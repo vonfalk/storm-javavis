@@ -1,0 +1,13 @@
+.386
+.model flat, stdcall
+
+extern x86SEH:near
+
+x86SafeSEH proto
+.SAFESEH x86SafeSeh
+
+.code
+x86SafeSEH proc
+	jmp x86SEH
+x86SafeSEH endp
+end
