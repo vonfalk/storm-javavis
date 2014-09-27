@@ -39,7 +39,11 @@ BEGIN_TEST(RegexTest) {
 	 */
 	CHECK_EQ(matchRegex(L"a*c", L"aaac"), 4);
 	CHECK_EQ(matchRegex(L"a*cd", L"cd"), 2);
+	CHECK_EQ(matchRegex(L"a*cd", L"acdef"), 3);
+	CHECK_EQ(matchRegex(L"a*cd", L"aef"), 0);
 	CHECK_EQ(matchRegex(L"[abc]*d", L"acbd"), 4);
+	CHECK_EQ(matchRegex(L"[abc]*", L"acbabc"), 6);
+	CHECK_EQ(matchRegex(L"f[abc]*", L"f"), 1);
 
 	/**
 	 * Check ? matching.
@@ -47,6 +51,8 @@ BEGIN_TEST(RegexTest) {
 	CHECK_EQ(matchRegex(L"a?c", L"c"), 1);
 	CHECK_EQ(matchRegex(L"a?c", L"ac"), 2);
 	CHECK_EQ(matchRegex(L"[ab]?c", L"bc"), 2);
+	CHECK_EQ(matchRegex(L"[ab]?", L"a"), 1);
+	CHECK_EQ(matchRegex(L"f[ab]?", L"f"), 1);
 
 	/**
 	 * . matching
@@ -61,5 +67,21 @@ BEGIN_TEST(RegexTest) {
 	CHECK_EQ(matchRegex(L"a+c", L"c"), 0);
 	CHECK_EQ(matchRegex(L"a+c", L"ac"), 2);
 	CHECK_EQ(matchRegex(L"a+c", L"aac"), 3);
+	CHECK_EQ(matchRegex(L"a+", L"aa"), 2);
+	CHECK_EQ(matchRegex(L"ba+", L"ba"), 2);
+	CHECK_EQ(matchRegex(L"ba+", L"b"), 0);
+
+	/**
+	 * Random tests.
+	 */
+	CHECK_EQ(matchRegex(L"[ab]*bcd..", L"abababcdba"), 10);
+	CHECK_EQ(matchRegex(L"[ab]*bcd[ab]*", L"abababcdba"), 10);
+
+	/**
+	 * Check correct indexing when not searching from the start.
+	 */
+	CHECK_EQ(matchRegex(L"abc", L"aabcc", 1), 4);
+	CHECK_EQ(matchRegex(L"[abc]*", L"dabcd", 1), 4);
+	CHECK_EQ(matchRegex(L"a", L"zzz", 1), 1);
 
 } END_TEST
