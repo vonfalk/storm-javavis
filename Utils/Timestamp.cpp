@@ -87,7 +87,7 @@ namespace util {
 	}
 
 	void Timestamp::sync(Timespan deltaT) {
-		PLN(L"Synced time as " << deltaT.toString() << L"\n");
+		PLN(L"Synced time as " << deltaT.toS() << L"\n");
 		Timestamp::deltaT = deltaT.micros();
 	}
 

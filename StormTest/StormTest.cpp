@@ -1,13 +1,11 @@
 #include "stdafx.h"
 
+#include "Test/TestMgr.h"
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	// May need this in the future...
-	// AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0);
-
-	PLN("Hello World!");
-
+	Tests::run();
 	return 0;
 }
 

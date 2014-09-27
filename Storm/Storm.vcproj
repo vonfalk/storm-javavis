@@ -172,6 +172,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\Regex.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -184,6 +188,10 @@
 			</File>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Regex.h"
 				>
 			</File>
 		</Filter>

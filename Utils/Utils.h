@@ -24,6 +24,7 @@ typedef unsigned __int64 uint64;
 typedef unsigned __int64 nat64;
 typedef __int64 int64;
 typedef unsigned char byte;
+typedef wchar_t wchar;
 
 #include "Containers.h"
 
@@ -128,3 +129,4 @@ inline float toDeg(float inRad) { return inRad * 180.0f / pi; }
 
 #include "Object.h"
 #include "Debug.h"
+#include "Printable.h"

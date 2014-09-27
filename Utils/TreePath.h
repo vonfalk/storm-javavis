@@ -6,7 +6,7 @@
 // This class represents a sequence of numbers, which in turns indicates
 // the path to get to a specific node inside a (ordered) tree. Think of these
 // numbers as filenames, then it works like regular file-system paths.
-class TreePath : public util::Printable {
+class TreePath : public Printable {
 public:
 	// Create an empty path.
 	TreePath() {}
