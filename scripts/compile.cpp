@@ -39,7 +39,7 @@ int main(int argc, const char **argv) {
 	int r = system(compile.c_str());
 
 	if (r == 0 && !clean && !all && !release) {
-		cout << "Running!" << endl;
+		cout << endl;
 
 		string cmd = build + "\\" + project;
 		system(cmd.c_str());
