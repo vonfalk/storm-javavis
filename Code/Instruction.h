@@ -14,7 +14,7 @@ namespace code {
 
 	// Value type describing a single ASM instruction and its parameters.
 	// Use the functions below to create op-code objects.
-	class Instruction : public util::Printable {
+	class Instruction : public Printable {
 	public:
 		Instruction();
 

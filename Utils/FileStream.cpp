@@ -4,7 +4,7 @@
 namespace util {
 
 	FileStream::FileStream(const Path &filename, Mode mode) : mode(mode), name(filename) {
-		openFile(filename.toString(), mode);
+		openFile(filename.toS(), mode);
 	}
 
 	void FileStream::openFile(const String &name, Mode mode) {

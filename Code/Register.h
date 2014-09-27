@@ -71,7 +71,7 @@ namespace code {
 		Register largest(Register r) const;
 
 		// To string.
-		String toString() const;
+		String toS() const;
 
 		// Modify members.
 		Registers &operator +=(Register r);

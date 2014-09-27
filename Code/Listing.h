@@ -11,7 +11,7 @@
 namespace code {
 
 	// Represents a code listing, can be linked into machine code.
-	class Listing : public util::Printable {
+	class Listing : public Printable {
 	public:
 		Listing();
 

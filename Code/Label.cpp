@@ -3,11 +3,11 @@
 
 namespace code {
 
-	String Label::toString() const {
+	String Label::toS() const {
 		if (id == 0)
 			return L"meta";
 		else
-			return toS(id);
+			return ::toS(id);
 	}
 
 }

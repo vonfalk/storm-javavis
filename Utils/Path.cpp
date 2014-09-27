@@ -141,7 +141,7 @@ void Path::simplify() {
 	}
 }
 
-String Path::toString() const {
+String Path::toS() const {
 	// On Windows, we do not need to know if the path is absolute or relative.
 	String result = join(parts, L"\\");
 	if (isDirectory) result += L"\\";
@@ -253,9 +253,9 @@ Path Path::makeRelative(const Path &to) const {
 }
 
 bool Path::exists() const {
-	return PathFileExists(toString().c_str()) == TRUE;
+	return PathFileExists(toS().c_str()) == TRUE;
 }
 
 void Path::deleteFile() const {
-	DeleteFile(toString().c_str());
+	DeleteFile(toS().c_str());
 }

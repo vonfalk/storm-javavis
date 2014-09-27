@@ -16,7 +16,7 @@ namespace code {
 	// A reference
 	// A variable
 	// A block
-	class Value : public util::Printable {
+	class Value : public Printable {
 	public:
 
 		// Value type

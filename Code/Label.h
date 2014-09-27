@@ -13,7 +13,7 @@ namespace code {
 		inline bool operator !=(const Label &o) const { return id != o.id; }
 
 		// To string.
-		String toString() const;
+		String toS() const;
 
 	private:
 		Label(nat id) : id(id) {}

@@ -51,7 +51,7 @@ public:
 	Path &operator +=(const String &file);
 
 	// To string.
-	String toString() const;
+	String toS() const;
 
 	// Status about this path.
 	bool isDir() const;

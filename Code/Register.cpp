@@ -140,7 +140,7 @@ namespace code {
 		return *this;
 	}
 
-	String Registers::toString() const {
+	String Registers::toS() const {
 		vector<String> names;
 		names.reserve(regs.size());
 

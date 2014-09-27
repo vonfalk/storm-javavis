@@ -45,7 +45,7 @@ namespace code {
 		}
 		return *this;
 	}
-	
+
 	std::multimap<nat, Label> Listing::getLabels() const {
 		std::multimap<nat, Label> labels;
 		for (Labels::const_iterator i = this->labels.begin(); i != this->labels.end(); ++i) {
@@ -63,7 +63,7 @@ namespace code {
 		for (std::multimap<nat, Label>::iterator i = first; i != last; ++i) {
 			if (i != first)
 				to << " ";
-			to << i->second.toString();
+			to << i->second.toS();
 		}
 
 		return to.str();
@@ -89,7 +89,7 @@ namespace code {
 					to << std::endl;
 			}
 			to << std::setw(spaces) << ' ';
-			to << std::setw(25) << registers[i].toString() << ' ';
+			to << std::setw(25) << registers[i].toS() << ' ';
 			to << code[i];
 		}
 	}

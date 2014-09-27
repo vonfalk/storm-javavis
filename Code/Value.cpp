@@ -102,12 +102,12 @@ namespace code {
 
 	void Value::ensureReadable(const wchar_t *instruction) const {
 		if (!readable())
-			throw InvalidValue(L"For instruction " + String(instruction) + L": " + toS(*this) + L" is not readable");
+			throw InvalidValue(L"For instruction " + String(instruction) + L": " + ::toS(*this) + L" is not readable");
 	}
 
 	void Value::ensureWritable(const wchar_t *instruction) const {
 		if (!writable())
-			throw InvalidValue(L"For instruction " + String(instruction) + L": " + toS(*this) + L" is not writable");
+			throw InvalidValue(L"For instruction " + String(instruction) + L": " + ::toS(*this) + L" is not writable");
 	}
 
 	static Long maskConstant(Long val, nat size) {
@@ -143,10 +143,10 @@ namespace code {
 				to << name(iRegister);
 				break;
 			case tConstant:
-				to << L"#" << toHex(maskConstant(iConstant, valSize), true) << " (" << toS((Long)iConstant) << ")";
+				to << L"#" << toHex(maskConstant(iConstant, valSize), true) << " (" << ::toS((Long)iConstant) << ")";
 				break;
 			case tLabel:
-				to << L"#" << label().toString() << L":";
+				to << L"#" << label().toS() << L":";
 				break;
 			case tReference:
 				to << L"@" << iReference.targetName();

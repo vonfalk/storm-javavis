@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
 #include "Test/TestMgr.h"
-#include <afxwin.h>
 
 void myFn() {
 	PLN("In the new function!");
