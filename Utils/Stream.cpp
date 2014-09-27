@@ -8,12 +8,12 @@ namespace util {
 	Stream::~Stream() {}
 
 	nat Stream::read(nat size, void *to) {
-		ASSERT(FALSE);
+		assert(false);
 		return 0;
 	}
 
 	void Stream::write(nat size, const void *from) {
-		ASSERT(FALSE);
+		assert(false);
 	}
 
 	bool Stream::more() const {

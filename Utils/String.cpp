@@ -10,10 +10,10 @@ String::String(const char *chars) {
 	nat bufferSize = size * 2 + 1;
 	wchar_t *outBuffer = new wchar_t[bufferSize];
 	outBuffer[0] = 0;
-	
+
 	size_t outSize = 0;
 	errno_t error = mbstowcs_s(&outSize, outBuffer, bufferSize, chars, bufferSize - 1);
-	ASSERT(error == 0);
+	assert(error == 0);
 
 	*this = outBuffer;
 
@@ -28,7 +28,7 @@ std::string String::toChar() const {
 
 	size_t outSize = 0;
 	errno_t error = wcstombs_s(&outSize, outBuffer, bufferSize, c_str(), bufferSize - 1);
-	ASSERT(error == 0);
+	assert(error == 0);
 
 	std::string result(outBuffer);
 	delete []outBuffer;

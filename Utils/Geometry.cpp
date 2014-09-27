@@ -4,7 +4,7 @@
 namespace util {
 
 	Vector bezierPoint(const vector<Vector> &pts, float param) {
-		ASSERT(pts.size() == 4);
+		assert(pts.size() == 4);
 
 		Vector r = pts[0] * pow(1 - param, 3);
 		r += pts[1] * 3 * pow(1 - param, 2) * param;

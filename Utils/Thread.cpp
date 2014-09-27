@@ -4,7 +4,11 @@
 
 namespace util {
 
-	Thread::Thread() : running(null), end(false) {}
+	Thread::Thread() : running(null), end(false) {
+		TODO("Implement native thread!");
+		TODO("Add semaphore!");
+		assert(false);
+	}
 
 	Thread::~Thread() {
 		stopWait();
@@ -20,8 +24,10 @@ namespace util {
 	}
 
 	bool Thread::sameAsCurrent() {
-		CWinThread *thread = AfxGetThread();
-		return thread == running;
+		//CWinThread *thread = AfxGetThread();
+		//return thread == running;
+		assert(false);
+		return false;
 	}
 
 	bool Thread::start(const Function<void, Thread::Control &> &fn) {
@@ -29,19 +35,20 @@ namespace util {
 		end = false;
 
 		this->fn = fn;
-		running = AfxBeginThread(threadProc, this);
+		// running = AfxBeginThread(threadProc, this);
 
 		return true;
 	}
 
 	UINT Thread::threadProc(LPVOID param) {
 		Thread *me = (Thread *)param;
-		
+
 		Thread::Control control(*me);
 		me->fn(control);
 
 		// done, clean up
-		me->running = null;
+		// me->running = null;
 		return 0;
 	}
+
 }

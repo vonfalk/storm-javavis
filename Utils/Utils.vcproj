@@ -21,7 +21,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			UseOfMFC="1"
+			UseOfMFC="0"
 			CharacterSet="1"
 			>
 			<Tool
@@ -85,7 +85,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			UseOfMFC="1"
+			UseOfMFC="0"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -194,10 +194,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\HashQueue.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Includes.cpp"
 				>
 			</File>
@@ -223,10 +219,6 @@
 			</File>
 			<File
 				RelativePath=".\MemoryPool.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MultiHashQueue.cpp"
 				>
 			</File>
 			<File
@@ -270,10 +262,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Runnable.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Semaphore.cpp"
 				>
 			</File>
@@ -307,22 +295,6 @@
 			</File>
 			<File
 				RelativePath=".\Stream.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\StreamCollection.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\StreamDescriptor.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\StreamReader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\StreamWriter.cpp"
 				>
 			</File>
 			<File
@@ -362,10 +334,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\UniqueId.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Utils.cpp"
 				>
 			</File>
@@ -379,6 +347,10 @@
 			</File>
 			<File
 				RelativePath=".\WorkerThread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StreamCollection.cpp"
 				>
 			</File>
 		</Filter>
@@ -456,10 +428,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\HashQueue.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Includes.h"
 				>
 			</File>
@@ -505,10 +473,6 @@
 			</File>
 			<File
 				RelativePath=".\MemoryPool.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MultiHashQueue.h"
 				>
 			</File>
 			<File
@@ -576,10 +540,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Runnable.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Semaphore.h"
 				>
 			</File>
@@ -605,22 +565,6 @@
 			</File>
 			<File
 				RelativePath=".\Stream.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StreamCollection.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StreamDescriptor.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StreamReader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StreamWriter.h"
 				>
 			</File>
 			<File
@@ -688,10 +632,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\UniqueId.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Utils.h"
 				>
 			</File>
@@ -705,6 +645,10 @@
 			</File>
 			<File
 				RelativePath=".\WorkerThread.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StreamCollection.h"
 				>
 			</File>
 		</Filter>

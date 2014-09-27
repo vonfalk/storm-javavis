@@ -22,7 +22,7 @@ public:
 	NoSuchFile(const String &file) : file(file) {};
 	NoSuchFile(const NoSuchFile &other) : file(other.file) {};
 	NoSuchFile &operator=(const NoSuchFile &other) { file = other.file; return *this; };
-	
+
 	virtual String what() const { return L"The file " + file + L" does not exist."; };
 protected:
 	String file;

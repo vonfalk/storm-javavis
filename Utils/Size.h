@@ -8,7 +8,6 @@ public:
 
 	inline Size() : w(0), h(0) {};
 	inline Size(int w, int h) : w(w), h(h) {}
-	inline Size(CSize size) : w(size.cx), h(size.cy) {}
 
 	// Expand any negative dimensions to the dimension given in "to"
 	inline Size expanded(Size to) const {

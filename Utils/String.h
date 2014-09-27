@@ -13,11 +13,6 @@ public:
 	inline String(const wchar_t *str) : std::wstring(str) {}
 	inline String(nat count, wchar_t ch) : std::wstring(size_t(count), ch) {}
 
-#ifndef NO_MFC
-	// Good to have until transition is complete!
-	inline String(const CString &str) : std::wstring(str.GetString()) {}
-#endif
-
 	// Concat ctor
 	inline String(const wchar_t *strA, const wchar_t *strB) : std::wstring(strA) {
 		*this += strB;

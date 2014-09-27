@@ -110,7 +110,7 @@ void testFunction(Arena &arena) {
 	l << epilog() << ret(4);
 
 	PLN("Before:" << l);
-	
+
 	Binary output(arena, L"MyFunction");
 	output.set(l);
 
@@ -125,11 +125,7 @@ void testFunction(Arena &arena) {
 }
 
 
-int _tmain(int argc, _TCHAR* argv[])
-{
-	// While we still have some depencies on MFC, initialize it...
-	AfxWinInit(::GetModuleHandle(NULL), NULL, ::GetCommandLine(), 0);
-
+int _tmain(int argc, _TCHAR* argv[]) {
 	TODO(L"Test without SEH as well!");
 
 	Tests::run();
@@ -140,7 +136,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	//testFunction(arena);
 
-	
+
 	waitForReturn();
 	return 0;
 }

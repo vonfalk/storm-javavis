@@ -34,7 +34,7 @@ namespace util {
 	}
 
 	Stream *FileStream::clone() const {
-		ASSERT(mode & mRead);
+		assert(mode & mRead);
 		return new FileStream(name, mode);
 	}
 

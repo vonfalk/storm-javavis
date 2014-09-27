@@ -99,7 +99,7 @@ namespace util {
 		Edit edit;
 
 		// Verify our type.
-		void verifyType(Type t) const { ASSERT(getType() == t); };
+		void verifyType(Type t) const { assert(getType() == t); };
 
 		// Generic getter and setter
 		template <class T>

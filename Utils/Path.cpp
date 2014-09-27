@@ -21,7 +21,7 @@ String getDirectory(const String &path) {
 }
 
 String getParentDir(const String &path) {
-	ASSERT(isDirectory(path));
+	assert(isDirectory(path));
 
 	nat found = path.rfind('\\', path.size() - 2);
 	if (found == String::npos) return L"";
@@ -173,7 +173,7 @@ Path Path::operator +(const Path &other) const {
 }
 
 Path &Path::operator +=(const Path &other) {
-	ASSERT(!other.isAbsolute());
+	assert(!other.isAbsolute());
 	isDirectory = other.isDirectory;
 	parts.insert(parts.end(), other.parts.begin(), other.parts.end());
 	simplify();

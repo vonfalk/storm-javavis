@@ -49,10 +49,10 @@ namespace util {
 
 			// The data in this file. Always sized to fit the actual data.
 			vector<byte> data;
-			
+
 			// How far has the file been loaded? Invalid if "readFrom" == null
 			nat64 readUntil;
-			
+
 			// Reading from a file. Will be set to null when/if there is no more data to load.
 			Stream *readFrom;
 

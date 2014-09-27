@@ -48,25 +48,6 @@ inline void limit(T &toLimit, const T &minLimit, const T &maxLimit) {
 
 #define null NULL
 
-#ifndef NO_MFC
-double strToDouble(const CString &str);
-int strToInt(const CString &str);
-int hexStrToInt(const CString &str);
-
-//Does not add 0x
-CString toHexString(nat i, bool prefix = false);
-//Adds 0x automatically
-CString toHexString(const void *x, bool prefix = true);
-CString toString(int i);
-CString toString(nat i);
-CString toString(int64 i);
-CString toString(nat64 i);
-CString toString(double i);
-CString toString(const char *cstr);
-
-bool validateFilename(const CString &name);
-#endif
-
 inline float degToRad(float angle) {
 	return float(angle * M_PI / 180.0);
 }

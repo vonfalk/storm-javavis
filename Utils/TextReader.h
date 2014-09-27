@@ -21,7 +21,7 @@ namespace util {
 		inline bool atEnd() const { return !stream->more(); };
 		inline bool more() const { return stream->more(); };
 
-		CString getLine();
+		String getLine();
 
 		inline Stream *getStream() const { return stream; };
 

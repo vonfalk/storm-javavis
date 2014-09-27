@@ -29,8 +29,8 @@ namespace util {
 
 		template <class T>
 		T get() const {
-			ASSERT(sizeof(T) <= MaxSize);
-			ASSERT(currSize == sizeof(T));
+			assert(sizeof(T) <= MaxSize);
+			assert(currSize == sizeof(T));
 			T tmp;
 			memcpy(&tmp, data, sizeof(T));
 			return tmp;
@@ -39,7 +39,7 @@ namespace util {
 		template <class T>
 		void set(const T &p) {
 			PLN_IF("INVALID SIZE: " << sizeof(T) << " vs " << MaxSize, sizeof(T) > MaxSize);
-			ASSERT(sizeof(T) <= MaxSize);
+			assert(sizeof(T) <= MaxSize);
 			currSize = sizeof(T);
 			memcpy(data, &p, sizeof(T));
 		}

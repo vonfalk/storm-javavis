@@ -29,7 +29,7 @@ namespace util {
 			case textfile::utf16rev:
 				return new textfile::Utf16Writer(stream, true);
 			default:
-				ASSERT(FALSE);
+				assert(FALSE);
 				return null;
 		}
 	}

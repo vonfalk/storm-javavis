@@ -16,7 +16,7 @@ namespace util {
 	}
 
 	nat trailingZeros(nat number) {
-		ASSERT(number != 0);
+		assert(number != 0);
 		nat r = 0;
 		while ((number & 0x1) == 0) {
 			r += 1;

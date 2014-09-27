@@ -20,14 +20,14 @@ namespace util {
 		~TypeInformation();
 
 		template<class S>
-		void add(const CString &name, int id) {
+		void add(const String &name, int id) {
 			recognizers[id] = recognize<T, S>;
 			creators[id] = createObject<T, S>;
 			names[id] = name;
 		}
 
 		int getCount() const { return numClasses; };
-		CString getName(int id) const;
+		String getName(int id) const;
 		int getType(const T *c) const;
 		T *create(int id) const;
 	private:
@@ -38,7 +38,7 @@ namespace util {
 
 		recognizer *recognizers;
 		creator *creators;
-		CString *names;
+		String *names;
 		int numClasses;
 	};
 
@@ -47,7 +47,7 @@ namespace util {
 	TypeInformation<T, void>::TypeInformation(int size) {
 		recognizers = new recognizer[size];
 		creators = new creator[size];
-		names = new CString[size];
+		names = new String[size];
 		//lastId = 0;
 		numClasses = size;
 	}
@@ -60,7 +60,7 @@ namespace util {
 	}
 
 	template<class T>
-	CString TypeInformation<T, void>::getName(int id) const {
+	String TypeInformation<T, void>::getName(int id) const {
 		if ((id < 0) || (id >= numClasses)) return L"INVALID TYPE";
 		return names[id];
 	}

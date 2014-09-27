@@ -26,7 +26,7 @@ namespace util {
 		RefCount() : refs(0) {};
 		virtual ~RefCount() {};
 
-		inline void addRef() const { 
+		inline void addRef() const {
 			InterlockedIncrement(&refs);
 		};
 		inline void release() const {

@@ -26,14 +26,14 @@ namespace util {
 		~TypeInformation();
 
 		template<class S>
-		void add(const CString &name, int id) {
+		void add(const String &name, int id) {
 			recognizers[id] = recognize<T, S>;
 			creators[id] = createObject<T, S, CreateArg>;
 			names[id] = name;
 		}
 
 		int getCount() const { return numClasses; };
-		CString getName(int id) const;
+		String getName(int id) const;
 		int getType(const T *c) const;
 		T *create(int id, CreateArg arg) const;
 	private:
@@ -44,7 +44,7 @@ namespace util {
 
 		recognizer *recognizers;
 		creator *creators;
-		CString *names;
+		String *names;
 		int numClasses;
 	};
 
@@ -53,7 +53,7 @@ namespace util {
 	TypeInformation<T, CreateArg>::TypeInformation(int size) {
 		recognizers = new recognizer[size];
 		creators = new creator[size];
-		names = new CString[size];
+		names = new String[size];
 		//lastId = 0;
 		numClasses = size;
 	}
@@ -66,7 +66,7 @@ namespace util {
 	}
 
 	template<class T, class CreateArg>
-	CString TypeInformation<T, CreateArg>::getName(int id) const {
+	String TypeInformation<T, CreateArg>::getName(int id) const {
 		if ((id < 0) || (id >= numClasses)) return L"INVALID TYPE";
 		return names[id];
 	}
@@ -99,12 +99,12 @@ namespace util {
 #define DECLARE_PUBLIC_GET_INTERFACE(baseClass, memberName) \
 	static inline int getTypeCount() { return memberName.getCount(); }; \
 	static inline int getType(const baseClass *object) { return memberName.getType(object); }; \
-	static inline CString getTypeName(int typeId) { return memberName.getName(typeId); }; \
-	static inline CString getTypeName(const baseClass *object) { return getTypeName(getType(object)); };
+	static inline String getTypeName(int typeId) { return memberName.getName(typeId); }; \
+	static inline String getTypeName(const baseClass *object) { return getTypeName(getType(object)); };
 
 #define DECLARE_TYPE_GETTER(memberName) \
 	inline int getType() const { return memberName.getType(this); }; \
-	inline CString getTypeName() const { return memberName.getName(memberName.getType(this)); };
+	inline String getTypeName() const { return memberName.getName(memberName.getType(this)); };
 
 #define DECLARE_PUBLIC_CREATE_INTERFACE(baseClass, createArg, memberName) \
 	static inline baseClass *createType(int id, createArg arg) { return memberName.create(id, arg); };

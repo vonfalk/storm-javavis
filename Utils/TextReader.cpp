@@ -33,7 +33,7 @@ namespace util {
 		}
 	}
 
-	CString TextReader::getLine() {
+	String TextReader::getLine() {
 		std::wostringstream s;
 
 		while (!atEnd()) {
@@ -42,7 +42,7 @@ namespace util {
 			else if (ch != '\r') s << ch;
 		}
 
-		return CString(s.str().c_str());
+		return String(s.str());
 	}
 
 	//////////////////////////////////////////////////////////////////////////

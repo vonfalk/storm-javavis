@@ -6,13 +6,13 @@ namespace util {
 	void Properties::add(const Property &p) {
 		if (find(p.getName()) == NO_ID) {
 			properties.push_back(p);
-			
+
 			Property &end = properties.back();
 			if (end.onUpdate == Function<void>()) {
 				end.onUpdate = onUpdateFn;
 			}
 		} else {
-			ASSERT(FALSE);
+			assert(FALSE);
 		}
 	}
 

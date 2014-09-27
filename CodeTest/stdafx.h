@@ -10,10 +10,6 @@
 #include <stdio.h>
 #include <tchar.h>
 
-// Remove when not dependent on MFC anymore.
-#include <afx.h>
-
-#define NO_MFC
 #include "Utils/Utils.h"
 #include "Code/Code.h"
 

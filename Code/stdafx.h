@@ -9,8 +9,6 @@
 
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 
-#define NO_MFC
 #include "Utils/Utils.h"
 #include "Code.h"
 
-#include <assert.h>

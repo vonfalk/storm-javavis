@@ -48,7 +48,7 @@ namespace util {
 
 		if (maxRead == 0) return 0;
 
-		ASSERT(size_t(currPos) == currPos);
+		assert(size_t(currPos) == currPos);
 		memcpy(buffer, &contents->data[size_t(currPos)], maxRead);
 		currPos += maxRead;
 		return maxRead;
@@ -62,11 +62,11 @@ namespace util {
 
 		nat64 neededSize = currPos + size;
 		if (neededSize > contents->data.size()) {
-			ASSERT(size_t(neededSize) == neededSize);
+			assert(size_t(neededSize) == neededSize);
 			contents->data.resize(size_t(neededSize));
 		}
 
-		ASSERT(size_t(currPos) == currPos);
+		assert(size_t(currPos) == currPos);
 		memcpy(&contents->data[size_t(currPos)], buffer, size);
 		currPos += size;
 	}
@@ -91,7 +91,7 @@ namespace util {
 
 	MemoryFile::Contents::Contents(Stream *from) : readFrom(from), readUntil(0) {
 		nat64 size = readFrom->length();
-		ASSERT(size_t(size) == size); // If 32-bit this makes sense...
+		assert(size_t(size) == size); // If 32-bit this makes sense...
 		data.resize(size_t(size));
 
 		copyThread.start(util::memberFn(this, &MemoryFile::Contents::copyFn));
@@ -117,7 +117,7 @@ namespace util {
 			readUntil += got;
 
 			if (!readFrom->valid()) {
-				ASSERT(FALSE);
+				assert(false);
 				break;
 			}
 		}

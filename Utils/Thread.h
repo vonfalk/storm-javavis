@@ -31,7 +31,8 @@ namespace util {
 
 		bool sameAsCurrent();
 	private:
-		CWinThread *running;
+		//CWinThread *running;
+		void *running;
 		bool end;
 
 		// The function to start
@@ -39,5 +40,6 @@ namespace util {
 
 		static UINT threadProc(LPVOID param);
 	};
+
 
 }

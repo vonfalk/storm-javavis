@@ -6,7 +6,7 @@ namespace util {
 	MemoryPool::MemoryPool(nat size) : data(new byte[size]), dataSize(size), firstFree(0), allocCount(0) {}
 
 	MemoryPool::~MemoryPool() {
-		ASSERT(allocCount == 0);
+		assert(allocCount == 0);
 		delete []data;
 	}
 
@@ -28,7 +28,7 @@ namespace util {
 	}
 
 	void MemoryPool::free(void *memory) {
-		ASSERT(allocCount > 0);
+		assert(allocCount > 0);
 		if (--allocCount == 0) {
 			firstFree = 0;
 		}

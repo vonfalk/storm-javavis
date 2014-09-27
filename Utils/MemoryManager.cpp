@@ -60,7 +60,7 @@ namespace memory {
 		file << "- " << std::hex << nat(memptr) << std::endl;
 #endif
 		Block *b = Block::owningBlock(memptr);
-		ASSERT(blocks.count(b) == 1);
+		assert(blocks.count(b) == 1);
 		if (b == null) return;
 
 		blocks.erase(b);

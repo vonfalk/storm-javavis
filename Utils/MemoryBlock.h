@@ -50,7 +50,7 @@ namespace memory {
 		void print(std::wostream &to, byte *block) const;
 
 		bool valid() const;
-		
+
 		static nat resolution;
 		static const nat overhead = sizeof(Descriptor); //The overhead for each allocation.
 		static const nat smallestSize = 16; //Smallest free chunk.

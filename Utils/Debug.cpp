@@ -31,9 +31,9 @@ namespace util {
 	}
 
 	static void debugConsoleOutput(const wchar_t *data) {
-		CStringA str = CStringA(CString(data));
+		std::string str = String(data).toChar();
 		DWORD result;
-		WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), str.GetString(), str.GetLength(), &result, NULL);
+		WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), str.c_str(), str.size(), &result, NULL);
 	}
 
 	void setDebugTarget(DebugTarget target) {
