@@ -2,7 +2,9 @@
 
 (setq project-root "~/Projects/storm/")
 (setq project-file (concat project-root "storm.sln"))
-(setq add-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl"))
+(setq add-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl -a"))
+(setq remove-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl -d"))
+(setq rename-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl -r"))
 (setq p-compile-command "scripts/compile")
 (setq p-clean-command "scripts/compile -c")
 (setq p-release-command "scripts/compile -r")
@@ -103,6 +105,8 @@
 	    (local-set-key (kbd "C-c C-a") 'compile-all)
 	    (local-set-key (kbd "C-c C-v C-s") 'open-vs)
 	    (local-set-key (kbd "M-n") 'next-error)
+	    (local-set-key (kbd "C-c C-f C-r") 'rename-proj-file)
+	    (local-set-key (kbd "C-c C-f C-d") 'delete-proj-file)
 	    )
 	  )
 
@@ -121,7 +125,26 @@
 
 (defun filename (fname)
   (let ((l (split-string (subpath fname) "/")))
-	(nth (- (length l) 1) l)))
+    (car (last l))))
+
+(defun subproj-relative-file (filename)
+  (let ((subproj (subproject filename)))
+    (substring (subpath filename) (+ 1 (length subproj)))))
+
+(defun project-file (file)
+  (let ((subproj (subproject file)))
+    (concat (expand-file-name project-root) subproj "/" subproj ".vcproj")))
+
+(defun project-cmd-helper (files)
+  (if (eq (cdr files) nil)
+      (subproj-relative-file (car files))
+    (concat (subproj-relative-file (car files))
+	    " " (project-cmd-helper (cdr files)))))
+
+(defun project-cmd (cmd files)
+  (concat cmd
+	  " " (expand-file-name (project-file (car files)))
+	  " " (project-cmd-helper files)))
 
 (add-hook 'find-file-hooks 'maybe-add-cpp-template)
 (defun maybe-add-cpp-template ()
@@ -161,10 +184,13 @@
   (add-file-to-project buffer-file-name))
 
 (defun add-file-to-project (file)
-  (let ((subproj (subproject file)))
-    (let ((projfile (concat (expand-file-name project-root) subproj "/" subproj ".vcproj")))
-      (let ((cmd (concat add-file-cmd " \"" (expand-file-name projfile) "\" " (substring (subpath file) (+ 1 (length subproj))))))
-		(shell-command-to-string cmd)))))
+  (shell-command-to-string (project-cmd add-file-cmd (list file))))
+
+(defun rename-file-project (from to)
+  (shell-command-to-string (project-cmd rename-file-cmd (list from to))))
+
+(defun remove-file-project (file)
+  (shell-command-to-string (project-cmd remove-file-cmd (list file))))
 
 (defun open-vs ()
   (interactive)
@@ -189,6 +215,23 @@
 (defun run-compile (cmd)
   (let ((default-directory project-root))
     (compile cmd)))
+
+(defun rename-proj-file ()
+  (interactive)
+  (let ((fn (read-file-name "New name:")))
+    (rename-file-project buffer-file-name fn)
+    (rename-file buffer-file-name fn)
+    (setq buffer-file-name fn)
+    (rename-buffer (filename fn) t)))
+
+(defun delete-proj-file ()
+  (interactive)
+  (if (yes-or-no-p "Really delete?")
+      (progn
+	(remove-file-project buffer-file-name)
+	(delete-file buffer-file-name)
+	(kill-buffer))
+    ))
 
 ;; Behaviour.
 
