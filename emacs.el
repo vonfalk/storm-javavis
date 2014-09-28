@@ -58,7 +58,7 @@
     (indent-for-tab-command)
     (goto-char to)))
 
-(defun storm-cpp-single ()
+(defun storm-cpp-singleline ()
   (interactive "*")
   (insert "// "))
 

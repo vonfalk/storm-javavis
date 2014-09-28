@@ -26,7 +26,7 @@ namespace storm {
 
 	private:
 		// Character set.
-		struct Set {
+		struct Set : public Printable {
 			// Create an empty set.
 			Set();
 
@@ -45,8 +45,8 @@ namespace storm {
 			// Does this set contain a specific character?
 			bool contains(wchar ch) const;
 
-			// ToString
-			String toS() const;
+		protected:
+			virtual void output(std::wostream &to) const;
 		};
 
 		// Repeat type.

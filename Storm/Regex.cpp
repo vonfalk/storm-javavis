@@ -4,7 +4,6 @@
 namespace storm {
 
 	nat matchRegex(const String &pattern, const String &str, nat start) {
-		PLN(Regex(pattern));
 		return Regex(pattern).match(str, start);
 	}
 
@@ -32,22 +31,26 @@ namespace storm {
 		return inverted;
 	}
 
-	String Regex::Set::toS() const {
-		if (chars.size() == 0)
+	void Regex::Set::output(std::wostream &to) const {
+		if (chars.size() == 0) {
 			if (inverted)
-				return L".";
+				to << L".";
 			else
-				return L"[^.]";
+				to << L"[^.]";
+			return;
+		}
 
-		std::wostringstream t;
-		t << '[';
+		if (!inverted && chars.size() == 1) {
+			to << chars[0];
+			return;
+		}
+
+		to << '[';
 		if (inverted)
-			t << '^';
+			to << '^';
 		for (nat i = 0; i < chars.size(); i++)
-			t << chars[i];
-		t << ']';
-
-		return t.str();
+			to << chars[i];
+		to << ']';
 	}
 
 	/**
@@ -59,9 +62,8 @@ namespace storm {
 	}
 
 	void Regex::output(std::wostream &to) const {
-		to << "Regex: ";
 		for (nat i = 0; i < chars.size(); i++) {
-			to << chars[i].toS();
+			to << chars[i];
 
 			switch (repeat[i]) {
 			case rZeroPlus:

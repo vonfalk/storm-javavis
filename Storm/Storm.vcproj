@@ -176,6 +176,18 @@
 				RelativePath=".\Regex.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\SyntaxRule.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxType.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxToken.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -192,6 +204,18 @@
 			</File>
 			<File
 				RelativePath=".\Regex.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxRule.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxType.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxToken.h"
 				>
 			</File>
 		</Filter>

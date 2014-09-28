@@ -1,6 +1,16 @@
 // The main syntax follows:
 
 DELIMITER : "[ \t\n]+" = delimiter();
+DELIMITER => " ";
+
+NL : "[ \t\n]+" = delimiter();
+NL => "\n";
+
+INDENT : "[ \t\n]+" = delimiter();
+INDENT => "\i";
+
+DEDENT : "[ \t\n]+" = delimiter();
+DEDENT => "\d";
 
 // Basic types
 
@@ -13,6 +23,6 @@ Type : Name name = createType(name);
 
 // Basic syntax
 
-Expr : '{' (Expr expr[])* '}' = createBlock(expr);
-Expr : Name n1 '=' Name n2 ';' = createAssignment(n1, n2);
+Expr : '{', (Expr expr[], )* '}' = createBlock(expr);
+Expr : Name n1, '=', Name n2, ';' = createAssignment(n1, n2);
 
