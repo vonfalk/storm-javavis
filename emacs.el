@@ -193,13 +193,14 @@
 (defun is-test-project ()
   (let ((proj (subproject buffer-file-name)))
     (and (> (length proj) 4)
-	 (eql (substring proj -4 "Test")))))
+	 (eql (substring proj -4) "Test"))))
 
 (defun shall-have-namespace ()
   (let ((proj (subproject buffer-file-name)))
-    (or
-     (is-test-project)
-     (eql (proj "Utils")))))
+    (not
+     (or
+      (is-test-project)
+      (eql proj "Utils")))))
   
 (defun insert-namespace ()
   (insert "namespace ")
