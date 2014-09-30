@@ -192,6 +192,10 @@
 				RelativePath=".\SrcPos.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Tokenizer.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -224,6 +228,10 @@
 			</File>
 			<File
 				RelativePath=".\SrcPos.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Tokenizer.h"
 				>
 			</File>
 		</Filter>

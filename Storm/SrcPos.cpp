@@ -18,12 +18,8 @@ namespace storm {
 
 	SrcPos::SrcPos(const Path &file, nat offset) : file(file), offset(offset) {}
 
-	Path SrcPos::file() const {
-		return ;
-	}
-
 	void SrcPos::output(std::wostream &to) const {
-		to << file() << "(" << offset << ")";
+		to << file << "(" << offset << ")";
 	}
 
 	LineCol SrcPos::lineCol() const {

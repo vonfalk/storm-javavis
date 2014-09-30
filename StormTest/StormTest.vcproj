@@ -204,6 +204,10 @@
 				RelativePath=".\SrcPosTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TokenizerTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

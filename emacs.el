@@ -182,6 +182,8 @@
   (insert "\"\n\n")
   (if (shall-have-namespace)
       (insert-namespace))
+  (if (is-test-project)
+      (insert-test-template))
   (add-file-to-project buffer-file-name))
 
 (defun add-header-template ()
@@ -190,17 +192,26 @@
       (insert-namespace))
   (add-file-to-project buffer-file-name))
 
+(defun insert-test-template ()
+  (insert "BEGIN_TEST(")
+  (insert (replace-regexp-in-string ".cpp" "" (filename buffer-file-name)))
+  (insert ") {\n\n")
+  (let ((pos (point)))
+    (insert "\n\n} END_TEST")
+    (goto-char pos)
+    (indent-for-tab-command)))
+
 (defun is-test-project ()
   (let ((proj (subproject buffer-file-name)))
     (and (> (length proj) 4)
-	 (eql (substring proj -4) "Test"))))
+	 (equal (substring proj -4) "Test"))))
 
 (defun shall-have-namespace ()
   (let ((proj (subproject buffer-file-name)))
     (not
      (or
       (is-test-project)
-      (eql proj "Utils")))))
+      (equal proj "Utils")))))
   
 (defun insert-namespace ()
   (insert "namespace ")
