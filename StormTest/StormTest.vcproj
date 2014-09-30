@@ -200,6 +200,10 @@
 				RelativePath=".\RegexTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\SrcPosTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

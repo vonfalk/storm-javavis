@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Gdiplus.h>
+//#include <Gdiplus.h>
 
 class Vector;
 
@@ -24,7 +24,7 @@ public:
 	// create from a byte array containing RGBA colors (see TexturePlane.h)
 	Color(const byte *src);
 
-	operator Gdiplus::Color() const { return Gdiplus::Color(BYTE(255.0f * a), BYTE(255.0f * r), BYTE(255.0f * g), BYTE(255.0f * b)); }
+	//operator Gdiplus::Color() const { return Gdiplus::Color(BYTE(255.0f * a), BYTE(255.0f * r), BYTE(255.0f * g), BYTE(255.0f * b)); }
 
 	// Get a system color.
 	static Color sysColor(int id);
@@ -38,11 +38,11 @@ public:
 	// Save/load interface.
 	static Color load(util::Stream &from);
 	void save(util::Stream &to) const;
-	
+
 
 	float r, g, b, a;
 
-	
+
 	// operators
 	inline Color operator +(const Color &other) const { return Color(r + other.r, g + other.g, b + other.b, a + other.a); }
 	inline Color operator -(const Color &other) const { return Color(r - other.r, g - other.g, b - other.b, a - other.a); }

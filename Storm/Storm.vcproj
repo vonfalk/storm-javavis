@@ -188,6 +188,10 @@
 				RelativePath=".\SyntaxToken.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\SrcPos.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -216,6 +220,10 @@
 			</File>
 			<File
 				RelativePath=".\SyntaxToken.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SrcPos.h"
 				>
 			</File>
 		</Filter>

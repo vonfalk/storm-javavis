@@ -1,97 +1,33 @@
 #include "StdAfx.h"
 #include "Path.h"
+#include "Exception.h"
 
 #include <Shlwapi.h>
-
-
-String getPathFile(const String &path) {
-	nat found = path.rfind('\\');
-	if (found == String::npos) return path;
-
-	return path.mid(found + 1);
-}
-
-String getDirectory(const String &path) {
-	if (isDirectory(path)) return path;
-
-	nat found = path.rfind('\\');
-	if (found == String::npos) return L"";
-
-	return path.left(found + 1);
-}
-
-String getParentDir(const String &path) {
-	assert(isDirectory(path));
-
-	nat found = path.rfind('\\', path.size() - 2);
-	if (found == String::npos) return L"";
-
-	return path.left(found + 1);
-}
-
-bool isDirectory(const String &path) {
-	if (path.size() == 0) return false;
-	return path[path.size() - 1] == '\\';
-}
-
-String getExecutablePath() {
-	wchar_t tmp[MAX_PATH + 1];
-	GetModuleFileName(NULL, tmp, MAX_PATH + 1);
-	return getDirectory(tmp);
-}
-
-String getExecutablePath(const String &rel) {
-	return makePathNotRelative(rel, getExecutablePath());
-}
-
-static String firstPath(const String &path) {
-	nat found = path.find('\\');
-	if (found == String::npos) return path;
-	return path.left(found);
-}
-
-static String restPath(const String &path) {
-	nat found = path.find('\\');
-	if (found == String::npos) return L"";
-	return path.mid(found + 1);
-}
-
-String makePathRelative(const String &path, const String &to) {
-	String result = path;
-	String relTo = to;
-	bool equal = true;
-
-	while (relTo.size() != 0) {
-		String resultPart = firstPath(result);
-		String relPart = firstPath(relTo);
-
-		if (equal && relPart == resultPart) {
-			// Ok, they're equal so far.
-			result = restPath(result);
-		} else {
-			// They (still) differ...
-			result = L"..\\" + result;
-			equal = false;
-		}
-
-		relTo = restPath(relTo);
-	}
-
-	return result;
-}
-
-String makePathNotRelative(const String &relative, const String &to) {
-	wchar_t out[MAX_PATH];
-	PathCombine(out, to.c_str(), relative.c_str());
-	return out;
-}
+#pragma comment(lib, "shlwapi.lib")
 
 //////////////////////////////////////////////////////////////////////////
 // The Path class
 //////////////////////////////////////////////////////////////////////////
 
 Path Path::executable() {
-	return Path(getExecutablePath());
+	static Path e;
+	if (e.parts.size() == 0) {
+		wchar_t tmp[MAX_PATH + 1];
+		GetModuleFileName(NULL, tmp, MAX_PATH + 1);
+		e = Path(tmp).parent();
+	}
+	return e;
+}
+
+Path Path::executable(const Path &path) {
+	return executable() + path;
+}
+
+Path Path::dbgRoot() {
+#ifndef DEBUG
+	throw UserError(L"dbgRoot not availiable during release!");
+#endif
+	return executable().parent();
 }
 
 Path::Path(const String &path) {

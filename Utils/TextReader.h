@@ -25,6 +25,7 @@ namespace util {
 
 		inline Stream *getStream() const { return stream; };
 
+		// Takes ownership of 'stream'.
 		static TextReader *create(Stream *stream);
 	protected:
 		TextReader(Stream *stream);

@@ -1,0 +1,4 @@
+Sample text file
+This file is used to
+count line and column
+numbers in StormTest/SrcPosTest.cpp

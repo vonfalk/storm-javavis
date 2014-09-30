@@ -10,7 +10,6 @@ namespace util {
 	class FileStream : public Stream {
 	public:
 		FileStream(const Path &path, Mode mode);
-		// FileStream(const String &name, Mode mode);
 		virtual ~FileStream();
 
 		virtual Stream *clone() const;

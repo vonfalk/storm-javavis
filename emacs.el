@@ -9,6 +9,7 @@
 (setq p-clean-command "scripts/compile -c")
 (setq p-release-command "scripts/compile -r")
 (setq p-all-command "scripts/compile -a")
+(setq read-buffer-completion-ignore-case t)
 
 ;; Setup code-style
 
@@ -94,6 +95,7 @@
 
 (add-hook 'c-mode-common-hook
 	  (lambda ()
+	    (local-set-key (kbd "C-o") 'my-open-line)
 	    (local-set-key (kbd "M-o") 'ff-find-other-file)
 	    (local-set-key (kbd "RET") 'storm-return)
 	    (local-set-key (kbd "C-M-j") 'storm-cpp-singleline)
@@ -111,6 +113,14 @@
 	  )
 
 ;; Helpers for bindings.
+
+(defun my-open-line ()
+  (interactive)
+  (open-line 1)
+  (let ((last (point)))
+    (move-beginning-of-line 2)
+    (indent-for-tab-command)
+    (goto-char last)))
 
 (defun in-project (filename)
   (and filename

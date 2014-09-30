@@ -1,35 +1,19 @@
 #pragma once
 
-// Nice functions for manipulating paths. These are LEGACY and should not be used! Use the Path class below instead!
-
-// Get the file from a path.
-String getPathFile(const String &path);
-
-// Get the directory from a path. If it is already a directory, "path" is returned.
-String getDirectory(const String &path);
-
-// Get the parent directory from a path. Assumes "path" is a directory.
-String getParentDir(const String &path);
-
-// Is this a directory?
-bool isDirectory(const String &path);
-
-// Get the path of our executable file.
-String getExecutablePath();
-
-// Get a path relative to the executable path.
-String getExecutablePath(const String &rel);
-
-// Make a path relative another.
-String makePathRelative(const String &path, const String &to);
-String makePathNotRelative(const String &relative, const String &to);
-
-// A class for managing path names.
+/**
+ * A class for managing path names.
+ */
 class Path {
 	friend std::wostream &operator <<(std::wostream &to, const Path &path);
 public:
 	// Get the path of the executable file we're currently running from.
 	static Path executable();
+
+	// Get a path representing a file relative to the executable path.
+	static Path executable(const Path &path);
+
+	// Get a path to the root of the debug environment (only valid during debug).
+	static Path dbgRoot();
 
 	// Create an empty path.
 	Path();
