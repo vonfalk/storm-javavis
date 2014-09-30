@@ -156,6 +156,11 @@
 		(if (string-match "\\.h$" buffer-file-name)
 			(add-header-template)))))
 
+(add-hook 'find-file-hooks 'correct-win-filename)
+(defun correct-win-filename ()
+  (interactive)
+  (rename-buffer (filename buffer-file-name) t))
+
 (defun add-cpp-template ()
   (insert "#include \"stdafx.h\"\n")
   (insert "#include \"")
@@ -238,10 +243,19 @@
 (add-to-list 'auto-mode-alist '("\\.h" . c++-mode))
 
 (setq display-buffer-alist
-      '((".*" . ((display-buffer-reuse-window
-		  display-buffer-use-some-window
-		  display-buffer-pop-up-window)
-		 . nil))))
+      '(("\\*compilation\\*" .
+	 ((display-buffer-reuse-window
+	   display-buffer-use-some-window
+	   display-buffer-pop-up-window)
+	  . ((reusable-frames . t)
+	     (inhibit-switch-frame . t))))
+	(".*" .
+	 ((display-buffer-reuse-window
+	   display-buffer-use-some-window
+	   display-buffer-pop-up-window) .
+	   nil))))
+	 
+
 
 (setq compilation-scroll-output 'first-error)
 
