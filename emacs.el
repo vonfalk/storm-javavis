@@ -174,29 +174,41 @@
 (defun add-cpp-template ()
   (insert "#include \"stdafx.h\"\n")
   (insert "#include \"")
-  (insert (replace-regexp-in-string
-		   ".cpp" ".h"
-		   (filename buffer-file-name)))
+  (if (is-test-project)
+      (insert "Test/Test.h")
+    (insert (replace-regexp-in-string
+	     ".cpp" ".h"
+	     (filename buffer-file-name))))
   (insert "\"\n\n")
-  (insert "namespace ")
-  (insert (downcase (subproject buffer-file-name)))
-  (insert " {\n\n")
-  (let ((pos (point)))
-    (insert "\n\n}\n")
-    (goto-char pos)
-    (indent-for-tab-command))
+  (if (shall-have-namespace)
+      (insert-namespace))
   (add-file-to-project buffer-file-name))
 
 (defun add-header-template ()
   (insert "#pragma once\n\n")
+  (if (shall-have-namespace)
+      (insert-namespace))
+  (add-file-to-project buffer-file-name))
+
+(defun is-test-project ()
+  (let ((proj (subproject buffer-file-name)))
+    (and (> (length proj) 4)
+	 (eql (substring proj -4 "Test")))))
+
+(defun shall-have-namespace ()
+  (let ((proj (subproject buffer-file-name)))
+    (or
+     (is-test-project)
+     (eql (proj "Utils")))))
+  
+(defun insert-namespace ()
   (insert "namespace ")
   (insert (downcase (subproject buffer-file-name)))
   (insert " {\n\n")
   (let ((pos (point)))
     (insert "\n\n}\n")
     (goto-char pos)
-    (indent-for-tab-command))
-  (add-file-to-project buffer-file-name))
+    (indent-for-tab-command)))
 
 (defun add-file-to-project (file)
   (shell-command-to-string (project-cmd add-file-cmd (list file))))

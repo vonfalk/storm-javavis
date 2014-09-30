@@ -651,6 +651,10 @@
 				RelativePath=".\StreamCollection.h"
 				>
 			</File>
+			<File
+				RelativePath=".\UniqueId.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

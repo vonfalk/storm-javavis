@@ -44,6 +44,7 @@ namespace storm {
 		// Compare.
 		inline bool operator !=(const SrcPos &o) const { return !(*this == o); }
 		inline bool operator ==(const SrcPos &o) const { return file == o.file && offset == o.offset; }
+
 	protected:
 		virtual void output(std::wostream &to) const;
 	};
