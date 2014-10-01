@@ -22,6 +22,7 @@ namespace util {
 		inline bool more() const { return stream->more(); };
 
 		String getLine();
+		String getAll();
 
 		inline Stream *getStream() const { return stream; };
 

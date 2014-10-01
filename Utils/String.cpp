@@ -107,6 +107,29 @@ String String::trim() const {
 	return substr(start, end - start + 1);
 }
 
+vector<String> String::split(const String &delim) const {
+	return ::split(*this, delim);
+}
+
+vector<String> split(const String &str, const String &delimiter) {
+	vector<String> r;
+
+	nat start = 0;
+	nat end = str.find(delimiter);
+	while (end != String::npos) {
+		if (start < end)
+			r.push_back(str.substr(start, end - start));
+
+		start = end + delimiter.size();
+		end = str.find(delimiter, start);
+	}
+
+	if (start < str.size())
+		r.push_back(str.substr(start));
+
+	return r;
+}
+
 String join(const vector<String> &data, const String &between) {
 	if (data.size() == 0) return L"";
 

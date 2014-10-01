@@ -196,6 +196,22 @@
 				RelativePath=".\Tokenizer.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Engine.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Package.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PkgPath.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BnfReader.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -232,6 +248,22 @@
 			</File>
 			<File
 				RelativePath=".\Tokenizer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\BnfReader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Engine.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Package.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PkgPath.h"
 				>
 			</File>
 		</Filter>

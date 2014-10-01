@@ -3,6 +3,9 @@
 #include "ConUtils.h"
 #include <iostream>
 
+using std::wostream;
+using std::endl;
+
 #ifdef _DEBUG
 
 // print line to debug output, usage:

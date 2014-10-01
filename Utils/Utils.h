@@ -84,6 +84,14 @@ inline void clear(T &vec) {
 	}
 }
 
+// Clear the contents of a map<?, ?*>.
+template <class T>
+inline void clearMap(T &map) {
+	for (T::iterator i = map.begin(), end = map.end(); i != end; ++i)
+		delete i->second;
+	map.clear();
+}
+
 // Release a pointer to an interface.
 template <class T>
 inline void release(T *&ptr) {
@@ -126,6 +134,25 @@ inline float deg(float inDeg) { return inDeg * pi / 180.0f; }
 
 // radians to degrees
 inline float toDeg(float inRad) { return inRad * 180.0f / pi; }
+
+/**
+ * Convenient vector comparisions.
+ */
+template <class T>
+bool operator ==(const vector<T> &a, const vector<T> &b) {
+	if (a.size() != b.size())
+		return false;
+	for (nat i = 0; i < a.size(); i++)
+		if (a[i] != b[i])
+			return false;
+	return true;
+}
+
+template <class T>
+bool operator !=(const vector<T> &a, const vector<T> &b) {
+	return !(a == b);
+}
+
 
 #include "Object.h"
 #include "Debug.h"

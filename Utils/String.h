@@ -67,6 +67,12 @@ public:
 	String unescape() const;
 	String firstParam() const;
 	String restParams() const;
+
+	// Split string.
+	vector<String> split(const String &delim) const;
+
+	// Redefine npos, since sizeof(nat) may not be equal to sizeof(size_t)
+	static const nat npos = -1;
 };
 
 inline String operator +(const String &a, const wchar_t *b) {
@@ -77,6 +83,7 @@ inline String operator +(const wchar_t *a, const String &b) {
 	return String(a, b.c_str());
 }
 
+vector<String> split(const String &str, const String &delimiter);
 String join(const vector<String> &data, const String &between);
 
 // To string for various datatypes.
@@ -114,4 +121,10 @@ String join(const vector<T> &data, const String &between) {
 template <class T>
 String toS(const vector<T> &data) {
 	return join(data, L", ");
+}
+
+// Output for arrays.
+template <class T>
+std::wostream &operator <<(std::wostream &to, const vector<T> &data) {
+	return to << toS(data);
 }

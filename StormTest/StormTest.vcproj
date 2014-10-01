@@ -208,6 +208,10 @@
 				RelativePath=".\TokenizerTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\PkgTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

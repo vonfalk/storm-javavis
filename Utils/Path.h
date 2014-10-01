@@ -43,7 +43,7 @@ public:
 	bool isEmpty() const;
 
 	// Make this obj a directory.
-	void makeDir() { isDirectory = true; }
+	inline void makeDir() { isDirectory = true; }
 
 	// Get parent directory.
 	Path parent() const;
@@ -51,6 +51,9 @@ public:
 	// Get the title of this file or directory.
 	String title() const;
 	String titleNoExt() const;
+
+	// Has file extension? (ext shall not contain .)
+	bool hasExt(const String &ext) const;
 
 	// Does the file exist?
 	bool exists() const;
@@ -61,6 +64,9 @@ public:
 	// Make this path relative to another path. Absolute-making is accomplished by
 	// using the + operator above.
 	Path makeRelative(const Path &to) const;
+
+	// Find the children of this path.
+	vector<Path> children() const;
 private:
 
 	// Internal representation is a list of strings, one for each part of the pathname.

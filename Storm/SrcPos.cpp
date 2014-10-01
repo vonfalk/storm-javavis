@@ -49,6 +49,9 @@ namespace storm {
 			throw;
 		}
 
+		if (reader)
+			delete reader;
+
 		return r;
 	}
 

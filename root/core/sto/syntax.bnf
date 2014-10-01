@@ -16,13 +16,13 @@ DEDENT => "\d";
 
 Name : {"[A-Za-z][^ ]."} name = createName(name);
 
-Package : Name src[] ('.' Name src[])* = createPkg(src);
+Package : Name src[], ('.', Name src[])* = createPkg(src);
 
-Type : Package pkg '.' Name name = createTypePkg(pkg, name);
+Type : Package pkg, '.', Name name = createTypePkg(pkg, name);
 Type : Name name = createType(name);
 
 // Basic syntax
 
-Expr : '{', (Expr expr[], )* '}' = createBlock(expr);
+Expr : '{', (Expr expr[], )*, '}' = createBlock(expr);
 Expr : Name n1, '=', Name n2, ';' = createAssignment(n1, n2);
 

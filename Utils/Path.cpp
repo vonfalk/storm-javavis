@@ -145,6 +145,11 @@ String Path::titleNoExt() const {
 	return t.substr(0, last);
 }
 
+bool Path::hasExt(const String &ext) const {
+	String t = title();
+	return t.endsWith(L"." + ext);
+}
+
 bool Path::isDir() const {
 	return isDirectory;
 }
@@ -194,4 +199,28 @@ bool Path::exists() const {
 
 void Path::deleteFile() const {
 	DeleteFile(toS().c_str());
+}
+
+vector<Path> Path::children() const {
+	vector<Path> result;
+
+	String searchStr = toS();
+	if (!isDir())
+		searchStr += L"\\";
+	searchStr += L"*";
+
+	WIN32_FIND_DATA findData;
+	HANDLE h = FindFirstFile(searchStr.c_str(), &findData);
+	if (h == INVALID_HANDLE_VALUE)
+		return result;
+
+	do {
+		if (wcscmp(findData.cFileName, L"..") != 0 && wcscmp(findData.cFileName, L".") != 0) {
+			result.push_back(*this + findData.cFileName);
+			if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+				result.back().makeDir();
+		}
+	} while (FindNextFile(h, &findData));
+
+	return result;
 }

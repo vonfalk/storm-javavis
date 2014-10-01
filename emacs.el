@@ -119,7 +119,8 @@
   (open-line 1)
   (let ((last (point)))
     (move-beginning-of-line 2)
-    (indent-for-tab-command)
+    (if (not (= (point) (line-end-position)))
+	(indent-for-tab-command))
     (goto-char last)))
 
 (defun in-project (filename)
