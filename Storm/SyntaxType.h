@@ -14,6 +14,12 @@ namespace storm {
 
 		~SyntaxType();
 
+		// Set how to output this type (assumes unescaped string, ie containing \n and so on).
+		void setOutput(const String &str);
+
+		// Add a rule. Takes ownership of the pointer.
+		void add(SyntaxRule *rule);
+
 	protected:
 		virtual void output(std::wostream &to) const;
 
@@ -23,6 +29,9 @@ namespace storm {
 
 		// List of all rules associated to this type.
 		vector<SyntaxRule*> rules;
+
+		// How to output matches. null=>default.
+		String *outputStr;
 	};
 
 }

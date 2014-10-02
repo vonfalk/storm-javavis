@@ -26,6 +26,9 @@ public:
 	explicit String(const char *str);
 	std::string toChar() const;
 
+	// Contains anything?
+	inline bool any() const { return size() > 0; }
+
 	// Operators on the string.
 	inline String operator +(const String &b) const { return String(this->c_str(), b.c_str()); }
 
@@ -64,7 +67,7 @@ public:
 	nat toIntHex() const;
 
 	// Treat the string as a command line.
-	String unescape() const;
+	String unescape(bool keepUnknown = false) const;
 	String firstParam() const;
 	String restParams() const;
 

@@ -266,6 +266,10 @@
 				RelativePath=".\PkgPath.h"
 				>
 			</File>
+			<File
+				RelativePath=".\Exception.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

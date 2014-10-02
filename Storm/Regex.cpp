@@ -31,6 +31,32 @@ namespace storm {
 		return inverted;
 	}
 
+	void escape(std::wostream &to, wchar ch) {
+		switch (ch) {
+		case '\n':
+			to << "\\n";
+			break;
+		case '\t':
+			to << "\\t";
+			break;
+		case '\r':
+			to << "\\r";
+			break;
+		case '.':
+		case '[':
+		case ']':
+		case '*':
+		case '?':
+		case '+':
+		case '^':
+			to << "\\";
+			// fall thru
+		default:
+			to << ch;
+			break;
+		}
+	}
+
 	void Regex::Set::output(std::wostream &to) const {
 		if (chars.size() == 0) {
 			if (inverted)
@@ -41,15 +67,16 @@ namespace storm {
 		}
 
 		if (!inverted && chars.size() == 1) {
-			to << chars[0];
+			escape(to, chars[0]);
 			return;
 		}
 
 		to << '[';
 		if (inverted)
 			to << '^';
-		for (nat i = 0; i < chars.size(); i++)
-			to << chars[i];
+		for (nat i = 0; i < chars.size(); i++) {
+			escape(to, chars[i]);
+		}
 		to << ']';
 	}
 
@@ -124,17 +151,30 @@ namespace storm {
 			pos++;
 		}
 
+		nat dashCount = 0;
 		for (; pos < pattern.size(); pos++) {
 			switch (pattern[pos]) {
 			case '\\':
 				if (++pos < pattern.size())
 					s.chars.push_back(pattern[pos]);
 				break;
+			case '-':
+				dashCount = 2;
+				break;
 			case ']':
 				pos++;
 				goto done;
 			default:
 				s.chars.push_back(pattern[pos]);
+			}
+
+			if (dashCount > 0) {
+				if (--dashCount == 0 && s.chars.size() >= 2) {
+					wchar a = s.chars.back(); s.chars.pop_back();
+					wchar b = s.chars.back(); s.chars.pop_back();
+					for (wchar c = min(a, b); c <= max(a, b); c++)
+						s.chars.push_back(c);
+				}
 			}
 		}
 

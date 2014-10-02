@@ -17,6 +17,9 @@
 (setq whitespace-style '(face trailing lines-tail))
 (setq whitespace-line-column 120)
 
+(defun blank-line ()
+  (= (point) (line-end-position)))
+
 (defun c-lineup-arglist-tabs-only (ignored)
   "Line up argument lists by tabs, not spaces"
   (let* ((anchor (c-langelem-pos c-syntactic-element))
@@ -56,12 +59,17 @@
     (insert "\n */")
     (indent-for-tab-command)
     (insert "\n")
-    (indent-for-tab-command)
+    (if (not (blank-line))
+	(indent-for-tab-command))
     (goto-char to)))
 
 (defun storm-cpp-singleline ()
   (interactive "*")
-  (insert "// "))
+  (if (blank-line)
+      (insert "// ")
+    (progn
+      (my-open-line)
+      (insert "// "))))
 
 (defun storm-return () 
   "Advanced `newline' command for Javadoc multiline comments.   
@@ -119,7 +127,7 @@
   (open-line 1)
   (let ((last (point)))
     (move-beginning-of-line 2)
-    (if (not (= (point) (line-end-position)))
+    (if (not (blank-line))
 	(indent-for-tab-command))
     (goto-char last)))
 

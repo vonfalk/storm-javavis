@@ -10,6 +10,7 @@ namespace storm {
 	class SyntaxToken : public Printable, NoCopy {
 	public:
 		// More public interface here...
+
 	};
 
 
@@ -18,7 +19,7 @@ namespace storm {
 	 */
 	class RegexToken : public SyntaxToken {
 	public:
-		RegexToken(const String &regex);
+		RegexToken(const String &regex, const String &to = L"");
 
 	protected:
 		virtual void output(std::wostream &to) const;
@@ -26,6 +27,10 @@ namespace storm {
 	private:
 		// 'compiled' regex to match.
 		Regex regex;
+
+		// Bind the matched part (or the syntax tree) to this literal. Nothing
+		// is done if 'bindTo' is empty.
+		String bindTo;
 	};
 
 	/**
@@ -42,7 +47,16 @@ namespace storm {
 		// Type to match.
 		String typeName;
 
-		// Bind to? (empty -> nothing).
+		// Bind the matched part (or the syntax tree) to this literal. Nothing
+		// is done if 'bindTo' is empty.
 		String bindTo;
+	};
+
+	/**
+	 * Represents matching the whitespace type.
+	 */
+	class WhitespaceToken : public SyntaxToken {
+	protected:
+		virtual void output(std::wostream &to) const;
 	};
 }

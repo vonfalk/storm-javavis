@@ -223,7 +223,7 @@ nat String::toIntHex() const {
 	}
 }
 
-String String::unescape() const {
+String String::unescape(bool keepUnknown) const {
 	std::wostringstream ret;
 
 	const String &str = *this;
@@ -250,6 +250,8 @@ String String::unescape() const {
 					i += 4;
 					break;
 				default:
+					if (keepUnknown)
+						ret << '\\';
 					ret << str[i];
 					break;
 			}

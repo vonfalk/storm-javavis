@@ -22,6 +22,12 @@ namespace storm {
 
 		// Empty token?
 		inline bool empty() const { return token.size() == 0; }
+
+		// Is this a string?
+		bool isStr() const;
+
+		// Extract the string from the token. Assumes isStr().
+		String strVal() const;
 	};
 
 
@@ -36,9 +42,12 @@ namespace storm {
 		// Note that 'src' is assumed to live at least as long as this object!
 		Tokenizer(const Path &path, const String &src, nat start);
 
-		// Get the next token in the stream. Returns an empty token if the end of file is
-		// reached.
+		// Get the next token in the stream. Throws an exception if the end of stream
+		// has been reached.
 		Token next();
+
+		// Peek.
+		Token peek();
 
 		// More tokens to get?
 		bool more() const;

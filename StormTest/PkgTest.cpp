@@ -3,6 +3,8 @@
 
 #include "Storm/PkgPath.h"
 #include "Storm/Engine.h"
+#include "Storm/Exception.h"
+
 using namespace storm;
 
 BEGIN_TEST(PkgTest) {
@@ -23,6 +25,12 @@ BEGIN_TEST(PkgTest) {
 	CHECK(rootPkg != null);
 	Package *coreSto = e.package(PkgPath(L"core.sto"));
 	CHECK(coreSto != null);
-	coreSto->syntax();
+
+	TODO("Move to separate test!");
+	try {
+		coreSto->syntax();
+	} catch (const Exception &e) {
+		PLN(e.what());
+	}
 
 } END_TEST

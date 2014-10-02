@@ -1,12 +1,32 @@
 #include "stdafx.h"
 #include "Tokenizer.h"
+#include "Exception.h"
 
 namespace storm {
 
-	static const wchar *operators = L"()[]{}+-?*=><,.";
+	bool Token::isStr() const {
+		return token.size() >= 2
+			&& token[0] == '"'
+			&& token[token.size()-1] == '"';
+	}
+
+	String Token::strVal() const {
+		assert(isStr());
+		return token.substr(1, token.size() - 2);
+	}
+
+	static const wchar *operators = L"+?*=><.";
+	static const wchar *specials = L"(){},-";
 
 	static bool isOperator(wchar c) {
 		for (const wchar *p = operators; *p; p++)
+			if (c == *p)
+				return true;
+		return false;
+	}
+
+	static bool isSpecial(wchar c) {
+		for (const wchar *p = specials; *p; p++)
 			if (c == *p)
 				return true;
 		return false;
@@ -29,9 +49,16 @@ namespace storm {
 	}
 
 	Token Tokenizer::next() {
-		Token t = nextToken;
+		Token t = peek();
 		nextToken = findNext();
 		return t;
+	}
+
+	Token Tokenizer::peek() {
+		if (!more())
+			throw SyntaxError(SrcPos(srcFile, pos), L"Unexpected end of file");
+
+		return nextToken;
 	}
 
 	bool Tokenizer::more() const {
@@ -76,6 +103,8 @@ namespace storm {
 			pos++;
 			if (isWhitespace(ch)) {
 				start = pos;
+			} else if (isSpecial(ch)) {
+				state = sDone;
 			} else if (isOperator(ch)) {
 				state = sOperator;
 			} else if (ch == '"') {
@@ -85,7 +114,7 @@ namespace storm {
 			}
 			break;
 		case sText:
-			if (isOperator(ch) || isWhitespace(ch)) {
+			if (isOperator(ch) || isWhitespace(ch) || isSpecial(ch)) {
 				state = sDone;
 			} else {
 				pos++;

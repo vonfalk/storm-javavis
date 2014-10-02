@@ -27,6 +27,7 @@ BEGIN_TEST(RegexTest) {
 	/**
 	 * Escape chars.
 	 */
+	CHECK_EQ(matchRegex(L"a\\.b", L"a.b"), 3);
 	CHECK_EQ(matchRegex(L"\\[", L"["), 1);
 	CHECK_EQ(matchRegex(L"[\\^]", L"^"), 1);
 	CHECK_EQ(matchRegex(L"[\\^]", L"a"), 0);
@@ -83,5 +84,12 @@ BEGIN_TEST(RegexTest) {
 	CHECK_EQ(matchRegex(L"abc", L"aabcc", 1), 4);
 	CHECK_EQ(matchRegex(L"[abc]*", L"dabcd", 1), 4);
 	CHECK_EQ(matchRegex(L"a", L"zzz", 1), 1);
+
+	/**
+	 * Character ranges.
+	 */
+	CHECK_EQ(matchRegex(L"[1-9]*", L"12345"), 5);
+	CHECK_EQ(matchRegex(L"[1-35-8]*", L"12356"), 5);
+	CHECK_EQ(matchRegex(L"[1-35-8]*", L"1234"), 3);
 
 } END_TEST

@@ -16,12 +16,12 @@ BEGIN_TEST(TokenizerTest) {
 	}
 
 	{
-		String s(L"Hello \"string\\\"\"?(op");
+		String s(L"Hello \"string\\\"\"?*op");
 		Tokenizer t(Path(), s, 0);
 
 		CHECK_EQ(t.next().token, L"Hello");
 		CHECK_EQ(t.next().token, L"\"string\\\"\"");
-		CHECK_EQ(t.next().token, L"?(");
+		CHECK_EQ(t.next().token, L"?*");
 		CHECK_EQ(t.next().token, L"op");
 		CHECK(!t.more());
 	}
@@ -32,6 +32,29 @@ BEGIN_TEST(TokenizerTest) {
 
 		CHECK_EQ(t.next().token, L"He");
 		CHECK_EQ(t.next().token, L"comment");
+		CHECK(!t.more());
+	}
+
+	{
+		// Special chars.
+		String s(L"(,)");
+		Tokenizer t(Path(), s, 0);
+
+		CHECK_EQ(t.next().token, L"(");
+		CHECK_EQ(t.next().token, L",");
+		CHECK_EQ(t.next().token, L")");
+		CHECK(!t.more());
+	}
+
+
+	{
+		// Special chars.
+		String s(L"a,f");
+		Tokenizer t(Path(), s, 0);
+
+		CHECK_EQ(t.next().token, L"a");
+		CHECK_EQ(t.next().token, L",");
+		CHECK_EQ(t.next().token, L"f");
 		CHECK(!t.more());
 	}
 

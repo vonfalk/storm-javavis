@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "BnfReader.h"
+#include "Exception.h"
 
 #include "Utils/FileStream.h"
 #include "Utils/TextFile.h"
@@ -7,7 +8,9 @@
 
 namespace storm {
 
-	void parseBnf(hash_map<String, SyntaxType*> &types, Tokenizer &tok);
+	typedef hash_map<String, SyntaxType*> TypeMap;
+
+	void parseBnf(TypeMap &types, Tokenizer &tok);
 
 
 	/**
@@ -27,9 +30,160 @@ namespace storm {
 		parseBnf(types, tok);
 	}
 
-	void parseBnf(hash_map<String, SyntaxType*> &types, Tokenizer &tok) {
-		while (tok.more())
-			PLN(tok.next().token);
+	SyntaxType &getType(TypeMap &map, const String &name) {
+		TypeMap::iterator i = map.find(name);
+		if (i != map.end())
+			return *i->second;
+
+		SyntaxType *t = new SyntaxType(name);
+		map.insert(make_pair(name, t));
+		return *t;
+	}
+
+	/**
+	 * Parsing the bnf.
+	 */
+
+	void parseOutputDirective(SyntaxType &to, Tokenizer &tok) {
+		Token outputStr = tok.next();
+		Token end = tok.next();
+
+		if (!outputStr.isStr())
+			throw SyntaxError(outputStr.pos, L"Expected string");
+
+		if (end.token != L";")
+			throw SyntaxError(end.pos, L"Expected ;");
+
+		to.setOutput(outputStr.strVal().unescape(true));
+	}
+
+	bool isEndOfToken(const Token &t) {
+		return (t.token == L",")
+			|| (t.token == L"-")
+			|| (t.token == L"=")
+			|| (t.token == L")*")
+			|| (t.token == L")?")
+			|| (t.token == L")+")
+			|| (t.token == L"(");
+	}
+
+	SyntaxToken *parseToken(Tokenizer &tok) {
+		if (isEndOfToken(tok.peek()))
+			return null;
+
+		Token t = tok.next();
+
+		if (isEndOfToken(tok.peek())) {
+			if (t.isStr())
+				return new RegexToken(t.strVal().unescape(true));
+			else
+				return new TypeToken(t.token);
+		} else {
+			Token name = tok.next();
+			if (name.isStr())
+				throw SyntaxError(name.pos, L"Expected name or separator, found string.");
+
+			if (t.isStr())
+				return new RegexToken(t.strVal().unescape(true), name.token);
+			else
+				return new TypeToken(t.token, name.token);
+		}
+	}
+
+	void parseTokens(SyntaxRule &to, Tokenizer &tok) {
+		bool end = false;
+		while (!end) {
+			SyntaxToken *st = parseToken(tok);
+			if (st)
+				to.add(st);
+
+			Token sep = tok.next();
+			if (sep.token == L"=") {
+				end = true;
+			} else if (sep.token == L",") {
+				to.add(new WhitespaceToken());
+			} else if (sep.token == L"-") {
+			} else if (sep.token == L"(") {
+				if (to.hasRepeat())
+					throw SyntaxError(sep.pos, L"Only one repeat per rule is allowed.");
+				to.startRepeat();
+			} else if (sep.token == L")") {
+				Token r = tok.next();
+				if (r.token == L"*") {
+					to.endRepeat(SyntaxRule::rZeroPlus);
+				} else if (r.token == L"+") {
+					to.endRepeat(SyntaxRule::rOnePlus);
+				} else if (r.token == L"?") {
+					to.endRepeat(SyntaxRule::rZeroOne);
+				} else {
+					throw SyntaxError(r.pos, L"Unknown repetition: " + r.token);
+				}
+			} else {
+				throw SyntaxError(sep.pos, L"Unknown separator: " + sep.token);
+			}
+		}
+	}
+
+	void parseCall(SyntaxRule &to, Tokenizer &tok) {
+		Token name = tok.next();
+		Token paren = tok.next();
+
+		if (paren.token != L"(")
+			throw SyntaxError(paren.pos, L"Expected (");
+
+		vector<String> params;
+		bool end = false;
+		while (!end) {
+			Token param = tok.next();
+			if (param.token == L")")
+				break;
+
+			params.push_back(param.token);
+
+			Token sep = tok.next();
+			if (sep.token == L")") {
+				end = true;
+			} else if (sep.token == L",") {
+			} else {
+				throw SyntaxError(sep.pos, L"Unexpected " + sep.token);
+			}
+		}
+
+		Token endSt = tok.next();
+		if (endSt.token != L";")
+			throw SyntaxError(endSt.pos, L"Expected ;");
+
+		to.setMatchFn(name.token, params);
+	}
+
+	void parseRule(SyntaxType &to, Tokenizer &tok) {
+		SyntaxRule *rule = new SyntaxRule();
+
+		try {
+			parseTokens(*rule, tok);
+			parseCall(*rule, tok);
+
+			to.add(rule);
+		} catch (...) {
+			delete rule;
+			throw;
+		}
+	}
+
+	void parseBnf(TypeMap &types, Tokenizer &tok) {
+		while (tok.more()) {
+			// What we have here is either a rule or a output directive:
+			Token typeName = tok.next();
+			Token delim = tok.next();
+
+			if (delim.token == L"=>") {
+				parseOutputDirective(getType(types, typeName.token), tok);
+			} else if (delim.token == L":") {
+				parseRule(getType(types, typeName.token), tok);
+			} else {
+				throw SyntaxError(delim.pos, L"Unknown rule or directive");
+			}
+		}
 	}
 
 }
