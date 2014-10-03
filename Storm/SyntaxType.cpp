@@ -3,7 +3,7 @@
 
 namespace storm {
 
-	SyntaxType::SyntaxType(const String &name) : name(name), outputStr(null) {}
+	SyntaxType::SyntaxType(const String &name) : tName(name), outputStr(null) {}
 
 	SyntaxType::~SyntaxType() {
 		clear(rules);
@@ -19,14 +19,15 @@ namespace storm {
 
 	void SyntaxType::add(SyntaxRule *rule) {
 		rules.push_back(rule);
+		rule->owner = this;
 	}
 
 	void SyntaxType::output(std::wostream &to) const {
 		for (nat i = 0; i < rules.size(); i++) {
-			to << name << " : " << *rules[i] << endl;
+			to << *rules[i] << endl;
 		}
 		if (outputStr)
-			to << name << " => \"" << *outputStr << "\"" << endl;
+			to << tName << " => \"" << *outputStr << "\"" << endl;
 	}
 
 }

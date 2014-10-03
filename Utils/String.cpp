@@ -130,17 +130,6 @@ vector<String> split(const String &str, const String &delimiter) {
 	return r;
 }
 
-String join(const vector<String> &data, const String &between) {
-	if (data.size() == 0) return L"";
-
-	std::wostringstream oss;
-	oss << data[0];
-	for (nat i = 1; i < data.size(); i++) {
-		oss << between << data[i];
-	}
-	return oss.str();
-}
-
 String toHex(const void *x, bool prefix) {
 	if (sizeof(void *) == sizeof(nat)) {
 		return toHex(nat(x), prefix);
@@ -198,6 +187,7 @@ String toS(nat i) { return genericToS(i); }
 String toS(int64 i) { return genericToS(i); }
 String toS(nat64 i) { return genericToS(i); }
 String toS(double i) { return genericToS(i); }
+const String &toS(const String &s) { return s; }
 
 double String::toDouble() const {
 	wchar_t *end;

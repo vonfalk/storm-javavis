@@ -21,12 +21,13 @@ namespace storm {
 	public:
 		RegexToken(const String &regex, const String &to = L"");
 
+		// 'compiled' regex to match.
+		Regex regex;
+
 	protected:
 		virtual void output(std::wostream &to) const;
 
 	private:
-		// 'compiled' regex to match.
-		Regex regex;
 
 		// Bind the matched part (or the syntax tree) to this literal. Nothing
 		// is done if 'bindTo' is empty.
@@ -39,6 +40,9 @@ namespace storm {
 	class TypeToken : public SyntaxToken {
 	public:
 		TypeToken(const String &name, const String &to = L"");
+
+		// Get the type.
+		inline const String &type() const { return typeName; }
 
 	protected:
 		virtual void output(std::wostream &to) const;
@@ -55,7 +59,9 @@ namespace storm {
 	/**
 	 * Represents matching the whitespace type.
 	 */
-	class WhitespaceToken : public SyntaxToken {
+	class DelimToken : public TypeToken {
+	public:
+		DelimToken();
 	protected:
 		virtual void output(std::wostream &to) const;
 	};

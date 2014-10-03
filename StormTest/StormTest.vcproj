@@ -212,6 +212,10 @@
 				RelativePath=".\PkgTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ParserTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

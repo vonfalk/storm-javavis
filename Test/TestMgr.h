@@ -16,14 +16,20 @@ void Tests::addTest(Test *t) {
 
 TestResult Tests::run() {
 	Tests &t = instance();
-
 	TestResult r;
-	for (TestMap::const_iterator i = t.tests.begin(); i != t.tests.end(); i++) {
-		std::wcout << L"Running " << i->first << L"..." << std::endl;
-		r += i->second->run();
-	}
 
-	std::wcout << r << std::endl;
+	try {
+
+		for (TestMap::const_iterator i = t.tests.begin(); i != t.tests.end(); i++) {
+			std::wcout << L"Running " << i->first << L"..." << std::endl;
+			r += i->second->run();
+		}
+
+		std::wcout << r << std::endl;
+
+	} catch (const Exception &e) {
+		PLN(L"Error while testing: " << e);
+	}
 
 	return r;
 }

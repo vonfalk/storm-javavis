@@ -20,12 +20,18 @@ namespace storm {
 		// Add a rule. Takes ownership of the pointer.
 		void add(SyntaxRule *rule);
 
+		// Rule access.
+		inline nat size() const { return rules.size(); }
+		inline SyntaxRule* operator[] (nat i) { return rules[i]; }
+
+		// Get our name.
+		inline const String &name() const { return tName; }
 	protected:
 		virtual void output(std::wostream &to) const;
 
 	private:
 		// The name of this type.
-		String name;
+		String tName;
 
 		// List of all rules associated to this type.
 		vector<SyntaxRule*> rules;

@@ -29,6 +29,6 @@ namespace storm {
 	}
 
 	void PkgPath::output(std::wostream &to) const {
-		to << join(parts, L".");
+		join(to, parts, L".");
 	}
 }

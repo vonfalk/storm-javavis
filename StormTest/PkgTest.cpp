@@ -26,11 +26,4 @@ BEGIN_TEST(PkgTest) {
 	Package *coreSto = e.package(PkgPath(L"core.sto"));
 	CHECK(coreSto != null);
 
-	TODO("Move to separate test!");
-	try {
-		coreSto->syntax();
-	} catch (const Exception &e) {
-		PLN(e.what());
-	}
-
 } END_TEST

@@ -1,10 +1,12 @@
 #pragma once
 
-class Exception {
+class Exception : public Printable {
 public:
 	virtual ~Exception() {};
 
 	virtual String what() const = 0;
+protected:
+	virtual void output(wostream &to) const;
 };
 
 // Generic error supposed to be reported to the user, not falling under any other cathegory.

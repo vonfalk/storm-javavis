@@ -86,8 +86,9 @@ inline String operator +(const wchar_t *a, const String &b) {
 	return String(a, b.c_str());
 }
 
+// Split 'str' by 'delimiter'. 'str' may start and end with 'delimiter',
+// in that case those parts are discarded.
 vector<String> split(const String &str, const String &delimiter);
-String join(const vector<String> &data, const String &between);
 
 // To string for various datatypes.
 String toHex(int i, bool prefix = false);
@@ -100,6 +101,7 @@ String toS(nat i);
 String toS(int64 i);
 String toS(nat64 i);
 String toS(double i);
+const String &toS(const String &s);
 
 // To string based on the output operator.
 template <class T>
@@ -109,25 +111,37 @@ String toS(const T &v) {
 	return to.str();
 }
 
-// A join for any type we can do toS on.
-template <class T>
-String join(const vector<T> &data, const String &between) {
-	vector<String> tmp;
-	tmp.reserve(data.size());
-	for (nat i = 0; i < data.size(); i++) {
-		tmp.push_back(toS(data[i]));
-	}
-	return join(tmp, between);
-}
-
 // To string for arrays.
 template <class T>
 String toS(const vector<T> &data) {
 	return join(data, L", ");
 }
 
+// Join a vector or any other sequence type.
+template <class T>
+void join(std::wostream &to, const T &data, const String &between) {
+	T::const_iterator i = data.begin();
+	T::const_iterator end = data.end();
+	if (i == end)
+		return;
+
+	to << toS(*i);
+	for (++i; i != end; ++i) {
+		to << between << toS(*i);
+	}
+}
+
+template <class T>
+String join(const T &data, const String &between) {
+	std::wostringstream oss;
+	join(oss, data, between);
+	return oss.str();
+}
+
+
 // Output for arrays.
 template <class T>
 std::wostream &operator <<(std::wostream &to, const vector<T> &data) {
-	return to << toS(data);
+	join(to, data, L", ");
+	return to;
 }

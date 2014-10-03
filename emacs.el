@@ -269,8 +269,7 @@
   (let ((fn (read-file-name "New name:")))
     (rename-file-project buffer-file-name fn)
     (rename-file buffer-file-name fn)
-    (setq buffer-file-name fn)
-    (rename-buffer (filename fn) t)))
+    (set-visited-file-name fn t t)))
 
 (defun delete-proj-file ()
   (interactive)

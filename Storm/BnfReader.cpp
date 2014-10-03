@@ -101,7 +101,7 @@ namespace storm {
 			if (sep.token == L"=") {
 				end = true;
 			} else if (sep.token == L",") {
-				to.add(new WhitespaceToken());
+				to.add(new DelimToken());
 			} else if (sep.token == L"-") {
 			} else if (sep.token == L"(") {
 				if (to.hasRepeat())

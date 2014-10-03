@@ -35,7 +35,10 @@ namespace storm {
 	/**
 	 * Whitespace token.
 	 */
-	void WhitespaceToken::output(std::wostream &to) const {
+
+	DelimToken::DelimToken() : TypeToken(L"DELIMITER") {}
+
+	void DelimToken::output(std::wostream &to) const {
 		to << ',';
 	}
 }
