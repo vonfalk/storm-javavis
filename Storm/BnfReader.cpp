@@ -61,9 +61,7 @@ namespace storm {
 		return (t.token == L",")
 			|| (t.token == L"-")
 			|| (t.token == L"=")
-			|| (t.token == L")*")
-			|| (t.token == L")?")
-			|| (t.token == L")+")
+			|| (t.token == L")")
 			|| (t.token == L"(");
 	}
 

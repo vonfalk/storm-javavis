@@ -1,6 +1,6 @@
 // Really simple syntax, mainly for testing the parser.
 
-DELIMITER : " " = delim();
+DELIMITER : " *" = delim();
 DELIMITER => " ";
 
 // Root rule.
@@ -13,6 +13,13 @@ Expr : Expr, "-", Expr = sub();
 Expr : "a" = var();
 Expr : "b" = var();
 Expr : "1" = nr();
+Expr : "2" = nr();
+
+// Root rule with repetitions.
+Rep1Root : "{", (Expr - ";",)+ - "}" = foo();
+Rep2Root : "{", (Expr - ";",)* - "}" = foo();
+Rep3Root : "{", (Expr - ";",)? - "}" = foo();
+
 
 
 

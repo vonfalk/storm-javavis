@@ -75,13 +75,22 @@ namespace storm {
 		 */
 		class State : public Printable {
 		public:
+			// Position in a rule.
 			RuleIter pos;
+
+			// In which step was this rule instantiated?
 			nat from;
+
+			// Lookahead, do we need this?
 			String lookahead;
 
+			// Create empty state.
 			State() : from(0) {}
+
+			// Create a state.
 			State(const RuleIter &ri, nat from, const String &l) : pos(ri), from(from), lookahead(l) {}
 
+			// Equality.
 			inline bool operator ==(const State &o) const {
 				return pos == o.pos
 					&& from == o.from
@@ -148,13 +157,13 @@ namespace storm {
 		bool process(nat step);
 
 		// Run the predictor on one element in 'set'.
-		void predictor(StateSet &set, nat pos, State &state);
+		void predictor(StateSet &set, nat pos, State state);
 
 		// Run the scanner on one element in 'set'.
-		void scanner(StateSet &set, nat pos, State &state);
+		void scanner(StateSet &set, nat pos, State state);
 
 		// Run the completer on one element in 'set'.
-		void completer(StateSet &set, nat pos, State &state);
+		void completer(StateSet &set, nat pos, State state);
 	};
 
 }

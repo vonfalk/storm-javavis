@@ -112,6 +112,10 @@ namespace storm {
 
 	RuleIter::RuleIter(SyntaxRule *rule, nat token, nat rep) : ruleP(rule), tokenId(token), repCount(rep) {}
 
+	bool RuleIter::valid() const {
+		return ruleP != null;
+	}
+
 	bool RuleIter::end() const {
 		return (ruleP == null)
 			|| (tokenId >= ruleP->tokens.size());

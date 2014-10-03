@@ -26,4 +26,11 @@ BEGIN_TEST(ParserTest) {
 	CHECK_EQ(parser.parse(L"Root", L"a + b-"), 5);
 	CHECK_EQ(parser.parse(L"Root", L"a + "), 1);
 
+	CHECK_EQ(parser.parse(L"Rep1Root", L"{ a; b; 1 + 2;}"), 15);
+	CHECK_EQ(parser.parse(L"Rep2Root", L"{ a; b; 1 + 2;}"), 15);
+	CHECK_EQ(parser.parse(L"Rep2Root", L"{}"), 2);
+	CHECK_EQ(parser.parse(L"Rep3Root", L"{ a; }"), 6);
+	CHECK_EQ(parser.parse(L"Rep3Root", L"{}"), 2);
+	CHECK_EQ(parser.parse(L"Rep3Root", L"{ a; b; }"), 0);
+
 } END_TEST

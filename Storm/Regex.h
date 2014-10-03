@@ -5,9 +5,12 @@ namespace storm {
 	/**
 	 * Regex matching. Matches 'str' from 'start', returns index of the first
 	 * character that does not match 'pattern', or the length of the string.
+	 * Returns NO_MATCH if the pattern does not match.
 	 */
 	nat matchRegex(const String &pattern, const String &str, nat start = 0);
 
+	// Returned when there is no match at all.
+	extern const nat NO_MATCH;
 
 	/**
 	 * Regex matcher class, stores 'compiled' patterns.
@@ -18,7 +21,8 @@ namespace storm {
 		Regex(const String &pattern);
 
 		// Match the string 'str' starting from 'start'. Returning the last character
-		// matched by the pattern, or the length of the string.
+		// matched by the pattern, or the length of the string. Returns NO_MATCH if the
+		// pattern does not match.
 		nat match(const String &str, nat start = 0) const;
 
 	protected:

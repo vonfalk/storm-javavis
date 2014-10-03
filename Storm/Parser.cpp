@@ -45,11 +45,8 @@ namespace storm {
 	bool Parser::process(nat step) {
 		bool seenFinish = false;
 		StateSet &s = steps[step];
-		PLN("Processing " << step);
 
 		for (nat i = 0; i < s.size(); i++) {
-			PVAR(s[i]);
-
 			predictor(s, step, s[i]);
 			completer(s, step, s[i]);
 			scanner(s, step, s[i]);
@@ -61,7 +58,7 @@ namespace storm {
 		return seenFinish;
 	}
 
-	void Parser::predictor(StateSet &s, nat pos, State &state) {
+	void Parser::predictor(StateSet &s, nat pos, State state) {
 		SyntaxToken *token = state.pos.token();
 		TypeToken *type = dynamic_cast<TypeToken*>(token);
 		if (!type)
@@ -79,27 +76,29 @@ namespace storm {
 		}
 	}
 
-	void Parser::scanner(StateSet &s, nat pos, State &state) {
+	void Parser::scanner(StateSet &s, nat pos, State state) {
 		SyntaxToken *token = state.pos.token();
 		RegexToken *t = dynamic_cast<RegexToken*>(token);
 		if (!t)
 			return;
 
 		nat matched = t->regex.match(src, pos);
-		if (matched == pos)
+		if (matched == NO_MATCH)
 			return;
 
 		// Should not happen, but best to be safe!
 		if (matched >= steps.size())
 			return;
 
-		// TODO: Consider nextB as well!
 		State ns(state);
-		ns.pos = ns.pos.nextA();
+		ns.pos = state.pos.nextA();
+		steps[matched].insert(ns);
+
+		ns.pos = state.pos.nextB();
 		steps[matched].insert(ns);
 	}
 
-	void Parser::completer(StateSet &s, nat pos, State &state) {
+	void Parser::completer(StateSet &s, nat pos, State state) {
 		if (!state.pos.end())
 			return;
 
@@ -110,8 +109,10 @@ namespace storm {
 			if (!st.isRule(completed))
 				continue;
 
-			// TODO: Consider repetitions as well!
-			st.pos = st.pos.nextA();
+			st.pos = from[i].pos.nextA();
+			s.insert(st);
+
+			st.pos = from[i].pos.nextB();
 			s.insert(st);
 		}
 	}
@@ -134,7 +135,7 @@ namespace storm {
 		std::wostringstream oss;
 
 		if (pos == steps.size() - 1)
-			oss << L"Unexpected end of file.";
+			oss << L"Unexpected end of stream.";
 		else
 			oss << L"Unexpected " << src[pos];
 
@@ -146,8 +147,9 @@ namespace storm {
 
 		set<String> regexes = regexCompletions(steps[pos]);
 		if (!regexes.empty()) {
-			oss << L"\nExpected tokens: ";
-			join(oss, regexes, L", ");
+			oss << L"\nExpected tokens: \"";
+			join(oss, regexes, L"\", \"");
+			oss << L"\"";
 		}
 
 		return SyntaxError(SrcPos(path, pos), oss.str());
@@ -227,14 +229,18 @@ namespace storm {
 	}
 
 	bool Parser::State::finish(const SyntaxRule *rootRule) const {
-		return (&pos.rule() == rootRule)
-			&& (pos.end());
+		return &pos.rule() == rootRule
+			&& pos.end();
+		// We could check pos.from here as well, but we can never instantiate that rule again!
 	}
 
 	/**
 	 * State set.
 	 */
 	void Parser::StateSet::insert(const State &state) {
+		if (!state.pos.valid())
+			return;
+
 		for (nat i = 0; i < size(); i++)
 			if ((*this)[i] == state)
 				return;

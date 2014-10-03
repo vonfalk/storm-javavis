@@ -76,7 +76,10 @@ namespace storm {
 		// Reference a rule.
 		RuleIter(SyntaxRule &rule);
 
-		// Is this a valid iterator?
+		// Valid iterator?
+		bool valid() const;
+
+		// At end?
 		bool end() const;
 
 		// Create an iterator that is one step further in the iteration.

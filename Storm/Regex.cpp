@@ -3,6 +3,8 @@
 
 namespace storm {
 
+	const nat NO_MATCH = -1;
+
 	nat matchRegex(const String &pattern, const String &str, nat start) {
 		return Regex(pattern).match(str, start);
 	}
@@ -185,8 +187,16 @@ namespace storm {
 	}
 
 	nat Regex::match(const String &str, nat start) const {
-		nat r = match(0, str, start, true);
-		return max(r, start);
+		return match(0, str, start, true);
+	}
+
+	// Helper to merge results.
+	static nat best(nat a, nat b) {
+		if (a == NO_MATCH)
+			return b;
+		if (b == NO_MATCH)
+			return a;
+		return max(a, b);
 	}
 
 	nat Regex::match(nat patternPos, const String &str, nat pos, bool firstTry) const {
@@ -200,37 +210,40 @@ namespace storm {
 		switch (r) {
 		case rOnce:
 			if (pos >= str.size())
-				return 0;
+				return NO_MATCH;
 
 			if (!c.contains(str[pos]))
-				return 0;
+				return NO_MATCH;
+
 			return match(patternPos + 1, str, pos + 1, true);
 		case rZeroPlus:
 			if (pos >= str.size() || !c.contains(str[pos])) {
 				return match(patternPos + 1, str, pos, true);
 			} else {
 				res = match(patternPos, str, pos + 1, false);
-				return max(match(patternPos + 1, str, pos + 1, true), res);
+				return best(match(patternPos + 1, str, pos + 1, true), res);
 			}
 		case rOnePlus:
 			if (pos >= str.size() || !c.contains(str[pos])) {
 				if (firstTry)
-					return 0;
+					return NO_MATCH;
 				else
 					return match(patternPos + 1, str, pos, true);
 			} else {
 				res = match(patternPos, str, pos + 1, false);
-				return max(match(patternPos + 1, str, pos + 1, true), res);
+				return best(match(patternPos + 1, str, pos + 1, true), res);
 			}
 		case rZeroOne:
 			if (pos >= str.size() || !c.contains(str[pos])) {
 				return match(patternPos + 1, str, pos, true);
 			} else {
 				res = match(patternPos, str, pos + 1, false);
-				return max(match(patternPos + 1, str, pos + 1, true), res);
+				return best(match(patternPos + 1, str, pos + 1, true), res);
 			}
 		}
 
-		return 0;
+		// You forgot something!
+		assert(false);
+		return NO_MATCH;
 	}
 }
