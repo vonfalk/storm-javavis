@@ -29,8 +29,14 @@ namespace storm {
 	 */
 	class SrcPos : public Printable {
 	public:
+		// Unknown position.
+		explicit SrcPos();
+
 		// Given the offset
 		SrcPos(const Path &file, nat offset);
+
+		// Unknown offset.
+		static const nat noOffset = -1;
 
 		// The file.
 		Path file;
@@ -40,6 +46,9 @@ namespace storm {
 
 		// Compute the line and character offsets by opening the file and count the lines.
 		LineCol lineCol() const;
+
+		// Unknown position?
+		inline bool unknown() const { return offset == noOffset; }
 
 		// Compare.
 		inline bool operator !=(const SrcPos &o) const { return !(*this == o); }

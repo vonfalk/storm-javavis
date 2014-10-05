@@ -155,7 +155,7 @@ namespace storm {
 	}
 
 	void parseRule(SyntaxType &to, Tokenizer &tok) {
-		SyntaxRule *rule = new SyntaxRule();
+		SyntaxRule *rule = new SyntaxRule(tok.position());
 
 		try {
 			parseTokens(*rule, tok);

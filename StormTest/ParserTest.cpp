@@ -7,6 +7,17 @@
 
 using namespace storm;
 
+nat parse(SyntaxSet &set, const String &root, const String &str) {
+	Parser p(set, str);
+	nat r = p.parse(root);
+	SyntaxNode *t = p.tree();
+	if (t) {
+		PLN(*t);
+		delete t;
+	}
+	return r;
+}
+
 BEGIN_TEST(ParserTest) {
 
 	Path root = Path::executable() + Path(L"../root/");
@@ -20,17 +31,18 @@ BEGIN_TEST(ParserTest) {
 	Package *simple = engine.package(PkgPath(L"core.simple"));
 	simple->syntax();
 
-	SyntaxSet parser;
-	parser.add(*simple);
-	CHECK_EQ(parser.parse(L"Root", L"a + b"), 5);
-	CHECK_EQ(parser.parse(L"Root", L"a + b-"), 5);
-	CHECK_EQ(parser.parse(L"Root", L"a + "), 1);
+	SyntaxSet set;
+	set.add(*simple);
 
-	CHECK_EQ(parser.parse(L"Rep1Root", L"{ a; b; 1 + 2;}"), 15);
-	CHECK_EQ(parser.parse(L"Rep2Root", L"{ a; b; 1 + 2;}"), 15);
-	CHECK_EQ(parser.parse(L"Rep2Root", L"{}"), 2);
-	CHECK_EQ(parser.parse(L"Rep3Root", L"{ a; }"), 6);
-	CHECK_EQ(parser.parse(L"Rep3Root", L"{}"), 2);
-	CHECK_EQ(parser.parse(L"Rep3Root", L"{ a; b; }"), 0);
+	CHECK_EQ(parse(set, L"Root", L"a + b"), 5);
+	CHECK_EQ(parse(set, L"Root", L"a + b-"), 5);
+	CHECK_EQ(parse(set, L"Root", L"a + "), 1);
+
+	CHECK_EQ(parse(set, L"Rep1Root", L"{ a; b; 1 + 2;}"), 15);
+	CHECK_EQ(parse(set, L"Rep2Root", L"{ a; b; 1 + 2;}"), 15);
+	CHECK_EQ(parse(set, L"Rep2Root", L"{}"), 2);
+	CHECK_EQ(parse(set, L"Rep3Root", L"{ a; }"), 6);
+	CHECK_EQ(parse(set, L"Rep3Root", L"{}"), 2);
+	CHECK_EQ(parse(set, L"Rep3Root", L"{ a; b; }"), Parser::NO_MATCH);
 
 } END_TEST

@@ -2,6 +2,7 @@
 #include "Parser.h"
 
 #include "Package.h"
+#include <iomanip>
 
 namespace storm {
 
@@ -10,29 +11,20 @@ namespace storm {
 		syntax = pkg.syntax();
 	}
 
-	nat SyntaxSet::parse(const String &root, const String &src, nat start) {
-		Parser p(*this, src);
-		nat r = p.parse(root, start);
-		if (p.hasError()) {
-			PLN(p.error(Path()));
-		}
-		return r;
-	}
-
 	/**
 	 * Parser implementation.
 	 */
 
-	Parser::Parser(SyntaxSet &set, const String &src) : syntax(set), src(src) {}
+	Parser::Parser(SyntaxSet &set, const String &src) : syntax(set), src(src), rootRule(SrcPos()) {}
 
 	nat Parser::parse(const String &rootType, nat pos) {
 		rootRule.clear();
-		rootRule.add(new TypeToken(rootType));
+		rootRule.add(new TypeToken(rootType, L"root"));
 
 		steps = vector<StateSet>(src.size() + 1);
-		steps[pos].insert(State(rootRule, 0, L""));
+		steps[pos].insert(State(rootRule, 0));
 
-		nat len = 0;
+		nat len = NO_MATCH;
 
 		for (nat i = pos; i < steps.size(); i++) {
 			if (process(i))
@@ -47,9 +39,11 @@ namespace storm {
 		StateSet &s = steps[step];
 
 		for (nat i = 0; i < s.size(); i++) {
-			predictor(s, step, s[i]);
-			completer(s, step, s[i]);
-			scanner(s, step, s[i]);
+			StatePtr ptr(step, i);
+
+			predictor(s, s[i], ptr);
+			completer(s, s[i], ptr);
+			scanner(s, s[i], ptr);
 
 			if (s[i].finish(&rootRule))
 				seenFinish = true;
@@ -58,7 +52,7 @@ namespace storm {
 		return seenFinish;
 	}
 
-	void Parser::predictor(StateSet &s, nat pos, State state) {
+	void Parser::predictor(StateSet &s, State state, StatePtr ptr) {
 		SyntaxToken *token = state.pos.token();
 		TypeToken *type = dynamic_cast<TypeToken*>(token);
 		if (!type)
@@ -71,18 +65,18 @@ namespace storm {
 		for (nat i = 0; i < t.size(); i++) {
 			SyntaxRule *rule = t[i];
 			// Todo: We need to find possible lookahead strings!
-			State ns(RuleIter(*rule), pos, L"");
+			State ns(RuleIter(*rule), ptr.step);
 			s.insert(ns);
 		}
 	}
 
-	void Parser::scanner(StateSet &s, nat pos, State state) {
+	void Parser::scanner(StateSet &s, State state, StatePtr ptr) {
 		SyntaxToken *token = state.pos.token();
 		RegexToken *t = dynamic_cast<RegexToken*>(token);
 		if (!t)
 			return;
 
-		nat matched = t->regex.match(src, pos);
+		nat matched = t->regex.match(src, ptr.step);
 		if (matched == NO_MATCH)
 			return;
 
@@ -90,15 +84,14 @@ namespace storm {
 		if (matched >= steps.size())
 			return;
 
-		State ns(state);
-		ns.pos = state.pos.nextA();
+		State ns(state.pos.nextA(), state.from, ptr);
 		steps[matched].insert(ns);
 
 		ns.pos = state.pos.nextB();
 		steps[matched].insert(ns);
 	}
 
-	void Parser::completer(StateSet &s, nat pos, State state) {
+	void Parser::completer(StateSet &s, State state, StatePtr ptr) {
 		if (!state.pos.end())
 			return;
 
@@ -106,14 +99,15 @@ namespace storm {
 		StateSet &from = steps[state.from];
 		for (nat i = 0; i < from.size(); i++) {
 			State st = from[i];
+			StatePtr stPtr(state.from, i);
 			if (!st.isRule(completed))
 				continue;
 
-			st.pos = from[i].pos.nextA();
-			s.insert(st);
+			State ns(st.pos.nextA(), st.from, stPtr, ptr);
+			s.insert(ns);
 
-			st.pos = from[i].pos.nextB();
-			s.insert(st);
+			ns.pos = st.pos.nextB();
+			s.insert(ns);
 		}
 	}
 
@@ -163,6 +157,16 @@ namespace storm {
 		return 0;
 	}
 
+	Parser::StatePtr Parser::finish() const {
+		for (nat i = steps.size() - 1; i > 0; i--) {
+			for (nat j = 0; j < steps[i].size(); j++) {
+				if (steps[i][j].finish(&rootRule))
+					return StatePtr(i, j);
+			}
+		}
+		return StatePtr();
+	}
+
 	set<String> Parser::typeCompletions(const StateSet &states) const {
 		set<String> r;
 
@@ -185,17 +189,84 @@ namespace storm {
 		return r;
 	}
 
+	Parser::State &Parser::state(const StatePtr &ptr) {
+		assert(ptr.valid());
+		return steps[ptr.step][ptr.id];
+	}
+
+
+	void Parser::dbgPrintTree(StatePtr ptr, nat indent) {
+		State &s = state(ptr);
+
+		String in(indent, ' ');
+		PLN(in << ptr << ": " << s.pos);
+
+		if (s.prev.valid())
+			dbgPrintTree(s.prev, indent + 1);
+		if (s.completed.valid())
+			dbgPrintTree(s.completed, indent + 1);
+	}
+
+	SyntaxNode *Parser::tree() {
+		StatePtr f = finish();
+		if (!f.valid())
+			return null;
+
+		SyntaxNode *result = null;
+
+		SyntaxNode *root = tree(f);
+		SyntaxVariable *resultVar = root->find(L"root", SyntaxVariable::tNode);
+		if (resultVar) {
+			result = resultVar->node();
+			resultVar->orphan();
+		}
+		delete root;
+
+		return result;
+	}
+
+	SyntaxNode *Parser::tree(StatePtr pos) {
+		State *cState = &state(pos);
+		SyntaxNode *result = null;
+		SyntaxNode *tmp = null;
+
+		try {
+			result = new SyntaxNode(&cState->pos.rule());
+
+			for (; cState->prev.valid(); pos = cState->prev, cState = &state(pos)) {
+				State *pState = &state(cState->prev);
+
+				if (pState->bindToken()) {
+					const String &to = pState->bindTokenTo();
+
+					if (cState->completed.valid()) {
+						tmp = tree(cState->completed);
+						result->add(to, tmp);
+						tmp = null;
+					} else {
+						nat fromPos = cState->prev.step;
+						nat toPos = pos.step;
+						String matched = src.substr(fromPos, toPos - fromPos);
+						result->add(to, matched);
+					}
+				}
+			}
+		} catch (...) {
+			delete result;
+			delete tmp;
+			throw;
+		}
+
+		return result;
+	}
+
 
 	/**
 	 * State.
 	 */
 	void Parser::State::output(wostream &to) const {
-		to << "{State: " << pos << ", " << from << ", ";
-		if (lookahead.empty())
-			to << L"<?>";
-		else
-			to << lookahead;
-		to << "}";
+		to << "{State: " << pos << ", from: " << from;
+		to << ", prev: " << prev << ", completed: " << completed << "}";
 	}
 
 	bool Parser::State::isRule() const {
@@ -228,15 +299,24 @@ namespace storm {
 		return t->regex;
 	}
 
+	bool Parser::State::bindToken() const {
+		return pos.token()->bind();
+	}
+
+	const String &Parser::State::bindTokenTo() const {
+		return pos.token()->bindTo;
+	}
+
 	bool Parser::State::finish(const SyntaxRule *rootRule) const {
 		return &pos.rule() == rootRule
 			&& pos.end();
-		// We could check pos.from here as well, but we can never instantiate that rule again!
+		// We could check pos.from here as well, but we can never instantiate that rule more than once!
 	}
 
 	/**
 	 * State set.
 	 */
+
 	void Parser::StateSet::insert(const State &state) {
 		if (!state.pos.valid())
 			return;
@@ -245,5 +325,16 @@ namespace storm {
 			if ((*this)[i] == state)
 				return;
 		push_back(state);
+	}
+
+	/**
+	 * StatePtr.
+	 */
+
+	void Parser::StatePtr::output(wostream &to) const {
+		if (valid())
+			to << L"(" << step << L", " << id << L")";
+		else
+			to << L"(-)";
 	}
 }

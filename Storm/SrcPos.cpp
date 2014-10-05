@@ -16,14 +16,22 @@ namespace storm {
 	 * SrcPos.
 	 */
 
+	SrcPos::SrcPos() : file(Path()), offset(noOffset) {}
+
 	SrcPos::SrcPos(const Path &file, nat offset) : file(file), offset(offset) {}
 
 	void SrcPos::output(std::wostream &to) const {
-		to << file << "(" << offset << ")";
+		if (unknown())
+			to << "<unknown location>";
+		else
+			to << file << "(" << offset << ")";
 	}
 
 	LineCol SrcPos::lineCol() const {
 		LineCol r(0, 0);
+		if (unknown())
+			return r;
+
 		util::TextReader *reader = null;
 
 		try {

@@ -1,5 +1,6 @@
 #pragma once
 #include "SyntaxToken.h"
+#include "SrcPos.h"
 
 namespace storm {
 
@@ -10,7 +11,8 @@ namespace storm {
 		friend class RuleIter;
 		friend class SyntaxType;
 	public:
-		SyntaxRule();
+		// 'pos' is the start of this rule's definition.
+		SyntaxRule(const SrcPos &pos);
 		~SyntaxRule();
 
 		// Clear all tokens.
@@ -40,6 +42,9 @@ namespace storm {
 
 		// Set function to call on match.
 		void setMatchFn(const String &name, const vector<String> &params);
+
+		// This rule's position.
+		const SrcPos pos;
 
 	protected:
 		virtual void output(std::wostream &to) const;

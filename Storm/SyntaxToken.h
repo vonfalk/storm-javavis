@@ -9,8 +9,14 @@ namespace storm {
 	 */
 	class SyntaxToken : public Printable, NoCopy {
 	public:
-		// More public interface here...
+		// Bind the matched part (or the syntax tree) to this literal. Nothing
+		// is done if 'bindTo' is empty.
+		String bindTo;
 
+		// Bind to something?
+		inline bool bind() const { return bindTo != L""; }
+
+		// More public interface here...
 	};
 
 
@@ -26,12 +32,6 @@ namespace storm {
 
 	protected:
 		virtual void output(std::wostream &to) const;
-
-	private:
-
-		// Bind the matched part (or the syntax tree) to this literal. Nothing
-		// is done if 'bindTo' is empty.
-		String bindTo;
 	};
 
 	/**
@@ -50,10 +50,6 @@ namespace storm {
 	private:
 		// Type to match.
 		String typeName;
-
-		// Bind the matched part (or the syntax tree) to this literal. Nothing
-		// is done if 'bindTo' is empty.
-		String bindTo;
 	};
 
 	/**

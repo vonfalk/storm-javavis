@@ -14,7 +14,7 @@ namespace storm {
 		inline CodeError(const SrcPos &where) : where(where) {}
 
 		// Where is the error located?
-		const SrcPos where;
+		SrcPos where;
 	};
 
 
@@ -28,6 +28,7 @@ namespace storm {
 		inline virtual String what() const {
 			return where.toS() + L": Syntax error: " + msg;
 		}
+
 	private:
 		String msg;
 	};

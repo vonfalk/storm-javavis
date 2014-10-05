@@ -5,7 +5,7 @@
 
 namespace storm {
 
-	SyntaxRule::SyntaxRule() : owner(null), repStart(0), repEnd(0), repType(rNone) {}
+	SyntaxRule::SyntaxRule(const SrcPos &pos) : pos(pos), owner(null), repStart(0), repEnd(0), repType(rNone) {}
 
 	SyntaxRule::~SyntaxRule() {
 		::clear(tokens);

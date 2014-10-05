@@ -49,6 +49,9 @@ namespace storm {
 		// Peek.
 		Token peek();
 
+		// Current position.
+		inline SrcPos position() const { return SrcPos(srcFile, pos); }
+
 		// More tokens to get?
 		bool more() const;
 

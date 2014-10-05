@@ -4,4 +4,4 @@
 
 void waitForReturn();
 
-void initCrt();
+void initDebug();

@@ -216,6 +216,14 @@
 				RelativePath=".\Parser.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\SyntaxNode.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxVariable.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -276,6 +284,14 @@
 			</File>
 			<File
 				RelativePath=".\Parser.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxNode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxVariable.h"
 				>
 			</File>
 		</Filter>

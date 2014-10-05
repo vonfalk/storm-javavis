@@ -103,7 +103,22 @@ String toS(nat64 i);
 String toS(double i);
 const String &toS(const String &s);
 
+template <class A, class B>
+inline std::wostream &operator <<(std::wostream &to, const std::pair<A, B*> &pair) {
+	return to << pair.first << L" -> " << *pair.second;
+}
+template <class A, class B>
+inline std::wostream &operator <<(std::wostream &to, const std::pair<A, B> &pair) {
+	return to << pair.first << L" -> " << pair.second;
+}
+
 // To string based on the output operator.
+template <class T>
+String toS(T *v) {
+	std::wostringstream to;
+	to << *v;
+	return to.str();
+}
 template <class T>
 String toS(const T &v) {
 	std::wostringstream to;
@@ -131,6 +146,19 @@ void join(std::wostream &to, const T &data, const String &between) {
 	}
 }
 
+template <class T, class ToS>
+void join(std::wostream &to, const T &data, const String &between, ToS toS) {
+	T::const_iterator i = data.begin();
+	T::const_iterator end = data.end();
+	if (i == end)
+		return;
+
+	to << toS(*i);
+	for (++i; i != end; ++i) {
+		to << between << toS(*i);
+	}
+}
+
 template <class T>
 String join(const T &data, const String &between) {
 	std::wostringstream oss;
@@ -138,6 +166,12 @@ String join(const T &data, const String &between) {
 	return oss.str();
 }
 
+template <class T, class ToS>
+String join(const T &data, const String &between, ToS toS) {
+	std::wostringstream oss;
+	join(oss, data, between, toS);
+	return oss.str();
+}
 
 // Output for arrays.
 template <class T>

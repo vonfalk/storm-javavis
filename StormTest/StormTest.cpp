@@ -5,7 +5,7 @@
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	initCrt();
+	initDebug();
 
 	Tests::run();
 

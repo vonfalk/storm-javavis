@@ -2,6 +2,7 @@
 
 #include "SyntaxType.h"
 #include "SyntaxRule.h"
+#include "SyntaxNode.h"
 #include "Exception.h"
 
 namespace storm {
@@ -27,10 +28,6 @@ namespace storm {
 		// Add syntax from a package.
 		void add(Package &pkg);
 
-		// Parse a string from 'start', trying to match the 'root' rule.
-		// Returns the index of the first non-matched character. Throws an exception on failure.
-		nat parse(const String &root, const String &str, nat start = 0);
-
 	private:
 		// All syntax definitions.
 		hash_map<String, SyntaxType*> syntax;
@@ -44,6 +41,8 @@ namespace storm {
 	 */
 	class Parser : NoCopy {
 	public:
+		static const nat NO_MATCH = -1;
+
 		// Create the parser, reads syntax from 'set'. 'set' is expected
 		// to outlive this object.
 		Parser(SyntaxSet &set, const String &src);
@@ -63,6 +62,10 @@ namespace storm {
 		// by 'parse'.
 		SyntaxError error(const Path &file) const;
 
+		// Generate a syntax tree. Leaves ownership of the tree to the caller.
+		// If the last parse was not successfull at all (ie, returned NO_MATCH), returns null.
+		SyntaxNode *tree();
+
 	private:
 		// Syntax source.
 		SyntaxSet &syntax;
@@ -71,7 +74,40 @@ namespace storm {
 		const String &src;
 
 		/**
+		 * Reference to a state.
+		 */
+		class StatePtr : public Printable {
+		public:
+			// Invalid ptr.
+			inline StatePtr() : step(-1), id(-1) {}
+			// Reference something.
+			inline StatePtr(nat step, nat id) : step(step), id(id) {}
+
+			// Step.
+			nat step;
+
+			// Id in that step.
+			nat id;
+
+			// Valid reference?
+			inline bool valid() const {
+				nat z = -1;
+				return step != z && id != z;
+			}
+		protected:
+			virtual void output(wostream &to) const;
+		};
+
+
+		/**
 		 * A single state in the parsing.
+		 * With the 'prev' and 'completed' pointers, these state nodes will
+		 * form a linked path from the finished state to the beginning of the
+		 * parse. Each state representing the first installment of a node has
+		 * both of these set to null.
+		 * Note that 'prev' and 'completed' are not included in the == comparision.
+		 * This is so that grammars that have multiple valid parses shall still
+		 * give a single result.
 		 */
 		class State : public Printable {
 		public:
@@ -82,19 +118,27 @@ namespace storm {
 			nat from;
 
 			// Lookahead, do we need this?
-			String lookahead;
+			// String lookahead;
+
+			// Last instance of this state. Ie. with pos == pos - 1.
+			StatePtr prev;
+
+			// What state was completed to make this advance (if any)?
+			StatePtr completed;
 
 			// Create empty state.
 			State() : from(0) {}
 
 			// Create a state.
-			State(const RuleIter &ri, nat from, const String &l) : pos(ri), from(from), lookahead(l) {}
+			State(const RuleIter &ri, nat from,
+				const StatePtr &prev = StatePtr(),
+				const StatePtr &completed = StatePtr())
+				: pos(ri), from(from), prev(prev), completed(completed) {}
 
 			// Equality.
 			inline bool operator ==(const State &o) const {
 				return pos == o.pos
-					&& from == o.from
-					&& lookahead == o.lookahead;
+					&& from == o.from;
 			}
 			inline bool operator !=(const State &o) const {
 				return !(*this == o);
@@ -114,6 +158,12 @@ namespace storm {
 
 			// What is the content of the next regex, assumes isRegex();
 			const Regex &tokenRegex() const;
+
+			// Bind the next token to something?
+			bool bindToken() const;
+
+			// Bind the next token to this variable.
+			const String &bindTokenTo() const;
 
 			// Does this state represent a state where we are done?
 			bool finish(const SyntaxRule *rootRule) const;
@@ -140,6 +190,9 @@ namespace storm {
 		// The root rule.
 		SyntaxRule rootRule;
 
+		// Find the finish state.
+		StatePtr finish() const;
+
 		// Find the last step wich is not empty.
 		nat lastStep() const;
 
@@ -149,6 +202,10 @@ namespace storm {
 		// Find possible regex completions for a step.
 		set<String> regexCompletions(const StateSet &states) const;
 
+		// Get a state from a StatePtr. Note that this reference may be invalidated
+		// as soon as something is added to a step!
+		State &state(const StatePtr &ptr);
+
 		/**
 		 * Parsing.
 		 */
@@ -157,13 +214,23 @@ namespace storm {
 		bool process(nat step);
 
 		// Run the predictor on one element in 'set'.
-		void predictor(StateSet &set, nat pos, State state);
+		void predictor(StateSet &set, State state, StatePtr ptr);
 
 		// Run the scanner on one element in 'set'.
-		void scanner(StateSet &set, nat pos, State state);
+		void scanner(StateSet &set, State state, StatePtr ptr);
 
 		// Run the completer on one element in 'set'.
-		void completer(StateSet &set, nat pos, State state);
+		void completer(StateSet &set, State state, StatePtr ptr);
+
+		/**
+		 * Result extraction.
+		 */
+
+		// Extract the syntax tree, starting at 'ptr'.
+		SyntaxNode *tree(StatePtr ptr);
+
+		// Print the parse tree (very crude).
+		void dbgPrintTree(StatePtr ptr, nat indent = 0);
 	};
 
 }
