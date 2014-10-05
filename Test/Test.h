@@ -142,8 +142,9 @@ private: \
 	DEFINE_TEST(name); \
 	name name::instance; \
 	TestResult name::run() const {\
-		TestResult __result__;
+		TestResult __result__; do
 
 #define END_TEST \
-		return __result__; \
+	while (false); \
+	return __result__; \
 	}
