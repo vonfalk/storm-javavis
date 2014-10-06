@@ -8,7 +8,7 @@ namespace storm {
 	/**
 	 * Defines the contents of a package. A package may contain
 	 * one or more of the following items:
-	 * - Classes (ie types)
+	 * - Types (ie classes ...)
 	 * - Functions
 	 * - Syntax rules
 	 * - Packages
