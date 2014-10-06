@@ -12,7 +12,7 @@ nat parse(SyntaxSet &set, const String &root, const String &str) {
 	nat r = p.parse(root);
 	SyntaxNode *t = p.tree();
 	if (t) {
-		PLN(*t);
+		// PLN(*t);
 		delete t;
 	}
 	return r;

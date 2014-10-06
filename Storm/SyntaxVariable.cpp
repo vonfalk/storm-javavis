@@ -109,7 +109,12 @@ namespace storm {
 			break;
 		case tNodeArr:
 			to << "[";
-			join(to, *nArr, L", ");
+			if (nArr->size() > 0) {
+				to << endl;
+				Indent i(to);
+				join(to, *nArr, L",\n");
+				to << endl;
+			}
 			to << "]";
 			break;
 		}

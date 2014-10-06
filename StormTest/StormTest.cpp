@@ -2,7 +2,6 @@
 
 #include "Test/TestMgr.h"
 
-
 int _tmain(int argc, _TCHAR* argv[])
 {
 	initDebug();

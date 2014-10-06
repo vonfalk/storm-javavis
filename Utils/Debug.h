@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ConUtils.h"
+#include "Indent.h"
 #include <iostream>
 
 using std::wostream;

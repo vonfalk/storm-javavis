@@ -10,9 +10,13 @@ namespace storm {
 	}
 
 	void SyntaxNode::output(wostream &to) const {
-		to << srcRule->type() << "(";
-		// to << *srcRule << " (";
-		join(to, vars, L", ");
+		to << *srcRule << " (";
+		if (vars.size() > 0) {
+			to << endl;
+			Indent i(to);
+			join(to, vars, L",\n");
+			to << endl;
+		}
 		to << ")";
 	}
 

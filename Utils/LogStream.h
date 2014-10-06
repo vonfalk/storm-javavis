@@ -44,7 +44,8 @@ namespace util {
 		Elem buffer[bufferSize];
 
 		void setBuffer() {
-			setp(&buffer[0], &buffer[bufferSize - 3]); // room for an extra character as well as a null character
+			// room for an extra character as well as a null character
+			setp(&buffer[0], &buffer[bufferSize - 3]);
 		}
 
 	};

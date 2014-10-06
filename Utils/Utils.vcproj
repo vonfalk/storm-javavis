@@ -353,6 +353,10 @@
 				RelativePath=".\StreamCollection.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Indent.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -653,6 +657,10 @@
 			</File>
 			<File
 				RelativePath=".\UniqueId.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Indent.h"
 				>
 			</File>
 		</Filter>
