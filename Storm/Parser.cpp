@@ -251,6 +251,8 @@ namespace storm {
 					}
 				}
 			}
+
+			result->reverseArrays();
 		} catch (...) {
 			delete result;
 			delete tmp;

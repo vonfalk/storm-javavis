@@ -26,6 +26,9 @@ namespace storm {
 		// Find the entry in the map for the variable.
 		SyntaxVariable *find(const String &name, SyntaxVariable::Type type);
 
+		// Reverse all arrays in this node (not recursive).
+		void reverseArrays();
+
 	protected:
 		virtual void output(wostream &to) const;
 

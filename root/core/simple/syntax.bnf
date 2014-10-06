@@ -10,8 +10,8 @@ Root : Expr, Root = root();
 // Expression
 Expr : Expr e[], "\+" op, Expr e[] = operator(e, "+");
 Expr : Expr e[], "-" op, Expr e[] = operator(e, "-");
-Expr : "[a-z]" v = var();
-Expr : "[0-9]" v = nr();
+Expr : "[a-z]+" v = var();
+Expr : "[0-9]+" v = nr();
 
 // Root rule with repetitions.
 Rep1Root : "{", (Expr e[] - ";",)+ - "}" = foo();

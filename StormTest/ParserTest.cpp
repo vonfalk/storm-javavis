@@ -45,4 +45,6 @@ BEGIN_TEST(ParserTest) {
 	CHECK_EQ(parse(set, L"Rep3Root", L"{}"), 2);
 	CHECK_EQ(parse(set, L"Rep3Root", L"{ a; b; }"), Parser::NO_MATCH);
 
+	CHECK_EQ(parse(set, L"Root", L"banana + rock + 33"), 18);
+
 } END_TEST

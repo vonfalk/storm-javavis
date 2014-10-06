@@ -44,6 +44,9 @@ namespace storm {
 		// Orphan any owned data.
 		void orphan();
 
+		// Reverse the array (if we're an array).
+		void reverseArray();
+
 	protected:
 		virtual void output(wostream &to) const;
 

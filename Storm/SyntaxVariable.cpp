@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SyntaxVariable.h"
 #include "SyntaxNode.h"
+#include <algorithm>
 
 namespace storm {
 
@@ -127,6 +128,17 @@ namespace storm {
 			break;
 		case tNodeArr:
 			nArr->clear();
+			break;
+		}
+	}
+
+	void SyntaxVariable::reverseArray() {
+		switch (vType) {
+		case tStringArr:
+			std::reverse(strArr->begin(), strArr->end());
+			break;
+		case tNodeArr:
+			std::reverse(nArr->begin(), nArr->end());
 			break;
 		}
 	}
