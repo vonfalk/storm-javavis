@@ -20,12 +20,20 @@ bool positive(float f) {
 
 #ifdef WIN32
 
-void atomicIncrement(volatile nat &v) {
-	InterlockedIncrement((volatile LONG *)&v);
+// Check alignment of value.
+static inline bool aligned(volatile void *v) {
+	UINT_PTR i = (UINT_PTR)v;
+	return (i & 0x3) == 0;
 }
 
-void atomicDecrement(volatile nat &v) {
-	InterlockedDecrement((volatile LONG *)&v);
+nat atomicIncrement(volatile nat &v) {
+	assert(aligned(&v));
+	return (nat)InterlockedIncrement((volatile LONG *)&v);
+}
+
+nat atomicDecrement(volatile nat &v) {
+	assert(aligned(&v));
+	return (nat)InterlockedDecrement((volatile LONG *)&v);
 }
 
 #else

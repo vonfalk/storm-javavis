@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Utils/Path.h"
-#include "PkgPath.h"
+#include "Name.h"
 #include "Package.h"
 
 namespace storm {
@@ -23,7 +23,7 @@ namespace storm {
 		~Engine();
 
 		// Find the given package. Returns null on failure.
-		Package *package(const PkgPath &path);
+		Package *package(const Name &path);
 
 	private:
 		// Path to root directory.

@@ -2,20 +2,22 @@
 #include "Package.h"
 
 #include "BnfReader.h"
+#include "Type.h"
 
 namespace storm {
 
-	Package::Package() : pkgPath(null) {
-		init();
+	Package::Package(Scope *root) : pkgPath(null) {
+		init(root);
 	}
 
-	Package::Package(const Path &path) {
+	Package::Package(const Path &path, Scope *root) {
 		pkgPath = new Path(path);
 		pkgPath->makeDir();
-		init();
+		init(root);
 	}
 
-	void Package::init() {
+	void Package::init(Scope *root) {
+		nameFallback = root;
 		syntaxLoaded = false;
 		codeLoaded = false;
 	}
@@ -23,6 +25,7 @@ namespace storm {
 	Package::~Package() {
 		clearMap(packages);
 		clearMap(syntaxTypes);
+		clearMap(types);
 		delete pkgPath;
 	}
 
@@ -39,23 +42,39 @@ namespace storm {
 		}
 	}
 
-	Package *Package::find(const PkgPath &path, nat start) {
-		if (start == path.size())
+	Named *Package::findHere(const Name &name) {
+		return findName(name, 0);
+	}
+
+	Named *Package::findName(const Name &name, nat start) {
+		if (start == name.size())
 			return this;
-		if (start > path.size())
+		if (start > name.size())
 			return null;
 
 		Package *found = null;
-		PkgMap::iterator i = packages.find(path[start]);
+		PkgMap::iterator i = packages.find(name[start]);
 		if (i == packages.end())
-			found = loadPackage(path[start]);
+			found = loadPackage(name[start]);
 		else
 			found = i->second;
 
 		if (found == null)
+			return findTypeOrFn(name, start);
+
+		return found->findName(name, start + 1);
+	}
+
+	Named *Package::findTypeOrFn(const Name &name, nat start) {
+		// Nested types are not yet supported.
+		if (start != name.size() - 1)
 			return null;
 
-		return found->find(path, start + 1);
+		TypeMap::iterator i = types.find(name[start]);
+		if (i == types.end())
+			return null;
+		else
+			return i->second;
 	}
 
 	Package *Package::loadPackage(const String &name) {
@@ -69,7 +88,7 @@ namespace storm {
 		if (!p.exists())
 			return null;
 
-		Package *pkg = new Package(*pkgPath + Path(name));
+		Package *pkg = new Package(*pkgPath + Path(name), nameFallback);
 		packages[name] = pkg;
 		return pkg;
 	}

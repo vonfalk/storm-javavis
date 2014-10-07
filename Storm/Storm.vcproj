@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../"
+				AdditionalIncludeDirectories="../;./"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -106,7 +106,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../"
+				AdditionalIncludeDirectories="../;./"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -153,6 +153,50 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\BnfReader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Engine.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Function.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Int.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Name.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Object.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Package.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Parser.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Regex.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Scope.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SrcPos.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -173,47 +217,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Regex.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxRule.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxType.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxToken.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SrcPos.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Tokenizer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Engine.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Package.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PkgPath.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\BnfReader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Parser.cpp"
+				RelativePath=".\Lib\StdLib.cpp"
 				>
 			</File>
 			<File
@@ -221,7 +225,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SyntaxRule.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxToken.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxType.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\SyntaxVariable.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Tokenizer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Type.cpp"
 				>
 			</File>
 		</Filter>
@@ -231,38 +255,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Regex.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxRule.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxType.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxToken.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SrcPos.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Tokenizer.h"
-				>
-			</File>
-			<File
 				RelativePath=".\BnfReader.h"
 				>
 			</File>
@@ -271,15 +263,31 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Package.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PkgPath.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Exception.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Function.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Int.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Name.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Named.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Object.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Package.h"
 				>
 			</File>
 			<File
@@ -287,11 +295,55 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Regex.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Scope.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SrcPos.h"
+				>
+			</File>
+			<File
+				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\StdLib.h"
+				>
+			</File>
+			<File
 				RelativePath=".\SyntaxNode.h"
 				>
 			</File>
 			<File
+				RelativePath=".\SyntaxRule.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxToken.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxType.h"
+				>
+			</File>
+			<File
 				RelativePath=".\SyntaxVariable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Tokenizer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Type.h"
 				>
 			</File>
 		</Filter>

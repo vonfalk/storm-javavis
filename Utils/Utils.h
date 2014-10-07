@@ -123,8 +123,8 @@ inline float eq(float a, float b, float tolerance = defTolerance) {
 }
 
 // Atomic increase and decrease of variables
-void atomicIncrement(volatile nat &v);
-void atomicDecrement(volatile nat &v);
+nat atomicIncrement(volatile nat &v);
+nat atomicDecrement(volatile nat &v);
 
 // angle functions
 
@@ -153,6 +153,19 @@ bool operator !=(const vector<T> &a, const vector<T> &b) {
 	return !(a == b);
 }
 
+template <class T>
+struct as {
+	template <class U>
+	as(U *v) {
+		this->v = dynamic_cast<T*>(v);
+	}
+
+	operator T*() const {
+		return v;
+	}
+
+	T *v;
+};
 
 #include "Object.h"
 #include "Debug.h"

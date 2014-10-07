@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 
-#include "Storm/PkgPath.h"
+#include "Storm/Name.h"
 #include "Storm/Engine.h"
 #include "Storm/Exception.h"
 
@@ -13,17 +13,17 @@ BEGIN_TEST(PkgTest) {
 	CHECK_EQ(split(L"a, b, c", L", "), vector<String>(tc1, tc1 + 3));
 	CHECK_EQ(split(L", a, b, c, ", L", "), vector<String>(tc1, tc1 + 3));
 
-	CHECK_EQ(toS(PkgPath(L"a.b.c")), L"a.b.c");
-	CHECK_EQ(PkgPath(L"a.b") + PkgPath(L"c"), PkgPath(L"a.b.c"));
-	CHECK_EQ(PkgPath(L"a.b.c.").parent(), PkgPath(L"a.b"));
+	CHECK_EQ(toS(Name(L"a.b.c")), L"a.b.c");
+	CHECK_EQ(Name(L"a.b") + Name(L"c"), Name(L"a.b.c"));
+	CHECK_EQ(Name(L"a.b.c.").parent(), Name(L"a.b"));
 
 	// Do some real things!
 	Path root = Path::executable() + Path(L"../root/");
 	Engine e(root);
 
-	Package *rootPkg = e.package(PkgPath());
+	Package *rootPkg = e.package(Name());
 	CHECK(rootPkg != null);
-	Package *coreSto = e.package(PkgPath(L"core.sto"));
+	Package *coreSto = e.package(Name(L"core.sto"));
 	CHECK(coreSto != null);
 
 } END_TEST

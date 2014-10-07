@@ -1,9 +1,13 @@
 #pragma once
-#include "PkgPath.h"
+#include "Name.h"
 #include "SyntaxType.h"
+#include "Named.h"
+#include "Scope.h"
 #include "Utils/Path.h"
 
 namespace storm {
+
+	class Type;
 
 	/**
 	 * Defines the contents of a package. A package may contain
@@ -17,19 +21,16 @@ namespace storm {
 	 * Packages are lazily loaded, which means that the contents
 	 * is not loaded until it is needed.
 	 */
-	class Package : public Printable, NoCopy {
+	class Package : public Named, public Scope {
 	public:
 		// Create a virtual package, ie a package not present
 		// on disk. Those packages must therefore be eagerly loaded.
-		Package();
+		Package(Scope *root);
 
 		// 'dir' is the directory this package is located in.
-		Package(const Path &pkgPath);
+		Package(const Path &pkgPath, Scope *root);
 
 		~Package();
-
-		// Find a sub-package. Returns 'null' on failure.
-		Package *find(const PkgPath &path, nat start = 0);
 
 		// Get a list of all syntax rules in this package.
 		// The rules are still owned by this class.
@@ -37,6 +38,8 @@ namespace storm {
 
 	protected:
 		virtual void output(std::wostream &to) const;
+		virtual Named *findHere(const Name &name);
+
 	private:
 		// Our path. Points to null if this is a virtual package.
 		Path *pkgPath;
@@ -48,6 +51,20 @@ namespace storm {
 		// Rules present in this package.
 		typedef hash_map<String, SyntaxType*> SyntaxMap;
 		SyntaxMap syntaxTypes;
+
+		// Types in this package.
+		typedef hash_map<String, Type*> TypeMap;
+		TypeMap types;
+
+		/**
+		 * Recursive member lookup.
+		 */
+
+		// Find a name in this package or a sub-package.
+		Named *findName(const Name &name, nat start);
+
+		// Find the name in this package. Examines the types and functions present here.
+		Named *findTypeOrFn(const Name &name, nat start);
 
 		/**
 		 * Lazy-loading status:
@@ -62,7 +79,7 @@ namespace storm {
 		/**
 		 * Init.
 		 */
-		void init();
+		void init(Scope *root);
 
 		/**
 		 * Loading of sub-packages.
