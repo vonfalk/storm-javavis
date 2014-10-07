@@ -1,0 +1,35 @@
+// This is the syntax for the basic storm language, used to build the
+// real storm language.
+
+DELIMITER => void : " *";
+DELIMITER => void : "//.*\n";
+
+// Name rule returns a String, created by taking the 'name' parameter.
+Name => String(name) : "[A-Za-z][^ ]*" name;
+
+// Package
+Package => Pkg(parts[]) : Name parts[], (".", Name parts[])*;
+Type => Type(pkg, name) : (Package pkg, ".", )? - Name name;
+
+// Operators.
+Operator => String(op) : "[\+-*/]" op;
+
+// Statement.
+Stmt(Block scope);
+Stmt => Declare(type, name) : Type type, Name name;
+Stmt => Assign(scope, name, expr) : Name name, "=", Stmt;
+Stmt => Operator(lhs, op, rhs) : Stmt lhs, Operator op, Stmt rhs;
+Stmt => Block(scope);
+
+Block(Block parent?);
+Block => Block(parent) : "{", (Stmt(me) -> statement, ";", )* "}";
+
+// Argument list (for functions)
+ArgList : ArgList(types[], names[]) : Type types[], Name names[], (",", Type types[], Name names[])*;
+
+// Function definition (not lazily loaded yet...)
+Function => Function(retType, name, args, cont) : Type retType, Name name, "(", ArgList args, ")", Block cont;
+
+// Root rule, used to parse an entire file.
+File => File : (Function -> function, )*;
+
