@@ -3,6 +3,8 @@
 
 namespace storm {
 
+	class Str;
+
 	/**
 	 * A list of all built-in functions.
 	 */
@@ -29,4 +31,7 @@ namespace storm {
 	 */
 	const BuiltInFunction *builtInFunctions();
 
+	// Testing function (to be removed...).
+	STORM_PKG(core);
+	Str *STORM_FN testFn(Str *s);
 }

@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="Storm"
-	ProjectGUID="{340BFE84-58B4-43CF-B711-5ED371ACD703}"
-	RootNamespace="storm"
+	Name="StormBuiltin"
+	ProjectGUID="{1521783C-F263-47D0-8A12-F9882B2ACBA0}"
+	RootNamespace="StormBuiltin"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -20,7 +20,7 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="1"
 			CharacterSet="1"
 			>
 			<Tool
@@ -41,8 +41,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../;./"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
+				AdditionalIncludeDirectories="../"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -60,11 +60,17 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
-				IgnoreAllDefaultLibraries="true"
+				Name="VCLinkerTool"
+				LinkIncremental="2"
+				GenerateDebugInformation="true"
+				SubSystem="1"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -76,6 +82,9 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -83,7 +92,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="4"
+			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -106,8 +115,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../;./"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				AdditionalIncludeDirectories="../"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -124,11 +133,19 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLibrarianTool"
-				IgnoreAllDefaultLibraries="true"
+				Name="VCLinkerTool"
+				LinkIncremental="1"
+				GenerateDebugInformation="true"
+				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -138,6 +155,9 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -152,50 +172,6 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
-			<File
-				RelativePath=".\BnfReader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Engine.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Function.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Int.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Name.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Object.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Package.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Parser.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Regex.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Scope.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SrcPos.cpp"
-				>
-			</File>
 			<File
 				RelativePath=".\stdafx.cpp"
 				>
@@ -217,43 +193,15 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Lib\StdLib.cpp"
+				RelativePath=".\StormBuiltin.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxNode.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxRule.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxToken.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxType.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxVariable.cpp"
+				RelativePath=".\Function.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Tokenizer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Type.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Str.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\BuiltIn.cpp"
 				>
 			</File>
 		</Filter>
@@ -263,83 +211,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\BnfReader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Engine.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Exception.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Function.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Int.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Name.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Named.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Object.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Package.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Parser.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Regex.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Scope.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SrcPos.h"
-				>
-			</File>
-			<File
 				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\StdLib.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxNode.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxRule.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxToken.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxType.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxVariable.h"
 				>
 			</File>
 			<File
@@ -347,23 +219,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Function.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Tokenizer.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Type.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Str.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\BuiltIn.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Storm.h"
+				RelativePath=".\Exception.h"
 				>
 			</File>
 		</Filter>
