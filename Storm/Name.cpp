@@ -6,7 +6,7 @@ namespace storm {
 	Name::Name() {}
 
 	Name::Name(const String &path) {
-		parts = path.toLower().split(L".");
+		parts = path.split(L".");
 	}
 
 	Name &Name::operator +=(const Name &o) {

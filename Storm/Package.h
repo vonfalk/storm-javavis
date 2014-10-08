@@ -8,6 +8,7 @@
 namespace storm {
 
 	class Type;
+	class Function;
 
 	/**
 	 * Defines the contents of a package. A package may contain
@@ -36,6 +37,18 @@ namespace storm {
 		// The rules are still owned by this class.
 		hash_map<String, SyntaxType*> syntax();
 
+		// Get a sub-package by name.
+		Package *childPackage(const String &name);
+
+		// Add a sub-package. Assumes that it does not already exists!
+		void add(Package *pkg, const String &name);
+
+		// Add a type to this package.
+		void add(Type *type);
+
+		// Add a function to this package.
+		void add(Function *function);
+
 	protected:
 		virtual void output(std::wostream &to) const;
 		virtual Named *findHere(const Name &name);
@@ -55,6 +68,10 @@ namespace storm {
 		// Types in this package.
 		typedef hash_map<String, Type*> TypeMap;
 		TypeMap types;
+
+		// Functions in this package. TODO: Manage overloaded functions as well!
+		typedef hash_map<String, Function*> FnMap;
+		FnMap functions;
 
 		/**
 		 * Recursive member lookup.

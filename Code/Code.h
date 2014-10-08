@@ -70,7 +70,7 @@ namespace code {
 	// Use the types from the windows api headers...
 	typedef UINT_PTR cpuNat;
 	typedef INT_PTR cpuInt;
-	
+
 	typedef char Char;
 	typedef unsigned char Byte;
 	typedef int Int;

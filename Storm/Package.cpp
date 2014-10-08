@@ -3,6 +3,7 @@
 
 #include "BnfReader.h"
 #include "Type.h"
+#include "Function.h"
 
 namespace storm {
 
@@ -26,6 +27,7 @@ namespace storm {
 		clearMap(packages);
 		clearMap(syntaxTypes);
 		clearMap(types);
+		clearMap(functions);
 		delete pkgPath;
 	}
 
@@ -34,11 +36,31 @@ namespace storm {
 			to << "Pkg in " << *pkgPath;
 		else
 			to << "Virtual Pkg";
-
 		to << endl;
+
 		to << "Loaded packages:" << endl;
-		for (PkgMap::const_iterator i = packages.begin(); i != packages.end(); ++i) {
-			to << "->" << i->first << endl;
+		{
+			Indent i(to);
+			for (PkgMap::const_iterator i = packages.begin(); i != packages.end(); ++i) {
+				// to << i->first << endl;
+				to << *i->second << endl;
+			}
+		}
+
+		to << "Types:" << endl;
+		{
+			Indent i(to);
+			for (TypeMap::const_iterator i = types.begin(); i != types.end(); ++i) {
+				to << i->first << endl;
+			}
+		}
+
+		to << "Functions:" << endl;
+		{
+			Indent i(to);
+			for (FnMap::const_iterator i = functions.begin(); i != functions.end(); ++i) {
+				to << *i->second << endl;
+			}
 		}
 	}
 
@@ -52,13 +74,7 @@ namespace storm {
 		if (start > name.size())
 			return null;
 
-		Package *found = null;
-		PkgMap::iterator i = packages.find(name[start]);
-		if (i == packages.end())
-			found = loadPackage(name[start]);
-		else
-			found = i->second;
-
+		Package *found = childPackage(name[start]);
 		if (found == null)
 			return findTypeOrFn(name, start);
 
@@ -98,6 +114,29 @@ namespace storm {
 			loadSyntax();
 
 		return syntaxTypes;
+	}
+
+	Package *Package::childPackage(const String &name) {
+		PkgMap::iterator i = packages.find(name);
+		if (i == packages.end())
+			return loadPackage(name);
+		else
+			return i->second;
+	}
+
+	void Package::add(Package *pkg, const String &name) {
+		assert(packages.count(name) == 0);
+		packages.insert(make_pair(name, pkg));
+	}
+
+	void Package::add(Type *type) {
+		assert(types.count(type->name) == 0);
+		types.insert(make_pair(type->name, type));
+	}
+
+	void Package::add(Function *fn) {
+		assert(functions.count(fn->name) == 0);
+		functions.insert(make_pair(fn->name, fn));
 	}
 
 	void Package::loadSyntax() {

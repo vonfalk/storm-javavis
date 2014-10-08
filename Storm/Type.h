@@ -8,13 +8,10 @@ namespace storm {
 	 */
 	enum TypeFlags {
 		// Regular type.
-		typeNone = 0x00,
+		typeClass = 0x00,
 
 		// Is it a value type (does not inherit from Object).
 		typeValue = 0x01,
-
-		// Is this a type without vtable?
-		typeRigid = 0x02,
 	};
 
 	inline TypeFlags operator &(TypeFlags a, TypeFlags b) { return TypeFlags(nat(a) & nat(b)); }
@@ -34,6 +31,9 @@ namespace storm {
 
 		// Type flags.
 		const TypeFlags flags;
+
+		// Get the size of this type.
+		virtual nat size() const;
 
 	protected:
 		virtual void output(wostream &to) const;

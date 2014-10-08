@@ -7,8 +7,13 @@ namespace storm {
 
 	Type::~Type() {}
 
+	nat Type::size() const {
+		TODO(L"Implement me!");
+		return 0;
+	}
+
 	void Type::output(wostream &to) const {
-		to << L"Type " << name;
+		to << name;
 	}
 
 }

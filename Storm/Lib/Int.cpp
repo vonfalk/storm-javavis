@@ -3,10 +3,17 @@
 
 namespace storm {
 
-	Type *integerType() {
-		Type *t = new Type(L"Int", typeValue);
+	class IntType : public Type {
+	public:
+		IntType() : Type(L"Int", typeValue) {}
 
-		return t;
+		virtual nat size() const {
+			return sizeof(code::Int);
+		}
+	};
+
+	Type *intType() {
+		return new IntType();
 	}
 
 }

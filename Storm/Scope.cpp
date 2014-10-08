@@ -7,7 +7,7 @@ namespace storm {
 
 	Named *Scope::find(const Name &name) {
 		Named *r = findHere(name);
-		if (r == null && nameFallback)
+		if (r == null && nameFallback && nameFallback != this)
 			return nameFallback->find(name);
 		else
 			return r;

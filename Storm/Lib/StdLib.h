@@ -1,6 +1,9 @@
 #pragma once
 #include "Engine.h"
 
+#include "Int.h"
+#include "Str.h"
+
 namespace storm {
 
 	/**

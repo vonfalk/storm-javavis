@@ -16,6 +16,8 @@ namespace storm {
 		// Initialize object to 0 references.
 		Object(Type *type);
 
+		virtual ~Object();
+
 		// The type of this object.
 		Type *const type;
 
@@ -31,11 +33,12 @@ namespace storm {
 		}
 
 	private:
-		// Current references.
+		// Current number of references.
 		nat refs;
 
-		// Purely reference counted object.
-		virtual ~Object();
+		// We shall use release() instead of delete.
+		void operator delete(void *ptr);
+		void operator delete[](void *ptr);
 	};
 
 }

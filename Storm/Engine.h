@@ -22,8 +22,9 @@ namespace storm {
 
 		~Engine();
 
-		// Find the given package. Returns null on failure.
-		Package *package(const Name &path);
+		// Find the given package. Returns null on failure. If 'create' is
+		// true, then all packages that does not yet exist are created.
+		Package *package(const Name &path, bool create = false);
 
 	private:
 		// Path to root directory.
@@ -31,6 +32,10 @@ namespace storm {
 
 		// Root package.
 		Package rootPkg;
+
+		// Create the package (recursive).
+		Package *createPackage(Package *pkg, const Name &path, nat at = 0);
+
 	};
 
 }
