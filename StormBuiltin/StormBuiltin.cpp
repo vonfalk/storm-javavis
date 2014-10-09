@@ -66,6 +66,7 @@ String lineEnding(const Path &file) {
 			result = L"\n";
 			break;
 		}
+		prev = c;
 	}
 
 	delete r;
