@@ -1,10 +1,11 @@
 #include "stdafx.h"
 #include "BuiltIn.h"
+#include "Str.h"
 #include <stdarg.h>
 
 // Below are auto-generated includes.
 // BEGIN INCLUDES
-#include "Str.h"
+#include "Lib/BuiltIn.h"
 // END INCLUDES
 
 namespace storm {
@@ -38,7 +39,7 @@ namespace storm {
 	const BuiltInFunction *builtInFunctions() {
 		static BuiltInFunction fns[] = {
 			// BEGIN LIST
-			{ Name(L"core"), Name(L"Str"), L"test", list(1, Name(L"Str")), &testFn },
+			{ Name(L"core"), Name(L"Str"), L"testFn", list(1, Name(L"Str")), &storm::testFn },
 			// END LIST
 			{ Name(), Name(), L"", list(0), null },
 		};

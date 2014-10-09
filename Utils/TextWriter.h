@@ -23,11 +23,12 @@ namespace util {
 	namespace textfile {
 		class Utf8Writer : public TextWriter {
 		public:
-			Utf8Writer(Stream *to);
+			Utf8Writer(Stream *to, bool bom);
 
-			virtual textfile::Format format() { return textfile::utf8; };
+			virtual textfile::Format format() { return bom ? textfile::utf8 : textfile::utf8noBom; };
 			virtual void put(wchar_t ch);
 		private:
+			bool bom;
 			wchar_t largeCp;
 
 			static inline bool isSurrogate(wchar_t ch) { return (ch & 0xFC00) == 0xD800; };

@@ -38,15 +38,16 @@ namespace util {
 	namespace textfile {
 		class Utf8Reader : public TextReader {
 		public:
-			Utf8Reader(Stream *stream);
+			Utf8Reader(Stream *stream, bool bom);
 			virtual ~Utf8Reader();
 
-			virtual textfile::Format format() { return textfile::utf8; };
+			virtual textfile::Format format() { return bom ? textfile::utf8 : textfile::utf8noBom; };
 
 			virtual void seek(nat position);
 
 			virtual wchar_t get();
 		private:
+			bool bom;
 			bool nextValid;
 			wchar_t nextCh;
 			byte read();

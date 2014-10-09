@@ -22,15 +22,17 @@ namespace util {
 
 	TextWriter *TextWriter::create(Stream *stream, textfile::Format fmt) {
 		switch (fmt) {
-			case textfile::utf8:
-				return new textfile::Utf8Writer(stream);
-			case textfile::utf16:
-				return new textfile::Utf16Writer(stream, false);
-			case textfile::utf16rev:
-				return new textfile::Utf16Writer(stream, true);
-			default:
-				assert(FALSE);
-				return null;
+		case textfile::utf8:
+			return new textfile::Utf8Writer(stream, true);
+		case textfile::utf8noBom:
+			return new textfile::Utf8Writer(stream, false);
+		case textfile::utf16:
+			return new textfile::Utf16Writer(stream, false);
+		case textfile::utf16rev:
+			return new textfile::Utf16Writer(stream, true);
+		default:
+			assert(FALSE);
+			return null;
 		}
 	}
 
@@ -39,8 +41,9 @@ namespace util {
 		// Utf8Writer
 		//////////////////////////////////////////////////////////////////////////
 
-		Utf8Writer::Utf8Writer(Stream *to) : TextWriter(to), largeCp(0) {
-			put(0xFEFF);
+		Utf8Writer::Utf8Writer(Stream *to, bool bom) : TextWriter(to), largeCp(0), bom(bom) {
+			if (bom)
+				put(0xFEFF);
 		}
 
 		void Utf8Writer::put(wchar_t ch) {

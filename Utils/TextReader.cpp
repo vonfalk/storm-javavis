@@ -22,14 +22,16 @@ namespace util {
 		} else if (bom == 0xFFFE) {
 			return new textfile::Utf16Reader(stream, true);
 		} else {
+			bool bom = false;
 			stream->seek(0);
 			byte b[3];
 			stream->read(3, b);
 			if (b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) {
+				bom = true;
 			} else {
 				stream->seek(0);
 			}
-			return new textfile::Utf8Reader(stream);
+			return new textfile::Utf8Reader(stream, bom);
 		}
 	}
 
@@ -58,7 +60,7 @@ namespace util {
 	// Utf8
 	//////////////////////////////////////////////////////////////////////////
 
-	textfile::Utf8Reader::Utf8Reader(Stream *stream) : TextReader(stream), nextValid(false) {}
+	textfile::Utf8Reader::Utf8Reader(Stream *stream, bool bom) : TextReader(stream), bom(bom), nextValid(false) {}
 
 	textfile::Utf8Reader::~Utf8Reader() {}
 

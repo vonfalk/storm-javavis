@@ -6,7 +6,7 @@ namespace stormbuiltin {
 
 	class Error : public Exception {
 	public:
-		Error(const String &msg, const Path &file = Path()) : msg(msg) {}
+		Error(const String &msg, const Path &file = Path()) : msg(msg), file(file) {}
 		virtual String what() const {
 			if (file.isEmpty())
 				return msg;

@@ -9,7 +9,7 @@ namespace util {
 	//////////////////////////////////////////////////////////////////////////
 
 	namespace textfile {
-		enum Format { utf8, utf16, utf16rev };
+		enum Format { utf8, utf8noBom, utf16, utf16rev };
 	}
 }
 
