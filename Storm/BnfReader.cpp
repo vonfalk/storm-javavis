@@ -8,7 +8,7 @@
 
 namespace storm {
 
-	typedef hash_map<String, SyntaxType*> TypeMap;
+	typedef hash_map<String, SyntaxRule*> TypeMap;
 
 	void parseBnf(TypeMap &types, Tokenizer &tok);
 
@@ -21,7 +21,7 @@ namespace storm {
 		return file.hasExt(L"bnf");
 	}
 
-	void parseBnf(hash_map<String, SyntaxType*> &types, const Path &file) {
+	void parseBnf(hash_map<String, SyntaxRule*> &types, const Path &file) {
 		util::TextReader *r = util::TextReader::create(new util::FileStream(file, util::Stream::mRead));
 		String content = r->getAll();
 		delete r;
@@ -30,12 +30,12 @@ namespace storm {
 		parseBnf(types, tok);
 	}
 
-	SyntaxType &getType(TypeMap &map, const String &name) {
+	SyntaxRule &getType(TypeMap &map, const String &name) {
 		TypeMap::iterator i = map.find(name);
 		if (i != map.end())
 			return *i->second;
 
-		SyntaxType *t = new SyntaxType(name);
+		SyntaxRule *t = new SyntaxRule(name);
 		map.insert(make_pair(name, t));
 		return *t;
 	}
@@ -44,7 +44,7 @@ namespace storm {
 	 * Parsing the bnf.
 	 */
 
-	void parseOutputDirective(SyntaxType &to, Tokenizer &tok) {
+	void parseOutputDirective(SyntaxRule &to, Tokenizer &tok) {
 		Token outputStr = tok.next();
 		Token end = tok.next();
 
@@ -88,7 +88,7 @@ namespace storm {
 		}
 	}
 
-	void parseTokens(SyntaxRule &to, Tokenizer &tok) {
+	void parseTokens(SyntaxOption &to, Tokenizer &tok) {
 		bool end = false;
 		while (!end) {
 			SyntaxToken *st = parseToken(tok);
@@ -108,11 +108,11 @@ namespace storm {
 			} else if (sep.token == L")") {
 				Token r = tok.next();
 				if (r.token == L"*") {
-					to.endRepeat(SyntaxRule::rZeroPlus);
+					to.endRepeat(SyntaxOption::rZeroPlus);
 				} else if (r.token == L"+") {
-					to.endRepeat(SyntaxRule::rOnePlus);
+					to.endRepeat(SyntaxOption::rOnePlus);
 				} else if (r.token == L"?") {
-					to.endRepeat(SyntaxRule::rZeroOne);
+					to.endRepeat(SyntaxOption::rZeroOne);
 				} else {
 					throw SyntaxError(r.pos, L"Unknown repetition: " + r.token);
 				}
@@ -122,7 +122,7 @@ namespace storm {
 		}
 	}
 
-	void parseCall(SyntaxRule &to, Tokenizer &tok) {
+	void parseCall(SyntaxOption &to, Tokenizer &tok) {
 		Token name = tok.next();
 		Token paren = tok.next();
 
@@ -154,8 +154,8 @@ namespace storm {
 		to.setMatchFn(name.token, params);
 	}
 
-	void parseRule(SyntaxType &to, Tokenizer &tok) {
-		SyntaxRule *rule = new SyntaxRule(tok.position());
+	void parseRule(SyntaxRule &to, Tokenizer &tok) {
+		SyntaxOption *rule = new SyntaxOption(tok.position());
 
 		try {
 			parseTokens(*rule, tok);

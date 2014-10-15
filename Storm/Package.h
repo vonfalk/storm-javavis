@@ -1,6 +1,6 @@
 #pragma once
 #include "Name.h"
-#include "SyntaxType.h"
+#include "SyntaxRule.h"
 #include "Named.h"
 #include "Scope.h"
 #include "Utils/Path.h"
@@ -33,9 +33,9 @@ namespace storm {
 
 		~Package();
 
-		// Get a list of all syntax rules in this package.
-		// The rules are still owned by this class.
-		hash_map<String, SyntaxType*> syntax();
+		// Get a list of all syntax options in this package.
+		// The options are still owned by this class.
+		hash_map<String, SyntaxRule*> syntax();
 
 		// Get a sub-package by name.
 		Package *childPackage(const String &name);
@@ -62,7 +62,7 @@ namespace storm {
 		PkgMap packages;
 
 		// Rules present in this package.
-		typedef hash_map<String, SyntaxType*> SyntaxMap;
+		typedef hash_map<String, SyntaxRule*> SyntaxMap;
 		SyntaxMap syntaxTypes;
 
 		// Types in this package.

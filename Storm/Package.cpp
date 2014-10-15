@@ -109,7 +109,7 @@ namespace storm {
 		return pkg;
 	}
 
-	hash_map<String, SyntaxType*> Package::syntax() {
+	hash_map<String, SyntaxRule*> Package::syntax() {
 		if (!syntaxLoaded)
 			loadSyntax();
 

@@ -15,14 +15,14 @@ namespace storm {
 	 * Parser implementation.
 	 */
 
-	Parser::Parser(SyntaxSet &set, const String &src) : syntax(set), src(src), rootRule(SrcPos()) {}
+	Parser::Parser(SyntaxSet &set, const String &src) : syntax(set), src(src), rootOption(SrcPos()) {}
 
 	nat Parser::parse(const String &rootType, nat pos) {
-		rootRule.clear();
-		rootRule.add(new TypeToken(rootType, L"root"));
+		rootOption.clear();
+		rootOption.add(new TypeToken(rootType, L"root"));
 
 		steps = vector<StateSet>(src.size() + 1);
-		steps[pos].insert(State(rootRule, 0));
+		steps[pos].insert(State(rootOption, 0));
 
 		nat len = NO_MATCH;
 
@@ -45,7 +45,7 @@ namespace storm {
 			completer(s, s[i], ptr);
 			scanner(s, s[i], ptr);
 
-			if (s[i].finish(&rootRule))
+			if (s[i].finish(&rootOption))
 				seenFinish = true;
 		}
 
@@ -60,10 +60,10 @@ namespace storm {
 
 		if (syntax.syntax.count(type->type()) == 0)
 			return;
-		SyntaxType &t = *syntax.syntax[type->type()];
+		SyntaxRule &t = *syntax.syntax[type->type()];
 
 		for (nat i = 0; i < t.size(); i++) {
-			SyntaxRule *rule = t[i];
+			SyntaxOption *rule = t[i];
 			// Todo: We need to find possible lookahead strings!
 			State ns(RuleIter(*rule), ptr.step);
 			s.insert(ns);
@@ -118,7 +118,7 @@ namespace storm {
 
 		const StateSet &s = steps.back();
 		for (nat i = 0; i < s.size(); i++)
-			if (s[i].finish(&rootRule))
+			if (s[i].finish(&rootOption))
 				return false;
 
 		return true;
@@ -160,7 +160,7 @@ namespace storm {
 	Parser::StatePtr Parser::finish() const {
 		for (nat i = steps.size() - 1; i > 0; i--) {
 			for (nat j = 0; j < steps[i].size(); j++) {
-				if (steps[i][j].finish(&rootRule))
+				if (steps[i][j].finish(&rootOption))
 					return StatePtr(i, j);
 			}
 		}
@@ -309,8 +309,8 @@ namespace storm {
 		return pos.token()->bindTo;
 	}
 
-	bool Parser::State::finish(const SyntaxRule *rootRule) const {
-		return &pos.rule() == rootRule
+	bool Parser::State::finish(const SyntaxOption *rootOption) const {
+		return &pos.rule() == rootOption
 			&& pos.end();
 		// We could check pos.from here as well, but we can never instantiate that rule more than once!
 	}

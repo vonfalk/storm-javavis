@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Utils/Path.h"
-#include "SyntaxType.h"
+#include "SyntaxRule.h"
 
 
 namespace storm {
@@ -11,7 +11,7 @@ namespace storm {
 
 	// Read syntax definitions from the given file, and merge them
 	// into the given hash map. Throws an appropriate exception on
-	// failure. Note that no ownership of the SyntaxType is taken.
-	void parseBnf(hash_map<String, SyntaxType*> &types, const Path &file);
+	// failure. Note that no ownership of the SyntaxRule is taken.
+	void parseBnf(hash_map<String, SyntaxRule*> &types, const Path &file);
 
 }

@@ -143,7 +143,7 @@
 	(car l)))
 
 (defun filename (fname)
-  (let ((l (split-string (subpath fname) "/")))
+  (let ((l (split-string fname "/")))
     (car (last l))))
 
 (defun subproj-relative-file (filename)

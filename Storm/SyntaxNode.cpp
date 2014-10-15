@@ -3,7 +3,7 @@
 
 namespace storm {
 
-	SyntaxNode::SyntaxNode(const SyntaxRule *rule) : srcRule(rule) {}
+	SyntaxNode::SyntaxNode(const SyntaxOption *rule) : srcRule(rule) {}
 
 	SyntaxNode::~SyntaxNode() {
 		clearMap(vars);

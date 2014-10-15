@@ -237,7 +237,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxRule.cpp"
+				RelativePath=".\SyntaxOption.cpp"
 				>
 			</File>
 			<File
@@ -245,7 +245,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxType.cpp"
+				RelativePath=".\SyntaxRule.cpp"
 				>
 			</File>
 			<File
@@ -343,7 +343,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxRule.h"
+				RelativePath=".\SyntaxOption.h"
 				>
 			</File>
 			<File
@@ -351,7 +351,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxType.h"
+				RelativePath=".\SyntaxRule.h"
 				>
 			</File>
 			<File

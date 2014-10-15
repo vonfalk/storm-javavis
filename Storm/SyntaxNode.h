@@ -1,6 +1,6 @@
 #pragma once
 #include "SyntaxVariable.h"
-#include "SyntaxRule.h"
+#include "SyntaxOption.h"
 
 namespace storm {
 
@@ -15,7 +15,7 @@ namespace storm {
 	 */
 	class SyntaxNode : public Printable, NoCopy {
 	public:
-		SyntaxNode(const SyntaxRule *rule);
+		SyntaxNode(const SyntaxOption *rule);
 
 		~SyntaxNode();
 
@@ -38,7 +38,7 @@ namespace storm {
 		VarMap vars;
 
 		// The syntax rule that resulted in this node.
-		const SyntaxRule *srcRule;
+		const SyntaxOption *srcRule;
 
 		// Find the type to use for this variable.
 		SyntaxVariable::Type typeOf(const String &name, bool isString);

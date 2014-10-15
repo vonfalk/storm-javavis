@@ -1,7 +1,7 @@
 #pragma once
 
-#include "SyntaxType.h"
 #include "SyntaxRule.h"
+#include "SyntaxOption.h"
 #include "SyntaxNode.h"
 #include "Exception.h"
 
@@ -30,7 +30,7 @@ namespace storm {
 
 	private:
 		// All syntax definitions.
-		hash_map<String, SyntaxType*> syntax;
+		hash_map<String, SyntaxRule*> syntax;
 	};
 
 
@@ -166,7 +166,7 @@ namespace storm {
 			const String &bindTokenTo() const;
 
 			// Does this state represent a state where we are done?
-			bool finish(const SyntaxRule *rootRule) const;
+			bool finish(const SyntaxOption *rootOption) const;
 
 		protected:
 			virtual void output(wostream &to) const;
@@ -188,7 +188,7 @@ namespace storm {
 		 */
 
 		// The root rule.
-		SyntaxRule rootRule;
+		SyntaxOption rootOption;
 
 		// Find the finish state.
 		StatePtr finish() const;
