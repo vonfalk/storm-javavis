@@ -19,13 +19,13 @@ Stmt(Block scope);
 Stmt => Declare(type, name) : Type type, Name name;
 Stmt => Assign(scope, name, expr) : Name name, "=", Stmt;
 Stmt => Operator(lhs, op, rhs) : Stmt lhs, Operator op, Stmt rhs;
-Stmt => Block(scope);
+Stmt => b : Block(scope) b;
 
-Block(Block parent?);
+Block(Block parent);
 Block => Block(parent) : "{", (Stmt(me) -> statement, ";", )* "}";
 
 // Argument list (for functions)
-ArgList : ArgList(types[], names[]) : Type types[], Name names[], (",", Type types[], Name names[])*;
+ArgList => ArgList(types[], names[]) : Type types[], Name names[], (",", Type types[], Name names[])*;
 
 // Function definition (not lazily loaded yet...)
 Function => Function(retType, name, args, cont) : Type retType, Name name, "(", ArgList args, ")", Block cont;

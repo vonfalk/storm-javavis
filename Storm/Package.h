@@ -63,7 +63,7 @@ namespace storm {
 
 		// Rules present in this package.
 		typedef hash_map<String, SyntaxRule*> SyntaxMap;
-		SyntaxMap syntaxTypes;
+		SyntaxMap syntaxRules;
 
 		// Types in this package.
 		typedef hash_map<String, Type*> TypeMap;

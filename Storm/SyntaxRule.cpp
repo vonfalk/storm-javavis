@@ -3,18 +3,10 @@
 
 namespace storm {
 
-	SyntaxRule::SyntaxRule(const String &name) : tName(name), outputStr(null) {}
+	SyntaxRule::SyntaxRule(const String &name) : rName(name) {}
 
 	SyntaxRule::~SyntaxRule() {
 		clear(options);
-		delete outputStr;
-	}
-
-	void SyntaxRule::setOutput(const String &str) {
-		if (outputStr == null)
-			outputStr = new String(str);
-		else
-			*outputStr = str;
 	}
 
 	void SyntaxRule::add(SyntaxOption *rule) {
@@ -23,11 +15,17 @@ namespace storm {
 	}
 
 	void SyntaxRule::output(std::wostream &to) const {
+		to << rName << L"(";
+		join(to, params, L", ");
+		to << L")" << endl;
+
 		for (nat i = 0; i < options.size(); i++) {
 			to << *options[i] << endl;
 		}
-		if (outputStr)
-			to << tName << " => \"" << *outputStr << "\"" << endl;
+	}
+
+	wostream &operator <<(wostream &to, const SyntaxRule::Param &p) {
+		return to << p.type << L" " << p.name;
 	}
 
 }

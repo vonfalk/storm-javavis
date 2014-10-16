@@ -26,24 +26,31 @@ namespace storm {
 			return L"";
 	}
 
-	void SyntaxOption::outputRep(std::wostream &to, nat i, nat marker) const {
-		if (repStart == i && repType != rNone)
-			to << L"(";
+	int SyntaxOption::outputRep(std::wostream &to, nat i, nat marker) const {
+		int any = 0;
+		if (repStart == i && repType != rNone) {
+			any |= 1;
+			to << L" (";
+		}
 		if (marker == i)
 			to << L"<>";
 		if (repEnd == i) {
 			switch (repType) {
 			case rZeroOne:
+				any |= 2;
 				to << L")?";
 				break;
 			case rZeroPlus:
+				any |= 2;
 				to << L")*";
 				break;
 			case rOnePlus:
+				any |= 2;
 				to << L")+";
 				break;
 			}
 		}
+		return any;
 	}
 
 	void SyntaxOption::output(std::wostream &to) const {
@@ -52,37 +59,55 @@ namespace storm {
 
 	void SyntaxOption::output(wostream &to, nat marker) const {
 		if (owner)
-			to << owner->name() << L" : ";
-
-		for (nat i = 0; i < tokens.size(); i++) {
-			if (i > 0)
-				to << L" ";
-
-			outputRep(to, i, marker);
-			to << *tokens[i];
-
-			// Not too nice, but gives good outputs!
-			if (i + 1 < tokens.size()) {
-				if (dynamic_cast<DelimToken*>(tokens[i+1])) {
-					i++;
-					outputRep(to, i, marker);
-					to << L",";
-				} else {
-					to << L" -";
-				}
-			}
-		}
-
-		outputRep(to, tokens.size(), marker);
+			to << owner->name();
 
 		if (matchFn.any()) {
-			to << L" = " << matchFn << L"(";
+			to << L" => ";
+			to << matchFn << L"(";
 			for (nat i = 0; i < matchFnParams.size(); i++) {
 				if (i > 0) to << L", ";
 				to << matchFnParams[i];
 			}
-			to << L")";
+			to << L") : ";
 		}
+
+		bool lastComma = false;
+		bool lastRep = true;
+		for (nat i = 0; i < tokens.size(); i++) {
+			switch (outputRep(to, i, marker)) {
+			case 0:
+				break;
+			case 1:
+				lastComma = false;
+				lastRep = true;
+				break;
+			case 2:
+			case 3:
+				lastComma = false;
+				lastRep = false;
+				break;
+			}
+
+			if (!lastComma && as<DelimToken>(tokens[i])) {
+				to << L",";
+				lastComma = true;
+			} else {
+				if (i > 0) {
+					if (!lastRep)
+						to << L" ";
+					if (!lastComma && !lastRep)
+						to << L"- ";
+				}
+				to << *tokens[i];
+				lastComma = false;
+			}
+
+			lastRep = false;
+		}
+
+		outputRep(to, tokens.size(), marker);
+
+		to << L";";
 	}
 
 	void SyntaxOption::add(SyntaxToken *token) {

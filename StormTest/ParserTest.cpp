@@ -27,6 +27,10 @@ BEGIN_TEST(ParserTest) {
 	Package *coreSto = engine.package(Name(L"core.sto"));
 	coreSto->syntax();
 
+	Package *coreBs = engine.package(Name(L"core.bs"));
+	coreBs->syntax();
+	PLN(*coreBs);
+
 	// Try parsing a file with the simple syntax.
 	Package *simple = engine.package(Name(L"core.simple"));
 	simple->syntax();

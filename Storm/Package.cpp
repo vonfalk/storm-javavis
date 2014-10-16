@@ -25,7 +25,7 @@ namespace storm {
 
 	Package::~Package() {
 		clearMap(packages);
-		clearMap(syntaxTypes);
+		clearMap(syntaxRules);
 		clearMap(types);
 		clearMap(functions);
 		delete pkgPath;
@@ -59,6 +59,14 @@ namespace storm {
 		{
 			Indent i(to);
 			for (FnMap::const_iterator i = functions.begin(); i != functions.end(); ++i) {
+				to << *i->second << endl;
+			}
+		}
+
+		to << "Syntax:" << endl;
+		{
+			Indent i(to);
+			for (SyntaxMap::const_iterator i = syntaxRules.begin(); i != syntaxRules.end(); ++i) {
 				to << *i->second << endl;
 			}
 		}
@@ -113,7 +121,7 @@ namespace storm {
 		if (!syntaxLoaded)
 			loadSyntax();
 
-		return syntaxTypes;
+		return syntaxRules;
 	}
 
 	Package *Package::childPackage(const String &name) {
@@ -148,11 +156,11 @@ namespace storm {
 			for (nat i = 0; i < files.size(); i++) {
 				const Path &f = files[i];
 				if (!f.isDir() && isBnfFile(f)) {
-					parseBnf(syntaxTypes, f);
+					parseBnf(syntaxRules, f);
 				}
 			}
 		} catch (...) {
-			clearMap(syntaxTypes);
+			clearMap(syntaxRules);
 			throw;
 		}
 

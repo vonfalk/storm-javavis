@@ -3,34 +3,33 @@ BNF syntax guide:
 
 Terminology
 -------------
-Type: A set of syntax rules, all returning the same type of syntax.
-Rule: A single rule of syntax, composed by one or more tokens.
-Token: Either a regex matching some text, or a reference to another type.
+Rule: A set of syntax options, all returning the same type of syntax.
+Option: A single option of syntax, composed by one or more tokens.
+Token: Either a regex matching some text, or a reference to another rule.
 
-
----------- New style ---------------
 
 Rule definition
 -----------------
 
-Type => Result : expression;
+Rule => Result : expression;
 or
-Type => Result(args) : expression;
+Rule => Result(args) : expression;
 
-There are also Type definitions:
-Type(params)
+There are also Rule definitions:
+Rule(params)
 
-Above, Type denotes a Type in the syntax. A type here is a named set of rules.
+Above, Rule denotes a Rule in the syntax. A type here is a named set of rules.
 The type may also ask for one or more named parameters. These are declared in
 the type definition like this:
-Type(Type1 name1, ...)
+Rule(Type1 name1, ...)
 If the name of the parameter ends in a question mark (?), it means that the
 parameter is optional. In that case, all rules of that type will act as if the
 parameter was never specified whenever it is left out.
 
 Result above is a simple expression that will be evaluated to create the node.
 This may be either a name of a function or the name of a type (in which case
-the constructor is executed). A number of parameters may also be specified.
+the constructor is executed) or a simple variable name (scalar, no arrays).
+A number of parameters may also be specified.
 
 The expression contains a number of tokens, separated with either a comma(,) or
 a dash(-). If they are separated with a comma, the DELIMITER type is inserted
@@ -53,7 +52,7 @@ expression is bound to the variable instead.
 
 If a syntax type is declared to take parameters, they can be passed to the
 type rules by specifying them as follows in the expression:
-Type(param, ...)
+Rule(param, ...)
 If a rule requires the current result value as a parameter, use "me". Note
 that "me" can not be used if the result is bound to a variable. See 'evaluation order'
 for details.
@@ -79,51 +78,3 @@ by the initialization of the return variable "me". Then each of the tokens bound
 to a method invocation are evaluated and executed in turn. This allows for 'me' to
 respond to each of the matched types in order of appearance.
 
-
----------- Old style ---------------
-
-Rule definition
------------------
-
-Result : expression = builtin(...)
-
-or
-
-Result : expression {
-...code...
-}
-
-Result is a syntax type that the generating function returns. Expression is one or more of the following:
-
-"str" : regex string. Matches the regex-like string inside. Eg. "[^\n]*".
-Type  : matches any rule returning the specified type.
-"rx" x: regex string. Matches the regex-like string insige and binds a literal to the matched string.
-Type x: matches any rule returning the specified type and binds a literal to the result.
-
-Two tokens in a rule must be separated by either a comma (,) or a dash (-). Comma means
-that there is an instance of the special rule DELIMITER between the two tokens. A dash
-disallows that.
-
-Repetition syntax:
-( ... )* : zero or more
-( ... )+ : one or more
-( ... )? : zero or one
-
-Repetition contents may be terminated with a comma (,) to indicate that whitespace is allowed
-between two iterations in the repetition. There may only be one repetition per syntax rule.
-
-Variables that may contain more than one value, shall be declared as a list-type like so:
-var[].
-
-Syntax output and formatting:
-------------------------------
-Result => "\n"
-tells the pretty-printing functionality how to print the given syntax tree.
-Special case: \i -> indent. \d -> dedent.
-
-Call order of functions:
---------------------------
-Functions are called from root down to leaves. A special type containing the scoping information is
-also passed to all functions.
-
-Two levels of these, one operating on pre-transformed types, and one operating on post-transformed types.

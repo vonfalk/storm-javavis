@@ -9,14 +9,22 @@ namespace storm {
 	 */
 	class SyntaxToken : public Printable, NoCopy {
 	public:
+		SyntaxToken(const String &to, bool method);
+
 		// Bind the matched part (or the syntax tree) to this literal. Nothing
 		// is done if 'bindTo' is empty.
 		String bindTo;
+
+		// Instead of variable, run method?
+		bool method;
 
 		// Bind to something?
 		inline bool bind() const { return bindTo != L""; }
 
 		// More public interface here...
+
+	protected:
+		virtual void output(std::wostream &to) const;
 	};
 
 
@@ -25,7 +33,7 @@ namespace storm {
 	 */
 	class RegexToken : public SyntaxToken {
 	public:
-		RegexToken(const String &regex, const String &to = L"");
+		RegexToken(const String &regex, const String &to = L"", bool method = false);
 
 		// 'compiled' regex to match.
 		Regex regex;
@@ -39,10 +47,13 @@ namespace storm {
 	 */
 	class TypeToken : public SyntaxToken {
 	public:
-		TypeToken(const String &name, const String &to = L"");
+		TypeToken(const String &name, const String &to = L"", bool method = false);
 
 		// Get the type.
 		inline const String &type() const { return typeName; }
+
+		// Parameters to the type (if any).
+		vector<String> params;
 
 	protected:
 		virtual void output(std::wostream &to) const;

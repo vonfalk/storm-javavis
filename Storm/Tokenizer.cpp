@@ -15,8 +15,8 @@ namespace storm {
 		return token.substr(1, token.size() - 2);
 	}
 
-	static const wchar *operators = L"+?*=><.";
-	static const wchar *specials = L"(){},-";
+	static const wchar *operators = L"-?*=><.+";
+	static const wchar *specials = L"(){},;";
 
 	static bool isOperator(wchar c) {
 		for (const wchar *p = operators; *p; p++)

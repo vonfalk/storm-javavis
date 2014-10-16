@@ -1,29 +1,21 @@
 // TODO: Make sure to check types somewhere!
 // The main syntax follows:
 
-DELIMITER : "[ \t\r\n]+" = delimiter();
-DELIMITER => " ";
+DELIMITER => void : "[ \t\r\n]+";
 
-NL : "[ \t\r\n]+" = delimiter();
-NL => "\n";
-
-INDENT : "[ \t\r\n]+" = delimiter();
-INDENT => "\i";
-
-DEDENT : "[ \t\r\n]+" = delimiter();
-DEDENT => "\d";
+NL => void : "[ \t\r\n]+";
 
 // Basic types
 
-Name : "[A-Za-z][^ ]." name = createName(name);
+Name => createName(name) : "[A-Za-z][^ ]." name;
 
-Package : Name src[] (, "\.", Name src[])* = createPkg(src);
+Package => createPkg(src) : Name src[] (, "\.", Name src[])*;
 
-Type : Package pkg, "\.", Name name = createTypePkg(pkg, name);
-Type : Name name = createType(name);
+Type => createTypePkg(pkg, name) : Package pkg, "\.", Name name;
+Type => createType(name) : Name name;
 
 // Basic syntax
 
-Expr : "{", (Expr expr[], )*, "}" = createBlock(expr);
-Expr : Name n1, "=", Name n2, ";" = createAssignment(n1, n2);
+Expr => createBlock(expr) : "{", (Expr expr[], )*, "}";
+Expr => createAssignment(n1, n2) : Name n1, "=", Name n2, ";";
 

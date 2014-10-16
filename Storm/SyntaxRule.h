@@ -14,9 +14,6 @@ namespace storm {
 
 		~SyntaxRule();
 
-		// Set how to output this type (assumes unescaped string, ie containing \n and so on).
-		void setOutput(const String &str);
-
 		// Add a rule. Takes ownership of the pointer.
 		void add(SyntaxOption *rule);
 
@@ -25,19 +22,27 @@ namespace storm {
 		inline SyntaxOption* operator[] (nat i) { return options[i]; }
 
 		// Get our name.
-		inline const String &name() const { return tName; }
+		inline const String &name() const { return rName; }
+
+		// Formal parameters.
+		struct Param {
+			String type, name;
+		};
+
+		// Parameters for this rule.
+		vector<Param> params;
+
 	protected:
 		virtual void output(std::wostream &to) const;
 
 	private:
 		// The name of this type.
-		String tName;
+		String rName;
 
 		// List of all options associated to this type.
 		vector<SyntaxOption*> options;
 
-		// How to output matches. null=>default.
-		String *outputStr;
 	};
 
+	wostream &operator <<(wostream &to, const SyntaxRule::Param &p);
 }

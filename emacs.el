@@ -100,6 +100,7 @@
 ;; Setup keybindings
 
 (global-set-key (kbd "C-.") 'other-window)
+(global-set-key (kbd "M-g M-c") 'goto-char)
 
 (add-hook 'c-mode-common-hook
 	  (lambda ()

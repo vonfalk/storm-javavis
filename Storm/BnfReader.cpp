@@ -14,8 +14,7 @@ namespace storm {
 
 
 	/**
-	 * This may change later, one idea is to have the extension as:
-	 * foo.bnf.<lang> instead of just .bnf
+	 * This may change later.
 	 */
 	bool isBnfFile(const Path &file) {
 		return file.hasExt(L"bnf");
@@ -30,7 +29,7 @@ namespace storm {
 		parseBnf(types, tok);
 	}
 
-	SyntaxRule &getType(TypeMap &map, const String &name) {
+	SyntaxRule &getRule(TypeMap &map, const String &name) {
 		TypeMap::iterator i = map.find(name);
 		if (i != map.end())
 			return *i->second;
@@ -44,23 +43,53 @@ namespace storm {
 	 * Parsing the bnf.
 	 */
 
-	void parseOutputDirective(SyntaxRule &to, Tokenizer &tok) {
-		Token outputStr = tok.next();
-		Token end = tok.next();
+	vector<String> parseCallParams(Tokenizer &tok) {
+		vector<String> r;
+		if (tok.peek().token == L")") {
+			tok.next();
+			return r;
+		}
 
-		if (!outputStr.isStr())
-			throw SyntaxError(outputStr.pos, L"Expected string");
+		bool end = false;
+		while (!end) {
+			Token param = tok.next();
+			r.push_back(param.token);
 
-		if (end.token != L";")
-			throw SyntaxError(end.pos, L"Expected ;");
+			Token sep = tok.next();
+			if (sep.token == L")") {
+				end = true;
+			} else if (sep.token == L",") {
+			} else {
+				throw SyntaxError(sep.pos, L"Unexpected " + sep.token);
+			}
+		}
 
-		to.setOutput(outputStr.strVal().unescape(true));
+		return r;
+	}
+
+	void parseCall(SyntaxOption &to, Tokenizer &tok) {
+		Token name = tok.next();
+		vector<String> params;
+
+		if (tok.peek().token != L":") {
+			Token paren = tok.next();
+			if (paren.token != L"(")
+				throw SyntaxError(paren.pos, L"Expected (");
+
+			params = parseCallParams(tok);
+		}
+
+		Token endSt = tok.next();
+		if (endSt.token != L":")
+			throw SyntaxError(endSt.pos, L"Expected :");
+
+		to.setMatchFn(name.token, params);
 	}
 
 	bool isEndOfToken(const Token &t) {
 		return (t.token == L",")
 			|| (t.token == L"-")
-			|| (t.token == L"=")
+			|| (t.token == L";")
 			|| (t.token == L")")
 			|| (t.token == L"(");
 	}
@@ -70,22 +99,46 @@ namespace storm {
 			return null;
 
 		Token t = tok.next();
+		SyntaxToken *result = null;
+		vector<String> params;
+
+		if (tok.peek().token == L"(") {
+			tok.next();
+			params = parseCallParams(tok);
+		}
 
 		if (isEndOfToken(tok.peek())) {
 			if (t.isStr())
-				return new RegexToken(t.strVal().unescape(true));
+				result = new RegexToken(t.strVal().unescape(true));
 			else
-				return new TypeToken(t.token);
+				result = new TypeToken(t.token);
 		} else {
 			Token name = tok.next();
+			bool method = false;
+
 			if (name.isStr())
 				throw SyntaxError(name.pos, L"Expected name or separator, found string.");
 
+			if (name.token == L"->") {
+				method = true;
+				name = tok.next();
+			}
+
 			if (t.isStr())
-				return new RegexToken(t.strVal().unescape(true), name.token);
+				result = new RegexToken(t.strVal().unescape(true), name.token, method);
 			else
-				return new TypeToken(t.token, name.token);
+				result = new TypeToken(t.token, name.token, method);
 		}
+
+		TypeToken *tt = as<TypeToken>(result);
+		if (tt) {
+			tt->params = params;
+		} else if (params.size() > 0) {
+			delete result;
+			throw SyntaxError(t.pos, L"Regex can not take parameters.");
+		}
+
+		return result;
 	}
 
 	void parseTokens(SyntaxOption &to, Tokenizer &tok) {
@@ -96,7 +149,7 @@ namespace storm {
 				to.add(st);
 
 			Token sep = tok.next();
-			if (sep.token == L"=") {
+			if (sep.token == L";") {
 				end = true;
 			} else if (sep.token == L",") {
 				to.add(new DelimToken());
@@ -122,64 +175,59 @@ namespace storm {
 		}
 	}
 
-	void parseCall(SyntaxOption &to, Tokenizer &tok) {
-		Token name = tok.next();
-		Token paren = tok.next();
-
-		if (paren.token != L"(")
-			throw SyntaxError(paren.pos, L"Expected (");
-
-		vector<String> params;
-		bool end = false;
-		while (!end) {
-			Token param = tok.next();
-			if (param.token == L")")
-				break;
-
-			params.push_back(param.token);
-
-			Token sep = tok.next();
-			if (sep.token == L")") {
-				end = true;
-			} else if (sep.token == L",") {
-			} else {
-				throw SyntaxError(sep.pos, L"Unexpected " + sep.token);
-			}
-		}
-
-		Token endSt = tok.next();
-		if (endSt.token != L";")
-			throw SyntaxError(endSt.pos, L"Expected ;");
-
-		to.setMatchFn(name.token, params);
-	}
-
 	void parseRule(SyntaxRule &to, Tokenizer &tok) {
-		SyntaxOption *rule = new SyntaxOption(tok.position());
+		SyntaxOption *option = new SyntaxOption(tok.position());
 
 		try {
-			parseTokens(*rule, tok);
-			parseCall(*rule, tok);
+			parseCall(*option, tok);
+			parseTokens(*option, tok);
 
-			to.add(rule);
+			to.add(option);
 		} catch (...) {
-			delete rule;
+			delete option;
 			throw;
 		}
 	}
 
+	void parseDeclaration(SyntaxRule &to, Tokenizer &tok) {
+		if (to.params.size() > 0)
+			throw SyntaxError(tok.position(), L"There is already a declaration of " + to.name());
+
+		bool end = false;
+		if (tok.peek().token == L")")
+			end = true;
+
+		while (!end) {
+			Token type = tok.next();
+			Token name = tok.next();
+
+			Token delim = tok.next();
+			if (delim.token == L")")
+				end = true;
+			else if (delim.token != L",")
+				throw SyntaxError(delim.pos, L"Expected , or )");
+
+			SyntaxRule::Param p = { type.token, name.token };
+			to.params.push_back(p);
+		}
+
+		Token paren = tok.next();
+		if (paren.token != L";")
+			throw SyntaxError(paren.pos, L"Expected ;");
+	}
+
 	void parseBnf(TypeMap &types, Tokenizer &tok) {
 		while (tok.more()) {
-			// What we have here is either a rule or a output directive:
-			Token typeName = tok.next();
+			// What we have here is either a rule or a rule declaration.
+			Token ruleName = tok.next();
 			Token delim = tok.next();
 
 			if (delim.token == L"=>") {
-				parseOutputDirective(getType(types, typeName.token), tok);
-			} else if (delim.token == L":") {
-				parseRule(getType(types, typeName.token), tok);
+				parseRule(getRule(types, ruleName.token), tok);
+			} else if (delim.token == L"(") {
+				parseDeclaration(getRule(types, ruleName.token), tok);
 			} else {
-				throw SyntaxError(delim.pos, L"Unknown rule or directive");
+				throw SyntaxError(delim.pos, L"No rule definition or declaration.");
 			}
 		}
 	}

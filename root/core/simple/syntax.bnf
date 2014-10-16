@@ -1,22 +1,21 @@
 // Really simple syntax, mainly for testing the parser.
 
-DELIMITER : " *" = delim();
-DELIMITER => " ";
+DELIMITER => void : " *";
 
 // Root rule.
-Root : Expr e[] = root();
-Root : Expr, Root = root();
+Root => root() : Expr e[];
+Root => root() : Expr, Root;
 
 // Expression
-Expr : Expr e[], "\+" op, Expr e[] = operator(e, "+");
-Expr : Expr e[], "-" op, Expr e[] = operator(e, "-");
-Expr : "[a-z]+" v = var();
-Expr : "[0-9]+" v = nr();
+Expr => operator(e, op) : Expr e[], "\+" op, Expr e[];
+Expr => operator(e, op) : Expr e[], "-" op, Expr e[];
+Expr => var() : "[a-z]+" v;
+Expr => nr() : "[0-9]+" v;
 
 // Root rule with repetitions.
-Rep1Root : "{", (Expr e[] - ";",)+ - "}" = foo();
-Rep2Root : "{", (Expr e[] - ";",)* - "}" = foo();
-Rep3Root : "{", (Expr e[] - ";",)? - "}" = foo();
+Rep1Root => foo() : "{", (Expr e[] - ";",)+ - "}";
+Rep2Root => foo() : "{", (Expr e[] - ";",)* - "}";
+Rep3Root => foo() : "{", (Expr e[] - ";",)? - "}";
 
 
 

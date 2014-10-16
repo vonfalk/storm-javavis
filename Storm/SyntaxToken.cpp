@@ -3,18 +3,27 @@
 
 namespace storm {
 
+	SyntaxToken::SyntaxToken(const String &to, bool method) : bindTo(to), method(method) {}
+
+	void SyntaxToken::output(wostream &to) const {
+		if (bindTo != L"") {
+			to << ' ';
+			if (method)
+				to << L"-> ";
+			to << bindTo;
+		}
+	}
+
 	/**
 	 * Regex token.
 	 */
 
-	RegexToken::RegexToken(const String &regex, const String &to) : regex(regex) {
-		bindTo = to;
-	}
+	RegexToken::RegexToken(const String &regex, const String &to, bool method)
+		: SyntaxToken(to, method), regex(regex) {}
 
 	void RegexToken::output(std::wostream &to) const {
 		to << '"' << regex << '"';
-		if (bindTo != L"")
-			to << ' ' << bindTo;
+		SyntaxToken::output(to);
 	}
 
 
@@ -22,14 +31,17 @@ namespace storm {
 	 * Type token.
 	 */
 
-	TypeToken::TypeToken(const String &name, const String &to) : typeName(name) {
-		bindTo = to;
-	}
+	TypeToken::TypeToken(const String &name, const String &to, bool method)
+		: SyntaxToken(to, method), typeName(name) {}
 
 	void TypeToken::output(std::wostream &to) const {
 		to << typeName;
-		if (bindTo != L"")
-			to << ' ' << bindTo;
+		if (params.size() > 0) {
+			to << L"(";
+			join(to, params, L", ");
+			to << L")";
+		}
+		SyntaxToken::output(to);
 	}
 
 	/**
@@ -39,6 +51,6 @@ namespace storm {
 	DelimToken::DelimToken() : TypeToken(L"DELIMITER") {}
 
 	void DelimToken::output(std::wostream &to) const {
-		to << ',';
+		to << "DELIMITER";
 	}
 }

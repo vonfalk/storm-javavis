@@ -65,8 +65,8 @@ namespace storm {
 		String matchFn;
 		vector<String> matchFnParams;
 
-		// Helper for repetition outputs.
-		void outputRep(std::wostream &to, nat i, nat marker) const;
+		// Helper for repetition outputs. (0 = nothing, 1 = start, 2 = end)
+		int outputRep(std::wostream &to, nat i, nat marker) const;
 	};
 
 
