@@ -12,7 +12,7 @@ namespace storm {
 		if (type == null)
 			to << L"null";
 		else
-			to << *type;
+			to << type->name;
 	}
 
 	bool Value::operator ==(const Value &o) const {

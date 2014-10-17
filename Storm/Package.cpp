@@ -7,11 +7,11 @@
 
 namespace storm {
 
-	Package::Package(Scope *root) : pkgPath(null) {
+	Package::Package(Scope *root) : Named(L"<root>"), pkgPath(null) {
 		init(root);
 	}
 
-	Package::Package(const Path &path, Scope *root) {
+	Package::Package(const Path &path, Scope *root) : Named(path.title()) {
 		pkgPath = new Path(path);
 		pkgPath->makeDir();
 		init(root);
@@ -33,9 +33,9 @@ namespace storm {
 
 	void Package::output(std::wostream &to) const {
 		if (pkgPath)
-			to << "Pkg in " << *pkgPath;
+			to << "Pkg " << name << " in " << *pkgPath;
 		else
-			to << "Virtual Pkg";
+			to << "Virtual Pkg " << name;
 		to << endl;
 
 		to << "Loaded packages:" << endl;

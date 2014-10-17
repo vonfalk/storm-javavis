@@ -11,3 +11,7 @@
 // For example: Str *STORM_FN foo();
 #define STORM_FN CODECALL
 
+// Mark a constructor.
+#define STORM_CTOR
+
+

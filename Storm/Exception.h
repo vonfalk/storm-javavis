@@ -33,4 +33,16 @@ namespace storm {
 		String msg;
 	};
 
+
+	/**
+	 * Error in type definitions.
+	 */
+	class TypedefError : public CodeError {
+	public:
+		inline TypedefError(const String &msg) : CodeError(SrcPos()), msg(msg) { TODO("Require a SrcPos!"); }
+		inline virtual String what() const { return where.toS() + L": Type definition error: " + msg; }
+	private:
+		String msg;
+	};
+
 }

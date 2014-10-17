@@ -1,9 +1,12 @@
 #include "stdafx.h"
 #include "Type.h"
+#include "Exception.h"
 
 namespace storm {
 
-	Type::Type(const String &name, TypeFlags f) : name(name), flags(f) {}
+	const String Type::CTOR = L"__ctor";
+
+	Type::Type(const String &name, TypeFlags f) : Named(name), flags(f) {}
 
 	Type::~Type() {
 		clearMap(members);
@@ -32,6 +35,8 @@ namespace storm {
 	}
 
 	void Type::add(NameOverload *o) {
+		validate(o);
+
 		Overload *ovl = null;
 		MemberMap::iterator i = members.find(o->name);
 		if (i == members.end()) {
@@ -42,6 +47,21 @@ namespace storm {
 		}
 
 		ovl->add(o);
+	}
+
+	void Type::validate(NameOverload *o) {
+		if (o->params.empty())
+			throw TypedefError(L"Member functions must have at least one parameter!");
+
+		const Value &first = o->params.front();
+		if (o->name == CTOR) {
+			TODO("Better validation here!");
+			if (first.type == null || first.type->name != L"Type")
+				throw TypedefError(L"Member constructors must have 'Type' as first parameter.");
+		} else {
+			if (first != Value(this))
+				throw TypedefError(L"Member functions must have 'this' as first parameter.");
+		}
 	}
 
 	bool Type::operator <(const Type &o) const {

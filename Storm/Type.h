@@ -22,14 +22,18 @@ namespace storm {
 	/**
 	 * Represents a type. This class contains information about
 	 * all type members, fields and so on.
+	 *
+	 * The special name "__ctor" is reserved for the constructor.
+	 * A constructor is special in the way that it does not take a parameter
+	 * to the object itself as its first parameter. Instead it takes a parameter
+	 * to the current Type-object instead. This is enforced by the 'add' method.
 	 */
 	class Type : public Named, public Scope {
 	public:
 		Type(const String &name, TypeFlags flags);
 		~Type();
 
-		// Type name.
-		const String name;
+		static const String CTOR;
 
 		// Type flags.
 		const TypeFlags flags;
@@ -45,6 +49,7 @@ namespace storm {
 
 		// Define some ordering between the types.
 		bool operator <(const Type &o) const;
+
 	protected:
 		virtual void output(wostream &to) const;
 		virtual Named *findHere(const Name &name);
@@ -56,6 +61,9 @@ namespace storm {
 
 		// Super type (when inheritance is used).
 		Type *superType;
+
+		// Validate parameters to added members.
+		void validate(NameOverload *m);
 	};
 
 }

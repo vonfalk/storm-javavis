@@ -9,12 +9,12 @@ namespace storm {
 	 * names is the type and count of their operators.
 	 * TODO? Inherit from Named as well?
 	 */
-	class NameOverload : public Printable {
+	class NameOverload : public Named {
 	public:
 		// Give params.
 		NameOverload(const String &name, const vector<Value> &params);
 
-		const String name;
+		// Parameters
 		const vector<Value> params;
 	};
 
@@ -27,9 +27,6 @@ namespace storm {
 		Overload(const String &name);
 		~Overload();
 
-		// Our name.
-		const String &name;
-
 		// Add an overload.
 		void add(NameOverload *n);
 
@@ -38,7 +35,9 @@ namespace storm {
 
 	private:
 		struct Item {
+			Item(const vector<Value> &k);
 			Item(NameOverload *overload);
+			const vector<Value> &k;
 			NameOverload *v;
 			bool operator <(const Item &o) const;
 		};

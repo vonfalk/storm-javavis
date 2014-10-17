@@ -3,10 +3,10 @@
 
 namespace storm {
 
-	NameOverload::NameOverload(const String &name, const vector<Value> &params) : name(name), params(params) {}
+	NameOverload::NameOverload(const String &name, const vector<Value> &params) : Named(name), params(params) {}
 
 
-	Overload::Overload(const String &name) : name(name) {}
+	Overload::Overload(const String &name) : Named(name) {}
 
 	Overload::~Overload() {
 		for (ItemMap::iterator i = items.begin(); i != items.end(); i++) {
@@ -20,9 +20,7 @@ namespace storm {
 		} else {
 			for (ItemMap::const_iterator i = items.begin(); i != items.end(); i++) {
 				NameOverload *no = i->v;
-				to << no->name << L"(";
-				join(to, no->params, L", ");
-				to << L")";
+				to << *no;
 			}
 		}
 	}
@@ -38,11 +36,13 @@ namespace storm {
 	 * Value.
 	 */
 
-	Overload::Item::Item(NameOverload *overload) : v(overload) {}
+	Overload::Item::Item(const vector<Value> &k) : k(k), v(null) {}
+
+	Overload::Item::Item(NameOverload *overload) : k(overload->params), v(overload) {}
 
 	bool Overload::Item::operator <(const Item &o) const {
-		const vector<Value> &a = v->params;
-		const vector<Value> &b = o.v->params;
+		const vector<Value> &a = k;
+		const vector<Value> &b = o.k;
 
 		if (a.size() == b.size())
 			return a.size() < b.size();

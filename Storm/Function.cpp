@@ -16,4 +16,12 @@ namespace storm {
 		to << ")";
 	}
 
+
+	NativeFunction::NativeFunction(Value result, const String &name, const vector<Value> &params, void *ptr)
+		: Function(result, name, params), fnPtr(ptr) {}
+
+	void *NativeFunction::pointer() const {
+		return fnPtr;
+	}
+
 }

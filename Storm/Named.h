@@ -7,6 +7,12 @@ namespace storm {
 	 * are anything in the compiler with a name, eg functions,
 	 * types among others.
 	 */
-	class Named : public Printable, NoCopy {};
+	class Named : public Printable, NoCopy {
+	public:
+		inline Named(const String &name) : name(name) {}
+
+		// Our name.
+		const String name;
+	};
 
 }

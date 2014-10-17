@@ -14,6 +14,12 @@ namespace storm {
 		// The value of this 'str' object.
 		String v;
 
+		// Empty ctor
+		STORM_CTOR Str(Type *type);
+
+		// Copy ctor
+		STORM_CTOR Str(Type *type, const Str &copy);
+
 		// String length.
 		Nat STORM_FN count() const;
 	};

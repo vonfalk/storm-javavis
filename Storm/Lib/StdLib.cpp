@@ -3,6 +3,7 @@
 #include "BuiltIn.h"
 #include "Exception.h"
 #include "Function.h"
+#include "TypeClass.h"
 
 namespace storm {
 
@@ -40,19 +41,34 @@ namespace storm {
 
 		Value result = null;
 		vector<Value> params;
-		Type *typeMember = null;
+
+		if (fn->typeMember) {
+			if (fn->name == Type::CTOR)
+				params.push_back(findValue(to.scope(), Name(L"core.Type")));
+			else if (Type *t = as<Type>(into))
+				params.push_back(Value(as<Type>(t)));
+			else
+				assert(false);
+		}
 
 		result = findValue(scope, fn->result);
 		params.reserve(fn->params.size());
 		for (nat i = 0; i < fn->params.size(); i++)
 			params.push_back(findValue(scope, fn->params[i]));
 
-		if (Package *p = as<Package>(into)) {
-			p->add(new Function(result, fn->name, params));
-		} else if (Type *t = as<Type>(into)) {
-			t->add(new Function(result, fn->name, params));
-		} else {
-			assert(false);
+		NativeFunction *toAdd = new NativeFunction(result, fn->name, params, fn->fnPtr);
+		try {
+			if (Package *p = as<Package>(into)) {
+				p->add(toAdd);
+			} else if (Type *t = as<Type>(into)) {
+				t->add(toAdd);
+			} else {
+				delete toAdd;
+				assert(false);
+			}
+		} catch (...) {
+			delete toAdd;
+			throw;
 		}
 	}
 
@@ -68,6 +84,7 @@ namespace storm {
 		root->add(intType());
 		root->add(natType());
 		root->add(strType());
+		root->add(typeType());
 
 		addBuiltIn(to);
 
