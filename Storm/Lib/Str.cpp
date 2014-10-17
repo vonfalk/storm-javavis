@@ -4,6 +4,10 @@
 
 namespace storm {
 
+	nat Str::count() const {
+		return v.size();
+	}
+
 
 	// Create the string type.
 	Type *strType() {

@@ -5,6 +5,9 @@
 namespace storm {
 
 	Engine::Engine(const Path &root) : rootPath(root), rootPkg(root, &rootPkg) {
+		defaultOrder.scopes.push_back(&rootPkg);
+		defaultOrder.scopes.push_back(package(Name(L"core"), true));
+
 		addStdLib(*this);
 	}
 
@@ -28,6 +31,7 @@ namespace storm {
 		Package *next = pkg->childPackage(path[pos]);
 		if (next == null) {
 			next = new Package(&rootPkg);
+			pkg->add(next, path[pos]);
 		}
 
 		return createPackage(next, path, pos + 1);

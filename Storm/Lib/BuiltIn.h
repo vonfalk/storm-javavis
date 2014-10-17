@@ -13,6 +13,9 @@ namespace storm {
 		// The location (package or typename).
 		Name pkg;
 
+		// Member of a type? null=no.
+		const wchar *typeMember;
+
 		// Name of the return type.
 		Name result;
 
@@ -31,7 +34,4 @@ namespace storm {
 	 */
 	const BuiltInFunction *builtInFunctions();
 
-	// Testing function (to be removed...).
-	STORM_PKG(core);
-	Str *STORM_FN testFn(Str *s);
 }

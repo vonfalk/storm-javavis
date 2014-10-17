@@ -260,6 +260,14 @@
 				RelativePath=".\Type.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Value.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Overload.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -368,6 +376,14 @@
 			</File>
 			<File
 				RelativePath=".\Type.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Value.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Overload.h"
 				>
 			</File>
 		</Filter>

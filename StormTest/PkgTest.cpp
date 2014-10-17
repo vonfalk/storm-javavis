@@ -23,7 +23,7 @@ BEGIN_TEST(PkgTest) {
 
 	Package *rootPkg = e.package(Name());
 	CHECK(rootPkg != null);
-	Package *coreSto = e.package(Name(L"core.sto"));
+	Package *coreSto = e.package(Name(L"lang.sto"));
 	CHECK(coreSto != null);
 
 } END_TEST

@@ -1,5 +1,5 @@
 #pragma once
-#include "Named.h"
+#include "Overload.h"
 
 namespace storm {
 
@@ -10,20 +10,20 @@ namespace storm {
 	 * a free function. In the case of a member function, the 'this' pointer
 	 * is explicitly stated as the first parameter.
 	 */
-	class Function : public Named {
+	class Function : public NameOverload {
 	public:
 		// Create a function. No ownership of the Type * is taken.
-		Function(Type *result, const String &name, const vector<Type*> &params);
+		Function(Value result, const String &name, const vector<Value> &params);
 		~Function();
 
 		// Function name.
 		const String name;
 
 		// Function result.
-		Type *const result;
+		const Value result;
 
 		// Function parameters.
-		const vector<Type*> params;
+		const vector<Value> params;
 
 	protected:
 		virtual void output(wostream &to) const;

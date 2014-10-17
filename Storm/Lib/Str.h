@@ -1,7 +1,10 @@
 #pragma once
 #include "Object.h"
+#include "Int.h"
 
 namespace storm {
+
+	STORM_PKG(core);
 
 	/**
 	 * The string type used by the generated code.
@@ -10,6 +13,9 @@ namespace storm {
 	public:
 		// The value of this 'str' object.
 		String v;
+
+		// String length.
+		Nat STORM_FN count() const;
 	};
 
 
@@ -17,4 +23,5 @@ namespace storm {
 	 * Create the string type.
 	 */
 	Type *strType();
+
 }

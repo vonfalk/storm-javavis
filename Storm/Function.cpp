@@ -4,15 +4,14 @@
 
 namespace storm {
 
-	Function::Function(Type *result, const String &name, const vector<Type*> &params)
-		: result(result),
-		  name(name),
-		  params(params) {}
+	Function::Function(Value result, const String &name, const vector<Value> &params)
+		: NameOverload(name, params),
+		  result(result) {}
 
 	Function::~Function() {}
 
 	void Function::output(wostream &to) const {
-		to << ::toS(*result) << " " << name << "(";
+		to << result << " " << name << "(";
 		join(to, params, L", ");
 		to << ")";
 	}

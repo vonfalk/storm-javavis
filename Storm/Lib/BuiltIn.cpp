@@ -5,7 +5,7 @@
 
 // Below are auto-generated includes.
 // BEGIN INCLUDES
-#include "Lib/BuiltIn.h"
+#include "Lib/Str.h"
 // END INCLUDES
 
 namespace storm {
@@ -26,22 +26,14 @@ namespace storm {
 	}
 
 	/**
-	 * Test function (in the meantime...)
-	 */
-	Str *testFn(Str *v) {
-		PLN("TestFn: " << v->v);
-		return v;
-	}
-
-	/**
 	 * Everything between BEGIN LIST and END LIST is auto-generated.
 	 */
 	const BuiltInFunction *builtInFunctions() {
 		static BuiltInFunction fns[] = {
 			// BEGIN LIST
-			{ Name(L"core"), Name(L"Str"), L"testFn", list(1, Name(L"Str")), &storm::testFn },
+			{ Name(L"core"), L"Str", Name(L"Nat"), L"count", list(0), address(&storm::Str::count) },
 			// END LIST
-			{ Name(), Name(), L"", list(0), null },
+			{ Name(), null, Name(), L"", list(0), null },
 		};
 		return fns;
 	}

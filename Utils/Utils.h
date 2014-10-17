@@ -63,6 +63,7 @@ bool getKeyState(nat key); //Hur var det när nuv. meddelande skickades?
 
 bool positive(float f);
 
+// Hack to allow casting member-function-pointers into void *.
 template <class T>
 inline void *address(T fn) {
 	return (void *&)fn;
@@ -78,10 +79,9 @@ inline void del(T *&ptr) {
 // Clear the contents of a vector or list containing pointers.
 template <class T>
 inline void clear(T &vec) {
-	while (vec.size() > 0) {
-		delete vec.back();
-		vec.pop_back();
-	}
+	for (T::iterator i = vec.begin(), end = vec.end(); i != end; ++i)
+		delete *i;
+	vec.clear();
 }
 
 // Clear the contents of a map<?, ?*>.

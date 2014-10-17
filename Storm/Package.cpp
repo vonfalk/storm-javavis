@@ -27,7 +27,7 @@ namespace storm {
 		clearMap(packages);
 		clearMap(syntaxRules);
 		clearMap(types);
-		clearMap(functions);
+		clearMap(members);
 		delete pkgPath;
 	}
 
@@ -42,7 +42,6 @@ namespace storm {
 		{
 			Indent i(to);
 			for (PkgMap::const_iterator i = packages.begin(); i != packages.end(); ++i) {
-				// to << i->first << endl;
 				to << *i->second << endl;
 			}
 		}
@@ -51,14 +50,14 @@ namespace storm {
 		{
 			Indent i(to);
 			for (TypeMap::const_iterator i = types.begin(); i != types.end(); ++i) {
-				to << i->first << endl;
+				to << *i->second << endl;
 			}
 		}
 
-		to << "Functions:" << endl;
+		to << "Members:" << endl;
 		{
 			Indent i(to);
-			for (FnMap::const_iterator i = functions.begin(); i != functions.end(); ++i) {
+			for (MemberMap::const_iterator i = members.begin(); i != members.end(); ++i) {
 				to << *i->second << endl;
 			}
 		}
@@ -140,11 +139,20 @@ namespace storm {
 	void Package::add(Type *type) {
 		assert(types.count(type->name) == 0);
 		types.insert(make_pair(type->name, type));
+		type->setParentScope(this);
 	}
 
-	void Package::add(Function *fn) {
-		assert(functions.count(fn->name) == 0);
-		functions.insert(make_pair(fn->name, fn));
+	void Package::add(NameOverload *fn) {
+		Overload *o = null;
+		MemberMap::iterator i = members.find(fn->name);
+		if (i == members.end()) {
+			o = new Overload(fn->name);
+			members.insert(make_pair(fn->name, o));
+		} else {
+			o = i->second;
+		}
+
+		o->add(fn);
 	}
 
 	void Package::loadSyntax() {

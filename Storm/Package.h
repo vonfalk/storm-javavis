@@ -3,6 +3,7 @@
 #include "SyntaxRule.h"
 #include "Named.h"
 #include "Scope.h"
+#include "Overload.h"
 #include "Utils/Path.h"
 
 namespace storm {
@@ -47,7 +48,7 @@ namespace storm {
 		void add(Type *type);
 
 		// Add a function to this package.
-		void add(Function *function);
+		void add(NameOverload *function);
 
 	protected:
 		virtual void output(std::wostream &to) const;
@@ -69,9 +70,9 @@ namespace storm {
 		typedef hash_map<String, Type*> TypeMap;
 		TypeMap types;
 
-		// Functions in this package. TODO: Manage overloaded functions as well!
-		typedef hash_map<String, Function*> FnMap;
-		FnMap functions;
+		// All functions and variables in this package.
+		typedef hash_map<String, Overload*> MemberMap;
+		MemberMap members;
 
 		/**
 		 * Recursive member lookup.

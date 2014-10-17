@@ -1,5 +1,7 @@
 #pragma once
 #include "Named.h"
+#include "Scope.h"
+#include "Overload.h"
 
 namespace storm {
 
@@ -21,7 +23,7 @@ namespace storm {
 	 * Represents a type. This class contains information about
 	 * all type members, fields and so on.
 	 */
-	class Type : public Named {
+	class Type : public Named, public Scope {
 	public:
 		Type(const String &name, TypeFlags flags);
 		~Type();
@@ -35,11 +37,22 @@ namespace storm {
 		// Get the size of this type.
 		virtual nat size() const;
 
+		// Set the parent scope (done automatically by Package).
+		void setParentScope(Scope *parent);
+
+		// Add new members.
+		void add(NameOverload *m);
+
+		// Define some ordering between the types.
+		bool operator <(const Type &o) const;
 	protected:
 		virtual void output(wostream &to) const;
+		virtual Named *findHere(const Name &name);
 
 	private:
-		// Member functions.
+		// Members.
+		typedef hash_map<String, Overload*> MemberMap;
+		MemberMap members;
 
 		// Super type (when inheritance is used).
 		Type *superType;

@@ -24,4 +24,15 @@ namespace storm {
 		virtual Named *findHere(const Name &name) = 0;
 	};
 
+
+	/**
+	 * Define a lookup in terms of a chain of other scopes.
+	 */
+	class ScopeChain : public Scope {
+	public:
+		// Search in these scopes, in order.
+		vector<Scope*> scopes;
+	protected:
+		virtual Named *findHere(const Name &name);
+	};
 }

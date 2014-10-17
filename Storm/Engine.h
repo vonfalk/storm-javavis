@@ -3,6 +3,7 @@
 #include "Utils/Path.h"
 #include "Name.h"
 #include "Package.h"
+#include "Scope.h"
 
 namespace storm {
 
@@ -26,6 +27,9 @@ namespace storm {
 		// true, then all packages that does not yet exist are created.
 		Package *package(const Name &path, bool create = false);
 
+		// Get the root scope. (looks in core as well).
+		Scope *scope() { return &defaultOrder; }
+
 	private:
 		// Path to root directory.
 		Path rootPath;
@@ -33,9 +37,11 @@ namespace storm {
 		// Root package.
 		Package rootPkg;
 
+		// Default look-up order.
+		ScopeChain defaultOrder;
+
 		// Create the package (recursive).
 		Package *createPackage(Package *pkg, const Name &path, nat at = 0);
-
 	};
 
 }

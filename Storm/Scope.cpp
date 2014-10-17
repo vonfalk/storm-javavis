@@ -14,4 +14,12 @@ namespace storm {
 	}
 
 
+	Named *ScopeChain::findHere(const Name &name) {
+		for (nat i = 0; i < scopes.size(); i++) {
+			Named *n = scopes[i]->find(name);
+			if (n)
+				return n;
+		}
+		return null;
+	}
 }

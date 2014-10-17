@@ -16,4 +16,18 @@ namespace storm {
 		return new IntType();
 	}
 
+
+	class NatType : public Type {
+	public:
+		NatType() : Type(L"Nat", typeValue) {}
+
+		virtual nat size() const {
+			return sizeof(code::Nat);
+		}
+	};
+
+	Type *natType() {
+		return new NatType();
+	}
+
 }

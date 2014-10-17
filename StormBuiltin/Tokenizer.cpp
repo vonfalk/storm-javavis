@@ -5,7 +5,7 @@
 namespace stormbuiltin {
 
 	static const wchar *operators = L"+?*=><.";
-	static const wchar *specials = L"(){},-";
+	static const wchar *specials = L"(){},-;";
 
 	static bool isOperator(wchar c) {
 		for (const wchar *p = operators; *p; p++)

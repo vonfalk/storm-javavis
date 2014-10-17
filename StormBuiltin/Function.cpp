@@ -68,6 +68,7 @@ namespace stormbuiltin {
 		String package;
 		vector<String> scope;
 		vector<nat> extra;
+		vector<bool> isClass;
 
 		String lastType;
 
@@ -81,6 +82,8 @@ namespace stormbuiltin {
 				if (lastType != L"#define") {
 					Function fn = findFunction(lastType, tok);
 					fn.package = package;
+					if (isClass.size() > 0 && isClass.back())
+						fn.classMember = scope.back();
 					vector<String> t = scope;
 					t.push_back(fn.name);
 					fn.cppName = join(t, L"::");
@@ -89,11 +92,13 @@ namespace stormbuiltin {
 			} else if (token == L"class" || token == L"struct") {
 				scope.push_back(tok.next());
 				extra.push_back(0);
+				isClass.push_back(true);
 				if (tok.peek() != L";")
 					while (tok.next() != L"{");
 			} else if (token == L"namespace") {
 				scope.push_back(tok.next());
 				extra.push_back(0);
+				isClass.push_back(false);
 				if (tok.next() != L"{")
 					throw Error(L"Expected {");
 			} else if (token == L"{") {
@@ -104,6 +109,7 @@ namespace stormbuiltin {
 					if (extra.back() == 0) {
 						extra.pop_back();
 						scope.pop_back();
+						isClass.pop_back();
 					} else {
 						extra.back()--;
 					}

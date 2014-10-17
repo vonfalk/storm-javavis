@@ -137,13 +137,18 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 		Function &f = result[i];
 
 		codeStr << L"{ Name(L\"" << f.package << L"\"), ";
+		if (f.classMember.empty())
+			codeStr << L"null";
+		else
+			codeStr << 'L' << '"' << f.classMember << '"';
+		codeStr << L", ";
 		codeStr << L"Name(L\"" << f.result << L"\"), ";
 		codeStr << L"L\"" << f.name << L"\", ";
 		codeStr << L"list(" << f.params.size();
 		for (nat j = 0; j < f.params.size(); j++) {
 			codeStr << L", Name(L\"" << f.params[j] << L"\")";
 		}
-		codeStr << L"), &" << f.cppName << L" },\n";
+		codeStr << L"), address(&" << f.cppName << L") },\n";
 	}
 
 	updateFile(listFile, headerStr.str(), codeStr.str());

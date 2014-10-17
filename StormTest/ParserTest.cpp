@@ -24,15 +24,14 @@ BEGIN_TEST(ParserTest) {
 	Engine engine(root);
 
 	// Try to get the syntax for the 'sto' file format.
-	Package *coreSto = engine.package(Name(L"core.sto"));
+	Package *coreSto = engine.package(Name(L"lang.sto"));
 	coreSto->syntax();
 
-	Package *coreBs = engine.package(Name(L"core.bs"));
+	Package *coreBs = engine.package(Name(L"lang.bs"));
 	coreBs->syntax();
-	PLN(*coreBs);
 
 	// Try parsing a file with the simple syntax.
-	Package *simple = engine.package(Name(L"core.simple"));
+	Package *simple = engine.package(Name(L"lang.simple"));
 	simple->syntax();
 
 	SyntaxSet set;

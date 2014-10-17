@@ -15,6 +15,9 @@ namespace stormbuiltin {
 		// Header file this function is located in.
 		Path header;
 
+		// Class member.
+		String classMember;
+
 		// Name of the storm function.
 		String name;
 
