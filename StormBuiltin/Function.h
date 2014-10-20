@@ -15,7 +15,7 @@ namespace stormbuiltin {
 		// Header file this function is located in.
 		Path header;
 
-		// Class member.
+		// Type member.
 		String classMember;
 
 		// Name of the storm function.
@@ -31,9 +31,35 @@ namespace stormbuiltin {
 		vector<String> params;
 	};
 
+	/**
+	 * Describes an exported class.
+	 */
+	struct Type {
+		// Name of the class.
+		String name;
+
+		// Package.
+		String package;
+	};
+
+
+	/**
+	 * Contents of a file.
+	 */
+	struct File {
+		// Functions.
+		vector<Function> fns;
+
+		// Types
+		vector<Type> types;
+
+		// Add another 'file' to this one.
+		void add(const File &o);
+	};
+
 	wostream &operator <<(wostream &to, const Function &fn);
 
 	// Find all functions in a file.
-	vector<Function> parseFile(const Path &file);
+	File parseFile(const Path &file);
 
 }

@@ -15,6 +15,16 @@ namespace stormbuiltin {
 		return to;
 	}
 
+	struct Scope {
+		String name;
+		nat extra;
+		bool isType;
+	};
+
+	String toS(const Scope &s) {
+		return s.name;
+	}
+
 	String findPackage(Tokenizer &tok) {
 		if (tok.next() != L"(")
 			throw Error(L"Expected (");
@@ -25,9 +35,8 @@ namespace stormbuiltin {
 		return pkg;
 	}
 
-	Function findFunction(String &returnType, Tokenizer &tok) {
+	Function findFunction(Tokenizer &tok) {
 		Function fn;
-		fn.result = returnType;
 		fn.name = tok.next();
 		if (tok.next() != L"(")
 			throw Error(L"Expected (");
@@ -63,14 +72,41 @@ namespace stormbuiltin {
 		return fn;
 	}
 
-	vector<Function> parseFile(Tokenizer &tok) {
-		vector<Function> found;
+	String creationStr(const Function &fn, const vector<Scope> &scope) {
+		std::wostringstream to;
+		to << L"create" << fn.params.size();
+		to << L"<";
+		join(to, scope, L"::");
+		for (nat i = 1; i < fn.params.size(); i++) {
+			to << L", " << fn.params[i];
+		}
+		to << L">";
+		return to.str();
+	}
+
+	Function parseFn(Tokenizer &tok, const vector<Scope> &scope, const String &retType, const String &package) {
+		Function fn = findFunction(tok);
+		fn.result = retType;
+		fn.package = package;
+		if (!scope.empty() && scope.back().isType)
+			fn.classMember = scope.back().name;
+		fn.cppName = join(scope, L"::");
+		if (!fn.cppName.empty())
+			fn.cppName += L"::";
+		fn.cppName += fn.name;
+		return fn;
+	}
+
+	File parseFile(Tokenizer &tok) {
+		File r;
+		vector<Function> &found = r.fns;
+		vector<Type> &types = r.types;
+
 		String package;
-		vector<String> scope;
-		vector<nat> extra;
-		vector<bool> isClass;
+		vector<Scope> scope;
 
 		String lastType;
+		bool addType = false;
 
 		while (tok.more()) {
 			bool wasType = false;
@@ -80,39 +116,50 @@ namespace stormbuiltin {
 				package = findPackage(tok);
 			} else if (token == L"STORM_FN") {
 				if (lastType != L"#define") {
-					Function fn = findFunction(lastType, tok);
-					fn.package = package;
-					if (isClass.size() > 0 && isClass.back())
-						fn.classMember = scope.back();
-					vector<String> t = scope;
-					t.push_back(fn.name);
-					fn.cppName = join(t, L"::");
+					Function fn = parseFn(tok, scope, lastType, package);
 					found.push_back(fn);
 				}
+			} else if (token == L"STORM") {
+				if (lastType != L"#define") {
+					String next = tok.peek();
+					if (next == L"class" || next == L"struct") {
+						addType = true;
+					} else {
+						Function fn = parseFn(tok, scope, L"", package);
+						fn.result = fn.name;
+						fn.name = L"__ctor";
+						if (scope.empty() || !scope.back().isType)
+							throw Error(L"Constructors must live in types.");
+						fn.cppName = creationStr(fn, scope);
+						found.push_back(fn);
+					}
+				}
 			} else if (token == L"class" || token == L"struct") {
-				scope.push_back(tok.next());
-				extra.push_back(0);
-				isClass.push_back(true);
+				Scope s = { tok.next(), 0, true };
+				scope.push_back(s);
 				if (tok.peek() != L";")
 					while (tok.next() != L"{");
+
+				if (addType) {
+					Type c = { s.name, package };
+					types.push_back(c);
+				}
 			} else if (token == L"namespace") {
-				scope.push_back(tok.next());
-				extra.push_back(0);
-				isClass.push_back(false);
+				Scope s = { tok.next(), 0, false };
+				scope.push_back(s);
 				if (tok.next() != L"{")
 					throw Error(L"Expected {");
 			} else if (token == L"{") {
-				if (extra.size() > 0)
-					extra.back()++;
+				addType = false;
+				if (!scope.empty())
+					scope.back().extra++;
 			} else if (token == L"}") {
-				if (extra.size() > 0) {
-					if (extra.back() == 0) {
-						extra.pop_back();
+				addType = false;
+				if (!scope.empty()) {
+					if (scope.back().extra == 0)
 						scope.pop_back();
-						isClass.pop_back();
-					} else {
-						extra.back()--;
-					}
+					else
+						scope.back().extra--;
 				}
 			} else if (token == L";") {
 			} else {
@@ -125,17 +172,18 @@ namespace stormbuiltin {
 					wasType = true;
 					lastType += token;
 				}
+				addType = false;
 			}
 
 			if (!wasType)
 				lastType = L"";
 		}
 
-		return found;
+		return r;
 	}
 
-	vector<Function> parseFile(const Path &file) {
-		vector<Function> result;
+	File parseFile(const Path &file) {
+		File result;
 		TextReader *reader = TextReader::create(new FileStream(file, FileStream::mRead));
 		String contents = reader->getAll();
 		delete reader;
@@ -143,14 +191,20 @@ namespace stormbuiltin {
 		Tokenizer tok(file, contents, 0);
 		try {
 			result = parseFile(tok);
-			for (nat i = 0; i < result.size(); i++) {
-				result[i].header = file;
+			for (nat i = 0; i < result.fns.size(); i++) {
+				result.fns[i].header = file;
 			}
 			return result;
 		} catch (const Error &e) {
 			Error err(e.what(), file);
 			throw err;
 		}
+	}
+
+
+	void File::add(const File &o) {
+		fns.insert(fns.end(), o.fns.begin(), o.fns.end());
+		types.insert(types.end(), o.types.begin(), o.types.end());
 	}
 
 }

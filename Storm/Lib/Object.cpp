@@ -7,12 +7,4 @@ namespace storm {
 
 	Object::~Object() {}
 
-	void Object::operator delete(void *ptr) {
-		::operator delete(ptr);
-	}
-
-	void Object::operator delete[](void *ptr) {
-		::operator delete[](ptr);
-	}
-
 }

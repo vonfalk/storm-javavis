@@ -20,7 +20,7 @@ namespace storm {
 		} else {
 			for (ItemMap::const_iterator i = items.begin(); i != items.end(); i++) {
 				NameOverload *no = i->v;
-				to << *no;
+				to << *no << endl;
 			}
 		}
 	}
@@ -44,10 +44,10 @@ namespace storm {
 		const vector<Value> &a = k;
 		const vector<Value> &b = o.k;
 
-		if (a.size() == b.size())
+		if (a.size() != b.size())
 			return a.size() < b.size();
 
-		for (nat i = 0;i < a.size(); i++) {
+		for (nat i = 0; i < a.size(); i++) {
 			if (a[i] != b[i])
 				return a[i] < b[i];
 		}

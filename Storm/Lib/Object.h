@@ -35,10 +35,6 @@ namespace storm {
 	private:
 		// Current number of references.
 		nat refs;
-
-		// We shall use release() instead of delete.
-		void operator delete(void *ptr);
-		void operator delete[](void *ptr);
 	};
 
 }

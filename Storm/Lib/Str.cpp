@@ -12,10 +12,4 @@ namespace storm {
 		return v.size();
 	}
 
-
-	// Create the string type.
-	Type *strType() {
-		return new Type(L"Str", typeClass);
-	}
-
 }

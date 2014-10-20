@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Scope.h"
+#include "Named.h"
 
 namespace storm {
 

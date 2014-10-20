@@ -44,7 +44,7 @@ namespace storm {
 
 		if (fn->typeMember) {
 			if (fn->name == Type::CTOR)
-				params.push_back(findValue(to.scope(), Name(L"core.Type")));
+				;
 			else if (Type *t = as<Type>(into))
 				params.push_back(Value(as<Type>(t)));
 			else
@@ -72,7 +72,19 @@ namespace storm {
 		}
 	}
 
+	static void addBuiltIn(Engine &to, const BuiltInType *t) {
+		Package *pkg = to.package(t->pkg);
+		if (!pkg)
+			throw BuiltInError(L"Failed to locate package " + toS(t->pkg));
+
+		Type *tc = new Type(t->name, typeClass);
+		pkg->add(tc);
+	}
+
 	static void addBuiltIn(Engine &to) {
+		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
+			addBuiltIn(to, t);
+		}
 		for (const BuiltInFunction *fn = builtInFunctions(); fn->fnPtr; fn++) {
 			addBuiltIn(to, fn);
 		}
@@ -83,11 +95,9 @@ namespace storm {
 		Package *root = to.package(Name(L"core"));
 		root->add(intType());
 		root->add(natType());
-		root->add(strType());
 		root->add(typeType());
 
 		addBuiltIn(to);
-
 		PLN(*root);
 	}
 

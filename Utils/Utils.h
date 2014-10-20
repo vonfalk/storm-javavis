@@ -154,6 +154,17 @@ bool operator !=(const vector<T> &a, const vector<T> &b) {
 }
 
 template <class T>
+bool operator <(const vector<T> &a, const vector<T> &b) {
+	nat to = min(a.size(), b.size());
+	for (nat i = 0; i < to; i++) {
+		if (a[i] != b[i])
+			return a[i] < b[i];
+	}
+
+	return a.size() < b.size();
+}
+
+template <class T>
 struct as {
 	template <class U>
 	as(U *v) {

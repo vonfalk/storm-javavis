@@ -8,7 +8,7 @@
 using namespace stormbuiltin;
 using namespace util;
 
-void findFunctions(const Path &p, vector<Function> &result) {
+void findFunctions(const Path &p, File &result) {
 	vector<Path> children = p.children();
 	for (nat i = 0; i < children.size(); i++) {
 		Path &c = children[i];
@@ -16,13 +16,23 @@ void findFunctions(const Path &p, vector<Function> &result) {
 		if (c.isDir()) {
 			findFunctions(c, result);
 		} else if (c.hasExt(L"h")) {
-			vector<Function> f = parseFile(c);
-			result.insert(result.end(), f.begin(), f.end());
+			File f = parseFile(c);
+			result.add(f);
 		}
 	}
 }
 
 bool compareFn(const Function &a, const Function &b) {
+	if (a.package != b.package)
+		return a.package < b.package;
+	if (a.name != b.name)
+		return a.name < b.name;
+	return a.params < b.params;
+}
+
+bool compareType(const Type &a, const Type &b) {
+	if (a.package != b.package)
+		return a.package < b.package;
 	return a.name < b.name;
 }
 
@@ -74,7 +84,7 @@ String lineEnding(const Path &file) {
 	return result;
 }
 
-void updateFile(const Path &file, const String &headers, const String &fnList) {
+void updateFile(const Path &file, const String &headers, const String &fnList, const String &typeList) {
 	vector<String> lines;
 	String newline = lineEnding(file);
 
@@ -97,6 +107,13 @@ void updateFile(const Path &file, const String &headers, const String &fnList) {
 		} else if (line.find(L"// END INCLUDES") != String::npos) {
 			keep = true;
 			lines.push_back(line);
+		} else if (line.find(L"// BEGIN TYPES") != String::npos) {
+			keep = false;
+			lines.push_back(line);
+			addLines(lines, typeList, indentation(line));
+		} else if (line.find(L"// END TYPES") != String::npos) {
+			keep = true;
+			lines.push_back(line);
 		} else if (keep) {
 			lines.push_back(line);
 		}
@@ -117,12 +134,12 @@ void updateFile(const Path &file, const String &headers, const String &fnList) {
 }
 
 void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listFile) {
-	vector<Function> result;
+	File result;
 	findFunctions(headerRoot, result);
 
 	set<String> headers;
-	for (nat i = 0; i < result.size(); i++) {
-		Path r = result[i].header.makeRelative(root);
+	for (nat i = 0; i < result.fns.size(); i++) {
+		Path r = result.fns[i].header.makeRelative(root);
 		headers.insert(r.toS());
 	}
 
@@ -131,10 +148,10 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 		headerStr << L"#include \"" << fixPath(*i) << "\"";
 	}
 
-	sort(result.begin(), result.end(), compareFn);
+	sort(result.fns.begin(), result.fns.end(), compareFn);
 	std::wostringstream codeStr;
-	for (nat i = 0; i < result.size(); i++) {
-		Function &f = result[i];
+	for (nat i = 0; i < result.fns.size(); i++) {
+		Function &f = result.fns[i];
 
 		codeStr << L"{ Name(L\"" << f.package << L"\"), ";
 		if (f.classMember.empty())
@@ -151,7 +168,17 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 		codeStr << L"), address(&" << f.cppName << L") },\n";
 	}
 
-	updateFile(listFile, headerStr.str(), codeStr.str());
+	sort(result.types.begin(), result.types.end(), compareType);
+	std::wostringstream typeStr;
+	for (nat i = 0; i < result.types.size(); i++) {
+		Type &t = result.types[i];
+
+		typeStr << L"{ Name(L\"" << t.package << L"\"), ";
+		typeStr << L"L\"" << t.name << L"\" }," << endl;
+		PLN("Found type:");
+	}
+
+	updateFile(listFile, headerStr.str(), codeStr.str(), typeStr.str());
 }
 
 int _tmain(int argc, _TCHAR* argv[]) {
