@@ -24,5 +24,4 @@ namespace storm {
 		Nat STORM_FN count() const;
 	};
 
-
 }

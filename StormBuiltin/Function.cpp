@@ -97,6 +97,44 @@ namespace stormbuiltin {
 		return fn;
 	}
 
+	String parseType(Tokenizer &tok) {
+		std::wostringstream result(tok.next());
+
+		while (tok.peek() == L"::") {
+			result << tok.next();
+			result << tok.next();
+		}
+
+		return result.str();
+	}
+
+	String parseSuper(Tokenizer &tok) {
+		if (tok.peek() == L";")
+			return L"";
+
+		String result;
+		nat state = 0;
+		while (tok.peek() != L"{") {
+			String t = tok.next();
+			switch (state) {
+			case 0:
+				if (t == L"," || t == L":")
+					state = 1;
+				break;
+			case 1:
+				if (t == L"public" && result == L"")
+					result = parseType(tok);
+				state = 1;
+				break;
+			}
+		}
+
+		tok.next();
+		if (result == L"Object")
+			return L"";
+		return result;
+	}
+
 	File parseFile(Tokenizer &tok) {
 		File r;
 		vector<Function> &found = r.fns;
@@ -137,11 +175,10 @@ namespace stormbuiltin {
 			} else if (token == L"class" || token == L"struct") {
 				Scope s = { tok.next(), 0, true };
 				scope.push_back(s);
-				if (tok.peek() != L";")
-					while (tok.next() != L"{");
+				String super = parseSuper(tok);
 
 				if (addType) {
-					Type c = { s.name, package };
+					Type c = { s.name, super, package };
 					types.push_back(c);
 				}
 			} else if (token == L"namespace") {

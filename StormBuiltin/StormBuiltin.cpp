@@ -174,8 +174,12 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 		Type &t = result.types[i];
 
 		typeStr << L"{ Name(L\"" << t.package << L"\"), ";
-		typeStr << L"L\"" << t.name << L"\" }," << endl;
-		PLN("Found type:");
+		typeStr << L"L\"" << t.name << L"\", ";
+		if (t.super.empty())
+			typeStr << L"null";
+		else
+			typeStr << L"L\"" << t.super << L"\"";
+		typeStr << " }," << endl;
 	}
 
 	updateFile(listFile, headerStr.str(), codeStr.str(), typeStr.str());

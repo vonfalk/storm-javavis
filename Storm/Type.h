@@ -44,6 +44,9 @@ namespace storm {
 		// Set the parent scope (done automatically by Package).
 		void setParentScope(Scope *parent);
 
+		// Set parent type. The parent type has to have the same type parameters as this one.
+		void setSuper(Type *super);
+
 		// Add new members.
 		void add(NameOverload *m);
 

@@ -73,10 +73,13 @@ namespace stormbuiltin {
 
 		wchar ch = src[pos];
 
-		if (ch == '/' && pos < src.size() && src[pos] == ch) {
+		if (ch == '/' && pos+1 < src.size() && (src[pos+1] == '/' || src[pos+1] == '*')) {
 			switch (state) {
 			case sStart:
-				state = sComment;
+				if (src[pos+1] == '*')
+					state = sMlComment;
+				else
+					state = sComment;
 				break;
 			case sString:
 			case sComment:
@@ -127,6 +130,11 @@ namespace stormbuiltin {
 		case sComment:
 			start = ++pos;
 			if (ch == '\n')
+				state = sStart;
+			break;
+		case sMlComment:
+			start = ++pos;
+			if (ch == '*' && pos < src.size() && src[pos] == '/')
 				state = sStart;
 			break;
 		case sDone:

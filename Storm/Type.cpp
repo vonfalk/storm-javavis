@@ -6,7 +6,7 @@ namespace storm {
 
 	const String Type::CTOR = L"__ctor";
 
-	Type::Type(const String &name, TypeFlags f) : Named(name), flags(f) {}
+	Type::Type(const String &name, TypeFlags f) : Named(name), flags(f), superType(null) {}
 
 	Type::~Type() {
 		clearMap(members);
@@ -21,12 +21,21 @@ namespace storm {
 		nameFallback = parent;
 	}
 
+	void Type::setSuper(Type *super) {
+		assert(super->flags == flags);
+		assert(superType == null);
+		superType = super;
+	}
+
 	Named *Type::findHere(const Name &name) {
 		return null;
 	}
 
 	void Type::output(wostream &to) const {
-		to << name << ":" << endl;
+		to << name;
+		if (superType)
+			to << L" : " << superType->name;
+		to << ":" << endl;
 		Indent i(to);
 
 		for (MemberMap::const_iterator i = members.begin(); i != members.end(); ++i) {

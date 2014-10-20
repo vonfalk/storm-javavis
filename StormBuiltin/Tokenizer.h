@@ -41,6 +41,7 @@ namespace stormbuiltin {
 			sOperator,
 			sString,
 			sComment,
+			sMlComment,
 			sDone,
 		};
 

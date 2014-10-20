@@ -38,6 +38,9 @@ namespace stormbuiltin {
 		// Name of the class.
 		String name;
 
+		// Superclass (if any).
+		String super;
+
 		// Package.
 		String package;
 	};

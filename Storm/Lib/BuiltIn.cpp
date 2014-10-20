@@ -44,7 +44,7 @@ namespace storm {
 	const BuiltInType *builtInTypes() {
 		static BuiltInType types[] = {
 			// BEGIN TYPES
-			{ Name(L"core"), L"Str" },
+			{ Name(L"core"), L"Str", null },
 			// END TYPES
 			{ L"", null },
 		};

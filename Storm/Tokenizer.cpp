@@ -84,7 +84,7 @@ namespace storm {
 
 		wchar ch = src[pos];
 
-		if (ch == '/' && pos < src.size() && src[pos] == ch) {
+		if (ch == '/' && pos+1 < src.size() && src[pos+1] == ch) {
 			switch (state) {
 			case sStart:
 				state = sComment;
