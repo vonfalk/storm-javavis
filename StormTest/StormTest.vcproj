@@ -216,6 +216,10 @@
 				RelativePath=".\ParserTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TransformTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

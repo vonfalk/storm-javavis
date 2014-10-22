@@ -32,6 +32,10 @@ namespace storm {
 		inline nat size() const { return parts.size(); }
 		inline const String &operator [](nat id) const { return parts[id]; }
 
+		// empty/any
+		inline bool any() const { return size() > 0; }
+		inline bool empty() const { return size() == 0; }
+
 	protected:
 		virtual void output(std::wostream &to) const;
 

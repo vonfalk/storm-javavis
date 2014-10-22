@@ -50,9 +50,11 @@ namespace storm {
 		// Add a function to this package.
 		void add(NameOverload *function);
 
+		// Sadly, used in Engine. Otherwise would be private.
+		virtual Named *findHere(const Name &name);
+
 	protected:
 		virtual void output(std::wostream &to) const;
-		virtual Named *findHere(const Name &name);
 
 	private:
 		// Our path. Points to null if this is a virtual package.

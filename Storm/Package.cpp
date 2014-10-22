@@ -164,7 +164,7 @@ namespace storm {
 			for (nat i = 0; i < files.size(); i++) {
 				const Path &f = files[i];
 				if (!f.isDir() && isBnfFile(f)) {
-					parseBnf(syntaxRules, f);
+					parseBnf(syntaxRules, f, this);
 				}
 			}
 		} catch (...) {

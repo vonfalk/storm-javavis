@@ -28,8 +28,9 @@ namespace storm {
 
 		// Release reference.
 		inline void release() {
-			if (atomicDecrement(refs) == 0)
-				delete this;
+			if (this)
+				if (atomicDecrement(refs) == 0)
+					delete this;
 		}
 
 	private:

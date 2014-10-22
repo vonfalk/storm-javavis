@@ -3,19 +3,19 @@
 DELIMITER => void : " *";
 
 // Root rule.
-Root => root() : Expr e[];
-Root => root() : Expr, Root;
+Root => root() : SExpr e;
+Root => root() : SExpr, Root;
 
 // Expression
-Expr => operator(e, op) : Expr e[], "\+" op, Expr e[];
-Expr => operator(e, op) : Expr e[], "-" op, Expr e[];
-Expr => var() : "[a-z]+" v;
-Expr => nr() : "[0-9]+" v;
+SExpr => sOperator(lhs, rhs, op) : SExpr lhs, "\+" op, SExpr rhs;
+SExpr => sOperator(lhs, rhs, op) : SExpr lhs, "-" op, SExpr rhs;
+SExpr => sVar() : "[a-z]+" v;
+SExpr => sNr() : "[0-9]+" v;
 
 // Root rule with repetitions.
-Rep1Root => foo() : "{", (Expr e[] - ";",)+ - "}";
-Rep2Root => foo() : "{", (Expr e[] - ";",)* - "}";
-Rep3Root => foo() : "{", (Expr e[] - ";",)? - "}";
+Rep1Root => SScope() : "{", (SExpr -> expr - ";",)+ - "}";
+Rep2Root => SScope() : "{", (SExpr -> expr - ";",)* - "}";
+Rep3Root => SScope() : "{", (SExpr -> expr - ";",)? - "}";
 
 
 

@@ -5,7 +5,8 @@
 
 namespace storm {
 
-	SyntaxOption::SyntaxOption(const SrcPos &pos) : pos(pos), owner(null), repStart(0), repEnd(0), repType(rNone) {}
+	SyntaxOption::SyntaxOption(const SrcPos &pos, Scope *scope)
+		: pos(pos), owner(null), repStart(0), repEnd(0), repType(rNone) {}
 
 	SyntaxOption::~SyntaxOption() {
 		::clear(tokens);
@@ -15,11 +16,11 @@ namespace storm {
 		::clear(tokens);
 		repStart = repEnd = 0;
 		repType = rNone;
-		matchFn = L"";
+		matchFn = Name();
 		matchFnParams.clear();
 	}
 
-	String SyntaxOption::type() const {
+	String SyntaxOption::rule() const {
 		if (owner)
 			return owner->name();
 		else
@@ -123,10 +124,11 @@ namespace storm {
 		repType = r;
 	}
 
-	void SyntaxOption::setMatchFn(const String &name, const vector<String> &params) {
+	void SyntaxOption::setMatchFn(const Name &name, const vector<String> &params) {
 		matchFn = name;
 		matchFnParams = params;
 	}
+
 
 	/**
 	 * Iterator.

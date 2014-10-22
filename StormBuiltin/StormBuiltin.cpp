@@ -145,7 +145,7 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 
 	std::wostringstream headerStr;
 	for (set<String>::iterator i = headers.begin(); i != headers.end(); i++) {
-		headerStr << L"#include \"" << fixPath(*i) << "\"";
+		headerStr << L"#include \"" << fixPath(*i) << "\"\n";
 	}
 
 	sort(result.fns.begin(), result.fns.end(), compareFn);
@@ -159,7 +159,10 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 		else
 			codeStr << 'L' << '"' << f.classMember << '"';
 		codeStr << L", ";
-		codeStr << L"Name(L\"" << f.result << L"\"), ";
+		if (f.result == L"void")
+			codeStr << L"Name(), ";
+		else
+			codeStr << L"Name(L\"" << f.result << L"\"), ";
 		codeStr << L"L\"" << f.name << L"\", ";
 		codeStr << L"list(" << f.params.size();
 		for (nat j = 0; j < f.params.size(); j++) {

@@ -1,13 +1,11 @@
 #include "stdafx.h"
 #include "Engine.h"
-#include "Lib/StdLib.h"
+#include "Std.h"
 
 namespace storm {
 
-	Engine::Engine(const Path &root) : rootPath(root), rootPkg(root, &rootPkg) {
-		defaultOrder.scopes.push_back(&rootPkg);
-		defaultOrder.scopes.push_back(package(Name(L"core"), true));
-
+	Engine::Engine(const Path &root) : rootPath(root), rootPkg(root, &defaultPkgs) {
+		defaultPkgs.pkgs.push_back(package(Name(L"core"), true));
 		addStdLib(*this);
 	}
 
@@ -35,6 +33,15 @@ namespace storm {
 		}
 
 		return createPackage(next, path, pos + 1);
+	}
+
+	Named *Engine::DefaultPkgs::findHere(const Name &name) {
+		for (nat i = 0; i < pkgs.size(); i++) {
+			Named *n = pkgs[i]->findHere(name);
+			if (n)
+				return n;
+		}
+		return null;
 	}
 
 }

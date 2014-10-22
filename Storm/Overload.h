@@ -30,6 +30,12 @@ namespace storm {
 		// Add an overload.
 		void add(NameOverload *n);
 
+		// Number of overloads.
+		nat size() const { return items.size(); }
+
+		// Get an overload, returns null on failure.
+		NameOverload *find(const vector<Value> &p);
+
 	protected:
 		virtual void output(wostream &to) const;
 

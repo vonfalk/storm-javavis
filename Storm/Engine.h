@@ -28,9 +28,20 @@ namespace storm {
 		Package *package(const Name &path, bool create = false);
 
 		// Get the root scope. (looks in core as well).
-		Scope *scope() { return &defaultOrder; }
+		Scope *scope() { return &rootPkg; }
 
 	private:
+		/**
+		 * Class for finding packages in core automatically.
+		 */
+		class DefaultPkgs : public Scope {
+		public:
+			vector<Package *> pkgs;
+
+		protected:
+			virtual Named *findHere(const Name &name);
+		};
+
 		// Path to root directory.
 		Path rootPath;
 
@@ -38,7 +49,7 @@ namespace storm {
 		Package rootPkg;
 
 		// Default look-up order.
-		ScopeChain defaultOrder;
+		DefaultPkgs defaultPkgs;
 
 		// Create the package (recursive).
 		Package *createPackage(Package *pkg, const Name &path, nat at = 0);

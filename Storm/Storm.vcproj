@@ -26,7 +26,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\ $(SolutionDir)Storm\Lib\BuiltIn.cpp"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\BuiltIn.cpp"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -51,6 +51,7 @@
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="4"
+				ShowIncludes="false"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -185,6 +186,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Overload.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Package.cpp"
 				>
 			</File>
@@ -202,6 +207,10 @@
 			</File>
 			<File
 				RelativePath=".\SrcPos.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Std.cpp"
 				>
 			</File>
 			<File
@@ -225,10 +234,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Lib\StdLib.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Lib\Str.cpp"
 				>
 			</File>
@@ -241,11 +246,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxToken.cpp"
+				RelativePath=".\SyntaxRule.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxRule.cpp"
+				RelativePath=".\SyntaxToken.cpp"
 				>
 			</File>
 			<File
@@ -261,15 +266,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lib\TypeClass.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Value.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Overload.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\TypeClass.cpp"
+				RelativePath=".\Lang\Simple.cpp"
 				>
 			</File>
 		</Filter>
@@ -315,6 +320,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Overload.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Package.h"
 				>
 			</File>
@@ -335,11 +344,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\stdafx.h"
+				RelativePath=".\Std.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\StdLib.h"
+				RelativePath=".\stdafx.h"
 				>
 			</File>
 			<File
@@ -359,11 +368,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxToken.h"
+				RelativePath=".\SyntaxRule.h"
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxRule.h"
+				RelativePath=".\SyntaxToken.h"
 				>
 			</File>
 			<File
@@ -383,15 +392,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lib\TypeClass.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Value.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Overload.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\TypeClass.h"
+				RelativePath=".\Lang\Simple.h"
 				>
 			</File>
 		</Filter>

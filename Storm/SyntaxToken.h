@@ -19,7 +19,10 @@ namespace storm {
 		bool method;
 
 		// Bind to something?
-		inline bool bind() const { return bindTo != L""; }
+		inline bool bind() const { return bindTo != L"" && !method; }
+
+		// Invoke something?
+		inline bool invoke() const { return bindTo != L"" && method; }
 
 		// More public interface here...
 

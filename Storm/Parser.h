@@ -165,6 +165,12 @@ namespace storm {
 			// Bind the next token to this variable.
 			const String &bindTokenTo() const;
 
+			// Invoke some method on the next token?
+			bool invokeToken() const;
+
+			// Invoke which metod on the next token.
+			const String &invokeOnToken() const;
+
 			// Does this state represent a state where we are done?
 			bool finish(const SyntaxOption *rootOption) const;
 

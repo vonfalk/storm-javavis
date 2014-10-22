@@ -10,7 +10,7 @@ namespace storm {
 
 	typedef hash_map<String, SyntaxRule*> TypeMap;
 
-	void parseBnf(TypeMap &types, Tokenizer &tok);
+	void parseBnf(TypeMap &types, Tokenizer &tok, Scope *scope);
 
 
 	/**
@@ -20,13 +20,13 @@ namespace storm {
 		return file.hasExt(L"bnf");
 	}
 
-	void parseBnf(hash_map<String, SyntaxRule*> &types, const Path &file) {
+	void parseBnf(hash_map<String, SyntaxRule*> &types, const Path &file, Scope *scope) {
 		util::TextReader *r = util::TextReader::create(new util::FileStream(file, util::Stream::mRead));
 		String content = r->getAll();
 		delete r;
 
 		Tokenizer tok(file, content, 0);
-		parseBnf(types, tok);
+		parseBnf(types, tok, scope);
 	}
 
 	SyntaxRule &getRule(TypeMap &map, const String &name) {
@@ -175,8 +175,8 @@ namespace storm {
 		}
 	}
 
-	void parseRule(SyntaxRule &to, Tokenizer &tok) {
-		SyntaxOption *option = new SyntaxOption(tok.position());
+	void parseRule(SyntaxRule &to, Tokenizer &tok, Scope *scope) {
+		SyntaxOption *option = new SyntaxOption(tok.position(), scope);
 
 		try {
 			parseCall(*option, tok);
@@ -216,14 +216,14 @@ namespace storm {
 			throw SyntaxError(paren.pos, L"Expected ;");
 	}
 
-	void parseBnf(TypeMap &types, Tokenizer &tok) {
+	void parseBnf(TypeMap &types, Tokenizer &tok, Scope *scope) {
 		while (tok.more()) {
 			// What we have here is either a rule or a rule declaration.
 			Token ruleName = tok.next();
 			Token delim = tok.next();
 
 			if (delim.token == L"=>") {
-				parseRule(getRule(types, ruleName.token), tok);
+				parseRule(getRule(types, ruleName.token), tok, scope);
 			} else if (delim.token == L"(") {
 				parseDeclaration(getRule(types, ruleName.token), tok);
 			} else {

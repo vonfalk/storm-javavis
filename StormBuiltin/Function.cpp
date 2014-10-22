@@ -150,27 +150,25 @@ namespace stormbuiltin {
 			bool wasType = false;
 			String token = tok.next();
 
-			if (token == L"STORM_PKG") {
+			if (token == L"#define") {
+				tok.next();
+			} else if (token == L"STORM_PKG") {
 				package = findPackage(tok);
 			} else if (token == L"STORM_FN") {
-				if (lastType != L"#define") {
-					Function fn = parseFn(tok, scope, lastType, package);
-					found.push_back(fn);
-				}
+				Function fn = parseFn(tok, scope, lastType, package);
+				found.push_back(fn);
 			} else if (token == L"STORM") {
-				if (lastType != L"#define") {
-					String next = tok.peek();
-					if (next == L"class" || next == L"struct") {
-						addType = true;
-					} else {
-						Function fn = parseFn(tok, scope, L"", package);
-						fn.result = fn.name;
-						fn.name = L"__ctor";
-						if (scope.empty() || !scope.back().isType)
-							throw Error(L"Constructors must live in types.");
-						fn.cppName = creationStr(fn, scope);
-						found.push_back(fn);
-					}
+				String next = tok.peek();
+				if (next == L"class" || next == L"struct") {
+					addType = true;
+				} else {
+					Function fn = parseFn(tok, scope, L"", package);
+					fn.result = fn.name;
+					fn.name = L"__ctor";
+					if (scope.empty() || !scope.back().isType)
+						throw Error(L"Constructors must live in types.");
+					fn.cppName = creationStr(fn, scope);
+					found.push_back(fn);
 				}
 			} else if (token == L"class" || token == L"struct") {
 				Scope s = { tok.next(), 0, true };
@@ -199,6 +197,7 @@ namespace stormbuiltin {
 						scope.back().extra--;
 				}
 			} else if (token == L";") {
+			} else if (token.endsWith(L":")) {
 			} else {
 				if (token == L"*" || token == L"&") {
 					wasType = true;

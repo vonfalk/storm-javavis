@@ -32,6 +32,15 @@ namespace storm {
 		items.insert(toInsert);
 	}
 
+	NameOverload *Overload::find(const vector<Value> &params) {
+		Item ti(params);
+		ItemMap::const_iterator i = items.find(ti);
+		if (i == items.end())
+			return null;
+		else
+			return i->v;
+	}
+
 	/**
 	 * Value.
 	 */

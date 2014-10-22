@@ -5,6 +5,7 @@
 
 // Below are auto-generated includes.
 // BEGIN INCLUDES
+#include "Lang/Simple.h"
 #include "Lib/Str.h"
 // END INCLUDES
 
@@ -45,6 +46,8 @@ namespace storm {
 		static BuiltInType types[] = {
 			// BEGIN TYPES
 			{ Name(L"core"), L"Str", null },
+			{ Name(L"lang.simple"), L"SExpr", null },
+			{ Name(L"lang.simple"), L"SScope", null },
 			// END TYPES
 			{ L"", null },
 		};
@@ -60,6 +63,10 @@ namespace storm {
 			{ Name(L"core"), L"Str", Name(L"Str"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::Str>) },
 			{ Name(L"core"), L"Str", Name(L"Str"), L"__ctor", list(2, Name(L"Type"), Name(L"Str")), address(&create2<storm::Str, Str>) },
 			{ Name(L"core"), L"Str", Name(L"Nat"), L"count", list(0), address(&storm::Str::count) },
+			{ Name(L"lang.simple"), L"SScope", Name(), L"expr", list(1, Name(L"SExpr")), address(&storm::SScope::expr) },
+			{ Name(L"lang.simple"), null, Name(L"SExpr"), L"sNr", list(1, Name(L"Str")), address(&storm::sNr) },
+			{ Name(L"lang.simple"), null, Name(L"SExpr"), L"sOperator", list(3, Name(L"SExpr"), Name(L"SExpr"), Name(L"Str")), address(&storm::sOperator) },
+			{ Name(L"lang.simple"), null, Name(L"SExpr"), L"sVar", list(1, Name(L"Str")), address(&storm::sVar) },
 			// END LIST
 			{ Name(), null, Name(), L"", list(0), null },
 		};

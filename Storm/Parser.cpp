@@ -15,7 +15,7 @@ namespace storm {
 	 * Parser implementation.
 	 */
 
-	Parser::Parser(SyntaxSet &set, const String &src) : syntax(set), src(src), rootOption(SrcPos()) {}
+	Parser::Parser(SyntaxSet &set, const String &src) : syntax(set), src(src), rootOption(SrcPos(), null) {}
 
 	nat Parser::parse(const String &rootType, nat pos) {
 		rootOption.clear();
@@ -95,7 +95,7 @@ namespace storm {
 		if (!state.pos.end())
 			return;
 
-		String completed = state.pos.rule().type();
+		String completed = state.pos.rule().rule();
 		StateSet &from = steps[state.from];
 		for (nat i = 0; i < from.size(); i++) {
 			State st = from[i];
@@ -236,18 +236,25 @@ namespace storm {
 			for (; cState->prev.valid(); pos = cState->prev, cState = &state(pos)) {
 				State *pState = &state(cState->prev);
 
-				if (pState->bindToken()) {
-					const String &to = pState->bindTokenTo();
+				if (pState->bindToken() || pState->invokeToken()) {
+					const String &to = pState->bindToken() ?
+						pState->bindTokenTo() : pState->invokeOnToken();
 
 					if (cState->completed.valid()) {
 						tmp = tree(cState->completed);
-						result->add(to, tmp);
+						if (pState->bindToken())
+							result->add(to, tmp);
+						else
+							result->invoke(to, tmp);
 						tmp = null;
 					} else {
 						nat fromPos = cState->prev.step;
 						nat toPos = pos.step;
 						String matched = src.substr(fromPos, toPos - fromPos);
-						result->add(to, matched);
+						if (pState->bindToken())
+							result->add(to, matched);
+						else
+							result->invoke(to, matched);
 					}
 				}
 			}
@@ -306,6 +313,14 @@ namespace storm {
 	}
 
 	const String &Parser::State::bindTokenTo() const {
+		return pos.token()->bindTo;
+	}
+
+	bool Parser::State::invokeToken() const {
+		return pos.token()->invoke();
+	}
+
+	const String &Parser::State::invokeOnToken() const {
 		return pos.token()->bindTo;
 	}
 

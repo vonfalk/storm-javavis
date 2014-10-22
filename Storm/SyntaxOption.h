@@ -1,6 +1,7 @@
 #pragma once
 #include "SyntaxToken.h"
 #include "SrcPos.h"
+#include "Scope.h"
 
 namespace storm {
 
@@ -12,7 +13,7 @@ namespace storm {
 		friend class SyntaxRule;
 	public:
 		// 'pos' is the start of this rule's definition.
-		SyntaxOption(const SrcPos &pos);
+		SyntaxOption(const SrcPos &pos, Scope *scope);
 		~SyntaxOption();
 
 		// Clear all tokens.
@@ -26,8 +27,8 @@ namespace storm {
 			rOnePlus,
 		};
 
-		// Get the name of the type this rule is a member of. Returns "" if not a member.
-		String type() const;
+		// Get the name of the rule this option is a member of. Returns "" if not a member.
+		String rule() const;
 		inline SyntaxRule *parent() const { return owner; }
 
 		// Add a token.
@@ -41,7 +42,7 @@ namespace storm {
 		inline bool hasRepeat() const { return repType != rNone; }
 
 		// Set function to call on match.
-		void setMatchFn(const String &name, const vector<String> &params);
+		void setMatchFn(const Name &name, const vector<String> &params);
 
 		// This rule's position.
 		const SrcPos pos;
@@ -51,6 +52,9 @@ namespace storm {
 		void output(std::wostream &to, nat marker) const;
 
 	private:
+		// Syntactic scope.
+		Scope *scope;
+
 		// Our owner.
 		SyntaxRule *owner;
 
@@ -62,11 +66,12 @@ namespace storm {
 		Repeat repType;
 
 		// Function name to call.
-		String matchFn;
+		Name matchFn;
 		vector<String> matchFnParams;
 
 		// Helper for repetition outputs. (0 = nothing, 1 = start, 2 = end)
 		int outputRep(std::wostream &to, nat i, nat marker) const;
+
 	};
 
 

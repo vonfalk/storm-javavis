@@ -1,9 +1,11 @@
 #include "stdafx.h"
 #include "StdLib.h"
-#include "BuiltIn.h"
+#include "Lib/BuiltIn.h"
+#include "Lib/TypeClass.h"
+#include "Lib/Int.h"
 #include "Exception.h"
 #include "Function.h"
-#include "TypeClass.h"
+#include "Engine.h"
 
 namespace storm {
 
@@ -39,7 +41,7 @@ namespace storm {
 				throw BuiltInError(L"Could not locate " + String(fn->typeMember) + L" in " + toS(fn->pkg));
 		}
 
-		Value result = null;
+		Value result;
 		vector<Value> params;
 
 		if (fn->typeMember) {
@@ -51,7 +53,8 @@ namespace storm {
 				assert(false);
 		}
 
-		result = findValue(scope, fn->result);
+		if (fn->result.any())
+			result = findValue(scope, fn->result);
 		params.reserve(fn->params.size());
 		for (nat i = 0; i < fn->params.size(); i++)
 			params.push_back(findValue(scope, fn->params[i]));
@@ -119,7 +122,6 @@ namespace storm {
 		root->add(typeType());
 
 		addBuiltIn(to);
-		PLN(*root);
 	}
 
 }

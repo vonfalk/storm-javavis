@@ -7,6 +7,7 @@ namespace storm {
 
 	SyntaxNode::~SyntaxNode() {
 		clearMap(vars);
+		clearMap(invocations); // Hack!
 	}
 
 	void SyntaxNode::output(wostream &to) const {
@@ -34,6 +35,28 @@ namespace storm {
 		try {
 			SyntaxVariable *v = find(var, typeOf(var, false));
 			v->add(node);
+		} catch (SyntaxTypeError e) {
+			e.where = srcRule->pos;
+			throw e;
+		}
+	}
+
+	void SyntaxNode::invoke(const String &m, const String &val) {
+		try {
+			SyntaxVariable *sv = new SyntaxVariable(SyntaxVariable::tString);
+			invocations.push_back(make_pair(m, sv));
+			sv->add(val);
+		} catch (SyntaxTypeError e) {
+			e.where = srcRule->pos;
+			throw e;
+		}
+	}
+
+	void SyntaxNode::invoke(const String &m, SyntaxNode *val) {
+		try {
+			SyntaxVariable *sv = new SyntaxVariable(SyntaxVariable::tNode);
+			invocations.push_back(make_pair(m, sv));
+			sv->add(val);
 		} catch (SyntaxTypeError e) {
 			e.where = srcRule->pos;
 			throw e;
@@ -70,6 +93,14 @@ namespace storm {
 			}
 			return v;
 		}
+	}
+
+	/**
+	 * Transformation
+	 */
+
+	Object *transform(const SyntaxNode &node) {
+		return null;
 	}
 
 }

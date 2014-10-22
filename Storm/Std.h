@@ -1,8 +1,9 @@
 #pragma once
 #include "Engine.h"
 
-#include "Int.h"
-#include "Str.h"
+#include "Lib/Int.h"
+#include "Lib/Str.h"
+#include "Lib/Object.h"
 
 namespace storm {
 

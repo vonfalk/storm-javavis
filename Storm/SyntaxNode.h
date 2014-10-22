@@ -1,6 +1,7 @@
 #pragma once
 #include "SyntaxVariable.h"
 #include "SyntaxOption.h"
+#include "Std.h"
 
 namespace storm {
 
@@ -23,6 +24,10 @@ namespace storm {
 		void add(const String &var, const String &val);
 		void add(const String &var, SyntaxNode *node);
 
+		// Add a method invocation to the syntax node. Throws an error on failure.
+		void invoke(const String &member, const String &val);
+		void invoke(const String &member, SyntaxNode *node);
+
 		// Find the entry in the map for the variable.
 		SyntaxVariable *find(const String &name, SyntaxVariable::Type type);
 
@@ -37,11 +42,20 @@ namespace storm {
 		typedef map<String, SyntaxVariable*> VarMap;
 		VarMap vars;
 
+		// Method invocations, in order.
+		typedef std::pair<String, SyntaxVariable*> Invocation;
+		vector<Invocation> invocations;
+
 		// The syntax rule that resulted in this node.
 		const SyntaxOption *srcRule;
 
 		// Find the type to use for this variable.
 		SyntaxVariable::Type typeOf(const String &name, bool isString);
 	};
+
+
+	// Transform a syntax node into the representation described by
+	// the original syntax rules and options. TODO: Type!
+	Object *transform(const SyntaxNode &node);
 
 }
