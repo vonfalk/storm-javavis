@@ -20,6 +20,9 @@ namespace storm {
 		// Copy ctor
 		STORM Str(Type *type, const Str &copy);
 
+		// Create from regular string.
+		Str(Type *type, const String &s);
+
 		// String length.
 		Nat STORM_FN count() const;
 	};

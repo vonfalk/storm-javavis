@@ -10,10 +10,15 @@ namespace storm {
 	 * reference counting mechanism among other things.
 	 * These are designed to be manipulated through pointer,
 	 * and is therefore not copyable using regular C++ methods.
+	 *
+	 * Rules for the ref-counting:
+	 * When returning Object*s, the caller has the responsibility
+	 * to release one reference. Ie, the caller has ownership of one reference.
+	 * Function parameters are also the caller's responisibility.
 	 */
 	class Object : NoCopy {
 	public:
-		// Initialize object to 0 references.
+		// Initialize object to 1 reference.
 		Object(Type *type);
 
 		virtual ~Object();
@@ -37,5 +42,28 @@ namespace storm {
 		// Current number of references.
 		nat refs;
 	};
+
+
+	// Release (sets to null as well!)
+	inline void release(Object *&o) {
+		o->release();
+		o = null;
+	}
+
+	// Release collection.
+	template <class T>
+	void releaseVec(T &v) {
+		for (T::iterator i = v.begin(); i != v.end(); ++i)
+			release(*i);
+		v.clear();
+	}
+
+	// Release map.
+	template <class T>
+	void releaseMap(T &v) {
+		for (T::iterator i = v.begin(); i != v.end(); ++i)
+			release(i->second);
+		v.clear();
+	}
 
 }

@@ -9,8 +9,8 @@ Root => root() : SExpr, Root;
 // Expression
 SExpr => sOperator(lhs, rhs, op) : SExpr lhs, "\+" op, SExpr rhs;
 SExpr => sOperator(lhs, rhs, op) : SExpr lhs, "-" op, SExpr rhs;
-SExpr => sVar() : "[a-z]+" v;
-SExpr => sNr() : "[0-9]+" v;
+SExpr => sVar(v) : "[a-z]+" v;
+SExpr => sNr(v) : "[0-9]+" v;
 
 // Root rule with repetitions.
 Rep1Root => SScope() : "{", (SExpr -> expr - ";",)+ - "}";

@@ -30,16 +30,16 @@ namespace storm {
 		void add(SyntaxNode *node);
 
 		// Which type?
-		inline Type type() const { return vType; }
+		const Type type;
 
 		// Get the name of 'type'.
 		static String name(Type t);
 
 		// Get different types. Asserts on failure!
-		inline const String &string() const { assert(vType == tString); return *str; }
-		inline const vector<String> &stringArr() const { assert(vType == tStringArr); return *strArr; }
-		inline SyntaxNode *node() const { assert(vType == tNode); return n; }
-		inline const vector<SyntaxNode*> &nodeArr() const { assert(vType == tNodeArr); return *nArr; }
+		inline const String &string() const { assert(type == tString); return *str; }
+		inline const vector<String> &stringArr() const { assert(type == tStringArr); return *strArr; }
+		inline SyntaxNode *node() const { assert(type == tNode); return n; }
+		inline const vector<SyntaxNode*> &nodeArr() const { assert(type == tNodeArr); return *nArr; }
 
 		// Orphan any owned data.
 		void orphan();
@@ -51,9 +51,6 @@ namespace storm {
 		virtual void output(wostream &to) const;
 
 	private:
-		// What kind of data?
-		Type vType;
-
 		// Different data types.
 		union {
 			String *str;
@@ -72,6 +69,7 @@ namespace storm {
 	class SyntaxTypeError : public CodeError {
 	public:
 		SyntaxTypeError(const String &msg) : CodeError(SrcPos()), msg(msg) {}
+		SyntaxTypeError(const String &msg, const SrcPos &pos) : CodeError(pos), msg(msg) {}
 
 		inline String what() const { return where.toS() + L": Invalid types: " + msg; }
 	private:

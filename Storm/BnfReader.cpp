@@ -83,7 +83,8 @@ namespace storm {
 		if (endSt.token != L":")
 			throw SyntaxError(endSt.pos, L"Expected :");
 
-		to.setMatchFn(name.token, params);
+		to.matchFn = name.token;
+		to.matchFnParams = params;
 	}
 
 	bool isEndOfToken(const Token &t) {

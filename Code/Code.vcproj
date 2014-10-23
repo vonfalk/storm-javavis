@@ -296,6 +296,10 @@
 				RelativePath=".\X86\VariableX86.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Function.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -412,6 +416,10 @@
 			</File>
 			<File
 				RelativePath=".\X86\VariableX86.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Function.h"
 				>
 			</File>
 		</Filter>

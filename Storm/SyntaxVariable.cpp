@@ -5,7 +5,7 @@
 
 namespace storm {
 
-	SyntaxVariable::SyntaxVariable(Type t) : vType(t) {
+	SyntaxVariable::SyntaxVariable(Type t) : type(t) {
 		switch (t) {
 		case tString:
 			str = null;
@@ -25,7 +25,7 @@ namespace storm {
 	}
 
 	SyntaxVariable::~SyntaxVariable() {
-		switch (vType) {
+		switch (type) {
 		case tString:
 			delete str;
 			break;
@@ -62,7 +62,7 @@ namespace storm {
 	}
 
 	void SyntaxVariable::add(const String &v) {
-		switch (vType) {
+		switch (type) {
 		case tString:
 			if (str)
 				throw SyntaxTypeError(L"Expected string array, found string.");
@@ -73,12 +73,12 @@ namespace storm {
 			strArr->push_back(v);
 			break;
 		default:
-			throw SyntaxTypeError(L"Expected string or string array, found " + name(vType));
+			throw SyntaxTypeError(L"Expected string or string array, found " + name(type));
 		}
 	}
 
 	void SyntaxVariable::add(SyntaxNode *v) {
-		switch (vType) {
+		switch (type) {
 		case tNode:
 			if (n)
 				throw SyntaxTypeError(L"Expected syntax node array, found syntax node.");
@@ -89,12 +89,12 @@ namespace storm {
 			nArr->push_back(v);
 			break;
 		default:
-			throw SyntaxTypeError(L"Expected syntax node or syntax node array, found " + name(vType));
+			throw SyntaxTypeError(L"Expected syntax node or syntax node array, found " + name(type));
 		}
 	}
 
 	void SyntaxVariable::output(wostream &to) const {
-		switch (vType) {
+		switch (type) {
 		case tString:
 			if (str)
 				to << *str;
@@ -122,7 +122,7 @@ namespace storm {
 	}
 
 	void SyntaxVariable::orphan() {
-		switch (vType) {
+		switch (type) {
 		case tNode:
 			n = null;
 			break;
@@ -133,7 +133,7 @@ namespace storm {
 	}
 
 	void SyntaxVariable::reverseArray() {
-		switch (vType) {
+		switch (type) {
 		case tStringArr:
 			std::reverse(strArr->begin(), strArr->end());
 			break;

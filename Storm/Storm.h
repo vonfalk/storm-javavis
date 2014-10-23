@@ -15,3 +15,7 @@
 #define STORM
 
 
+namespace storm {
+	class Engine;
+}
+

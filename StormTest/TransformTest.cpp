@@ -7,16 +7,22 @@
 
 using namespace storm;
 
-bool tfm(SyntaxSet &set, const String &root, const String &str) {
+bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str) {
 	Parser p(set, str);
 	if (!p.parse(root))
 		return false;
 	SyntaxNode *t = p.tree();
 	if (!t)
 		return false;
-
 	PLN(*t);
-	Object *o = transform(*t);
+
+	Object *o = null;
+	try {
+		o = transform(e, *t);
+	} catch (...) {
+		delete t;
+		throw;
+	}
 
 	// Null-safe!
 	o->release();
@@ -32,6 +38,6 @@ BEGIN_TEST(TransformTest) {
 	Package *simple = engine.package(Name(L"lang.simple"));
 	SyntaxSet set;
 	set.add(*simple);
-	CHECK(tfm(set, L"Root", L"a + b"));
+	CHECK(tfm(engine, set, L"Rep1Root", L"{ a + b; }"));
 
 } END_TEST

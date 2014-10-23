@@ -19,6 +19,18 @@ namespace storm {
 
 
 	/**
+	 * Internal error.
+	 */
+	class InternalError : public Exception {
+	public:
+		inline InternalError(const String &w) : w(w) {}
+		inline virtual String what() const { return w; }
+	private:
+		String w;
+	};
+
+
+	/**
 	 * Some syntax error.
 	 */
 	class SyntaxError : public CodeError {

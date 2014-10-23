@@ -15,6 +15,8 @@ namespace storm {
 
 	STORM class SScope : public Object {
 	public:
+		STORM SScope(Type *t);
+
 		void STORM_FN expr(SExpr *expr);
 	};
 

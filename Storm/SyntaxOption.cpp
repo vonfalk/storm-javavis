@@ -6,7 +6,7 @@
 namespace storm {
 
 	SyntaxOption::SyntaxOption(const SrcPos &pos, Scope *scope)
-		: pos(pos), owner(null), repStart(0), repEnd(0), repType(rNone) {}
+		: scope(scope), pos(pos), owner(null), repStart(0), repEnd(0), repType(rNone) {}
 
 	SyntaxOption::~SyntaxOption() {
 		::clear(tokens);
@@ -122,11 +122,6 @@ namespace storm {
 	void SyntaxOption::endRepeat(Repeat r) {
 		repEnd = tokens.size();
 		repType = r;
-	}
-
-	void SyntaxOption::setMatchFn(const Name &name, const vector<String> &params) {
-		matchFn = name;
-		matchFnParams = params;
 	}
 
 

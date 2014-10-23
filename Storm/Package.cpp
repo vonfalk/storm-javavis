@@ -94,10 +94,14 @@ namespace storm {
 			return null;
 
 		TypeMap::iterator i = types.find(name[start]);
-		if (i == types.end())
-			return null;
-		else
+		if (i != types.end())
 			return i->second;
+
+		MemberMap::iterator j = members.find(name[start]);
+		if (j != members.end())
+			return j->second;
+
+		return null;
 	}
 
 	Package *Package::loadPackage(const String &name) {

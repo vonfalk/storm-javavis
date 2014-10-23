@@ -30,6 +30,10 @@ namespace storm {
 		// Get the root scope. (looks in core as well).
 		Scope *scope() { return &rootPkg; }
 
+		// Get some commonly used types.
+		Type *strType();
+		Type *typeType();
+
 	private:
 		/**
 		 * Class for finding packages in core automatically.
@@ -53,6 +57,12 @@ namespace storm {
 
 		// Create the package (recursive).
 		Package *createPackage(Package *pkg, const Name &path, nat at = 0);
+
+		// Cached types.
+		Type *tStr, *tType;
+
+		// Set T to the type, reporting any errors.
+		void setType(Type *&t, const String &name);
 	};
 
 }

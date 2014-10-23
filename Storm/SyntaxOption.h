@@ -41,8 +41,12 @@ namespace storm {
 		// Has any repeat?
 		inline bool hasRepeat() const { return repType != rNone; }
 
-		// Set function to call on match.
-		void setMatchFn(const Name &name, const vector<String> &params);
+		// Syntactic scope.
+		Scope *const scope;
+
+		// Function name to call.
+		Name matchFn;
+		vector<String> matchFnParams;
 
 		// This rule's position.
 		const SrcPos pos;
@@ -52,9 +56,6 @@ namespace storm {
 		void output(std::wostream &to, nat marker) const;
 
 	private:
-		// Syntactic scope.
-		Scope *scope;
-
 		// Our owner.
 		SyntaxRule *owner;
 
@@ -64,10 +65,6 @@ namespace storm {
 		// Start/end of repeat.
 		nat repStart, repEnd;
 		Repeat repType;
-
-		// Function name to call.
-		Name matchFn;
-		vector<String> matchFnParams;
 
 		// Helper for repetition outputs. (0 = nothing, 1 = start, 2 = end)
 		int outputRep(std::wostream &to, nat i, nat marker) const;

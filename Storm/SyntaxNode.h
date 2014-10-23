@@ -16,7 +16,7 @@ namespace storm {
 	 */
 	class SyntaxNode : public Printable, NoCopy {
 	public:
-		SyntaxNode(const SyntaxOption *rule);
+		SyntaxNode(const SyntaxOption *option);
 
 		~SyntaxNode();
 
@@ -28,11 +28,21 @@ namespace storm {
 		void invoke(const String &member, const String &val);
 		void invoke(const String &member, SyntaxNode *node);
 
-		// Find the entry in the map for the variable.
+		// Find the entry in the map for the variable. Creates the variable if it does not exist.
 		SyntaxVariable *find(const String &name, SyntaxVariable::Type type);
+
+		// Find the entry in the map for the variable. Returns null if the variable does not exist.
+		SyntaxVariable *find(const String &name) const;
 
 		// Reverse all arrays in this node (not recursive).
 		void reverseArrays();
+
+		// The syntax option that resulted in this node.
+		const SyntaxOption *const option;
+
+		// Get invocations.
+		inline nat invocationCount() const { return invocations.size(); }
+		inline std::pair<String, SyntaxVariable*> invocation(nat i) const { return invocations[i]; }
 
 	protected:
 		virtual void output(wostream &to) const;
@@ -46,16 +56,14 @@ namespace storm {
 		typedef std::pair<String, SyntaxVariable*> Invocation;
 		vector<Invocation> invocations;
 
-		// The syntax rule that resulted in this node.
-		const SyntaxOption *srcRule;
-
 		// Find the type to use for this variable.
 		SyntaxVariable::Type typeOf(const String &name, bool isString);
+
 	};
 
 
 	// Transform a syntax node into the representation described by
 	// the original syntax rules and options. TODO: Type!
-	Object *transform(const SyntaxNode &node);
+	Object *transform(Engine &e, const SyntaxNode &node);
 
 }

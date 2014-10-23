@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Scope.h"
 #include "Named.h"
+#include "Overload.h"
 
 namespace storm {
 
@@ -12,6 +13,16 @@ namespace storm {
 			return nameFallback->find(name);
 		else
 			return r;
+	}
+
+	NameOverload *Scope::find(const Name &name, const vector<Value> &params) {
+		Named *named = find(name);
+
+		if (Overload *overload = as<Overload>(named)) {
+			return overload->find(params);
+		} else {
+			return null;
+		}
 	}
 
 

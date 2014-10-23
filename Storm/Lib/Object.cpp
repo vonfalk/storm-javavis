@@ -3,7 +3,7 @@
 
 namespace storm {
 
-	Object::Object(Type *t) : type(t), refs(0) {}
+	Object::Object(Type *t) : type(t), refs(1) {}
 
 	Object::~Object() {}
 

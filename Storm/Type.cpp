@@ -28,7 +28,14 @@ namespace storm {
 	}
 
 	Named *Type::findHere(const Name &name) {
-		return null;
+		if (name.size() != 1)
+			return null;
+
+		MemberMap::const_iterator i = members.find(name[0]);
+		if (i == members.end())
+			return null;
+		else
+			return i->second;
 	}
 
 	void Type::output(wostream &to) const {

@@ -3,6 +3,8 @@
 
 namespace storm {
 
+	SScope::SScope(Type *t) : Object(t) {}
+
 	void SScope::expr(SExpr *expr) {}
 
 	SExpr *sOperator(SExpr *lhs, SExpr *rhs, Str *op) { return null; }

@@ -1,9 +1,11 @@
 #pragma once
 #include "Name.h"
+#include "Value.h"
 
 namespace storm {
 
 	class Named;
+	class NameOverload;
 
 	/**
 	 * Denotes a scope to use when looking up names.
@@ -15,6 +17,10 @@ namespace storm {
 		// Find the given NameRef, either by using an absulute path or something
 		// relative to the current object.
 		Named *find(const Name &name);
+
+		// Find a overloaded name. Usually a function. Equivalent to call 'find' above
+		// and then try to find something with parameters.
+		NameOverload *find(const Name &name, const vector<Value> &params);
 
 	protected:
 		// Fallback for name lookup.

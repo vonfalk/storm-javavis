@@ -12,7 +12,7 @@ namespace storm {
 
 	void Value::output(wostream &to) const {
 		if (type == null)
-			to << L"null";
+			to << L"void";
 		else
 			to << type->name;
 	}

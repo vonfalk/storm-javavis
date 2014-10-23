@@ -92,14 +92,6 @@ inline void clearMap(T &map) {
 	map.clear();
 }
 
-// Release a pointer to an interface.
-template <class T>
-inline void release(T *&ptr) {
-	if (ptr) ptr->Release();
-	ptr = null;
-}
-
-
 //Disable warning about using this pointer in ctor of objects since
 //this occurs in almost every class using the member function pointer.
 #pragma warning ( disable : 4355 )
