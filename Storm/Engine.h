@@ -30,9 +30,11 @@ namespace storm {
 		// Get the root scope. (looks in core as well).
 		Scope *scope() { return &rootPkg; }
 
-		// Get some commonly used types.
-		Type *strType();
+		// Get some commonly used types. TODO: remove the need!
 		Type *typeType();
+
+		// Get a built-in type.
+		inline Type *builtIn(nat id) const { return cached[id]; }
 
 	private:
 		/**
@@ -59,7 +61,10 @@ namespace storm {
 		Package *createPackage(Package *pkg, const Name &path, nat at = 0);
 
 		// Cached types.
-		Type *tStr, *tType;
+		Type *tType;
+
+		// Cached types.
+		vector<Type *> cached;
 
 		// Set T to the type, reporting any errors.
 		void setType(Type *&t, const String &name);

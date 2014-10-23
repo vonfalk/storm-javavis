@@ -9,19 +9,20 @@ namespace storm {
 	/**
 	 * The string type used by the generated code.
 	 */
-	STORM class Str : public Object {
+	class Str : public Object {
+		STORM_CLASS;
 	public:
 		// The value of this 'str' object.
 		String v;
 
 		// Empty ctor
-		STORM Str(Type *type);
+		STORM_CTOR Str(Type *type);
 
 		// Copy ctor
-		STORM Str(Type *type, const Str &copy);
+		STORM_CTOR Str(Type *type, const Str &copy);
 
 		// Create from regular string.
-		Str(Type *type, const String &s);
+		Str(Engine &e, const String &s);
 
 		// String length.
 		Nat STORM_FN count() const;

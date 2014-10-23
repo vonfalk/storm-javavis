@@ -8,13 +8,13 @@ namespace storm {
 	 * Definition of the integer type in the storm language.
 	 */
 	typedef code::Int Int;
-	Type *intType();
+	Type *intType(Engine &e);
 
 
 	/**
 	 * Natural number (uint) type.
 	 */
 	typedef code::Nat Nat;
-	Type *natType();
+	Type *natType(Engine &e);
 
 }

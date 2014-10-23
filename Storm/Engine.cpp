@@ -7,9 +7,8 @@ namespace storm {
 
 	Engine::Engine(const Path &root) : rootPath(root), rootPkg(root, &defaultPkgs) {
 		defaultPkgs.pkgs.push_back(package(Name(L"core"), true));
-		addStdLib(*this);
+		addStdLib(*this, cached);
 
-		setType(tStr, L"core.Str");
 		setType(tType, L"core.Type");
 	}
 
@@ -55,10 +54,6 @@ namespace storm {
 				return n;
 		}
 		return null;
-	}
-
-	Type *Engine::strType() {
-		return tStr;
 	}
 
 	Type *Engine::typeType() {

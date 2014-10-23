@@ -3,6 +3,8 @@
 
 namespace storm {
 
+	class Type;
+
 	/**
 	 * A list of all built-in classes.
 	 */
@@ -16,6 +18,9 @@ namespace storm {
 
 		// Name of parent type (or null).
 		const wchar *super;
+
+		// Static Type pointer index.
+		nat typePtrId;
 	};
 
 	/**

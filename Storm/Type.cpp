@@ -6,7 +6,7 @@ namespace storm {
 
 	const String Type::CTOR = L"__ctor";
 
-	Type::Type(const String &name, TypeFlags f) : Named(name), flags(f), superType(null) {}
+	Type::Type(Engine &e, const String &name, TypeFlags f) : Named(name), engine(e), flags(f), superType(null) {}
 
 	Type::~Type() {
 		clearMap(members);

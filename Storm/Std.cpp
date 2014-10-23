@@ -75,13 +75,14 @@ namespace storm {
 		}
 	}
 
-	static void addBuiltIn(Engine &to, const BuiltInType *t) {
+	static Type *addBuiltIn(Engine &to, const BuiltInType *t) {
 		Package *pkg = to.package(t->pkg);
 		if (!pkg)
 			throw BuiltInError(L"Failed to locate package " + toS(t->pkg));
 
-		Type *tc = new Type(t->name, typeClass);
+		Type *tc = new Type(to, t->name, typeClass);
 		pkg->add(tc);
+		return tc;
 	}
 
 	static void addSuper(Engine &to, const BuiltInType *t) {
@@ -102,9 +103,10 @@ namespace storm {
 		tc->setSuper(super);
 	}
 
-	static void addBuiltIn(Engine &to) {
+	static void addBuiltIn(Engine &to, vector<Type *> &cached) {
+		cached.clear();
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
-			addBuiltIn(to, t);
+			cached.push_back(addBuiltIn(to, t));
 		}
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
 			addSuper(to, t);
@@ -114,14 +116,14 @@ namespace storm {
 		}
 	}
 
-	void addStdLib(Engine &to) {
+	void addStdLib(Engine &to, vector<Type *> &cached) {
 		// Place common types in the core package.
 		Package *root = to.package(Name(L"core"));
-		root->add(intType());
-		root->add(natType());
-		root->add(typeType());
+		root->add(intType(to));
+		root->add(natType(to));
+		root->add(typeType(to));
 
-		addBuiltIn(to);
+		addBuiltIn(to, cached);
 	}
 
 }

@@ -5,29 +5,29 @@ namespace storm {
 
 	class IntType : public Type {
 	public:
-		IntType() : Type(L"Int", typeValue) {}
+		IntType(Engine &e) : Type(e, L"Int", typeValue) {}
 
 		virtual nat size() const {
 			return sizeof(code::Int);
 		}
 	};
 
-	Type *intType() {
-		return new IntType();
+	Type *intType(Engine &e) {
+		return new IntType(e);
 	}
 
 
 	class NatType : public Type {
 	public:
-		NatType() : Type(L"Nat", typeValue) {}
+		NatType(Engine &e) : Type(e, L"Nat", typeValue) {}
 
 		virtual nat size() const {
 			return sizeof(code::Nat);
 		}
 	};
 
-	Type *natType() {
-		return new NatType();
+	Type *natType(Engine &e) {
+		return new NatType(e);
 	}
 
 }

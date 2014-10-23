@@ -114,7 +114,7 @@ namespace storm {
 	static Object *evaluate(Engine &engine, SyntaxVariable *v) {
 		switch (v->type) {
 		case SyntaxVariable::tString:
-			return new Str(engine.strType(), v->string());
+			return new Str(engine, v->string());
 		case SyntaxVariable::tNode:
 			return transform(engine, *v->node());
 		case SyntaxVariable::tStringArr:
@@ -169,16 +169,20 @@ namespace storm {
 		if (me == null || param == null)
 			throw SyntaxTypeError(L"Null is not supported!", pos);
 
-		vector<Value> types(1, Value(param->type));
 		Type *t = me->type;
+		vector<Value> types(2);
+		types[0] = Value(t);
+		types[1] = Value(param->type);
 		NameOverload *no = t->find(Name(memberName), types);
 		if (Function *f = as<Function>(no)) {
-			vector<Object*> params(1, param);
+			vector<Object*> params(2);
+			params[0] = me;
+			params[1] = param;
 			return code::fnCall<Object, Object>(f->pointer(), params);
 		}
 
 		throw SyntaxTypeError(L"Could not find a member function " +
-							memberName + L"(" + join(types, L", ") + L") in" +
+							memberName + L"(" + join(types, L", ") + L") in " +
 							t->name, pos);
 	}
 
@@ -211,7 +215,7 @@ namespace storm {
 				std::pair<String, SyntaxVariable*> v = node.invocation(i);
 				tmp = evaluate(e, v.second);
 				callMember(result, v.first, tmp, option->pos);
-				tmp = null;
+				release(tmp);
 			}
 
 		} catch (...) {

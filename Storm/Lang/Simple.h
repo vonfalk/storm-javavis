@@ -9,13 +9,16 @@ namespace storm {
 	 * Functions used by the 'simple' syntax.
 	 */
 
-	STORM class SExpr : public Object {
+	class SExpr : public Object {
+		STORM_CLASS;
 	public:
+		SExpr(Type *t);
 	};
 
-	STORM class SScope : public Object {
+	class SScope : public Object {
+		STORM_CLASS;
 	public:
-		STORM SScope(Type *t);
+		STORM_CTOR SScope(Type *t);
 
 		void STORM_FN expr(SExpr *expr);
 	};

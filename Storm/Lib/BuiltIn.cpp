@@ -9,6 +9,15 @@
 #include "Lib/Str.h"
 // END INCLUDES
 
+// BEGIN STATIC
+storm::Type *storm::Str::type(Engine &e) { return e.builtIn(0); }
+storm::Type *storm::Str::type(Object *o) { return type(o->type->engine); }
+storm::Type *storm::SExpr::type(Engine &e) { return e.builtIn(1); }
+storm::Type *storm::SExpr::type(Object *o) { return type(o->type->engine); }
+storm::Type *storm::SScope::type(Engine &e) { return e.builtIn(2); }
+storm::Type *storm::SScope::type(Object *o) { return type(o->type->engine); }
+// END STATIC
+
 namespace storm {
 
 	/**
@@ -45,11 +54,11 @@ namespace storm {
 	const BuiltInType *builtInTypes() {
 		static BuiltInType types[] = {
 			// BEGIN TYPES
-			{ Name(L"core"), L"Str", null },
-			{ Name(L"lang.simple"), L"SExpr", null },
-			{ Name(L"lang.simple"), L"SScope", null },
+			{ Name(L"core"), L"Str", null, 0 },
+			{ Name(L"lang.simple"), L"SExpr", null, 1 },
+			{ Name(L"lang.simple"), L"SScope", null, 2 },
 			// END TYPES
-			{ L"", null },
+			{ L"", null, null, null },
 		};
 		return types;
 	}

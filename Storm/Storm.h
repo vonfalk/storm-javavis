@@ -11,8 +11,14 @@
 // For example: Str *STORM_FN foo();
 #define STORM_FN CODECALL
 
-// Mark a constructor, or a class.
-#define STORM
+#define STORM_CLASS							\
+	public:									\
+	static Type *type(Engine &e);			\
+	static Type *type(Object *o);			\
+private:
+
+// Mark a constructor.
+#define STORM_CTOR
 
 
 namespace storm {

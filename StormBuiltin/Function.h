@@ -43,6 +43,9 @@ namespace stormbuiltin {
 
 		// Package.
 		String package;
+
+		// C++ name (fully qualified).
+		String cppName;
 	};
 
 

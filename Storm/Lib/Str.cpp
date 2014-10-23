@@ -8,7 +8,7 @@ namespace storm {
 
 	Str::Str(Type *type, const Str &o) : Object(type), v(o.v) {}
 
-	Str::Str(Type *type, const String &o) : Object(type), v(o) {}
+	Str::Str(Engine &e, const String &o) : Object(type(e)), v(o) {}
 
 	nat Str::count() const {
 		return v.size();

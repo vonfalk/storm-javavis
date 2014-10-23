@@ -3,6 +3,6 @@
 
 namespace storm {
 
-	Type *typeType();
+	Type *typeType(Engine &e);
 
 }

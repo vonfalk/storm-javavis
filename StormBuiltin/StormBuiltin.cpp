@@ -84,7 +84,12 @@ String lineEnding(const Path &file) {
 	return result;
 }
 
-void updateFile(const Path &file, const String &headers, const String &fnList, const String &typeList) {
+void updateFile(const Path &file,
+				const String &headers,
+				const String &fnList,
+				const String &typeList,
+				const String &typeDecls) {
+
 	vector<String> lines;
 	String newline = lineEnding(file);
 
@@ -112,6 +117,13 @@ void updateFile(const Path &file, const String &headers, const String &fnList, c
 			lines.push_back(line);
 			addLines(lines, typeList, indentation(line));
 		} else if (line.find(L"// END TYPES") != String::npos) {
+			keep = true;
+			lines.push_back(line);
+		} else if (line.find(L"// BEGIN STATIC") != String::npos) {
+			keep = false;
+			lines.push_back(line);
+			addLines(lines, typeDecls, indentation(line));
+		} else if (line.find(L"// END STATIC") != String::npos) {
 			keep = true;
 			lines.push_back(line);
 		} else if (keep) {
@@ -182,10 +194,18 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 			typeStr << L"null";
 		else
 			typeStr << L"L\"" << t.super << L"\"";
+		typeStr << L", " << i;
 		typeStr << " }," << endl;
 	}
 
-	updateFile(listFile, headerStr.str(), codeStr.str(), typeStr.str());
+	std::wostringstream declStr;
+	for (nat i = 0; i < result.types.size(); i++) {
+		Type &t = result.types[i];
+		declStr << L"storm::Type *" << t.cppName << L"::type(Engine &e) { return e.builtIn(" << i << L"); }\n";
+		declStr << L"storm::Type *" << t.cppName << L"::type(Object *o) { return type(o->type->engine); }\n";
+	}
+
+	updateFile(listFile, headerStr.str(), codeStr.str(), typeStr.str(), declStr.str());
 }
 
 int _tmain(int argc, _TCHAR* argv[]) {

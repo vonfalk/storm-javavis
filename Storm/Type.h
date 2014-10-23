@@ -30,10 +30,13 @@ namespace storm {
 	 */
 	class Type : public Named, public Scope {
 	public:
-		Type(const String &name, TypeFlags flags);
+		Type(Engine &engine, const String &name, TypeFlags flags);
 		~Type();
 
 		static const String CTOR;
+
+		// Owning engine.
+		Engine &engine;
 
 		// Type flags.
 		const TypeFlags flags;

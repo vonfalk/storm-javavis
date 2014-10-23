@@ -17,6 +17,7 @@ namespace stormbuiltin {
 
 	struct Scope {
 		String name;
+		String super;
 		nat extra;
 		bool isType;
 	};
@@ -144,7 +145,6 @@ namespace stormbuiltin {
 		vector<Scope> scope;
 
 		String lastType;
-		bool addType = false;
 
 		while (tok.more()) {
 			bool wasType = false;
@@ -157,39 +157,37 @@ namespace stormbuiltin {
 			} else if (token == L"STORM_FN") {
 				Function fn = parseFn(tok, scope, lastType, package);
 				found.push_back(fn);
-			} else if (token == L"STORM") {
-				String next = tok.peek();
-				if (next == L"class" || next == L"struct") {
-					addType = true;
-				} else {
-					Function fn = parseFn(tok, scope, L"", package);
-					fn.result = fn.name;
-					fn.name = L"__ctor";
-					if (scope.empty() || !scope.back().isType)
-						throw Error(L"Constructors must live in types.");
-					fn.cppName = creationStr(fn, scope);
-					found.push_back(fn);
-				}
-			} else if (token == L"class" || token == L"struct") {
-				Scope s = { tok.next(), 0, true };
-				scope.push_back(s);
-				String super = parseSuper(tok);
+			} else if (token == L"STORM_CLASS") {
+				Scope &top = scope.back();
+				if (!top.isType)
+					throw Error(L"STORM_CLASS must be inside a class or struct.");
 
-				if (addType) {
-					Type c = { s.name, super, package };
-					types.push_back(c);
-				}
+				Type t = { top.name, top.super, package, join(scope, L"::") };
+				types.push_back(t);
+			} else if (token == L"STORM_CTOR") {
+				Function fn = parseFn(tok, scope, L"", package);
+				if (fn.params.size() <= 0 || fn.params.front() != L"Type")
+					throw Error(L"Constructors must take a 'Type' as the first parameter.");
+				fn.result = fn.name;
+				fn.name = L"__ctor";
+				if (scope.empty() || !scope.back().isType)
+					throw Error(L"Constructors must live in types.");
+				fn.cppName = creationStr(fn, scope);
+				found.push_back(fn);
+			} else if (token == L"class" || token == L"struct") {
+				String name = tok.next();
+				String super = parseSuper(tok);
+				Scope s = { name, super, 0, true };
+				scope.push_back(s);
 			} else if (token == L"namespace") {
-				Scope s = { tok.next(), 0, false };
+				Scope s = { tok.next(), L"", 0, false };
 				scope.push_back(s);
 				if (tok.next() != L"{")
 					throw Error(L"Expected {");
 			} else if (token == L"{") {
-				addType = false;
 				if (!scope.empty())
 					scope.back().extra++;
 			} else if (token == L"}") {
-				addType = false;
 				if (!scope.empty()) {
 					if (scope.back().extra == 0)
 						scope.pop_back();
@@ -208,7 +206,6 @@ namespace stormbuiltin {
 					wasType = true;
 					lastType += token;
 				}
-				addType = false;
 			}
 
 			if (!wasType)

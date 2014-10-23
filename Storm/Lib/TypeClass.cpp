@@ -3,8 +3,8 @@
 
 namespace storm {
 
-	Type *typeType() {
-		return new Type(L"Type", typeClass);
+	Type *typeType(Engine &e) {
+		return new Type(e, L"Type", typeClass);
 	}
 
 }
