@@ -10,6 +10,15 @@ namespace storm {
 
 	Value::Value(Type *t) : type(t) {}
 
+	bool Value::canStore(Type *x) {
+		while (x) {
+			if (x == type)
+				return true;
+			x = x->super();
+		}
+		return false;
+	}
+
 	void Value::output(wostream &to) const {
 		if (type == null)
 			to << L"void";

@@ -1,7 +1,6 @@
 #pragma once
 #include "SyntaxVariable.h"
 #include "SyntaxOption.h"
-#include "Std.h"
 
 namespace storm {
 
@@ -20,19 +19,32 @@ namespace storm {
 
 		~SyntaxNode();
 
+		// Content for a variable.
+		struct Var {
+			SyntaxVariable *value;
+			vector<String> params;
+		};
+
+		// Member function invocation.
+		struct Invocation {
+			String member;
+			Var val;
+		};
+
+
 		// Add a value to the syntax node. Throws an error on failure.
-		void add(const String &var, const String &val);
-		void add(const String &var, SyntaxNode *node);
+		void add(const String &var, const String &val, const vector<String> &params);
+		void add(const String &var, SyntaxNode *node, const vector<String> &params);
 
 		// Add a method invocation to the syntax node. Throws an error on failure.
-		void invoke(const String &member, const String &val);
-		void invoke(const String &member, SyntaxNode *node);
+		void invoke(const String &member, const String &val, const vector<String> &params);
+		void invoke(const String &member, SyntaxNode *node, const vector<String> &params);
 
 		// Find the entry in the map for the variable. Creates the variable if it does not exist.
-		SyntaxVariable *find(const String &name, SyntaxVariable::Type type);
+		Var &find(const String &name, SyntaxVariable::Type type);
 
 		// Find the entry in the map for the variable. Returns null if the variable does not exist.
-		SyntaxVariable *find(const String &name) const;
+		const Var *find(const String &name) const;
 
 		// Reverse all arrays in this node (not recursive).
 		void reverseArrays();
@@ -41,29 +53,24 @@ namespace storm {
 		const SyntaxOption *const option;
 
 		// Get invocations.
-		inline nat invocationCount() const { return invocations.size(); }
-		inline std::pair<String, SyntaxVariable*> invocation(nat i) const { return invocations[i]; }
+		const vector<Invocation> &invocations;
 
 	protected:
 		virtual void output(wostream &to) const;
 
 	private:
 		// All bound variables of this syntax node.
-		typedef map<String, SyntaxVariable*> VarMap;
+		typedef map<String, Var> VarMap;
 		VarMap vars;
 
 		// Method invocations, in order.
-		typedef std::pair<String, SyntaxVariable*> Invocation;
-		vector<Invocation> invocations;
+		vector<Invocation> mInvocations;
 
 		// Find the type to use for this variable.
 		SyntaxVariable::Type typeOf(const String &name, bool isString);
 
 	};
 
-
-	// Transform a syntax node into the representation described by
-	// the original syntax rules and options. TODO: Type!
-	Object *transform(Engine &e, const SyntaxNode &node);
-
+	wostream &operator <<(wostream &to, const SyntaxNode::Var &v);
+	wostream &operator <<(wostream &to, const SyntaxNode::Invocation &f);
 }

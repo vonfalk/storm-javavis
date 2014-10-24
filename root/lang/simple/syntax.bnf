@@ -7,13 +7,14 @@ Root => root() : SExpr e;
 Root => root() : SExpr, Root;
 
 // Expression
-SExpr => sOperator(lhs, rhs, op) : SExpr lhs, "\+" op, SExpr rhs;
-SExpr => sOperator(lhs, rhs, op) : SExpr lhs, "-" op, SExpr rhs;
+SExpr(SScope foo);
+SExpr => sOperator(lhs, rhs, op) : SExpr(foo) lhs, "\+" op, SExpr(foo) rhs;
+SExpr => sOperator(lhs, rhs, op) : SExpr(foo) lhs, "-" op, SExpr(foo) rhs;
 SExpr => sVar(v) : "[a-z]+" v;
 SExpr => sNr(v) : "[0-9]+" v;
 
 // Root rule with repetitions.
-Rep1Root => SScope() : "{", (SExpr -> expr - ";",)+ - "}";
+Rep1Root => SScope() : "{", (SExpr(me) -> expr - ";",)+ - "}";
 Rep2Root => SScope() : "{", (SExpr -> expr - ";",)* - "}";
 Rep3Root => SScope() : "{", (SExpr -> expr - ";",)? - "}";
 

@@ -202,7 +202,7 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 	for (nat i = 0; i < result.types.size(); i++) {
 		Type &t = result.types[i];
 		declStr << L"storm::Type *" << t.cppName << L"::type(Engine &e) { return e.builtIn(" << i << L"); }\n";
-		declStr << L"storm::Type *" << t.cppName << L"::type(Object *o) { return type(o->type->engine); }\n";
+		declStr << L"storm::Type *" << t.cppName << L"::type(Object *o) { return type(o->myType->engine); }\n";
 	}
 
 	updateFile(listFile, headerStr.str(), codeStr.str(), typeStr.str(), declStr.str());

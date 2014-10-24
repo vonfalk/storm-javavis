@@ -24,7 +24,7 @@ namespace storm {
 		virtual ~Object();
 
 		// The type of this object.
-		Type *const type;
+		Type *const myType;
 
 		// Add reference.
 		inline void addRef() {

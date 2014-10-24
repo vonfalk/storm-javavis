@@ -8,7 +8,7 @@ namespace storm {
 	 * A value is a 'handle' to a type. The value itself is to be considered
 	 * a handle to any type in the system, possible along with modifiers. For
 	 * example, if the pointer (if relevant) may be null.
-	 * TODO: ValueType instead?
+	 * TODO: ValueT instead?
 	 */
 	class Value : public Printable {
 	public:
@@ -20,6 +20,9 @@ namespace storm {
 
 		// The type referred.
 		Type *type;
+
+		// Can this value store a type of 'x'?
+		bool canStore(Type *x);
 
 		// Any extra modifiers goes here:
 		// TODO: implement

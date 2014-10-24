@@ -4,6 +4,7 @@
 #include "Storm/Engine.h"
 #include "Storm/Exception.h"
 #include "Storm/Parser.h"
+#include "Storm/SyntaxTransform.h"
 
 using namespace storm;
 

@@ -1,5 +1,7 @@
 ;; Configuration
 
+(setq font-lock-maximum-decoration 2)
+
 (setq project-root "~/Projects/storm/")
 (setq project-file (concat project-root "storm.sln"))
 (setq add-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl -a"))

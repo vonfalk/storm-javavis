@@ -277,6 +277,10 @@
 				RelativePath=".\Lang\Simple.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\SyntaxTransform.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -401,6 +405,10 @@
 			</File>
 			<File
 				RelativePath=".\Lang\Simple.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxTransform.h"
 				>
 			</File>
 		</Filter>

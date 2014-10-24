@@ -215,10 +215,10 @@ namespace storm {
 		SyntaxNode *result = null;
 
 		SyntaxNode *root = tree(f);
-		SyntaxVariable *resultVar = root->find(L"root", SyntaxVariable::tNode);
-		if (resultVar) {
-			result = resultVar->node();
-			resultVar->orphan();
+		SyntaxNode::Var &resultVar = root->find(L"root", SyntaxVariable::tNode);
+		if (resultVar.value) {
+			result = resultVar.value->node();
+			resultVar.value->orphan();
 		}
 		delete root;
 
@@ -240,21 +240,25 @@ namespace storm {
 					const String &to = pState->bindToken() ?
 						pState->bindTokenTo() : pState->invokeOnToken();
 
+					vector<String> params;
+					if (TypeToken *t = as<TypeToken>(pState->pos.token()))
+						params = t->params;
+
 					if (cState->completed.valid()) {
 						tmp = tree(cState->completed);
 						if (pState->bindToken())
-							result->add(to, tmp);
+							result->add(to, tmp, params);
 						else
-							result->invoke(to, tmp);
+							result->invoke(to, tmp, params);
 						tmp = null;
 					} else {
 						nat fromPos = cState->prev.step;
 						nat toPos = pos.step;
 						String matched = src.substr(fromPos, toPos - fromPos);
 						if (pState->bindToken())
-							result->add(to, matched);
+							result->add(to, matched, params);
 						else
-							result->invoke(to, matched);
+							result->invoke(to, matched, params);
 					}
 				}
 			}

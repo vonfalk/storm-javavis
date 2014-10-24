@@ -11,11 +11,11 @@
 
 // BEGIN STATIC
 storm::Type *storm::Str::type(Engine &e) { return e.builtIn(0); }
-storm::Type *storm::Str::type(Object *o) { return type(o->type->engine); }
+storm::Type *storm::Str::type(Object *o) { return type(o->myType->engine); }
 storm::Type *storm::SExpr::type(Engine &e) { return e.builtIn(1); }
-storm::Type *storm::SExpr::type(Object *o) { return type(o->type->engine); }
+storm::Type *storm::SExpr::type(Object *o) { return type(o->myType->engine); }
 storm::Type *storm::SScope::type(Engine &e) { return e.builtIn(2); }
-storm::Type *storm::SScope::type(Object *o) { return type(o->type->engine); }
+storm::Type *storm::SScope::type(Object *o) { return type(o->myType->engine); }
 // END STATIC
 
 namespace storm {

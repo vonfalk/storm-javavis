@@ -1,6 +1,7 @@
 #pragma once
 
 #include <hash_map>
+#include <hash_set>
 
 namespace stdext {
 
@@ -11,3 +12,5 @@ namespace stdext {
 }
 
 using stdext::hash_map;
+using stdext::hash_set;
+
