@@ -6,10 +6,16 @@ namespace code {
 #ifdef X86
 
 	void *fnCall(void *fnPtr, nat paramCount, const void **params) {
-		byte *sptr;
-		__asm mov sptr, esp;
 		nat paramSize = paramCount * sizeof(void *);
-		memcpy(sptr - paramSize, params, paramSize);
+		const void **stack;
+		__asm mov stack, esp;
+
+		const void **to = stack - paramCount;
+		for (nat i = 0; i < paramCount; i++)
+			to[i] = params[i];
+		// Excercise: Why is this a bad idea?
+		// memcpy(sptr - paramSize, params, paramSize);
+
 		__asm {
 			sub esp, paramSize;
 			call fnPtr;

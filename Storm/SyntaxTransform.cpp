@@ -97,7 +97,6 @@ namespace storm {
 			// Call any remaining member functions...
 			for (nat i = 0; i < node.invocations.size(); i++) {
 				const SyntaxNode::Invocation &v = node.invocations[i];
-				PVAR(v);
 				vector<Object*> params(v.val.params.size());
 				for (nat i = 0; i < v.val.params.size(); i++) {
 					params[i] = vars.get(v.val.params[i]);

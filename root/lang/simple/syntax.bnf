@@ -15,8 +15,8 @@ SExpr => sNr(v) : "[0-9]+" v;
 
 // Root rule with repetitions.
 Rep1Root => SScope() : "{", (SExpr(me) -> expr - ";",)+ - "}";
-Rep2Root => SScope() : "{", (SExpr -> expr - ";",)* - "}";
-Rep3Root => SScope() : "{", (SExpr -> expr - ";",)? - "}";
+Rep2Root => SScope() : "{", (SExpr(me) -> expr - ";",)* - "}";
+Rep3Root => SScope() : "{", (SExpr(me) -> expr - ";",)? - "}";
 
 
 
