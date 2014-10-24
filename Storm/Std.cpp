@@ -116,12 +116,15 @@ namespace storm {
 		}
 	}
 
-	void addStdLib(Engine &to, vector<Type *> &cached) {
-		// Place common types in the core package.
+	void addStdLib(Engine &to, vector<Type *> &cached, Type *&tType) {
+		// Place core types in the core package.
 		Package *root = to.package(Name(L"core"));
 		root->add(intType(to));
 		root->add(natType(to));
-		root->add(typeType(to));
+
+		// TODO: This should be handled normally later on.
+		tType = typeType(to);
+		root->add(tType);
 
 		addBuiltIn(to, cached);
 	}

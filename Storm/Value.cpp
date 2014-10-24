@@ -10,13 +10,17 @@ namespace storm {
 
 	Value::Value(Type *t) : type(t) {}
 
-	bool Value::canStore(Type *x) {
+	bool Value::canStore(Type *x) const {
 		while (x) {
 			if (x == type)
 				return true;
 			x = x->super();
 		}
 		return false;
+	}
+
+	bool Value::canStore(const Value &v) const {
+		return canStore(v.type);
 	}
 
 	void Value::output(wostream &to) const {
@@ -28,10 +32,6 @@ namespace storm {
 
 	bool Value::operator ==(const Value &o) const {
 		return type == o.type;
-	}
-
-	bool Value::operator <(const Value &o) const {
-		return type < o.type;
 	}
 
 	/**

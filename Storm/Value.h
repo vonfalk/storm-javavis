@@ -22,7 +22,8 @@ namespace storm {
 		Type *type;
 
 		// Can this value store a type of 'x'?
-		bool canStore(Type *x);
+		bool canStore(Type *x) const;
+		bool canStore(const Value &v) const;
 
 		// Any extra modifiers goes here:
 		// TODO: implement
@@ -31,8 +32,6 @@ namespace storm {
 		bool operator ==(const Value &o) const;
 		inline bool operator !=(const Value &o) const { return !(*this == o); }
 
-		// Define some ordering, which allows us to be inside std::map's
-		bool operator <(const Value &o) const;
 	protected:
 		virtual void output(wostream &to) const;
 	};

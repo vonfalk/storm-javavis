@@ -10,6 +10,6 @@ namespace storm {
 	/**
 	 * Standard library definition. Adds the standard library to the Engine.
 	 */
-	void addStdLib(Engine &to, vector<Type *> &cached);
+	void addStdLib(Engine &to, vector<Type *> &cached, Type *&typeType);
 
 }

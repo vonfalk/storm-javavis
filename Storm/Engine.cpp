@@ -7,21 +7,10 @@ namespace storm {
 
 	Engine::Engine(const Path &root) : rootPath(root), rootPkg(root, &defaultPkgs) {
 		defaultPkgs.pkgs.push_back(package(Name(L"core"), true));
-		addStdLib(*this, cached);
-
-		setType(tType, L"core.Type");
+		addStdLib(*this, cached, tType);
 	}
 
 	Engine::~Engine() {}
-
-	void Engine::setType(Type *&t, const String &name) {
-		Named *n = scope()->find(Name(name));
-		if (Type *tt = as<Type>(n)) {
-			t = tt;
-		} else {
-			throw InternalError(L"Failed to find " + name);
-		}
-	}
 
 	Package *Engine::package(const Name &path, bool create) {
 		Named *n = rootPkg.find(path);

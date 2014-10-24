@@ -56,9 +56,6 @@ namespace storm {
 		// Add new members.
 		void add(NameOverload *m);
 
-		// Define some ordering between the types.
-		bool operator <(const Type &o) const;
-
 	protected:
 		virtual void output(wostream &to) const;
 		virtual Named *findHere(const Name &name);

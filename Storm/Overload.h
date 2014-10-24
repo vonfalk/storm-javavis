@@ -40,16 +40,11 @@ namespace storm {
 		virtual void output(wostream &to) const;
 
 	private:
-		struct Item {
-			Item(const vector<Value> &k);
-			Item(NameOverload *overload);
-			const vector<Value> &k;
-			NameOverload *v;
-			bool operator <(const Item &o) const;
-		};
+		// Items here.
+		vector<NameOverload *> items;
 
-		typedef set<Item> ItemMap;
-		ItemMap items;
+		// Is it a suitable overload?
+		static bool suitable(NameOverload *overload, const vector<Value> &params);
 	};
 
 }

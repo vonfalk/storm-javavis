@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Type.h"
 #include "Exception.h"
+#include "Engine.h"
 
 namespace storm {
 
@@ -71,18 +72,12 @@ namespace storm {
 
 		const Value &first = o->params.front();
 		if (o->name == CTOR) {
-			TODO("Better validation here!");
-			if (first.type == null || first.type->name != L"Type")
+			if (first.type != engine.typeType())
 				throw TypedefError(L"Member constructors must have 'Type' as first parameter.");
 		} else {
 			if (first != Value(this))
 				throw TypedefError(L"Member functions must have 'this' as first parameter.");
 		}
-	}
-
-	bool Type::operator <(const Type &o) const {
-		// Ugly, but works for now.
-		return this < &o;
 	}
 
 }
