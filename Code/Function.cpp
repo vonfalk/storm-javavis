@@ -7,6 +7,7 @@ namespace code {
 
 	void *fnCall(void *fnPtr, nat paramCount, const void **params) {
 		nat paramSize = paramCount * sizeof(void *);
+		void *result;
 		const void **stack;
 		__asm mov stack, esp;
 
@@ -20,7 +21,10 @@ namespace code {
 			sub esp, paramSize;
 			call fnPtr;
 			add esp, paramSize;
+			mov result, eax;
 		}
+
+		return result;
 	}
 
 #endif
