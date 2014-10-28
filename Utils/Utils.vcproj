@@ -663,6 +663,10 @@
 				RelativePath=".\Indent.h"
 				>
 			</File>
+			<File
+				RelativePath=".\Platform.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

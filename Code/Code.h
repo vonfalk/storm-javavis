@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Utils/Platform.h"
+
 // This file defines some common types in the asm generator, such as word-sized types.
 // Defines one of the following symbols:
 // X86 - When compiling for a 32-bit X86
@@ -24,32 +26,13 @@
 // Which expands to the calling convention to be used by the generated function calls.
 
 
-#if defined(_WIN64)
-#define X64
-#define WINDOWS
-#elif defined(_WIN32)
-#define X86
-#define WINDOWS
-#endif
-// TODO: More architectures here!
-
-
 // Checks that something is defined!
 #if !defined(X86) && !defined(X64)
-#error "Unknown architecture, currently known are x86 and amd-64"
+#error "Unsupported architecture, currently supported are x86 and amd-64"
 #endif
 
-#if !defined(WINDOWS) && !defined(LINUX)
+#if !defined(WINDOWS) && !defined(LINUX) && !defined(POSIX)
 #error "Unknown OS, currently known are Windows and Linux"
-#endif
-
-// Currently unsupported checks...
-#ifdef LINUX
-#error "Linux is not currently supported!"
-#endif
-
-#ifdef X64
-#error "amd64 is not currently supported!"
 #endif
 
 #ifdef WINDOWS
@@ -81,6 +64,11 @@ namespace code {
 #define CODECALL __cdecl
 
 }
+
+#else
+
+#error "Unsupported system!";
+
 #endif
 
 
