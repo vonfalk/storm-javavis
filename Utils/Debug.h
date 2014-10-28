@@ -13,6 +13,7 @@ using std::endl;
 // PLN("Hello " << "world!");
 // PLN("Hello " << n << " times!");
 // PLN_IF("X is larger than 10", X > 10);
+#define PNN(str) util::debugStream() << str
 #define PLN(str) util::debugStream() << str << std::endl
 #define PLN_IF(str, cond) if (cond) PLN(str)
 #define PLN_LINES(str) util::printLines(str)
@@ -28,6 +29,7 @@ using std::endl;
 #define TIME(str) util::Timer __timer__(str);
 
 #else
+#define PNN(str)
 #define PLN(str)
 #define PLN_IF(str, cond)
 #define PVAR(expr)

@@ -3,6 +3,9 @@
 
 .data
 
+??_7VTest@storm@@6B@ proto syscall
+cppVTable_storm__VTest proto
+
 ??_7Str@storm@@6B@ proto syscall
 cppVTable_storm__Str proto
 
@@ -14,6 +17,11 @@ cppVTable_storm__SScope proto
 
 
 .code
+
+cppVTable_storm__VTest proc
+	mov eax, ??_7VTest@storm@@6B@
+	ret
+cppVTable_storm__VTest endp
 
 cppVTable_storm__Str proc
 	mov eax, ??_7Str@storm@@6B@

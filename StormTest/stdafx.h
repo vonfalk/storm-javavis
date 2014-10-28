@@ -7,3 +7,7 @@
 
 #include "Utils/Utils.h"
 #include "Storm/Storm.h"
+#include "Storm/Engine.h"
+#include "Storm/Std.h"
+
+using namespace storm;

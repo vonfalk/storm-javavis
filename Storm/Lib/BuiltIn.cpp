@@ -7,18 +7,23 @@
 // BEGIN INCLUDES
 #include "Lang/Simple.h"
 #include "Lib/Str.h"
+#include "Test/VTest.h"
 // END INCLUDES
 
 // BEGIN STATIC
-storm::Type *storm::Str::type(Engine &e) { return e.builtIn(0); }
+storm::Type *storm::VTest::type(Engine &e) { return e.builtIn(0); }
+storm::Type *storm::VTest::type(Object *o) { return type(o->myType->engine); }
+extern "C" void *cppVTable_storm__VTest();
+void *storm::VTest::cppVTable() { return cppVTable_storm__VTest(); }
+storm::Type *storm::Str::type(Engine &e) { return e.builtIn(1); }
 storm::Type *storm::Str::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__Str();
 void *storm::Str::cppVTable() { return cppVTable_storm__Str(); }
-storm::Type *storm::SExpr::type(Engine &e) { return e.builtIn(1); }
+storm::Type *storm::SExpr::type(Engine &e) { return e.builtIn(2); }
 storm::Type *storm::SExpr::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__SExpr();
 void *storm::SExpr::cppVTable() { return cppVTable_storm__SExpr(); }
-storm::Type *storm::SScope::type(Engine &e) { return e.builtIn(2); }
+storm::Type *storm::SScope::type(Engine &e) { return e.builtIn(3); }
 storm::Type *storm::SScope::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__SScope();
 void *storm::SScope::cppVTable() { return cppVTable_storm__SScope(); }
@@ -60,9 +65,10 @@ namespace storm {
 	const BuiltInType *builtInTypes() {
 		static BuiltInType types[] = {
 			// BEGIN TYPES
-			{ Name(L"core"), L"Str", null, 0 },
-			{ Name(L"lang.simple"), L"SExpr", null, 1 },
-			{ Name(L"lang.simple"), L"SScope", null, 2 },
+			{ Name(L""), L"VTest", null, 0 },
+			{ Name(L"core"), L"Str", null, 1 },
+			{ Name(L"lang.simple"), L"SExpr", null, 2 },
+			{ Name(L"lang.simple"), L"SScope", null, 3 },
 			// END TYPES
 			{ L"", null, null, null },
 		};
@@ -75,6 +81,9 @@ namespace storm {
 	const BuiltInFunction *builtInFunctions() {
 		static BuiltInFunction fns[] = {
 			// BEGIN LIST
+			{ Name(L""), L"VTest", Name(L"VTest"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::VTest>) },
+			{ Name(L""), L"VTest", Name(L""), L"returnOne", list(0), address(&storm::VTest::returnOne) },
+			{ Name(L""), L"VTest", Name(L""), L"returnTwo", list(0), address(&storm::VTest::returnTwo) },
 			{ Name(L"core"), L"Str", Name(L"Str"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::Str>) },
 			{ Name(L"core"), L"Str", Name(L"Str"), L"__ctor", list(2, Name(L"Type"), Name(L"Str")), address(&create2<storm::Str, Str>) },
 			{ Name(L"core"), L"Str", Name(L"Nat"), L"count", list(0), address(&storm::Str::count) },

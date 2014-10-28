@@ -220,6 +220,10 @@
 				RelativePath=".\TransformTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\VTableTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

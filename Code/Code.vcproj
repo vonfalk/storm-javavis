@@ -300,6 +300,10 @@
 				RelativePath=".\Function.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\VTable.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -420,6 +424,10 @@
 			</File>
 			<File
 				RelativePath=".\Function.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VTable.h"
 				>
 			</File>
 		</Filter>
