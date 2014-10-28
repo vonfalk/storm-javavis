@@ -14,6 +14,9 @@
 		/>
 	</Platforms>
 	<ToolFiles>
+		<DefaultToolFile
+			FileName="masm.rules"
+		/>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
@@ -26,10 +29,13 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\BuiltIn.cpp"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="MASM"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -97,6 +103,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="MASM"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -206,6 +215,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lang\Simple.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\SrcPos.cpp"
 				>
 			</File>
@@ -254,6 +267,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SyntaxTransform.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\SyntaxVariable.cpp"
 				>
 			</File>
@@ -274,11 +291,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lang\Simple.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxTransform.cpp"
+				RelativePath=".\Lib\VTables.asm"
 				>
 			</File>
 		</Filter>
@@ -344,6 +357,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lang\Simple.h"
+				>
+			</File>
+			<File
 				RelativePath=".\SrcPos.h"
 				>
 			</File>
@@ -380,6 +397,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SyntaxTransform.h"
+				>
+			</File>
+			<File
 				RelativePath=".\SyntaxVariable.h"
 				>
 			</File>
@@ -401,14 +422,6 @@
 			</File>
 			<File
 				RelativePath=".\Value.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lang\Simple.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxTransform.h"
 				>
 			</File>
 		</Filter>

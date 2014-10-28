@@ -85,10 +85,12 @@ String lineEnding(const Path &file) {
 }
 
 void updateFile(const Path &file,
+				const Path &asmFile,
 				const String &headers,
 				const String &fnList,
 				const String &typeList,
-				const String &typeDecls) {
+				const String &typeDecls,
+				const String &asmContent) {
 
 	vector<String> lines;
 	String newline = lineEnding(file);
@@ -141,11 +143,72 @@ void updateFile(const Path &file,
 			w->put(newline);
 		w->put(lines[i]);
 	}
-
 	delete w;
+
+	w = TextWriter::create(new FileStream(asmFile, Stream::mWrite), fmt);
+	lines.clear();
+	addLines(lines, asmContent, L"");
+	for (nat i = 0; i < lines.size(); i++) {
+		if (i > 0)
+			w->put(newline);
+		w->put(lines[i]);
+	}
+	delete w;
+
 }
 
-void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listFile) {
+String vtableSymbol(const Type &t) {
+	vector<String> parts = t.cppName.split(L"::");
+	std::wostringstream r;
+	r << L"??_7";
+	for (nat i = parts.size(); i > 0; i--) {
+		r << parts[i-1] << L"@";
+	}
+	r << L"@6B@";
+	return r.str();
+}
+
+String vtableFnName(const Type &t) {
+	String cppName = t.cppName;
+	for (nat i = 0; i < cppName.size(); i++)
+		if (cppName[i] == ':')
+			cppName[i] = '_';
+	return L"cppVTable_" + cppName;
+}
+
+String asmContent(const vector<Type> &types) {
+	std::wostringstream c;
+	c << L".386\n";
+	c << L".model flat, c\n\n";
+	c << L".data\n\n";
+
+	for (nat i = 0; i < types.size(); i++) {
+		const Type &t = types[i];
+		String sym = vtableSymbol(t);
+		String fn = vtableFnName(t);
+
+		c << sym << L" proto syscall\n";
+		c << fn << L" proto\n\n";
+	}
+
+	c << L"\n.code\n\n";
+
+	for (nat i = 0; i < types.size(); i++) {
+		const Type &t = types[i];
+		String sym = vtableSymbol(t);
+		String fn = vtableFnName(t);
+
+		c << fn << L" proc\n";
+		c << L"\tmov eax, " << sym << L"\n";
+		c << L"\tret\n";
+		c << fn << L" endp\n\n";
+	}
+	c << L"end\n";
+
+	return c.str();
+}
+
+void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listFile, const Path &asmFile) {
 	File result;
 	findFunctions(headerRoot, result);
 
@@ -203,26 +266,36 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 		Type &t = result.types[i];
 		declStr << L"storm::Type *" << t.cppName << L"::type(Engine &e) { return e.builtIn(" << i << L"); }\n";
 		declStr << L"storm::Type *" << t.cppName << L"::type(Object *o) { return type(o->myType->engine); }\n";
+		String fnName = vtableFnName(t);
+		declStr << L"extern \"C\" void *" << fnName << L"();\n";
+		declStr << L"void *" << t.cppName << L"::cppVTable() { return " << fnName << L"(); }\n";
 	}
 
-	updateFile(listFile, headerStr.str(), codeStr.str(), typeStr.str(), declStr.str());
+	updateFile(listFile,
+			asmFile,
+			headerStr.str(),
+			codeStr.str(),
+			typeStr.str(),
+			declStr.str(),
+			asmContent(result.types));
 }
 
 int _tmain(int argc, _TCHAR* argv[]) {
 	initDebug();
 
-	Path root, scanDir, output;
-	if (argc < 4) {
-		std::wcout << L"Error: <root> <scanDir> <output> must be provided!" << std::endl;
+	Path root, scanDir, output, asmOutput;
+	if (argc < 5) {
+		std::wcout << L"Error: <root> <scanDir> <output> <asmOutput> must be provided!" << std::endl;
 		return 1;
 	}
 
 	root = Path(String(argv[1]));
 	scanDir = Path(String(argv[2]));
 	output = Path(String(argv[3]));
+	asmOutput = Path(String(argv[4]));
 
 	try {
-		generateBuiltin(root, scanDir, output);
+		generateBuiltin(root, scanDir, output, asmOutput);
 	} catch (const Exception &e) {
 		std::wcout << L"Error: " << e.what() << std::endl;
 		return 2;

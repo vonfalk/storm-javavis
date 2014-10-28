@@ -10,8 +10,9 @@ using namespace storm;
 BEGIN_TEST(PkgTest) {
 
 	String tc1[3] = { L"a", L"b", L"c" };
+	String tc2[4] = { L"a", L"b", L"", L"c" };
 	CHECK_EQ(split(L"a, b, c", L", "), vector<String>(tc1, tc1 + 3));
-	CHECK_EQ(split(L", a, b, c, ", L", "), vector<String>(tc1, tc1 + 3));
+	CHECK_EQ(split(L"a, b, , c", L", "), vector<String>(tc2, tc2 + 4));
 
 	CHECK_EQ(toS(Name(L"a.b.c")), L"a.b.c");
 	CHECK_EQ(Name(L"a.b") + Name(L"c"), Name(L"a.b.c"));

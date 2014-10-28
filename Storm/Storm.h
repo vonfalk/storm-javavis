@@ -15,6 +15,7 @@
 	public:									\
 	static Type *type(Engine &e);			\
 	static Type *type(Object *o);			\
+	static void *cppVTable();				\
 private:
 
 // Mark a constructor.

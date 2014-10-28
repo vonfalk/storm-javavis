@@ -117,8 +117,7 @@ vector<String> split(const String &str, const String &delimiter) {
 	nat start = 0;
 	nat end = str.find(delimiter);
 	while (end != String::npos) {
-		if (start < end)
-			r.push_back(str.substr(start, end - start));
+		r.push_back(str.substr(start, end - start));
 
 		start = end + delimiter.size();
 		end = str.find(delimiter, start);

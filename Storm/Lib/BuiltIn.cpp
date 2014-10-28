@@ -12,10 +12,16 @@
 // BEGIN STATIC
 storm::Type *storm::Str::type(Engine &e) { return e.builtIn(0); }
 storm::Type *storm::Str::type(Object *o) { return type(o->myType->engine); }
+extern "C" void *cppVTable_storm__Str();
+void *storm::Str::cppVTable() { return cppVTable_storm__Str(); }
 storm::Type *storm::SExpr::type(Engine &e) { return e.builtIn(1); }
 storm::Type *storm::SExpr::type(Object *o) { return type(o->myType->engine); }
+extern "C" void *cppVTable_storm__SExpr();
+void *storm::SExpr::cppVTable() { return cppVTable_storm__SExpr(); }
 storm::Type *storm::SScope::type(Engine &e) { return e.builtIn(2); }
 storm::Type *storm::SScope::type(Object *o) { return type(o->myType->engine); }
+extern "C" void *cppVTable_storm__SScope();
+void *storm::SScope::cppVTable() { return cppVTable_storm__SScope(); }
 // END STATIC
 
 namespace storm {
