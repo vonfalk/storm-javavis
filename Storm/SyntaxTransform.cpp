@@ -28,19 +28,23 @@ namespace storm {
 			types[i] = Value(params[i]->myType);
 
 		NameOverload *no = option->scope->find(option->matchFn, types);
-		if (Function *f = as<Function>(no))
-			return code::fnCall<Object, Object>(f->pointer(), params);
+		if (Function *f = as<Function>(no)) {
+			code::FnCall call;
+			for (nat i = 0; i < params.size(); i++)
+			 	call.param(params[i]);
+			return call.call<Object *>(f->pointer());
+		}
 
 		// See if we can find a constructor!
 		if (Type *t = as<Type>(option->scope->find(option->matchFn))) {
 			types.insert(types.begin(), Value(e.typeType()));
 			no = t->find(Type::CTOR, types);
 			if (Function *ctor = as<Function>(no)) {
-				vector<void *> p(params.size() + 1);
-				p[0] = t;
+				code::FnCall call;
+				call.param(t);
 				for (nat i = 0; i < params.size(); i++)
-					p[i+1] = params[i];
-				return code::fnCall<Object, void>(ctor->pointer(), p);
+					call.param(t);
+				return call.call<Object *>(ctor->pointer());
 			}
 
 			throw SyntaxTypeError(L"Could not find a constructor " +
@@ -64,10 +68,9 @@ namespace storm {
 		types[1] = Value(param->myType);
 		NameOverload *no = t->find(Name(memberName), types);
 		if (Function *f = as<Function>(no)) {
-			vector<Object*> params(2);
-			params[0] = me;
-			params[1] = param;
-			return code::fnCall<Object, Object>(f->pointer(), params);
+			code::FnCall call;
+			call.param(me).param(param);
+			return call.call<Object *>(f->pointer());
 		}
 
 		throw SyntaxTypeError(L"Could not find a member function " +

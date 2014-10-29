@@ -283,6 +283,8 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 int _tmain(int argc, _TCHAR* argv[]) {
 	initDebug();
 
+	TODO("Do not alter the outputs if no changes are made!");
+
 	Path root, scanDir, output, asmOutput;
 	if (argc < 5) {
 		std::wcout << L"Error: <root> <scanDir> <output> <asmOutput> must be provided!" << std::endl;

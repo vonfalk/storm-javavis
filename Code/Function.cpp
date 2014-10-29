@@ -6,33 +6,6 @@
 namespace code {
 
 #ifdef X86
-
-	void *fnCall(void *fnPtr, nat paramCount, const void **params) {
-		nat paramSize = paramCount * sizeof(void *);
-		void *result;
-		const void **stack;
-		__asm mov stack, esp;
-
-		const void **to = stack - paramCount;
-		for (nat i = 0; i < paramCount; i++)
-			to[i] = params[i];
-		// Excercise: Why is this a bad idea?
-		// memcpy(sptr - paramSize, params, paramSize);
-
-		__asm {
-			sub esp, paramSize;
-			call fnPtr;
-			add esp, paramSize;
-			mov result, eax;
-		}
-
-		return result;
-	}
-
-#endif
-
-
-#ifdef X86
 	nat FnCall::paramsSize() {
 		nat size = 0;
 		for (nat i = 0; i < params.size(); i++) {
@@ -53,6 +26,9 @@ namespace code {
 	}
 
 	void FnCall::destroyParams(void *to) {
+		// Note: this is not needed on X86 for Visual Studio, as the called function
+		// destroys the values passed (don't ask me how it works with variable argument lists).
+		// This implementation is provided as a reference implementation.
 		byte *at = (byte *)to;
 		for (nat i = 0; i < params.size(); i++) {
 			Param &p = params[i];
@@ -76,11 +52,8 @@ namespace code {
 			call fn;
 			mov ebx, result;
 			mov [ebx], eax;
+			add esp, sz;
 		}
-
-		destroyParams(stackTop);
-
-		__asm add esp, sz;
 	}
 
 	void FnCall::doCall8(void *result, void *fn) {
@@ -98,11 +71,8 @@ namespace code {
 			mov ebx, result;
 			mov [ebx], eax;
 			mov [ebx+4], edx;
+			add esp, sz;
 		}
-
-		destroyParams(stackTop);
-
-		__asm add esp, sz;
 	}
 
 	void FnCall::doCallLarge(void *result, nat retSz, void *fn) {
@@ -119,11 +89,8 @@ namespace code {
 			push result;
 			call fn;
 			pop result;
+			add esp, sz;
 		}
-
-		destroyParams(stackTop);
-
-		__asm add esp, sz;
 	}
 
 	void FnCall::doCall(void *result, nat resultSize, void *fn) {
@@ -144,6 +111,28 @@ namespace code {
 	void FnCall::callVoid(void *fn) {
 		nat dummy;
 		doCall4(&dummy, fn);
+	}
+
+	float FnCall::doFloatCall(void *fn) {
+		return (float)doDoubleCall(fn);
+	}
+
+	double FnCall::doDoubleCall(void *fn) {
+		nat sz = paramsSize();
+		void *stackTop;
+		__asm {
+			sub esp, sz;
+			mov stackTop, esp;
+		}
+
+		copyParams(stackTop);
+
+		__asm {
+			call fn;
+			add esp, sz;
+		}
+
+		// we're fine! Output is already stored on the floating-point stack.
 	}
 
 #endif

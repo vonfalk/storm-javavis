@@ -1,22 +1,7 @@
 #pragma once
+#include "Utils/Templates.h"
 
 namespace code {
-
-	/**
-	 * Helpers to call functions in more flexible ways than what
-	 * is allowed by 'regular' c++. These are implemented in a machine-specific way.
-	 */
-
-	void *fnCall(void *fnPtr, nat paramCount, const void **params);
-
-	// Call a function taking an arbitrary number of pointer arguments. Assumed to return a pointer.
-	template <class R, class T>
-	R *fnCall(void *fnPtr, const vector<T *> &params) {
-		void *r = fnCall(fnPtr, params.size(), (const void **)&params[0]);
-		return (R*)r;
-	}
-
-
 
 	/**
 	 * Call a function with a completely variable parameter list.
@@ -37,16 +22,22 @@ namespace code {
 	public:
 
 		template <class T>
-		void param(const T &p) {
+		FnCall &param(const T &p) {
 			Param par = { &FnCall::copy<T>, &FnCall::destroy<T>, &p, sizeof(T) };
 			params.push_back(par);
+			return *this;
 		}
 
-		// Call 'fn' with the parameters previously added. T can be any type.
+		// Call 'fn' with the parameters previously added. T can be any type except references.
+		// Use callRef in that case.
 		template <class T>
 		T call(void *fn) {
 			T *data = (T*)_alloca(sizeof(T));
-			doUserCall((void *)data, sizeof(T), fn);
+			if (TypeInfo<T>::pointer() || TypeInfo<T>::reference()) {
+				doCall((void *)data, sizeof(T), fn);
+			} else {
+				doUserCall((void *)data, sizeof(T), fn);
+			}
 			return *data;
 		}
 
@@ -78,23 +69,28 @@ namespace code {
 			return data;
 		}
 
+		template <>
+		float call(void *fn) {
+			return doFloatCall(fn);
+		}
+
+		template <>
+		double call(void *fn) {
+			return doDoubleCall(fn);
+		}
+
+		template <>
+		void call(void *fn) {
+			callVoid(fn);
+		}
+
 		// Specific overload for references.
 		template <class T>
 		T &callRef(void *fn) {
 			T *ptr = null;
-			doUserCall((void *)&ptr, sizeof(ptr), fn);
+			doCall((void *)&ptr, sizeof(ptr), fn);
 			return *ptr;
 		}
-
-		// Specific overload for pointers.
-		template <class T>
-		T *callPtr(void *fn) {
-			T *ptr = null;
-			doUserCall((void *)&ptr, sizeof(ptr), fn);
-			return ptr;
-		}
-
-		void callVoid(void *fn);
 
 	private:
 		// Data for a single parameter.
@@ -113,6 +109,12 @@ namespace code {
 
 		// Call a function that returns a user-defined type.
 		void doUserCall(void *result, nat resultSize, void *fn);
+
+		// Call a function that returns floating point values.
+		float doFloatCall(void *fn);
+		double doDoubleCall(void *fn);
+
+		void callVoid(void *fn);
 
 		// Some special cases (for x86 at least)
 		void doCall4(void *result, void *fn);

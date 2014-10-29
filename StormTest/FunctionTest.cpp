@@ -71,7 +71,125 @@ BEGIN_TEST(FunctionTest) {
 	CHECK_EQ(call.call<MediumType>(&testType2), MediumType(1, 2));
 	CHECK_EQ(call.call<LargeType>(&testType3), LargeType(1, 2, 3, -1));
 	sum = 0;
-	call.callVoid(&testVoid);
+	call.call<void>(&testVoid);
 	CHECK_EQ(sum, 3);
+
+} END_TEST
+
+
+class Tracker {
+public:
+	Tracker(int data) : data(data) { copies = 0; }
+	~Tracker() { copies--; }
+	Tracker(const Tracker &o) : data(o.data) { copies++; }
+
+	int data;
+
+	static int copies;
+};
+
+int Tracker::copies = 0;
+
+void trackerFn(Tracker t) {
+	assert(t.data == 10);
+}
+
+int64 variedFn(int a, int64 b, int c) {
+	return a + b + c;
+}
+
+int shortFn(byte a, int b) {
+	return a + b;
+}
+
+BEGIN_TEST(FunctionParamTest) {
+
+	{
+		FnCall call;
+		Tracker t(10);
+		call.param(t);
+		call.call<void>(&trackerFn);
+		CHECK_EQ(Tracker::copies, 0);
+	}
+
+	{
+		FnCall call;
+		int a = 0x1, c = 0x20;
+		int64 b = 0x100000000;
+		call.param(a).param(b).param(c);
+		CHECK_EQ(call.call<int64>(&variedFn), 0x100000021);
+	}
+
+	{
+		FnCall call;
+		byte a = 0x10;
+		int b = 0x1010;
+		call.param(a).param(b);
+		CHECK_EQ(call.call<int>(&shortFn), 0x1020);
+	}
+
+} END_TEST
+
+
+float returnFloat(int i) {
+	return float(i);
+}
+
+int takeFloat(float f) {
+	return int(f);
+}
+
+double returnDouble(int i) {
+	return double(i);
+}
+
+int takeDouble(double d) {
+	return int(d);
+}
+
+BEGIN_TEST(FunctionFloatTest) {
+
+	{
+		FnCall call;
+		int p = 100;
+		CHECK_EQ(call.param(p).call<float>(&returnFloat), 100.0f);
+	}
+
+	{
+		FnCall call;
+		float f = 100.0f;
+		CHECK_EQ(call.param(f).call<int>(&takeFloat), 100);
+	}
+
+	{
+		FnCall call;
+		int p = 100;
+		CHECK_EQ(call.param(p).call<double>(&returnDouble), 100.0);
+	}
+
+	{
+		FnCall call;
+		double d = 100.0f;
+		CHECK_EQ(call.param(d).call<int>(&takeDouble), 100);
+	}
+
+} END_TEST
+
+LargeType &refFn(LargeType *t) {
+	return *t;
+}
+
+LargeType *ptrFn(LargeType *t) {
+	return t;
+}
+
+BEGIN_TEST(FunctionRefPtrTest) {
+
+	LargeType t(1, 2, 3, 4);
+	FnCall call;
+	call.param(&t);
+
+	CHECK_EQ(&call.callRef<LargeType>(&refFn), &t);
+	CHECK_EQ(call.call<LargeType*>(&ptrFn), &t);
 
 } END_TEST
