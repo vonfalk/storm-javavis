@@ -99,7 +99,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\ $(SolutionDir)Storm\Lib\BuiltIn.cpp"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"

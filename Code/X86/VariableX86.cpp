@@ -60,7 +60,7 @@ namespace code {
 
 		int Offsets::updateVarOffset(const Variable &var, const Frame &frame, nat savedReg) {
 			nat id = var.getId();
-			
+
 			// Already computed?
 			if (off[id] != 0)
 				return off[id];
@@ -70,7 +70,7 @@ namespace code {
 			nat size = var.size();
 			if (size == 0)
 				size = sizeof(cpuNat);
-			util::roundUp(size, 4);
+			roundUp(size, 4);
 
 			int offset;
 			if (p == Variable::invalid) {
@@ -78,7 +78,7 @@ namespace code {
 			} else {
 				offset = updateVarOffset(p, frame, savedReg);
 			}
-			
+
 			offset -= size;
 			off[id] = offset;
 			return offset;
@@ -92,7 +92,7 @@ namespace code {
 				return off[id];
 
 			Variable p = frame.prev(var);
-			
+
 			int offset;
 			if (p == Variable::invalid) {
 				// return address and ebp.
@@ -101,7 +101,7 @@ namespace code {
 				nat size = p.size();
 				if (size == 0)
 					size = sizeof(cpuNat);
-				util::roundUp(size, 4);
+				roundUp(size, 4);
 
 				offset = updateParamOffset(p, frame);
 				offset =+ size;

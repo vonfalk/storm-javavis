@@ -84,7 +84,7 @@ private:
 
 template <class T, class U>
 void verifyEq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
-	if (lhs != rhs) {
+	if (!(lhs == rhs)) {
 		r.failed++;
 		std::wcout << L"Failed: " << expr << L" == " << lhs << L" != " << rhs << std::endl;
 	}

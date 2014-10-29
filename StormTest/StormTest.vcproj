@@ -224,6 +224,10 @@
 				RelativePath=".\VTableTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\FunctionTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

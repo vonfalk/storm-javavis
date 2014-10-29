@@ -7,7 +7,6 @@ namespace storm {
 	VTest::VTest(Engine &e) : Object(type(e)) {}
 
 	VTest::~VTest() {
-		PLN("DTOR");
 	}
 
 	int VTest::returnOne() { return 1; }
