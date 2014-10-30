@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "Timestamp.h"
 #include "Platform.h"
+#include <iomanip>
 
 Timestamp::Timestamp() {
 	LARGE_INTEGER li;
@@ -39,7 +40,7 @@ bool Timestamp::operator >=(const Timestamp &other) const {
 }
 
 bool Timestamp::operator <=(const Timestamp &other) const {
-	return ((*this) > other) || ((*this) == other);
+	return ((*this) < other) || ((*this) == other);
 }
 
 
@@ -66,6 +67,22 @@ Timestamp &Timestamp::operator -=(const Timespan &other) {
 }
 
 void Timestamp::output(std::wostream &to) const {
-	to << int(time);
+	LARGE_INTEGER li;
+	li.QuadPart = time * 10LL;
+	FILETIME fTime = { li.LowPart, li.HighPart };
+	SYSTEMTIME sTime;
+	FileTimeToSystemTime(&fTime, &sTime);
+
+	using std::setw;
+
+	wchar_t f = to.fill('0');
+	to << setw(4) << sTime.wYear << L"-"
+	   << setw(2) << sTime.wMonth << L"-"
+	   << setw(2) << sTime.wDay << L" "
+	   << setw(2) << sTime.wHour << L":"
+	   << setw(2) << sTime.wMinute << L":"
+	   << setw(2) << sTime.wSecond << L","
+	   << setw(4) << sTime.wMilliseconds;
+	to.fill(f);
 }
 

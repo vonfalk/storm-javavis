@@ -1,12 +1,16 @@
 #include "stdafx.h"
 #include "Utils/Path.h"
+#include "Header.h"
+#include "Function.h"
+#include "Exception.h"
+#include "Output.h"
+
+// TODO: Remove
 #include "Utils/FileStream.h"
 #include "Utils/TextReader.h"
 
-#include "Header.h"
 
-#include "Function.h"
-#include "Exception.h"
+#define DEBUG_MODE
 
 static void findHeaders(vector<Header*> &output, const Path &p) {
 	vector<Path> children = p.children();
@@ -26,6 +30,121 @@ vector<Header*> findHeaders(const Path &p) {
 	findHeaders(h, p);
 	return h;
 }
+
+Timestamp lastTime(const vector<Header *> &headers) {
+	Timestamp latest = headers[0]->file.mTime();
+
+	for (nat i = 1; i < headers.size(); i++) {
+		limitMin(latest, headers[i]->file.mTime());
+	}
+
+	return latest;
+}
+
+Types allTypes(vector<Header *> &headers) {
+	Types t;
+	for (nat i = 0; i < headers.size(); i++) {
+		Header &h = *headers[i];
+		const vector<Type> &types = h.getTypes();
+
+		for (nat i = 0; i < types.size(); i++) {
+			t.add(types[i]);
+		}
+	}
+	return t;
+}
+
+int _tmain(int argc, _TCHAR* argv[]) {
+	initDebug();
+
+	Timestamp start;
+
+#ifdef DEBUG_MODE
+	// For debugging.
+	Path root = Path::executable() + Path(L"../Storm/");
+	Path scanDir = root;
+
+	Path output = root + Path(L"Lib/BuiltIn.cpp");
+	Path asmOutput = root + Path(L"Lib/VTables.asm");
+
+	bool forceUpdate = false;
+#else
+
+	// Inputs
+	Path root, scanDir;
+	// Outputs
+	Path output, asmOutput;
+
+	if (argc < 4) {
+		std::wcout << L"Error: <root> <scanDir> <update> [<asmOutput>] required!" << std::endl;
+		return 1;
+	}
+
+	root = Path(String(argv[1]));
+	scanDir = Path(String(argv[2]));
+	output = Path(String(argv[3]));
+
+	bool forceUpdate = true;
+#endif
+
+	Timestamp outputModified = output.mTime();
+	if (argc >= 5) {
+		asmOutput = Path(String(argv[4]));
+		limitMin(outputModified, asmOutput.mTime());
+	}
+
+	vector<Header*> headers = findHeaders(root);
+	if (headers.size() == 0) {
+		std::wcout << L"Error: No input files!" << endl;
+		return 1;
+	}
+
+	Timestamp inputModified = lastTime(headers);
+
+	if (inputModified <= outputModified && !forceUpdate) {
+		std::wcout << L"Already up to date!" << std::endl;
+	} else {
+		try {
+			Types t = allTypes(headers);
+			PLN(typeList(t));
+		} catch (const Exception &e) {
+			std::wcout << L"Error: " << e.what() << endl;
+			clear(headers);
+			return 2;
+		}
+	}
+
+	Timestamp end;
+	PLN("Total time: " << end - start);
+
+	clear(headers);
+	return 0;
+
+	// TODO("Do not alter the outputs if no changes are made!");
+
+	// Path root, scanDir, output, asmOutput;
+	// if (argc < 5) {
+	// 	std::wcout << L"Error: <root> <scanDir> <output> <asmOutput> must be provided!" << std::endl;
+	// 	return 1;
+	// }
+
+	// root = Path(String(argv[1]));
+	// scanDir = Path(String(argv[2]));
+	// output = Path(String(argv[3]));
+	// asmOutput = Path(String(argv[4]));
+
+	// try {
+	// 	generateBuiltin(root, scanDir, output, asmOutput);
+	// } catch (const Exception &e) {
+	// 	std::wcout << L"Error: " << e.what() << std::endl;
+	// 	return 2;
+	// }
+
+	return 0;
+}
+
+
+
 
 using namespace stormbuiltin;
 using namespace util;
@@ -301,42 +420,3 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 			declStr.str(),
 			asmContent(result.types));
 }
-
-int _tmain(int argc, _TCHAR* argv[]) {
-	initDebug();
-
-	try {
-		Path root = Path::executable() + Path(L"../Storm/");
-		vector<Header*> h = findHeaders(root);
-		PVAR(h);
-		clear(h);
-	} catch (const Exception &e) {
-		std::wcout << L"Error: " << e.what() << endl;
-		return 2;
-	}
-
-	return 0;
-
-	// TODO("Do not alter the outputs if no changes are made!");
-
-	// Path root, scanDir, output, asmOutput;
-	// if (argc < 5) {
-	// 	std::wcout << L"Error: <root> <scanDir> <output> <asmOutput> must be provided!" << std::endl;
-	// 	return 1;
-	// }
-
-	// root = Path(String(argv[1]));
-	// scanDir = Path(String(argv[2]));
-	// output = Path(String(argv[3]));
-	// asmOutput = Path(String(argv[4]));
-
-	// try {
-	// 	generateBuiltin(root, scanDir, output, asmOutput);
-	// } catch (const Exception &e) {
-	// 	std::wcout << L"Error: " << e.what() << std::endl;
-	// 	return 2;
-	// }
-
-	return 0;
-}
-

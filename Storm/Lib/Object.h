@@ -4,6 +4,8 @@ namespace storm {
 
 	class Type;
 
+	STORM_PKG(core);
+
 	/**
 	 * The root object that all non-value objects inherit
 	 * from. This class contains the logic for the central
@@ -17,6 +19,7 @@ namespace storm {
 	 * Function parameters are also the caller's responisibility.
 	 */
 	class Object : NoCopy {
+		STORM_CLASS;
 	public:
 		// Initialize object to 1 reference.
 		Object(Type *type);

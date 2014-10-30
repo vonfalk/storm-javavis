@@ -4,8 +4,11 @@
 /**
  * Describes an exported class.
  */
-class Type {
+class Type : public Printable {
 public:
+	Type(const String &name, const CppName &super, const String &pkg, const CppName &cppName)
+		: name(name), super(super), package(pkg), cppName(cppName) {}
+
 	// Name of the class.
 	String name;
 
@@ -15,7 +18,39 @@ public:
 	// Package.
 	String package;
 
-	// C++-scope.
+	// C++-name.
 	CppName cppName;
 
+	// Concat 'name' and 'package'.
+	String fullName() const;
+
+protected:
+	virtual void output(wostream &to) const;
+
+};
+
+
+/**
+ * Keep a number of types so that we can generate
+ * fully qualified names for types, given their scope.
+ */
+class Types : public Printable {
+public:
+
+	// Add a type.
+	void add(const Type &type);
+
+	// Find a type. scope.parent() is used for lookup.
+	Type find(const CppName &name, const CppName &scope) const;
+
+	// Get all types in here.
+	vector<Type> getTypes() const;
+
+protected:
+	virtual void output(wostream &to) const;
+
+private:
+	// Known types.
+	typedef map<CppName, Type> T;
+	T types;
 };

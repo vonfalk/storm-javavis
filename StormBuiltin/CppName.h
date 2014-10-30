@@ -14,6 +14,18 @@ public:
 	// Parts to be joined by ::
 	vector<String> parts;
 
+	// Parent name.
+	CppName parent() const;
+
+	// Empty?
+	inline bool empty() const { return parts.empty(); }
+
+	// Concatenation.
+	CppName operator +(const CppName &o) const;
+
+	// Use in set.
+	bool operator <(const CppName &o) const;
+
 protected:
 	virtual void output(wostream &to) const;
 

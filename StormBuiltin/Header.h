@@ -15,7 +15,7 @@ public:
 	const Path file;
 
 	// Get the contents of this header:
-	vector<Type> getTypes();
+	const vector<Type> &getTypes();
 
 protected:
 	virtual void output(wostream &o) const;

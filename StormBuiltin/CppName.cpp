@@ -19,6 +19,23 @@ CppName CppName::read(Tokenizer &tok) {
 	return CppName(parts);
 }
 
+CppName CppName::parent() const {
+	if (parts.size() >= 1)
+		return vector<String>(parts.begin(), parts.end() - 1);
+	else
+		return vector<String>();
+}
+
+CppName CppName::operator +(const CppName &o) const {
+	vector<String> r = parts;
+	r.insert(r.end(), o.parts.begin(), o.parts.end());
+	return r;
+}
+
+bool CppName::operator <(const CppName &o) const {
+	return this->parts < o.parts;
+}
+
 void CppName::output(wostream &to) const {
 	join(to, parts, L"::");
 }

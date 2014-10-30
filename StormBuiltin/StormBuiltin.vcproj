@@ -216,6 +216,14 @@
 				RelativePath=".\Parse.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Type.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Output.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -256,6 +264,10 @@
 			</File>
 			<File
 				RelativePath=".\Parse.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Output.h"
 				>
 			</File>
 		</Filter>

@@ -6,15 +6,13 @@
 #include "Utils/FileStream.h"
 using namespace util;
 
-Header::Header(const Path &p) : file(p), parsed(false) {
-	parse(); TODO("REMOVE!");
-}
+Header::Header(const Path &p) : file(p), parsed(false) {}
 
 void Header::output(wostream &to) const {
 	to << L"Header: " << file;
 }
 
-vector<Type> Header::getTypes() {
+const vector<Type> &Header::getTypes() {
 	parse();
 	return types;
 }
@@ -52,8 +50,7 @@ void Header::parse(Tokenizer &tok) {
 		} else if (token == L"STORM_CLASS") {
 			if (!scope.isType())
 				throw Error(L"STORM_CLASS only allowed in classes and structs!");
-			Type t = { scope.name(), scope.super(), pkg, scope.cppName() };
-			types.push_back(t);
+			types.push_back(Type(scope.name(), scope.super(), pkg, scope.cppName()));
 		} else if (token == L"STORM_PKG") {
 			pkg = parsePkg(tok);
 		} else if (token == L"class" || token == L"struct") {
@@ -61,7 +58,6 @@ void Header::parse(Tokenizer &tok) {
 			if (tok.peek() != L";") {
 				scope.push(true, name, findSuper(tok));
 				tok.expect(L"{");
-				PVAR(scope);
 			}
 		} else if (token == L"namespace") {
 			scope.push(false, tok.next());
