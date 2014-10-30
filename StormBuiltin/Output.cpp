@@ -80,6 +80,8 @@ String vtableCode(const Types &types) {
 		out << vtableFnName(type.cppName) << L" proto\n\n";
 	}
 
+	out << L"\n.code\n\n";
+
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
 		String fn = vtableFnName(type.cppName);
