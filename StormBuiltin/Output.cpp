@@ -68,6 +68,10 @@ String vtableCode(const Types &types) {
 	std::wostringstream out;
 	vector<Type> t = types.getTypes();
 
+	out << L".386\n";
+	out << L".model flat, c\n\n";
+	out << L".data\n\n";
+
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
 
