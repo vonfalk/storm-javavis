@@ -223,7 +223,8 @@
     (not
      (or
       (is-test-project)
-      (equal proj "Utils")))))
+      (equal proj "Utils")
+      (equal proj "StormBuiltin")))))
   
 (defun insert-namespace ()
   (insert "namespace ")

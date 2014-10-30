@@ -27,14 +27,14 @@ namespace util {
 			~Time();
 		private:
 			FramerateTimer &owner;
-			util::Timestamp startTime;
+			Timestamp startTime;
 		};
 
 	private:
 		const wchar_t *name;
 
 		// Called by ~Time when an interval has been elapsed.
-		void onInterval(util::Timespan time);
+		void onInterval(Timespan time);
 
 		// Number of samples before output
 		static const nat numSamples = 100;
@@ -43,7 +43,7 @@ namespace util {
 		nat currentSample;
 
 		// Sample record.
-		util::Timespan samples[numSamples];
+		Timespan samples[numSamples];
 
 		// Output statistics.
 		void outputStats();

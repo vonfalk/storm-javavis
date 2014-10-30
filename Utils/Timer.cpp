@@ -8,7 +8,7 @@ namespace util {
 	Timer::Timer(const char *msg) : msg(msg), wmsg(null) {}
 
 	Timer::~Timer() {
-		util::Timestamp end;
+		Timestamp end;
 
 		if (msg) debugStream() << msg;
 		if (wmsg) debugStream() << wmsg;

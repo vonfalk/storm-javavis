@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utils/Path.h"
+#include "Type.h"
 
 
 namespace stormbuiltin {
@@ -30,24 +31,6 @@ namespace stormbuiltin {
 		// Types of parameters to the function.
 		vector<String> params;
 	};
-
-	/**
-	 * Describes an exported class.
-	 */
-	struct Type {
-		// Name of the class.
-		String name;
-
-		// Superclass (if any).
-		String super;
-
-		// Package.
-		String package;
-
-		// C++ name (fully qualified).
-		String cppName;
-	};
-
 
 	/**
 	 * Contents of a file.

@@ -1,9 +1,31 @@
 #include "stdafx.h"
 #include "Utils/Path.h"
-#include "Function.h"
-#include "Exception.h"
 #include "Utils/FileStream.h"
 #include "Utils/TextReader.h"
+
+#include "Header.h"
+
+#include "Function.h"
+#include "Exception.h"
+
+static void findHeaders(vector<Header*> &output, const Path &p) {
+	vector<Path> children = p.children();
+	for (nat i = 0; i < children.size(); i++) {
+		Path &c = children[i];
+
+		if (c.isDir()) {
+			findHeaders(output, c);
+		} else if (c.hasExt(L"h")) {
+			output.push_back(new Header(c));
+		}
+	}
+}
+
+vector<Header*> findHeaders(const Path &p) {
+	vector<Header*> h;
+	findHeaders(h, p);
+	return h;
+}
 
 using namespace stormbuiltin;
 using namespace util;
@@ -158,7 +180,7 @@ void updateFile(const Path &file,
 }
 
 String vtableSymbol(const Type &t) {
-	vector<String> parts = t.cppName.split(L"::");
+	vector<String> parts; //  = t.cppName.split(L"::");
 	std::wostringstream r;
 	r << L"??_7";
 	for (nat i = parts.size(); i > 0; i--) {
@@ -169,7 +191,7 @@ String vtableSymbol(const Type &t) {
 }
 
 String vtableFnName(const Type &t) {
-	String cppName = t.cppName;
+	String cppName; // = t.cppName;
 	for (nat i = 0; i < cppName.size(); i++)
 		if (cppName[i] == ':')
 			cppName[i] = '_';
@@ -253,10 +275,10 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 
 		typeStr << L"{ Name(L\"" << t.package << L"\"), ";
 		typeStr << L"L\"" << t.name << L"\", ";
-		if (t.super.empty())
-			typeStr << L"null";
-		else
-			typeStr << L"L\"" << t.super << L"\"";
+		// if (t.super.empty())
+		// 	typeStr << L"null";
+		// else
+		// 	typeStr << L"L\"" << t.super << L"\"";
 		typeStr << L", " << i;
 		typeStr << " }," << endl;
 	}
@@ -264,11 +286,11 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 	std::wostringstream declStr;
 	for (nat i = 0; i < result.types.size(); i++) {
 		Type &t = result.types[i];
-		declStr << L"storm::Type *" << t.cppName << L"::type(Engine &e) { return e.builtIn(" << i << L"); }\n";
-		declStr << L"storm::Type *" << t.cppName << L"::type(Object *o) { return type(o->myType->engine); }\n";
+		// declStr << L"storm::Type *" << t.cppName << L"::type(Engine &e) { return e.builtIn(" << i << L"); }\n";
+		// declStr << L"storm::Type *" << t.cppName << L"::type(Object *o) { return type(o->myType->engine); }\n";
 		String fnName = vtableFnName(t);
 		declStr << L"extern \"C\" void *" << fnName << L"();\n";
-		declStr << L"void *" << t.cppName << L"::cppVTable() { return " << fnName << L"(); }\n";
+		// declStr << L"void *" << t.cppName << L"::cppVTable() { return " << fnName << L"(); }\n";
 	}
 
 	updateFile(listFile,
@@ -283,25 +305,37 @@ void generateBuiltin(const Path &root, const Path &headerRoot, const Path &listF
 int _tmain(int argc, _TCHAR* argv[]) {
 	initDebug();
 
-	TODO("Do not alter the outputs if no changes are made!");
-
-	Path root, scanDir, output, asmOutput;
-	if (argc < 5) {
-		std::wcout << L"Error: <root> <scanDir> <output> <asmOutput> must be provided!" << std::endl;
-		return 1;
-	}
-
-	root = Path(String(argv[1]));
-	scanDir = Path(String(argv[2]));
-	output = Path(String(argv[3]));
-	asmOutput = Path(String(argv[4]));
-
 	try {
-		generateBuiltin(root, scanDir, output, asmOutput);
+		Path root = Path::executable() + Path(L"../Storm/");
+		vector<Header*> h = findHeaders(root);
+		PVAR(h);
+		clear(h);
 	} catch (const Exception &e) {
-		std::wcout << L"Error: " << e.what() << std::endl;
+		std::wcout << L"Error: " << e.what() << endl;
 		return 2;
 	}
+
+	return 0;
+
+	// TODO("Do not alter the outputs if no changes are made!");
+
+	// Path root, scanDir, output, asmOutput;
+	// if (argc < 5) {
+	// 	std::wcout << L"Error: <root> <scanDir> <output> <asmOutput> must be provided!" << std::endl;
+	// 	return 1;
+	// }
+
+	// root = Path(String(argv[1]));
+	// scanDir = Path(String(argv[2]));
+	// output = Path(String(argv[3]));
+	// asmOutput = Path(String(argv[4]));
+
+	// try {
+	// 	generateBuiltin(root, scanDir, output, asmOutput);
+	// } catch (const Exception &e) {
+	// 	std::wcout << L"Error: " << e.what() << std::endl;
+	// 	return 2;
+	// }
 
 	return 0;
 }

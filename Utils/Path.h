@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Timestamp.h"
+
 /**
  * A class for managing path names.
  */
@@ -67,6 +69,13 @@ public:
 
 	// Find the children of this path.
 	vector<Path> children() const;
+
+	// Modified time.
+	Timestamp mTime() const;
+
+	// Created time.
+	Timestamp cTime() const;
+
 private:
 
 	// Internal representation is a list of strings, one for each part of the pathname.

@@ -222,5 +222,29 @@ vector<Path> Path::children() const {
 		}
 	} while (FindNextFile(h, &findData));
 
+	FindClose(h);
+
 	return result;
+}
+
+Timestamp fromFileTime(FILETIME ft);
+
+Timestamp Path::mTime() const {
+	WIN32_FIND_DATA d;
+	HANDLE h = FindFirstFile(toS().c_str(), &d);
+	if (h == INVALID_HANDLE_VALUE)
+		return Timestamp(0);
+	FindClose(h);
+
+	return fromFileTime(d.ftLastWriteTime);
+}
+
+Timestamp Path::cTime() const {
+	WIN32_FIND_DATA d;
+	HANDLE h = FindFirstFile(toS().c_str(), &d);
+	if (h == INVALID_HANDLE_VALUE)
+		return Timestamp(0);
+	FindClose(h);
+
+	return fromFileTime(d.ftCreationTime);
 }

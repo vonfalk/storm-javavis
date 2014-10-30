@@ -13,7 +13,7 @@ namespace util {
 	private:
 		const char *msg;
 		const wchar_t *wmsg;
-		util::Timestamp start;
+		Timestamp start;
 	};
 
 }

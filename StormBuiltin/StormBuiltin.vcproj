@@ -204,6 +204,18 @@
 				RelativePath=".\Tokenizer.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Header.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CppName.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Parse.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -228,6 +240,22 @@
 			</File>
 			<File
 				RelativePath=".\Exception.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Header.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Type.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CppName.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Parse.h"
 				>
 			</File>
 		</Filter>

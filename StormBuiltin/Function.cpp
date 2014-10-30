@@ -162,8 +162,8 @@ namespace stormbuiltin {
 				if (!top.isType)
 					throw Error(L"STORM_CLASS must be inside a class or struct.");
 
-				Type t = { top.name, top.super, package, join(scope, L"::") };
-				types.push_back(t);
+				// Type t = { top.name, top.super, package, join(scope, L"::") };
+				// types.push_back(t);
 			} else if (token == L"STORM_CTOR") {
 				Function fn = parseFn(tok, scope, L"", package);
 				if (fn.params.size() <= 0 || fn.params.front() != L"Type")
@@ -221,7 +221,7 @@ namespace stormbuiltin {
 		String contents = reader->getAll();
 		delete reader;
 
-		Tokenizer tok(file, contents, 0);
+		Tokenizer tok(contents, 0);
 		try {
 			result = parseFile(tok);
 			for (nat i = 0; i < result.fns.size(); i++) {
