@@ -107,6 +107,8 @@ int _tmain(int argc, _TCHAR* argv[]) {
 		try {
 			Types t = allTypes(headers);
 			PLN(typeList(t));
+			PLN(vtableCode(t));
+			PLN(typeFunctions(t));
 		} catch (const Exception &e) {
 			std::wcout << L"Error: " << e.what() << endl;
 			clear(headers);
