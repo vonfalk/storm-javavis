@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/Path.h"
 #include "Type.h"
+#include "Function.h"
 #include "Tokenizer.h"
 
 /**
@@ -17,6 +18,9 @@ public:
 	// Get the contents of this header:
 	const vector<Type> &getTypes();
 
+	// Get the functions in here.
+	const vector<Function> &getFunctions();
+
 protected:
 	virtual void output(wostream &o) const;
 
@@ -26,6 +30,9 @@ private:
 
 	// Cache of types.
 	vector<Type> types;
+
+	// Cache of functions.
+	vector<Function> functions;
 
 	// Parse the file.
 	void parse();

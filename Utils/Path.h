@@ -26,6 +26,8 @@ public:
 	// Comparison.
 	bool operator ==(const Path &o) const;
 	inline bool operator !=(const Path &o) const { return !(*this == o); }
+	bool operator <(const Path &o) const;
+	bool operator >(const Path &o) const;
 
 	// Concat this path with another path, the other path must be relative.
 	Path operator +(const Path &other) const;

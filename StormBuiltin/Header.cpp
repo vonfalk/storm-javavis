@@ -2,6 +2,7 @@
 #include "Header.h"
 #include "Exception.h"
 #include "Parse.h"
+#include "Function.h"
 #include "Utils/TextReader.h"
 #include "Utils/FileStream.h"
 using namespace util;
@@ -15,6 +16,11 @@ void Header::output(wostream &to) const {
 const vector<Type> &Header::getTypes() {
 	parse();
 	return types;
+}
+
+const vector<Function> &Header::getFunctions() {
+	parse();
+	return functions;
 }
 
 void Header::parse() {
@@ -38,15 +44,18 @@ void Header::parse() {
 void Header::parse(Tokenizer &tok) {
 	String pkg;
 	CppScope scope;
+	CppType lastType;
 
 	while (tok.more()) {
 		String token = tok.next();
+		bool wasType = false;
 
 		if (token[0] == '#') {
 			// Ignore preprocessor text.
 			if (token == L"#define")
 				tok.next();
 		} else if (token == L"STORM_FN") {
+			functions.push_back(Function::read(pkg, scope, lastType, tok));
 		} else if (token == L"STORM_CLASS") {
 			if (!scope.isType())
 				throw Error(L"STORM_CLASS only allowed in classes and structs!");
@@ -68,6 +77,33 @@ void Header::parse(Tokenizer &tok) {
 			scope.push();
 		} else if (token == L"}") {
 			scope.pop();
+		} else if (token == L";") {
+		} else if (token == L"::") {
+			if (!lastType.type.empty()) {
+				lastType.type.parts.push_back(tok.next());
+				wasType = true;
+			}
+		} else if (token == L"*") {
+			if (!lastType.type.empty()) {
+				wasType = true;
+				lastType.isPtr = true;
+			}
+		} else if (token == L"&") {
+			if (!lastType.type.empty()) {
+				wasType = true;
+				lastType.isRef = true;
+			}
+		} else if (token == L"const") {
+			lastType.isConst = true;
+			wasType = true;
+		} else {
+			if (!lastType.type.empty())
+				lastType.clear();
+			lastType.type.parts.push_back(token);
+			wasType = true;
 		}
+
+		if (!wasType)
+			lastType.clear();
 	}
 }

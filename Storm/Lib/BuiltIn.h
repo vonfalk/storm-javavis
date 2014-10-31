@@ -16,8 +16,8 @@ namespace storm {
 		// Name of the type (null in the last element).
 		const wchar *name;
 
-		// Name of parent type (or null).
-		const wchar *super;
+		// Name of parent type (or empty).
+		Name super;
 
 		// Static Type pointer index.
 		nat typePtrId;

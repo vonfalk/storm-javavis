@@ -1,5 +1,6 @@
 #pragma once
 #include "Type.h"
+#include "Header.h"
 
 /**
  * Generate and write output.
@@ -14,3 +15,8 @@ String typeFunctions(const Types &t);
 // Generate the vtable code (asm).
 String vtableCode(const Types &t);
 
+// Generate list of functions.
+String functionList(const vector<Header *> &headers, const Types &t);
+
+// Generate list of includes
+String headerList(const vector<Header *> &headers, const Path &root);

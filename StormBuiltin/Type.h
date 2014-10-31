@@ -6,8 +6,12 @@
  */
 class Type : public Printable {
 public:
+	// Built-in type.
+	Type(const String &name, const String &pkg)
+		: name(name), super(), package(pkg), cppName(vector<String>(1,name)), exported(false) {}
+
 	Type(const String &name, const CppName &super, const String &pkg, const CppName &cppName)
-		: name(name), super(super), package(pkg), cppName(cppName) {}
+		: name(name), super(super), package(pkg), cppName(cppName), exported(true) {}
 
 	// Name of the class.
 	String name;
@@ -20,6 +24,9 @@ public:
 
 	// C++-name.
 	CppName cppName;
+
+	// Export this type?
+	bool exported;
 
 	// Concat 'name' and 'package'.
 	String fullName() const;

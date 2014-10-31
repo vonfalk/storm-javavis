@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Output.h"
+#include "Exception.h"
 
 /**
  * Helpers
@@ -21,6 +22,30 @@ String vtableFnName(const CppName &name) {
 	return L"cppVTable_" + cppName;
 }
 
+void fnPtr(wostream &to, const Function &fn, const Types &types) {
+	CppName scope = fn.cppScope.scopeName();
+
+	to << fn.result.fullName(types, scope) << "(CODECALL ";
+	if (fn.cppScope.isType())
+		to << fn.cppScope.cppName() << L"::";
+
+	to << L"*)(";
+	for (nat i = 0; i < fn.params.size(); i++) {
+		if (i != 0)
+			to << L", ";
+		to << fn.params[i].fullName(types, scope);
+	}
+	to << L")";
+	if (fn.isConst)
+		to << L" const";
+}
+
+String fixPath(String str) {
+	for (nat i = 0; i < str.size(); i++)
+		if (str[i] == '\\')
+			str[i] = '/';
+	return str;
+}
 
 /**
  * Generation
@@ -34,14 +59,16 @@ String typeList(const Types &types) {
 		Type &type = t[i];
 
 		out << L"{ Name(L\"" << type.package << L"\"), ";
-		out << L"\"" << type.name << L"\", ";
+		out << L"L\"" << type.name << L"\", ";
 
 		if (type.super.empty()) {
 			out << L"Name(), ";
 		} else {
-			Type super = types.find(type.super, type.cppName);
+			Type super = types.find(type.super, type.cppName.parent());
 			out << L"Name(L\"" << super.fullName() << L"\"), ";
 		}
+
+		out << i << L" ";
 		out << L"},\n";
 	}
 
@@ -93,6 +120,81 @@ String vtableCode(const Types &types) {
 	}
 
 	out << L"end\n";
+
+	return out.str();
+}
+
+void functionList(wostream &out, const vector<Function> &fns, const Types &types) {
+	for (nat i = 0; i < fns.size(); i++) {
+		const Function &fn = fns[i];
+		CppName scope = fn.cppScope.scopeName();
+
+		// Package
+		out << L"{ Name(L\"" << fn.package << L"\"), ";
+
+		// Member of?
+		if (fn.cppScope.isType()) {
+			Type member = types.find(fn.cppScope.cppName(), scope);
+			out << L"L\"" << member.name << L"\", ";
+		} else {
+			out << "null, ";
+		}
+
+		// Result
+		if (fn.result.isVoid()) {
+			out << L"Name(), ";
+		} else {
+			out << L"Name(L\"" << types.find(fn.result.type, scope).fullName() << L"\"), ";
+		}
+
+		// Name
+		out << L"L\"" << fn.name << L"\", ";
+
+		// Params
+		out << L"list(" << fn.params.size();
+		for (nat i = 0; i < fn.params.size(); i++) {
+			out << L", Name(L\"" << types.find(fn.params[i].type, scope).fullName() << L"\")";
+		}
+		out << L"), ";
+
+		CppName name = fn.cppScope.cppName() + CppName(vector<String>(1, fn.name));
+
+		// Function ptr.
+		out << L"address<";
+		fnPtr(out, fn, types);
+		out << L">(&" << name << L") },\n";
+	}
+}
+
+String functionList(const vector<Header *> &headers, const Types &types) {
+	std::wostringstream out;
+
+	for (nat i = 0; i < headers.size(); i++) {
+		Header &header = *headers[i];
+		const vector<Function> &fns = header.getFunctions();
+
+		try {
+			functionList(out, fns, types);
+		} catch (const Error &e) {
+			Error err(e.what(), header.file);
+			throw err;
+		}
+	}
+
+	return out.str();
+}
+
+String headerList(const vector<Header *> &headers, const Path &root) {
+	std::wostringstream out;
+
+	for (nat i = 0; i < headers.size(); i++) {
+		Header &header = *headers[i];
+
+		if (header.getFunctions().size() > 0 || header.getTypes().size() > 0) {
+			Path rel = header.file.makeRelative(root);
+			out << L"#include \"" << fixPath(rel.toS()) << L"\"\n";
+		}
+	}
 
 	return out.str();
 }

@@ -9,7 +9,7 @@ namespace storm {
 	VTest::~VTest() {
 	}
 
-	int VTest::returnOne() { return 1; }
-	int VTest::returnTwo() { return 2; }
+	Int VTest::returnOne() { return 1; }
+	Int VTest::returnTwo() { return 2; }
 
 }

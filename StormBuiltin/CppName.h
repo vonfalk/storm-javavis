@@ -20,6 +20,9 @@ public:
 	// Empty?
 	inline bool empty() const { return parts.empty(); }
 
+	// Clear.
+	inline void clear() { parts.clear(); }
+
 	// Concatenation.
 	CppName operator +(const CppName &o) const;
 
@@ -29,6 +32,34 @@ public:
 protected:
 	virtual void output(wostream &to) const;
 
+};
+
+class Types;
+
+class CppType : public Printable {
+public:
+	CppType() : isConst(false), isPtr(false), isRef(false) {}
+
+	// name of the type.
+	CppName type;
+
+	// modifiers
+	bool isConst, isPtr, isRef;
+
+	// Clear.
+	inline void clear() { type.clear(); isConst = isPtr = isRef = false; }
+
+	// Read!
+	static CppType read(Tokenizer &tok);
+
+	// Void?
+	bool isVoid() const;
+
+	// Full name.
+	CppType fullName(const Types &t, const CppName &scope) const;
+
+protected:
+	virtual void output(wostream &to) const;
 };
 
 class CppScope : public Printable {
@@ -55,6 +86,9 @@ public:
 
 	// Get the current name.
 	CppName cppName() const;
+
+	// Get the name of the current scope, ie cppName if !isType and cppName.parent() if isType
+	CppName scopeName() const;
 
 	// Is this a type?
 	bool isType() const;

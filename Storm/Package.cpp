@@ -115,7 +115,7 @@ namespace storm {
 		if (!p.exists())
 			return null;
 
-		Package *pkg = new Package(*pkgPath + Path(name), nameFallback);
+		Package *pkg = new Package(*pkgPath + Path(name), this);
 		packages[name] = pkg;
 		return pkg;
 	}

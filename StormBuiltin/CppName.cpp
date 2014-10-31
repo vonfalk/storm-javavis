@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CppName.h"
 #include "Parse.h"
+#include "Type.h"
 
 CppName CppName::read(Tokenizer &tok) {
 	vector<String> parts;
@@ -40,6 +41,47 @@ void CppName::output(wostream &to) const {
 	join(to, parts, L"::");
 }
 
+CppType CppType::read(Tokenizer &tok) {
+	CppType t;
+
+	if (tok.peek() == L"const") {
+		t.isConst = true;
+		tok.next();
+	}
+
+	t.type = CppName::read(tok);
+
+	if (tok.peek() == L"*") {
+		t.isPtr = true;
+		tok.next();
+	} else if (tok.peek() == L"&") {
+		t.isRef = true;
+		tok.next();
+	}
+
+	return t;
+}
+
+void CppType::output(wostream &to) const {
+	if (isConst)
+		to << L"const ";
+	to << type;
+	if (isPtr)
+		to << L" *";
+	else if (isRef)
+		to << L" &";
+}
+
+bool CppType::isVoid() const {
+	return type.parts.size() == 1 && type.parts[0] == L"void";
+}
+
+CppType CppType::fullName(const Types &t, const CppName &scope) const {
+	CppType c = *this;
+	c.type = t.find(type, scope).cppName;
+	return c;
+}
+
 
 void CppScope::push(bool type, const String &name, const CppName &super) {
 	Part p = { type, 0, name, super };
@@ -63,6 +105,13 @@ CppName CppScope::cppName() const {
 	for (nat i = 0; i < parts.size(); i++)
 		r[i] = parts[i].name;
 	return CppName(r);
+}
+
+CppName CppScope::scopeName() const {
+	if (isType())
+		return cppName().parent();
+	else
+		return cppName();
 }
 
 bool CppScope::isType() const {

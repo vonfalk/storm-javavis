@@ -102,6 +102,17 @@ bool Path::operator ==(const Path &o) const {
 	return true;
 }
 
+bool Path::operator <(const Path &o) const {
+	if (isDirectory != o.isDirectory && parts == o.parts)
+		return o.isDirectory;
+	return parts < o.parts;
+}
+
+bool Path::operator >(const Path &o) const {
+	return o < *this;
+}
+
+
 Path Path::operator +(const Path &other) const {
 	Path result(*this);
 	result += other;

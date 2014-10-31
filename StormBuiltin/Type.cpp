@@ -24,7 +24,7 @@ Type Types::find(const CppName &name, const CppName &scope) const {
 		return i->second;
 
 	// It should be scope.parent() + name.
-	CppName r = scope.parent() + name;
+	CppName r = scope + name;
 	i = types.find(r);
 	if (i != types.end())
 		return i->second;
@@ -39,7 +39,8 @@ void Types::output(wostream &to) const {
 vector<Type> Types::getTypes() const {
 	vector<Type> r;
 	for (T::const_iterator i = types.begin(); i != types.end(); ++i) {
-		r.push_back(i->second);
+		if (i->second.exported)
+			r.push_back(i->second);
 	}
 	return r;
 }

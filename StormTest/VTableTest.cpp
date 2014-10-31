@@ -4,11 +4,11 @@
 #include "Storm/Test/VTest.h"
 #include "Code/VTable.h"
 
-int CODECALL replaceOne(VTest *me) {
+Int CODECALL replaceOne(VTest *me) {
 	return 3;
 }
 
-int CODECALL replaceTwo(VTest *me) {
+Int CODECALL replaceTwo(VTest *me) {
 	return 4;
 }
 

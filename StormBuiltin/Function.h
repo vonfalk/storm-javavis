@@ -1,54 +1,36 @@
 #pragma once
 
-#include "Utils/Path.h"
-#include "Type.h"
+#include "CppName.h"
+#include "Tokenizer.h"
 
+/**
+ * Describes a single function that is to be exported.
+ */
+class Function : public Printable {
+public:
 
-namespace stormbuiltin {
+	// Name of the cpp function.
+	CppScope cppScope;
 
-	/**
-	 * Describes a single function that is to be exported.
-	 */
-	struct Function {
-		// Name of the cpp function.
-		String cppName;
+	// Name of the storm function.
+	String name;
 
-		// Header file this function is located in.
-		Path header;
+	// Storm package.
+	String package;
 
-		// Type member.
-		String classMember;
+	// Return type
+	CppType result;
 
-		// Name of the storm function.
-		String name;
+	// Parameter types.
+	vector<CppType> params;
 
-		// Function shall be located in this package.
-		String package;
+	// Const function?
+	bool isConst;
 
-		// Result type.
-		String result;
+	// Read a function.
+	static Function read(const String &package, const CppScope &scope, const CppType &result, Tokenizer &tok);
 
-		// Types of parameters to the function.
-		vector<String> params;
-	};
+protected:
+	virtual void output(wostream &to) const;
+};
 
-	/**
-	 * Contents of a file.
-	 */
-	struct File {
-		// Functions.
-		vector<Function> fns;
-
-		// Types
-		vector<Type> types;
-
-		// Add another 'file' to this one.
-		void add(const File &o);
-	};
-
-	wostream &operator <<(wostream &to, const Function &fn);
-
-	// Find all functions in a file.
-	File parseFile(const Path &file);
-
-}

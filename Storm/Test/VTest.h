@@ -14,8 +14,8 @@ namespace storm {
 
 		~VTest();
 
-		virtual int STORM_FN returnOne();
-		virtual int STORM_FN returnTwo();
+		virtual Int STORM_FN returnOne();
+		virtual Int STORM_FN returnTwo();
 	};
 
 }

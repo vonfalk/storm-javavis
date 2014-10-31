@@ -86,7 +86,7 @@ namespace storm {
 	}
 
 	static void addSuper(Engine &to, const BuiltInType *t) {
-		if (t->super == null)
+		if (t->super.empty())
 			return;
 
 		Name fullName = t->pkg + Name(t->name);
@@ -95,10 +95,10 @@ namespace storm {
 		if (!tc)
 			throw new BuiltInError(L"Failed to locate type " + toS(fullName));
 
-		Named *s = tc->find(Name(t->super));
+		Named *s = tc->find(t->super);
 		Type *super = as<Type>(s);
 		if (!super)
-			throw new BuiltInError(L"Failed to locate super type " + String(t->super));
+			throw new BuiltInError(L"Failed to locate super type " + toS(t->super));
 
 		tc->setSuper(super);
 	}
