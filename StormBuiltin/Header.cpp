@@ -62,6 +62,16 @@ void Header::parse(Tokenizer &tok) {
 			types.push_back(Type(scope.name(), scope.super(), pkg, scope.cppName()));
 		} else if (token == L"STORM_PKG") {
 			pkg = parsePkg(tok);
+		} else if (token == L"STORM_CTOR") {
+			CppType t;
+			t.type = scope.cppName();
+			t.isPtr = true;
+			Function ctor = Function::read(pkg, scope, t, tok);
+			ctor.name = L"__ctor";
+			functions.push_back(ctor);
+			if (ctor.params.size() < 1 || !ctor.params[0].isTypePtr()) {
+				throw Error(L"Constructors must have Type * as first parameter.");
+			}
 		} else if (token == L"class" || token == L"struct") {
 			String name = tok.next();
 			if (tok.peek() != L";") {

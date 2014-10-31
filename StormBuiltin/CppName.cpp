@@ -73,7 +73,11 @@ void CppType::output(wostream &to) const {
 }
 
 bool CppType::isVoid() const {
-	return type.parts.size() == 1 && type.parts[0] == L"void";
+	return type.parts.size() == 1 && type.parts[0] == L"void" && !isPtr;
+}
+
+bool CppType::isTypePtr() const {
+	return type.parts.size() == 1 && type.parts[0] == L"Type" && isPtr;
 }
 
 CppType CppType::fullName(const Types &t, const CppName &scope) const {

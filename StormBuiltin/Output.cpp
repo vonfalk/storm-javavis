@@ -160,9 +160,19 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 		CppName name = fn.cppScope.cppName() + CppName(vector<String>(1, fn.name));
 
 		// Function ptr.
-		out << L"address<";
-		fnPtr(out, fn, types);
-		out << L">(&" << name << L") },\n";
+		if (fn.name != L"__ctor") {
+			out << L"address<";
+			fnPtr(out, fn, types);
+			out << L">(&" << name << L")";
+		} else {
+			out << L"address(&create" << fn.params.size() << L"<";
+			out << fn.cppScope.cppName();
+			for (nat i = 1; i < fn.params.size(); i++) {
+				out << L", " << fn.params[i].fullName(types, scope);
+			}
+			out << L">)";
+		}
+		out << " },\n";
 	}
 }
 

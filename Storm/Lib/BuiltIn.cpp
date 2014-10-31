@@ -87,11 +87,15 @@ namespace storm {
 	const BuiltInFunction *builtInFunctions() {
 		static BuiltInFunction fns[] = {
 			// BEGIN LIST
+			{ Name(L"lang.simple"), L"SScope", Name(L"lang.simple.SScope"), L"__ctor", list(1, Name(L"core.Type")), address(&create1<storm::SScope>) },
 			{ Name(L"lang.simple"), L"SScope", Name(), L"expr", list(1, Name(L"lang.simple.SExpr")), address<void(CODECALL storm::SScope::*)(storm::SExpr *)>(&storm::SScope::expr) },
 			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sOperator", list(3, Name(L"lang.simple.SExpr"), Name(L"lang.simple.SExpr"), Name(L"core.Str")), address<storm::SExpr *(CODECALL *)(storm::SExpr *, storm::SExpr *, storm::Str *)>(&storm::sOperator) },
 			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sVar", list(1, Name(L"core.Str")), address<storm::SExpr *(CODECALL *)(storm::Str *)>(&storm::sVar) },
 			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sNr", list(1, Name(L"core.Str")), address<storm::SExpr *(CODECALL *)(storm::Str *)>(&storm::sNr) },
+			{ Name(L"core"), L"Str", Name(L"core.Str"), L"__ctor", list(1, Name(L"core.Type")), address(&create1<storm::Str>) },
+			{ Name(L"core"), L"Str", Name(L"core.Str"), L"__ctor", list(2, Name(L"core.Type"), Name(L"core.Str")), address(&create2<storm::Str, const storm::Str>) },
 			{ Name(L"core"), L"Str", Name(L"core.Nat"), L"count", list(0), address<Nat(CODECALL storm::Str::*)() const>(&storm::Str::count) },
+			{ Name(L""), L"VTest", Name(L"VTest"), L"__ctor", list(1, Name(L"core.Type")), address(&create1<storm::VTest>) },
 			{ Name(L""), L"VTest", Name(L"core.Int"), L"returnOne", list(0), address<Int(CODECALL storm::VTest::*)()>(&storm::VTest::returnOne) },
 			{ Name(L""), L"VTest", Name(L"core.Int"), L"returnTwo", list(0), address<Int(CODECALL storm::VTest::*)()>(&storm::VTest::returnTwo) },
 			// END LIST

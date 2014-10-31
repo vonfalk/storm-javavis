@@ -55,6 +55,9 @@ public:
 	// Void?
 	bool isVoid() const;
 
+	// Type* ?
+	bool isTypePtr() const;
+
 	// Full name.
 	CppType fullName(const Types &t, const CppName &scope) const;
 
