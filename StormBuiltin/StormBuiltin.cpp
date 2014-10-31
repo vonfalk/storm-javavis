@@ -6,7 +6,7 @@
 #include "Output.h"
 #include "Write.h"
 
-#define DEBUG_MODE
+// #define DEBUG_MODE
 
 static void findHeaders(vector<Header*> &output, const Path &p) {
 	vector<Path> children = p.children();
