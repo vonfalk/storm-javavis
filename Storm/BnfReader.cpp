@@ -10,7 +10,7 @@ namespace storm {
 
 	typedef hash_map<String, SyntaxRule*> TypeMap;
 
-	void parseBnf(TypeMap &types, Tokenizer &tok, Scope *scope);
+	void parseBnf(TypeMap &types, Tokenizer &tok, const Scope &scope);
 
 
 	/**
@@ -20,7 +20,7 @@ namespace storm {
 		return file.hasExt(L"bnf");
 	}
 
-	void parseBnf(hash_map<String, SyntaxRule*> &types, const Path &file, Scope *scope) {
+	void parseBnf(hash_map<String, SyntaxRule*> &types, const Path &file, const Scope &scope) {
 		util::TextReader *r = util::TextReader::create(new util::FileStream(file, util::Stream::mRead));
 		String content = r->getAll();
 		delete r;
@@ -176,7 +176,7 @@ namespace storm {
 		}
 	}
 
-	void parseRule(SyntaxRule &to, Tokenizer &tok, Scope *scope) {
+	void parseRule(SyntaxRule &to, Tokenizer &tok, const Scope &scope) {
 		SyntaxOption *option = new SyntaxOption(tok.position(), scope);
 
 		try {
@@ -217,7 +217,7 @@ namespace storm {
 			throw SyntaxError(paren.pos, L"Expected ;");
 	}
 
-	void parseBnf(TypeMap &types, Tokenizer &tok, Scope *scope) {
+	void parseBnf(TypeMap &types, Tokenizer &tok, const Scope &scope) {
 		while (tok.more()) {
 			// What we have here is either a rule or a rule declaration.
 			Token ruleName = tok.next();

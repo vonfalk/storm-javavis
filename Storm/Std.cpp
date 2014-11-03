@@ -9,16 +9,8 @@
 
 namespace storm {
 
-	class BuiltInError : public Exception {
-	public:
-		BuiltInError(const String &msg) : msg(msg) {}
-		virtual String what() const { return L"Error while loading built in functions: " + msg; }
-	private:
-		String msg;
-	};
-
-	static Value findValue(Scope *src, const Name &name) {
-		Named *f = src->find(name);
+	static Value findValue(const Scope &src, const Name &name) {
+		Named *f = src.find(name);
 		if (Type *t = as<Type>(f))
 			return Value(t);
 
@@ -27,17 +19,17 @@ namespace storm {
 
 	static void addBuiltIn(Engine &to, const BuiltInFunction *fn) {
 		Named *into = null;
-		Scope *scope = null;
+		Scope scope(null);
 		if (!fn->typeMember) {
 			Package *p = to.package(fn->pkg, true);
 			if (!p)
 				throw BuiltInError(L"Failed to locate package " + toS(fn->pkg));
 			into = p;
-			scope = p;
+			scope.top = p;
 		} else {
 			into = to.scope()->find(fn->pkg + Name(fn->typeMember));
-			scope = as<Scope>(into);
-			if (!into || !scope)
+			scope.top = as<NameLookup>(into);
+			if (!into || !scope.top)
 				throw BuiltInError(L"Could not locate " + String(fn->typeMember) + L" in " + toS(fn->pkg));
 		}
 
@@ -93,12 +85,12 @@ namespace storm {
 		Named *n = to.scope()->find(fullName);
 		Type *tc = as<Type>(n);
 		if (!tc)
-			throw new BuiltInError(L"Failed to locate type " + toS(fullName));
+			throw BuiltInError(L"Failed to locate type " + toS(fullName));
 
-		Named *s = tc->find(t->super);
+		Named *s = Scope(tc).find(t->super);
 		Type *super = as<Type>(s);
 		if (!super)
-			throw new BuiltInError(L"Failed to locate super type " + toS(t->super));
+			throw BuiltInError(L"Failed to locate super type " + toS(t->super));
 
 		tc->setSuper(super);
 	}
@@ -118,13 +110,13 @@ namespace storm {
 
 	void addStdLib(Engine &to, vector<Type *> &cached, Type *&tType) {
 		// Place core types in the core package.
-		Package *root = to.package(Name(L"core"));
-		root->add(intType(to));
-		root->add(natType(to));
+		Package *core = to.package(Name(L"core"), true);
+		core->add(intType(to));
+		core->add(natType(to));
 
 		// TODO: This should be handled normally later on.
 		tType = typeType(to);
-		root->add(tType);
+		core->add(tType);
 
 		addBuiltIn(to, cached);
 	}

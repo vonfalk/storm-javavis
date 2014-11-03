@@ -12,6 +12,6 @@ namespace storm {
 	// Read syntax definitions from the given file, and merge them
 	// into the given hash map. Throws an appropriate exception on
 	// failure. Note that no ownership of the SyntaxRule is taken.
-	void parseBnf(hash_map<String, SyntaxRule*> &types, const Path &file, Scope *scope);
+	void parseBnf(hash_map<String, SyntaxRule*> &types, const Path &file, const Scope &scope);
 
 }

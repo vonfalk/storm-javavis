@@ -18,17 +18,13 @@ namespace storm {
 		return 0;
 	}
 
-	void Type::setParentScope(Scope *parent) {
-		nameFallback = parent;
-	}
-
 	void Type::setSuper(Type *super) {
 		assert(super->flags == flags);
 		assert(superType == null);
 		superType = super;
 	}
 
-	Named *Type::findHere(const Name &name) {
+	Named *Type::find(const Name &name) {
 		if (name.size() != 1)
 			return null;
 

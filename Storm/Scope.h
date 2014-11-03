@@ -8,37 +8,42 @@ namespace storm {
 	class NameOverload;
 
 	/**
+	 * An interface for objects that can lookup names.
+	 */
+	class NameLookup : NoCopy {
+	public:
+		// Find the specified name in here, returns null if not found.
+		virtual Named *find(const Name &name) = 0;
+
+		// Get the parent object to this lookup, or null if none.
+		virtual NameLookup *parent() const = 0;
+	};
+
+	/**
 	 * Denotes a scope to use when looking up names.
+	 * The scope itself is not much more than a policy along with the currently
+	 * topmost element. For example, when looking for names relative a specific
+	 * type, the type itself will be the topmost element. This is used to traverse
+	 * the type hierarchy in any way the current implementation wishes to find
+	 * a match for the name. This is designed so that the current implementation
+	 * can be overridden by specific language implementations later on.
 	 */
 	class Scope {
 	public:
-		Scope();
+		// Create the default lookup with a given topmost object.
+		Scope(NameLookup *top);
+
+		// Topmost object.
+		NameLookup *top;
 
 		// Find the given NameRef, either by using an absulute path or something
 		// relative to the current object.
-		Named *find(const Name &name);
+		virtual Named *find(const Name &name) const;
 
 		// Find a overloaded name. Usually a function. Equivalent to call 'find' above
 		// and then try to find something with parameters.
-		NameOverload *find(const Name &name, const vector<Value> &params);
-
-	protected:
-		// Fallback for name lookup.
-		Scope *nameFallback;
-
-		// Find a name in this scope.
-		virtual Named *findHere(const Name &name) = 0;
+		NameOverload *find(const Name &name, const vector<Value> &params) const;
 	};
 
 
-	/**
-	 * Define a lookup in terms of a chain of other scopes.
-	 */
-	class ScopeChain : public Scope {
-	public:
-		// Search in these scopes, in order.
-		vector<Scope*> scopes;
-	protected:
-		virtual Named *findHere(const Name &name);
-	};
 }

@@ -5,8 +5,7 @@
 
 namespace storm {
 
-	Engine::Engine(const Path &root) : rootPath(root), rootPkg(root, &defaultPkgs) {
-		defaultPkgs.pkgs.push_back(package(Name(L"core"), true));
+	Engine::Engine(const Path &root) : rootPath(root), rootPkg(root), rootScope(&rootPkg) {
 		addStdLib(*this, cached, tType);
 	}
 
@@ -29,20 +28,11 @@ namespace storm {
 
 		Package *next = pkg->childPackage(path[pos]);
 		if (next == null) {
-			next = new Package(&rootPkg);
+			next = new Package(path[pos]);
 			pkg->add(next, path[pos]);
 		}
 
 		return createPackage(next, path, pos + 1);
-	}
-
-	Named *Engine::DefaultPkgs::findHere(const Name &name) {
-		for (nat i = 0; i < pkgs.size(); i++) {
-			Named *n = pkgs[i]->findHere(name);
-			if (n)
-				return n;
-		}
-		return null;
 	}
 
 	Type *Engine::typeType() {

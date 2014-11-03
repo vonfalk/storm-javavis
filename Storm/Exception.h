@@ -57,4 +57,17 @@ namespace storm {
 		String msg;
 	};
 
+
+	/**
+	 * Error while handling built-in functions.
+	 */
+	class BuiltInError : public Exception {
+	public:
+		BuiltInError(const String &msg) : msg(msg) {}
+		virtual String what() const { return L"Error while loading built in functions: " + msg; }
+	private:
+		String msg;
+	};
+
+
 }

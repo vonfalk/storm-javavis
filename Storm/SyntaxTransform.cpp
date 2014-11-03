@@ -27,7 +27,7 @@ namespace storm {
 		for (nat i = 0; i < params.size(); i++)
 			types[i] = Value(params[i]->myType);
 
-		NameOverload *no = option->scope->find(option->matchFn, types);
+		NameOverload *no = option->scope.find(option->matchFn, types);
 		if (Function *f = as<Function>(no)) {
 			code::FnCall call;
 			for (nat i = 0; i < params.size(); i++)
@@ -36,9 +36,9 @@ namespace storm {
 		}
 
 		// See if we can find a constructor!
-		if (Type *t = as<Type>(option->scope->find(option->matchFn))) {
+		if (Type *t = as<Type>(option->scope.find(option->matchFn))) {
 			types.insert(types.begin(), Value(e.typeType()));
-			no = t->find(Type::CTOR, types);
+			no = Scope(t).find(Type::CTOR, types);
 			if (Function *ctor = as<Function>(no)) {
 				code::FnCall call;
 				call.param(t);
@@ -66,7 +66,7 @@ namespace storm {
 		vector<Value> types(2);
 		types[0] = Value(t);
 		types[1] = Value(param->myType);
-		NameOverload *no = t->find(Name(memberName), types);
+		NameOverload *no = Scope(t).find(Name(memberName), types);
 		if (Function *f = as<Function>(no)) {
 			code::FnCall call;
 			call.param(me).param(param);
@@ -135,7 +135,7 @@ namespace storm {
 
 		for (nat i = 0; i < params.size(); i++) {
 			const SyntaxRule::Param &param = rule->params[i];
-			Type *t = as<Type>(option->scope->find(Name(param.type)));
+			Type *t = as<Type>(option->scope.find(Name(param.type)));
 			if (t == null)
 				throw SyntaxTypeError(L"Unknown type: " + param.type);
 			if (params[i] == null)

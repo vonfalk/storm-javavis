@@ -13,7 +13,7 @@ namespace storm {
 		friend class SyntaxRule;
 	public:
 		// 'pos' is the start of this rule's definition.
-		SyntaxOption(const SrcPos &pos, Scope *scope);
+		SyntaxOption(const SrcPos &pos, const Scope &scope);
 		~SyntaxOption();
 
 		// Clear all tokens.
@@ -42,7 +42,7 @@ namespace storm {
 		inline bool hasRepeat() const { return repType != rNone; }
 
 		// Syntactic scope.
-		Scope *const scope;
+		const Scope scope;
 
 		// Function name to call.
 		Name matchFn;

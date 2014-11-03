@@ -2,6 +2,7 @@
 #include "Named.h"
 #include "Scope.h"
 #include "Overload.h"
+#include "Package.h"
 
 namespace storm {
 
@@ -28,7 +29,7 @@ namespace storm {
 	 * to the object itself as its first parameter. Instead it takes a parameter
 	 * to the current Type-object instead. This is enforced by the 'add' method.
 	 */
-	class Type : public Named, public Scope {
+	class Type : public Named, public NameLookup {
 	public:
 		Type(Engine &engine, const String &name, TypeFlags flags);
 		~Type();
@@ -44,9 +45,6 @@ namespace storm {
 		// Get the size of this type.
 		virtual nat size() const;
 
-		// Set the parent scope (done automatically by Package).
-		void setParentScope(Scope *parent);
-
 		// Set parent type. The parent type has to have the same type parameters as this one.
 		void setSuper(Type *super);
 
@@ -56,9 +54,17 @@ namespace storm {
 		// Add new members.
 		void add(NameOverload *m);
 
+		// Lookup names.
+		virtual Named *find(const Name &name);
+
+		// Parent.
+		virtual Package *parent() const { return parentPkg; }
+
+		// Parent package, updated by Package class.
+		Package *parentPkg;
+
 	protected:
 		virtual void output(wostream &to) const;
-		virtual Named *findHere(const Name &name);
 
 	private:
 		// Members.

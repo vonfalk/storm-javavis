@@ -22,16 +22,19 @@ namespace storm {
 	 * engine object, and is therefore managed by the engine object.
 	 * Packages are lazily loaded, which means that the contents
 	 * is not loaded until it is needed.
+	 *
+	 * TODO: Unify loading of syntax and code into one (syntax may be present in code files as well!)
 	 */
-	class Package : public Named, public Scope {
+	class Package : public Named, public NameLookup {
 	public:
 		// Create a virtual package, ie a package not present
 		// on disk. Those packages must therefore be eagerly loaded.
-		Package(Scope *root);
+		Package(const String &name);
 
 		// 'dir' is the directory this package is located in.
-		Package(const Path &pkgPath, Scope *root);
+		Package(const Path &pkgPath);
 
+		// Dtor.
 		~Package();
 
 		// Get a list of all syntax options in this package.
@@ -50,13 +53,19 @@ namespace storm {
 		// Add a function to this package.
 		void add(NameOverload *function);
 
-		// Sadly, used in Engine. Otherwise would be private.
-		virtual Named *findHere(const Name &name);
+		// Find a name here.
+		virtual Named *find(const Name &name);
+
+		// Get parent.
+		virtual Package *parent() const { return parentPkg; }
 
 	protected:
 		virtual void output(std::wostream &to) const;
 
 	private:
+		// Our parent, null if root.
+		Package *parentPkg;
+
 		// Our path. Points to null if this is a virtual package.
 		Path *pkgPath;
 
@@ -99,7 +108,7 @@ namespace storm {
 		/**
 		 * Init.
 		 */
-		void init(Scope *root);
+		void init();
 
 		/**
 		 * Loading of sub-packages.

@@ -7,7 +7,6 @@ namespace storm {
 	/**
 	 * An overloaded name. What differentiates two different
 	 * names is the type and count of their operators.
-	 * TODO? Inherit from Named as well?
 	 */
 	class NameOverload : public Named {
 	public:

@@ -5,7 +5,7 @@
 
 namespace storm {
 
-	SyntaxOption::SyntaxOption(const SrcPos &pos, Scope *scope)
+	SyntaxOption::SyntaxOption(const SrcPos &pos, const Scope &scope)
 		: scope(scope), pos(pos), owner(null), repStart(0), repEnd(0), repType(rNone) {}
 
 	SyntaxOption::~SyntaxOption() {

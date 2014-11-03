@@ -7,18 +7,18 @@
 
 namespace storm {
 
-	Package::Package(Scope *root) : Named(L"<root>"), pkgPath(null) {
-		init(root);
+	Package::Package(const String &name) : Named(name), pkgPath(null) {
+		init();
 	}
 
-	Package::Package(const Path &path, Scope *root) : Named(path.title()) {
+	Package::Package(const Path &path) : Named(path.title()) {
 		pkgPath = new Path(path);
 		pkgPath->makeDir();
-		init(root);
+		init();
 	}
 
-	void Package::init(Scope *root) {
-		nameFallback = root;
+	void Package::init() {
+		parentPkg = null;
 		syntaxLoaded = false;
 		codeLoaded = false;
 	}
@@ -32,10 +32,15 @@ namespace storm {
 	}
 
 	void Package::output(std::wostream &to) const {
-		if (pkgPath)
-			to << "Pkg " << name << " in " << *pkgPath;
+		if (parentPkg == null)
+			to << "Root package";
 		else
-			to << "Virtual Pkg " << name;
+			to << "Pkg " << name;
+
+		if (pkgPath)
+			to << " in " << *pkgPath;
+		else
+			to << " (virtual)";
 		to << endl;
 
 		to << "Loaded packages:" << endl;
@@ -71,7 +76,7 @@ namespace storm {
 		}
 	}
 
-	Named *Package::findHere(const Name &name) {
+	Named *Package::find(const Name &name) {
 		return findName(name, 0);
 	}
 
@@ -115,8 +120,9 @@ namespace storm {
 		if (!p.exists())
 			return null;
 
-		Package *pkg = new Package(*pkgPath + Path(name), this);
+		Package *pkg = new Package(*pkgPath + Path(name));
 		packages[name] = pkg;
+		pkg->parentPkg = this;
 		return pkg;
 	}
 
@@ -138,12 +144,13 @@ namespace storm {
 	void Package::add(Package *pkg, const String &name) {
 		assert(packages.count(name) == 0);
 		packages.insert(make_pair(name, pkg));
+		pkg->parentPkg = this;
 	}
 
 	void Package::add(Type *type) {
 		assert(types.count(type->name) == 0);
 		types.insert(make_pair(type->name, type));
-		type->setParentScope(this);
+		type->parentPkg = this;
 	}
 
 	void Package::add(NameOverload *fn) {
@@ -168,7 +175,8 @@ namespace storm {
 			for (nat i = 0; i < files.size(); i++) {
 				const Path &f = files[i];
 				if (!f.isDir() && isBnfFile(f)) {
-					parseBnf(syntaxRules, f, this);
+					Scope scope(this);
+					parseBnf(syntaxRules, f, scope);
 				}
 			}
 		} catch (...) {
