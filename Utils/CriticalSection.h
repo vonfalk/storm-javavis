@@ -1,24 +1,21 @@
 #pragma once
 
-namespace util {
+class CriticalSection {
+public:
+	CriticalSection();
+	~CriticalSection();
 
-	class CriticalSection {
+	class Section {
 	public:
-		CriticalSection();
-		~CriticalSection();
-
-		class Section {
-		public:
-			Section(CriticalSection &section);
-			~Section();
-		private:
-			CriticalSection *section;
-		};
-
-		typedef Section L; //Shorthand name
+		Section(CriticalSection &section);
+		~Section();
 	private:
-		CRITICAL_SECTION criticalSection;
+		CriticalSection *section;
 	};
 
-	typedef CriticalSection Lock; //Alternate name
+	typedef Section L; //Shorthand name
+private:
+	CRITICAL_SECTION criticalSection;
 };
+
+typedef CriticalSection Lock; //Alternate name

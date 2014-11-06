@@ -21,7 +21,7 @@ namespace storm {
 	}
 
 	void parseBnf(hash_map<String, SyntaxRule*> &types, const Path &file, const Scope &scope) {
-		util::TextReader *r = util::TextReader::create(new util::FileStream(file, util::Stream::mRead));
+		TextReader *r = TextReader::create(new FileStream(file, Stream::mRead));
 		String content = r->getAll();
 		delete r;
 

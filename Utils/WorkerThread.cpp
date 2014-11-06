@@ -13,14 +13,14 @@ namespace util {
 		worker.stopWait();
 	}
 
-	void WorkerThread::add(util::Function<void, Control&> &toCall) {
+	void WorkerThread::add(Fn<void, Control&> &toCall) {
 		Lock::L l(workLock);
 
 		workList.push_back(toCall);
 		waitSema.up();
 
 		if (!worker.isRunning()) {
-			worker.start(util::memberFn(this, &WorkerThread::threadMain));
+			worker.start(memberFn(this, &WorkerThread::threadMain));
 		}
 	}
 
@@ -35,7 +35,7 @@ namespace util {
 			// Will block until another item is in the list
 			waitSema.down();
 
-			Function<void, Control&> toCall;
+			Fn<void, Control&> toCall;
 			{
 				Lock::L l(workLock);
 				if (workList.size() > 0) {

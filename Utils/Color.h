@@ -3,10 +3,7 @@
 //#include <Gdiplus.h>
 
 class Vector;
-
-namespace util {
-	class Stream;
-}
+class Stream;
 
 // rgba color used within directx
 // DO NOT CHANGE LAYOUT OR SIZE OF THIS OBJECT. IT IS ASSUMED TO BE EXACTLY AS DirectX WANTS IT.
@@ -36,8 +33,8 @@ public:
 	COLORREF ref() const;
 
 	// Save/load interface.
-	static Color load(util::Stream &from);
-	void save(util::Stream &to) const;
+	static Color load(Stream &from);
+	void save(Stream &to) const;
 
 
 	float r, g, b, a;

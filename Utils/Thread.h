@@ -1,45 +1,60 @@
 #pragma once
 
 #include "Function.h"
+#include "Platform.h"
+#include "Semaphore.h"
 
-namespace util {
+#ifdef VS
+#define THREAD __declspec(thread)
+#endif
 
-	class Thread : NoCopy {
+#ifndef THREAD
+#error "someone forgot to declare THREAD for your architecture"
+#endif
+
+class Thread : NoCopy {
+public:
+	Thread();
+	~Thread();
+
+	bool isRunning();
+
+	class Control : NoCopy {
 	public:
-		Thread();
-		~Thread();
+		inline Thread &thread() { return t; };
+		inline bool run() { return !t.end; };
 
-		inline bool isRunning() const { return running != null; };
+		friend class Thread;
+	protected:
+		Control(Thread &t) : t(t) {};
 
-		class Control {
-		public:
-			inline Thread &thread() { return t; };
-			inline void end() { t.running = null; };
-			inline bool run() { return !t.end; };
-
-			friend class Thread;
-		protected:
-			Control(Thread &t) : t(t) {};
-
-			Thread &t;
-		};
-
-		bool start(const Function<void, Thread::Control &> &fn);
-
-		void stop();
-		void stopWait();
-
-		bool sameAsCurrent();
-	private:
-		//CWinThread *running;
-		void *running;
-		bool end;
-
-		// The function to start
-		Function<void, Thread::Control &> fn;
-
-		static UINT threadProc(LPVOID param);
+		Thread &t;
 	};
 
+	bool start(const Fn<void, Thread::Control &> &fn);
 
-}
+	void stop();
+	void stopWait();
+
+	bool sameAsCurrent();
+
+private:
+	// Running thread's thread id.
+	uintptr_t threadId;
+
+	// Exit request?
+	bool end;
+
+	// Last known state of the thread.
+	bool running;
+
+	// The function to start
+	Fn<void, Thread::Control &> fn;
+
+	// Wait semaphores.
+	Semaphore startSema;
+	Semaphore stopSema;
+
+	static void threadProc(void *param);
+};
+

@@ -1,19 +1,19 @@
 #include "StdAfx.h"
 #include "CriticalSection.h"
 
-util::CriticalSection::CriticalSection() {
+CriticalSection::CriticalSection() {
 	InitializeCriticalSection(&criticalSection);
 }
 
-util::CriticalSection::~CriticalSection() {
+CriticalSection::~CriticalSection() {
 	DeleteCriticalSection(&criticalSection);
 }
 
-util::CriticalSection::Section::Section(CriticalSection &section) {
+CriticalSection::Section::Section(CriticalSection &section) {
 	EnterCriticalSection(&section.criticalSection);
 	this->section = &section;
 }
 
-util::CriticalSection::Section::~Section() {
+CriticalSection::Section::~Section() {
 	LeaveCriticalSection(&section->criticalSection);
 }

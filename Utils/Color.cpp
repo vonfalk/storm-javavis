@@ -53,7 +53,7 @@ Color Color::sysColor(int id) {
 	return Color(c, 1.0f);
 }
 
-Color Color::load(util::Stream &from) {
+Color Color::load(Stream &from) {
 	float r = from.read<float>();
 	float g = from.read<float>();
 	float b = from.read<float>();
@@ -61,7 +61,7 @@ Color Color::load(util::Stream &from) {
 	return Color(r, g, b, a);
 }
 
-void Color::save(util::Stream &to) const {
+void Color::save(Stream &to) const {
 	to.write<float>(r);
 	to.write<float>(g);
 	to.write<float>(b);

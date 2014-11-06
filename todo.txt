@@ -1,1 +1,1 @@
-
+Rewrite the syntax representation, ie. SyntaxSet should store a better representation. Before that maybe a flat structure should be used. Also return types for rules may be specified.

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utils/Platform.h"
+#include "Utils/Thread.h" // get THREAD modifier
 
 // This file defines some common types in the asm generator, such as word-sized types.
 // Defines one of the following symbols:
@@ -25,6 +26,9 @@
 // CODECALL
 // Which expands to the calling convention to be used by the generated function calls.
 
+// Thread local storage:
+// THREAD, eg. THREAD int foo;
+// Beware, this is not respected for UThread threads!
 
 // Checks that something is defined!
 #if !defined(X86) && !defined(X64)
@@ -38,10 +42,11 @@
 #ifdef WINDOWS
 
 #include <Windows.h>
+
+// We need to remove min and max macros...
 #ifdef min
 #undef min
 #endif
-
 #ifdef max
 #undef max
 #endif
@@ -70,7 +75,6 @@ namespace code {
 #error "Unsupported system!";
 
 #endif
-
 
 #ifndef CODECALL
 #error "someone forgot to declare CODECALL for your architecture"

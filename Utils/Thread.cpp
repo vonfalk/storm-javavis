@@ -1,54 +1,68 @@
 #include "stdafx.h"
 
 #include "Thread.h"
+#include <process.h>
 
-namespace util {
+static const uintptr_t invalidId = -1L;
 
-	Thread::Thread() : running(null), end(false) {
-		TODO("Implement native thread!");
-		TODO("Add semaphore!");
-		assert(false);
-	}
+Thread::Thread() : threadId(invalidId), end(false), startSema(0) {}
 
-	Thread::~Thread() {
-		stopWait();
-	}
-
-	void Thread::stop() {
-		end = true;
-	}
-
-	void Thread::stopWait() {
-		stop();
-		while (running) { Sleep(0); }
-	}
-
-	bool Thread::sameAsCurrent() {
-		//CWinThread *thread = AfxGetThread();
-		//return thread == running;
-		assert(false);
-		return false;
-	}
-
-	bool Thread::start(const Function<void, Thread::Control &> &fn) {
-		if (isRunning()) return false;
-		end = false;
-
-		this->fn = fn;
-		// running = AfxBeginThread(threadProc, this);
-
-		return true;
-	}
-
-	UINT Thread::threadProc(LPVOID param) {
-		Thread *me = (Thread *)param;
-
-		Thread::Control control(*me);
-		me->fn(control);
-
-		// done, clean up
-		// me->running = null;
-		return 0;
-	}
-
+Thread::~Thread() {
+	stopWait();
 }
+
+bool Thread::isRunning() {
+	bool r = threadId != invalidId;
+	if (running && !r) {
+		// It stopped! Fix the semaphore.
+		stopSema.down();
+		running = false;
+	}
+	return r;
+}
+
+void Thread::stop() {
+	end = true;
+}
+
+void Thread::stopWait() {
+	stop();
+	// Optimization:
+	stopSema.down();
+	running = false;
+}
+
+bool Thread::sameAsCurrent() {
+	return GetCurrentThreadId() == threadId;
+}
+
+bool Thread::start(const Fn<void, Thread::Control &> &fn) {
+	if (isRunning())
+		return false;
+	end = false;
+
+	this->fn = fn;
+	running = true;
+
+	_beginthread(threadProc, 0, this);
+	startSema.down();
+
+	return true;
+}
+
+void Thread::threadProc(void *param) {
+	Thread *me = (Thread *)param;
+	me->threadId = GetCurrentThreadId();
+	// Signal init done.
+	me->startSema.up();
+
+	Thread::Control control(*me);
+	me->fn(control);
+
+	// done, clean up
+	me->threadId = invalidId;
+	me->stopSema.up();
+
+	_endthread();
+}
+

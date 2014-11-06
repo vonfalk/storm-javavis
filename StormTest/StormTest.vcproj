@@ -228,6 +228,10 @@
 				RelativePath=".\FunctionTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ThreadTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -240,6 +244,10 @@
 			</File>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ThreadTest.cpp"
 				>
 			</File>
 		</Filter>

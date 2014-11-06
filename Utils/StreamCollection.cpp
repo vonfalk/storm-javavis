@@ -73,7 +73,7 @@ namespace util {
 		readHeader();
 	}
 
-	StreamCollReader::StreamCollReader(const Path &file) : from(new util::FileStream(file, Stream::mRead)) {
+	StreamCollReader::StreamCollReader(const Path &file) : from(new FileStream(file, Stream::mRead)) {
 		readHeader();
 	}
 
@@ -196,7 +196,7 @@ namespace util {
 	}
 
 	bool StreamCollWriter::addStream(Stream *from, const String &name) {
-		util::Stream *tmp = open(name);
+		Stream *tmp = open(name);
 		if (tmp == null) return false;
 
 		tmp->write(from);

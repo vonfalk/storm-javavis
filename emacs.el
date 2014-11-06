@@ -250,7 +250,9 @@
 
 (defun compile-project ()
   (interactive)
-  (run-compile p-compile-command))
+  (if (in-project buffer-file-name)
+      (run-compile p-compile-command)
+    (call-interactively 'compile)))
 
 (defun clean-project ()
   (interactive)

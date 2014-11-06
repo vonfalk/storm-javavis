@@ -100,13 +100,13 @@ inline void clearMap(T &map) {
 //Clear an object. Equivalent to ZeroMemory(&t, sizeof(T));
 template <class T>
 inline void zeroMem(T &obj) {
-	ZeroMemory(&obj, sizeof(T));
+	memset(&obj, 0, sizeof(T));
 }
 
 // clear an array
 template <class T>
 inline void zeroArray(T *arr, nat count) {
-	ZeroMemory(arr, count * sizeof(T));
+	memset(arr, 0, count * sizeof(T));
 }
 
 const float defTolerance = 0.01f;

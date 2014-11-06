@@ -32,10 +32,10 @@ namespace storm {
 		if (unknown())
 			return r;
 
-		util::TextReader *reader = null;
+		TextReader *reader = null;
 
 		try {
-			reader = util::TextReader::create(new util::FileStream(file, util::Stream::mRead));
+			reader = TextReader::create(new FileStream(file, Stream::mRead));
 			for (nat i = 0; i < offset; i++) {
 				wchar c = reader->get();
 				switch (c) {

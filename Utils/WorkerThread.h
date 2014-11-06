@@ -41,16 +41,16 @@ namespace util {
 		};
 
 		// Add a delayed call to the thread
-		void add(Function<void, Control &> &toCall);
+		void add(Fn<void, Control &> &toCall);
 	private:
 		// The thread itself.
-		util::Thread worker;
+		Thread worker;
 
 		// Lock for the list.
 		Lock workLock;
 
 		// List of all the work.
-		std::list<Function<void, Control &> > workList;
+		std::list<Fn<void, Control &> > workList;
 
 		// Semaphore for keeping the thread waiting.
 		Semaphore waitSema;
