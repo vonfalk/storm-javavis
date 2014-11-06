@@ -304,6 +304,10 @@
 				RelativePath=".\VTable.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\UThread.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -428,6 +432,10 @@
 			</File>
 			<File
 				RelativePath=".\VTable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UThread.h"
 				>
 			</File>
 		</Filter>

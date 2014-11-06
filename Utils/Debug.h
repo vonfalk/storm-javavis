@@ -7,7 +7,9 @@
 using std::wostream;
 using std::endl;
 
-#ifdef _DEBUG
+#define DEBUG_OUT
+
+#ifdef DEBUG_OUT
 
 // print line to debug output, usage:
 // PLN("Hello " << "world!");

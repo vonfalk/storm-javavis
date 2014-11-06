@@ -26,7 +26,7 @@ int main(int argc, const char **argv) {
 	}
 
 	if (clean)
-		compile = "devenv storm.sln /Clean";
+		compile = "devenv storm.sln /Clean " + build;
 	else
 		compile = "devenv storm.sln /Build " + build + " /Project " + project;
 

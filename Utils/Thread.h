@@ -4,14 +4,6 @@
 #include "Platform.h"
 #include "Semaphore.h"
 
-#ifdef VS
-#define THREAD __declspec(thread)
-#endif
-
-#ifndef THREAD
-#error "someone forgot to declare THREAD for your architecture"
-#endif
-
 class Thread : NoCopy {
 public:
 	Thread();

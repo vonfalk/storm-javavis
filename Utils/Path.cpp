@@ -25,7 +25,7 @@ Path Path::executable(const Path &path) {
 
 Path Path::dbgRoot() {
 #ifndef DEBUG
-	throw UserError(L"dbgRoot not availiable during release!");
+	WARNING(L"Using dbgRoot in release!");
 #endif
 	return executable().parent();
 }

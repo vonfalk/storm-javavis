@@ -26,6 +26,13 @@
  * GCC - GCC compiler, TODO: version?
  */
 
+/**
+ * Standardized function/variable specifications:
+ * THREAD - thread local variable
+ * NAKED - naked function call, ie no prolog/epilog. Maybe not supported for all compilers.
+ */
+
+
 
 // Detect the current architecture and platform.
 #if defined(_WIN64)
@@ -59,3 +66,11 @@
 
 #endif
 
+#ifdef VS
+#define THREAD __declspec(thread)
+#define NAKED __declspec(naked)
+#endif
+
+#ifndef THREAD
+#error "someone forgot to declare THREAD for your architecture"
+#endif

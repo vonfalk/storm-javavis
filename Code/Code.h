@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Utils/Platform.h"
-#include "Utils/Thread.h" // get THREAD modifier
 
 // This file defines some common types in the asm generator, such as word-sized types.
 // Defines one of the following symbols:

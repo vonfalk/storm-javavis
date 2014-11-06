@@ -189,6 +189,9 @@ BEGIN_TEST(FunctionRefPtrTest) {
 	FnCall call;
 	call.param(&t);
 
+	LargeType *f = &call.callRef<LargeType>(&refFn);
+	CHECK_EQ(f, &t);
+
 	CHECK_EQ(&call.callRef<LargeType>(&refFn), &t);
 	CHECK_EQ(call.call<LargeType*>(&ptrFn), &t);
 

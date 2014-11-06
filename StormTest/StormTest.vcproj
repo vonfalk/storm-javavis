@@ -246,10 +246,6 @@
 				RelativePath=".\targetver.h"
 				>
 			</File>
-			<File
-				RelativePath=".\ThreadTest.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
