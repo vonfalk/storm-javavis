@@ -5,8 +5,8 @@
 
 namespace storm {
 
-	SyntaxOption::SyntaxOption(const SrcPos &pos, const Scope &scope)
-		: scope(scope), pos(pos), owner(null), repStart(0), repEnd(0), repType(rNone) {}
+	SyntaxOption::SyntaxOption(const SrcPos &pos, const Scope &scope, const String &owner)
+		: scope(scope), pos(pos), owner(owner), repStart(0), repEnd(0), repType(rNone) {}
 
 	SyntaxOption::~SyntaxOption() {
 		::clear(tokens);
@@ -18,13 +18,6 @@ namespace storm {
 		repType = rNone;
 		matchFn = Name();
 		matchFnParams.clear();
-	}
-
-	String SyntaxOption::rule() const {
-		if (owner)
-			return owner->name();
-		else
-			return L"";
 	}
 
 	int SyntaxOption::outputRep(std::wostream &to, nat i, nat marker) const {
@@ -59,8 +52,7 @@ namespace storm {
 	}
 
 	void SyntaxOption::output(wostream &to, nat marker) const {
-		if (owner)
-			to << owner->name();
+		to << owner;
 
 		if (matchFn.any()) {
 			to << L" => ";

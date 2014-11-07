@@ -1,4 +1,5 @@
 #pragma once
+#include "SyntaxSet.h"
 #include "SyntaxNode.h"
 #include "Std.h"
 
@@ -10,14 +11,14 @@ namespace storm {
 	 */
 
 	// Transform the syntax tree. TODO: Static type-checking?
-	Object *transform(Engine &e, const SyntaxNode &root, const vector<Object*> &params = vector<Object*>());
+	Object *transform(Engine &e, SyntaxSet &syntax, const SyntaxNode &root, const vector<Object*> &params = vector<Object*>());
 
 	/**
 	 * Used to keep track of currently evaluated variables during transform.
 	 */
 	class SyntaxVars : NoCopy {
 	public:
-		SyntaxVars(Engine &e, const SyntaxNode &node, const vector<Object*> &params);
+		SyntaxVars(Engine &e, SyntaxSet &syntax, const SyntaxNode &node, const vector<Object*> &params);
 		~SyntaxVars();
 
 		Object *get(const String &name);
@@ -34,6 +35,9 @@ namespace storm {
 
 		// Engine.
 		Engine &e;
+
+		// Syntax set
+		SyntaxSet &syntax;
 
 		// Keep track of infinite recursion in 'get'.
 		hash_set<String> currentNames;

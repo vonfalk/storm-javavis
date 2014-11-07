@@ -6,12 +6,12 @@
 namespace storm {
 
 	// Evaluate a syntaxVariable. Never returns null.
-	static Object *evaluate(Engine &engine, SyntaxVariable *v, const vector<Object *> &params) {
+	static Object *evaluate(Engine &engine, SyntaxSet &syntax, SyntaxVariable *v, const vector<Object *> &params) {
 		switch (v->type) {
 		case SyntaxVariable::tString:
 			return new Str(engine, v->string());
 		case SyntaxVariable::tNode:
-			return transform(engine, *v->node(), params);
+			return transform(engine, syntax, *v->node(), params);
 		case SyntaxVariable::tStringArr:
 		case SyntaxVariable::tNodeArr:
 			TODO(L"Arrays not supported yet!");
@@ -79,11 +79,11 @@ namespace storm {
 	}
 
 
-	Object *transform(Engine &e, const SyntaxNode &node, const vector<Object*> &params) {
+	Object *transform(Engine &e, SyntaxSet &syntax, const SyntaxNode &node, const vector<Object*> &params) {
 		const SyntaxOption *option = node.option;
 		Object *result = null;
 		Object *tmp = null;
-		SyntaxVars vars(e, node, params);
+		SyntaxVars vars(e, syntax, node, params);
 
 		try {
 			vector<Object*> values;
@@ -105,7 +105,7 @@ namespace storm {
 					params[i] = vars.get(v.val.params[i]);
 				}
 
-				tmp = evaluate(e, v.val.value, params);
+				tmp = evaluate(e, syntax, v.val.value, params);
 				callMember(result, v.member, tmp, option->pos);
 				release(tmp);
 			}
@@ -124,10 +124,13 @@ namespace storm {
 	 * The SyntaxVars type.
 	 */
 
-	SyntaxVars::SyntaxVars(Engine &e, const SyntaxNode &node, const vector<Object*> &params) : e(e), node(node) {
+	SyntaxVars::SyntaxVars(Engine &e, SyntaxSet &syntax, const SyntaxNode &node, const vector<Object*> &params)
+		: e(e), syntax(syntax), node(node) {
+
 		const SyntaxOption *option = node.option;
-		SyntaxRule *rule = option->parent();
 		const SrcPos &pos = node.option->pos;
+		SyntaxRule *rule = syntax.rule(option->rule());
+		assert(rule);
 
 		if (params.size() != rule->params.size())
 			throw SyntaxTypeError(L"Invalid number of parameters to rule: " + toS(params.size()) +
@@ -174,7 +177,7 @@ namespace storm {
 			for (nat i = 0; i < v->params.size(); i++)
 				params[i] = get(v->params[i]);
 
-			Object *o = evaluate(e, v->value, params);
+			Object *o = evaluate(e, syntax, v->value, params);
 			vars.insert(make_pair(name, o));
 			currentNames.erase(name);
 			return o;

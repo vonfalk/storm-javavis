@@ -31,6 +31,13 @@ namespace storm {
 		delete pkgPath;
 	}
 
+	Name Package::path() const {
+		if (parentPkg)
+			return parentPkg->path() + name;
+		else
+			return Name();
+	}
+
 	void Package::output(std::wostream &to) const {
 		if (parentPkg == null)
 			to << "Root package";

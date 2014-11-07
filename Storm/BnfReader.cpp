@@ -177,7 +177,7 @@ namespace storm {
 	}
 
 	void parseRule(SyntaxRule &to, Tokenizer &tok, const Scope &scope) {
-		SyntaxOption *option = new SyntaxOption(tok.position(), scope);
+		SyntaxOption *option = new SyntaxOption(tok.position(), scope, to.name());
 
 		try {
 			parseCall(*option, tok);
@@ -191,8 +191,9 @@ namespace storm {
 	}
 
 	void parseDeclaration(SyntaxRule &to, Tokenizer &tok) {
-		if (to.params.size() > 0)
+		if (!to.declared.unknown())
 			throw SyntaxError(tok.position(), L"There is already a declaration of " + to.name());
+		to.declared = tok.position();
 
 		bool end = false;
 		if (tok.peek().token == L")")

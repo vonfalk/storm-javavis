@@ -298,6 +298,10 @@
 				RelativePath=".\Test\VTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\SyntaxSet.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -430,6 +434,10 @@
 			</File>
 			<File
 				RelativePath=".\Test\VTest.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxSet.h"
 				>
 			</File>
 		</Filter>

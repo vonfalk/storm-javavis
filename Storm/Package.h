@@ -56,6 +56,9 @@ namespace storm {
 		// Find a name here.
 		virtual Named *find(const Name &name);
 
+		// Get our path relative the root.
+		Name path() const;
+
 		// Get parent.
 		virtual Package *parent() const { return parentPkg; }
 

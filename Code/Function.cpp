@@ -140,7 +140,7 @@ namespace code {
 			call copyParams;
 
 			call fn;
-			sub esp, ebx;
+			add esp, ebx;
 		}
 		// we're fine! Output is already stored on the floating-point stack.
 	}

@@ -22,8 +22,15 @@ namespace storm {
 		inline bool operator ==(const Name &o) const { return parts == o.parts; }
 		inline bool operator !=(const Name &o) const { return parts != o.parts; }
 
+		// Ordering.
+		inline bool operator <(const Name &o) const { return parts < o.parts; }
+		inline bool operator >(const Name &o) const { return parts > o.parts; }
+
 		// Get the parent.
 		Name parent() const;
+
+		// Last element.
+		String last() const;
 
 		// Is this the root package?
 		inline bool root() const { return size() == 0; }
@@ -43,5 +50,20 @@ namespace storm {
 		// Store each part.
 		vector<String> parts;
 	};
+
+}
+
+namespace stdext {
+
+	inline size_t hash_value(const storm::Name &n) {
+		// djb2 hash
+		size_t r = 5381;
+		for (nat i = 0; i < n.size(); i++) {
+			const String &s = n[i];
+			for (nat j = 0; j < s.size(); j++)
+				r = ((r << 5) + r) + s[j];
+		}
+		return r;
+	}
 
 }

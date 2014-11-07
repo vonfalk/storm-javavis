@@ -19,7 +19,7 @@ bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str) {
 
 	Object *o = null;
 	try {
-		o = transform(e, *t);
+		o = transform(e, set, *t);
 	} catch (...) {
 		delete t;
 		throw;

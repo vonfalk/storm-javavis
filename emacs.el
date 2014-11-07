@@ -116,6 +116,7 @@
 	    (local-set-key (kbd "C-c C-m") 'clean-project)
 	    (local-set-key (kbd "C-c C-r") 'compile-release)
 	    (local-set-key (kbd "C-c C-a") 'compile-all)
+	    (local-set-key (kbd "C-c C-q") 'kill-compilation)
 	    (local-set-key (kbd "C-c C-v C-s") 'open-vs)
 	    (local-set-key (kbd "M-n") 'next-error)
 	    (local-set-key (kbd "C-c C-f C-r") 'rename-proj-file)

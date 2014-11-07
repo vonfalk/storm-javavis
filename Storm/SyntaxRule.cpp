@@ -3,15 +3,21 @@
 
 namespace storm {
 
-	SyntaxRule::SyntaxRule(const String &name) : rName(name) {}
+	SyntaxRule::SyntaxRule(const String &name, bool owner) : rName(name), owner(owner), declared() {}
 
 	SyntaxRule::~SyntaxRule() {
-		clear(options);
+		if (owner) {
+			clear(options);
+		}
+	}
+
+	void SyntaxRule::copyDeclaration(const SyntaxRule &o) {
+		declared = o.declared;
+		params = o.params;
 	}
 
 	void SyntaxRule::add(SyntaxOption *rule) {
 		options.push_back(rule);
-		rule->owner = this;
 	}
 
 	void SyntaxRule::output(std::wostream &to) const {

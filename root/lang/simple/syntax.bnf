@@ -18,6 +18,3 @@ Rep1Root => SScope() : "{", (SExpr(me) -> expr - ";",)+ - "}";
 Rep2Root => SScope() : "{", (SExpr(me) -> expr - ";",)* - "}";
 Rep3Root => SScope() : "{", (SExpr(me) -> expr - ";",)? - "}";
 
-
-
-

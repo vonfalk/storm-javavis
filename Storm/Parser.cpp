@@ -6,16 +6,11 @@
 
 namespace storm {
 
-	void SyntaxSet::add(Package &pkg) {
-		assert(syntax.size() == 0); // No support for merging yet!
-		syntax = pkg.syntax();
-	}
-
 	/**
 	 * Parser implementation.
 	 */
 
-	Parser::Parser(SyntaxSet &set, const String &src) : syntax(set), src(src), rootOption(SrcPos(), null) {}
+	Parser::Parser(SyntaxSet &set, const String &src) : syntax(set), src(src), rootOption(SrcPos(), null, L"") {}
 
 	nat Parser::parse(const String &rootType, nat pos) {
 		rootOption.clear();
@@ -58,9 +53,12 @@ namespace storm {
 		if (!type)
 			return;
 
-		if (syntax.syntax.count(type->type()) == 0)
+		SyntaxRule *sr = syntax.rule(type->type());
+		if (sr == null) {
+			TODO(L"Error message?");
 			return;
-		SyntaxRule &t = *syntax.syntax[type->type()];
+		}
+		SyntaxRule &t = *sr;
 
 		for (nat i = 0; i < t.size(); i++) {
 			SyntaxOption *rule = t[i];

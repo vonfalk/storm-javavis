@@ -5,7 +5,7 @@
 
 static const uintptr_t invalidId = -1L;
 
-Thread::Thread() : threadId(invalidId), end(false), startSema(0), stopSema(0) {}
+Thread::Thread() : threadId(invalidId), end(false), startSema(0), stopSema(0), running(false) {}
 
 Thread::~Thread() {
 	stopWait();

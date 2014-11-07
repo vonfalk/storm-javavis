@@ -1,3 +1,2 @@
-Rewrite the syntax representation, ie. SyntaxSet should store a better representation. Before that maybe a flat structure should be used. Also return types for rules may be specified.
+Also return types for rules may be specified.
 
-When working in release mode, the compiler optimizes the call interface too much and breaks two calls.

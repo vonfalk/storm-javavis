@@ -13,7 +13,7 @@ namespace storm {
 		friend class SyntaxRule;
 	public:
 		// 'pos' is the start of this rule's definition.
-		SyntaxOption(const SrcPos &pos, const Scope &scope);
+		SyntaxOption(const SrcPos &pos, const Scope &scope, const String &owner);
 		~SyntaxOption();
 
 		// Clear all tokens.
@@ -28,8 +28,7 @@ namespace storm {
 		};
 
 		// Get the name of the rule this option is a member of. Returns "" if not a member.
-		String rule() const;
-		inline SyntaxRule *parent() const { return owner; }
+		inline const String &rule() const { return owner; }
 
 		// Add a token.
 		void add(SyntaxToken *token);
@@ -57,7 +56,7 @@ namespace storm {
 
 	private:
 		// Our owner.
-		SyntaxRule *owner;
+		String owner;
 
 		// List of all tokens to match.
 		vector<SyntaxToken*> tokens;

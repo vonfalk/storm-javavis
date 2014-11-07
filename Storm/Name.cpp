@@ -28,6 +28,10 @@ namespace storm {
 		return p;
 	}
 
+	String Name::last() const {
+		return parts.back();
+	}
+
 	void Name::output(std::wostream &to) const {
 		join(to, parts, L".");
 	}

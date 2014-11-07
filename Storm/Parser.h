@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SyntaxSet.h"
 #include "SyntaxRule.h"
 #include "SyntaxOption.h"
 #include "SyntaxNode.h"
@@ -18,21 +19,6 @@ namespace storm {
 	 *
 	 * Note: The parser will not claim ownership of any rule or type objects.
 	 */
-
-	/**
-	 * A set of packages making up all the syntax needed for parsing.
-	 */
-	class SyntaxSet : NoCopy {
-		friend class Parser;
-	public:
-		// Add syntax from a package.
-		void add(Package &pkg);
-
-	private:
-		// All syntax definitions.
-		hash_map<String, SyntaxRule*> syntax;
-	};
-
 
 	/**
 	 * The actual parser. Create for a specific string, call parse.

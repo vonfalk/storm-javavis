@@ -9,8 +9,8 @@ namespace storm {
 	 */
 	class SyntaxRule : public Printable, NoCopy {
 	public:
-		// Create a new syntax type.
-		SyntaxRule(const String &name);
+		// Create a new syntax type. If !owner, we will not delete our options on destruction.
+		SyntaxRule(const String &name, bool owner = true);
 
 		~SyntaxRule();
 
@@ -32,6 +32,12 @@ namespace storm {
 		// Parameters for this rule.
 		vector<Param> params;
 
+		// Where were we declared? "unknown()" if not declared.
+		SrcPos declared;
+
+		// Copy our declaration to another.
+		void copyDeclaration(const SyntaxRule &o);
+
 	protected:
 		virtual void output(std::wostream &to) const;
 
@@ -42,6 +48,8 @@ namespace storm {
 		// List of all options associated to this type.
 		vector<SyntaxOption*> options;
 
+		// Owner?
+		bool owner;
 	};
 
 	wostream &operator <<(wostream &to, const SyntaxRule::Param &p);
