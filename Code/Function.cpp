@@ -33,62 +33,72 @@ namespace code {
 		for (nat i = 0; i < params.size(); i++) {
 			Param &p = params[i];
 			nat s = roundUp(p.size, sizeof(void *));
-			(*p.destroy)(at);
+			if (p.destroy)
+				(*p.destroy)(at);
 			at += s;
 		}
 	}
 
 	void FnCall::doCall4(void *result, void *fn) {
 		nat sz = paramsSize();
-		void *stackTop;
 		__asm {
-			sub esp, sz;
-			mov stackTop, esp;
-		}
+			// Ebx is preserved along function calls!
+			mov ebx, sz;
+			// ecx is the 'this' ptr in the call to 'copyParams'
+			mov ecx, this;
 
-		copyParams(stackTop);
+			sub esp, ebx;
+			mov eax, esp;
 
-		__asm {
+			// Call copyParams
+			push eax;
+			call copyParams;
+
 			call fn;
+			add esp, ebx;
+
+			// Now it should be safe to access stack-allocated variables again!
 			mov ebx, result;
 			mov [ebx], eax;
-			add esp, sz;
 		}
 	}
 
 	void FnCall::doCall8(void *result, void *fn) {
 		nat sz = paramsSize();
-		void *stackTop;
 		__asm {
-			sub esp, sz;
-			mov stackTop, esp;
-		}
+			mov ebx, sz;
+			mov ecx, this;
 
-		copyParams(stackTop);
+			sub esp, ebx;
+			mov eax, esp;
 
-		__asm {
+			push eax;
+			call copyParams;
+
 			call fn;
+			add esp, ebx;
+
 			mov ebx, result;
 			mov [ebx], eax;
 			mov [ebx+4], edx;
-			add esp, sz;
 		}
 	}
 
 	void FnCall::doCallLarge(void *result, nat retSz, void *fn) {
 		nat sz = paramsSize();
-		void *stackTop;
 		__asm {
-			sub esp, sz;
-			mov stackTop, esp;
-		}
+			mov ebx, sz;
+			mov ecx, this;
 
-		copyParams(stackTop);
+			sub esp, ebx;
+			mov eax, esp;
 
-		__asm {
+			push eax;
+			call copyParams;
+
 			push result;
 			call fn;
-			pop result;
+			add esp, 4;
 			add esp, sz;
 		}
 	}
@@ -119,19 +129,19 @@ namespace code {
 
 	double FnCall::doDoubleCall(void *fn) {
 		nat sz = paramsSize();
-		void *stackTop;
 		__asm {
-			sub esp, sz;
-			mov stackTop, esp;
-		}
+			mov ebx, sz;
+			mov ecx, this;
 
-		copyParams(stackTop);
+			sub esp, ebx;
+			mov eax, esp;
 
-		__asm {
+			push eax;
+			call copyParams;
+
 			call fn;
-			add esp, sz;
+			sub esp, ebx;
 		}
-
 		// we're fine! Output is already stored on the floating-point stack.
 	}
 

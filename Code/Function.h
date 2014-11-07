@@ -13,7 +13,8 @@ namespace code {
 	 * the parameters, which means that you have to keep the object
 	 * on the stack until the function call is complete at least.
 	 * For example: f.param(String(L"hello")) will not work. Instead
-	 * you need to do: String s(L"hello"); f.param(s);
+	 * you need to do: String s(L"hello"); f.param(s); Note
+	 * that f.param(&foo) will work, even if the pointer is temporary.
 	 *
 	 * Returning types other than integers and pointers are not yet
 	 * supported.
@@ -21,9 +22,18 @@ namespace code {
 	class FnCall : NoCopy {
 	public:
 
+		// Since we want to do param(&p) for a reference, we must take care of
+		// that case specifically, since the pointer given to us is temporary!
 		template <class T>
 		FnCall &param(const T &p) {
-			Param par = { &FnCall::copy<T>, &FnCall::destroy<T>, &p, sizeof(T) };
+			Param par = { &FnCall::copy<T>, &FnCall::destroy<T>, sizeof(T), &p };
+			if (TypeInfo<T>::pointer() || TypeInfo<T>::reference()) {
+				// if ptr or ref, copy the ptr/ref directly.
+				par.copy = &FnCall::copyPtr;
+				par.destroy = null;
+				// We know that sizeof(T) == sizeof(void*)
+				par.value = *(void **)&p;
+			}
 			params.push_back(par);
 			return *this;
 		}
@@ -32,7 +42,8 @@ namespace code {
 		// Use callRef in that case.
 		template <class T>
 		T call(void *fn) {
-			T *data = (T*)_alloca(sizeof(T));
+			byte d[sizeof(T)];
+			T *data = (T*)d;
 			if (TypeInfo<T>::pointer() || TypeInfo<T>::reference()) {
 				doCall((void *)data, sizeof(T), fn);
 			} else {
@@ -97,8 +108,8 @@ namespace code {
 		struct Param {
 			void (*copy)(const void *, void *);
 			void (*destroy)(void *);
-			const void *value;
 			nat size;
+			const void *value;
 		};
 
 		// All parameters.
@@ -136,6 +147,12 @@ namespace code {
 		static void copy(const void *from, void *to) {
 			const T* f = (const T*)from;
 			new (to) T(*f);
+		}
+
+		// Copy a raw pointer or reference.
+		static inline void copyPtr(const void *from, void *to) {
+			const void **t = (const void **)to;
+			*t = from;
 		}
 
 		// Destructor invocation.

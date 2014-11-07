@@ -36,9 +36,13 @@ namespace code {
 		if (info.State == MEM_FREE)
 			return false;
 
-		if (info.Protect == PAGE_NOACCESS)
+		if (info.Protect == 0)
 			return false;
-		if (info.Protect == PAGE_GUARD)
+		if (info.Protect & PAGE_NOACCESS)
+			return false;
+		if (info.Protect & PAGE_GUARD)
+			return false;
+		if (info.Protect & PAGE_EXECUTE) // I think this is execute only.
 			return false;
 
 		return true;
