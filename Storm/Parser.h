@@ -98,7 +98,7 @@ namespace storm {
 		class State : public Printable {
 		public:
 			// Position in a rule.
-			RuleIter pos;
+			OptionIter pos;
 
 			// In which step was this rule instantiated?
 			nat from;
@@ -116,7 +116,7 @@ namespace storm {
 			State() : from(0) {}
 
 			// Create a state.
-			State(const RuleIter &ri, nat from,
+			State(const OptionIter &ri, nat from,
 				const StatePtr &prev = StatePtr(),
 				const StatePtr &completed = StatePtr())
 				: pos(ri), from(from), prev(prev), completed(completed) {}

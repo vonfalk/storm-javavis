@@ -56,12 +56,17 @@ namespace storm {
 	 */
 	template <class T>
 	T *create1(Type *type) {
-		return new T(type);
+		return new (type)T();
 	}
 
 	template <class T, class P>
 	T *create2(Type *type, const P &p) {
-		return new T(type, p);
+		return new (type)T(p);
+	}
+
+	template <class T, class P, class Q>
+	T *create3(Type *type, const P &p, const Q &q) {
+		return new (type)T(p, q);
 	}
 
 	/**
@@ -70,11 +75,11 @@ namespace storm {
 	const BuiltInType *builtInTypes() {
 		static BuiltInType types[] = {
 			// BEGIN TYPES
-			{ Name(L"core"), L"Object", Name(), 0 },
-			{ Name(L"lang.simple"), L"SExpr", Name(L"core.Object"), 1 },
-			{ Name(L"lang.simple"), L"SScope", Name(L"core.Object"), 2 },
-			{ Name(L"core"), L"Str", Name(L"core.Object"), 3 },
-			{ Name(L""), L"VTest", Name(L"core.Object"), 4 },
+			{ Name(L"core"), L"Object", Name(), sizeof(storm::Object), 0 },
+			{ Name(L"lang.simple"), L"SExpr", Name(L"core.Object"), sizeof(storm::SExpr), 1 },
+			{ Name(L"lang.simple"), L"SScope", Name(L"core.Object"), sizeof(storm::SScope), 2 },
+			{ Name(L"core"), L"Str", Name(L"core.Object"), sizeof(storm::Str), 3 },
+			{ Name(L""), L"VTest", Name(L"core.Object"), sizeof(storm::VTest), 4 },
 			// END TYPES
 			{ L"", null, L"", null },
 		};
@@ -92,9 +97,13 @@ namespace storm {
 			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sOperator", list(3, Name(L"lang.simple.SExpr"), Name(L"lang.simple.SExpr"), Name(L"core.Str")), address<storm::SExpr *(CODECALL *)(storm::SExpr *, storm::SExpr *, storm::Str *)>(&storm::sOperator) },
 			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sVar", list(1, Name(L"core.Str")), address<storm::SExpr *(CODECALL *)(storm::Str *)>(&storm::sVar) },
 			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sNr", list(1, Name(L"core.Str")), address<storm::SExpr *(CODECALL *)(storm::Str *)>(&storm::sNr) },
+			{ Name(L"core"), L"Object", Name(L"core.Str"), L"toS", list(0), address<storm::Str *(CODECALL storm::Object::*)()>(&storm::Object::toS) },
+			{ Name(L"core"), L"Object", Name(L"core.Bool"), L"equals", list(1, Name(L"core.Object")), address<Bool(CODECALL storm::Object::*)(storm::Object *)>(&storm::Object::equals) },
 			{ Name(L"core"), L"Str", Name(L"core.Str"), L"__ctor", list(1, Name(L"core.Type")), address(&create1<storm::Str>) },
 			{ Name(L"core"), L"Str", Name(L"core.Str"), L"__ctor", list(2, Name(L"core.Type"), Name(L"core.Str")), address(&create2<storm::Str, const storm::Str>) },
 			{ Name(L"core"), L"Str", Name(L"core.Nat"), L"count", list(0), address<Nat(CODECALL storm::Str::*)() const>(&storm::Str::count) },
+			{ Name(L"core"), L"Str", Name(L"core.Bool"), L"equals", list(1, Name(L"core.Object")), address<Bool(CODECALL storm::Str::*)(storm::Object *)>(&storm::Str::equals) },
+			{ Name(L"core"), L"Str", Name(L"core.Str"), L"toS", list(0), address<storm::Str *(CODECALL storm::Str::*)()>(&storm::Str::toS) },
 			{ Name(L""), L"VTest", Name(L"VTest"), L"__ctor", list(1, Name(L"core.Type")), address(&create1<storm::VTest>) },
 			{ Name(L""), L"VTest", Name(L"core.Int"), L"returnOne", list(0), address<Int(CODECALL storm::VTest::*)()>(&storm::VTest::returnOne) },
 			{ Name(L""), L"VTest", Name(L"core.Int"), L"returnTwo", list(0), address<Int(CODECALL storm::VTest::*)()>(&storm::VTest::returnTwo) },

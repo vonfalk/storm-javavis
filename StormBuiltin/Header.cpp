@@ -68,10 +68,8 @@ void Header::parse(Tokenizer &tok) {
 			t.isPtr = true;
 			Function ctor = Function::read(pkg, scope, t, tok);
 			ctor.name = L"__ctor";
+			ctor.params.insert(ctor.params.begin(), CppType::typePtr());
 			functions.push_back(ctor);
-			if (ctor.params.size() < 1 || !ctor.params[0].isTypePtr()) {
-				throw Error(L"Constructors must have Type * as first parameter.");
-			}
 		} else if (token == L"class" || token == L"struct") {
 			String name = tok.next();
 			if (tok.peek() != L";") {

@@ -9,7 +9,7 @@ namespace storm {
 	static Object *evaluate(Engine &engine, SyntaxSet &syntax, SyntaxVariable *v, const vector<Object *> &params) {
 		switch (v->type) {
 		case SyntaxVariable::tString:
-			return new Str(engine, v->string());
+			return CREATE(Str, engine, v->string());
 		case SyntaxVariable::tNode:
 			return transform(engine, syntax, *v->node(), params);
 		case SyntaxVariable::tStringArr:
@@ -43,7 +43,7 @@ namespace storm {
 				code::FnCall call;
 				call.param(t);
 				for (nat i = 0; i < params.size(); i++)
-					call.param(t);
+					call.param(params[i]);
 				return call.call<Object *>(ctor->pointer());
 			}
 

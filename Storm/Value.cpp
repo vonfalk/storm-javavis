@@ -53,7 +53,7 @@ namespace storm {
 			return Value();
 		} else if (Type *t = as<Type>(f)) {
 			// We do not correctly handle this yet.
-			assert((t->flags & typeValue) != typeValue);
+			assert(t->flags & typeClass);
 			return Value(t);
 		} else if (Overload *o = as<Overload>(f)) {
 			NameOverload *no = o->find(params);

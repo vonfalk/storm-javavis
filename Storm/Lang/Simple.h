@@ -12,13 +12,13 @@ namespace storm {
 	class SExpr : public Object {
 		STORM_CLASS;
 	public:
-		SExpr(Type *t);
+		SExpr();
 	};
 
 	class SScope : public Object {
 		STORM_CLASS;
 	public:
-		STORM_CTOR SScope(Type *t);
+		STORM_CTOR SScope();
 
 		void STORM_FN expr(SExpr *expr);
 	};

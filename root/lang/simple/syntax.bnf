@@ -18,3 +18,6 @@ Rep1Root => SScope() : "{", (SExpr(me) -> expr - ";",)+ - "}";
 Rep2Root => SScope() : "{", (SExpr(me) -> expr - ";",)* - "}";
 Rep3Root => SScope() : "{", (SExpr(me) -> expr - ";",)? - "}";
 
+// Capture strings.
+CaptureRoot => Str(captured) : ( Rep1Root ) captured;
+Capture2Root => Str(captured) : "-", (Rep1Root) captured, "-";

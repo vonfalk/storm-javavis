@@ -3,11 +3,23 @@
 #include "Lib/BuiltIn.h"
 #include "Lib/TypeClass.h"
 #include "Lib/Int.h"
+#include "Lib/Bool.h"
 #include "Exception.h"
 #include "Function.h"
 #include "Engine.h"
 
 namespace storm {
+
+	/**
+	 * Overload to force-set the size.
+	 */
+	class BuiltInClass : public Type {
+	public:
+		BuiltInClass(Engine &e, const String &name, TypeFlags f, nat size) : Type(e, name, f), mySize(size) {}
+		virtual nat size() const { return mySize; }
+	private:
+		nat mySize;
+	};
 
 	static Value findValue(const Scope &src, const Name &name) {
 		Named *f = src.find(name);
@@ -72,7 +84,7 @@ namespace storm {
 		if (!pkg)
 			throw BuiltInError(L"Failed to locate package " + toS(t->pkg));
 
-		Type *tc = new Type(to, t->name, typeClass);
+		Type *tc = new BuiltInClass(to, t->name, typeClass, t->typeSize);
 		pkg->add(tc);
 		return tc;
 	}
@@ -113,6 +125,7 @@ namespace storm {
 		Package *core = to.package(Name(L"core"), true);
 		core->add(intType(to));
 		core->add(natType(to));
+		core->add(boolType(to));
 
 		// TODO: This should be handled normally later on.
 		tType = typeType(to);

@@ -51,7 +51,6 @@ String fixPath(String str) {
  * Generation
  */
 
-
 String typeList(const Types &types) {
 	std::wostringstream out;
 	vector<Type> t = types.getTypes();
@@ -67,6 +66,8 @@ String typeList(const Types &types) {
 			Type super = types.find(type.super, type.cppName.parent());
 			out << L"Name(L\"" << super.fullName() << L"\"), ";
 		}
+
+		out << L"sizeof(" << type.cppName << L"), ";
 
 		out << i << L" ";
 		out << L"},\n";

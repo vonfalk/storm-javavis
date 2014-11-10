@@ -6,7 +6,7 @@
 namespace storm {
 
 	SyntaxOption::SyntaxOption(const SrcPos &pos, const Scope &scope, const String &owner)
-		: scope(scope), pos(pos), owner(owner), repStart(0), repEnd(0), repType(rNone) {}
+		: scope(scope), pos(pos), owner(owner), markStart(0), markEnd(0), markType(mNone) {}
 
 	SyntaxOption::~SyntaxOption() {
 		::clear(tokens);
@@ -14,33 +14,38 @@ namespace storm {
 
 	void SyntaxOption::clear() {
 		::clear(tokens);
-		repStart = repEnd = 0;
-		repType = rNone;
+		markStart = markEnd = 0;
+		markType = mNone;
 		matchFn = Name();
 		matchFnParams.clear();
+		markCapture = L"";
 	}
 
-	int SyntaxOption::outputRep(std::wostream &to, nat i, nat marker) const {
+	int SyntaxOption::outputMark(std::wostream &to, nat i, nat marker) const {
 		int any = 0;
-		if (repStart == i && repType != rNone) {
+		if (markStart == i && markType != mNone) {
 			any |= 1;
 			to << L" (";
 		}
 		if (marker == i)
 			to << L"<>";
-		if (repEnd == i) {
-			switch (repType) {
-			case rZeroOne:
+		if (markEnd == i) {
+			switch (markType) {
+			case mRepZeroOne:
 				any |= 2;
 				to << L")?";
 				break;
-			case rZeroPlus:
+			case mRepZeroPlus:
 				any |= 2;
 				to << L")*";
 				break;
-			case rOnePlus:
+			case mRepOnePlus:
 				any |= 2;
 				to << L")+";
+				break;
+			case mCapture:
+				any |= 2;
+				to << L") " << markCapture;
 				break;
 			}
 		}
@@ -65,19 +70,19 @@ namespace storm {
 		}
 
 		bool lastComma = false;
-		bool lastRep = true;
+		bool lastMark = true;
 		for (nat i = 0; i < tokens.size(); i++) {
-			switch (outputRep(to, i, marker)) {
+			switch (outputMark(to, i, marker)) {
 			case 0:
 				break;
 			case 1:
 				lastComma = false;
-				lastRep = true;
+				lastMark = true;
 				break;
 			case 2:
 			case 3:
 				lastComma = false;
-				lastRep = false;
+				lastMark = false;
 				break;
 			}
 
@@ -86,19 +91,19 @@ namespace storm {
 				lastComma = true;
 			} else {
 				if (i > 0) {
-					if (!lastRep)
+					if (!lastMark)
 						to << L" ";
-					if (!lastComma && !lastRep)
+					if (!lastComma && !lastMark)
 						to << L"- ";
 				}
 				to << *tokens[i];
 				lastComma = false;
 			}
 
-			lastRep = false;
+			lastMark = false;
 		}
 
-		outputRep(to, tokens.size(), marker);
+		outputMark(to, tokens.size(), marker);
 
 		to << L";";
 	}
@@ -107,76 +112,94 @@ namespace storm {
 		tokens.push_back(token);
 	}
 
-	void SyntaxOption::startRepeat() {
-		repStart = tokens.size();
+	void SyntaxOption::startMark() {
+		markStart = tokens.size();
 	}
 
-	void SyntaxOption::endRepeat(Repeat r) {
-		repEnd = tokens.size();
-		repType = r;
+	void SyntaxOption::endMark(Mark r) {
+		markEnd = tokens.size();
+		markType = r;
+	}
+
+	void SyntaxOption::endMark(const String &to) {
+		endMark(mCapture);
+		markCapture = to;
 	}
 
 
 	/**
 	 * Iterator.
 	 */
-	RuleIter::RuleIter() : ruleP(null), tokenId(0) {}
+	OptionIter::OptionIter() : optionP(null), tokenId(0) {}
 
-	RuleIter::RuleIter(SyntaxOption &rule) : ruleP(&rule), tokenId(0), repCount(0) {}
+	OptionIter::OptionIter(SyntaxOption &rule) : optionP(&rule), tokenId(0), repCount(0) {}
 
-	RuleIter::RuleIter(SyntaxOption *rule, nat token, nat rep) : ruleP(rule), tokenId(token), repCount(rep) {}
+	OptionIter::OptionIter(SyntaxOption *rule, nat token, nat rep) : optionP(rule), tokenId(token), repCount(rep) {}
 
-	bool RuleIter::valid() const {
-		return ruleP != null;
+	bool OptionIter::valid() const {
+		return optionP != null;
 	}
 
-	bool RuleIter::end() const {
-		return (ruleP == null)
-			|| (tokenId >= ruleP->tokens.size());
+	bool OptionIter::end() const {
+		return (optionP == null)
+			|| (tokenId >= optionP->tokens.size());
 	}
 
-	RuleIter RuleIter::nextA() const {
-		bool start = (tokenId + 1) == ruleP->repStart;
+	bool OptionIter::captureBegin() const {
+		return valid()
+			&& (optionP->markType == SyntaxOption::mCapture)
+			&& (optionP->markStart == tokenId);
+	}
+
+	bool OptionIter::captureEnd() const {
+		return valid()
+			&& (optionP->markType == SyntaxOption::mCapture)
+			&& (optionP->markEnd == tokenId);
+	}
+
+	OptionIter OptionIter::nextA() const {
+		bool start = (tokenId + 1) == optionP->markStart;
 		nat rep = start ? repCount + 1 : repCount;
-		return RuleIter(ruleP, tokenId + 1, rep);
+		return OptionIter(optionP, tokenId + 1, rep);
 	}
 
-	RuleIter RuleIter::nextB() const {
-		bool start = (tokenId + 1) == ruleP->repStart;
-		bool end = (tokenId + 1) == ruleP->repEnd;
+	OptionIter OptionIter::nextB() const {
+		bool start = (tokenId + 1) == optionP->markStart;
+		bool end = (tokenId + 1) == optionP->markEnd;
 
-		switch (ruleP->repType) {
-		case SyntaxOption::rNone:
-			return RuleIter();
-		case SyntaxOption::rZeroOne:
+		switch (optionP->markType) {
+		case SyntaxOption::mNone:
+		case SyntaxOption::mCapture:
+			return OptionIter();
+		case SyntaxOption::mRepZeroOne:
 			if (start)
-				return RuleIter(ruleP, ruleP->repEnd, 0);
-			return RuleIter();
-		case SyntaxOption::rZeroPlus:
+				return OptionIter(optionP, optionP->markEnd, 0);
+			return OptionIter();
+		case SyntaxOption::mRepZeroPlus:
 			if (start)
-				return RuleIter(ruleP, ruleP->repEnd, 0);
+				return OptionIter(optionP, optionP->markEnd, 0);
 			if (end)
-				return RuleIter(ruleP, ruleP->repStart, repCount + 1);
-			return RuleIter();
-		case SyntaxOption::rOnePlus:
+				return OptionIter(optionP, optionP->markStart, repCount + 1);
+			return OptionIter();
+		case SyntaxOption::mRepOnePlus:
 			if (end)
-				return RuleIter(ruleP, ruleP->repStart, repCount + 1);
-			return RuleIter();
+				return OptionIter(optionP, optionP->markStart, repCount + 1);
+			return OptionIter();
 		default:
 			assert(false);
-			return RuleIter();
+			return OptionIter();
 		}
 	}
 
-	SyntaxToken *RuleIter::token() const {
+	SyntaxToken *OptionIter::token() const {
 		if (end())
 			return null;
-		return ruleP->tokens[tokenId];
+		return optionP->tokens[tokenId];
 	}
 
-	void RuleIter::output(wostream &to) const {
+	void OptionIter::output(wostream &to) const {
 		to << "{";
-		ruleP->output(to, tokenId);
+		optionP->output(to, tokenId);
 		to << ", " << repCount << "}";
 	}
 }

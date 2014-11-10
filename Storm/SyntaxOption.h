@@ -9,7 +9,7 @@ namespace storm {
 	 * Describes a syntax rule.
 	 */
 	class SyntaxOption : public Printable, NoCopy {
-		friend class RuleIter;
+		friend class OptionIter;
 		friend class SyntaxRule;
 	public:
 		// 'pos' is the start of this rule's definition.
@@ -19,12 +19,15 @@ namespace storm {
 		// Clear all tokens.
 		void clear();
 
-		// What kind of repeat is to be used?
-		enum Repeat {
-			rNone,
-			rZeroOne,
-			rZeroPlus,
-			rOnePlus,
+		// What mark is used?
+		enum Mark {
+			mNone,
+			// Repeat values
+			mRepZeroOne,
+			mRepZeroPlus,
+			mRepOnePlus,
+			// Capture
+			mCapture,
 		};
 
 		// Get the name of the rule this option is a member of. Returns "" if not a member.
@@ -33,12 +36,18 @@ namespace storm {
 		// Add a token.
 		void add(SyntaxToken *token);
 
-		// Set start/end of repeat (only one is supported).
-		void startRepeat();
-		void endRepeat(Repeat type);
+		// Set start/end of a mark (only one is supported).
+		void startMark();
+		void endMark(Mark type);
+		void endMark(const String &captureTo);
 
-		// Has any repeat?
-		inline bool hasRepeat() const { return repType != rNone; }
+		// Mark used?
+		inline bool hasMark() const { return markType != mNone; }
+
+		// Capture used?
+		inline bool hasCapture() const { return markType == mCapture; }
+		// To what variable?
+		inline const String &captureTo() const { return markCapture; }
 
 		// Syntactic scope.
 		const Scope scope;
@@ -62,11 +71,12 @@ namespace storm {
 		vector<SyntaxToken*> tokens;
 
 		// Start/end of repeat.
-		nat repStart, repEnd;
-		Repeat repType;
+		nat markStart, markEnd;
+		Mark markType;
+		String markCapture;
 
 		// Helper for repetition outputs. (0 = nothing, 1 = start, 2 = end)
-		int outputRep(std::wostream &to, nat i, nat marker) const;
+		int outputMark(std::wostream &to, nat i, nat marker) const;
 
 	};
 
@@ -74,13 +84,13 @@ namespace storm {
 	/**
 	 * Iterator into a rule.
 	 */
-	class RuleIter : public Printable {
+	class OptionIter : public Printable {
 	public:
 		// Null-iterator.
-		RuleIter();
+		OptionIter();
 
 		// Reference a rule.
-		RuleIter(SyntaxOption &rule);
+		OptionIter(SyntaxOption &rule);
 
 		// Valid iterator?
 		bool valid() const;
@@ -88,24 +98,30 @@ namespace storm {
 		// At end?
 		bool end() const;
 
+		// At beginning/end of capture:
+		// At the first included token in the capture?
+		bool captureBegin() const;
+		// At the first non-included token in the capture?
+		bool captureEnd() const;
+
 		// Create an iterator that is one step further in the iteration.
 		// This will in some cases result in multiple possibilities!
-		RuleIter nextA() const;
-		RuleIter nextB() const;
+		OptionIter nextA() const;
+		OptionIter nextB() const;
 
 		// Get the token at the current location.
 		SyntaxToken *token() const;
 
-		// Get the rule we're referencing.
-		inline SyntaxOption &rule() const { return *ruleP; }
+		// Get the option we're referencing.
+		inline SyntaxOption &option() const { return *optionP; }
 
 		// Same point?
-		inline bool operator ==(const RuleIter &o) const {
-			return ruleP == o.ruleP
+		inline bool operator ==(const OptionIter &o) const {
+			return optionP == o.optionP
 				&& tokenId == o.tokenId
 				&& repCount == o.repCount;
 		}
-		inline bool operator !=(const RuleIter &o) const {
+		inline bool operator !=(const OptionIter &o) const {
 			return !(*this == o);
 		}
 
@@ -113,10 +129,10 @@ namespace storm {
 		virtual void output(wostream &to) const;
 	private:
 		// Create and set values.
-		RuleIter(SyntaxOption *r, nat token, nat rep);
+		OptionIter(SyntaxOption *r, nat token, nat rep);
 
 		// Referenced rule, null if invalid.
-		SyntaxOption *ruleP;
+		SyntaxOption *optionP;
 
 		// Which token in the rule?
 		nat tokenId;

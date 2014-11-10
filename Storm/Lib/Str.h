@@ -16,16 +16,22 @@ namespace storm {
 		String v;
 
 		// Empty ctor
-		STORM_CTOR Str(Type *type);
+		STORM_CTOR Str();
 
 		// Copy ctor
-		STORM_CTOR Str(Type *type, const Str &copy);
+		STORM_CTOR Str(const Str &copy);
 
 		// Create from regular string.
-		Str(Engine &e, const String &s);
+		Str(const String &s);
 
 		// String length.
 		Nat STORM_FN count() const;
+
+		// Equals.
+		virtual Bool STORM_FN equals(Object *o);
+
+		// ToS
+		virtual Str *STORM_FN toS();
 	};
 
 }

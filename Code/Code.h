@@ -80,6 +80,4 @@ namespace code {
 #endif
 
 #include "Utils/Printable.h"
-
-// Get the offset of a specific variable inside a struct.
-#define OFFSET_OF(type, member) size_t(&((type *)0)->member)
+#include "Utils/Memory.h" // OFFSET_OF, BASE_PTR

@@ -19,6 +19,9 @@ namespace storm {
 		// Name of parent type (or empty).
 		Name super;
 
+		// Size of type.
+		nat typeSize;
+
 		// Static Type pointer index.
 		nat typePtrId;
 	};

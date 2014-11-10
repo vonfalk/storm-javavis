@@ -49,6 +49,7 @@ Types allTypes(vector<Header *> &headers) {
 	t.add(Type(L"void", L""));
 	t.add(Type(L"Int", L"core"));
 	t.add(Type(L"Nat", L"core"));
+	t.add(Type(L"Bool", L"core"));
 	t.add(Type(L"Type", L"core"));
 
 	for (nat i = 0; i < headers.size(); i++) {

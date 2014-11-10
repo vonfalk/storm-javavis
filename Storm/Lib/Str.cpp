@@ -4,14 +4,26 @@
 
 namespace storm {
 
-	Str::Str(Type *type) : Object(type) {}
+	Str::Str() : Object() {}
 
-	Str::Str(Type *type, const Str &o) : Object(type), v(o.v) {}
+	Str::Str(const Str &o) : Object(), v(o.v) {}
 
-	Str::Str(Engine &e, const String &o) : Object(type(e)), v(o) {}
+	Str::Str(const String &o) : Object(), v(o) {}
 
 	nat Str::count() const {
 		return v.size();
+	}
+
+	Bool Str::equals(Object *o) {
+		if (!Object::equals(o))
+			return false;
+		Str *other = (Str *)o;
+		return v == other->v;
+	}
+
+	Str *Str::toS() {
+		addRef();
+		return this;
 	}
 
 }

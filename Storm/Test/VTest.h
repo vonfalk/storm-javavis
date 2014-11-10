@@ -9,8 +9,7 @@ namespace storm {
 	class VTest : public Object {
 		STORM_CLASS;
 	public:
-		STORM_CTOR VTest(Type *t);
-		VTest(Engine &e);
+		STORM_CTOR VTest();
 
 		~VTest();
 

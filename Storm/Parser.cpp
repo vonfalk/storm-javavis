@@ -63,7 +63,7 @@ namespace storm {
 		for (nat i = 0; i < t.size(); i++) {
 			SyntaxOption *rule = t[i];
 			// Todo: We need to find possible lookahead strings!
-			State ns(RuleIter(*rule), ptr.step);
+			State ns(OptionIter(*rule), ptr.step);
 			s.insert(ns);
 		}
 	}
@@ -93,7 +93,7 @@ namespace storm {
 		if (!state.pos.end())
 			return;
 
-		String completed = state.pos.rule().rule();
+		String completed = state.pos.option().rule();
 		StateSet &from = steps[state.from];
 		for (nat i = 0; i < from.size(); i++) {
 			State st = from[i];
@@ -227,11 +227,18 @@ namespace storm {
 		State *cState = &state(pos);
 		SyntaxNode *result = null;
 		SyntaxNode *tmp = null;
+		nat captureBegin = 0, captureEnd = 0;
+		SyntaxOption &option = cState->pos.option();
 
 		try {
-			result = new SyntaxNode(&cState->pos.rule());
+			result = new SyntaxNode(&option);
 
 			for (; cState->prev.valid(); pos = cState->prev, cState = &state(pos)) {
+				if (cState->pos.captureEnd())
+					captureEnd = pos.step;
+				if (cState->pos.captureBegin())
+					captureBegin = pos.step;
+
 				State *pState = &state(cState->prev);
 
 				if (pState->bindToken() || pState->invokeToken()) {
@@ -266,6 +273,11 @@ namespace storm {
 			delete result;
 			delete tmp;
 			throw;
+		}
+
+		if (option.hasCapture() && captureBegin < captureEnd) {
+			String captured = src.substr(captureBegin, captureEnd - captureBegin);
+			result->add(option.captureTo(), captured, vector<String>());
 		}
 
 		return result;
@@ -327,7 +339,7 @@ namespace storm {
 	}
 
 	bool Parser::State::finish(const SyntaxOption *rootOption) const {
-		return &pos.rule() == rootOption
+		return &pos.option() == rootOption
 			&& pos.end();
 		// We could check pos.from here as well, but we can never instantiate that rule more than once!
 	}

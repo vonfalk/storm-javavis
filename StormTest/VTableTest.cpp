@@ -17,7 +17,7 @@ BEGIN_TEST(VTableTest) {
 	Engine engine(root);
 	code::VTable table(VTest::cppVTable());
 
-	VTest *test = new VTest(engine);
+	VTest *test = new (VTest::type(engine)) VTest();
 	table.setTo(test);
 	CHECK_EQ(test->returnOne(), 1);
 	CHECK_EQ(test->returnTwo(), 2);

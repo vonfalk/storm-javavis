@@ -80,6 +80,14 @@ bool CppType::isTypePtr() const {
 	return type.parts.size() == 1 && type.parts[0] == L"Type" && isPtr;
 }
 
+CppType CppType::typePtr() {
+	CppType t;
+	t.type = CppName(vector<String>(1, L"Type"));
+	t.isPtr = true;
+	assert(t.isTypePtr());
+	return t;
+}
+
 CppType CppType::fullName(const Types &t, const CppName &scope) const {
 	CppType c = *this;
 	c.type = t.find(type, scope).cppName;

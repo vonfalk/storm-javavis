@@ -11,10 +11,10 @@ namespace storm {
 	 */
 	enum TypeFlags {
 		// Regular type.
-		typeClass = 0x00,
+		typeClass = 0x01,
 
 		// Is it a value type (does not inherit from Object).
-		typeValue = 0x01,
+		typeValue = 0x02,
 	};
 
 	inline TypeFlags operator &(TypeFlags a, TypeFlags b) { return TypeFlags(nat(a) & nat(b)); }
@@ -76,6 +76,13 @@ namespace storm {
 
 		// Validate parameters to added members.
 		void validate(NameOverload *m);
+
+		// Our parent type's size.
+		nat superSize() const;
+
+		// Our size (including base classes). If it is zero, we need to re-compute it!
+		mutable nat mySize;
+
 	};
 
 }

@@ -58,6 +58,8 @@ public:
 	// Type* ?
 	bool isTypePtr() const;
 
+	static CppType typePtr();
+
 	// Full name.
 	CppType fullName(const Types &t, const CppName &scope) const;
 

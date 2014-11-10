@@ -2,20 +2,39 @@
 #include "Type.h"
 #include "Exception.h"
 #include "Engine.h"
+#include "Lib/Object.h"
 
 namespace storm {
 
 	const String Type::CTOR = L"__ctor";
 
-	Type::Type(Engine &e, const String &name, TypeFlags f) : Named(name), engine(e), flags(f), superType(null) {}
+	Type::Type(Engine &e, const String &name, TypeFlags f)
+		: Named(name), engine(e), flags(f), superType(null), mySize(0) {}
 
 	Type::~Type() {
 		clearMap(members);
 	}
 
-	nat Type::size() const {
-		TODO(L"Implement me!");
+	nat Type::superSize() const {
+		if (superType)
+			return superType->size();
+
+		if (flags & typeClass)
+			return sizeof(Object);
+		else if (flags & typeValue)
+			return 0;
+
+		assert(false);
 		return 0;
+	}
+
+	nat Type::size() const {
+		if (mySize > 0) {
+			nat s = superSize();
+			// re-compute our size. NOTE: base-classes must be able to propagate size-changes to children!
+			TODO(L"Implement me!");
+		}
+		return mySize;
 	}
 
 	void Type::setSuper(Type *super) {

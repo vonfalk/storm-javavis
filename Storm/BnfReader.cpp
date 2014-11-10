@@ -156,17 +156,19 @@ namespace storm {
 				to.add(new DelimToken());
 			} else if (sep.token == L"-") {
 			} else if (sep.token == L"(") {
-				if (to.hasRepeat())
-					throw SyntaxError(sep.pos, L"Only one repeat per rule is allowed.");
-				to.startRepeat();
+				if (to.hasMark())
+					throw SyntaxError(sep.pos, L"Only one mark per rule is allowed.");
+				to.startMark();
 			} else if (sep.token == L")") {
 				Token r = tok.next();
 				if (r.token == L"*") {
-					to.endRepeat(SyntaxOption::rZeroPlus);
+					to.endMark(SyntaxOption::mRepZeroPlus);
 				} else if (r.token == L"+") {
-					to.endRepeat(SyntaxOption::rOnePlus);
+					to.endMark(SyntaxOption::mRepOnePlus);
 				} else if (r.token == L"?") {
-					to.endRepeat(SyntaxOption::rZeroOne);
+					to.endMark(SyntaxOption::mRepZeroOne);
+				} else if (r.token != L"," && r.token != L"-") {
+					to.endMark(r.token);
 				} else {
 					throw SyntaxError(r.pos, L"Unknown repetition: " + r.token);
 				}

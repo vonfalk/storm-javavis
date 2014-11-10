@@ -63,6 +63,11 @@ The tokens to be repeated are enclosed by paranthesis and directly followed by
 the character indicating the current repetition mode, like this:
 "a", ("b", )* - "c"
 
+Instead of repetition, a subexpression can be "captured", which means that the
+text that was matched is bound to a variable in its raw form. This could be useful
+to skip parts of a file to parse that part later, for example. To capture something,
+simply omit the repetition character from the repetition syntax, and replace it
+with the name of the variable to bind the matched string to.
 
 Evaluation order
 -----------------
