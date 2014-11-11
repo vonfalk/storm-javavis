@@ -173,6 +173,7 @@ namespace code {
 		*--esp = (void *)v;
 	}
 
+#pragma warning (disable: 4733)
 	// May not return. *oldEsp is updated with the current esp.
 	static NAKED void doSwitch(void *newEsp, void ***oldEsp) {
 		__asm {
@@ -188,14 +189,14 @@ namespace code {
 			push ebx;
 			push esi;
 			push edi;
-			// TODO: Seh
+			push dword ptr fs:[0];
 
 			// Swap stacks.
 			mov [eax], esp;
 			mov esp, ecx;
 
 			// Restore state.
-			// TODO: Seh
+			pop dword ptr fs:[0];
 			pop edi;
 			pop esi;
 			pop ebx;
@@ -221,7 +222,7 @@ namespace code {
 		push(0); // ebx
 		push(0); // esi
 		push(0); // edi
-		// seh
+		push(0); // seh
 	}
 
 #endif

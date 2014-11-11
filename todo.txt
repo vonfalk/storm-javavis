@@ -3,3 +3,5 @@ Also: return types for rules may be specified.
 Consider adding the -> syntax for captures in BNF rules, to be symmetric with other variables.
 
 Re-think the equals() in object!
+
+Check exceptions in threads!
