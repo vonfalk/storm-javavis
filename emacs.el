@@ -2,6 +2,7 @@
 
 (setq font-lock-maximum-decoration 2)
 
+(setq use-compilation-window t)
 (setq project-root "~/Projects/storm/")
 (setq project-file (concat project-root "storm.sln"))
 (setq add-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl -a"))
@@ -12,6 +13,10 @@
 (setq p-release-command "scripts/compile -r")
 (setq p-all-command "scripts/compile -a")
 (setq read-buffer-completion-ignore-case t)
+
+(setq compilation-w 100)
+(setq compilation-h 83)
+(setq compilation-adjust 160)
 
 ;; Setup code-style
 
@@ -287,6 +292,31 @@
 	(kill-buffer))
     ))
 
+;; Create compilation window
+(setq compilation-window 'nil)
+(setq compilation-frame 'nil)
+
+(defun create-compilation-frame ()
+  (let* ((current-params (frame-parameters))
+	 (left-pos (cdr (assoc 'left current-params)))
+	 (height (cdr (assoc 'height current-params)))
+	 (created (make-frame '(inhibit-switch-frame))))
+    (setq compilation-frame created)
+    (setq compilation-window (frame-selected-window created))
+    (set-frame-size created compilation-w compilation-h)
+    (let* ((created-w (frame-pixel-width created)))
+      (set-frame-position created (- left-pos created-w compilation-adjust) 0)
+      )))
+
+(defun get-compilation-window (buffer e)
+  (if (eq compilation-frame 'nil)
+      (create-compilation-frame)
+    (if (not (frame-live-p compilation-frame))
+	(create-compilation-frame)))
+  (window--display-buffer buffer compilation-window 'frame)
+  compilation-window)
+
+
 ;; Behaviour.
 
 (add-to-list 'auto-mode-alist '("\\.h" . c++-mode))
@@ -294,6 +324,7 @@
 (setq display-buffer-alist
       '(("\\*compilation\\*" .
 	 ((display-buffer-reuse-window
+	   get-compilation-window
 	   display-buffer-use-some-window
 	   display-buffer-pop-up-window)
 	  . ((reusable-frames . t)
