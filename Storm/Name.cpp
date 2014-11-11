@@ -32,6 +32,14 @@ namespace storm {
 		return parts.back();
 	}
 
+	Name Name::from(nat f) const {
+		Name r;
+		for (nat i = f; f < parts.size(); f++) {
+			r.parts.push_back(parts[i]);
+		}
+		return r;
+	}
+
 	void Name::output(std::wostream &to) const {
 		join(to, parts, L".");
 	}

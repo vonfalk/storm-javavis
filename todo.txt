@@ -5,3 +5,5 @@ Consider adding the -> syntax for captures in BNF rules, to be symmetric with ot
 Re-think the equals() in object!
 
 Check exceptions in threads!
+
+Remove Printable::toS(), use the global toS() instead?

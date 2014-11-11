@@ -42,8 +42,10 @@ namespace storm {
 			if (Function *ctor = as<Function>(no)) {
 				code::FnCall call;
 				call.param(t);
-				for (nat i = 0; i < params.size(); i++)
-					call.param(params[i]);
+				for (nat i = 0; i < params.size(); i++) {
+					Object *o = params[i];
+					call.param<Object *>(o);
+				}
 				return call.call<Object *>(ctor->pointer());
 			}
 

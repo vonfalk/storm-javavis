@@ -10,9 +10,8 @@ namespace storm {
 	}
 
 	void SyntaxSet::add(Package &pkg) {
-		typedef hash_map<String, SyntaxRule*> SMap;
-		SMap rules = pkg.syntax();
-		for (SMap::iterator i = rules.begin(); i != rules.end(); ++i) {
+		const SyntaxRules &rules = pkg.syntax();
+		for (SyntaxRules::iterator i = rules.begin(); i != rules.end(); ++i) {
 			add(i->first, i->second);
 		}
 	}

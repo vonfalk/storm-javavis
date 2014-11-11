@@ -10,6 +10,8 @@ namespace storm {
 
 	class Type;
 	class Function;
+	class PkgReader;
+	class PkgFiles;
 
 	/**
 	 * Defines the contents of a package. A package may contain
@@ -22,24 +24,25 @@ namespace storm {
 	 * engine object, and is therefore managed by the engine object.
 	 * Packages are lazily loaded, which means that the contents
 	 * is not loaded until it is needed.
-	 *
-	 * TODO: Unify loading of syntax and code into one (syntax may be present in code files as well!)
 	 */
 	class Package : public Named, public NameLookup {
 	public:
 		// Create a virtual package, ie a package not present
 		// on disk. Those packages must therefore be eagerly loaded.
-		Package(const String &name);
+		Package(const String &name, Engine &engine);
 
 		// 'dir' is the directory this package is located in.
-		Package(const Path &pkgPath);
+		Package(const Path &pkgPath, Engine &engine);
 
 		// Dtor.
 		~Package();
 
+		// Owning engine.
+		Engine &engine;
+
 		// Get a list of all syntax options in this package.
 		// The options are still owned by this class.
-		hash_map<String, SyntaxRule*> syntax();
+		const SyntaxRules &syntax();
 
 		// Get a sub-package by name.
 		Package *childPackage(const String &name);
@@ -77,8 +80,7 @@ namespace storm {
 		PkgMap packages;
 
 		// Rules present in this package.
-		typedef hash_map<String, SyntaxRule*> SyntaxMap;
-		SyntaxMap syntaxRules;
+		SyntaxRules syntaxRules;
 
 		// Types in this package.
 		typedef hash_map<String, Type*> TypeMap;
@@ -102,11 +104,20 @@ namespace storm {
 		 * Lazy-loading status:
 		 */
 
-		// All syntax (.bnf-files) examined?
-		bool syntaxLoaded;
-
 		// All code files (.sto among others) examined?
-		bool codeLoaded;
+		bool loaded, loading;
+
+		// Load code if not done yet. (need something more complex when supporting re-loads).
+		void load();
+
+		// Load code unconditionally. Use load()
+		void loadAlways();
+
+		// Create a PkgReader from 'pkg'.
+		PkgReader *createReader(const Name &pkg, PkgFiles *files);
+
+		// Load a PkgReader from 'pkg', adding it to 'loading'.
+		void load(const Name &pkg, PkgFiles *files);
 
 		/**
 		 * Init.
@@ -119,9 +130,6 @@ namespace storm {
 
 		// Try to load a sub-package. Returns null on failure.
 		Package *loadPackage(const String &name);
-
-		// Load all syntax found in this package.
-		void loadSyntax();
 	};
 
 }

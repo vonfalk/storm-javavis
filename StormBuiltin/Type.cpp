@@ -18,18 +18,19 @@ void Types::add(const Type &type) {
 }
 
 Type Types::find(const CppName &name, const CppName &scope) const {
-	// Already fully-qualified?
+
+	for (CppName current = scope; !current.empty(); current = current.parent()) {
+		T::const_iterator i = types.find(current + name);
+		if (i != types.end())
+			return i->second;
+	}
+
+	// Fully qualified name?
 	T::const_iterator i = types.find(name);
 	if (i != types.end())
 		return i->second;
 
-	// It should be scope.parent() + name.
-	CppName r = scope + name;
-	i = types.find(r);
-	if (i != types.end())
-		return i->second;
-
-	throw Error(L"Type " + ::toS(name) + L" not found in " + ::toS(scope.parent()));
+	throw Error(L"Type " + ::toS(name) + L" not found in " + ::toS(scope));
 }
 
 void Types::output(wostream &to) const {

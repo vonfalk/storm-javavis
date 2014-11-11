@@ -29,7 +29,7 @@ namespace storm {
 	 * Rules for the ref-counting:
 	 * When returning Object*s, the caller has the responsibility
 	 * to release one reference. Ie, the caller has ownership of one reference.
-	 * Function parameters are also the caller's responisibility.
+	 * Function parameters are also the caller's responisibility. (Is this good?)
 	 */
 	class Object : NoCopy {
 		STORM_CLASS;
@@ -95,7 +95,7 @@ namespace storm {
 	template <class T>
 	void releaseVec(T &v) {
 		for (T::iterator i = v.begin(); i != v.end(); ++i)
-			release(*i);
+			(*i)->release();
 		v.clear();
 	}
 
@@ -103,7 +103,7 @@ namespace storm {
 	template <class T>
 	void releaseMap(T &v) {
 		for (T::iterator i = v.begin(); i != v.end(); ++i)
-			release(i->second);
+			i->second->release();
 		v.clear();
 	}
 

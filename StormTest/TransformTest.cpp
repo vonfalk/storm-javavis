@@ -10,11 +10,16 @@ using namespace storm;
 
 bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Object *eqTo) {
 	Parser p(set, str);
-	if (!p.parse(root))
+	if (!p.parse(root)) {
+		eqTo->release();
 		return false;
+	}
+
 	SyntaxNode *t = p.tree();
-	if (!t)
+	if (!t) {
+		eqTo->release();
 		return false;
+	}
 	//PLN(*t);
 
 	Object *o = null;

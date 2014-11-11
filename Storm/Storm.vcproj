@@ -306,6 +306,10 @@
 				RelativePath=".\Lib\Bool.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\PkgReader.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -446,6 +450,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Bool.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PkgReader.h"
 				>
 			</File>
 		</Filter>

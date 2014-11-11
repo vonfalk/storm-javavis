@@ -2,7 +2,7 @@
 #include "Tokenizer.h"
 #include "Exception.h"
 
-static const wchar *operators = L"+?*=><.";
+static const wchar *operators = L"+?*&=><.";
 static const wchar *specials = L"(){},-;";
 
 static bool isOperator(wchar c) {

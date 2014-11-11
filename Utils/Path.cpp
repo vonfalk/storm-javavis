@@ -161,6 +161,15 @@ bool Path::hasExt(const String &ext) const {
 	return t.endsWith(L"." + ext);
 }
 
+String Path::ext() const {
+	String t = title();
+	nat p = t.rfind('.');
+	if (p == String::npos)
+		return L"";
+	else
+		return t.substr(p + 1);
+}
+
 bool Path::isDir() const {
 	return isDirectory;
 }

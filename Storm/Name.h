@@ -32,6 +32,9 @@ namespace storm {
 		// Last element.
 		String last() const;
 
+		// All elements from 'n'.
+		Name from(nat n) const;
+
 		// Is this the root package?
 		inline bool root() const { return size() == 0; }
 

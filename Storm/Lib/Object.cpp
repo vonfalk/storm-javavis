@@ -21,7 +21,7 @@ namespace storm {
 	}
 
 	Str *Object::toS() {
-		return CREATE(Str, this, L"Unknown object");
+		return CREATE(Str, this, myType->name + L": " + toHex(this));
 	}
 
 	Bool Object::equals(Object *o) {

@@ -4,14 +4,19 @@
 #include "BnfReader.h"
 #include "Type.h"
 #include "Function.h"
+#include "PkgReader.h"
+#include "Engine.h"
+#include "Exception.h"
+
+#include "Code/Function.h"
 
 namespace storm {
 
-	Package::Package(const String &name) : Named(name), pkgPath(null) {
+	Package::Package(const String &name, Engine &engine) : Named(name), engine(engine), pkgPath(null) {
 		init();
 	}
 
-	Package::Package(const Path &path) : Named(path.title()) {
+	Package::Package(const Path &path, Engine &engine) : Named(path.title()), engine(engine) {
 		pkgPath = new Path(path);
 		pkgPath->makeDir();
 		init();
@@ -19,13 +24,12 @@ namespace storm {
 
 	void Package::init() {
 		parentPkg = null;
-		syntaxLoaded = false;
-		codeLoaded = false;
+		loaded = false;
+		loading = false;
 	}
 
 	Package::~Package() {
 		clearMap(packages);
-		clearMap(syntaxRules);
 		clearMap(types);
 		clearMap(members);
 		delete pkgPath;
@@ -77,9 +81,7 @@ namespace storm {
 		to << "Syntax:" << endl;
 		{
 			Indent i(to);
-			for (SyntaxMap::const_iterator i = syntaxRules.begin(); i != syntaxRules.end(); ++i) {
-				to << *i->second << endl;
-			}
+			to << syntaxRules;
 		}
 	}
 
@@ -101,14 +103,18 @@ namespace storm {
 	}
 
 	Named *Package::findTypeOrFn(const Name &name, nat start) {
-		// Nested types are not yet supported.
+		TypeMap::iterator i = types.find(name[start]);
+		if (i != types.end()) {
+			Type *t = i->second;
+			if (name.size() - 1 == start)
+				return t;
+			else
+				return t->find(name.from(start + 1));
+		}
+
+		// No nested types.
 		if (start != name.size() - 1)
 			return null;
-
-		TypeMap::iterator i = types.find(name[start]);
-		if (i != types.end())
-			return i->second;
-
 		MemberMap::iterator j = members.find(name[start]);
 		if (j != members.end())
 			return j->second;
@@ -127,16 +133,14 @@ namespace storm {
 		if (!p.exists())
 			return null;
 
-		Package *pkg = new Package(*pkgPath + Path(name));
+		Package *pkg = new Package(*pkgPath + Path(name), engine);
 		packages[name] = pkg;
 		pkg->parentPkg = this;
 		return pkg;
 	}
 
-	hash_map<String, SyntaxRule*> Package::syntax() {
-		if (!syntaxLoaded)
-			loadSyntax();
-
+	const SyntaxRules &Package::syntax() {
+		load();
 		return syntaxRules;
 	}
 
@@ -173,24 +177,85 @@ namespace storm {
 		o->add(fn);
 	}
 
-	void Package::loadSyntax() {
+	void Package::load() {
+		if (loaded)
+			return;
 		if (!pkgPath)
 			return;
+		if (loading)
+			throw InternalError(L"Recursive package loading detected! " + toS());
+		loading = true;
+		loadAlways();
+		loading = false;
+		loaded = true;
+	}
+
+	void Package::loadAlways() {
+		typedef hash_map<Name, PkgFiles *> M;
+		M files;
 
 		try {
-			vector<Path> files = pkgPath->children();
-			for (nat i = 0; i < files.size(); i++) {
-				const Path &f = files[i];
-				if (!f.isDir() && isBnfFile(f)) {
-					Scope scope(this);
-					parseBnf(syntaxRules, f, scope);
-				}
+			files = syntaxPkg(pkgPath->children(), engine);
+
+			Name myName = path();
+			for (M::iterator i = files.begin(); i != files.end(); ++i) {
+				if (i->first != myName)
+					load(i->first, i->second);
 			}
+
+			if (files.count(myName) == 1) {
+				load(myName, files[myName]);
+			}
+
 		} catch (...) {
-			clearMap(syntaxRules);
+			// We did nothing...
+			syntaxRules.clear();
+			clearMap(types);
+			clearMap(members);
+			releaseMap(files);
 			throw;
 		}
 
-		syntaxLoaded = true;
+		releaseMap(files);
 	}
+
+	PkgReader *Package::createReader(const Name &pkg, PkgFiles *files) {
+		Name rName = readerName(pkg);
+		Type *readerT = as<Type>(engine.scope()->find(rName));
+		if (!readerT) {
+			// Ignore files that are not known.
+			WARNING(L"Ignoring unknown filetype due to missing " << rName);
+			return null;
+		}
+		if (readerT->super() != PkgReader::type(engine))
+			throw RuntimeError(::toS(rName) + L" is not a subtype of lang.PkgReader.");
+
+		vector<Value> paramTypes(2);
+		paramTypes[0] = Value(engine.typeType()); // TODO: Type::type(engine)
+		paramTypes[1] = Value(PkgFiles::type(engine));
+		Function *ctor = as<Function>(engine.scope()->find(rName + Name(Type::CTOR), paramTypes));
+		if (!ctor)
+			throw RuntimeError(::toS(rName) + L": no constructor taking PkgFiles found!");
+
+		code::FnCall call;
+		call.param(readerT);
+		call.param(files);
+		return call.call<PkgReader *>(ctor->pointer());
+	}
+
+	void Package::load(const Name &pkg, PkgFiles *files) {
+		PkgReader *reader = createReader(pkg, files);
+		if (!reader)
+			return;
+
+		try {
+			Scope scope(this);
+			reader->readSyntax(syntaxRules, scope);
+
+		} catch (...) {
+			reader->release();
+		}
+		reader->release();
+	}
+
 }

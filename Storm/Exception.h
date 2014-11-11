@@ -6,6 +6,19 @@
 namespace storm {
 
 	/**
+	 * Runtime errors.
+	 */
+
+	class RuntimeError : public Exception {
+	public:
+		inline RuntimeError(const String &w) : w(w) {}
+		inline virtual String what() const { return w; }
+	private:
+		String w;
+	};
+
+
+	/**
 	 * Defines exceptions used in the compiler.
 	 */
 

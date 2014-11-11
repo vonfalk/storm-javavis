@@ -14,6 +14,9 @@ namespace storm {
 
 		~SyntaxRule();
 
+		// Orphan any options.
+		void orphanOptions();
+
 		// Add a rule. Takes ownership of the pointer.
 		void add(SyntaxOption *rule);
 
@@ -53,4 +56,46 @@ namespace storm {
 	};
 
 	wostream &operator <<(wostream &to, const SyntaxRule::Param &p);
+
+
+	/**
+	 * A set of syntax rules. Acts like map<name, rule>, but has support for
+	 * merges, among other things.
+	 * Takes ownership of rules.
+	 */
+	class SyntaxRules : public Printable, NoCopy {
+		typedef hash_map<String, SyntaxRule *> Map;
+	public:
+
+		// Iterator type (always const).
+		typedef Map::const_iterator iterator;
+
+		// Free contents.
+		~SyntaxRules();
+		void clear();
+
+		// Add a single rule. Merges with already existing ones if already present.
+		// If this rule has a definition, throws an exception.
+		void add(SyntaxRule *rule);
+
+		// Add another SyntaxRules.
+		void add(const SyntaxRules &o);
+
+		// Get element. Returns null if it does not exist.
+		SyntaxRule *operator [](const String &name) const;
+
+		// Iterators
+		inline iterator begin() const { return data.begin(); }
+		inline iterator end() const { return data.end(); }
+
+	protected:
+		virtual void output(wostream &to) const;
+
+	private:
+		// Contents.
+		Map data;
+
+		// Merge two rules.
+		void merge(SyntaxRule *to, SyntaxRule *from);
+	};
 }

@@ -8,9 +8,26 @@
 
 namespace storm {
 
-	typedef hash_map<String, SyntaxRule*> TypeMap;
+	/**
+	 * Interface to the package loader.
+	 */
 
-	void parseBnf(TypeMap &types, Tokenizer &tok, const Scope &scope);
+	bnf::Reader::Reader(PkgFiles *files) : PkgReader(files) {}
+
+	void bnf::Reader::readSyntax(SyntaxRules &to, Scope &scope) {
+		const vector<Path> &f = files->files;
+		for (nat i = 0; i < f.size(); i++) {
+			parseBnf(to, f[i], scope);
+		}
+	}
+
+
+	/**
+	 * The parsing code.
+	 */
+
+
+	void parseBnf(SyntaxRules &types, Tokenizer &tok, const Scope &scope);
 
 
 	/**
@@ -20,7 +37,7 @@ namespace storm {
 		return file.hasExt(L"bnf");
 	}
 
-	void parseBnf(hash_map<String, SyntaxRule*> &types, const Path &file, const Scope &scope) {
+	void parseBnf(SyntaxRules &types, const Path &file, const Scope &scope) {
 		TextReader *r = TextReader::create(new FileStream(file, Stream::mRead));
 		String content = r->getAll();
 		delete r;
@@ -29,13 +46,13 @@ namespace storm {
 		parseBnf(types, tok, scope);
 	}
 
-	SyntaxRule &getRule(TypeMap &map, const String &name) {
-		TypeMap::iterator i = map.find(name);
-		if (i != map.end())
-			return *i->second;
+	SyntaxRule &getRule(SyntaxRules &map, const String &name) {
+		SyntaxRule *t = map[name];
+		if (t)
+			return *t;
 
-		SyntaxRule *t = new SyntaxRule(name);
-		map.insert(make_pair(name, t));
+		t = new SyntaxRule(name);
+		map.add(t);
 		return *t;
 	}
 
@@ -220,7 +237,7 @@ namespace storm {
 			throw SyntaxError(paren.pos, L"Expected ;");
 	}
 
-	void parseBnf(TypeMap &types, Tokenizer &tok, const Scope &scope) {
+	void parseBnf(SyntaxRules &types, Tokenizer &tok, const Scope &scope) {
 		while (tok.more()) {
 			// What we have here is either a rule or a rule declaration.
 			Token ruleName = tok.next();

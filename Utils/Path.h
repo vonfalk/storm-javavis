@@ -59,6 +59,9 @@ public:
 	// Has file extension? (ext shall not contain .)
 	bool hasExt(const String &ext) const;
 
+	// Get file extension (always the last one).
+	String ext() const;
+
 	// Does the file exist?
 	bool exists() const;
 

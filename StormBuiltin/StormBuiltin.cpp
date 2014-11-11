@@ -121,6 +121,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 			d.vtableCode = vtableCode(t);
 			d.functionList = functionList(headers, t);
 			d.headerList = headerList(headers, root);
+
 			update(output, asmOutput, d);
 		} catch (const Exception &e) {
 			std::wcout << L"Error: " << e.what() << endl;

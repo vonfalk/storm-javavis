@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "SyntaxRule.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -9,6 +10,10 @@ namespace storm {
 		if (owner) {
 			clear(options);
 		}
+	}
+
+	void SyntaxRule::orphanOptions() {
+		options.clear();
 	}
 
 	void SyntaxRule::copyDeclaration(const SyntaxRule &o) {
@@ -32,6 +37,60 @@ namespace storm {
 
 	wostream &operator <<(wostream &to, const SyntaxRule::Param &p) {
 		return to << p.type << L" " << p.name;
+	}
+
+
+	/**
+	 * Collection.
+	 */
+
+	SyntaxRules::~SyntaxRules() {
+		clear();
+	}
+
+	void SyntaxRules::clear() {
+		clearMap(data);
+	}
+
+	SyntaxRule *SyntaxRules::operator [](const String &name) const {
+		Map::const_iterator i = data.find(name);
+		if (i == data.end())
+			return null;
+		return i->second;
+	}
+
+	void SyntaxRules::add(SyntaxRule *rule) {
+		Map::iterator i = data.find(rule->name());
+		if (i == data.end()) {
+			data.insert(make_pair(rule->name(), rule));
+		} else {
+			try {
+				merge(i->second, rule);
+			} catch (...) {
+				delete rule;
+			}
+			delete rule;
+		}
+	}
+
+	void SyntaxRules::merge(SyntaxRule *to, SyntaxRule *from) {
+		if (to->declared.unknown()) {
+			to->copyDeclaration(*from);
+		} else if (!from->declared.unknown()) {
+			throw SyntaxError(from->declared, L"The rule " + to->name() +
+							L" was already declared at " + ::toS(to->declared));
+		}
+
+		for (nat i = 0; i < from->size(); i++)
+			to->add((*from)[i]);
+
+		from->orphanOptions();
+	}
+
+	void SyntaxRules::output(wostream &to) const {
+		for (Map::const_iterator i = data.begin(); i != data.end(); i++) {
+			to << *i->second << endl;
+		}
 	}
 
 }
