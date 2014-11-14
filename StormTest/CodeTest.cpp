@@ -11,4 +11,5 @@ BEGIN_TEST(CodeTest) {
 	CHECK(test->find(Name(L"bar")));
 	CHECK(test->find(Name(L"Foo")));
 
+	break;
 } END_TEST

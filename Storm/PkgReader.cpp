@@ -58,13 +58,9 @@ namespace storm {
 	 * PkgReader.
 	 */
 
-	PkgReader::PkgReader(PkgFiles *files) : pkgFiles(files), owner(null) {
-		pkgFiles->addRef();
-	}
+	PkgReader::PkgReader(Auto<PkgFiles> files) : pkgFiles(files), owner(null) {}
 
-	PkgReader::~PkgReader() {
-		pkgFiles->release();
-	}
+	PkgReader::~PkgReader() {}
 
 	void PkgReader::readSyntax(SyntaxRules &to) {}
 
@@ -90,11 +86,7 @@ namespace storm {
 	 * FilesReader.
 	 */
 
-	FilesReader::FilesReader(PkgFiles *files) : PkgReader(files) {}
-
-	FilesReader::~FilesReader() {
-		releaseVec(files);
-	}
+	FilesReader::FilesReader(Auto<PkgFiles> files) : PkgReader(files) {}
 
 	void FilesReader::readSyntax(SyntaxRules &to) {
 		loadFiles();

@@ -13,7 +13,7 @@ namespace storm {
 		public:
 			STORM_CTOR Pkg();
 
-			void STORM_FN add(Str *part);
+			void STORM_FN add(Auto<Str> part);
 
 			// Get the entire pkg path as a Name.
 			Name name() const;

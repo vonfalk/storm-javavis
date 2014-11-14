@@ -14,7 +14,7 @@ namespace storm {
 		public:
 			STORM_CTOR Includes();
 
-			void STORM_FN add(Pkg *pkg);
+			void STORM_FN add(Auto<Pkg> pkg);
 
 			// Names.
 			vector<Name> names;

@@ -6,7 +6,7 @@ namespace storm {
 
 	Str::Str() : Object() {}
 
-	Str::Str(const Str &o) : Object(), v(o.v) {}
+	Str::Str(Auto<Str> o) : Object(), v(o->v) {}
 
 	Str::Str(const String &o) : Object(), v(o) {}
 
@@ -14,10 +14,10 @@ namespace storm {
 		return v.size();
 	}
 
-	Bool Str::equals(Object *o) {
+	Bool Str::equals(Auto<Object> o) {
 		if (!Object::equals(o))
 			return false;
-		Str *other = (Str *)o;
+		Str *other = (Str *)o.borrow();
 		return v == other->v;
 	}
 

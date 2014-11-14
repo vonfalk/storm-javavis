@@ -57,7 +57,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create a pkgReader.
-		STORM_CTOR PkgReader(PkgFiles *files);
+		STORM_CTOR PkgReader(Auto<PkgFiles> files);
 
 		// Dtor.
 		~PkgReader();
@@ -66,7 +66,7 @@ namespace storm {
 		Package *owner;
 
 		// Files passed to this object.
-		PkgFiles *pkgFiles;
+		Auto<PkgFiles> pkgFiles;
 
 		// Get syntax. Override to implement syntax-loading.
 		virtual void readSyntax(SyntaxRules &to);
@@ -110,8 +110,7 @@ namespace storm {
 	class FilesReader : public PkgReader {
 		STORM_CLASS;
 	public:
-		STORM_CTOR FilesReader(PkgFiles *files);
-		~FilesReader();
+		STORM_CTOR FilesReader(Auto<PkgFiles> files);
 
 		// Read contents from all files.
 		virtual void readSyntax(SyntaxRules &to);
@@ -122,7 +121,7 @@ namespace storm {
 		virtual FileReader *createFile(const Path &path);
 
 		// Store files while in use.
-		vector<FileReader *> files;
+		vector<Auto<FileReader> > files;
 
 		// Populate 'files' if it is not done already.
 		void loadFiles();

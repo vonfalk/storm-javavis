@@ -5,7 +5,7 @@ namespace storm {
 
 	bs::Includes::Includes() : Object() {}
 
-	void bs::Includes::add(Pkg *pkg) {
+	void bs::Includes::add(Auto<Pkg> pkg) {
 		names.push_back(pkg->name());
 	}
 

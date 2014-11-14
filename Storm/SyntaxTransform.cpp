@@ -30,8 +30,10 @@ namespace storm {
 		NameOverload *no = option->scope.find(option->matchFn, types);
 		if (Function *f = as<Function>(no)) {
 			code::FnCall call;
-			for (nat i = 0; i < params.size(); i++)
-			 	call.param(params[i]);
+			for (nat i = 0; i < params.size(); i++) {
+				params[i]->addRef();
+				call.param<Object *>(params[i]);
+			}
 			return call.call<Object *>(f->pointer());
 		}
 
@@ -43,8 +45,8 @@ namespace storm {
 				code::FnCall call;
 				call.param(t);
 				for (nat i = 0; i < params.size(); i++) {
-					Object *o = params[i];
-					call.param<Object *>(o);
+					params[i]->addRef();
+					call.param<Object *>(params[i]);
 				}
 				return call.call<Object *>(ctor->pointer());
 			}
@@ -72,6 +74,7 @@ namespace storm {
 		if (Function *f = as<Function>(no)) {
 			code::FnCall call;
 			call.param(me).param(param);
+			param->addRef();
 			return call.call<Object *>(f->pointer());
 		}
 

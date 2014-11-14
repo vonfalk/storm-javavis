@@ -1,4 +1,5 @@
 #pragma once
+#include "Auto.h"
 #include "Lib/Bool.h"
 
 namespace storm {
@@ -29,7 +30,7 @@ namespace storm {
 	 * Rules for the ref-counting:
 	 * When returning Object*s, the caller has the responsibility
 	 * to release one reference. Ie, the caller has ownership of one reference.
-	 * Function parameters are also the caller's responisibility. (Is this good?)
+	 * Function parameters are freed by the called function. Hint: use Auto<>!
 	 */
 	class Object : NoCopy {
 		STORM_CLASS;
@@ -44,7 +45,8 @@ namespace storm {
 
 		// Add reference.
 		inline void addRef() {
-			atomicIncrement(refs);
+			if (this)
+				atomicIncrement(refs);
 		}
 
 		// Release reference.
@@ -75,7 +77,7 @@ namespace storm {
 		virtual Str *STORM_FN toS();
 
 		// Compare for equality.
-		virtual Bool STORM_FN equals(Object *o);
+		virtual Bool STORM_FN equals(Auto<Object> o);
 
 	private:
 		// Current number of references.
@@ -107,5 +109,5 @@ namespace storm {
 		v.clear();
 	}
 
-
 }
+

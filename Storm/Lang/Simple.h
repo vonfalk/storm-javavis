@@ -20,12 +20,12 @@ namespace storm {
 	public:
 		STORM_CTOR SScope();
 
-		void STORM_FN expr(SExpr *expr);
+		void STORM_FN expr(Auto<SExpr> expr);
 	};
 
 
-	SExpr *STORM_FN sOperator(SExpr *lhs, SExpr *rhs, Str *op);
-	SExpr *STORM_FN sVar(Str *op);
-	SExpr *STORM_FN sNr(Str *op);
+	SExpr *STORM_FN sOperator(Auto<SExpr> lhs, Auto<SExpr> rhs, Auto<Str> op);
+	SExpr *STORM_FN sVar(Auto<Str> op);
+	SExpr *STORM_FN sNr(Auto<Str> op);
 
 }

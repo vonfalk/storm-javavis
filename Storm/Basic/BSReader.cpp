@@ -7,7 +7,7 @@
 
 namespace storm {
 
-	bs::Reader::Reader(PkgFiles *files) : FilesReader(files) {}
+	bs::Reader::Reader(Auto<PkgFiles> files) : FilesReader(files) {}
 
 	FileReader *bs::Reader::createFile(const Path &path) {
 		return CREATE(bs::File, this, path, owner);
@@ -21,13 +21,11 @@ namespace storm {
 
 	bs::File::~File() {}
 
-	void bs::File::readTypes() {
-		
-	}
+	void bs::File::readTypes() {}
 
 	void bs::File::readIncludes() {
 		SyntaxNode *rootNode = null;
-		Object *includes = null;
+		Auto<Object> includes;
 
 		try {
 			syntax.add(*syntaxPackage());
@@ -40,7 +38,7 @@ namespace storm {
 			rootNode = parser.tree();
 			includes = transform(package->engine, syntax, *rootNode);
 
-			if (Includes *inc = as<Includes>(includes)) {
+			if (Includes *inc = as<Includes>(includes.borrow())) {
 				setIncludes(inc->names);
 			}
 

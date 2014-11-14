@@ -44,6 +44,18 @@ void CppName::output(wostream &to) const {
 CppType CppType::read(Tokenizer &tok) {
 	CppType t;
 
+	if (tok.peek() == L"Auto") {
+		tok.next();
+		tok.expect(L"<");
+
+		t = CppType::read(tok);
+		t.isAuto = true;
+
+		tok.expect(L">");
+
+		return t;
+	}
+
 	if (tok.peek() == L"const") {
 		t.isConst = true;
 		tok.next();
@@ -63,6 +75,8 @@ CppType CppType::read(Tokenizer &tok) {
 }
 
 void CppType::output(wostream &to) const {
+	if (isAuto)
+		to << L"storm::Auto<";
 	if (isConst)
 		to << L"const ";
 	to << type;
@@ -70,6 +84,8 @@ void CppType::output(wostream &to) const {
 		to << L" *";
 	else if (isRef)
 		to << L" &";
+	if (isAuto)
+		to << L">";
 }
 
 bool CppType::isVoid() const {

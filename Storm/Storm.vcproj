@@ -480,6 +480,10 @@
 				RelativePath=".\Basic\BSPkg.h"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\Auto.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

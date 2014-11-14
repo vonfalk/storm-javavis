@@ -24,8 +24,8 @@ namespace storm {
 		return CREATE(Str, this, myType->name + L": " + toHex(this));
 	}
 
-	Bool Object::equals(Object *o) {
-		if (o == null)
+	Bool Object::equals(Auto<Object> o) {
+		if (!o)
 			return false;
 		if (o->myType != myType)
 			return false;

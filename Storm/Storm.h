@@ -11,11 +11,15 @@
 // For example: Str *STORM_FN foo();
 #define STORM_FN CODECALL
 
-#define STORM_CLASS							\
-	public:									\
-	static Type *type(Engine &e);			\
-	static Type *type(Object *o);			\
-	static void *cppVTable();				\
+#define STORM_CLASS										\
+	public:												\
+	static Type *type(Engine &e);						\
+	static Type *type(Object *o);						\
+	template <class T>									\
+	static inline Type *type(const Auto<T> &o) {		\
+		return type(o.borrow());						\
+	}													\
+	static void *cppVTable();							\
 private:
 
 // Mark a constructor.
