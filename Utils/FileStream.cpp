@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "FileStream.h"
+#include "TextReader.h"
 
 FileStream::FileStream(const Path &filename, Mode mode) : mode(mode), name(filename) {
 	openFile(filename.toS(), mode);
@@ -83,3 +84,20 @@ void FileStream::seek(nat64 to) {
 	SetFilePointerEx(file, distance, NULL, FILE_BEGIN);
 }
 
+
+/**
+ * Read entire text file.
+ */
+String readTextFile(const Path &file) {
+	String r;
+	TextReader *reader = null;
+	try {
+		reader = TextReader::create(new FileStream(file, Stream::mRead));
+		r = reader->getAll();
+		delete reader;
+	} catch (...) {
+		delete reader;
+		throw;
+	}
+	return r;
+}

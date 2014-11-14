@@ -5,8 +5,9 @@
 
 namespace storm {
 
-	Engine::Engine(const Path &root) : rootPath(root), rootPkg(root, *this), rootScope(&rootPkg) {
+	Engine::Engine(const Path &root) : inited(false), rootPath(root), rootPkg(root, *this), rootScope(&rootPkg) {
 		addStdLib(*this, cached, tType);
+		inited = true;
 	}
 
 	Engine::~Engine() {}

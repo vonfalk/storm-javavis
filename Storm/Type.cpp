@@ -15,6 +15,14 @@ namespace storm {
 		clearMap(members);
 	}
 
+	bool Type::isA(Type *o) const {
+		for (const Type *curr = this; curr; curr = curr->super()) {
+			if (o == curr)
+				return true;
+		}
+		return false;
+	}
+
 	nat Type::superSize() const {
 		if (superType)
 			return superType->size();

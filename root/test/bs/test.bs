@@ -1,0 +1,9 @@
+use core;
+
+class Foo {
+Int a = 10;
+}
+
+int bar(Foo a) {
+return a.a;
+}

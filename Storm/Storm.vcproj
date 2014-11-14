@@ -310,6 +310,18 @@
 				RelativePath=".\PkgReader.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSReader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSPkg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSIncludes.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -454,6 +466,18 @@
 			</File>
 			<File
 				RelativePath=".\PkgReader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSReader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSIncludes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSPkg.h"
 				>
 			</File>
 		</Filter>

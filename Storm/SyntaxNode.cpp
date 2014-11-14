@@ -89,6 +89,8 @@ namespace storm {
 	void SyntaxNode::reverseArrays() {
 		for (VarMap::iterator i = vars.begin(); i != vars.end(); ++i)
 			i->second.value->reverseArray();
+
+		std::reverse(mInvocations.begin(), mInvocations.end());
 	}
 
 	SyntaxVariable::Type SyntaxNode::typeOf(const String &name, bool isStr) {

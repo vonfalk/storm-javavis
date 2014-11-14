@@ -14,6 +14,9 @@ namespace storm {
 		// Path to a named in the form 'a.b.c...'
 		Name(const String &path);
 
+		// Path to a named as a vector.
+		Name(const vector<String> &parts);
+
 		// Concat paths.
 		Name operator +(const Name &o) const;
 		Name &operator +=(const Name &o);

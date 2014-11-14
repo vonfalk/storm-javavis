@@ -14,7 +14,7 @@ namespace storm {
 	 *
 	 * TODO: Validate types of rules here?
 	 */
-	class SyntaxSet : NoCopy {
+	class SyntaxSet : public Printable, NoCopy {
 	public:
 		~SyntaxSet();
 
@@ -24,6 +24,9 @@ namespace storm {
 
 		// Get the SyntaxRule with a specific name.
 		SyntaxRule *rule(const String &name);
+
+	protected:
+		virtual void output(wostream &to) const;
 
 	private:
 		// Syntax rules.

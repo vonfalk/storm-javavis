@@ -54,10 +54,9 @@ namespace storm {
 			return;
 
 		SyntaxRule *sr = syntax.rule(type->type());
-		if (sr == null) {
-			TODO(L"Error message?");
-			return;
-		}
+		if (sr == null)
+			throw SyntaxError(state.pos.option().pos, L"Can not find rule " + type->type());
+
 		SyntaxRule &t = *sr;
 
 		for (nat i = 0; i < t.size(); i++) {

@@ -99,7 +99,7 @@ namespace storm {
 		if (!tc)
 			throw BuiltInError(L"Failed to locate type " + toS(fullName));
 
-		Named *s = Scope(tc).find(t->super);
+		Named *s = to.scope()->find(t->super);
 		Type *super = as<Type>(s);
 		if (!super)
 			throw BuiltInError(L"Failed to locate super type " + toS(t->super));

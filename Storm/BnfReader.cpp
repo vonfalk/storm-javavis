@@ -5,6 +5,7 @@
 #include "Utils/FileStream.h"
 #include "Utils/TextFile.h"
 #include "Tokenizer.h"
+#include "Package.h"
 
 namespace storm {
 
@@ -14,8 +15,10 @@ namespace storm {
 
 	bnf::Reader::Reader(PkgFiles *files) : PkgReader(files) {}
 
-	void bnf::Reader::readSyntax(SyntaxRules &to, Scope &scope) {
-		const vector<Path> &f = files->files;
+	void bnf::Reader::readSyntax(SyntaxRules &to) {
+		Scope scope(owner);
+
+		const vector<Path> &f = pkgFiles->files;
 		for (nat i = 0; i < f.size(); i++) {
 			parseBnf(to, f[i], scope);
 		}

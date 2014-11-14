@@ -10,8 +10,10 @@ Tests &Tests::instance() {
 	return t;
 }
 
-void Tests::addTest(Test *t) {
+void Tests::addTest(Test *t, bool single) {
 	instance().tests.insert(std::make_pair(t->getName(), t));
+	if (single)
+		instance().only = t;
 }
 
 TestResult Tests::run() {
@@ -20,9 +22,13 @@ TestResult Tests::run() {
 
 	try {
 
-		for (TestMap::const_iterator i = t.tests.begin(); i != t.tests.end(); i++) {
-			std::wcout << L"Running " << i->first << L"..." << std::endl;
-			r += i->second->run();
+		if (t.only) {
+			r += t.only->run();
+		} else {
+			for (TestMap::const_iterator i = t.tests.begin(); i != t.tests.end(); i++) {
+				std::wcout << L"Running " << i->first << L"..." << std::endl;
+				r += i->second->run();
+			}
 		}
 
 		std::wcout << r << std::endl;

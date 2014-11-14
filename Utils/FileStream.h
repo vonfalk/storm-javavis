@@ -34,3 +34,7 @@ private:
 };
 
 
+/**
+ * Read an entire text file.
+ */
+String readTextFile(const Path &file);

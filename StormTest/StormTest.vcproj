@@ -232,6 +232,10 @@
 				RelativePath=".\ThreadTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\CodeTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

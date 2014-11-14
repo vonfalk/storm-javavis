@@ -36,6 +36,9 @@ namespace storm {
 		// Get the default scope lookup for the root packag.
 		inline Scope *scope() { return &rootScope; }
 
+		// Initialized?
+		inline bool initialized() { return inited; }
+
 	private:
 		// Path to root directory.
 		Path rootPath;
@@ -54,6 +57,9 @@ namespace storm {
 
 		// Cached types.
 		vector<Type *> cached;
+
+		// Initialized?
+		bool inited;
 
 		// Set T to the type, reporting any errors.
 		void setType(Type *&t, const String &name);

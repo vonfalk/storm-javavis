@@ -9,6 +9,7 @@ namespace storm {
 	class Engine;
 	class SyntaxRules;
 	class Scope;
+	class Package;
 
 	// Get the name of the 'reader' class from 'pkg'.
 	Name readerName(const Name &name);
@@ -45,10 +46,12 @@ namespace storm {
 	 * The process is designed to be implemented as follows:
 	 * 1: get syntax
 	 * 2: get types (just information, should be lazy-loaded!)
-	 * 3: resolve types (ie figure out how structs should look)
+	 * 3: resolve types (ie figure out how structs should look) (needed?)
 	 * 4: get functions
 	 * This is to ensure that inter-depencies are resolved correctly. Within each language,
 	 * these rules may be implemented differently.
+	 *
+	 * TODO: expose the majority through STORM_FN.
 	 */
 	class PkgReader : public Object {
 		STORM_CLASS;
@@ -59,11 +62,70 @@ namespace storm {
 		// Dtor.
 		~PkgReader();
 
-		// Files passed to this object.
-		PkgFiles *files;
+		// Owning package. TODO: Set in ctor!
+		Package *owner;
 
-		// Get syntax. Override to implement syntax-loading. TODO: STORM_FN, expose custom scope through package ptr.
-		virtual void readSyntax(SyntaxRules &to, Scope &scope);
+		// Files passed to this object.
+		PkgFiles *pkgFiles;
+
+		// Get syntax. Override to implement syntax-loading.
+		virtual void readSyntax(SyntaxRules &to);
+
+		// Get all types. Override to implement type-loading.
+		virtual void readTypes();
+
+	};
+
+
+	/**
+	 * Single file.
+	 */
+	class FileReader : public Object {
+		STORM_CLASS;
+	public:
+		// Create a FileReader.
+		FileReader(const Path &file, Package *into);
+
+		// File.
+		const Path file;
+
+		// Package we're loading into.
+		Package *package;
+
+		// Read syntax from this file.
+		virtual void readSyntax(SyntaxRules &to);
+
+		// Read types from this file.
+		virtual void readTypes();
+
+		// Get the package where the syntax for the current file is located.
+		Package *syntaxPackage() const;
+	};
+
+
+	/**
+	 * Extension to handle a set of files more or less independently. A more
+	 * intelligent extension to the PkgReader above.
+	 */
+	class FilesReader : public PkgReader {
+		STORM_CLASS;
+	public:
+		STORM_CTOR FilesReader(PkgFiles *files);
+		~FilesReader();
+
+		// Read contents from all files.
+		virtual void readSyntax(SyntaxRules &to);
+		virtual void readTypes();
+
+	protected:
+		// Create a file object. This is called as late as possible.
+		virtual FileReader *createFile(const Path &path);
+
+		// Store files while in use.
+		vector<FileReader *> files;
+
+		// Populate 'files' if it is not done already.
+		void loadFiles();
 	};
 
 }

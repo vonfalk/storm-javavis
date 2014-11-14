@@ -76,9 +76,28 @@ namespace storm {
 		to << '[';
 		if (inverted)
 			to << '^';
+
+		bool inRep = false;
+		wchar last = 0;
 		for (nat i = 0; i < chars.size(); i++) {
-			escape(to, chars[i]);
+			if (!inRep) {
+				if (chars[i] == last + 1) {
+					inRep = true;
+					to << L"-";
+				} else {
+					escape(to, chars[i]);
+				}
+			} else if (chars[i] != last + 1) {
+				escape(to, last);
+				escape(to, chars[i]);
+				inRep = false;
+			}
+			last = chars[i];
 		}
+
+		if (inRep)
+			escape(to, last);
+
 		to << ']';
 	}
 

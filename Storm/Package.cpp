@@ -95,11 +95,18 @@ namespace storm {
 		if (start > name.size())
 			return null;
 
-		Package *found = childPackage(name[start]);
-		if (found == null)
-			return findTypeOrFn(name, start);
+		if (Package *found = childPackage(name[start]))
+			return found->findName(name, start + 1);
 
-		return found->findName(name, start + 1);
+		if (Named *r = findTypeOrFn(name, start))
+			return r;
+
+		if (!loaded) {
+			load();
+			return findTypeOrFn(name, start);
+		}
+
+		return null;
 	}
 
 	Named *Package::findTypeOrFn(const Name &name, nat start) {
@@ -178,14 +185,21 @@ namespace storm {
 	}
 
 	void Package::load() {
+		if (!engine.initialized())
+			return;
 		if (loaded)
 			return;
 		if (!pkgPath)
 			return;
 		if (loading)
-			throw InternalError(L"Recursive package loading detected! " + toS());
+			return;
 		loading = true;
-		loadAlways();
+		try {
+			loadAlways();
+		} catch (...) {
+			loading = false;
+			throw;
+		}
 		loading = false;
 		loaded = true;
 	}
@@ -193,18 +207,29 @@ namespace storm {
 	void Package::loadAlways() {
 		typedef hash_map<Name, PkgFiles *> M;
 		M files;
+		vector<PkgReader *> toLoad;
 
 		try {
 			files = syntaxPkg(pkgPath->children(), engine);
 
 			Name myName = path();
+
 			for (M::iterator i = files.begin(); i != files.end(); ++i) {
 				if (i->first != myName)
-					load(i->first, i->second);
+					addReader(toLoad, i->first, i->second);
 			}
 
-			if (files.count(myName) == 1) {
-				load(myName, files[myName]);
+			if (files.count(myName) == 1)
+				addReader(toLoad, myName, files[myName]);
+
+			// Load all syntax.
+			for (nat i = 0; i < toLoad.size(); i++) {
+				toLoad[i]->readSyntax(syntaxRules);
+			}
+
+			// Load all types.
+			for (nat i = 0; i < toLoad.size(); i++) {
+				toLoad[i]->readTypes();
 			}
 
 		} catch (...) {
@@ -213,10 +238,12 @@ namespace storm {
 			clearMap(types);
 			clearMap(members);
 			releaseMap(files);
+			releaseVec(toLoad);
 			throw;
 		}
 
 		releaseMap(files);
+		releaseVec(toLoad);
 	}
 
 	PkgReader *Package::createReader(const Name &pkg, PkgFiles *files) {
@@ -227,7 +254,7 @@ namespace storm {
 			WARNING(L"Ignoring unknown filetype due to missing " << rName);
 			return null;
 		}
-		if (readerT->super() != PkgReader::type(engine))
+		if (!readerT->isA(PkgReader::type(engine)))
 			throw RuntimeError(::toS(rName) + L" is not a subtype of lang.PkgReader.");
 
 		vector<Value> paramTypes(2);
@@ -240,22 +267,15 @@ namespace storm {
 		code::FnCall call;
 		call.param(readerT);
 		call.param(files);
-		return call.call<PkgReader *>(ctor->pointer());
+		PkgReader *r = call.call<PkgReader *>(ctor->pointer());
+		r->owner = this;
+		return r;
 	}
 
-	void Package::load(const Name &pkg, PkgFiles *files) {
-		PkgReader *reader = createReader(pkg, files);
-		if (!reader)
-			return;
-
-		try {
-			Scope scope(this);
-			reader->readSyntax(syntaxRules, scope);
-
-		} catch (...) {
-			reader->release();
-		}
-		reader->release();
+	void Package::addReader(vector<PkgReader *> &to, const Name &pkg, PkgFiles *files) {
+		PkgReader *r = createReader(pkg, files);
+		if (r)
+			to.push_back(r);
 	}
 
 }

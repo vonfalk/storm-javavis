@@ -9,6 +9,8 @@ namespace storm {
 		parts = path.split(L".");
 	}
 
+	Name::Name(const vector<String> &parts) : parts(parts) {}
+
 	Name &Name::operator +=(const Name &o) {
 		for (nat i = 0; i < o.parts.size(); i++)
 			parts.push_back(o.parts[i]);

@@ -51,6 +51,9 @@ namespace storm {
 		// Get super type.
 		inline Type *super() const { return superType; }
 
+		// Any super type the given type?
+		bool isA(Type *super) const;
+
 		// Add new members.
 		void add(NameOverload *m);
 

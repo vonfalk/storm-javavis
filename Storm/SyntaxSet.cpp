@@ -22,9 +22,9 @@ namespace storm {
 		if (!rule->declared.unknown()) {
 			if (!dest->declared.unknown())
 				throw SyntaxError(rule->declared,
-								L"The rule " + toS(path) +
+								L"The rule " + ::toS(path) +
 								L" was previously declared at " +
-								toS(dest->declared));
+								::toS(dest->declared));
 			dest->copyDeclaration(*rule);
 		}
 
@@ -47,6 +47,12 @@ namespace storm {
 		if (i == rules.end())
 			return null;
 		return i->second;
+	}
+
+	void SyntaxSet::output(wostream &to) const {
+		for (RMap::const_iterator i = rules.begin(); i != rules.end(); i++) {
+			to << *i->second << endl;
+		}
 	}
 
 }

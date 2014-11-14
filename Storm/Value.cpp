@@ -11,12 +11,7 @@ namespace storm {
 	Value::Value(Type *t) : type(t) {}
 
 	bool Value::canStore(Type *x) const {
-		while (x) {
-			if (x == type)
-				return true;
-			x = x->super();
-		}
-		return false;
+		return x->isA(type);
 	}
 
 	bool Value::canStore(const Value &v) const {

@@ -116,8 +116,8 @@ namespace storm {
 		// Create a PkgReader from 'pkg'.
 		PkgReader *createReader(const Name &pkg, PkgFiles *files);
 
-		// Load a PkgReader from 'pkg', adding it to 'loading'.
-		void load(const Name &pkg, PkgFiles *files);
+		// Add a PkgReader to 'to'.
+		void addReader(vector<PkgReader *> &to, const Name &pkg, PkgFiles *files);
 
 		/**
 		 * Init.

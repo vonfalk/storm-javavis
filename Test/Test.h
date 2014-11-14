@@ -27,10 +27,10 @@ public:
 	}
 
 	inline TestResult &operator +=(const TestResult &other) {
-		total += other.total; 
+		total += other.total;
 		failed += other.failed;
 		crashed += other.crashed;
-		return *this; 
+		return *this;
 	}
 
 	friend std::wostream &operator <<(std::wostream &to, const TestResult &r);
@@ -49,6 +49,8 @@ class Test;
 
 class Tests : Singleton {
 public:
+	inline Tests() : only(null) {}
+
 	//Run all tests, returns the statistics.
 	static TestResult run();
 
@@ -56,8 +58,10 @@ private:
 	typedef map<String, Test *> TestMap;
 	TestMap tests;
 
+	Test *only;
+
 	static Tests &instance();
-	static void addTest(Test *t); //Takes ownership of the test.
+	static void addTest(Test *t, bool single); //Takes ownership of the test.
 
 	friend class Test;
 };
@@ -69,8 +73,8 @@ public:
 
 	inline const String &getName() const { return name; }
 protected:
-	Test(const String &name) : name(name) {
-		Tests::instance().addTest(this);
+	Test(const String &name, bool single=false) : name(name) {
+		Tests::instance().addTest(this, single);
 	}
 
 private:
@@ -94,12 +98,12 @@ void verifyEq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	std::wcout << L"Crashed " << expr << L": " << error << std::endl; \
 	__result__.crashed++
 
-#define DEFINE_TEST(name) \
+#define DEFINE_TEST(name, single) \
 class name : public Test { \
 public: \
 	virtual TestResult run() const; \
 private: \
-	name() : Test(_T(#name)) {} \
+    name() : Test(_T(#name), single) {}	\
 	static name instance; \
 }
 
@@ -139,10 +143,16 @@ private: \
 
 
 #define BEGIN_TEST(name) \
-	DEFINE_TEST(name); \
+	DEFINE_TEST(name, false); \
 	name name::instance; \
 	TestResult name::run() const {\
 		TestResult __result__; do
+
+#define BEGIN_TEST_(name) \
+	DEFINE_TEST(name, true); \
+	name name::instance; \
+	TestResult name::run() const { \
+	    TestResult __result__; do
 
 #define END_TEST \
 	while (false); \

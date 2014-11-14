@@ -7,3 +7,7 @@ Re-think the equals() in object!
 Check exceptions in threads!
 
 Remove Printable::toS(), use the global toS() instead?
+
+When functions called by the syntax transform returns objects, we leak memory. Fix!
+
+Calling convention with references: let the called function free parameters? Add auto-ptr in that case.

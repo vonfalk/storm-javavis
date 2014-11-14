@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "PkgReader.h"
 #include "Lib/Str.h"
+#include "Engine.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -18,6 +20,9 @@ namespace storm {
 		M r;
 
 		for (nat i = 0; i < paths.size(); i++) {
+			if (paths[i].isDir())
+				continue;
+
 			Name pkg = syntaxPkg(paths[i]);
 			M::iterator found = r.find(pkg);
 			PkgFiles *into;
@@ -53,13 +58,69 @@ namespace storm {
 	 * PkgReader.
 	 */
 
-	PkgReader::PkgReader(PkgFiles *files) : files(files) {
-		files->addRef();
+	PkgReader::PkgReader(PkgFiles *files) : pkgFiles(files), owner(null) {
+		pkgFiles->addRef();
 	}
 
 	PkgReader::~PkgReader() {
-		files->release();
+		pkgFiles->release();
 	}
 
-	void PkgReader::readSyntax(SyntaxRules &to, Scope &scope) {}
+	void PkgReader::readSyntax(SyntaxRules &to) {}
+
+	void PkgReader::readTypes() {}
+
+
+	/**
+	 * FileReader.
+	 */
+
+	FileReader::FileReader(const Path &file, Package *into) : file(file), package(into) {}
+
+	void FileReader::readSyntax(SyntaxRules &to) {}
+
+	void FileReader::readTypes() {}
+
+	Package *FileReader::syntaxPackage() const {
+		Scope *scope = package->engine.scope();
+		return as<Package>(scope->find(syntaxPkg(file)));
+	}
+
+	/**
+	 * FilesReader.
+	 */
+
+	FilesReader::FilesReader(PkgFiles *files) : PkgReader(files) {}
+
+	FilesReader::~FilesReader() {
+		releaseVec(files);
+	}
+
+	void FilesReader::readSyntax(SyntaxRules &to) {
+		loadFiles();
+		for (nat i = 0; i < files.size(); i++) {
+			files[i]->readSyntax(to);
+		}
+	}
+
+	void FilesReader::readTypes() {
+		loadFiles();
+		for (nat i = 0; i < files.size(); i++) {
+			files[i]->readTypes();
+		}
+	}
+
+	void FilesReader::loadFiles() {
+		if (files.size() != 0)
+			return;
+
+		for (nat i = 0; i < pkgFiles->files.size(); i++) {
+			files.push_back(createFile(pkgFiles->files[i]));
+		}
+	}
+
+	FileReader *FilesReader::createFile(const Path &path) {
+		throw InternalError(L"Please implement the 'createFile' on " + myType->name);
+	}
+
 }
