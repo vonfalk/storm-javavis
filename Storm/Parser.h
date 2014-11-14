@@ -169,7 +169,8 @@ namespace storm {
 		 */
 		class StateSet : public vector<State> {
 		public:
-			void insert(const State &s);
+			// returns true if inserted. Does not insert invalid positions.
+			bool insert(const State &s);
 		};
 
 		// State sets.
@@ -205,14 +206,18 @@ namespace storm {
 		// Process the set at index 'set'. Returns true if a 'finish' state is seen.
 		bool process(nat step);
 
+		// Re-run completers on 'step'.
+		void runCompleters(nat step);
+
 		// Run the predictor on one element in 'set'.
 		void predictor(StateSet &set, State state, StatePtr ptr);
 
 		// Run the scanner on one element in 'set'.
 		void scanner(StateSet &set, State state, StatePtr ptr);
 
-		// Run the completer on one element in 'set'.
-		void completer(StateSet &set, State state, StatePtr ptr);
+		// Run the completer on one element in 'set'. Returns true
+		// if new states were inserted in the current 'set'.
+		bool completer(StateSet &set, State state, StatePtr ptr);
 
 		/**
 		 * Result extraction.

@@ -21,7 +21,16 @@ namespace storm {
 
 	bs::File::~File() {}
 
-	void bs::File::readTypes() {}
+	void bs::File::readTypes() {
+		Parser parser(syntax, contents);
+		parser.parse(L"File", headerSize);
+		if (parser.hasError())
+			throw parser.error(file);
+
+		SyntaxNode *root = parser.tree();
+		Auto<Object> includes = transform(package->engine, syntax, *root);
+		delete root;
+	}
 
 	void bs::File::readIncludes() {
 		SyntaxNode *rootNode = null;
@@ -57,6 +66,7 @@ namespace storm {
 			if (!p)
 				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(inc[i]));
 			includes.push_back(p);
+			syntax.add(*p);
 		}
 	}
 

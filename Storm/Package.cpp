@@ -251,7 +251,7 @@ namespace storm {
 		Type *readerT = as<Type>(engine.scope()->find(rName));
 		if (!readerT) {
 			// Ignore files that are not known.
-			WARNING(L"Ignoring unknown filetype due to missing " << rName);
+			WARNING(L"Ignoring unknown filetype due to missing " << rName << L"(" << *files << L")");
 			return null;
 		}
 		if (!readerT->isA(PkgReader::type(engine)))

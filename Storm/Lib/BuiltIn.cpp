@@ -5,6 +5,7 @@
 
 // Below are auto-generated includes.
 // BEGIN INCLUDES
+#include "Basic/BSClass.h"
 #include "Basic/BSIncludes.h"
 #include "Basic/BSPkg.h"
 #include "Basic/BSReader.h"
@@ -57,22 +58,30 @@ storm::Type *storm::bnf::Reader::type(Engine &e) { return e.builtIn(9); }
 storm::Type *storm::bnf::Reader::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bnf__Reader();
 void *storm::bnf::Reader::cppVTable() { return cppVTable_storm__bnf__Reader(); }
-storm::Type *storm::bs::File::type(Engine &e) { return e.builtIn(10); }
+storm::Type *storm::bs::Class::type(Engine &e) { return e.builtIn(10); }
+storm::Type *storm::bs::Class::type(Object *o) { return type(o->myType->engine); }
+extern "C" void *cppVTable_storm__bs__Class();
+void *storm::bs::Class::cppVTable() { return cppVTable_storm__bs__Class(); }
+storm::Type *storm::bs::File::type(Engine &e) { return e.builtIn(11); }
 storm::Type *storm::bs::File::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bs__File();
 void *storm::bs::File::cppVTable() { return cppVTable_storm__bs__File(); }
-storm::Type *storm::bs::Includes::type(Engine &e) { return e.builtIn(11); }
+storm::Type *storm::bs::Includes::type(Engine &e) { return e.builtIn(12); }
 storm::Type *storm::bs::Includes::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bs__Includes();
 void *storm::bs::Includes::cppVTable() { return cppVTable_storm__bs__Includes(); }
-storm::Type *storm::bs::Pkg::type(Engine &e) { return e.builtIn(12); }
+storm::Type *storm::bs::Pkg::type(Engine &e) { return e.builtIn(13); }
 storm::Type *storm::bs::Pkg::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bs__Pkg();
 void *storm::bs::Pkg::cppVTable() { return cppVTable_storm__bs__Pkg(); }
-storm::Type *storm::bs::Reader::type(Engine &e) { return e.builtIn(13); }
+storm::Type *storm::bs::Reader::type(Engine &e) { return e.builtIn(14); }
 storm::Type *storm::bs::Reader::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bs__Reader();
 void *storm::bs::Reader::cppVTable() { return cppVTable_storm__bs__Reader(); }
+storm::Type *storm::bs::Tmp::type(Engine &e) { return e.builtIn(15); }
+storm::Type *storm::bs::Tmp::type(Object *o) { return type(o->myType->engine); }
+extern "C" void *cppVTable_storm__bs__Tmp();
+void *storm::bs::Tmp::cppVTable() { return cppVTable_storm__bs__Tmp(); }
 // END STATIC
 
 namespace storm {
@@ -126,10 +135,12 @@ namespace storm {
 			{ Name(L"core"), L"Str", Name(L"core.Object"), sizeof(storm::Str), 7 },
 			{ Name(L""), L"VTest", Name(L"core.Object"), sizeof(storm::VTest), 8 },
 			{ Name(L"lang.bnf"), L"Reader", Name(L"lang.PkgReader"), sizeof(storm::bnf::Reader), 9 },
-			{ Name(L"lang.bs"), L"File", Name(L"lang.FileReader"), sizeof(storm::bs::File), 10 },
-			{ Name(L"lang.bs"), L"Includes", Name(L"core.Object"), sizeof(storm::bs::Includes), 11 },
-			{ Name(L"lang.bs"), L"Pkg", Name(L"core.Object"), sizeof(storm::bs::Pkg), 12 },
-			{ Name(L"lang.bs"), L"Reader", Name(L"lang.FilesReader"), sizeof(storm::bs::Reader), 13 },
+			{ Name(L""), L"Class", Name(L"core.Object"), sizeof(storm::bs::Class), 10 },
+			{ Name(L"lang.bs"), L"File", Name(L"lang.FileReader"), sizeof(storm::bs::File), 11 },
+			{ Name(L"lang.bs"), L"Includes", Name(L"core.Object"), sizeof(storm::bs::Includes), 12 },
+			{ Name(L"lang.bs"), L"Pkg", Name(L"core.Object"), sizeof(storm::bs::Pkg), 13 },
+			{ Name(L"lang.bs"), L"Reader", Name(L"lang.FilesReader"), sizeof(storm::bs::Reader), 14 },
+			{ Name(L""), L"Tmp", Name(L"core.Object"), sizeof(storm::bs::Tmp), 15 },
 			// END TYPES
 			{ L"", null, L"", null },
 		};
@@ -142,6 +153,9 @@ namespace storm {
 	const BuiltInFunction *builtInFunctions() {
 		static BuiltInFunction fns[] = {
 			// BEGIN LIST
+			{ Name(L""), L"Class", Name(L"Class"), L"__ctor", list(3, Name(L"core.Type"), Name(L"core.Str"), Name(L"core.Str")), address(&create3<storm::bs::Class, storm::Str *, storm::Str *>) },
+			{ Name(L""), L"Tmp", Name(L"Tmp"), L"__ctor", list(1, Name(L"core.Type")), address(&create1<storm::bs::Tmp>) },
+			{ Name(L""), L"Tmp", Name(), L"add", list(1, Name(L"Class")), address<void(CODECALL storm::bs::Tmp::*)(storm::Auto<storm::bs::Class>)>(&storm::bs::Tmp::add) },
 			{ Name(L"lang.bs"), L"Includes", Name(L"lang.bs.Includes"), L"__ctor", list(1, Name(L"core.Type")), address(&create1<storm::bs::Includes>) },
 			{ Name(L"lang.bs"), L"Includes", Name(), L"add", list(1, Name(L"lang.bs.Pkg")), address<void(CODECALL storm::bs::Includes::*)(storm::Auto<storm::bs::Pkg>)>(&storm::bs::Includes::add) },
 			{ Name(L"lang.bs"), L"Pkg", Name(L"lang.bs.Pkg"), L"__ctor", list(1, Name(L"core.Type")), address(&create1<storm::bs::Pkg>) },

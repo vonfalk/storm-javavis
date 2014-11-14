@@ -90,13 +90,15 @@ namespace storm {
 	void parseCall(SyntaxOption &to, Tokenizer &tok) {
 		Token name = tok.next();
 		vector<String> params;
+		bool isCall = false;
 
 		if (tok.peek().token != L":") {
 			Token paren = tok.next();
-			if (paren.token != L"(")
-				throw SyntaxError(paren.pos, L"Expected (");
 
-			params = parseCallParams(tok);
+			if (paren.token == L"(") {
+				params = parseCallParams(tok);
+				isCall = true;
+			}
 		}
 
 		Token endSt = tok.next();
@@ -105,6 +107,11 @@ namespace storm {
 
 		to.matchFn = name.token;
 		to.matchFnParams = params;
+		to.matchVar = !isCall;
+
+		if (!isCall && to.matchFn.size() > 1) {
+			throw SyntaxError(name.pos, L"Looks like a function call but has no parameter list!");
+		}
 	}
 
 	bool isEndOfToken(const Token &t) {

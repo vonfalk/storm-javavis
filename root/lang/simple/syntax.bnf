@@ -13,11 +13,19 @@ SExpr => sOperator(lhs, rhs, op) : SExpr(foo) lhs, "-" op, SExpr(foo) rhs;
 SExpr => sVar(v) : "[a-z]+" v;
 SExpr => sNr(v) : "[0-9]+" v;
 
+AorB => void : "[ab]";
+
 // Root rule with repetitions.
 Rep1Root => SScope() : "{", (SExpr(me) -> expr - ";",)+ - "}";
 Rep2Root => SScope() : "{", (SExpr(me) -> expr - ";",)* - "}";
 Rep3Root => SScope() : "{", (SExpr(me) -> expr - ";",)? - "}";
+Rep4Root => SScope() : (AorB, "\.")?, AorB;
 
 // Capture strings.
 CaptureRoot => Str(captured) : ( Rep1Root ) captured;
 Capture2Root => Str(captured) : "-", (Rep1Root) captured, "-";
+
+// Empty rules (really multiple instantiations of the same rule with zero length in some cases.
+Empty => void : "(", EmptyRule, ")";
+
+EmptyRule => void : DELIMITER;

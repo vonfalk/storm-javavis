@@ -90,6 +90,12 @@ namespace storm {
 		Object *tmp = null;
 		SyntaxVars vars(e, syntax, node, params);
 
+		if (option->matchVar) {
+			result = vars.get(option->matchFn[0]);
+			result->addRef();
+			return result;
+		}
+
 		try {
 			vector<Object*> values;
 			for (nat i = 0; i < option->matchFnParams.size(); i++) {

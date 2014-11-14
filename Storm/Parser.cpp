@@ -17,7 +17,7 @@ namespace storm {
 		rootOption.add(new TypeToken(rootType, L"root"));
 
 		steps = vector<StateSet>(src.size() + 1);
-		steps[pos].insert(State(rootOption, 0));
+		steps[pos].insert(State(OptionIter::firstA(rootOption), 0));
 
 		nat len = NO_MATCH;
 
@@ -32,19 +32,36 @@ namespace storm {
 	bool Parser::process(nat step) {
 		bool seenFinish = false;
 		StateSet &s = steps[step];
+		bool moreCompleters = false;
 
 		for (nat i = 0; i < s.size(); i++) {
 			StatePtr ptr(step, i);
+			// PLN(step << ": " << s[i]);
 
 			predictor(s, s[i], ptr);
-			completer(s, s[i], ptr);
+			moreCompleters |= completer(s, s[i], ptr);
 			scanner(s, s[i], ptr);
 
 			if (s[i].finish(&rootOption))
 				seenFinish = true;
+
+			if (i == s.size() - 1 && moreCompleters) {
+				// Run completers again, some may produce more states now.
+				runCompleters(step);
+				moreCompleters = false;
+			}
 		}
 
 		return seenFinish;
+	}
+
+	void Parser::runCompleters(nat step) {
+		StateSet &s = steps[step];
+		nat to = s.size();
+		for (nat i = 0; i < to; i++) {
+			StatePtr ptr(step, i);
+			completer(s, s[i], ptr);
+		}
 	}
 
 	void Parser::predictor(StateSet &s, State state, StatePtr ptr) {
@@ -62,8 +79,8 @@ namespace storm {
 		for (nat i = 0; i < t.size(); i++) {
 			SyntaxOption *rule = t[i];
 			// Todo: We need to find possible lookahead strings!
-			State ns(OptionIter(*rule), ptr.step);
-			s.insert(ns);
+			s.insert(State(OptionIter::firstA(*rule), ptr.step));
+			s.insert(State(OptionIter::firstB(*rule), ptr.step));
 		}
 	}
 
@@ -88,10 +105,11 @@ namespace storm {
 		steps[matched].insert(ns);
 	}
 
-	void Parser::completer(StateSet &s, State state, StatePtr ptr) {
+	bool Parser::completer(StateSet &s, State state, StatePtr ptr) {
 		if (!state.pos.end())
-			return;
+			return false;
 
+		bool inserted = false;
 		String completed = state.pos.option().rule();
 		StateSet &from = steps[state.from];
 		for (nat i = 0; i < from.size(); i++) {
@@ -101,11 +119,13 @@ namespace storm {
 				continue;
 
 			State ns(st.pos.nextA(), st.from, stPtr, ptr);
-			s.insert(ns);
+			inserted |= s.insert(ns);
 
 			ns.pos = st.pos.nextB();
-			s.insert(ns);
+			inserted |= s.insert(ns);
 		}
+
+		return inserted && ptr.step == state.from;
 	}
 
 	bool Parser::hasError() const {
@@ -267,6 +287,9 @@ namespace storm {
 				}
 			}
 
+			if (cState->pos.captureBegin())
+				captureBegin = pos.step;
+
 			result->reverseArrays();
 		} catch (...) {
 			delete result;
@@ -347,14 +370,16 @@ namespace storm {
 	 * State set.
 	 */
 
-	void Parser::StateSet::insert(const State &state) {
+	bool Parser::StateSet::insert(const State &state) {
 		if (!state.pos.valid())
-			return;
+			return true;
 
 		for (nat i = 0; i < size(); i++)
 			if ((*this)[i] == state)
-				return;
+				return false;
+
 		push_back(state);
+		return true;
 	}
 
 	/**

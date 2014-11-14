@@ -11,27 +11,35 @@ Name => Str(name) : "[A-Za-z]+" name;
 Package => Pkg() : Name -> add - ("\." - Name -> add)*;
 Type => Type(pkg, name) : (Package pkg, "\.", )? - Name name;
 
-// Operators.
-Operator => Str(op) : "[\+-*/]" op;
+// Skip a block, assuming matching {} and well-behaved strings.
+SkipBlock => cont : ( SkipContent ) cont;
+SkipContent => void : SkipContent, SkipContent;
+SkipContent => void : "[^{}\"']*";
+SkipContent => void : "{", SkipContent, "}";
+SkipContent => void : "\"" - StrContent - "\"";
+SkipContent => void : "'[^']'";
+SkipContent => void : "'\\.'";
 
-// Statement.
-Stmt(Block scope);
-Stmt => Declare(type, name) : Type type, Name name;
-Stmt => Assign(scope, name, expr) : Name name, "=", Stmt;
-Stmt => Operator(lhs, op, rhs) : Stmt lhs, Operator op, Stmt rhs;
-Stmt => b : Block(scope) b;
+StrContent => void : "[^\"\\]*";
+StrContent => void : StrContent - "\\." - StrContent;
 
-Block(Block parent);
-Block => Block(parent) : "{", (Stmt(me) -> statement, ";", )* "}";
+// Parameter list (possibly empty)
+Params => void : DELIMITER;
+Params => void : Type, Name;
+Params => void : Type, Name, ",", (Type, Name, )*;
 
-// Argument list (for functions)
-ArgList => ArgList(types[], names[]) : Type types[], Name names[], (",", Type types[], Name names[])*;
+// Function
+Function => Class(name, contents) : Type, Name name, "(", Params, ")", "{", SkipBlock contents, "}";
 
-// Function definition (not lazily loaded yet...)
-Function => Function(retType, name, args, cont) : Type retType, Name name, "(", ArgList args, ")", Block cont;
+// Class
+Class => Class(name, contents) : "class", Name name, "{", SkipBlock contents, "}";
 
-// Root rule, used to parse an entire file.
-File => File : (Function -> function, )*;
+// Possible root blocks.
+FileItem => fn : Function fn;
+FileItem => cls : Class cls;
+
+// Root rule, used to parse an entire file. (except use-statements).
+File => Tmp() : (FileItem -> add, )*;
 
 // Root rule for parsing includes.
 Includes => Includes() : ("use", Package -> add, ";", )*;

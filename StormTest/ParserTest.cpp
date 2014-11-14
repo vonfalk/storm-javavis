@@ -40,6 +40,7 @@ BEGIN_TEST(ParserTest) {
 	CHECK_EQ(parse(set, L"Root", L"a + b"), 5);
 	CHECK_EQ(parse(set, L"Root", L"a + b-"), 5);
 	CHECK_EQ(parse(set, L"Root", L"a + "), 1);
+	CHECK_EQ(parse(set, L"Root", L"banana + rock + 33"), 18);
 
 	CHECK_EQ(parse(set, L"Rep1Root", L"{ a; b; 1 + 2;}"), 15);
 	CHECK_EQ(parse(set, L"Rep2Root", L"{ a; b; 1 + 2;}"), 15);
@@ -47,7 +48,8 @@ BEGIN_TEST(ParserTest) {
 	CHECK_EQ(parse(set, L"Rep3Root", L"{ a; }"), 6);
 	CHECK_EQ(parse(set, L"Rep3Root", L"{}"), 2);
 	CHECK_EQ(parse(set, L"Rep3Root", L"{ a; b; }"), Parser::NO_MATCH);
-
-	CHECK_EQ(parse(set, L"Root", L"banana + rock + 33"), 18);
+	CHECK_EQ(parse(set, L"Rep4Root", L"a.b"), 3);
+	CHECK_EQ(parse(set, L"Rep4Root", L"b"), 1);
+	CHECK_EQ(parse(set, L"Empty", L"()"), 2);
 
 } END_TEST

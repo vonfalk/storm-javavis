@@ -33,6 +33,9 @@ cppVTable_storm__VTest proto
 ??_7Reader@bnf@storm@@6B@ proto syscall
 cppVTable_storm__bnf__Reader proto
 
+??_7Class@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__Class proto
+
 ??_7File@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__File proto
 
@@ -44,6 +47,9 @@ cppVTable_storm__bs__Pkg proto
 
 ??_7Reader@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__Reader proto
+
+??_7Tmp@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__Tmp proto
 
 
 .code
@@ -98,6 +104,11 @@ cppVTable_storm__bnf__Reader proc
 	ret
 cppVTable_storm__bnf__Reader endp
 
+cppVTable_storm__bs__Class proc
+	mov eax, ??_7Class@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__Class endp
+
 cppVTable_storm__bs__File proc
 	mov eax, ??_7File@bs@storm@@6B@
 	ret
@@ -117,5 +128,10 @@ cppVTable_storm__bs__Reader proc
 	mov eax, ??_7Reader@bs@storm@@6B@
 	ret
 cppVTable_storm__bs__Reader endp
+
+cppVTable_storm__bs__Tmp proc
+	mov eax, ??_7Tmp@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__Tmp endp
 
 end

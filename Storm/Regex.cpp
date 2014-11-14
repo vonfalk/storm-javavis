@@ -51,6 +51,7 @@ namespace storm {
 		case '?':
 		case '+':
 		case '^':
+		case '"':
 			to << "\\";
 			// fall thru
 		default:

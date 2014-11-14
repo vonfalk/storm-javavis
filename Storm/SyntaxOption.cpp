@@ -132,9 +132,30 @@ namespace storm {
 	 */
 	OptionIter::OptionIter() : optionP(null), tokenId(0) {}
 
-	OptionIter::OptionIter(SyntaxOption &rule) : optionP(&rule), tokenId(0), repCount(0) {}
+	OptionIter::OptionIter(SyntaxOption *option, nat token, nat rep) : optionP(option), tokenId(token), repCount(rep) {}
 
-	OptionIter::OptionIter(SyntaxOption *rule, nat token, nat rep) : optionP(rule), tokenId(token), repCount(rep) {}
+	OptionIter OptionIter::firstA(SyntaxOption &option) {
+		return OptionIter(&option, 0, 0);
+	}
+
+	OptionIter OptionIter::firstB(SyntaxOption &option) {
+		if (option.markStart > 0)
+			return OptionIter();
+
+		switch (option.markType) {
+		case SyntaxOption::mNone:
+		case SyntaxOption::mCapture:
+			return OptionIter();
+		case SyntaxOption::mRepZeroOne:
+		case SyntaxOption::mRepZeroPlus:
+			return OptionIter(&option, option.markEnd, 0);
+		case SyntaxOption::mRepOnePlus:
+			return OptionIter();
+		default:
+			assert(false);
+			return OptionIter();
+		}
+	}
 
 	bool OptionIter::valid() const {
 		return optionP != null;

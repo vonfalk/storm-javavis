@@ -322,6 +322,10 @@
 				RelativePath=".\Basic\BSIncludes.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSClass.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -482,6 +486,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Auto.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSClass.h"
 				>
 			</File>
 		</Filter>

@@ -2,8 +2,11 @@ use core;
 
 class Foo {
 Int a = 10;
+"fisk\"bulle";
+'"';
 }
 
-int bar(Foo a) {
-return a.a;
+Int bar() {
+return 3;
 }
+

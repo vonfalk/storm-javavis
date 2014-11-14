@@ -52,9 +52,10 @@ namespace storm {
 		// Syntactic scope.
 		const Scope scope;
 
-		// Function name to call.
+		// Function name to call/variable's value.
 		Name matchFn;
 		vector<String> matchFnParams;
+		bool matchVar;
 
 		// This rule's position.
 		const SrcPos pos;
@@ -89,8 +90,9 @@ namespace storm {
 		// Null-iterator.
 		OptionIter();
 
-		// Reference a rule.
-		OptionIter(SyntaxOption &rule);
+		// Start of an option:
+		static OptionIter firstA(SyntaxOption &option);
+		static OptionIter firstB(SyntaxOption &option);
 
 		// Valid iterator?
 		bool valid() const;
