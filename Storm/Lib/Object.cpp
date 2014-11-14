@@ -21,7 +21,13 @@ namespace storm {
 	}
 
 	Str *Object::toS() {
-		return CREATE(Str, this, myType->name + L": " + toHex(this));
+		std::wostringstream out;
+		out << *this;
+		return CREATE(Str, this, out.str());
+	}
+
+	void Object::output(wostream &to) const {
+		to << myType->name << L": " << toHex(this);
 	}
 
 	Bool Object::equals(Auto<Object> o) {
@@ -31,18 +37,6 @@ namespace storm {
 			return false;
 		return true;
 	}
-
-	wostream &operator <<(wostream &to, Object &o) {
-		Str *r = null;
-		if (&o && (r = o.toS())) {
-			to << r->v;
-		} else {
-			to << L"null";
-		}
-		r->release();
-		return to;
-	}
-
 
 	/**
 	 * Memory management.

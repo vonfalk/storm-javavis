@@ -29,6 +29,9 @@ public:
 	// Use in set.
 	bool operator <(const CppName &o) const;
 
+	// Is this the root Object class?
+	bool isObject() const;
+
 protected:
 	virtual void output(wostream &to) const;
 

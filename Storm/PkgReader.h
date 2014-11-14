@@ -31,11 +31,11 @@ namespace storm {
 		// Add a new file.
 		void add(const Path &file);
 
-		// ToS
-		virtual Str *STORM_FN toS();
-
 		// All files to process.
 		vector<Path> files;
+
+	protected:
+		virtual void output(wostream &to) const;
 	};
 
 	/**

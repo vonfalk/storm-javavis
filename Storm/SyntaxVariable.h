@@ -71,7 +71,7 @@ namespace storm {
 		SyntaxTypeError(const String &msg) : CodeError(SrcPos()), msg(msg) {}
 		SyntaxTypeError(const String &msg, const SrcPos &pos) : CodeError(pos), msg(msg) {}
 
-		inline String what() const { return where.toS() + L": Invalid types: " + msg; }
+		inline String what() const { return toS(where) + L": Invalid types: " + msg; }
 	private:
 		String msg;
 	};

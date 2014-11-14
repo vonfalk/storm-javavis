@@ -41,6 +41,12 @@ void CppName::output(wostream &to) const {
 	join(to, parts, L"::");
 }
 
+bool CppName::isObject() const {
+	if (parts.size() != 2)
+		return false;
+	return parts[0] == L"storm" && parts[1] == L"Object";
+}
+
 CppType CppType::read(Tokenizer &tok) {
 	CppType t;
 

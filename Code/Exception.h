@@ -24,7 +24,7 @@ namespace code {
 
 		nat id;
 
-		String what() const { return String(L"Duplicate usage of label ") + ::toS(id) + L"."; }
+		String what() const { return String(L"Duplicate usage of label ") + toS(id) + L"."; }
 	};
 
 	class UnusedLabelError : public Exception {
@@ -33,6 +33,6 @@ namespace code {
 
 		nat id;
 
-		String what() const { return String(L"Use of undefined label ") + ::toS(id) + L"."; }
+		String what() const { return String(L"Use of undefined label ") + toS(id) + L"."; }
 	};
 }

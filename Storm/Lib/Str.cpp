@@ -21,6 +21,10 @@ namespace storm {
 		return v == other->v;
 	}
 
+	void Str::output(wostream &to) const {
+		to << v;
+	}
+
 	Str *Str::toS() {
 		addRef();
 		return this;

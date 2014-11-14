@@ -175,7 +175,6 @@ namespace storm {
 			{ Name(L"core"), L"Str", Name(L"core.Bool"), L"equals", list(1, Name(L"core.Object")), address<Bool(CODECALL storm::Str::*)(storm::Auto<storm::Object>)>(&storm::Str::equals) },
 			{ Name(L"core"), L"Str", Name(L"core.Str"), L"toS", list(0), address<storm::Str *(CODECALL storm::Str::*)()>(&storm::Str::toS) },
 			{ Name(L"lang"), L"PkgFiles", Name(L"lang.PkgFiles"), L"__ctor", list(1, Name(L"core.Type")), address(&create1<storm::PkgFiles>) },
-			{ Name(L"lang"), L"PkgFiles", Name(L"core.Str"), L"toS", list(0), address<storm::Str *(CODECALL storm::PkgFiles::*)()>(&storm::PkgFiles::toS) },
 			{ Name(L"lang"), L"PkgReader", Name(L"lang.PkgReader"), L"__ctor", list(2, Name(L"core.Type"), Name(L"lang.PkgFiles")), address(&create2<storm::PkgReader, storm::PkgFiles *>) },
 			{ Name(L"lang"), L"FilesReader", Name(L"lang.FilesReader"), L"__ctor", list(2, Name(L"core.Type"), Name(L"lang.PkgFiles")), address(&create2<storm::FilesReader, storm::PkgFiles *>) },
 			{ Name(L""), L"VTest", Name(L"VTest"), L"__ctor", list(1, Name(L"core.Type")), address(&create1<storm::VTest>) },

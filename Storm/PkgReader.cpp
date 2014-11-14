@@ -50,8 +50,8 @@ namespace storm {
 		files.push_back(f);
 	}
 
-	Str *PkgFiles::toS() {
-		return CREATE(Str, this, join(files, L", "));
+	void PkgFiles::output(wostream &to) const {
+		join(to, files, L", ");
 	}
 
 	/**

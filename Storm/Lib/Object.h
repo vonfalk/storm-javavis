@@ -32,7 +32,7 @@ namespace storm {
 	 * to release one reference. Ie, the caller has ownership of one reference.
 	 * Function parameters are freed by the called function. Hint: use Auto<>!
 	 */
-	class Object : NoCopy {
+	class Object : public Printable {
 		STORM_CLASS;
 	public:
 		// Initialize object to 1 reference.
@@ -79,13 +79,16 @@ namespace storm {
 		// Compare for equality.
 		virtual Bool STORM_FN equals(Auto<Object> o);
 
+	protected:
+		virtual void output(wostream &to) const;
+
 	private:
+		Object(const Object &o);
+		Object &operator =(const Object &o);
+
 		// Current number of references.
 		nat refs;
 	};
-
-	wostream &operator <<(wostream &to, Object &o);
-
 
 	// Release (sets to null as well!)
 	inline void release(Object *&o) {

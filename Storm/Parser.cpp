@@ -200,7 +200,7 @@ namespace storm {
 
 		for (nat i = 0; i < states.size(); i++) {
 			if (states[i].isRegex())
-				r.insert(states[i].tokenRegex().toS());
+				r.insert(toS(states[i].tokenRegex()));
 		}
 
 		return r;

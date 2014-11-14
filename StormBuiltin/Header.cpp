@@ -59,7 +59,13 @@ void Header::parse(Tokenizer &tok) {
 		} else if (token == L"STORM_CLASS") {
 			if (!scope.isType())
 				throw Error(L"STORM_CLASS only allowed in classes and structs!");
-			types.push_back(Type(scope.name(), scope.super(), pkg, scope.cppName()));
+			if (scope.cppName().isObject()) {
+				// storm::Object is the root object, ignore any
+				// super-classes! They are just for convenience!
+				types.push_back(Type(scope.name(), CppName(), pkg, scope.cppName()));
+			} else {
+				types.push_back(Type(scope.name(), scope.super(), pkg, scope.cppName()));
+			}
 		} else if (token == L"STORM_PKG") {
 			pkg = parsePkg(tok);
 		} else if (token == L"STORM_CTOR") {

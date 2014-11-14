@@ -32,6 +32,9 @@ namespace storm {
 
 		// ToS
 		virtual Str *STORM_FN toS();
+
+	protected:
+		virtual void output(wostream &to) const;
 	};
 
 }

@@ -5,9 +5,9 @@
 
 Printable::~Printable() {}
 
-String Printable::toS() const {
+String toS(const Printable &from) {
 	std::wostringstream ss;
-	ss << *this;
+	ss << from;
 	return String(ss.str());
 }
 
