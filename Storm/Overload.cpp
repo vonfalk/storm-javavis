@@ -8,9 +8,7 @@ namespace storm {
 
 	Overload::Overload(const String &name) : Named(name) {}
 
-	Overload::~Overload() {
-		clear(items);
-	}
+	Overload::~Overload() {}
 
 	void Overload::output(wostream &to) const {
 		if (items.size() == 0) {
@@ -31,12 +29,12 @@ namespace storm {
 	NameOverload *Overload::find(const vector<Value> &params) {
 		for (nat i = 0; i < items.size(); i++) {
 			if (suitable(items[i], params))
-				return items[i];
+				return items[i].borrow();
 		}
 		return null;
 	}
 
-	bool Overload::suitable(NameOverload *overload, const vector<Value> &params) {
+	bool Overload::suitable(const Auto<NameOverload> &overload, const vector<Value> &params) {
 		// No default-parameters yet!
 		if (overload->params.size() != params.size())
 			return false;

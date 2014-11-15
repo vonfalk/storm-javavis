@@ -27,11 +27,8 @@ namespace storm {
 		// true, then all packages that does not yet exist are created.
 		Package *package(const Name &path, bool create = false);
 
-		// Get some commonly used types. TODO: remove the need!
-		Type *typeType();
-
 		// Get a built-in type.
-		inline Type *builtIn(nat id) const { return cached[id]; }
+		inline Type *builtIn(nat id) const { return cached[id].borrow(); }
 
 		// Get the default scope lookup for the root packag.
 		inline Scope *scope() { return &rootScope; }
@@ -44,19 +41,16 @@ namespace storm {
 		Path rootPath;
 
 		// Root package.
-		Package rootPkg;
+		Package *rootPkg;
 
 		// Create the package (recursive).
 		Package *createPackage(Package *pkg, const Name &path, nat at = 0);
-
-		// Cached types.
-		Type *tType;
 
 		// Root scope.
 		Scope rootScope;
 
 		// Cached types.
-		vector<Type *> cached;
+		vector<Auto<Type> > cached;
 
 		// Initialized?
 		bool inited;

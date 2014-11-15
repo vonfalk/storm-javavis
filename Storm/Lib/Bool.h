@@ -1,8 +1,8 @@
 #pragma once
 
 namespace storm {
-	class Type;
 	class Engine;
+	class Type;
 
 	typedef bool Bool;
 

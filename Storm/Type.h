@@ -29,10 +29,16 @@ namespace storm {
 	 * to the object itself as its first parameter. Instead it takes a parameter
 	 * to the current Type-object instead. This is enforced by the 'add' method.
 	 */
-	class Type : public Named, public NameLookup {
+	class Type : public Named {
+		STORM_CLASS;
 	public:
-		Type(Engine &engine, const String &name, TypeFlags flags);
+		// If size == 0, it will be automatically computed based on members. Size
+		// is mainly used to denote built-in classes.
+		Type(Engine &engine, const String &name, TypeFlags flags, nat size = 0);
 		~Type();
+
+		// Create the first type instance, as an instance of itself.
+		static Type *createType(Engine &engine, const String &name, TypeFlags flags);
 
 		static const String CTOR;
 
@@ -43,7 +49,7 @@ namespace storm {
 		const TypeFlags flags;
 
 		// Get the size of this type.
-		virtual nat size() const;
+		nat size() const;
 
 		// Set parent type. The parent type has to have the same type parameters as this one.
 		void setSuper(Type *super);
@@ -66,12 +72,15 @@ namespace storm {
 		// Parent package, updated by Package class.
 		Package *parentPkg;
 
+		// Clear contents. Mainly used for clean exits.
+		void clear();
+
 	protected:
 		virtual void output(wostream &to) const;
 
 	private:
 		// Members.
-		typedef hash_map<String, Overload*> MemberMap;
+		typedef hash_map<String, Auto<Overload> > MemberMap;
 		MemberMap members;
 
 		// Super type (when inheritance is used).
@@ -82,6 +91,9 @@ namespace storm {
 
 		// Our parent type's size.
 		nat superSize() const;
+
+		// Fixed size (as a built-in type)?
+		nat fixedSize;
 
 		// Our size (including base classes). If it is zero, we need to re-compute it!
 		mutable nat mySize;

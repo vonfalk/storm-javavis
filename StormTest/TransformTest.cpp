@@ -8,7 +8,7 @@
 
 using namespace storm;
 
-bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Object *eqTo) {
+bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Auto<Object> eqTo) {
 	Parser p(set, str);
 	if (!p.parse(root)) {
 		eqTo->release();
@@ -17,30 +17,22 @@ bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Objec
 
 	SyntaxNode *t = p.tree();
 	if (!t) {
-		eqTo->release();
 		return false;
 	}
-	//PLN(*t);
+	// PLN(*t);
 
-	Object *o = null;
 	try {
-		o = transform(e, set, *t);
+		Auto<Object> o = transform(e, set, *t);
+		bool result = true;
+		if (eqTo)
+			result = eqTo->equals(o);
+
+		delete t;
+		return result;
 	} catch (...) {
 		delete t;
-		eqTo->release();
 		throw;
 	}
-
-	bool result = true;
-	if (eqTo)
-		result = eqTo->equals(o);
-
-	// Null-safe!
-	o->release();
-	eqTo->release();
-	delete t;
-
-	return result;
 }
 
 BEGIN_TEST(TransformTest) {

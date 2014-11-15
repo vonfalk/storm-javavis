@@ -19,6 +19,10 @@ public:
 		_CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDOUT);
 		_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
 		_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
+
+		// Check heap consistency at each allocation.
+		// int f = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+		// _CrtSetDbgFlag(f | _CRTDBG_CHECK_ALWAYS_DF);
 	}
 
 	~CrtInit() {

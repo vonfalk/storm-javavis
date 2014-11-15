@@ -25,7 +25,8 @@ namespace storm {
 	 * Packages are lazily loaded, which means that the contents
 	 * is not loaded until it is needed.
 	 */
-	class Package : public Named, public NameLookup {
+	class Package : public Named {
+		STORM_CLASS;
 	public:
 		// Create a virtual package, ie a package not present
 		// on disk. Those packages must therefore be eagerly loaded.
@@ -48,7 +49,7 @@ namespace storm {
 		Package *childPackage(const String &name);
 
 		// Add a sub-package. Assumes that it does not already exists!
-		void add(Package *pkg, const String &name);
+		void STORM_FN add(Auto<Package> pkg);
 
 		// Add a type to this package.
 		void add(Type *type);
@@ -76,18 +77,18 @@ namespace storm {
 		Path *pkgPath;
 
 		// Sub-packages. These are loaded on demand.
-		typedef hash_map<String, Package*> PkgMap;
+		typedef hash_map<String, Auto<Package> > PkgMap;
 		PkgMap packages;
 
 		// Rules present in this package.
 		SyntaxRules syntaxRules;
 
 		// Types in this package.
-		typedef hash_map<String, Type*> TypeMap;
+		typedef hash_map<String, Auto<Type> > TypeMap;
 		TypeMap types;
 
 		// All functions and variables in this package.
-		typedef hash_map<String, Overload*> MemberMap;
+		typedef hash_map<String, Auto<Overload> > MemberMap;
 		MemberMap members;
 
 		/**

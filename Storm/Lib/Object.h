@@ -82,6 +82,12 @@ namespace storm {
 	protected:
 		virtual void output(wostream &to) const;
 
+		static void *allocDumb(Engine &e, size_t size);
+
+		// Placement new, for the first type.
+		static inline void *operator new(size_t size, void *mem) { return mem; }
+		static inline void operator delete(void *z, void *mem) { /* if this is ever executed z == mem */ }
+
 	private:
 		Object(const Object &o);
 		Object &operator =(const Object &o);
@@ -99,8 +105,9 @@ namespace storm {
 	// Release collection.
 	template <class T>
 	void releaseVec(T &v) {
-		for (T::iterator i = v.begin(); i != v.end(); ++i)
+		for (T::iterator i = v.begin(); i != v.end(); ++i) {
 			(*i)->release();
+		}
 		v.clear();
 	}
 

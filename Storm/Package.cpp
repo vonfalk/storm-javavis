@@ -29,9 +29,6 @@ namespace storm {
 	}
 
 	Package::~Package() {
-		clearMap(packages);
-		clearMap(types);
-		clearMap(members);
 		delete pkgPath;
 	}
 
@@ -112,7 +109,7 @@ namespace storm {
 	Named *Package::findTypeOrFn(const Name &name, nat start) {
 		TypeMap::iterator i = types.find(name[start]);
 		if (i != types.end()) {
-			Type *t = i->second;
+			Type *t = i->second.borrow();
 			if (name.size() - 1 == start)
 				return t;
 			else
@@ -124,7 +121,7 @@ namespace storm {
 			return null;
 		MemberMap::iterator j = members.find(name[start]);
 		if (j != members.end())
-			return j->second;
+			return j->second.borrow();
 
 		return null;
 	}
@@ -140,7 +137,7 @@ namespace storm {
 		if (!p.exists())
 			return null;
 
-		Package *pkg = new Package(*pkgPath + Path(name), engine);
+		Package *pkg = CREATE(Package, engine, *pkgPath + Path(name), engine);
 		packages[name] = pkg;
 		pkg->parentPkg = this;
 		return pkg;
@@ -156,10 +153,11 @@ namespace storm {
 		if (i == packages.end())
 			return loadPackage(name);
 		else
-			return i->second;
+			return i->second.borrow();
 	}
 
-	void Package::add(Package *pkg, const String &name) {
+	void Package::add(Auto<Package> pkg) {
+		const String &name = pkg->name;
 		assert(packages.count(name) == 0);
 		packages.insert(make_pair(name, pkg));
 		pkg->parentPkg = this;
@@ -175,10 +173,10 @@ namespace storm {
 		Overload *o = null;
 		MemberMap::iterator i = members.find(fn->name);
 		if (i == members.end()) {
-			o = new Overload(fn->name);
+			o = CREATE(Overload, engine, fn->name);
 			members.insert(make_pair(fn->name, o));
 		} else {
-			o = i->second;
+			o = i->second.borrow();
 		}
 
 		o->add(fn);
@@ -257,9 +255,10 @@ namespace storm {
 		if (!readerT->isA(PkgReader::type(engine)))
 			throw RuntimeError(::toS(rName) + L" is not a subtype of lang.PkgReader.");
 
-		vector<Value> paramTypes(2);
-		paramTypes[0] = Value(engine.typeType()); // TODO: Type::type(engine)
+		vector<Value> paramTypes(3);
+		paramTypes[0] = Value(Type::type(engine));
 		paramTypes[1] = Value(PkgFiles::type(engine));
+		paramTypes[2] = Value(Package::type(engine));
 		Function *ctor = as<Function>(engine.scope()->find(rName + Name(Type::CTOR), paramTypes));
 		if (!ctor)
 			throw RuntimeError(::toS(rName) + L": no constructor taking PkgFiles found!");
@@ -267,8 +266,10 @@ namespace storm {
 		code::FnCall call;
 		call.param(readerT);
 		call.param(files);
+		call.param(this);
+		files->addRef();
+		this->addRef();
 		PkgReader *r = call.call<PkgReader *>(ctor->pointer());
-		r->owner = this;
 		return r;
 	}
 

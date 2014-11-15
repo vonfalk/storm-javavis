@@ -13,10 +13,10 @@ namespace storm {
 	 * Interface to the package loader.
 	 */
 
-	bnf::Reader::Reader(PkgFiles *files) : PkgReader(files) {}
+	bnf::Reader::Reader(Auto<PkgFiles> files, Auto<Package> pkg) : PkgReader(files, pkg) {}
 
 	void bnf::Reader::readSyntax(SyntaxRules &to) {
-		Scope scope(owner);
+		Scope scope(owner.borrow());
 
 		const vector<Path> &f = pkgFiles->files;
 		for (nat i = 0; i < f.size(); i++) {

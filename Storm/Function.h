@@ -16,6 +16,7 @@ namespace storm {
 	 * Note that the "implicit" this-pointer is actually explicit here.
 	 */
 	class Function : public NameOverload {
+		STORM_CLASS;
 	public:
 		// Create a function.
 		Function(Value result, const String &name, const vector<Value> &params);
@@ -38,6 +39,7 @@ namespace storm {
 	 * along with some metadata.
 	 */
 	class NativeFunction : public Function {
+		STORM_CLASS;
 	public:
 		// Create a native function.
 		NativeFunction(Value result, const String &name, const vector<Value> &params, void *ptr);

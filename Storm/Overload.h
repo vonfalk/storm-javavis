@@ -9,6 +9,7 @@ namespace storm {
 	 * names is the type and count of their operators.
 	 */
 	class NameOverload : public Named {
+		STORM_CLASS;
 	public:
 		// Give params.
 		NameOverload(const String &name, const vector<Value> &params);
@@ -22,6 +23,7 @@ namespace storm {
 	 * entry, taking a different number of parameters.
 	 */
 	class Overload : public Named {
+		STORM_CLASS;
 	public:
 		Overload(const String &name);
 		~Overload();
@@ -40,10 +42,10 @@ namespace storm {
 
 	private:
 		// Items here.
-		vector<NameOverload *> items;
+		vector<Auto<NameOverload> > items;
 
 		// Is it a suitable overload?
-		static bool suitable(NameOverload *overload, const vector<Value> &params);
+		static bool suitable(const Auto<NameOverload> &overload, const vector<Value> &params);
 	};
 
 }

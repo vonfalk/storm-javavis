@@ -7,14 +7,14 @@
 
 namespace storm {
 
-	bs::Reader::Reader(Auto<PkgFiles> files) : FilesReader(files) {}
+	bs::Reader::Reader(Auto<PkgFiles> files, Auto<Package> pkg) : FilesReader(files, pkg) {}
 
 	FileReader *bs::Reader::createFile(const Path &path) {
 		return CREATE(bs::File, this, path, owner);
 	}
 
 
-	bs::File::File(const Path &path, Package *owner) : FileReader(path, owner) {
+	bs::File::File(const Path &path, Auto<Package> owner) : FileReader(path, owner) {
 		contents = readTextFile(path);
 		readIncludes();
 	}
@@ -52,10 +52,8 @@ namespace storm {
 			}
 
 			delete rootNode;
-			includes->release();
 		} catch (...) {
 			delete rootNode;
-			includes->release();
 			throw;
 		}
 	}

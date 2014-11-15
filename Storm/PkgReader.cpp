@@ -58,7 +58,7 @@ namespace storm {
 	 * PkgReader.
 	 */
 
-	PkgReader::PkgReader(Auto<PkgFiles> files) : pkgFiles(files), owner(null) {}
+	PkgReader::PkgReader(Auto<PkgFiles> files, Auto<Package> owner) : pkgFiles(files), owner(owner) {}
 
 	PkgReader::~PkgReader() {}
 
@@ -71,7 +71,7 @@ namespace storm {
 	 * FileReader.
 	 */
 
-	FileReader::FileReader(const Path &file, Package *into) : file(file), package(into) {}
+	FileReader::FileReader(const Path &file, Auto<Package> into) : file(file), package(into) {}
 
 	void FileReader::readSyntax(SyntaxRules &to) {}
 
@@ -86,7 +86,7 @@ namespace storm {
 	 * FilesReader.
 	 */
 
-	FilesReader::FilesReader(Auto<PkgFiles> files) : PkgReader(files) {}
+	FilesReader::FilesReader(Auto<PkgFiles> files, Auto<Package> pkg) : PkgReader(files, pkg) {}
 
 	void FilesReader::readSyntax(SyntaxRules &to) {
 		loadFiles();

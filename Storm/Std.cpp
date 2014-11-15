@@ -1,7 +1,6 @@
 #include "stdafx.h"
-#include "StdLib.h"
+#include "Std.h"
 #include "Lib/BuiltIn.h"
-#include "Lib/TypeClass.h"
 #include "Lib/Int.h"
 #include "Lib/Bool.h"
 #include "Exception.h"
@@ -9,17 +8,6 @@
 #include "Engine.h"
 
 namespace storm {
-
-	/**
-	 * Overload to force-set the size.
-	 */
-	class BuiltInClass : public Type {
-	public:
-		BuiltInClass(Engine &e, const String &name, TypeFlags f, nat size) : Type(e, name, f), mySize(size) {}
-		virtual nat size() const { return mySize; }
-	private:
-		nat mySize;
-	};
 
 	static Value findValue(const Scope &src, const Name &name) {
 		Named *f = src.find(name);
@@ -63,7 +51,7 @@ namespace storm {
 		for (nat i = 0; i < fn->params.size(); i++)
 			params.push_back(findValue(scope, fn->params[i]));
 
-		NativeFunction *toAdd = new NativeFunction(result, fn->name, params, fn->fnPtr);
+		NativeFunction *toAdd = CREATE(NativeFunction, to, result, fn->name, params, fn->fnPtr);
 		try {
 			if (Package *p = as<Package>(into)) {
 				p->add(toAdd);
@@ -79,26 +67,21 @@ namespace storm {
 		}
 	}
 
-	static Type *addBuiltIn(Engine &to, const BuiltInType *t) {
-		Package *pkg = to.package(t->pkg);
+	static void addToPkg(Engine &to, const BuiltInType *t) {
+		Package *pkg = to.package(t->pkg, true);
 		if (!pkg)
 			throw BuiltInError(L"Failed to locate package " + toS(t->pkg));
 
-		Type *tc = new BuiltInClass(to, t->name, typeClass, t->typeSize);
-		pkg->add(tc);
-		return tc;
+		Type *type = to.builtIn(t->typePtrId);
+		type->addRef();
+		pkg->add(type);
 	}
 
 	static void addSuper(Engine &to, const BuiltInType *t) {
 		if (t->super.empty())
 			return;
 
-		Name fullName = t->pkg + Name(t->name);
-		Named *n = to.scope()->find(fullName);
-		Type *tc = as<Type>(n);
-		if (!tc)
-			throw BuiltInError(L"Failed to locate type " + toS(fullName));
-
+		Type *tc = to.builtIn(t->typePtrId);
 		Named *s = to.scope()->find(t->super);
 		Type *super = as<Type>(s);
 		if (!super)
@@ -107,10 +90,24 @@ namespace storm {
 		tc->setSuper(super);
 	}
 
-	static void addBuiltIn(Engine &to, vector<Type *> &cached) {
-		cached.clear();
+	static nat builtInCount() {
+		nat count = 0;
+		for (const BuiltInType *t = builtInTypes(); t->name; t++)
+			count++;
+		return count;
+	}
+
+	static const BuiltInType *findById(nat id) {
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
-			cached.push_back(addBuiltIn(to, t));
+			if (t->typePtrId == id)
+				return t;
+		}
+		return null;
+	}
+
+	static void addBuiltIn(Engine &to) {
+		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
+			addToPkg(to, t);
 		}
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
 			addSuper(to, t);
@@ -120,18 +117,42 @@ namespace storm {
 		}
 	}
 
-	void addStdLib(Engine &to, vector<Type *> &cached, Type *&tType) {
+	void createStdTypes(Engine &to, vector<Auto<Type> > &cached) {
+		nat count = builtInCount();
+		const BuiltInType *b = builtInTypes();
+
+		cached.resize(count);
+
+		// The first type should be the Type-type, which requires special
+		// treatment. (We do not have a Type to feed CREATE yet)
+		const BuiltInType *tType = findById(0);
+		if (tType == null || tType->name != String(L"Type"))
+			throw BuiltInError(L"The first type is not Type.");
+		cached[0] = Type::createType(to, L"Type", typeClass);
+
+		// Now we can create the rest of all types.
+		for (nat i = 0; i < count; i++) {
+			const BuiltInType &t = b[i];
+			nat id = t.typePtrId;
+
+			if (id == 0)
+				continue;
+
+			if (cached.size() <= id)
+				cached.resize(id + 1);
+			cached[i] = CREATE(Type, to, to, t.name, typeClass, t.typeSize);
+		}
+	}
+
+
+	void addStdLib(Engine &to) {
 		// Place core types in the core package.
 		Package *core = to.package(Name(L"core"), true);
 		core->add(intType(to));
 		core->add(natType(to));
 		core->add(boolType(to));
 
-		// TODO: This should be handled normally later on.
-		tType = typeType(to);
-		core->add(tType);
-
-		addBuiltIn(to, cached);
+		addBuiltIn(to);
 	}
 
 }

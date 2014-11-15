@@ -13,7 +13,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Ctor.
-			STORM_CTOR Reader(Auto<PkgFiles> files);
+			STORM_CTOR Reader(Auto<PkgFiles> files, Auto<Package> pkg);
 
 		protected:
 			virtual FileReader *createFile(const Path &path);
@@ -26,7 +26,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Ctor.
-			File(const Path &file, Package *owner);
+			File(const Path &file, Auto<Package> owner);
 
 			// Dtor.
 			~File();

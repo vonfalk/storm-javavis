@@ -4,20 +4,9 @@
 
 namespace storm {
 
-	class Named;
+	class NameLookup;
 	class NameOverload;
-
-	/**
-	 * An interface for objects that can lookup names.
-	 */
-	class NameLookup : NoCopy {
-	public:
-		// Find the specified name in here, returns null if not found.
-		virtual Named *find(const Name &name) = 0;
-
-		// Get the parent object to this lookup, or null if none.
-		virtual NameLookup *parent() const = 0;
-	};
+	class Named;
 
 	/**
 	 * Denotes a scope to use when looking up names.

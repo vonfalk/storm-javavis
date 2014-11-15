@@ -53,9 +53,14 @@ namespace storm {
 		inline T *operator ->() const { return obj; }
 		inline T &operator *() const { return *obj; }
 
-		// Check for null.
-		inline operator bool() {
-			return obj != null;
+		// Check for null in if-statements.
+		inline operator void *() {
+			return obj;
+		}
+
+		// Check with other ptr.
+		inline bool operator ==(const T *o) {
+			return obj == o;
 		}
 
 	private:
@@ -63,4 +68,8 @@ namespace storm {
 		T *obj;
 	};
 
+	template <class T>
+	wostream &operator <<(wostream &to, const Auto<T> &v) {
+		return to << v.borrow();
+	}
 }

@@ -3,20 +3,34 @@
 #include "Type.h"
 #include "Lib/Str.h"
 
-//#define DEBUG_REFS
+// #define DEBUG_REFS
 
 namespace storm {
 
 	// Note the hack: myType(myType). myType is initialized in operator new.
 	Object::Object() : myType(myType), refs(1) {
 #ifdef DEBUG_REFS
-		PLN("Created " << this << ", " << myType->name);
+		if (myType == this) {
+			// The Type-type is special.
+			PLN("Created " << this << ", Type");
+		} else {
+			PLN("Created " << this << ", " << myType->name);
+		}
 #endif
 	}
 
 	Object::~Object() {
+		if (refs) {
+			int z = 20;
+			_CrtDbgBreak();
+		}
+		assert(refs == 0);
 #ifdef DEBUG_REFS
-		PLN("Destroying " << this << ", " << myType->name);
+		if (myType == this) {
+			PLN("Destroying " << this << ", Type");
+		} else {
+			PLN("Destroying " << this << ", " << myType->name);
+		}
 #endif
 	}
 
@@ -42,13 +56,17 @@ namespace storm {
 	 * Memory management.
 	 */
 
+	void *Object::allocDumb(Engine &e, size_t size) {
+		return malloc(size);
+	}
+
 	void *Object::operator new(size_t size, Type *type) {
 		size_t s = type->size();
 
 		assert(type->flags & typeClass);
-		assert(size <= s);
+		assert(("Triggers if a subtype is not properly declared.", size <= s));
 
-		void *mem = malloc(s);
+		void *mem = allocDumb(type->engine, s);
 		size_t typeOffset = OFFSET_OF(Object, myType);
 		OFFSET_IN(mem, typeOffset, Type *) = type;
 

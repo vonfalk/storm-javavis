@@ -283,10 +283,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\TypeClass.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Value.cpp"
 				>
 			</File>
@@ -324,6 +320,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSClass.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Named.cpp"
 				>
 			</File>
 		</Filter>
@@ -449,10 +449,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\TypeClass.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Value.h"
 				>
 			</File>
@@ -490,6 +486,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSClass.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\BoolDef.h"
 				>
 			</File>
 		</Filter>

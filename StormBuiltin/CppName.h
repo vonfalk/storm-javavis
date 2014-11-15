@@ -28,6 +28,8 @@ public:
 
 	// Use in set.
 	bool operator <(const CppName &o) const;
+	inline bool operator ==(const CppName &o) const { return parts == o.parts; }
+	inline bool operator !=(const CppName &o) const { return parts != o.parts; }
 
 	// Is this the root Object class?
 	bool isObject() const;

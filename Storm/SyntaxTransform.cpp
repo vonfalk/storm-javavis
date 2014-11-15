@@ -39,7 +39,7 @@ namespace storm {
 
 		// See if we can find a constructor!
 		if (Type *t = as<Type>(option->scope.find(option->matchFn))) {
-			types.insert(types.begin(), Value(e.typeType()));
+			types.insert(types.begin(), Value(Type::type(e)));
 			no = Scope(t).find(Type::CTOR, types);
 			if (Function *ctor = as<Function>(no)) {
 				code::FnCall call;

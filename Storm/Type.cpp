@@ -3,16 +3,27 @@
 #include "Exception.h"
 #include "Engine.h"
 #include "Lib/Object.h"
+#include "Std.h"
 
 namespace storm {
 
 	const String Type::CTOR = L"__ctor";
 
-	Type::Type(Engine &e, const String &name, TypeFlags f)
-		: Named(name), engine(e), flags(f), superType(null), mySize(0) {}
+	Type::Type(Engine &e, const String &name, TypeFlags f, nat size)
+		: Named(name), engine(e), flags(f), superType(null), fixedSize(size), mySize(0) {}
 
-	Type::~Type() {
-		clearMap(members);
+	Type::~Type() {}
+
+	void Type::clear() {
+		members.clear();
+		superType = null;
+	}
+
+	Type *Type::createType(Engine &engine, const String &name, TypeFlags flags) {
+		void *mem = allocDumb(engine, sizeof(Type));
+		size_t typeOffset = OFFSET_OF(Object, myType);
+		OFFSET_IN(mem, typeOffset, Type *) = (Type *)mem;
+		return new (mem) Type(engine, name, flags, sizeof(Type));
 	}
 
 	bool Type::isA(Type *o) const {
@@ -37,10 +48,15 @@ namespace storm {
 	}
 
 	nat Type::size() const {
-		if (mySize > 0) {
-			nat s = superSize();
-			// re-compute our size. NOTE: base-classes must be able to propagate size-changes to children!
-			TODO(L"Implement me!");
+		if (mySize == 0) {
+			if (fixedSize) {
+				mySize = fixedSize;
+			} else {
+				nat s = superSize();
+				// re-compute our size.
+				// NOTE: base-classes must be able to propagate size-changes to children!
+				TODO(L"Implement me!");
+			}
 		}
 		return mySize;
 	}
@@ -59,7 +75,7 @@ namespace storm {
 		if (i == members.end())
 			return null;
 		else
-			return i->second;
+			return i->second.borrow();
 	}
 
 	void Type::output(wostream &to) const {
@@ -80,10 +96,10 @@ namespace storm {
 		Overload *ovl = null;
 		MemberMap::iterator i = members.find(o->name);
 		if (i == members.end()) {
-			ovl = new Overload(o->name);
+			ovl = CREATE(Overload, engine, o->name);
 			members.insert(make_pair(o->name, ovl));
 		} else {
-			ovl = i->second;
+			ovl = i->second.borrow();
 		}
 
 		ovl->add(o);
@@ -95,7 +111,7 @@ namespace storm {
 
 		const Value &first = o->params.front();
 		if (o->name == CTOR) {
-			if (first.type != engine.typeType())
+			if (first.type != Type::type(engine))
 				throw TypedefError(L"Member constructors must have 'Type' as first parameter.");
 		} else {
 			if (first != Value(this))
