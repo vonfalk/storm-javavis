@@ -6,8 +6,6 @@
 
 namespace storm {
 
-	Scope::Scope(NameLookup *top) : top(top) {}
-
 	static Package *rootPkg(Package *p) {
 		while (p->parent())
 			p = p->parent();
@@ -35,6 +33,12 @@ namespace storm {
 		}
 	}
 
+	Scope::Scope(NameLookup *top) : top(top) {
+		if (top)
+			if (Package *core = corePkg(top))
+				extra.push_back(core);
+	}
+
 	Named *Scope::find(const Name &name) const {
 		// Regular path.
 		for (NameLookup *at = top; at; at = nextCandidate(at)) {
@@ -42,10 +46,10 @@ namespace storm {
 				return found;
 		}
 
-		// Last try: core pkg
-		if (Package *core = corePkg(top))
-			if (Named *found = core->find(name))
+		for (nat i = 0; i < extra.size(); i++) {
+			if (Named *found = extra[i]->find(name))
 				return found;
+		}
 
 		// We failed!
 		return null;

@@ -54,8 +54,14 @@ cppVTable_storm__PkgReader proto
 ??_7SExpr@storm@@6B@ proto syscall
 cppVTable_storm__SExpr proto
 
+??_7SObject@storm@@6B@ proto syscall
+cppVTable_storm__SObject proto
+
 ??_7SScope@storm@@6B@ proto syscall
 cppVTable_storm__SScope proto
+
+??_7SStr@storm@@6B@ proto syscall
+cppVTable_storm__SStr proto
 
 ??_7Str@storm@@6B@ proto syscall
 cppVTable_storm__Str proto
@@ -172,10 +178,20 @@ cppVTable_storm__SExpr proc
 	ret
 cppVTable_storm__SExpr endp
 
+cppVTable_storm__SObject proc
+	mov eax, ??_7SObject@storm@@6B@
+	ret
+cppVTable_storm__SObject endp
+
 cppVTable_storm__SScope proc
 	mov eax, ??_7SScope@storm@@6B@
 	ret
 cppVTable_storm__SScope endp
+
+cppVTable_storm__SStr proc
+	mov eax, ??_7SStr@storm@@6B@
+	ret
+cppVTable_storm__SStr endp
 
 cppVTable_storm__Str proc
 	mov eax, ??_7Str@storm@@6B@

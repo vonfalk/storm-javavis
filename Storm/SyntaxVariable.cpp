@@ -5,7 +5,7 @@
 
 namespace storm {
 
-	SyntaxVariable::SyntaxVariable(Type t) : type(t) {
+	SyntaxVariable::SyntaxVariable(Type t, const SrcPos &pos) : type(t), pos(pos) {
 		switch (t) {
 		case tString:
 			str = null;
@@ -119,6 +119,7 @@ namespace storm {
 			to << "]";
 			break;
 		}
+		to << L"@" << pos;
 	}
 
 	void SyntaxVariable::orphan() {

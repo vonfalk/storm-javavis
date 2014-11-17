@@ -3,21 +3,21 @@
 
 namespace storm {
 
-	SExpr::SExpr() : Object() {}
+	SExpr::SExpr() {}
 
-	SScope::SScope() : Object() {}
+	SScope::SScope() {}
 
 	void SScope::expr(Auto<SExpr> expr) {}
 
-	SExpr *sOperator(Auto<SExpr> lhs, Auto<SExpr> rhs, Auto<Str> op) {
+	SExpr *sOperator(Auto<SExpr> lhs, Auto<SExpr> rhs, Auto<SStr> op) {
 		return CREATE(SExpr, op);
 	}
 
-	SExpr *sVar(Auto<Str> op) {
+	SExpr *sVar(Auto<SStr> op) {
 		return CREATE(SExpr, op);
 	}
 
-	SExpr *sNr(Auto<Str> op) {
+	SExpr *sNr(Auto<SStr> op) {
 		return CREATE(SExpr, op);
 	}
 

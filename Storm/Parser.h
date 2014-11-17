@@ -50,7 +50,8 @@ namespace storm {
 
 		// Generate a syntax tree. Leaves ownership of the tree to the caller.
 		// If the last parse was not successfull at all (ie, returned NO_MATCH), returns null.
-		SyntaxNode *tree();
+		// 'file' is for correct SrcRefs in the resulting tree.
+		SyntaxNode *tree(const Path &file);
 
 	private:
 		// Syntax source.
@@ -224,7 +225,7 @@ namespace storm {
 		 */
 
 		// Extract the syntax tree, starting at 'ptr'.
-		SyntaxNode *tree(StatePtr ptr);
+		SyntaxNode *tree(StatePtr ptr, const Path &file);
 
 		// Print the parse tree (very crude).
 		void dbgPrintTree(StatePtr ptr, nat indent = 0);

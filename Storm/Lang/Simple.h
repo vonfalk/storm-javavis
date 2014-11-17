@@ -1,5 +1,6 @@
 #pragma once
 #include "Std.h"
+#include "SyntaxObject.h"
 
 namespace storm {
 
@@ -9,13 +10,13 @@ namespace storm {
 	 * Functions used by the 'simple' syntax.
 	 */
 
-	class SExpr : public Object {
+	class SExpr : public SObject {
 		STORM_CLASS;
 	public:
 		SExpr();
 	};
 
-	class SScope : public Object {
+	class SScope : public SObject {
 		STORM_CLASS;
 	public:
 		STORM_CTOR SScope();
@@ -24,8 +25,8 @@ namespace storm {
 	};
 
 
-	SExpr *STORM_FN sOperator(Auto<SExpr> lhs, Auto<SExpr> rhs, Auto<Str> op);
-	SExpr *STORM_FN sVar(Auto<Str> op);
-	SExpr *STORM_FN sNr(Auto<Str> op);
+	SExpr *STORM_FN sOperator(Auto<SExpr> lhs, Auto<SExpr> rhs, Auto<SStr> op);
+	SExpr *STORM_FN sVar(Auto<SStr> op);
+	SExpr *STORM_FN sNr(Auto<SStr> op);
 
 }

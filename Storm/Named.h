@@ -34,6 +34,13 @@ namespace storm {
 
 		// Our name.
 		const String name;
+
+		// Full path.
+		virtual Name path() const;
+
+	private:
+		// Find our closest named parent.
+		Named *closestNamed() const;
 	};
 
 }

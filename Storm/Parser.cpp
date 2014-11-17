@@ -224,25 +224,26 @@ namespace storm {
 			dbgPrintTree(s.completed, indent + 1);
 	}
 
-	SyntaxNode *Parser::tree() {
+	SyntaxNode *Parser::tree(const Path &file) {
 		StatePtr f = finish();
 		if (!f.valid())
 			return null;
 
 		SyntaxNode *result = null;
 
-		SyntaxNode *root = tree(f);
-		SyntaxNode::Var &resultVar = root->find(L"root", SyntaxVariable::tNode);
-		if (resultVar.value) {
-			result = resultVar.value->node();
-			resultVar.value->orphan();
+		SyntaxNode *root = tree(f, file);
+		// SyntaxNode::Var &resultVar = root->find(L"root", SyntaxVariable::tNode);
+		const SyntaxNode::Var *resultVar = root->find(L"root");
+		if (resultVar->value) {
+			result = resultVar->value->node();
+			resultVar->value->orphan();
 		}
 		delete root;
 
 		return result;
 	}
 
-	SyntaxNode *Parser::tree(StatePtr pos) {
+	SyntaxNode *Parser::tree(StatePtr pos, const Path &file) {
 		State *cState = &state(pos);
 		SyntaxNode *result = null;
 		SyntaxNode *tmp = null;
@@ -268,21 +269,23 @@ namespace storm {
 					if (TypeToken *t = as<TypeToken>(pState->pos.token()))
 						params = t->params;
 
+					SrcPos srcPos(file, pos.step);
+
 					if (cState->completed.valid()) {
-						tmp = tree(cState->completed);
+						tmp = tree(cState->completed, file);
 						if (pState->bindToken())
-							result->add(to, tmp, params);
+							result->add(to, tmp, params, srcPos);
 						else
-							result->invoke(to, tmp, params);
+							result->invoke(to, tmp, params, srcPos);
 						tmp = null;
 					} else {
 						nat fromPos = cState->prev.step;
 						nat toPos = pos.step;
 						String matched = src.substr(fromPos, toPos - fromPos);
 						if (pState->bindToken())
-							result->add(to, matched, params);
+							result->add(to, matched, params, srcPos);
 						else
-							result->invoke(to, matched, params);
+							result->invoke(to, matched, params, srcPos);
 					}
 				}
 			}
@@ -298,8 +301,9 @@ namespace storm {
 		}
 
 		if (option.hasCapture() && captureBegin < captureEnd) {
+			SrcPos srcPos(file, captureBegin);
 			String captured = src.substr(captureBegin, captureEnd - captureBegin);
-			result->add(option.captureTo(), captured, vector<String>());
+			result->add(option.captureTo(), captured, vector<String>(), srcPos);
 		}
 
 		return result;

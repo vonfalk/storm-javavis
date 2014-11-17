@@ -17,6 +17,7 @@ namespace storm {
 
 	void bnf::Reader::readSyntax(SyntaxRules &to) {
 		Scope scope(owner.borrow());
+		scope.extra.push_back(scope.find(Name(L"core.lang")));
 
 		const vector<Path> &f = pkgFiles->files;
 		for (nat i = 0; i < f.size(); i++) {

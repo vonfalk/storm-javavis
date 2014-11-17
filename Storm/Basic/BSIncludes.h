@@ -1,6 +1,7 @@
 #pragma once
 #include "Std.h"
 #include "BSPkg.h"
+#include "SyntaxObject.h"
 
 namespace storm {
 	namespace bs {
@@ -9,7 +10,7 @@ namespace storm {
 		/**
 		 * Receives includes from the parser.
 		 */
-		class Includes : public Object {
+		class Includes : public SObject {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Includes();

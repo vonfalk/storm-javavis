@@ -5,7 +5,7 @@ DELIMITER => void : "[ \n\r\t]*";
 DELIMITER => void : "//.*\n";
 
 // Name rule returns a String, created by taking the 'name' parameter.
-Name => Str(name) : "[A-Za-z]+" name;
+Name => SStr(name) : "[A-Za-z]+" name;
 
 // Package
 Package => Pkg() : Name -> add - ("\." - Name -> add)*;

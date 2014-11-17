@@ -20,6 +20,7 @@
 #include "Overload.h"
 #include "Package.h"
 #include "PkgReader.h"
+#include "SyntaxObject.h"
 #include "Test/VTest.h"
 #include "Type.h"
 // END INCLUDES
@@ -93,43 +94,51 @@ storm::Type *storm::SExpr::type(Engine &e) { return e.builtIn(16); }
 storm::Type *storm::SExpr::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__SExpr();
 void *storm::SExpr::cppVTable() { return cppVTable_storm__SExpr(); }
-storm::Type *storm::SScope::type(Engine &e) { return e.builtIn(17); }
+storm::Type *storm::SObject::type(Engine &e) { return e.builtIn(17); }
+storm::Type *storm::SObject::type(Object *o) { return type(o->myType->engine); }
+extern "C" void *cppVTable_storm__SObject();
+void *storm::SObject::cppVTable() { return cppVTable_storm__SObject(); }
+storm::Type *storm::SScope::type(Engine &e) { return e.builtIn(18); }
 storm::Type *storm::SScope::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__SScope();
 void *storm::SScope::cppVTable() { return cppVTable_storm__SScope(); }
-storm::Type *storm::Str::type(Engine &e) { return e.builtIn(18); }
+storm::Type *storm::SStr::type(Engine &e) { return e.builtIn(19); }
+storm::Type *storm::SStr::type(Object *o) { return type(o->myType->engine); }
+extern "C" void *cppVTable_storm__SStr();
+void *storm::SStr::cppVTable() { return cppVTable_storm__SStr(); }
+storm::Type *storm::Str::type(Engine &e) { return e.builtIn(20); }
 storm::Type *storm::Str::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__Str();
 void *storm::Str::cppVTable() { return cppVTable_storm__Str(); }
-storm::Type *storm::VTest::type(Engine &e) { return e.builtIn(19); }
+storm::Type *storm::VTest::type(Engine &e) { return e.builtIn(21); }
 storm::Type *storm::VTest::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__VTest();
 void *storm::VTest::cppVTable() { return cppVTable_storm__VTest(); }
-storm::Type *storm::bnf::Reader::type(Engine &e) { return e.builtIn(20); }
+storm::Type *storm::bnf::Reader::type(Engine &e) { return e.builtIn(22); }
 storm::Type *storm::bnf::Reader::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bnf__Reader();
 void *storm::bnf::Reader::cppVTable() { return cppVTable_storm__bnf__Reader(); }
-storm::Type *storm::bs::Class::type(Engine &e) { return e.builtIn(21); }
+storm::Type *storm::bs::Class::type(Engine &e) { return e.builtIn(23); }
 storm::Type *storm::bs::Class::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bs__Class();
 void *storm::bs::Class::cppVTable() { return cppVTable_storm__bs__Class(); }
-storm::Type *storm::bs::File::type(Engine &e) { return e.builtIn(22); }
+storm::Type *storm::bs::File::type(Engine &e) { return e.builtIn(24); }
 storm::Type *storm::bs::File::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bs__File();
 void *storm::bs::File::cppVTable() { return cppVTable_storm__bs__File(); }
-storm::Type *storm::bs::Includes::type(Engine &e) { return e.builtIn(23); }
+storm::Type *storm::bs::Includes::type(Engine &e) { return e.builtIn(25); }
 storm::Type *storm::bs::Includes::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bs__Includes();
 void *storm::bs::Includes::cppVTable() { return cppVTable_storm__bs__Includes(); }
-storm::Type *storm::bs::Pkg::type(Engine &e) { return e.builtIn(24); }
+storm::Type *storm::bs::Pkg::type(Engine &e) { return e.builtIn(26); }
 storm::Type *storm::bs::Pkg::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bs__Pkg();
 void *storm::bs::Pkg::cppVTable() { return cppVTable_storm__bs__Pkg(); }
-storm::Type *storm::bs::Reader::type(Engine &e) { return e.builtIn(25); }
+storm::Type *storm::bs::Reader::type(Engine &e) { return e.builtIn(27); }
 storm::Type *storm::bs::Reader::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bs__Reader();
 void *storm::bs::Reader::cppVTable() { return cppVTable_storm__bs__Reader(); }
-storm::Type *storm::bs::Tmp::type(Engine &e) { return e.builtIn(26); }
+storm::Type *storm::bs::Tmp::type(Engine &e) { return e.builtIn(28); }
 storm::Type *storm::bs::Tmp::type(Object *o) { return type(o->myType->engine); }
 extern "C" void *cppVTable_storm__bs__Tmp();
 void *storm::bs::Tmp::cppVTable() { return cppVTable_storm__bs__Tmp(); }
@@ -192,17 +201,19 @@ namespace storm {
 			{ Name(L""), L"Package", Name(L"core.lang.Named"), sizeof(storm::Package), 13 },
 			{ Name(L"lang"), L"PkgFiles", Name(L"core.Object"), sizeof(storm::PkgFiles), 14 },
 			{ Name(L"lang"), L"PkgReader", Name(L"core.Object"), sizeof(storm::PkgReader), 15 },
-			{ Name(L"lang.simple"), L"SExpr", Name(L"core.Object"), sizeof(storm::SExpr), 16 },
-			{ Name(L"lang.simple"), L"SScope", Name(L"core.Object"), sizeof(storm::SScope), 17 },
-			{ Name(L"core"), L"Str", Name(L"core.Object"), sizeof(storm::Str), 18 },
-			{ Name(L""), L"VTest", Name(L"core.Object"), sizeof(storm::VTest), 19 },
-			{ Name(L"lang.bnf"), L"Reader", Name(L"lang.PkgReader"), sizeof(storm::bnf::Reader), 20 },
-			{ Name(L""), L"Class", Name(L"core.Object"), sizeof(storm::bs::Class), 21 },
-			{ Name(L"lang.bs"), L"File", Name(L"lang.FileReader"), sizeof(storm::bs::File), 22 },
-			{ Name(L"lang.bs"), L"Includes", Name(L"core.Object"), sizeof(storm::bs::Includes), 23 },
-			{ Name(L"lang.bs"), L"Pkg", Name(L"core.Object"), sizeof(storm::bs::Pkg), 24 },
-			{ Name(L"lang.bs"), L"Reader", Name(L"lang.FilesReader"), sizeof(storm::bs::Reader), 25 },
-			{ Name(L""), L"Tmp", Name(L"core.Object"), sizeof(storm::bs::Tmp), 26 },
+			{ Name(L"lang.simple"), L"SExpr", Name(L"core.lang.SObject"), sizeof(storm::SExpr), 16 },
+			{ Name(L"core.lang"), L"SObject", Name(L"core.Object"), sizeof(storm::SObject), 17 },
+			{ Name(L"lang.simple"), L"SScope", Name(L"core.lang.SObject"), sizeof(storm::SScope), 18 },
+			{ Name(L"core.lang"), L"SStr", Name(L"core.lang.SObject"), sizeof(storm::SStr), 19 },
+			{ Name(L"core"), L"Str", Name(L"core.Object"), sizeof(storm::Str), 20 },
+			{ Name(L""), L"VTest", Name(L"core.Object"), sizeof(storm::VTest), 21 },
+			{ Name(L"lang.bnf"), L"Reader", Name(L"lang.PkgReader"), sizeof(storm::bnf::Reader), 22 },
+			{ Name(L"lang.bs"), L"Class", Name(L"core.lang.SObject"), sizeof(storm::bs::Class), 23 },
+			{ Name(L"lang.bs"), L"File", Name(L"lang.FileReader"), sizeof(storm::bs::File), 24 },
+			{ Name(L"lang.bs"), L"Includes", Name(L"core.lang.SObject"), sizeof(storm::bs::Includes), 25 },
+			{ Name(L"lang.bs"), L"Pkg", Name(L"core.lang.SObject"), sizeof(storm::bs::Pkg), 26 },
+			{ Name(L"lang.bs"), L"Reader", Name(L"lang.FilesReader"), sizeof(storm::bs::Reader), 27 },
+			{ Name(L"lang.bs"), L"Tmp", Name(L"core.lang.SObject"), sizeof(storm::bs::Tmp), 28 },
 			// END TYPES
 			{ L"", null, L"", null },
 		};
@@ -215,20 +226,20 @@ namespace storm {
 	const BuiltInFunction *builtInFunctions() {
 		static BuiltInFunction fns[] = {
 			// BEGIN LIST
-			{ Name(L""), L"Class", Name(L"Class"), L"__ctor", list(3, Name(L"Type"), Name(L"core.Str"), Name(L"core.Str")), address(&create3<storm::bs::Class, storm::Str *, storm::Str *>) },
-			{ Name(L""), L"Tmp", Name(L"Tmp"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::bs::Tmp>) },
-			{ Name(L""), L"Tmp", Name(), L"add", list(1, Name(L"Class")), address<void(CODECALL storm::bs::Tmp::*)(storm::Auto<storm::bs::Class>)>(&storm::bs::Tmp::add) },
+			{ Name(L"lang.bs"), L"Class", Name(L"lang.bs.Class"), L"__ctor", list(3, Name(L"Type"), Name(L"core.lang.SStr"), Name(L"core.lang.SStr")), address(&create3<storm::bs::Class, storm::SStr *, storm::SStr *>) },
+			{ Name(L"lang.bs"), L"Tmp", Name(L"lang.bs.Tmp"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::bs::Tmp>) },
+			{ Name(L"lang.bs"), L"Tmp", Name(), L"add", list(1, Name(L"lang.bs.Class")), address<void(CODECALL storm::bs::Tmp::*)(storm::Auto<storm::bs::Class>)>(&storm::bs::Tmp::add) },
 			{ Name(L"lang.bs"), L"Includes", Name(L"lang.bs.Includes"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::bs::Includes>) },
 			{ Name(L"lang.bs"), L"Includes", Name(), L"add", list(1, Name(L"lang.bs.Pkg")), address<void(CODECALL storm::bs::Includes::*)(storm::Auto<storm::bs::Pkg>)>(&storm::bs::Includes::add) },
 			{ Name(L"lang.bs"), L"Pkg", Name(L"lang.bs.Pkg"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::bs::Pkg>) },
-			{ Name(L"lang.bs"), L"Pkg", Name(), L"add", list(1, Name(L"core.Str")), address<void(CODECALL storm::bs::Pkg::*)(storm::Auto<storm::Str>)>(&storm::bs::Pkg::add) },
+			{ Name(L"lang.bs"), L"Pkg", Name(), L"add", list(1, Name(L"core.lang.SStr")), address<void(CODECALL storm::bs::Pkg::*)(storm::Auto<storm::SStr>)>(&storm::bs::Pkg::add) },
 			{ Name(L"lang.bs"), L"Reader", Name(L"lang.bs.Reader"), L"__ctor", list(3, Name(L"Type"), Name(L"lang.PkgFiles"), Name(L"Package")), address(&create3<storm::bs::Reader, storm::PkgFiles *, storm::Package *>) },
 			{ Name(L"lang.bnf"), L"Reader", Name(L"lang.bnf.Reader"), L"__ctor", list(3, Name(L"Type"), Name(L"lang.PkgFiles"), Name(L"Package")), address(&create3<storm::bnf::Reader, storm::PkgFiles *, storm::Package *>) },
 			{ Name(L"lang.simple"), L"SScope", Name(L"lang.simple.SScope"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::SScope>) },
 			{ Name(L"lang.simple"), L"SScope", Name(), L"expr", list(1, Name(L"lang.simple.SExpr")), address<void(CODECALL storm::SScope::*)(storm::Auto<storm::SExpr>)>(&storm::SScope::expr) },
-			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sOperator", list(3, Name(L"lang.simple.SExpr"), Name(L"lang.simple.SExpr"), Name(L"core.Str")), address<storm::SExpr *(CODECALL *)(storm::Auto<storm::SExpr>, storm::Auto<storm::SExpr>, storm::Auto<storm::Str>)>(&storm::sOperator) },
-			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sVar", list(1, Name(L"core.Str")), address<storm::SExpr *(CODECALL *)(storm::Auto<storm::Str>)>(&storm::sVar) },
-			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sNr", list(1, Name(L"core.Str")), address<storm::SExpr *(CODECALL *)(storm::Auto<storm::Str>)>(&storm::sNr) },
+			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sOperator", list(3, Name(L"lang.simple.SExpr"), Name(L"lang.simple.SExpr"), Name(L"core.lang.SStr")), address<storm::SExpr *(CODECALL *)(storm::Auto<storm::SExpr>, storm::Auto<storm::SExpr>, storm::Auto<storm::SStr>)>(&storm::sOperator) },
+			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sVar", list(1, Name(L"core.lang.SStr")), address<storm::SExpr *(CODECALL *)(storm::Auto<storm::SStr>)>(&storm::sVar) },
+			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sNr", list(1, Name(L"core.lang.SStr")), address<storm::SExpr *(CODECALL *)(storm::Auto<storm::SStr>)>(&storm::sNr) },
 			{ Name(L"core"), L"Object", Name(L"core.Str"), L"toS", list(0), address<storm::Str *(CODECALL storm::Object::*)()>(&storm::Object::toS) },
 			{ Name(L"core"), L"Object", Name(L"core.Bool"), L"equals", list(1, Name(L"core.Object")), address<Bool(CODECALL storm::Object::*)(storm::Auto<storm::Object>)>(&storm::Object::equals) },
 			{ Name(L"core"), L"Str", Name(L"core.Str"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::Str>) },
@@ -241,6 +252,10 @@ namespace storm {
 			{ Name(L"lang"), L"PkgFiles", Name(L"lang.PkgFiles"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::PkgFiles>) },
 			{ Name(L"lang"), L"PkgReader", Name(L"lang.PkgReader"), L"__ctor", list(3, Name(L"Type"), Name(L"lang.PkgFiles"), Name(L"Package")), address(&create3<storm::PkgReader, storm::PkgFiles *, storm::Package *>) },
 			{ Name(L"lang"), L"FilesReader", Name(L"lang.FilesReader"), L"__ctor", list(3, Name(L"Type"), Name(L"lang.PkgFiles"), Name(L"Package")), address(&create3<storm::FilesReader, storm::PkgFiles *, storm::Package *>) },
+			{ Name(L"core.lang"), L"SObject", Name(L"core.lang.SObject"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::SObject>) },
+			{ Name(L"core.lang"), L"SStr", Name(L"core.lang.SStr"), L"__ctor", list(2, Name(L"Type"), Name(L"core.Str")), address(&create2<storm::SStr, storm::Str *>) },
+			{ Name(L"core.lang"), L"SStr", Name(L"core.lang.SStr"), L"__ctor", list(2, Name(L"Type"), Name(L"core.lang.SStr")), address(&create2<storm::SStr, storm::SStr *>) },
+			{ Name(L"core.lang"), L"SStr", Name(L"core.Bool"), L"equals", list(1, Name(L"core.Object")), address<Bool(CODECALL storm::SStr::*)(storm::Object *)>(&storm::SStr::equals) },
 			{ Name(L""), L"VTest", Name(L"VTest"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::VTest>) },
 			{ Name(L""), L"VTest", Name(L"core.Int"), L"returnOne", list(0), address<Int(CODECALL storm::VTest::*)()>(&storm::VTest::returnOne) },
 			{ Name(L""), L"VTest", Name(L"core.Int"), L"returnTwo", list(0), address<Int(CODECALL storm::VTest::*)()>(&storm::VTest::returnTwo) },

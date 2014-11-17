@@ -10,7 +10,7 @@ using namespace storm;
 nat parse(SyntaxSet &set, const String &root, const String &str) {
 	Parser p(set, str);
 	nat r = p.parse(root);
-	SyntaxNode *t = p.tree();
+	SyntaxNode *t = p.tree(Path());
 	if (t) {
 		// PLN(*t);
 		delete t;

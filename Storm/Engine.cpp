@@ -10,10 +10,11 @@ namespace storm {
 
 		// Now, all the types are created, so we can create packages!
 		rootPkg = CREATE(Package, *this, root, *this);
-		rootScope = rootPkg;
+		rootScope = Scope(rootPkg);
 
 		// And finally insert everything into their correct packages.
 		addStdLib(*this);
+		rootScope = Scope(rootPkg);
 		inited = true;
 	}
 

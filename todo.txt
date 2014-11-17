@@ -10,4 +10,4 @@ Remove Printable::toS(), use the global toS() instead?
 
 When functions called by the syntax transform returns objects, we leak memory. Fix!
 
-Source references from the parser?
+Check for circular dependencies while loading packages. Eg. .sto language requires core.lang, which contains a .sto file.

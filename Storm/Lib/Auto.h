@@ -38,7 +38,7 @@ namespace storm {
 		// Casting.
 		template <class U>
 		inline Auto<U> as() {
-			U *o = dynamic_cast<U>(obj);
+			U *o = ::as<U>(obj);
 			o->addRef();
 			return Auto<U>(o);
 		}
@@ -48,6 +48,9 @@ namespace storm {
 
 		// Get a pointer, borriowing the reference.
 		inline T *borrow() const { return obj; }
+
+		// Get a pointer with a new reference.
+		inline T *ref() const { obj->addRef(); return obj; }
 
 		// Operators.
 		inline T *operator ->() const { return obj; }

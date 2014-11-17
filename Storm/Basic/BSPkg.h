@@ -1,5 +1,6 @@
 #pragma once
 #include "Std.h"
+#include "SyntaxObject.h"
 
 namespace storm {
 	namespace bs {
@@ -8,12 +9,12 @@ namespace storm {
 		/**
 		 * Package name from the parser.
 		 */
-		class Pkg : public Object {
+		class Pkg : public SObject {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Pkg();
 
-			void STORM_FN add(Auto<Str> part);
+			void STORM_FN add(Auto<SStr> part);
 
 			// Get the entire pkg path as a Name.
 			Name name() const;

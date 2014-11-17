@@ -20,11 +20,7 @@ namespace storm {
 	}
 
 	Object::~Object() {
-		if (refs) {
-			int z = 20;
-			_CrtDbgBreak();
-		}
-		assert(refs == 0);
+		// assert(refs == 0); // When an exception is thrown in a ctor, this would trigger!
 #ifdef DEBUG_REFS
 		if (myType == this) {
 			PLN("Destroying " << this << ", Type");
@@ -32,6 +28,10 @@ namespace storm {
 			PLN("Destroying " << this << ", " << myType->name);
 		}
 #endif
+	}
+
+	Engine &Object::engine() const {
+		return myType->engine;
 	}
 
 	Str *Object::toS() {

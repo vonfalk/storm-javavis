@@ -3,7 +3,8 @@
 
 namespace storm {
 
-	SyntaxNode::SyntaxNode(const SyntaxOption *option) : option(option), invocations(mInvocations) {}
+	SyntaxNode::SyntaxNode(const SyntaxOption *option)
+		: option(option), invocations(mInvocations) {}
 
 	SyntaxNode::~SyntaxNode() {
 		for (VarMap::iterator i = vars.begin(); i != vars.end(); ++i)
@@ -40,9 +41,9 @@ namespace storm {
 		return to << f.member << L" -> " << f.val;
 	}
 
-	void SyntaxNode::add(const String &var, const String &val, const vector<String> &params) {
+	void SyntaxNode::add(const String &var, const String &val, const vector<String> &params, const SrcPos &pos) {
 		try {
-			Var &v = find(var, typeOf(var, true));
+			Var &v = find(var, typeOf(var, true), pos);
 			v.params = params;
 			v.value->add(val);
 		} catch (SyntaxTypeError e) {
@@ -51,9 +52,9 @@ namespace storm {
 		}
 	}
 
-	void SyntaxNode::add(const String &var, SyntaxNode *node, const vector<String> &params) {
+	void SyntaxNode::add(const String &var, SyntaxNode *node, const vector<String> &params, const SrcPos &pos) {
 		try {
-			Var &v = find(var, typeOf(var, false));
+			Var &v = find(var, typeOf(var, false), pos);
 			v.params = params;
 			v.value->add(node);
 		} catch (SyntaxTypeError e) {
@@ -62,9 +63,9 @@ namespace storm {
 		}
 	}
 
-	void SyntaxNode::invoke(const String &m, const String &val, const vector<String> &params) {
+	void SyntaxNode::invoke(const String &m, const String &val, const vector<String> &params, const SrcPos &pos) {
 		try {
-			SyntaxVariable *sv = new SyntaxVariable(SyntaxVariable::tString);
+			SyntaxVariable *sv = new SyntaxVariable(SyntaxVariable::tString, pos);
 			Invocation i = { m, sv, params };
 			mInvocations.push_back(i);
 			sv->add(val);
@@ -74,9 +75,9 @@ namespace storm {
 		}
 	}
 
-	void SyntaxNode::invoke(const String &m, SyntaxNode *val, const vector<String> &params) {
+	void SyntaxNode::invoke(const String &m, SyntaxNode *val, const vector<String> &params, const SrcPos &pos) {
 		try {
-			SyntaxVariable *sv = new SyntaxVariable(SyntaxVariable::tNode);
+			SyntaxVariable *sv = new SyntaxVariable(SyntaxVariable::tNode, pos);
 			Invocation i = { m, sv, params };
 			mInvocations.push_back(i);
 			sv->add(val);
@@ -100,10 +101,10 @@ namespace storm {
 			return isStr ? SyntaxVariable::tString : SyntaxVariable::tNode;
 	}
 
-	SyntaxNode::Var &SyntaxNode::find(const String &name, SyntaxVariable::Type type) {
+	SyntaxNode::Var &SyntaxNode::find(const String &name, SyntaxVariable::Type type, const SrcPos &pos) {
 		VarMap::iterator i = vars.find(name);
 		if (i == vars.end()) {
-			SyntaxVariable *v = new SyntaxVariable(type);
+			SyntaxVariable *v = new SyntaxVariable(type, pos);
 			Var val = { v };
 			return vars.insert(make_pair(name, val)).first->second;
 		} else {

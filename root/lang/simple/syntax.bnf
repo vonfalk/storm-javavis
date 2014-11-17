@@ -22,8 +22,8 @@ Rep3Root => SScope() : "{", (SExpr(me) -> expr - ";",)? - "}";
 Rep4Root => SScope() : (AorB, "\.")?, AorB;
 
 // Capture strings.
-CaptureRoot => Str(captured) : ( Rep1Root ) captured;
-Capture2Root => Str(captured) : "-", (Rep1Root) captured, "-";
+CaptureRoot => SStr(captured) : ( Rep1Root ) captured;
+Capture2Root => SStr(captured) : "-", (Rep1Root) captured, "-";
 
 // Empty rules (really multiple instantiations of the same rule with zero length in some cases.
 Empty => void : "(", EmptyRule, ")";

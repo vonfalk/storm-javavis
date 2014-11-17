@@ -3,7 +3,7 @@
 
 namespace storm {
 
-	bs::Class::Class(Auto<Str> name, Auto<Str> content) {
+	bs::Class::Class(Auto<SStr> name, Auto<SStr> content) {
 		PLN(*name);
 		PLN(*content);
 	}

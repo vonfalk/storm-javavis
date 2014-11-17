@@ -43,6 +43,9 @@ namespace storm {
 		// The type of this object.
 		Type *const myType;
 
+		// Get the engine somehow.
+		Engine &engine() const;
+
 		// Add reference.
 		inline void addRef() {
 			if (this)

@@ -1,6 +1,7 @@
 #pragma once
 #include "SyntaxSet.h"
 #include "SyntaxNode.h"
+#include "SyntaxObject.h"
 #include "Std.h"
 
 namespace storm {
@@ -8,10 +9,16 @@ namespace storm {
 	/**
 	 * Functions for transforming a syntax tree (represented by the root SyntaxNode)
 	 * into the representation defined in the syntax definition.
+	 *
+	 * Note that return parameters has to be derived from core.lang.SObject.
 	 */
 
 	// Transform the syntax tree. TODO: Static type-checking?
-	Object *transform(Engine &e, SyntaxSet &syntax, const SyntaxNode &root, const vector<Object*> &params = vector<Object*>());
+	SObject *transform(Engine &e,
+					SyntaxSet &syntax,
+					const SyntaxNode &root,
+					const vector<Object*> &params = vector<Object*>(),
+					const SrcPos *pos = null);
 
 	/**
 	 * Used to keep track of currently evaluated variables during transform.
@@ -21,7 +28,7 @@ namespace storm {
 		SyntaxVars(Engine &e, SyntaxSet &syntax, const SyntaxNode &node, const vector<Object*> &params);
 		~SyntaxVars();
 
-		Object *get(const String &name);
+		SObject *get(const String &name);
 
 		// Set a variable.
 		void set(const String &name, Object *v);
@@ -41,5 +48,8 @@ namespace storm {
 
 		// Keep track of infinite recursion in 'get'.
 		hash_set<String> currentNames;
+
+		// Cast to SObject.
+		SObject *cast(Object *ptr);
 	};
 }

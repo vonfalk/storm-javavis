@@ -27,9 +27,14 @@ namespace storm {
 		if (parser.hasError())
 			throw parser.error(file);
 
-		SyntaxNode *root = parser.tree();
-		Auto<Object> includes = transform(package->engine, syntax, *root);
-		delete root;
+		SyntaxNode *root = parser.tree(file);
+		try {
+			Auto<Object> includes = transform(package->engine, syntax, *root);
+			delete root;
+		} catch (...) {
+			delete root;
+			throw;
+		}
 	}
 
 	void bs::File::readIncludes() {
@@ -44,7 +49,7 @@ namespace storm {
 			if (headerSize == parser.NO_MATCH)
 				throw parser.error(file);
 
-			rootNode = parser.tree();
+			rootNode = parser.tree(file);
 			includes = transform(package->engine, syntax, *rootNode);
 
 			if (Includes *inc = as<Includes>(includes.borrow())) {

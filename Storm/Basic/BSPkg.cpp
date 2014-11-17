@@ -3,10 +3,10 @@
 
 namespace storm {
 
-	bs::Pkg::Pkg() : Object() {}
+	bs::Pkg::Pkg() {}
 
-	void bs::Pkg::add(Auto<Str> part) {
-		parts.push_back(part->v);
+	void bs::Pkg::add(Auto<SStr> part) {
+		parts.push_back(part->v->v);
 	}
 
 	Name bs::Pkg::name() const {

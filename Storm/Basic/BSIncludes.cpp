@@ -3,7 +3,7 @@
 
 namespace storm {
 
-	bs::Includes::Includes() : Object() {}
+	bs::Includes::Includes() {}
 
 	void bs::Includes::add(Auto<Pkg> pkg) {
 		names.push_back(pkg->name());

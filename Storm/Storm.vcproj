@@ -326,6 +326,10 @@
 				RelativePath=".\Named.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\SyntaxObject.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -490,6 +494,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\BoolDef.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxObject.h"
 				>
 			</File>
 		</Filter>

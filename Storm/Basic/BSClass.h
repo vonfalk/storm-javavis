@@ -1,17 +1,19 @@
 #pragma once
 #include "Std.h"
+#include "SyntaxObject.h"
 
 namespace storm {
 	namespace bs {
+		STORM_PKG(lang.bs);
 
-		class Class : public Object {
+		class Class : public SObject {
 			STORM_CLASS;
 		public:
-			STORM_CTOR Class(Auto<Str> name, Auto<Str> content);
+			STORM_CTOR Class(Auto<SStr> name, Auto<SStr> content);
 		};
 
 
-		class Tmp : public Object {
+		class Tmp : public SObject {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Tmp();

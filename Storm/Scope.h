@@ -32,6 +32,9 @@ namespace storm {
 		// Find a overloaded name. Usually a function. Equivalent to call 'find' above
 		// and then try to find something with parameters.
 		NameOverload *find(const Name &name, const vector<Value> &params) const;
+
+		// Additional NameLookups to search (not recursively). TODO? move to subclass when refcounted.
+		vector<NameLookup *> extra;
 	};
 
 

@@ -15,7 +15,7 @@ bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Auto<
 		return false;
 	}
 
-	SyntaxNode *t = p.tree();
+	SyntaxNode *t = p.tree(Path());
 	if (!t) {
 		return false;
 	}
@@ -24,8 +24,12 @@ bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Auto<
 	try {
 		Auto<Object> o = transform(e, set, *t);
 		bool result = true;
-		if (eqTo)
+		if (eqTo) {
 			result = eqTo->equals(o);
+			if (!result) {
+				PLN("Got: " << *o << L", expected: " << *eqTo);
+			}
+		}
 
 		delete t;
 		return result;
@@ -45,7 +49,7 @@ BEGIN_TEST(TransformTest) {
 	set.add(*simple);
 	CHECK(tfm(engine, set, L"Rep1Root", L"{ a + b; }", null));
 
-	CHECK(tfm(engine, set, L"CaptureRoot", L"{ a + b; }", CREATE(Str, engine, L"{ a + b; }")));
-	CHECK(tfm(engine, set, L"Capture2Root", L"-{ a + b; }-", CREATE(Str, engine, L"{ a + b; }")));
+	CHECK(tfm(engine, set, L"CaptureRoot", L"{ a + b; }", CREATE(SStr, engine, L"{ a + b; }")));
+	CHECK(tfm(engine, set, L"Capture2Root", L"-{ a + b; }-", CREATE(SStr, engine, L"{ a + b; }")));
 
 } END_TEST

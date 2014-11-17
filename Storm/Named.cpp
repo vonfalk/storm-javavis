@@ -16,4 +16,20 @@ namespace storm {
 
 	Named::Named(Auto<Str> name) : name(name->v) {}
 
+	Named *Named::closestNamed() const {
+		for (NameLookup *p = parent(); p; p = p->parent()) {
+			if (Named *n = as<Named>(p))
+				return n;
+		}
+		return null;
+	}
+
+	Name Named::path() const {
+		Named *parent = closestNamed();
+		if (parent)
+			return parent->path() + Name(name);
+		else
+			return Name(name);
+	}
+
 }

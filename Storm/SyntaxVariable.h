@@ -19,7 +19,7 @@ namespace storm {
 		};
 
 		// Create a syntax variable with a given type.
-		SyntaxVariable(Type type);
+		SyntaxVariable(Type type, const SrcPos &pos);
 
 		// Dtor.
 		~SyntaxVariable();
@@ -34,6 +34,9 @@ namespace storm {
 
 		// Get the name of 'type'.
 		static String name(Type t);
+
+		// Source
+		SrcPos pos;
 
 		// Get different types. Asserts on failure!
 		inline const String &string() const { assert(type == tString); return *str; }
