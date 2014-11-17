@@ -78,6 +78,8 @@ void Header::parse(Tokenizer &tok) {
 			functions.push_back(ctor);
 		} else if (token == L"class" || token == L"struct") {
 			String name = tok.next();
+			if (tok.peek() == L"<")
+				skipTemplate(tok);
 			if (tok.peek() != L";") {
 				scope.push(true, name, findSuper(tok));
 				tok.expect(L"{");

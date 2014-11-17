@@ -46,6 +46,9 @@ namespace storm {
 		// Get the engine somehow.
 		Engine &engine() const;
 
+		// This one is used to detect the presence of custom casting. Do not remove/rename!
+		bool isA(Type *o) const;
+
 		// Add reference.
 		inline void addRef() {
 			if (this)
@@ -123,4 +126,24 @@ namespace storm {
 	}
 
 }
+
+// Custom as<> implementation.
+template <class To>
+To *customAs(storm::Object *from) {
+	if (from == null)
+		return null;
+	if (from->isA(To::type(from->engine())))
+		return static_cast<To*>(from);
+	return null;
+}
+
+template <class To>
+To *customAs(const storm::Object *from) {
+	if (from == null)
+		return null;
+	if (from->isA(To::type(from->engine())))
+		return static_cast<To*>(from);
+	return null;
+}
+
 

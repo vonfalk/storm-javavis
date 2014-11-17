@@ -156,11 +156,26 @@ bool operator <(const vector<T> &a, const vector<T> &b) {
 	return a.size() < b.size();
 }
 
+template <class From, class To, bool custom>
+struct my_cast {
+	inline To *cast(From *f) { return dynamic_cast<To *>(f); }
+};
+
+template <class From, class To>
+struct my_cast<From, To, true> {
+	inline To *cast(From *f) { return customAs<To>(f); }
+};
+
+#include "Detect.h"
+CREATE_DETECTOR(isA);
+
 template <class T>
 struct as {
 	template <class U>
 	as(U *v) {
-		this->v = dynamic_cast<T*>(v);
+		my_cast<U, T, detect_isA<U>::value> c;
+		this->v = c.cast(v);
+		// this->v = dynamic_cast<T*>(v);
 	}
 
 	operator T*() const {

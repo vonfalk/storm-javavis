@@ -34,6 +34,10 @@ namespace storm {
 		return myType->engine;
 	}
 
+	bool Object::isA(Type *t) const {
+		return myType->isA(t);
+	}
+
 	Str *Object::toS() {
 		std::wostringstream out;
 		out << *this;

@@ -2,7 +2,8 @@ Also: return types for rules may be specified.
 
 Consider adding the -> syntax for captures in BNF rules, to be symmetric with other variables.
 
-Re-think the equals() in object!
+Re-think the equals() in object! Idea: use a global equals with cached specific implementations in Type. This
+can also be used to implement > < and others!
 
 Check exceptions in threads!
 

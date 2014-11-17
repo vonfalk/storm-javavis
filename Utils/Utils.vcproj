@@ -667,6 +667,10 @@
 				RelativePath=".\Platform.h"
 				>
 			</File>
+			<File
+				RelativePath=".\Detect.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

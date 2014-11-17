@@ -55,7 +55,7 @@ namespace storm {
 		void setSuper(Type *super);
 
 		// Get super type.
-		inline Type *super() const { return superType; }
+		Type *super() const;
 
 		// Any super type the given type?
 		bool isA(Type *super) const;
@@ -83,8 +83,11 @@ namespace storm {
 		typedef hash_map<String, Auto<Overload> > MemberMap;
 		MemberMap members;
 
-		// Super type (when inheritance is used).
-		Type *superType;
+		// Super types (when inheritance is used). The last element is us, next to last our super and so on.
+		vector<Type *> superTypes;
+
+		// Known child types.
+		set<Type *> children;
 
 		// Validate parameters to added members.
 		void validate(NameOverload *m);

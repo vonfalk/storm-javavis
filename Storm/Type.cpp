@@ -4,19 +4,22 @@
 #include "Engine.h"
 #include "Lib/Object.h"
 #include "Std.h"
+#include "Package.h"
 
 namespace storm {
 
 	const String Type::CTOR = L"__ctor";
 
 	Type::Type(Engine &e, const String &name, TypeFlags f, nat size)
-		: Named(name), engine(e), flags(f), superType(null), fixedSize(size), mySize(0) {}
+		: Named(name), engine(e), flags(f), fixedSize(size), mySize(0), parentPkg(null) {
+		superTypes.push_back(this);
+	}
 
 	Type::~Type() {}
 
 	void Type::clear() {
 		members.clear();
-		superType = null;
+		superTypes = vector<Type *>(1, this);
 	}
 
 	Type *Type::createType(Engine &engine, const String &name, TypeFlags flags) {
@@ -27,16 +30,14 @@ namespace storm {
 	}
 
 	bool Type::isA(Type *o) const {
-		for (const Type *curr = this; curr; curr = curr->super()) {
-			if (o == curr)
-				return true;
-		}
-		return false;
+		nat depth = o->superTypes.size();
+		return superTypes.size() >= depth
+			&& superTypes[depth - 1] == o;
 	}
 
 	nat Type::superSize() const {
-		if (superType)
-			return superType->size();
+		if (super())
+			return super()->size();
 
 		if (flags & typeClass)
 			return sizeof(Object);
@@ -63,8 +64,35 @@ namespace storm {
 
 	void Type::setSuper(Type *super) {
 		assert(super->flags == flags);
-		assert(superType == null);
-		superType = super;
+
+		Type *oldSuper = this->super();
+		if (oldSuper != null && oldSuper != super)
+			oldSuper->children.erase(this);
+		if (oldSuper != super && super != null)
+			super->children.insert(this);
+
+		if (super == null) {
+			superTypes = vector<Type*>(1, this);
+		} else {
+			nat sz = super->superTypes.size();
+			superTypes = vector<Type *>(sz + 1);
+			for (nat i = 0; i < sz; i++) {
+				superTypes[i] = super->superTypes[i];
+			}
+			superTypes[sz] = this;
+		}
+
+		// Notify our children we've our type map!
+		for (set<Type*>::iterator i = children.begin(); i != children.end(); ++i) {
+			(*i)->setSuper(this);
+		}
+	}
+
+	Type *Type::super() const {
+		if (superTypes.size() <= 1)
+			return null;
+		else
+			return superTypes[superTypes.size() - 2];
 	}
 
 	Named *Type::find(const Name &name) {
@@ -80,8 +108,8 @@ namespace storm {
 
 	void Type::output(wostream &to) const {
 		to << name;
-		if (superType)
-			to << L" : " << superType->name;
+		if (super())
+			to << L" : " << super()->path();
 		to << ":" << endl;
 		Indent i(to);
 
