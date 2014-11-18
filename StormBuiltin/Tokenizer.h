@@ -5,6 +5,8 @@
  * Tokenizer designed to properly tokenize the contents of .bnf files.
  * Handles strings and basic operators (including ()[] and {}).
  * Also handles comments. Comments have the form // ... \n
+ * NOTE TO SELF: / * ... * / leaves a / as an artifact! This does not break anything,
+ * and is therefore not fixed yet.
  */
 class Tokenizer : NoCopy {
 public:

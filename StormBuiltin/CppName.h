@@ -114,4 +114,7 @@ protected:
 
 private:
 	vector<Part> parts;
+
+	// Depth in the root block.
+	nat rootDepth;
 };

@@ -28,10 +28,7 @@ void Header::parse() {
 		return;
 	parsed = true;
 
-	TextReader *reader = TextReader::create(new FileStream(file, FileStream::mRead));
-	String contents = reader->getAll();
-	delete reader;
-
+	String contents = readTextFile(file);
 	Tokenizer tok(contents, 0);
 	try {
 		parse(tok);
@@ -45,6 +42,8 @@ void Header::parse(Tokenizer &tok) {
 	String pkg;
 	CppScope scope;
 	CppType lastType;
+
+	int depth = 0;
 
 	while (tok.more()) {
 		String token = tok.next();

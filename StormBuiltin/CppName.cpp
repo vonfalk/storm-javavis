@@ -123,15 +123,21 @@ void CppScope::push(bool type, const String &name, const CppName &super) {
 }
 
 void CppScope::push() {
-	if (!parts.empty())
+	if (parts.empty())
+		rootDepth++;
+	else
 		parts.back().depth++;
 }
 
 void CppScope::pop() {
-	if (parts.empty())
-		std::wcout << L"Warning, unbalanced braces." << endl;
-	if (!parts.empty() && parts.back().depth-- == 0)
+	if (parts.empty()) {
+		if (rootDepth == 0)
+			std::wcout << L"Warning, unbalanced braces." << endl;
+		else
+			rootDepth--;
+	} else if (parts.back().depth-- == 0) {
 		parts.pop_back();
+	}
 }
 
 CppName CppScope::cppName() const {
