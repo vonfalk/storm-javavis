@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Utils/Path.h"
+#include "Utils/Lock.h"
 
 namespace storm {
 
@@ -27,7 +28,7 @@ namespace storm {
 	 * TODO: This representation may need to be optimized a bit, since the current implementation
 	 * results in loads of copies of the path to the file.
 	 */
-	class SrcPos : public Printable {
+	class SrcPos {
 	public:
 		// Unknown position.
 		explicit SrcPos();
@@ -35,11 +36,18 @@ namespace storm {
 		// Given the offset
 		SrcPos(const Path &file, nat offset);
 
+		// Copy
+		SrcPos(const SrcPos &o);
+		SrcPos &operator =(const SrcPos &o);
+
+		// Dtor
+		~SrcPos();
+
 		// Unknown offset.
 		static const nat noOffset = -1;
 
-		// The file.
-		Path file;
+		// File.
+		Path file() const;
 
 		// The offset (in characters) from the beginning of the file. Not counting any BOM.
 		nat offset;
@@ -52,10 +60,37 @@ namespace storm {
 
 		// Compare.
 		inline bool operator !=(const SrcPos &o) const { return !(*this == o); }
-		inline bool operator ==(const SrcPos &o) const { return file == o.file && offset == o.offset; }
+		inline bool operator ==(const SrcPos &o) const { return offset == o.offset && sharedFile == o.sharedFile; }
 
-	protected:
-		virtual void output(std::wostream &to) const;
+	private:
+		struct File {
+			const Path *file;
+			nat refs;
+		};
+
+		// Which file are we using?
+		File *sharedFile;
+
+		// Compare keys.
+		struct mapCompare {
+			bool operator() (File *a, File *b);
+		};
+
+		// All files in here. Shared between instances.
+		typedef set<File *, mapCompare> FileCache;
+		static FileCache fileCache;
+
+		// Lock for the cache.
+		static Lock cacheLock;
+
+		// Find the shared Path object.
+		File *shared(const Path &path);
+
+		// Release a shared file ref.
+		void release(File *f);
 	};
+
+	// Output.
+	wostream &operator <<(wostream &to, const SrcPos &pos);
 
 }

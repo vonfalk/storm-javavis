@@ -12,8 +12,6 @@ namespace storm {
 			// Create class 'name' with contents 'content'.
 			STORM_CTOR Class(Auto<SStr> name, Auto<SStr> content);
 
-		private:
-			
 		};
 
 
