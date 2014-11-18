@@ -183,6 +183,21 @@ namespace storm {
 		return new (type)T(p, q);
 	}
 
+	template <class T, class P, class Q, class R>
+	T *create4(Type *type, P p, Q q, R r) {
+		return new (type)T(p, q, r);
+	}
+
+	template <class T, class P, class Q, class R, class S>
+	T *create5(Type *type, P p, Q q, R r, S s) {
+		return new (type)T(p, q, r, s);
+	}
+
+	template <class T, class P, class Q, class R, class S, class U>
+	T *create6(Type *type, P p, Q q, R r, S s, U u) {
+		return new (type)T(p, q, r, s, u);
+	}
+
 	/**
 	 * Everything between BEGIN TYPES and END TYPES is auto-generated.
 	 */
@@ -213,7 +228,7 @@ namespace storm {
 			{ Name(L"core"), L"Str", Name(L"core.Object"), sizeof(storm::Str), typeClass, 21 },
 			{ Name(L""), L"VTest", Name(L"core.Object"), sizeof(storm::VTest), typeClass, 22 },
 			{ Name(L"lang.bnf"), L"Reader", Name(L"lang.PkgReader"), sizeof(storm::bnf::Reader), typeClass, 23 },
-			{ Name(L"lang.bs"), L"Class", Name(L"core.lang.SObject"), sizeof(storm::bs::Class), typeClass, 24 },
+			{ Name(L"lang.bs"), L"Class", Name(L"core.Object"), sizeof(storm::bs::Class), typeClass, 24 },
 			{ Name(L"lang.bs"), L"File", Name(L"lang.FileReader"), sizeof(storm::bs::File), typeClass, 25 },
 			{ Name(L"lang.bs"), L"Includes", Name(L"core.lang.SObject"), sizeof(storm::bs::Includes), typeClass, 26 },
 			{ Name(L"lang.bs"), L"Pkg", Name(L"core.lang.SObject"), sizeof(storm::bs::Pkg), typeClass, 27 },
@@ -231,7 +246,7 @@ namespace storm {
 	const BuiltInFunction *builtInFunctions() {
 		static BuiltInFunction fns[] = {
 			// BEGIN LIST
-			{ Name(L"lang.bs"), L"Class", Name(L"lang.bs.Class"), L"__ctor", list(3, Name(L"Type"), Name(L"core.lang.SStr"), Name(L"core.lang.SStr")), address(&create3<storm::bs::Class, storm::SStr *, storm::SStr *>) },
+			{ Name(L"lang.bs"), L"Class", Name(L"lang.bs.Class"), L"__ctor", list(4, Name(L"Type"), Name(L"core.lang.SrcPos"), Name(L"core.lang.SStr"), Name(L"core.lang.SStr")), address(&create4<storm::bs::Class, storm::SrcPos, storm::SStr *, storm::SStr *>) },
 			{ Name(L"lang.bs"), L"Tmp", Name(L"lang.bs.Tmp"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::bs::Tmp>) },
 			{ Name(L"lang.bs"), L"Tmp", Name(), L"add", list(1, Name(L"lang.bs.Class")), address<void(CODECALL storm::bs::Tmp::*)(storm::Auto<storm::bs::Class>)>(&storm::bs::Tmp::add) },
 			{ Name(L"lang.bs"), L"Includes", Name(L"lang.bs.Includes"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::bs::Includes>) },

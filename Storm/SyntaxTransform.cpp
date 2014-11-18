@@ -6,10 +6,10 @@
 namespace storm {
 
 	// Evaluate a syntaxVariable. Never returns null.
-	static SObject *evaluate(Engine &engine, SyntaxSet &syntax, SyntaxVariable *v, const vector<Object *> &params) {
+	static Object *evaluate(Engine &engine, SyntaxSet &syntax, SyntaxVariable *v, const vector<Object *> &params) {
 		switch (v->type) {
 		case SyntaxVariable::tString: {
-			SObject *result = CREATE(SStr, engine, v->string());
+			SStr *result = CREATE(SStr, engine, v->string());
 			result->pos = v->pos;
 			return result;
 		}
@@ -25,17 +25,25 @@ namespace storm {
 	}
 
 	// Call a function.
-	static Object *callFunction(Engine &e, const SyntaxOption *option, const vector<Object *> &params) {
+	static Object *callFunction(Engine &e, const SyntaxOption *option, const vector<Object *> &params, const SrcPos &pos) {
 		vector<Value> types(params.size());
-		for (nat i = 0; i < params.size(); i++)
-			types[i] = Value(params[i]->myType);
+		for (nat i = 0; i < params.size(); i++) {
+			if (params[i])
+				types[i] = Value(params[i]->myType);
+			else
+				types[i] = SrcPos::type(e);
+		}
 
 		NameOverload *no = option->scope.find(option->matchFn, types);
 		if (Function *f = as<Function>(no)) {
 			code::FnCall call;
 			for (nat i = 0; i < params.size(); i++) {
-				params[i]->addRef();
-				call.param<Object *>(params[i]);
+				if (params[i]) {
+					params[i]->addRef();
+					call.param<Object *>(params[i]);
+				} else {
+					call.param<SrcPos>(pos);
+				}
 			}
 			return call.call<Object *>(f->pointer());
 		}
@@ -48,8 +56,12 @@ namespace storm {
 				code::FnCall call;
 				call.param(t);
 				for (nat i = 0; i < params.size(); i++) {
-					params[i]->addRef();
-					call.param<Object *>(params[i]);
+					if (params[i]) {
+						params[i]->addRef();
+						call.param<Object *>(params[i]);
+					} else {
+						call.param<SrcPos>(pos);
+					}
 				}
 				return call.call<Object *>(ctor->pointer());
 			}
@@ -64,7 +76,7 @@ namespace storm {
 							option->pos);
 	}
 
-	// Call a member function.
+	// Call a member function. NOTE: No support for param==null -> pos!
 	static Object *callMember(Object *me, const String &memberName, Object *param, const SrcPos &pos) {
 		if (me == null || param == null)
 			throw SyntaxTypeError(L"Null is not supported!", pos);
@@ -87,18 +99,20 @@ namespace storm {
 	}
 
 
-	SObject *transform(Engine &e,
+	Object *transform(Engine &e,
 					SyntaxSet &syntax,
 					const SyntaxNode &node,
 					const vector<Object*> &params,
 					const SrcPos *pos)
 	{
 		const SyntaxOption *option = node.option;
-		Auto<SObject> result;
+		Auto<Object> result;
 		SyntaxVars vars(e, syntax, node, params);
+		SrcPos posCopy;
+		if (pos) posCopy = *pos;
 
 		if (option->matchVar) {
-			SObject *t = vars.get(option->matchFn[0]);
+			Object *t = vars.get(option->matchFn[0]);
 			t->addRef();
 			return t;
 		}
@@ -109,16 +123,13 @@ namespace storm {
 			values.push_back(vars.get(p));
 		}
 
-		Auto<Object> t = callFunction(e, option, values);
-		if (t == null)
-			throw SyntaxTypeError(L"Syntax generating functions may not return null.", option->pos);
-		result = t.as<SObject>();
+		result = callFunction(e, option, values, posCopy);
 		if (result == null)
-			throw SyntaxTypeError(L"Syntax generating functions must return a"
-								L" subtype of core.lang.SObject, got " + toS(t->myType->path()),
-								option->pos);
-		if (pos)
-			result->pos = *pos;
+			throw SyntaxTypeError(L"Syntax generating functions may not return null.", option->pos);
+
+		if (SObject *s = as<SObject>(result.borrow()))
+			if (pos)
+				s->pos = *pos;
 		vars.set(L"me", result.borrow());
 
 		// Call any remaining member functions...
@@ -129,7 +140,7 @@ namespace storm {
 				params[i] = vars.get(v.val.params[i]);
 			}
 
-			Auto<SObject> tmp = evaluate(e, syntax, v.val.value, params);
+			Auto<Object> tmp = evaluate(e, syntax, v.val.value, params);
 			callMember(result.borrow(), v.member, tmp.borrow(), option->pos);
 		}
 
@@ -174,10 +185,13 @@ namespace storm {
 	}
 
 
-	SObject *SyntaxVars::get(const String &name) {
+	Object *SyntaxVars::get(const String &name) {
+		if (name == L"pos")
+			return null;
+
 		Map::iterator i = vars.find(name);
 		if (i != vars.end())
-			return cast(i->second);
+			return i->second;
 
 		if (currentNames.count(name) != 0)
 			throw SyntaxTypeError(L"Variable " + name + L" depends on itself!", node.option->pos);
@@ -194,7 +208,7 @@ namespace storm {
 			for (nat i = 0; i < v->params.size(); i++)
 				params[i] = get(v->params[i]);
 
-			SObject *o = evaluate(e, syntax, v->value, params);
+			Object *o = evaluate(e, syntax, v->value, params);
 			vars.insert(make_pair(name, o));
 			currentNames.erase(name);
 			return o;
@@ -211,13 +225,6 @@ namespace storm {
 		} else {
 			throw SyntaxTypeError(L"The variable " + name + L" is already set!", node.option->pos);
 		}
-	}
-
-	SObject *SyntaxVars::cast(Object *obj) {
-		SObject *r = as<SObject>(obj);
-		if (r == null)
-			throw SyntaxTypeError(L"Return values from syntax rules must be of type core.lang.SObject.", node.option->pos);
-		return r;
 	}
 
 }

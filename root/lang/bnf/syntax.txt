@@ -57,6 +57,11 @@ If a rule requires the current result value as a parameter, use "me". Note
 that "me" can not be used if the result is bound to a variable. See 'evaluation order'
 for details.
 
+Apart from "me", there is also the special variable "pos", which contains the position
+where the rule started in the source file. If a variable is derived from core.lang.SObject,
+the position is contained within that SObject, and "pos" does not need to be used. Also
+pay attention that strings are of the type "SStr", which inherits from "SObject".
+
 Part of the expression may also be repeated. There are three different repetition
 modes, as in regex: * - zero or more, + - one or more and ? zero or one.
 The tokens to be repeated are enclosed by paranthesis and directly followed by

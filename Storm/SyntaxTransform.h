@@ -10,11 +10,11 @@ namespace storm {
 	 * Functions for transforming a syntax tree (represented by the root SyntaxNode)
 	 * into the representation defined in the syntax definition.
 	 *
-	 * Note that return parameters has to be derived from core.lang.SObject.
+	 * Note that if return parameters are derived from SObject, their 'pos' will be updated.
 	 */
 
 	// Transform the syntax tree. TODO: Static type-checking?
-	SObject *transform(Engine &e,
+	Object *transform(Engine &e,
 					SyntaxSet &syntax,
 					const SyntaxNode &root,
 					const vector<Object*> &params = vector<Object*>(),
@@ -28,7 +28,8 @@ namespace storm {
 		SyntaxVars(Engine &e, SyntaxSet &syntax, const SyntaxNode &node, const vector<Object*> &params);
 		~SyntaxVars();
 
-		SObject *get(const String &name);
+		// Computes the value if needed. Note that get("pos") -> null!
+		Object *get(const String &name);
 
 		// Set a variable.
 		void set(const String &name, Object *v);
@@ -48,8 +49,5 @@ namespace storm {
 
 		// Keep track of infinite recursion in 'get'.
 		hash_set<String> currentNames;
-
-		// Cast to SObject.
-		SObject *cast(Object *ptr);
 	};
 }

@@ -6,11 +6,11 @@ namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
-		class Class : public SObject {
+		class Class : public Object {
 			STORM_CLASS;
 		public:
 			// Create class 'name' with contents 'content'.
-			STORM_CTOR Class(Auto<SStr> name, Auto<SStr> content);
+			STORM_CTOR Class(SrcPos pos, Auto<SStr> name, Auto<SStr> content);
 
 		};
 

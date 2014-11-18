@@ -269,7 +269,7 @@ namespace storm {
 					if (TypeToken *t = as<TypeToken>(pState->pos.token()))
 						params = t->params;
 
-					SrcPos srcPos(file, pos.step);
+					SrcPos srcPos(file, cState->prev.step);
 
 					if (cState->completed.valid()) {
 						tmp = tree(cState->completed, file);

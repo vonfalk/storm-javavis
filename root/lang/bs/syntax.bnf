@@ -29,10 +29,10 @@ Params => void : Type, Name;
 Params => void : Type, Name, ",", (Type, Name, )*;
 
 // Function
-Function => Class(name, contents) : Type, Name name, "(", Params, ")", "{", SkipBlock contents, "}";
+Function => Class(pos, name, contents) : Type, Name name, "(", Params, ")", "{", SkipBlock contents, "}";
 
 // Class
-Class => Class(name, contents) : "class", Name name, "{", SkipBlock contents, "}";
+Class => Class(pos, name, contents) : "class", Name name, "{", SkipBlock contents, "}";
 
 // Possible root blocks.
 FileItem => fn : Function fn;
