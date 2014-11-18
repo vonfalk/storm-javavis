@@ -22,8 +22,12 @@ namespace storm {
 		// Size of type.
 		nat typeSize;
 
+		// Type flags. (found in TypeFlags)
+		int typeFlags;
+
 		// Static Type pointer index.
 		nat typePtrId;
+
 	};
 
 	/**

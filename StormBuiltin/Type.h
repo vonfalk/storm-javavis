@@ -7,11 +7,11 @@
 class Type : public Printable {
 public:
 	// Built-in type.
-	Type(const String &name, const String &pkg)
-		: name(name), super(), package(pkg), cppName(vector<String>(1,name)), exported(false) {}
+	Type(const String &name, const String &pkg, bool value = false)
+		: name(name), super(), package(pkg), cppName(vector<String>(1,name)), exported(false), value(value) {}
 
-	Type(const String &name, const CppName &super, const String &pkg, const CppName &cppName)
-		: name(name), super(super), package(pkg), cppName(cppName), exported(true) {}
+	Type(const String &name, const CppName &super, const String &pkg, const CppName &cppName, bool value = false)
+		: name(name), super(super), package(pkg), cppName(cppName), exported(true), value(value) {}
 
 	// Name of the class.
 	String name;
@@ -27,6 +27,9 @@ public:
 
 	// Export this type?
 	bool exported;
+
+	// Value type?
+	bool value;
 
 	// Concat 'name' and 'package'.
 	String fullName() const;

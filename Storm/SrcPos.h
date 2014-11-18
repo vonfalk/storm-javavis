@@ -1,9 +1,11 @@
 #pragma once
+#include "Lib/Object.h"
 
 #include "Utils/Path.h"
 #include "Utils/Lock.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	/**
 	 * Struct to hold the line and column in a file.
@@ -29,6 +31,7 @@ namespace storm {
 	 * results in loads of copies of the path to the file.
 	 */
 	class SrcPos {
+		STORM_VALUE;
 	public:
 		// Unknown position.
 		explicit SrcPos();

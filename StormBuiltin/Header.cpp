@@ -55,15 +55,18 @@ void Header::parse(Tokenizer &tok) {
 				tok.next();
 		} else if (token == L"STORM_FN") {
 			functions.push_back(Function::read(pkg, scope, lastType, tok));
-		} else if (token == L"STORM_CLASS") {
+		} else if (token == L"STORM_CLASS" || token == L"STORM_VALUE") {
 			if (!scope.isType())
 				throw Error(L"STORM_CLASS only allowed in classes and structs!");
-			if (scope.cppName().isObject()) {
+			bool isValue = token == L"STORM_VALUE";
+
+			if (scope.cppName().isObject() || isValue) {
 				// storm::Object is the root object, ignore any
 				// super-classes! They are just for convenience!
-				types.push_back(Type(scope.name(), CppName(), pkg, scope.cppName()));
+				// Inheritance is not (yet) supported for value types either.
+				types.push_back(Type(scope.name(), CppName(), pkg, scope.cppName(), isValue));
 			} else {
-				types.push_back(Type(scope.name(), scope.super(), pkg, scope.cppName()));
+				types.push_back(Type(scope.name(), scope.super(), pkg, scope.cppName(), isValue));
 			}
 		} else if (token == L"STORM_PKG") {
 			pkg = parsePkg(tok);

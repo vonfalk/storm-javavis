@@ -69,6 +69,12 @@ String typeList(const Types &types) {
 
 		out << L"sizeof(" << type.cppName << L"), ";
 
+		if (type.value) {
+			out << L"typeValue, ";
+		} else {
+			out << L"typeClass, ";
+		}
+
 		out << i << L" ";
 		out << L"},\n";
 	}
@@ -85,8 +91,11 @@ String typeFunctions(const Types &types) {
 
 		out << L"storm::Type *" << type.cppName << L"::type(Engine &e) { return e.builtIn(" << i << L"); }\n";
 		out << L"storm::Type *" << type.cppName << L"::type(Object *o) { return type(o->myType->engine); }\n";
-		out << L"extern \"C\" void *" << fn << L"();\n";
-		out << L"void *" << type.cppName << L"::cppVTable() { return " << fn << L"(); }\n";
+		if (!type.value) {
+			// Values do not have type information.
+			out << L"extern \"C\" void *" << fn << L"();\n";
+			out << L"void *" << type.cppName << L"::cppVTable() { return " << fn << L"(); }\n";
+		}
 	}
 
 	return out.str();
@@ -102,6 +111,8 @@ String vtableCode(const Types &types) {
 
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
+		if (type.value)
+			continue;
 
 		vtableSymbolName(out, type.cppName);
 		out << L" proto syscall\n";
@@ -112,6 +123,9 @@ String vtableCode(const Types &types) {
 
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
+		if (type.value)
+			continue;
+
 		String fn = vtableFnName(type.cppName);
 
 		out << fn << L" proc\n";
