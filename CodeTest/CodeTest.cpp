@@ -82,7 +82,7 @@ public:
 	String what() const { return L"Test error"; }
 };
 
-void throwException() {
+static void throwException() {
 	throw TestError();
 }
 
@@ -136,7 +136,6 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	//testFunction(arena);
 
 
-	waitForReturn();
 	return 0;
 }
 

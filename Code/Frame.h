@@ -35,15 +35,16 @@ namespace code {
 		// declaration in C/C++. IsFloat shall be true if the parameter is
 		// a floating-point parameter. In some calling conventions, floating
 		// point parameters are treated separately.
-		inline Variable createByteParam() { return createParameter(1, false); }
-		inline Variable createIntParam() { return createParameter(4, false); }
-		inline Variable createLongParam() { return createParameter(8, false); }
-		inline Variable createPtrParam() { return createParameter(0, false); }
+		inline Variable createByteParam(Value free = Value()) { return createParameter(1, false, free); }
+		inline Variable createIntParam(Value free = Value()) { return createParameter(4, false, free); }
+		inline Variable createLongParam(Value free = Value()) { return createParameter(8, false, free); }
+		inline Variable createPtrParam(Value free = Value()) { return createParameter(0, false, free); }
 
 		// Custom parameter creation.
-		Variable createParameter(nat size, bool isFloat);
+		Variable createParameter(nat size, bool isFloat, Value free = Value());
 
-		// Get the variable located before the current variable (either in the same, or in another block). Returns an empty variable if none exists.
+		// Get the variable located before the current variable (either in the same, or in another block).
+		// Returns an empty variable if none exists.
 		Variable prev(Variable v) const;
 
 		// Is 'v' a parameter?
@@ -77,6 +78,9 @@ namespace code {
 
 			// Is it a floating-point parameter?
 			bool isFloat;
+
+			// Which function to call on free?
+			Value freeFn;
 		};
 
 		struct Var {

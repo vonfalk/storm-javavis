@@ -174,7 +174,7 @@ namespace storm {
 		Overload *o = null;
 		MemberMap::iterator i = members.find(fn->name);
 		if (i == members.end()) {
-			o = CREATE(Overload, engine, fn->name);
+			o = CREATE(Overload, engine, this, fn->name);
 			members.insert(make_pair(fn->name, o));
 		} else {
 			o = i->second.borrow();

@@ -105,7 +105,7 @@ namespace code {
 	void Binary::destroyFrame(const machine::StackFrame &frame) const {
 		nat block = machine::activeBlock(frame, metadata);
 		assert(block < blocks.size());
-		
+
 		while (block < blocks.size()) {
 			Block *b = blocks[block];
 

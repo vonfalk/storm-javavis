@@ -20,14 +20,21 @@ namespace code {
 		// Set the address we're currently referring.
 		void set(void *address, nat size = 0);
 
+		// Get the last address.
+		inline void *address() const { return lastAddress; }
+
 		inline const String &getTitle() const { return title; }
 		inline nat getId() const { return referenceId; }
+
 	private:
 		// Our reference id. This is our unique identifier in the system.
 		nat referenceId;
 
 		// Our title.
 		String title;
+
+		// Last known address.
+		void *lastAddress;
 	};
 
 }

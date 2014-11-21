@@ -2,11 +2,13 @@ use core;
 
 class Foo {
 Int a = 10;
+create() {
 "fisk\"bulle";
 '"';
 }
+}
 
-Int bar(Int foo, Int bar) {
+Int bar() {
 return 3;
 }
 

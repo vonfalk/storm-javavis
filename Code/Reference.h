@@ -8,7 +8,7 @@ namespace code {
 	class Arena;
 
 	// There are two kinds of references: A lightweight one
-	// and a more robust one. 
+	// and a more robust one.
 	//
 	// The lightweight one (Ref) are
 	// for use during shorter time intervals, for example

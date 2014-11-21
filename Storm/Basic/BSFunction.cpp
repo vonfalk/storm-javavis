@@ -21,10 +21,6 @@ namespace storm {
 
 
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params, Auto<Str> contents)
-		: Function(result, name, params), contents(contents) {}
-
-	void *bs::BSFunction::pointer() const {
-		return null;
-	}
+		: LazyFunction(result, name, params), contents(contents) {}
 
 }

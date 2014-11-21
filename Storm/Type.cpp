@@ -126,7 +126,7 @@ namespace storm {
 		Overload *ovl = null;
 		MemberMap::iterator i = members.find(o->name);
 		if (i == members.end()) {
-			ovl = CREATE(Overload, engine, o->name);
+			ovl = CREATE(Overload, engine, this, o->name);
 			members.insert(make_pair(o->name, ovl));
 		} else {
 			ovl = i->second.borrow();

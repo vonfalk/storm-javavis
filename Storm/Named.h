@@ -18,6 +18,7 @@ namespace storm {
 
 		// Get the parent object to this lookup, or null if none.
 		virtual NameLookup *parent() const;
+
 	};
 
 
@@ -37,6 +38,9 @@ namespace storm {
 
 		// Full path.
 		virtual Name path() const;
+
+		// Generate a unique, human-readable identifier (for use in Code api:s).
+		virtual String identifier() const;
 
 	private:
 		// Find our closest named parent.

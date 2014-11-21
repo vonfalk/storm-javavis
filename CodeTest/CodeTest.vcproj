@@ -209,6 +209,10 @@
 				RelativePath=".\TestPreserve.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestException.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

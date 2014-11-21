@@ -18,7 +18,7 @@ namespace code {
 		void putSize(Word w, nat size);
 
 		void putRelative(cpuNat addr);
-		
+
 		void putAddress(const Ref &ref);
 		void putRelative(const Ref &ref);
 
@@ -63,7 +63,7 @@ namespace code {
 		virtual void putInt(Nat w);
 		virtual void putLong(Word w);
 		virtual void putPtr(cpuNat v);
-		
+
 		virtual nat tell() const;
 
 	protected:

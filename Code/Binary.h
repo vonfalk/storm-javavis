@@ -20,7 +20,7 @@ namespace code {
 		// change the location in memory of the data and will therefore
 		// invalidate any previous pointers.
 		void set(const Listing &listing);
-	
+
 		// Get the current pointer to the underlying binary data. This
 		// shall be treated as a temporary pointer.
 		const void *getData() const;

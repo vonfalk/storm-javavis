@@ -1,5 +1,6 @@
 #pragma once
 #include "Overload.h"
+#include "Code/RefSource.h"
 
 namespace storm {
 
@@ -14,23 +15,42 @@ namespace storm {
 	 * This class is eventually supposed to act as a RefSource.
 	 *
 	 * Note that the "implicit" this-pointer is actually explicit here.
+	 *
+	 * TODO: Add concept of a lookup function, that is supposed to look
+	 * up which function is to be executed. This is where vtable dispatch
+	 * is implemented! Maybe this will be an explicit subclass of Function?
+	 *
+	 * TODO: Add concept of invalidators to at least LazyFn.
 	 */
 	class Function : public NameOverload {
 		STORM_CLASS;
 	public:
 		// Create a function.
 		Function(Value result, const String &name, const vector<Value> &params);
+
+		// Dtor.
 		~Function();
 
 		// Function result.
 		const Value result;
 
-		// Get the code for this function. Do not assume it is static!
-		// This may be replaced by the corresponding API from RefSource.
-		virtual void *pointer() const = 0;
+		// Get the code for this function. Do not assume it is static! Use
+		// 'ref' if you are doing anything more than one function call!
+		void *pointer();
+
+		// Get the reference we are providing.
+		code::RefSource &ref();
 
 	protected:
 		virtual void output(wostream &to) const;
+
+		// Overload called when the reference is first needed.
+		virtual void initRef(code::RefSource &ref) = 0;
+
+	private:
+		// The reference we are providing. Initialized when needed since we do not have enough
+		// information in the constructor.
+		code::RefSource *source;
 	};
 
 
@@ -44,12 +64,31 @@ namespace storm {
 		// Create a native function.
 		NativeFunction(Value result, const String &name, const vector<Value> &params, void *ptr);
 
-		// Get the fn pointer.
-		virtual void *pointer() const;
+	protected:
+		// Initref
+		virtual void initRef(code::RefSource &ref);
 
 	private:
 		// Pointer to the pre-compiled function.
 		void *fnPtr;
+	};
+
+
+	/**
+	 * A function that will be generated when needed. Overload the 'update' function
+	 * to make it work. Note that 'update' may be called more than once in case of
+	 * something else causing the generated code to be invalidated (this is not yet
+	 * implemented).
+	 */
+	class LazyFunction : public Function {
+		STORM_CLASS;
+	public:
+		LazyFunction(Value result, const String &name, const vector<Value> &params);
+
+	protected:
+		// Initialize reference.
+		void initRef(code::RefSource &ref);
+
 	};
 
 }

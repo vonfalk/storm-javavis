@@ -35,12 +35,11 @@ namespace storm {
 		/**
 		 * Function in the BS language.
 		 */
-		class BSFunction : public Function {
+		class BSFunction : public LazyFunction {
 			STORM_CLASS;
 		public:
 			BSFunction(Value result, const String &name, const vector<Value> &params, Auto<Str> contents);
 
-			virtual void *pointer() const;
 		private:
 			// Code.
 			Auto<Str> contents;

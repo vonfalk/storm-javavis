@@ -40,7 +40,7 @@ namespace code {
 			notPreserved += eax;
 			notPreserved += ecx;
 			notPreserved += edx;
-			
+
 			for (nat i = 0; i < ARRAY_SIZE(allRegisters); i++) {
 				Register reg = allRegisters[i];
 				if (r.contains(reg)) {

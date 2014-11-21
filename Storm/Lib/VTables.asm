@@ -21,6 +21,9 @@ cppVTable_storm__Function proto
 ??_7IntType@storm@@6B@ proto syscall
 cppVTable_storm__IntType proto
 
+??_7LazyFunction@storm@@6B@ proto syscall
+cppVTable_storm__LazyFunction proto
+
 ??_7NameLookup@storm@@6B@ proto syscall
 cppVTable_storm__NameLookup proto
 
@@ -137,6 +140,11 @@ cppVTable_storm__IntType proc
 	mov eax, ??_7IntType@storm@@6B@
 	ret
 cppVTable_storm__IntType endp
+
+cppVTable_storm__LazyFunction proc
+	mov eax, ??_7LazyFunction@storm@@6B@
+	ret
+cppVTable_storm__LazyFunction endp
 
 cppVTable_storm__NameLookup proc
 	mov eax, ??_7NameLookup@storm@@6B@

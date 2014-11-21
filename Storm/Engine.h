@@ -4,6 +4,7 @@
 #include "Name.h"
 #include "Package.h"
 #include "Scope.h"
+#include "Code/Arena.h"
 
 namespace storm {
 
@@ -35,6 +36,9 @@ namespace storm {
 
 		// Initialized?
 		inline bool initialized() { return inited; }
+
+		// Arena.
+		code::Arena arena;
 
 	private:
 		// Path to root directory.

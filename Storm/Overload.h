@@ -3,20 +3,7 @@
 #include "Named.h"
 
 namespace storm {
-
-	/**
-	 * An overloaded name. What differentiates two different
-	 * names is the type and count of their operators.
-	 */
-	class NameOverload : public Named {
-		STORM_CLASS;
-	public:
-		// Give params.
-		NameOverload(const String &name, const vector<Value> &params);
-
-		// Parameters
-		const vector<Value> params;
-	};
+	class NameOverload;
 
 	/**
 	 * Representing a named entity consisting of (possibly) more than one
@@ -25,7 +12,7 @@ namespace storm {
 	class Overload : public Named {
 		STORM_CLASS;
 	public:
-		Overload(const String &name);
+		Overload(NameLookup *parent, const String &name);
 		~Overload();
 
 		// Add an overload.
@@ -37,6 +24,9 @@ namespace storm {
 		// Get an overload, returns null on failure.
 		NameOverload *find(const vector<Value> &p);
 
+		// Parent.
+		NameLookup *parent() const;
+
 	protected:
 		virtual void output(wostream &to) const;
 
@@ -44,8 +34,40 @@ namespace storm {
 		// Items here.
 		vector<Auto<NameOverload> > items;
 
+		// Parent.
+		NameLookup *p;
+
 		// Is it a suitable overload?
 		static bool suitable(const Auto<NameOverload> &overload, const vector<Value> &params);
+	};
+
+
+	/**
+	 * An overloaded name. What differentiates two different
+	 * names is the type and count of their operators.
+	 */
+	class NameOverload : public Named {
+		friend class Overload;
+		STORM_CLASS;
+	public:
+		// Give params.
+		NameOverload(const String &name, const vector<Value> &params);
+
+		// Parameters
+		const vector<Value> params;
+
+		// Human-readable identifier.
+		virtual String identifier() const;
+
+		// Owner.
+		virtual Overload *parent() const;
+
+		// Path.
+		Name path() const;
+
+	private:
+		// Owner. Set by 'overload'.
+		Overload * owner;
 	};
 
 }

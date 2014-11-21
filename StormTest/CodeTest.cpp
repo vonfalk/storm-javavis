@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Test/Test.h"
+#include "Storm/Function.h"
 
 BEGIN_TEST(CodeTest) {
 
@@ -11,5 +12,14 @@ BEGIN_TEST(CodeTest) {
 	CHECK(test->find(Name(L"bar")));
 	CHECK(test->find(Name(L"Foo")));
 
-	break;
+	Function *fun = as<Function>(engine.scope()->find(Name(L"test.bs.bar"), vector<Value>()));
+	CHECK(fun);
+	typedef Int (*VoidFn)();
+	VoidFn *fn = (VoidFn *)fun->pointer();
+	if (fn) {
+		CHECK_EQ((*fn)(), 3);
+	} else {
+		CHECK(fn);
+	}
+
 } END_TEST

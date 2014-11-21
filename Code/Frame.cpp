@@ -127,8 +127,8 @@ namespace code {
 		return Variable(nextVariableId++, size);
 	}
 
-	Variable Frame::createParameter(nat size, bool isFloat) {
-		Param p = { size, isFloat };
+	Variable Frame::createParameter(nat size, bool isFloat, Value free) {
+		Param p = { size, isFloat, free };
 		parameters.insert(std::make_pair(nextVariableId, p));
 		return Variable(nextVariableId++, size);
 	}
@@ -145,7 +145,7 @@ namespace code {
 
 	Value Frame::freeFn(Variable v) const {
 		if (parameters.count(v.id)) {
-			return Value();
+			return parameters.find(v.id)->second.freeFn;
 		} else if (vars.count(v.id)) {
 			return vars.find(v.id)->second.freeFn;
 		} else {

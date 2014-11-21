@@ -32,4 +32,8 @@ namespace storm {
 			return Name(name);
 	}
 
+	String Named::identifier() const {
+		return ::toS(path());
+	}
+
 }

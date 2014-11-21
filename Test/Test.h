@@ -141,6 +141,14 @@ private: \
 
 #define CHECK_EQ(expr, eq) CHECK_EQ_TITLE(expr, eq, #expr)
 
+#define CHECK_ERROR(expr)						\
+	try {										\
+		__result__.total++;						\
+		expr;									\
+		__result__.failed++;					\
+	} catch (const Exception &) {				\
+	}
+
 
 #define BEGIN_TEST(name) \
 	DEFINE_TEST(name, false); \
