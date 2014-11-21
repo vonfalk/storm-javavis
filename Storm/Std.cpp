@@ -140,7 +140,7 @@ namespace storm {
 
 			if (cached.size() <= id)
 				cached.resize(id + 1);
-			cached[i] = CREATE(Type, to, to, t.name, TypeFlags(t.typeFlags), t.typeSize);
+			cached[i] = CREATE(Type, to, t.name, TypeFlags(t.typeFlags), t.typeSize);
 		}
 	}
 

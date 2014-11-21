@@ -6,8 +6,7 @@
 namespace storm {
 
 	Type *boolType(Engine &e) {
-		return CREATE(BoolType, e, e);
+		return CREATE(BoolType, e);
 	}
-
 
 }

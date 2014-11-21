@@ -330,6 +330,22 @@
 				RelativePath=".\SyntaxObject.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSContents.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSType.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSFunction.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSParams.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -498,6 +514,22 @@
 			</File>
 			<File
 				RelativePath=".\SyntaxObject.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSContents.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSFunction.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSType.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSParams.h"
 				>
 			</File>
 		</Filter>

@@ -7,7 +7,7 @@ namespace storm {
 	class IntType : public Type {
 		STORM_CLASS;
 	public:
-		IntType(Engine &e) : Type(e, L"Int", typeValue) {}
+		IntType() : Type(L"Int", typeValue) {}
 
 		virtual nat size() const {
 			return sizeof(code::Int);
@@ -25,7 +25,7 @@ namespace storm {
 	class NatType : public Type {
 		STORM_CLASS;
 	public:
-		NatType(Engine &e) : Type(e, L"Nat", typeValue) {}
+		NatType() : Type(L"Nat", typeValue) {}
 
 		virtual nat size() const {
 			return sizeof(code::Nat);

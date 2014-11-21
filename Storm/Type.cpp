@@ -10,8 +10,8 @@ namespace storm {
 
 	const String Type::CTOR = L"__ctor";
 
-	Type::Type(Engine &e, const String &name, TypeFlags f, nat size)
-		: Named(name), engine(e), flags(f), fixedSize(size), mySize(0), parentPkg(null) {
+	Type::Type(const String &name, TypeFlags f, nat size)
+		: Named(name), engine(Object::engine()), flags(f), fixedSize(size), mySize(0), parentPkg(null) {
 		superTypes.push_back(this);
 	}
 
@@ -25,8 +25,10 @@ namespace storm {
 	Type *Type::createType(Engine &engine, const String &name, TypeFlags flags) {
 		void *mem = allocDumb(engine, sizeof(Type));
 		size_t typeOffset = OFFSET_OF(Object, myType);
+		size_t engineOffset = sizeof(Named);
 		OFFSET_IN(mem, typeOffset, Type *) = (Type *)mem;
-		return new (mem) Type(engine, name, flags, sizeof(Type));
+		OFFSET_IN(mem, engineOffset, Engine *) = &engine;
+		return new (mem) Type(name, flags, sizeof(Type));
 	}
 
 	bool Type::isA(Type *o) const {

@@ -52,7 +52,7 @@ namespace storm {
 		void STORM_FN add(Auto<Package> pkg);
 
 		// Add a type to this package.
-		void add(Type *type);
+		void STORM_FN add(Auto<Type> type);
 
 		// Add a function to this package.
 		void add(NameOverload *function);

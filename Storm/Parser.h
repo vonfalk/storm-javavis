@@ -53,6 +53,9 @@ namespace storm {
 		// 'file' is for correct SrcRefs in the resulting tree.
 		SyntaxNode *tree(const Path &file);
 
+		// Shorthand for generating a tree and transform it into Storm objects.
+		Object *transform(Engine &engine, const Path &file);
+
 	private:
 		// Syntax source.
 		SyntaxSet &syntax;

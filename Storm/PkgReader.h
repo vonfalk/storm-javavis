@@ -74,6 +74,8 @@ namespace storm {
 		// Get all types. Override to implement type-loading.
 		virtual void readTypes();
 
+		// Get all functions.
+		virtual void readFunctions();
 	};
 
 
@@ -98,6 +100,9 @@ namespace storm {
 		// Read types from this file.
 		virtual void readTypes();
 
+		// Read types from this file.
+		virtual void readFunctions();
+
 		// Get the package where the syntax for the current file is located.
 		Package *syntaxPackage() const;
 	};
@@ -115,6 +120,7 @@ namespace storm {
 		// Read contents from all files.
 		virtual void readSyntax(SyntaxRules &to);
 		virtual void readTypes();
+		virtual void readFunctions();
 
 	protected:
 		// Create a file object. This is called as late as possible.

@@ -66,6 +66,8 @@ namespace storm {
 
 	void PkgReader::readTypes() {}
 
+	void PkgReader::readFunctions() {}
+
 
 	/**
 	 * FileReader.
@@ -76,6 +78,8 @@ namespace storm {
 	void FileReader::readSyntax(SyntaxRules &to) {}
 
 	void FileReader::readTypes() {}
+
+	void FileReader::readFunctions() {}
 
 	Package *FileReader::syntaxPackage() const {
 		Scope *scope = package->engine.scope();
@@ -99,6 +103,13 @@ namespace storm {
 		loadFiles();
 		for (nat i = 0; i < files.size(); i++) {
 			files[i]->readTypes();
+		}
+	}
+
+	void FilesReader::readFunctions() {
+		loadFiles();
+		for (nat i = 0; i < files.size(); i++) {
+			files[i]->readFunctions();
 		}
 	}
 

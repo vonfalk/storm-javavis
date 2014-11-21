@@ -1,6 +1,7 @@
 #pragma once
 #include "PkgReader.h"
 #include "SyntaxSet.h"
+#include "Basic/BSContents.h"
 
 namespace storm {
 	namespace bs {
@@ -34,15 +35,21 @@ namespace storm {
 			// Get types.
 			void readTypes();
 
+			// Get functions.
+			void readFunctions();
+
 		private:
 			// The file contents.
-			String contents;
+			String fileContents;
 
 			// Length of header. The header is the use statements.
 			nat headerSize;
 
 			// Syntax to use while parsing.
 			SyntaxSet syntax;
+
+			// Contents.
+			Auto<Contents> contents;
 
 			// All included packages.
 			vector<Package *> includes;
@@ -52,6 +59,12 @@ namespace storm {
 
 			// Find included packages.
 			void setIncludes(const vector<Name> &includes);
+
+			// Set 'contents' to something good.
+			void readContents();
+
+			// Create a scope.
+			Scope scope();
 		};
 	}
 }

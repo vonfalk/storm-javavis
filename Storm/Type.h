@@ -33,8 +33,8 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// If size == 0, it will be automatically computed based on members. Size
-		// is mainly used to denote built-in classes.
-		Type(Engine &engine, const String &name, TypeFlags flags, nat size = 0);
+		// is mainly used to denote built-in classes. TODO: Remove engine from ctor?
+		Type(const String &name, TypeFlags flags, nat size = 0);
 		~Type();
 
 		// Create the first type instance, as an instance of itself.
@@ -42,7 +42,7 @@ namespace storm {
 
 		static const String CTOR;
 
-		// Owning engine.
+		// Owning engine. Currently this has to be the first member in Type. Otherwise modify createType.
 		Engine &engine;
 
 		// Type flags.

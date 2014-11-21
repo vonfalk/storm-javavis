@@ -73,6 +73,11 @@ namespace storm {
 
 	template <class T>
 	wostream &operator <<(wostream &to, const Auto<T> &v) {
-		return to << v.borrow();
+		T *ptr = v.borrow();
+		if (ptr)
+			to << *ptr;
+		else
+			to << L"null";
+		return to;
 	}
 }

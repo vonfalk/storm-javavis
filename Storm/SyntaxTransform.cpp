@@ -2,6 +2,7 @@
 #include "SyntaxTransform.h"
 #include "Code/Function.h"
 #include "Function.h"
+#include "Parser.h"
 
 namespace storm {
 

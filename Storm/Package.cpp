@@ -164,7 +164,7 @@ namespace storm {
 		pkg->parentPkg = this;
 	}
 
-	void Package::add(Type *type) {
+	void Package::add(Auto<Type> type) {
 		assert(types.count(type->name) == 0);
 		types.insert(make_pair(type->name, type));
 		type->parentPkg = this;
@@ -229,6 +229,11 @@ namespace storm {
 			// Load all types.
 			for (nat i = 0; i < toLoad.size(); i++) {
 				toLoad[i]->readTypes();
+			}
+
+			// Load all functions.
+			for (nat i = 0; i < toLoad.size(); i++) {
+				toLoad[i]->readFunctions();
 			}
 
 		} catch (...) {

@@ -6,7 +6,7 @@ Int a = 10;
 '"';
 }
 
-Int bar() {
+Int bar(Int foo, Int bar) {
 return 3;
 }
 

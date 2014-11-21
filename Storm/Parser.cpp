@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Parser.h"
 
+#include "SyntaxTransform.h"
 #include "Package.h"
 #include <iomanip>
 
@@ -309,6 +310,21 @@ namespace storm {
 		return result;
 	}
 
+	/**
+	 * Shorthand.
+	 */
+
+	Object *Parser::transform(Engine &engine, const Path &file) {
+		SyntaxNode *root = tree(file);
+		try {
+			Auto<Object> result = storm::transform(engine, syntax, *root);
+			delete root;
+			return result.ret();
+		} catch (...) {
+			delete root;
+			throw;
+		}
+	}
 
 	/**
 	 * State.

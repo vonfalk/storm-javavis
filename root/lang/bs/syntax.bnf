@@ -9,7 +9,8 @@ Name => SStr(name) : "[A-Za-z]+" name;
 
 // Package
 Package => Pkg() : Name -> add - ("\." - Name -> add)*;
-Type => Type(pkg, name) : (Package pkg, "\.", )? - Name name;
+Type => TypeName(name) : Name name;
+Type => TypeName(pkg, name) : Package pkg, "\.", Name name;
 
 // Skip a block, assuming matching {} and well-behaved strings.
 SkipBlock => cont : ( SkipContent ) cont;
@@ -24,12 +25,12 @@ StrContent => void : "[^\"\\]*";
 StrContent => void : StrContent - "\\." - StrContent;
 
 // Parameter list (possibly empty)
-Params => void : DELIMITER;
-Params => void : Type, Name;
-Params => void : Type, Name, ",", (Type, Name, )*;
+Params => Params() : DELIMITER;
+Params => Params() : Type -> add, Name, (",", Type -> add, Name, )*;
 
 // Function
-Function => Class(pos, name, contents) : Type, Name name, "(", Params, ")", "{", SkipBlock contents, "}";
+Function => FunctionDecl(pos, name, result, params, contents) :
+Type result, Name name, "(", Params params, ")", "{", SkipBlock contents, "}";
 
 // Class
 Class => Class(pos, name, contents) : "class", Name name, "{", SkipBlock contents, "}";
@@ -39,7 +40,7 @@ FileItem => fn : Function fn;
 FileItem => cls : Class cls;
 
 // Root rule, used to parse an entire file. (except use-statements).
-File => Tmp() : (FileItem -> add, )*;
+File => Contents() : (FileItem -> add, )*;
 
 // Root rule for parsing includes.
 Includes => Includes() : ("use", Package -> add, ";", )*;

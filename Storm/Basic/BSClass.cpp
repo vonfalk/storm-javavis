@@ -3,14 +3,6 @@
 
 namespace storm {
 
-	bs::Class::Class(SrcPos pos, Auto<SStr> name, Auto<SStr> content) {
-		PLN(pos);
-		PLN(*name);
-		PLN(*content);
-	}
-
-	bs::Tmp::Tmp() {}
-
-	void bs::Tmp::add(Auto<Class> c) {}
+	bs::Class::Class(SrcPos pos, Auto<SStr> name, Auto<SStr> content) : Type(name->v->v, typeClass) {}
 
 }

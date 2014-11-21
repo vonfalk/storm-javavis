@@ -1,12 +1,13 @@
 #pragma once
 #include "Std.h"
 #include "SyntaxObject.h"
+#include "Type.h"
 
 namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
-		class Class : public Object {
+		class Class : public Type {
 			STORM_CLASS;
 		public:
 			// Create class 'name' with contents 'content'.
@@ -14,13 +15,5 @@ namespace storm {
 
 		};
 
-
-		class Tmp : public SObject {
-			STORM_CLASS;
-		public:
-			STORM_CTOR Tmp();
-
-			void STORM_FN add(Auto<Class> c);
-		};
 	}
 }

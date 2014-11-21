@@ -72,23 +72,38 @@ cppVTable_storm__VTest proto
 ??_7Reader@bnf@storm@@6B@ proto syscall
 cppVTable_storm__bnf__Reader proto
 
+??_7BSFunction@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__BSFunction proto
+
 ??_7Class@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__Class proto
+
+??_7Contents@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__Contents proto
 
 ??_7File@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__File proto
 
+??_7FunctionDecl@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__FunctionDecl proto
+
 ??_7Includes@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__Includes proto
+
+??_7Params@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__Params proto
 
 ??_7Pkg@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__Pkg proto
 
+??_7PkgName@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__PkgName proto
+
 ??_7Reader@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__Reader proto
 
-??_7Tmp@bs@storm@@6B@ proto syscall
-cppVTable_storm__bs__Tmp proto
+??_7TypeName@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__TypeName proto
 
 
 .code
@@ -208,34 +223,59 @@ cppVTable_storm__bnf__Reader proc
 	ret
 cppVTable_storm__bnf__Reader endp
 
+cppVTable_storm__bs__BSFunction proc
+	mov eax, ??_7BSFunction@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__BSFunction endp
+
 cppVTable_storm__bs__Class proc
 	mov eax, ??_7Class@bs@storm@@6B@
 	ret
 cppVTable_storm__bs__Class endp
+
+cppVTable_storm__bs__Contents proc
+	mov eax, ??_7Contents@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__Contents endp
 
 cppVTable_storm__bs__File proc
 	mov eax, ??_7File@bs@storm@@6B@
 	ret
 cppVTable_storm__bs__File endp
 
+cppVTable_storm__bs__FunctionDecl proc
+	mov eax, ??_7FunctionDecl@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__FunctionDecl endp
+
 cppVTable_storm__bs__Includes proc
 	mov eax, ??_7Includes@bs@storm@@6B@
 	ret
 cppVTable_storm__bs__Includes endp
+
+cppVTable_storm__bs__Params proc
+	mov eax, ??_7Params@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__Params endp
 
 cppVTable_storm__bs__Pkg proc
 	mov eax, ??_7Pkg@bs@storm@@6B@
 	ret
 cppVTable_storm__bs__Pkg endp
 
+cppVTable_storm__bs__PkgName proc
+	mov eax, ??_7PkgName@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__PkgName endp
+
 cppVTable_storm__bs__Reader proc
 	mov eax, ??_7Reader@bs@storm@@6B@
 	ret
 cppVTable_storm__bs__Reader endp
 
-cppVTable_storm__bs__Tmp proc
-	mov eax, ??_7Tmp@bs@storm@@6B@
+cppVTable_storm__bs__TypeName proc
+	mov eax, ??_7TypeName@bs@storm@@6B@
 	ret
-cppVTable_storm__bs__Tmp endp
+cppVTable_storm__bs__TypeName endp
 
 end
