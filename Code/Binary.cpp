@@ -4,15 +4,19 @@
 
 namespace code {
 
-	Binary::Binary(Arena &arena, const String &title) : RefSource(arena, title) {
-		memory = null;
-		size = 0;
+	Binary::Binary(Arena &arena, const String &title, const Listing &listing)
+		: title(title), arena(arena), memory(null), size(0) {
+		set(listing);
 	}
 
 	Binary::~Binary() {
 		clear(references);
 		clear(blocks);
 		arena.codeFree(memory);
+	}
+
+	void Binary::update(RefSource &ref) {
+		ref.set(memory, size);
 	}
 
 	Binary::Block *Binary::Block::create(const Frame &frame, const code::Block &b) {
@@ -39,12 +43,12 @@ namespace code {
 
 		for (nat i = 0; i < from.absoluteRefs.size(); i++) {
 			const Output::UsedRef &r = from.absoluteRefs[i];
-			references.push_back(new BinaryUpdater(r.reference, getTitle(), (cpuNat *)(baseAddr + r.offset), false));
+			references.push_back(new BinaryUpdater(r.reference, title, (cpuNat *)(baseAddr + r.offset), false));
 		}
 
 		for (nat i = 0; i < from.relativeRefs.size(); i++) {
 			const Output::UsedRef &r = from.relativeRefs[i];
-			references.push_back(new BinaryUpdater(r.reference, getTitle(), (cpuNat *)(baseAddr + r.offset), true));
+			references.push_back(new BinaryUpdater(r.reference, title, (cpuNat *)(baseAddr + r.offset), true));
 		}
 
 		std::swap(references, this->references);
@@ -70,7 +74,7 @@ namespace code {
 		nat oldSize = size;
 
 		Listing transformed = machine::transform(listing, this);
-		PLN("After transformation:" << transformed);
+		// PLN("After transformation:" << transformed);
 
 		// Calculate size and positions of labels and other important positions...
 		SizeOutput sizeOutput(transformed.getLabelCount());
@@ -94,7 +98,6 @@ namespace code {
 			throw;
 		}
 
-		RefSource::set(memory);
 		arena.codeFree(oldMem);
 	}
 

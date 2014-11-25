@@ -19,8 +19,9 @@ void testReplace(Arena &arena) {
 	l2 << ret(0);
 	PLN(l2);
 
-	Binary middle(arena, L"middle");
-	middle.set(l2);
+	Binary middleBlob(arena, L"middle", l2);
+	RefSource middle(arena, L"middle");
+	middleBlob.update(middle);
 
 	Listing l;
 	Label lbl = l.label();
@@ -32,8 +33,7 @@ void testReplace(Arena &arena) {
 	l << ret(0);
 	PLN(l);
 
-	Binary output(arena, L"Test");
-	output.set(l);
+	Binary output(arena, L"Test", l);
 
 	void (*p)();
 	p = (void (*)())output.getData();
@@ -45,15 +45,14 @@ void testReplace(Arena &arena) {
 	l2 << fnCall(paramFun, 0);
 	l2 << ret(0);
 	PLN(l2);
-	middle.set(l2);
+	Binary middle2(arena, L"middle", l2);
+	middle2.update(middle);
 
 	p = (void (*)())output.getData();
 	(*p)();
 }
 
 void testPush(Arena &arena) {
-	Binary b(arena, L"TestFn");
-
 	for (nat i = 0; i < 0xFFFFF; i++) {
 		if ((i & 0xFF) == 0)
 			PLN("Now at " << toHex(i));
@@ -63,7 +62,7 @@ void testPush(Arena &arena) {
 		l << pop(eax);
 		l << ret(4);
 
-		b.set(l);
+		Binary b(arena, L"TestFn", l);
 
 		typedef cpuInt (*fn)();
 		fn p = (fn)b.getData();
@@ -110,8 +109,7 @@ void testFunction(Arena &arena) {
 
 	PLN("Before:" << l);
 
-	Binary output(arena, L"MyFunction");
-	output.set(l);
+	Binary output(arena, L"MyFunction", l);
 
 	typedef cpuInt (*fn)(cpuInt);
 	fn p = (fn)output.getData();
@@ -129,12 +127,12 @@ int _tmain(int argc, _TCHAR* argv[]) {
 
 	Tests::run();
 
-	//testReplace(arena);
+	// Arena arena;
+	// testReplace(arena);
 
-	//testPush(arena);
+	// testPush(arena);
 
-	//testFunction(arena);
-
+	// testFunction(arena);
 
 	return 0;
 }

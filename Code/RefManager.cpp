@@ -71,7 +71,7 @@ namespace code {
 
 		if (candidate == addresses.end())
 			return invalid;
-		
+
 		nat id = candidate->second;
 		Info *info = infoMap.find(id)->second;
 		byte *from = (byte *)info->address;

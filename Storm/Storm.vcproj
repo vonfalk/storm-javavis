@@ -346,6 +346,10 @@
 				RelativePath=".\Basic\BSParams.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Code.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -530,6 +534,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSParams.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Code.h"
 				>
 			</File>
 		</Filter>

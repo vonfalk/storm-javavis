@@ -42,10 +42,7 @@ BEGIN_TEST_(TestException) {
 	l << epilog();
 	l << ret(4);
 
-	PLN("Before:" << l);
-
-	Binary output(arena, L"MyFunction");
-	output.set(l);
+	Binary output(arena, L"MyFunction", l);
 
 	typedef cpuInt (*fn)(cpuInt);
 	fn p = (fn)output.getData();

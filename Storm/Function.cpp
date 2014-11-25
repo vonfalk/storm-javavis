@@ -6,10 +6,14 @@
 namespace storm {
 
 	Function::Function(Value result, const String &name, const vector<Value> &params)
-		: NameOverload(name, params), result(result), source(null) {}
+		: NameOverload(name, params), result(result), lookupRef(null), codeRef(null) {}
 
 	Function::~Function() {
-		delete source;
+		// Correct destruction order.
+		code = null;
+		lookup = null;
+		delete codeRef;
+		delete lookupRef;
 	}
 
 	void *Function::pointer() {
@@ -17,12 +21,37 @@ namespace storm {
 	}
 
 	code::RefSource &Function::ref() {
-		if (!source) {
+		initRefs();
+		return *lookupRef;
+	}
+
+	void Function::setCode(Auto<Code> code) {
+		this->code = code;
+		if (codeRef)
+			code->update(*codeRef);
+	}
+
+	void Function::setLookup(Auto<Code> code) {
+		lookup = code;
+		if (lookupRef)
+			lookup->update(*lookupRef);
+	}
+
+	void Function::initRefs() {
+		if (!codeRef) {
 			assert(("Too early!", parent()));
-			source = new code::RefSource(engine().arena, identifier());
-			initRef(*source);
+			codeRef = new code::RefSource(engine().arena, identifier() + L"<c>");
+			if (code)
+				code->update(*codeRef);
 		}
-		return *source;
+
+		if (!lookupRef) {
+			assert(("Too early!", parent()));
+			lookupRef = new code::RefSource(engine().arena, identifier() + L"<l>");
+			if (!lookup)
+				lookup = CREATE(DelegatedCode, engine(), code::Ref(*codeRef), lookupRef->getTitle());
+			lookup->update(*lookupRef);
+		}
 	}
 
 	void Function::output(wostream &to) const {
@@ -31,21 +60,10 @@ namespace storm {
 		to << ")";
 	}
 
-
-	NativeFunction::NativeFunction(Value result, const String &name, const vector<Value> &params, void *ptr)
-		: Function(result, name, params), fnPtr(ptr) {}
-
-	void NativeFunction::initRef(code::RefSource &ref) {
-		ref.set(fnPtr);
+	Function *nativeFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr) {
+		Function *fn = CREATE(Function, e, result, name, params);
+		fn->setCode(CREATE(StaticCode, e, ptr));
+		return fn;
 	}
-
-	/**
-	 * Lazy function.
-	 */
-
-	LazyFunction::LazyFunction(Value result, const String &name, const vector<Value> &params)
-		: Function(result, name, params) {}
-
-	void LazyFunction::initRef(code::RefSource &ref) {}
 
 }

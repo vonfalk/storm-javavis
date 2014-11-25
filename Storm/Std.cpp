@@ -51,7 +51,7 @@ namespace storm {
 		for (nat i = 0; i < fn->params.size(); i++)
 			params.push_back(findValue(scope, fn->params[i]));
 
-		NativeFunction *toAdd = CREATE(NativeFunction, to, result, fn->name, params, fn->fnPtr);
+		Function *toAdd = nativeFunction(to, result, fn->name, params, fn->fnPtr);
 		try {
 			if (Package *p = as<Package>(into)) {
 				p->add(toAdd);

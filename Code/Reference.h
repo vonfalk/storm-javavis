@@ -2,6 +2,7 @@
 
 #include "RefSource.h"
 #include "Utils/InlineSet.h"
+#include "Utils/Function.h"
 
 namespace code {
 
@@ -51,6 +52,19 @@ namespace code {
 
 		// The last seen address.
 		void *lastAddress;
+	};
+
+
+	/**
+	 * Callback function for a reference.
+	 */
+	class CbReference : public Reference {
+	public:
+		CbReference(RefSource &source, const String &title);
+		CbReference(const Ref &copy, const String &title);
+
+		Fn<void, void*> onChange;
+		virtual void onAddressChanged(void *addr);
 	};
 
 

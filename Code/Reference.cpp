@@ -21,6 +21,13 @@ namespace code {
 		lastAddress = newAddress;
 	}
 
+	CbReference::CbReference(RefSource &source, const String &title) : Reference(source, title) {}
+	CbReference::CbReference(const Ref &copy, const String &title) : Reference(copy, title) {}
+
+	void CbReference::onAddressChanged(void *a) {
+		onChange(a);
+	}
+
 	Ref::Ref() : arena(null), referring(0) {}
 
 	Ref::Ref(RefSource &source) : arena(&source.arena), referring(source.getId()) {

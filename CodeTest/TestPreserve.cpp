@@ -11,7 +11,6 @@ BEGIN_TEST(TestPreserve) {
 	l << epilog();
 	l << ret(4);
 
-	Binary b(arena, L"TestPreserve");
-	b.set(l);
+	Binary b(arena, L"TestPreserve", l);
 	CHECK_EQ(callFn(b.getData(), 0), 0x00);
 } END_TEST

@@ -1,8 +1,9 @@
 #pragma once
 #include "Overload.h"
-#include "Code/RefSource.h"
+#include "Code.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	class Type;
 
@@ -34,61 +35,40 @@ namespace storm {
 		// Function result.
 		const Value result;
 
+
 		// Get the code for this function. Do not assume it is static! Use
 		// 'ref' if you are doing anything more than one function call!
 		void *pointer();
 
-		// Get the reference we are providing.
+		// Get the reference we are providing. This reference will always
+		// refer some lookup function if that is needed for this function
+		// call. It will be updated to match as well.
 		code::RefSource &ref();
+
+		// Code to be executed.
+		void setCode(Auto<Code> code);
+
+		// Set lookup code. (default one provided!)
+		void setLookup(Auto<Code> lookup);
 
 	protected:
 		virtual void output(wostream &to) const;
 
-		// Overload called when the reference is first needed.
-		virtual void initRef(code::RefSource &ref) = 0;
-
 	private:
-		// The reference we are providing. Initialized when needed since we do not have enough
-		// information in the constructor.
-		code::RefSource *source;
+		// Two references. One is for the lookup function, and one is for the actual
+		// code to be executed. Initialized when needed because of lack of information in the ctor.
+		code::RefSource *lookupRef;
+		code::RefSource *codeRef;
+
+		// Current code to be executed.
+		Auto<Code> code;
+		Auto<Code> lookup;
+
+		// Initialize references if needed.
+		void initRefs();
 	};
 
 
-	/**
-	 * Describes a pre-compiled (native) function. These objects are just a function pointer
-	 * along with some metadata.
-	 */
-	class NativeFunction : public Function {
-		STORM_CLASS;
-	public:
-		// Create a native function.
-		NativeFunction(Value result, const String &name, const vector<Value> &params, void *ptr);
-
-	protected:
-		// Initref
-		virtual void initRef(code::RefSource &ref);
-
-	private:
-		// Pointer to the pre-compiled function.
-		void *fnPtr;
-	};
-
-
-	/**
-	 * A function that will be generated when needed. Overload the 'update' function
-	 * to make it work. Note that 'update' may be called more than once in case of
-	 * something else causing the generated code to be invalidated (this is not yet
-	 * implemented).
-	 */
-	class LazyFunction : public Function {
-		STORM_CLASS;
-	public:
-		LazyFunction(Value result, const String &name, const vector<Value> &params);
-
-	protected:
-		// Initialize reference.
-		void initRef(code::RefSource &ref);
-
-	};
-
+	// Create a function referring a pre-compiled function.
+	Function *nativeFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr);
 }

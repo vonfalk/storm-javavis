@@ -9,6 +9,12 @@ cppVTable_storm__Type proto
 ??_7BoolType@storm@@6B@ proto syscall
 cppVTable_storm__BoolType proto
 
+??_7Code@storm@@6B@ proto syscall
+cppVTable_storm__Code proto
+
+??_7DelegatedCode@storm@@6B@ proto syscall
+cppVTable_storm__DelegatedCode proto
+
 ??_7FileReader@storm@@6B@ proto syscall
 cppVTable_storm__FileReader proto
 
@@ -21,8 +27,8 @@ cppVTable_storm__Function proto
 ??_7IntType@storm@@6B@ proto syscall
 cppVTable_storm__IntType proto
 
-??_7LazyFunction@storm@@6B@ proto syscall
-cppVTable_storm__LazyFunction proto
+??_7LazyCode@storm@@6B@ proto syscall
+cppVTable_storm__LazyCode proto
 
 ??_7NameLookup@storm@@6B@ proto syscall
 cppVTable_storm__NameLookup proto
@@ -35,9 +41,6 @@ cppVTable_storm__Named proto
 
 ??_7NatType@storm@@6B@ proto syscall
 cppVTable_storm__NatType proto
-
-??_7NativeFunction@storm@@6B@ proto syscall
-cppVTable_storm__NativeFunction proto
 
 ??_7Object@storm@@6B@ proto syscall
 cppVTable_storm__Object proto
@@ -65,6 +68,9 @@ cppVTable_storm__SScope proto
 
 ??_7SStr@storm@@6B@ proto syscall
 cppVTable_storm__SStr proto
+
+??_7StaticCode@storm@@6B@ proto syscall
+cppVTable_storm__StaticCode proto
 
 ??_7Str@storm@@6B@ proto syscall
 cppVTable_storm__Str proto
@@ -121,6 +127,16 @@ cppVTable_storm__BoolType proc
 	ret
 cppVTable_storm__BoolType endp
 
+cppVTable_storm__Code proc
+	mov eax, ??_7Code@storm@@6B@
+	ret
+cppVTable_storm__Code endp
+
+cppVTable_storm__DelegatedCode proc
+	mov eax, ??_7DelegatedCode@storm@@6B@
+	ret
+cppVTable_storm__DelegatedCode endp
+
 cppVTable_storm__FileReader proc
 	mov eax, ??_7FileReader@storm@@6B@
 	ret
@@ -141,10 +157,10 @@ cppVTable_storm__IntType proc
 	ret
 cppVTable_storm__IntType endp
 
-cppVTable_storm__LazyFunction proc
-	mov eax, ??_7LazyFunction@storm@@6B@
+cppVTable_storm__LazyCode proc
+	mov eax, ??_7LazyCode@storm@@6B@
 	ret
-cppVTable_storm__LazyFunction endp
+cppVTable_storm__LazyCode endp
 
 cppVTable_storm__NameLookup proc
 	mov eax, ??_7NameLookup@storm@@6B@
@@ -165,11 +181,6 @@ cppVTable_storm__NatType proc
 	mov eax, ??_7NatType@storm@@6B@
 	ret
 cppVTable_storm__NatType endp
-
-cppVTable_storm__NativeFunction proc
-	mov eax, ??_7NativeFunction@storm@@6B@
-	ret
-cppVTable_storm__NativeFunction endp
 
 cppVTable_storm__Object proc
 	mov eax, ??_7Object@storm@@6B@
@@ -215,6 +226,11 @@ cppVTable_storm__SStr proc
 	mov eax, ??_7SStr@storm@@6B@
 	ret
 cppVTable_storm__SStr endp
+
+cppVTable_storm__StaticCode proc
+	mov eax, ??_7StaticCode@storm@@6B@
+	ret
+cppVTable_storm__StaticCode endp
 
 cppVTable_storm__Str proc
 	mov eax, ??_7Str@storm@@6B@

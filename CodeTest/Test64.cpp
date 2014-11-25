@@ -17,8 +17,7 @@ BEGIN_TEST(Test64Asm) {
 	l << epilog();
 	l << ret(8);
 
-	Binary b(arena, L"Test64Asm");
-	b.set(l);
+	Binary b(arena, L"Test64Asm", l);
 	CHECK_EQ(callFn(b.getData(), int64(0)), 0xBBBBBBBBBB);
 
 } END_TEST
@@ -39,8 +38,7 @@ BEGIN_TEST(Test64Preserve) {
 	l << epilog();
 	l << ret(8);
 
-	Binary b(arena, L"Test64Preserve");
-	b.set(l);
+	Binary b(arena, L"Test64Preserve", l);
 	CHECK_EQ(callFn(b.getData(), int64(0)), 0x123456789A);
 } END_TEST
 
