@@ -6,6 +6,8 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class Function;
+
 	/**
 	 * Code is a block of machine code belonging to a function. This code
 	 * takes parameters as described by the Function it belongs to.
@@ -15,6 +17,15 @@ namespace storm {
 	class Code : public Object {
 		STORM_CLASS;
 	public:
+		Code();
+
+		// Attach to a specific function. Done by the function itself
+		// before 'update' is called.
+		void attach(Function *owner);
+
+		// Detach the old owner.
+		void detach();
+
 		// Set up the RefSource. This 'ref' shall be kept updated until the
 		// destruction of this object or when 'update' is called with another
 		// object.
@@ -26,6 +37,9 @@ namespace storm {
 
 		// The reference to update.
 		code::RefSource *toUpdate;
+
+		// Owning function.
+		Function *owner;
 	};
 
 
@@ -54,11 +68,37 @@ namespace storm {
 	class LazyCode : public Code {
 		STORM_CLASS;
 	public:
-		STORM_CTOR LazyCode() {}
+		// The 'generate' function will be called when code needs to be updated.
+		LazyCode(const Fn<code::Listing, void> &generate);
+
+		// Dtor.
+		~LazyCode();
 
 	protected:
 		// Update ref.
 		virtual void newRef();
+
+	private:
+		// Currently used code.
+		code::Binary *code;
+
+		// Generate code using this function.
+		Fn<code::Listing, void> load;
+
+		// Code loaded?
+		bool loaded;
+
+		// Loading code?
+		bool loading;
+
+		// Create redirection code.
+		void createRedirect();
+
+		// Called to update code.
+		static const void *CODECALL updateCode(LazyCode *c);
+
+		// Create a Binary from a Listing.
+		void setCode(const code::Listing &listing);
 	};
 
 

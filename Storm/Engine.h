@@ -5,6 +5,7 @@
 #include "Package.h"
 #include "Scope.h"
 #include "Code/Arena.h"
+#include "Code/Binary.h"
 
 namespace storm {
 
@@ -40,6 +41,15 @@ namespace storm {
 		// Arena.
 		code::Arena arena;
 
+		// Reference to the addRef and release functions.
+		code::RefSource addRef, release;
+
+		// Other references.
+		code::RefSource lazyCodeFn;
+
+		// Delete old code later.
+		void destroy(code::Binary *binary);
+
 	private:
 		// Path to root directory.
 		Path rootPath;
@@ -58,6 +68,9 @@ namespace storm {
 
 		// Initialized?
 		bool inited;
+
+		// Binary objects to destroy. TODO: Be more eager!
+		vector<code::Binary *> toDestroy;
 
 		// Set T to the type, reporting any errors.
 		void setType(Type *&t, const String &name);

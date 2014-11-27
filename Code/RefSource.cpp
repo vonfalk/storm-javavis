@@ -14,8 +14,10 @@ namespace code {
 	}
 
 	void RefSource::set(void *address, nat size) {
-		lastAddress = address;
-		arena.refManager.setAddress(referenceId, address, size);
+		if (lastAddress != address) {
+			lastAddress = address;
+			arena.refManager.setAddress(referenceId, address, size);
+		}
 	}
 
 }

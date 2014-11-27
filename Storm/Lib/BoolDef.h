@@ -11,6 +11,8 @@ namespace storm {
 		virtual nat size() const {
 			return sizeof(storm::Bool);
 		}
+
+		virtual bool isBuiltIn() const { return true; }
 	};
 
 

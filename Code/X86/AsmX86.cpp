@@ -28,25 +28,25 @@ namespace code {
 			assert(instr.size() == 4); // more comes later!
 			const Value &src = instr.src();
 			switch (src.type()) {
-				case Value::tConstant:
-					if (singleByte(src.constant())) {
-						to.putByte(0x6A);
-						to.putByte(Byte(src.constant() & 0xFF));
-					} else {
-						to.putByte(0x68);
-						to.putInt(cpuNat(src.constant()));
-					}
-					break;
-				case Value::tRegister:
-					to.putByte(0x50 + registerId(src.reg()));
-					break;
-				case Value::tRelative:
-					to.putByte(0xFF);
-					modRm(to, 6, src);
-					break;
-				default:
-					assert(false);
-					break;
+			case Value::tConstant:
+				if (singleByte(src.constant())) {
+					to.putByte(0x6A);
+					to.putByte(Byte(src.constant() & 0xFF));
+				} else {
+					to.putByte(0x68);
+					to.putInt(cpuNat(src.constant()));
+				}
+				break;
+			case Value::tRegister:
+				to.putByte(0x50 + registerId(src.reg()));
+				break;
+			case Value::tRelative:
+				to.putByte(0xFF);
+				modRm(to, 6, src);
+				break;
+			default:
+				assert(false);
+				break;
 			}
 		}
 
@@ -54,45 +54,52 @@ namespace code {
 			assert(instr.size() == 4); // more comes later!
 			const Value &dest = instr.dest();
 			switch (dest.type()) {
-				case Value::tRegister:
-					to.putByte(0x58 + registerId(dest.reg()));
-					break;
-				case Value::tRelative:
-					to.putByte(0x8F);
-					modRm(to, 0, dest);
-					break;
-				default:
-					assert(false);
-					break;
+			case Value::tRegister:
+				to.putByte(0x58 + registerId(dest.reg()));
+				break;
+			case Value::tRelative:
+				to.putByte(0x8F);
+				modRm(to, 0, dest);
+				break;
+			default:
+				assert(false);
+				break;
 			}
 		}
 
-		static void jmpCall(byte opCode, Arena &arena, Output &output, const Value &src) {
+		static void jmpCall(bool call, Arena &arena, Output &output, const Value &src) {
+			byte opCode = call ? 0xE8 : 0xE9;
+
 			switch (src.type()) {
-				case Value::tConstant:
-					output.putByte(opCode);
-					output.putRelative(cpuNat(src.constant()));
-					break;
-				case Value::tLabel:
-					output.putByte(opCode);
-					output.putRelative(src.label());
-					break;
-				case Value::tReference:
-					output.putByte(opCode);
-					output.putRelative(src.reference());
-					break;
-				default:
-					assert(false);
-					break;
+			case Value::tConstant:
+				output.putByte(opCode);
+				output.putRelative(cpuNat(src.constant()));
+				break;
+			case Value::tLabel:
+				output.putByte(opCode);
+				output.putRelative(src.label());
+				break;
+			case Value::tReference:
+				output.putByte(opCode);
+				output.putRelative(src.reference());
+				break;
+			case Value::tRegister:
+				output.putByte(0xFF);
+				modRm(output, call ? 2 : 4, src);
+				break;
+			default:
+				PLN(L"jmpCall not implemented for " << src);
+				assert(false);
+				break;
 			}
 		}
 
 		void jmp(Output &to, Params p, const Instruction &instr) {
-			jmpCall(0xE9, p.arena, to, instr.src());
+			jmpCall(false, p.arena, to, instr.src());
 		}
 
 		void call(Output &to, Params p, const Instruction &instr) {
-			jmpCall(0xE8, p.arena, to, instr.src());
+			jmpCall(true, p.arena, to, instr.src());
 		}
 
 		void ret(Output &to, Params p, const Instruction &instr) {
@@ -222,15 +229,15 @@ namespace code {
 		void dat(Output &to, Params p, const Instruction &instr) {
 			const Value &v = instr.src();
 			switch (v.type()) {
-				case Value::tConstant:
-					to.putSize(v.constant(), v.sizeType());
-					return;
-				case Value::tLabel:
-					to.putAddress(v.label());
-					return;
-				case Value::tReference:
-					to.putAddress(v.reference());
-					return;
+			case Value::tConstant:
+				to.putSize(v.constant(), v.sizeType());
+				return;
+			case Value::tLabel:
+				to.putAddress(v.label());
+				return;
+			case Value::tReference:
+				to.putAddress(v.reference());
+				return;
 			}
 			assert(false);
 		}

@@ -58,7 +58,7 @@ namespace storm {
 				nat s = superSize();
 				// re-compute our size.
 				// NOTE: base-classes must be able to propagate size-changes to children!
-				TODO(L"Implement me!");
+				TODO(L"Implement me! (for " << identifier() << ")");
 			}
 		}
 		return mySize;

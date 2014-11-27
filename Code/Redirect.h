@@ -19,7 +19,10 @@ namespace code {
 		Redirect();
 
 		// Add a parameter to the function.
-		void param(nat size , Ref dtor);
+		void param(nat size, Ref dtor);
+
+		// Set return value.
+		void result(nat size, bool builtIn);
 
 		// Create the code (platform dependent).
 		Listing code(const Value &fn, const Value &param);
@@ -33,6 +36,12 @@ namespace code {
 
 		// Parameters.
 		vector<Param> params;
+
+		// Result size.
+		nat resultSize;
+
+		// Result built into the C++ compiler?
+		bool resultBuiltIn;
 	};
 
 }

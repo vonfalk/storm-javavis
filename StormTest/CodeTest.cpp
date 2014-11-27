@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Storm/Function.h"
+#include "Code/Function.h"
 
 BEGIN_TEST(CodeTest) {
 
@@ -14,12 +15,10 @@ BEGIN_TEST(CodeTest) {
 
 	Function *fun = as<Function>(engine.scope()->find(Name(L"test.bs.bar"), vector<Value>()));
 	CHECK(fun);
-	typedef Int (*VoidFn)();
-	VoidFn *fn = (VoidFn *)fun->pointer();
+	void *fn = fun->pointer();
+	CHECK(fn);
 	if (fn) {
-		CHECK_EQ((*fn)(), 3);
-	} else {
-		CHECK(fn);
+		CHECK_EQ(code::FnCall().call<Int>(fn), 3);
 	}
 
 } END_TEST

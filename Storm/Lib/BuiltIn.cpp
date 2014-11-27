@@ -308,7 +308,6 @@ namespace storm {
 			{ Name(L""), L"TypeName", Name(L"TypeName"), L"__ctor", list(2, Name(L"Type"), Name(L"core.lang.SStr")), address(&create2<storm::bs::TypeName, storm::SStr *>) },
 			{ Name(L""), L"TypeName", Name(L"TypeName"), L"__ctor", list(3, Name(L"Type"), Name(L"PkgName"), Name(L"core.lang.SStr")), address(&create3<storm::bs::TypeName, storm::bs::PkgName *, storm::SStr *>) },
 			{ Name(L"lang.bnf"), L"Reader", Name(L"lang.bnf.Reader"), L"__ctor", list(3, Name(L"Type"), Name(L"lang.PkgFiles"), Name(L"Package")), address(&create3<storm::bnf::Reader, storm::PkgFiles *, storm::Package *>) },
-			{ Name(L"core.lang"), L"LazyCode", Name(L"core.lang.LazyCode"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::LazyCode>) },
 			{ Name(L"lang.simple"), L"SScope", Name(L"lang.simple.SScope"), L"__ctor", list(1, Name(L"Type")), address(&create1<storm::SScope>) },
 			{ Name(L"lang.simple"), L"SScope", Name(), L"expr", list(1, Name(L"lang.simple.SExpr")), address<void(CODECALL storm::SScope::*)(storm::Auto<storm::SExpr>)>(&storm::SScope::expr) },
 			{ Name(L"lang.simple"), null, Name(L"lang.simple.SExpr"), L"sOperator", list(3, Name(L"lang.simple.SExpr"), Name(L"lang.simple.SExpr"), Name(L"core.lang.SStr")), address<storm::SExpr *(CODECALL *)(storm::Auto<storm::SExpr>, storm::Auto<storm::SExpr>, storm::Auto<storm::SStr>)>(&storm::sOperator) },

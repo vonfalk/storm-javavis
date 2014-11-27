@@ -5,7 +5,13 @@
 
 namespace storm {
 
-	Engine::Engine(const Path &root) : inited(false), rootPath(root), rootScope(null) {
+	Engine::Engine(const Path &root)
+		: inited(false), rootPath(root), rootScope(null),
+		  arena(), addRef(arena, L"addRef"), release(arena, L"release"), lazyCodeFn(arena, L"lazyUpdate") {
+
+		addRef.set(address(&Object::addRef));
+		release.set(address(&Object::release));
+
 		createStdTypes(*this, cached);
 
 		// Now, all the types are created, so we can create packages!
@@ -31,6 +37,9 @@ namespace storm {
 		cached.clear();
 
 		t->release();
+
+		TODO(L"Destroy these earlier if possible!"); // We can do this when we have proper threading.
+		clear(toDestroy);
 	}
 
 	Package *Engine::package(const Name &path, bool create) {
@@ -55,6 +64,10 @@ namespace storm {
 		}
 
 		return createPackage(next, path, pos + 1);
+	}
+
+	void Engine::destroy(code::Binary *b) {
+		toDestroy.push_back(b);
 	}
 
 }

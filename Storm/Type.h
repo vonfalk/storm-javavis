@@ -33,7 +33,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// If size == 0, it will be automatically computed based on members. Size
-		// is mainly used to denote built-in classes. TODO: Remove engine from ctor?
+		// is mainly used to denote built-in classes.
 		Type(const String &name, TypeFlags flags, nat size = 0);
 		~Type();
 
@@ -74,6 +74,9 @@ namespace storm {
 
 		// Clear contents. Mainly used for clean exits.
 		void clear();
+
+		// Is this a type built in into the C++ compiler? These are handled differently in cdecl.
+		virtual bool isBuiltIn() const { return false; }
 
 	protected:
 		virtual void output(wostream &to) const;

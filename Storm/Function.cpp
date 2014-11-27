@@ -26,12 +26,18 @@ namespace storm {
 	}
 
 	void Function::setCode(Auto<Code> code) {
+		if (this->code)
+			this->code->detach();
+		code->attach(this);
 		this->code = code;
 		if (codeRef)
 			code->update(*codeRef);
 	}
 
 	void Function::setLookup(Auto<Code> code) {
+		if (lookup)
+			lookup->detach();
+		code->attach(this);
 		lookup = code;
 		if (lookupRef)
 			lookup->update(*lookupRef);

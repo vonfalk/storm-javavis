@@ -43,7 +43,11 @@ namespace storm {
 		private:
 			// Code.
 			Auto<Str> contents;
+
+			// Generate code.
+			code::Listing generateCode();
 		};
+
 
 	}
 }

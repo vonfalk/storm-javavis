@@ -122,6 +122,7 @@ namespace code {
 		friend Value wordConst(Word v);
 		friend Value intPtrConst(Int v);
 		friend Value natPtrConst(Nat v);
+		friend Value ptrConst(void *v);
 		friend Value byteRel(Register reg, int offset);
 		friend Value intRel(Register reg, int offset);
 		friend Value longRel(Register reg, int offset);
@@ -143,6 +144,7 @@ namespace code {
 	// size_t like constants. Cannot be more than 32-bits for compatibility.
 	Value intPtrConst(Int v);
 	Value natPtrConst(Nat v);
+	Value ptrConst(void *v); // careful with this, will break miserably if serialized and loaded.
 
 	// Create relative values.
 	Value byteRel(Register reg, int offset);

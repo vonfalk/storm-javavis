@@ -184,7 +184,7 @@ namespace code {
 		assert(valType == tLabel);
 		return Label(labelId);
 	}
-	
+
 	Ref Value::reference() const {
 		assert(valType == tReference);
 		return iReference;
@@ -214,7 +214,7 @@ namespace code {
 	Value wordConst(Word v) { return Value(Word(v), 8); }
 	Value intPtrConst(Int v) { return Value(Word(v), 0); }
 	Value natPtrConst(Nat v) { return Value(Word(v), 0); }
-
+	Value ptrConst(void *v) { return Value(Word(v), 0); }
 
 	Value byteRel(Register reg, int offset) { return Value(reg, offset, 1); }
 	Value intRel(Register reg, int offset) { return Value(reg, offset, 4); }

@@ -1,4 +1,5 @@
 #pragma once
+#include "Code/Reference.h"
 
 namespace storm {
 
@@ -20,6 +21,16 @@ namespace storm {
 
 		// The type referred.
 		Type *type;
+
+		// Get the size of this type (always returns 0 for pointers, like Code does).
+		nat size() const;
+
+		// Get the destructor for this type. A destructor has the signature void dtor(T).
+		// TODO: What to return if no dtor?
+		code::Ref destructor() const;
+
+		// Is this type built into the C++ compiler?
+		bool isBuiltIn() const;
 
 		// Can this value store a type of 'x'?
 		bool canStore(Type *x) const;

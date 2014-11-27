@@ -10,6 +10,31 @@ namespace storm {
 
 	Value::Value(Type *t) : type(t) {}
 
+	nat Value::size() const {
+		if (type->flags & typeClass) {
+			return 0; // by pointer
+		} else {
+			return type->size();
+		}
+	}
+
+	bool Value::isBuiltIn() const {
+		if (type->flags & typeClass) {
+			return true; // by pointer
+		} else {
+			return type->isBuiltIn();
+		}
+	}
+
+	code::Ref Value::destructor() const {
+		if (type->flags & typeClass) {
+			return code::Ref(type->engine.release);
+		} else {
+			TODO(L"Implement!");
+			assert(false);
+		}
+	}
+
 	bool Value::canStore(Type *x) const {
 		return x->isA(type);
 	}

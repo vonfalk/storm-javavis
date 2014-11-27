@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "BSFunction.h"
+#include "Code/Instruction.h"
 
 namespace storm {
 
@@ -21,6 +22,17 @@ namespace storm {
 
 
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params, Auto<Str> contents)
-		: Function(result, name, params), contents(contents) {}
+		: Function(result, name, params), contents(contents) {
+
+		setCode(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode)));
+	}
+
+	code::Listing bs::BSFunction::generateCode() {
+		using namespace code;
+		Listing l;
+		l << mov(eax, natConst(2));
+		l << ret(4);
+		return l;
+	}
 
 }
