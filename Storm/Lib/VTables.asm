@@ -84,14 +84,26 @@ cppVTable_storm__bnf__Reader proto
 ??_7BSFunction@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__BSFunction proto
 
+??_7Block@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__Block proto
+
 ??_7Class@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__Class proto
+
+??_7Constant@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__Constant proto
 
 ??_7Contents@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__Contents proto
 
+??_7Expr@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__Expr proto
+
 ??_7File@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__File proto
+
+??_7FnBody@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__FnBody proto
 
 ??_7FunctionDecl@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__FunctionDecl proto
@@ -252,20 +264,40 @@ cppVTable_storm__bs__BSFunction proc
 	ret
 cppVTable_storm__bs__BSFunction endp
 
+cppVTable_storm__bs__Block proc
+	mov eax, ??_7Block@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__Block endp
+
 cppVTable_storm__bs__Class proc
 	mov eax, ??_7Class@bs@storm@@6B@
 	ret
 cppVTable_storm__bs__Class endp
+
+cppVTable_storm__bs__Constant proc
+	mov eax, ??_7Constant@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__Constant endp
 
 cppVTable_storm__bs__Contents proc
 	mov eax, ??_7Contents@bs@storm@@6B@
 	ret
 cppVTable_storm__bs__Contents endp
 
+cppVTable_storm__bs__Expr proc
+	mov eax, ??_7Expr@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__Expr endp
+
 cppVTable_storm__bs__File proc
 	mov eax, ??_7File@bs@storm@@6B@
 	ret
 cppVTable_storm__bs__File endp
+
+cppVTable_storm__bs__FnBody proc
+	mov eax, ??_7FnBody@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__FnBody endp
 
 cppVTable_storm__bs__FunctionDecl proc
 	mov eax, ??_7FunctionDecl@bs@storm@@6B@

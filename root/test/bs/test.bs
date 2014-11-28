@@ -9,6 +9,6 @@ create() {
 }
 
 Int bar() {
-return 3;
+3;
 }
 

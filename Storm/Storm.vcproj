@@ -350,6 +350,14 @@
 				RelativePath=".\Code.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSBlock.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSExpr.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -538,6 +546,14 @@
 			</File>
 			<File
 				RelativePath=".\Code.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSBlock.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSExpr.h"
 				>
 			</File>
 		</Filter>

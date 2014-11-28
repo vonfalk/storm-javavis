@@ -120,8 +120,8 @@ namespace storm {
 		// Same point?
 		inline bool operator ==(const OptionIter &o) const {
 			return optionP == o.optionP
-				&& tokenId == o.tokenId
-				&& repCount == o.repCount;
+				&& tokenId == o.tokenId;
+			/* && repCount == o.repCount; Prevents infinite repetitions of zero-rules, but lies a little. */
 		}
 		inline bool operator !=(const OptionIter &o) const {
 			return !(*this == o);

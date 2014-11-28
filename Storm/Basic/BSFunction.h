@@ -2,6 +2,8 @@
 #include "Std.h"
 #include "Basic/BSParams.h"
 #include "Function.h"
+#include "BSBlock.h"
+#include "BSExpr.h"
 
 namespace storm {
 	namespace bs {
@@ -48,6 +50,17 @@ namespace storm {
 			code::Listing generateCode();
 		};
 
+
+		/**
+		 * Contents of a function.
+		 */
+		class FnBody : public Block {
+			STORM_CLASS;
+		public:
+			STORM_CTOR FnBody();
+
+			void expr(Auto<Expr> s);
+		};
 
 	}
 }
