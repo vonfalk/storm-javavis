@@ -28,6 +28,7 @@ namespace storm {
 			into = p;
 			scope->top = p;
 		} else {
+
 			into = to.scope()->find(fn->pkg + Name(fn->typeMember));
 			scope->top = as<NameLookup>(into);
 			if (!into || !scope->top)

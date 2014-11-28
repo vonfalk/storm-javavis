@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\BuiltIn.template.cpp $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -99,7 +99,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\BuiltIn.template.cpp $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -211,11 +211,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Basic\BSScope.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Basic\BSType.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Lib\BuiltIn.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\BuiltIn.template.cpp"
 				>
 			</File>
 			<File
@@ -358,10 +366,6 @@
 				RelativePath=".\Test\VTest.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\Basic\BSScope.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -418,6 +422,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSReader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSScope.h"
 				>
 			</File>
 			<File
@@ -558,10 +566,6 @@
 			</File>
 			<File
 				RelativePath=".\Test\VTest.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSScope.h"
 				>
 			</File>
 		</Filter>

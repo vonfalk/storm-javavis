@@ -10,4 +10,4 @@ struct FileData {
 	String headerList;
 };
 
-void update(const Path &outFile, const Path &asmFile, const FileData &data);
+void update(const Path &inFile, const Path &outFile, const Path &asmFile, const FileData &data);

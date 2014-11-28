@@ -61,7 +61,9 @@ vector<String> readFile(const Path &file, const FileData &data) {
 
 	while (r->more()) {
 		String line = r->getLine();
-		if (line.find(L"// BEGIN LIST") != String::npos) {
+		if (line.find(L"#ifdef IGNORE_THIS_FILE") != String::npos) {
+		} else if (line.find(L"#endif") != String::npos) {
+		} else if (line.find(L"// BEGIN LIST") != String::npos) {
 			keep = false;
 			lines.push_back(line);
 			addLines(lines, data.functionList, indentation(line));
@@ -112,11 +114,11 @@ void writeFile(const Path &to, const vector<String> &lines, FileFmt format) {
 	delete w;
 }
 
-void update(const Path &outFile, const Path &asmFile, const FileData &data) {
-	FileFmt fmt = fileFmt(outFile);
+void update(const Path &inFile, const Path &outFile, const Path &asmFile, const FileData &data) {
+	FileFmt fmt = fileFmt(inFile);
 
 	{
-		vector<String> lines = readFile(outFile, data);
+		vector<String> lines = readFile(inFile, data);
 		writeFile(outFile, lines, fmt);
 	}
 

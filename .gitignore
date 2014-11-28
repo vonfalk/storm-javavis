@@ -55,3 +55,7 @@ ReadMe.txt
 *.aps
 
 \#*\#
+
+# Generated files
+Storm/Lib/BuiltIn.cpp
+Storm/Lib/VTables.asm

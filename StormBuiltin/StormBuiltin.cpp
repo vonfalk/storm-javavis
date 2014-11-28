@@ -73,6 +73,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	Path root = Path::executable() + Path(L"../Storm/");
 	Path scanDir = root;
 
+	Path input = root + Path(L"Lib/BuiltIn.template.cpp");
 	Path output = root + Path(L"Lib/BuiltIn.cpp");
 	Path asmOutput = root + Path(L"Lib/VTables.asm");
 
@@ -80,25 +81,26 @@ int _tmain(int argc, _TCHAR* argv[]) {
 #else
 
 	// Inputs
-	Path root, scanDir;
+	Path root, scanDir, input;
 	// Outputs
 	Path output, asmOutput;
 
 	if (argc < 4) {
-		std::wcout << L"Error: <root> <scanDir> <update> [<asmOutput>] required!" << std::endl;
+		std::wcout << L"Error: <root> <scanDir> <input> <output> [<asmOutput>] required!" << std::endl;
 		return 1;
 	}
 
 	root = Path(String(argv[1]));
 	scanDir = Path(String(argv[2]));
-	output = Path(String(argv[3]));
+	input = Path(String(argv[3]));
+	output = Path(String(argv[4]));
 
 	bool forceUpdate = false;
 #endif
 
 	Timestamp outputModified = output.mTime();
-	if (argc >= 5) {
-		asmOutput = Path(String(argv[4]));
+	if (argc >= 6) {
+		asmOutput = Path(String(argv[5]));
 		limitMin(outputModified, asmOutput.mTime());
 	}
 
@@ -109,8 +111,13 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	}
 
 	Timestamp inputModified = lastTime(headers);
+	limitMin(inputModified, input.mTime());
 
-	if (inputModified <= outputModified && !forceUpdate) {
+	bool toDate = inputModified <= outputModified;
+	toDate &= !forceUpdate;
+	toDate &= output.exists();
+
+	if (toDate) {
 		std::wcout << L"Already up to date!" << std::endl;
 	} else {
 		try {
@@ -122,7 +129,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 			d.functionList = functionList(headers, t);
 			d.headerList = headerList(headers, root);
 
-			update(output, asmOutput, d);
+			update(input, output, asmOutput, d);
 		} catch (const Exception &e) {
 			std::wcout << L"Error: " << e.what() << endl;
 			clear(headers);
