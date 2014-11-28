@@ -31,8 +31,8 @@ namespace storm {
 		return Name(p);
 	}
 
-	Value bs::TypeName::value(const Scope &scope) {
-		Named *n = scope.find(getName());
+	Value bs::TypeName::value(Auto<Scope> scope) {
+		Named *n = scope->find(getName());
 		if (Type *t = as<Type>(n)) {
 			return Value(t);
 		} else {

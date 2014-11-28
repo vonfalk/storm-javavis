@@ -29,6 +29,9 @@ namespace storm {
 		virtual void output(wostream &to) const;
 
 	private:
+		// Added packages.
+		set<Package *> added;
+
 		// Syntax rules.
 		typedef hash_map<String, SyntaxRule *> RMap;
 		RMap rules;

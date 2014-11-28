@@ -42,6 +42,9 @@ namespace code {
 			return;
 
 		Info *info = i->second;
+		if (info->lightCount != 0 || !info->references.empty()) {
+			PLN(info->source->getTitle() << L" still has live references!");
+		}
 		assert(info->lightCount == 0);
 		assert(info->references.empty());
 		infoMap.erase(id);

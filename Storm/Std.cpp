@@ -9,8 +9,8 @@
 
 namespace storm {
 
-	static Value findValue(const Scope &src, const Name &name) {
-		Named *f = src.find(name);
+	static Value findValue(const Scope *src, const Name &name) {
+		Named *f = src->find(name);
 		if (Type *t = as<Type>(f))
 			return Value(t);
 
@@ -19,17 +19,18 @@ namespace storm {
 
 	static void addBuiltIn(Engine &to, const BuiltInFunction *fn) {
 		Named *into = null;
-		Scope scope(null);
+		Auto<Scope> scope = CREATE(Scope, to, null);
+
 		if (!fn->typeMember) {
 			Package *p = to.package(fn->pkg, true);
 			if (!p)
 				throw BuiltInError(L"Failed to locate package " + toS(fn->pkg));
 			into = p;
-			scope.top = p;
+			scope->top = p;
 		} else {
 			into = to.scope()->find(fn->pkg + Name(fn->typeMember));
-			scope.top = as<NameLookup>(into);
-			if (!into || !scope.top)
+			scope->top = as<NameLookup>(into);
+			if (!into || !scope->top)
 				throw BuiltInError(L"Could not locate " + String(fn->typeMember) + L" in " + toS(fn->pkg));
 		}
 
@@ -46,10 +47,10 @@ namespace storm {
 		}
 
 		if (fn->result.any())
-			result = findValue(scope, fn->result);
+			result = findValue(scope.borrow(), fn->result);
 		params.reserve(fn->params.size());
 		for (nat i = 0; i < fn->params.size(); i++)
-			params.push_back(findValue(scope, fn->params[i]));
+			params.push_back(findValue(scope.borrow(), fn->params[i]));
 
 		Function *toAdd = nativeFunction(to, result, fn->name, params, fn->fnPtr);
 		try {

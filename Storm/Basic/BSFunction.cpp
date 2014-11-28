@@ -14,27 +14,27 @@ namespace storm {
 								Auto<SStr> contents)
 		: pos(pos), name(name), result(result), params(params), contents(contents) {}
 
-	Function *bs::FunctionDecl::asFunction(const Scope &scope) {
+	Function *bs::FunctionDecl::asFunction(Auto<BSScope> scope) {
 		Value result = this->result->value(scope);
 		vector<Value> params(this->params->params.size());
 		for (nat i = 0; i < this->params->params.size(); i++)
 			params.push_back(this->params->params[i]->value(scope));
 
-		return CREATE(BSFunction, this, result, name->v->v, params, contents->v);
+		return CREATE(BSFunction, this, result, name->v->v, params, scope, contents->v);
 	}
 
 
-	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params, Auto<Str> contents)
-		: Function(result, name, params), contents(contents) {
+	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
+							Auto<BSScope> scope, Auto<Str> contents)
+		: Function(result, name, params), scope(scope), contents(contents) {
 
 		setCode(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode)));
 	}
 
 	code::Listing bs::BSFunction::generateCode() {
-		Path file(L"foo.bs");
+		const Path &file = scope->file;
 		SyntaxSet syntax;
-		syntax.add(*engine().package(syntaxPkg(file)));
-		TODO(L"Respect use statements, proper file.");
+		scope->addSyntax(syntax);
 
 		Parser parser(syntax, contents->v);
 		nat r = parser.parse(L"FunctionBody");

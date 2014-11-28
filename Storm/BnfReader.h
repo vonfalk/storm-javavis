@@ -12,7 +12,7 @@ namespace storm {
 	// Read syntax definitions from the given file, and merge them
 	// into the given hash map. Throws an appropriate exception on
 	// failure. Note that no ownership of the SyntaxRule is taken.
-	void parseBnf(SyntaxRules &to, const Path &file, const Scope &scope);
+	void parseBnf(SyntaxRules &to, const Path &file, Auto<Scope> scope);
 
 
 	namespace bnf {

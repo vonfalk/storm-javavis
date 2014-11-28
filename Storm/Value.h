@@ -1,4 +1,5 @@
 #pragma once
+#include "Lib/Auto.h"
 #include "Code/Reference.h"
 
 namespace storm {
@@ -55,6 +56,6 @@ namespace storm {
 	class Name;
 
 	// Find the result type of a function call. Constructor calls are also handled.
-	Value fnResultType(Scope *scope, const Name &fn, const vector<Value> &params);
+	Value fnResultType(Auto<Scope> scope, const Name &fn, const vector<Value> &params);
 
 }

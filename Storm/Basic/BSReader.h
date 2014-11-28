@@ -1,6 +1,7 @@
 #pragma once
 #include "PkgReader.h"
 #include "SyntaxSet.h"
+#include "BSScope.h"
 #include "Basic/BSContents.h"
 
 namespace storm {
@@ -38,6 +39,9 @@ namespace storm {
 			// Get functions.
 			void readFunctions();
 
+			// All included packages, inside a scope.
+			Auto<BSScope> scope;
+
 		private:
 			// The file contents.
 			String fileContents;
@@ -51,9 +55,6 @@ namespace storm {
 			// Contents.
 			Auto<Contents> contents;
 
-			// All included packages.
-			vector<Package *> includes;
-
 			// Read includes from the file.
 			void readIncludes();
 
@@ -62,9 +63,6 @@ namespace storm {
 
 			// Set 'contents' to something good.
 			void readContents();
-
-			// Create a scope.
-			Scope scope();
 		};
 	}
 }

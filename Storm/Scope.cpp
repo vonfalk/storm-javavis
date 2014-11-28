@@ -6,20 +6,25 @@
 
 namespace storm {
 
-	static Package *rootPkg(Package *p) {
+	Package *Scope::firstPkg(NameLookup *l) {
+		while (!as<Package>(l))
+			l = l->parent();
+		return as<Package>(l);
+	}
+
+	Package *Scope::rootPkg(Package *p) {
 		while (p->parent())
 			p = p->parent();
 		return p;
 	}
 
-	static Package *corePkg(NameLookup *l) {
-		while (!as<Package>(l))
-			l = l->parent();
-		Package *root = rootPkg(as<Package>(l));
+	Package *Scope::corePkg(NameLookup *l) {
+		Package *top = firstPkg(l);
+		Package *root = rootPkg(top);
 		return as<Package>(root->find(Name(L"core")));
 	}
 
-	static NameLookup *nextCandidate(NameLookup *prev) {
+	NameLookup *Scope::nextCandidate(NameLookup *prev) {
 		if (Package *pkg = as<Package>(prev)) {
 			// Examine the root next.
 			Package *root = rootPkg(pkg);
@@ -33,11 +38,7 @@ namespace storm {
 		}
 	}
 
-	Scope::Scope(NameLookup *top) : top(top) {
-		if (top)
-			if (Package *core = corePkg(top))
-				extra.push_back(core);
-	}
+	Scope::Scope(Auto<NameLookup> top) : top(top.borrow()) {}
 
 	Named *Scope::find(const Name &name) const {
 		// Regular path.
@@ -46,10 +47,10 @@ namespace storm {
 				return found;
 		}
 
-		for (nat i = 0; i < extra.size(); i++) {
-			if (Named *found = extra[i]->find(name))
+		// Core.
+		if (Package *core = corePkg(top))
+			if (Named *found = core->find(name))
 				return found;
-		}
 
 		// We failed!
 		return null;
@@ -63,6 +64,24 @@ namespace storm {
 		} else {
 			return null;
 		}
+	}
+
+	/**
+	 * Extra
+	 */
+
+	ScopeExtra::ScopeExtra(Auto<NameLookup> lookup) : Scope(lookup) {}
+
+	Named *ScopeExtra::find(const Name &name) const {
+		if (Named *found = Scope::find(name))
+			return found;
+
+		for (nat i = 0; i < extra.size(); i++) {
+			if (Named *found = extra[i]->find(name))
+				return found;
+		}
+
+		return null;
 	}
 
 }

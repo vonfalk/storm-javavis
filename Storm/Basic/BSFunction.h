@@ -4,6 +4,7 @@
 #include "Function.h"
 #include "BSBlock.h"
 #include "BSExpr.h"
+#include "BSScope.h"
 
 namespace storm {
 	namespace bs {
@@ -30,7 +31,7 @@ namespace storm {
 			Auto<SStr> contents;
 
 			// Create a corresponding function.
-			Function *asFunction(const Scope &scope);
+			Function *asFunction(Auto<BSScope> scope);
 		};
 
 
@@ -40,11 +41,15 @@ namespace storm {
 		class BSFunction : public Function {
 			STORM_CLASS;
 		public:
-			BSFunction(Value result, const String &name, const vector<Value> &params, Auto<Str> contents);
+			BSFunction(Value result, const String &name, const vector<Value> &params,
+					Auto<BSScope> scope, Auto<Str> contents);
 
 		private:
 			// Code.
 			Auto<Str> contents;
+
+			// Scope.
+			Auto<BSScope> scope;
 
 			// Generate code.
 			code::Listing generateCode();

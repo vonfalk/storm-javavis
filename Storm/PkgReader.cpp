@@ -2,6 +2,7 @@
 #include "PkgReader.h"
 #include "Lib/Str.h"
 #include "Engine.h"
+#include "Scope.h"
 #include "Exception.h"
 
 namespace storm {
@@ -82,8 +83,7 @@ namespace storm {
 	void FileReader::readFunctions() {}
 
 	Package *FileReader::syntaxPackage() const {
-		Scope *scope = package->engine.scope();
-		return as<Package>(scope->find(syntaxPkg(file)));
+		return package->engine.package(syntaxPkg(file));
 	}
 
 	/**

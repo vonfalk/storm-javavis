@@ -20,6 +20,11 @@ namespace storm {
 
 		// Copy.
 		inline Auto(const Auto<T> &from) : obj(from.obj) { obj->addRef(); }
+
+		// Downcast.
+		template <class U>
+		inline Auto(const Auto<U> &from) : obj(from.borrow()) { obj->addRef(); }
+
 		inline Auto<T> &operator =(const Auto<T> &from) {
 			obj->release();
 			obj = from.obj;
@@ -35,7 +40,7 @@ namespace storm {
 			return Auto<Object>(obj);
 		}
 
-		// Casting.
+		// Upcasting.
 		template <class U>
 		inline Auto<U> as() {
 			U *o = ::as<U>(obj);
@@ -79,5 +84,12 @@ namespace storm {
 		else
 			to << L"null";
 		return to;
+	}
+
+	template <class T>
+	Auto<T> capture(T *t) {
+		if (t)
+			t->addRef();
+		return Auto<T>(t);
 	}
 }

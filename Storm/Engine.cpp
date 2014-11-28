@@ -6,7 +6,7 @@
 namespace storm {
 
 	Engine::Engine(const Path &root)
-		: inited(false), rootPath(root), rootScope(null),
+		: inited(false), rootPath(root),
 		  arena(), addRef(arena, L"addRef"), release(arena, L"release"), lazyCodeFn(arena, L"lazyUpdate") {
 
 		addRef.set(address(&Object::addRef));
@@ -16,16 +16,18 @@ namespace storm {
 
 		// Now, all the types are created, so we can create packages!
 		rootPkg = CREATE(Package, *this, root, *this);
-		rootScope = Scope(rootPkg);
+
+		rootPkg->addRef();
+		rootScope = CREATE(Scope, *this, rootPkg);
 
 		// And finally insert everything into their correct packages.
 		addStdLib(*this);
-		rootScope = Scope(rootPkg);
 		inited = true;
 	}
 
 	Engine::~Engine() {
 		rootPkg->release();
+		rootScope = null; // keeps a reference to the root package.
 
 		// Keep the type a little longer.
 		Type *t = Type::type(*this);

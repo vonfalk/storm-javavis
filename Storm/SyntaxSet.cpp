@@ -10,6 +10,10 @@ namespace storm {
 	}
 
 	void SyntaxSet::add(Package &pkg) {
+		if (added.count(&pkg))
+			return;
+		added.insert(&pkg);
+
 		const SyntaxRules &rules = pkg.syntax();
 		for (SyntaxRules::iterator i = rules.begin(); i != rules.end(); ++i) {
 			add(i->first, i->second);

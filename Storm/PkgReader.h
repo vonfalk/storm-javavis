@@ -8,7 +8,6 @@ namespace storm {
 	class PkgFiles;
 	class Engine;
 	class SyntaxRules;
-	class Scope;
 	class Package;
 
 	// Get the name of the 'reader' class from 'pkg'.

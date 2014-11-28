@@ -69,6 +69,12 @@ cppVTable_storm__SScope proto
 ??_7SStr@storm@@6B@ proto syscall
 cppVTable_storm__SStr proto
 
+??_7Scope@storm@@6B@ proto syscall
+cppVTable_storm__Scope proto
+
+??_7ScopeExtra@storm@@6B@ proto syscall
+cppVTable_storm__ScopeExtra proto
+
 ??_7StaticCode@storm@@6B@ proto syscall
 cppVTable_storm__StaticCode proto
 
@@ -83,6 +89,9 @@ cppVTable_storm__bnf__Reader proto
 
 ??_7BSFunction@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__BSFunction proto
+
+??_7BSScope@bs@storm@@6B@ proto syscall
+cppVTable_storm__bs__BSScope proto
 
 ??_7Block@bs@storm@@6B@ proto syscall
 cppVTable_storm__bs__Block proto
@@ -239,6 +248,16 @@ cppVTable_storm__SStr proc
 	ret
 cppVTable_storm__SStr endp
 
+cppVTable_storm__Scope proc
+	mov eax, ??_7Scope@storm@@6B@
+	ret
+cppVTable_storm__Scope endp
+
+cppVTable_storm__ScopeExtra proc
+	mov eax, ??_7ScopeExtra@storm@@6B@
+	ret
+cppVTable_storm__ScopeExtra endp
+
 cppVTable_storm__StaticCode proc
 	mov eax, ??_7StaticCode@storm@@6B@
 	ret
@@ -263,6 +282,11 @@ cppVTable_storm__bs__BSFunction proc
 	mov eax, ??_7BSFunction@bs@storm@@6B@
 	ret
 cppVTable_storm__bs__BSFunction endp
+
+cppVTable_storm__bs__BSScope proc
+	mov eax, ??_7BSScope@bs@storm@@6B@
+	ret
+cppVTable_storm__bs__BSScope endp
 
 cppVTable_storm__bs__Block proc
 	mov eax, ??_7Block@bs@storm@@6B@

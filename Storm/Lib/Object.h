@@ -85,6 +85,8 @@ namespace storm {
 		// Compare for equality.
 		virtual Bool STORM_FN equals(Auto<Object> o);
 
+		// Dump leaks.
+		static void dumpLeaks();
 	protected:
 		virtual void output(wostream &to) const;
 

@@ -16,8 +16,8 @@ namespace storm {
 	bnf::Reader::Reader(Auto<PkgFiles> files, Auto<Package> pkg) : PkgReader(files, pkg) {}
 
 	void bnf::Reader::readSyntax(SyntaxRules &to) {
-		Scope scope(owner.borrow());
-		scope.extra.push_back(scope.find(Name(L"core.lang")));
+		Auto<ScopeExtra> scope = CREATE(ScopeExtra, engine(), owner);
+		scope->extra.push_back(scope->find(Name(L"core.lang")));
 
 		const vector<Path> &f = pkgFiles->files;
 		for (nat i = 0; i < f.size(); i++) {
@@ -31,7 +31,7 @@ namespace storm {
 	 */
 
 
-	void parseBnf(SyntaxRules &types, Tokenizer &tok, const Scope &scope);
+	void parseBnf(SyntaxRules &types, Tokenizer &tok, Auto<Scope> scope);
 
 
 	/**
@@ -41,7 +41,7 @@ namespace storm {
 		return file.hasExt(L"bnf");
 	}
 
-	void parseBnf(SyntaxRules &types, const Path &file, const Scope &scope) {
+	void parseBnf(SyntaxRules &types, const Path &file, Auto<Scope> scope) {
 		TextReader *r = TextReader::create(new FileStream(file, Stream::mRead));
 		String content = r->getAll();
 		delete r;
@@ -206,7 +206,7 @@ namespace storm {
 		}
 	}
 
-	void parseRule(SyntaxRule &to, Tokenizer &tok, const Scope &scope) {
+	void parseRule(SyntaxRule &to, Tokenizer &tok, Auto<Scope> scope) {
 		SyntaxOption *option = new SyntaxOption(tok.position(), scope, to.name());
 
 		try {
@@ -248,7 +248,7 @@ namespace storm {
 			throw SyntaxError(paren.pos, L"Expected ;");
 	}
 
-	void parseBnf(SyntaxRules &types, Tokenizer &tok, const Scope &scope) {
+	void parseBnf(SyntaxRules &types, Tokenizer &tok, Auto<Scope> scope) {
 		while (tok.more()) {
 			// What we have here is either a rule or a rule declaration.
 			Token ruleName = tok.next();

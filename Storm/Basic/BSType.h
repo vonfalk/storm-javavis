@@ -38,7 +38,7 @@ namespace storm {
 			Name getName();
 
 			// Find the Value.
-			Value value(const Scope &scope);
+			Value value(Auto<Scope> scope);
 
 		protected:
 			virtual void output(wostream &to) const;

@@ -171,7 +171,55 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lib\Bool.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSBlock.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSClass.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSContents.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSExpr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSFunction.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSIncludes.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSParams.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSPkg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSReader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSType.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\BuiltIn.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Code.cpp"
 				>
 			</File>
 			<File
@@ -191,6 +239,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Named.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\Object.cpp"
 				>
 			</File>
@@ -204,6 +256,10 @@
 			</File>
 			<File
 				RelativePath=".\Parser.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PkgReader.cpp"
 				>
 			</File>
 			<File
@@ -255,11 +311,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SyntaxObject.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\SyntaxOption.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\SyntaxRule.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxSet.cpp"
 				>
 			</File>
 			<File
@@ -295,67 +359,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxSet.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Bool.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PkgReader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSReader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSPkg.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSIncludes.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSClass.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Named.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxObject.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSContents.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSType.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSFunction.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSParams.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Code.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSBlock.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSExpr.cpp"
+				RelativePath=".\Basic\BSScope.cpp"
 				>
 			</File>
 		</Filter>
@@ -365,11 +369,67 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\Lib\Auto.h"
+				>
+			</File>
+			<File
 				RelativePath=".\BnfReader.h"
 				>
 			</File>
 			<File
+				RelativePath=".\Lib\Bool.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\BoolDef.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSBlock.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSClass.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSContents.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSExpr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSFunction.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSIncludes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSParams.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSPkg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSReader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSType.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\BuiltIn.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Code.h"
 				>
 			</File>
 			<File
@@ -413,6 +473,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PkgReader.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Regex.h"
 				>
 			</File>
@@ -449,11 +513,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SyntaxObject.h"
+				>
+			</File>
+			<File
 				RelativePath=".\SyntaxOption.h"
 				>
 			</File>
 			<File
 				RelativePath=".\SyntaxRule.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SyntaxSet.h"
 				>
 			</File>
 			<File
@@ -489,71 +561,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SyntaxSet.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Bool.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PkgReader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSReader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSIncludes.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSPkg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Auto.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSClass.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\BoolDef.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SyntaxObject.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSContents.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSFunction.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSType.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSParams.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Code.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSBlock.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSExpr.h"
+				RelativePath=".\Basic\BSScope.h"
 				>
 			</File>
 		</Filter>

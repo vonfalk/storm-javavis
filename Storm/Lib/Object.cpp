@@ -3,18 +3,49 @@
 #include "Type.h"
 #include "Lib/Str.h"
 
-//#define DEBUG_REFS
+// #define DEBUG_REFS
+// #define DEBUG_LEAKS
 
 namespace storm {
 
+#ifdef DEBUG_LEAKS
+	map<Object *, String> live;
+
+	void Object::dumpLeaks() {
+		if (live.size() > 0)
+			PLN(L"Leaks detected!");
+		for (map<Object *, String>::iterator i = live.begin(); i != live.end(); i++) {
+			PLN(L"Object " << i->first << L": " << i->second << L" (" << i->first->refs << L")");
+		}
+	}
+#else
+	void Object::dumpLeaks() {}
+#endif
+
 	// Note the hack: myType(myType). myType is initialized in operator new.
 	Object::Object() : myType(myType), refs(1) {
+#if defined(DEBUG) && defined(X86)
+		if ((nat)myType == 0xCCCCCCCC) {
+			PLN("Do not stack allocate objects, stupid!");
+			DebugBreak();
+			assert(false);
+		}
+#endif
+
 #ifdef DEBUG_REFS
 		if (myType == this) {
 			// The Type-type is special.
 			PLN("Created " << this << ", Type");
 		} else {
 			PLN("Created " << this << ", " << myType->name);
+		}
+#endif
+
+#ifdef DEBUG_LEAKS
+		if (myType == this) {
+			live.insert(make_pair(this, L"Type"));
+		} else {
+			live.insert(make_pair(this, myType->name));
 		}
 #endif
 	}
@@ -27,6 +58,10 @@ namespace storm {
 		} else {
 			PLN("Destroying " << this << ", " << myType->name);
 		}
+#endif
+
+#ifdef DEBUG_LEAKS
+		live.erase(this);
 #endif
 	}
 

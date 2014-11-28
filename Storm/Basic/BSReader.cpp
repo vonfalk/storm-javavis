@@ -31,18 +31,9 @@ namespace storm {
 
 	void bs::File::readFunctions() {
 		readContents();
-		Scope s = scope();
 		for (nat i = 0; i < contents->functions.size(); i++) {
-			package->add(contents->functions[i]->asFunction(s));
+			package->add(contents->functions[i]->asFunction(scope));
 		}
-	}
-
-	Scope bs::File::scope() {
-		Scope scope(package.borrow());
-		for (nat i = 0; i < includes.size(); i++) {
-			scope.extra.push_back(includes[i]);
-		}
-		return scope;
 	}
 
 	void bs::File::readContents() {
@@ -81,13 +72,18 @@ namespace storm {
 	}
 
 	void bs::File::setIncludes(const vector<Name> &inc) {
+		scope = CREATE(BSScope, this, package);
+		scope->file = file;
+
 		for (nat i = 0; i < inc.size(); i++) {
 			Package *p = package->engine.package(inc[i]);
 			if (!p)
 				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(inc[i]));
-			includes.push_back(p);
-			syntax.add(*p);
+
+			scope->includes.push_back(p);
 		}
+
+		scope->addSyntax(syntax);
 	}
 
 }

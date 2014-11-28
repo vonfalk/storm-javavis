@@ -33,7 +33,7 @@ namespace storm {
 		inline Type *builtIn(nat id) const { return cached[id].borrow(); }
 
 		// Get the default scope lookup for the root packag.
-		inline Scope *scope() { return &rootScope; }
+		inline Scope *scope() { return rootScope.borrow(); }
 
 		// Initialized?
 		inline bool initialized() { return inited; }
@@ -61,7 +61,7 @@ namespace storm {
 		Package *createPackage(Package *pkg, const Name &path, nat at = 0);
 
 		// Root scope.
-		Scope rootScope;
+		Auto<Scope> rootScope;
 
 		// Cached types.
 		vector<Auto<Type> > cached;

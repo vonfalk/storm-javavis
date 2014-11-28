@@ -13,6 +13,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	Timestamp end;
 	PLN("Total time: " << (end - start));
 
+	Object::dumpLeaks();
+
 	return 0;
 }
 
