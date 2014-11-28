@@ -102,10 +102,13 @@ namespace storm {
 			return null;
 
 		MemberMap::const_iterator i = members.find(name[0]);
-		if (i == members.end())
-			return null;
-		else
-			return i->second.borrow();
+		if (i != members.end())
+			return i ->second.borrow();
+
+		if (Type *s = super())
+			return s->find(name);
+
+		return null;
 	}
 
 	void Type::output(wostream &to) const {
@@ -147,6 +150,12 @@ namespace storm {
 			if (first != Value(this))
 				throw TypedefError(L"Member functions must have 'this' as first parameter.");
 		}
+	}
+
+	code::Value Type::destructor() const {
+		TODO(L"Implement!");
+		assert(false);
+		return code::Value();
 	}
 
 }

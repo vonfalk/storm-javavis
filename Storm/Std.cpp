@@ -53,19 +53,13 @@ namespace storm {
 		for (nat i = 0; i < fn->params.size(); i++)
 			params.push_back(findValue(scope.borrow(), fn->params[i]));
 
-		Function *toAdd = nativeFunction(to, result, fn->name, params, fn->fnPtr);
-		try {
-			if (Package *p = as<Package>(into)) {
-				p->add(toAdd);
-			} else if (Type *t = as<Type>(into)) {
-				t->add(toAdd);
-			} else {
-				delete toAdd;
-				assert(false);
-			}
-		} catch (...) {
-			delete toAdd;
-			throw;
+		Auto<Function> toAdd = nativeFunction(to, result, fn->name, params, fn->fnPtr);
+		if (Package *p = as<Package>(into)) {
+			p->add(toAdd.ret());
+		} else if (Type *t = as<Type>(into)) {
+			t->add(toAdd.ret());
+		} else {
+			assert(false);
 		}
 	}
 
@@ -150,9 +144,9 @@ namespace storm {
 	void addStdLib(Engine &to) {
 		// Place core types in the core package.
 		Package *core = to.package(Name(L"core"), true);
-		core->add(intType(to));
-		core->add(natType(to));
-		core->add(boolType(to));
+		core->add(capture(intType(to)));
+		core->add(capture(natType(to)));
+		core->add(capture(boolType(to)));
 
 		addBuiltIn(to);
 	}

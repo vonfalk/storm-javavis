@@ -53,3 +53,18 @@ namespace util {
 	void printLines(const std::string &str);
 	void printLines(const String &str);
 }
+
+
+/**
+ * Insanely useful for debugging who made bad deallocations:
+ * 		_CrtSetAllocHook(&myHook);
+ * static void *watch = 0;
+ *
+ * int myHook(int type, void *data, size_t size, int blockuse, long request, const byte *filename, int line) {
+ * 	if (data == watch && type == _HOOK_FREE)
+ * 		DebugBreak();
+ * 	return TRUE;
+ * }
+ *	_ASSERT(_CrtCheckMemory());
+ *
+ */

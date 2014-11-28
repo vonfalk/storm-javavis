@@ -12,7 +12,7 @@ namespace code {
 		resultBuiltIn = i;
 	}
 
-	void Redirect::param(nat size, Ref dtor) {
+	void Redirect::param(nat size, Value dtor) {
 		Param p = { size, dtor };
 		params.push_back(p);
 	}

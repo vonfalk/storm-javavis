@@ -10,6 +10,7 @@ namespace storm {
 		IntType() : Type(L"Int", typeValue, sizeof(code::Int)) {}
 
 		virtual bool isBuiltIn() const { return true; }
+		virtual code::Value destructor() const { return code::Value(); }
 	};
 
 
@@ -26,6 +27,7 @@ namespace storm {
 		NatType() : Type(L"Nat", typeValue, sizeof(code::Nat)) {}
 
 		virtual bool isBuiltIn() const { return true; }
+		virtual code::Value destructor() const { return code::Value(); }
 	};
 
 

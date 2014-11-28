@@ -15,6 +15,18 @@ namespace storm {
 			STORM_CTOR Block(Auto<Block> parent);
 
 			Block *parent; // No auto, will destroy refcounting.
+
+			void STORM_FN expr(Auto<Expr> s);
+
+			// Result.
+			virtual Value result();
+
+			// Generate code.
+			virtual code::Listing code(code::Variable var);
+
+			// Expressions in this block.
+			vector<Auto<Expr> > exprs;
+
 		};
 
 	}

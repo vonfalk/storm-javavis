@@ -60,6 +60,21 @@ namespace storm {
 
 
 	/**
+	 * Type checking error.
+	 */
+	class TypeError : public CodeError {
+	public:
+		inline TypeError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
+
+		inline virtual String what() const {
+			return toS(where) + L": Type error: " + msg;
+		}
+
+	private:
+		String msg;
+	};
+
+	/**
 	 * Error in type definitions.
 	 */
 	class TypedefError : public CodeError {

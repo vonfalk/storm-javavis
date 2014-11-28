@@ -9,6 +9,8 @@ namespace storm {
 		: inited(false), rootPath(root),
 		  arena(), addRef(arena, L"addRef"), release(arena, L"release"), lazyCodeFn(arena, L"lazyUpdate") {
 
+		specialCached.resize(specialCount);
+
 		addRef.set(address(&Object::addRef));
 		release.set(address(&Object::release));
 
@@ -29,7 +31,10 @@ namespace storm {
 		rootPkg->release();
 		rootScope = null; // keeps a reference to the root package.
 
-		// Keep the type a little longer.
+		// Release more cached types. This needs to be above clearing other types.
+		specialCached.clear();
+
+		// Keep the type type a little longer.
 		Type *t = Type::type(*this);
 		t->addRef();
 
@@ -42,6 +47,10 @@ namespace storm {
 
 		TODO(L"Destroy these earlier if possible!"); // We can do this when we have proper threading.
 		clear(toDestroy);
+	}
+
+	void Engine::setSpecialBuiltIn(Special t, Auto<Type> z) {
+		specialCached[nat(t)] = z;
 	}
 
 	Package *Engine::package(const Name &path, bool create) {

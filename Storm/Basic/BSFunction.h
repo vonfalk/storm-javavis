@@ -63,8 +63,6 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR FnBody();
-
-			void expr(Auto<Expr> s);
 		};
 
 	}

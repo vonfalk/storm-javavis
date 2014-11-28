@@ -42,9 +42,7 @@ namespace storm {
 	}
 
 	void parseBnf(SyntaxRules &types, const Path &file, Auto<Scope> scope) {
-		TextReader *r = TextReader::create(new FileStream(file, Stream::mRead));
-		String content = r->getAll();
-		delete r;
+		String content = readTextFile(file);
 
 		Tokenizer tok(file, content, 0);
 		parseBnf(types, tok, scope);

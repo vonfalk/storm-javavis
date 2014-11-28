@@ -10,6 +10,18 @@
 namespace storm {
 
 	/**
+	 * Some special types.
+	 */
+	enum Special {
+		specialInt = 0,
+		specialNat,
+		specialBool,
+
+		// last
+		specialCount,
+	};
+
+	/**
 	 * Defines the root object of the compiler. This object contains
 	 * everything needed by the compiler itself, and shall be kept alive
 	 * as long as anything from the compiler is used.
@@ -31,6 +43,10 @@ namespace storm {
 
 		// Get a built-in type.
 		inline Type *builtIn(nat id) const { return cached[id].borrow(); }
+
+		// Special built-in types.
+		inline Type *specialBuiltIn(Special t) const { return specialCached[nat(t)].borrow(); }
+		void setSpecialBuiltIn(Special t, Auto<Type> z);
 
 		// Get the default scope lookup for the root packag.
 		inline Scope *scope() { return rootScope.borrow(); }
@@ -65,6 +81,7 @@ namespace storm {
 
 		// Cached types.
 		vector<Auto<Type> > cached;
+		vector<Auto<Type> > specialCached;
 
 		// Initialized?
 		bool inited;

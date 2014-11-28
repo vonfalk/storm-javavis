@@ -46,15 +46,32 @@ namespace storm {
 		if (!body)
 			throw InternalError(L"Invalid syntax");
 
+		Value resultType = body->result();
+		result.mustStore(result, SrcPos(file, 0));
+
+		// Generate code!
 		using namespace code;
 		Listing l;
-		l << mov(eax, natConst(2));
-		l << ret(4);
+
+		if (resultType == Value()) {
+			l << prolog();
+			l << body->code(Variable::invalid);
+			l << epilog();
+			l << ret(0);
+		} else {
+			code::Block root = l.frame.root();
+			Variable resultVar = l.frame.createVariable(root, resultType.size(), resultType.destructor());
+
+			l << prolog();
+			l << body->code(resultVar);
+			l << mov(eax, resultVar); // This will fail for other types than ints and pointers.
+			l << epilog();
+			l << ret(resultType.size());
+		}
+
 		return l;
 	}
 
 	bs::FnBody::FnBody() {}
-
-	void bs::FnBody::expr(Auto<Expr> expr) {}
 
 }

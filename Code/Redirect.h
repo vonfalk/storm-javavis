@@ -19,7 +19,7 @@ namespace code {
 		Redirect();
 
 		// Add a parameter to the function.
-		void param(nat size, Ref dtor);
+		void param(nat size, Value dtor);
 
 		// Set return value.
 		void result(nat size, bool builtIn);
@@ -31,7 +31,7 @@ namespace code {
 		// All data we need about a parameter.
 		struct Param {
 			nat size;
-			Ref dtor;
+			Value dtor;
 		};
 
 		// Parameters.

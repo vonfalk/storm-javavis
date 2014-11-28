@@ -51,7 +51,7 @@ namespace code {
 		inline nat getId() const { return id; }
 
 		// No public interface, everything is handled by the owning Listing.
-	
+
 		inline bool operator ==(const Block &o) const { return id == o.id; }
 		inline bool operator !=(const Block &o) const { return id != o.id; }
 	private:

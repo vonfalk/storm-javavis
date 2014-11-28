@@ -3,6 +3,7 @@
 #include "Type.h"
 #include "Scope.h"
 #include "Function.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -26,12 +27,11 @@ namespace storm {
 		}
 	}
 
-	code::Ref Value::destructor() const {
+	code::Value Value::destructor() const {
 		if (type->flags & typeClass) {
 			return code::Ref(type->engine.release);
 		} else {
-			TODO(L"Implement!");
-			assert(false);
+			return type->destructor();
 		}
 	}
 
@@ -41,6 +41,11 @@ namespace storm {
 
 	bool Value::canStore(const Value &v) const {
 		return canStore(v.type);
+	}
+
+	void Value::mustStore(const Value &v, const SrcPos &p) const {
+		if (!canStore(v))
+			throw TypeError(p, L"Expected " + ::toS(this) + L", got " + ::toS(v));
 	}
 
 	void Value::output(wostream &to) const {

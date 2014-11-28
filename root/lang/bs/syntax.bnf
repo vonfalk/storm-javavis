@@ -48,7 +48,7 @@ Includes => Includes() : ("use", Package -> add, ";", )*;
 
 // Expression
 Expr(Block block);
-Expr => Constant(nr) : "[0-9]+" nr;
+Expr => intConstant(nr) : "[0-9]+" nr;
 Expr => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
 
 // Statement

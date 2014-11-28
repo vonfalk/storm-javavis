@@ -1,6 +1,7 @@
 #pragma once
+#include "SrcPos.h"
 #include "Lib/Auto.h"
-#include "Code/Reference.h"
+#include "Code/Value.h"
 
 namespace storm {
 
@@ -27,8 +28,7 @@ namespace storm {
 		nat size() const;
 
 		// Get the destructor for this type. A destructor has the signature void dtor(T).
-		// TODO: What to return if no dtor?
-		code::Ref destructor() const;
+		code::Value destructor() const;
 
 		// Is this type built into the C++ compiler?
 		bool isBuiltIn() const;
@@ -36,6 +36,9 @@ namespace storm {
 		// Can this value store a type of 'x'?
 		bool canStore(Type *x) const;
 		bool canStore(const Value &v) const;
+
+		// Ensure that we can store.
+		void mustStore(const Value &v, const SrcPos &pos) const;
 
 		// Any extra modifiers goes here:
 		// TODO: implement

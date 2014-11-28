@@ -3,6 +3,7 @@
 #include "Scope.h"
 #include "Overload.h"
 #include "Package.h"
+#include "Code/Value.h"
 
 namespace storm {
 
@@ -77,6 +78,9 @@ namespace storm {
 
 		// Is this a type built in into the C++ compiler? These are handled differently in cdecl.
 		virtual bool isBuiltIn() const { return false; }
+
+		// Get a pointer/reference to the destructor (if any).
+		virtual code::Value destructor() const;
 
 	protected:
 		virtual void output(wostream &to) const;
