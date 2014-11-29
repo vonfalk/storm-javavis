@@ -54,7 +54,7 @@ Expr => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
 // Statement
 Stmt(Block block);
 Stmt => expr : Expr(block) expr, ";";
-Expr => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
+Stmt => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
 
 // Root rule for parsing function bodies.
 FunctionBody => FnBody() : (Stmt(me) -> expr, )*;
