@@ -568,6 +568,10 @@
 				RelativePath=".\Test\VTest.h"
 				>
 			</File>
+			<File
+				RelativePath=".\CodeGen.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

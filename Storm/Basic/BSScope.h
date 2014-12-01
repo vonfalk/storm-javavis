@@ -10,8 +10,6 @@ namespace storm {
 		public:
 			STORM_CTOR BSScope(Auto<NameLookup> l);
 
-			virtual Named *find(const Name &name) const;
-
 			// File name.
 			Path file;
 
@@ -20,6 +18,10 @@ namespace storm {
 
 			// Get syntax.
 			void addSyntax(SyntaxSet &to);
+
+		protected:
+			virtual Named *findHere(const Name &name) const;
+			virtual NameOverload *findHere(const Name &name, const vector<Value> &param) const;
 		};
 
 	}

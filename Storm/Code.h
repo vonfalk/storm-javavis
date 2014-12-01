@@ -2,6 +2,7 @@
 #include "Code/RefSource.h"
 #include "Code/Reference.h"
 #include "Std.h"
+#include "CodeGen.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -120,6 +121,35 @@ namespace storm {
 
 		// Updated.
 		void updated(void *n);
+	};
+
+
+	/**
+	 * Parameters to a function generating inlined code.
+	 */
+	struct InlinedParams {
+		GenState state;
+		const vector<code::Value> &params;
+		code::Value result;
+	};
+
+
+	/**
+	 * Inlined code. Lazily provides actual code as well.
+	 */
+	class InlinedCode : public LazyCode {
+		STORM_CLASS;
+	public:
+		InlinedCode(Fn<void, InlinedParams> generate);
+
+		// Generate inlined code.
+		virtual void code(GenState state, const vector<code::Value> &params, code::Value result);
+	private:
+		// Generation fn.
+		Fn<void, InlinedParams> generate;
+
+		// Generate non-inline version as well.
+		code::Listing generatePtr();
 	};
 
 }

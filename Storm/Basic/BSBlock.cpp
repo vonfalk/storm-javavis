@@ -3,9 +3,9 @@
 
 namespace storm {
 
-	bs::Block::Block() : parent(null) {}
+	bs::Block::Block(Auto<BSScope> scope) : scope(scope), parent(null) {}
 
-	bs::Block::Block(Auto<Block> parent) : parent(parent.borrow()) {}
+	bs::Block::Block(Auto<Block> parent) : scope(parent->scope), parent(parent.borrow()) {}
 
 	void bs::Block::expr(Auto<Expr> e) {
 		exprs.push_back(e);
@@ -18,20 +18,20 @@ namespace storm {
 			return Value();
 	}
 
-	code::Listing bs::Block::code(code::Variable var) {
+	void bs::Block::code(GenState state, code::Variable var) {
 		using namespace code;
-		Listing r;
 
 		if (exprs.size() == 0)
-			return r;
+			return;
+
+		code::Block block = state.frame.createChild(state.block);
+		GenState subState = { state.to, state.frame, block };
 
 		for (nat i = 0; i < exprs.size() - 1; i++) {
-			r << exprs[i]->code(Variable::invalid);
+			exprs[i]->code(subState, Variable::invalid);
 		}
 
-		r << exprs[exprs.size() - 1]->code(var);
-
-		return r;
+		exprs[exprs.size() - 1]->code(subState, var);
 	}
 
 }

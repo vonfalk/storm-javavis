@@ -1,6 +1,7 @@
 #pragma once
 #include "Overload.h"
 #include "Code.h"
+#include "CodeGen.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -45,6 +46,9 @@ namespace storm {
 		// call. It will be updated to match as well.
 		code::RefSource &ref();
 
+		// Generate code for this function call.
+		void genCode(GenState to, const vector<code::Value> &params, code::Value result);
+
 		// Code to be executed.
 		void setCode(Auto<Code> code);
 
@@ -71,4 +75,8 @@ namespace storm {
 
 	// Create a function referring a pre-compiled function.
 	Function *nativeFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr);
+
+	// Create an inlined function.
+	Function *inlinedFunction(Engine &e, Value result, const String &name,
+							const vector<Value> &params, Fn<void, InlinedParams> fn);
 }

@@ -45,10 +45,14 @@ File => Contents() : (FileItem -> add, )*;
 // Root rule for parsing includes.
 Includes => Includes() : ("use", Package -> add, ";", )*;
 
+// Operators (priority not defined here).
+Operator => v : "[+\-*/]" v;
 
 // Expression
 Expr(Block block);
 Expr => intConstant(nr) : "[0-9]+" nr;
+Expr => Operator(block, lhs, op, rhs) : Expr(block) lhs, Operator op, Expr(block) rhs;
+// Expr => e : "(", Expr e, ")"
 Expr => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
 
 // Statement
@@ -57,4 +61,5 @@ Stmt => expr : Expr(block) expr, ";";
 Stmt => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
 
 // Root rule for parsing function bodies.
-FunctionBody => FnBody() : (Stmt(me) -> expr, )*;
+FunctionBody(BSScope scope);
+FunctionBody => FnBody(scope) : (Stmt(me) -> expr, )*;

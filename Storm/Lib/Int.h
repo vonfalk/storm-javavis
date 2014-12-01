@@ -7,7 +7,7 @@ namespace storm {
 	class IntType : public Type {
 		STORM_CLASS;
 	public:
-		IntType() : Type(L"Int", typeValue, sizeof(code::Int)) {}
+		IntType();
 
 		virtual bool isBuiltIn() const { return true; }
 		virtual code::Value destructor() const { return code::Value(); }
@@ -24,7 +24,7 @@ namespace storm {
 	class NatType : public Type {
 		STORM_CLASS;
 	public:
-		NatType() : Type(L"Nat", typeValue, sizeof(code::Nat)) {}
+		NatType();
 
 		virtual bool isBuiltIn() const { return true; }
 		virtual code::Value destructor() const { return code::Value(); }

@@ -313,10 +313,10 @@ namespace storm {
 	 * Shorthand.
 	 */
 
-	Object *Parser::transform(Engine &engine, const Path &file) {
+	Object *Parser::transform(Engine &engine, const Path &file, const vector<Object *> &params) {
 		SyntaxNode *root = tree(file);
 		try {
-			Auto<Object> result = storm::transform(engine, syntax, *root);
+			Auto<Object> result = storm::transform(engine, syntax, *root, params);
 			delete root;
 			return result.ret();
 		} catch (...) {

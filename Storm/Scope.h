@@ -30,13 +30,17 @@ namespace storm {
 
 		// Find the given NameRef, either by using an absulute path or something
 		// relative to the current object. NOTE: returns a borrowed ptr.
-		virtual Named *find(const Name &name) const;
+		Named *find(const Name &name) const;
 
 		// Find a overloaded name. Usually a function. Equivalent to call 'find' above
 		// and then try to find something with parameters.
 		NameOverload *find(const Name &name, const vector<Value> &params) const;
 
 	protected:
+		// Find here.
+		virtual Named *findHere(const Name &name) const;
+		virtual NameOverload *findHere(const Name &name, const vector<Value> &params) const;
+
 		// Find the first package.
 		static Package *firstPkg(NameLookup *top);
 
@@ -60,11 +64,13 @@ namespace storm {
 		// Create.
 		STORM_CTOR ScopeExtra(Auto<NameLookup> top);
 
-		// Find
-		virtual Named *find(const Name &name) const;
-
 		// Additional NameLookups to search (not recursively).
 		vector<NameLookup *> extra;
+
+	protected:
+		// Find
+		virtual Named *findHere(const Name &name) const;
+
 	};
 
 }

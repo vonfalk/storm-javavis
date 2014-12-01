@@ -20,7 +20,7 @@ static int throwException() {
 	return 4;
 }
 
-BEGIN_TEST_(TestException) {
+BEGIN_TEST(TestException) {
 	Arena arena;
 	Listing l;
 
@@ -59,3 +59,27 @@ BEGIN_TEST_(TestException) {
 
 } END_TEST
 
+
+BEGIN_TEST(TestNoException) {
+	Arena arena;
+	Listing l;
+
+	Variable par1 = l.frame.createParameter(4, false);
+	Variable par2 = l.frame.createParameter(4, false);
+
+	Variable var1 = l.frame.createIntVar(l.frame.root());
+
+	l << prolog();
+	l << mov(var1, par1);
+	l << add(var1, par2);
+	l << mov(eax, var1);
+	l << epilog();
+	l << ret(4);
+
+	Binary output(arena, L"MyFn", l);
+
+	typedef cpuInt (*Fn)(cpuInt, cpuInt);
+	Fn fn = (Fn)output.getData();
+
+	CHECK_EQ((*fn)(1, 2), 3);
+} END_TEST

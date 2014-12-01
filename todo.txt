@@ -27,3 +27,8 @@ l << ret();
 
 Note to self:
 Parsing works _bad_ on rules like this: ( DELIMITER )*.
+
+
+
+Future test cases:
+Extend a class with an inlined function, and override that function.

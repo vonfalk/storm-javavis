@@ -1,5 +1,6 @@
 #pragma once
 #include "BSExpr.h"
+#include "BSScope.h"
 
 namespace storm {
 	namespace bs {
@@ -11,10 +12,14 @@ namespace storm {
 		class Block : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR Block();
+			STORM_CTOR Block(Auto<BSScope> scope);
 			STORM_CTOR Block(Auto<Block> parent);
 
-			Block *parent; // No auto, will destroy refcounting.
+			// Scope.
+			Auto<BSScope> scope;
+
+			// No auto, will destroy refcounting.
+			Block *parent;
 
 			void STORM_FN expr(Auto<Expr> s);
 
@@ -22,7 +27,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual code::Listing code(code::Variable var);
+			virtual void code(GenState state, code::Variable var);
 
 			// Expressions in this block.
 			vector<Auto<Expr> > exprs;

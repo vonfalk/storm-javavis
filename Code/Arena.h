@@ -40,6 +40,12 @@ namespace code {
 			return external(name, address(ptr));
 		}
 
+		// Call this function to disable reference checking during shutdown.
+		// This will disable vital functions in the reference management, from
+		// the point 'preShutdown' is called, it is assumed that the only thing
+		// that happens is that all references will eventually be destroyed.
+		void preShutdown();
+
 	private:
 		memory::Manager alloc;
 

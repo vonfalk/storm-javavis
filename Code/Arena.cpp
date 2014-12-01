@@ -26,4 +26,8 @@ namespace code {
 		return Ref(*r);
 	}
 
+	void Arena::preShutdown() {
+		refManager.preShutdown();
+	}
+
 }

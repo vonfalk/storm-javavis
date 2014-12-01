@@ -41,6 +41,9 @@ namespace code {
 		void *addReference(Reference *r, nat id);
 		void removeReference(Reference *r, nat id);
 
+		// Disable checking of dead references (during shutdown).
+		void preShutdown();
+
 	private:
 		struct Info {
 			RefSource *source;
@@ -70,6 +73,9 @@ namespace code {
 		// Map containing current addresses mapping to indices.
 		typedef std::multimap<void *, nat> AddrMap;
 		AddrMap addresses;
+
+		// Are we shutting down?
+		bool shutdown;
 
 		// Register an address.
 		void addAddr(void *addr, nat id);

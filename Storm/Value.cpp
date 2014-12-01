@@ -20,7 +20,9 @@ namespace storm {
 	}
 
 	bool Value::isBuiltIn() const {
-		if (type->flags & typeClass) {
+		if (!type) {
+			return true;
+		} else if (type->flags & typeClass) {
 			return true; // by pointer
 		} else {
 			return type->isBuiltIn();
@@ -28,11 +30,17 @@ namespace storm {
 	}
 
 	code::Value Value::destructor() const {
-		if (type->flags & typeClass) {
+		if (type && (type->flags & typeClass)) {
 			return code::Ref(type->engine.release);
 		} else {
 			return type->destructor();
 		}
+	}
+
+	bool Value::refcounted() const {
+		if (!type)
+			return false;
+		return (type->flags & typeClass) != 0;
 	}
 
 	bool Value::canStore(Type *x) const {

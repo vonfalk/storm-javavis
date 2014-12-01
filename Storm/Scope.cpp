@@ -41,6 +41,14 @@ namespace storm {
 	Scope::Scope(Auto<NameLookup> top) : top(top.borrow()) {}
 
 	Named *Scope::find(const Name &name) const {
+		return findHere(name);
+	}
+
+	NameOverload *Scope::find(const Name &name, const vector<Value> &params) const {
+		return findHere(name, params);
+	}
+
+	Named *Scope::findHere(const Name &name) const {
 		// Regular path.
 		for (NameLookup *at = top; at; at = nextCandidate(at)) {
 			if (Named *found = at->find(name))
@@ -56,7 +64,7 @@ namespace storm {
 		return null;
 	}
 
-	NameOverload *Scope::find(const Name &name, const vector<Value> &params) const {
+	NameOverload *Scope::findHere(const Name &name, const vector<Value> &params) const {
 		Named *named = find(name);
 
 		if (Overload *overload = as<Overload>(named)) {
@@ -72,8 +80,8 @@ namespace storm {
 
 	ScopeExtra::ScopeExtra(Auto<NameLookup> lookup) : Scope(lookup) {}
 
-	Named *ScopeExtra::find(const Name &name) const {
-		if (Named *found = Scope::find(name))
+	Named *ScopeExtra::findHere(const Name &name) const {
+		if (Named *found = Scope::findHere(name))
 			return found;
 
 		for (nat i = 0; i < extra.size(); i++) {

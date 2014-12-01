@@ -2,6 +2,7 @@
 #include "Function.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Code/Instruction.h"
 
 namespace storm {
 
@@ -23,6 +24,29 @@ namespace storm {
 	code::RefSource &Function::ref() {
 		initRefs();
 		return *lookupRef;
+	}
+
+	void Function::genCode(GenState to, const vector<code::Value> &params, code::Value result) {
+		initRefs();
+
+		assert(params.size() == this->params.size());
+		bool inlined = true;
+		inlined &= as<DelegatedCode>(lookup.borrow()) != 0;
+		inlined &= as<InlinedCode>(code.borrow()) != 0;
+
+		if (inlined) {
+			InlinedCode *c = as<InlinedCode>(code.borrow());
+			c->code(to, params, result);
+		} else {
+			using namespace code;
+
+			assert(("Not implemented for value types yet!", this->result.isBuiltIn()));
+			for (nat i = 0; i < params.size(); i++) {
+				to.to << fnParam(params[i]);
+			}
+			to.to << fnCall(Ref(ref()), result.size());
+			to.to << mov(result, asSize(ptrA, result.size()));
+		}
 	}
 
 	void Function::setCode(Auto<Code> code) {
@@ -70,6 +94,13 @@ namespace storm {
 		Function *fn = CREATE(Function, e, result, name, params);
 		fn->setCode(CREATE(StaticCode, e, ptr));
 		return fn;
+	}
+
+	Function *inlinedFunction(Engine &e, Value result, const String &name,
+							const vector<Value> &params, Fn<void, InlinedParams> fn) {
+		Function *f = CREATE(Function, e, result, name, params);
+		f->setCode(CREATE(InlinedCode, e, fn));
+		return f;
 	}
 
 }

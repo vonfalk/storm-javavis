@@ -51,12 +51,14 @@ namespace storm {
 
 		// Add reference.
 		inline void addRef() {
+			// _ASSERT(_CrtCheckMemory());
 			if (this)
 				atomicIncrement(refs);
 		}
 
 		// Release reference.
 		inline void release() {
+			// _ASSERT(_CrtCheckMemory());
 			if (this)
 				if (atomicDecrement(refs) == 0)
 					delete this;

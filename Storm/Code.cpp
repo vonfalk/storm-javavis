@@ -107,4 +107,42 @@ namespace storm {
 			toUpdate->set(p);
 	}
 
+
+	/**
+	 * Inlined code.
+	 */
+
+	InlinedCode::InlinedCode(Fn<void, InlinedParams> gen)
+		: LazyCode(memberVoidFn(this, &InlinedCode::generatePtr)), generate(gen) {}
+
+	void InlinedCode::code(GenState state, const vector<code::Value> &params, code::Value result) {
+		InlinedParams p = { state, params, result };
+		generate(p);
+	}
+
+	code::Listing InlinedCode::generatePtr() {
+		using namespace code;
+		if (!owner->result.isBuiltIn()) {
+			TODO(L"Implement return of non-built in types");
+			assert(false);
+		}
+
+		Listing l;
+
+		vector<code::Value> params;
+		for (nat i = 0; i < owner->params.size(); i++) {
+			const Value &p = owner->params[i];
+			params.push_back(l.frame.createParameter(p.size(), false, p.destructor()));
+		}
+
+		l << prolog();
+
+		GenState state = { l, l.frame, l.frame.root() };
+		code(state, params, asSize(ptrA, owner->result.size()));
+
+		l << epilog();
+		l << ret(owner->result.size());
+
+		return l;
+	}
 }

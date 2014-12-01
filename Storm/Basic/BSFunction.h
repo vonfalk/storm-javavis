@@ -62,7 +62,7 @@ namespace storm {
 		class FnBody : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR FnBody();
+			STORM_CTOR FnBody(Auto<BSScope> scope);
 		};
 
 	}

@@ -1,6 +1,7 @@
 #pragma once
 #include "Std.h"
 #include "SyntaxObject.h"
+#include "CodeGen.h"
 #include "Code/Listing.h"
 #include "Code/Block.h"
 
@@ -11,7 +12,7 @@ namespace storm {
 		/**
 		 * Base class for expressions. (no difference between statements and expressions here!)
 		 */
-		class Expr : public Object {
+		class Expr : public SObject {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Expr();
@@ -20,7 +21,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code, place result in 'var' unless 'var' == Variable::invalid.
-			virtual code::Listing code(code::Variable var);
+			virtual void code(GenState state, code::Variable var);
 		};
 
 
@@ -47,12 +48,47 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual code::Listing code(code::Variable var);
+			virtual void code(GenState state, code::Variable var);
 
 		protected:
 			virtual void output(wostream &out) const;
 		};
 
 		Constant *STORM_FN intConstant(Auto<SStr> str);
+
+		class Block;
+
+		/**
+		 * Operator.
+		 */
+		class Operator : public Expr {
+			STORM_CLASS;
+		public:
+			STORM_CTOR Operator(Auto<Block> block, Auto<Expr> lhs, Auto<SStr> m, Auto<Expr> rhs);
+
+			// Owning block.
+			Block *block;
+
+			// Sub-expressions.
+			Auto<Expr> lhs;
+			Auto<Expr> rhs;
+
+			// The actual operator.
+			Auto<Str> op;
+
+			// Result.
+			virtual Value result();
+
+			// Generate code.
+			virtual void code(GenState to, code::Variable var);
+
+		private:
+			// Get the function to call.
+			Function *findFn();
+
+			// Cache of the function to call.
+			Function *fn;
+		};
+
 	}
 }

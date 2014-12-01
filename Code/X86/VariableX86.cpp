@@ -11,7 +11,7 @@ namespace code {
 		// Specific for SEH.
 		static int baseOffset(nat preservedRegisters, const Frame &frame) {
 			int offset = preservedRegisters * sizeof(cpuNat);
-			// current block and owner
+			// current block and owner TODO: Really needed?
 			offset += 2 * sizeof(cpuNat);
 			// if using SEH, 2 more
 			if (frame.exceptionHandlerNeeded())
@@ -70,7 +70,7 @@ namespace code {
 			nat size = var.size();
 			if (size == 0)
 				size = sizeof(cpuNat);
-			roundUp(size, 4);
+			roundUp(size, sizeof(cpuNat));
 
 			int offset;
 			if (p == Variable::invalid) {
@@ -101,10 +101,10 @@ namespace code {
 				nat size = p.size();
 				if (size == 0)
 					size = sizeof(cpuNat);
-				roundUp(size, 4);
+				roundUp(size, sizeof(cpuNat));
 
 				offset = updateParamOffset(p, frame);
-				offset =+ size;
+				offset += size;
 			}
 
 			off[id] = offset;

@@ -41,7 +41,7 @@ namespace storm {
 		if (parser.parse(L"FunctionBody") < contents->v.size())
 			throw parser.error(file);
 
-		Auto<Object> c = parser.transform(engine(), file);
+		Auto<Object> c = parser.transform(engine(), file, vector<Object *>(1, scope.borrow()));
 		Auto<FnBody> body = c.as<FnBody>();
 		if (!body)
 			throw InternalError(L"Invalid syntax");
@@ -53,9 +53,11 @@ namespace storm {
 		using namespace code;
 		Listing l;
 
+		GenState state = { l, l.frame, l.frame.root() };
+
 		if (resultType == Value()) {
 			l << prolog();
-			l << body->code(Variable::invalid);
+			body->code(state, Variable::invalid);
 			l << epilog();
 			l << ret(0);
 		} else {
@@ -63,8 +65,8 @@ namespace storm {
 			Variable resultVar = l.frame.createVariable(root, resultType.size(), resultType.destructor());
 
 			l << prolog();
-			l << body->code(resultVar);
-			l << mov(eax, resultVar); // This will fail for other types than ints and pointers.
+			body->code(state, resultVar);
+			l << mov(asSize(ptrA, resultType.size()), resultVar);
 			l << epilog();
 			l << ret(resultType.size());
 		}
@@ -72,6 +74,6 @@ namespace storm {
 		return l;
 	}
 
-	bs::FnBody::FnBody() {}
+	bs::FnBody::FnBody(Auto<BSScope> scope) : Block(scope) {}
 
 }

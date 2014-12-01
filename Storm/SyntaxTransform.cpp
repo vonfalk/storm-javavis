@@ -164,7 +164,8 @@ namespace storm {
 		assert(rule);
 
 		if (params.size() != rule->params.size())
-			throw SyntaxTypeError(L"Invalid number of parameters to rule: " + toS(params.size()) +
+			throw SyntaxTypeError(L"Invalid number of parameters to rule " + rule->name()
+								+ L": got " + toS(params.size()) +
 								L", expected " + toS(rule->params.size()), pos);
 
 		for (nat i = 0; i < params.size(); i++) {

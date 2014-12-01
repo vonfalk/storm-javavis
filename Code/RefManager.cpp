@@ -11,12 +11,18 @@ namespace code {
 		return (c == RefManager::invalid - 1) ? 0 : c + 1;
 	}
 
-	RefManager::RefManager() : firstFreeIndex(0) {}
+	RefManager::RefManager() : firstFreeIndex(0), shutdown(false) {}
 
 	RefManager::~RefManager() {}
 
+	void RefManager::preShutdown() {
+		assert(!shutdown);
+		shutdown = true;
+	}
+
 	nat RefManager::addSource(RefSource *source) {
-		// This will fail in the unlikely event that we have 2^32 elements in our array, in which case we would already be out of memory.
+		// This will fail in the unlikely event that we have 2^32 elements in our
+		// array, in which case we would already be out of memory.
 		while (infoMap.count(firstFreeIndex) == 1)
 			firstFreeIndex = nextId(firstFreeIndex);
 
@@ -42,11 +48,15 @@ namespace code {
 			return;
 
 		Info *info = i->second;
-		if (info->lightCount != 0 || !info->references.empty()) {
-			PLN(info->source->getTitle() << L" still has live references!");
+		if (!shutdown) {
+			if (info->lightCount != 0 || !info->references.empty()) {
+				PLN(info->source->getTitle() << L" still has live references!");
+			}
+			assert(info->lightCount == 0);
+			if (!info->references.empty())
+				DebugBreak();
+			assert(info->references.empty());
 		}
-		assert(info->lightCount == 0);
-		assert(info->references.empty());
 		infoMap.erase(id);
 		removeAddr(info->address, id);
 		delete info;
@@ -107,8 +117,13 @@ namespace code {
 	}
 
 	void RefManager::removeLightRef(nat id) {
-		assert(infoMap.count(id) == 1);
-		atomicDecrement(infoMap[id]->lightCount);
+		if (!shutdown) {
+			assert(infoMap.count(id) == 1);
+		}
+
+		if (infoMap.count(id) == 1) {
+			atomicDecrement(infoMap[id]->lightCount);
+		}
 	}
 
 	void *RefManager::addReference(Reference *r, nat id) {
@@ -119,9 +134,16 @@ namespace code {
 	}
 
 	void RefManager::removeReference(Reference *r, nat id) {
-		assert(infoMap.count(id) == 1);
-		Info *info = infoMap[id];
-		info->references.erase(r);
+		// TODO: This could be solved nicer by removing RefSources only
+		// when their refcount reaches zero.
+		if (!shutdown) {
+			assert(infoMap.count(id) == 1);
+		}
+
+		if (infoMap.count(id) == 1) {
+			Info *info = infoMap[id];
+			info->references.erase(r);
+		}
 	}
 
 	void RefManager::addAddr(void *addr, nat id) {

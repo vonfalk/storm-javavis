@@ -35,6 +35,7 @@ TestResult Tests::run() {
 
 	} catch (const Exception &e) {
 		PLN(L"Error while testing: " << e);
+		PLN(L"ABORTED");
 	}
 
 	return r;

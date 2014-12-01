@@ -33,6 +33,9 @@ namespace storm {
 		// Is this type built into the C++ compiler?
 		bool isBuiltIn() const;
 
+		// Refcounted value?
+		bool refcounted() const;
+
 		// Can this value store a type of 'x'?
 		bool canStore(Type *x) const;
 		bool canStore(const Value &v) const;
