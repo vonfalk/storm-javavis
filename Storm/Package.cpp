@@ -239,8 +239,8 @@ namespace storm {
 		} catch (...) {
 			// We did nothing...
 			syntaxRules.clear();
-			clearMap(types);
-			clearMap(members);
+			types.clear();
+			members.clear();
 			releaseMap(files);
 			releaseVec(toLoad);
 			throw;
