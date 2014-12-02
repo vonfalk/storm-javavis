@@ -47,7 +47,7 @@ namespace storm {
 		code::RefSource &ref();
 
 		// Generate code for this function call.
-		void genCode(GenState to, const vector<code::Value> &params, code::Value result);
+		void genCode(const GenState &to, const vector<code::Value> &params, code::Value result);
 
 		// Code to be executed.
 		void setCode(Auto<Code> code);

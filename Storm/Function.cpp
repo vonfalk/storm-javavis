@@ -26,7 +26,7 @@ namespace storm {
 		return *lookupRef;
 	}
 
-	void Function::genCode(GenState to, const vector<code::Value> &params, code::Value result) {
+	void Function::genCode(const GenState &to, const vector<code::Value> &params, code::Value result) {
 		initRefs();
 
 		assert(params.size() == this->params.size());

@@ -366,6 +366,10 @@
 				RelativePath=".\Test\VTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSVar.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -570,6 +574,10 @@
 			</File>
 			<File
 				RelativePath=".\CodeGen.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSVar.h"
 				>
 			</File>
 		</Filter>

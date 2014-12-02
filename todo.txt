@@ -28,7 +28,8 @@ l << ret();
 Note to self:
 Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
-
+In bs: check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should
+be something like the same statement instead).
 
 Future test cases:
 Extend a class with an inlined function, and override that function.

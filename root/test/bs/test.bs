@@ -8,7 +8,11 @@ create() {
 }
 }
 
+Int foo() {
+2;
+}
+
 Int bar() {
-1 + 2;
+1 + var v = 2;
 }
 

@@ -1,12 +1,21 @@
 #include "stdafx.h"
 #include "BSScope.h"
+#include "BSBlock.h"
+#include "BSVar.h"
 #include "PkgReader.h"
 
 namespace storm {
 
-	bs::BSScope::BSScope(Auto<NameLookup> l) : Scope(l) {}
+	bs::BSScope::BSScope(Auto<NameLookup> l) : Scope(l), topBlock(null) {}
 
 	Named *bs::BSScope::findHere(const Name &name) const {
+		if (name.size() == 1) {
+			for (Block *b = topBlock; b; b = b->parent) {
+				if (Named *n = b->variable(name[0]))
+					return n;
+			}
+		}
+
 		if (Named *found = Scope::findHere(name))
 			return found;
 
@@ -36,6 +45,22 @@ namespace storm {
 
 		for (nat i = 0; i < includes.size(); i++)
 			to.add(*includes[i]);
+	}
+
+	bs::BSScope *bs::BSScope::child(Auto<NameLookup> l) {
+		Auto<BSScope> r = CREATE(BSScope, this, l);
+		r->file = file;
+		r->includes = includes;
+		r->topBlock = topBlock;
+		return r.ret();
+	}
+
+	bs::BSScope *bs::BSScope::child(Auto<Block> b) {
+		Auto<BSScope> r = CREATE(BSScope, this, capture(top));
+		r->file = file;
+		r->includes = includes;
+		r->topBlock = b.borrow();
+		return r.ret();
 	}
 
 }

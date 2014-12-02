@@ -115,7 +115,7 @@ namespace storm {
 	InlinedCode::InlinedCode(Fn<void, InlinedParams> gen)
 		: LazyCode(memberVoidFn(this, &InlinedCode::generatePtr)), generate(gen) {}
 
-	void InlinedCode::code(GenState state, const vector<code::Value> &params, code::Value result) {
+	void InlinedCode::code(const GenState &state, const vector<code::Value> &params, code::Value result) {
 		InlinedParams p = { state, params, result };
 		generate(p);
 	}

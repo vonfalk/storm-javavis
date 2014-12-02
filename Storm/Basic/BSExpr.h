@@ -21,7 +21,8 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code, place result in 'var' unless 'var' == Variable::invalid.
-			virtual void code(GenState state, code::Variable var);
+			// TODO: To avoid loads of temporary variables, change to code(state, bool result) -> Variable
+			virtual void code(const GenState &state, code::Variable var);
 		};
 
 
@@ -48,7 +49,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(GenState state, code::Variable var);
+			virtual void code(const GenState &state, code::Variable var);
 
 		protected:
 			virtual void output(wostream &out) const;
@@ -80,7 +81,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(GenState to, code::Variable var);
+			virtual void code(const GenState &to, code::Variable var);
 
 		private:
 			// Get the function to call.

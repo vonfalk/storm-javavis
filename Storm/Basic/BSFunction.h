@@ -5,6 +5,7 @@
 #include "BSBlock.h"
 #include "BSExpr.h"
 #include "BSScope.h"
+#include "BSVar.h"
 
 namespace storm {
 	namespace bs {

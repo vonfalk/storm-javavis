@@ -71,6 +71,7 @@ namespace storm {
 			l << ret(resultType.size());
 		}
 
+		PVAR(l);
 		return l;
 	}
 

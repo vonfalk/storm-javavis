@@ -13,7 +13,7 @@ namespace storm {
 		return Value();
 	}
 
-	void bs::Expr::code(GenState to, code::Variable var) {
+	void bs::Expr::code(const GenState &to, code::Variable var) {
 		assert(var == code::Variable::invalid);
 	}
 
@@ -40,7 +40,7 @@ namespace storm {
 		}
 	}
 
-	void bs::Constant::code(GenState s, code::Variable var) {
+	void bs::Constant::code(const GenState &s, code::Variable var) {
 		using namespace code;
 
 		if (var == code::Variable::invalid)
@@ -75,7 +75,7 @@ namespace storm {
 		return f->result;
 	}
 
-	void bs::Operator::code(GenState s, code::Variable result) {
+	void bs::Operator::code(const GenState &s, code::Variable result) {
 		using namespace code;
 		Value r = this->result();
 		// This code should be shared with general function calls!
