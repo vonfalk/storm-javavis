@@ -19,8 +19,6 @@ namespace code {
 	Value::Value(Block b) : valType(tBlock), blockId(b.id), valSize(0), iOffset(0) {}
 
 	Value::Value(Variable v) : valType(tVariable), blockId(v.id), valSize(v.size()), iOffset(0) {
-		if (v == Variable::invalid)
-			DebugBreak();
 		assert(v != Variable::invalid);
 	}
 

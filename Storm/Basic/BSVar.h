@@ -13,7 +13,7 @@ namespace storm {
 		class LocalVar : public Named {
 			STORM_CLASS;
 		public:
-			LocalVar(const String &name, const Value &val, const SrcPos &pos);
+			LocalVar(const String &name, const Value &val, const SrcPos &pos, bool param = false);
 
 			// Type.
 			Value result;
@@ -23,6 +23,9 @@ namespace storm {
 
 			// Location (not initialized until code generation).
 			code::Variable var;
+
+			// Is this a parameter?
+			bool param;
 		};
 
 

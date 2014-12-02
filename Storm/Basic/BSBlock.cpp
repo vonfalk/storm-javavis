@@ -31,7 +31,8 @@ namespace storm {
 
 		for (VarMap::const_iterator i = variables.begin(); i != variables.end(); ++i) {
 			LocalVar *v = i->second.borrow();
-			v->var = state.frame.createVariable(block, v->result.size(), v->result.destructor());
+			if (!v->param)
+				v->var = state.frame.createVariable(block, v->result.size(), v->result.destructor());
 		}
 
 		state.to << begin(block);

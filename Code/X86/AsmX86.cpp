@@ -243,11 +243,13 @@ namespace code {
 		}
 
 		void addRef(Output &to, Params p, const Instruction &instr) {
+			TODO(L"Implement addRef");
 			assert(false); // Does not correctly call the function, no parameters are used!
 			//jmpCall(0xE9, p.arena, to, Value((cpuNat)p.arena.addRef));
 		}
 
 		void releaseRef(Output &to, Params p, const Instruction &instr) {
+			TODO(L"Implement releaseRef");
 			assert(false); // Does not correctly call the function, no parameters are used!
 			//jmpCall(0xE9, p.arena, to, Value((cpuNat)p.arena.releaseRef));
 		}

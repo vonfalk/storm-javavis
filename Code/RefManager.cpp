@@ -53,8 +53,6 @@ namespace code {
 				PLN(info->source->getTitle() << L" still has live references!");
 			}
 			assert(info->lightCount == 0);
-			if (!info->references.empty())
-				DebugBreak();
 			assert(info->references.empty());
 		}
 		infoMap.erase(id);

@@ -43,14 +43,24 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			BSFunction(Value result, const String &name, const vector<Value> &params,
-					Auto<BSScope> scope, Auto<Str> contents);
+					const vector<String> &names, Auto<BSScope> scope, Auto<Str> contents,
+					const SrcPos &pos);
+
+			// Declared at.
+			SrcPos pos;
+
+			// Scope.
+			Auto<BSScope> scope;
+
+			// Add function parameters to a block.
+			void addParams(Auto<Block> block);
 
 		private:
 			// Code.
 			Auto<Str> contents;
 
-			// Scope.
-			Auto<BSScope> scope;
+			// Parameter names.
+			vector<String> paramNames;
 
 			// Generate code.
 			code::Listing generateCode();
@@ -63,7 +73,7 @@ namespace storm {
 		class FnBody : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR FnBody(Auto<BSScope> scope);
+			STORM_CTOR FnBody(Auto<BSFunction> owner);
 		};
 
 	}

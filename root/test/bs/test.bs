@@ -8,12 +8,12 @@ create() {
 }
 }
 
-Int foo() {
-2;
+Int foo(Int p) {
+p - 2;
 }
 
 Int bar() {
-1 + var v = 2;
-v + 1;
+var z = 1; var v = 4;
+foo(z + v);
 }
 

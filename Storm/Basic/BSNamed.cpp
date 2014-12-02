@@ -74,13 +74,15 @@ namespace storm {
 
 		// Load parameters.
 		for (nat i = 0; i < values.size(); i++) {
-			vars[i] = s.frame.createVariable(s.block, values[i].size(), values[i].destructor());
-			params->expressions[i]->code(s, to);
+			Variable v = s.frame.createVariable(s.block, values[i].size(), values[i].destructor());
+			params->expressions[i]->code(s, v);
+			vars[i] = v;
 		}
 
 		// Increase refs for all parameters.
 		for (nat i = 0; i < vars.size(); i++)
-			s.to << code::addRef(vars[i]);
+			if (values[i].refcounted())
+				s.to << code::addRef(vars[i]);
 
 		// Call!
 		toExecute->genCode(s, vars, resultVar);

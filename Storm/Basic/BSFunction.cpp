@@ -18,15 +18,20 @@ namespace storm {
 		Value result = this->result->value(scope);
 		vector<Value> params(this->params->params.size());
 		for (nat i = 0; i < this->params->params.size(); i++)
-			params.push_back(this->params->params[i]->value(scope));
+			params[i] = this->params->params[i]->value(scope);
 
-		return CREATE(BSFunction, this, result, name->v->v, params, scope, contents->v);
+		vector<String> names(this->params->names.size());
+		for (nat i = 0; i < this->params->names.size(); i++)
+			names[i] = this->params->names[i]->v->v;
+
+		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents->v, name->pos);
 	}
 
 
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
-							Auto<BSScope> scope, Auto<Str> contents)
-		: Function(result, name, params), scope(scope), contents(contents) {
+							const vector<String> &names, Auto<BSScope> scope,
+							Auto<Str> contents,	const SrcPos &pos)
+		: Function(result, name, params), scope(scope), contents(contents), paramNames(names) {
 
 		setCode(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode)));
 	}
@@ -41,7 +46,7 @@ namespace storm {
 		if (parser.parse(L"FunctionBody") < contents->v.size())
 			throw parser.error(file);
 
-		Auto<Object> c = parser.transform(engine(), file, vector<Object *>(1, scope.borrow()));
+		Auto<Object> c = parser.transform(engine(), file, vector<Object *>(1, this));
 		Auto<FnBody> body = c.as<FnBody>();
 		if (!body)
 			throw InternalError(L"Invalid syntax");
@@ -52,6 +57,14 @@ namespace storm {
 		// Generate code!
 		using namespace code;
 		Listing l;
+
+		// Parameters
+		for (nat i = 0; i < params.size(); i++) {
+			const Value &t = params[i];
+			LocalVar *var = body->variable(paramNames[i]);
+			assert(var);
+			var->var = l.frame.createParameter(t.size(), false, t.destructor());
+		}
 
 		GenState state = { l, l.frame, l.frame.root() };
 
@@ -75,6 +88,15 @@ namespace storm {
 		return l;
 	}
 
-	bs::FnBody::FnBody(Auto<BSScope> scope) : Block(scope) {}
+	void bs::BSFunction::addParams(Auto<Block> to) {
+		for (nat i = 0; i < params.size(); i++) {
+			Auto<LocalVar> var = CREATE(LocalVar, this, paramNames[i], params[i], pos, true);
+			to->add(var);
+		}
+	}
+
+	bs::FnBody::FnBody(Auto<BSFunction> owner) : Block(owner->scope) {
+		owner->addParams(capture(this));
+	}
 
 }

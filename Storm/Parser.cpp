@@ -33,22 +33,21 @@ namespace storm {
 	bool Parser::process(nat step) {
 		bool seenFinish = false;
 		StateSet &s = steps[step];
-		bool moreCompleters = false;
 
 		for (nat i = 0; i < s.size(); i++) {
 			StatePtr ptr(step, i);
+			// PLN(ptr << ": " << s[i]);
 
 			predictor(s, s[i], ptr);
-			moreCompleters |= completer(s, s[i], ptr);
+			completer(s, s[i], ptr);
 			scanner(s, s[i], ptr);
 
 			if (s[i].finish(&rootOption))
 				seenFinish = true;
 
-			if (i == s.size() - 1 && moreCompleters) {
+			if (i == s.size() - 1) {
 				// Run completers again, some may produce more states now.
 				runCompleters(step);
-				moreCompleters = false;
 			}
 		}
 
@@ -86,13 +85,14 @@ namespace storm {
 
 	void Parser::scanner(StateSet &s, State state, StatePtr ptr) {
 		SyntaxToken *token = state.pos.token();
-		RegexToken *t = dynamic_cast<RegexToken*>(token);
+		RegexToken *t = as<RegexToken>(token);
 		if (!t)
 			return;
 
 		nat matched = t->regex.match(src, ptr.step);
-		if (matched == NO_MATCH)
+		if (matched == NO_MATCH) {
 			return;
+		}
 
 		// Should not happen, but best to be safe!
 		if (matched >= steps.size())
@@ -105,11 +105,10 @@ namespace storm {
 		steps[matched].insert(ns);
 	}
 
-	bool Parser::completer(StateSet &s, State state, StatePtr ptr) {
+	void Parser::completer(StateSet &s, State state, StatePtr ptr) {
 		if (!state.pos.end())
-			return false;
+			return;
 
-		bool inserted = false;
 		String completed = state.pos.option().rule();
 		StateSet &from = steps[state.from];
 		for (nat i = 0; i < from.size(); i++) {
@@ -119,13 +118,15 @@ namespace storm {
 				continue;
 
 			State ns(st.pos.nextA(), st.from, stPtr, ptr);
-			inserted |= s.insert(ns);
+			s.insert(ns);
+			// if (ns.pos.valid())
+			// 	PLN("->" << ns);
 
 			ns.pos = st.pos.nextB();
-			inserted |= s.insert(ns);
+			s.insert(ns);
+			// if (ns.pos.valid())
+			// 	PLN("->" << ns);
 		}
-
-		return inserted && ptr.step == state.from;
 	}
 
 	bool Parser::hasError() const {

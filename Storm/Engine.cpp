@@ -28,12 +28,12 @@ namespace storm {
 	}
 
 	Engine::~Engine() {
-		rootPkg->release();
-		rootScope = null; // keeps a reference to the root package.
-
 		// Disable warnings for unneeded references at this point... We do not know the correct
 		// destruction order, and it would not be worth it to compute it.
 		arena.preShutdown();
+
+		rootPkg->release();
+		rootScope = null; // keeps a reference to the root package.
 
 		// Release more cached types. This needs to be above clearing other types.
 		specialCached.clear();

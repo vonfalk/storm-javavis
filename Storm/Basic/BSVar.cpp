@@ -52,8 +52,8 @@ namespace storm {
 		 * LocalVar
 		 */
 
-		bs::LocalVar::LocalVar(const String &name, const Value &t, const SrcPos &pos)
-			: Named(name), result(t), pos(pos), var(code::Variable::invalid) {}
+		bs::LocalVar::LocalVar(const String &name, const Value &t, const SrcPos &pos, bool param)
+			: Named(name), result(t), pos(pos), var(code::Variable::invalid), param(param) {}
 
 	}
 }

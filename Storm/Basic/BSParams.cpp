@@ -9,6 +9,10 @@ namespace storm {
 		params.push_back(type);
 	}
 
+	void bs::Params::add(Auto<SStr> name) {
+		names.push_back(name);
+	}
+
 	void bs::Params::output(wostream &to) const {
 		to << L"(";
 		join(to, params, L", ");

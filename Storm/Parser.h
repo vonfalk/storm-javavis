@@ -221,7 +221,7 @@ namespace storm {
 
 		// Run the completer on one element in 'set'. Returns true
 		// if new states were inserted in the current 'set'.
-		bool completer(StateSet &set, State state, StatePtr ptr);
+		void completer(StateSet &set, State state, StatePtr ptr);
 
 		/**
 		 * Result extraction.

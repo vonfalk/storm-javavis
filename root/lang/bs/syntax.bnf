@@ -26,7 +26,7 @@ StrContent => void : StrContent - "\\." - StrContent;
 
 // Parameter list (possibly empty)
 Params => Params() : DELIMITER;
-Params => Params() : Type -> add, Name, (",", Type -> add, Name, )*;
+Params => Params() : Type -> add, Name -> add, (",", Type -> add, Name -> add, )*;
 
 // Function
 Function => FunctionDecl(pos, name, result, params, contents) :
@@ -74,5 +74,5 @@ Stmt => expr : Expr(block) expr, ";";
 Stmt => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
 
 // Root rule for parsing function bodies.
-FunctionBody(BSScope scope);
-FunctionBody => FnBody(scope) : (Stmt(me) -> expr, )*;
+FunctionBody(BSFunction fn);
+FunctionBody => FnBody(fn) : (Stmt(me) -> expr, )*;

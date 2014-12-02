@@ -14,8 +14,10 @@ namespace storm {
 			STORM_CTOR Params();
 
 			void STORM_FN add(Auto<TypeName> type);
+			void STORM_FN add(Auto<SStr> name);
 
 			vector<Auto<TypeName> > params;
+			vector<Auto<SStr> > names;
 
 		protected:
 			virtual void output(wostream &to) const;
