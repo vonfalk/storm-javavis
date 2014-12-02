@@ -193,7 +193,7 @@ namespace storm {
 					to.endMark(SyntaxOption::mRepOnePlus);
 				} else if (r.token == L"?") {
 					to.endMark(SyntaxOption::mRepZeroOne);
-				} else if (r.token != L"," && r.token != L"-") {
+				} else if (r.token != L"," && r.token != L"-" && r.token != L";") {
 					to.endMark(r.token);
 				} else {
 					throw SyntaxError(r.pos, L"Unknown repetition: " + r.token);

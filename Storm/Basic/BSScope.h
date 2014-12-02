@@ -29,7 +29,7 @@ namespace storm {
 
 		protected:
 			virtual Named *findHere(const Name &name) const;
-			virtual NameOverload *findHere(const Name &name, const vector<Value> &param) const;
+			virtual Named *findHere(const Name &name, const vector<Value> &param) const;
 		};
 
 	}

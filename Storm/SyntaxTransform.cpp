@@ -35,7 +35,7 @@ namespace storm {
 				types[i] = SrcPos::type(e);
 		}
 
-		NameOverload *no = option->scope->find(option->matchFn, types);
+		Named *no = option->scope->find(option->matchFn, types);
 		if (Function *f = as<Function>(no)) {
 			code::FnCall call;
 			for (nat i = 0; i < params.size(); i++) {
@@ -88,7 +88,7 @@ namespace storm {
 		types[0] = Value(t);
 		types[1] = Value(param->myType);
 		Auto<Scope> scope = CREATE(Scope, me, capture(t));
-		NameOverload *no = scope->find(Name(memberName), types);
+		Named *no = scope->find(Name(memberName), types);
 		if (Function *f = as<Function>(no)) {
 			code::FnCall call;
 			call.param(me).param(param);

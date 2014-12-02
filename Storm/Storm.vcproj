@@ -370,6 +370,10 @@
 				RelativePath=".\Basic\BSVar.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSNamed.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -578,6 +582,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSVar.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSNamed.h"
 				>
 			</File>
 		</Filter>

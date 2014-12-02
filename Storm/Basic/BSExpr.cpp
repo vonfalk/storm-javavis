@@ -101,7 +101,7 @@ namespace storm {
 		vector<code::Value> params(2);
 		params[0] = lhsVar;
 		params[1] = rhsVar;
-		f->genCode(s, params, result);
+		f->genCode(s, params, to);
 	}
 
 	Function *bs::Operator::findFn() {

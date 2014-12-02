@@ -6,20 +6,22 @@ namespace storm {
 	namespace bs {
 
 		bs::Var::Var(Auto<Block> block, Auto<TypeName> type, Auto<SStr> name) {
-			Value t = type->value(block->scope);
-			variable = CREATE(LocalVar, this, name->v->v, t, name->pos);
-			block->add(variable);
+			init(block, type->value(block->scope), name);
 		}
 
 		bs::Var::Var(Auto<Block> block, Auto<SStr> name, Auto<Expr> init) {
-			Value t = init->result();
-			this->init = init;
-			variable = CREATE(LocalVar, this, name->v->v, t, name->pos);
+			this->init(block, init->result(), name);
+			initTo(init);
+		}
+
+		void bs::Var::init(Auto<Block> block, const Value &type, Auto<SStr> name) {
+			variable = CREATE(LocalVar, this, name->v->v, type, name->pos);
 			block->add(variable);
 		}
 
 		void bs::Var::initTo(Auto<Expr> e) {
-			init = e;
+			variable->result.mustStore(e->result(), variable->pos);
+			initExpr = e;
 		}
 
 		Value bs::Var::result() {
@@ -31,9 +33,9 @@ namespace storm {
 
 			assert(variable->var != Variable::invalid);
 
-			if (init) {
+			if (initExpr) {
 				// Evaluate.
-				init->code(s, variable->var);
+				initExpr->code(s, variable->var);
 			}
 
 

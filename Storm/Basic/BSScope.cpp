@@ -11,8 +11,9 @@ namespace storm {
 	Named *bs::BSScope::findHere(const Name &name) const {
 		if (name.size() == 1) {
 			for (Block *b = topBlock; b; b = b->parent) {
-				if (Named *n = b->variable(name[0]))
+				if (Named *n = b->variable(name[0])) {
 					return n;
+				}
 			}
 		}
 
@@ -27,13 +28,17 @@ namespace storm {
 		return null;
 	}
 
-	NameOverload *bs::BSScope::findHere(const Name &name, const vector<Value> &params) const {
-		if (NameOverload *n = Scope::findHere(name, params))
+	Named *bs::BSScope::findHere(const Name &name, const vector<Value> &params) const {
+		if (Named *n = Scope::findHere(name, params))
 			return n;
 
 		if (params.size() > 0 && name.size() == 1) {
-			if (Overload *o = as<Overload>(params[0].type->find(name)))
+			Named *n = params[0].type->find(name);
+			if (Overload *o = as<Overload>(n)) {
 				return o->find(params);
+			} else if (params.size() == 0) {
+				return n;
+			}
 		}
 
 		return null;

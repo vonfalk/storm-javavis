@@ -14,5 +14,6 @@ Int foo() {
 
 Int bar() {
 1 + var v = 2;
+v + 1;
 }
 

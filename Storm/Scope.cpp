@@ -44,7 +44,7 @@ namespace storm {
 		return findHere(name);
 	}
 
-	NameOverload *Scope::find(const Name &name, const vector<Value> &params) const {
+	Named *Scope::find(const Name &name, const vector<Value> &params) const {
 		return findHere(name, params);
 	}
 
@@ -64,11 +64,13 @@ namespace storm {
 		return null;
 	}
 
-	NameOverload *Scope::findHere(const Name &name, const vector<Value> &params) const {
+	Named *Scope::findHere(const Name &name, const vector<Value> &params) const {
 		Named *named = find(name);
 
 		if (Overload *overload = as<Overload>(named)) {
 			return overload->find(params);
+		} else if (params.size() == 0) {
+			return named;
 		} else {
 			return null;
 		}

@@ -8,6 +8,7 @@ namespace storm {
 
 		/**
 		 * Local variable.
+		 * TODO? NameOverload as well? For member variables?
 		 */
 		class LocalVar : public Named {
 			STORM_CLASS;
@@ -38,7 +39,7 @@ namespace storm {
 			Auto<LocalVar> variable;
 
 			// Initialize to.
-			Auto<Expr> init;
+			Auto<Expr> initExpr;
 
 			// Set initializing expression.
 			void STORM_FN initTo(Auto<Expr> e);
@@ -48,6 +49,10 @@ namespace storm {
 
 			// Generate code.
 			virtual void code(const GenState &state, code::Variable to);
+
+		private:
+			// Initialize.
+			void init(Auto<Block> block, const Value &type, Auto<SStr> name);
 		};
 
 

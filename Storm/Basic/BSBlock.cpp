@@ -5,9 +5,9 @@
 
 namespace storm {
 
-	bs::Block::Block(Auto<BSScope> scope) : scope(scope), parent(null) {}
+	bs::Block::Block(Auto<BSScope> scope) : scope(scope->child(capture(this))), parent(null) {}
 
-	bs::Block::Block(Auto<Block> parent) : scope(parent->scope), parent(parent.borrow()) {}
+	bs::Block::Block(Auto<Block> parent) : scope(parent->scope->child(capture(this))), parent(parent.borrow()) {}
 
 	void bs::Block::expr(Auto<Expr> e) {
 		exprs.push_back(e);

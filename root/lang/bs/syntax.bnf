@@ -48,6 +48,16 @@ Includes => Includes() : ("use", Package -> add, ";", )*;
 // Operators (priority not defined here).
 Operator => v : "[+\-*/]" v;
 
+// Parameter list
+Values(Block block);
+Values => Actual() : DELIMITER;
+Values => Actual() : Expr(block) -> add, (",", Expr(block) -> add)*;
+
+// Parameter list with/without parens.
+FnValues(Block block);
+FnValues => Actual() : DELIMITER;
+FnValues => v : "(", Values(block) v, ")";
+
 // Expression
 Expr(Block block);
 Expr => intConstant(nr) : "[0-9]+" nr;
@@ -56,6 +66,7 @@ Expr => Operator(block, lhs, op, rhs) : Expr(block) lhs, Operator op, Expr(block
 Expr => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
 Expr => Var(block, t, name) : Type t, Name name, ("=", Expr(block) -> initTo)?;
 Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;
+Expr => NamedExpr(block, name, params) : Name name, FnValues(block) params;
 
 // Statement
 Stmt(Block block);
