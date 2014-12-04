@@ -21,6 +21,7 @@ namespace code {
 		void sbb(Output &to, Params p, const Instruction &instr);
 		void xor(Output &to, Params p, const Instruction &instr);
 		void cmp(Output &to, Params p, const Instruction &instr);
+		void mul(Output &to, Params p, const Instruction &instr);
 
 		void dat(Output &to, Params p, const Instruction &instr);
 

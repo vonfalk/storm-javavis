@@ -31,6 +31,7 @@ namespace code {
 		OP_CODE(sbb),
 		OP_CODE(xor),
 		OP_CODE(cmp),
+		OP_CODE(mul),
 		OP_CODE(dat),
 		OP_CODE(addRef),
 		OP_CODE(releaseRef),

@@ -125,6 +125,8 @@ void testFunction(Arena &arena) {
 int _tmain(int argc, _TCHAR* argv[]) {
 	TODO(L"Test without SEH as well!");
 
+	initDebug();
+
 	Tests::run();
 
 	// Arena arena;

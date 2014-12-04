@@ -226,6 +226,13 @@ namespace code {
 			immRegInstr(to, op8, op, instr.dest(), instr.src());
 		}
 
+		void mul(Output &to, Params p, const Instruction &instr) {
+			assert(instr.dest().type() == Value::tRegister);
+			to.putByte(0x0F);
+			to.putByte(0xAF);
+			modRm(to, registerId(instr.dest().reg()), instr.src());
+		}
+
 		void dat(Output &to, Params p, const Instruction &instr) {
 			const Value &v = instr.src();
 			switch (v.type()) {

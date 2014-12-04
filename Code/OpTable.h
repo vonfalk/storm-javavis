@@ -16,8 +16,12 @@ namespace code {
 	public:
 		// Create the table.
 		OpTable(const OpEntry<T> *entries, nat count) {
+			for (nat i = 0; i < ARRAY_SIZE(data); i++)
+				data[i] = null;
+
 			for (nat i = 0; i < count; i++) {
 				const OpEntry<T> &e = entries[i];
+				assert(data[e.opCode] == null);
 				data[e.opCode] = e.data;
 			}
 		}
@@ -30,5 +34,29 @@ namespace code {
 		T data[op::numOpCodes];
 	};
 
+
+	/**
+	 * Contains a subset of op-codes.
+	 */
+	class OpSet {
+	public:
+		// Create.
+		inline OpSet(const OpCode *opCodes, nat count) {
+			for (nat i = 0; i < ARRAY_SIZE(data); i++)
+				data[i] = false;
+
+			for (nat i = 0; i < count; i++) {
+				OpCode c = opCodes[i];
+				data[c] = true;
+			}
+		}
+
+		// Get the op-code at 'o'.
+		inline bool operator[](OpCode o) { return data[o]; }
+
+	private:
+		// Data.
+		bool data[op::numOpCodes];
+	};
 
 }

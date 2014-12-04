@@ -213,6 +213,10 @@
 				RelativePath=".\TestException.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestMul.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

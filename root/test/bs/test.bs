@@ -13,7 +13,7 @@ p - 2;
 }
 
 Int bar() {
-var z = 1; var v = 4;
+var z = 1; var v = (2 * 2);
 foo(z + v);
 }
 

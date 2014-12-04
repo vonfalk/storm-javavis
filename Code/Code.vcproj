@@ -281,7 +281,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\X86\TransformX86.cpp"
+				RelativePath=".\X86\TransformParamsX86.cpp"
 				>
 			</File>
 			<File
@@ -310,6 +310,10 @@
 			</File>
 			<File
 				RelativePath=".\Redirect.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\X86\TransformX86.cpp"
 				>
 			</File>
 		</Filter>
@@ -415,7 +419,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\X86\TransformX86.h"
+				RelativePath=".\X86\TransformParamsX86.h"
 				>
 			</File>
 			<File
@@ -444,6 +448,10 @@
 			</File>
 			<File
 				RelativePath=".\Redirect.h"
+				>
+			</File>
+			<File
+				RelativePath=".\X86\TransformX86.h"
 				>
 			</File>
 		</Filter>

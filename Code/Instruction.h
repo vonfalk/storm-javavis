@@ -30,6 +30,7 @@ namespace code {
 		// These are intended for use by the backends, no sanity checks are made here!
 		Instruction altered(const Value &dest, const Value &src) const;
 		Instruction alterSrc(const Value &v) const;
+		Instruction alterDest(const Value &v) const;
 	protected:
 		void output(std::wostream &to) const;
 
@@ -71,7 +72,7 @@ namespace code {
 	Instruction fnParam(const Value &src);
 	Instruction fnCall(const Value &src, nat returnSize);
 
-	// Integer math
+	// Integer math (signed)
 	Instruction add(const Value &dest, const Value &src);
 	Instruction adc(const Value &dest, const Value &src);
 	Instruction or(const Value &dest, const Value &src);
@@ -80,6 +81,7 @@ namespace code {
 	Instruction sbb(const Value &dest, const Value &src);
 	Instruction xor(const Value &dest, const Value &src);
 	Instruction cmp(const Value &dest, const Value &src);
+	Instruction mul(const Value &dest, const Value &src);
 
 	// Data
 	Instruction dat(const Value &v);

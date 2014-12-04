@@ -46,7 +46,7 @@ File => Contents() : (FileItem -> add, )*;
 Includes => Includes() : ("use", Package -> add, ";", )*;
 
 // Operators (priority not defined here).
-Operator => v : "[+\-*/]" v;
+Operator => v : "[+\-*/%]" v;
 
 // Parameter list
 Values(Block block);
@@ -67,6 +67,7 @@ Expr => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
 Expr => Var(block, t, name) : Type t, Name name, ("=", Expr(block) -> initTo)?;
 Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;
 Expr => NamedExpr(block, name, params) : Name name, FnValues(block) params;
+Expr => z : "(", Expr(block) z, ")";
 
 // Statement
 Stmt(Block block);

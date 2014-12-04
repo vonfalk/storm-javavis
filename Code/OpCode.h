@@ -22,6 +22,7 @@ namespace code {
 			sbb,
 			xor,
 			cmp,
+			mul,
 
 			// Data
 			dat,

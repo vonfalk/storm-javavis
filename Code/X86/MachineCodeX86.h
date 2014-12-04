@@ -7,6 +7,7 @@
 #include "Block.h"
 #include "Seh.h"
 #include "VariableX86.h"
+#include "TransformX86.h"
 #include "UsedRegisters.h"
 
 namespace code {
@@ -27,6 +28,9 @@ namespace code {
 		extern const Register ptrD, ptrSi, ptrDi;
 		extern const Register dl;
 		extern const Register edx, esi, edi;
+
+		// Get the Transform fn for 'op'
+		TransformFn transformFn(OpCode op);
 
 		// Add all 64-bit pairs to the Registers object.
 		void add64(Registers &r);
@@ -101,23 +105,6 @@ namespace code {
 		void immRegInstr(Output &to, const ImmRegInstr8 &op, const Value &dest, const Value &src);
 		void immRegInstr(Output &to, const ImmRegInstr8 &op8, const ImmRegInstr &op, const Value &dest, const Value &src);
 
-
-		// First step, transform any ImmReg op-codes to use intermediate registers.
-		class ImmRegTfm : public Transformer {
-		public:
-			ImmRegTfm(const Listing &from);
-
-			UsedRegisters registers;
-
-		protected:
-			virtual void transform(Listing &to, nat line);
-
-			// Needs splitting?
-			bool needsImmediate(nat line);
-			bool supported(nat line);
-
-			Register suitableRegister(nat line);
-		};
 	}
 
 	namespace machine {

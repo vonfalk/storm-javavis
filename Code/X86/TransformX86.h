@@ -1,59 +1,36 @@
 #pragma once
 
 #ifdef X86
-#include "MachineCodeX86.h"
-#include "Seh.h"
-#include "VariableX86.h"
+#include "Listing.h"
+#include "UsedRegisters.h"
 
 namespace code {
 	namespace machineX86 {
 
-		// Parameters
-		class TfmParams : public Transformer {
+		/**
+		 * Transform unsupported op-codes into sequences of other op-codes.
+		 * This step is free to transform the code in (almost) any way.
+		 */
+		class Transform : public Transformer {
 		public:
-			TfmParams(const Listing &from, const Binary *owner);
+			Transform(const Listing &from);
 
-			// State during transform.
-			State state;
-			// Registers needed to be preserved for the current instruction
-			Registers preserve;
-			// Owner object.
-			const Binary *owner;
-
-			// Register usage
+			// Remember unused registers.
 			UsedRegisters registers;
 
-			// Saved registers. (only the 32-bit versions).
-			Registers savedRegisters;
-			nat savedRegisterCount;
+			// Get a good unused register at 'line'.
+			Register unusedReg(nat line) const;
 
-			// Variables
-			Offsets vars;
-
-			virtual void before(Listing &to);
+		protected:
 			virtual void transform(Listing &to, nat line);
-			virtual void after(Listing &to);
-
-			// Look up variables in instructions.
-			void lookupVars(Instruction &instr) const;
-			void lookupVars(Listing &to, Instruction instr) const;
-
-			// Replace the value 'v' if it is a variable. Returns true if 'v' was altered.
-			bool lookupVar(Value &v) const;
-			inline Value lookup(const Variable &v, int offset) const { return vars.variable(v, offset); }
 		};
 
-		// Transform function calls into regular asm-instructions.
-		void fnParamTfm(Listing &to, TfmParams &params, const Instruction &instr);
-		void fnCallTfm(Listing &to, TfmParams &params, const Instruction &instr);
+		typedef void (*TransformFn)(const Transform &, Listing &, nat);
 
-		// Transform prolog and epilog.
-		void prologTfm(Listing &to, TfmParams &params, const Instruction &instr);
-		void epilogTfm(Listing &to, TfmParams &params, const Instruction &instr);
-
-		// Transform block start and end.
-		void beginBlockTfm(Listing &to, TfmParams &params, const Instruction &instr);
-		void endBlockTfm(Listing &to, TfmParams &params, const Instruction &instr);
+		// Transform functions executed. Assigned to op-codes in MachineCodeX86.cpp
+		// immRegTfm is a special case.
+		void immRegTfm(const Transform &tfm, Listing &to, nat line);
+		void mulTfm(const Transform &tfm, Listing &to, nat size);
 
 	}
 }

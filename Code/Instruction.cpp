@@ -37,7 +37,7 @@ namespace code {
 		if (dest.sizeType() != src.sizeType()) {
 			throw InvalidValue(String(L"For ") + name(opCode) + L": Size of operands must match! " + toS(dest) + L", " + toS(src));
 		}
-			
+
 		return Instruction(opCode, dest, mode, src);
 	}
 
@@ -59,13 +59,19 @@ namespace code {
 		return i;
 	}
 
+	Instruction Instruction::alterDest(const Value &v) const {
+		Instruction i(*this);
+		i.myDest = v;
+		return i;
+	}
+
 	Instruction::Instruction() {}
 
 	Instruction::Instruction(OpCode opCode, const Value &dest, DestMode destMode, const Value &src) : opCode(opCode), myDest(dest), myDestMode(destMode), mySrc(src) {}
 
 	void Instruction::output(std::wostream &to) const {
 		to << name(opCode);
-		
+
 		if (!myDest.empty() && !mySrc.empty())
 			to << L" " << myDest << L", " << mySrc;
 		else if (!myDest.empty())
@@ -158,6 +164,10 @@ namespace code {
 
 	Instruction cmp(const Value &dest, const Value &src) {
 		return createDestSrc(op::cmp, dest, destRead, src);
+	}
+
+	Instruction mul(const Value &dest, const Value &src) {
+		return createDestSrc(op::mul, dest, destRead | destWrite, src);
 	}
 
 	Instruction dat(const Value &v) {

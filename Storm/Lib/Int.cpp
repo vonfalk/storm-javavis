@@ -16,15 +16,16 @@ namespace storm {
 		p.state.to << code::sub(p.result, p.params[1]);
 	}
 
-	static Int add(Int a, Int b) {
-		return a + b;
+	static void intMul(InlinedParams p) {
+		p.state.to << code::mov(p.result, p.params[0]);
+		p.state.to << code::mul(p.result, p.params[1]);
 	}
-
 
 	IntType::IntType() : Type(L"Int", typeValue | typeFinal, sizeof(code::Int)) {
 		vector<Value> ii(2, Value(this));
 		add(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&intAdd)));
 		add(inlinedFunction(engine, Value(this), L"-", ii, simpleFn(&intSub)));
+		add(inlinedFunction(engine, Value(this), L"*", ii, simpleFn(&intMul)));
 	}
 
 

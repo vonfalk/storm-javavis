@@ -5,6 +5,7 @@
 #include "AsmX86.h"
 #include "Transform64.h"
 #include "TransformX86.h"
+#include "TransformParamsX86.h"
 #include "VariableX86.h"
 #include "Listing.h"
 #include "Frame.h"
@@ -14,9 +15,14 @@ namespace code {
 
 	namespace machine {
 #define OUTPUT(x) { op::x, &machineX86::x }
+#define TRANSFORM(x) { op::x, &machineX86::x ## Tfm }
+#define IMM_REG(x) { op::x, &machineX86::immRegTfm }
 
 		typedef void (*OutputFn)(Output &, machineX86::Params, const Instruction &);
 
+		/**
+		 * Output functions.
+		 */
 		static OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
 			OUTPUT(push),
@@ -33,6 +39,7 @@ namespace code {
 			OUTPUT(sbb),
 			OUTPUT(xor),
 			OUTPUT(cmp),
+			OUTPUT(mul),
 
 			OUTPUT(dat),
 
@@ -42,13 +49,40 @@ namespace code {
 			OUTPUT(threadLocal),
 		};
 
+		/**
+		 * Tell which op-codes are implemented using immediate values.
+		 */
 		static OpCode immReg[] = {
 			op::mov, op::add, op::adc, op::or, op::and, op::sub, op::sbb, op::xor, op::cmp
 		};
 
+		/**
+		 * Transform functions. immReg op-codes overrides these!
+		 */
+		static OpEntry<machineX86::TransformFn> transformMap[] = {
+			IMM_REG(mov),
+			IMM_REG(add),
+			IMM_REG(adc),
+			IMM_REG(or),
+			IMM_REG(and),
+			IMM_REG(sub),
+			IMM_REG(sbb),
+			IMM_REG(xor),
+			IMM_REG(cmp),
+
+			TRANSFORM(mul),
+		};
 	}
 
 	namespace machineX86 {
+
+		// Transform function.
+		TransformFn transformFn(OpCode op) {
+			using namespace machine;
+			static OpTable<TransformFn> t(transformMap, ARRAY_SIZE(transformMap));
+			return t[op];
+		}
+
 
 		State::State() : currentBlock() {}
 
@@ -131,14 +165,14 @@ namespace code {
 		Value low32(const Value &v) {
 			assert(v.size() == 8);
 			switch (v.type()) {
-				case Value::tConstant:
-					return natConst(v.constant() & 0xFFFFFFFF);
-				case Value::tRegister:
-					return Value(low32(v.reg()));
-				case Value::tRelative:
-					return intRel(v.reg(), v.offset());
-				case Value::tVariable:
-					return intRel(v.variable(), v.offset());
+			case Value::tConstant:
+				return natConst(v.constant() & 0xFFFFFFFF);
+			case Value::tRegister:
+				return Value(low32(v.reg()));
+			case Value::tRelative:
+				return intRel(v.reg(), v.offset());
+			case Value::tVariable:
+				return intRel(v.variable(), v.offset());
 			}
 			assert(false);
 			return Value();
@@ -146,37 +180,36 @@ namespace code {
 
 		nat registerId(Register r) {
 			switch (r) {
-				case al:
-				case ptrA:
-				case eax:
-					return 0;
-				case cl:
-				case ptrC:
-				case ecx:
-					return 1;
-				case dl:
-				case ptrD:
-				case edx:
-					return 2;
-				case bl:
-				case ptrB:
-				case ebx:
-					return 3;
-				case ptrSi:
-				case esi:
-					return 6;
-				case ptrDi:
-				case edi:
-					return 7;
-				
-				case ptrStack:
-					return 4;
-				case ptrFrame:
-					return 5;
-				
-				default:
-					assert(false);
-					return 0;
+			case al:
+			case ptrA:
+			case eax:
+				return 0;
+			case cl:
+			case ptrC:
+			case ecx:
+				return 1;
+			case dl:
+			case ptrD:
+			case edx:
+				return 2;
+			case bl:
+			case ptrB:
+			case ebx:
+				return 3;
+			case ptrSi:
+			case esi:
+				return 6;
+			case ptrDi:
+			case edi:
+				return 7;
+
+			case ptrStack:
+				return 4;
+			case ptrFrame:
+				return 5;
+			default:
+				assert(false);
+				return 0;
 			}
 		}
 
@@ -325,73 +358,6 @@ namespace code {
 			}
 		}
 
-		ImmRegTfm::ImmRegTfm(const Listing &from) : Transformer(from), registers(from) {}
-
-		void ImmRegTfm::transform(Listing &to, nat line) {
-			if (!needsImmediate(line)) {
-				to << from[line];
-			} else if (supported(line)) {
-				to << from[line];
-			} else {
-				const Instruction &instr = from[line];
-				nat size = instr.src().size();
-
-				assert(size <= 4); // Not implemented for 8 byte values.
-
-				Register reg = suitableRegister(line);
-
-				if (reg == noReg) {
-					reg = asSize(ptrD, size);
-					to << code::push(ptrD);
-					to << code::mov(reg, instr.src());
-					to << instr.alterSrc(reg);
-					to << code::pop(ptrD);
-				} else {
-					reg = asSize(reg, size);
-					to << code::mov(reg, instr.src());
-					to << instr.alterSrc(reg);
-				}
-			}
-		}
-
-		bool ImmRegTfm::needsImmediate(nat line) {
-			for (nat i = 0; i < ARRAY_SIZE(machine::immReg); i++) {
-				if (machine::immReg[i] == from[line].op())
-					return true;
-			}
-			return false;
-		}
-
-		bool ImmRegTfm::supported(nat line) {
-			switch (from[line].src().type()) {
-				case Value::tLabel:
-				case Value::tReference:
-				case Value::tConstant:
-				case Value::tRegister:
-					return true;
-				default:
-					if (from[line].dest().type() == Value::tRegister) {
-						return true;
-					}
-					break;
-			}
-
-			return false;
-		}
-
-		Register ImmRegTfm::suitableRegister(nat line) {
-			Registers regs = registers[line];
-			add64(regs);
-
-			Register order[] = { ptrD, ptrSi, ptrDi };
-
-			for (nat i = 0; i < ARRAY_SIZE(order); i++) {
-				if (!regs.contains(order[i]))
-					return order[i];
-			}
-
-			return noReg;
-		}
 	}
 
 	namespace machine {
@@ -412,7 +378,7 @@ namespace code {
 				src = &middle;
 			}
 
-			machineX86::ImmRegTfm tfm(*src);
+			machineX86::Transform tfm(*src);
 			middle = tfm.transformed();
 
 			machineX86::TfmParams params(middle, owner);
@@ -423,7 +389,7 @@ namespace code {
 			static OpTable<OutputFn> outputs(outputMap, ARRAY_SIZE(outputMap));
 
 			OutputFn output = outputs[from.op()];
-			assert(output); // Possibly forgotten transform
+			assert(output); // Possibly forgotten output
 			if (!output)
 				return;
 
