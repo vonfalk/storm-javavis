@@ -22,11 +22,12 @@ namespace code {
 			TFM64(sbb),
 			TFM64(xor),
 			TFM64(cmp),
+			TFM64(mul),
 
 			TFM64(push),
 			TFM64(pop),
 		};
-		
+
 
 		Transform64::Transform64(const Listing &from) : Transformer(from) {}
 
@@ -93,6 +94,11 @@ namespace code {
 			//to << code::jne(end);
 			to << code::cmp(low32(instr.dest()), low32(instr.src()));
 			to << end;
+		}
+
+		void Transform64::mulTfm(Listing &to, const Instruction &instr) {
+			TODO("Implement proper 64-bit multiplication!");
+			assert(false);
 		}
 
 		void Transform64::pushTfm(Listing &to, const Instruction &instr) {
