@@ -45,9 +45,6 @@ File => Contents() : (FileItem -> add, )*;
 // Root rule for parsing includes.
 Includes => Includes() : ("use", Package -> add, ";", )*;
 
-// Operators (priority not defined here).
-Operator => v : "[+\-*/%]" v;
-
 // Parameter list
 Values(Block block);
 Values => Actual() : DELIMITER;
@@ -58,16 +55,29 @@ FnValues(Block block);
 FnValues => Actual() : DELIMITER;
 FnValues => v : "(", Values(block) v, ")";
 
+// Atoms, for example constants and variables/function calls.
+Atom(Block block);
+Atom => intConstant(nr) : "[0-9]+" nr;
+Atom => NamedExpr(block, name, params) : Name name, FnValues(block) params;
+Atom => e : "(", Expr(block) e, ")";
+Atom => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
+
+// Highest priority. Right-associative, eg (a * b) * c
+Expr1(Block block);
+Expr1 => a : Atom(block) a;
+Expr1 => Operator(block, lhs, op, rhs) : Expr1(block) lhs, "\*" op, Atom(block) rhs;
+
+// Addition, subtraction. Right-associative, eg (a + b) + c
+Expr2(Block block);
+Expr2 => e : Expr1(block) e;
+Expr2 => Operator(block, lhs, op, rhs) : Expr2(block) lhs, "\+" op, Expr1(block) rhs;
+Expr2 => Operator(block, lhs, op, rhs) : Expr2(block) lhs, "-" op, Expr1(block) rhs;
+
 // Expression
 Expr(Block block);
-Expr => intConstant(nr) : "[0-9]+" nr;
-Expr => Operator(block, lhs, op, rhs) : Expr(block) lhs, Operator op, Expr(block) rhs;
-// Expr => e : "(", Expr e, ")"
-Expr => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
+Expr => e : Expr2(block) e;
 Expr => Var(block, t, name) : Type t, Name name, ("=", Expr(block) -> initTo)?;
 Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;
-Expr => NamedExpr(block, name, params) : Name name, FnValues(block) params;
-Expr => z : "(", Expr(block) z, ")";
 
 // Statement
 Stmt(Block block);

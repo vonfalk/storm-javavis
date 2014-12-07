@@ -66,9 +66,7 @@ namespace storm {
 	 */
 
 	bs::Operator::Operator(Auto<Block> block, Auto<Expr> lhs, Auto<SStr> op, Auto<Expr> rhs)
-		: block(block.borrow()), lhs(lhs), rhs(rhs), op(op->v), fn(null) {
-		TODO("Respect operator priority!");
-	}
+		: block(block.borrow()), lhs(lhs), rhs(rhs), op(op->v), fn(null) {}
 
 	Value bs::Operator::result() {
 		Function *f = findFn();

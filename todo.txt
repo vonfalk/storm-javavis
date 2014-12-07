@@ -31,8 +31,6 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 In bs: check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should
 be something like the same statement instead).
 
-In bs: rewrite the BNF rules like in p94-early to solve operator priority in the syntax.
-
 Idea for a better solution in the parser: Detect potentially empty rules, and complete them directly.
 
 Future test cases:
