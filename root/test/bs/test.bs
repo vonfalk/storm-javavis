@@ -3,17 +3,20 @@ use core;
 class Foo {
 Int a = 10;
 create() {
-"fisk\"bulle";
+"aa\"bb";
 '"';
 }
 }
 
 Int foo(Int p) {
-p - 2;
+    p - 2;
 }
 
 Int bar() {
-var z = 1; var v = (2 * 2);
-foo(z + v);
+    var z = 1; var v = (2 * 2);
+    foo(z + v);
 }
 
+Int demo() {
+    3;
+}
