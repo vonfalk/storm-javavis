@@ -18,6 +18,17 @@
 (setq compilation-h 83)
 (setq compilation-adjust 160)
 
+;; Demo mode
+
+(setq demo-mode nil)
+
+(defun start-demo (name)
+  (setq demo-mode t)
+  (set-face-attribute 'default nil :height 120))
+
+(add-to-list 'command-switch-alist '("demo" . start-demo))
+
+
 ;; Setup code-style
 
 (require 'whitespace)
@@ -109,6 +120,13 @@
 (global-set-key (kbd "C-.") 'other-window)
 (global-set-key (kbd "M-g M-c") 'goto-char)
 
+(global-set-key (kbd "M-p") 'compile-project)
+(global-set-key (kbd "C-c C-m") 'clean-project)
+(global-set-key (kbd "C-c C-r") 'compile-release)
+(global-set-key (kbd "C-c C-a") 'compile-all)
+(global-set-key (kbd "C-c C-q") 'kill-compilation)
+(global-set-key (kbd "C-c C-v C-s") 'open-vs)
+
 (add-hook 'c-mode-common-hook
 	  (lambda ()
 	    (local-set-key (kbd "C-o") 'my-open-line)
@@ -117,12 +135,6 @@
 	    (local-set-key (kbd "C-M-j") 'storm-cpp-singleline)
 	    (local-set-key (kbd "C-M-k") 'storm-insert-comment)
 	    (local-set-key (kbd "C->") "->")
-	    (local-set-key (kbd "M-p") 'compile-project)
-	    (local-set-key (kbd "C-c C-m") 'clean-project)
-	    (local-set-key (kbd "C-c C-r") 'compile-release)
-	    (local-set-key (kbd "C-c C-a") 'compile-all)
-	    (local-set-key (kbd "C-c C-q") 'kill-compilation)
-	    (local-set-key (kbd "C-c C-v C-s") 'open-vs)
 	    (local-set-key (kbd "M-n") 'next-error)
 	    (local-set-key (kbd "C-c C-f C-r") 'rename-proj-file)
 	    (local-set-key (kbd "C-c C-f C-d") 'delete-proj-file)
@@ -309,12 +321,15 @@
       )))
 
 (defun get-compilation-window (buffer e)
-  (if (eq compilation-frame 'nil)
-      (create-compilation-frame)
-    (if (not (frame-live-p compilation-frame))
-	(create-compilation-frame)))
-  (window--display-buffer buffer compilation-window 'frame)
-  compilation-window)
+  (if demo-mode
+      nil
+    (progn
+      (if (eq compilation-frame 'nil)
+	  (create-compilation-frame)
+	(if (not (frame-live-p compilation-frame))
+	    (create-compilation-frame)))
+      (window--display-buffer buffer compilation-window 'frame)
+      compilation-window)))
 
 
 ;; Behaviour.
@@ -343,3 +358,4 @@
   '(("\\.cpp\\'" (".h"))
     ("\\.h\\'" (".cpp" ".c"))
     ))
+

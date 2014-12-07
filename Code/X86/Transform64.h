@@ -22,6 +22,7 @@ namespace code {
 			void sbbTfm(Listing &to, const Instruction &instr);
 			void xorTfm(Listing &to, const Instruction &instr);
 			void cmpTfm(Listing &to, const Instruction &instr);
+			void mulTfm(Listing &to, const Instruction &instr);
 
 			void pushTfm(Listing &to, const Instruction &instr);
 			void popTfm(Listing &to, const Instruction &instr);
