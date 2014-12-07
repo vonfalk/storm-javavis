@@ -63,15 +63,16 @@ Atom => e : "(", Expr(block) e, ")";
 Atom => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
 
 // Highest priority. Right-associative, eg (a * b) * c
+Oper1 => v : "[*/%]" v;
 Expr1(Block block);
 Expr1 => a : Atom(block) a;
-Expr1 => Operator(block, lhs, op, rhs) : Expr1(block) lhs, "\*" op, Atom(block) rhs;
+Expr1 => Operator(block, lhs, op, rhs) : Expr1(block) lhs, Oper1 op, Atom(block) rhs;
 
 // Addition, subtraction. Right-associative, eg (a + b) + c
+Oper2 => v : "[\+\-]" v;
 Expr2(Block block);
 Expr2 => e : Expr1(block) e;
-Expr2 => Operator(block, lhs, op, rhs) : Expr2(block) lhs, "\+" op, Expr1(block) rhs;
-Expr2 => Operator(block, lhs, op, rhs) : Expr2(block) lhs, "-" op, Expr1(block) rhs;
+Expr2 => Operator(block, lhs, op, rhs) : Expr2(block) lhs, Oper2 op, Expr1(block) rhs;
 
 // Expression
 Expr(Block block);
