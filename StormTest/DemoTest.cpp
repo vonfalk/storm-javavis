@@ -3,7 +3,7 @@
 #include "Storm/Function.h"
 #include "Code/Function.h"
 
-BEGIN_TEST_(DemoTest) {
+BEGIN_TESTX(DemoTest) {
 
 	Path root = Path::executable() + Path(L"../root/");
 	Engine engine(root);

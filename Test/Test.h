@@ -162,6 +162,10 @@ private: \
 	TestResult name::run() const { \
 	    TestResult __result__; do
 
+#define BEGIN_TESTX(name) \
+	TestResult name() {	  \
+	TestResult __result__; do
+
 #define END_TEST \
 	while (false); \
 	return __result__; \
