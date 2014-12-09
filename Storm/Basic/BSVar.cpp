@@ -28,22 +28,27 @@ namespace storm {
 			return variable->result;
 		}
 
-		void bs::Var::code(const GenState &s, code::Variable to) {
+		void bs::Var::code(const GenState &s, GenResult &to) {
 			using namespace code;
 
 			assert(variable->var != Variable::invalid);
 
 			if (initExpr) {
 				// Evaluate.
-				initExpr->code(s, variable->var);
+				GenResult gr(variable->var);
+				initExpr->code(s, gr);
 			}
 
 
-			if (to != Variable::invalid) {
+			if (to.needed) {
 				// Part of another expression.
-				s.to << mov(to, variable->var);
-				if (variable->result.refcounted())
-					s.to << code::addRef(to);
+				if (!to.suggest(variable->var)) {
+					Variable v = to.location(s, variable->result);
+
+					if (variable->result.refcounted())
+						s.to << code::addRef(v);
+					s.to << mov(v, variable->var);
+				}
 			}
 		}
 

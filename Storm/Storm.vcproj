@@ -374,6 +374,10 @@
 				RelativePath=".\Basic\BSNamed.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\CodeGen.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

@@ -10,7 +10,7 @@
 namespace code {
 
 	// An implementation of the variable and block management, used by "Listing".
-	class Frame {
+	class Frame : public Printable {
 	public:
 		Frame();
 
@@ -60,6 +60,9 @@ namespace code {
 		// Get all blocks.
 		vector<Block> allBlocks() const;
 
+		// Get all children to 'b'.
+		vector<Block> children(Block b) const;
+
 		// Get all variables.
 		vector<Variable> allVariables() const;
 
@@ -71,6 +74,10 @@ namespace code {
 
 		// Is an exception handler needed for this frame?
 		bool exceptionHandlerNeeded() const;
+
+	protected:
+		virtual void output(wostream &to) const;
+
 	private:
 		struct Param {
 			// The size of this parameter.
@@ -122,6 +129,9 @@ namespace code {
 
 		// Get the size of a variable.
 		nat size(nat v) const;
+
+		// Helper to the output function.
+		void outputBlock(wostream &to, Block b) const;
 	};
 
 }

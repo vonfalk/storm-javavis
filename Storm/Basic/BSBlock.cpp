@@ -20,7 +20,7 @@ namespace storm {
 			return Value();
 	}
 
-	void bs::Block::code(const GenState &state, code::Variable var) {
+	void bs::Block::code(const GenState &state, GenResult &to) {
 		using namespace code;
 
 		if (exprs.size() == 0)
@@ -38,10 +38,11 @@ namespace storm {
 		state.to << begin(block);
 
 		for (nat i = 0; i < exprs.size() - 1; i++) {
-			exprs[i]->code(subState, Variable::invalid);
+			GenResult s;
+			exprs[i]->code(subState, s);
 		}
 
-		exprs[exprs.size() - 1]->code(subState, var);
+		exprs[exprs.size() - 1]->code(subState, to);
 		state.to << end(block);
 	}
 

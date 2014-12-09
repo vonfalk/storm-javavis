@@ -29,7 +29,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &state, code::Variable var);
+			virtual void code(const GenState &state, GenResult &to);
 
 			// Expressions in this block.
 			vector<Auto<Expr> > exprs;

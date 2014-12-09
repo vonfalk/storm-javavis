@@ -52,7 +52,7 @@ namespace storm {
 			throw InternalError(L"Invalid syntax");
 
 		Value resultType = body->result();
-		result.mustStore(result, SrcPos(file, 0));
+		result.mustStore(resultType, SrcPos(file, 0));
 
 		// Generate code!
 		using namespace code;
@@ -69,17 +69,20 @@ namespace storm {
 		GenState state = { l, l.frame, l.frame.root() };
 
 		if (resultType == Value()) {
+			GenResult r;
+
 			l << prolog();
-			body->code(state, Variable::invalid);
+			body->code(state, r);
 			l << epilog();
 			l << ret(0);
 		} else {
-			code::Block root = l.frame.root();
-			Variable resultVar = l.frame.createVariable(root, resultType.size(), resultType.destructor());
+			GenResult r(l.frame.root());
 
 			l << prolog();
-			body->code(state, resultVar);
-			l << mov(asSize(ptrA, resultType.size()), resultVar);
+			body->code(state, r);
+
+			Variable result = r.location(state, resultType);
+			l << mov(asSize(ptrA, resultType.size()), result);
 			l << epilog();
 			l << ret(resultType.size());
 		}

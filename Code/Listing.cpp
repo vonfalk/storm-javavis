@@ -72,6 +72,8 @@ namespace code {
 	void Listing::output(std::wostream &to) const {
 		std::multimap<nat, Label> labels = getLabels();
 
+		to << frame;
+
 		const nat indent = 6;
 
 		UsedRegisters registers(*this);

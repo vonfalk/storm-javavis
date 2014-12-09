@@ -2,6 +2,7 @@
 #include "Frame.h"
 #include "Exception.h"
 
+#include "Utils/Indent.h"
 #include "Utils/Math.h"
 
 namespace code {
@@ -9,6 +10,27 @@ namespace code {
 	Frame::Frame() : nextBlockId(1), nextVariableId(0), anyDestructors(false) {
 		// Create the root block as ID 0.
 		blocks.insert(std::make_pair(0, InternalBlock()));
+	}
+
+	void Frame::output(wostream &to) const {
+		outputBlock(to, root());
+	}
+
+	void Frame::outputBlock(wostream &to, Block block) const {
+		to << endl << Value(block) << L":";
+
+		Indent indent(to);
+		vector<Block> c = children(block);
+		vector<Variable> v = variables(block);
+
+		for (nat i = 0; i < v.size(); i++) {
+			to << endl << Value(v[i]);
+			if (isParam(v[i]))
+				to << " (param)";
+		}
+
+		for (nat i = 0; i < c.size(); i++)
+			outputBlock(to, c[i]);
 	}
 
 	bool Frame::exceptionHandlerNeeded() const {
@@ -23,6 +45,15 @@ namespace code {
 		vector<Block> r(nextBlockId);
 		for (nat i = 0; i < nextBlockId; i++) {
 			r[i] = Block(i);
+		}
+		return r;
+	}
+
+	vector<Block> Frame::children(Block b) const {
+		vector<Block> r;
+		for (BlockMap::const_iterator i = blocks.begin(); i != blocks.end(); ++i) {
+			if (i->second.parent == b.id)
+				r.push_back(Block(i->first));
 		}
 		return r;
 	}
@@ -54,7 +85,7 @@ namespace code {
 			if (pos == b.variables.begin()) {
 				// Find a new variable in any parent blocks!
 
-				while (id != Variable::invalid.id) {
+				while (id == Variable::invalid.id) {
 					p = parent(p);
 					if (p == Block::invalid)
 						return Variable::invalid;
@@ -159,6 +190,7 @@ namespace code {
 
 		const InternalBlock &block = blocks.find(b.id)->second;
 		vector<Variable> r(block.variables.size());
+
 		for (nat i = 0; i < r.size(); i++) {
 			const Var &v = vars.find(block.variables[i])->second;
 			r[i] = Variable(block.variables[i], v.size);

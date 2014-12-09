@@ -52,7 +52,7 @@ namespace storm {
 		return Value();
 	}
 
-	void bs::NamedExpr::code(const GenState &s, code::Variable to) {
+	void bs::NamedExpr::code(const GenState &s, GenResult &to) {
 		if (toExecute)
 			callCode(s, to);
 		else if (toLoad)
@@ -61,22 +61,18 @@ namespace storm {
 			assert(false);
 	}
 
-	void bs::NamedExpr::callCode(const GenState &s, code::Variable to) {
+	void bs::NamedExpr::callCode(const GenState &s, GenResult &to) {
 		using namespace code;
 		const Value &r = toExecute->result;
-
-		Variable resultVar = to;
-		if (resultVar == Variable::invalid)
-			resultVar = s.frame.createVariable(s.block, r.size(), r.destructor());
 
 		vector<Value> values = params->values();
 		vector<code::Value> vars(values.size());
 
 		// Load parameters.
 		for (nat i = 0; i < values.size(); i++) {
-			Variable v = s.frame.createVariable(s.block, values[i].size(), values[i].destructor());
-			params->expressions[i]->code(s, v);
-			vars[i] = v;
+			GenResult gr(s.block);
+			params->expressions[i]->code(s, gr);
+			vars[i] = gr.location(s, values[i]);
 		}
 
 		// Increase refs for all parameters.
@@ -85,16 +81,29 @@ namespace storm {
 				s.to << code::addRef(vars[i]);
 
 		// Call!
-		toExecute->genCode(s, vars, resultVar);
+		toExecute->genCode(s, vars, to);
 	}
 
-	void bs::NamedExpr::loadCode(const GenState &s, code::Variable to) {
+	void bs::NamedExpr::loadCode(const GenState &s, GenResult &to) {
 		using namespace code;
 
-		if (to == Variable::invalid)
+		if (!to.needed)
 			return;
 
-		s.to << mov(to, toLoad->var);
+		if (!to.suggest(toLoad->var)) {
+			Variable v = to.location(s, toLoad->result);
+
+			if (toLoad->result.refcounted())
+				s.to << code::addRef(v);
+			s.to << mov(v, toLoad->var);
+		}
+	}
+
+	bs::NamedExpr *bs::Operator(Auto<Block> block, Auto<Expr> lhs, Auto<SStr> m, Auto<Expr> rhs) {
+		Auto<Actual> actual = CREATE(Actual, block);
+		actual->add(lhs);
+		actual->add(rhs);
+		return CREATE(NamedExpr, block, block, m, actual);
 	}
 
 }

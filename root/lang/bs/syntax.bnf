@@ -2,7 +2,7 @@
 // real storm language.
 
 DELIMITER => void : "[ \n\r\t]*";
-DELIMITER => void : "//.*\n";
+DELIMITER => void : "[ \n\r\t]*//.*\n";
 
 // Name rule returns a String, created by taking the 'name' parameter.
 Name => SStr(name) : "[A-Za-z]+" name;

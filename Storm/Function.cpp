@@ -26,7 +26,9 @@ namespace storm {
 		return *lookupRef;
 	}
 
-	void Function::genCode(const GenState &to, const vector<code::Value> &params, code::Value result) {
+	void Function::genCode(const GenState &to, const vector<code::Value> &params, GenResult &res) {
+		using namespace code;
+
 		initRefs();
 
 		assert(params.size() == this->params.size());
@@ -34,12 +36,12 @@ namespace storm {
 		inlined &= as<DelegatedCode>(lookup.borrow()) != 0;
 		inlined &= as<InlinedCode>(code.borrow()) != 0;
 
+		Variable result = res.location(to, this->result);
+
 		if (inlined) {
 			InlinedCode *c = as<InlinedCode>(code.borrow());
 			c->code(to, params, result);
 		} else {
-			using namespace code;
-
 			assert(("Not implemented for value types yet!", this->result.isBuiltIn()));
 			for (nat i = 0; i < params.size(); i++) {
 				to.to << fnParam(params[i]);

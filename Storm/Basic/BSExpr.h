@@ -20,9 +20,8 @@ namespace storm {
 			// Result of an expression. Default is null. TODO: STORM_FN
 			virtual Value result();
 
-			// Generate code, place result in 'var' unless 'var' == Variable::invalid.
-			// TODO: To avoid loads of temporary variables, change to code(state, bool result) -> Variable
-			virtual void code(const GenState &state, code::Variable var);
+			// Generate code.
+			virtual void code(const GenState &state, GenResult &r);
 		};
 
 
@@ -49,47 +48,13 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &state, code::Variable var);
+			virtual void code(const GenState &state, GenResult &r);
 
 		protected:
 			virtual void output(wostream &out) const;
 		};
 
 		Constant *STORM_FN intConstant(Auto<SStr> str);
-
-		class Block;
-
-		/**
-		 * Operator.
-		 */
-		class Operator : public Expr {
-			STORM_CLASS;
-		public:
-			STORM_CTOR Operator(Auto<Block> block, Auto<Expr> lhs, Auto<SStr> m, Auto<Expr> rhs);
-
-			// Owning block.
-			Block *block;
-
-			// Sub-expressions.
-			Auto<Expr> lhs;
-			Auto<Expr> rhs;
-
-			// The actual operator.
-			Auto<Str> op;
-
-			// Result.
-			virtual Value result();
-
-			// Generate code.
-			virtual void code(const GenState &to, code::Variable var);
-
-		private:
-			// Get the function to call.
-			Function *findFn();
-
-			// Cache of the function to call.
-			Function *fn;
-		};
 
 	}
 }

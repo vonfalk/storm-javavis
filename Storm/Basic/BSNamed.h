@@ -36,7 +36,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &s, code::Variable to);
+			virtual void code(const GenState &s, GenResult &to);
 
 		private:
 			// The function to execute (if any).
@@ -49,14 +49,17 @@ namespace storm {
 			Auto<Actual> params;
 
 			// Generate code to call a function.
-			void callCode(const GenState &s, code::Variable to);
+			void callCode(const GenState &s, GenResult &to);
 
 			// Generate code to load a variable.
-			void loadCode(const GenState &s, code::Variable to);
+			void loadCode(const GenState &s, GenResult &to);
 
 			// Find what to call.
 			void findTarget(Auto<Scope> scope, const Name &name, const SrcPos &pos);
 		};
+
+
+		NamedExpr * STORM_FN Operator(Auto<Block> block, Auto<Expr> lhs, Auto<SStr> m, Auto<Expr> rhs);
 
 	}
 }

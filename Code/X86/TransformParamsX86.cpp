@@ -260,7 +260,7 @@ namespace code {
 			}
 
 			nat stackVarSize = params.vars.maxSize();
-			if (stackVarSize)			
+			if (stackVarSize)
 				to << code::sub(ptrStack, natPtrConst(stackVarSize));
 
 			// Initialize the root block.
@@ -270,7 +270,7 @@ namespace code {
 		void epilogTfm(Listing &to, TfmParams &params, const Instruction &instr) {
 			// Destroy blocks, keep the state in "params", we may return early!
 			Block currentBlock = params.state.currentBlock;
-			
+
 			for (Block c = currentBlock; c != Block::invalid; c = to.frame.parent(c)) {
 				destroyBlock(to, params, c, true);
 			}

@@ -1,6 +1,7 @@
 #pragma once
 #include "BSExpr.h"
 #include "BSType.h"
+#include "BSBlock.h"
 
 namespace storm {
 	namespace bs {
@@ -51,7 +52,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &state, code::Variable to);
+			virtual void code(const GenState &state, GenResult &to);
 
 		private:
 			// Initialize.
