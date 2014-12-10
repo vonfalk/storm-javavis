@@ -217,6 +217,10 @@
 				RelativePath=".\TestMul.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestJmp.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

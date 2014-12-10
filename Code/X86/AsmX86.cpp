@@ -67,9 +67,7 @@ namespace code {
 			}
 		}
 
-		static void jmpCall(bool call, Arena &arena, Output &output, const Value &src) {
-			byte opCode = call ? 0xE8 : 0xE9;
-
+		static void jmpCall(byte opCode, Arena &arena, Output &output, const Value &src) {
 			switch (src.type()) {
 			case Value::tConstant:
 				output.putByte(opCode);
@@ -83,10 +81,6 @@ namespace code {
 				output.putByte(opCode);
 				output.putRelative(src.reference());
 				break;
-			case Value::tRegister:
-				output.putByte(0xFF);
-				modRm(output, call ? 2 : 4, src);
-				break;
 			default:
 				PLN(L"jmpCall not implemented for " << src);
 				assert(false);
@@ -94,8 +88,70 @@ namespace code {
 			}
 		}
 
+		static void jmpCall(bool call, Arena &arena, Output &output, const Value &src) {
+			if (src.type() == Value::tRegister) {
+				output.putByte(0xFF);
+				modRm(output, call ? 2 : 4, src);
+			} else {
+				byte opCode = call ? 0xE8 : 0xE9;
+				jmpCall(opCode, arena, output, src);
+			}
+		}
+
+		static byte condOp(CondFlag c) {
+			switch (c) {
+			case ifAlways:
+				assert(false);
+				break;
+			case ifOverflow:
+				return 0x0;
+			case ifNoOverflow:
+				return 0x1;
+			case ifEqual:
+				return 0x4;
+			case ifNotEqual:
+				return 0x5;
+			case ifBelow:
+				return 0x2;
+			case ifBelowEqual:
+				return 0x6;
+			case ifAboveEqual:
+				return 0x3;
+			case ifAbove:
+				return 0x7;
+			case ifLess:
+				return 0xC;
+			case ifLessEqual:
+				return 0xE;
+			case ifGreaterEqual:
+				return 0xD;
+			case ifGreater:
+				return 0xF;
+			}
+
+			assert(false);
+			PLN("Missing jmpcond: " << c);
+			return 0;
+		}
+
 		void jmp(Output &to, Params p, const Instruction &instr) {
-			jmpCall(false, p.arena, to, instr.src());
+			CondFlag c = CondFlag(instr.src().constant());
+			if (c == ifAlways) {
+				jmpCall(false, p.arena, to, instr.dest());
+			} else if (c == ifNever) {
+				// nothing
+			} else {
+				byte op = 0x80 + condOp(c);
+				to.putByte(0x0F);
+				jmpCall(op, p.arena, to, instr.dest());
+			}
+		}
+
+		void setCond(Output &to, Params p, const Instruction &instr) {
+			CondFlag c = CondFlag(instr.src().constant());
+			to.putByte(0x0F);
+			to.putByte(0x90 + condOp(c));
+			modRm(to, 0, instr.dest());
 		}
 
 		void call(Output &to, Params p, const Instruction &instr) {

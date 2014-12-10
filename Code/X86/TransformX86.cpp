@@ -112,6 +112,21 @@ namespace code {
 			}
 		}
 
+		void setCondTfm(const Transform &tfm, Listing &to, nat line) {
+			const Instruction &instr = tfm.from[line];
+			switch (instr.src().constant()) {
+			case ifAlways:
+				to << mov(instr.dest(), byteConst(1));
+				break;
+			case ifNever:
+				to << mov(instr.dest(), byteConst(0));
+				break;
+			default:
+				to << instr;
+				break;
+			}
+		}
+
 	}
 }
 

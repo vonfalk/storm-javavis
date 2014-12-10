@@ -30,6 +30,7 @@ namespace code {
 			OUTPUT(jmp),
 			OUTPUT(call),
 			OUTPUT(ret),
+			OUTPUT(setCond),
 
 			OUTPUT(add),
 			OUTPUT(adc),
@@ -71,6 +72,7 @@ namespace code {
 			IMM_REG(cmp),
 
 			TRANSFORM(mul),
+			TRANSFORM(setCond),
 		};
 	}
 

@@ -21,6 +21,7 @@ namespace code {
 		OP_CODE(jmp),
 		OP_CODE(call),
 		OP_CODE(ret),
+		OP_CODE(setCond),
 		OP_CODE(fnParam),
 		OP_CODE(fnCall),
 		OP_CODE(add),

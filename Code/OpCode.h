@@ -12,6 +12,7 @@ namespace code {
 			jmp,
 			call,
 			ret,
+			setCond,
 			fnParam,
 			fnCall,
 			add,
@@ -23,6 +24,9 @@ namespace code {
 			xor,
 			cmp,
 			mul,
+			shl,
+			shr,
+			sar,
 
 			// Data
 			dat,

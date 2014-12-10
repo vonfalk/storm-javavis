@@ -57,13 +57,45 @@ namespace code {
 	inline DestMode operator |(DestMode a, DestMode b) { return DestMode(int(a) | int(b)); }
 	inline DestMode operator &(DestMode a, DestMode b) { return DestMode(int(a) & int(b)); }
 
+	// Conditional for jumps and others.
+	enum CondFlag {
+		ifAlways,
+		ifNever,
+
+		ifOverflow,
+		ifNoOverflow,
+		ifEqual,
+		ifNotEqual,
+
+		// Unsigned comparision.
+		ifBelow,
+		ifBelowEqual,
+		ifAboveEqual,
+		ifAbove,
+
+		// Singned comparision.
+		ifLess,
+		ifLessEqual,
+		ifGreaterEqual,
+		ifGreater,
+	};
+
+	// Get the string name.
+	const wchar_t *name(CondFlag cond);
+
+	// Inverse the flag.
+	CondFlag inverse(CondFlag cond);
+
 	// Functions for creating Instruction objects.
 	Instruction mov(const Value &to, const Value &from);
 	Instruction push(const Value &v);
 	Instruction pop(const Value &to);
-	Instruction jmp(const Value &to);
+	Instruction jmp(const Value &to, CondFlag cond = ifAlways);
 	Instruction call(const Value &to, nat returnSize);
 	Instruction ret(nat returnSize);
+
+	// Set a byte to the result of an operation.
+	Instruction setCond(const Value &to, CondFlag cond);
 
 	// Function calls. Works like this: fnParam(10), fnParam(20), fnCall(myFn). Labels placed between fnParam
 	// and fnCall will effectively be before the first fnParam. All fnParams will be merged into the fnCall, so do
@@ -82,6 +114,11 @@ namespace code {
 	Instruction xor(const Value &dest, const Value &src);
 	Instruction cmp(const Value &dest, const Value &src);
 	Instruction mul(const Value &dest, const Value &src);
+
+	// Shifts.
+	Instruction shl(const Value &dest, const Value &src);
+	Instruction shr(const Value &dest, const Value &src);
+	Instruction sar(const Value &dest, const Value &src);
 
 	// Data
 	Instruction dat(const Value &v);

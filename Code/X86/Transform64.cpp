@@ -37,7 +37,7 @@ namespace code {
 			const Instruction &instr = from[line];
 			Tfm64Fn f = tfm[instr.op()];
 
-			if (f) {
+			if (f && instr.size() == 8) {
 				(this->*f)(to, instr);
 			} else {
 				to << instr;
@@ -86,12 +86,9 @@ namespace code {
 		}
 
 		void Transform64::cmpTfm(Listing &to, const Instruction &instr) {
-			TODO("Implement jne");
-			TODO("Test, should work with > < = != at least (maybe not parity)");
-			assert(false);
 			Label end = to.label();
 			to << code::cmp(high32(instr.dest()), high32(instr.src()));
-			//to << code::jne(end);
+			to << code::jmp(end, ifNotEqual);
 			to << code::cmp(low32(instr.dest()), low32(instr.src()));
 			to << end;
 		}

@@ -12,6 +12,7 @@ namespace code {
 		void jmp(Output &to, Params p, const Instruction &instr);
 		void call(Output &to, Params p, const Instruction &instr);
 		void ret(Output &to, Params p, const Instruction &instr);
+		void setCond(Output &to, Params p, const Instruction &instr);
 
 		void add(Output &to, Params p, const Instruction &instr);
 		void adc(Output &to, Params p, const Instruction &instr);
