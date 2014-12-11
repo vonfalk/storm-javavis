@@ -221,6 +221,10 @@
 				RelativePath=".\TestJmp.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestShift.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -237,6 +241,10 @@
 			</File>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TestShift.cpp"
 				>
 			</File>
 		</Filter>

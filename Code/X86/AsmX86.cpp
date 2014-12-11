@@ -289,6 +289,53 @@ namespace code {
 			modRm(to, registerId(instr.dest().reg()), instr.src());
 		}
 
+
+		/**
+		 * Shift op-codes.
+		 */
+
+		static void shiftOp(Output &to, const Value &dest, const Value &src, byte subOp) {
+			assert(("64-bit conversion failed.", dest.size() < 8));
+
+			byte c;
+			bool is8 = dest.size() == 1;
+
+			switch (src.type()) {
+			case Value::tConstant:
+				c = byte(src.constant());
+				if (c == 1) {
+					to.putByte(is8 ? 0xD0 : 0xD1);
+					modRm(to, subOp, dest);
+				} else {
+					to.putByte(is8 ? 0xC0 : 0xC1);
+					modRm(to, subOp, dest);
+					to.putByte(c);
+				}
+				break;
+			case Value::tRegister:
+				assert(("Transform of shift-op failed.", src.reg() == cl));
+
+				to.putByte(is8 ? 0xD2 : 0xD3);
+				modRm(to, subOp, dest);
+				break;
+			default:
+				assert(("The transform was not run.", false));
+				break;
+			}
+		}
+
+		void shl(Output &to, Params p, const Instruction &instr) {
+			shiftOp(to, instr.dest(), instr.src(), 4);
+		}
+
+		void shr(Output &to, Params p, const Instruction &instr) {
+			shiftOp(to, instr.dest(), instr.src(), 5);
+		}
+
+		void sar(Output &to, Params p, const Instruction &instr) {
+			shiftOp(to, instr.dest(), instr.src(), 7);
+		}
+
 		void dat(Output &to, Params p, const Instruction &instr) {
 			const Value &v = instr.src();
 			switch (v.type()) {

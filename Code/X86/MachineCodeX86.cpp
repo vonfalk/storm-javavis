@@ -41,6 +41,9 @@ namespace code {
 			OUTPUT(xor),
 			OUTPUT(cmp),
 			OUTPUT(mul),
+			OUTPUT(shl),
+			OUTPUT(shr),
+			OUTPUT(sar),
 
 			OUTPUT(dat),
 
@@ -73,6 +76,9 @@ namespace code {
 
 			TRANSFORM(mul),
 			TRANSFORM(setCond),
+			TRANSFORM(shl),
+			TRANSFORM(shr),
+			TRANSFORM(sar),
 		};
 	}
 
@@ -391,7 +397,7 @@ namespace code {
 			static OpTable<OutputFn> outputs(outputMap, ARRAY_SIZE(outputMap));
 
 			OutputFn output = outputs[from.op()];
-			assert(output); // Possibly forgotten output
+			assert(("Unknown op-code", output)); // Possibly forgotten output
 			if (!output)
 				return;
 

@@ -127,10 +127,12 @@ namespace code {
 		friend Value intRel(Register reg, int offset);
 		friend Value longRel(Register reg, int offset);
 		friend Value ptrRel(Register reg, int offset);
+		friend Value xRel(nat size, Register reg, int offset);
 		friend Value byteRel(Variable v, int offset);
 		friend Value intRel(Variable v, int offset);
 		friend Value longRel(Variable v, int offset);
 		friend Value ptrRel(Variable v, int offset);
+		friend Value xRel(nat size, Variable v, int offset);
 	};
 
 	// Create constants.
@@ -151,10 +153,12 @@ namespace code {
 	Value intRel(Register reg, int offset);
 	Value longRel(Register reg, int offset);
 	Value ptrRel(Register reg, int offset);
+	Value xRel(nat size, Register reg, int offset);
 
 	// Create values relative to variable locations.
 	Value byteRel(Variable v, int offset);
 	Value intRel(Variable v, int offset);
 	Value longRel(Variable v, int offset);
 	Value ptrRel(Variable v, int offset);
+	Value xRel(nat size, Variable v, int offset);
 }

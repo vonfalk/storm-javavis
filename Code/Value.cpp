@@ -220,9 +220,11 @@ namespace code {
 	Value intRel(Register reg, int offset) { return Value(reg, offset, 4); }
 	Value longRel(Register reg, int offset) { return Value(reg, offset, 8); }
 	Value ptrRel(Register reg, int offset) { return Value(reg, offset, 0); }
+	Value xRel(nat size, Register reg, int offset) { return Value(reg, offset, size); }
 
 	Value byteRel(Variable v, int offset) { return Value(v, offset, 1); }
 	Value intRel(Variable v, int offset) { return Value(v, offset, 4); }
 	Value longRel(Variable v, int offset) { return Value(v, offset, 8); }
 	Value ptrRel(Variable v, int offset) { return Value(v, offset, 0); }
+	Value xRel(nat size, Variable v, int offset) { return Value(v, offset, size); }
 }

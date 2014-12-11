@@ -24,6 +24,10 @@ namespace code {
 		void cmp(Output &to, Params p, const Instruction &instr);
 		void mul(Output &to, Params p, const Instruction &instr);
 
+		void shl(Output &to, Params p, const Instruction &instr);
+		void shr(Output &to, Params p, const Instruction &instr);
+		void sar(Output &to, Params p, const Instruction &instr);
+
 		void dat(Output &to, Params p, const Instruction &instr);
 
 		void addRef(Output &to, Params p, const Instruction &instr);

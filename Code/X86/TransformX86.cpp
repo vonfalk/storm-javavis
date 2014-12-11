@@ -127,6 +127,67 @@ namespace code {
 			}
 		}
 
+		void shlTfm(const Transform &tfm, Listing &to, nat line) {
+			const Instruction &instr = tfm.from[line];
+
+			switch (instr.src().type()) {
+			case Value::tRegister:
+				if (instr.src().reg() != cl)
+					break;
+				// Fall-thru
+			case Value::tConstant:
+				// Supported directly!
+				to << instr;
+				return;
+			}
+
+			// We need to store the value in cl.
+			Register reg = tfm.unusedReg(line);
+			if (reg != noReg)
+				reg = asSize(reg, 4);
+
+			if (instr.dest().type() == Value::tRegister && asSize(instr.dest().reg(), 4) == ecx) {
+				nat size = instr.dest().size();
+				reg = asSize(reg, size);
+
+				if (reg == noReg) {
+					// No free registers.
+					to << push(ecx);
+					to << mov(cl, instr.src());
+					to << instr.alterDest(xRel(size, ptrStack, 0)).alterSrc(cl);
+					to << pop(ecx);
+				} else {
+					to << mov(reg, instr.dest());
+					to << mov(cl, instr.src());
+					to << instr.alterDest(reg).alterSrc(cl);
+					to << mov(instr.dest(), reg);
+				}
+
+				return;
+			}
+
+			if (reg == noReg)
+				to << push(ecx);
+			else
+				to << mov(reg, ecx);
+
+			to << mov(cl, instr.src());
+			to << instr.alterSrc(cl);
+
+			if (reg == noReg)
+				to << pop(ecx);
+			else
+				to << mov(ecx, reg);
+		}
+
+		void shrTfm(const Transform &tfm, Listing &to, nat line) {
+			shlTfm(tfm, to, line);
+		}
+
+		void sarTfm(const Transform &tfm, Listing &to, nat line) {
+			shlTfm(tfm, to, line);
+		}
+
 	}
 }
 

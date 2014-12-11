@@ -115,7 +115,7 @@ namespace code {
 	Instruction cmp(const Value &dest, const Value &src);
 	Instruction mul(const Value &dest, const Value &src);
 
-	// Shifts.
+	// Shifts. Src.size() == 1
 	Instruction shl(const Value &dest, const Value &src);
 	Instruction shr(const Value &dest, const Value &src);
 	Instruction sar(const Value &dest, const Value &src);

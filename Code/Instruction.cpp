@@ -258,6 +258,24 @@ namespace code {
 		return createDestSrc(op::mul, dest, destRead | destWrite, src);
 	}
 
+	Instruction shl(const Value &dest, const Value &src) {
+		if (src.size() != 1)
+			throw InvalidValue(L"Size must be 1");
+		return createLoose(op::shl, dest, destRead | destWrite, src);
+	}
+
+	Instruction shr(const Value &dest, const Value &src) {
+		if (src.size() != 1)
+			throw InvalidValue(L"Size must be 1");
+		return createLoose(op::shr, dest, destRead | destWrite, src);
+	}
+
+	Instruction sar(const Value &dest, const Value &src) {
+		if (src.size() != 1)
+			throw InvalidValue(L"Size must be 1");
+		return createLoose(op::sar, dest, destRead | destWrite, src);
+	}
+
 	Instruction dat(const Value &v) {
 		switch (v.type()) {
 			case Value::tConstant:

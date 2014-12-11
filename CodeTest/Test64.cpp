@@ -127,8 +127,7 @@ BEGIN_TEST(Test64Cmp) {
 		l << mov(eax, intConst(0));
 		l << cmp(v1, v2);
 		l << setCond(al, cf[i]);
-		for (nat j = 0; j < i; j++)
-			l << add(eax, eax);
+		l << shl(eax, byteConst(i));
 		l << or(r, eax);
 	}
 
