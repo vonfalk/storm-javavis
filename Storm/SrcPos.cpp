@@ -83,6 +83,12 @@ namespace storm {
 			return Path();
 	}
 
+	SrcPos SrcPos::operator +(nat o) const {
+		SrcPos p(*this);
+		p.offset += o;
+		return p;
+	}
+
 	wostream &operator <<(wostream &to, const SrcPos &pos) {
 		if (pos.unknown())
 			to << "<unknown location>";

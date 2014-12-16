@@ -11,7 +11,11 @@ namespace storm {
 	 * Parser implementation.
 	 */
 
-	Parser::Parser(SyntaxSet &set, const String &src) : syntax(set), src(src), rootOption(SrcPos(), null, L"") {}
+	Parser::Parser(SyntaxSet &set, const String &src, const SrcPos &pos)
+		: syntax(set), src(src), srcPos(pos), rootOption(SrcPos(), null, L"") {}
+
+	Parser::Parser(SyntaxSet &set, const String &src, const Path &file)
+		: syntax(set), src(src), srcPos(file, 0), rootOption(SrcPos(), null, L"") {}
 
 	nat Parser::parse(const String &rootType, nat pos) {
 		rootOption.clear();
@@ -142,7 +146,7 @@ namespace storm {
 		return true;
 	}
 
-	SyntaxError Parser::error(const Path &path) const {
+	SyntaxError Parser::error() const {
 		nat pos = lastStep();
 		std::wostringstream oss;
 
@@ -164,7 +168,7 @@ namespace storm {
 			oss << L"\"";
 		}
 
-		return SyntaxError(SrcPos(path, pos), oss.str());
+		return SyntaxError(srcPos + pos, oss.str());
 	}
 
 	nat Parser::lastStep() const {
@@ -225,14 +229,14 @@ namespace storm {
 			dbgPrintTree(s.completed, indent + 1);
 	}
 
-	SyntaxNode *Parser::tree(const Path &file) {
+	SyntaxNode *Parser::tree() {
 		StatePtr f = finish();
 		if (!f.valid())
 			return null;
 
 		SyntaxNode *result = null;
 
-		SyntaxNode *root = tree(f, file);
+		SyntaxNode *root = tree(f);
 		// SyntaxNode::Var &resultVar = root->find(L"root", SyntaxVariable::tNode);
 		const SyntaxNode::Var *resultVar = root->find(L"root");
 		if (resultVar->value) {
@@ -244,7 +248,7 @@ namespace storm {
 		return result;
 	}
 
-	SyntaxNode *Parser::tree(StatePtr pos, const Path &file) {
+	SyntaxNode *Parser::tree(StatePtr pos) {
 		State *cState = &state(pos);
 		SyntaxNode *result = null;
 		SyntaxNode *tmp = null;
@@ -270,23 +274,23 @@ namespace storm {
 					if (TypeToken *t = as<TypeToken>(pState->pos.token()))
 						params = t->params;
 
-					SrcPos srcPos(file, cState->prev.step);
+					SrcPos p = srcPos + cState->prev.step;
 
 					if (cState->completed.valid()) {
-						tmp = tree(cState->completed, file);
+						tmp = tree(cState->completed);
 						if (pState->bindToken())
-							result->add(to, tmp, params, srcPos);
+							result->add(to, tmp, params, p);
 						else
-							result->invoke(to, tmp, params, srcPos);
+							result->invoke(to, tmp, params, p);
 						tmp = null;
 					} else {
 						nat fromPos = cState->prev.step;
 						nat toPos = pos.step;
 						String matched = src.substr(fromPos, toPos - fromPos);
 						if (pState->bindToken())
-							result->add(to, matched, params, srcPos);
+							result->add(to, matched, params, p);
 						else
-							result->invoke(to, matched, params, srcPos);
+							result->invoke(to, matched, params, p);
 					}
 				}
 			}
@@ -302,9 +306,9 @@ namespace storm {
 		}
 
 		if (option.hasCapture() && captureBegin < captureEnd) {
-			SrcPos srcPos(file, captureBegin);
+			SrcPos p = srcPos + captureBegin;
 			String captured = src.substr(captureBegin, captureEnd - captureBegin);
-			result->add(option.captureTo(), captured, vector<String>(), srcPos);
+			result->add(option.captureTo(), captured, vector<String>(), p);
 		}
 
 		return result;
@@ -314,8 +318,8 @@ namespace storm {
 	 * Shorthand.
 	 */
 
-	Object *Parser::transform(Engine &engine, const Path &file, const vector<Object *> &params) {
-		SyntaxNode *root = tree(file);
+	Object *Parser::transform(Engine &engine, const vector<Object *> &params) {
+		SyntaxNode *root = tree();
 		try {
 			Auto<Object> result = storm::transform(engine, syntax, *root, params);
 			delete root;

@@ -31,7 +31,10 @@ namespace storm {
 
 		// Create the parser, reads syntax from 'set'. 'set' is expected
 		// to outlive this object.
-		Parser(SyntaxSet &set, const String &src);
+		// 'pos' is the start position of 'src'. If 'src' is the entire file, the second
+		// variant can also be used.
+		Parser(SyntaxSet &set, const String &src, const SrcPos &pos);
+		Parser(SyntaxSet &set, const String &src, const Path &file);
 
 		// Parse the string previously given from 'start'. Returns the first index not matched.
 		nat parse(const String &rootType, nat start = 0);
@@ -46,15 +49,15 @@ namespace storm {
 		// Get an error message on the parsing. This examines what
 		// went wrong on the last step, maybe beyond the length indicated
 		// by 'parse'.
-		SyntaxError error(const Path &file) const;
+		SyntaxError error() const;
 
 		// Generate a syntax tree. Leaves ownership of the tree to the caller.
 		// If the last parse was not successfull at all (ie, returned NO_MATCH), returns null.
 		// 'file' is for correct SrcRefs in the resulting tree.
-		SyntaxNode *tree(const Path &file);
+		SyntaxNode *tree();
 
 		// Shorthand for generating a tree and transform it into Storm objects. Note 'params' does not own refs.
-		Object *transform(Engine &engine, const Path &file, const vector<Object*> &params = vector<Object*>());
+		Object *transform(Engine &engine, const vector<Object*> &params = vector<Object*>());
 
 	private:
 		// Syntax source.
@@ -62,6 +65,9 @@ namespace storm {
 
 		// Source string.
 		const String &src;
+
+		// Start of 'src'.
+		const SrcPos srcPos;
 
 		/**
 		 * Reference to a state.
@@ -228,7 +234,7 @@ namespace storm {
 		 */
 
 		// Extract the syntax tree, starting at 'ptr'.
-		SyntaxNode *tree(StatePtr ptr, const Path &file);
+		SyntaxNode *tree(StatePtr ptr);
 
 		// Print the parse tree (very crude).
 		void dbgPrintTree(StatePtr ptr, nat indent = 0);

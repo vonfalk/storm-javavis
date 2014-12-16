@@ -43,7 +43,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			BSFunction(Value result, const String &name, const vector<Value> &params,
-					const vector<String> &names, Auto<BSScope> scope, Auto<Str> contents,
+					const vector<String> &names, Auto<BSScope> scope, Auto<SStr> contents,
 					const SrcPos &pos);
 
 			// Declared at.
@@ -57,7 +57,7 @@ namespace storm {
 
 		private:
 			// Code.
-			Auto<Str> contents;
+			Auto<SStr> contents;
 
 			// Parameter names.
 			vector<String> paramNames;

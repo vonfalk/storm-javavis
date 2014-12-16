@@ -8,9 +8,9 @@
 using namespace storm;
 
 nat parse(SyntaxSet &set, const String &root, const String &str) {
-	Parser p(set, str);
+	Parser p(set, str, Path());
 	nat r = p.parse(root);
-	SyntaxNode *t = p.tree(Path());
+	SyntaxNode *t = p.tree();
 	if (t) {
 		// PLN(*t);
 		delete t;

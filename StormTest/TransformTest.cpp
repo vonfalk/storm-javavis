@@ -9,13 +9,13 @@
 using namespace storm;
 
 bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Auto<Object> eqTo) {
-	Parser p(set, str);
+	Parser p(set, str, Path());
 	if (!p.parse(root)) {
 		eqTo->release();
 		return false;
 	}
 
-	SyntaxNode *t = p.tree(Path());
+	SyntaxNode *t = p.tree();
 	if (!t) {
 		return false;
 	}

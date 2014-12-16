@@ -24,9 +24,33 @@
 
 (defun start-demo (name)
   (setq demo-mode t)
-  (set-face-attribute 'default nil :height 120))
+  (set-face-attribute 'default nil :height 100))
 
 (add-to-list 'command-switch-alist '("demo" . start-demo))
+
+;; Custom goto-char (including line endings)
+
+(defun newline-on-disk ()
+  (let* ((sym buffer-file-coding-system)
+	 (name (symbol-name sym))
+	 (end (substring name -4)))
+    (if (equal end "-dos")
+	2
+      1)))
+
+(defun goto-byte (byte)
+  (interactive "nGoto byte: ")
+  (setq pos 0)
+  (setq lines 0)
+  (setq last-line-nr (line-number-at-pos pos))
+  (setq line-weight (- (newline-on-disk) 1))
+  (while (<= (+ pos lines) byte)
+    (setq line-nr (line-number-at-pos pos))
+    (setq pos (+ pos 1))
+    (if (not (= last-line-nr line-nr))
+	(setq lines (+ lines line-weight)))
+    (setq last-line-nr line-nr))
+  (goto-char pos))
 
 
 ;; Setup code-style
@@ -118,7 +142,8 @@
 ;; Setup keybindings
 
 (global-set-key (kbd "C-.") 'other-window)
-(global-set-key (kbd "M-g M-c") 'goto-char)
+(global-set-key (kbd "M-g c") 'goto-byte)
+(global-set-key (kbd "M-g M-c") 'goto-byte)
 
 (global-set-key (kbd "M-p") 'compile-project)
 (global-set-key (kbd "C-c C-m") 'clean-project)
@@ -144,7 +169,7 @@
 ;; Helpers for bindings.
 
 (defun my-open-line ()
-  (interactive)
+  (interactive "*")
   (open-line 1)
   (let ((last (point)))
     (move-beginning-of-line 2)
@@ -188,7 +213,7 @@
 
 (add-hook 'find-file-hooks 'maybe-add-cpp-template)
 (defun maybe-add-cpp-template ()
-  (interactive)
+  (interactive "*")
   (if (and (in-project buffer-file-name)
 		   (not (file-exists-p buffer-file-name)))
       (if (string-match "\\.cpp$" buffer-file-name)

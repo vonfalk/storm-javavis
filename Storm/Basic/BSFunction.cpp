@@ -24,35 +24,34 @@ namespace storm {
 		for (nat i = 0; i < this->params->names.size(); i++)
 			names[i] = this->params->names[i]->v->v;
 
-		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents->v, name->pos);
+		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, name->pos);
 	}
 
 
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
 							const vector<String> &names, Auto<BSScope> scope,
-							Auto<Str> contents,	const SrcPos &pos)
+							Auto<SStr> contents, const SrcPos &pos)
 		: Function(result, name, params), scope(scope), contents(contents), paramNames(names) {
 
 		setCode(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode)));
 	}
 
 	code::Listing bs::BSFunction::generateCode() {
-		const Path &file = scope->file;
 		SyntaxSet syntax;
 		scope->addSyntax(syntax);
 
-		Parser parser(syntax, contents->v);
+		Parser parser(syntax, contents->v->v, contents->pos);
 		nat r = parser.parse(L"FunctionBody");
-		if (parser.parse(L"FunctionBody") < contents->v.size())
-			throw parser.error(file);
+		if (parser.parse(L"FunctionBody") < contents->v->v.size())
+			throw parser.error();
 
-		Auto<Object> c = parser.transform(engine(), file, vector<Object *>(1, this));
+		Auto<Object> c = parser.transform(engine(), vector<Object *>(1, this));
 		Auto<FnBody> body = c.as<FnBody>();
 		if (!body)
 			throw InternalError(L"Invalid syntax");
 
 		Value resultType = body->result();
-		result.mustStore(resultType, SrcPos(file, 0));
+		result.mustStore(resultType, pos);
 
 		// Generate code!
 		using namespace code;

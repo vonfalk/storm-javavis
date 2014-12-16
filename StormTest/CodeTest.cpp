@@ -30,8 +30,6 @@ BEGIN_TEST(CodeTest) {
 
 	Package *test = engine.package(Name(L"test.bs"));
 
-	PVAR(boolType(engine)->size());
-
 	CHECK(test->find(Name(L"bar")));
 	CHECK(test->find(Name(L"Foo")));
 

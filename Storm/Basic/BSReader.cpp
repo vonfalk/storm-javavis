@@ -40,12 +40,12 @@ namespace storm {
 		if (contents)
 			return;
 
-		Parser parser(syntax, fileContents);
+		Parser parser(syntax, fileContents, file);
 		parser.parse(L"File", headerSize);
 		if (parser.hasError())
-			throw parser.error(file);
+			throw parser.error();
 
-		Auto<Object> includes = parser.transform(package->engine, file);
+		Auto<Object> includes = parser.transform(package->engine);
 		contents = includes.as<Contents>();
 
 		if (!contents) {
@@ -59,12 +59,12 @@ namespace storm {
 		syntax.add(*syntaxPackage());
 		syntax.add(*package);
 
-		Parser parser(syntax, fileContents);
+		Parser parser(syntax, fileContents, file);
 		headerSize = parser.parse(L"Includes");
 		if (headerSize == parser.NO_MATCH)
-			throw parser.error(file);
+			throw parser.error();
 
-		includes = parser.transform(package->engine, file);
+		includes = parser.transform(package->engine);
 
 		if (Includes *inc = as<Includes>(includes.borrow())) {
 			setIncludes(inc->names);

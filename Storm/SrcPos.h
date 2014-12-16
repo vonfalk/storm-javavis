@@ -27,8 +27,6 @@ namespace storm {
 
 	/**
 	 * Describes a position in the source file.
-	 * TODO: This representation may need to be optimized a bit, since the current implementation
-	 * results in loads of copies of the path to the file.
 	 */
 	class SrcPos {
 		STORM_VALUE;
@@ -48,6 +46,9 @@ namespace storm {
 
 		// Unknown offset.
 		static const nat noOffset = -1;
+
+		// Advance a number of characters.
+		SrcPos operator +(nat c) const;
 
 		// File.
 		Path file() const;
