@@ -9,6 +9,11 @@ namespace storm {
 			init(block, type->value(block->scope), name);
 		}
 
+		bs::Var::Var(Auto<Block> block, Auto<TypeName> type, Auto<SStr> name, Auto<Expr> init) {
+			this->init(block, type->value(block->scope), name);
+			initTo(init);
+		}
+
 		bs::Var::Var(Auto<Block> block, Auto<SStr> name, Auto<Expr> init) {
 			this->init(block, init->result(), name);
 			initTo(init);

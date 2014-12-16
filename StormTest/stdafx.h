@@ -11,4 +11,6 @@
 #include "Storm/Engine.h"
 #include "Storm/Std.h"
 
+#include "Exception.h"
+
 using namespace storm;

@@ -1,7 +1,6 @@
 #pragma once
 #include "BSExpr.h"
 #include "BSType.h"
-#include "BSBlock.h"
 
 namespace storm {
 	namespace bs {
@@ -29,6 +28,7 @@ namespace storm {
 			bool param;
 		};
 
+		class Block;
 
 		/**
 		 * Local variable delcaration.
@@ -36,7 +36,13 @@ namespace storm {
 		class Var : public Expr {
 			STORM_CLASS;
 		public:
+			// Initialize to zero or null (remove?).
 			STORM_CTOR Var(Auto<Block> block, Auto<TypeName> type, Auto<SStr> name);
+
+			// Initialize to an expression.
+			STORM_CTOR Var(Auto<Block> block, Auto<TypeName> type, Auto<SStr> name, Auto<Expr> init);
+
+			// Initialize to an expression (auto type).
 			STORM_CTOR Var(Auto<Block> block, Auto<SStr> name, Auto<Expr> init);
 
 			// Declared variable.
@@ -44,9 +50,6 @@ namespace storm {
 
 			// Initialize to.
 			Auto<Expr> initExpr;
-
-			// Set initializing expression.
-			void STORM_FN initTo(Auto<Expr> e);
 
 			// Result type.
 			virtual Value result();
@@ -57,8 +60,12 @@ namespace storm {
 		private:
 			// Initialize.
 			void init(Auto<Block> block, const Value &type, Auto<SStr> name);
-		};
 
+			// Set return value.
+			void initTo(Auto<Expr> expr);
+		};
 
 	}
 }
+
+#include "BSBlock.h"

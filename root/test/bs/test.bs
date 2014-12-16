@@ -17,6 +17,14 @@ Int bar() {
     foo(z + v);
 }
 
+Int ifTest(Int v) {
+    if (v == 1) {
+       3;
+    } else {
+       4;
+    };
+}
+
 Int demo() {
     3;
 }

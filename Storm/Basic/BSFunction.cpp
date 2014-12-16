@@ -98,7 +98,7 @@ namespace storm {
 		}
 	}
 
-	bs::FnBody::FnBody(Auto<BSFunction> owner) : Block(owner->scope) {
+	bs::FnBody::FnBody(Auto<BSFunction> owner) : ExprBlock(owner->scope) {
 		owner->addParams(capture(this));
 	}
 

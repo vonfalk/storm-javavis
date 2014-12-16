@@ -378,6 +378,10 @@
 				RelativePath=".\CodeGen.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSIf.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -590,6 +594,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSNamed.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSIf.h"
 				>
 			</File>
 		</Filter>

@@ -35,3 +35,4 @@ Idea for a better solution in the parser: Detect potentially empty rules, and co
 
 Future test cases:
 Extend a class with an inlined function, and override that function.
+Compilation error in a function => ensure so that the next invocation returns the same error.

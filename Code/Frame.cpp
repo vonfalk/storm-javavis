@@ -31,6 +31,9 @@ namespace code {
 
 		for (nat i = 0; i < c.size(); i++)
 			outputBlock(to, c[i]);
+
+		if (v.size() + c.size() == 0)
+			to << endl << "(empty)";
 	}
 
 	bool Frame::exceptionHandlerNeeded() const {

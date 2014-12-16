@@ -9,22 +9,8 @@ namespace storm {
 
 	bs::Block::Block(Auto<Block> parent) : scope(parent->scope->child(capture(this))), parent(parent.borrow()) {}
 
-	void bs::Block::expr(Auto<Expr> e) {
-		exprs.push_back(e);
-	}
-
-	Value bs::Block::result() {
-		if (!exprs.empty())
-			return exprs.back()->result();
-		else
-			return Value();
-	}
-
 	void bs::Block::code(const GenState &state, GenResult &to) {
 		using namespace code;
-
-		if (exprs.size() == 0)
-			return;
 
 		code::Block block = state.frame.createChild(state.block);
 		GenState subState = { state.to, state.frame, block };
@@ -37,13 +23,13 @@ namespace storm {
 
 		state.to << begin(block);
 
-		for (nat i = 0; i < exprs.size() - 1; i++) {
-			GenResult s;
-			exprs[i]->code(subState, s);
-		}
+		blockCode(subState, to);
 
-		exprs[exprs.size() - 1]->code(subState, to);
 		state.to << end(block);
+	}
+
+	void bs::Block::blockCode(const GenState &state, GenResult &to) {
+		assert(("Implement me!", false));
 	}
 
 	void bs::Block::add(Auto<LocalVar> var) {
@@ -59,6 +45,36 @@ namespace storm {
 			return i->second.borrow();
 		else
 			return null;
+	}
+
+
+	bs::ExprBlock::ExprBlock(Auto<BSScope> scope) : Block(scope) {}
+
+	bs::ExprBlock::ExprBlock(Auto<Block> parent) : Block(parent) {}
+
+	void bs::ExprBlock::expr(Auto<Expr> expr) {
+		exprs.push_back(expr);
+	}
+
+	Value bs::ExprBlock::result() {
+		if (!exprs.empty())
+			return exprs.back()->result();
+		else
+			return Value();
+	}
+
+	void bs::ExprBlock::code(const GenState &state, GenResult &to) {
+		if (!exprs.empty())
+			Block::code(state, to);
+	}
+
+	void bs::ExprBlock::blockCode(const GenState &state, GenResult &to) {
+		for (nat i = 0; i < exprs.size() - 1; i++) {
+			GenResult s;
+			exprs[i]->code(state, s);
+		}
+
+		exprs[exprs.size() - 1]->code(state, to);
 	}
 
 }

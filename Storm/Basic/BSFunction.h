@@ -70,7 +70,7 @@ namespace storm {
 		/**
 		 * Contents of a function.
 		 */
-		class FnBody : public Block {
+		class FnBody : public ExprBlock {
 			STORM_CLASS;
 		public:
 			STORM_CTOR FnBody(Auto<BSFunction> owner);

@@ -60,7 +60,9 @@ Atom(Block block);
 Atom => intConstant(nr) : "[0-9]+" nr;
 Atom => NamedExpr(block, name, params) : Name name, FnValues(block) params;
 Atom => e : "(", Expr(block) e, ")";
-Atom => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
+Atom => ExprBlock(block) : "{", (Stmt(me) -> expr, )*, "}";
+Atom => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr;
+Atom => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr, "else", Expr(me) -> falseExpr;
 
 // Highest priority. Right-associative, eg (a * b) * c
 Oper1 => v : "[*/%]" v;
@@ -74,16 +76,28 @@ Expr2(Block block);
 Expr2 => e : Expr1(block) e;
 Expr2 => Operator(block, lhs, op, rhs) : Expr2(block) lhs, Oper2 op, Expr1(block) rhs;
 
+// Comparision operators.
+Oper3 => v : "==" v;
+Oper3 => v : "!=" v;
+Oper3 => v : ">" v;
+Oper3 => v : "<" v;
+Oper3 => v : "<=" v;
+Oper3 => v : ">=" v;
+Expr3(Block block);
+Expr3 => e : Expr2(block) e;
+Expr3 => Operator(block, lhs, op, rhs) : Expr3(block) lhs, Oper3 op, Expr2(block) rhs;
+
 // Expression
 Expr(Block block);
-Expr => e : Expr2(block) e;
-Expr => Var(block, t, name) : Type t, Name name, ("=", Expr(block) -> initTo)?;
+Expr => e : Expr3(block) e;
+Expr => Var(block, t, name) : Type t, Name name;
+Expr => Var(block, t, name, init) : Type t, Name name, "=", Expr(block) init;
 Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;
 
 // Statement
 Stmt(Block block);
 Stmt => expr : Expr(block) expr, ";";
-Stmt => Block(block) : "{", (Stmt(me) -> expr, )*, "}";
+Stmt => ExprBlock(block) : "{", (Stmt(me) -> expr, )*, "}";
 
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);

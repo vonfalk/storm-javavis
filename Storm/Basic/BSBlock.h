@@ -1,6 +1,7 @@
 #pragma once
 #include "BSExpr.h"
 #include "BSScope.h"
+#include "BSVar.h"
 
 namespace storm {
 	namespace bs {
@@ -9,7 +10,9 @@ namespace storm {
 		class LocalVar;
 
 		/**
-		 * A block. Blocks are expressions and return the last value in themselves.
+		 * A basic block. This block only acts as a new scope for variables. It
+		 * is abstract to let other types of expressions act as some kind of block
+		 * for variables.
 		 */
 		class Block : public Expr {
 			STORM_CLASS;
@@ -23,16 +26,11 @@ namespace storm {
 			// No auto, will destroy refcounting.
 			Block *parent;
 
-			void STORM_FN expr(Auto<Expr> s);
-
-			// Result.
-			virtual Value result();
-
-			// Generate code.
+			// Generate code. Override 'blockCode' to generate only block contents.
 			virtual void code(const GenState &state, GenResult &to);
 
-			// Expressions in this block.
-			vector<Auto<Expr> > exprs;
+			// Override to generate contents of the block.
+			virtual void blockCode(const GenState &state, GenResult &to);
 
 			// Find a variable. Same semantics as 'find'.
 			LocalVar *variable(const String &name);
@@ -45,6 +43,32 @@ namespace storm {
 			typedef hash_map<String, Auto<LocalVar> > VarMap;
 			VarMap variables;
 
+		};
+
+
+		/**
+		 * A block that contains statements.
+		 */
+		class ExprBlock : public Block {
+			STORM_CLASS;
+		public:
+			STORM_CTOR ExprBlock(Auto<BSScope> scope);
+			STORM_CTOR ExprBlock(Auto<Block> parent);
+
+			// Expressions here.
+			vector<Auto<Expr> > exprs;
+
+			// Add an expression.
+			void STORM_FN expr(Auto<Expr> s);
+
+			// Result.
+			virtual Value result();
+
+			// Optimization.
+			virtual void code(const GenState &state, GenResult &to);
+
+			// Code generation.
+			virtual void blockCode(const GenState &state, GenResult &to);
 		};
 
 	}

@@ -73,7 +73,12 @@ namespace storm {
 				throw InternalError(L"Trying to update " + c->owner->identifier() + L" recursively!");
 
 			c->loading = true;
-			c->setCode(c->load());
+			try {
+				c->setCode(c->load());
+			} catch (...) {
+				c->loading = false;
+				throw;
+			}
 			c->loading = false;
 			c->loaded = true;
 		}

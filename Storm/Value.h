@@ -54,6 +54,14 @@ namespace storm {
 		virtual void output(wostream &to) const;
 	};
 
+	/**
+	 * Compute the common denominator of two values so that
+	 * it is possible to cast both 'a' and 'b' to the resulting
+	 * type. In case 'a' and 'b' are unrelated, Value() - void
+	 * is returned.
+	 */
+	Value common(const Value &a, const Value &b);
+
 
 	/**
 	 * Various helper functions.

@@ -67,6 +67,14 @@ namespace storm {
 		return type == o.type;
 	}
 
+	Value common(const Value &a, const Value &b) {
+		for (Type *t = a.type; t; t = t->super()) {
+			if (b.type->isA(t))
+				return Value(t);
+		}
+		return Value();
+	}
+
 	/**
 	 * Helpers
 	 */

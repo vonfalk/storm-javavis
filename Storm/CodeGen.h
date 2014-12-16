@@ -31,6 +31,7 @@ namespace storm {
 	 * the generated result (if any).
 	 * The result is either not needed (GenResult()), needed
 	 * but unspecified, or needed and specified.
+	 * Todo: Allow these to reside in registers as well?
 	 */
 	class GenResult {
 	public:

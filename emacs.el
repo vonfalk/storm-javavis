@@ -57,7 +57,7 @@
                          c-lineup-gcc-asm-reg
                          c-lineup-arglist-tabs-only))))
 	    ;; Enable kernel mode for the appropriate files
-	    (when (in-project buffer-file-name)
+	    (when t ;; (in-project buffer-file-name)
 	      (setq ff-other-file-alist my-cpp-other-file-alist)
 	      (setq indent-tabs-mode t)
 	      (whitespace-mode t)
