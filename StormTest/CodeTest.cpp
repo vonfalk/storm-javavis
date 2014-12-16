@@ -37,6 +37,9 @@ BEGIN_TEST(CodeTest) {
 
 	CHECK_EQ(runFn(engine, L"test.bs.bar"), 3);
 	CHECK_EQ(runFn(engine, L"test.bs.ifTest", 1), 3);
-	CHECK_EQ(runFn(engine, L"test.bs.ifTest", 3), 4);
+	CHECK_EQ(runFn(engine, L"test.bs.ifTest", 2), 4);
+	CHECK_EQ(runFn(engine, L"test.bs.ifTest", 3), 5);
+	CHECK_EQ(runFn(engine, L"test.bs.ifTest2", 3), 4);
+	CHECK_EQ(runFn(engine, L"test.bs.ifTest2", 0), -1);
 
 } END_TEST

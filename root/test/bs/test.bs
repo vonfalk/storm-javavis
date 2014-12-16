@@ -20,9 +20,19 @@ Int bar() {
 Int ifTest(Int v) {
     if (v == 1) {
        3;
-    } else {
+    } else if (v == 2) {
        4;
-    };
+    } else {
+       5;
+    }
+}
+
+Int ifTest2(Int v) {
+    if ((Int z = v + 1) > 1) {
+       z;
+    } else {
+       v - 1;
+    }
 }
 
 Int demo() {

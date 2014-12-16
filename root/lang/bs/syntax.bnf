@@ -5,7 +5,7 @@ DELIMITER => void : "[ \n\r\t]*";
 DELIMITER => void : "[ \n\r\t]*//.*\n";
 
 // Name rule returns a String, created by taking the 'name' parameter.
-Name => SStr(name) : "[A-Za-z]+" name;
+Name => SStr(name) : "[A-Za-z][A-Za-z0-9]*" name;
 
 // Package
 Package => Pkg() : Name -> add - ("\." - Name -> add)*;
@@ -55,14 +55,22 @@ FnValues(Block block);
 FnValues => Actual() : DELIMITER;
 FnValues => v : "(", Values(block) v, ")";
 
+// Block.
+Block(Block parent);
+Block => ExprBlock(parent) : "{", (Stmt(me) -> expr, )*, "}";
+
+// If.
+If(Block block);
+If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr;
+If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr, "else", Expr(me) -> falseExpr;
+
 // Atoms, for example constants and variables/function calls.
 Atom(Block block);
 Atom => intConstant(nr) : "[0-9]+" nr;
 Atom => NamedExpr(block, name, params) : Name name, FnValues(block) params;
 Atom => e : "(", Expr(block) e, ")";
-Atom => ExprBlock(block) : "{", (Stmt(me) -> expr, )*, "}";
-Atom => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr;
-Atom => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr, "else", Expr(me) -> falseExpr;
+Atom => e : Block(block) e;
+Atom => e : If(block) e;
 
 // Highest priority. Right-associative, eg (a * b) * c
 Oper1 => v : "[*/%]" v;
@@ -97,7 +105,8 @@ Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;
 // Statement
 Stmt(Block block);
 Stmt => expr : Expr(block) expr, ";";
-Stmt => ExprBlock(block) : "{", (Stmt(me) -> expr, )*, "}";
+Stmt => e : Block(block) e;
+Stmt => e : If(block) e;
 
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);
