@@ -13,7 +13,7 @@ namespace storm {
 		friend class SyntaxRule;
 	public:
 		// 'pos' is the start of this rule's definition.
-		SyntaxOption(const SrcPos &pos, Auto<Scope> scope, const String &owner);
+		SyntaxOption(const SrcPos &pos, const Scope &scope, const String &owner);
 		~SyntaxOption();
 
 		// Clear all tokens.
@@ -50,7 +50,7 @@ namespace storm {
 		inline const String &captureTo() const { return markCapture; }
 
 		// Syntactic scope.
-		const Auto<Scope> scope;
+		const Scope scope;
 
 		// Function name to call/variable's value.
 		Name matchFn;

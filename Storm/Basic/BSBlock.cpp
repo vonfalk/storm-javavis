@@ -5,9 +5,11 @@
 
 namespace storm {
 
-	bs::Block::Block(Auto<BSScope> scope) : scope(scope->child(capture(this))), parent(null) {}
+	bs::Block::Block(const Scope &scope)
+		: lookup(CREATE(BlockLookup, engine(), capture(this), scope.top)), scope(scope, lookup) {}
 
-	bs::Block::Block(Auto<Block> parent) : scope(parent->scope->child(capture(this))), parent(parent.borrow()) {}
+	bs::Block::Block(Auto<Block> parent)
+		: lookup(CREATE(BlockLookup, engine(), capture(this), parent->scope.top)), scope(parent->scope, lookup) {}
 
 	void bs::Block::code(const GenState &state, GenResult &to) {
 		using namespace code;
@@ -29,7 +31,7 @@ namespace storm {
 	}
 
 	void bs::Block::blockCode(const GenState &state, GenResult &to) {
-		assert(("Implement me!", false));
+		assert(("Implement me in a subclass!", false));
 	}
 
 	void bs::Block::add(Auto<LocalVar> var) {
@@ -48,7 +50,7 @@ namespace storm {
 	}
 
 
-	bs::ExprBlock::ExprBlock(Auto<BSScope> scope) : Block(scope) {}
+	bs::ExprBlock::ExprBlock(const Scope &scope) : Block(scope) {}
 
 	bs::ExprBlock::ExprBlock(Auto<Block> parent) : Block(parent) {}
 
@@ -75,6 +77,23 @@ namespace storm {
 		}
 
 		exprs[exprs.size() - 1]->code(state, to);
+	}
+
+	/**
+	 * Block lookup
+	 */
+
+	bs::BlockLookup::BlockLookup(Auto<Block> o, NameLookup *prev) : block(o.borrow()), prev(prev) {}
+
+	Named *bs::BlockLookup::find(const Name &name) {
+		if (name.size() == 1)
+			return block->variable(name[0]);
+		else
+			return null;
+	}
+
+	NameLookup *bs::BlockLookup::parent() const {
+		return prev;
 	}
 
 }

@@ -48,8 +48,11 @@ namespace storm {
 		inline Type *specialBuiltIn(Special t) const { return specialCached[nat(t)].borrow(); }
 		void setSpecialBuiltIn(Special t, Auto<Type> z);
 
-		// Get the default scope lookup for the root packag.
-		inline Scope *scope() { return rootScope.borrow(); }
+		// Get the default scope lookup.
+		inline Auto<ScopeLookup> scopeLookup() { assert(defScopeLookup); return defScopeLookup; }
+
+		// Get the default scope for the root package.
+		inline Scope *scope() { assert(rootScope != null); return rootScope; }
 
 		// Initialized?
 		inline bool initialized() { return inited; }
@@ -71,13 +74,16 @@ namespace storm {
 		Path rootPath;
 
 		// Root package.
-		Package *rootPkg;
+		Auto<Package> rootPkg;
 
 		// Create the package (recursive).
 		Package *createPackage(Package *pkg, const Name &path, nat at = 0);
 
 		// Root scope.
-		Auto<Scope> rootScope;
+		Scope *rootScope;
+
+		// Scope lookup.
+		Auto<ScopeLookup> defScopeLookup;
 
 		// Cached types.
 		vector<Auto<Type> > cached;

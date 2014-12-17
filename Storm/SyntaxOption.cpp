@@ -5,7 +5,7 @@
 
 namespace storm {
 
-	SyntaxOption::SyntaxOption(const SrcPos &pos, Auto<Scope> scope, const String &owner)
+	SyntaxOption::SyntaxOption(const SrcPos &pos, const Scope &scope, const String &owner)
 		: scope(scope), pos(pos), owner(owner), markStart(0), markEnd(0), markType(mNone) {}
 
 	SyntaxOption::~SyntaxOption() {

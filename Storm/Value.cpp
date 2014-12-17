@@ -88,8 +88,8 @@ namespace storm {
 		}
 	}
 
-	Value fnResultType(Auto<Scope> scope, const Name &fn, const vector<Value> &params) {
-		Named *f = scope->find(fn);
+	Value fnResultType(const Scope &scope, const Name &fn, const vector<Value> &params) {
+		Named *f = scope.find(fn);
 		if (f == null) {
 			return Value();
 		} else if (Type *t = as<Type>(f)) {

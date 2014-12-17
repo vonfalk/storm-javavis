@@ -32,7 +32,7 @@ namespace storm {
 			Auto<SStr> contents;
 
 			// Create a corresponding function.
-			Function *asFunction(Auto<BSScope> scope);
+			Function *asFunction(const Scope &scope);
 		};
 
 
@@ -43,14 +43,14 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			BSFunction(Value result, const String &name, const vector<Value> &params,
-					const vector<String> &names, Auto<BSScope> scope, Auto<SStr> contents,
+					const vector<String> &names, const Scope &scope, Auto<SStr> contents,
 					const SrcPos &pos);
 
 			// Declared at.
 			SrcPos pos;
 
 			// Scope.
-			Auto<BSScope> scope;
+			const Scope scope;
 
 			// Add function parameters to a block.
 			void addParams(Auto<Block> block);

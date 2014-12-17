@@ -14,7 +14,7 @@ namespace storm {
 								Auto<SStr> contents)
 		: pos(pos), name(name), result(result), params(params), contents(contents) {}
 
-	Function *bs::FunctionDecl::asFunction(Auto<BSScope> scope) {
+	Function *bs::FunctionDecl::asFunction(const Scope &scope) {
 		Value result = this->result->value(scope);
 		vector<Value> params(this->params->params.size());
 		for (nat i = 0; i < this->params->params.size(); i++)
@@ -29,7 +29,7 @@ namespace storm {
 
 
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
-							const vector<String> &names, Auto<BSScope> scope,
+							const vector<String> &names, const Scope &scope,
 							Auto<SStr> contents, const SrcPos &pos)
 		: Function(result, name, params), scope(scope), contents(contents), paramNames(names) {
 
@@ -38,7 +38,7 @@ namespace storm {
 
 	code::Listing bs::BSFunction::generateCode() {
 		SyntaxSet syntax;
-		scope->addSyntax(syntax);
+		addSyntax(scope, syntax);
 
 		Parser parser(syntax, contents->v->v, contents->pos);
 		nat r = parser.parse(L"FunctionBody");

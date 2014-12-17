@@ -1,6 +1,5 @@
 #pragma once
 #include "BSExpr.h"
-#include "BSScope.h"
 #include "BSVar.h"
 
 namespace storm {
@@ -8,6 +7,7 @@ namespace storm {
 		STORM_PKG(lang.bs);
 
 		class LocalVar;
+		class BlockLookup;
 
 		/**
 		 * A basic block. This block only acts as a new scope for variables. It
@@ -17,14 +17,14 @@ namespace storm {
 		class Block : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR Block(Auto<BSScope> scope);
+			Block(const Scope &scope); // todo: make STORM_CTOR
 			STORM_CTOR Block(Auto<Block> parent);
 
-			// Scope.
-			Auto<BSScope> scope;
+			// Lookup node.
+			Auto<BlockLookup> lookup;
 
-			// No auto, will destroy refcounting.
-			Block *parent;
+			// Scope.
+			Scope scope;
 
 			// Generate code. Override 'blockCode' to generate only block contents.
 			virtual void code(const GenState &state, GenResult &to);
@@ -45,14 +45,13 @@ namespace storm {
 
 		};
 
-
 		/**
 		 * A block that contains statements.
 		 */
 		class ExprBlock : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR ExprBlock(Auto<BSScope> scope);
+			ExprBlock(const Scope &scope);
 			STORM_CTOR ExprBlock(Auto<Block> parent);
 
 			// Expressions here.
@@ -69,6 +68,29 @@ namespace storm {
 
 			// Code generation.
 			virtual void blockCode(const GenState &state, GenResult &to);
+		};
+
+
+		/**
+		 * Node in the name lookup tree for our blocks.
+		 */
+		class BlockLookup : public NameLookup {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR BlockLookup(Auto<Block> block, NameLookup *prev);
+
+			// Risk of cycles, no ref.
+			Block *block;
+
+			// Previous lookup (risk of cycles).
+			NameLookup *prev;
+
+			// Find a variable here.
+			virtual Named *find(const Name &name);
+
+			// Parent.
+			virtual NameLookup *parent() const;
 		};
 
 	}

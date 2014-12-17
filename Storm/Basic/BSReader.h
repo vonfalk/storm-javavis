@@ -39,8 +39,11 @@ namespace storm {
 			// Get functions.
 			void readFunctions();
 
+			// The lookup.
+			Auto<BSScope> scopeLookup;
+
 			// All included packages, inside a scope.
-			Auto<BSScope> scope;
+			const Scope scope;
 
 		private:
 			// The file contents.

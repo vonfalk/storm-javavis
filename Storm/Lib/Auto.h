@@ -42,7 +42,7 @@ namespace storm {
 
 		// Upcasting.
 		template <class U>
-		inline Auto<U> as() {
+		inline Auto<U> as() const {
 			U *o = ::as<U>(obj);
 			o->addRef();
 			return Auto<U>(o);
@@ -62,7 +62,7 @@ namespace storm {
 		inline T &operator *() const { return *obj; }
 
 		// Check for null in if-statements.
-		inline operator void *() {
+		inline operator void *() const {
 			return obj;
 		}
 

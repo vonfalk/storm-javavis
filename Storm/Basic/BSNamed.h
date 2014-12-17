@@ -55,7 +55,7 @@ namespace storm {
 			void loadCode(const GenState &s, GenResult &to);
 
 			// Find what to call.
-			void findTarget(Auto<Scope> scope, const Name &name, const SrcPos &pos);
+			void findTarget(const Scope &scope, const Name &name, const SrcPos &pos);
 		};
 
 

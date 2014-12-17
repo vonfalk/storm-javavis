@@ -6,31 +6,27 @@ namespace storm {
 	namespace bs {
 		class Block;
 
-		class BSScope : public Scope {
+		class BSScope : public ScopeLookup {
 			STORM_CLASS;
 		public:
-			STORM_CTOR BSScope(Auto<NameLookup> l);
+			BSScope(const Path &file);
 
 			// File name.
-			Path file;
+			const Path file;
 
 			// Included packages. (risk of cycles here)
 			vector<Package *> includes;
 
-			// Current block (cycle risk).
-			Block *topBlock;
-
 			// Get syntax.
-			void addSyntax(SyntaxSet &to);
+			void addSyntax(const Scope &from, SyntaxSet &to);
 
-			// Sub-scope. (TODO: Redo to make operations like this easier to implement, and cheaper).
-			BSScope *child(Auto<NameLookup> l);
-			BSScope *child(Auto<Block> block);
-
-		protected:
-			virtual Named *findHere(const Name &name) const;
-			virtual Named *findHere(const Name &name, const vector<Value> &param) const;
+			// Find stuff.
+			virtual Named *find(const Scope &from, const Name &name);
+			virtual Named *find(const Scope &from, const Name &name, const vector<Value> &param);
 		};
+
+		void addInclude(const Scope &to, Package *p);
+		void addSyntax(const Scope &from, SyntaxSet &to);
 
 	}
 }

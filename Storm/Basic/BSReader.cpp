@@ -15,7 +15,9 @@ namespace storm {
 	}
 
 
-	bs::File::File(const Path &path, Auto<Package> owner) : FileReader(path, owner) {
+	bs::File::File(const Path &path, Auto<Package> owner)
+		: FileReader(path, owner), scopeLookup(CREATE(BSScope, engine(), path)), scope(owner, scopeLookup) {
+
 		fileContents = readTextFile(path);
 		readIncludes();
 	}
@@ -72,18 +74,15 @@ namespace storm {
 	}
 
 	void bs::File::setIncludes(const vector<Name> &inc) {
-		scope = CREATE(BSScope, this, package);
-		scope->file = file;
-
 		for (nat i = 0; i < inc.size(); i++) {
 			Package *p = package->engine.package(inc[i]);
 			if (!p)
 				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(inc[i]));
 
-			scope->includes.push_back(p);
+			addInclude(scope, p);
 		}
 
-		scope->addSyntax(syntax);
+		addSyntax(scope, syntax);
 	}
 
 }

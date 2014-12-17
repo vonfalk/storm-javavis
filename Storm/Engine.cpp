@@ -6,7 +6,7 @@
 namespace storm {
 
 	Engine::Engine(const Path &root)
-		: inited(false), rootPath(root),
+		: inited(false), rootPath(root), rootScope(null),
 		  arena(), addRef(arena, L"addRef"), release(arena, L"release"), lazyCodeFn(arena, L"lazyUpdate") {
 
 		specialCached.resize(specialCount);
@@ -19,8 +19,8 @@ namespace storm {
 		// Now, all the types are created, so we can create packages!
 		rootPkg = CREATE(Package, *this, root, *this);
 
-		rootPkg->addRef();
-		rootScope = CREATE(Scope, *this, rootPkg);
+		defScopeLookup = CREATE(ScopeLookup, *this);
+		rootScope = new Scope(rootPkg);
 
 		// And finally insert everything into their correct packages.
 		addStdLib(*this);
@@ -32,8 +32,8 @@ namespace storm {
 		// destruction order, and it would not be worth it to compute it.
 		arena.preShutdown();
 
-		rootPkg->release();
-		rootScope = null; // keeps a reference to the root package.
+		rootPkg = null;
+		rootScope->top = null; // keeps a reference to the root package.
 
 		// Release more cached types. This needs to be above clearing other types.
 		specialCached.clear();
@@ -51,6 +51,8 @@ namespace storm {
 
 		TODO(L"Destroy these earlier if possible!"); // We can do this when we have proper threading.
 		clear(toDestroy);
+
+		delete rootScope;
 	}
 
 	void Engine::setSpecialBuiltIn(Special t, Auto<Type> z) {
@@ -63,7 +65,7 @@ namespace storm {
 			return pkg;
 
 		if (create)
-			return createPackage(rootPkg, path);
+			return createPackage(rootPkg.borrow(), path);
 
 		return null;
 	}

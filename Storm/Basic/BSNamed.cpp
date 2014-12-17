@@ -30,8 +30,8 @@ namespace storm {
 		findTarget(block->scope, Name(name->v->v), name->pos);
 	}
 
-	void bs::NamedExpr::findTarget(Auto<Scope> scope, const Name &name, const SrcPos &pos) {
-		Named *n = scope->find(name, params->values());
+	void bs::NamedExpr::findTarget(const Scope &scope, const Name &name, const SrcPos &pos) {
+		Named *n = scope.find(name, params->values());
 		if (!n)
 			throw SyntaxError(pos, L"Can not find " + ::toS(name) + L"("
 							+ join(params->values(), L", ") + L").");
