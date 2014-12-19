@@ -16,6 +16,7 @@ namespace code {
 
 	static OpDesc descs[] = {
 		OP_CODE(mov),
+		OP_CODE(lea),
 		OP_CODE(push),
 		OP_CODE(pop),
 		OP_CODE(jmp),

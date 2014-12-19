@@ -19,10 +19,13 @@ namespace storm {
 		Value();
 
 		// Create a value based on a type.
-		Value(Type *type);
+		Value(Type *type, bool ref = false);
 
 		// The type referred.
 		Type *type;
+
+		// Reference? Not a good idea for return values.
+		bool ref;
 
 		// Get the size of this type (always returns 0 for pointers, like Code does).
 		nat size() const;

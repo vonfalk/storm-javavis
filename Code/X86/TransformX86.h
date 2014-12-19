@@ -30,6 +30,7 @@ namespace code {
 		// Transform functions executed. Assigned to op-codes in MachineCodeX86.cpp
 		// immRegTfm is a special case.
 		void immRegTfm(const Transform &tfm, Listing &to, nat line);
+		void leaTfm(const Transform &tfm, Listing &to, nat line);
 		void mulTfm(const Transform &tfm, Listing &to, nat line);
 		void setCondTfm(const Transform &tfm, Listing &to, nat line);
 		void shlTfm(const Transform &tfm, Listing &to, nat line);

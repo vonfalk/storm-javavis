@@ -174,6 +174,20 @@ namespace code {
 		return createDestSrc(op::mov, to, destWrite, from);
 	}
 
+	Instruction lea(const Value &to, const Value &from) {
+		if (to.sizeType() != 0)
+			throw InvalidValue(L"Lea must update a pointer.");
+		switch (from.type()) {
+		case Value::tRelative:
+		case Value::tVariable:
+			// These are ok.
+			break;
+		default:
+			throw InvalidValue(L"lea must be used with a complex addressing mode. (Got " + toS(from) + L")");
+		}
+		return createLoose(op::lea, to, destWrite, from);
+	}
+
 	Instruction push(const Value &v) {
 		return createSrc(op::push, v);
 	}

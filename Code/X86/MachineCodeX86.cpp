@@ -25,6 +25,7 @@ namespace code {
 		 */
 		static OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
+			OUTPUT(lea),
 			OUTPUT(push),
 			OUTPUT(pop),
 			OUTPUT(jmp),
@@ -74,6 +75,7 @@ namespace code {
 			IMM_REG(xor),
 			IMM_REG(cmp),
 
+			TRANSFORM(lea),
 			TRANSFORM(mul),
 			TRANSFORM(setCond),
 			TRANSFORM(shl),

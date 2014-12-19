@@ -24,6 +24,12 @@ namespace code {
 			immRegInstr(to, op8, op, instr.dest(), instr.src());
 		}
 
+		void lea(Output &to, Params p, const Instruction &instr) {
+			to.putByte(0x8D);
+			// dest is a register.
+			modRm(to, registerId(instr.dest().reg()), instr.src());
+		}
+
 		void push(Output &to, Params p, const Instruction &instr) {
 			assert(instr.size() == 4); // more comes later!
 			const Value &src = instr.src();

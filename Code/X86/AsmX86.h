@@ -6,6 +6,7 @@
 namespace code {
 	namespace machineX86 {
 		void mov(Output &to, Params p, const Instruction &instr);
+		void lea(Output &to, Params p, const Instruction &instr);
 		void push(Output &to, Params p, const Instruction &instr);
 		void pop(Output &to, Params p, const Instruction &instr);
 

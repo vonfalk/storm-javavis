@@ -84,6 +84,27 @@ namespace code {
 			}
 		}
 
+		void leaTfm(const Transform &tfm, Listing &to, nat line) {
+			const Instruction &instr = tfm.from[line];
+			if (instr.dest().type() == Value::tRegister) {
+				to << instr;
+				return;
+			}
+
+			Register reg = tfm.unusedReg(line);
+
+			if (reg == noReg) {
+				to << code::push(ptrD);
+				to << code::lea(ptrD, instr.src());
+				to << code::mov(instr.dest(), ptrD);
+				to << code::pop(ptrD);
+			} else {
+				reg = asSize(reg, 0);
+				to << code::lea(reg, instr.src());
+				to << code::mov(instr.dest(), reg);
+			}
+		}
+
 		void mulTfm(const Transform &tfm, Listing &to, nat line) {
 			const Instruction &instr = tfm.from[line];
 

@@ -87,9 +87,11 @@ namespace storm {
 	}
 
 	void LazyCode::setCode(const code::Listing &l) {
+		code::Binary *newCode = new code::Binary(engine().arena, L"redirect", l);
+
 		if (code)
 			engine().destroy(code);
-		code = new code::Binary(engine().arena, L"redirect", l);
+		code = newCode;
 		if (toUpdate)
 			code->update(*toUpdate);
 	}
@@ -120,8 +122,8 @@ namespace storm {
 	InlinedCode::InlinedCode(Fn<void, InlinedParams> gen)
 		: LazyCode(memberVoidFn(this, &InlinedCode::generatePtr)), generate(gen) {}
 
-	void InlinedCode::code(const GenState &state, const vector<code::Value> &params, code::Value result) {
-		InlinedParams p = { state, params, result };
+	void InlinedCode::code(const GenState &state, const vector<code::Value> &params, GenResult &result) {
+		InlinedParams p = { engine(), state, params, result };
 		generate(p);
 	}
 
@@ -143,7 +145,12 @@ namespace storm {
 		l << prolog();
 
 		GenState state = { l, l.frame, l.frame.root() };
-		code(state, params, asSize(ptrA, owner->result.size()));
+		GenResult result(l.frame.root());
+		code(state, params, result);
+
+		if (owner->result != Value()) {
+			l << mov(asSize(ptrA, owner->result.size()), result.location(state, owner->result));
+		}
 
 		l << epilog();
 		l << ret(owner->result.size());

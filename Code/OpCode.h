@@ -7,6 +7,7 @@ namespace code {
 
 		enum OpCode {
 			mov,
+			lea,
 			push,
 			pop,
 			jmp,

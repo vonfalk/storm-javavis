@@ -21,16 +21,7 @@ namespace code {
 #endif
 
 		static Value getOffset(int offset, nat size) {
-			switch (size) {
-				case 1:
-					return byteRel(ptrFrame, offset);
-				case 4:
-					return intRel(ptrFrame, offset);
-				case 8:
-					return longRel(ptrFrame, offset);
-			}
-			assert(false);
-			return intRel(ptrFrame, offset);
+			return xRel(size, ptrFrame, offset);
 		}
 
 		void Offsets::init(nat preservedRegisters, const Frame &frame) {

@@ -40,4 +40,6 @@ BEGIN_TEST(CodeTest) {
 	CHECK_EQ(runFn(engine, L"test.bs.ifTest2", 3), 4);
 	CHECK_EQ(runFn(engine, L"test.bs.ifTest2", 0), -1);
 
+	CHECK_EQ(runFn(engine, L"test.bs.assign", 1), 2);
+
 } END_TEST

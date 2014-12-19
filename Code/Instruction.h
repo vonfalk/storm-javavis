@@ -88,6 +88,7 @@ namespace code {
 
 	// Functions for creating Instruction objects.
 	Instruction mov(const Value &to, const Value &from);
+	Instruction lea(const Value &to, const Value &from);
 	Instruction push(const Value &v);
 	Instruction pop(const Value &to);
 	Instruction jmp(const Value &to, CondFlag cond = ifAlways);

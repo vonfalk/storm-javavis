@@ -47,7 +47,7 @@ namespace storm {
 
 			if (to.needed) {
 				// Part of another expression.
-				if (!to.suggest(variable->var)) {
+				if (!to.suggest(s, variable->var)) {
 					Variable v = to.location(s, variable->result);
 
 					if (variable->result.refcounted())

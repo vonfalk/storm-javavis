@@ -2,12 +2,16 @@
 #include "Function.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Exception.h"
 #include "Code/Instruction.h"
 
 namespace storm {
 
 	Function::Function(Value result, const String &name, const vector<Value> &params)
-		: NameOverload(name, params), result(result), lookupRef(null), codeRef(null) {}
+		: NameOverload(name, params), result(result), lookupRef(null), codeRef(null) {
+		if (result.ref)
+			throw TypedefError(L"It is a bad idea to return references!");
+	}
 
 	Function::~Function() {
 		// Correct destruction order.
@@ -36,12 +40,12 @@ namespace storm {
 		inlined &= as<DelegatedCode>(lookup.borrow()) != 0;
 		inlined &= as<InlinedCode>(code.borrow()) != 0;
 
-		Variable result = res.location(to, this->result);
-
 		if (inlined) {
 			InlinedCode *c = as<InlinedCode>(code.borrow());
-			c->code(to, params, result);
+			c->code(to, params, res);
 		} else {
+			Variable result = res.location(to, this->result);
+
 			assert(("Not implemented for value types yet!", this->result.isBuiltIn()));
 			for (nat i = 0; i < params.size(); i++) {
 				to.to << fnParam(params[i]);

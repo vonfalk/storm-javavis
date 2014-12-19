@@ -7,12 +7,16 @@
 
 namespace storm {
 
-	Value::Value() : type(null) {}
+	Value::Value() : type(null), ref(false) {}
 
-	Value::Value(Type *t) : type(t) {}
+	Value::Value(Type *t, bool ref) : type(t), ref(ref) {}
 
 	nat Value::size() const {
-		if (type->flags & typeClass) {
+		if (ref) {
+			return 0; // pointer-sized
+		} else if (!type) {
+			return 0;
+		} else if (type->flags & typeClass) {
 			return 0; // by pointer
 		} else {
 			return type->size();
@@ -20,7 +24,7 @@ namespace storm {
 	}
 
 	bool Value::isBuiltIn() const {
-		if (!type) {
+		if (!type || ref) {
 			return true;
 		} else if (type->flags & typeClass) {
 			return true; // by pointer
@@ -30,7 +34,9 @@ namespace storm {
 	}
 
 	code::Value Value::destructor() const {
-		if (type && (type->flags & typeClass)) {
+		if (ref) {
+			return code::Value();
+		} else if (type && (type->flags & typeClass)) {
 			return code::Ref(type->engine.release);
 		} else {
 			return type->destructor();
@@ -61,10 +67,12 @@ namespace storm {
 			to << L"void";
 		else
 			to << type->name;
+		if (ref)
+			to << "&";
 	}
 
 	bool Value::operator ==(const Value &o) const {
-		return type == o.type;
+		return type == o.type && ref == o.ref;
 	}
 
 	Value common(const Value &a, const Value &b) {

@@ -6,7 +6,14 @@ namespace code {
 
 	Binary::Binary(Arena &arena, const String &title, const Listing &listing)
 		: title(title), arena(arena), memory(null), size(0) {
-		set(listing);
+		try {
+			set(listing);
+		} catch (...) {
+			clear(references);
+			clear(blocks);
+			arena.codeFree(memory);
+			throw;
+		}
 	}
 
 	Binary::~Binary() {
@@ -95,6 +102,7 @@ namespace code {
 			arena.codeFree(memory);
 			memory = oldMem;
 			size = oldSize;
+			PLN("WERE FUCKED");
 			throw;
 		}
 

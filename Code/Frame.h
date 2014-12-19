@@ -57,6 +57,12 @@ namespace code {
 		Block parent(Variable v) const;
 		Block parent(Block b) const;
 
+		// Check if 'parent' directly or indirectly contains 'child'.
+		bool indirectParent(Block parent, Block child) const;
+
+		// Check if 'v' outlives the block 'b'.
+		bool outlives(Variable v, Block b) const;
+
 		// Get all blocks.
 		vector<Block> allBlocks() const;
 

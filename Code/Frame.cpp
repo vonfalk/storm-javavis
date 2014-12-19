@@ -131,6 +131,19 @@ namespace code {
 		return Block(blocks.find(b.id)->second.parent);
 	}
 
+	bool Frame::indirectParent(Block parent, Block child) const {
+		for (Block c = child; c != Block::invalid; c = this->parent(c)) {
+			PLN("At: " << Value(c) << " vs " << Value(parent));
+			if (c == parent)
+				return true;
+		}
+		return false;
+	}
+
+	bool Frame::outlives(Variable v, Block b) const {
+		return indirectParent(parent(v), b);
+	}
+
 	Block Frame::createChild(Block parent) {
 		if (parent == Block::invalid)
 			throw FrameError();

@@ -35,6 +35,14 @@ Int ifTest2(Int v) {
     }
 }
 
+Int assign(Int v) {
+    Int z = v;
+    if (z == 1) {
+       z = 2;
+    }
+    z;
+}
+
 Int demo() {
     3;
 }

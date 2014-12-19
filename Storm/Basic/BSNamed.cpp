@@ -72,7 +72,9 @@ namespace storm {
 		for (nat i = 0; i < values.size(); i++) {
 			GenResult gr(s.block);
 			params->expressions[i]->code(s, gr);
-			vars[i] = gr.location(s, values[i]);
+			GenResult casted(s.block);
+			cast(s, casted, code::Value(gr.location(s, values[i])), values[i], toExecute->params[i]);
+			vars[i] = casted.location(s, values[i]);
 		}
 
 		// Increase refs for all parameters.
@@ -90,7 +92,7 @@ namespace storm {
 		if (!to.needed)
 			return;
 
-		if (!to.suggest(toLoad->var)) {
+		if (!to.suggest(s, toLoad->var)) {
 			Variable v = to.location(s, toLoad->result);
 
 			if (toLoad->result.refcounted())

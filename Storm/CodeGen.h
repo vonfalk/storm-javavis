@@ -49,7 +49,7 @@ namespace storm {
 
 		// Suggest a location. Returns true if it is used. Otherwise, store the value in whatever
 		// location is returned by 'location'.
-		bool suggest(code::Variable v);
+		bool suggest(const GenState &s, code::Variable v);
 
 		// Do we need a result?
 		const bool needed;
@@ -61,5 +61,11 @@ namespace storm {
 		// In which block?
 		code::Block block;
 	};
+
+
+	/**
+	 * Cast a value to another.
+	 */
+	void cast(const GenState &state, GenResult &r, code::Value &src, const Value &from, const Value &to);
 
 }

@@ -7,24 +7,37 @@
 namespace storm {
 
 	static void intAdd(InlinedParams p) {
-		p.state.to << code::mov(p.result, p.params[0]);
-		p.state.to << code::add(p.result, p.params[1]);
+		code::Value result = p.result.location(p.state, Value(intType(p.engine)));
+		p.state.to << code::mov(result, p.params[0]);
+		p.state.to << code::add(result, p.params[1]);
 	}
 
 	static void intSub(InlinedParams p) {
-		p.state.to << code::mov(p.result, p.params[0]);
-		p.state.to << code::sub(p.result, p.params[1]);
+		code::Value result = p.result.location(p.state, Value(intType(p.engine)));
+		p.state.to << code::mov(result, p.params[0]);
+		p.state.to << code::sub(result, p.params[1]);
 	}
 
 	static void intMul(InlinedParams p) {
-		p.state.to << code::mov(p.result, p.params[0]);
-		p.state.to << code::mul(p.result, p.params[1]);
+		code::Value result = p.result.location(p.state, Value(intType(p.engine)));
+		p.state.to << code::mov(result, p.params[0]);
+		p.state.to << code::mul(result, p.params[1]);
 	}
 
 	template <code::CondFlag f>
 	static void intCmp(InlinedParams p) {
+		code::Value result = p.result.location(p.state, Value(boolType(p.engine)));
 		p.state.to << code::cmp(p.params[0], p.params[1]);
-		p.state.to << code::setCond(p.result, f);
+		p.state.to << code::setCond(result, f);
+	}
+
+	static void intAssign(InlinedParams p) {
+		p.state.to << code::mov(code::ptrA, p.params[0]);
+		p.state.to << code::mov(code::intRel(code::ptrA, 0), p.params[1]);
+		if (p.result.needed) {
+			code::Value result = p.result.location(p.state, Value(intType(p.engine)));
+			p.state.to << code::mov(result, code::intRel(code::eax, 0));
+		}
 	}
 
 	IntType::IntType() : Type(L"Int", typeValue | typeFinal, sizeof(code::Int)) {
@@ -39,6 +52,11 @@ namespace storm {
 		add(inlinedFunction(engine, b, L">", ii, simpleFn(&intCmp<code::ifGreater>)));
 		add(inlinedFunction(engine, b, L"<=", ii, simpleFn(&intCmp<code::ifLessEqual>)));
 		add(inlinedFunction(engine, b, L">=", ii, simpleFn(&intCmp<code::ifGreaterEqual>)));
+
+		vector<Value> ri(2);
+		ri[0] = Value(this, true);
+		ri[1] = Value(this);
+		add(inlinedFunction(engine, Value(this), L"=", ri, simpleFn(&intAssign)));
 	}
 
 

@@ -128,9 +128,10 @@ namespace storm {
 	 * Parameters to a function generating inlined code.
 	 */
 	struct InlinedParams {
+		Engine &engine;
 		const GenState &state;
 		const vector<code::Value> &params;
-		code::Value result;
+		GenResult &result;
 	};
 
 
@@ -143,7 +144,7 @@ namespace storm {
 		InlinedCode(Fn<void, InlinedParams> generate);
 
 		// Generate inlined code.
-		virtual void code(const GenState &state, const vector<code::Value> &params, code::Value result);
+		virtual void code(const GenState &state, const vector<code::Value> &params, GenResult &result);
 	private:
 		// Generation fn.
 		Fn<void, InlinedParams> generate;
