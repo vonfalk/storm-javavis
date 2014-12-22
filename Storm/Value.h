@@ -6,6 +6,11 @@
 namespace storm {
 
 	class Type;
+	class Engine;
+
+	Type *boolType(Engine &e);
+	Type *intType(Engine &e);
+	Type *natType(Engine &e);
 
 	/**
 	 * A value is a 'handle' to a type. The value itself is to be considered
@@ -52,6 +57,11 @@ namespace storm {
 		// Type equality.
 		bool operator ==(const Value &o) const;
 		inline bool operator !=(const Value &o) const { return !(*this == o); }
+
+		// Some standard types.
+		static inline Value stdBool(Engine &e) { return Value(boolType(e)); }
+		static inline Value stdInt(Engine &e) { return Value(intType(e)); }
+		static inline Value stdNat(Engine &e) { return Value(natType(e)); }
 
 	protected:
 		virtual void output(wostream &to) const;

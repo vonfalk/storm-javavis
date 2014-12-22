@@ -34,3 +34,9 @@ Idea for a better solution in the parser: Detect potentially empty rules, and co
 Future test cases:
 Extend a class with an inlined function, and override that function.
 Compilation error in a function => ensure so that the next invocation returns the same error.
+
+
+In Code: move the ifAlways... to be a special value in the code::Value class, which makes for a
+much cleaner implementation.
+
+Replace TypeError(x, L".....") with TypeError(x, from, to);

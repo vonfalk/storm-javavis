@@ -15,7 +15,6 @@ namespace storm {
 		using namespace code;
 
 		code::Block block = state.frame.createChild(state.block);
-		GenState subState = { state.to, state.frame, block };
 
 		for (VarMap::const_iterator i = variables.begin(); i != variables.end(); ++i) {
 			LocalVar *v = i->second.borrow();
@@ -23,10 +22,13 @@ namespace storm {
 				v->var = state.frame.createVariable(block, v->result.size(), v->result.destructor());
 		}
 
+		blockCode(state, to, block);
+	}
+
+	void bs::Block::blockCode(const GenState &state, GenResult &to, const code::Block &block) {
 		state.to << begin(block);
-
+		GenState subState = { state.to, state.frame, block };
 		blockCode(subState, to);
-
 		state.to << end(block);
 	}
 

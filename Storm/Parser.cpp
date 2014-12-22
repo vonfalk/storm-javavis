@@ -168,6 +168,12 @@ namespace storm {
 			oss << L"\"";
 		}
 
+		set<String> rules = rulesInProgress(steps[pos]);
+		if (!rules.empty()) {
+			oss << L"\nRules in progress: ";
+			join(oss, rules, L", ");
+		}
+
 		return SyntaxError(srcPos + pos, oss.str());
 	}
 
@@ -206,6 +212,18 @@ namespace storm {
 		for (nat i = 0; i < states.size(); i++) {
 			if (states[i].isRegex())
 				r.insert(toS(states[i].tokenRegex()));
+		}
+
+		return r;
+	}
+
+	set<String> Parser::rulesInProgress(const StateSet &states) const {
+		set<String> r;
+
+		for (nat i = 0; i < states.size(); i++) {
+			const String &n = states[i].pos.option().rule();
+			if (n != L"")
+				r.insert(n);
 		}
 
 		return r;

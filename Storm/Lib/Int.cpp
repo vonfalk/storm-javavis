@@ -36,7 +36,7 @@ namespace storm {
 		p.state.to << code::mov(code::intRel(code::ptrA, 0), p.params[1]);
 		if (p.result.needed) {
 			code::Value result = p.result.location(p.state, Value(intType(p.engine)));
-			p.state.to << code::mov(result, code::intRel(code::eax, 0));
+			p.state.to << code::mov(result, code::intRel(code::ptrA, 0));
 		}
 	}
 

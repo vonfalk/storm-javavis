@@ -64,6 +64,10 @@ If(Block block);
 If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr;
 If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr, "else", Expr(me) -> falseExpr;
 
+// While.
+While(Block block);
+While => While(block) : "while", "(", Expr(me) -> cond, ")", Stmt(me) -> body;
+
 // Atoms, for example constants and variables/function calls.
 Atom(Block block);
 Atom => intConstant(nr) : "[0-9]+" nr;
@@ -108,6 +112,7 @@ Stmt(Block block);
 Stmt => expr : Expr(block) expr, ";";
 Stmt => e : Block(block) e;
 Stmt => e : If(block) e;
+Stmt => e : While(block) e;
 
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);

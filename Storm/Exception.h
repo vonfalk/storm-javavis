@@ -2,6 +2,7 @@
 #include "Utils/Exception.h"
 
 #include "SrcPos.h"
+#include "Value.h"
 
 namespace storm {
 
@@ -65,6 +66,8 @@ namespace storm {
 	class TypeError : public CodeError {
 	public:
 		inline TypeError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
+		inline TypeError(const SrcPos &where, const Value &expected, const Value &got)
+			: CodeError(where), msg(L"Expected " + toS(expected) + L" but got " + toS(got)) {}
 
 		inline virtual String what() const {
 			return toS(where) + L": Type error: " + msg;

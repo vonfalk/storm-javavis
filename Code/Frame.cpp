@@ -133,7 +133,6 @@ namespace code {
 
 	bool Frame::indirectParent(Block parent, Block child) const {
 		for (Block c = child; c != Block::invalid; c = this->parent(c)) {
-			PLN("At: " << Value(c) << " vs " << Value(parent));
 			if (c == parent)
 				return true;
 		}

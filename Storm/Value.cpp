@@ -59,7 +59,7 @@ namespace storm {
 
 	void Value::mustStore(const Value &v, const SrcPos &p) const {
 		if (!canStore(v))
-			throw TypeError(p, L"Expected " + ::toS(this) + L", got " + ::toS(v));
+			throw TypeError(p, *this, v);
 	}
 
 	void Value::output(wostream &to) const {

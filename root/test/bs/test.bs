@@ -43,6 +43,15 @@ Int assign(Int v) {
     z;
 }
 
+Int while(Int z) {
+    Int r = 1;
+    while (z > 0) {
+        r = r * 2;
+	z = z - 1;
+    }
+    r;
+}
+
 Int demo() {
     3;
 }

@@ -205,6 +205,9 @@ namespace storm {
 		// Find possible regex completions for a step.
 		set<String> regexCompletions(const StateSet &states) const;
 
+		// Find currently used rules.
+		set<String> rulesInProgress(const StateSet &states) const;
+
 		// Get a state from a StatePtr. Note that this reference may be invalidated
 		// as soon as something is added to a step!
 		State &state(const StatePtr &ptr);

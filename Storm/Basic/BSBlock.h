@@ -29,6 +29,9 @@ namespace storm {
 			// Generate code. Override 'blockCode' to generate only block contents.
 			virtual void code(const GenState &state, GenResult &to);
 
+			// Override to initialize the block yourself.
+			virtual void blockCode(const GenState &state, GenResult &to, const code::Block &newBlock);
+
 			// Override to generate contents of the block.
 			virtual void blockCode(const GenState &state, GenResult &to);
 
