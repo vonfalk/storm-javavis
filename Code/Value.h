@@ -4,6 +4,7 @@
 #include "Label.h"
 #include "Reference.h"
 #include "Block.h"
+#include "CondFlag.h"
 
 namespace code {
 
@@ -35,6 +36,8 @@ namespace code {
 			tBlock,
 			// variable(), offset() (read at [&variable() + offset()])
 			tVariable,
+			// condFlag()
+			tCondFlag,
 			// reg(), offset() (read at [reg() + offset()])
 			tRelative,
 		};
@@ -45,6 +48,7 @@ namespace code {
 		Value(const Ref &ref);
 		Value(Block block);
 		Value(Variable variable);
+		Value(CondFlag condFlag);
 
 		bool operator ==(const Value &o) const;
 		inline bool operator !=(const Value &o) const { return !(*this == o); }
@@ -72,6 +76,7 @@ namespace code {
 		Ref reference() const;
 		Block block() const;
 		Variable variable() const;
+		CondFlag condFlag() const;
 		int offset() const;
 
 	private:
@@ -103,6 +108,8 @@ namespace code {
 			nat blockId;
 			// variable id
 			nat variableId;
+			// conditional flag
+			CondFlag cFlag;
 		};
 
 		// Offset relative either a register or a variable.

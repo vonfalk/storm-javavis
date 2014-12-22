@@ -141,7 +141,7 @@ namespace code {
 		}
 
 		void jmp(Output &to, Params p, const Instruction &instr) {
-			CondFlag c = CondFlag(instr.src().constant());
+			CondFlag c = instr.src().condFlag();
 			if (c == ifAlways) {
 				jmpCall(false, p.arena, to, instr.dest());
 			} else if (c == ifNever) {
@@ -154,7 +154,7 @@ namespace code {
 		}
 
 		void setCond(Output &to, Params p, const Instruction &instr) {
-			CondFlag c = CondFlag(instr.src().constant());
+			CondFlag c = instr.src().condFlag();
 			to.putByte(0x0F);
 			to.putByte(0x90 + condOp(c));
 			modRm(to, 0, instr.dest());

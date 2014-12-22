@@ -22,6 +22,8 @@ namespace code {
 		assert(v != Variable::invalid);
 	}
 
+	Value::Value(CondFlag f) : valType(tCondFlag), cFlag(f), valSize(1), iOffset(0) {}
+
 	Value::Value(Register reg, cpuInt offset, nat sz) : valType(tRelative), valSize(sz) {
 		assert(code::size(reg) == 0);
 		iRegister = reg;
@@ -133,39 +135,42 @@ namespace code {
 			return;
 		}
 
-		if (valType != tRegister) {
+		if (valType != tRegister && valType != tCondFlag) {
 			const wchar_t types[] = L"pb??i???l";
 			to << types[valSize];
 		}
 
 		switch (valType) {
-			case tRegister:
-				to << name(iRegister);
-				break;
-			case tConstant:
-				to << L"#" << toHex(maskConstant(iConstant, valSize), true) << " (" << ::toS((Long)iConstant) << ")";
-				break;
-			case tLabel:
-				to << L"#" << label().toS() << L":";
-				break;
-			case tReference:
-				to << L"@" << iReference.targetName();
-				break;
-			case tBlock:
-				to << L"Block" << blockId;
-				break;
-			case tVariable:
-				if (iOffset != 0)
-					to << L"[var" << variableId << (iOffset >= 0 ? L"+" : L"-") << toHex(abs(iOffset), true) << L"]";
-				else
-					to << L"var" << variableId;
-				break;
-			case tRelative:
-				to << L"[" << name(iRegister) << (iOffset >= 0 ? L"+" : L"-") << toHex(abs(iOffset), true) << L"]";
-				break;
-			default:
-				assert(false);
-				break;
+		case tRegister:
+			to << name(iRegister);
+			break;
+		case tConstant:
+			to << L"#" << toHex(maskConstant(iConstant, valSize), true) << " (" << ::toS((Long)iConstant) << ")";
+			break;
+		case tLabel:
+			to << L"#" << label().toS() << L":";
+			break;
+		case tReference:
+			to << L"@" << iReference.targetName();
+			break;
+		case tBlock:
+			to << L"Block" << blockId;
+			break;
+		case tVariable:
+			if (iOffset != 0)
+				to << L"[var" << variableId << (iOffset >= 0 ? L"+" : L"-") << toHex(abs(iOffset), true) << L"]";
+			else
+				to << L"var" << variableId;
+			break;
+		case tCondFlag:
+			to << name(cFlag);
+			break;
+		case tRelative:
+			to << L"[" << name(iRegister) << (iOffset >= 0 ? L"+" : L"-") << toHex(abs(iOffset), true) << L"]";
+			break;
+		default:
+			assert(false);
+			break;
 		}
 
 	}
@@ -193,6 +198,11 @@ namespace code {
 	Block Value::block() const {
 		assert(valType == tBlock);
 		return Block(blockId);
+	}
+
+	CondFlag Value::condFlag() const {
+		assert(valType == tCondFlag);
+		return cFlag;
 	}
 
 	Variable Value::variable() const {

@@ -316,6 +316,10 @@
 				RelativePath=".\X86\TransformX86.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\CondFlag.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -452,6 +456,10 @@
 			</File>
 			<File
 				RelativePath=".\X86\TransformX86.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CondFlag.h"
 				>
 			</File>
 		</Filter>

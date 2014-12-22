@@ -135,7 +135,7 @@ namespace code {
 
 		void setCondTfm(const Transform &tfm, Listing &to, nat line) {
 			const Instruction &instr = tfm.from[line];
-			switch (instr.src().constant()) {
+			switch (instr.src().condFlag()) {
 			case ifAlways:
 				to << mov(instr.dest(), byteConst(1));
 				break;

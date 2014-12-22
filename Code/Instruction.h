@@ -57,35 +57,6 @@ namespace code {
 	inline DestMode operator |(DestMode a, DestMode b) { return DestMode(int(a) | int(b)); }
 	inline DestMode operator &(DestMode a, DestMode b) { return DestMode(int(a) & int(b)); }
 
-	// Conditional for jumps and others.
-	enum CondFlag {
-		ifAlways,
-		ifNever,
-
-		ifOverflow,
-		ifNoOverflow,
-		ifEqual,
-		ifNotEqual,
-
-		// Unsigned comparision.
-		ifBelow,
-		ifBelowEqual,
-		ifAboveEqual,
-		ifAbove,
-
-		// Singned comparision.
-		ifLess,
-		ifLessEqual,
-		ifGreaterEqual,
-		ifGreater,
-	};
-
-	// Get the string name.
-	const wchar_t *name(CondFlag cond);
-
-	// Inverse the flag.
-	CondFlag inverse(CondFlag cond);
-
 	// Functions for creating Instruction objects.
 	Instruction mov(const Value &to, const Value &from);
 	Instruction lea(const Value &to, const Value &from);
