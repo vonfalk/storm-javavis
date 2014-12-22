@@ -64,9 +64,10 @@ If(Block block);
 If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr;
 If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr, "else", Expr(me) -> falseExpr;
 
-// While.
-While(Block block);
-While => While(block) : "while", "(", Expr(me) -> cond, ")", Stmt(me) -> body;
+// Loops.
+Loop(Block block);
+Loop => While(block) : "while", "(", Expr(me) -> cond, ")", Stmt(me) -> body;
+Loop => For(block) : "for", "(", Expr(me) -> start, ";", Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me) -> body;
 
 // Atoms, for example constants and variables/function calls.
 Atom(Block block);
@@ -75,6 +76,7 @@ Atom => NamedExpr(block, name, params) : Name name, FnValues(block) params;
 Atom => e : "(", Expr(block) e, ")";
 Atom => e : Block(block) e;
 Atom => e : If(block) e;
+Atom => e : Loop(block) e; // For symmetry... I guess it is not really very useful!
 
 // Highest priority. Right-associative, eg (a * b) * c
 Oper1 => v : "[*/%]" v;
@@ -112,7 +114,7 @@ Stmt(Block block);
 Stmt => expr : Expr(block) expr, ";";
 Stmt => e : Block(block) e;
 Stmt => e : If(block) e;
-Stmt => e : While(block) e;
+Stmt => e : Loop(block) e;
 
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);

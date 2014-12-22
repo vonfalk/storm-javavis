@@ -48,7 +48,7 @@ namespace storm {
 		bool canStore(Type *x) const;
 		bool canStore(const Value &v) const;
 
-		// Ensure that we can store.
+		// Ensure that we can store another type.
 		void mustStore(const Value &v, const SrcPos &pos) const;
 
 		// Any extra modifiers goes here:

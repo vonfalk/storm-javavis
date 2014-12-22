@@ -7,9 +7,7 @@ namespace storm {
 	bs::While::While(Auto<Block> parent) : Block(parent) {}
 
 	void bs::While::cond(Auto<Expr> e) {
-		Value b = Value::stdBool(engine());
-		if (e->result() != b)
-			throw TypeError(e->pos, b, e->result());
+		e->result().mustStore(Value::stdBool(engine()), e->pos);
 		condExpr = e;
 	}
 
@@ -34,7 +32,7 @@ namespace storm {
 
 		GenResult condResult(block);
 		condExpr->code(subState, condResult);
-		s.to << cmp(condResult.location(s, Value::stdBool(engine())), byteConst(0));
+		s.to << cmp(condResult.location(subState, Value::stdBool(engine())), byteConst(0));
 		s.to << jmp(end, ifEqual);
 
 		GenResult bodyResult;

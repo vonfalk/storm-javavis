@@ -40,3 +40,5 @@ In Code: move the ifAlways... to be a special value in the code::Value class, wh
 much cleaner implementation.
 
 Replace TypeError(x, L".....") with TypeError(x, from, to);
+
+Make sure that expressions such as: 1 + 1 = 3 does not compile. Ie, improve handling of references.

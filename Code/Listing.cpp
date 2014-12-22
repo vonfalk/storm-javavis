@@ -91,7 +91,7 @@ namespace code {
 					to << std::endl;
 			}
 			to << std::setw(spaces) << ' ';
-			to << std::setw(25) << registers[i].toS() << ' ';
+			to << std::setw(10) << registers[i].toS() << ' ';
 			to << code[i];
 		}
 	}

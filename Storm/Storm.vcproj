@@ -386,6 +386,10 @@
 				RelativePath=".\Basic\BSWhile.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSFor.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -610,6 +614,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSWhile.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSFor.h"
 				>
 			</File>
 		</Filter>

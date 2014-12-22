@@ -42,5 +42,6 @@ BEGIN_TEST(CodeTest) {
 
 	CHECK_EQ(runFn(engine, L"test.bs.assign", 1), 2);
 	CHECK_EQ(runFn(engine, L"test.bs.while", 10), 1024);
+	CHECK_EQ(runFn(engine, L"test.bs.for", 10), 1024);
 
 } END_TEST
