@@ -5,10 +5,6 @@ namespace storm {
 
 	bs::For::For(Auto<Block> parent) : Block(parent) {}
 
-	void bs::For::start(Auto<Expr> e) {
-		startExpr = e;
-	}
-
 	void bs::For::test(Auto<Expr> e) {
 		e->result().mustStore(Value::stdBool(engine()), e->pos);
 		testExpr = e;
@@ -26,30 +22,28 @@ namespace storm {
 		return Value();
 	}
 
-	void bs::For::blockCode(const GenState &s, GenResult &to) {
+	void bs::For::blockCode(const GenState &s, GenResult &to, const code::Block &block) {
 		using namespace code;
 
 		Label begin = s.to.label();
 		Label end = s.to.label();
-
-		TODO(L"Fix a new scope for the second and third part of the for loop.");
-
-		GenResult startResult;
-		startExpr->code(s, startResult);
+		GenState subState = { s.to, s.frame, block };
 
 		s.to << begin;
+		s.to << code::begin(block);
 
-		GenResult testResult(s.block);
-		testExpr->code(s, testResult);
-		s.to << cmp(testResult.location(s, Value::stdBool(engine())), byteConst(0));
+		GenResult testResult(block);
+		testExpr->code(subState, testResult);
+		s.to << cmp(testResult.location(subState, Value::stdBool(engine())), byteConst(0));
 		s.to << jmp(end, ifEqual);
 
 		GenResult bodyResult;
-		bodyExpr->code(s, bodyResult);
+		bodyExpr->code(subState, bodyResult);
 
 		GenResult updateResult;
-		updateExpr->code(s, updateResult);
+		updateExpr->code(subState, updateResult);
 
+		s.to << code::end(block);
 		s.to << jmp(begin);
 		s.to << end;
 	}

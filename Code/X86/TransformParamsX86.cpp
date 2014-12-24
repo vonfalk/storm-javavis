@@ -146,7 +146,7 @@ namespace code {
 			const code::Frame &frame = to.frame;
 
 			if (params.state.currentBlock != frame.parent(b)) {
-				assert(false);
+				assert(("Beginning block without beginning its parent", false));
 				throw BlockBeginError();
 			}
 

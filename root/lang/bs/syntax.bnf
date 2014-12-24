@@ -67,7 +67,11 @@ If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr, "else"
 // Loops.
 Loop(Block block);
 Loop => While(block) : "while", "(", Expr(me) -> cond, ")", Stmt(me) -> body;
-Loop => For(block) : "for", "(", Expr(me) -> start, ";", Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me) -> body;
+
+// The for loop is divided into two to get correct scoping.
+Loop => ExprBlock(block) : "for", "(", Expr(me) -> expr, ";", ForInner(me) -> expr;
+ForInner(Block block);
+ForInner => For(block) : Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me) -> body;
 
 // Atoms, for example constants and variables/function calls.
 Atom(Block block);

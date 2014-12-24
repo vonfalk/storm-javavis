@@ -6,16 +6,13 @@ namespace storm {
 		STORM_PKG(lang.bs);
 
 		/**
-		 * For loop (basic).
+		 * For loop (basic). The start expression should
+		 * be placed in a block outside the for loop.
 		 */
 		class For : public Block {
 			STORM_CLASS;
 		public:
 			STORM_CTOR For(Auto<Block> parent);
-
-			// Startup expression.
-			Auto<Expr> startExpr;
-			void STORM_FN start(Auto<Expr> e);
 
 			// Test expression.
 			Auto<Expr> testExpr;
@@ -33,7 +30,7 @@ namespace storm {
 			virtual Value result();
 
 			// Code.
-			virtual void blockCode(const GenState &s, GenResult &to);
+			virtual void blockCode(const GenState &s, GenResult &to, const code::Block &block);
 		};
 
 	}
