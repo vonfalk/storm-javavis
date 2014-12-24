@@ -61,6 +61,9 @@ namespace storm {
 #endif
 
 #ifdef DEBUG_LEAKS
+		if (live.count(this) == 0) {
+			PLN("Found a double-free!");
+		}
 		live.erase(this);
 #endif
 	}

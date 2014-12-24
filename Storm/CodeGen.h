@@ -38,21 +38,28 @@ namespace storm {
 		// No result is needed.
 		GenResult();
 
-		// A result is needed in 'block'.
-		GenResult(code::Block block);
+		// A result is of type 't' needed in 'block'.
+		GenResult(const Value &t, code::Block block);
 
 		// Indicate that the result should be stored in 'var'.
-		GenResult(code::Variable var);
+		GenResult(const Value &t, code::Variable var);
 
-		// Get the location of the result (it will be created if it does not exist).
-		code::Variable location(const GenState &s, const Value &type);
+		// Get the location of the result, assuming the result is needed.
+		code::Variable location(const GenState &s);
+
+		// Get the location of the result, even if it was not required by the creator.
+		code::Variable safeLocation(const GenState &s, const Value &t);
 
 		// Suggest a location. Returns true if it is used. Otherwise, store the value in whatever
 		// location is returned by 'location'.
 		bool suggest(const GenState &s, code::Variable v);
+		bool suggest(const GenState &s, code::Value v);
 
-		// Do we need a result?
-		const bool needed;
+		// What type of result is needed? (void = no result needed at all).
+		const Value type;
+
+		// Any result needed?
+		inline bool needed() const { return type != Value(); }
 
 	private:
 		// Stored variable.
@@ -61,11 +68,5 @@ namespace storm {
 		// In which block?
 		code::Block block;
 	};
-
-
-	/**
-	 * Cast a value to another.
-	 */
-	void cast(const GenState &state, GenResult &r, code::Value &src, const Value &from, const Value &to);
 
 }

@@ -147,7 +147,7 @@ namespace storm {
 			if (first.type != Type::type(engine))
 				throw TypedefError(L"Member constructors must have 'Type' as first parameter.");
 		} else {
-			if (!first.canStore(Value(this)))
+			if (!first.canStore(Value(this, true)))
 				throw TypedefError(L"Member functions must have 'this' as first parameter."
 								L" Got " + ::toS(first) + L", expected " +
 								::toS(Value(this)) + L" for " + o->name);

@@ -49,6 +49,12 @@ namespace storm {
 		return (type->flags & typeClass) != 0;
 	}
 
+	Value Value::asRef() const {
+		Value v(*this);
+		v.ref = true;
+		return v;
+	}
+
 	bool Value::canStore(Type *x) const {
 		if (type == null)
 			return true; // void can 'store' all types.
@@ -58,6 +64,8 @@ namespace storm {
 	}
 
 	bool Value::canStore(const Value &v) const {
+		if (ref && !v.ref)
+			return false; // Can not create references from a value.
 		return canStore(v.type);
 	}
 

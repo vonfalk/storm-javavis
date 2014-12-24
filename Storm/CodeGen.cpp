@@ -4,24 +4,46 @@
 
 namespace storm {
 
-	GenResult::GenResult() : needed(false), variable(code::Variable::invalid), block(code::Block::invalid) {}
+	using code::Variable;
+	using code::Block;
 
-	GenResult::GenResult(code::Block block) : needed(true), variable(code::Variable::invalid), block(block) {}
+	GenResult::GenResult() : type(), variable(Variable::invalid), block(Block::invalid) {}
 
-	GenResult::GenResult(code::Variable var) : needed(true), variable(var), block(code::Block::invalid) {}
+	GenResult::GenResult(const Value &t, Block block) : type(t), variable(Variable::invalid), block(block) {}
 
-	code::Variable GenResult::location(const GenState &state, const Value &t) {
-		if (variable == code::Variable::invalid) {
-			if (block == code::Block::invalid) {
-				variable = storm::variable(state, t);
+	GenResult::GenResult(const Value &t, Variable var) : type(t), variable(var), block(code::Block::invalid) {}
+
+	code::Variable GenResult::location(const GenState &state) {
+		if (!needed())
+			DebugBreak();
+		assert(("Trying to get the location of an unneeded result. use safeLocation instead.", needed()));
+
+		if (variable == Variable::invalid) {
+			if (block == Block::invalid) {
+				variable = storm::variable(state, type);
 			} else {
-				variable = storm::variable(state.frame, block, t);
+				variable = storm::variable(state.frame, block, type);
 			}
 		}
 		return variable;
 	}
 
-	bool GenResult::suggest(const GenState &s, code::Variable v) {
+	code::Variable GenResult::safeLocation(const GenState &s, const Value &t) {
+		if (needed())
+			return location(s);
+		else if (variable == Variable::invalid)
+			return variable = storm::variable(s, t);
+		else
+			return variable;
+	}
+
+	bool GenResult::suggest(const GenState &s, code::Value v) {
+		if (v.type() == code::Value::tVariable)
+			return suggest(s, v.variable());
+		return false;
+	}
+
+	bool GenResult::suggest(const GenState &s, Variable v) {
 		using namespace code;
 
 		if (variable == Variable::invalid) {
@@ -41,36 +63,4 @@ namespace storm {
 		}
 	}
 
-	void cast(const GenState &state, GenResult &r, code::Value &src, const Value &from, const Value &to) {
-		using namespace code;
-
-		if (!to.canStore(from))
-			throw InternalError(L"Can not cast " + toS(from) + L" to " + toS(to) + L"!");
-
-		// Do we actually need to do something?
-		if (from.ref == to.ref) {
-			if (src.type() != code::Value::tVariable || !r.suggest(state, src.variable()))
-				state.to << mov(r.location(state, to), src);
-			return;
-		}
-
-		// Cast to a reference?
-		if (!from.ref) {
-			Variable dest = r.location(state, to);
-			state.to << lea(dest, src);
-			return;
-		}
-
-		// Cast from a reference.
-		if (from.ref) {
-			Variable dest = r.location(state, to);
-			state.to << mov(ptrA, src);
-			state.to << mov(dest, xRel(to.size(), ptrA, 0));
-			return;
-		}
-
-		// Failed!
-		assert(false);
-		throw InternalError(L"Cast failed. Do not know how to cast " + toS(from) + L" to " + toS(to) + L"!");
-	}
 }

@@ -8,10 +8,7 @@
 namespace storm {
 
 	Function::Function(Value result, const String &name, const vector<Value> &params)
-		: NameOverload(name, params), result(result), lookupRef(null), codeRef(null) {
-		if (result.ref)
-			throw TypedefError(L"It is a bad idea to return references!");
-	}
+		: NameOverload(name, params), result(result), lookupRef(null), codeRef(null) {}
 
 	Function::~Function() {
 		// Correct destruction order.
@@ -44,7 +41,7 @@ namespace storm {
 			InlinedCode *c = as<InlinedCode>(code.borrow());
 			c->code(to, params, res);
 		} else {
-			Variable result = res.location(to, this->result);
+			Variable result = res.safeLocation(to, this->result);
 
 			assert(("Not implemented for value types yet!", this->result.isBuiltIn()));
 			for (nat i = 0; i < params.size(); i++) {

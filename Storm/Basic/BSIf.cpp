@@ -33,13 +33,13 @@ namespace storm {
 	void bs::If::blockCode(const GenState &state, GenResult &r) {
 		using namespace code;
 
-		GenResult condResult(state.block);
+		GenResult condResult(Value::stdBool(engine()), state.block);
 		condition->code(state, condResult);
 
 		Label lblElse = state.to.label();
 		Label lblDone = state.to.label();
 
-		state.to << cmp(condResult.location(state, Value(boolType(engine()))), byteConst(0));
+		state.to << cmp(condResult.location(state), byteConst(0));
 		state.to << jmp(lblElse, ifEqual);
 
 		trueCode->code(state, r);

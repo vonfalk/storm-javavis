@@ -30,7 +30,7 @@ namespace storm {
 		}
 
 		Value bs::Var::result() {
-			return variable->result;
+			return variable->result.asRef();
 		}
 
 		void bs::Var::code(const GenState &s, GenResult &to) {
@@ -40,15 +40,18 @@ namespace storm {
 
 			if (initExpr) {
 				// Evaluate.
-				GenResult gr(variable->var);
+				GenResult gr(variable->result, variable->var);
 				initExpr->code(s, gr);
 			}
 
 
-			if (to.needed) {
+			if (to.needed()) {
 				// Part of another expression.
-				if (!to.suggest(s, variable->var)) {
-					Variable v = to.location(s, variable->result);
+				if (to.type.ref) {
+					Variable v = to.location(s);
+					s.to << lea(v, variable->var);
+				} else if (!to.suggest(s, variable->var)) {
+					Variable v = to.location(s);
 
 					if (variable->result.refcounted())
 						s.to << code::addRef(v);

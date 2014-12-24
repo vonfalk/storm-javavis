@@ -48,7 +48,7 @@ namespace storm {
 		if (toExecute)
 			return toExecute->result;
 		if (toLoad)
-			return toLoad->result;
+			return toLoad->result.asRef();
 		return Value();
 	}
 
@@ -65,16 +65,18 @@ namespace storm {
 		using namespace code;
 		const Value &r = toExecute->result;
 
-		vector<Value> values = params->values();
+		// Note that toExecute->params may not be equal to params->values()
+		// since some actual parameters may report that they can return a
+		// reference to a value. However, we know that toExecute->params.canStore(params->values())
+		// so it is OK to take toExecute->params directly.
+		const vector<Value> &values = toExecute->params;
 		vector<code::Value> vars(values.size());
 
 		// Load parameters.
 		for (nat i = 0; i < values.size(); i++) {
-			GenResult gr(s.block);
+			GenResult gr(values[i], s.block);
 			params->expressions[i]->code(s, gr);
-			GenResult casted(s.block);
-			cast(s, casted, code::Value(gr.location(s, values[i])), values[i], toExecute->params[i]);
-			vars[i] = casted.location(s, values[i]);
+			vars[i] = gr.location(s);
 		}
 
 		// Increase refs for all parameters.
@@ -89,11 +91,14 @@ namespace storm {
 	void bs::NamedExpr::loadCode(const GenState &s, GenResult &to) {
 		using namespace code;
 
-		if (!to.needed)
+		if (!to.needed())
 			return;
 
-		if (!to.suggest(s, toLoad->var)) {
-			Variable v = to.location(s, toLoad->result);
+		if (to.type.ref) {
+			Variable v = to.location(s);
+			s.to << lea(v, toLoad->var);
+		} else if (!to.suggest(s, toLoad->var)) {
+			Variable v = to.location(s);
 
 			if (toLoad->result.refcounted())
 				s.to << code::addRef(v);

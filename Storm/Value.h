@@ -35,6 +35,9 @@ namespace storm {
 		// Get the size of this type (always returns 0 for pointers, like Code does).
 		nat size() const;
 
+		// As a reference.
+		Value asRef() const;
+
 		// Get the destructor for this type. A destructor has the signature void dtor(T).
 		code::Value destructor() const;
 

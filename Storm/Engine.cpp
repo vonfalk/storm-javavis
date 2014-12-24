@@ -34,6 +34,8 @@ namespace storm {
 
 		rootPkg = null;
 		rootScope->top = null; // keeps a reference to the root package.
+		rootScope->lookup = null;
+		defScopeLookup = null;
 
 		// Release more cached types. This needs to be above clearing other types.
 		specialCached.clear();

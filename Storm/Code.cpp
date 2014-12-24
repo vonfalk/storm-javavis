@@ -145,11 +145,11 @@ namespace storm {
 		l << prolog();
 
 		GenState state = { l, l.frame, l.frame.root() };
-		GenResult result(l.frame.root());
+		GenResult result(owner->result, l.frame.root());
 		code(state, params, result);
 
 		if (owner->result != Value()) {
-			l << mov(asSize(ptrA, owner->result.size()), result.location(state, owner->result));
+			l << mov(asSize(ptrA, owner->result.size()), result.location(state));
 		}
 
 		l << epilog();

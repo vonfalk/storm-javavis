@@ -30,9 +30,9 @@ namespace storm {
 		s.to << begin;
 		s.to << code::begin(block);
 
-		GenResult condResult(block);
+		GenResult condResult(Value::stdBool(engine()), block);
 		condExpr->code(subState, condResult);
-		s.to << cmp(condResult.location(subState, Value::stdBool(engine())), byteConst(0));
+		s.to << cmp(condResult.location(subState), byteConst(0));
 		s.to << jmp(end, ifEqual);
 
 		GenResult bodyResult;

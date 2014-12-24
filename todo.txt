@@ -31,5 +31,3 @@ Compilation error in a function => ensure so that the next invocation returns th
 
 
 Replace TypeError(x, L".....") with TypeError(x, from, to);
-
-Make sure that expressions such as: 1 + 1 = 3 does not compile. Ie, improve handling of references.

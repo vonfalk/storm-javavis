@@ -33,6 +33,9 @@ namespace storm {
 							Auto<SStr> contents, const SrcPos &pos)
 		: Function(result, name, params), scope(scope), contents(contents), paramNames(names) {
 
+		if (result.ref)
+			throw SyntaxError(pos, L"Returning references is not a good idea at this point!");
+
 		setCode(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode)));
 	}
 
@@ -50,8 +53,7 @@ namespace storm {
 		if (!body)
 			throw InternalError(L"Invalid syntax");
 
-		Value resultType = body->result();
-		result.mustStore(resultType, pos);
+		result.mustStore(body->result(), pos);
 
 		// Generate code!
 		using namespace code;
@@ -67,7 +69,7 @@ namespace storm {
 
 		GenState state = { l, l.frame, l.frame.root() };
 
-		if (resultType == Value()) {
+		if (result == Value()) {
 			GenResult r;
 
 			l << prolog();
@@ -75,18 +77,18 @@ namespace storm {
 			l << epilog();
 			l << ret(0);
 		} else {
-			GenResult r(l.frame.root());
+			GenResult r(result, l.frame.root());
 
 			l << prolog();
 			body->code(state, r);
 
-			Variable result = r.location(state, resultType);
-			l << mov(asSize(ptrA, resultType.size()), result);
+			Variable result = r.location(state);
+			l << mov(asSize(ptrA, result.size()), result);
 			l << epilog();
-			l << ret(resultType.size());
+			l << ret(result.size());
 		}
 
-		PVAR(l);
+		PLN(identifier() << L": " << l);
 		return l;
 	}
 

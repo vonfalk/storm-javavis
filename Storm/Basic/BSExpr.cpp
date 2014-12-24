@@ -14,7 +14,7 @@ namespace storm {
 	}
 
 	void bs::Expr::code(const GenState &to, GenResult &var) {
-		assert(!var.needed);
+		assert(!var.needed());
 	}
 
 	bs::Constant::Constant(Int v) : cType(tInt), value(v) {}
@@ -43,12 +43,12 @@ namespace storm {
 	void bs::Constant::code(const GenState &s, GenResult &r) {
 		using namespace code;
 
-		if (!r.needed)
+		if (!r.needed())
 			return;
 
 		switch (cType) {
 		case tInt:
-			s.to << mov(r.location(s, Value(intType(engine()))), intConst(value));
+			s.to << mov(r.location(s), intConst(value));
 			break;
 		default:
 			TODO("Implement missing type");
