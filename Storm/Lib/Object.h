@@ -4,6 +4,9 @@
 
 namespace storm {
 
+	// When debugging, checks that objects are alive.
+	void checkLive(void *obj);
+
 	class Type;
 	class Str;
 
@@ -52,16 +55,20 @@ namespace storm {
 		// Add reference.
 		inline void addRef() {
 			// _ASSERT(_CrtCheckMemory());
-			if (this)
+			if (this) {
+				checkLive(this);
 				atomicIncrement(refs);
+			}
 		}
 
 		// Release reference.
 		inline void release() {
 			// _ASSERT(_CrtCheckMemory());
-			if (this)
+			if (this) {
+				checkLive(this);
 				if (atomicDecrement(refs) == 0)
 					delete this;
+			}
 		}
 
 		// Our specialized operator new(). Allocates memory for the Type provided,

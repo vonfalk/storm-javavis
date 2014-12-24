@@ -3,6 +3,10 @@
 #include "Type.h"
 #include "Lib/Str.h"
 
+// DEBUG_REFS print references, DEBUG_LEAKS tracks live
+// objects to output a list of the remaining objects at
+// program termination. It also tracks use (ie addRef/release)
+// of free'd objects.
 // #define DEBUG_REFS
 // #define DEBUG_LEAKS
 
@@ -65,6 +69,16 @@ namespace storm {
 			PLN("Found a double-free!");
 		}
 		live.erase(this);
+#endif
+	}
+
+	void checkLive(void *o) {
+#ifdef DEBUG_LEAKS
+		if (live.count((Object *)o) == 0) {
+			PLN("Access to dead object!");
+			DebugBreak();
+			assert(false);
+		}
 #endif
 	}
 

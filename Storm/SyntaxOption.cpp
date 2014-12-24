@@ -9,9 +9,7 @@ namespace storm {
 		: scope(scope), pos(pos), owner(owner), markStart(0), markEnd(0), markType(mNone) {}
 
 	SyntaxOption::~SyntaxOption() {
-		_ASSERT(_CrtCheckMemory());
 		::clear(tokens);
-		_ASSERT(_CrtCheckMemory());
 	}
 
 	void SyntaxOption::clear() {
