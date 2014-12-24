@@ -32,7 +32,11 @@ namespace storm {
 	}
 
 	Value bs::TypeName::value(const Scope &scope) {
-		Named *n = scope.find(getName());
+		Name name = getName();
+		if (name.size() == 1 && name[0] == L"void")
+			return Value();
+
+		Named *n = scope.find(name);
 		if (Type *t = as<Type>(n)) {
 			return Value(t);
 		} else {

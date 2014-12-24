@@ -33,6 +33,8 @@ BEGIN_TEST(CodeTest) {
 	CHECK(test->find(Name(L"bar")));
 	CHECK(test->find(Name(L"Foo")));
 
+	CHECK_RUNS(runFn(engine, L"test.bs.voidFn"));
+
 	CHECK_EQ(runFn(engine, L"test.bs.bar"), 3);
 	CHECK_EQ(runFn(engine, L"test.bs.ifTest", 1), 3);
 	CHECK_EQ(runFn(engine, L"test.bs.ifTest", 2), 4);
@@ -43,5 +45,7 @@ BEGIN_TEST(CodeTest) {
 	CHECK_EQ(runFn(engine, L"test.bs.assign", 1), 2);
 	CHECK_EQ(runFn(engine, L"test.bs.while", 10), 1024);
 	CHECK_EQ(runFn(engine, L"test.bs.for", 10), 1024);
+
+	CHECK_ERROR(runFn(engine, L"test.bs.assignError"));
 
 } END_TEST

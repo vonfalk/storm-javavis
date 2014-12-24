@@ -1,8 +1,10 @@
 // This is the syntax for the basic storm language, used to build the
 // real storm language.
 
-DELIMITER => void : "[ \n\r\t]*";
-DELIMITER => void : "[ \n\r\t]*//.*\n";
+Whitespace => void : "[ \n\r\t]*";
+
+DELIMITER => void : Whitespace;
+DELIMITER => void : Whitespace - "//[^\n\r]*[\n\r]" - Whitespace; // "[ \n\r\t]*//.*[\n\r][ \n\r\t]*";
 
 // Name rule returns a String, created by taking the 'name' parameter.
 Name => SStr(name) : "[A-Za-z][A-Za-z0-9]*" name;
@@ -122,4 +124,4 @@ Stmt => e : Loop(block) e;
 
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);
-FunctionBody => FnBody(fn) : (Stmt(me) -> expr, )*;
+FunctionBody => FnBody(fn) : DELIMITER - (Stmt(me) -> expr, )* - DELIMITER;

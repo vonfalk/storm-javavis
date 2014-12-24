@@ -149,7 +149,7 @@
 (global-set-key (kbd "C-c C-m") 'clean-project)
 (global-set-key (kbd "C-c C-r") 'compile-release)
 (global-set-key (kbd "C-c C-a") 'compile-all)
-(global-set-key (kbd "C-c C-q") 'kill-compilation)
+(global-set-key (kbd "C-c C-k") 'kill-compilation)
 (global-set-key (kbd "C-c C-v C-s") 'open-vs)
 
 (add-hook 'c-mode-common-hook

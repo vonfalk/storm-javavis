@@ -18,6 +18,7 @@ Int bar() {
 }
 
 Int ifTest(Int v) {
+    // Let's assume comments work!
     if (v == 1) {
        3;
     } else if (v == 2) {
@@ -58,6 +59,16 @@ Int for(Int z) {
         r = r * 2;
     }
     r;
+}
+
+void voidFn() {
+    // Make sure we can return 'void'.
+    3;
+}
+
+void assignError() {
+    // Should not compile.
+    1 + 1 = 3;
 }
 
 Int demo() {

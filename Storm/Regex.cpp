@@ -6,7 +6,10 @@ namespace storm {
 	const nat NO_MATCH = -1;
 
 	nat matchRegex(const String &pattern, const String &str, nat start) {
-		return Regex(pattern).match(str, start);
+		Regex p(pattern);
+		nat r = p.match(str, start);
+		// PLN(p << " with " << str << " -> " << r);
+		return r;
 	}
 
 	/**

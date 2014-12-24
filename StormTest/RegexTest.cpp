@@ -100,4 +100,12 @@ BEGIN_TEST(RegexTest) {
 	CHECK_EQ(matchRegex(L"a*", L"zb", 1), 1);
 	CHECK_EQ(matchRegex(L"a+", L"zb", 1), NO_MATCH);
 
+	/**
+	 * Some real-world examples.
+	 */
+	CHECK_EQ(matchRegex(L"//.*[\n\r]", L"// comment\n"), 11);
+	CHECK_EQ(matchRegex(L"[ \n\r\t]*//.*[\n\r]", L"   // comment\n"), 14);
+	CHECK_EQ(matchRegex(L"//.*[\n\r][ \n\r\t]*", L"// comment\n  \n"), 14);
+	CHECK_EQ(matchRegex(L"[ \n\r\t]*//.*[\n\r][ \n\r\t]*", L"   // comment\n  \n"), 17);
+
 } END_TEST

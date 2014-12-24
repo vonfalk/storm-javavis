@@ -17,12 +17,6 @@ In the reference system, Reference should instead of containing a human-readable
 of reference to what it provides (at least in most cases), so that the reference system can do a graph
 search to find islands of code that are separated from the rest of the references.
 
-Check if the following returns correctly:
-l << mov(ecx, Value(1));
-l << mov(eax, Value(0));
-l << epilog();
-l << ret();
-
 Note to self:
 Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
@@ -35,9 +29,6 @@ Future test cases:
 Extend a class with an inlined function, and override that function.
 Compilation error in a function => ensure so that the next invocation returns the same error.
 
-
-In Code: move the ifAlways... to be a special value in the code::Value class, which makes for a
-much cleaner implementation.
 
 Replace TypeError(x, L".....") with TypeError(x, from, to);
 

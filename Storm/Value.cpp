@@ -50,6 +50,10 @@ namespace storm {
 	}
 
 	bool Value::canStore(Type *x) const {
+		if (type == null)
+			return true; // void can 'store' all types.
+		if (x == null)
+			return false; // void can not be 'upcasted' to anything else.
 		return x->isA(type);
 	}
 

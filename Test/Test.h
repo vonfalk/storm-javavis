@@ -146,7 +146,18 @@ private: \
 		__result__.total++;						\
 		expr;									\
 		__result__.failed++;					\
+		std::wcout << "Failed: " << #expr << ", did not fail as expected" << std::endl; \
 	} catch (const Exception &) {				\
+	}
+
+#define CHECK_RUNS(expr)						\
+	try {										\
+		__result__.total++;						\
+		expr;									\
+	} catch (const Exception &e) {				\
+		OUTPUT_ERROR(#expr, e.what());			\
+	} catch (...) {								\
+		OUTPUT_ERROR(#expr, "unknown crash");	\
 	}
 
 
