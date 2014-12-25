@@ -30,7 +30,8 @@ namespace code {
 		vector<Variable> vars = frame.variables(b);
 
 		nat size = sizeof(Block) + sizeof(Var)*(vars.size() - 1);
-		Block *c = (Block *)new byte[size];
+		Block *c = (Block *)::operator new (size);
+		// Block *c = (Block *)new byte[size];
 
 		c->parent = frame.parent(b).getId();
 		c->variables = vars.size();

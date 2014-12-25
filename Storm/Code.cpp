@@ -6,7 +6,7 @@
 
 namespace storm {
 
-	Code::Code() : owner(null) {}
+	Code::Code() : owner(null), toUpdate(null) {}
 
 	void Code::detach() {
 		owner = null;

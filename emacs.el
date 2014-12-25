@@ -9,6 +9,7 @@
 (setq remove-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl -d"))
 (setq rename-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl -r"))
 (setq p-compile-command "scripts/compile")
+(setq p-compile-valgrind-command "scripts/compile -v")
 (setq p-clean-command "scripts/compile -c")
 (setq p-release-command "scripts/compile -r")
 (setq p-all-command "scripts/compile -a")
@@ -146,6 +147,7 @@
 (global-set-key (kbd "M-g M-c") 'goto-byte)
 
 (global-set-key (kbd "M-p") 'compile-project)
+(global-set-key (kbd "C-c M-p") 'compile-project-valgrind)
 (global-set-key (kbd "C-c C-m") 'clean-project)
 (global-set-key (kbd "C-c C-r") 'compile-release)
 (global-set-key (kbd "C-c C-a") 'compile-all)
@@ -296,6 +298,10 @@
   (if (in-project buffer-file-name)
       (run-compile p-compile-command)
     (call-interactively 'compile)))
+
+(defun compile-project-valgrind ()
+  (interactive)
+  (run-compile p-compile-valgrind-command))
 
 (defun clean-project ()
   (interactive)
