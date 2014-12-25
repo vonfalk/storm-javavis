@@ -14,15 +14,19 @@ int main(int argc, const char **argv) {
 	bool clean = false;
 	bool all = false;
 	bool release = false;
+	bool valgrind = false;
 
 	string compile;
-	if (argc > 1) {
-		if (strcmp(argv[1], "-c") == 0)
+	for (int i = 1; i < argc; i++) {
+		const char *s = argv[i];
+		if (strcmp(s, "-c") == 0)
 			clean = true;
-		else if (strcmp(argv[1], "-r") == 0)
+		else if (strcmp(s, "-r") == 0)
 			release = true;
-		else if (strcmp(argv[1], "-a") == 0)
+		else if (strcmp(s, "-a") == 0)
 			all = true;
+		else if (strcmp(s, "-v") == 0)
+			valgrind = true;
 	}
 
 	if (clean)
@@ -42,6 +46,10 @@ int main(int argc, const char **argv) {
 		cout << endl;
 
 		string cmd = build + "\\" + project;
+		if (valgrind) {
+			cmd = "drmemory.exe -logdir Debug -batch -results_to_stderr -- " + cmd;
+		}
+
 		system(cmd.c_str());
 	}
 
