@@ -49,9 +49,7 @@ namespace storm {
 			throw parser.error();
 
 		Auto<Object> c = parser.transform(engine(), vector<Object *>(1, this));
-		Auto<FnBody> body = c.as<FnBody>();
-		if (!body)
-			throw InternalError(L"Invalid syntax");
+		Auto<FnBody> body = c.expect<FnBody>(engine(), L"While evaluating FunctionBody");
 
 		result.mustStore(body->result(), pos);
 

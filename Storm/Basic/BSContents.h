@@ -26,6 +26,9 @@ namespace storm {
 
 			// All function definitions.
 			vector<Auto<FunctionDecl> > functions;
+
+			// Set the scope for all contents that needs it.
+			void setScope(const Scope &scope);
 		};
 
 	}

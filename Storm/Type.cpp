@@ -11,11 +11,20 @@ namespace storm {
 	const String Type::CTOR = L"__ctor";
 
 	Type::Type(const String &name, TypeFlags f, nat size)
-		: Named(name), engine(Object::engine()), flags(f), fixedSize(size), mySize(0), parentPkg(null) {
+		: Named(name), engine(Object::engine()), flags(f), fixedSize(size),
+		  mySize(0), parentPkg(null), lazyLoaded(false) {
 		superTypes.push_back(this);
 	}
 
 	Type::~Type() {}
+
+	void Type::lazyLoad() {}
+
+	void Type::ensureLoaded() {
+		if (!lazyLoaded)
+			lazyLoad();
+		lazyLoaded = true;
+	}
 
 	void Type::clear() {
 		members.clear();
@@ -52,6 +61,8 @@ namespace storm {
 
 	nat Type::size() const {
 		if (mySize == 0) {
+			TODO("Run ensureLoaded here!");
+			// ensureLoaded();
 			if (fixedSize) {
 				mySize = fixedSize;
 			} else {
@@ -101,6 +112,8 @@ namespace storm {
 		if (name.size() != 1)
 			return null;
 
+		ensureLoaded();
+
 		MemberMap::const_iterator i = members.find(name[0]);
 		if (i != members.end())
 			return i ->second.borrow();
@@ -115,6 +128,8 @@ namespace storm {
 		to << name;
 		if (super())
 			to << L" : " << super()->path();
+		if (!lazyLoaded)
+			to << L"(not loaded)";
 		to << ":" << endl;
 		Indent i(to);
 
@@ -156,6 +171,7 @@ namespace storm {
 
 	code::Value Type::destructor() const {
 		TODO(L"Implement!");
+		// ensureLoaded(); Needed here!
 		assert(false);
 		return code::Value();
 	}

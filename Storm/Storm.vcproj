@@ -390,6 +390,10 @@
 				RelativePath=".\Basic\BSFor.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\Auto.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

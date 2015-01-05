@@ -88,6 +88,10 @@ namespace storm {
 	protected:
 		virtual void output(wostream &to) const;
 
+		// Called before the first time any information is wanted.
+		// NOTE: Inheritance information is assumed to be set up in a non-lazy way!
+		virtual void lazyLoad();
+
 	private:
 		// Members.
 		typedef hash_map<String, Auto<Overload> > MemberMap;
@@ -110,6 +114,12 @@ namespace storm {
 
 		// Our size (including base classes). If it is zero, we need to re-compute it!
 		mutable nat mySize;
+
+		// Loaded the lazy parts?
+		bool lazyLoaded;
+
+		// Ensure that any lazy-loaded parts are loaded.
+		void ensureLoaded();
 
 	};
 

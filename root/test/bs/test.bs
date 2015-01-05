@@ -1,11 +1,8 @@
 use core;
 
 class Foo {
-Int a = 10;
-create() {
-"aa\"bb";
-'"';
-}
+    Int a;
+    Int b;
 }
 
 Int foo(Int p) {

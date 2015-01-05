@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "BSContents.h"
+#include "BSClass.h"
 
 namespace storm {
 
@@ -11,6 +12,14 @@ namespace storm {
 
 	void bs::Contents::add(Auto<FunctionDecl> t) {
 		functions.push_back(t);
+	}
+
+	void bs::Contents::setScope(const Scope &scope) {
+		for (nat i = 0; i < types.size(); i++) {
+			if (bs::Class *c = as<bs::Class>(types[i].borrow())) {
+				c->setScope(scope);
+			}
+		}
 	}
 
 }

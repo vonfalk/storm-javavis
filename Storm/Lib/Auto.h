@@ -3,6 +3,8 @@
 namespace storm {
 
 	class Object;
+	class Engine;
+	class Type;
 
 	/**
 	 * Automatic refcounting of Object-ptrs. Follows the calling convention, and is binary
@@ -48,6 +50,19 @@ namespace storm {
 			return Auto<U>(o);
 		}
 
+		// Upcasting, expect a specific type.
+		template <class U>
+		inline Auto<U> expect(Engine &e, const String &context) const {
+			U *o = ::as<U>(obj);
+			if (!o) {
+				Type *expected = U::type(e);
+				Type *got = obj ? obj->myType : null;
+				throwTypeError(context, expected, got);
+			}
+			o->addRef();
+			return Auto<U>(o);
+		}
+
 		// Return the pointer (releases our ownership of it).
 		inline T *ret() { T *t = obj; obj = null; return t; }
 
@@ -75,6 +90,9 @@ namespace storm {
 		// Owned object.
 		T *obj;
 	};
+
+	// Helper to throw an internal type error.
+	void throwTypeError(const String &context, Type *expected, Type *got);
 
 	template <class T>
 	wostream &operator <<(wostream &to, const Auto<T> &v) {

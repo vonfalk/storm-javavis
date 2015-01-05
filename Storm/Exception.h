@@ -3,6 +3,7 @@
 
 #include "SrcPos.h"
 #include "Value.h"
+#include "Type.h"
 
 namespace storm {
 
@@ -41,6 +42,18 @@ namespace storm {
 		inline virtual String what() const { return w; }
 	private:
 		String w;
+	};
+
+
+	/**
+	 * Internal type error (something in C++ went wrong).
+	 */
+	class InternalTypeError : public InternalError {
+	public:
+		inline InternalTypeError(const String &context, const Type *expected, const Type *got)
+			: InternalError(context + L": expected " +
+							expected->identifier() + L", got " +
+							(got ? got->identifier() : String(L"null"))) {}
 	};
 
 

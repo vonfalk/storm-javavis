@@ -48,11 +48,8 @@ namespace storm {
 			throw parser.error();
 
 		Auto<Object> includes = parser.transform(package->engine);
-		contents = includes.as<Contents>();
-
-		if (!contents) {
-			throw InternalError(L"Invalid type returned from rules for .bs");
-		}
+		contents = includes.expect<Contents>(package->engine, L"While evaluating File");
+		contents->setScope(scope);
 	}
 
 	void bs::File::readIncludes() {

@@ -125,3 +125,9 @@ Stmt => e : Loop(block) e;
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);
 FunctionBody => FnBody(fn) : DELIMITER - (Stmt(me) -> expr, )* - DELIMITER;
+
+// Possible contents of a class.
+ClassItem => Variable(t, n) : Type t, Name n;
+
+// Root rule for parsing classes and values.
+ClassBody => ClassBody() : ClassItem -> add;
