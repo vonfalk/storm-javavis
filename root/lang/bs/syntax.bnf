@@ -128,7 +128,9 @@ FunctionBody => FnBody(fn) : DELIMITER - (Stmt(me) -> expr, )* - DELIMITER;
 
 // Possible contents of a class.
 ClassItem(Class owner);
-ClassItem => Variable(owner, t, n) : Type t, Name n, ";";
+ClassItem => ClassVar(owner, t, n) : Type t, Name n, ";";
+ClassItem => classFn(owner, pos, name, result, params, contents) :
+Type result, Name name, "(", Params params, ")", "{", SkipBlock contents, "}";
 
 // Root rule for parsing classes and values.
 ClassBody(Class owner);

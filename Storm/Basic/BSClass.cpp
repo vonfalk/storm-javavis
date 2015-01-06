@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "BSClass.h"
-#include "BSScope.h"
 #include "SyntaxSet.h"
 #include "Parser.h"
+#include "BSScope.h"
+#include "BSFunction.h"
 
 namespace storm {
 
@@ -45,7 +46,26 @@ namespace storm {
 	 * Member
 	 */
 
-	bs::Variable::Variable(Auto<Class> owner, Auto<TypeName> type, Auto<SStr> name)
+	bs::ClassVar::ClassVar(Auto<Class> owner, Auto<TypeName> type, Auto<SStr> name)
 		: TypeVar(owner.borrow(), type->value(owner->scope), name->v->v) {}
+
+
+	bs::BSFunction *STORM_FN bs::classFn(Auto<Class> owner,
+										SrcPos pos,
+										Auto<SStr> name,
+										Auto<TypeName> result,
+										Auto<Params> params,
+										Auto<SStr> contents) {
+
+		params->addThis(owner.borrow());
+		return CREATE(BSFunction, owner->engine,
+					result->value(owner->scope),
+					name->v->v,
+					params->cTypes(owner->scope),
+					params->cNames(),
+					owner->scope,
+					contents,
+					pos);
+	}
 
 }

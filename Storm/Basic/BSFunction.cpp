@@ -16,13 +16,8 @@ namespace storm {
 
 	Function *bs::FunctionDecl::asFunction(const Scope &scope) {
 		Value result = this->result->value(scope);
-		vector<Value> params(this->params->params.size());
-		for (nat i = 0; i < this->params->params.size(); i++)
-			params[i] = this->params->params[i]->value(scope);
-
-		vector<String> names(this->params->names.size());
-		for (nat i = 0; i < this->params->names.size(); i++)
-			names[i] = this->params->names[i]->v->v;
+		vector<Value> params = this->params->cTypes(scope);
+		vector<String> names = this->params->cNames();
 
 		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, name->pos);
 	}

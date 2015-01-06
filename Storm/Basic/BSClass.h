@@ -2,12 +2,16 @@
 #include "Std.h"
 #include "SyntaxObject.h"
 #include "Type.h"
-#include "BSType.h"
 #include "TypeVar.h"
+
+#include "BSType.h"
+#include "BSParams.h"
 
 namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
+
+		class BSFunction;
 
 		class Class : public Type {
 			STORM_CLASS;
@@ -53,11 +57,21 @@ namespace storm {
 		/**
 		 * Class variable.
 		 */
-		class Variable : public TypeVar {
+		class ClassVar : public TypeVar {
 			STORM_CLASS;
 		public:
-			STORM_CTOR Variable(Auto<Class> owner, Auto<TypeName> type, Auto<SStr> name);
+			STORM_CTOR ClassVar(Auto<Class> owner, Auto<TypeName> type, Auto<SStr> name);
 		};
+
+		/**
+		 * Class function.
+		 */
+		BSFunction *STORM_FN classFn(Auto<Class> owner,
+									SrcPos pos,
+									Auto<SStr> name,
+									Auto<TypeName> result,
+									Auto<Params> params,
+									Auto<SStr> contents);
 
 	}
 }

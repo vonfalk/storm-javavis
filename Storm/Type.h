@@ -47,6 +47,7 @@ namespace storm {
 		static const String CTOR;
 
 		// Owning engine. Currently this has to be the first member in Type. Otherwise modify createType.
+		// TODO: Rename so that it does not collide with engine() in Object (confusing!).
 		Engine &engine;
 
 		// Type flags.

@@ -3,6 +3,10 @@ use core;
 class Foo {
     Int a;
     Int b;
+
+    Int foo() {
+        a;
+    }
 }
 
 Int foo(Int p) {
