@@ -2,6 +2,8 @@
 #include "Std.h"
 #include "SyntaxObject.h"
 #include "Type.h"
+#include "BSType.h"
+#include "TypeVar.h"
 
 namespace storm {
 	namespace bs {
@@ -41,10 +43,20 @@ namespace storm {
 			STORM_CTOR ClassBody();
 
 			// Add content.
-			void STORM_FN add(Auto<Named> item);
+			void STORM_FN add(Auto<NameOverload> item);
 
 			// Contents.
-			vector<Auto<Named> > items;
+			vector<Auto<NameOverload> > items;
+		};
+
+
+		/**
+		 * Class variable.
+		 */
+		class Variable : public TypeVar {
+			STORM_CLASS;
+		public:
+			STORM_CTOR Variable(Auto<Class> owner, Auto<TypeName> type, Auto<SStr> name);
 		};
 
 	}

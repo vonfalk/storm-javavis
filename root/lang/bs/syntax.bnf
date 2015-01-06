@@ -127,7 +127,9 @@ FunctionBody(BSFunction fn);
 FunctionBody => FnBody(fn) : DELIMITER - (Stmt(me) -> expr, )* - DELIMITER;
 
 // Possible contents of a class.
-ClassItem => Variable(t, n) : Type t, Name n;
+ClassItem(Class owner);
+ClassItem => Variable(owner, t, n) : Type t, Name n, ";";
 
 // Root rule for parsing classes and values.
-ClassBody => ClassBody() : ClassItem -> add;
+ClassBody(Class owner);
+ClassBody => ClassBody() : (ClassItem(owner) -> add, )*;

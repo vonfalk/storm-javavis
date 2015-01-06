@@ -68,3 +68,9 @@ namespace util {
  *	_ASSERT(_CrtCheckMemory());
  *
  */
+
+
+/**
+ * Initialize debug runtime.
+ */
+void initDebug();

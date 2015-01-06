@@ -394,6 +394,10 @@
 				RelativePath=".\Lib\Auto.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TypeVar.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -622,6 +626,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSFor.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TypeVar.h"
 				>
 			</File>
 		</Filter>

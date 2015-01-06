@@ -65,6 +65,7 @@ namespace storm {
 
 		// Return the pointer (releases our ownership of it).
 		inline T *ret() { T *t = obj; obj = null; return t; }
+		inline T *steal() { T *t = obj; obj = null; return t; }
 
 		// Get a pointer, borriowing the reference.
 		inline T *borrow() const { return obj; }

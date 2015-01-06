@@ -32,6 +32,7 @@ BEGIN_TEST(CodeTest) {
 
 	CHECK(test->find(Name(L"bar")));
 	CHECK(test->find(Name(L"Foo")));
+	CHECK(test->find(Name(L"Foo.a")));
 
 	CHECK_RUNS(runFn(engine, L"test.bs.voidFn"));
 

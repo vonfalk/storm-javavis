@@ -12,7 +12,7 @@ namespace storm {
 
 	Type::Type(const String &name, TypeFlags f, nat size)
 		: Named(name), engine(Object::engine()), flags(f), fixedSize(size),
-		  mySize(0), parentPkg(null), lazyLoaded(false) {
+		  mySize(0), parentPkg(null), lazyLoaded(false), lazyLoading(false) {
 		superTypes.push_back(this);
 	}
 
@@ -21,8 +21,19 @@ namespace storm {
 	void Type::lazyLoad() {}
 
 	void Type::ensureLoaded() {
-		if (!lazyLoaded)
-			lazyLoad();
+		if (!lazyLoaded) {
+			if (lazyLoading)
+				throw InternalError(L"Cyclic loading of " + identifier() + L" detected!");
+
+			lazyLoading = true;
+			try {
+				lazyLoad();
+			} catch (...) {
+				lazyLoading = false;
+				throw;
+			}
+			lazyLoading = false;
+		}
 		lazyLoaded = true;
 	}
 
@@ -61,7 +72,7 @@ namespace storm {
 
 	nat Type::size() const {
 		if (mySize == 0) {
-			TODO("Run ensureLoaded here!");
+			// TODO("Run ensureLoaded here!");
 			// ensureLoaded();
 			if (fixedSize) {
 				mySize = fixedSize;
@@ -112,7 +123,8 @@ namespace storm {
 		if (name.size() != 1)
 			return null;
 
-		ensureLoaded();
+		if (!lazyLoading)
+			ensureLoaded();
 
 		MemberMap::const_iterator i = members.find(name[0]);
 		if (i != members.end())

@@ -118,6 +118,9 @@ namespace storm {
 		// Loaded the lazy parts?
 		bool lazyLoaded;
 
+		// Loading the lazy parts?
+		bool lazyLoading;
+
 		// Ensure that any lazy-loaded parts are loaded.
 		void ensureLoaded();
 

@@ -17,13 +17,18 @@ namespace storm {
 		SyntaxSet syntax;
 		addSyntax(scope, syntax);
 
-		Parser parser(syntax, content->v->v, content->pos.file());
-		parser.parse(L"ClassBody", content->pos.offset);
+		Parser parser(syntax, content->v->v, content->pos);
+		parser.parse(L"ClassBody");
 		if (parser.hasError())
 			throw parser.error();
 
 		Engine &e = Object::engine();
-		Auto<ClassBody> body = Auto<Object>(parser.transform(e)).expect<ClassBody>(e, L"From ClassBody rule");
+		Auto<Object> z = parser.transform(e, vector<Object *>(1, this));
+		Auto<ClassBody> body = z.expect<ClassBody>(e, L"From ClassBody rule");
+
+		for (nat i = 0; i < body->items.size(); i++) {
+			add(body->items[i].steal());
+		}
 	}
 
 	/**
@@ -32,8 +37,15 @@ namespace storm {
 
 	bs::ClassBody::ClassBody() {}
 
-	void bs::ClassBody::add(Auto<Named> i) {
+	void bs::ClassBody::add(Auto<NameOverload> i) {
 		items.push_back(i);
 	}
+
+	/**
+	 * Member
+	 */
+
+	bs::Variable::Variable(Auto<Class> owner, Auto<TypeName> type, Auto<SStr> name)
+		: TypeVar(owner.borrow(), type->value(owner->scope), name->v->v) {}
 
 }

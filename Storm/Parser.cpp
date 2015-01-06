@@ -18,6 +18,8 @@ namespace storm {
 		: syntax(set), src(src), srcPos(file, 0), rootOption(SrcPos(), Scope(), L"") {}
 
 	nat Parser::parse(const String &rootType, nat pos) {
+		assert(pos <= src.size());
+
 		rootOption.clear();
 		rootOption.add(new TypeToken(rootType, L"root"));
 
