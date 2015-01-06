@@ -5,7 +5,7 @@ namespace code {
 
 	Variable::Variable() : id(-1), sz(0) {}
 
-	Variable::Variable(nat id, nat size) : id(id), sz(size) {}
+	Variable::Variable(nat id, Size size) : id(id), sz(size) {}
 
 	const Variable Variable::invalid;
 

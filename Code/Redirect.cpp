@@ -7,12 +7,12 @@ namespace code {
 
 	Redirect::Redirect() : resultSize(0), resultBuiltIn(false) {}
 
-	void Redirect::result(nat size, bool i) {
+	void Redirect::result(Size size, bool i) {
 		resultSize = size;
 		resultBuiltIn = i;
 	}
 
-	void Redirect::param(nat size, Value dtor) {
+	void Redirect::param(Size size, Value dtor) {
 		Param p = { size, dtor };
 		params.push_back(p);
 	}

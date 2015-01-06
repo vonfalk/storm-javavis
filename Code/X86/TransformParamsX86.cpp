@@ -85,9 +85,9 @@ namespace code {
 
 		bool TfmParams::lookupVar(Value &v) const {
 			if (v.type() == Value::tVariable) {
-				assert(v.size() <= 8);
+				assert(v.currentSize() <= 8);
 
-				v = vars.variable(v.variable(), v.offset());
+				v = vars.variable(v.variable(), v.offset().current());
 				return true;
 			}
 			return false;
@@ -125,7 +125,7 @@ namespace code {
 			switch (start.type()) {
 				case Value::tRelative:
 					base = start.reg();
-					offset = start.offset();
+					offset = start.offset().current();
 					break;
 				default:
 					assert(false); // Not supported
@@ -135,9 +135,9 @@ namespace code {
 			for (nat i = 0; i < size; i += sizeof(cpuNat)) {
 				nat remaining = size - i;
 				if (remaining == 1) {
-					to << code::mov(byteRel(base, cpuInt(i) + offset), byteConst(0));
+					to << code::mov(byteRel(base, Offset(cpuInt(i) + offset)), byteConst(0));
 				} else {
-					to << code::mov(intRel(base, cpuInt(i) + offset), natConst(0));
+					to << code::mov(intRel(base, Offset(cpuInt(i) + offset)), natConst(0));
 				}
 			}
 		}
@@ -159,7 +159,7 @@ namespace code {
 				Variable var = vars[i];
 
 				if (!frame.isParam(var)) {
-					zeroMem(to, params.lookup(var, 0), var.size());
+					zeroMem(to, params.lookup(var, 0), var.size().currentSize());
 				}
 			}
 
@@ -202,7 +202,7 @@ namespace code {
 					params.lookupVars(i);
 					fnCallTfm(to, params, i);
 
-					zeroMem(to, params.lookup(var, 0), var.size());
+					zeroMem(to, params.lookup(var, 0), var.size().currentSize());
 				}
 			}
 
@@ -232,7 +232,7 @@ namespace code {
 				fnParams.pop_back();
 			}
 
-			to << code::call(instr.src(), instr.dest().size());
+			to << code::call(instr.src(), instr.dest().size().currentSize());
 
 			to << code::add(ptrStack, natPtrConst(numParams * sizeof(cpuNat)));
 		}
@@ -250,8 +250,8 @@ namespace code {
 			if (to.frame.exceptionHandlerNeeded()) {
 				// Set up the SEH handler for this frame.
 				to << code::threadLocal() << code::push(natPtrConst(Nat(&x86SafeSEH)));
-				to << code::threadLocal() << code::push(ptrRel(noReg, 0));
-				to << code::threadLocal() << code::mov(ptrRel(noReg, 0), ptrStack);
+				to << code::threadLocal() << code::push(ptrRel(noReg, Offset(0)));
+				to << code::threadLocal() << code::mov(ptrRel(noReg, Offset(0)), ptrStack);
 			}
 
 			// Save any registers we need to preserve.
@@ -278,7 +278,7 @@ namespace code {
 			// Save any registers we need to preserve.
 			nat id = 0;
 			for (Registers::iterator i = params.savedRegisters.begin(); i != params.savedRegisters.end(); ++i, id++) {
-				to << code::mov(*i, intRel(ptrFrame, -int(id * 4 + 12)));
+				to << code::mov(*i, intRel(ptrFrame, -Offset(id * 4 + 12)));
 			}
 
 			// Restore
@@ -288,9 +288,9 @@ namespace code {
 				// Remove the SEH handler.
 
 				// Find the previous handler (relative to ebp if esp is not right)
-				to << code::mov(edx, intRel(ptrFrame, -8));
+				to << code::mov(edx, intRel(ptrFrame, Offset(-8)));
 				// Restore it...
-				to << code::threadLocal() << mov(intRel(noReg, 0), edx);
+				to << code::threadLocal() << mov(intRel(noReg, Offset(0)), edx);
 			}
 
 			to << code::mov(ptrStack, ptrFrame);

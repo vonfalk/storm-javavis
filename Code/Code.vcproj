@@ -181,10 +181,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Errors.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Frame.cpp"
 				>
 			</File>
@@ -320,6 +316,10 @@
 				RelativePath=".\CondFlag.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Size.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -344,10 +344,6 @@
 			</File>
 			<File
 				RelativePath=".\Code.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Errors.h"
 				>
 			</File>
 			<File
@@ -460,6 +456,14 @@
 			</File>
 			<File
 				RelativePath=".\CondFlag.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Size.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ISize.h"
 				>
 			</File>
 		</Filter>

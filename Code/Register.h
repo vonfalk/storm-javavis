@@ -1,4 +1,5 @@
 #pragma once
+#include "Size.h"
 
 // Defines the available registers to the end-user of this API. These registers
 // are not to be overwritten by using ASM-instructions unless they are specified
@@ -37,8 +38,10 @@ namespace code {
 	bool fromBackend(Register r);
 	const wchar_t *name(Register r);
 
-	nat size(Register r);
+	// nat size(Register r);
+	Size size(Register r);
 	Register asSize(Register r, nat size=0);
+	Register asSize(Register r, Size size);
 
 
 	// Collection of registers. Considers registers of different sizes as the same register, but keeps track

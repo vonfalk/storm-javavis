@@ -15,6 +15,7 @@ namespace code {
 		virtual void putPtr(cpuNat v) = 0; // 4 or 8 bytes
 
 		// Write a word with a given size (0 = ptr)
+		// TODO? Replace 'nat' with 'Size'
 		void putSize(Word w, nat size);
 
 		void putRelative(cpuNat addr);

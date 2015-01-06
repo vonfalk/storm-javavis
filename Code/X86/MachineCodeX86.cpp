@@ -137,7 +137,7 @@ namespace code {
 
 		bool has64(const Listing &l) {
 			for (nat i = 0; i < l.size(); i++) {
-				if (l[i].size() == 8)
+				if (l[i].currentSize() == 8)
 					return true;
 			}
 			return false;
@@ -157,23 +157,23 @@ namespace code {
 		}
 
 		Value high32(const Value &v) {
-			assert(v.size() == 8);
+			assert(v.size() == Size::sLong);
 			switch (v.type()) {
 				case Value::tConstant:
 					return natConst(v.constant() >> 32);
 				case Value::tRegister:
 					return Value(high32(v.reg()));
 				case Value::tRelative:
-					return intRel(v.reg(), v.offset() + 4);
+					return intRel(v.reg(), Offset(v.offset().current() + 4));
 				case Value::tVariable:
-					return intRel(v.variable(), v.offset() + 4);
+					return intRel(v.variable(), Offset(v.offset().current() + 4));
 			}
 			assert(false);
 			return Value();
 		}
 
 		Value low32(const Value &v) {
-			assert(v.size() == 8);
+			assert(v.currentSize() == 8);
 			switch (v.type()) {
 			case Value::tConstant:
 				return natConst(v.constant() & 0xFFFFFFFF);
@@ -261,19 +261,19 @@ namespace code {
 				case Value::tRelative:
 					if (dest.reg() == noReg) {
 						to.putByte(modRmValue(0, subOp, 5));
-						to.putInt(dest.offset());
+						to.putInt(dest.offset().current());
 					} else {
 						byte mode = 2;
 						nat reg = registerId(dest.reg());
 
-						if (dest.offset() == 0) {
+						if (dest.offset() == Offset(0)) {
 							if (reg == 5) {
 								// We need to used disp8 for ebp...
 								mode = 1;
 							} else {
 								mode = 0;
 							}
-						} else if (singleByte(dest.offset())) {
+						} else if (singleByte(dest.offset().current())) {
 							mode = 1;
 						}
 
@@ -284,9 +284,9 @@ namespace code {
 						}
 
 						if (mode == 1) {
-							to.putByte(byte(dest.offset()));
+							to.putByte(byte(dest.offset().current()));
 						} else if (mode == 2) {
-							to.putInt(cpuNat(dest.offset()));
+							to.putInt(cpuNat(dest.offset().current()));
 						}
 					}
 					break;
@@ -358,10 +358,10 @@ namespace code {
 		}
 
 		void immRegInstr(Output &to, const ImmRegInstr8 &op8, const ImmRegInstr &op, const Value &dest, const Value &src) {
-			nat size = src.size();
-			if (size == 4) {
+			Size size = src.size();
+			if (size == Size::sInt) {
 				immRegInstr(to, op, dest, src);
-			} else if (size == 1) {
+			} else if (size == Size::sByte) {
 				immRegInstr(to, op8, dest, src);
 			} else {
 				assert(false);

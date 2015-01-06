@@ -61,7 +61,7 @@ namespace code {
 			nat id;
 
 			// Variable size.
-			nat size;
+			Size size;
 		};
 
 		// Store information about a single scope.

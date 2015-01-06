@@ -1,4 +1,5 @@
 #pragma once
+#include "Size.h"
 
 namespace code {
 
@@ -14,23 +15,23 @@ namespace code {
 
 		static const Variable invalid;
 
-		// Get the block's ID, mainly for backends.
+		// Get the variable's ID, mainly for backends.
 		inline nat getId() const { return id; }
 
-		inline nat size() const { return sz; }
+		inline Size size() const { return sz; }
 
 		// Note, small public api since this class is mainly owned by the Frame object.
 
 		inline bool operator ==(const Variable &o) const { return id == o.id; }
 		inline bool operator !=(const Variable &o) const { return id != o.id; }
 	private:
-		Variable(nat id, nat sz);
+		Variable(nat id, Size sz);
 
 		// Unique identifier, provided by the block.
 		nat id;
 
 		// Size of the variable
-		nat sz;
+		Size sz;
 	};
 
 	// Represents a block of code in a listing. These blocks contain a set of

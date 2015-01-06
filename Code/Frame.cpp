@@ -156,7 +156,7 @@ namespace code {
 		return Block(nextBlockId++);
 	}
 
-	Variable Frame::createVariable(Block in, nat size, Value free) {
+	Variable Frame::createVariable(Block in, Size size, Value free) {
 		if (in == Block::invalid)
 			throw FrameError();
 
@@ -173,13 +173,13 @@ namespace code {
 		return Variable(nextVariableId++, size);
 	}
 
-	Variable Frame::createParameter(nat size, bool isFloat, Value free) {
+	Variable Frame::createParameter(Size size, bool isFloat, Value free) {
 		Param p = { size, isFloat, free };
 		parameters.insert(std::make_pair(nextVariableId, p));
 		return Variable(nextVariableId++, size);
 	}
 
-	nat Frame::size(nat v) const {
+	Size Frame::size(nat v) const {
 		if (parameters.count(v)) {
 			return parameters.find(v)->second.size;
 		} else if (vars.count(v)) {
@@ -216,7 +216,7 @@ namespace code {
 			ParamMap::const_iterator at = parameters.begin(), end = parameters.end();
 			for (; at != end; ++at) {
 				nat id = at->first;
-				nat size = at->second.size;
+				Size size = at->second.size;
 				r.push_back(Variable(id, size));
 			}
 		}

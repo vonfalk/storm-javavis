@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "Value.h"
-#include "Errors.h"
+#include "Exception.h"
 
 namespace code {
 
@@ -10,7 +10,8 @@ namespace code {
 		assert(r != noReg);
 	}
 
-	Value::Value(Word v, nat sz) : valType(tConstant), iConstant(v), valSize(sz), iOffset(0) {}
+	Value::Value(Word v, Size sz) : valType(tConstant), iConstant(v), valSize(sz), iOffset(0) {}
+	Value::Value(Size v, Size sz) : valType(tSizeConstant), iSize(v), valSize(sz), iOffset(0) {}
 
 	Value::Value(Label lbl) : valType(tLabel), labelId(lbl.id), valSize(0), iOffset(0) {}
 
@@ -24,16 +25,16 @@ namespace code {
 
 	Value::Value(CondFlag f) : valType(tCondFlag), cFlag(f), valSize(1), iOffset(0) {}
 
-	Value::Value(Register reg, cpuInt offset, nat sz) : valType(tRelative), valSize(sz) {
-		assert(code::size(reg) == 0);
+	Value::Value(Register reg, Offset offset, Size sz) : valType(tRelative), valSize(sz) {
+		assert(code::size(reg) == Size::sPtr);
 		iRegister = reg;
 		iOffset = offset;
 	}
 
-	Value::Value(Variable v, int offset, nat size) : valType(tVariable), valSize(size) {
+	Value::Value(Variable v, Offset offset, Size size) : valType(tVariable), valSize(size) {
 		assert(v != Variable::invalid);
-		assert(offset + size <= v.size());
-		assert(offset >= 0);
+		assert(offset + size <= Offset(v.size()));
+		assert(offset >= Offset());
 		variableId = v.id;
 		iOffset = offset;
 	}
@@ -42,18 +43,21 @@ namespace code {
 		return valType == tNone;
 	}
 
-	nat Value::sizeType() const {
+	Value::Type Value::type() const {
+		if (valType == tSizeConstant)
+			return tConstant;
+		return valType;
+	}
+
+	Size Value::size() const {
 		return valSize;
 	}
 
-	nat Value::size() const {
+	nat Value::currentSize() const {
 		if (empty())
 			return 0;
 
-		if (valSize == 0)
-			return sizeof(cpuNat);
-		else
-			return valSize;
+		return valSize.currentSize();
 	}
 
 	bool Value::readable() const {
@@ -80,25 +84,27 @@ namespace code {
 			return false;
 
 		switch (valType) {
-			case tNone:
-				return true;
-			case tConstant:
-				return iConstant == o.iConstant;
-			case tRegister:
-				return iRegister == o.iRegister;
-			case tLabel:
-				return labelId == o.labelId;
-			case tReference:
-				return iReference == o.iReference;
-			case tBlock:
-				return blockId == o.blockId;
-			case tVariable:
-				return variableId == o.variableId && iOffset == o.iOffset;
-			case tRelative:
-				return iRegister == o.iRegister && iOffset == o.iOffset;
-			default:
-				assert(false);
-				return false;
+		case tNone:
+			return true;
+		case tConstant:
+			return iConstant == o.iConstant;
+		case tSizeConstant:
+			return iSize == o.iSize;
+		case tRegister:
+			return iRegister == o.iRegister;
+		case tLabel:
+			return labelId == o.labelId;
+		case tReference:
+			return iReference == o.iReference;
+		case tBlock:
+			return blockId == o.blockId;
+		case tVariable:
+			return variableId == o.variableId && iOffset == o.iOffset;
+		case tRelative:
+			return iRegister == o.iRegister && iOffset == o.iOffset;
+		default:
+			assert(false);
+			return false;
 		}
 	}
 
@@ -112,11 +118,8 @@ namespace code {
 			throw InvalidValue(L"For instruction " + String(instruction) + L": " + ::toS(*this) + L" is not writable");
 	}
 
-	static Long maskConstant(Long val, nat size) {
-		if (size == 0)
-			size = sizeof(cpuNat);
-
-		switch (size) {
+	static Long maskConstant(Long val, Size size) {
+		switch (size.currentSize()) {
 			case 8:
 				return val;
 			case 4:
@@ -136,8 +139,16 @@ namespace code {
 		}
 
 		if (valType != tRegister && valType != tCondFlag) {
-			const wchar_t types[] = L"pb??i???l";
-			to << types[valSize];
+			if (valSize == Size::sPtr)
+				to << 'p';
+			else if (valSize == Size::sByte)
+				to << 'b';
+			else if (valSize == Size::sInt)
+				to << 'i';
+			else if (valSize == Size::sLong)
+				to << 'l';
+			else
+				to << valSize << ':';
 		}
 
 		switch (valType) {
@@ -147,6 +158,8 @@ namespace code {
 		case tConstant:
 			to << L"#" << toHex(maskConstant(iConstant, valSize), true) << " (" << ::toS((Long)iConstant) << ")";
 			break;
+		case tSizeConstant:
+			to << L"#" << iSize;
 		case tLabel:
 			to << L"#" << label().toS() << L":";
 			break;
@@ -157,8 +170,8 @@ namespace code {
 			to << L"Block" << blockId;
 			break;
 		case tVariable:
-			if (iOffset != 0)
-				to << L"[var" << variableId << (iOffset >= 0 ? L"+" : L"-") << toHex(abs(iOffset), true) << L"]";
+			if (iOffset != Offset())
+				to << L"[var" << variableId << iOffset.format(true) << L"]";
 			else
 				to << L"var" << variableId;
 			break;
@@ -166,7 +179,7 @@ namespace code {
 			to << name(cFlag);
 			break;
 		case tRelative:
-			to << L"[" << name(iRegister) << (iOffset >= 0 ? L"+" : L"-") << toHex(abs(iOffset), true) << L"]";
+			to << L"[" << name(iRegister) << iOffset.format(true) << L"]";
 			break;
 		default:
 			assert(false);
@@ -176,8 +189,12 @@ namespace code {
 	}
 
 	Word Value::constant() const {
-		assert(valType == tConstant);
-		return iConstant;
+		if (valType == tConstant)
+			return iConstant;
+		if (valType == tSizeConstant)
+			return iSize.currentSize();
+		assert(("Tried to get constant value from non-constant.", false));
+		return 0;
 	}
 
 	Register Value::reg() const {
@@ -210,31 +227,32 @@ namespace code {
 		return Variable(variableId, valSize);
 	}
 
-	int Value::offset() const {
+	Offset Value::offset() const {
 		assert(valType == tVariable || valType == tRelative);
 		return iOffset;
 	}
 
 	// Creators...
-	Value charConst(Char v) { return Value(Word(v), 1); }
-	Value byteConst(Byte v) { return Value(Word(v), 1); }
-	Value intConst(Int v) { return Value(Word(v), 4); }
-	Value natConst(Nat v) { return Value(Word(v), 4); }
-	Value longConst(Long v) { return Value(Word(v), 8); }
-	Value wordConst(Word v) { return Value(Word(v), 8); }
-	Value intPtrConst(Int v) { return Value(Word(v), 0); }
-	Value natPtrConst(Nat v) { return Value(Word(v), 0); }
-	Value ptrConst(void *v) { return Value(Word(v), 0); }
+	Value charConst(Char v) { return Value(Word(v), Size::sChar); }
+	Value byteConst(Byte v) { return Value(Word(v), Size::sByte); }
+	Value intConst(Int v) { return Value(Word(v), Size::sInt); }
+	Value natConst(Nat v) { return Value(Word(v), Size::sNat); }
+	Value longConst(Long v) { return Value(Word(v), Size::sLong); }
+	Value wordConst(Word v) { return Value(Word(v), Size::sWord); }
+	Value intPtrConst(Int v) { return Value(Word(v), Size::sPtr); }
+	Value natPtrConst(Nat v) { return Value(Word(v), Size::sPtr); }
+	Value ptrConst(Size v) { return Value(v, Size::sPtr); }
+	Value ptrConst(void *v) { return Value(Word(v), Size::sPtr); }
 
-	Value byteRel(Register reg, int offset) { return Value(reg, offset, 1); }
-	Value intRel(Register reg, int offset) { return Value(reg, offset, 4); }
-	Value longRel(Register reg, int offset) { return Value(reg, offset, 8); }
-	Value ptrRel(Register reg, int offset) { return Value(reg, offset, 0); }
-	Value xRel(nat size, Register reg, int offset) { return Value(reg, offset, size); }
+	Value byteRel(Register reg, Offset offset) { return Value(reg, offset, Size::sByte); }
+	Value intRel(Register reg, Offset offset) { return Value(reg, offset, Size::sInt); }
+	Value longRel(Register reg, Offset offset) { return Value(reg, offset, Size::sLong); }
+	Value ptrRel(Register reg, Offset offset) { return Value(reg, offset, Size::sPtr); }
+	Value xRel(Size size, Register reg, Offset offset) { return Value(reg, offset, size); }
 
-	Value byteRel(Variable v, int offset) { return Value(v, offset, 1); }
-	Value intRel(Variable v, int offset) { return Value(v, offset, 4); }
-	Value longRel(Variable v, int offset) { return Value(v, offset, 8); }
-	Value ptrRel(Variable v, int offset) { return Value(v, offset, 0); }
-	Value xRel(nat size, Variable v, int offset) { return Value(v, offset, size); }
+	Value byteRel(Variable v, Offset offset) { return Value(v, offset, Size::sByte); }
+	Value intRel(Variable v, Offset offset) { return Value(v, offset, Size::sInt); }
+	Value longRel(Variable v, Offset offset) { return Value(v, offset, Size::sLong); }
+	Value ptrRel(Variable v, Offset offset) { return Value(v, offset, Size::sPtr); }
+	Value xRel(Size size, Variable v, Offset offset) { return Value(v, offset, size); }
 }

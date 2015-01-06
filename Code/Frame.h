@@ -22,26 +22,26 @@ namespace code {
 
 		// Create a variable in a block. Free will be called once with this value as a parameter if
 		// the size is <= sizeof(cpuNat), or a pointer to it otherwise.
-		inline Variable createByteVar(Block in, Value free = Value()) { return createVariable(in, 1, free); }
-		inline Variable createIntVar(Block in, Value free = Value()) { return createVariable(in, 4, free); }
-		inline Variable createLongVar(Block in, Value free = Value()) { return createVariable(in, 8, free); }
-		inline Variable createPtrVar(Block in, Value free = Value()) { return createVariable(in, 0, free); }
+		inline Variable createByteVar(Block in, Value free = Value()) { return createVariable(in, Size::sByte, free); }
+		inline Variable createIntVar(Block in, Value free = Value()) { return createVariable(in, Size::sInt, free); }
+		inline Variable createLongVar(Block in, Value free = Value()) { return createVariable(in, Size::sLong, free); }
+		inline Variable createPtrVar(Block in, Value free = Value()) { return createVariable(in, Size::sPtr, free); }
 
 		// Custom variable creation.
-		Variable createVariable(Block in, nat size, Value free = Value());
+		Variable createVariable(Block in, Size size, Value free = Value());
 
 		// Create a function parameter. These are assumed to be
 		// created in the same order as the parameters appear in the function
 		// declaration in C/C++. IsFloat shall be true if the parameter is
 		// a floating-point parameter. In some calling conventions, floating
 		// point parameters are treated separately.
-		inline Variable createByteParam(Value free = Value()) { return createParameter(1, false, free); }
-		inline Variable createIntParam(Value free = Value()) { return createParameter(4, false, free); }
-		inline Variable createLongParam(Value free = Value()) { return createParameter(8, false, free); }
-		inline Variable createPtrParam(Value free = Value()) { return createParameter(0, false, free); }
+		inline Variable createByteParam(Value free = Value()) { return createParameter(Size::sByte, false, free); }
+		inline Variable createIntParam(Value free = Value()) { return createParameter(Size::sInt, false, free); }
+		inline Variable createLongParam(Value free = Value()) { return createParameter(Size::sLong, false, free); }
+		inline Variable createPtrParam(Value free = Value()) { return createParameter(Size::sPtr, false, free); }
 
 		// Custom parameter creation.
-		Variable createParameter(nat size, bool isFloat, Value free = Value());
+		Variable createParameter(Size size, bool isFloat, Value free = Value());
 
 		// Get the variable located before the current variable (either in the same, or in another block).
 		// Returns an empty variable if none exists.
@@ -87,7 +87,7 @@ namespace code {
 	private:
 		struct Param {
 			// The size of this parameter.
-			nat size;
+			Size size;
 
 			// Is it a floating-point parameter?
 			bool isFloat;
@@ -101,7 +101,7 @@ namespace code {
 			nat block;
 
 			// The size of this variable (0 = pointer)
-			nat size;
+			Size size;
 
 			// Which function to call on free?
 			Value freeFn;
@@ -134,7 +134,7 @@ namespace code {
 		bool anyDestructors;
 
 		// Get the size of a variable.
-		nat size(nat v) const;
+		Size size(nat v) const;
 
 		// Helper to the output function.
 		void outputBlock(wostream &to, Block b) const;

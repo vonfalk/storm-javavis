@@ -54,8 +54,21 @@ namespace code {
 		}
 	}
 
-	nat size(Register r) {
-		return (int(r) >> 4) & 0xF;
+	Size size(Register r) {
+		nat s = (nat(r) >> 4) & 0xF;
+		switch (s) {
+		case 0:
+			return Size::sPtr;
+		case 1:
+			return Size::sByte;
+		case 4:
+			return Size::sInt;
+		case 8:
+			return Size::sLong;
+		default:
+			assert(false);
+			return Size();
+		}
 	}
 
 	Register asSize(Register r, nat size) {
@@ -63,6 +76,19 @@ namespace code {
 		v &= ~0xF0;
 		v |= (size & 0xF) << 4;
 		return Register(v);
+	}
+
+	Register asSize(Register r, Size size) {
+		if (size == Size::sByte)
+			return asSize(r, 1);
+		if (size == Size::sInt)
+			return asSize(r, 4);
+		if (size == Size::sLong)
+			return asSize(r, 8);
+		if (size == Size::sPtr)
+			return asSize(r, 0);
+		assert(false);
+		return asSize(r, 0);
 	}
 
 	//////////////////////////////////////////////////////////////////////////

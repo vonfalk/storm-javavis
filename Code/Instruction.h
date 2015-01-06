@@ -24,8 +24,9 @@ namespace code {
 		inline DestMode destMode() const { return myDestMode; }
 		inline OpCode op() const { return opCode; }
 
-		// Get the maxium size of operands needed.
-		nat size() const;
+		// Get the maxium size of operands needed for the current cpu.
+		nat currentSize() const;
+		Size size() const;
 
 		// These are intended for use by the backends, no sanity checks are made here!
 		Instruction altered(const Value &dest, const Value &src) const;
@@ -73,6 +74,7 @@ namespace code {
 	// and fnCall will effectively be before the first fnParam. All fnParams will be merged into the fnCall, so do
 	// not place other instructions between. Parameters are entered "right to left". Ie, the above example
 	// calls myFn(10, 20).
+	// TODO: replace returnSize with a Size param?
 	Instruction fnParam(const Value &src);
 	Instruction fnCall(const Value &src, nat returnSize);
 

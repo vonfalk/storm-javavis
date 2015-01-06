@@ -40,6 +40,9 @@ namespace code {
 			tCondFlag,
 			// reg(), offset() (read at [reg() + offset()])
 			tRelative,
+
+			// Internal, appears as a constant. Stored in iOffset.
+			tSizeConstant,
 		};
 
 		Value();
@@ -55,47 +58,48 @@ namespace code {
 
 		bool empty() const;
 
-		inline Type type() const { return valType; }
+		Type type() const;
 
 		bool writable() const;
 		bool readable() const;
 
-		// Get the size of this value (1, 4, or 8 bytes). Pointer sizes depend on the backend.
-		nat size() const;
+		// Get the size of this value.
+		Size size() const;
 
-		// Returns the same as "size", except for pointers, which returns 0.
-		nat sizeType() const;
+		// Get the size of this value (1, 4, or 8 bytes). Pointer sizes depend on the backend.
+		nat currentSize() const;
 
 		// These throw an appropriate exception if the value is not X.
 		void ensureWritable(const wchar_t *instruction) const;
 		void ensureReadable(const wchar_t *instruction) const;
 
-		Word constant() const;
+		Word constant() const; // if the constant is a size, the size on this platform is returned.
 		Register reg() const; // "register" is a reserved word...
 		Label label() const;
 		Ref reference() const;
 		Block block() const;
 		Variable variable() const;
 		CondFlag condFlag() const;
-		int offset() const;
+		Offset offset() const;
 
 	private:
 		// Use the creators below for these:
 
 		// Constant
-		Value(Word c, nat size);
+		Value(Word c, Size size);
+		Value(Size s, Size size);
 
 		// Reference
-		Value(Register r, int offset, nat size);
+		Value(Register r, Offset offset, Size size);
 
 		// Variable + offset
-		Value(Variable v, int offset, nat size);
+		Value(Variable v, Offset offset, Size size);
 
 		// Type
 		Type valType;
 
-		// Type description. (size == 0 => pointer)
-		nat valSize;
+		// Type description.
+		Size valSize;
 
 		union {
 			// tConstant:
@@ -113,7 +117,10 @@ namespace code {
 		};
 
 		// Offset relative either a register or a variable.
-		int iOffset;
+		Offset iOffset;
+
+		// Size.
+		Size iSize;
 
 		// Only valid if tReference, otherwise a null reference.
 		Ref iReference;
@@ -129,17 +136,18 @@ namespace code {
 		friend Value wordConst(Word v);
 		friend Value intPtrConst(Int v);
 		friend Value natPtrConst(Nat v);
+		friend Value ptrConst(Size v);
 		friend Value ptrConst(void *v);
-		friend Value byteRel(Register reg, int offset);
-		friend Value intRel(Register reg, int offset);
-		friend Value longRel(Register reg, int offset);
-		friend Value ptrRel(Register reg, int offset);
-		friend Value xRel(nat size, Register reg, int offset);
-		friend Value byteRel(Variable v, int offset);
-		friend Value intRel(Variable v, int offset);
-		friend Value longRel(Variable v, int offset);
-		friend Value ptrRel(Variable v, int offset);
-		friend Value xRel(nat size, Variable v, int offset);
+		friend Value byteRel(Register reg, Offset offset);
+		friend Value intRel(Register reg, Offset offset);
+		friend Value longRel(Register reg, Offset offset);
+		friend Value ptrRel(Register reg, Offset offset);
+		friend Value xRel(Size size, Register reg, Offset offset);
+		friend Value byteRel(Variable v, Offset offset);
+		friend Value intRel(Variable v, Offset offset);
+		friend Value longRel(Variable v, Offset offset);
+		friend Value ptrRel(Variable v, Offset offset);
+		friend Value xRel(Size size, Variable v, Offset offset);
 	};
 
 	// Create constants.
@@ -153,19 +161,20 @@ namespace code {
 	// size_t like constants. Cannot be more than 32-bits for compatibility.
 	Value intPtrConst(Int v);
 	Value natPtrConst(Nat v);
+	Value ptrConst(Size v);
 	Value ptrConst(void *v); // careful with this, will break miserably if serialized and loaded.
 
 	// Create relative values.
-	Value byteRel(Register reg, int offset);
-	Value intRel(Register reg, int offset);
-	Value longRel(Register reg, int offset);
-	Value ptrRel(Register reg, int offset);
-	Value xRel(nat size, Register reg, int offset);
+	Value byteRel(Register reg, Offset offset);
+	Value intRel(Register reg, Offset offset);
+	Value longRel(Register reg, Offset offset);
+	Value ptrRel(Register reg, Offset offset);
+	Value xRel(Size size, Register reg, Offset offset);
 
 	// Create values relative to variable locations.
-	Value byteRel(Variable v, int offset);
-	Value intRel(Variable v, int offset);
-	Value longRel(Variable v, int offset);
-	Value ptrRel(Variable v, int offset);
-	Value xRel(nat size, Variable v, int offset);
+	Value byteRel(Variable v, Offset offset);
+	Value intRel(Variable v, Offset offset);
+	Value longRel(Variable v, Offset offset);
+	Value ptrRel(Variable v, Offset offset);
+	Value xRel(Size size, Variable v, Offset offset);
 }

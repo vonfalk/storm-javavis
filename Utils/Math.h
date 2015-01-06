@@ -14,8 +14,10 @@ nat nextPowerOfTwo(nat number);
 nat trailingZeros(nat number);
 
 // Round up to the nearest multiple of "multiple"
-inline nat roundUp(nat number, nat multiple) {
-	nat remainder = number % multiple;
+// T should be an integer number, preferrably unsigned.
+template <class T>
+inline T roundUp(T number, T multiple) {
+	T remainder = number % multiple;
 	if (remainder == 0) return number;
 	return number + (multiple - remainder);
 }

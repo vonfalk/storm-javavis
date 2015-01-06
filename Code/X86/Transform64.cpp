@@ -37,7 +37,7 @@ namespace code {
 			const Instruction &instr = from[line];
 			Tfm64Fn f = tfm[instr.op()];
 
-			if (f && instr.size() == 8) {
+			if (f && instr.currentSize() == 8) {
 				(this->*f)(to, instr);
 			} else {
 				to << instr;

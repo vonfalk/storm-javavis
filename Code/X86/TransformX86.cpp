@@ -65,9 +65,9 @@ namespace code {
 				return;
 			}
 
-			nat size = instr.src().size();
+			Size size = instr.src().size();
 
-			assert(("The 64-bit transform should have fixed this!", size <= 4));
+			assert(("The 64-bit transform should have fixed this!", size <= Size::sInt));
 
 			Register reg = tfm.unusedReg(line);
 
@@ -108,8 +108,8 @@ namespace code {
 		void mulTfm(const Transform &tfm, Listing &to, nat line) {
 			const Instruction &instr = tfm.from[line];
 
-			nat size = instr.size();
-			assert(("Bytes not supported yet", size != 1 && size <= 4));
+			Size size = instr.size();
+			assert(("Bytes not supported yet", size != Size::sByte && size <= Size::sInt));
 
 			if (instr.src().type() == Value::tRegister) {
 				to << instr;
@@ -168,14 +168,14 @@ namespace code {
 				reg = asSize(reg, 4);
 
 			if (instr.dest().type() == Value::tRegister && asSize(instr.dest().reg(), 4) == ecx) {
-				nat size = instr.dest().size();
+				Size size = instr.dest().size();
 				reg = asSize(reg, size);
 
 				if (reg == noReg) {
 					// No free registers.
 					to << push(ecx);
 					to << mov(cl, instr.src());
-					to << instr.alterDest(xRel(size, ptrStack, 0)).alterSrc(cl);
+					to << instr.alterDest(xRel(size, ptrStack, Offset(0))).alterSrc(cl);
 					to << pop(ecx);
 				} else {
 					to << mov(reg, instr.dest());

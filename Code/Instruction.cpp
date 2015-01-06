@@ -2,7 +2,7 @@
 #include "Instruction.h"
 #include "Arena.h"
 #include "MachineCode.h"
-#include "Errors.h"
+#include "Exception.h"
 
 using namespace code::machine; // For the OP-codes.
 
@@ -34,7 +34,7 @@ namespace code {
 			dest.ensureReadable(name(opCode));
 
 		src.ensureReadable(name(opCode));
-		if (dest.sizeType() != src.sizeType()) {
+		if (dest.size() != src.size()) {
 			throw InvalidValue(String(L"For ") + name(opCode) + L": Size of operands must match! " + toS(dest) + L", " + toS(src));
 		}
 
@@ -81,7 +81,11 @@ namespace code {
 			to << L" " << mySrc;
 	}
 
-	nat Instruction::size() const {
+	nat Instruction::currentSize() const {
+		return max(mySrc.currentSize(), myDest.currentSize());
+	}
+
+	Size Instruction::size() const {
 		return max(mySrc.size(), myDest.size());
 	}
 
@@ -94,7 +98,7 @@ namespace code {
 	}
 
 	Instruction lea(const Value &to, const Value &from) {
-		if (to.sizeType() != 0)
+		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Lea must update a pointer.");
 		switch (from.type()) {
 		case Value::tRelative:
@@ -116,19 +120,19 @@ namespace code {
 	}
 
 	Instruction jmp(const Value &to, CondFlag cond) {
-		if (to.sizeType() != 0)
+		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must jump to a pointer.");
 		return createLoose(op::jmp, to, destRead, cond);
 	}
 
 	Instruction setCond(const Value &to, CondFlag cond) {
-		if (to.size() != 1)
+		if (to.size() != Size::sByte)
 			throw InvalidValue(L"Must set a byte.");
 		return createLoose(op::setCond, to, destWrite, cond);
 	}
 
 	Instruction call(const Value &to, nat returnSize) {
-		if (to.sizeType() != 0)
+		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer.");
 		if (returnSize > 8)
 			throw InvalidValue(L"Size must be below or equal to 8.");
@@ -148,7 +152,7 @@ namespace code {
 	Instruction fnCall(const Value &src, nat returnSize) {
 		if (src.type() == Value::tConstant)
 			throw InvalidValue(L"Should not call constant values, use references instead!");
-		if (src.sizeType() != 0)
+		if (src.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer.");
 		if (returnSize > 8)
 			throw InvalidValue(L"Size must be below or equal to 8.");
@@ -192,19 +196,19 @@ namespace code {
 	}
 
 	Instruction shl(const Value &dest, const Value &src) {
-		if (src.size() != 1)
+		if (src.size() != Size::sByte)
 			throw InvalidValue(L"Size must be 1");
 		return createLoose(op::shl, dest, destRead | destWrite, src);
 	}
 
 	Instruction shr(const Value &dest, const Value &src) {
-		if (src.size() != 1)
+		if (src.size() != Size::sByte)
 			throw InvalidValue(L"Size must be 1");
 		return createLoose(op::shr, dest, destRead | destWrite, src);
 	}
 
 	Instruction sar(const Value &dest, const Value &src) {
-		if (src.size() != 1)
+		if (src.size() != Size::sByte)
 			throw InvalidValue(L"Size must be 1");
 		return createLoose(op::sar, dest, destRead | destWrite, src);
 	}

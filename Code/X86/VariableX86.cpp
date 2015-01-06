@@ -20,10 +20,6 @@ namespace code {
 		}
 #endif
 
-		static Value getOffset(int offset, nat size) {
-			return xRel(size, ptrFrame, offset);
-		}
-
 		void Offsets::init(nat preservedRegisters, const Frame &frame) {
 			vector<Variable> vars = frame.allVariables();
 			off = vector<int>(vars.size(), 0); // All values begin un-initialized.
@@ -58,9 +54,7 @@ namespace code {
 
 			// Find the variable right before us in the frame.
 			Variable p = frame.prev(var);
-			nat size = var.size();
-			if (size == 0)
-				size = sizeof(cpuNat);
+			nat size = var.size().currentSize();
 			roundUp(size, sizeof(cpuNat));
 
 			int offset;
@@ -89,9 +83,7 @@ namespace code {
 				// return address and ebp.
 				offset = 2 * sizeof(cpuNat);
 			} else {
-				nat size = p.size();
-				if (size == 0)
-					size = sizeof(cpuNat);
+				nat size = p.size().currentSize();
 				roundUp(size, sizeof(cpuNat));
 
 				offset = updateParamOffset(p, frame);
@@ -107,15 +99,15 @@ namespace code {
 		}
 
 		Value Offsets::variable(Variable v, int off) const {
-			return getOffset(offset(v) + off, v.size());
+			return xRel(v.size(), ptrFrame, Offset(offset(v) + off));
 		}
 
 		Value Offsets::blockId() const {
-			return intRel(ptrFrame, -4);
+			return intRel(ptrFrame, Offset(-4));
 		}
 
 		Value Offsets::blockPtr() const {
-			return intRel(ptrFrame, -8);
+			return intRel(ptrFrame, Offset(-8));
 		}
 
 		//////////////////////////////////////////////////////////////////////////
@@ -134,7 +126,7 @@ namespace code {
 
 				if (freeFn.empty())
 					freeFn = natPtrConst(0);
-				assert(freeFn.sizeType() == 0);
+				assert(freeFn.size() == Size::sPtr);
 
 				to << dat(intConst(offset));
 				to << dat(freeFn);

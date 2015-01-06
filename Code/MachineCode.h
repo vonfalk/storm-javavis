@@ -21,7 +21,7 @@ namespace code {
 		// Struct describing the state required for code generation. The
 		// only requirements for the state is that it has an empty constructor. This
 		// is also the only assumption other code may make about the state type.
-		
+
 		// typedef X State
 
 		//////////////////////////////////////////////////////////////////////////

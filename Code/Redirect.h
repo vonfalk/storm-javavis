@@ -19,10 +19,10 @@ namespace code {
 		Redirect();
 
 		// Add a parameter to the function.
-		void param(nat size, Value dtor);
+		void param(Size size, Value dtor);
 
 		// Set return value.
-		void result(nat size, bool builtIn);
+		void result(Size size, bool builtIn);
 
 		// Create the code (platform dependent).
 		Listing code(const Value &fn, const Value &param);
@@ -30,7 +30,7 @@ namespace code {
 	private:
 		// All data we need about a parameter.
 		struct Param {
-			nat size;
+			Size size;
 			Value dtor;
 		};
 
@@ -38,7 +38,7 @@ namespace code {
 		vector<Param> params;
 
 		// Result size.
-		nat resultSize;
+		Size resultSize;
 
 		// Result built into the C++ compiler?
 		bool resultBuiltIn;

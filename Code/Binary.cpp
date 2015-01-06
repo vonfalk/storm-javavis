@@ -143,7 +143,7 @@ namespace code {
 		if (info.freeFn == null)
 			return;
 
-		switch (var.size) {
+		switch (var.size.currentSize()) {
 			case 1:
 				callFn<Byte>(info.freeFn, info.ptr);
 				break;

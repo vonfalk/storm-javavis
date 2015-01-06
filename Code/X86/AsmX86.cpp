@@ -31,7 +31,7 @@ namespace code {
 		}
 
 		void push(Output &to, Params p, const Instruction &instr) {
-			assert(instr.size() == 4); // more comes later!
+			assert(instr.currentSize() == 4); // more comes later!
 			const Value &src = instr.src();
 			switch (src.type()) {
 			case Value::tConstant:
@@ -57,7 +57,7 @@ namespace code {
 		}
 
 		void pop(Output &to, Params p, const Instruction &instr) {
-			assert(instr.size() == 4); // more comes later!
+			assert(instr.currentSize() == 4); // more comes later!
 			const Value &dest = instr.dest();
 			switch (dest.type()) {
 			case Value::tRegister:
@@ -301,10 +301,10 @@ namespace code {
 		 */
 
 		static void shiftOp(Output &to, const Value &dest, const Value &src, byte subOp) {
-			assert(("64-bit conversion failed.", dest.size() < 8));
+			assert(("64-bit conversion failed.", dest.currentSize() < 8));
 
 			byte c;
-			bool is8 = dest.size() == 1;
+			bool is8 = dest.currentSize() == 1;
 
 			switch (src.type()) {
 			case Value::tConstant:
@@ -346,7 +346,7 @@ namespace code {
 			const Value &v = instr.src();
 			switch (v.type()) {
 			case Value::tConstant:
-				to.putSize(v.constant(), v.sizeType());
+				to.putSize(v.constant(), v.currentSize());
 				return;
 			case Value::tLabel:
 				to.putAddress(v.label());
