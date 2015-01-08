@@ -59,7 +59,7 @@ namespace code {
 		if (empty())
 			return 0;
 
-		return valSize.currentSize();
+		return valSize.current();
 	}
 
 	bool Value::readable() const {
@@ -121,7 +121,7 @@ namespace code {
 	}
 
 	static Long maskConstant(Long val, Size size) {
-		switch (size.currentSize()) {
+		switch (size.current()) {
 			case 8:
 				return val;
 			case 4:
@@ -196,7 +196,7 @@ namespace code {
 		if (valType == tConstant)
 			return iConstant;
 		if (valType == tSizeConstant)
-			return iSize.currentSize();
+			return iSize.current();
 		assert(("Tried to get constant value from non-constant.", false));
 		return 0;
 	}

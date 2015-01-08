@@ -48,7 +48,7 @@ namespace storm {
 		}
 	}
 
-	BoolType::BoolType() : Type(L"Bool", typeValue, sizeof(Bool)) {
+	BoolType::BoolType() : Type(L"Bool", typeValue, Size::sByte) {
 		vector<Value> bb(2, Value(this));
 		vector<Value> b(1, Value(this));
 		add(inlinedFunction(engine, Value(this), L"&", bb, simpleFn(&boolAnd)));

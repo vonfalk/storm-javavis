@@ -54,7 +54,7 @@ namespace code {
 
 			// Find the variable right before us in the frame.
 			Variable p = frame.prev(var);
-			nat size = var.size().currentSize();
+			nat size = var.size().current();
 			roundUp(size, sizeof(cpuNat));
 
 			int offset;
@@ -83,7 +83,7 @@ namespace code {
 				// return address and ebp.
 				offset = 2 * sizeof(cpuNat);
 			} else {
-				nat size = p.size().currentSize();
+				nat size = p.size().current();
 				roundUp(size, sizeof(cpuNat));
 
 				offset = updateParamOffset(p, frame);

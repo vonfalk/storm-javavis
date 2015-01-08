@@ -137,8 +137,9 @@ namespace storm {
 
 			if (cached.size() <= id)
 				cached.resize(id + 1);
-			cached[i] = CREATE(Type, to, t.name, TypeFlags(t.typeFlags), t.typeSize);
+			cached[i] = CREATE(Type, to, t.name, TypeFlags(t.typeFlags), Size(t.typeSize));
 		}
+		TODO(L"Find a way to compute the size of types for 64-bit as well!");
 	}
 
 

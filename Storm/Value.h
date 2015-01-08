@@ -2,6 +2,7 @@
 #include "SrcPos.h"
 #include "Lib/Auto.h"
 #include "Code/Value.h"
+#include "Code/Size.h"
 
 namespace storm {
 
@@ -32,8 +33,8 @@ namespace storm {
 		// Reference? Not a good idea for return values.
 		bool ref;
 
-		// Get the size of this type (always returns 0 for pointers, like Code does).
-		nat size() const;
+		// Get the size of this type.
+		Size size() const;
 
 		// As a reference.
 		Value asRef() const;

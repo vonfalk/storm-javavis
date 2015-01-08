@@ -23,12 +23,12 @@ BEGIN_TEST(TestJmp) {
 	l << cmp(v, intConst(0));
 	l << jmp(done, ifEqual);
 	l << fnParam(v);
-	l << fnCall(pv, 0);
+	l << fnCall(pv, Size::sPtr);
 	l << sub(v, intConst(1));
 	l << jmp(begin);
 	l << done;
 	l << epilog();
-	l << ret(0);
+	l << ret(Size::sPtr);
 
 	sumVar = 0;
 
@@ -61,12 +61,12 @@ BEGIN_TEST(TestSetCond) {
 	l << cmp(al, byteConst(0));
 	l << jmp(done, ifNotEqual);
 	l << fnParam(v);
-	l << fnCall(pv, 0);
+	l << fnCall(pv, Size::sPtr);
 	l << sub(v, intConst(1));
 	l << jmp(begin);
 	l << done;
 	l << epilog();
-	l << ret(0);
+	l << ret(Size::sPtr);
 
 	sumVar = 0;
 

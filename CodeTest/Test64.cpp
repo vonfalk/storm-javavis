@@ -15,7 +15,7 @@ BEGIN_TEST(Test64Asm) {
 	l << mov(rax, v);
 
 	l << epilog();
-	l << ret(8);
+	l << ret(Size::sLong);
 
 	Binary b(arena, L"Test64Asm", l);
 	CHECK_EQ(callFn(b.getData(), int64(0)), 0xBBBBBBBBBB);
@@ -36,7 +36,7 @@ BEGIN_TEST(Test64Preserve) {
 	l << mov(rax, v);
 	l << add(v, v2);
 	l << epilog();
-	l << ret(8);
+	l << ret(Size::sLong);
 
 	Binary b(arena, L"Test64Preserve", l);
 	CHECK_EQ(callFn(b.getData(), int64(0)), 0x123456789A);
@@ -142,7 +142,7 @@ BEGIN_TEST(Test64Cmp) {
 
 	l << mov(eax, r);
 	l << epilog();
-	l << ret(4);
+	l << ret(Size::sInt);
 
 	Binary b(arena, L"Test64Cmp", l);
 	const void *p = b.getData();

@@ -36,11 +36,11 @@ BEGIN_TEST(TestException) {
 	l << begin(myBlock);
 	l << mov(result, par);
 	l << add(result, intConst(4));
-	l << fnCall(ex, 4);
+	l << fnCall(ex, Size::sInt);
 	l << add(result, eax);
 	l << mov(eax, result);
 	l << epilog();
-	l << ret(4);
+	l << ret(Size::sInt);
 
 	Binary output(arena, L"MyFunction", l);
 
@@ -74,7 +74,7 @@ BEGIN_TEST(TestNoException) {
 	l << add(var1, par2);
 	l << mov(eax, var1);
 	l << epilog();
-	l << ret(4);
+	l << ret(Size::sInt);
 
 	Binary output(arena, L"MyFn", l);
 

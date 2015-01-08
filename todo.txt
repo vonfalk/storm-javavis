@@ -1,5 +1,9 @@
 Also: return types for rules may be specified.
 
+Fix the size of built-in types. Currently we do not know the size for anything but the current architecture.
+
+In Code: support returning 'void' by passing Size() to ret and fnCall() (currently not handled properly).
+
 Consider adding the -> syntax for captures in BNF rules, to be symmetric with other variables.
 
 Double-check STORM_PKG in all source files. It is currently missing from many.

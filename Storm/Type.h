@@ -38,7 +38,7 @@ namespace storm {
 	public:
 		// If size == 0, it will be automatically computed based on members. Size
 		// is mainly used to denote built-in classes.
-		Type(const String &name, TypeFlags flags, nat size = 0);
+		Type(const String &name, TypeFlags flags, Size size = Size());
 		~Type();
 
 		// Create the first type instance, as an instance of itself.
@@ -54,7 +54,7 @@ namespace storm {
 		const TypeFlags flags;
 
 		// Get the size of this type.
-		nat size() const;
+		Size size(); // const;
 
 		// Set parent type. The parent type has to have the same type parameters as this one.
 		void setSuper(Type *super);
@@ -108,13 +108,13 @@ namespace storm {
 		void validate(NameOverload *m);
 
 		// Our parent type's size.
-		nat superSize() const;
+		Size superSize() const;
 
 		// Fixed size (as a built-in type)?
-		nat fixedSize;
+		Size fixedSize;
 
 		// Our size (including base classes). If it is zero, we need to re-compute it!
-		mutable nat mySize;
+		mutable Size mySize;
 
 		// Loaded the lazy parts?
 		bool lazyLoaded;

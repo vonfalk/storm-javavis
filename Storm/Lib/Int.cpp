@@ -41,7 +41,7 @@ namespace storm {
 
 	static void intAssign(InlinedParams p) {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::mov(code::intRel(code::ptrA, 0), p.params[1]);
+		p.state.to << code::mov(code::intRel(code::ptrA), p.params[1]);
 		if (p.result.needed()) {
 			if (p.result.type.ref) {
 				if (!p.result.suggest(p.state, p.params[0]))
@@ -53,7 +53,7 @@ namespace storm {
 		}
 	}
 
-	IntType::IntType() : Type(L"Int", typeValue | typeFinal, sizeof(code::Int)) {
+	IntType::IntType() : Type(L"Int", typeValue | typeFinal, Size::sInt) {
 		vector<Value> ii(2, Value(this));
 		Value b(boolType(engine));
 		add(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&intAdd)));
@@ -82,7 +82,7 @@ namespace storm {
 		return t;
 	}
 
-	NatType::NatType() : Type(L"Nat", typeValue | typeFinal, sizeof(code::Nat)) {}
+	NatType::NatType() : Type(L"Nat", typeValue | typeFinal, Size::sNat) {}
 
 	Type *natType(Engine &e) {
 		Type *t = e.specialBuiltIn(specialNat);

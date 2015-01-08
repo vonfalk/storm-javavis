@@ -131,16 +131,16 @@ namespace code {
 		return createLoose(op::setCond, to, destWrite, cond);
 	}
 
-	Instruction call(const Value &to, nat returnSize) {
+	Instruction call(const Value &to, Size returnSize) {
 		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer.");
-		if (returnSize > 8)
+		if (returnSize > Size::sLong)
 			throw InvalidValue(L"Size must be below or equal to 8.");
 		return createLoose(op::call, asSize(ptrA, returnSize), destWrite, to);
 	}
 
-	Instruction ret(nat returnSize) {
-		if (returnSize > 8)
+	Instruction ret(Size returnSize) {
+		if (returnSize > Size::sLong)
 			throw InvalidValue(L"Size must be below or equal to 8.");
 		return createSrc(op::ret, asSize(ptrA, returnSize));
 	}
@@ -149,12 +149,12 @@ namespace code {
 		return createSrc(op::fnParam, src);
 	}
 
-	Instruction fnCall(const Value &src, nat returnSize) {
+	Instruction fnCall(const Value &src, Size returnSize) {
 		if (src.type() == Value::tConstant)
 			throw InvalidValue(L"Should not call constant values, use references instead!");
 		if (src.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer.");
-		if (returnSize > 8)
+		if (returnSize > Size::sLong)
 			throw InvalidValue(L"Size must be below or equal to 8.");
 		return createLoose(op::fnCall, asSize(ptrA, returnSize), destWrite, src);
 	}

@@ -23,7 +23,7 @@ namespace code {
 		explicit Size(nat s);
 
 		// Get the size for the current platform.
-		nat currentSize() const;
+		nat current() const;
 
 		// Pointer size.
 		static Size sPtr;

@@ -1,6 +1,7 @@
 #pragma once
 #include "Auto.h"
 #include "Lib/Bool.h"
+#include "Code/Size.h"
 
 namespace storm {
 
@@ -45,6 +46,9 @@ namespace storm {
 
 		// The type of this object.
 		Type *const myType;
+
+		// Get the size.
+		static Size baseSize();
 
 		// Get the engine somehow.
 		Engine &engine() const;

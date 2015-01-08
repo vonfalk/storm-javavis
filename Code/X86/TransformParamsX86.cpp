@@ -159,7 +159,7 @@ namespace code {
 				Variable var = vars[i];
 
 				if (!frame.isParam(var)) {
-					zeroMem(to, params.lookup(var, 0), var.size().currentSize());
+					zeroMem(to, params.lookup(var, 0), var.size().current());
 				}
 			}
 
@@ -198,11 +198,11 @@ namespace code {
 					params.lookupVars(i);
 					fnParamTfm(to, params, i);
 
-					i = code::fnCall(dtor, 4);
+					i = code::fnCall(dtor, Size::sPtr);
 					params.lookupVars(i);
 					fnCallTfm(to, params, i);
 
-					zeroMem(to, params.lookup(var, 0), var.size().currentSize());
+					zeroMem(to, params.lookup(var, 0), var.size().current());
 				}
 			}
 
@@ -232,7 +232,7 @@ namespace code {
 				fnParams.pop_back();
 			}
 
-			to << code::call(instr.src(), instr.dest().size().currentSize());
+			to << code::call(instr.src(), instr.dest().size());
 
 			to << code::add(ptrStack, natPtrConst(numParams * sizeof(cpuNat)));
 		}

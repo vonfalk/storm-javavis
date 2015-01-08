@@ -9,7 +9,7 @@ BEGIN_TEST(TestPreserve) {
 	l << mov(ebx, natConst(0x01));
 	l << mov(ecx, natConst(0x02));
 	l << epilog();
-	l << ret(4);
+	l << ret(Size::sInt);
 
 	Binary b(arena, L"TestPreserve", l);
 	CHECK_EQ(callFn(b.getData(), 0), 0x00);

@@ -68,7 +68,7 @@ namespace storm {
 			l << prolog();
 			body->code(state, r);
 			l << epilog();
-			l << ret(0);
+			l << ret(Size::sPtr);
 		} else {
 			GenResult r(result, l.frame.root());
 

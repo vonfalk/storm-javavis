@@ -38,5 +38,7 @@ private:
 
 namespace storm {
 	class Engine;
+
+	using code::Size;
 }
 

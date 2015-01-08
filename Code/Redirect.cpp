@@ -33,7 +33,7 @@ namespace code {
 		l << prolog();
 
 		l << fnParam(param);
-		l << fnCall(fn, 0); // (sizeof void *)
+		l << fnCall(fn, Size::sPtr);
 
 		l << epilog(); // preserves ptrA
 		l << jmp(ptrA);

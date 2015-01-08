@@ -10,9 +10,9 @@ namespace storm {
 
 	const String Type::CTOR = L"__ctor";
 
-	Type::Type(const String &name, TypeFlags f, nat size)
+	Type::Type(const String &name, TypeFlags f, Size size)
 		: Named(name), engine(Object::engine()), flags(f), fixedSize(size),
-		  mySize(0), parentPkg(null), lazyLoaded(false), lazyLoading(false) {
+		  mySize(), parentPkg(null), lazyLoaded(false), lazyLoading(false) {
 		superTypes.push_back(this);
 	}
 
@@ -48,7 +48,7 @@ namespace storm {
 		size_t engineOffset = sizeof(Named);
 		OFFSET_IN(mem, typeOffset, Type *) = (Type *)mem;
 		OFFSET_IN(mem, engineOffset, Engine *) = &engine;
-		return new (mem) Type(name, flags, sizeof(Type));
+		return new (mem) Type(name, flags, Size(sizeof(Type)));
 	}
 
 	bool Type::isA(Type *o) const {
@@ -57,27 +57,27 @@ namespace storm {
 			&& superTypes[depth - 1] == o;
 	}
 
-	nat Type::superSize() const {
+	Size Type::superSize() const {
 		if (super())
 			return super()->size();
 
 		if (flags & typeClass)
-			return sizeof(Object);
+			return Object::baseSize();
 		else if (flags & typeValue)
-			return 0;
+			return Size(0);
 
 		assert(false);
-		return 0;
+		return Size();
 	}
 
-	nat Type::size() const {
-		if (mySize == 0) {
-			// TODO("Run ensureLoaded here!");
-			// ensureLoaded();
-			if (fixedSize) {
+	Size Type::size() {
+		if (mySize == Size()) {
+			ensureLoaded();
+
+			if (fixedSize != Size()) {
 				mySize = fixedSize;
 			} else {
-				nat s = superSize();
+				Size s = superSize();
 				// re-compute our size.
 				// NOTE: base-classes must be able to propagate size-changes to children!
 				TODO(L"Implement me! (for " << identifier() << ")");

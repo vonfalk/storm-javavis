@@ -11,13 +11,16 @@ namespace storm {
 
 	Value::Value(Type *t, bool ref) : type(t), ref(ref) {}
 
-	nat Value::size() const {
+	Size Value::size() const {
 		if (ref) {
-			return 0; // pointer-sized
+			// References are passed by pointer.
+			return Size::sPtr;
 		} else if (!type) {
-			return 0;
+			// null
+			return Size();
 		} else if (type->flags & typeClass) {
-			return 0; // by pointer
+			// by pointer
+			return Size::sPtr;
 		} else {
 			return type->size();
 		}

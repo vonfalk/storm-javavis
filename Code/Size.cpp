@@ -17,7 +17,7 @@ namespace code {
 	Size Size::sLong = Size(8);
 	Size Size::sWord = Size(8);
 
-	nat Size::currentSize() const {
+	nat Size::current() const {
 		switch (sizeof(void *)) {
 		case 4:
 			return s32.size;

@@ -15,8 +15,8 @@ void testReplace(Arena &arena) {
 	Ref paramFun = arena.external(L"paramFn", &paramFn);
 
 	Listing l2;
-	l2 << call(fun, 0);
-	l2 << ret(0);
+	l2 << call(fun, Size::sPtr);
+	l2 << ret(Size::sPtr);
 	PLN(l2);
 
 	Binary middleBlob(arena, L"middle", l2);
@@ -27,10 +27,10 @@ void testReplace(Arena &arena) {
 	Label lbl = l.label();
 
 	l << jmp(lbl);
-	l << call(fun, 0);
+	l << call(fun, Size::sPtr);
 	l << lbl;
-	l << call(Ref(middle), 0);
-	l << ret(0);
+	l << call(Ref(middle), Size::sPtr);
+	l << ret(Size::sPtr);
 	PLN(l);
 
 	Binary output(arena, L"Test", l);
@@ -42,8 +42,8 @@ void testReplace(Arena &arena) {
 	l2 = Listing();
 	l2 << fnParam(natConst(128));
 	l2 << fnParam(natConst(20));
-	l2 << fnCall(paramFun, 0);
-	l2 << ret(0);
+	l2 << fnCall(paramFun, Size::sPtr);
+	l2 << ret(Size::sPtr);
 	PLN(l2);
 	Binary middle2(arena, L"middle", l2);
 	middle2.update(middle);
@@ -60,7 +60,7 @@ void testPush(Arena &arena) {
 		Listing l;
 		l << push(natConst(i));
 		l << pop(eax);
-		l << ret(4);
+		l << ret(Size::sInt);
 
 		Binary b(arena, L"TestFn", l);
 
@@ -100,12 +100,12 @@ void testFunction(Arena &arena) {
 	l << begin(myBlock);
 	l << mov(result, natConst(1));
 	l << add(result, par);
-	l << fnCall(ex, 4);
+	l << fnCall(ex, Size::sInt);
 	l << mov(eax, result);
-	l << epilog() << ret(4);
+	l << epilog() << ret(Size::sInt);
 
 	l << end(myBlock);
-	l << epilog() << ret(4);
+	l << epilog() << ret(Size::sInt);
 
 	PLN("Before:" << l);
 

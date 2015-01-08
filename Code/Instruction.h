@@ -64,8 +64,8 @@ namespace code {
 	Instruction push(const Value &v);
 	Instruction pop(const Value &to);
 	Instruction jmp(const Value &to, CondFlag cond = ifAlways);
-	Instruction call(const Value &to, nat returnSize);
-	Instruction ret(nat returnSize);
+	Instruction call(const Value &to, Size returnSize);
+	Instruction ret(Size returnSize);
 
 	// Set a byte to the result of an operation.
 	Instruction setCond(const Value &to, CondFlag cond);
@@ -76,7 +76,7 @@ namespace code {
 	// calls myFn(10, 20).
 	// TODO: replace returnSize with a Size param?
 	Instruction fnParam(const Value &src);
-	Instruction fnCall(const Value &src, nat returnSize);
+	Instruction fnCall(const Value &src, Size returnSize);
 
 	// Integer math (signed)
 	Instruction add(const Value &dest, const Value &src);

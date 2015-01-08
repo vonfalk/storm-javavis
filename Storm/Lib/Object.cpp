@@ -82,6 +82,16 @@ namespace storm {
 #endif
 	}
 
+	Size Object::baseSize() {
+		// TODO: Maybe automate this?
+		Size s;
+		s += Size::sPtr; // vtable
+		s += Size::sPtr; // myType
+		s += Size::sNat; // refs
+		assert(("Forgot to update baseSize!", s.current() == sizeof(Object)));
+		return s;
+	}
+
 	Engine &Object::engine() const {
 		return myType->engine;
 	}
@@ -117,7 +127,7 @@ namespace storm {
 	}
 
 	void *Object::operator new(size_t size, Type *type) {
-		size_t s = type->size();
+		size_t s = type->size().current();
 
 		assert(type->flags & typeClass);
 		assert(("Triggers if a subtype is not properly declared.", size <= s));

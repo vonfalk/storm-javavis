@@ -79,5 +79,6 @@ namespace code {
 #error "someone forgot to declare CODECALL for your architecture"
 #endif
 
+#include "Code/Size.h"
 #include "Utils/Printable.h"
 #include "Utils/Memory.h" // OFFSET_OF, BASE_PTR
