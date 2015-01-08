@@ -39,7 +39,7 @@ namespace code {
 		}
 	}
 
-	void FnCall::doCall4(void *result, void *fn) {
+	void FnCall::doCall4(void *result, const void *fn) {
 		nat sz = paramsSize();
 		__asm {
 			// Ebx is preserved along function calls!
@@ -63,7 +63,7 @@ namespace code {
 		}
 	}
 
-	void FnCall::doCall8(void *result, void *fn) {
+	void FnCall::doCall8(void *result, const void *fn) {
 		nat sz = paramsSize();
 		__asm {
 			mov ebx, sz;
@@ -84,7 +84,7 @@ namespace code {
 		}
 	}
 
-	void FnCall::doCallLarge(void *result, nat retSz, void *fn) {
+	void FnCall::doCallLarge(void *result, nat retSz, const void *fn) {
 		nat sz = paramsSize();
 		__asm {
 			mov ebx, sz;
@@ -103,7 +103,7 @@ namespace code {
 		}
 	}
 
-	void FnCall::doCall(void *result, nat resultSize, void *fn) {
+	void FnCall::doCall(void *result, nat resultSize, const void *fn) {
 		resultSize = roundUp(resultSize, sizeof(void *));
 		if (resultSize <= 4) {
 			doCall4(result, fn);
@@ -114,20 +114,20 @@ namespace code {
 		}
 	}
 
-	void FnCall::doUserCall(void *result, nat resultSize, void *fn) {
+	void FnCall::doUserCall(void *result, nat resultSize, const void *fn) {
 		doCallLarge(result, resultSize, fn);
 	}
 
-	void FnCall::callVoid(void *fn) {
+	void FnCall::callVoid(const void *fn) {
 		nat dummy;
 		doCall4(&dummy, fn);
 	}
 
-	float FnCall::doFloatCall(void *fn) {
+	float FnCall::doFloatCall(const void *fn) {
 		return (float)doDoubleCall(fn);
 	}
 
-	double FnCall::doDoubleCall(void *fn) {
+	double FnCall::doDoubleCall(const void *fn) {
 		nat sz = paramsSize();
 		__asm {
 			mov ebx, sz;

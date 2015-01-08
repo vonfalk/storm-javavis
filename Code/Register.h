@@ -41,6 +41,8 @@ namespace code {
 	// nat size(Register r);
 	Size size(Register r);
 	Register asSize(Register r, nat size=0);
+
+	// Returns 'noReg' if the desired size is not available.
 	Register asSize(Register r, Size size);
 
 

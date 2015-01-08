@@ -41,7 +41,7 @@ namespace code {
 		// Call 'fn' with the parameters previously added. T can be any type except references.
 		// Use callRef in that case.
 		template <class T>
-		T call(void *fn) {
+		T call(const void *fn) {
 			byte d[sizeof(T)];
 			T *data = (T*)d;
 			if (TypeInfo<T>::pointer() || TypeInfo<T>::reference()) {
@@ -53,51 +53,51 @@ namespace code {
 		}
 
 		template <>
-		int call(void *fn) {
+		int call(const void *fn) {
 			int data;
 			doCall(&data, sizeof(int), fn);
 			return data;
 		}
 
 		template <>
-		nat call(void *fn) {
+		nat call(const void *fn) {
 			nat data;
 			doCall(&data, sizeof(nat), fn);
 			return data;
 		}
 
 		template <>
-		int64 call(void *fn) {
+		int64 call(const void *fn) {
 			int64 data;
 			doCall(&data, sizeof(int64), fn);
 			return data;
 		}
 
 		template <>
-		nat64 call(void *fn) {
+		nat64 call(const void *fn) {
 			nat64 data;
 			doCall(&data, sizeof(nat64), fn);
 			return data;
 		}
 
 		template <>
-		float call(void *fn) {
+		float call(const void *fn) {
 			return doFloatCall(fn);
 		}
 
 		template <>
-		double call(void *fn) {
+		double call(const void *fn) {
 			return doDoubleCall(fn);
 		}
 
 		template <>
-		void call(void *fn) {
+		void call(const void *fn) {
 			callVoid(fn);
 		}
 
 		// Specific overload for references.
 		template <class T>
-		T &callRef(void *fn) {
+		T &callRef(const void *fn) {
 			T *ptr = null;
 			doCall((void *)&ptr, sizeof(ptr), fn);
 			return *ptr;
@@ -116,21 +116,21 @@ namespace code {
 		vector<Param> params;
 
 		// Do the actual call.
-		void doCall(void *result, nat resultSize, void *fn);
+		void doCall(void *result, nat resultSize, const void *fn);
 
 		// Call a function that returns a user-defined type.
-		void doUserCall(void *result, nat resultSize, void *fn);
+		void doUserCall(void *result, nat resultSize, const void *fn);
 
 		// Call a function that returns floating point values.
-		float doFloatCall(void *fn);
-		double doDoubleCall(void *fn);
+		float doFloatCall(const void *fn);
+		double doDoubleCall(const void *fn);
 
-		void callVoid(void *fn);
+		void callVoid(const void *fn);
 
 		// Some special cases (for x86 at least)
-		void doCall4(void *result, void *fn);
-		void doCall8(void *result, void *fn);
-		void doCallLarge(void *result, nat sz, void *fn);
+		void doCall4(void *result, const void *fn);
+		void doCall8(void *result, const void *fn);
+		void doCallLarge(void *result, nat sz, const void *fn);
 
 
 		// Find out how much stack space the parameters take.

@@ -87,8 +87,8 @@ namespace code {
 			return asSize(r, 8);
 		if (size == Size::sPtr)
 			return asSize(r, 0);
-		assert(false);
-		return asSize(r, 0);
+
+		return noReg;
 	}
 
 	//////////////////////////////////////////////////////////////////////////

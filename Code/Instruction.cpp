@@ -8,6 +8,18 @@ using namespace code::machine; // For the OP-codes.
 
 namespace code {
 
+	static Value sizedReg(Register base, Size size) {
+		Register s = asSize(base, size);
+		if (s == noReg) {
+			if (size == Size())
+				return Value();
+			else
+				throw InvalidValue(L"The return size must fit in a register (ie < 8 bytes).");
+		} else {
+			return Value(s);
+		}
+	}
+
 	static Instruction create(OpCode opCode) {
 		return Instruction(opCode, Value(), destNone, Value());
 	}
@@ -134,15 +146,16 @@ namespace code {
 	Instruction call(const Value &to, Size returnSize) {
 		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer.");
-		if (returnSize > Size::sLong)
-			throw InvalidValue(L"Size must be below or equal to 8.");
-		return createLoose(op::call, asSize(ptrA, returnSize), destWrite, to);
+
+		return createLoose(op::call, sizedReg(ptrA, returnSize), destWrite, to);
 	}
 
 	Instruction ret(Size returnSize) {
-		if (returnSize > Size::sLong)
-			throw InvalidValue(L"Size must be below or equal to 8.");
-		return createSrc(op::ret, asSize(ptrA, returnSize));
+		Value r = sizedReg(ptrA, returnSize);
+		if (r.type() == Value::tNone)
+			return create(op::ret);
+		else
+			return createSrc(op::ret, r);
 	}
 
 	Instruction fnParam(const Value &src) {
@@ -154,9 +167,8 @@ namespace code {
 			throw InvalidValue(L"Should not call constant values, use references instead!");
 		if (src.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer.");
-		if (returnSize > Size::sLong)
-			throw InvalidValue(L"Size must be below or equal to 8.");
-		return createLoose(op::fnCall, asSize(ptrA, returnSize), destWrite, src);
+
+		return createLoose(op::fnCall, sizedReg(ptrA, returnSize), destWrite, src);
 	}
 
 	Instruction add(const Value &dest, const Value &src) {

@@ -225,6 +225,10 @@
 				RelativePath=".\TestShift.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestVoid.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
