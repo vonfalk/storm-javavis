@@ -15,7 +15,7 @@ BEGIN_TEST(TestShift) {
 	l << mov(eax, ecx);
 
 	l << mov(ecx, eax);
-	l << shr(ecx, byteRel(p2, 0));
+	l << shr(ecx, byteRel(p2));
 	l << or(eax, ecx);
 
 	l << shl(eax, byteConst(1));

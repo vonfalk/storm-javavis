@@ -359,11 +359,12 @@ namespace code {
 
 		void immRegInstr(Output &to, const ImmRegInstr8 &op8, const ImmRegInstr &op, const Value &dest, const Value &src) {
 			Size size = src.size();
-			if (size == Size::sInt) {
+			if (size == Size::sInt || size == Size::sPtr) {
 				immRegInstr(to, op, dest, src);
 			} else if (size == Size::sByte) {
 				immRegInstr(to, op8, dest, src);
 			} else {
+				PLN("FAIL: " << size);
 				assert(false);
 			}
 		}

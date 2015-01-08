@@ -102,13 +102,13 @@ namespace code {
 
 		// Addition and subtraction
 		template <class O>
-		Offset operator +(const Offset &o) const {
+		Offset operator +(const O &o) const {
 			Offset t = *this;
 			t += o;
 			return t;
 		}
 		template <class O>
-		Offset operator -(const Offset &o) const {
+		Offset operator -(const O &o) const {
 			Offset t = *this;
 			t -= o;
 			return t;
@@ -119,9 +119,7 @@ namespace code {
 
 		// Addition/subtraction with Size
 		Offset &operator +=(const Size &o);
-		Offset operator +(const Size &o) const;
 		Offset &operator -=(const Size &o);
-		Offset operator -(const Size &o) const;
 
 		// Negation. 'add' will still move further from zero.
 		Offset operator -() const;

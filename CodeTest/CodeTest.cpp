@@ -91,10 +91,10 @@ void testFunction(Arena &arena) {
 	Ref intCleanup = arena.external(L"destroyInt", &destroyInt);
 	Ref ex = arena.external(L"throwException", &throwException);
 
-	Variable par = l.frame.createParameter(4, false);
+	Variable par = l.frame.createIntParam();
 
 	Block myBlock = l.frame.createChild(l.frame.root());
-	Variable result = l.frame.createVariable(myBlock, 4, intCleanup);
+	Variable result = l.frame.createVariable(myBlock, Size::sInt, intCleanup);
 
 	l << prolog();
 	l << begin(myBlock);

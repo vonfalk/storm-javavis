@@ -13,17 +13,19 @@ namespace code {
 	Value::Value(Word v, Size sz) : valType(tConstant), iConstant(v), valSize(sz), iOffset(0) {}
 	Value::Value(Size v, Size sz) : valType(tSizeConstant), iSize(v), valSize(sz), iOffset(0) {}
 
-	Value::Value(Label lbl) : valType(tLabel), labelId(lbl.id), valSize(0), iOffset(0) {}
+	Value::Value(Label lbl) : valType(tLabel), labelId(lbl.id), valSize(Size::sPtr), iOffset(0) {}
 
-	Value::Value(const Ref &ref) : valType(tReference), iReference(ref), valSize(0), iOffset(0) {}
+	Value::Value(const Ref &ref) : valType(tReference), iReference(ref), valSize(Size::sPtr), iOffset(0) {}
 
+	// The size of a block value is zero, since it is an abstract entity.
 	Value::Value(Block b) : valType(tBlock), blockId(b.id), valSize(0), iOffset(0) {}
 
 	Value::Value(Variable v) : valType(tVariable), blockId(v.id), valSize(v.size()), iOffset(0) {
 		assert(v != Variable::invalid);
 	}
 
-	Value::Value(CondFlag f) : valType(tCondFlag), cFlag(f), valSize(1), iOffset(0) {}
+	// Yet another abstract entity.
+	Value::Value(CondFlag f) : valType(tCondFlag), cFlag(f), valSize(0), iOffset(0) {}
 
 	Value::Value(Register reg, Offset offset, Size sz) : valType(tRelative), valSize(sz) {
 		assert(code::size(reg) == Size::sPtr);
@@ -139,7 +141,9 @@ namespace code {
 		}
 
 		if (valType != tRegister && valType != tCondFlag) {
-			if (valSize == Size::sPtr)
+			if (valSize == Size())
+				to << "a"; // a for 'abstract entity'
+			else if (valSize == Size::sPtr)
 				to << 'p';
 			else if (valSize == Size::sByte)
 				to << 'b';

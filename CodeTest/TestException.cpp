@@ -27,10 +27,10 @@ BEGIN_TEST(TestException) {
 	Ref intCleanup = arena.external(L"destroyInt", &destroyInt);
 	Ref ex = arena.external(L"throwException", &throwException);
 
-	Variable par = l.frame.createParameter(4, false, intCleanup);
+	Variable par = l.frame.createIntParam(intCleanup);
 
 	Block myBlock = l.frame.createChild(l.frame.root());
-	Variable result = l.frame.createVariable(myBlock, 4, intCleanup);
+	Variable result = l.frame.createVariable(myBlock, Size::sInt, intCleanup);
 
 	l << prolog();
 	l << begin(myBlock);
@@ -64,8 +64,8 @@ BEGIN_TEST(TestNoException) {
 	Arena arena;
 	Listing l;
 
-	Variable par1 = l.frame.createParameter(4, false);
-	Variable par2 = l.frame.createParameter(4, false);
+	Variable par1 = l.frame.createIntParam();
+	Variable par2 = l.frame.createIntParam();
 
 	Variable var1 = l.frame.createIntVar(l.frame.root());
 

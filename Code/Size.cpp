@@ -140,9 +140,9 @@ namespace code {
 
 	wostream &operator <<(wostream &to, const Offset &s) {
 		if (s.o32 == s.o64)
-			to << toHex(s.o32);
+			to << toHex(s.o32, true);
 		else
-			to << toHex(s.o32) << "/" << toHex(s.o64);
+			to << toHex(s.o32, true) << "/" << toHex(s.o64, true);
 		return to;
 	}
 

@@ -121,7 +121,7 @@ namespace code {
 
 	Instruction jmp(const Value &to, CondFlag cond) {
 		if (to.size() != Size::sPtr)
-			throw InvalidValue(L"Must jump to a pointer.");
+			throw InvalidValue(L"Must jump to a pointer, trying to jump to " + toS(to));
 		return createLoose(op::jmp, to, destRead, cond);
 	}
 

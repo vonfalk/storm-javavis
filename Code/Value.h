@@ -165,16 +165,16 @@ namespace code {
 	Value ptrConst(void *v); // careful with this, will break miserably if serialized and loaded.
 
 	// Create relative values.
-	Value byteRel(Register reg, Offset offset);
-	Value intRel(Register reg, Offset offset);
-	Value longRel(Register reg, Offset offset);
-	Value ptrRel(Register reg, Offset offset);
-	Value xRel(Size size, Register reg, Offset offset);
+	Value byteRel(Register reg, Offset offset = Offset(0));
+	Value intRel(Register reg, Offset offset = Offset(0));
+	Value longRel(Register reg, Offset offset = Offset(0));
+	Value ptrRel(Register reg, Offset offset = Offset(0));
+	Value xRel(Size size, Register reg, Offset offset = Offset(0));
 
 	// Create values relative to variable locations.
-	Value byteRel(Variable v, Offset offset);
-	Value intRel(Variable v, Offset offset);
-	Value longRel(Variable v, Offset offset);
-	Value ptrRel(Variable v, Offset offset);
-	Value xRel(Size size, Variable v, Offset offset);
+	Value byteRel(Variable v, Offset offset = Offset(0));
+	Value intRel(Variable v, Offset offset = Offset(0));
+	Value longRel(Variable v, Offset offset = Offset(0));
+	Value ptrRel(Variable v, Offset offset = Offset(0));
+	Value xRel(Size size, Variable v, Offset offset = Offset(0));
 }

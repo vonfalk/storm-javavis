@@ -250,8 +250,8 @@ namespace code {
 			if (to.frame.exceptionHandlerNeeded()) {
 				// Set up the SEH handler for this frame.
 				to << code::threadLocal() << code::push(natPtrConst(Nat(&x86SafeSEH)));
-				to << code::threadLocal() << code::push(ptrRel(noReg, Offset(0)));
-				to << code::threadLocal() << code::mov(ptrRel(noReg, Offset(0)), ptrStack);
+				to << code::threadLocal() << code::push(ptrRel(noReg));
+				to << code::threadLocal() << code::mov(ptrRel(noReg), ptrStack);
 			}
 
 			// Save any registers we need to preserve.
@@ -290,7 +290,7 @@ namespace code {
 				// Find the previous handler (relative to ebp if esp is not right)
 				to << code::mov(edx, intRel(ptrFrame, Offset(-8)));
 				// Restore it...
-				to << code::threadLocal() << mov(intRel(noReg, Offset(0)), edx);
+				to << code::threadLocal() << mov(intRel(noReg), edx);
 			}
 
 			to << code::mov(ptrStack, ptrFrame);
