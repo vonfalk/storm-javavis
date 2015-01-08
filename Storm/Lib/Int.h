@@ -3,6 +3,7 @@
 #include "Code/Code.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	class IntType : public Type {
 		STORM_CLASS;

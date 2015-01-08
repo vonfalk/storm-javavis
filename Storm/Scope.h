@@ -4,6 +4,7 @@
 #include "Lib/Object.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	class NameLookup;
 	class NameOverload;

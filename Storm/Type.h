@@ -6,6 +6,7 @@
 #include "Code/Value.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	/**
 	 * Define different properties for a type.

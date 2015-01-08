@@ -4,6 +4,8 @@
 
 namespace storm {
 	namespace bs {
+		STORM_PKG(lang.bs);
+
 		class Block;
 
 		class BSScope : public ScopeLookup {

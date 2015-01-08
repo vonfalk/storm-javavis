@@ -3,6 +3,7 @@
 #include "Value.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	/**
 	 * A variable contained in a type. This is used to allocate

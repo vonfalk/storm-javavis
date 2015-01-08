@@ -1,6 +1,7 @@
 Also: return types for rules may be specified.
 
-Fix the size of built-in types. Currently we do not know the size for anything but the current architecture.
+The size of built-in types is not entirely correct at the moment. The current architecture's size is
+used for both values in Size at the moment, which will not work when running saved code from x86 on x86-64.
 
 Consider adding the -> syntax for captures in BNF rules, to be symmetric with other variables.
 

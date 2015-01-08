@@ -3,6 +3,8 @@
 #include "Named.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
+
 	class NameOverload;
 
 	/**

@@ -5,6 +5,7 @@
 
 namespace storm {
 	namespace bs {
+		STORM_PKG(lang.bs);
 
 		/**
 		 * Names a package.

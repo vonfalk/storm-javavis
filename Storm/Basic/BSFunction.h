@@ -9,6 +9,7 @@
 
 namespace storm {
 	namespace bs {
+		STORM_PKG(lang.bs);
 
 		/**
 		 * Function declaration. This holds the needed information to create each function

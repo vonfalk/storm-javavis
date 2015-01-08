@@ -7,6 +7,7 @@
 #include "Utils/Path.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	class Type;
 	class Function;
