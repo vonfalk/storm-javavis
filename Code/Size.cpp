@@ -5,9 +5,9 @@ namespace code {
 
 	Size::Size() {}
 
-	Size::Size(nat s) : s32(nat16(s)), s64(nat16(s)) {}
+	Size::Size(nat s) : s32(s), s64(s) {}
 
-	Size::Size(nat s32, nat s64) : s32(nat16(s32)), s64(nat16(s64)) {}
+	Size::Size(nat s32, nat s64) : s32(s32), s64(s64) {}
 
 	Size Size::sPtr = Size(4, 8);
 	Size Size::sChar = Size(1);
@@ -29,6 +29,13 @@ namespace code {
 		}
 	}
 
+	Size Size::align() const {
+		Size s;
+		s.s32.align = s32.align;
+		s.s64.align = s64.align;
+		return s;
+	}
+
 	Size &Size::operator +=(const Size &o) {
 		s32 += o.s32;
 		s64 += o.s64;
@@ -41,6 +48,18 @@ namespace code {
 		return t;
 	}
 
+	Size &Size::operator *=(nat o) {
+		s32 *= o;
+		s64 *= o;
+		return *this;
+	}
+
+	Size Size::operator *(nat o) const {
+		Size t = *this;
+		t *= o;
+		return t;
+	}
+
 	bool Size::operator ==(const Size &o) const {
 		return s32.size == o.s32.size && s64.size == o.s64.size;
 	}
@@ -50,10 +69,10 @@ namespace code {
 	}
 
 	wostream &operator <<(wostream &to, const Size &s) {
-		if (s.s32.size == s.s64.size)
-			to << toHex(s.s32.size);
+		if (s.s32.size == s.s64.size && s.s32.align == s.s32.align)
+			to << s.s32;
 		else
-			to << toHex(s.s32.size) << "/" << toHex(s.s64.size);
+			to << s.s32 << "/" << s.s64;
 		return to;
 	}
 
@@ -74,13 +93,13 @@ namespace code {
 	}
 
 
-	Offset::Offset() {}
+	Offset::Offset() : o32(0), o64(0) {}
 
-	Offset::Offset(int s) : o32(short(s)), o64(short(s)) {}
+	Offset::Offset(int s) : o32(s), o64(s) {}
 
-	Offset::Offset(Size s) : o32(s.s32.size), o64(s.s64.size) {}
+	Offset::Offset(Size s) : o32(int(s.s32.size)), o64(int(s.s64.size)) {}
 
-	Offset::Offset(int o32, int o64) : o32(short(o32)), o64(short(o64)) {}
+	Offset::Offset(int o32, int o64) : o32(o32), o64(o64) {}
 
 	Offset Offset::sPtr = Offset(4, 8);
 	Offset Offset::sChar = Offset(1);
@@ -126,6 +145,18 @@ namespace code {
 		return *this;
 	}
 
+	Offset &Offset::operator *=(int o) {
+		o32 *= o;
+		o64 *= o;
+		return *this;
+	}
+
+	Offset Offset::operator *(int o) const {
+		Offset z = *this;
+		z *= o;
+		return z;
+	}
+
 	Offset Offset::operator -() const {
 		return Offset(-o32, -o64);
 	}
@@ -164,10 +195,12 @@ namespace code {
 
 	String Offset::format(bool sign) const {
 		std::wostringstream o;
-		if (*this < Offset())
-			o << L"-";
-		else
-			o << L"+";
+		if (sign) {
+			if (*this < Offset())
+				o << L"-";
+			else
+				o << L"+";
+		}
 		o << abs();
 		return o.str();
 	}

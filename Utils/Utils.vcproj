@@ -671,6 +671,10 @@
 				RelativePath=".\Detect.h"
 				>
 			</File>
+			<File
+				RelativePath=".\MapSwap.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

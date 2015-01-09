@@ -5,9 +5,8 @@ namespace code {
 
 	/**
 	 * Machine-independent size description. This class allows composition
-	 * of primitive types to composite types. Doing this, it assumes that
-	 * each primitive type has to be aligned to its size while composite
-	 * types are pointer-aligned (unless they are smaller than that).
+	 * of primitive types to composite types. For composite types, the
+	 * class keeps track of the needed alignment for the type as well.
 	 *
 	 * This is currently implemented as two separate sizes, one assuming
 	 * 32-bit pointers and the other assuming 64-bit pointers. This will
@@ -25,6 +24,9 @@ namespace code {
 		// Get the size for the current platform.
 		nat current() const;
 
+		// Get a Size of zero, only with the align of this Size.
+		Size align() const;
+
 		// Pointer size.
 		static Size sPtr;
 
@@ -40,6 +42,10 @@ namespace code {
 		Size &operator +=(const Size &o);
 		Size operator +(const Size &o) const;
 
+		// Multiplication with positive. Equal to repeated addition.
+		Size &operator *=(nat o);
+		Size operator *(nat o) const;
+
 		// Equality check.
 		bool operator ==(const Size &o) const;
 		bool operator !=(const Size &o) const;
@@ -52,8 +58,6 @@ namespace code {
 
 		// Output.
 		friend wostream &operator <<(wostream &to, const Size &s);
-
-		Size abs() const;
 	private:
 		// Initialize to specific values.
 		Size(nat s32, nat s64);
@@ -121,6 +125,10 @@ namespace code {
 		Offset &operator +=(const Size &o);
 		Offset &operator -=(const Size &o);
 
+		// Multiplication.
+		Offset &operator *=(int o);
+		Offset operator *(int o) const;
+
 		// Negation. 'add' will still move further from zero.
 		Offset operator -() const;
 
@@ -146,10 +154,10 @@ namespace code {
 		Offset(int s32, int s64);
 
 		// 32-bit offset.
-		short o32;
+		int o32;
 
 		// 64-bit offset.
-		short o64;
+		int o64;
 	};
 
 	/**

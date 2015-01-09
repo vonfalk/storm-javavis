@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "TypeLayout.h"
+#include "Exception.h"
+#include "Utils/MapSwap.h"
+#include <iomanip>
 
 namespace storm {
 
@@ -9,7 +12,69 @@ namespace storm {
 	}
 
 	void TypeLayout::add(TypeVar *v) {
-		// Ok, we need to find some space somewhere!
+		assert(("Variable already inserted!", offsets.count(v) == 0));
+
+		// Allocate 'v' at the end.
+		Size vSz = v->varType.size();
+		offsets.insert(make_pair(v, total + vSz.align()));
+		total += vSz;
+	}
+
+	Offset TypeLayout::offset(Size parentSize, TypeVar *v) const {
+		OffsetMap::const_iterator f = offsets.find(v);
+		if (f == offsets.end()) {
+			assert(("Variable not added here!", false));
+			throw InternalError(L"Variable not added properly: " + ::toS(v));
+		}
+
+		Size r = total.align() + f->second;
+		return Offset(parentSize + r);
+	}
+
+	Size TypeLayout::size(Size parentSize) const {
+		return parentSize + total;
+	}
+
+	bool TypeLayout::operator ==(const TypeLayout &o) const {
+		if (total != o.total)
+			return false;
+
+		OffsetMap::const_iterator i = offsets.begin(), e = offsets.end();
+		for (; i != e; ++i) {
+			OffsetMap::const_iterator oi = o.offsets.find(i->first);
+			if (oi == o.offsets.end())
+				return false;
+			if (oi->second != i->second)
+				return false;
+		}
+
+		return true;
+	}
+
+	bool TypeLayout::operator !=(const TypeLayout &o) const {
+		return !(*this == o);
+	}
+
+	void TypeLayout::format(wostream &o, Size rel) const {
+		o << L"Layout " << total << L" bytes";
+		if (rel != Size())
+			o << L", offset: " << rel;
+		o << endl;
+
+		Indent indent(o);
+
+		map<Size, TypeVar *> sorted;
+		mapSwap(offsets, sorted);
+
+		Size align = total.align();
+		for (map<Size, TypeVar *>::iterator i = sorted.begin(); i != sorted.end(); ++i) {
+			Offset s = offset(rel, i->second);
+			o << std::setw(10) << i->second->name << L": " << ::toS(s) << endl;
+		}
+	}
+
+	void TypeLayout::output(wostream &o) const {
+		format(o);
 	}
 
 }

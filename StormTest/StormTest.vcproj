@@ -240,6 +240,10 @@
 				RelativePath=".\DemoTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\LayoutTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
