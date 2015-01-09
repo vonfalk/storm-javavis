@@ -402,6 +402,10 @@
 				RelativePath=".\TypeLayout.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TypeCtor.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -638,6 +642,10 @@
 			</File>
 			<File
 				RelativePath=".\TypeLayout.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TypeCtor.h"
 				>
 			</File>
 		</Filter>

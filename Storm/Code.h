@@ -62,6 +62,26 @@ namespace storm {
 		void *ptr;
 	};
 
+	/**
+	 * Simple subclass for dynamic generated code.
+	 */
+	class DynamicCode : public Code {
+		STORM_CLASS;
+	public:
+		// Code to be executed.
+		DynamicCode(const code::Listing &listing);
+
+		~DynamicCode();
+
+	protected:
+		// Update ref.
+		virtual void newRef();
+
+	private:
+		// Binary with code.
+		code::Binary *code;
+	};
+
 
 	/**
 	 * Lazily loaded code.

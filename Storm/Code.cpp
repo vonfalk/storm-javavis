@@ -36,6 +36,24 @@ namespace storm {
 
 
 	/**
+	 * Dynamic code.
+	 */
+
+	DynamicCode::DynamicCode(const code::Listing &src) {
+		code = new code::Binary(engine().arena, L"dynamic code", src);
+	}
+
+	DynamicCode::~DynamicCode() {
+		if (code)
+			engine().destroy(code);
+	}
+
+	void DynamicCode::newRef() {
+		code->update(*toUpdate);
+	}
+
+
+	/**
 	 * Lazily loaded code.
 	 */
 

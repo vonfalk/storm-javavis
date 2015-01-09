@@ -78,9 +78,7 @@ namespace storm {
 				mySize = fixedSize;
 			} else {
 				Size s = superSize();
-				// re-compute our size.
-				// NOTE: base-classes must be able to propagate size-changes to children!
-				TODO(L"Implement me! (for " << identifier() << ")");
+				mySize = layout.size(s);
 			}
 		}
 		return mySize;
@@ -163,6 +161,7 @@ namespace storm {
 		}
 
 		ovl->add(o);
+		layout.add(o);
 	}
 
 	void Type::validate(NameOverload *o) {

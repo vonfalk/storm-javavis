@@ -130,7 +130,7 @@ namespace storm {
 		size_t s = type->size().current();
 
 		assert(type->flags & typeClass);
-		assert(("Triggers if a subtype is not properly declared.", size <= s));
+		assert(("Not enough memory for the specified type!", size >= s));
 
 		void *mem = allocDumb(type->engine, s);
 		size_t typeOffset = OFFSET_OF(Object, myType);

@@ -3,6 +3,7 @@
 #include "Scope.h"
 #include "Overload.h"
 #include "Package.h"
+#include "TypeLayout.h"
 #include "Code/Value.h"
 
 namespace storm {
@@ -116,6 +117,9 @@ namespace storm {
 
 		// Our size (including base classes). If it is zero, we need to re-compute it!
 		mutable Size mySize;
+
+		// Variable layout.
+		TypeLayout layout;
 
 		// Loaded the lazy parts?
 		bool lazyLoaded;
