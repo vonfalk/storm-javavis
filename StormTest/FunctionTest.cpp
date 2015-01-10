@@ -195,3 +195,18 @@ BEGIN_TEST(FunctionRefPtrTest) {
 	CHECK_EQ(call.call<LargeType*>(&ptrFn), &t);
 
 } END_TEST
+
+
+BEGIN_TEST(FunctionCopyTest) {
+	int a = 10;
+	int b = 20;
+
+	FnCall d;
+	{
+		FnCall c;
+		c.param(a).param(b);
+		d = c;
+	}
+
+	CHECK_EQ(d.call<int>(&testFn1), 30);
+} END_TEST

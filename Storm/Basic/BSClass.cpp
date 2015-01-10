@@ -4,6 +4,7 @@
 #include "Parser.h"
 #include "BSScope.h"
 #include "BSFunction.h"
+#include "TypeCtor.h"
 
 namespace storm {
 
@@ -23,13 +24,15 @@ namespace storm {
 		if (parser.hasError())
 			throw parser.error();
 
-		Engine &e = Object::engine();
-		Auto<Object> z = parser.transform(e, vector<Object *>(1, this));
-		Auto<ClassBody> body = z.expect<ClassBody>(e, L"From ClassBody rule");
+		Auto<Object> z = parser.transform(engine, vector<Object *>(1, this));
+		Auto<ClassBody> body = z.expect<ClassBody>(engine, L"From ClassBody rule");
 
 		for (nat i = 0; i < body->items.size(); i++) {
 			add(body->items[i].steal());
 		}
+
+		// Temporary solution.
+		add(CREATE(TypeDefaultCtor, engine, this));
 	}
 
 	/**

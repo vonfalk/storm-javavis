@@ -10,6 +10,7 @@ namespace storm {
 
 		Function *before = null;
 		Type *super = owner->super();
+
 		if (super) {
 			// We may need to run another function first...
 			Overload *ovl = as<Overload>(super->find(Name(Type::CTOR)));

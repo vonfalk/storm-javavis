@@ -31,6 +31,8 @@ namespace storm {
 		virtual Named *find(const Scope &in, const Name &name);
 
 		// Find 'name' with 'params' in 'in'. Note that the returned pointer is borrowed.
+		// If you pass Scope() (void) as the first parameter, it will match the "this" pointer
+		// of member functions if relevant.
 		virtual Named *find(const Scope &in, const Name &name, const vector<Value> &params);
 
 	protected:

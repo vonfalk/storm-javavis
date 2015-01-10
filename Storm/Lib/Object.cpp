@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Object.h"
 #include "Type.h"
+#include "Function.h"
 #include "Lib/Str.h"
 
 // DEBUG_REFS print references, DEBUG_LEAKS tracks live
@@ -133,14 +134,25 @@ namespace storm {
 		assert(("Not enough memory for the specified type!", size >= s));
 
 		void *mem = allocDumb(type->engine, s);
+		memset(mem, 0, s);
 		size_t typeOffset = OFFSET_OF(Object, myType);
 		OFFSET_IN(mem, typeOffset, Type *) = type;
 
 		return mem;
 	}
 
+	void *Object::operator new(size_t size, void *mem) {
+		size_t typeOffset = OFFSET_OF(Object, myType);
+		assert(OFFSET_IN(mem, typeOffset, Type *));
+		return mem;
+	}
+
 	void Object::operator delete(void *mem, Type *type) {
 		free(mem);
+	}
+
+	void Object::operator delete(void *ptr, void *mem) {
+		// No need...
 	}
 
 	void Object::operator delete(void *mem) {
@@ -151,4 +163,25 @@ namespace storm {
 	void *Object::operator new[](size_t size, Type *type) { assert(false); return null; }
 	void Object::operator delete[](void *ptr) { assert(false); }
 
+	Object *createObj(Function *ctor, code::FnCall params) {
+		assert(("Don't use create() with other functions than constructors.", ctor->name == Type::CTOR));
+		assert(("Wrong number of parameters to constructor! The first one is filled in automatically.",
+					ctor->params.size() == params.count() + 1));
+		Type *type = ctor->params[0].type;
+		assert(type->flags & typeClass);
+
+		void *mem = Object::operator new(type->size().current(), type);
+
+		try {
+			if (ctor->params[0].ref)
+				params.prependParam(&mem);
+			else
+				params.prependParam(mem);
+			params.call<void>(ctor->pointer());
+		} catch (...) {
+			Object::operator delete(mem, mem);
+			throw;
+		}
+		return (Object *)mem;
+	}
 }

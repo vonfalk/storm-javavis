@@ -262,7 +262,7 @@ namespace storm {
 			throw RuntimeError(::toS(rName) + L" is not a subtype of lang.PkgReader.");
 
 		vector<Value> paramTypes(3);
-		paramTypes[0] = Value(Type::type(engine));
+		paramTypes[0] = Value();
 		paramTypes[1] = Value(PkgFiles::type(engine));
 		paramTypes[2] = Value(Package::type(engine));
 		Function *ctor = as<Function>(engine.scope()->find(rName + Name(Type::CTOR), paramTypes));
@@ -270,12 +270,11 @@ namespace storm {
 			throw RuntimeError(::toS(rName) + L": no constructor taking PkgFiles found!");
 
 		code::FnCall call;
-		call.param(readerT);
 		call.param(files);
 		call.param(this);
 		files->addRef();
 		this->addRef();
-		PkgReader *r = call.call<PkgReader *>(ctor->pointer());
+		PkgReader *r = create<PkgReader>(ctor, call);
 		return r;
 	}
 

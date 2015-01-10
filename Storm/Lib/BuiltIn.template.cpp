@@ -34,33 +34,33 @@ namespace storm {
 	 * Constructor for built-in classes.
 	 */
 	template <class T>
-	T *create1(Type *type) {
-		return new (type)T();
+	T *create1(void *mem) {
+		return new (mem)T();
 	}
 
 	template <class T, class P>
-	T *create2(Type *type, P p) {
-		return new (type)T(p);
+	T *create2(void *mem, P p) {
+		return new (mem)T(p);
 	}
 
 	template <class T, class P, class Q>
-	T *create3(Type *type, P p, Q q) {
-		return new (type)T(p, q);
+	T *create3(void *mem, P p, Q q) {
+		return new (mem)T(p, q);
 	}
 
 	template <class T, class P, class Q, class R>
-	T *create4(Type *type, P p, Q q, R r) {
-		return new (type)T(p, q, r);
+	T *create4(void *mem, P p, Q q, R r) {
+		return new (mem)T(p, q, r);
 	}
 
 	template <class T, class P, class Q, class R, class S>
-	T *create5(Type *type, P p, Q q, R r, S s) {
-		return new (type)T(p, q, r, s);
+	T *create5(void *mem, P p, Q q, R r, S s) {
+		return new (mem)T(p, q, r, s);
 	}
 
 	template <class T, class P, class Q, class R, class S, class U>
-	T *create6(Type *type, P p, Q q, R r, S s, U u) {
-		return new (type)T(p, q, r, s, u);
+	T *create6(void *mem, P p, Q q, R r, S s, U u) {
+		return new (mem)T(p, q, r, s, u);
 	}
 
 	/**

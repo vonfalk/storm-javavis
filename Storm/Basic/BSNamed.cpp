@@ -36,6 +36,9 @@ namespace storm {
 			throw SyntaxError(pos, L"Can not find " + ::toS(name) + L"("
 							+ join(params->values(), L", ") + L").");
 
+		if (n->name == Type::CTOR)
+			throw SyntaxError(pos, L"Can not call a constructor outside a new-expression.");
+
 		toExecute = as<Function>(n);
 		toLoad = as<LocalVar>(n);
 

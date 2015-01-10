@@ -51,12 +51,11 @@ namespace storm {
 
 		// See if we can find a constructor!
 		if (Type *t = as<Type>(option->scope.find(option->matchFn))) {
-			types.insert(types.begin(), Value(Type::type(e)));
+			types.insert(types.begin(), Value(t));
 			Scope scope(capture(t));
 			no = scope.find(Type::CTOR, types);
 			if (Function *ctor = as<Function>(no)) {
 				code::FnCall call;
-				call.param(t);
 				for (nat i = 0; i < params.size(); i++) {
 					if (params[i]) {
 						params[i]->addRef();
@@ -65,7 +64,7 @@ namespace storm {
 						call.param<SrcPos>(pos);
 					}
 				}
-				return call.call<Object *>(ctor->pointer());
+				return create<Object>(ctor, call);
 			}
 
 			throw SyntaxTypeError(L"Could not find a constructor " +

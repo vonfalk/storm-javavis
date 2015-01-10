@@ -19,7 +19,7 @@ namespace code {
 	 * Returning types other than integers and pointers are not yet
 	 * supported.
 	 */
-	class FnCall : NoCopy {
+	class FnCall {
 	public:
 
 		// Since we want to do param(&p) for a reference, we must take care of
@@ -35,6 +35,22 @@ namespace code {
 				par.value = *(void **)&p;
 			}
 			params.push_back(par);
+			return *this;
+		}
+
+		// Since we want to do param(&p) for a reference, we must take care of
+		// that case specifically, since the pointer given to us is temporary!
+		template <class T>
+		FnCall &prependParam(const T &p) {
+			Param par = { &FnCall::copy<T>, &FnCall::destroy<T>, sizeof(T), &p };
+			if (TypeInfo<T>::pointer() || TypeInfo<T>::reference()) {
+				// if ptr or ref, copy the ptr/ref directly.
+				par.copy = &FnCall::copyPtr;
+				par.destroy = null;
+				// We know that sizeof(T) == sizeof(void*)
+				par.value = *(void **)&p;
+			}
+			params.insert(params.begin(), par);
 			return *this;
 		}
 
@@ -102,6 +118,9 @@ namespace code {
 			doCall((void *)&ptr, sizeof(ptr), fn);
 			return *ptr;
 		}
+
+		// Parameter count.
+		inline nat count() const { return params.size(); }
 
 	private:
 		// Data for a single parameter.

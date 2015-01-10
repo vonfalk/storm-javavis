@@ -13,6 +13,14 @@ namespace storm {
 	Type::Type(const String &name, TypeFlags f, Size size)
 		: Named(name), engine(Object::engine()), flags(f), fixedSize(size),
 		  mySize(), parentPkg(null), lazyLoaded(false), lazyLoading(false) {
+		if (flags & typeClass) {
+			// NOTE: The only time objType will be null is during startup, and in
+			// that case, setSuper will be called later anyway. Therefore it is OK
+			// to leave the class without a Object parent for a short while.
+			Type *objType = Object::type(engine);
+			if (objType)
+				superTypes.push_back(Object::type(engine));
+		}
 		superTypes.push_back(this);
 	}
 
@@ -85,7 +93,20 @@ namespace storm {
 	}
 
 	void Type::setSuper(Type *super) {
-		assert(super->flags == flags);
+		if (super->flags & typeFinal)
+			throw InternalError(super->identifier() +
+							L" is final and can not be inherited from by " +
+							identifier());
+
+		if (flags & typeClass) {
+			if (super == null && this != Object::type(engine))
+				throw InternalError(identifier() + L" must at least inherit from Object.");
+			if (!(super->flags & typeClass))
+				throw InternalError(identifier() + L" may only inherit from other objects.");
+		} else if (flags & typeValue) {
+			if (!(super->flags & typeValue))
+				throw InternalError(identifier() + L" may only inherit from other values.");
+		}
 
 		Type *oldSuper = this->super();
 		if (oldSuper != null && oldSuper != super)
@@ -111,10 +132,11 @@ namespace storm {
 	}
 
 	Type *Type::super() const {
-		if (superTypes.size() <= 1)
+		if (superTypes.size() <= 1) {
 			return null;
-		else
+		} else {
 			return superTypes[superTypes.size() - 2];
+		}
 	}
 
 	Named *Type::find(const Name &name) {
@@ -169,15 +191,10 @@ namespace storm {
 			throw TypedefError(L"Member functions must have at least one parameter!");
 
 		const Value &first = o->params.front();
-		if (o->name == CTOR) {
-			if (first.type != Type::type(engine))
-				throw TypedefError(L"Member constructors must have 'Type' as first parameter.");
-		} else {
-			if (!first.canStore(Value(this, true)))
-				throw TypedefError(L"Member functions must have 'this' as first parameter."
-								L" Got " + ::toS(first) + L", expected " +
-								::toS(Value(this)) + L" for " + o->name);
-		}
+		if (!first.canStore(Value(this, true)))
+			throw TypedefError(L"Member functions must have 'this' as first parameter."
+							L" Got " + ::toS(first) + L", expected " +
+							::toS(Value(this)) + L" for " + o->name);
 	}
 
 	code::Value Type::destructor() const {

@@ -182,6 +182,10 @@ struct as {
 		return v;
 	}
 
+	T *operator ->() const {
+		return v;
+	}
+
 	T *v;
 };
 

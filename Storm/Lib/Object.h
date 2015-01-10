@@ -2,6 +2,7 @@
 #include "Auto.h"
 #include "Lib/Bool.h"
 #include "Code/Size.h"
+#include "Code/Function.h"
 
 namespace storm {
 
@@ -10,6 +11,7 @@ namespace storm {
 
 	class Type;
 	class Str;
+	class Function;
 
 	STORM_PKG(core);
 
@@ -40,7 +42,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Initialize object to 1 reference.
-		Object();
+		STORM_CTOR Object();
 
 		virtual ~Object();
 
@@ -78,9 +80,11 @@ namespace storm {
 		// Our specialized operator new(). Allocates memory for the Type provided,
 		// regardless of the size here. Ie, the allocated size may be >= sizeof(obj).
 		static void *operator new (size_t size, Type *type);
+		static void *operator new (size_t size, void *mem);
 
 		// Matching delete.
 		static void operator delete(void *ptr, Type *type);
+		static void operator delete(void *ptr, void *mem);
 		static void operator delete(void *ptr);
 
 		// NOTE: these will simply assert, not possible to implement right now.
@@ -105,10 +109,6 @@ namespace storm {
 
 		static void *allocDumb(Engine &e, size_t size);
 
-		// Placement new, for the first type.
-		static inline void *operator new(size_t size, void *mem) { return mem; }
-		static inline void operator delete(void *z, void *mem) { /* if this is ever executed z == mem */ }
-
 	private:
 		Object(const Object &o);
 		Object &operator =(const Object &o);
@@ -116,6 +116,13 @@ namespace storm {
 		// Current number of references.
 		nat refs;
 	};
+
+	// Create an object using the supplied constructor.
+	Object *createObj(Function *ctor, code::FnCall params);
+	template <class T>
+	inline T *create(Function *ctor, const code::FnCall &params) {
+		return (T *)createObj(ctor, params);
+	}
 
 	// Release (sets to null as well!)
 	inline void release(Object *&o) {

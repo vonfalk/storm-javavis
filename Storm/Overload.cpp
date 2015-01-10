@@ -42,7 +42,20 @@ namespace storm {
 		if (overload->params.size() != params.size())
 			return false;
 
-		for (nat i = 0; i < params.size(); i++) {
+		nat start = 0;
+
+		if (params.size() >= 1 && params[0] == Value()) {
+			Type *owner = as<Type>(p);
+			if (!owner)
+				return false;
+
+			if (!overload->params[0].canStore(Value(owner)))
+				return false;
+
+			start = 1;
+		}
+
+		for (nat i = start; i < params.size(); i++) {
 			if (!overload->params[i].canStore(params[i]))
 				return false;
 		}

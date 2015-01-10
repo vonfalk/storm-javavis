@@ -29,11 +29,19 @@ BEGIN_TEST(CodeTest) {
 	Engine engine(root);
 
 	Package *test = engine.package(Name(L"test.bs"));
+	Scope tScope(capture(test));
 
 	CHECK(test->find(Name(L"bar")));
 	CHECK(test->find(Name(L"Foo")));
 	CHECK(test->find(Name(L"Foo.a")));
 	CHECK(test->find(Name(L"Foo.foo")));
+
+	// Try to create an object.
+	Function *fooCtor = as<Function>(tScope.find(Name(L"Foo") + Name(Type::CTOR), vector<Value>(1, Value())));
+	CHECK(fooCtor);
+	Auto<Object> o = create<Object>(fooCtor, code::FnCall());
+	PLN(o);
+	CHECK(o.borrow());
 
 	CHECK_RUNS(runFn(engine, L"test.bs.voidFn"));
 

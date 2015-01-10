@@ -76,7 +76,7 @@ void Header::parse(Tokenizer &tok) {
 			t.isPtr = true;
 			Function ctor = Function::read(pkg, scope, t, tok);
 			ctor.name = L"__ctor";
-			ctor.params.insert(ctor.params.begin(), CppType::typePtr());
+			ctor.params.insert(ctor.params.begin(), t);
 			functions.push_back(ctor);
 		} else if (token == L"class" || token == L"struct") {
 			String name = tok.next();
