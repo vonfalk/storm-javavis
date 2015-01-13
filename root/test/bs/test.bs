@@ -9,6 +9,11 @@ class Foo {
     }
 }
 
+Int createFoo() {
+    Foo v = Foo();
+    3;
+}
+
 Int foo(Int p) {
     p - 2;
 }

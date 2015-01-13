@@ -5,8 +5,7 @@
 
 BEGIN_TESTX(DemoTest) {
 
-	Path root = Path::executable() + Path(L"../root/");
-	Engine engine(root);
+	Engine &engine = *gEngine;
 
 	Package *test = engine.package(Name(L"test.bs"));
 

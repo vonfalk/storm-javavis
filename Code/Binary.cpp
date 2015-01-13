@@ -103,7 +103,6 @@ namespace code {
 			arena.codeFree(memory);
 			memory = oldMem;
 			size = oldSize;
-			PLN("WERE FUCKED");
 			throw;
 		}
 

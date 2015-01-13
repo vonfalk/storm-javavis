@@ -55,6 +55,9 @@ namespace storm {
 		// Type flags.
 		const TypeFlags flags;
 
+		// Reference to this Type that will be kept updated through any renames.
+		code::RefSource typeRef;
+
 		// Get the size of this type.
 		Size size(); // const;
 

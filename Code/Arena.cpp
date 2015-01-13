@@ -3,7 +3,8 @@
 
 namespace code {
 
-	Arena::Arena() : addRef(null), releaseRef(null) {}
+	// Important to let 'refManager' initialize before 'addRef'.
+	Arena::Arena() : refManager(), addRef(*this, L"addRef"), releaseRef(*this, L"releaseRef") {}
 
 	Arena::~Arena() {
 		assert(("Memory leak detected!", alloc.empty()));

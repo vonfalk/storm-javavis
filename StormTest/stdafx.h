@@ -14,3 +14,6 @@
 #include "Exception.h"
 
 using namespace storm;
+
+extern Engine *gEngine;
+

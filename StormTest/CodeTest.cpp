@@ -25,8 +25,7 @@ Int runFn(Engine &e, const String &fn, Int p) {
 
 BEGIN_TEST(CodeTest) {
 
-	Path root = Path::executable() + Path(L"../root/");
-	Engine engine(root);
+	Engine &engine = *gEngine;
 
 	Package *test = engine.package(Name(L"test.bs"));
 	Scope tScope(capture(test));
@@ -35,13 +34,6 @@ BEGIN_TEST(CodeTest) {
 	CHECK(test->find(Name(L"Foo")));
 	CHECK(test->find(Name(L"Foo.a")));
 	CHECK(test->find(Name(L"Foo.foo")));
-
-	// Try to create an object.
-	Function *fooCtor = as<Function>(tScope.find(Name(L"Foo") + Name(Type::CTOR), vector<Value>(1, Value())));
-	CHECK(fooCtor);
-	Auto<Object> o = create<Object>(fooCtor, code::FnCall());
-	PLN(o);
-	CHECK(o.borrow());
 
 	CHECK_RUNS(runFn(engine, L"test.bs.voidFn"));
 
@@ -55,6 +47,8 @@ BEGIN_TEST(CodeTest) {
 	CHECK_EQ(runFn(engine, L"test.bs.assign", 1), 2);
 	CHECK_EQ(runFn(engine, L"test.bs.while", 10), 1024);
 	CHECK_EQ(runFn(engine, L"test.bs.for", 10), 1024);
+
+	CHECK_EQ(runFn(engine, L"test.bs.createFoo"), 3);
 
 	CHECK_ERROR(runFn(engine, L"test.bs.assignError"));
 

@@ -38,12 +38,13 @@ namespace code {
 
 		// Destroy variables on the current stack frame.
 		void destroyFrame(const machine::StackFrame &frame) const;
-	private:
-		// Title.
-		String title;
 
 		// Arena
 		Arena &arena;
+
+	private:
+		// Title.
+		String title;
 
 		// Allocated code chunk
 		void *memory;

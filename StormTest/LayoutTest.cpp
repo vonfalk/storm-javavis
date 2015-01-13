@@ -17,7 +17,7 @@ static void debug(const TypeLayout &l) {
 #define defVar(name, type) Auto<TypeVar> _##name = var(e, type, _T(#name)); TypeVar *name = _##name.borrow()
 
 BEGIN_TEST(LayoutTest) {
-	Engine e(Path::executable());
+	Engine &e = *gEngine;
 
 	defVar(bool1, boolType(e));
 	defVar(bool2, boolType(e));

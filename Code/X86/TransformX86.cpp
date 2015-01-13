@@ -7,7 +7,8 @@
 namespace code {
 	namespace machineX86 {
 
-		Transform::Transform(const Listing &from) : Transformer(from), registers(from) {}
+		Transform::Transform(const Listing &from, Arena &arena)
+			: Transformer(from), arena(arena), registers(from) {}
 
 		void Transform::transform(Listing &to, nat line) {
 			const Instruction &instr = from[line];
@@ -19,11 +20,7 @@ namespace code {
 			}
 		}
 
-
-		Register Transform::unusedReg(nat line) const {
-			Registers regs = registers[line];
-			add64(regs);
-
+		Register Transform::unusedReg(const Registers &regs) const {
 			Register order[] = { ptrD, ptrSi, ptrDi };
 
 			for (nat i = 0; i < ARRAY_SIZE(order); i++) {
@@ -32,6 +29,61 @@ namespace code {
 			}
 
 			return noReg;
+		}
+
+		Register Transform::unusedReg(nat line) const {
+			Registers regs = registers[line];
+			add64(regs);
+
+			return unusedReg(regs);
+		}
+
+		Register Transform::preserve(Register r, const Registers &used, Listing &to) const {
+			if (!used.contains(r))
+				return noReg;
+
+			Register into = unusedReg(used);
+			if (into == noReg) {
+				to << push(r);
+			} else {
+				into = asSize(into, size(r));
+				to << mov(into, r);
+			}
+			return into;
+		}
+
+		vector<Register> Transform::preserve(const vector<Register> &regs, nat line, Listing &to) const {
+			vector<Register> result(regs.size(), noReg);
+			Registers used = registers[line];
+			add64(used);
+
+			for (nat i = 0; i < regs.size(); i++) {
+				Register r = preserve(regs[i], used, to);
+				if (r != noReg)
+					used += r;
+				result[i] = r;
+			}
+
+			return result;
+		}
+
+		void Transform::restore(Register r, Register saved, const Registers &used, Listing &to) const {
+			if (!used.contains(r))
+				return;
+
+			if (saved == noReg) {
+				to << pop(r);
+			} else {
+				to << mov(saved, r);
+			}
+		}
+
+		void Transform::restore(const vector<Register> &regs, const vector<Register> &saved, nat line, Listing &to) const {
+			Registers used = registers[line];
+			add64(used);
+
+			for (nat i = regs.size(); i > 0; i--)
+				restore(regs[i-1], saved[i-1], used, to);
 		}
 
 
@@ -207,6 +259,28 @@ namespace code {
 
 		void sarTfm(const Transform &tfm, Listing &to, nat line) {
 			shlTfm(tfm, to, line);
+		}
+
+		void addRefTfm(const Transform &tfm, Listing &to, nat line) {
+			vector<Register> preserve = regsNotPreserved();
+			vector<Register> saved = tfm.preserve(preserve, line, to);
+
+			const Instruction &instr = tfm.from[line];
+			to << fnParam(instr.src());
+			to << fnCall(Ref(tfm.arena.addRef), Size());
+
+			tfm.restore(preserve, saved, line, to);
+		}
+
+		void releaseRefTfm(const Transform &tfm, Listing &to, nat line) {
+			vector<Register> preserve = regsNotPreserved();
+			vector<Register> saved = tfm.preserve(preserve, line, to);
+
+			const Instruction &instr = tfm.from[line];
+			to << fnParam(instr.src());
+			to << fnCall(Ref(tfm.arena.releaseRef), Size());
+
+			tfm.restore(preserve, saved, line, to);
 		}
 
 	}

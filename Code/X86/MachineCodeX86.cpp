@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "MachineCode.h"
 #ifdef X86
+#include "Binary.h"
 #include "Instruction.h"
 #include "AsmX86.h"
 #include "Transform64.h"
@@ -48,9 +49,6 @@ namespace code {
 
 			OUTPUT(dat),
 
-			OUTPUT(addRef),
-			OUTPUT(releaseRef),
-
 			OUTPUT(threadLocal),
 		};
 
@@ -81,6 +79,9 @@ namespace code {
 			TRANSFORM(shl),
 			TRANSFORM(shr),
 			TRANSFORM(sar),
+
+			TRANSFORM(addRef),
+			TRANSFORM(releaseRef),
 		};
 	}
 
@@ -127,6 +128,29 @@ namespace code {
 				default:
 					return null;
 			}
+		}
+
+		vector<Register> regsNotPreserved() {
+			static vector<Register> r;
+			if (r.size() == 0) {
+				r.push_back(eax);
+				r.push_back(ecx);
+				r.push_back(edx);
+			}
+			return r;
+		}
+
+		vector<Register> regsBase() {
+			static vector<Register> r;
+			if (r.size() == 0) {
+				r.push_back(eax);
+				r.push_back(ebx);
+				r.push_back(ecx);
+				r.push_back(edx);
+				r.push_back(esi);
+				r.push_back(edi);
+			}
+			return r;
 		}
 
 		void add64(Registers &r) {
@@ -389,7 +413,7 @@ namespace code {
 				src = &middle;
 			}
 
-			machineX86::Transform tfm(*src);
+			machineX86::Transform tfm(*src, owner->arena);
 			middle = tfm.transformed();
 
 			machineX86::TfmParams params(middle, owner);

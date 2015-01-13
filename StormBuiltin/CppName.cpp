@@ -98,6 +98,12 @@ bool CppType::isVoid() const {
 	return type.parts.size() == 1 && type.parts[0] == L"void" && !isPtr;
 }
 
+CppType CppType::tVoid() {
+	CppType t;
+	t.type.parts.push_back(L"void");
+	return t;
+}
+
 bool CppType::isTypePtr() const {
 	return type.parts.size() == 1 && type.parts[0] == L"Type" && isPtr;
 }

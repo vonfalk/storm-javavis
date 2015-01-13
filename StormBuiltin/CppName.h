@@ -60,6 +60,9 @@ public:
 	// Void?
 	bool isVoid() const;
 
+	// Void type.
+	static CppType tVoid();
+
 	// Type* ?
 	bool isTypePtr() const;
 

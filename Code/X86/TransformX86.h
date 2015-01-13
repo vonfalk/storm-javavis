@@ -13,7 +13,10 @@ namespace code {
 		 */
 		class Transform : public Transformer {
 		public:
-			Transform(const Listing &from);
+			Transform(const Listing &from, Arena &arena);
+
+			// Arena.
+			Arena &arena;
 
 			// Remember unused registers.
 			UsedRegisters registers;
@@ -21,8 +24,24 @@ namespace code {
 			// Get a good unused register at 'line'.
 			Register unusedReg(nat line) const;
 
+			// Preserve a number of registers.
+			vector<Register> preserve(const vector<Register> &regs, nat line, Listing &to) const;
+
+			// Restore registers previously preserved.
+			void restore(const vector<Register> &regs, const vector<Register> &saved, nat line, Listing &to) const;
+
 		protected:
 			virtual void transform(Listing &to, nat line);
+
+		private:
+			// Preserve a single register
+			Register preserve(Register r, const Registers &used, Listing &to) const;
+
+			// Restore a single register
+			void restore(Register r, Register saved, const Registers &used, Listing &to) const;
+
+			// Pick an unused register.
+			Register unusedReg(const Registers &used) const;
 		};
 
 		typedef void (*TransformFn)(const Transform &, Listing &, nat);
@@ -36,6 +55,8 @@ namespace code {
 		void shlTfm(const Transform &tfm, Listing &to, nat line);
 		void shrTfm(const Transform &tfm, Listing &to, nat line);
 		void sarTfm(const Transform &tfm, Listing &to, nat line);
+		void addRefTfm(const Transform &tfm, Listing &to, nat line);
+		void releaseRefTfm(const Transform &tfm, Listing &to, nat line);
 
 	}
 }

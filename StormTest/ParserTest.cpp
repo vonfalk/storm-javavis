@@ -20,8 +20,7 @@ nat parse(SyntaxSet &set, const String &root, const String &str) {
 
 BEGIN_TEST(ParserTest) {
 
-	Path root = Path::executable() + Path(L"../root/");
-	Engine engine(root);
+	Engine &engine = *gEngine;
 
 	// Try to get the syntax for the 'sto' file format.
 	Package *coreSto = engine.package(Name(L"lang.sto"));

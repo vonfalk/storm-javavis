@@ -41,8 +41,10 @@ namespace storm {
 			return code::Value();
 		} else if (type && (type->flags & typeClass)) {
 			return code::Ref(type->engine.release);
-		} else {
+		} else if (type) {
 			return type->destructor();
+		} else {
+			return code::Value();
 		}
 	}
 

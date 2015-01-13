@@ -45,6 +45,9 @@ namespace storm {
 			// The variable to load (if any).
 			LocalVar *toLoad;
 
+			// The type to create (if any). Constructor saved in 'toExecute'.
+			Value toCreate;
+
 			// Parameters
 			Auto<Actual> params;
 
@@ -54,8 +57,14 @@ namespace storm {
 			// Generate code to load a variable.
 			void loadCode(const GenState &s, GenResult &to);
 
+			// Generate code to create a type.
+			void createCode(const GenState &s, GenResult &to);
+
 			// Find what to call.
 			void findTarget(const Scope &scope, const Name &name, const SrcPos &pos);
+
+			// Find a constructor.
+			void findCtor(Type *t, const SrcPos &pos);
 		};
 
 

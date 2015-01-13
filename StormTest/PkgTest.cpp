@@ -19,8 +19,7 @@ BEGIN_TEST(PkgTest) {
 	CHECK_EQ(Name(L"a.b.c.").parent(), Name(L"a.b"));
 
 	// Do some real things!
-	Path root = Path::executable() + Path(L"../root/");
-	Engine e(root);
+	Engine &e = *gEngine;
 
 	Package *rootPkg = e.package(Name());
 	CHECK(rootPkg != null);

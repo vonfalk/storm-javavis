@@ -5,14 +5,18 @@
 #include "Lib/Object.h"
 #include "Std.h"
 #include "Package.h"
+#include "Function.h"
 
 namespace storm {
 
 	const String Type::CTOR = L"__ctor";
 
 	Type::Type(const String &name, TypeFlags f, Size size)
-		: Named(name), engine(Object::engine()), flags(f), fixedSize(size),
-		  mySize(), parentPkg(null), lazyLoaded(false), lazyLoading(false) {
+		: Named(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
+		  fixedSize(size), mySize(), parentPkg(null), lazyLoaded(false), lazyLoading(false) {
+
+		typeRef.set(this);
+
 		if (flags & typeClass) {
 			// NOTE: The only time objType will be null is during startup, and in
 			// that case, setSuper will be called later anyway. Therefore it is OK
@@ -195,6 +199,14 @@ namespace storm {
 			throw TypedefError(L"Member functions must have 'this' as first parameter."
 							L" Got " + ::toS(first) + L", expected " +
 							::toS(Value(this)) + L" for " + o->name);
+
+		if (o->name == CTOR) {
+			Function *fn = as<Function>(o);
+			if (!fn)
+				throw TypedefError(L"Constructors must be functions.");
+			if (fn->result != Value())
+				throw TypedefError(L"Constructors may not return any value.");
+		}
 	}
 
 	code::Value Type::destructor() const {

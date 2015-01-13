@@ -31,9 +31,6 @@ namespace code {
 
 		void dat(Output &to, Params p, const Instruction &instr);
 
-		void addRef(Output &to, Params p, const Instruction &instr);
-		void releaseRef(Output &to, Params p, const Instruction &instr);
-
 		void threadLocal(Output &to, Params p, const Instruction &instr);
 	}
 }

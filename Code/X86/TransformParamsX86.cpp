@@ -35,13 +35,10 @@ namespace code {
 			// Handle 64-bit registers.
 			add64(r);
 
-			Register allRegisters[] = { eax, ebx, ecx, edx, esi, edi };
-			Registers notPreserved;
-			notPreserved += eax;
-			notPreserved += ecx;
-			notPreserved += edx;
+			vector<Register> allRegisters = regsBase();
+			Registers notPreserved(regsNotPreserved());
 
-			for (nat i = 0; i < ARRAY_SIZE(allRegisters); i++) {
+			for (nat i = 0; i < allRegisters.size(); i++) {
 				Register reg = allRegisters[i];
 				if (r.contains(reg)) {
 					if (!notPreserved.contains(reg)) {
@@ -198,7 +195,7 @@ namespace code {
 					params.lookupVars(i);
 					fnParamTfm(to, params, i);
 
-					i = code::fnCall(dtor, Size::sPtr);
+					i = code::fnCall(dtor, Size());
 					params.lookupVars(i);
 					fnCallTfm(to, params, i);
 

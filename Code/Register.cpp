@@ -101,6 +101,11 @@ namespace code {
 		regs.insert(r);
 	}
 
+	Registers::Registers(const vector<Register> &r) {
+		for (nat i = 0; i < r.size(); i++)
+			*this += r[i];
+	}
+
 	Registers Registers::all() {
 		Registers r;
 		r += ptrA;

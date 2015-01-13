@@ -13,8 +13,8 @@ Int CODECALL replaceTwo(VTest *me) {
 }
 
 BEGIN_TEST(VTableTest) {
-	Path root = Path::executable() + Path(L"../root/");
-	Engine engine(root);
+	Engine &engine = *gEngine;
+
 	code::VTable table(VTest::cppVTable());
 
 	Auto<VTest> test = CREATE(VTest, engine);

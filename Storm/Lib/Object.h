@@ -59,7 +59,7 @@ namespace storm {
 		bool isA(Type *o) const;
 
 		// Add reference.
-		inline void addRef() {
+		inline void CODECALL addRef() {
 			// _ASSERT(_CrtCheckMemory());
 			if (this) {
 				checkLive(this);
@@ -68,7 +68,7 @@ namespace storm {
 		}
 
 		// Release reference.
-		inline void release() {
+		inline void CODECALL release() {
 			// _ASSERT(_CrtCheckMemory());
 			if (this) {
 				checkLive(this);
@@ -79,6 +79,7 @@ namespace storm {
 
 		// Our specialized operator new(). Allocates memory for the Type provided,
 		// regardless of the size here. Ie, the allocated size may be >= sizeof(obj).
+		// If 'size' is 0, the check is ignored.
 		static void *operator new (size_t size, Type *type);
 		static void *operator new (size_t size, void *mem);
 
@@ -123,6 +124,12 @@ namespace storm {
 	inline T *create(Function *ctor, const code::FnCall &params) {
 		return (T *)createObj(ctor, params);
 	}
+
+	// Create an object from Storm.
+	void *CODECALL stormMalloc(Type *type);
+
+	// Destroy an object from Storm.
+	void CODECALL stormFree(void *mem);
 
 	// Release (sets to null as well!)
 	inline void release(Object *&o) {

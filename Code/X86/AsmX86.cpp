@@ -50,6 +50,10 @@ namespace code {
 				to.putByte(0xFF);
 				modRm(to, 6, src);
 				break;
+			case Value::tReference:
+				to.putByte(0x68); // we need an entire 32-bits.
+				to.putAddress(src.reference());
+				break;
 			default:
 				assert(false);
 				break;
@@ -356,18 +360,6 @@ namespace code {
 				return;
 			}
 			assert(false);
-		}
-
-		void addRef(Output &to, Params p, const Instruction &instr) {
-			TODO(L"Implement addRef");
-			assert(false); // Does not correctly call the function, no parameters are used!
-			//jmpCall(0xE9, p.arena, to, Value((cpuNat)p.arena.addRef));
-		}
-
-		void releaseRef(Output &to, Params p, const Instruction &instr) {
-			TODO(L"Implement releaseRef");
-			assert(false); // Does not correctly call the function, no parameters are used!
-			//jmpCall(0xE9, p.arena, to, Value((cpuNat)p.arena.releaseRef));
 		}
 
 		void threadLocal(Output &to, Params p, const Instruction &instr) {

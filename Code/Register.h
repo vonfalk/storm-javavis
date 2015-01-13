@@ -56,6 +56,9 @@ namespace code {
 		// Create representing a single register.
 		explicit Registers(Register r);
 
+		// Vector of registers => Registers.
+		explicit Registers(const vector<Register> &r);
+
 		// Create with all registers, except for the ptrStack and ptrFrame.
 		static Registers all();
 

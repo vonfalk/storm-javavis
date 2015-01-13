@@ -3,6 +3,7 @@
 #include "Utils/MemoryManager.h"
 #include "RefManager.h"
 #include "Reference.h"
+#include "RefSource.h"
 
 namespace code {
 
@@ -15,6 +16,9 @@ namespace code {
 		friend class RefSource;
 		friend class Reference;
 		friend class Ref;
+
+		RefManager refManager;
+
 	public:
 		Arena();
 		~Arena();
@@ -25,8 +29,7 @@ namespace code {
 		// generating any code.
 		// These are assumed to work in pairs, and that a pair of add-release
 		// can freely be optimized away.
-		typedef void (*RefcountFn)(void *);
-		RefcountFn addRef, releaseRef;
+		RefSource addRef, releaseRef;
 
 		// Allocate and free memory suitable for code.
 		void *codeAlloc(nat size);
@@ -48,8 +51,6 @@ namespace code {
 
 	private:
 		memory::Manager alloc;
-
-		RefManager refManager;
 
 		vector<RefSource *> externalRefs;
 	};

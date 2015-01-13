@@ -61,7 +61,10 @@ namespace storm {
 		code::Arena arena;
 
 		// Reference to the addRef and release functions.
-		code::RefSource addRef, release;
+		code::RefSource &addRef, &release;
+
+		// Reference to the memory allocation function.
+		code::RefSource allocRef, freeRef;
 
 		// Other references.
 		code::RefSource lazyCodeFn;

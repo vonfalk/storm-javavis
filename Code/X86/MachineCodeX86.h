@@ -32,6 +32,12 @@ namespace code {
 		// Get the Transform fn for 'op'
 		TransformFn transformFn(OpCode op);
 
+		// Registers that function calls does not preserve in cdecl on x86.
+		vector<Register> regsNotPreserved();
+
+		// All base registers (ie not the ones used to extend base registers).
+		vector<Register> regsBase();
+
 		// Add all 64-bit pairs to the Registers object.
 		void add64(Registers &r);
 

@@ -6,13 +6,17 @@
 namespace storm {
 
 	Engine::Engine(const Path &root)
-		: inited(false), rootPath(root), rootScope(null),
-		  arena(), addRef(arena, L"addRef"), release(arena, L"release"), lazyCodeFn(arena, L"lazyUpdate") {
+		: inited(false), rootPath(root), rootScope(null), arena(),
+		  addRef(arena.addRef), release(arena.releaseRef),
+		  allocRef(arena, L"alloc"), freeRef(arena, L"free"),
+		  lazyCodeFn(arena, L"lazyUpdate") {
 
 		specialCached.resize(specialCount);
 
 		addRef.set(address(&Object::addRef));
 		release.set(address(&Object::release));
+		allocRef.set(address(&stormMalloc));
+		freeRef.set(address(&stormFree));
 
 		createStdTypes(*this, cached);
 

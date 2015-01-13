@@ -74,7 +74,7 @@ void Header::parse(Tokenizer &tok) {
 			CppType t;
 			t.type = scope.cppName();
 			t.isPtr = true;
-			Function ctor = Function::read(pkg, scope, t, tok);
+			Function ctor = Function::read(pkg, scope, CppType::tVoid(), tok);
 			ctor.name = L"__ctor";
 			ctor.params.insert(ctor.params.begin(), t);
 			functions.push_back(ctor);

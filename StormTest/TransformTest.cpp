@@ -41,8 +41,7 @@ bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Auto<
 
 BEGIN_TEST(TransformTest) {
 
-	Path root = Path::executable() + Path(L"../root/");
-	Engine engine(root);
+	Engine &engine = *gEngine;
 
 	Package *simple = engine.package(Name(L"lang.simple"));
 	SyntaxSet set;

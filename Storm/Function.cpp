@@ -40,13 +40,19 @@ namespace storm {
 		if (inlined) {
 			InlinedCode *c = as<InlinedCode>(code.borrow());
 			c->code(to, params, res);
+		} else if (result == Value()) {
+			assert(("Not implemented for value types yet!", this->result.isBuiltIn()));
+			for (nat i = 0; i < params.size(); i++)
+				to.to << fnParam(params[i]);
+
+			to.to << fnCall(Ref(ref()), Size());
 		} else {
 			Variable result = res.safeLocation(to, this->result);
 
 			assert(("Not implemented for value types yet!", this->result.isBuiltIn()));
-			for (nat i = 0; i < params.size(); i++) {
+			for (nat i = 0; i < params.size(); i++)
 				to.to << fnParam(params[i]);
-			}
+
 			to.to << fnCall(Ref(ref()), result.size());
 			to.to << mov(result, asSize(ptrA, result.size()));
 		}

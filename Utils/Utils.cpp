@@ -37,5 +37,5 @@ nat atomicDecrement(volatile nat &v) {
 }
 
 #else
-#error "atomicIncrement and atomicDecrement are only supported on Windows"
+#error "atomicIncrement and atomicDecrement are only supported on Windows for now"
 #endif

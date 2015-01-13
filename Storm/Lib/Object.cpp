@@ -131,7 +131,7 @@ namespace storm {
 		size_t s = type->size().current();
 
 		assert(type->flags & typeClass);
-		assert(("Not enough memory for the specified type!", size >= s));
+		assert(("Not enough memory for the specified type!", size >= s || size == 0));
 
 		void *mem = allocDumb(type->engine, s);
 		memset(mem, 0, s);
@@ -148,7 +148,7 @@ namespace storm {
 	}
 
 	void Object::operator delete(void *mem, Type *type) {
-		free(mem);
+		Object::operator delete(mem);
 	}
 
 	void Object::operator delete(void *ptr, void *mem) {
@@ -156,8 +156,7 @@ namespace storm {
 	}
 
 	void Object::operator delete(void *mem) {
-		size_t typeOffset = OFFSET_OF(Object, myType);
-		Object::operator delete(mem, OFFSET_IN(mem, typeOffset, Type *));
+		free(mem);
 	}
 
 	void *Object::operator new[](size_t size, Type *type) { assert(false); return null; }
@@ -179,9 +178,19 @@ namespace storm {
 				params.prependParam(mem);
 			params.call<void>(ctor->pointer());
 		} catch (...) {
-			Object::operator delete(mem, mem);
+			Object::operator delete(mem, type);
 			throw;
 		}
 		return (Object *)mem;
 	}
+
+	void *CODECALL stormMalloc(Type *type) {
+		return Object::operator new(0, type);
+	}
+
+	void CODECALL stormFree(void *mem) {
+		// OK to pass null to mem.
+		Object::operator delete(mem);
+	}
+
 }
