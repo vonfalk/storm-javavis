@@ -22,6 +22,9 @@ namespace storm {
 
 			// Add a parameter.
 			void STORM_FN add(Auto<Expr> expr);
+
+			// Add a parameter to the beginning.
+			void STORM_FN addFirst(Auto<Expr> expr);
 		};
 
 		/**
@@ -30,7 +33,12 @@ namespace storm {
 		class NamedExpr : public Expr {
 			STORM_CLASS;
 		public:
+			// Try to call 'name' with 'params'.
 			STORM_CTOR NamedExpr(Auto<Block> block, Auto<SStr> name, Auto<Actual> params);
+
+			// Try to call 'name' with 'first' as the first parameter of 'params'. This is
+			// used when we find an expression like: a.b(...). Then a is 'first'.
+			STORM_CTOR NamedExpr(Auto<Block> block, Auto<SStr> name, Auto<Expr> first, Auto<Actual> params);
 
 			// The return type of this 'NamedExpr'.
 			virtual Value result();

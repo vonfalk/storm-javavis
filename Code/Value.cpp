@@ -142,7 +142,7 @@ namespace code {
 
 		if (valType != tRegister && valType != tCondFlag) {
 			if (valSize == Size())
-				to << "a"; // a for 'abstract entity'
+				to << "";
 			else if (valSize == Size::sPtr)
 				to << 'p';
 			else if (valSize == Size::sByte)

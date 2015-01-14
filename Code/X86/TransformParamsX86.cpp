@@ -179,7 +179,7 @@ namespace code {
 			for (nat i = 0; i < vars.size(); i++) {
 				Variable var = vars[i];
 
-				Value dtor = frame.freeFn(var);
+				Value dtor = frame.freeFn(var, freeOnBlockExit);
 				if (dtor.type() != Value::tNone) {
 					if (preserveEax && !pushedEax) {
 						to << code::push(eax);

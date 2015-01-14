@@ -7,6 +7,22 @@
 
 namespace code {
 
+	const wchar *name(FreeOn f) {
+		switch (f) {
+		case freeOnNone:
+			return L"never";
+		case freeOnException:
+			return L"on exception";
+		case freeOnBlockExit:
+			return L"on exit block";
+		case freeOnBoth:
+			return L"always";
+		default:
+			assert(false);
+			return L"unknown";
+		}
+	}
+
 	Frame::Frame() : nextBlockId(1), nextVariableId(0), anyDestructors(false) {
 		// Create the root block as ID 0.
 		blocks.insert(std::make_pair(0, InternalBlock()));
@@ -27,7 +43,7 @@ namespace code {
 			to << endl << Value(v[i]);
 			Value free = freeFn(v[i]);
 			if (free != Value())
-				to << L" (free: " << free << L")";
+				to << L" (free: " << free << L", " << name(freeOn(v[i])) << L")";
 			if (isParam(v[i]))
 				to << L" (param)";
 		}
@@ -159,29 +175,31 @@ namespace code {
 		return Block(nextBlockId++);
 	}
 
-	Variable Frame::createVariable(Block in, Size size, Value free) {
+	Variable Frame::createVariable(Block in, Size size, Value free, FreeOn on) {
 		if (in == Block::invalid)
 			throw FrameError();
 
 		if (!free.empty())
-			anyDestructors = true;
+			if (on & freeOnException)
+				anyDestructors = true;
 
 		assert(blocks.count(in.id));
 		InternalBlock &block = blocks[in.id];
 		block.variables.push_back(nextVariableId);
 
-		Var v = { in.id, size, free };
+		Var v = { in.id, size, free, on };
 		vars.insert(std::make_pair(nextVariableId, v));
 
 		return Variable(nextVariableId++, size);
 	}
 
-	Variable Frame::createParameter(Size size, bool isFloat, Value free) {
-		Param p = { size, isFloat, free };
-		parameters.insert(std::make_pair(nextVariableId, p));
-
+	Variable Frame::createParameter(Size size, bool isFloat, Value free, FreeOn on) {
 		if (!free.empty())
-			anyDestructors = true;
+			if (on & freeOnException)
+				anyDestructors = true;
+
+		Param p = { size, isFloat, free, on };
+		parameters.insert(std::make_pair(nextVariableId, p));
 
 		return Variable(nextVariableId++, size);
 	}
@@ -204,6 +222,23 @@ namespace code {
 		} else {
 			throw FrameError();
 		}
+	}
+
+	FreeOn Frame::freeOn(Variable v) const {
+		if (parameters.count(v.id)) {
+			return parameters.find(v.id)->second.freeOn;
+		} else if (vars.count(v.id)) {
+			return vars.find(v.id)->second.freeOn;
+		} else {
+			throw FrameError();
+		}
+	}
+
+	Value Frame::freeFn(Variable v, FreeOn scenario) const {
+		if (scenario & freeOn(v))
+			return freeFn(v);
+		else
+			return Value();
 	}
 
 	vector<Variable> Frame::variables(Block b) const {

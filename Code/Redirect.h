@@ -12,7 +12,8 @@ namespace code {
 	 * return (*call)(...);
 	 * where 'param' is pre-defined.
 	 *
-	 * TODO: Properly destroy parameters on exception!
+	 * Note: the cleanup function is only run if an exception is throw, not during
+	 * normal execution!
 	 */
 	class Redirect {
 	public:

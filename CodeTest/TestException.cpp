@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
+#include "Code/Redirect.h"
+#include "Code/Function.h"
 
 static int destroyed = 0;
 
@@ -59,6 +61,54 @@ BEGIN_TEST(TestException) {
 
 } END_TEST
 
+static cpuInt redirectTo() {
+	return 3;
+}
+
+static void *redirectFn(cpuInt v) {
+	if (throwError)
+		throw Error();
+	return &redirectTo;
+}
+
+BEGIN_TEST(TestChainedException) {
+	Arena arena;
+	Ref intCleanup = arena.external(L"destroyInt", &destroyInt);
+	Ref throwEx = arena.external(L"throwException", &redirectFn);
+
+	// Innermost function is a redirect.
+	Redirect redirect;
+	redirect.param(Size::sInt, Ref(intCleanup));
+	redirect.result(Size::sInt, true);
+	Binary inner(arena, L"inner", redirect.code(Ref(throwEx), Value()));
+	RefSource innerRef(arena, L"inner");
+	inner.update(innerRef);
+
+	// Outermost function is a regular function.
+	Listing l;
+	Variable result = l.frame.createIntVar(l.frame.root(), Ref(intCleanup));
+	Variable r2 = l.frame.createIntVar(l.frame.root(), Ref(intCleanup), freeOnBlockExit);
+
+	l << prolog();
+	l << mov(result, intConst(3));
+	l << mov(r2, intConst(2));
+	l << fnParam(result);
+	l << fnCall(Ref(innerRef), Size::sInt);
+	l << epilog();
+	l << ret(Size::sInt);
+
+	Binary outer(arena, L"outer", l);
+
+	throwError = true;
+	destroyed = 0;
+	CHECK_ERROR(FnCall().call<cpuInt>(outer.getData()));
+	CHECK_EQ(destroyed, 6);
+
+	throwError = false;
+	destroyed = 0;
+	CHECK_EQ(FnCall().call<cpuInt>(outer.getData()), 3);
+	CHECK_EQ(destroyed, 5);
+} END_TEST
 
 BEGIN_TEST(TestNoException) {
 	Arena arena;

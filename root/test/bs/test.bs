@@ -5,13 +5,19 @@ class Foo {
     Int b;
 
     Int foo() {
-        a;
+        a - b;
+    }
+
+    void set() {
+    	a = 10;
+	b = 7;
     }
 }
 
 Int createFoo() {
     Foo v = Foo();
-    3;
+    v.set;
+    v.foo;
 }
 
 Int foo(Int p) {

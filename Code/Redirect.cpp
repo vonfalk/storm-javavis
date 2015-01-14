@@ -19,7 +19,6 @@ namespace code {
 
 	Listing Redirect::code(const Value &fn, const Value &param) {
 		Listing l;
-		Block root = l.frame.root();
 
 		if (!resultBuiltIn) {
 			l.frame.createParameter(resultSize, false); // no dtor needed here.
@@ -27,12 +26,13 @@ namespace code {
 
 		for (nat i = 0; i < params.size(); i++) {
 			Param &p = params[i];
-			l.frame.createParameter(p.size, false, p.dtor);
+			l.frame.createParameter(p.size, false, p.dtor, freeOnException);
 		}
 
 		l << prolog();
 
-		l << fnParam(param);
+		if (param != Value())
+			l << fnParam(param);
 		l << fnCall(fn, Size::sPtr);
 
 		l << epilog(); // preserves ptrA

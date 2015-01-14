@@ -9,6 +9,21 @@
 
 namespace code {
 
+	// Control over when variables are freed using the free function.
+	enum FreeOn {
+		freeOnNone = 0x0,
+		freeOnException = 0x1,
+		freeOnBlockExit = 0x2,
+		freeOnBoth = 0x3,
+	};
+
+	// And+or.
+	inline FreeOn operator &(FreeOn a, FreeOn b) { return FreeOn(nat(a) & nat(b)); }
+	inline FreeOn operator |(FreeOn a, FreeOn b) { return FreeOn(nat(a) | nat(b)); }
+
+	// ToString for 'FreeOn'
+	const wchar *name(FreeOn f);
+
 	// An implementation of the variable and block management, used by "Listing".
 	class Frame : public Printable {
 	public:
@@ -22,26 +37,42 @@ namespace code {
 
 		// Create a variable in a block. Free will be called once with this value as a parameter if
 		// the size is <= sizeof(cpuNat), or a pointer to it otherwise.
-		inline Variable createByteVar(Block in, Value free = Value()) { return createVariable(in, Size::sByte, free); }
-		inline Variable createIntVar(Block in, Value free = Value()) { return createVariable(in, Size::sInt, free); }
-		inline Variable createLongVar(Block in, Value free = Value()) { return createVariable(in, Size::sLong, free); }
-		inline Variable createPtrVar(Block in, Value free = Value()) { return createVariable(in, Size::sPtr, free); }
+		inline Variable createByteVar(Block in, Value free = Value(), FreeOn on = freeOnBoth) {
+			return createVariable(in, Size::sByte, free, on);
+		}
+		inline Variable createIntVar(Block in, Value free = Value(), FreeOn on = freeOnBoth) {
+			return createVariable(in, Size::sInt, free, on);
+		}
+		inline Variable createLongVar(Block in, Value free = Value(), FreeOn on = freeOnBoth) {
+			return createVariable(in, Size::sLong, free, on);
+		}
+		inline Variable createPtrVar(Block in, Value free = Value(), FreeOn on = freeOnBoth) {
+			return createVariable(in, Size::sPtr, free, on);
+		}
 
 		// Custom variable creation.
-		Variable createVariable(Block in, Size size, Value free = Value());
+		Variable createVariable(Block in, Size size, Value free = Value(), FreeOn when = freeOnBoth);
 
 		// Create a function parameter. These are assumed to be
 		// created in the same order as the parameters appear in the function
 		// declaration in C/C++. IsFloat shall be true if the parameter is
 		// a floating-point parameter. In some calling conventions, floating
 		// point parameters are treated separately.
-		inline Variable createByteParam(Value free = Value()) { return createParameter(Size::sByte, false, free); }
-		inline Variable createIntParam(Value free = Value()) { return createParameter(Size::sInt, false, free); }
-		inline Variable createLongParam(Value free = Value()) { return createParameter(Size::sLong, false, free); }
-		inline Variable createPtrParam(Value free = Value()) { return createParameter(Size::sPtr, false, free); }
+		inline Variable createByteParam(Value free = Value(), FreeOn on = freeOnBoth) {
+			return createParameter(Size::sByte, false, free, on);
+		}
+		inline Variable createIntParam(Value free = Value(), FreeOn on = freeOnBoth) {
+			return createParameter(Size::sInt, false, free, on);
+		}
+		inline Variable createLongParam(Value free = Value(), FreeOn on = freeOnBoth) {
+			return createParameter(Size::sLong, false, free, on);
+		}
+		inline Variable createPtrParam(Value free = Value(), FreeOn on = freeOnBoth) {
+			return createParameter(Size::sPtr, false, free, on);
+		}
 
 		// Custom parameter creation.
-		Variable createParameter(Size size, bool isFloat, Value free = Value());
+		Variable createParameter(Size size, bool isFloat, Value free = Value(), FreeOn when = freeOnBoth);
 
 		// Get the variable located before the current variable (either in the same, or in another block).
 		// Returns an empty variable if none exists.
@@ -52,6 +83,12 @@ namespace code {
 
 		// What shall be called when the variable goes out of scope?
 		Value freeFn(Variable v) const;
+
+		// When should 'freeFn' be used?
+		FreeOn freeOn(Variable v) const;
+
+		// Returns 'freeFn' if the 'freeOn' contains the flag given, otherwise Value().
+		Value freeFn(Variable v, FreeOn scenario) const;
 
 		// Get the parent block to "b".
 		Block parent(Variable v) const;
@@ -94,6 +131,9 @@ namespace code {
 
 			// Which function to call on free?
 			Value freeFn;
+
+			// Free when?
+			FreeOn freeOn;
 		};
 
 		struct Var {
@@ -105,6 +145,9 @@ namespace code {
 
 			// Which function to call on free?
 			Value freeFn;
+
+			// Free when?
+			FreeOn freeOn;
 		};
 
 		struct InternalBlock {

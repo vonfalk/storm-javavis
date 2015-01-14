@@ -79,6 +79,7 @@ ForInner => For(block) : Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me
 Atom(Block block);
 Atom => intConstant(nr) : "[0-9]+" nr;
 Atom => NamedExpr(block, name, params) : Name name, FnValues(block) params;
+Atom => NamedExpr(block, name, dotExpr, params) : Expr(block) dotExpr, "\.", Name name, FnValues(block) params;
 Atom => e : "(", Expr(block) e, ")";
 Atom => e : Block(block) e;
 Atom => e : If(block) e;

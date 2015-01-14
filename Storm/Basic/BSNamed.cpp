@@ -20,6 +20,10 @@ namespace storm {
 		expressions.push_back(e);
 	}
 
+	void bs::Actual::addFirst(Auto<Expr> e) {
+		expressions.insert(expressions.begin(), e);
+	}
+
 
 	/**
 	 * Function/variable call.
@@ -27,6 +31,12 @@ namespace storm {
 
 	bs::NamedExpr::NamedExpr(Auto<Block> block, Auto<SStr> name, Auto<Actual> params)
 		: toExecute(null), toLoad(null), params(params) {
+		findTarget(block->scope, Name(name->v->v), name->pos);
+	}
+
+	bs::NamedExpr::NamedExpr(Auto<Block> block, Auto<SStr> name, Auto<Expr> first, Auto<Actual> params)
+		: toExecute(null), toLoad(null), params(params) {
+		params->addFirst(first);
 		findTarget(block->scope, Name(name->v->v), name->pos);
 	}
 
@@ -146,7 +156,13 @@ namespace storm {
 
 		assert(("Creating values is not implemented yet!", toCreate.type->flags & typeClass));
 
-		Variable rawMemory = s.frame.createPtrVar(s.block, Ref(e.freeRef));
+		code::Block subBlock = s.frame.createChild(s.block);
+		s.to << begin(subBlock);
+		GenState subState = { s.to, s.frame, subBlock };
+
+		// Only free this one automatically on an exception. If there is no exception,
+		// the memory will be owned by the object itself.
+		Variable rawMemory = s.frame.createPtrVar(subBlock, Ref(e.freeRef), freeOnException);
 
 		// Allocate memory into our temporary variable.
 		s.to << fnParam(Ref(toCreate.type->typeRef));
@@ -161,9 +177,9 @@ namespace storm {
 		vars[0] = rawMemory;
 
 		for (nat i = 1; i < values.size(); i++) {
-			GenResult gr(values[i], s.block);
-			params->expressions[i - 1]->code(s, gr);
-			vars[i] = gr.location(s);
+			GenResult gr(values[i], subState.block);
+			params->expressions[i - 1]->code(subState, gr);
+			vars[i] = gr.location(subState);
 		}
 
 		// Increase refs for all parameters, except the not yet initialized object.
@@ -172,15 +188,13 @@ namespace storm {
 				s.to << code::addRef(vars[i]);
 
 		// Call!
-		GenResult voidTo(Value(), s.block);
-		toExecute->genCode(s, vars, voidTo);
+		GenResult voidTo(Value(), subBlock);
+		toExecute->genCode(subState, vars, voidTo);
 
 		// Store our result.
-		s.to << mov(to.location(s), rawMemory);
+		s.to << mov(to.location(subState), rawMemory);
 
-		// Since the constructor did not throw an exception, we can set the 'rawMemory'
-		// to 'null' now since it would otherwise be freed.
-		s.to << mov(rawMemory, intPtrConst(0));
+		s.to << end(subBlock);
 	}
 
 	bs::NamedExpr *bs::Operator(Auto<Block> block, Auto<Expr> lhs, Auto<SStr> m, Auto<Expr> rhs) {

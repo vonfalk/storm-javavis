@@ -57,7 +57,8 @@ namespace code {
 			// The location of the variable on the stack.
 			void *ptr;
 
-			// The free function for this variable.
+			// The free function for this variable, is null if the variable/parameter
+			// is declared as not being destroyed on exceptions.
 			void *freeFn;
 		};
 

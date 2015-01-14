@@ -45,7 +45,7 @@ namespace code {
 				// Offset of the variable.
 				int offset;
 
-				// The function to be called (if any) to free the variable.
+				// The function to be called (if any) to free the variable when an exception occurs.
 				void *freeFn;
 			};
 
