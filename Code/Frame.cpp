@@ -25,8 +25,11 @@ namespace code {
 
 		for (nat i = 0; i < v.size(); i++) {
 			to << endl << Value(v[i]);
+			Value free = freeFn(v[i]);
+			if (free != Value())
+				to << L" (free: " << free << L")";
 			if (isParam(v[i]))
-				to << " (param)";
+				to << L" (param)";
 		}
 
 		for (nat i = 0; i < c.size(); i++)
@@ -176,6 +179,10 @@ namespace code {
 	Variable Frame::createParameter(Size size, bool isFloat, Value free) {
 		Param p = { size, isFloat, free };
 		parameters.insert(std::make_pair(nextVariableId, p));
+
+		if (!free.empty())
+			anyDestructors = true;
+
 		return Variable(nextVariableId++, size);
 	}
 
