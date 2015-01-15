@@ -69,7 +69,13 @@ namespace storm {
 			void createCode(const GenState &s, GenResult &to);
 
 			// Find what to call.
-			void findTarget(const Scope &scope, const Name &name, const SrcPos &pos);
+			void findTarget(Auto<Block> block, const Name &name, const SrcPos &pos, bool useThis);
+
+			// Given a 'named', find out what to call.
+			bool findTarget(Named *n, const SrcPos &pos);
+
+			// Find what to call. Assumes we're trying to use the 'this' pointer.
+			bool findTargetThis(Auto<Block> block, const Name &name, const SrcPos &pos, Named *&candidate);
 
 			// Find a constructor.
 			void findCtor(Type *t, const SrcPos &pos);

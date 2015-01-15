@@ -26,11 +26,13 @@ namespace storm {
 
 		// Expressions of the form foo(x, y, z) are equal to x.foo(y, z).
 		if (params.size() > 0 && name.size() == 1) {
-			Named *n = params[0].type->find(name);
-			if (Overload *o = as<Overload>(n)) {
-				return o->find(params);
-			} else if (params.size() == 0) {
-				return n;
+			if (params[0] != Value()) {
+				Named *n = params[0].type->find(name);
+				if (Overload *o = as<Overload>(n)) {
+					return o->find(params);
+				} else if (params.size() == 0) {
+					return n;
+				}
 			}
 		}
 

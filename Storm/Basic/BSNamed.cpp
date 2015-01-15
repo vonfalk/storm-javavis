@@ -31,41 +31,85 @@ namespace storm {
 
 	bs::NamedExpr::NamedExpr(Auto<Block> block, Auto<SStr> name, Auto<Actual> params)
 		: toExecute(null), toLoad(null), params(params) {
-		findTarget(block->scope, Name(name->v->v), name->pos);
+		findTarget(block, Name(name->v->v), name->pos, true);
 	}
 
 	bs::NamedExpr::NamedExpr(Auto<Block> block, Auto<SStr> name, Auto<Expr> first, Auto<Actual> params)
 		: toExecute(null), toLoad(null), params(params) {
 		params->addFirst(first);
-		findTarget(block->scope, Name(name->v->v), name->pos);
+		findTarget(block, Name(name->v->v), name->pos, false);
 	}
 
-	void bs::NamedExpr::findTarget(const Scope &scope, const Name &name, const SrcPos &pos) {
+	void bs::NamedExpr::findTarget(Auto<Block> block, const Name &name, const SrcPos &pos, bool useThis) {
+		const Scope &scope = block->scope;
+
 		if (Type *t = as<Type>(scope.find(name))) {
 			findCtor(t, pos);
 			return;
 		}
 
+		// If we have a this-pointer, try to use it!
+		Named *candidateN = null;
+		if (useThis && findTargetThis(block, name, pos, candidateN))
+			return;
+
 		Named *n = scope.find(name, params->values());
 
-		if (!n) {
-			TODO(L"Check this-pointer as well!");
+		if (findTarget(n, pos))
+			return;
+
+		if (!n && !candidateN) {
 			throw SyntaxError(pos, L"Can not find " + ::toS(name) + L"("
 							+ join(params->values(), L", ") + L").");
 		}
 
-		if (n->name == Type::CTOR)
-			throw SyntaxError(pos, L"Can not call a constructor outside a new-expression.");
+		if (!n)
+			n = candidateN;
 
-		if (toExecute = as<Function>(n))
-			return;
-
-		if (toLoad = as<LocalVar>(n))
-			return;
-
-		throw TypeError(pos, ::toS(name) + L" is a " + n->myType->identifier() +
+		throw TypeError(pos, ::toS(n) + L" is a " + n->myType->identifier() +
 						L". Only functions, variables and constructors are supported.");
 	}
+
+	bool bs::NamedExpr::findTarget(Named *n, const SrcPos &pos) {
+		if (!n)
+			return false;
+
+		if (n->name == Type::CTOR)
+			throw SyntaxError(pos, L"Can not call a constructor by using __ctor. Use Foo() instead.");
+
+		if (toExecute = as<Function>(n))
+			return true;
+
+		if (toLoad = as<LocalVar>(n))
+			return true;
+
+		return false;
+	}
+
+	bool bs::NamedExpr::findTargetThis(Auto<Block> block, const Name &name, const SrcPos &pos, Named *&candidate) {
+		const Scope &scope = block->scope;
+
+		LocalVar *thisVar = block->variable(L"this");
+		if (!thisVar)
+			return false;
+
+		vector<Value> vals = params->values();
+		vals.insert(vals.begin(), thisVar->result);
+		Named *n = scope.find(name, vals);
+		candidate = n;
+
+		if (!findTarget(n, pos))
+			return false;
+
+		// Ok, now we need to modify the parameters by adding a reference to 'this'.
+		Auto<Actual> subParams = CREATE(Actual, this);
+		Auto<SStr> nThis = CREATE(SStr, this, L"this");
+		Auto<NamedExpr> sub = CREATE(NamedExpr, this, block, nThis, subParams);
+		params->addFirst(sub);
+
+		return true;
+	}
+
 
 	void bs::NamedExpr::findCtor(Type *t, const SrcPos &pos) {
 		vector<Value> params = this->params->values();

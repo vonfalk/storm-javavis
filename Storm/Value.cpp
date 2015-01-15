@@ -83,7 +83,7 @@ namespace storm {
 		if (type == null)
 			to << L"void";
 		else
-			to << type->name;
+			to << type->identifier();
 		if (ref)
 			to << "&";
 	}

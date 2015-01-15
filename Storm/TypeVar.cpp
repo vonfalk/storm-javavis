@@ -7,7 +7,7 @@ namespace storm {
 		: NameOverload(name, vector<Value>(1, owner)), varType(type) {}
 
 	void TypeVar::output(wostream &to) const {
-		to << varType << L" " << name;
+		to << varType << L" " << params[0] << L":" << name;
 	}
 
 	Named *TypeVar::find(const Name &name) {
