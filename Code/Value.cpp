@@ -12,6 +12,7 @@ namespace code {
 
 	Value::Value(Word v, Size sz) : valType(tConstant), iConstant(v), valSize(sz), iOffset(0) {}
 	Value::Value(Size v, Size sz) : valType(tSizeConstant), iSize(v), valSize(sz), iOffset(0) {}
+	Value::Value(Offset v, Size sz) : valType(tOffsetConstant), iOffset(v), valSize(sz) {}
 
 	Value::Value(Label lbl) : valType(tLabel), labelId(lbl.id), valSize(Size::sPtr), iOffset(0) {}
 
@@ -47,6 +48,8 @@ namespace code {
 
 	Value::Type Value::type() const {
 		if (valType == tSizeConstant)
+			return tConstant;
+		if (valType == tOffsetConstant)
 			return tConstant;
 		return valType;
 	}
@@ -92,6 +95,8 @@ namespace code {
 			return iConstant == o.iConstant;
 		case tSizeConstant:
 			return iSize == o.iSize;
+		case tOffsetConstant:
+			return iOffset == o.iOffset;
 		case tRegister:
 			return iRegister == o.iRegister;
 		case tLabel:
@@ -164,6 +169,10 @@ namespace code {
 			break;
 		case tSizeConstant:
 			to << L"#" << iSize;
+			break;
+		case tOffsetConstant:
+			to << L"#" << iOffset.format(true);
+			break;
 		case tLabel:
 			to << L"#" << label().toS() << L":";
 			break;
@@ -197,6 +206,8 @@ namespace code {
 			return iConstant;
 		if (valType == tSizeConstant)
 			return iSize.current();
+		if (valType == tOffsetConstant)
+			return iOffset.current();
 		assert(("Tried to get constant value from non-constant.", false));
 		return 0;
 	}
@@ -232,7 +243,7 @@ namespace code {
 	}
 
 	Offset Value::offset() const {
-		assert(valType == tVariable || valType == tRelative);
+		assert(valType == tVariable || valType == tRelative || valType == tOffsetConstant);
 		return iOffset;
 	}
 
@@ -245,6 +256,7 @@ namespace code {
 	Value wordConst(Word v) { return Value(Word(v), Size::sWord); }
 	Value intPtrConst(Int v) { return Value(Word(v), Size::sPtr); }
 	Value natPtrConst(Nat v) { return Value(Word(v), Size::sPtr); }
+	Value intPtrConst(Offset v) { return Value(v, Size::sPtr); }
 	Value ptrConst(Size v) { return Value(v, Size::sPtr); }
 	Value ptrConst(void *v) { return Value(Word(v), Size::sPtr); }
 

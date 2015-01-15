@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "TypeVar.h"
+#include "Type.h"
 
 namespace storm {
 
@@ -7,10 +8,18 @@ namespace storm {
 		: NameOverload(name, vector<Value>(1, owner)), varType(type) {}
 
 	void TypeVar::output(wostream &to) const {
-		to << varType << L" " << params[0] << L":" << name;
+		to << varType << L" " << owner()->identifier() << L":" << name;
 	}
 
 	Named *TypeVar::find(const Name &name) {
 		return null;
+	}
+
+	Type *TypeVar::owner() const {
+		return params[0].type;
+	}
+
+	Offset TypeVar::offset() const {
+		return owner()->offset(this);
 	}
 }

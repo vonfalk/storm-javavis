@@ -37,7 +37,7 @@ namespace storm {
 		Size size() const;
 
 		// As a reference.
-		Value asRef() const;
+		Value asRef(bool v = true) const;
 
 		// Get the destructor for this type. A destructor has the signature void dtor(T).
 		code::Value destructor() const;

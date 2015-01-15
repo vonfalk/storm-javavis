@@ -20,8 +20,9 @@ namespace storm {
 		total += vSz;
 	}
 
-	Offset TypeLayout::offset(Size parentSize, TypeVar *v) const {
-		OffsetMap::const_iterator f = offsets.find(v);
+	Offset TypeLayout::offset(Size parentSize, const TypeVar *v) const {
+		// Sad, but needed...
+		OffsetMap::const_iterator f = offsets.find(const_cast<TypeVar *>(v));
 		if (f == offsets.end()) {
 			assert(("Variable not added here!", false));
 			throw InternalError(L"Variable not added properly: " + ::toS(v));

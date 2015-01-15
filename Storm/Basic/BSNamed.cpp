@@ -83,6 +83,9 @@ namespace storm {
 		if (toLoad = as<LocalVar>(n))
 			return true;
 
+		if (toAccess = as<TypeVar>(n))
+			return true;
+
 		return false;
 	}
 
@@ -134,6 +137,9 @@ namespace storm {
 			return toExecute->result;
 		if (toLoad)
 			return toLoad->result.asRef();
+		if (toAccess)
+			return toAccess->varType.asRef();
+		assert(false);
 		return Value();
 	}
 
@@ -144,6 +150,8 @@ namespace storm {
 			callCode(s, to);
 		else if (toLoad)
 			loadCode(s, to);
+		else if (toAccess)
+			accessCode(s, to);
 		else
 			assert(false);
 	}
@@ -190,6 +198,31 @@ namespace storm {
 			if (toLoad->result.refcounted())
 				s.to << code::addRef(v);
 			s.to << mov(v, toLoad->var);
+		}
+	}
+
+	void bs::NamedExpr::accessCode(const GenState &s, GenResult &to) {
+		using namespace code;
+		assert(params->expressions.size() == 1);
+
+		if (!to.needed())
+			return;
+
+		// Get the 'this' ptr.
+		Auto<Expr> tExpr = params->expressions[0];
+		GenResult tResult(tExpr->result().asRef(false), s.block);
+		tExpr->code(s, tResult);
+		code::Value tVar = tResult.location(s);
+		code::Value result = to.location(s);
+
+		if (to.type.ref) {
+			s.to << mov(result, tVar);
+			s.to << add(result, intPtrConst(toAccess->offset()));
+		} else {
+			// We need to copy the variable, we can not suggest a temporary location.
+			s.to << mov(ptrA, tVar);
+			s.to << add(ptrA, intPtrConst(toAccess->offset()));
+			s.to << mov(result, xRel(result.size(), ptrA));
 		}
 	}
 

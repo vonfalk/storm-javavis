@@ -9,6 +9,8 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class TypeVar;
+
 	/**
 	 * Define different properties for a type.
 	 */
@@ -90,6 +92,9 @@ namespace storm {
 
 		// Get a pointer/reference to the destructor (if any).
 		virtual code::Value destructor() const;
+
+		// Get the offset to a member. TODO: Maybe replace this one with RefSources in TypeVar?
+		Offset offset(const TypeVar *var) const;
 
 	protected:
 		virtual void output(wostream &to) const;

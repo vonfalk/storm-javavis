@@ -14,6 +14,12 @@ namespace storm {
 	public:
 		TypeVar(Type *owner, const Value &type, const String &name);
 
+		// Owning type.
+		Type *owner() const;
+
+		// Get our offset.
+		Offset offset() const;
+
 		// Our type.
 		const Value varType;
 

@@ -1,5 +1,7 @@
 Also: return types for rules may be specified.
 
+For member variables: make them use references instead of hard-coding offsets directly.
+
 In basic storm: Allow the dot operator to be used as scope resolution as well (maybe another in BS? like in cpp?)
 
 Extract the inheritance logic from the Type class into a separate class, making the Type class smaller.

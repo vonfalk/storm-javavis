@@ -41,8 +41,8 @@ namespace code {
 			// reg(), offset() (read at [reg() + offset()])
 			tRelative,
 
-			// Internal, appears as a constant. Stored in iOffset.
-			tSizeConstant,
+			// Internal, appears as a constant. Stored in iSize/iOffset.
+			tSizeConstant, tOffsetConstant,
 		};
 
 		Value();
@@ -88,6 +88,7 @@ namespace code {
 		// Constant
 		Value(Word c, Size size);
 		Value(Size s, Size size);
+		Value(Offset s, Size size);
 
 		// Reference
 		Value(Register r, Offset offset, Size size);
@@ -136,6 +137,7 @@ namespace code {
 		friend Value wordConst(Word v);
 		friend Value intPtrConst(Int v);
 		friend Value natPtrConst(Nat v);
+		friend Value intPtrConst(Offset v);
 		friend Value ptrConst(Size v);
 		friend Value ptrConst(void *v);
 		friend Value byteRel(Register reg, Offset offset);
@@ -161,6 +163,7 @@ namespace code {
 	// size_t like constants. Cannot be more than 32-bits for compatibility.
 	Value intPtrConst(Int v);
 	Value natPtrConst(Nat v);
+	Value intPtrConst(Offset v);
 	Value ptrConst(Size v);
 	Value ptrConst(void *v); // careful with this, will break miserably if serialized and loaded.
 
@@ -171,7 +174,7 @@ namespace code {
 	Value ptrRel(Register reg, Offset offset = Offset(0));
 	Value xRel(Size size, Register reg, Offset offset = Offset(0));
 
-	// Create values relative to variable locations.
+	// Create values relative to variable locations (relative to the beginning of the variable, not its content).
 	Value byteRel(Variable v, Offset offset = Offset(0));
 	Value intRel(Variable v, Offset offset = Offset(0));
 	Value longRel(Variable v, Offset offset = Offset(0));

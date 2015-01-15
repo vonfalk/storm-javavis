@@ -216,4 +216,8 @@ namespace storm {
 		return code::Value();
 	}
 
+	Offset Type::offset(const TypeVar *var) const {
+		return layout.offset(superSize(), var);
+	}
+
 }

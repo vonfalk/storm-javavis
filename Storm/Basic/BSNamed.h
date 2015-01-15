@@ -53,6 +53,9 @@ namespace storm {
 			// The variable to load (if any).
 			LocalVar *toLoad;
 
+			// Member variable to load (if any).
+			TypeVar *toAccess;
+
 			// The type to create (if any). Constructor saved in 'toExecute'.
 			Value toCreate;
 
@@ -67,6 +70,9 @@ namespace storm {
 
 			// Generate code to create a type.
 			void createCode(const GenState &s, GenResult &to);
+
+			// Generate code to access a member variable.
+			void accessCode(const GenState &s, GenResult &to);
 
 			// Find what to call.
 			void findTarget(Auto<Block> block, const Name &name, const SrcPos &pos, bool useThis);

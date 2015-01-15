@@ -18,7 +18,7 @@ namespace storm {
 		void add(NameOverload *o);
 
 		// Get the offset of 'v'.
-		Offset offset(Size parentSize, TypeVar *v) const;
+		Offset offset(Size parentSize, const TypeVar *v) const;
 
 		// Total size of all variables.
 		Size size(Size parentSize) const;
