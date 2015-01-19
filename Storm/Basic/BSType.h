@@ -15,7 +15,7 @@ namespace storm {
 		public:
 			STORM_CTOR PkgName();
 
-			void STORM_FN add(Auto<SStr> part);
+			void STORM_FN add(Par<SStr> part);
 
 			vector<Auto<Str> > parts;
 
@@ -29,8 +29,8 @@ namespace storm {
 		class TypeName : public SObject {
 			STORM_CLASS;
 		public:
-			STORM_CTOR TypeName(Auto<SStr> name);
-			STORM_CTOR TypeName(Auto<PkgName> pkg, Auto<SStr> name);
+			STORM_CTOR TypeName(Par<SStr> name);
+			STORM_CTOR TypeName(Par<PkgName> pkg, Par<SStr> name);
 
 			Auto<PkgName> pkg;
 			Auto<Str> name;

@@ -6,11 +6,11 @@ namespace storm {
 
 	bs::Contents::Contents() {}
 
-	void bs::Contents::add(Auto<Type> t) {
+	void bs::Contents::add(Par<Type> t) {
 		types.push_back(t);
 	}
 
-	void bs::Contents::add(Auto<FunctionDecl> t) {
+	void bs::Contents::add(Par<FunctionDecl> t) {
 		functions.push_back(t);
 	}
 

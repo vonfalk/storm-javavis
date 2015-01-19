@@ -7,17 +7,17 @@ namespace storm {
 
 	SScope::SScope() {}
 
-	void SScope::expr(Auto<SExpr> expr) {}
+	void SScope::expr(Par<SExpr> expr) {}
 
-	SExpr *sOperator(Auto<SExpr> lhs, Auto<SExpr> rhs, Auto<SStr> op) {
+	SExpr *sOperator(Par<SExpr> lhs, Par<SExpr> rhs, Par<SStr> op) {
 		return CREATE(SExpr, op);
 	}
 
-	SExpr *sVar(Auto<SStr> op) {
+	SExpr *sVar(Par<SStr> op) {
 		return CREATE(SExpr, op);
 	}
 
-	SExpr *sNr(Auto<SStr> op) {
+	SExpr *sNr(Par<SStr> op) {
 		return CREATE(SExpr, op);
 	}
 

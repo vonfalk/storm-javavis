@@ -5,26 +5,26 @@
 namespace storm {
 	namespace bs {
 
-		bs::Var::Var(Auto<Block> block, Auto<TypeName> type, Auto<SStr> name) {
+		bs::Var::Var(Par<Block> block, Par<TypeName> type, Par<SStr> name) {
 			init(block, type->value(block->scope), name);
 		}
 
-		bs::Var::Var(Auto<Block> block, Auto<TypeName> type, Auto<SStr> name, Auto<Expr> init) {
+		bs::Var::Var(Par<Block> block, Par<TypeName> type, Par<SStr> name, Par<Expr> init) {
 			this->init(block, type->value(block->scope), name);
 			initTo(init);
 		}
 
-		bs::Var::Var(Auto<Block> block, Auto<SStr> name, Auto<Expr> init) {
+		bs::Var::Var(Par<Block> block, Par<SStr> name, Par<Expr> init) {
 			this->init(block, init->result(), name);
 			initTo(init);
 		}
 
-		void bs::Var::init(Auto<Block> block, const Value &type, Auto<SStr> name) {
+		void bs::Var::init(Par<Block> block, const Value &type, Par<SStr> name) {
 			variable = CREATE(LocalVar, this, name->v->v, type, name->pos);
 			block->add(variable);
 		}
 
-		void bs::Var::initTo(Auto<Expr> e) {
+		void bs::Var::initTo(Par<Expr> e) {
 			variable->result.mustStore(e->result(), variable->pos);
 			initExpr = e;
 		}

@@ -19,7 +19,7 @@ namespace storm {
 		STORM_CTOR Str();
 
 		// Copy ctor
-		STORM_CTOR Str(Auto<Str> copy);
+		STORM_CTOR Str(Par<Str> copy);
 
 		// Create from regular string.
 		Str(const String &s);
@@ -28,7 +28,7 @@ namespace storm {
 		Nat STORM_FN count() const;
 
 		// Equals.
-		virtual Bool STORM_FN equals(Auto<Object> o);
+		virtual Bool STORM_FN equals(Par<Object> o);
 
 		// ToS
 		virtual Str *STORM_FN toS();

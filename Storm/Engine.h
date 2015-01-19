@@ -46,7 +46,7 @@ namespace storm {
 
 		// Special built-in types.
 		inline Type *specialBuiltIn(Special t) const { return specialCached[nat(t)].borrow(); }
-		void setSpecialBuiltIn(Special t, Auto<Type> z);
+		void setSpecialBuiltIn(Special t, Par<Type> z);
 
 		// Get the default scope lookup.
 		inline Auto<ScopeLookup> scopeLookup() { assert(defScopeLookup); return defScopeLookup; }

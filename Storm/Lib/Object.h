@@ -36,7 +36,12 @@ namespace storm {
 	 * Rules for the ref-counting:
 	 * When returning Object*s, the caller has the responsibility
 	 * to release one reference. Ie, the caller has ownership of one reference.
-	 * Function parameters are freed by the called function. Hint: use Auto<>!
+	 * The cast of Auto<> steals ownership of this reference automatically,
+	 * so Auto<T> t = fnCall() is correct.
+	 *
+	 * Function parameters are freed by the calling function. The Auto<> can
+	 * fall back to a Par<> (which should be used for function parameters) and
+	 * behaves correctly in that case. Otherwise, use Auto<>::borrow().
 	 */
 	class Object : public Printable {
 		STORM_CLASS;
@@ -101,7 +106,7 @@ namespace storm {
 		virtual Str *STORM_FN toS();
 
 		// Compare for equality.
-		virtual Bool STORM_FN equals(Auto<Object> o);
+		virtual Bool STORM_FN equals(Par<Object> o);
 
 		// Dump leaks.
 		static void dumpLeaks();

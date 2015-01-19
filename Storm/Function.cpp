@@ -58,7 +58,7 @@ namespace storm {
 		}
 	}
 
-	void Function::setCode(Auto<Code> code) {
+	void Function::setCode(Par<Code> code) {
 		if (this->code)
 			this->code->detach();
 		code->attach(this);
@@ -67,7 +67,7 @@ namespace storm {
 			code->update(*codeRef);
 	}
 
-	void Function::setLookup(Auto<Code> code) {
+	void Function::setLookup(Par<Code> code) {
 		if (lookup)
 			lookup->detach();
 		code->attach(this);
@@ -101,14 +101,16 @@ namespace storm {
 
 	Function *nativeFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr) {
 		Function *fn = CREATE(Function, e, result, name, params);
-		fn->setCode(CREATE(StaticCode, e, ptr));
+		Auto<StaticCode> c = CREATE(StaticCode, e, ptr);
+		fn->setCode(c);
 		return fn;
 	}
 
 	Function *inlinedFunction(Engine &e, Value result, const String &name,
 							const vector<Value> &params, Fn<void, InlinedParams> fn) {
 		Function *f = CREATE(Function, e, result, name, params);
-		f->setCode(CREATE(InlinedCode, e, fn));
+		Auto<InlinedCode> ic = CREATE(InlinedCode, e, fn);
+		f->setCode(ic);
 		return f;
 	}
 

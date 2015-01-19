@@ -3,18 +3,18 @@
 
 namespace storm {
 
-	bs::For::For(Auto<Block> parent) : Block(parent) {}
+	bs::For::For(Par<Block> parent) : Block(parent) {}
 
-	void bs::For::test(Auto<Expr> e) {
+	void bs::For::test(Par<Expr> e) {
 		e->result().mustStore(Value::stdBool(engine()), e->pos);
 		testExpr = e;
 	}
 
-	void bs::For::update(Auto<Expr> e) {
+	void bs::For::update(Par<Expr> e) {
 		updateExpr = e;
 	}
 
-	void bs::For::body(Auto<Expr> e) {
+	void bs::For::body(Par<Expr> e) {
 		bodyExpr = e;
 	}
 

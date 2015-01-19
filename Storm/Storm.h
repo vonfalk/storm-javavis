@@ -20,6 +20,10 @@
 	static inline Type *type(const Auto<T> &o) {	\
 		return type(o.borrow());					\
 	}												\
+	template <class T>								\
+	static inline Type *type(const Par<T> &o) {		\
+		return type(o.borrow());					\
+	}
 
 // Mark a value-type.
 #define STORM_VALUE \

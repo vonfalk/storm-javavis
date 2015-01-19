@@ -26,7 +26,7 @@ namespace storm {
 		assert(n->name == name);
 		assert(find(n->params) == null);
 		n->owner = this;
-		items.push_back(n);
+		items.push_back(capture(n));
 	}
 
 	NameOverload *Overload::find(const vector<Value> &params) {
@@ -37,7 +37,7 @@ namespace storm {
 		return null;
 	}
 
-	bool Overload::suitable(const Auto<NameOverload> &overload, const vector<Value> &params) {
+	bool Overload::suitable(Par<NameOverload> overload, const vector<Value> &params) {
 		// No default-parameters yet!
 		if (overload->params.size() != params.size())
 			return false;

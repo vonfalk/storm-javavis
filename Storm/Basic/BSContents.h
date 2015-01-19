@@ -16,10 +16,10 @@ namespace storm {
 			STORM_CTOR Contents();
 
 			// Add a type.
-			void STORM_FN add(Auto<Type> type);
+			void STORM_FN add(Par<Type> type);
 
 			// Add a function.
-			void STORM_FN add(Auto<FunctionDecl> fn);
+			void STORM_FN add(Par<FunctionDecl> fn);
 
 			// All types.
 			vector<Auto<Type> > types;

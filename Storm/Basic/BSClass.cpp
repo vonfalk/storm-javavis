@@ -8,11 +8,11 @@
 
 namespace storm {
 
-	bs::Class::Class(SrcPos pos, Auto<SStr> name, Auto<SStr> content)
+	bs::Class::Class(SrcPos pos, Par<SStr> name, Par<SStr> content)
 		: Type(name->v->v, typeClass), declared(pos), content(content) {}
 
 	void bs::Class::setScope(const Scope &scope) {
-		this->scope = Scope(scope, capture(this));
+		this->scope = Scope(scope, this);
 	}
 
 	void bs::Class::lazyLoad() {
@@ -28,11 +28,11 @@ namespace storm {
 		Auto<ClassBody> body = z.expect<ClassBody>(engine, L"From ClassBody rule");
 
 		for (nat i = 0; i < body->items.size(); i++) {
-			add(body->items[i].steal());
+			add(body->items[i].borrow());
 		}
 
 		// Temporary solution.
-		add(CREATE(TypeDefaultCtor, engine, this));
+		add(steal(CREATE(TypeDefaultCtor, engine, this)));
 	}
 
 	/**
@@ -41,7 +41,7 @@ namespace storm {
 
 	bs::ClassBody::ClassBody() {}
 
-	void bs::ClassBody::add(Auto<NameOverload> i) {
+	void bs::ClassBody::add(Par<NameOverload> i) {
 		items.push_back(i);
 	}
 
@@ -49,16 +49,16 @@ namespace storm {
 	 * Member
 	 */
 
-	bs::ClassVar::ClassVar(Auto<Class> owner, Auto<TypeName> type, Auto<SStr> name)
+	bs::ClassVar::ClassVar(Par<Class> owner, Par<TypeName> type, Par<SStr> name)
 		: TypeVar(owner.borrow(), type->value(owner->scope), name->v->v) {}
 
 
-	bs::BSFunction *STORM_FN bs::classFn(Auto<Class> owner,
+	bs::BSFunction *STORM_FN bs::classFn(Par<Class> owner,
 										SrcPos pos,
-										Auto<SStr> name,
-										Auto<TypeName> result,
-										Auto<Params> params,
-										Auto<SStr> contents) {
+										Par<SStr> name,
+										Par<TypeName> result,
+										Par<Params> params,
+										Par<SStr> contents) {
 
 		params->addThis(owner.borrow());
 		return CREATE(BSFunction, owner->engine,

@@ -6,7 +6,7 @@ namespace storm {
 
 	bs::PkgName::PkgName() {}
 
-	void bs::PkgName::add(Auto<SStr> name) {
+	void bs::PkgName::add(Par<SStr> name) {
 		parts.push_back(name->v);
 	}
 
@@ -14,8 +14,8 @@ namespace storm {
 		join(to, parts, L", ");
 	}
 
-	bs::TypeName::TypeName(Auto<SStr> name) : name(name->v) {}
-	bs::TypeName::TypeName(Auto<PkgName> pkg, Auto<SStr> name) : pkg(pkg), name(name->v) {}
+	bs::TypeName::TypeName(Par<SStr> name) : name(name->v) {}
+	bs::TypeName::TypeName(Par<PkgName> pkg, Par<SStr> name) : pkg(pkg), name(name->v) {}
 
 	void bs::TypeName::output(wostream &to) const {
 		to << pkg << L"." << name;

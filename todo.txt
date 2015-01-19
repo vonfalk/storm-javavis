@@ -6,6 +6,11 @@ In basic storm: Allow the dot operator to be used as scope resolution as well (m
 
 Extract the inheritance logic from the Type class into a separate class, making the Type class smaller.
 
+In the parser: allow member variables to be assigned by the -> syntax as well! Useful in various places
+in Basic.
+
+Optimization pass in Code that looks for the pattern: addRef -> never written -> release() in dtor.
+
 The size of built-in types is not entirely correct at the moment. The current architecture's size is
 used for both values in Size at the moment, which will not work when running saved code from x86 on x86-64.
 

@@ -56,7 +56,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create a pkgReader.
-		STORM_CTOR PkgReader(Auto<PkgFiles> files, Auto<Package> owner);
+		STORM_CTOR PkgReader(Par<PkgFiles> files, Par<Package> owner);
 
 		// Dtor.
 		~PkgReader();
@@ -85,7 +85,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create a FileReader.
-		FileReader(const Path &file, Auto<Package> into);
+		FileReader(const Path &file, Par<Package> into);
 
 		// File.
 		const Path file;
@@ -114,7 +114,7 @@ namespace storm {
 	class FilesReader : public PkgReader {
 		STORM_CLASS;
 	public:
-		STORM_CTOR FilesReader(Auto<PkgFiles> files, Auto<Package> pkg);
+		STORM_CTOR FilesReader(Par<PkgFiles> files, Par<Package> pkg);
 
 		// Read contents from all files.
 		virtual void readSyntax(SyntaxRules &to);

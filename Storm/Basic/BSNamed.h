@@ -21,10 +21,10 @@ namespace storm {
 			vector<Value> values();
 
 			// Add a parameter.
-			void STORM_FN add(Auto<Expr> expr);
+			void STORM_FN add(Par<Expr> expr);
 
 			// Add a parameter to the beginning.
-			void STORM_FN addFirst(Auto<Expr> expr);
+			void STORM_FN addFirst(Par<Expr> expr);
 		};
 
 
@@ -34,7 +34,7 @@ namespace storm {
 		class FnCall : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR FnCall(Auto<Function> toExecute, Auto<Actual> params);
+			STORM_CTOR FnCall(Par<Function> toExecute, Par<Actual> params);
 
 			// Result type.
 			virtual Value result();
@@ -57,7 +57,7 @@ namespace storm {
 		class CtorCall : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR CtorCall(Auto<Function> ctor, Auto<Actual> params);
+			STORM_CTOR CtorCall(Par<Function> ctor, Par<Actual> params);
 
 			// Result type.
 			virtual Value result();
@@ -83,7 +83,7 @@ namespace storm {
 		class LocalVarAccess : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR LocalVarAccess(Auto<LocalVar> var);
+			STORM_CTOR LocalVarAccess(Par<LocalVar> var);
 
 			// Result type.
 			virtual Value result();
@@ -103,7 +103,7 @@ namespace storm {
 		class MemberVarAccess : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR MemberVarAccess(Auto<Expr> member, Auto<TypeVar> var);
+			STORM_CTOR MemberVarAccess(Par<Expr> member, Par<TypeVar> var);
 
 			// Result type.
 			virtual Value result();
@@ -121,14 +121,14 @@ namespace storm {
 
 
 		// Find out what the named expression means, and create proper object.
-		Expr *STORM_FN namedExpr(Auto<Block> block, Auto<SStr> name, Auto<Actual> params);
+		Expr *STORM_FN namedExpr(Par<Block> block, Par<SStr> name, Par<Actual> params);
 
 		// Special case of above, used when we find an expression like a.b(...). 'first' is inserted
 		// into the beginning of 'params' and used. This method inhibits automatic insertion of 'this'.
-		Expr *STORM_FN namedExpr(Auto<Block> block, Auto<SStr> name, Auto<Expr> first, Auto<Actual> params);
+		Expr *STORM_FN namedExpr(Par<Block> block, Par<SStr> name, Par<Expr> first, Par<Actual> params);
 
 		// Create an operator.
-		Expr *STORM_FN operatorExpr(Auto<Block> block, Auto<Expr> lhs, Auto<SStr> m, Auto<Expr> rhs);
+		Expr *STORM_FN operatorExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs);
 
 	}
 }

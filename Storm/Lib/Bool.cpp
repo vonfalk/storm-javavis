@@ -51,11 +51,11 @@ namespace storm {
 	BoolType::BoolType() : Type(L"Bool", typeValue, Size::sByte) {
 		vector<Value> bb(2, Value(this));
 		vector<Value> b(1, Value(this));
-		add(inlinedFunction(engine, Value(this), L"&", bb, simpleFn(&boolAnd)));
-		add(inlinedFunction(engine, Value(this), L"|", bb, simpleFn(&boolOr)));
-		add(inlinedFunction(engine, Value(this), L"==", bb, simpleFn(&boolEq)));
-		add(inlinedFunction(engine, Value(this), L"!=", bb, simpleFn(&boolNeq)));
-		add(inlinedFunction(engine, Value(this), L"!", b, simpleFn(&boolNot)));
+		add(steal(inlinedFunction(engine, Value(this), L"&", bb, simpleFn(&boolAnd))));
+		add(steal(inlinedFunction(engine, Value(this), L"|", bb, simpleFn(&boolOr))));
+		add(steal(inlinedFunction(engine, Value(this), L"==", bb, simpleFn(&boolEq))));
+		add(steal(inlinedFunction(engine, Value(this), L"!=", bb, simpleFn(&boolNeq))));
+		add(steal(inlinedFunction(engine, Value(this), L"!", b, simpleFn(&boolNot))));
 	}
 
 	Type *boolType(Engine &e) {

@@ -6,9 +6,9 @@ namespace storm {
 
 	SObject::SObject() : pos() {}
 
-	SStr::SStr(Auto<Str> s) : v(s) {}
+	SStr::SStr(Par<Str> s) : v(s) {}
 
-	SStr::SStr(Auto<SStr> s) : v(s->v) {
+	SStr::SStr(Par<SStr> s) : v(s->v) {
 		pos = s->pos;
 	}
 

@@ -12,19 +12,19 @@ namespace storm {
 		class For : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR For(Auto<Block> parent);
+			STORM_CTOR For(Par<Block> parent);
 
 			// Test expression.
 			Auto<Expr> testExpr;
-			void STORM_FN test(Auto<Expr> e);
+			void STORM_FN test(Par<Expr> e);
 
 			// Update expression.
 			Auto<Expr> updateExpr;
-			void STORM_FN update(Auto<Expr> e);
+			void STORM_FN update(Par<Expr> e);
 
 			// Body.
 			Auto<Expr> bodyExpr;
-			void STORM_FN body(Auto<Expr> e);
+			void STORM_FN body(Par<Expr> e);
 
 			// Result (always void).
 			virtual Value result();

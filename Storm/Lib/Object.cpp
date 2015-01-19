@@ -111,7 +111,7 @@ namespace storm {
 		to << myType->name << L": " << toHex(this);
 	}
 
-	Bool Object::equals(Auto<Object> o) {
+	Bool Object::equals(Par<Object> o) {
 		if (!o)
 			return false;
 		if (o->myType != myType)

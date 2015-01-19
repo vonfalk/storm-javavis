@@ -20,10 +20,10 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR FunctionDecl(SrcPos pos,
-									Auto<SStr> name,
-									Auto<TypeName> result,
-									Auto<Params> params,
-									Auto<SStr> contents);
+									Par<SStr> name,
+									Par<TypeName> result,
+									Par<Params> params,
+									Par<SStr> contents);
 
 			// Values.
 			SrcPos pos;
@@ -44,7 +44,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			BSFunction(Value result, const String &name, const vector<Value> &params,
-					const vector<String> &names, const Scope &scope, Auto<SStr> contents,
+					const vector<String> &names, const Scope &scope, Par<SStr> contents,
 					const SrcPos &pos);
 
 			// Declared at.
@@ -54,7 +54,7 @@ namespace storm {
 			const Scope scope;
 
 			// Add function parameters to a block.
-			void addParams(Auto<Block> block);
+			void addParams(Par<Block> block);
 
 		private:
 			// Code.
@@ -74,7 +74,7 @@ namespace storm {
 		class FnBody : public ExprBlock {
 			STORM_CLASS;
 		public:
-			STORM_CTOR FnBody(Auto<BSFunction> owner);
+			STORM_CTOR FnBody(Par<BSFunction> owner);
 		};
 
 	}

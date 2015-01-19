@@ -14,14 +14,14 @@ namespace storm {
 
 	Scope::Scope() : top(null), lookup(null) {}
 
-	Scope::Scope(Auto<NameLookup> top) : top(top.borrow()) {
+	Scope::Scope(Par<NameLookup> top) : top(top.borrow()) {
 		assert(top);
 		lookup = top->engine().scopeLookup();
 	}
 
-	Scope::Scope(Auto<NameLookup> top, Auto<ScopeLookup> lookup) : top(top.borrow()), lookup(lookup) {}
+	Scope::Scope(Par<NameLookup> top, Par<ScopeLookup> lookup) : top(top.borrow()), lookup(lookup) {}
 
-	Scope::Scope(const Scope &parent, Auto<NameLookup> top) : top(top.borrow()), lookup(parent.lookup) {}
+	Scope::Scope(const Scope &parent, Par<NameLookup> top) : top(top.borrow()), lookup(parent.lookup) {}
 
 	Named *Scope::find(const Name &name) const {
 		if (lookup)

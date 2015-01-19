@@ -5,7 +5,7 @@ namespace storm {
 
 	bs::Pkg::Pkg() {}
 
-	void bs::Pkg::add(Auto<SStr> part) {
+	void bs::Pkg::add(Par<SStr> part) {
 		parts.push_back(part->v->v);
 	}
 

@@ -18,7 +18,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			Block(const Scope &scope); // todo: make STORM_CTOR
-			STORM_CTOR Block(Auto<Block> parent);
+			STORM_CTOR Block(Par<Block> parent);
 
 			// Lookup node.
 			Auto<BlockLookup> lookup;
@@ -39,7 +39,7 @@ namespace storm {
 			LocalVar *variable(const String &name);
 
 			// Add a variable
-			void add(Auto<LocalVar> v);
+			void add(Par<LocalVar> v);
 
 		private:
 			// Variables in this block.
@@ -55,13 +55,13 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			ExprBlock(const Scope &scope);
-			STORM_CTOR ExprBlock(Auto<Block> parent);
+			STORM_CTOR ExprBlock(Par<Block> parent);
 
 			// Expressions here.
 			vector<Auto<Expr> > exprs;
 
 			// Add an expression.
-			void STORM_FN expr(Auto<Expr> s);
+			void STORM_FN expr(Par<Expr> s);
 
 			// Result.
 			virtual Value result();
@@ -81,7 +81,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR BlockLookup(Auto<Block> block, NameLookup *prev);
+			STORM_CTOR BlockLookup(Par<Block> block, NameLookup *prev);
 
 			// Risk of cycles, no ref.
 			Block *block;

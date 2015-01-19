@@ -50,10 +50,10 @@ namespace storm {
 		void genCode(const GenState &to, const vector<code::Value> &params, GenResult &result);
 
 		// Code to be executed.
-		void setCode(Auto<Code> code);
+		void setCode(Par<Code> code);
 
 		// Set lookup code. (default one provided!)
-		void setLookup(Auto<Code> lookup);
+		void setLookup(Par<Code> lookup);
 
 	protected:
 		virtual void output(wostream &to) const;

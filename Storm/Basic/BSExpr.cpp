@@ -56,7 +56,7 @@ namespace storm {
 		}
 	}
 
-	bs::Constant *bs::intConstant(Auto<SStr> v) {
+	bs::Constant *bs::intConstant(Par<SStr> v) {
 		return CREATE(Constant, v->engine(), v->v->v.toInt());
 	}
 

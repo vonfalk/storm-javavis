@@ -40,7 +40,6 @@ namespace storm {
 			code::FnCall call;
 			for (nat i = 0; i < params.size(); i++) {
 				if (params[i]) {
-					params[i]->addRef();
 					call.param<Object *>(params[i]);
 				} else {
 					call.param<SrcPos>(pos);
@@ -52,13 +51,12 @@ namespace storm {
 		// See if we can find a constructor!
 		if (Type *t = as<Type>(option->scope.find(option->matchFn))) {
 			types.insert(types.begin(), Value(t));
-			Scope scope(capture(t));
+			Scope scope(t);
 			no = scope.find(Type::CTOR, types);
 			if (Function *ctor = as<Function>(no)) {
 				code::FnCall call;
 				for (nat i = 0; i < params.size(); i++) {
 					if (params[i]) {
-						params[i]->addRef();
 						call.param<Object *>(params[i]);
 					} else {
 						call.param<SrcPos>(pos);
@@ -86,12 +84,11 @@ namespace storm {
 		vector<Value> types(2);
 		types[0] = Value(t);
 		types[1] = Value(param->myType);
-		Scope scope(capture(t));
+		Scope scope(t);
 		Named *no = scope.find(Name(memberName), types);
 		if (Function *f = as<Function>(no)) {
 			code::FnCall call;
 			call.param(me).param(param);
-			param->addRef();
 			return call.call<Object *>(f->pointer());
 		}
 

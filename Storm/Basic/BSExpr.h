@@ -54,7 +54,7 @@ namespace storm {
 			virtual void output(wostream &out) const;
 		};
 
-		Constant *STORM_FN intConstant(Auto<SStr> str);
+		Constant *STORM_FN intConstant(Par<SStr> str);
 
 	}
 }

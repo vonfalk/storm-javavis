@@ -56,20 +56,20 @@ namespace storm {
 	IntType::IntType() : Type(L"Int", typeValue | typeFinal, Size::sInt) {
 		vector<Value> ii(2, Value(this));
 		Value b(boolType(engine));
-		add(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&intAdd)));
-		add(inlinedFunction(engine, Value(this), L"-", ii, simpleFn(&intSub)));
-		add(inlinedFunction(engine, Value(this), L"*", ii, simpleFn(&intMul)));
-		add(inlinedFunction(engine, b, L"==", ii, simpleFn(&intCmp<code::ifEqual>)));
-		add(inlinedFunction(engine, b, L"!=", ii, simpleFn(&intCmp<code::ifNotEqual>)));
-		add(inlinedFunction(engine, b, L"<", ii, simpleFn(&intCmp<code::ifLess>)));
-		add(inlinedFunction(engine, b, L">", ii, simpleFn(&intCmp<code::ifGreater>)));
-		add(inlinedFunction(engine, b, L"<=", ii, simpleFn(&intCmp<code::ifLessEqual>)));
-		add(inlinedFunction(engine, b, L">=", ii, simpleFn(&intCmp<code::ifGreaterEqual>)));
+		add(steal(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&intAdd))));
+		add(steal(inlinedFunction(engine, Value(this), L"-", ii, simpleFn(&intSub))));
+		add(steal(inlinedFunction(engine, Value(this), L"*", ii, simpleFn(&intMul))));
+		add(steal(inlinedFunction(engine, b, L"==", ii, simpleFn(&intCmp<code::ifEqual>))));
+		add(steal(inlinedFunction(engine, b, L"!=", ii, simpleFn(&intCmp<code::ifNotEqual>))));
+		add(steal(inlinedFunction(engine, b, L"<", ii, simpleFn(&intCmp<code::ifLess>))));
+		add(steal(inlinedFunction(engine, b, L">", ii, simpleFn(&intCmp<code::ifGreater>))));
+		add(steal(inlinedFunction(engine, b, L"<=", ii, simpleFn(&intCmp<code::ifLessEqual>))));
+		add(steal(inlinedFunction(engine, b, L">=", ii, simpleFn(&intCmp<code::ifGreaterEqual>))));
 
 		vector<Value> ri(2);
 		ri[0] = Value(this, true);
 		ri[1] = Value(this);
-		add(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&intAssign)));
+		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&intAssign))));
 	}
 
 

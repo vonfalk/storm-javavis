@@ -184,11 +184,11 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 			out << fn.cppScope.cppName();
 			for (nat i = 1; i < fn.params.size(); i++) {
 				CppType t = fn.params[i].fullName(types, scope);
-				if (t.isAuto) {
+				if (t.isPar) {
 					// Efficiency hack: pass by ptr to the create-fn,
 					// it will be casted to Auto by C++ later and do
 					// the right thing in all cases anyway.
-					t.isAuto = false;
+					t.isPar = false;
 					t.isPtr = true;
 				}
 				out << L", " << t;

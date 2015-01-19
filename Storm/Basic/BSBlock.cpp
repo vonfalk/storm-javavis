@@ -6,10 +6,10 @@
 namespace storm {
 
 	bs::Block::Block(const Scope &scope)
-		: lookup(CREATE(BlockLookup, engine(), capture(this), scope.top)), scope(scope, lookup) {}
+		: lookup(CREATE(BlockLookup, engine(), this, scope.top)), scope(scope, lookup) {}
 
-	bs::Block::Block(Auto<Block> parent)
-		: lookup(CREATE(BlockLookup, engine(), capture(this), parent->scope.top)), scope(parent->scope, lookup) {}
+	bs::Block::Block(Par<Block> parent)
+		: lookup(CREATE(BlockLookup, engine(), this, parent->scope.top)), scope(parent->scope, lookup) {}
 
 	void bs::Block::code(const GenState &state, GenResult &to) {
 		using namespace code;
@@ -36,7 +36,7 @@ namespace storm {
 		assert(("Implement me in a subclass!", false));
 	}
 
-	void bs::Block::add(Auto<LocalVar> var) {
+	void bs::Block::add(Par<LocalVar> var) {
 		LocalVar *old = variable(var->name);
 		if (old != null)
 			throw TypeError(old->pos, L"The variable " + old->name + L" is already defined.");
@@ -54,9 +54,9 @@ namespace storm {
 
 	bs::ExprBlock::ExprBlock(const Scope &scope) : Block(scope) {}
 
-	bs::ExprBlock::ExprBlock(Auto<Block> parent) : Block(parent) {}
+	bs::ExprBlock::ExprBlock(Par<Block> parent) : Block(parent) {}
 
-	void bs::ExprBlock::expr(Auto<Expr> expr) {
+	void bs::ExprBlock::expr(Par<Expr> expr) {
 		exprs.push_back(expr);
 	}
 
@@ -85,7 +85,7 @@ namespace storm {
 	 * Block lookup
 	 */
 
-	bs::BlockLookup::BlockLookup(Auto<Block> o, NameLookup *prev) : block(o.borrow()), prev(prev) {}
+	bs::BlockLookup::BlockLookup(Par<Block> o, NameLookup *prev) : block(o.borrow()), prev(prev) {}
 
 	Named *bs::BlockLookup::find(const Name &name) {
 		if (name.size() == 1)

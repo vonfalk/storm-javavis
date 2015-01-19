@@ -17,7 +17,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create class 'name' with contents 'content'.
-			STORM_CTOR Class(SrcPos pos, Auto<SStr> name, Auto<SStr> content);
+			STORM_CTOR Class(SrcPos pos, Par<SStr> name, Par<SStr> content);
 
 			// The scope used for this class.
 			Scope scope;
@@ -47,7 +47,7 @@ namespace storm {
 			STORM_CTOR ClassBody();
 
 			// Add content.
-			void STORM_FN add(Auto<NameOverload> item);
+			void STORM_FN add(Par<NameOverload> item);
 
 			// Contents.
 			vector<Auto<NameOverload> > items;
@@ -60,18 +60,18 @@ namespace storm {
 		class ClassVar : public TypeVar {
 			STORM_CLASS;
 		public:
-			STORM_CTOR ClassVar(Auto<Class> owner, Auto<TypeName> type, Auto<SStr> name);
+			STORM_CTOR ClassVar(Par<Class> owner, Par<TypeName> type, Par<SStr> name);
 		};
 
 		/**
 		 * Class function.
 		 */
-		BSFunction *STORM_FN classFn(Auto<Class> owner,
+		BSFunction *STORM_FN classFn(Par<Class> owner,
 									SrcPos pos,
-									Auto<SStr> name,
-									Auto<TypeName> result,
-									Auto<Params> params,
-									Auto<SStr> contents);
+									Par<SStr> name,
+									Par<TypeName> result,
+									Par<Params> params,
+									Par<SStr> contents);
 
 	}
 }

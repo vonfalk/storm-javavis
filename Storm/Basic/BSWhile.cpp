@@ -4,14 +4,14 @@
 
 namespace storm {
 
-	bs::While::While(Auto<Block> parent) : Block(parent) {}
+	bs::While::While(Par<Block> parent) : Block(parent) {}
 
-	void bs::While::cond(Auto<Expr> e) {
+	void bs::While::cond(Par<Expr> e) {
 		e->result().mustStore(Value::stdBool(engine()), e->pos);
 		condExpr = e;
 	}
 
-	void bs::While::body(Auto<Expr> e) {
+	void bs::While::body(Par<Expr> e) {
 		bodyExpr = e;
 	}
 

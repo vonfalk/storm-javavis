@@ -8,10 +8,10 @@
 namespace storm {
 
 	bs::FunctionDecl::FunctionDecl(SrcPos pos,
-								Auto<SStr> name,
-								Auto<TypeName> result,
-								Auto<Params> params,
-								Auto<SStr> contents)
+								Par<SStr> name,
+								Par<TypeName> result,
+								Par<Params> params,
+								Par<SStr> contents)
 		: pos(pos), name(name), result(result), params(params), contents(contents) {}
 
 	Function *bs::FunctionDecl::asFunction(const Scope &scope) {
@@ -25,13 +25,13 @@ namespace storm {
 
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
 							const vector<String> &names, const Scope &scope,
-							Auto<SStr> contents, const SrcPos &pos)
+							Par<SStr> contents, const SrcPos &pos)
 		: Function(result, name, params), scope(scope), contents(contents), paramNames(names) {
 
 		if (result.ref)
 			throw SyntaxError(pos, L"Returning references is not a good idea at this point!");
 
-		setCode(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode)));
+		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
 	}
 
 	code::Listing bs::BSFunction::generateCode() {
@@ -52,12 +52,17 @@ namespace storm {
 		using namespace code;
 		Listing l;
 
+		l << prolog();
+
 		// Parameters
 		for (nat i = 0; i < params.size(); i++) {
 			const Value &t = params[i];
 			LocalVar *var = body->variable(paramNames[i]);
 			assert(var);
 			var->var = l.frame.createParameter(t.size(), false, t.destructor());
+
+			if (t.refcounted())
+				l << code::addRef(var->var);
 		}
 
 		GenState state = { l, l.frame, l.frame.root() };
@@ -65,14 +70,12 @@ namespace storm {
 		if (result == Value()) {
 			GenResult r;
 
-			l << prolog();
 			body->code(state, r);
 			l << epilog();
 			l << ret(Size::sPtr);
 		} else {
 			GenResult r(result, l.frame.root());
 
-			l << prolog();
 			body->code(state, r);
 
 			Variable result = r.location(state);
@@ -85,15 +88,15 @@ namespace storm {
 		return l;
 	}
 
-	void bs::BSFunction::addParams(Auto<Block> to) {
+	void bs::BSFunction::addParams(Par<Block> to) {
 		for (nat i = 0; i < params.size(); i++) {
 			Auto<LocalVar> var = CREATE(LocalVar, this, paramNames[i], params[i], pos, true);
 			to->add(var);
 		}
 	}
 
-	bs::FnBody::FnBody(Auto<BSFunction> owner) : ExprBlock(owner->scope) {
-		owner->addParams(capture(this));
+	bs::FnBody::FnBody(Par<BSFunction> owner) : ExprBlock(owner->scope) {
+		owner->addParams(this);
 	}
 
 }

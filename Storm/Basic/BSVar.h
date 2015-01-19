@@ -37,13 +37,13 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Initialize to zero or null (remove?).
-			STORM_CTOR Var(Auto<Block> block, Auto<TypeName> type, Auto<SStr> name);
+			STORM_CTOR Var(Par<Block> block, Par<TypeName> type, Par<SStr> name);
 
 			// Initialize to an expression.
-			STORM_CTOR Var(Auto<Block> block, Auto<TypeName> type, Auto<SStr> name, Auto<Expr> init);
+			STORM_CTOR Var(Par<Block> block, Par<TypeName> type, Par<SStr> name, Par<Expr> init);
 
 			// Initialize to an expression (auto type).
-			STORM_CTOR Var(Auto<Block> block, Auto<SStr> name, Auto<Expr> init);
+			STORM_CTOR Var(Par<Block> block, Par<SStr> name, Par<Expr> init);
 
 			// Declared variable.
 			Auto<LocalVar> variable;
@@ -59,10 +59,10 @@ namespace storm {
 
 		private:
 			// Initialize.
-			void init(Auto<Block> block, const Value &type, Auto<SStr> name);
+			void init(Par<Block> block, const Value &type, Par<SStr> name);
 
 			// Set return value.
-			void initTo(Auto<Expr> expr);
+			void initTo(Par<Expr> expr);
 		};
 
 	}

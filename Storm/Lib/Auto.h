@@ -7,9 +7,87 @@ namespace storm {
 	class Type;
 
 	/**
+	 * Calling convention is explained in Object.h
+	 */
+
+	template <class T>
+	class Auto;
+
+	/**
+	 * Automatic reference counting helper. This is a borrowed reference, suitable for
+	 * function parameters. It is binary compatible with raw pointers, so that functions
+	 * declared with pointers can be called anyway.
+	 */
+	template <class T>
+	class Par {
+	public:
+		// Create null-ptr
+		inline Par() : obj(null) {}
+
+		// Borrow from Auto<> (possibly downcasting)
+		template <class U>
+		inline Par(const Auto<U> &o) : obj(o.borrow()) {}
+
+		// Borrows 'ptr'.
+		inline Par(T *obj) : obj(obj) {}
+
+		// Downcasting.
+		template <class U>
+		inline Par(const Par<U> &from) : obj(from.borrow()) {}
+
+		// No need for explicit copy, assign or dtor. We do not need to do anything.
+
+		// Upcasting.
+		template <class U>
+		inline Par<U> as() const {
+			U *p = ::as<U>(obj);
+			return Par<U>(p);
+		}
+
+		// Upcasting, expect a specific type.
+		template <class U>
+		inline Par<U> expect(Engine &e, const String &context) const {
+			Par<U> r = as<U>();
+			if (!r) {
+				Type *expected = U::type(e);
+				Type *got = obj ? obj->myType : null;
+				throwTypeError(context, expected, got);
+			}
+			return r;
+		}
+
+		// Return the pointer.
+		inline T *ret() { T *t = obj; obj = null; return t; }
+
+		// Get a pointer, borriowing the reference.
+		inline T *borrow() const { return obj; }
+
+		// Get a pointer with a new reference.
+		inline T *ref() const { obj->addRef(); return obj; }
+
+		// Operators.
+		inline T *operator ->() const { return obj; }
+		inline T &operator *() const { return *obj; }
+
+		// Check for null in if-statements.
+		inline operator void *() const {
+			return obj;
+		}
+
+		// Check with other ptr.
+		inline bool operator ==(const T *o) {
+			return obj == o;
+		}
+
+	private:
+		// Pointer. Has to be the first and only member.
+		T *obj;
+	};
+
+	/**
 	 * Automatic refcounting of Object-ptrs. Follows the calling convention, and is binary
 	 * compatible with a pointer, so that it can be used to receive values from functions
-	 * called with raw pointers. Not for return values. In that case, use ret().
+	 * called with raw pointers (breaks calling convention). Not for return values: In that case, use ret().
 	 */
 	template <class T>
 	class Auto {
@@ -19,6 +97,10 @@ namespace storm {
 
 		// Takes the ownership of 'obj'.
 		inline Auto(T *obj) : obj(obj) {}
+
+		// Takes ownership from a Par<> (possibly downcasting)
+		template <class U>
+		inline Auto(const Par<U> &o) : obj(o.ref()) {}
 
 		// Copy.
 		inline Auto(const Auto<T> &from) : obj(from.obj) { obj->addRef(); }
@@ -36,11 +118,6 @@ namespace storm {
 
 		// Destroy.
 		inline ~Auto() { obj->release(); }
-
-		// Downcast to Object.
-		inline operator Auto<Object> () {
-			return Auto<Object>(obj);
-		}
 
 		// Upcasting.
 		template <class U>
@@ -106,9 +183,40 @@ namespace storm {
 	}
 
 	template <class T>
+	wostream &operator <<(wostream &to, const Par<T> &v) {
+		T *ptr = v.borrow();
+		if (ptr)
+			to << *ptr;
+		else
+			to << L"null";
+		return to;
+	}
+
+	template <class T>
 	Auto<T> capture(T *t) {
 		if (t)
 			t->addRef();
 		return Auto<T>(t);
 	}
+
+	/**
+	 * Steal a reference into a pointer. Useful when chaining function calls.
+	 * foo(steal(bar())) is equivalent to
+	 * foo(Auto<T>(bar).borrow())
+	 */
+	template <class T>
+	struct Steal {
+		Steal(T *v) : v(v) {}
+		~Steal() { v->release(); }
+
+		operator T *() { return v; }
+		template <class U>
+		operator Par<U>() { return Par<U>(v); }
+
+		T *v;
+	};
+
+	template <class T>
+	inline Steal<T> steal(T *ptr) { return Steal<T>(ptr); }
+
 }

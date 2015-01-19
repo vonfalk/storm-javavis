@@ -30,7 +30,7 @@ namespace storm {
 	class Named : public NameLookup {
 		STORM_CLASS;
 	public:
-		STORM_CTOR Named(Auto<Str> name);
+		STORM_CTOR Named(Par<Str> name);
 		inline Named(const String &name) : name(name) {}
 
 		// Our name.

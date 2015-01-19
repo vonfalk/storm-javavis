@@ -26,9 +26,14 @@ namespace storm {
 		defScopeLookup = CREATE(ScopeLookup, *this);
 		rootScope = new Scope(rootPkg);
 
-		// And finally insert everything into their correct packages.
-		addStdLib(*this);
-		inited = true;
+		try {
+			// And finally insert everything into their correct packages.
+			addStdLib(*this);
+			inited = true;
+		} catch (...) {
+			delete rootScope;
+			throw;
+		}
 	}
 
 	Engine::~Engine() {
@@ -61,7 +66,7 @@ namespace storm {
 		delete rootScope;
 	}
 
-	void Engine::setSpecialBuiltIn(Special t, Auto<Type> z) {
+	void Engine::setSpecialBuiltIn(Special t, Par<Type> z) {
 		specialCached[nat(t)] = z;
 	}
 
@@ -82,8 +87,9 @@ namespace storm {
 
 		Package *next = pkg->childPackage(path[pos]);
 		if (next == null) {
-			next = CREATE(Package, *this, path[pos], *this);
-			pkg->add(next);
+			Auto<Package> r = CREATE(Package, *this, path[pos], *this);
+			pkg->add(r.borrow());
+			next = r.borrow();
 		}
 
 		return createPackage(next, path, pos + 1);

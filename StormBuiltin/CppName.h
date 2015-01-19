@@ -43,13 +43,13 @@ class Types;
 
 class CppType : public Printable {
 public:
-	CppType() : isConst(false), isPtr(false), isRef(false), isAuto(false) {}
+	CppType() : isConst(false), isPtr(false), isRef(false), isPar(false) {}
 
 	// name of the type.
 	CppName type;
 
 	// modifiers
-	bool isConst, isPtr, isRef, isAuto;
+	bool isConst, isPtr, isRef, isPar;
 
 	// Clear.
 	inline void clear() { type.clear(); isConst = isPtr = isRef = false; }

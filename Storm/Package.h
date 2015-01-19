@@ -50,10 +50,10 @@ namespace storm {
 		Package *childPackage(const String &name);
 
 		// Add a sub-package. Assumes that it does not already exists!
-		void STORM_FN add(Auto<Package> pkg);
+		void STORM_FN add(Package* pkg);
 
 		// Add a type to this package.
-		void STORM_FN add(Auto<Type> type);
+		void STORM_FN add(Type* type);
 
 		// Add a function to this package.
 		void add(NameOverload *function);

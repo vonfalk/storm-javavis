@@ -40,7 +40,7 @@ namespace storm {
 		NameLookup *p;
 
 		// Is it a suitable overload?
-		bool suitable(const Auto<NameOverload> &overload, const vector<Value> &params);
+		bool suitable(Par<NameOverload> overload, const vector<Value> &params);
 	};
 
 

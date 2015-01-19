@@ -8,14 +8,14 @@
 
 namespace storm {
 
-	bs::Reader::Reader(Auto<PkgFiles> files, Auto<Package> pkg) : FilesReader(files, pkg) {}
+	bs::Reader::Reader(Par<PkgFiles> files, Par<Package> pkg) : FilesReader(files, pkg) {}
 
 	FileReader *bs::Reader::createFile(const Path &path) {
 		return CREATE(bs::File, this, path, owner);
 	}
 
 
-	bs::File::File(const Path &path, Auto<Package> owner)
+	bs::File::File(const Path &path, Par<Package> owner)
 		: FileReader(path, owner), scopeLookup(CREATE(BSScope, engine(), path)), scope(owner, scopeLookup) {
 
 		fileContents = readTextFile(path);
@@ -27,14 +27,14 @@ namespace storm {
 	void bs::File::readTypes() {
 		readContents();
 		for (nat i = 0; i < contents->types.size(); i++) {
-			package->add(contents->types[i]);
+			package->add(contents->types[i].borrow());
 		}
 	}
 
 	void bs::File::readFunctions() {
 		readContents();
 		for (nat i = 0; i < contents->functions.size(); i++) {
-			package->add(contents->functions[i]->asFunction(scope));
+			package->add(steal(contents->functions[i]->asFunction(scope)));
 		}
 	}
 

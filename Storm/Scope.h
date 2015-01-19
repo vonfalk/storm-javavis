@@ -70,16 +70,16 @@ namespace storm {
 		explicit Scope();
 
 		// Create the default lookup with a given topmost object.
-		Scope(Auto<NameLookup> top);
+		Scope(Par<NameLookup> top);
 
 		// Create a custom lookup.
-		Scope(Auto<NameLookup> top, Auto<ScopeLookup> lookup);
+		Scope(Par<NameLookup> top, Par<ScopeLookup> lookup);
 
 		// Create a child scope.
-		Scope(const Scope &parent, Auto<NameLookup> top);
+		Scope(const Scope &parent, Par<NameLookup> top);
 
 		// Create a child scope.
-		inline Scope child(Auto<NameLookup> top) { return Scope(*this, top); }
+		inline Scope child(Par<NameLookup> top) { return Scope(*this, top); }
 
 		// Topmost object.
 		NameLookup *top;

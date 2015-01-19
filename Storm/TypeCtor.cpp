@@ -42,7 +42,7 @@ namespace storm {
 		l << epilog();
 		l << ret(Size());
 
-		setCode(CREATE(DynamicCode, this, l));
+		setCode(steal(CREATE(DynamicCode, this, l)));
 	}
 
 }

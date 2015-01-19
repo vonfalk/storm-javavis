@@ -50,12 +50,12 @@ bool CppName::isObject() const {
 CppType CppType::read(Tokenizer &tok) {
 	CppType t;
 
-	if (tok.peek() == L"Auto") {
+	if (tok.peek() == L"Par") {
 		tok.next();
 		tok.expect(L"<");
 
 		t = CppType::read(tok);
-		t.isAuto = true;
+		t.isPar = true;
 
 		tok.expect(L">");
 
@@ -81,8 +81,8 @@ CppType CppType::read(Tokenizer &tok) {
 }
 
 void CppType::output(wostream &to) const {
-	if (isAuto)
-		to << L"storm::Auto<";
+	if (isPar)
+		to << L"storm::Par<";
 	if (isConst)
 		to << L"const ";
 	to << type;
@@ -90,7 +90,7 @@ void CppType::output(wostream &to) const {
 		to << L" *";
 	else if (isRef)
 		to << L" &";
-	if (isAuto)
+	if (isPar)
 		to << L">";
 }
 

@@ -4,19 +4,19 @@
 
 namespace storm {
 
-	bs::If::If(Auto<Block> parent) : Block(parent) {}
+	bs::If::If(Par<Block> parent) : Block(parent) {}
 
-	void bs::If::cond(Auto<Expr> e) {
+	void bs::If::cond(Par<Expr> e) {
 		if (e->result() != Value(boolType(engine())))
 			throw TypeError(e->pos, L"The expression must evaluate to Bool.");
 		condition = e;
 	}
 
-	void bs::If::trueExpr(Auto<Expr> e) {
+	void bs::If::trueExpr(Par<Expr> e) {
 		trueCode = e;
 	}
 
-	void bs::If::falseExpr(Auto<Expr> e) {
+	void bs::If::falseExpr(Par<Expr> e) {
 		falseCode = e;
 	}
 

@@ -13,7 +13,7 @@ namespace storm {
 	 * Interface to the package loader.
 	 */
 
-	bnf::Reader::Reader(Auto<PkgFiles> files, Auto<Package> pkg) : PkgReader(files, pkg) {}
+	bnf::Reader::Reader(Par<PkgFiles> files, Par<Package> pkg) : PkgReader(files, pkg) {}
 
 	void bnf::Reader::readSyntax(SyntaxRules &to) {
 		Auto<ScopeExtra> extra = CREATE(ScopeExtra, engine());

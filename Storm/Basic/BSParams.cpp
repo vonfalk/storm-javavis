@@ -5,11 +5,11 @@ namespace storm {
 
 	bs::Params::Params() : thisType(null) {}
 
-	void bs::Params::add(Auto<TypeName> type) {
+	void bs::Params::add(Par<TypeName> type) {
 		params.push_back(type);
 	}
 
-	void bs::Params::add(Auto<SStr> name) {
+	void bs::Params::add(Par<SStr> name) {
 		names.push_back(name);
 	}
 

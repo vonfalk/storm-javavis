@@ -7,7 +7,9 @@ namespace code {
 	Arena::Arena() : refManager(), addRef(*this, L"addRef"), releaseRef(*this, L"releaseRef") {}
 
 	Arena::~Arena() {
-		assert(("Memory leak detected!", alloc.empty()));
+		if (!alloc.empty())
+			PLN("Memory leak in code allocations detected!");
+		// assert(("Memory leak detected!", alloc.empty()));
 		clear(externalRefs);
 	}
 

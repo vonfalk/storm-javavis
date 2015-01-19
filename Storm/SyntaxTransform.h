@@ -10,9 +10,6 @@ namespace storm {
 	 * Functions for transforming a syntax tree (represented by the root SyntaxNode)
 	 * into the representation defined in the syntax definition.
 	 *
-	 * NOTE: Parameters in 'transform' does not follow calling convention, they are not assumed
-	 * to have an associated reference!
-	 *
 	 * Note that if return parameters are derived from SObject, their 'pos' will be updated.
 	 */
 

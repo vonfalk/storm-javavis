@@ -16,11 +16,11 @@ namespace storm {
 		return v;
 	}
 
-	void bs::Actual::add(Auto<Expr> e) {
+	void bs::Actual::add(Par<Expr> e) {
 		expressions.push_back(e);
 	}
 
-	void bs::Actual::addFirst(Auto<Expr> e) {
+	void bs::Actual::addFirst(Par<Expr> e) {
 		expressions.insert(expressions.begin(), e);
 	}
 
@@ -29,7 +29,7 @@ namespace storm {
 	 * Function call.
 	 */
 
-	bs::FnCall::FnCall(Auto<Function> toExecute, Auto<Actual> params)
+	bs::FnCall::FnCall(Par<Function> toExecute, Par<Actual> params)
 		: toExecute(toExecute), params(params) {}
 
 	Value bs::FnCall::result() {
@@ -54,11 +54,6 @@ namespace storm {
 			vars[i] = gr.location(s);
 		}
 
-		// Increase refs for all parameters.
-		for (nat i = 0; i < vars.size(); i++)
-			if (values[i].refcounted())
-				s.to << code::addRef(vars[i]);
-
 		// Call!
 		toExecute->genCode(s, vars, to);
 	}
@@ -68,7 +63,7 @@ namespace storm {
 	 * Execute constructor.
 	 */
 
-	bs::CtorCall::CtorCall(Auto<Function> ctor, Auto<Actual> params) : ctor(ctor), params(params) {
+	bs::CtorCall::CtorCall(Par<Function> ctor, Par<Actual> params) : ctor(ctor), params(params) {
 		toCreate = ctor->params[0];
 	}
 
@@ -109,11 +104,6 @@ namespace storm {
 			vars[i] = gr.location(subState);
 		}
 
-		// Increase refs for all parameters, except the not yet initialized object.
-		for (nat i = 1; i < vars.size(); i++)
-			if (values[i].refcounted())
-				s.to << code::addRef(vars[i]);
-
 		// Call!
 		GenResult voidTo(Value(), subBlock);
 		ctor->genCode(subState, vars, voidTo);
@@ -128,7 +118,7 @@ namespace storm {
 	/**
 	 * Local variable.
 	 */
-	bs::LocalVarAccess::LocalVarAccess(Auto<LocalVar> var) : var(var) {}
+	bs::LocalVarAccess::LocalVarAccess(Par<LocalVar> var) : var(var) {}
 
 	Value bs::LocalVarAccess::result() {
 		return var->result.asRef();
@@ -156,7 +146,7 @@ namespace storm {
 	/**
 	 * Member variable.
 	 */
-	bs::MemberVarAccess::MemberVarAccess(Auto<Expr> member, Auto<TypeVar> var) : member(member), var(var) {}
+	bs::MemberVarAccess::MemberVarAccess(Par<Expr> member, Par<TypeVar> var) : member(member), var(var) {}
 
 	Value bs::MemberVarAccess::result() {
 		return var->varType.asRef();
@@ -197,18 +187,18 @@ namespace storm {
 	 * Look up a proper action from a name and a set of parameters.
 	 */
 	namespace bs {
-		static Expr *findCtor(Type *t, Auto<Actual> actual, const SrcPos &pos);
-		static Expr *findTarget(Named *n, Auto<Expr> first, Auto<Actual> actual, const SrcPos &pos);
-		static Expr *findTargetThis(Auto<Block> block, const Name &name,
-									Auto<Actual> params, const SrcPos &pos,
+		static Expr *findCtor(Type *t, Par<Actual> actual, const SrcPos &pos);
+		static Expr *findTarget(Named *n, Par<Expr> first, Par<Actual> actual, const SrcPos &pos);
+		static Expr *findTargetThis(Par<Block> block, const Name &name,
+									Par<Actual> params, const SrcPos &pos,
 									Named *&candidate);
-		static Expr *findTarget(Auto<Block> block, const Name &name,
-								const SrcPos &pos, Auto<Actual> params,
+		static Expr *findTarget(Par<Block> block, const Name &name,
+								const SrcPos &pos, Par<Actual> params,
 								bool useThis);
 	}
 
 	// Find a constructor.
-	static bs::Expr *bs::findCtor(Type *t, Auto<Actual> actual, const SrcPos &pos) {
+	static bs::Expr *bs::findCtor(Type *t, Par<Actual> actual, const SrcPos &pos) {
 		vector<Value> params = actual->values();
 		params.insert(params.begin(), Value(t)); // this-ptr for the created type.
 
@@ -220,12 +210,12 @@ namespace storm {
 		if (!ctor)
 			throw SyntaxError(pos, L"No constructor (" + join(params, L", ") + L")");
 
-		return CREATE(CtorCall, t, capture(ctor), actual);
+		return CREATE(CtorCall, t, ctor, actual);
 	}
 
 
 	// Helper to create the actual type, given something found.
-	static bs::Expr *bs::findTarget(Named *n, Auto<Expr> first, Auto<Actual> actual, const SrcPos &pos) {
+	static bs::Expr *bs::findTarget(Named *n, Par<Expr> first, Par<Actual> actual, const SrcPos &pos) {
 		if (!n)
 			return null;
 
@@ -235,27 +225,27 @@ namespace storm {
 		if (Function *f = as<Function>(n)) {
 			if (first)
 				actual->addFirst(first);
-			return CREATE(FnCall, n, capture(f), actual);
+			return CREATE(FnCall, n, f, actual);
 		}
 
 		if (LocalVar *v = as<LocalVar>(n)) {
 			assert(!first);
-			return CREATE(LocalVarAccess, n, capture(v));
+			return CREATE(LocalVarAccess, n, v);
 		}
 
 		if (TypeVar *v = as<TypeVar>(n)) {
 			if (first)
-				return CREATE(MemberVarAccess, n, first, capture(v));
+				return CREATE(MemberVarAccess, n, first, v);
 			else
-				return CREATE(MemberVarAccess, n, actual->expressions.front(), capture(v));
+				return CREATE(MemberVarAccess, n, actual->expressions.front(), v);
 		}
 
 		return null;
 	}
 
 	// Find a target assuming we should use the this-pointer.
-	static bs::Expr *bs::findTargetThis(Auto<Block> block, const Name &name,
-										Auto<Actual> params, const SrcPos &pos,
+	static bs::Expr *bs::findTargetThis(Par<Block> block, const Name &name,
+										Par<Actual> params, const SrcPos &pos,
 										Named *&candidate) {
 		const Scope &scope = block->scope;
 
@@ -268,7 +258,7 @@ namespace storm {
 		Named *n = scope.find(name, vals);
 		candidate = n;
 
-		Auto<Expr> first = CREATE(LocalVarAccess, block, capture(thisVar));
+		Auto<Expr> first = CREATE(LocalVarAccess, block, thisVar);
 		Expr *e = findTarget(n, first, params, pos);
 		if (e)
 			return e;
@@ -278,8 +268,8 @@ namespace storm {
 
 	// Find whatever is meant by the 'name' in this context. Return suitable expression. If
 	// 'useThis' is true, a 'this' pointer may be inserted as the first parameter.
-	static bs::Expr *bs::findTarget(Auto<Block> block, const Name &name,
-									const SrcPos &pos, Auto<Actual> params,
+	static bs::Expr *bs::findTarget(Par<Block> block, const Name &name,
+									const SrcPos &pos, Par<Actual> params,
 									bool useThis) {
 		const Scope &scope = block->scope;
 
@@ -308,17 +298,17 @@ namespace storm {
 						L". Only functions, variables and constructors are supported.");
 	}
 
-	bs::Expr *bs::namedExpr(Auto<Block> block, Auto<SStr> name, Auto<Actual> params) {
+	bs::Expr *bs::namedExpr(Par<Block> block, Par<SStr> name, Par<Actual> params) {
 		return findTarget(block, Name(name->v->v), name->pos, params, true);
 	}
 
-	bs::Expr *bs::namedExpr(Auto<Block> block, Auto<SStr> name, Auto<Expr> first, Auto<Actual> params) {
+	bs::Expr *bs::namedExpr(Par<Block> block, Par<SStr> name, Par<Expr> first, Par<Actual> params) {
 		params->addFirst(first);
 		return findTarget(block, Name(name->v->v), name->pos, params, false);
 	}
 
 
-	bs::Expr *bs::operatorExpr(Auto<Block> block, Auto<Expr> lhs, Auto<SStr> m, Auto<Expr> rhs) {
+	bs::Expr *bs::operatorExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs) {
 		Auto<Actual> actual = CREATE(Actual, block);
 		actual->add(lhs);
 		actual->add(rhs);

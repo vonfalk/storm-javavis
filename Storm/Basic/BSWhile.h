@@ -11,15 +11,15 @@ namespace storm {
 		class While : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR While(Auto<Block> parent);
+			STORM_CTOR While(Par<Block> parent);
 
 			// Condition expression.
 			Auto<Expr> condExpr;
-			void STORM_FN cond(Auto<Expr> e);
+			void STORM_FN cond(Par<Expr> e);
 
 			// Content.
 			Auto<Expr> bodyExpr;
-			void STORM_FN body(Auto<Expr> e);
+			void STORM_FN body(Par<Expr> e);
 
 			// Result (always void).
 			virtual Value result();

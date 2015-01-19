@@ -14,8 +14,8 @@ namespace storm {
 		public:
 			STORM_CTOR Params();
 
-			void STORM_FN add(Auto<TypeName> type);
-			void STORM_FN add(Auto<SStr> name);
+			void STORM_FN add(Par<TypeName> type);
+			void STORM_FN add(Par<SStr> name);
 
 			// Add a 'this' as the first parameter.
 			void addThis(Type *t);

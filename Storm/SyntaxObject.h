@@ -25,8 +25,8 @@ namespace storm {
 	class SStr : public SObject {
 		STORM_CLASS;
 	public:
-		STORM_CTOR SStr(Auto<Str> src);
-		STORM_CTOR SStr(Auto<SStr> src);
+		STORM_CTOR SStr(Par<Str> src);
+		STORM_CTOR SStr(Par<SStr> src);
 		SStr(const String &str);
 
 		// The string captured.

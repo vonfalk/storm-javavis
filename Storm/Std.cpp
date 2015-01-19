@@ -35,7 +35,7 @@ namespace storm {
 				throw BuiltInError(L"Could not locate " + String(fn->typeMember) + L" in " + toS(fn->pkg));
 		}
 
-		Scope scope(capture(top));
+		Scope scope(top);
 		Value result;
 		vector<Value> params;
 
@@ -56,9 +56,9 @@ namespace storm {
 
 		Auto<Function> toAdd = nativeFunction(to, result, fn->name, params, fn->fnPtr);
 		if (Package *p = as<Package>(into)) {
-			p->add(toAdd.ret());
+			p->add(toAdd.borrow());
 		} else if (Type *t = as<Type>(into)) {
-			t->add(toAdd.ret());
+			t->add(toAdd.borrow());
 		} else {
 			assert(false);
 		}
@@ -70,7 +70,6 @@ namespace storm {
 			throw BuiltInError(L"Failed to locate package " + toS(t->pkg));
 
 		Type *type = to.builtIn(t->typePtrId);
-		type->addRef();
 		pkg->add(type);
 	}
 
@@ -146,9 +145,9 @@ namespace storm {
 	void addStdLib(Engine &to) {
 		// Place core types in the core package.
 		Package *core = to.package(Name(L"core"), true);
-		core->add(capture(intType(to)));
-		core->add(capture(natType(to)));
-		core->add(capture(boolType(to)));
+		core->add(steal(intType(to)));
+		core->add(steal(natType(to)));
+		core->add(steal(boolType(to)));
 
 		addBuiltIn(to);
 	}

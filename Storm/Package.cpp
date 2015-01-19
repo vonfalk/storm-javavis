@@ -1,4 +1,3 @@
-
 #include "stdafx.h"
 #include "Package.h"
 
@@ -157,16 +156,16 @@ namespace storm {
 			return i->second.borrow();
 	}
 
-	void Package::add(Auto<Package> pkg) {
+	void Package::add(Package *pkg) {
 		const String &name = pkg->name;
 		assert(packages.count(name) == 0);
-		packages.insert(make_pair(name, pkg));
+		packages.insert(make_pair(name, capture(pkg)));
 		pkg->parentPkg = this;
 	}
 
-	void Package::add(Auto<Type> type) {
+	void Package::add(Type *type) {
 		assert(types.count(type->name) == 0);
-		types.insert(make_pair(type->name, type));
+		types.insert(make_pair(type->name, capture(type)));
 		type->parentPkg = this;
 	}
 
@@ -272,8 +271,6 @@ namespace storm {
 		code::FnCall call;
 		call.param(files);
 		call.param(this);
-		files->addRef();
-		this->addRef();
 		PkgReader *r = create<PkgReader>(ctor, call);
 		return r;
 	}
