@@ -59,8 +59,6 @@ namespace code {
 
 			for (nat i = 0; i < regs.size(); i++) {
 				Register r = preserve(regs[i], used, to);
-				if (r != noReg)
-					used += r;
 				result[i] = r;
 			}
 
@@ -74,7 +72,7 @@ namespace code {
 			if (saved == noReg) {
 				to << pop(r);
 			} else {
-				to << mov(saved, r);
+				to << mov(r, saved);
 			}
 		}
 

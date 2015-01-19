@@ -111,7 +111,7 @@ Expr3 => operatorExpr(block, lhs, op, rhs) : Expr3(block) lhs, Oper3 op, Expr2(b
 // Expression
 Expr(Block block);
 Expr => e : Expr3(block) e;
-Expr => operatorExpr(block, lhs, op, rhs) : Expr3(block) lhs, "=" op, Expr(block) rhs;
+Expr => assignExpr(block, lhs, op, rhs) : Expr3(block) lhs, "=" op, Expr(block) rhs;
 Expr => Var(block, t, name) : Type t, Name name;
 Expr => Var(block, t, name, init) : Type t, Name name, "=", Expr(block) init;
 Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;

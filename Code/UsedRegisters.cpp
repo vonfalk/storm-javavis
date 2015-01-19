@@ -3,6 +3,19 @@
 
 namespace code {
 
+	// Check add any read registers from the instructions indirect part.
+	void addIndirect(Registers &to, const Value &v) {
+		if (v.type() == Value::tRelative) {
+			if (v.reg() != ptrStack && v.reg() != ptrFrame)
+				to += v.reg();
+		}
+	}
+
+	void addIndirect(Registers &to, const Instruction &instr) {
+		addIndirect(to, instr.src());
+		addIndirect(to, instr.dest());
+	}
+
 	// Helper for ourselves. Add 'from' if it is a register.
 	Registers &operator +=(Registers &to, const Value &from) {
 		if (from.type() == Value::tRegister)
@@ -44,29 +57,31 @@ namespace code {
 		Registers write;
 
 		switch (instr.op()) {
-			case op::jmp:
-			case op::beginBlock:
-			case op::endBlock:
-			case op::prolog:
-				used = Registers();
-				break;
+		case op::jmp:
+		case op::beginBlock:
+		case op::endBlock:
+		case op::prolog:
+			used = Registers();
+			break;
 
-			case op::fnCall:
-			case op::call:
-				used = Registers();
-			default:
-				used += instr.src();
+		case op::fnCall:
+		case op::call:
+			used = Registers();
 
-				if (instr.destMode() & destWrite) {
-					write += instr.dest();
-					used -= instr.dest();
-				}
+		default:
+			addIndirect(used, instr);
+			used += instr.src();
 
-				if (instr.destMode() & destRead) {
-					used += instr.dest();
-				}
+			if (instr.destMode() & destWrite) {
+				write += instr.dest();
+				used -= instr.dest();
+			}
 
-				break;
+			if (instr.destMode() & destRead) {
+				used += instr.dest();
+			}
+
+			break;
 		}
 
 		return write;

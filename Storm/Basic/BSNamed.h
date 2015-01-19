@@ -120,6 +120,25 @@ namespace storm {
 		};
 
 
+		/**
+		 * Default assignment operator.
+		 */
+		class ClassAssign : public Expr {
+			STORM_CLASS;
+		public:
+			STORM_CTOR ClassAssign(Par<Expr> to, Par<Expr> value);
+
+			// Result type.
+			virtual Value result();
+
+			// Generate code.
+			virtual void code(const GenState &s, GenResult &to);
+
+		private:
+			Auto<Expr> to, value;
+		};
+
+
 		// Find out what the named expression means, and create proper object.
 		Expr *STORM_FN namedExpr(Par<Block> block, Par<SStr> name, Par<Actual> params);
 
@@ -129,6 +148,9 @@ namespace storm {
 
 		// Create an operator.
 		Expr *STORM_FN operatorExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs);
+
+		// Assignment operator.
+		Expr *STORM_FN assignExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs);
 
 	}
 }

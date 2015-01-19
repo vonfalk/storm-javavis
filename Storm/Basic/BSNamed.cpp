@@ -184,6 +184,61 @@ namespace storm {
 
 
 	/**
+	 * Assignment.
+	 */
+	bs::ClassAssign::ClassAssign(Par<Expr> to, Par<Expr> value) : to(to), value(value) {
+		Value r = to->result();
+		if ((r.type->flags & typeClass) != typeClass)
+			throw TypeError(to->pos, L"The default assignment can not be used with other types than classes"
+							L" at the moment. Please implement an assignment operator for your type.");
+		if (!r.ref)
+			throw TypeError(to->pos, L"Can not assign to a non-reference.");
+	}
+
+	Value bs::ClassAssign::result() {
+		return to->result().asRef(false);
+	}
+
+	void bs::ClassAssign::code(const GenState &s, GenResult &to) {
+		using namespace code;
+
+		// Type to work with.
+		Value t = this->to->result().asRef(false);
+
+		// Target variable.
+		GenResult lhs(t.asRef(true), s.block);
+		this->to->code(s, lhs);
+		code::Value targetAddr = lhs.location(s);
+
+		// Compute RHS...
+		GenResult rhs(t, s.block);
+		value->code(s, rhs);
+
+		// Erase the previous value.
+		if (t.refcounted()) {
+			s.to << code::mov(ptrA, targetAddr);
+			s.to << code::releaseRef(ptrRel(ptrA));
+			s.to << code::addRef(rhs.location(s));
+		}
+		s.to << code::mov(ptrRel(ptrA), rhs.location(s));
+
+		// Do we need to return some value?
+		if (!to.needed())
+			return;
+
+		if (to.type.ref) {
+			if (!to.suggest(s, targetAddr)) {
+				s.to << mov(to.location(s), targetAddr);
+			}
+		} else {
+			s.to << mov(ptrA, targetAddr);
+			s.to << mov(to.location(s), ptrRel(ptrA));
+			s.to << code::addRef(to.location(s));
+		}
+	}
+
+
+	/**
 	 * Look up a proper action from a name and a set of parameters.
 	 */
 	namespace bs {
@@ -313,6 +368,17 @@ namespace storm {
 		actual->add(lhs);
 		actual->add(rhs);
 		return namedExpr(block, m, actual);
+	}
+
+	bs::Expr *bs::assignExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs) {
+		Value r = lhs->result();
+		if (r.type && r.ref) {
+			if (r.type->flags & typeClass) {
+				return CREATE(ClassAssign, block, lhs, rhs);
+			}
+		}
+
+		return operatorExpr(block, lhs, m, rhs);
 	}
 
 }
