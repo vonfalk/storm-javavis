@@ -27,68 +27,108 @@ namespace storm {
 			void STORM_FN addFirst(Auto<Expr> expr);
 		};
 
+
 		/**
-		 * Execute something named (eg a variable, a function).
+		 * Execute a function.
 		 */
-		class NamedExpr : public Expr {
+		class FnCall : public Expr {
 			STORM_CLASS;
 		public:
-			// Try to call 'name' with 'params'.
-			STORM_CTOR NamedExpr(Auto<Block> block, Auto<SStr> name, Auto<Actual> params);
+			STORM_CTOR FnCall(Auto<Function> toExecute, Auto<Actual> params);
 
-			// Try to call 'name' with 'first' as the first parameter of 'params'. This is
-			// used when we find an expression like: a.b(...). Then a is 'first'.
-			STORM_CTOR NamedExpr(Auto<Block> block, Auto<SStr> name, Auto<Expr> first, Auto<Actual> params);
-
-			// The return type of this 'NamedExpr'.
+			// Result type.
 			virtual Value result();
 
 			// Generate code.
 			virtual void code(const GenState &s, GenResult &to);
 
 		private:
-			// The function to execute (if any).
-			Function *toExecute;
+			// Function to run.
+			Auto<Function> toExecute;
 
-			// The variable to load (if any).
-			LocalVar *toLoad;
-
-			// Member variable to load (if any).
-			TypeVar *toAccess;
-
-			// The type to create (if any). Constructor saved in 'toExecute'.
-			Value toCreate;
-
-			// Parameters
+			// Parameters.
 			Auto<Actual> params;
-
-			// Generate code to call a function.
-			void callCode(const GenState &s, GenResult &to);
-
-			// Generate code to load a variable.
-			void loadCode(const GenState &s, GenResult &to);
-
-			// Generate code to create a type.
-			void createCode(const GenState &s, GenResult &to);
-
-			// Generate code to access a member variable.
-			void accessCode(const GenState &s, GenResult &to);
-
-			// Find what to call.
-			void findTarget(Auto<Block> block, const Name &name, const SrcPos &pos, bool useThis);
-
-			// Given a 'named', find out what to call.
-			bool findTarget(Named *n, const SrcPos &pos);
-
-			// Find what to call. Assumes we're trying to use the 'this' pointer.
-			bool findTargetThis(Auto<Block> block, const Name &name, const SrcPos &pos, Named *&candidate);
-
-			// Find a constructor.
-			void findCtor(Type *t, const SrcPos &pos);
 		};
 
 
-		NamedExpr * STORM_FN Operator(Auto<Block> block, Auto<Expr> lhs, Auto<SStr> m, Auto<Expr> rhs);
+		/**
+		 * Execute a constructor.
+		 */
+		class CtorCall : public Expr {
+			STORM_CLASS;
+		public:
+			STORM_CTOR CtorCall(Auto<Function> ctor, Auto<Actual> params);
+
+			// Result type.
+			virtual Value result();
+
+			// Generate code.
+			virtual void code(const GenState &s, GenResult &to);
+
+		private:
+			// Type to create.
+			Value toCreate;
+
+			// Constructor to run.
+			Auto<Function> ctor;
+
+			// Parameters.
+			Auto<Actual> params;
+		};
+
+
+		/**
+		 * Get a local variable.
+		 */
+		class LocalVarAccess : public Expr {
+			STORM_CLASS;
+		public:
+			STORM_CTOR LocalVarAccess(Auto<LocalVar> var);
+
+			// Result type.
+			virtual Value result();
+
+			// Generate code.
+			virtual void code(const GenState &s, GenResult &to);
+
+		private:
+			// Variable to access.
+			Auto<LocalVar> var;
+		};
+
+
+		/**
+		 * Read a type variable.
+		 */
+		class MemberVarAccess : public Expr {
+			STORM_CLASS;
+		public:
+			STORM_CTOR MemberVarAccess(Auto<Expr> member, Auto<TypeVar> var);
+
+			// Result type.
+			virtual Value result();
+
+			// Generate code.
+			virtual void code(const GenState &s, GenResult &to);
+
+		private:
+			// Member in which the variable is.
+			Auto<Expr> member;
+
+			// Variable to access.
+			Auto<TypeVar> var;
+		};
+
+
+		// Find out what the named expression means, and create proper object.
+		Expr *STORM_FN namedExpr(Auto<Block> block, Auto<SStr> name, Auto<Actual> params);
+
+		// Special case of above, used when we find an expression like a.b(...). 'first' is inserted
+		// into the beginning of 'params' and used. This method inhibits automatic insertion of 'this'.
+		Expr *STORM_FN namedExpr(Auto<Block> block, Auto<SStr> name, Auto<Expr> first, Auto<Actual> params);
+
+		// Create an operator.
+		Expr *STORM_FN operatorExpr(Auto<Block> block, Auto<Expr> lhs, Auto<SStr> m, Auto<Expr> rhs);
 
 	}
 }

@@ -78,8 +78,8 @@ ForInner => For(block) : Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me
 // Atoms, for example constants and variables/function calls.
 Atom(Block block);
 Atom => intConstant(nr) : "[0-9]+" nr;
-Atom => NamedExpr(block, name, params) : Name name, FnValues(block) params;
-Atom => NamedExpr(block, name, dotExpr, params) : Expr(block) dotExpr, "\.", Name name, FnValues(block) params;
+Atom => namedExpr(block, name, params) : Name name, FnValues(block) params;
+Atom => namedExpr(block, name, dotExpr, params) : Expr(block) dotExpr, "\.", Name name, FnValues(block) params;
 Atom => e : "(", Expr(block) e, ")";
 Atom => e : Block(block) e;
 Atom => e : If(block) e;
@@ -89,13 +89,13 @@ Atom => e : Loop(block) e; // For symmetry... I guess it is not really very usef
 Oper1 => v : "[*/%]" v;
 Expr1(Block block);
 Expr1 => a : Atom(block) a;
-Expr1 => Operator(block, lhs, op, rhs) : Expr1(block) lhs, Oper1 op, Atom(block) rhs;
+Expr1 => operatorExpr(block, lhs, op, rhs) : Expr1(block) lhs, Oper1 op, Atom(block) rhs;
 
 // Addition, subtraction. Right-associative, eg (a + b) + c
 Oper2 => v : "[\+\-]" v;
 Expr2(Block block);
 Expr2 => e : Expr1(block) e;
-Expr2 => Operator(block, lhs, op, rhs) : Expr2(block) lhs, Oper2 op, Expr1(block) rhs;
+Expr2 => operatorExpr(block, lhs, op, rhs) : Expr2(block) lhs, Oper2 op, Expr1(block) rhs;
 
 // Comparision operators.
 Oper3 => v : "==" v;
@@ -106,12 +106,12 @@ Oper3 => v : "<=" v;
 Oper3 => v : ">=" v;
 Expr3(Block block);
 Expr3 => e : Expr2(block) e;
-Expr3 => Operator(block, lhs, op, rhs) : Expr3(block) lhs, Oper3 op, Expr2(block) rhs;
+Expr3 => operatorExpr(block, lhs, op, rhs) : Expr3(block) lhs, Oper3 op, Expr2(block) rhs;
 
 // Expression
 Expr(Block block);
 Expr => e : Expr3(block) e;
-Expr => Operator(block, lhs, op, rhs) : Expr3(block) lhs, "=" op, Expr(block) rhs;
+Expr => operatorExpr(block, lhs, op, rhs) : Expr3(block) lhs, "=" op, Expr(block) rhs;
 Expr => Var(block, t, name) : Type t, Name name;
 Expr => Var(block, t, name, init) : Type t, Name name, "=", Expr(block) init;
 Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;
