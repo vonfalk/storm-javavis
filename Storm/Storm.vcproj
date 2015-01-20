@@ -406,6 +406,10 @@
 				RelativePath=".\TypeCtor.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TypeChain.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -646,6 +650,10 @@
 			</File>
 			<File
 				RelativePath=".\TypeCtor.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TypeChain.h"
 				>
 			</File>
 		</Filter>

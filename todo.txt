@@ -7,8 +7,6 @@ For member variables: make them use references instead of hard-coding offsets di
 
 In basic storm: Allow the dot operator to be used as scope resolution as well (maybe another in BS? like in cpp?)
 
-Extract the inheritance logic from the Type class into a separate class, making the Type class smaller.
-
 In the parser: allow member variables to be assigned by the -> syntax as well! Useful in various places
 in Basic.
 

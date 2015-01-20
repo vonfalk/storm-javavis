@@ -13,19 +13,19 @@ namespace storm {
 
 	Type::Type(const String &name, TypeFlags f, Size size)
 		: Named(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
-		  fixedSize(size), mySize(), parentPkg(null), lazyLoaded(false), lazyLoading(false) {
+		  fixedSize(size), mySize(), chain(this), parentPkg(null), lazyLoaded(false), lazyLoading(false) {
 
 		typeRef.set(this);
 
+		// Enforce that all objects inherit from Object.
 		if (flags & typeClass) {
 			// NOTE: The only time objType will be null is during startup, and in
 			// that case, setSuper will be called later anyway. Therefore it is OK
 			// to leave the class without a Object parent for a short while.
 			Type *objType = Object::type(engine);
 			if (objType)
-				superTypes.push_back(Object::type(engine));
+				chain.super(objType);
 		}
-		superTypes.push_back(this);
 	}
 
 	Type::~Type() {}
@@ -51,7 +51,7 @@ namespace storm {
 
 	void Type::clear() {
 		members.clear();
-		superTypes = vector<Type *>(1, this);
+		chain.super(null);
 	}
 
 	Type *Type::createType(Engine &engine, const String &name, TypeFlags flags) {
@@ -64,9 +64,7 @@ namespace storm {
 	}
 
 	bool Type::isA(Type *o) const {
-		nat depth = o->superTypes.size();
-		return superTypes.size() >= depth
-			&& superTypes[depth - 1] == o;
+		return chain.isA(o);
 	}
 
 	Size Type::superSize() const {
@@ -112,35 +110,11 @@ namespace storm {
 				throw InternalError(identifier() + L" may only inherit from other values.");
 		}
 
-		Type *oldSuper = this->super();
-		if (oldSuper != null && oldSuper != super)
-			oldSuper->children.erase(this);
-		if (oldSuper != super && super != null)
-			super->children.insert(this);
-
-		if (super == null) {
-			superTypes = vector<Type*>(1, this);
-		} else {
-			nat sz = super->superTypes.size();
-			superTypes = vector<Type *>(sz + 1);
-			for (nat i = 0; i < sz; i++) {
-				superTypes[i] = super->superTypes[i];
-			}
-			superTypes[sz] = this;
-		}
-
-		// Notify our children we've our type map!
-		for (set<Type*>::iterator i = children.begin(); i != children.end(); ++i) {
-			(*i)->setSuper(this);
-		}
+		chain.super(super);
 	}
 
 	Type *Type::super() const {
-		if (superTypes.size() <= 1) {
-			return null;
-		} else {
-			return superTypes[superTypes.size() - 2];
-		}
+		return chain.super();
 	}
 
 	Named *Type::find(const Name &name) {
