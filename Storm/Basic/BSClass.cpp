@@ -11,8 +11,19 @@ namespace storm {
 	bs::Class::Class(SrcPos pos, Par<SStr> name, Par<SStr> content)
 		: Type(name->v->v, typeClass), declared(pos), content(content) {}
 
+	bs::Class::Class(SrcPos pos, Par<SStr> name, Par<SStr> content, Par<TypeName> base)
+		: Type(name->v->v, typeClass), declared(pos), content(content), base(base) {}
+
 	void bs::Class::setScope(const Scope &scope) {
 		this->scope = Scope(scope, this);
+	}
+
+	void bs::Class::setBase() {
+		if (base) {
+			Value t = base->value(scope);
+			setSuper(t.type);
+			base = null;
+		}
 	}
 
 	void bs::Class::lazyLoad() {

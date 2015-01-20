@@ -67,6 +67,8 @@ namespace storm {
 
 	void PkgReader::readTypes() {}
 
+	void PkgReader::resolveTypes() {}
+
 	void PkgReader::readFunctions() {}
 
 
@@ -79,6 +81,8 @@ namespace storm {
 	void FileReader::readSyntax(SyntaxRules &to) {}
 
 	void FileReader::readTypes() {}
+
+	void FileReader::resolveTypes() {}
 
 	void FileReader::readFunctions() {}
 
@@ -103,6 +107,13 @@ namespace storm {
 		loadFiles();
 		for (nat i = 0; i < files.size(); i++) {
 			files[i]->readTypes();
+		}
+	}
+
+	void FilesReader::resolveTypes() {
+		loadFiles();
+		for (nat i = 0; i < files.size(); i++) {
+			files[i]->resolveTypes();
 		}
 	}
 

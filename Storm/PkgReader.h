@@ -45,7 +45,7 @@ namespace storm {
 	 * The process is designed to be implemented as follows:
 	 * 1: get syntax
 	 * 2: get types (just information, should be lazy-loaded!)
-	 * 3: resolve types (ie figure out how structs should look) (needed?)
+	 * 3: resolve types (ie set up inheritance, figure out how structs look...)
 	 * 4: get functions
 	 * This is to ensure that inter-depencies are resolved correctly. Within each language,
 	 * these rules may be implemented differently.
@@ -73,6 +73,9 @@ namespace storm {
 		// Get all types. Override to implement type-loading.
 		virtual void readTypes();
 
+		// Resolve types.
+		virtual void resolveTypes();
+
 		// Get all functions.
 		virtual void readFunctions();
 	};
@@ -99,6 +102,9 @@ namespace storm {
 		// Read types from this file.
 		virtual void readTypes();
 
+		// Resolve types in this file.
+		virtual void resolveTypes();
+
 		// Read types from this file.
 		virtual void readFunctions();
 
@@ -119,6 +125,7 @@ namespace storm {
 		// Read contents from all files.
 		virtual void readSyntax(SyntaxRules &to);
 		virtual void readTypes();
+		virtual void resolveTypes();
 		virtual void readFunctions();
 
 	protected:

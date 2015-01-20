@@ -52,4 +52,7 @@ BEGIN_TEST(CodeTest) {
 
 	CHECK_ERROR(runFn(engine, L"test.bs.assignError"));
 
+	CHECK_EQ(runFn(engine, L"test.bs.testBase"), 10);
+	CHECK_EQ(runFn(engine, L"test.bs.testDerived"), 20);
+
 } END_TEST

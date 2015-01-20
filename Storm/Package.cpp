@@ -230,6 +230,11 @@ namespace storm {
 				toLoad[i]->readTypes();
 			}
 
+			// Set up all types.
+			for (nat i = 0; i < toLoad.size(); i++) {
+				toLoad[i]->resolveTypes();
+			}
+
 			// Load all functions.
 			for (nat i = 0; i < toLoad.size(); i++) {
 				toLoad[i]->readFunctions();

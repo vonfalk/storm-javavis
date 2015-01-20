@@ -1,0 +1,34 @@
+use core;
+
+class Base {
+	Int a;
+
+	Int overload() {
+		a;
+	}
+}
+
+class Derived extends Base {
+	Int b;
+
+	Int overload() {
+		b;
+	}
+}
+
+Int extract(Base b) {
+	b.overload;
+}
+
+Int testBase() {
+	Base b = Base();
+	b.a = 10;
+	extract(b);
+}
+
+Int testDerived() {
+	Derived d = Derived();
+	d.a = 10;
+	d.b = 20;
+	extract(d);
+}

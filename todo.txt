@@ -1,5 +1,8 @@
 Also: return types for rules may be specified.
 
+The following case is not very well handled:
+fn(Base b), fn(Derived b) - no errors, only the first one is called.
+
 For member variables: make them use references instead of hard-coding offsets directly.
 
 In basic storm: Allow the dot operator to be used as scope resolution as well (maybe another in BS? like in cpp?)

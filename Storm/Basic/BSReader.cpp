@@ -4,6 +4,7 @@
 #include "SyntaxTransform.h"
 #include "BSIncludes.h"
 #include "BSContents.h"
+#include "BSClass.h"
 #include "Utils/FileStream.h"
 
 namespace storm {
@@ -28,6 +29,14 @@ namespace storm {
 		readContents();
 		for (nat i = 0; i < contents->types.size(); i++) {
 			package->add(contents->types[i].borrow());
+		}
+	}
+
+	void bs::File::resolveTypes() {
+		readContents();
+		for (nat i = 0; i < contents->types.size(); i++) {
+			if (Class *c = as<Class>(contents->types[i].borrow()))
+				c->setBase();
 		}
 	}
 

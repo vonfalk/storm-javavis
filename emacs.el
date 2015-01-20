@@ -366,7 +366,7 @@
 ;; Behaviour.
 
 (add-to-list 'auto-mode-alist '("\\.h" . c++-mode))
-(add-to-list 'auto-mode-alist '("\\.bs" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.bs" . java-mode))
 
 (setq display-buffer-alist
       '(("\\*compilation\\*" .

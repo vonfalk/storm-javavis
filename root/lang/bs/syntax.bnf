@@ -36,6 +36,7 @@ Type result, Name name, "(", Params params, ")", "{", SkipBlock contents, "}";
 
 // Class
 Class => Class(pos, name, contents) : "class", Name name, "{", SkipBlock contents, "}";
+Class => Class(pos, name, contents, base) : "class", Name name, "extends", Type base, "{", SkipBlock contents, "}";
 
 // Possible root blocks.
 FileItem => fn : Function fn;

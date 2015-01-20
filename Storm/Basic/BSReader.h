@@ -36,6 +36,9 @@ namespace storm {
 			// Get types.
 			void readTypes();
 
+			// Update inheritance.
+			void resolveTypes();
+
 			// Get functions.
 			void readFunctions();
 

@@ -19,11 +19,17 @@ namespace storm {
 			// Create class 'name' with contents 'content'.
 			STORM_CTOR Class(SrcPos pos, Par<SStr> name, Par<SStr> content);
 
+			// Create class 'name' with contents 'content', extended from 'base'.
+			STORM_CTOR Class(SrcPos pos, Par<SStr> name, Par<SStr> content, Par<TypeName> base);
+
 			// The scope used for this class.
 			Scope scope;
 
 			// Set the scope (done by BSContents).
 			void setScope(const Scope &scope);
+
+			// Set the base class.
+			void setBase();
 
 			// Declared at.
 			const SrcPos declared;
@@ -35,6 +41,9 @@ namespace storm {
 		private:
 			// Contents of the class.
 			Auto<SStr> content;
+
+			// Base class (if any).
+			Auto<TypeName> base;
 		};
 
 
