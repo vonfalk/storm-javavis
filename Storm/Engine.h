@@ -72,6 +72,9 @@ namespace storm {
 		// Delete old code later.
 		void destroy(code::Binary *binary);
 
+		// Get the maxium size needed for any C++ vtable.
+		inline nat maxCppVTable() const { return cppVTableSize; }
+
 	private:
 		// Path to root directory.
 		Path rootPath;
@@ -91,6 +94,9 @@ namespace storm {
 		// Cached types.
 		vector<Auto<Type> > cached;
 		vector<Auto<Type> > specialCached;
+
+		// Maxium C++ VTable size.
+		nat cppVTableSize;
 
 		// Initialized?
 		bool inited;

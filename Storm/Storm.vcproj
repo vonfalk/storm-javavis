@@ -410,6 +410,10 @@
 				RelativePath=".\TypeChain.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\VTable.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -654,6 +658,10 @@
 			</File>
 			<File
 				RelativePath=".\TypeChain.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VTable.h"
 				>
 			</File>
 		</Filter>

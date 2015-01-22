@@ -11,6 +11,9 @@ namespace storm {
 		  allocRef(arena, L"alloc"), freeRef(arena, L"free"),
 		  lazyCodeFn(arena, L"lazyUpdate") {
 
+		cppVTableSize = maxVTableCount();
+		PVAR(cppVTableSize);
+
 		specialCached.resize(specialCount);
 
 		addRef.set(address(&Object::addRef));

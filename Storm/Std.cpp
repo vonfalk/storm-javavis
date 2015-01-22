@@ -6,6 +6,7 @@
 #include "Exception.h"
 #include "Function.h"
 #include "Engine.h"
+#include "Code/VTable.h"
 
 namespace storm {
 
@@ -152,4 +153,17 @@ namespace storm {
 		addBuiltIn(to);
 	}
 
+	nat maxVTableCount() {
+		nat r = 0;
+		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
+			if (t->typeFlags & typeValue)
+				continue;
+
+			if (t->cppVTable == null) {
+				WARNING(L"Missing VTable for " << t->name);
+			}
+			r = max(r, code::vtableCount(t->cppVTable));
+		}
+		return r;
+	}
 }

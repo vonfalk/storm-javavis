@@ -11,7 +11,7 @@ namespace code {
 		return *o;
 	}
 
-	void setVtable(void *object, void *vtable) {
+	void setVTable(void *object, void *vtable) {
 		void **o = (void **)object;
 		*o = vtable;
 	}
@@ -22,6 +22,8 @@ namespace code {
 	 */
 
 #if defined(VS) && VS == 2008
+
+	int VTable::extraOffset = -2;
 
 	// Is the address readable?
 	static bool readable(void *addr) {
@@ -48,6 +50,29 @@ namespace code {
 		return true;
 	}
 
+	// Print some information about 'addr' for debugging.
+	static void flags(void *addr) {
+		MEMORY_BASIC_INFORMATION info;
+		nat r = VirtualQuery(addr, &info, sizeof(info));
+		assert(r == sizeof(info));
+
+		printf("%p:", addr);
+		if (info.State == MEM_FREE)
+			printf(" free");
+		if (info.Protect & PAGE_NOACCESS || info.Protect == 0)
+			printf(" noaccess");
+		if (info.Protect & PAGE_GUARD)
+			printf(" guard");
+		if (info.Protect & PAGE_EXECUTE) // I think this is execute only.
+			printf(" executable");
+		if (info.Protect & PAGE_READONLY)
+			printf(" readonly");
+		if (info.Protect & PAGE_READWRITE)
+			printf(" readwrite");
+
+		printf("\n");
+	}
+
 	static bool isNewVTable(void *addr) {
 		nat *p = (nat *)addr;
 		if (p[0] < 0xFF && p[1] < 0xFF)
@@ -55,13 +80,16 @@ namespace code {
 		return false;
 	}
 
-	static nat vtableSize(void *vtable) {
+	nat vtableCount(void *vtable) {
 		void **table = (void **)vtable;
 		assert(readable(table));
 
 		// Find the size by looking at each address.
 		nat size = 1;
 		while (readable(table + size)) {
+			// For debugging, this is good!
+			// flags(table[size]);
+
 			if (!readable(table[size]))
 				return size;
 
@@ -74,16 +102,21 @@ namespace code {
 		return size - 1;
 	}
 
-	static void **allocVTable(void *from, nat size) {
+	static void **allocVTable(nat size) {
+		void **table = new void*[size + 2];
+		return table + 2;
+	}
+
+	static void copyVTable(void *from, void *to, nat size) {
+		// Note: copies one byte extra before 'from' and 'to'.
 		void **f = ((void **)from) - 1;
-		void **table = new void*[size + 1];
-		for (nat i = 0; i < size + 1; i++)
-			table[i] = f[i];
-		return table + 1;
+		void **t = ((void **)to) - 1;
+		for (nat i = 0; i <= size; i++)
+			t[i] = f[i];
 	}
 
 	static void freeVTable(void *from) {
-		void **f = ((void **)from) - 1;
+		void **f = ((void **)from) - 2;
 		delete[] f;
 	}
 
@@ -157,14 +190,44 @@ namespace code {
 
 #endif
 
-
-	VTable::VTable(void *cppVTable) {
-		size = vtableSize(cppVTable);
+	VTable::VTable(void *cppVTable, nat count) {
+		nat size = vtableCount(cppVTable);
 		if (size > VTABLE_WARN_SIZE) {
 			PLN("Big vtable detected: " << size << L" bytes.");
 			assert(false);
 		}
-		content = allocVTable(cppVTable, size);
+
+		if (count == 0)
+			count = size;
+
+		if (count < size) {
+			PLN("Tried to allocate too small VTable: got " << count << ", needed " << size << ".");
+			assert(false);
+			count = size;
+		}
+
+		content = allocVTable(count);
+		// Note: this may copy less than 'count' bytes!
+		copyVTable(cppVTable, content, size);
+		this->size = count;
+	}
+
+	VTable::VTable(const VTable &src) {
+		size = src.size;
+		content = allocVTable(size);
+		copyVTable(src.content, content, size);
+		extra(src.extra());
+	}
+
+	void VTable::replace(void *cppVTable) {
+		nat newSize = vtableCount(cppVTable);
+		assert(("Tried to replace with a too big VTable!", newSize <= size));
+		copyVTable(cppVTable, content, newSize);
+	}
+
+	void VTable::replace(const VTable &src) {
+		assert(("Tried to replace with a too big VTable!", src.size <= size));
+		copyVTable(src.content, content, size);
 	}
 
 	VTable::~VTable() {
@@ -172,12 +235,20 @@ namespace code {
 	}
 
 	void VTable::setTo(void *object) {
-		setVtable(object, content);
+		setVTable(object, content);
 	}
 
 	void VTable::set(void *fn, void *newFn) {
 		nat id = functionOffset(fn);
 		content[id] = newFn;
+	}
+
+	void *VTable::extra() const {
+		return content[extraOffset];
+	}
+
+	void VTable::extra(void *to) {
+		content[extraOffset] = to;
 	}
 
 }

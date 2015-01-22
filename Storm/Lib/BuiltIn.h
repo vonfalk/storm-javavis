@@ -28,6 +28,8 @@ namespace storm {
 		// Static Type pointer index.
 		nat typePtrId;
 
+		// The vtable pointer to the C++ type.
+		void *cppVTable;
 	};
 
 	/**

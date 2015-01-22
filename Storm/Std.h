@@ -21,4 +21,9 @@ namespace storm {
 	 */
 	void addStdLib(Engine &to);
 
+	/**
+	 * Compute the maxium needed VTable size for C++ types.
+	 */
+	nat maxVTableCount();
+
 }

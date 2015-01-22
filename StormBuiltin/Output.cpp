@@ -75,7 +75,12 @@ String typeList(const Types &types) {
 			out << L"typeClass, ";
 		}
 
-		out << i << L" ";
+		out << i << L", ";
+		if (type.value) {
+			out << L"null ";
+		} else {
+			out << type.cppName << L"::cppVTable() ";
+		}
 		out << L"},\n";
 	}
 

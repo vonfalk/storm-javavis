@@ -34,9 +34,9 @@ namespace storm {
 			return;
 
 		if (old)
-			old->children.erase(this);
+			old->child.erase(this);
 		if (n)
-			n->children.insert(this);
+			n->child.insert(this);
 
 		if (n)
 			updateSuper(*n);
@@ -76,11 +76,22 @@ namespace storm {
 	}
 
 	void TypeChain::notify() const {
-		set<TypeChain*>::const_iterator i, end = children.end();
-		for (i = children.begin(); i != end; ++i) {
+		set<TypeChain*>::const_iterator i, end = child.end();
+		for (i = child.begin(); i != end; ++i) {
 			TypeChain *c = *i;
 			c->updateSuper(*this);
 		}
+	}
+
+	vector<Type*> TypeChain::children() const {
+		vector<Type*> r(child.size());
+
+		set<TypeChain*>::const_iterator i, end = child.end();
+		nat to = 0;
+		for (i = child.begin(); i != end; ++i)
+			r[to] = (*i)->owner;
+
+		return r;
 	}
 
 }

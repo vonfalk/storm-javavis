@@ -26,6 +26,10 @@ namespace storm {
 		bool isA(TypeChain *o) const;
 		bool isA(Type *o) const;
 
+		// Get all currently known children. Note that the result is not
+		// ordered in any way at all, even though it is a vector.
+		vector<Type *> children() const;
+
 	private:
 		// The chain of super types. Always ends with 'this'.
 		TypeChain **chain;
@@ -34,7 +38,7 @@ namespace storm {
 		nat count;
 
 		// We need to update child types when we're updated.
-		set<TypeChain *> children;
+		set<TypeChain *> child;
 
 		// Owner.
 		Type *owner;

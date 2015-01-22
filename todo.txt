@@ -46,3 +46,6 @@ Compilation error in a function => ensure so that the next invocation returns th
 
 
 Replace TypeError(x, L".....") with TypeError(x, from, to);
+
+Note: The current solution of allocating VTables "too large" only works if we know all C++ types at startup. This
+is not neccessarily true when we implement dynamic library loading!
