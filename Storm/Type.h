@@ -1,10 +1,11 @@
 #pragma once
-#include "TypeChain.h"
 #include "Named.h"
 #include "Scope.h"
 #include "Overload.h"
 #include "Package.h"
+#include "TypeChain.h"
 #include "TypeLayout.h"
+#include "VTable.h"
 #include "Code/Value.h"
 
 namespace storm {
@@ -41,9 +42,13 @@ namespace storm {
 	class Type : public Named {
 		STORM_CLASS;
 	public:
-		// If size == 0, it will be automatically computed based on members. Size
-		// is mainly used to denote built-in classes.
-		Type(const String &name, TypeFlags flags, Size size = Size());
+		// Create a type that exists in Storm.
+		Type(const String &name, TypeFlags flags);
+
+		// Create a type declared in C++.
+		Type(const String &name, TypeFlags flags, Size size, void *cppVTable);
+
+		// Dtor.
 		~Type();
 
 		// Create the first type instance, as an instance of itself.
@@ -100,6 +105,9 @@ namespace storm {
 		// Type chain.
 		TypeChain chain;
 
+		// VTable for this type. Not too useful if we're a value type, but maintained anyway for simplicity.
+		VTable vtable;
+
 	protected:
 		virtual void output(wostream &to) const;
 
@@ -118,11 +126,8 @@ namespace storm {
 		// Our parent type's size.
 		Size superSize() const;
 
-		// Fixed size (as a built-in type)?
-		Size fixedSize;
-
 		// Our size (including base classes). If it is zero, we need to re-compute it!
-		mutable Size mySize;
+		Size mySize;
 
 		// Variable layout.
 		TypeLayout layout;
@@ -136,6 +141,22 @@ namespace storm {
 		// Ensure that any lazy-loaded parts are loaded.
 		void ensureLoaded();
 
+		// Init (shared parts of constructors).
+		void init();
+
+		// Update the need for virtual calls for all members.
+		void updateVirtual();
+		void updateVirtual(Overload *o);
+
+		// Check if 'x' needs to have a virtual dispatch.
+		bool needsVirtual(Function *fn);
+
+		// Enable/disable vtable lookup for the given function.
+		void enableLookup(Function *fn);
+		void disableLookup(Function *fn);
+
+		// Find a possible overload to a function. Does not attempt to lazy-load.
+		Function *overloadTo(Function *base);
 	};
 
 }

@@ -52,7 +52,7 @@ namespace storm {
 		// Code to be executed.
 		void setCode(Par<Code> code);
 
-		// Set lookup code. (default one provided!)
+		// Set lookup code. (default one provided!, use 'null' to restore default).
 		void setLookup(Par<Code> lookup);
 
 	protected:

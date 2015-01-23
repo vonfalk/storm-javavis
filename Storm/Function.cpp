@@ -70,10 +70,18 @@ namespace storm {
 	void Function::setLookup(Par<Code> code) {
 		if (lookup)
 			lookup->detach();
-		code->attach(this);
-		lookup = code;
-		if (lookupRef)
-			lookup->update(*lookupRef);
+
+		if (code == null && codeRef != null)
+			lookup = CREATE(DelegatedCode, engine(), code::Ref(*codeRef), lookupRef->getTitle());
+		else
+			lookup = code;
+
+		if (lookup) {
+			lookup->attach(this);
+
+			if (lookupRef)
+				lookup->update(*lookupRef);
+		}
 	}
 
 	void Function::initRefs() {
@@ -87,8 +95,10 @@ namespace storm {
 		if (!lookupRef) {
 			assert(("Too early!", parent()));
 			lookupRef = new code::RefSource(engine().arena, identifier() + L"<l>");
-			if (!lookup)
+			if (!lookup) {
 				lookup = CREATE(DelegatedCode, engine(), code::Ref(*codeRef), lookupRef->getTitle());
+				lookup->attach(this);
+			}
 			lookup->update(*lookupRef);
 		}
 	}

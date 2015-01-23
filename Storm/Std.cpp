@@ -137,7 +137,8 @@ namespace storm {
 
 			if (cached.size() <= id)
 				cached.resize(id + 1);
-			cached[i] = CREATE(Type, to, t.name, TypeFlags(t.typeFlags), Size(t.typeSize));
+			// Here we're not giving the right size for other platforms than the current platform.
+			cached[i] = CREATE(Type, to, t.name, TypeFlags(t.typeFlags), Size(t.typeSize), t.cppVTable);
 		}
 		TODO(L"Find a way to compute the size of types for 64-bit as well!");
 	}
@@ -155,6 +156,7 @@ namespace storm {
 
 	nat maxVTableCount() {
 		nat r = 0;
+
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
 			if (t->typeFlags & typeValue)
 				continue;

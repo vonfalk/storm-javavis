@@ -9,6 +9,8 @@
 
 namespace storm {
 
+	class VTableCalls;
+
 	/**
 	 * Some special types.
 	 */
@@ -69,6 +71,9 @@ namespace storm {
 		// Other references.
 		code::RefSource lazyCodeFn;
 
+		// Get a reference to a virtual function call.
+		code::Ref virtualCall(nat id) const;
+
 		// Delete old code later.
 		void destroy(code::Binary *binary);
 
@@ -103,6 +108,9 @@ namespace storm {
 
 		// Binary objects to destroy. TODO: Be more eager!
 		vector<code::Binary *> toDestroy;
+
+		// The cache of virtual function call stubs.
+		VTableCalls *vcalls;
 
 		// Set T to the type, reporting any errors.
 		void setType(Type *&t, const String &name);

@@ -26,8 +26,11 @@ namespace storm {
 	void TypeDefaultCtor::generateCode(Function *before) {
 		using namespace code;
 
+		// The type.
+		Type *type = before->params[0].type;
+
 		Listing l;
-		Variable v = l.frame.createPtrParam(); // Refcounting here as well?
+		Variable v = l.frame.createPtrParam();
 
 		l << prolog();
 
@@ -38,6 +41,10 @@ namespace storm {
 		}
 
 		// TODO: Call constructors for any data members that requires it.
+
+		// Set the vtable. (TODO: maybe a symbolic offset here?)
+		l << mov(ptrA, v);
+		l << mov(ptrRel(ptrA), Ref(type->vtable.ref));
 
 		l << epilog();
 		l << ret(Size());

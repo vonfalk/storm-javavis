@@ -46,6 +46,9 @@ namespace code {
 		// Get our size.
 		inline nat count() const { return size; }
 
+		// Get the pointer.
+		inline void *ptr() const { return content; }
+
 	private:
 		// Size of the vtable.
 		nat size;

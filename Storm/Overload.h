@@ -14,6 +14,8 @@ namespace storm {
 	class Overload : public Named {
 		STORM_CLASS;
 	public:
+		typedef vector<Auto<NameOverload> >::const_iterator iterator;
+
 		Overload(NameLookup *parent, const String &name);
 		~Overload();
 
@@ -28,6 +30,10 @@ namespace storm {
 
 		// Parent.
 		NameLookup *parent() const;
+
+		// Iterator through the sequence.
+		inline iterator begin() const { return items.begin(); }
+		inline iterator end() const { return items.end(); }
 
 	protected:
 		virtual void output(wostream &to) const;

@@ -11,9 +11,27 @@ namespace storm {
 
 	const String Type::CTOR = L"__ctor";
 
-	Type::Type(const String &name, TypeFlags f, Size size)
+	Type::Type(const String &name, TypeFlags f)
 		: Named(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
-		  fixedSize(size), mySize(), chain(this), parentPkg(null), lazyLoaded(false), lazyLoading(false) {
+		  mySize(), chain(this), vtable(engine) {
+
+		init();
+	}
+
+	Type::Type(const String &name, TypeFlags f, Size size, void *cppVTable)
+		: Named(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
+		  mySize(size), chain(this), vtable(engine) {
+
+		// Create the VTable first, otherwise init() may get strange ideas...
+		vtable.create(cppVTable);
+
+		init();
+	}
+
+	void Type::init() {
+		lazyLoading = false;
+		lazyLoaded = false;
+		parentPkg = null;
 
 		typeRef.set(this);
 
@@ -24,7 +42,7 @@ namespace storm {
 			// to leave the class without a Object parent for a short while.
 			Type *objType = Object::type(engine);
 			if (objType)
-				chain.super(objType);
+				setSuper(objType);
 		}
 	}
 
@@ -45,6 +63,9 @@ namespace storm {
 				throw;
 			}
 			lazyLoading = false;
+			updateVirtual();
+			if (Type *s = super())
+				s->updateVirtual();
 		}
 		lazyLoaded = true;
 	}
@@ -60,7 +81,7 @@ namespace storm {
 		size_t engineOffset = sizeof(Named);
 		OFFSET_IN(mem, typeOffset, Type *) = (Type *)mem;
 		OFFSET_IN(mem, engineOffset, Engine *) = &engine;
-		return new (mem) Type(name, flags, Size(sizeof(Type)));
+		return new (mem) Type(name, flags, Size(sizeof(Type)), Type::cppVTable());
 	}
 
 	bool Type::isA(Type *o) const {
@@ -84,12 +105,8 @@ namespace storm {
 		if (mySize == Size()) {
 			ensureLoaded();
 
-			if (fixedSize != Size()) {
-				mySize = fixedSize;
-			} else {
-				Size s = superSize();
-				mySize = layout.size(s);
-			}
+			Size s = superSize();
+			mySize = layout.size(s);
 		}
 		return mySize;
 	}
@@ -110,7 +127,18 @@ namespace storm {
 				throw InternalError(identifier() + L" may only inherit from other values.");
 		}
 
+		Type *lastSuper = chain.super();
+
 		chain.super(super);
+
+		if (lastSuper)
+			lastSuper->updateVirtual();
+
+		if (!vtable.builtIn()) {
+			vtable.create(super->vtable);
+			if (super)
+				super->updateVirtual();
+		}
 	}
 
 	Type *Type::super() const {
@@ -126,7 +154,7 @@ namespace storm {
 
 		MemberMap::const_iterator i = members.find(name[0]);
 		if (i != members.end())
-			return i ->second.borrow();
+			return i->second.borrow();
 
 		if (Type *s = super())
 			return s->find(name);
@@ -192,6 +220,62 @@ namespace storm {
 
 	Offset Type::offset(const TypeVar *var) const {
 		return layout.offset(superSize(), var);
+	}
+
+	void Type::updateVirtual() {
+		// If we're a built in type, there is nothing we can do anyway!
+		if (vtable.builtIn())
+			return;
+
+		if (flags & typeValue)
+			return;
+
+		for (MemberMap::iterator i = members.begin(), end = members.end(); i != end; ++i) {
+			Overload *o = i->second.borrow();
+			updateVirtual(o);
+		}
+	}
+
+	void Type::updateVirtual(Overload *o) {
+		// Constructors never need virtual dispatch (and would crash if we used it there...).
+		if (o->name == CTOR)
+			return;
+
+		for (Overload::iterator i = o->begin(), end = o->end(); i != end; ++i) {
+			NameOverload *no = i->borrow();
+			if (Function *fn = as<Function>(no)) {
+				if (needsVirtual(fn))
+					enableLookup(fn);
+				else
+					disableLookup(fn);
+			}
+		}
+	}
+
+	void Type::enableLookup(Function *fn) {}
+
+	void Type::disableLookup(Function *fn) {
+		fn->setLookup(null);
+	}
+
+	bool Type::needsVirtual(Function *fn) {
+		vector<Type *> children = chain.children();
+		for (nat i = 0; i < children.size(); i++)
+			if (children[i]->overloadTo(fn))
+				return true;
+
+		return false;
+	}
+
+	Function *Type::overloadTo(Function *to) {
+		MemberMap::const_iterator i = members.find(to->name);
+		if (i == members.end())
+			return null;
+
+		// Replace the 'this' parameter, otherwise we would never get a match!
+		vector<Value> params = to->params;
+		params[0].type = this;
+		return as<Function>(i->second->find(params));
 	}
 
 }

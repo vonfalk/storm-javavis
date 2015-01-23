@@ -1,12 +1,32 @@
 #pragma once
+#include "Code/Value.h"
 
 namespace code {
 	class VTable;
+	class Binary;
 }
 
 namespace storm {
 
 	class Object;
+
+	/**
+	 * ADT describing a position in a VTable.
+	 */
+	class VTablePos {
+		friend class VTableCalls;
+		friend class VTable;
+		friend wostream &operator <<(wostream &to, const VTablePos &pos);
+
+		// Offset?
+		nat offset;
+
+		// Entry in Storm?
+		bool stormEntry;
+	};
+
+	wostream &operator <<(wostream &to, const VTablePos &pos);
+
 
 	/**
 	 * Implementation of a VTable for storm programs. This implementation
@@ -35,6 +55,9 @@ namespace storm {
 		// Initialize to empty, use 'create' later.
 		VTable(Engine &e);
 
+		// Dtor.
+		~VTable();
+
 		// Create from a C++ vtable. This can only be done once.
 		void create(void *cppVTable);
 
@@ -45,6 +68,12 @@ namespace storm {
 		// Replace the VTable of an object. (silently does nothing if not 'create'd)
 		void update(Object *object);
 
+		// The reference to the vtable itself.
+		code::RefSource ref;
+
+		// Built in vtable?
+		bool builtIn() const;
+
 	private:
 		// Engine.
 		Engine &engine;
@@ -54,6 +83,40 @@ namespace storm {
 
 		// The derived VTable (if we have generated one).
 		code::VTable *replaced;
+	};
+
+
+	/**
+	 * Keep track of and share created vtable call stubs.
+	 */
+	class VTableCalls : NoCopy {
+	public:
+		// Create
+		VTableCalls(Engine &e);
+
+		// Dtor.
+		~VTableCalls();
+
+		// Get the vtable call for entry pos.
+		code::Ref call(VTablePos pos);
+
+	private:
+		// Engine.
+		Engine &engine;
+
+		// Created code stubs.
+		vector<code::RefSource *> stormCreated;
+		vector<code::RefSource *> cppCreated;
+
+		// Created binary objects. 'random' order.
+		vector<code::Binary *> binaries;
+
+		// Get the call.
+		code::Ref call(nat i, vector<code::RefSource *> &src, code::RefSource *(VTableCalls::*create)(nat));
+
+		// Create a stub.
+		code::RefSource *createStorm(nat i);
+		code::RefSource *createCpp(nat i);
 	};
 
 }

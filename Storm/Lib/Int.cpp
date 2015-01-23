@@ -53,7 +53,7 @@ namespace storm {
 		}
 	}
 
-	IntType::IntType() : Type(L"Int", typeValue | typeFinal, Size::sInt) {
+	IntType::IntType() : Type(L"Int", typeValue | typeFinal, Size::sInt, null) {
 		vector<Value> ii(2, Value(this));
 		Value b(boolType(engine));
 		add(steal(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&intAdd))));
@@ -82,7 +82,7 @@ namespace storm {
 		return t;
 	}
 
-	NatType::NatType() : Type(L"Nat", typeValue | typeFinal, Size::sNat) {}
+	NatType::NatType() : Type(L"Nat", typeValue | typeFinal, Size::sNat, null) {}
 
 	Type *natType(Engine &e) {
 		Type *t = e.specialBuiltIn(specialNat);

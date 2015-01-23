@@ -12,8 +12,7 @@ namespace storm {
 		  lazyCodeFn(arena, L"lazyUpdate") {
 
 		cppVTableSize = maxVTableCount();
-		PVAR(cppVTableSize);
-
+		vcalls = new VTableCalls(*this);
 		specialCached.resize(specialCount);
 
 		addRef.set(address(&Object::addRef));
@@ -60,6 +59,7 @@ namespace storm {
 			cached[i]->clear();
 		}
 		cached.clear();
+		delete vcalls;
 
 		t->release();
 

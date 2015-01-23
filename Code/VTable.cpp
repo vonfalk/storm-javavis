@@ -87,7 +87,8 @@ namespace code {
 		// Find the size by looking at each address.
 		nat size = 1;
 		while (readable(table + size)) {
-			// For debugging, this is good!
+			// For debugging, one of these are good.
+			// flags(table + size);
 			// flags(table[size]);
 
 			if (!readable(table[size]))
