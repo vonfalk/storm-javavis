@@ -27,6 +27,11 @@ namespace storm {
 		return *lookupRef;
 	}
 
+	code::RefSource &Function::directRef() {
+		initRefs();
+		return *codeRef;
+	}
+
 	void Function::genCode(const GenState &to, const vector<code::Value> &params, GenResult &res) {
 		using namespace code;
 
@@ -107,6 +112,24 @@ namespace storm {
 		to << result << " " << name << "(";
 		join(to, params, L", ");
 		to << ")";
+	}
+
+	bool isOverload(Function *base, Function *overload) {
+		if (base->params.size() != overload->params.size())
+			return false;
+
+		if (base->params.size() <= 0)
+			return false;
+
+		// First parameter is special.
+		if (!base->params[0].canStore(overload->params[0]))
+			return false;
+
+		for (nat i = 1; i < base->params.size(); i++)
+			if (!overload->params[i].canStore(overload->params[i]))
+				return false;
+
+		return true;
 	}
 
 	Function *nativeFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr) {

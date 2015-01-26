@@ -1,4 +1,5 @@
 use core;
+use core.debug;
 
 class Base {
 	Int a;
@@ -22,12 +23,14 @@ Int extract(Base b) {
 
 Int testBase() {
 	Base b = Base();
+	// printVTable(b);
 	b.a = 10;
 	extract(b);
 }
 
 Int testDerived() {
 	Derived d = Derived();
+	// printVTable(d);
 	d.a = 10;
 	d.b = 20;
 	extract(d);

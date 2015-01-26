@@ -178,6 +178,7 @@ namespace code {
 			break;
 		case tReference:
 			to << L"@" << iReference.targetName();
+			to << L" (" << toHex(iReference.address(), true) << L")";
 			break;
 		case tBlock:
 			to << L"Block" << blockId;

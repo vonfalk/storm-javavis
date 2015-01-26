@@ -5,7 +5,7 @@
 
 namespace code {
 
-	Reference::Reference(RefSource &source, const String &title) : title(title), arena(arena), referring(source.getId()) {
+	Reference::Reference(RefSource &source, const String &title) : title(title), arena(source.arena), referring(source.getId()) {
 		lastAddress = arena.refManager.addReference(this, referring);
 	}
 
@@ -25,6 +25,7 @@ namespace code {
 	CbReference::CbReference(const Ref &copy, const String &title) : Reference(copy, title) {}
 
 	void CbReference::onAddressChanged(void *a) {
+		Reference::onAddressChanged(a);
 		onChange(a);
 	}
 

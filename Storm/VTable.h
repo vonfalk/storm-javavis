@@ -1,5 +1,7 @@
 #pragma once
 #include "Code/Value.h"
+#include "StormVTable.h"
+#include "VTablePos.h"
 
 namespace code {
 	class VTable;
@@ -9,24 +11,7 @@ namespace code {
 namespace storm {
 
 	class Object;
-
-	/**
-	 * ADT describing a position in a VTable.
-	 */
-	class VTablePos {
-		friend class VTableCalls;
-		friend class VTable;
-		friend wostream &operator <<(wostream &to, const VTablePos &pos);
-
-		// Offset?
-		nat offset;
-
-		// Entry in Storm?
-		bool stormEntry;
-	};
-
-	wostream &operator <<(wostream &to, const VTablePos &pos);
-
+	class Function;
 
 	/**
 	 * Implementation of a VTable for storm programs. This implementation
@@ -49,8 +34,12 @@ namespace storm {
 	 * TODO: We have trouble when an object switches C++-based base class! In that
 	 * case we need to re-allocate the VTable itself... Maybe we can figure out the
 	 * maxium size needed and use that?
+	 *
+	 * TODO: This also contains the same information as the chain class, remove duplication?
 	 */
 	class VTable : NoCopy {
+		// Needed to update actual data.
+		friend class VTableUpdater;
 	public:
 		// Initialize to empty, use 'create' later.
 		VTable(Engine &e);
@@ -63,7 +52,10 @@ namespace storm {
 
 		// Create a sub-vtable. This can be done multiple times if the inheritance
 		// chain is broken.
-		void create(const VTable &parent);
+		void create(VTable &parent);
+
+		// Create a new root-vtable for an object not inherited from anything.
+		void create();
 
 		// Replace the VTable of an object. (silently does nothing if not 'create'd)
 		void update(Object *object);
@@ -74,6 +66,12 @@ namespace storm {
 		// Built in vtable?
 		bool builtIn() const;
 
+		// Insert a function into the VTable.
+		VTablePos insert(Function *fn);
+
+		// Debug output of this VTable and any children.
+		void dbg_dump();
+
 	private:
 		// Engine.
 		Engine &engine;
@@ -83,6 +81,32 @@ namespace storm {
 
 		// The derived VTable (if we have generated one).
 		code::VTable *replaced;
+
+		// Storm VTable.
+		StormVTable storm;
+
+		// Known children.
+		typedef set<VTable *> ChildSet;
+		ChildSet children;
+
+		// Our parent.
+		VTable *parent;
+
+		// Update the address for entry 'i'.
+		void updateAddr(nat i, void *to, VTableUpdater *src);
+
+		// Find a base-variation of the function 'fn', return its index.
+		nat findBase(Function *fn);
+
+		// Find a suitable slot for 'fn'.
+		nat findSlot(Function *fn);
+
+		// Check if 'fn' was inserted here earlier.
+		bool inserted(Function *fn);
+
+		// Resize requested from the parent.
+		void expand(nat into, nat count);
+		void contract(nat from, nat to);
 	};
 
 

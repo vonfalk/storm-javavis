@@ -20,14 +20,11 @@ namespace storm {
 				throw InternalError(L"Did not find a default constructor in " + super->identifier());
 		}
 
-		generateCode(before);
+		generateCode(owner, before);
 	}
 
-	void TypeDefaultCtor::generateCode(Function *before) {
+	void TypeDefaultCtor::generateCode(Type *type, Function *before) {
 		using namespace code;
-
-		// The type.
-		Type *type = before->params[0].type;
 
 		Listing l;
 		Variable v = l.frame.createPtrParam();
@@ -49,6 +46,7 @@ namespace storm {
 		l << epilog();
 		l << ret(Size());
 
+		// PLN("Constructor for " << type->name << ": " << l);
 		setCode(steal(CREATE(DynamicCode, this, l)));
 	}
 

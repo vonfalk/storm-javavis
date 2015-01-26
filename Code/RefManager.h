@@ -59,10 +59,6 @@ namespace code {
 			util::InlineSet<Reference> references;
 		};
 
-		// Map from the titles of sources to their ID:s
-		typedef hash_map<String, nat> NameMap;
-		NameMap nameMap;
-
 		// Map from indices to info-structs.
 		typedef hash_map<nat, Info *> InfoMap;
 		InfoMap infoMap;

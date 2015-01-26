@@ -1,9 +1,9 @@
 #pragma once
-
 #include "Utils/Path.h"
 #include "Name.h"
 #include "Package.h"
 #include "Scope.h"
+#include "VTablePos.h"
 #include "Code/Arena.h"
 #include "Code/Binary.h"
 
@@ -72,7 +72,7 @@ namespace storm {
 		code::RefSource lazyCodeFn;
 
 		// Get a reference to a virtual function call.
-		code::Ref virtualCall(nat id) const;
+		code::Ref virtualCall(VTablePos pos) const;
 
 		// Delete old code later.
 		void destroy(code::Binary *binary);

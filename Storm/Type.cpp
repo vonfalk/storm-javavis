@@ -135,9 +135,12 @@ namespace storm {
 			lastSuper->updateVirtual();
 
 		if (!vtable.builtIn()) {
-			vtable.create(super->vtable);
-			if (super)
+			if (super) {
+				vtable.create(super->vtable);
 				super->updateVirtual();
+			} else {
+				vtable.create();
+			}
 		}
 	}
 
@@ -190,6 +193,10 @@ namespace storm {
 
 		ovl->add(o);
 		layout.add(o);
+
+		if (Type *s = super())
+			s->updateVirtual();
+		updateVirtual(ovl);
 	}
 
 	void Type::validate(NameOverload *o) {
@@ -252,17 +259,31 @@ namespace storm {
 		}
 	}
 
-	void Type::enableLookup(Function *fn) {}
+	void Type::enableLookup(Function *fn) {
+		VTablePos pos = vtable.insert(fn);
+		insertOverloads(fn);
+
+		// PLN(*fn << " got " << pos);
+		// vtable.dbg_dump();
+
+		Auto<DelegatedCode> lookup = CREATE(DelegatedCode, engine, engine.virtualCall(pos), identifier());
+		fn->setLookup(lookup);
+	}
 
 	void Type::disableLookup(Function *fn) {
+		// TODO: Remove 'fn' from the vtable when we know it is not needed there anymore.
 		fn->setLookup(null);
 	}
 
 	bool Type::needsVirtual(Function *fn) {
 		vector<Type *> children = chain.children();
-		for (nat i = 0; i < children.size(); i++)
-			if (children[i]->overloadTo(fn))
+		for (nat i = 0; i < children.size(); i++) {
+			Type *c = children[i];
+			if (c->overloadTo(fn))
 				return true;
+			if (c->needsVirtual(fn))
+				return true;
+		}
 
 		return false;
 	}
@@ -276,6 +297,16 @@ namespace storm {
 		vector<Value> params = to->params;
 		params[0].type = this;
 		return as<Function>(i->second->find(params));
+	}
+
+	void Type::insertOverloads(Function *fn) {
+		if (Function *f = overloadTo(fn))
+			if (f != fn)
+				vtable.insert(f);
+
+		vector<Type *> children = chain.children();
+		for (nat i = 0; i < children.size(); i++)
+			children[i]->insertOverloads(fn);
 	}
 
 }

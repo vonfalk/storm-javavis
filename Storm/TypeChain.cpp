@@ -88,7 +88,7 @@ namespace storm {
 
 		set<TypeChain*>::const_iterator i, end = child.end();
 		nat to = 0;
-		for (i = child.begin(); i != end; ++i)
+		for (i = child.begin(); i != end; ++i, to++)
 			r[to] = (*i)->owner;
 
 		return r;

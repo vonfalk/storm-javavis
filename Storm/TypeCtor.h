@@ -21,7 +21,7 @@ namespace storm {
 
 	private:
 		// Generate code.
-		void generateCode(Function *before);
+		void generateCode(Type *type, Function *before);
 	};
 
 }

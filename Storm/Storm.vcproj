@@ -414,6 +414,18 @@
 				RelativePath=".\VTable.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\StormVTable.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\VTablePos.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\System.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -662,6 +674,18 @@
 			</File>
 			<File
 				RelativePath=".\VTable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StormVTable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VTablePos.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\System.h"
 				>
 			</File>
 		</Filter>

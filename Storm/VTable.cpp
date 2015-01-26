@@ -3,29 +3,30 @@
 #include "Engine.h"
 #include "Code/VTable.h"
 #include "Code/Binary.h"
+#include "Function.h"
+#include <iomanip>
 
 namespace storm {
 
-	wostream &operator <<(wostream &to, const VTablePos &pos) {
-		to << pos.stormEntry ? L"storm" : L"c++";
-		to << L":" << pos.offset;
-		return to;
-	}
-
-	VTable::VTable(Engine &e) : ref(e.arena, L"vtable"), engine(e), cppVTable(null), replaced(null) {}
+	VTable::VTable(Engine &e)
+		: ref(e.arena, L"vtable"), engine(e), cppVTable(null),
+		  storm(replaced), replaced(null), parent(null) {}
 
 	VTable::~VTable() {
-		// TODO: Delay!
-		delete replaced;
+		// TODO: Delay! Note, also delay the destruction of our StormVTable! Might be easier to delay
+		// the destruction of the entire owning Type class.
+		del(replaced);
 	}
 
 	void VTable::create(void *cppVTable) {
 		assert(replaced == null && this->cppVTable == null);
 		this->cppVTable = cppVTable;
 		ref.set(cppVTable);
+
+		// Classes created from a VTable does not need parent/child information.
 	}
 
-	void VTable::create(const VTable &parent) {
+	void VTable::create(VTable &parent) {
 		cppVTable = parent.cppVTable;
 		if (!replaced) {
 			if (parent.replaced)
@@ -40,6 +41,27 @@ namespace storm {
 		}
 
 		ref.set(replaced->ptr());
+		storm.clear();
+
+		// Update child/parent relation.
+		if (this->parent)
+			this->parent->children.erase(this);
+		this->parent = &parent;
+		parent.children.insert(this);
+
+		// Clear all our children.
+		for (ChildSet::iterator i = children.begin(); i != children.end(); ++i) {
+			VTable *c = *i;
+			c->create(*this);
+		}
+	}
+
+	void VTable::create() {
+		// TODO: Implement
+		assert(("Creating an empty VTable is not supported yet!", false));
+		if (parent)
+			parent->children.erase(this);
+		parent = null;
 	}
 
 	void VTable::update(Object *object) {
@@ -52,6 +74,128 @@ namespace storm {
 	bool VTable::builtIn() const {
 		return replaced == null && cppVTable != null;
 	}
+
+	VTablePos VTable::insert(Function *fn) {
+		// Check if this one has been inserted before, as a super-type.
+		nat slot = findSlot(fn);
+
+		// May have been inserted before.
+		if (storm.item(slot) == null) {
+			VTableUpdater *updater = new VTableUpdater(*this, fn);
+			storm.item(slot, updater);
+			updater->update();
+		}
+
+		return VTablePos(slot, true);
+	}
+
+	bool VTable::inserted(Function *fn) {
+		for (nat i = 0; i < storm.count(); i++) {
+			VTableUpdater *item = storm.item(i);
+			if (item != null && item->fn == fn)
+				return true;
+		}
+		return false;
+	}
+
+	void VTable::updateAddr(nat id, void *to, VTableUpdater *src) {
+		// We've got our own implementation!
+		if (storm.item(id) != null && storm.item(id) != src)
+			return;
+
+		storm.addr(id, to);
+
+		for (ChildSet::iterator i = children.begin(); i != children.end(); ++i)
+			(*i)->updateAddr(id, to, src);
+	}
+
+	nat VTable::findSlot(Function *fn) {
+		nat slot = storm.findItem(fn);
+		if (slot < storm.count())
+			return slot;
+
+		// If 'fn' is an overload, we need to reuse the previous slot.
+		slot = findBase(fn);
+		if (slot < storm.count())
+			return slot;
+
+		// Find an unused slot. Do not use any from the parents range.
+		if (parent)
+			slot = storm.emptyItem(parent->storm.count());
+		else
+			slot = storm.emptyItem();
+
+		if (slot < storm.count())
+			return slot;
+
+		// Allocate a new slot.
+		slot = storm.count();
+		expand(slot, 1);
+		return slot;
+	}
+
+	nat VTable::findBase(Function *fn) {
+		// TODO: More efficient?
+		for (nat i = 0; i < storm.count(); i++) {
+			VTableUpdater *item = storm.item(i);
+			if (item != null && isOverload(item->fn, fn))
+				return i;
+		}
+
+		if (parent)
+			return parent->findBase(fn);
+		return storm.count();
+	}
+
+	void VTable::expand(nat at, nat insert) {
+		storm.expand(at, insert);
+
+		for (ChildSet::iterator i = children.begin(); i != children.end(); ++i)
+			(*i)->contract(at, insert);
+	}
+
+	void VTable::contract(nat from, nat to) {
+		storm.expand(from, to);
+
+		for (ChildSet::iterator i = children.begin(); i != children.end(); ++i)
+			(*i)->contract(from, to);
+	}
+
+	void VTable::dbg_dump() {
+		wostream &to = std::wcout;
+		to << L"Vtable: ";
+		if (replaced)
+			to << replaced->ptr() << L", " << replaced->extra();
+		else
+			to << cppVTable;
+		to << endl;
+
+		Indent z(to);
+		if (builtIn()) {
+			to << L"Built in class, no vtable." << endl;
+			return;
+		}
+
+		for (nat i = 0; i < storm.count(); i++) {
+			to << std::setw(3) << i << L": ";
+			to << storm.addr(i) << L" (";
+
+			VTableUpdater *u = storm.item(i);
+			if (u)
+				to << *u->fn;
+			else
+				to << L"null";
+			to << L")" << endl;
+		}
+
+		for (ChildSet::iterator i = children.begin(); i != children.end(); ++i)
+			(*i)->dbg_dump();
+	}
+
+
+	/**
+	 * VTable code.
+	 */
 
 
 	VTableCalls::VTableCalls(Engine &e) : engine(e) {}
@@ -86,8 +230,8 @@ namespace storm {
 
 		// TODO: Make less machine dependent!
 
-		// Reduced prolog.
-		l << mov(ptrFrame, ptrStack);
+		// TODO: Be able to make a naked function, without the need for a prolog and epilog!
+		l << prolog();
 
 		// Compute address!
 		l << mov(ptrA, v);
@@ -97,8 +241,10 @@ namespace storm {
 		l << mov(ptrA, ptrRel(ptrA, Offset::sPtr * -2));
 		// Get the actual entry.
 		l << mov(ptrA, ptrRel(ptrA, Offset::sPtr * i));
-		// Call it! (size does not matter in this case).
-		l << code::call(ptrA, Size());
+
+		// Call it!
+		l << epilog();
+		l << jmp(ptrA);
 
 		Binary *b = new Binary(engine.arena, L"stormVtableCall" + toS(i), l);
 		binaries.push_back(b);
@@ -116,7 +262,7 @@ namespace storm {
 		// TODO: Make less machine dependent!
 
 		// Reduced prolog.
-		l << mov(ptrFrame, ptrStack);
+		l << prolog();
 
 		// Compute address!
 		l << mov(ptrA, v);
@@ -124,8 +270,10 @@ namespace storm {
 		l << mov(ptrA, ptrRel(ptrA));
 		// Get the actual entry.
 		l << mov(ptrA, ptrRel(ptrA, Offset::sPtr * i));
+
 		// Call it!
-		l << code::call(ptrA, Size());
+		l << epilog();
+		l << jmp(ptrA);
 
 		Binary *b = new Binary(engine.arena, L"cppVtableCall" + toS(i), l);
 		binaries.push_back(b);

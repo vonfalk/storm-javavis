@@ -231,7 +231,8 @@ namespace code {
 
 			to << code::call(instr.src(), instr.dest().size());
 
-			to << code::add(ptrStack, natPtrConst(numParams * sizeof(cpuNat)));
+			if (numParams > 0)
+				to << code::add(ptrStack, natPtrConst(numParams * sizeof(cpuNat)));
 		}
 
 

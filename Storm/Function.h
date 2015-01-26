@@ -46,6 +46,11 @@ namespace storm {
 		// call. It will be updated to match as well.
 		code::RefSource &ref();
 
+		// Get the reference, bypassing any lookup functionality. In general, it
+		// is better to use 'ref', but in some cases (such as implementing the lookup)
+		// this reference is needed.
+		code::RefSource &directRef();
+
 		// Generate code for this function call.
 		void genCode(const GenState &to, const vector<code::Value> &params, GenResult &result);
 
@@ -72,6 +77,9 @@ namespace storm {
 		void initRefs();
 	};
 
+
+	// Determine if 'a' is an overload of 'b'.
+	bool isOverload(Function *base, Function *overload);
 
 	// Create a function referring a pre-compiled function.
 	Function *nativeFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr);

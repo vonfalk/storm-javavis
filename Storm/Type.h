@@ -157,6 +157,9 @@ namespace storm {
 
 		// Find a possible overload to a function. Does not attempt to lazy-load.
 		Function *overloadTo(Function *base);
+
+		// Insert all known overloads to 'fn' into the respective types vtables.
+		void insertOverloads(Function *base);
 	};
 
 }

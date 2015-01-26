@@ -102,4 +102,8 @@ namespace storm {
 		toDestroy.push_back(b);
 	}
 
+	code::Ref Engine::virtualCall(VTablePos pos) const {
+		return vcalls->call(pos);
+	}
+
 }
