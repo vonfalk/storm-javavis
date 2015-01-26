@@ -6,7 +6,7 @@ namespace storm {
 	STORM_PKG(core.debug);
 
 	/**
-	 * System functions useful while developing the compiler itself. May or may
+	 * Debug functions useful while developing the compiler itself. May or may
 	 * not be available in release mode later on. TODO: decide.
 	 */
 

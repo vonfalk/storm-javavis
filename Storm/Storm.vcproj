@@ -423,7 +423,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\System.cpp"
+				RelativePath=".\Lib\Debug.cpp"
 				>
 			</File>
 			<File
@@ -653,10 +653,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Basic\BSWhile.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Basic\BSFor.h"
 				>
 			</File>
@@ -689,7 +685,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\System.h"
+				RelativePath=".\Lib\Debug.h"
 				>
 			</File>
 			<File

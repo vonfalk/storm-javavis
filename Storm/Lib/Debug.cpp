@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "System.h"
+#include "Debug.h"
 #include "Code/VTable.h"
 #include "Type.h"
 
