@@ -1,5 +1,5 @@
 #pragma once
-#include "Code/Reference.h"
+#include "VTableSlot.h"
 
 namespace code {
 	class VTable;
@@ -7,34 +7,11 @@ namespace code {
 
 namespace storm {
 
-	class VTable;
 	class Function;
 
 	/**
 	 * Source for the VTable references.
 	 */
-	class VTableUpdater : public code::Reference {
-		friend class StormVTable;
-	public:
-		VTableUpdater(VTable &owner, Function *fn);
-
-		// Called when updated.
-		virtual void onAddressChanged(void *addr);
-
-		// Update the vtable now.
-		void update();
-
-		// The actual function.
-		Function *const fn;
-
-	private:
-		// Which VTable to update?
-		VTable &owner;
-
-		// The index to update.
-		nat id;
-	};
-
 	/**
 	 * Helper for handling the raw array in which we are storing the Storm VTable.
 	 */
@@ -52,23 +29,23 @@ namespace storm {
 		// Ensure a specific size.
 		void ensure(nat size);
 
-		// Get/set an item.
-		void item(nat id, VTableUpdater *data);
-		VTableUpdater *item(nat id);
+		// Get/set an slot.
+		void slot(nat id, VTableSlot *data);
+		VTableSlot *slot(nat id);
 
-		// Get/set an address. Assumes that it is not an item.
+		// Get/set an address. Assumes that it is not an slot.
 		void addr(nat id, void *ptr);
 		void *addr(nat id);
 
-		// Find an empty item. Returns the count() if there is none.
-		nat emptyItem(nat from = 0) const;
+		// Find an empty slot. Returns the count() if there is none.
+		nat emptySlot(nat from = 0) const;
 
 		// Find an addr equal to the one given. Returns count() if none.
 		nat findAddr(void *addr) const;
 
-		// Find an item. Returns count() if none.
-		nat findItem(VTableUpdater *item) const;
-		nat findItem(Function *item) const;
+		// Find an slot. Returns count() if none.
+		nat findSlot(VTableSlot *slot) const;
+		nat findSlot(Function *slot) const;
 
 		// Current size.
 		inline nat count() const { return size; }
@@ -87,7 +64,7 @@ namespace storm {
 		void **addrs;
 
 		// The source of addresses to the vtable.
-		VTableUpdater **src;
+		VTableSlot **src;
 
 		// Size.
 		nat size;

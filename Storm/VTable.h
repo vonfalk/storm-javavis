@@ -39,7 +39,7 @@ namespace storm {
 	 */
 	class VTable : NoCopy {
 		// Needed to update actual data.
-		friend class VTableUpdater;
+		friend class VTableSlot;
 	public:
 		// Initialize to empty, use 'create' later.
 		VTable(Engine &e);
@@ -93,7 +93,7 @@ namespace storm {
 		VTable *parent;
 
 		// Update the address for entry 'i'.
-		void updateAddr(nat i, void *to, VTableUpdater *src);
+		void updateAddr(nat i, void *to, VTableSlot *src);
 
 		// Find a base-variation of the function 'fn', return its index.
 		nat findBase(Function *fn);

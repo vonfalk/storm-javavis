@@ -6,19 +6,6 @@
 
 namespace storm {
 
-	VTableUpdater::VTableUpdater(VTable &owner, Function *fn)
-		: Reference(fn->directRef(), L"vtable"), owner(owner), fn(fn), id(0) {}
-
-	void VTableUpdater::onAddressChanged(void *na) {
-		Reference::onAddressChanged(na);
-		update();
-	}
-
-	void VTableUpdater::update() {
-		owner.updateAddr(id, address(), this);
-	}
-
-
 	StormVTable::StormVTable(code::VTable *&update)
 		: update(update), size(0), capacity(0), addrs(null), src(null) {}
 
@@ -48,7 +35,7 @@ namespace storm {
 		addrs = n;
 
 		// Copy 'src'
-		VTableUpdater **z = new VTableUpdater*[capacity];
+		VTableSlot **z = new VTableSlot*[capacity];
 		zeroArray(z, capacity);
 		if (addrs)
 			for (nat i = 0; i < size; i++)
@@ -76,14 +63,14 @@ namespace storm {
 			update->extra(addrs);
 	}
 
-	void StormVTable::item(nat i, VTableUpdater *update) {
+	void StormVTable::slot(nat i, VTableSlot *update) {
 		assert(i < size);
 		delete src[i];
 		src[i] = update;
 		update->id = i;
 	}
 
-	VTableUpdater *StormVTable::item(nat i) {
+	VTableSlot *StormVTable::slot(nat i) {
 		assert(i < size);
 		return src[i];
 	}
@@ -99,7 +86,7 @@ namespace storm {
 	}
 
 
-	nat StormVTable::emptyItem(nat from) const {
+	nat StormVTable::emptySlot(nat from) const {
 		for (nat i = from; i < size; i++)
 			if (src[i] == null)
 				return i;
@@ -115,7 +102,7 @@ namespace storm {
 		return count();
 	}
 
-	nat StormVTable::findItem(VTableUpdater *v) const {
+	nat StormVTable::findSlot(VTableSlot *v) const {
 		for (nat i = 0; i < size; i++)
 			if (src[i] == v)
 				return i;
@@ -123,7 +110,7 @@ namespace storm {
 		return count();
 	}
 
-	nat StormVTable::findItem(Function *v) const {
+	nat StormVTable::findSlot(Function *v) const {
 		for (nat i = 0; i < size; i++)
 			if (src[i] != null && src[i]->fn == v)
 				return i;

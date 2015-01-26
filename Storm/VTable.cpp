@@ -80,9 +80,9 @@ namespace storm {
 		nat slot = findSlot(fn);
 
 		// May have been inserted before.
-		if (storm.item(slot) == null) {
-			VTableUpdater *updater = new VTableUpdater(*this, fn);
-			storm.item(slot, updater);
+		if (storm.slot(slot) == null) {
+			VTableSlot *updater = new VTableSlot(*this, fn);
+			storm.slot(slot, updater);
 			updater->update();
 		}
 
@@ -91,16 +91,16 @@ namespace storm {
 
 	bool VTable::inserted(Function *fn) {
 		for (nat i = 0; i < storm.count(); i++) {
-			VTableUpdater *item = storm.item(i);
-			if (item != null && item->fn == fn)
+			VTableSlot *slot = storm.slot(i);
+			if (slot != null && slot->fn == fn)
 				return true;
 		}
 		return false;
 	}
 
-	void VTable::updateAddr(nat id, void *to, VTableUpdater *src) {
+	void VTable::updateAddr(nat id, void *to, VTableSlot *src) {
 		// We've got our own implementation!
-		if (storm.item(id) != null && storm.item(id) != src)
+		if (storm.slot(id) != null && storm.slot(id) != src)
 			return;
 
 		storm.addr(id, to);
@@ -110,7 +110,7 @@ namespace storm {
 	}
 
 	nat VTable::findSlot(Function *fn) {
-		nat slot = storm.findItem(fn);
+		nat slot = storm.findSlot(fn);
 		if (slot < storm.count())
 			return slot;
 
@@ -121,9 +121,9 @@ namespace storm {
 
 		// Find an unused slot. Do not use any from the parents range.
 		if (parent)
-			slot = storm.emptyItem(parent->storm.count());
+			slot = storm.emptySlot(parent->storm.count());
 		else
-			slot = storm.emptyItem();
+			slot = storm.emptySlot();
 
 		if (slot < storm.count())
 			return slot;
@@ -137,8 +137,8 @@ namespace storm {
 	nat VTable::findBase(Function *fn) {
 		// TODO: More efficient?
 		for (nat i = 0; i < storm.count(); i++) {
-			VTableUpdater *item = storm.item(i);
-			if (item != null && isOverload(item->fn, fn))
+			VTableSlot *slot = storm.slot(i);
+			if (slot != null && isOverload(slot->fn, fn))
 				return i;
 		}
 
@@ -180,7 +180,7 @@ namespace storm {
 			to << std::setw(3) << i << L": ";
 			to << storm.addr(i) << L" (";
 
-			VTableUpdater *u = storm.item(i);
+			VTableSlot *u = storm.slot(i);
 			if (u)
 				to << *u->fn;
 			else
