@@ -38,7 +38,8 @@ namespace storm {
 		nat count;
 
 		// We need to update child types when we're updated.
-		set<TypeChain *> child;
+		typedef set<TypeChain *> ChildSet;
+		ChildSet child;
 
 		// Owner.
 		Type *owner;

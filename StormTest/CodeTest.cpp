@@ -55,4 +55,7 @@ BEGIN_TEST(CodeTest) {
 	CHECK_EQ(runFn(engine, L"test.bs.testBase"), 10);
 	CHECK_EQ(runFn(engine, L"test.bs.testDerived"), 20);
 
+	CHECK_EQ(runFn(engine, L"test.bs.testCppBase"), 10);
+	CHECK_EQ(runFn(engine, L"test.bs.testCppDerived"), 20);
+
 } END_TEST

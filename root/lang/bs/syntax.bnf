@@ -4,7 +4,7 @@
 Whitespace => void : "[ \n\r\t]*";
 
 DELIMITER => void : Whitespace;
-DELIMITER => void : Whitespace - "//[^\n\r]*[\n\r]" - Whitespace; // "[ \n\r\t]*//.*[\n\r][ \n\r\t]*";
+DELIMITER => void : Whitespace - "//[^\n\r]*[\n\r]" - DELIMITER; // "[ \n\r\t]*//.*[\n\r][ \n\r\t]*";
 
 // Name rule returns a String, created by taking the 'name' parameter.
 Name => SStr(name) : "[A-Za-z][A-Za-z0-9]*" name;

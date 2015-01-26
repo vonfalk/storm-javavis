@@ -9,6 +9,12 @@ namespace storm {
 	}
 
 	TypeChain::~TypeChain() {
+		if (TypeChain *s = superChain())
+			s->child.erase(this);
+
+		vector<TypeChain *> c(child.begin(), child.end());
+		for (nat i = 0; i < c.size(); i++)
+			c[i]->super(null);
 		delete []chain;
 	}
 
@@ -76,7 +82,7 @@ namespace storm {
 	}
 
 	void TypeChain::notify() const {
-		set<TypeChain*>::const_iterator i, end = child.end();
+		ChildSet::const_iterator i, end = child.end();
 		for (i = child.begin(); i != end; ++i) {
 			TypeChain *c = *i;
 			c->updateSuper(*this);
@@ -86,7 +92,7 @@ namespace storm {
 	vector<Type*> TypeChain::children() const {
 		vector<Type*> r(child.size());
 
-		set<TypeChain*>::const_iterator i, end = child.end();
+		ChildSet::const_iterator i, end = child.end();
 		nat to = 0;
 		for (i = child.begin(); i != end; ++i, to++)
 			r[to] = (*i)->owner;

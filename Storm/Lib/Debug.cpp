@@ -17,4 +17,20 @@ namespace storm {
 	void ptrace(Int z) {
 		PLN("At: " << z);
 	}
+
+
+	Dbg::Dbg() : v(10) { PLN("In constructor!"); }
+
+	void Dbg::set(Int v) {
+		this->v = v;
+	}
+
+	Int Dbg::get() {
+		return v;
+	}
+
+	void Dbg::dbg() {
+		PLN("Debug object. Type: " << myType->identifier() << " value: " << v);
+	}
+
 }

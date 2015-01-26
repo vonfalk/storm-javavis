@@ -35,3 +35,26 @@ Int testDerived() {
 	d.b = 20;
 	extract(d);
 }
+
+class DerivedDbg extends Dbg {
+	Int b;
+
+	Int get() {
+		b;
+	}
+}
+
+Int extract(Dbg b) {
+	b.get;
+}
+
+Int testCppBase() {
+	Dbg b = Dbg();
+	extract(b);
+}
+
+Int testCppDerived() {
+	DerivedDbg d = DerivedDbg();
+	d.b = 20;
+	extract(d);
+}

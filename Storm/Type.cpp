@@ -48,6 +48,10 @@ namespace storm {
 
 	Type::~Type() {}
 
+	void Type::allowLazyLoad(bool allow) {
+		lazyLoading = !allow;
+	}
+
 	void Type::lazyLoad() {}
 
 	void Type::ensureLoaded() {

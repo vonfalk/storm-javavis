@@ -16,6 +16,7 @@ namespace storm {
 
 	void bs::Class::setScope(const Scope &scope) {
 		this->scope = Scope(scope, this);
+		allowLazyLoad(false);
 	}
 
 	void bs::Class::setBase() {
@@ -24,6 +25,7 @@ namespace storm {
 			setSuper(t.type);
 			base = null;
 		}
+		allowLazyLoad(true);
 	}
 
 	void bs::Class::lazyLoad() {

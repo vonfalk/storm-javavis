@@ -115,6 +115,9 @@ namespace storm {
 		// NOTE: Inheritance information is assumed to be set up in a non-lazy way!
 		virtual void lazyLoad();
 
+		// Call to inhibit lazy-loading until later.
+		void allowLazyLoad(bool v);
+
 	private:
 		// Members.
 		typedef hash_map<String, Auto<Overload> > MemberMap;
