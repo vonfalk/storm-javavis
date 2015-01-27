@@ -67,7 +67,7 @@ namespace storm {
 		assert(i < size);
 		delete src[i];
 		src[i] = update;
-		update->id = i;
+		update->id.offset = i;
 	}
 
 	VTableSlot *StormVTable::slot(nat i) {
@@ -127,7 +127,7 @@ namespace storm {
 			addrs[to] = addrs[from];
 			src[to] = src[from];
 			if (src[to])
-				src[to]->id = to;
+				src[to]->id.offset = to;
 
 			addrs[from] = null;
 			src[to] = null;
@@ -144,7 +144,7 @@ namespace storm {
 			addrs[i - move] = addrs[i];
 			src[i - move] = src[i];
 			if (src[i - move])
-				src[i - move]->id = i - move;
+				src[i - move]->id.offset = i - move;
 
 			addrs[i] = null;
 			src[i] = null;

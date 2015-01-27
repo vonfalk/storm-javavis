@@ -17,14 +17,18 @@ namespace storm {
 		// TODO: Delay! Note, also delay the destruction of our StormVTable! Might be easier to delay
 		// the destruction of the entire owning Type class.
 		del(replaced);
-		del(cppFunctions);
+		clear(cppSlots);
 	}
 
 	void VTable::create(void *cppVTable) {
 		assert(replaced == null && this->cppVTable == null);
 		this->cppVTable = cppVTable;
 		ref.set(cppVTable);
-		cppFunctions = vector<VTableUpdater*>(code::vtableCount(cppVTable), null);
+
+		nat cppCount = 0;
+		if (cppVTable)
+			cppCount = code::vtableCount(cppVTable);
+		cppSlots = vector<VTableSlot*>(cppCount, null);
 
 		// Classes created from a VTable does not need parent/child information.
 	}
@@ -45,7 +49,7 @@ namespace storm {
 
 		ref.set(replaced->ptr());
 		storm.clear();
-		cppFunctions = vector<VTableUpdater*>(replaced->count(), null);
+		cppSlots = vector<VTableSlot*>(replaced->count(), null);
 
 		// Update child/parent relation.
 		if (this->parent)
@@ -79,31 +83,57 @@ namespace storm {
 		return replaced == null && cppVTable != null;
 	}
 
+	VTableSlot *VTable::slot(VTablePos pos) {
+		switch (pos.type) {
+		case VTablePos::tStorm:
+			return storm.slot(pos.offset);
+		case VTablePos::tCpp:
+			return cppSlots[pos.offset];
+		}
+		assert(false);
+		return null;
+	}
+
+	void VTable::slot(VTablePos pos, VTableSlot *to) {
+		switch (pos.type) {
+		case VTablePos::tStorm:
+			storm.slot(pos.offset, to);
+			break;
+		case VTablePos::tCpp:
+			cppSlots[pos.offset] = to;
+			break;
+		default:
+			assert(false);
+			break;
+		}
+	}
+
+	void VTable::addr(VTablePos pos, void *to) {
+		switch (pos.type) {
+		case VTablePos::tStorm:
+			storm.addr(pos.offset, to);
+			break;
+		case VTablePos::tCpp:
+			if (replaced)
+				replaced->set(pos.offset, to);
+			break;
+		default:
+			assert(false);
+			break;
+		}
+	}
+
 	VTablePos VTable::insert(Function *fn) {
 		VTablePos r = findSlot(fn);
 
 		// May have been inserted before.
-		if (get(r) == null) {
-			VTableSlot *updater = new VTableSlot(*this, fn);
-			set(r, updater);
+		if (slot(r) == null) {
+			VTableSlot *updater = new VTableSlot(*this, fn, r);
+			slot(r, updater);
 			updater->update();
 		}
 
 		return r;
-	}
-
-	VTablePos VTable::insertStorm(Function *fn) {
-		// Check if this one has been inserted before, as a super-type.
-		nat slot = findSlot(fn);
-
-		// May have been inserted before.
-		if (storm.slot(slot) == null) {
-			VTableSlot *updater = new VTableSlot(*this, fn);
-			storm.slot(slot, updater);
-			updater->update();
-		}
-
-		return VTablePos(slot, true);
 	}
 
 	bool VTable::inserted(Function *fn) {
@@ -115,12 +145,14 @@ namespace storm {
 		return false;
 	}
 
-	void VTable::updateAddr(nat id, void *to, VTableSlot *src) {
+	void VTable::updateAddr(VTablePos id, void *to, VTableSlot *src) {
+		VTableSlot *s = slot(id);
+
 		// We've got our own implementation!
-		if (storm.slot(id) != null && storm.slot(id) != src)
+		if (s != null && s != src)
 			return;
 
-		storm.addr(id, to);
+		addr(id, to);
 
 		for (ChildSet::iterator i = children.begin(); i != children.end(); ++i)
 			(*i)->updateAddr(id, to, src);
@@ -133,18 +165,17 @@ namespace storm {
 			if (slot == code::VTable::invalid)
 				throw InternalError(::toS(*fn) + L" is not properly implemented in C++. "
 									L"Failed to find a VTable entry in the C++ vtable for it!");
-			return VTablePos(slot, true);
+			return VTablePos::cpp(slot);
 		}
 
 		// Inserted here before?
 		nat slot = storm.findSlot(fn);
 		if (slot < storm.count())
-			return slot;
+			return VTablePos::storm(slot);
 
 		// If 'fn' is an overload, we need to reuse the previous slot.
-		slot = findBase(fn);
-		if (slot < storm.count())
-			return slot;
+		if (VTablePos s = findBase(fn))
+			return s;
 
 		// Find an unused slot. Do not use any from the parents range.
 		if (parent)
@@ -153,25 +184,48 @@ namespace storm {
 			slot = storm.emptySlot();
 
 		if (slot < storm.count())
-			return slot;
+			return VTablePos::storm(slot);
 
 		// Allocate a new slot.
 		slot = storm.count();
 		expand(slot, 1);
-		return slot;
+		return VTablePos::storm(slot);
 	}
 
-	nat VTable::findBase(Function *fn) {
+	VTablePos VTable::findBase(Function *fn) {
+		// 1: In the C++ vtable?
+		VTablePos p = findCppBase(fn);
+		if (p)
+			return p;
+
+		// 2: In the Storm vtable?
+		return findStormBase(fn);
+	}
+
+	VTablePos VTable::findCppBase(Function *fn) {
+		// TODO: More efficient?
+		for (nat i = 0; i < cppSlots.size(); i++) {
+			VTableSlot *slot = cppSlots[i];
+			if (slot != null && isOverload(slot->fn, fn))
+				return VTablePos::cpp(i);
+		}
+
+		if (parent)
+			return parent->findCppBase(fn);
+		return VTablePos();
+	}
+
+	VTablePos VTable::findStormBase(Function *fn) {
 		// TODO: More efficient?
 		for (nat i = 0; i < storm.count(); i++) {
 			VTableSlot *slot = storm.slot(i);
 			if (slot != null && isOverload(slot->fn, fn))
-				return i;
+				return VTablePos::storm(i);
 		}
 
 		if (parent)
-			return parent->findBase(fn);
-		return storm.count();
+			return parent->findStormBase(fn);
+		return VTablePos();
 	}
 
 	void VTable::expand(nat at, nat insert) {
@@ -234,10 +288,15 @@ namespace storm {
 	}
 
 	code::Ref VTableCalls::call(VTablePos pos) {
-		if (pos.stormEntry)
+		switch (pos.type) {
+		case VTablePos::tStorm:
 			return call(pos.offset, stormCreated, &VTableCalls::createStorm);
-		else
+		case VTablePos::tCpp:
 			return call(pos.offset, cppCreated, &VTableCalls::createCpp);
+		default:
+			assert(false);
+			return code::Ref();
+		}
 	}
 
 	code::Ref VTableCalls::call(nat i, vector<code::RefSource *> &src, code::RefSource *(VTableCalls::*create)(nat)) {

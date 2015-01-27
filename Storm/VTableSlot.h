@@ -1,5 +1,6 @@
 #pragma once
 #include "Code/Reference.h"
+#include "VTablePos.h"
 
 namespace storm {
 
@@ -13,7 +14,7 @@ namespace storm {
 	class VTableSlot : public code::Reference {
 		friend class StormVTable;
 	public:
-		VTableSlot(VTable &owner, Function *fn);
+		VTableSlot(VTable &owner, Function *fn, VTablePos pos);
 
 		// Called when updated.
 		virtual void onAddressChanged(void *addr);
@@ -24,13 +25,11 @@ namespace storm {
 		// The actual function.
 		Function *const fn;
 
-	private:
 		// Which VTable to update?
 		VTable &owner;
 
 		// The index to update.
-		nat id;
+		VTablePos id;
 	};
-
 
 }

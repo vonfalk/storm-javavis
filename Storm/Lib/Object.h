@@ -82,6 +82,9 @@ namespace storm {
 			}
 		}
 
+		// Get a peek at the current refcount.
+		inline nat dbg_refs() { return refs; }
+
 		// Our specialized operator new(). Allocates memory for the Type provided,
 		// regardless of the size here. Ie, the allocated size may be >= sizeof(obj).
 		// If 'size' is 0, the check is ignored.

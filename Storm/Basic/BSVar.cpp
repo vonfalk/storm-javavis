@@ -53,9 +53,9 @@ namespace storm {
 				} else if (!to.suggest(s, variable->var)) {
 					Variable v = to.location(s);
 
+					s.to << mov(v, variable->var);
 					if (variable->result.refcounted())
 						s.to << code::addRef(v);
-					s.to << mov(v, variable->var);
 				}
 			}
 		}

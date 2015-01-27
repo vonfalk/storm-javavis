@@ -86,7 +86,7 @@ namespace storm {
 		code::VTable *replaced;
 
 		// Functions we have replaced in 'replaced', or 'cppVTable'.
-		vector<VTableUpdater *> cppFunctions;
+		vector<VTableSlot *> cppSlots;
 
 		// Storm VTable.
 		StormVTable storm;
@@ -99,16 +99,18 @@ namespace storm {
 		VTable *parent;
 
 		// Update the address for entry 'i'.
-		void updateAddr(nat i, void *to, VTableSlot *src);
+		void updateAddr(VTablePos i, void *to, VTableSlot *src);
 
 		// Insert a VTable entry for a native Storm implementation.
 		VTablePos insertStorm(Function *fn);
 
 		// Find a base-variation of the function 'fn', return its index.
 		VTablePos findBase(Function *fn);
+		VTablePos findCppBase(Function *fn);
+		VTablePos findStormBase(Function *fn);
 
 		// Find a suitable slot for 'fn'.
-		nat findSlot(Function *fn);
+		VTablePos findSlot(Function *fn);
 
 		// Check if 'fn' was inserted here earlier.
 		bool inserted(Function *fn);
@@ -117,9 +119,12 @@ namespace storm {
 		void expand(nat into, nat count);
 		void contract(nat from, nat to);
 
-		// Set/get updater.
-		VTableUpdater *get(VTablePos pos);
-		void set(VTablePos pos, VTableUpdater *to);
+		// Slot get/set.
+		VTableSlot *slot(VTablePos pos);
+		void slot(VTablePos pos, VTableSlot *to);
+
+		// Address set.
+		void addr(VTablePos pos, void *to);
 	};
 
 

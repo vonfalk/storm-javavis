@@ -55,7 +55,6 @@ DerivedDbg derived() {
 }
 
 Dbg createCpp(Int type) {
-	ptrace(type);
 	if (type == 1) {
 		Dbg();
 	} else {

@@ -12,6 +12,7 @@ namespace storm {
 	void printVTable(Object *obj) {
 		void *v = code::vtableOf(obj);
 		PLN("Vtable of: " << obj << " is " << v);
+		PLN(" Refs: " << obj->dbg_refs());
 	}
 
 	void ptrace(Int z) {
