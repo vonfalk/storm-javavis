@@ -16,10 +16,10 @@ namespace storm {
 
 	void bs::Class::setScope(const Scope &scope) {
 		this->scope = Scope(scope, this);
-		allowLazyLoad(false);
 	}
 
 	void bs::Class::setBase() {
+		allowLazyLoad(false);
 		if (base) {
 			Value t = base->value(scope);
 			setSuper(t.type);

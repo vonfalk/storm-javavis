@@ -84,6 +84,11 @@ namespace storm {
 	// Create a function referring a pre-compiled function.
 	Function *nativeFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr);
 
+	// Create a function referring a pre-compiled function that is possibly using vtable calls.
+	Function *nativeMemberFunction(Engine &e, Type *member, Value result,
+								const String &name, const vector<Value> &params,
+								void *ptr);
+
 	// Create an inlined function.
 	Function *inlinedFunction(Engine &e, Value result, const String &name,
 							const vector<Value> &params, Fn<void, InlinedParams> fn);

@@ -29,7 +29,6 @@ namespace storm {
 			into = p;
 			top = p;
 		} else {
-
 			into = to.scope()->find(fn->pkg + Name(fn->typeMember));
 			top = as<NameLookup>(into);
 			if (!into || !top)
@@ -55,7 +54,14 @@ namespace storm {
 		for (nat i = 0; i < fn->params.size(); i++)
 			params.push_back(findValue(scope, fn->params[i]));
 
-		Auto<Function> toAdd = nativeFunction(to, result, fn->name, params, fn->fnPtr);
+		Auto<Function> toAdd;
+		if (fn->typeMember) {
+			// Make sure we handle vtable calls correctly!
+			toAdd = nativeMemberFunction(to, params[0].type, result, fn->name, params, fn->fnPtr);
+		} else {
+			toAdd = nativeFunction(to, result, fn->name, params, fn->fnPtr);
+		}
+
 		if (Package *p = as<Package>(into)) {
 			p->add(toAdd.borrow());
 		} else if (Type *t = as<Type>(into)) {

@@ -54,6 +54,9 @@ namespace storm {
 		// chain is broken.
 		void create(VTable &parent);
 
+		// Get the C++ vtable we're based off.
+		inline void *baseVTable() const { return cppVTable; }
+
 		// Create a new root-vtable for an object not inherited from anything.
 		void create();
 
@@ -82,6 +85,9 @@ namespace storm {
 		// The derived VTable (if we have generated one).
 		code::VTable *replaced;
 
+		// Functions we have replaced in 'replaced', or 'cppVTable'.
+		vector<VTableUpdater *> cppFunctions;
+
 		// Storm VTable.
 		StormVTable storm;
 
@@ -95,8 +101,11 @@ namespace storm {
 		// Update the address for entry 'i'.
 		void updateAddr(nat i, void *to, VTableSlot *src);
 
+		// Insert a VTable entry for a native Storm implementation.
+		VTablePos insertStorm(Function *fn);
+
 		// Find a base-variation of the function 'fn', return its index.
-		nat findBase(Function *fn);
+		VTablePos findBase(Function *fn);
 
 		// Find a suitable slot for 'fn'.
 		nat findSlot(Function *fn);
@@ -107,6 +116,10 @@ namespace storm {
 		// Resize requested from the parent.
 		void expand(nat into, nat count);
 		void contract(nat from, nat to);
+
+		// Set/get updater.
+		VTableUpdater *get(VTablePos pos);
+		void set(VTablePos pos, VTableUpdater *to);
 	};
 
 

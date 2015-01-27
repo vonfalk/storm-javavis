@@ -83,12 +83,12 @@
                          c-lineup-arglist-tabs-only))))
 	    ;; Enable kernel mode for the appropriate files
 	    (when t ;; (in-project buffer-file-name)
+	      (setq tab-width 4)
 	      (setq ff-other-file-alist my-cpp-other-file-alist)
 	      (setq indent-tabs-mode t)
-	      (setq tab-width 4)
-	      (setq c-basic-offset 4)
 	      (c-set-style "linux-tabs-only")
 	      (whitespace-mode t)
+	      (setq c-basic-offset 4)
 	      )))
 
 (defun storm-insert-comment ()

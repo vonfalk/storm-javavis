@@ -48,13 +48,22 @@ Int extract(Dbg b) {
 	b.get;
 }
 
-Int testCppBase() {
-	Dbg b = Dbg();
-	extract(b);
-}
-
-Int testCppDerived() {
+DerivedDbg derived() {
 	DerivedDbg d = DerivedDbg();
 	d.b = 20;
-	extract(d);
+	d;
+}
+
+Dbg createCpp(Int type) {
+	ptrace(type);
+	if (type == 1) {
+		Dbg();
+	} else {
+		derived();
+	}
+}
+
+Int testCpp(Int type) {
+	Dbg b = createCpp(type);
+	extract(b);
 }

@@ -168,6 +168,8 @@ namespace code {
 		byte *data = (byte *)fn;
 		nat size = ARRAY_SIZE(fnData);
 		if (memcmp(fnData, data, size) != 0) {
+			return VTable::invalid;
+			// For debug:
 			PLN("Mismatched machine code. Expected: ");
 			dumpCode(fnData, size);
 			PLN("Got:");
@@ -185,7 +187,7 @@ namespace code {
 		} else {
 			PLN(L"Machine code mismatch: Excepted 0x60 or 0xA0, got " << toHex(data[size]));
 			assert(false);
-			return 0;
+			return VTable::invalid;
 		}
 	}
 
@@ -239,9 +241,19 @@ namespace code {
 		setVTable(object, content);
 	}
 
+	void VTable::set(nat slot, void *newFn) {
+		assert(slot < size);
+		content[slot] = newFn;
+	}
+
 	void VTable::set(void *fn, void *newFn) {
-		nat id = functionOffset(fn);
-		content[id] = newFn;
+		nat slot = find(fn);
+		assert(slot != invalid);
+		set(slot, newFn);
+	}
+
+	nat VTable::find(void *fn) {
+		return findSlot(fn, content, size);
 	}
 
 	void *VTable::extra() const {
@@ -252,4 +264,27 @@ namespace code {
 		content[extraOffset] = to;
 	}
 
+	nat findSlot(void *ptr, void *vtable, nat size) {
+		nat slot = functionOffset(ptr);
+		if (slot != VTable::invalid)
+			return slot;
+
+		if (size == 0)
+			size = vtableCount(vtable);
+		void **v = (void **)vtable;
+
+		for (nat i = 0; i < size; i++)
+			if (v[i] == ptr)
+				return i;
+
+		return VTable::invalid;
+	}
+
+	void *deVirtualize(void *ptr, void *vtable) {
+		nat id = functionOffset(ptr);
+		if (id == VTable::invalid)
+			return null;
+		void **v = (void **)vtable;
+		return v[id];
+	}
 }

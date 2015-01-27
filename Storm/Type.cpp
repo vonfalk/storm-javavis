@@ -234,10 +234,7 @@ namespace storm {
 	}
 
 	void Type::updateVirtual() {
-		// If we're a built in type, there is nothing we can do anyway!
-		if (vtable.builtIn())
-			return;
-
+		// Value types does not need vtables.
 		if (flags & typeValue)
 			return;
 
@@ -270,13 +267,21 @@ namespace storm {
 		// PLN(*fn << " got " << pos);
 		// vtable.dbg_dump();
 
-		Auto<DelegatedCode> lookup = CREATE(DelegatedCode, engine, engine.virtualCall(pos), identifier());
-		fn->setLookup(lookup);
+		// If we're a built in type, we do not want to mess with the lookup. A great one is already provided
+		// by the C++ compiler!
+		if (!vtable.builtIn()) {
+			Auto<DelegatedCode> lookup = CREATE(DelegatedCode, engine, engine.virtualCall(pos), identifier());
+			fn->setLookup(lookup);
+		}
 	}
 
 	void Type::disableLookup(Function *fn) {
 		// TODO: Remove 'fn' from the vtable when we know it is not needed there anymore.
-		fn->setLookup(null);
+
+		// Do not mess with vtables in C++-derived classes. Should not cause troubles,
+		// but we would lose the C++ vtable call stub and replace it with our own slower (and possibly wrong) version.
+		if (!vtable.builtIn())
+			fn->setLookup(null);
 	}
 
 	bool Type::needsVirtual(Function *fn) {

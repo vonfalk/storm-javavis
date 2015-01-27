@@ -4,6 +4,7 @@
 #include "Code/VTable.h"
 #include "Code/Binary.h"
 #include "Function.h"
+#include "Exception.h"
 #include <iomanip>
 
 namespace storm {
@@ -16,12 +17,14 @@ namespace storm {
 		// TODO: Delay! Note, also delay the destruction of our StormVTable! Might be easier to delay
 		// the destruction of the entire owning Type class.
 		del(replaced);
+		del(cppFunctions);
 	}
 
 	void VTable::create(void *cppVTable) {
 		assert(replaced == null && this->cppVTable == null);
 		this->cppVTable = cppVTable;
 		ref.set(cppVTable);
+		cppFunctions = vector<VTableUpdater*>(code::vtableCount(cppVTable), null);
 
 		// Classes created from a VTable does not need parent/child information.
 	}
@@ -42,6 +45,7 @@ namespace storm {
 
 		ref.set(replaced->ptr());
 		storm.clear();
+		cppFunctions = vector<VTableUpdater*>(replaced->count(), null);
 
 		// Update child/parent relation.
 		if (this->parent)
@@ -76,6 +80,19 @@ namespace storm {
 	}
 
 	VTablePos VTable::insert(Function *fn) {
+		VTablePos r = findSlot(fn);
+
+		// May have been inserted before.
+		if (get(r) == null) {
+			VTableSlot *updater = new VTableSlot(*this, fn);
+			set(r, updater);
+			updater->update();
+		}
+
+		return r;
+	}
+
+	VTablePos VTable::insertStorm(Function *fn) {
 		// Check if this one has been inserted before, as a super-type.
 		nat slot = findSlot(fn);
 
@@ -109,7 +126,17 @@ namespace storm {
 			(*i)->updateAddr(id, to, src);
 	}
 
-	nat VTable::findSlot(Function *fn) {
+	VTablePos VTable::findSlot(Function *fn) {
+		// Cpp function?
+		if (builtIn()) {
+			nat slot = code::findSlot(fn->directRef().address(), cppVTable);
+			if (slot == code::VTable::invalid)
+				throw InternalError(::toS(*fn) + L" is not properly implemented in C++. "
+									L"Failed to find a VTable entry in the C++ vtable for it!");
+			return VTablePos(slot, true);
+		}
+
+		// Inserted here before?
 		nat slot = storm.findSlot(fn);
 		if (slot < storm.count())
 			return slot;

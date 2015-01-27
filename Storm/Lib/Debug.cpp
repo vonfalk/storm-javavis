@@ -19,7 +19,7 @@ namespace storm {
 	}
 
 
-	Dbg::Dbg() : v(10) { PLN("In constructor!"); }
+	Dbg::Dbg() : v(10) {}
 
 	void Dbg::set(Int v) {
 		this->v = v;

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Storm/Function.h"
+#include "Storm/Lib/Debug.h"
 #include "Code/Function.h"
 
 Int runFn(Engine &e, const String &fn) {
@@ -22,6 +23,17 @@ Int runFn(Engine &e, const String &fn, Int p) {
 		throw TestError(L"Function " + fn + L" did not return any code.");
 	return code::FnCall().param(p).call<Int>(ptr);
 }
+
+Object *runObjFn(Engine &e, const String &fn, Int p) {
+	Function *fun = as<Function>(e.scope()->find(Name(fn), vector<Value>(1, Value(intType(e)))));
+	if (!fun)
+		throw TestError(L"Function " + fn + L" was not found.");
+	void *ptr = fun->pointer();
+	if (!ptr)
+		throw TestError(L"Function " + fn + L" did not return any code.");
+	return code::FnCall().param(p).call<Object *>(ptr);
+}
+
 
 BEGIN_TEST(CodeTest) {
 
@@ -55,7 +67,12 @@ BEGIN_TEST(CodeTest) {
 	CHECK_EQ(runFn(engine, L"test.bs.testBase"), 10);
 	CHECK_EQ(runFn(engine, L"test.bs.testDerived"), 20);
 
-	CHECK_EQ(runFn(engine, L"test.bs.testCppBase"), 10);
-	CHECK_EQ(runFn(engine, L"test.bs.testCppDerived"), 20);
+	CHECK_EQ(runFn(engine, L"test.bs.testCpp", 1), 10);
+	CHECK_EQ(runFn(engine, L"test.bs.testCpp", 2), 20);
+
+	Auto<Object> created = runObjFn(engine, L"test.bs.createCpp", 1);
+	CHECK_EQ(created.expect<Dbg>(engine, L"dbg")->get(), 10);
+	created = runObjFn(engine, L"test.bs.createCpp", 2);
+	CHECK_EQ(created.expect<Dbg>(engine, L"dbg")->get(), 20);
 
 } END_TEST

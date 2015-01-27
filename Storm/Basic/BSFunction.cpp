@@ -78,8 +78,11 @@ namespace storm {
 
 			body->code(state, r);
 
-			Variable result = r.location(state);
-			l << mov(asSize(ptrA, result.size()), result);
+			Variable rval = r.location(state);
+			l << mov(asSize(ptrA, result.size()), rval);
+			if (result.refcounted())
+				l << code::addRef(ptrA);
+
 			l << epilog();
 			l << ret(result.size());
 		}

@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "Exception.h"
 #include "Code/Instruction.h"
+#include "Code/VTable.h"
 
 namespace storm {
 
@@ -138,6 +139,27 @@ namespace storm {
 		fn->setCode(c);
 		return fn;
 	}
+
+	Function *nativeMemberFunction(Engine &e, Type *member, Value result,
+								const String &name, const vector<Value> &params,
+								void *ptr) {
+		void *vtable = member->vtable.baseVTable();
+		void *plain = code::deVirtualize(ptr, vtable);
+
+		Function *fn = CREATE(Function, e, result, name, params);
+		if (plain) {
+			Auto<StaticCode> c = CREATE(StaticCode, e, plain);
+			fn->setCode(c);
+			Auto<StaticCode> l = CREATE(StaticCode, e, ptr);
+			fn->setLookup(l);
+		} else {
+			Auto<StaticCode> c = CREATE(StaticCode, e, ptr);
+			fn->setCode(c);
+		}
+
+		return fn;
+	}
+
 
 	Function *inlinedFunction(Engine &e, Value result, const String &name,
 							const vector<Value> &params, Fn<void, InlinedParams> fn) {

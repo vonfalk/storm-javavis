@@ -38,6 +38,11 @@ namespace code {
 		// Set the position indicated with a new function. "fn" is
 		// a function pointer to the member to be replaced.
 		void set(void *fn, void *newFn);
+		void set(nat slot, void *fn);
+
+		// Find the slot of the pointer. The pointer may or may
+		// not be previously de-virtualized.
+		nat find(void *fn);
 
 		// Get/set the extra member in the VTable.
 		void *extra() const;
@@ -49,6 +54,9 @@ namespace code {
 		// Get the pointer.
 		inline void *ptr() const { return content; }
 
+		// Invalid slot.
+		static const nat invalid = -1;
+
 	private:
 		// Size of the vtable.
 		nat size;
@@ -59,6 +67,15 @@ namespace code {
 		// Offset of the extra data (system-dependent).
 		static int extraOffset;
 	};
+
+	// De-virtualize a function call. The standard way of calling virtual
+	// functions by pointer is to call by vtable. There is no easy way to
+	// get the address to the specific function.
+	// If 'fnPtr' is not a virtual lookup stub, null is returned.
+	void *deVirtualize(void *fnPtr, void *vtable);
+
+	// Find an entry in a vtable. 'fn' may or may not be de-virtualized.
+	nat findSlot(void *fn, void *vtable, nat size = 0);
 
 	// Compute the size of a VTable.
 	nat vtableCount(void *vtable);
