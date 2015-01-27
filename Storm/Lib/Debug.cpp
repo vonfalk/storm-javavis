@@ -34,4 +34,12 @@ namespace storm {
 		PLN("Debug object. Type: " << myType->identifier() << " value: " << v);
 	}
 
+	Int Dbg::returnOne() {
+		return 1;
+	}
+
+	Int Dbg::returnTwo() {
+		return 2;
+	}
+
 }

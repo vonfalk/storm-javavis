@@ -34,6 +34,10 @@ namespace storm {
 		// Get a value.
 		virtual Int STORM_FN get();
 
+		// For use in VTableTest.
+		virtual Int STORM_FN returnOne();
+		virtual Int STORM_FN returnTwo();
+
 	private:
 		Int v;
 	};

@@ -37,7 +37,12 @@ public:
 };
 
 inline std::wostream &operator <<(std::wostream &to, const TestResult &r) {
-	to << L"Passed " << r.passed() << L" of " << r.total << L" tests";
+	to << L"Passed ";
+	if (r.passed() == r.total)
+		to << L"all ";
+	else
+		to << r.passed() << L" of ";
+	to << r.total << L" tests";
 	if (r.failed > 0)
 		to << L"\nFailed " << r.failed << L" tests!";
 	if (r.crashed > 0)

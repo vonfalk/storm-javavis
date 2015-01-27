@@ -1,28 +1,28 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 
-#include "Storm/Test/VTest.h"
+#include "Storm/Lib/Debug.h"
 #include "Code/VTable.h"
 
-Int CODECALL replaceOne(VTest *me) {
+Int CODECALL replaceOne(Dbg *me) {
 	return 3;
 }
 
-Int CODECALL replaceTwo(VTest *me) {
+Int CODECALL replaceTwo(Dbg *me) {
 	return 4;
 }
 
 BEGIN_TEST(VTableTest) {
 	Engine &engine = *gEngine;
 
-	code::VTable table(VTest::cppVTable());
+	code::VTable table(Dbg::cppVTable());
 
-	Auto<VTest> test = CREATE(VTest, engine);
+	Auto<Dbg> test = CREATE(Dbg, engine);
 	table.setTo(test.borrow());
 	CHECK_EQ(test->returnOne(), 1);
 	CHECK_EQ(test->returnTwo(), 2);
-	table.set(address(&VTest::returnOne), address(&replaceOne));
-	table.set(address(&VTest::returnTwo), address(&replaceTwo));
+	table.set(address(&Dbg::returnOne), address(&replaceOne));
+	table.set(address(&Dbg::returnTwo), address(&replaceTwo));
 	CHECK_EQ(test->returnOne(), 3);
 	CHECK_EQ(test->returnTwo(), 4);
 

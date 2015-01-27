@@ -363,10 +363,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Test\VTest.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Basic\BSVar.cpp"
 				>
 			</File>
@@ -626,10 +622,6 @@
 			</File>
 			<File
 				RelativePath=".\Value.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Test\VTest.h"
 				>
 			</File>
 			<File
