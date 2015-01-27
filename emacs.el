@@ -85,10 +85,10 @@
 	    (when t ;; (in-project buffer-file-name)
 	      (setq ff-other-file-alist my-cpp-other-file-alist)
 	      (setq indent-tabs-mode t)
-	      (whitespace-mode t)
-	      (c-set-style "linux-tabs-only")
 	      (setq tab-width 4)
 	      (setq c-basic-offset 4)
+	      (c-set-style "linux-tabs-only")
+	      (whitespace-mode t)
 	      )))
 
 (defun storm-insert-comment ()
@@ -188,7 +188,7 @@
 
 (defun subproject (filename)
   (let ((l (split-string (subpath filename) "/")))
-	(car l)))
+    (car l)))
 
 (defun filename (fname)
   (let ((l (split-string fname "/")))
@@ -217,11 +217,11 @@
 (defun maybe-add-cpp-template ()
   (interactive "*")
   (if (and (in-project buffer-file-name)
-		   (not (file-exists-p buffer-file-name)))
+	   (not (file-exists-p buffer-file-name)))
       (if (string-match "\\.cpp$" buffer-file-name)
-		  (add-cpp-template)
-		(if (string-match "\\.h$" buffer-file-name)
-			(add-header-template)))))
+	  (add-cpp-template)
+	(if (string-match "\\.h$" buffer-file-name)
+	    (add-header-template)))))
 
 (add-hook 'find-file-hooks 'correct-win-filename)
 (defun correct-win-filename ()
@@ -270,7 +270,7 @@
       (is-test-project)
       (equal proj "Utils")
       (equal proj "StormBuiltin")))))
-  
+
 (defun insert-namespace ()
   (insert "namespace ")
   (insert (downcase (subproject buffer-file-name)))
@@ -381,7 +381,7 @@
 	   display-buffer-use-some-window
 	   display-buffer-pop-up-window) .
 	   nil))))
-	 
+
 
 
 (setq compilation-scroll-output 'first-error)
