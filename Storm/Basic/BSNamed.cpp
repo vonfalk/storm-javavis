@@ -76,6 +76,9 @@ namespace storm {
 
 		Engine &e = Object::engine();
 
+		if (toCreate.type->flags & typeValue) {
+			PLN("Trying to create value from " << *toCreate.type);
+		}
 		assert(("Creating values is not implemented yet!", toCreate.type->flags & typeClass));
 
 		code::Block subBlock = s.frame.createChild(s.block);
@@ -275,7 +278,9 @@ namespace storm {
 			return null;
 
 		if (n->name == Type::CTOR)
-			throw SyntaxError(pos, L"Can not call a constructor by using __ctor. Use Foo() instead.");
+			throw SyntaxError(pos, L"Can not call a constructor by using __ctor. Use Type() instead.");
+		if (n->name == Type::DTOR)
+			throw SyntaxError(pos, L"Manual invocations of destructors are forbidden.");
 
 		if (Function *f = as<Function>(n)) {
 			if (first)

@@ -180,14 +180,10 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 		CppName name = fn.cppScope.cppName() + CppName(vector<String>(1, fn.name));
 
 		// Function ptr.
-		if (fn.name != L"__ctor") {
-			out << L"address<";
-			fnPtr(out, fn, types);
-			out << L">(&" << name << L")";
-		} else {
-			out << L"address(&create" << fn.params.size() << L"<";
+		if (fn.name == L"__ctor") {
+			out << L"address(&create" << (fn.params.size() + 1) << L"<";
 			out << fn.cppScope.cppName();
-			for (nat i = 1; i < fn.params.size(); i++) {
+			for (nat i = 0; i < fn.params.size(); i++) {
 				CppType t = fn.params[i].fullName(types, scope);
 				if (t.isPar) {
 					// Efficiency hack: pass by ptr to the create-fn,
@@ -199,6 +195,12 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 				out << L", " << t;
 			}
 			out << L">)";
+		} else if (fn.name == L"__dtor") {
+			out << L"address(&destroy<" << fn.cppScope.cppName() << L">)";
+		} else {
+			out << L"address<";
+			fnPtr(out, fn, types);
+			out << L">(&" << name << L")";
 		}
 		out << " },\n";
 	}

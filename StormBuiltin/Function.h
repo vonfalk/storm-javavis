@@ -2,6 +2,7 @@
 
 #include "CppName.h"
 #include "Tokenizer.h"
+#include "Type.h"
 
 /**
  * Describes a single function that is to be exported.
@@ -29,6 +30,9 @@ public:
 
 	// Read a function.
 	static Function read(const String &package, const CppScope &scope, const CppType &result, Tokenizer &tok);
+
+	// Create a destructor for a type.
+	static Function dtor(const String &package, const CppScope &scope);
 
 protected:
 	virtual void output(wostream &to) const;

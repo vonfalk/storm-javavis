@@ -9,6 +9,9 @@ class Path {
 	friend std::wostream &operator <<(std::wostream &to, const Path &path);
 public:
 	// Get the path of the executable file we're currently running from.
+	static Path executableFile();
+
+	// Get the path of the executable file we're currently running from.
 	static Path executable();
 
 	// Get a path representing a file relative to the executable path.

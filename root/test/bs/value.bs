@@ -1,0 +1,8 @@
+use core;
+use core.debug;
+
+// Test usage of value types.
+Int testValue() {
+	DbgVal v = DbgVal();
+	v.get;
+}

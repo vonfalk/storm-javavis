@@ -9,13 +9,20 @@
 // The Path class
 //////////////////////////////////////////////////////////////////////////
 
-Path Path::executable() {
+Path Path::executableFile() {
 	static Path e;
 	if (e.parts.size() == 0) {
 		wchar_t tmp[MAX_PATH + 1];
 		GetModuleFileName(NULL, tmp, MAX_PATH + 1);
-		e = Path(tmp).parent();
+		e = Path(tmp);
 	}
+	return e;
+}
+
+Path Path::executable() {
+	static Path e;
+	if (e.parts.size() == 0)
+		e = executableFile().parent();
 	return e;
 }
 

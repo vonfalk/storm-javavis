@@ -64,6 +64,14 @@ namespace storm {
 	}
 
 	/**
+	 * Destructor for built-in value types.
+	 */
+	template <class T>
+	void destroy(const T &v) {
+		v.~T();
+	}
+
+	/**
 	 * Everything between BEGIN TYPES and END TYPES is auto-generated.
 	 */
 	const BuiltInType *builtInTypes() {

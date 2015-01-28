@@ -10,6 +10,7 @@
 namespace storm {
 
 	const String Type::CTOR = L"__ctor";
+	const String Type::DTOR = L"__dtor";
 
 	Type::Type(const String &name, TypeFlags f)
 		: Named(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
@@ -218,15 +219,26 @@ namespace storm {
 			if (!fn)
 				throw TypedefError(L"Constructors must be functions.");
 			if (fn->result != Value())
-				throw TypedefError(L"Constructors may not return any value.");
+				throw TypedefError(L"Constructors may not return a value.");
+		}
+
+		if (o->name == DTOR) {
+			Function *fn = as<Function>(o);
+			if (!fn)
+				throw TypedefError(L"Destructors must be functions.");
+			if (fn->result != Value())
+				throw TypedefError(L"Destructors may not return a value.");
+			if (fn->params.size() != 1 || fn->params[0].type != this)
+				throw TypedefError(L"Destructors may take no parameters except the this-parameter.");
 		}
 	}
 
-	code::Value Type::destructor() const {
-		TODO(L"Implement!");
-		// ensureLoaded(); Needed here!
-		assert(false);
-		return code::Value();
+	Function *Type::destructor() {
+		Overload *o = as<Overload>(find(Name(DTOR)));
+		if (!o)
+			return null;
+
+		return as<Function>(o->find(vector<Value>(1, Value(this, true))));
 	}
 
 	Offset Type::offset(const TypeVar *var) const {

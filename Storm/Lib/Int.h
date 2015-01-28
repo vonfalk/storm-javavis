@@ -11,7 +11,7 @@ namespace storm {
 		IntType();
 
 		virtual bool isBuiltIn() const { return true; }
-		virtual code::Value destructor() const { return code::Value(); }
+		virtual Function *destructor() { return null; }
 	};
 
 
@@ -28,7 +28,7 @@ namespace storm {
 		NatType();
 
 		virtual bool isBuiltIn() const { return true; }
-		virtual code::Value destructor() const { return code::Value(); }
+		virtual Function *destructor() { return null; }
 	};
 
 

@@ -55,6 +55,7 @@ namespace storm {
 		static Type *createType(Engine &engine, const String &name, TypeFlags flags);
 
 		static const String CTOR;
+		static const String DTOR;
 
 		// Owning engine. Currently this has to be the first member in Type. Otherwise modify createType.
 		// TODO: Rename so that it does not collide with engine() in Object (confusing!).
@@ -97,7 +98,7 @@ namespace storm {
 		virtual bool isBuiltIn() const { return false; }
 
 		// Get a pointer/reference to the destructor (if any).
-		virtual code::Value destructor() const;
+		virtual Function *destructor();
 
 		// Get the offset to a member. TODO: Maybe replace this one with RefSources in TypeVar?
 		Offset offset(const TypeVar *var) const;

@@ -57,26 +57,29 @@ void Header::parse(Tokenizer &tok) {
 			functions.push_back(Function::read(pkg, scope, lastType, tok));
 		} else if (token == L"STORM_CLASS" || token == L"STORM_VALUE") {
 			if (!scope.isType())
-				throw Error(L"STORM_CLASS only allowed in classes and structs!");
+				throw Error(L"STORM_CLASS or STORM_VALUE only allowed in classes and structs!");
 			bool isValue = token == L"STORM_VALUE";
 
-			if (scope.cppName().isObject() || isValue) {
+			Type t;
+			if (scope.cppName().isObject()) {
 				// storm::Object is the root object, ignore any
 				// super-classes! They are just for convenience!
-				// Inheritance is not (yet) supported for value types either.
-				types.push_back(Type(scope.name(), CppName(), pkg, scope.cppName(), isValue));
+				t = Type(scope.name(), CppName(), pkg, scope.cppName(), isValue);
 			} else {
-				types.push_back(Type(scope.name(), scope.super(), pkg, scope.cppName(), isValue));
+				t = Type(scope.name(), scope.super(), pkg, scope.cppName(), isValue);
+			}
+			types.push_back(t);
+
+			// Values need their destructor!
+			if (isValue) {
+				functions.push_back(Function::dtor(pkg, scope));
+				// TODO: May need other functions as well (like assignment).
 			}
 		} else if (token == L"STORM_PKG") {
 			pkg = parsePkg(tok);
 		} else if (token == L"STORM_CTOR") {
-			CppType t;
-			t.type = scope.cppName();
-			t.isPtr = true;
 			Function ctor = Function::read(pkg, scope, CppType::tVoid(), tok);
 			ctor.name = L"__ctor";
-			ctor.params.insert(ctor.params.begin(), t);
 			functions.push_back(ctor);
 		} else if (token == L"class" || token == L"struct") {
 			String name = tok.next();

@@ -112,6 +112,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 
 	Timestamp inputModified = lastTime(headers);
 	limitMin(inputModified, input.mTime());
+	limitMin(inputModified, Path::executableFile().mTime());
 
 	bool toDate = inputModified <= outputModified;
 	toDate &= !forceUpdate;

@@ -42,7 +42,10 @@ namespace storm {
 		} else if (type && (type->flags & typeClass)) {
 			return code::Ref(type->engine.release);
 		} else if (type) {
-			return type->destructor();
+			Function *dtor = type->destructor();
+			if (!dtor)
+				return code::Value();
+			return code::Ref(dtor->ref());
 		} else {
 			return code::Value();
 		}

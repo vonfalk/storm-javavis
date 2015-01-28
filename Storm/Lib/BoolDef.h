@@ -10,7 +10,7 @@ namespace storm {
 		BoolType();
 
 		virtual bool isBuiltIn() const { return true; }
-		virtual code::Value destructor() const { return code::Value(); }
+		virtual Function *destructor() { return null; }
 	};
 
 }

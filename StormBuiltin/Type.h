@@ -6,6 +6,8 @@
  */
 class Type : public Printable {
 public:
+	Type() {}
+
 	// Built-in type.
 	Type(const String &name, const String &pkg, bool value = false)
 		: name(name), super(), package(pkg), cppName(vector<String>(1,name)), exported(false), value(value) {}

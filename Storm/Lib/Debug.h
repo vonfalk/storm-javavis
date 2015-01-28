@@ -41,4 +41,19 @@ namespace storm {
 	private:
 		Int v;
 	};
+
+
+	// Value implemented in C++ for testing.
+	class DbgVal {
+		STORM_VALUE;
+	public:
+		STORM_CTOR DbgVal();
+
+		Int v;
+
+		// Manipulations.
+		void STORM_FN set(Int v);
+		Int STORM_FN get();
+	};
+
 }

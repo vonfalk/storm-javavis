@@ -21,6 +21,7 @@ namespace storm {
 	static void addBuiltIn(Engine &to, const BuiltInFunction *fn) {
 		Named *into = null;
 		NameLookup *top = null;
+		vector<Value> params;
 
 		if (!fn->typeMember) {
 			Package *p = to.package(fn->pkg, true);
@@ -29,24 +30,24 @@ namespace storm {
 			into = p;
 			top = p;
 		} else {
-			into = to.scope()->find(fn->pkg + Name(fn->typeMember));
+			Type *t = as<Type>(to.scope()->find(fn->pkg + Name(fn->typeMember)));
+			into = t;
 			top = as<NameLookup>(into);
 			if (!into || !top)
 				throw BuiltInError(L"Could not locate " + String(fn->typeMember) + L" in " + toS(fn->pkg));
+
+			// add the 'this' parameter
+			if (t->flags & typeClass) {
+				params.push_back(Value(t));
+			} else if (t->flags & typeValue) {
+				params.push_back(Value(t).asRef());
+			} else {
+				assert(false);
+			}
 		}
 
 		Scope scope(top);
 		Value result;
-		vector<Value> params;
-
-		if (fn->typeMember) {
-			if (fn->name == Type::CTOR)
-				;
-			else if (Type *t = as<Type>(into))
-				params.push_back(Value(as<Type>(t)));
-			else
-				assert(false);
-		}
 
 		if (fn->result.any())
 			result = findValue(scope, fn->result);

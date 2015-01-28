@@ -42,4 +42,15 @@ namespace storm {
 		return 2;
 	}
 
+
+	DbgVal::DbgVal() : v(10) {}
+
+	void DbgVal::set(Int v) {
+		this->v = v;
+	}
+
+	Int DbgVal::get() {
+		return v;
+	}
+
 }

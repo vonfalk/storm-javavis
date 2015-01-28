@@ -38,3 +38,13 @@ Function Function::read(const String &package, const CppScope &scope, const CppT
 
 	return r;
 }
+
+Function Function::dtor(const String &package, const CppScope &scope) {
+	Function r;
+	r.result = CppType::tVoid();
+	r.cppScope = scope;
+	r.name = L"__dtor";
+	r.isConst = false;
+	r.package = package;
+	return r;
+}
