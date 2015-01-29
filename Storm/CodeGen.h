@@ -14,10 +14,9 @@ namespace storm {
 	};
 
 	// Helper to create a variable from a Value (this is common).
-	inline code::Variable variable(code::Frame &frame, code::Block block, const Value &v) {
-		return frame.createVariable(block, v.size(), v.destructor());
-	}
+	code::Variable variable(code::Frame &frame, code::Block block, const Value &v);
 
+	// Variations.
 	inline code::Variable variable(code::Listing &l, code::Block block, const Value &v) {
 		return variable(l.frame, block, v);
 	}

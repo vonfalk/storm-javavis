@@ -7,20 +7,21 @@
 
 namespace code {
 
-	const wchar *name(FreeOn f) {
-		switch (f) {
-		case freeOnNone:
-			return L"never";
-		case freeOnException:
-			return L"on exception";
-		case freeOnBlockExit:
-			return L"on exit block";
-		case freeOnBoth:
-			return L"always";
-		default:
-			assert(false);
-			return L"unknown";
-		}
+	String name(FreeOpt f) {
+		wchar *first = L"never";
+		wchar *second = L"by value";
+
+		if (f & freeOnBoth)
+			first = L"always";
+		else if (f & freeOnBlockExit)
+			first = L"on exit block";
+		else if (f & freeOnException)
+			first = L"on exception";
+
+		if (f & freePtr)
+			second = L"by ptr";
+
+		return String(first) + L", " + String(second);
 	}
 
 	Frame::Frame() : nextBlockId(1), nextVariableId(0), anyDestructors(false) {
@@ -43,7 +44,7 @@ namespace code {
 			to << endl << Value(v[i]);
 			Value free = freeFn(v[i]);
 			if (free != Value())
-				to << L" (free: " << free << L", " << name(freeOn(v[i])) << L")";
+				to << L" (free: " << free << L", " << name(freeOpt(v[i])) << L")";
 			if (isParam(v[i]))
 				to << L" (param)";
 		}
@@ -175,9 +176,17 @@ namespace code {
 		return Block(nextBlockId++);
 	}
 
-	Variable Frame::createVariable(Block in, Size size, Value free, FreeOn on) {
+	static void checkFree(const Value &free, FreeOpt on) {
+		if ((on & freePtr) != freePtr)
+			if (free.size() > Size(8))
+				throw InvalidValue(L"Can not destroy values larger than 8 bytes by value.");
+	}
+
+	Variable Frame::createVariable(Block in, Size size, Value free, FreeOpt on) {
 		if (in == Block::invalid)
 			throw FrameError();
+
+		checkFree(free, on);
 
 		if (!free.empty())
 			if (on & freeOnException)
@@ -193,7 +202,9 @@ namespace code {
 		return Variable(nextVariableId++, size);
 	}
 
-	Variable Frame::createParameter(Size size, bool isFloat, Value free, FreeOn on) {
+	Variable Frame::createParameter(Size size, bool isFloat, Value free, FreeOpt on) {
+		checkFree(free, on);
+
 		if (!free.empty())
 			if (on & freeOnException)
 				anyDestructors = true;
@@ -224,21 +235,14 @@ namespace code {
 		}
 	}
 
-	FreeOn Frame::freeOn(Variable v) const {
+	FreeOpt Frame::freeOpt(Variable v) const {
 		if (parameters.count(v.id)) {
-			return parameters.find(v.id)->second.freeOn;
+			return parameters.find(v.id)->second.freeOpt;
 		} else if (vars.count(v.id)) {
-			return vars.find(v.id)->second.freeOn;
+			return vars.find(v.id)->second.freeOpt;
 		} else {
 			throw FrameError();
 		}
-	}
-
-	Value Frame::freeFn(Variable v, FreeOn scenario) const {
-		if (scenario & freeOn(v))
-			return freeFn(v);
-		else
-			return Value();
 	}
 
 	vector<Variable> Frame::variables(Block b) const {

@@ -67,6 +67,9 @@ namespace storm {
 		static inline Value stdInt(Engine &e) { return Value(intType(e)); }
 		static inline Value stdNat(Engine &e) { return Value(natType(e)); }
 
+		// Create a this-pointer for a type.
+		static Value thisPtr(Type *t);
+
 	protected:
 		virtual void output(wostream &to) const;
 	};

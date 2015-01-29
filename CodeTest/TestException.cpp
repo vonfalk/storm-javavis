@@ -133,3 +133,92 @@ BEGIN_TEST(TestNoException) {
 
 	CHECK_EQ((*fn)(1, 2), 3);
 } END_TEST
+
+static void destroyPtr(cpuInt *v) {
+	destroyed = *v;
+}
+
+BEGIN_TEST(TestRefException) {
+	Arena arena;
+	Listing l;
+
+	Ref intCleanup = arena.external(L"destroyPtr", &destroyPtr);
+	Ref throwEx = arena.external(L"throwException", &throwException);
+
+	Variable v = l.frame.createIntVar(l.frame.root(), Ref(intCleanup), freeOnBoth | freePtr);
+
+	l << prolog();
+	l << mov(v, intConst(103));
+	l << fnCall(Ref(throwEx), Size::sInt);
+	l << mov(v, eax);
+	l << epilog();
+	l << ret(Size::sInt);
+
+	Binary output(arena, L"MyFn", l);
+
+	const void *fn = output.getData();
+
+	destroyed = 0;
+	throwError = true;
+	CHECK_ERROR(FnCall().call<cpuInt>(fn));
+	CHECK_EQ(destroyed, 103);
+
+	destroyed = 0;
+	throwError = false;
+	CHECK_EQ(FnCall().call<cpuInt>(fn), 4);
+	CHECK_EQ(destroyed, 4);
+
+} END_TEST
+
+
+  /**
+   * For some reason, throwing an exception in a generated function right after we have returned
+   * from the same (probably another generated as well), causes a crash. Probably we are not properly
+   * cleaning up the SEH stuff on the stack, but not so badly so that C++ can not recover it later.
+   */
+BEGIN_TEST(TestMultipleEx) {
+	Arena arena;
+	Listing l;
+
+	Ref intCleanup = arena.external(L"destroyInt", &destroyInt);
+	Ref throwEx = arena.external(L"throwException", &throwException);
+
+	Variable v = l.frame.createIntVar(l.frame.root(), Ref(intCleanup));
+
+	l << prolog();
+	l << mov(v, intConst(103));
+	l << fnCall(Ref(throwEx), Size::sInt);
+	l << epilog();
+	l << ret(Size());
+
+	Binary output(arena, L"MyFn", l);
+	typedef void (*FnPtr)();
+	FnPtr fn = (FnPtr)output.getData();
+
+#if defined(X86) && defined(SEH)
+	void *sehTop, *after;
+
+	__asm {
+		mov eax, fs:[0];
+		mov sehTop, eax;
+	};
+#endif
+
+	throwError = false;
+	CHECK_RUNS((*fn)());
+
+#if defined(X86) && defined(SEH)
+	__asm {
+		mov eax, fs:[0];
+		mov after, eax;
+	};
+
+	// Something broke this!
+	CHECK_EQ(after, sehTop);
+#endif
+
+	// Crashes...
+	throwError = true;
+	CHECK_ERROR((*fn)());
+
+} END_TEST

@@ -70,11 +70,7 @@ namespace storm {
 		std::wostringstream ss;
 		ss << parent()->identifier();
 		ss << L"(";
-		for (nat i = 0; i < params.size(); i++) {
-			if (i != 0)
-				ss << L", ";
-			ss << params[i].type->identifier();
-		}
+		join(ss, params, L", ");
 		ss << L")";
 		return ss.str();
 	}

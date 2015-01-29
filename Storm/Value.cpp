@@ -7,6 +7,18 @@
 
 namespace storm {
 
+	Value Value::thisPtr(Type *t) {
+		bool ref = false;
+		if (t->flags & typeValue) {
+			ref = true;
+		} else if (t->flags & typeClass) {
+			ref = false;
+		} else {
+			assert(("You do want to set either typeValue or typeClass on your types!", false));
+		}
+		return Value(t, (t->flags & typeValue) != 0);
+	}
+
 	Value::Value() : type(null), ref(false) {}
 
 	Value::Value(Type *t, bool ref) : type(t), ref(ref) {}
@@ -39,13 +51,13 @@ namespace storm {
 	code::Value Value::destructor() const {
 		if (ref) {
 			return code::Value();
-		} else if (type && (type->flags & typeClass)) {
-			return code::Ref(type->engine.release);
 		} else if (type) {
-			Function *dtor = type->destructor();
-			if (!dtor)
+			if (type->flags & typeClass)
+				return code::Ref(type->engine.release);
+			else if (Function *dtor = type->destructor())
+				return code::Ref(dtor->ref());
+			else
 				return code::Value();
-			return code::Ref(dtor->ref());
 		} else {
 			return code::Value();
 		}

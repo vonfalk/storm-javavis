@@ -74,6 +74,12 @@ namespace storm {
 
 			// Parameters.
 			Auto<Actual> params;
+
+			// Create a value.
+			void createValue(const GenState &s, GenResult &to);
+
+			// Create a class.
+			void createClass(const GenState &s, GenResult &to);
 		};
 
 

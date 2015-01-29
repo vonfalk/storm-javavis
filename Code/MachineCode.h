@@ -60,6 +60,9 @@ namespace code {
 			// The free function for this variable, is null if the variable/parameter
 			// is declared as not being destroyed on exceptions.
 			void *freeFn;
+
+			// How do we destroy this variable?
+			FreeOpt freeOpt;
 		};
 
 		// Get the active block in the call frame.

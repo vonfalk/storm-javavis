@@ -40,13 +40,7 @@ namespace storm {
 				throw BuiltInError(L"Could not locate " + String(fn->typeMember) + L" in " + toS(fn->pkg));
 
 			// add the 'this' parameter
-			if (t->flags & typeClass) {
-				params.push_back(Value(t));
-			} else if (t->flags & typeValue) {
-				params.push_back(Value(t).asRef());
-			} else {
-				assert(false);
-			}
+			params.push_back(Value::thisPtr(t));
 		}
 
 		Scope scope(top);

@@ -179,8 +179,10 @@ namespace code {
 			for (nat i = 0; i < vars.size(); i++) {
 				Variable var = vars[i];
 
-				Value dtor = frame.freeFn(var, freeOnBlockExit);
-				if (dtor.type() != Value::tNone) {
+				Value dtor = frame.freeFn(var);
+				FreeOpt on = frame.freeOpt(var);
+
+				if (dtor.type() != Value::tNone && (on & freeOnBlockExit) == freeOnBlockExit) {
 					if (preserveEax && !pushedEax) {
 						to << code::push(eax);
 						pushedEax = true;
@@ -191,11 +193,21 @@ namespace code {
 						pushedEdx = true;
 					}
 
-					Instruction i = code::fnParam(var);
-					params.lookupVars(i);
-					fnParamTfm(to, params, i);
+					if (on & freePtr) {
+						Instruction i = code::lea(ptrA, ptrRel(var));
+						params.lookupVars(i);
+						to << i;
 
-					i = code::fnCall(dtor, Size());
+						i = code::fnParam(ptrA);
+						params.lookupVars(i);
+						fnParamTfm(to, params, i);
+					} else {
+						Instruction i = code::fnParam(var);
+						params.lookupVars(i);
+						fnParamTfm(to, params, i);
+					}
+
+					Instruction i = code::fnCall(dtor, Size());
 					params.lookupVars(i);
 					fnCallTfm(to, params, i);
 
@@ -247,7 +259,8 @@ namespace code {
 
 			if (to.frame.exceptionHandlerNeeded()) {
 				// Set up the SEH handler for this frame.
-				to << code::threadLocal() << code::push(natPtrConst(Nat(&x86SafeSEH)));
+				// to << code::threadLocal() << code::push(natPtrConst(Nat(&x86SafeSEH)));
+				to << code::push(natPtrConst(Nat(&x86SafeSEH)));
 				to << code::threadLocal() << code::push(ptrRel(noReg));
 				to << code::threadLocal() << code::mov(ptrRel(noReg), ptrStack);
 			}
@@ -285,8 +298,8 @@ namespace code {
 			if (to.frame.exceptionHandlerNeeded()) {
 				// Remove the SEH handler.
 
-				// Find the previous handler (relative to ebp if esp is not right)
-				to << code::mov(edx, intRel(ptrFrame, Offset(-8)));
+				// Find the previous handler (relative to ebp, if esp is not right)
+				to << code::mov(edx, intRel(ptrFrame, Offset(-16)));
 				// Restore it...
 				to << code::threadLocal() << mov(intRel(noReg), edx);
 			}

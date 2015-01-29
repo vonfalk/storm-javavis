@@ -19,7 +19,7 @@ namespace storm {
 		for (VarMap::const_iterator i = variables.begin(); i != variables.end(); ++i) {
 			LocalVar *v = i->second.borrow();
 			if (!v->param)
-				v->var = state.frame.createVariable(block, v->result.size(), v->result.destructor());
+				v->var = storm::variable(state, v->result);
 		}
 
 		blockCode(state, to, block);

@@ -122,7 +122,8 @@ namespace code {
 			for (nat i = 0; i < variables.size(); i++) {
 				Variable var = variables[i];
 				int offset = offsets.offset(var);
-				Value freeFn = frame.freeFn(var, freeOnException);
+				Value freeFn = frame.freeFn(var);
+				nat opts = nat(frame.freeOpt(var));
 
 				if (freeFn.empty())
 					freeFn = natPtrConst(0);
@@ -130,6 +131,7 @@ namespace code {
 
 				to << dat(intConst(offset));
 				to << dat(freeFn);
+				to << dat(natConst(opts));
 			}
 		}
 	}

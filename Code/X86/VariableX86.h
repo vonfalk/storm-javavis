@@ -47,6 +47,9 @@ namespace code {
 
 				// The function to be called (if any) to free the variable when an exception occurs.
 				void *freeFn;
+
+				// Options.
+				nat freeOpt;
 			};
 
 			// Number of elements in "info".

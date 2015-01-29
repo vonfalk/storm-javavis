@@ -82,7 +82,7 @@ namespace code {
 			const Meta::Var &v = data->info[variableId];
 			byte *ebp = (byte *)frame->ebp();
 
-			VarInfo info = { ebp + v.offset, v.freeFn };
+			VarInfo info = { ebp + v.offset, v.freeFn, FreeOpt(v.freeOpt) };
 			return info;
 		}
 	}

@@ -72,14 +72,41 @@ namespace storm {
 	}
 
 	void bs::CtorCall::code(const GenState &s, GenResult &to) {
+		if (toCreate.type->flags & typeClass) {
+			createClass(s, to);
+		} else if (toCreate.type->flags & typeValue) {
+			createValue(s, to);
+		} else {
+			assert(false);
+		}
+	}
+
+	void bs::CtorCall::createValue(const GenState &s, GenResult &to) {
+		using namespace code;
+		Engine &e = Object::engine();
+
+		// Call the constructor with the address of our variable.
+		const vector<Value> &values = ctor->params;
+		vector<code::Value> vars(values.size());
+
+		// Load parameters.
+		vars[0] = to.location(s);
+
+		for (nat i = 1; i < values.size(); i++) {
+			GenResult gr(values[i], s.block);
+			params->expressions[i - 1]->code(s, gr);
+			vars[i] = gr.location(s);
+		}
+
+		// Call it!
+		GenResult voidTo(Value(), s.block);
+		ctor->genCode(s, vars, voidTo);
+	}
+
+	void bs::CtorCall::createClass(const GenState &s, GenResult &to) {
 		using namespace code;
 
 		Engine &e = Object::engine();
-
-		if (toCreate.type->flags & typeValue) {
-			PLN("Trying to create value from " << *toCreate.type);
-		}
-		assert(("Creating values is not implemented yet!", toCreate.type->flags & typeClass));
 
 		code::Block subBlock = s.frame.createChild(s.block);
 		s.to << begin(subBlock);
@@ -258,7 +285,7 @@ namespace storm {
 	// Find a constructor.
 	static bs::Expr *bs::findCtor(Type *t, Par<Actual> actual, const SrcPos &pos) {
 		vector<Value> params = actual->values();
-		params.insert(params.begin(), Value(t)); // this-ptr for the created type.
+		params.insert(params.begin(), Value::thisPtr(t));
 
 		Overload *o = as<Overload>(t->find(Name(Type::CTOR)));
 		if (!o)
@@ -266,7 +293,7 @@ namespace storm {
 
 		Function *ctor = as<Function>(o->find(params));
 		if (!ctor)
-			throw SyntaxError(pos, L"No constructor (" + join(params, L", ") + L")");
+			throw SyntaxError(pos, L"No constructor " + t->identifier() + L"(" + join(params, L", ") + L")");
 
 		return CREATE(CtorCall, t, ctor, actual);
 	}

@@ -142,7 +142,15 @@ namespace code {
 		if (info.freeFn == null)
 			return;
 
-		switch (var.size.current()) {
+		if ((info.freeOpt & freeOnException) == 0)
+			return;
+
+		if (info.freeOpt & freePtr) {
+			typedef void (CODECALL *FreeFn)(void *);
+			FreeFn f = (FreeFn)info.freeFn;
+			(*f)(info.ptr);
+		} else {
+			switch (var.size.current()) {
 			case 1:
 				callFn<Byte>(info.freeFn, info.ptr);
 				break;
@@ -150,8 +158,12 @@ namespace code {
 				callFn<Int>(info.freeFn, info.ptr);
 				break;
 			case 8:
-				assert(false); // Not implemented yet!
+				callFn<Long>(info.freeFn, info.ptr);
 				break;
+			default:
+				assert(("By-value destruction of values larger than 8 bytes is not supported.", false));
+				break;
+			}
 		}
 	}
 

@@ -9,20 +9,28 @@
 
 namespace code {
 
-	// Control over when variables are freed using the free function.
-	enum FreeOn {
+	/**
+	 * Control when and how variables are freed.
+	 */
+	enum FreeOpt {
 		freeOnNone = 0x0,
 		freeOnException = 0x1,
 		freeOnBlockExit = 0x2,
 		freeOnBoth = 0x3,
+
+		// Pass a pointer to the free function? (by-value is default).
+		freePtr = 0x10,
+
+		// Default options.
+		freeDef = freeOnBoth,
 	};
 
 	// And+or.
-	inline FreeOn operator &(FreeOn a, FreeOn b) { return FreeOn(nat(a) & nat(b)); }
-	inline FreeOn operator |(FreeOn a, FreeOn b) { return FreeOn(nat(a) | nat(b)); }
+	inline FreeOpt operator &(FreeOpt a, FreeOpt b) { return FreeOpt(nat(a) & nat(b)); }
+	inline FreeOpt operator |(FreeOpt a, FreeOpt b) { return FreeOpt(nat(a) | nat(b)); }
 
-	// ToString for 'FreeOn'
-	const wchar *name(FreeOn f);
+	// ToString for 'FreeOpt'
+	String name(FreeOpt f);
 
 	// An implementation of the variable and block management, used by "Listing".
 	class Frame : public Printable {
@@ -37,42 +45,42 @@ namespace code {
 
 		// Create a variable in a block. Free will be called once with this value as a parameter if
 		// the size is <= sizeof(cpuNat), or a pointer to it otherwise.
-		inline Variable createByteVar(Block in, Value free = Value(), FreeOn on = freeOnBoth) {
+		inline Variable createByteVar(Block in, Value free = Value(), FreeOpt on = freeDef) {
 			return createVariable(in, Size::sByte, free, on);
 		}
-		inline Variable createIntVar(Block in, Value free = Value(), FreeOn on = freeOnBoth) {
+		inline Variable createIntVar(Block in, Value free = Value(), FreeOpt on = freeDef) {
 			return createVariable(in, Size::sInt, free, on);
 		}
-		inline Variable createLongVar(Block in, Value free = Value(), FreeOn on = freeOnBoth) {
+		inline Variable createLongVar(Block in, Value free = Value(), FreeOpt on = freeDef) {
 			return createVariable(in, Size::sLong, free, on);
 		}
-		inline Variable createPtrVar(Block in, Value free = Value(), FreeOn on = freeOnBoth) {
+		inline Variable createPtrVar(Block in, Value free = Value(), FreeOpt on = freeDef) {
 			return createVariable(in, Size::sPtr, free, on);
 		}
 
 		// Custom variable creation.
-		Variable createVariable(Block in, Size size, Value free = Value(), FreeOn when = freeOnBoth);
+		Variable createVariable(Block in, Size size, Value free = Value(), FreeOpt when = freeDef);
 
 		// Create a function parameter. These are assumed to be
 		// created in the same order as the parameters appear in the function
 		// declaration in C/C++. IsFloat shall be true if the parameter is
 		// a floating-point parameter. In some calling conventions, floating
 		// point parameters are treated separately.
-		inline Variable createByteParam(Value free = Value(), FreeOn on = freeOnBoth) {
+		inline Variable createByteParam(Value free = Value(), FreeOpt on = freeDef) {
 			return createParameter(Size::sByte, false, free, on);
 		}
-		inline Variable createIntParam(Value free = Value(), FreeOn on = freeOnBoth) {
+		inline Variable createIntParam(Value free = Value(), FreeOpt on = freeDef) {
 			return createParameter(Size::sInt, false, free, on);
 		}
-		inline Variable createLongParam(Value free = Value(), FreeOn on = freeOnBoth) {
+		inline Variable createLongParam(Value free = Value(), FreeOpt on = freeDef) {
 			return createParameter(Size::sLong, false, free, on);
 		}
-		inline Variable createPtrParam(Value free = Value(), FreeOn on = freeOnBoth) {
+		inline Variable createPtrParam(Value free = Value(), FreeOpt on = freeDef) {
 			return createParameter(Size::sPtr, false, free, on);
 		}
 
 		// Custom parameter creation.
-		Variable createParameter(Size size, bool isFloat, Value free = Value(), FreeOn when = freeOnBoth);
+		Variable createParameter(Size size, bool isFloat, Value free = Value(), FreeOpt when = freeDef);
 
 		// Get the variable located before the current variable (either in the same, or in another block).
 		// Returns an empty variable if none exists.
@@ -85,10 +93,7 @@ namespace code {
 		Value freeFn(Variable v) const;
 
 		// When should 'freeFn' be used?
-		FreeOn freeOn(Variable v) const;
-
-		// Returns 'freeFn' if the 'freeOn' contains the flag given, otherwise Value().
-		Value freeFn(Variable v, FreeOn scenario) const;
+		FreeOpt freeOpt(Variable v) const;
 
 		// Get the parent block to "b".
 		Block parent(Variable v) const;
@@ -133,7 +138,7 @@ namespace code {
 			Value freeFn;
 
 			// Free when?
-			FreeOn freeOn;
+			FreeOpt freeOpt;
 		};
 
 		struct Var {
@@ -147,7 +152,7 @@ namespace code {
 			Value freeFn;
 
 			// Free when?
-			FreeOn freeOn;
+			FreeOpt freeOpt;
 		};
 
 		struct InternalBlock {
