@@ -34,6 +34,12 @@ public:
 	// Create a destructor for a type.
 	static Function dtor(const String &package, const CppScope &scope);
 
+	// Create a copy-ctor for a type.
+	static Function copyCtor(const String &package, const CppScope &scope);
+
+	// Create the assignment operator for a type.
+	static Function assignment(const String &package, const CppScope &scope);
+
 protected:
 	virtual void output(wostream &to) const;
 };

@@ -144,6 +144,29 @@ String vtableCode(const Types &types) {
 	return out.str();
 }
 
+static String valueRef(const CppType &type, const CppName &scope, const Types &types) {
+	std::wostringstream out;
+	out << L"valueRef(";
+	if (!type.isVoid()) {
+		out << L"L\"";
+		out << types.find(type.type, scope).fullName();
+		out << L"\", ";
+		if (type.isRef || type.isPtr)
+			out << L"true";
+		else
+			out << L"false";
+	}
+	out << L")";
+	return out.str();
+}
+
+static String stormName(const String &cppName) {
+	if (cppName.left(9) == L"operator ")
+		return cppName.substr(9);
+	else
+		return cppName;
+}
+
 void functionList(wostream &out, const vector<Function> &fns, const Types &types) {
 	for (nat i = 0; i < fns.size(); i++) {
 		const Function &fn = fns[i];
@@ -161,19 +184,15 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 		}
 
 		// Result
-		if (fn.result.isVoid()) {
-			out << L"Name(), ";
-		} else {
-			out << L"Name(L\"" << types.find(fn.result.type, scope).fullName() << L"\"), ";
-		}
+		out << valueRef(fn.result, scope, types) << L", ";
 
 		// Name
-		out << L"L\"" << fn.name << L"\", ";
+		out << L"L\"" << stormName(fn.name) << L"\", ";
 
 		// Params
 		out << L"list(" << fn.params.size();
 		for (nat i = 0; i < fn.params.size(); i++) {
-			out << L", Name(L\"" << types.find(fn.params[i].type, scope).fullName() << L"\")";
+			out << L", " << valueRef(fn.params[i], scope, types);
 		}
 		out << L"), ";
 
@@ -197,6 +216,8 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 			out << L">)";
 		} else if (fn.name == L"__dtor") {
 			out << L"address(&destroy<" << fn.cppScope.cppName() << L">)";
+		} else if (fn.name == L"operator =") {
+			out << L"address(&wrapAssign<" << fn.cppScope.cppName() << L">)";
 		} else {
 			out << L"address<";
 			fnPtr(out, fn, types);

@@ -16,15 +16,40 @@
 namespace storm {
 
 	/**
+	 * Create a ValueRef.
+	 */
+	ValueRef valueRef(const wchar *name, bool ref) {
+		ValueRef r = { name, ref };
+		return r;
+	}
+
+	/**
+	 * Null value.
+	 */
+	ValueRef valueRef() {
+		ValueRef r = { null, null };
+		return r;
+	}
+
+	/**
+	 * Wrap the default generated assignment operator. Since the calling convention differ,
+	 * we need to wrap it like this.
+	 */
+	template <class T>
+	T &CODECALL wrapAssign(T &to, const T &from) {
+		return to = from;
+	}
+
+	/**
 	 * Create a vector from a argument list.
 	 */
-	vector<Name> list(nat count, ...) {
+	vector<ValueRef> list(nat count, ...) {
 		va_list l;
 		va_start(l, count);
 
-		vector<Name> result;
+		vector<ValueRef> result;
 		for (nat i = 0; i < count; i++)
-			result.push_back(va_arg(l, Name));
+			result.push_back(va_arg(l, ValueRef));
 
 		va_end(l);
 		return result;
@@ -90,7 +115,7 @@ namespace storm {
 		static BuiltInFunction fns[] = {
 			// BEGIN LIST
 			// END LIST
-			{ Name(), null, Name(), L"", list(0), null },
+			{ Name(), null, valueRef(), L"", list(0), null },
 		};
 		return fns;
 	}

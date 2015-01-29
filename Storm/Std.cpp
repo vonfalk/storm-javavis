@@ -10,12 +10,15 @@
 
 namespace storm {
 
-	static Value findValue(const Scope &src, const Name &name) {
-		Named *f = src.find(name);
-		if (Type *t = as<Type>(f))
-			return Value(t);
+	static Value findValue(const Scope &src, const ValueRef &val) {
+		if (val.name == null)
+			return Value();
 
-		throw BuiltInError(L"Type " + toS(name) + L" was not found.");
+		Named *f = src.find(Name(val.name));
+		if (Type *t = as<Type>(f))
+			return Value(t, val.ref);
+
+		throw BuiltInError(L"Type " + toS(val.name) + L" was not found.");
 	}
 
 	static void addBuiltIn(Engine &to, const BuiltInFunction *fn) {
@@ -47,10 +50,8 @@ namespace storm {
 		}
 
 		Scope scope(top);
-		Value result;
+		Value result = findValue(scope, fn->result);
 
-		if (fn->result.any())
-			result = findValue(scope, fn->result);
 		params.reserve(fn->params.size());
 		for (nat i = 0; i < fn->params.size(); i++)
 			params.push_back(findValue(scope, fn->params[i]));

@@ -33,6 +33,17 @@ namespace storm {
 	};
 
 	/**
+	 * Value reference. This can be used to look up an actual value runtime.
+	 */
+	struct ValueRef {
+		// Name of the type.
+		const wchar *name;
+
+		// Reference?
+		bool ref;
+	};
+
+	/**
 	 * A list of all built-in functions.
 	 */
 	struct BuiltInFunction {
@@ -44,13 +55,13 @@ namespace storm {
 		const wchar *typeMember;
 
 		// Name of the return type.
-		Name result;
+		ValueRef result;
 
 		// Name of the function.
 		String name;
 
 		// Parameters to the function (Name of the types).
-		vector<Name> params;
+		vector<ValueRef> params;
 
 		// Function pointer. Null if the last element.
 		void *fnPtr;

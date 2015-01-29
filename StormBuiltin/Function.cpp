@@ -48,3 +48,40 @@ Function Function::dtor(const String &package, const CppScope &scope) {
 	r.package = package;
 	return r;
 }
+
+Function Function::copyCtor(const String &package, const CppScope &scope) {
+	Function r;
+	r.result = CppType::tVoid();
+	r.cppScope = scope;
+	r.name = L"__ctor";
+	r.isConst = false;
+	r.package = package;
+
+	CppType z;
+	z.isRef = true;
+	z.isConst = true;
+	z.type = scope.cppName();
+	r.params.push_back(z);
+
+	return r;
+}
+
+Function Function::assignment(const String &package, const CppScope &scope) {
+	Function r;
+	r.result = CppType::tVoid();
+	r.cppScope = scope;
+	r.name = L"operator =";
+	r.isConst = false;
+	r.package = package;
+
+	CppType z;
+	z.isRef = true;
+	z.isConst = true;
+	z.type = scope.cppName();
+	r.params.push_back(z);
+
+	r.result = z;
+	r.result.isConst = false;
+
+	return r;
+}
