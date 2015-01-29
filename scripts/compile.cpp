@@ -49,6 +49,7 @@ int main(int argc, const char **argv) {
 		if (valgrind) {
 			cmd = "drmemory.exe -logdir Debug -batch -results_to_stderr -- " + cmd;
 		}
+		cout << cmd << endl;
 
 		system(cmd.c_str());
 	}

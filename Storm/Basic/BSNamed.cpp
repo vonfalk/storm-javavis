@@ -72,13 +72,10 @@ namespace storm {
 	}
 
 	void bs::CtorCall::code(const GenState &s, GenResult &to) {
-		if (toCreate.type->flags & typeClass) {
-			createClass(s, to);
-		} else if (toCreate.type->flags & typeValue) {
+		if (toCreate.isValue())
 			createValue(s, to);
-		} else {
-			assert(false);
-		}
+		else
+			createClass(s, to);
 	}
 
 	void bs::CtorCall::createValue(const GenState &s, GenResult &to) {
@@ -86,16 +83,27 @@ namespace storm {
 		Engine &e = Object::engine();
 
 		// Call the constructor with the address of our variable.
-		const vector<Value> &values = ctor->params;
+		vector<Value> values = ctor->params;
 		vector<code::Value> vars(values.size());
 
 		// Load parameters.
-		vars[0] = to.location(s);
-
+		TODO(L"Here, if the function we're calling takes a reference to something, but the params can not give a ref, "
+			L"this breaks! Same goes for FnCall!");
 		for (nat i = 1; i < values.size(); i++) {
 			GenResult gr(values[i], s.block);
 			params->expressions[i - 1]->code(s, gr);
 			vars[i] = gr.location(s);
+		}
+
+		// This needs to be last, otherwise other generated code may overwrite it!
+		if (to.type.ref) {
+			// Should this really happen?
+			DebugBreak();
+			vars[0] = to.location(s);
+		} else {
+			code::Value srcVar = to.safeLocation(s, toCreate.asRef(false));
+			vars[0] = code::Value(ptrA);
+			s.to << lea(vars[0], srcVar);
 		}
 
 		// Call it!
@@ -122,7 +130,7 @@ namespace storm {
 		s.to << mov(rawMemory, ptrA);
 
 		// Call the constructor:
-		const vector<Value> &values = ctor->params;
+		vector<Value> values = ctor->params;
 		vector<code::Value> vars(values.size());
 
 		// Load parameters.
@@ -142,6 +150,36 @@ namespace storm {
 		s.to << mov(to.location(subState), rawMemory);
 
 		s.to << end(subBlock);
+	}
+
+
+	bs::CtorCall *bs::defaultCtor(const SrcPos &pos, Par<Type> t) {
+		Overload *o = as<Overload>(t->find(Type::CTOR));
+		if (!o)
+			throw SyntaxError(pos, L"No default constructor for " + t->identifier());
+
+		vector<Value> params(1, Value(t.borrow(), true));
+		Function *f = as<Function>(o->find(params));
+		if (!f)
+			throw SyntaxError(pos, L"No default constructor for " + t->identifier());
+
+		Auto<Actual> actual = CREATE(Actual, t);
+		return CREATE(CtorCall, t, f, actual);
+	}
+
+	bs::CtorCall *bs::copyCtor(const SrcPos &pos, Par<Type> t, Par<Expr> src) {
+		Overload *o = as<Overload>(t->find(Type::CTOR));
+		if (!o)
+			throw SyntaxError(pos, L"No copy-constructor for " + t->identifier());
+
+		vector<Value> params(2, Value(t.borrow(), true));
+		Function *f = as<Function>(o->find(params));
+		if (!f)
+			throw SyntaxError(pos, L"No copy-constructor for " + t->identifier());
+
+		Auto<Actual> actual = CREATE(Actual, t);
+		actual->add(src);
+		return CREATE(CtorCall, t, f, actual);
 	}
 
 

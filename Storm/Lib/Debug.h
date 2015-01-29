@@ -43,17 +43,33 @@ namespace storm {
 	};
 
 
-	// Value implemented in C++ for testing.
+	// Value implemented in C++ for testing. Tracks live instances!
 	class DbgVal {
 		STORM_VALUE;
 	public:
 		STORM_CTOR DbgVal();
 
+		~DbgVal();
+		DbgVal(const DbgVal &o);
+		DbgVal &operator =(const DbgVal &o);
+
 		Int v;
 
 		// Manipulations.
 		void STORM_FN set(Int v);
-		Int STORM_FN get();
+		Int STORM_FN get() const;
+
+		// Instance checks.
+
+		// Returns 'true' if all instances were cleared before.
+		static bool clear();
+
+		// Prints all live objects.
+		static void dbg_dump();
+
+		// Current live instances.
+		typedef std::set<const DbgVal*> LiveSet;
+		static LiveSet live;
 	};
 
 }

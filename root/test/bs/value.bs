@@ -6,3 +6,27 @@ Int testValue() {
 	DbgVal v = DbgVal();
 	v.get;
 }
+
+Int testDefInit() {
+	DbgVal v;
+	v.get;
+}
+
+// Test assigning values.
+Int testValAssign() {
+	DbgVal v1;
+	DbgVal v2 = DbgVal();
+	v2 = v1;
+	v1.set(5);
+	v2.set(15);
+	v1.get + v2.get;
+}
+
+// Test copy of values.
+Int testValCopy() {
+	DbgVal v1;
+	DbgVal v2 = v1;
+	v1.set(5);
+	v2.set(15);
+	v1.get + v2.get;
+}

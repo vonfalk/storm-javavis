@@ -48,6 +48,9 @@ namespace storm {
 		// Refcounted value?
 		bool refcounted() const;
 
+		// Is it a value type (null is not a value type).
+		bool isValue() const;
+
 		// Can this value store a type of 'x'?
 		bool canStore(Type *x) const;
 		bool canStore(const Value &v) const;

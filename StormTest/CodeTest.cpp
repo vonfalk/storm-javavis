@@ -82,7 +82,15 @@ BEGIN_TEST(InheritanceTest) {
 	CHECK_EQ(created.expect<Dbg>(*gEngine, L"dbg")->get(), 20);
 } END_TEST
 
-BEGIN_TEST(ValueTest) {
+BEGIN_TEST_(ValueTest) {
 	// Values.
+	DbgVal::clear();
 	CHECK_EQ(runFn(L"test.bs.testValue"), 10);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn(L"test.bs.testDefInit"), 10);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn(L"test.bs.testValAssign"), 20);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn(L"test.bs.testValCopy"), 20);
+	CHECK(DbgVal::clear());
 } END_TEST

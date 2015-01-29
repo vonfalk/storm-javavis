@@ -1,5 +1,8 @@
 Also: return types for rules may be specified.
 
+Verify that exceptions thrown in constructors are actually correctly propagated. Calling create1<DbgVal>(null) does
+not crash for some reason...
+
 The following case is not very well handled:
 fn(Base b), fn(Derived b) - no errors, only the first one is called.
 

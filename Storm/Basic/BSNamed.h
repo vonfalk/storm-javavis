@@ -57,6 +57,7 @@ namespace storm {
 		class CtorCall : public Expr {
 			STORM_CLASS;
 		public:
+			// Call a constructor.
 			STORM_CTOR CtorCall(Par<Function> ctor, Par<Actual> params);
 
 			// Result type.
@@ -82,6 +83,11 @@ namespace storm {
 			void createClass(const GenState &s, GenResult &to);
 		};
 
+		// Call the default constructor for T.
+		CtorCall *STORM_FN defaultCtor(const SrcPos &pos, Par<Type> t);
+
+		// Call the copy-constructor for T.
+		CtorCall *STORM_FN copyCtor(const SrcPos &pos, Par<Type> t, Par<Expr> src);
 
 		/**
 		 * Get a local variable.

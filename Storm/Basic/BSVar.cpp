@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "BSVar.h"
 #include "BSBlock.h"
+#include "BSNamed.h"
 
 namespace storm {
 	namespace bs {
@@ -38,12 +39,21 @@ namespace storm {
 
 			assert(variable->var != Variable::invalid);
 
-			if (initExpr) {
-				// Evaluate.
+			const Value &t = variable->result;
+
+			if (t.isValue()) {
+				Auto<Expr> ctor;
+				if (initExpr)
+					ctor = copyCtor(pos, t.type, initExpr);
+				else
+					ctor = defaultCtor(pos, t.type);
+
+				GenResult gr(variable->result, variable->var);
+				ctor->code(s, gr);
+			} else if (initExpr) {
 				GenResult gr(variable->result, variable->var);
 				initExpr->code(s, gr);
 			}
-
 
 			if (to.needed()) {
 				// Part of another expression.

@@ -48,6 +48,12 @@ namespace storm {
 		}
 	}
 
+	bool Value::isValue() const {
+		if (type == null)
+			return false;
+		return (type->flags & typeValue) == typeValue;
+	}
+
 	code::Value Value::destructor() const {
 		if (ref) {
 			return code::Value();
