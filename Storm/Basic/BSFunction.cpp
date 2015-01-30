@@ -87,7 +87,7 @@ namespace storm {
 			l << ret(result.size());
 		}
 
-		PLN(identifier() << L": " << l);
+		// PLN(identifier() << L": " << l);
 		return l;
 	}
 

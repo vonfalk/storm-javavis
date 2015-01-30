@@ -1,0 +1,2 @@
+Slow startuptimes after compilation can be fixed by adding the debug folder
+to excluded places in Windows Defender/Windows Security Essentials.

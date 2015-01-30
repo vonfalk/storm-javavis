@@ -2,12 +2,18 @@
 #include "BSVar.h"
 #include "BSBlock.h"
 #include "BSNamed.h"
+#include "Exception.h"
 
 namespace storm {
 	namespace bs {
 
 		bs::Var::Var(Par<Block> block, Par<TypeName> type, Par<SStr> name) {
 			init(block, type->value(block->scope), name);
+		}
+
+		bs::Var::Var(Par<Block> block, Par<TypeName> type, Par<SStr> name, Par<Actual> params) {
+			init(block, type->value(block->scope), name);
+			initTo(params);
 		}
 
 		bs::Var::Var(Par<Block> block, Par<TypeName> type, Par<SStr> name, Par<Expr> init) {
@@ -30,6 +36,22 @@ namespace storm {
 			initExpr = e;
 		}
 
+		void bs::Var::initTo(Par<Actual> actuals) {
+			Type *t = variable->result.type;
+			Overload *ctors = as<Overload>(t->find(Type::CTOR));
+			if (!ctors)
+				throw SyntaxError(pos, ::toS(variable->result) + L" has no constructors.");
+
+			vector<Value> params = actuals->values();
+			params.insert(params.begin(), Value::thisPtr(t));
+			Function *ctor = as<Function>(ctors->find(params));
+			if (!ctor)
+				throw SyntaxError(pos, L"No constructor " + ::toS(variable->result) + L"("
+								+ join(params, L", ") + L") found. Can not initialize.");
+
+			initCtor = CREATE(CtorCall, this, capture(ctor), actuals);
+		}
+
 		Value bs::Var::result() {
 			return variable->result.asRef();
 		}
@@ -43,14 +65,24 @@ namespace storm {
 
 			if (t.isValue()) {
 				Auto<Expr> ctor;
-				if (initExpr)
+
+				if (t.isBuiltIn())
+					ctor = initExpr;
+				else if (initCtor)
+					ctor = initCtor;
+				else if (initExpr)
 					ctor = copyCtor(pos, t.type, initExpr);
 				else
 					ctor = defaultCtor(pos, t.type);
 
-				GenResult gr(variable->result, variable->var);
-				ctor->code(s, gr);
+				if (ctor) {
+					GenResult gr(variable->result, variable->var);
+					ctor->code(s, gr);
+				}
 			} else if (initExpr) {
+				GenResult gr(variable->result, variable->var);
+				initExpr->code(s, gr);
+			} else if (initCtor) {
 				GenResult gr(variable->result, variable->var);
 				initExpr->code(s, gr);
 			}

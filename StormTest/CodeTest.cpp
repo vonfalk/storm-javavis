@@ -63,8 +63,6 @@ BEGIN_TEST(BasicSyntax) {
 	CHECK_EQ(runFn(L"test.bs.for", 10), 1024);
 
 	CHECK_EQ(runFn(L"test.bs.createFoo"), 3);
-
-	CHECK_ERROR(runFn(L"test.bs.assignError"));
 } END_TEST
 
 BEGIN_TEST(InheritanceTest) {
@@ -82,7 +80,7 @@ BEGIN_TEST(InheritanceTest) {
 	CHECK_EQ(created.expect<Dbg>(*gEngine, L"dbg")->get(), 20);
 } END_TEST
 
-BEGIN_TEST_(ValueTest) {
+BEGIN_TEST(ValueTest) {
 	// Values.
 	DbgVal::clear();
 	CHECK_EQ(runFn(L"test.bs.testValue"), 10);
@@ -92,5 +90,7 @@ BEGIN_TEST_(ValueTest) {
 	CHECK_EQ(runFn(L"test.bs.testValAssign"), 20);
 	CHECK(DbgVal::clear());
 	CHECK_EQ(runFn(L"test.bs.testValCopy"), 20);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn(L"test.bs.testValCtor"), 7);
 	CHECK(DbgVal::clear());
 } END_TEST

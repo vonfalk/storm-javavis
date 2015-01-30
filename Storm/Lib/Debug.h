@@ -48,6 +48,7 @@ namespace storm {
 		STORM_VALUE;
 	public:
 		STORM_CTOR DbgVal();
+		STORM_CTOR DbgVal(Int v);
 
 		~DbgVal();
 		DbgVal(const DbgVal &o);

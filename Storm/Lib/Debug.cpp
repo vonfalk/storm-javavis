@@ -71,6 +71,10 @@ namespace storm {
 		created(this);
 	}
 
+	DbgVal::DbgVal(Int v) : v(v) {
+		created(this);
+	}
+
 	DbgVal::DbgVal(const DbgVal &o) : v(o.get()) {
 		created(this);
 	}

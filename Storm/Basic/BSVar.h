@@ -1,6 +1,7 @@
 #pragma once
 #include "BSExpr.h"
 #include "BSType.h"
+#include "BSActual.h"
 
 namespace storm {
 	namespace bs {
@@ -39,6 +40,9 @@ namespace storm {
 			// Initialize to zero or null (remove?).
 			STORM_CTOR Var(Par<Block> block, Par<TypeName> type, Par<SStr> name);
 
+			// Initialize with initializer-list (like Foo(1))
+			STORM_CTOR Var(Par<Block> block, Par<TypeName> type, Par<SStr> name, Par<Actual> actual);
+
 			// Initialize to an expression.
 			STORM_CTOR Var(Par<Block> block, Par<TypeName> type, Par<SStr> name, Par<Expr> init);
 
@@ -47,9 +51,6 @@ namespace storm {
 
 			// Declared variable.
 			Auto<LocalVar> variable;
-
-			// Initialize to.
-			Auto<Expr> initExpr;
 
 			// Result type.
 			virtual Value result();
@@ -63,6 +64,17 @@ namespace storm {
 
 			// Set return value.
 			void initTo(Par<Expr> expr);
+
+			// Initialize ctor call.
+			void initTo(Par<Actual> actual);
+
+			// Initialize to.
+			Auto<Expr> initExpr;
+
+			// Initialize using a constructor directly. When dealing with value types, this
+			// will create the value in-place instead of copying the value to its location.
+			// When dealing with reference types, it does not matter.
+			Auto<Expr> initCtor;
 		};
 
 	}

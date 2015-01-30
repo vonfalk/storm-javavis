@@ -1,32 +1,12 @@
 #pragma once
 #include "BSExpr.h"
 #include "BSVar.h"
+#include "BSActual.h"
+#include "Function.h"
 
 namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
-
-		/**
-		 * Actual parameters to a function.
-		 */
-		class Actual : public Object {
-			STORM_CLASS;
-		public:
-			STORM_CTOR Actual();
-
-			// Parameters.
-			vector<Auto<Expr> > expressions;
-
-			// Compute all types.
-			vector<Value> values();
-
-			// Add a parameter.
-			void STORM_FN add(Par<Expr> expr);
-
-			// Add a parameter to the beginning.
-			void STORM_FN addFirst(Par<Expr> expr);
-		};
-
 
 		/**
 		 * Execute a function.

@@ -6,25 +6,6 @@
 
 namespace storm {
 
-	bs::Actual::Actual() {}
-
-	vector<Value> bs::Actual::values() {
-		vector<Value> v(expressions.size());
-		for (nat i = 0; i < expressions.size(); i++) {
-			v[i] = expressions[i]->result();
-		}
-		return v;
-	}
-
-	void bs::Actual::add(Par<Expr> e) {
-		expressions.push_back(e);
-	}
-
-	void bs::Actual::addFirst(Par<Expr> e) {
-		expressions.insert(expressions.begin(), e);
-	}
-
-
 	/**
 	 * Function call.
 	 */
@@ -48,11 +29,8 @@ namespace storm {
 		vector<code::Value> vars(values.size());
 
 		// Load parameters.
-		for (nat i = 0; i < values.size(); i++) {
-			GenResult gr(values[i], s.block);
-			params->expressions[i]->code(s, gr);
-			vars[i] = gr.location(s);
-		}
+		for (nat i = 0; i < values.size(); i++)
+			vars[i] = params->code(i, s, values[i]);
 
 		// Call!
 		toExecute->genCode(s, vars, to);
@@ -87,13 +65,8 @@ namespace storm {
 		vector<code::Value> vars(values.size());
 
 		// Load parameters.
-		TODO(L"Here, if the function we're calling takes a reference to something, but the params can not give a ref, "
-			L"this breaks! Same goes for FnCall!");
-		for (nat i = 1; i < values.size(); i++) {
-			GenResult gr(values[i], s.block);
-			params->expressions[i - 1]->code(s, gr);
-			vars[i] = gr.location(s);
-		}
+		for (nat i = 1; i < values.size(); i++)
+			vars[i] = params->code(i - 1, s, values[i]);
 
 		// This needs to be last, otherwise other generated code may overwrite it!
 		if (to.type.ref) {
@@ -136,11 +109,8 @@ namespace storm {
 		// Load parameters.
 		vars[0] = rawMemory;
 
-		for (nat i = 1; i < values.size(); i++) {
-			GenResult gr(values[i], subState.block);
-			params->expressions[i - 1]->code(subState, gr);
-			vars[i] = gr.location(subState);
-		}
+		for (nat i = 1; i < values.size(); i++)
+			vars[i] = params->code(i - 1, s, values[i]);
 
 		// Call!
 		GenResult voidTo(Value(), subBlock);

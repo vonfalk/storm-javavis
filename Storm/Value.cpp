@@ -90,8 +90,11 @@ namespace storm {
 	}
 
 	bool Value::canStore(const Value &v) const {
+		// For objects: we can not create references from values.
+		// For values, we need to be able to. In the future, maybe const refs from values?
 		if (ref && !v.ref)
-			return false; // Can not create references from a value.
+			if (!isValue())
+				return false;
 		return canStore(v.type);
 	}
 

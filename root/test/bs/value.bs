@@ -30,3 +30,9 @@ Int testValCopy() {
 	v2.set(15);
 	v1.get + v2.get;
 }
+
+// Test direct creation of values.
+Int testValCtor() {
+	DbgVal v(7);
+	v.get;
+}
