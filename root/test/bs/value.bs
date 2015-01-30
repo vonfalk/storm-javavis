@@ -47,3 +47,13 @@ Int testValParam() {
 	DbgVal toPar(7);
 	toPar.get + asVal(toPar);
 }
+
+DbgVal createVal(Int v) {
+	DbgVal(v);
+}
+
+// Test values as return parameters.
+Int testValReturn() {
+	DbgVal v = createVal(22);
+	v.get;
+}

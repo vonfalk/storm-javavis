@@ -47,7 +47,6 @@ namespace storm {
 			InlinedCode *c = as<InlinedCode>(code.borrow());
 			c->code(to, params, res);
 		} else if (result == Value()) {
-			assert(("Not implemented for value types yet!", this->result.isBuiltIn()));
 			for (nat i = 0; i < params.size(); i++)
 				to.to << fnParam(params[i]);
 
@@ -55,7 +54,7 @@ namespace storm {
 		} else {
 			Variable result = res.safeLocation(to, this->result);
 
-			assert(("Not implemented for value types yet!", this->result.isBuiltIn()));
+			assert(("Not implemented for value types yet!", this->result.returnOnStack()));
 			for (nat i = 0; i < params.size(); i++) {
 				code::Value copyCtor = this->params[i].copyCtor();
 				if (copyCtor.type() != code::Value::tNone) {

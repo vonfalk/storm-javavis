@@ -37,7 +37,8 @@ namespace storm {
 		}
 
 		void bs::Var::initTo(Par<Actual> actuals) {
-			if (variable->result.isValue() && variable->result.isBuiltIn()) {
+			if (variable->result.isBuiltIn()) {
+				// Assignment is the same as initialization here...
 				if (actuals->expressions.size() == 1) {
 					initTo(Par<Expr>(actuals->expressions[0]));
 					return;
@@ -73,9 +74,7 @@ namespace storm {
 			if (t.isValue()) {
 				Auto<Expr> ctor;
 
-				if (t.isBuiltIn())
-					ctor = initExpr;
-				else if (initCtor)
+				if (initCtor)
 					ctor = initCtor;
 				else if (initExpr)
 					ctor = copyCtor(pos, t.type, initExpr);

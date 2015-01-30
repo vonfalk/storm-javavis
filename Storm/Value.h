@@ -45,13 +45,16 @@ namespace storm {
 		// Get the copy ctor for this type if there is any for this type.
 		code::Value copyCtor() const;
 
-		// Is this type built into the C++ compiler?
+		// Return on stack?
+		bool returnOnStack() const;
+
+		// Is this type built into the C++ compiler? (not pointers or references)
 		bool isBuiltIn() const;
 
 		// Refcounted value?
 		bool refcounted() const;
 
-		// Is it a value type (null is not a value type).
+		// Is it a value type (null is not a value type). Any built-in type does not count either.
 		bool isValue() const;
 
 		// Can this value store a type of 'x'?

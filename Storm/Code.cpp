@@ -74,7 +74,7 @@ namespace storm {
 		code::Redirect r;
 		loaded = false;
 
-		r.result(owner->result.size(), owner->result.isBuiltIn());
+		r.result(owner->result.size(), owner->result.returnOnStack());
 
 		// parameters (no refcount on parameters), but we need to destroy value parameters
 		// if there is an exception...
@@ -152,7 +152,7 @@ namespace storm {
 
 	code::Listing InlinedCode::generatePtr() {
 		using namespace code;
-		if (!owner->result.isBuiltIn()) {
+		if (!owner->result.returnOnStack()) {
 			TODO(L"Implement return of non-built in types");
 			assert(false);
 		}

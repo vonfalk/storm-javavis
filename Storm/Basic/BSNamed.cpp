@@ -42,7 +42,7 @@ namespace storm {
 	 */
 
 	bs::CtorCall::CtorCall(Par<Function> ctor, Par<Actual> params) : ctor(ctor), params(params) {
-		toCreate = ctor->params[0];
+		toCreate = ctor->params[0].asRef(false);
 	}
 
 	Value bs::CtorCall::result() {

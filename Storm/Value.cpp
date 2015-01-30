@@ -38,18 +38,24 @@ namespace storm {
 		}
 	}
 
-	bool Value::isBuiltIn() const {
-		if (!type || ref) {
+	bool Value::returnOnStack() const {
+		if (ref)
 			return true;
-		} else if (type->flags & typeClass) {
-			return true; // by pointer
-		} else {
-			return type->isBuiltIn();
-		}
+		if (isBuiltIn())
+			return true;
+		return !isValue();
+	}
+
+	bool Value::isBuiltIn() const {
+		if (type == null)
+			return true;
+		return type->isBuiltIn();
 	}
 
 	bool Value::isValue() const {
 		if (type == null)
+			return false;
+		if (isBuiltIn())
 			return false;
 		return (type->flags & typeValue) == typeValue;
 	}
@@ -108,7 +114,7 @@ namespace storm {
 		// For objects: we can not create references from values.
 		// For values, we need to be able to. In the future, maybe const refs from values?
 		if (ref && !v.ref)
-			if (!isValue())
+			if (!isValue() && !v.isValue())
 				return false;
 		return canStore(v.type);
 	}
