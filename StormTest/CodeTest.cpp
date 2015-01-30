@@ -98,6 +98,6 @@ BEGIN_TEST(ValueTest) {
 	CHECK(DbgVal::clear());
 	CHECK_EQ(runFn(L"test.bs.testValParam"), 16);
 	CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn(L"test.bs.testValReturn"), 22);
-	// CHECK(DbgVal::clear());
+	CHECK_EQ(runFn(L"test.bs.testValReturn"), 22);
+	CHECK(DbgVal::clear());
 } END_TEST

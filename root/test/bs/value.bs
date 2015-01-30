@@ -54,6 +54,6 @@ DbgVal createVal(Int v) {
 
 // Test values as return parameters.
 Int testValReturn() {
-	DbgVal v = createVal(22);
+	DbgVal v(createVal(22));
 	v.get;
 }

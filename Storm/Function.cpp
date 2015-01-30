@@ -54,7 +54,11 @@ namespace storm {
 		} else {
 			Variable result = res.safeLocation(to, this->result);
 
-			assert(("Not implemented for value types yet!", this->result.returnOnStack()));
+			if (!this->result.returnOnStack()) {
+				to.to << lea(ptrA, ptrRel(result));
+				to.to << fnParam(ptrA);
+			}
+
 			for (nat i = 0; i < params.size(); i++) {
 				code::Value copyCtor = this->params[i].copyCtor();
 				if (copyCtor.type() != code::Value::tNone) {
@@ -65,8 +69,13 @@ namespace storm {
 				}
 			}
 
-			to.to << fnCall(Ref(ref()), result.size());
-			to.to << mov(result, asSize(ptrA, result.size()));
+			if (this->result.returnOnStack()) {
+				to.to << fnCall(Ref(ref()), result.size());
+				to.to << mov(result, asSize(ptrA, result.size()));
+			} else {
+				// Ignore return value...
+				to.to << fnCall(Ref(ref()), Size());
+			}
 		}
 	}
 

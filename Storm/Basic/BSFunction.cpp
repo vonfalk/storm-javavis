@@ -54,6 +54,12 @@ namespace storm {
 
 		l << prolog();
 
+		// Return value parameter (if needed).
+		Variable returnValue;
+		if (!result.returnOnStack()) {
+			returnValue = l.frame.createParameter(Size::sPtr, false, result.destructor(), freeOnException);
+		}
+
 		// Parameters
 		for (nat i = 0; i < params.size(); i++) {
 			const Value &t = params[i];
@@ -76,8 +82,8 @@ namespace storm {
 
 			body->code(state, r);
 			l << epilog();
-			l << ret(Size::sPtr);
-		} else {
+			l << ret(Size());
+		} else if (result.returnOnStack()) {
 			GenResult r(result, l.frame.root());
 
 			body->code(state, r);
@@ -89,6 +95,19 @@ namespace storm {
 
 			l << epilog();
 			l << ret(result.size());
+		} else {
+			GenResult r(result, l.frame.root());
+
+			body->code(state, r);
+
+			Variable rval = r.location(state);
+			l << lea(ptrA, ptrRel(rval));
+			l << fnParam(returnValue);
+			l << fnParam(ptrA);
+			l << fnCall(result.copyCtor(), Size::sPtr);
+
+			l << epilog();
+			l << ret(Size::sPtr);
 		}
 
 		// PLN(identifier() << L": " << l);

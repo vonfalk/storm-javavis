@@ -70,8 +70,6 @@ namespace storm {
 
 		// This needs to be last, otherwise other generated code may overwrite it!
 		if (to.type.ref) {
-			// Should this really happen?
-			DebugBreak();
 			vars[0] = to.location(s);
 		} else {
 			code::Value srcVar = to.safeLocation(s, toCreate.asRef(false));
