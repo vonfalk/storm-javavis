@@ -25,6 +25,9 @@ namespace storm {
 	public:
 		STORM_CTOR Dbg();
 
+		// Set the value as well...
+		STORM_CTOR Dbg(Int v);
+
 		// Print our state.
 		void STORM_FN dbg();
 

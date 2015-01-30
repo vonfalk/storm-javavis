@@ -40,7 +40,7 @@ namespace code {
 
 		// Outputs the given virtual instruction as machine code. It must have been
 		// transformed first, since transforms may remove some virtual op-codes completely.
-		void output(Output &to, Arena &arena, const Frame &frame, State &state, const Instruction &from);
+		void output(Output &to, Arena &arena, const Frame &frame, const Instruction &from);
 
 		//////////////////////////////////////////////////////////////////////////
 		// Call examination

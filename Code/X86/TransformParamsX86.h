@@ -16,8 +16,18 @@ namespace code {
 		public:
 			TfmParams(const Listing &from, const Binary *owner);
 
-			// State during transform.
-			State state;
+			// State during transform:
+
+			// Function parameters yet to be called.
+			struct FnParam {
+				Value param;
+				Value copy;
+			};
+			vector<FnParam> fnParams;
+
+			// Current block.
+			Block currentBlock;
+
 			// Registers needed to be preserved for the current instruction
 			Registers preserve;
 			// Owner object.

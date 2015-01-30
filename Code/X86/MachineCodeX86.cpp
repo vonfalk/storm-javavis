@@ -95,8 +95,6 @@ namespace code {
 		}
 
 
-		State::State() : currentBlock() {}
-
 		const Register ptrD = Register(0x100);
 		const Register ptrSi = Register(0x101);
 		const Register ptrDi = Register(0x102);
@@ -420,7 +418,7 @@ namespace code {
 			return params.transformed();
 		}
 
-		void output(Output &to, Arena &arena, const Frame &frame, State &state, const Instruction &from) {
+		void output(Output &to, Arena &arena, const Frame &frame, const Instruction &from) {
 			static OpTable<OutputFn> outputs(outputMap, ARRAY_SIZE(outputMap));
 
 			OutputFn output = outputs[from.op()];
@@ -428,7 +426,7 @@ namespace code {
 			if (!output)
 				return;
 
-			machineX86::Params params = { arena, frame, state };
+			machineX86::Params params = { arena, frame };
 			(*output)(to, params, from);
 		}
 

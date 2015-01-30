@@ -52,13 +52,6 @@ namespace code {
 
 		const wchar_t* name(Register r);
 
-		struct State {
-			vector<Value> fnParams;
-			Block currentBlock;
-
-			State();
-		};
-
 		nat registerId(Register r);
 
 		// Calculate the modRm value for the desired mode, src and dest. src is the parameter sometimes used for
@@ -75,7 +68,7 @@ namespace code {
 		struct Params {
 			Arena &arena;
 			const Frame &frame;
-			State &state;
+			// State &state;
 		};
 
 
@@ -113,10 +106,6 @@ namespace code {
 
 	}
 
-	namespace machine {
-		// Define the state we need in this backend.
-		typedef machineX86::State State;
-	}
 }
 
 #endif

@@ -22,6 +22,8 @@ namespace storm {
 
 	Dbg::Dbg() : v(10) {}
 
+	Dbg::Dbg(Int v) : v(v) {}
+
 	void Dbg::set(Int v) {
 		this->v = v;
 	}

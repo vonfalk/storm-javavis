@@ -37,6 +37,13 @@ namespace storm {
 		}
 
 		void bs::Var::initTo(Par<Actual> actuals) {
+			if (variable->result.isValue() && variable->result.isBuiltIn()) {
+				if (actuals->expressions.size() == 1) {
+					initTo(Par<Expr>(actuals->expressions[0]));
+					return;
+				}
+			}
+
 			Type *t = variable->result.type;
 			Overload *ctors = as<Overload>(t->find(Type::CTOR));
 			if (!ctors)
@@ -84,7 +91,7 @@ namespace storm {
 				initExpr->code(s, gr);
 			} else if (initCtor) {
 				GenResult gr(variable->result, variable->var);
-				initExpr->code(s, gr);
+				initCtor->code(s, gr);
 			}
 
 			if (to.needed()) {

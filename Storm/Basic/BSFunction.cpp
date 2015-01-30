@@ -59,7 +59,11 @@ namespace storm {
 			const Value &t = params[i];
 			LocalVar *var = body->variable(paramNames[i]);
 			assert(var);
-			var->var = l.frame.createParameter(t.size(), false, t.destructor());
+			if (t.isValue()) {
+				var->var = l.frame.createParameter(t.size(), false, t.destructor(), freeOnBoth | freePtr);
+			} else {
+				var->var = l.frame.createParameter(t.size(), false, t.destructor());
+			}
 
 			if (t.refcounted())
 				l << code::addRef(var->var);

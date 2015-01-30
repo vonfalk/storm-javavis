@@ -76,9 +76,14 @@ namespace storm {
 
 		r.result(owner->result.size(), owner->result.isBuiltIn());
 
-		// parameters (no refcount on parameters).
+		// parameters (no refcount on parameters), but we need to destroy value parameters
+		// if there is an exception...
 		for (nat i = 0; i < owner->params.size(); i++) {
-			r.param(owner->params[i].size(), code::Value());
+			if (owner->params[i].isValue()) {
+				r.param(owner->params[i].size(), owner->params[i].destructor());
+			} else {
+				r.param(owner->params[i].size(), code::Value());
+			}
 		}
 
 		engine().lazyCodeFn.set(address(&LazyCode::updateCode));

@@ -162,6 +162,16 @@ namespace code {
 		return createSrc(op::fnParam, src);
 	}
 
+	Instruction fnParam(const Variable &src, const Value &copyFn) {
+		if (copyFn.type() != Value::tNone) {
+			if (copyFn.type() == Value::tConstant)
+				throw InvalidValue(L"Should not call constant values, use references instead!");
+			if (copyFn.size() != Size::sPtr)
+				throw InvalidValue(L"Must call a pointer.");
+		}
+		return createLoose(op::fnParam, copyFn, destRead, src);
+	}
+
 	Instruction fnCall(const Value &src, Size returnSize) {
 		if (src.type() == Value::tConstant)
 			throw InvalidValue(L"Should not call constant values, use references instead!");

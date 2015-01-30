@@ -74,8 +74,10 @@ namespace code {
 	// and fnCall will effectively be before the first fnParam. All fnParams will be merged into the fnCall, so do
 	// not place other instructions between. Parameters are entered "right to left". Ie, the above example
 	// calls myFn(10, 20).
-	// TODO: replace returnSize with a Size param?
+	// fnParam taking two parameters uses the function 'copy' to copy 'src' onto the stack. 'copy' is assumed
+	// to have the signature <ptr or void> copy(void *dest, void *src), like copy ctors in C++.
 	Instruction fnParam(const Value &src);
+	Instruction fnParam(const Variable &src, const Value &copyFn);
 	Instruction fnCall(const Value &src, Size returnSize);
 
 	// Integer math (signed)

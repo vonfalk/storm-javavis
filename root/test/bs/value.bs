@@ -36,3 +36,14 @@ Int testValCtor() {
 	DbgVal v(7);
 	v.get;
 }
+
+Int asVal(DbgVal v) {
+	v.set(v.get + 2);
+	v.get;
+}
+
+// Test values as function parameters.
+Int testValParam() {
+	DbgVal toPar(7);
+	toPar.get + asVal(toPar);
+}

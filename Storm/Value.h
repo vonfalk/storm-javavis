@@ -42,6 +42,9 @@ namespace storm {
 		// Get the destructor for this type. A destructor has the signature void dtor(T).
 		code::Value destructor() const;
 
+		// Get the copy ctor for this type if there is any for this type.
+		code::Value copyCtor() const;
+
 		// Is this type built into the C++ compiler?
 		bool isBuiltIn() const;
 

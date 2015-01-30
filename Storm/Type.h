@@ -100,6 +100,9 @@ namespace storm {
 		// Get a pointer/reference to the destructor (if any).
 		virtual Function *destructor();
 
+		// Get a pointer/reference to the copy constructor (if any).
+		virtual Function *copyCtor();
+
 		// Get the offset to a member. TODO: Maybe replace this one with RefSources in TypeVar?
 		Offset offset(const TypeVar *var) const;
 

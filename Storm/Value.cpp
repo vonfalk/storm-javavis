@@ -69,6 +69,21 @@ namespace storm {
 		}
 	}
 
+	code::Value Value::copyCtor() const {
+		if (ref) {
+			return code::Value();
+		} else if (type) {
+			if (type->flags & typeClass)
+				return code::Value();
+			else if (Function *ctor = type->copyCtor())
+				return code::Ref(ctor->ref());
+			else
+				return code::Value();
+		} else {
+			return code::Value();
+		}
+	}
+
 	bool Value::refcounted() const {
 		if (!type)
 			return false;

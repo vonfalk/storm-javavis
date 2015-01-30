@@ -8,7 +8,6 @@ namespace code {
 		void output(Output &to, Arena &arena, const Listing &listing) {
 			std::multimap<nat, Label> labels = listing.getLabels();
 
-			State state;
 			std::multimap<nat, Label>::iterator at = labels.begin(), end = labels.end();
 
 			for (nat line = 0; line < listing.size(); line++) {
@@ -19,7 +18,7 @@ namespace code {
 					++at;
 				}
 
-				output(to, arena, listing.frame, state, listing[line]);
+				output(to, arena, listing.frame, listing[line]);
 			}
 
 			// Any remaining labels shall also be added!

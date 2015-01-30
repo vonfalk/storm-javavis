@@ -142,13 +142,13 @@ namespace code {
 		static void initBlock(Listing &to, TfmParams &params, Block b) {
 			const code::Frame &frame = to.frame;
 
-			if (params.state.currentBlock != frame.parent(b)) {
+			if (params.currentBlock != frame.parent(b)) {
 				assert(("Beginning block without beginning its parent", false));
 				throw BlockBeginError();
 			}
 
 
-			params.state.currentBlock = b;
+			params.currentBlock = b;
 
 			// Initialize variables to zero...
 			vector<Variable> vars = frame.variables(b);
@@ -166,7 +166,7 @@ namespace code {
 		static void destroyBlock(Listing &to, TfmParams &params, Block b, bool preserveEax) {
 			const code::Frame &frame = to.frame;
 
-			if (params.state.currentBlock != b) {
+			if (params.currentBlock != b) {
 				assert(false);
 				throw BlockEndError();
 			}
@@ -222,29 +222,68 @@ namespace code {
 				to << code::pop(eax);
 
 			Block parent = frame.parent(b);
-			params.state.currentBlock = parent;
+			params.currentBlock = parent;
 			to << code::mov(params.vars.blockId(), natConst(parent.getId()));
 		}
 
 		void fnParamTfm(Listing &to, TfmParams &params, const Instruction &instr) {
 			// Remember the parameter...
-			params.state.fnParams.push_back(instr.src());
+			TfmParams::FnParam p = { instr.src(), instr.dest() };
+			params.fnParams.push_back(p);
 		}
+
+		struct ParamOffset {
+			nat fromStart;
+			nat valueId;
+		};
 
 		void fnCallTfm(Listing &to, TfmParams &params, const Instruction &instr) {
 			// Simple cdecl call.
-			vector<Value> &fnParams = params.state.fnParams;
+			vector<TfmParams::FnParam> &fnParams = params.fnParams;
 
-			nat numParams = fnParams.size();
-			while (!fnParams.empty()) {
-				to << code::push(fnParams.back());
-				fnParams.pop_back();
+			// Keep track of any copy-functions we need to call!
+			vector<ParamOffset> copies;
+			nat totalSize = 0;
+
+			for (nat i = fnParams.size(); i > 0; i--) {
+				TfmParams::FnParam &p = fnParams[i-1];
+				if (p.copy == Value()) {
+					// Nothing special...
+					to << code::push(p.param);
+					totalSize += sizeof(cpuNat);
+				} else {
+					// Reserve some empty space on the stack...
+					nat s = roundUp(p.param.size().current(), sizeof(cpuNat));
+					totalSize += s;
+					to << code::sub(ptrStack, natPtrConst(s));
+					ParamOffset par = { totalSize, i - 1 };
+					copies.push_back(par);
+				}
+			}
+
+			// Now, we can destroy all registers that are not preserved across function calls!
+			for (nat i = 0; i < copies.size(); i++) {
+				ParamOffset &offset = copies[i];
+				TfmParams::FnParam &src = fnParams[offset.valueId];
+
+				// Note: sizeof(cpuNat) is because we need to skip the first param of the copy function.
+				Offset destOffset(totalSize - offset.fromStart + sizeof(cpuNat));
+
+				// Copy!
+				to << code::lea(ptrA, ptrRel(src.param.reg(), src.param.offset()));
+				to << code::push(ptrA);
+				to << code::lea(ptrA, ptrRel(ptrStack, destOffset));
+				to << code::push(ptrA);
+				to << code::call(src.copy, Size());
+				to << code::add(ptrStack, natPtrConst(2 * sizeof(cpuNat)));
 			}
 
 			to << code::call(instr.src(), instr.dest().size());
 
-			if (numParams > 0)
-				to << code::add(ptrStack, natPtrConst(numParams * sizeof(cpuNat)));
+			if (totalSize > 0)
+				to << code::add(ptrStack, natPtrConst(totalSize));
+
+			fnParams.clear();
 		}
 
 
@@ -280,7 +319,7 @@ namespace code {
 
 		void epilogTfm(Listing &to, TfmParams &params, const Instruction &instr) {
 			// Destroy blocks, keep the state in "params", we may return early!
-			Block currentBlock = params.state.currentBlock;
+			Block currentBlock = params.currentBlock;
 
 			for (Block c = currentBlock; c != Block::invalid; c = to.frame.parent(c)) {
 				destroyBlock(to, params, c, true);
@@ -293,7 +332,7 @@ namespace code {
 			}
 
 			// Restore
-			params.state.currentBlock = currentBlock;
+			params.currentBlock = currentBlock;
 
 			if (to.frame.exceptionHandlerNeeded()) {
 				// Remove the SEH handler.

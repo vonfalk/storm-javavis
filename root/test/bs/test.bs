@@ -1,4 +1,5 @@
 use core;
+use core.debug;
 
 class Foo {
     Int a;
@@ -24,6 +25,8 @@ Int createFoo() {
 
 Int foo(Int p) {
     p - 2;
+	// Comments after as well?
+	// Works, right?
 }
 
 Int bar() {
@@ -33,6 +36,7 @@ Int bar() {
 
 Int ifTest(Int v) {
     // Let's assume comments work!
+	// Multiline as well!
     if (v == 1) {
        3;
     } else if (v == 2) {
@@ -82,4 +86,14 @@ void voidFn() {
 
 Int demo() {
     3;
+}
+
+Int testCtor() {
+	Dbg b(20);
+	extract(b);
+}
+
+Int testIntCtor() {
+	Int z(20);
+	z;
 }

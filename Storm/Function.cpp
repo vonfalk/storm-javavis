@@ -56,8 +56,15 @@ namespace storm {
 			Variable result = res.safeLocation(to, this->result);
 
 			assert(("Not implemented for value types yet!", this->result.isBuiltIn()));
-			for (nat i = 0; i < params.size(); i++)
-				to.to << fnParam(params[i]);
+			for (nat i = 0; i < params.size(); i++) {
+				code::Value copyCtor = this->params[i].copyCtor();
+				if (copyCtor.type() != code::Value::tNone) {
+					assert(params[i].type() == code::Value::tVariable);
+					to.to << fnParam(params[i].variable(), copyCtor);
+				} else {
+					to.to << fnParam(params[i]);
+				}
+			}
 
 			to.to << fnCall(Ref(ref()), result.size());
 			to.to << mov(result, asSize(ptrA, result.size()));
