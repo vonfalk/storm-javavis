@@ -57,6 +57,8 @@ namespace storm {
 		DbgVal(const DbgVal &o);
 		DbgVal &operator =(const DbgVal &o);
 
+		bool operator ==(const DbgVal &o) const;
+
 		Int v;
 
 		// Manipulations.
@@ -75,5 +77,7 @@ namespace storm {
 		typedef std::set<const DbgVal*> LiveSet;
 		static LiveSet live;
 	};
+
+	wostream &operator <<(wostream &to, const DbgVal &v);
 
 }

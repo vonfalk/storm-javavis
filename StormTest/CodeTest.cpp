@@ -4,7 +4,8 @@
 #include "Storm/Lib/Debug.h"
 #include "Code/Function.h"
 
-Int runFn(const String &fn) {
+template <class T>
+T runFn(const String &fn) {
 	Engine &e = *gEngine;
 	Function *fun = as<Function>(e.scope()->find(Name(fn), vector<Value>()));
 	if (!fun)
@@ -12,29 +13,49 @@ Int runFn(const String &fn) {
 	void *ptr = fun->pointer();
 	if (!ptr)
 		throw TestError(L"Function " + fn + L" did not return any code.");
-	return code::FnCall().call<Int>(ptr);
+	return code::FnCall().call<T>(ptr);
+}
+
+template <class T>
+T runFn(const String &fn, Int p) {
+	Engine &e = *gEngine;
+	Function *fun = as<Function>(e.scope()->find(Name(fn), vector<Value>(1, Value(intType(e)))));
+	if (!fun)
+		throw TestError(L"Function " + fn + L" was not found.");
+	void *ptr = fun->pointer();
+	if (!ptr)
+		throw TestError(L"Function " + fn + L" did not return any code.");
+
+	TODO(L"FnCall does not do the right thing when returning values!");
+	typedef T (CODECALL *Ptr)(Int);
+	Ptr z = (Ptr)ptr;
+	return (*z)(p);
+	// return code::FnCall().param(p).call<T>(ptr);
+}
+
+template <class T, class Par>
+T runFn(const String &fn, const Par &par) {
+	Engine &e = *gEngine;
+	Function *fun = as<Function>(e.scope()->find(Name(fn), vector<Value>(1, Value(Par::type(e)))));
+	if (!fun)
+		throw TestError(L"Function " + fn + L" was not found.");
+	void *ptr = fun->pointer();
+	if (!ptr)
+		throw TestError(L"Function " + fn + L" did not return any code.");
+
+	TODO(L"FnCall does not do the right thing when returning values!");
+	typedef T (CODECALL *Ptr)(Par);
+	Ptr p = (Ptr)ptr;
+	return (*p)(par);
+	// return code::FnCall().param(par).call<T>(ptr);
+}
+
+Int runFn(const String &fn) {
+	return runFn<Int>(fn);
 }
 
 Int runFn(const String &fn, Int p) {
-	Engine &e = *gEngine;
-	Function *fun = as<Function>(e.scope()->find(Name(fn), vector<Value>(1, Value(intType(e)))));
-	if (!fun)
-		throw TestError(L"Function " + fn + L" was not found.");
-	void *ptr = fun->pointer();
-	if (!ptr)
-		throw TestError(L"Function " + fn + L" did not return any code.");
-	return code::FnCall().param(p).call<Int>(ptr);
-}
-
-Object *runObjFn(const String &fn, Int p) {
-	Engine &e = *gEngine;
-	Function *fun = as<Function>(e.scope()->find(Name(fn), vector<Value>(1, Value(intType(e)))));
-	if (!fun)
-		throw TestError(L"Function " + fn + L" was not found.");
-	void *ptr = fun->pointer();
-	if (!ptr)
-		throw TestError(L"Function " + fn + L" did not return any code.");
-	return code::FnCall().param(p).call<Object *>(ptr);
+	return runFn<Int>(fn, p);
 }
 
 
@@ -77,9 +98,9 @@ BEGIN_TEST(InheritanceTest) {
 	CHECK_EQ(runFn(L"test.bs.testCpp", 1), 10);
 	CHECK_EQ(runFn(L"test.bs.testCpp", 2), 20);
 
-	Auto<Object> created = runObjFn(L"test.bs.createCpp", 1);
+	Auto<Object> created = runFn<Object*>(L"test.bs.createCpp", 1);
 	CHECK_EQ(created.expect<Dbg>(*gEngine, L"dbg")->get(), 10);
-	created = runObjFn(L"test.bs.createCpp", 2);
+	created = runFn<Object*>(L"test.bs.createCpp", 2);
 	CHECK_EQ(created.expect<Dbg>(*gEngine, L"dbg")->get(), 20);
 } END_TEST
 
@@ -99,5 +120,9 @@ BEGIN_TEST(ValueTest) {
 	CHECK_EQ(runFn(L"test.bs.testValParam"), 16);
 	CHECK(DbgVal::clear());
 	CHECK_EQ(runFn(L"test.bs.testValReturn"), 22);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn<DbgVal>(L"test.bs.createVal", 20), DbgVal(20));
+	CHECK(DbgVal::clear());
+	CHECK_EQ((runFn<Int, DbgVal>(L"test.bs.asVal", DbgVal(11))), 13);
 	CHECK(DbgVal::clear());
 } END_TEST

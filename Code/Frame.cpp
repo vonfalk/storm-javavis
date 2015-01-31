@@ -11,7 +11,7 @@ namespace code {
 		wchar *first = L"never";
 		wchar *second = L"by value";
 
-		if (f & freeOnBoth)
+		if ((f & freeOnBoth) == freeOnBoth)
 			first = L"always";
 		else if (f & freeOnBlockExit)
 			first = L"on exit block";

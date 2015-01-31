@@ -123,4 +123,12 @@ namespace storm {
 		return v;
 	}
 
+	bool DbgVal::operator ==(const DbgVal &o) const {
+		return get() == o.get();
+	}
+
+	wostream &operator <<(wostream &to, const DbgVal &v) {
+		return to << L"DbgVal:" << v.get();
+	}
+
 }
