@@ -1,8 +1,5 @@
 #include "stdafx.h"
 #include "Test/Test.h"
-#include "Code/Function.h"
-
-using namespace code;
 
 struct SmallType {
 	int v;
@@ -34,32 +31,32 @@ wostream &operator <<(wostream &to, const LargeType &o) {
 	return to << L"{ " << o.v1 << L", " << o.v2 << L", " << o.v3 << L", " << o.v4 << L" }";
 }
 
-int testFn1(int p1, int p2) {
+static int testFn1(int p1, int p2) {
 	return p1 + p2;
 }
 
-int64 testFn2(int p1, int p2) {
+static int64 testFn2(int p1, int p2) {
 	return 0x100000000LL + p1 + p2;
 }
 
-SmallType testType1(int p1, int p2) {
+static SmallType testType1(int p1, int p2) {
 	return SmallType(p1 + p2);
 }
 
-MediumType testType2(int p1, int p2) {
+static MediumType testType2(int p1, int p2) {
 	return MediumType(p1, p2);
 }
 
-LargeType testType3(int p1, int p2) {
+static LargeType testType3(int p1, int p2) {
 	return LargeType(p1, p2, p1 + p2, p1 - p2);
 }
 
-int sum = 0;
-void testVoid(int p1, int p2) {
+static int sum = 0;
+static void testVoid(int p1, int p2) {
 	sum = p1 + p2;
 }
 
-BEGIN_TEST(FunctionTest) {
+BEGIN_TEST(FnCallTest) {
 
 	FnCall call;
 	int p1 = 1, p2 = 2;
@@ -131,19 +128,31 @@ BEGIN_TEST(FunctionParamTest) {
 } END_TEST
 
 
-float returnFloat(int i) {
+static Tracker returnTracker() {
+	return Tracker(22);
+}
+
+
+BEGIN_TEST(FunctionReturnTest) {
+	Tracker t = FnCall().call<Tracker>(&returnTracker);
+	CHECK_EQ(t.data, 22);
+	CHECK_EQ(Tracker::copies, 0);
+} END_TEST
+
+
+static float returnFloat(int i) {
 	return float(i);
 }
 
-int takeFloat(float f) {
+static int takeFloat(float f) {
 	return int(f);
 }
 
-double returnDouble(int i) {
+static double returnDouble(int i) {
 	return double(i);
 }
 
-int takeDouble(double d) {
+static int takeDouble(double d) {
 	return int(d);
 }
 

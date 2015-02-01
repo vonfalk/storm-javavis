@@ -65,7 +65,9 @@ namespace code {
 			} else {
 				doUserCall((void *)data, sizeof(T), fn);
 			}
-			return *data;
+			T copy = *data;
+			data->~T();
+			return copy;
 		}
 
 		template <>

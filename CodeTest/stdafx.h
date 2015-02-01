@@ -24,6 +24,7 @@
 #include "Code/Listing.h"
 #include "Code/MachineCode.h"
 #include "Code/Exception.h"
+#include "Code/Function.h"
 
 using namespace std;
 using namespace code;

@@ -26,11 +26,7 @@ T runFn(const String &fn, Int p) {
 	if (!ptr)
 		throw TestError(L"Function " + fn + L" did not return any code.");
 
-	TODO(L"FnCall does not do the right thing when returning values!");
-	typedef T (CODECALL *Ptr)(Int);
-	Ptr z = (Ptr)ptr;
-	return (*z)(p);
-	// return code::FnCall().param(p).call<T>(ptr);
+	return code::FnCall().param(p).call<T>(ptr);
 }
 
 template <class T, class Par>
@@ -43,11 +39,7 @@ T runFn(const String &fn, const Par &par) {
 	if (!ptr)
 		throw TestError(L"Function " + fn + L" did not return any code.");
 
-	TODO(L"FnCall does not do the right thing when returning values!");
-	typedef T (CODECALL *Ptr)(Par);
-	Ptr p = (Ptr)ptr;
-	return (*p)(par);
-	// return code::FnCall().param(par).call<T>(ptr);
+	return code::FnCall().param(par).call<T>(ptr);
 }
 
 Int runFn(const String &fn) {

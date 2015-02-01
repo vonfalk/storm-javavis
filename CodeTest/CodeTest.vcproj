@@ -233,6 +233,10 @@
 				RelativePath=".\TestCall.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestFnCall.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

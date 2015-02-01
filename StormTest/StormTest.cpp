@@ -19,6 +19,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		Tests::run();
 
 		gEngine = null;
+		Timestamp tests;
 	} catch (const Exception &e) {
 		PLN("Creation error: " << e.what());
 	}

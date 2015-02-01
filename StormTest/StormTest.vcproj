@@ -225,10 +225,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FunctionTest.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ThreadTest.cpp"
 				>
 			</File>
