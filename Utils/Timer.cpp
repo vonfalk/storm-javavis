@@ -3,16 +3,12 @@
 
 namespace util {
 
-	Timer::Timer(const wchar_t *msg) : msg(null), wmsg(msg) {}
-
-	Timer::Timer(const char *msg) : msg(msg), wmsg(null) {}
+	Timer::Timer(const String &msg) : msg(msg) {}
 
 	Timer::~Timer() {
 		Timestamp end;
 
-		if (msg) debugStream() << msg;
-		if (wmsg) debugStream() << wmsg;
-
+		debugStream() << msg;
 		debugStream() << L" in " << end - start << std::endl;
 	}
 

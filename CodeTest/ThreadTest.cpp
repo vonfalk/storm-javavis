@@ -3,12 +3,10 @@
 #include "Code/UThread.h"
 #include "Utils/Thread.h"
 
-using code::UThread;
-
 static int var = 0;
 static THREAD int local = 0;
 
-void otherThread(Thread::Control &c) {
+static void otherThread(Thread::Control &c) {
 	var++;
 	local++;
 	assert(c.thread().sameAsCurrent());
@@ -37,7 +35,7 @@ BEGIN_TEST(ThreadTest) {
 static int count1 = 0;
 static int count2 = 0;
 
-void utFn1() {
+static void utFn1() {
 	count1 = 1;
 	UThread::leave();
 	count1 = 10;
@@ -45,7 +43,7 @@ void utFn1() {
 	count1 = 4;
 }
 
-void utFn2() {
+static void utFn2() {
 	count2 = 1;
 	UThread::leave();
 	count2 = 10;
@@ -54,6 +52,8 @@ void utFn2() {
 }
 
 BEGIN_TEST(UThreadTest) {
+	count1 = 0;
+	count2 = 0;
 
 	UThread::spawn(simpleVoidFn(&utFn1));
 	CHECK_EQ(count1, 0);

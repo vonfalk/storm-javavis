@@ -8,6 +8,8 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	initDebug();
 
+	Sleep(2000);
+
 	Timestamp start;
 
 	try {
@@ -15,6 +17,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		Path root = Path::executable() + Path(L"../root/");
 		Engine e(root);
 		gEngine = &e;
+
+		PLN("Compiler boot: " << (Timestamp() - start));
 
 		Tests::run();
 

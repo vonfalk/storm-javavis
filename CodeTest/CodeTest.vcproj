@@ -237,6 +237,10 @@
 				RelativePath=".\TestFnCall.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ThreadTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -257,6 +261,10 @@
 			</File>
 			<File
 				RelativePath=".\TestShift.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ThreadTest.cpp"
 				>
 			</File>
 		</Filter>
