@@ -77,7 +77,7 @@ namespace storm {
 
 		// Compare keys.
 		struct mapCompare {
-			bool operator() (File *a, File *b);
+			bool operator() (const File *a, const File *b) const;
 		};
 
 		// All files in here. Shared between instances.

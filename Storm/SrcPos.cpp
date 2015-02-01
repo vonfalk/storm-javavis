@@ -44,7 +44,7 @@ namespace storm {
 		release(sharedFile);
 	}
 
-	bool SrcPos::mapCompare::operator ()(File *a, File *b) {
+	bool SrcPos::mapCompare::operator ()(const File *a, const File *b) const {
 		return *a->file < *b->file;
 	}
 
