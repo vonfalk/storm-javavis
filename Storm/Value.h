@@ -60,6 +60,9 @@ namespace storm {
 		// Is it a value type (null is not a value type). Any built-in type does not count either.
 		bool isValue() const;
 
+		// Is it a class type?
+		bool isClass() const;
+
 		// Can this value store a type of 'x'?
 		bool canStore(Type *x) const;
 		bool canStore(const Value &v) const;

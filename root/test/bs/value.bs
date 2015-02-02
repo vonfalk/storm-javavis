@@ -87,3 +87,22 @@ Int testCustomValue() {
 	b.y = 10;
 	a.cross(b);
 }
+
+// What happens when we have refs in a value?
+value RefVal {
+	Dbg d;
+
+	void init(Int z) {
+		d = Dbg(z);
+	}
+
+	Int v() {
+		d.get;
+	}
+}
+
+Int testRefInVal(Int z) {
+	RefVal v;
+	v.init(z);
+	v.v;
+}

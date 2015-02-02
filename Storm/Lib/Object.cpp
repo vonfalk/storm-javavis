@@ -76,7 +76,7 @@ namespace storm {
 	void checkLive(void *o) {
 #ifdef DEBUG_LEAKS
 		if (live.count((Object *)o) == 0) {
-			PLN("Access to dead object!");
+			PLN("Access to dead object: " << o);
 			DebugBreak();
 			assert(false);
 		}

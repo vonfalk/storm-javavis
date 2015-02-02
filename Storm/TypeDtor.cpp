@@ -30,11 +30,15 @@ namespace storm {
 		for (nat i = 0; i < vars.size(); i++) {
 			TypeVar *v = vars[i].borrow();
 			const Value &t = v->varType;
-			if (t.isValue()) {
+			code::Value dtor = t.destructor();
+			if (dtor.type() != code::Value::tNone) {
 				l << mov(ptrA, dest);
 				l << add(ptrA, intPtrConst(v->offset()));
+				if (t.isClass())
+					l << mov(ptrA, ptrRel(ptrA));
+
 				l << fnParam(ptrA);
-				l << fnCall(t.destructor(), Size());
+				l << fnCall(dtor, Size());
 			}
 		}
 

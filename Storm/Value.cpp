@@ -60,6 +60,14 @@ namespace storm {
 		return (type->flags & typeValue) == typeValue;
 	}
 
+	bool Value::isClass() const {
+		if (type == null)
+			return false;
+		if (isBuiltIn())
+			return false;
+		return (type->flags & typeClass) == typeClass;
+	}
+
 	code::Value Value::destructor() const {
 		if (ref) {
 			return code::Value();

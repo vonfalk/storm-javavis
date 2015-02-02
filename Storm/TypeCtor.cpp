@@ -98,6 +98,7 @@ namespace storm {
 		for (nat i = 0; i < vars.size(); i++) {
 			TypeVar *v = vars[i].borrow();
 			const Value &t = v->varType;
+
 			l << mov(ptrA, dest);
 			l << mov(ptrC, src);
 			if (t.isValue()) {
