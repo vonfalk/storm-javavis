@@ -39,9 +39,6 @@ namespace code {
 		}
 
 		Register Transform::preserve(Register r, const Registers &used, Listing &to) const {
-			if (!used.contains(r))
-				return noReg;
-
 			Register into = unusedReg(used);
 			if (into == noReg) {
 				to << push(r);
@@ -54,12 +51,21 @@ namespace code {
 
 		vector<Register> Transform::preserve(const vector<Register> &regs, nat line, Listing &to) const {
 			vector<Register> result(regs.size(), noReg);
+			Registers needsPreserve = registers[line];
+			add64(needsPreserve);
+
 			Registers used = registers[line];
+			for (nat i = 0; i < regs.size(); i++)
+				used += regs[i];
 			add64(used);
 
 			for (nat i = 0; i < regs.size(); i++) {
-				Register r = preserve(regs[i], used, to);
+				Register r = noReg;
+				if (needsPreserve.contains(regs[i]))
+					r = preserve(regs[i], used, to);
 				result[i] = r;
+				if (r != noReg)
+					used += r;
 			}
 
 			return result;
