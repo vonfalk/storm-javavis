@@ -249,6 +249,14 @@ namespace storm {
 		return as<Function>(o->find(vector<Value>(2, Value::thisPtr(this))));
 	}
 
+	Function *Type::assignFn() {
+		Overload *o = as<Overload>(find(Name(L"=")));
+		if (!o)
+			return null;
+
+		return as<Function>(o->find(vector<Value>(2, Value::thisPtr(this))));
+	}
+
 	Function *Type::defaultCtor() {
 		Overload *o = as<Overload>(find(Name(CTOR)));
 		if (!o)

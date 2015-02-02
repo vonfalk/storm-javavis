@@ -48,6 +48,9 @@ namespace storm {
 		// Get the default ctor for this type if there is any.
 		code::Value defaultCtor() const;
 
+		// Get the assignment function for this type if there is any.
+		code::Value assignFn() const;
+
 		// Return on stack?
 		bool returnOnStack() const;
 

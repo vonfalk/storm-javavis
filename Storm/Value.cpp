@@ -111,6 +111,20 @@ namespace storm {
 		return code::Value();
 	}
 
+	code::Value Value::assignFn() const {
+		if (ref)
+			return code::Value();
+
+		if (!isValue())
+			return code::Value();
+
+		if (Function *ctor = type->assignFn())
+			return code::Ref(ctor->ref());
+
+		return code::Value();
+	}
+
+
 	bool Value::refcounted() const {
 		if (!type)
 			return false;

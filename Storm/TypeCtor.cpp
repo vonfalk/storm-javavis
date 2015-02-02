@@ -128,4 +128,77 @@ namespace storm {
 		setCode(steal(CREATE(DynamicCode, this, l)));
 	}
 
+
+	TypeAssignFn::TypeAssignFn(Type *owner)
+		: Function(Value::thisPtr(owner), L"=", vector<Value>(2, Value::thisPtr(owner))) {
+
+		Function *before = null;
+		Type *super = owner->super();
+
+		if (super) {
+			// Find parent copy-ctor.
+			Overload *ovl = as<Overload>(super->find(Name(L"=")));
+			if (ovl)
+				before = as<Function>(ovl->find(vector<Value>(2, Value::thisPtr(super))));
+			if (!before)
+				throw InternalError(L"Did not find an assignment operator in " + super->identifier());
+		}
+
+		generateCode(owner, before);
+	}
+
+	void TypeAssignFn::generateCode(Type *type, Function *before) {
+		using namespace code;
+
+		Listing l;
+		Variable dest = l.frame.createPtrParam();
+		Variable src = l.frame.createPtrParam();
+
+		l << prolog();
+
+		if (before) {
+			l << fnParam(dest);
+			l << fnParam(src);
+			l << fnCall(Ref(before->ref()), Size::sPtr);
+			if (before->result.refcounted())
+				l << code::releaseRef(ptrA);
+		}
+
+		// Copy data members.
+		vector<Auto<TypeVar> > vars = type->variables();
+		for (nat i = 0; i < vars.size(); i++) {
+			TypeVar *v = vars[i].borrow();
+			const Value &t = v->varType;
+
+			l << mov(ptrA, dest);
+			l << mov(ptrC, src);
+			if (t.isValue()) {
+				l << add(ptrA, intPtrConst(v->offset()));
+				l << add(ptrC, intPtrConst(v->offset()));
+				l << fnParam(ptrA);
+				l << fnParam(ptrC);
+				l << fnCall(t.assignFn(), Size());
+			} else {
+				code::Value to = xRel(t.size(), ptrA, v->offset());
+				code::Value from = xRel(t.size(), ptrC, v->offset());
+				if (t.refcounted())
+					l << code::releaseRef(to);
+				l << mov(to, from);
+				if (t.refcounted())
+					l << code::addRef(to);
+			}
+		}
+
+		if (type->flags & typeClass) {
+			// Set the vtable.
+			l << mov(ptrA, dest);
+			l << mov(ptrRel(ptrA), Ref(type->vtable.ref));
+		}
+
+		l << epilog();
+		l << ret(Size());
+
+		setCode(steal(CREATE(DynamicCode, this, l)));
+	}
+
 }

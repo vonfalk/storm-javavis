@@ -114,6 +114,14 @@ Int testCopyRefVal(Int z) {
 	c.v;
 }
 
+Int testAssignRefVal(Int z) {
+	RefVal o;
+	o.init(z);
+	RefVal c;
+	c = o;
+	c.v;
+}
+
 // What happens when we have values in values?
 value ValVal {
 	DbgVal v;
@@ -129,5 +137,13 @@ Int testCopyValVal(Int z) {
 	ValVal o;
 	o.v.set(z);
 	ValVal c(o);
+	c.v.get;
+}
+
+Int testAssignValVal(Int z) {
+	ValVal o;
+	o.v.set(z);
+	ValVal c;
+	c = o;
 	c.v.get;
 }

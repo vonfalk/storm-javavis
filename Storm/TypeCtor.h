@@ -46,4 +46,25 @@ namespace storm {
 	};
 
 
+	/**
+	 * A default assignment-operator for a value. This is provided since it is useful
+	 * in many cases, especially when debugging. Real language implementations probably
+	 * want to have their own implementations.
+	 *
+	 * The copy constructor works just like in C++. It takes one (reference) parameter
+	 * that is the source of the copy.
+	 * NOTE: Assumes that all members have been added by the time this class is created!
+	 */
+	class TypeAssignFn : public Function {
+		STORM_CLASS;
+	public:
+		// Create.
+		TypeAssignFn(Type *owner);
+
+	private:
+		// Generate code.
+		void generateCode(Type *type, Function *before);
+	};
+
+
 }

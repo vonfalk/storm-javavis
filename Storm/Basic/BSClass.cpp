@@ -57,8 +57,10 @@ namespace storm {
 		// Temporary solution.
 		add(steal(CREATE(TypeDefaultCtor, engine, this)));
 		add(steal(CREATE(TypeDefaultDtor, engine, this)));
-		if (flags & typeValue)
+		if (flags & typeValue) {
 			add(steal(CREATE(TypeCopyCtor, engine, this)));
+			add(steal(CREATE(TypeAssignFn, engine, this)));
+		}
 	}
 
 	/**
