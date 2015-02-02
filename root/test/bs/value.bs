@@ -57,3 +57,33 @@ Int testValReturn() {
 	DbgVal v(createVal(22));
 	v.get;
 }
+
+// What happens when a class contains a value?
+class Container {
+	DbgVal v;
+}
+
+Int testContainVal() {
+	Container c = Container();
+	c.v.get;
+}
+
+// Declare a value!
+value Pt2 {
+	Int x;
+	Int y;
+
+	Int cross(Pt2 o) {
+		x*o.y - y*o.x;
+	}
+}
+
+Int testCustomValue() {
+	Pt2 a;
+	a.x = 10;
+	a.y = 20;
+	Pt2 b;
+	b.x = 20;
+	b.y = 10;
+	a.cross(b);
+}

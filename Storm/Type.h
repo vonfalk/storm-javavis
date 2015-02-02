@@ -103,8 +103,14 @@ namespace storm {
 		// Get a pointer/reference to the copy constructor (if any).
 		virtual Function *copyCtor();
 
+		// Get a pointer/reference to the default constructor (if any).
+		virtual Function *defaultCtor();
+
 		// Get the offset to a member. TODO: Maybe replace this one with RefSources in TypeVar?
 		Offset offset(const TypeVar *var) const;
+
+		// Get all current member variables (not from super-classes).
+		vector<Auto<TypeVar> > variables() const;
 
 		// Type chain.
 		TypeChain chain;

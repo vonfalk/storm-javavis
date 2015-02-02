@@ -117,4 +117,10 @@ BEGIN_TEST(ValueTest) {
 	CHECK(DbgVal::clear());
 	CHECK_EQ((runFn<Int, DbgVal>(L"test.bs.asVal", DbgVal(11))), 13);
 	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn(L"test.bs.testContainVal"), 10);
+	CHECK(DbgVal::clear());
+} END_TEST
+
+BEGIN_TEST(CustomValueTest) {
+	CHECK_EQ(runFn(L"test.bs.testCustomValue"), -300);
 } END_TEST

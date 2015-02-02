@@ -249,9 +249,21 @@ namespace storm {
 		return as<Function>(o->find(vector<Value>(2, Value::thisPtr(this))));
 	}
 
+	Function *Type::defaultCtor() {
+		Overload *o = as<Overload>(find(Name(CTOR)));
+		if (!o)
+			return null;
+
+		return as<Function>(o->find(vector<Value>(1, Value::thisPtr(this))));
+	}
+
 
 	Offset Type::offset(const TypeVar *var) const {
 		return layout.offset(superSize(), var);
+	}
+
+	vector<Auto<TypeVar> > Type::variables() const {
+		return layout.variables();
 	}
 
 	void Type::updateVirtual() {

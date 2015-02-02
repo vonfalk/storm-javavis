@@ -60,10 +60,9 @@ namespace storm {
 			}
 
 			for (nat i = 0; i < params.size(); i++) {
-				code::Value copyCtor = this->params[i].copyCtor();
-				if (copyCtor.type() != code::Value::tNone) {
+				if (this->params[i].isValue()) {
 					assert(params[i].type() == code::Value::tVariable);
-					to.to << fnParam(params[i].variable(), copyCtor);
+					to.to << fnParam(params[i].variable(), this->params[i].copyCtor());
 				} else {
 					to.to << fnParam(params[i]);
 				}

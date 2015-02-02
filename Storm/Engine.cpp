@@ -5,10 +5,19 @@
 
 namespace storm {
 
+#ifdef DEBUG
+	static void CODECALL dbgPrint(Int v) {
+		PLN("Debug: " << v);
+	}
+#endif
+
 	Engine::Engine(const Path &root)
 		: inited(false), rootPath(root), rootScope(null), arena(),
 		  addRef(arena.addRef), release(arena.releaseRef),
 		  allocRef(arena, L"alloc"), freeRef(arena, L"free"),
+#ifdef DEBUG
+		  dbgPrint(arena, L"dbgPrint"),
+#endif
 		  lazyCodeFn(arena, L"lazyUpdate") {
 
 		cppVTableSize = maxVTableCount();
@@ -19,6 +28,10 @@ namespace storm {
 		release.set(address(&Object::release));
 		allocRef.set(address(&stormMalloc));
 		freeRef.set(address(&stormFree));
+
+#ifdef DEBUG
+		dbgPrint.set(address(&storm::dbgPrint));
+#endif
 
 		createStdTypes(*this, cached);
 

@@ -78,4 +78,13 @@ namespace storm {
 		format(o);
 	}
 
+	vector<Auto<TypeVar> > TypeLayout::variables() const {
+		vector<Auto<TypeVar> > r;
+		r.reserve(offsets.size());
+		for (OffsetMap::const_iterator i = offsets.begin(); i != offsets.end(); ++i) {
+			r.push_back(capture(i->first));
+		}
+		return r;
+	}
+
 }

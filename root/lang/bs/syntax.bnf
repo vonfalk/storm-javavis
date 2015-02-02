@@ -34,9 +34,14 @@ Params => Params() : Type -> add, Name -> add, (",", Type -> add, Name -> add, )
 Function => FunctionDecl(pos, name, result, params, contents) :
 Type result, Name name, "(", Params params, ")", "{", SkipBlock contents, "}";
 
-// Class
-Class => Class(pos, name, contents) : "class", Name name, "{", SkipBlock contents, "}";
-Class => Class(pos, name, contents, base) : "class", Name name, "extends", Type base, "{", SkipBlock contents, "}";
+// Class or value?
+CVType => t : "class" t;
+CVType => t : "value" t;
+
+// Class / value
+Class => Class(pos, t, name, contents) : CVType t, Name name, "{", SkipBlock contents, "}";
+Class => Class(pos, t, name, contents, base) : CVType t, Name name, "extends", Type base, "{", SkipBlock contents, "}";
+
 
 // Possible root blocks.
 FileItem => fn : Function fn;

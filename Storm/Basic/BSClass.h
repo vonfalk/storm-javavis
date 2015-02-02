@@ -17,10 +17,10 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create class 'name' with contents 'content'.
-			STORM_CTOR Class(SrcPos pos, Par<SStr> name, Par<SStr> content);
+			STORM_CTOR Class(SrcPos pos, Par<SStr> type, Par<SStr> name, Par<SStr> content);
 
 			// Create class 'name' with contents 'content', extended from 'base'.
-			STORM_CTOR Class(SrcPos pos, Par<SStr> name, Par<SStr> content, Par<TypeName> base);
+			STORM_CTOR Class(SrcPos pos, Par<SStr> type, Par<SStr> name, Par<SStr> content, Par<TypeName> base);
 
 			// The scope used for this class.
 			Scope scope;

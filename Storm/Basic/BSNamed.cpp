@@ -166,15 +166,23 @@ namespace storm {
 		if (!to.needed())
 			return;
 
-		if (to.type.ref) {
+		if (to.type.ref && !var->result.ref) {
 			Variable v = to.location(s);
 			s.to << lea(v, var->var);
 		} else if (!to.suggest(s, var->var)) {
 			Variable v = to.location(s);
 
-			s.to << mov(v, var->var);
-			if (var->result.refcounted())
-				s.to << code::addRef(v);
+			if (var->result.isValue()) {
+				s.to << lea(ptrA, var->var);
+				s.to << lea(ptrC, v);
+				s.to << fnParam(ptrC);
+				s.to << fnParam(ptrA);
+				s.to << fnCall(var->result.copyCtor(), Size());
+			} else {
+				s.to << mov(v, var->var);
+				if (var->result.refcounted())
+					s.to << code::addRef(v);
+			}
 		}
 	}
 
@@ -189,8 +197,6 @@ namespace storm {
 	}
 
 	void bs::MemberVarAccess::code(const GenState &s, GenResult &to) {
-		using namespace code;
-
 		if (!to.needed()) {
 			// We still need to evaluate 'member', it may have side effects!
 			GenResult mResult;
@@ -198,21 +204,59 @@ namespace storm {
 			return;
 		}
 
+		if (var->owner()->flags & typeValue) {
+			valueCode(s, to);
+		} else {
+			classCode(s, to);
+		}
+	}
+
+	void bs::MemberVarAccess::valueCode(const GenState &s, GenResult &to) {
+		using namespace code;
+
+		Value mType = member->result();
+		code::Variable memberPtr;
+
+		{
+			GenResult mResult(mType, s.block);
+			member->code(s, mResult);
+			memberPtr = mResult.location(s);
+		}
+
+		// If it was a reference, we can use it right away!
+		if (mType.ref) {
+			s.to << mov(ptrA, memberPtr);
+		} else {
+			s.to << lea(ptrA, memberPtr);
+		}
+
+		extractCode(s, to);
+	}
+
+	void bs::MemberVarAccess::classCode(const GenState &s, GenResult &to) {
+		using namespace code;
+
 		GenResult mResult(member->result().asRef(false), s.block);
 		member->code(s, mResult);
-		code::Value mVar = mResult.location(s);
-		code::Value result = to.location(s);
+		s.to << mov(ptrA, mResult.location(s));
 
+		extractCode(s, to);
+	}
+
+	void bs::MemberVarAccess::extractCode(const GenState &s, GenResult &to) {
+		using namespace code;
+
+		code::Variable result = to.location(s);
 		if (to.type.ref) {
-			s.to << mov(result, mVar);
-			s.to << add(result, intPtrConst(var->offset()));
-		} else {
-			// Not possible to suggest the already existing location, as it is
-			// not a 'code::Variable'.
-			s.to << mov(ptrA, mVar);
 			s.to << add(ptrA, intPtrConst(var->offset()));
-			s.to << mov(result, xRel(result.size(), ptrA));
-
+			s.to << mov(result, ptrA);
+		} else if (var->varType.isValue()) {
+			s.to << lea(ptrC, result);
+			s.to << fnParam(ptrC);
+			s.to << fnParam(ptrA);
+			s.to << fnCall(var->varType.copyCtor(), Size());
+		} else {
+			s.to << mov(result, xRel(result.size(), ptrA, var->offset()));
 			if (var->varType.refcounted())
 				s.to << code::addRef(result);
 		}

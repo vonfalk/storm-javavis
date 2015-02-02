@@ -1,5 +1,9 @@
 #pragma once
 
+#if defined(_DEBUG) && !defined(DEBUG)
+#define DEBUG
+#endif
+
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*x))
 
 #define _USE_MATH_DEFINES

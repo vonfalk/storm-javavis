@@ -71,6 +71,11 @@ namespace storm {
 		// Other references.
 		code::RefSource lazyCodeFn;
 
+#ifdef DEBUG
+		// Debug output an integer.
+		code::RefSource dbgPrint;
+#endif
+
 		// Get a reference to a virtual function call.
 		code::Ref virtualCall(VTablePos pos) const;
 

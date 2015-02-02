@@ -109,6 +109,15 @@ namespace storm {
 
 			// Variable to access.
 			Auto<TypeVar> var;
+
+			// Generate code for a value access.
+			void valueCode(const GenState &s, GenResult &to);
+
+			// Generate code for a class access.
+			void classCode(const GenState &s, GenResult &to);
+
+			// Extract the value itself from ptrA
+			void extractCode(const GenState &s, GenResult &to);
 		};
 
 

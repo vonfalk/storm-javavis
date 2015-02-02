@@ -8,11 +8,20 @@
 
 namespace storm {
 
-	bs::Class::Class(SrcPos pos, Par<SStr> name, Par<SStr> content)
-		: Type(name->v->v, typeClass), declared(pos), content(content) {}
+	static TypeFlags flag(Par<SStr> type) {
+		if (type->v->v == L"class")
+			return typeClass;
+		else if (type->v->v == L"value")
+			return typeValue;
+		else
+			throw SyntaxError(type->pos, L"Expected class or value.");
+	}
 
-	bs::Class::Class(SrcPos pos, Par<SStr> name, Par<SStr> content, Par<TypeName> base)
-		: Type(name->v->v, typeClass), declared(pos), content(content), base(base) {}
+	bs::Class::Class(SrcPos pos, Par<SStr> t, Par<SStr> name, Par<SStr> content)
+		: Type(name->v->v, flag(t)), declared(pos), content(content) {}
+
+	bs::Class::Class(SrcPos pos, Par<SStr> t, Par<SStr> name, Par<SStr> content, Par<TypeName> base)
+		: Type(name->v->v, flag(t)), declared(pos), content(content), base(base) {}
 
 	void bs::Class::setScope(const Scope &scope) {
 		this->scope = Scope(scope, this);
@@ -46,6 +55,9 @@ namespace storm {
 
 		// Temporary solution.
 		add(steal(CREATE(TypeDefaultCtor, engine, this)));
+		add(steal(CREATE(TypeDefaultDtor, engine, this)));
+		if (flags & typeValue)
+			add(steal(CREATE(TypeCopyCtor, engine, this)));
 	}
 
 	/**

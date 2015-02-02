@@ -45,6 +45,9 @@ namespace storm {
 		// Get the copy ctor for this type if there is any for this type.
 		code::Value copyCtor() const;
 
+		// Get the default ctor for this type if there is any.
+		code::Value defaultCtor() const;
+
 		// Return on stack?
 		bool returnOnStack() const;
 

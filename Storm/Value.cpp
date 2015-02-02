@@ -90,6 +90,19 @@ namespace storm {
 		}
 	}
 
+	code::Value Value::defaultCtor() const {
+		if (ref)
+			return code::Value();
+
+		if (!isValue())
+			return code::Value();
+
+		if (Function *ctor = type->defaultCtor())
+			return code::Ref(ctor->ref());
+
+		return code::Value();
+	}
+
 	bool Value::refcounted() const {
 		if (!type)
 			return false;

@@ -29,7 +29,7 @@ namespace storm {
 		vector<Value> r;
 		r.reserve(params.size() + (thisType ? 1 : 0));
 		if (thisType)
-			r.push_back(Value(thisType));
+			r.push_back(Value::thisPtr(thisType));
 
 		for (nat i = 0; i < params.size(); i++)
 			r.push_back(params[i]->value(scope));

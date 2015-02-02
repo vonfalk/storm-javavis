@@ -31,6 +31,9 @@ namespace storm {
 		// Output with non-default parameters.
 		void format(wostream &to, Size relative = Size()) const;
 
+		// Get all TypeVars that are currently here.
+		vector<Auto<TypeVar> > variables() const;
+
 	protected:
 		virtual void output(wostream &to) const;
 
