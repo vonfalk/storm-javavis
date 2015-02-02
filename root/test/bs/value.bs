@@ -101,8 +101,33 @@ value RefVal {
 	}
 }
 
-Int testRefInVal(Int z) {
+Int testRefVal(Int z) {
 	RefVal v;
 	v.init(z);
 	v.v;
+}
+
+Int testCopyRefVal(Int z) {
+	RefVal o;
+	o.init(z);
+	RefVal c(o);
+	c.v;
+}
+
+// What happens when we have values in values?
+value ValVal {
+	DbgVal v;
+}
+
+Int testValVal(Int z) {
+	ValVal v;
+	v.v.set(z);
+	v.v.get;
+}
+
+Int testCopyValVal(Int z) {
+	ValVal o;
+	o.v.set(z);
+	ValVal c(o);
+	c.v.get;
 }

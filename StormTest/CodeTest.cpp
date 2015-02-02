@@ -124,6 +124,9 @@ BEGIN_TEST(ValueTest) {
 
 BEGIN_TEST(CustomValueTest) {
 	CHECK_EQ(runFn(L"test.bs.testCustomValue"), -300);
-	CHECK_EQ(runFn(L"test.bs.testRefInVal", 24), 24);
+	CHECK_EQ(runFn(L"test.bs.testRefVal", 24), 24);
+	CHECK_EQ(runFn(L"test.bs.testCopyRefVal", 24), 24);
+	CHECK_EQ(runFn(L"test.bs.testValVal", 22), 22);
+	CHECK_EQ(runFn(L"test.bs.testCopyValVal", 22), 22);
 } END_TEST
 
