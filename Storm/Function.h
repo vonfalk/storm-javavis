@@ -89,6 +89,9 @@ namespace storm {
 								const String &name, const vector<Value> &params,
 								void *ptr);
 
+	// Create a function referring a pre-compiled destructor (using vtable calls).
+	Function *nativeDtor(Engine &e, Type *member, void *ptr);
+
 	// Create an inlined function.
 	Function *inlinedFunction(Engine &e, Value result, const String &name,
 							const vector<Value> &params, Fn<void, InlinedParams> fn);

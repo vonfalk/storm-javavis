@@ -430,6 +430,10 @@
 				RelativePath=".\Basic\BSActual.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TypeDtor.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -694,6 +698,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSActual.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TypeDtor.h"
 				>
 			</File>
 		</Filter>

@@ -5,6 +5,7 @@
 #include "BSScope.h"
 #include "BSFunction.h"
 #include "TypeCtor.h"
+#include "TypeDtor.h"
 
 namespace storm {
 

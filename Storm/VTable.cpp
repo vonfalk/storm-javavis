@@ -5,9 +5,18 @@
 #include "Code/Binary.h"
 #include "Function.h"
 #include "Exception.h"
+#include "TypeDtor.h"
 #include <iomanip>
 
 namespace storm {
+
+	/**
+	 * Redirect the C++ dtor to the storm dtor (using the vtable). Needs to be in a struct
+	 * since we have to be able to use __thiscall (not possible otherwise).
+	 *
+	 * Note that we will never instantiate this struct. In the member function, the 'this' pointer
+	 * will not even be of the correct type.
+	 */
 
 	VTable::VTable(Engine &e)
 		: ref(e.arena, L"vtable"), engine(e), cppVTable(null),
@@ -49,7 +58,11 @@ namespace storm {
 
 		ref.set(replaced->ptr());
 		storm.clear();
+		storm.ensure(1); // For the destructor.
 		cppSlots = vector<VTableSlot*>(replaced->count(), null);
+
+		// We need to replace the C++ dtor with our stub!
+		replaced->setDtor(dtorRedirect());
 
 		// Update child/parent relation.
 		if (this->parent)
@@ -124,6 +137,10 @@ namespace storm {
 	}
 
 	VTablePos VTable::insert(Function *fn) {
+		// Special case: destructors for built in type should not be inserted.
+		if (builtIn() && fn->name == Type::DTOR)
+			return VTablePos();
+
 		VTablePos r = findSlot(fn);
 
 		// May have been inserted before.
@@ -159,6 +176,10 @@ namespace storm {
 	}
 
 	VTablePos VTable::findSlot(Function *fn) {
+		// Destructor? (always in slot 0)
+		if (fn->name == Type::DTOR)
+			return VTablePos::storm(0);
+
 		// Cpp function?
 		if (builtIn()) {
 			nat slot = code::findSlot(fn->directRef().address(), cppVTable);
@@ -181,7 +202,7 @@ namespace storm {
 		if (parent)
 			slot = storm.emptySlot(parent->storm.count());
 		else
-			slot = storm.emptySlot();
+			slot = storm.emptySlot(1);
 
 		if (slot < storm.count())
 			return VTablePos::storm(slot);
@@ -189,6 +210,7 @@ namespace storm {
 		// Allocate a new slot.
 		slot = storm.count();
 		expand(slot, 1);
+		assert(("Double-allocated the destructor!", slot >= 1));
 		return VTablePos::storm(slot);
 	}
 

@@ -24,6 +24,7 @@ namespace code {
 #if defined(VS) && VS == 2008
 
 	int VTable::extraOffset = -2;
+	int VTable::dtorOffset = 0;
 
 	// Is the address readable?
 	static bool readable(void *addr) {
@@ -252,6 +253,10 @@ namespace code {
 		set(slot, newFn);
 	}
 
+	void VTable::setDtor(void *newFn) {
+		set(dtorOffset, newFn);
+	}
+
 	nat VTable::find(void *fn) {
 		return findSlot(fn, content, size);
 	}
@@ -287,4 +292,15 @@ namespace code {
 		void **v = (void **)vtable;
 		return v[id];
 	}
+
+	void *vtableExtra(void *obj) {
+		void **v = (void **)obj;
+		return v[VTable::extraOffset];
+	}
+
+	void *vtableDtor(void *vtable) {
+		void **v = (void **)vtable;
+		return v[VTable::dtorOffset];
+	}
+
 }

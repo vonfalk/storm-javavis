@@ -17,6 +17,8 @@ namespace code {
 	 * NOTE: This assumes single inheritance in the hierarchy!
 	 */
 	class VTable : NoCopy {
+		friend void *vtableExtra(void *);
+		friend void *vtableDtor(void *);
 	public:
 		// Create a VTable based on a C++ vtable. Optionally allocate extra data to be able to
 		// replace the VTable later.
@@ -39,6 +41,9 @@ namespace code {
 		// a function pointer to the member to be replaced.
 		void set(void *fn, void *newFn);
 		void set(nat slot, void *fn);
+
+		// Set the destructor to a new function (dtors are tricky, you can not take the address of them!)
+		void setDtor(void *fn);
 
 		// Find the slot of the pointer. The pointer may or may
 		// not be previously de-virtualized.
@@ -66,6 +71,9 @@ namespace code {
 
 		// Offset of the extra data (system-dependent).
 		static int extraOffset;
+
+		// Offset of the dtor (system-dependent).
+		static int dtorOffset;
 	};
 
 	// De-virtualize a function call. The standard way of calling virtual
@@ -82,6 +90,12 @@ namespace code {
 
 	// Get the vtable from an object.
 	void *vtableOf(void *object);
+
+	// Get the 'extra' field of the vtable.
+	void *vtableExtra(void *vtable);
+
+	// Get the 'dtor' field of the vtable.
+	void *vtableDtor(void *vtable);
 
 	// Set the vtable of an object.
 	void setVTable(void *object, void *vtable);

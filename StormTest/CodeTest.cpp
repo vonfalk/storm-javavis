@@ -25,7 +25,6 @@ T runFn(const String &fn, Int p) {
 	void *ptr = fun->pointer();
 	if (!ptr)
 		throw TestError(L"Function " + fn + L" did not return any code.");
-
 	return code::FnCall().param(p).call<T>(ptr);
 }
 
@@ -119,8 +118,11 @@ BEGIN_TEST(ValueTest) {
 	CHECK(DbgVal::clear());
 	CHECK_EQ(runFn(L"test.bs.testContainVal"), 10);
 	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn(L"test.bs.testContainVal"), 10);
+	CHECK(DbgVal::clear());
 } END_TEST
 
 BEGIN_TEST(CustomValueTest) {
 	CHECK_EQ(runFn(L"test.bs.testCustomValue"), -300);
 } END_TEST
+

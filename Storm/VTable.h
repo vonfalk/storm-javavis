@@ -101,9 +101,6 @@ namespace storm {
 		// Update the address for entry 'i'.
 		void updateAddr(VTablePos i, void *to, VTableSlot *src);
 
-		// Insert a VTable entry for a native Storm implementation.
-		VTablePos insertStorm(Function *fn);
-
 		// Find a base-variation of the function 'fn', return its index.
 		VTablePos findBase(Function *fn);
 		VTablePos findCppBase(Function *fn);
@@ -111,6 +108,9 @@ namespace storm {
 
 		// Find a suitable slot for 'fn'.
 		VTablePos findSlot(Function *fn);
+
+		// Find a suitable slot for 'dtor'.
+		VTablePos findDtorSlot(Function *fn);
 
 		// Check if 'fn' was inserted here earlier.
 		bool inserted(Function *fn);

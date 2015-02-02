@@ -70,9 +70,11 @@ void Header::parse(Tokenizer &tok) {
 			}
 			types.push_back(t);
 
+			// Declare the destructor.
+			functions.push_back(Function::dtor(pkg, scope));
+
 			// Values need their destructor as well as copy and assignment operators.
 			if (isValue) {
-				functions.push_back(Function::dtor(pkg, scope));
 				functions.push_back(Function::copyCtor(pkg, scope));
 				functions.push_back(Function::assignment(pkg, scope));
 				// TODO: May need other functions as well.

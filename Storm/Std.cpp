@@ -51,7 +51,9 @@ namespace storm {
 			params.push_back(findValue(scope, fn->params[i]));
 
 		Auto<Function> toAdd;
-		if (fn->typeMember) {
+		if (fn->typeMember && fn->name == Type::DTOR) {
+			toAdd = nativeDtor(to, params[0].type, fn->fnPtr);
+		} else if (fn->typeMember) {
 			// Make sure we handle vtable calls correctly!
 			toAdd = nativeMemberFunction(to, params[0].type, result, fn->name, params, fn->fnPtr);
 		} else {

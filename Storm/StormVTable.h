@@ -10,10 +10,8 @@ namespace storm {
 	class Function;
 
 	/**
-	 * Source for the VTable references.
-	 */
-	/**
 	 * Helper for handling the raw array in which we are storing the Storm VTable.
+	 * Note: the first entry is reserved for Storm's destructor.
 	 */
 	class StormVTable : NoCopy {
 	public:

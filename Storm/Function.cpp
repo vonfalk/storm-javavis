@@ -2,6 +2,7 @@
 #include "Function.h"
 #include "Type.h"
 #include "Engine.h"
+#include "TypeDtor.h"
 #include "Exception.h"
 #include "Code/Instruction.h"
 #include "Code/VTable.h"
@@ -162,13 +163,30 @@ namespace storm {
 
 		Function *fn = CREATE(Function, e, result, name, params);
 		if (plain) {
-			Auto<StaticCode> c = CREATE(StaticCode, e, plain);
-			fn->setCode(c);
-			Auto<StaticCode> l = CREATE(StaticCode, e, ptr);
-			fn->setLookup(l);
+			fn->setCode(steal(CREATE(StaticCode, e, plain)));
+			fn->setLookup(steal(CREATE(StaticCode, e, ptr)));
 		} else {
-			Auto<StaticCode> c = CREATE(StaticCode, e, ptr);
-			fn->setCode(c);
+			fn->setCode(steal(CREATE(StaticCode, e, ptr)));
+		}
+
+		return fn;
+	}
+
+	Function *nativeDtor(Engine &e, Type *member, void *ptr) {
+		Function *fn = CREATE(Function, e, Value(), Type::DTOR, vector<Value>(1, Value::thisPtr(member)));
+
+		// For destructors, we get the lookup directly.
+		// We have to find the raw function ourselves.
+		void *vtable = member->vtable.baseVTable();
+
+		if (vtable) {
+			// We need to wrap the raw pointer since dtors generally does not use the same calling convention
+			// as regular functions.
+			void *raw = code::vtableDtor(vtable);
+			fn->setLookup(steal(CREATE(StaticCode, e, ptr)));
+			fn->setCode(steal(wrapRawDestructor(e, raw)));
+		} else {
+			fn->setCode(steal(CREATE(StaticCode, e, ptr)));
 		}
 
 		return fn;
