@@ -7,24 +7,28 @@
 
 namespace storm {
 
-	Name readerName(const Name &name) {
-		return name + Name(L"Reader");
+	Name *readerName(Par<const Name> name) {
+		Name *n = CREATE(Name, name, name);
+		n->add(steal(CREATE(NamePart, name, L"Reader")));
+		return n;
 	}
 
-	Name syntaxPkg(const Path &path) {
-		Name l(L"lang");
-		return l + Name(path.ext());
+	Name *syntaxPkg(Engine &e, const Path &path) {
+		Name *n = CREATE(Name, e, L"lang");
+		n->add(path.ext());
+		return n;
 	}
 
-	hash_map<Name, PkgFiles *> syntaxPkg(const vector<Path> &paths, Engine &e) {
-		typedef hash_map<Name, PkgFiles *> M;
+	hash_map<Auto<Name>, PkgFiles *> syntaxPkg(const vector<Path> &paths, Engine &e) {
+		typedef hash_map<Auto<Name>, PkgFiles *> M;
 		M r;
+		TODO(L"Check the behaviour of the map here!");
 
 		for (nat i = 0; i < paths.size(); i++) {
 			if (paths[i].isDir())
 				continue;
 
-			Name pkg = syntaxPkg(paths[i]);
+			Auto<Name> pkg = syntaxPkg(e, paths[i]);
 			M::iterator found = r.find(pkg);
 			PkgFiles *into;
 
@@ -87,7 +91,8 @@ namespace storm {
 	void FileReader::readFunctions() {}
 
 	Package *FileReader::syntaxPackage() const {
-		return package->engine.package(syntaxPkg(file));
+		Auto<Name> pkg = syntaxPkg(engine(), file);
+		return package->engine.package(pkg);
 	}
 
 	/**

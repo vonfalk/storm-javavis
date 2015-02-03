@@ -8,39 +8,43 @@ namespace storm {
 
 	bs::BSScope::BSScope(const Path &file) : file(file) {}
 
-	Named *bs::BSScope::find(const Scope &s, const Name &name) {
+	Named *bs::BSScope::findHelper(const Scope &s, Par<Name> name) {
 		if (Named *found = ScopeLookup::find(s, name))
 			return found;
 
 		for (nat i = 0; i < includes.size(); i++) {
-			if (Named *found = includes[i]->find(name))
+			if (Named *found = storm::find(includes[i], name))
 				return found;
 		}
 
 		return null;
 	}
 
-	Named *bs::BSScope::find(const Scope &s, const Name &name, const vector<Value> &params) {
-		if (Named *n = ScopeLookup::find(s, name, params))
-			return n;
+	Named *bs::BSScope::find(const Scope &s, Par<Name> name) {
+		TODO(L"Re-implement the logic here!");
+		return findHelper(s, name);
 
-		// Expressions of the form foo(x, y, z) are equal to x.foo(y, z).
-		if (params.size() > 0 && name.size() == 1) {
-			if (params[0] != Value()) {
-				Named *n = params[0].type->find(name);
-				if (Overload *o = as<Overload>(n)) {
-					return o->find(params);
-				} else if (params.size() == 0) {
-					return n;
-				}
-			}
-		}
+		// if (Named *n = ScopeLookup::find(s, name, params))
+		// 	return n;
 
-		return null;
+		// // Expressions of the form foo(x, y, z) are equal to x.foo(y, z).
+		// if (params.size() > 0 && name.size() == 1) {
+		// 	if (params[0] != Value()) {
+		// 		Named *n = params[0].type->find(name);
+		// 		if (Overload *o = as<Overload>(n)) {
+		// 			return o->find(params);
+		// 		} else if (params.size() == 0) {
+		// 			return n;
+		// 		}
+		// 	}
+		// }
+
+		// return null;
 	}
 
 	void bs::BSScope::addSyntax(const Scope &from, SyntaxSet &to) {
-		to.add(*engine().package(syntaxPkg(file)));
+		Auto<Name> syntax = syntaxPkg(engine(), file);
+		to.add(*engine().package(syntax));
 		to.add(*firstPkg(from.top)); // current package.
 
 		for (nat i = 0; i < includes.size(); i++)

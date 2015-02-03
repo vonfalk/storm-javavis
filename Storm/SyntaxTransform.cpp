@@ -35,7 +35,9 @@ namespace storm {
 				types[i] = SrcPos::type(e);
 		}
 
-		Named *no = option->scope.find(option->matchFn, types);
+		Auto<Name> match = CREATE(Name, e);
+		match->add(option->matchFn, types);
+		Named *no = option->scope.find(match);
 		if (Function *f = as<Function>(no)) {
 			code::FnCall call;
 			for (nat i = 0; i < params.size(); i++) {
@@ -49,10 +51,11 @@ namespace storm {
 		}
 
 		// See if we can find a constructor!
-		if (Type *t = as<Type>(option->scope.find(option->matchFn))) {
+		Auto<Name> ctor = CREATE(Name, e, option->matchFn);
+		if (Type *t = as<Type>(option->scope.find(ctor))) {
 			types.insert(types.begin(), Value(t));
-			Scope scope(t);
-			no = scope.find(Type::CTOR, types);
+			Auto<NamePart> ctor = CREATE(NamePart, e, Type::CTOR, types);
+			no = t->find(ctor);
 			if (Function *ctor = as<Function>(no)) {
 				code::FnCall call;
 				for (nat i = 0; i < params.size(); i++) {
@@ -84,8 +87,8 @@ namespace storm {
 		vector<Value> types(2);
 		types[0] = Value(t);
 		types[1] = Value(param->myType);
-		Scope scope(t);
-		Named *no = scope.find(Name(memberName), types);
+		Auto<NamePart> part = CREATE(NamePart, t, memberName, types);
+		Named *no = t->find(part);
 		if (Function *f = as<Function>(no)) {
 			code::FnCall call;
 			call.param(me).param(param);
@@ -111,7 +114,7 @@ namespace storm {
 		if (pos) posCopy = *pos;
 
 		if (option->matchVar) {
-			Object *t = vars.get(option->matchFn[0]);
+			Object *t = vars.get(option->matchFn);
 			t->addRef();
 			return t;
 		}
@@ -166,7 +169,8 @@ namespace storm {
 
 		for (nat i = 0; i < params.size(); i++) {
 			const SyntaxRule::Param &param = rule->params[i];
-			Type *t = as<Type>(option->scope.find(Name(param.type)));
+			Auto<Name> typeName = parseSimpleName(e, param.type);
+			Type *t = as<Type>(option->scope.find(typeName));
 			if (t == null)
 				throw SyntaxTypeError(L"Unknown type: " + param.type);
 			if (params[i] == null)

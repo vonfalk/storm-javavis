@@ -16,7 +16,7 @@ namespace storm {
 		::clear(tokens);
 		markStart = markEnd = 0;
 		markType = mNone;
-		matchFn = Name();
+		matchFn = null;
 		matchFnParams.clear();
 		markCapture = L"";
 	}
@@ -59,7 +59,7 @@ namespace storm {
 	void SyntaxOption::output(wostream &to, nat marker) const {
 		to << owner;
 
-		if (matchFn.any()) {
+		if (matchFn != L"") {
 			to << L" => ";
 			to << matchFn << L"(";
 			for (nat i = 0; i < matchFnParams.size(); i++) {

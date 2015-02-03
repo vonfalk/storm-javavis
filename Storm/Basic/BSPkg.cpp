@@ -3,14 +3,16 @@
 
 namespace storm {
 
-	bs::Pkg::Pkg() {}
-
-	void bs::Pkg::add(Par<SStr> part) {
-		parts.push_back(part->v->v);
+	bs::Pkg::Pkg() {
+		n = CREATE(Name, this);
 	}
 
-	Name bs::Pkg::name() const {
-		return Name(parts);
+	void bs::Pkg::add(Par<SStr> part) {
+		n->add(steal(CREATE(NamePart, this, part->v)));
+	}
+
+	Name *bs::Pkg::name() const {
+		return n.ret();
 	}
 
 }

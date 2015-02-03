@@ -6,7 +6,7 @@
 
 namespace storm {
 
-	void TypeLayout::add(NameOverload *n) {
+	void TypeLayout::add(Named *n) {
 		if (TypeVar *v = as<TypeVar>(n))
 			add(v);
 	}

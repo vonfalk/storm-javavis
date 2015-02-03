@@ -15,13 +15,6 @@ namespace storm {
 	};
 
 
-	/**
-	 * Definition of the integer type in the storm language.
-	 */
-	typedef code::Int Int;
-	Type *intType(Engine &e);
-
-
 	class NatType : public Type {
 		STORM_CLASS;
 	public:
@@ -31,11 +24,5 @@ namespace storm {
 		virtual Function *destructor() { return null; }
 	};
 
-
-	/**
-	 * Natural number (uint) type.
-	 */
-	typedef code::Nat Nat;
-	Type *natType(Engine &e);
 
 }

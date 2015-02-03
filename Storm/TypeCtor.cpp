@@ -13,9 +13,7 @@ namespace storm {
 
 		if (super) {
 			// We may need to run another function first...
-			Overload *ovl = as<Overload>(super->find(Name(Type::CTOR)));
-			if (ovl)
-				before = as<Function>(ovl->find(vector<Value>(1, Value::thisPtr(super))));
+			before = super->defaultCtor();
 			if (!before)
 				throw InternalError(L"Did not find a default constructor in " + super->identifier());
 		}
@@ -68,9 +66,7 @@ namespace storm {
 
 		if (super) {
 			// Find parent copy-ctor.
-			Overload *ovl = as<Overload>(super->find(Name(Type::CTOR)));
-			if (ovl)
-				before = as<Function>(ovl->find(vector<Value>(1, Value::thisPtr(super))));
+			before = super->copyCtor();
 			if (!before)
 				throw InternalError(L"Did not find a default constructor in " + super->identifier());
 		}
@@ -136,10 +132,8 @@ namespace storm {
 		Type *super = owner->super();
 
 		if (super) {
-			// Find parent copy-ctor.
-			Overload *ovl = as<Overload>(super->find(Name(L"=")));
-			if (ovl)
-				before = as<Function>(ovl->find(vector<Value>(2, Value::thisPtr(super))));
+			// Find parent assignment operator.
+			before = super->assignFn();
 			if (!before)
 				throw InternalError(L"Did not find an assignment operator in " + super->identifier());
 		}

@@ -46,13 +46,9 @@ namespace storm {
 			}
 
 			Type *t = variable->result.type;
-			Overload *ctors = as<Overload>(t->find(Type::CTOR));
-			if (!ctors)
-				throw SyntaxError(pos, ::toS(variable->result) + L" has no constructors.");
-
 			vector<Value> params = actuals->values();
 			params.insert(params.begin(), Value::thisPtr(t));
-			Function *ctor = as<Function>(ctors->find(params));
+			Function *ctor = as<Function>(t->find(Type::CTOR, params));
 			if (!ctor)
 				throw SyntaxError(pos, L"No constructor " + ::toS(variable->result) + L"("
 								+ join(params, L", ") + L") found. Can not initialize.");

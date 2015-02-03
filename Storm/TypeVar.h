@@ -1,6 +1,6 @@
 #pragma once
-#include "Overload.h"
 #include "Value.h"
+#include "Named.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -9,7 +9,7 @@ namespace storm {
 	 * A variable contained in a type. This is used to allocate
 	 * space in the host object.
 	 */
-	class TypeVar : public NameOverload {
+	class TypeVar : public Named {
 		STORM_CLASS;
 	public:
 		TypeVar(Type *owner, const Value &type, const String &name);

@@ -14,16 +14,17 @@ BEGIN_TEST(PkgTest) {
 	CHECK_EQ(split(L"a, b, c", L", "), vector<String>(tc1, tc1 + 3));
 	CHECK_EQ(split(L"a, b, , c", L", "), vector<String>(tc2, tc2 + 4));
 
-	CHECK_EQ(toS(Name(L"a.b.c")), L"a.b.c");
-	CHECK_EQ(Name(L"a.b") + Name(L"c"), Name(L"a.b.c"));
-	CHECK_EQ(Name(L"a.b.c.").parent(), Name(L"a.b"));
-
 	// Do some real things!
 	Engine &e = *gEngine;
 
-	Package *rootPkg = e.package(Name());
+	Auto<Name> name = CREATE(Name, e);
+	Package *rootPkg = e.package(name);
 	CHECK(rootPkg != null);
-	Package *coreSto = e.package(Name(L"lang.sto"));
+
+	name->add(L"lang");
+	name->add(L"sto");
+	CHECK_EQ(toS(name), L"lang.sto");
+	Package *coreSto = e.package(name);
 	CHECK(coreSto != null);
 
 } END_TEST

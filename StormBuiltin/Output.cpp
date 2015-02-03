@@ -57,14 +57,14 @@ String typeList(const Types &types) {
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
 
-		out << L"{ Name(L\"" << type.package << L"\"), ";
+		out << L"{ L\"" << type.package << L"\", ";
 		out << L"L\"" << type.name << L"\", ";
 
 		if (type.super.empty()) {
-			out << L"Name(), ";
+			out << L"null, ";
 		} else {
 			Type super = types.find(type.super, type.cppName.parent());
-			out << L"Name(L\"" << super.fullName() << L"\"), ";
+			out << L"L\"" << super.fullName() << L"\", ";
 		}
 
 		out << L"sizeof(" << type.cppName << L"), ";
@@ -95,7 +95,7 @@ String typeFunctions(const Types &types) {
 		String fn = vtableFnName(type.cppName);
 
 		out << L"storm::Type *" << type.cppName << L"::type(Engine &e) { return e.builtIn(" << i << L"); }\n";
-		out << L"storm::Type *" << type.cppName << L"::type(Object *o) { return type(o->myType->engine); }\n";
+		out << L"storm::Type *" << type.cppName << L"::type(const Object *o) { return type(o->myType->engine); }\n";
 		if (!type.value) {
 			// Values do not have type information.
 			out << L"extern \"C\" void *" << fn << L"();\n";
@@ -173,7 +173,7 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 		CppName scope = fn.cppScope.scopeName();
 
 		// Package
-		out << L"{ Name(L\"" << fn.package << L"\"), ";
+		out << L"{ L\"" << fn.package << L"\", ";
 
 		// Member of?
 		if (fn.cppScope.isType()) {

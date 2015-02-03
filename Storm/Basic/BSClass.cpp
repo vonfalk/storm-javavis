@@ -69,7 +69,7 @@ namespace storm {
 
 	bs::ClassBody::ClassBody() {}
 
-	void bs::ClassBody::add(Par<NameOverload> i) {
+	void bs::ClassBody::add(Par<Named> i) {
 		items.push_back(i);
 	}
 

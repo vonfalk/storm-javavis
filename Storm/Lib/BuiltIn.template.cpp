@@ -115,7 +115,7 @@ namespace storm {
 		static BuiltInFunction fns[] = {
 			// BEGIN LIST
 			// END LIST
-			{ Name(), null, valueRef(), L"", list(0), null },
+			{ null, null, valueRef(), L"", list(0), null },
 		};
 		return fns;
 	}

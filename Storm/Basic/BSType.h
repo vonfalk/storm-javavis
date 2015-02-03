@@ -24,7 +24,7 @@ namespace storm {
 		};
 
 		/**
-		 * Names a type.
+		 * Names a type. TODO? Maybe replace with a raw name?
 		 */
 		class TypeName : public SObject {
 			STORM_CLASS;
@@ -36,7 +36,7 @@ namespace storm {
 			Auto<Str> name;
 
 			// Get a regular name.
-			Name getName();
+			Name *getName();
 
 			// Find the Value.
 			Value value(const Scope &scope);

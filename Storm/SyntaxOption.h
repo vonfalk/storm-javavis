@@ -53,7 +53,7 @@ namespace storm {
 		const Scope scope;
 
 		// Function name to call/variable's value.
-		Name matchFn;
+		String matchFn;
 		vector<String> matchFnParams;
 		bool matchVar;
 

@@ -18,7 +18,7 @@ namespace storm {
 			void STORM_FN add(Par<Pkg> pkg);
 
 			// Names.
-			vector<Name> names;
+			vector<Auto<Name> > names;
 		};
 
 	}

@@ -7,7 +7,8 @@
 template <class T>
 T runFn(const String &fn) {
 	Engine &e = *gEngine;
-	Function *fun = as<Function>(e.scope()->find(Name(fn), vector<Value>()));
+	Auto<Name> fName = parseSimpleName(e, fn);
+	Function *fun = as<Function>(e.scope()->find(fName));
 	if (!fun)
 		throw TestError(L"Function " + fn + L" was not found.");
 	void *ptr = fun->pointer();
@@ -19,7 +20,9 @@ T runFn(const String &fn) {
 template <class T>
 T runFn(const String &fn, Int p) {
 	Engine &e = *gEngine;
-	Function *fun = as<Function>(e.scope()->find(Name(fn), vector<Value>(1, Value(intType(e)))));
+	Auto<Name> fName = parseSimpleName(e, fn);
+	fName = fName->withParams(vector<Value>(1, Value(intType(e))));
+	Function *fun = as<Function>(e.scope()->find(fName));
 	if (!fun)
 		throw TestError(L"Function " + fn + L" was not found.");
 	void *ptr = fun->pointer();
@@ -31,7 +34,9 @@ T runFn(const String &fn, Int p) {
 template <class T, class Par>
 T runFn(const String &fn, const Par &par) {
 	Engine &e = *gEngine;
-	Function *fun = as<Function>(e.scope()->find(Name(fn), vector<Value>(1, Value(Par::type(e)))));
+	Auto<Name> fName = parseSimpleName(e, fn);
+	fName = fName->withParams(vector<Value>(1, Value(intType(e))));
+	Function *fun = as<Function>(e.scope()->find(fName));
 	if (!fun)
 		throw TestError(L"Function " + fn + L" was not found.");
 	void *ptr = fun->pointer();
@@ -49,16 +54,6 @@ Int runFn(const String &fn, Int p) {
 	return runFn<Int>(fn, p);
 }
 
-
-BEGIN_TEST(LoadCode) {
-	Engine &engine = *gEngine;
-	Package *test = engine.package(Name(L"test.bs"));
-
-	CHECK(test->find(Name(L"bar")));
-	CHECK(test->find(Name(L"Foo")));
-	CHECK(test->find(Name(L"Foo.a")));
-	CHECK(test->find(Name(L"Foo.foo")));
-} END_TEST
 
 BEGIN_TEST(BasicSyntax) {
 	CHECK_RUNS(runFn(L"test.bs.voidFn"));

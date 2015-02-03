@@ -1,75 +1,119 @@
 #pragma once
+#include "Value.h"
+#include "Lib/Types.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
+
+	/**
+	 * Represents one part of a name. Each part is a string and zero or more
+	 * parameters (think templates in C++).
+	 */
+	class NamePart : public Object {
+		STORM_CLASS;
+	public:
+		// Create with only a name.
+		STORM_CTOR NamePart(Par<Str> name);
+
+		// Create from C++.
+		NamePart(const String &name);
+
+		// Create with params.
+		NamePart(const String &name, const vector<Value> &params);
+
+		// The name here.
+		const String name;
+
+		// Any parameters present.
+		vector<Value> params;
+
+		// Equality check.
+		bool operator ==(const NamePart &o) const;
+		inline bool operator !=(const NamePart &o) const { return !(*this == o); }
+
+	protected:
+		// Output.
+		virtual void output(std::wostream &to) const;
+	};
 
 	/**
 	 * Representation of a name, either a relative name or an absolute
 	 * name including the full package path.
 	 */
-	class Name : public Printable {
+	class Name : public Object {
+		STORM_CLASS;
 	public:
 		// Path to the root package.
-		Name();
+		STORM_CTOR Name();
 
-		// Path to a named in the form 'a.b.c...'
-		Name(const String &path);
+		// Create with one entry.
+		STORM_CTOR Name(Par<NamePart> v);
 
-		// Path to a named as a vector.
-		Name(const vector<String> &parts);
+		// Create with one entry.
+		Name(const String &p);
+
+		// Copy ctor.
+		STORM_CTOR Name(Par<const Name> n);
+
+		// Append a new entry.
+		void STORM_FN add(Par<NamePart> v);
+
+		// Append a new simple entry for C++.
+		void add(const String &name);
+		void add(const String &name, const vector<Value> &params);
 
 		// Concat paths.
-		Name operator +(const Name &o) const;
-		Name &operator +=(const Name &o);
+		// Name operator +(const Name &o) const;
+		// Name operator +=(const Name &o) const;
+
 
 		// Equality.
-		inline bool operator ==(const Name &o) const { return parts == o.parts; }
-		inline bool operator !=(const Name &o) const { return parts != o.parts; }
+		bool operator ==(const Name &o) const;
+		inline bool operator !=(const Name &o) const { return !(*this == o); }
 
 		// Ordering.
-		inline bool operator <(const Name &o) const { return parts < o.parts; }
-		inline bool operator >(const Name &o) const { return parts > o.parts; }
+		// inline bool operator <(const Name &o) const { return parts < o.parts; }
+		// inline bool operator >(const Name &o) const { return parts > o.parts; }
 
 		// Get the parent.
-		Name parent() const;
+		Name *STORM_FN parent() const;
 
 		// Last element.
-		String last() const;
+		NamePart *STORM_FN last() const;
+
+		// Stick parameters to the last element.
+		Name *withParams(const vector<Value> &v) const;
 
 		// All elements from 'n'.
-		Name from(nat n) const;
+		Name *STORM_FN from(Nat n) const;
 
 		// Is this the root package?
-		inline bool root() const { return size() == 0; }
+		inline Bool STORM_FN root() const { return size() == 0; }
 
-		// Access to individual elements.
-		inline nat size() const { return parts.size(); }
-		inline const String &operator [](nat id) const { return parts[id]; }
+		// Access to individual elements (BORROWED PTR, not exposed to storm).
+		// TODO: Expose to Storm!
+		inline Nat size() const { return parts.size(); }
+		inline NamePart *at(Nat id) const { return parts[id].borrow(); }
 
 		// empty/any
-		inline bool any() const { return size() > 0; }
-		inline bool empty() const { return size() == 0; }
+		inline Bool STORM_FN any() const { return size() > 0; }
+		inline Bool STORM_FN empty() const { return size() == 0; }
+
+		// Hash function.
+		size_t hash() const;
 
 	protected:
 		virtual void output(std::wostream &to) const;
 
 	private:
 		// Store each part.
-		vector<String> parts;
+		vector<Auto<NamePart> > parts;
 	};
 
-}
 
-namespace stdext {
-
-	inline size_t hash_value(const storm::Name &n) {
-		// djb2 hash
-		size_t r = 5381;
-		for (nat i = 0; i < n.size(); i++) {
-			const String &s = n[i];
-			for (nat j = 0; j < s.size(); j++)
-				r = ((r << 5) + r) + s[j];
-		}
-		return r;
-	}
+	// Parse a name (does not support parameterized names).
+	Name *parseSimpleName(Engine &e, const String &s);
 
 }
+
+

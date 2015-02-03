@@ -79,7 +79,7 @@ namespace storm {
 		}
 	}
 
-	void bs::File::setIncludes(const vector<Name> &inc) {
+	void bs::File::setIncludes(const vector<Auto<Name> > &inc) {
 		for (nat i = 0; i < inc.size(); i++) {
 			Package *p = package->engine.package(inc[i]);
 			if (!p)

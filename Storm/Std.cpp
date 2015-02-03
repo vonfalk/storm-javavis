@@ -10,11 +10,12 @@
 
 namespace storm {
 
-	static Value findValue(const Scope &src, const ValueRef &val) {
+	static Value findValue(const Scope &src, const ValueRef &val, Engine &e) {
 		if (val.name == null)
 			return Value();
 
-		Named *f = src.find(Name(val.name));
+		Auto<Name> name = parseSimpleName(e, val.name);
+		Named *f = src.find(name);
 		if (Type *t = as<Type>(f))
 			return Value(t, val.ref);
 
@@ -25,15 +26,17 @@ namespace storm {
 		Named *into = null;
 		NameLookup *top = null;
 		vector<Value> params;
+		Auto<Name> pkg = parseSimpleName(to, fn->pkg);
 
 		if (!fn->typeMember) {
-			Package *p = to.package(fn->pkg, true);
+			Package *p = to.package(pkg, true);
 			if (!p)
 				throw BuiltInError(L"Failed to locate package " + toS(fn->pkg));
 			into = p;
 			top = p;
 		} else {
-			Type *t = as<Type>(to.scope()->find(fn->pkg + Name(fn->typeMember)));
+			pkg->add(fn->typeMember);
+			Type *t = as<Type>(to.scope()->find(pkg));
 			into = t;
 			top = as<NameLookup>(into);
 			if (!into || !top)
@@ -44,11 +47,11 @@ namespace storm {
 		}
 
 		Scope scope(top);
-		Value result = findValue(scope, fn->result);
+		Value result = findValue(scope, fn->result, to);
 
 		params.reserve(fn->params.size());
 		for (nat i = 0; i < fn->params.size(); i++)
-			params.push_back(findValue(scope, fn->params[i]));
+			params.push_back(findValue(scope, fn->params[i], to));
 
 		Auto<Function> toAdd;
 		if (fn->typeMember && fn->name == Type::DTOR) {
@@ -70,7 +73,8 @@ namespace storm {
 	}
 
 	static void addToPkg(Engine &to, const BuiltInType *t) {
-		Package *pkg = to.package(t->pkg, true);
+		Auto<Name> pkgName = parseSimpleName(to, t->pkg);
+		Package *pkg = to.package(pkgName, true);
 		if (!pkg)
 			throw BuiltInError(L"Failed to locate package " + toS(t->pkg));
 
@@ -79,14 +83,15 @@ namespace storm {
 	}
 
 	static void addSuper(Engine &to, const BuiltInType *t) {
-		if (t->super.empty())
+		if (t->super == null)
 			return;
 
 		Type *tc = to.builtIn(t->typePtrId);
-		Named *s = to.scope()->find(t->super);
+		Auto<Name> superName = parseSimpleName(to, t->super);
+		Named *s = to.scope()->find(superName);
 		Type *super = as<Type>(s);
 		if (!super)
-			throw BuiltInError(L"Failed to locate super type " + toS(t->super));
+			throw BuiltInError(L"Failed to locate super type " + String(t->super));
 
 		tc->setSuper(super);
 	}
@@ -150,7 +155,8 @@ namespace storm {
 
 	void addStdLib(Engine &to) {
 		// Place core types in the core package.
-		Package *core = to.package(Name(L"core"), true);
+		Auto<Name> coreName = CREATE(Name, to, L"core");
+		Package *core = to.package(coreName, true);
 		core->add(steal(intType(to)));
 		core->add(steal(natType(to)));
 		core->add(steal(boolType(to)));

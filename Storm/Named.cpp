@@ -4,17 +4,23 @@
 
 namespace storm {
 
-	Named *NameLookup::find(const Name &name) {
+	NameLookup::NameLookup() : parentLookup(null) {}
+
+	Named *NameLookup::find(Par<NamePart> name) {
 		assert(false); // Implement me!
 		return null;
 	}
 
 	NameLookup *NameLookup::parent() const {
-		assert(false); // Implement me!
+		assert(parentLookup != null);
 		return null;
 	}
 
 	Named::Named(Par<Str> name) : name(name->v) {}
+
+	Named::Named(const String &name) : name(name) {}
+
+	Named::Named(const String &name, const vector<Value> &params) : name(name), params(params) {}
 
 	Named *Named::closestNamed() const {
 		for (NameLookup *p = parent(); p; p = p->parent()) {
@@ -24,12 +30,17 @@ namespace storm {
 		return null;
 	}
 
-	Name Named::path() const {
+	Name *Named::path() const {
 		Named *parent = closestNamed();
+
+		Name *r = null;
 		if (parent)
-			return parent->path() + Name(name);
+			r = parent->path();
 		else
-			return Name(name);
+			r = CREATE(Name, this);
+
+		r->add(steal(CREATE(NamePart, this, name, params)));
+		return r;
 	}
 
 	String Named::identifier() const {

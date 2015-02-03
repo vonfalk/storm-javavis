@@ -13,14 +13,14 @@ namespace storm {
 	const String Type::DTOR = L"__dtor";
 
 	Type::Type(const String &name, TypeFlags f)
-		: Named(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
+		: NameSet(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
 		  mySize(), chain(this), vtable(engine) {
 
 		init();
 	}
 
 	Type::Type(const String &name, TypeFlags f, Size size, void *cppVTable)
-		: Named(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
+		: NameSet(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
 		  mySize(size), chain(this), vtable(engine) {
 
 		// Create the VTable first, otherwise init() may get strange ideas...
@@ -76,14 +76,14 @@ namespace storm {
 	}
 
 	void Type::clear() {
-		members.clear();
+		NameSet::clear();
 		chain.super(null);
 	}
 
 	Type *Type::createType(Engine &engine, const String &name, TypeFlags flags) {
 		void *mem = allocDumb(engine, sizeof(Type));
 		size_t typeOffset = OFFSET_OF(Object, myType);
-		size_t engineOffset = sizeof(Named);
+		size_t engineOffset = sizeof(NameSet);
 		OFFSET_IN(mem, typeOffset, Type *) = (Type *)mem;
 		OFFSET_IN(mem, engineOffset, Engine *) = &engine;
 		return new (mem) Type(name, flags, Size(sizeof(Type)), Type::cppVTable());
@@ -153,21 +153,18 @@ namespace storm {
 		return chain.super();
 	}
 
-	Named *Type::find(const Name &name) {
-		if (name.size() != 1)
-			return null;
-
+	Named *Type::find(Par<NamePart> name) {
 		if (!lazyLoading)
 			ensureLoaded();
 
-		MemberMap::const_iterator i = members.find(name[0]);
-		if (i != members.end())
-			return i->second.borrow();
+		return NameSet::find(name);
+	}
 
-		if (Type *s = super())
-			return s->find(name);
+	Named *Type::find(const String &name, const vector<Value> &params) {
+		if (!lazyLoading)
+			ensureLoaded();
 
-		return null;
+		return NameSet::find(name, params);
 	}
 
 	void Type::output(wostream &to) const {
@@ -179,32 +176,22 @@ namespace storm {
 		to << ":" << endl;
 		Indent i(to);
 
-		for (MemberMap::const_iterator i = members.begin(); i != members.end(); ++i) {
-			to << *i->second;
-		}
+		NameSet::output(to);
 	}
 
-	void Type::add(NameOverload *o) {
-		validate(o);
+	void Type::add(Par<Named> o) {
+		validate(o.borrow());
 
-		Overload *ovl = null;
-		MemberMap::iterator i = members.find(o->name);
-		if (i == members.end()) {
-			ovl = CREATE(Overload, engine, this, o->name);
-			members.insert(make_pair(o->name, ovl));
-		} else {
-			ovl = i->second.borrow();
-		}
+		NameSet::add(o);
+		layout.add(o.borrow());
 
-		ovl->add(o);
-		layout.add(o);
-
+		// TODO: We do not need to update all virtual functions here.
 		if (Type *s = super())
 			s->updateVirtual();
-		updateVirtual(ovl);
+		updateVirtual();
 	}
 
-	void Type::validate(NameOverload *o) {
+	void Type::validate(Named *o) {
 		if (o->params.empty())
 			throw TypedefError(L"Member functions must have at least one parameter!");
 
@@ -234,35 +221,19 @@ namespace storm {
 	}
 
 	Function *Type::destructor() {
-		Overload *o = as<Overload>(find(Name(DTOR)));
-		if (!o)
-			return null;
-
-		return as<Function>(o->find(vector<Value>(1, Value::thisPtr(this))));
+		return as<Function>(find(DTOR, vector<Value>(1, Value::thisPtr(this))));
 	}
 
 	Function *Type::copyCtor() {
-		Overload *o = as<Overload>(find(Name(CTOR)));
-		if (!o)
-			return null;
-
-		return as<Function>(o->find(vector<Value>(2, Value::thisPtr(this))));
+		return as<Function>(find(CTOR, vector<Value>(2, Value::thisPtr(this))));
 	}
 
 	Function *Type::assignFn() {
-		Overload *o = as<Overload>(find(Name(L"=")));
-		if (!o)
-			return null;
-
-		return as<Function>(o->find(vector<Value>(2, Value::thisPtr(this))));
+		return as<Function>(find(L"=", vector<Value>(2, Value::thisPtr(this))));
 	}
 
 	Function *Type::defaultCtor() {
-		Overload *o = as<Overload>(find(Name(CTOR)));
-		if (!o)
-			return null;
-
-		return as<Function>(o->find(vector<Value>(1, Value::thisPtr(this))));
+		return as<Function>(find(CTOR, vector<Value>(1, Value::thisPtr(this))));
 	}
 
 
@@ -279,31 +250,28 @@ namespace storm {
 		if (flags & typeValue)
 			return;
 
-		for (MemberMap::iterator i = members.begin(), end = members.end(); i != end; ++i) {
-			Overload *o = i->second.borrow();
-			updateVirtual(o);
+		for (NameSet::iterator i = begin(), end = this->end(); i != end; ++i) {
+			updateVirtual(i->borrow());
 		}
 	}
 
-	void Type::updateVirtual(Overload *o) {
+	void Type::updateVirtual(Named *named) {
 		// Constructors never need virtual dispatch (and would crash if we used it there...).
-		if (o->name == CTOR)
+		if (named->name == CTOR)
 			return;
 
-		for (Overload::iterator i = o->begin(), end = o->end(); i != end; ++i) {
-			NameOverload *no = i->borrow();
-			if (Function *fn = as<Function>(no)) {
-				if (needsVirtual(fn))
-					enableLookup(fn);
-				else
-					disableLookup(fn);
-			}
+		if (Function *fn = as<Function>(named)) {
+			if (needsVirtual(fn))
+				enableLookup(fn);
+			else
+				disableLookup(fn);
 		}
 	}
 
 	void Type::enableLookup(Function *fn) {
 		VTablePos pos = vtable.insert(fn);
 		insertOverloads(fn);
+
 
 		// PLN(*fn << " got " << pos);
 		// vtable.dbg_dump();
@@ -339,14 +307,10 @@ namespace storm {
 	}
 
 	Function *Type::overloadTo(Function *to) {
-		MemberMap::const_iterator i = members.find(to->name);
-		if (i == members.end())
-			return null;
-
 		// Replace the 'this' parameter, otherwise we would never get a match!
 		vector<Value> params = to->params;
-		params[0].type = this;
-		return as<Function>(i->second->find(params));
+		params[0] = Value::thisPtr(this);
+		return as<Function>(find(to->name, params));
 	}
 
 	void Type::insertOverloads(Function *fn) {

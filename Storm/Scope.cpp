@@ -1,12 +1,19 @@
 #include "stdafx.h"
 #include "Scope.h"
 #include "Named.h"
-#include "Overload.h"
 #include "Package.h"
 #include "Engine.h"
 #include "Type.h"
 
 namespace storm {
+
+	Named *find(Par<NameLookup> root, Par<Name> name) {
+		NameLookup *at = root.borrow();
+		for (nat i = 0; at != null && i < name->size(); i++) {
+			at = at->find(name->at(i));
+		}
+		return as<Named>(at);
+	}
 
 	/**
 	 * Scope.
@@ -23,16 +30,9 @@ namespace storm {
 
 	Scope::Scope(const Scope &parent, Par<NameLookup> top) : top(top.borrow()), lookup(parent.lookup) {}
 
-	Named *Scope::find(const Name &name) const {
+	Named *Scope::find(Par<Name> name) const {
 		if (lookup)
 			return lookup->find(*this, name);
-
-		return null;
-	}
-
-	Named *Scope::find(const Name &name, const vector<Value> &params) const {
-		if (lookup)
-			return lookup->find(*this, name, params);
 
 		return null;
 	}
@@ -51,15 +51,18 @@ namespace storm {
 	}
 
 	Package *ScopeLookup::rootPkg(Package *p) {
-		while (p->parent())
-			p = p->parent();
+		while (p->parent()) {
+			assert(as<Package>(p->parent()));
+			p = (Package*)p->parent();
+		}
 		return p;
 	}
 
 	Package *ScopeLookup::corePkg(NameLookup *l) {
 		Package *top = firstPkg(l);
 		Package *root = rootPkg(top);
-		return as<Package>(root->find(Name(L"core")));
+		Auto<NamePart> core = CREATE(NamePart, l, L"core");
+		return as<Package>(root->find(core));
 	}
 
 	NameLookup *ScopeLookup::nextCandidate(NameLookup *prev) {
@@ -76,32 +79,20 @@ namespace storm {
 		}
 	}
 
-	Named *ScopeLookup::find(const Scope &in, const Name &name) {
+	Named *ScopeLookup::find(const Scope &in, Par<Name> name) {
 		// Regular path.
 		for (NameLookup *at = in.top; at; at = nextCandidate(at)) {
-			if (Named *found = at->find(name))
+			if (Named *found = storm::find(at, name))
 				return found;
 		}
 
 		// Core.
 		if (Package *core = corePkg(in.top))
-			if (Named *found = core->find(name))
+			if (Named *found = storm::find(core, name))
 				return found;
 
 		// We failed!
 		return null;
-	}
-
-	Named *ScopeLookup::find(const Scope &in, const Name &name, const vector<Value> &params) {
-		Named *named = find(in, name);
-
-		if (Overload *overload = as<Overload>(named)) {
-			return overload->find(params);
-		} else if (params.size() == 0) {
-			return named;
-		} else {
-			return null;
-		}
 	}
 
 	/**
@@ -110,12 +101,12 @@ namespace storm {
 
 	ScopeExtra::ScopeExtra() {}
 
-	Named *ScopeExtra::find(const Scope &in, const Name &name) {
+	Named *ScopeExtra::find(const Scope &in, Par<Name> name) {
 		if (Named *found = ScopeLookup::find(in, name))
 			return found;
 
 		for (nat i = 0; i < extra.size(); i++) {
-			if (Named *found = extra[i]->find(name))
+			if (Named *found = storm::find(extra[i], name))
 				return found;
 		}
 

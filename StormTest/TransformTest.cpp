@@ -43,7 +43,7 @@ BEGIN_TEST(TransformTest) {
 
 	Engine &engine = *gEngine;
 
-	Package *simple = engine.package(Name(L"lang.simple"));
+	Package *simple = engine.package(L"lang.simple");
 	SyntaxSet set;
 	set.add(*simple);
 	CHECK(tfm(engine, set, L"Rep1Root", L"{ a + b; }", null));

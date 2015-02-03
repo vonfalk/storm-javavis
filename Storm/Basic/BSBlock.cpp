@@ -88,10 +88,14 @@ namespace storm {
 	bs::BlockLookup::BlockLookup(Par<Block> o, NameLookup *prev) : block(o.borrow()), prev(prev) {}
 
 	Named *bs::BlockLookup::find(const Name &name) {
-		if (name.size() == 1)
-			return block->variable(name[0]);
-		else
+		if (name.size() != 1)
 			return null;
+
+		Auto<NamePart> p = name.at(0);
+		if (!p->params.empty())
+			return null;
+
+		return block->variable(p->name);
 	}
 
 	NameLookup *bs::BlockLookup::parent() const {

@@ -10,7 +10,7 @@
 namespace storm {
 
 	Function::Function(Value result, const String &name, const vector<Value> &params)
-		: NameOverload(name, params), result(result), lookupRef(null), codeRef(null) {}
+		: Named(name, params), result(result), lookupRef(null), codeRef(null) {}
 
 	Function::~Function() {
 		// Correct destruction order.

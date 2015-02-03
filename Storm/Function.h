@@ -1,5 +1,4 @@
 #pragma once
-#include "Overload.h"
 #include "Code.h"
 #include "CodeGen.h"
 
@@ -24,7 +23,7 @@ namespace storm {
 	 *
 	 * TODO: Add concept of invalidators to at least LazyFn.
 	 */
-	class Function : public NameOverload {
+	class Function : public Named {
 		STORM_CLASS;
 	public:
 		// Create a function.

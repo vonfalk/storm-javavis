@@ -18,7 +18,10 @@ namespace storm {
 	void bnf::Reader::readSyntax(SyntaxRules &to) {
 		Auto<ScopeExtra> extra = CREATE(ScopeExtra, engine());
 		Scope scope(owner, extra);
-		extra->extra.push_back(scope.find(Name(L"core.lang")));
+		Auto<Name> p = CREATE(Name, this);
+		p->add(L"core");
+		p->add(L"lang");
+		extra->extra.push_back(scope.find(p));
 
 		const vector<Path> &f = pkgFiles->files;
 		for (nat i = 0; i < f.size(); i++) {

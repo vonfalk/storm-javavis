@@ -41,7 +41,8 @@ namespace storm {
 
 		// Find the given package. Returns null on failure. If 'create' is
 		// true, then all packages that does not yet exist are created.
-		Package *package(const Name &path, bool create = false);
+		Package *package(Par<Name> path, bool create = false);
+		Package *package(const String &name);
 
 		// Get a built-in type.
 		inline Type *builtIn(nat id) const { return cached[id].borrow(); }
@@ -93,7 +94,7 @@ namespace storm {
 		Auto<Package> rootPkg;
 
 		// Create the package (recursive).
-		Package *createPackage(Package *pkg, const Name &path, nat at = 0);
+		Package *createPackage(Package *pkg, Par<Name> path, nat at = 0);
 
 		// Root scope.
 		Scope *rootScope;

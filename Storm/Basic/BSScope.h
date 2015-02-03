@@ -23,8 +23,11 @@ namespace storm {
 			void addSyntax(const Scope &from, SyntaxSet &to);
 
 			// Find stuff.
-			virtual Named *find(const Scope &from, const Name &name);
-			virtual Named *find(const Scope &from, const Name &name, const vector<Value> &param);
+			virtual Named *find(const Scope &from, Par<Name> name);
+
+		private:
+			// Find helper.
+			virtual Named *findHelper(const Scope &from, Par<Name> name);
 		};
 
 		void addInclude(const Scope &to, Package *p);

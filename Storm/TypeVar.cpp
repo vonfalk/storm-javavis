@@ -5,7 +5,7 @@
 namespace storm {
 
 	TypeVar::TypeVar(Type *owner, const Value &type, const String &name)
-		: NameOverload(name, vector<Value>(1, Value::thisPtr(owner))), varType(type) {}
+		: Named(name, vector<Value>(1, Value::thisPtr(owner))), varType(type) {}
 
 	void TypeVar::output(wostream &to) const {
 		to << varType << L" " << owner()->identifier() << L":" << name;

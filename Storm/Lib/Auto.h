@@ -141,7 +141,9 @@ namespace storm {
 		}
 
 		// Return the pointer (releases our ownership of it).
-		inline T *ret() { T *t = obj; obj = null; return t; }
+		inline T *ret() const { obj->addRef(); return obj; }
+
+		// Steal the pointer. Sets this to null.
 		inline T *steal() { T *t = obj; obj = null; return t; }
 
 		// Get a pointer, borriowing the reference.
@@ -210,13 +212,43 @@ namespace storm {
 		~Steal() { v->release(); }
 
 		operator T *() { return v; }
+
 		template <class U>
 		operator Par<U>() { return Par<U>(v); }
+
+		template <class U>
+		operator Auto<U>() { return Auto<U>(capture(v)); }
 
 		T *v;
 	};
 
 	template <class T>
 	inline Steal<T> steal(T *ptr) { return Steal<T>(ptr); }
+
+}
+
+namespace stdext {
+
+	/**
+	 * Enable hash functions for Auto values.
+	 */
+	template <class T>
+	inline size_t hash_value(const storm::Auto<T> &n) {
+		return n->hash();
+	}
+
+}
+
+namespace std {
+
+	/**
+	 * Specialize for equality checks in maps and so on.
+	 */
+	template <class T>
+	struct equal_to<storm::Auto<T> > {
+		bool operator () (const storm::Auto<T> &a, const storm::Auto<T> &b) {
+			return (*a) == (*b);
+		}
+	};
 
 }

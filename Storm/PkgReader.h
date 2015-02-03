@@ -11,13 +11,13 @@ namespace storm {
 	class Package;
 
 	// Get the name of the 'reader' class from 'pkg'.
-	Name readerName(const Name &name);
+	Name *STORM_FN readerName(Par<const Name> name);
 
 	// Get the name of the package containing the syntax to be used when parsing 'path'.
-	Name syntaxPkg(const Path &path);
+	Name *syntaxPkg(Engine &e, const Path &path);
 
 	// Same as above, but generates a map of all files with the same extension.
-	hash_map<Name, PkgFiles *> syntaxPkg(const vector<Path> &paths, Engine &e);
+	hash_map<Auto<Name>, PkgFiles *> syntaxPkg(const vector<Path> &paths, Engine &e);
 
 	/**
 	 * Input set to a PkgReader.

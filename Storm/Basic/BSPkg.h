@@ -8,6 +8,7 @@ namespace storm {
 
 		/**
 		 * Package name from the parser.
+		 * TODO? Replace with a plain Name?
 		 */
 		class Pkg : public SObject {
 			STORM_CLASS;
@@ -17,10 +18,11 @@ namespace storm {
 			void STORM_FN add(Par<SStr> part);
 
 			// Get the entire pkg path as a Name.
-			Name name() const;
+			Name *STORM_FN name() const;
 
-			// All parts so far.
-			vector<String> parts;
+		private:
+			// Name under construction.
+			Auto<Name> n;
 		};
 
 	}

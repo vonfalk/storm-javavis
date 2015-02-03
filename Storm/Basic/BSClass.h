@@ -56,10 +56,10 @@ namespace storm {
 			STORM_CTOR ClassBody();
 
 			// Add content.
-			void STORM_FN add(Par<NameOverload> item);
+			void STORM_FN add(Par<Named> item);
 
 			// Contents.
-			vector<Auto<NameOverload> > items;
+			vector<Auto<Named> > items;
 		};
 
 

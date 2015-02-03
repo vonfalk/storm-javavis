@@ -180,20 +180,8 @@ namespace storm {
 		return Value();
 	}
 
-	/**
-	 * Helpers
-	 */
 
-	static Value fnResultType(NameOverload *no) {
-		if (Function *fn = as<Function>(no)) {
-			return fn->result;
-		} else {
-			assert(false); // Unhandled type!
-			return Value();
-		}
-	}
-
-	Value fnResultType(const Scope &scope, const Name &fn, const vector<Value> &params) {
+	Value fnResultType(const Scope &scope, Par<Name> fn) {
 		Named *f = scope.find(fn);
 		if (f == null) {
 			return Value();
@@ -201,9 +189,8 @@ namespace storm {
 			// We do not correctly handle this yet.
 			assert(t->flags & typeClass);
 			return Value(t);
-		} else if (Overload *o = as<Overload>(f)) {
-			NameOverload *no = o->find(params);
-			return fnResultType(no);
+		} else if (Function *fn = as<Function>(f)) {
+			return fn->result;
 		} else {
 			assert(false); // Unhandled type!
 			return Value();

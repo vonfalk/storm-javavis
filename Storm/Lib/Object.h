@@ -1,6 +1,6 @@
 #pragma once
 #include "Auto.h"
-#include "Lib/Bool.h"
+#include "Lib/Types.h"
 #include "Code/Size.h"
 #include "Code/Function.h"
 

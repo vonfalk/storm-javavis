@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Bool.h"
 #include "Type.h"
-#include "BoolDef.h"
+#include "Bool.h"
 #include "Engine.h"
 #include "Code.h"
 #include "Function.h"

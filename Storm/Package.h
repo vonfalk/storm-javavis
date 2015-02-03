@@ -3,7 +3,7 @@
 #include "SyntaxRule.h"
 #include "Named.h"
 #include "Scope.h"
-#include "Overload.h"
+#include "NameSet.h"
 #include "Utils/Path.h"
 
 namespace storm {
@@ -26,7 +26,7 @@ namespace storm {
 	 * Packages are lazily loaded, which means that the contents
 	 * is not loaded until it is needed.
 	 */
-	class Package : public Named {
+	class Package : public NameSet {
 		STORM_CLASS;
 	public:
 		// Create a virtual package, ie a package not present
@@ -46,61 +46,21 @@ namespace storm {
 		// The options are still owned by this class.
 		const SyntaxRules &syntax();
 
-		// Get a sub-package by name.
-		Package *childPackage(const String &name);
-
-		// Add a sub-package. Assumes that it does not already exists!
-		void STORM_FN add(Package* pkg);
-
-		// Add a type to this package.
-		void STORM_FN add(Type* type);
-
-		// Add a function to this package.
-		void add(NameOverload *function);
-
 		// Find a name here.
-		virtual Named *find(const Name &name);
-
-		// Get our path relative the root.
-		virtual Name path() const;
+		virtual Named *find(Par<NamePart> name);
 
 		// Get parent.
-		virtual Package *parent() const { return parentPkg; }
+		virtual NameLookup *parent() const;
 
 	protected:
 		virtual void output(std::wostream &to) const;
 
 	private:
-		// Our parent, null if root.
-		Package *parentPkg;
-
 		// Our path. Points to null if this is a virtual package.
 		Path *pkgPath;
 
-		// Sub-packages. These are loaded on demand.
-		typedef hash_map<String, Auto<Package> > PkgMap;
-		PkgMap packages;
-
 		// Rules present in this package.
 		SyntaxRules syntaxRules;
-
-		// Types in this package.
-		typedef hash_map<String, Auto<Type> > TypeMap;
-		TypeMap types;
-
-		// All functions and variables in this package.
-		typedef hash_map<String, Auto<Overload> > MemberMap;
-		MemberMap members;
-
-		/**
-		 * Recursive member lookup.
-		 */
-
-		// Find a name in this package or a sub-package.
-		Named *findName(const Name &name, nat start);
-
-		// Find the name in this package. Examines the types and functions present here.
-		Named *findTypeOrFn(const Name &name, nat start);
 
 		/**
 		 * Lazy-loading status:
@@ -116,10 +76,10 @@ namespace storm {
 		void loadAlways();
 
 		// Create a PkgReader from 'pkg'.
-		PkgReader *createReader(const Name &pkg, PkgFiles *files);
+		PkgReader *createReader(Par<Name> pkg, PkgFiles *files);
 
 		// Add a PkgReader to 'to'.
-		void addReader(vector<PkgReader *> &to, const Name &pkg, PkgFiles *files);
+		void addReader(vector<PkgReader *> &to, Par<Name> pkg, PkgFiles *files);
 
 		/**
 		 * Init.

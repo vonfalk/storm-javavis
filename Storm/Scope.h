@@ -7,7 +7,6 @@ namespace storm {
 	STORM_PKG(core.lang);
 
 	class NameLookup;
-	class NameOverload;
 	class Named;
 	class Package;
 
@@ -17,6 +16,9 @@ namespace storm {
 	 * pointer to the current 'ScopeLookup', which implements the lookup strategy
 	 */
 	class Scope;
+
+	// Find a named from a Name.
+	Named *find(Par<NameLookup> root, Par<Name> name);
 
 
 	/**
@@ -28,12 +30,7 @@ namespace storm {
 		STORM_CTOR ScopeLookup();
 
 		// Find 'name' in 'in'. Note that the returned pointer is borrowed.
-		virtual Named *find(const Scope &in, const Name &name);
-
-		// Find 'name' with 'params' in 'in'. Note that the returned pointer is borrowed.
-		// If you pass Scope() (void) as the first parameter, it will match the "this" pointer
-		// of member functions if relevant.
-		virtual Named *find(const Scope &in, const Name &name, const vector<Value> &params);
+		virtual Named *find(const Scope &in, Par<Name> name);
 
 	protected:
 		/**
@@ -89,11 +86,7 @@ namespace storm {
 
 		// Find the given NameRef, either by using an absulute path or something
 		// relative to the current object. NOTE: returns a borrowed ptr.
-		Named *find(const Name &name) const;
-
-		// Find a overloaded name. Usually a function. Equivalent to call 'find' above
-		// and then try to find something with parameters. May return plain 'Named' if params.size() == 0
-		Named *find(const Name &name, const vector<Value> &params) const;
+		Named *find(Par<Name> name) const;
 	};
 
 
@@ -110,7 +103,7 @@ namespace storm {
 		vector<NameLookup *> extra;
 
 		// Find
-		virtual Named *find(const Scope &in, const Name &name);
+		virtual Named *find(const Scope &in, Par<Name> name);
 
 	};
 

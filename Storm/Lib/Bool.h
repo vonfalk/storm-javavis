@@ -1,11 +1,16 @@
 #pragma once
+#include "Type.h"
 
 namespace storm {
-	class Engine;
-	class Type;
+	STORM_PKG(core.lang);
 
-	typedef bool Bool;
+	class BoolType : public Type {
+		STORM_CLASS;
+	public:
+		BoolType();
 
-	Type *boolType(Engine &to);
+		virtual bool isBuiltIn() const { return true; }
+		virtual Function *destructor() { return null; }
+	};
 
 }

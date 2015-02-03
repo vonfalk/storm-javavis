@@ -11,13 +11,13 @@ namespace storm {
 	struct BuiltInType {
 
 		// Location (package).
-		Name pkg;
+		const wchar *pkg;
 
 		// Name of the type (null in the last element).
 		const wchar *name;
 
 		// Name of parent type (or empty).
-		Name super;
+		const wchar *super;
 
 		// Size of type.
 		nat typeSize;
@@ -49,7 +49,7 @@ namespace storm {
 	struct BuiltInFunction {
 
 		// The location (package).
-		Name pkg;
+		const wchar *pkg;
 
 		// Member of a type? null=no.
 		const wchar *typeMember;
@@ -58,7 +58,7 @@ namespace storm {
 		ValueRef result;
 
 		// Name of the function.
-		String name;
+		const wchar *name;
 
 		// Parameters to the function (Name of the types).
 		vector<ValueRef> params;

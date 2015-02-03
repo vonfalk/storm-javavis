@@ -122,12 +122,7 @@ namespace storm {
 
 
 	bs::CtorCall *bs::defaultCtor(const SrcPos &pos, Par<Type> t) {
-		Overload *o = as<Overload>(t->find(Type::CTOR));
-		if (!o)
-			throw SyntaxError(pos, L"No default constructor for " + t->identifier());
-
-		vector<Value> params(1, Value(t.borrow(), true));
-		Function *f = as<Function>(o->find(params));
+		Function *f = t->defaultCtor();
 		if (!f)
 			throw SyntaxError(pos, L"No default constructor for " + t->identifier());
 
@@ -136,12 +131,7 @@ namespace storm {
 	}
 
 	bs::CtorCall *bs::copyCtor(const SrcPos &pos, Par<Type> t, Par<Expr> src) {
-		Overload *o = as<Overload>(t->find(Type::CTOR));
-		if (!o)
-			throw SyntaxError(pos, L"No copy-constructor for " + t->identifier());
-
-		vector<Value> params(2, Value(t.borrow(), true));
-		Function *f = as<Function>(o->find(params));
+		Function *f = t->copyCtor();
 		if (!f)
 			throw SyntaxError(pos, L"No copy-constructor for " + t->identifier());
 
@@ -324,10 +314,10 @@ namespace storm {
 	namespace bs {
 		static Expr *findCtor(Type *t, Par<Actual> actual, const SrcPos &pos);
 		static Expr *findTarget(Named *n, Par<Expr> first, Par<Actual> actual, const SrcPos &pos);
-		static Expr *findTargetThis(Par<Block> block, const Name &name,
+		static Expr *findTargetThis(Par<Block> block, Par<Name> name,
 									Par<Actual> params, const SrcPos &pos,
 									Named *&candidate);
-		static Expr *findTarget(Par<Block> block, const Name &name,
+		static Expr *findTarget(Par<Block> block, Par<Name> name,
 								const SrcPos &pos, Par<Actual> params,
 								bool useThis);
 	}
@@ -337,11 +327,7 @@ namespace storm {
 		vector<Value> params = actual->values();
 		params.insert(params.begin(), Value::thisPtr(t));
 
-		Overload *o = as<Overload>(t->find(Name(Type::CTOR)));
-		if (!o)
-			throw SyntaxError(pos, L"No constructor for " + t->identifier());
-
-		Function *ctor = as<Function>(o->find(params));
+		Function *ctor = as<Function>(t->find(Type::CTOR, params));
 		if (!ctor)
 			throw SyntaxError(pos, L"No constructor " + t->identifier() + L"(" + join(params, L", ") + L")");
 
@@ -381,7 +367,7 @@ namespace storm {
 	}
 
 	// Find a target assuming we should use the this-pointer.
-	static bs::Expr *bs::findTargetThis(Par<Block> block, const Name &name,
+	static bs::Expr *bs::findTargetThis(Par<Block> block, Par<Name> name,
 										Par<Actual> params, const SrcPos &pos,
 										Named *&candidate) {
 		const Scope &scope = block->scope;
@@ -392,7 +378,7 @@ namespace storm {
 
 		vector<Value> vals = params->values();
 		vals.insert(vals.begin(), thisVar->result);
-		Named *n = scope.find(name, vals);
+		Named *n = scope.find(capture(name->withParams(vals)));
 		candidate = n;
 
 		Auto<Expr> first = CREATE(LocalVarAccess, block, thisVar);
@@ -405,7 +391,7 @@ namespace storm {
 
 	// Find whatever is meant by the 'name' in this context. Return suitable expression. If
 	// 'useThis' is true, a 'this' pointer may be inserted as the first parameter.
-	static bs::Expr *bs::findTarget(Par<Block> block, const Name &name,
+	static bs::Expr *bs::findTarget(Par<Block> block, Par<Name> name,
 									const SrcPos &pos, Par<Actual> params,
 									bool useThis) {
 		const Scope &scope = block->scope;
@@ -419,7 +405,7 @@ namespace storm {
 			if (Expr *e = findTargetThis(block, name, params, pos, candidate))
 				return e;
 
-		Named *n = scope.find(name, params->values());
+		Named *n = scope.find(capture(name->withParams(params->values())));
 
 		if (Expr *e = findTarget(n, null, params, pos))
 			return e;
@@ -436,12 +422,14 @@ namespace storm {
 	}
 
 	bs::Expr *bs::namedExpr(Par<Block> block, Par<SStr> name, Par<Actual> params) {
-		return findTarget(block, Name(name->v->v), name->pos, params, true);
+		Auto<Name> n = parseSimpleName(name->engine(), name->v->v);
+		return findTarget(block, n, name->pos, params, true);
 	}
 
 	bs::Expr *bs::namedExpr(Par<Block> block, Par<SStr> name, Par<Expr> first, Par<Actual> params) {
 		params->addFirst(first);
-		return findTarget(block, Name(name->v->v), name->pos, params, false);
+		Auto<Name> n = parseSimpleName(name->engine(), name->v->v);
+		return findTarget(block, n, name->pos, params, false);
 	}
 
 

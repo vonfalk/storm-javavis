@@ -15,7 +15,7 @@ namespace storm {
 	public:
 		// Add a new variable.
 		void add(TypeVar *v);
-		void add(NameOverload *o);
+		void add(Named *o);
 
 		// Get the offset of 'v'.
 		Offset offset(Size parentSize, const TypeVar *v) const;

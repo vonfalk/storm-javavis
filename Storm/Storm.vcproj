@@ -255,10 +255,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Overload.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Package.cpp"
 				>
 			</File>
@@ -434,6 +430,10 @@
 				RelativePath=".\TypeDtor.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\NameSet.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -450,10 +450,6 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Bool.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\BoolDef.h"
 				>
 			</File>
 			<File
@@ -534,10 +530,6 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Object.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Overload.h"
 				>
 			</File>
 			<File
@@ -702,6 +694,14 @@
 			</File>
 			<File
 				RelativePath=".\TypeDtor.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Types.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NameSet.h"
 				>
 			</File>
 		</Filter>

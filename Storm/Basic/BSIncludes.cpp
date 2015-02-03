@@ -6,7 +6,7 @@ namespace storm {
 	bs::Includes::Includes() {}
 
 	void bs::Includes::add(Par<Pkg> pkg) {
-		names.push_back(pkg->name());
+		names.push_back(steal(pkg->name()));
 	}
 
 }

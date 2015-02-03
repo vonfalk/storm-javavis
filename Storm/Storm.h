@@ -15,7 +15,7 @@
 #define TYPE_CODE									\
 	public:											\
 	static Type *type(Engine &e);					\
-	static Type *type(Object *o);					\
+	static Type *type(const Object *o);				\
 	template <class T>								\
 	static inline Type *type(const Auto<T> &o) {	\
 		return type(o.borrow());					\

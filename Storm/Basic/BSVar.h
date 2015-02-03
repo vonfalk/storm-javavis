@@ -9,7 +9,6 @@ namespace storm {
 
 		/**
 		 * Local variable.
-		 * TODO? NameOverload as well? For member variables?
 		 */
 		class LocalVar : public Named {
 			STORM_CLASS;

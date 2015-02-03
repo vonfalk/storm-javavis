@@ -108,6 +108,6 @@ namespace storm {
 	class Name;
 
 	// Find the result type of a function call. Constructor calls are also handled.
-	Value fnResultType(const Scope &scope, const Name &fn, const vector<Value> &params);
+	Value fnResultType(const Scope &scope, Par<Name> fn);
 
 }

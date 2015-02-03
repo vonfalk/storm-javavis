@@ -1,7 +1,6 @@
 #pragma once
 #include "Named.h"
 #include "Scope.h"
-#include "Overload.h"
 #include "Package.h"
 #include "TypeChain.h"
 #include "TypeLayout.h"
@@ -39,7 +38,7 @@ namespace storm {
 	 * to the object itself as its first parameter. Instead it takes a parameter
 	 * to the current Type-object instead. This is enforced by the 'add' method.
 	 */
-	class Type : public Named {
+	class Type : public NameSet {
 		STORM_CLASS;
 	public:
 		// Create a type that exists in Storm.
@@ -80,10 +79,11 @@ namespace storm {
 		bool isA(Type *super) const;
 
 		// Add new members.
-		void add(NameOverload *m);
+		virtual void STORM_FN add(Par<Named> m);
 
-		// Lookup names.
-		virtual Named *find(const Name &name);
+		// Find stuff.
+		virtual Named *find(Par<NamePart> name);
+		Named *find(const String &name, const vector<Value> &params);
 
 		// Parent.
 		virtual Package *parent() const { return parentPkg; }
@@ -132,12 +132,8 @@ namespace storm {
 		void allowLazyLoad(bool v);
 
 	private:
-		// Members.
-		typedef hash_map<String, Auto<Overload> > MemberMap;
-		MemberMap members;
-
 		// Validate parameters to added members.
-		void validate(NameOverload *m);
+		void validate(Named *m);
 
 		// Our parent type's size.
 		Size superSize() const;
@@ -162,7 +158,7 @@ namespace storm {
 
 		// Update the need for virtual calls for all members.
 		void updateVirtual();
-		void updateVirtual(Overload *o);
+		void updateVirtual(Named *named);
 
 		// Check if 'x' needs to have a virtual dispatch.
 		bool needsVirtual(Function *fn);

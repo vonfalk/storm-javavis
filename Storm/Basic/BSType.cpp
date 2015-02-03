@@ -21,19 +21,19 @@ namespace storm {
 		to << pkg << L"." << name;
 	}
 
-	Name bs::TypeName::getName() {
-		vector<String> p;
+	Name *bs::TypeName::getName() {
+		Name *r = CREATE(Name, this);
 		if (pkg) {
 			for (nat i = 0; i < pkg->parts.size(); i++)
-				p.push_back(pkg->parts[i]->v);
+				r->add(steal(CREATE(NamePart, this, pkg->parts[i])));
 		}
-		p.push_back(name->v);
-		return Name(p);
+		r->add(steal(CREATE(NamePart, this, name)));
+		return r;
 	}
 
 	Value bs::TypeName::value(const Scope &scope) {
-		Name name = getName();
-		if (name.size() == 1 && name[0] == L"void")
+		Auto<Name> name = getName();
+		if (name->size() == 1 && name->at(0)->name == L"void")
 			return Value();
 
 		Named *n = scope.find(name);

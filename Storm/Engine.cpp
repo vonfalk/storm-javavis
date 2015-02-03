@@ -86,8 +86,13 @@ namespace storm {
 		specialCached[nat(t)] = z;
 	}
 
-	Package *Engine::package(const Name &path, bool create) {
-		Named *n = rootPkg->find(path);
+	Package *Engine::package(const String &path) {
+		Auto<Name> name = parseSimpleName(*this, path);
+		return package(name);
+	}
+
+	Package *Engine::package(Par<Name> path, bool create) {
+		Named *n = find(rootPkg, path);
 		if (Package *pkg = as<Package>(n))
 			return pkg;
 
@@ -97,13 +102,15 @@ namespace storm {
 		return null;
 	}
 
-	Package *Engine::createPackage(Package *pkg, const Name &path, nat pos) {
-		if (path.size() == pos)
+	Package *Engine::createPackage(Package *pkg, Par<Name> path, nat pos) {
+		if (path->size() == pos)
 			return pkg;
 
-		Package *next = pkg->childPackage(path[pos]);
+		assert(path->at(pos)->params.size() == 0);
+
+		Package *next = as<Package>(pkg->find(path->at(pos)));
 		if (next == null) {
-			Auto<Package> r = CREATE(Package, *this, path[pos], *this);
+			Auto<Package> r = CREATE(Package, *this, path->at(pos)->name, *this);
 			pkg->add(r.borrow());
 			next = r.borrow();
 		}
