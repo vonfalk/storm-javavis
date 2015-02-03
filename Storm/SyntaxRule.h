@@ -88,6 +88,9 @@ namespace storm {
 		inline iterator begin() const { return data.begin(); }
 		inline iterator end() const { return data.end(); }
 
+		// Empty?
+		inline bool empty() const { return data.empty(); }
+
 	protected:
 		virtual void output(wostream &to) const;
 

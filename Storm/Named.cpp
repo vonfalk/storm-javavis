@@ -12,8 +12,8 @@ namespace storm {
 	}
 
 	NameLookup *NameLookup::parent() const {
-		assert(parentLookup != null);
-		return null;
+		assert(parentLookup);
+		return parentLookup;
 	}
 
 	Named::Named(Par<Str> name) : name(name->v) {}
@@ -44,7 +44,8 @@ namespace storm {
 	}
 
 	String Named::identifier() const {
-		return ::toS(path());
+		Auto<Name> p = path();
+		return ::toS(p);
 	}
 
 }

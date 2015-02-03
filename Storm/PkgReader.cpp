@@ -19,8 +19,8 @@ namespace storm {
 		return n;
 	}
 
-	hash_map<Auto<Name>, PkgFiles *> syntaxPkg(const vector<Path> &paths, Engine &e) {
-		typedef hash_map<Auto<Name>, PkgFiles *> M;
+	hash_map<Auto<Name>, Auto<PkgFiles> > syntaxPkg(const vector<Path> &paths, Engine &e) {
+		typedef hash_map<Auto<Name>, Auto<PkgFiles> > M;
 		M r;
 		TODO(L"Check the behaviour of the map here!");
 
@@ -30,8 +30,8 @@ namespace storm {
 
 			Auto<Name> pkg = syntaxPkg(e, paths[i]);
 			M::iterator found = r.find(pkg);
-			PkgFiles *into;
 
+			Auto<PkgFiles> into;
 			if (found == r.end()) {
 				into = CREATE(PkgFiles, e);
 				r.insert(make_pair(pkg, into));

@@ -25,7 +25,7 @@ namespace storm {
 		const String name;
 
 		// Any parameters present.
-		vector<Value> params;
+		const vector<Value> params;
 
 		// Equality check.
 		bool operator ==(const NamePart &o) const;

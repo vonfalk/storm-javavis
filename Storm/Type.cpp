@@ -32,7 +32,6 @@ namespace storm {
 	void Type::init() {
 		lazyLoading = false;
 		lazyLoaded = false;
-		parentPkg = null;
 
 		typeRef.set(this);
 
@@ -310,7 +309,7 @@ namespace storm {
 		// Replace the 'this' parameter, otherwise we would never get a match!
 		vector<Value> params = to->params;
 		params[0] = Value::thisPtr(this);
-		return as<Function>(find(to->name, params));
+		return as<Function>(NameSet::find(to->name, params));
 	}
 
 	void Type::insertOverloads(Function *fn) {

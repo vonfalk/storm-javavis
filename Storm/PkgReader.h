@@ -17,7 +17,7 @@ namespace storm {
 	Name *syntaxPkg(Engine &e, const Path &path);
 
 	// Same as above, but generates a map of all files with the same extension.
-	hash_map<Auto<Name>, PkgFiles *> syntaxPkg(const vector<Path> &paths, Engine &e);
+	hash_map<Auto<Name>, Auto<PkgFiles> > syntaxPkg(const vector<Path> &paths, Engine &e);
 
 	/**
 	 * Input set to a PkgReader.

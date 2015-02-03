@@ -24,10 +24,12 @@ namespace storm {
 		Overload *o = null;
 		OverloadMap::iterator i = overloads.find(p->name);
 
-		if (i == overloads.end())
+		if (i == overloads.end()) {
 			o = new Overload();
-		else
+			overloads.insert(make_pair(p->name, o));
+		} else {
 			o = i->second;
+		}
 
 		add(o, p);
 	}

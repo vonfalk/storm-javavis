@@ -76,10 +76,10 @@ namespace storm {
 		void loadAlways();
 
 		// Create a PkgReader from 'pkg'.
-		PkgReader *createReader(Par<Name> pkg, PkgFiles *files);
+		PkgReader *createReader(Par<Name> pkg, Par<PkgFiles> files);
 
 		// Add a PkgReader to 'to'.
-		void addReader(vector<PkgReader *> &to, Par<Name> pkg, PkgFiles *files);
+		void addReader(vector<Auto<PkgReader> > &to, Par<Name> pkg, Par<PkgFiles> files);
 
 		/**
 		 * Init.

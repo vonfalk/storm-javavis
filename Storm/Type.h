@@ -85,12 +85,6 @@ namespace storm {
 		virtual Named *find(Par<NamePart> name);
 		Named *find(const String &name, const vector<Value> &params);
 
-		// Parent.
-		virtual Package *parent() const { return parentPkg; }
-
-		// Parent package, updated by Package class.
-		Package *parentPkg;
-
 		// Clear contents. Mainly used for clean exits.
 		void clear();
 

@@ -111,8 +111,8 @@ namespace storm {
 		Package *next = as<Package>(pkg->find(path->at(pos)));
 		if (next == null) {
 			Auto<Package> r = CREATE(Package, *this, path->at(pos)->name, *this);
-			pkg->add(r.borrow());
 			next = r.borrow();
+			pkg->add(r);
 		}
 
 		return createPackage(next, path, pos + 1);

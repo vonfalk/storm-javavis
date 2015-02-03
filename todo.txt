@@ -1,5 +1,8 @@
 Also: return types for rules may be specified.
 
+Rewrite the table of classes so that the parent class simply refers another ID in the table. This
+will make less use of the system itself before being able to set up the inheritance so that as<> works.
+
 Verify that exceptions thrown in constructors are actually correctly propagated. Calling create1<DbgVal>(null) does
 not crash for some reason...
 

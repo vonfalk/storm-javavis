@@ -52,8 +52,8 @@ namespace storm {
 			NameSet::output(to);
 		}
 
-		to << "Syntax:" << endl;
-		{
+		if (!syntaxRules.empty()) {
+			to << "Syntax:" << endl;
 			Indent i(to);
 			to << syntaxRules;
 		}
@@ -65,7 +65,7 @@ namespace storm {
 
 		if (name->params.size() == 0)
 			if (Package *pkg = loadPackage(name->name))
-				return loadPackage(name->name);
+				return pkg;
 
 		if (loaded)
 			return null;
@@ -85,9 +85,9 @@ namespace storm {
 		if (!p.exists())
 			return null;
 
-		Package *pkg = CREATE(Package, engine, *pkgPath + Path(name), engine);
+		Auto<Package> pkg = CREATE(Package, engine, *pkgPath + Path(name), engine);
 		add(pkg);
-		return pkg;
+		return pkg.borrow();
 	}
 
 	const SyntaxRules &Package::syntax() {
@@ -116,9 +116,9 @@ namespace storm {
 	}
 
 	void Package::loadAlways() {
-		typedef hash_map<Auto<Name>, PkgFiles *> M;
+		typedef hash_map<Auto<Name>, Auto<PkgFiles> > M;
 		M files;
-		vector<PkgReader *> toLoad;
+		vector<Auto<PkgReader> > toLoad;
 
 		try {
 			files = syntaxPkg(pkgPath->children(), engine);
@@ -159,12 +159,9 @@ namespace storm {
 			NameSet::clear();
 			throw;
 		}
-
-		releaseMap(files);
-		releaseVec(toLoad);
 	}
 
-	PkgReader *Package::createReader(Par<Name> pkg, PkgFiles *files) {
+	PkgReader *Package::createReader(Par<Name> pkg, Par<PkgFiles> files) {
 		Auto<Name> rName = readerName(pkg);
 		Type *readerT = as<Type>(engine.scope()->find(rName));
 		if (!readerT) {
@@ -176,23 +173,22 @@ namespace storm {
 			throw RuntimeError(::toS(rName) + L" is not a subtype of lang.PkgReader.");
 
 		vector<Value> paramTypes(3);
-		paramTypes[0] = Value();
+		paramTypes[0] = Value::thisPtr(readerT);
 		paramTypes[1] = Value(PkgFiles::type(engine));
 		paramTypes[2] = Value(Package::type(engine));
 
-		rName->add(Type::CTOR, paramTypes);
-		Function *ctor = as<Function>(engine.scope()->find(rName));
+		Function *ctor = as<Function>(readerT->find(Type::CTOR, paramTypes));
 		if (!ctor)
 			throw RuntimeError(::toS(rName) + L": no constructor taking PkgFiles found!");
 
 		code::FnCall call;
-		call.param(files);
+		call.param(files.borrow());
 		call.param(this);
 		PkgReader *r = create<PkgReader>(ctor, call);
 		return r;
 	}
 
-	void Package::addReader(vector<PkgReader *> &to, Par<Name> pkg, PkgFiles *files) {
+	void Package::addReader(vector<Auto<PkgReader> > &to, Par<Name> pkg, Par<PkgFiles> files) {
 		PkgReader *r = createReader(pkg, files);
 		if (r)
 			to.push_back(r);

@@ -37,7 +37,7 @@ namespace storm {
 		~NameSet();
 
 		// Add a Named.
-		void add(Par<Named> item);
+		virtual void STORM_FN add(Par<Named> item);
 
 		// Find a NamePart (returns borrowed ptr).
 		virtual Named *find(Par<NamePart> part) const;

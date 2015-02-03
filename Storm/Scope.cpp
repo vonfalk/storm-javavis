@@ -7,12 +7,17 @@
 
 namespace storm {
 
+	// Reminder: do not use as<> in here, as this function is used before the inheritance is set up!
 	Named *find(Par<NameLookup> root, Par<Name> name) {
-		NameLookup *at = root.borrow();
-		for (nat i = 0; at != null && i < name->size(); i++) {
+		if (name->size() == 0)
+			return null;
+
+		Named *at = root->find(name->at(0));
+		for (nat i = 1; at != null && i < name->size(); i++) {
 			at = at->find(name->at(i));
 		}
-		return as<Named>(at);
+
+		return at;
 	}
 
 	/**
