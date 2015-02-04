@@ -43,9 +43,9 @@ function compute_sum {
     done
 }
 
-echo "date,code blank,code comment,code code,storm blank,storm comment,storm code,sum blank,sum comment,sum code"
+echo "date;code blank;code comment;code code;storm blank;storm comment;storm code;sum blank;sum comment;sum code"
 
-git log --format="format:%H %ci" master | while read commit date time timezone; do
+git log --format="format:%H %ci" $1 | while read commit date time timezone; do
     echo -n $date $time";"
 
     code=`count $commit $code_regex | tr -d "\n"`
@@ -56,4 +56,5 @@ git log --format="format:%H %ci" master | while read commit date time timezone; 
 
     compute_sum $code $storm
     echo ""
+
 done
