@@ -19,7 +19,7 @@ function list_hashes {
 }
 
 function count_input {
-    perl cloc.pl --stdin-name="foo.cpp" --quiet -csv - | tail -n1 | cut -d"," -f3-
+    perl cloc.pl --stdin-name="foo.cpp" --quiet --csv-delimiter=";" - | tail -n1 | cut -d";" -f3-
 }
 
 function count {
@@ -37,10 +37,12 @@ function count {
 echo "date,code blank,code comment,code code,storm blank,storm comment,storm code"
 
 git log --format="format:%H %ci" master | while read commit date time timezone; do
-    echo -n $date $time","
+    echo -n $date $time";"
 
     count $commit $code_regex | tr -d "\n"
-    echo -n ","
+    echo -n ";"
 
     count $commit $storm_regex
+
+    exit 12
 done
