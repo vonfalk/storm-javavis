@@ -103,7 +103,7 @@ namespace storm {
 		static BuiltInType types[] = {
 			// BEGIN TYPES
 			// END TYPES
-			{ L"", null, L"", null },
+			{ null, null, 0, 0, 0, 0, null },
 		};
 		return types;
 	}
@@ -115,7 +115,7 @@ namespace storm {
 		static BuiltInFunction fns[] = {
 			// BEGIN LIST
 			// END LIST
-			{ null, null, valueRef(), L"", list(0), null },
+			{ null, null, valueRef(), null, list(0), null },
 		};
 		return fns;
 	}

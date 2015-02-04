@@ -83,16 +83,13 @@ namespace storm {
 	}
 
 	static void addSuper(Engine &to, const BuiltInType *t) {
-		if (t->super == null)
+		if (t->super == t->typePtrId)
 			return;
 
 		Type *tc = to.builtIn(t->typePtrId);
-		Auto<Name> superName = parseSimpleName(to, t->super);
-		Named *s = to.scope()->find(superName);
-		Type *super = as<Type>(s);
+		Type *super = to.builtIn(t->super);
 		if (!super)
-			throw BuiltInError(L"Failed to locate super type " + String(t->super));
-
+			throw BuiltInError(L"Failed to locate super type with id " + toS(t->super));
 		tc->setSuper(super);
 	}
 
@@ -113,10 +110,10 @@ namespace storm {
 
 	static void addBuiltIn(Engine &to) {
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
-			addToPkg(to, t);
+			addSuper(to, t);
 		}
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
-			addSuper(to, t);
+			addToPkg(to, t);
 		}
 		for (const BuiltInFunction *fn = builtInFunctions(); fn->fnPtr; fn++) {
 			addBuiltIn(to, fn);

@@ -48,6 +48,18 @@ String fixPath(String str) {
 }
 
 /**
+ * Find the id of a type via CppName.
+ */
+nat typeId(const vector<Type> &ordered, const CppName &ref) {
+	for (nat i = 0; i < ordered.size(); i++) {
+		if (ordered[i].cppName == ref)
+			return i;
+	}
+
+	throw Error(L"Could not find " + ::toS(ref) + L" in the list of types!");
+}
+
+/**
  * Generation
  */
 
@@ -60,11 +72,13 @@ String typeList(const Types &types) {
 		out << L"{ L\"" << type.package << L"\", ";
 		out << L"L\"" << type.name << L"\", ";
 
+		out << i << L" /* id */, ";
+
 		if (type.super.empty()) {
-			out << L"null, ";
+			out << i << L" /* none */, ";
 		} else {
 			Type super = types.find(type.super, type.cppName.parent());
-			out << L"L\"" << super.fullName() << L"\", ";
+			out << typeId(t, super.cppName) << L" /* " << super.fullName() << " */, ";
 		}
 
 		out << L"sizeof(" << type.cppName << L"), ";
@@ -75,7 +89,6 @@ String typeList(const Types &types) {
 			out << L"typeClass, ";
 		}
 
-		out << i << L", ";
 		if (type.value) {
 			out << L"null ";
 		} else {

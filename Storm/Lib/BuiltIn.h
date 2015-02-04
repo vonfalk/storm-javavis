@@ -16,17 +16,17 @@ namespace storm {
 		// Name of the type (null in the last element).
 		const wchar *name;
 
-		// Name of parent type (or empty).
-		const wchar *super;
+		// Static Type pointer index.
+		nat typePtrId;
+
+		// Index of super type (id of this entry if none).
+		nat super;
 
 		// Size of type.
 		nat typeSize;
 
 		// Type flags. (found in TypeFlags)
 		int typeFlags;
-
-		// Static Type pointer index.
-		nat typePtrId;
 
 		// The vtable pointer to the C++ type.
 		void *cppVTable;
