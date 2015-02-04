@@ -39,10 +39,6 @@ namespace storm {
 		// Add a Named.
 		virtual void STORM_FN add(Par<Named> item);
 
-		// Find a NamePart (returns borrowed ptr).
-		virtual Named *find(Par<NamePart> part) const;
-		Named *find(const String &name, const vector<Value> &params) const;
-
 		// Iterator:
 		class iterator : public std::iterator<std::bidirectional_iterator_tag, Auto<Named> > {
 			friend NameSet;
@@ -74,6 +70,9 @@ namespace storm {
 		iterator end(const String &name) const;
 
 	protected:
+		// Find a NamePart (returns borrowed ptr).
+		virtual Named *findHere(const String &name, const vector<Value> &params);
+
 		// Compare two parameter lists. 'our' is stored in here, 'asked' is what is asked for.
 		virtual bool candidate(const vector<Value> &our, const vector<Value> &asked) const;
 
@@ -90,7 +89,7 @@ namespace storm {
 		void add(Overload *to, Par<Named> item);
 
 		// Find from a specific overload.
-		Named *find(Overload *from, const vector<Value> &params) const;
+		Named *findHere(Overload *from, const vector<Value> &params);
 	};
 
 

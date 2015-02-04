@@ -21,8 +21,22 @@ namespace storm {
 	}
 
 	Named *bs::BSScope::find(const Scope &s, Par<Name> name) {
-		TODO(L"Re-implement the logic here!");
-		return findHelper(s, name);
+		if (Named *n = findHelper(s, name))
+			return n;
+
+		// Expressions of the form foo(x, y, z) are equal to x.foo(y, z).
+		if (name->size() > 1)
+			return null;
+
+		Auto<NamePart> last = name->last();
+		if (last->params.size() == 0)
+			return null;
+
+		const Value &v = last->params[0];
+		if (v == Value())
+			return null;
+
+		return v.type->find(last);
 
 		// if (Named *n = ScopeLookup::find(s, name, params))
 		// 	return n;

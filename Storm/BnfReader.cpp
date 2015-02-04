@@ -111,10 +111,6 @@ namespace storm {
 		to.matchFn = name.token;
 		to.matchFnParams = params;
 		to.matchVar = !isCall;
-
-		if (!isCall && to.matchFn.size() > 1) {
-			throw SyntaxError(name.pos, L"Looks like a function call but has no parameter list!");
-		}
 	}
 
 	bool isEndOfToken(const Token &t) {

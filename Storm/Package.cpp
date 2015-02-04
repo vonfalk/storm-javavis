@@ -59,23 +59,23 @@ namespace storm {
 		}
 	}
 
-	Named *Package::find(Par<NamePart> name) {
-		if (Named *named = NameSet::find(name))
+	Named *Package::findHere(const String &name, const vector<Value> &params) {
+		if (Named *named = NameSet::findHere(name, params))
 			return named;
 
-		if (name->params.size() == 0)
-			if (Package *pkg = loadPackage(name->name))
+		if (params.size() == 0)
+			if (Package *pkg = loadPackage(name))
 				return pkg;
 
 		if (loaded)
 			return null;
 
 		load();
-		return NameSet::find(name);
+		return NameSet::findHere(name, params);
 	}
 
 	Package *Package::loadPackage(const String &name) {
-		assert(NameSet::find(name, vector<Value>()) == null);
+		assert(NameSet::findHere(name, vector<Value>()) == null);
 
 		// Virtual package, can not be auto loaded.
 		if (pkgPath == null)

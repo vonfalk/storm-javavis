@@ -86,14 +86,9 @@ namespace storm {
 			// Risk of cycles, no ref.
 			Block *block;
 
-			// Previous lookup (risk of cycles).
-			NameLookup *prev;
-
+		protected:
 			// Find a variable here.
-			virtual Named *find(const Name &name);
-
-			// Parent.
-			virtual NameLookup *parent() const;
+			virtual Named *findHere(const String &name, const vector<Value> &params);
 		};
 
 	}

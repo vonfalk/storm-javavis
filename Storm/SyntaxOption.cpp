@@ -16,7 +16,7 @@ namespace storm {
 		::clear(tokens);
 		markStart = markEnd = 0;
 		markType = mNone;
-		matchFn = null;
+		matchFn = String();
 		matchFnParams.clear();
 		markCapture = L"";
 	}

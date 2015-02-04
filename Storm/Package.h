@@ -46,13 +46,14 @@ namespace storm {
 		// The options are still owned by this class.
 		const SyntaxRules &syntax();
 
-		// Find a name here.
-		virtual Named *find(Par<NamePart> name);
-
 		// Get parent.
 		virtual NameLookup *parent() const;
 
 	protected:
+		// Find a name here.
+		virtual Named *findHere(const String &name, const vector<Value> &params);
+
+		// Output.
 		virtual void output(std::wostream &to) const;
 
 	private:

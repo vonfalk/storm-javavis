@@ -15,8 +15,9 @@ namespace storm {
 	public:
 		STORM_CTOR NameLookup();
 
-		// Find the specified NamePart in here, returns null if not found.
-		virtual Named *find(Par<NamePart> name);
+		// Find the specified NamePart in here, returns null if not found. BORROWED PTR.
+		inline Named *find(Par<NamePart> name) { return findHere(name->name, name->params); }
+		inline Named *find(const String &name, const vector<Value> &params) { return findHere(name, params); }
 
 		// Get the parent object to this lookup, or null if none.
 		virtual NameLookup *parent() const;
@@ -25,6 +26,10 @@ namespace storm {
 		// default 'parent' implementation asserts. Therefore, root objects need to
 		// override 'parent' in order to return null.
 		NameLookup *parentLookup;
+
+	protected:
+		// Find something here. This one is called by both the public overloads.
+		virtual Named *findHere(const String &name, const vector<Value> &params);
 	};
 
 

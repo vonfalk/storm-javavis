@@ -152,18 +152,17 @@ namespace storm {
 		return chain.super();
 	}
 
-	Named *Type::find(Par<NamePart> name) {
+	Named *Type::findHere(const String &name, const vector<Value> &params) {
 		if (!lazyLoading)
 			ensureLoaded();
 
-		return NameSet::find(name);
-	}
+		if (Named *n = NameSet::findHere(name, params))
+			return n;
 
-	Named *Type::find(const String &name, const vector<Value> &params) {
-		if (!lazyLoading)
-			ensureLoaded();
+		if (Type *s = super())
+			return s->findHere(name, params);
 
-		return NameSet::find(name, params);
+		return null;
 	}
 
 	void Type::output(wostream &to) const {
@@ -309,7 +308,7 @@ namespace storm {
 		// Replace the 'this' parameter, otherwise we would never get a match!
 		vector<Value> params = to->params;
 		params[0] = Value::thisPtr(this);
-		return as<Function>(NameSet::find(to->name, params));
+		return as<Function>(NameSet::findHere(to->name, params));
 	}
 
 	void Type::insertOverloads(Function *fn) {

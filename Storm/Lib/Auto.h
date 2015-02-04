@@ -227,6 +227,7 @@ namespace storm {
 
 }
 
+#ifdef VS
 namespace stdext {
 
 	/**
@@ -237,7 +238,49 @@ namespace stdext {
 		return n->hash();
 	}
 
+
+	/**
+	 * Use the hash value in multimaps. Turns out we need an absolute ordering, and not
+	 * just an equality check... This hack will solve it!
+	 */
+	template <class T>
+	class hash_compare<storm::Auto<T> > {
+	public:
+
+		// Standard values from the original implementation
+		enum {
+			bucket_size = 4,
+			min_buckets = 8,
+		};
+
+		// Ctor.
+		hash_compare() {}
+
+		// Hash something
+		size_t operator ()(const storm::Auto<T> &k) const {
+			// Pseudoranomization found in the original implementation. Probably platform specific.
+			long _Quot = k->hash() & LONG_MAX;
+			ldiv_t _Qrem = ldiv(_Quot, 127773);
+
+			_Qrem.rem = 16807 * _Qrem.rem - 2836 * _Qrem.quot;
+			if (_Qrem.rem < 0)
+				_Qrem.rem += LONG_MAX;
+			return ((size_t)_Qrem.rem);
+		}
+
+		// Ordering
+		bool operator ()(const storm::Auto<T> &a, const storm::Auto<T> &b) const {
+			if (*a == *b)
+				return false;
+			// Order by pointers otherwise. A little hacky, but works!
+			return a.borrow() < b.borrow();
+		}
+	};
+
 }
+#else
+#error "Please define interaction with hash-maps for your compiler!"
+#endif
 
 namespace std {
 

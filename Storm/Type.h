@@ -81,10 +81,6 @@ namespace storm {
 		// Add new members.
 		virtual void STORM_FN add(Par<Named> m);
 
-		// Find stuff.
-		virtual Named *find(Par<NamePart> name);
-		Named *find(const String &name, const vector<Value> &params);
-
 		// Clear contents. Mainly used for clean exits.
 		void clear();
 
@@ -117,6 +113,9 @@ namespace storm {
 
 	protected:
 		virtual void output(wostream &to) const;
+
+		// Find stuff.
+		virtual Named *findHere(const String &name, const vector<Value> &params);
 
 		// Called before the first time any information is wanted.
 		// NOTE: Inheritance information is assumed to be set up in a non-lazy way!

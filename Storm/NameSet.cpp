@@ -34,27 +34,23 @@ namespace storm {
 		add(o, p);
 	}
 
-	Named *NameSet::find(Par<NamePart> name) const {
-		return find(name->name, name->params);
-	}
-
-	Named *NameSet::find(const String &name, const vector<Value> &params) const {
+	Named *NameSet::findHere(const String &name, const vector<Value> &params) {
 		OverloadMap::const_iterator i = overloads.find(name);
 		if (i == overloads.end())
 			return null;
 
-		return find(i->second, params);
+		return findHere(i->second, params);
 	}
 
 	void NameSet::add(Overload *to, Par<Named> n) {
-		if (find(to, n->params))
+		if (findHere(to, n->params))
 			throw TypedefError(::toS(n) + L" is already defined in " + identifier());
 
 		to->items.push_back(n);
 		n->parentLookup = this;
 	}
 
-	Named *NameSet::find(Overload *from, const vector<Value> &params) const {
+	Named *NameSet::findHere(Overload *from, const vector<Value> &params) {
 		for (nat i = 0; i < from->items.size(); i++) {
 			Named *c = from->items[i].borrow();
 			if (candidate(c->params, params))
@@ -99,7 +95,7 @@ namespace storm {
 
 	void NameSet::output(wostream &to) const {
 		for (iterator i = begin(); i != end(); ++i)
-			to << *i;
+			to << *i << endl;
 	}
 
 	/**

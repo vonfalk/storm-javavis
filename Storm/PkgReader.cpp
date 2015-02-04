@@ -22,7 +22,6 @@ namespace storm {
 	hash_map<Auto<Name>, Auto<PkgFiles> > syntaxPkg(const vector<Path> &paths, Engine &e) {
 		typedef hash_map<Auto<Name>, Auto<PkgFiles> > M;
 		M r;
-		TODO(L"Check the behaviour of the map here!");
 
 		for (nat i = 0; i < paths.size(); i++) {
 			if (paths[i].isDir())

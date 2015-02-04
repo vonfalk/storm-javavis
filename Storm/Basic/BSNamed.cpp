@@ -378,7 +378,7 @@ namespace storm {
 
 		vector<Value> vals = params->values();
 		vals.insert(vals.begin(), thisVar->result);
-		Named *n = scope.find(capture(name->withParams(vals)));
+		Named *n = scope.find(steal(name->withParams(vals)));
 		candidate = n;
 
 		Auto<Expr> first = CREATE(LocalVarAccess, block, thisVar);
@@ -405,7 +405,7 @@ namespace storm {
 			if (Expr *e = findTargetThis(block, name, params, pos, candidate))
 				return e;
 
-		Named *n = scope.find(capture(name->withParams(params->values())));
+		Named *n = scope.find(steal(name->withParams(params->values())));
 
 		if (Expr *e = findTarget(n, null, params, pos))
 			return e;

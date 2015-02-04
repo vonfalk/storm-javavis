@@ -91,7 +91,6 @@ namespace storm {
 	}
 
 	bool Name::operator ==(const Name &o) const {
-		PLN("CHECKING EQUALITY");
 		if (parts.size() != o.parts.size())
 			return false;
 
@@ -103,7 +102,6 @@ namespace storm {
 	}
 
 	size_t Name::hash() const {
-		PLN("COMPUTING HASH");
 		// djb2 hash
 		size_t r = 5381;
 		for (nat i = 0; i < parts.size(); i++) {
@@ -116,6 +114,7 @@ namespace storm {
 			// vastly different packages anyway.
 			r = ((r << 5) + r) + parts[i]->params.size();
 		}
+
 		return r;
 	}
 
