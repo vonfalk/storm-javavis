@@ -34,15 +34,26 @@ function count {
     # 	tail -n1 | cut -d"," -f3-
 }
 
-echo "date,code blank,code comment,code code,storm blank,storm comment,storm code"
+function compute_sum {
+    local other=$2
+    echo $1";" | while read -d";" a; do
+	local b=`echo $other | cut -d";" -f1`
+	echo -n $(($a + $b))";"
+	other=`echo $other | cut -d";" -f2-`
+    done
+}
+
+echo "date,code blank,code comment,code code,storm blank,storm comment,storm code,sum blank,sum comment,sum code"
 
 git log --format="format:%H %ci" master | while read commit date time timezone; do
     echo -n $date $time";"
 
-    count $commit $code_regex | tr -d "\n"
-    echo -n ";"
+    code=`count $commit $code_regex | tr -d "\n"`
+    echo -n $code";"
 
-    count $commit $storm_regex
+    storm=`count $commit $storm_regex | tr -d "\n"`
+    echo -n $storm";"
 
-    exit 12
+    compute_sum $code $storm
+    echo ""
 done
