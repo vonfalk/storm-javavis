@@ -9,7 +9,7 @@
 // program termination. It also tracks use (ie addRef/release)
 // of free'd objects.
 // #define DEBUG_REFS
-#define DEBUG_LEAKS
+// #define DEBUG_LEAKS
 
 namespace storm {
 
