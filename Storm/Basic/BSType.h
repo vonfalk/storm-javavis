@@ -7,41 +7,57 @@ namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
+		class TypeName;
+
 		/**
-		 * Names a package.
+		 * Parameters to a type.
 		 */
-		class PkgName : public SObject {
+		class TypePart : public SObject {
 			STORM_CLASS;
 		public:
-			STORM_CTOR PkgName();
+			// Ctor.
+			STORM_CTOR TypePart(Par<SStr> name);
 
-			void STORM_FN add(Par<SStr> part);
+			// Add parameter.
+			void STORM_FN add(Par<TypeName> t);
 
-			vector<Auto<Str> > parts;
+			// Name.
+			Auto<Str> name;
+
+			// Parameters.
+			vector<Auto<TypeName> > params;
+
+			// As name part.
+			NamePart *toPart(const Scope &scope);
 
 		protected:
+			// Output.
 			virtual void output(wostream &to) const;
 		};
 
 		/**
-		 * Names a type. TODO? Maybe replace with a raw name?
+		 * Type name.
 		 */
 		class TypeName : public SObject {
 			STORM_CLASS;
 		public:
-			STORM_CTOR TypeName(Par<SStr> name);
-			STORM_CTOR TypeName(Par<PkgName> pkg, Par<SStr> name);
+			// Ctor.
+			STORM_CTOR TypeName();
 
-			Auto<PkgName> pkg;
-			Auto<Str> name;
+			// Add a part.
+			void STORM_FN add(Par<TypePart> part);
 
-			// Get a regular name.
-			Name *getName();
+			// Parts.
+			vector<Auto<TypePart> > parts;
 
-			// Find the Value.
-			Value value(const Scope &scope);
+			// Convert to a Name.
+			Name *toName(const Scope &scope);
+
+			// Resolve to a type.
+			Value resolve(const Scope &scope);
 
 		protected:
+			// Output.
 			virtual void output(wostream &to) const;
 		};
 

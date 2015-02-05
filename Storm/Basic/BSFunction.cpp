@@ -15,7 +15,7 @@ namespace storm {
 		: pos(pos), name(name), result(result), params(params), contents(contents) {}
 
 	Function *bs::FunctionDecl::asFunction(const Scope &scope) {
-		Value result = this->result->value(scope);
+		Value result = this->result->resolve(scope);
 		vector<Value> params = this->params->cTypes(scope);
 		vector<String> names = this->params->cNames();
 

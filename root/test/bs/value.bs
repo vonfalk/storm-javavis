@@ -1,5 +1,5 @@
 use core;
-use core.debug;
+use core:debug;
 
 // Test usage of value types.
 Int testValue() {

@@ -32,7 +32,7 @@ namespace storm {
 			r.push_back(Value::thisPtr(thisType));
 
 		for (nat i = 0; i < params.size(); i++)
-			r.push_back(params[i]->value(scope));
+			r.push_back(params[i]->resolve(scope));
 
 		return r;
 	}

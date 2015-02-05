@@ -31,7 +31,7 @@ namespace storm {
 	void bs::Class::setBase() {
 		allowLazyLoad(false);
 		if (base) {
-			Value t = base->value(scope);
+			Value t = base->resolve(scope);
 			setSuper(t.type);
 			base = null;
 		}
@@ -78,7 +78,7 @@ namespace storm {
 	 */
 
 	bs::ClassVar::ClassVar(Par<Class> owner, Par<TypeName> type, Par<SStr> name)
-		: TypeVar(owner.borrow(), type->value(owner->scope), name->v->v) {}
+		: TypeVar(owner.borrow(), type->resolve(owner->scope), name->v->v) {}
 
 
 	bs::BSFunction *STORM_FN bs::classFn(Par<Class> owner,
@@ -90,7 +90,7 @@ namespace storm {
 
 		params->addThis(owner.borrow());
 		return CREATE(BSFunction, owner->engine,
-					result->value(owner->scope),
+					result->resolve(owner->scope),
 					name->v->v,
 					params->cTypes(owner->scope),
 					params->cNames(),

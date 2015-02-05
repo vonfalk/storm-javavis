@@ -1,8 +1,8 @@
 use core;
-use core.debug;
+use core:debug;
 
 Int testArray() {
-	Array a;
+	Array<Dbg> a;
 
 	3;
 }

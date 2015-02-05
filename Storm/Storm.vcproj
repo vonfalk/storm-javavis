@@ -203,10 +203,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Basic\BSPkg.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Basic\BSReader.cpp"
 				>
 			</File>
@@ -490,10 +486,6 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSParams.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSPkg.h"
 				>
 			</File>
 			<File

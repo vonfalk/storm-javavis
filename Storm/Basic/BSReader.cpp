@@ -79,9 +79,10 @@ namespace storm {
 		}
 	}
 
-	void bs::File::setIncludes(const vector<Auto<Name> > &inc) {
+	void bs::File::setIncludes(const vector<Auto<TypeName> > &inc) {
 		for (nat i = 0; i < inc.size(); i++) {
-			Package *p = package->engine.package(inc[i]);
+			Auto<Name> name = inc[i]->toName(scope);
+			Package *p = package->engine.package(name);
 			if (!p)
 				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(inc[i]));
 

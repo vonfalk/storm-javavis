@@ -9,10 +9,14 @@ DELIMITER => void : Whitespace - "//[^\n\r]*[\n\r]" - DELIMITER; // "[ \n\r\t]*/
 // Name rule returns a String, created by taking the 'name' parameter.
 Name => SStr(name) : "[A-Za-z][A-Za-z0-9]*" name;
 
-// Package
-Package => Pkg() : Name -> add - ("\." - Name -> add)*;
-Type => TypeName(name) : Name name;
-Type => TypeName(pkg, name) : Package pkg, "\.", Name name;
+// Part in a type name
+TypePart => TypePart(n) : Name n;
+TypePart => TypePart(n) : Name n, "<", ">";
+TypePart => TypePart(n) : Name n, "<", Type -> add, (",", Type -> add, )* ">";
+
+// Type or package (same thing).
+Type => TypeName() : TypePart -> add, (":", TypePart -> add, )*;
+Package => t : Type t;
 
 // Skip a block, assuming matching {} and well-behaved strings.
 SkipBlock => cont : ( SkipContent ) cont;

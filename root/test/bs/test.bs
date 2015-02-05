@@ -1,5 +1,5 @@
 use core;
-use core.debug;
+use core:debug;
 
 class Foo {
     Int a;

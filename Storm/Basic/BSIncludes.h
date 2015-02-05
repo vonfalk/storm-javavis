@@ -1,6 +1,6 @@
 #pragma once
 #include "Std.h"
-#include "BSPkg.h"
+#include "BSType.h"
 #include "SyntaxObject.h"
 
 namespace storm {
@@ -15,10 +15,10 @@ namespace storm {
 		public:
 			STORM_CTOR Includes();
 
-			void STORM_FN add(Par<Pkg> pkg);
+			void STORM_FN add(Par<TypeName> pkg);
 
 			// Names.
-			vector<Auto<Name> > names;
+			vector<Auto<TypeName> > names;
 		};
 
 	}

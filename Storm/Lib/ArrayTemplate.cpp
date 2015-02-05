@@ -4,7 +4,12 @@
 namespace storm {
 
 	static Named *generateArray(Par<NamePart> part) {
-		PLN("Generating array: " << part);
+		if (part->params.size() != 1)
+			return null;
+
+		const Value &type = part->params[0];
+		PLN("Want to generate for " << type);
+
 		return null;
 	}
 
