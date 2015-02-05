@@ -85,15 +85,22 @@ Loop => ExprBlock(block) : "for", "(", Expr(me) -> expr, ";", ForInner(me) -> ex
 ForInner(Block block);
 ForInner => For(block) : Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me) -> body;
 
+// Pre-and postfix operators.
+PrePost => v : "\+\+" v;
+PrePost => v : "--" v;
+
 // Atoms, for example constants and variables/function calls.
 Atom(Block block);
 Atom => intConstant(nr) : "[0-9]+" nr;
-Atom => namedExpr(block, name, params) : Name name, FnValues(block) params;
+Atom => namedExpr(block, name, params) : Type name, FnValues(block) params;
 Atom => namedExpr(block, name, dotExpr, params) : Atom(block) dotExpr, "\.", Name name, FnValues(block) params;
 Atom => e : "(", Expr(block) e, ")";
 Atom => e : Block(block) e;
 Atom => e : If(block) e;
 Atom => e : Loop(block) e; // For symmetry... I guess it is not really very useful!
+Atom => accessExpr(block, lhs, par) : Atom(block) lhs, "\[", Expr(block) par, "\]";
+Atom => prefixOperator(block, o, e) : PrePost o, Expr(block) e;
+Atom => postfixOperator(block, o, e) : Expr(block) e, PrePost o;
 
 // Highest priority. Right-associative, eg (a * b) * c
 Oper1 => v : "[*/%]" v;
@@ -114,6 +121,8 @@ Oper3 => v : ">" v;
 Oper3 => v : "<" v;
 Oper3 => v : "<=" v;
 Oper3 => v : ">=" v;
+Oper3 => v : "<<" v;
+Oper3 => v : ">>" v;
 Expr3(Block block);
 Expr3 => e : Expr2(block) e;
 Expr3 => operatorExpr(block, lhs, op, rhs) : Expr3(block) lhs, Oper3 op, Expr2(block) rhs;
@@ -122,9 +131,8 @@ Expr3 => operatorExpr(block, lhs, op, rhs) : Expr3(block) lhs, Oper3 op, Expr2(b
 Expr(Block block);
 Expr => e : Expr3(block) e;
 Expr => assignExpr(block, lhs, op, rhs) : Expr3(block) lhs, "=" op, Expr(block) rhs;
-Expr => Var(block, t, name) : Type t, Name name;
-Expr => Var(block, t, name, init) : Type t, Name name, "=", Expr(block) init;
 Expr => Var(block, t, name, actual) : Type t, Name name, FnValues(block) actual;
+Expr => Var(block, t, name, init) : Type t, Name name, "=", Expr(block) init;
 Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;
 
 // Statement

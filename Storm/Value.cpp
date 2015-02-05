@@ -23,6 +23,8 @@ namespace storm {
 
 	Value::Value(Type *t, bool ref) : type(t), ref(ref) {}
 
+	Value::Value(Par<Type> t, bool ref) : type(t.borrow()), ref(ref) {}
+
 	Size Value::size() const {
 		if (ref) {
 			// References are passed by pointer.
@@ -197,4 +199,20 @@ namespace storm {
 		}
 	}
 
+#ifdef VS
+	vector<Value> valList(nat count, ...) {
+		vector<Value> r;
+		r.reserve(count);
+
+		va_list l;
+		va_start(l, count);
+
+		for (nat i = 0; i < count; i++) {
+			r.push_back(va_arg(l, Value));
+		}
+
+		va_end(l);
+		return r;
+	}
+#endif
 }

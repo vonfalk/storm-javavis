@@ -26,6 +26,7 @@ namespace storm {
 
 		// Create a value based on a type.
 		Value(Type *type, bool ref = false);
+		Value(Par<Type> type, bool ref = false);
 
 		// The type referred.
 		Type *type;
@@ -109,5 +110,12 @@ namespace storm {
 
 	// Find the result type of a function call. Constructor calls are also handled.
 	Value fnResultType(const Scope &scope, Par<Name> fn);
+
+	// Array of values.
+#ifdef VS
+	vector<Value> valList(nat count, ...);
+#else
+#error "Define valList for C++11 here"
+#endif
 
 }

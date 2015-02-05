@@ -142,6 +142,7 @@ namespace storm {
 
 		// Find out what the named expression means, and create proper object.
 		Expr *STORM_FN namedExpr(Par<Block> block, Par<SStr> name, Par<Actual> params);
+		Expr *STORM_FN namedExpr(Par<Block> block, Par<TypeName> name, Par<Actual> params);
 
 		// Special case of above, used when we find an expression like a.b(...). 'first' is inserted
 		// into the beginning of 'params' and used. This method inhibits automatic insertion of 'this'.
@@ -153,5 +154,13 @@ namespace storm {
 		// Assignment operator.
 		Expr *STORM_FN assignExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs);
 
+		// Element access operator.
+		Expr *STORM_FN accessExpr(Par<Block> block, Par<Expr> lhs, Par<Expr> par);
+
+		// Prefix operator.
+		Expr *STORM_FN prefixOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr);
+
+		// Postfix operator.
+		Expr *STORM_FN postfixOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr);
 	}
 }

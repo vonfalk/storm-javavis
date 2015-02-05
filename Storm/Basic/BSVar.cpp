@@ -7,10 +7,6 @@
 namespace storm {
 	namespace bs {
 
-		bs::Var::Var(Par<Block> block, Par<TypeName> type, Par<SStr> name) {
-			init(block, type->resolve(block->scope), name);
-		}
-
 		bs::Var::Var(Par<Block> block, Par<TypeName> type, Par<SStr> name, Par<Actual> params) {
 			init(block, type->resolve(block->scope), name);
 			initTo(params);

@@ -426,6 +426,11 @@ namespace storm {
 		return findTarget(block, n, name->pos, params, true);
 	}
 
+	bs::Expr *bs::namedExpr(Par<Block> block, Par<TypeName> name, Par<Actual> params) {
+		Auto<Name> n = name->toName(block->scope);
+		return findTarget(block, n, name->pos, params, true);
+	}
+
 	bs::Expr *bs::namedExpr(Par<Block> block, Par<SStr> name, Par<Expr> first, Par<Actual> params) {
 		params->addFirst(first);
 		Auto<Name> n = parseSimpleName(name->engine(), name->v->v);
@@ -449,6 +454,29 @@ namespace storm {
 		}
 
 		return operatorExpr(block, lhs, m, rhs);
+	}
+
+
+	bs::Expr *STORM_FN bs::accessExpr(Par<Block> block, Par<Expr> lhs, Par<Expr> par) {
+		Auto<Actual> actual = CREATE(Actual, block);
+		actual->add(lhs);
+		actual->add(par);
+		Auto<SStr> m = CREATE(SStr, block, L"[]");
+		return namedExpr(block, m, actual);
+	}
+
+	bs::Expr *STORM_FN bs::prefixOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr) {
+		Auto<Actual> actual = CREATE(Actual, block);
+		actual->add(expr);
+		o->v->v = o->v->v + L"*";
+		return namedExpr(block, o, actual);
+	}
+
+	bs::Expr *STORM_FN bs::postfixOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr) {
+		Auto<Actual> actual = CREATE(Actual, block);
+		actual->add(expr);
+		o->v->v = L"*" + o->v->v;
+		return namedExpr(block, o, actual);
 	}
 
 }

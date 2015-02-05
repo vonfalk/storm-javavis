@@ -4,5 +4,14 @@ use core:debug;
 Int testArray() {
 	Array<Dbg> a;
 
-	3;
+	for (Int i = 0; i < 22; i++) {
+		a << Dbg(i);
+	}
+
+	Int sum = 0;
+	for (Nat i = 0.nat; i < a.count; i++) {
+		sum = sum + a[i].get;
+	}
+
+	sum;
 }

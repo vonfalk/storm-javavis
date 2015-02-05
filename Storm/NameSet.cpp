@@ -59,9 +59,9 @@ namespace storm {
 
 		if (o->templ) {
 			Auto<NamePart> part = CREATE(NamePart, this, name, params);
-			if (Named *n = o->templ->generate(part)) {
+			if (Auto<Named> n = o->templ->generate(part)) {
 				add(n);
-				return n;
+				return n.borrow();
 			}
 		}
 

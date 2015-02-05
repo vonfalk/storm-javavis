@@ -42,7 +42,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create a type that exists in Storm.
-		Type(const String &name, TypeFlags flags);
+		Type(const String &name, TypeFlags flags, const vector<Value> &params = vector<Value>());
 
 		// Create a type declared in C++.
 		Type(const String &name, TypeFlags flags, Size size, void *cppVTable);

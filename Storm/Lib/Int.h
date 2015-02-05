@@ -12,6 +12,9 @@ namespace storm {
 
 		virtual bool isBuiltIn() const { return true; }
 		virtual Function *destructor() { return null; }
+
+	protected:
+		virtual void lazyLoad();
 	};
 
 
@@ -22,6 +25,9 @@ namespace storm {
 
 		virtual bool isBuiltIn() const { return true; }
 		virtual Function *destructor() { return null; }
+
+	protected:
+		virtual void lazyLoad();
 	};
 
 

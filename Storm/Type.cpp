@@ -12,8 +12,8 @@ namespace storm {
 	const String Type::CTOR = L"__ctor";
 	const String Type::DTOR = L"__dtor";
 
-	Type::Type(const String &name, TypeFlags f)
-		: NameSet(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
+	Type::Type(const String &name, TypeFlags f, const vector<Value> &params)
+		: NameSet(name, params), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
 		  mySize(), chain(this), vtable(engine) {
 
 		init();
@@ -168,7 +168,7 @@ namespace storm {
 	void Type::output(wostream &to) const {
 		to << name;
 		if (super())
-			to << L" : " << super()->path();
+			to << L" : " << super()->identifier();
 		if (!lazyLoaded)
 			to << L"(not loaded)";
 		to << ":" << endl;

@@ -36,9 +36,6 @@ namespace storm {
 		class Var : public Expr {
 			STORM_CLASS;
 		public:
-			// Initialize to zero or null (remove?).
-			STORM_CTOR Var(Par<Block> block, Par<TypeName> type, Par<SStr> name);
-
 			// Initialize with initializer-list (like Foo(1))
 			STORM_CTOR Var(Par<Block> block, Par<TypeName> type, Par<SStr> name, Par<Actual> actual);
 
