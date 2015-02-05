@@ -3,6 +3,7 @@
 #include "Lib/BuiltIn.h"
 #include "Lib/Int.h"
 #include "Lib/Bool.h"
+#include "Lib/ArrayTemplate.h"
 #include "Exception.h"
 #include "Function.h"
 #include "Engine.h"
@@ -157,6 +158,7 @@ namespace storm {
 		core->add(steal(intType(to)));
 		core->add(steal(natType(to)));
 		core->add(steal(boolType(to)));
+		core->add(steal(arrayTemplate(to)));
 
 		addBuiltIn(to);
 	}

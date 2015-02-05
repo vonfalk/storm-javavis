@@ -438,6 +438,14 @@
 				RelativePath=".\Lib\Array.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Template.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\ArrayTemplate.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -714,6 +722,14 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Handle.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Template.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\ArrayTemplate.h"
 				>
 			</File>
 		</Filter>

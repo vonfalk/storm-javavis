@@ -17,11 +17,11 @@
 		typedef char ArrayOfOne[1];				\
 		typedef char ArrayOfTwo[2];				\
 												\
-		template <class U>											\
-		static ArrayOfOne &func(Check<int Fallback::*, &U::X> *);	\
-		template <class U>											\
-		static ArrayOfTwo &func(...);								\
-	public:															\
-	typedef detect_##X type;										\
-	enum { value = sizeof(func<Derived>(0)) == 2 };					\
+		template <class U>												\
+		static ArrayOfOne &func(Check<int Fallback::*, &U::X> *);		\
+		template <class U>												\
+		static ArrayOfTwo &func(...);									\
+	public:																\
+	typedef detect_##X type;											\
+	enum { value = sizeof(func<Derived>(0)) == sizeof(ArrayOfTwo) };	\
 };

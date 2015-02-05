@@ -21,9 +21,9 @@ namespace storm {
 	NameSet::Overload::~Overload() {}
 
 	void NameSet::add(Par<Named> p) {
-		Overload *o = null;
 		OverloadMap::iterator i = overloads.find(p->name);
 
+		Overload *o = null;
 		if (i == overloads.end()) {
 			o = new Overload();
 			overloads.insert(make_pair(p->name, o));
@@ -34,12 +34,38 @@ namespace storm {
 		add(o, p);
 	}
 
+	void NameSet::add(Par<Template> p) {
+		OverloadMap::iterator i = overloads.find(p->name);
+
+		Overload *o = null;
+		if (i == overloads.end()) {
+			o = new Overload();
+			overloads.insert(make_pair(p->name, o));
+		} else {
+			o = i->second;
+		}
+
+		o->templ = p;
+	}
+
 	Named *NameSet::findHere(const String &name, const vector<Value> &params) {
 		OverloadMap::const_iterator i = overloads.find(name);
 		if (i == overloads.end())
 			return null;
 
-		return findHere(i->second, params);
+		Overload *o = i->second;
+		if (Named *n = findHere(o, params))
+			return n;
+
+		if (o->templ) {
+			Auto<NamePart> part = CREATE(NamePart, this, name, params);
+			if (Named *n = o->templ->generate(part)) {
+				add(n);
+				return n;
+			}
+		}
+
+		return null;
 	}
 
 	void NameSet::add(Overload *to, Par<Named> n) {

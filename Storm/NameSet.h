@@ -1,5 +1,6 @@
 #pragma once
 #include "Named.h"
+#include "Template.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -22,6 +23,10 @@ namespace storm {
 
 			// Contents.
 			vector<Auto<Named> > items;
+
+			// Template inside?
+			// TODO: Allow multiple with the same name?
+			Auto<Template> templ;
 		};
 
 		// Overloads.
@@ -38,6 +43,9 @@ namespace storm {
 
 		// Add a Named.
 		virtual void STORM_FN add(Par<Named> item);
+
+		// Add a template.
+		virtual void STORM_FN add(Par<Template> item);
 
 		// Iterator:
 		class iterator : public std::iterator<std::bidirectional_iterator_tag, Auto<Named> > {

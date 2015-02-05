@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 
-BEGIN_TEST_(ArrayTest) {
+BEGIN_TEST(ArrayTest) {
 	Engine &e = *gEngine;
 
 	DbgVal::clear();

@@ -1,0 +1,8 @@
+use core;
+use core.debug;
+
+Int testArray() {
+	Array a;
+
+	3;
+}

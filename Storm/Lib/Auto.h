@@ -1,6 +1,9 @@
 #pragma once
+#include "Utils/Templates.h"
 
 namespace storm {
+
+#define IF_CONVERTIBLE(From, To) typename EnableIf<IsConvertible<From, To>::value, bool>::t = false
 
 	class Object;
 	class Engine;
@@ -26,14 +29,17 @@ namespace storm {
 
 		// Borrow from Auto<> (possibly downcasting)
 		template <class U>
-		inline Par(const Auto<U> &o) : obj(o.borrow()) {}
+		inline Par(const Auto<U> &o, IF_CONVERTIBLE(U, T)) : obj(o.borrow()) {}
 
 		// Borrows 'ptr'.
 		inline Par(T *obj) : obj(obj) {}
 
 		// Downcasting.
 		template <class U>
-		inline Par(const Par<U> &from) : obj(from.borrow()) {}
+		inline Par(const Par<U> &from, IF_CONVERTIBLE(U, T)) : obj(from.borrow()) {}
+
+		// Downcasting (to override the Par(T*) ctor.
+		inline Par(const Par<T> &from) : obj(from.borrow()) {}
 
 		// No need for explicit copy, assign or dtor. We do not need to do anything.
 
@@ -98,16 +104,16 @@ namespace storm {
 		// Takes the ownership of 'obj'.
 		inline Auto(T *obj) : obj(obj) {}
 
-		// Takes ownership from a Par<> (possibly downcasting)
+		// Copy from a Par<> (possibly downcasting)
 		template <class U>
-		inline Auto(const Par<U> &o) : obj(o.ref()) {}
-
-		// Copy.
-		inline Auto(const Auto<T> &from) : obj(from.obj) { obj->addRef(); }
+		inline Auto(const Par<U> &o, IF_CONVERTIBLE(U, T)) : obj(o.borrow()) { obj->addRef(); }
 
 		// Downcast.
 		template <class U>
-		inline Auto(const Auto<U> &from) : obj(from.borrow()) { obj->addRef(); }
+		inline Auto(const Auto<U> &from, IF_CONVERTIBLE(U, T)) : obj(from.borrow()) { obj->addRef(); }
+
+		// Copy (otherwise the Auto(T *) is ranked higher than the templated one!
+		inline Auto(const Auto<T> &from) : obj(from.borrow()) { obj->addRef(); }
 
 		inline Auto<T> &operator =(const Auto<T> &from) {
 			obj->release();
@@ -207,23 +213,7 @@ namespace storm {
 	 * foo(Auto<T>(bar).borrow())
 	 */
 	template <class T>
-	struct Steal {
-		Steal(T *v) : v(v) {}
-		~Steal() { v->release(); }
-
-		operator T *() { return v; }
-
-		template <class U>
-		operator Par<U>() { return Par<U>(v); }
-
-		template <class U>
-		operator Auto<U>() { return Auto<U>(capture(v)); }
-
-		T *v;
-	};
-
-	template <class T>
-	inline Steal<T> steal(T *ptr) { return Steal<T>(ptr); }
+	inline Auto<T> steal(T *ptr) { return Auto<T>(ptr); }
 
 }
 
