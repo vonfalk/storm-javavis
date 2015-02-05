@@ -114,7 +114,7 @@ public:
 
 		// Check heap consistency at each allocation.
 		// int f = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
-		// _CrtSetDbgFlag(f | _CRTDBG_CHECK_ALWAYS_DF);
+		// _CrtSetDbgFlag((f & 0x0000FFFF) | _CRTDBG_CHECK_ALWAYS_DF);
 	}
 
 	~CrtInit() {
