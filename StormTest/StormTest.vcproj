@@ -236,6 +236,10 @@
 				RelativePath=".\HashTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ArrayTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

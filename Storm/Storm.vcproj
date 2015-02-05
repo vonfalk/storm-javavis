@@ -434,6 +434,10 @@
 				RelativePath=".\NameSet.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\Array.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -702,6 +706,14 @@
 			</File>
 			<File
 				RelativePath=".\NameSet.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Array.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Handle.h"
 				>
 			</File>
 		</Filter>
