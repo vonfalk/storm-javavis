@@ -27,7 +27,7 @@ namespace storm {
 
 	void bs::Block::blockCode(const GenState &state, GenResult &to, const code::Block &block) {
 		state.to << begin(block);
-		GenState subState = { state.to, state.frame, block };
+		GenState subState = { state.to, state.data, state.frame, block };
 		blockCode(subState, to);
 		state.to << end(block);
 	}

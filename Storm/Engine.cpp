@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include "Std.h"
 #include "Exception.h"
+#include "Lib/Str.h"
 
 namespace storm {
 
@@ -18,7 +19,7 @@ namespace storm {
 #ifdef DEBUG
 		  dbgPrint(arena, L"dbgPrint"),
 #endif
-		  lazyCodeFn(arena, L"lazyUpdate") {
+		  lazyCodeFn(arena, L"lazyUpdate"), createStrFn(arena, L"createStr") {
 
 		cppVTableSize = maxVTableCount();
 		vcalls = new VTableCalls(*this);
@@ -28,6 +29,7 @@ namespace storm {
 		release.set(address(&Object::release));
 		allocRef.set(address(&stormMalloc));
 		freeRef.set(address(&stormFree));
+		createStrFn.set(address(&Str::createStr));
 
 #ifdef DEBUG
 		dbgPrint.set(address(&storm::dbgPrint));

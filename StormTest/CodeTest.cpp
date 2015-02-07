@@ -73,6 +73,8 @@ BEGIN_TEST(BasicSyntax) {
 
 	CHECK_EQ(runFn(L"test.bs.testCtor"), 20);
 	CHECK_EQ(runFn(L"test.bs.testIntCtor"), 20);
+
+	CHECK_EQ(runFn(L"test.bs.testStr"), 12);
 } END_TEST
 
 BEGIN_TEST(InheritanceTest) {

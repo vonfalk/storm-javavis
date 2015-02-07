@@ -10,6 +10,8 @@ namespace storm {
 
 	Str::Str(const String &o) : Object(), v(o) {}
 
+	Str::Str(const wchar *s) : Object(), v(s) {}
+
 	nat Str::count() const {
 		return v.size();
 	}
@@ -30,4 +32,7 @@ namespace storm {
 		return this;
 	}
 
+	Str *Str::createStr(Type *type, const wchar *str) {
+		return new (type) Str(str);
+	}
 }

@@ -188,10 +188,10 @@ namespace storm {
 	}
 
 	Parser::StatePtr Parser::finish() const {
-		for (nat i = steps.size() - 1; i > 0; i--) {
-			for (nat j = 0; j < steps[i].size(); j++) {
-				if (steps[i][j].finish(&rootOption))
-					return StatePtr(i, j);
+		for (nat i = steps.size(); i > 0; i--) {
+			for (nat j = 0; j < steps[i-1].size(); j++) {
+				if (steps[i-1][j].finish(&rootOption))
+					return StatePtr(i-1, j);
 			}
 		}
 		return StatePtr();
@@ -340,6 +340,9 @@ namespace storm {
 
 	Object *Parser::transform(Engine &engine, const vector<Object *> &params) {
 		SyntaxNode *root = tree();
+		if (!root)
+			return null;
+
 		try {
 			Auto<Object> result = storm::transform(engine, syntax, *root, params);
 			delete root;

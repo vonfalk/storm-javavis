@@ -15,6 +15,9 @@ namespace storm {
 	// Print the VTable of an object.
 	void STORM_FN printVTable(Object *obj);
 
+	// Crude printing (not final version).
+	void STORM_FN print(Object *obj);
+
 	// Basic print tracing (to be removed when we have something real).
 	void STORM_FN ptrace(Int z);
 
@@ -27,6 +30,9 @@ namespace storm {
 
 		// Set the value as well...
 		STORM_CTOR Dbg(Int v);
+
+		// Dtor.
+		~Dbg();
 
 		// Print our state.
 		void STORM_FN dbg();

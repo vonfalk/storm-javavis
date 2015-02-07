@@ -27,7 +27,7 @@ namespace storm {
 
 		Label begin = s.to.label();
 		Label end = s.to.label();
-		GenState subState = { s.to, s.frame, block };
+		GenState subState = { s.to, s.data, s.frame, block };
 
 		s.to << begin;
 		s.to << code::begin(block);

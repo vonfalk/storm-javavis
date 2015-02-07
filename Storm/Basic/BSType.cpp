@@ -8,6 +8,8 @@ namespace storm {
 
 		bs::TypePart::TypePart(Par<SStr> name) : name(name->v) {}
 
+		bs::TypePart::TypePart(Par<Str> name) : name(name) {}
+
 		void bs::TypePart::add(Par<TypeName> param) {
 			params.push_back(param);
 		}
@@ -39,7 +41,7 @@ namespace storm {
 		}
 
 		void bs::TypeName::output(wostream &to) const {
-			join(to, parts, L", ");
+			join(to, parts, L".");
 		}
 
 		Name *bs::TypeName::toName(const Scope &scope) {

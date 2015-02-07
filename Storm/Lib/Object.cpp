@@ -4,12 +4,16 @@
 #include "Function.h"
 #include "Lib/Str.h"
 
+#ifdef DEBUG
+
 // DEBUG_REFS print references, DEBUG_LEAKS tracks live
 // objects to output a list of the remaining objects at
 // program termination. It also tracks use (ie addRef/release)
 // of free'd objects.
 // #define DEBUG_REFS
-// #define DEBUG_LEAKS
+#define DEBUG_LEAKS
+
+#endif
 
 namespace storm {
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "Code/Listing.h"
 #include "Value.h"
+#include "CodeData.h"
 
 namespace storm {
 
@@ -8,8 +9,16 @@ namespace storm {
 	 * Describes the state of code generation.
 	 */
 	struct GenState {
+		// Generate code here.
 		code::Listing &to;
+
+		// Generate any data here.
+		CodeData &data;
+
+		// Current frame (generally points to to.frame).
 		code::Frame &frame;
+
+		// Current block.
 		code::Block block;
 	};
 

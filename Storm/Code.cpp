@@ -158,6 +158,7 @@ namespace storm {
 		}
 
 		Listing l;
+		CodeData data;
 
 		vector<code::Value> params;
 		for (nat i = 0; i < owner->params.size(); i++) {
@@ -167,7 +168,7 @@ namespace storm {
 
 		l << prolog();
 
-		GenState state = { l, l.frame, l.frame.root() };
+		GenState state = { l, data, l.frame, l.frame.root() };
 		GenResult result(owner->result, l.frame.root());
 		code(state, params, result);
 
@@ -177,6 +178,8 @@ namespace storm {
 
 		l << epilog();
 		l << ret(owner->result.size());
+
+		l << data;
 
 		return l;
 	}

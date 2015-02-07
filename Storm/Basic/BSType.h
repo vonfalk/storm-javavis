@@ -18,6 +18,9 @@ namespace storm {
 			// Ctor.
 			STORM_CTOR TypePart(Par<SStr> name);
 
+			// SStr.
+			STORM_CTOR TypePart(Par<Str> name);
+
 			// Add parameter.
 			void STORM_FN add(Par<TypeName> t);
 

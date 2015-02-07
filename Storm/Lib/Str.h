@@ -15,6 +15,9 @@ namespace storm {
 		// The value of this 'str' object.
 		String v;
 
+		// From literal ctor.
+		Str(const wchar *s);
+
 		// Empty ctor
 		STORM_CTOR Str();
 
@@ -32,6 +35,9 @@ namespace storm {
 
 		// ToS
 		virtual Str *STORM_FN toS();
+
+		// Create a string from a literal. There is a reference in Engine to this.
+		static Str *CODECALL createStr(Type *strType, const wchar *str);
 
 	protected:
 		virtual void output(wostream &to) const;

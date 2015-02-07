@@ -70,7 +70,7 @@ namespace storm {
 		code::RefSource allocRef, freeRef;
 
 		// Other references.
-		code::RefSource lazyCodeFn;
+		code::RefSource lazyCodeFn, createStrFn;
 
 #ifdef DEBUG
 		// Debug output an integer.

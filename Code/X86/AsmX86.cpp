@@ -54,6 +54,10 @@ namespace code {
 				to.putByte(0x68); // we need an entire 32-bits.
 				to.putAddress(src.reference());
 				break;
+			case Value::tLabel:
+				to.putByte(0x68);
+				to.putAddress(src.label());
+				break;
 			default:
 				assert(false);
 				break;

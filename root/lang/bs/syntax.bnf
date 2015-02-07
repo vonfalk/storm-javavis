@@ -18,6 +18,9 @@ TypePart => TypePart(n) : Name n, "<", Type -> add, (",", Type -> add, )* ">";
 Type => TypeName() : TypePart -> add, (":", TypePart -> add, )*;
 Package => t : Type t;
 
+// Array type.
+Type => arrayType(t) : Type t, "\[\]";
+
 // Skip a block, assuming matching {} and well-behaved strings.
 SkipBlock => cont : ( SkipContent ) cont;
 SkipContent => void : SkipContent, SkipContent;
@@ -52,10 +55,10 @@ FileItem => fn : Function fn;
 FileItem => cls : Class cls;
 
 // Root rule, used to parse an entire file. (except use-statements).
-File => Contents() : (FileItem -> add, )*;
+File => Contents() : , (FileItem -> add, )*;
 
 // Root rule for parsing includes.
-Includes => Includes() : ("use", Package -> add, ";", )*;
+Includes => Includes() : , ("use", Package -> add, ";", )*;
 
 // Parameter list
 Values(Block block);
@@ -92,6 +95,8 @@ PrePost => v : "--" v;
 // Atoms, for example constants and variables/function calls.
 Atom(Block block);
 Atom => intConstant(nr) : "[0-9]+" nr;
+Atom => intConstant(nr) : "\-[0-9]+" nr;
+Atom => strConstant(str) : "\"" - ( StrContent ) str - "\"";
 Atom => namedExpr(block, name, params) : Type name, FnValues(block) params;
 Atom => namedExpr(block, name, dotExpr, params) : Atom(block) dotExpr, "\.", Name name, FnValues(block) params;
 Atom => e : "(", Expr(block) e, ")";

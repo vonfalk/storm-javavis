@@ -1,0 +1,12 @@
+
+// Implement support for Int[] instead of Array<Int>
+TypeName arrayType(TypeName t) {
+	TypePart core("core");
+	TypePart array("Array");
+	array.add(t);
+
+	TypeName name;
+	name.add(core);
+	name.add(array);
+	name;
+}

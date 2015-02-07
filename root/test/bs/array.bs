@@ -36,7 +36,7 @@ Int testValArray() {
 }
 
 Int testIntArray() {
-	Array<Int> a;
+	Int[] a;
 
 	for (Int i = 0; i < 20; i++)
 		a << i;

@@ -2,6 +2,7 @@
 #include "Debug.h"
 #include "Code/VTable.h"
 #include "Type.h"
+#include "Str.h"
 
 namespace storm {
 
@@ -10,6 +11,7 @@ namespace storm {
 	}
 
 	void printVTable(Object *obj) {
+		checkLive(obj);
 		void *v = code::vtableOf(obj);
 		PLN("Vtable of: " << obj << " is " << v);
 		PLN(" Refs: " << obj->dbg_refs());
@@ -19,10 +21,24 @@ namespace storm {
 		PLN("At: " << z);
 	}
 
+	void print(Object *s) {
+		if (s == null) {
+			PLN("null");
+			return;
+		}
+
+		checkLive(s);
+
+		Auto<Str> z = s->toS();
+		PLN(z);
+	}
+
 
 	Dbg::Dbg() : v(10) {}
 
 	Dbg::Dbg(Int v) : v(v) {}
+
+	Dbg::~Dbg() {}
 
 	void Dbg::set(Int v) {
 		this->v = v;

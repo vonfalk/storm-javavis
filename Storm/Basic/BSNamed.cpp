@@ -30,8 +30,11 @@ namespace storm {
 					s.to << fnCall(to.type.copyCtor(), Size());
 				} else {
 					// Regular machine operations suffice!
+					Variable target = to.location(s);
 					s.to << mov(ptrA, t.location(s));
-					s.to << mov(to.location(s), xRel(to.type.size(), ptrA));
+					s.to << mov(target, xRel(to.type.size(), ptrA));
+					if (to.type.refcounted())
+						s.to << addRef(target);
 				}
 			} else {
 				call->genCode(s, values, to);
@@ -124,7 +127,7 @@ namespace storm {
 
 		code::Block subBlock = s.frame.createChild(s.block);
 		s.to << begin(subBlock);
-		GenState subState = { s.to, s.frame, subBlock };
+		GenState subState = { s.to, s.data, s.frame, subBlock };
 
 		// Only free this one automatically on an exception. If there is no exception,
 		// the memory will be owned by the object itself.

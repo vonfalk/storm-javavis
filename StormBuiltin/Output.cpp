@@ -161,10 +161,11 @@ static String valueRef(const CppType &type, const CppName &scope, const Types &t
 	std::wostringstream out;
 	out << L"valueRef(";
 	if (!type.isVoid()) {
+		Type full = types.find(type.type, scope);
 		out << L"L\"";
-		out << types.find(type.type, scope).fullName();
+		out << full.fullName();
 		out << L"\", ";
-		if (type.isRef || type.isPtr)
+		if (full.value && (type.isRef || type.isPtr))
 			out << L"true";
 		else
 			out << L"false";

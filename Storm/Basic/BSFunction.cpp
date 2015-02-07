@@ -51,6 +51,7 @@ namespace storm {
 		// Generate code!
 		using namespace code;
 		Listing l;
+		CodeData data;
 
 		l << prolog();
 
@@ -75,7 +76,7 @@ namespace storm {
 				l << code::addRef(var->var);
 		}
 
-		GenState state = { l, l.frame, l.frame.root() };
+		GenState state = { l, data, l.frame, l.frame.root() };
 
 		if (result == Value()) {
 			GenResult r;
@@ -109,6 +110,8 @@ namespace storm {
 			l << epilog();
 			l << ret(Size::sPtr);
 		}
+
+		l << data;
 
 		// PLN(identifier() << L": " << l);
 		return l;
