@@ -37,6 +37,10 @@ namespace code {
 		Reference(const Ref &copy, const String &title);
 		~Reference();
 
+		// Set to a new source.
+		void set(RefSource &source);
+		void set(const Ref &copy);
+
 		// Note: onAddressChanged will _not_ be called for the initial address.
 		virtual void onAddressChanged(void *newAddress);
 		inline void *address() const { return lastAddress; }
@@ -64,6 +68,18 @@ namespace code {
 		CbReference(const Ref &copy, const String &title);
 
 		Fn<void, void*> onChange;
+		virtual void onAddressChanged(void *addr);
+	};
+
+	/**
+	 * Update a specific address.
+	 */
+	class AddrReference : public Reference {
+	public:
+		AddrReference(void **update, RefSource &source, const String &title);
+		AddrReference(void **update, const Ref &source, const String &title);
+
+		void **update;
 		virtual void onAddressChanged(void *addr);
 	};
 

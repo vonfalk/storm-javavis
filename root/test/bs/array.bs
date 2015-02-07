@@ -8,10 +8,45 @@ Int testArray() {
 		a << Dbg(i);
 	}
 
+	a[1.nat] = Dbg(0);
+
 	Int sum = 0;
 	for (Nat i = 0.nat; i < a.count; i++) {
 		sum = sum + a[i].get;
 	}
+
+	sum;
+}
+
+Int testValArray() {
+	Array<DbgVal> a;
+
+	for (Int i = 0; i < 23; i++) {
+		a << DbgVal(i);
+	}
+
+	a[3.nat] = DbgVal(0);
+
+	Int sum = 0;
+	for (Nat i = 0.nat; i < a.count; i++) {
+		sum = sum + a[i].get;
+	}
+
+	sum;
+}
+
+Int testIntArray() {
+	Array<Int> a;
+
+	for (Int i = 0; i < 20; i++)
+		a << i;
+
+	for (Int i = 5; i < 15; i++)
+		a[i.nat] = 0;
+
+	Int sum = 0;
+	for (Nat i = 0.nat; i < a.count; i++)
+		sum = sum + a[i];
 
 	sum;
 }

@@ -81,6 +81,13 @@ namespace storm {
 		}
 	}
 
+	static void intCopyCtor(InlinedParams p) {
+		p.state.to << code::mov(code::ptrC, p.params[1]);
+		p.state.to << code::mov(code::ptrA, p.params[0]);
+		p.state.to << code::mov(code::intRel(code::ptrA), code::intRel(code::ptrC));
+	}
+
+
 	static void intToNat(InlinedParams p) {
 		if (p.result.needed())
 			p.state.to << code::mov(p.result.location(p.state), p.params[0]);
@@ -113,6 +120,9 @@ namespace storm {
 		ri[0] = Value(this, true);
 		ri[1] = Value(this);
 		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&intAssign))));
+
+		vector<Value> rr(2, Value(this, true));
+		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&intCopyCtor))));
 	}
 
 
@@ -192,6 +202,12 @@ namespace storm {
 		}
 	}
 
+	static void natCopyCtor(InlinedParams p) {
+		p.state.to << code::mov(code::ptrC, p.params[1]);
+		p.state.to << code::mov(code::ptrA, p.params[0]);
+		p.state.to << code::mov(code::intRel(code::ptrA), code::intRel(code::ptrC));
+	}
+
 	static void natToInt(InlinedParams p) {
 		if (p.result.needed())
 			p.state.to << code::mov(p.result.location(p.state), p.params[0]);
@@ -223,6 +239,9 @@ namespace storm {
 		ri[0] = Value(this, true);
 		ri[1] = Value(this);
 		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&natAssign))));
+
+		vector<Value> rr(2, Value(this, true));
+		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&intCopyCtor))));
 	}
 
 

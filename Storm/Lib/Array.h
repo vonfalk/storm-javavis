@@ -30,9 +30,20 @@ namespace storm {
 		// Clear.
 		void STORM_FN clear();
 
+		// Raw operations.
+		void pushRaw(const void *value) {
+			ensure(size + 1);
+			(*handle.create)(ptr(size++), value);
+		}
+
+		void *atRaw(nat id) {
+			assert(id < size);
+			return ptr(id);
+		}
+
 	protected:
 		// Handle
-		Handle handle;
+		const Handle &handle;
 
 		// Size.
 		nat size;
@@ -71,10 +82,10 @@ namespace storm {
 
 		// Insert an element.
 		void push(const T &item) {
-			ensure(size + 1);
-			(*handle.create)(ptr(size++), &item);
+			pushRaw(&item);
 		}
 
 	};
+
 
 }

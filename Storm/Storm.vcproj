@@ -442,6 +442,10 @@
 				RelativePath=".\Lib\ArrayTemplate.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\Handle.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

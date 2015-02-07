@@ -128,5 +128,7 @@ BEGIN_TEST(CustomValueTest) {
 } END_TEST
 
 BEGIN_TEST(StormArrayTest) {
-	CHECK_EQ(runFn(L"test.bs.testArray"), 231);
+	CHECK_EQ(runFn(L"test.bs.testArray"), 230);
+	CHECK_EQ(runFn(L"test.bs.testValArray"), 250);
+	CHECK_EQ(runFn(L"test.bs.testIntArray"), 95);
 } END_TEST

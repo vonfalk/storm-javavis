@@ -19,15 +19,20 @@ namespace storm {
 		// Ctor.
 		ArrayType(const Value &param);
 
+		// Parameter type.
+		const Value param;
+
 	protected:
 		// Lazy loading.
 		virtual void lazyLoad();
 
 	private:
-		// Parameter type.
-		Value param;
 
 		// Load functions assuming param is an object.
 		void loadClassFns();
+
+		// Load functions assuming param is a value.
+		void loadValueFns();
 	};
+
 }

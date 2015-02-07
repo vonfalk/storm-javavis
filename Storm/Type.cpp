@@ -115,6 +115,29 @@ namespace storm {
 		return mySize;
 	}
 
+	const Handle &Type::handle() {
+		if (typeHandle.size == 0)
+			updateHandle(true);
+		return typeHandle;
+	}
+
+	void Type::updateHandle(bool force) {
+		if (typeHandle.size == 0 && !force)
+			return;
+
+		Function *dtor = destructor();
+		Function *create = copyCtor();
+		if (!create)
+			throw RuntimeError(L"The type " + identifier() + L" does not have a copy constructor.");
+
+		typeHandle.size = size().current();
+		if (dtor)
+			typeHandle.destroyRef(code::Ref(dtor->ref()));
+		else
+			typeHandle.destroyRef();
+		typeHandle.createRef(code::Ref(create->ref()));
+	}
+
 	void Type::setSuper(Type *super) {
 		if (super->flags & typeFinal)
 			throw InternalError(super->identifier() +
@@ -205,6 +228,8 @@ namespace storm {
 				throw TypedefError(L"Constructors must be functions.");
 			if (fn->result != Value())
 				throw TypedefError(L"Constructors may not return a value.");
+			if (fn->params.size() == 2 && fn->params[1].type == this && fn->params[1] != Value::thisPtr(this))
+				throw TypedefError(L"The copy constructor must take a reference!");
 		}
 
 		if (o->name == DTOR) {
@@ -213,7 +238,7 @@ namespace storm {
 				throw TypedefError(L"Destructors must be functions.");
 			if (fn->result != Value())
 				throw TypedefError(L"Destructors may not return a value.");
-			if (fn->params.size() != 1 || fn->params[0].type != this)
+			if (fn->params.size() != 1 || fn->params[0] != Value::thisPtr(this))
 				throw TypedefError(L"Destructors may take no parameters except the this-parameter.");
 		}
 	}

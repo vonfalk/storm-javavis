@@ -17,6 +17,21 @@ namespace code {
 		arena.refManager.removeReference(this, referring);
 	}
 
+	void Reference::set(RefSource &source) {
+		arena.refManager.removeReference(this, referring);
+		referring = source.getId();
+		lastAddress = arena.refManager.addReference(this, referring);
+		onAddressChanged(lastAddress);
+	}
+
+	void Reference::set(const Ref &source) {
+		arena.refManager.removeReference(this, referring);
+		referring = source.referring;
+		lastAddress = arena.refManager.addReference(this, referring);
+		onAddressChanged(lastAddress);
+	}
+
+
 	void Reference::onAddressChanged(void *newAddress) {
 		lastAddress = newAddress;
 	}
@@ -27,6 +42,21 @@ namespace code {
 	void CbReference::onAddressChanged(void *a) {
 		Reference::onAddressChanged(a);
 		onChange(a);
+	}
+
+	AddrReference::AddrReference(void **update, RefSource &source, const String &title)
+		: Reference(source, title), update(update) {
+		*update = source.address();
+	}
+
+	AddrReference::AddrReference(void **update, const Ref &from, const String &title)
+		: Reference(from, title), update(update) {
+		*update = from.address();
+	}
+
+	void AddrReference::onAddressChanged(void *a) {
+		Reference::onAddressChanged(a);
+		*update = a;
 	}
 
 	Ref::Ref() : arena(null), referring(0) {}

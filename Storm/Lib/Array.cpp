@@ -33,10 +33,13 @@ namespace storm {
 		if (data == null)
 			return;
 
-		size_t elemSize = handle.size;
-		size_t to = elements * elemSize;
-		for (nat i = 0; i < to; i += elemSize)
-			(*handle.destroy)(data + i);
+		if (handle.destroy) {
+			size_t elemSize = handle.size;
+			size_t to = elements * elemSize;
+			for (nat i = 0; i < to; i += elemSize)
+				(*handle.destroy)(data + i);
+		}
+
 		delete[] data;
 	}
 

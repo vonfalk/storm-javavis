@@ -11,12 +11,33 @@ namespace storm {
 		new (mem) Array<Auto<Object>>();
 	}
 
+	static void CODECALL createValue(void *mem) {
+		// Extract the type...
+		nat offset = OFFSET_OF(Object, myType);
+		Type *type = OFFSET_IN(mem, offset, Type *);
+
+		// Find out the handle.
+		ArrayType *arr = as<ArrayType>(type);
+		const Handle &handle = arr->param.type->handle();
+
+		// Create it!
+		new (mem) ArrayBase(handle);
+	}
+
 	static void CODECALL pushClass(Array<Auto<Object>> *to, Par<Object> o) {
 		to->push(o);
 	}
 
-	static Object *CODECALL getClass(Array<Auto<Object>> *to, Nat id) {
-		return to->at(id).ret();
+	static void CODECALL pushValue(ArrayBase *to, void *ptr) {
+		to->pushRaw(ptr);
+	}
+
+	static void *CODECALL getClass(Array<Auto<Object>> *from, Nat id) {
+		return from->atRaw(id);
+	}
+
+	static void *CODECALL getValue(ArrayBase *from, Nat id) {
+		return from->atRaw(id);
 	}
 
 	static Named *generateArray(Par<NamePart> part) {
@@ -38,18 +59,33 @@ namespace storm {
 	ArrayType::ArrayType(const Value &param) : Type(L"Array", typeClass, valList(1, param)), param(param) {}
 
 	void ArrayType::lazyLoad() {
+		if (param.ref)
+			throw InternalError(L"References are not supported by the array yet.");
+
 		if (param.isClass())
 			loadClassFns();
 		else
-			throw InternalError(L"The type " + ::toS(param) + L" is not supported for arrays yet.");
+			loadValueFns();
 	}
 
 	void ArrayType::loadClassFns() {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
+		Value refParam = param.asRef(true);
+
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createClass))));
 		add(steal(nativeFunction(e, Value(), L"<<", valList(2, t, param), address(&pushClass))));
-		add(steal(nativeFunction(e, param, L"[]", valList(2, t, Value(natType(e))), address(&getClass))));
+		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getClass))));
+	}
+
+	void ArrayType::loadValueFns() {
+		Engine &e = engine;
+		Value t = Value::thisPtr(this);
+		Value refParam = param.asRef(true);
+
+		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createValue))));
+		add(steal(nativeFunction(e, Value(), L"<<", valList(2, t, refParam), address(&pushValue))));
+		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getValue))));
 	}
 
 }

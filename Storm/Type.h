@@ -5,6 +5,7 @@
 #include "TypeChain.h"
 #include "TypeLayout.h"
 #include "VTable.h"
+#include "Lib/Handle.h"
 #include "Code/Value.h"
 
 namespace storm {
@@ -68,6 +69,9 @@ namespace storm {
 
 		// Get the size of this type.
 		Size size(); // const;
+
+		// Get a handle to this type. It will be updated as long as this type lives.
+		const Handle &handle();
 
 		// Set parent type. The parent type has to have the same type parameters as this one.
 		void setSuper(Type *super);
@@ -137,11 +141,17 @@ namespace storm {
 		// Variable layout.
 		TypeLayout layout;
 
+		// Type handle.
+		RefHandle typeHandle;
+
 		// Loaded the lazy parts?
 		bool lazyLoaded;
 
 		// Loading the lazy parts?
 		bool lazyLoading;
+
+		// Update the handle.
+		void updateHandle(bool force);
 
 		// Ensure that any lazy-loaded parts are loaded.
 		void ensureLoaded();

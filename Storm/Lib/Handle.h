@@ -1,4 +1,5 @@
 #pragma once
+#include "Code/Reference.h"
 
 namespace storm {
 
@@ -6,23 +7,49 @@ namespace storm {
 	 * A type handle, ie information about a type without actually knowing
 	 * exactly what the type itself is.
 	 * Used to make it easier to implement templates usable in Storm from C++.
+	 *
+	 * NOTE: Do not copy, introducing NoCopy here crashes the static variable below
+	 * for some reason...
 	 */
 	class Handle {
 	public:
 		// Size of the type.
-		const size_t size;
+		size_t size;
 
-		// Destructor.
-		typedef void (*Destroy)(void *);
-		const Destroy destroy;
-
-		// Copy (to, from).
-		typedef void (*Copy)(void *, const void *);
-		const Copy copy;
+		// Destructor (may be null).
+		typedef void (CODECALL *Destroy)(void *);
+		Destroy destroy;
 
 		// Copy-construct (to, from)
-		typedef void (*const Create)(void *, const void *);
-		const Create create;
+		typedef void (CODECALL *const Create)(void *, const void *);
+		Create create;
+
+		inline Handle()
+			: size(0), destroy(null), create(null) {}
+		inline Handle(size_t size, Destroy destroy, Create create)
+			: size(size), destroy(destroy), create(create) {}
+	};
+
+	/**
+	 * Use a handle which updates automagically.
+	 */
+	class RefHandle : public Handle {
+	public:
+		// Ctor.
+		RefHandle();
+
+		// Dtor.
+		~RefHandle();
+
+		// Set references.
+		void destroyRef(const code::Ref &ref);
+		void destroyRef();
+		void createRef(const code::Ref &ref);
+
+	private:
+		// References.
+		code::AddrReference *destroyUpdater;
+		code::AddrReference *createUpdater;
 	};
 
 	/**
@@ -35,15 +62,11 @@ namespace storm {
 			return sizeof(T);
 		}
 
-		static void destroy(void *v) {
+		static void CODECALL destroy(void *v) {
 			((T*)v)->~T();
 		}
 
-		static void copy(void *to, const void *from) {
-			*((T*)to) = *((T*)from);
-		}
-
-		static void create(void *to, const void *from) {
+		static void CODECALL create(void *to, const void *from) {
 			new (to) T(*((T*)from));
 		}
 
@@ -54,13 +77,12 @@ namespace storm {
 	 * Create handles.
 	 */
 	template <class T>
-	Handle handle() {
-		Handle h = {
+	const Handle &handle() {
+		static Handle h = Handle(
 			HandleHelper<T>::size(),
 			&HandleHelper<T>::destroy,
-			&HandleHelper<T>::copy,
-			&HandleHelper<T>::create,
-		};
+			&HandleHelper<T>::create
+			);
 		return h;
 	}
 

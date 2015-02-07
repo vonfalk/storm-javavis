@@ -6,6 +6,41 @@
 
 namespace storm {
 
+	namespace bs {
+		// Helper for calling a function and handling the result correctly.
+		static void callFn(Par<Function> call, const GenState &s, vector<code::Value> &values, GenResult &to) {
+			using namespace code;
+
+			if (to.type.ref != call->result.ref) {
+				// We need to do stuff!
+				GenResult t(call->result, s.block);
+				call->genCode(s, values, t);
+
+				if (!to.needed())
+					return;
+
+				if (to.type.ref) {
+					// Dangerous...
+					s.to << lea(to.location(s), ptrRel(t.location(s)));
+				} else if (to.type.isValue()) {
+					// Need to copy...
+					s.to << lea(ptrA, ptrRel(to.location(s)));
+					s.to << fnParam(ptrA);
+					s.to << fnParam(t.location(s));
+					s.to << fnCall(to.type.copyCtor(), Size());
+				} else {
+					// Regular machine operations suffice!
+					s.to << mov(ptrA, t.location(s));
+					s.to << mov(to.location(s), xRel(to.type.size(), ptrA));
+				}
+			} else {
+				call->genCode(s, values, to);
+			}
+		}
+
+	}
+
+
 	/**
 	 * Function call.
 	 */
@@ -33,7 +68,7 @@ namespace storm {
 			vars[i] = params->code(i, s, values[i]);
 
 		// Call!
-		toExecute->genCode(s, vars, to);
+		callFn(toExecute, s, vars, to);
 	}
 
 
