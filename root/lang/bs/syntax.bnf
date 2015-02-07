@@ -92,6 +92,11 @@ ForInner => For(block) : Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me
 PrePost => v : "\+\+" v;
 PrePost => v : "--" v;
 
+// Initializer list for arrays.
+ArrayInitList(Block block);
+ArrayInitList => Array<Expr>() : DELIMITER;
+ArrayInitList => Array<Expr>() : Expr(block) -> push (, ", ", Expr(block) -> push)*;
+
 // Atoms, for example constants and variables/function calls.
 Atom(Block block);
 Atom => intConstant(nr) : "[0-9]+" nr;
@@ -106,6 +111,7 @@ Atom => e : Loop(block) e; // For symmetry... I guess it is not really very usef
 Atom => accessExpr(block, lhs, par) : Atom(block) lhs, "\[", Expr(block) par, "\]";
 Atom => prefixOperator(block, o, e) : PrePost o, Expr(block) e;
 Atom => postfixOperator(block, o, e) : Expr(block) e, PrePost o;
+Atom => arrayInit(block, t, list) : "\[", Type t, ":", ArrayInitList(block) list, "\]";
 
 // Highest priority. Right-associative, eg (a * b) * c
 Oper1 => v : "[*/%]" v;

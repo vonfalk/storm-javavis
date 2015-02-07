@@ -90,8 +90,23 @@ namespace storm {
 		return r;
 	}
 
+	String parseFnName(Tokenizer &tok) {
+		std::wostringstream r;
+		r << tok.next().token;
+
+		while (true) {
+			Token t = tok.peek();
+			if (t.token == L":" || t.token == L"(" || t.token == L";")
+				break;
+			r << t.token;
+			tok.next();
+		}
+
+		return r.str();
+	}
+
 	void parseCall(SyntaxOption &to, Tokenizer &tok) {
-		Token name = tok.next();
+		String name = parseFnName(tok);
 		vector<String> params;
 		bool isCall = false;
 
@@ -108,7 +123,7 @@ namespace storm {
 		if (endSt.token != L":")
 			throw SyntaxError(endSt.pos, L"Expected :");
 
-		to.matchFn = name.token;
+		to.matchFn = name;
 		to.matchFnParams = params;
 		to.matchVar = !isCall;
 	}

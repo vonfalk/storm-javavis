@@ -51,6 +51,16 @@ Int testIntArray() {
 	sum;
 }
 
+Int testInitArray() {
+	Int[] a = [Int: 1, 3, 3, 7];
+
+	Int sum;
+	for (Nat i = 0; i < a.count; i++)
+		sum = sum + a[i];
+
+	sum;
+}
+
 Array<DbgVal> createValArray() {
 	Array<DbgVal> a;
 

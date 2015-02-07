@@ -35,12 +35,13 @@ namespace storm {
 		Named *parent = closestNamed();
 
 		Name *r = null;
-		if (parent)
+		if (parent) {
 			r = parent->path();
-		else
+			r->add(steal(CREATE(NamePart, this, name, params)));
+		} else {
 			r = CREATE(Name, this);
+		}
 
-		r->add(steal(CREATE(NamePart, this, name, params)));
 		return r;
 	}
 

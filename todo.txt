@@ -1,5 +1,7 @@
 Also: return types for rules may be specified.
 
+Remove support for arrays in the syntax. We can simply use Array<Foo> and -> push instead.
+
 Verify that exceptions thrown in constructors are actually correctly propagated. Calling create1<DbgVal>(null) does
 not crash for some reason...
 

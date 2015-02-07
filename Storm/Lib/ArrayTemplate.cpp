@@ -24,12 +24,16 @@ namespace storm {
 		new (mem) ArrayBase(handle);
 	}
 
-	static void CODECALL pushClass(Array<Auto<Object>> *to, Par<Object> o) {
+	static Array<Auto<Object>> *CODECALL pushClass(Array<Auto<Object>> *to, Par<Object> o) {
 		to->push(o);
+		to->addRef();
+		return to;
 	}
 
-	static void CODECALL pushValue(ArrayBase *to, void *ptr) {
+	static ArrayBase *CODECALL pushValue(ArrayBase *to, void *ptr) {
 		to->pushRaw(ptr);
+		to->addRef();
+		return to;
 	}
 
 	static void *CODECALL getClass(Array<Auto<Object>> *from, Nat id) {
@@ -74,7 +78,8 @@ namespace storm {
 		Value refParam = param.asRef(true);
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createClass))));
-		add(steal(nativeFunction(e, Value(), L"<<", valList(2, t, param), address(&pushClass))));
+		add(steal(nativeFunction(e, t, L"<<", valList(2, t, param), address(&pushClass))));
+		add(steal(nativeFunction(e, Value(), L"push", valList(2, t, param), address(&pushClass))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getClass))));
 	}
 
@@ -84,7 +89,8 @@ namespace storm {
 		Value refParam = param.asRef(true);
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createValue))));
-		add(steal(nativeFunction(e, Value(), L"<<", valList(2, t, refParam), address(&pushValue))));
+		add(steal(nativeFunction(e, t, L"<<", valList(2, t, refParam), address(&pushValue))));
+		add(steal(nativeFunction(e, Value(), L"push", valList(2, t, refParam), address(&pushValue))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getValue))));
 	}
 

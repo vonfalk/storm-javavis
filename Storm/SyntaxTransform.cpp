@@ -3,6 +3,7 @@
 #include "Code/Function.h"
 #include "Function.h"
 #include "Parser.h"
+#include "Tokenizer.h"
 
 namespace storm {
 
@@ -25,6 +26,67 @@ namespace storm {
 		throw SyntaxTypeError(L"Unknown type of syntax variable.");
 	}
 
+	// Parse a string into a Name, supporting <> as template parameters.
+	static Name *parseName(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok);
+
+	static NamePart *parseNamePart(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok) {
+		String name = tok.next().token;
+		vector<Value> params;
+
+		if (tok.more() && tok.peek().token == L"<") {
+			tok.next();
+
+			while (tok.more() && tok.peek().token != L">") {
+				Auto<Name> n = parseName(e, scope, pos, tok);
+				if (Type *t = as<Type>(scope.find(n)))
+					params.push_back(Value(t));
+				else
+					throw SyntaxError(pos, L"Unknown type: " + ::toS(n));
+
+				if (!tok.more())
+					throw SyntaxError(pos, L"Unbalanced <>");
+				Token t = tok.peek();
+				if (t.token == L">")
+					break;
+				if (t.token != L",")
+					throw SyntaxError(pos, L"Expected , got" + t.token);
+			}
+
+			tok.next();
+		}
+
+		return CREATE(NamePart, e, name, params);
+	}
+
+	static Name *parseName(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok) {
+		Auto<Name> r = CREATE(Name, e);
+		Auto<NamePart> part;
+
+		while (tok.more()) {
+			Auto<NamePart> part = parseNamePart(e, scope, pos, tok);
+			r->add(part);
+
+			if (!tok.more())
+				break;
+
+			Token t = tok.peek();
+			if (t.token == L">")
+				break;
+			if (t.token == L",")
+				break;
+			if (t.token != L".")
+				throw SyntaxError(pos, L"Expected . got " + t.token);
+			tok.next();
+		}
+
+		return r.ret();
+	}
+
+	static Name *parseName(Engine &e, const Scope &scope, const SrcPos &pos, const String &src) {
+		Tokenizer tok(Path(), src, 0);
+		return parseName(e, scope, pos, tok);
+	}
+
 	// Call a function.
 	static Object *callFunction(Engine &e, const SyntaxOption *option, const vector<Object *> &params, const SrcPos &pos) {
 		vector<Value> types(params.size());
@@ -35,27 +97,29 @@ namespace storm {
 				types[i] = SrcPos::type(e);
 		}
 
-		Auto<Name> match = CREATE(Name, e);
-		match->add(option->matchFn, types);
-		Named *no = option->scope.find(match);
-		if (Function *f = as<Function>(no)) {
-			code::FnCall call;
-			for (nat i = 0; i < params.size(); i++) {
-				if (params[i]) {
-					call.param<Object *>(params[i]);
-				} else {
-					call.param<SrcPos>(pos);
+		Auto<Name> name = parseName(e, option->scope, option->pos, option->matchFn);
+
+		if (name->at(name->size() - 1)->params.size() == 0) {
+			Auto<Name> match = name->withParams(types);
+			Named *no = option->scope.find(match);
+			if (Function *f = as<Function>(no)) {
+				code::FnCall call;
+				for (nat i = 0; i < params.size(); i++) {
+					if (params[i]) {
+						call.param<Object *>(params[i]);
+					} else {
+						call.param<SrcPos>(pos);
+					}
 				}
+				return call.call<Object *>(f->pointer());
 			}
-			return call.call<Object *>(f->pointer());
 		}
 
 		// See if we can find a constructor!
-		Auto<Name> ctor = CREATE(Name, e, option->matchFn);
-		if (Type *t = as<Type>(option->scope.find(ctor))) {
+		if (Type *t = as<Type>(option->scope.find(name))) {
 			types.insert(types.begin(), Value(t));
 			Auto<NamePart> ctor = CREATE(NamePart, e, Type::CTOR, types);
-			no = t->find(ctor);
+			Named *no = t->find(ctor);
 			if (Function *ctor = as<Function>(no)) {
 				code::FnCall call;
 				for (nat i = 0; i < params.size(); i++) {
