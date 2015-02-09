@@ -13,7 +13,11 @@ namespace code {
 
 	class BlockBeginError : public Exception {
 	public:
-		String what() const { return L"The parent scope must be entered before a child scope."; }
+		BlockBeginError() : msg(L"The parent scope must be entered before a child scope.") {}
+		BlockBeginError(const String &msg) : msg(msg) {}
+		String what() const { return msg; }
+	private:
+		String msg;
 	};
 
 	class BlockEndError : public Exception {

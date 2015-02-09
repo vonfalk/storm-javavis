@@ -21,6 +21,11 @@ namespace storm {
 	// Basic print tracing (to be removed when we have something real).
 	void STORM_FN ptrace(Int z);
 
+	// Print the stack (machine specific, for debug).
+	void STORM_FN dumpStack();
+
+	// Throw an exception.
+	void STORM_FN throwError();
 
 	// Class partly implemented in C++, we'll try to override this in Storm.
 	class Dbg : public Object {

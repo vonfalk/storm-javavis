@@ -5,6 +5,8 @@
 #include "Parser.h"
 #include "Tokenizer.h"
 
+#include "Lib/Debug.h"
+
 namespace storm {
 
 	// Evaluate a syntaxVariable. Never returns null.

@@ -23,8 +23,9 @@ Type => arrayType(t) : Type t, "\[\]";
 
 // Skip a block, assuming matching {} and well-behaved strings.
 SkipBlock => cont : ( SkipContent ) cont;
-SkipContent => void : SkipContent, SkipContent;
+SkipContent => void : SkipContent - Whitespace - SkipContent;
 SkipContent => void : "[^{}\"']*";
+SkipContent => void : "//[^\n\r]*[\n\r]";
 SkipContent => void : "{", SkipContent, "}";
 SkipContent => void : "\"" - StrContent - "\"";
 SkipContent => void : "'[^']'";
@@ -72,7 +73,7 @@ FnValues => v : "(", Values(block) v, ")";
 
 // Block.
 Block(Block parent);
-Block => ExprBlock(parent) : "{", (Stmt(me) -> expr, )*, "}";
+Block => ExprBlock(parent) : "{", (Stmt(me) -> add, )*, "}";
 
 // If.
 If(Block block);
@@ -84,7 +85,7 @@ Loop(Block block);
 Loop => While(block) : "while", "(", Expr(me) -> cond, ")", Stmt(me) -> body;
 
 // The for loop is divided into two to get correct scoping.
-Loop => ExprBlock(block) : "for", "(", Expr(me) -> expr, ";", ForInner(me) -> expr;
+Loop => ExprBlock(block) : "for", "(", Expr(me) -> add, ";", ForInner(me) -> add;
 ForInner(Block block);
 ForInner => For(block) : Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me) -> body;
 
@@ -155,7 +156,7 @@ Stmt => e : Loop(block) e;
 
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);
-FunctionBody => FnBody(fn) : DELIMITER - (Stmt(me) -> expr, )* - DELIMITER;
+FunctionBody => FnBody(fn) : DELIMITER - (Stmt(me) -> add, )* - DELIMITER;
 
 // Possible contents of a class.
 ClassItem(Class owner);

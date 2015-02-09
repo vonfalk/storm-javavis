@@ -61,7 +61,7 @@ namespace storm {
 			vector<Auto<Expr> > exprs;
 
 			// Add an expression.
-			void STORM_FN expr(Par<Expr> s);
+			void STORM_FN add(Par<Expr> s);
 
 			// Result.
 			virtual Value result();
@@ -71,6 +71,9 @@ namespace storm {
 
 			// Code generation.
 			virtual void blockCode(const GenState &state, GenResult &to);
+
+		private:
+			virtual void output(wostream &to) const;
 		};
 
 

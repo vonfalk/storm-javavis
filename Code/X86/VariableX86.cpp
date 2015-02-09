@@ -52,10 +52,11 @@ namespace code {
 			if (off[id] != 0)
 				return off[id];
 
+			// TODO: In some cases it may be interesting to back more than one byte into an int location.
 			// Find the variable right before us in the frame.
 			Variable p = frame.prev(var);
 			nat size = var.size().current();
-			roundUp(size, sizeof(cpuNat));
+			size = roundUp(size, sizeof(cpuNat));
 
 			int offset;
 			if (p == Variable::invalid) {
@@ -84,7 +85,7 @@ namespace code {
 				offset = 2 * sizeof(cpuNat);
 			} else {
 				nat size = p.size().current();
-				roundUp(size, sizeof(cpuNat));
+				size = roundUp(size, sizeof(cpuNat));
 
 				offset = updateParamOffset(p, frame);
 				offset += size;

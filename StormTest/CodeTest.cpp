@@ -75,6 +75,8 @@ BEGIN_TEST(BasicSyntax) {
 	CHECK_EQ(runFn(L"test.bs.testIntCtor"), 20);
 
 	CHECK_EQ(runFn(L"test.bs.testStr"), 12);
+
+	CHECK_ERROR(runFn(L"test.bs.forError", 10));
 } END_TEST
 
 BEGIN_TEST(InheritanceTest) {
@@ -133,7 +135,7 @@ BEGIN_TEST(StormArrayTest) {
 	CHECK_EQ(runFn(L"test.bs.testArray"), 230);
 	CHECK_EQ(runFn(L"test.bs.testValArray"), 250);
 	CHECK_EQ(runFn(L"test.bs.testIntArray"), 95);
-	CHECK_EQ(runFn(L"test.bs.testInitArray"), 95);
+	CHECK_EQ(runFn(L"test.bs.testInitArray"), 1337);
 
 	// Interoperability.
 	Auto<Array<DbgVal>> r = runFn<Array<DbgVal>*>(L"test.bs.createValArray");

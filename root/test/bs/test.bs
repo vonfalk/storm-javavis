@@ -66,17 +66,28 @@ Int while(Int z) {
     Int r = 1;
     while (z > 0) {
         r = r * 2;
-	z = z - 1;
+		z = z - 1;
     }
     r;
 }
 
 Int for(Int z) {
     Int r = 1;
-    for (Int i = 0; i < z; i = i + 1) {
+	for (Int i = 0; i < z; i++) {
         r = r * 2;
     }
     r;
+}
+
+Int forError(Int z) {
+	// For some reason, this did not work at some point in time!
+	// It was because the stack was not properly aligned due to the bool variable in the for loop.
+	throwError;
+	Int r = 1;
+	for (Int i = 0; i < z; i++) {
+		r = r * 2;
+	}
+	r;
 }
 
 void voidFn() {

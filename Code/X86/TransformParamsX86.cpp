@@ -143,8 +143,9 @@ namespace code {
 			const code::Frame &frame = to.frame;
 
 			if (params.currentBlock != frame.parent(b)) {
-				assert(("Beginning block without beginning its parent", false));
-				throw BlockBeginError();
+				throw BlockBeginError(L"Can not begin " + toS(Value(b)) + L" unless the current block is "
+									+ toS(Value(frame.parent(b))) + L". We are now in "
+									+ toS(Value(params.currentBlock)));
 			}
 
 
@@ -310,6 +311,7 @@ namespace code {
 			}
 
 			nat stackVarSize = params.vars.maxSize();
+			assert(stackVarSize % 4 == 0);
 			if (stackVarSize)
 				to << code::sub(ptrStack, natPtrConst(stackVarSize));
 

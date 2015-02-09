@@ -56,7 +56,7 @@ namespace storm {
 
 	bs::ExprBlock::ExprBlock(Par<Block> parent) : Block(parent) {}
 
-	void bs::ExprBlock::expr(Par<Expr> expr) {
+	void bs::ExprBlock::add(Par<Expr> expr) {
 		exprs.push_back(expr);
 	}
 
@@ -79,6 +79,17 @@ namespace storm {
 		}
 
 		exprs[exprs.size() - 1]->code(state, to);
+	}
+
+	void bs::ExprBlock::output(wostream &to) const {
+		to << L"{" << endl;
+		{
+			Indent i(to);
+			for (nat i = 0; i < exprs.size(); i++) {
+				to << exprs[i] << L";" << endl;
+			}
+		}
+		to << L"}";
 	}
 
 	/**

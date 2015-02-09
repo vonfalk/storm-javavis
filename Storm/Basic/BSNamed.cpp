@@ -74,6 +74,11 @@ namespace storm {
 		callFn(toExecute, s, vars, to);
 	}
 
+	void bs::FnCall::output(wostream &to) const {
+		Auto<Name> p = toExecute->path();
+		p = p->withParams(vector<Value>());
+		to << p << params;
+	}
 
 	/**
 	 * Execute constructor.
@@ -85,6 +90,10 @@ namespace storm {
 
 	Value bs::CtorCall::result() {
 		return toCreate.asRef(false);
+	}
+
+	void bs::CtorCall::output(wostream &to) const {
+		to << toCreate << params;
 	}
 
 	void bs::CtorCall::code(const GenState &s, GenResult &to) {
@@ -146,7 +155,7 @@ namespace storm {
 		vars[0] = rawMemory;
 
 		for (nat i = 1; i < values.size(); i++)
-			vars[i] = params->code(i - 1, s, values[i]);
+			vars[i] = params->code(i - 1, subState, values[i]);
 
 		// Call!
 		GenResult voidTo(Value(), subBlock);
@@ -212,6 +221,10 @@ namespace storm {
 					s.to << code::addRef(v);
 			}
 		}
+	}
+
+	void bs::LocalVarAccess::output(wostream &to) const {
+		to << var->name;
 	}
 
 

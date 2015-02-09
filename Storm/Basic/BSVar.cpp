@@ -107,6 +107,14 @@ namespace storm {
 			}
 		}
 
+		void bs::Var::output(wostream &to) const {
+			to << variable->result << L" " << variable->name;
+			if (initExpr)
+				to << L" = " << initExpr;
+			else if (initCtor)
+				to << L"(" << initCtor << L")";
+		}
+
 
 		/**
 		 * LocalVar

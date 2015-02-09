@@ -14,13 +14,18 @@ TypeName arrayType(TypeName t) {
 }
 
 Expr arrayInit(Block block, TypeName type, Array<Expr> list) {
-	Expr root = namedExpr(block, arrayType(type), Actual());
+	ExprBlock b(block);
 
-	// Expr last = root;
-	// SStr operator("<<");
-	// for (Nat i = 0.nat; i < list.count; i++) {
-	// 	last = operatorExpr(block, last, operator, list[i]);
-    // }
+	SStr arrayName("tmp");
+	Var array(b, arrayName, namedExpr(b, arrayType(type), Actual()));
+	b.add(array);
 
-	root;
+	Expr varAccess = namedExpr(b, arrayName, Actual());
+	SStr operator("<<");
+	for (Nat i = 0.nat; i < list.count; i++) {
+		b.add(operatorExpr(b, varAccess, operator, list[i]));
+	}
+
+	b.add(varAccess);
+	b;
 }

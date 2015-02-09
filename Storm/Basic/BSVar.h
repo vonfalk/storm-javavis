@@ -54,6 +54,9 @@ namespace storm {
 			// Generate code.
 			virtual void code(const GenState &state, GenResult &to);
 
+		protected:
+			virtual void output(wostream &to) const;
+
 		private:
 			// Initialize.
 			void init(Par<Block> block, const Value &type, Par<SStr> name);

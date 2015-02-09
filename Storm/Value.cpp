@@ -151,7 +151,7 @@ namespace storm {
 		// For objects: we can not create references from values.
 		// For values, we need to be able to. In the future, maybe const refs from values?
 		if (ref && !v.ref)
-			if (!isValue() && !v.isValue())
+			if (isClass() && v.isClass())
 				return false;
 		return canStore(v.type);
 	}

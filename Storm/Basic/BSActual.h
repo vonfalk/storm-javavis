@@ -28,6 +28,9 @@ namespace storm {
 
 			// Add a parameter to the beginning.
 			void STORM_FN addFirst(Par<Expr> expr);
+
+		protected:
+			virtual void output(wostream &to) const;
 		};
 
 	}

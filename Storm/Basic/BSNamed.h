@@ -22,6 +22,9 @@ namespace storm {
 			// Generate code.
 			virtual void code(const GenState &s, GenResult &to);
 
+		protected:
+			virtual void output(wostream &to) const;
+
 		private:
 			// Function to run.
 			Auto<Function> toExecute;
@@ -45,6 +48,9 @@ namespace storm {
 
 			// Generate code.
 			virtual void code(const GenState &s, GenResult &to);
+
+		protected:
+			virtual void output(wostream &to) const;
 
 		private:
 			// Type to create.
@@ -82,6 +88,9 @@ namespace storm {
 
 			// Generate code.
 			virtual void code(const GenState &s, GenResult &to);
+
+		protected:
+			virtual void output(wostream &to) const;
 
 		private:
 			// Variable to access.

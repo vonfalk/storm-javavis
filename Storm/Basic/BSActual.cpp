@@ -50,4 +50,9 @@ namespace storm {
 		}
 	}
 
+	void bs::Actual::output(wostream &to) const {
+		to << L"(";
+		join(to, expressions, L", ");
+		to << L")";
+	}
 }
