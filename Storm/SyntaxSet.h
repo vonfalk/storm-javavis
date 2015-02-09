@@ -15,6 +15,7 @@ namespace storm {
 	 * TODO: Validate types of rules here?
 	 */
 	class SyntaxSet : public Printable, NoCopy {
+		typedef hash_map<String, SyntaxRule *> RMap;
 	public:
 		~SyntaxSet();
 
@@ -25,6 +26,11 @@ namespace storm {
 		// Get the SyntaxRule with a specific name.
 		SyntaxRule *rule(const String &name);
 
+		// Iterators.
+		typedef RMap::const_iterator iterator;
+		inline iterator begin() const { return rules.begin(); }
+		inline iterator end() const { return rules.end(); }
+
 	protected:
 		virtual void output(wostream &to) const;
 
@@ -33,7 +39,6 @@ namespace storm {
 		set<Package *> added;
 
 		// Syntax rules.
-		typedef hash_map<String, SyntaxRule *> RMap;
 		RMap rules;
 
 		// Add a rule.

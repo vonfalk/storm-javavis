@@ -4,6 +4,7 @@
 #include "SyntaxTransform.h"
 #include "Package.h"
 #include <iomanip>
+#include <deque>
 
 namespace storm {
 
@@ -18,7 +19,18 @@ namespace storm {
 		: syntax(set), src(src), srcPos(file, 0), rootOption(SrcPos(), Scope(), L"") {}
 
 	nat Parser::parse(const String &rootType, nat pos) {
+		static bool first = true;
+		if (first) {
+			for (SyntaxSet::iterator i = syntax.begin(), end = syntax.end(); i != end; ++i) {
+				bool r = matchesEmpty(*i->second);
+				PLN(i->first << L": " << (r ? L"yes" : L"no"));
+			}
+			first = false;
+		}
+
 		assert(pos <= src.size());
+		static Timespan totalTime;
+		Timestamp start;
 
 		rootOption.clear();
 		rootOption.add(new TypeToken(rootType, L"root"));
@@ -32,6 +44,12 @@ namespace storm {
 			if (process(i))
 				len = i;
 		}
+
+		Timestamp end;
+		Timespan time = end - start;
+		PLN("Parsed in " << time);
+		totalTime += time;
+		PLN("Total parse time: " << totalTime);
 
 		return len;
 	}
@@ -51,10 +69,10 @@ namespace storm {
 			if (s[i].finish(&rootOption))
 				seenFinish = true;
 
-			if (i == s.size() - 1) {
-				// Run completers again, some may produce more states now.
-				runCompleters(step);
-			}
+			// if (i == s.size() - 1) {
+			// 	// Run completers again, some may produce more states now.
+			// 	runCompleters(step);
+			// }
 		}
 
 		return seenFinish;
@@ -80,6 +98,23 @@ namespace storm {
 			throw SyntaxError(state.pos.option().pos, L"Can not find rule " + type->type());
 
 		SyntaxRule &t = *sr;
+
+		if (matchesEmpty(t)) {
+			// It should be possible to terminate the rule right now.
+			// TODO: How? Add the 'completed' so that we can make our tree!
+			// right now, if we have something like: Foo => x : WHITESPACE x;
+			// things would go really bad.
+
+			State ns(state.pos.nextA(), state.from, ptr);
+			s.insert(ns);
+			// if (ns.pos.valid())
+			// 	PLN("=>" << ns);
+
+			ns.pos = state.pos.nextB();
+			s.insert(ns);
+			// if (ns.pos.valid())
+			// 	PLN("=>" << ns);
+		}
 
 		for (nat i = 0; i < t.size(); i++) {
 			SyntaxOption *rule = t[i];
@@ -132,6 +167,74 @@ namespace storm {
 			s.insert(ns);
 			// if (ns.pos.valid())
 			// 	PLN("->" << ns);
+		}
+	}
+
+	bool Parser::matchesEmpty(SyntaxRule &rule) {
+		EmptyCache::iterator i = emptyCache.find(&rule);
+		if (i != emptyCache.end())
+			return i->second;
+
+		// Tell it matches nothing in case the rule is recursive!
+		// This will yeild correct results and prevent endless recursion.
+		i = emptyCache.insert(make_pair(&rule, true)).first;
+
+		bool result = false;
+		for (nat i = 0; i < rule.size(); i++) {
+			if (matchesEmpty(rule[i])) {
+				result = true;
+				break;
+			}
+		}
+
+		i->second = result;
+		return result;
+	}
+
+	static void insert(std::deque<OptionIter> &q, const OptionIter &next) {
+		if (!next.valid())
+			return;
+
+		for (std::deque<OptionIter>::iterator i = q.begin(), end = q.end(); i != end; ++i)
+			if (*i == next)
+				return;
+		q.push_back(next);
+	}
+
+	bool Parser::matchesEmpty(SyntaxOption *option) {
+		std::deque<OptionIter> q;
+		q.push_back(OptionIter::firstA(*option));
+		q.push_back(OptionIter::firstB(*option));
+
+		while (!q.empty()) {
+			OptionIter now = q.front(); q.pop_front();
+			if (!now.valid())
+				continue;
+			if (now.end())
+				return true;
+
+			if (matchesEmpty(now.token())) {
+				insert(q, now.nextA());
+				insert(q, now.nextB());
+			}
+		}
+
+		return false;
+	}
+
+	bool Parser::matchesEmpty(SyntaxToken *token) {
+		if (RegexToken *t = as< RegexToken>(token)) {
+			return t->regex.match(L"") != NO_MATCH;
+
+		} else if (TypeToken *t = as<TypeToken>(token)) {
+			if (SyntaxRule *r = syntax.rule(t->type()))
+				return matchesEmpty(*r);
+
+			// Will not go well later on anyway if this result is ever needed.
+			return true;
+		} else {
+			assert(("Unknown syntax token type.", false));
+			return false;
 		}
 	}
 

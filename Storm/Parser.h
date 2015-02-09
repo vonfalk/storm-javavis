@@ -232,6 +232,20 @@ namespace storm {
 		// if new states were inserted in the current 'set'.
 		void completer(StateSet &set, State state, StatePtr ptr);
 
+		// Determine if the rule 'r' may match the empty string.
+		// This uses a cache, and is used in 'predictor' to allow rules matching empty strings.
+		bool matchesEmpty(SyntaxRule &rule);
+
+		// A single option?
+		bool matchesEmpty(SyntaxOption *option);
+
+		// A single token?
+		bool matchesEmpty(SyntaxToken *token);
+
+		// Cache to 'matchesEmpty'.
+		typedef hash_map<SyntaxRule *, bool> EmptyCache;
+		EmptyCache emptyCache;
+
 		/**
 		 * Result extraction.
 		 */

@@ -26,9 +26,6 @@ BEGIN_TEST(ParserTest) {
 	Package *coreSto = engine.package(L"lang.sto");
 	coreSto->syntax();
 
-	Package *coreBs = engine.package(L"lang.bs");
-	coreBs->syntax();
-
 	// Try parsing a file with the simple syntax.
 	Package *simple = engine.package(L"lang.simple");
 	simple->syntax();

@@ -23,6 +23,7 @@ namespace storm {
 		// Options access.
 		inline nat size() const { return options.size(); }
 		inline SyntaxOption* operator[] (nat i) { return options[i]; }
+		inline const SyntaxOption* operator[] (nat i) const { return options[i]; }
 
 		// Get our name.
 		inline const String &name() const { return rName; }
