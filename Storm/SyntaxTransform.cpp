@@ -145,7 +145,7 @@ namespace storm {
 	}
 
 	// Call a member function. NOTE: No support for param==null -> pos!
-	static Object *callMember(Object *me, const String &memberName, Object *param, const SrcPos &pos) {
+	static void callMember(Object *me, const String &memberName, Object *param, const SrcPos &pos) {
 		if (me == null || param == null)
 			throw SyntaxTypeError(L"Null is not supported!", pos);
 
@@ -154,16 +154,20 @@ namespace storm {
 		types[0] = Value(t);
 		types[1] = Value(param->myType);
 		Auto<NamePart> part = CREATE(NamePart, t, memberName, types);
-		Named *no = t->find(part);
-		if (Function *f = as<Function>(no)) {
+
+		if (Function *f = as<Function>(t->find(part))) {
 			code::FnCall call;
 			call.param(me).param(param);
-			return call.call<Object *>(f->pointer());
-		}
 
-		throw SyntaxTypeError(L"Could not find a member function " +
-							memberName + L"(" + join(types, L", ") + L") in " +
-							t->name, pos);
+			if (f->result.refcounted())
+				Auto<Object> r = call.call<Object*>(f->pointer());
+			else
+				call.call<void>(f->pointer());
+		} else {
+			throw SyntaxTypeError(L"Could not find a member function " +
+								memberName + L"(" + join(types, L", ") + L") in " +
+								t->name, pos);
+		}
 	}
 
 

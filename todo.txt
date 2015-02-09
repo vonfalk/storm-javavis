@@ -7,7 +7,6 @@ Consider adding the -> syntax for captures in BNF rules, to be symmetric with ot
 Remove support for arrays in the syntax. We can simply use Array<Foo> and -> push instead.
 
 In SyntaxTransform: check return values from functions as well!
-When functions called by the syntax transform returns objects, we leak memory. Fix!
 
 Idea for a better solution in the parser: Detect potentially empty rules, and complete them directly.
 

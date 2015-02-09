@@ -70,6 +70,7 @@ namespace storm {
 			loadClassFns();
 		else
 			loadValueFns();
+
 	}
 
 	void ArrayType::loadClassFns() {
@@ -79,7 +80,7 @@ namespace storm {
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createClass))));
 		add(steal(nativeFunction(e, t, L"<<", valList(2, t, param), address(&pushClass))));
-		add(steal(nativeFunction(e, Value(), L"push", valList(2, t, param), address(&pushClass))));
+		add(steal(nativeFunction(e, t, L"push", valList(2, t, param), address(&pushClass))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getClass))));
 	}
 
@@ -90,7 +91,7 @@ namespace storm {
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createValue))));
 		add(steal(nativeFunction(e, t, L"<<", valList(2, t, refParam), address(&pushValue))));
-		add(steal(nativeFunction(e, Value(), L"push", valList(2, t, refParam), address(&pushValue))));
+		add(steal(nativeFunction(e, t, L"push", valList(2, t, refParam), address(&pushValue))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getValue))));
 	}
 
