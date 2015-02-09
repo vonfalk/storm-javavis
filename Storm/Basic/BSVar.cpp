@@ -4,6 +4,8 @@
 #include "BSNamed.h"
 #include "Exception.h"
 
+#include "Lib/Debug.h"
+
 namespace storm {
 	namespace bs {
 
@@ -35,8 +37,12 @@ namespace storm {
 		void bs::Var::initTo(Par<Actual> actuals) {
 			if (variable->result.isBuiltIn()) {
 				// Assignment is the same as initialization here...
-				if (actuals->expressions.size() == 1) {
+				nat size = actuals->expressions.size();
+				if (size == 1) {
 					initTo(Par<Expr>(actuals->expressions[0]));
+					return;
+				} else if (size == 0) {
+					// No constructor, initialized to zero!
 					return;
 				}
 			}
@@ -46,8 +52,9 @@ namespace storm {
 			params.insert(params.begin(), Value::thisPtr(t));
 			Function *ctor = as<Function>(t->find(Type::CTOR, params));
 			if (!ctor)
-				throw SyntaxError(pos, L"No constructor " + ::toS(variable->result) + L"("
-								+ join(params, L", ") + L") found. Can not initialize.");
+				throw SyntaxError(variable->pos, L"No constructor " + ::toS(variable->result)
+								+ L"(" + join(params, L", ") + L") found. Can not initialize "
+								+ variable->name + L".");
 
 			initCtor = CREATE(CtorCall, this, capture(ctor), actuals);
 		}
