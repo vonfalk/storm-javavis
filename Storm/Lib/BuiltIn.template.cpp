@@ -19,7 +19,7 @@ namespace storm {
 	 * Create a ValueRef.
 	 */
 	ValueRef valueRef(const wchar *name, bool ref) {
-		ValueRef r = { name, ref };
+		ValueRef r = { name, ref ? ValueRef::ref : ValueRef::nothing };
 		return r;
 	}
 
@@ -27,7 +27,16 @@ namespace storm {
 	 * Null value.
 	 */
 	ValueRef valueRef() {
-		ValueRef r = { null, null };
+		ValueRef r = { null, ValueRef::nothing };
+		return r;
+	}
+
+	/**
+	 * Create a valueref pointing to an array of type "t".
+	 */
+	ValueRef arrayRef(const wchar *name, bool ref) {
+		ValueRef r = valueRef(name, ref);
+		r.options = r.options | ValueRef::array;
 		return r;
 	}
 

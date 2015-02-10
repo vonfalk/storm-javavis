@@ -108,6 +108,18 @@ void Header::parse(Tokenizer &tok) {
 				lastType.type.parts.push_back(tok.next());
 				wasType = true;
 			}
+		} else if ((token == L"Array" || token == L"ArrayP") && tok.peek() == L"<") {
+			tok.next();
+
+			lastType = CppType::read(tok);
+			if (token == L"Array")
+				lastType.isArray = true;
+			else
+				lastType.isArrayP = true;
+
+			tok.expect(L">");
+
+			wasType = true;
 		} else if (token == L"*") {
 			if (!lastType.type.empty()) {
 				wasType = true;

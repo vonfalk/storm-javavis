@@ -8,7 +8,7 @@
 namespace storm {
 
 	static void CODECALL createClass(void *mem) {
-		new (mem) Array<Auto<Object>>();
+		new (mem) ArrayP<Object>();
 	}
 
 	static void CODECALL createValue(void *mem) {
@@ -24,7 +24,7 @@ namespace storm {
 		new (mem) ArrayBase(handle);
 	}
 
-	static Array<Auto<Object>> *CODECALL pushClass(Array<Auto<Object>> *to, Par<Object> o) {
+	static ArrayP<Object> *CODECALL pushClass(ArrayP<Object> *to, Par<Object> o) {
 		to->push(o);
 		to->addRef();
 		return to;
@@ -36,7 +36,7 @@ namespace storm {
 		return to;
 	}
 
-	static void *CODECALL getClass(Array<Auto<Object>> *from, Nat id) {
+	static void *CODECALL getClass(ArrayP<Object> *from, Nat id) {
 		return from->atRaw(id);
 	}
 
@@ -93,6 +93,16 @@ namespace storm {
 		add(steal(nativeFunction(e, t, L"<<", valList(2, t, refParam), address(&pushValue))));
 		add(steal(nativeFunction(e, t, L"push", valList(2, t, refParam), address(&pushValue))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getValue))));
+	}
+
+
+	Type *arrayType(Engine &e, const Value &type) {
+		Auto<Name> tName = CREATE(Name, e);
+		tName->add(L"core");
+		tName->add(L"Array", vector<Value>(1, type));
+		Type *r = as<Type>(e.scope()->find(tName));
+		assert(("The array type was not found!", r));
+		return r;
 	}
 
 }

@@ -30,7 +30,9 @@ Empty => void : "(", EmptyRule e, ")";
 Empty2 => void : "(" - DELIMITER - DELIMITER - ")";
 EmptyRule => void : DELIMITER;
 
-EmptyVal => consume(e) : "(", EmptyValRule e, ")";
+EmptyVal => consume(e) : "(", ConvertRule e, ")";
+
+ConvertRule => convert(e) : EmptyValRule e;
 
 EmptyValRule => Array<SStr>() : DELIMITER;
 EmptyValRule => Array<SStr>() : EmptyCont -> push;

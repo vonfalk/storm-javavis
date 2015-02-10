@@ -39,9 +39,22 @@ namespace storm {
 		// Name of the type.
 		const wchar *name;
 
-		// Reference?
-		bool ref;
+		// Options (bitmask).
+		enum Options {
+			nothing = 0x0,
+
+			// Reference to 'name'.
+			ref = 0x1,
+
+			// Type is Array<'name'>. If combined with ref, it is Array<'name' &>. Reference
+			// to an array (like Array<T> &) is not allowed here.
+			array = 0x2,
+		};
+		Options options;
 	};
+
+	inline ValueRef::Options operator &(ValueRef::Options a, ValueRef::Options b) { return ValueRef::Options(int(a)&int(b)); }
+	inline ValueRef::Options operator |(ValueRef::Options a, ValueRef::Options b) { return ValueRef::Options(int(a)|int(b)); }
 
 	/**
 	 * A list of all built-in functions.

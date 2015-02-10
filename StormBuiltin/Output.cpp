@@ -159,7 +159,12 @@ String vtableCode(const Types &types) {
 
 static String valueRef(const CppType &type, const CppName &scope, const Types &types) {
 	std::wostringstream out;
-	out << L"valueRef(";
+
+	if (type.isArray || type.isArrayP)
+		out << L"arrayRef(";
+	else
+		out << L"valueRef(";
+
 	if (!type.isVoid()) {
 		Type full = types.find(type.type, scope);
 		out << L"L\"";

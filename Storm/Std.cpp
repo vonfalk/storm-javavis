@@ -17,8 +17,16 @@ namespace storm {
 
 		Auto<Name> name = parseSimpleName(e, val.name);
 		Named *f = src.find(name);
-		if (Type *t = as<Type>(f))
-			return Value(t, val.ref);
+		if (Type *t = as<Type>(f)) {
+			Value r(t, (val.options & ValueRef::ref) != ValueRef::nothing);
+
+			if (val.options & ValueRef::array) {
+				Type *array = arrayType(e, r);
+				r = Value(array);
+			}
+
+			return r;
+		}
 
 		throw BuiltInError(L"Type " + toS(val.name) + L" was not found.");
 	}

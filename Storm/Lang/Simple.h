@@ -1,6 +1,7 @@
 #pragma once
 #include "Std.h"
 #include "SyntaxObject.h"
+#include "Lib/Array.h"
 
 namespace storm {
 
@@ -29,6 +30,6 @@ namespace storm {
 	SExpr *STORM_FN sVar(Par<SStr> op);
 	SExpr *STORM_FN sNr(Par<SStr> op);
 
-	// Todo: rewrite to take Par<Array<Auto<SStr>>> instead.
-	Str *STORM_FN consume(Par<Object> v);
+	ArrayP<Str> *STORM_FN convert(Par<ArrayP<SStr>> v);
+	Str *STORM_FN consume(Par<ArrayP<Str>> v);
 }

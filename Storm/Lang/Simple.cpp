@@ -22,21 +22,22 @@ namespace storm {
 		return CREATE(SExpr, op);
 	}
 
-	Str *consume(Par<Object> obj) {
-		if (as<ArrayBase>(obj.borrow())) {
-			// Probably an Array<Object>... We can not put those in function
-			// declarations yet...
-			Array<Auto<Object>> *z = (Array<Auto<Object>> *)obj.borrow();
-			if (z->count() == 0)
-				return CREATE(Str, z, L"");
+	ArrayP<Str> *convert(Par<ArrayP<SStr>> v) {
+		TODO(L"Correct type marker for 'result'!");
+		ArrayP<Str> *result = new (ArrayBase::type(v)) ArrayP<Str>();
 
-			if (SStr *c = as<SStr>(z->at(0).borrow()))
-				return c->v.ret();
-
-			return z->at(0)->toS();
+		for (nat i = 0; i < v->count(); i++) {
+			result->push(v->at(i)->v);
 		}
 
-		return obj->toS();
+		return result;
+	}
+
+	Str *consume(Par<ArrayP<Str>> v) {
+		if (v->count() == 1)
+			return v->at(0).ret();
+		else
+			return v->toS();
 	}
 
 }

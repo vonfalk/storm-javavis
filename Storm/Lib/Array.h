@@ -105,5 +105,17 @@ namespace storm {
 
 	};
 
+	/**
+	 * Array of pointers using Auto. Synonym with Array<Auto<T>>.
+	 */
+	template <class T>
+	class ArrayP : public Array<Auto<T> > {
+	public:
+		// Empty array.
+		ArrayP() : Array() {}
+
+		// Copy array.
+		ArrayP(const ArrayP<T> &o) : ArrayBase(o) {}
+	};
 
 }
