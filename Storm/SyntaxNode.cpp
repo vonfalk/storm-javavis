@@ -42,83 +42,33 @@ namespace storm {
 	}
 
 	void SyntaxNode::add(const String &var, const String &val, const vector<String> &params, const SrcPos &pos) {
-		try {
-			Var &v = find(var, typeOf(var, true), pos);
-			v.params = params;
-			v.value->add(val);
-		} catch (SyntaxTypeError e) {
-			e.where = option->pos;
-			throw e;
-		}
+		if (vars.count(var))
+			throw SyntaxVarAssignedError(pos, var);
+
+		Var v = { new SyntaxVariable(pos, val), params };
+		vars.insert(make_pair(var, v));
 	}
 
-	void SyntaxNode::add(const String &var, SyntaxNode *node, const vector<String> &params, const SrcPos &pos) {
-		try {
-			Var &v = find(var, typeOf(var, false), pos);
-			v.params = params;
-			v.value->add(node);
-		} catch (SyntaxTypeError e) {
-			e.where = option->pos;
-			throw e;
-		}
+	void SyntaxNode::add(const String &var, SyntaxNode *val, const vector<String> &params, const SrcPos &pos) {
+		if (vars.count(var))
+			throw SyntaxVarAssignedError(pos, var);
+
+		Var v = { new SyntaxVariable(pos, val), params };
+		vars.insert(make_pair(var, v));
 	}
 
 	void SyntaxNode::invoke(const String &m, const String &val, const vector<String> &params, const SrcPos &pos) {
-		try {
-			SyntaxVariable *sv = new SyntaxVariable(SyntaxVariable::tString, pos);
-			Invocation i = { m, sv, params };
-			mInvocations.push_back(i);
-			sv->add(val);
-		} catch (SyntaxTypeError e) {
-			e.where = option->pos;
-			throw e;
-		}
+		Invocation i = { m, { new SyntaxVariable(pos, val), params } };
+		mInvocations.push_back(i);
 	}
 
 	void SyntaxNode::invoke(const String &m, SyntaxNode *val, const vector<String> &params, const SrcPos &pos) {
-		try {
-			SyntaxVariable *sv = new SyntaxVariable(SyntaxVariable::tNode, pos);
-			Invocation i = { m, sv, params };
-			mInvocations.push_back(i);
-			sv->add(val);
-		} catch (SyntaxTypeError e) {
-			e.where = option->pos;
-			throw e;
-		}
+		Invocation i = { m, { new SyntaxVariable(pos, val), params } };
+		mInvocations.push_back(i);
 	}
 
 	void SyntaxNode::reverseArrays() {
-		for (VarMap::iterator i = vars.begin(); i != vars.end(); ++i)
-			i->second.value->reverseArray();
-
 		std::reverse(mInvocations.begin(), mInvocations.end());
-	}
-
-	SyntaxVariable::Type SyntaxNode::typeOf(const String &name, bool isStr) {
-		if (name.endsWith(L"[]"))
-			return isStr ? SyntaxVariable::tStringArr : SyntaxVariable::tNodeArr;
-		else
-			return isStr ? SyntaxVariable::tString : SyntaxVariable::tNode;
-	}
-
-	SyntaxNode::Var &SyntaxNode::find(const String &name, SyntaxVariable::Type type, const SrcPos &pos) {
-		VarMap::iterator i = vars.find(name);
-		if (i == vars.end()) {
-			SyntaxVariable *v = new SyntaxVariable(type, pos);
-			Var val = { v };
-			return vars.insert(make_pair(name, val)).first->second;
-		} else {
-			Var &v = i->second;
-			if (v.value->type != type) {
-				SyntaxTypeError e(L"Invalid type of " + name + L": "
-								+ SyntaxVariable::name(v.value->type)
-								+ L", expected "
-								+ SyntaxVariable::name(type));
-				e.where = option->pos;
-				throw e;
-			}
-			return v;
-		}
 	}
 
 	const SyntaxNode::Var *SyntaxNode::find(const String &name) const {

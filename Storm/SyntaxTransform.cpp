@@ -19,13 +19,10 @@ namespace storm {
 		}
 		case SyntaxVariable::tNode:
 			return transform(engine, syntax, *v->node(), params, &v->pos);
-		case SyntaxVariable::tStringArr:
-		case SyntaxVariable::tNodeArr:
-			TODO(L"Arrays not supported yet!");
+		default:
+			assert(false);
 			return null;
 		}
-
-		throw SyntaxTypeError(L"Unknown type of syntax variable.");
 	}
 
 	// Parse a string into a Name, supporting <> as template parameters.
@@ -105,6 +102,12 @@ namespace storm {
 			Auto<Name> match = name->withParams(types);
 			Named *no = option->scope.find(match);
 			if (Function *f = as<Function>(no)) {
+				if (f->result == Value())
+					throw SyntaxTypeError(option->pos, L"A rule's function must return a value.");
+				if (!f->result.isClass())
+					throw SyntaxTypeError(option->pos, L"Only objects are supported in the syntax. "
+										+ ::toS(f->result) + L" is a value or a built-in type.");
+
 				code::FnCall call;
 				for (nat i = 0; i < params.size(); i++) {
 					if (params[i]) {
@@ -134,20 +137,18 @@ namespace storm {
 				return create<Object>(ctor, call);
 			}
 
-			throw SyntaxTypeError(L"Could not find a constructor " +
-								toS(option->matchFn) + L"(" + join(types, L", ") + L")",
-								option->pos);
+			throw SyntaxTypeError(option->pos, L"Could not find a constructor " +
+								toS(option->matchFn) + L"(" + join(types, L", ") + L")");
 		}
 
-		throw SyntaxTypeError(L"Could not find a function " +
-							toS(option->matchFn) + L"(" + join(types, L", ") + L")",
-							option->pos);
+		throw SyntaxTypeError(option->pos, L"Could not find a function " +
+							toS(option->matchFn) + L"(" + join(types, L", ") + L")");
 	}
 
 	// Call a member function. NOTE: No support for param==null -> pos!
 	static void callMember(Object *me, const String &memberName, Object *param, const SrcPos &pos) {
 		if (me == null || param == null)
-			throw SyntaxTypeError(L"Null is not supported!", pos);
+			throw SyntaxTypeError(pos, L"Null is not supported!");
 
 		Type *t = me->myType;
 		vector<Value> types(2);
@@ -164,9 +165,9 @@ namespace storm {
 			else
 				call.call<void>(f->pointer());
 		} else {
-			throw SyntaxTypeError(L"Could not find a member function " +
+			throw SyntaxTypeError(pos, L"Could not find a member function " +
 								memberName + L"(" + join(types, L", ") + L") in " +
-								t->name, pos);
+								t->name);
 		}
 	}
 
@@ -197,7 +198,7 @@ namespace storm {
 
 		result = callFunction(e, option, values, posCopy);
 		if (result == null)
-			throw SyntaxTypeError(L"Syntax generating functions may not return null.", option->pos);
+			throw SyntaxTypeError(option->pos, L"Syntax generating functions may not return null.");
 
 		if (SObject *s = as<SObject>(result.borrow()))
 			if (pos)
@@ -233,22 +234,22 @@ namespace storm {
 		assert(rule);
 
 		if (params.size() != rule->params.size())
-			throw SyntaxTypeError(L"Invalid number of parameters to rule " + rule->name()
+			throw SyntaxTypeError(pos, L"Invalid number of parameters to rule " + rule->name()
 								+ L": got " + toS(params.size()) +
-								L", expected " + toS(rule->params.size()), pos);
+								L", expected " + toS(rule->params.size()));
 
 		for (nat i = 0; i < params.size(); i++) {
 			const SyntaxRule::Param &param = rule->params[i];
 			Auto<Name> typeName = parseSimpleName(e, param.type);
 			Type *t = as<Type>(option->scope.find(typeName));
 			if (t == null)
-				throw SyntaxTypeError(L"Unknown type: " + param.type);
+				throw SyntaxTypeError(pos, L"Unknown type: " + param.type);
 			if (params[i] == null)
-				throw SyntaxTypeError(L"Null is not supported!");
+				throw SyntaxTypeError(pos, L"Null is not supported!");
 
 			Type *vt = params[i]->myType;
 			if (!Value(t).canStore(vt))
-				throw SyntaxTypeError(L"Incompatible types: got " + vt->name + L", expected " + t->name, pos);
+				throw SyntaxTypeError(pos, L"Incompatible types: got " + vt->name + L", expected " + t->name);
 			vars.insert(make_pair(param.name, params[i]));
 			params[i]->addRef();
 		}
@@ -268,15 +269,13 @@ namespace storm {
 			return i->second;
 
 		if (currentNames.count(name) != 0)
-			throw SyntaxTypeError(L"Variable " + name + L" depends on itself!", node.option->pos);
+			throw SyntaxTypeError(node.option->pos, L"Variable " + name + L" depends on itself!");
 		currentNames.insert(name);
 
 		try {
 			const SyntaxNode::Var *v = node.find(name);
-			if (v == null) {
-				TODO(L"This may happen if an array should contain zero elements...");
-				throw SyntaxTypeError(L"The variable " + name + L" does not exist!", node.option->pos);
-			}
+			if (v == null)
+				throw SyntaxTypeError(node.option->pos, L"The variable " + name + L" does not exist!");
 
 			vector<Object*> params(v->params.size());
 			for (nat i = 0; i < v->params.size(); i++)
@@ -297,7 +296,7 @@ namespace storm {
 			vars.insert(make_pair(name, o));
 			o->addRef();
 		} else {
-			throw SyntaxTypeError(L"The variable " + name + L" is already set!", node.option->pos);
+			throw SyntaxTypeError(node.option->pos, L"The variable " + name + L" is already set!");
 		}
 	}
 

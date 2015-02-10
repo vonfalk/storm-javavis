@@ -4,10 +4,6 @@ Syntax
 ---------
 Consider adding the -> syntax for captures in BNF rules, to be symmetric with other variables.
 
-Remove support for arrays in the syntax. We can simply use Array<Foo> and -> push instead.
-
-In SyntaxTransform: check return values from functions as well!
-
 Note to self:
 Parsing works _bad_ on rules like this: ( DELIMITER )*.
 

@@ -40,9 +40,6 @@ namespace storm {
 		void invoke(const String &member, const String &val, const vector<String> &params, const SrcPos &pos);
 		void invoke(const String &member, SyntaxNode *node, const vector<String> &params, const SrcPos &pos);
 
-		// Find the entry in the map for the variable. Creates the variable if it does not exist.
-		Var &find(const String &name, SyntaxVariable::Type type, const SrcPos &pos);
-
 		// Find the entry in the map for the variable. Returns null if the variable does not exist.
 		const Var *find(const String &name) const;
 
@@ -66,11 +63,21 @@ namespace storm {
 		// Method invocations, in order.
 		vector<Invocation> mInvocations;
 
-		// Find the type to use for this variable.
-		SyntaxVariable::Type typeOf(const String &name, bool isString);
-
 	};
 
 	wostream &operator <<(wostream &to, const SyntaxNode::Var &v);
 	wostream &operator <<(wostream &to, const SyntaxNode::Invocation &f);
+
+	/**
+	 * Error thrown when a variable in a syntax rule is assigned twice.
+	 */
+	class SyntaxVarAssignedError : public CodeError {
+	public:
+		SyntaxVarAssignedError(const SrcPos &pos, const String &var) : CodeError(pos), var(var) {}
+
+		inline String what() const { return toS(where) + L": Variable already assigned: " + var; }
+	private:
+		String var;
+	};
+
 }

@@ -50,4 +50,17 @@ namespace storm {
 		// Keep track of infinite recursion in 'get'.
 		hash_set<String> currentNames;
 	};
+
+	/**
+	 * Type errors in the syntax somehow.
+	 */
+	class SyntaxTypeError : public CodeError {
+	public:
+		SyntaxTypeError(const SrcPos &pos, const String &msg) : CodeError(pos), msg(msg) {}
+
+		inline String what() const { return toS(where) + L": " + msg; }
+	private:
+		String msg;
+	};
+
 }

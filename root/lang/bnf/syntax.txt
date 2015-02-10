@@ -28,7 +28,7 @@ parameter was never specified whenever it is left out.
 
 Result above is a simple expression that will be evaluated to create the node.
 This may be either a name of a function or the name of a type (in which case
-the constructor is executed) or a simple variable name (scalar, no arrays).
+the constructor is executed) or a simple variable name.
 A number of parameters may also be specified.
 
 The expression contains a number of tokens, separated with either a comma(,) or
@@ -45,7 +45,6 @@ in quotation marks.
 Each token may either be bound to a variable in the rule, or can be sent to
 a function of the current object as follows:
 "a.*c" foo    : Bind the variable 'foo' to the string matched by the regex "a.*c".
-"a.*c" foo[]  : Append the matched string to the array foo[].
 "a.*c" -> foo : Call the 'foo' member of the result object with the match as a parameter.
 This of course applies for types as well. In that case the value of the result
 expression is bound to the variable instead.
