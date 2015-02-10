@@ -80,9 +80,27 @@ namespace storm {
 			return ((T *)data)[i];
 		}
 
+		const T &at(Nat i) const {
+			assert(i < size);
+			return ((T *)data)[i];
+		}
+
 		// Insert an element.
 		void push(const T &item) {
 			pushRaw(&item);
+		}
+
+	protected:
+		virtual void output(wostream &to) const {
+			to << L"[";
+
+			if (count() > 0)
+				to << ::toS(at(0));
+
+			for (nat i = 1; i < count(); i++)
+				to << L", " << ::toS(at(i));
+
+			to << L"]";
 		}
 
 	};

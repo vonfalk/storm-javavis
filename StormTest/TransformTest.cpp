@@ -10,13 +10,14 @@ using namespace storm;
 
 bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Auto<Object> eqTo) {
 	Parser p(set, str, Path());
-	if (!p.parse(root)) {
-		eqTo->release();
+	if (p.parse(root) == Parser::NO_MATCH) {
+		PLN("Parse failure.");
 		return false;
 	}
 
 	SyntaxNode *t = p.tree();
 	if (!t) {
+		PLN("No tree.");
 		return false;
 	}
 	// PLN(*t);
@@ -24,11 +25,11 @@ bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Auto<
 	try {
 		Auto<Object> o = transform(e, set, *t);
 		bool result = true;
-		if (eqTo) {
+		if (eqTo)
 			result = eqTo->equals(o);
-			if (!result) {
-				PLN("Got: " << *o << L", expected: " << *eqTo);
-			}
+
+		if (!result) {
+			PLN("Got: " << *o << L", expected: " << *eqTo);
 		}
 
 		delete t;
@@ -46,9 +47,12 @@ BEGIN_TEST(TransformTest) {
 	Package *simple = engine.package(L"lang.simple");
 	SyntaxSet set;
 	set.add(*simple);
-	CHECK(tfm(engine, set, L"Rep1Root", L"{ a + b; }", null));
 
+	CHECK(tfm(engine, set, L"Rep1Root", L"{ a + b; }", null));
 	CHECK(tfm(engine, set, L"CaptureRoot", L"{ a + b; }", CREATE(SStr, engine, L"{ a + b; }")));
 	CHECK(tfm(engine, set, L"Capture2Root", L"-{ a + b; }-", CREATE(SStr, engine, L"{ a + b; }")));
+
+	CHECK(tfm(engine, set, L"EmptyVal", L"()", CREATE(Str, engine, L"")));
+	CHECK(tfm(engine, set, L"EmptyVal", L"(abcabc)", CREATE(Str, engine, L"abcabc")));
 
 } END_TEST

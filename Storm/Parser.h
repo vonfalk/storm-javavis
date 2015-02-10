@@ -219,9 +219,6 @@ namespace storm {
 		// Process the set at index 'set'. Returns true if a 'finish' state is seen.
 		bool process(nat step);
 
-		// Re-run completers on 'step'.
-		void runCompleters(nat step);
-
 		// Run the predictor on one element in 'set'.
 		void predictor(StateSet &set, State state, StatePtr ptr);
 

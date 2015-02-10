@@ -29,4 +29,6 @@ namespace storm {
 	SExpr *STORM_FN sVar(Par<SStr> op);
 	SExpr *STORM_FN sNr(Par<SStr> op);
 
+	// Todo: rewrite to take Par<Array<Auto<SStr>>> instead.
+	Str *STORM_FN consume(Par<Object> v);
 }

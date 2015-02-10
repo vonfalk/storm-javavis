@@ -19,18 +19,7 @@ namespace storm {
 		: syntax(set), src(src), srcPos(file, 0), rootOption(SrcPos(), Scope(), L"") {}
 
 	nat Parser::parse(const String &rootType, nat pos) {
-		static bool first = true;
-		if (first) {
-			for (SyntaxSet::iterator i = syntax.begin(), end = syntax.end(); i != end; ++i) {
-				bool r = matchesEmpty(*i->second);
-				PLN(i->first << L": " << (r ? L"yes" : L"no"));
-			}
-			first = false;
-		}
-
 		assert(pos <= src.size());
-		static Timespan totalTime;
-		Timestamp start;
 
 		rootOption.clear();
 		rootOption.add(new TypeToken(rootType, L"root"));
@@ -44,12 +33,6 @@ namespace storm {
 			if (process(i))
 				len = i;
 		}
-
-		Timestamp end;
-		Timespan time = end - start;
-		PLN("Parsed in " << time);
-		totalTime += time;
-		PLN("Total parse time: " << totalTime);
 
 		return len;
 	}
@@ -68,23 +51,9 @@ namespace storm {
 
 			if (s[i].finish(&rootOption))
 				seenFinish = true;
-
-			// if (i == s.size() - 1) {
-			// 	// Run completers again, some may produce more states now.
-			// 	runCompleters(step);
-			// }
 		}
 
 		return seenFinish;
-	}
-
-	void Parser::runCompleters(nat step) {
-		StateSet &s = steps[step];
-		nat to = s.size();
-		for (nat i = 0; i < to; i++) {
-			StatePtr ptr(step, i);
-			completer(s, s[i], ptr);
-		}
 	}
 
 	void Parser::predictor(StateSet &s, State state, StatePtr ptr) {
@@ -93,34 +62,49 @@ namespace storm {
 		if (!type)
 			return;
 
-		SyntaxRule *sr = syntax.rule(type->type());
+		const String &rule = type->type();
+		SyntaxRule *sr = syntax.rule(rule);
 		if (sr == null)
 			throw SyntaxError(state.pos.option().pos, L"Can not find rule " + type->type());
 
 		SyntaxRule &t = *sr;
-
-		if (matchesEmpty(t)) {
-			// It should be possible to terminate the rule right now.
-			// TODO: How? Add the 'completed' so that we can make our tree!
-			// right now, if we have something like: Foo => x : WHITESPACE x;
-			// things would go really bad.
-
-			State ns(state.pos.nextA(), state.from, ptr);
-			s.insert(ns);
-			// if (ns.pos.valid())
-			// 	PLN("=>" << ns);
-
-			ns.pos = state.pos.nextB();
-			s.insert(ns);
-			// if (ns.pos.valid())
-			// 	PLN("=>" << ns);
-		}
 
 		for (nat i = 0; i < t.size(); i++) {
 			SyntaxOption *rule = t[i];
 			// Todo: We need to find possible lookahead strings!
 			s.insert(State(OptionIter::firstA(*rule), ptr.step));
 			s.insert(State(OptionIter::firstB(*rule), ptr.step));
+		}
+
+		if (matchesEmpty(t)) {
+			// The original parser fails with rules like:
+			// Foo => void : "(" - DELIMITER - Bar - DELIMITER - ")";
+			// Bar => void : DELIMITER;
+			// since the completed state of Bar may already have been added
+			// and processed when trying to match DELIMITER. Therefore, we
+			// need to look for completed instances of Bar (since it may match "")
+			// in the current state before continuing. If it is not found, it
+			// may be added and processed later, but that is OK.
+
+			for (nat i = 0; i < ptr.id; i++) {
+				const State &now = s[i];
+				if (!now.pos.end())
+					continue;
+
+				if (rule != now.pos.option().rule())
+					continue;
+
+				StatePtr completedBy(ptr.step, i);
+				State ns(state.pos.nextA(), state.from, ptr, completedBy);
+				s.insert(ns);
+				// if (ns.pos.valid())
+				// 	PLN("=>" << ns);
+
+				ns.pos = state.pos.nextB();
+				s.insert(ns);
+				// if (ns.pos.valid())
+				// 	PLN("=>" << ns);
+			}
 		}
 	}
 

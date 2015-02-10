@@ -26,7 +26,12 @@ CaptureRoot => SStr(captured) : ( Rep1Root ) captured;
 Capture2Root => SStr(captured) : "-", (Rep1Root) captured, "-";
 
 // Empty rules (really multiple instantiations of the same rule with zero length in some cases.
-Empty => void : "(", EmptyRule, ")";
+Empty => void : "(", EmptyRule e, ")";
 Empty2 => void : "(" - DELIMITER - DELIMITER - ")";
-
 EmptyRule => void : DELIMITER;
+
+EmptyVal => consume(e) : "(", EmptyValRule e, ")";
+
+EmptyValRule => Array<SStr>() : DELIMITER;
+EmptyValRule => Array<SStr>() : EmptyCont -> push;
+EmptyCont => s : "[abc]+" s;
