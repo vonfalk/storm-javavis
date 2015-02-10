@@ -8,12 +8,8 @@ Remove support for arrays in the syntax. We can simply use Array<Foo> and -> pus
 
 In SyntaxTransform: check return values from functions as well!
 
-Idea for a better solution in the parser: Detect potentially empty rules, and complete them directly.
-
-
 Note to self:
 Parsing works _bad_ on rules like this: ( DELIMITER )*.
-
 
 
 Others
