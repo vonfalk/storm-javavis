@@ -15,24 +15,29 @@
 #define TYPE_CODE									\
 	public:											\
 	static Type *type(Engine &e);					\
-	static Type *type(const Object *o);				\
-	template <class T>								\
-	static inline Type *type(const Auto<T> &o) {	\
+	static Type *type(const Object *o);
+
+#define TYPE_EXTRA_CODE								\
+	public:											\
+	template <class Z>								\
+	static inline Type *type(const Auto<Z> &o) {	\
 		return type(o.borrow());					\
 	}												\
-	template <class T>								\
-	static inline Type *type(const Par<T> &o) {		\
+	template <class Z>								\
+	static inline Type *type(const Par<Z> &o) {		\
 		return type(o.borrow());					\
 	}
 
 // Mark a value-type.
 #define STORM_VALUE \
 	TYPE_CODE		\
+	TYPE_EXTRA_CODE \
 private:
 
 // Mark a class(object)-type.
 #define STORM_CLASS								\
 	TYPE_CODE									\
+	TYPE_EXTRA_CODE								\
 	static void *cppVTable();					\
 private:
 

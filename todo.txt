@@ -7,6 +7,9 @@ Consider adding the -> syntax for captures in BNF rules, to be symmetric with ot
 Note to self:
 Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
+Core
+-------
+Optimize the ArrayTemplate lookup somewhat.
 
 Others
 ---------

@@ -35,7 +35,6 @@ namespace storm {
 		void loadValueFns();
 	};
 
-	// Look up a specific array type.
-	Type *arrayType(Engine &e, const Value &type);
+	// See Array.h for 'arrayType' function.
 
 }

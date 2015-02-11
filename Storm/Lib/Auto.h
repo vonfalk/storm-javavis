@@ -172,6 +172,14 @@ namespace storm {
 			return obj == o;
 		}
 
+		// Proxies for the type() so that Array<Auto<T>> works.
+		static Type *type(Engine &e) { return T::type(e); }
+		static Type *type(const Object *o) { return T::type(o); }
+		template <class Z>
+		static Type *type(const Auto<Z> &o) { return T::type(o); }
+		template <class Z>
+		static Type *type(const Par<Z> &o) { return T::type(o); }
+
 	private:
 		// Owned object.
 		T *obj;
@@ -214,6 +222,25 @@ namespace storm {
 	 */
 	template <class T>
 	inline Auto<T> steal(T *ptr) { return Auto<T>(ptr); }
+
+
+	/**
+	 * Template magic to detect Auto or Par.
+	 */
+	template <class T>
+	struct IsAuto {
+		static const bool v = false;
+	};
+
+	template <class T>
+	struct IsAuto<Auto<T>> {
+		static const bool v = true;
+	};
+
+	template <class T>
+	struct IsAuto<Par<T>> {
+		static const bool v = true;
+	};
 
 }
 

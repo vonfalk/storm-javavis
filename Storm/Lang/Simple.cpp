@@ -23,8 +23,7 @@ namespace storm {
 	}
 
 	ArrayP<Str> *convert(Par<ArrayP<SStr>> v) {
-		TODO(L"Correct type marker for 'result'!");
-		ArrayP<Str> *result = new (ArrayBase::type(v)) ArrayP<Str>();
+		ArrayP<Str> *result = CREATE(ArrayP<Str>, v);
 
 		for (nat i = 0; i < v->count(); i++) {
 			result->push(v->at(i)->v);

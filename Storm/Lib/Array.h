@@ -2,12 +2,17 @@
 #include "Object.h"
 #include "Types.h"
 #include "Handle.h"
+#include "Storm/Value.h"
 
 namespace storm {
 
 	/**
 	 * Array for use in Storm and in C++.
 	 */
+
+	// This function is implemented in ArrayTemplate.cpp
+	// Look up a specific array type (create it if it is not already created). Implemented in ArrayTemplate.cpp
+	Type *arrayType(Engine &e, const Value &type);
 
 	/**
 	 * The base class that is used in Storm, use the derived class in C++.
@@ -67,7 +72,11 @@ namespace storm {
 
 	template <class T>
 	class Array : public ArrayBase {
+		TYPE_EXTRA_CODE
 	public:
+		static Type *type(Engine &e) { return arrayType(e, value<T>(e)); }
+		static Type *type(const Object *o) { return arrayType(o->engine(), value<T>(o->engine())); }
+
 		// Empty array.
 		Array() : ArrayBase(storm::handle<T>()) {}
 
@@ -111,6 +120,7 @@ namespace storm {
 	template <class T>
 	class ArrayP : public Array<Auto<T> > {
 	public:
+
 		// Empty array.
 		ArrayP() : Array() {}
 

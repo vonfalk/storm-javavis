@@ -101,6 +101,62 @@ namespace storm {
 	 */
 	Value common(const Value &a, const Value &b);
 
+	/**
+	 * Template magic for finding the Value of a C++ type.
+	 */
+
+	template <class T>
+	struct LookupValue {
+		static Type *type(Engine &e) {
+			return T::type(e);
+		}
+	};
+
+	template <class T>
+	struct LookupValue<T *> {
+		static Type *type(Engine &e) {
+			return T::type(e);
+		}
+	};
+
+	template <class T>
+	struct LookupValue<T &> {
+		static Type *type(Engine &e) {
+			return T::type(e);
+		}
+	};
+
+	template <>
+	struct LookupValue<Int> {
+		static Type *type(Engine &e) {
+			return intType(e);
+		}
+	};
+
+	template <>
+	struct LookupValue<Nat> {
+		static Type *type(Engine &e) {
+			return natType(e);
+		}
+	};
+
+	template <>
+	struct LookupValue<Bool> {
+		static Type *type(Engine &e) {
+			return boolType(e);
+		}
+	};
+
+	template <class T>
+	Value value(Engine &e) {
+		bool isRef = TypeInfo<T>::reference() || TypeInfo<T>::pointer() || IsAuto<T>::v;
+		Type *t = LookupValue<T>::type(e);
+		if (t->flags & typeClass) {
+			assert(("Class type tried to be used by value!", isRef));
+			isRef = false;
+		}
+		return Value(t, isRef);
+	}
 
 	/**
 	 * Various helper functions.
