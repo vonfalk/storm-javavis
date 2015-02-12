@@ -61,6 +61,7 @@ namespace storm {
 		} else {
 			result = *i;
 		}
+
 		result->refs++;
 		return result;
 	}

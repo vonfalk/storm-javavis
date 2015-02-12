@@ -37,12 +37,12 @@ Path Path::dbgRoot() {
 	return executable().parent();
 }
 
-Path::Path(const String &path) {
+Path::Path(const String &path) : isDirectory(false) {
 	parseStr(path);
 	simplify();
 }
 
-Path::Path() {}
+Path::Path() : isDirectory(false) {}
 
 void Path::parseStr(const String &str) {
 	nat numPaths = std::count(str.begin(), str.end(), '\\');
