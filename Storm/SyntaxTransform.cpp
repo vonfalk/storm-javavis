@@ -249,7 +249,8 @@ namespace storm {
 
 			Type *vt = params[i]->myType;
 			if (!Value(t).canStore(vt))
-				throw SyntaxTypeError(pos, L"Incompatible types: got " + vt->name + L", expected " + t->name);
+				throw SyntaxTypeError(pos, L"Incompatible types: got " + vt->identifier()
+									+ L", expected " + t->identifier());
 			vars.insert(make_pair(param.name, params[i]));
 			params[i]->addRef();
 		}

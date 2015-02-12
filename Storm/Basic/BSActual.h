@@ -1,5 +1,6 @@
 #pragma once
 #include "BSExpr.h"
+#include "SyntaxObject.h"
 
 namespace storm {
 	namespace bs {
@@ -8,7 +9,7 @@ namespace storm {
 		/**
 		 * Actual parameters to a function.
 		 */
-		class Actual : public Object {
+		class Actual : public SObject {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Actual();

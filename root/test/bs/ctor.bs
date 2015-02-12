@@ -1,0 +1,33 @@
+use core:debug;
+
+class CtorClass {
+
+	Int a;
+	Dbg b;
+
+	ctor() {
+		super() {
+			a = 20;
+			b = 30;
+		}
+	}
+
+	ctor(Int a) {
+		super() {
+			a = a;
+			b = a * 2;
+		}
+	}
+
+}
+
+
+Int ctorTest() {
+	CtorClass c;
+	c.a + c.b.get;
+}
+
+Int ctorTest(Int v) {
+	CtorClass c(v);
+	c.a + c.b.get;
+}

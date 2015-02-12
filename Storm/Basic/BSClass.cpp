@@ -4,6 +4,7 @@
 #include "Parser.h"
 #include "BSScope.h"
 #include "BSFunction.h"
+#include "BSCtor.h"
 #include "TypeCtor.h"
 #include "TypeDtor.h"
 
@@ -50,13 +51,21 @@ namespace storm {
 		Auto<Object> z = parser.transform(engine, vector<Object *>(1, this));
 		Auto<ClassBody> body = z.expect<ClassBody>(engine, L"From ClassBody rule");
 
+		// Found a CTOR?
+		bool hasCtor = false;
+
 		for (nat i = 0; i < body->items.size(); i++) {
-			add(body->items[i].borrow());
+			Auto<Named> z = body->items[i];
+			if (z->name == Type::CTOR)
+				hasCtor = true;
+			add(z.borrow());
 		}
 
-		// Temporary solution.
-		add(steal(CREATE(TypeDefaultCtor, engine, this)));
 		add(steal(CREATE(TypeDefaultDtor, engine, this)));
+		if (!hasCtor)
+			add(steal(CREATE(TypeDefaultCtor, engine, this)));
+
+		// Temporary solution.
 		if (flags & typeValue) {
 			add(steal(CREATE(TypeCopyCtor, engine, this)));
 			add(steal(CREATE(TypeAssignFn, engine, this)));
@@ -97,6 +106,17 @@ namespace storm {
 					owner->scope,
 					contents,
 					pos);
+	}
+
+	bs::BSCtor *STORM_FN bs::classCtor(Par<Class> owner,
+										SrcPos pos,
+										Par<Params> params,
+										Par<SStr> contents) {
+		params->addThis(owner.borrow());
+		vector<String> names = params->cNames();
+		vector<Value> values = params->cTypes(owner->scope);
+
+		return CREATE(BSCtor, owner->engine, values, names, owner->scope, contents, pos);
 	}
 
 }

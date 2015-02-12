@@ -450,16 +450,18 @@ namespace storm {
 		if (Type *t = as<Type>(scope.find(name)))
 			return findCtor(t, params, pos);
 
+		// Try without the this pointer first.
+		Named *n = scope.find(steal(name->withParams(params->values())));
+
+		if (Expr *e = findTarget(n, null, params, pos))
+			return e;
+
 		// If we have a this-pointer, try to use it!
 		Named *candidate = null;
 		if (useThis)
 			if (Expr *e = findTargetThis(block, name, params, pos, candidate))
 				return e;
 
-		Named *n = scope.find(steal(name->withParams(params->values())));
-
-		if (Expr *e = findTarget(n, null, params, pos))
-			return e;
 
 		if (!n && !candidate)
 			throw SyntaxError(pos, L"Can not find " + ::toS(name) + L"("

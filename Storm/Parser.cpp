@@ -338,8 +338,10 @@ namespace storm {
 
 	SyntaxNode *Parser::tree() {
 		StatePtr f = finish();
-		if (!f.valid())
+		if (!f.valid()) {
+			WARNING("Getting tree from an unfinished tree!");
 			return null;
+		}
 
 		SyntaxNode *result = null;
 

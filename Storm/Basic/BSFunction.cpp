@@ -26,7 +26,7 @@ namespace storm {
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
 							const vector<String> &names, const Scope &scope,
 							Par<SStr> contents, const SrcPos &pos)
-		: Function(result, name, params), scope(scope), contents(contents), paramNames(names) {
+		: Function(result, name, params), scope(scope), contents(contents), paramNames(names), pos(pos) {
 
 		if (result.ref)
 			throw SyntaxError(pos, L"Returning references is not a good idea at this point!");
@@ -40,7 +40,7 @@ namespace storm {
 
 		Parser parser(syntax, contents->v->v, contents->pos);
 		nat r = parser.parse(L"FunctionBody");
-		if (parser.parse(L"FunctionBody") < contents->v->v.size())
+		if (parser.hasError())
 			throw parser.error();
 
 		Auto<Object> c = parser.transform(engine(), vector<Object *>(1, this));

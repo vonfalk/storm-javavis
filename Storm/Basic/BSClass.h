@@ -12,6 +12,7 @@ namespace storm {
 		STORM_PKG(lang.bs);
 
 		class BSFunction;
+		class BSCtor;
 
 		class Class : public Type {
 			STORM_CLASS;
@@ -79,6 +80,14 @@ namespace storm {
 									SrcPos pos,
 									Par<SStr> name,
 									Par<TypeName> result,
+									Par<Params> params,
+									Par<SStr> contents);
+
+		/**
+		 * Class constructor.
+		 */
+		BSCtor *STORM_FN classCtor(Par<Class> owner,
+									SrcPos pos,
 									Par<Params> params,
 									Par<SStr> contents);
 

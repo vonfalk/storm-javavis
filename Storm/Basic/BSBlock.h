@@ -61,6 +61,7 @@ namespace storm {
 			vector<Auto<Expr> > exprs;
 
 			// Add an expression.
+			using Block::add;
 			void STORM_FN add(Par<Expr> s);
 
 			// Result.
