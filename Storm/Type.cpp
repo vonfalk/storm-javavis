@@ -182,8 +182,9 @@ namespace storm {
 		if (Named *n = NameSet::findHere(name, params))
 			return n;
 
-		if (Type *s = super())
-			return s->findHere(name, params);
+		if (name != CTOR)
+			if (Type *s = super())
+				return s->findHere(name, params);
 
 		return null;
 	}
