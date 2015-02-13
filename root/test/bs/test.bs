@@ -95,6 +95,8 @@ void voidFn() {
     3;
 }
 
+void emptyVoidFn() {}
+
 Int demo() {
     3;
 }

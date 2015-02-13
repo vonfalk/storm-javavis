@@ -51,6 +51,8 @@ BEGIN_TEST(TransformTest) {
 	CHECK(tfm(engine, set, L"Rep1Root", L"{ a + b; }", null));
 	CHECK(tfm(engine, set, L"CaptureRoot", L"{ a + b; }", CREATE(SStr, engine, L"{ a + b; }")));
 	CHECK(tfm(engine, set, L"Capture2Root", L"-{ a + b; }-", CREATE(SStr, engine, L"{ a + b; }")));
+	CHECK(tfm(engine, set, L"CaptureEmpty", L"- -", CREATE(SStr, engine, L" ")));
+	CHECK(tfm(engine, set, L"CaptureEmpty", L"--", CREATE(SStr, engine, L"")));
 
 	CHECK(tfm(engine, set, L"EmptyVal", L"()", CREATE(Str, engine, L"[]")));
 	CHECK(tfm(engine, set, L"EmptyVal", L"(abcabc)", CREATE(Str, engine, L"abcabc")));

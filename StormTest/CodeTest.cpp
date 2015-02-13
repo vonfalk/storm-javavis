@@ -57,6 +57,7 @@ Int runFn(const String &fn, Int p) {
 
 BEGIN_TEST(BasicSyntax) {
 	CHECK_RUNS(runFn(L"test.bs.voidFn"));
+	CHECK_RUNS(runFn(L"test.bs.emptyVoidFn"));
 
 	CHECK_EQ(runFn(L"test.bs.bar"), 3);
 	CHECK_EQ(runFn(L"test.bs.ifTest", 1), 3);

@@ -414,7 +414,7 @@ namespace storm {
 			throw;
 		}
 
-		if (option.hasCapture() && captureBegin < captureEnd) {
+		if (option.hasCapture() && captureBegin <= captureEnd) {
 			SrcPos p = srcPos + captureBegin;
 			String captured = src.substr(captureBegin, captureEnd - captureBegin);
 			result->add(option.captureTo(), captured, vector<String>(), p);

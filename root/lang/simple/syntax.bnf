@@ -24,6 +24,7 @@ Rep4Root => SScope() : (AorB, "\.")?, AorB;
 // Capture strings.
 CaptureRoot => SStr(captured) : ( Rep1Root ) captured;
 Capture2Root => SStr(captured) : "-", (Rep1Root) captured, "-";
+CaptureEmpty => SStr(captured) : "-" - ( DELIMITER ) captured - "-";
 
 // Empty rules (really multiple instantiations of the same rule with zero length in some cases.
 Empty => void : "(", EmptyRule e, ")";
