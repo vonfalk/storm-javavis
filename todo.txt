@@ -13,7 +13,6 @@ Optimize the ArrayTemplate lookup somewhat.
 
 Basic
 ------
-Make sure that this-param is write protected! This can also be used to optimize refcounting a bit!
 
 Others
 ---------

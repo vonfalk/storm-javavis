@@ -45,7 +45,7 @@ namespace storm {
 		public:
 			BSFunction(Value result, const String &name, const vector<Value> &params,
 					const vector<String> &names, const Scope &scope, Par<SStr> contents,
-					const SrcPos &pos);
+					const SrcPos &pos, bool isMember);
 
 			// Declared at.
 			SrcPos pos;
@@ -65,6 +65,9 @@ namespace storm {
 
 			// Generate code.
 			code::Listing generateCode();
+
+			// Is a member function (ie this as first param?)
+			bool isMember;
 		};
 
 

@@ -59,10 +59,21 @@ class CtorDerived extends CtorBase {
 		base + der;
 	}
 
+	Int brokenValue() {
+		// This should not even compile!
+		this = CtorDerived(1, 2);
+		base + der;
+	}
+
 }
 
 
 Int ctorDerTest(Int v) {
 	CtorDerived z(v, v * 2);
 	z.value;
+}
+
+Int ctorErrorTest() {
+	CtorDerived z(3, 4);
+	z.brokenValue;
 }

@@ -19,14 +19,15 @@ namespace storm {
 		vector<Value> params = this->params->cTypes(scope);
 		vector<String> names = this->params->cNames();
 
-		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, name->pos);
+		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, name->pos, false);
 	}
 
 
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
 							const vector<String> &names, const Scope &scope,
-							Par<SStr> contents, const SrcPos &pos)
-		: Function(result, name, params), scope(scope), contents(contents), paramNames(names), pos(pos) {
+							Par<SStr> contents, const SrcPos &pos, bool isMember)
+		: Function(result, name, params), scope(scope), contents(contents),
+		  paramNames(names), pos(pos), isMember(isMember) {
 
 		if (result.ref)
 			throw SyntaxError(pos, L"Returning references is not a good idea at this point!");
@@ -68,11 +69,14 @@ namespace storm {
 			assert(var);
 			if (t.isValue()) {
 				var->var = l.frame.createParameter(t.size(), false, t.destructor(), freeOnBoth | freePtr);
+			} else if (var->constant) {
+				// Borrowed ptr.
+				var->var = l.frame.createParameter(t.size(), false);
 			} else {
 				var->var = l.frame.createParameter(t.size(), false, t.destructor());
 			}
 
-			if (t.refcounted())
+			if (t.refcounted() && !var->constant)
 				l << code::addRef(var->var);
 		}
 
@@ -120,6 +124,8 @@ namespace storm {
 	void bs::BSFunction::addParams(Par<Block> to) {
 		for (nat i = 0; i < params.size(); i++) {
 			Auto<LocalVar> var = CREATE(LocalVar, this, paramNames[i], params[i], pos, true);
+			if (i == 0 && isMember)
+				var->constant = true;
 			to->add(var);
 		}
 	}

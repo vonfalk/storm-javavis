@@ -194,7 +194,10 @@ namespace storm {
 	bs::LocalVarAccess::LocalVarAccess(Par<LocalVar> var) : var(var) {}
 
 	Value bs::LocalVarAccess::result() {
-		return var->result.asRef();
+		if (var->constant)
+			return var->result;
+		else
+			return var->result.asRef();
 	}
 
 	void bs::LocalVarAccess::code(const GenState &s, GenResult &to) {
@@ -500,7 +503,7 @@ namespace storm {
 
 	bs::Expr *bs::assignExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs) {
 		Value r = lhs->result();
-		if (r.type && r.ref) {
+		if (r.type) {
 			if (r.type->flags & typeClass) {
 				return CREATE(ClassAssign, block, lhs, rhs);
 			}

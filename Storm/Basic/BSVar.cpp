@@ -108,6 +108,8 @@ namespace storm {
 		}
 
 		void bs::Var::output(wostream &to) const {
+			if (variable->constant)
+				to << L"const ";
 			to << variable->result << L" " << variable->name;
 			if (initExpr)
 				to << L" = " << initExpr;
@@ -121,7 +123,7 @@ namespace storm {
 		 */
 
 		bs::LocalVar::LocalVar(const String &name, const Value &t, const SrcPos &pos, bool param)
-			: Named(name), result(t), pos(pos), var(code::Variable::invalid), param(param) {}
+			: Named(name), result(t), pos(pos), var(code::Variable::invalid), param(param), constant(false) {}
 
 	}
 }

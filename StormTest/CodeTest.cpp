@@ -150,4 +150,5 @@ BEGIN_TEST(StormCtorTest) {
 	CHECK_EQ(runFn(L"test.bs.ctorTest"), 50);
 	CHECK_EQ(runFn(L"test.bs.ctorTest", 10), 30);
 	CHECK_EQ(runFn(L"test.bs.ctorDerTest", 2), 6);
+	CHECK_ERROR(runFn(L"test.bs.ctorErrorTest"));
 } END_TEST

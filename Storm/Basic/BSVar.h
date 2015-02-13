@@ -26,6 +26,9 @@ namespace storm {
 
 			// Is this a parameter?
 			bool param;
+
+			// Constant variable? This is currently only used for the 'this' pointer.
+			bool constant;
 		};
 
 		class Block;

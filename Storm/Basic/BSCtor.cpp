@@ -73,6 +73,8 @@ namespace storm {
 	void bs::BSCtor::addParams(Par<Block> to) {
 		for (nat i = 0; i < params.size(); i++) {
 			Auto<LocalVar> var = CREATE(LocalVar, this, paramNames[i], params[i], pos, true);
+			if (i == 0)
+				var->constant = true;
 			to->add(var);
 		}
 	}
