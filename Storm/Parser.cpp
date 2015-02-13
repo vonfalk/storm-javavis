@@ -242,7 +242,7 @@ namespace storm {
 		if (pos == steps.size() - 1)
 			oss << L"Unexpected end of stream.";
 		else
-			oss << L"Unexpected " << src[pos];
+			oss << L"Unexpected " << String::escape(src[pos]);
 
 		set<String> tokens = typeCompletions(steps[pos]);
 		if (!tokens.empty()) {

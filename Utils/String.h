@@ -68,6 +68,8 @@ public:
 
 	// Treat the string as a command line.
 	String unescape(bool keepUnknown = false) const;
+	String escape() const;
+	static String escape(wchar ch);
 	String firstParam() const;
 	String restParams() const;
 

@@ -23,10 +23,11 @@ Type => arrayType(t) : Type t, "\[\]";
 
 // Skip a block, assuming matching {} and well-behaved strings.
 SkipBlock => cont : ( SkipContent ) cont;
-SkipContent => void : SkipContent - Whitespace - SkipContent;
-SkipContent => void : "[^{}\"']*";
+SkipContent => void : Whitespace - SkipContent - Whitespace - SkipContent - Whitespace;
+SkipContent => void : "[^{}/\"']*";
+SkipContent => void : "/[^/]" - SkipContent;
 SkipContent => void : "//[^\n\r]*[\n\r]";
-SkipContent => void : "{", SkipContent, "}";
+SkipContent => void : "{" - SkipContent - "}";
 SkipContent => void : "\"" - StrContent - "\"";
 SkipContent => void : "'[^']'";
 SkipContent => void : "'\\.'";
@@ -40,15 +41,15 @@ Params => Params() : Type -> add, Name -> add, (",", Type -> add, Name -> add, )
 
 // Function
 Function => FunctionDecl(pos, name, result, params, contents) :
-Type result, Name name, "(", Params params, ")", "{", SkipBlock contents, "}";
+Type result, Name name, "(", Params params, ")", "{" - SkipBlock contents - "}";
 
 // Class or value?
 CVType => t : "class" t;
 CVType => t : "value" t;
 
 // Class / value
-Class => Class(pos, t, name, contents) : CVType t, Name name, "{", SkipBlock contents, "}";
-Class => Class(pos, t, name, contents, base) : CVType t, Name name, "extends", Type base, "{", SkipBlock contents, "}";
+Class => Class(pos, t, name, contents) : CVType t, Name name, "{" - SkipBlock contents - "}";
+Class => Class(pos, t, name, contents, base) : CVType t, Name name, "extends", Type base, "{" - SkipBlock contents - "}";
 
 
 // Possible root blocks.
@@ -172,7 +173,7 @@ Initializer => Initializer(name, params) : Name name, FnValues(block) params;
 
 // Root rule for parsing constructor bodies.
 CtorBody(BSCtor fn);
-CtorBody => CtorBody(fn) : DELIMITER - CtorStmts(me) -> add, SuperCall(me) -> add, CtorStmts(me) -> add - DELIMITER;
+CtorBody => CtorBody(fn) : DELIMITER - CtorStmts(me) -> add, SuperCall(me) -> add, CtorStmts(me) -> add;
 
 CtorStmts(Block block);
 CtorStmts => Array<Expr>() : (Stmt(block) -> push, )*;
@@ -181,10 +182,10 @@ CtorStmts => Array<Expr>() : (Stmt(block) -> push, )*;
 ClassItem(Class owner);
 ClassItem => ClassVar(owner, t, n) : Type t, Name n, ";";
 ClassItem => classFn(owner, pos, name, result, params, contents) :
-  Type result, Name name, "(", Params params, ")", "{", SkipBlock contents, "}";
+  Type result, Name name, "(", Params params, ")", "{" - SkipBlock contents - "}";
 ClassItem => classCtor(owner, pos, params, contents) : 
-  "ctor", "(", Params params, ")", "{", SkipBlock contents, "}";
+  "ctor", "(", Params params, ")", "{" - SkipBlock contents - "}";
 
 // Root rule for parsing classes and values.
 ClassBody(Class owner);
-ClassBody => ClassBody() : (ClassItem(owner) -> add, )*;
+ClassBody => ClassBody() : DELIMITER - (ClassItem(owner) -> add, )*;

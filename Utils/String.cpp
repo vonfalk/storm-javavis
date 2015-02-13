@@ -252,6 +252,26 @@ String String::unescape(bool keepUnknown) const {
 	return ret.str().c_str();
 }
 
+String String::escape() const {
+	std::wostringstream to;
+	for (nat i = 0; i < size(); i++)
+		to << escape((*this)[i]);
+	return to.str();
+}
+
+String String::escape(wchar c) {
+	switch (c) {
+	case '\n':
+		return L"\\n";
+	case '\r':
+		return L"\\r";
+	case '\t':
+		return L"\\t";
+	default:
+		return String(1, c);
+	}
+}
+
 static nat firstParameterEnd(const String &str) {
 	bool content = false;
 	bool inString = false;

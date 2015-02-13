@@ -149,4 +149,5 @@ BEGIN_TEST(StormArrayTest) {
 BEGIN_TEST(StormCtorTest) {
 	CHECK_EQ(runFn(L"test.bs.ctorTest"), 50);
 	CHECK_EQ(runFn(L"test.bs.ctorTest", 10), 30);
+	CHECK_EQ(runFn(L"test.bs.ctorDerTest", 2), 6);
 } END_TEST

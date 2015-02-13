@@ -31,3 +31,38 @@ Int ctorTest(Int v) {
 	CtorClass c(v);
 	c.a + c.b.get;
 }
+
+class CtorBase {
+
+	Int base;
+
+	ctor(Int v) {
+		super() { base = v; }
+	}
+
+	Int value() {
+		base;
+	}
+
+}
+
+class CtorDerived extends CtorBase {
+
+	Int der;
+
+	ctor(Int a, Int b) {
+		super(a) { der = b; }
+		// comments here should work!
+	}
+
+	Int value() {
+		base + der;
+	}
+
+}
+
+
+Int ctorDerTest(Int v) {
+	CtorDerived z(v, v * 2);
+	z.value;
+}
