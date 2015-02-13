@@ -55,6 +55,12 @@ class CtorDerived extends CtorBase {
 		// comments here should work!
 	}
 
+	ctor(Int a) {
+		super(1) { der = 1; }
+		// This is broken, it should not compile.
+		this = CtorDerived(a, a);
+	}
+
 	Int value() {
 		base + der;
 	}
@@ -62,6 +68,7 @@ class CtorDerived extends CtorBase {
 	Int brokenValue() {
 		// This should not even compile!
 		this = CtorDerived(1, 2);
+		ptrace(1);
 		base + der;
 	}
 
@@ -74,6 +81,11 @@ Int ctorDerTest(Int v) {
 }
 
 Int ctorErrorTest() {
+	CtorDerived z(4);
+	z.value;
+}
+
+Int memberAssignErrorTest() {
 	CtorDerived z(3, 4);
 	z.brokenValue;
 }

@@ -58,67 +58,106 @@ namespace code {
 		// Use callRef in that case.
 		template <class T>
 		T call(const void *fn) {
-			byte d[sizeof(T)];
-			T *data = (T*)d;
-			if (TypeInfo<T>::pointer() || TypeInfo<T>::reference()) {
-				doCall((void *)data, sizeof(T), fn);
-			} else {
-				doUserCall((void *)data, sizeof(T), fn);
+			// For some reason, we need try-catch around these ones. Otherwise we crash
+			// when running in release mode for some reason! Probably, it prevents some inlining
+			// somewhere that breaks something...
+			try {
+				byte d[sizeof(T)];
+				T *data = (T*)d;
+				if (TypeInfo<T>::pointer() || TypeInfo<T>::reference()) {
+					doCall((void *)data, sizeof(T), fn);
+				} else {
+					doUserCall((void *)data, sizeof(T), fn);
+				}
+				T copy = *data;
+				data->~T();
+				return copy;
+			} catch (...) {
+				throw;
 			}
-			T copy = *data;
-			data->~T();
-			return copy;
 		}
 
 		template <>
 		int call(const void *fn) {
-			int data;
-			doCall(&data, sizeof(int), fn);
-			return data;
+			try {
+				int data;
+				doCall(&data, sizeof(int), fn);
+				return data;
+			} catch (...) {
+				throw;
+			}
 		}
 
 		template <>
 		nat call(const void *fn) {
-			nat data;
-			doCall(&data, sizeof(nat), fn);
-			return data;
+			try {
+				nat data;
+				doCall(&data, sizeof(nat), fn);
+				return data;
+			} catch (...) {
+				throw;
+			}
 		}
 
 		template <>
 		int64 call(const void *fn) {
-			int64 data;
-			doCall(&data, sizeof(int64), fn);
-			return data;
+			try {
+				int64 data;
+				doCall(&data, sizeof(int64), fn);
+				return data;
+			} catch (...) {
+				throw;
+			}
 		}
 
 		template <>
 		nat64 call(const void *fn) {
-			nat64 data;
-			doCall(&data, sizeof(nat64), fn);
-			return data;
+			try {
+				nat64 data;
+				doCall(&data, sizeof(nat64), fn);
+				return data;
+			} catch (...) {
+				throw;
+			}
 		}
 
 		template <>
 		float call(const void *fn) {
-			return doFloatCall(fn);
+			try {
+				return doFloatCall(fn);
+			} catch (...) {
+				throw;
+			}
 		}
 
 		template <>
 		double call(const void *fn) {
-			return doDoubleCall(fn);
+			try {
+				return doDoubleCall(fn);
+			} catch (...) {
+				throw;
+			}
 		}
 
 		template <>
 		void call(const void *fn) {
-			callVoid(fn);
+			try {
+				callVoid(fn);
+			} catch (...) {
+				throw;
+			}
 		}
 
 		// Specific overload for references.
 		template <class T>
 		T &callRef(const void *fn) {
-			T *ptr = null;
-			doCall((void *)&ptr, sizeof(ptr), fn);
-			return *ptr;
+			try {
+				T *ptr = null;
+				doCall((void *)&ptr, sizeof(ptr), fn);
+				return *ptr;
+			} catch (...) {
+				throw;
+			}
 		}
 
 		// Parameter count.

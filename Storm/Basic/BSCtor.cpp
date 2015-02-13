@@ -111,6 +111,7 @@ namespace storm {
 		thisVar = capture(block->variable(L" this"));
 		thisPtr = thisVar->result;
 		Auto<LocalVar> created = CREATE(LocalVar, this, L"this", thisPtr, thisVar->pos, true);
+		created->constant = true;
 		block->add(created);
 
 		this->params = params;
