@@ -14,7 +14,9 @@ namespace storm {
 		class FnCall : public Expr {
 			STORM_CLASS;
 		public:
+			// if '!lookup', then the lookup functionality (such as vtables) will not be used.
 			STORM_CTOR FnCall(Par<Function> toExecute, Par<Actual> params);
+			STORM_CTOR FnCall(Par<Function> toExecute, Par<Actual> params, Bool lookup);
 
 			// Result type.
 			virtual Value result();
@@ -31,6 +33,9 @@ namespace storm {
 
 			// Parameters.
 			Auto<Actual> params;
+
+			// Use lookup?
+			bool lookup;
 		};
 
 

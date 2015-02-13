@@ -62,13 +62,12 @@ class CtorDerived extends CtorBase {
 	}
 
 	Int value() {
-		base + der;
+		super:value + der;
 	}
 
 	Int brokenValue() {
 		// This should not even compile!
 		this = CtorDerived(1, 2);
-		ptrace(1);
 		base + der;
 	}
 

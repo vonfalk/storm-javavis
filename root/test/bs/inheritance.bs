@@ -7,6 +7,10 @@ class Base {
 	Int overload() {
 		a;
 	}
+
+	Int sum() {
+		a;
+	}
 }
 
 class Derived extends Base {
@@ -14,6 +18,10 @@ class Derived extends Base {
 
 	Int overload() {
 		b;
+	}
+
+	Int sum() {
+		super:sum + b;
 	}
 }
 
@@ -34,6 +42,13 @@ Int testDerived() {
 	d.a = 10;
 	d.b = 20;
 	extract(d);
+}
+
+Int testSuperExpr() {
+	Derived d = Derived();
+	d.a = 10;
+	d.b = 20;
+	d.sum;
 }
 
 class DerivedDbg extends Dbg {

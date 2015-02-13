@@ -51,7 +51,7 @@ namespace storm {
 		code::RefSource &directRef();
 
 		// Generate code for this function call.
-		void genCode(const GenState &to, const vector<code::Value> &params, GenResult &result);
+		void genCode(const GenState &to, const vector<code::Value> &params, GenResult &result, bool useLookup = true);
 
 		// Code to be executed.
 		void setCode(Par<Code> code);

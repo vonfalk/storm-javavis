@@ -92,6 +92,9 @@ BEGIN_TEST(InheritanceTest) {
 	CHECK_EQ(created.expect<Dbg>(*gEngine, L"dbg")->get(), 10);
 	created = runFn<Object*>(L"test.bs.createCpp", 2);
 	CHECK_EQ(created.expect<Dbg>(*gEngine, L"dbg")->get(), 20);
+
+	// Use of 'super'.
+	CHECK_EQ(runFn(L"test.bs.testSuperExpr"), 30);
 } END_TEST
 
 BEGIN_TEST(ValueTest) {

@@ -34,14 +34,18 @@ namespace storm {
 		return *codeRef;
 	}
 
-	void Function::genCode(const GenState &to, const vector<code::Value> &params, GenResult &res) {
+	void Function::genCode(const GenState &to, const vector<code::Value> &params, GenResult &res, bool useLookup) {
 		using namespace code;
 
 		initRefs();
 
 		assert(params.size() == this->params.size());
+		Ref ref(useLookup ? this->ref() : directRef());
+
 		bool inlined = true;
-		inlined &= as<DelegatedCode>(lookup.borrow()) != 0;
+		if (useLookup)
+			// If we're not going to use the lookup, we may be more eager to inline code!
+			inlined &= as<DelegatedCode>(lookup.borrow()) != 0;
 		inlined &= as<InlinedCode>(code.borrow()) != 0;
 
 		if (inlined) {
@@ -51,7 +55,7 @@ namespace storm {
 			for (nat i = 0; i < params.size(); i++)
 				to.to << fnParam(params[i]);
 
-			to.to << fnCall(Ref(ref()), Size());
+			to.to << fnCall(ref, Size());
 		} else {
 			Variable result = res.safeLocation(to, this->result);
 
@@ -70,11 +74,11 @@ namespace storm {
 			}
 
 			if (this->result.returnOnStack()) {
-				to.to << fnCall(Ref(ref()), result.size());
+				to.to << fnCall(ref, result.size());
 				to.to << mov(result, asSize(ptrA, result.size()));
 			} else {
 				// Ignore return value...
-				to.to << fnCall(Ref(ref()), Size());
+				to.to << fnCall(ref, Size());
 			}
 		}
 	}

@@ -8,13 +8,14 @@ namespace storm {
 
 	namespace bs {
 		// Helper for calling a function and handling the result correctly.
-		static void callFn(Par<Function> call, const GenState &s, vector<code::Value> &values, GenResult &to) {
+		static void callFn(Par<Function> call, const GenState &s, vector<code::Value> &values,
+						GenResult &to, bool lookup) {
 			using namespace code;
 
 			if (to.type.ref != call->result.ref) {
 				// We need to do stuff!
 				GenResult t(call->result, s.block);
-				call->genCode(s, values, t);
+				call->genCode(s, values, t, lookup);
 
 				if (!to.needed())
 					return;
@@ -37,7 +38,7 @@ namespace storm {
 						s.to << addRef(target);
 				}
 			} else {
-				call->genCode(s, values, to);
+				call->genCode(s, values, to, lookup);
 			}
 		}
 
@@ -48,8 +49,11 @@ namespace storm {
 	 * Function call.
 	 */
 
+	bs::FnCall::FnCall(Par<Function> toExecute, Par<Actual> params, Bool lookup)
+		: toExecute(toExecute), params(params), lookup(lookup) {}
+
 	bs::FnCall::FnCall(Par<Function> toExecute, Par<Actual> params)
-		: toExecute(toExecute), params(params) {}
+		: toExecute(toExecute), params(params), lookup(true) {}
 
 	Value bs::FnCall::result() {
 		return toExecute->result;
@@ -71,7 +75,7 @@ namespace storm {
 			vars[i] = params->code(i, s, values[i]);
 
 		// Call!
-		callFn(toExecute, s, vars, to);
+		callFn(toExecute, s, vars, to, lookup);
 	}
 
 	void bs::FnCall::output(wostream &to) const {
@@ -367,7 +371,7 @@ namespace storm {
 	 */
 	namespace bs {
 		static Expr *findCtor(Type *t, Par<Actual> actual, const SrcPos &pos);
-		static Expr *findTarget(Named *n, Par<Expr> first, Par<Actual> actual, const SrcPos &pos);
+		static Expr *findTarget(Named *n, Par<Expr> first, Par<Actual> actual, const SrcPos &pos, bool useLookup);
 		static Expr *findTargetThis(Par<Block> block, Par<Name> name,
 									Par<Actual> params, const SrcPos &pos,
 									Named *&candidate);
@@ -389,8 +393,9 @@ namespace storm {
 	}
 
 
-	// Helper to create the actual type, given something found.
-	static bs::Expr *bs::findTarget(Named *n, Par<Expr> first, Par<Actual> actual, const SrcPos &pos) {
+	// Helper to create the actual type, given something found. If '!useLookup', then we will not use the lookup
+	// of the function or variable.
+	static bs::Expr *bs::findTarget(Named *n, Par<Expr> first, Par<Actual> actual, const SrcPos &pos, bool useLookup) {
 		if (!n)
 			return null;
 
@@ -402,7 +407,7 @@ namespace storm {
 		if (Function *f = as<Function>(n)) {
 			if (first)
 				actual->addFirst(first);
-			return CREATE(FnCall, n, f, actual);
+			return CREATE(FnCall, n, f, actual, useLookup);
 		}
 
 		if (LocalVar *v = as<LocalVar>(n)) {
@@ -420,6 +425,16 @@ namespace storm {
 		return null;
 	}
 
+	static bool isSuperName(Par<Name> name) {
+		if (name->size() <= 1)
+			return false;
+
+		NamePart *p = name->at(0);
+		if (p->name != L"super")
+			return false;
+		return p->params.size() == 0;
+	}
+
 	// Find a target assuming we should use the this-pointer.
 	static bs::Expr *bs::findTargetThis(Par<Block> block, Par<Name> name,
 										Par<Actual> params, const SrcPos &pos,
@@ -432,11 +447,27 @@ namespace storm {
 
 		vector<Value> vals = params->values();
 		vals.insert(vals.begin(), thisVar->result);
-		Named *n = scope.find(steal(name->withParams(vals)));
-		candidate = n;
+		bool useLookup = true;
+
+		if (isSuperName(name)) {
+			Auto<Name> part = name->from(1);
+			// It is something in the super type!
+			Type *super = thisVar->result.type->super();
+			if (!super)
+				throw SyntaxError(pos, L"No super type for " + ::toS(thisVar->result) + L", can not use 'super' here.");
+
+			candidate = storm::find(super, steal(part->withParams(vals)));
+			useLookup = false;
+		} else {
+			// May be anything.
+			candidate = scope.find(steal(name->withParams(vals)));
+			useLookup = true;
+		}
+
+		Named *n = candidate;
 
 		Auto<Expr> first = CREATE(LocalVarAccess, block, thisVar);
-		Expr *e = findTarget(n, first, params, pos);
+		Expr *e = findTarget(n, first, params, pos, useLookup);
 		if (e)
 			return e;
 
@@ -456,7 +487,7 @@ namespace storm {
 		// Try without the this pointer first.
 		Named *n = scope.find(steal(name->withParams(params->values())));
 
-		if (Expr *e = findTarget(n, null, params, pos))
+		if (Expr *e = findTarget(n, null, params, pos, true))
 			return e;
 
 		// If we have a this-pointer, try to use it!
