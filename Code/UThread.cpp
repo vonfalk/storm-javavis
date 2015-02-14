@@ -5,7 +5,7 @@
 namespace code {
 
 	// Approximate stack size. (we need about 20K to be able to do cout)
-	static nat stackSize = 1024 * 20;
+	static nat stackSize = 1024 * 40;
 
 #ifdef WINDOWS
 
@@ -222,7 +222,7 @@ namespace code {
 		push(0); // ebx
 		push(0); // esi
 		push(0); // edi
-		push(0); // seh
+		push(0xFFFFFFFF); // seh
 	}
 
 #endif

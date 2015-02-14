@@ -320,6 +320,10 @@
 				RelativePath=".\Size.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Debug.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -464,6 +468,10 @@
 			</File>
 			<File
 				RelativePath=".\ISize.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Debug.h"
 				>
 			</File>
 		</Filter>

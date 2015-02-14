@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Code/UThread.h"
+#include "Code/Debug.h"
 #include "Utils/Thread.h"
+#include "Utils/Exception.h"
 
 static int var = 0;
 static THREAD int local = 0;
@@ -76,4 +78,38 @@ BEGIN_TEST(UThreadTest) {
 	CHECK_EQ(count1, 4);
 	CHECK_EQ(count2, 4);
 
+} END_TEST
+
+static nat exceptions = 0;
+
+static void exInner(nat depth = 0) {
+	UThread::leave();
+	if (depth == 3) {
+		dumpStack();
+		throw UserError(L"Testing!");
+	} else {
+		exInner(depth + 1);
+	}
+}
+
+static void exRoot() {
+	try {
+		exInner();
+	} catch (const UserError &e) {
+		exceptions += e.what() == L"Testing!";
+	}
+}
+
+BEGIN_TEST(UThreadExTest) {
+	exceptions = 0;
+
+	UThread::spawn(simpleVoidFn(&exRoot));
+	UThread::spawn(simpleVoidFn(&exRoot));
+
+	dumpStack();
+
+	for (nat i = 0; i < 50; i++)
+		UThread::leave();
+
+	CHECK_EQ(exceptions, 2);
 } END_TEST
