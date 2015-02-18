@@ -19,13 +19,25 @@ namespace code {
 	};
 
 	void dumpStack() {
+		void *stackPtr;
 		SehFrame *top;
 		__asm {
 			mov eax, fs:[0];
 			mov top, eax;
+			mov stackPtr, esp;
 		};
 
 		PLN("---- STACK DUMP ----");
+
+		NT_TIB *tib = machineX86::getTIB();
+		PLN("Stack base: " << tib->StackBase);
+		PLN("Stack top: " << tib->StackLimit);
+		PLN("Stack ptr: " << stackPtr);
+		PLN("Stack size: " << (nat(tib->StackBase) - nat(tib->StackLimit)));
+		if (stackPtr > tib->StackBase)
+			PLN("Above stack.");
+		if (stackPtr < tib->StackLimit)
+			PLN("Below stack.");
 
 		for (nat i = 0; i < 10; i++) {
 			PLN("SEH at: " << top);

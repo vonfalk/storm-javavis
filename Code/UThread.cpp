@@ -175,9 +175,13 @@ namespace code {
 
 #pragma warning (disable: 4733)
 	// May not return. *oldEsp is updated with the current esp.
+	// Note: we need to keep fs:[4] and fs:[8] updated (stack begin and end) updated
+	// for exceptions to work in our threads. These could be saved through the 'stack'
+	// member in the UThread itself, but this is much easier and only uses 8 bytes on the
+	// stack anyway.
 	static NAKED void doSwitch(void *newEsp, void ***oldEsp) {
 		__asm {
-			// Prolog, bonus: saves ebp!
+			// Prolog. Bonus: saves ebp!
 			push ebp;
 			mov ebp, esp;
 
@@ -190,18 +194,22 @@ namespace code {
 			push esi;
 			push edi;
 			push dword ptr fs:[0];
+			push dword ptr fs:[4];
+			push dword ptr fs:[8];
 
 			// Swap stacks.
 			mov [eax], esp;
 			mov esp, ecx;
 
 			// Restore state.
+			pop dword ptr fs:[8];
+			pop dword ptr fs:[4];
 			pop dword ptr fs:[0];
 			pop edi;
 			pop esi;
 			pop ebx;
 
-			// Epilog, bonus: restores ebp!
+			// Epilog. Bonus: restores ebp!
 			pop ebp;
 			ret;
 		}
@@ -222,7 +230,9 @@ namespace code {
 		push(0); // ebx
 		push(0); // esi
 		push(0); // edi
-		push(0xFFFFFFFF); // seh
+		push(0xFFFFFFFF); // seh (end of list is indicated by -1)
+		push(stack.top + stack.size); // stack base
+		push(stack.top); // stack limit
 	}
 
 #endif

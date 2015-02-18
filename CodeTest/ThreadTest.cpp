@@ -85,7 +85,7 @@ static nat exceptions = 0;
 static void exInner(nat depth = 0) {
 	UThread::leave();
 	if (depth == 3) {
-		dumpStack();
+		// dumpStack();
 		throw UserError(L"Testing!");
 	} else {
 		exInner(depth + 1);
@@ -106,7 +106,7 @@ BEGIN_TEST(UThreadExTest) {
 	UThread::spawn(simpleVoidFn(&exRoot));
 	UThread::spawn(simpleVoidFn(&exRoot));
 
-	dumpStack();
+	// dumpStack();
 
 	for (nat i = 0; i < 50; i++)
 		UThread::leave();
