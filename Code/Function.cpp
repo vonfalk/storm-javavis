@@ -6,7 +6,7 @@
 namespace code {
 
 #ifdef X86
-	nat FnCall::paramsSize() {
+	nat FnCall::paramsSize() const {
 		nat size = 0;
 		for (nat i = 0; i < params.size(); i++) {
 			nat s = params[i].size;
@@ -15,23 +15,23 @@ namespace code {
 		return size;
 	}
 
-	void FnCall::copyParams(void *to) {
+	void FnCall::copyParams(void *to) const {
 		byte *at = (byte *)to;
 		for (nat i = 0; i < params.size(); i++) {
-			Param &p = params[i];
+			const Param &p = params[i];
 			nat s = roundUp(p.size, sizeof(void *));
 			(*p.copy)(p.value, at);
 			at += s;
 		}
 	}
 
-	void FnCall::destroyParams(void *to) {
+	void FnCall::destroyParams(void *to) const {
 		// Note: this is not needed on X86 for Visual Studio, as the called function
 		// destroys the values passed (don't ask me how it works with variable argument lists).
 		// This implementation is provided as a reference implementation.
 		byte *at = (byte *)to;
 		for (nat i = 0; i < params.size(); i++) {
-			Param &p = params[i];
+			const Param &p = params[i];
 			nat s = roundUp(p.size, sizeof(void *));
 			if (p.destroy)
 				(*p.destroy)(at);

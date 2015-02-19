@@ -20,6 +20,8 @@ namespace code {
 	 * supported.
 	 */
 	class FnCall {
+		// Let the UThread use us.
+		friend class UThread;
 	public:
 
 		// Since we want to do param(&p) for a reference, we must take care of
@@ -192,15 +194,14 @@ namespace code {
 		void doCall8(void *result, const void *fn);
 		void doCallLarge(void *result, nat sz, const void *fn);
 
-
 		// Find out how much stack space the parameters take.
-		nat paramsSize();
+		nat paramsSize() const;
 
 		// Copy parameters to the stack.
-		void copyParams(void *to);
+		void copyParams(void *to) const;
 
 		// Destroy parameters on the stack.
-		void destroyParams(void *to);
+		void destroyParams(void *to) const;
 
 		// Copy-ctor invocation.
 		template <class T>

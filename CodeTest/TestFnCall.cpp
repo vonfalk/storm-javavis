@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Test/Test.h"
+#include "Tracker.h"
 
 struct SmallType {
 	int v;
@@ -74,19 +75,6 @@ BEGIN_TEST(FnCallTest) {
 } END_TEST
 
 
-class Tracker {
-public:
-	Tracker(int data) : data(data) { copies = 0; }
-	~Tracker() { copies--; }
-	Tracker(const Tracker &o) : data(o.data) { copies++; }
-
-	int data;
-
-	static int copies;
-};
-
-int Tracker::copies = 0;
-
 void trackerFn(Tracker t) {
 	assert(t.data == 10);
 }
@@ -101,13 +89,14 @@ int shortFn(byte a, int b) {
 
 BEGIN_TEST(FunctionParamTest) {
 
+	Tracker::clear();
 	{
 		FnCall call;
 		Tracker t(10);
 		call.param(t);
 		call.call<void>(&trackerFn);
-		CHECK_EQ(Tracker::copies, 0);
 	}
+	CHECK(Tracker::clear());
 
 	{
 		FnCall call;
@@ -134,9 +123,12 @@ static Tracker returnTracker() {
 
 
 BEGIN_TEST(FunctionReturnTest) {
-	Tracker t = FnCall().call<Tracker>(&returnTracker);
-	CHECK_EQ(t.data, 22);
-	CHECK_EQ(Tracker::copies, 0);
+	Tracker::clear();
+	{
+		Tracker t = FnCall().call<Tracker>(&returnTracker);
+		CHECK_EQ(t.data, 22);
+	}
+	CHECK(Tracker::clear());
 } END_TEST
 
 

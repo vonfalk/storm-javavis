@@ -4,6 +4,7 @@
 #include "Code/Debug.h"
 #include "Utils/Thread.h"
 #include "Utils/Exception.h"
+#include "Tracker.h"
 
 static int var = 0;
 static THREAD int local = 0;
@@ -112,4 +113,34 @@ BEGIN_TEST(UThreadExTest) {
 		UThread::leave();
 
 	CHECK_EQ(exceptions, 2);
+} END_TEST
+
+// Test functions.
+static nat fnCallSum = 0;
+
+static void natNatFn(nat a, nat b) {
+	fnCallSum += a + b;
+}
+
+static void trackerFn(Tracker a) {
+	fnCallSum += a.data;
+}
+
+BEGIN_TEST(UThreadFnCallTest) {
+	fnCallSum = 0;
+
+	nat a = 10, b = 20;
+	UThread::spawn(&natNatFn, FnCall().param(a).param(b));
+	UThread::leave();
+	CHECK_EQ(fnCallSum, 30);
+
+	Tracker::clear();
+	{
+		Tracker t(12);
+		UThread::spawn(&trackerFn, FnCall().param(t));
+		UThread::leave();
+	}
+	CHECK_EQ(fnCallSum, 42);
+	CHECK(Tracker::clear());
+
 } END_TEST

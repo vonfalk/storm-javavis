@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils/Function.h"
+#include "Function.h"
 
 namespace code {
 
@@ -25,6 +26,14 @@ namespace code {
 	 */
 	class UThread : NoCopy {
 	public:
+		// TODO: provide some way of detecting when a thread has terminated, and/or a future-like
+		// object with its result.
+
+		// Create another thread running 'fn'. Does not pre-empt this thread. Parameters are
+		// copied before the return of the call, and no special care of the lifetime of the
+		// parameters in 'params' needs to be taken.
+		static void spawn(const void *fn, const FnCall &params);
+
 		// Create another thread running 'fn'. Does not pre-empt this thread.
 		static void spawn(const Fn<void, void> &fn);
 
@@ -65,9 +74,23 @@ namespace code {
 		// Initialize the stack to call 'fn' with 'param'.
 		void initialStack(void *fn, void *param);
 
+		// Push the initial context onto the stack (should be done last).
+		void pushContext(const void *returnTo);
+
+		// Push parameters to a function call.
+		void pushParams(const void *returnTo, void *param);
+		void pushParams(const void *returnTo, const FnCall &params);
+
 		// Switch to this thread. (does not behave as the compiler thinks it does!)
 		// Note: does not even return for all switches (until later).
 		void switchTo();
+
+		// Insert this UThread in this thread's linked list.
+		void insert();
+
+		// Remove the running UThread from this thread's linked list. Implicitly switches to the
+		// next free thread.
+		static void remove();
 
 		// Main function in new threads.
 		static void main(Fn<void, void> *fn);

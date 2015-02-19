@@ -68,47 +68,30 @@ namespace code {
 		freeStack(stack);
 	}
 
-	void UThread::spawn(const Fn<void, void> &fn) {
-		UThread *t = new UThread();
-
-		t->initialStack(address(&UThread::main), new Fn<void, void>(fn));
-
+	void UThread::insert() {
 		// Add to the back of the queue.
-		if (UThread *next = nextThread) {
-			t->prev = next->prev;
-			t->next = next;
+		if (nextThread) {
+			prev = nextThread->prev;
+			next = nextThread;
 
-			t->prev->next = t;
-			t->next->prev = t;
+			prev->next = this;
+			next->prev = this;
 		} else {
-			t->next = t;
-			t->prev = t;
-			nextThread = t;
+			next = this;
+			prev = this;
+			nextThread = this;
 		}
 	}
 
-	void UThread::main(Fn<void, void> *fn) {
-		try {
-			// The other possible exit of 'switchTo'
-			afterSwitch();
-
-			(*fn)();
-		} catch (...) {
-			// Not good, but we can not let it pass further!
-			assert(false);
-		}
-
-		delete fn;
-
-		// It should not be possible to exit from the 'main' thread of this OS thread.
-		assert(nextThread != null);
-
-		// Remove the running thread, and schedule the next one instead.
+	void UThread::remove() {
+		// Remove, and schedule the next thread.
 		UThread *t = nextThread;
 		terminatedThread = t;
 
+		assert(("Can not remove the original UThread!", t != null));
+
 		if (t->next == t) {
-			// We're alone!
+			// Only one left!
 			nextThread = null;
 		} else {
 			t->next->prev = t->prev;
@@ -118,7 +101,7 @@ namespace code {
 
 		t->switchTo();
 
-		// Should never get here!
+		// Should not return...
 		assert(false);
 	}
 
@@ -151,6 +134,44 @@ namespace code {
 			delete terminatedThread;
 			terminatedThread = null;
 		}
+	}
+
+	/**
+	 * Spawn a thread running a Fn<void, void>:
+	 */
+
+	void UThread::spawn(const Fn<void, void> &fn) {
+		UThread *t = new UThread();
+		t->pushParams(null, new Fn<void, void>(fn));
+		t->pushContext(address(&UThread::main));
+		t->insert();
+	}
+
+	void UThread::main(Fn<void, void> *fn) {
+		try {
+			// The other possible exit of 'switchTo'
+			afterSwitch();
+
+			(*fn)();
+		} catch (...) {
+			// Not good, but we can not let it pass further!
+			assert(false);
+		}
+
+		delete fn;
+
+		remove();
+	}
+
+	/**
+	 * Spawn a thread running a FnCall:
+	 */
+
+	void UThread::spawn(const void *fn, const FnCall &params) {
+		UThread *t = new UThread();
+		t->pushParams(address(&UThread::remove), params);
+		t->pushContext(fn);
+		t->insert();
 	}
 
 
@@ -222,10 +243,21 @@ namespace code {
 		doSwitch(newEsp, &esp); // May not return.
 	}
 
-	void UThread::initialStack(void *fn, void *param) {
-		push(param); // parameter
-		push(0); // return to
-		push(fn); // return to
+	void UThread::pushParams(const void *fn, void *param) {
+		push(param);
+		push((void *)fn);
+	}
+
+	void UThread::pushParams(const void *fn, const FnCall &params) {
+		nat s = params.paramsSize();
+		assert(s % 4 == 0);
+		esp -= s / 4;
+		params.copyParams(esp);
+		push((void *)fn);
+	}
+
+	void UThread::pushContext(const void *fn) {
+		push((void *)fn); // return to
 		push(0); // ebp
 		push(0); // ebx
 		push(0); // esi
@@ -236,5 +268,6 @@ namespace code {
 	}
 
 #endif
+
 
 }

@@ -241,6 +241,10 @@
 				RelativePath=".\ThreadTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Tracker.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -265,6 +269,10 @@
 			</File>
 			<File
 				RelativePath=".\ThreadTest.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Tracker.h"
 				>
 			</File>
 		</Filter>
