@@ -245,6 +245,10 @@
 				RelativePath=".\Tracker.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestTrace.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

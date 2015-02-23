@@ -324,6 +324,14 @@
 				RelativePath=".\Debug.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\StackTrace.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FnLookup.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -472,6 +480,14 @@
 			</File>
 			<File
 				RelativePath=".\Debug.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StackTrace.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FnLookup.h"
 				>
 			</File>
 		</Filter>
