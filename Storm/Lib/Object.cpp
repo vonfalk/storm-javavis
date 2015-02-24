@@ -93,7 +93,7 @@ namespace storm {
 		s += Size::sPtr; // vtable
 		s += Size::sPtr; // myType
 		s += Size::sNat; // refs
-		assert(("Forgot to update baseSize!", s.current() == sizeof(Object)));
+		assert(s.current() == sizeof(Object), "Forgot to update baseSize!");
 		return s;
 	}
 
@@ -135,7 +135,7 @@ namespace storm {
 		size_t s = type->size().current();
 
 		assert(type->flags & typeClass);
-		assert(("Not enough memory for the specified type!", size >= s || size == 0));
+		assert(size >= s || size == 0, "Not enough memory for the specified type!");
 
 		void *mem = allocDumb(type->engine, s);
 		memset(mem, 0, s);
@@ -167,9 +167,9 @@ namespace storm {
 	void Object::operator delete[](void *ptr) { assert(false); }
 
 	Object *createObj(Function *ctor, code::FnCall params) {
-		assert(("Don't use create() with other functions than constructors.", ctor->name == Type::CTOR));
-		assert(("Wrong number of parameters to constructor! The first one is filled in automatically.",
-					ctor->params.size() == params.count() + 1));
+		assert(ctor->name == Type::CTOR, "Don't use create() with other functions than constructors.");
+		assert(ctor->params.size() == params.count() + 1,
+			"Wrong number of parameters to constructor! The first one is filled in automatically.");
 		Type *type = ctor->params[0].type;
 		assert(type->flags & typeClass);
 

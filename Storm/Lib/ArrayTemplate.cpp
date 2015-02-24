@@ -101,7 +101,7 @@ namespace storm {
 		tName->add(L"core");
 		tName->add(L"Array", vector<Value>(1, type));
 		Type *r = as<Type>(e.scope()->find(tName));
-		assert(("The array type was not found!", r));
+		assert(r, "The array type was not found!");
 		return r;
 	}
 

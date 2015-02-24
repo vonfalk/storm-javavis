@@ -209,7 +209,7 @@ namespace code {
 			return iSize.current();
 		if (valType == tOffsetConstant)
 			return iOffset.current();
-		assert(("Tried to get constant value from non-constant.", false));
+		assert(false, "Tried to get constant value from non-constant.");
 		return 0;
 	}
 

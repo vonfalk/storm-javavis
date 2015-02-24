@@ -71,7 +71,7 @@ namespace storm {
 			// Get the dtor (always in slot 0).
 			typedef void (CODECALL *Dtor)(void *);
 			Dtor dtor = (Dtor)vtable[0];
-			assert(("Someone forgot to set the Storm dtor!", dtor));
+			assert(dtor, "Someone forgot to set the Storm dtor!");
 			(*dtor)(this);
 
 			if (del)

@@ -152,7 +152,7 @@ namespace storm {
 		bool isRef = TypeInfo<T>::reference() || TypeInfo<T>::pointer() || IsAuto<T>::v;
 		Type *t = LookupValue<T>::type(e);
 		if (t->flags & typeClass) {
-			assert(("Class type tried to be used by value!", isRef));
+			assert(isRef, "Class type tried to be used by value!");
 			isRef = false;
 		}
 		return Value(t, isRef);

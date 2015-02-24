@@ -33,7 +33,7 @@ namespace storm {
 	}
 
 	void bs::Block::blockCode(const GenState &state, GenResult &to) {
-		assert(("Implement me in a subclass!", false));
+		assert(false, "Implement me in a subclass!");
 	}
 
 	void bs::Block::add(Par<LocalVar> var) {

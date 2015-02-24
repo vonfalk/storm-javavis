@@ -7,6 +7,12 @@ AssertionException::AssertionException(const String &file, nat line, const Strin
 	PLN(what());
 }
 
+AssertionException::AssertionException(const String &file, nat line, const String &expr, const char *msg)
+	: file(file), line(line), expr(expr), msg(String(msg)) {
+	// If no one catches it, print it now as well.
+	PLN(what());
+}
+
 String AssertionException::what() const {
 	std::wostringstream s;
 	s << L"Assertion failed: ";

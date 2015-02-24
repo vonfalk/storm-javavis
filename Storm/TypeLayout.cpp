@@ -12,7 +12,7 @@ namespace storm {
 	}
 
 	void TypeLayout::add(TypeVar *v) {
-		assert(("Variable already inserted!", offsets.count(v) == 0));
+		assert(offsets.count(v) == 0, "Variable already inserted!");
 
 		// Allocate 'v' at the end.
 		Size vSz = v->varType.size();
@@ -24,7 +24,7 @@ namespace storm {
 		// Sad, but needed...
 		OffsetMap::const_iterator f = offsets.find(const_cast<TypeVar *>(v));
 		if (f == offsets.end()) {
-			assert(("Variable not added here!", false));
+			assert(false, "Variable not added here!");
 			throw InternalError(L"Variable not added properly: " + ::toS(v));
 		}
 

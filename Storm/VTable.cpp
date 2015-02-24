@@ -79,7 +79,7 @@ namespace storm {
 
 	void VTable::create() {
 		// TODO: Implement
-		assert(("Creating an empty VTable is not supported yet!", false));
+		assert(false, "Creating an empty VTable is not supported yet!");
 		if (parent)
 			parent->children.erase(this);
 		parent = null;
@@ -210,7 +210,7 @@ namespace storm {
 		// Allocate a new slot.
 		slot = storm.count();
 		expand(slot, 1);
-		assert(("Double-allocated the destructor!", slot >= 1));
+		assert(slot >= 1, "Double-allocated the destructor!");
 		return VTablePos::storm(slot);
 	}
 

@@ -15,6 +15,7 @@
 class AssertionException : public Exception {
 public:
 	AssertionException(const String &file, nat line, const String &expr, const String &msg = L"");
+	AssertionException(const String &file, nat line, const String &expr, const char *msg);
 
 	virtual String what() const;
 

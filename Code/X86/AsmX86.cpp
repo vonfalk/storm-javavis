@@ -309,7 +309,7 @@ namespace code {
 		 */
 
 		static void shiftOp(Output &to, const Value &dest, const Value &src, byte subOp) {
-			assert(("64-bit conversion failed.", dest.currentSize() < 8));
+			assert(dest.currentSize() < 8, "64-bit conversion failed.");
 
 			byte c;
 			bool is8 = dest.currentSize() == 1;
@@ -327,13 +327,13 @@ namespace code {
 				}
 				break;
 			case Value::tRegister:
-				assert(("Transform of shift-op failed.", src.reg() == cl));
+				assert(src.reg() == cl, "Transform of shift-op failed.");
 
 				to.putByte(is8 ? 0xD2 : 0xD3);
 				modRm(to, subOp, dest);
 				break;
 			default:
-				assert(("The transform was not run.", false));
+				assert(false, "The transform was not run.");
 				break;
 			}
 		}

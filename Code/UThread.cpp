@@ -88,7 +88,7 @@ namespace code {
 		UThread *t = nextThread;
 		terminatedThread = t;
 
-		assert(("Can not remove the original UThread!", t != null));
+		assert(t != null, "Can not remove the original UThread!");
 
 		if (t->next == t) {
 			// Only one left!

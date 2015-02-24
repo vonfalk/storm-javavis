@@ -115,7 +115,7 @@ namespace code {
 
 	void Binary::destroyFrame(const machine::StackFrame &frame) const {
 		nat block = machine::activeBlock(frame, metadata);
-		assert(block < blocks.size());
+		assert(block < blocks.size(), "Invalid block id");
 
 		while (block < blocks.size()) {
 			Block *b = blocks[block];
@@ -161,7 +161,7 @@ namespace code {
 				callFn<Long>(info.freeFn, info.ptr);
 				break;
 			default:
-				assert(("By-value destruction of values larger than 8 bytes is not supported.", false));
+				assert(false, "By-value destruction of values larger than 8 bytes is not supported.");
 				break;
 			}
 		}

@@ -9,7 +9,7 @@ namespace code {
 	Arena::~Arena() {
 		if (!alloc.empty())
 			PLN("Memory leak in code allocations detected!");
-		// assert(("Memory leak detected!", alloc.empty()));
+		// assert(alloc.empty(), "Memory leak detected!");
 		clear(externalRefs);
 	}
 

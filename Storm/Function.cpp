@@ -111,14 +111,14 @@ namespace storm {
 
 	void Function::initRefs() {
 		if (!codeRef) {
-			assert(("Too early!", parent()));
+			assert(parent(), "Too early!");
 			codeRef = new code::RefSource(engine().arena, identifier() + L"<c>");
 			if (code)
 				code->update(*codeRef);
 		}
 
 		if (!lookupRef) {
-			assert(("Too early!", parent()));
+			assert(parent(), "Too early!");
 			lookupRef = new code::RefSource(engine().arena, identifier() + L"<l>");
 			if (!lookup) {
 				lookup = CREATE(DelegatedCode, engine(), code::Ref(*codeRef), lookupRef->getTitle());

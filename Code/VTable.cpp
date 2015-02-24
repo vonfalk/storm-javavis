@@ -225,12 +225,12 @@ namespace code {
 
 	void VTable::replace(void *cppVTable) {
 		nat newSize = vtableCount(cppVTable);
-		assert(("Tried to replace with a too big VTable!", newSize <= size));
+		assert(newSize <= size, "Tried to replace with a too big VTable!");
 		copyVTable(cppVTable, content, newSize);
 	}
 
 	void VTable::replace(const VTable &src) {
-		assert(("Tried to replace with a too big VTable!", src.size <= size));
+		assert(src.size <= size, "Tried to replace with a too big VTable!");
 		copyVTable(src.content, content, size);
 	}
 

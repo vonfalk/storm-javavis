@@ -422,7 +422,7 @@ namespace code {
 			static OpTable<OutputFn> outputs(outputMap, ARRAY_SIZE(outputMap));
 
 			OutputFn output = outputs[from.op()];
-			assert(("Unknown op-code", output)); // Possibly forgotten output
+			assert(output, "Unknown op-code"); // Possibly forgotten output
 			if (!output)
 				return;
 

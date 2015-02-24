@@ -123,7 +123,7 @@ namespace code {
 
 			Size size = instr.src().size();
 
-			assert(("The 64-bit transform should have fixed this!", size <= Size::sInt));
+			assert(size <= Size::sInt, "The 64-bit transform should have fixed this!");
 
 			Register reg = tfm.unusedReg(line);
 
@@ -165,7 +165,7 @@ namespace code {
 			const Instruction &instr = tfm.from[line];
 
 			Size size = instr.size();
-			assert(("Bytes not supported yet", size != Size::sByte && size <= Size::sInt));
+			assert(size != Size::sByte && size <= Size::sInt, "Bytes not supported yet");
 
 			if (instr.src().type() == Value::tRegister) {
 				to << instr;

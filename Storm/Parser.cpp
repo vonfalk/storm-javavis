@@ -217,7 +217,7 @@ namespace storm {
 			// Will not go well later on anyway if this result is ever needed.
 			return true;
 		} else {
-			assert(("Unknown syntax token type.", false));
+			assert(false, "Unknown syntax token type.");
 			return false;
 		}
 	}

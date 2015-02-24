@@ -24,7 +24,7 @@ namespace code {
 		case 8:
 			return s64.size;
 		default:
-			assert(("Only 32 and 64-bit platforms are supported now.", false));
+			assert(false, "Only 32 and 64-bit platforms are supported now.");
 			return 0;
 		}
 	}
@@ -116,7 +116,7 @@ namespace code {
 		case 8:
 			return o64;
 		default:
-			assert(("Only 32 and 64-bit platforms are supported now.", false));
+			assert(false, "Only 32 and 64-bit platforms are supported now.");
 			return 0;
 		}
 	}

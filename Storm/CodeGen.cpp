@@ -26,7 +26,7 @@ namespace storm {
 	GenResult::GenResult(const Value &t, Variable var) : type(t), variable(var), block(code::Block::invalid) {}
 
 	code::Variable GenResult::location(const GenState &state) {
-		assert(("Trying to get the location of an unneeded result. use safeLocation instead.", needed()));
+		assert(needed(), "Trying to get the location of an unneeded result. use safeLocation instead.");
 
 		if (variable == Variable::invalid) {
 			if (block == Block::invalid) {

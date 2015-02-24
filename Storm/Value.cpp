@@ -14,7 +14,7 @@ namespace storm {
 		} else if (t->flags & typeClass) {
 			ref = false;
 		} else {
-			assert(("You do want to set either typeValue or typeClass on your types!", false));
+			assert(false, "You do want to set either typeValue or typeClass on your types!");
 		}
 		return Value(t, (t->flags & typeValue) != 0);
 	}
