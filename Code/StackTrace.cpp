@@ -6,10 +6,11 @@
 
 // System specific headers.
 #include "X86/Seh.h"
+#include "DbgHelper.h"
 
 namespace code {
 
-	StackTrace::StackTrace() : frames(null), size(0) {}
+	StackTrace::StackTrace() : frames(null), size(0), capacity(0) {}
 
 	StackTrace::StackTrace(nat n) : frames(new StackFrame[n]), size(n) {}
 
@@ -26,11 +27,32 @@ namespace code {
 		StackTrace copy(o);
 		swap(frames, copy.frames);
 		swap(size, copy.size);
+		swap(capacity, copy.capacity);
 		return *this;
 	}
 
 	StackTrace::~StackTrace() {
 		delete []frames;
+	}
+
+	void StackTrace::push(const StackFrame &frame) {
+		if (size >= capacity) {
+			if (capacity == 0)
+				capacity = 8;
+			else
+				capacity *= 2;
+
+			StackFrame *n = new StackFrame[capacity];
+
+			if (frames)
+				for (nat i = 0; i < size; i++)
+					n[i] = frames[i];
+
+			swap(n, frames);
+			delete []n;
+		}
+
+		frames[size++] = frame;
 	}
 
 	void StackTrace::output(wostream &to) const {
@@ -61,7 +83,72 @@ namespace code {
 	 * System specific code for collecting the stack trace itself.
 	 */
 
-#if defined(X86) && defined(WINDOWS)
+	// Windows stack traces using DbgHelp. Relies on debug information.
+#if !defined(STANDALONE_STACKWALK) && defined(WINDOWS)
+
+#if defined(X86)
+	static const DWORD machineType = IMAGE_FILE_MACHINE_I386;
+
+	static void initFrame(CONTEXT &context, STACKFRAME64 &frame) {
+		frame.AddrPC.Offset = context.Eip;
+		frame.AddrPC.Mode = AddrModeFlat;
+		frame.AddrFrame.Offset = context.Ebp;
+		frame.AddrFrame.Mode = AddrModeFlat;
+		frame.AddrStack.Offset = context.Esp;
+		frame.AddrStack.Mode = AddrModeFlat;
+	}
+
+#elif defined(X64)
+	static const DWORD machineType = IMAGE_FILE_MACHINE_AMD64;
+
+	static void initFrame(CONTEXT &context, STACKFRAME64 &frame) {
+		frame.AddrPC.Offset = context.Rip;
+		frame.AddrPC.Mode = AddrModeFlat;
+		frame.AddrFrame.Offset = context.Rsp; // is this correct?
+		frame.AddrFrame.Mode = AddrModeFlat;
+		frame.AddrStack.Offset = context.Rsp;
+		frame.AddrStack.Mode = AddrModeFlat;
+	}
+#else
+#error "Unknown windows platform!"
+#endif
+
+
+	StackTrace stackTrace(nat skip) {
+		// Initialize the library if it is not already done.
+		dbgHelp();
+
+		CONTEXT context;
+		RtlCaptureContext(&context);
+
+		HANDLE process = GetCurrentProcess();
+		HANDLE thread = GetCurrentThread();
+		STACKFRAME64 frame;
+		initFrame(context, frame);
+
+		StackTrace r;
+
+		while (StackWalk64(machineType, process, thread, &frame, &context, NULL, NULL, NULL, NULL)) {
+			if (skip > 0) {
+				skip--;
+				continue;
+			}
+
+			StackFrame f;
+
+			f.code = (void *)frame.AddrPC.Offset;
+			// parameters...
+
+			r.push(f);
+		}
+
+		return r;
+	}
+
+#endif
+
+	// The stand-alone stack walk for X86 windows. Fails when frame pointer is omitted.
+#if defined(STANDALONE_STACKWALK) && defined(X86) && defined(WINDOWS)
 
 	static bool onStack(void *stackMin, void *stackMax, void *ptr) {
 		return ptr >= stackMin
@@ -98,7 +185,10 @@ namespace code {
 		for (void *now = base; onStack(stackMin, stackMax, prevFrame(now)); now = prevFrame(now))
 			frames++;
 
-		frames -= skip;
+		if (frames > skip)
+			frames -= skip;
+		else
+			skip = 0;
 
 		// Collect the trace itself.
 		StackTrace r(frames);

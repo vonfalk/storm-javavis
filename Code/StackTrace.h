@@ -62,6 +62,9 @@ namespace code {
 		// Size.
 		inline nat count() const { return size; }
 
+		// Add an element (grows).
+		void push(const StackFrame &frame);
+
 	protected:
 		// Output. Not formatted in any way.
 		virtual void output(wostream &to) const;
@@ -72,6 +75,9 @@ namespace code {
 
 		// Number of frames.
 		nat size;
+
+		// Capacity.
+		nat capacity;
 	};
 
 	// Generate a stack trace from the calling point in the code.

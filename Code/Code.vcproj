@@ -332,6 +332,10 @@
 				RelativePath=".\FnLookup.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\DbgHelper.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -488,6 +492,10 @@
 			</File>
 			<File
 				RelativePath=".\FnLookup.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DbgHelper.h"
 				>
 			</File>
 		</Filter>

@@ -3,6 +3,10 @@
 #include "Utils/Utils.h"
 #include "Utils/Platform.h"
 
+// Use standalone stack walking (ie no external libraries). This will not
+// always work well for optimized code. On windows, the default is to use the DbgHelp library.
+// #define STANDALONE_STACKWALK
+
 // This file defines some common types in the asm generator, such as word-sized types.
 // Defines one of the following symbols:
 // X86 - When compiling for a 32-bit X86

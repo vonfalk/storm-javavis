@@ -1,21 +1,23 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Code/StackTrace.h"
+#include "Code/FnLookup.h"
 
-// Frame pointer omission does not play well with our stack tracing.
-#pragma optimize("y", off)
+StackTrace foo() {
+	PNN(""); // This prevents some optimization and gives better results on the test below.
+	return code::stackTrace();
+}
+
 StackTrace bar(nat depth, bool exception) {
 	if (depth == 0) {
-		assert(false, L"We should fail!");
 		if (exception)
 			throw UserError(L"Fail!");
 		else
-			return code::stackTrace();
+			return foo();
 	} else {
 		return bar(depth - 1, exception);
 	}
 }
-#pragma optimize("", on)
 
 BEGIN_TEST(TestTrace) {
 
@@ -23,12 +25,5 @@ BEGIN_TEST(TestTrace) {
 	StackTrace depth2 = bar(20, false);
 
 	CHECK_EQ(depth2.count(), depth1.count() + 10);
-
-	try {
-		bar(10, true);
-	} catch (const Exception &e) {
-		PVAR(e);
-	}
-	PLN(format(depth1));
 
 } END_TEST

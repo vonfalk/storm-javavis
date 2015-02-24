@@ -1,47 +1,11 @@
 #include "stdafx.h"
 #include "FnLookup.h"
 #include "Utils/Path.h"
+#include "DbgHelper.h"
 
 namespace code {
 
 #ifdef WINDOWS
-	// use wchar_t in DbgHelp functions.
-#define DBGHELP_TRANSLATE_TCHAR
-#include "Dbghelp.h"
-#pragma comment (lib, "Dbghelp.lib")
-
-	class DbgHelp : NoCopy {
-	public:
-		// Handle to our process.
-		HANDLE process;
-
-		// Initialized?
-		bool initialized;
-
-		// Initialize the DbgHelper library.
-		DbgHelp() {
-			process = GetCurrentProcess();
-			SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS | SYMOPT_LOAD_LINES);
-			if (SymInitialize(process, NULL, TRUE)) {
-				initialized = true;
-			} else {
-				WARNING(L"Failed to initialize DbgHelp!");
-				initialized = false;
-			}
-		}
-
-		~DbgHelp() {
-			if (initialized) {
-				SymCleanup(process);
-			}
-		}
-	};
-
-	// Static instance (lazy).
-	DbgHelp &dbgHelp() {
-		static DbgHelp v;
-		return v;
-	}
 
 	// Easy creation of a SYMBOL_INFO
 	struct SymInfo : SYMBOL_INFO {
