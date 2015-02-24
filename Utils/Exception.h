@@ -1,10 +1,17 @@
 #pragma once
 
+#include "Code/StackTrace.h"
+
 class Exception : public Printable {
 public:
+	Exception();
 	virtual ~Exception() {};
 
 	virtual String what() const = 0;
+
+	// Stack trace (uses the one from Code if available).
+	code::StackTrace stackTrace;
+
 protected:
 	virtual void output(wostream &to) const;
 };

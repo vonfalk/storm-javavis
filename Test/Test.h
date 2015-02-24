@@ -99,47 +99,47 @@ void verifyEq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	}
 }
 
-#define OUTPUT_ERROR(expr, error) \
+#define OUTPUT_ERROR(expr, error)									  \
 	std::wcout << L"Crashed " << expr << L": " << error << std::endl; \
 	__result__.crashed++
 
-#define DEFINE_TEST(name, single) \
-class name : public Test { \
-public: \
-	virtual TestResult run() const; \
-private: \
-    name() : Test(_T(#name), single) {}	\
-	static name instance; \
-}
+#define DEFINE_TEST(name, single)		\
+	class name : public Test {			\
+	public:								\
+	virtual TestResult run() const;		\
+	private:							\
+	name() : Test(_T(#name), single) {}	\
+	static name instance;				\
+	}
 
 
 //////////////////////////////////////////////////////////////////////////
 // Macros
 //////////////////////////////////////////////////////////////////////////
 
-#define CHECK_TITLE(expr, title) \
-	try { \
-		__result__.total++; \
-		if (!(expr)) { \
-			__result__.failed++; \
+#define CHECK_TITLE(expr, title)							\
+	try {													\
+		__result__.total++;									\
+		if (!(expr)) {										\
+			__result__.failed++;							\
 			std::wcout << "Failed: " << title << std::endl; \
-		} \
-	} catch (const Exception &e) {	\
-		OUTPUT_ERROR(title, e.what()); \
-	} catch (...) { \
-		OUTPUT_ERROR(title, "unknown crash"); \
+		}													\
+	} catch (const Exception &e) {							\
+		OUTPUT_ERROR(title, e);								\
+	} catch (...) {											\
+		OUTPUT_ERROR(title, "unknown crash");				\
 	}
 
-#define CHECK_EQ_TITLE(expr, eq, title) \
-	try { \
-		__result__.total++; \
-		std::wostringstream __stream__; \
-		__stream__ << title; \
+#define CHECK_EQ_TITLE(expr, eq, title)					  \
+	try {												  \
+		__result__.total++;								  \
+		std::wostringstream __stream__;					  \
+		__stream__ << title;							  \
 		verifyEq(__result__, expr, eq, __stream__.str()); \
-	} catch (const Exception &e) { \
-		OUTPUT_ERROR(title, e.what()); \
-	} catch (...) { \
-		OUTPUT_ERROR(title, "unknown crash"); \
+	} catch (const Exception &e) {						  \
+		OUTPUT_ERROR(title, e);							  \
+	} catch (...) {										  \
+		OUTPUT_ERROR(title, "unknown crash");			  \
 	}
 
 #define CHECK(expr) CHECK_TITLE(expr, #expr)
@@ -160,29 +160,29 @@ private: \
 		__result__.total++;						\
 		expr;									\
 	} catch (const Exception &e) {				\
-		OUTPUT_ERROR(#expr, e.what());			\
+		OUTPUT_ERROR(#expr, e);					\
 	} catch (...) {								\
 		OUTPUT_ERROR(#expr, "unknown crash");	\
 	}
 
 
-#define BEGIN_TEST(name) \
-	DEFINE_TEST(name, false); \
-	name name::instance; \
-	TestResult name::run() const {\
-		TestResult __result__; do
-
-#define BEGIN_TEST_(name) \
-	DEFINE_TEST(name, true); \
-	name name::instance; \
-	TestResult name::run() const { \
-	    TestResult __result__; do
-
-#define BEGIN_TESTX(name) \
-	TestResult name() {	  \
+#define BEGIN_TEST(name)						\
+	DEFINE_TEST(name, false);					\
+	name name::instance;						\
+	TestResult name::run() const {				\
 	TestResult __result__; do
 
-#define END_TEST \
-	while (false); \
+#define BEGIN_TEST_(name)						\
+	DEFINE_TEST(name, true);					\
+	name name::instance;						\
+	TestResult name::run() const {				\
+	TestResult __result__; do
+
+#define BEGIN_TESTX(name)						\
+	TestResult name() {							\
+	TestResult __result__; do
+
+#define END_TEST	   \
+	while (false);	   \
 	return __result__; \
 	}

@@ -1,5 +1,8 @@
 #pragma once
 
+#define _WIDEN(X) L ## X
+#define WIDEN(X) _WIDEN(X)
+
 #if defined(_DEBUG) && !defined(DEBUG)
 #define DEBUG
 #endif
@@ -8,7 +11,6 @@
 
 #define _USE_MATH_DEFINES
 #include <cmath>
-#include <assert.h>
 
 #undef min
 #undef max
@@ -196,3 +198,4 @@ struct as {
 #include "Object.h"
 #include "Debug.h"
 #include "Printable.h"
+#include "Assert.h"

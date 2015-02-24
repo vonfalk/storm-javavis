@@ -75,7 +75,7 @@ namespace code {
 	};
 
 	// Generate a stack trace from the calling point in the code.
-	StackTrace stackTrace();
+	StackTrace stackTrace(nat skip = 0);
 
 	// Fromat an entire trace (only looks up C++ functions).
 	String format(const StackTrace &trace);

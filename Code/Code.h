@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Utils/Utils.h"
 #include "Utils/Platform.h"
 
 // This file defines some common types in the asm generator, such as word-sized types.

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "FnLookup.h"
+#include "Utils/Path.h"
 
 namespace code {
 
@@ -120,7 +121,7 @@ namespace code {
 	static bool baseType(wostream &to, DWORD index) {
 		switch (index) {
 		case btVoid:
-			to << L"Void";
+			to << L"void";
 			return true;
 		case btChar:
 			to << L"char";
@@ -141,7 +142,7 @@ namespace code {
 			to << L"BCD";
 			return true;
 		case btBool:
-			to << L"Bool";
+			to << L"bool";
 			return true;
 		case btLong:
 			to << L"long";
@@ -269,10 +270,11 @@ namespace code {
 
 		std::wostringstream r;
 
-		if (hasLine)
-			r << line.FileName << L"(" << line.LineNumber << L"): ";
-		else
+		if (hasLine) {
+			r << line.FileName << L"(L" << line.LineNumber << L"): ";
+		} else {
 			r << L"<unknown location>: ";
+		}
 
 		if (hasSymName)
 			outputSymbol(r, symbol);

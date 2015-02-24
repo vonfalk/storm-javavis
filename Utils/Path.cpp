@@ -101,11 +101,14 @@ std::wostream &operator <<(std::wostream &to, const Path &path) {
 }
 
 bool Path::operator ==(const Path &o) const {
-	if (isDirectory != o.isDirectory) return false;
-	if (parts.size() != o.parts.size()) return false;
-	for (nat i = 0; i < parts.size(); i++) {
-		if (parts[i] != o.parts[i]) return false;
-	}
+	if (isDirectory != o.isDirectory)
+		return false;
+	if (parts.size() != o.parts.size())
+		return false;
+
+	for (nat i = 0; i < parts.size(); i++)
+		if (parts[i] != o.parts[i])
+			return false;
 	return true;
 }
 
@@ -205,7 +208,8 @@ Path Path::makeRelative(const Path &to) const {
 		} else if (i >= parts.size()) {
 			result.parts.push_back(L"..");
 			equal = false;
-		} else if (to.parts[i] != parts[i]) {
+		} else if (to.parts[i].compareNoCase(parts[i]) != 0) {
+			// } else if (to.parts[i] != parts[i]) {
 			result.parts.push_back(L"..");
 			equal = false;
 		} else {

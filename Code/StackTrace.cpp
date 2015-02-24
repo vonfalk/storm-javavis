@@ -83,7 +83,7 @@ namespace code {
 		return v[2 + id];
 	}
 
-	StackTrace stackTrace() {
+	StackTrace stackTrace(nat skip) {
 		NT_TIB *tib = machineX86::getTIB();
 		void *stackMax = tib->StackBase;
 		void *stackMin = tib->StackLimit;
@@ -98,9 +98,14 @@ namespace code {
 		for (void *now = base; onStack(stackMin, stackMax, prevFrame(now)); now = prevFrame(now))
 			frames++;
 
+		frames -= skip;
+
 		// Collect the trace itself.
 		StackTrace r(frames);
 		void *now = base;
+		for (nat i = 0; i < skip; i++)
+			now = prevFrame(now);
+
 		for (nat i = 0; i < frames; i++) {
 			StackFrame &f = r[i];
 			f.code = prevIp(now);
