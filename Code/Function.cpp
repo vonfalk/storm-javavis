@@ -103,19 +103,21 @@ namespace code {
 		}
 	}
 
-	void FnCall::doCall(void *result, nat resultSize, const void *fn) {
-		resultSize = roundUp(resultSize, sizeof(void *));
-		if (resultSize <= 4) {
-			doCall4(result, fn);
-		} else if (resultSize <= 8) {
-			doCall8(result, fn);
-		} else {
-			doCallLarge(result, resultSize, fn);
-		}
-	}
+	void FnCall::doCall(void *result, const TypeInfo &info, const void *fn) {
+		nat s = roundUp(info.size, sizeof(void *));
 
-	void FnCall::doUserCall(void *result, nat resultSize, const void *fn) {
-		doCallLarge(result, resultSize, fn);
+		if (info.plain() && info.kind == TypeInfo::user) {
+			// Result is returned on stack.
+			doCallLarge(result, s, fn);
+			return;
+		}
+
+		if (s <= 4)
+			doCall4(result, fn);
+		else if (s <= 8)
+			doCall8(result, fn);
+		else
+			doCallLarge(result, s, fn);
 	}
 
 	void FnCall::callVoid(const void *fn) {

@@ -3,6 +3,7 @@
 #include "Lib/Auto.h"
 #include "Code/Value.h"
 #include "Code/Size.h"
+#include "Utils/TypeInfo.h"
 
 namespace storm {
 
@@ -149,7 +150,7 @@ namespace storm {
 
 	template <class T>
 	Value value(Engine &e) {
-		bool isRef = TypeInfo<T>::reference() || TypeInfo<T>::pointer() || IsAuto<T>::v;
+		bool isRef = !typeInfo<T>().plain() || IsAuto<T>::v;
 		Type *t = LookupValue<T>::type(e);
 		if (t->flags & typeClass) {
 			assert(isRef, "Class type tried to be used by value!");

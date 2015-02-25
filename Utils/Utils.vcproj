@@ -363,6 +363,10 @@
 				RelativePath=".\Assert.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TypeInfo.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -683,6 +687,10 @@
 			</File>
 			<File
 				RelativePath=".\Assert.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TypeInfo.h"
 				>
 			</File>
 		</Filter>

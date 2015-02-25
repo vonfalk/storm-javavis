@@ -1,5 +1,5 @@
 #pragma once
-#include "Utils/Templates.h"
+#include "Utils/TypeInfo.h"
 
 namespace code {
 
@@ -29,7 +29,7 @@ namespace code {
 		template <class T>
 		FnCall &param(const T &p) {
 			Param par = { &FnCall::copy<T>, &FnCall::destroy<T>, sizeof(T), &p };
-			if (TypeInfo<T>::pointer() || TypeInfo<T>::reference()) {
+			if (!typeInfo<T>().plain()) {
 				// if ptr or ref, copy the ptr/ref directly.
 				par.copy = &FnCall::copyPtr;
 				par.destroy = null;
@@ -45,7 +45,7 @@ namespace code {
 		template <class T>
 		FnCall &prependParam(const T &p) {
 			Param par = { &FnCall::copy<T>, &FnCall::destroy<T>, sizeof(T), &p };
-			if (TypeInfo<T>::pointer() || TypeInfo<T>::reference()) {
+			if (!typeInfo<T>().plain()) {
 				// if ptr or ref, copy the ptr/ref directly.
 				par.copy = &FnCall::copyPtr;
 				par.destroy = null;
@@ -64,13 +64,10 @@ namespace code {
 			// when running in release mode for some reason! Probably, it prevents some inlining
 			// somewhere that breaks something...
 			try {
+				TypeInfo t = typeInfo<T>();
 				byte d[sizeof(T)];
 				T *data = (T*)d;
-				if (TypeInfo<T>::pointer() || TypeInfo<T>::reference()) {
-					doCall((void *)data, sizeof(T), fn);
-				} else {
-					doUserCall((void *)data, sizeof(T), fn);
-				}
+				doCall((void *)data, t, fn);
 				T copy = *data;
 				data->~T();
 				return copy;
@@ -80,47 +77,8 @@ namespace code {
 		}
 
 		template <>
-		int call(const void *fn) {
-			try {
-				int data;
-				doCall(&data, sizeof(int), fn);
-				return data;
-			} catch (...) {
-				throw;
-			}
-		}
-
-		template <>
-		nat call(const void *fn) {
-			try {
-				nat data;
-				doCall(&data, sizeof(nat), fn);
-				return data;
-			} catch (...) {
-				throw;
-			}
-		}
-
-		template <>
-		int64 call(const void *fn) {
-			try {
-				int64 data;
-				doCall(&data, sizeof(int64), fn);
-				return data;
-			} catch (...) {
-				throw;
-			}
-		}
-
-		template <>
-		nat64 call(const void *fn) {
-			try {
-				nat64 data;
-				doCall(&data, sizeof(nat64), fn);
-				return data;
-			} catch (...) {
-				throw;
-			}
+		void call(const void *fn) {
+			callVoid(fn);
 		}
 
 		template <>
@@ -141,21 +99,12 @@ namespace code {
 			}
 		}
 
-		template <>
-		void call(const void *fn) {
-			try {
-				callVoid(fn);
-			} catch (...) {
-				throw;
-			}
-		}
-
 		// Specific overload for references.
 		template <class T>
 		T &callRef(const void *fn) {
 			try {
 				T *ptr = null;
-				doCall((void *)&ptr, sizeof(ptr), fn);
+				doCall((void *)&ptr, typeInfo<T &>(), fn);
 				return *ptr;
 			} catch (...) {
 				throw;
@@ -177,8 +126,8 @@ namespace code {
 		// All parameters.
 		vector<Param> params;
 
-		// Do the actual call.
-		void doCall(void *result, nat resultSize, const void *fn);
+		// Do the call, given type information.
+		void doCall(void *result, const TypeInfo &info, const void *fn);
 
 		// Call a function that returns a user-defined type.
 		void doUserCall(void *result, nat resultSize, const void *fn);

@@ -185,7 +185,6 @@ LargeType *ptrFn(LargeType *t) {
 }
 
 BEGIN_TEST(FunctionRefPtrTest) {
-
 	LargeType t(1, 2, 3, 4);
 	FnCall call;
 	call.param(&t);
