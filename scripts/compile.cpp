@@ -1,8 +1,26 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <vector>
+#include <Windows.h>
+
+typedef unsigned int nat;
 
 using namespace std;
+
+vector<string> findFiles(const string &str) {
+	vector<string> r;
+	WIN32_FIND_DATA data;
+	HANDLE h = FindFirstFile(str.c_str(), &data);
+	if (h == INVALID_HANDLE_VALUE)
+		return r;
+
+	do {
+		r.push_back(data.cFileName);
+	} while (FindNextFile(h, &data));
+
+	return r;
+}
 
 int main(int argc, const char **argv) {
 	ifstream config("buildconfig");
@@ -42,15 +60,23 @@ int main(int argc, const char **argv) {
 
 	int r = system(compile.c_str());
 
-	if (r == 0 && !clean && !all && !release) {
+	if (r == 0 && all) {
+
+		vector<string> paths = findFiles(build + "\\*Test.exe");
+		for (nat i = 0; i < paths.size(); i++) {
+			string cmd = build + "\\" + paths[i];
+			cout << endl << cmd << endl;
+			system(cmd.c_str());
+		}
+	} else if (r == 0 && !clean && !release) {
 		cout << endl;
 
 		string cmd = build + "\\" + project;
 		if (valgrind) {
 			cmd = "drmemory.exe -logdir Debug -batch -results_to_stderr -- " + cmd;
 		}
-		cout << cmd << endl;
 
+		cout << cmd << endl;
 		system(cmd.c_str());
 	}
 
