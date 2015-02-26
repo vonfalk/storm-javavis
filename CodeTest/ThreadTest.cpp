@@ -76,12 +76,6 @@ BEGIN_TEST(UThreadInterop) {
 	stopSema.down();
 	CHECK_EQ(var, 2);
 
-	if (cas(&waiting, 1, 0) == 1)
-		sema.up();
-
-	cas(&waiting, 0, 1);
-	sema.down();
-
 	TODO("Test launching something on a thread started with an empty function as well.");
 	// Like this:
 	// var = 0;
@@ -91,6 +85,67 @@ BEGIN_TEST(UThreadInterop) {
 	// stopSema.down();
 	// CHECK_EQ(var, 1);
 } END_TEST
+
+struct Cond {
+	// Condition variable to use for testing.
+	Condition c;
+
+	// Semaphore to start the other thread.
+	Semaphore start;
+
+	// Semaphore to indicate an iteration is done.
+	Semaphore done;
+
+	// Shared variable to use for results.
+	nat count;
+
+	Cond() : start(0), done(0), count(0) {}
+
+	// Run the other thread.
+	void run() {
+		for (nat i = 0; i < 10; i++) {
+			start.down();
+			c.wait();
+			count++;
+			done.up();
+		}
+
+	}
+};
+
+BEGIN_TEST(ConditionTest) {
+	Cond z;
+
+	Thread::start(memberVoidFn(&z, &Cond::run));
+
+	z.start.up();
+	Sleep(10); // Let the other thread run into c.wait()
+	z.c.signal();
+	z.done.down();
+	CHECK_EQ(z.count, 1);
+
+	z.c.signal();
+	z.start.up();
+	z.done.down();
+	CHECK_EQ(z.count, 2);
+
+	z.c.signal();
+	z.c.signal();
+	z.start.up();
+	z.done.down();
+	Sleep(10); // If it runs multiple times, make sure it is complete.
+	CHECK_EQ(z.count, 3);
+
+	// Stress test the rest of the times...
+	for (nat i = 4; i <= 10; i++) {
+		z.start.up();
+		z.c.signal();
+		z.done.down();
+		CHECK_EQ(z.count, i);
+	}
+
+	// Now z.count is 10, and the other thread will terminate eventually.
+} END_TEST;
 
 static int count1 = 0;
 static int count2 = 0;

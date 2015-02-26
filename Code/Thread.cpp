@@ -28,13 +28,21 @@ namespace code {
 	// This is 'null' for the first thread that is not spawned through 'startThread'.
 	static THREAD ThreadData *currThreadData = 0;
 
-	ThreadData::ThreadData() : references(0), doneSema(null) {}
+	/**
+	 * Thread data.
+	 */
 
-	ThreadData::~ThreadData() {
-		if (doneSema)
-			doneSema->up();
+	ThreadData::ThreadData() : references(0) {}
+
+	ThreadData::~ThreadData() {}
+
+	void ThreadData::reportZero() {
+		wakeCond.signal();
 	}
 
+	/**
+	 * Thread
+	 */
 
 	Thread::Thread(ThreadData *data) : data(data) {
 		data->addRef();
@@ -69,7 +77,9 @@ namespace code {
 			return Thread(currThreadData);
 
 		// The first thread, create its data...
-		static Thread first(new ThreadData());
+		static ThreadData firstData;
+		// Keep the first thread from firing 'signal' all the time.
+		static Thread first(&firstData);
 		return first;
 	}
 
@@ -82,14 +92,10 @@ namespace code {
 	}
 
 	void Thread::threadMain(ThreadStart &start) {
-		Semaphore done(0);
-		ThreadData *d = new ThreadData();
-		d->doneSema = &done;
-		// we need to keep this one alive until we terminate.
-		d->addRef();
+		ThreadData d;
 
-		currThreadData = d;
-		start.data = d;
+		currThreadData = &d;
+		start.data = &d;
 		Fn<void, void> fn = start.startFn;
 
 		start.sema.up();
@@ -101,13 +107,29 @@ namespace code {
 		while (UThread::any())
 			UThread::leave();
 
-		// Release our reference, so that it may report no more usage.
-		d->release();
+		while (true) {
+			// Wait for the condition to fire. This is done whenever the
+			// refcount reaches zero, or when a new UThread has been added.
+			d.wakeCond.wait();
 
-		// Keep the thread alive until the ThreadData is destroyed.
-		done.down();
+			// If the refcount is zero, we can safely say that no one else
+			// can increase it after this point (assuming no UThreads).
+			// At that point no one can add more UThreads either, so in
+			// this case we can not have any race-conditions.
 
-		TODO(L"Someone may have added more UThreads at this point. They should be executed before done.down returns.");
+			// Hacky atomic read...
+			if (atomicCAS(d.references, 0, 0) == 0)
+				if (!UThread::any())
+					break;
+
+			// Either we have more references, or more UThreads to run.
+			// Either way, it does not hurt to try to run the UThreads.
+			while (UThread::any())
+				UThread::leave();
+		}
+
+		// Failsafe for the currThreadData.
+		currThreadData = null;
 	}
 
 #ifdef WINDOWS

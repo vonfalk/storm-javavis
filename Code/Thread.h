@@ -58,8 +58,9 @@ namespace code {
 		// Number of references.
 		nat references;
 
-		// Semaphore that is upped when this object is destroyed. May be null.
-		Semaphore *doneSema;
+		// Condition variable for waking up the thread when there is more work to do
+		// or when it is time to exit.
+		Condition wakeCond;
 
 		// Create.
 		ThreadData();
@@ -75,9 +76,12 @@ namespace code {
 		// Release.
 		void release() {
 			if (atomicDecrement(references) == 0)
-				delete this;
+				reportZero();
 		}
 
+	private:
+		// Report zero references.
+		void reportZero();
 	};
 
 }

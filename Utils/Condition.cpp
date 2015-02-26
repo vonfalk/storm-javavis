@@ -1,17 +1,16 @@
 #include "stdafx.h"
 #include "Condition.h"
 
-Condition::Condition() : sema(0) {}
+Condition::Condition() : signaled(0), sema(0) {}
 
 void Condition::signal() {
-	TODO("Test the Condition variable!");
-	// If someone was waiting, report that we will up the semaphore.
-	if (atomicCAS(waiting, 1, 0) == 1)
+	// If we're the first one to signal, alter the semaphore.
+	if (atomicCAS(signaled, 0, 1) == 0)
 		sema.up();
 }
 
 void Condition::wait() {
-	TODO("Test the Condition variable!");
-	atomicCAS(waiting, 0, 1);
+	// Wait for someone to signal, and then reset the signaled state for next time.
 	sema.down();
+	atomicCAS(signaled, 1, 0);
 }
