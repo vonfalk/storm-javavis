@@ -7,7 +7,9 @@
 // CHECK(condition)
 // CHECK_TITLE(condition, title)
 // CHECK_EQ(expr, val)
+// CHECK_NEQ(expr, val)
 // CHECK_EQ_TITLE(expr, val, title)
+// CHECK_NEQ_TITLE(expr, val, title)
 // BEGIN_TEST(name)
 // END_TEST
 // And the types:
@@ -99,6 +101,14 @@ void verifyEq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	}
 }
 
+template <class T, class U>
+void verifyNeq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
+	if (lhs == rhs) {
+		r.failed++;
+		std::wcout << L"Failed: " << expr << L" != " << lhs << L" == " << rhs << std::endl;
+	}
+}
+
 #define OUTPUT_ERROR(expr, error)									  \
 	std::wcout << L"Crashed " << expr << L": " << error << std::endl; \
 	__result__.crashed++
@@ -142,9 +152,23 @@ void verifyEq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 		OUTPUT_ERROR(title, "unknown crash");			  \
 	}
 
+#define CHECK_NEQ_TITLE(expr, eq, title)					\
+	try {													\
+		__result__.total++;									\
+		std::wostringstream __stream__;						\
+		__stream__ << title;								\
+		verifyNeq(__result__, expr, eq, __stream__.str());	\
+	} catch (const Exception &e) {							\
+		OUTPUT_ERROR(title, e);								\
+	} catch (...) {											\
+		OUTPUT_ERROR(title, "unknown crash");				\
+	}
+
 #define CHECK(expr) CHECK_TITLE(expr, #expr)
 
 #define CHECK_EQ(expr, eq) CHECK_EQ_TITLE(expr, eq, #expr)
+
+#define CHECK_NEQ(expr, eq) CHECK_NEQ_TITLE(expr, eq, #expr)
 
 #define CHECK_ERROR(expr)						\
 	try {										\

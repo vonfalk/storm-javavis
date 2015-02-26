@@ -1,38 +1,89 @@
 #include "stdafx.h"
 #include "Test/Test.h"
+#include "Code/Thread.h"
 #include "Code/UThread.h"
 #include "Code/Debug.h"
-#include "Utils/Thread.h"
 #include "Utils/Exception.h"
+#include "Utils/Semaphore.h"
 #include "Tracker.h"
 
 static int var = 0;
 static THREAD int local = 0;
+static Semaphore stopSema(0);
 
-static void otherThread(Thread::Control &c) {
+static void otherThread() {
 	var++;
 	local++;
-	assert(c.thread().sameAsCurrent());
 	Sleep(10);
 	var++;
 	local++;
 	assert(local == 2);
+	stopSema.up();
 }
 
 BEGIN_TEST(ThreadTest) {
 	var = 0;
 	local = 1;
 	{
-		Thread t;
-		t.start(simpleFn(otherThread));
-		t.stopWait();
-		CHECK_EQ(var, 2);
-
-		t.start(simpleFn(otherThread));
+		Thread t = Thread::start(simpleVoidFn(otherThread));
+		CHECK_NEQ(t, Thread::current());
 	}
+	Sleep(30);
+	stopSema.down();
+	CHECK_EQ(var, 2);
+
+	{
+		Thread t = Thread::start(simpleVoidFn(otherThread));
+		CHECK_NEQ(t, Thread::current());
+	}
+	stopSema.down();
 	CHECK_EQ(var, 4);
 	CHECK_EQ(local, 1);
 
+} END_TEST
+
+static void setVar() {
+	var = 1;
+	stopSema.up();
+}
+
+static void uthreadInterop() {
+	UThread::spawn(simpleVoidFn(&setVar));
+	// Note: we're not running leave here!
+}
+
+static void setVar2() {
+	// Keep a reference, to confuse the runtime a bit.
+	Thread t = Thread::current();
+	UThread::leave();
+	var = 2;
+	stopSema.up();
+}
+
+static void uthreadInterop2() {
+	UThread::spawn(simpleVoidFn(&setVar2));
+	UThread::leave();
+}
+
+BEGIN_TEST(UThreadInterop) {
+	var = 0;
+	Thread::start(simpleVoidFn(uthreadInterop));
+	stopSema.down();
+	CHECK_EQ(var, 1);
+
+	var = 0;
+	Thread::start(simpleVoidFn(uthreadInterop2));
+	stopSema.down();
+	CHECK_EQ(var, 2);
+
+	TODO("Test launching something on a thread started with an empty function as well.");
+	// Like this:
+	// var = 0;
+	// Thread t = Thread::start(Fn<void, void>());
+	// Sleep(20);
+	// UThread::spawn(t, &setVar);
+	// stopSema.down();
+	// CHECK_EQ(var, 1);
 } END_TEST
 
 static int count1 = 0;

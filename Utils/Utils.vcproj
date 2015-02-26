@@ -216,10 +216,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MemoryFile.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\MemoryManager.cpp"
 				>
 			</File>
@@ -320,10 +316,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Thread.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Timer.cpp"
 				>
 			</File>
@@ -353,10 +345,6 @@
 			</File>
 			<File
 				RelativePath=".\Vector.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\WorkerThread.cpp"
 				>
 			</File>
 			<File
@@ -487,10 +475,6 @@
 			</File>
 			<File
 				RelativePath=".\MemoryBlock.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MemoryFile.h"
 				>
 			</File>
 			<File
@@ -634,10 +618,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Thread.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Timer.h"
 				>
 			</File>
@@ -679,10 +659,6 @@
 			</File>
 			<File
 				RelativePath=".\Vector.h"
-				>
-			</File>
-			<File
-				RelativePath=".\WorkerThread.h"
 				>
 			</File>
 			<File

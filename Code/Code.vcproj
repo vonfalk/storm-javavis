@@ -336,6 +336,10 @@
 				RelativePath=".\DbgHelper.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Thread.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -496,6 +500,14 @@
 			</File>
 			<File
 				RelativePath=".\DbgHelper.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.cpp"
 				>
 			</File>
 		</Filter>
