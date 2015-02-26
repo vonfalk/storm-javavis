@@ -3,22 +3,9 @@
 // stdafx.obj will contain the pre-compiled type information
 
 #include "stdafx.h"
+#include "Platform.h"
 
-bool getAsyncKeyState(nat key) { //Hur är det just nu?
-	return (GetAsyncKeyState(key) & 0x8000) != 0;
-}
-
-bool getKeyState(nat key) { //Hur var det när nuv. meddelande skickades?
-	return (GetKeyState(key) & 0x8000) != 0;
-}
-
-
-bool positive(float f) {
-	return f >= 0.0f;
-}
-
-
-#ifdef WIN32
+#ifdef WINDOWS
 
 // Check alignment of value.
 static inline bool aligned(volatile void *v) {
@@ -35,6 +22,12 @@ nat atomicDecrement(volatile nat &v) {
 	assert(aligned(&v));
 	return (nat)InterlockedDecrement((volatile LONG *)&v);
 }
+
+nat atomicCAS(volatile nat &v, nat compare, nat exchange) {
+	assert(aligned(&v));
+	return (nat)InterlockedCompareExchange((volatile LONG *)&v, (LONG)exchange, (LONG)compare);
+}
+
 
 #else
 #error "atomicIncrement and atomicDecrement are only supported on Windows for now"

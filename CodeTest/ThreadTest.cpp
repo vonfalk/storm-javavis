@@ -76,6 +76,12 @@ BEGIN_TEST(UThreadInterop) {
 	stopSema.down();
 	CHECK_EQ(var, 2);
 
+	if (cas(&waiting, 1, 0) == 1)
+		sema.up();
+
+	cas(&waiting, 0, 1);
+	sema.down();
+
 	TODO("Test launching something on a thread started with an empty function as well.");
 	// Like this:
 	// var = 0;

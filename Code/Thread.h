@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/Function.h"
 #include "Utils/Semaphore.h"
+#include "Utils/Condition.h"
 
 namespace code {
 

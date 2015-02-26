@@ -64,11 +64,6 @@ inline float radToDeg(float angle) {
 }
 
 
-bool getAsyncKeyState(nat key); //Hur är det just nu?
-bool getKeyState(nat key); //Hur var det när nuv. meddelande skickades?
-
-bool positive(float f);
-
 // Hack to allow casting member-function-pointers into void *.
 template <class T>
 inline void *address(T fn) {
@@ -123,6 +118,9 @@ inline float eq(float a, float b, float tolerance = defTolerance) {
 // Atomic increase and decrease of variables
 nat atomicIncrement(volatile nat &v);
 nat atomicDecrement(volatile nat &v);
+
+// Compare and swap (atomic)
+nat atomicCAS(volatile nat &v, nat compare, nat exchange);
 
 // angle functions
 

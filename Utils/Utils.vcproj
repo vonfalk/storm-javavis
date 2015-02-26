@@ -355,6 +355,10 @@
 				RelativePath=".\TypeInfo.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Condition.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -667,6 +671,10 @@
 			</File>
 			<File
 				RelativePath=".\TypeInfo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Condition.h"
 				>
 			</File>
 		</Filter>
