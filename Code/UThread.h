@@ -194,6 +194,11 @@ namespace code {
 		static void doDoubleCall(SpawnParams *s, void *params);
 		static void doCall4(SpawnParams *s, void *params);
 		static void doCall8(SpawnParams *s, void *params);
+
+		// Choose the right call function. Done to prevent the compiler from
+		// thinking that doXxxCall does not throw exceptions...
+		typedef void (*DoCallFn)(SpawnParams *, void *params);
+		static DoCallFn chooseCall(const TypeInfo &info);
 	};
 
 }

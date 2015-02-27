@@ -299,22 +299,10 @@ namespace code {
 		typedef void (*ErrorFn)(void *, const Exception &);
 
 		try {
-			TypeInfo &r = s->result;
-			bool userCall = r.plain() && r.kind == TypeInfo::user;
-
-			if (userCall)
-				doUserCall(s, params);
-			else if (r.kind == TypeInfo::floatNr && r.size == sizeof(float))
-				doFloatCall(s, params);
-			else if (r.kind == TypeInfo::floatNr && r.size == sizeof(double))
-				doDoubleCall(s, params);
-			else if (r.size <= 4)
-				doCall4(s, params);
-			else if (r.size <= 8)
-				doCall8(s, params);
-			else
-				doUserCall(s, params);
-
+			// This is done to force VS2008 compiler to see that this function
+			// may throw an exception and include exception handling here.
+			DoCallFn fn = chooseCall(s->result);
+			(*fn)(s, params);
 		} catch (const Exception &e) {
 			const ErrorFn f = (const ErrorFn)s->onError;
 			(*f)(s->data, e);
@@ -327,6 +315,20 @@ namespace code {
 		remove();
 	}
 
+	UThread::DoCallFn UThread::chooseCall(const TypeInfo &r) {
+		if (r.plain() && r.kind == TypeInfo::user)
+			return &UThread::doUserCall;
+		else if (r.kind == TypeInfo::floatNr && r.size == sizeof(float))
+			return &UThread::doFloatCall;
+		else if (r.kind == TypeInfo::floatNr && r.size == sizeof(double))
+			return &UThread::doDoubleCall;
+		else if (r.size <= 4)
+			return &UThread::doCall4;
+		else if (r.size <= 8)
+			return &UThread::doCall8;
+		else
+			return &UThread::doUserCall;
+	}
 
 	// Machine specific code here as far as possible:
 #ifdef X86
