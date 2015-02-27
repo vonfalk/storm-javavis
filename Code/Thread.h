@@ -5,6 +5,8 @@
 
 namespace code {
 
+	struct UState;
+
 	// Internal data.
 	class ThreadData;
 	class ThreadStart;
@@ -30,6 +32,9 @@ namespace code {
 
 		// Compare.
 		bool operator ==(const Thread &o) const;
+
+		// Get the thread data.
+		inline ThreadData *threadData() const { return data; }
 
 		// Start a thread.
 		static Thread start(const Fn<void, void> &start);
@@ -61,6 +66,9 @@ namespace code {
 		// Condition variable for waking up the thread when there is more work to do
 		// or when it is time to exit.
 		Condition wakeCond;
+
+		// Data used for the UThreads.
+		UState *uState;
 
 		// Create.
 		ThreadData();

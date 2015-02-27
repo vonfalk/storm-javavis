@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "UThread.h"
+#include "Thread.h"
 #include "Utils/Math.h"
+#include "Utils/Lock.h"
 
 namespace code {
 
@@ -46,20 +48,126 @@ namespace code {
 
 #endif
 
-	// No need to deallocate the current stack.
-	static THREAD Stack currentStack = { 0, 0 };
+	// The state data for UThreads.
+	// All variables in here are only used from one thread, except the linked
+	// list in 'newHead', 'newTail', and 'newCount'. 'newHead' and 'newTail'
+	// are protected by 'newLock', while 'newCount' should be used atomically.
+	struct UState {
+		// The stack of the currently running thread. We do not need to
+		// de-allocate the stack of the thread provided by the OS, so we
+		// initialize it to (0, 0).
+		Stack stack;
 
-	// Next thread to schedule (null = none, we're alone).
-	static THREAD UThread *nextThread = null;
+		// The next thread in a circularly linked queue.
+		UThread *next;
 
-	// Thread to remove at earliest opportunity.
-	static THREAD UThread *terminatedThread = null;
+		// Thread to remove as soon as possible.
+		UThread *terminated;
 
+		// New nodes. Note that only 'next' is used here.
+		UThread *newHead, *newTail;
+		nat newCount;
+		Lock *newLock;
+
+		// Insert/remove a thread from the linked list.
+		void insert(UThread *t);
+		void remove(UThread *t);
+
+		// Add a new UThread to the new list.
+		void insertNew(UThread *t);
+
+		// Copy all new threads to the 'regular' list.
+		void copyNew();
+	};
+
+	// The current state for this thread.
+	static THREAD UState state = { { 0, 0 }, null, null, null, null, 0, null };
+
+	// Get the state for any thread.
+	static UState &uState(const Thread *t) {
+		if (t == null)
+			return state;
+
+		ThreadData *d = t->threadData();
+		return *d->uState;
+	}
+
+	// Insert a new thread.
+	static void insert(UThread *t, const Thread *to) {
+		UState &s = uState(to);
+		if (to == null) {
+			s.insert(t);
+		} else {
+			s.insertNew(t);
+			// Signal the thread.
+			to->threadData()->wakeCond.signal();
+		}
+	}
+
+	void UState::insert(UThread *t) {
+		if (next) {
+			t->prev = next->prev;
+			t->next = next;
+
+			t->prev->next = t;
+			t->next->prev = t;
+		} else {
+			t->next = t;
+			t->prev = t;
+			next = t;
+		}
+	}
+
+	void UState::remove(UThread *t) {
+		if (next == t) {
+			// Removing head element...
+			if (t->next == t)
+				next = null;
+			else
+				next = t->next;
+		}
+
+		t->next->prev = t->prev;
+		t->prev->next = t->next;
+	}
+
+	void UState::insertNew(UThread *t) {
+		Lock::L z(newLock);
+
+		if (newTail) {
+			newTail->next = t;
+			newTail = t;
+		} else {
+			newHead = newTail = t;
+			t->next = null;
+		}
+
+		atomicIncrement(newCount);
+	}
+
+	void UState::copyNew() {
+		// Anything to do?
+		if (atomicCAS(newCount, 0, 0) == 0)
+			return;
+
+		Lock::L z(newLock);
+
+		while (newHead) {
+			UThread *t = newHead;
+			newHead = newHead->next;
+			insert(t);
+		}
+
+		newHead = newTail = null;
+		// Safe to just set the count here, only one consumer and the produces uses the lock.
+		newCount = 0;
+	}
+
+	/**
+	 * UThread.
+	 */
 
 	UThread::UThread() : next(null), prev(null) {
-		static nat threadId = 1;
-		id = threadId++;
-
 		stack = allocStack();
 		esp = initialEsp();
 	}
@@ -68,45 +176,34 @@ namespace code {
 		freeStack(stack);
 	}
 
-	void UThread::insert() {
-		// Add to the back of the queue.
-		if (nextThread) {
-			prev = nextThread->prev;
-			next = nextThread;
+	void UThread::initOsThread(ThreadData *data) {
+		data->uState = &state;
+		// Safe, this is done before anyone knows about us.
+		state.newLock = new Lock;
+	}
 
-			prev->next = this;
-			next->prev = this;
-		} else {
-			next = this;
-			prev = this;
-			nextThread = this;
-		}
+	void UThread::destroyOsThread(ThreadData *data) {
+		data->uState = null;
+		// Safe, this is done when everyone else has forgotten about us.
+		del(state.newLock);
 	}
 
 	void UThread::remove() {
 		// Remove, and schedule the next thread.
-		UThread *t = nextThread;
-		terminatedThread = t;
+		UThread *t = state.next;
+		state.terminated = t;
 
 		assert(t != null, "Can not remove the original UThread!");
+		state.remove(t);
 
-		if (t->next == t) {
-			// Only one left!
-			nextThread = null;
-		} else {
-			t->next->prev = t->prev;
-			t->prev->next = t->next;
-			nextThread = t->next;
-		}
-
+		// Switch threads, never return.
 		t->switchTo();
-
-		// Should not return...
 		assert(false);
 	}
 
 	bool UThread::any() {
-		return nextThread != null;
+		state.copyNew();
+		return state.next != null;
 	}
 
 	void UThread::leave() {
@@ -114,11 +211,11 @@ namespace code {
 			return;
 
 		// Go to the next thread.
-		UThread *t = nextThread;
-		nextThread = t->next;
+		UThread *t = state.next;
+		state.next = t->next;
 
 		// Careful with this! It does _not_ behave as the compiler
-		// thinks it does, better keep it late!
+		// thinks it does, better keep it late in the function!
 		t->switchTo();
 
 		// One possible exit of 'switchTo'
@@ -130,9 +227,9 @@ namespace code {
 	}
 
 	void UThread::reap() {
-		if (terminatedThread) {
-			delete terminatedThread;
-			terminatedThread = null;
+		if (state.terminated) {
+			delete state.terminated;
+			state.terminated = null;
 		}
 	}
 
@@ -140,11 +237,11 @@ namespace code {
 	 * Spawn a thread running a Fn<void, void>:
 	 */
 
-	void UThread::spawn(const Fn<void, void> &fn) {
+	void UThread::spawn(const Fn<void, void> &fn, const Thread *on) {
 		UThread *t = new UThread();
 		t->pushParams(null, new Fn<void, void>(fn));
 		t->pushContext(address(&UThread::main));
-		t->insert();
+		insert(t, on);
 	}
 
 	void UThread::main(Fn<void, void> *fn) {
@@ -167,11 +264,11 @@ namespace code {
 	 * Spawn a thread running a FnCall:
 	 */
 
-	void UThread::spawn(const void *fn, const FnCall &params) {
+	void UThread::spawn(const void *fn, const FnCall &params, const Thread *on) {
 		UThread *t = new UThread();
 		t->pushParams(address(&UThread::remove), params);
 		t->pushContext(fn);
-		t->insert();
+		insert(t, on);
 	}
 
 
@@ -238,7 +335,7 @@ namespace code {
 
 	void UThread::switchTo() {
 		void **newEsp = esp;
-		swap(currentStack, stack);
+		swap(state.stack, stack);
 
 		doSwitch(newEsp, &esp); // May not return.
 	}

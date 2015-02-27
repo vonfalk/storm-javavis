@@ -76,14 +76,12 @@ BEGIN_TEST(UThreadInterop) {
 	stopSema.down();
 	CHECK_EQ(var, 2);
 
-	TODO("Test launching something on a thread started with an empty function as well.");
-	// Like this:
-	// var = 0;
-	// Thread t = Thread::start(Fn<void, void>());
-	// Sleep(20);
-	// UThread::spawn(t, &setVar);
-	// stopSema.down();
-	// CHECK_EQ(var, 1);
+	var = 0;
+	Thread t = Thread::start(Fn<void, void>());
+	Sleep(20); // Make sure 't' enters the condition waiting.
+	UThread::spawn(simpleVoidFn(setVar), &t);
+	stopSema.down();
+	CHECK_EQ(var, 1);
 } END_TEST
 
 struct Cond {

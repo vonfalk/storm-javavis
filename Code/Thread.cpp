@@ -32,9 +32,13 @@ namespace code {
 	 * Thread data.
 	 */
 
-	ThreadData::ThreadData() : references(0) {}
+	ThreadData::ThreadData() : references(0), uState(null) {
+		UThread::initOsThread(this);
+	}
 
-	ThreadData::~ThreadData() {}
+	ThreadData::~ThreadData() {
+		UThread::destroyOsThread(this);
+	}
 
 	void ThreadData::reportZero() {
 		wakeCond.signal();

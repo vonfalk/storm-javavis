@@ -164,10 +164,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CriticalSection.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Debug.cpp"
 				>
 			</File>
@@ -359,6 +355,10 @@
 				RelativePath=".\Condition.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lock.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -391,10 +391,6 @@
 			</File>
 			<File
 				RelativePath=".\ConUtils.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CriticalSection.h"
 				>
 			</File>
 			<File
