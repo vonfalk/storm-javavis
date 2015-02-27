@@ -271,6 +271,62 @@ namespace code {
 		insert(t, on);
 	}
 
+	/**
+	 * Spawn a thread running a FnCall with a function call indicating the result.
+	 */
+
+	void UThread::spawn(const SpawnParams &s, const FnCall &params, const Thread *on) {
+		UThread *t = new UThread();
+
+		// Copy 's' to the bottom of the stack (no need for malloc!)
+		SpawnParams *sPos = (SpawnParams*)t->alloc(sizeof(s));
+		*sPos = s;
+
+		// Copy the parameters a bit over the top. Space for a return value between.
+		void *paramsPos = t->pushParams(params, s.result.size);
+
+		// Set up the initial function call.
+		t->pushParams(null, FnCall().param(sPos).param(paramsPos));
+		t->pushContext(&UThread::mainParams);
+
+		// Done.
+		insert(t, on);
+	}
+
+	void UThread::mainParams(SpawnParams *s, void *params) {
+		// Note: we may not call functions until we have called
+		// 's.toCall', since there are parameters higher up on the stack!
+		typedef void (*ErrorFn)(void *, const Exception &);
+
+		try {
+			TypeInfo &r = s->result;
+			bool userCall = r.plain() && r.kind == TypeInfo::user;
+
+			if (userCall)
+				doUserCall(s, params);
+			else if (r.kind == TypeInfo::floatNr && r.size == sizeof(float))
+				doFloatCall(s, params);
+			else if (r.kind == TypeInfo::floatNr && r.size == sizeof(double))
+				doDoubleCall(s, params);
+			else if (r.size <= 4)
+				doCall4(s, params);
+			else if (r.size <= 8)
+				doCall8(s, params);
+			else
+				doUserCall(s, params);
+
+		} catch (const Exception &e) {
+			const ErrorFn f = (const ErrorFn)s->onError;
+			(*f)(s->data, e);
+		} catch (...) {
+			// We can not throw it any further...
+			// Assert eats stack space for us, ignore it here.
+		}
+
+		// Terminate ourselves.
+		remove();
+	}
+
 
 	// Machine specific code here as far as possible:
 #ifdef X86
@@ -353,6 +409,25 @@ namespace code {
 		push((void *)fn);
 	}
 
+	void *UThread::pushParams(const FnCall &params, nat minSpace) {
+		minSpace += 10 * 4; // Space for the context and some return addresses.
+		// Extra space for the function. VS fills about 200 bytes of the stack
+		// with random data in the function prolog, so we want to have a good margin here.
+		minSpace += 200 * 4;
+
+		nat s = params.paramsSize();
+		assert(s % 4 == 0);
+		void **to = esp - (s + minSpace) / 4;
+		params.copyParams(to);
+		return to;
+	}
+
+	void *UThread::alloc(size_t s) {
+		s = roundUp(s, sizeof(void *));
+		esp -= (s / sizeof(void *));
+		return esp;
+	}
+
 	void UThread::pushContext(const void *fn) {
 		push((void *)fn); // return to
 		push(0); // ebp
@@ -364,7 +439,126 @@ namespace code {
 		push(stack.top); // stack limit
 	}
 
-#endif
 
+	void UThread::doUserCall(SpawnParams *s, void *params) {
+		const void *toCall = s->toCall;
+		const void *resultFn = s->onResult;
+		void *data = s->data;
+		nat rSize = s->result.size;
+
+		__asm {
+			// Prepare the stack.
+			sub esp, rSize;
+			mov eax, esp;
+
+			mov edi, esp;
+			mov esp, params;
+
+			// Call and restore the stack.
+			push eax;
+			call toCall;
+			mov esp, edi;
+
+			// Now the result is right on top of the stack!
+			push data;
+			call resultFn;
+			add esp, 4;
+			add esp, rSize;
+		}
+	}
+
+	void UThread::doDoubleCall(SpawnParams *s, void *params) {
+		const void *toCall = s->toCall;
+		const void *resultFn = s->onResult;
+		void *data = s->data;
+
+		__asm {
+			// Prepare the stack.
+			mov edi, esp;
+			mov esp, params;
+
+			// Call and restore the stack.
+			call toCall;
+			mov esp, edi;
+
+			// Call the 'we're done' function.
+			push eax;
+			push eax;
+			fstp QWORD PTR [esp];
+			push data;
+			call resultFn;
+			add esp, 12;
+		}
+	}
+
+	void UThread::doFloatCall(SpawnParams *s, void *params) {
+		const void *toCall = s->toCall;
+		const void *resultFn = s->onResult;
+		void *data = s->data;
+
+		__asm {
+			// Prepare the stack.
+			mov edi, esp;
+			mov esp, params;
+
+			// Call and restore the stack.
+			call toCall;
+			mov esp, edi;
+
+			// Call the 'we're done' function.
+			push eax;
+			fstp DWORD PTR [esp];
+			push data;
+			call resultFn;
+			add esp, 8;
+		}
+	}
+
+	void UThread::doCall4(SpawnParams *s, void *params) {
+		const void *toCall = s->toCall;
+		const void *resultFn = s->onResult;
+		void *data = s->data;
+
+		__asm {
+			// Prepare the stack.
+			mov edi, esp;
+			mov esp, params;
+
+			// Call and restore the stack.
+			call toCall;
+			mov esp, edi;
+
+			// Call the 'we're done' function.
+			push eax;
+			push data;
+			call resultFn;
+			add esp, 8;
+		}
+	}
+
+	void UThread::doCall8(SpawnParams *s, void *params) {
+		const void *toCall = s->toCall;
+		const void *resultFn = s->onResult;
+		void *data = s->data;
+
+		__asm {
+			// Prepare the stack.
+			mov edi, esp;
+			mov esp, params;
+
+			// Call and restore the stack.
+			call toCall;
+			mov esp, edi;
+
+			// Call the 'we're done' function.
+			push edx;
+			push eax;
+			push data;
+			call resultFn;
+			add esp, 12;
+		}
+	}
+
+#endif
 
 }

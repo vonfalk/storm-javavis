@@ -24,6 +24,7 @@ struct TypeInfo {
 
 	// Kind of type?
 	enum Kind {
+		nothing, // ie void
 		signedNr, // ie int, int64 ...
 		unsignedNr, // ie nat, nat64 ...
 		floatNr, // float, double ...
@@ -113,6 +114,11 @@ struct KindOf<T *> {
 template <class T>
 struct KindOf<T &> {
 	enum { v = KindOf<T>::v };
+};
+
+template <>
+struct KindOf<void> {
+	enum { v = TypeInfo::nothing };
 };
 
 template <>
