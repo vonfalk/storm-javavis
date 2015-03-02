@@ -340,6 +340,10 @@
 				RelativePath=".\Thread.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Sync.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -512,6 +516,10 @@
 			</File>
 			<File
 				RelativePath=".\InlineList.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Sync.h"
 				>
 			</File>
 		</Filter>

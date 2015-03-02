@@ -18,7 +18,7 @@ namespace code {
 	 * the standard synchronization primitives are not aware of these threads,
 	 * they will block all UThreads running on the OS thread, and therefore
 	 * possibly cause deadlocks and other unexpected results. Use the
-	 * code::Lock and code::Sema instead.
+	 * code::Lock and code::Sema instead. These are found in "Sync.h"
 	 */
 
 	class UThreadData;

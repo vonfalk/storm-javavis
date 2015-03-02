@@ -2,6 +2,7 @@
 #include "Test/Test.h"
 #include "Utils/Semaphore.h"
 #include "Code/UThread.h"
+#include "Code/Sync.h"
 #include "Tracker.h"
 
 static void returnVoid(bool error) {
@@ -167,3 +168,42 @@ BEGIN_TEST(UThreadResultTest) {
 
 } END_TEST
 
+
+struct SemaTest {
+	Sema sema;
+
+	nat state;
+
+	SemaTest() : sema(1), state(0) {}
+
+	void run() {
+		// Should not block.
+		sema.down();
+
+		state = 1;
+
+		// Should block.
+		sema.down();
+
+		state = 2;
+	}
+};
+
+
+BEGIN_TEST(UThreadSema) {
+	SemaTest t;
+	UThread::spawn(memberVoidFn(&t, &SemaTest::run));
+
+	CHECK_EQ(t.state, 0);
+	UThread::leave();
+	CHECK_EQ(t.state, 1);
+	for (nat i = 0; i < 20; i++)
+		UThread::leave();
+	CHECK_EQ(t.state, 1);
+
+	t.sema.up();
+	UThread::leave();
+	CHECK_EQ(t.state, 2);
+
+	TODO(L"Test on other threads as well, much like UThreadInterop.");
+} END_TEST

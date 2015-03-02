@@ -3,7 +3,7 @@
 /**
  * A simple lock.
  */
-class Lock {
+class Lock : NoCopy {
 public:
 	// Create.
 	Lock();
@@ -18,6 +18,9 @@ public:
 		L(Lock *l);
 		~L();
 	private:
+		L(const L &);
+		L &operator =(const L &);
+
 		Lock *l;
 	};
 
