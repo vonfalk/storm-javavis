@@ -2,10 +2,11 @@
 #include "Utils/Function.h"
 #include "Utils/Semaphore.h"
 #include "Utils/Condition.h"
+#include "UThread.h"
 
 namespace code {
 
-	struct UState;
+	class UThreadState;
 
 	// Internal data.
 	class ThreadData;
@@ -67,8 +68,9 @@ namespace code {
 		// or when it is time to exit.
 		Condition wakeCond;
 
-		// Data used for the UThreads.
-		UState *uState;
+		// Data used for the UThreads. Make sure to always run constructors and destructors
+		// from the thread this ThreadData is representing.
+		UThreadState uState;
 
 		// Create.
 		ThreadData();
@@ -77,12 +79,12 @@ namespace code {
 		~ThreadData();
 
 		// Add refcount.
-		void addRef() {
+		inline void addRef() {
 			atomicIncrement(references);
 		}
 
 		// Release.
-		void release() {
+		inline void release() {
 			if (atomicDecrement(references) == 0)
 				reportZero();
 		}

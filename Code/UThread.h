@@ -1,204 +1,257 @@
 #pragma once
-#include "Utils/Function.h"
 #include "Function.h"
+#include "InlineList.h"
+#include "Utils/Function.h"
+#include "Utils/Lock.h"
 
 namespace code {
 
 	class Thread;
-	class ThreadData;
 
 	/**
-	 * Describes the stack of a UThread. Intended as an internal data structure.
-	 */
-	struct Stack {
-		// The top address (what we've allocated). Null if nothing.
-		byte *top;
-
-		// The total size of the stack.
-		nat size;
-	};
-
-	/**
-	 * The current state of all threads for the current OS thread.
-	 */
-	struct UState;
-
-	/**
-	 * Represents a user-level thread. These threads do not preempt by themselves,
-	 * you have to call UThread::leave() to do that.
+	 * Implementation of user-level threads.
 	 *
-	 * This class is designed to hold information about all UThreads _not_ running.
-	 * This class holds the needed state for any non-running thread. The threads
-	 * are scheduled one after another, therefore they are linked into a circular buffer.
+	 * Many of these threads are run on a single OS thread. They are
+	 * cooperatively scheduled by calling the UThread::leave() function.
+	 * Since the OS are unaware of these threads, it is not possible to
+	 * use the standard OS syncronization primitives in all cases. Since
+	 * the standard synchronization primitives are not aware of these threads,
+	 * they will block all UThreads running on the OS thread, and therefore
+	 * possibly cause deadlocks and other unexpected results. Use the
+	 * code::Lock and code::Sema instead.
 	 */
-	class UThread : NoCopy {
-		friend struct UState;
+
+	class UThreadData;
+
+	/**
+	 * This is a handle to a specific UThread. Currently, not many operations
+	 * is supported on another UThread than the current. Therefore, the backing
+	 * UThread is not kept after the UThread has terminated.
+	 */
+	class UThread {
 	public:
-		// TODO: provide some way of detecting when a thread has terminated, and/or a future-like
-		// object with its result.
-
-		// Declares what to do when the function terminates in the other thread. All functions
-		// here will be running on the same UThread as the function called.
-		template <class R, class Param>
-		struct Result {
-			// Data to pass to all functions.
-			Param *data;
-
-			// Function called when the function has terminated with result Result.
-			void (*done)(Param *, R);
-
-			// Function called when the function terminates with an exception.
-			void (*error)(Param *, const Exception &);
-		};
-
-		// Specialize Result for void results.
-		template <class Param>
-		struct Result<void, Param> {
-			// Data.
-			Param *data;
-
-			// Success.
-			void (*done)(Param *);
-
-			// Failure.
-			void (*error)(Param *, const Exception &);
-		};
-
-		// Create another thread running 'fn'. Does not pre-empt this thread. Parameters
-		// are copied before this function returns, so no special care needs to be taken
-		// in that regard.
-		template <class R, class P>
-		static void spawn(const void *fn, const FnCall &params, const Result<R, P> &r, const Thread *on = null) {
-			SpawnParams p = {
-				fn,
-				r.data,
-				(const void *)r.error,
-				(const void *)r.done,
-				typeInfo<R>(),
-			};
-			spawn(p, params, on);
-		}
-
-		// Create another thread running 'fn'. Does not pre-empt this thread. Parameters are
-		// copied before the return of the call, and no special care of the lifetime of the
-		// parameters in 'params' needs to be taken.
-		static void spawn(const void *fn, const FnCall &params, const Thread *on = null);
-
-		// Create another thread running 'fn'. Does not pre-empt this thread.
-		static void spawn(const Fn<void, void> &fn, const Thread *on = null);
-
-		// Schedule the next thread. This function will eventually return when all other
-		// UThreads have been given the chance to run.
-		static void leave();
-
-		// More threads running?
-		static bool any();
 
 		/**
-		 * For internal use:
-		 * These are automatically called from Code/Thread.cpp when needed. Take care that the
-		 * thread referred needs to be the calling thread as well.
+		 * Description of how to handle the result from a function call on another
+		 * thread. When the function completes, 'done' is called with its result.
+		 * If an exception is thrown, 'error' is called with the exception instead.
+		 * 'data' may be used to provide custom data to the callbacks.
 		 */
+		template <class R, class Param>
+		struct Result {
+			Param *data;
+			void (*done)(Param *, R);
+			void (*error)(Param *, const Exception &);
+		};
 
-		// Initialize the current OS thread to be able to receive spawns from other threads. This
-		// is automatically called whenever a Thread object is created for the current thread.
-		static void initOsThread(ThreadData *data);
+		// Specific for void.
+		template <class Param>
+		struct Result<void, Param> {
+			Param *data;
+			void (*done)(Param *);
+			void (*error)(Param *, const Exception &);
+		};
 
-		// Destroy anything allocated from 'initOsThread'. This is also done automatically
-		// when using threads from Code/Thread.h
-		static void destroyOsThread(ThreadData *data);
 
-	private:
-		// Create a new object from a stack.
-		UThread();
-
-		// Clean up.
-		~UThread();
-
-		// Stack used by this thread.
-		Stack stack;
-
-		// Current stack top.
-		void **esp;
-
-		// Next and prev UThread to run. Linked in a circular list.
-		UThread *next, *prev;
-
-		// Push ptr-sized values onto stack.
-		void push(void *v);
-		void push(uintptr_t v);
-		void push(intptr_t v);
-
-		// Allocate things on the stack.
-		void *alloc(size_t size);
-
-		// Compute the initial esp from our stack.
-		void **initialEsp();
-
-		// Initialize the stack to call 'fn' with 'param'.
-		void initialStack(void *fn, void *param);
-
-		// Push the initial context onto the stack (should be done last).
-		void pushContext(const void *returnTo);
-
-		// Push parameters to a function call.
-		void pushParams(const void *returnTo, void *param);
-		void pushParams(const void *returnTo, const FnCall &params);
-
-		// Push parameters to a function call a bit higher up on the stack (at least minSpace bytes free).
-		// Does not modify esp, it is up to the programmer to ensure that we do not overwrite these.
-		void *pushParams(const FnCall &params, nat minSpace);
-
-		// Switch to this thread. (does not behave as the compiler thinks it does!)
-		// Note: does not even return for all switches (until later).
-		void switchTo();
-
-		// Cleanup parameters struct. Needs to be POD.
-		struct SpawnParams {
+		/**
+		 * Raw parameters to a spawn-call. Use 'result' above if possible to maintain
+		 * some type-safety.
+		 */
+		struct Params {
 			// Function to call.
 			const void *toCall;
 
 			// Data to the callbacks.
 			void *data;
 
-			// Callbacks on completion of 'toCall'.
+			// Callbacks.
 			const void *onError;
-			const void *onResult;
+			const void *onDone;
 
-			// Result type of 'toCall'.
+			// Result type info.
 			TypeInfo result;
 		};
 
-		// Spawn a thread where some cleanup should be used.
-		static void spawn(const SpawnParams &s, const FnCall &params, const Thread *on);
 
-		// Main function in new threads using SpawnParams.
-		static void mainParams(SpawnParams *s, void *params);
 
-		// Main function in new threads.
-		static void main(Fn<void, void> *fn);
+		// Copy.
+		UThread(const UThread &o);
 
-		// Remove the running UThread from this thread's linked list. Implicitly switches to the
-		// next free thread.
-		static void remove();
+		// Assign.
+		UThread &operator =(const UThread &o);
 
-		// Delete any pending deletions.
-		static void reap();
+		// Destroy.
+		~UThread();
 
-		// Called after a thread switch.
-		static void afterSwitch();
+		// Same UThread?
+		inline bool operator ==(const UThread &o) const { return data == o.data; }
+		inline bool operator !=(const UThread &o) const { return data != o.data; }
 
-		// Some low-level function calls.
-		static void doUserCall(SpawnParams *s, void *params);
-		static void doFloatCall(SpawnParams *s, void *params);
-		static void doDoubleCall(SpawnParams *s, void *params);
-		static void doCall4(SpawnParams *s, void *params);
-		static void doCall8(SpawnParams *s, void *params);
+		// Yeild to another UThread. Returns sometime in the future. Returns 'true' if other
+		// threads were run between the call and the return.
+		static bool leave();
 
-		// Choose the right call function. Done to prevent the compiler from
-		// thinking that doXxxCall does not throw exceptions...
-		typedef void (*DoCallFn)(SpawnParams *, void *params);
-		static DoCallFn chooseCall(const TypeInfo &info);
+		// Any more UThreads to run here?
+		static bool any();
+
+		/**
+		 * Spawn a new UThread on the currently running thread, or another thread.
+		 * There are a few variants of spawn here, all of them take some kind of
+		 * function pointer, optionally with parameters to run, followed by a reference
+		 * to the OS thread (Thread *) to run on. If this is left out, or set to null,
+		 * the thread of the caller is used.
+		 * All of these return as soon as the new UThread is set up, they do not
+		 * pre-empt the currently running thread.
+		 */
+
+		// Spawn using a Fn<void, void>.
+		static UThread spawn(const Fn<void, void> &fn, const Thread *on = null);
+
+		// Spawn using a plain function pointer and parameters. The parameters stored in
+		// 'params' follows the same lifetime rules as FnCall::call() does. No special care
+		// needs to be taken. Note: fn may not return a value!
+		static UThread spawn(const void *fn, const FnCall &params, const Thread *on = null);
+
+		// Spawn using a plain function pointer and parameters. Works much like the one below,
+		// but is not as type-safe.
+		static UThread spawn(const Params &p, const FnCall &params, const Thread *on = null);
+
+		// Spawn using a plain function pointer and parameters. Calls either 'done' or 'error'
+		// in 'result' when the execution of 'fn' is finished.
+		template <class R, class P>
+		static UThread spawn(const void *fn, const FnCall &params, const Result<R, P> &r, const Thread *on = null) {
+			Params p = {
+				fn,
+				r.data,
+				(const void *)r.error,
+				(const void *)r.done,
+				typeInfo<R>(),
+			};
+			return spawn(p, params, on);
+		}
+
+	private:
+		// Create
+		UThread(UThreadData *data);
+
+		// Referenced data.
+		UThreadData *data;
 	};
+
+
+	/**
+	 * UThread data.
+	 */
+	class UThreadData : NoCopy {
+		// Create.
+		UThreadData();
+
+	public:
+		// Number of references.
+		nat references;
+
+		// Next position in inlined lists.
+		UThreadData *next;
+
+		// Add refcount.
+		inline void addRef() {
+			atomicIncrement(references);
+		}
+
+		inline void release() {
+			if (atomicDecrement(references) == 0)
+				delete this;
+		}
+
+		// Create for the first thread (where the stack is allocated by OS).
+		static UThreadData *createFirst();
+
+		// Create any other threads.
+		static UThreadData *create();
+
+		// Destroy.
+		~UThreadData();
+
+		// The current stack pointer. This is not valid if the thread is running.
+		void **esp;
+
+		// The current stack (lowest address and size). May be null.
+		void *stackBase;
+		nat stackSize;
+
+		// Switch from this thread to 'to'.
+		void switchTo(UThreadData *to);
+
+		// Push values to the stack.
+		void push(void *v);
+		void push(intptr_t v);
+		void push(uintptr_t v);
+
+		// Push some parameters on the stack.
+		void pushParams(const void *returnTo, void *param);
+		void pushParams(const void *returnTo, const FnCall &params);
+
+		// Push parameters while leaving some space on the stack.
+		void *pushParams(const FnCall &params, nat space);
+
+		// Allocate some space on the stack.
+		void *alloc(size_t size);
+
+		// Push the initial context to the stack.
+		void pushContext(const void *returnTo);
+
+	};
+
+	/**
+	 * Thread-specific state of the scheduler. It is designed to avoid
+	 * locks as far as possible, to ensure high performance in thread
+	 * switching.
+	 * This class is not threadsafe, unless where noted.
+	 */
+	class UThreadState : NoCopy {
+	public:
+		// Create.
+		UThreadState();
+
+		// Destroy.
+		~UThreadState();
+
+		// Get the state for the current thread.
+		static UThreadState *current();
+
+		// Any more ready threads?
+		bool any();
+
+		// Schedule the next thread.
+		bool leave();
+
+		// Exit the current thread.
+		void exit();
+
+		// Add a new thread as 'ready'.
+		void insert(UThreadData *data);
+
+	private:
+		// Currently running thread here.
+		UThreadData *running;
+
+		// Lock for the 'ready' and 'waiting' lists. The 'exit' list is not protected,
+		// since it is only ever accessed from the OS thread owning this state.
+		Lock lock;
+
+		// Ready threads. May be scheduled now.
+		InlineList<UThreadData> ready;
+
+		// Waiting threads.
+		InlineList<UThreadData> waiting;
+
+		// Keep track of exited threads. Remove these at earliest opportunity!
+		InlineList<UThreadData> exited;
+
+		// Elliminate any exited threads.
+		void reap();
+
+	};
+
 
 }

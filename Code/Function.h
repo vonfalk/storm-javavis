@@ -21,7 +21,7 @@ namespace code {
 	 */
 	class FnCall {
 		// Let the UThread use us.
-		friend class UThread;
+		friend class UThreadData;
 	public:
 
 		// Since we want to do param(&p) for a reference, we must take care of

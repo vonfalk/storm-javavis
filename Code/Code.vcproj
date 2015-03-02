@@ -510,6 +510,10 @@
 				RelativePath=".\Thread.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\InlineList.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

@@ -32,13 +32,9 @@ namespace code {
 	 * Thread data.
 	 */
 
-	ThreadData::ThreadData() : references(0), uState(null) {
-		UThread::initOsThread(this);
-	}
+	ThreadData::ThreadData() : references(0) {}
 
-	ThreadData::~ThreadData() {
-		UThread::destroyOsThread(this);
-	}
+	ThreadData::~ThreadData() {}
 
 	void ThreadData::reportZero() {
 		wakeCond.signal();
@@ -107,9 +103,11 @@ namespace code {
 
 		fn();
 
+		// NOTE: The following logic is _not_ correct when we introduce waiting threads.
+
 		// Let any UThreads terminate...
-		while (UThread::any())
-			UThread::leave();
+		while (UThread::leave())
+			;
 
 		while (true) {
 			// Wait for the condition to fire. This is done whenever the
@@ -128,8 +126,8 @@ namespace code {
 
 			// Either we have more references, or more UThreads to run.
 			// Either way, it does not hurt to try to run the UThreads.
-			while (UThread::any())
-				UThread::leave();
+			while (UThread::leave())
+				;
 		}
 
 		// Failsafe for the currThreadData.
