@@ -51,7 +51,7 @@ namespace code {
 	 * Lock
 	 */
 
-	Lock::Lock() {}
+	Lock::Lock() : sema(1) {}
 
 	Lock::~Lock() {}
 
@@ -64,11 +64,11 @@ namespace code {
 	}
 
 	void Lock::lock() {
-		assert(false, L"Not implemented yet!");
+		sema.down();
 	}
 
 	void Lock::unlock() {
-		assert(false, L"Not implemented yet");
+		sema.up();
 	}
 
 }

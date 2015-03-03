@@ -68,6 +68,11 @@ namespace code {
 
 		// Lock.
 		void unlock();
+
+		// Semaphore for locking features, we do not yet check ownership of
+		// the lock, that is handled fairly good by the L class.
+		// TODO: Maybe recursive locking as well?
+		Sema sema;
 	};
 
 }
