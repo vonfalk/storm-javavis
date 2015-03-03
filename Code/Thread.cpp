@@ -20,6 +20,15 @@ namespace code {
 
 		// Init.
 		ThreadStart(const Fn<void, void> &fn) : sema(0), startFn(fn) {}
+
+		// Remove one reference from 'data', if present. The started thread
+		// should set one reference in 'data', so that it may not exit
+		// before the 'start' function has returned and reclaimed at least one
+		// reference.
+		~ThreadStart() {
+			if (data)
+				data->release();
+		}
 	};
 
 	// This one is system-specific
@@ -32,7 +41,7 @@ namespace code {
 	 * Thread data.
 	 */
 
-	ThreadData::ThreadData() : references(0) {}
+	ThreadData::ThreadData() : references(0), uState(this) {}
 
 	ThreadData::~ThreadData() {}
 
@@ -91,9 +100,42 @@ namespace code {
 		return Thread(start.data);
 	}
 
+#ifdef DEBUG
+	/**
+	 * Ensure that all threads have exited in debug builds!
+	 */
+	static nat aliveThreads = 0;
+
+	static void checkThreads() {
+		assert(aliveThreads == 0, L"Some threads have not terminated before process exit!");
+	}
+
+	static void threadStarted() {
+		static bool first = true;
+		if (first) {
+			atexit(&checkThreads);
+			first = false;
+		}
+		aliveThreads++;
+	}
+
+	static void threadTerminated() {
+		aliveThreads--;
+	}
+
+#else
+
+	static void threadStarted() {}
+	static void threadTerminated() {}
+
+#endif
+
 	void Thread::threadMain(ThreadStart &start) {
 		ThreadData d;
 
+		threadStarted();
+
+		d.addRef();
 		currThreadData = &d;
 		start.data = &d;
 		Fn<void, void> fn = start.startFn;
@@ -105,14 +147,11 @@ namespace code {
 
 		// NOTE: The following logic is _not_ correct when we introduce waiting threads.
 
-		// Let any UThreads terminate...
-		while (UThread::leave())
-			;
-
 		while (true) {
-			// Wait for the condition to fire. This is done whenever the
-			// refcount reaches zero, or when a new UThread has been added.
-			d.wakeCond.wait();
+			// Either we have more references, or more UThreads to run.
+			// Either way, it does not hurt to try to run the UThreads.
+			while (UThread::leave())
+				;
 
 			// If the refcount is zero, we can safely say that no one else
 			// can increase it after this point (assuming no UThreads).
@@ -120,18 +159,20 @@ namespace code {
 			// this case we can not have any race-conditions.
 
 			// Hacky atomic read...
-			if (atomicCAS(d.references, 0, 0) == 0)
+			if (atomicCAS(d.references, 0, 0) == 0) {
 				if (!UThread::any())
 					break;
+			}
 
-			// Either we have more references, or more UThreads to run.
-			// Either way, it does not hurt to try to run the UThreads.
-			while (UThread::leave())
-				;
+			// Wait for the condition to fire. This is done whenever the
+			// refcount reaches zero, or when a new UThread has been added.
+			d.wakeCond.wait();
 		}
 
 		// Failsafe for the currThreadData.
 		currThreadData = null;
+
+		threadTerminated();
 	}
 
 #ifdef WINDOWS

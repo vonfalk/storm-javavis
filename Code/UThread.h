@@ -7,6 +7,7 @@
 namespace code {
 
 	class Thread;
+	class ThreadData;
 
 	/**
 	 * Implementation of user-level threads.
@@ -22,6 +23,7 @@ namespace code {
 	 */
 
 	class UThreadData;
+	class UThreadState;
 
 	/**
 	 * This is a handle to a specific UThread. Currently, not many operations
@@ -94,6 +96,9 @@ namespace code {
 		// Any more UThreads to run here?
 		static bool any();
 
+		// Get the currently running UThread.
+		static UThread current();
+
 		/**
 		 * Spawn a new UThread on the currently running thread, or another thread.
 		 * There are a few variants of spawn here, all of them take some kind of
@@ -130,6 +135,9 @@ namespace code {
 			return spawn(p, params, on);
 		}
 
+		// Get the thread data. Mainly for internal use.
+		inline UThreadData *threadData() { return data; }
+
 	private:
 		// Create
 		UThread(UThreadData *data);
@@ -152,6 +160,9 @@ namespace code {
 
 		// Next position in inlined lists.
 		UThreadData *next;
+
+		// Owner.
+		UThreadState *owner;
 
 		// Add refcount.
 		inline void addRef() {
@@ -211,42 +222,57 @@ namespace code {
 	class UThreadState : NoCopy {
 	public:
 		// Create.
-		UThreadState();
+		UThreadState(ThreadData *owner);
 
 		// Destroy.
 		~UThreadState();
 
+		// The thread we belong to.
+		ThreadData *const owner;
+
 		// Get the state for the current thread.
 		static UThreadState *current();
 
-		// Any more ready threads?
+		// Any more ready threads? This includes waiting threads.
 		bool any();
 
 		// Schedule the next thread.
 		bool leave();
 
+		// Exits from the current thread and does not schedule it until
+		// it is 'inserted' again. Make sure to call 'wake' on the current thread later,
+		// otherwise we will leak memory.
+		void wait();
+
+		// Wake up a sleeping thread. Only works for threads which have been 'wait'ed earlier.
+		void wake(UThreadData *data);
+
 		// Exit the current thread.
 		void exit();
 
-		// Add a new thread as 'ready'.
+		// Add a new thread as 'ready'. Safe to call from other OS threads.
 		void insert(UThreadData *data);
+
+		// Get the currently running thread.
+		inline UThreadData *runningThread() { return running; }
 
 	private:
 		// Currently running thread here.
 		UThreadData *running;
 
-		// Lock for the 'ready' and 'waiting' lists. The 'exit' list is not protected,
+		// Lock for the 'ready' list. The 'exit' list is not protected,
 		// since it is only ever accessed from the OS thread owning this state.
 		Lock lock;
 
 		// Ready threads. May be scheduled now.
 		InlineList<UThreadData> ready;
 
-		// Waiting threads.
-		InlineList<UThreadData> waiting;
-
 		// Keep track of exited threads. Remove these at earliest opportunity!
 		InlineList<UThreadData> exited;
+
+		// Number of threads alive. Always updated using atomics, no locks. Threads
+		// that are waiting and not stored in the 'ready' queue are also counted.
+		nat aliveCount;
 
 		// Elliminate any exited threads.
 		void reap();

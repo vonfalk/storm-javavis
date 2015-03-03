@@ -47,6 +47,11 @@
 
 #include <Windows.h>
 
+// Sometimes it re-defines "small" to "char", no good!
+#ifdef small
+#undef small
+#endif
+
 // We need to remove min and max macros...
 #ifdef min
 #undef min
@@ -87,3 +92,5 @@ namespace code {
 #include "Code/Size.h"
 #include "Utils/Printable.h"
 #include "Utils/Memory.h" // OFFSET_OF, BASE_PTR
+
+

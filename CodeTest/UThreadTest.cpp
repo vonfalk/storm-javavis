@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Utils/Semaphore.h"
+#include "Code/Thread.h"
 #include "Code/UThread.h"
 #include "Code/Sync.h"
 #include "Tracker.h"
@@ -205,5 +206,83 @@ BEGIN_TEST(UThreadSema) {
 	UThread::leave();
 	CHECK_EQ(t.state, 2);
 
-	TODO(L"Test on other threads as well, much like UThreadInterop.");
 } END_TEST
+
+struct SemaInterop {
+	Sema sema;
+
+	nat state;
+
+	SemaInterop() : sema(0), state(0) {}
+
+	void run() {
+		state = 1;
+
+		// Should block.
+		sema.down();
+
+		state = 2;
+	}
+
+	void small() {
+		state = 5;
+	}
+
+	void run2() {
+		state = 3;
+		sema.down();
+		state = 4;
+	}
+};
+
+BEGIN_TEST(UThreadSemaInterop) {
+	SemaInterop t;
+
+	// Make the main thread wait for a UThread that is not in its running state.
+	{
+		Thread on = Thread::start(memberVoidFn(&t, &SemaInterop::run));
+		Sleep(30);
+		CHECK_EQ(t.state, 1);
+
+		// Another thread, should block.
+		UThread::spawn(memberVoidFn(&t, &SemaInterop::run2), &on);
+		Sleep(30);
+		CHECK_EQ(t.state, 3);
+	}
+
+	// Now, release the original thread and make sure it does not exit until the 'run2' call is complete.
+	t.sema.up();
+	Sleep(30);
+	CHECK_EQ(t.state, 2);
+
+	t.sema.up();
+	Sleep(30);
+	CHECK_EQ(t.state, 4);
+
+	// No threads to schedule when a sema should block. This should make
+	// the other thread spin in UThread::wait() for a while.
+	Thread::start(memberVoidFn(&t, &SemaInterop::run));
+	Sleep(30);
+	CHECK_EQ(t.state, 1);
+	t.sema.up();
+	Sleep(30);
+	CHECK_EQ(t.state, 2);
+
+	// No threads to schedule when a sema would block while starting another UThread.
+	{
+		Thread on = Thread::start(memberVoidFn(&t, &SemaInterop::run));
+		Sleep(30);
+		CHECK_EQ(t.state, 1);
+
+		// Launch another UThread!
+		UThread::spawn(memberVoidFn(&t, &SemaInterop::small), &on);
+		Sleep(30);
+		CHECK_EQ(t.state, 5);
+
+		t.sema.up();
+	}
+	Sleep(30);
+	CHECK_EQ(t.state, 2);
+
+} END_TEST
+

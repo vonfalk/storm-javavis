@@ -4,6 +4,7 @@
 #include "Utils/Math.h"
 #include "Utils/Lock.h"
 
+
 namespace code {
 
 	/**
@@ -88,6 +89,10 @@ namespace code {
 		return UThreadState::current()->any();
 	}
 
+	UThread UThread::current() {
+		return UThread(UThreadState::current()->runningThread());
+	}
+
 	static void spawnFn(Fn<void, void> *fn) {
 		try {
 			(*fn)();
@@ -164,7 +169,7 @@ namespace code {
 	 * UThread data.
 	 */
 
-	UThreadData::UThreadData() : references(0), next(null), stackBase(null), stackSize(null), esp(null) {}
+	UThreadData::UThreadData() : references(0), next(null), owner(null), stackBase(null), stackSize(null), esp(null) {}
 
 	UThreadData *UThreadData::createFirst() {
 		// For the thread where the stack was allocated by the OS, we do not need to care.
@@ -194,17 +199,24 @@ namespace code {
 
 	static THREAD UThreadState *threadState = null;
 
-	UThreadState::UThreadState() {
+	UThreadState::UThreadState(ThreadData *owner) : owner(owner) {
 		threadState = this;
 
 		running = UThreadData::createFirst();
+		running->owner = this;
 		running->addRef();
+
+		aliveCount = 1;
 	}
 
 	UThreadState::~UThreadState() {
 		threadState = null;
-		if (running)
+		if (running) {
 			running->release();
+			atomicDecrement(aliveCount);
+		}
+
+		assert(aliveCount == 0, L"An OS thread tried to terminate before all its UThreads terminated.");
 	}
 
 	UThreadState *UThreadState::current() {
@@ -213,8 +225,7 @@ namespace code {
 	}
 
 	bool UThreadState::any() {
-		Lock::L z(lock);
-		return ready.any();
+		return atomicCAS(aliveCount, 1, 1) != 1;
 	}
 
 	bool UThreadState::leave() {
@@ -252,10 +263,11 @@ namespace code {
 				break;
 
 			// Wait for the signal.
-			Thread::current().threadData()->wakeCond.wait();
+			owner->wakeCond.wait();
 		}
 
 		// Now, we have something to do!
+		atomicDecrement(aliveCount);
 		exited.push(prev);
 		running = next;
 		prev->switchTo(running);
@@ -265,9 +277,43 @@ namespace code {
 	}
 
 	void UThreadState::insert(UThreadData *data) {
+		data->owner = this;
+		atomicIncrement(aliveCount);
+
 		Lock::L z(lock);
 		ready.push(data);
 		data->addRef();
+	}
+
+	void UThreadState::wait() {
+		UThreadData *prev = running;
+		UThreadData *next = null;
+
+		while (true) {
+			{
+				Lock::L z(lock);
+				next = ready.pop();
+			}
+
+			if (next == prev) {
+				// May happen if we are the only UThread running.
+				break;
+			} else if (next) {
+				running = next;
+				prev->switchTo(running);
+				break;
+			}
+
+			// Nothing to do in the meantime...
+			owner->wakeCond.wait();
+		}
+
+		reap();
+	}
+
+	void UThreadState::wake(UThreadData *data) {
+		Lock::L z(lock);
+		ready.push(data);
 	}
 
 	void UThreadState::reap() {
