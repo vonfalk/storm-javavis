@@ -25,6 +25,9 @@ namespace storm {
 		// Create a thread.
 		STORM_CTOR Thread();
 
+		// Create a thread and use a specific already existing code::Thread object.
+		Thread(code::Thread thread);
+
 		// Destroy it. This does not enforce that the thread has actually terminated.
 		~Thread();
 

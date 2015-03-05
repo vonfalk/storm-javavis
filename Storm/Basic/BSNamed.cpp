@@ -144,11 +144,11 @@ namespace storm {
 
 		// Only free this one automatically on an exception. If there is no exception,
 		// the memory will be owned by the object itself.
-		Variable rawMemory = s.frame.createPtrVar(subBlock, Ref(e.freeRef), freeOnException);
+		Variable rawMemory = s.frame.createPtrVar(subBlock, Ref(e.fnRefs.freeRef), freeOnException);
 
 		// Allocate memory into our temporary variable.
 		s.to << fnParam(Ref(toCreate.type->typeRef));
-		s.to << fnCall(Ref(e.allocRef), Size::sPtr);
+		s.to << fnCall(Ref(e.fnRefs.allocRef), Size::sPtr);
 		s.to << mov(rawMemory, ptrA);
 
 		// Call the constructor:

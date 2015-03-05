@@ -67,7 +67,9 @@ namespace storm {
 		nat dummy;
 
 		// Get the thread we are representing.
-		storm::Thread *thread(Engine &e) const;
+		Thread *thread(Engine &e) const;
 
+		// Force the thread to something already created.
+		void force(Engine &e, Thread *to);
 	};
 }

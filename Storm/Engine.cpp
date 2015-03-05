@@ -7,36 +7,33 @@
 
 namespace storm {
 
-#ifdef DEBUG
-	static void CODECALL dbgPrint(Int v) {
-		PLN("Debug: " << v);
-	}
-#endif
-
-	Engine::Engine(const Path &root)
-		: inited(false), rootPath(root), rootScope(null), arena(),
-		  addRef(arena.addRef), release(arena.releaseRef),
+	FnRefs::FnRefs(code::Arena &arena)
+		: addRef(arena.addRef), release(arena.releaseRef),
 		  allocRef(arena, L"alloc"), freeRef(arena, L"free"),
-#ifdef DEBUG
-		  dbgPrint(arena, L"dbgPrint"),
-#endif
 		  lazyCodeFn(arena, L"lazyUpdate"), createStrFn(arena, L"createStr") {
-
-		cppVTableSize = maxVTableCount();
-		vcalls = new VTableCalls(*this);
-		specialCached.resize(specialCount);
 
 		addRef.set(address(&Object::addRef));
 		release.set(address(&Object::release));
 		allocRef.set(address(&stormMalloc));
 		freeRef.set(address(&stormFree));
 		createStrFn.set(address(&Str::createStr));
+	}
 
-#ifdef DEBUG
-		dbgPrint.set(address(&storm::dbgPrint));
-#endif
+	Engine::Engine(const Path &root, ThreadMode mode)
+		: inited(false), rootPath(root), rootScope(null), arena(), fnRefs(arena) {
+
+		cppVTableSize = maxVTableCount();
+		vcalls = new VTableCalls(*this);
+		specialCached.resize(specialCount);
 
 		createStdTypes(*this, cached);
+
+		// If we are to reuse the calling thread, we have to set the compiler thread up
+		// before we call 'addStdLib' below. Otherwise a new thread will be created.
+		if (mode == reuseMain) {
+			Auto<Thread> t = CREATE(Thread, *this, code::Thread::current());
+			Compiler.force(*this, t.borrow());
+		}
 
 		// Now, all the types are created, so we can create packages!
 		rootPkg = CREATE(Package, *this, root, *this);
@@ -101,6 +98,11 @@ namespace storm {
 		} else {
 			return i->second.borrow();
 		}
+	}
+
+	void Engine::thread(uintptr_t id, Par<Thread> t) {
+		assert(threads.count(id) == 0, L"A thread with this id has already been created.");
+		threads.insert(make_pair(id, Auto<Thread>(t)));
 	}
 
 	Package *Engine::package(const String &path) {

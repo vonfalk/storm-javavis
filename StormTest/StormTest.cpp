@@ -13,7 +13,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	try {
 		// Initialize our engine.
 		Path root = Path::executable() + Path(L"../root/");
-		Engine e(root);
+		Engine e(root, Engine::reuseMain);
 		gEngine = &e;
 
 		PLN("Compiler boot: " << (Timestamp() - start));

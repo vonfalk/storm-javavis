@@ -8,5 +8,9 @@ namespace storm {
 		return e.thread((uintptr_t)&dummy);
 	}
 
+	void DeclThread::force(Engine &e, Thread *to) {
+		e.thread((uintptr_t)&dummy, to);
+	}
+
 }
 

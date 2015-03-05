@@ -73,7 +73,7 @@ namespace storm {
 		Label data = s.to.label();
 		s.to << fnParam(Ref(Str::type(e)->typeRef));
 		s.to << fnParam(data);
-		s.to << fnCall(Ref(e.createStrFn), Size::sPtr);
+		s.to << fnCall(Ref(e.fnRefs.createStrFn), Size::sPtr);
 		s.to << mov(r.location(s), ptrA);
 
 		s.data.add(data, memberFn(this, &Constant::strData), this);

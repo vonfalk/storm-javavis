@@ -86,8 +86,8 @@ namespace storm {
 			}
 		}
 
-		engine().lazyCodeFn.set(address(&LazyCode::updateCode));
-		setCode(r.code(code::Ref(engine().lazyCodeFn), code::ptrConst(this)));
+		engine().fnRefs.lazyCodeFn.set(address(&LazyCode::updateCode));
+		setCode(r.code(code::Ref(engine().fnRefs.lazyCodeFn), code::ptrConst(this)));
 	}
 
 	const void *LazyCode::updateCode(LazyCode *c) {

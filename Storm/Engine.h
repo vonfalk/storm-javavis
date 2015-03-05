@@ -24,6 +24,24 @@ namespace storm {
 	};
 
 	/**
+	 * References to various functions in the compiler.
+	 */
+	class FnRefs {
+	public:
+		// Create.
+		FnRefs(code::Arena &arena);
+
+		// Reference to the addRef and release functions.
+		code::RefSource &addRef, &release;
+
+		// Reference to the memory allocation function.
+		code::RefSource allocRef, freeRef;
+
+		// Other references.
+		code::RefSource lazyCodeFn, createStrFn;
+	};
+
+	/**
 	 * Defines the root object of the compiler. This object contains
 	 * everything needed by the compiler itself, and shall be kept alive
 	 * as long as anything from the compiler is used.
@@ -32,10 +50,25 @@ namespace storm {
 	 */
 	class Engine : NoCopy {
 	public:
-		// Create the engine. 'root' is the location of the root package
-		// directory on disk. The package 'core' is assumed to be found
-		// as a subdirectory of the given root path.
-		Engine(const Path &root);
+		// Threading mode for the engine:
+		enum ThreadMode {
+			// Create a new main thread for the compiler (this is the storm::Compiler thread) to
+			// use for compiling code. This means that the compiler will manage itself, but care
+			// must be taken not to manipulate anything below the engine in another thread.
+			newMain,
+
+			// Reuses the caller of the constructor as the compiler thread (storm::Compiler). This
+			// makes it easier to interface with the compiler itself, since calls can be made
+			// directly into the compiler, but care must be taken to allow the compiler to process
+			// any messages sent to the compiler by calling UThread::leave(), or make the thread
+			// wait in a code::Lock or code::Sema for events.
+			reuseMain,
+		};
+
+		// Create the engine.
+		// 'root' is the location of the root package directory on disk. The
+		// package 'core' is assumed to be found as a subdirectory of the given root path.
+		Engine(const Path &root, ThreadMode mode);
 
 		~Engine();
 
@@ -55,6 +88,9 @@ namespace storm {
 		// as long as the compiler does. Returns a borrowed ptr.
 		Thread *thread(uintptr_t id);
 
+		// Set a specific thread to be used as a specific id.
+		void thread(uintptr_t id, Par<Thread> thread);
+
 		// Get the default scope lookup.
 		inline Auto<ScopeLookup> scopeLookup() { assert(defScopeLookup); return defScopeLookup; }
 
@@ -67,19 +103,8 @@ namespace storm {
 		// Arena.
 		code::Arena arena;
 
-		// Reference to the addRef and release functions.
-		code::RefSource &addRef, &release;
-
-		// Reference to the memory allocation function.
-		code::RefSource allocRef, freeRef;
-
-		// Other references.
-		code::RefSource lazyCodeFn, createStrFn;
-
-#ifdef DEBUG
-		// Debug output an integer.
-		code::RefSource dbgPrint;
-#endif
+		// Built-in functions.
+		FnRefs fnRefs;
 
 		// Get a reference to a virtual function call.
 		code::Ref virtualCall(VTablePos pos) const;

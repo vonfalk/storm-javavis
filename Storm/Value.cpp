@@ -75,7 +75,7 @@ namespace storm {
 			return code::Value();
 		} else if (type) {
 			if (type->flags & typeClass)
-				return code::Ref(type->engine.release);
+				return code::Ref(type->engine.fnRefs.release);
 			else if (Function *dtor = type->destructor())
 				return code::Ref(dtor->ref());
 			else
