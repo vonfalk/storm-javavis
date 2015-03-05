@@ -7,3 +7,12 @@ use core:debug;
 // in some cases during updates. This would break thread-safety.
 thread Other;
 
+// Should be able to access threads as regular values.
+Thread getThread() {
+	Other;
+}
+
+Thread getCompilerThread() {
+	Compiler;
+}
+

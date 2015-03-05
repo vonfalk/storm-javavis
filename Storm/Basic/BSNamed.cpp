@@ -312,8 +312,27 @@ namespace storm {
 
 
 	/**
+	 * Named thread.
+	 */
+
+	bs::NamedThreadAccess::NamedThreadAccess(Par<NamedThread> thread) : thread(thread) {}
+
+	Value bs::NamedThreadAccess::result() {
+		return Value(Thread::type(engine()));
+	}
+
+	void bs::NamedThreadAccess::code(const GenState &s, GenResult &to) {
+		if (to.needed()) {
+			s.to << code::mov(to.location(s), thread->ref());
+			s.to << code::addRef(thread->ref());
+		}
+	}
+
+
+	/**
 	 * Assignment.
 	 */
+
 	bs::ClassAssign::ClassAssign(Par<Expr> to, Par<Expr> value) : to(to), value(value) {
 		Value r = to->result();
 		if ((r.type->flags & typeClass) != typeClass)
@@ -394,7 +413,7 @@ namespace storm {
 
 
 	// Helper to create the actual type, given something found. If '!useLookup', then we will not use the lookup
-	// of the function or variable.
+	// of the function or variable (ie use vtables).
 	static bs::Expr *bs::findTarget(Named *n, Par<Expr> first, Par<Actual> actual, const SrcPos &pos, bool useLookup) {
 		if (!n)
 			return null;
@@ -420,6 +439,10 @@ namespace storm {
 				return CREATE(MemberVarAccess, n, first, v);
 			else
 				return CREATE(MemberVarAccess, n, actual->expressions.front(), v);
+		}
+
+		if (NamedThread *v = as<NamedThread>(n)) {
+			return CREATE(NamedThreadAccess, n, v);
 		}
 
 		return null;

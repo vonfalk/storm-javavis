@@ -17,8 +17,14 @@ namespace storm {
 		STORM_CTOR NamedThread(Par<Str> name);
 		STORM_CTOR NamedThread(Par<SStr> name);
 
+		// Destroy.
+		~NamedThread();
+
 		// Declared at.
 		SrcPos pos;
+
+		// Reference to this thread.
+		code::Ref ref();
 
 	protected:
 		// Output.
@@ -29,6 +35,8 @@ namespace storm {
 		// the thread safety is violated. Also double-check this when considering code updates!
 		Auto<Thread> thread;
 
+		// Reference.
+		code::RefSource *reference;
 	};
 
 }

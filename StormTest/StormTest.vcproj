@@ -270,6 +270,10 @@
 				RelativePath=".\ThreadTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Fn.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

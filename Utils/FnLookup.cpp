@@ -190,7 +190,7 @@ static void outputSymbol(wostream &to, SymInfo &symbol) {
 	// Name
 	to << symbol.Name;
 
-	// Function? Should be SymTagFunction, but that is not defined...
+	// Function?
 	if (symbol.Tag != SymTagFunction)
 		return;
 

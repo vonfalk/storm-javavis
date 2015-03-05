@@ -3,6 +3,7 @@
 #include "BSVar.h"
 #include "BSActual.h"
 #include "Function.h"
+#include "NamedThread.h"
 
 namespace storm {
 	namespace bs {
@@ -132,6 +133,26 @@ namespace storm {
 
 			// Extract the value itself from ptrA
 			void extractCode(const GenState &s, GenResult &to);
+		};
+
+		/**
+		 * Read a named thread variable.
+		 */
+		class NamedThreadAccess : public Expr {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR NamedThreadAccess(Par<NamedThread> thread);
+
+			// Result type.
+			virtual Value result();
+
+			// Generate code.
+			virtual void code(const GenState &s, GenResult &to);
+
+		private:
+			// Which thread?
+			Auto<NamedThread> thread;
 		};
 
 
