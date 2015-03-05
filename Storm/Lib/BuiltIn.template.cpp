@@ -97,6 +97,11 @@ namespace storm {
 		new (mem)T(p, q, r, s, u);
 	}
 
+	template <class T, class P, class Q, class R, class S, class U, class V>
+	void create7(void *mem, P p, Q q, R r, S s, U u, V v) {
+		new (mem)T(p, q, r, s, u, v);
+	}
+
 	/**
 	 * Destructor for built-in value types.
 	 */

@@ -4,6 +4,8 @@
 #include "Parser.h"
 #include "PkgReader.h"
 #include "Exception.h"
+#include "Thread.h"
+#include "NamedThread.h"
 
 namespace storm {
 
@@ -12,12 +14,29 @@ namespace storm {
 								Par<TypeName> result,
 								Par<Params> params,
 								Par<SStr> contents)
-		: pos(pos), name(name), result(result), params(params), contents(contents) {}
+		: pos(pos), name(name), result(result), params(params), thread(null), contents(contents) {}
+
+	bs::FunctionDecl::FunctionDecl(SrcPos pos,
+								Par<SStr> name,
+								Par<TypeName> result,
+								Par<Params> params,
+								Par<TypeName> thread,
+								Par<SStr> contents)
+		: pos(pos), name(name), result(result), params(params), thread(thread), contents(contents) {}
 
 	Function *bs::FunctionDecl::asFunction(const Scope &scope) {
 		Value result = this->result->resolve(scope);
 		vector<Value> params = this->params->cTypes(scope);
 		vector<String> names = this->params->cNames();
+
+		if (thread) {
+			Named *n = thread->find(scope);
+			if (NamedThread *t = as<NamedThread>(n)) {
+				TODO(L"Implement support for threads: " << *t);
+			} else {
+				throw SyntaxError(thread->pos, L"The identifier " + ::toS(thread) + L" is not a thread.");
+			}
+		}
 
 		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, name->pos, false);
 	}

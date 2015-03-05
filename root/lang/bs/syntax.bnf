@@ -42,6 +42,8 @@ Params => Params() : Type -> add, Name -> add, (",", Type -> add, Name -> add, )
 // Function
 Function => FunctionDecl(pos, name, result, params, contents) :
 Type result, Name name, "(", Params params, ")", "{" - SkipBlock contents - "}";
+Function => FunctionDecl(pos, name, result, params, thread, contents) :
+Type result, Name name, "(", Params params, ")", "on", Type thread, "{" - SkipBlock contents - "}";
 
 // Class or value?
 CVType => t : "class" t;

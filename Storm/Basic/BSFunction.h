@@ -25,11 +25,19 @@ namespace storm {
 									Par<Params> params,
 									Par<SStr> contents);
 
+			STORM_CTOR FunctionDecl(SrcPos pos,
+									Par<SStr> name,
+									Par<TypeName> result,
+									Par<Params> params,
+									Par<TypeName> thread,
+									Par<SStr> contents);
+
 			// Values.
 			SrcPos pos;
 			Auto<SStr> name;
 			Auto<TypeName> result;
 			Auto<Params> params;
+			Auto<TypeName> thread; // may be null
 			Auto<SStr> contents;
 
 			// Create a corresponding function.

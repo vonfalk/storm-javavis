@@ -56,6 +56,9 @@ namespace storm {
 			// Convert to a Name.
 			Name *toName(const Scope &scope);
 
+			// Find.
+			Named *find(const Scope &scope);
+
 			// Resolve to a type.
 			Value resolve(const Scope &scope);
 

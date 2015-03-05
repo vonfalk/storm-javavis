@@ -53,6 +53,11 @@ namespace storm {
 			return n.ret();
 		}
 
+		Named *bs::TypeName::find(const Scope &scope) {
+			Auto<Name> name = toName(scope);
+			return scope.find(name);
+		}
+
 		Value bs::TypeName::resolve(const Scope &scope) {
 			Auto<Name> name = toName(scope);
 			if (name->size() == 1 && name->at(0)->name == L"void")

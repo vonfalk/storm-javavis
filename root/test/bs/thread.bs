@@ -16,3 +16,10 @@ Thread getCompilerThread() {
 	Compiler;
 }
 
+Int postInt() {
+	otherIntFn(1);
+}
+
+Int otherIntFn(Int v) on Other {
+	8 + v;
+}

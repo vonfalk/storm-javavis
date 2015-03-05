@@ -10,4 +10,6 @@ BEGIN_TEST(ThreadTest) {
 	thread = runFn<Thread*>(L"test.bs.getCompilerThread");
 	CHECK_EQ(thread.borrow(), storm::Compiler.thread(*gEngine));
 
+	CHECK_EQ(runFn(L"test.bs.postInt"), 9);
+
 } END_TEST
