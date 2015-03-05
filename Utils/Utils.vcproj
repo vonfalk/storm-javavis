@@ -156,11 +156,23 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\Assert.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Color.cpp"
 				>
 			</File>
 			<File
+				RelativePath=".\Condition.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ConUtils.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DbgHelper.cpp"
 				>
 			</File>
 			<File
@@ -177,6 +189,10 @@
 			</File>
 			<File
 				RelativePath=".\FileTypes.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FnLookup.cpp"
 				>
 			</File>
 			<File
@@ -197,6 +213,10 @@
 			</File>
 			<File
 				RelativePath=".\Indent.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lock.cpp"
 				>
 			</File>
 			<File
@@ -268,6 +288,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\StackTrace.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -328,6 +352,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TypeInfo.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TypeInformation.cpp"
 				>
 			</File>
@@ -343,28 +371,16 @@
 				RelativePath=".\Vector.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\Assert.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TypeInfo.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Condition.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lock.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\Assert.h"
+				>
+			</File>
 			<File
 				RelativePath=".\AutoPtr.h"
 				>
@@ -386,11 +402,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Condition.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Containers.h"
 				>
 			</File>
 			<File
 				RelativePath=".\ConUtils.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DbgHelper.h"
 				>
 			</File>
 			<File
@@ -411,6 +435,10 @@
 			</File>
 			<File
 				RelativePath=".\FileTypes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FnLookup.h"
 				>
 			</File>
 			<File
@@ -570,6 +598,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\StackTrace.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
@@ -638,6 +670,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TypeInfo.h"
+				>
+			</File>
+			<File
 				RelativePath=".\TypeInformation.h"
 				>
 			</File>
@@ -659,18 +695,6 @@
 			</File>
 			<File
 				RelativePath=".\Vector.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Assert.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TypeInfo.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Condition.h"
 				>
 			</File>
 		</Filter>

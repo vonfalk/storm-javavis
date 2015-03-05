@@ -181,7 +181,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CondFlag.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Debug.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FnLookup.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Frame.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Function.cpp"
 				>
 			</File>
 			<File
@@ -210,6 +226,10 @@
 			</File>
 			<File
 				RelativePath=".\Output.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Redirect.cpp"
 				>
 			</File>
 			<File
@@ -253,6 +273,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Size.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -273,6 +297,14 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\Sync.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\X86\Transform64.cpp"
 				>
 			</File>
@@ -281,7 +313,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\X86\TransformX86.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\UsedRegisters.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\UThread.cpp"
 				>
 			</File>
 			<File
@@ -293,55 +333,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Function.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\VTable.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\UThread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Redirect.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\X86\TransformX86.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CondFlag.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Size.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Debug.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\StackTrace.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FnLookup.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DbgHelper.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Sync.cpp"
 				>
 			</File>
 		</Filter>
@@ -371,7 +363,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CondFlag.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Debug.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Exception.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FnLookup.h"
 				>
 			</File>
 			<File
@@ -379,7 +383,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Function.h"
+				>
+			</File>
+			<File
+				RelativePath=".\InlineList.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Instruction.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ISize.h"
 				>
 			</File>
 			<File
@@ -411,6 +427,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Redirect.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Reference.h"
 				>
 			</File>
@@ -431,11 +451,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Size.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
 			<File
+				RelativePath=".\Sync.h"
+				>
+			</File>
+			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.h"
 				>
 			</File>
 			<File
@@ -447,7 +483,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\X86\TransformX86.h"
+				>
+			</File>
+			<File
 				RelativePath=".\UsedRegisters.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UThread.h"
 				>
 			</File>
 			<File
@@ -459,67 +503,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Function.h"
-				>
-			</File>
-			<File
 				RelativePath=".\VTable.h"
-				>
-			</File>
-			<File
-				RelativePath=".\UThread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Redirect.h"
-				>
-			</File>
-			<File
-				RelativePath=".\X86\TransformX86.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CondFlag.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Size.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ISize.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Debug.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StackTrace.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FnLookup.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DbgHelper.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\InlineList.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Sync.h"
 				>
 			</File>
 		</Filter>

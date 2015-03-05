@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "Test/Test.h"
-#include "Code/StackTrace.h"
+#include "Utils/StackTrace.h"
 #include "Code/FnLookup.h"
 
 StackTrace foo() {
 	PNN(""); // This prevents some optimization and gives better results on the test below.
-	return code::stackTrace();
+	return stackTrace();
 }
 
 StackTrace bar(nat depth, bool exception) {
