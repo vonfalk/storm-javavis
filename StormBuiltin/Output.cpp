@@ -270,10 +270,24 @@ String headerList(const vector<Header *> &headers, const Path &root) {
 	for (nat i = 0; i < headers.size(); i++) {
 		Header &header = *headers[i];
 
-		if (header.getFunctions().size() > 0 || header.getTypes().size() > 0) {
+		if (header.getFunctions().size() > 0 || header.getTypes().size() > 0 || header.getThreads().size() > 0) {
 			Path rel = header.file.makeRelative(root);
 			out << L"#include \"" << fixPath(rel.toS()) << L"\"\n";
 		}
+	}
+
+	return out.str();
+}
+
+String threadList(const vector<Thread> &threads) {
+	std::wostringstream out;
+
+	for (nat i = 0; i < threads.size(); i++) {
+		const Thread &t = threads[i];
+
+		out << L"{ L\"" << t.pkg << L"\", ";
+		out << L"L\"" << t.name << L"\", ";
+		out << L"&" << t.cppName << " },\n";
 	}
 
 	return out.str();

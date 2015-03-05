@@ -23,6 +23,11 @@ const vector<Function> &Header::getFunctions() {
 	return functions;
 }
 
+const vector<Thread> &Header::getThreads() {
+	parse();
+	return threads;
+}
+
 void Header::parse() {
 	if (parsed)
 		return;
@@ -53,6 +58,18 @@ void Header::parse(Tokenizer &tok) {
 			// Ignore preprocessor text.
 			if (token == L"#define")
 				tok.next();
+		} else if (token == L"STORM_THREAD") {
+			tok.expect(L"(");
+			String name = tok.next();
+			tok.expect(L")");
+			tok.expect(L";");
+
+			Thread t = {
+				scope.cppName() + name,
+				name,
+				pkg
+			};
+			threads.push_back(t);
 		} else if (token == L"STORM_FN") {
 			functions.push_back(Function::read(pkg, scope, lastType, tok));
 		} else if (token == L"STORM_CLASS" || token == L"STORM_VALUE") {

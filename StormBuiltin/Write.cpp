@@ -91,6 +91,13 @@ vector<String> readFile(const Path &file, const FileData &data) {
 		} else if (line.find(L"// END STATIC") != String::npos) {
 			keep = true;
 			lines.push_back(line);
+		} else if (line.find(L"// BEGIN THREADS") != String::npos) {
+			keep = false;
+			lines.push_back(line);
+			addLines(lines, data.threadList, indentation(line));
+		} else if (line.find(L"// END THREADS") != String::npos) {
+			keep = true;
+			lines.push_back(line);
 		} else if (keep) {
 			lines.push_back(line);
 		}

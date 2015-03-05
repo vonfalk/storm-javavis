@@ -51,6 +51,10 @@ namespace storm {
 		inline Type *specialBuiltIn(Special t) const { return specialCached[nat(t)].borrow(); }
 		void setSpecialBuiltIn(Special t, Par<Type> z);
 
+		// Find threads. The threads declared by STORM_THREAD are looked up this way. They live
+		// as long as the compiler does. Returns a borrowed ptr.
+		Thread *thread(uintptr_t id);
+
 		// Get the default scope lookup.
 		inline Auto<ScopeLookup> scopeLookup() { assert(defScopeLookup); return defScopeLookup; }
 
@@ -105,6 +109,10 @@ namespace storm {
 		// Cached types.
 		vector<Auto<Type> > cached;
 		vector<Auto<Type> > specialCached;
+
+		// Threads.
+		typedef hash_map<uintptr_t, Auto<Thread> > ThreadMap;
+		ThreadMap threads;
 
 		// Maxium C++ VTable size.
 		nat cppVTableSize;

@@ -63,6 +63,23 @@ Types allTypes(vector<Header *> &headers) {
 	return t;
 }
 
+vector<Thread> allThreads(vector<Header *> &headers) {
+	vector<Thread> threads;
+
+	for (nat i = 0; i < headers.size(); i++) {
+		Header &h = *headers[i];
+		const vector<Thread> &t = h.getThreads();
+
+		for (nat i = 0; i < t.size(); i++) {
+			threads.push_back(t[i]);
+		}
+	}
+
+	sort(threads.begin(), threads.end());
+
+	return threads;
+}
+
 int _tmain(int argc, _TCHAR* argv[]) {
 	initDebug();
 
@@ -129,6 +146,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 			d.vtableCode = vtableCode(t);
 			d.functionList = functionList(headers, t);
 			d.headerList = headerList(headers, root);
+			d.threadList = threadList(allThreads(headers));
 
 			update(input, output, asmOutput, d);
 		} catch (const Exception &e) {

@@ -25,6 +25,7 @@ public:
 
 	// Concatenation.
 	CppName operator +(const CppName &o) const;
+	CppName operator +(const String &o) const;
 
 	// Use in set.
 	bool operator <(const CppName &o) const;

@@ -240,6 +240,10 @@
 				RelativePath=".\ArrayTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ThreadTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -260,6 +264,10 @@
 			</File>
 			<File
 				RelativePath=".\HashTest.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ThreadTest.cpp"
 				>
 			</File>
 		</Filter>

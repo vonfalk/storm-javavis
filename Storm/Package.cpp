@@ -39,7 +39,7 @@ namespace storm {
 		if (parent() == null)
 			to << "Root package";
 		else
-			to << "Pkg " << name;
+			to << "Pkg " << identifier();
 
 		if (pkgPath)
 			to << " in " << *pkgPath;

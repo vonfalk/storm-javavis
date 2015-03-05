@@ -454,6 +454,18 @@
 				RelativePath=".\Basic\BSCtor.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\NamedThread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Storm.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -742,6 +754,22 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSCtor.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NamedThread.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NamedThread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.cpp"
 				>
 			</File>
 		</Filter>

@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include "Std.h"
 #include "Exception.h"
+#include "Thread.h"
 #include "Lib/Str.h"
 
 namespace storm {
@@ -66,6 +67,9 @@ namespace storm {
 		// Release more cached types. This needs to be above clearing other types.
 		specialCached.clear();
 
+		// Release any threads now.
+		threads.clear();
+
 		// Keep the type type a little longer.
 		Type *t = Type::type(*this);
 		t->addRef();
@@ -86,6 +90,17 @@ namespace storm {
 
 	void Engine::setSpecialBuiltIn(Special t, Par<Type> z) {
 		specialCached[nat(t)] = z;
+	}
+
+	Thread *Engine::thread(uintptr_t id) {
+		ThreadMap::const_iterator i = threads.find(id);
+		if (i == threads.end()) {
+			Auto<Thread> t = CREATE(Thread, *this);
+			threads.insert(make_pair(id, t));
+			return t.borrow();
+		} else {
+			return i->second.borrow();
+		}
 	}
 
 	Package *Engine::package(const String &path) {

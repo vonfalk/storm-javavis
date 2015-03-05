@@ -51,10 +51,13 @@ CVType => t : "value" t;
 Class => Class(pos, t, name, contents) : CVType t, Name name, "{" - SkipBlock contents - "}";
 Class => Class(pos, t, name, contents, base) : CVType t, Name name, "extends", Type base, "{" - SkipBlock contents - "}";
 
+// Named thread declaration.
+NamedThread => NamedThread(name) : "thread", Name name, ";";
 
 // Possible root blocks.
 FileItem => fn : Function fn;
 FileItem => cls : Class cls;
+FileItem => t : NamedThread t;
 
 // Root rule, used to parse an entire file. (except use-statements).
 File => Contents() : , (FileItem -> add, )*;

@@ -33,6 +33,12 @@ CppName CppName::operator +(const CppName &o) const {
 	return r;
 }
 
+CppName CppName::operator +(const String &o) const {
+	vector<String> r = parts;
+	r.push_back(o);
+	return r;
+}
+
 bool CppName::operator <(const CppName &o) const {
 	return this->parts < o.parts;
 }

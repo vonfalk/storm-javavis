@@ -38,7 +38,7 @@ namespace code {
 		inline ThreadData *threadData() const { return data; }
 
 		// Start a thread.
-		static Thread start(const Fn<void, void> &start);
+		static Thread spawn(const Fn<void, void> &start);
 
 		// Get the current thread.
 		static Thread current();

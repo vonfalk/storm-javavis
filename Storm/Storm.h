@@ -44,11 +44,30 @@ private:
 // Mark a constructor.
 #define STORM_CTOR
 
+// Declare a thread.
+#define STORM_THREAD(name)						\
+	extern storm::DeclThread name
+
+// Define the thread.
+#define DEFINE_STORM_THREAD(name)				\
+	storm::DeclThread name
 
 namespace storm {
 	class Engine;
+	class Thread;
 
 	using code::Size;
 	using code::Offset;
-}
 
+	/**
+	 * Class used when declaring named threads from C++.
+	 */
+	struct DeclThread {
+		// The address of this member is our unique identifier.
+		nat dummy;
+
+		// Get the thread we are representing.
+		storm::Thread *thread(Engine &e) const;
+
+	};
+}

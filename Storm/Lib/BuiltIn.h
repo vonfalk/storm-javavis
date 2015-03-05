@@ -81,6 +81,21 @@ namespace storm {
 	};
 
 	/**
+	 * A list of all built-in threads.
+	 */
+	struct BuiltInThread {
+
+		// Location (package).
+		const wchar *pkg;
+
+		// Name.
+		const wchar *name;
+
+		// Pointer to the thread-declaration type.
+		DeclThread *decl;
+	};
+
+	/**
 	 * Get list of built-in types.
 	 */
 	const BuiltInType *builtInTypes();
@@ -89,5 +104,10 @@ namespace storm {
 	 * Get the list. The list ends with a function with a null 'fnPtr'.
 	 */
 	const BuiltInFunction *builtInFunctions();
+
+	/**
+	 * Get the list of built in threads. Ends with a null entry.
+	 */
+	const BuiltInThread *builtInThreads();
 
 }

@@ -3,6 +3,7 @@
 #include "Code.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	/**
 	 * A default destructor for a type. This is provided since it is useful in

@@ -92,7 +92,7 @@ namespace code {
 		return first;
 	}
 
-	Thread Thread::start(const Fn<void, void> &fn) {
+	Thread Thread::spawn(const Fn<void, void> &fn) {
 		ThreadStart start(fn);
 		startThread(start);
 		start.sema.down();

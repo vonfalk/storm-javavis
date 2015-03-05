@@ -7,6 +7,7 @@
 #include "Exception.h"
 #include "Function.h"
 #include "Engine.h"
+#include "NamedThread.h"
 #include "Code/VTable.h"
 
 namespace storm {
@@ -102,6 +103,17 @@ namespace storm {
 		tc->setSuper(super);
 	}
 
+	static void addThread(Engine &to, const BuiltInThread *t) {
+		Auto<Name> pkgName = parseSimpleName(to, t->pkg);
+		Package *pkg = to.package(pkgName, true);
+		if (!pkg)
+			throw BuiltInError(L"Failed to locate package " + toS(t->pkg));
+
+		Thread *thread = t->decl->thread(to);
+		Auto<NamedThread> created = CREATE(NamedThread, to, String(t->name), thread);
+		pkg->add(created);
+	}
+
 	static nat builtInCount() {
 		nat count = 0;
 		for (const BuiltInType *t = builtInTypes(); t->name; t++)
@@ -118,6 +130,9 @@ namespace storm {
 	}
 
 	static void addBuiltIn(Engine &to) {
+		for (const BuiltInThread *t = builtInThreads(); t->name; t++) {
+			addThread(to, t);
+		}
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
 			addSuper(to, t);
 		}

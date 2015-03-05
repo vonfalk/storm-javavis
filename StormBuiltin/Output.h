@@ -20,3 +20,7 @@ String functionList(const vector<Header *> &headers, const Types &t);
 
 // Generate list of includes
 String headerList(const vector<Header *> &headers, const Path &root);
+
+// Generate list of threads.
+String threadList(const vector<Thread> &threads);
+

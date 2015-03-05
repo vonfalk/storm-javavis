@@ -14,6 +14,10 @@ namespace storm {
 		functions.push_back(t);
 	}
 
+	void bs::Contents::add(Par<NamedThread> t) {
+		threads.push_back(t);
+	}
+
 	void bs::Contents::setScope(const Scope &scope) {
 		for (nat i = 0; i < types.size(); i++) {
 			if (bs::Class *c = as<bs::Class>(types[i].borrow())) {

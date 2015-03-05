@@ -1,5 +1,6 @@
 #pragma once
 #include "Std.h"
+#include "NamedThread.h"
 #include "Basic/BSFunction.h"
 
 namespace storm {
@@ -21,11 +22,17 @@ namespace storm {
 			// Add a function.
 			void STORM_FN add(Par<FunctionDecl> fn);
 
+			// Add a named thread.
+			void STORM_FN add(Par<NamedThread> thread);
+
 			// All types.
 			vector<Auto<Type> > types;
 
 			// All function definitions.
 			vector<Auto<FunctionDecl> > functions;
+
+			// All named threads.
+			vector<Auto<NamedThread> > threads;
 
 			// Set the scope for all contents that needs it.
 			void setScope(const Scope &scope);

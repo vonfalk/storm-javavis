@@ -129,6 +129,18 @@ namespace storm {
 		return fns;
 	}
 
+	/**
+	 * Everything between BEGIN THREADS and END THREADS is auto-generated.
+	 */
+	const BuiltInThread *builtInThreads() {
+		static BuiltInThread threads[] = {
+			// BEGIN THREADS
+			// END THREADS
+			{ null, null, null },
+		};
+		return threads;
+	}
+
 }
 
 #endif

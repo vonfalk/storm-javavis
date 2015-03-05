@@ -25,7 +25,7 @@ BEGIN_TEST(ThreadTest) {
 	var = 0;
 	local = 1;
 	{
-		Thread t = Thread::start(simpleVoidFn(otherThread));
+		Thread t = Thread::spawn(simpleVoidFn(otherThread));
 		CHECK_NEQ(t, Thread::current());
 	}
 	Sleep(30);
@@ -33,7 +33,7 @@ BEGIN_TEST(ThreadTest) {
 	CHECK_EQ(var, 2);
 
 	{
-		Thread t = Thread::start(simpleVoidFn(otherThread));
+		Thread t = Thread::spawn(simpleVoidFn(otherThread));
 		CHECK_NEQ(t, Thread::current());
 	}
 	stopSema.down();
@@ -67,17 +67,17 @@ static void uthreadInterop2() {
 
 BEGIN_TEST(UThreadInterop) {
 	var = 0;
-	Thread::start(simpleVoidFn(uthreadInterop));
+	Thread::spawn(simpleVoidFn(uthreadInterop));
 	stopSema.down();
 	CHECK_EQ(var, 1);
 
 	var = 0;
-	Thread::start(simpleVoidFn(uthreadInterop2));
+	Thread::spawn(simpleVoidFn(uthreadInterop2));
 	stopSema.down();
 	CHECK_EQ(var, 2);
 
 	var = 0;
-	Thread t = Thread::start(Fn<void, void>());
+	Thread t = Thread::spawn(Fn<void, void>());
 	Sleep(20); // Make sure 't' enters the condition waiting.
 	UThread::spawn(simpleVoidFn(setVar), &t);
 	stopSema.down();
@@ -114,7 +114,7 @@ struct Cond {
 BEGIN_TEST(ConditionTest) {
 	Cond z;
 
-	Thread::start(memberVoidFn(&z, &Cond::run));
+	Thread::spawn(memberVoidFn(&z, &Cond::run));
 
 	z.start.up();
 	Sleep(10); // Let the other thread run into c.wait()

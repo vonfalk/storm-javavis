@@ -30,6 +30,10 @@ namespace storm {
 		for (nat i = 0; i < contents->types.size(); i++) {
 			package->add(contents->types[i].borrow());
 		}
+
+		for (nat i = 0; i < contents->threads.size(); i++) {
+			package->add(contents->threads[i].borrow());
+		}
 	}
 
 	void bs::File::resolveTypes() {

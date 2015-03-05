@@ -1,0 +1,9 @@
+use core;
+use core:debug;
+
+// Declare a named thread. Threads are a special kind of global variables, since
+// the compiler have to impose stricter checks on threads compared to regular global
+// variables. For example, a named thread may not mutate like a global variable may do
+// in some cases during updates. This would break thread-safety.
+thread Other;
+

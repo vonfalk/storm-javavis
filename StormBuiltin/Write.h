@@ -8,6 +8,7 @@ struct FileData {
 	String vtableCode;
 	String functionList;
 	String headerList;
+	String threadList;
 };
 
 void update(const Path &inFile, const Path &outFile, const Path &asmFile, const FileData &data);

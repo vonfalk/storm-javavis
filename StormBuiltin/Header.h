@@ -2,6 +2,7 @@
 #include "Utils/Path.h"
 #include "Type.h"
 #include "Function.h"
+#include "Thread.h"
 #include "Tokenizer.h"
 
 /**
@@ -21,6 +22,9 @@ public:
 	// Get the functions in here.
 	const vector<Function> &getFunctions();
 
+	// Get the threads in here.
+	const vector<Thread> &getThreads();
+
 protected:
 	virtual void output(wostream &o) const;
 
@@ -33,6 +37,9 @@ private:
 
 	// Cache of functions.
 	vector<Function> functions;
+
+	// Cache of threads.
+	vector<Thread> threads;
 
 	// Parse the file.
 	void parse();
