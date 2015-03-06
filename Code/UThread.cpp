@@ -146,24 +146,34 @@ namespace code {
 		return UThread(t);
 	}
 
-	UThread UThread::spawn(const Params &p, const FnParams &params, const Thread *on) {
-		UThreadData *t = UThreadData::create();
+	UThread UThread::spawn(const Params *p, const FnParams *params, const Thread *on, UThreadData *t) {
+		if (t == null)
+			t = UThreadData::create();
 
 		// Copy parameters to the stack of the new thread.
-		Params *pPos = (Params *)t->alloc(sizeof(p));
-		*pPos = p;
+		Params *pPos = (Params *)t->alloc(sizeof(Params));
+		*pPos = *p;
 
 		// Copy parameters a bit over the top. Space for a return value and some temporary space between.
-		void *paramsPos = t->pushParams(params, p.result.size);
+		void *paramsPos = t->pushParams(*params, p->result.size);
 
 		// Set up the initial function call.
-		t->pushParams(null, FnParams().add(pPos).add(paramsPos));
+		t->pushParams(null, pPos, paramsPos);
 		t->pushContext(&spawnParams);
 
 		// Done.
 		insert(t, on);
 		return UThread(t);
 	}
+
+	UThreadData *UThread::spawnLater() {
+		return UThreadData::create();
+	}
+
+	void UThread::abortSpawn(UThread *data) {
+		delete data;
+	}
+
 
 	/**
 	 * UThread data.
@@ -337,21 +347,29 @@ namespace code {
 		return sz;
 	}
 
+	void *UThread::spawnParamMem(UThreadData *data) {
+		// The stack grows from the bottom, so we can reuse the top for parameters.
+		return data->stackBase;
+	}
+
 	static void *allocStack(nat size) {
 		nat pageSz = pageSize();
 		size = roundUp(size, pageSz);
 		size += pageSz; // we need a guard page.
 
-		void *mem = VirtualAlloc(null, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+		byte *mem = (byte *)VirtualAlloc(null, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
 		DWORD oldProt;
-		VirtualProtect(mem, pageSz - 1, PAGE_READONLY | PAGE_GUARD, &oldProt);
+		VirtualProtect(mem, 1, PAGE_READONLY | PAGE_GUARD, &oldProt);
 
-		return mem;
+		// Do not show the guard page to other parts...
+		return mem + pageSz;
 	}
 
 	static void freeStack(void *base, nat size) {
-		VirtualFree(base, 0, MEM_RELEASE);
+		byte *mem = (byte *)base;
+		mem -= pageSize();
+		VirtualFree(mem, 0, MEM_RELEASE);
 	}
 
 	static void **initialEsp(void *base, nat size) {
@@ -513,6 +531,12 @@ namespace code {
 
 	void UThreadData::pushParams(const void *returnTo, void *param) {
 		push(param);
+		push((void *)returnTo);
+	}
+
+	void UThreadData::pushParams(const void *returnTo, void *param1, void *param2) {
+		push(param2);
+		push(param1);
 		push((void *)returnTo);
 	}
 

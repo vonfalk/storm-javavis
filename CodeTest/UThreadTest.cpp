@@ -286,3 +286,21 @@ BEGIN_TEST(UThreadSemaInterop) {
 
 } END_TEST
 
+static int spawnLaterFn(int a, int b) {
+	return a + b;
+}
+
+BEGIN_TEST(UThreadSpawnLater) {
+	int v1 = 10;
+	int v2 = 20;
+	int r;
+	UThread::Params params = { &spawnLaterFn, &r, error, checkInt, typeInfo<int>() };
+
+	UThreadData *data = UThread::spawnLater();
+	FnParams p(UThread::spawnParamMem(data));
+	p.add(v1).add(v2);
+	UThread::spawn(&params, &p, null, data);
+	UThread::leave();
+
+	CHECK_EQ(r, 30);
+} END_TEST

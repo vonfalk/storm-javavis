@@ -118,8 +118,9 @@ namespace code {
 		static UThread spawn(const void *fn, const FnParams &params, const Thread *on = null);
 
 		// Spawn using a plain function pointer and parameters. Works much like the one below,
-		// but is not as type-safe.
-		static UThread spawn(const Params &p, const FnParams &params, const Thread *on = null);
+		// but is not as type-safe. Also usable to launch threads from machine code.
+		static UThread CODECALL spawn(const Params *p, const FnParams *params,
+									const Thread *on = null, UThreadData *d = null);
 
 		// Spawn using a plain function pointer and parameters. Calls either 'done' or 'error'
 		// in 'result' when the execution of 'fn' is finished.
@@ -132,8 +133,30 @@ namespace code {
 				(const void *)r.done,
 				typeInfo<R>(),
 			};
-			return spawn(p, params, on);
+			return spawn(&p, &params, on);
 		}
+
+		/**
+		 * Spawn a new UThread in two step. This can be used to pass parameters easily from
+		 * machine code, without allocating any memory at all except for the stack and internal
+		 * data needed by the UThread itself (which may be removed in the future).
+		 * This is a four step process:
+		 * 1: call spawnLater to allocate the thread itself.
+		 * 2: call spawnParamMem(v) to get a pointer to the memory usable for parameters.
+		 * 3: add parameters using FnParams
+		 * 4: call either UThread::spawn() or abortSpawn()
+		 */
+
+		// Spawn a thread later. Returns a thread that is allocated but not yet scheduled. Make
+		// sure to either start it using 'spawn' or 'abortSpawn' to avoid leaking resources.
+		static UThreadData *CODECALL spawnLater();
+
+		// Get memory usable for parameters.
+		static void *CODECALL spawnParamMem(UThreadData *data);
+
+		// Abort the spawn.
+		static void CODECALL abortSpawn(UThread *data);
+
 
 		// Get the thread data. Mainly for internal use.
 		inline UThreadData *threadData() { return data; }
@@ -200,6 +223,7 @@ namespace code {
 
 		// Push some parameters on the stack.
 		void pushParams(const void *returnTo, void *param);
+		void pushParams(const void *returnTo, void *param1, void *param2);
 		void pushParams(const void *returnTo, const FnParams &params);
 
 		// Push parameters while leaving some space on the stack.
