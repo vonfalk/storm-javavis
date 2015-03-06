@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Test/Test.h"
-#include "Code/Function.h"
 
 static int tmpVar = 0;
 
@@ -23,7 +22,7 @@ BEGIN_TEST(TestVoid) {
 	Binary b(arena, L"code", l);
 
 	tmpVar = 0;
-	FnCall().call<void>(b.getData());
+	call<void>(b.getData());
 	CHECK_EQ(tmpVar, 3);
 
 } END_TEST

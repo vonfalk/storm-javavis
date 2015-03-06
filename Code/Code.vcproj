@@ -197,10 +197,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Function.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Instruction.cpp"
 				>
 			</File>
@@ -336,6 +332,10 @@
 				RelativePath=".\VTable.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\FnParams.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -380,10 +380,6 @@
 			</File>
 			<File
 				RelativePath=".\Frame.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Function.h"
 				>
 			</File>
 			<File
@@ -504,6 +500,10 @@
 			</File>
 			<File
 				RelativePath=".\VTable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FnParams.h"
 				>
 			</File>
 		</Filter>

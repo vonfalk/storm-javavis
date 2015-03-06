@@ -136,7 +136,7 @@ namespace code {
 		return UThread(t);
 	}
 
-	UThread UThread::spawn(const void *fn, const FnCall &params, const Thread *on) {
+	UThread UThread::spawn(const void *fn, const FnParams &params, const Thread *on) {
 		UThreadData *t = UThreadData::create();
 
 		t->pushParams(&exitUThread, params);
@@ -146,7 +146,7 @@ namespace code {
 		return UThread(t);
 	}
 
-	UThread UThread::spawn(const Params &p, const FnCall &params, const Thread *on) {
+	UThread UThread::spawn(const Params &p, const FnParams &params, const Thread *on) {
 		UThreadData *t = UThreadData::create();
 
 		// Copy parameters to the stack of the new thread.
@@ -157,7 +157,7 @@ namespace code {
 		void *paramsPos = t->pushParams(params, p.result.size);
 
 		// Set up the initial function call.
-		t->pushParams(null, FnCall().param(pPos).param(paramsPos));
+		t->pushParams(null, FnParams().add(pPos).add(paramsPos));
 		t->pushContext(&spawnParams);
 
 		// Done.
@@ -516,24 +516,24 @@ namespace code {
 		push((void *)returnTo);
 	}
 
-	void UThreadData::pushParams(const void *returnTo, const FnCall &params) {
-		nat s = params.paramsSize();
+	void UThreadData::pushParams(const void *returnTo, const FnParams &params) {
+		nat s = params.totalSize();
 		assert(s % 4 == 0);
 		esp -= s / 4;
-		params.copyParams(esp);
+		params.copy(esp);
 		push((void *)returnTo);
 	}
 
-	void *UThreadData::pushParams(const FnCall &params, nat minSpace) {
+	void *UThreadData::pushParams(const FnParams &params, nat minSpace) {
 		minSpace += 10 * 4; // Space for the context and some return addresses.
 		// Extra space for the function. VS fills about 200 bytes of the stack
 		// with random data in the function prolog, so we want to have a good margin here.
 		minSpace += 200 * 4;
 
-		nat s = params.paramsSize();
+		nat s = params.totalSize();
 		assert(s % 4 == 0);
 		void **to = esp - (s + minSpace) / 4;
-		params.copyParams(to);
+		params.copy(to);
 		return to;
 	}
 

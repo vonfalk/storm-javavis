@@ -82,7 +82,7 @@ BEGIN_TEST(UThreadResultTest) {
 	int c = 0;
 	{
 		bool e = false;
-		FnCall params; params.param(e);
+		FnParams params; params.add(e);
 		UThread::Result<void, int> rv = { &c, &checkVoid, &error };
 		UThread::spawn(returnVoid, params, rv);
 		UThread::leave();
@@ -96,7 +96,7 @@ BEGIN_TEST(UThreadResultTest) {
 
 	{
 		int v = 10;
-		FnCall params; params.param(v);
+		FnParams params; params.add(v);
 		UThread::Result<int, int> ri = { &c, &checkInt, &error };
 		UThread::spawn(returnInt, params, ri);
 		UThread::leave();
@@ -105,7 +105,7 @@ BEGIN_TEST(UThreadResultTest) {
 
 	{
 		int64 v = 1024LL << 30LL;
-		FnCall params; params.param(v);
+		FnParams params; params.add(v);
 		UThread::Result<int64, int> ri = { &c, &checkInt64, &error };
 		UThread::spawn(returnInt64, params, ri);
 		UThread::leave();
@@ -115,7 +115,7 @@ BEGIN_TEST(UThreadResultTest) {
 	{
 		double r = 0.0;
 		float v = 13.37f;
-		FnCall params; params.param(v);
+		FnParams params; params.add(v);
 		UThread::Result<float, double> ri = { &r, &checkFloat, &errorFloat };
 		UThread::spawn(returnFloat, params, ri);
 		UThread::leave();
@@ -125,7 +125,7 @@ BEGIN_TEST(UThreadResultTest) {
 	{
 		double r = 0.0;
 		double v = 13.37;
-		FnCall params; params.param(v);
+		FnParams params; params.add(v);
 		UThread::Result<double, double> ri = { &r, &checkDouble, &errorFloat };
 		UThread::spawn(returnDouble, params, ri);
 		UThread::leave();
@@ -136,7 +136,7 @@ BEGIN_TEST(UThreadResultTest) {
 	{
 		int r = 0;
 		int t = 22;
-		FnCall params; params.param(t);
+		FnParams params; params.add(t);
 		UThread::Result<Tracker, int> ri = { &r, &checkTracker, &error };
 		UThread::spawn(returnTracker, params, ri);
 		UThread::leave();
@@ -153,7 +153,7 @@ BEGIN_TEST(UThreadResultTest) {
 	{
 		int r = 0;
 		Tracker t(22);
-		FnCall params; params.param(t);
+		FnParams params; params.add(t);
 		UThread::Result<int, int> ri = { &r, &checkInt, &error };
 		UThread::spawn(takeTracker, params, ri);
 		UThread::leave();

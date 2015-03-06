@@ -167,11 +167,27 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\Lib\Array.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\ArrayTemplate.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Auto.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\BnfReader.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Lib\Bool.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSActual.cpp"
 				>
 			</File>
 			<File
@@ -187,7 +203,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Basic\BSCtor.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Basic\BSExpr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSFor.cpp"
 				>
 			</File>
 			<File
@@ -195,7 +219,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Basic\BSIf.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Basic\BSIncludes.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSNamed.cpp"
 				>
 			</File>
 			<File
@@ -215,15 +247,31 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Basic\BSVar.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSWhile.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\BuiltIn.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\BuiltIn.template.cpp"
+				RelativePath=".\Code.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Code.cpp"
+				RelativePath=".\CodeData.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CodeGen.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Debug.cpp"
 				>
 			</File>
 			<File
@@ -232,6 +280,10 @@
 			</File>
 			<File
 				RelativePath=".\Function.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Handle.cpp"
 				>
 			</File>
 			<File
@@ -244,6 +296,14 @@
 			</File>
 			<File
 				RelativePath=".\Named.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NamedThread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NameSet.cpp"
 				>
 			</File>
 			<File
@@ -303,6 +363,14 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\Storm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StormVTable.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\Str.cpp"
 				>
 			</File>
@@ -339,6 +407,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Template.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Tokenizer.cpp"
 				>
 			</File>
@@ -347,47 +423,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Value.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\VTables.asm"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSVar.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSNamed.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CodeGen.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSIf.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSWhile.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSFor.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Auto.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TypeVar.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TypeLayout.cpp"
+				RelativePath=".\TypeChain.cpp"
 				>
 			</File>
 			<File
@@ -395,7 +431,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TypeChain.cpp"
+				RelativePath=".\TypeDtor.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TypeLayout.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TypeVar.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Value.cpp"
 				>
 			</File>
 			<File
@@ -403,67 +451,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\StormVTable.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\VTablePos.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Debug.cpp"
+				RelativePath=".\Lib\VTables.asm"
 				>
 			</File>
 			<File
 				RelativePath=".\VTableSlot.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSActual.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TypeDtor.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NameSet.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Array.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Template.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\ArrayTemplate.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Handle.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CodeData.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSCtor.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NamedThread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Storm.cpp"
 				>
 			</File>
 		</Filter>
@@ -473,7 +469,19 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\Lib\Array.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\ArrayTemplate.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\Auto.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\Basic.h"
 				>
 			</File>
 			<File
@@ -482,6 +490,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Bool.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSActual.h"
 				>
 			</File>
 			<File
@@ -497,7 +509,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Basic\BSCtor.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Basic\BSExpr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSFor.h"
 				>
 			</File>
 			<File
@@ -505,7 +525,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Basic\BSIf.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Basic\BSIncludes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSNamed.h"
 				>
 			</File>
 			<File
@@ -525,11 +553,31 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Basic\BSVar.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSWhile.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\BuiltIn.h"
 				>
 			</File>
 			<File
 				RelativePath=".\Code.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CodeData.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CodeGen.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Debug.h"
 				>
 			</File>
 			<File
@@ -545,6 +593,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lib\Handle.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\Int.h"
 				>
 			</File>
@@ -554,6 +606,18 @@
 			</File>
 			<File
 				RelativePath=".\Named.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NamedThread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NamedThread.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NameSet.h"
 				>
 			</File>
 			<File
@@ -601,6 +665,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\StormVTable.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\Str.h"
 				>
 			</File>
@@ -641,6 +709,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Template.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Tokenizer.h"
 				>
 			</File>
@@ -649,39 +729,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Value.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CodeGen.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSVar.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSNamed.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSIf.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSWhile.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSFor.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TypeVar.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TypeLayout.h"
+				RelativePath=".\TypeChain.h"
 				>
 			</File>
 			<File
@@ -689,39 +737,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TypeChain.h"
-				>
-			</File>
-			<File
-				RelativePath=".\VTable.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StormVTable.h"
-				>
-			</File>
-			<File
-				RelativePath=".\VTablePos.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Debug.h"
-				>
-			</File>
-			<File
-				RelativePath=".\VTableSlot.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\Basic.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSActual.h"
-				>
-			</File>
-			<File
 				RelativePath=".\TypeDtor.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TypeLayout.h"
 				>
 			</File>
 			<File
@@ -729,47 +749,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NameSet.h"
+				RelativePath=".\TypeVar.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Array.h"
+				RelativePath=".\Value.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Handle.h"
+				RelativePath=".\VTable.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Template.h"
+				RelativePath=".\VTablePos.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\ArrayTemplate.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CodeData.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSCtor.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NamedThread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NamedThread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
+				RelativePath=".\VTableSlot.h"
 				>
 			</File>
 		</Filter>

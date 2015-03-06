@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "SyntaxTransform.h"
-#include "Code/Function.h"
+#include "Code/FnParams.h"
 #include "Function.h"
 #include "Parser.h"
 #include "Tokenizer.h"
@@ -108,15 +108,15 @@ namespace storm {
 					throw SyntaxTypeError(option->pos, L"Only objects are supported in the syntax. "
 										+ ::toS(f->result) + L" is a value or a built-in type.");
 
-				code::FnCall call;
+				code::FnParams call;
 				for (nat i = 0; i < params.size(); i++) {
 					if (params[i]) {
-						call.param<Object *>(params[i]);
+						call.add<Object *>(params[i]);
 					} else {
-						call.param<SrcPos>(pos);
+						call.add<SrcPos>(pos);
 					}
 				}
-				return call.call<Object *>(f->pointer());
+				return code::call<Object *>(f->pointer(), call);
 			}
 		}
 
@@ -126,12 +126,12 @@ namespace storm {
 			Auto<NamePart> ctor = CREATE(NamePart, e, Type::CTOR, types);
 			Named *no = t->find(ctor);
 			if (Function *ctor = as<Function>(no)) {
-				code::FnCall call;
+				code::FnParams call;
 				for (nat i = 0; i < params.size(); i++) {
 					if (params[i]) {
-						call.param<Object *>(params[i]);
+						call.add<Object *>(params[i]);
 					} else {
-						call.param<SrcPos>(pos);
+						call.add<SrcPos>(pos);
 					}
 				}
 				return create<Object>(ctor, call);
@@ -157,13 +157,13 @@ namespace storm {
 		Auto<NamePart> part = CREATE(NamePart, t, memberName, types);
 
 		if (Function *f = as<Function>(t->find(part))) {
-			code::FnCall call;
-			call.param(me).param(param);
+			code::FnParams call;
+			call.add(me).add(param);
 
 			if (f->result.refcounted())
-				Auto<Object> r = call.call<Object*>(f->pointer());
+				Auto<Object> r = code::call<Object *>(f->pointer(), call);
 			else
-				call.call<void>(f->pointer());
+				code::call<void>(f->pointer(), call);
 		} else {
 			throw SyntaxTypeError(pos, L"Could not find a member function " +
 								memberName + L"(" + join(types, L", ") + L") in " +

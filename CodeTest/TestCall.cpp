@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Test/Test.h"
-#include "Code/Function.h"
 
 static cpuInt copied = 0;
 
@@ -34,7 +33,7 @@ BEGIN_TEST(TestCall) {
 	const void *f = b.getData();
 
 	copied = 0;
-	CHECK_EQ(FnCall().call<cpuInt>(f), 22);
+	CHECK_EQ(call<cpuInt>(f), 22);
 	CHECK_EQ(copied, 20);
 
 } END_TEST

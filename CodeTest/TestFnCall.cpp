@@ -59,17 +59,17 @@ static void testVoid(int p1, int p2) {
 
 BEGIN_TEST(FnCallTest) {
 
-	FnCall call;
+	FnParams p;
 	int p1 = 1, p2 = 2;
-	call.param(p1);
-	call.param(p2);
-	CHECK_EQ(call.call<int>(&testFn1), 3);
-	CHECK_EQ(call.call<int64>(&testFn2), 0x100000003LL);
-	CHECK_EQ(call.call<SmallType>(&testType1), SmallType(3));
-	CHECK_EQ(call.call<MediumType>(&testType2), MediumType(1, 2));
-	CHECK_EQ(call.call<LargeType>(&testType3), LargeType(1, 2, 3, -1));
+	p.add(p1);
+	p.add(p2);
+	CHECK_EQ(call<int>(&testFn1, p), 3);
+	CHECK_EQ(call<int64>(&testFn2, p), 0x100000003LL);
+	CHECK_EQ(call<SmallType>(&testType1, p), SmallType(3));
+	CHECK_EQ(call<MediumType>(&testType2, p), MediumType(1, 2));
+	CHECK_EQ(call<LargeType>(&testType3, p), LargeType(1, 2, 3, -1));
 	sum = 0;
-	call.call<void>(&testVoid);
+	call<void>(&testVoid, p);
 	CHECK_EQ(sum, 3);
 
 } END_TEST
@@ -77,6 +77,10 @@ BEGIN_TEST(FnCallTest) {
 
 void trackerFn(Tracker t) {
 	assert(t.data == 10);
+}
+
+Tracker trackerError(Tracker t) {
+	throw UserError(L"ERROR");
 }
 
 int64 variedFn(int a, int64 b, int c) {
@@ -91,27 +95,36 @@ BEGIN_TEST(FunctionParamTest) {
 
 	Tracker::clear();
 	{
-		FnCall call;
+		FnParams p;
 		Tracker t(10);
-		call.param(t);
-		call.call<void>(&trackerFn);
+		p.add(t);
+		call<void>(&trackerFn, p);
+	}
+	CHECK(Tracker::clear());
+
+	Tracker::clear();
+	{
+		FnParams p;
+		Tracker t(10);
+		p.add(t);
+		CHECK_ERROR(call<Tracker>(&trackerError, p));
 	}
 	CHECK(Tracker::clear());
 
 	{
-		FnCall call;
+		FnParams p;
 		int a = 0x1, c = 0x20;
 		int64 b = 0x100000000;
-		call.param(a).param(b).param(c);
-		CHECK_EQ(call.call<int64>(&variedFn), 0x100000021);
+		p.add(a).add(b).add(c);
+		CHECK_EQ(call<int64>(&variedFn, p), 0x100000021);
 	}
 
 	{
-		FnCall call;
+		FnParams p;
 		byte a = 0x10;
 		int b = 0x1010;
-		call.param(a).param(b);
-		CHECK_EQ(call.call<int>(&shortFn), 0x1020);
+		p.add(a).add(b);
+		CHECK_EQ(call<int>(&shortFn, p), 0x1020);
 	}
 
 } END_TEST
@@ -125,7 +138,7 @@ static Tracker returnTracker() {
 BEGIN_TEST(FunctionReturnTest) {
 	Tracker::clear();
 	{
-		Tracker t = FnCall().call<Tracker>(&returnTracker);
+		Tracker t = call<Tracker>(&returnTracker);
 		CHECK_EQ(t.data, 22);
 	}
 	CHECK(Tracker::clear());
@@ -151,27 +164,23 @@ static int takeDouble(double d) {
 BEGIN_TEST(FunctionFloatTest) {
 
 	{
-		FnCall call;
 		int p = 100;
-		CHECK_EQ(call.param(p).call<float>(&returnFloat), 100.0f);
+		CHECK_EQ(call<float>(&returnFloat, FnParams().add(p)), 100.0f);
 	}
 
 	{
-		FnCall call;
 		float f = 100.0f;
-		CHECK_EQ(call.param(f).call<int>(&takeFloat), 100);
+		CHECK_EQ(call<int>(&takeFloat, FnParams().add(f)), 100);
 	}
 
 	{
-		FnCall call;
 		int p = 100;
-		CHECK_EQ(call.param(p).call<double>(&returnDouble), 100.0);
+		CHECK_EQ(call<double>(&returnDouble, FnParams().add(p)), 100.0);
 	}
 
 	{
-		FnCall call;
 		double d = 100.0f;
-		CHECK_EQ(call.param(d).call<int>(&takeDouble), 100);
+		CHECK_EQ(call<int>(&takeDouble, FnParams().add(d)), 100);
 	}
 
 } END_TEST
@@ -186,13 +195,13 @@ LargeType *ptrFn(LargeType *t) {
 
 BEGIN_TEST(FunctionRefPtrTest) {
 	LargeType t(1, 2, 3, 4);
-	FnCall call;
-	call.param(&t);
+	FnParams par;
+	par.add(&t);
 
-	LargeType *f = &call.callRef<LargeType>(&refFn);
+	LargeType *f = &callRef<LargeType>(&refFn, par);
 	CHECK_EQ(f, &t);
-	CHECK_EQ(&call.callRef<LargeType>(&refFn), &t);
-	CHECK_EQ(call.call<LargeType*>(&ptrFn), &t);
+	CHECK_EQ(&callRef<LargeType>(&refFn, par), &t);
+	CHECK_EQ(call<LargeType*>(&ptrFn, par), &t);
 
 } END_TEST
 
@@ -201,12 +210,12 @@ BEGIN_TEST(FunctionCopyTest) {
 	int a = 10;
 	int b = 20;
 
-	FnCall d;
+	FnParams d;
 	{
-		FnCall c;
-		c.param(a).param(b);
+		FnParams c;
+		c.add(a).add(b);
 		d = c;
 	}
 
-	CHECK_EQ(d.call<int>(&testFn1), 30);
+	CHECK_EQ(call<int>(&testFn1, d), 30);
 } END_TEST

@@ -37,23 +37,6 @@ namespace storm {
 			return null;
 
 		return v.type->find(last);
-
-		// if (Named *n = ScopeLookup::find(s, name, params))
-		// 	return n;
-
-		// // Expressions of the form foo(x, y, z) are equal to x.foo(y, z).
-		// if (params.size() > 0 && name.size() == 1) {
-		// 	if (params[0] != Value()) {
-		// 		Named *n = params[0].type->find(name);
-		// 		if (Overload *o = as<Overload>(n)) {
-		// 			return o->find(params);
-		// 		} else if (params.size() == 0) {
-		// 			return n;
-		// 		}
-		// 	}
-		// }
-
-		// return null;
 	}
 
 	void bs::BSScope::addSyntax(const Scope &from, SyntaxSet &to) {

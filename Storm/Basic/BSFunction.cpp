@@ -28,30 +28,38 @@ namespace storm {
 		Value result = this->result->resolve(scope);
 		vector<Value> params = this->params->cTypes(scope);
 		vector<String> names = this->params->cNames();
+		NamedThread *thread = null;
 
-		if (thread) {
-			Named *n = thread->find(scope);
+		if (this->thread) {
+			Named *n = this->thread->find(scope);
 			if (NamedThread *t = as<NamedThread>(n)) {
-				TODO(L"Implement support for threads: " << *t);
+				thread = t;
 			} else {
-				throw SyntaxError(thread->pos, L"The identifier " + ::toS(thread) + L" is not a thread.");
+				throw SyntaxError(this->thread->pos, L"The identifier " + ::toS(thread) + L" is not a thread.");
 			}
 		}
 
-		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, name->pos, false);
+		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, thread, name->pos, false);
 	}
 
 
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
-							const vector<String> &names, const Scope &scope,
-							Par<SStr> contents, const SrcPos &pos, bool isMember)
+							const vector<String> &names, const Scope &scope, Par<SStr> contents,
+							Par<NamedThread> thread, const SrcPos &pos, bool isMember)
 		: Function(result, name, params), scope(scope), contents(contents),
-		  paramNames(names), pos(pos), isMember(isMember) {
+		  paramNames(names), pos(pos), isMember(isMember), onThread(thread) {
 
 		if (result.ref)
 			throw SyntaxError(pos, L"Returning references is not a good idea at this point!");
 
 		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
+	}
+
+	RunOn bs::BSFunction::runOn() const {
+		if (onThread)
+			return RunOn(onThread);
+
+		return Function::runOn();
 	}
 
 	code::Listing bs::BSFunction::generateCode() {
@@ -99,7 +107,7 @@ namespace storm {
 				l << code::addRef(var->var);
 		}
 
-		GenState state = { l, data, l.frame, l.frame.root() };
+		GenState state = { l, data, runOn(), l.frame, l.frame.root() };
 
 		if (result == Value()) {
 			GenResult r;

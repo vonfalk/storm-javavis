@@ -20,6 +20,13 @@ namespace storm {
 		delete lookupRef;
 	}
 
+	RunOn Function::runOn() const {
+		if (Type *t = as<Type>(parent())) {
+			TODO(L"Not implemented correctly for types yet!");
+		}
+		return RunOn(RunOn::any);
+	}
+
 	void *Function::pointer() {
 		return ref().address();
 	}
@@ -34,24 +41,36 @@ namespace storm {
 		return *codeRef;
 	}
 
-	void Function::genCode(const GenState &to, const vector<code::Value> &params, GenResult &res, bool useLookup) {
+	void Function::genCode(const GenState &to, const Actuals &params, GenResult &res,
+						const code::Value &thread, bool useLookup) {
+		initRefs();
+		assert(params.size() == this->params.size());
+		code::Ref ref(useLookup ? this->ref() : directRef());
+
+		if (thread.empty()) {
+			bool inlined = true;
+			// If we're not going to use the lookup, we may be more eager to inline!
+			if (useLookup)
+				inlined &= as<DelegatedCode>(lookup.borrow()) != 0;
+			inlined &= as<InlinedCode>(code.borrow()) != 0;
+			if (inlined)
+				genCodeInline(to, params, res);
+			else
+				genCodeDirect(to, params, res, ref);
+		} else {
+			genCodePost(to, params, res, ref, thread);
+		}
+	}
+
+	void Function::genCodeInline(const GenState &to, const Actuals &params, GenResult &res) {
+		InlinedCode *c = as<InlinedCode>(code.borrow());
+		c->code(to, params, res);
+	}
+
+	void Function::genCodeDirect(const GenState &to, const Actuals &params, GenResult &res, code::Ref ref) {
 		using namespace code;
 
-		initRefs();
-
-		assert(params.size() == this->params.size());
-		Ref ref(useLookup ? this->ref() : directRef());
-
-		bool inlined = true;
-		if (useLookup)
-			// If we're not going to use the lookup, we may be more eager to inline code!
-			inlined &= as<DelegatedCode>(lookup.borrow()) != 0;
-		inlined &= as<InlinedCode>(code.borrow()) != 0;
-
-		if (inlined) {
-			InlinedCode *c = as<InlinedCode>(code.borrow());
-			c->code(to, params, res);
-		} else if (result == Value()) {
+		if (result == Value()) {
 			for (nat i = 0; i < params.size(); i++)
 				to.to << fnParam(params[i]);
 
@@ -81,6 +100,12 @@ namespace storm {
 				to.to << fnCall(ref, Size());
 			}
 		}
+	}
+
+	void Function::genCodePost(const GenState &to, const Actuals &params, GenResult &res,
+							code::Ref ref, const code::Value &thread) {
+		using namespace code;
+		TODO(L"IMPLEMENT ME!");
 	}
 
 	void Function::setCode(Par<Code> code) {

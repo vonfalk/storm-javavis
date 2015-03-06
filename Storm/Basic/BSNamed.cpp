@@ -7,15 +7,45 @@
 namespace storm {
 
 	namespace bs {
-		// Helper for calling a function and handling the result correctly.
+		// Decide which thread to use.
+		static code::Value runOnThread(const RunOn &our, const RunOn &their) {
+			code::Value r;
+
+			// Do we really need to do anything?
+			if (our.canRun(their))
+				return r;
+
+			switch (their.state) {
+			case RunOn::any:
+				// Should be caught above, but this works anyway!
+				return r;
+			case RunOn::runtime:
+				assert(false, L"NOT IMPLEMENTED YET!");
+				break;
+			case RunOn::named:
+				PLN("Run on " << their);
+				r = their.thread->ref();
+				break;
+			default:
+				assert(false, L"Unknown state " + ::toS(nat(their.state)));
+				break;
+			}
+
+			return r;
+		}
+
+		// Call the function and handle the result correctly.
 		static void callFn(Par<Function> call, const GenState &s, vector<code::Value> &values,
 						GenResult &to, bool lookup) {
 			using namespace code;
 
+			// See on which thread we want to run the function.
+			code::Value thread = runOnThread(s.runOn, call->runOn());
+
 			if (to.type.ref != call->result.ref) {
 				// We need to do stuff!
 				GenResult t(call->result, s.block);
-				call->genCode(s, values, t, lookup);
+				call->genCode(s, values, t, thread, lookup);
 
 				if (!to.needed())
 					return;
@@ -38,7 +68,7 @@ namespace storm {
 						s.to << addRef(target);
 				}
 			} else {
-				call->genCode(s, values, to, lookup);
+				call->genCode(s, values, to, thread, lookup);
 			}
 		}
 
@@ -140,7 +170,7 @@ namespace storm {
 
 		code::Block subBlock = s.frame.createChild(s.block);
 		s.to << begin(subBlock);
-		GenState subState = { s.to, s.data, s.frame, subBlock };
+		GenState subState = s.child(subBlock);
 
 		// Only free this one automatically on an exception. If there is no exception,
 		// the memory will be owned by the object itself.

@@ -1,5 +1,5 @@
 #pragma once
-#include "Function.h"
+#include "FnParams.h"
 #include "InlineList.h"
 #include "Utils/Function.h"
 #include "Utils/Lock.h"
@@ -113,18 +113,18 @@ namespace code {
 		static UThread spawn(const Fn<void, void> &fn, const Thread *on = null);
 
 		// Spawn using a plain function pointer and parameters. The parameters stored in
-		// 'params' follows the same lifetime rules as FnCall::call() does. No special care
+		// 'params' follows the same lifetime rules as FnParams::call() does. No special care
 		// needs to be taken. Note: fn may not return a value!
-		static UThread spawn(const void *fn, const FnCall &params, const Thread *on = null);
+		static UThread spawn(const void *fn, const FnParams &params, const Thread *on = null);
 
 		// Spawn using a plain function pointer and parameters. Works much like the one below,
 		// but is not as type-safe.
-		static UThread spawn(const Params &p, const FnCall &params, const Thread *on = null);
+		static UThread spawn(const Params &p, const FnParams &params, const Thread *on = null);
 
 		// Spawn using a plain function pointer and parameters. Calls either 'done' or 'error'
 		// in 'result' when the execution of 'fn' is finished.
 		template <class R, class P>
-		static UThread spawn(const void *fn, const FnCall &params, const Result<R, P> &r, const Thread *on = null) {
+		static UThread spawn(const void *fn, const FnParams &params, const Result<R, P> &r, const Thread *on = null) {
 			Params p = {
 				fn,
 				r.data,
@@ -200,10 +200,10 @@ namespace code {
 
 		// Push some parameters on the stack.
 		void pushParams(const void *returnTo, void *param);
-		void pushParams(const void *returnTo, const FnCall &params);
+		void pushParams(const void *returnTo, const FnParams &params);
 
 		// Push parameters while leaving some space on the stack.
-		void *pushParams(const FnCall &params, nat space);
+		void *pushParams(const FnParams &params, nat space);
 
 		// Allocate some space on the stack.
 		void *alloc(size_t size);

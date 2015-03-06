@@ -35,7 +35,7 @@ namespace storm {
 	Object::Object() : myType(myType), refs(1) {
 #if defined(DEBUG) && defined(X86)
 		if ((nat)myType == 0xCCCCCCCC) {
-			PLN("Do not stack allocate objects, stupid!");
+			PLN("Do not stack allocate Objects, stupid!");
 			DebugBreak();
 			assert(false);
 		}
@@ -166,7 +166,7 @@ namespace storm {
 	void *Object::operator new[](size_t size, Type *type) { assert(false); return null; }
 	void Object::operator delete[](void *ptr) { assert(false); }
 
-	Object *createObj(Function *ctor, code::FnCall params) {
+	Object *createObj(Function *ctor, code::FnParams params) {
 		assert(ctor->name == Type::CTOR, "Don't use create() with other functions than constructors.");
 		assert(ctor->params.size() == params.count() + 1,
 			"Wrong number of parameters to constructor! The first one is filled in automatically.");
@@ -177,10 +177,10 @@ namespace storm {
 
 		try {
 			if (ctor->params[0].ref)
-				params.prependParam(&mem);
+				params.addFirst(mem);
 			else
-				params.prependParam(mem);
-			params.call<void>(ctor->pointer());
+				params.addFirst(mem);
+			code::call<void>(ctor->pointer(), params);
 		} catch (...) {
 			Object::operator delete(mem, type);
 			throw;

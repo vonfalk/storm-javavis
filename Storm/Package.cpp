@@ -8,7 +8,7 @@
 #include "Engine.h"
 #include "Exception.h"
 
-#include "Code/Function.h"
+#include "Code/FnParams.h"
 
 namespace storm {
 
@@ -181,10 +181,10 @@ namespace storm {
 		if (!ctor)
 			throw RuntimeError(::toS(rName) + L": no constructor taking PkgFiles found!");
 
-		code::FnCall call;
-		call.param(files.borrow());
-		call.param(this);
-		PkgReader *r = create<PkgReader>(ctor, call);
+		code::FnParams params;
+		params.add(files.borrow());
+		params.add(this);
+		PkgReader *r = create<PkgReader>(ctor, params);
 		return r;
 	}
 

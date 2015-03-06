@@ -168,7 +168,7 @@ namespace storm {
 
 		l << prolog();
 
-		GenState state = { l, data, l.frame, l.frame.root() };
+		GenState state = { l, data, owner->runOn(), l.frame, l.frame.root() };
 		GenResult result(owner->result, l.frame.root());
 		code(state, params, result);
 

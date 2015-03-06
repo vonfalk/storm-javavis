@@ -39,6 +39,9 @@ namespace storm {
 
 		// Other references.
 		code::RefSource lazyCodeFn, createStrFn;
+
+		// Things we need to call another thread.
+		// TODO!
 	};
 
 	/**

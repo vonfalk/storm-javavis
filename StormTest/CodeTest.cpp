@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Storm/Function.h"
-#include "Code/Function.h"
+#include "Code/FnParams.h"
 #include "Fn.h"
 
 

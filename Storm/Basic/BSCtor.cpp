@@ -57,7 +57,7 @@ namespace storm {
 				l << code::addRef(var->var);
 		}
 
-		GenState state = { l, data, l.frame, l.frame.root() };
+		GenState state = { l, data, runOn(), l.frame, l.frame.root() };
 
 		GenResult r;
 		body->code(state, r);

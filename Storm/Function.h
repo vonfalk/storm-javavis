@@ -1,6 +1,7 @@
 #pragma once
 #include "Code.h"
 #include "CodeGen.h"
+#include "Thread.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -35,6 +36,10 @@ namespace storm {
 		// Function result.
 		const Value result;
 
+		// Run this function on? Defaults to the specifier of the type if it is a member,
+		// otherwise nothing.
+		virtual RunOn runOn() const;
+
 
 		// Get the code for this function. Do not assume it is static! Use
 		// 'ref' if you are doing anything more than one function call!
@@ -50,8 +55,11 @@ namespace storm {
 		// this reference is needed.
 		code::RefSource &directRef();
 
-		// Generate code for this function call.
-		void genCode(const GenState &to, const vector<code::Value> &params, GenResult &result, bool useLookup = true);
+		// Generate code for this function call. If 'thread' is something other than code::Value(),
+		// the function will be used on the thread indicated there instead.
+		typedef vector<code::Value> Actuals;
+		void genCode(const GenState &to, const Actuals &params, GenResult &result,
+					const code::Value &thread = code::Value(), bool useLookup = true);
 
 		// Code to be executed.
 		void setCode(Par<Code> code);
@@ -74,6 +82,16 @@ namespace storm {
 
 		// Initialize references if needed.
 		void initRefs();
+
+		// Generate code for a direct function call.
+		void genCodeDirect(const GenState &to, const Actuals &params, GenResult &result, code::Ref ref);
+
+		// Generate code for an inlined function call.
+		void genCodeInline(const GenState &to, const Actuals &params, GenResult &result);
+
+		// Generate code for an indirect function call, ie post it to another thread.
+		void genCodePost(const GenState &to, const Actuals &params, GenResult &result,
+						code::Ref ref, const code::Value &thread);
 	};
 
 

@@ -53,7 +53,7 @@ namespace storm {
 		public:
 			BSFunction(Value result, const String &name, const vector<Value> &params,
 					const vector<String> &names, const Scope &scope, Par<SStr> contents,
-					const SrcPos &pos, bool isMember);
+					Par<NamedThread> thread, const SrcPos &pos, bool isMember);
 
 			// Declared at.
 			SrcPos pos;
@@ -64,7 +64,13 @@ namespace storm {
 			// Add function parameters to a block.
 			void addParams(Par<Block> block);
 
+			// Custom RunOn implementation.
+			virtual RunOn runOn() const;
+
 		private:
+			// Run on a specific thread.
+			Auto<NamedThread> onThread;
+
 			// Code.
 			Auto<SStr> contents;
 

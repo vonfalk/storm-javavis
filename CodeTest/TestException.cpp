@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Code/Redirect.h"
-#include "Code/Function.h"
 
 static int destroyed = 0;
 
@@ -101,12 +100,12 @@ BEGIN_TEST(TestChainedException) {
 
 	throwError = true;
 	destroyed = 0;
-	CHECK_ERROR(FnCall().call<cpuInt>(outer.getData()));
+	CHECK_ERROR(call<cpuInt>(outer.getData()));
 	CHECK_EQ(destroyed, 6);
 
 	throwError = false;
 	destroyed = 0;
-	CHECK_EQ(FnCall().call<cpuInt>(outer.getData()), 3);
+	CHECK_EQ(call<cpuInt>(outer.getData()), 3);
 	CHECK_EQ(destroyed, 5);
 } END_TEST
 
@@ -160,12 +159,12 @@ BEGIN_TEST(TestRefException) {
 
 	destroyed = 0;
 	throwError = true;
-	CHECK_ERROR(FnCall().call<cpuInt>(fn));
+	CHECK_ERROR(call<cpuInt>(fn));
 	CHECK_EQ(destroyed, 103);
 
 	destroyed = 0;
 	throwError = false;
-	CHECK_EQ(FnCall().call<cpuInt>(fn), 4);
+	CHECK_EQ(call<cpuInt>(fn), 4);
 	CHECK_EQ(destroyed, 4);
 
 } END_TEST

@@ -105,6 +105,7 @@ namespace storm {
 					params->cNames(),
 					owner->scope,
 					contents,
+					null, // thread
 					pos,
 					true);
 	}

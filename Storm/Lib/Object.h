@@ -2,7 +2,7 @@
 #include "Auto.h"
 #include "Lib/Types.h"
 #include "Code/Size.h"
-#include "Code/Function.h"
+#include "Code/FnParams.h"
 
 namespace storm {
 
@@ -127,9 +127,9 @@ namespace storm {
 	};
 
 	// Create an object using the supplied constructor.
-	Object *createObj(Function *ctor, code::FnCall params);
+	Object *createObj(Function *ctor, code::FnParams params);
 	template <class T>
-	inline T *create(Function *ctor, const code::FnCall &params) {
+	inline T *create(Function *ctor, const code::FnParams &params) {
 		return (T *)createObj(ctor, params);
 	}
 

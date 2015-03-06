@@ -240,14 +240,14 @@ BEGIN_TEST(UThreadFnCallTest) {
 	fnCallSum = 0;
 
 	nat a = 10, b = 20;
-	UThread::spawn(&natNatFn, FnCall().param(a).param(b));
+	UThread::spawn(&natNatFn, FnParams().add(a).add(b));
 	UThread::leave();
 	CHECK_EQ(fnCallSum, 30);
 
 	Tracker::clear();
 	{
 		Tracker t(12);
-		UThread::spawn(&trackerFn, FnCall().param(t));
+		UThread::spawn(&trackerFn, FnParams().add(t));
 		UThread::leave();
 	}
 	CHECK_EQ(fnCallSum, 42);

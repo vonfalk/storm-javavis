@@ -26,6 +26,9 @@ namespace storm {
 		// Reference to this thread.
 		code::Ref ref();
 
+		// Get the thread. (borrowed ptr).
+		Thread *thread() const { return myThread.borrow(); }
+
 	protected:
 		// Output.
 		virtual void output(wostream &to) const;
@@ -33,10 +36,48 @@ namespace storm {
 	private:
 		// The thread we are representing. Make sure this stays the same over time, otherwise
 		// the thread safety is violated. Also double-check this when considering code updates!
-		Auto<Thread> thread;
+		Auto<Thread> myThread;
 
 		// Reference.
 		code::RefSource *reference;
 	};
+
+
+	// Constraints for which threads a specific function or variable may be accessed from.
+	// See RunOn::State for the possible states.
+	class RunOn {
+		STORM_VALUE;
+	public:
+		// Determines the state.
+		enum State {
+			// Run anywhere. This is used when no threading constraint has been declared,
+			// and is the default value of this class.
+			any,
+
+			// The thread to run on is decided runtime. For example when a class has been
+			// declared to run on a thread provided runtime.
+			runtime,
+
+			// The thread is known compile-time. Find the thread in the 'thread' member.
+			named,
+		};
+
+		// State.
+		State state;
+
+		// Thread. Only valid if 'state == named'.
+		Auto<NamedThread> thread;
+
+		// Create.
+		RunOn(State s = any);
+		RunOn(Par<NamedThread> thread);
+
+		// Assuming we are running on a thread represented by this, may we run a function
+		// declared to run on 'other'?
+		bool canRun(const RunOn &other) const;
+	};
+
+	// Output.
+	wostream &operator <<(wostream &to, const RunOn &v);
 
 }

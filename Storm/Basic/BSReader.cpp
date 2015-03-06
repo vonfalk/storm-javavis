@@ -31,6 +31,7 @@ namespace storm {
 			package->add(contents->types[i].borrow());
 		}
 
+		// TODO: This should probably be before we try to resolve threads from the types...
 		for (nat i = 0; i < contents->threads.size(); i++) {
 			package->add(contents->threads[i].borrow());
 		}

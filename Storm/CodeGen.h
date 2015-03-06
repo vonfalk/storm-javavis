@@ -2,6 +2,7 @@
 #include "Code/Listing.h"
 #include "Value.h"
 #include "CodeData.h"
+#include "NamedThread.h"
 
 namespace storm {
 
@@ -15,11 +16,26 @@ namespace storm {
 		// Generate any data here.
 		CodeData &data;
 
+		// Which thread are we running on?
+		RunOn runOn;
+
 		// Current frame (generally points to to.frame).
 		code::Frame &frame;
 
 		// Current block.
 		code::Block block;
+
+		// Create a child GenState.
+		inline GenState child(code::Block block) const {
+			GenState s = {
+				to,
+				data,
+				runOn,
+				frame,
+				block,
+			};
+			return s;
+		}
 	};
 
 	// Helper to create a variable from a Value (this is common).
