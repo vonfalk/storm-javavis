@@ -253,6 +253,7 @@ namespace code {
 	Value byteConst(Byte v) { return Value(Word(v), Size::sByte); }
 	Value intConst(Int v) { return Value(Word(v), Size::sInt); }
 	Value natConst(Nat v) { return Value(Word(v), Size::sNat); }
+	Value natConst(Size v) { return Value(v, Size::sNat); }
 	Value longConst(Long v) { return Value(Word(v), Size::sLong); }
 	Value wordConst(Word v) { return Value(Word(v), Size::sWord); }
 	Value intPtrConst(Int v) { return Value(Word(v), Size::sPtr); }

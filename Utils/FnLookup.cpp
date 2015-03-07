@@ -231,9 +231,12 @@ String CppLookup::format(const StackFrame &frame) const {
 	bool hasLine = SymGetLineFromAddr64(h.process, ptr, &lineDisplacement, &line) ? true : false;
 
 	std::wostringstream r;
-
 	if (hasLine) {
-		r << line.FileName << L"(L" << line.LineNumber << L"): ";
+		Path path(line.FileName);
+#ifdef DEBUG
+		path = path.makeRelative(Path::dbgRoot());
+#endif
+		r << path << L"(L" << line.LineNumber << L"): ";
 	} else {
 		r << L"<unknown location>: ";
 	}

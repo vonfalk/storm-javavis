@@ -16,13 +16,13 @@ namespace code {
 	class FnParams {
 	public:
 		// Type declarations.
-		typedef void (*CopyFn)(const void *, void *);
+		typedef void (*CopyFn)(void *, const void *);
 		typedef void (*DestroyFn)(void *);
 
 		// Data for a single parameter.
 		struct Param {
-			void (*copy)(const void *, void *);
-			void (*destroy)(void *);
+			CopyFn copy;
+			DestroyFn destroy;
 			nat size;
 			const void *value;
 		};
@@ -51,7 +51,7 @@ namespace code {
 		// Destroy.
 		~FnParams();
 
-		// Add a parameter (low-level).
+		// Add a parameter (low-level). Use null, null to indicate that 'value' is the value to be used.
 		void add(CopyFn copy, DestroyFn destroy, nat size, const void *value);
 
 		// Add a parameter to the front (low-level).
@@ -95,6 +95,9 @@ namespace code {
 		// Destroy parameters on the stack (provide the lowest address, like arrays).
 		void destroy(void *mem) const;
 
+		// Get the size of the class (for machine code generation).
+		static Size classSize();
+
 	private:
 		// Backing storage.
 		Param *params;
@@ -111,7 +114,7 @@ namespace code {
 
 		// Copy-ctor invocation.
 		template <class T>
-		static void copy(const void *from, void *to) {
+		static void copy(void *to, const void *from) {
 			const T* f = (const T*)from;
 			new (to) T(*f);
 		}

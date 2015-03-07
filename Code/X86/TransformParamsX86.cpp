@@ -82,8 +82,6 @@ namespace code {
 
 		bool TfmParams::lookupVar(Value &v) const {
 			if (v.type() == Value::tVariable) {
-				assert(v.currentSize() <= 8);
-
 				v = vars.variable(v.variable(), v.offset().current());
 				return true;
 			}

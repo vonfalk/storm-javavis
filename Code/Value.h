@@ -133,6 +133,7 @@ namespace code {
 		friend Value byteConst(Byte v);
 		friend Value intConst(Int v);
 		friend Value natConst(Nat v);
+		friend Value natConst(Size v);
 		friend Value longConst(Long v);
 		friend Value wordConst(Word v);
 		friend Value intPtrConst(Int v);
@@ -157,6 +158,7 @@ namespace code {
 	Value byteConst(Byte v);
 	Value intConst(Int v);
 	Value natConst(Nat v);
+	Value natConst(Size v);
 	Value longConst(Long v);
 	Value wordConst(Word v);
 

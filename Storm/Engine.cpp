@@ -3,20 +3,72 @@
 #include "Std.h"
 #include "Exception.h"
 #include "Thread.h"
+#include "Code/UThread.h"
+#include "Code/FnParams.h"
 #include "Lib/Str.h"
 
 namespace storm {
 
+	// Wrappers.
+	void fnParamsCtor(void *memory, void *ptr) {
+		new (memory) code::FnParams(ptr);
+	}
+
+	void fnParamsDtor(code::FnParams *obj) {
+		obj->~FnParams();
+	}
+
+	void fnParamsAdd(code::FnParams *obj, code::FnParams::CopyFn copy, code::FnParams::DestroyFn destroy,
+					nat size, const void *value) {
+		obj->add(copy, destroy, size, value);
+	}
+
+	static void onError(void *, const Exception &e) {
+		PLN("Error: " << e);
+	}
+	static void onDone(void *, int r) {
+		PLN("Result: " << r);
+	}
+
+	void spawnThread(void *fn, const code::FnParams *params, Thread *on, code::UThreadData *data) {
+		code::UThread::Params p = {
+			fn,
+			null,
+			&onError,
+			&onDone,
+			typeInfo<int>(),
+		};
+		code::UThread::spawn(&p, params, &on->thread, data);
+		Sleep(1000);
+		code::UThread::leave();
+		Sleep(1000);
+	}
+
+
 	FnRefs::FnRefs(code::Arena &arena)
 		: addRef(arena.addRef), release(arena.releaseRef),
 		  allocRef(arena, L"alloc"), freeRef(arena, L"free"),
-		  lazyCodeFn(arena, L"lazyUpdate"), createStrFn(arena, L"createStr") {
+		  lazyCodeFn(arena, L"lazyUpdate"), createStrFn(arena, L"createStr"),
+		  spawnLater(arena, L"spawnLater"), spawnParam(arena, L"spawnParam"),
+		  spawn(arena, L"spawn"), abortSpawn(arena, L"abortSpawn"),
+		  fnParamsCtor(arena, L"FnParams::ctor"), fnParamsDtor(arena, L"FnParams::dtor"),
+		  fnParamsAdd(arena, L"FnParams::add")
+	{
 
 		addRef.set(address(&Object::addRef));
 		release.set(address(&Object::release));
 		allocRef.set(address(&stormMalloc));
 		freeRef.set(address(&stormFree));
 		createStrFn.set(address(&Str::createStr));
+
+		spawnLater.set(address(&code::UThread::spawnLater));
+		spawnParam.set(address(&code::UThread::spawnParamMem));
+		spawn.set(address(&storm::spawnThread));
+		abortSpawn.set(address(&code::UThread::abortSpawn));
+
+		fnParamsCtor.set(address(&storm::fnParamsCtor));
+		fnParamsDtor.set(address(&storm::fnParamsDtor));
+		fnParamsAdd.set(address(&storm::fnParamsAdd));
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode)

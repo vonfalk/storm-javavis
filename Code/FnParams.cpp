@@ -3,6 +3,14 @@
 
 namespace code {
 
+	Size FnParams::classSize() {
+		Size s = Size::sPtr;
+		s += Size::sNat;
+		s += Size::sNat;
+		assert(s.current() == sizeof(FnParams), L"Please update the size here.");
+		return s;
+	}
+
 	FnParams::FnParams() : params(new Param[initialCapacity]), size(0), capacity(initialCapacity) {}
 
 	FnParams::FnParams(void *buffer) : params((Param *)buffer), size(0), capacity(0) {}
@@ -77,7 +85,7 @@ namespace code {
 		for (nat i = 0; i < size; i++) {
 			const Param &p = params[i];
 			if (p.copy)
-				(*p.copy)(p.value, at);
+				(*p.copy)(at, p.value);
 			else
 				*((const void **)at) = p.value;
 			at += roundUp(p.size, sizeof(void *));

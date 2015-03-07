@@ -105,7 +105,77 @@ namespace storm {
 	void Function::genCodePost(const GenState &to, const Actuals &params, GenResult &res,
 							code::Ref ref, const code::Value &thread) {
 		using namespace code;
-		TODO(L"IMPLEMENT ME!");
+
+		Engine &e = engine();
+		Block b = to.frame.createChild(to.block);
+		to.to << begin(b);
+
+		// Create a UThreadData object.
+		Variable data = to.frame.createPtrVar(b, Ref(e.fnRefs.abortSpawn), freeOnException);
+		to.to << fnCall(Ref(e.fnRefs.spawnLater), Size::sPtr);
+		to.to << mov(data, ptrA);
+
+		// Find out the pointer to the data and create FnParams object.
+		to.to << fnParam(ptrA);
+		to.to << fnCall(Ref(e.fnRefs.spawnParam), Size::sPtr);
+		Variable fnParams = to.frame.createVariable(b,
+													FnParams::classSize(),
+													Ref(e.fnRefs.fnParamsDtor),
+													freeOnBoth | freePtr);
+		to.to << lea(ptrC, fnParams);
+		to.to << fnParam(ptrC);
+		to.to << fnParam(ptrA);
+		to.to << fnCall(Ref(e.fnRefs.fnParamsCtor), Size());
+
+		// Add all parameters.
+		for (nat i = 0; i < params.size(); i++) {
+			const Value &v = this->params[i];
+
+			if (v.isClass()) {
+				to.to << lea(ptrC, fnParams);
+				to.to << lea(ptrA, params[i]);
+				to.to << fnParam(ptrC);
+				to.to << fnParam(Ref(e.fnRefs.addRef));
+				to.to << fnParam(Ref(e.fnRefs.freeRef));
+				to.to << fnParam(natConst(v.size()));
+				to.to << fnParam(ptrA);
+				to.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
+			} else if (v.ref) {
+				// No need for copy ctors!
+				to.to << lea(ptrC, fnParams);
+				to.to << fnParam(ptrC);
+				to.to << fnParam(intPtrConst(0));
+				to.to << fnParam(intPtrConst(0));
+				to.to << fnParam(natConst(v.size()));
+				to.to << fnParam(params[i]);
+				to.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
+			} else {
+				code::Value dtor = v.destructor();
+				if (dtor.empty())
+					dtor = intPtrConst(0);
+				to.to << lea(ptrC, fnParams);
+				to.to << lea(ptrA, params[i]);
+				to.to << fnParam(ptrC);
+				to.to << fnParam(v.copyCtor());
+				to.to << fnParam(dtor);
+				to.to << fnParam(natConst(v.size()));
+				to.to << fnParam(ptrA);
+				to.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
+			}
+		}
+
+		// Spawn the thread!
+		to.to << lea(ptrA, fnParams);
+		to.to << fnParam(ref);
+		to.to << fnParam(ptrA);
+		to.to << fnParam(thread);
+		to.to << fnParam(data);
+		to.to << fnCall(Ref(e.fnRefs.spawn), Size());
+
+		// Wait for the result...
+		TODO(L"Wait for the result as well!");
+
+		to.to << end(b);
 	}
 
 	void Function::setCode(Par<Code> code) {

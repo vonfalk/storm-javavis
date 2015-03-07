@@ -91,6 +91,24 @@ namespace storm {
 	}
 
 	const void *LazyCode::updateCode(LazyCode *c) {
+		Msg msg;
+
+		// Make sure we're running on the Compiler thread!
+		Thread *cThread = Compiler.thread(c->engine());
+		if (cThread->thread != code::Thread::current()) {
+			code::FnParams params;
+			params.add(c).add(&msg);
+			TODO(L"We need to propagate exceptions from the async call to this thread!");
+			code::UThread::spawn(address(&LazyCode::updateCodeLocal), params, &cThread->thread);
+			msg.sema.down();
+		} else {
+			updateCodeLocal(c, &msg);
+		}
+
+		return msg.result;
+	}
+
+	void LazyCode::updateCodeLocal(LazyCode *c, Msg *msg) {
 		if (!c->loaded) {
 			if (c->loading)
 				throw InternalError(L"Trying to update " + c->owner->identifier() + L" recursively!");
@@ -106,7 +124,8 @@ namespace storm {
 			c->loaded = true;
 		}
 
-		return c->code->getData();
+		msg->result = c->code->getData();
+		msg->sema.up();
 	}
 
 	void LazyCode::setCode(const code::Listing &l) {

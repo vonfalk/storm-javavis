@@ -33,6 +33,7 @@ namespace code {
 
 		// Compare.
 		bool operator ==(const Thread &o) const;
+		inline bool operator !=(const Thread &o) const { return !(*this == o); }
 
 		// Get the thread data.
 		inline ThreadData *threadData() const { return data; }
