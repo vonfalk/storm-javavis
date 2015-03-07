@@ -101,6 +101,7 @@ namespace storm {
 			TODO(L"We need to propagate exceptions from the async call to this thread!");
 			code::UThread::spawn(address(&LazyCode::updateCodeLocal), params, &cThread->thread);
 			msg.sema.down();
+			assert(msg.result != null, L"Error occured in the other thread.");
 		} else {
 			updateCodeLocal(c, &msg);
 		}
@@ -118,6 +119,8 @@ namespace storm {
 				c->setCode(c->load());
 			} catch (...) {
 				c->loading = false;
+				msg->result = null;
+				msg->sema.up();
 				throw;
 			}
 			c->loading = false;

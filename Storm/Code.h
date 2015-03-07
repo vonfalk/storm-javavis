@@ -125,7 +125,10 @@ namespace storm {
 			// break multithreading semantics by allowing thread switches at every function call
 			// the first time that function is called.
 			Semaphore sema;
+
+			// Resulting function.
 			const void *result;
+
 			inline Msg() : sema(0), result(null) {}
 		};
 
