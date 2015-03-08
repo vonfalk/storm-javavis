@@ -7,8 +7,6 @@ public:
 	Exception();
 	virtual ~Exception();
 
-	Exception(const Exception &o);
-
 	virtual String what() const = 0;
 
 	// Stack trace

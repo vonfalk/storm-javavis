@@ -3,8 +3,6 @@
 #include "Code/Thread.h"
 #include "Code/Future.h"
 
-#include "Utils/ExceptionFwd.h"
-
 static void error() {
 	throw UserError(L"ERROR");
 }
@@ -26,7 +24,7 @@ struct ExThread {
 };
 
 // Test forwarding exceptions between threads.
-BEGIN_TEST_(ExceptionTest) {
+BEGIN_TEST(ExceptionTest) {
 	ExThread z;
 
 	Thread::spawn(memberVoidFn(&z, &ExThread::run));
@@ -34,13 +32,12 @@ BEGIN_TEST_(ExceptionTest) {
 	try {
 		z.result.wait();
 		CHECK(false);
-	} catch (const UserError &e) {
-		PVAR(e);
+	} catch (const UserError &) {
 		CHECK(true);
 	} catch (...) {
 		CHECK(false);
 	}
 
-	Sleep(2000);
+	Sleep(100);
 
 } END_TEST
