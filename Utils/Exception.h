@@ -5,7 +5,9 @@
 class Exception : public Printable {
 public:
 	Exception();
-	virtual ~Exception() {};
+	virtual ~Exception();
+
+	Exception(const Exception &o);
 
 	virtual String what() const = 0;
 

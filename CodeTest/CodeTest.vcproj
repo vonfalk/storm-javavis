@@ -253,6 +253,10 @@
 				RelativePath=".\UThreadTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ExceptionTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
