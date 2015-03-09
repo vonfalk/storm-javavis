@@ -111,6 +111,7 @@ namespace storm {
 		to.to << begin(b);
 
 		// Create a UThreadData object.
+		TODO(L"Check what happens when exceptions are thrown. This one should not be freed after 'spawn' is called.");
 		Variable data = to.frame.createPtrVar(b, Ref(e.fnRefs.abortSpawn), freeOnException);
 		to.to << fnCall(Ref(e.fnRefs.spawnLater), Size::sPtr);
 		to.to << mov(data, ptrA);
