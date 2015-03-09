@@ -3,6 +3,7 @@
 #include "InlineList.h"
 #include "Utils/Function.h"
 #include "Utils/Lock.h"
+#include "Future.h"
 
 namespace code {
 
@@ -54,28 +55,6 @@ namespace code {
 			void (*error)(Param *, const Exception &);
 		};
 
-
-		/**
-		 * Raw parameters to a spawn-call. Use 'result' above if possible to maintain
-		 * some type-safety.
-		 */
-		struct Params {
-			// Function to call.
-			const void *toCall;
-
-			// Data to the callbacks.
-			void *data;
-
-			// Callbacks.
-			const void *onError;
-			const void *onDone;
-
-			// Result type info.
-			TypeInfo result;
-		};
-
-
-
 		// Copy.
 		UThread(const UThread &o);
 
@@ -117,23 +96,18 @@ namespace code {
 		// needs to be taken. Note: fn may not return a value!
 		static UThread spawn(const void *fn, const FnParams &params, const Thread *on = null);
 
-		// Spawn using a plain function pointer and parameters. Works much like the one below,
-		// but is not as type-safe. Also usable to launch threads from machine code.
-		static UThread CODECALL spawn(const Params *p, const FnParams *params,
-									const Thread *on = null, UThreadData *d = null);
+		// Spawn a thread, returning the result in a future. Keep the Future object alive until
+		// it has gotten a result, otherwise we will probably crash! This is the low-level variant.
+		// It may also be used from the 'spawnLater' api by setting 'prealloc' to something other than null.
+		static UThread CODECALL spawn(const void *fn, const FnParams &params,
+									FutureBase &result, const BasicTypeInfo &resultType,
+									const Thread *on = null, UThreadData *prealloc = null);
 
-		// Spawn using a plain function pointer and parameters. Calls either 'done' or 'error'
-		// in 'result' when the execution of 'fn' is finished.
-		template <class R, class P>
-		static UThread spawn(const void *fn, const FnParams &params, const Result<R, P> &r, const Thread *on = null) {
-			Params p = {
-				fn,
-				r.data,
-				(const void *)r.error,
-				(const void *)r.done,
-				typeInfo<R>(),
-			};
-			return spawn(&p, &params, on);
+		// Spawn using a plain function pointer and parameters. Places the result (including any exceptions)
+		// in the future object.
+		template <class R, class Sema>
+		static UThread spawn(const void *fn, const FnParams &params, Future<R, Sema> &future, const Thread *on = null) {
+			return spawn(fn, params, future.impl(), typeInfo<R>(), on);
 		}
 
 		/**
@@ -286,7 +260,7 @@ namespace code {
 
 		// Lock for the 'ready' list. The 'exit' list is not protected,
 		// since it is only ever accessed from the OS thread owning this state.
-		Lock lock;
+		::Lock lock;
 
 		// Ready threads. May be scheduled now.
 		InlineList<UThreadData> ready;
@@ -305,3 +279,7 @@ namespace code {
 
 
 }
+
+
+// Don't ask...
+#include "Sync.h"

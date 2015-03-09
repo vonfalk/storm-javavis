@@ -23,25 +23,11 @@ namespace storm {
 		obj->add(copy, destroy, size, value);
 	}
 
-	static void onError(void *, const Exception &e) {
-		PLN("Error: " << e);
-	}
-	static void onDone(void *, int r) {
+	static void spawnThread(const void *fn, const code::FnParams *params, Thread *on, code::UThreadData *data) {
+		code::Future<int> future;
+		code::UThread::spawn(fn, *params, future.impl(), typeInfo<int>(), &on->thread, data);
+		int r = future.result();
 		PLN("Result: " << r);
-	}
-
-	void spawnThread(void *fn, const code::FnParams *params, Thread *on, code::UThreadData *data) {
-		code::UThread::Params p = {
-			fn,
-			null,
-			&onError,
-			&onDone,
-			typeInfo<int>(),
-		};
-		code::UThread::spawn(&p, params, &on->thread, data);
-		Sleep(1000);
-		code::UThread::leave();
-		Sleep(1000);
 	}
 
 

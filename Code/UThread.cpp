@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "UThread.h"
 #include "Thread.h"
+#include "FnCall.h"
 #include "Utils/Math.h"
 #include "Utils/Lock.h"
 
@@ -29,18 +30,6 @@ namespace code {
 
 	// Compute the initial esp for this architecture.
 	static void **initialEsp(void *base, nat size);
-
-	// Some low-level function calls.
-	static void doUserCall(UThread::Params *s, void *params);
-	static void doFloatCall(UThread::Params *s, void *params);
-	static void doDoubleCall(UThread::Params *s, void *params);
-	static void doCall4(UThread::Params *s, void *params);
-	static void doCall8(UThread::Params *s, void *params);
-
-	// Choose the right call function. Done to prevent the compiler from
-	// thinking that doXxxCall does not throw exceptions...
-	typedef void (*DoCallFn)(UThread::Params *, void *params);
-	static DoCallFn chooseCall(const TypeInfo &info);
 
 
 	/**
@@ -106,27 +95,39 @@ namespace code {
 		exitUThread();
 	}
 
-	static void spawnParams(UThread::Params *p, void *params) {
+	// Parameters to the spawn-call.
+	struct Params {
+		// Function to call.
+		const void *fn;
+
+		// The future to post the result to.
+		FutureBase *future;
+
+		// The type to be passed to the future object.
+		BasicTypeInfo resultType;
+	};
+
+	// 'actuals' is the location on our stack of the parameters to use when calling the function in 'params'.
+	// We disable the initialization check since it clears massive amounts of unused stack space.
+#pragma runtime_checks("", off)
+	static void spawnFuture(Params *params, void *actuals) {
 		// Note: Do not call anything strange before we call p->toCall, otherwise
 		// we may overwrite parameters already on the stack!
-		typedef void (*ErrorFn)(void *, const Exception &);
 
 		try {
-			// This is done to force VS2008 compiler to see that this function
-			// may throw an exception and include exception handling here.
-			DoCallFn fn = chooseCall(p->result);
-			(*fn)(p, params);
-		} catch (const Exception &e) {
-			const ErrorFn f = (const ErrorFn)p->onError;
-			(*f)(p->data, e);
+			// Call the function and place the result in the future.
+			call(params->fn, actuals, params->future->target, params->resultType);
+			// Notify success.
+			params->future->posted();
 		} catch (...) {
-			// We can not throw any further.
-			// should assert, but it takes too much stack space!
+			// Post the error.
+			params->future->error();
 		}
 
 		// Terminate ourselves.
 		exitUThread();
 	}
+#pragma runtime_checks("", restore)
 
 	UThread UThread::spawn(const Fn<void, void> &fn, const Thread *on) {
 		UThreadData *t = UThreadData::create();
@@ -148,22 +149,27 @@ namespace code {
 		return UThread(t);
 	}
 
-	UThread UThread::spawn(const Params *p, const FnParams *params, const Thread *on, UThreadData *t) {
+	UThread UThread::spawn(const void *fn, const FnParams &params,
+						FutureBase &result, const BasicTypeInfo &resultType,
+						const Thread *on, UThreadData *t) {
 		if (t == null)
 			t = UThreadData::create();
 
 		// Copy parameters to the stack of the new thread.
-		Params *pPos = (Params *)t->alloc(sizeof(Params));
-		*pPos = *p;
+		Params *p = (Params *)t->alloc(sizeof(Params));
+		p->fn = fn;
+		p->future = &result;
+		p->resultType = resultType;
 
-		// Copy parameters a bit over the top. Space for a return value and some temporary space between.
-		void *paramsPos = t->pushParams(*params, p->result.size);
+		// Copy parameters a bit over the top of the stack. Some temporary stack space between is
+		// inserted by the 'pushParams' function, to suit the current platform.
+		void *paramsPos = t->pushParams(params, 0);
 
-		// Set up the initial function call.
-		t->pushParams(null, pPos, paramsPos);
-		t->pushContext(&spawnParams);
+		// Set up the call to 'spawnParams'.
+		t->pushParams(null, p, paramsPos);
+		t->pushContext(&spawnFuture);
 
-		// Done.
+		// Done!
 		insert(t, on);
 		return UThread(t);
 	}
@@ -245,7 +251,7 @@ namespace code {
 
 		UThreadData *prev = running;
 		{
-			Lock::L z(lock);
+			::Lock::L z(lock);
 			UThreadData *next = ready.pop();
 			if (!next)
 				return false;
@@ -267,7 +273,7 @@ namespace code {
 
 		while (true) {
 			{
-				Lock::L z(lock);
+				::Lock::L z(lock);
 				next = ready.pop();
 			}
 
@@ -292,7 +298,7 @@ namespace code {
 		data->owner = this;
 		atomicIncrement(aliveCount);
 
-		Lock::L z(lock);
+		::Lock::L z(lock);
 		ready.push(data);
 		data->addRef();
 	}
@@ -303,7 +309,7 @@ namespace code {
 
 		while (true) {
 			{
-				Lock::L z(lock);
+				::Lock::L z(lock);
 				next = ready.pop();
 			}
 
@@ -324,7 +330,7 @@ namespace code {
 	}
 
 	void UThreadState::wake(UThreadData *data) {
-		Lock::L z(lock);
+		::Lock::L z(lock);
 		ready.push(data);
 	}
 
@@ -379,140 +385,6 @@ namespace code {
 		return (void **)(r + size);
 	}
 
-	DoCallFn chooseCall(const TypeInfo &r) {
-		if (r.plain() && r.kind == TypeInfo::user)
-			return &doUserCall;
-		else if (r.kind == TypeInfo::floatNr && r.size == sizeof(float))
-			return &doFloatCall;
-		else if (r.kind == TypeInfo::floatNr && r.size == sizeof(double))
-			return &doDoubleCall;
-		else if (r.size <= 4)
-			return &doCall4;
-		else if (r.size <= 8)
-			return &doCall8;
-		else
-			return &doUserCall;
-	}
-
-	void doUserCall(UThread::Params *s, void *params) {
-		const void *toCall = s->toCall;
-		const void *resultFn = s->onDone;
-		void *data = s->data;
-		nat rSize = s->result.size;
-
-		__asm {
-			// Prepare the stack.
-			sub esp, rSize;
-			mov eax, esp;
-
-			mov edi, esp;
-			mov esp, params;
-
-			// Call and restore the stack.
-			push eax;
-			call toCall;
-			mov esp, edi;
-
-			// Now the result is right on top of the stack!
-			push data;
-			call resultFn;
-			add esp, 4;
-			add esp, rSize;
-		}
-	}
-
-	void doDoubleCall(UThread::Params *s, void *params) {
-		const void *toCall = s->toCall;
-		const void *resultFn = s->onDone;
-		void *data = s->data;
-
-		__asm {
-			// Prepare the stack.
-			mov edi, esp;
-			mov esp, params;
-
-			// Call and restore the stack.
-			call toCall;
-			mov esp, edi;
-
-			// Call the 'we're done' function.
-			push eax;
-			push eax;
-			fstp QWORD PTR [esp];
-			push data;
-			call resultFn;
-			add esp, 12;
-		}
-	}
-
-	void doFloatCall(UThread::Params *s, void *params) {
-		const void *toCall = s->toCall;
-		const void *resultFn = s->onDone;
-		void *data = s->data;
-
-		__asm {
-			// Prepare the stack.
-			mov edi, esp;
-			mov esp, params;
-
-			// Call and restore the stack.
-			call toCall;
-			mov esp, edi;
-
-			// Call the 'we're done' function.
-			push eax;
-			fstp DWORD PTR [esp];
-			push data;
-			call resultFn;
-			add esp, 8;
-		}
-	}
-
-	void doCall4(UThread::Params *s, void *params) {
-		const void *toCall = s->toCall;
-		const void *resultFn = s->onDone;
-		void *data = s->data;
-
-		__asm {
-			// Prepare the stack.
-			mov edi, esp;
-			mov esp, params;
-
-			// Call and restore the stack.
-			call toCall;
-			mov esp, edi;
-
-			// Call the 'we're done' function.
-			push eax;
-			push data;
-			call resultFn;
-			add esp, 8;
-		}
-	}
-
-	void doCall8(UThread::Params *s, void *params) {
-		const void *toCall = s->toCall;
-		const void *resultFn = s->onDone;
-		void *data = s->data;
-
-		__asm {
-			// Prepare the stack.
-			mov edi, esp;
-			mov esp, params;
-
-			// Call and restore the stack.
-			call toCall;
-			mov esp, edi;
-
-			// Call the 'we're done' function.
-			push edx;
-			push eax;
-			push data;
-			call resultFn;
-			add esp, 12;
-		}
-	}
-
 	void UThreadData::push(void *v) {
 		*--esp = v;
 	}
@@ -551,10 +423,16 @@ namespace code {
 	}
 
 	void *UThreadData::pushParams(const FnParams &params, nat minSpace) {
-		minSpace += 10 * 4; // Space for the context and some return addresses.
-		// Extra space for the function. VS fills about 200 bytes of the stack
+		minSpace += 30 * 4; // Space for the context and some return addresses.
+		// Extra space for the function. VS fills about 200 machine words of the stack
 		// with random data in the function prolog, so we want to have a good margin here.
-		minSpace += 200 * 4;
+		// In release builds, we can probably reduce this a lot.
+#ifdef DEBUG
+		// In debug builds, the visual studio compiler allocates more stack than needed.
+		// I have removed some waste (including filling with 0xCC) by disabling runtime
+		// checks on relevant functions.
+		minSpace += 120 * 4;
+#endif
 
 		nat s = params.totalSize();
 		assert(s % 4 == 0);

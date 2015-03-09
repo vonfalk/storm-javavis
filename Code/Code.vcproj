@@ -340,6 +340,10 @@
 				RelativePath=".\Future.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\FnCall.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -512,6 +516,10 @@
 			</File>
 			<File
 				RelativePath=".\Future.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FnCall.h"
 				>
 			</File>
 		</Filter>

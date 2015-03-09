@@ -213,3 +213,7 @@ StackTrace stackTrace(nat skip) {
 
 #endif
 
+void dumpStack() {
+	StackTrace s = stackTrace();
+	PLN(format(s));
+}

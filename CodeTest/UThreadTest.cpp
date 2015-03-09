@@ -78,94 +78,80 @@ static void errorFloat(double *c, const Exception &e) {
 }
 
 BEGIN_TEST(UThreadResultTest) {
+	// If these tests start to fail, consider increasing the stack space for
+	// calling functions defined in UThread.cpp (pushParams).
 
-	int c = 0;
 	{
 		bool e = false;
 		FnParams params; params.add(e);
-		UThread::Result<void, int> rv = { &c, &checkVoid, &error };
-		UThread::spawn(returnVoid, params, rv);
-		UThread::leave();
-		CHECK_EQ(c, 1);
+		Future<void> r;
+		UThread::spawn(returnVoid, params, r);
+		CHECK_RUNS(r.result());
 
 		e = true;
-		UThread::spawn(returnVoid, params, rv);
-		UThread::leave();
-		CHECK_EQ(c, -1);
+		UThread::spawn(returnVoid, params, r);
+		CHECK_ERROR(r.result());
 	}
 
 	{
 		int v = 10;
 		FnParams params; params.add(v);
-		UThread::Result<int, int> ri = { &c, &checkInt, &error };
-		UThread::spawn(returnInt, params, ri);
-		UThread::leave();
-		CHECK_EQ(c, 10);
+		Future<int> r;
+		UThread::spawn(returnInt, params, r);
+		CHECK_EQ(r.result(), 10);
 	}
 
 	{
 		int64 v = 1024LL << 30LL;
 		FnParams params; params.add(v);
-		UThread::Result<int64, int> ri = { &c, &checkInt64, &error };
-		UThread::spawn(returnInt64, params, ri);
-		UThread::leave();
-		CHECK_EQ(c, 1024);
+		Future<int64> r;
+		UThread::spawn(returnInt64, params, r);
+		CHECK_EQ(r.result() >> 30LL, 1024);
 	}
 
 	{
-		double r = 0.0;
 		float v = 13.37f;
 		FnParams params; params.add(v);
-		UThread::Result<float, double> ri = { &r, &checkFloat, &errorFloat };
-		UThread::spawn(returnFloat, params, ri);
-		UThread::leave();
-		CHECK_EQ(r, 13.37f);
+		Future<float> r;
+		UThread::spawn(returnFloat, params, r);
+		CHECK_EQ(r.result(), 13.37f);
 	}
 
 	{
-		double r = 0.0;
 		double v = 13.37;
 		FnParams params; params.add(v);
-		UThread::Result<double, double> ri = { &r, &checkDouble, &errorFloat };
-		UThread::spawn(returnDouble, params, ri);
-		UThread::leave();
-		CHECK_EQ(r, 13.37);
+		Future<double> r;
+		UThread::spawn(returnDouble, params, r);
+		CHECK_EQ(r.result(), 13.37);
 	}
 
 	Tracker::clear();
 	{
-		int r = 0;
 		int t = 22;
 		FnParams params; params.add(t);
-		UThread::Result<Tracker, int> ri = { &r, &checkTracker, &error };
-		UThread::spawn(returnTracker, params, ri);
-		UThread::leave();
-		CHECK_EQ(r, 22);
+		Future<Tracker> r;
+		UThread::spawn(returnTracker, params, r);
+		CHECK_EQ(r.result().data, 22);
 
 		t = -2;
-		UThread::spawn(returnTracker, params, ri);
-		UThread::leave();
-		CHECK_EQ(r, -1);
+		UThread::spawn(returnTracker, params, r);
+		CHECK_ERROR(r.result());
 	}
 	CHECK(Tracker::clear());
 
 	Tracker::clear();
 	{
-		int r = 0;
 		Tracker t(22);
 		FnParams params; params.add(t);
-		UThread::Result<int, int> ri = { &r, &checkInt, &error };
-		UThread::spawn(takeTracker, params, ri);
-		UThread::leave();
-		CHECK_EQ(r, 22);
+		Future<int> r;
+		UThread::spawn(takeTracker, params, r);
+		CHECK_EQ(r.result(), 22);
 
 		t.data = -3;
-		UThread::spawn(takeTracker, params, ri);
-		UThread::leave();
-		CHECK_EQ(r, -1);
+		UThread::spawn(takeTracker, params, r);
+		CHECK_ERROR(r.result());
 	}
 	CHECK(Tracker::clear());
-
 
 } END_TEST
 
@@ -293,14 +279,11 @@ static int spawnLaterFn(int a, int b) {
 BEGIN_TEST(UThreadSpawnLater) {
 	int v1 = 10;
 	int v2 = 20;
-	int r;
-	UThread::Params params = { &spawnLaterFn, &r, error, checkInt, typeInfo<int>() };
 
 	UThreadData *data = UThread::spawnLater();
 	FnParams p(UThread::spawnParamMem(data));
 	p.add(v1).add(v2);
-	UThread::spawn(&params, &p, null, data);
-	UThread::leave();
-
-	CHECK_EQ(r, 30);
+	Future<int> future;
+	UThread::spawn(&spawnLaterFn, p, future.impl(), typeInfo<int>(), null, data);
+	CHECK_EQ(future.result(), 30);
 } END_TEST

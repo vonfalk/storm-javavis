@@ -1,33 +1,25 @@
 #include "stdafx.h"
 #include "Future.h"
 
-#ifdef CUSTOM_EXCEPTION_PTR
-// Found in crt/src/tidtable.c
-extern "C" void * __cdecl _getptd();
-// Look in crt/src/mtdll.h for the _tiddata definition!
-#endif
-
 namespace code {
 
-	Future::Future(void *target, nat size)
-		: targetPtr(target), size(size), resultSema(0),  hasError(false) {}
+	FutureBase::FutureBase(void *target) : target(target) {}
 
-	void Future::wait() {
-		resultSema.down();
-		if (hasError) {
+	void FutureBase::result() {
+		semaDown();
+		if (hasError()) {
 			throwError();
 		}
 	}
 
-	void Future::result() {
-		hasError = false;
-		resultSema.up();
+	void FutureBase::posted() {
+		semaUp();
 	}
 
 #ifdef CUSTOM_EXCEPTION_PTR
 
 #ifndef X86
-#error "This only works for X86! Please use a newer compiler with support for exception_ptr."
+#error "Only X86 is supported now. Please revise the code or use a compiler with support for exception_ptr"
 #endif
 
 	/**
@@ -103,13 +95,13 @@ namespace code {
 		}
 	}
 
-	Future::Cloned::Cloned() : data(null), type(null) {}
+	FutureBase::Cloned::Cloned() : data(null), type(null) {}
 
-	Future::Cloned::~Cloned() {
+	FutureBase::Cloned::~Cloned() {
 		clear();
 	}
 
-	void Future::Cloned::clear() {
+	void FutureBase::Cloned::clear() {
 		if (data) {
 			DummyException *p = (DummyException *)data;
 			(p->*(type->dtor))();
@@ -119,7 +111,7 @@ namespace code {
 		type = null;
 	}
 
-	void Future::Cloned::rethrow() {
+	void FutureBase::Cloned::rethrow() {
 		// It is safe to keep stuff at the stack here. catch-blocks are executed
 		// on top of this stack, ie this stack frame will not be reclaimed until
 		// the catch-blocks have been executed.
@@ -133,7 +125,7 @@ namespace code {
 		RaiseException(cppExceptionCode, EXCEPTION_NONCONTINUABLE, cppExceptionParams, args);
 	}
 
-	void Future::Cloned::set(void *src, const CppExceptionType *type) {
+	void FutureBase::Cloned::set(void *src, const CppExceptionType *type) {
 		clear();
 
 		this->type = type;
@@ -155,7 +147,7 @@ namespace code {
 	}
 
 
-	int Future::filter(EXCEPTION_POINTERS *info) {
+	int FutureBase::filter(EXCEPTION_POINTERS *info) {
 		EXCEPTION_RECORD *record = info->ExceptionRecord;
 
 		if (!isCppException(record)) {
@@ -182,32 +174,29 @@ namespace code {
 		return EXCEPTION_EXECUTE_HANDLER;
 	}
 
-	void Future::error() {
-		hasError = true;
-
+	void FutureBase::error() {
 		__try {
 			throw;
 		} __except (filter(GetExceptionInformation())) {
 			// Notify result.
-			resultSema.up();
+			semaUp();
 		}
 	}
 
 
-	void Future::throwError() {
+	void FutureBase::throwError() {
 		errorData.rethrow();
 	}
 
 #else
 
-	void Future::throwError() {
+	void FutureBase::throwError() {
 		std::rethrow_exception(errorData);
 	}
 
-	void Future::error() {
-		hasError = true;
+	void FutureBase::error() {
 		errorData = std::current_exception();
-		resultSema.up();
+		semaUp();
 	}
 
 #endif

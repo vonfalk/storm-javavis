@@ -24,6 +24,17 @@ struct IsConvertible {
 	enum { value = sizeof(check(from)) == sizeof(YesType) };
 };
 
+// Is a reference?
+template <class T>
+struct IsReference {
+	enum { value = false };
+};
+
+template <class T>
+struct IsReference<T &> {
+	enum { value = true };
+};
+
 // Enable something if:
 template <bool Cond, class T>
 struct EnableIf {};

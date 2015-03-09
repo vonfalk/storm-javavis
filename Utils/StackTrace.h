@@ -86,4 +86,5 @@ String format(const StackTrace &trace);
 // Format the entire trace using the supplied FnLookup.
 String format(const StackTrace &trace, const FnLookup &lookup);
 
-
+// Print the stack here.
+void dumpStack();

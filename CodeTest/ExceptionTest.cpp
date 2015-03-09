@@ -9,9 +9,9 @@ static void error() {
 
 struct ExThread {
 
-	Future result;
+	FutureSema<Semaphore> result;
 
-	ExThread() : result(null, 0) {}
+	ExThread() : result(null) {}
 
 	void run() {
 		try {
@@ -30,7 +30,7 @@ BEGIN_TEST(ExceptionTest) {
 	Thread::spawn(memberVoidFn(&z, &ExThread::run));
 
 	try {
-		z.result.wait();
+		z.result.result();
 		CHECK(false);
 	} catch (const UserError &) {
 		CHECK(true);

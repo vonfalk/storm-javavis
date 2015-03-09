@@ -1,7 +1,39 @@
 #pragma once
 
 /**
- * Information about a type.
+ * Minimal type information required for returning a value.
+ * This is supposed to stay constant through different releases of the
+ * compiler, so that it can easily be filled in from machine code. The
+ * type information should be enough to figure out how to pass the return
+ * value of a function.
+ */
+struct BasicTypeInfo {
+	// Size of the type.
+	nat size;
+
+	// Kind of type?
+	enum Kind {
+		nothing = 0, // void
+		signedNr, // int, int64...
+		unsignedNr, // nat, nat64...
+		floatNr, // float, double
+		ptr, // pointer or reference
+		user, // user defined type
+	};
+
+	Kind kind;
+
+	// Plain? (ie not a pointer nor a reference).
+	inline bool plain() const {
+		return kind != ptr;
+	}
+};
+
+wostream &operator <<(wostream &to, BasicTypeInfo::Kind k);
+wostream &operator <<(wostream &to, const BasicTypeInfo &t);
+
+/**
+ * Information about a type. Things like copy-ctors and/or destructors may be added here in the future.
  * Use typeInfo<T>() to get an instance of this.
  */
 struct TypeInfo {
@@ -24,7 +56,7 @@ struct TypeInfo {
 
 	// Kind of type?
 	enum Kind {
-		nothing, // ie void
+		nothing = 0, // ie void
 		signedNr, // ie int, int64 ...
 		unsignedNr, // ie nat, nat64 ...
 		floatNr, // float, double ...
@@ -34,6 +66,8 @@ struct TypeInfo {
 	// Kind.
 	Kind kind;
 
+	// Convert to the basic type info.
+	operator BasicTypeInfo();
 };
 
 // Output.

@@ -127,54 +127,6 @@ namespace code {
 		}
 	};
 
-	/**
-	 * Helper functions, not intended to be called directly.
-	 */
-	void doCall(void *result, const TypeInfo &info, const void *fn, const FnParams *params);
-	void doVoidCall(const void *fn, const FnParams *params);
-	float doFloatCall(const void *fn, const FnParams *params);
-	double doDoubleCall(const void *fn, const FnParams *params);
-
-
-	/**
-	 * Call a function using the parameters. For reference return types, use
-	 * 'callRef' instead.
-	 *
-	 * NOTE: In release we may need to add try {} catch (...) { throw; } to these
-	 * since C++ compiler sometimes fails to see that the exception handling is needed.
-	 * The test I wrote works in release, but there may be some more tricky cases I do not
-	 * see right now that triggers the bug.
-	 */
-	template <class T>
-	T call(const void *fn, const FnParams &params = FnParams()) {
-		byte d[sizeof(T)];
-		doCall(d, typeInfo<T>(), fn, &params);
-		T *result = (T *)d;
-		T copy = *result;
-		result->~T();
-		return copy;
-	}
-
-	template <>
-	inline void call(const void *fn, const FnParams &params) {
-		doVoidCall(fn, &params);
-	}
-
-	template <>
-	inline float call(const void *fn, const FnParams &params) {
-		return doFloatCall(fn, &params);
-	}
-
-	template <>
-	inline double call(const void *fn, const FnParams &params) {
-		return doDoubleCall(fn, &params);
-	}
-
-	template <class T>
-	T &callRef(const void *fn, const FnParams &params = FnParams()) {
-		T *ptr = null;
-		doCall(&ptr, typeInfo<T &>(), fn, &params);
-		return *ptr;
-	}
-
 }
+
+#include "FnCall.h"
