@@ -94,6 +94,14 @@ struct SizeOf<void> {
 	};
 };
 
+template <>
+struct SizeOf<const void> {
+	enum {
+		size = 0,
+		baseSize = 0,
+	};
+};
+
 template <class T>
 struct SizeOf<T *> {
 	enum {

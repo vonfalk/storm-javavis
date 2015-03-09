@@ -1,7 +1,6 @@
 #pragma once
 #include "Code/RefSource.h"
 #include "Code/Reference.h"
-#include "Utils/Semaphore.h"
 #include "Std.h"
 #include "CodeGen.h"
 
@@ -119,21 +118,8 @@ namespace storm {
 		// Called to update code.
 		static const void *CODECALL updateCode(LazyCode *c);
 
-		// Message between the two versions of updateCode.
-		struct Msg {
-			// Note: the use of the 'wrong' semaphore here is intentional. Otherwise we would
-			// break multithreading semantics by allowing thread switches at every function call
-			// the first time that function is called.
-			Semaphore sema;
-
-			// Resulting function.
-			const void *result;
-
-			inline Msg() : sema(0), result(null) {}
-		};
-
-		// Update code, know we're on the right thread.
-		static void updateCodeLocal(LazyCode *c, Msg *msg);
+		// Update code on the correct thread.
+		static const void *CODECALL updateCodeLocal(LazyCode *c);
 
 		// Create a Binary from a Listing.
 		void setCode(const code::Listing &listing);

@@ -3,6 +3,7 @@
 #include "Function.h"
 #include "Exception.h"
 #include "Code/Redirect.h"
+#include "Code/Future.h"
 
 namespace storm {
 
@@ -91,25 +92,21 @@ namespace storm {
 	}
 
 	const void *LazyCode::updateCode(LazyCode *c) {
-		Msg msg;
 
-		// Make sure we're running on the Compiler thread!
+		// If we're on the compiler thread, we may call directly.
+		// TODO? Always allocate a new UThread? This will make sure the compiler
+		// always has a predictable amount of stack space in some causes, which could be beneficial.
 		Thread *cThread = Compiler.thread(c->engine());
 		if (cThread->thread != code::Thread::current()) {
-			code::FnParams params;
-			params.add(c).add(&msg);
-			TODO(L"We need to propagate exceptions from the async call to this thread!");
-			code::UThread::spawn(address(&LazyCode::updateCodeLocal), params, &cThread->thread);
-			msg.sema.down();
-			assert(msg.result != null, L"Error occured in the other thread.");
+			code::Future<const void *> result;
+			code::UThread::spawn(&LazyCode::updateCodeLocal, code::FnParams().add(c), result);
+			return result.result();
 		} else {
-			updateCodeLocal(c, &msg);
+			return c->updateCodeLocal(c);
 		}
-
-		return msg.result;
 	}
 
-	void LazyCode::updateCodeLocal(LazyCode *c, Msg *msg) {
+	const void *LazyCode::updateCodeLocal(LazyCode *c) {
 		if (!c->loaded) {
 			if (c->loading)
 				throw InternalError(L"Trying to update " + c->owner->identifier() + L" recursively!");
@@ -119,16 +116,13 @@ namespace storm {
 				c->setCode(c->load());
 			} catch (...) {
 				c->loading = false;
-				msg->result = null;
-				msg->sema.up();
 				throw;
 			}
 			c->loading = false;
 			c->loaded = true;
 		}
 
-		msg->result = c->code->getData();
-		msg->sema.up();
+		return c->code->getData();
 	}
 
 	void LazyCode::setCode(const code::Listing &l) {
