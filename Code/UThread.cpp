@@ -139,8 +139,9 @@ namespace code {
 		return UThread(t);
 	}
 
-	UThread UThread::spawn(const void *fn, const FnParams &params, const Thread *on) {
-		UThreadData *t = UThreadData::create();
+	UThread UThread::spawn(const void *fn, const FnParams &params, const Thread *on, UThreadData *t) {
+		if (t == null)
+			t = UThreadData::create();
 
 		t->pushParams(&exitUThread, params);
 		t->pushContext(fn);

@@ -94,14 +94,14 @@ namespace code {
 		// Spawn using a plain function pointer and parameters. The parameters stored in
 		// 'params' follows the same lifetime rules as FnParams::call() does. No special care
 		// needs to be taken. Note: fn may not return a value!
-		static UThread spawn(const void *fn, const FnParams &params, const Thread *on = null);
+		static UThread spawn(const void *fn, const FnParams &params,
+							const Thread *on = null, UThreadData *prealloc = null);
 
 		// Spawn a thread, returning the result in a future. Keep the Future object alive until
 		// it has gotten a result, otherwise we will probably crash! This is the low-level variant.
 		// It may also be used from the 'spawnLater' api by setting 'prealloc' to something other than null.
-		static UThread CODECALL spawn(const void *fn, const FnParams &params,
-									FutureBase &result, const BasicTypeInfo &resultType,
-									const Thread *on = null, UThreadData *prealloc = null);
+		static UThread spawn(const void *fn, const FnParams &params, FutureBase &result,
+							const BasicTypeInfo &resultType, const Thread *on = null, UThreadData *prealloc = null);
 
 		// Spawn using a plain function pointer and parameters. Places the result (including any exceptions)
 		// in the future object.

@@ -41,7 +41,8 @@ namespace storm {
 		code::RefSource lazyCodeFn, createStrFn;
 
 		// Things we need to call another thread.
-		code::RefSource spawnLater, spawnParam, spawn, abortSpawn;
+		code::RefSource spawnLater, spawnParam, abortSpawn;
+		code::RefSource spawn, spawnResult;
 
 		// Interface to the FnParams needed.
 		code::RefSource fnParamsCtor, fnParamsDtor, fnParamsAdd;

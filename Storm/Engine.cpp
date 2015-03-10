@@ -3,32 +3,12 @@
 #include "Std.h"
 #include "Exception.h"
 #include "Thread.h"
+#include "Wrap.h"
 #include "Code/UThread.h"
 #include "Code/FnParams.h"
 #include "Lib/Str.h"
 
 namespace storm {
-
-	// Wrappers.
-	void fnParamsCtor(void *memory, void *ptr) {
-		new (memory) code::FnParams(ptr);
-	}
-
-	void fnParamsDtor(code::FnParams *obj) {
-		obj->~FnParams();
-	}
-
-	void fnParamsAdd(code::FnParams *obj, code::FnParams::CopyFn copy, code::FnParams::DestroyFn destroy,
-					nat size, const void *value) {
-		obj->add(copy, destroy, size, value);
-	}
-
-	static void spawnThread(const void *fn, const code::FnParams *params, void *result,
-							BasicTypeInfo *resultType, Thread *on, code::UThreadData *data) {
-		code::FutureSema<code::Sema> future(result);
-		code::UThread::spawn(fn, *params, future, *resultType, &on->thread, data);
-		future.result();
-	}
 
 
 	FnRefs::FnRefs(code::Arena &arena)
@@ -36,7 +16,7 @@ namespace storm {
 		  allocRef(arena, L"alloc"), freeRef(arena, L"free"),
 		  lazyCodeFn(arena, L"lazyUpdate"), createStrFn(arena, L"createStr"),
 		  spawnLater(arena, L"spawnLater"), spawnParam(arena, L"spawnParam"),
-		  spawn(arena, L"spawn"), abortSpawn(arena, L"abortSpawn"),
+		  abortSpawn(arena, L"abortSpawn"), spawn(arena, L"spawn"), spawnResult(arena, L"spawnResult"),
 		  fnParamsCtor(arena, L"FnParams::ctor"), fnParamsDtor(arena, L"FnParams::dtor"),
 		  fnParamsAdd(arena, L"FnParams::add")
 	{
@@ -49,8 +29,10 @@ namespace storm {
 
 		spawnLater.set(address(&code::UThread::spawnLater));
 		spawnParam.set(address(&code::UThread::spawnParamMem));
-		spawn.set(address(&storm::spawnThread));
 		abortSpawn.set(address(&code::UThread::abortSpawn));
+
+		spawn.set(address(&storm::spawnThread));
+		spawnResult.set(address(&storm::spawnThreadResult));
 
 		fnParamsCtor.set(address(&storm::fnParamsCtor));
 		fnParamsDtor.set(address(&storm::fnParamsDtor));

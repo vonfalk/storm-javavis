@@ -102,6 +102,53 @@ namespace storm {
 		}
 	}
 
+	void spawnThread(const void *fn, const code::FnParams *params, Thread *on, code::UThreadData *data) {
+		code::UThread::spawn(fn, *params, &on->thread, data);
+	}
+
+	void spawnThreadResult(const void *fn, const code::FnParams *params, void *result,
+						BasicTypeInfo *resultType, Thread *on, code::UThreadData *data) {
+		code::FutureSema<code::Sema> future(result);
+		code::UThread::spawn(fn, *params, future, *resultType, &on->thread, data);
+		future.result();
+		TODO(L"We need to copy the returned object while in the other thread!");
+	}
+
+	// Add a single parameter of type 'v', value in 'a' to 'to'.
+	static void addParam(Engine &e, const GenState &z, code::Variable to, const Value &v, const code::Value &a) {
+		using namespace code;
+		z.to << lea(ptrC, to);
+
+		if (v.isClass()) {
+			TODO(L"Do a deep copy of this object!");
+			z.to << lea(ptrA, a);
+			z.to << fnParam(ptrC);
+			z.to << fnParam(Ref(e.fnRefs.addRef));
+			z.to << fnParam(Ref(e.fnRefs.freeRef));
+			z.to << fnParam(natConst(v.size()));
+			z.to << fnParam(ptrA);
+			z.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
+		} else if (v.ref) {
+			// No need for copy ctors!
+			z.to << fnParam(intPtrConst(0));
+			z.to << fnParam(intPtrConst(0));
+			z.to << fnParam(natConst(v.size()));
+			z.to << fnParam(a);
+			z.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
+		} else {
+			code::Value dtor = v.destructor();
+			if (dtor.empty())
+				dtor = intPtrConst(0);
+			z.to << lea(ptrA, a);
+			z.to << fnParam(ptrC);
+			z.to << fnParam(v.copyCtor());
+			z.to << fnParam(dtor);
+			z.to << fnParam(natConst(v.size()));
+			z.to << fnParam(ptrA);
+			z.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
+		}
+	}
+
 	void Function::genCodePost(const GenState &to, const Actuals &params, GenResult &res,
 							code::Ref ref, const code::Value &thread) {
 		using namespace code;
@@ -122,48 +169,15 @@ namespace storm {
 													FnParams::classSize(),
 													Ref(e.fnRefs.fnParamsDtor),
 													freeOnBoth | freePtr);
+		// Call the constructor of FnParams
 		to.to << lea(ptrC, fnParams);
 		to.to << fnParam(ptrC);
 		to.to << fnParam(ptrA);
 		to.to << fnCall(Ref(e.fnRefs.fnParamsCtor), Size());
 
 		// Add all parameters.
-		for (nat i = 0; i < params.size(); i++) {
-			const Value &v = this->params[i];
-
-			if (v.isClass()) {
-				TODO(L"Do a deep copy of this object!");
-				to.to << lea(ptrC, fnParams);
-				to.to << lea(ptrA, params[i]);
-				to.to << fnParam(ptrC);
-				to.to << fnParam(Ref(e.fnRefs.addRef));
-				to.to << fnParam(Ref(e.fnRefs.freeRef));
-				to.to << fnParam(natConst(v.size()));
-				to.to << fnParam(ptrA);
-				to.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
-			} else if (v.ref) {
-				// No need for copy ctors!
-				to.to << lea(ptrC, fnParams);
-				to.to << fnParam(ptrC);
-				to.to << fnParam(intPtrConst(0));
-				to.to << fnParam(intPtrConst(0));
-				to.to << fnParam(natConst(v.size()));
-				to.to << fnParam(params[i]);
-				to.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
-			} else {
-				code::Value dtor = v.destructor();
-				if (dtor.empty())
-					dtor = intPtrConst(0);
-				to.to << lea(ptrC, fnParams);
-				to.to << lea(ptrA, params[i]);
-				to.to << fnParam(ptrC);
-				to.to << fnParam(v.copyCtor());
-				to.to << fnParam(dtor);
-				to.to << fnParam(natConst(v.size()));
-				to.to << fnParam(ptrA);
-				to.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
-			}
-		}
+		for (nat i = 0; i < params.size(); i++)
+			addParam(e, to, fnParams, this->params[i], params[i]);
 
 		// Describe the return type.
 		Variable returnType = createBasicTypeInfo(to.child(b), this->result);
@@ -174,7 +188,7 @@ namespace storm {
 		to.to << mov(dataNoFree, data);
 		to.to << mov(data, intPtrConst(0));
 
-		// Where shall we store the result (store the pointer there in ptrB);
+		// Where shall we store the result (store the pointer to it in ptrB);
 		if (this->result == Value()) {
 			// null-pointer.
 			to.to << mov(ptrB, intPtrConst(0));
@@ -191,7 +205,7 @@ namespace storm {
 		to.to << fnParam(ptrC);
 		to.to << fnParam(thread);
 		to.to << fnParam(dataNoFree);
-		to.to << fnCall(Ref(e.fnRefs.spawn), Size());
+		to.to << fnCall(Ref(e.fnRefs.spawnResult), Size());
 
 		// Wait for the result...
 		TODO(L"Make a copy of the result in the other thread if needed.");

@@ -462,6 +462,10 @@
 				RelativePath=".\VTableSlot.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Wrap.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -766,6 +770,10 @@
 			</File>
 			<File
 				RelativePath=".\VTableSlot.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Wrap.h"
 				>
 			</File>
 		</Filter>

@@ -23,7 +23,6 @@ namespace storm {
 				assert(false, L"NOT IMPLEMENTED YET!");
 				break;
 			case RunOn::named:
-				PLN("Run on " << their);
 				r = their.thread->ref();
 				break;
 			default:
