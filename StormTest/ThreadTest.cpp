@@ -12,4 +12,8 @@ BEGIN_TEST(ThreadTest) {
 
 	CHECK_EQ(runFn(L"test.bs.postInt"), 9);
 
+	DbgVal::clear();
+	CHECK_EQ(runFn(L"test.bs.postDbgVal"), 18);
+	CHECK(DbgVal::clear());
+
 } END_TEST

@@ -33,6 +33,8 @@ namespace storm {
 
 		Auto<Str> z = s->toS();
 		PLN(z);
+
+		PLN(*s->myType);
 	}
 
 	void dumpStack() {
@@ -45,6 +47,8 @@ namespace storm {
 
 
 	Dbg::Dbg() : v(10) {}
+
+	Dbg::Dbg(Par<Dbg> o) : v(o->v) {}
 
 	Dbg::Dbg(Int v) : v(v) {}
 

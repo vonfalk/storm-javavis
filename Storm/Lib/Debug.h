@@ -32,6 +32,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		STORM_CTOR Dbg();
+		STORM_CTOR Dbg(Par<Dbg> o);
 
 		// Set the value as well...
 		STORM_CTOR Dbg(Int v);

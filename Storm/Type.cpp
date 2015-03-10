@@ -252,6 +252,10 @@ namespace storm {
 		return as<Function>(find(CTOR, vector<Value>(2, Value::thisPtr(this))));
 	}
 
+	const void *Type::copyCtorFn() {
+		return handle().create;
+	}
+
 	Function *Type::assignFn() {
 		return as<Function>(find(L"=", vector<Value>(2, Value::thisPtr(this))));
 	}

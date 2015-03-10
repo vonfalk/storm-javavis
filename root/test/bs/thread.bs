@@ -23,3 +23,13 @@ Int postInt() {
 Int otherIntFn(Int v) on Other {
 	8 + v;
 }
+
+Int postDbgVal() {
+	DbgVal val(10);
+	otherDbgValFn(val);
+}
+
+Int otherDbgValFn(DbgVal v) on Other {
+	8 + v.get;
+}
+

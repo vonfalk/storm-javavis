@@ -31,10 +31,9 @@ namespace storm {
 	void Object::dumpLeaks() {}
 #endif
 
-	// Note the hack: myType(myType). myType is initialized in operator new.
-	Object::Object() : myType(myType), refs(1) {
+	static void created(Object *o) {
 #if defined(DEBUG) && defined(X86)
-		if ((nat)myType == 0xCCCCCCCC) {
+		if ((nat)o->myType == 0xCCCCCCCC) {
 			PLN("Do not stack allocate Objects, stupid!");
 			DebugBreak();
 			assert(false);
@@ -42,21 +41,31 @@ namespace storm {
 #endif
 
 #ifdef DEBUG_REFS
-		if (myType == this) {
+		if (o->myType == o) {
 			// The Type-type is special.
-			PLN("Created " << this << ", Type");
+			PLN("Created " << o << ", Type");
 		} else {
-			PLN("Created " << this << ", " << myType->name);
+			PLN("Created " << o << ", " << o->myType->name);
 		}
 #endif
 
 #ifdef DEBUG_LEAKS
-		if (myType == this) {
-			live.insert(make_pair(this, L"Type"));
+		if (o->myType == o) {
+			live.insert(make_pair(o, L"Type"));
 		} else {
-			live.insert(make_pair(this, myType->name));
+			live.insert(make_pair(o, o->myType->name));
 		}
 #endif
+	}
+
+	// Note the hack: myType(myType). myType is initialized in operator new.
+	Object::Object() : myType(myType), refs(1) {
+		created(this);
+	}
+
+	// Nothing to copy, really. Added to avoid special cases in other parts of the compiler.
+	Object::Object(Object *) : myType(myType), refs(1) {
+		created(this);
 	}
 
 	Object::~Object() {
@@ -166,26 +175,27 @@ namespace storm {
 	void *Object::operator new[](size_t size, Type *type) { assert(false); return null; }
 	void Object::operator delete[](void *ptr) { assert(false); }
 
-	Object *createObj(Function *ctor, code::FnParams params) {
-		assert(ctor->name == Type::CTOR, "Don't use create() with other functions than constructors.");
-		assert(ctor->params.size() == params.count() + 1,
-			"Wrong number of parameters to constructor! The first one is filled in automatically.");
-		Type *type = ctor->params[0].type;
+	Object *createObj(Type *type, const void *ctor, code::FnParams params) {
 		assert(type->flags & typeClass);
 
 		void *mem = Object::operator new(type->size().current(), type);
 
 		try {
-			if (ctor->params[0].ref)
-				params.addFirst(mem);
-			else
-				params.addFirst(mem);
-			code::call<void>(ctor->pointer(), params);
+			params.addFirst(mem);
+			code::call<void>(ctor, params);
 		} catch (...) {
 			Object::operator delete(mem, type);
 			throw;
 		}
 		return (Object *)mem;
+	}
+
+	Object *createObj(Function *ctor, code::FnParams params) {
+		assert(ctor->name == Type::CTOR, "Don't use create() with other functions than constructors.");
+		assert(ctor->params.size() == params.count() + 1,
+			"Wrong number of parameters to constructor! The first one is filled in automatically.");
+		Type *type = ctor->params[0].type;
+		return createObj(type, ctor->pointer(), params);
 	}
 
 	void *CODECALL stormMalloc(Type *type) {

@@ -1,0 +1,24 @@
+use core;
+use core:debug;
+
+// Test some object cloning!
+
+// Base class for cloning.
+class CloneBase {
+	Int a;
+	Dbg b;
+
+	ctor() {
+		super() {
+			a = 2;
+			b = 3;
+		}
+	}
+}
+
+
+void testClone() {
+	CloneBase a;
+	print(a);
+	print(clone(a));
+}

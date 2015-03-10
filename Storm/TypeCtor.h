@@ -32,6 +32,7 @@ namespace storm {
 	 *
 	 * The copy constructor works just like in C++. It takes one (reference) parameter
 	 * that is the source of the copy.
+	 * TODO: Make use of "copy"-like semantics when dealing with Objects.
 	 * NOTE: Assumes that all members have been added by the time this class is created!
 	 */
 	class TypeCopyCtor : public Function {
@@ -66,5 +67,13 @@ namespace storm {
 		void generateCode(Type *type, Function *before);
 	};
 
+
+	/**
+	 * Generate a default clone function for the type passed. Used with a template.
+	 */
+	Named *stdClone(Par<NamePart> par);
+
+	// Create the template.
+	Template *cloneTemplate(Engine &to);
 
 }

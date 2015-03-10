@@ -31,10 +31,6 @@ namespace storm {
 	 * Note: Designed as a value since the Type object needs to be able to create
 	 * instances of this object at startup.
 	 *
-	 * TODO: We have trouble when an object switches C++-based base class! In that
-	 * case we need to re-allocate the VTable itself... Maybe we can figure out the
-	 * maxium size needed and use that?
-	 *
 	 * TODO: This also contains the same information as the chain class, remove duplication?
 	 */
 	class VTable : NoCopy {

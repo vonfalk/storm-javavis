@@ -92,16 +92,19 @@ namespace storm {
 		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::user; }
 
 		// Get a pointer/reference to the destructor (if any).
-		virtual Function *destructor();
+		Function *destructor();
 
 		// Get a pointer/reference to the copy constructor (if any).
-		virtual Function *copyCtor();
+		Function *copyCtor();
+
+		// Pointer to the current copy-constructor of this type. Updated to match any changes. Null if none.
+		const void *copyCtorFn();
 
 		// Get a pointer/reference to the default constructor (if any).
-		virtual Function *defaultCtor();
+		Function *defaultCtor();
 
 		// Get a pointer/reference to the assignment operator (if any).
-		virtual Function *assignFn();
+		Function *assignFn();
 
 		// Get the offset to a member. TODO: Maybe replace this one with RefSources in TypeVar?
 		Offset offset(const TypeVar *var) const;

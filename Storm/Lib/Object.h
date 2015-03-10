@@ -49,6 +49,9 @@ namespace storm {
 		// Initialize object to 1 reference.
 		STORM_CTOR Object();
 
+		// Copy object. Initializes to 1 reference.
+		STORM_CTOR Object(Object *o);
+
 		virtual ~Object();
 
 		// The type of this object.
@@ -127,6 +130,7 @@ namespace storm {
 	};
 
 	// Create an object using the supplied constructor.
+	Object *createObj(Type *type, const void *ctor, code::FnParams params);
 	Object *createObj(Function *ctor, code::FnParams params);
 	template <class T>
 	inline T *create(Function *ctor, const code::FnParams &params) {

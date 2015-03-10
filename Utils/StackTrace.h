@@ -20,7 +20,7 @@ struct StackFrame {
 	};
 
 	// Return address, points inside some function.
-	void *code;
+	const void *code;
 
 	// Some function parameters (fixed number, contains garbage if not all are used).
 	void *params[maxParams];

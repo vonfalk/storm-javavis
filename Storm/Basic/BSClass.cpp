@@ -53,21 +53,26 @@ namespace storm {
 
 		// Found a CTOR?
 		bool hasCtor = false;
+		bool hasCopyCtor = false;
 
 		for (nat i = 0; i < body->items.size(); i++) {
 			Auto<Named> z = body->items[i];
-			if (z->name == Type::CTOR)
+			if (z->name == Type::CTOR) {
+				if (z->params.size() == 2 && z->params[0] == z->params[1])
+					hasCopyCtor = true;
 				hasCtor = true;
+			}
 			add(z.borrow());
 		}
 
 		add(steal(CREATE(TypeDefaultDtor, engine, this)));
 		if (!hasCtor)
 			add(steal(CREATE(TypeDefaultCtor, engine, this)));
+		if (!hasCopyCtor)
+			add(steal(CREATE(TypeCopyCtor, engine, this)));
 
 		// Temporary solution.
 		if (flags & typeValue) {
-			add(steal(CREATE(TypeCopyCtor, engine, this)));
 			add(steal(CREATE(TypeAssignFn, engine, this)));
 		}
 	}

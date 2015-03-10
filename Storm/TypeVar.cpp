@@ -8,7 +8,7 @@ namespace storm {
 		: Named(name, vector<Value>(1, Value::thisPtr(owner))), varType(type) {}
 
 	void TypeVar::output(wostream &to) const {
-		to << varType << L" " << owner()->identifier() << L":" << name;
+		to << varType << L" " << owner()->identifier() << L"." << name;
 	}
 
 	Named *TypeVar::find(const Name &name) {
@@ -22,4 +22,5 @@ namespace storm {
 	Offset TypeVar::offset() const {
 		return owner()->offset(this);
 	}
+
 }

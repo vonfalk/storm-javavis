@@ -244,6 +244,10 @@
 				RelativePath=".\ThreadTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\CloneTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

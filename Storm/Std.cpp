@@ -8,6 +8,7 @@
 #include "Function.h"
 #include "Engine.h"
 #include "NamedThread.h"
+#include "TypeCtor.h"
 #include "Code/VTable.h"
 
 namespace storm {
@@ -182,6 +183,7 @@ namespace storm {
 		core->add(steal(natType(to)));
 		core->add(steal(boolType(to)));
 		core->add(steal(arrayTemplate(to)));
+		core->add(steal(cloneTemplate(to)));
 
 		addBuiltIn(to);
 	}
