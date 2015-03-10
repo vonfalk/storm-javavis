@@ -144,7 +144,7 @@ namespace code {
 
 		// Post the result.
 		void post(const T &result) {
-			void *target = future.targetPtr();
+			void *target = future.target;
 			new (target)T(result);
 			future.posted();
 		}

@@ -98,8 +98,10 @@ namespace storm {
 		// always has a predictable amount of stack space in some causes, which could be beneficial.
 		Thread *cThread = Compiler.thread(c->engine());
 		if (cThread->thread != code::Thread::current()) {
-			code::Future<const void *> result;
-			code::UThread::spawn(&LazyCode::updateCodeLocal, code::FnParams().add(c), result);
+			// Note, we're blocking the calling thread entirely since we would otherwise
+			// possibly let other UThreads run where it was not expected!
+			code::Future<const void *, Semaphore> result;
+			code::UThread::spawn(&LazyCode::updateCodeLocal, code::FnParams().add(c), result, &cThread->thread);
 			return result.result();
 		} else {
 			return c->updateCodeLocal(c);

@@ -65,6 +65,14 @@ static void uthreadInterop2() {
 	UThread::leave();
 }
 
+struct TInterop {
+	Future<int, Semaphore> result;
+
+	void run() {
+		result.post(42);
+	}
+};
+
 BEGIN_TEST(UThreadInterop) {
 	var = 0;
 	Thread::spawn(simpleVoidFn(uthreadInterop));
@@ -82,6 +90,15 @@ BEGIN_TEST(UThreadInterop) {
 	UThread::spawn(simpleVoidFn(setVar), &t);
 	stopSema.down();
 	CHECK_EQ(var, 1);
+
+	// Check so that futures work with regular semaphores as well.
+	{
+		TInterop i;
+		Thread::spawn(memberVoidFn(&i, &TInterop::run));
+		CHECK_EQ(i.result.result(), 42);
+	}
+
+
 } END_TEST
 
 struct Cond {

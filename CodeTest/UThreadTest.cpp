@@ -39,44 +39,6 @@ static int takeTracker(Tracker t) {
 	return t.data;
 }
 
-static void checkVoid(int *c) {
-	(*c)++;
-}
-
-static void checkInt(int *c, int v) {
-	*c = v;
-}
-
-static void checkInt64(int *c, int64 v) {
-	*c = int(v >> 30LL);
-}
-
-static void checkFloat(double *c, float v) {
-	*c = v;
-}
-
-static void checkDouble(double *c, double v) {
-	*c = v;
-}
-
-static void checkTracker(int *c, Tracker t) {
-	*c = t.data;
-}
-
-static void error(int *c, const Exception &e) {
-	if (e.what() == L"ERROR")
-		*c = -1;
-	else
-		*c = -2;
-}
-
-static void errorFloat(double *c, const Exception &e) {
-	if (e.what() == L"ERROR")
-		*c = -1.0;
-	else
-		*c = -2.0;
-}
-
 BEGIN_TEST(UThreadResultTest) {
 	// If these tests start to fail, consider increasing the stack space for
 	// calling functions defined in UThread.cpp (pushParams).

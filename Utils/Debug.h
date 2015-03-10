@@ -21,8 +21,9 @@ using std::endl;
 #define PLN_LINES(str) util::printLines(str)
 #define PVAR(expr) PLN(#expr << "=" << (expr))
 
-// Good way of making TODO: comments
-#define TODO(str) PLN("TODO("__FUNCTION__"):" << str)
+// Good way of making TODO: comments (only displays 5 times).
+// #define TODO(str) PLN("TODO("__FUNCTION__"):" << str)
+#define TODO(str) do { static nat _times = 0; if (++_times <= 5) PLN("TODO("__FUNCTION__"):" << str); } while (false)
 
 // Good way of indicating something possibly interesting during debugging.
 #define WARNING(str) PLN("WARNING "__FUNCTION__": " << str);
