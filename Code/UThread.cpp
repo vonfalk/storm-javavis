@@ -179,7 +179,8 @@ namespace code {
 	}
 
 	void UThread::abortSpawn(UThread *data) {
-		delete data;
+		if (data)
+			delete data;
 	}
 
 

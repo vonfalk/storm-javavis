@@ -93,4 +93,6 @@ namespace storm {
 		code::Block block;
 	};
 
+	// Generate code to fill in a BasicTypeInfo struct. Only touches eax register.
+	code::Variable createBasicTypeInfo(const GenState &to, const Value &v);
 }

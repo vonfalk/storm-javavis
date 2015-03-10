@@ -111,7 +111,6 @@ namespace storm {
 		to.to << begin(b);
 
 		// Create a UThreadData object.
-		TODO(L"Check what happens when exceptions are thrown. This one should not be freed after 'spawn' is called.");
 		Variable data = to.frame.createPtrVar(b, Ref(e.fnRefs.abortSpawn), freeOnException);
 		to.to << fnCall(Ref(e.fnRefs.spawnLater), Size::sPtr);
 		to.to << mov(data, ptrA);
@@ -133,6 +132,7 @@ namespace storm {
 			const Value &v = this->params[i];
 
 			if (v.isClass()) {
+				TODO(L"Do a deep copy of this object!");
 				to.to << lea(ptrC, fnParams);
 				to.to << lea(ptrA, params[i]);
 				to.to << fnParam(ptrC);
@@ -165,16 +165,36 @@ namespace storm {
 			}
 		}
 
+		// Describe the return type.
+		Variable returnType = createBasicTypeInfo(to.child(b), this->result);
+
+		// Set the thread data to null, so that we do not double-free it if
+		// the call returns with an exception.
+		Variable dataNoFree = to.frame.createPtrVar(b);
+		to.to << mov(dataNoFree, data);
+		to.to << mov(data, intPtrConst(0));
+
+		// Where shall we store the result (store the pointer there in ptrB);
+		if (this->result == Value()) {
+			// null-pointer.
+			to.to << mov(ptrB, intPtrConst(0));
+		} else {
+			to.to << lea(ptrB, res.safeLocation(to.child(b), this->result));
+		}
+
 		// Spawn the thread!
 		to.to << lea(ptrA, fnParams);
+		to.to << lea(ptrC, returnType);
 		to.to << fnParam(ref);
 		to.to << fnParam(ptrA);
+		to.to << fnParam(ptrB);
+		to.to << fnParam(ptrC);
 		to.to << fnParam(thread);
-		to.to << fnParam(data);
+		to.to << fnParam(dataNoFree);
 		to.to << fnCall(Ref(e.fnRefs.spawn), Size());
 
 		// Wait for the result...
-		TODO(L"Wait for the result as well!");
+		TODO(L"Make a copy of the result in the other thread if needed.");
 
 		to.to << end(b);
 	}

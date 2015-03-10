@@ -51,7 +51,7 @@ namespace storm {
 	bool Value::isBuiltIn() const {
 		if (type == null)
 			return true;
-		return type->isBuiltIn();
+		return type->builtInType() != BasicTypeInfo::user;
 	}
 
 	bool Value::isValue() const {
@@ -159,6 +159,23 @@ namespace storm {
 	void Value::mustStore(const Value &v, const SrcPos &p) const {
 		if (!canStore(v))
 			throw TypeError(p, *this, v);
+	}
+
+	BasicTypeInfo Value::typeInfo() const {
+		BasicTypeInfo::Kind kind = BasicTypeInfo::nothing;
+
+		if (isClass())
+			kind = BasicTypeInfo::ptr;
+		else if (isValue())
+			kind = BasicTypeInfo::user;
+		else if (type != null)
+			kind = type->builtInType();
+
+		BasicTypeInfo r = {
+			size().current(),
+			kind,
+		};
+		return r;
 	}
 
 	void Value::output(wostream &to) const {

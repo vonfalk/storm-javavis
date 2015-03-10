@@ -75,6 +75,9 @@ namespace storm {
 		// Ensure that we can store another type.
 		void mustStore(const Value &v, const SrcPos &pos) const;
 
+		// Generate a TypeInfo describing this type. May be extended to the full TypeInfo in the future.
+		BasicTypeInfo typeInfo() const;
+
 		// Any extra modifiers goes here:
 		// TODO: implement
 

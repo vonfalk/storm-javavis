@@ -88,8 +88,8 @@ namespace storm {
 		// Clear contents. Mainly used for clean exits.
 		void clear();
 
-		// Is this a type built in into the C++ compiler? These are handled differently in cdecl.
-		virtual bool isBuiltIn() const { return false; }
+		// What kind of built-in type is this? Returns 'user' if it is not a built-in type.
+		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::user; }
 
 		// Get a pointer/reference to the destructor (if any).
 		virtual Function *destructor();

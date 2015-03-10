@@ -10,7 +10,7 @@ namespace storm {
 	public:
 		IntType();
 
-		virtual bool isBuiltIn() const { return true; }
+		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::signedNr; }
 		virtual Function *destructor() { return null; }
 
 	protected:
@@ -23,7 +23,7 @@ namespace storm {
 	public:
 		NatType();
 
-		virtual bool isBuiltIn() const { return true; }
+		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::unsignedNr; }
 		virtual Function *destructor() { return null; }
 
 	protected:

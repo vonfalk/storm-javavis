@@ -73,4 +73,20 @@ namespace storm {
 		}
 	}
 
+	code::Variable createBasicTypeInfo(const GenState &to, const Value &v) {
+		using namespace code;
+
+		BasicTypeInfo typeInfo = v.typeInfo();
+
+		Size s = Size::sNat * 2;
+		assert(s.current() == sizeof(typeInfo), L"Please check the declaration of BasicTypeInfo.");
+
+		Variable r = to.frame.createVariable(to.block, s);
+		to.to << lea(ptrA, r);
+		to.to << mov(intRel(ptrA), natConst(typeInfo.size));
+		to.to << mov(intRel(ptrA, Offset::sNat), natConst(typeInfo.kind));
+
+		return r;
+	}
+
 }

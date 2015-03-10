@@ -9,7 +9,7 @@ namespace storm {
 	public:
 		BoolType();
 
-		virtual bool isBuiltIn() const { return true; }
+		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::unsignedNr; }
 		virtual Function *destructor() { return null; }
 	};
 

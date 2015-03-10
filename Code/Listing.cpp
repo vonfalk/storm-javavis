@@ -74,7 +74,7 @@ namespace code {
 
 		to << frame;
 
-		const nat indent = 6;
+		const nat indent = 2;
 
 		UsedRegisters registers(*this);
 
@@ -91,7 +91,7 @@ namespace code {
 					to << std::endl;
 			}
 			to << std::setw(spaces) << ' ';
-			to << std::setw(10) << registers[i].toS() << ' ';
+			to << std::setw(16) << registers[i].toS() << ' ';
 			to << code[i];
 		}
 	}
