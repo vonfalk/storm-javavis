@@ -7,6 +7,7 @@
 #include "BSCtor.h"
 #include "TypeCtor.h"
 #include "TypeDtor.h"
+#include "Lib/CloneEnv.h"
 
 namespace storm {
 
@@ -54,6 +55,7 @@ namespace storm {
 		// Found a CTOR?
 		bool hasCtor = false;
 		bool hasCopyCtor = false;
+		bool hasDeepCopy = false;
 
 		for (nat i = 0; i < body->items.size(); i++) {
 			Auto<Named> z = body->items[i];
@@ -61,6 +63,9 @@ namespace storm {
 				if (z->params.size() == 2 && z->params[0] == z->params[1])
 					hasCopyCtor = true;
 				hasCtor = true;
+			} else if (z->name == L"deepCopy") {
+				if (z->params.size() == 2 && z->params[1].type == CloneEnv::type(this))
+					hasDeepCopy = true;
 			}
 			add(z.borrow());
 		}
@@ -70,6 +75,9 @@ namespace storm {
 			add(steal(CREATE(TypeDefaultCtor, engine, this)));
 		if (!hasCopyCtor)
 			add(steal(CREATE(TypeCopyCtor, engine, this)));
+
+		if (hasDeepCopy)
+			add(steal(CREATE(TypeDeepCopy, engine, this)));
 
 		// Temporary solution.
 		if (flags & typeValue) {

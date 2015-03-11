@@ -466,6 +466,10 @@
 				RelativePath=".\Wrap.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\CloneEnv.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -774,6 +778,10 @@
 			</File>
 			<File
 				RelativePath=".\Wrap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\CloneEnv.h"
 				>
 			</File>
 		</Filter>

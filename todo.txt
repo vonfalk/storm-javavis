@@ -34,6 +34,11 @@ Replace TypeError(x, L".....") with TypeError(x, from, to);
 Allow to store comments or documentation on various objects in the compiler. For example, packages
 may store their documentation in regular .txt files placed in the package itself.
 
+Check overloads with derived types. Eg base:foo(Base a), derived:foo(Derived a) is _not_ legal. The other way is!
+
+Overloads with derived types: pick the "best" overload in some sense.
+
+
 Code generation
 ----------------
 Optimization pass in Code that looks for the pattern: addRef -> never written -> release() in dtor.

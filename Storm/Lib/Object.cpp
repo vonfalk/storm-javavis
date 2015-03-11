@@ -132,6 +132,8 @@ namespace storm {
 		return true;
 	}
 
+	void Object::deepCopy(Par<CloneEnv> env) {}
+
 	/**
 	 * Memory management.
 	 */
@@ -196,6 +198,21 @@ namespace storm {
 			"Wrong number of parameters to constructor! The first one is filled in automatically.");
 		Type *type = ctor->params[0].type;
 		return createObj(type, ctor->pointer(), params);
+	}
+
+	Object *createCopy(const void *copyCtor, Object *old) {
+		typedef void (* Fn)(void *mem, Object *old);
+		Fn fn = (Fn)copyCtor;
+		Type *t = old->myType;
+		void *mem = Object::operator new(t->size().current(), t);
+
+		try {
+			(*fn)(mem, old);
+		} catch (...) {
+			Object::operator delete(mem, t);
+			throw;
+		}
+		return (Object *)mem;
 	}
 
 	void *CODECALL stormMalloc(Type *type) {

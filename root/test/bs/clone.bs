@@ -14,11 +14,13 @@ class CloneBase {
 			b = 3;
 		}
 	}
-}
 
+}
 
 void testClone() {
 	CloneBase a;
 	print(a);
-	print(clone(a));
+	CloneBase c = clone(a);
+	print(c);
+	disjoint(a, c);
 }

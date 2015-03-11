@@ -69,6 +69,21 @@ namespace storm {
 
 
 	/**
+	 * Default clone function.
+	 */
+	class TypeDeepCopy : public Function {
+		STORM_CLASS;
+	public:
+		// Create.
+		TypeDeepCopy(Type *type);
+
+	private:
+		// Generate code.
+		void generateCode(Type *type, Function *before);
+	};
+
+
+	/**
 	 * Generate a default clone function for the type passed. Used with a template.
 	 */
 	Named *stdClone(Par<NamePart> par);

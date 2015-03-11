@@ -12,6 +12,7 @@ namespace storm {
 	class Type;
 	class Str;
 	class Function;
+	class CloneEnv;
 
 	STORM_PKG(core);
 
@@ -114,6 +115,9 @@ namespace storm {
 		// Compare for equality.
 		virtual Bool STORM_FN equals(Par<Object> o);
 
+		// Deep copy anything that requires a deep copy.
+		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
+
 		// Dump leaks.
 		static void dumpLeaks();
 	protected:
@@ -136,6 +140,9 @@ namespace storm {
 	inline T *create(Function *ctor, const code::FnParams &params) {
 		return (T *)createObj(ctor, params);
 	}
+
+	// Create a shallow copy of an object by calling the provided copy ctor.
+	Object *createCopy(const void *copyCtor, Object *original);
 
 	// Create an object from Storm.
 	void *CODECALL stormMalloc(Type *type);

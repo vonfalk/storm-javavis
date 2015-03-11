@@ -41,7 +41,7 @@ the rest of the runtime:
 * Assignment operator: Values must have an assignment operator like `T =(T dest, T src)`.
 * Clone function: All types are expected to have a clone method. For actors, the clone method
   should not copy the actor, but instead just return the same pointer. The reason for this
-  is explained in the threading model below. The clone function should look like `void clone(T this, CloneEnv env)`.
+  is explained in the threading model below. The clone function should look like `T clone(T this, CloneEnv env)`.
 
 In general, languages will generate these functions automatically unless they are explicitly
 declared by the programmer. However, this is not the case when working in C++.
@@ -55,6 +55,29 @@ take care of any cycles in the object graph during the clone.
 
 There is one thing that may be unexpected when working with object cloning. References to actor
 types will not be cloned at all, they will refer to the same actor.
+
+The clone methods are implemented like this:
+```
+void deepCopy(CloneEnv env) {
+    super.deepCopy(env);
+    a = clone(a, env);
+    // ...
+}
+
+T clone(T object) {
+    CloneEnv env;
+    clone(object, env);
+}
+
+T clone(T object, CloneEnv env) {
+    T result = env.cloned(object);
+    if (!result) {
+        result = new T(object);
+        result.deepCopy(object, env);
+    }
+    return result;
+}
+```
 
 Threading model
 ----------------

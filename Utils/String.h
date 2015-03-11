@@ -131,7 +131,20 @@ String toS(const T &v) {
 // To string for arrays.
 template <class T>
 String toS(const vector<T> &data) {
-	return join(data, L", ");
+	std::wostringstream to;
+	to << L"[";
+	join(to, data, L", ");
+	to << L"]";
+	return to.str();
+}
+
+template <class T>
+String toS(const set<T> &data) {
+	std::wostringstream to;
+	to << L"{";
+	join(to, data, L", ");
+	to << L"}";
+	return to.str();
 }
 
 // Join a vector or any other sequence type.

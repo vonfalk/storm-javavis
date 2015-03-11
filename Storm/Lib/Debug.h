@@ -27,6 +27,12 @@ namespace storm {
 	// Throw an exception.
 	void STORM_FN throwError();
 
+	// Check so that 'a' and 'b' are completely disjoint.
+	Bool STORM_FN disjoint(Par<Object> a, Par<Object> b);
+
+	// Output the layout of 'a'.
+	void STORM_FN layout(Par<Object> a);
+
 	// Class partly implemented in C++, we'll try to override this in Storm.
 	class Dbg : public Object {
 		STORM_CLASS;
