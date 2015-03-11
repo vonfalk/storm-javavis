@@ -69,6 +69,9 @@ namespace storm {
 
 		// Capacity.
 		nat capacity;
+
+		// Dump.
+		void dbg_dump();
 	};
 
 

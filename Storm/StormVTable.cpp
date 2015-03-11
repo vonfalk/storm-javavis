@@ -3,6 +3,7 @@
 #include "Function.h"
 #include "VTable.h"
 #include "Code/VTable.h"
+#include <iomanip>
 
 namespace storm {
 
@@ -121,16 +122,17 @@ namespace storm {
 	void StormVTable::expand(nat at, nat count) {
 		ensure(size + count);
 
-		for (nat i = count; i > 0; i--) {
-			nat from = i - 1;
-			nat to = i + count - 1;
+		for (nat i = size; i > at + count; i--) {
+			nat from = i - count - 1;
+			nat to = i - 1;
+
 			addrs[to] = addrs[from];
 			src[to] = src[from];
 			if (src[to])
 				src[to]->id.offset = to;
 
 			addrs[from] = null;
-			src[to] = null;
+			src[from] = null;
 		}
 	}
 
@@ -151,6 +153,14 @@ namespace storm {
 		}
 
 		size -= move;
+	}
+
+	void StormVTable::dbg_dump() {
+		wostream &to = std::wcout;
+
+		for (nat i = 0; i < size; i++) {
+			to << std::setw(3) << i << L": " << src[i] << endl;
+		}
 	}
 
 }
