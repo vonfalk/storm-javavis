@@ -3,10 +3,21 @@ use core:debug;
 
 // Test some object cloning!
 
+value CloneVal {
+	Dbg z;
+
+	ctor() {
+		super() {
+			z = 8;
+		}
+	}
+}
+
 // Base class for cloning.
 class CloneBase {
 	Int a;
 	Dbg b;
+	CloneVal v;
 
 	ctor() {
 		super() {
@@ -17,10 +28,17 @@ class CloneBase {
 
 }
 
-void testClone() {
+CloneBase createBase() {
 	CloneBase a;
-	print(a);
+	a;
+}
+
+Int testClone() {
+	CloneBase a;
 	CloneBase c = clone(a);
-	print(c);
-	disjoint(a, c);
+	if (disjoint(a, c)) {
+		1;
+	} else {
+		0;
+	}
 }

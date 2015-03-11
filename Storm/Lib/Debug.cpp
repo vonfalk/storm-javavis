@@ -34,8 +34,19 @@ namespace storm {
 
 		Auto<Str> z = s->toS();
 		PLN(z);
+	}
 
+	void printInfo(Object *s) {
+		if (s == null) {
+			PLN("null");
+			return;
+		}
+
+		checkLive(s);
+		Auto<Str> z = s->toS();
+		PLN(z);
 		PLN(*s->myType);
+		s->myType->vtable.dbg_dump();
 	}
 
 	void dumpStack() {
@@ -155,9 +166,10 @@ namespace storm {
 			layout(a.borrow(), same);
 			PLN("--------- LAYOUT OF B ---------");
 			layout(b.borrow(), same);
+			return false;
 		}
 
-		return false;
+		return true;
 	}
 
 	void layout(Par<Object> obj) {
@@ -190,6 +202,10 @@ namespace storm {
 
 	Int Dbg::returnTwo() {
 		return 2;
+	}
+
+	void Dbg::deepCopy(Par<CloneEnv> e) {
+		// Nothing needed here...
 	}
 
 	DbgVal::LiveSet DbgVal::live;
@@ -277,6 +293,10 @@ namespace storm {
 
 	wostream &operator <<(wostream &to, const DbgVal &v) {
 		return to << L"DbgVal:" << v.get();
+	}
+
+	void DbgVal::deepCopy(Par<CloneEnv> env) {
+		// Nothing needed.
 	}
 
 }

@@ -265,6 +265,9 @@ namespace storm {
 	}
 
 	bool isOverload(Function *base, Function *overload) {
+		if (base->name != overload->name)
+			return false;
+
 		if (base->params.size() != overload->params.size())
 			return false;
 

@@ -106,6 +106,8 @@ namespace code {
 
 	static void **allocVTable(nat size) {
 		void **table = new void*[size + 2];
+		for (nat i = 0; i < size + 2; i++)
+			table[i] = null;
 		return table + 2;
 	}
 
@@ -251,6 +253,11 @@ namespace code {
 		nat slot = find(fn);
 		assert(slot != invalid);
 		set(slot, newFn);
+	}
+
+	void *VTable::get(nat slot) {
+		assert(slot < size);
+		return content[slot];
 	}
 
 	void VTable::setDtor(void *newFn) {

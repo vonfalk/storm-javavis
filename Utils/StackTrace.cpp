@@ -72,6 +72,12 @@ String format(const StackTrace &t) {
 	return format(t, CppLookup());
 }
 
+String cppFnName(const void *ptr) {
+	StackFrame f;
+	f.code = ptr;
+	return CppLookup().format(f);
+}
+
 /**
  * System specific code for collecting the stack trace itself.
  */

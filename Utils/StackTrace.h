@@ -88,3 +88,7 @@ String format(const StackTrace &trace, const FnLookup &lookup);
 
 // Print the stack here.
 void dumpStack();
+
+// Look up a single function from C++.
+String cppFnName(const void *ptr);
+

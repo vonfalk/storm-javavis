@@ -76,7 +76,7 @@ namespace storm {
 		if (!hasCopyCtor)
 			add(steal(CREATE(TypeCopyCtor, engine, this)));
 
-		if (hasDeepCopy)
+		if (!hasDeepCopy)
 			add(steal(CREATE(TypeDeepCopy, engine, this)));
 
 		// Temporary solution.

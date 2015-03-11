@@ -42,6 +42,9 @@ namespace code {
 		void set(void *fn, void *newFn);
 		void set(nat slot, void *fn);
 
+		// Get the pointer at a specific location.
+		void *get(nat slot);
+
 		// Set the destructor to a new function (dtors are tricky, you can not take the address of them!)
 		void setDtor(void *fn);
 

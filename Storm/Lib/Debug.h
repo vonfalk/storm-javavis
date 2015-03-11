@@ -18,6 +18,9 @@ namespace storm {
 	// Crude printing (not final version).
 	void STORM_FN print(Object *obj);
 
+	// Dump info on an object.
+	void STORM_FN printInfo(Object *obj);
+
 	// Basic print tracing (to be removed when we have something real).
 	void STORM_FN ptrace(Int z);
 
@@ -59,6 +62,9 @@ namespace storm {
 		virtual Int STORM_FN returnOne();
 		virtual Int STORM_FN returnTwo();
 
+		// Deep copy.
+		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
+
 	private:
 		Int v;
 	};
@@ -76,6 +82,8 @@ namespace storm {
 		DbgVal &operator =(const DbgVal &o);
 
 		bool operator ==(const DbgVal &o) const;
+
+		void STORM_FN deepCopy(Par<CloneEnv> env);
 
 		Int v;
 

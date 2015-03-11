@@ -2,6 +2,7 @@
 #include "Object.h"
 
 namespace storm {
+	STORM_PKG(core);
 
 	/**
 	 * Keeps track of objects already cloned.

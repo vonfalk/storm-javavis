@@ -229,24 +229,18 @@ namespace storm {
 
 		// Set up parameters. (always references, this ptr is always a reference of some kind).
 		Variable me = l.frame.createPtrParam();
-		Variable from = l.frame.createPtrParam();
 		Variable env = l.frame.createPtrParam();
 
 		// First, call the super class!
 		if (before) {
 			l << fnParam(me);
-			l << fnParam(from);
 			l << fnParam(env);
-			l << fnCall(Ref(before->ref()), Size());
+			l << fnCall(Ref(before->directRef()), Size());
 		}
 
 		// Find the clone function for objects.
 		Engine &e = engine();
-		Named *n = e.package(L"core")->find(L"clone", valList(2, Value(Object::type(e)), Value(CloneEnv::type(e))));
-		Function *f = as<Function>(n);
-		if (!f)
-			throw InternalError(L"Could not find the compiler generated clone function for objects!");
-		Ref cloneObjFn(f->ref());
+		Package *core = e.package(L"core");
 
 		// Find all refcounted objects and clone them. All values have already been done
 		// by the copy-ctor!
@@ -258,26 +252,44 @@ namespace storm {
 			if (t.ref)
 				throw InternalError(L"References are not supported yet! For " + ::toS(*v));
 
-			// Only need to do this with classes (FALSE)
-			if (!t.isClass())
+			// We do not need to do the built-in types.
+			if (t.isBuiltIn())
 				continue;
 
+			vector<Value> params = valList(2, Value::thisPtr(t.type), Value(CloneEnv::type(e)));
 			Offset offset = v->offset();
-			l << mov(ptrA, from);
-			l << fnParam(ptrRel(ptrA, offset));
-			l << fnParam(env);
-			l << fnCall(cloneObjFn, Size::sPtr);
-			l << mov(ptrC, me);
-			l << add(ptrC, intPtrConst(offset));
-			l << code::releaseRef(ptrRel(ptrC));
-			l << mov(ptrRel(ptrC), ptrA);
-			l << code::addRef(ptrA);
+			if (t.isValue()) {
+				// Call 'deepCopy' directly.
+				Function *fn = as<Function>(t.type->find(L"deepCopy", params));
+				if (!fn)
+					throw InternalError(L"The type " + ::toS(t) + L" does not have a 'deepCopy' member.");
+
+				l << mov(ptrA, me);
+				l << add(ptrA, intPtrConst(offset));
+				l << fnParam(ptrA);
+				l << fnParam(env);
+				l << fnCall(Ref(fn->ref()), Size());
+
+			} else {
+				// Find the clone function for us:
+				Function *fn = as<Function>(core->find(L"clone", params));
+				if (!fn)
+					throw InternalError(L"Failed to find the 'clone(T, CloneEnv) for T = " + ::toS(params[0]));
+
+				l << mov(ptrA, me);
+				l << fnParam(ptrRel(ptrA, offset));
+				l << fnParam(env);
+				l << fnCall(Ref(fn->ref()), Size::sPtr);
+				l << mov(ptrC, me);
+				l << add(ptrC, intPtrConst(offset));
+				l << code::releaseRef(ptrRel(ptrC));
+				l << mov(ptrRel(ptrC), ptrA);
+			}
 		}
 
 		l << epilog();
 		l << ret(Size());
 
-		PVAR(l);
 		setCode(steal(CREATE(DynamicCode, this, l)));
 	}
 
@@ -428,7 +440,7 @@ namespace storm {
 			return stdClone(e, param->name, param->params[0].asRef(false));
 
 		if (param->params.size() == 2)
-			return stdClone(e, param->name, param->params[0].asRef(false), param->params[1]);
+			return stdClone(e, param->name, param->params[0].asRef(false), param->params[1].asRef(false));
 
 		return null;
 	}

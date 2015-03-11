@@ -6,6 +6,7 @@
 #include "Function.h"
 #include "Exception.h"
 #include "TypeDtor.h"
+#include "Utils/FnLookup.h"
 #include <iomanip>
 
 namespace storm {
@@ -275,20 +276,45 @@ namespace storm {
 
 		Indent z(to);
 		if (builtIn()) {
-			to << L"Built in class, no vtable." << endl;
-			return;
-		}
+			to << L"Built in class. C++ vtable:" << endl;
+			void **src = (void **)cppVTable;
+			for (nat i = 0; i < cppSlots.size(); i++) {
+				to << std::setw(3) << i << L": ";
 
-		for (nat i = 0; i < storm.count(); i++) {
-			to << std::setw(3) << i << L": ";
-			to << storm.addr(i) << L" (";
+				VTableSlot *u = cppSlots[i];
+				if (u)
+					to << *u->fn << ", ";
 
-			VTableSlot *u = storm.slot(i);
-			if (u)
-				to << *u->fn;
-			else
-				to << L"null";
-			to << L")" << endl;
+				to << cppFnName(src[i]) << endl;
+			}
+
+		} else {
+
+			to << "C++:" << endl;
+			for (nat i = 0; i < cppSlots.size(); i++) {
+				to << std::setw(3) << i << L": " << replaced->get(i) << L" (";
+
+				VTableSlot *u = cppSlots[i];
+				if (u)
+					to << *u->fn;
+				else
+					to << cppFnName(replaced->get(i));
+				to << L")" << endl;
+			}
+
+			to << "Storm:" << endl;
+			for (nat i = 0; i < storm.count(); i++) {
+				to << std::setw(3) << i << L": ";
+				to << storm.addr(i) << L" (";
+
+				VTableSlot *u = storm.slot(i);
+				if (u)
+					to << *u->fn;
+				else
+					to << L"null";
+				to << L")" << endl;
+			}
+
 		}
 
 		for (ChildSet::iterator i = children.begin(); i != children.end(); ++i)
