@@ -3,302 +3,289 @@
 #include "Code/FnParams.h"
 #include "Function.h"
 #include "Parser.h"
-#include "Tokenizer.h"
 
 #include "Lib/Debug.h"
 
 namespace storm {
 
-	// Evaluate a syntaxVariable. Never returns null.
-	static Object *evaluate(Engine &engine, SyntaxSet &syntax, SyntaxVariable *v, const vector<Object *> &params) {
+	// Lookup a name.
+	Type *lookupType(TransformEnv &env, const SrcPos &pos, const Scope &scope, const String &name) {
+		Auto<Name> n = parseTemplateName(env.e, scope, pos, name);
+		return as<Type>(scope.find(n));
+	}
+
+	ActualObject::ActualObject(const Auto<Object> &v, const SrcPos &pos) : v(v) {
+		if (!v)
+			throw SyntaxTypeError(pos, L"Null is not an allowed return value.");
+	}
+
+	ActualObject::~ActualObject() {}
+
+	/**
+	 * Evaluation
+	 */
+
+	static Auto<ActualBase> transform(TransformEnv &env, const SyntaxNode &n,
+									const vector<Auto<ActualBase>> &params, const SrcPos *pos);
+
+	// Evaluate a syntax variable.
+	static Auto<ActualBase> evaluate(TransformEnv &env, SyntaxVariable *v, const vector<Auto<ActualBase>> &params) {
 		switch (v->type) {
-		case SyntaxVariable::tString: {
-			SStr *result = CREATE(SStr, engine, v->string());
+		case SyntaxVariable::tString:
+		{
+			SStr *result = CREATE(SStr, env.e, v->string());
 			result->pos = v->pos;
-			return result;
+			return new ActualObject(result, v->pos);
 		}
 		case SyntaxVariable::tNode:
-			return transform(engine, syntax, *v->node(), params, &v->pos);
+			return transform(env, *v->node(), params, &v->pos);
+			break;
 		default:
 			assert(false);
 			return null;
 		}
 	}
 
-	// Parse a string into a Name, supporting <> as template parameters.
-	static Name *parseName(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok);
-
-	static NamePart *parseNamePart(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok) {
-		String name = tok.next().token;
-		vector<Value> params;
-
-		if (tok.more() && tok.peek().token == L"<") {
-			tok.next();
-
-			while (tok.more() && tok.peek().token != L">") {
-				Auto<Name> n = parseName(e, scope, pos, tok);
-				if (Type *t = as<Type>(scope.find(n)))
-					params.push_back(Value(t));
-				else
-					throw SyntaxError(pos, L"Unknown type: " + ::toS(n));
-
-				if (!tok.more())
-					throw SyntaxError(pos, L"Unbalanced <>");
-				Token t = tok.peek();
-				if (t.token == L">")
-					break;
-				if (t.token != L",")
-					throw SyntaxError(pos, L"Expected , got" + t.token);
-			}
-
-			tok.next();
-		}
-
-		return CREATE(NamePart, e, name, params);
+	static vector<Value> types(const vector<Auto<ActualBase>> &p) {
+		vector<Value> r(p.size());
+		for (nat i = 0; i < p.size(); i++)
+			r[i] = p[i]->type();
+		return r;
 	}
 
-	static Name *parseName(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok) {
-		Auto<Name> r = CREATE(Name, e);
-		Auto<NamePart> part;
-
-		while (tok.more()) {
-			Auto<NamePart> part = parseNamePart(e, scope, pos, tok);
-			r->add(part);
-
-			if (!tok.more())
-				break;
-
-			Token t = tok.peek();
-			if (t.token == L">")
-				break;
-			if (t.token == L",")
-				break;
-			if (t.token != L".")
-				throw SyntaxError(pos, L"Expected . got " + t.token);
-			tok.next();
-		}
-
-		return r.ret();
+	static vector<Value> types(Type *first, const vector<Auto<ActualBase>> &p) {
+		vector<Value> r(p.size() + 1);
+		r[0] = Value::thisPtr(first);
+		for (nat i = 0; i < p.size(); i++)
+			r[i + 1] = p[i]->type();
+		return r;
 	}
 
-	static Name *parseName(Engine &e, const Scope &scope, const SrcPos &pos, const String &src) {
-		Tokenizer tok(Path(), src, 0);
-		return parseName(e, scope, pos, tok);
+	static Auto<ActualBase> tryCallFn(const SyntaxOption *option, Auto<Name> find, const vector<Auto<ActualBase>> &p) {
+		vector<Value> t = types(p);
+		find = find->withParams(t);
+		Function *f = as<Function>(option->scope.find(find));
+		if (!f)
+			return Auto<ActualBase>(null);
+
+		if (f->result == Value())
+			throw SyntaxTypeError(option->pos, L"A rule's function must return a value.");
+		if (!f->result.isClass())
+			throw SyntaxTypeError(option->pos, L"Only objects are supported in the syntax. "
+								+ ::toS(f->result) + L" is a value or a built-in type.");
+
+		code::FnParams params;
+		for (nat i = 0; i < p.size(); i++)
+			p[i]->add(params);
+		return new ActualObject(code::call<Object *>(f->pointer(), params), option->pos);
 	}
 
-	// Call a function.
-	static Object *callFunction(Engine &e, const SyntaxOption *option, const vector<Object *> &params, const SrcPos &pos) {
-		vector<Value> types(params.size());
-		for (nat i = 0; i < params.size(); i++) {
-			if (params[i])
-				types[i] = Value(params[i]->myType);
-			else
-				types[i] = SrcPos::type(e);
-		}
+	static Auto<ActualBase> tryCallCtor(const SyntaxOption *option, Auto<Name> find, const vector<Auto<ActualBase>> &p) {
+		Type *t = as<Type>(option->scope.find(find));
+		if (!t)
+			return Auto<ActualBase>(null);
 
-		Auto<Name> name = parseName(e, option->scope, option->pos, option->matchFn);
+		if ((t->flags & typeClass) == 0)
+			throw SyntaxTypeError(option->pos, L"Only objects are supported in the syntax. "
+								+ ::toS(find) + L" is a value or a built-in type.");
 
-		if (name->at(name->size() - 1)->params.size() == 0) {
-			Auto<Name> match = name->withParams(types);
-			Named *no = option->scope.find(match);
-			if (Function *f = as<Function>(no)) {
-				if (f->result == Value())
-					throw SyntaxTypeError(option->pos, L"A rule's function must return a value.");
-				if (!f->result.isClass())
-					throw SyntaxTypeError(option->pos, L"Only objects are supported in the syntax. "
-										+ ::toS(f->result) + L" is a value or a built-in type.");
+		Function *ctor = as<Function>(t->find(Type::CTOR, types(t, p)));
+		if (!ctor)
+			return Auto<ActualBase>(null);
 
-				code::FnParams call;
-				for (nat i = 0; i < params.size(); i++) {
-					if (params[i]) {
-						call.add<Object *>(params[i]);
-					} else {
-						call.add<SrcPos>(pos);
-					}
-				}
-				return code::call<Object *>(f->pointer(), call);
-			}
-		}
+		code::FnParams params;
+		for (nat i = 0; i < p.size(); i++)
+			p[i]->add(params);
 
-		// See if we can find a constructor!
-		if (Type *t = as<Type>(option->scope.find(name))) {
-			types.insert(types.begin(), Value(t));
-			Auto<NamePart> ctor = CREATE(NamePart, e, Type::CTOR, types);
-			Named *no = t->find(ctor);
-			if (Function *ctor = as<Function>(no)) {
-				code::FnParams call;
-				for (nat i = 0; i < params.size(); i++) {
-					if (params[i]) {
-						call.add<Object *>(params[i]);
-					} else {
-						call.add<SrcPos>(pos);
-					}
-				}
-				return create<Object>(ctor, call);
-			}
-
-			throw SyntaxTypeError(option->pos, L"Could not find a constructor " +
-								toS(option->matchFn) + L"(" + join(types, L", ") + L")");
-		}
-
-		throw SyntaxTypeError(option->pos, L"Could not find a function " +
-							toS(option->matchFn) + L"(" + join(types, L", ") + L")");
+		return new ActualObject(create<Object>(ctor, params), option->pos);
 	}
 
-	// Call a member function. NOTE: No support for param==null -> pos!
-	static void callMember(Object *me, const String &memberName, Object *param, const SrcPos &pos) {
-		if (me == null || param == null)
-			throw SyntaxTypeError(pos, L"Null is not supported!");
+	static Auto<ActualBase> callFn(TransformEnv &env, const SyntaxOption *option, const vector<Auto<ActualBase>> &p) {
+		Auto<ActualBase> result;
+		Auto<Name> name = parseTemplateName(env.e, option->scope, option->pos, option->matchFn);
+		Auto<NamePart> last = name->last();
+		if (last->params.size() == 0)
+			if (result = tryCallFn(option, name, p))
+				return result;
 
-		Type *t = me->myType;
+		if (result = tryCallCtor(option, name, p))
+			return result;
+
+		throw SyntaxTypeError(option->pos, L"Could not find a function or constructor " + ::toS(name)
+							+ L"(" + join(types(p), L", ") + L").");
+	}
+
+	static void callMember(const String &name, Auto<ActualBase> me, Auto<ActualBase> param, const SrcPos &pos) {
+		Type *t = me->type().type;
 		vector<Value> types(2);
-		types[0] = Value(t);
-		types[1] = Value(param->myType);
-		Auto<NamePart> part = CREATE(NamePart, t, memberName, types);
+		types[0] = me->type();
+		types[1] = param->type();
 
-		if (Function *f = as<Function>(t->find(part))) {
+		if (Function *f = as<Function>(t->find(name, types))) {
 			code::FnParams call;
-			call.add(me).add(param);
+			me->add(call);
+			param->add(call);
 
 			if (f->result.refcounted())
-				Auto<Object> r = code::call<Object *>(f->pointer(), call);
-			else
+				Auto<Object> o = code::call<Object *>(f->pointer(), call);
+			else if (f->result == Value())
 				code::call<void>(f->pointer(), call);
+			else
+				throw SyntaxTypeError(pos, L"Member functions called from the syntax may only return void or Objects.");
 		} else {
-			throw SyntaxTypeError(pos, L"Could not find a member function " +
-								memberName + L"(" + join(types, L", ") + L") in " +
-								t->name);
+			throw SyntaxTypeError(pos, L"Could not find a member function " + name
+								+ L"(" + join(types, L", ") + L") in " + t->identifier());
 		}
 	}
 
+	static Auto<ActualBase> transformFn(SyntaxVars &vars, TransformEnv &env, const SyntaxNode &n, const SrcPos *pos) {
+		const SyntaxOption *option = n.option;
+		const vector<String> &names = option->matchFnParams;
+		vector<Auto<ActualBase>> params(names.size());
+		for (nat i = 0; i < names.size(); i++)
+			params[i] = vars.get(names[i]);
 
-	Object *transform(Engine &e,
+		// Call it.
+		Auto<ActualBase> r = callFn(env, option, params);
+
+		// Set the 'pos' member if it exists.
+		if (pos)
+			if (ActualObject *o = as<ActualObject>(r.borrow()))
+				if (SObject *s = as<SObject>(o->v.borrow()))
+					s->pos = *pos;
+
+		// Add the 'me' variable. It may be used by later rules.
+		vars.set(L"me", r);
+
+		// Call any member functions...
+		for (nat i = 0; i < n.invocations.size(); i++) {
+			const SyntaxNode::Invocation &v = n.invocations[i];
+			vector<Auto<ActualBase>> params(v.val.params.size());
+			for (nat i = 0; i < v.val.params.size(); i++)
+				params[i] = vars.get(v.val.params[i]);
+
+			Auto<ActualBase> tmp = evaluate(env, v.val.value, params);
+			callMember(v.member, r, tmp, option->pos);
+		}
+
+		return r;
+	}
+
+	static Auto<ActualBase> transform(TransformEnv &env, const SyntaxNode &n,
+									const vector<Auto<ActualBase>> &params, const SrcPos *pos) {
+		const SyntaxOption *option = n.option;
+		SyntaxVars vars(n, params, env, pos);
+
+		if (option->matchVar)
+			return vars.get(option->matchFn);
+		else
+			return transformFn(vars, env, n, pos);
+	}
+
+
+	Auto<Object> transform(Engine &e,
 					SyntaxSet &syntax,
 					const SyntaxNode &node,
 					const vector<Object*> &params,
-					const SrcPos *pos)
-	{
-		const SyntaxOption *option = node.option;
-		Auto<Object> result;
-		SyntaxVars vars(e, syntax, node, params);
-		SrcPos posCopy;
-		if (pos) posCopy = *pos;
-
-		if (option->matchVar) {
-			Object *t = vars.get(option->matchFn);
-			t->addRef();
-			return t;
+					const SrcPos *pos) {
+		TransformEnv env = { e, syntax };
+		vector<Auto<ActualBase>> p(params.size());
+		for (nat i = 0; i < params.size(); i++) {
+			params[i]->addRef();
+			p[i] = new ActualObject(params[i], SrcPos());
 		}
 
-		vector<Object*> values; // borrowed ptrs.
-		for (nat i = 0; i < option->matchFnParams.size(); i++) {
-			const String &p = option->matchFnParams[i];
-			values.push_back(vars.get(p));
-		}
+		Auto<ActualBase> result = transform(env, node, p, pos);
+		if (ActualObject *o = as<ActualObject>(result.borrow()))
+			return o->v;
 
-		result = callFunction(e, option, values, posCopy);
-		if (result == null)
-			throw SyntaxTypeError(option->pos, L"Syntax generating functions may not return null.");
-
-		if (SObject *s = as<SObject>(result.borrow()))
-			if (pos)
-				s->pos = *pos;
-		vars.set(L"me", result.borrow());
-
-		// Call any remaining member functions...
-		for (nat i = 0; i < node.invocations.size(); i++) {
-			const SyntaxNode::Invocation &v = node.invocations[i];
-			vector<Object*> params(v.val.params.size());
-			for (nat i = 0; i < v.val.params.size(); i++) {
-				params[i] = vars.get(v.val.params[i]);
-			}
-
-			Auto<Object> tmp = evaluate(e, syntax, v.val.value, params);
-			callMember(result.borrow(), v.member, tmp.borrow(), option->pos);
-		}
-
-		return result.ret();
+		throw SyntaxTypeError(SrcPos(), L"The root rule has to return an Object.");
 	}
+
+
 
 
 	/**
-	 * The SyntaxVars type.
+	 * SyntaxVars
 	 */
 
-	SyntaxVars::SyntaxVars(Engine &e, SyntaxSet &syntax, const SyntaxNode &node, const vector<Object*> &params)
-		: e(e), syntax(syntax), node(node) {
+	SyntaxVars::SyntaxVars(const SyntaxNode &node, const vector<Auto<ActualBase>> &params,
+						TransformEnv &env, const SrcPos *pos)
+		: node(node), env(env), pos(pos) {
+		addParams(params);
+	}
 
+	SyntaxVars::~SyntaxVars() {}
+
+	void SyntaxVars::addParams(vector<Auto<ActualBase>> params) {
 		const SyntaxOption *option = node.option;
-		const SrcPos &pos = node.option->pos;
-		SyntaxRule *rule = syntax.rule(option->rule());
-		assert(rule);
+		SyntaxRule *rule = env.syntax.rule(option->rule());
 
 		if (params.size() != rule->params.size())
-			throw SyntaxTypeError(pos, L"Invalid number of parameters to rule " + rule->name()
-								+ L": got " + toS(params.size()) +
-								L", expected " + toS(rule->params.size()));
+			throw SyntaxTypeError(option->pos, L"Invalid number of parameters to " + rule->name()
+								+ L": got " + ::toS(params.size()) + L", expected "
+								+ ::toS(rule->params.size()));
 
 		for (nat i = 0; i < params.size(); i++) {
-			const SyntaxRule::Param &param = rule->params[i];
-			Auto<Name> typeName = parseSimpleName(e, param.type);
-			Type *t = as<Type>(option->scope.find(typeName));
+			const SyntaxRule::Param &p = rule->params[i];
+			Type *t = lookupType(env, rule->declared, rule->declScope, p.type);
 			if (t == null)
-				throw SyntaxTypeError(pos, L"Unknown type: " + param.type);
-			if (params[i] == null)
-				throw SyntaxTypeError(pos, L"Null is not supported!");
+				throw SyntaxTypeError(rule->declared, L"Unknown type: " + p.type);
+			Value(t).mustStore(params[i]->type(), option->pos);
 
-			Type *vt = params[i]->myType;
-			if (!Value(t).canStore(vt))
-				throw SyntaxTypeError(pos, L"Incompatible types: got " + vt->identifier()
-									+ L", expected " + t->identifier());
-			vars.insert(make_pair(param.name, params[i]));
-			params[i]->addRef();
+			vars.insert(make_pair(p.name, params[i]));
 		}
 	}
 
-	SyntaxVars::~SyntaxVars() {
-		releaseMap(vars);
-	}
-
-
-	Object *SyntaxVars::get(const String &name) {
-		if (name == L"pos")
-			return null;
-
+	void SyntaxVars::set(const String &name, Auto<ActualBase> v) {
 		Map::iterator i = vars.find(name);
-		if (i != vars.end())
-			return i->second;
-
-		if (currentNames.count(name) != 0)
-			throw SyntaxTypeError(node.option->pos, L"Variable " + name + L" depends on itself!");
-		currentNames.insert(name);
-
-		try {
-			const SyntaxNode::Var *v = node.find(name);
-			if (v == null)
-				throw SyntaxTypeError(node.option->pos, L"The variable " + name + L" does not exist!");
-
-			vector<Object*> params(v->params.size());
-			for (nat i = 0; i < v->params.size(); i++)
-				params[i] = get(v->params[i]);
-
-			Object *o = evaluate(e, syntax, v->value, params);
-			vars.insert(make_pair(name, o));
-			currentNames.erase(name);
-			return o;
-		} catch (...) {
-			currentNames.erase(name);
-			throw;
-		}
-	}
-
-	void SyntaxVars::set(const String &name, Object *o) {
-		if (vars.count(name) == 0) {
-			vars.insert(make_pair(name, o));
-			o->addRef();
-		} else {
+		if (i != vars.end()) {
+			delete v;
 			throw SyntaxTypeError(node.option->pos, L"The variable " + name + L" is already set!");
 		}
+		vars.insert(make_pair(name, v));
+	}
+
+	Auto<ActualBase> SyntaxVars::get(const String &name) {
+		Map::iterator i = vars.find(name);
+		if (i == vars.end())
+			return eval(name);
+
+		if (!i->second)
+			throw SyntaxTypeError(node.option->pos, L"The variable " + name + L" depends on itself!");
+
+		return i->second;
+	}
+
+	Auto<ActualBase> SyntaxVars::eval(const String &name) {
+		const SyntaxNode::Var *v = node.find(name);
+		if (v == null)
+			return valueOf(name);
+
+		vars.insert(make_pair(name, Auto<ActualBase>(null)));
+
+		vector<Auto<ActualBase>> params(v->params.size());
+		for (nat i = 0; i < v->params.size(); i++)
+			params[i] = get(v->params[i]);
+
+		Auto<ActualBase> r = evaluate(env, v->value, params);
+		vars[name] = r;
+		return r;
+	}
+
+	Auto<ActualBase> SyntaxVars::valueOf(const String &v) {
+		if (v == L"pos") {
+			// Create 'pos' only where it is needed.
+			if (pos == null)
+				return new Actual<SrcPos>(SrcPos(), SrcPos::type(env.e));
+			else
+				return new Actual<SrcPos>(*pos, SrcPos::type(env.e));
+		}
+
+		if (v.isInt())
+			return new Actual<Int>(v.toInt(), intType(env.e));
+
+		throw SyntaxTypeError(node.option->pos, L"The variable " + v + L" is not defined.");
 	}
 
 }

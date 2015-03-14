@@ -10,7 +10,7 @@ namespace storm {
 	class SyntaxRule : public Printable, NoCopy {
 	public:
 		// Create a new syntax type. If !owner, we will not delete our options on destruction.
-		SyntaxRule(const String &name, bool owner = true);
+		SyntaxRule(const String &name, const Scope &scope, bool owner = true);
 
 		~SyntaxRule();
 
@@ -38,6 +38,9 @@ namespace storm {
 
 		// Where were we declared? "unknown()" if not declared.
 		SrcPos declared;
+
+		// Scope at declaration site.
+		Scope declScope;
 
 		// Copy our declaration to another.
 		void copyDeclaration(const SyntaxRule &o);

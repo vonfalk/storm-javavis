@@ -158,6 +158,7 @@ namespace storm {
 	}
 
 	bs::FnBody::FnBody(Par<BSFunction> owner) : ExprBlock(owner->scope) {
+		PLN("Creaded fnBody @" << this);
 		owner->addParams(this);
 	}
 

@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Name.h"
 #include "Lib/Str.h"
+#include "Tokenizer.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -127,5 +129,71 @@ namespace storm {
 
 		return r.ret();
 	}
+
+
+	/**
+	 * parseTemplatename.
+	 */
+
+	static Name *parseName(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok);
+
+	static NamePart *parseNamePart(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok) {
+		String name = tok.next().token;
+		vector<Value> params;
+
+		if (tok.more() && tok.peek().token == L"<") {
+			tok.next();
+
+			while (tok.more() && tok.peek().token != L">") {
+				Auto<Name> n = parseName(e, scope, pos, tok);
+				if (Type *t = as<Type>(scope.find(n)))
+					params.push_back(Value(t));
+				else
+					throw SyntaxError(pos, L"Unknown type: " + ::toS(n));
+
+				if (!tok.more())
+					throw SyntaxError(pos, L"Unbalanced <>");
+				Token t = tok.peek();
+				if (t.token == L">")
+					break;
+				if (t.token != L",")
+					throw SyntaxError(pos, L"Expected , got" + t.token);
+			}
+
+			tok.next();
+		}
+
+		return CREATE(NamePart, e, name, params);
+	}
+
+	static Name *parseName(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok) {
+		Auto<Name> r = CREATE(Name, e);
+		Auto<NamePart> part;
+
+		while (tok.more()) {
+			Auto<NamePart> part = parseNamePart(e, scope, pos, tok);
+			r->add(part);
+
+			if (!tok.more())
+				break;
+
+			Token t = tok.peek();
+			if (t.token == L">")
+				break;
+			if (t.token == L",")
+				break;
+			if (t.token != L".")
+				throw SyntaxError(pos, L"Expected . got " + t.token);
+			tok.next();
+		}
+
+		return r.ret();
+	}
+
+	Name *parseTemplateName(Engine &e, const Scope &scope, const SrcPos &pos, const String &src) {
+		Tokenizer tok(Path(), src, 0);
+		return parseName(e, scope, pos, tok);
+	}
+
 
 }

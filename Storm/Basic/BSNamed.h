@@ -183,19 +183,5 @@ namespace storm {
 		// into the beginning of 'params' and used. This method inhibits automatic insertion of 'this'.
 		Expr *STORM_FN namedExpr(Par<Block> block, Par<SStr> name, Par<Expr> first, Par<Actual> params);
 
-		// Create an operator.
-		Expr *STORM_FN operatorExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs);
-
-		// Assignment operator.
-		Expr *STORM_FN assignExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs);
-
-		// Element access operator.
-		Expr *STORM_FN accessExpr(Par<Block> block, Par<Expr> lhs, Par<Expr> par);
-
-		// Prefix operator.
-		Expr *STORM_FN prefixOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr);
-
-		// Postfix operator.
-		Expr *STORM_FN postfixOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr);
 	}
 }

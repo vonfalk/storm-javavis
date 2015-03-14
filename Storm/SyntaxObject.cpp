@@ -16,6 +16,10 @@ namespace storm {
 		v = CREATE(Str, engine(), str);
 	}
 
+	Str *SStr::str() {
+		return v.ret();
+	}
+
 	Bool SStr::equals(Object *o) {
 		if (!Object::equals(o))
 			return false;

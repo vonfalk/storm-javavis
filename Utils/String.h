@@ -66,6 +66,10 @@ public:
 	nat toNat() const;
 	nat toIntHex() const;
 
+	// Is the string an integer?
+	bool isInt() const;
+	bool isNat() const;
+
 	// Treat the string as a command line.
 	String unescape(bool keepUnknown = false) const;
 	String escape() const;

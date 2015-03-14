@@ -14,42 +14,128 @@ namespace storm {
 	 */
 
 	// Transform the syntax tree. TODO: Static type-checking?
-	Object *transform(Engine &e,
-					SyntaxSet &syntax,
-					const SyntaxNode &root,
-					const vector<Object*> &params = vector<Object*>(),
-					const SrcPos *pos = null);
+	Auto<Object> transform(Engine &e,
+						SyntaxSet &syntax,
+						const SyntaxNode &root,
+						const vector<Object*> &params = vector<Object*>(),
+						const SrcPos *pos = null);
+
 
 	/**
-	 * Used to keep track of currently evaluated variables during transform.
+	 * Represents an actual parameter, currently Object *, SrcPos and int is supported.
+	 */
+	class ActualBase : NoCopy {
+	public:
+		ActualBase() : refs(1) {}
+
+		// Refcounting, so we can use it with 'Auto'.
+		inline void addRef() {
+			if (this)
+				refs++;
+		}
+
+		inline void release() {
+			if (this)
+				if (--refs == 0)
+					delete this;
+		}
+
+		// Add to fnParams.
+		virtual void add(code::FnParams &to) const = 0;
+
+		// Get the type.
+		virtual Value type() const = 0;
+
+	private:
+		// # of references.
+		nat refs;
+	};
+
+	template <class T>
+	class Actual : public ActualBase {
+	public:
+		Actual(const T &v, const Value &type) : v(v), t(type) {}
+
+		T v;
+
+		Value t;
+
+		void add(code::FnParams &to) const {
+			to.add(v);
+		}
+
+		Value type() const {
+			return t;
+		}
+	};
+
+	class ActualObject : public ActualBase {
+	public:
+		ActualObject(const Auto<Object> &v, const SrcPos &pos);
+		~ActualObject();
+
+		Auto<Object> v;
+
+		inline void add(code::FnParams &to) const {
+			to.add<Object *>(v.borrow());
+		}
+
+		inline Value type() const {
+			return Value(v->myType);
+		}
+	};
+
+
+	/**
+	 * Common variables in the entire transform.
+	 */
+	struct TransformEnv {
+		Engine &e;
+		SyntaxSet &syntax;
+	};
+
+
+	/**
+	 * Keep track of variables during evaluation.
 	 */
 	class SyntaxVars : NoCopy {
 	public:
-		SyntaxVars(Engine &e, SyntaxSet &syntax, const SyntaxNode &node, const vector<Object*> &params);
+		// Create.
+		SyntaxVars(const SyntaxNode &node, const vector<Auto<ActualBase>> &params, TransformEnv &env, const SrcPos *pos);
+
+		// Destroy.
 		~SyntaxVars();
 
-		// Computes the value if needed. Note that get("pos") -> null!
-		Object *get(const String &name);
+		// Get a variable by name.
+		Auto<ActualBase> get(const String &name);
 
-		// Set a variable.
-		void set(const String &name, Object *v);
+		// Set a variable by name.
+		void set(const String &name, Auto<ActualBase> v);
 
 	private:
-		typedef hash_map<String, Object *> Map;
+		// Evaluated variables. Entries containing a null-pointer are currently being created.
+		typedef hash_map<String, Auto<ActualBase>> Map;
 		Map vars;
 
-		// Source node.
+		// Syntax node.
 		const SyntaxNode &node;
 
-		// Engine.
-		Engine &e;
+		// Context.
+		TransformEnv &env;
 
-		// Syntax set
-		SyntaxSet &syntax;
+		// Position
+		const SrcPos *pos;
 
-		// Keep track of infinite recursion in 'get'.
-		hash_set<String> currentNames;
+		// Add formal parameters to this rule.
+		void addParams(vector<Auto<ActualBase>> params);
+
+		// Compute the value of a variable.
+		Auto<ActualBase> eval(const String &name);
+
+		// Compute the value of 'v', when 'v' is considered not to be a known variable.
+		Auto<ActualBase> valueOf(const String &v);
 	};
+
 
 	/**
 	 * Type errors in the syntax somehow.

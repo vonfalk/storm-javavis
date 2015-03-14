@@ -474,6 +474,10 @@
 				RelativePath=".\Exception.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSOperator.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -790,6 +794,10 @@
 			</File>
 			<File
 				RelativePath=".\MatchFlags.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSOperator.h"
 				>
 			</File>
 		</Filter>

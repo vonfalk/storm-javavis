@@ -32,6 +32,9 @@ namespace storm {
 		// The string captured.
 		Auto<Str> v;
 
+		// Get the string (TODO: Expose 'v' instead).
+		Str *STORM_FN str();
+
 		// Equals.
 		virtual Bool STORM_FN equals(Object *o);
 

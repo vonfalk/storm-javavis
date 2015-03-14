@@ -114,6 +114,9 @@ namespace storm {
 	// Parse a name (does not support parameterized names).
 	Name *parseSimpleName(Engine &e, const String &s);
 
+	// Parse a name possibly containing template parameters (using <>)
+	Name *parseTemplateName(Engine &e, const Scope &scope, const SrcPos &pos, const String &src);
+
 }
 
 

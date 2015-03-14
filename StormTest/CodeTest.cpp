@@ -30,6 +30,13 @@ BEGIN_TEST(BasicSyntax) {
 	CHECK_ERROR(runFn(L"test.bs.forError", 10));
 } END_TEST
 
+BEGIN_TEST_(PriorityTest) {
+	CHECK_EQ(runFn(L"test.bs.prio1"), 203);
+	CHECK_EQ(runFn(L"test.bs.prio2"), 203);
+	CHECK_EQ(runFn(L"test.bs.prio3"), 230);
+	CHECK_EQ(runFn(L"test.bs.prio4"), 230);
+} END_TEST
+
 BEGIN_TEST(InheritanceTest) {
 	// Some inheritance testing.
 	CHECK_EQ(runFn(L"test.bs.testBase"), 10);

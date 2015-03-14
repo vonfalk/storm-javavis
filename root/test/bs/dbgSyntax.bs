@@ -1,0 +1,10 @@
+use lang:bs;
+use core:debug;
+use core:lang;
+
+Expr dumpExpr(Expr e, SStr s) {
+	// print(s.str + ": " + e.toS);
+	print(s.str);
+	print(e.toS);
+	e;
+}

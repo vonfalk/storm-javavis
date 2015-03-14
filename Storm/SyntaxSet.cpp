@@ -40,7 +40,7 @@ namespace storm {
 	SyntaxRule *SyntaxSet::safeRule(const String &name) {
 		SyntaxRule *r = rule(name);
 		if (r == null) {
-			r = new SyntaxRule(name, false);
+			r = new SyntaxRule(name, Scope(), false);
 			rules.insert(make_pair(name, r));
 		}
 		return r;

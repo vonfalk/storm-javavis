@@ -30,6 +30,12 @@ namespace storm {
 		// String length.
 		Nat STORM_FN count() const;
 
+		// Concatenation.
+		Str *STORM_FN operator +(Par<Str> o);
+
+		// Multiplication.
+		Str *STORM_FN operator *(Nat times);
+
 		// Equals.
 		virtual Bool STORM_FN equals(Par<Object> o);
 

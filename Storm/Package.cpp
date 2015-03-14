@@ -157,6 +157,7 @@ namespace storm {
 			// We did nothing...
 			syntaxRules.clear();
 			NameSet::clear();
+			TODO(L"We can not clear everything here, that removes potential built-in types in the same pkg!");
 			throw;
 		}
 	}

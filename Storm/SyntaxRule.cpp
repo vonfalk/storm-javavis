@@ -4,7 +4,8 @@
 
 namespace storm {
 
-	SyntaxRule::SyntaxRule(const String &name, bool owner) : rName(name), owner(owner), declared() {}
+	SyntaxRule::SyntaxRule(const String &name, const Scope &scope, bool owner)
+		: rName(name), owner(owner), declared(), declScope(scope) {}
 
 	SyntaxRule::~SyntaxRule() {
 		if (owner) {
@@ -19,6 +20,7 @@ namespace storm {
 	void SyntaxRule::copyDeclaration(const SyntaxRule &o) {
 		declared = o.declared;
 		params = o.params;
+		declScope = o.declScope;
 	}
 
 	void SyntaxRule::add(SyntaxOption *rule) {

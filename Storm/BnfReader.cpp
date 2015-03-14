@@ -52,12 +52,12 @@ namespace storm {
 		parseBnf(types, tok, scope);
 	}
 
-	SyntaxRule &getRule(SyntaxRules &map, const String &name) {
+	SyntaxRule &getRule(SyntaxRules &map, const String &name, const Scope &scope) {
 		SyntaxRule *t = map[name];
 		if (t)
 			return *t;
 
-		t = new SyntaxRule(name);
+		t = new SyntaxRule(name, scope);
 		map.add(t);
 		return *t;
 	}
@@ -268,9 +268,9 @@ namespace storm {
 			Token delim = tok.next();
 
 			if (delim.token == L"=>") {
-				parseRule(getRule(types, ruleName.token), tok, scope);
+				parseRule(getRule(types, ruleName.token, scope), tok, scope);
 			} else if (delim.token == L"(") {
-				parseDeclaration(getRule(types, ruleName.token), tok);
+				parseDeclaration(getRule(types, ruleName.token, scope), tok);
 			} else {
 				throw SyntaxError(delim.pos, L"No rule definition or declaration.");
 			}

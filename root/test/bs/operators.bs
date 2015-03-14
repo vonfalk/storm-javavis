@@ -1,0 +1,16 @@
+// Test various operator priorities.
+Int prio1() {
+dump: 10 * 20 + 3;
+}
+
+Int prio2() {
+dump: 3 + 20 * 10;
+}
+
+Int prio3() {
+dump: 10 * (20 + 3);
+}
+
+Int prio4() {
+dump: (3 + 20) * 10;
+}

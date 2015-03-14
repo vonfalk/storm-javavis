@@ -16,6 +16,20 @@ namespace storm {
 		return v.size();
 	}
 
+	Str *Str::operator +(Par<Str> o) {
+		return CREATE(Str, this, v + o->v);
+	}
+
+	Str *Str::operator *(Nat times) {
+		String result(v.size() * times, ' ');
+		for (nat i = 0; i < times; i++) {
+			for (nat j = 0; j < v.size(); j++) {
+				result[i*v.size() + j] = v[j];
+			}
+		}
+		return CREATE(Str, this, result);
+	}
+
 	Bool Str::equals(Par<Object> o) {
 		if (!Object::equals(o))
 			return false;

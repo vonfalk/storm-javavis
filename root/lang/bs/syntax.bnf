@@ -120,37 +120,30 @@ Atom => prefixOperator(block, o, e) : PrePost o, Expr(block) e;
 Atom => postfixOperator(block, o, e) : Expr(block) e, PrePost o;
 Atom => arrayInit(block, t, list) : "\[", Type t, ":", ArrayInitList(block) list, "\]";
 
-// Highest priority. Right-associative, eg (a * b) * c
-Oper1 => v : "[*/%]" v;
-Expr1(Block block);
-Expr1 => a : Atom(block) a;
-Expr1 => operatorExpr(block, lhs, op, rhs) : Expr1(block) lhs, Oper1 op, Atom(block) rhs;
-
-// Addition, subtraction. Right-associative, eg (a + b) + c
-Oper2 => v : "[\+\-]" v;
-Expr2(Block block);
-Expr2 => e : Expr1(block) e;
-Expr2 => operatorExpr(block, lhs, op, rhs) : Expr2(block) lhs, Oper2 op, Expr1(block) rhs;
-
-// Comparision operators. (todo, different priority is needed).
-Oper3 => v : "==" v;
-Oper3 => v : "!=" v;
-Oper3 => v : ">" v;
-Oper3 => v : "<" v;
-Oper3 => v : "<=" v;
-Oper3 => v : ">=" v;
-Oper3 => v : "<<" v;
-Oper3 => v : ">>" v;
-Oper3 => v : "&" v;
-Oper3 => v : "|" v;
-Expr3(Block block);
-Expr3 => e : Expr2(block) e;
-Expr3 => operatorExpr(block, lhs, op, rhs) : Expr3(block) lhs, Oper3 op, Expr2(block) rhs;
+// Operators.
+Operator => lOperator(op, 900) : "\*" op;
+Operator => lOperator(op, 900) : "/" op;
+Operator => lOperator(op, 900) : "%" op;
+Operator => lOperator(op, 800) : "\+" op;
+Operator => lOperator(op, 800) : "\-" op;
+Operator => lOperator(op, 700) : "<<" op;
+Operator => lOperator(op, 700) : ">>" op;
+Operator => lOperator(op, 600) : ">" op;
+Operator => lOperator(op, 600) : "<" op;
+Operator => lOperator(op, 600) : ">=" op;
+Operator => lOperator(op, 600) : "<=" op;
+Operator => lOperator(op, 500) : "==" op;
+Operator => lOperator(op, 500) : "!=" op;
+Operator => lOperator(op, 490) : "&" op;
+Operator => lOperator(op, 480) : "^" op;
+Operator => lOperator(op, 470) : "|" op;
+// later: Operator => rOperator(op, 100) : "=" op;
 
 // Expression
 Expr(Block block);
-Expr => e : Expr3(block) e;
-Expr => assignExpr(block, lhs, op, rhs) : Expr3(block) lhs, "=" op, Expr(block) rhs;
+Expr => e : Atom(block) e;
+Expr => Operator(block, lhs, op, rhs) : Atom(block) lhs, Operator op, Expr(block) rhs;
+Expr => assignExpr(block, lhs, op, rhs) : Atom(block) lhs, "=" op, Expr(block) rhs;
 Expr => Var(block, t, name, actual) : Type t, Name name, FnValues(block) actual;
 Expr => Var(block, t, name, init) : Type t, Name name, "=", Expr(block) init;
 Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;
