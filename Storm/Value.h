@@ -1,5 +1,6 @@
 #pragma once
 #include "SrcPos.h"
+#include "MatchFlags.h"
 #include "Lib/Auto.h"
 #include "Code/Value.h"
 #include "Code/Size.h"
@@ -71,6 +72,10 @@ namespace storm {
 		// Can this value store a type of 'x'?
 		bool canStore(Type *x) const;
 		bool canStore(const Value &v) const;
+
+		// Matches another value, according to MatchFlags? Note that this relation is not transitive.
+		// If flags == matchDefault, then it is equivalent to 'canStore'.
+		bool matches(const Value &v, MatchFlags match) const;
 
 		// Ensure that we can store another type.
 		void mustStore(const Value &v, const SrcPos &pos) const;

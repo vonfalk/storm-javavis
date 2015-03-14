@@ -17,11 +17,11 @@ namespace storm {
 		return parentLookup;
 	}
 
-	Named::Named(Par<Str> name) : name(name->v) {}
+	Named::Named(Par<Str> name) : name(name->v), matchFlags(matchDefault) {}
 
-	Named::Named(const String &name) : name(name) {}
+	Named::Named(const String &name) : name(name), matchFlags(matchDefault) {}
 
-	Named::Named(const String &name, const vector<Value> &params) : name(name), params(params) {}
+	Named::Named(const String &name, const vector<Value> &params) : name(name), params(params), matchFlags(matchDefault) {}
 
 	Named *Named::closestNamed() const {
 		for (NameLookup *p = parent(); p; p = p->parent()) {

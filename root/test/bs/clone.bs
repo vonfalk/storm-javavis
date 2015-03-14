@@ -28,17 +28,42 @@ class CloneBase {
 
 }
 
-CloneBase createBase() {
-	CloneBase a;
-	a;
+// Derived class for cloning.
+class CloneDerived extends CloneBase {
+	Int c;
+
+	ctor() {
+		super() {
+			c = 4;
+		}
+	}
+
+	ctor(CloneDerived o) {
+		super(o) {
+			c = o.c + 1;
+		}
+	}
+
+	void deepCopy(CloneEnv e) {
+		super:deepCopy(e);
+		c++;
+	}
 }
 
-Int testClone() {
+Bool testClone() {
 	CloneBase a;
 	CloneBase c = clone(a);
-	if (disjoint(a, c)) {
-		1;
-	} else {
-		0;
-	}
+	disjoint(a, c);
+}
+
+Bool testCloneDerived() {
+	CloneDerived a;
+	CloneDerived c = a.clone;
+	disjoint(a, c) & (c.c == 6);
+}
+
+Bool testCloneValue() {
+	CloneVal a;
+	CloneVal b = a.clone;
+	disjoint(a.z, b.z);
 }

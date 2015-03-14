@@ -79,20 +79,20 @@ namespace storm {
 	Named *NameSet::findHere(Overload *from, const vector<Value> &params) {
 		for (nat i = 0; i < from->items.size(); i++) {
 			Named *c = from->items[i].borrow();
-			if (candidate(c->params, params))
+			if (candidate(c->matchFlags, c->params, params))
 				return c;
 		}
 		return null;
 	}
 
-	bool NameSet::candidate(const vector<Value> &our, const vector<Value> &ref) const {
+	bool NameSet::candidate(MatchFlags flags, const vector<Value> &our, const vector<Value> &ref) const {
 		nat params = our.size();
 		// No support for default-parameters here!
 		if (params != ref.size())
 			return false;
 
 		for (nat i = 0; i < params; i++)
-			if (!our[i].canStore(ref[i]))
+			if (!our[i].matches(ref[i], flags))
 				return false;
 
 		return true;

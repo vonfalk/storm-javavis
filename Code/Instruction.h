@@ -3,6 +3,7 @@
 #include "Arena.h"
 #include "Value.h"
 #include "OpCode.h"
+#include "Utils/Bitmask.h"
 
 namespace code {
 
@@ -55,8 +56,7 @@ namespace code {
 		friend Instruction createLoose(OpCode opCode, const Value &dest, DestMode destMode, const Value &src);
 	};
 
-	inline DestMode operator |(DestMode a, DestMode b) { return DestMode(int(a) | int(b)); }
-	inline DestMode operator &(DestMode a, DestMode b) { return DestMode(int(a) & int(b)); }
+	BITMASK_OPERATORS(DestMode);
 
 	// Functions for creating Instruction objects.
 	Instruction mov(const Value &to, const Value &from);

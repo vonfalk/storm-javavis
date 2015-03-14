@@ -156,6 +156,13 @@ namespace storm {
 		return canStore(v.type);
 	}
 
+	bool Value::matches(const Value &v, MatchFlags flags) const {
+		bool r = canStore(v);
+		if (flags & matchNoInheritance)
+			r &= type == v.type;
+		return r;
+	}
+
 	void Value::mustStore(const Value &v, const SrcPos &p) const {
 		if (!canStore(v))
 			throw TypeError(p, *this, v);

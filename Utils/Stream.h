@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Color.h"
+#include "Bitmask.h"
 
 // A basic stream class.
 // Any object that can follows the following interface can be loaded/saved using this class.
@@ -123,6 +124,4 @@ private:
 	void writeString(const String &s);
 };
 
-inline Stream::Mode operator |(Stream::Mode a, Stream::Mode b) { return (Stream::Mode)(int(a) | int(b)); };
-inline Stream::Mode operator &(Stream::Mode a, Stream::Mode b) { return (Stream::Mode)(int(a) & int(b)); };
-
+BITMASK_OPERATORS(Stream::Mode);

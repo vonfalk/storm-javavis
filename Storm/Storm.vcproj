@@ -470,6 +470,10 @@
 				RelativePath=".\Lib\CloneEnv.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Exception.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -782,6 +786,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\CloneEnv.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MatchFlags.h"
 				>
 			</File>
 		</Filter>

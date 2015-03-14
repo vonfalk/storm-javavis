@@ -6,11 +6,8 @@
 
 BEGIN_TEST(CloneTest) {
 
-	// Auto<Object> o = runFn<Object*>(L"test.bs.createBase");
-	// Auto<CloneEnv> e = CREATE(CloneEnv, *gEngine);
-	// PLN("Calling!");
-	// o->deepCopy(e);
-
-	CHECK_EQ(runFn(L"test.bs.testClone"), 1);
+	CHECK(runFn<Bool>(L"test.bs.testClone"));
+	CHECK(runFn<Bool>(L"test.bs.testCloneDerived"));
+	CHECK(runFn<Bool>(L"test.bs.testCloneValue"));
 
 } END_TEST

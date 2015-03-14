@@ -1,5 +1,6 @@
 #pragma once
 #include "Name.h"
+#include "Utils/Bitmask.h"
 
 namespace storm {
 
@@ -53,8 +54,7 @@ namespace storm {
 		Options options;
 	};
 
-	inline ValueRef::Options operator &(ValueRef::Options a, ValueRef::Options b) { return ValueRef::Options(int(a)&int(b)); }
-	inline ValueRef::Options operator |(ValueRef::Options a, ValueRef::Options b) { return ValueRef::Options(int(a)|int(b)); }
+	BITMASK_OPERATORS(ValueRef::Options);
 
 	/**
 	 * A list of all built-in functions.

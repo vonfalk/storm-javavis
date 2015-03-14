@@ -82,7 +82,7 @@ namespace storm {
 		virtual Named *findHere(const String &name, const vector<Value> &params);
 
 		// Compare two parameter lists. 'our' is stored in here, 'asked' is what is asked for.
-		virtual bool candidate(const vector<Value> &our, const vector<Value> &asked) const;
+		virtual bool candidate(MatchFlags flags, const vector<Value> &our, const vector<Value> &asked) const;
 
 		// Output.
 		virtual void output(wostream &to) const;

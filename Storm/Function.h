@@ -2,6 +2,7 @@
 #include "Code.h"
 #include "CodeGen.h"
 #include "Thread.h"
+#include "Utils/Bitmask.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -39,7 +40,6 @@ namespace storm {
 		// Run this function on? Defaults to the specifier of the type if it is a member,
 		// otherwise nothing.
 		virtual RunOn runOn() const;
-
 
 		// Get the code for this function. Do not assume it is static! Use
 		// 'ref' if you are doing anything more than one function call!
@@ -93,7 +93,6 @@ namespace storm {
 		void genCodePost(const GenState &to, const Actuals &params, GenResult &result,
 						code::Ref ref, const code::Value &thread);
 	};
-
 
 	// Determine if 'a' is an overload of 'b'.
 	bool isOverload(Function *base, Function *overload);

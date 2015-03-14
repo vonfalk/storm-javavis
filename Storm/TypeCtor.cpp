@@ -436,13 +436,18 @@ namespace storm {
 		using namespace code;
 		Engine &e = param->engine();
 
+		Named *result = null;
+
 		if (param->params.size() == 1)
-			return stdClone(e, param->name, param->params[0].asRef(false));
+			result = stdClone(e, param->name, param->params[0].asRef(false));
 
-		if (param->params.size() == 2)
-			return stdClone(e, param->name, param->params[0].asRef(false), param->params[1].asRef(false));
+		else if (param->params.size() == 2)
+			result = stdClone(e, param->name, param->params[0].asRef(false), param->params[1].asRef(false));
 
-		return null;
+		if (result)
+			result->matchFlags = matchNoInheritance;
+
+		return result;
 	}
 
 	Template *cloneTemplate(Engine &to) {

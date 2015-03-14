@@ -697,6 +697,10 @@
 				RelativePath=".\Vector.h"
 				>
 			</File>
+			<File
+				RelativePath=".\Bitmask.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

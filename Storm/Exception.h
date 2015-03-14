@@ -30,6 +30,10 @@ namespace storm {
 
 		// Where is the error located?
 		SrcPos where;
+
+	protected:
+		// We generally do not need a full stack trace here, so we skip that.
+		virtual void output(wostream &to) const;
 	};
 
 
