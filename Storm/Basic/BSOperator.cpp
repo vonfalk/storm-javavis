@@ -18,6 +18,18 @@ namespace storm {
 		return false;
 	}
 
+	Bool bs::OpInfo::after(Par<OpInfo> o) {
+		return o->before(this);
+	}
+
+	Bool bs::OpInfo::eq(Par<OpInfo> o) {
+		return !before(o) && !after(o);
+	}
+
+	void bs::OpInfo::output(wostream &to) const {
+		to << L"{name=" << name << L", left=" << (leftAssoc ? L"true" : L"false") << L"}";
+	}
+
 	bs::OpInfo *bs::lOperator(Par<SStr> op, Int p) {
 		return CREATE(OpInfo, op, op, p, true);
 	}
@@ -27,12 +39,164 @@ namespace storm {
 	}
 
 	bs::Operator::Operator(Par<Block> block, Par<Expr> lhs, Par<OpInfo> op, Par<Expr> rhs)
-		: block(block.borrow()), lhs(lhs), op(op), rhs(rhs) {}
+		: block(block.borrow()), lhs(lhs), op(op), rhs(rhs), fnCall(null) {}
 
-	void bs::Operator::output(wostream &to) const {
-		to << L"(" << lhs << L" " << op->name << L" " << rhs << L")";
+	// Left should be true if 'other' is 'our' left child.
+	static bool after(Par<bs::OpInfo> our, Par<bs::OpInfo> other, bool left) {
+		if (our->after(other))
+			return true;
+		if (our->leftAssoc == left && our->eq(other))
+			return true;
+		return false;
 	}
 
+	bs::Operator *bs::Operator::prioritize() {
+		Auto<Operator> l = lhs.as<Operator>();
+		Auto<Operator> r = rhs.as<Operator>();
+		Auto<Operator> me = capture(this);
+
+		invalidate();
+
+		if (l && r) {
+			// In:  (1 l 2) me (3 r 4)
+			// Out1 (1 l (2 me 3)) r 4 if l after me && l before r && me before r
+			// Out2 1 l ((2 me 3) r 4) if l after me && l after r && me before r
+			// Out3 1 l (2 me (3 r 4)) if l after me && me after r
+			// Out4 ((1 l 2) me 3) r 4 if l before me && me before r
+			// Out5 (1 l 2) me (3 r 4) if l before me && me after r
+
+			if (after(op, l->op, true)) {
+				// Equal to: X me (3 r 4)
+				// Out4 X me (3 r 4) if me before r
+				// Out5 (X me 3) r 4 if me after r
+
+				// Ignore l, use the r swap below...
+				l = null;
+			} else if (after(op, r->op, false)) {
+				// Equal to: (1 l 2) me X
+				// Out3 1 l (2 me X) if l after me
+				// Out5 (1 l 2) me X if l before me
+
+				// Ignore r, use the l swap below.
+				r = null;
+			} else {
+				// Out1 (1 l (2 me 3)) r 4 if l before r
+				// Out2 1 l ((2 me 3) r 4) if l after r
+				// We can set: X = 2 me 3 and get:
+				// Out1 (1 l X) r 4 if l before r
+				// Out2 1 l (X r 4) if l after r
+
+				lhs = l->rhs;
+				rhs = r->lhs;
+
+				if (after(l->op, r->op, false)) {
+					// Out2
+					r->lhs = me->prioritize();
+					l->rhs = r;
+
+					return l.ret();
+				} else {
+					// Out1
+					l->rhs = me->prioritize();
+					r->lhs = l;
+
+					return r.ret();
+				}
+			}
+		}
+
+		if (l) {
+			// In:  (1 l 2) me 3
+			// Out1 1 l (2 me 3) if me before l
+			// Out2 (1 l 2) me 3 if me after l
+
+			// Should the other one run first?
+			if (after(op, l->op, true))
+				return me.ret();
+
+			// Switch.
+			lhs = l->rhs;
+			l->rhs = me->prioritize();
+
+			return l.ret();
+		} else if (r) {
+			// In:  1 me (2 r 3)
+			// Out1 1 me (2 r 3) if me after r
+			// Out2 (1 me 2) r 3 if me before r
+
+			// Should the other one run first?
+			if (after(op, r->op, false))
+				return me.ret();
+
+			// Switch ourselves with the other one.
+			rhs = r->lhs;
+			r->lhs = me->prioritize();
+
+			return r.ret();
+		} else {
+			// We're a leaf operator.
+			return me.ret();
+		}
+	}
+
+	void bs::Operator::invalidate() {
+		fnCall = null;
+	}
+
+	void bs::Operator::initFnCall() {
+		Auto<Actual> actual = CREATE(Actual, block);
+		actual->add(lhs);
+		actual->add(rhs);
+		Auto<SStr> name = CREATE(SStr, block, op->name, op->pos);
+		fnCall = namedExpr(block, name, actual);
+	}
+
+	Value bs::Operator::result() {
+		if (!fnCall)
+			initFnCall();
+		return fnCall->result();
+	}
+
+	void bs::Operator::code(const GenState &s, GenResult &r) {
+		if (!fnCall)
+			initFnCall();
+		return fnCall->code(s, r);
+	}
+
+	void bs::Operator::output(wostream &to) const {
+		if (Operator *l = as<Operator>(lhs.borrow()))
+			to << L"<" << lhs << L">";
+		else
+			to << lhs;
+		to << L" " << op->name << L" ";
+		if (Operator *r = as<Operator>(rhs.borrow()))
+			to << L"<" << rhs << L">";
+		else
+			to << rhs;
+	}
+
+	bs::Operator *bs::mkOperator(Par<Block> block, Par<Expr> lhs, Par<OpInfo> op, Par<Expr> rhs) {
+		Auto<Operator> o = CREATE(Operator, op, block, lhs, op, rhs);
+		return o->prioritize();
+	}
+
+	/**
+	 * Parens.
+	 */
+
+	bs::ParenExpr::ParenExpr(Par<Expr> wrap) : wrap(wrap) {}
+
+	Value bs::ParenExpr::result() {
+		return wrap->result();
+	}
+
+	void bs::ParenExpr::code(const GenState &s, GenResult &r) {
+		wrap->code(s, r);
+	}
+
+	void bs::ParenExpr::output(wostream &to) const {
+		to << L"(" << wrap << L")";
+	}
 
 	/**
 	 * Create standard operators.

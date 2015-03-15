@@ -111,7 +111,7 @@ Atom => intConstant(nr) : "\-[0-9]+" nr;
 Atom => strConstant(str) : "\"" - ( StrContent ) str - "\"";
 Atom => namedExpr(block, name, params) : Type name, FnValues(block) params;
 Atom => namedExpr(block, name, dotExpr, params) : Atom(block) dotExpr, "\.", Name name, FnValues(block) params;
-Atom => e : "(", Expr(block) e, ")";
+Atom => ParenExpr(e) : "(", Expr(block) e, ")";
 Atom => e : Block(block) e;
 Atom => e : If(block) e;
 Atom => e : Loop(block) e; // For symmetry... I guess it is not really very useful!
@@ -142,7 +142,7 @@ Operator => lOperator(op, 470) : "|" op;
 // Expression
 Expr(Block block);
 Expr => e : Atom(block) e;
-Expr => Operator(block, lhs, op, rhs) : Atom(block) lhs, Operator op, Expr(block) rhs;
+Expr => mkOperator(block, lhs, op, rhs) : Atom(block) lhs, Operator op, Expr(block) rhs;
 Expr => assignExpr(block, lhs, op, rhs) : Atom(block) lhs, "=" op, Expr(block) rhs;
 Expr => Var(block, t, name, actual) : Type t, Name name, FnValues(block) actual;
 Expr => Var(block, t, name, init) : Type t, Name name, "=", Expr(block) init;

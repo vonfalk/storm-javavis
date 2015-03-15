@@ -35,6 +35,13 @@ namespace storm {
 			// The equality segments defined by this function will only contain either
 			// right or left associative operators.
 			Bool STORM_FN before(Par<OpInfo> o);
+
+			// Helpers based on 'before'.
+			Bool STORM_FN after(Par<OpInfo> o);
+			Bool STORM_FN eq(Par<OpInfo> o);
+
+		protected:
+			virtual void output(wostream &to) const;
 		};
 
 		// Create OpInfo.
@@ -61,11 +68,56 @@ namespace storm {
 			// Operator info.
 			Auto<OpInfo> op;
 
+			// Alter the tree to match the priority. Returns the new leaf node.
+			Operator *prioritize();
+
+			// Invalidate the cached function we are about to call. Call if you alter 'lhs' or 'rhs.
+			void invalidate();
+
+			// Create the function call.
+			virtual void initFnCall();
+
+			// Result.
+			virtual Value result();
+
+			// Generate code.
+			virtual void code(const GenState &s, GenResult &r);
+
 		protected:
 			// Output.
 			virtual void output(wostream &to) const;
+
+		private:
+			// The function call we are to execute. Lazy-loaded and invalidated by 'prioritize'.
+			Auto<Expr> fnCall;
 		};
 
+		// Create an operator, swap the operators around to follow correct priority and return the topmost one.
+		// This means that this function may not return a new operator always.
+		Operator *STORM_FN mkOperator(Par<Block> block, Par<Expr> lhs, Par<OpInfo> op, Par<Expr> rhs);
+
+		/**
+		 * Wrap an expression in parens, so that the reordering will stop att paren boundaries.
+		 */
+		class ParenExpr : public Expr {
+			STORM_CLASS;
+		public:
+			STORM_CTOR ParenExpr(Par<Expr> wrap);
+
+			// Result.
+			virtual Value result();
+
+			// Code.
+			virtual void code(const GenState &s, GenResult &r);
+
+		protected:
+			// Output.
+			virtual void output(wostream &to) const;
+
+		private:
+			// Expression we're containing.
+			Auto<Expr> wrap;
+		};
 
 		/**
 		 * Create various operators. These do not create Operator objects, since their priority

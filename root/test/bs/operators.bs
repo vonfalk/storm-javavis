@@ -1,16 +1,41 @@
 // Test various operator priorities.
 Int prio1() {
-dump: 10 * 20 + 3;
+	10 * 20 + 3;
 }
 
 Int prio2() {
-dump: 3 + 20 * 10;
+	3 + 20 * 10;
 }
 
 Int prio3() {
-dump: 10 * (20 + 3);
+	10 * (20 + 3);
 }
 
 Int prio4() {
-dump: (3 + 20) * 10;
+	(3 + 20) * 10;
+}
+
+Int prio5() {
+	#(1 + 2)# + 10 * 20 * 30 + 3 + 4;
+}
+
+// The syntax #b ... #e is 'weak' parens. They are weak since
+// they only control what will get to the prioritizing function, they
+// do not prevent rewriting as regular parens would do.
+Int prio6() {
+	#(1 + 2)# * #(3 + 4)#;
+}
+
+// Associativity
+Int prio7() {
+	5 - #(4 - 1)#;
+}
+
+Int prio8() {
+	5 #- 4 #- 1;
+}
+
+// Left-associative operators is slightly stronger.
+Int prio9() {
+	5 #- 4 - 1;
 }

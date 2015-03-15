@@ -8,6 +8,10 @@ namespace storm {
 
 	SStr::SStr(Par<Str> s) : v(s) {}
 
+	SStr::SStr(Par<Str> src, const SrcPos &pos) : v(src) {
+		this->pos = pos;
+	}
+
 	SStr::SStr(Par<SStr> s) : v(s->v) {
 		pos = s->pos;
 	}

@@ -1,2 +1,10 @@
 // Syntax for debugging...
-Expr => dumpExpr(e, str) : "dump:", ( Expr(block) e ) str;
+Stmt => dumpExpr(e, str) : "dump:", ( Expr(block) e ) str, ";";
+
+// Weak parens.
+Atom => z : "#(", Expr(block) z, ")#";
+
+// Operators with different associativity
+Operator => rOperator(op, 900) : "#" - "\*" op;
+Operator => rOperator(op, 800) : "#" - "\+" op;
+Operator => rOperator(op, 800) : "#" - "\-" op;

@@ -24,10 +24,10 @@ namespace storm {
 	void bs::Constant::output(wostream &to) const {
 		switch (cType) {
 		case tInt:
-			to << intValue << L"(I)";
+			to << intValue << L"i";
 			break;
 		case tStr:
-			to << strValue << L"(S)";
+			to << strValue << L"s";
 		default:
 			to << L"UNKNOWN";
 			break;

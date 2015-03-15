@@ -21,9 +21,11 @@ Expr arrayInit(Block block, TypeName type, Array<Expr> list) {
 	b.add(array);
 
 	Expr varAccess = namedExpr(b, arrayName, Actual());
-	SStr operator("<<");
+	SStr push("push"); // TODO: Add position as well!
 	for (Nat i = 0.nat; i < list.count; i++) {
-		b.add(operatorExpr(b, varAccess, operator, list[i]));
+		Actual params;
+		params.add(list[i]);
+		b.add(namedExpr(b, push, varAccess, params));
 	}
 
 	b.add(varAccess);

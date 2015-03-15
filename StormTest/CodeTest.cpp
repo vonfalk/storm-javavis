@@ -30,11 +30,16 @@ BEGIN_TEST(BasicSyntax) {
 	CHECK_ERROR(runFn(L"test.bs.forError", 10));
 } END_TEST
 
-BEGIN_TEST_(PriorityTest) {
+BEGIN_TEST(PriorityTest) {
 	CHECK_EQ(runFn(L"test.bs.prio1"), 203);
 	CHECK_EQ(runFn(L"test.bs.prio2"), 203);
 	CHECK_EQ(runFn(L"test.bs.prio3"), 230);
 	CHECK_EQ(runFn(L"test.bs.prio4"), 230);
+	CHECK_EQ(runFn(L"test.bs.prio5"), 6010);
+	CHECK_EQ(runFn(L"test.bs.prio6"), 11);
+	CHECK_EQ(runFn(L"test.bs.prio7"), 0);
+	CHECK_EQ(runFn(L"test.bs.prio8"), 2);
+	CHECK_EQ(runFn(L"test.bs.prio9"), 2);
 } END_TEST
 
 BEGIN_TEST(InheritanceTest) {
