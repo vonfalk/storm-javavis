@@ -30,12 +30,34 @@ namespace storm {
 		to << L"{name=" << name << L", left=" << (leftAssoc ? L"true" : L"false") << L"}";
 	}
 
+	bs::Expr *bs::OpInfo::meaning(Par<Block> block, Par<Expr> lhs, Par<Expr> rhs) {
+		Auto<Actual> actual = CREATE(Actual, block);
+		actual->add(lhs);
+		actual->add(rhs);
+		Auto<SStr> n = CREATE(SStr, block, name, pos);
+		return namedExpr(block, n, actual);
+	}
+
+	bs::AssignOpInfo::AssignOpInfo(Par<SStr> op, Int prio, Bool leftAssoc) : OpInfo(op, prio, leftAssoc) {}
+
+	bs::Expr *bs::AssignOpInfo::meaning(Par<Block> block, Par<Expr> lhs, Par<Expr> rhs) {
+		if (lhs->result().isClass())
+			return CREATE(ClassAssign, block, lhs, rhs);
+		else
+			return OpInfo::meaning(block, lhs, rhs);
+	}
+
+
 	bs::OpInfo *bs::lOperator(Par<SStr> op, Int p) {
 		return CREATE(OpInfo, op, op, p, true);
 	}
 
 	bs::OpInfo *bs::rOperator(Par<SStr> op, Int p) {
 		return CREATE(OpInfo, op, op, p, false);
+	}
+
+	bs::OpInfo *bs::assignOperator(Par<SStr> op, Int p) {
+		return CREATE(AssignOpInfo, op, op, p, false);
 	}
 
 	bs::Operator::Operator(Par<Block> block, Par<Expr> lhs, Par<OpInfo> op, Par<Expr> rhs)
@@ -143,23 +165,15 @@ namespace storm {
 		fnCall = null;
 	}
 
-	void bs::Operator::initFnCall() {
-		Auto<Actual> actual = CREATE(Actual, block);
-		actual->add(lhs);
-		actual->add(rhs);
-		Auto<SStr> name = CREATE(SStr, block, op->name, op->pos);
-		fnCall = namedExpr(block, name, actual);
-	}
-
 	Value bs::Operator::result() {
 		if (!fnCall)
-			initFnCall();
+			fnCall = op->meaning(block, lhs, rhs);
 		return fnCall->result();
 	}
 
 	void bs::Operator::code(const GenState &s, GenResult &r) {
 		if (!fnCall)
-			initFnCall();
+			fnCall = op->meaning(block, lhs, rhs);
 		return fnCall->code(s, r);
 	}
 
@@ -201,21 +215,6 @@ namespace storm {
 	/**
 	 * Create standard operators.
 	 */
-
-	bs::Expr *bs::assignExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs) {
-		Value r = lhs->result();
-		if (r.type) {
-			if (r.type->flags & typeClass) {
-				return CREATE(ClassAssign, block, lhs, rhs);
-			}
-		}
-
-		Auto<Actual> actual = CREATE(Actual, block);
-		actual->add(lhs);
-		actual->add(rhs);
-		return namedExpr(block, m, actual);
-	}
-
 
 	bs::Expr *STORM_FN bs::accessExpr(Par<Block> block, Par<Expr> lhs, Par<Expr> par) {
 		Auto<Actual> actual = CREATE(Actual, block);

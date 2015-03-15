@@ -40,13 +40,32 @@ namespace storm {
 			Bool STORM_FN after(Par<OpInfo> o);
 			Bool STORM_FN eq(Par<OpInfo> o);
 
+			// Create the meaning of this operator.
+			virtual Expr *STORM_FN meaning(Par<Block> block, Par<Expr> lhs, Par<Expr> rhs);
+
 		protected:
 			virtual void output(wostream &to) const;
+		};
+
+		/**
+		 * Info for the assignment operator.
+		 */
+		class AssignOpInfo : public OpInfo {
+			STORM_CLASS;
+		public:
+			// Ctor.
+			STORM_CTOR AssignOpInfo(Par<SStr> op, Int prio, Bool leftAssoc);
+
+			// Custom meaning.
+			virtual Expr *STORM_FN meaning(Par<Block> block, Par<Expr> lhs, Par<Expr> rhs);
 		};
 
 		// Create OpInfo.
 		OpInfo *STORM_FN lOperator(Par<SStr> op, Int priority);
 		OpInfo *STORM_FN rOperator(Par<SStr> op, Int priority);
+
+		// Assignment operator. (right associative).
+		OpInfo *STORM_FN assignOperator(Par<SStr> op, Int priority);
 
 		/**
 		 * Represents a binary operator. We need a special representation for it
@@ -73,9 +92,6 @@ namespace storm {
 
 			// Invalidate the cached function we are about to call. Call if you alter 'lhs' or 'rhs.
 			void invalidate();
-
-			// Create the function call.
-			virtual void initFnCall();
 
 			// Result.
 			virtual Value result();
@@ -119,13 +135,11 @@ namespace storm {
 			Auto<Expr> wrap;
 		};
 
+
 		/**
 		 * Create various operators. These do not create Operator objects, since their priority
 		 * is decided completely at parse-time.
 		 */
-
-		// Assignment operator. (TODO: Use Operator here as well?)
-		Expr *STORM_FN assignExpr(Par<Block> block, Par<Expr> lhs, Par<SStr> m, Par<Expr> rhs);
 
 		// Element access operator.
 		Expr *STORM_FN accessExpr(Par<Block> block, Par<Expr> lhs, Par<Expr> par);

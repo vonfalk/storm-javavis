@@ -137,13 +137,12 @@ Operator => lOperator(op, 500) : "!=" op;
 Operator => lOperator(op, 490) : "&" op;
 Operator => lOperator(op, 480) : "^" op;
 Operator => lOperator(op, 470) : "|" op;
-// later: Operator => rOperator(op, 100) : "=" op;
+Operator => assignOperator(op, 100) : "=" op;
 
 // Expression
 Expr(Block block);
 Expr => e : Atom(block) e;
 Expr => mkOperator(block, lhs, op, rhs) : Atom(block) lhs, Operator op, Expr(block) rhs;
-Expr => assignExpr(block, lhs, op, rhs) : Atom(block) lhs, "=" op, Expr(block) rhs;
 Expr => Var(block, t, name, actual) : Type t, Name name, FnValues(block) actual;
 Expr => Var(block, t, name, init) : Type t, Name name, "=", Expr(block) init;
 Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;
