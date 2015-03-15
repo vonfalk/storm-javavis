@@ -16,4 +16,7 @@ BEGIN_TEST(ThreadTest) {
 	CHECK_EQ(runFn(L"test.bs.postDbgVal"), 18);
 	CHECK(DbgVal::clear());
 
+	CHECK_EQ(runFn(L"test.bs.postObject"), 13);
+
+	TODO(L"Check values as well.");
 } END_TEST

@@ -34,6 +34,9 @@ namespace storm {
 		// Reference to the addRef and release functions.
 		code::RefSource &addRef, &release;
 
+		// Add/release references to a pointer. Ie Object **.
+		code::RefSource copyRefPtr, releasePtr;
+
 		// Reference to the memory allocation function.
 		code::RefSource allocRef, freeRef;
 

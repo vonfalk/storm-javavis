@@ -65,7 +65,7 @@ namespace code {
 				// we know that sizeof(T) == sizeof(void *)
 				add(null, null, sizeof(T), *(void **)&p);
 			} else {
-				add(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), &p);
+				add(&FnParams::copy<T>, null, sizeof(T), &p);
 			}
 			return *this;
 		}
@@ -78,7 +78,7 @@ namespace code {
 				// we know that sizeof(T) == sizeof(void *)
 				addFirst(null, null, sizeof(T), *(void **)&p);
 			} else {
-				addFirst(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), &p);
+				addFirst(&FnParams::copy<T>, null, sizeof(T), &p);
 			}
 			return *this;
 		}

@@ -10,9 +10,19 @@
 
 namespace storm {
 
+	static void copyRefPtr(Object **to, Object **from) {
+		*to = *from;
+		(*to)->addRef();
+	}
+
+	static void releasePtr(Object **o) {
+		(*o)->release();
+	}
+
 
 	FnRefs::FnRefs(code::Arena &arena)
 		: addRef(arena.addRef), release(arena.releaseRef),
+		  copyRefPtr(arena, L"copyRefPtr"), releasePtr(arena, L"releasePtr"),
 		  allocRef(arena, L"alloc"), freeRef(arena, L"free"),
 		  lazyCodeFn(arena, L"lazyUpdate"), createStrFn(arena, L"createStr"),
 		  spawnLater(arena, L"spawnLater"), spawnParam(arena, L"spawnParam"),
@@ -23,6 +33,8 @@ namespace storm {
 
 		addRef.set(address(&Object::addRef));
 		release.set(address(&Object::release));
+		copyRefPtr.set(address(&storm::copyRefPtr));
+		releasePtr.set(address(&storm::releasePtr));
 		allocRef.set(address(&stormMalloc));
 		freeRef.set(address(&stormFree));
 		createStrFn.set(address(&Str::createStr));

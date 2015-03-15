@@ -80,6 +80,14 @@ namespace storm {
 		Auto<Code> code;
 		Auto<Code> lookup;
 
+		// Helper for calling this function from another thread. This takes care
+		// of refcounting parameters and copying return values.
+		code::RefSource *threadThunkRef;
+		code::Binary *threadThunkCode;
+
+		// Get the thread thunk, generates it if needed. Returns null if no thunk is needed.
+		code::RefSource *threadThunk();
+
 		// Initialize references if needed.
 		void initRefs();
 

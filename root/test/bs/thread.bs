@@ -33,3 +33,17 @@ Int otherDbgValFn(DbgVal v) on Other {
 	8 + v.get;
 }
 
+Int postObject() {
+	CloneDerived d;
+	CloneDerived z = otherObjectFn(d);
+    // Should be 13. d is copied 2 times.
+	z.c;
+}
+
+CloneDerived otherObjectFn(CloneDerived o) on Other {
+	o.c = o.c + o.a + o.b.get;
+	o;
+}
+
+// Try with a value as well!
+

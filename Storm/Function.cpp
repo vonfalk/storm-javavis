@@ -18,6 +18,8 @@ namespace storm {
 		lookup = null;
 		delete codeRef;
 		delete lookupRef;
+		engine().destroy(threadThunkCode);
+		delete threadThunkRef;
 	}
 
 	RunOn Function::runOn() const {
@@ -58,6 +60,9 @@ namespace storm {
 			else
 				genCodeDirect(to, params, res, ref);
 		} else {
+			assert(useLookup, L"Non-lookup thunks not yet supported.");
+			if (code::RefSource *r = threadThunk())
+				ref = code::Ref(*r);
 			genCodePost(to, params, res, ref, thread);
 		}
 	}
@@ -114,34 +119,57 @@ namespace storm {
 		TODO(L"We need to copy the returned object while in the other thread!");
 	}
 
+	// Find 'std:clone' for the given type.
+	static code::Value stdCloneFn(Engine &e, const Value &type) {
+		Auto<Name> name = CREATE(Name, e);
+		name->add(L"core");
+		name->add(L"clone", valList(1, type));
+		Function *f = as<Function>(e.scope()->find(name));
+		if (!f)
+			throw InternalError(L"Could not find std.clone(" + ::toS(type) + L").");
+		return code::Value(code::Ref(f->ref()));
+	}
+
 	// Add a single parameter of type 'v', value in 'a' to 'to'.
 	static void addParam(Engine &e, const GenState &z, code::Variable to, const Value &v, const code::Value &a) {
 		using namespace code;
-		z.to << lea(ptrC, to);
 
 		if (v.isClass()) {
-			TODO(L"Do a deep copy of this object!");
-			z.to << lea(ptrA, a);
+			// Deep copy the object.
+			Variable clone = z.frame.createPtrVar(z.block, Ref(e.fnRefs.release));
+			z.to << fnParam(a);
+			z.to << fnCall(stdCloneFn(e, v), Size::sPtr);
+			z.to << mov(clone, ptrA);
+
+			z.to << lea(ptrC, to);
+			z.to << lea(ptrA, clone);
 			z.to << fnParam(ptrC);
-			z.to << fnParam(Ref(e.fnRefs.addRef));
-			z.to << fnParam(Ref(e.fnRefs.freeRef));
+			z.to << fnParam(Ref(e.fnRefs.copyRefPtr));
+			z.to << fnParam(Ref(e.fnRefs.releasePtr));
 			z.to << fnParam(natConst(v.size()));
 			z.to << fnParam(ptrA);
 			z.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
-		} else if (v.ref) {
+		} else if (v.ref || v.isBuiltIn()) {
 			// No need for copy ctors!
+			if (v.ref) {
+				TODO(L"Should references be allowed in these function calls?");
+			}
+			z.to << lea(ptrC, to);
+			z.to << fnParam(ptrC);
 			z.to << fnParam(intPtrConst(0));
 			z.to << fnParam(intPtrConst(0));
 			z.to << fnParam(natConst(v.size()));
 			z.to << fnParam(a);
 			z.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
 		} else {
+			// It is a value, use the stdClone.
 			code::Value dtor = v.destructor();
 			if (dtor.empty())
 				dtor = intPtrConst(0);
+			z.to << lea(ptrC, to);
 			z.to << lea(ptrA, a);
 			z.to << fnParam(ptrC);
-			z.to << fnParam(v.copyCtor());
+			z.to << fnParam(stdCloneFn(e, v));
 			z.to << fnParam(dtor);
 			z.to << fnParam(natConst(v.size()));
 			z.to << fnParam(ptrA);
@@ -177,7 +205,7 @@ namespace storm {
 
 		// Add all parameters.
 		for (nat i = 0; i < params.size(); i++)
-			addParam(e, to, fnParams, this->params[i], params[i]);
+			addParam(e, to.child(b), fnParams, this->params[i], params[i]);
 
 		// Describe the return type.
 		Variable returnType = createBasicTypeInfo(to.child(b), this->result);
@@ -211,6 +239,72 @@ namespace storm {
 		TODO(L"Make a copy of the result in the other thread if needed.");
 
 		to.to << end(b);
+	}
+
+	code::RefSource *Function::threadThunk() {
+		using namespace code;
+
+		if (threadThunkRef)
+			return threadThunkRef;
+
+		bool needsThunk = false;
+		needsThunk |= !result.isBuiltIn();
+		for (nat i = 0; i < params.size(); i++)
+			needsThunk |= !result.isBuiltIn();
+
+		if (!needsThunk)
+			return null;
+
+
+		Listing l;
+		l << prolog();
+
+		Variable resultParam;
+		if (result.isValue())
+			resultParam = l.frame.createPtrParam();
+
+		for (nat i = 0; i < params.size(); i++) {
+			const Value &t = params[i];
+			if (t.isClass()) {
+				Variable v = l.frame.createPtrParam(Ref(engine().fnRefs.release));
+				l << fnParam(v);
+			} else if (t.isBuiltIn()) {
+				Variable v = l.frame.createParameter(t.size(), false);
+				l << fnParam(v);
+			} else {
+				Variable v = l.frame.createParameter(t.size(), false, t.destructor());
+				l << fnParam(v, t.copyCtor());
+			}
+		}
+
+		if (result.isClass()) {
+			Variable t = l.frame.createPtrVar(l.frame.root(), Ref(engine().fnRefs.release));
+			l << fnCall(Ref(ref()), Size::sPtr);
+			l << mov(t, ptrA);
+			// Copy it...
+			l << fnParam(ptrA);
+			l << fnCall(stdCloneFn(engine(), result), Size::sPtr);
+		} else if (result.isValue()) {
+			l << fnParam(resultParam);
+			l << fnCall(Ref(ref()), Size::sPtr);
+			// Copy... It is enough to call the deepCopy member.
+			assert(false, L"Not implemented yet!");
+			l << mov(ptrA, resultParam);
+		} else {
+			l << fnCall(Ref(ref()), result.size());
+		}
+
+		l << epilog();
+		if (result.isBuiltIn())
+			l << ret(result.size());
+		else
+			l << ret(Size::sPtr);
+
+		String id = identifier() + L"<thunk>";
+		threadThunkCode = new Binary(engine().arena, id, l);
+		threadThunkRef = new RefSource(engine().arena, id);
+		threadThunkCode->update(*threadThunkRef);
+		return threadThunkRef;
 	}
 
 	void Function::setCode(Par<Code> code) {
