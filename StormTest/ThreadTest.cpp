@@ -12,11 +12,11 @@ BEGIN_TEST(ThreadTest) {
 
 	CHECK_EQ(runFn(L"test.bs.postInt"), 9);
 
+	// Check so that we keep reference counting correct.
 	DbgVal::clear();
 	CHECK_EQ(runFn(L"test.bs.postDbgVal"), 18);
 	CHECK(DbgVal::clear());
 
 	CHECK_EQ(runFn(L"test.bs.postObject"), 13);
-
-	TODO(L"Check values as well.");
+	CHECK_EQ(runFn(L"test.bs.postVal"), 33);
 } END_TEST

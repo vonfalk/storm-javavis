@@ -37,7 +37,11 @@ Int postObject() {
 	CloneDerived d;
 	CloneDerived z = otherObjectFn(d);
     // Should be 13. d is copied 2 times.
-	z.c;
+	if (disjoint(d, z)) {
+		z.c;
+	} else {
+		0;
+	}
 }
 
 CloneDerived otherObjectFn(CloneDerived o) on Other {
@@ -46,4 +50,32 @@ CloneDerived otherObjectFn(CloneDerived o) on Other {
 }
 
 // Try with a value as well!
+value ThreadVal {
+	CloneDerived v;
+	DbgVal z;
 
+	ctor() {
+		super() {
+			z = 10;
+			v();
+		}
+	}
+
+}
+
+Int postVal() {
+	ThreadVal v;
+	ThreadVal r = otherValFn(v);
+	if (disjoint(v.v, r.v)) {
+		r.v.c + r.z.get;
+	} else {
+		0;
+	}
+}
+
+ThreadVal otherValFn(ThreadVal v) on Other {
+	v.v = otherObjectFn(v.v);
+	print("In other function!");
+	v.z.set(20);
+	v;
+}

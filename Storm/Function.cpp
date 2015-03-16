@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "TypeDtor.h"
 #include "Exception.h"
+#include "Lib/CloneEnv.h"
 #include "Code/Instruction.h"
 #include "Code/VTable.h"
 
@@ -116,7 +117,6 @@ namespace storm {
 		code::FutureSema<code::Sema> future(result);
 		code::UThread::spawn(fn, *params, future, *resultType, &on->thread, data);
 		future.result();
-		TODO(L"We need to copy the returned object while in the other thread!");
 	}
 
 	// Find 'std:clone' for the given type.
@@ -177,7 +177,7 @@ namespace storm {
 		}
 	}
 
-	void Function::genCodePost(const GenState &to, const Actuals &params, GenResult &res,
+void Function::genCodePost(const GenState &to, const Actuals &params, GenResult &res,
 							code::Ref ref, const code::Value &thread) {
 		using namespace code;
 
@@ -235,9 +235,6 @@ namespace storm {
 		to.to << fnParam(dataNoFree);
 		to.to << fnCall(Ref(e.fnRefs.spawnResult), Size());
 
-		// Wait for the result...
-		TODO(L"Make a copy of the result in the other thread if needed.");
-
 		to.to << end(b);
 	}
 
@@ -260,8 +257,10 @@ namespace storm {
 		l << prolog();
 
 		Variable resultParam;
-		if (result.isValue())
-			resultParam = l.frame.createPtrParam();
+		if (result.isValue()) {
+			resultParam = l.frame.createPtrParam(result.destructor(), freeOnException);
+			l << fnParam(resultParam);
+		}
 
 		for (nat i = 0; i < params.size(); i++) {
 			const Value &t = params[i];
@@ -272,7 +271,7 @@ namespace storm {
 				Variable v = l.frame.createParameter(t.size(), false);
 				l << fnParam(v);
 			} else {
-				Variable v = l.frame.createParameter(t.size(), false, t.destructor());
+				Variable v = l.frame.createParameter(t.size(), false, t.destructor(), freeOnBoth | freePtr);
 				l << fnParam(v, t.copyCtor());
 			}
 		}
@@ -285,10 +284,30 @@ namespace storm {
 			l << fnParam(ptrA);
 			l << fnCall(stdCloneFn(engine(), result), Size::sPtr);
 		} else if (result.isValue()) {
-			l << fnParam(resultParam);
 			l << fnCall(Ref(ref()), Size::sPtr);
-			// Copy... It is enough to call the deepCopy member.
-			assert(false, L"Not implemented yet!");
+
+			// We need to create a CloneEnv object.
+			Value envType(CloneEnv::type(engine()));
+			Variable cloneMem = l.frame.createPtrVar(l.frame.root(), Ref(engine().fnRefs.freeRef), freeOnException);
+			Variable cloneEnv = l.frame.createPtrVar(l.frame.root(), Ref(engine().fnRefs.release));
+			l << fnParam(Ref(envType.type->typeRef));
+			l << fnCall(Ref(engine().fnRefs.allocRef), Size::sPtr);
+			l << mov(cloneMem, ptrA);
+			l << fnParam(ptrA);
+			l << fnCall(envType.defaultCtor(), Size::sPtr);
+			l << mov(cloneEnv, ptrA);
+			l << mov(cloneMem, intPtrConst(0));
+
+			// Find 'deepCopy'.
+			Function *deepCopy = as<Function>(result.type->find(L"deepCopy", valList(2, result, envType)));
+			if (!deepCopy)
+				throw InternalError(L"The type " + ::toS(result) + L" does not have the required 'deepCopy' member.");
+
+			// Copy by calling 'deepCopy'.
+			l << fnParam(resultParam);
+			l << fnParam(cloneEnv);
+			l << fnCall(Ref(deepCopy->ref()), Size::sPtr);
+
 			l << mov(ptrA, resultParam);
 		} else {
 			l << fnCall(Ref(ref()), result.size());

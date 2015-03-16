@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include "Utils/HashMap.h"
+#include "Utils/Bitmask.h"
 
 namespace code {
 
@@ -26,8 +27,7 @@ namespace code {
 	};
 
 	// And+or.
-	inline FreeOpt operator &(FreeOpt a, FreeOpt b) { return FreeOpt(nat(a) & nat(b)); }
-	inline FreeOpt operator |(FreeOpt a, FreeOpt b) { return FreeOpt(nat(a) | nat(b)); }
+	BITMASK_OPERATORS(FreeOpt);
 
 	// ToString for 'FreeOpt'
 	String name(FreeOpt f);

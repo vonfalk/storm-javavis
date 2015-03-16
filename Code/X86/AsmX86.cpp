@@ -31,7 +31,7 @@ namespace code {
 		}
 
 		void push(Output &to, Params p, const Instruction &instr) {
-			assert(instr.currentSize() == 4); // more comes later!
+			assert(instr.currentSize() == 4, toS(instr) + L": Only size 4 is supported now."); // More comes later.
 			const Value &src = instr.src();
 			switch (src.type()) {
 			case Value::tConstant:

@@ -104,9 +104,6 @@ namespace storm {
 		if (ref)
 			return code::Value();
 
-		if (!isValue())
-			return code::Value();
-
 		if (Function *ctor = type->defaultCtor())
 			return code::Ref(ctor->ref());
 
