@@ -132,10 +132,10 @@ namespace storm {
 
 		typeHandle.size = size().current();
 		if (dtor)
-			typeHandle.destroyRef(code::Ref(dtor->ref()));
+			typeHandle.destroyRef(dtor->ref());
 		else
 			typeHandle.destroyRef();
-		typeHandle.createRef(code::Ref(create->ref()));
+		typeHandle.createRef(create->ref());
 	}
 
 	void Type::setSuper(Type *super) {

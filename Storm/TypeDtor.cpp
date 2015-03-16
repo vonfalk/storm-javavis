@@ -44,7 +44,7 @@ namespace storm {
 
 		if (before) {
 			l << fnParam(dest);
-			l << fnCall(Ref(before->directRef()), Size());
+			l << fnCall(before->directRef(), Size());
 		}
 
 		l << epilog();

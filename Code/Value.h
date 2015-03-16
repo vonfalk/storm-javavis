@@ -49,6 +49,7 @@ namespace code {
 		Value(Register r);
 		Value(Label lbl);
 		Value(const Ref &ref);
+		Value(const RefSource &ref);
 		Value(Block block);
 		Value(Variable variable);
 		Value(CondFlag condFlag);

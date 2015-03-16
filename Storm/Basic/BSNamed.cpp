@@ -7,67 +7,68 @@
 namespace storm {
 
 	namespace bs {
-		// Decide which thread to use.
-		static code::Value runOnThread(const RunOn &our, const RunOn &their) {
-			code::Value r;
 
-			// Do we really need to do anything?
-			if (our.canRun(their))
-				return r;
-
-			switch (their.state) {
-			case RunOn::any:
-				// Should be caught above, but this works anyway!
-				return r;
-			case RunOn::runtime:
-				assert(false, L"NOT IMPLEMENTED YET!");
-				break;
-			case RunOn::named:
-				r = their.thread->ref();
-				break;
-			default:
-				assert(false, L"Unknown state " + ::toS(nat(their.state)));
-				break;
+		static void callOnThread(Par<Function> fn, const GenState &s, const Function::Actuals &actuals,
+								GenResult &to, bool lookup) {
+			RunOn target = fn->runOn();
+			if (s.runOn.canRun(target)) {
+				// Regular function call is  enough.
+				fn->localCall(s, actuals, to, lookup);
+				return;
 			}
 
-			return r;
+			// Remote thread call is needed...
+			switch (target.state) {
+			case RunOn::any:
+			assert(false, L"Should be handled above!");
+				fn->localCall(s, actuals, to, lookup);
+				break;
+			case RunOn::runtime:
+			assert(false, L"Not implemented yet!");
+				break;
+			case RunOn::named:
+			assert(lookup, L"Ignoring lookup for thread calls is not supported.");
+				fn->threadCall(s, actuals, to, target.thread->ref());
+				break;
+			default:
+			assert(false, L"Unknown RunOn::state: " + ::toS(nat(target.state)));
+				break;
+			}
 		}
 
 		// Call the function and handle the result correctly.
-		static void callFn(Par<Function> call, const GenState &s, vector<code::Value> &values,
+		static void callFn(Par<Function> call, const GenState &s, const Function::Actuals &values,
 						GenResult &to, bool lookup) {
 			using namespace code;
 
-			// See on which thread we want to run the function.
-			code::Value thread = runOnThread(s.runOn, call->runOn());
+			if (to.type.ref == call->result.ref) {
+				callOnThread(call, s, values, to, lookup);
+				return;
+			}
 
-			if (to.type.ref != call->result.ref) {
-				// We need to do stuff!
-				GenResult t(call->result, s.block);
-				call->genCode(s, values, t, thread, lookup);
+			// We need to do stuff!
+			GenResult t(call->result, s.block);
+			callOnThread(call, s, values, t, lookup);
 
-				if (!to.needed())
-					return;
+			if (!to.needed())
+				return;
 
-				if (to.type.ref) {
-					// Dangerous...
-					s.to << lea(to.location(s), ptrRel(t.location(s)));
-				} else if (to.type.isValue()) {
-					// Need to copy...
-					s.to << lea(ptrA, ptrRel(to.location(s)));
-					s.to << fnParam(ptrA);
-					s.to << fnParam(t.location(s));
-					s.to << fnCall(to.type.copyCtor(), Size());
-				} else {
-					// Regular machine operations suffice!
-					Variable target = to.location(s);
-					s.to << mov(ptrA, t.location(s));
-					s.to << mov(target, xRel(to.type.size(), ptrA));
-					if (to.type.refcounted())
-						s.to << addRef(target);
-				}
+			if (to.type.ref) {
+				// Dangerous...
+				s.to << lea(to.location(s), ptrRel(t.location(s)));
+			} else if (to.type.isValue()) {
+				// Need to copy...
+				s.to << lea(ptrA, ptrRel(to.location(s)));
+				s.to << fnParam(ptrA);
+				s.to << fnParam(t.location(s));
+				s.to << fnCall(to.type.copyCtor(), Size());
 			} else {
-				call->genCode(s, values, to, thread, lookup);
+				// Regular machine operations suffice!
+				Variable target = to.location(s);
+				s.to << mov(ptrA, t.location(s));
+				s.to << mov(target, xRel(to.type.size(), ptrA));
+				if (to.type.refcounted())
+					s.to << addRef(target);
 			}
 		}
 
@@ -159,7 +160,7 @@ namespace storm {
 
 		// Call it!
 		GenResult voidTo(Value(), s.block);
-		ctor->genCode(s, vars, voidTo);
+		ctor->localCall(s, vars, voidTo, false);
 	}
 
 	void bs::CtorCall::createClass(const GenState &s, GenResult &to) {
@@ -173,11 +174,11 @@ namespace storm {
 
 		// Only free this one automatically on an exception. If there is no exception,
 		// the memory will be owned by the object itself.
-		Variable rawMemory = s.frame.createPtrVar(subBlock, Ref(e.fnRefs.freeRef), freeOnException);
+		Variable rawMemory = s.frame.createPtrVar(subBlock, e.fnRefs.freeRef, freeOnException);
 
 		// Allocate memory into our temporary variable.
-		s.to << fnParam(Ref(toCreate.type->typeRef));
-		s.to << fnCall(Ref(e.fnRefs.allocRef), Size::sPtr);
+		s.to << fnParam(toCreate.type->typeRef);
+		s.to << fnCall(e.fnRefs.allocRef, Size::sPtr);
 		s.to << mov(rawMemory, ptrA);
 
 		// Call the constructor:
@@ -192,7 +193,7 @@ namespace storm {
 
 		// Call!
 		GenResult voidTo(Value(), subBlock);
-		ctor->genCode(subState, vars, voidTo);
+		ctor->localCall(subState, vars, voidTo, false);
 
 		// Store our result.
 		s.to << mov(to.location(subState), rawMemory);

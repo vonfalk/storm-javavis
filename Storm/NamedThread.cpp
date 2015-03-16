@@ -28,7 +28,7 @@ namespace storm {
 			reference = new code::RefSource(engine().arena, identifier());
 			reference->set(myThread.borrow());
 		}
-		return code::Ref(*reference);
+		return *reference;
 	}
 
 	void NamedThread::output(wostream &to) const {

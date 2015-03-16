@@ -44,36 +44,22 @@ namespace storm {
 		return *codeRef;
 	}
 
-	void Function::genCode(const GenState &to, const Actuals &params, GenResult &res,
-						const code::Value &thread, bool useLookup) {
+	void Function::localCall(const GenState &to, const Actuals &params, GenResult &res, bool useLookup) {
 		initRefs();
 		assert(params.size() == this->params.size());
-		code::Ref ref(useLookup ? this->ref() : directRef());
 
-		if (thread.empty()) {
-			bool inlined = true;
-			// If we're not going to use the lookup, we may be more eager to inline!
-			if (useLookup)
-				inlined &= as<DelegatedCode>(lookup.borrow()) != 0;
-			inlined &= as<InlinedCode>(code.borrow()) != 0;
-			if (inlined)
-				genCodeInline(to, params, res);
-			else
-				genCodeDirect(to, params, res, ref);
-		} else {
-			assert(useLookup, L"Non-lookup thunks not yet supported.");
-			if (code::RefSource *r = threadThunk())
-				ref = code::Ref(*r);
-			genCodePost(to, params, res, ref, thread);
-		}
+		InlinedCode *inlined = as<InlinedCode>(code.borrow());
+		// If we're not going to use the lookup, we may choose to inline sooner.
+		if (useLookup && as<DelegatedCode>(lookup.borrow()) == null)
+			inlined = null;
+
+		if (inlined)
+			inlined->code(to, params, res);
+		else
+			localCall(to, params, res, useLookup ? this->ref() : directRef());
 	}
 
-	void Function::genCodeInline(const GenState &to, const Actuals &params, GenResult &res) {
-		InlinedCode *c = as<InlinedCode>(code.borrow());
-		c->code(to, params, res);
-	}
-
-	void Function::genCodeDirect(const GenState &to, const Actuals &params, GenResult &res, code::Ref ref) {
+	void Function::localCall(const GenState &to, const Actuals &params, GenResult &res, code::Ref ref) {
 		using namespace code;
 
 		if (result == Value()) {
@@ -127,7 +113,7 @@ namespace storm {
 		Function *f = as<Function>(e.scope()->find(name));
 		if (!f)
 			throw InternalError(L"Could not find std.clone(" + ::toS(type) + L").");
-		return code::Value(code::Ref(f->ref()));
+		return code::Value(f->ref());
 	}
 
 	// Add a single parameter of type 'v', value in 'a' to 'to'.
@@ -136,7 +122,7 @@ namespace storm {
 
 		if (v.isClass()) {
 			// Deep copy the object.
-			Variable clone = z.frame.createPtrVar(z.block, Ref(e.fnRefs.release));
+			Variable clone = z.frame.createPtrVar(z.block, e.fnRefs.release);
 			z.to << fnParam(a);
 			z.to << fnCall(stdCloneFn(e, v), Size::sPtr);
 			z.to << mov(clone, ptrA);
@@ -144,11 +130,11 @@ namespace storm {
 			z.to << lea(ptrC, to);
 			z.to << lea(ptrA, clone);
 			z.to << fnParam(ptrC);
-			z.to << fnParam(Ref(e.fnRefs.copyRefPtr));
-			z.to << fnParam(Ref(e.fnRefs.releasePtr));
+			z.to << fnParam(e.fnRefs.copyRefPtr);
+			z.to << fnParam(e.fnRefs.releasePtr);
 			z.to << fnParam(natConst(v.size()));
 			z.to << fnParam(ptrA);
-			z.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
+			z.to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		} else if (v.ref || v.isBuiltIn()) {
 			// No need for copy ctors!
 			if (v.ref) {
@@ -160,7 +146,7 @@ namespace storm {
 			z.to << fnParam(intPtrConst(0));
 			z.to << fnParam(natConst(v.size()));
 			z.to << fnParam(a);
-			z.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
+			z.to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		} else {
 			// It is a value, use the stdClone.
 			code::Value dtor = v.destructor();
@@ -173,12 +159,11 @@ namespace storm {
 			z.to << fnParam(dtor);
 			z.to << fnParam(natConst(v.size()));
 			z.to << fnParam(ptrA);
-			z.to << fnCall(Ref(e.fnRefs.fnParamsAdd), Size());
+			z.to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		}
 	}
 
-void Function::genCodePost(const GenState &to, const Actuals &params, GenResult &res,
-							code::Ref ref, const code::Value &thread) {
+	void Function::threadCall(const GenState &to, const Actuals &params, GenResult &res, const code::Value &thread) {
 		using namespace code;
 
 		Engine &e = engine();
@@ -186,22 +171,22 @@ void Function::genCodePost(const GenState &to, const Actuals &params, GenResult 
 		to.to << begin(b);
 
 		// Create a UThreadData object.
-		Variable data = to.frame.createPtrVar(b, Ref(e.fnRefs.abortSpawn), freeOnException);
-		to.to << fnCall(Ref(e.fnRefs.spawnLater), Size::sPtr);
+		Variable data = to.frame.createPtrVar(b, e.fnRefs.abortSpawn, freeOnException);
+		to.to << fnCall(e.fnRefs.spawnLater, Size::sPtr);
 		to.to << mov(data, ptrA);
 
 		// Find out the pointer to the data and create FnParams object.
 		to.to << fnParam(ptrA);
-		to.to << fnCall(Ref(e.fnRefs.spawnParam), Size::sPtr);
+		to.to << fnCall(e.fnRefs.spawnParam, Size::sPtr);
 		Variable fnParams = to.frame.createVariable(b,
 													FnParams::classSize(),
-													Ref(e.fnRefs.fnParamsDtor),
+													e.fnRefs.fnParamsDtor,
 													freeOnBoth | freePtr);
 		// Call the constructor of FnParams
 		to.to << lea(ptrC, fnParams);
 		to.to << fnParam(ptrC);
 		to.to << fnParam(ptrA);
-		to.to << fnCall(Ref(e.fnRefs.fnParamsCtor), Size());
+		to.to << fnCall(e.fnRefs.fnParamsCtor, Size());
 
 		// Add all parameters.
 		for (nat i = 0; i < params.size(); i++)
@@ -224,16 +209,20 @@ void Function::genCodePost(const GenState &to, const Actuals &params, GenResult 
 			to.to << lea(ptrB, res.safeLocation(to.child(b), this->result));
 		}
 
+		const RefSource *fn = threadThunk();
+		if (!fn)
+			fn = &ref();
+
 		// Spawn the thread!
 		to.to << lea(ptrA, fnParams);
 		to.to << lea(ptrC, returnType);
-		to.to << fnParam(ref);
+		to.to << fnParam(*fn);
 		to.to << fnParam(ptrA);
 		to.to << fnParam(ptrB);
 		to.to << fnParam(ptrC);
 		to.to << fnParam(thread);
 		to.to << fnParam(dataNoFree);
-		to.to << fnCall(Ref(e.fnRefs.spawnResult), Size());
+		to.to << fnCall(e.fnRefs.spawnResult, Size());
 
 		to.to << end(b);
 	}
@@ -265,7 +254,7 @@ void Function::genCodePost(const GenState &to, const Actuals &params, GenResult 
 		for (nat i = 0; i < params.size(); i++) {
 			const Value &t = params[i];
 			if (t.isClass()) {
-				Variable v = l.frame.createPtrParam(Ref(engine().fnRefs.release));
+				Variable v = l.frame.createPtrParam(engine().fnRefs.release);
 				l << fnParam(v);
 			} else if (t.isBuiltIn()) {
 				Variable v = l.frame.createParameter(t.size(), false);
@@ -277,21 +266,21 @@ void Function::genCodePost(const GenState &to, const Actuals &params, GenResult 
 		}
 
 		if (result.isClass()) {
-			Variable t = l.frame.createPtrVar(l.frame.root(), Ref(engine().fnRefs.release));
-			l << fnCall(Ref(ref()), Size::sPtr);
+			Variable t = l.frame.createPtrVar(l.frame.root(), engine().fnRefs.release);
+			l << fnCall(ref(), Size::sPtr);
 			l << mov(t, ptrA);
 			// Copy it...
 			l << fnParam(ptrA);
 			l << fnCall(stdCloneFn(engine(), result), Size::sPtr);
 		} else if (result.isValue()) {
-			l << fnCall(Ref(ref()), Size::sPtr);
+			l << fnCall(ref(), Size::sPtr);
 
 			// We need to create a CloneEnv object.
 			Value envType(CloneEnv::type(engine()));
-			Variable cloneMem = l.frame.createPtrVar(l.frame.root(), Ref(engine().fnRefs.freeRef), freeOnException);
-			Variable cloneEnv = l.frame.createPtrVar(l.frame.root(), Ref(engine().fnRefs.release));
-			l << fnParam(Ref(envType.type->typeRef));
-			l << fnCall(Ref(engine().fnRefs.allocRef), Size::sPtr);
+			Variable cloneMem = l.frame.createPtrVar(l.frame.root(), engine().fnRefs.freeRef, freeOnException);
+			Variable cloneEnv = l.frame.createPtrVar(l.frame.root(), engine().fnRefs.release);
+			l << fnParam(envType.type->typeRef);
+			l << fnCall(engine().fnRefs.allocRef, Size::sPtr);
 			l << mov(cloneMem, ptrA);
 			l << fnParam(ptrA);
 			l << fnCall(envType.defaultCtor(), Size::sPtr);
@@ -306,11 +295,11 @@ void Function::genCodePost(const GenState &to, const Actuals &params, GenResult 
 			// Copy by calling 'deepCopy'.
 			l << fnParam(resultParam);
 			l << fnParam(cloneEnv);
-			l << fnCall(Ref(deepCopy->ref()), Size::sPtr);
+			l << fnCall(deepCopy->ref(), Size::sPtr);
 
 			l << mov(ptrA, resultParam);
 		} else {
-			l << fnCall(Ref(ref()), result.size());
+			l << fnCall(ref(), result.size());
 		}
 
 		l << epilog();
@@ -340,7 +329,7 @@ void Function::genCodePost(const GenState &to, const Actuals &params, GenResult 
 			lookup->detach();
 
 		if (code == null && codeRef != null)
-			lookup = CREATE(DelegatedCode, engine(), code::Ref(*codeRef), lookupRef->getTitle());
+			lookup = CREATE(DelegatedCode, engine(), *codeRef, lookupRef->getTitle());
 		else
 			lookup = code;
 
@@ -364,7 +353,7 @@ void Function::genCodePost(const GenState &to, const Actuals &params, GenResult 
 			assert(parent(), "Too early!");
 			lookupRef = new code::RefSource(engine().arena, identifier() + L"<l>");
 			if (!lookup) {
-				lookup = CREATE(DelegatedCode, engine(), code::Ref(*codeRef), lookupRef->getTitle());
+				lookup = CREATE(DelegatedCode, engine(), *codeRef, lookupRef->getTitle());
 				lookup->attach(this);
 			}
 			lookup->update(*lookupRef);

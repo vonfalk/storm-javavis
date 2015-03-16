@@ -33,7 +33,7 @@ namespace code {
 	class Reference : NoCopy, public util::SetMember<Reference> {
 		friend class Ref;
 	public:
-		Reference(RefSource &source, const String &title);
+		Reference(const RefSource &source, const String &title);
 		Reference(const Ref &copy, const String &title);
 		~Reference();
 
@@ -89,7 +89,7 @@ namespace code {
 		friend void swap(Ref &a, Ref &b);
 	public:
 		Ref();
-		explicit Ref(RefSource &source);
+		Ref(const RefSource &source);
 		Ref(const Reference &reference);
 
 		Ref(const Ref &o);

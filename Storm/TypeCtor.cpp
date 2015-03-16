@@ -33,7 +33,7 @@ namespace storm {
 
 		if (before) {
 			l << fnParam(dest);
-			l << fnCall(Ref(before->ref()), Size());
+			l << fnCall(before->ref(), Size());
 		}
 
 		vector<Auto<TypeVar> > vars = type->variables();
@@ -53,7 +53,7 @@ namespace storm {
 		if (type->flags & typeClass) {
 			// Set the vtable. (TODO: maybe a symbolic offset here?)
 			l << mov(ptrA, dest);
-			l << mov(ptrRel(ptrA), Ref(type->vtable.ref));
+			l << mov(ptrRel(ptrA), type->vtable.ref);
 		}
 
 		l << epilog();
@@ -90,7 +90,7 @@ namespace storm {
 		if (before) {
 			l << fnParam(dest);
 			l << fnParam(src);
-			l << fnCall(Ref(before->ref()), Size());
+			l << fnCall(before->ref(), Size());
 		}
 
 		// Copy data members.
@@ -120,7 +120,7 @@ namespace storm {
 		if (type->flags & typeClass) {
 			// Set the vtable.
 			l << mov(ptrA, dest);
-			l << mov(ptrRel(ptrA), Ref(type->vtable.ref));
+			l << mov(ptrRel(ptrA), type->vtable.ref);
 		}
 
 		l << epilog();
@@ -158,7 +158,7 @@ namespace storm {
 		if (before) {
 			l << fnParam(dest);
 			l << fnParam(src);
-			l << fnCall(Ref(before->ref()), Size::sPtr);
+			l << fnCall(before->ref(), Size::sPtr);
 			if (before->result.refcounted())
 				l << code::releaseRef(ptrA);
 		}
@@ -191,7 +191,7 @@ namespace storm {
 		if (type->flags & typeClass) {
 			// Set the vtable.
 			l << mov(ptrA, dest);
-			l << mov(ptrRel(ptrA), Ref(type->vtable.ref));
+			l << mov(ptrRel(ptrA), type->vtable.ref);
 		}
 
 		l << epilog();
@@ -235,7 +235,7 @@ namespace storm {
 		if (before) {
 			l << fnParam(me);
 			l << fnParam(env);
-			l << fnCall(Ref(before->directRef()), Size());
+			l << fnCall(before->directRef(), Size());
 		}
 
 		// Find the clone function for objects.
@@ -268,7 +268,7 @@ namespace storm {
 				l << add(ptrA, intPtrConst(offset));
 				l << fnParam(ptrA);
 				l << fnParam(env);
-				l << fnCall(Ref(fn->ref()), Size());
+				l << fnCall(fn->ref(), Size());
 
 			} else {
 				// Find the clone function for us:
@@ -279,7 +279,7 @@ namespace storm {
 				l << mov(ptrA, me);
 				l << fnParam(ptrRel(ptrA, offset));
 				l << fnParam(env);
-				l << fnCall(Ref(fn->ref()), Size::sPtr);
+				l << fnCall(fn->ref(), Size::sPtr);
 				l << mov(ptrC, me);
 				l << add(ptrC, intPtrConst(offset));
 				l << code::releaseRef(ptrRel(ptrC));
@@ -360,19 +360,19 @@ namespace storm {
 			l << fnCall(t.copyCtor(), Size());
 
 			Type *envType = CloneEnv::type(e);
-			Variable rawEnv = l.frame.createPtrVar(l.frame.root(), Ref(e.fnRefs.freeRef), freeOnException);
+			Variable rawEnv = l.frame.createPtrVar(l.frame.root(), e.fnRefs.freeRef, freeOnException);
 			Variable env = variable(l.frame, l.frame.root(), Value(envType));
-			l << fnParam(Ref(envType->typeRef));
-			l << fnCall(Ref(e.fnRefs.allocRef), Size::sPtr);
+			l << fnParam(envType->typeRef);
+			l << fnCall(e.fnRefs.allocRef, Size::sPtr);
 			l << mov(rawEnv, ptrA);
 			l << fnParam(ptrA);
-			l << fnCall(Ref(envType->defaultCtor()->ref()), Size());
+			l << fnCall(envType->defaultCtor()->ref(), Size());
 			l << mov(env, ptrA);
 			l << mov(rawEnv, intPtrConst(0));
 
 			l << fnParam(to);
 			l << fnParam(env);
-			l << fnCall(Ref(deepCopy(t.type)->ref()), Size());
+			l << fnCall(deepCopy(t.type)->ref(), Size());
 			l << mov(ptrA, to);
 			l << epilog();
 			l << ret(Size::sPtr);
@@ -420,7 +420,7 @@ namespace storm {
 			l << fnCall(t.copyCtor(), Size());
 			l << fnParam(to);
 			l << fnParam(env);
-			l << fnCall(Ref(deepCopy(t.type)->ref()), Size());
+			l << fnCall(deepCopy(t.type)->ref(), Size());
 			l << mov(ptrA, to);
 			l << epilog();
 			l << ret(Size::sPtr);

@@ -88,7 +88,7 @@ namespace storm {
 		}
 
 		engine().fnRefs.lazyCodeFn.set(address(&LazyCode::updateCode));
-		setCode(r.code(code::Ref(engine().fnRefs.lazyCodeFn), code::ptrConst(this)));
+		setCode(r.code(engine().fnRefs.lazyCodeFn, code::ptrConst(this)));
 	}
 
 	const void *LazyCode::updateCode(LazyCode *c) {
@@ -128,6 +128,7 @@ namespace storm {
 	}
 
 	void LazyCode::setCode(const code::Listing &l) {
+		// PLN("New code for " << owner->identifier() << ":" << l);
 		code::Binary *newCode = new code::Binary(engine().arena, L"redirect", l);
 
 		if (code)

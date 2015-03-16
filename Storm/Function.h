@@ -55,11 +55,18 @@ namespace storm {
 		// this reference is needed.
 		code::RefSource &directRef();
 
-		// Generate code for this function call. If 'thread' is something other than code::Value(),
-		// the function will be used on the thread indicated there instead.
+		// Actual parameters typedef.
 		typedef vector<code::Value> Actuals;
-		void genCode(const GenState &to, const Actuals &params, GenResult &result,
-					const code::Value &thread = code::Value(), bool useLookup = true);
+
+		// Generate code for this function call, assuming we are performing the call the same thread as the
+		// currently running thread. if 'useLookup' is false, we will not use the lookup function (ie VTables).
+		void localCall(const GenState &to, const Actuals &params, GenResult &result, bool useLookup);
+
+		// Generate code for this function call, assuming we want to run on a different thread.
+		void threadCall(const GenState &to, const Actuals &params, GenResult &result, const code::Value &thread);
+
+		// Generate code for this function call, assuming we want to run on a different thread, ignoring any result.
+		void asyncThreadCall(const GenState &to, const Actuals &params, const code::Value &thread);
 
 		// Code to be executed.
 		void setCode(Par<Code> code);
@@ -92,10 +99,7 @@ namespace storm {
 		void initRefs();
 
 		// Generate code for a direct function call.
-		void genCodeDirect(const GenState &to, const Actuals &params, GenResult &result, code::Ref ref);
-
-		// Generate code for an inlined function call.
-		void genCodeInline(const GenState &to, const Actuals &params, GenResult &result);
+		void localCall(const GenState &to, const Actuals &params, GenResult &result, code::Ref ref);
 
 		// Generate code for an indirect function call, ie post it to another thread.
 		void genCodePost(const GenState &to, const Actuals &params, GenResult &result,

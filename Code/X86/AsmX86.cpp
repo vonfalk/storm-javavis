@@ -31,7 +31,9 @@ namespace code {
 		}
 
 		void push(Output &to, Params p, const Instruction &instr) {
-			assert(instr.currentSize() == 4, toS(instr) + L": Only size 4 is supported now."); // More comes later.
+			// Size == 1 is covered by pushing whatever garbage is in the register. We need to keep the alignment
+			// of the stack anyway!
+			assert(instr.currentSize() <= 4, toS(instr) + L": Only size 4 is supported now.");
 			const Value &src = instr.src();
 			switch (src.type()) {
 			case Value::tConstant:

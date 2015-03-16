@@ -17,6 +17,7 @@ namespace code {
 	Value::Value(Label lbl) : valType(tLabel), labelId(lbl.id), valSize(Size::sPtr), iOffset(0) {}
 
 	Value::Value(const Ref &ref) : valType(tReference), iReference(ref), valSize(Size::sPtr), iOffset(0) {}
+	Value::Value(const RefSource &ref) : valType(tReference), iReference(ref), valSize(Size::sPtr), iOffset(0) {}
 
 	// The size of a block value is zero, since it is an abstract entity.
 	Value::Value(Block b) : valType(tBlock), blockId(b.id), valSize(0), iOffset(0) {}

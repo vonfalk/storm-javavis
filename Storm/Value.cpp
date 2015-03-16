@@ -75,9 +75,9 @@ namespace storm {
 			return code::Value();
 		} else if (type) {
 			if (type->flags & typeClass)
-				return code::Ref(type->engine.fnRefs.release);
+				return type->engine.fnRefs.release;
 			else if (Function *dtor = type->destructor())
-				return code::Ref(dtor->ref());
+				return dtor->ref();
 			else
 				return code::Value();
 		} else {
@@ -92,7 +92,7 @@ namespace storm {
 			if (type->flags & typeClass)
 				return code::Value();
 			else if (Function *ctor = type->copyCtor())
-				return code::Ref(ctor->ref());
+				return ctor->ref();
 			else
 				return code::Value();
 		} else {
@@ -105,7 +105,7 @@ namespace storm {
 			return code::Value();
 
 		if (Function *ctor = type->defaultCtor())
-			return code::Ref(ctor->ref());
+			return ctor->ref();
 
 		return code::Value();
 	}
@@ -118,7 +118,7 @@ namespace storm {
 			return code::Value();
 
 		if (Function *ctor = type->assignFn())
-			return code::Ref(ctor->ref());
+			return ctor->ref();
 
 		return code::Value();
 	}

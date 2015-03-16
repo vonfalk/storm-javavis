@@ -5,7 +5,7 @@
 
 namespace code {
 
-	Reference::Reference(RefSource &source, const String &title) : title(title), arena(source.arena), referring(source.getId()) {
+	Reference::Reference(const RefSource &source, const String &title) : title(title), arena(source.arena), referring(source.getId()) {
 		lastAddress = arena.refManager.addReference(this, referring);
 	}
 
@@ -61,7 +61,7 @@ namespace code {
 
 	Ref::Ref() : arena(null), referring(0) {}
 
-	Ref::Ref(RefSource &source) : arena(&source.arena), referring(source.getId()) {
+	Ref::Ref(const RefSource &source) : arena(&source.arena), referring(source.getId()) {
 		addRef();
 	}
 

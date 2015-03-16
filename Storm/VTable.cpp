@@ -354,7 +354,7 @@ namespace storm {
 		if (!src[i])
 			src[i] = (this->*create)(i);
 
-		return code::Ref(*src[i]);
+		return *src[i];
 	}
 
 	code::RefSource *VTableCalls::createStorm(nat i) {

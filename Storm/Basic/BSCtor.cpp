@@ -155,7 +155,7 @@ namespace storm {
 			actuals[i] = params->code(i, s, ctor->params[i]);
 
 		GenResult t;
-		ctor->genCode(s, actuals, t);
+		ctor->localCall(s, actuals, t, false);
 	}
 
 	void bs::SuperCall::code(const GenState &s, GenResult &r) {
@@ -171,7 +171,7 @@ namespace storm {
 		if (type->flags & typeClass) {
 			// TODO: maybe symbolic offset here?
 			s.to << mov(ptrA, dest);
-			s.to << mov(ptrRel(ptrA), Ref(type->vtable.ref));
+			s.to << mov(ptrRel(ptrA), type->vtable.ref);
 		}
 
 		// Initialize any member variables.
@@ -247,7 +247,7 @@ namespace storm {
 		actuals[0] = ptrA;
 
 		GenResult nothing;
-		ctor->genCode(s, actuals, nothing);
+		ctor->localCall(s, actuals, nothing, true);
 	}
 
 }

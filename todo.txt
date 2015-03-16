@@ -56,6 +56,7 @@ In basic storm: Allow the dot operator to be used as scope resolution as well (m
 In bs: check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should
 be something like the same statement instead).
 
+Consider syntax like: fork foo(), to indicate that we do not want to wait for the completion of 'foo'.
 
 Others
 ---------
