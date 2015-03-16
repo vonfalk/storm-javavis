@@ -160,8 +160,8 @@ FunctionBody => FnBody(fn) : DELIMITER - (Stmt(me) -> add, )* - DELIMITER;
 
 // Special statement for calling super constructor.
 SuperCall(CtorBody block);
-SuperCall => SuperCall(block, params) : "super", FnValues(block) params, ";";
-SuperCall => SuperCall(block, params, init) : "super", FnValues(block) params, "{", Initializers(block) init, "}";
+SuperCall => SuperCall(block, params) : "init", FnValues(block) params, ";";
+SuperCall => SuperCall(block, params, init) : "init", FnValues(block) params, "{", Initializers(block) init, "}";
 
 Initializers(Block block);
 Initializers => Array<Initializer>() : (Initializer(block) -> push, ";", )*;

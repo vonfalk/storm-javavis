@@ -86,7 +86,9 @@ namespace storm {
 		// Return value parameter (if needed).
 		Variable returnValue;
 		if (!result.returnOnStack()) {
-			returnValue = l.frame.createParameter(Size::sPtr, false, result.destructor(), freeOnException);
+			// Note: We do not need to free this one, since we will copy a value to it (and thereby initialize it)
+			// the last thing we do in this function.
+			returnValue = l.frame.createParameter(Size::sPtr, false);
 		}
 
 		// Parameters

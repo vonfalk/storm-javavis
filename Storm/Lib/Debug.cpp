@@ -278,7 +278,9 @@ namespace storm {
 
 		if (live.count(this) == 0) {
 			PLN("Trying to destroy a non-live object at " << this);
+			PLN(format(stackTrace()));
 			dbg_dumpNolock();
+			DebugBreak();
 			assert(false);
 		}
 		live.erase(this);

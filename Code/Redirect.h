@@ -20,7 +20,7 @@ namespace code {
 		Redirect();
 
 		// Add a parameter to the function.
-		void param(Size size, Value dtor);
+		void param(Size size, Value dtor, bool byPtr);
 
 		// Set return value.
 		void result(Size size, bool builtIn);
@@ -33,6 +33,7 @@ namespace code {
 		struct Param {
 			Size size;
 			Value dtor;
+			bool byPtr;
 		};
 
 		// Parameters.

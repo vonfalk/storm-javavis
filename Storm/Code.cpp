@@ -81,9 +81,9 @@ namespace storm {
 		// if there is an exception...
 		for (nat i = 0; i < owner->params.size(); i++) {
 			if (owner->params[i].isValue()) {
-				r.param(owner->params[i].size(), owner->params[i].destructor());
+				r.param(owner->params[i].size(), owner->params[i].destructor(), true);
 			} else {
-				r.param(owner->params[i].size(), code::Value());
+				r.param(owner->params[i].size(), code::Value(), false);
 			}
 		}
 
@@ -129,7 +129,7 @@ namespace storm {
 
 	void LazyCode::setCode(const code::Listing &l) {
 		// PLN("New code for " << owner->identifier() << ":" << l);
-		code::Binary *newCode = new code::Binary(engine().arena, L"redirect", l);
+		code::Binary *newCode = new code::Binary(engine().arena, owner->identifier(), l);
 
 		if (code)
 			engine().destroy(code);

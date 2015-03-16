@@ -5,12 +5,34 @@ BEGIN_TEST(TestPreserve) {
 	Listing l;
 
 	l << prolog();
-	l << mov(eax, natConst(0x00));
-	l << mov(ebx, natConst(0x01));
-	l << mov(ecx, natConst(0x02));
+	l << mov(rax, wordConst(0x00));
+	l << mov(rbx, wordConst(0x01));
+	l << mov(rcx, wordConst(0x02));
 	l << epilog();
 	l << ret(Size::sInt);
 
 	Binary b(arena, L"TestPreserve", l);
+	CHECK_EQ(callFn(b.getData(), 0), 0x00);
+} END_TEST
+
+static void dummy(void *ptr) {}
+
+BEGIN_TEST(TestPreserveEx) {
+	Arena arena;
+
+	Ref destroyPtr = arena.external(L"dummy", &dummy);
+
+	Listing l;
+
+	l.frame.createPtrVar(l.frame.root(), destroyPtr);
+
+	l << prolog();
+	l << mov(rax, wordConst(0x00));
+	l << mov(rbx, wordConst(0x01));
+	l << mov(rcx, wordConst(0x02));
+	l << epilog();
+	l << ret(Size::sInt);
+
+	Binary b(arena, L"TestPreserveEx", l);
 	CHECK_EQ(callFn(b.getData(), 0), 0x00);
 } END_TEST

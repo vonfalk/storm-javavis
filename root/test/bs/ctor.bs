@@ -6,14 +6,14 @@ class CtorClass {
 	Dbg b;
 
 	ctor() {
-		super() {
+		init() {
 			a = 20;
 			b = 30;
 		}
 	}
 
 	ctor(Int a) {
-		super() {
+		init() {
 			a = a;
 			b = a * 2;
 		}
@@ -37,7 +37,7 @@ class CtorBase {
 	Int base;
 
 	ctor(Int v) {
-		super() { base = v; }
+		init() { base = v; }
 	}
 
 	Int value() {
@@ -51,12 +51,12 @@ class CtorDerived extends CtorBase {
 	Int der;
 
 	ctor(Int a, Int b) {
-		super(a) { der = b; }
+		init(a) { der = b; }
 		// comments here should work!
 	}
 
 	ctor(Int a) {
-		super(1) { der = 1; }
+		init(1) { der = 1; }
 		// This is broken, it should not compile.
 		this = CtorDerived(a, a);
 	}

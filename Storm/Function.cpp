@@ -247,7 +247,7 @@ namespace storm {
 
 		Variable resultParam;
 		if (result.isValue()) {
-			resultParam = l.frame.createPtrParam(result.destructor(), freeOnException);
+			resultParam = l.frame.createPtrParam();
 			l << fnParam(resultParam);
 		}
 
@@ -275,6 +275,12 @@ namespace storm {
 		} else if (result.isValue()) {
 			l << fnCall(ref(), Size::sPtr);
 
+			Block subBlock = l.frame.createChild(l.frame.root());
+			// Keep track of the result object.
+			Variable freeResult = l.frame.createPtrVar(subBlock, result.destructor(), freeOnException);
+			l << begin(subBlock);
+			l << mov(freeResult, resultParam);
+
 			// We need to create a CloneEnv object.
 			Value envType(CloneEnv::type(engine()));
 			Variable cloneMem = l.frame.createPtrVar(l.frame.root(), engine().fnRefs.freeRef, freeOnException);
@@ -297,6 +303,7 @@ namespace storm {
 			l << fnParam(cloneEnv);
 			l << fnCall(deepCopy->ref(), Size::sPtr);
 
+			l << end(subBlock);
 			l << mov(ptrA, resultParam);
 		} else {
 			l << fnCall(ref(), result.size());

@@ -12,8 +12,8 @@ namespace code {
 		resultBuiltIn = i;
 	}
 
-	void Redirect::param(Size size, Value dtor) {
-		Param p = { size, dtor };
+	void Redirect::param(Size size, Value dtor, bool ptr) {
+		Param p = { size, dtor, ptr };
 		params.push_back(p);
 	}
 
@@ -26,7 +26,10 @@ namespace code {
 
 		for (nat i = 0; i < params.size(); i++) {
 			Param &p = params[i];
-			l.frame.createParameter(p.size, false, p.dtor, freeOnException);
+			FreeOpt o = freeOnException;
+			if (p.byPtr)
+				o |= freePtr;
+			l.frame.createParameter(p.size, false, p.dtor, o);
 		}
 
 		l << prolog();

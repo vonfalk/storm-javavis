@@ -26,12 +26,18 @@ namespace code {
 			// Get a pointer to the hidden variable containing the owning block object.
 			Value blockPtr() const;
 
+			// Get the offset to the first preserved register (relative ebp).
+			int preservedOffset() const;
+
 		private:
 			// Offset for all variables and parameters (pre-computed).
 			vector<int> off;
 
 			// Maxium size required by local variables.
 			nat maxSz;
+
+			// Offset for preserved registers.
+			int pOffset;
 
 			// Update the offset for 'off'. Returns the updated offset for 'var'.
 			int updateVarOffset(const Variable &var, const Frame &frame, nat savedReg);

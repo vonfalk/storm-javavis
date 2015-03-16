@@ -9,16 +9,19 @@ namespace code {
 
 #ifdef SEH
 		// Specific for SEH.
-		static int baseOffset(nat preservedRegisters, const Frame &frame) {
-			int offset = preservedRegisters * sizeof(cpuNat);
+		static int baseOffset(const Frame &frame) {
 			// current block and owner TODO: Really needed?
-			offset += 2 * sizeof(cpuNat);
+			int offset = 2 * sizeof(cpuNat);
 			// if using SEH, 2 more
 			if (frame.exceptionHandlerNeeded())
 				offset += 2 * sizeof(cpuNat);
 			return -offset;
 		}
 #endif
+
+		static int baseOffset(nat numPreserved, const Frame &frame) {
+			return baseOffset(frame) - numPreserved*sizeof(cpuNat);
+		}
 
 		void Offsets::init(nat preservedRegisters, const Frame &frame) {
 			vector<Variable> vars = frame.allVariables();
@@ -35,6 +38,7 @@ namespace code {
 				}
 			}
 
+			pOffset = baseOffset(frame);
 			int base = baseOffset(preservedRegisters, frame);
 			for (nat i = 0; i < off.size(); i++) {
 				int offset = off[i];
@@ -109,6 +113,10 @@ namespace code {
 
 		Value Offsets::blockPtr() const {
 			return intRel(ptrFrame, Offset(-8));
+		}
+
+		int Offsets::preservedOffset() const {
+			return pOffset - sizeof(cpuNat);
 		}
 
 		//////////////////////////////////////////////////////////////////////////

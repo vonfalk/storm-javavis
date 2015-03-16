@@ -55,7 +55,7 @@ value ThreadVal {
 	DbgVal z;
 
 	ctor() {
-		super() {
+		init() {
 			z = 10;
 			v();
 		}
@@ -78,3 +78,5 @@ ThreadVal otherValFn(ThreadVal v) on Other {
 	v.z.set(20);
 	v;
 }
+
+

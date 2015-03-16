@@ -77,7 +77,7 @@ BEGIN_TEST(TestChainedException) {
 
 	// Innermost function is a redirect.
 	Redirect redirect;
-	redirect.param(Size::sInt, Ref(intCleanup));
+	redirect.param(Size::sInt, Ref(intCleanup), false);
 	redirect.result(Size::sInt, true);
 	Binary inner(arena, L"inner", redirect.code(Ref(throwEx), Value()));
 	RefSource innerRef(arena, L"inner");
@@ -220,4 +220,62 @@ BEGIN_TEST(TestMultipleEx) {
 	throwError = true;
 	CHECK_ERROR((*fn)());
 
+} END_TEST
+
+struct Large {
+	int a;
+	int b;
+	int c;
+
+	Large() : a(0), b(10), c(0) {}
+};
+
+static bool correct = false;
+
+static void destroyLarge(Large *large) {
+	// PVAR(large->a);
+	// PVAR(large->b);
+	// PVAR(large->c);
+	correct &= large->a == 0;
+	correct &= large->b == 10;
+	correct &= large->c == 0;
+}
+
+BEGIN_TEST(TestDtor) {
+	Arena arena;
+	Ref dtor = arena.external(L"dtor", &destroyLarge);
+	Ref error = arena.external(L"error", &throwException);
+
+	Listing l;
+	Variable param = l.frame.createParameter(Size::sInt * 3, false, dtor, freeOnBoth | freePtr);
+	Variable var = l.frame.createVariable(l.frame.root(), Size::sInt * 3, dtor, freeOnBoth | freePtr);
+
+	l << prolog();
+
+	l << mov(eax, intRel(param, Offset()));
+	l << mov(intRel(var, Offset()), eax);
+	l << mov(eax, intRel(param, Offset::sInt));
+	l << mov(intRel(var, Offset::sInt), eax);
+	l << mov(eax, intRel(param, Offset::sInt * 2));
+	l << mov(intRel(var, Offset::sInt * 2), eax);
+
+	l << fnCall(error, Size());
+
+	l << epilog();
+	l << ret(Size());
+
+	Binary output(arena, L"MyFunction", l);
+	typedef void (*Fn)(Large);
+	Fn fn = (Fn)output.getData();
+	Large obj;
+
+	correct = true;
+	throwError = true;
+	CHECK_ERROR((*fn)(obj));
+	CHECK(correct);
+
+	correct = true;
+	throwError = false;
+	CHECK_RUNS((*fn)(obj));
+	CHECK(correct);
 } END_TEST

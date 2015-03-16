@@ -56,9 +56,6 @@ namespace code {
 		void TfmParams::transform(Listing &to, nat line) {
 			static OpTable<TransformParFn> transforms(transformMap, ARRAY_SIZE(transformMap));
 
-			preserve = registers[line];
-			add64(preserve);
-
 			Instruction i(from[line]);
 			lookupVars(i);
 
@@ -325,10 +322,11 @@ namespace code {
 				destroyBlock(to, params, c, true);
 			}
 
-			// Save any registers we need to preserve.
+			// Restore any previously preserved registers.
 			nat id = 0;
 			for (Registers::iterator i = params.savedRegisters.begin(); i != params.savedRegisters.end(); ++i, id++) {
-				to << code::mov(*i, intRel(ptrFrame, -Offset(id * 4 + 12)));
+				int offset = params.vars.preservedOffset() - id*sizeof(cpuNat);
+				to << code::mov(*i, intRel(ptrFrame, Offset(offset)));
 			}
 
 			// Restore

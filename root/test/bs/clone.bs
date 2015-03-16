@@ -7,7 +7,7 @@ value CloneVal {
 	Dbg z;
 
 	ctor() {
-		super() {
+		init() {
 			z = 8;
 		}
 	}
@@ -20,7 +20,7 @@ class CloneBase {
 	CloneVal v;
 
 	ctor() {
-		super() {
+		init() {
 			a = 2;
 			b = 3;
 		}
@@ -33,13 +33,13 @@ class CloneDerived extends CloneBase {
 	Int c;
 
 	ctor() {
-		super() {
+		init() {
 			c = 4;
 		}
 	}
 
 	ctor(CloneDerived o) {
-		super(o) {
+		init(o) {
 			c = o.c + 1;
 		}
 	}

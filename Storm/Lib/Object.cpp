@@ -97,6 +97,7 @@ namespace storm {
 		Lock::L z(liveLock);
 		if (live.count((Object *)o) == 0) {
 			PLN("Access to dead object: " << o);
+			PLN(format(stackTrace()));
 			DebugBreak();
 			assert(false);
 		}
