@@ -253,7 +253,7 @@ namespace code {
 
 		UThreadData *prev = running;
 		{
-			::Lock::L z(lock);
+			util::Lock::L z(lock);
 			UThreadData *next = ready.pop();
 			if (!next)
 				return false;
@@ -275,7 +275,7 @@ namespace code {
 
 		while (true) {
 			{
-				::Lock::L z(lock);
+				util::Lock::L z(lock);
 				next = ready.pop();
 			}
 
@@ -300,7 +300,7 @@ namespace code {
 		data->owner = this;
 		atomicIncrement(aliveCount);
 
-		::Lock::L z(lock);
+		util::Lock::L z(lock);
 		ready.push(data);
 		data->addRef();
 	}
@@ -311,7 +311,7 @@ namespace code {
 
 		while (true) {
 			{
-				::Lock::L z(lock);
+				util::Lock::L z(lock);
 				next = ready.pop();
 			}
 
@@ -332,7 +332,7 @@ namespace code {
 	}
 
 	void UThreadState::wake(UThreadData *data) {
-		::Lock::L z(lock);
+		util::Lock::L z(lock);
 		ready.push(data);
 	}
 

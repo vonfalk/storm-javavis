@@ -260,7 +260,7 @@ namespace code {
 
 		// Lock for the 'ready' list. The 'exit' list is not protected,
 		// since it is only ever accessed from the OS thread owning this state.
-		::Lock lock;
+		util::Lock lock;
 
 		// Ready threads. May be scheduled now.
 		InlineList<UThreadData> ready;

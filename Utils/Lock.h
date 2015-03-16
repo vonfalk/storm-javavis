@@ -1,30 +1,32 @@
 #pragma once
 
+namespace util {
 /**
  * A simple lock.
  */
-class Lock : NoCopy {
-public:
-	// Create.
-	Lock();
-
-	// Destroy.
-	~Lock();
-
-	// Lock the lock, and make sure it is automatically unlocked at the end of the scope.
-	class L {
+	class Lock : NoCopy {
 	public:
-		L(Lock &l);
-		L(Lock *l);
-		~L();
+		// Create.
+		Lock();
+
+		// Destroy.
+		~Lock();
+
+		// Lock the lock, and make sure it is automatically unlocked at the end of the scope.
+		class L {
+		public:
+			L(Lock &l);
+			L(Lock *l);
+			~L();
+		private:
+			L(const L &);
+			L &operator =(const L &);
+
+			Lock *l;
+		};
+
 	private:
-		L(const L &);
-		L &operator =(const L &);
-
-		Lock *l;
+		// Underlying implementation.
+		CRITICAL_SECTION cs;
 	};
-
-private:
-	// Underlying implementation.
-	CRITICAL_SECTION cs;
-};
+}

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SrcPos.h"
 
+#include "Code/Sync.h"
 #include "Utils/TextFile.h"
 #include "Utils/FileStream.h"
 

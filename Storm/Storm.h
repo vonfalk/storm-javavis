@@ -52,12 +52,19 @@ private:
 #define DEFINE_STORM_THREAD(name)				\
 	storm::DeclThread name
 
+namespace code {
+	class Lock;
+	class Sema;
+}
+
 namespace storm {
 	class Engine;
 	class Thread;
 
 	using code::Size;
 	using code::Offset;
+	using code::Lock;
+	using code::Sema;
 
 	/**
 	 * Class used when declaring named threads from C++.

@@ -75,7 +75,6 @@ Int postVal() {
 
 ThreadVal otherValFn(ThreadVal v) on Other {
 	v.v = otherObjectFn(v.v);
-	print("In other function!");
 	v.z.set(20);
 	v;
 }

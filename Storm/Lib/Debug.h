@@ -1,6 +1,7 @@
 #pragma once
 #include "Object.h"
 #include "Int.h"
+#include "Code/Sync.h"
 
 namespace storm {
 	STORM_PKG(core.debug);
@@ -102,6 +103,9 @@ namespace storm {
 		// Current live instances.
 		typedef std::set<const DbgVal*> LiveSet;
 		static LiveSet live;
+
+		// Lock for the live set.
+		static Lock liveLock;
 	};
 
 	wostream &operator <<(wostream &to, const DbgVal &v);

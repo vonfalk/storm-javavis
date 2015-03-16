@@ -4,6 +4,9 @@
 
 namespace code {
 
+	class UThread;
+	class UThreadData;
+
 	/**
 	 * Synchronization primitives aware of UThreads.
 	 */
@@ -34,7 +37,7 @@ namespace code {
 		InlineList<UThreadData> waiting;
 
 		// Lock the semaphore implementation.
-		::Lock lock;
+		util::Lock lock;
 	};
 
 

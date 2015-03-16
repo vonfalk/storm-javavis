@@ -10,7 +10,7 @@ ReadWrite::~ReadWrite() {
 //Reader
 
 ReadWrite::Reader::Reader(const ReadWrite &rw) : rw(rw) {
-	Lock::L l(rw.readersLock);
+	util::Lock::L l(rw.readersLock);
 	if (rw.readers++ == 0) {
 		//First reader. Wait for writers
 		rw.writers.down();
@@ -18,7 +18,7 @@ ReadWrite::Reader::Reader(const ReadWrite &rw) : rw(rw) {
 }
 
 ReadWrite::Reader::~Reader() {
-	Lock::L l(rw.readersLock);
+	util::Lock::L l(rw.readersLock);
 	if (--rw.readers == 0) {
 		//Last reader. Allow writers.
 		rw.writers.up();

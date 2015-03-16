@@ -32,7 +32,7 @@ public:
 	};
 private:
 	mutable nat readers;
-	mutable Lock readersLock;
+	mutable util::Lock readersLock;
 	mutable Semaphore writers;
 };
 

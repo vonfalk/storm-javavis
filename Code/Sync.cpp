@@ -10,7 +10,7 @@ namespace code {
 	Sema::~Sema() {}
 
 	void Sema::up() {
-		::Lock::L z(lock);
+		util::Lock::L z(lock);
 
 		UThreadData *data = waiting.pop();
 		if (!data) {
@@ -30,7 +30,7 @@ namespace code {
 		UThreadState *state = null;
 
 		{
-			::Lock::L z(lock);
+			util::Lock::L z(lock);
 			if (count > 0) {
 				count--;
 				return;

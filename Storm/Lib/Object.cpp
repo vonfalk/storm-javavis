@@ -3,6 +3,7 @@
 #include "Type.h"
 #include "Function.h"
 #include "Lib/Str.h"
+#include "Code/Sync.h"
 
 #ifdef DEBUG
 
@@ -19,8 +20,11 @@ namespace storm {
 
 #ifdef DEBUG_LEAKS
 	map<Object *, String> live;
+	Lock liveLock;
 
 	void Object::dumpLeaks() {
+		Lock::L z(liveLock);
+
 		if (live.size() > 0)
 			PLN(L"Leaks detected!");
 		for (map<Object *, String>::iterator i = live.begin(); i != live.end(); i++) {
@@ -50,6 +54,7 @@ namespace storm {
 #endif
 
 #ifdef DEBUG_LEAKS
+		Lock::L z(liveLock);
 		if (o->myType == o) {
 			live.insert(make_pair(o, L"Type"));
 		} else {
@@ -79,6 +84,7 @@ namespace storm {
 #endif
 
 #ifdef DEBUG_LEAKS
+		Lock::L z(liveLock);
 		if (live.count(this) == 0) {
 			PLN("Found a double-free!");
 		}
@@ -88,6 +94,7 @@ namespace storm {
 
 	void checkLive(void *o) {
 #ifdef DEBUG_LEAKS
+		Lock::L z(liveLock);
 		if (live.count((Object *)o) == 0) {
 			PLN("Access to dead object: " << o);
 			DebugBreak();

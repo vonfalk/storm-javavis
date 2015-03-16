@@ -210,24 +210,35 @@ namespace storm {
 
 	DbgVal::LiveSet DbgVal::live;
 
-	void DbgVal::dbg_dump() {
-		for (LiveSet::iterator i = live.begin(); i != live.end(); ++i) {
+	Lock DbgVal::liveLock;
+
+	static void dbg_dumpNolock() {
+		for (DbgVal::LiveSet::iterator i = DbgVal::live.begin(); i != DbgVal::live.end(); ++i) {
 			PLN(L"Live DbgVal at " << *i);
 		}
 	}
 
+	void DbgVal::dbg_dump() {
+		Lock::L z(liveLock);
+		dbg_dumpNolock();
+	}
+
 	bool DbgVal::clear() {
+		Lock::L z(liveLock);
+
 		if (live.empty())
 			return true;
 
-		dbg_dump();
+		dbg_dumpNolock();
 		return false;
 	}
 
 	static void created(DbgVal *v) {
+		Lock::L z(DbgVal::liveLock);
+
 		if (DbgVal::live.count(v) != 0) {
 			PLN("Trying to re-create a live instance at " << v);
-			DbgVal::dbg_dump();
+			dbg_dumpNolock();
 			assert(false);
 		}
 		DbgVal::live.insert(v);
@@ -246,14 +257,16 @@ namespace storm {
 	}
 
 	DbgVal &DbgVal::operator =(const DbgVal &o) {
+		Lock::L z(liveLock);
+
 		if (live.count(this) == 0) {
 			PLN("Trying to assign to a dead object at " << this);
-			dbg_dump();
+			dbg_dumpNolock();
 			assert(false);
 		}
 		if (live.count(&o) == 0) {
 			PLN("Trying to copy from a dead object at " << &o);
-			dbg_dump();
+			dbg_dumpNolock();
 			assert(false);
 		}
 		v = o.v;
@@ -261,27 +274,33 @@ namespace storm {
 	}
 
 	DbgVal::~DbgVal() {
+		Lock::L z(liveLock);
+
 		if (live.count(this) == 0) {
 			PLN("Trying to destroy a non-live object at " << this);
-			dbg_dump();
+			dbg_dumpNolock();
 			assert(false);
 		}
 		live.erase(this);
 	}
 
 	void DbgVal::set(Int v) {
+		Lock::L z(liveLock);
+
 		if (live.count(this) == 0) {
 			PLN("Trying to write to a dead object at " << this);
-			dbg_dump();
+			dbg_dumpNolock();
 			assert(false);
 		}
 		this->v = v;
 	}
 
 	Int DbgVal::get() const {
+		Lock::L z(liveLock);
+
 		if (live.count(this) == 0) {
 			PLN("Trying to read from a dead object at " << this);
-			dbg_dump();
+			dbg_dumpNolock();
 			assert(false);
 		}
 		return v;
