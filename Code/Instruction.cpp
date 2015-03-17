@@ -263,12 +263,12 @@ namespace code {
 		return create(op::epilog);
 	}
 
-	Instruction begin(Block block) {
+	Instruction begin(Part block) {
 		return createLoose(op::beginBlock, Value(), destNone, block);
 	}
 
 	Instruction end(Block block) {
-		return createLoose(op::endBlock, Value(), destNone, block);
+		return createLoose(op::endBlock, Value(), destNone, Part(block));
 	}
 
 	Instruction threadLocal() {

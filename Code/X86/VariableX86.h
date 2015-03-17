@@ -21,7 +21,7 @@ namespace code {
 			inline nat maxSize() const { return maxSz; }
 
 			// Get a pointer to the hidden variable containing the current active block.
-			Value blockId() const;
+			Value partId() const;
 
 			// Get a pointer to the hidden variable containing the owning block object.
 			Value blockPtr() const;

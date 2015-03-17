@@ -107,7 +107,7 @@ namespace code {
 			return xRel(v.size(), ptrFrame, Offset(offset(v) + off));
 		}
 
-		Value Offsets::blockId() const {
+		Value Offsets::partId() const {
 			return intRel(ptrFrame, Offset(-4));
 		}
 

@@ -42,6 +42,9 @@ namespace code {
 		// Arena
 		Arena &arena;
 
+		// Dump handlers.
+		void dbg_dump();
+
 	private:
 		// Title.
 		String title;
@@ -65,8 +68,8 @@ namespace code {
 			Size size;
 		};
 
-		// Store information about a single scope.
-		struct Block {
+		// Store information about a single part. Note that this looks like a tree!
+		struct Part {
 			// Parent scope if any, otherwise == this block id.
 			nat parent;
 
@@ -77,17 +80,17 @@ namespace code {
 			Var variable[1];
 
 			// Create a block.
-			static Block *create(const Frame &frame, const code::Block &b);
+			static Part *create(const Frame &frame, const code::Part &b);
 		};
 
-		// All blocks in this code. The backend keeps track of which is the currently active block.
-		vector<Block *> blocks;
+		// All parts in this code. The backend keeps track of which is the currently active part.
+		vector<Part *> parts;
 
 		// Update the contents of this binary.
 		void set(const Listing &listing);
 
 		void updateReferences(void *addr, const Output &from);
-		void updateBlocks(const Frame &from);
+		void updateParts(const Frame &from);
 
 		// Destroy a single variable.
 		void destroyVariable(const machine::StackFrame &frame, Var var) const;

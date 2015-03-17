@@ -66,7 +66,7 @@ namespace code {
 		};
 
 		// Get the active block in the call frame.
-		nat activeBlock(const StackFrame &frame, const FnMeta *data);
+		nat activePart(const StackFrame &frame, const FnMeta *data);
 
 		// Get the parent stack frame.
 		StackFrame parentFrame(const StackFrame &frame, const FnMeta *data);

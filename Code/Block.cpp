@@ -14,4 +14,10 @@ namespace code {
 	Block::Block(nat id) : id(id) {}
 
 	const Block Block::invalid;
+
+	Part::Part() : id(-1) {}
+
+	Part::Part(nat id) : id(id) {}
+
+	const Part Part::invalid;
 }

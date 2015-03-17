@@ -80,8 +80,8 @@ namespace code {
 		bool TfmParams::lookupVar(Value &v) const {
 			if (v.type() == Value::tVariable) {
 				Variable var = v.variable();
-				if (!from.frame.accessible(currentBlock, var))
-					throw VariableUseError(var, currentBlock);
+				if (!from.frame.accessible(currentPart, var))
+					throw VariableUseError(var, currentPart);
 
 				v = vars.variable(var, v.offset().current());
 				return true;
@@ -138,35 +138,38 @@ namespace code {
 			}
 		}
 
-		static void initBlock(Listing &to, TfmParams &params, Block b) {
+		static void initBlock(Listing &to, TfmParams &params, Part p) {
 			const code::Frame &frame = to.frame;
 
-			if (params.currentBlock != frame.parent(b)) {
-				throw BlockBeginError(L"Can not begin " + toS(Value(b)) + L" unless the current block is "
-									+ toS(Value(frame.parent(b))) + L". We are now in "
-									+ toS(Value(params.currentBlock)));
+			if (params.currentPart != frame.prev(p)) {
+				throw BlockBeginError(L"Can not begin " + toS(Value(p)) + L" unless the current is "
+									+ toS(Value(frame.prev(p))) + L". We are now in "
+									+ toS(Value(params.currentPart)));
 			}
 
 
-			params.currentBlock = b;
+			params.currentPart = p;
 
-			// Initialize variables to zero...
-			vector<Variable> vars = frame.variables(b);
-			for (nat i = 0; i < vars.size(); i++) {
-				Variable var = vars[i];
+			Block b = frame.asBlock(p);
+			if (b != Block::invalid) {
+				// Initialize variables to zero, the entire block!
+				vector<Variable> vars = frame.variables(p);
+				for (nat i = 0; i < vars.size(); i++) {
+					Variable var = vars[i];
 
-				if (!frame.isParam(var)) {
-					zeroMem(to, params.lookup(var, 0), var.size().current());
+					if (!frame.isParam(var)) {
+						zeroMem(to, params.lookup(var, 0), var.size().current());
+					}
 				}
 			}
 
-			to << code::mov(params.vars.blockId(), natConst(b.getId()));
+			to << code::mov(params.vars.partId(), natConst(p.getId()));
 		}
 
-		static void destroyBlock(Listing &to, TfmParams &params, Block b, bool preserveEax) {
+		static void destroyBlock(Listing &to, TfmParams &params, Part p, bool preserveEax) {
 			const code::Frame &frame = to.frame;
 
-			if (params.currentBlock != b) {
+			if (params.currentPart != p) {
 				assert(false);
 				throw BlockEndError();
 			}
@@ -175,7 +178,7 @@ namespace code {
 			bool pushedEdx = false;
 
 			// Call destructor on relevant elements...
-			vector<Variable> vars = frame.variables(b);
+			vector<Variable> vars = frame.variables(p);
 			for (nat i = 0; i < vars.size(); i++) {
 				Variable var = vars[i];
 
@@ -221,9 +224,9 @@ namespace code {
 			if (pushedEax)
 				to << code::pop(eax);
 
-			Block parent = frame.parent(b);
-			params.currentBlock = parent;
-			to << code::mov(params.vars.blockId(), natConst(parent.getId()));
+			Part prev = frame.prev(p);
+			params.currentPart = prev;
+			to << code::mov(params.vars.partId(), natConst(prev.getId()));
 		}
 
 		void fnParamTfm(Listing &to, TfmParams &params, const Instruction &instr) {
@@ -320,9 +323,9 @@ namespace code {
 
 		void epilogTfm(Listing &to, TfmParams &params, const Instruction &instr) {
 			// Destroy blocks, keep the state in "params", we may return early!
-			Block currentBlock = params.currentBlock;
+			Part currentPart = params.currentPart;
 
-			for (Block c = currentBlock; c != Block::invalid; c = to.frame.parent(c)) {
+			for (Part c = currentPart; c != Block::invalid; c = to.frame.prev(c)) {
 				destroyBlock(to, params, c, true);
 			}
 
@@ -334,7 +337,7 @@ namespace code {
 			}
 
 			// Restore
-			params.currentBlock = currentBlock;
+			params.currentPart = currentPart;
 
 			if (to.frame.exceptionHandlerNeeded()) {
 				// Remove the SEH handler.
@@ -351,11 +354,11 @@ namespace code {
 		}
 
 		void beginBlockTfm(Listing &to, TfmParams &params, const Instruction &instr) {
-			initBlock(to, params, instr.src().block());
+			initBlock(to, params, instr.src().part());
 		}
 
 		void endBlockTfm(Listing &to, TfmParams &params, const Instruction &instr) {
-			destroyBlock(to, params, instr.src().block(), false);
+			destroyBlock(to, params, instr.src().part(), false);
 		}
 
 	}

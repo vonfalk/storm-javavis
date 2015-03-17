@@ -115,7 +115,7 @@ namespace code {
 	// Scope management. A scope is assumed to be open on all instructions between "begin(scope)" and "end(scope)".
 	// Do not, for example, have all begin/end scopes in the end of the listing and jump forth and back between them.
 	// That makes the exception handling fail to detect what to destroy. NOTE: Does not preserve registers!
-	Instruction begin(Block block);
+	Instruction begin(Part block);
 	Instruction end(Block block);
 
 	// Segment override for the next instruction, not reliable for function calls or double memory accesses. Only

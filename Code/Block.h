@@ -3,9 +3,11 @@
 
 namespace code {
 
-	// Represents a variable in a block. This has information about
-	// its size and its current stack offset. The offset from the stack
-	// is not static among modifications to any blocks in the listing.
+	/**
+	 * Represents a variable in a block. This has information about
+	 * its size and its current stack offset. The offset from the stack
+	 * is not static among modifications to any blocks in the listing.
+	 */
 	class Variable {
 		friend class Frame;
 		friend class Value;
@@ -34,14 +36,17 @@ namespace code {
 		Size sz;
 	};
 
-	// Represents a block of code in a listing. These blocks contain a set of
-	// local variables, along with parent-child relations. This information is
-	// available in the final Binary-object as well. The binary object will then
-	// provide information of the current active block(s) in relation to an
-	// execution point in the program.
+	/**
+	 * Represents a block of code in a listing. These blocks contain a set of
+	 * local variables, along with parent-child relations. This information is
+	 * available in the final Binary-object as well. The binary object will then
+	 * provide information of the current active block(s) in relation to an
+	 * execution point in the program.
+	 */
 	class Block {
 		friend class Frame;
 		friend class Value;
+		friend class Part;
 	public:
 		// Initialize to nothing.
 		Block();
@@ -62,5 +67,35 @@ namespace code {
 		nat id;
 	};
 
+
+	/**
+	 * Represents a part of a block, these parts are a simple way of telling the runtime
+	 * when to enable certain error handlers on variables in the block.
+	 */
+	class Part {
+		friend class Frame;
+		friend class Value;
+	public:
+		// Initialize to nothing.
+		Part();
+
+		// Block ids are also part ids.
+		inline Part(const Block &o) : id(o.id) {}
+
+		static const Part invalid;
+
+		// Get the part's ID, mainly for backends.
+		inline nat getId() const { return id; }
+
+		// No public interface, everything is handled by the owning Listing object.
+
+		inline bool operator ==(const Part &o) const { return id == o.id; }
+		inline bool operator !=(const Part &o) const { return id != o.id; }
+	private:
+		Part(nat id);
+
+		// Unique identified, provided by the listing.
+		nat id;
+	};
 
 }

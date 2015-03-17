@@ -34,7 +34,7 @@ namespace code {
 			code::Binary *owner;
 
 			// The topmost active scope.
-			nat activeBlock;
+			nat activePart;
 
 			// Current EBP points to this!
 			void *lastEbp;
@@ -68,8 +68,8 @@ namespace code {
 
 	namespace machine {
 
-		nat activeBlock(const StackFrame &frame, const FnMeta *data) {
-			return frame->activeBlock;
+		nat activePart(const StackFrame &frame, const FnMeta *data) {
+			return frame->activePart;
 		}
 
 		// Get the parent stack frame.

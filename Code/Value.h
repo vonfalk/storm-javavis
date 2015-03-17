@@ -32,8 +32,8 @@ namespace code {
 			tLabel,
 			// reference()
 			tReference,
-			// block()
-			tBlock,
+			// part()
+			tPart,
 			// variable(), offset() (read at [&variable() + offset()])
 			tVariable,
 			// condFlag()
@@ -50,7 +50,7 @@ namespace code {
 		Value(Label lbl);
 		Value(const Ref &ref);
 		Value(const RefSource &ref);
-		Value(Block block);
+		Value(Part part);
 		Value(Variable variable);
 		Value(CondFlag condFlag);
 
@@ -78,7 +78,7 @@ namespace code {
 		Register reg() const; // "register" is a reserved word...
 		Label label() const;
 		Ref reference() const;
-		Block block() const;
+		Part part() const;
 		Variable variable() const;
 		CondFlag condFlag() const;
 		Offset offset() const;
@@ -110,8 +110,8 @@ namespace code {
 			Register iRegister;
 			// label id
 			nat labelId;
-			// block id
-			nat blockId;
+			// part id
+			nat partId;
 			// variable id
 			nat variableId;
 			// conditional flag

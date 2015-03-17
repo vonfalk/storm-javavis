@@ -24,9 +24,10 @@ namespace code {
 		return String(first) + L", " + String(second);
 	}
 
-	Frame::Frame() : nextBlockId(1), nextVariableId(0), anyDestructors(false) {
+	Frame::Frame() : nextPartId(1), nextVariableId(0), anyDestructors(false) {
 		// Create the root block as ID 0.
-		blocks.insert(std::make_pair(0, InternalBlock()));
+		blocks.insert(make_pair(0, InternalBlock()));
+		parts.insert(make_pair(0, InternalPart(0)));
 	}
 
 	void Frame::output(wostream &to) const {
@@ -34,26 +35,31 @@ namespace code {
 	}
 
 	void Frame::outputBlock(wostream &to, Block block) const {
-		to << endl << Value(block) << L":";
+		to << endl << "Block" << block.id << L":";
 
 		Indent indent(to);
-		vector<Block> c = children(block);
-		vector<Variable> v = variables(block);
 
-		for (nat i = 0; i < v.size(); i++) {
-			to << endl << Value(v[i]);
-			Value free = freeFn(v[i]);
-			if (free != Value())
-				to << L" (free: " << free << L", " << name(freeOpt(v[i])) << L")";
-			if (isParam(v[i]))
-				to << L" (param)";
+		for (Part p = block; p != Part::invalid; p = next(p)) {
+			if (asBlock(p) == Block::invalid)
+				to << endl << Value(p) << L":";
+
+			vector<Block> c = children(p);
+			vector<Variable> v = variables(p);
+			for (nat i = 0; i < v.size(); i++) {
+				to << endl << Value(v[i]);
+				Value free = freeFn(v[i]);
+				if (free != Value())
+					to << L" (free: " << free << L", " << name(freeOpt(v[i])) << L")";
+				if (isParam(v[i]))
+					to << L" (param)";
+			}
+
+			for (nat i = 0; i < c.size(); i++)
+				outputBlock(to, c[i]);
+
+			if (v.size() + c.size() == 0)
+				to << endl << "(empty)";
 		}
-
-		for (nat i = 0; i < c.size(); i++)
-			outputBlock(to, c[i]);
-
-		if (v.size() + c.size() == 0)
-			to << endl << "(empty)";
 	}
 
 	bool Frame::exceptionHandlerNeeded() const {
@@ -65,14 +71,22 @@ namespace code {
 	}
 
 	vector<Block> Frame::allBlocks() const {
-		vector<Block> r(nextBlockId);
-		for (nat i = 0; i < nextBlockId; i++) {
-			r[i] = Block(i);
+		vector<Block> r;
+		r.reserve(blocks.size());
+		for (BlockMap::const_iterator i = blocks.begin(), end = blocks.end(); i != end; ++i) {
+			r.push_back(Block(i->first));
 		}
 		return r;
 	}
 
-	vector<Block> Frame::children(Block b) const {
+	vector<Part> Frame::allParts() const {
+		vector<Part> r(nextPartId);
+		for (nat i = 0; i < nextPartId; i++)
+			r[i] = Part(i);
+		return r;
+	}
+
+	vector<Block> Frame::children(Part b) const {
 		vector<Block> r;
 		for (BlockMap::const_iterator i = blocks.begin(); i != blocks.end(); ++i) {
 			if (i->second.parent == b.id)
@@ -89,6 +103,26 @@ namespace code {
 		return r;
 	}
 
+	Part Frame::prev(Part p) const {
+		if (p == Part::invalid)
+			return p;
+
+		Block b = asBlock(p);
+		if (b != Block::invalid)
+			return parent(b);
+		return Part(parts.find(p.id)->second.prev);
+	}
+
+	Part Frame::prevStored(Part p) const {
+		if (p == Part::invalid)
+			return p;
+
+		Block b = asBlock(p);
+		if (b != Block::invalid)
+			return last(parent(b));
+		return prev(p);
+	}
+
 	Variable Frame::prev(Variable v) const {
 		if (isParam(v)) {
 			ParamMap::const_iterator i = parameters.find(v.id);
@@ -99,24 +133,24 @@ namespace code {
 			const Param &p = i->second;
 			return Variable(i->first, p.size);
 		} else {
-			Block p = parent(v);
-			const InternalBlock &b = blocks.find(p.id)->second;
+			Part z = parent(v);
+			const InternalPart &p = parts.find(z.id)->second;
 
-			vector<nat>::const_iterator pos = std::find(b.variables.begin(), b.variables.end(), v.id);
+			vector<nat>::const_iterator pos = std::find(p.variables.begin(), p.variables.end(), v.id);
 			nat id = Variable::invalid.id;
 
-			if (pos == b.variables.begin()) {
+			if (pos == p.variables.begin()) {
 				// Find a new variable in any parent blocks!
-
 				while (id == Variable::invalid.id) {
-					p = parent(p);
-					if (p == Block::invalid)
+					// ...
+					z = prevStored(z);
+					if (z == Block::invalid)
 						return Variable::invalid;
 
-					const InternalBlock &parent = blocks.find(p.id)->second;
-					nat numVars = parent.variables.size();
+					const InternalPart &prev = parts.find(z.id)->second;
+					nat numVars = prev.variables.size();
 					if (numVars > 0)
-						id = parent.variables[numVars - 1];
+						id = prev.variables[numVars - 1];
 				}
 			} else {
 				--pos;
@@ -133,68 +167,110 @@ namespace code {
 		return parameters.count(v.id) == 1;
 	}
 
-	Block Frame::parent(Variable v) const {
+	Part Frame::parent(Variable v) const {
 		if (parameters.count(v.id) == 1) {
 			return root();
 		} else if (vars.count(v.id) == 1) {
-			return Block(vars.find(v.id)->second.block);
+			return Part(vars.find(v.id)->second.part);
 		} else {
 			assert(false);
 			return root();
 		}
 	}
 
-	Block Frame::parent(Block b) const {
+	Part Frame::parent(Block b) const {
 		if (b == Block::invalid)
 			throw FrameError();
 
-		return Block(blocks.find(b.id)->second.parent);
+		return Part(blocks.find(b.id)->second.parent);
 	}
 
 	bool Frame::indirectParent(Block parent, Block child) const {
-		for (Block c = child; c != Block::invalid; c = this->parent(c)) {
+		for (Block c = child; c != Block::invalid; c = first(this->parent(c))) {
 			if (c == parent)
 				return true;
 		}
 		return false;
 	}
 
-	bool Frame::accessible(Block b, Variable v) const {
-		return indirectParent(parent(v), b);
+	bool Frame::accessible(Part b, Variable v) const {
+		return indirectParent(first(parent(v)), first(b));
 	}
 
-	Block Frame::createChild(Block parent) {
-		if (parent == Block::invalid)
+	Part Frame::next(Part p) const {
+		if (p == Part::invalid)
+			return Part::invalid;
+		return Part(parts.find(p.id)->second.next);
+	}
+
+	Part Frame::last(Part p) const {
+		for (Part n = next(p); n != Part::invalid; n = next(n))
+			p = n;
+		return p;
+	}
+
+	Block Frame::first(Part p) const {
+		if (p == Part::invalid)
+			return Block::invalid;
+		return Block(parts.find(p.id)->second.block);
+	}
+
+	Block Frame::asBlock(Part p) const {
+		if (blocks.count(p.id))
+			return Block(p.id);
+		return Block::invalid;
+	}
+
+	Block Frame::createChild(Part parent) {
+		if (parent == Part::invalid)
 			throw FrameError();
+		assert(parts.count(parent.id) == 1);
 
-		assert(blocks.count(parent.id) == 1);
-		InternalBlock block;
-		block.parent = parent.id;
+		InternalBlock block(parent.id);
+		blocks.insert(make_pair(nextPartId, block));
 
-		blocks.insert(std::make_pair(nextBlockId, block));
+		InternalPart part(nextPartId);
+		parts.insert(make_pair(nextPartId, part));
 
-		return Block(nextBlockId++);
+		return Block(nextPartId++);
 	}
 
-	static void checkFree(const Value &free, FreeOpt on) {
+	Part Frame::createPart(Part before) {
+		if (before == Part::invalid)
+			throw FrameError();
+		assert(parts.count(before.id) == 1);
+
+		before = last(before);
+
+		InternalPart &b = parts.find(before.id)->second;
+		b.next = nextPartId;
+
+		InternalPart part(b.block, before.id);
+		parts.insert(make_pair(nextPartId, part));
+		return Part(nextPartId++);
+	}
+
+	static bool checkFree(const Value &free, FreeOpt on) {
 		if ((on & freePtr) != freePtr)
 			if (free.size() > Size(8))
 				throw InvalidValue(L"Can not destroy values larger than 8 bytes by value.");
-	}
-
-	Variable Frame::createVariable(Block in, Size size, Value free, FreeOpt on) {
-		if (in == Block::invalid)
-			throw FrameError();
-
-		checkFree(free, on);
 
 		if (!free.empty())
 			if (on & freeOnException)
-				anyDestructors = true;
+				return true;
+		return false;
+	}
 
-		assert(blocks.count(in.id));
-		InternalBlock &block = blocks[in.id];
-		block.variables.push_back(nextVariableId);
+	Variable Frame::createVariable(Part in, Size size, Value free, FreeOpt on) {
+		if (in == Part::invalid)
+			throw FrameError();
+		assert(parts.count(in.id));
+
+		if (checkFree(free, on))
+			anyDestructors = true;
+
+		InternalPart &part = parts.find(in.id)->second;
+		part.variables.push_back(nextVariableId);
 
 		Var v = { in.id, size, free, on };
 		vars.insert(std::make_pair(nextVariableId, v));
@@ -203,11 +279,8 @@ namespace code {
 	}
 
 	Variable Frame::createParameter(Size size, bool isFloat, Value free, FreeOpt on) {
-		checkFree(free, on);
-
-		if (!free.empty())
-			if (on & freeOnException)
-				anyDestructors = true;
+		if (checkFree(free, on))
+			anyDestructors = true;
 
 		Param p = { size, isFloat, free, on };
 		parameters.insert(std::make_pair(nextVariableId, p));
@@ -245,20 +318,35 @@ namespace code {
 		}
 	}
 
-	vector<Variable> Frame::variables(Block b) const {
-		if (b == Block::invalid)
+	vector<Variable> Frame::allVariables(Block b) const {
+		vector<Variable> r;
+
+		for (Part c = b; c != Part::invalid; c = next(c))
+			variables(c, r);
+
+		return r;
+	}
+
+	vector<Variable> Frame::variables(Part p) const {
+		vector<Variable> r;
+		variables(p, r);
+		return r;
+	}
+
+	void Frame::variables(Part p, vector<Variable> &r) const {
+		if (p == Block::invalid)
 			throw FrameError();
 
-		const InternalBlock &block = blocks.find(b.id)->second;
-		vector<Variable> r(block.variables.size());
+		const InternalPart &part = parts.find(p.id)->second;
+		r.reserve(r.size() + part.variables.size());
 
-		for (nat i = 0; i < r.size(); i++) {
-			const Var &v = vars.find(block.variables[i])->second;
-			r[i] = Variable(block.variables[i], v.size);
+		for (nat i = 0; i < part.variables.size(); i++) {
+			nat id = part.variables[i];
+			r.push_back(Variable(id, size(id)));
 		}
 
-		// Root block?
-		if (b.id == 0) {
+		// Root part?
+		if (p.id == 0) {
 			ParamMap::const_iterator at = parameters.begin(), end = parameters.end();
 			for (; at != end; ++at) {
 				nat id = at->first;
@@ -266,8 +354,6 @@ namespace code {
 				r.push_back(Variable(id, size));
 			}
 		}
-
-		return r;
 	}
 
 	nat Frame::parameterCount() const {

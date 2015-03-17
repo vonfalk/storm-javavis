@@ -25,8 +25,8 @@ namespace code {
 			};
 			vector<FnParam> fnParams;
 
-			// Current block.
-			Block currentBlock;
+			// Current part.
+			Part currentPart;
 
 			// Registers needed to be preserved for the current instruction
 			Registers preserve;

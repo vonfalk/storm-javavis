@@ -10,7 +10,7 @@ namespace code {
 			set(listing);
 		} catch (...) {
 			clear(references);
-			clear(blocks);
+			clear(parts);
 			arena.codeFree(memory);
 			throw;
 		}
@@ -18,7 +18,7 @@ namespace code {
 
 	Binary::~Binary() {
 		clear(references);
-		clear(blocks);
+		clear(parts);
 		arena.codeFree(memory);
 	}
 
@@ -26,14 +26,14 @@ namespace code {
 		ref.set(memory, size);
 	}
 
-	Binary::Block *Binary::Block::create(const Frame &frame, const code::Block &b) {
-		vector<Variable> vars = frame.variables(b);
+	Binary::Part *Binary::Part::create(const Frame &frame, const code::Part &p) {
+		vector<Variable> vars = frame.variables(p);
 
-		nat size = sizeof(Block) + sizeof(Var)*(vars.size() - 1);
-		Block *c = (Block *)::operator new (size);
-		// Block *c = (Block *)new byte[size];
+		nat size = sizeof(Part) + sizeof(Var)*(vars.size() - 1);
+		Part *c = (Part *)::operator new (size);
+		// Part *c = (Part *)new byte[size];
 
-		c->parent = frame.parent(b).getId();
+		c->parent = frame.prev(p).getId();
 		c->variables = vars.size();
 
 		for (nat i = 0; i < vars.size(); i++) {
@@ -63,18 +63,32 @@ namespace code {
 		clear(references);
 	}
 
-	void Binary::updateBlocks(const Frame &from) {
-		vector<code::Block> blocks = from.allBlocks();
-		vector<Block *> r(blocks.size());
+	void Binary::updateParts(const Frame &from) {
+		vector<code::Part> parts = from.allParts();
+		vector<Part *> r(parts.size());
 
-		for (nat i = 0; i < blocks.size(); i++) {
-			code::Block b = blocks[i];
-
-			r[i] = Block::create(from, b);
+		for (nat i = 0; i < parts.size(); i++) {
+			code::Part p = parts[i];
+			r[i] = Part::create(from, p);
 		}
 
-		std::swap(r, this->blocks);
+		std::swap(r, this->parts);
 		clear(r);
+	}
+
+	void Binary::dbg_dump() {
+		wostream &to = std::wcout;
+
+		for (nat i = 0; i < parts.size(); i++) {
+			to << L"Part " << i << L":" << endl;
+			Part *p = parts[i];
+			to << L"parent=" << p->parent << endl;
+
+			Indent z(to);
+			for (nat i = 0; i < p->variables; i++) {
+				to << L"variable" << i << L"=" << p->variable[i].id << L", " << p->variable[i].size << endl;
+			}
+		}
 	}
 
 	void Binary::set(const Listing &listing) {
@@ -97,7 +111,7 @@ namespace code {
 
 			// Update our list of references
 			updateReferences(memory, memOutput);
-			updateBlocks(transformed.frame);
+			updateParts(transformed.frame);
 			metadata = (machine::FnMeta *)memOutput.lookup(transformed.metadata());
 		} catch (...) {
 			arena.codeFree(memory);
@@ -114,17 +128,17 @@ namespace code {
 	}
 
 	void Binary::destroyFrame(const machine::StackFrame &frame) const {
-		nat block = machine::activeBlock(frame, metadata);
-		assert(block < blocks.size(), "Invalid block id");
+		nat part = machine::activePart(frame, metadata);
+		assert(part < parts.size(), "Invalid block id");
 
-		while (block < blocks.size()) {
-			Block *b = blocks[block];
+		while (part < parts.size()) {
+			Part *b = parts[part];
 
 			for (nat i = 0; i < b->variables; i++) {
 				destroyVariable(frame, b->variable[i]);
 			}
 
-			block = b->parent;
+			part = b->parent;
 		}
 	}
 

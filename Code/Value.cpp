@@ -20,9 +20,9 @@ namespace code {
 	Value::Value(const RefSource &ref) : valType(tReference), iReference(ref), valSize(Size::sPtr), iOffset(0) {}
 
 	// The size of a block value is zero, since it is an abstract entity.
-	Value::Value(Block b) : valType(tBlock), blockId(b.id), valSize(0), iOffset(0) {}
+	Value::Value(Part p) : valType(tPart), partId(p.id), valSize(0), iOffset(0) {}
 
-	Value::Value(Variable v) : valType(tVariable), blockId(v.id), valSize(v.size()), iOffset(0) {
+	Value::Value(Variable v) : valType(tVariable), variableId(v.id), valSize(v.size()), iOffset(0) {
 		assert(v != Variable::invalid);
 	}
 
@@ -67,7 +67,7 @@ namespace code {
 	}
 
 	bool Value::readable() const {
-		return valType != tNone && valType != tBlock;
+		return valType != tNone && valType != tPart;
 	}
 
 	bool Value::writable() const {
@@ -104,8 +104,8 @@ namespace code {
 			return labelId == o.labelId;
 		case tReference:
 			return iReference == o.iReference;
-		case tBlock:
-			return blockId == o.blockId;
+		case tPart:
+			return partId == o.partId;
 		case tVariable:
 			return variableId == o.variableId && iOffset == o.iOffset;
 		case tRelative:
@@ -181,8 +181,8 @@ namespace code {
 			to << L"@" << iReference.targetName();
 			to << L" (" << toHex(iReference.address(), true) << L")";
 			break;
-		case tBlock:
-			to << L"Block" << blockId;
+		case tPart:
+			to << L"Part" << partId;
 			break;
 		case tVariable:
 			if (iOffset != Offset())
@@ -229,9 +229,9 @@ namespace code {
 		return iReference;
 	}
 
-	Block Value::block() const {
-		assert(valType == tBlock);
-		return Block(blockId);
+	Part Value::part() const {
+		assert(valType == tPart);
+		return Part(partId);
 	}
 
 	CondFlag Value::condFlag() const {

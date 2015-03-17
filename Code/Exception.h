@@ -28,7 +28,7 @@ namespace code {
 
 	class FrameError : public Exception {
 	public:
-		String what() const { return L"Trying to use an invalid variable or block."; }
+		String what() const { return L"Trying to use an invalid frame, part or variable."; }
 	};
 
 	class DuplicateLabelError : public Exception {
@@ -51,10 +51,10 @@ namespace code {
 
 	class VariableUseError : public Exception {
 	public:
-		VariableUseError(Variable v, Block b) : var(v), block(b) {}
+		VariableUseError(Variable v, Part p) : var(v), part(p) {}
 
 		Variable var;
-		Block block;
+		Part part;
 
 		String what() const;
 	};

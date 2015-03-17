@@ -5,7 +5,7 @@
 namespace code {
 
 	String VariableUseError::what() const {
-		return L"The variable #" + toS(Value(var)) + L" is not availiable in block" + toS(Value(block));
+		return L"The variable " + toS(Value(var)) + L" is not availiable in " + toS(Value(part));
 	}
 
 }
