@@ -17,6 +17,7 @@ struct BasicTypeInfo {
 		signedNr, // int, int64...
 		unsignedNr, // nat, nat64...
 		floatNr, // float, double
+		boolVal, // bool
 		ptr, // pointer or reference
 		user, // user defined type
 	};
@@ -58,8 +59,9 @@ struct TypeInfo {
 	enum Kind {
 		nothing = 0, // ie void
 		signedNr, // ie int, int64 ...
-		unsignedNr, // ie nat, nat64 ...
+		unsignedNr, // ie nat, nat64 ... also bool
 		floatNr, // float, double ...
+		boolVal, // bool
 		user, // user defined type
 	};
 
@@ -201,6 +203,11 @@ struct KindOf<unsigned short> {
 template <>
 struct KindOf<byte> {
 	enum { v = TypeInfo::unsignedNr };
+};
+
+template <>
+struct KindOf<bool> {
+	enum { v = TypeInfo::boolVal };
 };
 
 template <>

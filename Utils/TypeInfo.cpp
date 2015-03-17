@@ -18,6 +18,9 @@ TypeInfo::operator BasicTypeInfo() {
 		case floatNr:
 			k = BasicTypeInfo::floatNr;
 			break;
+		case boolVal:
+			k = BasicTypeInfo::boolVal;
+			break;
 		case user:
 		default:
 			k = BasicTypeInfo::user;
@@ -37,6 +40,8 @@ wostream &operator <<(wostream &to, BasicTypeInfo::Kind k) {
 		return to << L"unsigned";
 	case BasicTypeInfo::floatNr:
 		return to << L"float";
+	case BasicTypeInfo::boolVal:
+		return to << L"bool";
 	case BasicTypeInfo::user:
 		return to << L"user";
 	default:
@@ -57,6 +62,8 @@ wostream &operator <<(wostream &to, TypeInfo::Kind k) {
 		return to << L"unsigned";
 	case TypeInfo::floatNr:
 		return to << L"float";
+	case BasicTypeInfo::boolVal:
+		return to << L"bool";
 	case TypeInfo::user:
 		return to << L"user";
 	default:
