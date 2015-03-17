@@ -344,6 +344,10 @@
 				RelativePath=".\FnCall.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Exception.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

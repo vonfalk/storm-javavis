@@ -1,4 +1,5 @@
 #pragma once
+#include "Block.h"
 #include "Utils/Exception.h"
 
 namespace code {
@@ -46,5 +47,15 @@ namespace code {
 		nat id;
 
 		String what() const { return String(L"Use of undefined label ") + toS(id) + L"."; }
+	};
+
+	class VariableUseError : public Exception {
+	public:
+		VariableUseError(Variable v, Block b) : var(v), block(b) {}
+
+		Variable var;
+		Block block;
+
+		String what() const;
 	};
 }

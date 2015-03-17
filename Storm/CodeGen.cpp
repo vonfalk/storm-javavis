@@ -58,7 +58,7 @@ namespace storm {
 
 		if (variable == Variable::invalid) {
 			if (block != Block::invalid) {
-				if (!s.frame.outlives(v, block)) {
+				if (!s.frame.accessible(block, v)) {
 					// TODO? Cases that hit here could maybe be optimized somehow!
 					// this is common with the return value, which will almost always
 					// have to get its lifetime extended a bit. Maybe implement the

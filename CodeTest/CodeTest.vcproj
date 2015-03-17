@@ -257,6 +257,14 @@
 				RelativePath=".\ExceptionTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestBool.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestParts.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

@@ -79,7 +79,11 @@ namespace code {
 
 		bool TfmParams::lookupVar(Value &v) const {
 			if (v.type() == Value::tVariable) {
-				v = vars.variable(v.variable(), v.offset().current());
+				Variable var = v.variable();
+				if (!from.frame.accessible(currentBlock, var))
+					throw VariableUseError(var, currentBlock);
+
+				v = vars.variable(var, v.offset().current());
 				return true;
 			}
 			return false;

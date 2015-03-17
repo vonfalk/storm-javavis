@@ -159,7 +159,7 @@ namespace code {
 		return false;
 	}
 
-	bool Frame::outlives(Variable v, Block b) const {
+	bool Frame::accessible(Block b, Variable v) const {
 		return indirectParent(parent(v), b);
 	}
 
