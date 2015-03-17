@@ -66,7 +66,7 @@ namespace storm {
 		void bs::Var::code(const GenState &s, GenResult &to) {
 			using namespace code;
 
-			assert(variable->var != Variable::invalid);
+			Part part = variable->initialize(s);
 
 			const Value &t = variable->result;
 
@@ -91,6 +91,9 @@ namespace storm {
 				GenResult gr(variable->result, variable->var);
 				initCtor->code(s, gr);
 			}
+
+			if (part != Part::invalid)
+				s.to << begin(part);
 
 			if (to.needed()) {
 				// Part of another expression.
@@ -124,6 +127,49 @@ namespace storm {
 
 		bs::LocalVar::LocalVar(const String &name, const Value &t, const SrcPos &pos, bool param)
 			: Named(name), result(t), pos(pos), var(code::Variable::invalid), param(param), constant(false) {}
+
+		void LocalVar::create(const GenState &state) {
+			if (param)
+				return;
+			assert(block == code::Block::invalid, L"Already created");
+			block = state.block;
+		}
+
+		code::Part LocalVar::initialize(const GenState &state) {
+			assert(var == code::Variable::invalid, L"Already initialized!");
+			assert(block != code::Block::invalid, L"Not created!");
+
+			if (result.isValue()) {
+				// In this case, we do not want to run the destructor before we have initialized
+				// the value properly! Therefore, we need to create a Part for the variable.
+				code::Part part = state.frame.createPart(block);
+				var = storm::variable(state.to, part, result);
+				return part;
+			} else {
+				var = storm::variable(state.to, block, result);
+				return code::Part::invalid;
+			}
+		}
+
+		void LocalVar::createParam(const GenState &state) {
+			using namespace code;
+
+			if (!param)
+				return;
+			assert(var == Variable::invalid, L"Already created!");
+
+			if (result.isValue()) {
+				var = state.frame.createParameter(result.size(), false, result.destructor(), freeOnBoth | freePtr);
+			} else if (constant) {
+				// Borrowed ptr.
+				var = state.frame.createParameter(result.size(), false);
+			} else {
+				var = state.frame.createParameter(result.size(), false, result.destructor());
+			}
+
+			if (result.refcounted() && !constant)
+				state.to << code::addRef(var);
+		}
 
 	}
 }

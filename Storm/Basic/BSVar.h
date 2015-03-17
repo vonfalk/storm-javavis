@@ -21,6 +21,9 @@ namespace storm {
 			// Declared at
 			SrcPos pos;
 
+			// The block we are supposed to live inside. (initialized in code generation)
+			code::Block block;
+
 			// Location (not initialized until code generation).
 			code::Variable var;
 
@@ -29,6 +32,17 @@ namespace storm {
 
 			// Constant variable? This is currently only used for the 'this' pointer.
 			bool constant;
+
+			// Create the variable.
+			void create(const GenState &state);
+
+			// Create the parameter.
+			void createParam(const GenState &state);
+
+			// Tell us to initialize the variable (variable creation is delayed until this point).
+			// Returns the 'part' you want to do 'begin' on afterwards, or 'invalid' if there is no need.
+			code::Part initialize(const GenState &state);
+
 		};
 
 		class Block;

@@ -6,16 +6,17 @@ namespace storm {
 
 	using code::Variable;
 	using code::Block;
+	using code::Part;
 	using code::Frame;
 
-	Variable variable(Frame &frame, Block block, const Value &v) {
+	Variable variable(Frame &frame, Part part, const Value &v) {
 		code::FreeOpt opt = code::freeOnBoth;
 		code::Value dtor = v.destructor();
 		if (v != Value())
 			if (v.type->flags & typeValue)
 				opt = opt | code::freePtr;
 
-		return frame.createVariable(block, v.size(), dtor, opt);
+		return frame.createVariable(part, v.size(), dtor, opt);
 	}
 
 

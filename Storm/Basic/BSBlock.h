@@ -46,6 +46,10 @@ namespace storm {
 			typedef hash_map<String, Auto<LocalVar> > VarMap;
 			VarMap variables;
 
+			// The order of variables in this block. This is important since
+			// we generate Parts in the code.
+			vector<Auto<LocalVar>> localVars;
+
 		};
 
 		/**

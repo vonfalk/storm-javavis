@@ -119,3 +119,18 @@ BEGIN_TEST(StormCtorTest) {
 	CHECK_ERROR(runFn(L"test.bs.ctorErrorTest"));
 	CHECK_ERROR(runFn(L"test.bs.memberAssignErrorTest"));
 } END_TEST
+
+BEGIN_TEST_(ErrorTest) {
+	const nat times = 7;
+
+	DbgVal::clear();
+	CHECK_RUNS(runFn(L"test.bs.basicException", 0));
+	CHECK(DbgVal::clear());
+
+	for (nat i = 0; i < times; i++) {
+		CHECK_ERROR(runFn(L"test.bs.basicException", i + 1));
+		CHECK(DbgVal::clear());
+	}
+
+	CHECK_RUNS(runFn(L"test.bs.basicException", times + 1));
+} END_TEST

@@ -14,12 +14,11 @@ namespace storm {
 	void bs::Block::code(const GenState &state, GenResult &to) {
 		using namespace code;
 
-		code::Block block = state.frame.createChild(state.block);
+		code::Block block = state.frame.createChild(state.frame.last(state.block));
+		GenState child = state.child(block);
 
-		for (VarMap::const_iterator i = variables.begin(); i != variables.end(); ++i) {
-			LocalVar *v = i->second.borrow();
-			if (!v->param)
-				v->var = storm::variable(state, v->result);
+		for (nat i = 0; i < localVars.size(); i++) {
+			localVars[i]->create(child);
 		}
 
 		blockCode(state, to, block);
@@ -41,6 +40,7 @@ namespace storm {
 		if (old != null)
 			throw TypeError(old->pos, L"The variable " + old->name + L" is already defined.");
 		variables.insert(make_pair(var->name, var));
+		localVars.push_back(var);
 	}
 
 	bs::LocalVar *bs::Block::variable(const String &name) {

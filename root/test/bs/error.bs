@@ -1,0 +1,25 @@
+use core:debug;
+
+void errorOn(Int point, Int now) {
+	if (point == now)
+		throwError;
+}
+
+// Make sure the cleanup runs properly at various points in the function.
+void basicException(Int point) {
+	errorOn(point, 1);
+	DbgVal a(5);
+	{
+		errorOn(point, 2);
+		Dbg d(20);
+		errorOn(point, 3);
+		DbgVal v(10);
+		errorOn(point, 4);
+	}
+	errorOn(point, 5);
+	{
+		DbgVal v(6);
+		errorOn(point, 6);
+	}
+	errorOn(point, 7);
+}

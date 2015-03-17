@@ -358,7 +358,21 @@ namespace code {
 		}
 
 		void endBlockTfm(Listing &to, TfmParams &params, const Instruction &instr) {
-			destroyBlock(to, params, instr.src().part(), false);
+			Part target = instr.src().part();
+			Part start = params.currentPart;
+
+			while (params.currentPart != target) {
+				if (params.currentPart == Part::invalid) {
+					PLN("Block " << Value(target) << " is not a parent of " << Value(start));
+					throw BlockEndError();
+				}
+
+				// updates 'currentPart'.
+				destroyBlock(to, params, params.currentPart, false);
+			}
+
+			// Destroy the one we notified as well.
+			destroyBlock(to, params, params.currentPart, false);
 		}
 
 	}

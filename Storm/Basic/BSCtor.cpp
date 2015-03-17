@@ -43,21 +43,14 @@ namespace storm {
 			normal->var = thisVar;
 		}
 
+		GenState state = { l, data, runOn(), l.frame, l.frame.root() };
+
 		for (nat i = 1; i < params.size(); i++) {
 			const Value &t = params[i];
 			LocalVar *var = body->variable(paramNames[i]);
 			assert(var);
-			if (t.isValue()) {
-				var->var = l.frame.createParameter(t.size(), false, t.destructor(), freeOnBoth | freePtr);
-			} else {
-				var->var = l.frame.createParameter(t.size(), false, t.destructor());
-			}
-
-			if (t.refcounted())
-				l << code::addRef(var->var);
+			var->createParam(state);
 		}
-
-		GenState state = { l, data, runOn(), l.frame, l.frame.root() };
 
 		GenResult r;
 		body->code(state, r);
