@@ -22,8 +22,8 @@ namespace storm {
 		// Current frame (generally points to to.frame).
 		code::Frame &frame;
 
-		// Current block.
-		code::Block block;
+		// Current part.
+		code::Part part;
 
 		// Create a child GenState.
 		inline GenState child(code::Block block) const {
@@ -47,7 +47,7 @@ namespace storm {
 	}
 
 	inline code::Variable variable(const GenState &s, const Value &v) {
-		return variable(s.frame, s.block, v);
+		return variable(s.frame, s.part, v);
 	}
 
 	/**
@@ -62,8 +62,8 @@ namespace storm {
 		// No result is needed.
 		GenResult();
 
-		// A result is of type 't' needed in 'block'.
-		GenResult(const Value &t, code::Block block);
+		// A result is of type 't' needed in 'part'.
+		GenResult(const Value &t, code::Part part);
 
 		// Indicate that the result should be stored in 'var'.
 		GenResult(const Value &t, code::Variable var);
@@ -89,8 +89,8 @@ namespace storm {
 		// Stored variable.
 		code::Variable variable;
 
-		// In which block?
-		code::Block block;
+		// In which part?
+		code::Part part;
 	};
 
 	// Generate code to fill in a BasicTypeInfo struct. Only touches eax register.

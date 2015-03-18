@@ -11,10 +11,10 @@ namespace storm {
 	bs::Block::Block(Par<Block> parent)
 		: lookup(CREATE(BlockLookup, engine(), this, parent->scope.top)), scope(parent->scope, lookup) {}
 
-	void bs::Block::code(const GenState &state, GenResult &to) {
+	void bs::Block::code(GenState &state, GenResult &to) {
 		using namespace code;
 
-		code::Block block = state.frame.createChild(state.frame.last(state.block));
+		code::Block block = state.frame.createChild(state.part);
 		GenState child = state.child(block);
 
 		for (nat i = 0; i < localVars.size(); i++) {
@@ -24,14 +24,14 @@ namespace storm {
 		blockCode(state, to, block);
 	}
 
-	void bs::Block::blockCode(const GenState &state, GenResult &to, const code::Block &block) {
+	void bs::Block::blockCode(GenState &state, GenResult &to, const code::Block &block) {
 		state.to << begin(block);
 		GenState subState = state.child(block);
 		blockCode(subState, to);
 		state.to << end(block);
 	}
 
-	void bs::Block::blockCode(const GenState &state, GenResult &to) {
+	void bs::Block::blockCode(GenState &state, GenResult &to) {
 		assert(false, "Implement me in a subclass!");
 	}
 
@@ -67,12 +67,12 @@ namespace storm {
 			return Value();
 	}
 
-	void bs::ExprBlock::code(const GenState &state, GenResult &to) {
+	void bs::ExprBlock::code(GenState &state, GenResult &to) {
 		if (!exprs.empty())
 			Block::code(state, to);
 	}
 
-	void bs::ExprBlock::blockCode(const GenState &state, GenResult &to) {
+	void bs::ExprBlock::blockCode(GenState &state, GenResult &to) {
 		for (nat i = 0; i < exprs.size() - 1; i++) {
 			GenResult s;
 			exprs[i]->code(state, s);

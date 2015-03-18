@@ -22,7 +22,7 @@ namespace storm {
 		return Value();
 	}
 
-	void bs::For::blockCode(const GenState &s, GenResult &to, const code::Block &block) {
+	void bs::For::blockCode(GenState &s, GenResult &to, const code::Block &block) {
 		using namespace code;
 
 		Label begin = s.to.label();

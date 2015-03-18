@@ -30,10 +30,10 @@ namespace storm {
 		}
 	}
 
-	void bs::If::blockCode(const GenState &state, GenResult &r) {
+	void bs::If::blockCode(GenState &state, GenResult &r) {
 		using namespace code;
 
-		GenResult condResult(Value::stdBool(engine()), state.block);
+		GenResult condResult(Value::stdBool(engine()), state.part);
 		condition->code(state, condResult);
 
 		Label lblElse = state.to.label();

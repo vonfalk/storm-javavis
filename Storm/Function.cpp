@@ -122,7 +122,7 @@ namespace storm {
 
 		if (v.isClass()) {
 			// Deep copy the object.
-			Variable clone = z.frame.createPtrVar(z.block, e.fnRefs.release);
+			Variable clone = z.frame.createPtrVar(z.part, e.fnRefs.release);
 			z.to << fnParam(a);
 			z.to << fnCall(stdCloneFn(e, v), Size::sPtr);
 			z.to << mov(clone, ptrA);
@@ -167,7 +167,7 @@ namespace storm {
 		using namespace code;
 
 		Engine &e = engine();
-		Block b = to.frame.createChild(to.block);
+		Block b = to.frame.createChild(to.part);
 		to.to << begin(b);
 
 		// Create a UThreadData object.

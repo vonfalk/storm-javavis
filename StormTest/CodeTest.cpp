@@ -120,7 +120,7 @@ BEGIN_TEST(StormCtorTest) {
 	CHECK_ERROR(runFn(L"test.bs.memberAssignErrorTest"));
 } END_TEST
 
-BEGIN_TEST_(ErrorTest) {
+BEGIN_TEST(ErrorTest) {
 	const nat times = 7;
 
 	DbgVal::clear();

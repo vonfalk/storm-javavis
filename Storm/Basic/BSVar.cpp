@@ -63,7 +63,7 @@ namespace storm {
 			return variable->result.asRef();
 		}
 
-		void bs::Var::code(const GenState &s, GenResult &to) {
+		void bs::Var::code(GenState &s, GenResult &to) {
 			using namespace code;
 
 			Part part = variable->initialize(s);
@@ -92,8 +92,10 @@ namespace storm {
 				initCtor->code(s, gr);
 			}
 
-			if (part != Part::invalid)
+			if (part != Part::invalid) {
 				s.to << begin(part);
+				s.part = part;
+			}
 
 			if (to.needed()) {
 				// Part of another expression.
@@ -128,14 +130,14 @@ namespace storm {
 		bs::LocalVar::LocalVar(const String &name, const Value &t, const SrcPos &pos, bool param)
 			: Named(name), result(t), pos(pos), var(code::Variable::invalid), param(param), constant(false) {}
 
-		void LocalVar::create(const GenState &state) {
+		void LocalVar::create(GenState &state) {
 			if (param)
 				return;
 			assert(block == code::Block::invalid, L"Already created");
-			block = state.block;
+			block = state.frame.first(state.part);
 		}
 
-		code::Part LocalVar::initialize(const GenState &state) {
+		code::Part LocalVar::initialize(GenState &state) {
 			assert(var == code::Variable::invalid, L"Already initialized!");
 			assert(block != code::Block::invalid, L"Not created!");
 
@@ -151,7 +153,7 @@ namespace storm {
 			}
 		}
 
-		void LocalVar::createParam(const GenState &state) {
+		void LocalVar::createParam(GenState &state) {
 			using namespace code;
 
 			if (!param)

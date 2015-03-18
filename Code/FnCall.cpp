@@ -50,6 +50,24 @@ namespace code {
 		}
 	}
 
+	static NAKED void doCall1(const void *fn, void *params, void *result) {
+		__asm {
+			// Set up the stack.
+			push ebp;
+			mov ebp, esp;
+			mov esp, params;
+			call fn;
+
+			// Restore the stack and store result.
+			mov ecx, result;
+			mov [ecx], al;
+
+			mov esp, ebp;
+			pop ebp;
+			ret;
+		}
+	}
+
 	static NAKED void doCall4(const void *fn, void *params, void *result) {
 		__asm {
 			// Set up the stack.
@@ -145,7 +163,9 @@ namespace code {
 			return &doCall0;
 		}
 
-		if (info.size <= 4)
+		if (info.size <= 1)
+			return &doCall1;
+		else if (info.size <= 4)
 			return &doCall4;
 		else if (info.size <= 8)
 			return &doCall8;

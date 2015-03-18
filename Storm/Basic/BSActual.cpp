@@ -26,7 +26,7 @@ namespace storm {
 	 * Helper to compute an actual parameter. Takes care of ref/non-ref conversions.
 	 * Returns the value into which the resulting parameter were placed.
 	 */
-	code::Value bs::Actual::code(nat id, const GenState &s, const Value &param) {
+	code::Value bs::Actual::code(nat id, GenState &s, const Value &param) {
 		using namespace code;
 
 		Expr *expr = expressions[id].borrow();
@@ -44,7 +44,7 @@ namespace storm {
 			return tmpRef;
 		} else {
 			// 'expr' will handle the type we are giving it.
-			GenResult gr(param, s.block);
+			GenResult gr(param, s.part);
 			expr->code(s, gr);
 			return gr.location(s);
 		}

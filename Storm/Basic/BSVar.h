@@ -34,14 +34,14 @@ namespace storm {
 			bool constant;
 
 			// Create the variable.
-			void create(const GenState &state);
+			void create(GenState &state);
 
 			// Create the parameter.
-			void createParam(const GenState &state);
+			void createParam(GenState &state);
 
 			// Tell us to initialize the variable (variable creation is delayed until this point).
 			// Returns the 'part' you want to do 'begin' on afterwards, or 'invalid' if there is no need.
-			code::Part initialize(const GenState &state);
+			code::Part initialize(GenState &state);
 
 		};
 
@@ -69,7 +69,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &state, GenResult &to);
+			virtual void code(GenState &state, GenResult &to);
 
 		protected:
 			virtual void output(wostream &to) const;

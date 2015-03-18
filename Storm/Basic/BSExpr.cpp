@@ -13,7 +13,7 @@ namespace storm {
 		return Value();
 	}
 
-	void bs::Expr::code(const GenState &to, GenResult &var) {
+	void bs::Expr::code(GenState &to, GenResult &var) {
 		assert(!var.needed());
 	}
 
@@ -46,7 +46,7 @@ namespace storm {
 		}
 	}
 
-	void bs::Constant::code(const GenState &s, GenResult &r) {
+	void bs::Constant::code(GenState &s, GenResult &r) {
 		using namespace code;
 
 		if (!r.needed())
@@ -65,7 +65,7 @@ namespace storm {
 		}
 	}
 
-	void bs::Constant::strCode(const GenState &s, GenResult &r) {
+	void bs::Constant::strCode(GenState &s, GenResult &r) {
 		using namespace code;
 
 		Engine &e = engine();

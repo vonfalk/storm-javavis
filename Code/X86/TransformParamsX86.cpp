@@ -152,13 +152,16 @@ namespace code {
 
 			Block b = frame.asBlock(p);
 			if (b != Block::invalid) {
-				// Initialize variables to zero, the entire block!
-				vector<Variable> vars = frame.variables(p);
-				for (nat i = 0; i < vars.size(); i++) {
-					Variable var = vars[i];
 
-					if (!frame.isParam(var)) {
-						zeroMem(to, params.lookup(var, 0), var.size().current());
+				// Initialize variables to zero, the entire block!
+				for (Part c = b; c != Part::invalid; c = frame.next(c)) {
+					vector<Variable> vars = frame.variables(c);
+					for (nat i = 0; i < vars.size(); i++) {
+						Variable var = vars[i];
+
+						if (!frame.isParam(var)) {
+							zeroMem(to, params.lookup(var, 0), var.size().current());
+						}
 					}
 				}
 			}

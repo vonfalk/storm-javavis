@@ -131,7 +131,7 @@ namespace storm {
 		initMap.insert(make_pair(name, init->params));
 	}
 
-	void bs::SuperCall::callParent(const GenState &s) {
+	void bs::SuperCall::callParent(GenState &s) {
 		Type *parent = thisPtr.type->super();
 		if (!parent)
 			return;
@@ -151,7 +151,7 @@ namespace storm {
 		ctor->localCall(s, actuals, t, false);
 	}
 
-	void bs::SuperCall::code(const GenState &s, GenResult &r) {
+	void bs::SuperCall::code(GenState &s, GenResult &r) {
 		using namespace code;
 
 		// Super class should be called first.
@@ -174,7 +174,7 @@ namespace storm {
 		}
 	}
 
-	void bs::SuperCall::initVar(const GenState &s, Par<TypeVar> v) {
+	void bs::SuperCall::initVar(GenState &s, Par<TypeVar> v) {
 		InitMap::iterator i = initMap.find(v->name);
 		if (i == initMap.end())
 			initVarDefault(s, v);
@@ -182,7 +182,7 @@ namespace storm {
 			initVar(s, v, i->second);
 	}
 
-	void bs::SuperCall::initVarDefault(const GenState &s, Par<TypeVar> v) {
+	void bs::SuperCall::initVarDefault(GenState &s, Par<TypeVar> v) {
 		using namespace code;
 
 		const Value &t = v->varType;
@@ -201,7 +201,7 @@ namespace storm {
 		}
 	}
 
-	void bs::SuperCall::initVar(const GenState &s, Par<TypeVar> v, Par<Actual> to) {
+	void bs::SuperCall::initVar(GenState &s, Par<TypeVar> v, Par<Actual> to) {
 		using namespace code;
 
 		const Value &t = v->varType;
@@ -220,7 +220,7 @@ namespace storm {
 		if (t.isClass()) {
 			// Easy way, call the constructor as normal.
 			Auto<CtorCall> call = CREATE(CtorCall, this, ctor, to);
-			GenResult created(t, s.block);
+			GenResult created(t, s.part);
 			call->code(s, created);
 			Variable loc = created.location(s);
 			s.to << mov(ptrA, dest);

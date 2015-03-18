@@ -20,7 +20,7 @@ namespace storm {
 		return Value();
 	}
 
-	void bs::While::blockCode(const GenState &s, GenResult &r, const code::Block &block) {
+	void bs::While::blockCode(GenState &s, GenResult &r, const code::Block &block) {
 		using namespace code;
 
 		Label begin = s.to.label();

@@ -89,6 +89,7 @@ Int testCustomValue() {
 }
 
 // What happens when we have refs in a value?
+// Note that this class relies on Values being zeroed automatically in the constructor.
 value RefVal {
 	Dbg d;
 

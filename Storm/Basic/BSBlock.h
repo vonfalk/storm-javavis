@@ -27,13 +27,13 @@ namespace storm {
 			Scope scope;
 
 			// Generate code. Override 'blockCode' to generate only block contents.
-			virtual void code(const GenState &state, GenResult &to);
+			virtual void code(GenState &state, GenResult &to);
 
 			// Override to initialize the block yourself.
-			virtual void blockCode(const GenState &state, GenResult &to, const code::Block &newBlock);
+			virtual void blockCode(GenState &state, GenResult &to, const code::Block &newBlock);
 
 			// Override to generate contents of the block.
-			virtual void blockCode(const GenState &state, GenResult &to);
+			virtual void blockCode(GenState &state, GenResult &to);
 
 			// Find a variable. Same semantics as 'find'.
 			LocalVar *variable(const String &name);
@@ -72,10 +72,10 @@ namespace storm {
 			virtual Value result();
 
 			// Optimization.
-			virtual void code(const GenState &state, GenResult &to);
+			virtual void code(GenState &state, GenResult &to);
 
 			// Code generation.
-			virtual void blockCode(const GenState &state, GenResult &to);
+			virtual void blockCode(GenState &state, GenResult &to);
 
 		private:
 			virtual void output(wostream &to) const;

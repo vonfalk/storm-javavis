@@ -23,7 +23,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &s, GenResult &to);
+			virtual void code(GenState &s, GenResult &to);
 
 		protected:
 			virtual void output(wostream &to) const;
@@ -53,7 +53,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &s, GenResult &to);
+			virtual void code(GenState &s, GenResult &to);
 
 		protected:
 			virtual void output(wostream &to) const;
@@ -69,10 +69,10 @@ namespace storm {
 			Auto<Actual> params;
 
 			// Create a value.
-			void createValue(const GenState &s, GenResult &to);
+			void createValue(GenState &s, GenResult &to);
 
 			// Create a class.
-			void createClass(const GenState &s, GenResult &to);
+			void createClass(GenState &s, GenResult &to);
 		};
 
 		// Call the default constructor for T.
@@ -93,7 +93,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &s, GenResult &to);
+			virtual void code(GenState &s, GenResult &to);
 
 		protected:
 			virtual void output(wostream &to) const;
@@ -116,7 +116,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &s, GenResult &to);
+			virtual void code(GenState &s, GenResult &to);
 
 		private:
 			// Member in which the variable is.
@@ -126,13 +126,13 @@ namespace storm {
 			Auto<TypeVar> var;
 
 			// Generate code for a value access.
-			void valueCode(const GenState &s, GenResult &to);
+			void valueCode(GenState &s, GenResult &to);
 
 			// Generate code for a class access.
-			void classCode(const GenState &s, GenResult &to);
+			void classCode(GenState &s, GenResult &to);
 
 			// Extract the value itself from ptrA
-			void extractCode(const GenState &s, GenResult &to);
+			void extractCode(GenState &s, GenResult &to);
 		};
 
 		/**
@@ -148,7 +148,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &s, GenResult &to);
+			virtual void code(GenState &s, GenResult &to);
 
 		private:
 			// Which thread?
@@ -168,7 +168,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &s, GenResult &to);
+			virtual void code(GenState &s, GenResult &to);
 
 		private:
 			Auto<Expr> to, value;

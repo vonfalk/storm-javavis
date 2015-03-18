@@ -22,7 +22,7 @@ namespace storm {
 
 			// Generate the code to get one parameter. Returns where it is stored.
 			// 'type' may differ slightly from 'expressions[id]->result()'.
-			code::Value code(nat id, const GenState &s, const Value &type);
+			code::Value code(nat id, GenState &s, const Value &type);
 
 			// Add a parameter.
 			void STORM_FN add(Par<Expr> expr);
