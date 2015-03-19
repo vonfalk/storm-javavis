@@ -1,0 +1,165 @@
+use lang:bs;
+use core:debug;
+use core:lang;
+
+// Main file in the brainfuck implementation.
+
+class BfEnv {
+	ExprBlock block;
+	Var input;
+	Var output;
+	Var ptr;
+	Var data;
+
+	ctor(ExprBlock b, Expr input) {
+		init() {}
+		TypeName strT = strType();
+		TypeName natT = natType();
+		block = b;
+		input = Var(block, strT, SStr("input"), input);
+		output = Var(block, strT, SStr("output"), Actual());
+		ptr = Var(block, natT, SStr("ptr"), asNat(b, intConstant(SStr("0"))));
+
+		Expr init = namedExpr(b, SStr("initArray"), Actual());
+		data = Var(block, arrayType(natT), SStr("data"), init);
+
+		block.add(input);
+		block.add(output);
+		block.add(ptr);
+		block.add(data);
+	}
+
+	ctor(BfEnv c) {
+		init() {}
+		block = c.block;
+		input = c.input;
+		output = c.output;
+		ptr = c.ptr;
+		data = c.data;
+	}
+
+	BfEnv child(ExprBlock block) {
+		BfEnv c(this);
+		c.block = block;
+		c;
+	}
+
+	Expr ptrExpr() {
+		LocalVarAccess(ptr.var);
+	}
+
+	Expr dataExpr() {
+		accessExpr(block, LocalVarAccess(data.var), ptrExpr);
+	}
+}
+
+class BfToken {
+	void insert(BfEnv env) {}
+}
+
+class BfBack extends BfToken {
+	void insert(BfEnv env) {
+		env.block.add(prefixOperator(env.block, SStr("--"), env.ptrExpr));
+	}
+}
+class BfFwd extends BfToken {
+	void insert(BfEnv env) {
+		env.block.add(prefixOperator(env.block, SStr("++"), env.ptrExpr));
+	}
+}
+class BfInput extends BfToken {}
+class BfOutput extends BfToken {
+	void insert(BfEnv env) {
+		Actual p;
+		p.add(LocalVarAccess(env.output.var));
+		p.add(env.dataExpr);
+		env.block.add(namedExpr(env.block, debugAppend(), p));
+	}
+}
+
+class BfInc extends BfToken {
+	void insert(BfEnv env) {
+		env.block.add(prefixOperator(env.block, SStr("++"), env.dataExpr));
+	}
+}
+class BfDec extends BfToken {
+	void insert(BfEnv env) {
+		env.block.add(prefixOperator(env.block, SStr("--"), env.dataExpr));
+	}
+}
+
+class BfLoop extends BfToken {
+	BfToken[] content;
+
+	ctor(BfToken[] c) {
+		// NOTE: We can not initialize content by copy here for some reason...
+		init() {}
+		content = c;
+	}
+
+	void insert(BfEnv env) {
+		While w(env.block);
+		ExprBlock block(w);
+		w.body(block);
+		env.block.add(w);
+
+		OpInfo eq = lOperator(SStr("!="), 100);
+		w.cond(mkOperator(env.block, env.dataExpr, eq, asNat(env.block, intConstant(SStr("0")))));
+
+		// Wht can't I use 'content'?
+		BfEnv child = env.child(block);
+		BfToken[] c = this.content;
+		for (Nat i = 0.nat; i < c.count; i++) {
+			c[i].insert(child);
+		}
+	}
+}
+
+TypeName strType() {
+	TypeName name();
+	name.add(TypePart("core"));
+	name.add(TypePart("Str"));
+	name;
+}
+
+TypeName natType() {
+	TypeName name();
+	name.add(TypePart("core"));
+	name.add(TypePart("Nat"));
+	name;
+}
+
+TypeName debugAppend() {
+	TypeName name;
+	name.add(TypePart("core"));
+	name.add(TypePart("debug"));
+	name.add(TypePart("append"));
+	name;
+}
+
+Expr asNat(Block b, Expr e) {
+	Actual p;
+	p.add(e);
+	namedExpr(b, SStr("nat"), p);
+}
+
+Nat[] initArray() {
+	Nat[] r();
+	for (Nat i = 0.nat; i < 512.nat; i++)
+		r.push(0.nat);
+	r;
+}
+
+Expr bfCode(Block parent, Expr input, BfToken[] tokens) {
+	ExprBlock block(parent);
+
+	BfEnv env(block, input);
+
+	for (Nat i = 0.nat; i < tokens.count; i++) {
+		tokens[i].insert(env);
+	}
+
+	block.add(LocalVarAccess(env.output.var));
+
+	block;
+}

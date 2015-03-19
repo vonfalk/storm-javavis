@@ -24,6 +24,10 @@ namespace storm {
 			initTo(init);
 		}
 
+		bs::LocalVar *bs::Var::var() {
+			return variable.ret();
+		}
+
 		void bs::Var::init(Par<Block> block, const Value &type, Par<SStr> name) {
 			variable = CREATE(LocalVar, this, name->v->v, type, name->pos);
 			block->add(variable);

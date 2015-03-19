@@ -28,6 +28,7 @@ namespace storm {
 			break;
 		case tStr:
 			to << strValue << L"s";
+			break;
 		default:
 			to << L"UNKNOWN";
 			break;

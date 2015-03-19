@@ -1,0 +1,15 @@
+// Extension to allow expressions like:
+// bf(<in>) { code }
+
+Expr => bfCode(block, input, r) : "bf", "(", Expr(block) input, ")", "{", BfRoot r, "}";
+
+BfRoot => Array<BfToken>() : ( BfToken -> push, )*;
+
+BfToken => BfBack() : "<";
+BfToken => BfFwd() : ">";
+BfToken => BfInput() : ",";
+BfToken => BfOutput() : "\.";
+BfToken => BfInc() : "\+";
+BfToken => BfDec() : "\-";
+BfToken => BfLoop(c) : "\[", BfRoot c, "\]";
+

@@ -58,6 +58,9 @@ namespace storm {
 			// Declared variable.
 			Auto<LocalVar> variable;
 
+			// Get the declared variable.
+			LocalVar *STORM_FN var();
+
 			// Result type.
 			virtual Value result();
 

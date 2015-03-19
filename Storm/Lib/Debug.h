@@ -31,6 +31,9 @@ namespace storm {
 	// Throw an exception.
 	void STORM_FN throwError();
 
+	// Append an int to a string. Breaks the immutability of strings...
+	void STORM_FN append(Par<Str> s, Nat v);
+
 	// Check so that 'a' and 'b' are completely disjoint.
 	Bool STORM_FN disjoint(Par<Object> a, Par<Object> b);
 

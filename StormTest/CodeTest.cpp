@@ -139,3 +139,8 @@ BEGIN_TEST(ErrorTest) {
 	CALL_TEST_FN(checkTimes, L"test.bs.fnException", 3);
 	CALL_TEST_FN(checkTimes, L"test.bs.threadException", 4);
 } END_TEST
+
+
+BEGIN_TEST(BFTest) {
+	runFn(L"test.bs.bfMain");
+} END_TEST

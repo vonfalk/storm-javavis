@@ -36,7 +36,8 @@ namespace storm {
 		Lock::L z(cacheLock);
 		offset = o.offset;
 		sharedFile = o.sharedFile;
-		sharedFile->refs++;
+		if (sharedFile)
+			sharedFile->refs++;
 
 		return *this;
 	}

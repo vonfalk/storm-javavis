@@ -63,6 +63,8 @@ Default constructor does not initialize objects using the default ctor, it is in
 Exceptions while running copy-constructors to functions may cause leaks at the moment, since Code does not
 support attaching exception handlers to the values we have copied with fnParam.
 
+In constructors, it is not possible to assign member variables without using the copy ctor, even for objects!
+
 Others
 ---------
 Verify that exceptions thrown in constructors are actually correctly propagated. Calling create1<DbgVal>(null) does

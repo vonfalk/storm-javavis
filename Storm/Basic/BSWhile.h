@@ -26,6 +26,9 @@ namespace storm {
 
 			// Code.
 			virtual void blockCode(const GenState &state, GenResult &r, const code::Block &b);
+
+		protected:
+			virtual void output(wostream &to) const;
 		};
 
 	}

@@ -43,4 +43,8 @@ namespace storm {
 		s.to << end;
 	}
 
+	void bs::While::output(wostream &to) const {
+		to << L"while (" << condExpr << L")" << bodyExpr;
+	}
+
 }
