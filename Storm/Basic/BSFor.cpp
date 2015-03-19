@@ -22,7 +22,7 @@ namespace storm {
 		return Value();
 	}
 
-	void bs::For::blockCode(GenState &s, GenResult &to, const code::Block &block) {
+	void bs::For::blockCode(const GenState &s, GenResult &to, const code::Block &block) {
 		using namespace code;
 
 		Label begin = s.to.label();
@@ -34,7 +34,7 @@ namespace storm {
 
 		GenResult testResult(Value::stdBool(engine()), block);
 		testExpr->code(subState, testResult);
-		s.to << cmp(testResult.location(subState), byteConst(0));
+		s.to << cmp(testResult.location(subState).var, byteConst(0));
 		s.to << jmp(end, ifEqual);
 
 		GenResult bodyResult;

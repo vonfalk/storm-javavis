@@ -23,7 +23,7 @@ namespace storm {
 		code::Frame &frame;
 
 		// Current part.
-		code::Part part;
+		code::Block block;
 
 		// Create a child GenState.
 		inline GenState child(code::Block block) const {
@@ -38,16 +38,39 @@ namespace storm {
 		}
 	};
 
+	/**
+	 * Information about a created variable. This contains: 1: the variable itself,
+	 * and 2: the part it was allocated in. In the case of value variables, they have
+	 * to be allocated in a separate part so that their destructor is not executed too early.
+	 */
+	class VarInfo {
+	public:
+		// Create.
+		VarInfo();
+		explicit VarInfo(const code::Variable &v);
+		VarInfo(code::Variable v, bool needsPart);
+
+		// The variable created.
+		code::Variable var;
+
+		// Does this variable need a separate part for itself to correctly handle destructors?
+		bool needsPart;
+
+		// Begin 'part' if needed. Call when you have initialized the value.
+		void created(const GenState &to);
+
+	};
+
 	// Helper to create a variable from a Value (this is common).
-	code::Variable variable(code::Frame &frame, code::Part part, const Value &v);
+	VarInfo variable(code::Frame &frame, code::Block block, const Value &v);
 
 	// Variations.
-	inline code::Variable variable(code::Listing &l, code::Part part, const Value &v) {
-		return variable(l.frame, part, v);
+	inline VarInfo variable(code::Listing &l, code::Block block, const Value &v) {
+		return variable(l.frame, block, v);
 	}
 
-	inline code::Variable variable(const GenState &s, const Value &v) {
-		return variable(s.frame, s.part, v);
+	inline VarInfo variable(const GenState &s, const Value &v) {
+		return variable(s.frame, s.block, v);
 	}
 
 	/**
@@ -62,17 +85,17 @@ namespace storm {
 		// No result is needed.
 		GenResult();
 
-		// A result is of type 't' needed in 'part'.
-		GenResult(const Value &t, code::Part part);
+		// A result is of type 't' needed in 'block'.
+		GenResult(const Value &t, code::Block block);
 
 		// Indicate that the result should be stored in 'var'.
-		GenResult(const Value &t, code::Variable var);
+		GenResult(const Value &t, VarInfo var);
 
 		// Get the location of the result, assuming the result is needed.
-		code::Variable location(const GenState &s);
+		VarInfo location(const GenState &s);
 
 		// Get the location of the result, even if it was not required by the creator.
-		code::Variable safeLocation(const GenState &s, const Value &t);
+		VarInfo safeLocation(const GenState &s, const Value &t);
 
 		// Suggest a location. Returns true if it is used. Otherwise, store the value in whatever
 		// location is returned by 'location'.
@@ -87,10 +110,10 @@ namespace storm {
 
 	private:
 		// Stored variable.
-		code::Variable variable;
+		VarInfo variable;
 
-		// In which part?
-		code::Part part;
+		// In which block?
+		code::Block block;
 	};
 
 	// Generate code to fill in a BasicTypeInfo struct. Only touches eax register.

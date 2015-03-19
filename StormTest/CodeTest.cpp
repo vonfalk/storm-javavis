@@ -120,17 +120,22 @@ BEGIN_TEST(StormCtorTest) {
 	CHECK_ERROR(runFn(L"test.bs.memberAssignErrorTest"), CodeError);
 } END_TEST
 
-BEGIN_TEST(ErrorTest) {
-	const nat times = 7;
-
+BEGIN_TEST_FN(checkTimes, const String &name, nat times) {
 	DbgVal::clear();
-	CHECK_RUNS(runFn(L"test.bs.basicException", 0));
+	CHECK_RUNS(runFn(name, 0));
 	CHECK(DbgVal::clear());
-
 	for (nat i = 0; i < times; i++) {
-		CHECK_ERROR(runFn(L"test.bs.basicException", i + 1), DebugError);
+		CHECK_ERROR(runFn(name, i + 1), DebugError);
 		CHECK(DbgVal::clear());
 	}
+	CHECK_RUNS(runFn(name, times + 1));
+	CHECK(DbgVal::clear());
+} END_TEST_FN
 
-	CHECK_RUNS(runFn(L"test.bs.basicException", times + 1));
+// Tests that checks the exception safety at various times in the generated code. Especially
+// with regards to values.
+BEGIN_TEST(ErrorTest) {
+	CALL_TEST_FN(checkTimes, L"test.bs.basicException", 7);
+	CALL_TEST_FN(checkTimes, L"test.bs.fnException", 3);
+	CALL_TEST_FN(checkTimes, L"test.bs.threadException", 4);
 } END_TEST

@@ -9,40 +9,69 @@ namespace storm {
 	using code::Part;
 	using code::Frame;
 
-	Variable variable(Frame &frame, Part part, const Value &v) {
+	VarInfo::VarInfo() : var(Variable::invalid), needsPart(false) {}
+
+	VarInfo::VarInfo(const Variable &v) : var(v), needsPart(false) {}
+
+	VarInfo::VarInfo(Variable v, bool p) : var(v), needsPart(p) {}
+
+	void VarInfo::created(const GenState &to) {
+		if (!needsPart)
+			return;
+
+		Part root = to.frame.parent(var);
+		assert(to.frame.first(root) == to.block,
+			L"The variable " + ::toS(code::Value(var)) + L" was already created, or in wrong block: "
+			+ ::toS(code::Value(to.block)) + L"." + ::toS(to.to));
+
+		Part created = to.frame.createPart(root);
+		to.frame.delay(var, created);
+
+		to.to << begin(created);
+	}
+
+	VarInfo variable(Frame &frame, Block block, const Value &v) {
 		code::FreeOpt opt = code::freeOnBoth;
 		code::Value dtor = v.destructor();
-		if (v != Value())
-			if (v.type->flags & typeValue)
-				opt = opt | code::freePtr;
+		bool needsPart = false;
 
-		return frame.createVariable(part, v.size(), dtor, opt);
+		if (v.isValue()) {
+			opt = opt | code::freePtr;
+			needsPart = true;
+		}
+
+		return VarInfo(frame.createVariable(block, v.size(), dtor, opt), needsPart);
 	}
 
 
-	GenResult::GenResult() : type(), variable(Variable::invalid), part(Part::invalid) {}
+	GenResult::GenResult() : type(), block(Block::invalid) {}
 
-	GenResult::GenResult(const Value &t, Part part) : type(t), variable(Variable::invalid), part(part) {}
+	GenResult::GenResult(const Value &t, Block block) : type(t), block(block) {}
 
-	GenResult::GenResult(const Value &t, Variable var) : type(t), variable(var), part(code::Part::invalid) {}
+	GenResult::GenResult(const Value &t, VarInfo var) : type(t), variable(var), block(code::Block::invalid) {}
 
-	code::Variable GenResult::location(const GenState &state) {
+	VarInfo GenResult::location(const GenState &state) {
 		assert(needed(), "Trying to get the location of an unneeded result. use safeLocation instead.");
 
-		if (variable == Variable::invalid) {
-			if (part == Part::invalid) {
+		if (variable.var == Variable::invalid) {
+			if (block == Block::invalid) {
 				variable = storm::variable(state, type);
 			} else {
-				variable = storm::variable(state.frame, part, type);
+				variable = storm::variable(state.frame, block, type);
 			}
 		}
+
+		Frame &f = state.frame;
+		if (variable.needsPart && f.first(f.parent(variable.var)) != state.block)
+			// We need to delay the part transition until we have exited the current block!
+			return VarInfo(variable.var, false);
 		return variable;
 	}
 
-	code::Variable GenResult::safeLocation(const GenState &s, const Value &t) {
+	VarInfo GenResult::safeLocation(const GenState &s, const Value &t) {
 		if (needed())
 			return location(s);
-		else if (variable == Variable::invalid)
+		else if (variable.var == Variable::invalid)
 			return variable = storm::variable(s, t);
 		else
 			return variable;
@@ -57,9 +86,11 @@ namespace storm {
 	bool GenResult::suggest(const GenState &s, Variable v) {
 		using namespace code;
 
-		if (variable == Variable::invalid) {
-			if (part != Part::invalid) {
-				if (!s.frame.accessible(s.frame.first(part), v)) {
+		Frame &f = s.frame;
+
+		if (variable.var == Variable::invalid) {
+			if (block != Block::invalid) {
+				if (!f.accessible(f.first(block), v)) {
 					// TODO? Cases that hit here could maybe be optimized somehow!
 					// this is common with the return value, which will almost always
 					// have to get its lifetime extended a bit. Maybe implement the
@@ -67,7 +98,7 @@ namespace storm {
 					return false;
 				}
 			}
-			variable = v;
+			variable = VarInfo(v);
 			return true;
 		} else {
 			return false;
@@ -82,7 +113,7 @@ namespace storm {
 		Size s = Size::sNat * 2;
 		assert(s.current() == sizeof(typeInfo), L"Please check the declaration of BasicTypeInfo.");
 
-		Variable r = to.frame.createVariable(to.part, s);
+		Variable r = to.frame.createVariable(to.block, s);
 		to.to << lea(ptrA, r);
 		to.to << mov(intRel(ptrA), natConst(typeInfo.size));
 		to.to << mov(intRel(ptrA, Offset::sNat), natConst(typeInfo.kind));

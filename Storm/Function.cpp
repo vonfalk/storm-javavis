@@ -68,10 +68,10 @@ namespace storm {
 
 			to.to << fnCall(ref, Size());
 		} else {
-			Variable result = res.safeLocation(to, this->result);
+			VarInfo result = res.safeLocation(to, this->result);
 
 			if (!this->result.returnOnStack()) {
-				to.to << lea(ptrA, ptrRel(result));
+				to.to << lea(ptrA, ptrRel(result.var));
 				to.to << fnParam(ptrA);
 			}
 
@@ -85,12 +85,14 @@ namespace storm {
 			}
 
 			if (this->result.returnOnStack()) {
-				to.to << fnCall(ref, result.size());
-				to.to << mov(result, asSize(ptrA, result.size()));
+				to.to << fnCall(ref, result.var.size());
+				to.to << mov(result.var, asSize(ptrA, result.var.size()));
 			} else {
 				// Ignore return value...
 				to.to << fnCall(ref, Size());
 			}
+
+			result.created(to);
 		}
 	}
 
@@ -122,7 +124,7 @@ namespace storm {
 
 		if (v.isClass()) {
 			// Deep copy the object.
-			Variable clone = z.frame.createPtrVar(z.part, e.fnRefs.release);
+			Variable clone = z.frame.createPtrVar(z.block, e.fnRefs.release);
 			z.to << fnParam(a);
 			z.to << fnCall(stdCloneFn(e, v), Size::sPtr);
 			z.to << mov(clone, ptrA);
@@ -167,7 +169,7 @@ namespace storm {
 		using namespace code;
 
 		Engine &e = engine();
-		Block b = to.frame.createChild(to.part);
+		Block b = to.frame.createChild(to.frame.last(to.block));
 		to.to << begin(b);
 
 		// Create a UThreadData object.
@@ -202,11 +204,13 @@ namespace storm {
 		to.to << mov(data, intPtrConst(0));
 
 		// Where shall we store the result (store the pointer to it in ptrB);
+		VarInfo resultPos;
 		if (this->result == Value()) {
 			// null-pointer.
 			to.to << mov(ptrB, intPtrConst(0));
 		} else {
-			to.to << lea(ptrB, res.safeLocation(to.child(b), this->result));
+			resultPos = res.safeLocation(to, this->result);
+			to.to << lea(ptrB, resultPos.var);
 		}
 
 		const RefSource *fn = threadThunk();
@@ -225,6 +229,7 @@ namespace storm {
 		to.to << fnCall(e.fnRefs.spawnResult, Size());
 
 		to.to << end(b);
+		resultPos.created(to);
 	}
 
 	code::RefSource *Function::threadThunk() {

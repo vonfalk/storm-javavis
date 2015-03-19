@@ -112,6 +112,10 @@ namespace code {
 		// Custom variable creation.
 		Variable createVariable(Part in, Size size, Value free = Value(), FreeOpt when = freeDef);
 
+		// Delay a variable to a later Part (currently limited to later parts only, in theory we
+		// can implement a general move operation).
+		void delay(Variable v, Part to);
+
 		// Create a function parameter. These are assumed to be
 		// created in the same order as the parameters appear in the function
 		// declaration in C/C++. IsFloat shall be true if the parameter is

@@ -29,8 +29,10 @@ BEGIN_TEST(TestParts) {
 	Part part2 = l.frame.createPart(part1);
 	Part part3 = l.frame.createPart(part2);
 	Variable a = l.frame.createIntVar(part1, dtor);
-	Variable b = l.frame.createIntVar(part2, dtor);
-	Variable c = l.frame.createIntVar(part3, dtor);
+	Variable b = l.frame.createIntVar(part1, dtor);
+	Variable c = l.frame.createIntVar(part1, dtor);
+	l.frame.delay(b, part2);
+	l.frame.delay(c, part3);
 
 	l << prolog();
 	l << mov(a, intConst(1));

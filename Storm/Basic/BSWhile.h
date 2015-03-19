@@ -25,7 +25,7 @@ namespace storm {
 			virtual Value result();
 
 			// Code.
-			virtual void blockCode(GenState &state, GenResult &r, const code::Block &b);
+			virtual void blockCode(const GenState &state, GenResult &r, const code::Block &b);
 		};
 
 	}

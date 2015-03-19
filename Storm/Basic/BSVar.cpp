@@ -63,10 +63,8 @@ namespace storm {
 			return variable->result.asRef();
 		}
 
-		void bs::Var::code(GenState &s, GenResult &to) {
+		void bs::Var::code(const GenState &s, GenResult &to) {
 			using namespace code;
-
-			Part part = variable->initialize(s);
 
 			const Value &t = variable->result;
 
@@ -92,22 +90,20 @@ namespace storm {
 				initCtor->code(s, gr);
 			}
 
-			if (part != Part::invalid) {
-				s.to << begin(part);
-				s.part = part;
-			}
+			variable->var.created(s);
 
 			if (to.needed()) {
 				// Part of another expression.
 				if (to.type.ref) {
-					Variable v = to.location(s);
-					s.to << lea(v, variable->var);
-				} else if (!to.suggest(s, variable->var)) {
-					Variable v = to.location(s);
-
-					s.to << mov(v, variable->var);
+					VarInfo v = to.location(s);
+					s.to << lea(v.var, variable->var.var);
+					v.created(s);
+				} else if (!to.suggest(s, variable->var.var)) {
+					VarInfo v = to.location(s);
+					s.to << mov(v.var, variable->var.var);
 					if (variable->result.refcounted())
-						s.to << code::addRef(v);
+						s.to << code::addRef(v.var);
+					v.created(s);
 				}
 			}
 		}
@@ -130,47 +126,36 @@ namespace storm {
 		bs::LocalVar::LocalVar(const String &name, const Value &t, const SrcPos &pos, bool param)
 			: Named(name), result(t), pos(pos), var(code::Variable::invalid), param(param), constant(false) {}
 
-		void LocalVar::create(GenState &state) {
+		void LocalVar::create(const GenState &state) {
 			if (param)
 				return;
-			assert(block == code::Block::invalid, L"Already created");
-			block = state.frame.first(state.part);
+
+			assert(var.var == code::Variable::invalid, L"Already initialized!");
+
+			var = storm::variable(state.to, state.block, result);
 		}
 
-		code::Part LocalVar::initialize(GenState &state) {
-			assert(var == code::Variable::invalid, L"Already initialized!");
-			assert(block != code::Block::invalid, L"Not created!");
-
-			if (result.isValue()) {
-				// In this case, we do not want to run the destructor before we have initialized
-				// the value properly! Therefore, we need to create a Part for the variable.
-				code::Part part = state.frame.createPart(block);
-				var = storm::variable(state.to, part, result);
-				return part;
-			} else {
-				var = storm::variable(state.to, block, result);
-				return code::Part::invalid;
-			}
-		}
-
-		void LocalVar::createParam(GenState &state) {
+		void LocalVar::createParam(const GenState &state) {
 			using namespace code;
 
 			if (!param)
 				return;
-			assert(var == Variable::invalid, L"Already created!");
+			assert(var.var == Variable::invalid, L"Already created!");
 
+			Variable z;
 			if (result.isValue()) {
-				var = state.frame.createParameter(result.size(), false, result.destructor(), freeOnBoth | freePtr);
+				z = state.frame.createParameter(result.size(), false, result.destructor(), freeOnBoth | freePtr);
 			} else if (constant) {
 				// Borrowed ptr.
-				var = state.frame.createParameter(result.size(), false);
+				z = state.frame.createParameter(result.size(), false);
 			} else {
-				var = state.frame.createParameter(result.size(), false, result.destructor());
+				z = state.frame.createParameter(result.size(), false, result.destructor());
 			}
 
+			var = VarInfo(z);
+
 			if (result.refcounted() && !constant)
-				state.to << code::addRef(var);
+				state.to << code::addRef(var.var);
 		}
 
 	}

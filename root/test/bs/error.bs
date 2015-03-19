@@ -23,3 +23,31 @@ void basicException(Int point) {
 	}
 	errorOn(point, 7);
 }
+
+// How do we do with exceptions in other functions.
+void fnException(Int point) {
+	errorOn(point, 1);
+	DbgVal r = dbgValFn(DbgVal(1), point);
+	errorOn(point, 3);
+}
+
+DbgVal dbgValFn(DbgVal v, Int point) {
+	errorOn(point, 2);
+	v.set(3);
+	v;
+}
+
+// How do we do with exceptions combined with thread switches?
+void threadException(Int point) {
+	errorOn(point, 1);
+	DbgVal r = otherThreadError(DbgVal(1), point);
+	errorOn(point, 4);
+}
+
+// Thread function for another thread.
+DbgVal otherThreadError(DbgVal p, Int point) on Other {
+	errorOn(point, 2);
+	p.set(2);
+	errorOn(point, 3);
+	p;
+}

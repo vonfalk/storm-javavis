@@ -216,3 +216,13 @@ void verifyNeq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	while (false);	   \
 	return __result__; \
 	}
+
+#define BEGIN_TEST_FN(name, ...)				\
+	void name(TestResult &__result__, __VA_ARGS__) { do
+
+#define END_TEST_FN								\
+	while (false);								\
+	}
+
+#define CALL_TEST_FN(name, ...)					\
+	name(__result__, __VA_ARGS__)

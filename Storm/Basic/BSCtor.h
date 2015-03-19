@@ -85,7 +85,7 @@ namespace storm {
 			virtual Value result();
 
 			// Code.
-			virtual void code(GenState &s, GenResult &r);
+			virtual void code(const GenState &s, GenResult &r);
 
 		private:
 			// Member of.
@@ -108,14 +108,14 @@ namespace storm {
 			void init(Par<CtorBody> block, Par<Actual> params);
 
 			// Call the parent constructor (if any).
-			void callParent(GenState &s);
+			void callParent(const GenState &s);
 
 			// Initialize a variable.
-			void initVar(GenState &s, Par<TypeVar> var);
-			void initVar(GenState &s, Par<TypeVar> var, Par<Actual> to);
+			void initVar(const GenState &s, Par<TypeVar> var);
+			void initVar(const GenState &s, Par<TypeVar> var, Par<Actual> to);
 
 			// Initialize a variable with its default constructor.
-			void initVarDefault(GenState &s, Par<TypeVar> var);
+			void initVarDefault(const GenState &s, Par<TypeVar> var);
 
 			// Add an initializer.
 			void init(Par<Initializer> init);

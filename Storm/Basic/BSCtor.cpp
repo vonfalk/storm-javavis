@@ -39,8 +39,8 @@ namespace storm {
 			Variable thisVar = l.frame.createParameter(params[0].size(), false);
 			LocalVar *hidden = body->variable(L" this");
 			LocalVar *normal = body->variable(L"this");
-			hidden->var = thisVar;
-			normal->var = thisVar;
+			hidden->var = VarInfo(thisVar);
+			normal->var = VarInfo(thisVar);
 		}
 
 		GenState state = { l, data, runOn(), l.frame, l.frame.root() };
@@ -131,7 +131,7 @@ namespace storm {
 		initMap.insert(make_pair(name, init->params));
 	}
 
-	void bs::SuperCall::callParent(GenState &s) {
+	void bs::SuperCall::callParent(const GenState &s) {
 		Type *parent = thisPtr.type->super();
 		if (!parent)
 			return;
@@ -151,13 +151,13 @@ namespace storm {
 		ctor->localCall(s, actuals, t, false);
 	}
 
-	void bs::SuperCall::code(GenState &s, GenResult &r) {
+	void bs::SuperCall::code(const GenState &s, GenResult &r) {
 		using namespace code;
 
 		// Super class should be called first.
 		callParent(s);
 
-		Variable dest = thisVar->var;
+		Variable dest = thisVar->var.var;
 		Type *type = thisPtr.type;
 
 		// Set our VTable.
@@ -174,7 +174,7 @@ namespace storm {
 		}
 	}
 
-	void bs::SuperCall::initVar(GenState &s, Par<TypeVar> v) {
+	void bs::SuperCall::initVar(const GenState &s, Par<TypeVar> v) {
 		InitMap::iterator i = initMap.find(v->name);
 		if (i == initMap.end())
 			initVarDefault(s, v);
@@ -182,11 +182,11 @@ namespace storm {
 			initVar(s, v, i->second);
 	}
 
-	void bs::SuperCall::initVarDefault(GenState &s, Par<TypeVar> v) {
+	void bs::SuperCall::initVarDefault(const GenState &s, Par<TypeVar> v) {
 		using namespace code;
 
 		const Value &t = v->varType;
-		Variable dest = thisVar->var;
+		Variable dest = thisVar->var.var;
 
 		if (t.ref)
 			throw SyntaxError(pos, L"Can not initialize reference " + v->name + L", not implemented yet!");
@@ -201,11 +201,11 @@ namespace storm {
 		}
 	}
 
-	void bs::SuperCall::initVar(GenState &s, Par<TypeVar> v, Par<Actual> to) {
+	void bs::SuperCall::initVar(const GenState &s, Par<TypeVar> v, Par<Actual> to) {
 		using namespace code;
 
 		const Value &t = v->varType;
-		Variable dest = thisVar->var;
+		Variable dest = thisVar->var.var;
 
 		if (t.ref)
 			throw SyntaxError(pos, L"Can not initialize reference " + v->name + L", not implemented yet!");
@@ -220,12 +220,13 @@ namespace storm {
 		if (t.isClass()) {
 			// Easy way, call the constructor as normal.
 			Auto<CtorCall> call = CREATE(CtorCall, this, ctor, to);
-			GenResult created(t, s.part);
+			GenResult created(t, s.block);
 			call->code(s, created);
-			Variable loc = created.location(s);
+			VarInfo loc = created.location(s);
 			s.to << mov(ptrA, dest);
-			s.to << mov(ptrRel(ptrA, v->offset()), loc);
-			s.to << code::addRef(loc);
+			s.to << mov(ptrRel(ptrA, v->offset()), loc.var);
+			s.to << code::addRef(loc.var);
+			loc.created(s);
 			return;
 		}
 

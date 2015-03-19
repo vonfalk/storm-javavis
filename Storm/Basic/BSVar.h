@@ -21,11 +21,8 @@ namespace storm {
 			// Declared at
 			SrcPos pos;
 
-			// The block we are supposed to live inside. (initialized in code generation)
-			code::Block block;
-
 			// Location (not initialized until code generation).
-			code::Variable var;
+			VarInfo var;
 
 			// Is this a parameter?
 			bool param;
@@ -34,14 +31,10 @@ namespace storm {
 			bool constant;
 
 			// Create the variable.
-			void create(GenState &state);
+			void create(const GenState &state);
 
 			// Create the parameter.
-			void createParam(GenState &state);
-
-			// Tell us to initialize the variable (variable creation is delayed until this point).
-			// Returns the 'part' you want to do 'begin' on afterwards, or 'invalid' if there is no need.
-			code::Part initialize(GenState &state);
+			void createParam(const GenState &state);
 
 		};
 
@@ -69,7 +62,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(GenState &state, GenResult &to);
+			virtual void code(const GenState &state, GenResult &to);
 
 		protected:
 			virtual void output(wostream &to) const;

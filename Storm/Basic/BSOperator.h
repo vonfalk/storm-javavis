@@ -97,7 +97,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(GenState &s, GenResult &r);
+			virtual void code(const GenState &s, GenResult &r);
 
 		protected:
 			// Output.
@@ -124,7 +124,7 @@ namespace storm {
 			virtual Value result();
 
 			// Code.
-			virtual void code(GenState &s, GenResult &r);
+			virtual void code(const GenState &s, GenResult &r);
 
 		protected:
 			// Output.

@@ -23,6 +23,7 @@ TestResult Tests::run() {
 	try {
 
 		if (t.only) {
+			std::wcout << L"Running " << t.only->getName() << L"(single)..." << std::endl;
 			r += t.only->run();
 		} else {
 			for (TestMap::const_iterator i = t.tests.begin(); i != t.tests.end(); i++) {

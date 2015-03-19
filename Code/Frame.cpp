@@ -37,11 +37,11 @@ namespace code {
 	void Frame::outputBlock(wostream &to, Block block) const {
 		to << endl << "Block" << block.id << L":";
 
-		Indent indent(to);
-
 		for (Part p = block; p != Part::invalid; p = next(p)) {
 			if (asBlock(p) == Block::invalid)
-				to << endl << Value(p) << L":";
+				to << endl << L" " << Value(p) << L":";
+
+			Indent indent(to);
 
 			vector<Block> c = children(p);
 			vector<Variable> v = variables(p);
@@ -286,6 +286,26 @@ namespace code {
 		parameters.insert(std::make_pair(nextVariableId, p));
 
 		return Variable(nextVariableId++, size);
+	}
+
+	void Frame::delay(Variable v, Part to) {
+		if (isParam(v))
+			throw InvalidValue(L"Can not delay parameters.");
+
+		Part from = parent(v);
+		if (first(from) != first(to))
+			throw InvalidValue(L"Can only delay within the same block.");
+
+		InternalPart &p = parts.find(from.id)->second;
+		vector<nat>::iterator i = find(p.variables.begin(), p.variables.end(), v.id);
+		assert(i != p.variables.end());
+		p.variables.erase(i);
+
+		InternalPart &q = parts.find(to.id)->second;
+		q.variables.push_back(v.id);
+
+		Var &z = vars.find(v.id)->second;
+		z.part = to.id;
 	}
 
 	Size Frame::size(nat v) const {

@@ -56,12 +56,12 @@ In basic storm: Allow the dot operator to be used as scope resolution as well (m
 In bs: check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should
 be something like the same statement instead).
 
-Exceptions does not currently play well with values at all, since the values are set up to be destroyed before
-they have actually been initialized!
-
 Consider syntax like: fork foo(), to indicate that we do not want to wait for the completion of 'foo'.
 
 Default constructor does not initialize objects using the default ctor, it is instead setting them to null.
+
+Exceptions while running copy-constructors to functions may cause leaks at the moment, since Code does not
+support attaching exception handlers to the values we have copied with fnParam.
 
 Others
 ---------

@@ -13,7 +13,7 @@ namespace storm {
 		return Value();
 	}
 
-	void bs::Expr::code(GenState &to, GenResult &var) {
+	void bs::Expr::code(const GenState &to, GenResult &var) {
 		assert(!var.needed());
 	}
 
@@ -46,7 +46,7 @@ namespace storm {
 		}
 	}
 
-	void bs::Constant::code(GenState &s, GenResult &r) {
+	void bs::Constant::code(const GenState &s, GenResult &r) {
 		using namespace code;
 
 		if (!r.needed())
@@ -54,7 +54,7 @@ namespace storm {
 
 		switch (cType) {
 		case tInt:
-			s.to << mov(r.location(s), intConst(intValue));
+			intCode(s, r);
 			break;
 		case tStr:
 			strCode(s, r);
@@ -65,7 +65,7 @@ namespace storm {
 		}
 	}
 
-	void bs::Constant::strCode(GenState &s, GenResult &r) {
+	void bs::Constant::strCode(const GenState &s, GenResult &r) {
 		using namespace code;
 
 		Engine &e = engine();
@@ -74,9 +74,19 @@ namespace storm {
 		s.to << fnParam(Str::type(e)->typeRef);
 		s.to << fnParam(data);
 		s.to << fnCall(e.fnRefs.createStrFn, Size::sPtr);
-		s.to << mov(r.location(s), ptrA);
+		VarInfo to = r.location(s);
+		s.to << mov(to.var, ptrA);
+		to.created(s);
 
 		s.data.add(data, memberFn(this, &Constant::strData), this);
+	}
+
+	void bs::Constant::intCode(const GenState &s, GenResult &r) {
+		using namespace code;
+
+		VarInfo to = r.location(s);
+		s.to << mov(to.var, intConst(intValue));
+		to.created(s);
 	}
 
 	void bs::Constant::strData(code::Listing &to) {

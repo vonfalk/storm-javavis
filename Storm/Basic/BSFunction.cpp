@@ -112,8 +112,8 @@ namespace storm {
 
 			body->code(state, r);
 
-			Variable rval = r.location(state);
-			l << mov(asSize(ptrA, result.size()), rval);
+			VarInfo rval = r.location(state);
+			l << mov(asSize(ptrA, result.size()), rval.var);
 			if (result.refcounted())
 				l << code::addRef(ptrA);
 
@@ -124,8 +124,8 @@ namespace storm {
 
 			body->code(state, r);
 
-			Variable rval = r.location(state);
-			l << lea(ptrA, ptrRel(rval));
+			VarInfo rval = r.location(state);
+			l << lea(ptrA, ptrRel(rval.var));
 			l << fnParam(returnValue);
 			l << fnParam(ptrA);
 			l << fnCall(result.copyCtor(), Size::sPtr);

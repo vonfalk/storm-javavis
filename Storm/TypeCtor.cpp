@@ -361,7 +361,7 @@ namespace storm {
 
 			Type *envType = CloneEnv::type(e);
 			Variable rawEnv = l.frame.createPtrVar(l.frame.root(), e.fnRefs.freeRef, freeOnException);
-			Variable env = variable(l.frame, l.frame.root(), Value(envType));
+			Variable env = variable(l.frame, l.frame.root(), Value(envType)).var;
 			l << fnParam(envType->typeRef);
 			l << fnCall(e.fnRefs.allocRef, Size::sPtr);
 			l << mov(rawEnv, ptrA);
