@@ -170,13 +170,19 @@ void verifyNeq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 
 #define CHECK_NEQ(expr, eq) CHECK_NEQ_TITLE(expr, eq, #expr)
 
-#define CHECK_ERROR(expr)						\
-	try {										\
-		__result__.total++;						\
-		expr;									\
-		__result__.failed++;					\
+#define CHECK_ERROR(expr, type)											\
+	try {																\
+		__result__.total++;												\
+		expr;															\
+		__result__.failed++;											\
 		std::wcout << "Failed: " << #expr << ", did not fail as expected" << std::endl; \
-	} catch (const Exception &) {				\
+	} catch (const type &) {											\
+	} catch (const Exception &e) {										\
+		std::wcout << "Failed: " << #expr << ", did not throw " << #type << " as expected." << std::endl; \
+		std::wcout << e << std::endl;									\
+		__result__.failed++;											\
+	} catch (...) {														\
+		OUTPUT_ERROR(#expr, "unknown error");							\
 	}
 
 #define CHECK_RUNS(expr)						\

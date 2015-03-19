@@ -52,7 +52,7 @@ BEGIN_TEST(UThreadResultTest) {
 
 		e = true;
 		UThread::spawn(returnVoid, params, r);
-		CHECK_ERROR(r.result());
+		CHECK_ERROR(r.result(), UserError);
 	}
 
 	{
@@ -97,7 +97,7 @@ BEGIN_TEST(UThreadResultTest) {
 
 		t = -2;
 		UThread::spawn(returnTracker, params, r);
-		CHECK_ERROR(r.result());
+		CHECK_ERROR(r.result(), UserError);
 	}
 	CHECK(Tracker::clear());
 
@@ -111,7 +111,7 @@ BEGIN_TEST(UThreadResultTest) {
 
 		t.data = -3;
 		UThread::spawn(takeTracker, params, r);
-		CHECK_ERROR(r.result());
+		CHECK_ERROR(r.result(), UserError);
 	}
 	CHECK(Tracker::clear());
 

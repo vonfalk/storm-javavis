@@ -27,7 +27,7 @@ BEGIN_TEST(BasicSyntax) {
 
 	CHECK_EQ(runFn(L"test.bs.testStr"), 12);
 
-	CHECK_ERROR(runFn(L"test.bs.forError", 10));
+	CHECK_ERROR(runFn(L"test.bs.forError", 10), DebugError);
 } END_TEST
 
 BEGIN_TEST(PriorityTest) {
@@ -116,8 +116,8 @@ BEGIN_TEST(StormCtorTest) {
 	CHECK_EQ(runFn(L"test.bs.ctorTest"), 50);
 	CHECK_EQ(runFn(L"test.bs.ctorTest", 10), 30);
 	CHECK_EQ(runFn(L"test.bs.ctorDerTest", 2), 6);
-	CHECK_ERROR(runFn(L"test.bs.ctorErrorTest"));
-	CHECK_ERROR(runFn(L"test.bs.memberAssignErrorTest"));
+	CHECK_ERROR(runFn(L"test.bs.ctorErrorTest"), CodeError);
+	CHECK_ERROR(runFn(L"test.bs.memberAssignErrorTest"), CodeError);
 } END_TEST
 
 BEGIN_TEST(ErrorTest) {
@@ -128,7 +128,7 @@ BEGIN_TEST(ErrorTest) {
 	CHECK(DbgVal::clear());
 
 	for (nat i = 0; i < times; i++) {
-		CHECK_ERROR(runFn(L"test.bs.basicException", i + 1));
+		CHECK_ERROR(runFn(L"test.bs.basicException", i + 1), DebugError);
 		CHECK(DbgVal::clear());
 	}
 

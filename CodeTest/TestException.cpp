@@ -50,7 +50,7 @@ BEGIN_TEST(TestException) {
 
 	destroyed = 0;
 	throwError = true;
-	CHECK_ERROR((*p)(10));
+	CHECK_ERROR((*p)(10), Error);
 	CHECK_EQ(destroyed, 24);
 
 	destroyed = 0;
@@ -100,7 +100,7 @@ BEGIN_TEST(TestChainedException) {
 
 	throwError = true;
 	destroyed = 0;
-	CHECK_ERROR(call<cpuInt>(outer.getData()));
+	CHECK_ERROR(call<cpuInt>(outer.getData()), Error);
 	CHECK_EQ(destroyed, 6);
 
 	throwError = false;
@@ -159,7 +159,7 @@ BEGIN_TEST(TestRefException) {
 
 	destroyed = 0;
 	throwError = true;
-	CHECK_ERROR(call<cpuInt>(fn));
+	CHECK_ERROR(call<cpuInt>(fn), Error);
 	CHECK_EQ(destroyed, 103);
 
 	destroyed = 0;
@@ -218,7 +218,7 @@ BEGIN_TEST(TestMultipleEx) {
 
 	// Crashes...
 	throwError = true;
-	CHECK_ERROR((*fn)());
+	CHECK_ERROR((*fn)(), Error);
 
 } END_TEST
 
@@ -271,7 +271,7 @@ BEGIN_TEST(TestDtor) {
 
 	correct = true;
 	throwError = true;
-	CHECK_ERROR((*fn)(obj));
+	CHECK_ERROR((*fn)(obj), Error);
 	CHECK(correct);
 
 	correct = true;

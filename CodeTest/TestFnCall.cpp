@@ -107,7 +107,7 @@ BEGIN_TEST(FunctionParamTest) {
 		FnParams p;
 		Tracker t(10);
 		p.add(t);
-		CHECK_ERROR(call<Tracker>(&trackerError, p));
+		CHECK_ERROR(call<Tracker>(&trackerError, p), UserError);
 	}
 	CHECK(Tracker::clear());
 

@@ -48,6 +48,13 @@ namespace storm {
 		String w;
 	};
 
+	/**
+	 * Specific subclass when calling core:debug:throwError.
+	 */
+	class DebugError : public Exception {
+		inline virtual String what() const { return L"Debug error"; }
+	};
+
 
 	/**
 	 * Internal type error (something in C++ went wrong).

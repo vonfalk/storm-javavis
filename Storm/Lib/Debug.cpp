@@ -54,7 +54,7 @@ namespace storm {
 	}
 
 	void throwError() {
-		throw InternalError(L"Someone called 'throwError'.");
+		throw DebugError();
 	}
 
 	// Generic object traversal function.
