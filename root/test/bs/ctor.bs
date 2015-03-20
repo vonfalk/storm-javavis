@@ -105,3 +105,19 @@ Int memberAssignErrorTest() {
 	CtorDerived z(3, 4);
 	z.brokenValue;
 }
+
+
+class DefCtorClass {
+	CtorClass a;
+	Dbg b;
+
+	Int sum() {
+		b.get + a.a + a.b.get;
+	}
+}
+
+Int testDefaultCtor() {
+	DefCtorClass d;
+	// Default ctor should create all objects.
+	d.sum;
+}

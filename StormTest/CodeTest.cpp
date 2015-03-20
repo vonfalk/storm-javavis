@@ -120,6 +120,7 @@ BEGIN_TEST(StormCtorTest) {
 	CHECK_EQ(runFn(L"test.bs.ctorDerTest", 2), 6);
 	CHECK_ERROR(runFn(L"test.bs.ctorErrorTest"), CodeError);
 	CHECK_ERROR(runFn(L"test.bs.memberAssignErrorTest"), CodeError);
+	CHECK_EQ(runFn(L"test.bs.testDefaultCtor"), 60);
 } END_TEST
 
 BEGIN_TEST_FN(checkTimes, const String &name, nat times) {

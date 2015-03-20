@@ -16,7 +16,10 @@ namespace storm {
 		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSCtor::generateCode))));
 	}
 
-	code::Listing bs::BSCtor::generateCode() {
+	bs::CtorBody *bs::BSCtor::parse() {
+		if (!contents)
+			return defaultParse();
+
 		SyntaxSet syntax;
 		addSyntax(scope, syntax);
 
@@ -27,6 +30,21 @@ namespace storm {
 
 		Auto<Object> c = parser.transform(engine(), vector<Object *>(1, this));
 		Auto<CtorBody> body = c.expect<CtorBody>(engine(), L"While evaluating CtorBody");
+
+		return body.ret();
+	}
+
+	bs::CtorBody *bs::BSCtor::defaultParse() {
+		Auto<CtorBody> r = CREATE(CtorBody, this, this);
+		Auto<Actual> actual = CREATE(Actual, this);
+		Auto<SuperCall> super = CREATE(SuperCall, this, r, actual);
+		super->pos = pos;
+		r->add(super);
+		return r.ret();
+	}
+
+	code::Listing bs::BSCtor::generateCode() {
+		Auto<CtorBody> body = parse();
 
 		using namespace code;
 		Listing l;
@@ -193,8 +211,21 @@ namespace storm {
 			s.to << add(ptrA, intPtrConst(v->offset()));
 			s.to << fnParam(ptrA);
 			s.to << fnCall(t.defaultCtor(), Size());
+		} else if (t.isBuiltIn()) {
+			// Default value is already there.
 		} else {
-			// Initialize classes to default as well?
+			Function *ctor = t.type->defaultCtor();
+			if (!ctor)
+				throw SyntaxError(pos, L"Can not initialize " + v->name + L" by default-constructing it. In "
+								+ ::toS(thisPtr) + L", please initialize this member explicitly.");
+			Auto<Actual> params = CREATE(Actual, this);
+			Auto<CtorCall> ctorCall = CREATE(CtorCall, this, ctor, params);
+			GenResult created(t, s.block);
+			ctorCall->code(s, created);
+
+			s.to << mov(ptrA, dest);
+			s.to << mov(ptrRel(ptrA, v->offset()), created.location(s).var);
+			s.to << code::addRef(created.location(s).var);
 		}
 	}
 

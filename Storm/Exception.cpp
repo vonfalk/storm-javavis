@@ -4,7 +4,7 @@
 namespace storm {
 
 	void CodeError::output(wostream &to) const {
-		to << what() << endl << format(stackTrace);
+		to << what();
 	}
 
 }

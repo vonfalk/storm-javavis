@@ -9,13 +9,15 @@ namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
+		class CtorBody;
+
 		/**
 		 * A constructor. Enforces that the parent constructor is called.
 		 */
 		class BSCtor : public Function {
 			STORM_CLASS;
 		public:
-			// Create.
+			// Create. If contents is null, we will generate the default ctor.
 			BSCtor(const vector<Value> &values, const vector<String> &names,
 				const Scope &scope, Par<SStr> contents, const SrcPos &pos);
 
@@ -37,8 +39,13 @@ namespace storm {
 
 			// Generate code.
 			code::Listing generateCode();
-		};
 
+			// Parse.
+			CtorBody *parse();
+
+			// Default ctor contents.
+			CtorBody *defaultParse();
+		};
 
 		/**
 		 * Contents of the constructor.

@@ -72,7 +72,7 @@ namespace storm {
 
 		add(steal(CREATE(TypeDefaultDtor, engine, this)));
 		if (!hasCtor)
-			add(steal(CREATE(TypeDefaultCtor, engine, this)));
+			add(steal(classDefaultCtor(this)));
 		if (!hasCopyCtor)
 			add(steal(CREATE(TypeCopyCtor, engine, this)));
 
@@ -133,5 +133,12 @@ namespace storm {
 
 		return CREATE(BSCtor, owner->engine, values, names, owner->scope, contents, pos);
 	}
+
+	bs::BSCtor *STORM_FN bs::classDefaultCtor(Par<Class> owner) {
+		Auto<Params> params = CREATE(Params, owner);
+
+		return classCtor(owner, owner->declared, params, null);
+	}
+
 
 }
