@@ -30,17 +30,27 @@ namespace storm {
 		s.to << begin;
 		s.to << code::begin(block);
 
-		GenResult condResult(Value::stdBool(engine()), block);
+		// Place this in the parent block.
+		GenResult condResult(Value::stdBool(engine()), s.block);
 		condExpr->code(subState, condResult);
-		s.to << cmp(condResult.location(subState).var, byteConst(0));
+		Variable c = condResult.location(subState).var;
+		s.to << cmp(c, byteConst(0));
 		s.to << jmp(end, ifEqual);
+
+		Part before = s.frame.last(block);
 
 		GenResult bodyResult;
 		bodyExpr->code(subState, bodyResult);
 
-		s.to << code::end(block);
-		s.to << jmp(begin);
+		Part after = s.frame.next(before);
+		if (after != Part::invalid)
+			s.to << code::end(after);
+
+		// We may not jump across the end below.
 		s.to << end;
+		s.to << code::end(block);
+		s.to << cmp(c, byteConst(0));
+		s.to << jmp(begin, ifNotEqual);
 	}
 
 	void bs::While::output(wostream &to) const {

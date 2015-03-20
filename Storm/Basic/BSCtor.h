@@ -67,7 +67,10 @@ namespace storm {
 			// Name of the variable.
 			Auto<SStr> name;
 
-			// Initialize to.
+			// Initialize by assignment (may be null).
+			Auto<Expr> expr;
+
+			// Initialize to (may be null).
 			Auto<Actual> params;
 		};
 
@@ -101,7 +104,7 @@ namespace storm {
 			Scope scope;
 
 			// Initializers.
-			typedef hash_map<String, Auto<Actual>> InitMap;
+			typedef hash_map<String, Auto<Initializer>> InitMap;
 			InitMap initMap;
 
 			// Init.
@@ -112,7 +115,9 @@ namespace storm {
 
 			// Initialize a variable.
 			void initVar(const GenState &s, Par<TypeVar> var);
-			void initVar(const GenState &s, Par<TypeVar> var, Par<Actual> to);
+			void initVar(const GenState &s, Par<TypeVar> var, Par<Initializer> to);
+			void initVarCtor(const GenState &s, Par<TypeVar> var, Par<Actual> to);
+			void initVarAssign(const GenState &s, Par<TypeVar> var, Par<Expr> to);
 
 			// Initialize a variable with its default constructor.
 			void initVarDefault(const GenState &s, Par<TypeVar> var);

@@ -12,6 +12,13 @@ class CtorClass {
 		}
 	}
 
+	ctor(Dbg d) {
+		init() {
+			a = 20;
+			b = d;
+		}
+	}
+
 	ctor(Int a) {
 		init() {
 			a = a;
@@ -30,6 +37,16 @@ Int ctorTest() {
 Int ctorTest(Int v) {
 	CtorClass c(v);
 	c.a + c.b.get;
+}
+
+Int ctorTestDbg(Int v) {
+	Dbg dbg(v);
+	CtorClass c(dbg);
+	if (same(dbg, c.b)) {
+		c.a + c.b.get;
+	} else {
+		0;
+	}
 }
 
 class CtorBase {

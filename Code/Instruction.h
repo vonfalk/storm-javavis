@@ -116,7 +116,7 @@ namespace code {
 	// Do not, for example, have all begin/end scopes in the end of the listing and jump forth and back between them.
 	// That makes the exception handling fail to detect what to destroy. NOTE: Does not preserve registers!
 	Instruction begin(Part block);
-	Instruction end(Block block);
+	Instruction end(Part block);
 
 	// Segment override for the next instruction, not reliable for function calls or double memory accesses. Only
 	// availiable on relevant architectures, for example X86.

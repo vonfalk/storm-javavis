@@ -12,30 +12,22 @@ class BfEnv {
 	Var data;
 
 	ctor(ExprBlock b, Expr input) {
-		init() {}
 		TypeName strT = strType();
 		TypeName natT = natType();
-		block = b;
-		input = Var(block, strT, SStr("input"), input);
-		output = Var(block, strT, SStr("output"), Actual());
-		ptr = Var(block, natT, SStr("ptr"), asNat(b, intConstant(SStr("0"))));
 
 		Expr init = namedExpr(b, SStr("initArray"), Actual());
-		data = Var(block, arrayType(natT), SStr("data"), init);
+		init() {
+			block = b;
+			input = Var(b, strT, SStr("input"), input);
+			output = Var(b, strT, SStr("output"), Actual());
+			ptr = Var(b, natT, SStr("ptr"), asNat(b, intConstant(SStr("0"))));
+			data = Var(b, arrayType(natT), SStr("data"), init);
+		}
 
 		block.add(input);
 		block.add(output);
 		block.add(ptr);
 		block.add(data);
-	}
-
-	ctor(BfEnv c) {
-		init() {}
-		block = c.block;
-		input = c.input;
-		output = c.output;
-		ptr = c.ptr;
-		data = c.data;
 	}
 
 	BfEnv child(ExprBlock block) {
@@ -92,9 +84,9 @@ class BfLoop extends BfToken {
 	BfToken[] content;
 
 	ctor(BfToken[] c) {
-		// NOTE: We can not initialize content by copy here for some reason...
-		init() {}
-		content = c;
+		init() {
+			content = c;
+		}
 	}
 
 	void insert(BfEnv env) {
@@ -106,11 +98,9 @@ class BfLoop extends BfToken {
 		OpInfo eq = lOperator(SStr("!="), 100);
 		w.cond(mkOperator(env.block, env.dataExpr, eq, asNat(env.block, intConstant(SStr("0")))));
 
-		// Wht can't I use 'content'?
 		BfEnv child = env.child(block);
-		BfToken[] c = this.content;
-		for (Nat i = 0.nat; i < c.count; i++) {
-			c[i].insert(child);
+		for (Nat i = 0.nat; i < content.count; i++) {
+			content[i].insert(child);
 		}
 	}
 }

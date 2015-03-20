@@ -37,6 +37,9 @@ namespace storm {
 	// Check so that 'a' and 'b' are completely disjoint.
 	Bool STORM_FN disjoint(Par<Object> a, Par<Object> b);
 
+	// Check so that 'a' and 'b' are the same object.
+	Bool STORM_FN same(Par<Object> a, Par<Object> b);
+
 	// Output the layout of 'a'.
 	void STORM_FN layout(Par<Object> a);
 

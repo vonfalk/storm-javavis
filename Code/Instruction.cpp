@@ -267,7 +267,7 @@ namespace code {
 		return createLoose(op::beginBlock, Value(), destNone, block);
 	}
 
-	Instruction end(Block block) {
+	Instruction end(Part block) {
 		return createLoose(op::endBlock, Value(), destNone, Part(block));
 	}
 

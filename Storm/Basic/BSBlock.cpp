@@ -50,8 +50,12 @@ namespace storm {
 		VarMap::const_iterator i = variables.find(name);
 		if (i != variables.end())
 			return i->second.borrow();
-		else
-			return null;
+
+		BlockLookup *parent = as<BlockLookup>(lookup->parent());
+		if (parent)
+			return parent->block->variable(name);
+
+		return null;
 	}
 
 

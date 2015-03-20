@@ -82,10 +82,7 @@ namespace storm {
 		}
 	}
 
-	bs::Initializer::Initializer(Par<SStr> name, Par<Expr> expr) : name(name) {
-		params = CREATE(Actual, this);
-		params->add(expr);
-	}
+	bs::Initializer::Initializer(Par<SStr> name, Par<Expr> expr) : name(name), expr(expr) {}
 
 	bs::Initializer::Initializer(Par<SStr> name, Par<Actual> params) : name(name), params(params) {}
 
@@ -128,7 +125,7 @@ namespace storm {
 		if (initMap.count(name))
 			throw SyntaxError(init->name->pos, L"The member " + name + L" has already been initialized.");
 
-		initMap.insert(make_pair(name, init->params));
+		initMap.insert(make_pair(name, init));
 	}
 
 	void bs::SuperCall::callParent(const GenState &s) {
@@ -201,18 +198,40 @@ namespace storm {
 		}
 	}
 
-	void bs::SuperCall::initVar(const GenState &s, Par<TypeVar> v, Par<Actual> to) {
+	void bs::SuperCall::initVar(const GenState &s, Par<TypeVar> v, Par<Initializer> to) {
 		using namespace code;
 
 		const Value &t = v->varType;
-		Variable dest = thisVar->var.var;
 
 		if (t.ref)
 			throw SyntaxError(pos, L"Can not initialize reference " + v->name + L", not implemented yet!");
 
+		assert(to->expr || to->params);
+
+		if (to->expr) {
+			if (t.isClass() && t.canStore(to->expr->result())) {
+				initVarAssign(s, v, to->expr);
+			} else {
+				Auto<Actual> p = CREATE(Actual, this);
+				p->add(to->expr);
+				initVarCtor(s, v, p);
+			}
+		} else {
+			initVarCtor(s, v, to->params);
+		}
+
+	}
+
+	void bs::SuperCall::initVarCtor(const GenState &s, Par<TypeVar> v, Par<Actual> to) {
+		using namespace code;
+
+		const Value &t = v->varType;
+		Variable dest = thisVar->var.var;
 		Type *toCreate = t.type;
+
 		vector<Value> values = to->values();
 		values.insert(values.begin(), Value::thisPtr(toCreate));
+
 		Function *ctor = as<Function>(toCreate->find(Type::CTOR, values));
 		if (ctor == null)
 			throw SyntaxError(to->pos, L"No constructor for " + ::toS(t) + L"(" + join(values, L", ") + L").");
@@ -227,21 +246,35 @@ namespace storm {
 			s.to << mov(ptrRel(ptrA, v->offset()), loc.var);
 			s.to << code::addRef(loc.var);
 			loc.created(s);
-			return;
+		} else {
+			// Now we're left with the values!
+
+			vector<code::Value> actuals(values.size());
+			for (nat i = 1; i < values.size(); i++)
+				actuals[i] = to->code(i - 1, s, ctor->params[i]);
+
+			s.to << mov(ptrA, dest);
+			s.to << add(ptrA, intPtrConst(v->offset()));
+			actuals[0] = ptrA;
+
+			GenResult nothing;
+			ctor->localCall(s, actuals, nothing, true);
 		}
+	}
 
-		// Now we're left with the values!
+	void bs::SuperCall::initVarAssign(const GenState &s, Par<TypeVar> v, Par<Expr> to) {
+		using namespace code;
 
-		vector<code::Value> actuals(values.size());
-		for (nat i = 1; i < values.size(); i++)
-			actuals[i] = to->code(i - 1, s, ctor->params[i]);
+		const Value &t = v->varType;
+		Variable dest = thisVar->var.var;
+		assert(t.isClass());
 
+		GenResult result(t, s.block);
+		to->code(s, result);
+		VarInfo loc = result.location(s);
 		s.to << mov(ptrA, dest);
-		s.to << add(ptrA, intPtrConst(v->offset()));
-		actuals[0] = ptrA;
-
-		GenResult nothing;
-		ctor->localCall(s, actuals, nothing, true);
+		s.to << mov(ptrRel(ptrA, v->offset()), loc.var);
+		s.to << code::addRef(loc.var);
 	}
 
 }

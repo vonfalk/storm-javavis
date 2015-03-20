@@ -32,10 +32,14 @@ namespace storm {
 		s.to << begin;
 		s.to << code::begin(block);
 
-		GenResult testResult(Value::stdBool(engine()), block);
+		// Put this outside the current block, so we can use it later.
+		GenResult testResult(Value::stdBool(engine()), s.block);
 		testExpr->code(subState, testResult);
-		s.to << cmp(testResult.location(subState).var, byteConst(0));
+		Variable r = testResult.location(subState).var;
+		s.to << cmp(r, byteConst(0));
 		s.to << jmp(end, ifEqual);
+
+		Part before = s.frame.last(block);
 
 		GenResult bodyResult;
 		bodyExpr->code(subState, bodyResult);
@@ -43,9 +47,17 @@ namespace storm {
 		GenResult updateResult;
 		updateExpr->code(subState, updateResult);
 
-		s.to << code::end(block);
-		s.to << jmp(begin);
+		// Make sure to end all parts that may have been created so far.
+		Part after = s.frame.next(before);
+		if (after != Part::invalid)
+			s.to << code::end(after);
+
+		// We may not skip the 'end'.
 		s.to << end;
+		s.to << code::end(block);
+
+		s.to << cmp(r, byteConst(0));
+		s.to << jmp(begin, ifNotEqual);
 	}
 
 }

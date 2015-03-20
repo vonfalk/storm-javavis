@@ -176,6 +176,10 @@ namespace storm {
 		return true;
 	}
 
+	Bool same(Par<Object> a, Par<Object> b) {
+		return a.borrow() == b.borrow();
+	}
+
 	void layout(Par<Object> obj) {
 		layout(obj.borrow());
 	}

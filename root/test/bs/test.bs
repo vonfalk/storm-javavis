@@ -90,6 +90,35 @@ Int forError(Int z) {
 	r;
 }
 
+Dbg loopTarget() {
+	Dbg(10);
+}
+
+// Earlier, the scoping was wrong in the for loop, so as long as this one does not leak memory, it is fine.
+void forScope() {
+	for (Int i = 0; i < loopTarget.get; i++) {
+		// Nothing
+	}
+
+	Int z = 0;
+	while (z < loopTarget.get) {
+		z++;
+	}
+}
+
+// Make sure we do not destroy any variables inside the loop when exiting the loop.
+void forScopeVal() {
+	for (Int i = 0; i < 10; i++) {
+		DbgVal v(i);
+	}
+
+	Int z = 0;
+	while (z < 10) {
+		DbgVal v(z);
+		z++;
+	}
+}
+
 void voidFn() {
     // Make sure we can return 'void'.
     3;

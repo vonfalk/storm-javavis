@@ -26,8 +26,9 @@ BEGIN_TEST(BasicSyntax) {
 	CHECK_EQ(runFn(L"test.bs.testIntCtor"), 20);
 
 	CHECK_EQ(runFn(L"test.bs.testStr"), 12);
-
 	CHECK_ERROR(runFn(L"test.bs.forError", 10), DebugError);
+	CHECK_RUNS(runFn(L"test.bs.forScope"));
+	CHECK_RUNS(runFn(L"test.bs.forScopeVal"));
 } END_TEST
 
 BEGIN_TEST(PriorityTest) {
@@ -115,6 +116,7 @@ BEGIN_TEST(StormArrayTest) {
 BEGIN_TEST(StormCtorTest) {
 	CHECK_EQ(runFn(L"test.bs.ctorTest"), 50);
 	CHECK_EQ(runFn(L"test.bs.ctorTest", 10), 30);
+	CHECK_EQ(runFn(L"test.bs.ctorTestDbg", 10), 30);
 	CHECK_EQ(runFn(L"test.bs.ctorDerTest", 2), 6);
 	CHECK_ERROR(runFn(L"test.bs.ctorErrorTest"), CodeError);
 	CHECK_ERROR(runFn(L"test.bs.memberAssignErrorTest"), CodeError);
@@ -141,6 +143,7 @@ BEGIN_TEST(ErrorTest) {
 } END_TEST
 
 
-BEGIN_TEST(BFTest) {
-	runFn(L"test.bs.bfMain");
+BEGIN_TESTX(BFTest) {
+	// Takes a long time to run. Mostly here for testing.
+	runFn(L"test.bf.bfInBs");
 } END_TEST
