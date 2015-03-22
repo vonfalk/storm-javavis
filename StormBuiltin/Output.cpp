@@ -74,12 +74,17 @@ String typeList(const Types &types) {
 
 		out << i << L" /* id */, ";
 
-		if (type.super.empty()) {
+		if (type.super.name.empty()) {
 			out << i << L" /* none */, ";
 		} else {
-			Type super = types.find(type.super, type.cppName.parent());
+			Type super = types.find(type.super.name, type.cppName.parent());
 			out << typeId(t, super.cppName) << L" /* " << super.fullName() << " */, ";
 		}
+
+		if (type.super.isHidden)
+			out << L"true, ";
+		else
+			out << L"false, ";
 
 		out << L"sizeof(" << type.cppName << L"), ";
 
@@ -187,19 +192,21 @@ static String stormName(const String &cppName) {
 }
 
 void functionList(wostream &out, const vector<Function> &fns, const Types &types) {
+	vector<Type> typeList = types.getTypes();
+
 	for (nat i = 0; i < fns.size(); i++) {
 		const Function &fn = fns[i];
 		CppName scope = fn.cppScope.scopeName();
 
-		// Package
-		out << L"{ L\"" << fn.package << L"\", ";
+		out << L"{ ";
 
 		// Member of?
 		if (fn.cppScope.isType()) {
 			Type member = types.find(fn.cppScope.cppName(), scope);
-			out << L"L\"" << member.name << L"\", ";
+			out << L"null, ";
+			out << typeId(typeList, member.cppName) << L" /* " << member.fullName() << L" */, ";
 		} else {
-			out << "null, ";
+			out << "L\"" << fn.package << L"\", 0 /* -invalid- */, ";
 		}
 
 		// Result

@@ -1,5 +1,6 @@
 #pragma once
 #include "Named.h"
+#include "Thread.h"
 #include "Scope.h"
 #include "Package.h"
 #include "TypeChain.h"
@@ -24,11 +25,10 @@ namespace storm {
 		typeValue = 0x02,
 
 		// Final (not possible to override)?
-		typeFinal = 0x04,
+		typeFinal = 0x10,
 	};
 
-	inline TypeFlags operator &(TypeFlags a, TypeFlags b) { return TypeFlags(nat(a) & nat(b)); }
-	inline TypeFlags operator |(TypeFlags a, TypeFlags b) { return TypeFlags(nat(a) | nat(b)); }
+	BITMASK_OPERATORS(TypeFlags);
 
 	/**
 	 * Represents a type. This class contains information about
@@ -74,7 +74,12 @@ namespace storm {
 		const Handle &handle();
 
 		// Set parent type. The parent type has to have the same type parameters as this one.
-		void setSuper(Type *super);
+		void setSuper(Par<Type> super);
+
+		// Associate this type with a thread. Threads are inherited by all child objects, and
+		// it is only allowed to set the thread on a root object type. (threads does not make sense
+		// with values).
+		void setThread(Par<Thread> thread);
 
 		// Get super type.
 		Type *super() const;

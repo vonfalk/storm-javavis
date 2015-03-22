@@ -13,6 +13,21 @@
 
 namespace storm {
 
+	static nat builtInCount() {
+		nat count = 0;
+		for (const BuiltInType *t = builtInTypes(); t->name; t++)
+			count++;
+		return count;
+	}
+
+	static const BuiltInType *findById(nat id) {
+		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
+			if (t->typePtrId == id)
+				return t;
+		}
+		return null;
+	}
+
 	static Value findValue(const Scope &src, const ValueRef &val, Engine &e) {
 		if (val.name == null)
 			return Value();
@@ -33,31 +48,31 @@ namespace storm {
 		throw BuiltInError(L"Type " + toS(val.name) + L" was not found.");
 	}
 
-	static void addBuiltIn(Engine &to, const BuiltInFunction *fn) {
+	static void addBuiltIn(Engine &to, const BuiltInFunction *fn, Type *insertInto = null) {
 		Named *into = null;
-		NameLookup *top = null;
 		vector<Value> params;
-		Auto<Name> pkg = parseSimpleName(to, fn->pkg);
+		bool typeMember = false;
 
-		if (!fn->typeMember) {
+		if (fn->pkg) {
+			assert(insertInto == null);
+
+			Auto<Name> pkg = parseSimpleName(to, fn->pkg);
 			Package *p = to.package(pkg, true);
 			if (!p)
 				throw BuiltInError(L"Failed to locate package " + toS(fn->pkg));
 			into = p;
-			top = p;
 		} else {
-			pkg->add(fn->typeMember);
-			Type *t = as<Type>(to.scope()->find(pkg));
+			Type *t = insertInto;
+			if (!t)
+				t = to.builtIn(fn->memberId);
 			into = t;
-			top = as<NameLookup>(into);
-			if (!into || !top)
-				throw BuiltInError(L"Could not locate " + String(fn->typeMember) + L" in " + toS(fn->pkg));
+			typeMember = true;
 
 			// add the 'this' parameter
 			params.push_back(Value::thisPtr(t));
 		}
 
-		Scope scope(top);
+		Scope scope(into);
 		Value result = findValue(scope, fn->result, to);
 
 		params.reserve(fn->params.size());
@@ -65,9 +80,9 @@ namespace storm {
 			params.push_back(findValue(scope, fn->params[i], to));
 
 		Auto<Function> toAdd;
-		if (fn->typeMember && fn->name == Type::DTOR) {
+		if (typeMember && fn->name == Type::DTOR) {
 			toAdd = nativeDtor(to, params[0].type, fn->fnPtr);
-		} else if (fn->typeMember) {
+		} else if (typeMember) {
 			// Make sure we handle vtable calls correctly!
 			toAdd = nativeMemberFunction(to, params[0].type, result, fn->name, params, fn->fnPtr);
 		} else {
@@ -93,8 +108,28 @@ namespace storm {
 		pkg->add(type);
 	}
 
+	static void addHidden(Engine &e, Type *to, nat from) {
+		for (const BuiltInFunction *fn = builtInFunctions(); fn->fnPtr; fn++) {
+			if (fn->pkg == null && fn->memberId == from) {
+				String name = fn->name;
+				if (name == L"__ctor" || name == L"__dtor")
+					continue;
+
+				// Insert this function into ourselves!
+				addBuiltIn(e, fn, to);
+			}
+		}
+
+		const BuiltInType *p = findById(from);
+		if (p->super != from)
+			addHidden(e, to, p->typePtrId);
+	}
+
 	static void addSuper(Engine &to, const BuiltInType *t) {
 		if (t->super == t->typePtrId)
+			return;
+		if (t->hiddenSuper)
+			// Done later.
 			return;
 
 		Type *tc = to.builtIn(t->typePtrId);
@@ -115,33 +150,25 @@ namespace storm {
 		pkg->add(created);
 	}
 
-	static nat builtInCount() {
-		nat count = 0;
-		for (const BuiltInType *t = builtInTypes(); t->name; t++)
-			count++;
-		return count;
-	}
-
-	static const BuiltInType *findById(nat id) {
-		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
-			if (t->typePtrId == id)
-				return t;
-		}
-		return null;
-	}
-
 	static void addBuiltIn(Engine &to) {
-		for (const BuiltInThread *t = builtInThreads(); t->name; t++) {
-			addThread(to, t);
-		}
+		// This should be done first, since package lookup may require the use of as<>.
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
 			addSuper(to, t);
 		}
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
 			addToPkg(to, t);
 		}
+		for (const BuiltInThread *t = builtInThreads(); t->name; t++) {
+			addThread(to, t);
+		}
 		for (const BuiltInFunction *fn = builtInFunctions(); fn->fnPtr; fn++) {
 			addBuiltIn(to, fn);
+		}
+		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
+			if (!t->hiddenSuper)
+				continue;
+			// We should copy all the parent functions to ourselves!
+			addHidden(to, to.builtIn(t->typePtrId), t->super);
 		}
 	}
 

@@ -155,7 +155,7 @@ CppType CppType::fullName(const Types &t, const CppName &scope) const {
 }
 
 
-void CppScope::push(bool type, const String &name, const CppName &super) {
+void CppScope::push(bool type, const String &name, const CppSuper &super) {
 	Part p = { type, 0, name, super };
 	parts.push_back(p);
 }
@@ -196,10 +196,10 @@ bool CppScope::isType() const {
 	return !parts.empty() && parts.back().type;
 }
 
-CppName CppScope::super() const {
+CppSuper CppScope::super() const {
 	if (!parts.empty())
 		return parts.back().super;
-	return CppName();
+	return CppSuper();
 }
 
 String CppScope::name() const {
@@ -212,4 +212,11 @@ void CppScope::output(wostream &to) const {
 	to << cppName();
 	if (isType())
 		to << L"(super: " << super() << L")";
+}
+
+
+void CppSuper::output(wostream &to) const {
+	to << name;
+	if (isHidden)
+		to << L" (hidden)";
 }

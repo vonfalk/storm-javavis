@@ -45,13 +45,12 @@ Type result, Name name, "(", Params params, ")", "{" - SkipBlock contents - "}";
 Function => FunctionDecl(pos, name, result, params, thread, contents) :
 Type result, Name name, "(", Params params, ")", "on", Type thread, "{" - SkipBlock contents - "}";
 
-// Class or value?
-CVType => t : "class" t;
-CVType => t : "value" t;
-
 // Class / value
-Class => Class(pos, t, name, contents) : CVType t, Name name, "{" - SkipBlock contents - "}";
-Class => Class(pos, t, name, contents, base) : CVType t, Name name, "extends", Type base, "{" - SkipBlock contents - "}";
+Class => createClass(pos, name, contents) : "class", Name name, "{" - SkipBlock contents - "}";
+Class => createValue(pos, name, contents) : "value", Name name, "{" - SkipBlock contents - "}";
+Class => extendClass(pos, name, base, contents) : "class", Name name, "extends", Type base, "{" - SkipBlock contents - "}";
+Class => extendClass(pos, name, base, contents) : "value", Name name, "extends", Type base, "{" - SkipBlock contents - "}";
+Class => threadClass(pos, name, thread, contents) : "class", Name name, "on", Type thread, "{" - SkipBlock contents - "}";
 
 // Named thread declaration.
 NamedThread => NamedThread(name) : "thread", Name name, ";";

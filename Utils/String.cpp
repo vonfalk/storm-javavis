@@ -213,11 +213,17 @@ nat String::toIntHex() const {
 }
 
 bool String::isInt() const {
-	for (nat i = 0; i < size(); i++) {
+	if (size() == 0)
+		return false;
+
+	nat i = 0;
+	if ((*this)[i] == '-')
+		i = 1;
+
+	for (; i < size(); i++) {
 		wchar c = (*this)[i];
 		if (c < '0' || c > '9')
-			if (i != 0 && c != '-')
-				return false;
+			return false;
 	}
 	return true;
 }

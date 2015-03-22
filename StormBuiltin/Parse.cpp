@@ -37,8 +37,27 @@ String parsePkg(Tokenizer &tok) {
 	return r.str();
 }
 
-CppName findSuper(Tokenizer &tok) {
-	CppName r;
+static void readSuper(Tokenizer &tok, CppSuper &to) {
+	String t = tok.peek();
+	if (t == L"STORM_IGNORE") {
+		tok.next();
+		tok.expect(L"(");
+		CppName::read(tok);
+		tok.expect(L")");
+	} else if (t == L"STORM_HIDDEN") {
+		tok.next();
+		tok.expect(L"(");
+		to.name = CppName::read(tok);
+		to.isHidden = true;
+		tok.expect(L")");
+	} else {
+		to.name = CppName::read(tok);
+		to.isHidden = false;
+	}
+}
+
+CppSuper findSuper(Tokenizer &tok) {
+	CppSuper r;
 
 	if (tok.peek() != L":")
 		return r;
@@ -49,7 +68,7 @@ CppName findSuper(Tokenizer &tok) {
 		if (mode == L"public") {
 			// Want it!
 			tok.next();
-			r = CppName::read(tok);
+			readSuper(tok, r);
 		} else if (mode == L"private" || mode == L"protected") {
 			// consume and ignore
 			tok.next();

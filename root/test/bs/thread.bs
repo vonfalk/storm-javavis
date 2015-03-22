@@ -80,3 +80,6 @@ ThreadVal otherValFn(ThreadVal v) on Other {
 }
 
 
+class ThreadObj on Other {
+	
+}

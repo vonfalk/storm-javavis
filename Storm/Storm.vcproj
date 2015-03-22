@@ -478,6 +478,10 @@
 				RelativePath=".\Basic\BSOperator.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\TObject.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -798,6 +802,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSOperator.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\TObject.h"
 				>
 			</File>
 		</Filter>

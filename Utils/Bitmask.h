@@ -5,4 +5,5 @@
 	inline type operator &(type a, type b) { return type(int(a) & int(b)); } \
 	inline type operator |(type a, type b) { return type(int(a) | int(b)); } \
 	inline type operator &=(type &a, type b) { return a = a & b; } \
-	inline type operator |=(type &a, type b) { return a = a | b; }
+	inline type operator |=(type &a, type b) { return a = a | b; } \
+	inline type operator ~(type a) { return type(~int(a)); }

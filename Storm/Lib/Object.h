@@ -44,7 +44,7 @@ namespace storm {
 	 * fall back to a Par<> (which should be used for function parameters) and
 	 * behaves correctly in that case. Otherwise, use Auto<>::borrow().
 	 */
-	class Object : public Printable {
+	class Object : public STORM_IGNORE(Printable) {
 		STORM_CLASS;
 	public:
 		// Initialize object to 1 reference.

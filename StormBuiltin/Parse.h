@@ -1,8 +1,8 @@
 #pragma once
 #include "Tokenizer.h"
 
-class CppName;
+class CppSuper;
 
 void skipTemplate(Tokenizer &tok);
 String parsePkg(Tokenizer &tok);
-CppName findSuper(Tokenizer &tok);
+CppSuper findSuper(Tokenizer &tok);

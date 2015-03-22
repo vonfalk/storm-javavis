@@ -76,6 +76,17 @@ protected:
 	virtual void output(wostream &to) const;
 };
 
+class CppSuper : public Printable {
+public:
+	inline CppSuper() : isHidden(false) {}
+
+	CppName name;
+	bool isHidden;
+
+protected:
+	virtual void output(wostream &to) const;
+};
+
 class CppScope : public Printable {
 public:
 	struct Part {
@@ -86,11 +97,11 @@ public:
 		// Name of this part.
 		String name;
 		// Parent type.
-		CppName super;
+		CppSuper super;
 	};
 
 	// Push a new name.
-	void push(bool type, const String &name, const CppName &super = CppName());
+	void push(bool type, const String &name, const CppSuper &super = CppSuper());
 
 	// Push a new subscope (unnamed).
 	void push();
@@ -108,7 +119,7 @@ public:
 	bool isType() const;
 
 	// Super type of this type.
-	CppName super() const;
+	CppSuper super() const;
 
 	// Name of the topmost scope.
 	String name() const;

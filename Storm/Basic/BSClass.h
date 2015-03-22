@@ -17,11 +17,8 @@ namespace storm {
 		class Class : public Type {
 			STORM_CLASS;
 		public:
-			// Create class 'name' with contents 'content'.
-			STORM_CTOR Class(SrcPos pos, Par<SStr> type, Par<SStr> name, Par<SStr> content);
-
-			// Create class 'name' with contents 'content', extended from 'base'.
-			STORM_CTOR Class(SrcPos pos, Par<SStr> type, Par<SStr> name, Par<SStr> content, Par<TypeName> base);
+			// Create.
+			Class(TypeFlags flags, const SrcPos &pos, const String &name, Par<SStr> content);
 
 			// The scope used for this class.
 			Scope scope;
@@ -29,11 +26,17 @@ namespace storm {
 			// Set the scope (done by BSContents).
 			void setScope(const Scope &scope);
 
-			// Set the base class.
-			void setBase();
+			// Lookup any additional types needed.
+			void lookupTypes();
 
 			// Declared at.
 			const SrcPos declared;
+
+			// Base class (if any).
+			Auto<TypeName> base;
+
+			// Associated thread (if any).
+			Auto<TypeName> thread;
 
 		protected:
 			// Load the contents lazily.
@@ -42,10 +45,15 @@ namespace storm {
 		private:
 			// Contents of the class.
 			Auto<SStr> content;
-
-			// Base class (if any).
-			Auto<TypeName> base;
 		};
+
+
+		// Create a class not extended from anything.
+		Class *STORM_FN createClass(SrcPos pos, Par<SStr> name, Par<SStr> content);
+		Class *STORM_FN createValue(SrcPos pos, Par<SStr> name, Par<SStr> content);
+		Class *STORM_FN extendClass(SrcPos pos, Par<SStr> name, Par<TypeName> from, Par<SStr> content);
+		Class *STORM_FN extendValue(SrcPos pos, Par<SStr> name, Par<TypeName> from, Par<SStr> content);
+		Class *STORM_FN threadClass(SrcPos pos, Par<SStr> name, Par<TypeName> thread, Par<SStr> content);
 
 
 		/**

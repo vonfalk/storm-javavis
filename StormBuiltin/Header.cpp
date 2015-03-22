@@ -77,14 +77,7 @@ void Header::parse(Tokenizer &tok) {
 				throw Error(L"STORM_CLASS or STORM_VALUE only allowed in classes and structs!");
 			bool isValue = token == L"STORM_VALUE";
 
-			Type t;
-			if (scope.cppName().isObject()) {
-				// storm::Object is the root object, ignore any
-				// super-classes! They are just for convenience!
-				t = Type(scope.name(), CppName(), pkg, scope.cppName(), isValue);
-			} else {
-				t = Type(scope.name(), scope.super(), pkg, scope.cppName(), isValue);
-			}
+			Type t(scope.name(), scope.super(), pkg, scope.cppName(), isValue);
 			types.push_back(t);
 
 			// Declare the destructor.

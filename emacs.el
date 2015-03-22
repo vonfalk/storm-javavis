@@ -85,6 +85,7 @@
 	    (when t ;; (in-project buffer-file-name)
 	      (setq tab-width 4)
 	      (setq ff-other-file-alist my-cpp-other-file-alist)
+	      (setq ff-special-constructs nil)
 	      (setq indent-tabs-mode t)
 	      (c-set-style "linux-tabs-only")
 	      (whitespace-mode t)

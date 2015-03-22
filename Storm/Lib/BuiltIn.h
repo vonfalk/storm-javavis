@@ -23,6 +23,9 @@ namespace storm {
 		// Index of super type (id of this entry if none).
 		nat super;
 
+		// True if the super type should be hidden from the Storm implementation.
+		bool hiddenSuper;
+
 		// Size of type.
 		nat typeSize;
 
@@ -64,8 +67,8 @@ namespace storm {
 		// The location (package).
 		const wchar *pkg;
 
-		// Member of a type? null=no.
-		const wchar *typeMember;
+		// Member of a type? (valid if 'pkg' == null)
+		nat memberId;
 
 		// Name of the return type.
 		ValueRef result;

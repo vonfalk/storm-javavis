@@ -11,32 +11,60 @@
 
 namespace storm {
 
-	static TypeFlags flag(Par<SStr> type) {
-		if (type->v->v == L"class")
-			return typeClass;
-		else if (type->v->v == L"value")
-			return typeValue;
-		else
-			throw SyntaxError(type->pos, L"Expected class or value.");
+	bs::Class *bs::createClass(SrcPos pos, Par<SStr> name, Par<SStr> content) {
+		return CREATE(Class, name, typeClass, pos, name->v->v, content);
 	}
 
-	bs::Class::Class(SrcPos pos, Par<SStr> t, Par<SStr> name, Par<SStr> content)
-		: Type(name->v->v, flag(t)), declared(pos), content(content) {}
+	bs::Class *bs::createValue(SrcPos pos, Par<SStr> name, Par<SStr> content) {
+		return CREATE(Class, name, typeValue, pos, name->v->v, content);
+	}
 
-	bs::Class::Class(SrcPos pos, Par<SStr> t, Par<SStr> name, Par<SStr> content, Par<TypeName> base)
-		: Type(name->v->v, flag(t)), declared(pos), content(content), base(base) {}
+	bs::Class *bs::extendClass(SrcPos pos, Par<SStr> name, Par<TypeName> from, Par<SStr> content) {
+		Class *c = CREATE(Class, name, typeClass, pos, name->v->v, content);
+		c->base = from;
+		return c;
+	}
+
+	bs::Class *bs::extendValue(SrcPos pos, Par<SStr> name, Par<TypeName> from, Par<SStr> content) {
+		Class *c = CREATE(Class, name, typeValue, pos, name->v->v, content);
+		c->base = from;
+		return c;
+	}
+
+	bs::Class *bs::threadClass(SrcPos pos, Par<SStr> name, Par<TypeName> thread, Par<SStr> content) {
+		Class *c = CREATE(Class, name, typeClass, pos, name->v->v, content);
+		c->thread = thread;
+		return c;
+	}
+
+
+	bs::Class::Class(TypeFlags flags, const SrcPos &pos, const String &name, Par<SStr> content)
+		: Type(name, flags), declared(pos), content(content) {}
+
 
 	void bs::Class::setScope(const Scope &scope) {
 		this->scope = Scope(scope, this);
 	}
 
-	void bs::Class::setBase() {
+	void bs::Class::lookupTypes() {
 		allowLazyLoad(false);
+
 		if (base) {
 			Value t = base->resolve(scope);
 			setSuper(t.type);
 			base = null;
 		}
+
+		if (thread) {
+			Auto<Name> name = thread->toName(scope);
+			NamedThread *t = as<NamedThread>(scope.find(name));
+			if (!t)
+				throw SyntaxError(thread->pos, L"Can not find the thread " + ::toS(name) + L".");
+
+			setThread(t->thread());
+			thread = null;
+		}
+
 		allowLazyLoad(true);
 	}
 

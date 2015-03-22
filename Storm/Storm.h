@@ -11,6 +11,16 @@
 // For example: Str *STORM_FN foo();
 #define STORM_FN CODECALL
 
+// Mark the parent class as hidden from Storm. This is used in TObject.
+// This more or less means that we copy all members of the parent class
+// into this class, and treat them as separate entities in Storm.
+// Example: class Foo : public STORM_HIDDEN(Bar) {};
+#define STORM_HIDDEN(x) x
+
+// Ignore the parent class in Storm. This is used to not have to expose the
+// 'Printable' interface to Storm. Example: class Object : public STORM_IGNORE(Printable) {};
+#define STORM_IGNORE(x) x
+
 // Type code.
 #define TYPE_CODE									\
 	public:											\

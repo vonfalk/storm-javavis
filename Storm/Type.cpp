@@ -138,25 +138,31 @@ namespace storm {
 		typeHandle.createRef(create->ref());
 	}
 
-	void Type::setSuper(Type *super) {
-		if (super->flags & typeFinal)
+	void Type::setSuper(Par<Type> super) {
+		TypeFlags superFlags;
+		if (super)
+			superFlags = super->flags;
+		else
+			superFlags = flags & ~typeFinal;
+
+		if (superFlags & typeFinal)
 			throw InternalError(super->identifier() +
-							L" is final and can not be inherited from by " +
-							identifier());
+								L" is final and can not be inherited from by " +
+								identifier());
 
 		if (flags & typeClass) {
 			if (super == null && this != Object::type(engine))
 				throw InternalError(identifier() + L" must at least inherit from Object.");
-			if (!(super->flags & typeClass))
+			if (!(superFlags & typeClass))
 				throw InternalError(identifier() + L" may only inherit from other objects.");
 		} else if (flags & typeValue) {
-			if (!(super->flags & typeValue))
+			if (!(superFlags & typeValue))
 				throw InternalError(identifier() + L" may only inherit from other values.");
 		}
 
 		Type *lastSuper = chain.super();
 
-		chain.super(super);
+		chain.super(super.borrow());
 
 		if (lastSuper)
 			lastSuper->updateVirtual();
@@ -173,6 +179,15 @@ namespace storm {
 
 	Type *Type::super() const {
 		return chain.super();
+	}
+
+	void Type::setThread(Par<Thread> thread) {
+		if (!(flags & typeClass))
+			throw InternalError(identifier() + L": Can not be associated with a thread unless it is a class.");
+		if (super() != Object::type(engine))
+			throw InternalError(identifier() + L": Can not be associated with a thread since it is not a root object.");
+
+		TODO(L"Implement me!");
 	}
 
 	Named *Type::findHere(const String &name, const vector<Value> &params) {
@@ -195,7 +210,14 @@ namespace storm {
 			to << L" : " << super()->identifier();
 		if (!lazyLoaded)
 			to << L"(not loaded)";
-		to << ":" << endl;
+		to << ":";
+
+		if (flags & typeClass)
+			to << L" (class)";
+		else if (flags & typeValue)
+			to << L" (value)";
+
+		to << endl;
 		Indent i(to);
 
 		NameSet::output(to);
