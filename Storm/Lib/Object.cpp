@@ -110,7 +110,7 @@ namespace storm {
 		s += Size::sPtr; // vtable
 		s += Size::sPtr; // myType
 		s += Size::sNat; // refs
-		assert(s.current() == sizeof(Object), "Forgot to update baseSize!");
+		assert(s.current() == sizeof(Object), L"Forgot to update baseSize!");
 		return s;
 	}
 

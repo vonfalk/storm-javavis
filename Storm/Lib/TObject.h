@@ -28,6 +28,9 @@ namespace storm {
 		// Copy the object (Maybe we should not support this?)
 		STORM_CTOR TObject(Par<TObject> copy);
 
+		// Get the size.
+		static Size baseSize();
+
 		// This is more or less a dummy object to make the Object and TObject to be separate.
 
 		// The thread we should be running on.

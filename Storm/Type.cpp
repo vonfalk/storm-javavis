@@ -102,10 +102,14 @@ namespace storm {
 		if (super())
 			return super()->size();
 
-		if (flags & typeClass)
-			return Object::baseSize();
-		else if (flags & typeValue)
+		if (flags & typeClass) {
+			if (this == Object::type(engine))
+				return Object::baseSize();
+			else if (this == TObject::type(engine))
+				return TObject::baseSize();
+		} else if (flags & typeValue) {
 			return Size(0);
+		}
 
 		assert(false);
 		return Size();
