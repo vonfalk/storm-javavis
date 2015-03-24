@@ -160,10 +160,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Color.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Condition.cpp"
 				>
 			</File>
@@ -196,19 +192,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Font.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\FramerateTimer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Geometry.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Includes.cpp"
 				>
 			</File>
 			<File
@@ -221,10 +205,6 @@
 			</File>
 			<File
 				RelativePath=".\Math.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Matrix.cpp"
 				>
 			</File>
 			<File
@@ -260,31 +240,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Properties.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Property.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Quaternion.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ReadWrite.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Rect.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Semaphore.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SequenceNumber.cpp"
 				>
 			</File>
 			<File
@@ -348,27 +308,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TreePath.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\TypeInfo.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\TypeInformation.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Utils.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Value.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Vector.cpp"
 				>
 			</File>
 		</Filter>
@@ -382,23 +326,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\AutoPtr.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Blob.h"
 				>
 			</File>
 			<File
 				RelativePath=".\Border.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Callbacks.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Color.h"
 				>
 			</File>
 			<File
@@ -442,10 +374,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Font.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FramerateTimer.h"
 				>
 			</File>
@@ -454,15 +382,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Geometry.h"
-				>
-			</File>
-			<File
 				RelativePath=".\HashMap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Includes.h"
 				>
 			</File>
 			<File
@@ -491,10 +411,6 @@
 			</File>
 			<File
 				RelativePath=".\Math.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Matrix.h"
 				>
 			</File>
 			<File
@@ -530,14 +446,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Point.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Pointer.h"
-				>
-			</File>
-			<File
 				RelativePath=".\PoolAllocator.h"
 				>
 			</File>
@@ -550,51 +458,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Properties.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Property.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Quaternion.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Queue.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ReadWrite.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Rect.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ResultWaiter.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Semaphore.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SequenceNumber.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Size.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SpecializedTypeInformation.h"
 				>
 			</File>
 			<File
@@ -619,10 +487,6 @@
 			</File>
 			<File
 				RelativePath=".\String.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Table.h"
 				>
 			</File>
 			<File
@@ -662,39 +526,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Trackable.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TreePath.h"
-				>
-			</File>
-			<File
 				RelativePath=".\TypeInfo.h"
 				>
 			</File>
 			<File
-				RelativePath=".\TypeInformation.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Types.h"
-				>
-			</File>
-			<File
-				RelativePath=".\UniqueId.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Utils.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Value.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Vector.h"
 				>
 			</File>
 			<File

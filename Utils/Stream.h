@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Color.h"
 #include "Bitmask.h"
 
 // A basic stream class.
