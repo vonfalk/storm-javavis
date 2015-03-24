@@ -11,6 +11,18 @@ namespace storm {
 	 */
 	struct BuiltInType {
 
+		// Meaning of the 'super' field.
+		enum SuperMode {
+			// No super class.
+			superNone,
+			// Regular super class.
+			superClass,
+			// Hidden super class.
+			superHidden,
+			// Reference to a thread (these objects always inherit from TObject anyway).
+			superThread,
+		};
+
 		// Location (package).
 		const wchar *pkg;
 
@@ -20,11 +32,11 @@ namespace storm {
 		// Static Type pointer index.
 		nat typePtrId;
 
-		// Index of super type (id of this entry if none).
+		// Index of super type. See 'superField' for the meaning.
 		nat super;
 
-		// True if the super type should be hidden from the Storm implementation.
-		bool hiddenSuper;
+		// Mode of the 'super' field.
+		SuperMode superMode;
 
 		// Size of type.
 		nat typeSize;

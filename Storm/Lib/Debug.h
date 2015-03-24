@@ -1,5 +1,6 @@
 #pragma once
 #include "Object.h"
+#include "TObject.h"
 #include "Int.h"
 #include "Code/Sync.h"
 
@@ -115,5 +116,19 @@ namespace storm {
 	};
 
 	wostream &operator <<(wostream &to, const DbgVal &v);
+
+	// Object on another thread.
+	class DbgActor : public ObjectOn<Compiler> {
+		STORM_CLASS;
+	public:
+		STORM_CTOR DbgActor();
+		STORM_CTOR DbgActor(Int z);
+
+		void STORM_FN set(Int v);
+		Int STORM_FN get() const;
+
+	private:
+		Int v;
+	};
 
 }

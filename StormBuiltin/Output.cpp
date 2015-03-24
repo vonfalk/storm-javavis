@@ -60,10 +60,24 @@ nat typeId(const vector<Type> &ordered, const CppName &ref) {
 }
 
 /**
+ * Find the id of a thread via CppName.
+ */
+nat threadId(const vector<Thread> &threads, const CppName &ref, const CppName &scope) {
+	for (nat i = 0; i < threads.size(); i++) {
+		if (threads[i].cppName == ref)
+			return i;
+		if (threads[i].cppName == scope + ref)
+			return i;
+	}
+
+	return 0;
+}
+
+/**
  * Generation
  */
 
-String typeList(const Types &types) {
+String typeList(const Types &types, const vector<Thread> &threads) {
 	std::wostringstream out;
 	vector<Type> t = types.getTypes();
 	for (nat i = 0; i < t.size(); i++) {
@@ -74,17 +88,23 @@ String typeList(const Types &types) {
 
 		out << i << L" /* id */, ";
 
-		if (type.super.name.empty()) {
-			out << i << L" /* none */, ";
+		const CppSuper &super = type.super;
+		if (super.isThread) {
+			nat threadId = ::threadId(threads, super.name, type.cppName.parent());
+			out << threadId << L" /* " << super.name << L" */, ";
+			out << L"BuiltInType::superThread, ";
+		} else if (super.name.empty()) {
+			out << 0 << L" /* none */, ";
+			out << L"BuiltInType::superNone, ";
 		} else {
-			Type super = types.find(type.super.name, type.cppName.parent());
-			out << typeId(t, super.cppName) << L" /* " << super.fullName() << " */, ";
-		}
+			Type st = types.find(super.name, type.cppName.parent());
+			out << typeId(t, st.cppName) << L" /* " << st.fullName() << " */, ";
 
-		if (type.super.isHidden)
-			out << L"true, ";
-		else
-			out << L"false, ";
+			if (super.isHidden)
+				out << L"BuiltInType::superHidden, ";
+			else
+				out << L"BuiltInType::superClass, ";
+		}
 
 		out << L"sizeof(" << type.cppName << L"), ";
 
@@ -294,7 +314,7 @@ String threadList(const vector<Thread> &threads) {
 
 		out << L"{ L\"" << t.pkg << L"\", ";
 		out << L"L\"" << t.name << L"\", ";
-		out << L"&" << t.cppName << " },\n";
+		out << L"&" << t.cppName << "::v },\n";
 	}
 
 	return out.str();

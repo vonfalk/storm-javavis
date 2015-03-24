@@ -64,7 +64,7 @@ namespace storm {
 		// before we call 'addStdLib' below. Otherwise a new thread will be created.
 		if (mode == reuseMain) {
 			Auto<Thread> t = CREATE(Thread, *this, code::Thread::current());
-			Compiler.force(*this, t.borrow());
+			Compiler::force(*this, t.borrow());
 		}
 
 		// Now, all the types are created, so we can create packages!
@@ -77,6 +77,11 @@ namespace storm {
 			// And finally insert everything into their correct packages.
 			addStdLib(*this);
 			inited = true;
+		} catch (const Exception &e) {
+			// For some reason this code crashes, so better echo any exceptions at this point!
+			PVAR(e);
+			delete rootScope;
+			throw;
 		} catch (...) {
 			delete rootScope;
 			throw;

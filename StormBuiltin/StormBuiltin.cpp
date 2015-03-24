@@ -140,13 +140,14 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	} else {
 		try {
 			Types t = allTypes(headers);
+			vector<Thread> threads = allThreads(headers);
 			FileData d;
-			d.typeList = typeList(t);
+			d.typeList = typeList(t, threads);
 			d.typeFunctions = typeFunctions(t);
 			d.vtableCode = vtableCode(t);
 			d.functionList = functionList(headers, t);
 			d.headerList = headerList(headers, root);
-			d.threadList = threadList(allThreads(headers));
+			d.threadList = threadList(threads);
 
 			update(input, output, asmOutput, d);
 		} catch (const Exception &e) {

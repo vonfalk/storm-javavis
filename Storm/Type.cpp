@@ -152,12 +152,12 @@ namespace storm {
 
 		if (flags & typeClass) {
 			if (super == null && this != Object::type(engine))
-				throw InternalError(identifier() + L" must at least inherit from Object.");
+				throw InternalError(identifier() + L" must at least inherit from Object. Not:" + super->identifier());
 			if (!(superFlags & typeClass))
-				throw InternalError(identifier() + L" may only inherit from other objects.");
+				throw InternalError(identifier() + L" may only inherit from other objects. Not: " + super->identifier());
 		} else if (flags & typeValue) {
 			if (!(superFlags & typeValue))
-				throw InternalError(identifier() + L" may only inherit from other values.");
+				throw InternalError(identifier() + L" may only inherit from other values. Not: " + super->identifier());
 		}
 
 		Type *lastSuper = chain.super();

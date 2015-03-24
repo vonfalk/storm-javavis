@@ -117,7 +117,7 @@ namespace storm {
 		static BuiltInType types[] = {
 			// BEGIN TYPES
 			// END TYPES
-			{ null, null, 0, 0, false, 0, 0, null },
+			{ null, null, 0, 0, BuiltInType::superNone, 0, 0, null },
 		};
 		return types;
 	}

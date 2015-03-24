@@ -328,4 +328,16 @@ namespace storm {
 		// Nothing needed.
 	}
 
+	DbgActor::DbgActor() : v(0) {}
+
+	DbgActor::DbgActor(Int v) : v(v) {}
+
+	void DbgActor::set(Int v) {
+		this->v = v;
+	}
+
+	Int DbgActor::get() const {
+		return v;
+	}
+
 }

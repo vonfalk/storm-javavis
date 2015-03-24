@@ -96,7 +96,7 @@ namespace storm {
 		// If we're on the compiler thread, we may call directly.
 		// TODO? Always allocate a new UThread? This will make sure the compiler
 		// always has a predictable amount of stack space in some causes, which could be beneficial.
-		Thread *cThread = Compiler.thread(c->engine());
+		Thread *cThread = Compiler::thread(c->engine());
 		if (cThread->thread != code::Thread::current()) {
 			// Note, we're blocking the calling thread entirely since we would otherwise
 			// possibly let other UThreads run where it was not expected!

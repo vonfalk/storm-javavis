@@ -1,10 +1,11 @@
 #include "stdafx.h"
 #include "TObject.h"
+#include "Thread.h"
 
 namespace storm {
 
-	TObject::TObject() {}
+	TObject::TObject(Par<Thread> thread) : thread(thread) {}
 
-	TObject::TObject(TObject *c) : Object(c) {}
+	TObject::TObject(Par<TObject> c) : Object(c.borrow()), thread(c->thread) {}
 
 }

@@ -46,6 +46,9 @@ namespace storm {
 	}
 
 	String Named::identifier() const {
+		// Avoid crashes:
+		if (parentLookup == null)
+			return name;
 		Auto<Name> p = path();
 		return ::toS(p);
 	}

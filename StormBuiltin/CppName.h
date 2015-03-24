@@ -78,10 +78,16 @@ protected:
 
 class CppSuper : public Printable {
 public:
-	inline CppSuper() : isHidden(false) {}
+	inline CppSuper() : isHidden(false), isThread(false) {}
 
+	// Name of the super type.
 	CppName name;
+
+	// Is the super type hidden?
 	bool isHidden;
+
+	// Actually a thread?
+	bool isThread;
 
 protected:
 	virtual void output(wostream &to) const;

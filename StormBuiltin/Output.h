@@ -7,7 +7,7 @@
  */
 
 // Generate the list of types.
-String typeList(const Types &t);
+String typeList(const Types &t, const vector<Thread> &threads);
 
 // Generate functions for each type.
 String typeFunctions(const Types &t);

@@ -50,6 +50,12 @@ static void readSuper(Tokenizer &tok, CppSuper &to) {
 		to.name = CppName::read(tok);
 		to.isHidden = true;
 		tok.expect(L")");
+	} else if (t == L"ObjectOn") {
+		tok.next();
+		tok.expect(L"<");
+		to.name = CppName::read(tok);
+		to.isThread = true;
+		tok.expect(L">");
 	} else {
 		to.name = CppName::read(tok);
 		to.isHidden = false;

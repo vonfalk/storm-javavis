@@ -55,12 +55,22 @@ private:
 #define STORM_CTOR
 
 // Declare a thread.
-#define STORM_THREAD(name)						\
-	extern storm::DeclThread name
+#define STORM_THREAD(name)										\
+	struct name {												\
+		static storm::Thread *thread(storm::Engine &e);			\
+		static void force(storm::Engine &e, storm::Thread *to);	\
+		static storm::DeclThread v;								\
+	};
 
 // Define the thread.
-#define DEFINE_STORM_THREAD(name)				\
-	storm::DeclThread name
+#define DEFINE_STORM_THREAD(name)							\
+	storm::Thread *name::thread(storm::Engine &e) {			\
+		return v.thread(e);									\
+	}														\
+	void name::force(storm::Engine &e, storm::Thread *to) { \
+		v.force(e, to);										\
+	}														\
+	storm::DeclThread name::v;
 
 namespace code {
 	class Lock;

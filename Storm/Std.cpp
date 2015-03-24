@@ -121,17 +121,31 @@ namespace storm {
 		}
 
 		const BuiltInType *p = findById(from);
-		if (p->super != from)
+		if (p->superMode == BuiltInType::superClass)
 			addHidden(e, to, p->typePtrId);
 	}
 
 	static void addSuper(Engine &to, const BuiltInType *t) {
-		if (t->super == t->typePtrId)
+		switch (t->superMode) {
+		case BuiltInType::superHidden:
+			// No official super type, functions are added later.
 			return;
-		if (t->hiddenSuper)
-			// Done later.
+		case BuiltInType::superThread:
+			// Thread!
+			TODO(L"Tell the runtime about the thread!");
 			return;
+		case BuiltInType::superNone:
+			// Nothing to do.
+			return;
+		case BuiltInType::superClass:
+			// Proceed.
+			break;
+		default:
+			assert(false, L"Not implemented yet!");
+			return;
+		}
 
+		// Add as usual.
 		Type *tc = to.builtIn(t->typePtrId);
 		Type *super = to.builtIn(t->super);
 		if (!super)
@@ -165,10 +179,9 @@ namespace storm {
 			addBuiltIn(to, fn);
 		}
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
-			if (!t->hiddenSuper)
-				continue;
-			// We should copy all the parent functions to ourselves!
-			addHidden(to, to.builtIn(t->typePtrId), t->super);
+			if (t->superMode == BuiltInType::superHidden)
+				// We should copy all the parent functions to ourselves!
+				addHidden(to, to.builtIn(t->typePtrId), t->super);
 		}
 	}
 
