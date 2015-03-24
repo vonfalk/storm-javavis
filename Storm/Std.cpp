@@ -3,6 +3,8 @@
 #include "Lib/BuiltIn.h"
 #include "Lib/Int.h"
 #include "Lib/Bool.h"
+#include "Lib/Object.h"
+#include "Lib/TObject.h"
 #include "Lib/ArrayTemplate.h"
 #include "Exception.h"
 #include "Function.h"
@@ -126,34 +128,29 @@ namespace storm {
 	}
 
 	static void addSuper(Engine &to, const BuiltInType *t) {
-		switch (t->superMode) {
-		case BuiltInType::superHidden:
-			// No official super type, functions are added later.
-			return;
-		case BuiltInType::superThread:
-			// Thread!
-			TODO(L"Tell the runtime about the thread!");
-			return;
-		case BuiltInType::superNone:
-			// Nothing to do.
-			return;
-		case BuiltInType::superClass:
-			// Proceed.
-			break;
-		default:
-			assert(false, L"Not implemented yet!");
-			return;
-		}
 
-		// Add as usual.
 		Type *tc = to.builtIn(t->typePtrId);
-		Type *super = to.builtIn(t->super);
-		if (!super)
-			throw BuiltInError(L"Failed to locate super type with id " + toS(t->super));
-		tc->setSuper(super);
+		if (t->superMode == BuiltInType::superClass) {
+			// Add as usual.
+			Type *super = to.builtIn(t->super);
+			if (!super)
+				throw BuiltInError(L"Failed to locate super type with id " + toS(t->super));
+			tc->setSuper(super);
+		} else if (tc->flags & typeClass) {
+			Type *obj = Object::type(to);
+			Type *tObj = TObject::type(to);
+
+			// We promised to set the super class earlier, so we need some default.
+			if (tc == obj || tc == tObj)
+				;
+			else if (t->superMode == BuiltInType::superThread)
+				tc->setSuper(tObj);
+			else
+				tc->setSuper(obj);
+		}
 	}
 
-	static void addThread(Engine &to, const BuiltInThread *t) {
+	static NamedThread *addThread(Engine &to, const BuiltInThread *t) {
 		Auto<Name> pkgName = parseSimpleName(to, t->pkg);
 		Package *pkg = to.package(pkgName, true);
 		if (!pkg)
@@ -162,6 +159,16 @@ namespace storm {
 		Thread *thread = t->decl->thread(to);
 		Auto<NamedThread> created = CREATE(NamedThread, to, String(t->name), thread);
 		pkg->add(created);
+		return created.borrow();
+	}
+
+	static vector<NamedThread *> addThreads(Engine &to) {
+		vector<NamedThread *> threads;
+		for (const BuiltInThread *t = builtInThreads(); t->name; t++) {
+			NamedThread *created = addThread(to, t);
+			threads.push_back(created);
+		}
+		return threads;
 	}
 
 	static void addBuiltIn(Engine &to) {
@@ -172,16 +179,21 @@ namespace storm {
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
 			addToPkg(to, t);
 		}
-		for (const BuiltInThread *t = builtInThreads(); t->name; t++) {
-			addThread(to, t);
-		}
+		vector<NamedThread *> threads = addThreads(to);
 		for (const BuiltInFunction *fn = builtInFunctions(); fn->fnPtr; fn++) {
 			addBuiltIn(to, fn);
 		}
+
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
-			if (t->superMode == BuiltInType::superHidden)
+			switch (t->superMode) {
+			case BuiltInType::superHidden:
 				// We should copy all the parent functions to ourselves!
 				addHidden(to, to.builtIn(t->typePtrId), t->super);
+				break;
+			case BuiltInType::superThread:
+				// to.builtIn(t->typePtrId)->setThread(threads[t->super]);
+				break;
+			}
 		}
 	}
 
@@ -196,7 +208,7 @@ namespace storm {
 		const BuiltInType *tType = findById(0);
 		if (tType == null || tType->name != String(L"Type"))
 			throw BuiltInError(L"The first type is not Type.");
-		cached[0] = Type::createType(to, L"Type", typeClass);
+		cached[0] = Type::createType(to, L"Type", typeClass | typeManualSuper);
 
 		// Now we can create the rest of all types.
 		for (nat i = 0; i < count; i++) {
@@ -208,8 +220,9 @@ namespace storm {
 
 			if (cached.size() <= id)
 				cached.resize(id + 1);
+
 			// Here we're not giving the right size for other platforms than the current platform.
-			cached[i] = CREATE(Type, to, t.name, TypeFlags(t.typeFlags), Size(t.typeSize), t.cppVTable);
+			cached[i] = CREATE(Type, to, t.name, TypeFlags(t.typeFlags) | typeManualSuper, Size(t.typeSize), t.cppVTable);
 		}
 		TODO(L"Find a way to compute the size of types for 64-bit as well!");
 	}

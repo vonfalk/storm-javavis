@@ -61,7 +61,7 @@ namespace storm {
 			if (!t)
 				throw SyntaxError(thread->pos, L"Can not find the thread " + ::toS(name) + L".");
 
-			setThread(t->thread());
+			setThread(t);
 			thread = null;
 		}
 

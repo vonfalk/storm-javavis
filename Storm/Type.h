@@ -1,6 +1,7 @@
 #pragma once
 #include "Named.h"
 #include "Thread.h"
+#include "NamedThread.h"
 #include "Scope.h"
 #include "Package.h"
 #include "TypeChain.h"
@@ -26,6 +27,10 @@ namespace storm {
 
 		// Final (not possible to override)?
 		typeFinal = 0x10,
+
+		// Do not setup inheritance automatically (cleared in the constructor). If set,
+		// you are required to manually set classes to inherit from Object.
+		typeManualSuper = 0x80,
 	};
 
 	BITMASK_OPERATORS(TypeFlags);
@@ -79,10 +84,13 @@ namespace storm {
 		// Associate this type with a thread. Threads are inherited by all child objects, and
 		// it is only allowed to set the thread on a root object type. (threads does not make sense
 		// with values).
-		void setThread(Par<Thread> thread);
+		void setThread(Par<NamedThread> thread);
 
 		// Get super type.
 		Type *super() const;
+
+		// Get the thread we want to run on.
+		RunOn runOn() const;
 
 		// Any super type the given type?
 		bool isA(Type *super) const;
@@ -152,6 +160,9 @@ namespace storm {
 		// Type handle.
 		RefHandle typeHandle;
 
+		// Which thread should we be running on?
+		Auto<NamedThread> thread;
+
 		// Loaded the lazy parts?
 		bool lazyLoaded;
 
@@ -165,7 +176,7 @@ namespace storm {
 		void ensureLoaded();
 
 		// Init (shared parts of constructors).
-		void init();
+		void init(TypeFlags flags);
 
 		// Update the need for virtual calls for all members.
 		void updateVirtual();

@@ -3,6 +3,7 @@
 #include "Exception.h"
 #include "Engine.h"
 #include "Lib/Object.h"
+#include "Lib/TObject.h"
 #include "Std.h"
 #include "Package.h"
 #include "Function.h"
@@ -12,37 +13,42 @@ namespace storm {
 	const String Type::CTOR = L"__ctor";
 	const String Type::DTOR = L"__dtor";
 
+	static TypeFlags maskFlags(TypeFlags flags) {
+		return flags & ~typeManualSuper;
+	}
+
 	Type::Type(const String &name, TypeFlags f, const vector<Value> &params)
-		: NameSet(name, params), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
+		: NameSet(name, params), engine(Object::engine()), flags(maskFlags(f)), typeRef(engine.arena, L"typeRef"),
 		  mySize(), chain(this), vtable(engine) {
 
-		init();
+		init(f);
 	}
 
 	Type::Type(const String &name, TypeFlags f, Size size, void *cppVTable)
-		: NameSet(name), engine(Object::engine()), flags(f), typeRef(engine.arena, L"typeRef"),
+		: NameSet(name), engine(Object::engine()), flags(maskFlags(f)), typeRef(engine.arena, L"typeRef"),
 		  mySize(size), chain(this), vtable(engine) {
 
 		// Create the VTable first, otherwise init() may get strange ideas...
 		vtable.create(cppVTable);
 
-		init();
+		init(f);
 	}
 
-	void Type::init() {
+	void Type::init(TypeFlags flags) {
 		lazyLoading = false;
 		lazyLoaded = false;
 
 		typeRef.set(this);
 
-		// Enforce that all objects inherit from Object.
-		if (flags & typeClass) {
-			// NOTE: The only time objType will be null is during startup, and in
-			// that case, setSuper will be called later anyway. Therefore it is OK
-			// to leave the class without a Object parent for a short while.
-			Type *objType = Object::type(engine);
-			if (objType)
-				setSuper(objType);
+		// Enforce that all objects inherit from Object. Note that the flag 'typeManualSuper' is
+		// set when we create Types before the Object::type has been initialized.
+		if ((flags & typeManualSuper) == 0) {
+			if (flags & typeClass) {
+				if (!Object::type(engine))
+					DebugBreak();
+				assert(Object::type(engine), L"Please use the 'typeManualSuper' flag before Object has been created.");
+				setSuper(Object::type(engine));
+			}
 		}
 	}
 
@@ -151,7 +157,7 @@ namespace storm {
 								identifier());
 
 		if (flags & typeClass) {
-			if (super == null && this != Object::type(engine))
+			if (super == null && this != Object::type(engine) && this != TObject::type(engine))
 				throw InternalError(identifier() + L" must at least inherit from Object. Not:" + super->identifier());
 			if (!(superFlags & typeClass))
 				throw InternalError(identifier() + L" may only inherit from other objects. Not: " + super->identifier());
@@ -159,6 +165,8 @@ namespace storm {
 			if (!(superFlags & typeValue))
 				throw InternalError(identifier() + L" may only inherit from other values. Not: " + super->identifier());
 		}
+
+		assert(this != TObject::type(engine) || super == null, L"TObject may not inherit from anything!");
 
 		Type *lastSuper = chain.super();
 
@@ -181,13 +189,36 @@ namespace storm {
 		return chain.super();
 	}
 
-	void Type::setThread(Par<Thread> thread) {
+	void Type::setThread(Par<NamedThread> thread) {
 		if (!(flags & typeClass))
 			throw InternalError(identifier() + L": Can not be associated with a thread unless it is a class.");
-		if (super() != Object::type(engine))
+		Type *s = super();
+		if (s != Object::type(engine) && s != TObject::type(engine))
 			throw InternalError(identifier() + L": Can not be associated with a thread since it is not a root object.");
 
-		TODO(L"Implement me!");
+		if (s != TObject::type(engine))
+			setSuper(TObject::type(engine));
+
+		this->thread = thread;
+	}
+
+	RunOn Type::runOn() const {
+		Type *tObj = TObject::type(engine);
+		if (this == tObj)
+			// We do not know which thread...
+			return RunOn(RunOn::runtime);
+
+		for (const Type *t = this; t; t = t->super()) {
+			if (t == tObj)
+				// Not decided which is the actual thread.
+				return RunOn(RunOn::runtime);
+
+			if (thread)
+				return RunOn(thread);
+		}
+
+		// We do not inherit from TObject.
+		return RunOn(RunOn::any);
 	}
 
 	Named *Type::findHere(const String &name, const vector<Value> &params) {
