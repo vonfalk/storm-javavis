@@ -81,5 +81,27 @@ ThreadVal otherValFn(ThreadVal v) on Other {
 
 
 class ThreadObj on Other {
-	
+	Int v;
+
+	Int get() {
+		v;
+	}
+
+	void set(Int z) {
+		v = z;
+	}
+}
+
+void setValue(ThreadObj o) on Other {
+	o.set(20);
+}
+
+Int findValue(ThreadObj o) on Other {
+	o.get;
+}
+
+Int threadObj() {
+	ThreadObj z;
+	setValue(z);
+	findValue(z);
 }

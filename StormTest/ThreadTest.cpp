@@ -19,6 +19,7 @@ BEGIN_TEST(ThreadTest) {
 
 	CHECK_EQ(runFn(L"test.bs.postObject"), 13);
 	CHECK_EQ(runFn(L"test.bs.postVal"), 33);
+	CHECK_EQ(runFn(L"test.bs.threadObj"), 20);
 
 	// TODO: Implement som async/fork test here as well!
 } END_TEST

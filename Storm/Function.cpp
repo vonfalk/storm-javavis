@@ -25,7 +25,7 @@ namespace storm {
 
 	RunOn Function::runOn() const {
 		if (Type *t = as<Type>(parent())) {
-			TODO(L"Not implemented correctly for types yet!");
+			return t->runOn();
 		}
 		return RunOn(RunOn::any);
 	}
@@ -240,8 +240,9 @@ namespace storm {
 
 		bool needsThunk = false;
 		needsThunk |= !result.isBuiltIn();
-		for (nat i = 0; i < params.size(); i++)
-			needsThunk |= !result.isBuiltIn();
+		for (nat i = 0; i < params.size(); i++) {
+			needsThunk |= !params[i].isBuiltIn();
+		}
 
 		if (!needsThunk)
 			return null;

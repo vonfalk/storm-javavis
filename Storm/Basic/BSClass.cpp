@@ -101,10 +101,10 @@ namespace storm {
 		add(steal(CREATE(TypeDefaultDtor, engine, this)));
 		if (!hasCtor)
 			add(steal(classDefaultCtor(this)));
-		if (!hasCopyCtor)
+		if (!hasCopyCtor && runOn().state == RunOn::any)
 			add(steal(CREATE(TypeCopyCtor, engine, this)));
 
-		if (!hasDeepCopy)
+		if (!hasDeepCopy && runOn().state == RunOn::any)
 			add(steal(CREATE(TypeDeepCopy, engine, this)));
 
 		// Temporary solution.

@@ -18,6 +18,8 @@ namespace storm {
 			before = super->defaultCtor();
 			if (!before)
 				throw InternalError(L"Did not find a default constructor in " + super->identifier());
+
+			// TODO: if the super class is TObject, we want to provide a default parameter here.
 		}
 
 		generateCode(owner, before);
@@ -329,12 +331,26 @@ namespace storm {
 		return cloneObjectEnv(o, env.borrow());
 	}
 
+	// "clone" threaded objects.
+	static Object *CODECALL returnObject(Object *o) {
+		o->addRef();
+		return o;
+	}
+
+	static Object *CODECALL returnObjectEnv(Object *o, CloneEnv *env) {
+		o->addRef();
+		return o;
+	}
+
 	static Named *stdClone(Engine &e, const String &name, const Value &t) {
 		using namespace code;
 
 		// Standard function for all objects!
 		if (t.isClass()) {
-			return nativeFunction(e, t, name, valList(1, t), &cloneObject);
+			if (t.type->runOn().state != RunOn::any)
+				return nativeFunction(e, t, name, valList(1, t), &returnObject);
+			else
+				return nativeFunction(e, t, name, valList(1, t), &cloneObject);
 		}
 
 		if (t.isBuiltIn()) {
@@ -391,7 +407,10 @@ namespace storm {
 			return null;
 
 		if (t.isClass()) {
-			return nativeFunction(e, t, name, valList(2, t, env), &cloneObjectEnv);
+			if (t.type->runOn().state != RunOn::any)
+				return nativeFunction(e, t, name, valList(2, t, env), &returnObjectEnv);
+			else
+				return nativeFunction(e, t, name, valList(2, t, env), &cloneObjectEnv);
 		}
 
 		if (t.isBuiltIn()) {

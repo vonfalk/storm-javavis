@@ -3,6 +3,7 @@
 #include "Parser.h"
 #include "BSScope.h"
 #include "BSNamed.h"
+#include "Lib/TObject.h"
 
 namespace storm {
 
@@ -151,6 +152,11 @@ namespace storm {
 		if (!parent)
 			return;
 
+		if (parent == TObject::type(engine())) {
+			callTObject(s);
+			return;
+		}
+
 		// Find something to call.
 		vector<Value> values = params->values();
 		values[0].type = parent;
@@ -161,6 +167,45 @@ namespace storm {
 		vector<code::Value> actuals(values.size());
 		for (nat i = 0; i < values.size(); i++)
 			actuals[i] = params->code(i, s, ctor->params[i]);
+
+		GenResult t;
+		ctor->localCall(s, actuals, t, false);
+	}
+
+	void bs::SuperCall::callTObject(const GenState &s) {
+		// If we are assigned a specific thread, add it as the only parameter.
+		RunOn runOn = thisPtr.type->runOn();
+		switch (runOn.state) {
+		case RunOn::runtime:
+			callTObjectRuntime(s);
+			break;
+		case RunOn::named:
+			callTObjectNamed(s, runOn.thread);
+			break;
+		default:
+			assert(false, L"TObject without any thread. Should not happen!");
+			break;
+		}
+	}
+
+	void bs::SuperCall::callTObjectRuntime(const GenState &s) {
+		TODO(L"This needs special care to ensure we are running on the correct thread!");
+		assert(false);
+	}
+
+	void bs::SuperCall::callTObjectNamed(const GenState &s, Par<NamedThread> thread) {
+		if (params->expressions.size() != 1)
+			throw SyntaxError(pos, L"Can not initialize a threaded object with parameters.");
+
+		Type *parent = TObject::type(engine());
+		vector<Value> values = valList(2, Value(parent), Value(Thread::type(engine())));
+		Function *ctor = as<Function>(parent->find(Type::CTOR, values));
+		if (!ctor)
+			throw SyntaxError(pos, L"Could not find the constructor taking a Thread in TObject!");
+
+		vector<code::Value> actuals(2);
+		actuals[0] = params->code(0, s, ctor->params[0]);
+		actuals[1] = thread->ref();
 
 		GenResult t;
 		ctor->localCall(s, actuals, t, false);

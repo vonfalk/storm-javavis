@@ -120,6 +120,11 @@ namespace storm {
 			// Call the parent constructor (if any).
 			void callParent(const GenState &s);
 
+			// Call the TObject's ctor.
+			void callTObject(const GenState &s);
+			void callTObjectRuntime(const GenState &s);
+			void callTObjectNamed(const GenState &s, Par<NamedThread> thread);
+
 			// Initialize a variable.
 			void initVar(const GenState &s, Par<TypeVar> var);
 			void initVar(const GenState &s, Par<TypeVar> var, Par<Initializer> to);

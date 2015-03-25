@@ -129,7 +129,7 @@ namespace code {
 		static void *CODECALL spawnParamMem(UThreadData *data);
 
 		// Abort the spawn.
-		static void CODECALL abortSpawn(UThread *data);
+		static void CODECALL abortSpawn(UThreadData *data);
 
 
 		// Get the thread data. Mainly for internal use.

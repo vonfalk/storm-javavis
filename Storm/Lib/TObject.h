@@ -28,6 +28,9 @@ namespace storm {
 		// Copy the object (Maybe we should not support this?)
 		STORM_CTOR TObject(Par<TObject> copy);
 
+		// Dtor.
+		~TObject();
+
 		// Get the size.
 		static Size baseSize();
 

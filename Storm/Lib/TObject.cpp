@@ -8,6 +8,8 @@ namespace storm {
 
 	TObject::TObject(Par<TObject> c) : Object(c.borrow()), thread(c->thread) {}
 
+	TObject::~TObject() {}
+
 	Size TObject::baseSize() {
 		Size s = Object::baseSize();
 		s += Size::sPtr; // thread
