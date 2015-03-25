@@ -165,6 +165,21 @@ namespace storm {
 		}
 	}
 
+	// Add the this-parameter of the first parameter.
+	static void addCtorThis(Engine &e, const GenState &z, code::Variable to, const Value &v, const code::Value &a) {
+		using namespace code;
+
+		assert(v.size() == Size::sPtr);
+
+		z.to << lea(ptrC, to);
+		z.to << fnParam(ptrC);
+		z.to << fnParam(intPtrConst(0));
+		z.to << fnParam(intPtrConst(0));
+		z.to << fnParam(natConst(Size::sPtr));
+		z.to << fnParam(a);
+		z.to << fnCall(e.fnRefs.fnParamsAdd, Size());
+	}
+
 	void Function::threadCall(const GenState &to, const Actuals &params, GenResult &res, const code::Value &thread) {
 		using namespace code;
 
@@ -191,8 +206,12 @@ namespace storm {
 		to.to << fnCall(e.fnRefs.fnParamsCtor, Size());
 
 		// Add all parameters.
-		for (nat i = 0; i < params.size(); i++)
-			addParam(e, to.child(b), fnParams, this->params[i], params[i]);
+		for (nat i = 0; i < params.size(); i++) {
+			if (i == 0 && name == Type::CTOR)
+				addCtorThis(e, to.child(b), fnParams, this->params[i], params[i]);
+			else
+				addParam(e, to.child(b), fnParams, this->params[i], params[i]);
+		}
 
 		// Describe the return type.
 		Variable returnType = createBasicTypeInfo(to.child(b), this->result);
@@ -259,7 +278,10 @@ namespace storm {
 
 		for (nat i = 0; i < params.size(); i++) {
 			const Value &t = params[i];
-			if (t.isClass()) {
+			if (i == 0 && name == Type::CTOR) {
+				Variable v = l.frame.createPtrParam();
+				l << fnParam(v);
+			} else if (t.isClass()) {
 				Variable v = l.frame.createPtrParam(engine().fnRefs.release);
 				l << fnParam(v);
 			} else if (t.isBuiltIn()) {

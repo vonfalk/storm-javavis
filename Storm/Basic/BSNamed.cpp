@@ -197,7 +197,21 @@ namespace storm {
 
 		// Call!
 		GenResult voidTo(Value(), subBlock);
-		ctor->localCall(subState, vars, voidTo, false);
+		RunOn runOn = toCreate.type->runOn();
+		switch (runOn.state) {
+		case RunOn::any:
+			ctor->localCall(subState, vars, voidTo, false);
+			break;
+		case RunOn::runtime:
+			assert(false, L"I do not know how to do this yet!");
+			break;
+		case RunOn::named:
+			ctor->threadCall(subState, vars, voidTo, runOn.thread->ref());
+			break;
+		default:
+			assert(false, L"Unknown thread!");
+			break;
+		}
 
 		// Store our result.
 		VarInfo created = to.location(subState);
