@@ -16,8 +16,10 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// if '!lookup', then the lookup functionality (such as vtables) will not be used.
+			// if 'sameObject', then we will not spawn other threads for this function call, as it
+			// is assumed that we are always calling the same object.
 			STORM_CTOR FnCall(Par<Function> toExecute, Par<Actual> params);
-			STORM_CTOR FnCall(Par<Function> toExecute, Par<Actual> params, Bool lookup);
+			STORM_CTOR FnCall(Par<Function> toExecute, Par<Actual> params, Bool lookup, Bool sameObject);
 
 			// Result type.
 			virtual Value result();
@@ -37,6 +39,9 @@ namespace storm {
 
 			// Use lookup?
 			bool lookup;
+
+			// Same object?
+			bool sameObject;
 		};
 
 

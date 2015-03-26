@@ -92,10 +92,10 @@ class ThreadObj on Other {
 	}
 }
 
-class DynActor on <z> {
+class DynActor on ? {
 	Int v;
 
-	ctor(Thread z) {
+	ctor(Thread) {
 		init();
 	}
 
@@ -105,6 +105,13 @@ class DynActor on <z> {
 
 	void set(Int z) {
 		v = z;
+	}
+}
+
+class DerDynActor extends DynActor {
+	ctor(Thread, Int initial) {
+		init();
+		set(initial);
 	}
 }
 
@@ -148,5 +155,10 @@ Int threadActor() {
 Int actorObj() {
 	DynActor z = DynActor(Other);
 	setValue(z, 31);
+	findValue(z);
+}
+
+Int actorDerObj() {
+	DynActor z = DerDynActor(Other, 22);
 	findValue(z);
 }

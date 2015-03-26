@@ -9,9 +9,9 @@ namespace storm {
 	namespace bs {
 
 		static void callOnThread(Par<Function> fn, const GenState &s, const Function::Actuals &actuals,
-								GenResult &to, bool lookup) {
+								GenResult &to, bool lookup, bool sameObject) {
 			RunOn target = fn->runOn();
-			if (s.runOn.canRun(target)) {
+			if (sameObject || s.runOn.canRun(target)) {
 				// Regular function call is  enough.
 				fn->localCall(s, actuals, to, lookup);
 				return;
@@ -25,17 +25,17 @@ namespace storm {
 
 		// Call the function and handle the result correctly.
 		static void callFn(Par<Function> call, const GenState &s, const Function::Actuals &values,
-						GenResult &to, bool lookup) {
+						GenResult &to, bool lookup, bool sameObject) {
 			using namespace code;
 
 			if (to.type.ref == call->result.ref) {
-				callOnThread(call, s, values, to, lookup);
+				callOnThread(call, s, values, to, lookup, sameObject);
 				return;
 			}
 
 			// We need to do stuff!
 			GenResult t(call->result, s.block);
-			callOnThread(call, s, values, t, lookup);
+			callOnThread(call, s, values, t, lookup, sameObject);
 
 			if (!to.needed())
 				return;
@@ -67,11 +67,11 @@ namespace storm {
 	 * Function call.
 	 */
 
-	bs::FnCall::FnCall(Par<Function> toExecute, Par<Actual> params, Bool lookup)
-		: toExecute(toExecute), params(params), lookup(lookup) {}
+	bs::FnCall::FnCall(Par<Function> toExecute, Par<Actual> params, Bool lookup, Bool sameObject)
+		: toExecute(toExecute), params(params), lookup(lookup), sameObject(sameObject) {}
 
 	bs::FnCall::FnCall(Par<Function> toExecute, Par<Actual> params)
-		: toExecute(toExecute), params(params), lookup(true) {}
+		: toExecute(toExecute), params(params), lookup(true), sameObject(false) {}
 
 	Value bs::FnCall::result() {
 		return toExecute->result;
@@ -93,7 +93,7 @@ namespace storm {
 			vars[i] = params->code(i, s, values[i]);
 
 		// Call!
-		callFn(toExecute, s, vars, to, lookup);
+		callFn(toExecute, s, vars, to, lookup, sameObject);
 	}
 
 	void bs::FnCall::output(wostream &to) const {
@@ -184,7 +184,7 @@ namespace storm {
 
 		// Call!
 		GenResult voidTo(Value(), subBlock);
-		callFn(ctor, subState, vars, voidTo, false);
+		callFn(ctor, subState, vars, voidTo, false, false);
 
 		// Store our result.
 		VarInfo created = to.location(subState);
@@ -422,7 +422,7 @@ namespace storm {
 	 */
 	namespace bs {
 		static Expr *findCtor(Type *t, Par<Actual> actual, const SrcPos &pos);
-		static Expr *findTarget(Named *n, Par<Expr> first, Par<Actual> actual, const SrcPos &pos, bool useLookup);
+		static Expr *findTarget(Named *n, Par<LocalVar> first, Par<Actual> actual, const SrcPos &pos, bool useLookup);
 		static Expr *findTargetThis(Par<Block> block, Par<Name> name,
 									Par<Actual> params, const SrcPos &pos,
 									Named *&candidate);
@@ -446,7 +446,7 @@ namespace storm {
 
 	// Helper to create the actual type, given something found. If '!useLookup', then we will not use the lookup
 	// of the function or variable (ie use vtables).
-	static bs::Expr *bs::findTarget(Named *n, Par<Expr> first, Par<Actual> actual, const SrcPos &pos, bool useLookup) {
+	static bs::Expr *bs::findTarget(Named *n, Par<LocalVar> first, Par<Actual> actual, const SrcPos &pos, bool useLookup) {
 		if (!n)
 			return null;
 
@@ -457,8 +457,8 @@ namespace storm {
 
 		if (Function *f = as<Function>(n)) {
 			if (first)
-				actual->addFirst(first);
-			return CREATE(FnCall, n, f, actual, useLookup);
+				actual->addFirst(steal(CREATE(LocalVarAccess, first, first)));
+			return CREATE(FnCall, n, f, actual, useLookup, first ? true : false);
 		}
 
 		if (LocalVar *v = as<LocalVar>(n)) {
@@ -468,12 +468,13 @@ namespace storm {
 
 		if (TypeVar *v = as<TypeVar>(n)) {
 			if (first)
-				return CREATE(MemberVarAccess, n, first, v);
+				return CREATE(MemberVarAccess, n, steal(CREATE(LocalVarAccess, first, first)), v);
 			else
 				return CREATE(MemberVarAccess, n, actual->expressions.front(), v);
 		}
 
 		if (NamedThread *v = as<NamedThread>(n)) {
+			assert(!first);
 			return CREATE(NamedThreadAccess, n, v);
 		}
 
@@ -520,9 +521,7 @@ namespace storm {
 		}
 
 		Named *n = candidate;
-
-		Auto<Expr> first = CREATE(LocalVarAccess, block, thisVar);
-		Expr *e = findTarget(n, first, params, pos, useLookup);
+		Expr *e = findTarget(n, thisVar, params, pos, useLookup);
 		if (e)
 			return e;
 

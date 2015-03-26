@@ -38,9 +38,8 @@ namespace storm {
 		return c;
 	}
 
-	bs::Class *bs::threadClass(SrcPos pos, Par<SStr> name, Par<SStr> thread, Par<SStr> content) {
+	bs::Class *bs::threadClass(SrcPos pos, Par<SStr> name, Par<SStr> content) {
 		Class *c = CREATE(Class, name, typeClass, pos, name->v->v, content);
-		c->threadParam = thread->v;
 		c->setSuper(TObject::type(c->engine));
 		return c;
 	}
@@ -167,7 +166,7 @@ namespace storm {
 		vector<String> names = params->cNames();
 		vector<Value> values = params->cTypes(owner->scope);
 
-		return CREATE(BSCtor, owner->engine, values, names, owner, owner->scope, contents, pos);
+		return CREATE(BSCtor, owner->engine, values, names, owner->scope, contents, pos);
 	}
 
 	bs::BSCtor *STORM_FN bs::classDefaultCtor(Par<Class> owner) {

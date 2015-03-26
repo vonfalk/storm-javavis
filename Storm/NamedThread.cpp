@@ -44,6 +44,10 @@ namespace storm {
 		if (o.state == any)
 			return true;
 
+		// If the other one is declared as 'runtime', we can not know.
+		if (o.state == runtime)
+			return false;
+
 		if (state != o.state)
 			return false;
 		if (state == named && thread.borrow() != o.thread.borrow())

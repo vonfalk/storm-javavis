@@ -22,6 +22,7 @@ BEGIN_TEST(ThreadTest) {
 	CHECK_EQ(runFn(L"test.bs.threadObj"), 20);
 	CHECK_EQ(runFn(L"test.bs.threadActor"), 20);
 	CHECK_EQ(runFn(L"test.bs.actorObj"), 31);
+	CHECK_EQ(runFn(L"test.bs.actorDerObj"), 22);
 
 	// TODO: Implement som async/fork test here as well!
 } END_TEST

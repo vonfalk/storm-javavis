@@ -19,22 +19,16 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create. If contents is null, we will generate the default ctor.
-			BSCtor(const vector<Value> &values, const vector<String> &names, Par<Class> owner,
+			BSCtor(const vector<Value> &values, const vector<String> &names,
 				const Scope &scope, Par<SStr> contents, const SrcPos &pos);
 
 			// Scope.
 			const Scope scope;
 
-			// Index of the parameter used to store the thread we're supposed to run on. 'invalid' otherwise.
-			nat threadParam;
-
-			// Invalid parameter id.
-			static const nat invalidParam;
-
 			// We may need to run on a specific thread based on the current actual parameters.
 			virtual code::Variable findThread(const GenState &s, const Actuals &params);
 
-			// Add parameters. Returns the local variable that represents the 'threadParam' above.
+			// Add parameters. Returns the local variable that represents the 'threadParam' above if needed.
 			LocalVar *addParams(Par<Block> to);
 
 		private:
@@ -55,6 +49,9 @@ namespace storm {
 
 			// Default ctor contents.
 			CtorBody *defaultParse();
+
+			// Do we need a 'hidden' thread parameter?
+			bool needsThread;
 		};
 
 		/**
@@ -145,11 +142,8 @@ namespace storm {
 			// Call the parent constructor (if any).
 			void callParent(const GenState &s);
 
-			// Call the TObject's ctor.
-			void callTObject(const GenState &s);
-
-			// Figure out which thread we want to run on!
-			code::Value tObjectThread();
+			// Call the TObject's ctor, assuming we want to run on 't'.
+			void callTObject(const GenState &s, Par<NamedThread> t);
 
 			// Initialize a variable.
 			void initVar(const GenState &s, Par<TypeVar> var);
