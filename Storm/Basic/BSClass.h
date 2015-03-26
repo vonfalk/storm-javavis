@@ -38,6 +38,9 @@ namespace storm {
 			// Associated thread (if any).
 			Auto<TypeName> thread;
 
+			// The parameter to the constructor to be used as the thread.
+			Auto<Str> threadParam;
+
 		protected:
 			// Load the contents lazily.
 			virtual void lazyLoad();
@@ -51,9 +54,14 @@ namespace storm {
 		// Create a class not extended from anything.
 		Class *STORM_FN createClass(SrcPos pos, Par<SStr> name, Par<SStr> content);
 		Class *STORM_FN createValue(SrcPos pos, Par<SStr> name, Par<SStr> content);
+
+		// Create a class extended from a base class.
 		Class *STORM_FN extendClass(SrcPos pos, Par<SStr> name, Par<TypeName> from, Par<SStr> content);
 		Class *STORM_FN extendValue(SrcPos pos, Par<SStr> name, Par<TypeName> from, Par<SStr> content);
+
+		// Create an actor class.
 		Class *STORM_FN threadClass(SrcPos pos, Par<SStr> name, Par<TypeName> thread, Par<SStr> content);
+		Class *STORM_FN threadClass(SrcPos pos, Par<SStr> name, Par<SStr> thread, Par<SStr> content);
 
 
 		/**

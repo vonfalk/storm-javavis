@@ -3,7 +3,7 @@
 #include "Fn.h"
 #include "Storm/Thread.h"
 
-BEGIN_TEST_(ThreadTest) {
+BEGIN_TEST(ThreadTest) {
 
 	Auto<Thread> thread = runFn<Thread*>(L"test.bs.getThread");
 	CHECK_NEQ(thread.borrow(), storm::Compiler::thread(*gEngine));
@@ -21,6 +21,7 @@ BEGIN_TEST_(ThreadTest) {
 	CHECK_EQ(runFn(L"test.bs.postVal"), 33);
 	CHECK_EQ(runFn(L"test.bs.threadObj"), 20);
 	CHECK_EQ(runFn(L"test.bs.threadActor"), 20);
+	CHECK_EQ(runFn(L"test.bs.actorObj"), 31);
 
 	// TODO: Implement som async/fork test here as well!
 } END_TEST

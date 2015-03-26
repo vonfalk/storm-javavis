@@ -37,10 +37,6 @@ namespace storm {
 		// Function result.
 		const Value result;
 
-		// Run this function on? Defaults to the specifier of the type if it is a member,
-		// otherwise nothing.
-		virtual RunOn runOn() const;
-
 		// Get the code for this function. Do not assume it is static! Use
 		// 'ref' if you are doing anything more than one function call!
 		void *pointer();
@@ -57,6 +53,14 @@ namespace storm {
 
 		// Actual parameters typedef.
 		typedef vector<code::Value> Actuals;
+
+		// Run this function on? Defaults to the specifier of the type if it is a member,
+		// otherwise nothing.
+		virtual RunOn runOn() const;
+
+		// Output code to find the Thread we want to run on. Always returns a borrowed reference.
+		// Does not generate any meaningful result unless 'runOn' returns a state other than 'any'.
+		virtual code::Variable findThread(const GenState &to, const Actuals &params);
 
 		// Generate code for this function call, assuming we are performing the call the same thread as the
 		// currently running thread. if 'useLookup' is false, we will not use the lookup function (ie VTables).

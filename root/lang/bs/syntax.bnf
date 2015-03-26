@@ -51,6 +51,7 @@ Class => createValue(pos, name, contents) : "value", Name name, "{" - SkipBlock 
 Class => extendClass(pos, name, base, contents) : "class", Name name, "extends", Type base, "{" - SkipBlock contents - "}";
 Class => extendClass(pos, name, base, contents) : "value", Name name, "extends", Type base, "{" - SkipBlock contents - "}";
 Class => threadClass(pos, name, thread, contents) : "class", Name name, "on", Type thread, "{" - SkipBlock contents - "}";
+Class => threadClass(pos, name, t, contents) : "class", Name name, "on", "<", Name t, ">", "{" - SkipBlock contents - "}";
 
 // Named thread declaration.
 NamedThread => NamedThread(name) : "thread", Name name, ";";

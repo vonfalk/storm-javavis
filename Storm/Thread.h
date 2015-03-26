@@ -25,6 +25,10 @@ namespace storm {
 		// Create a thread.
 		STORM_CTOR Thread();
 
+		// Since we're acting like a value, we provide a copy ctor.
+		// TODO? Maybe we should become a threaded object?
+		STORM_CTOR Thread(Thread *o);
+
 		// Create a thread and use a specific already existing code::Thread object.
 		Thread(code::Thread thread);
 

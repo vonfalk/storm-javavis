@@ -92,6 +92,22 @@ class ThreadObj on Other {
 	}
 }
 
+class DynActor on <z> {
+	Int v;
+
+	ctor(Thread z) {
+		init();
+	}
+
+	Int get() {
+		v;
+	}
+
+	void set(Int z) {
+		v = z;
+	}
+}
+
 // This would not work unless 'o' is a threaded object.
 void setValue(ThreadObj o) on Other {
 	o.set(20);
@@ -101,11 +117,19 @@ void setValue(DbgActor o, Int to) on Other {
 	o.set(to);
 }
 
+void setValue(DynActor o, Int to) on Other {
+	o.set(to);
+}
+
 Int findValue(ThreadObj o) on Other {
 	o.get;
 }
 
 Int findValue(DbgActor o) on Other {
+	o.get;
+}
+
+Int findValue(DynActor o) on Other {
 	o.get;
 }
 
@@ -119,4 +143,10 @@ Int threadActor() {
 	DbgActor a(10);
 	setValue(a, 20);
 	findValue(a);
+}
+
+Int actorObj() {
+	DynActor z = DynActor(Other);
+	setValue(z, 31);
+	findValue(z);
 }

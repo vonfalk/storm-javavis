@@ -17,23 +17,10 @@ namespace storm {
 				return;
 			}
 
-			// Remote thread call is needed...
-			switch (target.state) {
-			case RunOn::any:
-			assert(false, L"Should be handled above!");
-				fn->localCall(s, actuals, to, lookup);
-				break;
-			case RunOn::runtime:
-			assert(false, L"Not implemented yet!");
-				break;
-			case RunOn::named:
-			assert(lookup, L"Ignoring lookup for thread calls is not supported.");
-				fn->threadCall(s, actuals, to, target.thread->ref());
-				break;
-			default:
-			assert(false, L"Unknown RunOn::state: " + ::toS(nat(target.state)));
-				break;
-			}
+			assert(target.state != RunOn::any);
+
+			code::Variable threadVar = fn->findThread(s, actuals);
+			fn->threadCall(s, actuals, to, threadVar);
 		}
 
 		// Call the function and handle the result correctly.
@@ -197,21 +184,7 @@ namespace storm {
 
 		// Call!
 		GenResult voidTo(Value(), subBlock);
-		RunOn runOn = toCreate.type->runOn();
-		switch (runOn.state) {
-		case RunOn::any:
-			ctor->localCall(subState, vars, voidTo, false);
-			break;
-		case RunOn::runtime:
-			assert(false, L"I do not know how to do this yet!");
-			break;
-		case RunOn::named:
-			ctor->threadCall(subState, vars, voidTo, runOn.thread->ref());
-			break;
-		default:
-			assert(false, L"Unknown thread!");
-			break;
-		}
+		callFn(ctor, subState, vars, voidTo, false);
 
 		// Store our result.
 		VarInfo created = to.location(subState);

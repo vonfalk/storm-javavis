@@ -10,6 +10,7 @@ namespace storm {
 		STORM_PKG(lang.bs);
 
 		class CtorBody;
+		class Class;
 
 		/**
 		 * A constructor. Enforces that the parent constructor is called.
@@ -18,14 +19,23 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create. If contents is null, we will generate the default ctor.
-			BSCtor(const vector<Value> &values, const vector<String> &names,
+			BSCtor(const vector<Value> &values, const vector<String> &names, Par<Class> owner,
 				const Scope &scope, Par<SStr> contents, const SrcPos &pos);
 
 			// Scope.
 			const Scope scope;
 
-			// Add parameters.
-			void addParams(Par<Block> to);
+			// Index of the parameter used to store the thread we're supposed to run on. 'invalid' otherwise.
+			nat threadParam;
+
+			// Invalid parameter id.
+			static const nat invalidParam;
+
+			// We may need to run on a specific thread based on the current actual parameters.
+			virtual code::Variable findThread(const GenState &s, const Actuals &params);
+
+			// Add parameters. Returns the local variable that represents the 'threadParam' above.
+			LocalVar *addParams(Par<Block> to);
 
 		private:
 			// Parameter names.
@@ -57,6 +67,18 @@ namespace storm {
 
 			using ExprBlock::add;
 			void STORM_FN add(Par<ArrayP<Expr>> exprs);
+
+			// Temporary storage of the actual LocalVar that stores the parameter we need to capture.
+			Auto<LocalVar> threadParam;
+
+			// Stores a copy of the parameter used to store the thread. Not reference counted.
+			// This is to make it impossible to overwrite the thread parameter before passing it
+			// to the TObject's constructor, like this:
+			// ctor(Thread a) { a = x; init(); }.
+			code::Variable thread;
+
+			// Code generation.
+			virtual void blockCode(const GenState &state, GenResult &to, const code::Block &block);
 		};
 
 		/**
@@ -107,6 +129,9 @@ namespace storm {
 			// This parameter.
 			Auto<LocalVar> thisVar;
 
+			// Body.
+			CtorBody *rootBlock;
+
 			// Scope.
 			Scope scope;
 
@@ -122,8 +147,9 @@ namespace storm {
 
 			// Call the TObject's ctor.
 			void callTObject(const GenState &s);
-			void callTObjectRuntime(const GenState &s);
-			void callTObjectNamed(const GenState &s, Par<NamedThread> thread);
+
+			// Figure out which thread we want to run on!
+			code::Value tObjectThread();
 
 			// Initialize a variable.
 			void initVar(const GenState &s, Par<TypeVar> var);

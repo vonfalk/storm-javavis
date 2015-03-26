@@ -3,18 +3,52 @@
 #include "Parser.h"
 #include "BSScope.h"
 #include "BSNamed.h"
+#include "BSClass.h"
 #include "Lib/TObject.h"
 
 namespace storm {
 
-	bs::BSCtor::BSCtor(const vector<Value> &values, const vector<String> &names,
+	const nat bs::BSCtor::invalidParam = -1;
+
+	bs::BSCtor::BSCtor(const vector<Value> &values, const vector<String> &names, Par<Class> owner,
 				const Scope &scope, Par<SStr> contents, const SrcPos &pos)
 		: Function(Value(), Type::CTOR, values), scope(scope), contents(contents), paramNames(names), pos(pos) {
+
+		threadParam = invalidParam;
+
+		if (owner->threadParam) {
+			for (nat i = 0; i < names.size(); i++) {
+				if (names[i] == owner->threadParam->v) {
+					Value expected = Value::thisPtr(Thread::type(engine()));
+					if (!expected.canStore(values[i]))
+						throw SyntaxError(pos, L"The parameter '" + names[i] + L"' has to be of the type "
+										+ ::toS(expected) + L". Found " + ::toS(values[i]));
+					threadParam = i;
+				}
+			}
+
+			if (threadParam == invalidParam)
+				throw SyntaxError(pos, L"The parameter '" + owner->threadParam->v + L"' has to be present "
+								L"in all constructors of the class " + owner->name + L".");
+		}
 
 		// Rename until it is initialized!
 		paramNames[0] = L" this";
 
 		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSCtor::generateCode))));
+	}
+
+	code::Variable bs::BSCtor::findThread(const GenState &s, const Actuals &params) {
+		using namespace code;
+
+		RunOn on = runOn();
+		if (on.state != RunOn::runtime)
+			return Function::findThread(s, params);
+
+		Variable r = s.frame.createPtrVar(s.block);
+		assert(threadParam != invalidParam, L"There should be a supplied thread parameter here.");
+		s.to << mov(r, params[threadParam]);
+		return r;
 	}
 
 	bs::CtorBody *bs::BSCtor::parse() {
@@ -82,23 +116,38 @@ namespace storm {
 		return l;
 	}
 
-	void bs::BSCtor::addParams(Par<Block> to) {
+	bs::LocalVar *bs::BSCtor::addParams(Par<Block> to) {
+		Auto<LocalVar> thread;
+
 		for (nat i = 0; i < params.size(); i++) {
 			Auto<LocalVar> var = CREATE(LocalVar, this, paramNames[i], params[i], pos, true);
 			if (i == 0)
 				var->constant = true;
 			to->add(var);
+			if (i == threadParam)
+				thread = var;
 		}
+
+		return thread.ret();
 	}
 
 	bs::CtorBody::CtorBody(Par<BSCtor> ctor) : ExprBlock(ctor->scope) {
-		ctor->addParams(this);
+		threadParam = ctor->addParams(this);
 	}
 
 	void bs::CtorBody::add(Par<ArrayP<Expr>> exprs) {
 		for (nat i = 0; i < exprs->count(); i++) {
 			add(exprs->at(i));
 		}
+	}
+
+	void bs::CtorBody::blockCode(const GenState &state, GenResult &to, const code::Block &block) {
+		if (threadParam) {
+			thread = state.frame.createPtrVar(state.block);
+			state.to << mov(thread, threadParam->var.var);
+		}
+
+		Block::blockCode(state, to, block);
 	}
 
 	bs::Initializer::Initializer(Par<SStr> name, Par<Expr> expr) : name(name), expr(expr) {}
@@ -116,6 +165,8 @@ namespace storm {
 	}
 
 	void bs::SuperCall::init(Par<CtorBody> block, Par<Actual> params) {
+		rootBlock = block.borrow();
+
 		// Add the regular this parameter!
 		thisVar = capture(block->variable(L" this"));
 		thisPtr = thisVar->result;
@@ -173,42 +224,39 @@ namespace storm {
 	}
 
 	void bs::SuperCall::callTObject(const GenState &s) {
-		// If we are assigned a specific thread, add it as the only parameter.
-		RunOn runOn = thisPtr.type->runOn();
-		switch (runOn.state) {
-		case RunOn::runtime:
-			callTObjectRuntime(s);
-			break;
-		case RunOn::named:
-			callTObjectNamed(s, runOn.thread);
-			break;
-		default:
-			assert(false, L"TObject without any thread. Should not happen!");
-			break;
-		}
-	}
-
-	void bs::SuperCall::callTObjectRuntime(const GenState &s) {
-		TODO(L"This needs special care to ensure we are running on the correct thread!");
-		assert(false);
-	}
-
-	void bs::SuperCall::callTObjectNamed(const GenState &s, Par<NamedThread> thread) {
 		if (params->expressions.size() != 1)
 			throw SyntaxError(pos, L"Can not initialize a threaded object with parameters.");
 
+		// Find the constructor of TObject.
 		Type *parent = TObject::type(engine());
 		vector<Value> values = valList(2, Value(parent), Value(Thread::type(engine())));
 		Function *ctor = as<Function>(parent->find(Type::CTOR, values));
 		if (!ctor)
-			throw SyntaxError(pos, L"Could not find the constructor taking a Thread in TObject!");
+			throw InternalError(L"The constructor of TObject: __ctor(TObject, Thread) was not found!");
 
+		// Call the constructor.
 		vector<code::Value> actuals(2);
 		actuals[0] = params->code(0, s, ctor->params[0]);
-		actuals[1] = thread->ref();
+		actuals[1] = tObjectThread();
 
 		GenResult t;
 		ctor->localCall(s, actuals, t, false);
+	}
+
+	code::Value bs::SuperCall::tObjectThread() {
+		RunOn runOn = thisPtr.type->runOn();
+		switch (runOn.state) {
+		case RunOn::runtime:
+			assert(rootBlock->thread != code::Variable::invalid, L"Should have had a special variable here!");
+			return rootBlock->thread;
+		case RunOn::named:
+			return runOn.thread->ref();
+		default:
+			assert(false, L"TObject without any thread. Should not happen!");
+			break;
+		}
+
+		return code::Value();
 	}
 
 	void bs::SuperCall::code(const GenState &s, GenResult &r) {

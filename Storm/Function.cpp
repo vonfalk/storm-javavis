@@ -5,6 +5,7 @@
 #include "TypeDtor.h"
 #include "Exception.h"
 #include "Lib/CloneEnv.h"
+#include "Lib/TObject.h"
 #include "Code/Instruction.h"
 #include "Code/VTable.h"
 
@@ -42,6 +43,32 @@ namespace storm {
 	code::RefSource &Function::directRef() {
 		initRefs();
 		return *codeRef;
+	}
+
+	code::Variable Function::findThread(const GenState &s, const Actuals &params) {
+		using namespace code;
+
+		RunOn on = runOn();
+		assert(on.state != RunOn::any, L"Only use 'findThread' on functions which 'runOn()' something other than any.");
+
+		Variable r = s.frame.createPtrVar(s.block);
+
+		switch (on.state) {
+		case RunOn::runtime:
+			// Should be a this-ptr. Does not work well for constructors.
+			assert(name != Type::CTOR, L"Please specify for your constructor semantics!");
+			s.to << mov(ptrA, params[0]);
+			s.to << mov(r, ptrRel(ptrA, TObject::threadOffset()));
+			break;
+		case RunOn::named:
+			s.to << mov(r, on.thread->ref());
+			break;
+		default:
+			assert(false, L"Unknown state.");
+			break;
+		}
+
+		return r;
 	}
 
 	void Function::localCall(const GenState &to, const Actuals &params, GenResult &res, bool useLookup) {

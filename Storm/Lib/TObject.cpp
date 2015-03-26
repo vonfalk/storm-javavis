@@ -17,4 +17,10 @@ namespace storm {
 		return s;
 	}
 
+	Offset TObject::threadOffset() {
+		Offset r(Object::baseSize());
+		assert(r.current() == OFFSET_OF(TObject, thread), L"Forgot to update threadOffset!");
+		return r;
+	}
+
 }
