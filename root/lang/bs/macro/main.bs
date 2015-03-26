@@ -1,0 +1,58 @@
+use lang:bs;
+use core:lang;
+
+// Get the name of the TypeName type.
+TypeName typeName() {
+	TypeName name;
+	name.add(TypePart("lang"));
+	name.add(TypePart("bs"));
+	name.add(TypePart("TypeName"));
+	name;
+}
+
+// Get the name of the TypePart type.
+TypeName typePart() {
+	TypeName name;
+	name.add(TypePart("lang"));
+	name.add(TypePart("bs"));
+	name.add(TypePart("TypePart"));
+	name;
+}
+
+// Create something that gives you a TypePart.
+Expr createTypePart(Block block, TypePart part) {
+	ExprBlock b(block);
+	TypeName partT = typePart();
+
+	Expr str = strConstant(SStr(part.title));
+	Var base(b, partT, SStr("part"), Actual(str));
+	b.add(base);
+	LocalVarAccess bAccess(base.var);
+
+	for (Nat i = 0.nat; i < part.count; i++) {
+		Expr created = createType(b, part[i]);
+		b.add(namedExpr(b, SStr("add"), bAccess, Actual(created)));
+	}
+
+	b.add(bAccess);
+	b;
+}
+
+// Create something that gives you a TypeName.
+Expr createType(Block block, TypeName type) {
+	ExprBlock b(block);
+	TypeName nameT = typeName();
+	TypeName partT = typePart();
+
+	Var base(b, nameT, SStr("name"), Actual());
+	b.add(base);
+
+	LocalVarAccess bAccess(base.var);
+	for (Nat i = 0.nat; i < type.count; i++) {
+		Expr created = createTypePart(b, type[i]);
+		b.add(namedExpr(b, SStr("add"), bAccess, Actual(created)));
+	}
+
+	b.add(bAccess);
+	b;
+}

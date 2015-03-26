@@ -30,6 +30,15 @@ namespace storm {
 			// Parameters.
 			vector<Auto<TypeName> > params;
 
+			// Name.
+			Str *STORM_FN title() const;
+
+			// Size.
+			Nat STORM_FN count() const;
+
+			// Element access.
+			TypeName *STORM_FN operator [](Nat id) const;
+
 			// As name part.
 			NamePart *toPart(const Scope &scope);
 
@@ -52,6 +61,12 @@ namespace storm {
 
 			// Parts.
 			vector<Auto<TypePart> > parts;
+
+			// Size.
+			Nat STORM_FN count() const;
+
+			// Get element.
+			TypePart *STORM_FN operator [](Nat id) const;
 
 			// Convert to a Name.
 			Name *toName(const Scope &scope);

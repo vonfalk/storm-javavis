@@ -1,7 +1,7 @@
 // Extension to allow expressions like:
 // bf(<in>) { code }
 
-Expr => bfCode(block, input, r) : "bf", "(", Expr(block) input, ")", "{", BfRoot r, "}";
+Expr => bfCode(block, input, mem, r) : "bf", "(", Expr(block) input, ",", Expr(block) mem, ")", "{", BfRoot r, "}";
 
 BfRoot => Array<BfToken>() : ( BfToken -> push, )*;
 

@@ -5,6 +5,10 @@ namespace storm {
 
 	bs::Actual::Actual() {}
 
+	bs::Actual::Actual(Par<Expr> expr) {
+		add(expr);
+	}
+
 	vector<Value> bs::Actual::values() {
 		vector<Value> v(expressions.size());
 		for (nat i = 0; i < expressions.size(); i++) {

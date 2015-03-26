@@ -27,7 +27,7 @@ namespace storm {
 			to << intValue << L"i";
 			break;
 		case tStr:
-			to << strValue << L"s";
+			to << L"\"" << strValue << L"\"";
 			break;
 		default:
 			to << L"UNKNOWN";

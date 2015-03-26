@@ -13,6 +13,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Actual();
+			STORM_CTOR Actual(Par<Expr> expr);
 
 			// Parameters.
 			vector<Auto<Expr> > expressions;

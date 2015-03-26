@@ -1,4 +1,5 @@
 use lang:bs;
+use lang:bs:macro;
 use core:debug;
 use core:lang;
 
@@ -11,11 +12,11 @@ class BfEnv {
 	Var ptr;
 	Var data;
 
-	ctor(ExprBlock b, Expr input) {
-		TypeName strT = strType();
-		TypeName natT = natType();
+	ctor(ExprBlock b, Expr input, Expr memSize) {
+		TypeName strT = name{core:Str};
+		TypeName natT = name{core:Nat};
 
-		Expr init = namedExpr(b, SStr("initArray"), Actual());
+		Expr init = namedExpr(b, name{lang:bs:bf:initArray}, Actual(memSize));
 		init() {
 			block = b;
 			input = Var(b, strT, SStr("input"), input);
@@ -65,7 +66,7 @@ class BfOutput extends BfToken {
 		Actual p;
 		p.add(LocalVarAccess(env.output.var));
 		p.add(env.dataExpr);
-		env.block.add(namedExpr(env.block, debugAppend(), p));
+		env.block.add(namedExpr(env.block, name{core:debug:append}, p));
 	}
 }
 
@@ -105,45 +106,27 @@ class BfLoop extends BfToken {
 	}
 }
 
-TypeName strType() {
-	TypeName name();
-	name.add(TypePart("core"));
-	name.add(TypePart("Str"));
-	name;
-}
-
-TypeName natType() {
-	TypeName name();
-	name.add(TypePart("core"));
-	name.add(TypePart("Nat"));
-	name;
-}
-
-TypeName debugAppend() {
-	TypeName name;
-	name.add(TypePart("core"));
-	name.add(TypePart("debug"));
-	name.add(TypePart("append"));
-	name;
-}
-
 Expr asNat(Block b, Expr e) {
 	Actual p;
 	p.add(e);
 	namedExpr(b, SStr("nat"), p);
 }
 
-Nat[] initArray() {
+Nat[] initArray(Nat size) {
 	Nat[] r();
-	for (Nat i = 0.nat; i < 512.nat; i++)
+	for (Nat i = 0.nat; i < size; i++)
 		r.push(0.nat);
 	r;
 }
 
-Expr bfCode(Block parent, Expr input, BfToken[] tokens) {
+Nat[] initArray(Int size) {
+	initArray(size.nat);
+}
+
+Expr bfCode(Block parent, Expr input, Expr memSize, BfToken[] tokens) {
 	ExprBlock block(parent);
 
-	BfEnv env(block, input);
+	BfEnv env(block, input, memSize);
 
 	for (Nat i = 0.nat; i < tokens.count; i++) {
 		tokens[i].insert(env);

@@ -40,9 +40,9 @@ namespace storm {
 	}
 
 	void bs::Block::add(Par<LocalVar> var) {
-		LocalVar *old = variable(var->name);
-		if (old != null)
-			throw TypeError(old->pos, L"The variable " + old->name + L" is already defined.");
+		VarMap::const_iterator i = variables.find(var->name);
+		if (i != variables.end())
+			throw TypeError(i->second->pos, L"The variable " + var->name + L" is already defined.");
 		variables.insert(make_pair(var->name, var));
 	}
 

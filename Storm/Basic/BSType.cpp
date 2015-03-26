@@ -10,6 +10,18 @@ namespace storm {
 
 		bs::TypePart::TypePart(Par<Str> name) : name(name) {}
 
+		Str *bs::TypePart::title() const {
+			return name.ret();
+		}
+
+		Nat bs::TypePart::count() const {
+			return params.size();
+		}
+
+		TypeName *bs::TypePart::operator [](Nat id) const {
+			return params[id].ret();
+		}
+
 		void bs::TypePart::add(Par<TypeName> param) {
 			params.push_back(param);
 		}
@@ -38,6 +50,14 @@ namespace storm {
 
 		void bs::TypeName::add(Par<TypePart> part) {
 			parts.push_back(part);
+		}
+
+		Nat bs::TypeName::count() const {
+			return parts.size();
+		}
+
+		TypePart *bs::TypeName::operator [](Nat i) const {
+			return parts[i].ret();
 		}
 
 		void bs::TypeName::output(wostream &to) const {
