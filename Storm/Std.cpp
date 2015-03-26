@@ -191,7 +191,7 @@ namespace storm {
 				addHidden(to, to.builtIn(t->typePtrId), t->super);
 				break;
 			case BuiltInType::superThread:
-				// to.builtIn(t->typePtrId)->setThread(threads[t->super]);
+				to.builtIn(t->typePtrId)->setThread(threads[t->super]);
 				break;
 			}
 		}

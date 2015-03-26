@@ -92,11 +92,20 @@ class ThreadObj on Other {
 	}
 }
 
+// This would not work unless 'o' is a threaded object.
 void setValue(ThreadObj o) on Other {
 	o.set(20);
 }
 
+void setValue(DbgActor o, Int to) on Other {
+	o.set(to);
+}
+
 Int findValue(ThreadObj o) on Other {
+	o.get;
+}
+
+Int findValue(DbgActor o) on Other {
 	o.get;
 }
 
@@ -104,4 +113,10 @@ Int threadObj() {
 	ThreadObj z;
 	setValue(z);
 	findValue(z);
+}
+
+Int threadActor() {
+	DbgActor a(10);
+	setValue(a, 20);
+	findValue(a);
 }
