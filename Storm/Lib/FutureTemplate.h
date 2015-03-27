@@ -1,24 +1,25 @@
 #pragma once
-#include "Array.h"
+#include "Future.h"
 #include "Template.h"
 #include "Type.h"
+#include "Code/Listing.h"
 
 namespace storm {
 	STORM_PKG(core);
 
 	/**
-	 * The array template class used in Storm.
+	 * The future template class used in Storm.
 	 */
-	Template *arrayTemplate(Engine &e);
+	Template *futureTemplate(Engine &e);
 
 	/**
-	 * The array type.
+	 * The future type.
 	 */
-	class ArrayType : public Type {
+	class FutureType : public Type {
 		STORM_CLASS;
 	public:
 		// Ctor.
-		ArrayType(const Value &param);
+		FutureType(const Value &param);
 
 		// Parameter type.
 		const Value param;
@@ -28,14 +29,17 @@ namespace storm {
 		virtual void lazyLoad();
 
 	private:
-
 		// Load functions assuming param is an object.
 		void loadClassFns();
 
 		// Load functions assuming param is a value.
 		void loadValueFns();
+
+		// Generate code for post and result functions.
+		code::Listing postValue();
+		code::Listing resultValue();
 	};
 
-	// See Array.h for 'arrayType' function.
+	// See Future.h for 'futureType' function.
 
 }

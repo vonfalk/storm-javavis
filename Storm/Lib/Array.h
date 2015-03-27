@@ -5,6 +5,7 @@
 #include "Storm/Value.h"
 
 namespace storm {
+	STORM_PKG(core);
 
 	/**
 	 * Array for use in Storm and in C++.
@@ -72,7 +73,7 @@ namespace storm {
 
 	template <class T>
 	class Array : public ArrayBase {
-		TYPE_EXTRA_CODE
+		TYPE_EXTRA_CODE;
 	public:
 		static Type *type(Engine &e) { return arrayType(e, value<T>(e)); }
 		static Type *type(const Object *o) { return arrayType(o->engine(), value<T>(o->engine())); }

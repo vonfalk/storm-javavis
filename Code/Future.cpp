@@ -3,16 +3,35 @@
 
 namespace code {
 
-	FutureBase::FutureBase(void *target) : target(target) {}
+	FutureBase::FutureBase(void *target) : target(target), resultPosted(0) {}
 
 	void FutureBase::result() {
+		// Block the first thread, and allow any subsequent threads to enter.
 		semaDown();
+		semaUp();
 		if (hasError()) {
 			throwError();
 		}
 	}
 
+	bool FutureBase::anyPosted() {
+		return atomicCAS(resultPosted, 1, 1) == 1;
+	}
+
+	bool FutureBase::dataPosted() {
+		return anyPosted() && !hasError();
+	}
+
 	void FutureBase::posted() {
+		nat p = atomicCAS(resultPosted, 0, 1);
+		if (p != 0)
+			DebugBreak();
+		assert(p == 0, L"A future may not be used more than once!");
+		semaUp();
+	}
+
+	void FutureBase::error() {
+		saveError();
 		semaUp();
 	}
 
@@ -103,8 +122,10 @@ namespace code {
 
 	void FutureBase::Cloned::clear() {
 		if (data) {
-			DummyException *p = (DummyException *)data;
-			(p->*(type->dtor))();
+			if (type->dtor) {
+				DummyException *p = (DummyException *)data;
+				(p->*(type->dtor))();
+			}
 			free(data);
 		}
 		data = null;
@@ -174,12 +195,10 @@ namespace code {
 		return EXCEPTION_EXECUTE_HANDLER;
 	}
 
-	void FutureBase::error() {
+	void FutureBase::saveError() {
 		__try {
 			throw;
 		} __except (filter(GetExceptionInformation())) {
-			// Notify result.
-			semaUp();
 		}
 	}
 
@@ -194,9 +213,8 @@ namespace code {
 		std::rethrow_exception(errorData);
 	}
 
-	void FutureBase::error() {
+	void FutureBase::saveError() {
 		errorData = std::current_exception();
-		semaUp();
 	}
 
 #endif

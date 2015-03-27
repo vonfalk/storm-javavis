@@ -96,8 +96,9 @@ BEGIN_TEST(UThreadInterop) {
 		TInterop i;
 		Thread::spawn(memberVoidFn(&i, &TInterop::run));
 		CHECK_EQ(i.result.result(), 42);
+		// Multiple times should also work.
+		CHECK_EQ(i.result.result(), 42);
 	}
-
 
 } END_TEST
 

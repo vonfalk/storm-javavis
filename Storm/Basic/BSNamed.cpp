@@ -159,7 +159,7 @@ namespace storm {
 
 		Engine &e = Object::engine();
 
-		code::Block subBlock = s.frame.createChild(s.block);
+		code::Block subBlock = s.frame.createChild(s.frame.last(s.block));
 		s.to << begin(subBlock);
 		GenState subState = s.child(subBlock);
 

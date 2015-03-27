@@ -502,4 +502,12 @@ namespace storm {
 		return f;
 	}
 
+	Function *dynamicFunction(Engine &e, Value result, const String &name,
+							const vector<Value> &params, const code::Listing &l) {
+		Auto<Function> f = CREATE(Function, e, result, name, params);
+		Auto<DynamicCode> dc = CREATE(DynamicCode, e, l);
+		f->setCode(dc);
+		return f.ret();
+	}
+
 }

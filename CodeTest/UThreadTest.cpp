@@ -51,8 +51,9 @@ BEGIN_TEST(UThreadResultTest) {
 		CHECK_RUNS(r.result());
 
 		e = true;
-		UThread::spawn(returnVoid, params, r);
-		CHECK_ERROR(r.result(), UserError);
+		Future<void> r2;
+		UThread::spawn(returnVoid, params, r2);
+		CHECK_ERROR(r2.result(), UserError);
 	}
 
 	{
@@ -94,10 +95,13 @@ BEGIN_TEST(UThreadResultTest) {
 		Future<Tracker> r;
 		UThread::spawn(returnTracker, params, r);
 		CHECK_EQ(r.result().data, 22);
+		CHECK_EQ(r.result().data, 22);
 
 		t = -2;
-		UThread::spawn(returnTracker, params, r);
-		CHECK_ERROR(r.result(), UserError);
+		Future<Tracker> r2;
+		UThread::spawn(returnTracker, params, r2);
+		CHECK_ERROR(r2.result(), UserError);
+		CHECK_ERROR(r2.result(), UserError);
 	}
 	CHECK(Tracker::clear());
 
@@ -108,10 +112,13 @@ BEGIN_TEST(UThreadResultTest) {
 		Future<int> r;
 		UThread::spawn(takeTracker, params, r);
 		CHECK_EQ(r.result(), 22);
+		CHECK_EQ(r.result(), 22);
 
 		t.data = -3;
-		UThread::spawn(takeTracker, params, r);
-		CHECK_ERROR(r.result(), UserError);
+		Future<int> r2;
+		UThread::spawn(takeTracker, params, r2);
+		CHECK_ERROR(r2.result(), UserError);
+		CHECK_ERROR(r2.result(), UserError);
 	}
 	CHECK(Tracker::clear());
 

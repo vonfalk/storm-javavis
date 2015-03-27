@@ -6,6 +6,7 @@
 #include "Lib/Object.h"
 #include "Lib/TObject.h"
 #include "Lib/ArrayTemplate.h"
+#include "Lib/FutureTemplate.h"
 #include "Exception.h"
 #include "Function.h"
 #include "Engine.h"
@@ -236,6 +237,7 @@ namespace storm {
 		core->add(steal(natType(to)));
 		core->add(steal(boolType(to)));
 		core->add(steal(arrayTemplate(to)));
+		core->add(steal(futureTemplate(to)));
 		core->add(steal(cloneTemplate(to)));
 
 		addBuiltIn(to);

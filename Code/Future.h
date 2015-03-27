@@ -44,6 +44,12 @@ namespace code {
 		// throw-catch block. Otherwise the runtime crashes.
 		void error();
 
+		// Has any result been posted?
+		bool dataPosted();
+
+		// Any result (either data or error) posted?
+		bool anyPosted();
+
 	protected:
 		// Alter the semaphore (whichever implementation is used).
 		virtual void semaUp() = 0;
@@ -53,6 +59,9 @@ namespace code {
 
 		// Throw the error captured earlier.
 		void throwError();
+
+		// Save the current exception.
+		void saveError();
 
 #ifdef CUSTOM_EXCEPTION_PTR
 		// Any error?
@@ -93,6 +102,9 @@ namespace code {
 			return errorData;
 		}
 #endif
+
+		// Anything posted? 0 or 1
+		nat resultPosted;
 	};
 
 	/**
@@ -123,6 +135,7 @@ namespace code {
 	 * inherit from the FutureBase<> class to provide a cleaner interface
 	 * to the user. The underlying FutureBase<> object may still be queried
 	 * if neccessary.
+	 * This class assumes that you will call 'result' at least once.
 	 */
 	template <class T, class Sema = code::Sema>
 	class Future : NoCopy {
@@ -131,15 +144,16 @@ namespace code {
 		Future() : future(&value) {}
 
 		// Destroy.
-		~Future() {}
+		~Future() {
+			if (future.dataPosted()) {
+				((T *)value)->~T();
+			}
+		}
 
 		// Get the result or throw the error, when the thread is ready.
 		T result() {
 			future.result();
-			T *v = (T *)value;
-			T copy = *v;
-			v->~T();
-			return copy;
+			return *(T *)value;
 		}
 
 		// Post the result.

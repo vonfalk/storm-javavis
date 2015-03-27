@@ -53,6 +53,7 @@ namespace storm {
 		const Value &type = part->params[0];
 		Type *r = CREATE(ArrayType, e, type);
 		r->setSuper(ArrayBase::type(e));
+		r->matchFlags = matchNoInheritance;
 		return r;
 	}
 
@@ -77,6 +78,8 @@ namespace storm {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
 		Value refParam = param.asRef(true);
+
+		TODO(L"We need a copy ctor, and a deepCopy function here.");
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createClass))));
 		add(steal(nativeFunction(e, t, L"<<", valList(2, t, param), address(&pushClass))));

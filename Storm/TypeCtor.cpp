@@ -296,7 +296,7 @@ namespace storm {
 	}
 
 	// Find the deepCopy member in a Type.
-	static Function *deepCopy(Type *in) {
+	Function *deepCopy(Type *in) {
 		Named *n = in->find(L"deepCopy", valList(2, Value::thisPtr(in), Value(CloneEnv::type(in))));
 		if (Function *f = as<Function>(n))
 			return f;
@@ -321,7 +321,7 @@ namespace storm {
 	}
 
 	// Clone an object.
-	static Object *CODECALL cloneObject(Object *o) {
+	Object *CODECALL cloneObject(Object *o) {
 		if (o == null)
 			// Hard work done!
 			return null;

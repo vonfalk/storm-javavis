@@ -162,3 +162,48 @@ Int actorDerObj() {
 	DynActor z = DerDynActor(Other, 22);
 	findValue(z);
 }
+
+// Test some future magic!
+Int basicFuture() {
+	CloneDerived original;
+	Future<CloneDerived> fut;
+	fut.post(original);
+	CloneDerived c = fut.result;
+	CloneDerived d = fut.result;
+	if (disjoint(original, c)) {
+		// These should be different as well!
+		if (disjoint(c, d)) {
+			c.c;
+		} else {
+			0;
+		}
+	} else {
+		0;
+	}
+}
+
+Int valueFuture() {
+	CloneVal val;
+	Future<CloneVal> fut;
+	fut.post(val);
+	CloneVal r = fut.result;
+
+	if (disjoint(val.z, r.z)) {
+		r.z.get;
+	} else {
+		0;
+	}
+}
+
+Int intFuture() {
+	Future<Int> fut;
+	fut.post(22);
+	fut.result;
+}
+
+// Test spawn-async.
+Int asyncDbgVal() {
+	DbgVal val(10);
+	var fut = spawn otherDbgValFn(val);
+	fut.v;
+}

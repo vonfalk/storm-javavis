@@ -91,4 +91,10 @@ namespace storm {
 	// Create the template.
 	Template *cloneTemplate(Engine &to);
 
+	// Clone any object.
+	Object *CODECALL cloneObject(Object *o);
+
+	// Find the deepCopy member in a Type.
+	Function *deepCopy(Type *in);
+
 }

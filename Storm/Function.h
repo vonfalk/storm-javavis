@@ -127,4 +127,8 @@ namespace storm {
 	// Create an inlined function.
 	Function *inlinedFunction(Engine &e, Value result, const String &name,
 							const vector<Value> &params, Fn<void, InlinedParams> fn);
+
+	// Create a dynamic function.
+	Function *dynamicFunction(Engine &e, Value result, const String &name,
+							const vector<Value> &params, const code::Listing &listing);
 }

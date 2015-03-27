@@ -7,6 +7,7 @@
 #include "Code/UThread.h"
 #include "Code/FnParams.h"
 #include "Lib/Str.h"
+#include "Lib/Future.h"
 
 namespace storm {
 
@@ -27,6 +28,7 @@ namespace storm {
 		  lazyCodeFn(arena, L"lazyUpdate"), createStrFn(arena, L"createStr"),
 		  spawnLater(arena, L"spawnLater"), spawnParam(arena, L"spawnParam"),
 		  abortSpawn(arena, L"abortSpawn"), spawn(arena, L"spawn"), spawnResult(arena, L"spawnResult"),
+		  futurePost(arena, L"futurePost"), futureResult(arena, L"futureResult"),
 		  fnParamsCtor(arena, L"FnParams::ctor"), fnParamsDtor(arena, L"FnParams::dtor"),
 		  fnParamsAdd(arena, L"FnParams::add")
 	{
@@ -45,6 +47,9 @@ namespace storm {
 
 		spawn.set(address(&storm::spawnThread));
 		spawnResult.set(address(&storm::spawnThreadResult));
+
+		futurePost.set(address(&FutureBase::postRaw));
+		futureResult.set(address<void (CODECALL FutureBase::*)(void *)>(&FutureBase::resultRaw));
 
 		fnParamsCtor.set(address(&storm::fnParamsCtor));
 		fnParamsDtor.set(address(&storm::fnParamsDtor));

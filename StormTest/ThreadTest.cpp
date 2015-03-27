@@ -24,5 +24,10 @@ BEGIN_TEST(ThreadTest) {
 	CHECK_EQ(runFn(L"test.bs.actorObj"), 31);
 	CHECK_EQ(runFn(L"test.bs.actorDerObj"), 22);
 
+	// Future tests.
+	CHECK_EQ(runFn(L"test.bs.basicFuture"), 8);
+	CHECK_EQ(runFn(L"test.bs.valueFuture"), 8);
+	CHECK_EQ(runFn(L"test.bs.intFuture"), 22);
+
 	// TODO: Implement som async/fork test here as well!
 } END_TEST

@@ -49,6 +49,9 @@ namespace storm {
 
 		// Interface to the FnParams needed.
 		code::RefSource fnParamsCtor, fnParamsDtor, fnParamsAdd;
+
+		// Some helpers for a Future object.
+		code::RefSource futurePost, futureResult;
 	};
 
 	/**
