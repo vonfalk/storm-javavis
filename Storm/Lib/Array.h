@@ -25,10 +25,13 @@ namespace storm {
 		ArrayBase(const Handle &type);
 
 		// Copy another array.
-		ArrayBase(const ArrayBase &other);
+		ArrayBase(const ArrayBase *other);
 
 		// Dtor.
 		~ArrayBase();
+
+		// Deep copy.
+		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
 
 		// Get size.
 		inline Nat STORM_FN count() const { return size; }
@@ -82,7 +85,7 @@ namespace storm {
 		Array() : ArrayBase(storm::handle<T>()) {}
 
 		// Copy array.
-		Array(const Array<T> &o) : ArrayBase(o) {}
+		Array(const Array<T> *o) : ArrayBase(o) {}
 
 		// Element access.
 		T &at(Nat i) {
@@ -126,7 +129,7 @@ namespace storm {
 		ArrayP() : Array() {}
 
 		// Copy array.
-		ArrayP(const ArrayP<T> &o) : ArrayBase(o) {}
+		ArrayP(const ArrayP<T> *o) : Array(o) {}
 	};
 
 }

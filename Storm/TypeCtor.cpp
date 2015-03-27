@@ -304,7 +304,7 @@ namespace storm {
 	}
 
 	// Clone an object with an env.
-	static Object *CODECALL cloneObjectEnv(Object *o, CloneEnv *env) {
+	Object *CODECALL cloneObjectEnv(Object *o, CloneEnv *env) {
 		if (o == null)
 			return null;
 

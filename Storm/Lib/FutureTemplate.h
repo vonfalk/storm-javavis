@@ -36,7 +36,6 @@ namespace storm {
 		void loadValueFns();
 
 		// Generate code for post and result functions.
-		code::Listing postValue();
 		code::Listing resultValue();
 	};
 

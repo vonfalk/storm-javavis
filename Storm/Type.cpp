@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "Lib/Object.h"
 #include "Lib/TObject.h"
+#include "Lib/CloneEnv.h"
 #include "Std.h"
 #include "Package.h"
 #include "Function.h"
@@ -44,8 +45,6 @@ namespace storm {
 		// set when we create Types before the Object::type has been initialized.
 		if ((flags & typeManualSuper) == 0) {
 			if (flags & typeClass) {
-				if (!Object::type(engine))
-					DebugBreak();
 				assert(Object::type(engine), L"Please use the 'typeManualSuper' flag before Object has been created.");
 				setSuper(Object::type(engine));
 			}
@@ -137,6 +136,7 @@ namespace storm {
 
 		Function *dtor = destructor();
 		Function *create = copyCtor();
+		Function *deepCopy = deepCopyFn();
 		if (!create)
 			throw RuntimeError(L"The type " + identifier() + L" does not have a copy constructor.");
 
@@ -145,6 +145,10 @@ namespace storm {
 			typeHandle.destroyRef(dtor->ref());
 		else
 			typeHandle.destroyRef();
+		if (deepCopy)
+			typeHandle.deepCopyRef(deepCopy->ref());
+		else
+			typeHandle.deepCopyRef();
 		typeHandle.createRef(create->ref());
 	}
 
@@ -319,6 +323,10 @@ namespace storm {
 
 	Function *Type::defaultCtor() {
 		return as<Function>(find(CTOR, vector<Value>(1, Value::thisPtr(this))));
+	}
+
+	Function *Type::deepCopyFn() {
+		return as<Function>(find(L"deepCopy", valList(2, Value::thisPtr(this), Value(CloneEnv::type(engine)))));
 	}
 
 

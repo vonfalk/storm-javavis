@@ -119,6 +119,9 @@ namespace storm {
 		// Get a pointer/reference to the assignment operator (if any).
 		Function *assignFn();
 
+		// Deep copy function.
+		Function *deepCopyFn();
+
 		// Get the offset to a member. TODO: Maybe replace this one with RefSources in TypeVar?
 		Offset offset(const TypeVar *var) const;
 

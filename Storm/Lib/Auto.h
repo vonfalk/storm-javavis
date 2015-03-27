@@ -8,6 +8,11 @@ namespace storm {
 	class Object;
 	class Engine;
 	class Type;
+	class CloneEnv;
+
+	// Copy objects.
+	Object *CODECALL cloneObjectEnv(Object *o, CloneEnv *env);
+
 
 	/**
 	 * Calling convention is explained in Object.h
@@ -170,6 +175,13 @@ namespace storm {
 		// Check with other ptr.
 		inline bool operator ==(const T *o) {
 			return obj == o;
+		}
+
+		// Deep copy.
+		void CODECALL deepCopy(CloneEnv *env) {
+			T *n = (T *)cloneObjectEnv(obj, env);
+			obj->release();
+			obj = n;
 		}
 
 		// Proxies for the type() so that Array<Auto<T>> works.

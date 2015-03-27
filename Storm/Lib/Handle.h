@@ -1,7 +1,10 @@
 #pragma once
 #include "Code/Reference.h"
 
+CREATE_DETECTOR(deepCopy);
+
 namespace storm {
+	class CloneEnv;
 
 	/**
 	 * A type handle, ie information about a type without actually knowing
@@ -21,13 +24,17 @@ namespace storm {
 		Destroy destroy;
 
 		// Copy-construct (to, from)
-		typedef void (CODECALL *const Create)(void *, const void *);
+		typedef void (CODECALL *Create)(void *, const void *);
 		Create create;
 
+		// Deep-copy.
+		typedef void (CODECALL *DeepCopy)(void *, CloneEnv *);
+		DeepCopy deepCopy;
+
 		inline Handle()
-			: size(0), destroy(null), create(null) {}
-		inline Handle(size_t size, Destroy destroy, Create create)
-			: size(size), destroy(destroy), create(create) {}
+			: size(0), destroy(null), create(null), deepCopy(null) {}
+		inline Handle(size_t size, Destroy destroy, Create create, DeepCopy deep)
+			: size(size), destroy(destroy), create(create), deepCopy(deep) {}
 	};
 
 	/**
@@ -44,12 +51,15 @@ namespace storm {
 		// Set references.
 		void destroyRef(const code::Ref &ref);
 		void destroyRef();
+		void deepCopyRef(const code::Ref &ref);
+		void deepCopyRef();
 		void createRef(const code::Ref &ref);
 
 	private:
 		// References.
 		code::AddrReference *destroyUpdater;
 		code::AddrReference *createUpdater;
+		code::AddrReference *deepCopyUpdater;
 	};
 
 	/**
@@ -72,6 +82,20 @@ namespace storm {
 
 	};
 
+	template <class T, bool hasDeepCopy>
+	class HandleDeepHelper {
+	public:
+		static Handle::DeepCopy deepCopy() { return null; }
+	};
+
+	template <class T>
+	class HandleDeepHelper<T, true> {
+	public:
+		static Handle::DeepCopy deepCopy() {
+			return (Handle::DeepCopy)address(&T::deepCopy);
+		}
+	};
+
 
 	/**
 	 * Create handles.
@@ -81,7 +105,8 @@ namespace storm {
 		static Handle h = Handle(
 			HandleHelper<T>::size(),
 			&HandleHelper<T>::destroy,
-			&HandleHelper<T>::create
+			&HandleHelper<T>::create,
+			HandleDeepHelper<T, detect_deepCopy<T>::value>::deepCopy()
 			);
 		return h;
 	}

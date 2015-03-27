@@ -93,6 +93,7 @@ namespace storm {
 
 	// Clone any object.
 	Object *CODECALL cloneObject(Object *o);
+	Object *CODECALL cloneObjectEnv(Object *o, CloneEnv *env);
 
 	// Find the deepCopy member in a Type.
 	Function *deepCopy(Type *in);

@@ -15,16 +15,12 @@ namespace storm {
 		new (mem) FutureP<Object>();
 	}
 
-	static void CODECALL postClass(FutureP<Object> *to, Par<Object> o) {
-		to->post(cloneObject(o.borrow()));
+	static void CODECALL postClass(FutureP<Object> *to, Par<Object> obj) {
+		to->post(obj);
 	}
 
-	static Object *CODECALL resultClass(FutureP<Object> *to, Par<Object> o) {
-		return cloneObject(to->result().borrow());
-	}
-
-	static void CODECALL deepCopyClass() {
-		// Nothing to do...
+	static Object *CODECALL resultClass(FutureP<Object> *to) {
+		return to->result().ret();
 	}
 
 	static void CODECALL createValue(void *mem) {
@@ -41,41 +37,8 @@ namespace storm {
 		new (mem) FutureBase(from);
 	}
 
-	code::Listing FutureType::postValue() {
-		using namespace code;
-
-		Listing l;
-
-		Variable future = l.frame.createPtrParam();
-		Variable valRef = l.frame.createPtrParam();
-
-		l << prolog();
-
-		if (!param.isBuiltIn()) {
-			// call 'deepCopy'.
-			Type *envType = CloneEnv::type(engine);
-			Variable rawEnv = l.frame.createPtrVar(l.frame.root(), engine.fnRefs.freeRef, freeOnException);
-			Variable env = variable(l.frame, l.frame.root(), Value(envType)).var;
-			l << fnParam(envType->typeRef);
-			l << fnCall(engine.fnRefs.allocRef, Size::sPtr);
-			l << mov(rawEnv, ptrA);
-			l << fnParam(ptrA);
-			l << fnCall(envType->defaultCtor()->ref(), Size());
-			l << mov(env, ptrA);
-			l << mov(rawEnv, intPtrConst(0));
-
-			l << fnParam(valRef);
-			l << fnParam(env);
-			l << fnCall(storm::deepCopy(param.type)->ref(), Size());
-		}
-
-		l << fnParam(future);
-		l << fnParam(valRef);
-		l << fnCall(engine.fnRefs.futurePost, Size());
-		l << epilog();
-		l << ret(Size());
-
-		return l;
+	static void CODECALL postValue(FutureBase *to, const void *obj) {
+		to->postRaw(obj);
 	}
 
 	code::Listing FutureType::resultValue() {
@@ -101,22 +64,6 @@ namespace storm {
 			l << fnParam(future);
 			l << fnParam(valRef);
 			l << fnCall(engine.fnRefs.futureResult, Size());
-
-			// call 'deepCopy'.
-			Type *envType = CloneEnv::type(engine);
-			Variable rawEnv = l.frame.createPtrVar(l.frame.root(), engine.fnRefs.freeRef, freeOnException);
-			Variable env = variable(l.frame, l.frame.root(), Value(envType)).var;
-			l << fnParam(envType->typeRef);
-			l << fnCall(engine.fnRefs.allocRef, Size::sPtr);
-			l << mov(rawEnv, ptrA);
-			l << fnParam(ptrA);
-			l << fnCall(envType->defaultCtor()->ref(), Size());
-			l << mov(env, ptrA);
-			l << mov(rawEnv, intPtrConst(0));
-
-			l << fnParam(valRef);
-			l << fnParam(env);
-			l << fnCall(storm::deepCopy(param.type)->ref(), Size());
 			l << mov(ptrA, valRef);
 			l << epilog();
 			l << ret(Size::sPtr);
@@ -162,7 +109,7 @@ namespace storm {
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&copyClass))));
 		add(steal(nativeFunction(e, Value(), L"post", valList(2, t, param), address(&postClass))));
 		add(steal(nativeFunction(e, param, L"result", valList(1, t), address(&resultClass))));
-		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&deepCopyClass))));
+		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&FutureBase::deepCopy))));
 	}
 
 	void FutureType::loadValueFns() {
@@ -173,9 +120,9 @@ namespace storm {
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createValue))));
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&copyValue))));
-		add(steal(dynamicFunction(e, Value(), L"post", valList(2, t, ref), postValue())));
+		add(steal(nativeFunction(e, Value(), L"post", valList(2, t, ref), address(&postValue))));
 		add(steal(dynamicFunction(e, param, L"result", valList(1, t), resultValue())));
-		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&deepCopyClass))));
+		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&FutureBase::deepCopy))));
 	}
 
 	Type *futureType(Engine &e, const Value &type) {

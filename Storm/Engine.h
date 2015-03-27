@@ -51,7 +51,7 @@ namespace storm {
 		code::RefSource fnParamsCtor, fnParamsDtor, fnParamsAdd;
 
 		// Some helpers for a Future object.
-		code::RefSource futurePost, futureResult;
+		code::RefSource futureResult;
 	};
 
 	/**

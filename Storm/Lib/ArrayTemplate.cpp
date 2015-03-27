@@ -4,11 +4,20 @@
 #include "Function.h"
 #include "Exception.h"
 #include "TypeCtor.h"
+#include "Lib/CloneEnv.h"
 
 namespace storm {
 
 	static void CODECALL createClass(void *mem) {
 		new (mem) ArrayP<Object>();
+	}
+
+	static void CODECALL copyClass(void *mem, ArrayP<Object> *from) {
+		new (mem) ArrayP<Object>(from);
+	}
+
+	static void CODECALL copyValue(void *mem, ArrayBase *from) {
+		new (mem) ArrayBase(from);
 	}
 
 	static void CODECALL createValue(void *mem) {
@@ -78,24 +87,28 @@ namespace storm {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
 		Value refParam = param.asRef(true);
-
-		TODO(L"We need a copy ctor, and a deepCopy function here.");
+		Value cloneEnv(CloneEnv::type(e));
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createClass))));
+		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&copyClass))));
 		add(steal(nativeFunction(e, t, L"<<", valList(2, t, param), address(&pushClass))));
 		add(steal(nativeFunction(e, t, L"push", valList(2, t, param), address(&pushClass))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getClass))));
+		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&ArrayBase::deepCopy))));
 	}
 
 	void ArrayType::loadValueFns() {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
 		Value refParam = param.asRef(true);
+		Value cloneEnv(CloneEnv::type(e));
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createValue))));
+		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&copyValue))));
 		add(steal(nativeFunction(e, t, L"<<", valList(2, t, refParam), address(&pushValue))));
 		add(steal(nativeFunction(e, t, L"push", valList(2, t, refParam), address(&pushValue))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getValue))));
+		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&ArrayBase::deepCopy))));
 	}
 
 

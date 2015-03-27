@@ -30,6 +30,9 @@ namespace storm {
 		// Destroy.
 		~FutureBase();
 
+		// Deep copy.
+		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
+
 		// Post a result.
 		void CODECALL postRaw(const void *value);
 
@@ -38,10 +41,6 @@ namespace storm {
 
 		// Wait for the result. 'to' is empty memory where the value will be copied into.
 		void CODECALL resultRaw(void *to);
-
-		// Wait for the result, returns our pointer to the result. This may be deallocated
-		// once this object is freed, make your own copy as soon as possible,
-		void *CODECALL resultRaw();
 
 	private:
 		// Data shared between futures. Since we allow copies, we need to share one
@@ -104,7 +103,11 @@ namespace storm {
 
 		// Get result.
 		T result() {
-			return *(T*)resultRaw();
+			byte data[sizeof(T)];
+			resultRaw(data);
+			T copy = *(T *)data;
+			((T *)data)->~T();
+			return copy;
 		}
 	};
 

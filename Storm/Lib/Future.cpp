@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Future.h"
+#include "CloneEnv.h"
 
 namespace storm {
 
@@ -16,9 +17,17 @@ namespace storm {
 		data->release();
 	}
 
+	void FutureBase::deepCopy(Par<CloneEnv> env) {
+		// We do not need to do anything here.
+	}
+
 	void FutureBase::postRaw(const void *value) {
 		// Note: if this is called more than once, we will leak memory here...
 		(*data->handle->create)(data->data, value);
+		if (data->handle->deepCopy) {
+			Auto<CloneEnv> e = CREATE(CloneEnv, this);
+			(*data->handle->deepCopy)(data->data, e.borrow());
+		}
 		data->future.posted();
 	}
 
@@ -29,11 +38,10 @@ namespace storm {
 	void FutureBase::resultRaw(void *to) {
 		data->future.result();
 		(*data->handle->create)(to, data->data);
-	}
-
-	void *FutureBase::resultRaw() {
-		data->future.result();
-		return data->data;
+		if (data->handle->deepCopy) {
+			Auto<CloneEnv> e = CREATE(CloneEnv, this);
+			(*data->handle->deepCopy)(to, e.borrow());
+		}
 	}
 
 	FutureBase::Data *FutureBase::Data::alloc(const Handle &type) {
