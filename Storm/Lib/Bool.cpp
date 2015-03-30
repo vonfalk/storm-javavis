@@ -48,6 +48,21 @@ namespace storm {
 		}
 	}
 
+	static void boolAssign(InlinedParams p) {
+		p.state.to << code::mov(code::ptrA, p.params[0]);
+		p.state.to << code::mov(code::byteRel(code::ptrA), p.params[1]);
+		if (p.result.needed()) {
+			if (p.result.type.ref) {
+				if (!p.result.suggest(p.state, p.params[0]))
+					p.state.to << code::mov(p.result.location(p.state).var, code::ptrA);
+			} else {
+				if (!p.result.suggest(p.state, p.params[1]))
+					p.state.to << code::mov(p.result.location(p.state).var, p.params[1]);
+			}
+		}
+	}
+
+
 	BoolType::BoolType() : Type(L"Bool", typeValue, Size::sByte, null) {
 		vector<Value> bb(2, Value(this));
 		vector<Value> b(1, Value(this));
@@ -56,6 +71,11 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"==", bb, simpleFn(&boolEq))));
 		add(steal(inlinedFunction(engine, Value(this), L"!=", bb, simpleFn(&boolNeq))));
 		add(steal(inlinedFunction(engine, Value(this), L"!", b, simpleFn(&boolNot))));
+
+		vector<Value> ri(2);
+		ri[0] = Value(this, true);
+		ri[1] = Value(this);
+		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&boolAssign))));
 	}
 
 	Type *boolType(Engine &e) {

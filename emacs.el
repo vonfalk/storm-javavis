@@ -318,7 +318,7 @@
 
 (defun run-compile (cmd)
   (let ((default-directory project-root))
-    (compile cmd)))
+    (compile cmd t)))
 
 (defun rename-proj-file ()
   (interactive)

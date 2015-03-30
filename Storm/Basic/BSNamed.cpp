@@ -590,6 +590,16 @@ namespace storm {
 	}
 
 	bs::Expr *bs::namedExpr(Par<Block> block, Par<TypeName> name, Par<Actual> params) {
+		if (name->count() == 1 && params->expressions.size() == 0) {
+			TypePart *part = name->parts[0].borrow();
+			if (part->params.empty()) {
+				const String &n = part->name->v;
+				if (n == L"true")
+					return CREATE(Constant, block, true);
+				else if (n == L"false")
+					return CREATE(Constant, block, false);
+			}
+		}
 		Auto<Name> n = name->toName(block->scope);
 		return findTarget(block, n, name->pos, params, true);
 	}

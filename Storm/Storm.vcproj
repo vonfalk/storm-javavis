@@ -490,6 +490,10 @@
 				RelativePath=".\Lib\FutureTemplate.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Repl.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -822,6 +826,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\FutureTemplate.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Repl.h"
 				>
 			</File>
 		</Filter>

@@ -1,5 +1,5 @@
 #pragma once
-#include "Type.h"
+#include "Storm/Type.h"
 #include "Code/Code.h"
 
 namespace storm {

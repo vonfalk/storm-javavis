@@ -19,7 +19,9 @@ namespace storm {
 
 	bs::Constant::Constant(Int v) : cType(tInt), intValue(v) {}
 
-	bs::Constant::Constant(Par<Str> v) : cType(tStr), strValue(v) {}
+	bs::Constant::Constant(Str *v) : cType(tStr), strValue(capture(v)) {}
+
+	bs::Constant::Constant(Bool v) : cType(tBool), boolValue(v) {}
 
 	void bs::Constant::output(wostream &to) const {
 		switch (cType) {
@@ -28,6 +30,9 @@ namespace storm {
 			break;
 		case tStr:
 			to << L"\"" << strValue << L"\"";
+			break;
+		case tBool:
+			to << (boolValue ? L"true" : L"false");
 			break;
 		default:
 			to << L"UNKNOWN";
@@ -41,6 +46,8 @@ namespace storm {
 			return Value(intType(engine()));
 		case tStr:
 			return Value(Str::type(engine()));
+		case tBool:
+			return Value(boolType(engine()));
 		default:
 			TODO("Implement missing type");
 			return Value();
@@ -59,6 +66,9 @@ namespace storm {
 			break;
 		case tStr:
 			strCode(s, r);
+			break;
+		case tBool:
+			boolCode(s, r);
 			break;
 		default:
 			TODO("Implement missing type");
@@ -90,6 +100,14 @@ namespace storm {
 		to.created(s);
 	}
 
+	void bs::Constant::boolCode(const GenState &s, GenResult &r) {
+		using namespace code;
+
+		VarInfo to = r.location(s);
+		s.to << mov(to.var, byteConst(boolValue ? 1 : 0));
+		to.created(s);
+	}
+
 	void bs::Constant::strData(code::Listing &to) {
 		using namespace code;
 
@@ -107,7 +125,7 @@ namespace storm {
 	}
 
 	bs::Constant *bs::strConstant(Par<SStr> v) {
-		return CREATE(Constant, v->engine(), v->v);
+		return CREATE(Constant, v->engine(), v->v.borrow());
 	}
 
 }

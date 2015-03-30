@@ -32,22 +32,27 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Constant(Int i);
-			STORM_CTOR Constant(Par<Str> str);
+			STORM_CTOR Constant(Str *str);
+			STORM_CTOR Constant(Bool b);
 
 			// Types
-			enum Type {
+			enum CType {
 				tInt,
 				tStr,
+				tBool,
 			};
 
 			// Actual type.
-			Type cType;
+			CType cType;
 
 			// Value (if integer).
 			Int intValue;
 
 			// Value (if string).
 			Auto<Str> strValue;
+
+			// Value (if bool).
+			Bool boolValue;
 
 			// Return value.
 			virtual Value result();
@@ -63,6 +68,9 @@ namespace storm {
 
 			// Code for an int label.
 			void intCode(const GenState &state, GenResult &r);
+
+			// Code for a bool label.
+			void boolCode(const GenState &state, GenResult &r);
 
 			// Generate string data.
 			void strData(code::Listing &to);

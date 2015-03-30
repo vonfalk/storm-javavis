@@ -1,0 +1,21 @@
+use lang;
+use core:debug;
+
+class Repl extends LangRepl {
+
+	Bool done;
+
+	Bool eval(Str line) {
+		if (line.equals("exit")) {
+			done = true;
+		} else {
+			print(line);
+		}
+		true;
+	}
+
+	Bool exit() {
+		done;
+	}
+
+}
