@@ -184,6 +184,12 @@ namespace storm {
 		layout(obj.borrow());
 	}
 
+	void dbgSleep(Int ms) {
+		if (ms < 0)
+			return;
+		Sleep(ms);
+	}
+
 	Dbg::Dbg() : v(10) {}
 
 	Dbg::Dbg(Par<Dbg> o) : v(o->v) {}

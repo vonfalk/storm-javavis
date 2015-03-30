@@ -201,9 +201,41 @@ Int intFuture() {
 	fut.result;
 }
 
+void noResultFuture() {
+	Future<DbgVal> fut;
+	fut.post(DbgVal(20));
+	// We're never getting the result back, make sure we do not crash too badly at least!
+}
+
 // Test spawn-async.
 Int asyncDbgVal() {
 	DbgVal val(10);
-	var fut = spawn otherDbgValFn(val);
-	fut.v;
+	var fut = otherDbgValFn(val) &;
+	fut.result;
+}
+
+Int slowFn(DbgVal v) on Other {
+	dbgSleep(10);
+	33;
+}
+
+Int unusedDbgVal() {
+	DbgVal val(10);
+	// Run it once as normal so that we may compile the function first!
+	Int r = slowFn(val);
+	var fut = slowFn(val) &;
+	// 'fut' not used.
+	r;
+}
+
+Int asyncObject() {
+	CloneDerived d;
+	var fut = otherObjectFn(d) &;
+	CloneDerived z = fut.result;
+    // Should be 13. d is copied 3 times.
+	if (disjoint(d, z)) {
+		z.c;
+	} else {
+		0;
+	}
 }

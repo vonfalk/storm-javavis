@@ -29,5 +29,17 @@ BEGIN_TEST(ThreadTest) {
 	CHECK_EQ(runFn(L"test.bs.valueFuture"), 8);
 	CHECK_EQ(runFn(L"test.bs.intFuture"), 22);
 
-	// TODO: Implement som async/fork test here as well!
+	DbgVal::clear();
+	CHECK_RUNS(runFn(L"test.bs.noResultFuture"));
+	CHECK(DbgVal::clear());
+
+	// Check 'spawn'.
+	DbgVal::clear();
+	CHECK_EQ(runFn(L"test.bs.asyncDbgVal"), 18);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn(L"test.bs.unusedDbgVal"), 33);
+	Sleep(100);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn(L"test.bs.asyncObject"), 15);
+
 } END_TEST

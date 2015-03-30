@@ -42,7 +42,24 @@ namespace storm {
 		// Wait for the result. 'to' is empty memory where the value will be copied into.
 		void CODECALL resultRaw(void *to);
 
+		// Get the underlying future object. Note: when you call this function,
+		// you are required to call either postRaw or error on the future object, otherwise
+		// we will leak resources!
+		code::FutureBase *rawFuture();
+
 	private:
+		// Custom extension of the 'FutureSema' object, so that we may get a notification when a
+		// result has been posted.
+		class FutureSema : public code::FutureSema<Sema> {
+		public:
+			// Ctor.
+			FutureSema(void *data);
+
+		protected:
+			// Custom notify so that we can keep the Data struct alive long enough.
+			virtual void notify();
+		};
+
 		// Data shared between futures. Since we allow copies, we need to share one
 		// FutureBase object.
 		struct Data {
@@ -53,10 +70,10 @@ namespace storm {
 			const Handle *handle;
 
 			// The Future object we are playing with.
-			code::FutureSema<Sema> future;
+			FutureSema future;
 
-			// Keep track of who are calling 'wait' and 'post'.
-			Sema sync;
+			// Do a release whenever the result has been posted?
+			nat releaseOnResult;
 
 			// Memory for the returned value. This one is not initialized until
 			// the future has got a result at least once. Note that it is allocated
@@ -72,6 +89,9 @@ namespace storm {
 			// Add/release ref.
 			void addRef();
 			void release();
+
+			// Called when a result has been posted.
+			static void resultPosted(FutureSema *from);
 		};
 
 		// Our data.

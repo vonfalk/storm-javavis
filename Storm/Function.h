@@ -69,8 +69,9 @@ namespace storm {
 		// Generate code for this function call, assuming we want to run on a different thread.
 		void threadCall(const GenState &to, const Actuals &params, GenResult &result, const code::Value &thread);
 
-		// Generate code for this function call, assuming we want to run on a different thread, ignoring any result.
-		void asyncThreadCall(const GenState &to, const Actuals &params, const code::Value &thread);
+		// Generate code for this function call, assuming we want to run on a different thread, returning a Future
+		// object.
+		void asyncThreadCall(const GenState &to, const Actuals &params, GenResult &result, const code::Value &thread);
 
 		// Code to be executed.
 		void setCode(Par<Code> code);
@@ -98,6 +99,15 @@ namespace storm {
 
 		// Get the thread thunk, generates it if needed. Returns null if no thunk is needed.
 		code::RefSource *threadThunk();
+
+		// Result from the prepare call.
+		struct PrepareResult {
+			code::Variable params, data;
+		};
+
+		// Generate the code that is shared between 'threadCall' and 'asyncThreadCall'. This is
+		// basically setting up the parameters for the call.
+		PrepareResult prepareThreadCall(const GenState &to, const Actuals &params);
 
 		// Initialize references if needed.
 		void initRefs();

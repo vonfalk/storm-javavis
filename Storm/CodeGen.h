@@ -118,4 +118,7 @@ namespace storm {
 
 	// Generate code to fill in a BasicTypeInfo struct. Only touches eax register.
 	code::Variable createBasicTypeInfo(const GenState &to, const Value &v);
+
+	// Create an object on the heap. Store it in variable 'to'. Only work for heap-allocated objects.
+	void allocObject(const GenState &s, Function *ctor, vector<code::Value> params, code::Variable to);
 }

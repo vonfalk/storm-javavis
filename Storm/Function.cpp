@@ -6,6 +6,7 @@
 #include "Exception.h"
 #include "Lib/CloneEnv.h"
 #include "Lib/TObject.h"
+#include "Lib/Future.h"
 #include "Code/Instruction.h"
 #include "Code/VTable.h"
 
@@ -134,6 +135,12 @@ namespace storm {
 		future.result();
 	}
 
+	void spawnThreadFuture(const void *fn, const code::FnParams *params, FutureBase *result,
+								BasicTypeInfo *resultType, Thread *on, code::UThreadData *data) {
+		code::FutureBase *future = result->rawFuture();
+		code::UThread::spawn(fn, *params, *future, *resultType, &on->thread, data);
+	}
+
 	// Find 'std:clone' for the given type.
 	static code::Value stdCloneFn(Engine &e, const Value &type) {
 		Auto<Name> name = CREATE(Name, e);
@@ -207,22 +214,20 @@ namespace storm {
 		z.to << fnCall(e.fnRefs.fnParamsAdd, Size());
 	}
 
-	void Function::threadCall(const GenState &to, const Actuals &params, GenResult &res, const code::Value &thread) {
+	Function::PrepareResult Function::prepareThreadCall(const GenState &to, const Actuals &params) {
 		using namespace code;
 
 		Engine &e = engine();
-		Block b = to.frame.createChild(to.frame.last(to.block));
-		to.to << begin(b);
 
 		// Create a UThreadData object.
-		Variable data = to.frame.createPtrVar(b, e.fnRefs.abortSpawn, freeOnException);
+		Variable data = to.frame.createPtrVar(to.block, e.fnRefs.abortSpawn, freeOnException);
 		to.to << fnCall(e.fnRefs.spawnLater, Size::sPtr);
 		to.to << mov(data, ptrA);
 
 		// Find out the pointer to the data and create FnParams object.
 		to.to << fnParam(ptrA);
 		to.to << fnCall(e.fnRefs.spawnParam, Size::sPtr);
-		Variable fnParams = to.frame.createVariable(b,
+		Variable fnParams = to.frame.createVariable(to.block,
 													FnParams::classSize(),
 													e.fnRefs.fnParamsDtor,
 													freeOnBoth | freePtr);
@@ -235,19 +240,30 @@ namespace storm {
 		// Add all parameters.
 		for (nat i = 0; i < params.size(); i++) {
 			if (i == 0 && name == Type::CTOR)
-				addCtorThis(e, to.child(b), fnParams, this->params[i], params[i]);
+				addCtorThis(e, to, fnParams, this->params[i], params[i]);
 			else
-				addParam(e, to.child(b), fnParams, this->params[i], params[i]);
+				addParam(e, to, fnParams, this->params[i], params[i]);
 		}
-
-		// Describe the return type.
-		Variable returnType = createBasicTypeInfo(to.child(b), this->result);
 
 		// Set the thread data to null, so that we do not double-free it if
 		// the call returns with an exception.
-		Variable dataNoFree = to.frame.createPtrVar(b);
+		Variable dataNoFree = to.frame.createPtrVar(to.block);
 		to.to << mov(dataNoFree, data);
 		to.to << mov(data, intPtrConst(0));
+
+		PrepareResult r = { fnParams, dataNoFree };
+		return r;
+	}
+
+	void Function::threadCall(const GenState &to, const Actuals &params, GenResult &res, const code::Value &thread) {
+		using namespace code;
+
+		Engine &e = engine();
+		Block b = to.frame.createChild(to.frame.last(to.block));
+		to.to << begin(b);
+		GenState sub = to.child(b);
+
+		PrepareResult r = prepareThreadCall(sub, params);
 
 		// Where shall we store the result (store the pointer to it in ptrB);
 		VarInfo resultPos;
@@ -263,19 +279,60 @@ namespace storm {
 		if (!fn)
 			fn = &ref();
 
+		// Describe the return type.
+		Variable returnType = createBasicTypeInfo(to, this->result);
+
 		// Spawn the thread!
-		to.to << lea(ptrA, fnParams);
+		to.to << lea(ptrA, r.params);
 		to.to << lea(ptrC, returnType);
 		to.to << fnParam(*fn);
 		to.to << fnParam(ptrA);
 		to.to << fnParam(ptrB);
 		to.to << fnParam(ptrC);
 		to.to << fnParam(thread);
-		to.to << fnParam(dataNoFree);
+		to.to << fnParam(r.data);
 		to.to << fnCall(e.fnRefs.spawnResult, Size());
 
 		to.to << end(b);
 		resultPos.created(to);
+	}
+
+	void Function::asyncThreadCall(const GenState &to, const Actuals &params, GenResult &result, const code::Value &t) {
+		using namespace code;
+
+		Engine &e = engine();
+		Block b = to.frame.createChild(to.frame.last(to.block));
+		to.to << begin(b);
+
+		GenState sub = to.child(b);
+		PrepareResult r = prepareThreadCall(sub, params);
+
+		// Create the result object.
+		Type *futureT = futureType(e, this->result);
+		VarInfo resultPos = result.safeLocation(sub, Value::thisPtr(futureT));
+		allocObject(sub, futureT->defaultCtor(), Actuals(), resultPos.var);
+		resultPos.created(sub);
+
+		// Find out what to call...
+		const RefSource *fn = threadThunk();
+		if (!fn)
+			fn = &ref();
+
+		// Return type...
+		Variable returnType = createBasicTypeInfo(to, this->result);
+
+		// Now we're ready to spawn the thread!
+		to.to << lea(ptrA, r.params);
+		to.to << lea(ptrC, returnType);
+		to.to << fnParam(*fn);
+		to.to << fnParam(ptrA);
+		to.to << fnParam(resultPos.var);
+		to.to << fnParam(ptrC);
+		to.to << fnParam(t);
+		to.to << fnParam(r.data);
+		to.to << fnCall(e.fnRefs.spawnFuture, Size());
+
+		to.to << end(b);
 	}
 
 	code::RefSource *Function::threadThunk() {

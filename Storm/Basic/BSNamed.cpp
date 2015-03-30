@@ -3,6 +3,7 @@
 #include "BSBlock.h"
 #include "Exception.h"
 #include "Function.h"
+#include "Lib/Future.h"
 
 namespace storm {
 
@@ -68,13 +69,20 @@ namespace storm {
 	 */
 
 	bs::FnCall::FnCall(Par<Function> toExecute, Par<Actual> params, Bool lookup, Bool sameObject)
-		: toExecute(toExecute), params(params), lookup(lookup), sameObject(sameObject) {}
+		: toExecute(toExecute), params(params), lookup(lookup), sameObject(sameObject), async(false) {}
 
 	bs::FnCall::FnCall(Par<Function> toExecute, Par<Actual> params)
-		: toExecute(toExecute), params(params), lookup(true), sameObject(false) {}
+		: toExecute(toExecute), params(params), lookup(true), sameObject(false), async(false) {}
+
+	void bs::FnCall::makeAsync() {
+		async = true;
+	}
 
 	Value bs::FnCall::result() {
-		return toExecute->result;
+		if (async)
+			return futureType(engine(), toExecute->result);
+		else
+			return toExecute->result;
 	}
 
 	void bs::FnCall::code(const GenState &s, GenResult &to) {
@@ -93,13 +101,27 @@ namespace storm {
 			vars[i] = params->code(i, s, values[i]);
 
 		// Call!
-		callFn(toExecute, s, vars, to, lookup, sameObject);
+		if (async) {
+			// We will here more or less force to run on another uthread, even though we would
+			// not strictly need to in all cases.
+			Function *fn = toExecute.borrow();
+			if (fn->runOn().state == RunOn::any)
+				throw SyntaxError(pos, L"The function " + fn->identifier() + L" does not specify a thread"
+								L"to execute on, and can therefore not be spawned using the async syntax.");
+
+			Variable threadVar = fn->findThread(s, vars);
+			fn->asyncThreadCall(s, vars, to, threadVar);
+		} else {
+			callFn(toExecute, s, vars, to, lookup, sameObject);
+		}
 	}
 
 	void bs::FnCall::output(wostream &to) const {
 		Auto<Name> p = toExecute->path();
 		p = p->withParams(vector<Value>());
 		to << p << params;
+		if (async)
+			to << L"&";
 	}
 
 	/**
@@ -578,5 +600,15 @@ namespace storm {
 		return findTarget(block, n, name->pos, params, false);
 	}
 
+	bs::Expr *STORM_FN bs::spawnExpr(Par<Expr> expr) {
+		FnCall *fnCall = as<FnCall>(expr.borrow());
+		if (!fnCall)
+			throw SyntaxError(expr->pos, L"The spawn-syntax is not applicable to anything but functions"
+							L" at the moment. This is a " + expr->myType->identifier());
+
+		fnCall->makeAsync();
+
+		return expr.ret();
+	}
 
 }

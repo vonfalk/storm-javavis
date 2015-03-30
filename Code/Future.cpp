@@ -7,8 +7,7 @@ namespace code {
 
 	void FutureBase::result() {
 		// Block the first thread, and allow any subsequent threads to enter.
-		semaDown();
-		semaUp();
+		wait();
 		if (hasError()) {
 			throwError();
 		}
@@ -24,15 +23,15 @@ namespace code {
 
 	void FutureBase::posted() {
 		nat p = atomicCAS(resultPosted, 0, 1);
-		if (p != 0)
-			DebugBreak();
 		assert(p == 0, L"A future may not be used more than once!");
-		semaUp();
+		notify();
 	}
 
 	void FutureBase::error() {
+		nat p = atomicCAS(resultPosted, 0, 1);
+		assert(p == 0, L"A future may not be used more than once!");
 		saveError();
-		semaUp();
+		notify();
 	}
 
 #ifdef CUSTOM_EXCEPTION_PTR

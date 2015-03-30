@@ -44,12 +44,25 @@ namespace storm {
 		}
 	}
 
+	code::FutureBase *FutureBase::rawFuture() {
+		if (atomicCAS(data->releaseOnResult, 0, 1) == 0)
+			data->addRef();
+		return &data->future;
+	}
+
+	FutureBase::FutureSema::FutureSema(void *data) : code::FutureSema<Sema>(data) {}
+
+	void FutureBase::FutureSema::notify() {
+		code::FutureSema<Sema>::notify();
+		Data::resultPosted(this);
+	}
+
 	FutureBase::Data *FutureBase::Data::alloc(const Handle &type) {
 		Data *r = (Data *)malloc(sizeof(Data) + type.size - sizeof(byte));
 		r->refs = 1;
 		r->handle = &type;
-		new (&r->future)code::FutureSema<Sema>(r->data);
-		new (&r->sync)Sema(1);
+		new (&r->future)FutureSema(r->data);
+		r->releaseOnResult = 0;
 		return r;
 	}
 
@@ -57,8 +70,7 @@ namespace storm {
 		// If the result is initialized, destroy it as well!
 		if (future.dataPosted() && handle->destroy)
 			(*handle->destroy)(data);
-		future.~FutureSema<Sema>();
-		sync.~Sema();
+		future.~FutureSema();
 		::free(this);
 	}
 
@@ -69,6 +81,13 @@ namespace storm {
 	void FutureBase::Data::release() {
 		if (atomicDecrement(refs) == 0)
 			free();
+	}
+
+	void FutureBase::Data::resultPosted(FutureSema *sema) {
+		Data *me = BASE_PTR(Data, sema, future);
+
+		if (atomicCAS(me->releaseOnResult, 1, 0) == 1)
+			me->release();
 	}
 
 }

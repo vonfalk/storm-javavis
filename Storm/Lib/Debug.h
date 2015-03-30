@@ -44,6 +44,10 @@ namespace storm {
 	// Output the layout of 'a'.
 	void STORM_FN layout(Par<Object> a);
 
+	// Very crude sleep implementation, it pauses all UThreads that happens to be running on the
+	// OS thread of this thread. This has to be improved later on!
+	void STORM_FN dbgSleep(Int ms);
+
 	// Class partly implemented in C++, we'll try to override this in Storm.
 	class Dbg : public Object {
 		STORM_CLASS;

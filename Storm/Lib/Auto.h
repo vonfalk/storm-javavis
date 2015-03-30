@@ -68,7 +68,7 @@ namespace storm {
 		}
 
 		// Return the pointer.
-		inline T *ret() { T *t = obj; obj = null; return t; }
+		inline T *ret() { T *t = obj; obj = null; t->addRef(); return t; }
 
 		// Get a pointer, borriowing the reference.
 		inline T *borrow() const { return obj; }

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CodeGen.h"
 #include "Exception.h"
+#include "Function.h"
 
 namespace storm {
 
@@ -119,6 +120,29 @@ namespace storm {
 		to.to << mov(intRel(ptrA, Offset::sNat), natConst(typeInfo.kind));
 
 		return r;
+	}
+
+	void allocObject(const GenState &s, Function *ctor, vector<code::Value> params, code::Variable to) {
+		using namespace code;
+
+		Type *type = ctor->params[0].type;
+		Engine &e = ctor->engine();
+		assert(type->flags & typeClass, L"Must allocate class objects.");
+
+		Block b = s.frame.createChild(s.frame.last(s.block));
+		Variable rawMem = s.frame.createPtrVar(b, e.fnRefs.freeRef, freeOnException);
+
+		s.to << begin(b);
+		s.to << fnParam(type->typeRef);
+		s.to << fnCall(e.fnRefs.allocRef, Size::sPtr);
+		s.to << mov(rawMem, ptrA);
+
+		GenResult r;
+		params.insert(params.begin(), code::Value(ptrA));
+		ctor->localCall(s, params, r, false);
+
+		s.to << mov(to, rawMem);
+		s.to << end(b);
 	}
 
 }

@@ -51,9 +51,9 @@ namespace code {
 		bool anyPosted();
 
 	protected:
-		// Alter the semaphore (whichever implementation is used).
-		virtual void semaUp() = 0;
-		virtual void semaDown() = 0;
+		// Manage the notification between threads (whichever implementation i used).
+		virtual void notify() = 0;
+		virtual void wait() = 0;
 
 	private:
 
@@ -120,11 +120,12 @@ namespace code {
 		// The semaphore to use.
 		T sema;
 
-		virtual void semaDown() {
+		virtual void wait() {
 			sema.down();
+			sema.up(); // allows us to wait more than once!
 		}
 
-		virtual void semaUp() {
+		virtual void notify() {
 			sema.up();
 		}
 	};
