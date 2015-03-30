@@ -376,15 +376,18 @@ namespace storm {
 			l << fnCall(t.copyCtor(), Size());
 
 			Type *envType = CloneEnv::type(e);
-			Variable rawEnv = l.frame.createPtrVar(l.frame.root(), e.fnRefs.freeRef, freeOnException);
 			Variable env = variable(l.frame, l.frame.root(), Value(envType)).var;
-			l << fnParam(envType->typeRef);
-			l << fnCall(e.fnRefs.allocRef, Size::sPtr);
-			l << mov(rawEnv, ptrA);
-			l << fnParam(ptrA);
-			l << fnCall(envType->defaultCtor()->ref(), Size());
-			l << mov(env, ptrA);
-			l << mov(rawEnv, intPtrConst(0));
+			allocObject(l, l.frame.root(), envType->defaultCtor(), vector<code::Value>(), env);
+
+			// Variable rawEnv = l.frame.createPtrVar(l.frame.root(), e.fnRefs.freeRef, freeOnException);
+			// Variable env = variable(l.frame, l.frame.root(), Value(envType)).var;
+			// l << fnParam(envType->typeRef);
+			// l << fnCall(e.fnRefs.allocRef, Size::sPtr);
+			// l << mov(rawEnv, ptrA);
+			// l << fnParam(ptrA);
+			// l << fnCall(envType->defaultCtor()->ref(), Size());
+			// l << mov(env, ptrA);
+			// l << mov(rawEnv, intPtrConst(0));
 
 			l << fnParam(to);
 			l << fnParam(env);

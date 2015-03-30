@@ -394,19 +394,12 @@ namespace storm {
 			l << mov(freeResult, resultParam);
 
 			// We need to create a CloneEnv object.
-			Value envType(CloneEnv::type(engine()));
-			Variable cloneMem = l.frame.createPtrVar(l.frame.root(), engine().fnRefs.freeRef, freeOnException);
+			Type *envType = CloneEnv::type(engine());
 			Variable cloneEnv = l.frame.createPtrVar(l.frame.root(), engine().fnRefs.release);
-			l << fnParam(envType.type->typeRef);
-			l << fnCall(engine().fnRefs.allocRef, Size::sPtr);
-			l << mov(cloneMem, ptrA);
-			l << fnParam(ptrA);
-			l << fnCall(envType.defaultCtor(), Size::sPtr);
-			l << mov(cloneEnv, ptrA);
-			l << mov(cloneMem, intPtrConst(0));
+			allocObject(l, subBlock, envType->defaultCtor(), Actuals(), cloneEnv);
 
 			// Find 'deepCopy'.
-			Function *deepCopy = as<Function>(result.type->find(L"deepCopy", valList(2, result, envType)));
+			Function *deepCopy = as<Function>(result.type->find(L"deepCopy", valList(2, result, Value::thisPtr(envType))));
 			if (!deepCopy)
 				throw InternalError(L"The type " + ::toS(result) + L" does not have the required 'deepCopy' member.");
 

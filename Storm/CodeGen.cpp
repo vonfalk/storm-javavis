@@ -122,6 +122,30 @@ namespace storm {
 		return r;
 	}
 
+	void allocObject(code::Listing &l, code::Block b, Function *ctor, vector<code::Value> params, code::Variable to) {
+		using namespace code;
+
+		Type *type = ctor->params[0].type;
+		Engine &e = ctor->engine();
+		assert(type->flags & typeClass, L"Must allocate class objects.");
+
+		Block sub = l.frame.createChild(l.frame.last(b));
+		Variable rawMem = l.frame.createPtrVar(sub, e.fnRefs.freeRef, freeOnException);
+
+		l << begin(sub);
+		l << fnParam(type->typeRef);
+		l << fnCall(e.fnRefs.allocRef, Size::sPtr);
+		l << mov(rawMem, ptrA);
+
+		l << fnParam(ptrA);
+		for (nat i = 0; i < params.size(); i++)
+			l << fnParam(params[i]);
+		l << fnCall(ctor->ref(), Size());
+
+		l << mov(to, rawMem);
+		l << end(sub);
+	}
+
 	void allocObject(const GenState &s, Function *ctor, vector<code::Value> params, code::Variable to) {
 		using namespace code;
 
@@ -139,7 +163,7 @@ namespace storm {
 
 		GenResult r;
 		params.insert(params.begin(), code::Value(ptrA));
-		ctor->localCall(s, params, r, false);
+		ctor->localCall(s.child(b), params, r, false);
 
 		s.to << mov(to, rawMem);
 		s.to << end(b);

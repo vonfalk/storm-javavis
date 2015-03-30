@@ -121,4 +121,5 @@ namespace storm {
 
 	// Create an object on the heap. Store it in variable 'to'. Only work for heap-allocated objects.
 	void allocObject(const GenState &s, Function *ctor, vector<code::Value> params, code::Variable to);
+	void allocObject(code::Listing &l, code::Block b, Function *ctor, vector<code::Value> params, code::Variable to);
 }
