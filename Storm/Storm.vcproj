@@ -494,6 +494,14 @@
 				RelativePath=".\Repl.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Io\Url.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Protocol.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -830,6 +838,14 @@
 			</File>
 			<File
 				RelativePath=".\Repl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Url.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Protocol.h"
 				>
 			</File>
 		</Filter>

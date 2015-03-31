@@ -5,7 +5,7 @@ namespace storm {
 
 	ArrayBase::ArrayBase(const Handle &type) : handle(type), size(0), capacity(0), data(null) {}
 
-	ArrayBase::ArrayBase(const ArrayBase *o) : handle(o->handle), size(o->size), capacity(o->size) {
+	ArrayBase::ArrayBase(Par<ArrayBase> o) : handle(o->handle), size(o->size), capacity(o->size) {
 		data = new byte[o->size * handle.size];
 		try {
 			for (size = 0; size < o->size; size++) {

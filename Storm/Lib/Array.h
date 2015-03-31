@@ -25,7 +25,7 @@ namespace storm {
 		ArrayBase(const Handle &type);
 
 		// Copy another array.
-		ArrayBase(const ArrayBase *other);
+		ArrayBase(Par<ArrayBase> other);
 
 		// Dtor.
 		~ArrayBase();
@@ -85,7 +85,7 @@ namespace storm {
 		Array() : ArrayBase(storm::handle<T>()) {}
 
 		// Copy array.
-		Array(const Array<T> *o) : ArrayBase(o) {}
+		Array(Par<Array<T>> o) : ArrayBase(o) {}
 
 		// Element access.
 		T &at(Nat i) {
@@ -129,7 +129,7 @@ namespace storm {
 		ArrayP() : Array() {}
 
 		// Copy array.
-		ArrayP(const ArrayP<T> *o) : Array(o) {}
+		ArrayP(Par<ArrayP<T>> o) : Array(o) {}
 	};
 
 }

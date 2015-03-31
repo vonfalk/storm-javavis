@@ -110,6 +110,12 @@ inline void zeroArray(T *arr, nat count) {
 	memset(arr, 0, count * sizeof(T));
 }
 
+// Copy an array.
+template <class T>
+inline void copyArray(T *to, const T *from, nat count) {
+	memcpy(to, from, count * sizeof(T));
+}
+
 const float defTolerance = 0.01f;
 inline float eq(float a, float b, float tolerance = defTolerance) {
 	return a + tolerance >= b && a - tolerance <= b;

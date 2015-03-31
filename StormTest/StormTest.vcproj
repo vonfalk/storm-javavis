@@ -248,6 +248,10 @@
 				RelativePath=".\CloneTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\UrlTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -276,6 +280,10 @@
 			</File>
 			<File
 				RelativePath=".\Fn.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UrlTest.cpp"
 				>
 			</File>
 		</Filter>
