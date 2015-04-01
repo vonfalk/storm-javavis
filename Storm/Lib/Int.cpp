@@ -241,7 +241,7 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&natAssign))));
 
 		vector<Value> rr(2, Value(this, true));
-		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&intCopyCtor))));
+		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&natCopyCtor))));
 	}
 
 
@@ -250,6 +250,119 @@ namespace storm {
 		if (!t) {
 			t = CREATE(NatType, e);
 			e.setSpecialBuiltIn(specialNat, t);
+		}
+		return t;
+	}
+
+	static void byteAdd(InlinedParams p) {
+		if (p.result.needed()) {
+			code::Value result = p.result.location(p.state).var;
+			p.state.to << code::mov(result, p.params[0]);
+			p.state.to << code::add(result, p.params[1]);
+		}
+	}
+
+	static void bytePrefixInc(InlinedParams p) {
+		p.state.to << code::mov(code::ptrA, p.params[0]);
+		p.state.to << code::add(intRel(code::ptrA), code::byteConst(1));
+		if (p.result.needed())
+			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+	}
+
+	static void bytePostfixInc(InlinedParams p) {
+		p.state.to << code::mov(code::ptrA, p.params[0]);
+		if (p.result.needed())
+			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+		p.state.to << code::add(byteRel(code::ptrA), code::byteConst(1));
+	}
+
+	static void bytePrefixDec(InlinedParams p) {
+		p.state.to << code::mov(code::ptrA, p.params[0]);
+		p.state.to << code::sub(intRel(code::ptrA), code::byteConst(1));
+		if (p.result.needed())
+			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+	}
+
+	static void bytePostfixDec(InlinedParams p) {
+		p.state.to << code::mov(code::ptrA, p.params[0]);
+		if (p.result.needed())
+			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+		p.state.to << code::sub(byteRel(code::ptrA), code::byteConst(1));
+	}
+
+	static void byteSub(InlinedParams p) {
+		if (p.result.needed()) {
+			code::Value result = p.result.location(p.state).var;
+			p.state.to << code::mov(result, p.params[0]);
+			p.state.to << code::sub(result, p.params[1]);
+		}
+	}
+
+	template <code::CondFlag f>
+	static void byteCmp(InlinedParams p) {
+		if (p.result.needed()) {
+			code::Value result = p.result.location(p.state).var;
+			p.state.to << code::cmp(p.params[0], p.params[1]);
+			p.state.to << code::setCond(result, f);
+		}
+	}
+
+	static void byteAssign(InlinedParams p) {
+		p.state.to << code::mov(code::ptrA, p.params[0]);
+		p.state.to << code::mov(code::byteRel(code::ptrA), p.params[1]);
+		if (p.result.needed()) {
+			if (p.result.type.ref) {
+				if (!p.result.suggest(p.state, p.params[0]))
+					p.state.to << code::mov(p.result.location(p.state).var, code::ptrA);
+			} else {
+				if (!p.result.suggest(p.state, p.params[1]))
+					p.state.to << code::mov(p.result.location(p.state).var, p.params[1]);
+			}
+		}
+	}
+
+	static void byteCopyCtor(InlinedParams p) {
+		p.state.to << code::mov(code::ptrC, p.params[1]);
+		p.state.to << code::mov(code::ptrA, p.params[0]);
+		p.state.to << code::mov(code::byteRel(code::ptrA), code::byteRel(code::ptrC));
+	}
+
+	ByteType::ByteType() : Type(L"Byte", typeValue | typeFinal, Size::sByte, null) {}
+
+	void ByteType::lazyLoad() {
+		vector<Value> r(1, Value(this, true));
+		vector<Value> ii(2, Value(this));
+		Value b(boolType(engine));
+		add(steal(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&byteAdd))));
+		add(steal(inlinedFunction(engine, Value(this), L"-", ii, simpleFn(&byteSub))));
+		// add(steal(inlinedFunction(engine, Value(this), L"*", ii, simpleFn(&byteMul))));
+		add(steal(inlinedFunction(engine, b, L"==", ii, simpleFn(&byteCmp<code::ifEqual>))));
+		add(steal(inlinedFunction(engine, b, L"!=", ii, simpleFn(&byteCmp<code::ifNotEqual>))));
+		add(steal(inlinedFunction(engine, b, L"<", ii, simpleFn(&byteCmp<code::ifBelow>))));
+		add(steal(inlinedFunction(engine, b, L">", ii, simpleFn(&byteCmp<code::ifAbove>))));
+		add(steal(inlinedFunction(engine, b, L"<=", ii, simpleFn(&byteCmp<code::ifBelowEqual>))));
+		add(steal(inlinedFunction(engine, b, L">=", ii, simpleFn(&byteCmp<code::ifAboveEqual>))));
+
+		add(steal(inlinedFunction(engine, Value(this), L"*++", r, simpleFn(&bytePostfixInc))));
+		add(steal(inlinedFunction(engine, Value(this), L"++*", r, simpleFn(&bytePrefixInc))));
+		add(steal(inlinedFunction(engine, Value(this), L"*--", r, simpleFn(&bytePostfixDec))));
+		add(steal(inlinedFunction(engine, Value(this), L"--*", r, simpleFn(&bytePrefixDec))));
+
+		vector<Value> ri(2);
+		ri[0] = Value(this, true);
+		ri[1] = Value(this);
+		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&byteAssign))));
+
+		vector<Value> rr(2, Value(this, true));
+		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&byteCopyCtor))));
+	}
+
+
+	Type *byteType(Engine &e) {
+		Type *t = e.specialBuiltIn(specialByte);
+		if (!t) {
+			t = CREATE(ByteType, e);
+			e.setSpecialBuiltIn(specialByte, t);
 		}
 		return t;
 	}

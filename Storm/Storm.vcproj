@@ -502,6 +502,22 @@
 				RelativePath=".\Io\Protocol.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Io\Stream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Text.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf16Text.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf8Text.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -846,6 +862,22 @@
 			</File>
 			<File
 				RelativePath=".\Io\Protocol.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Stream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Text.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf16Text.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf8Text.h"
 				>
 			</File>
 		</Filter>

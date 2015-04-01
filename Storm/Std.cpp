@@ -235,6 +235,7 @@ namespace storm {
 		Package *core = to.package(coreName, true);
 		core->add(steal(intType(to)));
 		core->add(steal(natType(to)));
+		core->add(steal(byteType(to)));
 		core->add(steal(boolType(to)));
 		core->add(steal(arrayTemplate(to)));
 		core->add(steal(futureTemplate(to)));

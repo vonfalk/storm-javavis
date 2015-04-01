@@ -17,6 +17,7 @@ namespace storm {
 	enum Special {
 		specialInt = 0,
 		specialNat,
+		specialByte,
 		specialBool,
 
 		// last

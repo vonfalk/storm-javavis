@@ -14,6 +14,8 @@ Core
 -------
 Check all classes in the compiler and consider adding a thread identifier to them.
 
+Check all classes for the need of a copy ctor and deepCopy function!
+
 Optimize the ArrayTemplate lookup somewhat.
 
 The size of built-in types is not entirely correct at the moment. The current architecture's size is

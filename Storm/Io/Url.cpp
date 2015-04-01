@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Url.h"
 #include "Lib/CloneEnv.h"
+#include "Protocol.h"
 
 namespace storm {
 
@@ -45,6 +46,10 @@ namespace storm {
 		}
 	}
 
+	Url::Url(Par<Protocol> p, Par<ArrayP<Str>> parts) : protocol(p), parts(parts), flags(nothing) {
+		simplifyInplace(this->parts);
+	}
+
 	Url::Url(Par<Protocol> p, Par<ArrayP<Str>> parts, Flags flags) : protocol(p), parts(parts), flags(flags) {
 		simplifyInplace(this->parts);
 	}
@@ -58,12 +63,17 @@ namespace storm {
 	Url::~Url() {}
 
 	void Url::output(wostream &to) const {
-		if (protocol)
-			to << protocol << L":/";
+		if (as<FileProtocol>(protocol.borrow()))
+			to << "/";
+		else if (protocol)
+			to << protocol << L"://";
 		else
-			to << L".";
+			to << L"./";
 
-		for (nat i = 0; i < parts->count(); i++)
+		if (parts->count() > 0)
+			to << parts->at(0)->v;
+
+		for (nat i = 1; i < parts->count(); i++)
 			to << L"/" << parts->at(i)->v;
 
 		if (flags & isDir)

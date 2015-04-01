@@ -36,6 +36,9 @@ namespace storm {
 		// Create from fundamentals. (TODO: Storm needs the flags somehow!)
 		Url(Par<Protocol> p, Par<ArrayP<Str>> parts, Flags flags);
 
+		// Ctor for STORM.
+		STORM_CTOR Url(Par<Protocol> p, Par<ArrayP<Str>> parts);
+
 		// Copy ctor.
 		STORM_CTOR Url(Par<Url> o);
 
@@ -98,6 +101,7 @@ namespace storm {
 	BITMASK_OPERATORS(Url::Flags);
 
 	// Parse a path. (assumed to be on the local file system).
+	// TODO: We need something general!
 	Url *parsePath(Engine &e, const String &s);
 	Url *STORM_FN parsePath(Par<Str> s);
 

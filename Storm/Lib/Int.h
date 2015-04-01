@@ -30,5 +30,17 @@ namespace storm {
 		virtual void lazyLoad();
 	};
 
+	class ByteType : public Type {
+		STORM_CLASS;
+	public:
+		ByteType();
+
+		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::unsignedNr; }
+		virtual Function *destructor() { return null; }
+
+	protected:
+		virtual void lazyLoad();
+	};
+
 
 }
