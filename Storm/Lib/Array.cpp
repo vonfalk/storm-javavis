@@ -32,11 +32,59 @@ namespace storm {
 		}
 	}
 
+	void ArrayBase::reserve(Nat size) {
+		ensure(size);
+	}
+
 	void ArrayBase::clear() {
 		destroy(data, size);
 		data = null;
 		size = 0;
 		capacity = 0;
+	}
+
+	Bool ArrayBase::any() {
+		return count() > 0;
+	}
+
+	void ArrayBase::erase(Nat id) {
+		assert(id < size);
+
+		// Where is there a non-constructed element? Size == none.
+		nat hole = size;
+
+		try {
+			if (handle.destroy) {
+				(*handle.destroy)(data + id * handle.size);
+				hole = id;
+			}
+
+			for (nat i = id + 1; i < size; i++) {
+				size_t offset = i * handle.size;
+				size_t prev = offset - handle.size;
+				(*handle.create)(data + prev, data + offset);
+				hole = size;
+				if (handle.destroy) {
+					(*handle.destroy)(data + offset);
+					hole = id;
+				}
+			}
+
+			size--;
+
+		} catch (...) {
+			// We may have one non-destroyed element now. If so, we destroy
+			// all elements after that (destructors are safer to call than constructors).
+			if (hole >= size)
+				throw;
+
+			if (handle.destroy) {
+				for (nat i = hole + 1; i < size; i++)
+					(*handle.destroy)(data + id * handle.size);
+				size = hole;
+			}
+			throw;
+		}
 	}
 
 	void ArrayBase::destroy(byte *data, nat elements) {

@@ -36,8 +36,17 @@ namespace storm {
 		// Get size.
 		inline Nat STORM_FN count() const { return size; }
 
+		// Reserve size.
+		void STORM_FN reserve(Nat size);
+
 		// Clear.
 		void STORM_FN clear();
+
+		// Any elements?
+		Bool STORM_FN any();
+
+		// Erase one element.
+		void STORM_FN erase(Nat id);
 
 		// Raw operations.
 		void pushRaw(const void *value) {
@@ -96,6 +105,17 @@ namespace storm {
 		const T &at(Nat i) const {
 			assert(i < size);
 			return ((T *)data)[i];
+		}
+
+		// Get the last element.
+		T &last() {
+			assert(any());
+			return ((T *)data)[size - 1];
+		}
+
+		const T &last() const {
+			assert(any());
+			return ((T *)data)[size - 1];
 		}
 
 		// Insert an element.

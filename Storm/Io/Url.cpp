@@ -18,12 +18,36 @@ namespace storm {
 	}
 
 	static ArrayP<Str> *simplify(Par<ArrayP<Str>> parts) {
-		// for (nat i = 0; i < parts->count(); i++) {
-		// 	if (
-		// }
+		Auto<ArrayP<Str>> result = CREATE(ArrayP<Str>, parts);
+		result->reserve(parts->count());
+
+		for (nat i = 0; i < parts->count(); i++) {
+			Auto<Str> &p = parts->at(i);
+			if (p->v == L".") {
+				// Ignore it.
+			} else if (p->v == L".." && result->any() && result->last()->v != L"..") {
+				result->erase(result->count() - 1);
+			} else {
+				result->push(p);
+			}
+		}
+
+		return result.ret();
 	}
 
-	Url::Url(Par<Protocol> p, Par<ArrayP<Str>> parts, Flags flags) : protocol(p), parts(parts), flags(flags) {}
+	static void simplifyInplace(Auto<ArrayP<Str>> &parts) {
+		for (nat i = 0; i < parts->count(); i++) {
+			Auto<Str> &p = parts->at(i);
+			if (p->v == L"." || p->v == L"..") {
+				parts = simplify(parts);
+				return;
+			}
+		}
+	}
+
+	Url::Url(Par<Protocol> p, Par<ArrayP<Str>> parts, Flags flags) : protocol(p), parts(parts), flags(flags) {
+		simplifyInplace(this->parts);
+	}
 
 	Url::Url(Par<Url> o) {
 		protocol = o->protocol;
@@ -69,6 +93,7 @@ namespace storm {
 			return c;
 
 		c->parts->push(p);
+		simplifyInplace(c->parts);
 		c->flags &= ~isDir;
 		return c;
 	}
@@ -80,6 +105,7 @@ namespace storm {
 		for (nat i = 0; i < url->parts->count(); i++)
 			c->parts->push(url->parts->at(i));
 
+		simplifyInplace(c->parts);
 		c->flags = (flags & ~isDir) | (url->flags & isDir);
 		return c;
 	}
