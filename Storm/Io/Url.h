@@ -31,9 +31,6 @@ namespace storm {
 			// Is this a directory (ie trailing backslash?). It is, however, always possible to
 			// append another part to a non-directory for convenience reasons.
 			isDir = 0x01,
-
-			// Is this a relative path? if so, the protocol is ignored.
-			isRelative = 0x02,
 		};
 
 		// Create from fundamentals. (TODO: Storm needs the flags somehow!)
@@ -47,6 +44,10 @@ namespace storm {
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(Par<CloneEnv> o);
+
+		// Equals. Note that this is always a bitwise equality, multiple paths may name
+		// the same file!
+		virtual Bool STORM_FN equals(Par<Object> o);
 
 		// Append another path to this one. The other one has to be a relative path.
 		Url *STORM_FN push(Par<Url> url);
@@ -74,14 +75,14 @@ namespace storm {
 		Str *STORM_FN ext() const;
 
 		// Generate a relative path.
-		Url *relative(Par<Url> to) const;
+		Url *relative(Par<Url> to);
 
 	protected:
 		// Output.
 		virtual void output(wostream &to) const;
 
 	private:
-		// Protocol.
+		// Protocol. If null, we're a relative path!
 		Auto<Protocol> protocol;
 
 		// Parts of the path.

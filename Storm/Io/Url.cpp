@@ -58,10 +58,10 @@ namespace storm {
 	Url::~Url() {}
 
 	void Url::output(wostream &to) const {
-		if (flags & isRelative)
+		if (protocol)
+			to << protocol << L":/";
+		else
 			to << L".";
-		else if (protocol)
-			to << protocol << L"://";
 
 		for (nat i = 0; i < parts->count(); i++)
 			to << L"/" << parts->at(i)->v;
@@ -72,6 +72,31 @@ namespace storm {
 
 	void Url::deepCopy(Par<CloneEnv> e) {
 		parts = e->clone(parts);
+	}
+
+	// TODO: How do we consider the protocol here? Should we?
+	Bool Url::equals(Par<Object> o) {
+		if (!Object::equals(o))
+			return false;
+
+		Url *u = (Url *)o.borrow();
+		if (protocol) {
+			if (!protocol->equals(u->protocol))
+				return false;
+		} else {
+			if (u->protocol)
+				return false;
+		}
+
+		if (parts->count() != u->parts->count())
+			return false;
+
+		for (nat i = 0; i < parts->count(); i++) {
+			if (!parts->at(i)->equals(u->parts->at(i)))
+				return false;
+		}
+
+		return true;
 	}
 
 	Url *Url::copy() {
@@ -99,8 +124,9 @@ namespace storm {
 	}
 
 	Url *Url::push(Par<Url> url) {
-		if (!(url->flags & isRelative))
+		if (url->absolute())
 			throw InvalidName(::toS(url));
+
 		Url *c = copy();
 		for (nat i = 0; i < url->parts->count(); i++)
 			c->parts->push(url->parts->at(i));
@@ -124,7 +150,7 @@ namespace storm {
 	}
 
 	Bool Url::absolute() const {
-		return (flags & isRelative) == nothing;
+		return protocol != null;
 	}
 
 	Str *Url::name() const {
@@ -158,8 +184,13 @@ namespace storm {
 		return CREATE(Str, this, n->v.substr(0, d));
 	}
 
-	Url *Url::relative(Par<Url> to) const {
-		// TODO: Check protocols for equality.
+	Url *Url::relative(Par<Url> to) {
+		if (!absolute() || !to->absolute())
+			throw InvalidName(L"Both paths to 'relative' must be absolute.");
+
+		// Different protocols, not possible...
+		if (!protocol->equals(to->protocol))
+			return capture(this).ret();
 
 		Auto<ArrayP<Str>> rel = CREATE(ArrayP<Str>, this);
 		Auto<Str> up = CREATE(Str, this, L"..");
@@ -180,7 +211,7 @@ namespace storm {
 		for (nat i = equalTo; i < parts->count(); i++)
 			rel->push(parts->at(i));
 
-		return CREATE(Url, this, protocol, rel, flags | isRelative);
+		return CREATE(Url, this, null, rel, flags);
 	}
 
 
@@ -202,12 +233,18 @@ namespace storm {
 			return CREATE(Url, e, null, parts, flags);
 
 		nat start = 0;
+		// UNIX absolute path?
 		if (separator(s[0]))
 			start = 1;
+		// Windows absulute path?
 		else if (s.size() >= 2 && s[1] == ':')
 			start = 0;
+		// Windows network share?
+		else if (s.size() >= 2 && separator(s[0]) && separator(s[1]))
+			start = 2;
+		// Relative path?
 		else
-			flags |= Url::isRelative;
+			protocol = null;
 
 		nat end = s.size() - 1;
 		if (start > end)
