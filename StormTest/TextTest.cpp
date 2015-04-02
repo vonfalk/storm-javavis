@@ -58,5 +58,6 @@ BEGIN_TEST_(TextTest) {
 	CHECK(streamEq(READ(revUtf16Data), utf32Data));
 	CHECK(streamEq(READ(utf8Data), utf32Data));
 	CHECK(streamEq(READ(plainUtf8Data), utf32Data));
+	CHECK_OBJ_EQ(READ(utf16Data)->readLine(), CREATE(Str, *gEngine, String(strData)));
 
 } END_TEST

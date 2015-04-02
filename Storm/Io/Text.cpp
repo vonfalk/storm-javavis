@@ -26,8 +26,8 @@ namespace storm {
 		} else {
 			// We need a surrogate pair.
 			c -= 0x010000;
-			to << wchar(((c >> 10) & 0x7FF) + 0xD800);
-			to << wchar((c & 0x7FF) + 0xDC00);
+			to << wchar(((c >> 10) & 0x3FF) + 0xD800);
+			to << wchar((c & 0x3FF) + 0xDC00);
 		}
 	}
 
