@@ -11,7 +11,7 @@ namespace storm {
 
 	Buffer::Buffer(Nat size) : size(size), data(new byte[size]), owner(true) {}
 
-	Buffer::Buffer(const Buffer &o) : size(o.size), data(new byte[size]), owner(true) {
+	Buffer::Buffer(const Buffer &o) : size(o.size), data(new byte[o.size]), owner(true) {
 		copyArray(data, o.data, size);
 	}
 

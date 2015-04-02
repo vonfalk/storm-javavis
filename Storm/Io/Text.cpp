@@ -1,13 +1,12 @@
 #include "stdafx.h"
 #include "Text.h"
+#include "Utf8Text.h"
+#include "Utf16Text.h"
+#include "Utils/Endian.h"
 
 namespace storm {
 
-	TextReader::TextReader() {}
-
-	Nat TextReader::read() {
-		return 0;
-	}
+	TextReader::TextReader() : first(true), next(0) {}
 
 	static void add(std::wostringstream &to, Nat c) {
 		if (c >= 0xD800 && c < 0xE000) {
@@ -30,6 +29,26 @@ namespace storm {
 			to << wchar(((c >> 10) & 0x7FF) + 0xD800);
 			to << wchar((c & 0x7FF) + 0xDC00);
 		}
+	}
+
+	Nat TextReader::readPoint() {
+		return 0;
+	}
+
+	Nat TextReader::read() {
+		if (first)
+			peek();
+		Nat r = next;
+		next = readPoint();
+		return r;
+	}
+
+	Nat TextReader::peek() {
+		if (first) {
+			first = false;
+			next = readPoint();
+		}
+		return next;
 	}
 
 	Str *TextReader::readLine() {
@@ -58,10 +77,6 @@ namespace storm {
 		return CREATE(Str, this, o.str());
 	}
 
-	Bool TextReader::more() {
-		return false;
-	}
-
 	TextWriter::TextWriter() {}
 
 	void TextWriter::write(Nat codepoint) {}
@@ -79,14 +94,24 @@ namespace storm {
 		nat16 bom = 0;
 		// We do not have to check the return value here, otherwise 'bom' won't be written.
 		from->peek(Buffer(&bom, 2));
+		networkSwap(bom);
+
+		Auto<TextReader> created;
 
 		if (bom == 0xFEFF) {
-			return null;
+			created = CREATE(Utf16Reader, from, from, true);
 		} else if (bom == 0xFFFE) {
-			return null;
+			created = CREATE(Utf16Reader, from, from, false);
 		} else {
-			return null;
+			created = CREATE(Utf8Reader, from, from);
 		}
+
+		// Consume the BOM if relevant.
+		Nat first = created->peek();
+		if (first == 0xFEFF)
+			created->read();
+
+		return created.ret();
 	}
 
 }

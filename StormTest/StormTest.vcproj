@@ -252,6 +252,10 @@
 				RelativePath=".\UrlTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TextTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

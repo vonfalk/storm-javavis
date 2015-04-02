@@ -45,6 +45,10 @@ namespace storm {
 
 		// Element access.
 		Byte &STORM_FN operator [](Nat id) { return data[id]; }
+		const Byte &operator [](Nat id) const { return data[id]; }
+
+		// Pointer to the first element.
+		byte *dataPtr() const { return data; }
 
 	private:
 		// Contents.

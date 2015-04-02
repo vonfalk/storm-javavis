@@ -1,44 +1,44 @@
 #include "stdafx.h"
 #include "Utf16Text.h"
+#include "Utils/Endian.h"
 
 namespace storm {
 
 	static inline bool leading(nat16 ch) {
-		return (ch & 0xF800) == 0xDB00;
+		// return (ch >= 0xD800) && (ch < 0xDC00);
+		return (ch & 0xFC00) == 0xD800;
 	}
 
 	static inline bool trailing(nat16 ch) {
-		return (ch & 0xF800) == 0xDC00;
+		// return (ch >= 0xDC00) && (ch < 0xE000);
+		return (ch & 0xFC00) == 0xDC00;
 	}
 
 	static inline nat assemble(nat16 lead, nat16 trail) {
-		return nat(lead & 0x7FF) << nat(10)
-			| nat(trail & 0x7FF);
+		nat r = nat(lead & 0x3FF) << nat(10);
+		r |= nat(trail & 0x3FF);
+		r += 0x10000;
+		return r;
 	}
 
-	static inline void reverse(nat16 &ch) {
-		nat16 r = (ch & 0xFF00) >> 8;
-		r |= (ch & 0xFF) << 8;
-		ch = r;
-	}
-
-	Utf16Reader::Utf16Reader(Par<IStream> stream, Bool rev) : src(stream), rev(rev) {}
+	Utf16Reader::Utf16Reader(Par<IStream> stream, Bool be) : src(stream), bigEndian(be) {}
 
 	nat16 Utf16Reader::readCh() {
 		nat16 ch = 0;
 		if (src->read(Buffer(&ch, 2)) != 2)
 			return 0;
-		if (rev)
-			reverse(ch);
+		networkSwap(ch);
+		if (!bigEndian)
+			ch = byteSwap(ch);
 		return ch;
 	}
 
-	Nat Utf16Reader::read() {
+	Nat Utf16Reader::readPoint() {
 		while (nat16 ch = readCh()) {
 			if (leading(ch)) {
 				nat16 t = readCh();
-				if (trailing(ch))
-					return assemble(t, ch);
+				if (trailing(t))
+					return assemble(ch, t);
 				else
 					return Nat('?');
 			} else if (!trailing(ch)) {
@@ -47,10 +47,6 @@ namespace storm {
 		}
 
 		return 0;
-	}
-
-	Bool Utf16Reader::more() {
-		return src->more();
 	}
 
 }

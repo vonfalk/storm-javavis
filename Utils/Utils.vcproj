@@ -315,6 +315,10 @@
 				RelativePath=".\Utils.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Endian.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -535,6 +539,10 @@
 			</File>
 			<File
 				RelativePath=".\Bitmask.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Endian.h"
 				>
 			</File>
 		</Filter>

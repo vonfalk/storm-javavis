@@ -15,10 +15,7 @@ namespace storm {
 		STORM_CTOR Utf8Reader(Par<IStream> src);
 
 		// Read a character.
-		virtual Nat STORM_FN read();
-
-		// More?
-		virtual Bool STORM_FN more();
+		virtual Nat STORM_FN readPoint();
 
 	private:
 		// IStream.

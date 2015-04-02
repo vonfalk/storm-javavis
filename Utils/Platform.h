@@ -21,6 +21,13 @@
  */
 
 /**
+ * Endian-ness: Look in Endian.h for more helpers regarding endianness.
+ * LITTLE_ENDIAN
+ * BIG_ENDIAN
+ */
+
+
+/**
  * Compilers:
  * VS - Visual Studio compiler. Set to the version, eg 2008 for VS2008.
  * GCC - GCC compiler, TODO: version?
@@ -60,7 +67,7 @@
 #error "Too early VS version, earliest supported is VS2008"
 #endif
 
-#elif defined __GNUC__
+#elif defined(__GNUC__)
 // GCC
 #define GCC __GNUC__
 
@@ -71,6 +78,13 @@
 #define NAKED __declspec(naked)
 #endif
 
+#if defined(X86) || defined(X64)
+#define LITTLE_ENDIAN
+#else
+#error "Unknown endianness for your platform. Define either LITTLE_ENDIAN or BIG_ENDIAN here."
+#endif
+
 #ifndef THREAD
 #error "someone forgot to declare THREAD for your architecture"
 #endif
+

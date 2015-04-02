@@ -3,7 +3,7 @@
 
 namespace storm {
 
-	static inline bool first(byte c) {
+	static inline bool isFirst(byte c) {
 		return (c & 0x80) == 0x00 // single byte
 			|| (c & 0xC0) == 0xC0; // starting byte
 	}
@@ -42,12 +42,12 @@ namespace storm {
 		return ch;
 	}
 
-	Nat Utf8Reader::read() {
+	Nat Utf8Reader::readPoint() {
 		byte ch = readCh();
 		if (ch == 0)
 			return 0;
 
-		if (!first(ch))
+		if (!isFirst(ch))
 			return Nat('?');
 
 		nat left, r;
@@ -56,16 +56,12 @@ namespace storm {
 		for (nat i = 0; i < left; i++) {
 			ch = readCh();
 			// Sadly, we miss one here...
-			if (first(ch))
+			if (isFirst(ch))
 				return Nat('?');
 			r = (r << 6) | (ch & 0x3F);
 		}
 
 		return r;
-	}
-
-	Bool Utf8Reader::more() {
-		return src->more();
 	}
 
 }

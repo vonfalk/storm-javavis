@@ -11,22 +11,18 @@ namespace storm {
 	class Utf16Reader : public TextReader {
 		STORM_CLASS;
 	public:
-		// Create the reader. 'rev' is if we need to reverse the byte order.
-		// TODO: Indicate little or big endian!
-		STORM_CTOR Utf16Reader(Par<IStream> src, Bool rev);
+		// Create the reader.
+		STORM_CTOR Utf16Reader(Par<IStream> src, Bool bigEndian);
 
 		// Read a character.
-		virtual Nat STORM_FN read();
-
-		// More?
-		virtual Bool STORM_FN more();
+		virtual Nat STORM_FN readPoint();
 
 	private:
 		// IStream.
 		Auto<IStream> src;
 
-		// Reverse endianness.
-		bool rev;
+		// Big endian?
+		Bool bigEndian;
 
 		// Read a character.
 		nat16 readCh();
