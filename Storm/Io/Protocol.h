@@ -1,9 +1,25 @@
 #pragma once
 
 #include "Storm/Lib/Object.h"
+#include "Storm/Lib/Array.h"
+#include "Exception.h"
+#include "Stream.h"
 
 namespace storm {
 	STORM_PKG(core.io);
+
+	class Url;
+
+
+	/**
+	 * Error thrown when an operation is not supported by a protocol.
+	 */
+	class ProtocolNotSupported : public Exception {
+	public:
+		ProtocolNotSupported(const String &operation, const String &protocol) : operation(operation), protocol(protocol) {}
+		String operation, protocol;
+		virtual String what() const { return operation + L" is not supported by the protocol " + protocol; }
+	};
 
 	/**
 	 * Defines a protocol to use with a Url. The protocol itself defines how
@@ -28,6 +44,21 @@ namespace storm {
 		// Implemented here as a simple bitwise comparision.
 		virtual Bool STORM_FN partEq(Par<Str> a, Par<Str> b);
 
+		/**
+		 * These should be implemented as far as possible.
+		 */
+
+		// Children of this directory.
+		virtual ArrayP<Url> *STORM_FN children(Par<Url> url);
+
+		// Read a file.
+		virtual IStream *STORM_FN read(Par<Url> url);
+
+		// Write a file.
+		virtual OStream *STORM_FN write(Par<Url> url);
+
+		// Exists?
+		virtual Bool STORM_FN exists(Par<Url> url);
 	};
 
 
@@ -46,9 +77,24 @@ namespace storm {
 		// Compare parts.
 		virtual Bool STORM_FN partEq(Par<Str> a, Par<Str> b);
 
+		// Children of this directory.
+		virtual ArrayP<Url> *STORM_FN children(Par<Url> url);
+
+		// Read a file.
+		virtual IStream *STORM_FN read(Par<Url> url);
+
+		// Write a file.
+		virtual OStream *STORM_FN write(Par<Url> url);
+
+		// Exists?
+		virtual Bool STORM_FN exists(Par<Url> url);
+
 	protected:
 		// output
 		virtual void output(wostream &to) const;
+
+		// Convert an Url to a string.
+		String format(Par<Url> url);
 	};
 
 

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Storm/Io/Url.h"
+#include "Storm/Io/Text.h"
 
 BEGIN_TEST(UrlTest) {
 
@@ -26,5 +27,18 @@ BEGIN_TEST(UrlTest) {
 
 	// Windows paths.
 	CHECK_OBJ_EQ(parsePath(e, L"C:/host/share/foo"), parsePath(e, L"/C:/host/share/foo"));
+
+	// Check the 'executableFileUrl'...
+	CHECK(steal(executableFileUrl(e))->exists());
+
+	Auto<Url> testFile = dbgRootUrl(e);
+	testFile = testFile->push(L"TestData");
+	testFile = testFile->push(L"SrcPos.txt");
+	PVAR(testFile);
+	CHECK(testFile->exists());
+
+	Auto<storm::IStream> stream = testFile->read();
+	Auto<TextReader> text = readText(stream);
+	CHECK_OBJ_EQ(text->readLine(), CREATE(Str, e, L"Sample text file"));
 
 } END_TEST

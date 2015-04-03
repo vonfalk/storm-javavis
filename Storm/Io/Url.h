@@ -6,6 +6,7 @@
 #include "Storm/Lib/Array.h"
 #include "Storm/Exception.h"
 #include "Protocol.h"
+#include "Stream.h"
 
 namespace storm {
 
@@ -59,6 +60,13 @@ namespace storm {
 		Url *STORM_FN push(Par<Str> part);
 		Url *push(const String &part);
 
+		// Append another part to this one, making the resulting Url into a directory.
+		Url *STORM_FN pushDir(Par<Str> part);
+		Url *pushDir(const String &part);
+
+		// Get all parts.
+		ArrayP<Str> *STORM_FN getParts() const;
+
 		// Is this a directory?
 		Bool STORM_FN dir() const;
 
@@ -79,6 +87,23 @@ namespace storm {
 
 		// Generate a relative path.
 		Url *relative(Par<Url> to);
+
+		/**
+		 * Find out things about this URL. All operations are not always supported
+		 * by all protocols. Note that these are generally assumed to be run on non-relative urls.
+		 */
+
+		// Find all children URL:s.
+		virtual ArrayP<Url> *STORM_FN children();
+
+		// Open this Url for reading.
+		virtual IStream *STORM_FN read();
+
+		// Open this Url for writing.
+		virtual OStream *STORM_FN write();
+
+		// Does this Url exist?
+		virtual Bool STORM_FN exists();
 
 	protected:
 		// Output.
@@ -104,6 +129,11 @@ namespace storm {
 	// TODO: We need something general!
 	Url *parsePath(Engine &e, const String &s);
 	Url *STORM_FN parsePath(Par<Str> s);
+
+	// Get some good URL:s.
+	Url *executableFileUrl(Engine &e);
+	Url *executableUrl(Engine &e);
+	Url *dbgRootUrl(Engine &e);
 
 
 	// Some exceptions.

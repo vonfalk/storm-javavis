@@ -109,6 +109,10 @@ namespace storm {
 		return true;
 	}
 
+	ArrayP<Str> *Url::getParts() const {
+		return CREATE(ArrayP<Str>, this, parts);
+	}
+
 	Url *Url::copy() {
 		Url *c = COPY(Url, this);
 		c->parts = COPY(ArrayP<Str>, c->parts);
@@ -130,6 +134,25 @@ namespace storm {
 		c->parts->push(p);
 		simplifyInplace(c->parts);
 		c->flags &= ~isDir;
+		return c;
+	}
+
+
+	Url *Url::pushDir(const String &p) {
+		Auto<Str> z = CREATE(Str, engine(), p);
+		return pushDir(z);
+	}
+
+	Url *Url::pushDir(Par<Str> p) {
+		validate(p->v);
+
+		Url *c = copy();
+		if (p->count() == 0)
+			return c;
+
+		c->parts->push(p);
+		simplifyInplace(c->parts);
+		c->flags |= isDir;
 		return c;
 	}
 
@@ -224,6 +247,38 @@ namespace storm {
 		return CREATE(Url, this, null, rel, flags);
 	}
 
+	/**
+	 * Forward to the protocol.
+	 */
+
+	// Find all children URL:s.
+	ArrayP<Url> *Url::children() {
+		if (!protocol)
+			throw ProtocolNotSupported(L"children", L"<none>");
+		return protocol->children(this);
+	}
+
+	// Open this Url for reading.
+	IStream *Url::read() {
+		if (!protocol)
+			throw ProtocolNotSupported(L"read", L"<none>");
+		return protocol->read(this);
+	}
+
+	// Open this Url for writing.
+	OStream *Url::write() {
+		if (!protocol)
+			throw ProtocolNotSupported(L"write", L"<none>");
+		return protocol->write(this);
+	}
+
+	// Does this Url exist?
+	Bool Url::exists() {
+		if (!protocol)
+			throw ProtocolNotSupported(L"exists", L"<none>");
+		return protocol->exists(this);
+	}
+
 
 	/**
 	 * Parsing
@@ -279,6 +334,29 @@ namespace storm {
 			parts->push(CREATE(Str, e, s.substr(last, end - last + 1)));
 
 		return CREATE(Url, e, protocol, parts, flags);
+	}
+
+#ifdef WINDOWS
+	Url *executableFileUrl(Engine &e) {
+		wchar_t tmp[MAX_PATH + 1];
+		GetModuleFileName(NULL, tmp, MAX_PATH + 1);
+		return parsePath(e, tmp);
+	}
+#else
+#error "Please implement executableFileUrl for your OS!"
+#endif
+
+	Url *executableUrl(Engine &e) {
+		Auto<Url> v = executableFileUrl(e);
+		return v->parent();
+	}
+
+	Url *dbgRootUrl(Engine &e) {
+#ifndef DEBUG
+		WARNING(L"Using dbgRoot in release!");
+#endif
+		Auto<Url> v = executableUrl(e);
+		return v->parent();
 	}
 
 }

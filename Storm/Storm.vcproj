@@ -522,6 +522,10 @@
 				RelativePath=".\Io\MemStream.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Io\FileStream.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -886,6 +890,10 @@
 			</File>
 			<File
 				RelativePath=".\Io\MemStream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\FileStream.h"
 				>
 			</File>
 		</Filter>
