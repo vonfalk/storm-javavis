@@ -5,6 +5,8 @@
 namespace storm {
 	STORM_PKG(core.io);
 
+	class Url;
+
 	/**
 	 * Text IO. Supports UTF8 and UTF16, little and big endian. The package includes
 	 * a method of detecting which encoding is used. TODO: this should also be extensible.
@@ -71,5 +73,8 @@ namespace storm {
 	 * Create a reader. Identifies the encoding automatically.
 	 */
 	TextReader *readText(Par<IStream> stream);
+
+	// Read all text from a text file.
+	Str *readAllText(Par<Url> file);
 
 }

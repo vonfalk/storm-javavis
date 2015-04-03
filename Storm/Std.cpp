@@ -237,7 +237,7 @@ namespace storm {
 		core->add(steal(natType(to)));
 		core->add(steal(byteType(to)));
 		core->add(steal(boolType(to)));
-		core->add(steal(arrayTemplate(to)));
+		addArrayTemplate(core);
 		core->add(steal(futureTemplate(to)));
 		core->add(steal(cloneTemplate(to)));
 

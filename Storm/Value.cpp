@@ -7,6 +7,10 @@
 
 namespace storm {
 
+	bool isClass(Type *t) {
+		return (t->flags & typeClass) != 0;
+	}
+
 	Value Value::thisPtr(Type *t) {
 		bool ref = false;
 		if (t->flags & typeValue) {

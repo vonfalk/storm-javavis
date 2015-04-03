@@ -2,6 +2,7 @@
 #include "Url.h"
 #include "Lib/CloneEnv.h"
 #include "Protocol.h"
+#include "Type.h"
 
 namespace storm {
 
@@ -44,6 +45,10 @@ namespace storm {
 				return;
 			}
 		}
+	}
+
+	Url::Url() : flags(nothing) {
+		parts = CREATE(ArrayP<Str>, this);
 	}
 
 	Url::Url(Par<Protocol> p, Par<ArrayP<Str>> parts) : protocol(p), parts(parts), flags(nothing) {

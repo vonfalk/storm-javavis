@@ -13,32 +13,33 @@ namespace storm {
 		return n;
 	}
 
-	Name *syntaxPkg(Engine &e, const Path &path) {
-		Name *n = CREATE(Name, e, L"lang");
-		n->add(path.ext());
+	Name *syntaxPkg(Par<Url> path) {
+		Name *n = CREATE(Name, path, L"lang");
+		Auto<NamePart> part = CREATE(NamePart, path, steal(path->ext()));
+		n->add(part);
 		return n;
 	}
 
-	hash_map<Auto<Name>, Auto<PkgFiles> > syntaxPkg(const vector<Path> &paths, Engine &e) {
+	hash_map<Auto<Name>, Auto<PkgFiles> > syntaxPkg(Auto<ArrayP<Url>> paths) {
 		typedef hash_map<Auto<Name>, Auto<PkgFiles> > M;
 		M r;
 
-		for (nat i = 0; i < paths.size(); i++) {
-			if (paths[i].isDir())
+		for (nat i = 0; i < paths->count(); i++) {
+			if (paths->at(i)->dir())
 				continue;
 
-			Auto<Name> pkg = syntaxPkg(e, paths[i]);
+			Auto<Name> pkg = syntaxPkg(paths->at(i));
 			M::iterator found = r.find(pkg);
 
 			Auto<PkgFiles> into;
 			if (found == r.end()) {
-				into = CREATE(PkgFiles, e);
+				into = CREATE(PkgFiles, paths);
 				r.insert(make_pair(pkg, into));
 			} else {
 				into = found->second;
 			}
 
-			into->add(paths[i]);
+			into->add(paths->at(i));
 		}
 
 		return r;
@@ -48,14 +49,16 @@ namespace storm {
 	 * PkgFiles.
 	 */
 
-	PkgFiles::PkgFiles() {}
+	PkgFiles::PkgFiles() {
+		files = CREATE(ArrayP<Url>, engine());
+	}
 
-	void PkgFiles::add(const Path &f) {
-		files.push_back(f);
+	void PkgFiles::add(Par<Url> f) {
+		files->push(f);
 	}
 
 	void PkgFiles::output(wostream &to) const {
-		join(to, files, L", ");
+		to << files;
 	}
 
 	/**
@@ -79,7 +82,7 @@ namespace storm {
 	 * FileReader.
 	 */
 
-	FileReader::FileReader(const Path &file, Par<Package> into) : file(file), package(into) {}
+	FileReader::FileReader(Par<Url> file, Par<Package> into) : file(file), package(into) {}
 
 	void FileReader::readSyntax(SyntaxRules &to) {}
 
@@ -90,8 +93,8 @@ namespace storm {
 	void FileReader::readFunctions() {}
 
 	Package *FileReader::syntaxPackage() const {
-		Auto<Name> pkg = syntaxPkg(engine(), file);
-		return package->engine.package(pkg);
+		Auto<Name> pkg = syntaxPkg(file);
+		return engine().package(pkg);
 	}
 
 	/**
@@ -132,12 +135,12 @@ namespace storm {
 		if (files.size() != 0)
 			return;
 
-		for (nat i = 0; i < pkgFiles->files.size(); i++) {
-			files.push_back(createFile(pkgFiles->files[i]));
+		for (nat i = 0; i < pkgFiles->files->count(); i++) {
+			files.push_back(createFile(pkgFiles->files->at(i)));
 		}
 	}
 
-	FileReader *FilesReader::createFile(const Path &path) {
+	FileReader *FilesReader::createFile(Par<Url> path) {
 		throw InternalError(L"Please implement the 'createFile' on " + myType->name);
 	}
 

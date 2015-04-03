@@ -34,7 +34,6 @@ BEGIN_TEST(UrlTest) {
 	Auto<Url> testFile = dbgRootUrl(e);
 	testFile = testFile->push(L"TestData");
 	testFile = testFile->push(L"SrcPos.txt");
-	PVAR(testFile);
 	CHECK(testFile->exists());
 
 	Auto<storm::IStream> stream = testFile->read();

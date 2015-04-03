@@ -1,7 +1,7 @@
 #pragma once
 #include "Name.h"
-#include "Utils/Path.h"
 #include "Lib/Object.h"
+#include "Io/Url.h"
 
 namespace storm {
 	STORM_PKG(lang);
@@ -14,13 +14,14 @@ namespace storm {
 	Name *STORM_FN readerName(Par<const Name> name);
 
 	// Get the name of the package containing the syntax to be used when parsing 'path'.
-	Name *syntaxPkg(Engine &e, const Path &path);
+	Name *syntaxPkg(Par<Url> path);
 
 	// Same as above, but generates a map of all files with the same extension.
-	hash_map<Auto<Name>, Auto<PkgFiles> > syntaxPkg(const vector<Path> &paths, Engine &e);
+	hash_map<Auto<Name>, Auto<PkgFiles> > syntaxPkg(Auto<ArrayP<Url>> paths);
 
 	/**
 	 * Input set to a PkgReader.
+	 * TODO? Replace with simple array?
 	 */
 	class PkgFiles : public Object {
 		STORM_CLASS; // final
@@ -28,10 +29,10 @@ namespace storm {
 		STORM_CTOR PkgFiles();
 
 		// Add a new file.
-		void add(const Path &file);
+		void STORM_FN add(Par<Url> file);
 
 		// All files to process.
-		vector<Path> files;
+		Auto<ArrayP<Url>> files;
 
 	protected:
 		virtual void output(wostream &to) const;
@@ -88,10 +89,10 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create a FileReader.
-		FileReader(const Path &file, Par<Package> into);
+		STORM_CTOR FileReader(Par<Url> file, Par<Package> into);
 
 		// File.
-		const Path file;
+		Par<Url> file;
 
 		// Package we're loading into.
 		Auto<Package> package;
@@ -128,10 +129,10 @@ namespace storm {
 		virtual void resolveTypes();
 		virtual void readFunctions();
 
-	protected:
 		// Create a file object. This is called as late as possible.
-		virtual FileReader *createFile(const Path &path);
+		virtual FileReader *STORM_FN createFile(Par<Url> path);
 
+	protected:
 		// Store files while in use.
 		vector<Auto<FileReader> > files;
 

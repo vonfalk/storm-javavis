@@ -6,9 +6,10 @@ using namespace storm;
 
 BEGIN_TEST(TokenizerTest) {
 
+	Auto<Url> empty = CREATE(Url, *gEngine);
 	{
 		String s(L"hello world");
-		Tokenizer t(Path(), s, 0);
+		Tokenizer t(empty, s, 0);
 
 		CHECK_EQ(t.next().token, L"hello");
 		CHECK_EQ(t.next().token, L"world");
@@ -17,7 +18,7 @@ BEGIN_TEST(TokenizerTest) {
 
 	{
 		String s(L"Hello \"string\\\"\"?*op");
-		Tokenizer t(Path(), s, 0);
+		Tokenizer t(empty, s, 0);
 
 		CHECK_EQ(t.next().token, L"Hello");
 		CHECK_EQ(t.next().token, L"\"string\\\"\"");
@@ -28,7 +29,7 @@ BEGIN_TEST(TokenizerTest) {
 
 	{
 		String s(L"He//llo\ncomment");
-		Tokenizer t(Path(), s, 0);
+		Tokenizer t(empty, s, 0);
 
 		CHECK_EQ(t.next().token, L"He");
 		CHECK_EQ(t.next().token, L"comment");
@@ -38,7 +39,7 @@ BEGIN_TEST(TokenizerTest) {
 	{
 		// Special chars.
 		String s(L"(,)");
-		Tokenizer t(Path(), s, 0);
+		Tokenizer t(empty, s, 0);
 
 		CHECK_EQ(t.next().token, L"(");
 		CHECK_EQ(t.next().token, L",");
@@ -50,7 +51,7 @@ BEGIN_TEST(TokenizerTest) {
 	{
 		// Special chars.
 		String s(L"a,f");
-		Tokenizer t(Path(), s, 0);
+		Tokenizer t(empty, s, 0);
 
 		CHECK_EQ(t.next().token, L"a");
 		CHECK_EQ(t.next().token, L",");

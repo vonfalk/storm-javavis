@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "SrcPos.h"
 
+#include "Io/Text.h"
+#include "Lib/CloneEnv.h"
 #include "Code/Sync.h"
 #include "Utils/TextFile.h"
 #include "Utils/FileStream.h"
@@ -17,73 +19,21 @@ namespace storm {
 	 * SrcPos.
 	 */
 
-	SrcPos::SrcPos() : sharedFile(null), offset(noOffset) {}
+	SrcPos::SrcPos() : file(), offset(noOffset) {}
 
-	SrcPos::SrcPos(const Path &file, nat offset) : offset(offset) {
-		sharedFile = shared(file);
-	}
+	SrcPos::SrcPos(Par<Url> file, nat offset) : file(file), offset(offset) {}
 
-	SrcPos::SrcPos(const SrcPos &o) : sharedFile(o.sharedFile), offset(o.offset) {
-		if (sharedFile) {
-			Lock::L z(cacheLock);
-			sharedFile->refs++;
-		}
-	}
+	SrcPos::SrcPos(const SrcPos &o) : file(o.file), offset(o.offset) {}
 
 	SrcPos &SrcPos::operator =(const SrcPos &o) {
-		release(sharedFile);
-
-		Lock::L z(cacheLock);
 		offset = o.offset;
-		sharedFile = o.sharedFile;
-		if (sharedFile)
-			sharedFile->refs++;
+		file = o.file;
 
 		return *this;
 	}
 
-	SrcPos::~SrcPos() {
-		release(sharedFile);
-	}
-
-	bool SrcPos::mapCompare::operator ()(const File *a, const File *b) const {
-		return *a->file < *b->file;
-	}
-
-	SrcPos::File *SrcPos::shared(const Path &p) {
-		Lock::L z(cacheLock);
-
-		File f = { &p, 0 };
-		File *result;
-		FileCache::const_iterator i = fileCache.find(&f);
-		if (i == fileCache.end()) {
-			result = new File(f);
-			result->file = new Path(p);
-			fileCache.insert(result);
-		} else {
-			result = *i;
-		}
-
-		result->refs++;
-		return result;
-	}
-
-	void SrcPos::release(File *f) {
-		if (f) {
-			Lock::L z(cacheLock);
-			if (--f->refs == 0) {
-				fileCache.erase(f);
-				delete f->file;
-				delete f;
-			}
-		}
-	}
-
-	Path SrcPos::file() const {
-		if (sharedFile)
-			return *sharedFile->file;
-		else
-			return Path();
+	void SrcPos::deepCopy(Par<CloneEnv> env) {
+		file = env->clone<Url>(file);
 	}
 
 	SrcPos SrcPos::operator +(nat o) const {
@@ -92,11 +42,25 @@ namespace storm {
 		return p;
 	}
 
+	Bool SrcPos::operator ==(const SrcPos &o) const {
+		if (offset != o.offset)
+			return false;
+
+		if (file && o.file) {
+			if (!file->equals(o.file))
+				return false;
+		} else if (file || o.file) {
+			return false;
+		}
+
+		return true;
+	}
+
 	wostream &operator <<(wostream &to, const SrcPos &pos) {
 		if (pos.unknown())
 			to << "<unknown location>";
 		else
-			to << pos.file() << "(" << pos.offset << ")";
+			to << pos.file << "(" << pos.offset << ")";
 		return to;
 	}
 
@@ -105,38 +69,26 @@ namespace storm {
 		if (unknown())
 			return r;
 
-		TextReader *reader = null;
+		Auto<IStream> stream = file->read();
+		Auto<TextReader> reader = readText(stream);
 
-		try {
-			reader = TextReader::create(new FileStream(file(), Stream::mRead));
-			for (nat i = 0; i < offset; i++) {
-				wchar c = reader->get();
-				switch (c) {
-				case '\r':
-					// ignored.
-					break;
-				case '\n':
-					r.line++;
-					r.col = 0;
-					break;
-				default:
-					r.col++;
-					break;
-				}
+		for (nat i = 0; i < offset; i++) {
+			Nat c = reader->read();
+			switch (c) {
+			case '\r':
+				// ignored.
+				break;
+			case '\n':
+				r.line++;
+				r.col = 0;
+				break;
+			default:
+				r.col++;
+				break;
 			}
-		} catch (...) {
-			if (reader)
-				delete reader;
-			throw;
 		}
-
-		if (reader)
-			delete reader;
 
 		return r;
 	}
-
-	SrcPos::FileCache SrcPos::fileCache;
-	Lock SrcPos::cacheLock;
 
 }

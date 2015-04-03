@@ -34,7 +34,7 @@ namespace storm {
 		// 'pos' is the start position of 'src'. If 'src' is the entire file, the second
 		// variant can also be used.
 		Parser(SyntaxSet &set, const String &src, const SrcPos &pos);
-		Parser(SyntaxSet &set, const String &src, const Path &file);
+		Parser(SyntaxSet &set, const String &src, Par<Url> file);
 
 		// Parse the string previously given from 'start'. Returns the first index not matched.
 		nat parse(const String &rootType, nat start = 0);

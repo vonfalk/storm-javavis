@@ -4,7 +4,7 @@
 #include "Storm/Lib/Object.h"
 #include "Storm/Lib/Str.h"
 #include "Storm/Lib/Array.h"
-#include "Storm/Exception.h"
+#include "Utils/Exception.h"
 #include "Protocol.h"
 #include "Stream.h"
 
@@ -33,6 +33,9 @@ namespace storm {
 			// append another part to a non-directory for convenience reasons.
 			isDir = 0x01,
 		};
+
+		// Empty url.
+		Url();
 
 		// Create from fundamentals. (TODO: Storm needs the flags somehow!)
 		Url(Par<Protocol> p, Par<ArrayP<Str>> parts, Flags flags);
@@ -135,8 +138,7 @@ namespace storm {
 	Url *executableUrl(Engine &e);
 	Url *dbgRootUrl(Engine &e);
 
-
-	// Some exceptions.
+		// Some exceptions.
 	class InvalidName : public Exception {
 	public:
 		InvalidName(const String &name) : name(name) {}

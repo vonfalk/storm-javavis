@@ -191,7 +191,8 @@ namespace storm {
 	}
 
 	Name *parseTemplateName(Engine &e, const Scope &scope, const SrcPos &pos, const String &src) {
-		Tokenizer tok(Path(), src, 0);
+		Auto<Url> path = CREATE(Url, e); // TODO: Null?
+		Tokenizer tok(path, src, 0);
 		return parseName(e, scope, pos, tok);
 	}
 

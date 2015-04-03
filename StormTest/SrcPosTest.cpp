@@ -5,8 +5,9 @@
 using namespace storm;
 
 BEGIN_TEST(SrcPosTest) {
-	Path testData = Path::dbgRoot() + Path(L"TestData/");
-	Path testFile = testData + L"SrcPos.txt";
+	Auto<Url> testData = dbgRootUrl(*gEngine);
+	testData = testData->push(L"TestData");
+	Auto<Url> testFile = testData->push(L"SrcPos.txt");
 
 	CHECK_EQ(SrcPos(testFile, 10).lineCol(), LineCol(0, 10));
 	CHECK_EQ(SrcPos(testFile, 16).lineCol(), LineCol(0, 16));

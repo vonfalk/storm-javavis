@@ -74,7 +74,8 @@ namespace storm {
 		}
 
 		// Now, all the types are created, so we can create packages!
-		rootPkg = CREATE(Package, *this, root, *this);
+		Auto<Url> rootUrl = parsePath(*this, root.toS());
+		rootPkg = CREATE(Package, *this, rootUrl);
 
 		defScopeLookup = CREATE(ScopeLookup, *this);
 		rootScope = new Scope(rootPkg);
@@ -172,7 +173,7 @@ namespace storm {
 
 		Package *next = as<Package>(pkg->find(path->at(pos)));
 		if (next == null) {
-			Auto<Package> r = CREATE(Package, *this, path->at(pos)->name, *this);
+			Auto<Package> r = CREATE(Package, *this, path->at(pos)->name);
 			next = r.borrow();
 			pkg->add(r);
 		}

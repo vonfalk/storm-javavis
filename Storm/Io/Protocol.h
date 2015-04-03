@@ -2,7 +2,7 @@
 
 #include "Storm/Lib/Object.h"
 #include "Storm/Lib/Array.h"
-#include "Exception.h"
+#include "Utils/Exception.h"
 #include "Stream.h"
 
 namespace storm {

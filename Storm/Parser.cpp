@@ -15,7 +15,7 @@ namespace storm {
 	Parser::Parser(SyntaxSet &set, const String &src, const SrcPos &pos)
 		: syntax(set), src(src), srcPos(pos), rootOption(SrcPos(), Scope(), L"") {}
 
-	Parser::Parser(SyntaxSet &set, const String &src, const Path &file)
+	Parser::Parser(SyntaxSet &set, const String &src, Par<Url> file)
 		: syntax(set), src(src), srcPos(file, 0), rootOption(SrcPos(), Scope(), L"") {}
 
 	nat Parser::parse(const String &rootType, nat pos) {

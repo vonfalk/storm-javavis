@@ -6,10 +6,8 @@
 namespace storm {
 	STORM_PKG(core);
 
-	/**
-	 * The array template class used in Storm.
-	 */
-	Template *arrayTemplate(Engine &e);
+	// Add the array template class to the package given.
+	void addArrayTemplate(Par<Package> to);
 
 	/**
 	 * The array type.

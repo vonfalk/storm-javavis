@@ -154,7 +154,7 @@ namespace storm {
 		size_t s = type->size().current();
 
 		assert(type->flags & typeClass);
-		assert(size >= s || size == 0, "Not enough memory for the specified type!");
+		assert(size <= s || size == 0, "Not enough memory for the specified type!");
 
 		void *mem = allocDumb(type->engine, s);
 		memset(mem, 0, s);

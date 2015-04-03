@@ -6,6 +6,7 @@
 #include "Utils/TextFile.h"
 #include "Tokenizer.h"
 #include "Package.h"
+#include "Io/Text.h"
 
 namespace storm {
 
@@ -23,9 +24,9 @@ namespace storm {
 		p->add(L"lang");
 		extra->extra.push_back(scope.find(p));
 
-		const vector<Path> &f = pkgFiles->files;
-		for (nat i = 0; i < f.size(); i++) {
-			parseBnf(to, f[i], scope);
+		const Auto<ArrayP<Url>> &f = pkgFiles->files;
+		for (nat i = 0; i < f->count(); i++) {
+			parseBnf(to, f->at(i), scope);
 		}
 	}
 
@@ -41,14 +42,15 @@ namespace storm {
 	/**
 	 * This may change later.
 	 */
-	bool isBnfFile(const Path &file) {
-		return file.hasExt(L"bnf");
+	bool isBnfFile(Par<Url> file) {
+		Auto<Str> ext = file->ext();
+		return ext->v == L"bnf";
 	}
 
-	void parseBnf(SyntaxRules &types, const Path &file, const Scope &scope) {
-		String content = readTextFile(file);
+	void parseBnf(SyntaxRules &types, Par<Url> file, const Scope &scope) {
+		Auto<Str> content = readAllText(file);
 
-		Tokenizer tok(file, content, 0);
+		Tokenizer tok(file, content->v, 0);
 		parseBnf(types, tok, scope);
 	}
 

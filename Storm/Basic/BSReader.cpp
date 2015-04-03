@@ -5,21 +5,23 @@
 #include "BSIncludes.h"
 #include "BSContents.h"
 #include "BSClass.h"
-#include "Utils/FileStream.h"
+#include "Io/Text.h"
+
 
 namespace storm {
 
 	bs::Reader::Reader(Par<PkgFiles> files, Par<Package> pkg) : FilesReader(files, pkg) {}
 
-	FileReader *bs::Reader::createFile(const Path &path) {
+	FileReader *bs::Reader::createFile(Par<Url> path) {
 		return CREATE(bs::File, this, path, owner);
 	}
 
 
-	bs::File::File(const Path &path, Par<Package> owner)
+	bs::File::File(Par<Url> path, Par<Package> owner)
 		: FileReader(path, owner), scopeLookup(CREATE(BSScope, engine(), path)), scope(owner, scopeLookup) {
 
-		fileContents = readTextFile(path);
+		Auto<Str> c = readAllText(path);
+		fileContents = c->v;
 		readIncludes();
 	}
 
@@ -60,8 +62,8 @@ namespace storm {
 		if (parser.hasError())
 			throw parser.error();
 
-		Auto<Object> includes = parser.transform(package->engine);
-		contents = includes.expect<Contents>(package->engine, L"While evaluating File");
+		Auto<Object> includes = parser.transform(package->engine());
+		contents = includes.expect<Contents>(package->engine(), L"While evaluating File");
 		contents->setScope(scope);
 	}
 
@@ -76,7 +78,7 @@ namespace storm {
 		if (headerSize == parser.NO_MATCH)
 			throw parser.error();
 
-		includes = parser.transform(package->engine);
+		includes = parser.transform(package->engine());
 
 		if (Includes *inc = as<Includes>(includes.borrow())) {
 			setIncludes(inc->names);
@@ -86,7 +88,7 @@ namespace storm {
 	void bs::File::setIncludes(const vector<Auto<TypeName> > &inc) {
 		for (nat i = 0; i < inc.size(); i++) {
 			Auto<Name> name = inc[i]->toName(scope);
-			Package *p = package->engine.package(name);
+			Package *p = package->engine().package(name);
 			if (!p)
 				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(inc[i]));
 

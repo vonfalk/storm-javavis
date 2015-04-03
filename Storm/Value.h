@@ -1,6 +1,6 @@
 #pragma once
-#include "SrcPos.h"
 #include "MatchFlags.h"
+#include "Lib/Types.h"
 #include "Lib/Auto.h"
 #include "Code/Value.h"
 #include "Code/Size.h"
@@ -10,10 +10,12 @@ namespace storm {
 
 	class Type;
 	class Engine;
+	class SrcPos;
 
 	Type *boolType(Engine &e);
 	Type *intType(Engine &e);
 	Type *natType(Engine &e);
+	Type *byteType(Engine &e);
 
 	/**
 	 * A value is a 'handle' to a type. The value itself is to be considered
@@ -150,17 +152,27 @@ namespace storm {
 	};
 
 	template <>
+	struct LookupValue<Byte> {
+		static Type *type(Engine &e) {
+			return byteType(e);
+		}
+	};
+
+	template <>
 	struct LookupValue<Bool> {
 		static Type *type(Engine &e) {
 			return boolType(e);
 		}
 	};
 
+	// Helper...
+	bool isClass(Type *t);
+
 	template <class T>
 	Value value(Engine &e) {
 		bool isRef = !typeInfo<T>().plain() || IsAuto<T>::v;
 		Type *t = LookupValue<T>::type(e);
-		if (t->flags & typeClass) {
+		if (isClass(t)) {
 			assert(isRef, "Class type tried to be used by value!");
 			isRef = false;
 		}

@@ -20,6 +20,9 @@ namespace storm {
 		specialByte,
 		specialBool,
 
+		// Array<Str>, we need this during startup in Url.
+		specialArrayStr,
+
 		// last
 		specialCount,
 	};
@@ -82,6 +85,7 @@ namespace storm {
 		// Create the engine.
 		// 'root' is the location of the root package directory on disk. The
 		// package 'core' is assumed to be found as a subdirectory of the given root path.
+		// TODO: Remove our depency on util::Path!
 		Engine(const Path &root, ThreadMode mode);
 
 		~Engine();

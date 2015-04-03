@@ -4,7 +4,6 @@
 #include "Named.h"
 #include "Scope.h"
 #include "NameSet.h"
-#include "Utils/Path.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -31,16 +30,13 @@ namespace storm {
 	public:
 		// Create a virtual package, ie a package not present
 		// on disk. Those packages must therefore be eagerly loaded.
-		Package(const String &name, Engine &engine);
+		Package(const String &name);
 
 		// 'dir' is the directory this package is located in.
-		Package(const Path &pkgPath, Engine &engine);
+		Package(Par<Url> pkgPath);
 
 		// Dtor.
 		~Package();
-
-		// Owning engine.
-		Engine &engine;
 
 		// Get a list of all syntax options in this package.
 		// The options are still owned by this class.
@@ -58,7 +54,7 @@ namespace storm {
 
 	private:
 		// Our path. Points to null if this is a virtual package.
-		Path *pkgPath;
+		Auto<Url> pkgPath;
 
 		// Rules present in this package.
 		SyntaxRules syntaxRules;

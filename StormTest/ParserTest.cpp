@@ -8,7 +8,8 @@
 using namespace storm;
 
 nat parse(SyntaxSet &set, const String &root, const String &str) {
-	Parser p(set, str, Path());
+	Auto<Url> empty = CREATE(Url, *gEngine);
+	Parser p(set, str, empty);
 	nat r = p.parse(root);
 	if (p.hasError())
 		return r;

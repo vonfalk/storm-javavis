@@ -1,18 +1,17 @@
 #pragma once
 
-#include "Utils/Path.h"
 #include "SyntaxRule.h"
 #include "PkgReader.h"
 
 namespace storm {
 
 	// Check if the path is a bnf file.
-	bool isBnfFile(const Path &file);
+	bool isBnfFile(Par<Url> file);
 
 	// Read syntax definitions from the given file, and merge them
 	// into the given hash map. Throws an appropriate exception on
 	// failure. Note that no ownership of the SyntaxRule is taken.
-	void parseBnf(SyntaxRules &to, const Path &file, const Scope &scope);
+	void parseBnf(SyntaxRules &to, Par<Url> file, const Scope &scope);
 
 
 	namespace bnf {

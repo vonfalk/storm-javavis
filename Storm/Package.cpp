@@ -12,13 +12,12 @@
 
 namespace storm {
 
-	Package::Package(const String &name, Engine &engine) : NameSet(name), engine(engine), pkgPath(null) {
+	Package::Package(const String &name) : NameSet(name), pkgPath(null) {
 		init();
 	}
 
-	Package::Package(const Path &path, Engine &engine) : NameSet(path.title()), engine(engine) {
-		pkgPath = new Path(path);
-		pkgPath->makeDir();
+	Package::Package(Par<Url> path) : NameSet(steal(path->title())->v) {
+		pkgPath = path;
 		init();
 	}
 
@@ -31,9 +30,7 @@ namespace storm {
 		loading = false;
 	}
 
-	Package::~Package() {
-		delete pkgPath;
-	}
+	Package::~Package() {}
 
 	void Package::output(std::wostream &to) const {
 		if (parent() == null)
@@ -81,11 +78,11 @@ namespace storm {
 		if (pkgPath == null)
 			return null;
 
-		Path p = *pkgPath + Path(name);
-		if (!p.exists())
+		Auto<Url> sub = pkgPath->push(name);
+		if (!sub->exists())
 			return null;
 
-		Auto<Package> pkg = CREATE(Package, engine, *pkgPath + Path(name), engine);
+		Auto<Package> pkg = CREATE(Package, this, sub);
 		add(pkg);
 		return pkg.borrow();
 	}
@@ -96,7 +93,7 @@ namespace storm {
 	}
 
 	void Package::load() {
-		if (!engine.initialized())
+		if (!engine().initialized())
 			return;
 		if (loaded)
 			return;
@@ -121,7 +118,7 @@ namespace storm {
 		vector<Auto<PkgReader> > toLoad;
 
 		try {
-			files = syntaxPkg(pkgPath->children(), engine);
+			files = syntaxPkg(pkgPath->children());
 
 			Auto<Name> myName = path();
 
@@ -164,19 +161,19 @@ namespace storm {
 
 	PkgReader *Package::createReader(Par<Name> pkg, Par<PkgFiles> files) {
 		Auto<Name> rName = readerName(pkg);
-		Type *readerT = as<Type>(engine.scope()->find(rName));
+		Type *readerT = as<Type>(engine().scope()->find(rName));
 		if (!readerT) {
 			// Ignore files that are not known.
 			WARNING(L"Ignoring unknown filetype due to missing " << rName << L"(" << *files << L")");
 			return null;
 		}
-		if (!readerT->isA(PkgReader::type(engine)))
+		if (!readerT->isA(PkgReader::type(this)))
 			throw RuntimeError(::toS(rName) + L" is not a subtype of lang.PkgReader.");
 
 		vector<Value> paramTypes(3);
 		paramTypes[0] = Value::thisPtr(readerT);
-		paramTypes[1] = Value(PkgFiles::type(engine));
-		paramTypes[2] = Value(Package::type(engine));
+		paramTypes[1] = Value(PkgFiles::type(this));
+		paramTypes[2] = Value(Package::type(this));
 
 		Function *ctor = as<Function>(readerT->find(Type::CTOR, paramTypes));
 		if (!ctor)

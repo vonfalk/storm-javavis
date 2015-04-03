@@ -9,7 +9,8 @@
 using namespace storm;
 
 bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Auto<Object> eqTo) {
-	Parser p(set, str, Path());
+	Auto<Url> empty = CREATE(Url, *gEngine);
+	Parser p(set, str, empty);
 	if (p.parse(root) == Parser::NO_MATCH) {
 		PLN("Parse failure.");
 		return false;

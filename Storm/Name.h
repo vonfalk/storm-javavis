@@ -1,6 +1,7 @@
 #pragma once
 #include "Value.h"
 #include "Lib/Types.h"
+#include "Lib/Object.h"
 
 namespace storm {
 	STORM_PKG(core.lang);

@@ -88,7 +88,9 @@ namespace storm {
 		return CREATE(Template, e, L"Future", simpleFn(&generateFuture));
 	}
 
-	FutureType::FutureType(const Value &param) : Type(L"Future", typeClass, valList(1, param)), param(param) {}
+	FutureType::FutureType(const Value &param) : Type(L"Future", typeClass, valList(1, param)), param(param) {
+		setSuper(FutureBase::type(engine));
+	}
 
 	void FutureType::lazyLoad() {
 		if (param.ref)

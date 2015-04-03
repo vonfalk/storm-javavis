@@ -53,24 +53,32 @@ namespace storm {
 		return from->atRaw(id);
 	}
 
-	static Named *generateArray(Par<NamePart> part) {
-		if (part->params.size() != 1)
-			return null;
-
-		Engine &e = part->engine();
-
-		const Value &type = part->params[0];
+	static Type *createArray(Engine &e, const Value &type) {
 		Type *r = CREATE(ArrayType, e, type);
 		r->setSuper(ArrayBase::type(e));
 		r->matchFlags = matchNoInheritance;
 		return r;
 	}
 
-	Template *arrayTemplate(Engine &e) {
-		return CREATE(Template, e, L"Array", simpleFn(&generateArray));
+	static Named *generateArray(Par<NamePart> part) {
+		if (part->params.size() != 1)
+			return null;
+
+		return createArray(part->engine(), part->params[0]);
 	}
 
-	ArrayType::ArrayType(const Value &param) : Type(L"Array", typeClass, valList(1, param)), param(param) {}
+	void addArrayTemplate(Par<Package> to) {
+		Auto<Template> t = CREATE(Template, to, L"Array", simpleFn(&generateArray));
+		to->add(t);
+
+		// Create and add Array<Str> as well, so we do not have two instances of it!
+		Type *special = arrayType(to->engine(), Value(Str::type(to)));
+		to->add(special);
+	}
+
+	ArrayType::ArrayType(const Value &param) : Type(L"Array", typeClass, valList(1, param)), param(param) {
+		setSuper(ArrayBase::type(engine));
+	}
 
 	void ArrayType::lazyLoad() {
 		if (param.ref)
@@ -113,6 +121,17 @@ namespace storm {
 
 
 	Type *arrayType(Engine &e, const Value &type) {
+		Value strParam(Str::type(e));
+		if (type == strParam) {
+			// We need this during early compiler startup, so we can not look this one up regularly...
+			Type *t = e.specialBuiltIn(specialArrayStr);
+			if (!t) {
+				t = CREATE(ArrayType, e, strParam);
+				e.setSpecialBuiltIn(specialArrayStr, steal(t));
+			}
+			return t;
+		}
+
 		Auto<Name> tName = CREATE(Name, e);
 		tName->add(L"core");
 		tName->add(L"Array", vector<Value>(1, type));

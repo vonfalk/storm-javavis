@@ -1,26 +1,29 @@
 #pragma once
 #include "Lib/Object.h"
+#include "Io/Url.h"
 
-#include "Utils/Path.h"
 #include "Utils/Lock.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class Url;
+
 	/**
 	 * Struct to hold the line and column in a file.
 	 */
-	class LineCol : public Printable {
+	class LineCol : public STORM_IGNORE(Printable) {
+		STORM_VALUE;
 	public:
 		// Create.
-		LineCol(nat line, nat col);
+		STORM_CTOR LineCol(Nat line, Nat col);
 
 		// The line and column in a file.
-		nat line, col;
+		Nat line, col;
 
 		// Comparision
-		inline bool operator !=(const LineCol &o) const { return !(*this == o); }
-		inline bool operator ==(const LineCol &o) const { return line == o.line && col == o.col; }
+		inline Bool operator !=(const LineCol &o) const { return !(*this == o); }
+		inline Bool operator ==(const LineCol &o) const { return line == o.line && col == o.col; }
 	protected:
 		virtual void output(std::wostream &to) const;
 	};
@@ -32,66 +35,39 @@ namespace storm {
 		STORM_VALUE;
 	public:
 		// Unknown position.
-		explicit SrcPos();
+		explicit STORM_CTOR SrcPos();
 
 		// Given the offset
-		SrcPos(const Path &file, nat offset);
+		STORM_CTOR SrcPos(Par<Url> file, Nat offset);
 
 		// Copy
 		SrcPos(const SrcPos &o);
 		SrcPos &operator =(const SrcPos &o);
 
-		// Dtor
-		~SrcPos();
+		// Deep copy.
+		void STORM_FN deepCopy(Par<CloneEnv> env);
 
 		// Unknown offset.
 		static const nat noOffset = -1;
 
 		// Advance a number of characters.
-		SrcPos operator +(nat c) const;
+		SrcPos STORM_FN operator +(Nat c) const;
 
 		// File.
-		Path file() const;
+		Auto<Url> file;
 
 		// The offset (in characters) from the beginning of the file. Not counting any BOM.
 		nat offset;
 
 		// Compute the line and character offsets by opening the file and count the lines.
-		LineCol lineCol() const;
+		LineCol STORM_FN lineCol() const;
 
 		// Unknown position?
-		inline bool unknown() const { return offset == noOffset; }
+		inline Bool STORM_FN unknown() const { return offset == noOffset; }
 
 		// Compare.
-		inline bool operator !=(const SrcPos &o) const { return !(*this == o); }
-		inline bool operator ==(const SrcPos &o) const { return offset == o.offset && sharedFile == o.sharedFile; }
-
-	private:
-		struct File {
-			const Path *file;
-			nat refs;
-		};
-
-		// Which file are we using?
-		File *sharedFile;
-
-		// Compare keys.
-		struct mapCompare {
-			bool operator() (const File *a, const File *b) const;
-		};
-
-		// All files in here. Shared between instances.
-		typedef set<File *, mapCompare> FileCache;
-		static FileCache fileCache;
-
-		// Lock for the cache.
-		static Lock cacheLock;
-
-		// Find the shared Path object.
-		File *shared(const Path &path);
-
-		// Release a shared file ref.
-		void release(File *f);
+		inline Bool STORM_FN operator !=(const SrcPos &o) const { return !(*this == o); }
+		Bool STORM_FN operator ==(const SrcPos &o) const;
 	};
 
 	// Output.

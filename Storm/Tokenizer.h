@@ -40,7 +40,7 @@ namespace storm {
 	public:
 		// Tokenize data in 'src' from 'start', assuming the content comes from 'path'.
 		// Note that 'src' is assumed to live at least as long as this object!
-		Tokenizer(const Path &path, const String &src, nat start);
+		Tokenizer(Par<Url> path, const String &src, nat start);
 
 		// Get the next token in the stream. Throws an exception if the end of stream
 		// has been reached.
@@ -60,7 +60,7 @@ namespace storm {
 		const String &src;
 
 		// Source file.
-		Path srcFile;
+		Auto<Url> srcFile;
 
 		// Current position.
 		nat pos;

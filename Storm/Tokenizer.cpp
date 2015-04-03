@@ -43,8 +43,8 @@ namespace storm {
 		return false;
 	}
 
-	Tokenizer::Tokenizer(const Path &path, const String &src, nat start)
-		: src(src), srcFile(path), pos(start), nextToken(L"", SrcPos(Path(), 0)) {
+	Tokenizer::Tokenizer(Par<Url> path, const String &src, nat start)
+		: src(src), srcFile(path), pos(start), nextToken(L"", SrcPos()) {
 		nextToken = findNext();
 	}
 

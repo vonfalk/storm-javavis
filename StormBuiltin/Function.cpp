@@ -18,7 +18,10 @@ Function Function::read(const String &package, const CppScope &scope, const CppT
 	r.package = package;
 
 	if (r.name == L"operator") {
-		r.name = L"operator " + tok.next();
+		r.name = L"operator ";
+		while (tok.peek() != L"(") {
+			r.name += tok.next();
+		}
 	}
 
 	tok.expect(L"(");

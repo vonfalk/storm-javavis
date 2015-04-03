@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Text.h"
+#include "Url.h"
 #include "Utf8Text.h"
 #include "Utf16Text.h"
 #include "Utils/Endian.h"
@@ -130,6 +131,12 @@ namespace storm {
 			created->read();
 
 		return created.ret();
+	}
+
+	Str *readAllText(Par<Url> from) {
+		Auto<IStream> stream = from->read();
+		Auto<TextReader> reader = readText(stream);
+		return reader->readAll();
 	}
 
 }

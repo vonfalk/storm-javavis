@@ -11,10 +11,10 @@ namespace storm {
 		class BSScope : public ScopeLookup {
 			STORM_CLASS;
 		public:
-			BSScope(const Path &file);
+			BSScope(Par<Url> file);
 
 			// File name.
-			const Path file;
+			Auto<Url> file;
 
 			// Included packages. (risk of cycles here)
 			vector<Package *> includes;
