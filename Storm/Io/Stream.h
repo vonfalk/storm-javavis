@@ -61,6 +61,9 @@ namespace storm {
 		bool owner;
 	};
 
+	// Output
+	wostream &operator <<(wostream &to, const Buffer &b);
+
 
 	/**
 	 * Input stream.
@@ -70,6 +73,9 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR IStream();
+
+		// Copy.
+		STORM_CTOR IStream(Par<IStream> o);
 
 		// Are we at the end of the stream?
 		virtual Bool STORM_FN more();
@@ -90,6 +96,9 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR OStream();
+
+		// Copy.
+		STORM_CTOR OStream(Par<OStream> o);
 
 		// Write some data.
 		virtual void STORM_FN write(const Buffer &buf);

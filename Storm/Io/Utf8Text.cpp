@@ -3,6 +3,10 @@
 
 namespace storm {
 
+	/**
+	 * Reader.
+	 */
+
 	static inline bool isFirst(byte c) {
 		return (c & 0x80) == 0x00 // single byte
 			|| (c & 0xC0) == 0xC0; // starting byte
@@ -62,6 +66,40 @@ namespace storm {
 		}
 
 		return r;
+	}
+
+	/**
+	 * Writer.
+	 */
+
+	Utf8Writer::Utf8Writer(Par<OStream> to) : to(to) {}
+
+	void Utf8Writer::write(Nat p) {
+		// Special case for 1-byte characters.
+		if (p < 0x80) {
+			byte b(p);
+			to->write(Buffer(&b, 1));
+			return;
+		}
+
+		byte out[6];
+		nat pos = 5;
+
+		while (true) {
+			nat first = pos + 1; // # of bits in the first byte
+			nat mask = (1 << first) - 1;
+			if ((p & ~mask) == 0) {
+				// Done!
+				out[pos] = byte(0xFE << first) | byte(p);
+				break;
+			} else {
+				out[pos] = 0x80 | byte(p & 0x3F);
+				p = p >> 6;
+			}
+			pos--;
+		}
+
+		to->write(Buffer(&out[pos], 6 - pos));
 	}
 
 }

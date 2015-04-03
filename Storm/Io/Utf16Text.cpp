@@ -4,6 +4,10 @@
 
 namespace storm {
 
+	/**
+	 * Read.
+	 */
+
 	static inline bool leading(nat16 ch) {
 		// return (ch >= 0xD800) && (ch < 0xDC00);
 		return (ch & 0xFC00) == 0xD800;
@@ -47,6 +51,49 @@ namespace storm {
 		}
 
 		return 0;
+	}
+
+	/**
+	 * Write.
+	 */
+
+	Utf16Writer::Utf16Writer(Par<OStream> to, Bool be) : to(to), bigEndian(be) {}
+
+	void Utf16Writer::write(Nat p) {
+		if (p >= 0xD800 && p < 0xE000) {
+			// Invalid codepoint.
+			p = '?';
+		}
+
+		if (p >= 0x110000) {
+			// Too large for UTF16.
+			p = '?';
+		}
+
+		if (p < 0xFFFF) {
+			// One is enough!
+			nat16 o(p);
+			networkSwap(o);
+			if (bigEndian)
+				o = byteSwap(o);
+
+			to->write(Buffer(&o, 2));
+		} else {
+			// Surrogate pair.
+			p -= 0x010000;
+			nat16 o[2] = {
+				nat16(((p >> 10) & 0x3FF) + 0xD800),
+				nat16((p & 0x3FF) + 0xDC00),
+			};
+			networkSwap(o[0]);
+			networkSwap(o[1]);
+			if (bigEndian) {
+				o[0] = byteSwap(o[0]);
+				o[1] = byteSwap(o[1]);
+			}
+
+			to->write(Buffer(o, 4));
+		}
 	}
 
 }

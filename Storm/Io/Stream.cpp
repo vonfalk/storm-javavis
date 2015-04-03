@@ -29,11 +29,27 @@ namespace storm {
 			delete []data;
 	}
 
+	wostream &operator <<(wostream &to, const Buffer &b) {
+		for (nat i = 0; i < b.count(); i++) {
+			to << toHex(b[i]);
+			if (i != b.count() - 1) {
+				if (i % 16 == 15)
+					to << endl;
+				else
+					to << ' ';
+			}
+		}
+
+		return to;
+	}
+
 	/**
 	 * IStream.
 	 */
 
 	IStream::IStream() {}
+
+	IStream::IStream(Par<IStream> o) {}
 
 	Bool IStream::more() {
 		return false;
@@ -52,6 +68,8 @@ namespace storm {
 	 */
 
 	OStream::OStream() {}
+
+	OStream::OStream(Par<OStream> o) {}
 
 	void OStream::write(const Buffer &buf) {}
 

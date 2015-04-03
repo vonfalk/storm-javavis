@@ -28,4 +28,21 @@ namespace storm {
 		nat16 readCh();
 	};
 
+
+	class Utf16Writer : public TextWriter {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR Utf16Writer(Par<OStream> to, Bool bigEndian);
+
+		// Write a character.
+		virtual void STORM_FN write(Nat codepoint);
+
+	private:
+		// OStream.
+		Auto<OStream> to;
+
+		// Big endian?
+		Bool bigEndian;
+	};
 }

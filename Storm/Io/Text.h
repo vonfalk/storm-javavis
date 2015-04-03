@@ -56,7 +56,7 @@ namespace storm {
 		STORM_CTOR TextWriter();
 
 		// Write a single code point in UTF32.
-		virtual void write(Nat codepoint);
+		virtual void STORM_FN write(Nat codepoint);
 
 		// Write a string.
 		virtual void STORM_FN write(Str *str);

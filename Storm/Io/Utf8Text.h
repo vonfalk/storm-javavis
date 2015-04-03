@@ -26,4 +26,18 @@ namespace storm {
 	};
 
 
+	class Utf8Writer : public TextWriter {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR Utf8Writer(Par<OStream> to);
+
+		// Write a character.
+		virtual void STORM_FN write(Nat codepoint);
+
+	private:
+		// OStream.
+		Auto<OStream> to;
+	};
+
 }
