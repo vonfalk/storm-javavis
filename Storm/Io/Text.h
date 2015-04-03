@@ -59,10 +59,10 @@ namespace storm {
 		virtual void STORM_FN write(Nat codepoint);
 
 		// Write a string.
-		virtual void STORM_FN write(Str *str);
+		virtual void STORM_FN write(Par<Str> str);
 
 		// Write a line (appens an appropriate line ending to 'str').
-		virtual void STORM_FN writeLine(Str *str);
+		virtual void STORM_FN writeLine(Par<Str> str);
 	};
 
 

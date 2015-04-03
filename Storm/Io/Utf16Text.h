@@ -38,6 +38,8 @@ namespace storm {
 		// Write a character.
 		virtual void STORM_FN write(Nat codepoint);
 
+		using TextWriter::write;
+
 	private:
 		// OStream.
 		Auto<OStream> to;
@@ -45,4 +47,29 @@ namespace storm {
 		// Big endian?
 		Bool bigEndian;
 	};
+
+
+	namespace utf16 {
+		/**
+		 * Utf16 helpers. Also used in Text.cpp.
+		 */
+
+		static inline bool leading(nat16 ch) {
+			// return (ch >= 0xD800) && (ch < 0xDC00);
+			return (ch & 0xFC00) == 0xD800;
+		}
+
+		static inline bool trailing(nat16 ch) {
+			// return (ch >= 0xDC00) && (ch < 0xE000);
+			return (ch & 0xFC00) == 0xDC00;
+		}
+
+		static inline nat assemble(nat16 lead, nat16 trail) {
+			nat r = nat(lead & 0x3FF) << nat(10);
+			r |= nat(trail & 0x3FF);
+			r += 0x10000;
+			return r;
+		}
+	}
+
 }

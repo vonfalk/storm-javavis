@@ -87,7 +87,7 @@ bool checkBuffer(const Buffer &buf, T *ref, nat size) {
 
 #define CHECK_BUFFER(buffer, src) CHECK_TITLE(checkBuffer(buffer, src, sizeof(src)), #buffer " == " #src);
 
-BEGIN_TEST_(TextTest) {
+BEGIN_TEST(TextTest) {
 
 	CHECK(streamEq(READ(utf16Data), utf32Data));
 	CHECK(streamEq(READ(revUtf16Data), utf32Data));
@@ -126,6 +126,13 @@ BEGIN_TEST_(TextTest) {
 		Auto<Utf16Writer> w = CREATE(Utf16Writer, *gEngine, to, !littleEndian);
 		copyText(READ(utf16Data), w, true);
 		CHECK_BUFFER(to->buffer(), revUtf16Data);
+	}
+
+	{
+		Auto<OMemStream> to = CREATE(OMemStream, *gEngine);
+		Auto<Utf8Writer> w = CREATE(Utf8Writer, *gEngine, to);
+		w->write(steal(CREATE(Str, *gEngine, String(strData))));
+		CHECK_BUFFER(to->buffer(), plainUtf8Data);
 	}
 
 } END_TEST

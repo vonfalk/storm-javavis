@@ -35,6 +35,8 @@ namespace storm {
 		// Write a character.
 		virtual void STORM_FN write(Nat codepoint);
 
+		using TextWriter::write;
+
 	private:
 		// OStream.
 		Auto<OStream> to;

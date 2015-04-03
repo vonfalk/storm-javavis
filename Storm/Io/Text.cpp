@@ -81,11 +81,29 @@ namespace storm {
 
 	void TextWriter::write(Nat codepoint) {}
 
-	void TextWriter::write(Str *str) {
-		TODO(L"Convert each character to UTF32 and write() it.");
+	void TextWriter::write(Par<Str> str) {
+		using namespace utf16;
+
+		const String &s = str->v;
+		nat16 last = 0;
+		for (nat i = 0; i < s.size(); i++) {
+			wchar ch = s[i];
+			if (leading(ch)) {
+				last = ch;
+			} else if (trailing(ch)) {
+				if (leading(last))
+					write(assemble(last, ch));
+				else
+					write('?');
+				last = 0;
+			} else {
+				write(Nat(ch));
+				last = 0;
+			}
+		}
 	}
 
-	void TextWriter::writeLine(Str *str) {
+	void TextWriter::writeLine(Par<Str> str) {
 		write(str);
 		write('\n');
 	}
