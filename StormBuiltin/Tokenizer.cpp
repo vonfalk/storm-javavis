@@ -110,7 +110,7 @@ void Tokenizer::processChar(nat &start, State &state) {
 		}
 		break;
 	case sText:
-		if (isOperator(ch) || isWhitespace(ch) || isSpecial(ch)) {
+		if (isOperator(ch) || isWhitespace(ch) || isSpecial(ch) || ch == '"') {
 			state = sDone;
 		} else {
 			pos++;
