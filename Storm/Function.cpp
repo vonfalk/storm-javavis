@@ -90,12 +90,22 @@ namespace storm {
 			localCall(to, params, res, useLookup ? this->ref() : directRef());
 	}
 
+	static void addParams(const GenState &to, const Function::Actuals &params, const vector<Value> &types) {
+		for (nat i = 0; i < params.size(); i++) {
+			const Value &p = types[i];
+			if (!p.ref && p.isValue()) {
+				to.to << fnParam(params[i].variable(), p.copyCtor());
+			} else {
+				to.to << fnParam(params[i]);
+			}
+		}
+	}
+
 	void Function::localCall(const GenState &to, const Actuals &params, GenResult &res, code::Ref ref) {
 		using namespace code;
 
 		if (result == Value()) {
-			for (nat i = 0; i < params.size(); i++)
-				to.to << fnParam(params[i]);
+			addParams(to, params, this->params);
 
 			to.to << fnCall(ref, Size());
 		} else {
@@ -106,14 +116,7 @@ namespace storm {
 				to.to << fnParam(ptrA);
 			}
 
-			for (nat i = 0; i < params.size(); i++) {
-				if (this->params[i].isValue()) {
-					assert(params[i].type() == code::Value::tVariable);
-					to.to << fnParam(params[i].variable(), this->params[i].copyCtor());
-				} else {
-					to.to << fnParam(params[i]);
-				}
-			}
+			addParams(to, params, this->params);
 
 			if (this->result.returnOnStack()) {
 				to.to << fnCall(ref, result.var.size());
