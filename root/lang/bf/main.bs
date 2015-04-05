@@ -1,0 +1,58 @@
+use lang;
+use lang:bs;
+use lang:bs:macro;
+use core:lang;
+use core:io;
+use core:debug;
+
+// Package reader for BF files.
+
+class Reader extends FilesReader {
+	// TODO: We should not need to store this ourselves!
+	Package pkg;
+
+	ctor(PkgFiles files, Package into) {
+		init(files, into) {
+			pkg = into;
+		}
+	}
+
+	FileReader createFile(Url path) {
+		BfFile(path, pkg);
+	}
+}
+
+
+class BfFile extends FileReader {
+	// TODO: We should not need to store this ourselves!
+	Package pkg;
+	Url file;
+
+	ctor(Url file, Package into) {
+		init(file, into) {
+			pkg = into;
+			file = file;
+		}
+	}
+
+	void readFunctions() {
+		// Only one function per file!
+		SrcPos pos(file, 0.nat);
+
+		TextReader reader = readText(file.read());
+		print(reader.readAll());
+
+		pkg.add(BfFunction(file.title));
+	}
+
+}
+
+class BfFunction extends Function {
+	ctor(Str name) {
+		Value result;
+		Value[] params = [Value: Value()];
+		init(result, name, params) {}
+		print("Created a function!");
+		print("We can not yet add any code here, we need some kind of function pointers for that!");
+	}
+}

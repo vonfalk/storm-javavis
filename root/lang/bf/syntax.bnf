@@ -1,0 +1,22 @@
+// Main brainfuck syntax. Based on the BS language.
+// Files start with a number, the space needed by the
+// brainfuck program. Each file will be declared as its
+// own function. A function takes a string for input, and
+// returns a string, which is the output from the program.
+
+DELIMITER => void : "[ \n\r\t]*";
+
+Number => v : "[0-9]+" v;
+
+BfFile => bfFile() : Number space, BfRoot code;
+
+BfComment => void : "[^<>,\.\+\-\[\]]";
+BfRoot => Array<BfToken>() : ( BfToken -> push - BfComment )*;
+
+BfToken => BfBack() : "<";
+BfToken => BfFwd() : ">";
+BfToken => BfInput() : ",";
+BfToken => BfOutput() : "\.";
+BfToken => BfInc() : "\+";
+BfToken => BfDec() : "\-";
+BfToken => BfLoop(c) : "\[", BfRoot c, "\]";
