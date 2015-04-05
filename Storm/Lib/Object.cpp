@@ -48,6 +48,9 @@ namespace storm {
 		if (o->myType == o) {
 			// The Type-type is special.
 			PLN("Created " << o << ", Type");
+		} else if (o->myType == 0) {
+			// Type will come later.
+			PLN("Created " << o << ", <unknown type>");
 		} else {
 			PLN("Created " << o << ", " << o->myType->name);
 		}
@@ -57,6 +60,8 @@ namespace storm {
 		Lock::L z(liveLock);
 		if (o->myType == o) {
 			live.insert(make_pair(o, L"Type"));
+		} else if (o->myType == null) {
+			live.insert(make_pair(o, L"<unknown type>"));
 		} else {
 			live.insert(make_pair(o, o->myType->name));
 		}
@@ -89,6 +94,18 @@ namespace storm {
 			PLN("Found a double-free!");
 		}
 		live.erase(this);
+#endif
+	}
+
+	void Object::setTypeLate(Par<Type> t) {
+		assert(myType == null, L"You may not use SET_TYPE_LATE to change the type of an object!");
+		size_t typeOffset = OFFSET_OF(Object, myType);
+		OFFSET_IN(this, typeOffset, Type *) = t.borrow();
+
+#ifdef DEBUG_LEAKS
+		if (live.count(this)) {
+			live[this] = t->name;
+		}
 #endif
 	}
 
@@ -147,7 +164,9 @@ namespace storm {
 	 */
 
 	void *Object::allocDumb(Engine &e, size_t size) {
-		return malloc(size);
+		void *mem = malloc(size);
+		memset(mem, 0, size);
+		return mem;
 	}
 
 	void *Object::operator new(size_t size, Type *type) {
@@ -157,7 +176,6 @@ namespace storm {
 		assert(size <= s || size == 0, "Not enough memory for the specified type!");
 
 		void *mem = allocDumb(type->engine, s);
-		memset(mem, 0, s);
 		size_t typeOffset = OFFSET_OF(Object, myType);
 		OFFSET_IN(mem, typeOffset, Type *) = type;
 
@@ -170,12 +188,20 @@ namespace storm {
 		return mem;
 	}
 
+	void *Object::operator new(size_t size, Engine &e) {
+		return allocDumb(e, size);
+	}
+
 	void Object::operator delete(void *mem, Type *type) {
 		Object::operator delete(mem);
 	}
 
 	void Object::operator delete(void *ptr, void *mem) {
 		// No need...
+	}
+
+	void Object::operator delete(void *mem, Engine &e) {
+		Object::operator delete(mem);
 	}
 
 	void Object::operator delete(void *mem) {

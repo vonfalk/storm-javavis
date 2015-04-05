@@ -28,6 +28,22 @@ namespace storm {
 	new (tName::stormType(eRef)) tName(__VA_ARGS__)
 
 	/**
+	 * Create an object without a type marker. This is only for use in early
+	 * startup of the compiler, and some objects will crash when using this
+	 * kind of initialization. The actual type should be provided later
+	 * by using SET_TYPE_LATE.
+	 * Example:
+	 * Auto<X> foo = CREATE_NOTYPE(X, e, ...);
+	 * ...
+	 * SET_TYPE_LATE(foo, <type>);
+	 */
+#define CREATE_NOTYPE(tName, engine, ...) \
+	new (engine) tName(__VA_ARGS__)
+
+#define SET_TYPE_LATE(object, type) \
+	object->setTypeLate(type)
+
+	/**
 	 * Copy a Storm object using its copy constructor.
 	 */
 #define COPY(tName, object) \
@@ -95,15 +111,20 @@ namespace storm {
 		// Get a peek at the current refcount.
 		inline nat dbg_refs() { return refs; }
 
+		// Set the type late. See SET_TYPE_LATE.
+		void setTypeLate(Par<Type> t);
+
 		// Our specialized operator new(). Allocates memory for the Type provided,
 		// regardless of the size here. Ie, the allocated size may be >= sizeof(obj).
 		// If 'size' is 0, the check is ignored.
 		static void *operator new (size_t size, Type *type);
 		static void *operator new (size_t size, void *mem);
+		static void *operator new (size_t size, Engine &e); // for no-type creation
 
 		// Matching delete.
 		static void operator delete(void *ptr, Type *type);
 		static void operator delete(void *ptr, void *mem);
+		static void operator delete(void *ptr, Engine &e);
 		static void operator delete(void *ptr);
 
 		// NOTE: these will simply assert, not possible to implement right now.

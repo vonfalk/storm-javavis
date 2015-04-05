@@ -7,6 +7,7 @@
 #include "Utils/TypeInfo.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	class Type;
 	class Engine;

@@ -31,6 +31,9 @@ namespace storm {
 		// Create a function.
 		Function(Value result, const String &name, const vector<Value> &params);
 
+		// Create from Storm.
+		STORM_CTOR Function(Value result, Par<Str> name, Par<Array<Value>> params);
+
 		// Dtor.
 		~Function();
 

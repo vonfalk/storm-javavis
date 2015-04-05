@@ -20,6 +20,15 @@ namespace storm {
 
 	Named::Named(Par<Str> name) : name(name->v), matchFlags(matchDefault) {}
 
+	static vector<Value> toVec(Par<Array<Value>> p) {
+		vector<Value> r(p->count());
+		for (nat i = 0; i < p->count(); i++)
+			r[i] = p->at(i);
+		return r;
+	}
+
+	Named::Named(Par<Str> name, Par<Array<Value>> p) : name(name->v), params(toVec(p)), matchFlags(matchDefault) {}
+
 	Named::Named(const String &name) : name(name), matchFlags(matchDefault) {}
 
 	Named::Named(const String &name, const vector<Value> &params) : name(name), params(params), matchFlags(matchDefault) {}

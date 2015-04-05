@@ -1,5 +1,8 @@
 #pragma once
 #include "Lib/Object.h"
+#include "Lib/TObject.h"
+#include "Lib/Array.h"
+#include "Thread.h"
 #include "Name.h"
 
 namespace storm {
@@ -10,7 +13,7 @@ namespace storm {
 	/**
 	 * An interface for objects that can lookup names.
 	 */
-	class NameLookup : public Object {
+	class NameLookup : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
 		STORM_CTOR NameLookup();
@@ -44,6 +47,9 @@ namespace storm {
 		// Create without parameters.
 		STORM_CTOR Named(Par<Str> name);
 
+		// Create with parameters.
+		STORM_CTOR Named(Par<Str> name, Par<Array<Value>> params);
+
 		// Create without parameters (C++)
 		Named(const String &name);
 
@@ -53,7 +59,7 @@ namespace storm {
 		// Our name.
 		const String name;
 
-		// Our parameters.
+		// Our parameters. TODO? Replace with Auto<Array<Value>>?
 		const vector<Value> params;
 
 		// Match flags.

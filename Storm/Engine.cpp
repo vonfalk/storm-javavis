@@ -64,14 +64,22 @@ namespace storm {
 		vcalls = new VTableCalls(*this);
 		specialCached.resize(specialCount);
 
+		// Since some of the standard types are declared to be executed on the Compiler thread,
+		// allocate some memory for the Compiler thread object, so that we can give those objects
+		// a valid pointer that we will initialize later...
+		Auto<Thread> compilerThread;
+		if (mode == reuseMain) {
+			compilerThread = CREATE_NOTYPE(Thread, *this, code::Thread::current());
+		} else {
+			compilerThread = CREATE_NOTYPE(Thread, *this);
+		}
+		Compiler::force(*this, compilerThread.borrow());
+
+		// Create the standard types in the compiler (like Type, among others).
 		createStdTypes(*this, cached);
 
-		// If we are to reuse the calling thread, we have to set the compiler thread up
-		// before we call 'addStdLib' below. Otherwise a new thread will be created.
-		if (mode == reuseMain) {
-			Auto<Thread> t = CREATE(Thread, *this, code::Thread::current());
-			Compiler::force(*this, t.borrow());
-		}
+		// Make sure the 'compilerThread' object gets its type mark at last!
+		SET_TYPE_LATE(compilerThread, Thread::stormType(*this));
 
 		// Now, all the types are created, so we can create packages!
 		Auto<Url> rootUrl = parsePath(*this, root.toS());

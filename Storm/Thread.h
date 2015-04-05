@@ -18,6 +18,9 @@ namespace storm {
 	 * but the implementation has to ensure that different functions running under the
 	 * same thread will never have a race-condition other than ones introduced by calling
 	 * UThread::leave().
+	 *
+	 * NOTE: Due to initialization order in Engine, do not assume we have access to the
+	 * 'myType' at creation in this class!
 	 */
 	class Thread : public Object {
 		STORM_CLASS;
