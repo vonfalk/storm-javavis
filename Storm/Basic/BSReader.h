@@ -33,13 +33,13 @@ namespace storm {
 			~File();
 
 			// Get types.
-			void readTypes();
+			void STORM_FN readTypes();
 
 			// Update inheritance.
-			void resolveTypes();
+			void STORM_FN resolveTypes();
 
 			// Get functions.
-			void readFunctions();
+			void STORM_FN readFunctions();
 
 			// The lookup.
 			Auto<BSScope> scopeLookup;

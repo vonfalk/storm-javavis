@@ -69,16 +69,16 @@ namespace storm {
 		Auto<PkgFiles> pkgFiles;
 
 		// Get syntax. Override to implement syntax-loading.
-		virtual void readSyntax(SyntaxRules &to);
+		virtual void STORM_FN readSyntax();
 
 		// Get all types. Override to implement type-loading.
-		virtual void readTypes();
+		virtual void STORM_FN readTypes();
 
 		// Resolve types.
-		virtual void resolveTypes();
+		virtual void STORM_FN resolveTypes();
 
 		// Get all functions.
-		virtual void readFunctions();
+		virtual void STORM_FN readFunctions();
 	};
 
 
@@ -98,16 +98,16 @@ namespace storm {
 		Auto<Package> package;
 
 		// Read syntax from this file.
-		virtual void readSyntax(SyntaxRules &to);
+		virtual void STORM_FN readSyntax();
 
 		// Read types from this file.
-		virtual void readTypes();
+		virtual void STORM_FN readTypes();
 
 		// Resolve types in this file.
-		virtual void resolveTypes();
+		virtual void STORM_FN resolveTypes();
 
 		// Read types from this file.
-		virtual void readFunctions();
+		virtual void STORM_FN readFunctions();
 
 		// Get the package where the syntax for the current file is located.
 		Package *syntaxPackage() const;
@@ -124,10 +124,10 @@ namespace storm {
 		STORM_CTOR FilesReader(Par<PkgFiles> files, Par<Package> pkg);
 
 		// Read contents from all files.
-		virtual void readSyntax(SyntaxRules &to);
-		virtual void readTypes();
-		virtual void resolveTypes();
-		virtual void readFunctions();
+		virtual void STORM_FN readSyntax();
+		virtual void STORM_FN readTypes();
+		virtual void STORM_FN resolveTypes();
+		virtual void STORM_FN readFunctions();
 
 		// Create a file object. This is called as late as possible.
 		virtual FileReader *STORM_FN createFile(Par<Url> path);

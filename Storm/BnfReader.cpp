@@ -16,7 +16,9 @@ namespace storm {
 
 	bnf::Reader::Reader(Par<PkgFiles> files, Par<Package> pkg) : PkgReader(files, pkg) {}
 
-	void bnf::Reader::readSyntax(SyntaxRules &to) {
+	void bnf::Reader::readSyntax() {
+		SyntaxRules &to = owner->syntax();
+
 		Auto<ScopeExtra> extra = CREATE(ScopeExtra, engine());
 		Scope scope(owner, extra);
 		Auto<Name> p = CREATE(Name, this);

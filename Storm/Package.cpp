@@ -87,7 +87,7 @@ namespace storm {
 		return pkg.borrow();
 	}
 
-	const SyntaxRules &Package::syntax() {
+	SyntaxRules &Package::syntax() {
 		load();
 		return syntaxRules;
 	}
@@ -132,7 +132,7 @@ namespace storm {
 
 			// Load all syntax.
 			for (nat i = 0; i < toLoad.size(); i++) {
-				toLoad[i]->readSyntax(syntaxRules);
+				toLoad[i]->readSyntax();
 			}
 
 			// Load all types.

@@ -12,6 +12,8 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
+Enable the SyntaxRules among others to be accessible from Storm.
+
 Check all classes in the compiler and consider adding a thread identifier to them.
 
 Check all classes for the need of a copy ctor and deepCopy function!

@@ -69,7 +69,7 @@ namespace storm {
 
 	PkgReader::~PkgReader() {}
 
-	void PkgReader::readSyntax(SyntaxRules &to) {}
+	void PkgReader::readSyntax() {}
 
 	void PkgReader::readTypes() {}
 
@@ -84,7 +84,7 @@ namespace storm {
 
 	FileReader::FileReader(Par<Url> file, Par<Package> into) : file(file), package(into) {}
 
-	void FileReader::readSyntax(SyntaxRules &to) {}
+	void FileReader::readSyntax() {}
 
 	void FileReader::readTypes() {}
 
@@ -103,10 +103,10 @@ namespace storm {
 
 	FilesReader::FilesReader(Par<PkgFiles> files, Par<Package> pkg) : PkgReader(files, pkg) {}
 
-	void FilesReader::readSyntax(SyntaxRules &to) {
+	void FilesReader::readSyntax() {
 		loadFiles();
 		for (nat i = 0; i < files.size(); i++) {
-			files[i]->readSyntax(to);
+			files[i]->readSyntax();
 		}
 	}
 

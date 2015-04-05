@@ -40,7 +40,7 @@ namespace storm {
 
 		// Get a list of all syntax options in this package.
 		// The options are still owned by this class.
-		const SyntaxRules &syntax();
+		SyntaxRules &syntax();
 
 		// Get parent.
 		virtual NameLookup *parent() const;
