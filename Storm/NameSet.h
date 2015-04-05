@@ -64,9 +64,10 @@ namespace storm {
 			Auto<Named> &operator *() const;
 			Auto<Named> *operator ->() const;
 		private:
-			iterator(OverloadMap::const_iterator i, nat pos);
+			iterator(const OverloadMap &m, OverloadMap::const_iterator i, nat pos);
 
 			// State.
+			const OverloadMap *m;
 			OverloadMap::const_iterator src;
 			nat pos;
 		};
@@ -76,6 +77,10 @@ namespace storm {
 		iterator end() const;
 		iterator begin(const String &name) const;
 		iterator end(const String &name) const;
+
+		// Find all types recursively.
+		vector<Auto<Type>> findTypes() const;
+		void findTypes(vector<Auto<Type>> &t) const;
 
 	protected:
 		// Find a NamePart (returns borrowed ptr).

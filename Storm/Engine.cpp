@@ -108,6 +108,9 @@ namespace storm {
 		// destruction order, and it would not be worth it to compute it.
 		arena.preShutdown();
 
+		// We need to destroy all types last, otherwise we will crash badly!
+		vector<Auto<Type>> types = rootPkg->findTypes();
+
 		rootPkg = null;
 		rootScope->top = null; // keeps a reference to the root package.
 		rootScope->lookup = null;
@@ -123,9 +126,11 @@ namespace storm {
 		Type *t = Type::stormType(*this);
 		t->addRef();
 
-		for (nat i = 0; i < cached.size(); i++) {
-			cached[i]->clear();
+		// All of 'cached' should be in 'types' as well!
+		for (nat i = 0; i < types.size(); i++) {
+			types[i]->clear();
 		}
+		types.clear();
 		cached.clear();
 		delete vcalls;
 

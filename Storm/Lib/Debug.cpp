@@ -40,6 +40,10 @@ namespace storm {
 		PLN(z);
 	}
 
+	void print(TObject *s) {
+		print((Object *)s);
+	}
+
 	void printInfo(Object *s) {
 		if (s == null) {
 			PLN("null");

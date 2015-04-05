@@ -100,23 +100,23 @@ namespace storm {
 	}
 
 	NameSet::iterator NameSet::begin() const {
-		return iterator(overloads.begin(), 0);
+		return iterator(overloads, overloads.begin(), 0);
 	}
 
 	NameSet::iterator NameSet::end() const {
-		return iterator(overloads.end(), 0);
+		return iterator(overloads, overloads.end(), 0);
 	}
 
 	NameSet::iterator NameSet::begin(const String &name) const {
 		OverloadMap::const_iterator found = overloads.find(name);
-		return iterator(found, 0);
+		return iterator(overloads, found, 0);
 	}
 
 	NameSet::iterator NameSet::end(const String &end) const {
 		OverloadMap::const_iterator found = overloads.find(name);
 		if (found != overloads.end())
 			++found;
-		return iterator(found, 0);
+		return iterator(overloads, found, 0);
 	}
 
 	void NameSet::output(wostream &to) const {
@@ -124,17 +124,38 @@ namespace storm {
 			to << *i << endl;
 	}
 
+	vector<Auto<Type>> NameSet::findTypes() const {
+		vector<Auto<Type>> r;
+		findTypes(r);
+		return r;
+	}
+
+	void NameSet::findTypes(vector<Auto<Type>> &t) const {
+		for (NameSet::iterator i = begin(), end = this->end(); i != end; ++i) {
+			Named *n = i->borrow();
+			if (Type *z = as<Type>(n)) {
+				t.push_back(capture(z));
+			} else if (NameSet *z = as<NameSet>(n)) {
+				z->findTypes(t);
+			}
+		}
+	}
+
 	/**
 	 * The iterator.
 	 */
 
-	NameSet::iterator::iterator() : pos(0) {}
+	NameSet::iterator::iterator() : m(null), pos(0) {}
 
-	NameSet::iterator::iterator(OverloadMap::const_iterator i, nat pos) : src(i), pos(pos) {}
+	NameSet::iterator::iterator(const OverloadMap &m, OverloadMap::const_iterator i, nat pos) : m(&m), src(i), pos(pos) {}
 
 	NameSet::iterator &NameSet::iterator::operator ++() {
 		if (src->second->items.size() == ++pos) {
-			++src;
+			do {
+				++src;
+				if (src == m->end())
+					break;
+			} while (src->second->items.size() == 0);
 			pos = 0;
 		}
 		return *this;
@@ -148,7 +169,11 @@ namespace storm {
 
 	NameSet::iterator &NameSet::iterator::operator --() {
 		if (pos == 0) {
-			--src;
+			do {
+				if (src == m->begin())
+					return *this;
+				--src;
+			} while (src->second->items.size() == 0);
 			pos = src->second->items.size() - 1;
 		} else {
 			pos--;

@@ -19,6 +19,7 @@ namespace storm {
 
 	// Crude printing (not final version).
 	void STORM_FN print(Object *obj);
+	void STORM_FN print(TObject *obj);
 
 	// Dump info on an object.
 	void STORM_FN printInfo(Object *obj);
