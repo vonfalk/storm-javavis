@@ -1,7 +1,10 @@
 #pragma once
 #include "Name.h"
+#include "Lib/TObject.h"
+#include "Thread.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	class Package;
 	class SyntaxRule;
@@ -14,9 +17,13 @@ namespace storm {
 	 *
 	 * TODO: Validate types of rules here?
 	 */
-	class SyntaxSet : public Printable, NoCopy {
+	class SyntaxSet : public ObjectOn<Compiler> {
+		STORM_CLASS;
+	private:
 		typedef hash_map<String, SyntaxRule *> RMap;
 	public:
+		STORM_CTOR SyntaxSet();
+
 		~SyntaxSet();
 
 		// Add syntax from a package. Packages are searched in the

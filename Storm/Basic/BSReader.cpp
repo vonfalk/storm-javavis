@@ -20,8 +20,8 @@ namespace storm {
 	bs::File::File(Par<Url> path, Par<Package> owner)
 		: FileReader(path, owner), scopeLookup(CREATE(BSScope, engine(), path)), scope(owner, scopeLookup) {
 
-		Auto<Str> c = readAllText(path);
-		fileContents = c->v;
+		syntax = CREATE(SyntaxSet, this);
+		fileContents = readAllText(path);
 		readIncludes();
 	}
 
@@ -57,12 +57,12 @@ namespace storm {
 		if (contents)
 			return;
 
-		Parser parser(syntax, fileContents, file);
-		parser.parse(L"File", headerSize);
-		if (parser.hasError())
-			throw parser.error();
+		Auto<Parser> parser = CREATE(Parser, this, syntax, fileContents, file);
+		parser->parse(L"File", headerSize);
+		if (parser->hasError())
+			throw parser->error();
 
-		Auto<Object> includes = parser.transform(package->engine());
+		Auto<Object> includes = parser->transform();
 		contents = includes.expect<Contents>(package->engine(), L"While evaluating File");
 		contents->setScope(scope);
 	}
@@ -70,15 +70,15 @@ namespace storm {
 	void bs::File::readIncludes() {
 		Auto<Object> includes;
 
-		syntax.add(*syntaxPackage());
-		syntax.add(*package);
+		syntax->add(*syntaxPackage());
+		syntax->add(*package);
 
-		Parser parser(syntax, fileContents, file);
-		headerSize = parser.parse(L"Includes");
-		if (headerSize == parser.NO_MATCH)
-			throw parser.error();
+		Auto<Parser> parser = CREATE(Parser, this, syntax, fileContents, file);
+		headerSize = parser->parse(L"Includes");
+		if (headerSize == Parser::NO_MATCH)
+			throw parser->error();
 
-		includes = parser.transform(package->engine());
+		includes = parser->transform();
 
 		if (Includes *inc = as<Includes>(includes.borrow())) {
 			setIncludes(inc->names);
@@ -95,7 +95,7 @@ namespace storm {
 			addInclude(scope, p);
 		}
 
-		addSyntax(scope, syntax);
+		syntax = getSyntax(scope);
 	}
 
 }

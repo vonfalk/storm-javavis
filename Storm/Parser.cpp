@@ -12,11 +12,23 @@ namespace storm {
 	 * Parser implementation.
 	 */
 
-	Parser::Parser(SyntaxSet &set, const String &src, const SrcPos &pos)
-		: syntax(set), src(src), srcPos(pos), rootOption(SrcPos(), Scope(), L"") {}
+	Parser::Parser(Par<SyntaxSet> set, Par<Str> src, const SrcPos &pos)
+		: syntax(set), srcStr(src), src(src->v), srcPos(pos), rootOption(SrcPos(), Scope(), L"") {}
 
-	Parser::Parser(SyntaxSet &set, const String &src, Par<Url> file)
-		: syntax(set), src(src), srcPos(file, 0), rootOption(SrcPos(), Scope(), L"") {}
+	Parser::Parser(Par<SyntaxSet> set, Par<Str> src, Par<Url> file)
+		: syntax(set), srcStr(src), src(src->v), srcPos(file, 0), rootOption(SrcPos(), Scope(), L"") {}
+
+	Nat Parser::noMatch() const {
+		return NO_MATCH;
+	}
+
+	Nat Parser::parse(Par<Str> root) {
+		return parse(root->v);
+	}
+
+	Nat Parser::parse(Par<Str> root, Nat pos) {
+		return parse(root->v, pos);
+	}
 
 	nat Parser::parse(const String &rootType, nat pos) {
 		assert(pos <= src.size());
@@ -63,7 +75,7 @@ namespace storm {
 			return;
 
 		const String &rule = type->type();
-		SyntaxRule *sr = syntax.rule(rule);
+		SyntaxRule *sr = syntax->rule(rule);
 		if (sr == null)
 			throw SyntaxError(state.pos.option().pos, L"Can not find rule " + type->type());
 
@@ -211,7 +223,7 @@ namespace storm {
 			return t->regex.match(L"") != NO_MATCH;
 
 		} else if (TypeToken *t = as<TypeToken>(token)) {
-			if (SyntaxRule *r = syntax.rule(t->type()))
+			if (SyntaxRule *r = syntax->rule(t->type()))
 				return matchesEmpty(*r);
 
 			// Will not go well later on anyway if this result is ever needed.
@@ -222,7 +234,11 @@ namespace storm {
 		}
 	}
 
-	bool Parser::hasError() const {
+	void Parser::throwError() const {
+		throw error();
+	}
+
+	Bool Parser::hasError() const {
 		if (lastStep() < steps.size() - 1) {
 			return true;
 		}
@@ -300,7 +316,7 @@ namespace storm {
 
 		for (nat i = 0; i < states.size(); i++) {
 			if (states[i].isRegex())
-				r.insert(toS(states[i].tokenRegex()));
+				r.insert(::toS(states[i].tokenRegex()));
 		}
 
 		return r;
@@ -427,19 +443,27 @@ namespace storm {
 	 * Shorthand.
 	 */
 
-	Object *Parser::transform(Engine &engine, const vector<Object *> &params) {
+	Object *Parser::transform(const vector<Object *> &params) {
 		SyntaxNode *root = tree();
 		if (!root)
 			return null;
 
 		try {
-			Auto<Object> result = storm::transform(engine, syntax, *root, params);
+			Auto<Object> result = storm::transform(engine(), *syntax, *root, params);
 			delete root;
 			return result.ret();
 		} catch (...) {
 			delete root;
 			throw;
 		}
+	}
+
+	Object *Parser::transform(Par<ArrayP<Object>> p) {
+		vector<Object *> params(p->count());
+		for (nat i = 0; i < p->count(); i++)
+			params[i] = p->at(i).borrow();
+
+		return transform(params);
 	}
 
 	/**

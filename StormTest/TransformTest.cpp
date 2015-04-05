@@ -8,15 +8,16 @@
 
 using namespace storm;
 
-bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Auto<Object> eqTo) {
-	Auto<Url> empty = CREATE(Url, *gEngine);
-	Parser p(set, str, empty);
-	if (p.parse(root) == Parser::NO_MATCH) {
+bool tfm(Engine &e, Par<SyntaxSet> set, const String &root, const String &str, Auto<Object> eqTo) {
+	Auto<Url> empty = CREATE(Url, e);
+	Auto<Str> s = CREATE(Str, e, str);
+	Auto<Parser> p = CREATE(Parser, e, set, s, empty);
+	if (p->parse(root) == Parser::NO_MATCH) {
 		PLN("Parse failure.");
 		return false;
 	}
 
-	SyntaxNode *t = p.tree();
+	SyntaxNode *t = p->tree();
 	if (!t) {
 		PLN("No tree.");
 		return false;
@@ -24,7 +25,7 @@ bool tfm(Engine &e, SyntaxSet &set, const String &root, const String &str, Auto<
 	// PLN(*t);
 
 	try {
-		Auto<Object> o = transform(e, set, *t);
+		Auto<Object> o = transform(e, *set.borrow(), *t);
 		bool result = true;
 		if (eqTo)
 			result = eqTo->equals(o);
@@ -46,8 +47,8 @@ BEGIN_TEST(TransformTest) {
 	Engine &engine = *gEngine;
 
 	Package *simple = engine.package(L"lang.simple");
-	SyntaxSet set;
-	set.add(*simple);
+	Auto<SyntaxSet> set = CREATE(SyntaxSet, engine);
+	set->add(*simple);
 
 	CHECK(tfm(engine, set, L"Rep1Root", L"{ a + b; }", null));
 	CHECK(tfm(engine, set, L"CaptureRoot", L"{ a + b; }", CREATE(SStr, engine, L"{ a + b; }")));

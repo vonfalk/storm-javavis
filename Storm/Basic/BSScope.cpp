@@ -39,13 +39,13 @@ namespace storm {
 		return v.type->find(last);
 	}
 
-	void bs::BSScope::addSyntax(const Scope &from, SyntaxSet &to) {
+	void bs::BSScope::addSyntax(const Scope &from, Par<SyntaxSet> to) {
 		Auto<Name> syntax = syntaxPkg(file);
-		to.add(*engine().package(syntax));
-		to.add(*firstPkg(from.top)); // current package.
+		to->add(*engine().package(syntax));
+		to->add(*firstPkg(from.top)); // current package.
 
 		for (nat i = 0; i < includes.size(); i++)
-			to.add(*includes[i]);
+			to->add(*includes[i]);
 	}
 
 	void bs::addInclude(const Scope &to, Package *pkg) {
@@ -56,11 +56,14 @@ namespace storm {
 		}
 	}
 
-	void bs::addSyntax(const Scope &scope, SyntaxSet &to) {
+	SyntaxSet *bs::getSyntax(const Scope &scope) {
 		if (Auto<BSScope> s = scope.lookup.as<BSScope>()) {
+			Auto<SyntaxSet> to = CREATE(SyntaxSet, s);
 			s->addSyntax(scope, to);
+			return to.ret();
 		} else {
 			WARNING(L"This is probably not what you want to do!");
+			return null;
 		}
 	}
 

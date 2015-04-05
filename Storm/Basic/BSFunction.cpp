@@ -63,15 +63,14 @@ namespace storm {
 	}
 
 	code::Listing bs::BSFunction::generateCode() {
-		SyntaxSet syntax;
-		addSyntax(scope, syntax);
+		Auto<SyntaxSet> syntax = getSyntax(scope);
 
-		Parser parser(syntax, contents->v->v, contents->pos);
-		nat r = parser.parse(L"FunctionBody");
-		if (parser.hasError())
-			throw parser.error();
+		Auto<Parser> parser = CREATE(Parser, this, syntax, contents->v, contents->pos);
+		nat r = parser->parse(L"FunctionBody");
+		if (parser->hasError())
+			throw parser->error();
 
-		Auto<Object> c = parser.transform(engine(), vector<Object *>(1, this));
+		Auto<Object> c = parser->transform(vector<Object *>(1, this));
 		Auto<FnBody> body = c.expect<FnBody>(engine(), L"While evaluating FunctionBody");
 
 		result.mustStore(body->result(), pos);

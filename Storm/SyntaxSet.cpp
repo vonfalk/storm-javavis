@@ -5,6 +5,8 @@
 
 namespace storm {
 
+	SyntaxSet::SyntaxSet() {}
+
 	SyntaxSet::~SyntaxSet() {
 		clearMap(rules);
 	}

@@ -5,8 +5,10 @@
 #include "SyntaxOption.h"
 #include "SyntaxNode.h"
 #include "Exception.h"
+#include "Lib/TObject.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	class Package;
 
@@ -25,7 +27,8 @@ namespace storm {
 	 * Implemented from article: An Efficient Context-Free Parsing Algorithm
 	 * by Jay Earley, University of Califormnia, Berkeley, California
 	 */
-	class Parser : NoCopy {
+	class Parser : public ObjectOn<Compiler> {
+		STORM_CLASS;
 	public:
 		static const nat NO_MATCH = -1;
 
@@ -33,23 +36,31 @@ namespace storm {
 		// to outlive this object.
 		// 'pos' is the start position of 'src'. If 'src' is the entire file, the second
 		// variant can also be used.
-		Parser(SyntaxSet &set, const String &src, const SrcPos &pos);
-		Parser(SyntaxSet &set, const String &src, Par<Url> file);
+		STORM_CTOR Parser(Par<SyntaxSet> set, Par<Str> src, const SrcPos &pos);
+		STORM_CTOR Parser(Par<SyntaxSet> set, Par<Str> src, Par<Url> file);
 
 		// Parse the string previously given from 'start'. Returns the first index not matched.
+		Nat STORM_FN parse(Par<Str> rootType);
+		Nat STORM_FN parse(Par<Str> rootType, Nat start);
 		nat parse(const String &rootType, nat start = 0);
+
+		// Get the no-match value (for Storm).
+		Nat STORM_FN noMatch() const;
 
 		/**
 		 * Operations on the last parse.
 		 */
 
 		// Is there any error information to retrieve?
-		bool hasError() const;
+		Bool STORM_FN hasError() const;
 
 		// Get an error message on the parsing. This examines what
 		// went wrong on the last step, maybe beyond the length indicated
 		// by 'parse'.
 		SyntaxError error() const;
+
+		// Helper for Storm to throw the error.
+		void STORM_FN throwError() const;
 
 		// Generate a syntax tree. Leaves ownership of the tree to the caller.
 		// If the last parse was not successfull at all (ie, returned NO_MATCH), returns null.
@@ -57,13 +68,15 @@ namespace storm {
 		SyntaxNode *tree();
 
 		// Shorthand for generating a tree and transform it into Storm objects. Note 'params' does not own refs.
-		Object *transform(Engine &engine, const vector<Object*> &params = vector<Object*>());
+		Object *transform(Par<ArrayP<Object>> params);
+		Object *transform(const vector<Object *> &params = vector<Object *>());
 
 	private:
 		// Syntax source.
-		SyntaxSet &syntax;
+		Auto<SyntaxSet> syntax;
 
 		// Source string.
+		Auto<Str> srcStr;
 		const String &src;
 
 		// Start of 'src'.

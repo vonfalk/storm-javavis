@@ -62,21 +62,22 @@ namespace storm {
 	 * can be overridden by specific language implementations later on.
 	 */
 	class Scope {
+		STORM_VALUE;
 	public:
 		// Create a scope that will never return anything.
-		explicit Scope();
+		explicit STORM_CTOR Scope();
 
 		// Create the default lookup with a given topmost object.
-		Scope(Par<NameLookup> top);
+		STORM_CTOR Scope(Par<NameLookup> top);
 
 		// Create a custom lookup.
-		Scope(Par<NameLookup> top, Par<ScopeLookup> lookup);
+		STORM_CTOR Scope(Par<NameLookup> top, Par<ScopeLookup> lookup);
 
 		// Create a child scope.
-		Scope(const Scope &parent, Par<NameLookup> top);
+		STORM_CTOR Scope(const Scope &parent, Par<NameLookup> top);
 
 		// Create a child scope.
-		inline Scope child(Par<NameLookup> top) { return Scope(*this, top); }
+		inline Scope STORM_FN child(Par<NameLookup> top) { return Scope(*this, top); }
 
 		// Topmost object.
 		NameLookup *top;

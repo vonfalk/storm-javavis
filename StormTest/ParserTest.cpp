@@ -7,14 +7,15 @@
 
 using namespace storm;
 
-nat parse(SyntaxSet &set, const String &root, const String &str) {
+nat parse(Par<SyntaxSet> set, const String &root, const String &str) {
 	Auto<Url> empty = CREATE(Url, *gEngine);
-	Parser p(set, str, empty);
-	nat r = p.parse(root);
-	if (p.hasError())
+	Auto<Str> s = CREATE(Str, *gEngine, str);
+	Auto<Parser> p = CREATE(Parser, *gEngine, set, s, empty);
+	nat r = p->parse(root);
+	if (p->hasError())
 		return r;
 
-	SyntaxNode *t = p.tree();
+	SyntaxNode *t = p->tree();
 	if (t) {
 		// PLN(*t);
 		delete t;
@@ -34,8 +35,8 @@ BEGIN_TEST(ParserTest) {
 	Package *simple = engine.package(L"lang.simple");
 	simple->syntax();
 
-	SyntaxSet set;
-	set.add(*simple);
+	Auto<SyntaxSet> set = CREATE(SyntaxSet, engine);
+	set->add(*simple);
 
 	CHECK_EQ(parse(set, L"Root", L"a + b"), 5);
 	CHECK_EQ(parse(set, L"Root", L"a + b-"), 5);

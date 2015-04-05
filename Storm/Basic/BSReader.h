@@ -49,13 +49,13 @@ namespace storm {
 
 		private:
 			// The file contents.
-			String fileContents;
+			Auto<Str> fileContents;
 
 			// Length of header. The header is the use statements.
 			nat headerSize;
 
 			// Syntax to use while parsing.
-			SyntaxSet syntax;
+			Auto<SyntaxSet> syntax;
 
 			// Contents.
 			Auto<Contents> contents;

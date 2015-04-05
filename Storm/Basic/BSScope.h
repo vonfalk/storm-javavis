@@ -20,7 +20,7 @@ namespace storm {
 			vector<Package *> includes;
 
 			// Get syntax.
-			void addSyntax(const Scope &from, SyntaxSet &to);
+			void addSyntax(const Scope &from, Par<SyntaxSet> to);
 
 			// Find stuff.
 			virtual Named *find(const Scope &from, Par<Name> name);
@@ -31,7 +31,9 @@ namespace storm {
 		};
 
 		void addInclude(const Scope &to, Package *p);
-		void addSyntax(const Scope &from, SyntaxSet &to);
+
+		// Get syntax from a scope.
+		SyntaxSet *STORM_FN getSyntax(const Scope &from);
 
 	}
 }

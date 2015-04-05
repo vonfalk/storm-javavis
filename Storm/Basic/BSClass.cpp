@@ -76,15 +76,14 @@ namespace storm {
 	}
 
 	void bs::Class::lazyLoad() {
-		SyntaxSet syntax;
-		addSyntax(scope, syntax);
+		Auto<SyntaxSet> syntax = getSyntax(scope);
 
-		Parser parser(syntax, content->v->v, content->pos);
-		parser.parse(L"ClassBody");
-		if (parser.hasError())
-			throw parser.error();
+		Auto<Parser> parser = CREATE(Parser, this, syntax, content->v, content->pos);
+		parser->parse(L"ClassBody");
+		if (parser->hasError())
+			throw parser->error();
 
-		Auto<Object> z = parser.transform(engine, vector<Object *>(1, this));
+		Auto<Object> z = parser->transform(vector<Object *>(1, this));
 		Auto<ClassBody> body = z.expect<ClassBody>(engine, L"From ClassBody rule");
 
 		// Found a CTOR?

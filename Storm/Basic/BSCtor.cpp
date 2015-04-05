@@ -51,15 +51,14 @@ namespace storm {
 		if (!contents)
 			return defaultParse();
 
-		SyntaxSet syntax;
-		addSyntax(scope, syntax);
+		Auto<SyntaxSet> syntax = getSyntax(scope);
 
-		Parser parser(syntax, contents->v->v, contents->pos);
-		nat parsed = parser.parse(L"CtorBody");
-		if (parser.hasError())
-			throw parser.error();
+		Auto<Parser> parser = CREATE(Parser, this, syntax, contents->v, contents->pos);
+		nat parsed = parser->parse(L"CtorBody");
+		if (parser->hasError())
+			throw parser->error();
 
-		Auto<Object> c = parser.transform(engine(), vector<Object *>(1, this));
+		Auto<Object> c = parser->transform(vector<Object *>(1, this));
 		Auto<CtorBody> body = c.expect<CtorBody>(engine(), L"While evaluating CtorBody");
 
 		return body.ret();
