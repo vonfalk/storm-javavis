@@ -107,8 +107,8 @@ namespace storm {
 		TYPE_EXTRA_CODE;
 	public:
 		// Type lookup.
-		static Type *type(Engine &e) { return futureType(e, value<T>(e)); }
-		static Type *type(const Object *o) { return arrayType(o->engine(), value<T>(o->engine())); }
+		static Type *stormType(Engine &e) { return futureType(e, value<T>(e)); }
+		static Type *stormType(const Object *o) { return futureType(o->engine(), value<T>(o->engine())); }
 
 		// Create.
 		Future() : FutureBase(storm::handle<T>()) {}

@@ -167,13 +167,13 @@ namespace storm {
 			WARNING(L"Ignoring unknown filetype due to missing " << rName << L"(" << *files << L")");
 			return null;
 		}
-		if (!readerT->isA(PkgReader::type(this)))
+		if (!readerT->isA(PkgReader::stormType(this)))
 			throw RuntimeError(::toS(rName) + L" is not a subtype of lang.PkgReader.");
 
 		vector<Value> paramTypes(3);
 		paramTypes[0] = Value::thisPtr(readerT);
-		paramTypes[1] = Value(PkgFiles::type(this));
-		paramTypes[2] = Value(Package::type(this));
+		paramTypes[1] = Value(PkgFiles::stormType(this));
+		paramTypes[2] = Value(Package::stormType(this));
 
 		Function *ctor = as<Function>(readerT->find(Type::CTOR, paramTypes));
 		if (!ctor)

@@ -40,7 +40,7 @@ namespace storm {
 
 	bs::Class *bs::threadClass(SrcPos pos, Par<SStr> name, Par<SStr> content) {
 		Class *c = CREATE(Class, name, typeClass, pos, name->v->v, content);
-		c->setSuper(TObject::type(c->engine));
+		c->setSuper(TObject::stormType(c->engine));
 		return c;
 	}
 
@@ -99,7 +99,7 @@ namespace storm {
 					hasCopyCtor = true;
 				hasCtor = true;
 			} else if (z->name == L"deepCopy") {
-				if (z->params.size() == 2 && z->params[1].type == CloneEnv::type(this))
+				if (z->params.size() == 2 && z->params[1].type == CloneEnv::stormType(this))
 					hasDeepCopy = true;
 			}
 			add(z.borrow());

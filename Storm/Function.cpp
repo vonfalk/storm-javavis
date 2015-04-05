@@ -394,7 +394,7 @@ namespace storm {
 			l << mov(freeResult, resultParam);
 
 			// We need to create a CloneEnv object.
-			Type *envType = CloneEnv::type(engine());
+			Type *envType = CloneEnv::stormType(engine());
 			Variable cloneEnv = l.frame.createPtrVar(l.frame.root(), engine().fnRefs.release);
 			allocObject(l, subBlock, envType->defaultCtor(), Actuals(), cloneEnv);
 

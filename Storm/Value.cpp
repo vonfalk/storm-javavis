@@ -27,7 +27,9 @@ namespace storm {
 
 	Value::Value(Type *t, bool ref) : type(t), ref(ref) {}
 
-	Value::Value(Par<Type> t, bool ref) : type(t.borrow()), ref(ref) {}
+	Value::Value(Par<Type> t) : type(t.borrow()), ref(false) {}
+
+	Value::Value(Par<Type> t, Bool ref) : type(t.borrow()), ref(ref) {}
 
 	Size Value::size() const {
 		if (ref) {

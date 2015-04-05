@@ -138,8 +138,8 @@ namespace storm {
 				throw BuiltInError(L"Failed to locate super type with id " + toS(t->super));
 			tc->setSuper(super);
 		} else if (tc->flags & typeClass) {
-			Type *obj = Object::type(to);
-			Type *tObj = TObject::type(to);
+			Type *obj = Object::stormType(to);
+			Type *tObj = TObject::stormType(to);
 
 			// We promised to set the super class earlier, so we need some default.
 			if (tc == obj || tc == tObj)

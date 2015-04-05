@@ -87,8 +87,8 @@ namespace storm {
 	class Array : public ArrayBase {
 		TYPE_EXTRA_CODE;
 	public:
-		static Type *type(Engine &e) { return arrayType(e, value<T>(e)); }
-		static Type *type(const Object *o) { return arrayType(o->engine(), value<T>(o->engine())); }
+		static Type *stormType(Engine &e) { return arrayType(e, value<T>(e)); }
+		static Type *stormType(const Object *o) { return arrayType(o->engine(), value<T>(o->engine())); }
 
 		// Empty array.
 		Array() : ArrayBase(storm::handle<T>()) {}

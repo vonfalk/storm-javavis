@@ -112,7 +112,7 @@ namespace storm {
 		threads.clear();
 
 		// Keep the type type a little longer.
-		Type *t = Type::type(*this);
+		Type *t = Type::stormType(*this);
 		t->addRef();
 
 		for (nat i = 0; i < cached.size(); i++) {

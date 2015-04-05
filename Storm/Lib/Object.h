@@ -25,7 +25,7 @@ namespace storm {
 	 * Foo *foo = CREATE(Foo, otherObject, 10);
 	 */
 #define CREATE(tName, eRef, ...) \
-	new (tName::type(eRef)) tName(__VA_ARGS__)
+	new (tName::stormType(eRef)) tName(__VA_ARGS__)
 
 	/**
 	 * Copy a Storm object using its copy constructor.
@@ -186,7 +186,7 @@ template <class To>
 To *customAs(storm::Object *from) {
 	if (from == null)
 		return null;
-	if (from->isA(To::type(from->engine())))
+	if (from->isA(To::stormType(from->engine())))
 		return static_cast<To*>(from);
 	return null;
 }

@@ -1,6 +1,8 @@
 #pragma once
 #include "Name.h"
 #include "Lib/Object.h"
+#include "Lib/TObject.h"
+#include "NamedThread.h"
 #include "Io/Url.h"
 
 namespace storm {
@@ -23,7 +25,7 @@ namespace storm {
 	 * Input set to a PkgReader.
 	 * TODO? Replace with simple array?
 	 */
-	class PkgFiles : public Object {
+	class PkgFiles : public ObjectOn<Compiler> {
 		STORM_CLASS; // final
 	public:
 		STORM_CTOR PkgFiles();
@@ -53,7 +55,7 @@ namespace storm {
 	 *
 	 * TODO: expose the majority through STORM_FN.
 	 */
-	class PkgReader : public Object {
+	class PkgReader : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
 		// Create a pkgReader.
@@ -85,7 +87,7 @@ namespace storm {
 	/**
 	 * Single file.
 	 */
-	class FileReader : public Object {
+	class FileReader : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
 		// Create a FileReader.
@@ -110,6 +112,7 @@ namespace storm {
 		virtual void STORM_FN readFunctions();
 
 		// Get the package where the syntax for the current file is located.
+		// TODO: Move?
 		Package *syntaxPackage() const;
 	};
 

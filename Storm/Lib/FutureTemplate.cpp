@@ -79,7 +79,7 @@ namespace storm {
 		Engine &e = part->engine();
 		const Value &type = part->params[0];
 		Type *r = CREATE(FutureType, e, type);
-		r->setSuper(FutureBase::type(e));
+		r->setSuper(FutureBase::stormType(e));
 		r->matchFlags = matchNoInheritance;
 		return r;
 	}
@@ -89,7 +89,7 @@ namespace storm {
 	}
 
 	FutureType::FutureType(const Value &param) : Type(L"Future", typeClass, valList(1, param)), param(param) {
-		setSuper(FutureBase::type(engine));
+		setSuper(FutureBase::stormType(engine));
 	}
 
 	void FutureType::lazyLoad() {
@@ -105,7 +105,7 @@ namespace storm {
 	void FutureType::loadClassFns() {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
-		Value cloneEnv = Value(CloneEnv::type(e));
+		Value cloneEnv = Value(CloneEnv::stormType(e));
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createClass))));
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&copyClass))));
@@ -117,7 +117,7 @@ namespace storm {
 	void FutureType::loadValueFns() {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
-		Value cloneEnv = Value(CloneEnv::type(e));
+		Value cloneEnv = Value(CloneEnv::stormType(e));
 		Value ref = param.asRef(true);
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createValue))));

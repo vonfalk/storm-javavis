@@ -23,14 +23,16 @@ namespace storm {
 	 * example, if the pointer (if relevant) may be null.
 	 * TODO: ValueT instead?
 	 */
-	class Value : public Printable {
+	class Value : public STORM_IGNORE(Printable) {
+		STORM_VALUE;
 	public:
 		// Create the 'null' value.
-		Value();
+		STORM_CTOR Value();
 
 		// Create a value based on a type.
 		Value(Type *type, bool ref = false);
-		Value(Par<Type> type, bool ref = false);
+		STORM_CTOR Value(Par<Type> type);
+		STORM_CTOR Value(Par<Type> type, Bool ref);
 
 		// The type referred.
 		Type *type;
@@ -119,21 +121,21 @@ namespace storm {
 	template <class T>
 	struct LookupValue {
 		static Type *type(Engine &e) {
-			return T::type(e);
+			return T::stormType(e);
 		}
 	};
 
 	template <class T>
 	struct LookupValue<T *> {
 		static Type *type(Engine &e) {
-			return T::type(e);
+			return T::stormType(e);
 		}
 	};
 
 	template <class T>
 	struct LookupValue<T &> {
 		static Type *type(Engine &e) {
-			return T::type(e);
+			return T::stormType(e);
 		}
 	};
 

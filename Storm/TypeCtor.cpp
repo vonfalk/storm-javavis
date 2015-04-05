@@ -207,7 +207,7 @@ namespace storm {
 	 */
 
 	TypeDeepCopy::TypeDeepCopy(Type *type)
-		: Function(Value(), L"deepCopy", valList(2, Value::thisPtr(type), Value(CloneEnv::type(type)))) {
+		: Function(Value(), L"deepCopy", valList(2, Value::thisPtr(type), Value(CloneEnv::stormType(type)))) {
 		Function *before = null;
 		Type *super = type->super();
 
@@ -258,7 +258,7 @@ namespace storm {
 			if (t.isBuiltIn())
 				continue;
 
-			vector<Value> params = valList(2, Value::thisPtr(t.type), Value(CloneEnv::type(e)));
+			vector<Value> params = valList(2, Value::thisPtr(t.type), Value(CloneEnv::stormType(e)));
 			Offset offset = v->offset();
 			if (t.isValue()) {
 				// Call 'deepCopy' directly.
@@ -297,7 +297,7 @@ namespace storm {
 
 	// Find the deepCopy member in a Type.
 	Function *deepCopy(Type *in) {
-		Named *n = in->find(L"deepCopy", valList(2, Value::thisPtr(in), Value(CloneEnv::type(in))));
+		Named *n = in->find(L"deepCopy", valList(2, Value::thisPtr(in), Value(CloneEnv::stormType(in))));
 		if (Function *f = as<Function>(n))
 			return f;
 		throw InternalError(L"The class " + in->identifier() + L" does not have a deepClone(CloneEnv) member.");
@@ -375,7 +375,7 @@ namespace storm {
 			l << fnParam(from);
 			l << fnCall(t.copyCtor(), Size());
 
-			Type *envType = CloneEnv::type(e);
+			Type *envType = CloneEnv::stormType(e);
 			Variable env = variable(l.frame, l.frame.root(), Value(envType)).var;
 			allocObject(l, l.frame.root(), envType->defaultCtor(), vector<code::Value>(), env);
 
@@ -396,7 +396,7 @@ namespace storm {
 		using namespace code;
 
 		// Second parameter should be CloneEnv!
-		if (env != Value(CloneEnv::type(e)))
+		if (env != Value(CloneEnv::stormType(e)))
 			return null;
 
 		if (t.isClass()) {

@@ -144,7 +144,7 @@ BEGIN_TEST(ErrorTest) {
 } END_TEST
 
 
-BEGIN_TESTX(BFTest) {
+BEGIN_TEST_(BFTest) {
 	// Takes a long time to run. Mostly here for testing.
 	runFn(L"test.bf.bfInBs");
 } END_TEST

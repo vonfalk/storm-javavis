@@ -14,13 +14,14 @@ namespace storm {
 
 		// If we inherit from a class that does not know which thread to run on, we need a Thread as the
 		// first parameter (#1, it is after the this ptr).
-		needsThread = values[0].type->runOn().state == RunOn::runtime;
+		RunOn runOn = values[0].type->runOn();
+		needsThread = runOn.state == RunOn::runtime;
 		if (needsThread) {
-			Value expected = Value::thisPtr(Thread::type(engine()));
+			Value expected = Value::thisPtr(Thread::stormType(engine()));
 
 			if (values.size() < 2)
 				throw SyntaxError(pos, L"This constructor needs to take a " + ::toS(expected)
-								+ L" as the first parameter.");
+								+ L" as the first parameter since we are threaded.");
 
 			if (!expected.canStore(values[1]))
 				throw SyntaxError(pos, L"This constructor needs to take a " + ::toS(expected) + L" as the first"
@@ -200,7 +201,7 @@ namespace storm {
 
 		RunOn runOn = thisPtr.type->runOn();
 		bool hiddenThread = runOn.state == RunOn::runtime;
-		if (!hiddenThread && parent == TObject::type(engine())) {
+		if (!hiddenThread && parent == TObject::stormType(engine())) {
 			callTObject(s, runOn.thread);
 			return;
 		}
@@ -210,7 +211,7 @@ namespace storm {
 		values[0].type = parent;
 
 		if (hiddenThread)
-			values.insert(values.begin() + 1, Value::thisPtr(Thread::type(engine())));
+			values.insert(values.begin() + 1, Value::thisPtr(Thread::stormType(engine())));
 
 		Function *ctor = as<Function>(parent->find(Type::CTOR, values));
 		if (!ctor)
@@ -238,8 +239,8 @@ namespace storm {
 			throw SyntaxError(pos, L"Can not initialize a threaded object with parameters.");
 
 		// Find the constructor of TObject.
-		Type *parent = TObject::type(engine());
-		vector<Value> values = valList(2, Value(parent), Value(Thread::type(engine())));
+		Type *parent = TObject::stormType(engine());
+		vector<Value> values = valList(2, Value(parent), Value(Thread::stormType(engine())));
 		Function *ctor = as<Function>(parent->find(Type::CTOR, values));
 		if (!ctor)
 			throw InternalError(L"The constructor of TObject: __ctor(TObject, Thread) was not found!");

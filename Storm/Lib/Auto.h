@@ -143,7 +143,7 @@ namespace storm {
 		inline Auto<U> expect(Engine &e, const String &context) const {
 			U *o = ::as<U>(obj);
 			if (!o) {
-				Type *expected = U::type(e);
+				Type *expected = U::stormType(e);
 				Type *got = obj ? obj->myType : null;
 				throwTypeError(context, expected, got);
 			}
@@ -185,12 +185,12 @@ namespace storm {
 		}
 
 		// Proxies for the type() so that Array<Auto<T>> works.
-		static Type *type(Engine &e) { return T::type(e); }
-		static Type *type(const Object *o) { return T::type(o); }
+		static Type *stormType(Engine &e) { return T::stormType(e); }
+		static Type *stormType(const Object *o) { return T::stormType(o); }
 		template <class Z>
-		static Type *type(const Auto<Z> &o) { return T::type(o); }
+		static Type *stormType(const Auto<Z> &o) { return T::stormType(o); }
 		template <class Z>
-		static Type *type(const Par<Z> &o) { return T::type(o); }
+		static Type *stormType(const Par<Z> &o) { return T::stormType(o); }
 
 	private:
 		// Owned object.

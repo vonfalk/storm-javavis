@@ -132,8 +132,8 @@ String typeFunctions(const Types &types) {
 		Type &type = t[i];
 		String fn = vtableFnName(type.cppName);
 
-		out << L"storm::Type *" << type.cppName << L"::type(Engine &e) { return e.builtIn(" << i << L"); }\n";
-		out << L"storm::Type *" << type.cppName << L"::type(const Object *o) { return type(o->myType->engine); }\n";
+		out << L"storm::Type *" << type.cppName << L"::stormType(Engine &e) { return e.builtIn(" << i << L"); }\n";
+		out << L"storm::Type *" << type.cppName << L"::stormType(const Object *o) { return stormType(o->myType->engine); }\n";
 		if (!type.value) {
 			// Values do not have type information.
 			out << L"extern \"C\" void *" << fn << L"();\n";

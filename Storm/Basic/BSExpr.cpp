@@ -45,7 +45,7 @@ namespace storm {
 		case tInt:
 			return Value(intType(engine()));
 		case tStr:
-			return Value(Str::type(engine()));
+			return Value(Str::stormType(engine()));
 		case tBool:
 			return Value(boolType(engine()));
 		default:
@@ -82,7 +82,7 @@ namespace storm {
 		Engine &e = engine();
 
 		Label data = s.to.label();
-		s.to << fnParam(Str::type(e)->typeRef);
+		s.to << fnParam(Str::stormType(e)->typeRef);
 		s.to << fnParam(data);
 		s.to << fnCall(e.fnRefs.createStrFn, Size::sPtr);
 		VarInfo to = r.location(s);

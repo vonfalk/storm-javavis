@@ -72,9 +72,9 @@ namespace storm {
 	/**
 	 * Create a reader. Identifies the encoding automatically.
 	 */
-	TextReader *readText(Par<IStream> stream);
+	TextReader *STORM_FN readText(Par<IStream> stream);
 
 	// Read all text from a text file.
-	Str *readAllText(Par<Url> file);
+	Str *STORM_FN readAllText(Par<Url> file);
 
 }

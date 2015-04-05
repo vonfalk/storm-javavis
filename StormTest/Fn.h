@@ -33,7 +33,7 @@ template <class T, class Par>
 T runFn(const String &fn, const Par &par) {
 	Engine &e = *gEngine;
 	Auto<Name> fName = parseSimpleName(e, fn);
-	fName = fName->withParams(vector<Value>(1, Par::type(e)));
+	fName = fName->withParams(vector<Value>(1, Par::stormType(e)));
 	Function *fun = as<Function>(e.scope()->find(fName));
 	if (!fun)
 		throw TestError(L"Function " + fn + L" was not found.");

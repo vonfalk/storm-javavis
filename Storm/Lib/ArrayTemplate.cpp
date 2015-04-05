@@ -55,7 +55,7 @@ namespace storm {
 
 	static Type *createArray(Engine &e, const Value &type) {
 		Type *r = CREATE(ArrayType, e, type);
-		r->setSuper(ArrayBase::type(e));
+		r->setSuper(ArrayBase::stormType(e));
 		r->matchFlags = matchNoInheritance;
 		return r;
 	}
@@ -72,12 +72,12 @@ namespace storm {
 		to->add(t);
 
 		// Create and add Array<Str> as well, so we do not have two instances of it!
-		Type *special = arrayType(to->engine(), Value(Str::type(to)));
+		Type *special = arrayType(to->engine(), Value(Str::stormType(to)));
 		to->add(special);
 	}
 
 	ArrayType::ArrayType(const Value &param) : Type(L"Array", typeClass, valList(1, param)), param(param) {
-		setSuper(ArrayBase::type(engine));
+		setSuper(ArrayBase::stormType(engine));
 	}
 
 	void ArrayType::lazyLoad() {
@@ -95,7 +95,7 @@ namespace storm {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
 		Value refParam = param.asRef(true);
-		Value cloneEnv(CloneEnv::type(e));
+		Value cloneEnv(CloneEnv::stormType(e));
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createClass))));
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&copyClass))));
@@ -109,7 +109,7 @@ namespace storm {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
 		Value refParam = param.asRef(true);
-		Value cloneEnv(CloneEnv::type(e));
+		Value cloneEnv(CloneEnv::stormType(e));
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createValue))));
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&copyValue))));
@@ -121,7 +121,7 @@ namespace storm {
 
 
 	Type *arrayType(Engine &e, const Value &type) {
-		Value strParam(Str::type(e));
+		Value strParam(Str::stormType(e));
 		if (type == strParam) {
 			// We need this during early compiler startup, so we can not look this one up regularly...
 			Type *t = e.specialBuiltIn(specialArrayStr);

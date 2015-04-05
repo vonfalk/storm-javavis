@@ -27,10 +27,10 @@ BEGIN_TEST(LayoutTest) {
 	defVar(int2, intType(e));
 	defVar(int3, intType(e));
 	defVar(int4, intType(e));
-	defVar(obj1, Str::type(e));
-	defVar(obj2, Str::type(e));
-	defVar(obj3, Str::type(e));
-	defVar(obj4, Str::type(e));
+	defVar(obj1, Str::stormType(e));
+	defVar(obj2, Str::stormType(e));
+	defVar(obj3, Str::stormType(e));
+	defVar(obj4, Str::stormType(e));
 
 	{
 		TypeLayout layout;

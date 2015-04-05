@@ -45,8 +45,8 @@ namespace storm {
 		// set when we create Types before the Object::type has been initialized.
 		if ((flags & typeManualSuper) == 0) {
 			if (flags & typeClass) {
-				assert(Object::type(engine), L"Please use the 'typeManualSuper' flag before Object has been created.");
-				setSuper(Object::type(engine));
+				assert(Object::stormType(engine), L"Please use the 'typeManualSuper' flag before Object has been created.");
+				setSuper(Object::stormType(engine));
 			}
 		}
 	}
@@ -102,9 +102,9 @@ namespace storm {
 			return super()->size();
 
 		if (flags & typeClass) {
-			if (this == Object::type(engine))
+			if (this == Object::stormType(engine))
 				return Object::baseSize();
-			else if (this == TObject::type(engine))
+			else if (this == TObject::stormType(engine))
 				return TObject::baseSize();
 		} else if (flags & typeValue) {
 			return Size(0);
@@ -165,7 +165,7 @@ namespace storm {
 								identifier());
 
 		if (flags & typeClass) {
-			if (super == null && this != Object::type(engine) && this != TObject::type(engine))
+			if (super == null && this != Object::stormType(engine) && this != TObject::stormType(engine))
 				throw InternalError(identifier() + L" must at least inherit from Object. Not:" + super->identifier());
 			if (!(superFlags & typeClass))
 				throw InternalError(identifier() + L" may only inherit from other objects. Not: " + super->identifier());
@@ -174,7 +174,7 @@ namespace storm {
 				throw InternalError(identifier() + L" may only inherit from other values. Not: " + super->identifier());
 		}
 
-		assert(this != TObject::type(engine) || super == null, L"TObject may not inherit from anything!");
+		assert(this != TObject::stormType(engine) || super == null, L"TObject may not inherit from anything!");
 
 		Type *lastSuper = chain.super();
 
@@ -201,28 +201,25 @@ namespace storm {
 		if (!(flags & typeClass))
 			throw InternalError(identifier() + L": Can not be associated with a thread unless it is a class.");
 		Type *s = super();
-		if (s != Object::type(engine) && s != TObject::type(engine))
+		if (s != Object::stormType(engine) && s != TObject::stormType(engine))
 			throw InternalError(identifier() + L": Can not be associated with a thread since it is not a root object.");
 
-		if (s != TObject::type(engine))
-			setSuper(TObject::type(engine));
+		if (s != TObject::stormType(engine))
+			setSuper(TObject::stormType(engine));
 
 		this->thread = thread;
 	}
 
 	RunOn Type::runOn() const {
-		Type *tObj = TObject::type(engine);
-		if (this == tObj)
-			// We do not know which thread...
-			return RunOn(RunOn::runtime);
+		Type *tObj = TObject::stormType(engine);
 
 		for (const Type *t = this; t; t = t->super()) {
 			if (t == tObj)
 				// Not decided which is the actual thread.
 				return RunOn(RunOn::runtime);
 
-			if (thread)
-				return RunOn(thread);
+			if (t->thread)
+				return RunOn(t->thread);
 		}
 
 		// We do not inherit from TObject.
@@ -326,7 +323,7 @@ namespace storm {
 	}
 
 	Function *Type::deepCopyFn() {
-		return as<Function>(find(L"deepCopy", valList(2, Value::thisPtr(this), Value(CloneEnv::type(engine)))));
+		return as<Function>(find(L"deepCopy", valList(2, Value::thisPtr(this), Value(CloneEnv::stormType(engine)))));
 	}
 
 

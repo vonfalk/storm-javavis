@@ -27,7 +27,7 @@ namespace storm {
 	public:
 		STORM_CTOR SStr(Par<Str> src);
 		STORM_CTOR SStr(Par<SStr> src);
-		SStr(Par<Str> src, const SrcPos &pos);
+		STORM_CTOR SStr(Par<Str> src, const SrcPos &pos);
 		SStr(const String &str);
 
 		// The string captured.

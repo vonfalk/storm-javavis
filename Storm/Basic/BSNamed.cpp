@@ -366,7 +366,7 @@ namespace storm {
 	bs::NamedThreadAccess::NamedThreadAccess(Par<NamedThread> thread) : thread(thread) {}
 
 	Value bs::NamedThreadAccess::result() {
-		return Value(Thread::type(engine()));
+		return Value(Thread::stormType(engine()));
 	}
 
 	void bs::NamedThreadAccess::code(const GenState &s, GenResult &to) {

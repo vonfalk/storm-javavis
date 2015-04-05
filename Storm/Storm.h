@@ -24,18 +24,18 @@
 // Type code.
 #define TYPE_CODE									\
 	public:											\
-	static Type *type(Engine &e);					\
-	static Type *type(const Object *o);
+	static Type *stormType(Engine &e);				\
+	static Type *stormType(const Object *o);
 
-#define TYPE_EXTRA_CODE								\
-	public:											\
-	template <class Z>								\
-	static inline Type *type(const Auto<Z> &o) {	\
-		return type(o.borrow());					\
-	}												\
-	template <class Z>								\
-	static inline Type *type(const Par<Z> &o) {		\
-		return type(o.borrow());					\
+#define TYPE_EXTRA_CODE									\
+	public:												\
+	template <class Z>									\
+	static inline Type *stormType(const Auto<Z> &o) {	\
+		return stormType(o.borrow());					\
+	}													\
+	template <class Z>									\
+	static inline Type *stormType(const Par<Z> &o) {	\
+		return stormType(o.borrow());					\
 	}
 
 // Mark a value-type.

@@ -6,7 +6,8 @@ BEGIN_TEST(ArrayTest) {
 
 	DbgVal::clear();
 
-	Auto<Array<DbgVal> > array = new (ArrayBase::type(e)) Array<DbgVal>();
+	// Auto<Array<DbgVal> > array = new (ArrayBase::stormType(e)) Array<DbgVal>();
+	Auto<Array<DbgVal>> array = CREATE(Array<DbgVal>, e);
 
 	for (nat i = 0; i < 30; i++)
 		array->push(DbgVal(i));

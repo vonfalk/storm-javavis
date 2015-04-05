@@ -1,5 +1,7 @@
 Syntax
 ---------
+Some kind of namespace support for the syntax rules. For example: the delimiter in BF and BS are quite different!
+
 Consider adding the -> syntax for captures in BNF rules, to be symmetric with other variables.
 
 In the parser: allow member variables to be assigned by the -> syntax as well! Useful in various places

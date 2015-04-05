@@ -277,9 +277,9 @@ namespace storm {
 		if (v == L"pos") {
 			// Create 'pos' only where it is needed.
 			if (pos == null)
-				return new Actual<SrcPos>(SrcPos(), SrcPos::type(env.e));
+				return new Actual<SrcPos>(SrcPos(), SrcPos::stormType(env.e));
 			else
-				return new Actual<SrcPos>(*pos, SrcPos::type(env.e));
+				return new Actual<SrcPos>(*pos, SrcPos::stormType(env.e));
 		}
 
 		if (v.isInt())
