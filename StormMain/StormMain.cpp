@@ -24,7 +24,7 @@ int launchMainLoop(Engine &engine, const String &lang) {
 		return 1;
 	}
 
-	Type *langRepl = LangRepl::type(engine);
+	Type *langRepl = LangRepl::stormType(engine);
 	if (!replType->isA(langRepl)) {
 		wcout << L"The type " << replName << L" needs to inherit from " << langRepl->identifier() << endl;
 		return 1;
@@ -80,9 +80,15 @@ int _tmain(int argc, _TCHAR* argv[]) {
 
 		wcout << L"Compiler boot in " << (end - start) << endl;
 
-		// Todo: We probably want more launch options here, for example run a specific
-		// function as our main and so on...
-		return launchMainLoop(engine, lang);
+		try {
+			// Todo: We probably want more launch options here, for example run a specific
+			// function as our main and so on...
+			return launchMainLoop(engine, lang);
+		} catch (const Exception &e) {
+			// We need an extra so that errrors depending on the engine will not crash at least!";
+			wcout << L"Unhandled exception: " << e << endl;
+			return 2;
+		}
 	} catch (const Exception &e) {
 		wcout << L"Unhandled exception: " << e << endl;
 		return 2;

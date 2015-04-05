@@ -1,4 +1,6 @@
 use lang;
+use core:io;
+use core:lang;
 use core:debug;
 
 class Repl extends LangRepl {
@@ -6,6 +8,10 @@ class Repl extends LangRepl {
 	Bool done;
 
 	Bool eval(Str line) {
+		SyntaxSet set;
+		Url url;
+		Parser p(set, line, url);
+
 		if (line.equals("exit")) {
 			done = true;
 		} else {

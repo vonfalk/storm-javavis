@@ -35,7 +35,7 @@ namespace storm {
 		};
 
 		// Empty url.
-		Url();
+		STORM_CTOR Url();
 
 		// Create from fundamentals. (TODO: Storm needs the flags somehow!)
 		Url(Par<Protocol> p, Par<ArrayP<Str>> parts, Flags flags);
