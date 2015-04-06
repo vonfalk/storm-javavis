@@ -14,7 +14,7 @@ namespace code {
 	}
 
 	bool FutureBase::anyPosted() {
-		return atomicCAS(resultPosted, 1, 1) == 1;
+		return atomicRead(resultPosted) == 1;
 	}
 
 	bool FutureBase::dataPosted() {

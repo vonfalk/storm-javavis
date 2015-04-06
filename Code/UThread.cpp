@@ -253,7 +253,7 @@ namespace code {
 	}
 
 	bool UThreadState::any() {
-		return atomicCAS(aliveCount, 1, 1) != 1;
+		return atomicRead(aliveCount) != 1;
 	}
 
 	bool UThreadState::leave() {

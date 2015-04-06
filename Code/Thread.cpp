@@ -158,8 +158,7 @@ namespace code {
 			// At that point no one can add more UThreads either, so in
 			// this case we can not have any race-conditions.
 
-			// Hacky atomic read...
-			if (atomicCAS(d.references, 0, 0) == 0) {
+			if (atomicRead(d.references) == 0) {
 				if (!UThread::any())
 					break;
 			}

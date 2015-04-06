@@ -36,31 +36,24 @@ class BfFile extends FileReader {
 	}
 
 	void readFunctions() {
-		// Only one function per file!
-		SrcPos pos(file, 0.nat);
-
-		Scope scope = rootScope;
-		TypeName name = name{core:Str};
-		print(name);
-		Name n = name.toName(scope);
-		print(n);
-		// Note: This does not work since member functions are implemented like this
-		// in cdecl: member(*this, *result, foo), not free(*result, ...)
-		// Value strVal = name.resolve(scope);
-
 		TextReader reader = readText(file.read());
 		print(reader.readAll());
 
-		pkg.add(BfFunction(file.title));
+		BfFunction fn(file.title, file);
+		print(fn);
+		pkg.add(fn);
 	}
 
 }
 
 class BfFunction extends Function {
-	ctor(Str name) {
-		Value result;
-		Value[] params = [Value: Value()];
-		init(result, name, params) {}
+	Url file;
+
+	ctor(Str name, Url file) {
+		Value strVal = (name{core:Str}).resolve(rootScope);
+		init(strVal, name, [Value: strVal]) {
+			file = file;
+		}
 		print("Created a function!");
 		print("We can not yet add any code here, we need some kind of function pointers for that!");
 	}

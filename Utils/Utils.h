@@ -129,14 +129,13 @@ nat atomicDecrement(volatile nat &v);
 // Compare and swap (atomic)
 nat atomicCAS(volatile nat &v, nat compare, nat exchange);
 
-// angle functions
+// Atomic read/write.
+nat atomicRead(volatile nat &v);
+void atomicWrite(volatile nat &v, nat value);
 
-
-// degrees to radians
-inline float deg(float inDeg) { return inDeg * pi / 180.0f; }
-
-// radians to degrees
-inline float toDeg(float inRad) { return inRad * 180.0f / pi; }
+// Atomic read/write. These two does not need aligned data.
+nat unalignedAtomicRead(volatile nat &v);
+void unalignedAtomicWrite(volatile nat &v, nat value);
 
 /**
  * Convenient vector comparisions.

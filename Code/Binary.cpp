@@ -204,17 +204,15 @@ namespace code {
 	}
 
 
-	BinaryUpdater::BinaryUpdater(const Ref &ref, const String &title, cpuNat *at, bool relative) : Reference(ref, title), at(at), relative(relative) {}
+	BinaryUpdater::BinaryUpdater(const Ref &ref, const String &title, cpuNat *at, bool relative)
+		: Reference(ref, title), at(at), relative(relative) {}
 
 	void BinaryUpdater::onAddressChanged(void *newAddress) {
 		Reference::onAddressChanged(newAddress);
 
 		cpuNat addr = (cpuNat)newAddress;
-		if (relative) {
+		if (relative)
 			addr -= cpuNat(at) + sizeof(cpuNat);
-			*at = addr;
-		} else {
-			*at = addr;
-		}
+		unalignedAtomicWrite(*at, addr);
 	}
 }

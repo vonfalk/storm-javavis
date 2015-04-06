@@ -28,6 +28,41 @@ nat atomicCAS(volatile nat &v, nat compare, nat exchange) {
 	return (nat)InterlockedCompareExchange((volatile LONG *)&v, (LONG)exchange, (LONG)compare);
 }
 
+nat atomicRead(volatile nat &v) {
+	assert(aligned(&v));
+	// Volatile reads are atomic on X86/X64 as long as they are aligned.
+	return v;
+}
+
+void atomicWrite(volatile nat &v, nat value) {
+	assert(aligned(&v));
+	// Volatile writes are atomic on X86/X64 as long as they are aligned.
+	v = value;
+}
+
+#ifdef X86
+
+nat unalignedAtomicRead(volatile nat &v) {
+	volatile nat *addr = &v;
+	nat result;
+	__asm {
+		mov eax, 0;
+		mov ecx, addr;
+		lock add eax, [ecx];
+	}
+	return result;
+}
+
+void unalignedAtomicWrite(volatile nat &v, nat value) {
+	volatile nat *addr = &v;
+	__asm {
+		mov eax, value;
+		mov ecx, addr;
+		lock xchg [ecx], eax;
+	}
+}
+
+#endif
 
 #else
 #error "atomicIncrement and atomicDecrement are only supported on Windows for now"
