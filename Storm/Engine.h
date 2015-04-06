@@ -49,7 +49,7 @@ namespace storm {
 
 		// Things we need to call another thread.
 		code::RefSource spawnLater, spawnParam, abortSpawn;
-		code::RefSource spawn, spawnResult, spawnFuture;
+		code::RefSource spawnResult, spawnFuture;
 
 		// Interface to the FnParams needed.
 		code::RefSource fnParamsCtor, fnParamsDtor, fnParamsAdd;

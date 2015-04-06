@@ -4,6 +4,7 @@
 #include "Thread.h"
 #include "NamedThread.h"
 #include "Utils/Bitmask.h"
+#include "Code/FnCall.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -41,9 +42,18 @@ namespace storm {
 		// Function result.
 		const Value result;
 
+		// Easy call of functions. No support for references yet.
+		template <class Result>
+		inline Result call(const code::FnParams &params = code::FnParams()) {
+			return code::call<Result>(pointer(), isMember(), params);
+		}
+
 		// Get the code for this function. Do not assume it is static! Use
 		// 'ref' if you are doing anything more than one function call!
 		void *pointer();
+
+		// Is this a member function?
+		bool isMember();
 
 		// Get the reference we are providing. This reference will always
 		// refer some lookup function if that is needed for this function
@@ -129,6 +139,10 @@ namespace storm {
 		// Generate code for an indirect function call, ie post it to another thread.
 		void genCodePost(const GenState &to, const Actuals &params, GenResult &result,
 						code::Ref ref, const code::Value &thread);
+
+		// Add parameters for the function call.
+		void addParams(const GenState &to, const Actuals &params, const code::Variable &resultIn);
+		void addParam(const GenState &to, const Actuals &params, nat id);
 	};
 
 	// Determine if 'a' is an overload of 'b'.
@@ -155,4 +169,5 @@ namespace storm {
 	// Create a dynamic function.
 	Function *dynamicFunction(Engine &e, Value result, const String &name,
 							const vector<Value> &params, const code::Listing &listing);
+
 }

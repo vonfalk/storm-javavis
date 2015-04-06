@@ -12,7 +12,7 @@ T runFn(const String &fn) {
 	void *ptr = fun->pointer();
 	if (!ptr)
 		throw TestError(L"Function " + fn + L" did not return any code.");
-	return code::call<T>(ptr);
+	return fun->call<T>();
 }
 
 template <class T>
@@ -26,7 +26,7 @@ T runFn(const String &fn, Int p) {
 	void *ptr = fun->pointer();
 	if (!ptr)
 		throw TestError(L"Function " + fn + L" did not return any code.");
-	return code::call<T>(ptr, code::FnParams().add(p));
+	return fun->call<T>(code::FnParams().add(p));
 }
 
 template <class T, class Par>
@@ -41,7 +41,7 @@ T runFn(const String &fn, const Par &par) {
 	if (!ptr)
 		throw TestError(L"Function " + fn + L" did not return any code.");
 
-	return code::call<T>(ptr, code::FnParams().add(par));
+	return fun->call<T>(code::FnParams().add(par));
 }
 
 inline Int runFn(const String &fn) {

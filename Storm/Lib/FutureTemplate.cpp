@@ -58,8 +58,8 @@ namespace storm {
 			l << epilog();
 			l << ret(param.size());
 		} else {
-			Variable valRef = l.frame.createPtrParam();
 			Variable future = l.frame.createPtrParam();
+			Variable valRef = l.frame.createPtrParam();
 			l << prolog();
 			l << fnParam(future);
 			l << fnParam(valRef);

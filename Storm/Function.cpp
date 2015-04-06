@@ -46,6 +46,10 @@ namespace storm {
 		return ref().address();
 	}
 
+	bool Function::isMember() {
+		return as<Type>(parent()) != null;
+	}
+
 	code::RefSource &Function::ref() {
 		initRefs();
 		return *lookupRef;
@@ -97,14 +101,39 @@ namespace storm {
 			localCall(to, params, res, useLookup ? this->ref() : directRef());
 	}
 
-	static void addParams(const GenState &to, const Function::Actuals &params, const vector<Value> &types) {
-		for (nat i = 0; i < params.size(); i++) {
-			const Value &p = types[i];
-			if (!p.ref && p.isValue()) {
-				to.to << fnParam(params[i].variable(), p.copyCtor());
-			} else {
-				to.to << fnParam(params[i]);
+	void Function::addParam(const GenState &to, const Actuals &params, nat id) {
+		const Value &p = this->params[id];
+		if (!p.ref && p.isValue()) {
+			to.to << fnParam(params[id].variable(), p.copyCtor());
+		} else {
+			to.to << fnParam(params[id]);
+		}
+	}
+
+	void Function::addParams(const GenState &to, const Actuals &params, const code::Variable &resultIn) {
+		using namespace code;
+
+		// Do we need a parameter for the result?
+		bool resultParam = resultIn != Variable::invalid;
+		resultParam &= !result.returnInReg();
+
+		nat start = 0;
+
+		if (resultParam) {
+			if (isMember()) {
+				assert(params.size() >= 1);
+				assert(params[0] != code::Value(ptrA));
+				addParam(to, params, 0);
+				start = 1;
 			}
+
+			to.to << lea(ptrA, ptrRel(resultIn));
+			to.to << fnParam(ptrA);
+		}
+
+		for (nat i = start; i < params.size(); i++) {
+			assert(!resultParam || params[i] != code::Value(ptrA));
+			addParam(to, params, i);
 		}
 	}
 
@@ -112,18 +141,12 @@ namespace storm {
 		using namespace code;
 
 		if (result == Value()) {
-			addParams(to, params, this->params);
+			addParams(to, params, code::Variable());
 
 			to.to << fnCall(ref, Size());
 		} else {
 			VarInfo result = res.safeLocation(to, this->result);
-
-			if (!this->result.returnInReg()) {
-				to.to << lea(ptrA, ptrRel(result.var));
-				to.to << fnParam(ptrA);
-			}
-
-			addParams(to, params, this->params);
+			addParams(to, params, result.var);
 
 			if (this->result.returnInReg()) {
 				to.to << fnCall(ref, result.var.size());
@@ -137,21 +160,17 @@ namespace storm {
 		}
 	}
 
-	void spawnThread(const void *fn, const code::FnParams *params, Thread *on, code::UThreadData *data) {
-		code::UThread::spawn(fn, *params, &on->thread, data);
-	}
-
-	void spawnThreadResult(const void *fn, const code::FnParams *params, void *result,
+	void spawnThreadResult(const void *fn, bool member, const code::FnParams *params, void *result,
 						BasicTypeInfo *resultType, Thread *on, code::UThreadData *data) {
 		code::FutureSema<code::Sema> future(result);
-		code::UThread::spawn(fn, *params, future, *resultType, &on->thread, data);
+		code::UThread::spawn(fn, member, *params, future, *resultType, &on->thread, data);
 		future.result();
 	}
 
-	void spawnThreadFuture(const void *fn, const code::FnParams *params, FutureBase *result,
+	void spawnThreadFuture(const void *fn, bool member, const code::FnParams *params, FutureBase *result,
 								BasicTypeInfo *resultType, Thread *on, code::UThreadData *data) {
 		code::FutureBase *future = result->rawFuture();
-		code::UThread::spawn(fn, *params, *future, *resultType, &on->thread, data);
+		code::UThread::spawn(fn, member, *params, *future, *resultType, &on->thread, data);
 	}
 
 	// Find 'std:clone' for the given type.
@@ -166,7 +185,7 @@ namespace storm {
 	}
 
 	// Add a single parameter of type 'v', value in 'a' to 'to'.
-	static void addParam(Engine &e, const GenState &z, code::Variable to, const Value &v, const code::Value &a) {
+	static void addFutureParam(Engine &e, const GenState &z, code::Variable to, const Value &v, const code::Value &a) {
 		using namespace code;
 
 		if (v.isClass()) {
@@ -255,7 +274,7 @@ namespace storm {
 			if (i == 0 && name == Type::CTOR)
 				addCtorThis(e, to, fnParams, this->params[i], params[i]);
 			else
-				addParam(e, to, fnParams, this->params[i], params[i]);
+				addFutureParam(e, to, fnParams, this->params[i], params[i]);
 		}
 
 		// Set the thread data to null, so that we do not double-free it if
@@ -266,6 +285,10 @@ namespace storm {
 
 		PrepareResult r = { fnParams, dataNoFree };
 		return r;
+	}
+
+	static inline code::Value toVal(bool v) {
+		return code::byteConst(v ? 1 : 0);
 	}
 
 	void Function::threadCall(const GenState &to, const Actuals &params, GenResult &res, const code::Value &thread) {
@@ -299,6 +322,7 @@ namespace storm {
 		to.to << lea(ptrA, r.params);
 		to.to << lea(ptrC, returnType);
 		to.to << fnParam(*fn);
+		to.to << fnParam(toVal(isMember()));
 		to.to << fnParam(ptrA);
 		to.to << fnParam(ptrB);
 		to.to << fnParam(ptrC);
@@ -338,6 +362,7 @@ namespace storm {
 		to.to << lea(ptrA, r.params);
 		to.to << lea(ptrC, returnType);
 		to.to << fnParam(*fn);
+		to.to << fnParam(toVal(isMember()));
 		to.to << fnParam(ptrA);
 		to.to << fnParam(resultPos.var);
 		to.to << fnParam(ptrC);

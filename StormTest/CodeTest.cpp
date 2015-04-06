@@ -100,7 +100,7 @@ BEGIN_TEST(CustomValueTest) {
 	CHECK_EQ(runFn(L"test.bs.testAssignValVal", 22), 22);
 } END_TEST
 
-BEGIN_TEST_(ValueMemberTest) {
+BEGIN_TEST(ValueMemberTest) {
 	CHECK_EQ(runFn(L"test.bs.testVirtualVal1"), 10);
 	CHECK_EQ(runFn(L"test.bs.testVirtualVal2"), 20);
 	CHECK_EQ(runFn(L"test.bs.testVirtualVal3"), 15);

@@ -219,7 +219,7 @@ namespace storm {
 
 		try {
 			params.addFirst(mem);
-			code::call<void>(ctor, params);
+			code::call<void>(ctor, false, params);
 		} catch (...) {
 			Object::operator delete(mem, type);
 			throw;

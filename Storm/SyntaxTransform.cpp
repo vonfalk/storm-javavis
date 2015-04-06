@@ -77,7 +77,7 @@ namespace storm {
 		code::FnParams params;
 		for (nat i = 0; i < p.size(); i++)
 			p[i]->add(params);
-		return new ActualObject(code::call<Object *>(f->pointer(), params), option->pos);
+		return new ActualObject(f->call<Object *>(params), option->pos);
 	}
 
 	static Auto<ActualBase> tryCallCtor(const SyntaxOption *option, Auto<Name> find, const vector<Auto<ActualBase>> &p) {
@@ -127,9 +127,9 @@ namespace storm {
 			param->add(call);
 
 			if (f->result.refcounted())
-				Auto<Object> o = code::call<Object *>(f->pointer(), call);
+				Auto<Object> o = f->call<Object *>(call);
 			else if (f->result == Value())
-				code::call<void>(f->pointer(), call);
+				f->call<void>(call);
 			else
 				throw SyntaxTypeError(pos, L"Member functions called from the syntax may only return void or Objects.");
 		} else {

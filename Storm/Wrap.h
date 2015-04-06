@@ -24,9 +24,8 @@ namespace storm {
 	class FutureBase;
 
 	// Spawning a thread. Implemented in Function.cpp.
-	void spawnThread(const void *fn, const code::FnParams *params, Thread *on, code::UThreadData *data);
-	void spawnThreadResult(const void *fn, const code::FnParams *params, void *result,
+	void spawnThreadResult(const void *fn, bool member, const code::FnParams *params, void *result,
 						BasicTypeInfo *resultType, Thread *on, code::UThreadData *data);
-	void spawnThreadFuture(const void *fn, const code::FnParams *params, FutureBase *result,
+	void spawnThreadFuture(const void *fn, bool member, const code::FnParams *params, FutureBase *result,
 						BasicTypeInfo *resultType, Thread *on, code::UThreadData *data);
 }

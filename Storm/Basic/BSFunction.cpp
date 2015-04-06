@@ -58,6 +58,12 @@ namespace storm {
 		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
 	}
 
+	code::Variable createResultVar(code::Listing &l) {
+		// Note: We do not need to free this one, since we will copy a value to it (and thereby initialize it)
+		// the last thing we do in this function.
+		return l.frame.createParameter(Size::sPtr, false);
+	}
+
 	code::Listing bs::BSFunction::generateCode() {
 		Auto<SyntaxSet> syntax = getSyntax(scope);
 
@@ -80,10 +86,8 @@ namespace storm {
 
 		// Return value parameter (if needed).
 		Variable returnValue;
-		if (!result.returnInReg()) {
-			// Note: We do not need to free this one, since we will copy a value to it (and thereby initialize it)
-			// the last thing we do in this function.
-			returnValue = l.frame.createParameter(Size::sPtr, false);
+		if (!result.returnInReg() && !isMember) {
+			returnValue = createResultVar(l);
 		}
 
 		GenState state = { l, data, runOn(), l.frame, l.frame.root() };
@@ -94,7 +98,13 @@ namespace storm {
 			LocalVar *var = body->variable(paramNames[i]);
 			assert(var);
 			var->createParam(state);
+
+			if (i == 0 && !result.returnInReg() && isMember) {
+				returnValue = createResultVar(l);
+			}
 		}
+
+		assert(result.returnInReg() || returnValue != Variable::invalid);
 
 		if (result == Value()) {
 			GenResult r;

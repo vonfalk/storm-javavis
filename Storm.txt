@@ -161,6 +161,17 @@ In many aspects, the storm runtime handles objects and values like C++, so they 
 well as long as all types involved are properly exposed to the compiler's type system.
 
 
+Calling conventions
+--------------------
+The calling convention used in the compiler varies by platform, but it is generally `cdecl`, ie.
+the standard calling convention used in C. This is also used for member functions (the standard
+here is usually `thiscall`) to unify the calling conventions used. However, they still differ
+when dealing with return values that are not stored in registers. In the case of a non-member
+function, a pointer to empty memory suitable for the result is passed as the first parameter
+to the function. For member functions, the `this` pointer is always first, and the result
+pointer is inserted as the second parameter.
+
+
 Basic Storm
 --------------
 

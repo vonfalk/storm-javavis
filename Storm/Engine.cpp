@@ -27,7 +27,7 @@ namespace storm {
 		  allocRef(arena, L"alloc"), freeRef(arena, L"free"),
 		  lazyCodeFn(arena, L"lazyUpdate"), createStrFn(arena, L"createStr"),
 		  spawnLater(arena, L"spawnLater"), spawnParam(arena, L"spawnParam"),
-		  abortSpawn(arena, L"abortSpawn"), spawn(arena, L"spawn"),
+		  abortSpawn(arena, L"abortSpawn"),
 		  spawnResult(arena, L"spawnResult"), spawnFuture(arena, L"spawnFuture"),
 		  futureResult(arena, L"futureResult"),
 		  fnParamsCtor(arena, L"FnParams::ctor"), fnParamsDtor(arena, L"FnParams::dtor"),
@@ -46,7 +46,6 @@ namespace storm {
 		spawnParam.set(address(&code::UThread::spawnParamMem));
 		abortSpawn.set(address(&code::UThread::abortSpawn));
 
-		spawn.set(address(&storm::spawnThread));
 		spawnResult.set(address(&storm::spawnThreadResult));
 		spawnFuture.set(address(&storm::spawnThreadFuture));
 
