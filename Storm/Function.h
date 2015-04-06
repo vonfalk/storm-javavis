@@ -92,7 +92,7 @@ namespace storm {
 		void asyncThreadCall(const GenState &to, const Actuals &params, GenResult &result, const code::Value &thread);
 
 		// Code to be executed.
-		void setCode(Par<Code> code);
+		void STORM_FN setCode(Par<Code> code);
 
 		// Set lookup code. (default one provided!, use 'null' to restore default).
 		void setLookup(Par<Code> lookup);

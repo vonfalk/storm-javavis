@@ -526,6 +526,10 @@
 				RelativePath=".\Io\FileStream.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\AsmWrap.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -894,6 +898,10 @@
 			</File>
 			<File
 				RelativePath=".\Io\FileStream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AsmWrap.h"
 				>
 			</File>
 		</Filter>

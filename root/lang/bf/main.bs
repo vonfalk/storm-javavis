@@ -4,6 +4,7 @@ use lang:bs:macro;
 use core:lang;
 use core:io;
 use core:debug;
+use core:asm;
 
 // Package reader for BF files.
 
@@ -47,14 +48,32 @@ class BfFile extends FileReader {
 }
 
 class BfFunction extends Function {
-	Url file;
 
 	ctor(Str name, Url file) {
 		Value strVal = (name{core:Str}).resolve(rootScope);
-		init(strVal, name, [Value: strVal]) {
+		init(strVal, name, [Value: strVal]) {}
+
+		setCode(BfCode(file));
+	}
+}
+
+class BfCode extends TmpLazyCode {
+	Url file;
+
+	ctor(Url file) {
+		init() {
 			file = file;
 		}
-		print("Created a function!");
-		print("We can not yet add any code here, we need some kind of function pointers for that!");
+	}
+
+	Listing load() {
+		Listing r;
+
+		r << prolog();
+		print("Generated code!");
+		r << epilog();
+		r << ret();
+
+		r;
 	}
 }

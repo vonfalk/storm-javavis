@@ -1,8 +1,10 @@
 #pragma once
 #include "Code/RefSource.h"
 #include "Code/Reference.h"
+#include "AsmWrap.h"
 #include "Std.h"
 #include "CodeGen.h"
+#include "Lib/TObject.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -15,7 +17,7 @@ namespace storm {
 	 * The reason Code is not directly in Function is to allow lookup code
 	 * segments to perform vtable lookups easily as needed.
 	 */
-	class Code : public Object {
+	class Code : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
 		Code();
@@ -123,6 +125,23 @@ namespace storm {
 
 		// Create a Binary from a Listing.
 		void setCode(const code::Listing &listing);
+	};
+
+	/**
+	 * Temporary solution for using LazyCode without function pointers.
+	 * TODO: Remove.
+	 */
+	class TmpLazyCode : public LazyCode {
+		STORM_CLASS;
+	public:
+		STORM_CTOR TmpLazyCode();
+
+		// Called when we need to load code. Override in Storm.
+		virtual wrap::Listing *STORM_FN load();
+
+	private:
+		// Adapter fn for 'load'.
+		code::Listing loadCode();
 	};
 
 

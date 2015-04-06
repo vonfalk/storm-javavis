@@ -140,6 +140,22 @@ namespace storm {
 
 
 	/**
+	 * TmpLazyCode.
+	 */
+
+	TmpLazyCode::TmpLazyCode() : LazyCode(memberVoidFn(this, &TmpLazyCode::loadCode)) {}
+
+	wrap::Listing *TmpLazyCode::load() {
+		return CREATE(wrap::Listing, this);
+	}
+
+	code::Listing TmpLazyCode::loadCode() {
+		Auto<wrap::Listing> v = load();
+		return v->v;
+	}
+
+
+	/**
 	 * Delegated code.
 	 */
 

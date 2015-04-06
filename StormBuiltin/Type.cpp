@@ -18,7 +18,6 @@ void Types::add(const Type &type) {
 }
 
 Type Types::find(const CppName &name, const CppName &scope) const {
-
 	for (CppName current = scope; !current.empty(); current = current.parent()) {
 		T::const_iterator i = types.find(current + name);
 		if (i != types.end())
