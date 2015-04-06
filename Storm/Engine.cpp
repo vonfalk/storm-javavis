@@ -58,7 +58,9 @@ namespace storm {
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode)
-		: inited(false), rootPath(root), rootScope(null), arena(), fnRefs(arena) {
+		: inited(false), rootPath(root), rootScope(null), arena(), fnRefs(arena), engineRef(arena, L"engine") {
+
+		engineRef.set(this);
 
 		cppVTableSize = maxVTableCount();
 		vcalls = new VTableCalls(*this);
@@ -192,6 +194,10 @@ namespace storm {
 		}
 
 		return createPackage(next, path, pos + 1);
+	}
+
+	Package *Engine::rootPackage() {
+		return rootPkg.borrow();
 	}
 
 	void Engine::destroy(code::Binary *b) {

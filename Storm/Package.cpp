@@ -192,4 +192,14 @@ namespace storm {
 			to.push_back(r);
 	}
 
+	/**
+	 * Helpers.
+	 */
+
+	Package *rootPkg(Engine &e) {
+		Package *root = e.rootPackage();
+		root->addRef();
+		return root;
+	}
+
 }

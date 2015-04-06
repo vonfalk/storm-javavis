@@ -176,4 +176,30 @@ namespace storm {
 		code::Listing generatePtr();
 	};
 
+	/**
+	 * Simple subclass for statically allocated chunks of code. Automatically inserts
+	 * a 'engine' as the first parameter.
+	 */
+	class StaticEngineCode : public Code {
+		STORM_CLASS;
+	public:
+		// Code to be executed.
+		StaticEngineCode(const Value &returnType, void *ptr);
+
+		// Destroy.
+		~StaticEngineCode();
+
+	protected:
+		// Update ref.
+		virtual void newRef();
+
+	private:
+		// Code to be executed.
+		code::Binary *code;
+
+		// Reference to the original code.
+		code::RefSource original;
+	};
+
+
 }

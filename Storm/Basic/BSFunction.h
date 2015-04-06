@@ -64,13 +64,7 @@ namespace storm {
 			// Add function parameters to a block.
 			void addParams(Par<Block> block);
 
-			// Custom RunOn implementation.
-			virtual RunOn runOn() const;
-
 		private:
-			// Run on a specific thread.
-			Auto<NamedThread> onThread;
-
 			// Code.
 			Auto<SStr> contents;
 

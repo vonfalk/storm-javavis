@@ -33,7 +33,10 @@ void fnPtr(wostream &to, const Function &fn, const Types &types) {
 	for (nat i = 0; i < fn.params.size(); i++) {
 		if (i != 0)
 			to << L", ";
-		to << fn.params[i].fullName(types, scope);
+		if (fn.engineFn && i == 0)
+			to << L"storm::Engine &";
+		else
+			to << fn.params[i].fullName(types, scope);
 	}
 	to << L")";
 	if (fn.isConst)
@@ -82,6 +85,8 @@ String typeList(const Types &types, const vector<Thread> &threads) {
 	vector<Type> t = types.getTypes();
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
+		if (type.package == L"-")
+			continue;
 
 		out << L"{ L\"" << type.package << L"\", ";
 		out << L"L\"" << type.name << L"\", ";
@@ -130,6 +135,9 @@ String typeFunctions(const Types &types) {
 	vector<Type> t = types.getTypes();
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
+		if (type.package == L"-")
+			continue;
+
 		String fn = vtableFnName(type.cppName);
 
 		out << L"storm::Type *" << type.cppName << L"::stormType(Engine &e) { return e.builtIn(" << i << L"); }\n";
@@ -154,7 +162,7 @@ String vtableCode(const Types &types) {
 
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
-		if (type.value)
+		if (type.value || type.package == L"-")
 			continue;
 
 		vtableSymbolName(out, type.cppName);
@@ -166,7 +174,7 @@ String vtableCode(const Types &types) {
 
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
-		if (type.value)
+		if (type.value || type.package == L"-")
 			continue;
 
 		String fn = vtableFnName(type.cppName);
@@ -211,7 +219,7 @@ static String stormName(const String &cppName) {
 		return cppName;
 }
 
-void functionList(wostream &out, const vector<Function> &fns, const Types &types) {
+void functionList(wostream &out, const vector<Function> &fns, const Types &types, const vector<Thread> &threads) {
 	vector<Type> typeList = types.getTypes();
 
 	for (nat i = 0; i < fns.size(); i++) {
@@ -220,8 +228,21 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 
 		out << L"{ ";
 
+		bool member = fn.cppScope.isType();
+
+		// Flags.
+		if (member)
+			out << L"BuiltInFunction::typeMember";
+		else
+			out << L"BuiltInFunction::noMember";
+		if (!fn.thread.empty())
+			out << L"| BuiltInFunction::onThread";
+		if (fn.engineFn)
+			out << L"| BuiltInFunction::hiddenEngine";
+		out << L", ";
+
 		// Member of?
-		if (fn.cppScope.isType()) {
+		if (member) {
 			Type member = types.find(fn.cppScope.cppName(), scope);
 			out << L"null, ";
 			out << typeId(typeList, member.cppName) << L" /* " << member.fullName() << L" */, ";
@@ -235,14 +256,22 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 		// Name
 		out << L"L\"" << stormName(fn.name) << L"\", ";
 
+		CppName name = fn.cppScope.cppName() + CppName(vector<String>(1, fn.name));
+
 		// Params
-		out << L"list(" << fn.params.size();
-		for (nat i = 0; i < fn.params.size(); i++) {
-			out << L", " << valueRef(fn.params[i], scope, types);
+		vector<CppType> params = fn.params;
+		if (fn.engineFn) {
+			// Ignore the first one!
+			if (params.size() == 0)
+				throw Error(toS(name) + L" is marked with STORM_ENGINE_FN and must take an Engine as the first parameter.");
+			params.erase(params.begin());
+		}
+
+		out << L"list(" << params.size();
+		for (nat i = 0; i < params.size(); i++) {
+			out << L", " << valueRef(params[i], scope, types);
 		}
 		out << L"), ";
-
-		CppName name = fn.cppScope.cppName() + CppName(vector<String>(1, fn.name));
 
 		// Function ptr.
 		if (fn.name == L"__ctor") {
@@ -259,21 +288,30 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 				}
 				out << L", " << t;
 			}
-			out << L">)";
+			out << L">), ";
 		} else if (fn.name == L"__dtor") {
-			out << L"address(&destroy<" << fn.cppScope.cppName() << L">)";
+			out << L"address(&destroy<" << fn.cppScope.cppName() << L">), ";
 		} else if (fn.name == L"operator =") {
-			out << L"address(&wrapAssign<" << fn.cppScope.cppName() << L">)";
+			out << L"address(&wrapAssign<" << fn.cppScope.cppName() << L">), ";
 		} else {
 			out << L"address<";
 			fnPtr(out, fn, types);
-			out << L">(&" << name << L")";
+			out << L">(&" << name << L"), ";
 		}
+
+		// Thread id (if needed).
+		if (fn.thread.empty()) {
+			out << L"0 /* no thread */";
+		} else {
+			nat threadId = ::threadId(threads, fn.thread, fn.cppScope.cppName());
+			out << threadId << L" /* " << fn.thread << L" */";
+		}
+
 		out << " },\n";
 	}
 }
 
-String functionList(const vector<Header *> &headers, const Types &types) {
+String functionList(const vector<Header *> &headers, const Types &types, const vector<Thread> &threads) {
 	std::wostringstream out;
 
 	for (nat i = 0; i < headers.size(); i++) {
@@ -281,7 +319,7 @@ String functionList(const vector<Header *> &headers, const Types &types) {
 		const vector<Function> &fns = header.getFunctions();
 
 		try {
-			functionList(out, fns, types);
+			functionList(out, fns, types, threads);
 		} catch (const Error &e) {
 			Error err(e.what(), header.file);
 			throw err;

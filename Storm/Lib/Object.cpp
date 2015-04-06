@@ -173,7 +173,8 @@ namespace storm {
 		size_t s = type->size().current();
 
 		assert(type->flags & typeClass);
-		assert(size <= s || size == 0, "Not enough memory for the specified type!");
+		assert(size <= s || size == 0, L"Not enough memory for " + type->name
+			+ L". From C++: " + ::toS(size) + L" from storm: " + ::toS(s));
 
 		void *mem = allocDumb(type->engine, s);
 		size_t typeOffset = OFFSET_OF(Object, myType);

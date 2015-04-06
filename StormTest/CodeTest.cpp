@@ -4,6 +4,8 @@
 #include "Code/FnParams.h"
 #include "Fn.h"
 
+#include "Storm/Basic/BSType.h"
+
 
 BEGIN_TEST(BasicSyntax) {
 	CHECK_RUNS(runFn(L"test.bs.voidFn"));

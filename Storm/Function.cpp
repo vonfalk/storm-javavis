@@ -31,8 +31,15 @@ namespace storm {
 	RunOn Function::runOn() const {
 		if (Type *t = as<Type>(parent())) {
 			return t->runOn();
+		} else if (runOnThread) {
+			return RunOn(runOnThread);
+		} else {
+			return RunOn(RunOn::any);
 		}
-		return RunOn(RunOn::any);
+	}
+
+	void Function::runOn(Par<NamedThread> thread) {
+		runOnThread = thread;
 	}
 
 	void *Function::pointer() {
@@ -111,14 +118,14 @@ namespace storm {
 		} else {
 			VarInfo result = res.safeLocation(to, this->result);
 
-			if (!this->result.returnOnStack()) {
+			if (!this->result.returnInReg()) {
 				to.to << lea(ptrA, ptrRel(result.var));
 				to.to << fnParam(ptrA);
 			}
 
 			addParams(to, params, this->params);
 
-			if (this->result.returnOnStack()) {
+			if (this->result.returnInReg()) {
 				to.to << fnCall(ref, result.var.size());
 				to.to << mov(result.var, asSize(ptrA, result.var.size()));
 			} else {
@@ -508,6 +515,13 @@ namespace storm {
 	Function *nativeFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr) {
 		Function *fn = CREATE(Function, e, result, name, params);
 		Auto<StaticCode> c = CREATE(StaticCode, e, ptr);
+		fn->setCode(c);
+		return fn;
+	}
+
+	Function *nativeEngineFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr) {
+		Function *fn = CREATE(Function, e, result, name, params);
+		Auto<StaticEngineCode> c = CREATE(StaticEngineCode, e, result, ptr);
 		fn->setCode(c);
 		return fn;
 	}

@@ -76,10 +76,28 @@ namespace storm {
 	 */
 	struct BuiltInFunction {
 
-		// The location (package).
+		// Flags.
+		enum Mode {
+			// Not a member.
+			noMember = 0x01,
+
+			// Member of a type.
+			typeMember = 0x02,
+
+			// Run on a thread.
+			onThread = 0x10,
+
+			// Hide a 'engine' as the first parameter.
+			hiddenEngine = 0x20,
+		};
+
+		// Mode.
+		Mode mode;
+
+		// The location (package). Only valid if 'noMember' is set.
 		const wchar *pkg;
 
-		// Member of a type? (valid if 'pkg' == null)
+		// Member of a type? Only valid if 'typeMember' is set.
 		nat memberId;
 
 		// Name of the return type.
@@ -93,7 +111,12 @@ namespace storm {
 
 		// Function pointer. Null if the last element.
 		void *fnPtr;
+
+		// Run on a specific thread. Only valid if 'onThread' is set in 'mode'.
+		nat threadId;
 	};
+
+	BITMASK_OPERATORS(BuiltInFunction::Mode);
 
 	/**
 	 * A list of all built-in threads.

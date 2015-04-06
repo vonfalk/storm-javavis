@@ -1,7 +1,7 @@
 #pragma once
-#include "Std.h"
-#include "SyntaxObject.h"
-#include "Name.h"
+#include "Storm/Std.h"
+#include "Storm/SyntaxObject.h"
+#include "Storm/Name.h"
 
 namespace storm {
 	namespace bs {
@@ -69,13 +69,13 @@ namespace storm {
 			TypePart *STORM_FN operator [](Nat id) const;
 
 			// Convert to a Name.
-			Name *toName(const Scope &scope);
+			Name *STORM_FN toName(const Scope &scope);
 
 			// Find.
-			Named *find(const Scope &scope);
+			Named *STORM_FN find(const Scope &scope);
 
 			// Resolve to a type.
-			Value resolve(const Scope &scope);
+			Value STORM_FN resolve(const Scope &scope);
 
 		protected:
 			// Output.

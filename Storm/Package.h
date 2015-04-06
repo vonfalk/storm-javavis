@@ -91,4 +91,7 @@ namespace storm {
 		Package *loadPackage(const String &name);
 	};
 
+	// Find the root package.
+	Package *STORM_ENGINE_FN rootPkg(Engine &e) ON(Compiler);
+
 }

@@ -51,7 +51,7 @@ Types allTypes(vector<Header *> &headers) {
 	t.add(Type(L"Nat", L"core"));
 	t.add(Type(L"Byte", L"core"));
 	t.add(Type(L"Bool", L"core"));
-	t.add(Type(L"Type", L"core"));
+	// t.add(Type(L"Type", L"core"));
 
 	for (nat i = 0; i < headers.size(); i++) {
 		Header &h = *headers[i];
@@ -146,7 +146,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 			d.typeList = typeList(t, threads);
 			d.typeFunctions = typeFunctions(t);
 			d.vtableCode = vtableCode(t);
-			d.functionList = functionList(headers, t);
+			d.functionList = functionList(headers, t, threads);
 			d.headerList = headerList(headers, root);
 			d.threadList = threadList(threads);
 

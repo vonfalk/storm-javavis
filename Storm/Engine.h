@@ -91,9 +91,11 @@ namespace storm {
 		~Engine();
 
 		// Find the given package. Returns null on failure. If 'create' is
-		// true, then all packages that does not yet exist are created.
+		// true, then all packages that does not yet exist are created. All returns
+		// a borrowed ptr.
 		Package *package(Par<Name> path, bool create = false);
 		Package *package(const String &name);
+		Package *rootPackage();
 
 		// Get a built-in type.
 		inline Type *builtIn(nat id) const { return cached[id].borrow(); }
@@ -118,8 +120,12 @@ namespace storm {
 		// Initialized?
 		inline bool initialized() { return inited; }
 
-		// Arena.
+		// Arena. NOTE: Place this before 'engineRef' and 'fnRefs' since C++ compilers generally re-order
+		// initializations.
 		code::Arena arena;
+
+		// Named reference to the engine.
+		code::RefSource engineRef;
 
 		// Built-in functions.
 		FnRefs fnRefs;

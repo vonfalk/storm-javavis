@@ -16,7 +16,7 @@ String typeFunctions(const Types &t);
 String vtableCode(const Types &t);
 
 // Generate list of functions.
-String functionList(const vector<Header *> &headers, const Types &t);
+String functionList(const vector<Header *> &headers, const Types &t, const vector<Thread> &threads);
 
 // Generate list of includes
 String headerList(const vector<Header *> &headers, const Path &root);

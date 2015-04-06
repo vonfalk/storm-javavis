@@ -117,4 +117,11 @@ namespace storm {
 		return null;
 	}
 
+	/**
+	 * Helpers.
+	 */
+	Scope rootScope(Engine &e) {
+		return *e.scope();
+	}
+
 }

@@ -9,12 +9,13 @@ void Function::output(wostream &to) const {
 	to << L"), " << cppScope;
 }
 
-Function Function::read(const String &package, const CppScope &scope, const CppType &result, Tokenizer &tok) {
+Function Function::read(bool eFn, const String &package, const CppScope &scope, const CppType &result, Tokenizer &tok) {
 	Function r;
 	r.result = result;
 	r.cppScope = scope;
 	r.name = tok.next();
 	r.isConst = false;
+	r.engineFn = eFn;
 	r.package = package;
 
 	if (r.name == L"operator") {
@@ -43,6 +44,13 @@ Function Function::read(const String &package, const CppScope &scope, const CppT
 		tok.next();
 	}
 
+	if (tok.peek() == L"ON") {
+		tok.next();
+		tok.expect(L"(");
+		r.thread = CppName::read(tok);
+		tok.expect(L")");
+	}
+
 	return r;
 }
 
@@ -52,6 +60,7 @@ Function Function::dtor(const String &package, const CppScope &scope) {
 	r.cppScope = scope;
 	r.name = L"__dtor";
 	r.isConst = false;
+	r.engineFn = false;
 	r.package = package;
 	return r;
 }
@@ -62,6 +71,7 @@ Function Function::copyCtor(const String &package, const CppScope &scope) {
 	r.cppScope = scope;
 	r.name = L"__ctor";
 	r.isConst = false;
+	r.engineFn = false;
 	r.package = package;
 
 	CppType z;
@@ -79,6 +89,7 @@ Function Function::assignment(const String &package, const CppScope &scope) {
 	r.cppScope = scope;
 	r.name = L"operator =";
 	r.isConst = false;
+	r.engineFn = false;
 	r.package = package;
 
 	CppType z;

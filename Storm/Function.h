@@ -2,6 +2,7 @@
 #include "Code.h"
 #include "CodeGen.h"
 #include "Thread.h"
+#include "NamedThread.h"
 #include "Utils/Bitmask.h"
 
 namespace storm {
@@ -61,6 +62,10 @@ namespace storm {
 		// otherwise nothing.
 		virtual RunOn runOn() const;
 
+		// Set this function to run on a specific thread. If the function is a member of a
+		// type, this directive is overridden.
+		void runOn(Par<NamedThread> thread);
+
 		// Output code to find the Thread we want to run on. Always returns a borrowed reference.
 		// Does not generate any meaningful result unless 'runOn' returns a state other than 'any'.
 		virtual code::Variable findThread(const GenState &to, const Actuals &params);
@@ -103,6 +108,9 @@ namespace storm {
 		// Get the thread thunk, generates it if needed. Returns null if no thunk is needed.
 		code::RefSource *threadThunk();
 
+		// Run on a specific thread.
+		Auto<NamedThread> runOnThread;
+
 		// Result from the prepare call.
 		struct PrepareResult {
 			code::Variable params, data;
@@ -128,6 +136,9 @@ namespace storm {
 
 	// Create a function referring a pre-compiled function.
 	Function *nativeFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr);
+
+	// Create a function referring a pre-compiled function, adding 'Engine &' as the first parameter.
+	Function *nativeEngineFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr);
 
 	// Create a function referring a pre-compiled function that is possibly using vtable calls.
 	Function *nativeMemberFunction(Engine &e, Type *member, Value result,

@@ -51,12 +51,12 @@ namespace storm {
 		throw BuiltInError(L"Type " + toS(val.name) + L" was not found.");
 	}
 
-	static void addBuiltIn(Engine &to, const BuiltInFunction *fn, Type *insertInto = null) {
+	static void addBuiltIn(Engine &to, const BuiltInFunction *fn, const vector<NamedThread *> &threads, Type *insertInto = null) {
 		Named *into = null;
 		vector<Value> params;
 		bool typeMember = false;
 
-		if (fn->pkg) {
+		if (fn->mode & BuiltInFunction::noMember) {
 			assert(insertInto == null);
 
 			Auto<Name> pkg = parseSimpleName(to, fn->pkg);
@@ -64,7 +64,9 @@ namespace storm {
 			if (!p)
 				throw BuiltInError(L"Failed to locate package " + toS(fn->pkg));
 			into = p;
-		} else {
+		} else if (fn->mode & BuiltInFunction::typeMember) {
+			assert((fn->mode & BuiltInFunction::hiddenEngine) == 0, L"Not supported with typeMember");
+			assert((fn->mode & BuiltInFunction::onThread) == 0, L"Not supported with typeMember");
 			Type *t = insertInto;
 			if (!t)
 				t = to.builtIn(fn->memberId);
@@ -73,6 +75,9 @@ namespace storm {
 
 			// add the 'this' parameter
 			params.push_back(Value::thisPtr(t));
+		} else {
+			assert(false, L"Unknown function mode. Either typeMember or noMember should be set!");
+			return;
 		}
 
 		Scope scope(into);
@@ -88,8 +93,14 @@ namespace storm {
 		} else if (typeMember) {
 			// Make sure we handle vtable calls correctly!
 			toAdd = nativeMemberFunction(to, params[0].type, result, fn->name, params, fn->fnPtr);
+		} else if (fn->mode & BuiltInFunction::hiddenEngine) {
+			toAdd = nativeEngineFunction(to, result, fn->name, params, fn->fnPtr);
 		} else {
 			toAdd = nativeFunction(to, result, fn->name, params, fn->fnPtr);
+		}
+
+		if (fn->mode & BuiltInFunction::onThread) {
+			toAdd->runOn(threads[fn->threadId]);
 		}
 
 		if (Package *p = as<Package>(into)) {
@@ -111,7 +122,7 @@ namespace storm {
 		pkg->add(type);
 	}
 
-	static void addHidden(Engine &e, Type *to, nat from) {
+	static void addHidden(Engine &e, Type *to, nat from, const vector<NamedThread *> &threads) {
 		for (const BuiltInFunction *fn = builtInFunctions(); fn->fnPtr; fn++) {
 			if (fn->pkg == null && fn->memberId == from) {
 				String name = fn->name;
@@ -119,13 +130,13 @@ namespace storm {
 					continue;
 
 				// Insert this function into ourselves!
-				addBuiltIn(e, fn, to);
+				addBuiltIn(e, fn, threads, to);
 			}
 		}
 
 		const BuiltInType *p = findById(from);
 		if (p->superMode == BuiltInType::superClass)
-			addHidden(e, to, p->typePtrId);
+			addHidden(e, to, p->typePtrId, threads);
 	}
 
 	static void addSuper(Engine &to, const BuiltInType *t) {
@@ -182,14 +193,14 @@ namespace storm {
 		}
 		vector<NamedThread *> threads = addThreads(to);
 		for (const BuiltInFunction *fn = builtInFunctions(); fn->fnPtr; fn++) {
-			addBuiltIn(to, fn);
+			addBuiltIn(to, fn, threads);
 		}
 
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
 			switch (t->superMode) {
 			case BuiltInType::superHidden:
 				// We should copy all the parent functions to ourselves!
-				addHidden(to, to.builtIn(t->typePtrId), t->super);
+				addHidden(to, to.builtIn(t->typePtrId), t->super, threads);
 				break;
 			case BuiltInType::superThread:
 				to.builtIn(t->typePtrId)->setThread(threads[t->super]);

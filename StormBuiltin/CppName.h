@@ -58,6 +58,9 @@ public:
 	// Read!
 	static CppType read(Tokenizer &tok);
 
+	// Empty?
+	inline bool isEmpty() const { return type.empty(); }
+
 	// Void?
 	bool isVoid() const;
 

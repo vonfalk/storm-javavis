@@ -75,7 +75,7 @@ namespace storm {
 		code::Redirect r;
 		loaded = false;
 
-		r.result(owner->result.size(), owner->result.returnOnStack());
+		r.result(owner->result.size(), !owner->result.returnInReg());
 
 		// parameters (no refcount on parameters), but we need to destroy value parameters
 		// if there is an exception...
@@ -171,7 +171,7 @@ namespace storm {
 
 	code::Listing InlinedCode::generatePtr() {
 		using namespace code;
-		if (!owner->result.returnOnStack()) {
+		if (!owner->result.returnInReg()) {
 			TODO(L"Implement return of non-built in types");
 			assert(false);
 		}
@@ -201,6 +201,43 @@ namespace storm {
 		l << data;
 
 		return l;
+	}
+
+
+	/**
+	 * StaticEngineCode.
+	 */
+
+	StaticEngineCode::StaticEngineCode(const Value &returnType, void *ptr) : original(engine().arena, L"ref-to") {
+		using namespace code;
+
+		original.set(ptr);
+
+		// Probably machine-specific...
+		Listing l;
+
+		if (!returnType.returnInReg()) {
+			l << pop(ptrA);
+			l << pop(ptrC);
+			l << push(engine().engineRef);
+			l << push(ptrC);
+			l << push(ptrA);
+		} else {
+			l << pop(ptrA); // get the return address...
+			l << push(engine().engineRef);
+			l << push(ptrA); // put it back.
+		}
+		l << jmp(original);
+
+		code = new Binary(engine().arena, L"static engine code", l);
+	}
+
+	StaticEngineCode::~StaticEngineCode() {
+		delete code;
+	}
+
+	void StaticEngineCode::newRef() {
+		code->update(*toUpdate);
 	}
 
 }

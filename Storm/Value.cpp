@@ -46,7 +46,7 @@ namespace storm {
 		}
 	}
 
-	bool Value::returnOnStack() const {
+	bool Value::returnInReg() const {
 		if (ref)
 			return true;
 		if (isBuiltIn())

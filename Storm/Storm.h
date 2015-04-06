@@ -11,6 +11,16 @@
 // For example: Str *STORM_FN foo();
 #define STORM_FN CODECALL
 
+// Mark built-in functions with STORM_FN_ENGINE to get the right calling-convention
+// and the automatic generation of function tables. The difference from STORM_FN is
+// that the first parameter (of type Engine) will be generated automatically.
+#define STORM_ENGINE_FN CODECALL
+
+// Mark a built-in function to be executed on a specific thread. This is only
+// applicable for non-member functions (no support for static members in the preprocessor).
+// Example: void STORM_FN foo(Int a) ON(Compiler) {}
+#define ON(thread)
+
 // Mark the parent class as hidden from Storm. This is used in TObject.
 // This more or less means that we copy all members of the parent class
 // into this class, and treat them as separate entities in Storm.

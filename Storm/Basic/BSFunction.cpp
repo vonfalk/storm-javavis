@@ -47,19 +47,15 @@ namespace storm {
 							const vector<String> &names, const Scope &scope, Par<SStr> contents,
 							Par<NamedThread> thread, const SrcPos &pos, bool isMember)
 		: Function(result, name, params), scope(scope), contents(contents),
-		  paramNames(names), pos(pos), isMember(isMember), onThread(thread) {
+		  paramNames(names), pos(pos), isMember(isMember) {
+
+		if (thread)
+			runOn(thread);
 
 		if (result.ref)
 			throw SyntaxError(pos, L"Returning references is not a good idea at this point!");
 
 		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
-	}
-
-	RunOn bs::BSFunction::runOn() const {
-		if (onThread)
-			return RunOn(onThread);
-
-		return Function::runOn();
 	}
 
 	code::Listing bs::BSFunction::generateCode() {
@@ -84,7 +80,7 @@ namespace storm {
 
 		// Return value parameter (if needed).
 		Variable returnValue;
-		if (!result.returnOnStack()) {
+		if (!result.returnInReg()) {
 			// Note: We do not need to free this one, since we will copy a value to it (and thereby initialize it)
 			// the last thing we do in this function.
 			returnValue = l.frame.createParameter(Size::sPtr, false);
@@ -106,7 +102,7 @@ namespace storm {
 			body->code(state, r);
 			l << epilog();
 			l << ret(Size());
-		} else if (result.returnOnStack()) {
+		} else if (result.returnInReg()) {
 			GenResult r(result, l.frame.root());
 
 			body->code(state, r);

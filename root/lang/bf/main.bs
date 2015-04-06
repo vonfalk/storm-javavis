@@ -39,6 +39,15 @@ class BfFile extends FileReader {
 		// Only one function per file!
 		SrcPos pos(file, 0.nat);
 
+		Scope scope = rootScope;
+		TypeName name = name{core:Str};
+		print(name);
+		Name n = name.toName(scope);
+		print(n);
+		// Note: This does not work since member functions are implemented like this
+		// in cdecl: member(*this, *result, foo), not free(*result, ...)
+		// Value strVal = name.resolve(scope);
+
 		TextReader reader = readText(file.read());
 		print(reader.readAll());
 

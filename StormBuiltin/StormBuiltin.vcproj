@@ -290,6 +290,10 @@
 				RelativePath=".\Thread.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\StormBuiltin.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

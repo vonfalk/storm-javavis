@@ -59,8 +59,8 @@ namespace storm {
 		// Get the assignment function for this type if there is any.
 		code::Value assignFn() const;
 
-		// Return on stack?
-		bool returnOnStack() const;
+		// Return in register?
+		bool returnInReg() const;
 
 		// Is this type built into the C++ compiler? (not pointers or references)
 		bool isBuiltIn() const;

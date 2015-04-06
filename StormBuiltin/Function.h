@@ -25,11 +25,17 @@ public:
 	// Parameter types.
 	vector<CppType> params;
 
+	// On thread?
+	CppName thread;
+
 	// Const function?
 	bool isConst;
 
+	// Has a hidden 'Engine &' parameter?
+	bool engineFn;
+
 	// Read a function.
-	static Function read(const String &package, const CppScope &scope, const CppType &result, Tokenizer &tok);
+	static Function read(bool engineFn, const String &package, const CppScope &scope, const CppType &result, Tokenizer &tok);
 
 	// Create a destructor for a type.
 	static Function dtor(const String &package, const CppScope &scope);
