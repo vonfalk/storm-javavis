@@ -100,6 +100,15 @@ BEGIN_TEST(CustomValueTest) {
 	CHECK_EQ(runFn(L"test.bs.testAssignValVal", 22), 22);
 } END_TEST
 
+BEGIN_TEST_(ValueMemberTest) {
+	CHECK_EQ(runFn(L"test.bs.testVirtualVal1"), 10);
+	CHECK_EQ(runFn(L"test.bs.testVirtualVal2"), 20);
+	CHECK_EQ(runFn(L"test.bs.testVirtualVal3"), 15);
+	Auto<Dbg> v = runFn<Dbg *>(L"test.bs.testVirtualVal4");
+	CHECK_EQ(v->get(), 10);
+	CHECK_EQ(v->asDbgVal().v, 20);
+} END_TEST
+
 BEGIN_TEST(StormArrayTest) {
 	CHECK_EQ(runFn(L"test.bs.testArray"), 230);
 	CHECK_EQ(runFn(L"test.bs.testValArray"), 250);

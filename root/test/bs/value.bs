@@ -148,3 +148,40 @@ Int testAssignValVal(Int z) {
 	c = o;
 	c.v.get;
 }
+
+// Returning values from member functions?
+// In C++, the this pointer comes before the return value pointer, make sure we do the right thing!
+class DbgDerived extends Dbg {
+
+	ctor(Int v) {
+		init(v) {}
+	}
+
+	// This overrides the Dbg base function.
+	DbgVal asDbgVal() {
+		DbgVal(20);
+	}
+
+	DbgVal dbgVal() {
+		DbgVal(15);
+	}
+}
+
+Int testVirtualVal1() {
+	Dbg base(10);
+	base.asDbgVal.get;
+}
+
+Int testVirtualVal2() {
+	Dbg v = DbgDerived(10);
+	v.asDbgVal.get;
+}
+
+Int testVirtualVal3() {
+	DbgDerived v = DbgDerived(10);
+	v.dbgVal.get;
+}
+
+Dbg testVirtualVal4() {
+	DbgDerived(10);
+}

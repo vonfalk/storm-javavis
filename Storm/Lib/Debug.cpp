@@ -210,6 +210,10 @@ namespace storm {
 		return v;
 	}
 
+	DbgVal Dbg::asDbgVal() {
+		return DbgVal(v);
+	}
+
 	void Dbg::dbg() {
 		PLN("Debug object. Type: " << myType->identifier() << " value: " << v);
 	}

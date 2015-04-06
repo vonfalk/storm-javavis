@@ -49,40 +49,6 @@ namespace storm {
 	// OS thread of this thread. This has to be improved later on!
 	void STORM_FN dbgSleep(Int ms);
 
-	// Class partly implemented in C++, we'll try to override this in Storm.
-	class Dbg : public Object {
-		STORM_CLASS;
-	public:
-		STORM_CTOR Dbg();
-		STORM_CTOR Dbg(Par<Dbg> o);
-
-		// Set the value as well...
-		STORM_CTOR Dbg(Int v);
-
-		// Dtor.
-		~Dbg();
-
-		// Print our state.
-		void STORM_FN dbg();
-
-		// Set a value.
-		void STORM_FN set(Int v);
-
-		// Get a value.
-		virtual Int STORM_FN get();
-
-		// For use in VTableTest.
-		virtual Int STORM_FN returnOne();
-		virtual Int STORM_FN returnTwo();
-
-		// Deep copy.
-		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
-
-	private:
-		Int v;
-	};
-
-
 	// Value implemented in C++ for testing. Tracks live instances!
 	class DbgVal {
 		STORM_VALUE;
@@ -119,6 +85,43 @@ namespace storm {
 		// Lock for the live set.
 		static Lock liveLock;
 	};
+
+	// Class partly implemented in C++, we'll try to override this in Storm.
+	class Dbg : public Object {
+		STORM_CLASS;
+	public:
+		STORM_CTOR Dbg();
+		STORM_CTOR Dbg(Par<Dbg> o);
+
+		// Set the value as well...
+		STORM_CTOR Dbg(Int v);
+
+		// Dtor.
+		~Dbg();
+
+		// Print our state.
+		void STORM_FN dbg();
+
+		// Set a value.
+		void STORM_FN set(Int v);
+
+		// Get a value.
+		virtual Int STORM_FN get();
+
+		// Convert it to a DbgVal!
+		virtual DbgVal STORM_FN asDbgVal();
+
+		// For use in VTableTest.
+		virtual Int STORM_FN returnOne();
+		virtual Int STORM_FN returnTwo();
+
+		// Deep copy.
+		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
+
+	private:
+		Int v;
+	};
+
 
 	wostream &operator <<(wostream &to, const DbgVal &v);
 
