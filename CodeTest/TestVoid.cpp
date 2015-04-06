@@ -22,7 +22,7 @@ BEGIN_TEST(TestVoid) {
 	Binary b(arena, L"code", l);
 
 	tmpVar = 0;
-	call<void>(b.getData());
+	call<void>(b.getData(), false);
 	CHECK_EQ(tmpVar, 3);
 
 } END_TEST

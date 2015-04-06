@@ -64,22 +64,22 @@ BEGIN_TEST(TestParts) {
 
 	v = 0;
 	sum = 0;
-	CHECK_ERROR(call<void>(bin.getData(), params), InvalidValue);
+	CHECK_ERROR(call<void>(bin.getData(), false, params), InvalidValue);
 	CHECK_EQ(sum, 1);
 
 	v = 1;
 	sum = 0;
-	CHECK_ERROR(call<void>(bin.getData(), params), InvalidValue);
+	CHECK_ERROR(call<void>(bin.getData(), false, params), InvalidValue);
 	CHECK_EQ(sum, 3);
 
 	v = 2;
 	sum = 0;
-	CHECK_ERROR(call<void>(bin.getData(), params), InvalidValue);
+	CHECK_ERROR(call<void>(bin.getData(), false, params), InvalidValue);
 	CHECK_EQ(sum, 6);
 
 	v = 3;
 	sum = 0;
-	CHECK_RUNS(call<void>(bin.getData(), params));
+	CHECK_RUNS(call<void>(bin.getData(), false, params));
 	CHECK_EQ(sum, 6);
 
 } END_TEST
@@ -164,13 +164,13 @@ BEGIN_TEST(TestNestedPartsException) {
 	for (nat i = 0; i < ARRAY_SIZE(results); i++) {
 		v = i;
 		sum = 0;
-		CHECK_ERROR(call<void>(bin.getData(), params), InvalidValue);
+		CHECK_ERROR(call<void>(bin.getData(), false, params), InvalidValue);
 		CHECK_EQ(sum, results[i]);
 	}
 
 	v = ARRAY_SIZE(results);
 	sum = 0;
-	CHECK_RUNS(call<void>(bin.getData(), params));
+	CHECK_RUNS(call<void>(bin.getData(), false, params));
 	CHECK_EQ(sum, 0);
 
 } END_TEST
@@ -244,18 +244,18 @@ BEGIN_TEST(TestNestedParts) {
 	for (nat i = 0; i < ARRAY_SIZE(results); i++) {
 		v = i;
 		sum = 0;
-		CHECK_ERROR(call<void>(bin.getData(), params), InvalidValue);
+		CHECK_ERROR(call<void>(bin.getData(), false, params), InvalidValue);
 		CHECK_EQ(sum, results[i]);
 
 		v = i + 100;
 		sum = 0;
-		CHECK_RUNS(call<void>(bin.getData(), params));
+		CHECK_RUNS(call<void>(bin.getData(), false, params));
 		CHECK_EQ(sum, results[i]);
 	}
 
 	v = ARRAY_SIZE(results);
 	sum = 0;
-	CHECK_RUNS(call<void>(bin.getData(), params));
+	CHECK_RUNS(call<void>(bin.getData(), false, params));
 	CHECK_EQ(sum, 21);
 
 } END_TEST

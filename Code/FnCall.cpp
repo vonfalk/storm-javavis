@@ -18,6 +18,25 @@ namespace code {
 	 * upper bound on their stack consumption.
 	 */
 
+	static NAKED void doCallMemberLarge(const void *fn, void *params, void *result) {
+		__asm {
+			// Set up the stack.
+			push ebp;
+			mov ebp, esp;
+			mov esp, params;
+
+			// When we are calling a member function, the this-ptr goes before the result!
+			pop eax;
+			push result;
+			push eax;
+			call fn;
+
+			// Restore the stack.
+			mov esp, ebp;
+			pop ebp;
+			ret;
+		}
+	}
 
 	static NAKED void doCallLarge(const void *fn, void *params, void *result) {
 		__asm {
@@ -144,14 +163,18 @@ namespace code {
 
 	typedef void (*CallFn)(const void *, void *, void *);
 
-	static CallFn chooseCall(const BasicTypeInfo &info) {
+	static CallFn chooseCall(bool memberFn, const BasicTypeInfo &info) {
 		switch (info.kind) {
 		case BasicTypeInfo::user:
-			if (info.plain())
-				return &doCallLarge;
-			else
+			if (info.plain()) {
+				if (memberFn)
+					return &doCallMemberLarge;
+				else
+					return &doCallLarge;
+			} else {
 				// We're on X86, references and pointers are 4 bytes.
 				return &doCall4;
+			}
 		case BasicTypeInfo::floatNr:
 			if (info.size == 4)
 				return &doCallFloat;
@@ -169,17 +192,19 @@ namespace code {
 			return &doCall4;
 		else if (info.size <= 8)
 			return &doCall8;
+		else if (memberFn)
+			return &doCallMemberLarge;
 		else
 			return &doCallLarge;
 	}
 
-	void call(const void *fn, void *params, void *result, const BasicTypeInfo &info) {
-		CallFn z = chooseCall(info);
+	void call(const void *fn, bool memberFn, void *params, void *result, const BasicTypeInfo &info) {
+		CallFn z = chooseCall(memberFn, info);
 		(*z)(fn, params, result);
 	}
 
-	void call(const void *fn, const FnParams &params, void *result, const BasicTypeInfo &info) {
-		CallFn z = chooseCall(info);
+	void call(const void *fn, bool memberFn, const FnParams &params, void *result, const BasicTypeInfo &info) {
+		CallFn z = chooseCall(memberFn, info);
 		nat sz = params.totalSize();
 
 		__asm {

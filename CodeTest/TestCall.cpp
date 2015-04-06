@@ -33,7 +33,7 @@ BEGIN_TEST(TestCall) {
 	const void *f = b.getData();
 
 	copied = 0;
-	CHECK_EQ(call<cpuInt>(f), 22);
+	CHECK_EQ(call<cpuInt>(f, false), 22);
 	CHECK_EQ(copied, 20);
 
 } END_TEST

@@ -100,6 +100,9 @@ namespace code {
 		// Function to call.
 		const void *fn;
 
+		// Member function?
+		bool memberFn;
+
 		// The future to post the result to.
 		FutureBase *future;
 
@@ -116,7 +119,7 @@ namespace code {
 
 		try {
 			// Call the function and place the result in the future.
-			call(params->fn, actuals, params->future->target, params->resultType);
+			call(params->fn, params->memberFn, actuals, params->future->target, params->resultType);
 			// Notify success.
 			params->future->posted();
 		} catch (...) {
@@ -139,9 +142,13 @@ namespace code {
 		return UThread(t);
 	}
 
-	UThread UThread::spawn(const void *fn, const FnParams &params, const Thread *on, UThreadData *t) {
+	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params, const Thread *on, UThreadData *t) {
 		if (t == null)
 			t = UThreadData::create();
+
+#ifndef X86
+#error "You may need to consider 'memberFn' here. On X86 it is OK as long as we return void."
+#endif
 
 		t->pushParams(&exitUThread, params);
 		t->pushContext(fn);
@@ -150,7 +157,7 @@ namespace code {
 		return UThread(t);
 	}
 
-	UThread UThread::spawn(const void *fn, const FnParams &params,
+	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params,
 						FutureBase &result, const BasicTypeInfo &resultType,
 						const Thread *on, UThreadData *t) {
 		if (t == null)
@@ -159,6 +166,7 @@ namespace code {
 		// Copy parameters to the stack of the new thread.
 		Params *p = (Params *)t->alloc(sizeof(Params));
 		p->fn = fn;
+		p->memberFn = memberFn;
 		p->future = &result;
 		p->resultType = resultType;
 

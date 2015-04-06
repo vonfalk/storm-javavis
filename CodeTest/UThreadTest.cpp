@@ -39,6 +39,15 @@ static int takeTracker(Tracker t) {
 	return t.data;
 }
 
+struct DummyTracker {
+	Tracker t;
+	DummyTracker(int v) : t(v) {}
+
+	Tracker CODECALL value() {
+		return t;
+	}
+};
+
 BEGIN_TEST(UThreadResultTest) {
 	// If these tests start to fail, consider increasing the stack space for
 	// calling functions defined in UThread.cpp (pushParams).
@@ -47,12 +56,12 @@ BEGIN_TEST(UThreadResultTest) {
 		bool e = false;
 		FnParams params; params.add(e);
 		Future<void> r;
-		UThread::spawn(returnVoid, params, r);
+		UThread::spawn(returnVoid, false, params, r);
 		CHECK_RUNS(r.result());
 
 		e = true;
 		Future<void> r2;
-		UThread::spawn(returnVoid, params, r2);
+		UThread::spawn(returnVoid, false, params, r2);
 		CHECK_ERROR(r2.result(), UserError);
 	}
 
@@ -60,7 +69,7 @@ BEGIN_TEST(UThreadResultTest) {
 		int v = 10;
 		FnParams params; params.add(v);
 		Future<int> r;
-		UThread::spawn(returnInt, params, r);
+		UThread::spawn(returnInt, false, params, r);
 		CHECK_EQ(r.result(), 10);
 	}
 
@@ -68,7 +77,7 @@ BEGIN_TEST(UThreadResultTest) {
 		int64 v = 1024LL << 30LL;
 		FnParams params; params.add(v);
 		Future<int64> r;
-		UThread::spawn(returnInt64, params, r);
+		UThread::spawn(returnInt64, false, params, r);
 		CHECK_EQ(r.result() >> 30LL, 1024);
 	}
 
@@ -76,7 +85,7 @@ BEGIN_TEST(UThreadResultTest) {
 		float v = 13.37f;
 		FnParams params; params.add(v);
 		Future<float> r;
-		UThread::spawn(returnFloat, params, r);
+		UThread::spawn(returnFloat, false, params, r);
 		CHECK_EQ(r.result(), 13.37f);
 	}
 
@@ -84,7 +93,7 @@ BEGIN_TEST(UThreadResultTest) {
 		double v = 13.37;
 		FnParams params; params.add(v);
 		Future<double> r;
-		UThread::spawn(returnDouble, params, r);
+		UThread::spawn(returnDouble, false, params, r);
 		CHECK_EQ(r.result(), 13.37);
 	}
 
@@ -93,13 +102,13 @@ BEGIN_TEST(UThreadResultTest) {
 		int t = 22;
 		FnParams params; params.add(t);
 		Future<Tracker> r;
-		UThread::spawn(returnTracker, params, r);
+		UThread::spawn(returnTracker, false, params, r);
 		CHECK_EQ(r.result().data, 22);
 		CHECK_EQ(r.result().data, 22);
 
 		t = -2;
 		Future<Tracker> r2;
-		UThread::spawn(returnTracker, params, r2);
+		UThread::spawn(returnTracker, false, params, r2);
 		CHECK_ERROR(r2.result(), UserError);
 		CHECK_ERROR(r2.result(), UserError);
 	}
@@ -110,15 +119,25 @@ BEGIN_TEST(UThreadResultTest) {
 		Tracker t(22);
 		FnParams params; params.add(t);
 		Future<int> r;
-		UThread::spawn(takeTracker, params, r);
+		UThread::spawn(takeTracker, false, params, r);
 		CHECK_EQ(r.result(), 22);
 		CHECK_EQ(r.result(), 22);
 
 		t.data = -3;
 		Future<int> r2;
-		UThread::spawn(takeTracker, params, r2);
+		UThread::spawn(takeTracker, false, params, r2);
 		CHECK_ERROR(r2.result(), UserError);
 		CHECK_ERROR(r2.result(), UserError);
+	}
+	CHECK(Tracker::clear());
+
+	Tracker::clear();
+	{
+		DummyTracker t(12);
+		FnParams params; params.add(&t);
+		Future<Tracker> r;
+		UThread::spawn(address(&DummyTracker::value), true, params, r);
+		CHECK_EQ(r.result().data, 12);
 	}
 	CHECK(Tracker::clear());
 
@@ -253,6 +272,6 @@ BEGIN_TEST(UThreadSpawnLater) {
 	FnParams p(UThread::spawnParamMem(data));
 	p.add(v1).add(v2);
 	Future<int> future;
-	UThread::spawn(&spawnLaterFn, p, future.impl(), typeInfo<int>(), null, data);
+	UThread::spawn(&spawnLaterFn, false, p, future.impl(), typeInfo<int>(), null, data);
 	CHECK_EQ(future.result(), 30);
 } END_TEST

@@ -100,12 +100,12 @@ BEGIN_TEST(TestChainedException) {
 
 	throwError = true;
 	destroyed = 0;
-	CHECK_ERROR(call<cpuInt>(outer.getData()), Error);
+	CHECK_ERROR(call<cpuInt>(outer.getData(), false), Error);
 	CHECK_EQ(destroyed, 6);
 
 	throwError = false;
 	destroyed = 0;
-	CHECK_EQ(call<cpuInt>(outer.getData()), 3);
+	CHECK_EQ(call<cpuInt>(outer.getData(), false), 3);
 	CHECK_EQ(destroyed, 5);
 } END_TEST
 
@@ -159,12 +159,12 @@ BEGIN_TEST(TestRefException) {
 
 	destroyed = 0;
 	throwError = true;
-	CHECK_ERROR(call<cpuInt>(fn), Error);
+	CHECK_ERROR(call<cpuInt>(fn, false), Error);
 	CHECK_EQ(destroyed, 103);
 
 	destroyed = 0;
 	throwError = false;
-	CHECK_EQ(call<cpuInt>(fn), 4);
+	CHECK_EQ(call<cpuInt>(fn, false), 4);
 	CHECK_EQ(destroyed, 4);
 
 } END_TEST
