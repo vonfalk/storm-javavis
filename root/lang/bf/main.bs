@@ -74,11 +74,13 @@ class BfCode extends TmpLazyCode {
 			syntax.add(myPkg);
 		}
 
-		TextReader r = readText(file.read);
-		Parser parser(syntax, r.readAll, file);
+		Parser parser(syntax, file.read.readText.readAll, file);
 		parser.parse("BfFile");
-		if (parser.hasError)
+		if (parser.hasError) {
 			parser.throwError;
+		} else {
+			print("Parsing OK!");
+		}
 
 		Listing r;
 

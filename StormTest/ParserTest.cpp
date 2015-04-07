@@ -36,7 +36,7 @@ BEGIN_TEST(ParserTest) {
 	simple->syntax();
 
 	Auto<SyntaxSet> set = CREATE(SyntaxSet, engine);
-	set->add(*simple);
+	set->add(simple);
 
 	CHECK_EQ(parse(set, L"Root", L"a + b"), 5);
 	CHECK_EQ(parse(set, L"Root", L"a + b-"), 5);

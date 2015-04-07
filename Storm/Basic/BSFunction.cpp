@@ -31,8 +31,8 @@ namespace storm {
 		NamedThread *thread = null;
 
 		if (this->thread) {
-			Named *n = this->thread->find(scope);
-			if (NamedThread *t = as<NamedThread>(n)) {
+			Auto<Named> n = this->thread->find(scope);
+			if (NamedThread *t = as<NamedThread>(n.borrow())) {
 				thread = t;
 			} else {
 				throw SyntaxError(this->thread->pos, L"The identifier " + ::toS(thread) + L" is not a thread.");

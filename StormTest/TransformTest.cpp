@@ -48,7 +48,7 @@ BEGIN_TEST(TransformTest) {
 
 	Package *simple = engine.package(L"lang.simple");
 	Auto<SyntaxSet> set = CREATE(SyntaxSet, engine);
-	set->add(*simple);
+	set->add(simple);
 
 	CHECK(tfm(engine, set, L"Rep1Root", L"{ a + b; }", null));
 	CHECK(tfm(engine, set, L"CaptureRoot", L"{ a + b; }", CREATE(SStr, engine, L"{ a + b; }")));

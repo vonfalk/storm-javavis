@@ -10,7 +10,7 @@ Number => v : "[0-9]+" v;
 
 BfFile => bfFile() : Number space, BfRoot code;
 
-BfComment => void : "[^<>,\.\+\-\[\]]";
+BfComment => void : "[^<>,\.\+\-\[\]]*";
 BfRoot => Array<BfToken>() : ( BfToken -> push - BfComment )*;
 
 BfToken => BfBack() : "<";

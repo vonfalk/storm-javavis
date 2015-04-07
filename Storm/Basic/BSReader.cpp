@@ -70,8 +70,8 @@ namespace storm {
 	void bs::File::readIncludes() {
 		Auto<Object> includes;
 
-		syntax->add(*syntaxPackage());
-		syntax->add(*package);
+		syntax->add(syntaxPackage());
+		syntax->add(package);
 
 		Auto<Parser> parser = CREATE(Parser, this, syntax, fileContents, file);
 		headerSize = parser->parse(L"Includes");

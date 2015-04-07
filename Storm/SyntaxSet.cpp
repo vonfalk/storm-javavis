@@ -11,12 +11,14 @@ namespace storm {
 		clearMap(rules);
 	}
 
-	void SyntaxSet::add(Package &pkg) {
-		if (added.count(&pkg))
+	void SyntaxSet::add(Par<Package> p) {
+		// TODO: Keep a live reference to the package!
+		Package *pkg = p.borrow();
+		if (added.count(pkg))
 			return;
-		added.insert(&pkg);
+		added.insert(pkg);
 
-		const SyntaxRules &rules = pkg.syntax();
+		const SyntaxRules &rules = pkg->syntax();
 		for (SyntaxRules::iterator i = rules.begin(); i != rules.end(); ++i) {
 			add(i->first, i->second);
 		}

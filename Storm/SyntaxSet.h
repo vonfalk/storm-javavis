@@ -28,7 +28,7 @@ namespace storm {
 
 		// Add syntax from a package. Packages are searched in the
 		// order of addition (when that is relevant).
-		void add(Package &pkg);
+		void STORM_FN add(Par<Package> pkg);
 
 		// Get the SyntaxRule with a specific name.
 		SyntaxRule *rule(const String &name);

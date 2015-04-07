@@ -75,7 +75,7 @@ namespace storm {
 
 		Named *bs::TypeName::find(const Scope &scope) {
 			Auto<Name> name = toName(scope);
-			return scope.find(name);
+			return capture(scope.find(name)).ret();
 		}
 
 		Value bs::TypeName::resolve(const Scope &scope) {

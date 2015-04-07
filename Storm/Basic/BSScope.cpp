@@ -41,11 +41,11 @@ namespace storm {
 
 	void bs::BSScope::addSyntax(const Scope &from, Par<SyntaxSet> to) {
 		Auto<Name> syntax = syntaxPkg(file);
-		to->add(*engine().package(syntax));
-		to->add(*firstPkg(from.top)); // current package.
+		to->add(engine().package(syntax));
+		to->add(firstPkg(from.top)); // current package.
 
 		for (nat i = 0; i < includes.size(); i++)
-			to->add(*includes[i]);
+			to->add(includes[i]);
 	}
 
 	void bs::addInclude(const Scope &to, Package *pkg) {
