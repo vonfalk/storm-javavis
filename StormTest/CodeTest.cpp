@@ -104,8 +104,11 @@ BEGIN_TEST(ValueMemberTest) {
 	CHECK_EQ(runFn(L"test.bs.testVirtualVal1"), 10);
 	CHECK_EQ(runFn(L"test.bs.testVirtualVal2"), 20);
 	CHECK_EQ(runFn(L"test.bs.testVirtualVal3"), 15);
+	// This test is really good in release builts. For VS2008, the compiler uses
+	// the return value (in eax) of v->asDbgVal(), and crashes if we fail to return
+	// a correct value. In debug builds, the compiler usually re-loads the value
+	// itself instead.
 	Auto<Dbg> v = runFn<Dbg *>(L"test.bs.testVirtualVal4");
-	CHECK_EQ(v->get(), 10);
 	CHECK_EQ(v->asDbgVal().v, 20);
 } END_TEST
 

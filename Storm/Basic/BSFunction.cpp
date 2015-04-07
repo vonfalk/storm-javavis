@@ -84,24 +84,27 @@ namespace storm {
 
 		l << prolog();
 
+		GenState state = { l, data, runOn(), l.frame, l.frame.root() };
+
 		// Return value parameter (if needed).
 		Variable returnValue;
-		if (!result.returnInReg() && !isMember) {
+		nat start = 0;
+		if (!result.returnInReg()) {
+			if (isMember) {
+				// In member functions, the this ptr comes first!
+				LocalVar *var = body->variable(paramNames[0]);
+				var->createParam(state);
+				start = 1;
+			}
+
 			returnValue = createResultVar(l);
 		}
 
-		GenState state = { l, data, runOn(), l.frame, l.frame.root() };
-
 		// Parameters
-		for (nat i = 0; i < params.size(); i++) {
-			const Value &t = params[i];
+		for (nat i = start; i < params.size(); i++) {
 			LocalVar *var = body->variable(paramNames[i]);
 			assert(var);
 			var->createParam(state);
-
-			if (i == 0 && !result.returnInReg() && isMember) {
-				returnValue = createResultVar(l);
-			}
 		}
 
 		assert(result.returnInReg() || returnValue != Variable::invalid);
@@ -134,6 +137,9 @@ namespace storm {
 			l << fnParam(returnValue);
 			l << fnParam(ptrA);
 			l << fnCall(result.copyCtor(), Size::sPtr);
+			// We need to provide the address of the return value as our result. The copy ctor
+			// does not neccessarily return an address to the created value.
+			l << mov(ptrA, returnValue);
 
 			l << epilog();
 			l << ret(Size::sPtr);
