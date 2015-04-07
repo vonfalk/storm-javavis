@@ -69,10 +69,15 @@ class BfCode extends TmpLazyCode {
 	Listing load() {
 		Listing r;
 
+		Variable input = r.createPtrParam(Operand(), FreeOn());
+
 		r << prolog();
-		print("Generated code!");
+		r << addRef(Operand(input));
+		r << mov(Operand(ptrA), Operand(input));
 		r << epilog();
-		r << ret();
+		r << ret(sizePtr);
+
+		print(r);
 
 		r;
 	}

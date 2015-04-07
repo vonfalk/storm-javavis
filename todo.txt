@@ -53,7 +53,7 @@ In the reference system, Reference should instead of containing a human-readable
 of reference to what it provides (at least in most cases), so that the reference system can do a graph
 search to find islands of code that are separated from the rest of the references.
 
-Rename FnCall to FnParams? Rename the source files.
+Rename Value to Operand to avoid confusion?
 
 Basic
 ------

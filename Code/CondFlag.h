@@ -5,7 +5,6 @@ namespace code {
 	/**
 	 * Conditional flags for various op-codes.
 	 */
-		// Conditional for jumps and others.
 	enum CondFlag {
 		ifAlways,
 		ifNever,
