@@ -1,7 +1,12 @@
 #include "stdafx.h"
 #include "Wrap.h"
+#include "Type.h"
 
 namespace storm {
+
+	Bool objectAs(Object *obj, Type *as) {
+		return obj->myType->isA(as);
+	}
 
 	void fnParamsCtor(void *memory, void *ptr) {
 		new (memory) code::FnParams(ptr);

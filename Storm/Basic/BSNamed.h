@@ -106,12 +106,11 @@ namespace storm {
 			// Generate code.
 			virtual void code(const GenState &s, GenResult &to);
 
-		protected:
-			virtual void output(wostream &to) const;
-
-		private:
 			// Variable to access.
 			Auto<LocalVar> var;
+
+		protected:
+			virtual void output(wostream &to) const;
 		};
 
 

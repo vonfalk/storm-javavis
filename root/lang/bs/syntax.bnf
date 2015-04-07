@@ -85,6 +85,12 @@ Block => ExprBlock(parent) : "{", (Stmt(me) -> add, )*, "}";
 If(Block block);
 If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr;
 If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr, "else", Expr(me) -> falseExpr;
+If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfAsTrue(me) -> trueExpr;
+If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfAsTrue(me) -> trueExpr, "else", Expr(me) -> falseExpr;
+
+// Scoping for the <as> expression.
+IfAsTrue(IfAs parent);
+IfAsTrue => IfAsTrue(parent) : Expr(me) -> set;
 
 // Loops.
 Loop(Block block);

@@ -134,9 +134,11 @@ namespace storm {
 			if (param)
 				return;
 
-			assert(var.var == code::Variable::invalid, L"Already initialized!");
-
-			var = storm::variable(state.to, state.block, result);
+			if (var.var != code::Variable::invalid) {
+				assert(state.frame.accessible(state.block, var.var));
+			} else {
+				var = storm::variable(state.to, state.block, result);
+			}
 		}
 
 		void LocalVar::createParam(const GenState &state) {

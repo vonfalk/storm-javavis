@@ -45,7 +45,7 @@ namespace storm {
 		code::RefSource allocRef, freeRef;
 
 		// Other references.
-		code::RefSource lazyCodeFn, createStrFn;
+		code::RefSource lazyCodeFn, createStrFn, asFn;
 
 		// Things we need to call another thread.
 		code::RefSource spawnLater, spawnParam, abortSpawn;

@@ -67,6 +67,19 @@ class BfCode extends TmpLazyCode {
 	}
 
 	Listing load() {
+		Named myPkg = (name{lang:bf}).find(rootScope);
+		SyntaxSet syntax;
+
+		if (myPkg as Package) {
+			syntax.add(myPkg);
+		}
+
+		TextReader r = readText(file.read);
+		Parser parser(syntax, r.readAll, file);
+		parser.parse("BfFile");
+		if (parser.hasError)
+			parser.throwError;
+
 		Listing r;
 
 		Variable input = r.createPtrParam(Operand(), FreeOn());

@@ -25,7 +25,7 @@ namespace storm {
 		: addRef(arena.addRef), release(arena.releaseRef),
 		  copyRefPtr(arena, L"copyRefPtr"), releasePtr(arena, L"releasePtr"),
 		  allocRef(arena, L"alloc"), freeRef(arena, L"free"),
-		  lazyCodeFn(arena, L"lazyUpdate"), createStrFn(arena, L"createStr"),
+		  lazyCodeFn(arena, L"lazyUpdate"), createStrFn(arena, L"createStr"), asFn(arena, L"as"),
 		  spawnLater(arena, L"spawnLater"), spawnParam(arena, L"spawnParam"),
 		  abortSpawn(arena, L"abortSpawn"),
 		  spawnResult(arena, L"spawnResult"), spawnFuture(arena, L"spawnFuture"),
@@ -41,6 +41,7 @@ namespace storm {
 		allocRef.set(address(&stormMalloc));
 		freeRef.set(address(&stormFree));
 		createStrFn.set(address(&Str::createStr));
+		asFn.set(address(&objectAs));
 
 		spawnLater.set(address(&code::UThread::spawnLater));
 		spawnParam.set(address(&code::UThread::spawnParamMem));

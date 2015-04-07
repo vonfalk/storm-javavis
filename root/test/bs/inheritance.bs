@@ -51,6 +51,27 @@ Int testSuperExpr() {
 	d.sum;
 }
 
+Int asExpr(Base v) {
+	if (v as Derived) {
+		v.a + v.b;
+	} else {
+		v.a;
+	}
+}
+
+Int testAsExpr(Int v) {
+	if (v == 1) {
+		Base z;
+		z.a = 12;
+		asExpr(z);
+	} else {
+		Derived z;
+		z.a = 10;
+		z.b = 20;
+		asExpr(z);
+	}
+}
+
 class DerivedDbg extends Dbg {
 	Int b;
 

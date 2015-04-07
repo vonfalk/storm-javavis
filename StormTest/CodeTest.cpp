@@ -61,6 +61,10 @@ BEGIN_TEST(InheritanceTest) {
 
 	// Use of 'super'.
 	CHECK_EQ(runFn(L"test.bs.testSuperExpr"), 30);
+
+	// Use of 'as'.
+	CHECK_EQ(runFn(L"test.bs.testAsExpr", 0), 30);
+	CHECK_EQ(runFn(L"test.bs.testAsExpr", 1), 12);
 } END_TEST
 
 BEGIN_TEST(ValueTest) {

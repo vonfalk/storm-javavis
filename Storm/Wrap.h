@@ -6,10 +6,16 @@
 
 namespace storm {
 
+	class Object;
+	class Type;
+
 	/**
 	 * Contains wrappers to call various C++ functions from machine code.
 	 * All functions are defined in Wrap.cpp unless otherwise noted.
 	 */
+
+	// Does an object inherit from a specific type?
+	bool objectAs(Object *obj, Type *as);
 
 	// FnParams(void *ptr);
 	void fnParamsCtor(void *memory, void *ptr);
