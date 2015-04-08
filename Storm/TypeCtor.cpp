@@ -376,7 +376,7 @@ namespace storm {
 			l << fnCall(t.copyCtor(), Size());
 
 			Type *envType = CloneEnv::stormType(e);
-			Variable env = variable(l.frame, l.frame.root(), Value(envType)).var;
+			Variable env = variable(l.frame, l.frame.root(), Value(envType)).var();
 			allocObject(l, l.frame.root(), envType->defaultCtor(), vector<code::Value>(), env);
 
 			l << fnParam(to);

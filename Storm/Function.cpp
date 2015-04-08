@@ -146,11 +146,11 @@ namespace storm {
 			to.to << fnCall(ref, Size());
 		} else {
 			VarInfo result = res.safeLocation(to, this->result);
-			addParams(to, params, result.var);
+			addParams(to, params, result.var());
 
 			if (this->result.returnInReg()) {
-				to.to << fnCall(ref, result.var.size());
-				to.to << mov(result.var, asSize(ptrA, result.var.size()));
+				to.to << fnCall(ref, result.var().size());
+				to.to << mov(result.var(), asSize(ptrA, result.var().size()));
 			} else {
 				// Ignore return value...
 				to.to << fnCall(ref, Size());
@@ -308,7 +308,7 @@ namespace storm {
 			to.to << mov(ptrB, intPtrConst(0));
 		} else {
 			resultPos = res.safeLocation(to, this->result);
-			to.to << lea(ptrB, resultPos.var);
+			to.to << lea(ptrB, resultPos.var());
 		}
 
 		const RefSource *fn = threadThunk();
@@ -347,7 +347,7 @@ namespace storm {
 		// Create the result object.
 		Type *futureT = futureType(e, this->result);
 		VarInfo resultPos = result.safeLocation(sub, Value::thisPtr(futureT));
-		allocObject(sub, futureT->defaultCtor(), Actuals(), resultPos.var);
+		allocObject(sub, futureT->defaultCtor(), Actuals(), resultPos.var());
 		resultPos.created(sub);
 
 		// Find out what to call...
@@ -364,7 +364,7 @@ namespace storm {
 		to.to << fnParam(*fn);
 		to.to << fnParam(toVal(isMember()));
 		to.to << fnParam(ptrA);
-		to.to << fnParam(resultPos.var);
+		to.to << fnParam(resultPos.var());
 		to.to << fnParam(ptrC);
 		to.to << fnParam(t);
 		to.to << fnParam(r.data);

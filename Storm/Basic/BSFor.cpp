@@ -35,7 +35,7 @@ namespace storm {
 		// Put this outside the current block, so we can use it later.
 		GenResult testResult(Value::stdBool(engine()), s.block);
 		testExpr->code(subState, testResult);
-		Variable r = testResult.location(subState).var;
+		Variable r = testResult.location(subState).var();
 		s.to << cmp(r, byteConst(0));
 		s.to << jmp(end, ifEqual);
 

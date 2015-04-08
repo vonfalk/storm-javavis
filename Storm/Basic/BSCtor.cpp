@@ -139,7 +139,7 @@ namespace storm {
 	void bs::CtorBody::blockCode(const GenState &state, GenResult &to, const code::Block &block) {
 		if (threadParam) {
 			thread = state.frame.createPtrVar(state.block);
-			state.to << mov(thread, threadParam->var.var);
+			state.to << mov(thread, threadParam->var.var());
 		}
 
 		Block::blockCode(state, to, block);
@@ -221,7 +221,7 @@ namespace storm {
 
 		if (hiddenThread) {
 			actuals.push_back(params->code(0, s, ctor->params[0]));
-			actuals.push_back(rootBlock->threadParam->var.var);
+			actuals.push_back(rootBlock->threadParam->var.var());
 			for (nat i = 2; i < values.size(); i++)
 				actuals.push_back(params->code(i - 1, s, ctor->params[i]));
 		} else {
@@ -259,7 +259,7 @@ namespace storm {
 		// Super class should be called first.
 		callParent(s);
 
-		Variable dest = thisVar->var.var;
+		Variable dest = thisVar->var.var();
 		Type *type = thisPtr.type;
 
 		// Set our VTable.
@@ -288,7 +288,7 @@ namespace storm {
 		using namespace code;
 
 		const Value &t = v->varType;
-		Variable dest = thisVar->var.var;
+		Variable dest = thisVar->var.var();
 
 		if (t.ref)
 			throw SyntaxError(pos, L"Can not initialize reference " + v->name + L", not implemented yet!");
@@ -311,8 +311,8 @@ namespace storm {
 			ctorCall->code(s, created);
 
 			s.to << mov(ptrA, dest);
-			s.to << mov(ptrRel(ptrA, v->offset()), created.location(s).var);
-			s.to << code::addRef(created.location(s).var);
+			s.to << mov(ptrRel(ptrA, v->offset()), created.location(s).var());
+			s.to << code::addRef(created.location(s).var());
 		}
 	}
 
@@ -344,7 +344,7 @@ namespace storm {
 		using namespace code;
 
 		const Value &t = v->varType;
-		Variable dest = thisVar->var.var;
+		Variable dest = thisVar->var.var();
 		Type *toCreate = t.type;
 
 		vector<Value> values = to->values();
@@ -361,8 +361,8 @@ namespace storm {
 			call->code(s, created);
 			VarInfo loc = created.location(s);
 			s.to << mov(ptrA, dest);
-			s.to << mov(ptrRel(ptrA, v->offset()), loc.var);
-			s.to << code::addRef(loc.var);
+			s.to << mov(ptrRel(ptrA, v->offset()), loc.var());
+			s.to << code::addRef(loc.var());
 			loc.created(s);
 		} else {
 			// Now we're left with the values!
@@ -384,15 +384,15 @@ namespace storm {
 		using namespace code;
 
 		const Value &t = v->varType;
-		Variable dest = thisVar->var.var;
+		Variable dest = thisVar->var.var();
 		assert(t.isClass());
 
 		GenResult result(t, s.block);
 		to->code(s, result);
 		VarInfo loc = result.location(s);
 		s.to << mov(ptrA, dest);
-		s.to << mov(ptrRel(ptrA, v->offset()), loc.var);
-		s.to << code::addRef(loc.var);
+		s.to << mov(ptrRel(ptrA, v->offset()), loc.var());
+		s.to << code::addRef(loc.var());
 	}
 
 }

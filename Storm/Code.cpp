@@ -208,7 +208,7 @@ namespace storm {
 		code(state, params, result);
 
 		if (owner->result != Value()) {
-			l << mov(asSize(ptrA, owner->result.size()), result.location(state).var);
+			l << mov(asSize(ptrA, owner->result.size()), result.location(state).var());
 		}
 
 		l << epilog();

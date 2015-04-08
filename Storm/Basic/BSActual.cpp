@@ -44,14 +44,14 @@ namespace storm {
 			expr->code(s, gr);
 
 			VarInfo tmpRef = variable(s, param);
-			s.to << lea(tmpRef.var, ptrRel(tmpV.var));
+			s.to << lea(tmpRef.var(), ptrRel(tmpV.var()));
 			tmpRef.created(s);
-			return tmpRef.var;
+			return tmpRef.var();
 		} else {
 			// 'expr' will handle the type we are giving it.
 			GenResult gr(param, s.block);
 			expr->code(s, gr);
-			return gr.location(s).var;
+			return gr.location(s).var();
 		}
 	}
 

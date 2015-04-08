@@ -2,14 +2,17 @@
 #include "Utils/Function.h"
 #include "Code/Listing.h"
 #include "Lib/Auto.h"
-#include "Lib/Object.h"
+#include "Lib/TObject.h"
+#include "Thread.h"
 
 namespace storm {
 
 	/**
 	 * Data segments appended to the code.
+	 * TODO: Expose to Storm properly!
 	 */
-	class CodeData {
+	class CodeData : public ObjectOn<Compiler> {
+		STORM_CLASS;
 	public:
 
 		// Add some data, get the label that will be used.

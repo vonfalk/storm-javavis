@@ -8,7 +8,7 @@ namespace storm {
 
 	static void intAdd(InlinedParams p) {
 		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var;
+			code::Value result = p.result.location(p.state).var();
 			p.state.to << code::mov(result, p.params[0]);
 			p.state.to << code::add(result, p.params[1]);
 		}
@@ -18,13 +18,13 @@ namespace storm {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		p.state.to << code::add(intRel(code::ptrA), code::intConst(1));
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void intPostfixInc(InlinedParams p) {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 		p.state.to << code::add(intRel(code::ptrA), code::intConst(1));
 	}
 
@@ -32,19 +32,19 @@ namespace storm {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		p.state.to << code::sub(intRel(code::ptrA), code::intConst(1));
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void intPostfixDec(InlinedParams p) {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 		p.state.to << code::sub(intRel(code::ptrA), code::intConst(1));
 	}
 
 	static void intSub(InlinedParams p) {
 		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var;
+			code::Value result = p.result.location(p.state).var();
 			p.state.to << code::mov(result, p.params[0]);
 			p.state.to << code::sub(result, p.params[1]);
 		}
@@ -52,7 +52,7 @@ namespace storm {
 
 	static void intMul(InlinedParams p) {
 		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var;
+			code::Value result = p.result.location(p.state).var();
 			p.state.to << code::mov(result, p.params[0]);
 			p.state.to << code::mul(result, p.params[1]);
 		}
@@ -61,7 +61,7 @@ namespace storm {
 	template <code::CondFlag f>
 	static void intCmp(InlinedParams p) {
 		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var;
+			code::Value result = p.result.location(p.state).var();
 			p.state.to << code::cmp(p.params[0], p.params[1]);
 			p.state.to << code::setCond(result, f);
 		}
@@ -73,10 +73,10 @@ namespace storm {
 		if (p.result.needed()) {
 			if (p.result.type.ref) {
 				if (!p.result.suggest(p.state, p.params[0]))
-					p.state.to << code::mov(p.result.location(p.state).var, code::ptrA);
+					p.state.to << code::mov(p.result.location(p.state).var(), code::ptrA);
 			} else {
 				if (!p.result.suggest(p.state, p.params[1]))
-					p.state.to << code::mov(p.result.location(p.state).var, p.params[1]);
+					p.state.to << code::mov(p.result.location(p.state).var(), p.params[1]);
 			}
 		}
 	}
@@ -90,7 +90,7 @@ namespace storm {
 
 	static void intToNat(InlinedParams p) {
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, p.params[0]);
+			p.state.to << code::mov(p.result.location(p.state).var(), p.params[0]);
 	}
 
 	IntType::IntType() : Type(L"Int", typeValue | typeFinal, Size::sInt, null) {}
@@ -137,7 +137,7 @@ namespace storm {
 
 	static void natAdd(InlinedParams p) {
 		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var;
+			code::Value result = p.result.location(p.state).var();
 			p.state.to << code::mov(result, p.params[0]);
 			p.state.to << code::add(result, p.params[1]);
 		}
@@ -147,13 +147,13 @@ namespace storm {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		p.state.to << code::add(intRel(code::ptrA), code::natConst(1));
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void natPostfixInc(InlinedParams p) {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 		p.state.to << code::add(intRel(code::ptrA), code::natConst(1));
 	}
 
@@ -161,19 +161,19 @@ namespace storm {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		p.state.to << code::sub(intRel(code::ptrA), code::natConst(1));
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void natPostfixDec(InlinedParams p) {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 		p.state.to << code::sub(intRel(code::ptrA), code::natConst(1));
 	}
 
 	static void natSub(InlinedParams p) {
 		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var;
+			code::Value result = p.result.location(p.state).var();
 			p.state.to << code::mov(result, p.params[0]);
 			p.state.to << code::sub(result, p.params[1]);
 		}
@@ -182,7 +182,7 @@ namespace storm {
 	template <code::CondFlag f>
 	static void natCmp(InlinedParams p) {
 		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var;
+			code::Value result = p.result.location(p.state).var();
 			p.state.to << code::cmp(p.params[0], p.params[1]);
 			p.state.to << code::setCond(result, f);
 		}
@@ -194,10 +194,10 @@ namespace storm {
 		if (p.result.needed()) {
 			if (p.result.type.ref) {
 				if (!p.result.suggest(p.state, p.params[0]))
-					p.state.to << code::mov(p.result.location(p.state).var, code::ptrA);
+					p.state.to << code::mov(p.result.location(p.state).var(), code::ptrA);
 			} else {
 				if (!p.result.suggest(p.state, p.params[1]))
-					p.state.to << code::mov(p.result.location(p.state).var, p.params[1]);
+					p.state.to << code::mov(p.result.location(p.state).var(), p.params[1]);
 			}
 		}
 	}
@@ -210,7 +210,7 @@ namespace storm {
 
 	static void natToInt(InlinedParams p) {
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, p.params[0]);
+			p.state.to << code::mov(p.result.location(p.state).var(), p.params[0]);
 	}
 
 	NatType::NatType() : Type(L"Nat", typeValue | typeFinal, Size::sNat, null) {}
@@ -256,7 +256,7 @@ namespace storm {
 
 	static void byteAdd(InlinedParams p) {
 		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var;
+			code::Value result = p.result.location(p.state).var();
 			p.state.to << code::mov(result, p.params[0]);
 			p.state.to << code::add(result, p.params[1]);
 		}
@@ -266,13 +266,13 @@ namespace storm {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		p.state.to << code::add(intRel(code::ptrA), code::byteConst(1));
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void bytePostfixInc(InlinedParams p) {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 		p.state.to << code::add(byteRel(code::ptrA), code::byteConst(1));
 	}
 
@@ -280,19 +280,19 @@ namespace storm {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		p.state.to << code::sub(intRel(code::ptrA), code::byteConst(1));
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void bytePostfixDec(InlinedParams p) {
 		p.state.to << code::mov(code::ptrA, p.params[0]);
 		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var, intRel(code::ptrA));
+			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
 		p.state.to << code::sub(byteRel(code::ptrA), code::byteConst(1));
 	}
 
 	static void byteSub(InlinedParams p) {
 		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var;
+			code::Value result = p.result.location(p.state).var();
 			p.state.to << code::mov(result, p.params[0]);
 			p.state.to << code::sub(result, p.params[1]);
 		}
@@ -301,7 +301,7 @@ namespace storm {
 	template <code::CondFlag f>
 	static void byteCmp(InlinedParams p) {
 		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var;
+			code::Value result = p.result.location(p.state).var();
 			p.state.to << code::cmp(p.params[0], p.params[1]);
 			p.state.to << code::setCond(result, f);
 		}
@@ -313,10 +313,10 @@ namespace storm {
 		if (p.result.needed()) {
 			if (p.result.type.ref) {
 				if (!p.result.suggest(p.state, p.params[0]))
-					p.state.to << code::mov(p.result.location(p.state).var, code::ptrA);
+					p.state.to << code::mov(p.result.location(p.state).var(), code::ptrA);
 			} else {
 				if (!p.result.suggest(p.state, p.params[1]))
-					p.state.to << code::mov(p.result.location(p.state).var, p.params[1]);
+					p.state.to << code::mov(p.result.location(p.state).var(), p.params[1]);
 			}
 		}
 	}

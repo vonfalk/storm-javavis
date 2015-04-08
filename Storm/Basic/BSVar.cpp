@@ -100,13 +100,13 @@ namespace storm {
 				// Part of another expression.
 				if (to.type.ref) {
 					VarInfo v = to.location(s);
-					s.to << lea(v.var, variable->var.var);
+					s.to << lea(v.var(), variable->var.var());
 					v.created(s);
-				} else if (!to.suggest(s, variable->var.var)) {
+				} else if (!to.suggest(s, variable->var.var())) {
 					VarInfo v = to.location(s);
-					s.to << mov(v.var, variable->var.var);
+					s.to << mov(v.var(), variable->var.var());
 					if (variable->result.refcounted())
-						s.to << code::addRef(v.var);
+						s.to << code::addRef(v.var());
 					v.created(s);
 				}
 			}
@@ -134,8 +134,8 @@ namespace storm {
 			if (param)
 				return;
 
-			if (var.var != code::Variable::invalid) {
-				assert(state.frame.accessible(state.block, var.var));
+			if (var.var() != code::Variable::invalid) {
+				assert(state.frame.accessible(state.block, var.var()));
 			} else {
 				var = storm::variable(state.to, state.block, result);
 			}
@@ -146,7 +146,7 @@ namespace storm {
 
 			if (!param)
 				return;
-			assert(var.var == Variable::invalid, L"Already created!");
+			assert(var.var() == Variable::invalid, L"Already created!");
 
 			Variable z;
 			if (result.isValue()) {
@@ -161,7 +161,7 @@ namespace storm {
 			var = VarInfo(z);
 
 			if (result.refcounted() && !constant)
-				state.to << code::addRef(var.var);
+				state.to << code::addRef(var.var());
 		}
 
 	}

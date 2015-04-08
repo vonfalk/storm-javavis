@@ -86,7 +86,7 @@ namespace storm {
 		s.to << fnParam(data);
 		s.to << fnCall(e.fnRefs.createStrFn, Size::sPtr);
 		VarInfo to = r.location(s);
-		s.to << mov(to.var, ptrA);
+		s.to << mov(to.var(), ptrA);
 		to.created(s);
 
 		s.data.add(data, memberFn(this, &Constant::strData), this);
@@ -96,7 +96,7 @@ namespace storm {
 		using namespace code;
 
 		VarInfo to = r.location(s);
-		s.to << mov(to.var, intConst(intValue));
+		s.to << mov(to.var(), intConst(intValue));
 		to.created(s);
 	}
 
@@ -104,7 +104,7 @@ namespace storm {
 		using namespace code;
 
 		VarInfo to = r.location(s);
-		s.to << mov(to.var, byteConst(boolValue ? 1 : 0));
+		s.to << mov(to.var(), byteConst(boolValue ? 1 : 0));
 		to.created(s);
 	}
 

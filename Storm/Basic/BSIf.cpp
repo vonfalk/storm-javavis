@@ -40,7 +40,7 @@ namespace storm {
 		Label lblElse = state.to.label();
 		Label lblDone = state.to.label();
 
-		state.to << cmp(condResult.location(state).var, byteConst(0));
+		state.to << cmp(condResult.location(state).var(), byteConst(0));
 		state.to << jmp(lblElse, ifEqual);
 
 		trueCode->code(state, r);
@@ -121,7 +121,7 @@ namespace storm {
 		Value eResult = expression->result();
 		GenResult expr(expression->result(), state.block);
 		expression->code(state, expr);
-		Variable exprVar = expr.location(state).var;
+		Variable exprVar = expr.location(state).var();
 
 		Label lblElse = state.to.label();
 		Label lblDone = state.to.label();
@@ -144,11 +144,11 @@ namespace storm {
 			created->create(state);
 			if (eResult.ref) {
 				state.to << mov(ptrA, exprVar);
-				state.to << mov(created->var.var, ptrRel(ptrA));
+				state.to << mov(created->var.var(), ptrRel(ptrA));
 			} else {
-				state.to << mov(created->var.var, exprVar);
+				state.to << mov(created->var.var(), exprVar);
 			}
-			state.to << code::addRef(created->var.var);
+			state.to << code::addRef(created->var.var());
 			created->var.created(state);
 		}
 

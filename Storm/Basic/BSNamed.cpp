@@ -44,19 +44,19 @@ namespace storm {
 			VarInfo r = to.location(s);
 			if (to.type.ref) {
 				// Dangerous...
-				s.to << lea(r.var, ptrRel(t.location(s).var));
+				s.to << lea(r.var(), ptrRel(t.location(s).var()));
 			} else if (to.type.isValue()) {
 				// Need to copy...
-				s.to << lea(ptrA, ptrRel(r.var));
+				s.to << lea(ptrA, ptrRel(r.var()));
 				s.to << fnParam(ptrA);
-				s.to << fnParam(t.location(s).var);
+				s.to << fnParam(t.location(s).var());
 				s.to << fnCall(to.type.copyCtor(), Size());
 			} else {
 				// Regular machine operations suffice!
-				s.to << mov(ptrA, t.location(s).var);
-				s.to << mov(r.var, xRel(to.type.size(), ptrA));
+				s.to << mov(ptrA, t.location(s).var());
+				s.to << mov(r.var(), xRel(to.type.size(), ptrA));
 				if (to.type.refcounted())
-					s.to << addRef(r.var);
+					s.to << addRef(r.var());
 			}
 			r.created(s);
 		}
@@ -163,11 +163,11 @@ namespace storm {
 		VarInfo thisVar;
 		if (to.type.ref) {
 			thisVar = to.location(s);
-			vars[0] = thisVar.var;
+			vars[0] = thisVar.var();
 		} else {
 			thisVar = to.safeLocation(s, toCreate.asRef(false));
 			vars[0] = code::Value(ptrA);
-			s.to << lea(vars[0], thisVar.var);
+			s.to << lea(vars[0], thisVar.var());
 		}
 
 		// Call it!
@@ -210,7 +210,7 @@ namespace storm {
 
 		// Store our result.
 		VarInfo created = to.location(subState);
-		s.to << mov(created.var, rawMemory);
+		s.to << mov(created.var(), rawMemory);
 		created.created(s);
 
 		s.to << end(subBlock);
@@ -257,21 +257,21 @@ namespace storm {
 
 		if (to.type.ref && !var->result.ref) {
 			VarInfo v = to.location(s);
-			s.to << lea(v.var, var->var.var);
+			s.to << lea(v.var(), var->var.var());
 			v.created(s);
-		} else if (!to.suggest(s, var->var.var)) {
+		} else if (!to.suggest(s, var->var.var())) {
 
 			VarInfo v = to.location(s);
 			if (var->result.isValue()) {
-				s.to << lea(ptrA, var->var.var);
-				s.to << lea(ptrC, v.var);
+				s.to << lea(ptrA, var->var.var());
+				s.to << lea(ptrC, v.var());
 				s.to << fnParam(ptrC);
 				s.to << fnParam(ptrA);
 				s.to << fnCall(var->result.copyCtor(), Size());
 			} else {
-				s.to << mov(v.var, var->var.var);
+				s.to << mov(v.var(), var->var.var());
 				if (var->result.refcounted())
-					s.to << code::addRef(v.var);
+					s.to << code::addRef(v.var());
 			}
 			v.created(s);
 		}
@@ -315,7 +315,7 @@ namespace storm {
 		{
 			GenResult mResult(mType, s.block);
 			member->code(s, mResult);
-			memberPtr = mResult.location(s).var;
+			memberPtr = mResult.location(s).var();
 		}
 
 		// If it was a reference, we can use it right away!
@@ -333,7 +333,7 @@ namespace storm {
 
 		GenResult mResult(member->result().asRef(false), s.block);
 		member->code(s, mResult);
-		s.to << mov(ptrA, mResult.location(s).var);
+		s.to << mov(ptrA, mResult.location(s).var());
 
 		extractCode(s, to);
 	}
@@ -344,16 +344,16 @@ namespace storm {
 		VarInfo result = to.location(s);
 		if (to.type.ref) {
 			s.to << add(ptrA, intPtrConst(var->offset()));
-			s.to << mov(result.var, ptrA);
+			s.to << mov(result.var(), ptrA);
 		} else if (var->varType.isValue()) {
-			s.to << lea(ptrC, result.var);
+			s.to << lea(ptrC, result.var());
 			s.to << fnParam(ptrC);
 			s.to << fnParam(ptrA);
 			s.to << fnCall(var->varType.copyCtor(), Size());
 		} else {
-			s.to << mov(result.var, xRel(result.var.size(), ptrA, var->offset()));
+			s.to << mov(result.var(), xRel(result.var().size(), ptrA, var->offset()));
 			if (var->varType.refcounted())
-				s.to << code::addRef(result.var);
+				s.to << code::addRef(result.var());
 		}
 		result.created(s);
 	}
@@ -372,7 +372,7 @@ namespace storm {
 	void bs::NamedThreadAccess::code(const GenState &s, GenResult &to) {
 		if (to.needed()) {
 			VarInfo z = to.location(s);
-			s.to << code::mov(z.var, thread->ref());
+			s.to << code::mov(z.var(), thread->ref());
 			s.to << code::addRef(thread->ref());
 			z.created(s);
 		}
@@ -405,7 +405,7 @@ namespace storm {
 		// Target variable.
 		GenResult lhs(t.asRef(true), s.block);
 		this->to->code(s, lhs);
-		code::Value targetAddr = lhs.location(s).var;
+		code::Value targetAddr = lhs.location(s).var();
 
 		// Compute RHS...
 		GenResult rhs(t, s.block);
@@ -415,9 +415,9 @@ namespace storm {
 		if (t.refcounted()) {
 			s.to << code::mov(ptrA, targetAddr);
 			s.to << code::releaseRef(ptrRel(ptrA));
-			s.to << code::addRef(rhs.location(s).var);
+			s.to << code::addRef(rhs.location(s).var());
 		}
-		s.to << code::mov(ptrRel(ptrA), rhs.location(s).var);
+		s.to << code::mov(ptrRel(ptrA), rhs.location(s).var());
 
 		// Do we need to return some value?
 		if (!to.needed())
@@ -426,14 +426,14 @@ namespace storm {
 		if (to.type.ref) {
 			if (!to.suggest(s, targetAddr)) {
 				VarInfo z = to.location(s);
-				s.to << mov(z.var, targetAddr);
+				s.to << mov(z.var(), targetAddr);
 				z.created(s);
 			}
 		} else {
 			VarInfo z = to.location(s);
 			s.to << mov(ptrA, targetAddr);
-			s.to << mov(z.var, ptrRel(ptrA));
-			s.to << code::addRef(z.var);
+			s.to << mov(z.var(), ptrRel(ptrA));
+			s.to << code::addRef(z.var());
 			z.created(s);
 		}
 	}

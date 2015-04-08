@@ -10,26 +10,57 @@ namespace storm {
 	using code::Part;
 	using code::Frame;
 
-	VarInfo::VarInfo() : var(Variable::invalid), needsPart(false) {}
+	/**
+	 * Code generation.
+	 */
 
-	VarInfo::VarInfo(const Variable &v) : var(v), needsPart(false) {}
+	CodeGen::CodeGen(RunOn runOn) :
+		l(CREATE(wrap::Listing, this)),
+		data(CREATE(CodeData, this)),
+		runOn(runOn),
+		block(l->root()),
+		to(l->v),
+		frame(to.frame) {}
 
-	VarInfo::VarInfo(Variable v, bool p) : var(v), needsPart(p) {}
+	CodeGen::CodeGen(Par<CodeGen> o) :
+		l(o->l),
+		data(o->data),
+		runOn(o->runOn),
+		block(o->block),
+		to(o->to),
+		frame(o->frame) {}
 
-	void VarInfo::created(const GenState &to) {
+	CodeGen *CodeGen::child(wrap::Block block) {
+		CodeGen *o = CREATE(CodeGen, this, this);
+		o->block = block;
+		return o;
+	}
+
+	/**
+	 * Variable info.
+	 */
+
+	VarInfo::VarInfo() : v(Variable::invalid), needsPart(false) {}
+	VarInfo::VarInfo(wrap::Variable v) : v(v), needsPart(false) {}
+	VarInfo::VarInfo(wrap::Variable v, bool p) : v(v), needsPart(p) {}
+
+	void VarInfo::created(Par<CodeGen> to) {
 		if (!needsPart)
 			return;
 
-		Part root = to.frame.parent(var);
-		assert(to.frame.first(root) == to.block,
-			L"The variable " + ::toS(code::Value(var)) + L" was already created, or in wrong block: "
-			+ ::toS(code::Value(to.block)) + L"." + ::toS(to.to));
+		Part root = to->frame.parent(v.v);
+		assert(to->frame.first(root) == to->block.v,
+			L"The variable " + ::toS(code::Value(v.v)) + L" was already created, or in wrong block: "
+			+ ::toS(code::Value(to->block.v)) + L"." + ::toS(to->to));
 
-		Part created = to.frame.createPart(root);
-		to.frame.delay(var, created);
-
-		to.to << begin(created);
+		Part created = to->frame.createPart(root);
+		to->frame.delay(v.v, created);
+		to->to << begin(created);
 	}
+
+	/**
+	 * Create a variable.
+	 */
 
 	VarInfo variable(Frame &frame, Block block, const Value &v) {
 		code::FreeOpt opt = code::freeOnBoth;
@@ -45,66 +76,68 @@ namespace storm {
 	}
 
 
-	GenResult::GenResult() : type(), block(Block::invalid) {}
+	/**
+	 * CodeResult.
+	 */
 
-	GenResult::GenResult(const Value &t, Block block) : type(t), block(block) {}
+	CodeResult::CodeResult() : type(), block(Block::invalid) {}
+	CodeResult::CodeResult(const Value &t, wrap::Block block) : type(t), block(block.v) {}
+	CodeResult::CodeResult(const Value &t, VarInfo v) : type(t), variable(v), block(Block::invalid) {}
 
-	GenResult::GenResult(const Value &t, VarInfo var) : type(t), variable(var), block(code::Block::invalid) {}
+	VarInfo CodeResult::location(Par<CodeGen> s) {
+		assert(needed(), "Trying to get the location of an unneeded result. Use 'safeLocation' instead.");
 
-	VarInfo GenResult::location(const GenState &state) {
-		assert(needed(), "Trying to get the location of an unneeded result. use safeLocation instead.");
-
-		if (variable.var == Variable::invalid) {
+		if (variable.var() == Variable::invalid) {
 			if (block == Block::invalid) {
-				variable = storm::variable(state, type);
+				variable = storm::variable(s, type);
 			} else {
-				variable = storm::variable(state.frame, block, type);
+				variable = storm::variable(s->frame, block, type);
 			}
 		}
 
-		Frame &f = state.frame;
-		if (variable.needsPart && f.first(f.parent(variable.var)) != state.block)
+		Frame &f = s->frame;
+		if (variable.needsPart && f.first(f.parent(variable.var())) != state.block)
 			// We need to delay the part transition until we have exited the current block!
-			return VarInfo(variable.var, false);
+			return VarInfo(variable.var(), false);
 		return variable;
 	}
 
-	VarInfo GenResult::safeLocation(const GenState &s, const Value &t) {
+	VarInfo CodeResult::safeLocation(Par<CodeGen> s) {
 		if (needed())
 			return location(s);
-		else if (variable.var == Variable::invalid)
+		else if (variable.var() == Variable::invalid)
 			return variable = storm::variable(s, t);
 		else
 			return variable;
 	}
 
-	bool GenResult::suggest(const GenState &s, code::Value v) {
-		if (v.type() == code::Value::tVariable)
+	Bool CodeResult::suggest(Par<CodeGen> s, wrap::Variable v) {
+		Frame &f = s->frame;
+
+		if (variable.var() != Variable::invalid)
+			return false;
+
+		// TODO? Cases that hit here could maybe be optimized somehow!
+		// this is common with the return value, which will almost always
+		// have to get its lifetime extended a bit. Maybe implement the
+		// possibility to move variables to a more outer scope?
+		if (block != Block::invalid && !f.accessible(f.first(block), v))
+			return false;
+
+		variable = VarInfo(v);
+		return true;
+	}
+
+	Bool CodeResult::suggest(Par<CodeGen> s, wrap::Operand v) {
+		if (v.v.type() == code::Value::tVariable)
 			return suggest(s, v.variable());
 		return false;
 	}
 
-	bool GenResult::suggest(const GenState &s, Variable v) {
-		using namespace code;
 
-		Frame &f = s.frame;
-
-		if (variable.var == Variable::invalid) {
-			if (block != Block::invalid) {
-				if (!f.accessible(f.first(block), v)) {
-					// TODO? Cases that hit here could maybe be optimized somehow!
-					// this is common with the return value, which will almost always
-					// have to get its lifetime extended a bit. Maybe implement the
-					// possibility to move variables to a more outer scope?
-					return false;
-				}
-			}
-			variable = VarInfo(v);
-			return true;
-		} else {
-			return false;
-		}
-	}
+	/**
+	 * OLD CODE FROM HERE \/
+	 */
 
 	code::Variable createBasicTypeInfo(const GenState &to, const Value &v) {
 		using namespace code;

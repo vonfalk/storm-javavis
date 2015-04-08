@@ -33,7 +33,7 @@ namespace storm {
 		// Place this in the parent block.
 		GenResult condResult(Value::stdBool(engine()), s.block);
 		condExpr->code(subState, condResult);
-		Variable c = condResult.location(subState).var;
+		Variable c = condResult.location(subState).var();
 		s.to << cmp(c, byteConst(0));
 		s.to << jmp(end, ifEqual);
 
