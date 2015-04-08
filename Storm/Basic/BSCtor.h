@@ -26,7 +26,7 @@ namespace storm {
 			const Scope scope;
 
 			// We may need to run on a specific thread based on the current actual parameters.
-			virtual code::Variable findThread(const GenState &s, const Actuals &params);
+			virtual code::Variable findThread(Par<CodeGen> s, const Actuals &params);
 
 			// Add parameters. Returns the local variable that represents the 'threadParam' above if needed.
 			LocalVar *addParams(Par<Block> to);
@@ -75,7 +75,7 @@ namespace storm {
 			code::Variable thread;
 
 			// Code generation.
-			virtual void blockCode(const GenState &state, GenResult &to, const code::Block &block);
+			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> to, const code::Block &block);
 		};
 
 		/**
@@ -114,7 +114,7 @@ namespace storm {
 			virtual Value result();
 
 			// Code.
-			virtual void code(const GenState &s, GenResult &r);
+			virtual void code(Par<CodeGen> s, Par<CodeResult> r);
 
 		private:
 			// Member of.
@@ -140,19 +140,19 @@ namespace storm {
 			void init(Par<CtorBody> block, Par<Actual> params);
 
 			// Call the parent constructor (if any).
-			void callParent(const GenState &s);
+			void callParent(Par<CodeGen> s);
 
 			// Call the TObject's ctor, assuming we want to run on 't'.
-			void callTObject(const GenState &s, Par<NamedThread> t);
+			void callTObject(Par<CodeGen> s, Par<NamedThread> t);
 
 			// Initialize a variable.
-			void initVar(const GenState &s, Par<TypeVar> var);
-			void initVar(const GenState &s, Par<TypeVar> var, Par<Initializer> to);
-			void initVarCtor(const GenState &s, Par<TypeVar> var, Par<Actual> to);
-			void initVarAssign(const GenState &s, Par<TypeVar> var, Par<Expr> to);
+			void initVar(Par<CodeGen> s, Par<TypeVar> var);
+			void initVar(Par<CodeGen> s, Par<TypeVar> var, Par<Initializer> to);
+			void initVarCtor(Par<CodeGen> s, Par<TypeVar> var, Par<Actual> to);
+			void initVarAssign(Par<CodeGen> s, Par<TypeVar> var, Par<Expr> to);
 
 			// Initialize a variable with its default constructor.
-			void initVarDefault(const GenState &s, Par<TypeVar> var);
+			void initVarDefault(Par<CodeGen> s, Par<TypeVar> var);
 
 			// Add an initializer.
 			void init(Par<Initializer> init);

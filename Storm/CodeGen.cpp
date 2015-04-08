@@ -80,23 +80,23 @@ namespace storm {
 	 * CodeResult.
 	 */
 
-	CodeResult::CodeResult() : type(), block(Block::invalid) {}
-	CodeResult::CodeResult(const Value &t, wrap::Block block) : type(t), block(block.v) {}
-	CodeResult::CodeResult(const Value &t, VarInfo v) : type(t), variable(v), block(Block::invalid) {}
+	CodeResult::CodeResult() : t(), block(Block::invalid) {}
+	CodeResult::CodeResult(const Value &t, wrap::Block block) : t(t), block(block.v) {}
+	CodeResult::CodeResult(const Value &t, VarInfo v) : t(t), variable(v), block(Block::invalid) {}
 
 	VarInfo CodeResult::location(Par<CodeGen> s) {
 		assert(needed(), "Trying to get the location of an unneeded result. Use 'safeLocation' instead.");
 
 		if (variable.var() == Variable::invalid) {
 			if (block == Block::invalid) {
-				variable = storm::variable(s, type);
+				variable = storm::variable(s, t);
 			} else {
-				variable = storm::variable(s->frame, block, type);
+				variable = storm::variable(s->frame, block, t);
 			}
 		}
 
 		Frame &f = s->frame;
-		if (variable.needsPart && f.first(f.parent(variable.var())) != state.block)
+		if (variable.needsPart && f.first(f.parent(variable.var())) != s->block.v)
 			// We need to delay the part transition until we have exited the current block!
 			return VarInfo(variable.var(), false);
 		return variable;
@@ -121,7 +121,7 @@ namespace storm {
 		// this is common with the return value, which will almost always
 		// have to get its lifetime extended a bit. Maybe implement the
 		// possibility to move variables to a more outer scope?
-		if (block != Block::invalid && !f.accessible(f.first(block), v))
+		if (block != Block::invalid && !f.accessible(f.first(block), v.v))
 			return false;
 
 		variable = VarInfo(v);
@@ -130,16 +130,12 @@ namespace storm {
 
 	Bool CodeResult::suggest(Par<CodeGen> s, wrap::Operand v) {
 		if (v.v.type() == code::Value::tVariable)
-			return suggest(s, v.variable());
+			return suggest(s, v.v.variable());
 		return false;
 	}
 
 
-	/**
-	 * OLD CODE FROM HERE \/
-	 */
-
-	code::Variable createBasicTypeInfo(const GenState &to, const Value &v) {
+	code::Variable createBasicTypeInfo(Par<CodeGen> to, const Value &v) {
 		using namespace code;
 
 		BasicTypeInfo typeInfo = v.typeInfo();
@@ -147,13 +143,17 @@ namespace storm {
 		Size s = Size::sNat * 2;
 		assert(s.current() == sizeof(typeInfo), L"Please check the declaration of BasicTypeInfo.");
 
-		Variable r = to.frame.createVariable(to.block, s);
-		to.to << lea(ptrA, r);
-		to.to << mov(intRel(ptrA), natConst(typeInfo.size));
-		to.to << mov(intRel(ptrA, Offset::sNat), natConst(typeInfo.kind));
+		Variable r = to->frame.createVariable(to->block.v, s);
+		to->to << lea(ptrA, r);
+		to->to << mov(intRel(ptrA), natConst(typeInfo.size));
+		to->to << mov(intRel(ptrA, Offset::sNat), natConst(typeInfo.kind));
 
 		return r;
 	}
+
+	/**
+	 * OLD CODE FROM HERE \/
+	 */
 
 	void allocObject(code::Listing &l, code::Block b, Function *ctor, vector<code::Value> params, code::Variable to) {
 		using namespace code;

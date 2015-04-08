@@ -34,7 +34,7 @@ namespace storm {
 		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSCtor::generateCode))));
 	}
 
-	code::Variable bs::BSCtor::findThread(const GenState &s, const Actuals &params) {
+	code::Variable bs::BSCtor::findThread(Par<CodeGen> s, const Actuals &params) {
 		using namespace code;
 
 		RunOn on = runOn();
@@ -42,8 +42,8 @@ namespace storm {
 			return Function::findThread(s, params);
 
 		// We know it is always the first parameter!
-		Variable r = s.frame.createPtrVar(s.block);
-		s.to << mov(r, params[1]);
+		Variable r = s->frame.createPtrVar(s->block.v);
+		s->to << mov(r, params[1]);
 		return r;
 	}
 
@@ -77,8 +77,8 @@ namespace storm {
 		Auto<CtorBody> body = parse();
 
 		using namespace code;
-		Listing l;
-		CodeData data;
+		Auto<CodeGen> state = CREATE(CodeGen, this, runOn());
+		Listing &l = state->to;
 
 		l << prolog();
 
@@ -91,8 +91,6 @@ namespace storm {
 			normal->var = VarInfo(thisVar);
 		}
 
-		GenState state = { l, data, runOn(), l.frame, l.frame.root() };
-
 		for (nat i = 1; i < params.size(); i++) {
 			const Value &t = params[i];
 			LocalVar *var = body->variable(paramNames[i]);
@@ -100,12 +98,12 @@ namespace storm {
 			var->createParam(state);
 		}
 
-		GenResult r;
+		Auto<CodeResult> r = CREATE(CodeResult, this);
 		body->code(state, r);
 
 		l << epilog();
 		l << ret(Size());
-		l << data;
+		l << *state->data;
 
 		// PLN(identifier() << L": " << l);
 		return l;
@@ -136,7 +134,7 @@ namespace storm {
 		}
 	}
 
-	void bs::CtorBody::blockCode(const GenState &state, GenResult &to, const code::Block &block) {
+	void bs::CtorBody::blockCode(Par<CodeGen> state, GenResult &to, const code::Block &block) {
 		if (threadParam) {
 			thread = state.frame.createPtrVar(state.block);
 			state.to << mov(thread, threadParam->var.var());
@@ -193,7 +191,7 @@ namespace storm {
 		initMap.insert(make_pair(name, init));
 	}
 
-	void bs::SuperCall::callParent(const GenState &s) {
+	void bs::SuperCall::callParent(Par<CodeGen> s) {
 		Type *parent = thisPtr.type->super();
 		if (!parent)
 			return;
@@ -233,7 +231,7 @@ namespace storm {
 		ctor->localCall(s, actuals, t, false);
 	}
 
-	void bs::SuperCall::callTObject(const GenState &s, Par<NamedThread> t) {
+	void bs::SuperCall::callTObject(Par<CodeGen> s, Par<NamedThread> t) {
 		if (params->expressions.size() != 1)
 			throw SyntaxError(pos, L"Can not initialize a threaded object with parameters.");
 
@@ -253,7 +251,7 @@ namespace storm {
 		ctor->localCall(s, actuals, res, false);
 	}
 
-	void bs::SuperCall::code(const GenState &s, GenResult &r) {
+	void bs::SuperCall::code(Par<CodeGen> s, GenResult &r) {
 		using namespace code;
 
 		// Super class should be called first.
@@ -276,7 +274,7 @@ namespace storm {
 		}
 	}
 
-	void bs::SuperCall::initVar(const GenState &s, Par<TypeVar> v) {
+	void bs::SuperCall::initVar(Par<CodeGen> s, Par<TypeVar> v) {
 		InitMap::iterator i = initMap.find(v->name);
 		if (i == initMap.end())
 			initVarDefault(s, v);
@@ -284,7 +282,7 @@ namespace storm {
 			initVar(s, v, i->second);
 	}
 
-	void bs::SuperCall::initVarDefault(const GenState &s, Par<TypeVar> v) {
+	void bs::SuperCall::initVarDefault(Par<CodeGen> s, Par<TypeVar> v) {
 		using namespace code;
 
 		const Value &t = v->varType;
@@ -316,7 +314,7 @@ namespace storm {
 		}
 	}
 
-	void bs::SuperCall::initVar(const GenState &s, Par<TypeVar> v, Par<Initializer> to) {
+	void bs::SuperCall::initVar(Par<CodeGen> s, Par<TypeVar> v, Par<Initializer> to) {
 		using namespace code;
 
 		const Value &t = v->varType;
@@ -340,7 +338,7 @@ namespace storm {
 
 	}
 
-	void bs::SuperCall::initVarCtor(const GenState &s, Par<TypeVar> v, Par<Actual> to) {
+	void bs::SuperCall::initVarCtor(Par<CodeGen> s, Par<TypeVar> v, Par<Actual> to) {
 		using namespace code;
 
 		const Value &t = v->varType;
@@ -380,7 +378,7 @@ namespace storm {
 		}
 	}
 
-	void bs::SuperCall::initVarAssign(const GenState &s, Par<TypeVar> v, Par<Expr> to) {
+	void bs::SuperCall::initVarAssign(Par<CodeGen> s, Par<TypeVar> v, Par<Expr> to) {
 		using namespace code;
 
 		const Value &t = v->varType;

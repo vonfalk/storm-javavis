@@ -31,10 +31,10 @@ namespace storm {
 			bool constant;
 
 			// Create the variable.
-			void create(const GenState &state);
+			void create(Par<CodeGen> state);
 
 			// Create the parameter.
-			void createParam(const GenState &state);
+			void createParam(Par<CodeGen> state);
 
 		};
 
@@ -65,7 +65,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &state, GenResult &to);
+			virtual void code(Par<CodeGen> state, Par<CodeResult> to);
 
 		protected:
 			virtual void output(wostream &to) const;

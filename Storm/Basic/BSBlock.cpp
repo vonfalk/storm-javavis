@@ -11,11 +11,11 @@ namespace storm {
 	bs::Block::Block(Par<Block> parent)
 		: lookup(CREATE(BlockLookup, engine(), this, parent->scope.top)), scope(parent->scope, lookup) {}
 
-	void bs::Block::code(const GenState &state, GenResult &to) {
+	void bs::Block::code(Par<CodeGen> state, Par<CodeResult> to) {
 		using namespace code;
 
-		code::Block block = state.frame.createChild(state.frame.last(state.block));
-		GenState child = state.child(block);
+		code::Block block = state->frame.createChild(state->frame.last(state->block.v));
+		Auto<CodeGen> child = state->child(block);
 
 		for (VarMap::const_iterator i = variables.begin(), end = variables.end(); i != end; ++i) {
 			i->second->create(child);
@@ -24,18 +24,18 @@ namespace storm {
 		blockCode(state, to, block);
 
 		// May be delayed...
-		if (to.needed())
-			to.location(state).created(state);
+		if (to->needed())
+			to->location(state).created(state);
 	}
 
-	void bs::Block::blockCode(const GenState &state, GenResult &to, const code::Block &block) {
-		state.to << begin(block);
-		GenState subState = state.child(block);
+	void bs::Block::blockCode(Par<CodeGen> state, Par<CodeResult> to, const code::Block &block) {
+		state->to << begin(block);
+		Auto<CodeGen> subState = state->child(block);
 		blockCode(subState, to);
-		state.to << end(block);
+		state->to << end(block);
 	}
 
-	void bs::Block::blockCode(const GenState &state, GenResult &to) {
+	void bs::Block::blockCode(Par<CodeGen> state, Par<CodeResult> to) {
 		assert(false, "Implement me in a subclass!");
 	}
 
@@ -74,14 +74,14 @@ namespace storm {
 			return Value();
 	}
 
-	void bs::ExprBlock::code(const GenState &state, GenResult &to) {
+	void bs::ExprBlock::code(Par<CodeGen> state, Par<CodeResult> to) {
 		if (!exprs.empty())
 			Block::code(state, to);
 	}
 
-	void bs::ExprBlock::blockCode(const GenState &state, GenResult &to) {
+	void bs::ExprBlock::blockCode(Par<CodeGen> state, Par<CodeResult> to) {
 		for (nat i = 0; i < exprs.size() - 1; i++) {
-			GenResult s;
+			Auto<CodeResult> s = CREATE(CodeResult, this);
 			exprs[i]->code(state, s);
 		}
 

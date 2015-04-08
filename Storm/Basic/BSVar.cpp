@@ -137,7 +137,7 @@ namespace storm {
 			if (var.var() != code::Variable::invalid) {
 				assert(state.frame.accessible(state.block, var.var()));
 			} else {
-				var = storm::variable(state.to, state.block, result);
+				var = storm::variable(state.frame, state.block, result);
 			}
 		}
 

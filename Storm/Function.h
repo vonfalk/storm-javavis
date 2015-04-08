@@ -78,18 +78,18 @@ namespace storm {
 
 		// Output code to find the Thread we want to run on. Always returns a borrowed reference.
 		// Does not generate any meaningful result unless 'runOn' returns a state other than 'any'.
-		virtual code::Variable findThread(const GenState &to, const Actuals &params);
+		virtual code::Variable findThread(Par<CodeGen> to, const Actuals &params);
 
 		// Generate code for this function call, assuming we are performing the call the same thread as the
 		// currently running thread. if 'useLookup' is false, we will not use the lookup function (ie VTables).
-		void localCall(const GenState &to, const Actuals &params, GenResult &result, bool useLookup);
+		void localCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result, bool useLookup);
 
 		// Generate code for this function call, assuming we want to run on a different thread.
-		void threadCall(const GenState &to, const Actuals &params, GenResult &result, const code::Value &thread);
+		void threadCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result, const code::Value &thread);
 
 		// Generate code for this function call, assuming we want to run on a different thread, returning a Future
 		// object.
-		void asyncThreadCall(const GenState &to, const Actuals &params, GenResult &result, const code::Value &thread);
+		void asyncThreadCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result, const code::Value &thread);
 
 		// Code to be executed.
 		void STORM_FN setCode(Par<Code> code);
@@ -128,21 +128,21 @@ namespace storm {
 
 		// Generate the code that is shared between 'threadCall' and 'asyncThreadCall'. This is
 		// basically setting up the parameters for the call.
-		PrepareResult prepareThreadCall(const GenState &to, const Actuals &params);
+		PrepareResult prepareThreadCall(Par<CodeGen> to, const Actuals &params);
 
 		// Initialize references if needed.
 		void initRefs();
 
 		// Generate code for a direct function call.
-		void localCall(const GenState &to, const Actuals &params, GenResult &result, code::Ref ref);
+		void localCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result, code::Ref ref);
 
 		// Generate code for an indirect function call, ie post it to another thread.
-		void genCodePost(const GenState &to, const Actuals &params, GenResult &result,
+		void genCodePost(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result,
 						code::Ref ref, const code::Value &thread);
 
 		// Add parameters for the function call.
-		void addParams(const GenState &to, const Actuals &params, const code::Variable &resultIn);
-		void addParam(const GenState &to, const Actuals &params, nat id);
+		void addParams(Par<CodeGen> to, const Actuals &params, const code::Variable &resultIn);
+		void addParam(Par<CodeGen> to, const Actuals &params, nat id);
 	};
 
 	// Determine if 'a' is an overload of 'b'.

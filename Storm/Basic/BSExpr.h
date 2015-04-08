@@ -21,7 +21,7 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &state, GenResult &r);
+			virtual void code(Par<CodeGen> state, Par<CodeResult> r);
 		};
 
 
@@ -58,19 +58,19 @@ namespace storm {
 			virtual Value result();
 
 			// Generate code.
-			virtual void code(const GenState &state, GenResult &r);
+			virtual void code(Par<CodeGen> state, Par<CodeResult> r);
 
 		protected:
 			virtual void output(wostream &out) const;
 
 			// Code for a string label.
-			void strCode(const GenState &state, GenResult &r);
+			void strCode(Par<CodeGen> state, Par<CodeResult> r);
 
 			// Code for an int label.
-			void intCode(const GenState &state, GenResult &r);
+			void intCode(Par<CodeGen> state, Par<CodeResult> r);
 
 			// Code for a bool label.
-			void boolCode(const GenState &state, GenResult &r);
+			void boolCode(Par<CodeGen> state, Par<CodeResult> r);
 
 			// Generate string data.
 			void strData(code::Listing &to);
