@@ -4,6 +4,7 @@
 #include "Function.h"
 #include "Thread.h"
 #include "Tokenizer.h"
+#include "Variable.h"
 
 /**
  * Represents a found header.
@@ -22,6 +23,9 @@ public:
 	// Get the functions in here.
 	const vector<Function> &getFunctions();
 
+	// Get variables in here.
+	const vector<Variable> &getVariables();
+
 	// Get the threads in here.
 	const vector<Thread> &getThreads();
 
@@ -37,6 +41,9 @@ private:
 
 	// Cache of functions.
 	vector<Function> functions;
+
+	// Cache of variables.
+	vector<Variable> variables;
 
 	// Cache of threads.
 	vector<Thread> threads;

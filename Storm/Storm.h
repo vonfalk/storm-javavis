@@ -11,6 +11,9 @@
 // For example: Str *STORM_FN foo();
 #define STORM_FN CODECALL
 
+// Expose a data member to Storm. Example: STORM_VAR Auto<Str> foo;
+#define STORM_VAR
+
 // Mark built-in functions with STORM_FN_ENGINE to get the right calling-convention
 // and the automatic generation of function tables. The difference from STORM_FN is
 // that the first parameter (of type Engine) will be generated automatically.

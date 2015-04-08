@@ -68,7 +68,7 @@ namespace storm {
 		SyntaxNode *tree();
 
 		// Shorthand for generating a tree and transform it into Storm objects. Note 'params' does not own refs.
-		Object *transform(Par<ArrayP<Object>> params);
+		Object *STORM_FN transform(Par<ArrayP<Object>> params);
 		Object *transform(const vector<Object *> &params = vector<Object *>());
 
 	private:

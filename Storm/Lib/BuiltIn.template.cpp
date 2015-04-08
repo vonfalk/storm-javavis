@@ -135,6 +135,18 @@ namespace storm {
 	}
 
 	/**
+	 * Everything between BEGIN VARS and END VARS is auto-generated.
+	 */
+	const BuiltInVar *builtInVars() {
+		static BuiltInVar vars[] = {
+			// BEGIN VARS
+			// END VARS
+			{ 0, valueRef(), null, 0 },
+		};
+		return vars;
+	}
+
+	/**
 	 * Everything between BEGIN THREADS and END THREADS is auto-generated.
 	 */
 	const BuiltInThread *builtInThreads() {

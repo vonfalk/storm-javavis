@@ -65,10 +65,10 @@ namespace storm {
 		~PkgReader();
 
 		// Owning package.
-		Auto<Package> owner;
+		STORM_VAR Auto<Package> pkg;
 
 		// Files passed to this object.
-		Auto<PkgFiles> pkgFiles;
+		STORM_VAR Auto<PkgFiles> pkgFiles;
 
 		// Get syntax. Override to implement syntax-loading.
 		virtual void STORM_FN readSyntax();
@@ -94,10 +94,10 @@ namespace storm {
 		STORM_CTOR FileReader(Par<Url> file, Par<Package> into);
 
 		// File.
-		Par<Url> file;
+		STORM_VAR Par<Url> file;
 
 		// Package we're loading into.
-		Auto<Package> package;
+		STORM_VAR Auto<Package> pkg;
 
 		// Read syntax from this file.
 		virtual void STORM_FN readSyntax();

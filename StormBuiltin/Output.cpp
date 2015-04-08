@@ -329,6 +329,49 @@ String functionList(const vector<Header *> &headers, const Types &types, const v
 	return out.str();
 }
 
+void variableList(std::wostream &to, const vector<Variable> &vars, const Types &types) {
+	vector<Type> typeList = types.getTypes();
+
+	for (nat i = 0; i < vars.size(); i++) {
+		const Variable &v = vars[i];
+
+		to << L"{ ";
+
+		// Member of.
+		CppName scope = v.cppScope.cppName();
+		to << typeId(typeList, scope) << L" /* " << scope << L" */, ";
+
+		// Type.
+		to << valueRef(v.type, scope, types) << L", ";
+
+		// Name.
+		to << L"L\"" << v.name << L"\", ";
+
+		// Offset.
+		to << L"OFFSET_OF(" << scope << L", " << v.name << L")";
+
+		to << L" }," << endl;
+	}
+}
+
+String variableList(const vector<Header *> &headers, const Types &types) {
+	std::wostringstream out;
+
+	for (nat i = 0; i < headers.size(); i++) {
+		Header &header = *headers[i];
+		const vector<Variable> &vars = header.getVariables();
+
+		try {
+			variableList(out, vars, types);
+		} catch (const Error &e) {
+			Error err(e.what(), header.file);
+			throw err;
+		}
+	}
+
+	return out.str();
+}
+
 String headerList(const vector<Header *> &headers, const Path &root) {
 	std::wostringstream out;
 

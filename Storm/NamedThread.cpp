@@ -39,7 +39,7 @@ namespace storm {
 
 	RunOn::RunOn(Par<NamedThread> t) : state(named), thread(t) {}
 
-	bool RunOn::canRun(const RunOn &o) const {
+	Bool RunOn::canRun(const RunOn &o) const {
 		// Anyone can run code declared as 'any'.
 		if (o.state == any)
 			return true;
@@ -55,6 +55,19 @@ namespace storm {
 
 		return true;
 	}
+
+	RunOn runOn(Par<NamedThread> thread) {
+		return RunOn(thread);
+	}
+
+	RunOn runOnAny() {
+		return RunOn(RunOn::any);
+	}
+
+	RunOn runOnRuntime() {
+		return RunOn(RunOn::runtime);
+	}
+
 
 	wostream &operator <<(wostream &to, const RunOn &v) {
 		switch (v.state) {

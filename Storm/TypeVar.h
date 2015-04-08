@@ -31,4 +31,16 @@ namespace storm {
 		virtual void output(wostream &to) const;
 	};
 
+	/**
+	 * A variable declared in C++ with a pre-computed offset.
+	 */
+	class TypeVarCpp : public TypeVar {
+		STORM_CLASS;
+	public:
+		TypeVarCpp(Type *owner, const Value &type, const String &name, const Offset &offset);
+
+		// Our offset.
+		const Offset myOffset;
+	};
+
 }

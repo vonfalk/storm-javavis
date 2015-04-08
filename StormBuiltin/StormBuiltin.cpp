@@ -147,6 +147,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 			d.typeFunctions = typeFunctions(t);
 			d.vtableCode = vtableCode(t);
 			d.functionList = functionList(headers, t, threads);
+			d.variableList = variableList(headers, t);
 			d.headerList = headerList(headers, root);
 			d.threadList = threadList(threads);
 

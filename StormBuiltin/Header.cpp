@@ -23,6 +23,11 @@ const vector<Function> &Header::getFunctions() {
 	return functions;
 }
 
+const vector<Variable> &Header::getVariables() {
+	parse();
+	return variables;
+}
+
 const vector<Thread> &Header::getThreads() {
 	parse();
 	return threads;
@@ -72,6 +77,8 @@ void Header::parse(Tokenizer &tok) {
 			threads.push_back(t);
 		} else if (token == L"STORM_FN") {
 			functions.push_back(Function::read(false, pkg, scope, lastType, tok));
+		} else if (token == L"STORM_VAR") {
+			variables.push_back(Variable::read(scope, tok));
 		} else if (token == L"STORM_ENGINE_FN") {
 			functions.push_back(Function::read(true, pkg, scope, lastType, tok));
 		} else if (token == L"STORM_CLASS" || token == L"STORM_VALUE") {

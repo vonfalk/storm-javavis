@@ -23,4 +23,7 @@ namespace storm {
 		return owner()->offset(this);
 	}
 
+	TypeVarCpp::TypeVarCpp(Type *owner, const Value &type, const String &name, const Offset &offset)
+		: TypeVar(owner, type, name), myOffset(offset) {}
+
 }

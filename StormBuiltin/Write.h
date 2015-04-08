@@ -7,6 +7,7 @@ struct FileData {
 	String typeFunctions;
 	String vtableCode;
 	String functionList;
+	String variableList;
 	String headerList;
 	String threadList;
 };

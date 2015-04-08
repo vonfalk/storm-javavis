@@ -38,6 +38,12 @@ namespace storm {
 		// Equals.
 		virtual Bool STORM_FN equals(Par<Object> o);
 
+		// Convert to int.
+		Int STORM_FN toInt() const;
+
+		// Convert to nat.
+		Nat STORM_FN toNat() const;
+
 		// ToS
 		virtual Str *STORM_FN toS();
 

@@ -65,7 +65,7 @@ namespace storm {
 	 * PkgReader.
 	 */
 
-	PkgReader::PkgReader(Par<PkgFiles> files, Par<Package> owner) : pkgFiles(files), owner(owner) {}
+	PkgReader::PkgReader(Par<PkgFiles> files, Par<Package> owner) : pkgFiles(files), pkg(owner) {}
 
 	PkgReader::~PkgReader() {}
 
@@ -82,7 +82,7 @@ namespace storm {
 	 * FileReader.
 	 */
 
-	FileReader::FileReader(Par<Url> file, Par<Package> into) : file(file), package(into) {}
+	FileReader::FileReader(Par<Url> file, Par<Package> into) : file(file), pkg(into) {}
 
 	void FileReader::readSyntax() {}
 

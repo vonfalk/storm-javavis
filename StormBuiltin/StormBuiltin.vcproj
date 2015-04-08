@@ -232,6 +232,10 @@
 				RelativePath=".\Thread.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Variable.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -292,6 +296,10 @@
 			</File>
 			<File
 				RelativePath=".\StormBuiltin.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Variable.h"
 				>
 			</File>
 		</Filter>

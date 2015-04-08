@@ -112,6 +112,13 @@ namespace storm {
 		}
 	}
 
+	static void addBuiltIn(Engine &e, const BuiltInVar *var) {
+		Type *to = e.builtIn(var->memberId);
+		Value type = findValue(*e.scope(), var->type, e);
+		Auto<TypeVarCpp> v = CREATE(TypeVarCpp, e, to, type, var->name, Offset(var->offset));
+		to->add(v);
+	}
+
 	static void addToPkg(Engine &to, const BuiltInType *t) {
 		Auto<Name> pkgName = parseSimpleName(to, t->pkg);
 		Package *pkg = to.package(pkgName, true);
@@ -194,6 +201,9 @@ namespace storm {
 		vector<NamedThread *> threads = addThreads(to);
 		for (const BuiltInFunction *fn = builtInFunctions(); fn->fnPtr; fn++) {
 			addBuiltIn(to, fn, threads);
+		}
+		for (const BuiltInVar *var = builtInVars(); var->name; var++) {
+			addBuiltIn(to, var);
 		}
 
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {

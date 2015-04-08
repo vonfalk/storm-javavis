@@ -44,16 +44,16 @@ class Types;
 
 class CppType : public Printable {
 public:
-	CppType() : isConst(false), isPtr(false), isRef(false), isPar(false), isArray(false), isArrayP(false) {}
+	CppType() : isConst(false), isPtr(false), isRef(false), isAuto(false), isPar(false), isArray(false), isArrayP(false) {}
 
 	// name of the type.
 	CppName type;
 
 	// modifiers
-	bool isConst, isPtr, isRef, isPar, isArray, isArrayP;
+	bool isConst, isPtr, isRef, isAuto, isPar, isArray, isArrayP;
 
 	// Clear.
-	inline void clear() { type.clear(); isConst = isPtr = isRef = isArray = isArrayP = false; }
+	inline void clear() { type.clear(); isConst = isPtr = isRef = isAuto = isArray = isArrayP = false; }
 
 	// Read!
 	static CppType read(Tokenizer &tok);

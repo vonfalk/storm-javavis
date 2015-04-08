@@ -74,8 +74,13 @@ namespace storm {
 
 		// Assuming we are running on a thread represented by this, may we run a function
 		// declared to run on 'other'?
-		bool canRun(const RunOn &other) const;
+		Bool STORM_FN canRun(const RunOn &other) const;
 	};
+
+	// Create some RunOn objects (for Storm).
+	RunOn STORM_FN runOn(Par<NamedThread> thread);
+	RunOn STORM_FN runOnAny();
+	RunOn STORM_FN runOnRuntime();
 
 	// Output.
 	wostream &operator <<(wostream &to, const RunOn &v);

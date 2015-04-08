@@ -13,7 +13,7 @@ namespace storm {
 	bs::Reader::Reader(Par<PkgFiles> files, Par<Package> pkg) : FilesReader(files, pkg) {}
 
 	FileReader *bs::Reader::createFile(Par<Url> path) {
-		return CREATE(bs::File, this, path, owner);
+		return CREATE(bs::File, this, path, pkg);
 	}
 
 
@@ -30,11 +30,11 @@ namespace storm {
 	void bs::File::readTypes() {
 		readContents();
 		for (nat i = 0; i < contents->types.size(); i++) {
-			package->add(contents->types[i].borrow());
+			pkg->add(contents->types[i].borrow());
 		}
 
 		for (nat i = 0; i < contents->threads.size(); i++) {
-			package->add(contents->threads[i].borrow());
+			pkg->add(contents->threads[i].borrow());
 		}
 	}
 
@@ -49,7 +49,7 @@ namespace storm {
 	void bs::File::readFunctions() {
 		readContents();
 		for (nat i = 0; i < contents->functions.size(); i++) {
-			package->add(steal(contents->functions[i]->asFunction(scope)));
+			pkg->add(steal(contents->functions[i]->asFunction(scope)));
 		}
 	}
 
@@ -63,7 +63,7 @@ namespace storm {
 			throw parser->error();
 
 		Auto<Object> includes = parser->transform();
-		contents = includes.expect<Contents>(package->engine(), L"While evaluating File");
+		contents = includes.expect<Contents>(pkg->engine(), L"While evaluating File");
 		contents->setScope(scope);
 	}
 
@@ -71,7 +71,7 @@ namespace storm {
 		Auto<Object> includes;
 
 		syntax->add(syntaxPackage());
-		syntax->add(package);
+		syntax->add(pkg);
 
 		Auto<Parser> parser = CREATE(Parser, this, syntax, fileContents, file);
 		headerSize = parser->parse(L"Includes");
@@ -88,7 +88,7 @@ namespace storm {
 	void bs::File::setIncludes(const vector<Auto<TypeName> > &inc) {
 		for (nat i = 0; i < inc.size(); i++) {
 			Auto<Name> name = inc[i]->toName(scope);
-			Package *p = package->engine().package(name);
+			Package *p = pkg->engine().package(name);
 			if (!p)
 				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(inc[i]));
 

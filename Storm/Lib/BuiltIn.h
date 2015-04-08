@@ -119,6 +119,23 @@ namespace storm {
 	BITMASK_OPERATORS(BuiltInFunction::Mode);
 
 	/**
+	 * A list of all built-in variables (of types).
+	 */
+	struct BuiltInVar {
+		// Member of a type.
+		nat memberId;
+
+		// Type.
+		ValueRef type;
+
+		// Name of the variable.
+		const wchar *name;
+
+		// Offset of the variable. TODO: Offset for different platforms!
+		size_t offset;
+	};
+
+	/**
 	 * A list of all built-in threads.
 	 */
 	struct BuiltInThread {
@@ -142,6 +159,11 @@ namespace storm {
 	 * Get the list. The list ends with a function with a null 'fnPtr'.
 	 */
 	const BuiltInFunction *builtInFunctions();
+
+	/**
+	 * Get the list of variables. The list ends with an entry containing 'name' == null.
+	 */
+	const BuiltInVar *builtInVars();
 
 	/**
 	 * Get the list of built in threads. Ends with a null entry.

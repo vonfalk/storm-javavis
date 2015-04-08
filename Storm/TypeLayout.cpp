@@ -14,15 +14,25 @@ namespace storm {
 	void TypeLayout::add(TypeVar *v) {
 		assert(offsets.count(v) == 0, "Variable already inserted!");
 
-		// Allocate 'v' at the end.
-		Size vSz = v->varType.size();
-		offsets.insert(make_pair(v, total + vSz.align()));
-		total += vSz;
+		if (TypeVarCpp *cppVar = as<TypeVarCpp>(v)) {
+			// Add it just as it is. We will not read it anyway...
+			offsets.insert(make_pair(v, Size()));
+		} else {
+			// Allocate 'v' at the end.
+			Size vSz = v->varType.size();
+			offsets.insert(make_pair(v, total + vSz.align()));
+			total += vSz;
+		}
 	}
 
 	Offset TypeLayout::offset(Size parentSize, const TypeVar *v) const {
 		// Sad, but needed...
-		OffsetMap::const_iterator f = offsets.find(const_cast<TypeVar *>(v));
+		TypeVar *key = const_cast<TypeVar *>(v);
+		if (TypeVarCpp *k = as<TypeVarCpp>(key)) {
+			return k->myOffset;
+		}
+
+		OffsetMap::const_iterator f = offsets.find(key);
 		if (f == offsets.end()) {
 			assert(false, "Variable not added here!");
 			throw InternalError(L"Variable not added properly: " + ::toS(v));

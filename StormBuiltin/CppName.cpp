@@ -68,6 +68,17 @@ CppType CppType::read(Tokenizer &tok) {
 		return t;
 	}
 
+	if (tok.peek() == L"Auto") {
+		tok.next();
+		tok.expect(L"<");
+
+		t = CppType::read(tok);
+		t.isAuto = true;
+
+		tok.expect(L">");
+		return t;
+	}
+
 	bool isArray = false, isArrayP = false;
 	if (tok.peek() == L"Array")
 		isArray = true;
@@ -107,6 +118,8 @@ CppType CppType::read(Tokenizer &tok) {
 void CppType::output(wostream &to) const {
 	if (isPar)
 		to << L"storm::Par<";
+	if (isAuto)
+		to << L"storm::Auto<";
 	if (isArray)
 		to << L"storm::Array<";
 	if (isArrayP)
@@ -122,6 +135,8 @@ void CppType::output(wostream &to) const {
 		to << L" *";
 	else if (isRef)
 		to << L" &";
+	if (isAuto)
+		to << L">";
 	if (isPar)
 		to << L">";
 }

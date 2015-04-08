@@ -37,6 +37,14 @@ namespace storm {
 		return v == other->v;
 	}
 
+	Int Str::toInt() const {
+		return v.toInt();
+	}
+
+	Nat Str::toNat() const {
+		return v.toNat();
+	}
+
 	void Str::output(wostream &to) const {
 		to << v;
 	}
