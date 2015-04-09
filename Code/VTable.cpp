@@ -188,6 +188,7 @@ namespace code {
 			nat *ptr = (nat *)(data + size + 1);
 			return *ptr / sizeof(void *);
 		} else {
+			// Debugging for developers.
 			PLN(L"Machine code mismatch: Excepted 0x60 or 0xA0, got " << toHex(data[size]));
 			assert(false);
 			return VTable::invalid;

@@ -31,6 +31,15 @@ namespace storm {
 
 	Value::Value(Par<Type> t, Bool ref) : type(t.borrow()), ref(ref) {}
 
+	Type *Value::getType() const {
+		type->addRef();
+		return type;
+	}
+
+	void Value::deepCopy(Par<CloneEnv> env) {
+		// Named objects are threaded, it is OK to not do anything here.
+	}
+
 	Size Value::size() const {
 		if (ref) {
 			// References are passed by pointer.

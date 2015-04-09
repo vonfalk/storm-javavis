@@ -94,10 +94,10 @@ namespace storm {
 			void invalidate();
 
 			// Result.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Generate code.
-			virtual void code(Par<CodeGen> s, Par<CodeResult> r);
+			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> r);
 
 		protected:
 			// Output.
@@ -121,10 +121,10 @@ namespace storm {
 			STORM_CTOR ParenExpr(Par<Expr> wrap);
 
 			// Result.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Code.
-			virtual void code(Par<CodeGen> s, Par<CodeResult> r);
+			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> r);
 
 		protected:
 			// Output.

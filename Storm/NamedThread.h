@@ -4,6 +4,7 @@
 #include "Thread.h"
 
 namespace storm {
+	STORM_PKG(core);
 
 	/**
 	 * Declares a named thread in a package.

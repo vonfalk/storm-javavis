@@ -62,10 +62,10 @@ namespace storm {
 			LocalVar *STORM_FN var();
 
 			// Result type.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Generate code.
-			virtual void code(Par<CodeGen> state, Par<CodeResult> to);
+			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> to);
 
 		protected:
 			virtual void output(wostream &to) const;

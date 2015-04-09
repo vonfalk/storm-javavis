@@ -530,6 +530,10 @@
 				RelativePath=".\AsmWrap.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\StrBuf.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -902,6 +906,10 @@
 			</File>
 			<File
 				RelativePath=".\AsmWrap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\StrBuf.h"
 				>
 			</File>
 		</Filter>

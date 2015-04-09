@@ -41,6 +41,9 @@ namespace storm {
 		// Reference? Not a good idea for return values.
 		bool ref;
 
+		// Get the type. TODO: Rename/replace with read-only version of 'type' member variable.
+		Type *STORM_FN getType() const;
+
 		// Get the size of this type.
 		Size size() const;
 
@@ -102,6 +105,9 @@ namespace storm {
 
 		// Create a this-pointer for a type.
 		static Value thisPtr(Type *t);
+
+		// Deep copy.
+		void STORM_FN deepCopy(Par<CloneEnv> env);
 
 	protected:
 		virtual void output(wostream &to) const;

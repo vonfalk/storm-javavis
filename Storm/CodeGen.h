@@ -30,20 +30,24 @@ namespace storm {
 		 */
 
 		// Output listing.
-		Auto<wrap::Listing> l;
+		STORM_VAR Auto<wrap::Listing> l;
 
 		// Output data.
-		Auto<CodeData> data;
+		STORM_VAR Auto<CodeData> data;
 
 		// Which thread will this code be running on?
-		RunOn runOn;
+		STORM_VAR RunOn runOn;
 
 		// Current block.
-		wrap::Block block;
+		STORM_VAR wrap::Block block;
 
 		// Convenient access from C++.
 		code::Listing &to; // points to 'l->v'
 		code::Frame &frame; // points to 'to.frame'
+
+	protected:
+		// Output.
+		virtual void output(wostream &to) const;
 	};
 
 
@@ -96,10 +100,10 @@ namespace storm {
 		STORM_CTOR CodeResult(const Value &t, VarInfo var);
 
 		// Get a location to store the variable in, assuming the result is needed.
-		VarInfo location(Par<CodeGen> s);
+		VarInfo STORM_FN location(Par<CodeGen> s);
 
 		// Get the location of the result, even if it is not needed by the creator.
-		VarInfo safeLocation(Par<CodeGen> s, const Value &t);
+		VarInfo STORM_FN safeLocation(Par<CodeGen> s, const Value &t);
 
 		// Suggest a location. Returns true if it should be used. Otherwise, store the value in
 		// whatever location is returned by 'location' instead.

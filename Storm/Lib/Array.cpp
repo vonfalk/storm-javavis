@@ -105,7 +105,7 @@ namespace storm {
 		if (capacity >= n)
 			return;
 
-		nat growTo = max(nat(4), capacity * 2);
+		nat growTo = max(max(nat(4), n), capacity * 2);
 		byte *to = new byte[growTo * handle.size];
 		nat copied = 0;
 

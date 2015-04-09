@@ -73,7 +73,7 @@ namespace storm {
 		return r.ret();
 	}
 
-	code::Listing bs::BSCtor::generateCode() {
+	CodeGen *bs::BSCtor::generateCode() {
 		Auto<CtorBody> body = parse();
 
 		using namespace code;
@@ -103,10 +103,9 @@ namespace storm {
 
 		l << epilog();
 		l << ret(Size());
-		l << *state->data;
 
 		// PLN(identifier() << L": " << l);
-		return l;
+		return state.ret();
 	}
 
 	bs::LocalVar *bs::BSCtor::addParams(Par<Block> to) {

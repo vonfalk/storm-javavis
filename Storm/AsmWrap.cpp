@@ -9,6 +9,8 @@ namespace storm {
 
 	wrap::Size::Size() {}
 
+	wrap::Size::Size(Nat v) : v(v) {}
+
 	wrap::Size::Size(const code::Size &v) : v(v) {}
 
 	Bool wrap::Size::operator ==(const Size &o) const {
@@ -341,6 +343,10 @@ namespace storm {
 
 	wrap::Instruction wrap::mov(Operand to, Operand from) {
 		return code::mov(to.v, from.v);
+	}
+
+	wrap::Instruction wrap::lea(Operand to, Operand from) {
+		return code::lea(to.v, from.v);
 	}
 
 	wrap::Instruction wrap::addRef(Operand v) {

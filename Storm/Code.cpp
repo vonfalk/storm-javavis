@@ -58,7 +58,7 @@ namespace storm {
 	 * Lazily loaded code.
 	 */
 
-	LazyCode::LazyCode(const Fn<code::Listing, void> &fn) : code(null), loaded(false), loading(false), load(fn) {}
+	LazyCode::LazyCode(const Fn<CodeGen *, void> &fn) : code(null), loaded(false), loading(false), load(fn) {}
 
 	LazyCode::~LazyCode() {
 		if (code)
@@ -115,7 +115,9 @@ namespace storm {
 
 			c->loading = true;
 			try {
-				c->setCode(c->load());
+				Auto<CodeGen> r = c->load();
+				r->to << *r->data;
+				c->setCode(r->to);
 			} catch (...) {
 				c->loading = false;
 				throw;
@@ -145,15 +147,13 @@ namespace storm {
 
 	TmpLazyCode::TmpLazyCode() : LazyCode(memberVoidFn(this, &TmpLazyCode::loadCode)) {}
 
-	wrap::Listing *TmpLazyCode::load() {
-		return CREATE(wrap::Listing, this);
+	CodeGen *TmpLazyCode::load() {
+		return CREATE(CodeGen, this, owner->runOn());
 	}
 
-	code::Listing TmpLazyCode::loadCode() {
-		Auto<wrap::Listing> v = load();
-		return v->v;
+	CodeGen *TmpLazyCode::loadCode() {
+		return load();
 	}
-
 
 	/**
 	 * Delegated code.
@@ -185,7 +185,7 @@ namespace storm {
 		generate(p);
 	}
 
-	code::Listing InlinedCode::generatePtr() {
+	CodeGen *InlinedCode::generatePtr() {
 		using namespace code;
 		if (!owner->result.returnInReg()) {
 			TODO(L"Implement return of non-built in types");
@@ -213,9 +213,7 @@ namespace storm {
 		l << epilog();
 		l << ret(owner->result.size());
 
-		l << *state->data;
-
-		return l;
+		return state.ret();
 	}
 
 

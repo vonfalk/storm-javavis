@@ -64,7 +64,7 @@ namespace storm {
 		return l.frame.createParameter(Size::sPtr, false);
 	}
 
-	code::Listing bs::BSFunction::generateCode() {
+	CodeGen *bs::BSFunction::generateCode() {
 		Auto<SyntaxSet> syntax = getSyntax(scope);
 
 		Auto<Parser> parser = CREATE(Parser, this, syntax, contents->v, contents->pos);
@@ -142,10 +142,8 @@ namespace storm {
 			l << ret(Size::sPtr);
 		}
 
-		l << *state->data;
-
 		// PLN(identifier() << L": " << l);
-		return l;
+		return state.ret();
 	}
 
 	void bs::BSFunction::addParams(Par<Block> to) {

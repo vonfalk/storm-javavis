@@ -7,6 +7,8 @@ Consider adding the -> syntax for captures in BNF rules, to be symmetric with ot
 In the parser: allow member variables to be assigned by the -> syntax as well! Useful in various places
 in Basic.
 
+Make sure we are only working on types either specified as belonging to the compiler thread or no thread.
+
 Also: return types for rules may be specified.
 
 Note to self:
@@ -59,6 +61,8 @@ Rename Value to Operand to avoid confusion?
 
 Basic
 ------
+Variable accesses are currently racy. Fix this!
+
 In basic storm: Allow the dot operator to be used as scope resolution as well (maybe another in BS? like in cpp?)
 
 In bs: check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should

@@ -88,6 +88,9 @@ namespace storm {
 		// Find the given NameRef, either by using an absulute path or something
 		// relative to the current object. NOTE: returns a borrowed ptr.
 		Named *find(Par<Name> name) const;
+
+		// Deep copy.
+		void STORM_FN deepCopy(Par<CloneEnv> env);
 	};
 
 

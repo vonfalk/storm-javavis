@@ -34,6 +34,10 @@ namespace storm {
 
 	Scope::Scope(const Scope &parent, Par<NameLookup> top) : top(top.borrow()), lookup(parent.lookup) {}
 
+	void Scope::deepCopy(Par<CloneEnv> env) {
+		// Should be OK to not do anything here... All our members are threaded objects.
+	}
+
 	Named *Scope::find(Par<Name> name) const {
 		if (lookup)
 			return lookup->find(*this, name);

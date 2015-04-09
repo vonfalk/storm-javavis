@@ -21,6 +21,9 @@ namespace storm {
 		public:
 			STORM_CTOR Size();
 
+			// Prefer constructing from the sizeXxx constants below.
+			STORM_CTOR Size(Nat size);
+
 			// Convert from the type in code.
 			Size(const code::Size &v);
 
@@ -31,6 +34,9 @@ namespace storm {
 			Bool STORM_FN operator ==(const Size &o) const;
 			Size STORM_FN operator +(const Size &o) const;
 			Size &STORM_FN operator +=(const Size &o);
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
 		// Get some pre-defined sizes.
@@ -58,6 +64,9 @@ namespace storm {
 			Bool STORM_FN operator ==(const Offset &o) const;
 			Offset STORM_FN operator +(const Offset &o) const;
 			Offset &STORM_FN operator +=(const Offset &o);
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
 		// Get some pre-defined offsets.
@@ -76,6 +85,9 @@ namespace storm {
 			inline STORM_CTOR Variable() {}
 			inline Variable(code::Variable v) : v(v) {}
 			code::Variable v;
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
 		// Block.
@@ -85,6 +97,9 @@ namespace storm {
 			inline STORM_CTOR Block() {}
 			inline Block(code::Block v) : v(v) {}
 			code::Block v;
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
 		// Part.
@@ -95,6 +110,9 @@ namespace storm {
 			inline STORM_CTOR Part(Block b) : v(b.v) {}
 			inline Part(code::Part v) : v(v) {}
 			code::Part v;
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
 		// Wrapper for the Register type.
@@ -104,6 +122,9 @@ namespace storm {
 			STORM_CTOR Register();
 			inline Register(code::Register v) : v(v) {}
 			code::Register v;
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
 		// Create registers.
@@ -131,6 +152,9 @@ namespace storm {
 
 			// Invert it.
 			CondFlag STORM_FN inverse() const;
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
 		// Create.
@@ -183,6 +207,9 @@ namespace storm {
 
 			// Size.
 			Size STORM_FN size() const;
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
 		// Create. (some types does not yet exist in Storm).
@@ -213,6 +240,9 @@ namespace storm {
 
 			// Value.
 			code::Instruction v;
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
 		// Create instructions.
@@ -224,6 +254,7 @@ namespace storm {
 		Instruction STORM_FN releaseRef(Operand v);
 
 		Instruction STORM_FN mov(Operand to, Operand from);
+		Instruction STORM_FN lea(Operand to, Operand from);
 
 		// FreeOptions
 		class FreeOn {
@@ -235,6 +266,9 @@ namespace storm {
 
 			// Bitwise or.
 			inline FreeOn operator |(const FreeOn o) const { return v | o.v; }
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
 		// Create.

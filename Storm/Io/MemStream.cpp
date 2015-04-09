@@ -64,7 +64,7 @@ namespace storm {
 		if (size <= capacity)
 			return;
 
-		capacity = max(nat(100), capacity * 2);
+		capacity = max(max(nat(100), size), capacity * 2);
 		byte *n = new byte[capacity];
 		memcpy(n, data, pos);
 		swap(n, data);

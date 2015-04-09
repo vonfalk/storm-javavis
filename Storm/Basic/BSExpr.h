@@ -18,10 +18,10 @@ namespace storm {
 			STORM_CTOR Expr();
 
 			// Result of an expression. Default is null. TODO: STORM_FN
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Generate code.
-			virtual void code(Par<CodeGen> state, Par<CodeResult> r);
+			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
 		};
 
 
@@ -55,10 +55,10 @@ namespace storm {
 			Bool boolValue;
 
 			// Return value.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Generate code.
-			virtual void code(Par<CodeGen> state, Par<CodeResult> r);
+			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
 
 		protected:
 			virtual void output(wostream &out) const;

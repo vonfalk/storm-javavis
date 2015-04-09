@@ -17,7 +17,7 @@ namespace storm {
 		class Block : public Expr {
 			STORM_CLASS;
 		public:
-			Block(const Scope &scope); // todo: make STORM_CTOR
+			STORM_CTOR Block(const Scope &scope);
 			STORM_CTOR Block(Par<Block> parent);
 
 			// Lookup node.
@@ -27,13 +27,13 @@ namespace storm {
 			Scope scope;
 
 			// Generate code. Override 'blockCode' to generate only block contents.
-			virtual void code(Par<CodeGen> state, Par<CodeResult> to);
+			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> to);
 
 			// Override to initialize the block yourself.
 			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> to, const code::Block &newBlock);
 
 			// Override to generate contents of the block.
-			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> to);
+			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> to);
 
 			// Find a variable. Same semantics as 'find'.
 			LocalVar *variable(const String &name);
@@ -65,13 +65,13 @@ namespace storm {
 			void STORM_FN add(Par<Expr> s);
 
 			// Result.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Optimization.
-			virtual void code(Par<CodeGen> state, Par<CodeResult> to);
+			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> to);
 
 			// Code generation.
-			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> to);
+			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> to);
 
 		private:
 			virtual void output(wostream &to) const;

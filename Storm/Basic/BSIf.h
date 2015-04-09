@@ -23,17 +23,17 @@ namespace storm {
 			Auto<Expr> falseCode;
 
 			// Set condition.
-			void STORM_FN cond(Par<Expr> e);
+			virtual void STORM_FN cond(Par<Expr> e);
 
 			// Set true/false code.
-			void STORM_FN trueExpr(Par<Expr> e);
-			void STORM_FN falseExpr(Par<Expr> e);
+			virtual void STORM_FN trueExpr(Par<Expr> e);
+			virtual void STORM_FN falseExpr(Par<Expr> e);
 
 			// Result.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Code.
-			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> r);
+			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> r);
 		};
 
 
@@ -69,10 +69,10 @@ namespace storm {
 			void STORM_FN falseExpr(Par<Expr> e);
 
 			// Result.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Code.
-			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> r);
+			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> r);
 
 		private:
 			// Overridden variable.
@@ -96,8 +96,8 @@ namespace storm {
 			void STORM_FN set(Par<Expr> expr);
 
 			// Generate code.
-			virtual Value result();
-			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> to);
+			virtual Value STORM_FN result();
+			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> to);
 		};
 
 	}

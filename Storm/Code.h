@@ -92,7 +92,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// The 'generate' function will be called when code needs to be updated.
-		LazyCode(const Fn<code::Listing, void> &generate);
+		LazyCode(const Fn<CodeGen *, void> &generate);
 
 		// Dtor.
 		~LazyCode();
@@ -106,7 +106,7 @@ namespace storm {
 		code::Binary *code;
 
 		// Generate code using this function.
-		Fn<code::Listing, void> load;
+		Fn<CodeGen *, void> load;
 
 		// Code loaded?
 		bool loaded;
@@ -137,11 +137,11 @@ namespace storm {
 		STORM_CTOR TmpLazyCode();
 
 		// Called when we need to load code. Override in Storm.
-		virtual wrap::Listing *STORM_FN load();
+		virtual CodeGen *STORM_FN load();
 
 	private:
 		// Adapter fn for 'load'.
-		code::Listing loadCode();
+		CodeGen *loadCode();
 	};
 
 
@@ -192,7 +192,7 @@ namespace storm {
 		Fn<void, InlinedParams> generate;
 
 		// Generate non-inline version as well.
-		code::Listing generatePtr();
+		CodeGen *generatePtr();
 	};
 
 	/**

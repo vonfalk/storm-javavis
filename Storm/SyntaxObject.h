@@ -1,5 +1,6 @@
 #pragma once
-#include "Lib/Object.h"
+#include "Lib/TObject.h"
+#include "Thread.h"
 #include "SrcPos.h"
 
 namespace storm {
@@ -9,7 +10,7 @@ namespace storm {
 	 * Object that all objects used in syntax has to be derived from. Contains
 	 * an additional SrcPos that is automatically set by the framework.
 	 */
-	class SObject : public Object {
+	class SObject : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
 		STORM_CTOR SObject();

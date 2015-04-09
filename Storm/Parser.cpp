@@ -466,6 +466,17 @@ namespace storm {
 		return transform(params);
 	}
 
+	TObject *Parser::transformT(Par<ArrayP<TObject>> p) {
+		vector<Object *> params(p->count());
+		for (nat i = 0; i < p->count(); i++)
+			params[i] = p->at(i).borrow();
+
+		Auto<Object> o = transform(params);
+		if (!dynamic_cast<TObject *>(o.borrow()))
+			throw InternalError(L"Expected a TObject while transforming syntax.");
+		return (TObject *)o.ret();
+	}
+
 	/**
 	 * State.
 	 */

@@ -8,7 +8,7 @@ DELIMITER => void : "[ \n\r\t]*";
 
 Number => v : "[0-9]+" v;
 
-BfFile => BfFnDef(space, code) : Number space, BfRoot code;
+BfFile => BfExpr(space, code) : Number space, BfRoot code;
 
 BfComment => void : "[^<>,\.\+\-\[\]]*";
 BfRoot => Array<BfToken>() : ( BfToken -> push - BfComment )*;

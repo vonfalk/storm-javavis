@@ -42,7 +42,7 @@ namespace storm {
 			SrcPos pos;
 
 			// Generate code.
-			code::Listing generateCode();
+			CodeGen *generateCode();
 
 			// Parse.
 			CtorBody *parse();
@@ -111,10 +111,10 @@ namespace storm {
 			STORM_CTOR SuperCall(Par<CtorBody> block, Par<Actual> params, Par<ArrayP<Initializer>> init);
 
 			// Result.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Code.
-			virtual void code(Par<CodeGen> s, Par<CodeResult> r);
+			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> r);
 
 		private:
 			// Member of.

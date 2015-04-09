@@ -555,7 +555,10 @@ namespace storm {
 								const String &name, const vector<Value> &params,
 								void *ptr) {
 		void *vtable = member->vtable.baseVTable();
-		void *plain = code::deVirtualize(ptr, vtable);
+		void *plain = null;
+
+		if (member->flags & typeClass)
+			plain = code::deVirtualize(ptr, vtable);
 
 		Function *fn = CREATE(Function, e, result, name, params);
 		if (plain) {

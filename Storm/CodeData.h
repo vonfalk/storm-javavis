@@ -6,6 +6,7 @@
 #include "Thread.h"
 
 namespace storm {
+	STORM_PKG(core.asm);
 
 	/**
 	 * Data segments appended to the code.

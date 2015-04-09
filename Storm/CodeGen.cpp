@@ -36,6 +36,10 @@ namespace storm {
 		return o;
 	}
 
+	void CodeGen::output(wostream &to) const {
+		to << runOn << endl << code::Value(block.v) << l;
+	}
+
 	/**
 	 * Variable info.
 	 */
