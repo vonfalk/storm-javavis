@@ -25,10 +25,10 @@ namespace storm {
 			void makeAsync();
 
 			// Result type.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Generate code.
-			virtual void code(Par<CodeGen> s, Par<CodeResult> to);
+			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
 
 		protected:
 			virtual void output(wostream &to) const;
@@ -61,10 +61,10 @@ namespace storm {
 			STORM_CTOR CtorCall(Par<Function> ctor, Par<Actual> params);
 
 			// Result type.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Generate code.
-			virtual void code(Par<CodeGen> s, Par<CodeResult> to);
+			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
 
 		protected:
 			virtual void output(wostream &to) const;
@@ -101,13 +101,35 @@ namespace storm {
 			STORM_CTOR LocalVarAccess(Par<LocalVar> var);
 
 			// Result type.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Generate code.
-			virtual void code(Par<CodeGen> s, Par<CodeResult> to);
+			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
 
 			// Variable to access.
 			Auto<LocalVar> var;
+
+		protected:
+			virtual void output(wostream &to) const;
+		};
+
+		/**
+		 * Get a local variable (bare-bone wrapper for interfacing with other languages).
+		 */
+		class BareVarAccess : public Expr {
+			STORM_CLASS;
+		public:
+			STORM_CTOR BareVarAccess(Value type, wrap::Variable var);
+
+			// Result.
+			virtual Value STORM_FN result();
+
+			// Generate code.
+			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
+
+			// Type and variable.
+			Value type;
+			wrap::Variable var;
 
 		protected:
 			virtual void output(wostream &to) const;
@@ -123,10 +145,14 @@ namespace storm {
 			STORM_CTOR MemberVarAccess(Par<Expr> member, Par<TypeVar> var);
 
 			// Result type.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Generate code.
-			virtual void code(Par<CodeGen> s, Par<CodeResult> to);
+			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
+
+		protected:
+			// Output.
+			virtual void output(wostream &to) const;
 
 		private:
 			// Member in which the variable is.
@@ -155,10 +181,10 @@ namespace storm {
 			STORM_CTOR NamedThreadAccess(Par<NamedThread> thread);
 
 			// Result type.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Generate code.
-			virtual void code(Par<CodeGen> s, Par<CodeResult> to);
+			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
 
 		private:
 			// Which thread?
@@ -175,10 +201,10 @@ namespace storm {
 			STORM_CTOR ClassAssign(Par<Expr> to, Par<Expr> value);
 
 			// Result type.
-			virtual Value result();
+			virtual Value STORM_FN result();
 
 			// Generate code.
-			virtual void code(Par<CodeGen> s, Par<CodeResult> to);
+			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
 
 		private:
 			Auto<Expr> to, value;

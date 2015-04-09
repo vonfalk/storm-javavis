@@ -281,6 +281,45 @@ namespace storm {
 		to << var->name;
 	}
 
+	/**
+	 * Bare local variable.
+	 */
+	bs::BareVarAccess::BareVarAccess(Value type, wrap::Variable var) : type(type), var(var) {}
+
+	Value bs::BareVarAccess::result() {
+		return type;
+	}
+
+	void bs::BareVarAccess::code(Par<CodeGen> s, Par<CodeResult> to) {
+		using namespace code;
+
+		if (!to->needed())
+			return;
+
+		if (to->type().ref && !type.ref) {
+			VarInfo v = to->location(s);
+			s->to << lea(v.var(), var.v);
+			v.created(s);
+		} else if (!to->suggest(s, var.v)) {
+			VarInfo v = to->location(s);
+			if (type.isValue()) {
+				s->to << lea(ptrA, var.v);
+				s->to << lea(ptrC, v.var());
+				s->to << fnParam(ptrC);
+				s->to << fnParam(ptrA);
+				s->to << fnCall(type.copyCtor(), Size());
+			} else {
+				s->to << mov(v.var(), var.v);
+				if (type.refcounted())
+					s->to << code::addRef(v.var());
+			}
+			v.created(s);
+		}
+	}
+
+	void bs::BareVarAccess::output(wostream &to) const {
+		to << type << L"<bare>" << code::Value(var.v);
+	}
 
 	/**
 	 * Member variable.
@@ -346,6 +385,7 @@ namespace storm {
 			s->to << add(ptrA, intPtrConst(var->offset()));
 			s->to << mov(result.var(), ptrA);
 		} else if (var->varType.isValue()) {
+			s->to << add(ptrA, intPtrConst(var->offset()));
 			s->to << lea(ptrC, result.var());
 			s->to << fnParam(ptrC);
 			s->to << fnParam(ptrA);
@@ -356,6 +396,10 @@ namespace storm {
 				s->to << code::addRef(result.var());
 		}
 		result.created(s);
+	}
+
+	void bs::MemberVarAccess::output(wostream &to) const {
+		to << member << L"." << var->name;
 	}
 
 
