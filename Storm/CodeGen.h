@@ -99,7 +99,7 @@ namespace storm {
 		VarInfo location(Par<CodeGen> s);
 
 		// Get the location of the result, even if it is not needed by the creator.
-		VarInfo safeLocation(Par<CodeGen> s);
+		VarInfo safeLocation(Par<CodeGen> s, const Value &t);
 
 		// Suggest a location. Returns true if it should be used. Otherwise, store the value in
 		// whatever location is returned by 'location' instead.
@@ -140,7 +140,7 @@ namespace storm {
 
 	// Create an object on the heap. Store it in variable 'to'. Only work for heap-allocated objects.
 	// TODO: Expose to Storm!
-	void allocObject(Par<CodeGen> s, Function *ctor, vector<code::Value> params, code::Variable to);
-	void allocObject(code::Listing &l, code::Block b, Function *ctor, vector<code::Value> params, code::Variable to);
+	void allocObject(Par<CodeGen> s, Par<Function> ctor, vector<code::Value> params, code::Variable to);
+	void allocObject(code::Listing &l, code::Block b, Par<Function> ctor, vector<code::Value> params, code::Variable to);
 
 }

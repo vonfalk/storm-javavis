@@ -31,29 +31,29 @@ namespace storm {
 		}
 	}
 
-	void bs::If::blockCode(const GenState &state, GenResult &r) {
+	void bs::If::blockCode(Par<CodeGen> state, Par<CodeResult> r) {
 		using namespace code;
 
-		GenResult condResult(Value::stdBool(engine()), state.block);
+		Auto<CodeResult> condResult = CREATE(CodeResult, this, Value::stdBool(engine()), state->block);
 		condition->code(state, condResult);
 
-		Label lblElse = state.to.label();
-		Label lblDone = state.to.label();
+		Label lblElse = state->to.label();
+		Label lblDone = state->to.label();
 
-		state.to << cmp(condResult.location(state).var(), byteConst(0));
-		state.to << jmp(lblElse, ifEqual);
+		state->to << cmp(condResult->location(state).var(), byteConst(0));
+		state->to << jmp(lblElse, ifEqual);
 
 		trueCode->code(state, r);
 
 		if (falseCode) {
-			state.to << jmp(lblDone);
-			state.to << lblElse;
+			state->to << jmp(lblDone);
+			state->to << lblElse;
 
 			falseCode->code(state, r);
 
-			state.to << lblDone;
+			state->to << lblDone;
 		} else {
-			state.to << lblElse;
+			state->to << lblElse;
 		}
 	}
 
@@ -113,55 +113,55 @@ namespace storm {
 							L"the one specified (" + target->identifier() + L").");
 	}
 
-	void bs::IfAs::blockCode(const GenState &state, GenResult &r) {
+	void bs::IfAs::blockCode(Par<CodeGen> state, Par<CodeResult> r) {
 		using namespace code;
 
 		validate();
 
 		Value eResult = expression->result();
-		GenResult expr(expression->result(), state.block);
+		Auto<CodeResult> expr = CREATE(CodeResult, this, expression->result(), state->block);
 		expression->code(state, expr);
-		Variable exprVar = expr.location(state).var();
+		Variable exprVar = expr->location(state).var();
 
-		Label lblElse = state.to.label();
-		Label lblDone = state.to.label();
+		Label lblElse = state->to.label();
+		Label lblDone = state->to.label();
 
 		if (eResult.ref) {
-			state.to << mov(ptrA, exprVar);
-			state.to << mov(ptrA, ptrRel(ptrA));
-			state.to << fnParam(ptrA);
+			state->to << mov(ptrA, exprVar);
+			state->to << mov(ptrA, ptrRel(ptrA));
+			state->to << fnParam(ptrA);
 		} else {
-			state.to << fnParam(exprVar);
+			state->to << fnParam(exprVar);
 		}
-		state.to << fnParam(target->typeRef);
-		state.to << fnCall(engine().fnRefs.asFn, Size::sByte);
-		state.to << cmp(al, byteConst(0));
-		state.to << jmp(lblElse, ifEqual);
+		state->to << fnParam(target->typeRef);
+		state->to << fnCall(engine().fnRefs.asFn, Size::sByte);
+		state->to << cmp(al, byteConst(0));
+		state->to << jmp(lblElse, ifEqual);
 
 		if (created) {
 			// We cheat and create the variable here. It does not hurt, since it is not visible
 			// in the false branch anyway.
 			created->create(state);
 			if (eResult.ref) {
-				state.to << mov(ptrA, exprVar);
-				state.to << mov(created->var.var(), ptrRel(ptrA));
+				state->to << mov(ptrA, exprVar);
+				state->to << mov(created->var.var(), ptrRel(ptrA));
 			} else {
-				state.to << mov(created->var.var(), exprVar);
+				state->to << mov(created->var.var(), exprVar);
 			}
-			state.to << code::addRef(created->var.var());
+			state->to << code::addRef(created->var.var());
 			created->var.created(state);
 		}
 
 		trueCode->code(state, r);
 		if (falseCode) {
-			state.to << jmp(lblDone);
-			state.to << lblElse;
+			state->to << jmp(lblDone);
+			state->to << lblElse;
 
 			falseCode->code(state, r);
 
-			state.to << lblDone;
+			state->to << lblDone;
 		} else {
-			state.to << lblElse;
+			state->to << lblElse;
 		}
 	}
 
@@ -180,7 +180,7 @@ namespace storm {
 		return expr->result();
 	}
 
-	void bs::IfAsTrue::blockCode(const GenState &state, GenResult &to) {
+	void bs::IfAsTrue::blockCode(Par<CodeGen> state, Par<CodeResult> to) {
 		expr->code(state, to);
 	}
 

@@ -7,90 +7,90 @@
 namespace storm {
 
 	static void intAdd(InlinedParams p) {
-		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var();
-			p.state.to << code::mov(result, p.params[0]);
-			p.state.to << code::add(result, p.params[1]);
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << code::mov(result, p.params[0]);
+			p.state->to << code::add(result, p.params[1]);
 		}
 	}
 
 	static void intPrefixInc(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::add(intRel(code::ptrA), code::intConst(1));
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::add(intRel(code::ptrA), code::intConst(1));
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void intPostfixInc(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
-		p.state.to << code::add(intRel(code::ptrA), code::intConst(1));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::add(intRel(code::ptrA), code::intConst(1));
 	}
 
 	static void intPrefixDec(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::sub(intRel(code::ptrA), code::intConst(1));
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::sub(intRel(code::ptrA), code::intConst(1));
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void intPostfixDec(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
-		p.state.to << code::sub(intRel(code::ptrA), code::intConst(1));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::sub(intRel(code::ptrA), code::intConst(1));
 	}
 
 	static void intSub(InlinedParams p) {
-		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var();
-			p.state.to << code::mov(result, p.params[0]);
-			p.state.to << code::sub(result, p.params[1]);
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << code::mov(result, p.params[0]);
+			p.state->to << code::sub(result, p.params[1]);
 		}
 	}
 
 	static void intMul(InlinedParams p) {
-		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var();
-			p.state.to << code::mov(result, p.params[0]);
-			p.state.to << code::mul(result, p.params[1]);
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << code::mov(result, p.params[0]);
+			p.state->to << code::mul(result, p.params[1]);
 		}
 	}
 
 	template <code::CondFlag f>
 	static void intCmp(InlinedParams p) {
-		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var();
-			p.state.to << code::cmp(p.params[0], p.params[1]);
-			p.state.to << code::setCond(result, f);
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << code::cmp(p.params[0], p.params[1]);
+			p.state->to << code::setCond(result, f);
 		}
 	}
 
 	static void intAssign(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::mov(code::intRel(code::ptrA), p.params[1]);
-		if (p.result.needed()) {
-			if (p.result.type.ref) {
-				if (!p.result.suggest(p.state, p.params[0]))
-					p.state.to << code::mov(p.result.location(p.state).var(), code::ptrA);
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::mov(code::intRel(code::ptrA), p.params[1]);
+		if (p.result->needed()) {
+			if (p.result->type().ref) {
+				if (!p.result->suggest(p.state, p.params[0]))
+					p.state->to << code::mov(p.result->location(p.state).var(), code::ptrA);
 			} else {
-				if (!p.result.suggest(p.state, p.params[1]))
-					p.state.to << code::mov(p.result.location(p.state).var(), p.params[1]);
+				if (!p.result->suggest(p.state, p.params[1]))
+					p.state->to << code::mov(p.result->location(p.state).var(), p.params[1]);
 			}
 		}
 	}
 
 	static void intCopyCtor(InlinedParams p) {
-		p.state.to << code::mov(code::ptrC, p.params[1]);
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::mov(code::intRel(code::ptrA), code::intRel(code::ptrC));
+		p.state->to << code::mov(code::ptrC, p.params[1]);
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::mov(code::intRel(code::ptrA), code::intRel(code::ptrC));
 	}
 
 
 	static void intToNat(InlinedParams p) {
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), p.params[0]);
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), p.params[0]);
 	}
 
 	IntType::IntType() : Type(L"Int", typeValue | typeFinal, Size::sInt, null) {}
@@ -136,81 +136,81 @@ namespace storm {
 	}
 
 	static void natAdd(InlinedParams p) {
-		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var();
-			p.state.to << code::mov(result, p.params[0]);
-			p.state.to << code::add(result, p.params[1]);
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << code::mov(result, p.params[0]);
+			p.state->to << code::add(result, p.params[1]);
 		}
 	}
 
 	static void natPrefixInc(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::add(intRel(code::ptrA), code::natConst(1));
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::add(intRel(code::ptrA), code::natConst(1));
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void natPostfixInc(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
-		p.state.to << code::add(intRel(code::ptrA), code::natConst(1));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::add(intRel(code::ptrA), code::natConst(1));
 	}
 
 	static void natPrefixDec(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::sub(intRel(code::ptrA), code::natConst(1));
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::sub(intRel(code::ptrA), code::natConst(1));
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void natPostfixDec(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
-		p.state.to << code::sub(intRel(code::ptrA), code::natConst(1));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::sub(intRel(code::ptrA), code::natConst(1));
 	}
 
 	static void natSub(InlinedParams p) {
-		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var();
-			p.state.to << code::mov(result, p.params[0]);
-			p.state.to << code::sub(result, p.params[1]);
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << code::mov(result, p.params[0]);
+			p.state->to << code::sub(result, p.params[1]);
 		}
 	}
 
 	template <code::CondFlag f>
 	static void natCmp(InlinedParams p) {
-		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var();
-			p.state.to << code::cmp(p.params[0], p.params[1]);
-			p.state.to << code::setCond(result, f);
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << code::cmp(p.params[0], p.params[1]);
+			p.state->to << code::setCond(result, f);
 		}
 	}
 
 	static void natAssign(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::mov(code::intRel(code::ptrA), p.params[1]);
-		if (p.result.needed()) {
-			if (p.result.type.ref) {
-				if (!p.result.suggest(p.state, p.params[0]))
-					p.state.to << code::mov(p.result.location(p.state).var(), code::ptrA);
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::mov(code::intRel(code::ptrA), p.params[1]);
+		if (p.result->needed()) {
+			if (p.result->type().ref) {
+				if (!p.result->suggest(p.state, p.params[0]))
+					p.state->to << code::mov(p.result->location(p.state).var(), code::ptrA);
 			} else {
-				if (!p.result.suggest(p.state, p.params[1]))
-					p.state.to << code::mov(p.result.location(p.state).var(), p.params[1]);
+				if (!p.result->suggest(p.state, p.params[1]))
+					p.state->to << code::mov(p.result->location(p.state).var(), p.params[1]);
 			}
 		}
 	}
 
 	static void natCopyCtor(InlinedParams p) {
-		p.state.to << code::mov(code::ptrC, p.params[1]);
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::mov(code::intRel(code::ptrA), code::intRel(code::ptrC));
+		p.state->to << code::mov(code::ptrC, p.params[1]);
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::mov(code::intRel(code::ptrA), code::intRel(code::ptrC));
 	}
 
 	static void natToInt(InlinedParams p) {
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), p.params[0]);
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), p.params[0]);
 	}
 
 	NatType::NatType() : Type(L"Nat", typeValue | typeFinal, Size::sNat, null) {}
@@ -255,76 +255,76 @@ namespace storm {
 	}
 
 	static void byteAdd(InlinedParams p) {
-		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var();
-			p.state.to << code::mov(result, p.params[0]);
-			p.state.to << code::add(result, p.params[1]);
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << code::mov(result, p.params[0]);
+			p.state->to << code::add(result, p.params[1]);
 		}
 	}
 
 	static void bytePrefixInc(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::add(intRel(code::ptrA), code::byteConst(1));
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::add(intRel(code::ptrA), code::byteConst(1));
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void bytePostfixInc(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
-		p.state.to << code::add(byteRel(code::ptrA), code::byteConst(1));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::add(byteRel(code::ptrA), code::byteConst(1));
 	}
 
 	static void bytePrefixDec(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::sub(intRel(code::ptrA), code::byteConst(1));
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::sub(intRel(code::ptrA), code::byteConst(1));
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
 	}
 
 	static void bytePostfixDec(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		if (p.result.needed())
-			p.state.to << code::mov(p.result.location(p.state).var(), intRel(code::ptrA));
-		p.state.to << code::sub(byteRel(code::ptrA), code::byteConst(1));
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		if (p.result->needed())
+			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+		p.state->to << code::sub(byteRel(code::ptrA), code::byteConst(1));
 	}
 
 	static void byteSub(InlinedParams p) {
-		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var();
-			p.state.to << code::mov(result, p.params[0]);
-			p.state.to << code::sub(result, p.params[1]);
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << code::mov(result, p.params[0]);
+			p.state->to << code::sub(result, p.params[1]);
 		}
 	}
 
 	template <code::CondFlag f>
 	static void byteCmp(InlinedParams p) {
-		if (p.result.needed()) {
-			code::Value result = p.result.location(p.state).var();
-			p.state.to << code::cmp(p.params[0], p.params[1]);
-			p.state.to << code::setCond(result, f);
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << code::cmp(p.params[0], p.params[1]);
+			p.state->to << code::setCond(result, f);
 		}
 	}
 
 	static void byteAssign(InlinedParams p) {
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::mov(code::byteRel(code::ptrA), p.params[1]);
-		if (p.result.needed()) {
-			if (p.result.type.ref) {
-				if (!p.result.suggest(p.state, p.params[0]))
-					p.state.to << code::mov(p.result.location(p.state).var(), code::ptrA);
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::mov(code::byteRel(code::ptrA), p.params[1]);
+		if (p.result->needed()) {
+			if (p.result->type().ref) {
+				if (!p.result->suggest(p.state, p.params[0]))
+					p.state->to << code::mov(p.result->location(p.state).var(), code::ptrA);
 			} else {
-				if (!p.result.suggest(p.state, p.params[1]))
-					p.state.to << code::mov(p.result.location(p.state).var(), p.params[1]);
+				if (!p.result->suggest(p.state, p.params[1]))
+					p.state->to << code::mov(p.result->location(p.state).var(), p.params[1]);
 			}
 		}
 	}
 
 	static void byteCopyCtor(InlinedParams p) {
-		p.state.to << code::mov(code::ptrC, p.params[1]);
-		p.state.to << code::mov(code::ptrA, p.params[0]);
-		p.state.to << code::mov(code::byteRel(code::ptrA), code::byteRel(code::ptrC));
+		p.state->to << code::mov(code::ptrC, p.params[1]);
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::mov(code::byteRel(code::ptrA), code::byteRel(code::ptrC));
 	}
 
 	ByteType::ByteType() : Type(L"Byte", typeValue | typeFinal, Size::sByte, null) {}

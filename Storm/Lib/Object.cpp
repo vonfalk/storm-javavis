@@ -9,10 +9,12 @@
 
 // DEBUG_REFS print references, DEBUG_LEAKS tracks live
 // objects to output a list of the remaining objects at
-// program termination. It also tracks use (ie addRef/release)
-// of free'd objects.
+// program termination. DEBUG_USE checks at each addRef
+// and release call so that the pointer is valid. Requires
+// DEBUG_LEAKS.
 // #define DEBUG_REFS
-// #define DEBUG_LEAKS
+#define DEBUG_LEAKS
+#define DEBUG_PTRS
 
 #endif
 
@@ -110,7 +112,7 @@ namespace storm {
 	}
 
 	void checkLive(void *o) {
-#ifdef DEBUG_LEAKS
+#ifdef DEBUG_USE
 		Lock::L z(liveLock);
 		if (live.count((Object *)o) == 0) {
 			PLN("Access to dead object: " << o);

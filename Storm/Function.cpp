@@ -60,23 +60,23 @@ namespace storm {
 		return *codeRef;
 	}
 
-	code::Variable Function::findThread(const GenState &s, const Actuals &params) {
+	code::Variable Function::findThread(Par<CodeGen> s, const Actuals &params) {
 		using namespace code;
 
 		RunOn on = runOn();
 		assert(on.state != RunOn::any, L"Only use 'findThread' on functions which 'runOn()' something other than any.");
 
-		Variable r = s.frame.createPtrVar(s.block);
+		Variable r = s->frame.createPtrVar(s->block.v);
 
 		switch (on.state) {
 		case RunOn::runtime:
 			// Should be a this-ptr. Does not work well for constructors.
 			assert(name != Type::CTOR, L"Please specify for your constructor semantics!");
-			s.to << mov(ptrA, params[0]);
-			s.to << mov(r, ptrRel(ptrA, TObject::threadOffset()));
+			s->to << mov(ptrA, params[0]);
+			s->to << mov(r, ptrRel(ptrA, TObject::threadOffset()));
 			break;
 		case RunOn::named:
-			s.to << mov(r, on.thread->ref());
+			s->to << mov(r, on.thread->ref());
 			break;
 		default:
 			assert(false, L"Unknown state.");
@@ -86,7 +86,7 @@ namespace storm {
 		return r;
 	}
 
-	void Function::localCall(const GenState &to, const Actuals &params, GenResult &res, bool useLookup) {
+	void Function::localCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> res, bool useLookup) {
 		initRefs();
 		assert(params.size() == this->params.size());
 
@@ -101,16 +101,16 @@ namespace storm {
 			localCall(to, params, res, useLookup ? this->ref() : directRef());
 	}
 
-	void Function::addParam(const GenState &to, const Actuals &params, nat id) {
+	void Function::addParam(Par<CodeGen> to, const Actuals &params, nat id) {
 		const Value &p = this->params[id];
 		if (!p.ref && p.isValue()) {
-			to.to << fnParam(params[id].variable(), p.copyCtor());
+			to->to << fnParam(params[id].variable(), p.copyCtor());
 		} else {
-			to.to << fnParam(params[id]);
+			to->to << fnParam(params[id]);
 		}
 	}
 
-	void Function::addParams(const GenState &to, const Actuals &params, const code::Variable &resultIn) {
+	void Function::addParams(Par<CodeGen> to, const Actuals &params, const code::Variable &resultIn) {
 		using namespace code;
 
 		// Do we need a parameter for the result?
@@ -127,8 +127,8 @@ namespace storm {
 				start = 1;
 			}
 
-			to.to << lea(ptrA, ptrRel(resultIn));
-			to.to << fnParam(ptrA);
+			to->to << lea(ptrA, ptrRel(resultIn));
+			to->to << fnParam(ptrA);
 		}
 
 		for (nat i = start; i < params.size(); i++) {
@@ -137,23 +137,23 @@ namespace storm {
 		}
 	}
 
-	void Function::localCall(const GenState &to, const Actuals &params, GenResult &res, code::Ref ref) {
+	void Function::localCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> res, code::Ref ref) {
 		using namespace code;
 
 		if (result == Value()) {
 			addParams(to, params, code::Variable());
 
-			to.to << fnCall(ref, Size());
+			to->to << fnCall(ref, Size());
 		} else {
-			VarInfo result = res.safeLocation(to, this->result);
+			VarInfo result = res->safeLocation(to, this->result);
 			addParams(to, params, result.var());
 
 			if (this->result.returnInReg()) {
-				to.to << fnCall(ref, result.var().size());
-				to.to << mov(result.var(), asSize(ptrA, result.var().size()));
+				to->to << fnCall(ref, result.var().size());
+				to->to << mov(result.var(), asSize(ptrA, result.var().size()));
 			} else {
 				// Ignore return value...
-				to.to << fnCall(ref, Size());
+				to->to << fnCall(ref, Size());
 			}
 
 			result.created(to);
@@ -185,89 +185,89 @@ namespace storm {
 	}
 
 	// Add a single parameter of type 'v', value in 'a' to 'to'.
-	static void addFutureParam(Engine &e, const GenState &z, code::Variable to, const Value &v, const code::Value &a) {
+	static void addFutureParam(Engine &e, Par<CodeGen> z, code::Variable to, const Value &v, const code::Value &a) {
 		using namespace code;
 
 		if (v.isClass()) {
 			// Deep copy the object.
-			Variable clone = z.frame.createPtrVar(z.block, e.fnRefs.release);
-			z.to << fnParam(a);
-			z.to << fnCall(stdCloneFn(e, v), Size::sPtr);
-			z.to << mov(clone, ptrA);
+			Variable clone = z->frame.createPtrVar(z->block.v, e.fnRefs.release);
+			z->to << fnParam(a);
+			z->to << fnCall(stdCloneFn(e, v), Size::sPtr);
+			z->to << mov(clone, ptrA);
 
-			z.to << lea(ptrC, to);
-			z.to << lea(ptrA, clone);
-			z.to << fnParam(ptrC);
-			z.to << fnParam(e.fnRefs.copyRefPtr);
-			z.to << fnParam(e.fnRefs.releasePtr);
-			z.to << fnParam(natConst(v.size()));
-			z.to << fnParam(ptrA);
-			z.to << fnCall(e.fnRefs.fnParamsAdd, Size());
+			z->to << lea(ptrC, to);
+			z->to << lea(ptrA, clone);
+			z->to << fnParam(ptrC);
+			z->to << fnParam(e.fnRefs.copyRefPtr);
+			z->to << fnParam(e.fnRefs.releasePtr);
+			z->to << fnParam(natConst(v.size()));
+			z->to << fnParam(ptrA);
+			z->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		} else if (v.ref || v.isBuiltIn()) {
 			// No need for copy ctors!
 			if (v.ref) {
 				TODO(L"Should references be allowed in these function calls?");
 			}
-			z.to << lea(ptrC, to);
-			z.to << fnParam(ptrC);
-			z.to << fnParam(intPtrConst(0));
-			z.to << fnParam(intPtrConst(0));
-			z.to << fnParam(natConst(v.size()));
-			z.to << fnParam(a);
-			z.to << fnCall(e.fnRefs.fnParamsAdd, Size());
+			z->to << lea(ptrC, to);
+			z->to << fnParam(ptrC);
+			z->to << fnParam(intPtrConst(0));
+			z->to << fnParam(intPtrConst(0));
+			z->to << fnParam(natConst(v.size()));
+			z->to << fnParam(a);
+			z->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		} else {
 			// It is a value, use the stdClone.
 			code::Value dtor = v.destructor();
 			if (dtor.empty())
 				dtor = intPtrConst(0);
-			z.to << lea(ptrC, to);
-			z.to << lea(ptrA, a);
-			z.to << fnParam(ptrC);
-			z.to << fnParam(stdCloneFn(e, v));
-			z.to << fnParam(dtor);
-			z.to << fnParam(natConst(v.size()));
-			z.to << fnParam(ptrA);
-			z.to << fnCall(e.fnRefs.fnParamsAdd, Size());
+			z->to << lea(ptrC, to);
+			z->to << lea(ptrA, a);
+			z->to << fnParam(ptrC);
+			z->to << fnParam(stdCloneFn(e, v));
+			z->to << fnParam(dtor);
+			z->to << fnParam(natConst(v.size()));
+			z->to << fnParam(ptrA);
+			z->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		}
 	}
 
 	// Add the this-parameter of the first parameter.
-	static void addCtorThis(Engine &e, const GenState &z, code::Variable to, const Value &v, const code::Value &a) {
+	static void addCtorThis(Engine &e, Par<CodeGen> z, code::Variable to, const Value &v, const code::Value &a) {
 		using namespace code;
 
 		assert(v.size() == Size::sPtr);
 
-		z.to << lea(ptrC, to);
-		z.to << fnParam(ptrC);
-		z.to << fnParam(intPtrConst(0));
-		z.to << fnParam(intPtrConst(0));
-		z.to << fnParam(natConst(Size::sPtr));
-		z.to << fnParam(a);
-		z.to << fnCall(e.fnRefs.fnParamsAdd, Size());
+		z->to << lea(ptrC, to);
+		z->to << fnParam(ptrC);
+		z->to << fnParam(intPtrConst(0));
+		z->to << fnParam(intPtrConst(0));
+		z->to << fnParam(natConst(Size::sPtr));
+		z->to << fnParam(a);
+		z->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 	}
 
-	Function::PrepareResult Function::prepareThreadCall(const GenState &to, const Actuals &params) {
+	Function::PrepareResult Function::prepareThreadCall(Par<CodeGen> to, const Actuals &params) {
 		using namespace code;
 
 		Engine &e = engine();
 
 		// Create a UThreadData object.
-		Variable data = to.frame.createPtrVar(to.block, e.fnRefs.abortSpawn, freeOnException);
-		to.to << fnCall(e.fnRefs.spawnLater, Size::sPtr);
-		to.to << mov(data, ptrA);
+		Variable data = to->frame.createPtrVar(to->block.v, e.fnRefs.abortSpawn, freeOnException);
+		to->to << fnCall(e.fnRefs.spawnLater, Size::sPtr);
+		to->to << mov(data, ptrA);
 
 		// Find out the pointer to the data and create FnParams object.
-		to.to << fnParam(ptrA);
-		to.to << fnCall(e.fnRefs.spawnParam, Size::sPtr);
-		Variable fnParams = to.frame.createVariable(to.block,
+		to->to << fnParam(ptrA);
+		to->to << fnCall(e.fnRefs.spawnParam, Size::sPtr);
+		Variable fnParams = to->frame.createVariable(to->block.v,
 													FnParams::classSize(),
 													e.fnRefs.fnParamsDtor,
 													freeOnBoth | freePtr);
 		// Call the constructor of FnParams
-		to.to << lea(ptrC, fnParams);
-		to.to << fnParam(ptrC);
-		to.to << fnParam(ptrA);
-		to.to << fnCall(e.fnRefs.fnParamsCtor, Size());
+		to->to << lea(ptrC, fnParams);
+		to->to << fnParam(ptrC);
+		to->to << fnParam(ptrA);
+		to->to << fnCall(e.fnRefs.fnParamsCtor, Size());
 
 		// Add all parameters.
 		for (nat i = 0; i < params.size(); i++) {
@@ -279,9 +279,9 @@ namespace storm {
 
 		// Set the thread data to null, so that we do not double-free it if
 		// the call returns with an exception.
-		Variable dataNoFree = to.frame.createPtrVar(to.block);
-		to.to << mov(dataNoFree, data);
-		to.to << mov(data, intPtrConst(0));
+		Variable dataNoFree = to->frame.createPtrVar(to->block.v);
+		to->to << mov(dataNoFree, data);
+		to->to << mov(data, intPtrConst(0));
 
 		PrepareResult r = { fnParams, dataNoFree };
 		return r;
@@ -291,13 +291,13 @@ namespace storm {
 		return code::byteConst(v ? 1 : 0);
 	}
 
-	void Function::threadCall(const GenState &to, const Actuals &params, GenResult &res, const code::Value &thread) {
+	void Function::threadCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> res, const code::Value &thread) {
 		using namespace code;
 
 		Engine &e = engine();
-		Block b = to.frame.createChild(to.frame.last(to.block));
-		to.to << begin(b);
-		GenState sub = to.child(b);
+		Block b = to->frame.createChild(to->frame.last(to->block.v));
+		to->to << begin(b);
+		Auto<CodeGen> sub = to->child(b);
 
 		PrepareResult r = prepareThreadCall(sub, params);
 
@@ -305,10 +305,10 @@ namespace storm {
 		VarInfo resultPos;
 		if (this->result == Value()) {
 			// null-pointer.
-			to.to << mov(ptrB, intPtrConst(0));
+			to->to << mov(ptrB, intPtrConst(0));
 		} else {
-			resultPos = res.safeLocation(to, this->result);
-			to.to << lea(ptrB, resultPos.var());
+			resultPos = res->safeLocation(to, this->result);
+			to->to << lea(ptrB, resultPos.var());
 		}
 
 		const RefSource *fn = threadThunk();
@@ -319,34 +319,34 @@ namespace storm {
 		Variable returnType = createBasicTypeInfo(to, this->result);
 
 		// Spawn the thread!
-		to.to << lea(ptrA, r.params);
-		to.to << lea(ptrC, returnType);
-		to.to << fnParam(*fn);
-		to.to << fnParam(toVal(isMember()));
-		to.to << fnParam(ptrA);
-		to.to << fnParam(ptrB);
-		to.to << fnParam(ptrC);
-		to.to << fnParam(thread);
-		to.to << fnParam(r.data);
-		to.to << fnCall(e.fnRefs.spawnResult, Size());
+		to->to << lea(ptrA, r.params);
+		to->to << lea(ptrC, returnType);
+		to->to << fnParam(*fn);
+		to->to << fnParam(toVal(isMember()));
+		to->to << fnParam(ptrA);
+		to->to << fnParam(ptrB);
+		to->to << fnParam(ptrC);
+		to->to << fnParam(thread);
+		to->to << fnParam(r.data);
+		to->to << fnCall(e.fnRefs.spawnResult, Size());
 
-		to.to << end(b);
+		to->to << end(b);
 		resultPos.created(to);
 	}
 
-	void Function::asyncThreadCall(const GenState &to, const Actuals &params, GenResult &result, const code::Value &t) {
+	void Function::asyncThreadCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result, const code::Value &t) {
 		using namespace code;
 
 		Engine &e = engine();
-		Block b = to.frame.createChild(to.frame.last(to.block));
-		to.to << begin(b);
+		Block b = to->frame.createChild(to->frame.last(to->block.v));
+		to->to << begin(b);
 
-		GenState sub = to.child(b);
+		Auto<CodeGen> sub = to->child(b);
 		PrepareResult r = prepareThreadCall(sub, params);
 
 		// Create the result object.
 		Type *futureT = futureType(e, this->result);
-		VarInfo resultPos = result.safeLocation(sub, Value::thisPtr(futureT));
+		VarInfo resultPos = result->safeLocation(sub, Value::thisPtr(futureT));
 		allocObject(sub, futureT->defaultCtor(), Actuals(), resultPos.var());
 		resultPos.created(sub);
 
@@ -359,18 +359,18 @@ namespace storm {
 		Variable returnType = createBasicTypeInfo(to, this->result);
 
 		// Now we're ready to spawn the thread!
-		to.to << lea(ptrA, r.params);
-		to.to << lea(ptrC, returnType);
-		to.to << fnParam(*fn);
-		to.to << fnParam(toVal(isMember()));
-		to.to << fnParam(ptrA);
-		to.to << fnParam(resultPos.var());
-		to.to << fnParam(ptrC);
-		to.to << fnParam(t);
-		to.to << fnParam(r.data);
-		to.to << fnCall(e.fnRefs.spawnFuture, Size());
+		to->to << lea(ptrA, r.params);
+		to->to << lea(ptrC, returnType);
+		to->to << fnParam(*fn);
+		to->to << fnParam(toVal(isMember()));
+		to->to << fnParam(ptrA);
+		to->to << fnParam(resultPos.var());
+		to->to << fnParam(ptrC);
+		to->to << fnParam(t);
+		to->to << fnParam(r.data);
+		to->to << fnCall(e.fnRefs.spawnFuture, Size());
 
-		to.to << end(b);
+		to->to << end(b);
 	}
 
 	code::RefSource *Function::threadThunk() {

@@ -180,7 +180,7 @@ namespace storm {
 	InlinedCode::InlinedCode(Fn<void, InlinedParams> gen)
 		: LazyCode(memberVoidFn(this, &InlinedCode::generatePtr)), generate(gen) {}
 
-	void InlinedCode::code(const GenState &state, const vector<code::Value> &params, GenResult &result) {
+	void InlinedCode::code(Par<CodeGen> state, const vector<code::Value> &params, Par<CodeResult> result) {
 		InlinedParams p = { engine(), state, params, result };
 		generate(p);
 	}
@@ -192,8 +192,8 @@ namespace storm {
 			assert(false);
 		}
 
-		Listing l;
-		CodeData data;
+		Auto<CodeGen> state = CREATE(CodeGen, this, owner->runOn());
+		Listing &l = state->to;
 
 		vector<code::Value> params;
 		for (nat i = 0; i < owner->params.size(); i++) {
@@ -203,18 +203,17 @@ namespace storm {
 
 		l << prolog();
 
-		GenState state = { l, data, owner->runOn(), l.frame, l.frame.root() };
-		GenResult result(owner->result, l.frame.root());
+		Auto<CodeResult> result = CREATE(CodeResult, this, owner->result, l.frame.root());
 		code(state, params, result);
 
 		if (owner->result != Value()) {
-			l << mov(asSize(ptrA, owner->result.size()), result.location(state).var());
+			l << mov(asSize(ptrA, owner->result.size()), result->location(state).var());
 		}
 
 		l << epilog();
 		l << ret(owner->result.size());
 
-		l << data;
+		l << *state->data;
 
 		return l;
 	}

@@ -79,12 +79,11 @@ namespace storm {
 
 		// Generate code!
 		using namespace code;
-		Listing l;
-		CodeData data;
+		Auto<CodeGen> state = CREATE(CodeGen, this, runOn());
+
+		Listing &l = state->to;
 
 		l << prolog();
-
-		GenState state = { l, data, runOn(), l.frame, l.frame.root() };
 
 		// Return value parameter (if needed).
 		Variable returnValue;
@@ -110,17 +109,16 @@ namespace storm {
 		assert(result.returnInReg() || returnValue != Variable::invalid);
 
 		if (result == Value()) {
-			GenResult r;
-
+			Auto<CodeResult> r = CREATE(CodeResult, this);
 			body->code(state, r);
 			l << epilog();
 			l << ret(Size());
 		} else if (result.returnInReg()) {
-			GenResult r(result, l.frame.root());
+			Auto<CodeResult> r = CREATE(CodeResult, this, result, l.frame.root());
 
 			body->code(state, r);
 
-			VarInfo rval = r.location(state);
+			VarInfo rval = r->location(state);
 			l << mov(asSize(ptrA, result.size()), rval.var());
 			if (result.refcounted())
 				l << code::addRef(ptrA);
@@ -128,11 +126,10 @@ namespace storm {
 			l << epilog();
 			l << ret(result.size());
 		} else {
-			GenResult r(result, l.frame.root());
-
+			Auto<CodeResult> r = CREATE(CodeResult, this, result, l.frame.root());
 			body->code(state, r);
 
-			VarInfo rval = r.location(state);
+			VarInfo rval = r->location(state);
 			l << lea(ptrA, ptrRel(rval.var()));
 			l << fnParam(returnValue);
 			l << fnParam(ptrA);
@@ -145,7 +142,7 @@ namespace storm {
 			l << ret(Size::sPtr);
 		}
 
-		l << data;
+		l << *state->data;
 
 		// PLN(identifier() << L": " << l);
 		return l;

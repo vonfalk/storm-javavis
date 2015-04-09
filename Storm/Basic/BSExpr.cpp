@@ -13,8 +13,8 @@ namespace storm {
 		return Value();
 	}
 
-	void bs::Expr::code(const GenState &to, GenResult &var) {
-		assert(!var.needed());
+	void bs::Expr::code(Par<CodeGen> to, Par<CodeResult> var) {
+		assert(!var->needed());
 	}
 
 	bs::Constant::Constant(Int v) : cType(tInt), intValue(v) {}
@@ -54,10 +54,10 @@ namespace storm {
 		}
 	}
 
-	void bs::Constant::code(const GenState &s, GenResult &r) {
+	void bs::Constant::code(Par<CodeGen> s, Par<CodeResult> r) {
 		using namespace code;
 
-		if (!r.needed())
+		if (!r->needed())
 			return;
 
 		switch (cType) {
@@ -76,35 +76,35 @@ namespace storm {
 		}
 	}
 
-	void bs::Constant::strCode(const GenState &s, GenResult &r) {
+	void bs::Constant::strCode(Par<CodeGen> s, Par<CodeResult> r) {
 		using namespace code;
 
 		Engine &e = engine();
 
-		Label data = s.to.label();
-		s.to << fnParam(Str::stormType(e)->typeRef);
-		s.to << fnParam(data);
-		s.to << fnCall(e.fnRefs.createStrFn, Size::sPtr);
-		VarInfo to = r.location(s);
-		s.to << mov(to.var(), ptrA);
+		Label data = s->to.label();
+		s->to << fnParam(Str::stormType(e)->typeRef);
+		s->to << fnParam(data);
+		s->to << fnCall(e.fnRefs.createStrFn, Size::sPtr);
+		VarInfo to = r->location(s);
+		s->to << mov(to.var(), ptrA);
 		to.created(s);
 
-		s.data.add(data, memberFn(this, &Constant::strData), this);
+		s->data->add(data, memberFn(this, &Constant::strData), this);
 	}
 
-	void bs::Constant::intCode(const GenState &s, GenResult &r) {
+	void bs::Constant::intCode(Par<CodeGen> s, Par<CodeResult> r) {
 		using namespace code;
 
-		VarInfo to = r.location(s);
-		s.to << mov(to.var(), intConst(intValue));
+		VarInfo to = r->location(s);
+		s->to << mov(to.var(), intConst(intValue));
 		to.created(s);
 	}
 
-	void bs::Constant::boolCode(const GenState &s, GenResult &r) {
+	void bs::Constant::boolCode(Par<CodeGen> s, Par<CodeResult> r) {
 		using namespace code;
 
-		VarInfo to = r.location(s);
-		s.to << mov(to.var(), byteConst(boolValue ? 1 : 0));
+		VarInfo to = r->location(s);
+		s->to << mov(to.var(), byteConst(boolValue ? 1 : 0));
 		to.created(s);
 	}
 

@@ -14,6 +14,8 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
+Replace the parameter CodeResult with a return value? Is this possible?
+
 Enable the SyntaxRules among others to be accessible from Storm.
 
 Check all classes in the compiler and consider adding a thread identifier to them.

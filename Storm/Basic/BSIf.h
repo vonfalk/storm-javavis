@@ -33,7 +33,7 @@ namespace storm {
 			virtual Value result();
 
 			// Code.
-			virtual void blockCode(const GenState &state, GenResult &r);
+			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> r);
 		};
 
 
@@ -72,7 +72,7 @@ namespace storm {
 			virtual Value result();
 
 			// Code.
-			virtual void blockCode(const GenState &state, GenResult &r);
+			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> r);
 
 		private:
 			// Overridden variable.
@@ -97,7 +97,7 @@ namespace storm {
 
 			// Generate code.
 			virtual Value result();
-			virtual void blockCode(const GenState &state, GenResult &to);
+			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> to);
 		};
 
 	}

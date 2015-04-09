@@ -22,42 +22,42 @@ namespace storm {
 		return Value();
 	}
 
-	void bs::For::blockCode(const GenState &s, GenResult &to, const code::Block &block) {
+	void bs::For::blockCode(Par<CodeGen> s, Par<CodeResult> to, const code::Block &block) {
 		using namespace code;
 
-		Label begin = s.to.label();
-		Label end = s.to.label();
-		GenState subState = s.child(block);
+		Label begin = s->to.label();
+		Label end = s->to.label();
+		Auto<CodeGen> subState = s->child(block);
 
-		s.to << begin;
-		s.to << code::begin(block);
+		s->to << begin;
+		s->to << code::begin(block);
 
 		// Put this outside the current block, so we can use it later.
-		GenResult testResult(Value::stdBool(engine()), s.block);
+		Auto<CodeResult> testResult = CREATE(CodeResult, this, Value::stdBool(engine()), s->block.v);
 		testExpr->code(subState, testResult);
-		Variable r = testResult.location(subState).var();
-		s.to << cmp(r, byteConst(0));
-		s.to << jmp(end, ifEqual);
+		Variable r = testResult->location(subState).var();
+		s->to << cmp(r, byteConst(0));
+		s->to << jmp(end, ifEqual);
 
-		Part before = s.frame.last(block);
+		Part before = s->frame.last(block);
 
-		GenResult bodyResult;
+		Auto<CodeResult> bodyResult = CREATE(CodeResult, this);
 		bodyExpr->code(subState, bodyResult);
 
-		GenResult updateResult;
+		Auto<CodeResult> updateResult = CREATE(CodeResult, this);
 		updateExpr->code(subState, updateResult);
 
 		// Make sure to end all parts that may have been created so far.
-		Part after = s.frame.next(before);
+		Part after = s->frame.next(before);
 		if (after != Part::invalid)
-			s.to << code::end(after);
+			s->to << code::end(after);
 
 		// We may not skip the 'end'.
-		s.to << end;
-		s.to << code::end(block);
+		s->to << end;
+		s->to << code::end(block);
 
-		s.to << cmp(r, byteConst(0));
-		s.to << jmp(begin, ifNotEqual);
+		s->to << cmp(r, byteConst(0));
+		s->to << jmp(begin, ifNotEqual);
 	}
 
 }

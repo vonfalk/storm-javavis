@@ -9,10 +9,10 @@ namespace storm {
 
 	namespace bs {
 
-		static void callOnThread(Par<Function> fn, const GenState &s, const Function::Actuals &actuals,
-								GenResult &to, bool lookup, bool sameObject) {
+		static void callOnThread(Par<Function> fn, Par<CodeGen> s, const Function::Actuals &actuals,
+								Par<CodeResult> to, bool lookup, bool sameObject) {
 			RunOn target = fn->runOn();
-			if (sameObject || s.runOn.canRun(target)) {
+			if (sameObject || s->runOn.canRun(target)) {
 				// Regular function call is  enough.
 				fn->localCall(s, actuals, to, lookup);
 				return;
@@ -25,38 +25,38 @@ namespace storm {
 		}
 
 		// Call the function and handle the result correctly.
-		static void callFn(Par<Function> call, const GenState &s, const Function::Actuals &values,
-						GenResult &to, bool lookup, bool sameObject) {
+		static void callFn(Par<Function> call, Par<CodeGen> s, const Function::Actuals &values,
+						Par<CodeResult> to, bool lookup, bool sameObject) {
 			using namespace code;
 
-			if (to.type.ref == call->result.ref) {
+			if (to->type().ref == call->result.ref) {
 				callOnThread(call, s, values, to, lookup, sameObject);
 				return;
 			}
 
 			// We need to do stuff!
-			GenResult t(call->result, s.block);
+			Auto<CodeResult> t = CREATE(CodeResult, call, call->result, s->block);
 			callOnThread(call, s, values, t, lookup, sameObject);
 
-			if (!to.needed())
+			if (!to->needed())
 				return;
 
-			VarInfo r = to.location(s);
-			if (to.type.ref) {
+			VarInfo r = to->location(s);
+			if (to->type().ref) {
 				// Dangerous...
-				s.to << lea(r.var(), ptrRel(t.location(s).var()));
-			} else if (to.type.isValue()) {
+				s->to << lea(r.var(), ptrRel(t->location(s).var()));
+			} else if (to->type().isValue()) {
 				// Need to copy...
-				s.to << lea(ptrA, ptrRel(r.var()));
-				s.to << fnParam(ptrA);
-				s.to << fnParam(t.location(s).var());
-				s.to << fnCall(to.type.copyCtor(), Size());
+				s->to << lea(ptrA, ptrRel(r.var()));
+				s->to << fnParam(ptrA);
+				s->to << fnParam(t->location(s).var());
+				s->to << fnCall(to->type().copyCtor(), Size());
 			} else {
 				// Regular machine operations suffice!
-				s.to << mov(ptrA, t.location(s).var());
-				s.to << mov(r.var(), xRel(to.type.size(), ptrA));
-				if (to.type.refcounted())
-					s.to << addRef(r.var());
+				s->to << mov(ptrA, t->location(s).var());
+				s->to << mov(r.var(), xRel(to->type().size(), ptrA));
+				if (to->type().refcounted())
+					s->to << addRef(r.var());
 			}
 			r.created(s);
 		}
@@ -85,7 +85,7 @@ namespace storm {
 			return toExecute->result;
 	}
 
-	void bs::FnCall::code(const GenState &s, GenResult &to) {
+	void bs::FnCall::code(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 		const Value &r = toExecute->result;
 
@@ -140,14 +140,14 @@ namespace storm {
 		to << toCreate << params;
 	}
 
-	void bs::CtorCall::code(const GenState &s, GenResult &to) {
+	void bs::CtorCall::code(Par<CodeGen> s, Par<CodeResult> to) {
 		if (toCreate.isValue())
 			createValue(s, to);
 		else
 			createClass(s, to);
 	}
 
-	void bs::CtorCall::createValue(const GenState &s, GenResult &to) {
+	void bs::CtorCall::createValue(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 		Engine &e = Object::engine();
 
@@ -161,38 +161,38 @@ namespace storm {
 
 		// This needs to be last, otherwise other generated code may overwrite it!
 		VarInfo thisVar;
-		if (to.type.ref) {
-			thisVar = to.location(s);
+		if (to->type().ref) {
+			thisVar = to->location(s);
 			vars[0] = thisVar.var();
 		} else {
-			thisVar = to.safeLocation(s, toCreate.asRef(false));
+			thisVar = to->safeLocation(s, toCreate.asRef(false));
 			vars[0] = code::Value(ptrA);
-			s.to << lea(vars[0], thisVar.var());
+			s->to << lea(vars[0], thisVar.var());
 		}
 
 		// Call it!
-		GenResult voidTo(Value(), s.block);
+		Auto<CodeResult> voidTo = CREATE(CodeResult, this, Value(), s->block);
 		ctor->localCall(s, vars, voidTo, false);
 		thisVar.created(s);
 	}
 
-	void bs::CtorCall::createClass(const GenState &s, GenResult &to) {
+	void bs::CtorCall::createClass(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 
 		Engine &e = Object::engine();
 
-		code::Block subBlock = s.frame.createChild(s.frame.last(s.block));
-		s.to << begin(subBlock);
-		GenState subState = s.child(subBlock);
+		code::Block subBlock = s->frame.createChild(s->frame.last(s->block.v));
+		s->to << begin(subBlock);
+		Auto<CodeGen> subState = s->child(subBlock);
 
 		// Only free this one automatically on an exception. If there is no exception,
 		// the memory will be owned by the object itself.
-		Variable rawMemory = s.frame.createPtrVar(subBlock, e.fnRefs.freeRef, freeOnException);
+		Variable rawMemory = s->frame.createPtrVar(subBlock, e.fnRefs.freeRef, freeOnException);
 
 		// Allocate memory into our temporary variable.
-		s.to << fnParam(toCreate.type->typeRef);
-		s.to << fnCall(e.fnRefs.allocRef, Size::sPtr);
-		s.to << mov(rawMemory, ptrA);
+		s->to << fnParam(toCreate.type->typeRef);
+		s->to << fnCall(e.fnRefs.allocRef, Size::sPtr);
+		s->to << mov(rawMemory, ptrA);
 
 		// Call the constructor:
 		vector<Value> values = ctor->params;
@@ -205,15 +205,15 @@ namespace storm {
 			vars[i] = params->code(i - 1, subState, values[i]);
 
 		// Call!
-		GenResult voidTo(Value(), subBlock);
+		Auto<CodeResult> voidTo = CREATE(CodeResult, this, Value(), subBlock);
 		callFn(ctor, subState, vars, voidTo, false, false);
 
 		// Store our result.
-		VarInfo created = to.location(subState);
-		s.to << mov(created.var(), rawMemory);
+		VarInfo created = to->location(subState);
+		s->to << mov(created.var(), rawMemory);
 		created.created(s);
 
-		s.to << end(subBlock);
+		s->to << end(subBlock);
 	}
 
 
@@ -249,29 +249,29 @@ namespace storm {
 			return var->result.asRef();
 	}
 
-	void bs::LocalVarAccess::code(const GenState &s, GenResult &to) {
+	void bs::LocalVarAccess::code(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 
-		if (!to.needed())
+		if (!to->needed())
 			return;
 
-		if (to.type.ref && !var->result.ref) {
-			VarInfo v = to.location(s);
-			s.to << lea(v.var(), var->var.var());
+		if (to->type().ref && !var->result.ref) {
+			VarInfo v = to->location(s);
+			s->to << lea(v.var(), var->var.var());
 			v.created(s);
-		} else if (!to.suggest(s, var->var.var())) {
+		} else if (!to->suggest(s, var->var.var())) {
 
-			VarInfo v = to.location(s);
+			VarInfo v = to->location(s);
 			if (var->result.isValue()) {
-				s.to << lea(ptrA, var->var.var());
-				s.to << lea(ptrC, v.var());
-				s.to << fnParam(ptrC);
-				s.to << fnParam(ptrA);
-				s.to << fnCall(var->result.copyCtor(), Size());
+				s->to << lea(ptrA, var->var.var());
+				s->to << lea(ptrC, v.var());
+				s->to << fnParam(ptrC);
+				s->to << fnParam(ptrA);
+				s->to << fnCall(var->result.copyCtor(), Size());
 			} else {
-				s.to << mov(v.var(), var->var.var());
+				s->to << mov(v.var(), var->var.var());
 				if (var->result.refcounted())
-					s.to << code::addRef(v.var());
+					s->to << code::addRef(v.var());
 			}
 			v.created(s);
 		}
@@ -291,10 +291,10 @@ namespace storm {
 		return var->varType.asRef();
 	}
 
-	void bs::MemberVarAccess::code(const GenState &s, GenResult &to) {
-		if (!to.needed()) {
+	void bs::MemberVarAccess::code(Par<CodeGen> s, Par<CodeResult> to) {
+		if (!to->needed()) {
 			// We still need to evaluate 'member', it may have side effects!
-			GenResult mResult;
+			Auto<CodeResult> mResult = CREATE(CodeResult, this);
 			member->code(s, mResult);
 			return;
 		}
@@ -306,54 +306,54 @@ namespace storm {
 		}
 	}
 
-	void bs::MemberVarAccess::valueCode(const GenState &s, GenResult &to) {
+	void bs::MemberVarAccess::valueCode(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 
 		Value mType = member->result();
 		code::Variable memberPtr;
 
 		{
-			GenResult mResult(mType, s.block);
+			Auto<CodeResult> mResult = CREATE(CodeResult, this, mType, s->block);
 			member->code(s, mResult);
-			memberPtr = mResult.location(s).var();
+			memberPtr = mResult->location(s).var();
 		}
 
 		// If it was a reference, we can use it right away!
 		if (mType.ref) {
-			s.to << mov(ptrA, memberPtr);
+			s->to << mov(ptrA, memberPtr);
 		} else {
-			s.to << lea(ptrA, memberPtr);
+			s->to << lea(ptrA, memberPtr);
 		}
 
 		extractCode(s, to);
 	}
 
-	void bs::MemberVarAccess::classCode(const GenState &s, GenResult &to) {
+	void bs::MemberVarAccess::classCode(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 
-		GenResult mResult(member->result().asRef(false), s.block);
+		Auto<CodeResult> mResult = CREATE(CodeResult, this, member->result().asRef(false), s->block);
 		member->code(s, mResult);
-		s.to << mov(ptrA, mResult.location(s).var());
+		s->to << mov(ptrA, mResult->location(s).var());
 
 		extractCode(s, to);
 	}
 
-	void bs::MemberVarAccess::extractCode(const GenState &s, GenResult &to) {
+	void bs::MemberVarAccess::extractCode(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 
-		VarInfo result = to.location(s);
-		if (to.type.ref) {
-			s.to << add(ptrA, intPtrConst(var->offset()));
-			s.to << mov(result.var(), ptrA);
+		VarInfo result = to->location(s);
+		if (to->type().ref) {
+			s->to << add(ptrA, intPtrConst(var->offset()));
+			s->to << mov(result.var(), ptrA);
 		} else if (var->varType.isValue()) {
-			s.to << lea(ptrC, result.var());
-			s.to << fnParam(ptrC);
-			s.to << fnParam(ptrA);
-			s.to << fnCall(var->varType.copyCtor(), Size());
+			s->to << lea(ptrC, result.var());
+			s->to << fnParam(ptrC);
+			s->to << fnParam(ptrA);
+			s->to << fnCall(var->varType.copyCtor(), Size());
 		} else {
-			s.to << mov(result.var(), xRel(result.var().size(), ptrA, var->offset()));
+			s->to << mov(result.var(), xRel(result.var().size(), ptrA, var->offset()));
 			if (var->varType.refcounted())
-				s.to << code::addRef(result.var());
+				s->to << code::addRef(result.var());
 		}
 		result.created(s);
 	}
@@ -369,11 +369,11 @@ namespace storm {
 		return Value(Thread::stormType(engine()));
 	}
 
-	void bs::NamedThreadAccess::code(const GenState &s, GenResult &to) {
-		if (to.needed()) {
-			VarInfo z = to.location(s);
-			s.to << code::mov(z.var(), thread->ref());
-			s.to << code::addRef(thread->ref());
+	void bs::NamedThreadAccess::code(Par<CodeGen> s, Par<CodeResult> to) {
+		if (to->needed()) {
+			VarInfo z = to->location(s);
+			s->to << code::mov(z.var(), thread->ref());
+			s->to << code::addRef(thread->ref());
 			z.created(s);
 		}
 	}
@@ -396,44 +396,44 @@ namespace storm {
 		return to->result().asRef(false);
 	}
 
-	void bs::ClassAssign::code(const GenState &s, GenResult &to) {
+	void bs::ClassAssign::code(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 
 		// Type to work with.
 		Value t = this->to->result().asRef(false);
 
 		// Target variable.
-		GenResult lhs(t.asRef(true), s.block);
+		Auto<CodeResult> lhs = CREATE(CodeResult, this, t.asRef(true), s->block);
 		this->to->code(s, lhs);
-		code::Value targetAddr = lhs.location(s).var();
+		code::Value targetAddr = lhs->location(s).var();
 
 		// Compute RHS...
-		GenResult rhs(t, s.block);
+		Auto<CodeResult> rhs = CREATE(CodeResult, this, t, s->block);
 		value->code(s, rhs);
 
 		// Erase the previous value.
 		if (t.refcounted()) {
-			s.to << code::mov(ptrA, targetAddr);
-			s.to << code::releaseRef(ptrRel(ptrA));
-			s.to << code::addRef(rhs.location(s).var());
+			s->to << code::mov(ptrA, targetAddr);
+			s->to << code::releaseRef(ptrRel(ptrA));
+			s->to << code::addRef(rhs->location(s).var());
 		}
-		s.to << code::mov(ptrRel(ptrA), rhs.location(s).var());
+		s->to << code::mov(ptrRel(ptrA), rhs->location(s).var());
 
 		// Do we need to return some value?
-		if (!to.needed())
+		if (!to->needed())
 			return;
 
-		if (to.type.ref) {
-			if (!to.suggest(s, targetAddr)) {
-				VarInfo z = to.location(s);
-				s.to << mov(z.var(), targetAddr);
+		if (to->type().ref) {
+			if (!to->suggest(s, targetAddr)) {
+				VarInfo z = to->location(s);
+				s->to << mov(z.var(), targetAddr);
 				z.created(s);
 			}
 		} else {
-			VarInfo z = to.location(s);
-			s.to << mov(ptrA, targetAddr);
-			s.to << mov(z.var(), ptrRel(ptrA));
-			s.to << code::addRef(z.var());
+			VarInfo z = to->location(s);
+			s->to << mov(ptrA, targetAddr);
+			s->to << mov(z.var(), ptrRel(ptrA));
+			s->to << code::addRef(z.var());
 			z.created(s);
 		}
 	}

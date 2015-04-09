@@ -134,10 +134,10 @@ namespace storm {
 		}
 	}
 
-	void bs::CtorBody::blockCode(Par<CodeGen> state, GenResult &to, const code::Block &block) {
+	void bs::CtorBody::blockCode(Par<CodeGen> state, Par<CodeResult> to, const code::Block &block) {
 		if (threadParam) {
-			thread = state.frame.createPtrVar(state.block);
-			state.to << mov(thread, threadParam->var.var());
+			thread = state->frame.createPtrVar(state->block.v);
+			state->to << mov(thread, threadParam->var.var());
 		}
 
 		Block::blockCode(state, to, block);
@@ -227,7 +227,7 @@ namespace storm {
 				actuals.push_back(params->code(i, s, ctor->params[i]));
 		}
 
-		GenResult t;
+		Auto<CodeResult> t = CREATE(CodeResult, this);
 		ctor->localCall(s, actuals, t, false);
 	}
 
@@ -247,11 +247,11 @@ namespace storm {
 		actuals[0] = params->code(0, s, ctor->params[0]);
 		actuals[1] = t->ref();
 
-		GenResult res;
+		Auto<CodeResult> res = CREATE(CodeResult, this);
 		ctor->localCall(s, actuals, res, false);
 	}
 
-	void bs::SuperCall::code(Par<CodeGen> s, GenResult &r) {
+	void bs::SuperCall::code(Par<CodeGen> s, Par<CodeResult> r) {
 		using namespace code;
 
 		// Super class should be called first.
@@ -263,8 +263,8 @@ namespace storm {
 		// Set our VTable.
 		if (type->flags & typeClass) {
 			// TODO: maybe symbolic offset here?
-			s.to << mov(ptrA, dest);
-			s.to << mov(ptrRel(ptrA), type->vtable.ref);
+			s->to << mov(ptrA, dest);
+			s->to << mov(ptrRel(ptrA), type->vtable.ref);
 		}
 
 		// Initialize any member variables.
@@ -292,10 +292,10 @@ namespace storm {
 			throw SyntaxError(pos, L"Can not initialize reference " + v->name + L", not implemented yet!");
 
 		if (t.isValue()) {
-			s.to << mov(ptrA, dest);
-			s.to << add(ptrA, intPtrConst(v->offset()));
-			s.to << fnParam(ptrA);
-			s.to << fnCall(t.defaultCtor(), Size());
+			s->to << mov(ptrA, dest);
+			s->to << add(ptrA, intPtrConst(v->offset()));
+			s->to << fnParam(ptrA);
+			s->to << fnCall(t.defaultCtor(), Size());
 		} else if (t.isBuiltIn()) {
 			// Default value is already there.
 		} else {
@@ -305,12 +305,13 @@ namespace storm {
 								+ ::toS(thisPtr) + L", please initialize this member explicitly.");
 			Auto<Actual> params = CREATE(Actual, this);
 			Auto<CtorCall> ctorCall = CREATE(CtorCall, this, ctor, params);
-			GenResult created(t, s.block);
+			Auto<CodeResult> created = CREATE(CodeResult, this, t, s->block);
 			ctorCall->code(s, created);
 
-			s.to << mov(ptrA, dest);
-			s.to << mov(ptrRel(ptrA, v->offset()), created.location(s).var());
-			s.to << code::addRef(created.location(s).var());
+			code::Variable cVar = created->location(s).var();
+			s->to << mov(ptrA, dest);
+			s->to << mov(ptrRel(ptrA, v->offset()), cVar);
+			s->to << code::addRef(cVar);
 		}
 	}
 
@@ -355,12 +356,12 @@ namespace storm {
 		if (t.isClass()) {
 			// Easy way, call the constructor as normal.
 			Auto<CtorCall> call = CREATE(CtorCall, this, ctor, to);
-			GenResult created(t, s.block);
+			Auto<CodeResult> created = CREATE(CodeResult, this, t, s->block);
 			call->code(s, created);
-			VarInfo loc = created.location(s);
-			s.to << mov(ptrA, dest);
-			s.to << mov(ptrRel(ptrA, v->offset()), loc.var());
-			s.to << code::addRef(loc.var());
+			VarInfo loc = created->location(s);
+			s->to << mov(ptrA, dest);
+			s->to << mov(ptrRel(ptrA, v->offset()), loc.var());
+			s->to << code::addRef(loc.var());
 			loc.created(s);
 		} else {
 			// Now we're left with the values!
@@ -369,11 +370,11 @@ namespace storm {
 			for (nat i = 1; i < values.size(); i++)
 				actuals[i] = to->code(i - 1, s, ctor->params[i]);
 
-			s.to << mov(ptrA, dest);
-			s.to << add(ptrA, intPtrConst(v->offset()));
+			s->to << mov(ptrA, dest);
+			s->to << add(ptrA, intPtrConst(v->offset()));
 			actuals[0] = ptrA;
 
-			GenResult nothing;
+			Auto<CodeResult> nothing = CREATE(CodeResult, this);
 			ctor->localCall(s, actuals, nothing, true);
 		}
 	}
@@ -385,12 +386,12 @@ namespace storm {
 		Variable dest = thisVar->var.var();
 		assert(t.isClass());
 
-		GenResult result(t, s.block);
+		Auto<CodeResult> result = CREATE(CodeResult, this, t, s->block);
 		to->code(s, result);
-		VarInfo loc = result.location(s);
-		s.to << mov(ptrA, dest);
-		s.to << mov(ptrRel(ptrA, v->offset()), loc.var());
-		s.to << code::addRef(loc.var());
+		VarInfo loc = result->location(s);
+		s->to << mov(ptrA, dest);
+		s->to << mov(ptrRel(ptrA, v->offset()), loc.var());
+		s->to << code::addRef(loc.var());
 	}
 
 }

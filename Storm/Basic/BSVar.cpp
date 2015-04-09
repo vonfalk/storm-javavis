@@ -67,7 +67,7 @@ namespace storm {
 			return variable->result.asRef();
 		}
 
-		void bs::Var::code(const GenState &s, GenResult &to) {
+		void bs::Var::code(Par<CodeGen> s, Par<CodeResult> to) {
 			using namespace code;
 
 			const Value &t = variable->result;
@@ -83,30 +83,30 @@ namespace storm {
 					ctor = defaultCtor(pos, t.type);
 
 				if (ctor) {
-					GenResult gr(variable->result, variable->var);
+					Auto<CodeResult> gr = CREATE(CodeResult, this, variable->result, variable->var);
 					ctor->code(s, gr);
 				}
 			} else if (initExpr) {
-				GenResult gr(variable->result, variable->var);
+				Auto<CodeResult> gr = CREATE(CodeResult, this, variable->result, variable->var);
 				initExpr->code(s, gr);
 			} else if (initCtor) {
-				GenResult gr(variable->result, variable->var);
+				Auto<CodeResult> gr = CREATE(CodeResult, this, variable->result, variable->var);
 				initCtor->code(s, gr);
 			}
 
 			variable->var.created(s);
 
-			if (to.needed()) {
+			if (to->needed()) {
 				// Part of another expression.
-				if (to.type.ref) {
-					VarInfo v = to.location(s);
-					s.to << lea(v.var(), variable->var.var());
+				if (to->type().ref) {
+					VarInfo v = to->location(s);
+					s->to << lea(v.var(), variable->var.var());
 					v.created(s);
-				} else if (!to.suggest(s, variable->var.var())) {
-					VarInfo v = to.location(s);
-					s.to << mov(v.var(), variable->var.var());
+				} else if (!to->suggest(s, variable->var.var())) {
+					VarInfo v = to->location(s);
+					s->to << mov(v.var(), variable->var.var());
 					if (variable->result.refcounted())
-						s.to << code::addRef(v.var());
+						s->to << code::addRef(v.var());
 					v.created(s);
 				}
 			}
@@ -130,18 +130,18 @@ namespace storm {
 		bs::LocalVar::LocalVar(const String &name, const Value &t, const SrcPos &pos, bool param)
 			: Named(name), result(t), pos(pos), var(code::Variable::invalid), param(param), constant(false) {}
 
-		void LocalVar::create(const GenState &state) {
+		void LocalVar::create(Par<CodeGen> state) {
 			if (param)
 				return;
 
 			if (var.var() != code::Variable::invalid) {
-				assert(state.frame.accessible(state.block, var.var()));
+				assert(state->frame.accessible(state->block.v, var.var()));
 			} else {
-				var = storm::variable(state.frame, state.block, result);
+				var = storm::variable(state->frame, state->block.v, result);
 			}
 		}
 
-		void LocalVar::createParam(const GenState &state) {
+		void LocalVar::createParam(Par<CodeGen> state) {
 			using namespace code;
 
 			if (!param)
@@ -150,18 +150,18 @@ namespace storm {
 
 			Variable z;
 			if (result.isValue()) {
-				z = state.frame.createParameter(result.size(), false, result.destructor(), freeOnBoth | freePtr);
+				z = state->frame.createParameter(result.size(), false, result.destructor(), freeOnBoth | freePtr);
 			} else if (constant) {
 				// Borrowed ptr.
-				z = state.frame.createParameter(result.size(), false);
+				z = state->frame.createParameter(result.size(), false);
 			} else {
-				z = state.frame.createParameter(result.size(), false, result.destructor());
+				z = state->frame.createParameter(result.size(), false, result.destructor());
 			}
 
 			var = VarInfo(z);
 
 			if (result.refcounted() && !constant)
-				state.to << code::addRef(var.var());
+				state->to << code::addRef(var.var());
 		}
 
 	}

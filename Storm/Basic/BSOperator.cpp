@@ -171,7 +171,7 @@ namespace storm {
 		return fnCall->result();
 	}
 
-	void bs::Operator::code(const GenState &s, GenResult &r) {
+	void bs::Operator::code(Par<CodeGen> s, Par<CodeResult> r) {
 		if (!fnCall)
 			fnCall = op->meaning(block, lhs, rhs);
 		return fnCall->code(s, r);
@@ -204,7 +204,7 @@ namespace storm {
 		return wrap->result();
 	}
 
-	void bs::ParenExpr::code(const GenState &s, GenResult &r) {
+	void bs::ParenExpr::code(Par<CodeGen> s, Par<CodeResult> r) {
 		wrap->code(s, r);
 	}
 

@@ -102,7 +102,7 @@ namespace storm {
 		return variable;
 	}
 
-	VarInfo CodeResult::safeLocation(Par<CodeGen> s) {
+	VarInfo CodeResult::safeLocation(Par<CodeGen> s, const Value &t) {
 		if (needed())
 			return location(s);
 		else if (variable.var() == Variable::invalid)
@@ -151,11 +151,7 @@ namespace storm {
 		return r;
 	}
 
-	/**
-	 * OLD CODE FROM HERE \/
-	 */
-
-	void allocObject(code::Listing &l, code::Block b, Function *ctor, vector<code::Value> params, code::Variable to) {
+	void allocObject(code::Listing &l, code::Block b, Par<Function> ctor, vector<code::Value> params, code::Variable to) {
 		using namespace code;
 
 		Type *type = ctor->params[0].type;
@@ -179,27 +175,27 @@ namespace storm {
 		l << end(sub);
 	}
 
-	void allocObject(const GenState &s, Function *ctor, vector<code::Value> params, code::Variable to) {
+	void allocObject(Par<CodeGen> s, Par<Function> ctor, vector<code::Value> params, code::Variable to) {
 		using namespace code;
 
 		Type *type = ctor->params[0].type;
 		Engine &e = ctor->engine();
 		assert(type->flags & typeClass, L"Must allocate class objects.");
 
-		Block b = s.frame.createChild(s.frame.last(s.block));
-		Variable rawMem = s.frame.createPtrVar(b, e.fnRefs.freeRef, freeOnException);
+		Block b = s->frame.createChild(s->frame.last(s->block.v));
+		Variable rawMem = s->frame.createPtrVar(b, e.fnRefs.freeRef, freeOnException);
 
-		s.to << begin(b);
-		s.to << fnParam(type->typeRef);
-		s.to << fnCall(e.fnRefs.allocRef, Size::sPtr);
-		s.to << mov(rawMem, ptrA);
+		s->to << begin(b);
+		s->to << fnParam(type->typeRef);
+		s->to << fnCall(e.fnRefs.allocRef, Size::sPtr);
+		s->to << mov(rawMem, ptrA);
 
-		GenResult r;
+		Auto<CodeResult> r = CREATE(CodeResult, s);
 		params.insert(params.begin(), code::Value(ptrA));
-		ctor->localCall(s.child(b), params, r, false);
+		ctor->localCall(steal(s->child(b)), params, r, false);
 
-		s.to << mov(to, rawMem);
-		s.to << end(b);
+		s->to << mov(to, rawMem);
+		s->to << end(b);
 	}
 
 }
