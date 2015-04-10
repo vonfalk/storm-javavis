@@ -2,3 +2,4 @@
 
 // Use type{a:b:c} to build a type name quickly and easily.
 Expr => createType(block, type) : "name", "{", Type type, "}";
+Expr => exploreType(block, type) : "explore", "{", Type type, "}";

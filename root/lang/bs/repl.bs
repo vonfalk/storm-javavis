@@ -19,7 +19,14 @@ class Repl extends LangRepl {
 			syntax();
 		}
 
+		print("TODO: Clean up this a bit!");
+
 		Named pkg = (name{lang:bs}).find(rootScope);
+		if (pkg as Package) {
+			syntax.add(pkg);
+		}
+
+		pkg = (name{lang:bs:macro}).find(rootScope);
 		if (pkg as Package) {
 			syntax.add(pkg);
 		}
@@ -90,6 +97,7 @@ class ReplBlock extends Block {
 
 		addInclude(name{core});
 		addInclude(name{lang:bs});
+		addInclude(name{lang:bs:macro});
 	}
 
 	void addInclude(TypeName name) {
