@@ -128,10 +128,10 @@ class ReplCode extends TmpLazyCode {
 		if (toSFn as Function) {
 			// It exists, use the result.
 			FnCall toSCall(toSFn, Actual(expr));
-			print(toSCall);
 			toSCall.code(g, CodeResult(strType, resultVar));
 		} else {
 			// Just evaluate and print a dummy output.
+			expr.code(g, CodeResult());
 			createDefaultResult(g, result, resultVar);
 		}
 
