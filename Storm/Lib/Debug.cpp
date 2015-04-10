@@ -9,10 +9,6 @@
 
 namespace storm {
 
-	void append(Par<Str> s, Nat v) {
-		s->v += wchar_t(v);
-	}
-
 	void dbgBreak() {
 		DebugBreak();
 	}

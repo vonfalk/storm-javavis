@@ -115,6 +115,17 @@ namespace storm {
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
+		// Label.
+		class Label {
+			STORM_VALUE;
+		public:
+			inline Label(code::Label v) : v(v) {}
+			code::Label v;
+
+			// Deep copy.
+			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
+		};
+
 		// Wrapper for the Register type.
 		class Register {
 			STORM_VALUE;
@@ -196,6 +207,9 @@ namespace storm {
 			// Block.
 			STORM_CTOR Operand(Block b);
 
+			// Variable.
+			STORM_CTOR Operand(Label l);
+
 			// Convert.
 			Operand(const code::Value &v);
 
@@ -249,12 +263,28 @@ namespace storm {
 		Instruction STORM_FN prolog();
 		Instruction STORM_FN epilog();
 		Instruction STORM_FN ret(Size s);
+		Instruction STORM_FN jmp(Operand to);
+		Instruction STORM_FN jmp(Operand to, CondFlag cond);
 
 		Instruction STORM_FN addRef(Operand v);
 		Instruction STORM_FN releaseRef(Operand v);
 
 		Instruction STORM_FN mov(Operand to, Operand from);
 		Instruction STORM_FN lea(Operand to, Operand from);
+
+		Instruction STORM_FN push(Operand from);
+		Instruction STORM_FN pop(Operand to);
+
+		Instruction STORM_FN add(Operand dest, Operand src);
+		Instruction STORM_FN adc(Operand dest, Operand src);
+		Instruction STORM_FN or(Operand dest, Operand src);
+		Instruction STORM_FN and(Operand dest, Operand src);
+		Instruction STORM_FN sub(Operand dest, Operand src);
+		Instruction STORM_FN sbb(Operand dest, Operand src);
+		Instruction STORM_FN xor(Operand dest, Operand src);
+		Instruction STORM_FN cmp(Operand dest, Operand src);
+		Instruction STORM_FN mul(Operand dest, Operand src);
+
 
 		// FreeOptions
 		class FreeOn {
@@ -290,6 +320,9 @@ namespace storm {
 			// Data.
 			code::Listing v;
 
+			// Create a label.
+			Label STORM_FN label();
+
 			// The functionality of the frame is integrated here as well. This may or may not be a good idea.
 			Block STORM_FN root();
 			Block STORM_FN createChild(Part parent);
@@ -308,8 +341,9 @@ namespace storm {
 			Variable STORM_FN createPtrParam(Operand free, FreeOn on);
 			Variable STORM_FN createParameter(Size size, Bool isFloat, Operand free, FreeOn on);
 
-			// Append instructions.
+			// Append instructions and labels.
 			Listing *STORM_FN operator <<(const Instruction &v);
+			Listing *STORM_FN operator <<(const Label &l);
 
 		protected:
 			// Output.

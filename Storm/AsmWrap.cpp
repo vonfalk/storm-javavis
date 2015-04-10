@@ -244,6 +244,8 @@ namespace storm {
 
 	wrap::Operand::Operand(Block b) : v(b.v) {}
 
+	wrap::Operand::Operand(Label l) : v(l.v) {}
+
 	wrap::Operand::Operand(const code::Value &v) : v(v) {}
 
 	Bool wrap::Operand::operator ==(const Operand &o) const {
@@ -341,6 +343,14 @@ namespace storm {
 		return code::ret(s.v);
 	}
 
+	wrap::Instruction wrap::jmp(Operand to) {
+		return code::jmp(to.v);
+	}
+
+	wrap::Instruction wrap::jmp(Operand to, CondFlag cond) {
+		return code::jmp(to.v, cond.v);
+	}
+
 	wrap::Instruction wrap::mov(Operand to, Operand from) {
 		return code::mov(to.v, from.v);
 	}
@@ -355,6 +365,50 @@ namespace storm {
 
 	wrap::Instruction wrap::releaseRef(Operand v) {
 		return code::releaseRef(v.v);
+	}
+
+	wrap::Instruction wrap::add(Operand dest, Operand src) {
+		return code::add(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::adc(Operand dest, Operand src) {
+		return code::adc(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::or(Operand dest, Operand src) {
+		return code::or(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::and(Operand dest, Operand src) {
+		return code::and(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::sub(Operand dest, Operand src) {
+		return code::sub(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::sbb(Operand dest, Operand src) {
+		return code::sbb(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::xor(Operand dest, Operand src) {
+		return code::xor(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::cmp(Operand dest, Operand src) {
+		return code::cmp(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::mul(Operand dest, Operand src) {
+		return code::mul(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::push(Operand v) {
+		return code::push(v.v);
+	}
+
+	wrap::Instruction wrap::pop(Operand v) {
+		return code::pop(v.v);
 	}
 
 
@@ -395,6 +449,16 @@ namespace storm {
 		this->v << v.v;
 		addRef();
 		return this;
+	}
+
+	wrap::Listing *wrap::Listing::operator <<(const Label &l) {
+		this->v << l.v;
+		addRef();
+		return this;
+	}
+
+	wrap::Label wrap::Listing::label() {
+		return v.label();
 	}
 
 	void wrap::Listing::output(wostream &to) const {

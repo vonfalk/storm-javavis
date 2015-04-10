@@ -25,11 +25,7 @@ class BfFile extends FileReader {
 	}
 
 	void readFunctions() {
-		TextReader reader = readText(file.read());
-		print(reader.readAll());
-
 		BfFunction fn(file.title, file);
-		print(fn);
 		pkg.add(fn);
 	}
 
@@ -100,8 +96,6 @@ class BfCode extends TmpLazyCode {
 		l << epilog();
 		l << ret(sizePtr);
 
-		print(r);
-
 		r;
 	}
 }
@@ -122,8 +116,15 @@ class BfExpr extends lang:bs:Expr {
 		}
 	}
 
+	ctor(SStr space, BfToken[] data, lang:bs:Expr input) {
+		init() {
+			space = space.v.toNat;
+			tokens = data;
+		}
+	}
+
 	Value result() {
-		return (name{core:Str}).resolve(rootScope);
+		(name{core:Str}).resolve(rootScope);
 	}
 
 	void code(CodeGen g, CodeResult to) {
@@ -132,6 +133,11 @@ class BfExpr extends lang:bs:Expr {
 
 		// Initialize some variables...
 		state.createOutput();
+
+		// Generate code!
+		for (Nat i = 0.nat; i < tokens.count; i++) {
+			tokens[i].code(state, g);
+		}
 
 		// Generate the result.
 		state.createResult(to);
@@ -145,8 +151,11 @@ class BfState on Compiler {
 	// Pointer to a StrBuf.
 	Variable output;
 
-	// Pointer (raw) into 'data'.
-	Variable ptr;
+	// The data pointer is stored in ptrA, and has to be pushed/popped for each
+	// function call.
+
+	// Temporary variable (int sized).
+	Variable tmpData;
 
 	// Data area. A large variable.
 	Variable data;
@@ -161,7 +170,7 @@ class BfState on Compiler {
 		}
 
 		output = g.variable(strBuf).v;
-		ptr = g.l.createPtrVar(Part(g.block), Operand(), FreeOn());
+		tmpData = g.l.createIntVar(Part(g.block), Operand(), FreeOn());
 		data = g.l.createVariable(Part(g.block), Size(size), Operand(), FreeOn());
 	}
 
@@ -172,7 +181,7 @@ class BfState on Compiler {
 		ctor.code(g, CodeResult(strBuf, VarInfo(output)));
 
 		// Initialize our pointer as well.
-		g.l << lea(Operand(ptr), ptrRel(data, Offset()));
+		g.l << lea(Operand(ptrA), ptrRel(data, Offset()));
 	}
 
 	// Create the result.
@@ -184,19 +193,56 @@ class BfState on Compiler {
 	}
 }
 
-class BfToken on Compiler {}
+class BfToken on Compiler {
+	void code(BfState state, CodeGen to) {}
+}
 
-class BfBack extends BfToken {}
+class BfBack extends BfToken {
+	void code(BfState state, CodeGen to) {
+		to.l << sub(Operand(ptrA), intPtrConst(1));
+	}
+}
 
-class BfFwd extends BfToken {}
+class BfFwd extends BfToken {
+	void code(BfState state, CodeGen to) {
+		to.l << add(Operand(ptrA), intPtrConst(1));
+	}
+}
 
-class BfInput extends BfToken {}
+class BfInput extends BfToken {
+	void code(BfState state, CodeGen to) {
+		// For now: Indicate end of stream.
+		to.l << mov(byteRel(ptrA, Offset()), byteConst(0.byte));
+	}
+}
 
-class BfOutput extends BfToken {}
+class BfOutput extends BfToken {
+	void code(BfState state, CodeGen to) {
+		to.l << push(Operand(ptrA));
+		to.l << lea(Operand(ptrC), Operand(state.tmpData));
+		to.l << mov(byteRel(ptrC, Offset()), byteRel(ptrA, Offset()));
 
-class BfInc extends BfToken {}
+		Block block(Scope(state.strBuf.getType));
+		BareVarAccess outAccess(state.strBuf, state.output);
+		BareVarAccess tmpData((name{core:Nat}).resolve(rootScope), state.tmpData);
+		Expr e = namedExpr(block, SStr("addChar"), outAccess, Actual(tmpData));
+		e.code(to, CodeResult());
 
-class BfDec extends BfToken {}
+		to.l << pop(Operand(ptrA));
+	}
+}
+
+class BfInc extends BfToken {
+	void code(BfState state, CodeGen to) {
+		to.l << add(byteRel(ptrA, Offset()), byteConst(1.byte));
+	}
+}
+
+class BfDec extends BfToken {
+	void code(BfState state, CodeGen to) {
+		to.l << sub(byteRel(ptrA, Offset()), byteConst(1.byte));
+	}
+}
 
 class BfLoop extends BfToken {
 	BfToken[] tokens;
@@ -205,6 +251,23 @@ class BfLoop extends BfToken {
 		init() {
 			tokens = tokens;
 		}
+	}
+
+	void code(BfState state, CodeGen to) {
+		Label begin = to.l.label();
+		Label end = to.l.label();
+
+		to.l << begin;
+		to.l << cmp(byteRel(ptrA, Offset()), byteConst(0.byte));
+		to.l << jmp(Operand(end), ifEqual);
+
+		// Inner code...
+		for (Nat i = 0.nat; i < tokens.count; i++) {
+			tokens[i].code(state, to);
+		}
+
+		to.l << jmp(Operand(begin));
+		to.l << end;
 	}
 
 }

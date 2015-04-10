@@ -34,13 +34,13 @@ namespace storm {
 		virtual StrBuf *STORM_FN add(Nat i);
 
 		// Add a single char.
-		virtual void STORM_FN addChar(Int c);
+		virtual void STORM_FN addChar(Nat c);
 
 	protected:
 		virtual void output(wostream &to) const;
 
 	private:
-		// Buffer. This will always be null-terminated!
+		// Buffer. This will always have room for a null-terminator, but may not always be set.
 		wchar *buffer;
 
 		// Current capacity of 'buffer'. Not including the null-terminator.
@@ -51,6 +51,9 @@ namespace storm {
 
 		// Ensure capacity.
 		void ensure(nat capacity);
+
+		// Insert a null terminator.
+		void nullTerminate() const;
 	};
 
 }

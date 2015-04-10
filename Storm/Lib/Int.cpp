@@ -93,6 +93,13 @@ namespace storm {
 			p.state->to << code::mov(p.result->location(p.state).var(), p.params[0]);
 	}
 
+	static void intToByte(InlinedParams p) {
+		if (p.result->needed()) {
+			p.state->to << code::lea(code::ptrA, p.params[0]);
+			p.state->to << code::mov(p.result->location(p.state).var(), code::byteRel(code::ptrA));
+		}
+	}
+
 	IntType::IntType() : Type(L"Int", typeValue | typeFinal, Size::sInt, null) {}
 
 	void IntType::lazyLoad() {
@@ -110,6 +117,7 @@ namespace storm {
 		add(steal(inlinedFunction(engine, b, L">=", ii, simpleFn(&intCmp<code::ifGreaterEqual>))));
 
 		add(steal(inlinedFunction(engine, Value(natType(engine)), L"nat", valList(1, Value(this)), simpleFn(&intToNat))));
+		add(steal(inlinedFunction(engine, Value(byteType(engine)), L"byte", valList(1, Value(this)), simpleFn(&intToByte))));
 
 		add(steal(inlinedFunction(engine, Value(this), L"*++", r, simpleFn(&intPostfixInc))));
 		add(steal(inlinedFunction(engine, Value(this), L"++*", r, simpleFn(&intPrefixInc))));
@@ -213,6 +221,13 @@ namespace storm {
 			p.state->to << code::mov(p.result->location(p.state).var(), p.params[0]);
 	}
 
+	static void natToByte(InlinedParams p) {
+		if (p.result->needed()) {
+			p.state->to << code::lea(code::ptrA, p.params[0]);
+			p.state->to << code::mov(p.result->location(p.state).var(), code::byteRel(code::ptrA));
+		}
+	}
+
 	NatType::NatType() : Type(L"Nat", typeValue | typeFinal, Size::sNat, null) {}
 
 	void NatType::lazyLoad() {
@@ -229,6 +244,7 @@ namespace storm {
 		add(steal(inlinedFunction(engine, b, L"<=", ii, simpleFn(&natCmp<code::ifBelowEqual>))));
 		add(steal(inlinedFunction(engine, b, L">=", ii, simpleFn(&natCmp<code::ifAboveEqual>))));
 		add(steal(inlinedFunction(engine, Value(intType(engine)), L"int", valList(1, Value(this)), simpleFn(&natToInt))));
+		add(steal(inlinedFunction(engine, Value(byteType(engine)), L"byte", valList(1, Value(this)), simpleFn(&natToByte))));
 
 		add(steal(inlinedFunction(engine, Value(this), L"*++", r, simpleFn(&natPostfixInc))));
 		add(steal(inlinedFunction(engine, Value(this), L"++*", r, simpleFn(&natPrefixInc))));

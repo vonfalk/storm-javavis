@@ -9,7 +9,6 @@ namespace storm {
 		ensure(o->pos);
 		pos = o->pos;
 		copyArray(buffer, o->buffer, pos);
-		buffer[pos] = 0;
 	}
 
 	StrBuf::StrBuf(Par<Str> str) : buffer(null), capacity(0), pos(0) {
@@ -17,7 +16,6 @@ namespace storm {
 		pos = str->count();
 		for (nat i = 0; i < pos; i++)
 			buffer[i] = str->v[i];
-		buffer[pos] = 0;
 	}
 
 	void StrBuf::deepCopy(Par<CloneEnv> env) {
@@ -34,20 +32,26 @@ namespace storm {
 			return;
 
 		capacity = max(max(count, capacity * 2), nat(20));
+		// Note: We allocate one extra entry for the null terminator here!
 		wchar *n = new wchar[capacity + 1];
 		if (buffer)
 			copyArray(n, buffer, pos);
-		n[pos] = 0;
 		swap(n, buffer);
 		delete []n;
 	}
 
+	void StrBuf::nullTerminate() const {
+		buffer[pos] = 0;
+	}
+
 	// Get the string we've built!
 	Str *StrBuf::toS() {
-		if (buffer == null)
+		if (buffer == null) {
 			return CREATE(Str, this, L"");
-		else
+		} else {
+			nullTerminate();
 			return CREATE(Str, this, buffer);
+		}
 	}
 
 	// Append stuff.
@@ -115,7 +119,7 @@ namespace storm {
 	}
 
 	// Add a single char.
-	void StrBuf::addChar(Int p) {
+	void StrBuf::addChar(Nat p) {
 		if (p >= 0xD800 && p < 0xE000) {
 			// Invalid codepoint.
 			// p = '?';
@@ -141,7 +145,10 @@ namespace storm {
 	}
 
 	void StrBuf::output(wostream &to) const {
-		to << buffer;
+		if (buffer) {
+			nullTerminate();
+			to << buffer;
+		}
 	}
 
 }

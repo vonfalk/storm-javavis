@@ -37,7 +37,9 @@ namespace storm {
 	}
 
 	void CodeGen::output(wostream &to) const {
-		to << runOn << endl << code::Value(block.v) << l;
+		to << L"Run on: " << runOn << endl;
+		to << L"Current block: " << code::Value(block.v) << endl;
+		to << l;
 	}
 
 	/**

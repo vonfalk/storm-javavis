@@ -10,7 +10,8 @@ Number => v : "[0-9]+" v;
 
 BfFile => BfExpr(space, code) : Number space, BfRoot code;
 
-BfComment => void : "[^<>,\.\+\-\[\]]*";
+// Note: the {} chars are used to end blocks in other languages.
+BfComment => void : "[^<>,\.\+\-\[\]{}]*";
 BfRoot => Array<BfToken>() : ( BfToken -> push - BfComment )*;
 
 BfToken => BfBack() : "<";
@@ -20,3 +21,6 @@ BfToken => BfOutput() : "\.";
 BfToken => BfInc() : "\+";
 BfToken => BfDec() : "\-";
 BfToken => BfLoop(c) : "\[", BfRoot c, "\]";
+
+// Integration with BS.
+Expr => BfExpr(space, code, input) : "bf", "(", Expr(block) input, ",", Number space, ")", "{", BfRoot code, "}";
