@@ -14,8 +14,8 @@ namespace code {
 
 	// Stack size. (we need about 30k on Windows to do cout).
 	// 40k is too small to run the compiler well.
-    // TODO: Make compiler UThreads larger somehow? Maybe smaller stacks are enough in debug builds...
-	static nat stackSize = 100 * 1024;
+    // TODO: Make compiler UThreads larger somehow? Maybe smaller stacks are enough in release builds...
+	static nat stackSize = 400 * 1024;
 
 	// Switch the currently running threads. *oldEsp is set to the old esp.
 	// This returns as another thread, which may mean that it returns to the

@@ -62,6 +62,11 @@ namespace storm {
 		}
 	}
 
+	static void boolCopyCtor(InlinedParams p) {
+		p.state->to << code::mov(code::ptrC, p.params[1]);
+		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << code::mov(code::byteRel(code::ptrA), code::byteRel(code::ptrC));
+	}
 
 	BoolType::BoolType() : Type(L"Bool", typeValue, Size::sByte, null) {
 		vector<Value> bb(2, Value(this));
@@ -71,6 +76,9 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"==", bb, simpleFn(&boolEq))));
 		add(steal(inlinedFunction(engine, Value(this), L"!=", bb, simpleFn(&boolNeq))));
 		add(steal(inlinedFunction(engine, Value(this), L"!", b, simpleFn(&boolNot))));
+
+		vector<Value> rr(2, Value(this, true));
+		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&boolCopyCtor))));
 
 		vector<Value> ri(2);
 		ri[0] = Value(this, true);
@@ -85,6 +93,14 @@ namespace storm {
 			e.setSpecialBuiltIn(specialBool, t);
 		}
 		return t;
+	}
+
+	Str *toS(Engine &e, Bool v) {
+		if (v) {
+			return CREATE(Str, e, L"true");
+		} else {
+			return CREATE(Str, e, L"false");
+		}
 	}
 
 }

@@ -380,10 +380,10 @@ namespace storm {
 		l << epilog();
 		l << jmp(ptrA);
 
-		Binary *b = new Binary(engine.arena, L"stormVtableCall" + toS(i), l);
+		Binary *b = new Binary(engine.arena, L"stormVtableCall" + ::toS(i), l);
 		binaries.push_back(b);
 
-		RefSource *s = new RefSource(engine.arena, L"stormVtableCall" + toS(i));
+		RefSource *s = new RefSource(engine.arena, L"stormVtableCall" + ::toS(i));
 		b->update(*s);
 		return s;
 	}
@@ -409,10 +409,10 @@ namespace storm {
 		l << epilog();
 		l << jmp(ptrA);
 
-		Binary *b = new Binary(engine.arena, L"cppVtableCall" + toS(i), l);
+		Binary *b = new Binary(engine.arena, L"cppVtableCall" + ::toS(i), l);
 		binaries.push_back(b);
 
-		RefSource *s = new RefSource(engine.arena, L"cppVtableCall" + toS(i));
+		RefSource *s = new RefSource(engine.arena, L"cppVtableCall" + ::toS(i));
 		b->update(*s);
 		return s;
 	}

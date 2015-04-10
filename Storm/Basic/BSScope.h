@@ -11,10 +11,10 @@ namespace storm {
 		class BSScope : public ScopeLookup {
 			STORM_CLASS;
 		public:
-			BSScope(Par<Url> file);
+			STORM_CTOR BSScope(Par<Url> file);
 
 			// File name.
-			Auto<Url> file;
+			STORM_VAR Auto<Url> file;
 
 			// Included packages. (risk of cycles here)
 			vector<Package *> includes;
@@ -30,7 +30,7 @@ namespace storm {
 			virtual Named *findHelper(const Scope &from, Par<Name> name);
 		};
 
-		void addInclude(const Scope &to, Package *p);
+		void STORM_FN addInclude(const Scope &to, Par<Package> p);
 
 		// Get syntax from a scope.
 		SyntaxSet *STORM_FN getSyntax(const Scope &from);

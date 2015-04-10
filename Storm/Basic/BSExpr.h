@@ -49,7 +49,7 @@ namespace storm {
 			Int intValue;
 
 			// Value (if string).
-			Auto<Str> strValue;
+			String strValue;
 
 			// Value (if bool).
 			Bool boolValue;

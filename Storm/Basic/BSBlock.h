@@ -21,10 +21,10 @@ namespace storm {
 			STORM_CTOR Block(Par<Block> parent);
 
 			// Lookup node.
-			Auto<BlockLookup> lookup;
+			STORM_VAR Auto<BlockLookup> lookup;
 
 			// Scope.
-			Scope scope;
+			STORM_VAR Scope scope;
 
 			// Generate code. Override 'blockCode' to generate only block contents.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> to);

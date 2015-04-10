@@ -6,7 +6,16 @@
 
 namespace storm {
 
+	static vector<Value> toVec(Par<Array<Value>> values) {
+		vector<Value> r(values->count());
+		for (nat i = 0; i < values->count(); i++)
+			r[i] = values->at(i);
+		return r;
+	}
+
 	NamePart::NamePart(Par<Str> name) : name(name->v) {}
+
+	NamePart::NamePart(Par<Str> name, Par<Array<Value>> values) : name(name->v), params(toVec(values)) {}
 
 	NamePart::NamePart(const String &name) : name(name) {}
 
@@ -29,6 +38,11 @@ namespace storm {
 	Name::Name() {}
 
 	Name::Name(Par<NamePart> part) : parts(1, part) {}
+
+	Name::Name(Par<Str> part) {
+		Auto<NamePart> v = CREATE(NamePart, this, part);
+		add(v);
+	}
 
 	Name::Name(const String &part) {
 		add(part);

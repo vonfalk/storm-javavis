@@ -5,6 +5,8 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class Str;
+
 	class IntType : public Type {
 		STORM_CLASS;
 	public:
@@ -42,5 +44,10 @@ namespace storm {
 		virtual void lazyLoad();
 	};
 
+	// ToS for these types!
+	STORM_PKG(core);
+	Str *STORM_ENGINE_FN toS(Engine &e, Int v);
+	Str *STORM_ENGINE_FN toS(Engine &e, Nat v);
+	Str *STORM_ENGINE_FN toS(Engine &e, Byte v);
 
 }

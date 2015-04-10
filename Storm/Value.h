@@ -12,6 +12,7 @@ namespace storm {
 	class Type;
 	class Engine;
 	class SrcPos;
+	class Str;
 
 	Type *boolType(Engine &e);
 	Type *intType(Engine &e);
@@ -112,6 +113,9 @@ namespace storm {
 	protected:
 		virtual void output(wostream &to) const;
 	};
+
+	// toS
+	Str *STORM_ENGINE_FN toS(Engine &e, const Value &from);
 
 	/**
 	 * Compute the common denominator of two values so that

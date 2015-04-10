@@ -161,6 +161,11 @@ BEGIN_TEST(ErrorTest) {
 	CALL_TEST_FN(checkTimes, L"test.bs.threadException", 4);
 } END_TEST
 
+// Test the REPL of BS programmatically.
+BEGIN_TEST(ReplTest) {
+	runFn(L"test.bs.replTest");
+} END_TEST
+
 
 BEGIN_TESTX(BFTest) {
 	// Takes a long time to run. Mostly here for testing.

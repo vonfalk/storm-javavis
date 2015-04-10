@@ -19,7 +19,7 @@ namespace storm {
 
 	bs::Constant::Constant(Int v) : cType(tInt), intValue(v) {}
 
-	bs::Constant::Constant(Str *v) : cType(tStr), strValue(capture(v)) {}
+	bs::Constant::Constant(Str *v) : cType(tStr), strValue(v->v.unescape()) {}
 
 	bs::Constant::Constant(Bool v) : cType(tBool), boolValue(v) {}
 
@@ -112,7 +112,8 @@ namespace storm {
 		using namespace code;
 
 		// Generate the string in memory!
-		const String &v = strValue->v;
+		// TODO: Write int16:s directly instead...
+		const String &v = strValue;
 		for (nat i = 0; i < v.size(); i++) {
 			to << dat(byteConst(v[i] & 0xFF));
 			to << dat(byteConst(v[i] >> 8));

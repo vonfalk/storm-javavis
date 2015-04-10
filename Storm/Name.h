@@ -2,6 +2,7 @@
 #include "Value.h"
 #include "Lib/Types.h"
 #include "Lib/Object.h"
+#include "Lib/Array.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -15,6 +16,9 @@ namespace storm {
 	public:
 		// Create with only a name.
 		STORM_CTOR NamePart(Par<Str> name);
+
+		// Create with name and params.
+		STORM_CTOR NamePart(Par<Str> name, Par<Array<Value>> params);
 
 		// Create from C++.
 		NamePart(const String &name);
@@ -49,6 +53,9 @@ namespace storm {
 
 		// Create with one entry.
 		STORM_CTOR Name(Par<NamePart> v);
+
+		// One entry.
+		STORM_CTOR Name(Par<Str> v);
 
 		// Create with one entry.
 		Name(const String &p);

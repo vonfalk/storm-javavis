@@ -37,7 +37,7 @@ namespace code {
 
 	Value::Value(Variable v, Offset offset, Size size) : valType(tVariable), valSize(size) {
 		assert(v != Variable::invalid);
-		assert(offset + size <= Offset(v.size()));
+		assert(offset <= Offset(v.size()));
 		assert(offset >= Offset());
 		variableId = v.id;
 		iOffset = offset;

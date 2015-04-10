@@ -48,7 +48,7 @@ namespace storm {
 			return r;
 		}
 
-		throw BuiltInError(L"Type " + toS(val.name) + L" was not found.");
+		throw BuiltInError(L"Type " + ::toS(val.name) + L" was not found.");
 	}
 
 	static void addBuiltIn(Engine &to, const BuiltInFunction *fn, const vector<NamedThread *> &threads, Type *insertInto = null) {
@@ -62,7 +62,7 @@ namespace storm {
 			Auto<Name> pkg = parseSimpleName(to, fn->pkg);
 			Package *p = to.package(pkg, true);
 			if (!p)
-				throw BuiltInError(L"Failed to locate package " + toS(fn->pkg));
+				throw BuiltInError(L"Failed to locate package " + ::toS(fn->pkg));
 			into = p;
 		} else if (fn->mode & BuiltInFunction::typeMember) {
 			assert((fn->mode & BuiltInFunction::hiddenEngine) == 0, L"Not supported with typeMember");
@@ -123,7 +123,7 @@ namespace storm {
 		Auto<Name> pkgName = parseSimpleName(to, t->pkg);
 		Package *pkg = to.package(pkgName, true);
 		if (!pkg)
-			throw BuiltInError(L"Failed to locate package " + toS(t->pkg));
+			throw BuiltInError(L"Failed to locate package " + ::toS(t->pkg));
 
 		Type *type = to.builtIn(t->typePtrId);
 		pkg->add(type);
@@ -153,7 +153,7 @@ namespace storm {
 			// Add as usual.
 			Type *super = to.builtIn(t->super);
 			if (!super)
-				throw BuiltInError(L"Failed to locate super type with id " + toS(t->super));
+				throw BuiltInError(L"Failed to locate super type with id " + ::toS(t->super));
 			tc->setSuper(super);
 		} else if (tc->flags & typeClass) {
 			Type *obj = Object::stormType(to);
@@ -173,7 +173,7 @@ namespace storm {
 		Auto<Name> pkgName = parseSimpleName(to, t->pkg);
 		Package *pkg = to.package(pkgName, true);
 		if (!pkg)
-			throw BuiltInError(L"Failed to locate package " + toS(t->pkg));
+			throw BuiltInError(L"Failed to locate package " + ::toS(t->pkg));
 
 		Thread *thread = t->decl->thread(to);
 		Auto<NamedThread> created = CREATE(NamedThread, to, String(t->name), thread);

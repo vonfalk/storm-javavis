@@ -7,6 +7,10 @@
 
 namespace storm {
 
+	Str *toS(Engine &e, const Value &v) {
+		return CREATE(Str, e, ::toS(v));
+	}
+
 	bool isClass(Type *t) {
 		return (t->flags & typeClass) != 0;
 	}

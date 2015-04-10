@@ -1,5 +1,7 @@
 use lang;
+use lang:bs:macro;
 use core:io;
+use core:asm;
 use core:lang;
 use core:debug;
 
@@ -7,21 +9,146 @@ class Repl extends LangRepl {
 
 	Bool done;
 
-	Bool eval(Str line) {
-		SyntaxSet set;
-		Url url;
-		Parser p(set, line, url);
+	// Used syntax set.
+	SyntaxSet syntax;
 
+	// Pre-processing.
+	ctor() {
+		init() {
+			done = false;
+			syntax();
+		}
+
+		Named pkg = (name{lang:bs}).find(rootScope);
+		if (pkg as Package) {
+			syntax.add(pkg);
+		}
+	}
+
+	Bool eval(Str line) {
+		// TODO: Replace the exit special case with a function call.
 		if (line.equals("exit")) {
 			done = true;
+			true;
 		} else {
-			print(line);
+			evalLine(line);
 		}
-		true;
 	}
 
 	Bool exit() {
 		done;
+	}
+
+	Bool evalLine(Str line) {
+		Parser parser(syntax, line, Url());
+		parser.parse("Stmt");
+		if (parser.hasError) {
+			print("Syntax error:");
+			print(parser.errorMsg);
+			// WANT RETURN!
+			false;
+		} else {
+			// TODO: Another scope here!
+			ReplBlock block;
+			TObject stmt = parser.transformT([TObject: block]);
+			if (stmt as Expr) {
+				evalExpr(line, block, stmt);
+			}
+			true;
+		}
+	}
+
+	void evalExpr(Str line, ReplBlock block, Expr expr) {
+		Named replaceFn = (name{lang:bs:Repl:evalFn<lang:bs:Repl>}).find(rootScope);
+		if (replaceFn as core:lang:Function) {
+			ReplCode code(block, expr);
+			replaceFn.setCode(code);
+
+			// Now, run the replaced function!
+			StrBuf r;
+			r.add(line).add(" = ").add(evalFn());
+			print(r.toS);
+		} else {
+			print("I AM ERROR");
+		}
+	}
+
+	// This function will be replaced runtime, beware >)
+	// TODO: Replace with some kind of anonymous function.
+	Str evalFn() {
+		"";
+	}
+
+}
+
+class ReplBlock extends Block {
+	ctor() {
+		Named repl = (name{lang:bs:Repl}).find(rootScope);
+		// We need BS:s lookup for it to work good.
+		BSScope lookup(Url());
+		init(Scope(repl, lookup)) {}
+
+		addInclude(name{core});
+		addInclude(name{lang:bs});
+	}
+
+	void addInclude(TypeName name) {
+		Named v = name.find(rootScope);
+		if (v as Package) {
+			scope.addInclude(v);
+		}
+	}
+}
+
+class ReplCode extends TmpLazyCode {
+	ReplBlock root;
+	Expr expr;
+	Value strType;
+
+	ctor(ReplBlock root, Expr expr) {
+		init() {
+			root = root;
+			expr = expr;
+			strType = (name{core:Str}).resolve(rootScope);
+		}
+	}
+
+	CodeGen load() {
+		print("TODO: Implement support for this-ptr!");
+
+		CodeGen g(runOnAny);
+
+		VarInfo resultVar = g.variable(strType);
+
+		g.l << prolog();
+
+		Value result = expr.result;
+		Name name(NamePart("toS", [Value: result]));
+		Named toSFn = root.scope.find(name);
+		if (toSFn as Function) {
+			// It exists, use the result.
+			FnCall toSCall(toSFn, Actual(expr));
+			print(toSCall);
+			toSCall.code(g, CodeResult(strType, resultVar));
+		} else {
+			// Just evaluate and print a dummy output.
+			createDefaultResult(g, result, resultVar);
+		}
+
+		g.l << addRef(Operand(resultVar.v));
+		g.l << mov(Operand(ptrA), Operand(resultVar.v));
+		g.l << epilog();
+		g.l << ret(sizePtr);
+
+		g;
+	}
+
+	// Create an empty string for output.
+	void createDefaultResult(CodeGen g, Value resultType, VarInfo result) {
+		StrBuf s;
+		s.add("<").add(resultType.toS).add(">");
+		Expr constant = strConstant(SStr(s.toS));
+		constant.code(g, CodeResult(strType, result));
 	}
 
 }

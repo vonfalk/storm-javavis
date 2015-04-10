@@ -75,7 +75,7 @@ namespace storm {
 	public:
 		SyntaxVarAssignedError(const SrcPos &pos, const String &var) : CodeError(pos), var(var) {}
 
-		inline String what() const { return toS(where) + L": Variable already assigned: " + var; }
+		inline String what() const { return ::toS(where) + L": Variable already assigned: " + var; }
 	private:
 		String var;
 	};

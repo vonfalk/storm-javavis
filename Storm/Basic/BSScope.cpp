@@ -48,9 +48,9 @@ namespace storm {
 			to->add(includes[i]);
 	}
 
-	void bs::addInclude(const Scope &to, Package *pkg) {
+	void bs::addInclude(const Scope &to, Par<Package> pkg) {
 		if (Auto<BSScope> s = to.lookup.as<BSScope>()) {
-			s->includes.push_back(pkg);
+			s->includes.push_back(pkg.borrow());
 		} else {
 			WARNING(L"This is not what you want to do!");
 		}

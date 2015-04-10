@@ -71,7 +71,7 @@ namespace storm {
 			// Convert to a Name.
 			Name *STORM_FN toName(const Scope &scope);
 
-			// Find.
+			// Find. TODO: Storm does not expect this function to return null in its current state.
 			Named *STORM_FN find(const Scope &scope);
 
 			// Resolve to a type.

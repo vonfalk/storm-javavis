@@ -1,5 +1,6 @@
 #pragma once
-#include "Lib/Object.h"
+#include "Lib/TObject.h"
+#include "Thread.h"
 
 namespace storm {
 	STORM_PKG(lang);
@@ -8,9 +9,8 @@ namespace storm {
 	 * Defines the entry point for a REPL for a language. Any language that
 	 * supports a REPL may simply implement a class named "Repl" that inherits
 	 * from this class.
-	 * TODO: Maybe we want this on a specific thread?
 	 */
-	class LangRepl : public Object {
+	class LangRepl : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
 		// Create the REPL object.

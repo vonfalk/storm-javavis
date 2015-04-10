@@ -62,6 +62,9 @@ namespace storm {
 		// Helper for Storm to throw the error.
 		void STORM_FN throwError() const;
 
+		// Get the error string (for Storm).
+		Str *STORM_FN errorMsg() const;
+
 		// Generate a syntax tree. Leaves ownership of the tree to the caller.
 		// If the last parse was not successfull at all (ie, returned NO_MATCH), returns null.
 		// 'file' is for correct SrcRefs in the resulting tree.

@@ -45,6 +45,12 @@ namespace storm {
 		return null;
 	}
 
+	Named *find(const Scope &scope, Par<Name> name) {
+		Named *r = scope.find(name);
+		r->addRef();
+		return r;
+	}
+
 
 	/**
 	 * ScopeLookup.

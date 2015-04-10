@@ -16,6 +16,10 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
+Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
+This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.
+Make sure to decrease the stack size in UThread after this is done!
+
 Replace the parameter CodeResult with a return value? Is this possible?
 
 Enable the SyntaxRules among others to be accessible from Storm.

@@ -1,0 +1,9 @@
+use lang:bs;
+use core:debug;
+
+// Poor-mans eval!
+void replTest() {
+	Repl repl;
+	repl.eval("1+3;");
+	repl.eval("\"Hej\";");
+}

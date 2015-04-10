@@ -383,4 +383,17 @@ namespace storm {
 		return t;
 	}
 
+
+	Str *toS(Engine &e, Int v) {
+		return CREATE(Str, e, ::toS(v));
+	}
+
+	Str *toS(Engine &e, Nat v) {
+		return CREATE(Str, e, ::toS(v));
+	}
+
+	Str *toS(Engine &e, Byte v) {
+		return CREATE(Str, e, ::toS(v));
+	}
+
 }

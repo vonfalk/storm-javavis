@@ -157,6 +157,7 @@ namespace storm {
 			TODO(L"We can not clear everything here, that removes potential built-in types in the same pkg!");
 			throw;
 		}
+
 	}
 
 	PkgReader *Package::createReader(Par<Name> pkg, Par<PkgFiles> files) {

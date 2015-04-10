@@ -238,6 +238,10 @@ namespace storm {
 		throw error();
 	}
 
+	Str *Parser::errorMsg() const {
+		return CREATE(Str, this, error().what());
+	}
+
 	Bool Parser::hasError() const {
 		if (lastStep() < steps.size() - 1) {
 			return true;

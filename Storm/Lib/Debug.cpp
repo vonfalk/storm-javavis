@@ -125,9 +125,9 @@ namespace storm {
 		} else if (v.isBuiltIn()) {
 			// Built in type.
 			if (v.type == intType(var->engine())) {
-				value = toS(*(Int *)object);
+				value = ::toS(*(Int *)object);
 			} else if (v.type == natType(var->engine())) {
-				value = toS(*(Nat *)object);
+				value = ::toS(*(Nat *)object);
 			}
 		} else {
 			// Value

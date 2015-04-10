@@ -144,7 +144,7 @@ namespace storm {
 	public:
 		SyntaxTypeError(const SrcPos &pos, const String &msg) : CodeError(pos), msg(msg) {}
 
-		inline String what() const { return toS(where) + L": " + msg; }
+		inline String what() const { return ::toS(where) + L": " + msg; }
 	private:
 		String msg;
 	};

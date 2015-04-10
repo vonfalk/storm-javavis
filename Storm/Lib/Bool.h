@@ -13,4 +13,7 @@ namespace storm {
 		virtual Function *destructor() { return null; }
 	};
 
+	STORM_PKG(core);
+	Str *STORM_ENGINE_FN toS(Engine &e, Bool v);
+
 }
