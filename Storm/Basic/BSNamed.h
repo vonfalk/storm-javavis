@@ -128,8 +128,8 @@ namespace storm {
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
 
 			// Type and variable.
-			Value type;
-			wrap::Variable var;
+			STORM_VAR Value type;
+			STORM_VAR wrap::Variable var;
 
 		protected:
 			virtual void output(wostream &to) const;

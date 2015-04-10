@@ -4,6 +4,7 @@
 #include "Utf8Text.h"
 #include "Utf16Text.h"
 #include "Utils/Endian.h"
+#include "MemStream.h"
 
 namespace storm {
 
@@ -131,6 +132,17 @@ namespace storm {
 			created->read();
 
 		return created.ret();
+	}
+
+	TextReader *readStr(Par<Str> from) {
+		nat16 bom = 0xFEFF;
+		nat strSize = from->v.size() * sizeof(from->v[0]);
+		Buffer b(strSize + sizeof(bom));
+		copyArray(b.dataPtr(), (byte *)&bom, sizeof(bom));
+		copyArray(b.dataPtr() + sizeof(bom), (byte *)&from->v[0], strSize);
+
+		Auto<IMemStream> src = CREATE(IMemStream, from, b);
+		return readText(src);
 	}
 
 	Str *readAllText(Par<Url> from) {

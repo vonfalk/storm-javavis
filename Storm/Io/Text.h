@@ -74,6 +74,11 @@ namespace storm {
 	 */
 	TextReader *STORM_FN readText(Par<IStream> stream);
 
+	/**
+	 * Read a string.
+	 */
+	TextReader *STORM_FN readStr(Par<Str> from);
+
 	// Read all text from a text file.
 	Str *STORM_FN readAllText(Par<Url> file);
 

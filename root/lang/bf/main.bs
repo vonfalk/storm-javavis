@@ -83,6 +83,11 @@ class BfCode extends TmpLazyCode {
 		CodeResult result(strType, r.block);
 
 		if (o as BfExpr) {
+			Expr oInput = o.input;
+			if (oInput as BareVarAccess) {
+				oInput.var = input;
+			}
+
 			o.code(r, result);
 		} else {
 			print("I AM ERROR");
@@ -104,6 +109,7 @@ class BfCode extends TmpLazyCode {
 class BfExpr extends lang:bs:Expr {
 	Nat space;
 	BfToken[] tokens;
+	Expr input;
 
 	ctor() {
 		init() {}
@@ -113,6 +119,7 @@ class BfExpr extends lang:bs:Expr {
 		init() {
 			space = space.v.toNat;
 			tokens = data;
+			input = BareVarAccess((name{core:Str}).resolve(rootScope), Variable());
 		}
 	}
 
@@ -120,6 +127,7 @@ class BfExpr extends lang:bs:Expr {
 		init() {
 			space = space.v.toNat;
 			tokens = data;
+			input = input;
 		}
 	}
 
@@ -129,7 +137,7 @@ class BfExpr extends lang:bs:Expr {
 
 	void code(CodeGen g, CodeResult to) {
 		// Generate some code!
-		BfState state(g, space);
+		BfState state(g, space, input);
 
 		// Initialize some variables...
 		state.createOutput();
@@ -160,16 +168,30 @@ class BfState on Compiler {
 	// Data area. A large variable.
 	Variable data;
 
+	// Input expression and variable the TextReader is stored in.
+	Expr inputExpr;
+	Variable input;
+
 	// StrBuf type. Needed a couple of times...
 	Value strBuf;
 
-	ctor(CodeGen g, Nat size) {
+	// TextReader type.
+	Value textReader;
+
+	// Nat type.
+	Value natType;
+
+	ctor(CodeGen g, Nat size, Expr inputExpr) {
 		init() {
 			g = g;
 			strBuf = (name{core:StrBuf}).resolve(rootScope);
+			textReader = (name{core:io:TextReader}).resolve(rootScope);
+			natType = (name{core:Nat}).resolve(rootScope);
+			inputExpr = inputExpr;
 		}
 
 		output = g.variable(strBuf).v;
+		input = g.variable(textReader).v;
 		tmpData = g.l.createIntVar(Part(g.block), Operand(), FreeOn());
 		data = g.l.createVariable(Part(g.block), Size(size), Operand(), FreeOn());
 	}
@@ -179,6 +201,9 @@ class BfState on Compiler {
 		Block block(rootScope);
 		Expr ctor = namedExpr(block, name{core:StrBuf}, Actual());
 		ctor.code(g, CodeResult(strBuf, VarInfo(output)));
+
+		Expr create = namedExpr(block, name{core:io:readStr}, Actual(inputExpr));
+		create.code(g, CodeResult(textReader, VarInfo(input)));
 
 		// Initialize our pointer as well.
 		g.l << lea(Operand(ptrA), ptrRel(data, Offset()));
@@ -211,8 +236,16 @@ class BfFwd extends BfToken {
 
 class BfInput extends BfToken {
 	void code(BfState state, CodeGen to) {
-		// For now: Indicate end of stream.
-		to.l << mov(byteRel(ptrA, Offset()), byteConst(0.byte));
+		to.l << push(Operand(ptrA));
+
+		Block block(Scope(state.textReader.getType));
+		BareVarAccess inAccess(state.textReader, state.input);
+		Expr e = namedExpr(block, SStr("read"), inAccess, Actual());
+		e.code(to, CodeResult(state.natType, VarInfo(state.tmpData)));
+
+		to.l << lea(Operand(ptrC), Operand(state.tmpData));
+		to.l << pop(Operand(ptrA));
+		to.l << mov(byteRel(ptrA, Offset()), byteRel(ptrC, Offset()));
 	}
 }
 
@@ -224,7 +257,7 @@ class BfOutput extends BfToken {
 
 		Block block(Scope(state.strBuf.getType));
 		BareVarAccess outAccess(state.strBuf, state.output);
-		BareVarAccess tmpData((name{core:Nat}).resolve(rootScope), state.tmpData);
+		BareVarAccess tmpData(state.natType, state.tmpData);
 		Expr e = namedExpr(block, SStr("addChar"), outAccess, Actual(tmpData));
 		e.code(to, CodeResult());
 
