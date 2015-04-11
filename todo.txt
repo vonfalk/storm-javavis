@@ -20,6 +20,7 @@ Core
 -------
 Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
 This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.
+New regex parser written, optimize it (the new is about 2x slower when running ReplTest) and verify.
 Make sure to decrease the stack size in UThread after this is done!
 
 Test and rething toS function in Object. It does not always call the Storm version correctly...
