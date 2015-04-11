@@ -67,8 +67,11 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	try {
 		wcout << L"Welcome to the Storm compiler!" << endl;
 
-		// Path path = Path::dbgRoot() + L"root";
+#ifdef DEBUG
+		Path path = Path::dbgRoot() + L"root";
+#else
 		Path path = Path::executable() + L"root";
+#endif
 		wcout << L"Root directory: " << path << endl;
 
 		String lang = L"bs";

@@ -9,36 +9,42 @@ class Repl extends LangRepl {
 
 	Bool done;
 
-	// Used syntax set.
-	SyntaxSet syntax;
+	// Scope.
+	Scope scope;
 
 	// Pre-processing.
 	ctor() {
+		Named repl = (name{lang:bs:Repl}).find(rootScope);
+
 		init() {
 			done = false;
-			syntax();
+			scope = Scope(repl, BSScope());
 		}
 
-		print("TODO: Clean up this a bit!");
+		addPkg(name{core});
+		addPkg(name{lang:bs});
+		addPkg(name{lang:bs:macro});
+	}
 
-		Named pkg = (name{lang:bs}).find(rootScope);
+	void addPkg(TypeName name) {
+		Named pkg = name.find(rootScope);
 		if (pkg as Package) {
-			syntax.add(pkg);
-		}
-
-		pkg = (name{lang:bs:macro}).find(rootScope);
-		if (pkg as Package) {
-			syntax.add(pkg);
+			scope.addInclude(pkg);
 		}
 	}
 
 	Bool eval(Str line) {
-		// TODO: Replace the exit special case with a function call.
-		if (line.equals("exit")) {
-			done = true;
-			true;
+		SyntaxSet syntax = scope.getSyntax;
+		Parser parser(syntax, line, Url());
+		parser.parse("Stmt");
+		if (parser.hasError) {
+			print("Syntax error:");
+			print(parser.errorMsg);
+			false;
+			// WANT RETURN!
 		} else {
-			evalLine(line);
+			evalLine(line, parser);
+			true;
 		}
 	}
 
@@ -46,38 +52,48 @@ class Repl extends LangRepl {
 		done;
 	}
 
-	Bool evalLine(Str line) {
-		Parser parser(syntax, line, Url());
-		parser.parse("Stmt");
-		if (parser.hasError) {
-			print("Syntax error:");
-			print(parser.errorMsg);
-			// WANT RETURN!
-			false;
-		} else {
-			// TODO: Another scope here!
-			ReplBlock block;
-			TObject stmt = parser.transformT([TObject: block]);
-			if (stmt as Expr) {
-				evalExpr(line, block, stmt);
-			}
-			true;
+	void evalLine(Str line, Parser parser) {
+		ReplBlock block(scope);
+		LocalVar thisPtr("this", (name{lang:bs:ReplSandbox}).resolve(rootScope), SrcPos(), true);
+		block.add(thisPtr);
+
+		TObject stmt = parser.transformT([TObject: block]);
+		if (stmt as Expr) {
+			evalExpr(line, block, thisPtr, stmt);
 		}
 	}
 
-	void evalExpr(Str line, ReplBlock block, Expr expr) {
-		Named replaceFn = (name{lang:bs:Repl:evalFn<lang:bs:Repl>}).find(rootScope);
+	void evalExpr(Str line, ReplBlock block, LocalVar thisPtr, Expr expr) {
+		Named replaceFn = (name{lang:bs:ReplSandbox:evalFn<lang:bs:ReplSandbox>}).find(rootScope);
 		if (replaceFn as core:lang:Function) {
-			ReplCode code(block, expr);
+			ReplCode code(block, thisPtr, expr);
 			replaceFn.setCode(code);
 
 			// Now, run the replaced function!
+			ReplSandbox sandbox(this);
 			StrBuf r;
-			r.add(line).add(" = ").add(evalFn());
+			r.add(line).add(" = ").add(sandbox.evalFn());
 			print(r.toS);
 		} else {
 			print("I AM ERROR");
 		}
+	}
+
+}
+
+// Sandbox class for the Repl to execute in.
+class ReplSandbox on Compiler {
+	Repl owner;
+
+	ctor(Repl owner) {
+		init() {
+			owner = owner;
+		}
+	}
+
+	// This is the exit command.
+	void exit() {
+		owner.done = true;
 	}
 
 	// This function will be replaced runtime, beware >)
@@ -85,50 +101,36 @@ class Repl extends LangRepl {
 	Str evalFn() {
 		"";
 	}
-
 }
 
 class ReplBlock extends Block {
-	ctor() {
-		Named repl = (name{lang:bs:Repl}).find(rootScope);
-		// We need BS:s lookup for it to work good.
-		BSScope lookup(Url());
-		init(Scope(repl, lookup)) {}
-
-		addInclude(name{core});
-		addInclude(name{lang:bs});
-		addInclude(name{lang:bs:macro});
-	}
-
-	void addInclude(TypeName name) {
-		Named v = name.find(rootScope);
-		if (v as Package) {
-			scope.addInclude(v);
-		}
+	ctor(Scope scope) {
+		init(scope) {}
 	}
 }
 
 class ReplCode extends TmpLazyCode {
 	ReplBlock root;
+	LocalVar thisPtr;
 	Expr expr;
 	Value strType;
 
-	ctor(ReplBlock root, Expr expr) {
+	ctor(ReplBlock root, LocalVar thisPtr, Expr expr) {
 		init() {
 			root = root;
+			thisPtr = thisPtr;
 			expr = expr;
 			strType = (name{core:Str}).resolve(rootScope);
 		}
 	}
 
 	CodeGen load() {
-		print("TODO: Implement support for this-ptr!");
-
 		CodeGen g(runOnAny);
-
 		VarInfo resultVar = g.variable(strType);
 
 		g.l << prolog();
+
+		thisPtr.createParam(g);
 
 		Value result = expr.result;
 		Name name(NamePart("toS", [Value: result]));

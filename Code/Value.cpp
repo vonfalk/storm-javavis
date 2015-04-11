@@ -182,7 +182,10 @@ namespace code {
 			to << L" (" << toHex(iReference.address(), true) << L")";
 			break;
 		case tPart:
-			to << L"Part" << partId;
+			if (partId == Part::invalid.getId())
+				to << L"<invalid part>";
+			else
+				to << L"Part" << partId;
 			break;
 		case tVariable:
 			if (iOffset != Offset())

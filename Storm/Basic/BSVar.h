@@ -14,27 +14,28 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			LocalVar(const String &name, const Value &val, const SrcPos &pos, bool param = false);
+			STORM_CTOR LocalVar(Par<Str> name, const Value &val, const SrcPos &pos, Bool param);
 
 			// Type.
-			Value result;
+			STORM_VAR Value result;
 
 			// Declared at
-			SrcPos pos;
+			STORM_VAR SrcPos pos;
 
 			// Location (not initialized until code generation).
-			VarInfo var;
+			STORM_VAR VarInfo var;
 
 			// Is this a parameter?
-			bool param;
+			STORM_VAR Bool param;
 
 			// Constant variable? This is currently only used for the 'this' pointer.
-			bool constant;
+			STORM_VAR Bool constant;
 
 			// Create the variable.
-			void create(Par<CodeGen> state);
+			void STORM_FN create(Par<CodeGen> state);
 
 			// Create the parameter.
-			void createParam(Par<CodeGen> state);
+			void STORM_FN createParam(Par<CodeGen> state);
 
 		};
 

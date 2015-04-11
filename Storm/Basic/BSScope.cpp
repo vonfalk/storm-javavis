@@ -6,6 +6,8 @@
 
 namespace storm {
 
+	bs::BSScope::BSScope() {}
+
 	bs::BSScope::BSScope(Par<Url> file) : file(file) {}
 
 	Named *bs::BSScope::findHelper(const Scope &s, Par<Name> name) {
@@ -40,9 +42,13 @@ namespace storm {
 	}
 
 	void bs::BSScope::addSyntax(const Scope &from, Par<SyntaxSet> to) {
-		Auto<Name> syntax = syntaxPkg(file);
-		to->add(engine().package(syntax));
-		to->add(firstPkg(from.top)); // current package.
+		if (file) {
+			Auto<Name> syntax = syntaxPkg(file);
+			to->add(engine().package(syntax));
+		}
+
+		// Current package.
+		to->add(firstPkg(from.top));
 
 		for (nat i = 0; i < includes.size(); i++)
 			to->add(includes[i]);

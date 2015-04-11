@@ -39,7 +39,7 @@ namespace storm {
 			LocalVar *variable(const String &name);
 
 			// Add a variable
-			void add(Par<LocalVar> v);
+			void STORM_FN add(Par<LocalVar> v);
 
 		private:
 			// Variables in this block.

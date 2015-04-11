@@ -130,6 +130,9 @@ namespace storm {
 		bs::LocalVar::LocalVar(const String &name, const Value &t, const SrcPos &pos, bool param)
 			: Named(name), result(t), pos(pos), var(code::Variable::invalid), param(param), constant(false) {}
 
+		bs::LocalVar::LocalVar(Par<Str> name, const Value &val, const SrcPos &pos, Bool param)
+			: Named(name->v), result(val), pos(pos), var(code::Variable::invalid), param(param), constant(false) {}
+
 		void LocalVar::create(Par<CodeGen> state) {
 			if (param)
 				return;

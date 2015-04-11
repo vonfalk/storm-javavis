@@ -200,6 +200,9 @@ namespace storm {
 	}
 
 	static nat divideName(const String &str) {
+		if (str.empty())
+			return 0;
+
 		// Note, we _want_ to ignore files starting with . They are simply hidden files on UNIX.
 		for (nat i = str.size() - 1; i > 0; i--)
 			if (str[i] == '.')

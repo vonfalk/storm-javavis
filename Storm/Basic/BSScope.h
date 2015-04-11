@@ -11,6 +11,10 @@ namespace storm {
 		class BSScope : public ScopeLookup {
 			STORM_CLASS;
 		public:
+			// No atuomatic syntax.
+			STORM_CTOR BSScope();
+
+			// Automatically add the syntax package for 'file'.
 			STORM_CTOR BSScope(Par<Url> file);
 
 			// File name.
