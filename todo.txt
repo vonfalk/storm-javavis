@@ -7,6 +7,8 @@ Consider adding the -> syntax for captures in BNF rules, to be symmetric with ot
 In the parser: allow member variables to be assigned by the -> syntax as well! Useful in various places
 in Basic.
 
+It seems like the exact scope we get in the syntax depends on which file loaded us? Example: dbgSyntax in test.bs
+
 Make sure we are only working on types either specified as belonging to the compiler thread or no thread.
 
 Also: return types for rules may be specified.
@@ -19,6 +21,8 @@ Core
 Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
 This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.
 Make sure to decrease the stack size in UThread after this is done!
+
+Test and rething toS function in Object. It does not always call the Storm version correctly...
 
 Replace the parameter CodeResult with a return value? Is this possible?
 

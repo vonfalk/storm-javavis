@@ -145,6 +145,7 @@ Operator => lOperator(op, 490) : "&" op;
 Operator => lOperator(op, 480) : "^" op;
 Operator => lOperator(op, 470) : "|" op;
 Operator => assignOperator(op, 100) : "=" op;
+Operator => ConcatOperator(op, 300) : "#" op;
 
 // Expression
 Expr(Block block);

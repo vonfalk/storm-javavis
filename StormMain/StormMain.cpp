@@ -55,8 +55,13 @@ int launchMainLoop(Engine &engine, const String &lang) {
 		else
 			line = CREATE(Str, engine, line->v + L"\n" + data);
 
-		if (repl->eval(line))
+		try {
+			if (repl->eval(line))
+				line = Auto<Str>();
+		} catch (const Exception &e) {
+			wcout << L"Unhandled exception from 'eval': " << e << endl;
 			line = Auto<Str>();
+		}
 	}
 
 	return 0;

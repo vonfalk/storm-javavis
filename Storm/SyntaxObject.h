@@ -16,7 +16,7 @@ namespace storm {
 		STORM_CTOR SObject();
 
 		// The position of this SObject. Initialized to nothing.
-		SrcPos pos;
+		STORM_VAR SrcPos pos;
 	};
 
 

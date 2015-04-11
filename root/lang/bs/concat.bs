@@ -1,0 +1,125 @@
+use core;
+use core:lang;
+use core:debug;
+
+// Generate the TypeName for the StrBuf type.
+TypeName strBufType() {
+	TypeName t;
+	t.add(TypePart("core"));
+	t.add(TypePart("StrBuf"));
+	t;
+}
+
+// Implementation of the string concatenation operator (#).
+class ConcatOperator extends OpInfo {
+
+	ctor(SStr op, Int prio) {
+		init(op, prio, false) {}
+	}
+
+	Expr meaning(Block block, Expr lhs, Expr rhs) {
+		ConcatExpr r(block);
+		appendTo(r, lhs);
+		appendTo(r, rhs);
+		r;
+	}
+
+}
+
+// Helper to append parameters.
+void appendTo(ConcatExpr expr, Expr e) {
+	if (e as Operator) {
+		OpInfo info = e.op;
+		if (info as ConcatOperator) {
+			appendTo(expr, e.lhs);
+			appendTo(expr, e.rhs);
+		} else {
+			expr.append(e);
+		}
+	} else {
+		expr.append(e);
+	}
+}
+
+
+// The concatenation expression itself. It generates code of
+// the structure: { StrBuf b; { buf.add(...); buf.add(...); } buf; }
+class ConcatExpr extends Expr {
+	// Inner block, so that we can easily add new expressions at the right position.
+	ExprBlock outer;
+	ExprBlock inner;
+	Var strBufVar;
+
+	// Create the root node.
+	ctor(Block parent) {
+		ExprBlock outer(parent);
+		ExprBlock inner(outer);
+		init() {
+			outer = outer;
+			inner = inner;
+			strBufVar(outer, strBufType, SStr("b"), Actual());
+		}
+
+		// Generate the outer parts.
+		outer.add(strBufVar);
+		outer.add(inner);
+		outer.add(namedExpr(outer, SStr("toS"), LocalVarAccess(strBufVar.var), Actual()));
+	}
+
+	// Append a node to the end of the concatenation.
+	void append(Expr e) {
+		// Does the StrBuf class have a member 'add(T)'?
+		if (appendStrBuf(e)) {
+		} else if (appendToS(e)) {
+		} else {
+			throwSyntaxError(pos, "Can not convert " + e.result.toS + " to string by doing 'x.toS'.");
+		}
+	}
+
+	// Append a node, trying to call add on the StrBuf directly.
+	Bool appendStrBuf(Expr e) {
+		Value v = strBufType.resolve(rootScope);
+		Type t = v.getType;
+		Scope findIn = outer.scope.child(t);
+		NamePart part("add", [Value: v, e.result]);
+		Named member = findIn.find(Name(part));
+		if (member as Function) {
+			Actual params;
+			params.add(LocalVarAccess(strBufVar.var));
+			params.add(e);
+			inner.add(FnCall(member, params));
+			true;
+		} else {
+			false;
+		}
+	}
+
+	// Append a node, trying to call toS on the object first.
+	Bool appendToS(Expr e) {
+		Value r = e.result;
+		Scope findIn = outer.scope.child(r.getType);
+		NamePart part("toS", [Value: r]);
+		Named member = findIn.find(Name(part));
+		if (member as Function) {
+			FnCall call(member, Actual(e));
+			appendStrBuf(call);
+		} else {
+			false;
+		}
+	}
+
+	// Relay code generation and type info to the blocks.
+	Value result() {
+		outer.result();
+	}
+
+	void code(CodeGen g, CodeResult r) {
+		outer.code(g, r);
+	}
+
+	// Nice output.
+	Str toS() {
+		outer.toS;
+	}
+
+}

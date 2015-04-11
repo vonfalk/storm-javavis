@@ -534,6 +534,10 @@
 				RelativePath=".\Lib\StrBuf.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ExceptionWrap.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -910,6 +914,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\StrBuf.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ExceptionWrap.h"
 				>
 			</File>
 		</Filter>

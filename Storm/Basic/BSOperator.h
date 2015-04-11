@@ -4,12 +4,13 @@
 
 namespace storm {
 	namespace bs {
+		STORM_PKG(lang.bs);
 
 		/**
 		 * Operator information. Create by either 'lOperator' or 'rOperator' for
 		 * left- and right associative operators.
 		 */
-		class OpInfo : public Object {
+		class OpInfo : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
 			// Ctor.
@@ -82,10 +83,11 @@ namespace storm {
 			Block *block;
 
 			// Left- and right hand side.
-			Auto<Expr> lhs, rhs;
+			STORM_VAR Auto<Expr> lhs;
+			STORM_VAR Auto<Expr> rhs;
 
 			// Operator info.
-			Auto<OpInfo> op;
+			STORM_VAR Auto<OpInfo> op;
 
 			// Alter the tree to match the priority. Returns the new leaf node.
 			Operator *prioritize();

@@ -161,6 +161,11 @@ BEGIN_TEST(ErrorTest) {
 	CALL_TEST_FN(checkTimes, L"test.bs.threadException", 4);
 } END_TEST
 
+BEGIN_TEST(StrConcatTest) {
+	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.strConcatTest"), CREATE(Str, *gEngine, L"ab1cvoid"));
+	CHECK_ERROR(runFn<Str *>(L"test.bs.strConcatError"), SyntaxError);
+} END_TEST
+
 // Test the REPL of BS programmatically.
 BEGIN_TESTX(ReplTest) {
 	runFn(L"test.bs.replTest");

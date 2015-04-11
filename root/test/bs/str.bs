@@ -1,0 +1,9 @@
+use core:debug;
+
+Str strConcatTest() {
+	"a" # "b" # 1 # "c" # core:lang:Value();
+}
+
+Str strConcatError() {
+	"a" # core:asm:Size() # "b";
+}
