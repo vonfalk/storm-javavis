@@ -36,14 +36,23 @@ class Repl extends LangRepl {
 	Bool eval(Str line) {
 		SyntaxSet syntax = scope.getSyntax;
 		Parser parser(syntax, line, Url());
-		parser.parse("Stmt");
+
+		parser.parse("SkipBlock");
 		if (parser.hasError) {
-			print("Syntax error:");
-			print(parser.errorMsg);
+			// Mismatched something. Let the user complete their input.
 			false;
-			// WANT RETURN!
 		} else {
-			evalLine(line, parser);
+			parser.parse("Stmt");
+			if (parser.hasError) {
+				// Forgotten ;... Try treating it as an expression instead!
+				parser.parse("Expr");
+			}
+
+			if (parser.hasError) {
+				print(parser.errorMsg);
+			} else {
+				evalLine(line, parser);
+			}
 			true;
 		}
 	}

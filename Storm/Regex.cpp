@@ -91,9 +91,6 @@ namespace storm {
 		bool inRep = false;
 		wchar last = 0;
 		for (nat i = 0; i < chars.size(); i++) {
-			escape(to, chars[i]);
-			continue;
-
 			if (!inRep) {
 				if (chars[i] == last + 1) {
 					inRep = true;
