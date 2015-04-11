@@ -20,6 +20,10 @@ BEGIN_TEST(RegexTest) {
 	CHECK_EQ(matchRegex(L"[abc]", L"b"), 1);
 	CHECK_EQ(matchRegex(L"[abc]", L"c"), 1);
 	CHECK_EQ(matchRegex(L"[abc]", L"d"), NO_MATCH);
+	CHECK_EQ(matchRegex(L"[a-c]", L"a"), 1);
+	CHECK_EQ(matchRegex(L"[a-c]", L"b"), 1);
+	CHECK_EQ(matchRegex(L"[a-c]", L"c"), 1);
+	CHECK_EQ(matchRegex(L"[a-c]", L"d"), NO_MATCH);
 	CHECK_EQ(matchRegex(L"[^abc]", L"d"), 1);
 	CHECK_EQ(matchRegex(L"[^abc]", L"a"), NO_MATCH);
 	CHECK_EQ(matchRegex(L"[^abc\\^]", L"^"), NO_MATCH);
@@ -38,6 +42,7 @@ BEGIN_TEST(RegexTest) {
 	/**
 	 * Check * matching
 	 */
+	CHECK_EQ(matchRegex(L"a*", L"aaaa"), 4);
 	CHECK_EQ(matchRegex(L"a*c", L"aaac"), 4);
 	CHECK_EQ(matchRegex(L"a*cd", L"cd"), 2);
 	CHECK_EQ(matchRegex(L"a*cd", L"acdef"), 3);
@@ -107,5 +112,6 @@ BEGIN_TEST(RegexTest) {
 	CHECK_EQ(matchRegex(L"[ \n\r\t]*//.*[\n\r]", L"   // comment\n"), 14);
 	CHECK_EQ(matchRegex(L"//.*[\n\r][ \n\r\t]*", L"// comment\n  \n"), 14);
 	CHECK_EQ(matchRegex(L"[ \n\r\t]*//.*[\n\r][ \n\r\t]*", L"   // comment\n  \n"), 17);
+	CHECK_EQ(matchRegex(L"[^\\\"\\\\]*", L"Type"), 4);
 
 } END_TEST

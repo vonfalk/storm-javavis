@@ -454,10 +454,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PreVector.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Printable.h"
 				>
 			</File>
@@ -543,6 +539,10 @@
 			</File>
 			<File
 				RelativePath=".\Endian.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PreArray.h"
 				>
 			</File>
 		</Filter>

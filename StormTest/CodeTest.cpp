@@ -162,7 +162,7 @@ BEGIN_TEST(ErrorTest) {
 } END_TEST
 
 // Test the REPL of BS programmatically.
-BEGIN_TEST(ReplTest) {
+BEGIN_TESTX(ReplTest) {
 	runFn(L"test.bs.replTest");
 } END_TEST
 

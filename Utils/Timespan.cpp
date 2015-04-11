@@ -29,8 +29,10 @@ void Timespan::output(std::wostream &output) const {
 		output << this->time << L" us";
 	} else if (time < 1000 * 1000) {
 		output << this->time / 1000 << L" ms";
+	} else if (time < 60 * 1000 * 1000) {
+		output << std::fixed << std::setprecision(2) << (this->time / 1000000.0) << L" s";
 	} else {
-		output << std::fixed <<std::setprecision(2) << this->time / 1000000.0 << L" s";
+		output << std::fixed << std::setprecision(2) << (this->time / 60000000.0) << L" min";
 	}
 }
 

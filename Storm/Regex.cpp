@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Regex.h"
+#include "Utils/PreArray.h"
 
 namespace storm {
 
@@ -16,13 +17,18 @@ namespace storm {
 	 * Character set class.
 	 */
 
-	Regex::Set::Set() : chars(), inverted(false) {}
+	Regex::Set Regex::Set::empty() {
+		Set s = { vector<wchar>(), false };
+		return s;
+	}
 
-	Regex::Set::Set(wchar ch) : chars(1, ch), inverted(false) {}
+	Regex::Set Regex::Set::single(wchar ch) {
+		Set s = { vector<wchar>(1, ch), false };
+		return s;
+	}
 
 	Regex::Set Regex::Set::all() {
-		Set s;
-		s.inverted = true;
+		Set s = { vector<wchar>(), true };
 		return s;
 	}
 
@@ -36,7 +42,7 @@ namespace storm {
 		return inverted;
 	}
 
-	void escape(std::wostream &to, wchar ch) {
+	static void escape(std::wostream &to, wchar ch) {
 		switch (ch) {
 		case '\n':
 			to << "\\n";
@@ -55,6 +61,7 @@ namespace storm {
 		case '+':
 		case '^':
 		case '"':
+		case '\\':
 			to << "\\";
 			// fall thru
 		default:
@@ -84,6 +91,9 @@ namespace storm {
 		bool inRep = false;
 		wchar last = 0;
 		for (nat i = 0; i < chars.size(); i++) {
+			escape(to, chars[i]);
+			continue;
+
 			if (!inRep) {
 				if (chars[i] == last + 1) {
 					inRep = true;
@@ -105,6 +115,92 @@ namespace storm {
 		to << ']';
 	}
 
+	Regex::Set Regex::Set::parse(const String &in, nat &pos) {
+		switch (in[pos]) {
+		case '\\':
+			if (++pos < in.size())
+				return single(in[pos++]);
+			else
+				return single('\\');
+		case '[':
+			pos++;
+			return parseGroup(in, pos);
+		case '.':
+			pos++;
+			return all();
+		default:
+			return single(in[pos++]);
+		}
+	}
+
+	Regex::Set Regex::Set::parseGroup(const String &in, nat &pos) {
+		Set result = Set::empty();
+		if (in[pos] == '^') {
+			result.inverted = true;
+			pos++;
+		}
+
+		while (pos < in.size() && in[pos] != ']') {
+			switch (in[pos]) {
+			case '\\':
+				if (++pos < in.size())
+					result.chars.push_back(in[pos++]);
+				break;
+			case '-':
+				if (++pos < in.size() && result.chars.size() > 0) {
+					for (wchar c = result.chars.back() + 1; c < in[pos]; c++)
+						result.chars.push_back(c);
+					result.chars.push_back(in[pos++]);
+				}
+				break;
+			default:
+				result.chars.push_back(in[pos++]);
+				break;
+			}
+		}
+
+		if (pos < in.size())
+			pos++;
+
+		return result;
+	}
+
+	/**
+	 * State class.
+	 */
+
+	void Regex::State::output(std::wostream &to) const {
+		match.output(to);
+		if (skippable && repeatable)
+			to << '*';
+		else if (skippable)
+			to << '?';
+		else if (repeatable)
+			to << '+';
+	}
+
+	Regex::State Regex::State::parse(const String &in, nat &pos) {
+		State s = { Set::parse(in, pos), false, false };
+		if (pos < in.size()) {
+			switch (in[pos]) {
+			case '*':
+				s.skippable = true;
+				s.repeatable = true;
+				pos++;
+				break;
+			case '?':
+				s.skippable = true;
+				pos++;
+				break;
+			case '+':
+				s.repeatable = true;
+				pos++;
+				break;
+			}
+		}
+		return s;
+	}
+
 	/**
 	 * Regex class.
 	 */
@@ -114,159 +210,84 @@ namespace storm {
 	}
 
 	void Regex::output(std::wostream &to) const {
-		for (nat i = 0; i < chars.size(); i++) {
-			to << chars[i];
-
-			switch (repeat[i]) {
-			case rZeroPlus:
-				to << '*';
-				break;
-			case rOnePlus:
-				to << '+';
-				break;
-			case rZeroOne:
-				to << '?';
-				break;
-			}
+		for (nat i = 0; i < states.size(); i++) {
+			states[i].output(to);
 		}
 	}
 
 	void Regex::parse(const String &pattern) {
-		for (nat pos = 0; pos < pattern.size(); pos++) {
-			switch (pattern[pos]) {
-			case '\\':
-				if (++pos < pattern.size()) {
-					chars.push_back(Set(pattern[pos]));
-					repeat.push_back(rOnce);
-				}
-				break;
-			case '[':
-				pos += parseGroup(pattern, pos + 1);
-				break;
-			case '.':
-				chars.push_back(Set::all());
-				repeat.push_back(rOnce);
-				break;
-			case '*':
-				if (repeat.size() > 0)
-					repeat.back() = rZeroPlus;
-				break;
-			case '+':
-				if (repeat.size() > 0)
-					repeat.back() = rOnePlus;
-				break;
-			case '?':
-				if (repeat.size() > 0)
-					repeat.back() = rZeroOne;
-				break;
-			default:
-				chars.push_back(Set(pattern[pos]));
-				repeat.push_back(rOnce);
-				break;
-			}
+		nat pos = 0;
+		while (pos < pattern.size()) {
+			states.push_back(State::parse(pattern, pos));
 		}
 	}
 
-	nat Regex::parseGroup(const String &pattern, nat start) {
-		Set s;
-		nat pos = start;
-
-		if (start < pattern.size() && pattern[start] == '^') {
-			s.inverted = true;
-			pos++;
-		}
-
-		nat dashCount = 0;
-		for (; pos < pattern.size(); pos++) {
-			switch (pattern[pos]) {
-			case '\\':
-				if (++pos < pattern.size())
-					s.chars.push_back(pattern[pos]);
-				break;
-			case '-':
-				dashCount = 2;
-				break;
-			case ']':
-				pos++;
-				goto done;
-			default:
-				s.chars.push_back(pattern[pos]);
-			}
-
-			if (dashCount > 0) {
-				if (--dashCount == 0 && s.chars.size() >= 2) {
-					wchar a = s.chars.back(); s.chars.pop_back();
-					wchar b = s.chars.back(); s.chars.pop_back();
-					for (wchar c = min(a, b); c <= max(a, b); c++)
-						s.chars.push_back(c);
-				}
-			}
-		}
-
-	done:
-		chars.push_back(s);
-		repeat.push_back(rOnce);
-		return pos - start;
+	static void update(nat &best, nat candidate) {
+		if (best == NO_MATCH)
+			best = candidate;
+		else if (candidate != NO_MATCH)
+			best = max(best, candidate);
 	}
 
 	nat Regex::match(const String &str, nat start) const {
-		return match(0, str, start, true);
-	}
+		// Pre-allocate this much memory for 'current' and 'next'.
+		const nat prealloc = 40;
 
-	// Helper to merge results.
-	static nat best(nat a, nat b) {
-		if (a == NO_MATCH)
-			return b;
-		if (b == NO_MATCH)
-			return a;
-		return max(a, b);
-	}
+		nat best = NO_MATCH;
 
-	nat Regex::match(nat patternPos, const String &str, nat pos, bool firstTry) const {
-		if (patternPos == chars.size())
-			return pos;
+		// All current states.
+		PreArray<nat, prealloc> current;
+		current.push(0);
 
-		const Repeat &r = repeat[patternPos];
-		const Set &c = chars[patternPos];
-		nat res;
+		// We can simply move through the source string character by character.
+		for (nat pos = start; pos <= str.size(); pos++) {
+			PreArray<nat, prealloc> next;
+			wchar ch = 0;
+			if (pos < str.size())
+				ch = str[pos];
 
-		switch (r) {
-		case rOnce:
-			if (pos >= str.size())
-				return NO_MATCH;
+			// Simulate each state...
+			for (nat i = 0; i < current.count(); i++) {
+				nat stateId = current[i];
 
-			if (!c.contains(str[pos]))
-				return NO_MATCH;
+				// Done?
+				if (stateId == states.size()) {
+					update(best, pos);
+					continue;
+				}
 
-			return match(patternPos + 1, str, pos + 1, true);
-		case rZeroPlus:
-			if (pos >= str.size() || !c.contains(str[pos])) {
-				return match(patternPos + 1, str, pos, true);
-			} else {
-				res = match(patternPos, str, pos + 1, false);
-				return best(match(patternPos + 1, str, pos + 1, true), res);
+				// Skip ahead?
+				const State &state = states[stateId];
+				if (state.skippable)
+					current.push(stateId + 1);
+
+				// Match?
+				if (!state.match.contains(ch))
+					continue;
+
+				next.push(stateId + 1);
+
+				// Repeat?
+				if (state.repeatable)
+					next.push(stateId);
 			}
-		case rOnePlus:
-			if (pos >= str.size() || !c.contains(str[pos])) {
-				if (firstTry)
-					return NO_MATCH;
-				else
-					return match(patternPos + 1, str, pos, true);
-			} else {
-				res = match(patternPos, str, pos + 1, false);
-				return best(match(patternPos + 1, str, pos + 1, true), res);
+
+#ifdef DEBUG
+			// Warn when we are above the limit in debug mode.
+			static nat warned = prealloc;
+			if (next.count() > warned) {
+				warned = next.count();
+				WARNING(L"Large state array found when matching " << *this);
+				WARNING(L"Consider increasing 'prealloc' above " << next.count());
+				WARNING(L"Current prealloc: " << prealloc);
 			}
-		case rZeroOne:
-			if (pos >= str.size() || !c.contains(str[pos])) {
-				return match(patternPos + 1, str, pos, true);
-			} else {
-				res = match(patternPos, str, pos + 1, false);
-				return best(match(patternPos + 1, str, pos + 1, true), res);
-			}
+#endif
+
+			// New states!
+			current = next;
 		}
 
-		// You forgot something!
-		assert(false);
-		return NO_MATCH;
+		return best;
 	}
+
 }

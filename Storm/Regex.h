@@ -14,6 +14,10 @@ namespace storm {
 
 	/**
 	 * Regex matcher class, stores 'compiled' patterns.
+	 * KNOWN BUGS:
+	 * * We do not handle escaped characters in ranges (like this: [\--\+])
+	 *
+	 * Currently implemented as a NFA (nondeterministic finite automata) state machine.
 	 */
 	class Regex : public Printable {
 	public:
@@ -30,15 +34,21 @@ namespace storm {
 
 	private:
 		// Character set.
-		struct Set : public Printable {
+		struct Set {
 			// Create an empty set.
-			Set();
+			static Set empty();
 
 			// Create set containing a single character.
-			Set(wchar ch);
+			static Set single(wchar ch);
 
 			// Create a set matching any character.
 			static Set all();
+
+			// Create a set from a regex string at 'pos'.
+			static Set parse(const String &in, nat &pos);
+
+			// Create a set from a regex string, assuming we're in a group syntax.
+			static Set parseGroup(const String &in, nat &pos);
 
 			// Characters in this set.
 			vector<wchar> chars;
@@ -49,32 +59,36 @@ namespace storm {
 			// Does this set contain a specific character?
 			bool contains(wchar ch) const;
 
-		protected:
-			virtual void output(std::wostream &to) const;
+			// Output.
+			void output(std::wostream &to) const;
 		};
 
-		// Repeat type.
-		enum Repeat {
-			rOnce,
-			rZeroPlus,
-			rOnePlus,
-			rZeroOne,
+		// State in the NFA.
+		struct State {
+			// Matching characters.
+			Set match;
+
+			// Allow skipping this state?
+			// Used for the * and ? repetitions.
+			bool skippable;
+
+			// Allow repeating this state?
+			// Used for the * and + repetitions.
+			bool repeatable;
+
+			// Parse from a regex.
+			static State parse(const String &in, nat &pos);
+
+			// Output.
+			void output(std::wostream &to) const;
 		};
 
-		// Set of character sets to be matched.
-		vector<Set> chars;
-
-		// Repeat of each character set.
-		vector<Repeat> repeat;
+		// States.
+		vector<State> states;
 
 		// Parse a pattern string.
 		void parse(const String &pattern);
 
-		// Parse a character group. Returns the size of the group. The group is added to 'chars'.
-		nat parseGroup(const String &pattern, nat start);
-
-		// Match a string. 'firstTry' is true if this is the first time 'patternPos' is matched.
-		nat match(nat patternPos, const String &str, nat pos, bool firstTry) const;
 	};
 
 }
