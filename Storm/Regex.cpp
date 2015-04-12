@@ -237,7 +237,9 @@ namespace storm {
 		current.push(0);
 
 		// We can simply move through the source string character by character.
-		for (nat pos = start; pos <= str.size(); pos++) {
+		// Note: we exit when there are no more states to process. Otherwise the outer
+		// loop would process the entire string even though we are done with our matching.
+		for (nat pos = start; pos <= str.size() && current.count() > 0; pos++) {
 			PreArray<nat, prealloc> next;
 			wchar ch = 0;
 			if (pos < str.size())
