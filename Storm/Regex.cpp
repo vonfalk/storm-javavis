@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Regex.h"
-#include "Utils/PreArray.h"
+#include "Utils/PrePODArray.h"
 
 namespace storm {
 
@@ -233,14 +233,14 @@ namespace storm {
 		nat best = NO_MATCH;
 
 		// All current states.
-		PreArray<nat, prealloc> current;
+		PrePODArray<nat, prealloc> current;
 		current.push(0);
 
 		// We can simply move through the source string character by character.
 		// Note: we exit when there are no more states to process. Otherwise the outer
 		// loop would process the entire string even though we are done with our matching.
 		for (nat pos = start; pos <= str.size() && current.count() > 0; pos++) {
-			PreArray<nat, prealloc> next;
+			PrePODArray<nat, prealloc> next;
 			wchar ch = 0;
 			if (pos < str.size())
 				ch = str[pos];
@@ -249,24 +249,25 @@ namespace storm {
 			for (nat i = 0; i < current.count(); i++) {
 				nat stateId = current[i];
 
-				// Done?
+				// Done? (loot)
 				if (stateId == states.size()) {
 					update(best, pos);
 					continue;
 				}
 
-				// Skip ahead?
+				// Skip ahead? (burn)
 				const State &state = states[stateId];
 				if (state.skippable)
 					current.push(stateId + 1);
 
-				// Match?
+				// Match? (rape)
 				if (!state.match.contains(ch))
 					continue;
 
+				// Advance. (kill)
 				next.push(stateId + 1);
 
-				// Repeat?
+				// Repeat? (repeat)
 				if (state.repeatable)
 					next.push(stateId);
 			}

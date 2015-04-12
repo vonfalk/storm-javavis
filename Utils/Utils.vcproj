@@ -545,6 +545,10 @@
 				RelativePath=".\PreArray.h"
 				>
 			</File>
+			<File
+				RelativePath=".\PrePODArray.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
