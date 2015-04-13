@@ -1,8 +1,22 @@
 #include "stdafx.h"
 #include "FnPtr.h"
+#include "TObject.h"
 #include "Code/Future.h"
 
 namespace storm {
+
+	FnPtrBase::FnPtrBase(const code::Ref &ref, Object *thisPtr, bool strongThis) :
+		fnRef(ref),
+		thisPtr(thisPtr),
+		strongThisPtr(strongThis) {
+
+		if (strongThis)
+			thisPtr->addRef();
+
+		// Note: We may not be able to use as<> here, since we treat Object and TObject as separate types!
+		if (TObject *t = dynamic_cast<TObject *>(thisPtr))
+			thread = t->thread;
+	}
 
 	FnPtrBase::FnPtrBase(Par<FnPtrBase> o) :
 		fnRef(o->fnRef),
@@ -19,7 +33,20 @@ namespace storm {
 	}
 
 	void FnPtrBase::deepCopy(Par<CloneEnv> env) {
-		// Anything needed here?
+		clone(thread, env);
+
+		if (thisPtr) {
+			Auto<Object> v = capture(thisPtr);
+			clone(v, env);
+
+			if (strongThisPtr) {
+				thisPtr->release();
+				thisPtr = v.ret();
+			} else {
+				TODO(L"Is this always OK?");
+				thisPtr = v.borrow();
+			}
+		}
 	}
 
 	void FnPtrBase::callRaw(void *output, BasicTypeInfo type, const code::FnParams &params) const {
@@ -35,7 +62,7 @@ namespace storm {
 			code::UThread::spawn(fnRef.address(), isMember, params, future, type, &thread->thread);
 			future.result();
 		} else {
-			// No need to do anything.
+			// No need to do anything special.
 			code::call(fnRef.address(), isMember, params, output, type);
 		}
 	}

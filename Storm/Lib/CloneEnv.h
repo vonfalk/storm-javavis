@@ -43,6 +43,14 @@ namespace storm {
 		v.deepCopy(env);
 	}
 
+	// Assumes we have ownership of the pointer...
+	template <class T>
+	void clone(T *v, Par<CloneEnv> env) {
+		T *tmp = (T *)cloneObjectEnv(v, env.borrow());
+		swap(tmp, v);
+		v->release();
+	}
+
 	// Built-in types do not need anything special.
 	template <>
 	inline void clone(Int &v, Par<CloneEnv> env) {}

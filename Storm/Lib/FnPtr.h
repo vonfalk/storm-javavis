@@ -1,6 +1,7 @@
 #pragma once
 #include "Object.h"
-#include "Thread.h"
+#include "CloneEnv.h"
+#include "Storm/Thread.h"
 #include "Code/Reference.h"
 #include "Code/FnParams.h"
 
@@ -26,6 +27,9 @@ namespace storm {
 	class FnPtrBase : public Object {
 		STORM_CLASS;
 	public:
+		// Create.
+		FnPtrBase(const code::Ref &ref, Object *thisPtr = null, bool strongThis = false);
+
 		// Copy.
 		STORM_CTOR FnPtrBase(Par<FnPtrBase> o);
 
@@ -42,10 +46,13 @@ namespace storm {
 		template <class R>
 		R callRaw(const code::FnParams &params) const {
 			byte d[sizeof(R)];
-			callRaw(output, typeInfo<R>(), params);
+			callRaw(d, typeInfo<R>(), params);
 			R *result = (R *)d;
 			R copy = *result;
 			result->~R();
+
+			Auto<CloneEnv> env = CREATE(CloneEnv, engine());
+			clone(copy, env);
 			return copy;
 		}
 
@@ -75,6 +82,12 @@ namespace storm {
 
 	};
 
+	// Helper macro for adding a copied parameter
+#define ADD_COPY(to, type, param, env)				\
+	typename AsAuto<type>::v t ## param = param;	\
+	clone(t ## param, env);							\
+	to.add(borrow(t ## param));
+
 	/**
 	 * Compatible C++ class. Up to 3 parameters currently.
 	 * In future releases, this may be implemented using variadic templates.
@@ -86,13 +99,16 @@ namespace storm {
 		// static Type *stormType(Engine &e) { return; }
 		// static Type *stormType(const Object *o) { return; }
 
+		// Create.
+		FnPtr(const code::Ref &r, Object *thisPtr, bool strongThis) : FnPtrBase(r, thisPtr, strongThis) {}
+
 		R call(P1 p1) {
 			if (needsCopy()) {
-				typename AsAuto<P1>::v a = p1;
-				clone(v);
-
+				Auto<CloneEnv> env = CREATE(CloneEnv, engine());
 				code::FnParams params;
-				params.add(borrow(a));
+
+				ADD_COPY(params, P1, p1, env);
+
 				return callRaw<R>(params);
 			} else {
 				code::FnParams params;
@@ -103,11 +119,52 @@ namespace storm {
 	};
 
 	template <class R>
-	class FnPtr<R, void> {
+	class FnPtr<R, void> : public FnPtrBase {
 	public:
+		FnPtr(const code::Ref &r, Object *thisPtr, bool strongThis) : FnPtrBase(r, thisPtr, strongThis) {}
+
 		R call() {
 			return callRaw<R>(code::FnParams());
 		}
 	};
+
+
+	// Helper macro to not get the preprocessor to choke on things like CREATE(FnPtr<A, B>);
+#define FN_PTR(...) FnPtr<__VA_ARGS__>
+
+	// Create functions. The CREATE macro does not play well with templates where there is more
+	// than one parameter (problem with the pre-processor).
+	template <class R, class P1>
+	FnPtr<R, P1> *fnPtr(Engine &e, R (*fn)(P1)) {
+		return CREATE(FN_PTR(R, P1), e, code::Ref((void *)fn), null, false);
+	}
+
+	template <class R>
+	FnPtr<R> *fnPtr(Engine &e, R (*fn)()) {
+		return CREATE(FN_PTR(R), e, code::Ref((void *)fn), null, false);
+	}
+
+	template <class R, class P1, class C>
+	FnPtr<R, P1> *memberWeakPtr(Engine &e, Par<C> thisPtr, R (CODECALL C::*fn)(P1)) {
+		return CREATE(FN_PTR(R, P1), e, code::Ref(address(fn)), thisPtr.borrow(), false);
+	}
+
+	template <class R, class C>
+	FnPtr<R> *memberWeakPtr(Engine &e, Par<C> thisPtr, R (CODECALL C::*fn)()) {
+		return CREATE(FN_PTR(R), e, code::Ref(address(fn)), thisPtr.borrow(), false);
+	}
+
+	template <class R, class P1, class C>
+	FnPtr<R, P1> *memberWeakPtr(Engine &e, Auto<C> thisPtr, R (CODECALL C::*fn)(P1)) {
+		return CREATE(FN_PTR(R, P1), e, code::Ref(address(fn)), thisPtr.borrow(), false);
+	}
+
+	template <class R, class C>
+	FnPtr<R> *memberWeakPtr(Engine &e, Auto<C> thisPtr, R (CODECALL C::*fn)()) {
+		return CREATE(FN_PTR(R), e, code::Ref(address(fn)), thisPtr.borrow(), false);
+	}
+
+
+#undef FN_PTR
 
 }

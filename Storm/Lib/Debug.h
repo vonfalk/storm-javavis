@@ -132,6 +132,9 @@ namespace storm {
 		void STORM_FN set(Int v);
 		Int STORM_FN get() const;
 
+		// Echo a string (to verify that copies are being made).
+		Str *STORM_FN echo(Par<Str> str);
+
 	private:
 		Int v;
 	};

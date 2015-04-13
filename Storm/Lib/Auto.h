@@ -244,7 +244,7 @@ namespace storm {
 		static const bool v = false;
 
 		typedef const T &BorrowT;
-		BorrowT borrow(const T &v) { return v; }
+		static BorrowT borrow(const T &v) { return v; }
 	};
 
 	template <class T>
@@ -252,7 +252,7 @@ namespace storm {
 		static const bool v = true;
 
 		typedef T *BorrowT;
-		BorrowT borrow(const Auto<T> &v) { return v.borrow(); }
+		static BorrowT borrow(const Auto<T> &v) { return v.borrow(); }
 	};
 
 	template <class T>
@@ -260,7 +260,7 @@ namespace storm {
 		static const bool v = true;
 
 		typedef T *BorrowT;
-		BorrowT borrow(const Par<T> &v) { return v.borrow(); }
+		static BorrowT borrow(const Par<T> &v) { return v.borrow(); }
 	};
 
 	/**

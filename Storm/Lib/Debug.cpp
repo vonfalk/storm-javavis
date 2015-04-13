@@ -350,4 +350,8 @@ namespace storm {
 		return v;
 	}
 
+	Str *DbgActor::echo(Par<Str> v) {
+		return v.ret();
+	}
+
 }
