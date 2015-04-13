@@ -61,6 +61,7 @@ namespace storm {
 			Auto<NamePart> part = CREATE(NamePart, this, name, params);
 			if (Auto<Named> n = o->templ->generate(part)) {
 				add(n);
+				assert(n->name == name, L"A template returned a Named that did not match the name of the template!");
 				return n.borrow();
 			}
 		}
