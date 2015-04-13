@@ -37,11 +37,13 @@
 // Type code.
 #define TYPE_CODE									\
 	public:											\
-	static Type *stormType(Engine &e);				\
-	static Type *stormType(const Object *o);
+	static Type *stormType(Engine &e);
 
 #define TYPE_EXTRA_CODE									\
 	public:												\
+	static inline Type *stormType(const Object *o) {	\
+		return stormType(storm::engine(o));				\
+	}													\
 	template <class Z>									\
 	static inline Type *stormType(const Auto<Z> &o) {	\
 		return stormType(o.borrow());					\
@@ -92,6 +94,7 @@ namespace code {
 
 namespace storm {
 	class Engine;
+	class Object;
 	class Thread;
 
 	using code::Size;
@@ -112,4 +115,8 @@ namespace storm {
 		// Force the thread to something already created.
 		void force(Engine &e, Thread *to);
 	};
+
+	// Get the Engine from an object (implemented in Object.cpp)
+	Engine &engine(const Object *o);
+
 }

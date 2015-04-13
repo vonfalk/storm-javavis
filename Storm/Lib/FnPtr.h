@@ -81,7 +81,11 @@ namespace storm {
 	 */
 	template <class R, class P1 = void>
 	class FnPtr : public FnPtrBase {
+		// TYPE_EXTRA_CODE;
 	public:
+		// static Type *stormType(Engine &e) { return; }
+		// static Type *stormType(const Object *o) { return; }
+
 		R call(P1 p1) {
 			if (needsCopy()) {
 				typename AsAuto<P1>::v a = p1;

@@ -133,6 +133,10 @@ namespace storm {
 		return s;
 	}
 
+	Engine &engine(const Object *o) {
+		return o->myType->engine;
+	}
+
 	Engine &Object::engine() const {
 		return myType->engine;
 	}
