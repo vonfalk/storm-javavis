@@ -86,7 +86,7 @@ namespace storm {
 	}
 
 	void Url::deepCopy(Par<CloneEnv> e) {
-		parts = e->clone(parts);
+		clone(parts, e);
 	}
 
 	// TODO: How do we consider the protocol here? Should we?

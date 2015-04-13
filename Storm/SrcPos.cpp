@@ -33,7 +33,7 @@ namespace storm {
 	}
 
 	void SrcPos::deepCopy(Par<CloneEnv> env) {
-		file = env->clone<Url>(file);
+		clone(file, env);
 	}
 
 	SrcPos SrcPos::operator +(nat o) const {

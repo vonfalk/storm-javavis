@@ -1,12 +1,14 @@
 #pragma once
 #include "Object.h"
+#include "Auto.h"
+#include "Utils/Templates.h"
 
 namespace storm {
 	STORM_PKG(core);
 
 	// Implemented in TypeCtor.h
 	class CloneEnv;
-	Object *cloneObjectEnv(Object *o, CloneEnv *e);
+	Object *CODECALL cloneObjectEnv(Object *o, CloneEnv *e);
 
 	/**
 	 * Keeps track of objects already cloned.
@@ -26,21 +28,37 @@ namespace storm {
 		// Tell us that 'o' is cloned into 'to'
 		void STORM_FN cloned(Par<Object> o, Par<Object> to);
 
-		// C++ helper that clones an object if needed. Useful when implementing the 'deepCopy' member.
-		template <class T>
-		T *clone(Par<T> o) {
-			return (T *)cloneObjectEnv(o.borrow(), this);
-		}
-
-		template <class T>
-		T *clone(Auto<T> o) {
-			return (T *)cloneObjectEnv(o.borrow(), this);
-		}
-
 	private:
 		typedef hash_map<Object *, Object *> ObjMap;
 		ObjMap objs;
 
 	};
+
+
+	/**
+	 * Clone objects the C++ way! Takes either a value type or Auto<T>.
+	 */
+	template <class T>
+	void clone(T &v, Par<CloneEnv> env) {
+		v.deepCopy(env);
+	}
+
+	// Built-in types do not need anything special.
+	template <>
+	inline void clone(Int &v, Par<CloneEnv> env) {}
+	template <>
+	inline void clone(Nat &v, Par<CloneEnv> env) {}
+	template <>
+	inline void clone(Bool &v, Par<CloneEnv> env) {}
+
+	/**
+	 * Clone not inplace.
+	 */
+	template <class T>
+	T cloned(const T &v, Par<CloneEnv> env) {
+		T r = v;
+		clone(r);
+		return r;
+	}
 
 }

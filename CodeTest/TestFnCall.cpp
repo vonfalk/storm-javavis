@@ -232,3 +232,14 @@ BEGIN_TEST(FunctionCopyTest) {
 
 	CHECK_EQ(call<int>(&testFn1, false, d), 30);
 } END_TEST
+
+BEGIN_TEST(FunctionRefTest) {
+	int a = 10;
+	int b = 20;
+	int &refA = a;
+	int &refB = b;
+
+	FnParams par;
+	par.add(a).add(b);
+	CHECK_EQ(call<int>(&testFn1, false, par), 30);
+} END_TEST;

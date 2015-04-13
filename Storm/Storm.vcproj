@@ -538,6 +538,10 @@
 				RelativePath=".\ExceptionWrap.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\FnPtr.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -918,6 +922,10 @@
 			</File>
 			<File
 				RelativePath=".\ExceptionWrap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\FnPtr.h"
 				>
 			</File>
 		</Filter>

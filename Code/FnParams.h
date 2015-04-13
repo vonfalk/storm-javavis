@@ -57,7 +57,8 @@ namespace code {
 		// Add a parameter to the front (low-level).
 		void addFirst(CopyFn copy, DestroyFn destroy, nat size, const void *value);
 
-		// Add a parameter (high-level).
+		// Add a parameter (high-level). Note that a reference is treated like the value itself
+		// since we can not have a reference to a reference in the parameter.
 		template <class T>
 		inline FnParams &add(const T &p) {
 			if (!typeInfo<T>().plain()) {

@@ -69,6 +69,8 @@ namespace code {
 		addRef();
 	}
 
+	Ref::Ref(void *raw) : arena(null), raw(raw) {}
+
 	Ref::~Ref() {
 		if (arena)
 			arena->refManager.removeLightRef(referring);
@@ -97,14 +99,14 @@ namespace code {
 		if (arena)
 			return arena->refManager.address(referring);
 		else
-			return null;
+			return raw;
 	}
 
 	String Ref::targetName() const {
 		if (arena)
 			return arena->refManager.name(referring);
 		else
-			return L"NULL";
+			return L"RAW";
 	}
 
 	void Ref::addRef() {

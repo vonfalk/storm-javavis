@@ -178,8 +178,8 @@ namespace storm {
 		}
 
 		// Deep copy.
-		void CODECALL deepCopy(CloneEnv *env) {
-			T *n = (T *)cloneObjectEnv(obj, env);
+		void CODECALL deepCopy(Par<CloneEnv> env) {
+			T *n = (T *)cloneObjectEnv(obj, env.borrow());
 			obj->release();
 			obj = n;
 		}
@@ -242,17 +242,45 @@ namespace storm {
 	template <class T>
 	struct IsAuto {
 		static const bool v = false;
+
+		typedef const T &BorrowT;
+		BorrowT borrow(const T &v) { return v; }
 	};
 
 	template <class T>
 	struct IsAuto<Auto<T>> {
 		static const bool v = true;
+
+		typedef T *BorrowT;
+		BorrowT borrow(const Auto<T> &v) { return v.borrow(); }
 	};
 
 	template <class T>
 	struct IsAuto<Par<T>> {
 		static const bool v = true;
+
+		typedef T *BorrowT;
+		BorrowT borrow(const Par<T> &v) { return v.borrow(); }
 	};
+
+	/**
+	 * Convert Pars to Autos automagically.
+	 */
+	template <class T>
+	struct AsAuto {
+		typedef T v;
+	};
+
+	template <class T>
+	struct AsAuto<Par<T>> {
+		typedef Auto<T> v;
+	};
+
+	// Borrow if possible, otherwise return the same value.
+	template <class T>
+	typename IsAuto<T>::BorrowT borrow(const T &v) {
+		return IsAuto<T>::borrow(v);
+	}
 
 }
 
