@@ -90,6 +90,8 @@ namespace storm {
 			return obj == o;
 		}
 
+		static Type *stormType(Engine &e) { return T::stormType(e); }
+		static Type *stormType(const Object *o) { return T::stormType(o); }
 	private:
 		// Pointer. Has to be the first and only member.
 		T *obj;

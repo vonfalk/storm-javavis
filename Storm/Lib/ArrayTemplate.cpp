@@ -53,18 +53,11 @@ namespace storm {
 		return from->atRaw(id);
 	}
 
-	static Type *createArray(Engine &e, const Value &type) {
-		Type *r = CREATE(ArrayType, e, type);
-		r->setSuper(ArrayBase::stormType(e));
-		r->matchFlags = matchNoInheritance;
-		return r;
-	}
-
 	static Named *generateArray(Par<NamePart> part) {
 		if (part->params.size() != 1)
 			return null;
 
-		return createArray(part->engine(), part->params[0]);
+		return CREATE(ArrayType, part->engine(), part->params[0]);
 	}
 
 	void addArrayTemplate(Par<Package> to) {
@@ -78,6 +71,7 @@ namespace storm {
 
 	ArrayType::ArrayType(const Value &param) : Type(L"Array", typeClass, valList(1, param)), param(param) {
 		setSuper(ArrayBase::stormType(engine));
+		matchFlags = matchNoInheritance;
 	}
 
 	void ArrayType::lazyLoad() {
@@ -89,6 +83,7 @@ namespace storm {
 		else
 			loadValueFns();
 
+		// TODO: We want to generate a toS!
 	}
 
 	void ArrayType::loadClassFns() {

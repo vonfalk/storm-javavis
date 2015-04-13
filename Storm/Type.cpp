@@ -242,6 +242,12 @@ namespace storm {
 
 	void Type::output(wostream &to) const {
 		to << name;
+		if (params.size() > 0) {
+			to << L"(";
+			join(to, params, L", ");
+			to << L")";
+		}
+
 		if (super())
 			to << L" : " << super()->identifier();
 		if (!lazyLoaded)

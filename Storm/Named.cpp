@@ -57,8 +57,16 @@ namespace storm {
 
 	String Named::identifier() const {
 		// Avoid crashes:
-		if (parentLookup == null)
-			return name;
+		if (parentLookup == null) {
+			std::wostringstream to;
+			to << name;
+			if (params.size() > 0) {
+				to << L"(";
+				join(to, params, L", ");
+				to << L")";
+			}
+			return to.str();
+		}
 		Auto<Name> p = path();
 		return ::toS(p);
 	}

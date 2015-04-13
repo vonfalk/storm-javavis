@@ -1,11 +1,13 @@
 #pragma once
 #include "Object.h"
 #include "CloneEnv.h"
+#include "Storm/Value.h"
 #include "Storm/Thread.h"
 #include "Code/Reference.h"
 #include "Code/FnParams.h"
 
 namespace storm {
+	STORM_PKG(core);
 
 	/**
 	 * Function pointers for Storm and C++ code. Function pointers to member
@@ -20,6 +22,9 @@ namespace storm {
 	 * Function pointers to values are not yet supported.
 	 * TODO: The weak references should be checked!
 	 */
+
+	// Find the function pointer type. Implemented in FnPtrTemplate.cpp
+	Type *fnPtrType(Engine &e, const vector<Value> &params);
 
 	/**
 	 * Base class for a function.
@@ -94,10 +99,9 @@ namespace storm {
 	 */
 	template <class R, class P1 = void>
 	class FnPtr : public FnPtrBase {
-		// TYPE_EXTRA_CODE;
+		TYPE_EXTRA_CODE;
 	public:
-		// static Type *stormType(Engine &e) { return; }
-		// static Type *stormType(const Object *o) { return; }
+		static Type *stormType(Engine &e) { return fnPtrType(e, valList(2, value<R>(e), value<P1>(e))); }
 
 		// Create.
 		FnPtr(const code::Ref &r, Object *thisPtr, bool strongThis) : FnPtrBase(r, thisPtr, strongThis) {}
@@ -120,7 +124,10 @@ namespace storm {
 
 	template <class R>
 	class FnPtr<R, void> : public FnPtrBase {
+		TYPE_EXTRA_CODE;
 	public:
+		static Type *stormType(Engine &e) { return fnPtrType(e, valList(1, value<R>(e))); }
+
 		FnPtr(const code::Ref &r, Object *thisPtr, bool strongThis) : FnPtrBase(r, thisPtr, strongThis) {}
 
 		R call() {
