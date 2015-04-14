@@ -30,6 +30,7 @@ namespace storm {
 
 	// Implemented in FnPtrTemplate.cpp
 	bool fnPtrNeedsCopy(FnPtrBase *b);
+	void fnPtrCallRaw(FnPtrBase *b, void *output, BasicTypeInfo *type, code::FnParams *params);
 
 
 	class FutureBase;

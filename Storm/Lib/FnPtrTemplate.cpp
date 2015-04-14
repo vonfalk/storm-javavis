@@ -4,6 +4,7 @@
 #include "CloneEnv.h"
 #include "FnPtr.h"
 #include "Function.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -17,6 +18,25 @@ namespace storm {
 
 	Bool CODECALL fnPtrNeedsCopy(FnPtrBase *me) {
 		return me->needsCopy();
+	}
+
+	void CODECALL fnPtrCallRaw(FnPtrBase *b, void *output, BasicTypeInfo *type, code::FnParams *params) {
+		return b->callRaw(output, *type, *params);
+	}
+
+
+	static void callPlainCode(Par<FnPtrType> type, Par<CodeGen> s, code::Variable par, vector<code::Value> params) {
+		for (nat i = 0; i < params.size(); i++) {
+			const Value &t = type->params[i + 1];
+			addFnParam(s, par, t, params[i]);
+		}
+	}
+
+	static void callCopyCode(Par<FnPtrType> type, Par<CodeGen> s, code::Variable par, vector<code::Value> params) {
+		for (nat i = 0; i < params.size(); i++) {
+			const Value &t = type->params[i + 1];
+			addFnParamCopy(s, par, t, params[i]);
+		}
 	}
 
 	static code::Listing callCode(Par<FnPtrType> type) {
@@ -45,6 +65,9 @@ namespace storm {
 				params[i] = s->frame.createParameter(t.size(), false, t.destructor());
 		}
 
+		// Create the FnParams object.
+		Variable fnParams = createFnParams(s, type->params.size() - 1).v;
+
 		// Should we clone the result?
 		Variable needClone = s->frame.createByteVar(s->block.v);
 		s->to << fnParam(thisParam);
@@ -52,12 +75,93 @@ namespace storm {
 		s->to << mov(needClone, al);
 
 		// Handle parameters...
+		Label doCopy = s->to.label();
+		Label done = s->to.label();
+		s->to << cmp(needClone, byteConst(1));
+		s->to << jmp(doCopy, ifEqual);
+		callPlainCode(type, s, fnParams, params);
+		s->to << jmp(done);
+		s->to << doCopy;
+		callCopyCode(type, s, fnParams, params);
+		s->to << done;
 
+		// Return type info.
+		Variable typeInfo = createBasicTypeInfo(s, result);
+
+		// TODO: Do we need to copy the result?
 		if (!result.returnInReg()) {
+			s->to << lea(ptrB, typeInfo);
+			s->to << lea(ptrC, fnParams);
+			s->to << fnParam(thisParam);
+			s->to << fnParam(resultParam);
+			s->to << fnParam(ptrB);
+			s->to << fnParam(ptrC);
+			s->to << fnCall(e.fnRefs.fnPtrCall, Size());
+
+			// Need to copy?
+			Label noCopy = s->to.label();
+			s->to << cmp(needClone, byteConst(0));
+			s->to << jmp(noCopy, ifEqual);
+
+			// Call stdClone.
+			Type *envType = CloneEnv::stormType(e);
+			Variable cloneEnv = s->frame.createPtrVar(s->block.v, e.fnRefs.release);
+			allocObject(s, envType->defaultCtor(), vector<code::Value>(), cloneEnv);
+			Function *deepCopy = result.type->deepCopyFn();
+			if (!deepCopy)
+				throw InternalError(L"The type " + ::toS(result) + L" does not have the required 'deepCopy' member.");
+
+			s->to << fnParam(resultParam);
+			s->to << fnParam(cloneEnv);
+			s->to << fnCall(deepCopy->ref(), Size::sPtr);
+
+			s->to << noCopy;
 			s->to << mov(ptrA, resultParam);
 			s->to << epilog();
 			s->to << ret(Size::sPtr);
+		} else if (result.isClass()) {
+			// If 'tmp' is refcounted, we do not need to add references. That is
+			// already done by the callee!
+			Variable tmp = s->frame.createVariable(s->block.v, Size::sPtr, e.fnRefs.release);
+			s->to << lea(ptrA, tmp);
+			s->to << lea(ptrB, typeInfo);
+			s->to << lea(ptrC, fnParams);
+			s->to << fnParam(thisParam);
+			s->to << fnParam(ptrA);
+			s->to << fnParam(ptrB);
+			s->to << fnParam(ptrC);
+			s->to << fnCall(e.fnRefs.fnPtrCall, Size());
+
+			// Need to copy?
+			Label noCopy = s->to.label();
+			Label done = s->to.label();
+			s->to << cmp(needClone, byteConst(0));
+			s->to << jmp(noCopy, ifEqual);
+
+			// Copy.
+			s->to << fnParam(tmp);
+			s->to << fnCall(stdCloneFn(result).v, Size::sPtr);
+			s->to << jmp(done);
+
+			s->to << noCopy;
+			s->to << code::addRef(tmp);
+			s->to << mov(ptrA, tmp);
+
+			s->to << done;
+			s->to << epilog();
+			s->to << ret(Size::sPtr);
 		} else {
+			// This is a primitive, we never have to copy it!
+			Variable tmp = s->frame.createVariable(s->block.v, result.size());
+			s->to << lea(ptrA, tmp);
+			s->to << lea(ptrB, typeInfo);
+			s->to << lea(ptrC, fnParams);
+			s->to << fnParam(thisParam);
+			s->to << fnParam(ptrA);
+			s->to << fnParam(ptrB);
+			s->to << fnParam(ptrC);
+			s->to << fnCall(e.fnRefs.fnPtrCall, Size());
+			s->to << mov(asSize(ptrA, result.size()), tmp);
 			s->to << epilog();
 			s->to << ret(result.size());
 		}
@@ -78,8 +182,9 @@ namespace storm {
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&storm::copyCtor))));
 		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&storm::deepCopy))));
 
-		vector<Value> rest(params.begin() + 1, params.end());
-		add(steal(dynamicFunction(e, params[0], L"call", rest, callCode(this))));
+		vector<Value> fnCall = params;
+		fnCall[0] = t;
+		add(steal(dynamicFunction(e, params[0], L"call", fnCall, callCode(this))));
 	}
 
 	static Named *generateFnPtr(Par<NamePart> part) {

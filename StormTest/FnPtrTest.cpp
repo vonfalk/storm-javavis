@@ -29,5 +29,7 @@ BEGIN_TEST(FnPtrTest) {
 	// Run some code in Storm!
 	CHECK_EQ(runFnInt(L"test.bs.runFnPtr", fn), 12);
 	CHECK_EQ(runFnInt(L"test.bs.runFnPtr", voidFn), 5);
+	CHECK_EQ(runFnInt(L"test.bs.runStrFnPtr", strFn), 22);
 
+	TODO(L"Test values here as well as verifying the cloning works as expected.");
 } END_TEST

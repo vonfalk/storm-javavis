@@ -63,6 +63,9 @@ namespace storm {
 		// Get the assignment function for this type if there is any.
 		code::Value assignFn() const;
 
+		// Get the deep copy function.
+		code::Value deepCopyFn() const;
+
 		// Return in register?
 		bool returnInReg() const;
 

@@ -32,7 +32,7 @@ namespace storm {
 		  futureResult(arena, L"futureResult"),
 		  fnParamsCtor(arena, L"FnParams::ctor"), fnParamsDtor(arena, L"FnParams::dtor"),
 		  fnParamsAdd(arena, L"FnParams::add"),
-		  fnPtrCopy(arena, L"FnPtrBase::needsCopy")
+		  fnPtrCopy(arena, L"FnPtrBase::needsCopy"), fnPtrCall(arena, L"FnPtrBase::callRaw")
 	{
 
 		addRef.set(address(&Object::addRef));
@@ -57,6 +57,7 @@ namespace storm {
 		fnParamsDtor.set(address(&storm::fnParamsDtor));
 		fnParamsAdd.set(address(&storm::fnParamsAdd));
 		fnPtrCopy.set(address(&storm::fnPtrNeedsCopy));
+		fnPtrCall.set(address(&storm::fnPtrCallRaw));
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode)

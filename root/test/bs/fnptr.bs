@@ -7,3 +7,8 @@ Int runFnPtr(FnPtr<Int, Int> v) {
 Int runFnPtr(FnPtr<Int> v) {
 	v.call();
 }
+
+Int runStrFnPtr(FnPtr<Str, Str> v) {
+	Str z = v.call("22");
+	z.toInt;
+}

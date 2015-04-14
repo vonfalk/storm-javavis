@@ -49,21 +49,33 @@ namespace storm {
 		}
 	}
 
-	void FnPtrBase::callRaw(void *output, BasicTypeInfo type, const code::FnParams &params) const {
+	void FnPtrBase::callRaw(void *output, const BasicTypeInfo &type, const code::FnParams &params) const {
 		bool isMember = false;
 		if (thisPtr) {
 			isMember = true;
 			// Note: We never need to copy the this-ptr here. Either the object is a TObject, and then
 			// we have a thread or the this ptr is not a TObject and then we can not have a thread.
-		}
 
-		if (thread) {
-			code::FutureSema<code::Sema> future(output);
-			code::UThread::spawn(fnRef.address(), isMember, params, future, type, &thread->thread);
-			future.result();
+			// TODO: In the case of a thread call, we can avoid this allocation.
+			code::FnParams p = params;
+			p.addFirst(thisPtr);
+
+			if (thread) {
+				code::FutureSema<code::Sema> future(output);
+				code::UThread::spawn(fnRef.address(), isMember, p, future, type, &thread->thread);
+				future.result();
+			} else {
+				code::call(fnRef.address(), isMember, p, output, type);
+			}
 		} else {
-			// No need to do anything special.
-			code::call(fnRef.address(), isMember, params, output, type);
+			if (thread) {
+				code::FutureSema<code::Sema> future(output);
+				code::UThread::spawn(fnRef.address(), isMember, params, future, type, &thread->thread);
+				future.result();
+			} else {
+				// No need to do anything special.
+				code::call(fnRef.address(), isMember, params, output, type);
+			}
 		}
 	}
 

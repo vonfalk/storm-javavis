@@ -142,7 +142,6 @@ namespace storm {
 		return code::Value();
 	}
 
-
 	bool Value::refcounted() const {
 		if (!type)
 			return false;

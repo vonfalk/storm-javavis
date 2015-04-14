@@ -356,7 +356,7 @@ namespace storm {
 			allocObject(l, subBlock, envType->defaultCtor(), Actuals(), cloneEnv);
 
 			// Find 'deepCopy'.
-			Function *deepCopy = as<Function>(result.type->find(L"deepCopy", valList(2, result, Value::thisPtr(envType))));
+			Function *deepCopy = result.type->deepCopyFn();
 			if (!deepCopy)
 				throw InternalError(L"The type " + ::toS(result) + L" does not have the required 'deepCopy' member.");
 
