@@ -23,8 +23,8 @@ namespace code {
 		struct Param {
 			CopyFn copy;
 			DestroyFn destroy;
-			nat size;
 			const void *value;
+			nat size;
 		};
 
 		enum {
@@ -98,6 +98,9 @@ namespace code {
 
 		// Get the size of the class (for machine code generation).
 		static Size classSize();
+
+		// Get the size of a parameter (for machine code generation).
+		static Size paramSize();
 
 	private:
 		// Backing storage.

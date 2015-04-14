@@ -64,6 +64,14 @@ namespace storm {
 		// Call function with a pointer to the return value.
 		void callRaw(void *output, BasicTypeInfo type, const code::FnParams &params) const;
 
+		// Do we need to copy the parameters?
+		inline bool needsCopy() {
+			if (thread)
+				return true;
+			else
+				return false;
+		}
+
 	protected:
 		// Function to call.
 		code::Ref fnRef;
@@ -76,14 +84,6 @@ namespace storm {
 
 		// Strong this pointer?
 		bool strongThisPtr;
-
-		// Do we need to copy the parameters?
-		inline bool needsCopy() {
-			if (thread)
-				return true;
-			else
-				return false;
-		}
 
 	};
 

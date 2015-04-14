@@ -1,0 +1,9 @@
+use core:debug;
+
+Int runFnPtr(FnPtr<Int, Int> v) {
+	v.call(10);
+}
+
+Int runFnPtr(FnPtr<Int> v) {
+	v.call();
+}

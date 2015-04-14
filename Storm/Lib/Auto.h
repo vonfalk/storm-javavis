@@ -278,6 +278,19 @@ namespace storm {
 		typedef Auto<T> v;
 	};
 
+	/**
+	 * Convert Autos to Pars automagically.
+	 */
+	template <class T>
+	struct AsPar {
+		typedef T v;
+	};
+
+	template <class T>
+	struct AsPar<Auto<T>> {
+		typedef Par<T> v;
+	};
+
 	// Borrow if possible, otherwise return the same value.
 	template <class T>
 	typename IsAuto<T>::BorrowT borrow(const T &v) {

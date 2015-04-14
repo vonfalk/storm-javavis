@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Test/Test.h"
+#include "Fn.h"
 #include "Storm/Lib/FnPtr.h"
 
 static Int addTwo(Int v) {
@@ -24,5 +25,9 @@ BEGIN_TEST(FnPtrTest) {
 	Auto<Str> original = CREATE(Str, e, L"A");
 	Auto<Str> copy = strFn->call(original);
 	CHECK(original.borrow() != copy.borrow());
+
+	// Run some code in Storm!
+	CHECK_EQ(runFnInt(L"test.bs.runFnPtr", fn), 12);
+	CHECK_EQ(runFnInt(L"test.bs.runFnPtr", voidFn), 5);
 
 } END_TEST

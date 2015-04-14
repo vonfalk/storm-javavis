@@ -56,6 +56,9 @@ namespace storm {
 
 		// Some helpers for a Future object.
 		code::RefSource futureResult;
+
+		// Helpers for the FnPtr object.
+		code::RefSource fnPtrCopy;
 	};
 
 	/**

@@ -8,6 +8,7 @@ namespace storm {
 
 	class Object;
 	class Type;
+	class FnPtrBase;
 
 	/**
 	 * Contains wrappers to call various C++ functions from machine code.
@@ -26,6 +27,9 @@ namespace storm {
 	// fnParams->add(...);
 	void fnParamsAdd(code::FnParams *obj, code::FnParams::CopyFn copy,
 					code::FnParams::DestroyFn destroy, nat size, const void *value);
+
+	// Implemented in FnPtrTemplate.cpp
+	bool fnPtrNeedsCopy(FnPtrBase *b);
 
 
 	class FutureBase;

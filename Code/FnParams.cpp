@@ -11,6 +11,13 @@ namespace code {
 		return s;
 	}
 
+	Size FnParams::paramSize() {
+		Size s = Size::sPtr * 3;
+		s += Size::sNat;
+		assert(s.current() == sizeof(Param), L"Please update the size here.");
+		return s;
+	}
+
 	FnParams::FnParams() : params(new Param[initialCapacity]), size(0), capacity(initialCapacity) {}
 
 	FnParams::FnParams(void *buffer) : params((Param *)buffer), size(0), capacity(0) {}
@@ -54,7 +61,7 @@ namespace code {
 		if (capacity != 0 && capacity == size)
 			resize(capacity * 2);
 
-		Param p = { copy, destroy, paramSize, value };
+		Param p = { copy, destroy, value, paramSize };
 		params[size++] = p;
 	}
 
@@ -66,7 +73,7 @@ namespace code {
 			params[i] = params[i - 1];
 		size++;
 
-		Param p = { copy, destroy, paramSize, value };
+		Param p = { copy, destroy, value, paramSize };
 		params[0] = p;
 	}
 

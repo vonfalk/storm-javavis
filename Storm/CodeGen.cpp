@@ -204,4 +204,133 @@ namespace storm {
 		s->to << end(b);
 	}
 
+	wrap::Variable createFnParams(Par<CodeGen> s, wrap::Operand memory) {
+		using namespace code;
+
+		Engine &e = s->engine();
+		Variable v = s->frame.createVariable(s->block.v,
+											FnParams::classSize(),
+											e.fnRefs.fnParamsDtor,
+											freeOnBoth | freePtr);
+		// Call the ctor!
+		s->to << lea(ptrC, v);
+		s->to << fnParam(ptrC);
+		s->to << fnParam(memory.v);
+		s->to << fnCall(e.fnRefs.fnParamsCtor, Size());
+
+		return v;
+	}
+
+	wrap::Variable createFnParams(Par<CodeGen> s, Nat params) {
+		using namespace code;
+		// Allocate space for the parameters on the stack.
+		Size total = FnParams::paramSize() * params;
+		Variable v = s->frame.createVariable(s->block.v, total);
+		s->to << lea(ptrA, v);
+
+		return createFnParams(s, code::Value(ptrA));
+	}
+
+	void STORM_FN addFnParam(Par<CodeGen> s, wrap::Variable fnParams, const Value &type, const wrap::Operand &v) {
+		using namespace code;
+		Engine &e = s->engine();
+
+		if (type.isClass()) {
+			s->to << lea(ptrC, fnParams.v);
+			s->to << lea(ptrA, v.v);
+			s->to << fnParam(ptrC);
+			s->to << fnParam(e.fnRefs.copyRefPtr);
+			s->to << fnParam(e.fnRefs.releasePtr);
+			s->to << fnParam(natConst(type.size()));
+			s->to << fnParam(ptrA);
+			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+		} else if (type.ref || type.isBuiltIn()) {
+			s->to << lea(ptrC, fnParams.v);
+			s->to << fnParam(ptrC);
+			s->to << fnParam(intPtrConst(0));
+			s->to << fnParam(intPtrConst(0));
+			s->to << fnParam(natConst(type.size()));
+			s->to << fnParam(v.v);
+			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+		} else {
+			// Value.
+			code::Value dtor = type.destructor();
+			if (dtor.empty())
+				dtor = intPtrConst(0);
+			s->to << lea(ptrC, fnParams.v);
+			s->to << lea(ptrA, v.v);
+			s->to << fnParam(ptrC);
+			s->to << fnParam(type.copyCtor());
+			s->to << fnParam(dtor);
+			s->to << fnParam(natConst(type.size()));
+			s->to << fnParam(ptrA);
+			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+		}
+	}
+
+	// Find 'std:clone' for the given type.
+	wrap::Operand stdCloneFn(const Value &type) {
+		if (type == Value())
+			return wrap::Operand();
+
+		Engine &e = type.type->engine;
+		Auto<Name> name = CREATE(Name, e);
+		name->add(L"core");
+		name->add(L"clone", valList(1, type));
+		Function *f = as<Function>(e.scope()->find(name));
+		if (!f)
+			throw InternalError(L"Could not find std.clone(" + ::toS(type) + L").");
+		return code::Value(f->ref());
+	}
+
+	void STORM_FN addFnParamCopy(Par<CodeGen> s, wrap::Variable fnParams, const Value &type, const wrap::Operand &v) {
+		using namespace code;
+		Engine &e = s->engine();
+
+		if (type.isClass()) {
+			Variable clone = s->frame.createPtrVar(s->block.v, e.fnRefs.release);
+			s->to << fnParam(v.v);
+			s->to << fnCall(stdCloneFn(type).v, Size::sPtr);
+			s->to << mov(clone, ptrA);
+
+			// Regular parameter add.
+			addFnParam(s, fnParams, type, wrap::Variable(clone));
+		} else if (type.ref || type.isBuiltIn()) {
+			if (type.ref) {
+				TODO(L"Should we really allow pretending to deep-clone references?");
+			}
+
+			// Reuse the plain one.
+			addFnParam(s, fnParams, type, v);
+		} else {
+			// We can use stdClone as the copy ctor in this case.
+			code::Value dtor = type.destructor();
+			if (dtor.empty())
+				dtor = intPtrConst(0);
+			s->to << lea(ptrC, fnParams.v);
+			s->to << lea(ptrA, v.v);
+			s->to << fnParam(ptrC);
+			s->to << fnParam(stdCloneFn(type).v);
+			s->to << fnParam(dtor);
+			s->to << fnParam(natConst(type.size()));
+			s->to << fnParam(ptrA);
+			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+		}
+	}
+
+	void STORM_FN addFnParamPlain(Par<CodeGen> s, wrap::Variable fnParams, const wrap::Operand &v) {
+		using namespace code;
+		Engine &e = s->engine();
+
+		assert(v.size() == Size::sPtr);
+
+		s->to << lea(ptrC, fnParams.v);
+		s->to << fnParam(ptrC);
+		s->to << fnParam(intPtrConst(0));
+		s->to << fnParam(intPtrConst(0));
+		s->to << fnParam(natConst(Size::sPtr));
+		s->to << fnParam(v.v);
+		s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+	}
+
 }

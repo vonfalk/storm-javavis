@@ -173,79 +173,6 @@ namespace storm {
 		code::UThread::spawn(fn, member, *params, *future, *resultType, &on->thread, data);
 	}
 
-	// Find 'std:clone' for the given type.
-	static code::Value stdCloneFn(Engine &e, const Value &type) {
-		Auto<Name> name = CREATE(Name, e);
-		name->add(L"core");
-		name->add(L"clone", valList(1, type));
-		Function *f = as<Function>(e.scope()->find(name));
-		if (!f)
-			throw InternalError(L"Could not find std.clone(" + ::toS(type) + L").");
-		return code::Value(f->ref());
-	}
-
-	// Add a single parameter of type 'v', value in 'a' to 'to'.
-	static void addFutureParam(Engine &e, Par<CodeGen> z, code::Variable to, const Value &v, const code::Value &a) {
-		using namespace code;
-
-		if (v.isClass()) {
-			// Deep copy the object.
-			Variable clone = z->frame.createPtrVar(z->block.v, e.fnRefs.release);
-			z->to << fnParam(a);
-			z->to << fnCall(stdCloneFn(e, v), Size::sPtr);
-			z->to << mov(clone, ptrA);
-
-			z->to << lea(ptrC, to);
-			z->to << lea(ptrA, clone);
-			z->to << fnParam(ptrC);
-			z->to << fnParam(e.fnRefs.copyRefPtr);
-			z->to << fnParam(e.fnRefs.releasePtr);
-			z->to << fnParam(natConst(v.size()));
-			z->to << fnParam(ptrA);
-			z->to << fnCall(e.fnRefs.fnParamsAdd, Size());
-		} else if (v.ref || v.isBuiltIn()) {
-			// No need for copy ctors!
-			if (v.ref) {
-				TODO(L"Should references be allowed in these function calls?");
-			}
-			z->to << lea(ptrC, to);
-			z->to << fnParam(ptrC);
-			z->to << fnParam(intPtrConst(0));
-			z->to << fnParam(intPtrConst(0));
-			z->to << fnParam(natConst(v.size()));
-			z->to << fnParam(a);
-			z->to << fnCall(e.fnRefs.fnParamsAdd, Size());
-		} else {
-			// It is a value, use the stdClone.
-			code::Value dtor = v.destructor();
-			if (dtor.empty())
-				dtor = intPtrConst(0);
-			z->to << lea(ptrC, to);
-			z->to << lea(ptrA, a);
-			z->to << fnParam(ptrC);
-			z->to << fnParam(stdCloneFn(e, v));
-			z->to << fnParam(dtor);
-			z->to << fnParam(natConst(v.size()));
-			z->to << fnParam(ptrA);
-			z->to << fnCall(e.fnRefs.fnParamsAdd, Size());
-		}
-	}
-
-	// Add the this-parameter of the first parameter.
-	static void addCtorThis(Engine &e, Par<CodeGen> z, code::Variable to, const Value &v, const code::Value &a) {
-		using namespace code;
-
-		assert(v.size() == Size::sPtr);
-
-		z->to << lea(ptrC, to);
-		z->to << fnParam(ptrC);
-		z->to << fnParam(intPtrConst(0));
-		z->to << fnParam(intPtrConst(0));
-		z->to << fnParam(natConst(Size::sPtr));
-		z->to << fnParam(a);
-		z->to << fnCall(e.fnRefs.fnParamsAdd, Size());
-	}
-
 	Function::PrepareResult Function::prepareThreadCall(Par<CodeGen> to, const Actuals &params) {
 		using namespace code;
 
@@ -259,22 +186,14 @@ namespace storm {
 		// Find out the pointer to the data and create FnParams object.
 		to->to << fnParam(ptrA);
 		to->to << fnCall(e.fnRefs.spawnParam, Size::sPtr);
-		Variable fnParams = to->frame.createVariable(to->block.v,
-													FnParams::classSize(),
-													e.fnRefs.fnParamsDtor,
-													freeOnBoth | freePtr);
-		// Call the constructor of FnParams
-		to->to << lea(ptrC, fnParams);
-		to->to << fnParam(ptrC);
-		to->to << fnParam(ptrA);
-		to->to << fnCall(e.fnRefs.fnParamsCtor, Size());
+		Variable fnParams = createFnParams(to, code::Value(ptrA)).v;
 
 		// Add all parameters.
 		for (nat i = 0; i < params.size(); i++) {
 			if (i == 0 && name == Type::CTOR)
-				addCtorThis(e, to, fnParams, this->params[i], params[i]);
+				addFnParamPlain(to, fnParams, params[i]);
 			else
-				addFutureParam(e, to, fnParams, this->params[i], params[i]);
+				addFnParamCopy(to, fnParams, this->params[i], params[i]);
 		}
 
 		// Set the thread data to null, so that we do not double-free it if
@@ -421,7 +340,7 @@ namespace storm {
 			l << mov(t, ptrA);
 			// Copy it...
 			l << fnParam(ptrA);
-			l << fnCall(stdCloneFn(engine(), result), Size::sPtr);
+			l << fnCall(stdCloneFn(result).v, Size::sPtr);
 		} else if (result.isValue()) {
 			l << fnCall(ref(), Size::sPtr);
 

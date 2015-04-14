@@ -147,4 +147,24 @@ namespace storm {
 	void allocObject(Par<CodeGen> s, Par<Function> ctor, vector<code::Value> params, code::Variable to);
 	void allocObject(code::Listing &l, code::Block b, Par<Function> ctor, vector<code::Value> params, code::Variable to);
 
+	// Generate code that creates a FnParams object on the stack. Issueas a function call, and does not
+	// preserve any register values. 'memory' will be passed to the FnParams ctor as the memory to be used.
+	// Uses 'ptrC' before 'memory' is used.
+	wrap::Variable STORM_FN createFnParams(Par<CodeGen> s, wrap::Operand memory);
+
+	// Same as above, but takes the number of parameters needed to be passed.
+	wrap::Variable STORM_FN createFnParams(Par<CodeGen> s, Nat numParams);
+
+	// Add a parameter to a FnParams object.
+	void STORM_FN addFnParam(Par<CodeGen> s, wrap::Variable fnParams, const Value &type, const wrap::Operand &v);
+
+	// Add a parameter to a FnParams object, deep copy whatever type it is first.
+	void STORM_FN addFnParamCopy(Par<CodeGen> s, wrap::Variable fnParams, const Value &type, const wrap::Operand &v);
+
+	// Add a plain parameter (ie, treat it as a value, always).
+	void STORM_FN addFnParamPlain(Par<CodeGen> s, wrap::Variable fnParams, const wrap::Operand &v);
+
+	// Find 'std:clone' for the given type.
+	wrap::Operand STORM_FN stdCloneFn(const Value &type);
+
 }

@@ -51,3 +51,8 @@ inline Int runFn(const String &fn) {
 inline Int runFn(const String &fn, Int p) {
 	return runFn<Int>(fn, p);
 }
+
+template <class T>
+inline Int runFnInt(const String &fn, T p) {
+	return runFn<Int, typename AsPar<T>::v>(fn, p);
+}
