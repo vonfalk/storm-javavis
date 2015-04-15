@@ -157,6 +157,32 @@ namespace storm {
 		return CREATE(Str, this, out.str());
 	}
 
+	wostream &operator <<(wostream &to, const Object &o) {
+		// If someone has overloaded toS, we need to call that. Otherwise we can simply call
+		// the output function.
+		static void *toSFn = code::deVirtualize(address(&Object::toS), Object::cppVTable());
+		static nat toSSlot = code::findSlot(toSFn, Object::cppVTable());
+
+		bool overridden = false;
+		if (toSSlot != code::VTable::invalid) {
+			void *vtable = code::vtableOf(&o);
+			if (code::getSlot(vtable, toSSlot) != toSFn) {
+				overridden = true;
+			}
+		} else {
+			WARNING(L"Can not find toS in Object's vtable! Output from C++ will be broken.");
+		}
+
+		if (overridden) {
+			// Sorry about the const-cast...
+			Auto<Str> s = const_cast<Object &>(o).toS();
+			to << s->v;
+		} else {
+			o.output(to);
+		}
+		return to;
+	}
+
 	void Object::output(wostream &to) const {
 		to << myType->name << L": " << toHex(this);
 	}

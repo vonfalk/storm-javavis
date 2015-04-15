@@ -30,7 +30,7 @@ namespace storm {
 		clear(cppSlots);
 	}
 
-	void VTable::create(void *cppVTable) {
+	void VTable::createCpp(void *cppVTable) {
 		assert(replaced == null && this->cppVTable == null);
 		this->cppVTable = cppVTable;
 		ref.set(cppVTable);
@@ -39,12 +39,32 @@ namespace storm {
 		if (cppVTable)
 			cppCount = code::vtableCount(cppVTable);
 		cppSlots = vector<VTableSlot*>(cppCount, null);
-
-		// Classes created from a VTable does not need parent/child information.
 	}
 
-	void VTable::create(VTable &parent) {
+	void VTable::setParent(VTable &parent) {
+		// Update the Storm VTable?
+		if (!builtIn())
+			updateStorm(parent);
+
+		// Update child/parent relation.
+		// The if statement is needed to not break the iteration below.
+		if (this->parent != &parent) {
+			if (this->parent)
+				this->parent->children.erase(this);
+			this->parent = &parent;
+			parent.children.insert(this);
+		}
+
+		// Clear all our children.
+		for (ChildSet::iterator i = children.begin(); i != children.end(); ++i) {
+			VTable *c = *i;
+			c->setParent(*this);
+		}
+	}
+
+	void VTable::updateStorm(VTable &parent) {
 		cppVTable = parent.cppVTable;
+
 		if (!replaced) {
 			if (parent.replaced)
 				replaced = new code::VTable(*parent.replaced);
@@ -64,26 +84,6 @@ namespace storm {
 
 		// We need to replace the C++ dtor with our stub!
 		replaced->setDtor(dtorRedirect());
-
-		// Update child/parent relation.
-		if (this->parent)
-			this->parent->children.erase(this);
-		this->parent = &parent;
-		parent.children.insert(this);
-
-		// Clear all our children.
-		for (ChildSet::iterator i = children.begin(); i != children.end(); ++i) {
-			VTable *c = *i;
-			c->create(*this);
-		}
-	}
-
-	void VTable::create() {
-		// TODO: Implement
-		assert(false, "Creating an empty VTable is not supported yet!");
-		if (parent)
-			parent->children.erase(this);
-		parent = null;
 	}
 
 	void VTable::update(Object *object) {
@@ -184,9 +184,11 @@ namespace storm {
 		// Cpp function?
 		if (builtIn()) {
 			nat slot = code::findSlot(fn->directRef().address(), cppVTable);
-			if (slot == code::VTable::invalid)
+			if (slot == code::VTable::invalid) {
+				PVAR(fn->directRef().address());
 				throw InternalError(::toS(*fn) + L" is not properly implemented in C++. "
 									L"Failed to find a VTable entry in the C++ vtable for it!");
+			}
 			return VTablePos::cpp(slot);
 		}
 
@@ -267,7 +269,8 @@ namespace storm {
 
 	void VTable::dbg_dump() {
 		wostream &to = std::wcout;
-		to << L"Vtable: ";
+		to << L"Vtable: @" << this << L", parent: @" << parent << endl;
+		to << L"Data: ";
 		if (replaced)
 			to << replaced->ptr() << L", " << replaced->extra();
 		else

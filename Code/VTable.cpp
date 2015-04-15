@@ -7,7 +7,7 @@
 namespace code {
 
 #if defined(VS) || defined(GCC)
-	void *vtableOf(void *object) {
+	void *vtableOf(const void *object) {
 		void **o = (void **)object;
 		return *o;
 	}
@@ -244,6 +244,11 @@ namespace code {
 				return i;
 
 		return VTable::invalid;
+	}
+
+	void *getSlot(void *ptr, nat slot) {
+		void **p = (void **)ptr;
+		return p[slot];
 	}
 
 	void *deVirtualize(void *ptr, void *vtable) {

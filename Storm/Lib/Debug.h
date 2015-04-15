@@ -84,6 +84,8 @@ namespace storm {
 	};
 
 	// Class partly implemented in C++, we'll try to override this in Storm.
+	// NOTE: We are _not_ overriding toS here to see if overriding functions from
+	// classes other than the direct parent is working.
 	class Dbg : public Object {
 		STORM_CLASS;
 	public:

@@ -1,0 +1,21 @@
+use core:debug;
+
+class ToSDbg extends Dbg {
+	ctor(Int v) {
+		init(v) {}
+	}
+
+	Str toS() {
+		StrBuf b;
+		b.add(get);
+		b.toS;
+	}
+}
+
+Dbg toSDbg(Int v) {
+	if (v == 0) {
+		Dbg(0);
+	} else {
+		ToSDbg(1);
+	}
+}

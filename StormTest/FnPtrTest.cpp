@@ -16,7 +16,6 @@ static DbgVal returnDbgVal(Int v) {
 }
 
 static Dbg *returnDbg(Int v) {
-	PLN("Created dbg object.");
 	return CREATE(Dbg, *gEngine, v);
 }
 
@@ -28,9 +27,7 @@ static Str *echoStr(Par<Str> v) {
 	return v.ret();
 }
 
-static void consumeStr(Par<Str> v) {
-	PVAR(v);
-}
+static void consumeStr(Par<Str> v) {}
 
 BEGIN_TEST(FnPtrTest) {
 	Engine &e = *gEngine;

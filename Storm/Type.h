@@ -183,7 +183,12 @@ namespace storm {
 
 		// Update the need for virtual calls for all members.
 		void updateVirtual();
+
+		// Update the need for firtual calls for this functions and any parent functions found.
 		void updateVirtual(Named *named);
+
+		// Update the virtual state of a single function.
+		void updateVirtualHere(Function *fn);
 
 		// Check if 'x' needs to have a virtual dispatch.
 		bool needsVirtual(Function *fn);

@@ -43,12 +43,12 @@ namespace storm {
 		// Dtor.
 		~VTable();
 
-		// Create from a C++ vtable. This can only be done once.
-		void create(void *cppVTable);
+		// Create from a C++ vtable. This can only be done once. If you want a Storm VTable, use parent() only.
+		void createCpp(void *cppVTable);
 
-		// Create a sub-vtable. This can be done multiple times if the inheritance
-		// chain is broken.
-		void create(VTable &parent);
+		// Set the parent of this VTable. If this is not initialized using 'create', a sub-vtable is
+		// created to mirror the parent vtable.
+		void setParent(VTable &parent);
 
 		// Get the C++ vtable we're based off.
 		inline void *baseVTable() const { return cppVTable; }
@@ -121,6 +121,9 @@ namespace storm {
 
 		// Address set.
 		void addr(VTablePos pos, void *to);
+
+		// Update the Storm vtable.
+		void updateStorm(VTable &parent);
 	};
 
 

@@ -260,6 +260,10 @@
 				RelativePath=".\FnPtrTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ToSTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

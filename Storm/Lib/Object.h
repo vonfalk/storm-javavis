@@ -66,7 +66,7 @@ namespace storm {
 	 * fall back to a Par<> (which should be used for function parameters) and
 	 * behaves correctly in that case. Otherwise, use Auto<>::borrow().
 	 */
-	class Object : public STORM_IGNORE(Printable) {
+	class Object {
 	public:
 		STORM_CLASS;
 	public:
@@ -149,6 +149,7 @@ namespace storm {
 		// Dump leaks.
 		static void dumpLeaks();
 	protected:
+		friend wostream &operator <<(wostream &to, const Object &o);
 		virtual void output(wostream &to) const;
 
 		static void *allocDumb(Engine &e, size_t size);

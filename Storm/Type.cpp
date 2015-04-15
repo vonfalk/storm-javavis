@@ -30,7 +30,7 @@ namespace storm {
 		  mySize(size), chain(this), vtable(engine) {
 
 		// Create the VTable first, otherwise init() may get strange ideas...
-		vtable.create(cppVTable);
+		vtable.createCpp(cppVTable);
 
 		init(f);
 	}
@@ -73,8 +73,6 @@ namespace storm {
 			}
 			lazyLoading = false;
 			updateVirtual();
-			if (Type *s = super())
-				s->updateVirtual();
 		}
 		lazyLoaded = true;
 	}
@@ -183,13 +181,12 @@ namespace storm {
 		if (lastSuper)
 			lastSuper->updateVirtual();
 
-		if (!vtable.builtIn()) {
-			if (super) {
-				vtable.create(super->vtable);
-				super->updateVirtual();
-			} else {
-				vtable.create();
-			}
+		if (super) {
+			vtable.setParent(super->vtable);
+			updateVirtual();
+		} else {
+			assert(false);
+			// vtable.create();
 		}
 	}
 
@@ -271,10 +268,7 @@ namespace storm {
 		NameSet::add(o);
 		layout.add(o.borrow());
 
-		// TODO: We do not need to update all virtual functions here.
-		if (Type *s = super())
-			s->updateVirtual();
-		updateVirtual();
+		updateVirtual(o.borrow());
 	}
 
 	void Type::validate(Named *o) {
@@ -349,6 +343,10 @@ namespace storm {
 		for (NameSet::iterator i = begin(), end = this->end(); i != end; ++i) {
 			updateVirtual(i->borrow());
 		}
+
+		// Update parents as well...
+		if (Type *s = super())
+			s->updateVirtual();
 	}
 
 	void Type::updateVirtual(Named *named) {
@@ -356,18 +354,32 @@ namespace storm {
 		if (named->name == CTOR)
 			return;
 
-		if (Function *fn = as<Function>(named)) {
-			if (needsVirtual(fn))
-				enableLookup(fn);
-			else
-				disableLookup(fn);
+		if (flags & typeValue)
+			return;
+
+		Function *fn = as<Function>(named);
+		if (fn == null)
+			return;
+
+		updateVirtualHere(fn);
+
+		for (Type *s = super(); s; s = s->super()) {
+			Function *base = s->overloadTo(fn);
+			if (base)
+				s->enableLookup(base);
 		}
+	}
+
+	void Type::updateVirtualHere(Function *fn) {
+		if (needsVirtual(fn))
+			enableLookup(fn);
+		else
+			disableLookup(fn);
 	}
 
 	void Type::enableLookup(Function *fn) {
 		VTablePos pos = vtable.insert(fn);
 		insertOverloads(fn);
-
 
 		// PLN(*fn << " got " << pos);
 		// vtable.dbg_dump();
@@ -406,13 +418,16 @@ namespace storm {
 		// Replace the 'this' parameter, otherwise we would never get a match!
 		vector<Value> params = to->params;
 		params[0] = Value::thisPtr(this);
-		return as<Function>(NameSet::findHere(to->name, params));
+		Function *match = as<Function>(NameSet::findHere(to->name, params));
+		if (to == match)
+			return null;
+		return match;
 	}
 
 	void Type::insertOverloads(Function *fn) {
 		if (Function *f = overloadTo(fn))
 			if (f != fn)
-				vtable.insert(f);
+				VTablePos pos = vtable.insert(f);
 
 		vector<Type *> children = chain.children();
 		for (nat i = 0; i < children.size(); i++)

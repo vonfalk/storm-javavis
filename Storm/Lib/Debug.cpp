@@ -119,7 +119,7 @@ namespace storm {
 		const Value &v = var->varType;
 		if (v.isClass()) {
 			Object *obj = (Object *)object;
-			value = toS(obj) + L" @" + toHex(obj);
+			value = ::toS(obj) + L" @" + toHex(obj);
 			if (o.count(obj) != 0)
 				hilight = true;
 		} else if (v.isBuiltIn()) {
@@ -163,9 +163,9 @@ namespace storm {
 
 		if (!same.empty()) {
 			PLN("The objects " << a << " and " << b << " are not disjoint!");
-			PLN("Reachable from a: " << toS(aObjs));
-			PLN("Reachable from b: " << toS(bObjs));
-			PLN("Common: " << toS(same));
+			PLN("Reachable from a: " << ::toS(aObjs));
+			PLN("Reachable from b: " << ::toS(bObjs));
+			PLN("Common: " << ::toS(same));
 			PLN("--------- LAYOUT OF A ---------");
 			layout(a.borrow(), same);
 			PLN("--------- LAYOUT OF B ---------");

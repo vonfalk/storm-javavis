@@ -26,7 +26,7 @@ namespace storm {
 		bool isA(TypeChain *o) const;
 		bool isA(Type *o) const;
 
-		// Get all currently known children. Note that the result is not
+		// Get all currently known direct children. Note that the result is not
 		// ordered in any way at all, even though it is a vector.
 		vector<Type *> children() const;
 

@@ -88,11 +88,14 @@ namespace code {
 	// Find an entry in a vtable. 'fn' may or may not be de-virtualized.
 	nat findSlot(void *fn, void *vtable, nat size = 0);
 
+	// Get a slot in a vtable.
+	void *getSlot(void *fn, nat slot);
+
 	// Compute the size of a VTable.
 	nat vtableCount(void *vtable);
 
 	// Get the vtable from an object.
-	void *vtableOf(void *object);
+	void *vtableOf(const void *object);
 
 	// Get the 'extra' field of the vtable.
 	void *vtableExtra(void *vtable);
