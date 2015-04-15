@@ -191,9 +191,9 @@ namespace storm {
 		// Add all parameters.
 		for (nat i = 0; i < params.size(); i++) {
 			if (i == 0 && name == Type::CTOR)
-				addFnParamPlain(to, fnParams, params[i]);
+				addFnParam(to, fnParams, this->params[i], params[i], false);
 			else
-				addFnParamCopy(to, fnParams, this->params[i], params[i]);
+				addFnParamCopy(to, fnParams, this->params[i], params[i], true);
 		}
 
 		// Set the thread data to null, so that we do not double-free it if

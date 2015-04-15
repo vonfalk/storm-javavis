@@ -28,6 +28,7 @@ enum BasicType {
 	btFloat = 8,
 	btBCD = 9,
 	btBool = 10,
+	btEnum = 12, // Mine
 	btLong = 13,
 	btULong = 14,
 	btCurrency = 25,
@@ -105,6 +106,9 @@ static bool baseType(wostream &to, DWORD index) {
 		return true;
 	case btBool:
 		to << L"bool";
+		return true;
+	case btEnum:
+		to << L"enum";
 		return true;
 	case btLong:
 		to << L"long";

@@ -35,6 +35,17 @@ struct IsReference<T &> {
 	enum { value = true };
 };
 
+// Is the type void?
+template <class T>
+struct IsVoid {
+	enum { value = false };
+};
+
+template <>
+struct IsVoid<void> {
+	enum { value = true };
+};
+
 // Enable something if:
 template <bool Cond, class T>
 struct EnableIf {};

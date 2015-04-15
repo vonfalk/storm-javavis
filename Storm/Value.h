@@ -185,7 +185,7 @@ namespace storm {
 	bool isClass(Type *t);
 
 	template <class T>
-	Value value(Engine &e) {
+	Value value(typename EnableIf<!IsVoid<T>::value, Engine>::t &e) {
 		bool isRef = !typeInfo<T>().plain() || IsAuto<T>::v;
 		Type *t = LookupValue<T>::type(e);
 		if (isClass(t)) {
@@ -193,6 +193,12 @@ namespace storm {
 			isRef = false;
 		}
 		return Value(t, isRef);
+	}
+
+	// Special case for void.
+	template <class T>
+	Value value(typename EnableIf<IsVoid<T>::value, Engine>::t &e) {
+		return Value();
 	}
 
 	/**

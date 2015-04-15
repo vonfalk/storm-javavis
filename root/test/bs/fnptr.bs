@@ -8,7 +8,23 @@ Int runFnPtr(FnPtr<Int> v) {
 	v.call();
 }
 
+void consumeStr(FnPtr<void, Str> v) {
+	v.call("22");
+}
+
+Int consumeDbg(FnPtr<Int, Dbg> v) {
+	v.call(Dbg(23));
+}
+
 Int runStrFnPtr(FnPtr<Str, Str> v) {
 	Str z = v.call("22");
 	z.toInt;
+}
+
+Int runFnPtr(FnPtr<DbgVal, Int> v) {
+	v.call(23).get;
+}
+
+Int runFnPtr(FnPtr<Dbg, Int> v) {
+	v.call(21).get;
 }

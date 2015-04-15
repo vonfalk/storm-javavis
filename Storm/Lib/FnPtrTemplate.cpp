@@ -28,14 +28,14 @@ namespace storm {
 	static void callPlainCode(Par<FnPtrType> type, Par<CodeGen> s, code::Variable par, vector<code::Value> params) {
 		for (nat i = 0; i < params.size(); i++) {
 			const Value &t = type->params[i + 1];
-			addFnParam(s, par, t, params[i]);
+			addFnParam(s, par, t, params[i], false);
 		}
 	}
 
 	static void callCopyCode(Par<FnPtrType> type, Par<CodeGen> s, code::Variable par, vector<code::Value> params) {
 		for (nat i = 0; i < params.size(); i++) {
 			const Value &t = type->params[i + 1];
-			addFnParamCopy(s, par, t, params[i]);
+			addFnParamCopy(s, par, t, params[i], false);
 		}
 	}
 
@@ -161,7 +161,8 @@ namespace storm {
 			s->to << fnParam(ptrB);
 			s->to << fnParam(ptrC);
 			s->to << fnCall(e.fnRefs.fnPtrCall, Size());
-			s->to << mov(asSize(ptrA, result.size()), tmp);
+			if (result.size() != Size()) // void
+				s->to << mov(asSize(ptrA, result.size()), tmp);
 			s->to << epilog();
 			s->to << ret(result.size());
 		}

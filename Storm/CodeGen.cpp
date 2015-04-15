@@ -231,11 +231,27 @@ namespace storm {
 		return createFnParams(s, code::Value(ptrA));
 	}
 
-	void STORM_FN addFnParam(Par<CodeGen> s, wrap::Variable fnParams, const Value &type, const wrap::Operand &v) {
+	// Find 'std:clone' for the given type.
+	wrap::Operand stdCloneFn(const Value &type) {
+		if (type == Value())
+			return wrap::Operand();
+
+		Engine &e = type.type->engine;
+		Auto<Name> name = CREATE(Name, e);
+		name->add(L"core");
+		name->add(L"clone", valList(1, type));
+		Function *f = as<Function>(e.scope()->find(name));
+		if (!f)
+			throw InternalError(L"Could not find std.clone(" + ::toS(type) + L").");
+		return code::Value(f->ref());
+	}
+
+	void STORM_FN addFnParam(Par<CodeGen> s, wrap::Variable fnParams, const Value &type,
+							const wrap::Operand &v, Bool thunk) {
 		using namespace code;
 		Engine &e = s->engine();
 
-		if (type.isClass()) {
+		if (type.isClass() && thunk) {
 			s->to << lea(ptrC, fnParams.v);
 			s->to << lea(ptrA, v.v);
 			s->to << fnParam(ptrC);
@@ -243,6 +259,14 @@ namespace storm {
 			s->to << fnParam(e.fnRefs.releasePtr);
 			s->to << fnParam(natConst(type.size()));
 			s->to << fnParam(ptrA);
+			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+		} else if (type.isClass() && !thunk) {
+			s->to << lea(ptrC, fnParams.v);
+			s->to << fnParam(ptrC);
+			s->to << fnParam(intPtrConst(0));
+			s->to << fnParam(intPtrConst(0));
+			s->to << fnParam(natConst(type.size()));
+			s->to << fnParam(v.v);
 			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		} else if (type.ref || type.isBuiltIn()) {
 			s->to << lea(ptrC, fnParams.v);
@@ -268,22 +292,8 @@ namespace storm {
 		}
 	}
 
-	// Find 'std:clone' for the given type.
-	wrap::Operand stdCloneFn(const Value &type) {
-		if (type == Value())
-			return wrap::Operand();
-
-		Engine &e = type.type->engine;
-		Auto<Name> name = CREATE(Name, e);
-		name->add(L"core");
-		name->add(L"clone", valList(1, type));
-		Function *f = as<Function>(e.scope()->find(name));
-		if (!f)
-			throw InternalError(L"Could not find std.clone(" + ::toS(type) + L").");
-		return code::Value(f->ref());
-	}
-
-	void STORM_FN addFnParamCopy(Par<CodeGen> s, wrap::Variable fnParams, const Value &type, const wrap::Operand &v) {
+	void STORM_FN addFnParamCopy(Par<CodeGen> s, wrap::Variable fnParams, const Value &type,
+								const wrap::Operand &v, Bool thunk) {
 		using namespace code;
 		Engine &e = s->engine();
 
@@ -294,14 +304,14 @@ namespace storm {
 			s->to << mov(clone, ptrA);
 
 			// Regular parameter add.
-			addFnParam(s, fnParams, type, wrap::Variable(clone));
+			addFnParam(s, fnParams, type, wrap::Variable(clone), thunk);
 		} else if (type.ref || type.isBuiltIn()) {
 			if (type.ref) {
 				TODO(L"Should we really allow pretending to deep-clone references?");
 			}
 
 			// Reuse the plain one.
-			addFnParam(s, fnParams, type, v);
+			addFnParam(s, fnParams, type, v, thunk);
 		} else {
 			// We can use stdClone as the copy ctor in this case.
 			code::Value dtor = type.destructor();
@@ -316,21 +326,6 @@ namespace storm {
 			s->to << fnParam(ptrA);
 			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		}
-	}
-
-	void STORM_FN addFnParamPlain(Par<CodeGen> s, wrap::Variable fnParams, const wrap::Operand &v) {
-		using namespace code;
-		Engine &e = s->engine();
-
-		assert(v.size() == Size::sPtr);
-
-		s->to << lea(ptrC, fnParams.v);
-		s->to << fnParam(ptrC);
-		s->to << fnParam(intPtrConst(0));
-		s->to << fnParam(intPtrConst(0));
-		s->to << fnParam(natConst(Size::sPtr));
-		s->to << fnParam(v.v);
-		s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 	}
 
 }

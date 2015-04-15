@@ -70,6 +70,8 @@ search to find islands of code that are separated from the rest of the reference
 
 Rename Value to Operand to avoid confusion?
 
+Check thread safety in the reference management class.
+
 Basic
 ------
 Variable accesses are currently racy. Fix this!

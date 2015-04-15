@@ -155,14 +155,21 @@ namespace storm {
 	// Same as above, but takes the number of parameters needed to be passed.
 	wrap::Variable STORM_FN createFnParams(Par<CodeGen> s, Nat numParams);
 
+	/**
+	 * Note about addFnParam and addFnParamCopy: when dealing with refcounted pointers, it will add an extra reference
+	 * if 'thunk' is true. This means that the calling convention will _effectively be broken_ when thunk is true. Its
+	 * use is to keep references alive during a thread switch, and requires that the called function is a thunk, which
+	 * is automatically generated when used from Function.
+	 */
+
 	// Add a parameter to a FnParams object.
-	void STORM_FN addFnParam(Par<CodeGen> s, wrap::Variable fnParams, const Value &type, const wrap::Operand &v);
+	void STORM_FN addFnParam(Par<CodeGen> s, wrap::Variable fnParams, const Value &type,
+							const wrap::Operand &v, Bool thunk);
 
 	// Add a parameter to a FnParams object, deep copy whatever type it is first.
-	void STORM_FN addFnParamCopy(Par<CodeGen> s, wrap::Variable fnParams, const Value &type, const wrap::Operand &v);
-
-	// Add a plain parameter (ie, treat it as a value, always).
-	void STORM_FN addFnParamPlain(Par<CodeGen> s, wrap::Variable fnParams, const wrap::Operand &v);
+	// May add variables to the current scope.
+	void STORM_FN addFnParamCopy(Par<CodeGen> s, wrap::Variable fnParams, const Value &type,
+								const wrap::Operand &v, Bool thunk);
 
 	// Find 'std:clone' for the given type.
 	wrap::Operand STORM_FN stdCloneFn(const Value &type);
