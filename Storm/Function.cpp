@@ -435,6 +435,9 @@ namespace storm {
 		to << ")";
 	}
 
+	NativeFunction::NativeFunction(Value result, const String &name, const vector<Value> &params, nat slot) :
+		Function(result, name, params), vtableSlot(slot) {}
+
 	bool isOverload(Function *base, Function *overload) {
 		if (base->name != overload->name)
 			return false;
@@ -475,11 +478,20 @@ namespace storm {
 								void *ptr) {
 		void *vtable = member->vtable.baseVTable();
 		void *plain = null;
+		Function *fn = null;
 
-		if (member->flags & typeClass)
+		if (member->flags & typeClass) {
 			plain = code::deVirtualize(ptr, vtable);
 
-		Function *fn = CREATE(Function, e, result, name, params);
+			// Note: the findSlot here is predictable even after optimizations since we can rely on
+			// reading the code of 'ptr' to see which entry it uses instead of looking through the table
+			// for potentially similar items.
+			nat slot = code::findSlot(ptr, vtable);
+			fn = CREATE(NativeFunction, e, result, name, params, slot);
+		} else {
+			fn = CREATE(Function, e, result, name, params);
+		}
+
 		if (plain) {
 			fn->setCode(steal(CREATE(StaticCode, e, plain)));
 			fn->setLookup(steal(CREATE(StaticCode, e, ptr)));

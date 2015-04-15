@@ -145,6 +145,19 @@ namespace storm {
 		void addParam(Par<CodeGen> to, const Actuals &params, nat id);
 	};
 
+	/**
+	 * Native function, contains the original VTable slot as well!
+	 */
+	class NativeFunction : public Function {
+		STORM_CLASS;
+	public:
+		NativeFunction(Value result, const String &name, const vector<Value> &params, nat slot);
+
+		// The vtable slot of this function.
+		const nat vtableSlot;
+	};
+
+
 	// Determine if 'a' is an overload of 'b'.
 	bool isOverload(Function *base, Function *overload);
 

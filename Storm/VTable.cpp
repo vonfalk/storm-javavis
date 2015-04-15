@@ -183,12 +183,19 @@ namespace storm {
 
 		// Cpp function?
 		if (builtIn()) {
-			nat slot = code::findSlot(fn->directRef().address(), cppVTable);
+			nat slot = code::VTable::invalid;
+			if (NativeFunction *n = as<NativeFunction>(fn))
+				slot = n->vtableSlot;
+
 			if (slot == code::VTable::invalid) {
-				PVAR(fn->directRef().address());
+				WARNING(L"Falling back on unsafe lookup in VTable!");
+				slot = code::findSlot(fn->directRef().address(), cppVTable);
+			}
+
+			if (slot == code::VTable::invalid)
 				throw InternalError(::toS(*fn) + L" is not properly implemented in C++. "
 									L"Failed to find a VTable entry in the C++ vtable for it!");
-			}
+
 			return VTablePos::cpp(slot);
 		}
 

@@ -239,11 +239,18 @@ namespace code {
 			size = vtableCount(vtable);
 		void **v = (void **)vtable;
 
-		for (nat i = 0; i < size; i++)
-			if (v[i] == ptr)
-				return i;
+		nat result = VTable::invalid;
+		for (nat i = 0; i < size; i++) {
+			if (v[i] == ptr) {
+				if (result != VTable::invalid) {
+					WARNING(L"Multiple entries with the same address in the VTable.");
+					WARNING(L"Please use a non de-virtualized pointer instead!");
+				}
+				result = i;
+			}
+		}
 
-		return VTable::invalid;
+		return result;
 	}
 
 	void *getSlot(void *ptr, nat slot) {
