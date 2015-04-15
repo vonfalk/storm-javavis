@@ -42,16 +42,11 @@ class Repl extends LangRepl {
 			// Mismatched something. Let the user complete their input.
 			false;
 		} else {
-			parser.parse("Stmt");
+			parser.parse("ReplUse");
 			if (parser.hasError) {
-				// Forgotten ;... Try treating it as an expression instead!
-				parser.parse("Expr");
-			}
-
-			if (parser.hasError) {
-				print(parser.errorMsg);
-			} else {
 				evalLine(line, parser);
+			} else {
+				addUse(parser);
 			}
 			true;
 		}
@@ -61,14 +56,46 @@ class Repl extends LangRepl {
 		done;
 	}
 
-	void evalLine(Str line, Parser parser) {
-		ReplBlock block(scope);
-		LocalVar thisPtr("this", (name{lang:bs:ReplSandbox}).resolve(rootScope), SrcPos(), true);
-		block.add(thisPtr);
+	void addUse(Parser parser) {
+		TObject type = parser.transformT([TObject:]);
+		if (type as TypeName) {
+			addUse(type);
+		} else {
+			print("I AM ERROR");
+		}
+	}
 
-		TObject stmt = parser.transformT([TObject: block]);
-		if (stmt as Expr) {
-			evalExpr(line, block, thisPtr, stmt);
+	void addUse(TypeName name) {
+		Named pkg = name.find(rootScope);
+		if (pkg as Package) {
+			if (scope.addInclude(pkg)) {
+				print("Using " # name # ".");
+			} else {
+				print(name # " already in use.");
+			}
+		} else {
+			print("Package " # name # " not found.");
+		}
+	}
+
+	void evalLine(Str line, Parser parser) {
+		parser.parse("Stmt");
+		if (parser.hasError) {
+			// Forgotten ;... Try treating it as an expression instead!
+			parser.parse("Expr");
+		}
+
+		if (parser.hasError) {
+			print(parser.errorMsg);
+		} else {
+			ReplBlock block(scope);
+			LocalVar thisPtr("this", (name{lang:bs:ReplSandbox}).resolve(rootScope), SrcPos(), true);
+			block.add(thisPtr);
+
+			TObject stmt = parser.transformT([TObject: block]);
+			if (stmt as Expr) {
+				evalExpr(line, block, thisPtr, stmt);
+			}
 		}
 	}
 
@@ -80,9 +107,7 @@ class Repl extends LangRepl {
 
 			// Now, run the replaced function!
 			ReplSandbox sandbox(this);
-			StrBuf r;
-			r.add(line).add(" = ").add(sandbox.evalFn());
-			print(r.toS);
+			print("=> " # sandbox.evalFn());
 		} else {
 			print("I AM ERROR");
 		}

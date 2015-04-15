@@ -54,11 +54,16 @@ namespace storm {
 			to->add(includes[i]);
 	}
 
-	void bs::addInclude(const Scope &to, Par<Package> pkg) {
+	Bool bs::addInclude(const Scope &to, Par<Package> pkg) {
 		if (Auto<BSScope> s = to.lookup.as<BSScope>()) {
+			for (nat i = 0; i < s->includes.size(); i++)
+				if (s->includes[i] == pkg.borrow())
+					return false;
 			s->includes.push_back(pkg.borrow());
+			return true;
 		} else {
 			WARNING(L"This is not what you want to do!");
+			return false;
 		}
 	}
 

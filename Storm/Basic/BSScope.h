@@ -34,7 +34,7 @@ namespace storm {
 			virtual Named *findHelper(const Scope &from, Par<Name> name);
 		};
 
-		void STORM_FN addInclude(const Scope &to, Par<Package> p);
+		Bool STORM_FN addInclude(const Scope &to, Par<Package> p);
 
 		// Get syntax from a scope.
 		SyntaxSet *STORM_FN getSyntax(const Scope &from);

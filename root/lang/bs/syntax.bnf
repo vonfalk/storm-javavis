@@ -67,6 +67,9 @@ File => Contents() : , (FileItem -> add, )*;
 // Root rule for parsing includes.
 Includes => Includes() : , ("use", Package -> add, ";", )*;
 
+// Specific use-rule in the top loop.
+ReplUse => pkg : "use", Package pkg, ";?";
+
 // Parameter list
 Values(Block block);
 Values => Actual() : DELIMITER;
@@ -202,3 +205,4 @@ ClassItem => classCtor(owner, pos, params, contents) :
 // Root rule for parsing classes and values.
 ClassBody(Class owner);
 ClassBody => ClassBody() : DELIMITER - (ClassItem(owner) -> add, )*;
+
