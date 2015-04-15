@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "VTable.h"
+#include "Memory.h"
 
 #define VTABLE_WARN_SIZE 100
 
@@ -25,54 +26,6 @@ namespace code {
 
 	int VTable::extraOffset = -2;
 	int VTable::dtorOffset = 0;
-
-	// Is the address readable?
-	static bool readable(void *addr) {
-		if (addr == null)
-			return false;
-
-		MEMORY_BASIC_INFORMATION info;
-		nat r = VirtualQuery(addr, &info, sizeof(info));
-		if (r != sizeof(info))
-			return false;
-
-		if (info.State == MEM_FREE)
-			return false;
-
-		if (info.Protect == 0)
-			return false;
-		if (info.Protect & PAGE_NOACCESS)
-			return false;
-		if (info.Protect & PAGE_GUARD)
-			return false;
-		if (info.Protect & PAGE_EXECUTE) // I think this is execute only.
-			return false;
-
-		return true;
-	}
-
-	// Print some information about 'addr' for debugging.
-	static void flags(void *addr) {
-		MEMORY_BASIC_INFORMATION info;
-		nat r = VirtualQuery(addr, &info, sizeof(info));
-		assert(r == sizeof(info));
-
-		printf("%p:", addr);
-		if (info.State == MEM_FREE)
-			printf(" free");
-		if (info.Protect & PAGE_NOACCESS || info.Protect == 0)
-			printf(" noaccess");
-		if (info.Protect & PAGE_GUARD)
-			printf(" guard");
-		if (info.Protect & PAGE_EXECUTE) // I think this is execute only.
-			printf(" executable");
-		if (info.Protect & PAGE_READONLY)
-			printf(" readonly");
-		if (info.Protect & PAGE_READWRITE)
-			printf(" readwrite");
-
-		printf("\n");
-	}
 
 	static bool isNewVTable(void *addr) {
 		nat *p = (nat *)addr;

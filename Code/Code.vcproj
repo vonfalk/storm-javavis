@@ -348,6 +348,10 @@
 				RelativePath=".\Exception.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Memory.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -524,6 +528,10 @@
 			</File>
 			<File
 				RelativePath=".\FnCall.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Memory.h"
 				>
 			</File>
 		</Filter>

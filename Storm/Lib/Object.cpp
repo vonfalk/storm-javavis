@@ -4,6 +4,8 @@
 #include "Function.h"
 #include "Lib/Str.h"
 #include "Code/Sync.h"
+#include "Code/VTable.h"
+#include "Code/Memory.h"
 
 #ifdef DEBUG
 
@@ -30,7 +32,11 @@ namespace storm {
 		if (live.size() > 0)
 			PLN(L"Leaks detected!");
 		for (map<Object *, String>::iterator i = live.begin(); i != live.end(); i++) {
-			PLN(L"Object " << i->first << L": " << i->second << L" (" << i->first->refs << L")");
+			if (code::readable(i->first)) {
+				PLN(L"Object " << i->first << L": " << i->second << L" (" << i->first->refs << L")");
+			} else {
+				PLN(L"Object " << i->first << L": " << i->second << L" (dead)");
+			}
 		}
 	}
 #else
