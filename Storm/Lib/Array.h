@@ -59,10 +59,10 @@ namespace storm {
 			return ptr(id);
 		}
 
-	protected:
 		// Handle
 		const Handle &handle;
 
+	protected:
 		// Size.
 		nat size;
 

@@ -181,6 +181,13 @@ namespace storm {
 		l << end(sub);
 	}
 
+	code::Variable allocObject(Par<CodeGen> s, Par<Function> ctor, const vector<code::Value> &params) {
+		Engine &e = s->engine();
+		code::Variable r = s->frame.createPtrVar(s->block.v, e.fnRefs.release);
+		allocObject(s, ctor, params, r);
+		return r;
+	}
+
 	void allocObject(Par<CodeGen> s, Par<Function> ctor, vector<code::Value> params, code::Variable to) {
 		using namespace code;
 
@@ -326,6 +333,29 @@ namespace storm {
 			s->to << fnParam(ptrA);
 			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		}
+	}
+
+	wrap::Variable STORM_FN valueToS(Par<CodeGen> s, wrap::Variable object, Value type) {
+		using namespace code;
+		Engine &e = s->engine();
+
+		Value str = value<Str *>(e);
+		Value thisPtr = Value::thisPtr(type.type);
+		Function *fn = as<Function>(type.type->find(L"toS", valList(1, thisPtr)));
+		if (!fn)
+			throw InternalError(L"The type " + ::toS(thisPtr) + L" does not have a toS function.");
+
+		code::Value par;
+		if (!type.ref && type.isValue()) {
+			s->to << lea(ptrA, object.v);
+			par = ptrA;
+		} else {
+			par = object.v;
+		}
+
+		Auto<CodeResult> result = CREATE(CodeResult, s, str, s->block);
+		fn->autoCall(s, vector<code::Value>(1, par), result);
+		return result->location(s).v;
 	}
 
 }

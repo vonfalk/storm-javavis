@@ -86,6 +86,14 @@ namespace storm {
 		return r;
 	}
 
+	void Function::autoCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result) {
+		RunOn r = runOn();
+		if (to->runOn.canRun(r))
+			localCall(to, params, result, false);
+		else
+			threadCall(to, params, result, r.thread->ref());
+	}
+
 	void Function::localCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> res, bool useLookup) {
 		initRefs();
 		assert(params.size() == this->params.size());
@@ -536,6 +544,14 @@ namespace storm {
 		Auto<Function> f = CREATE(Function, e, result, name, params);
 		Auto<DynamicCode> dc = CREATE(DynamicCode, e, l);
 		f->setCode(dc);
+		return f.ret();
+	}
+
+	Function *lazyFunction(Engine &e, Value result, const String &name,
+						const vector<Value> &params, const Fn<CodeGen *, void> &generate) {
+		Auto<Function> f = CREATE(Function, e, result, name, params);
+		Auto<LazyCode> c = CREATE(LazyCode, e, generate);
+		f->setCode(c);
 		return f.ret();
 	}
 

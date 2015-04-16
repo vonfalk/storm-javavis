@@ -140,6 +140,7 @@ namespace code {
 		friend Value intPtrConst(Int v);
 		friend Value natPtrConst(Nat v);
 		friend Value intPtrConst(Offset v);
+		friend Value natPtrConst(Size v);
 		friend Value ptrConst(Size v);
 		friend Value ptrConst(void *v);
 		friend Value byteRel(Register reg, Offset offset);
@@ -167,6 +168,7 @@ namespace code {
 	Value intPtrConst(Int v);
 	Value natPtrConst(Nat v);
 	Value intPtrConst(Offset v);
+	Value natPtrConst(Size v);
 	Value ptrConst(Size v);
 	Value ptrConst(void *v); // careful with this, will break miserably if serialized and loaded.
 

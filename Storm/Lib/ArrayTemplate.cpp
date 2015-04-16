@@ -4,9 +4,20 @@
 #include "Function.h"
 #include "Exception.h"
 #include "TypeCtor.h"
-#include "Lib/CloneEnv.h"
+#include "CloneEnv.h"
+#include "StrBuf.h"
+#include "TypeDtor.h"
 
 namespace storm {
+
+	static void CODECALL destroyClass(ArrayP<Object> *v) {
+		v->~ArrayP<Object>();
+	}
+
+	static void CODECALL destroyValue(ArrayBase *v) {
+		v->~ArrayBase();
+	}
+
 
 	static void CODECALL createClass(void *mem) {
 		new (mem) ArrayP<Object>();
@@ -31,6 +42,9 @@ namespace storm {
 
 		// Create it!
 		new (mem) ArrayBase(handle);
+
+		// Set our vtable.
+		arr->vtable.update((Object *)mem);
 	}
 
 	static ArrayP<Object> *CODECALL pushClass(ArrayP<Object> *to, Par<Object> o) {
@@ -58,6 +72,44 @@ namespace storm {
 			return null;
 
 		return CREATE(ArrayType, part->engine(), part->params[0]);
+	}
+
+	// This one only deals with value types, so we will never have to worry about
+	// calls to different threads!
+	Str *valArrayToSMember(ArrayBase *array, Str *(CODECALL *elemToS)(void *)) {
+		Auto<StrBuf> r = CREATE(StrBuf, array);
+		r->add(L"[");
+
+		for (nat i = 0; i < array->count(); i++) {
+			if (i != 0)
+				r->add(L", ");
+			void *elem = array->atRaw(i);
+			Auto<Str> v = (*elemToS)(elem);
+			Auto<StrBuf> t = r->add(v);
+		}
+
+		r->add(L"]");
+		return r->toS();
+	}
+
+	Str *valArrayToSAdd(ArrayBase *array, const void *fn) {
+		byte buffer[2 * code::FnParams::elemSize];
+		Auto<StrBuf> r = CREATE(StrBuf, array);
+		const Handle &handle = array->handle;
+		r->add(L"[");
+
+		for (nat i = 0; i < array->count(); i++) {
+			if (i != 0)
+				r->add(L", ");
+			void *elem = array->atRaw(i);
+			code::FnParams params(buffer);
+			params.add(r.borrow());
+			params.add(handle.create, handle.destroy, handle.size, elem);
+			Auto<StrBuf> t = code::call<StrBuf *>(fn, true, params);
+		}
+
+		r->add(L"]");
+		return r->toS();
 	}
 
 	void addArrayTemplate(Par<Package> to) {
@@ -98,6 +150,9 @@ namespace storm {
 		add(steal(nativeFunction(e, t, L"push", valList(2, t, param), address(&pushClass))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getClass))));
 		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&ArrayBase::deepCopy))));
+		add(steal(nativeDtor(e, this, &destroyClass)));
+
+		// In this case, we are exploiting the C++ toS implementation we get from 'ArrayP'.
 	}
 
 	void ArrayType::loadValueFns() {
@@ -112,6 +167,65 @@ namespace storm {
 		add(steal(nativeFunction(e, t, L"push", valList(2, t, refParam), address(&pushValue))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getValue))));
 		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&ArrayBase::deepCopy))));
+		add(steal(nativeDtor(e, this, &destroyValue)));
+
+		Value strType = Value::thisPtr(Str::stormType(e));
+		add(steal(lazyFunction(e, strType, L"toS", valList(1, t), memberVoidFn(this, &ArrayType::valueToS))));
+	}
+
+	CodeGen *ArrayType::valueToS() {
+		// If the StrBuf has the member, we can use that as well.
+		Value strBufT = value<StrBuf *>(engine);
+		Function *addFn = as<Function>(strBufT.type->find(L"add", valList(2, strBufT, param)));
+		if (addFn)
+			return valueToSAdd(addFn);
+
+		Function *toSFn = as<Function>(param.type->find(L"toS", valList(1, param.asRef(true))));
+		if (toSFn)
+			return valueToSMember(toSFn);
+
+		// Look in the direct parent.
+		NameLookup *parent = param.type->parent();
+		toSFn = as<Function>(parent->find(L"toS", valList(1, param.asRef(true))));
+		if (toSFn)
+			return valueToSMember(toSFn);
+
+		throw InternalError(L"The type " + ::toS(param) + L" does not have a toS function. Therefore, "
+							L"the toS for the Array type can not be generated.");
+	}
+
+	CodeGen *ArrayType::valueToSMember(Function *toSFn) {
+		using namespace code;
+		Auto<CodeGen> g = CREATE(CodeGen, engine, RunOn());
+		g->to << prolog();
+
+		Variable thisPtr = g->frame.createPtrParam();
+
+		g->to << fnParam(thisPtr);
+		g->to << fnParam(toSFn->ref());
+		g->to << fnCall(engine.fnRefs.arrayToSMember, Size::sPtr);
+
+		g->to << epilog();
+		g->to << ret(Size::sPtr);
+
+		return g.ret();
+	}
+
+	CodeGen *ArrayType::valueToSAdd(Function *fn) {
+		using namespace code;
+		Auto<CodeGen> g = CREATE(CodeGen, engine, RunOn());
+		g->to << prolog();
+
+		Variable thisPtr = g->frame.createPtrParam();
+
+		g->to << fnParam(thisPtr);
+		g->to << fnParam(fn->ref());
+		g->to << fnCall(engine.fnRefs.arrayToSAdd, Size::sPtr);
+
+		g->to << epilog();
+		g->to << ret(Size::sPtr);
+
+		return g.ret();
 	}
 
 

@@ -34,7 +34,7 @@ void fnPtr(wostream &to, const Function &fn, const Types &types) {
 		if (i != 0)
 			to << L", ";
 		if (fn.engineFn && i == 0)
-			to << L"storm::Engine &";
+			to << L"storm::EnginePtr";
 		else
 			to << fn.params[i].fullName(types, scope);
 	}

@@ -1,4 +1,5 @@
 use core:debug;
+use core:lang;
 
 class ToSDbg extends Dbg {
 	ctor(Int v) {
@@ -18,4 +19,12 @@ Dbg toSDbg(Int v) {
 	} else {
 		ToSDbg(1);
 	}
+}
+
+Int[] createIntArray() {
+	[Int: 1, 2, 3];
+}
+
+Value[] createValueArray() {
+	Value[];
 }

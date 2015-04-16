@@ -65,6 +65,20 @@ namespace storm {
 		return this;
 	}
 
+	void StrBuf::add(const String &str) {
+		ensure(pos + str.size());
+		for (nat i = 0; i < str.size(); i++) {
+			buffer[pos++] = str[i];
+		}
+	}
+
+	void StrBuf::add(const wchar *str) {
+		ensure(pos + wcslen(str));
+		while (*str) {
+			buffer[pos++] = *(str++);
+		}
+	}
+
 	// 32-bit numbers does never need more than 12 digits, including a - sign.
 	static const nat maxDigits = 12;
 

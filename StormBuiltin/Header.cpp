@@ -48,6 +48,24 @@ void Header::parse() {
 	}
 }
 
+void checkEngineFn(const Function &fn) {
+	if (fn.params.size() < 1)
+		throw Error(L"The STORM_ENGINE_FN " + ::toS(fn) + L" must have at least one parameter.");
+
+	const CppType &first = fn.params[0];
+	bool fail = false;
+	if (first.type.parts.size() < 1)
+		fail = true;
+	else if (first.type.parts.back() != L"EnginePtr")
+		fail = true;
+	else if (first.isPtr || first.isRef)
+		fail = true;
+
+	if (fail)
+		throw Error(L"The first parameter of STORM_ENGINE_FN " + ::toS(fn) +
+					L" must have a EnginePtr as the first parameter.");
+}
+
 void Header::parse(Tokenizer &tok) {
 	String pkg;
 	CppScope scope;
@@ -81,6 +99,7 @@ void Header::parse(Tokenizer &tok) {
 			variables.push_back(Variable::read(scope, tok));
 		} else if (token == L"STORM_ENGINE_FN") {
 			functions.push_back(Function::read(true, pkg, scope, lastType, tok));
+			checkEngineFn(functions.back());
 		} else if (token == L"STORM_CLASS" || token == L"STORM_VALUE") {
 			if (!scope.isType())
 				throw Error(L"STORM_CLASS or STORM_VALUE only allowed in classes and structs!");

@@ -130,8 +130,8 @@ namespace storm {
 	/**
 	 * Helpers.
 	 */
-	Scope rootScope(Engine &e) {
-		return *e.scope();
+	Scope rootScope(EnginePtr e) {
+		return *e.v.scope();
 	}
 
 }

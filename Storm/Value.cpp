@@ -7,8 +7,8 @@
 
 namespace storm {
 
-	Str *toS(Engine &e, const Value &v) {
-		return CREATE(Str, e, ::toS(v));
+	Str *toS(EnginePtr e, const Value &v) {
+		return CREATE(Str, e.v, ::toS(v));
 	}
 
 	bool isClass(Type *t) {
@@ -239,7 +239,7 @@ namespace storm {
 	}
 
 #ifdef VS
-	vector<Value> valList(nat count, ...) {
+	ValList valList(nat count, ...) {
 		vector<Value> r;
 		r.reserve(count);
 

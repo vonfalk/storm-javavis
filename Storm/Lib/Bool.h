@@ -1,5 +1,6 @@
 #pragma once
 #include "Type.h"
+#include "EnginePtr.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -14,6 +15,6 @@ namespace storm {
 	};
 
 	STORM_PKG(core);
-	Str *STORM_ENGINE_FN toS(Engine &e, Bool v);
+	Str *STORM_ENGINE_FN toS(EnginePtr e, Bool v);
 
 }

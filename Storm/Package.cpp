@@ -197,8 +197,8 @@ namespace storm {
 	 * Helpers.
 	 */
 
-	Package *rootPkg(Engine &e) {
-		Package *root = e.rootPackage();
+	Package *rootPkg(EnginePtr e) {
+		Package *root = e.v.rootPackage();
 		root->addRef();
 		return root;
 	}

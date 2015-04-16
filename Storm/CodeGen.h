@@ -144,6 +144,7 @@ namespace storm {
 
 	// Create an object on the heap. Store it in variable 'to'. Only work for heap-allocated objects.
 	// TODO: Expose to Storm!
+	code::Variable allocObject(Par<CodeGen> s, Par<Function> ctor, vector<code::Value> params);
 	void allocObject(Par<CodeGen> s, Par<Function> ctor, vector<code::Value> params, code::Variable to);
 	void allocObject(code::Listing &l, code::Block b, Par<Function> ctor, vector<code::Value> params, code::Variable to);
 
@@ -173,5 +174,8 @@ namespace storm {
 
 	// Find 'std:clone' for the given type.
 	wrap::Operand STORM_FN stdCloneFn(const Value &type);
+
+	// Call the 'toS' function for a type in variable 'v'.
+	wrap::Variable STORM_FN valueToS(Par<CodeGen> s, wrap::Variable object, Value type);
 
 }

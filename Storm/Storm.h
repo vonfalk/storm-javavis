@@ -16,7 +16,7 @@
 
 // Mark built-in functions with STORM_FN_ENGINE to get the right calling-convention
 // and the automatic generation of function tables. The difference from STORM_FN is
-// that the first parameter (of type Engine) will be generated automatically.
+// that the first parameter (of type EnginePtr) will be generated automatically.
 #define STORM_ENGINE_FN CODECALL
 
 // Mark a built-in function to be executed on a specific thread. This is only

@@ -118,7 +118,7 @@ namespace storm {
 	/**
 	 * Get the root scope from the Engine.
 	 */
-	Scope STORM_ENGINE_FN rootScope(Engine &e) ON(Compiler);
+	Scope STORM_ENGINE_FN rootScope(EnginePtr e) ON(Compiler);
 
 }
 

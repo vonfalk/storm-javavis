@@ -95,11 +95,11 @@ namespace storm {
 		return t;
 	}
 
-	Str *toS(Engine &e, Bool v) {
+	Str *toS(EnginePtr e, Bool v) {
 		if (v) {
-			return CREATE(Str, e, L"true");
+			return CREATE(Str, e.v, L"true");
 		} else {
-			return CREATE(Str, e, L"false");
+			return CREATE(Str, e.v, L"false");
 		}
 	}
 

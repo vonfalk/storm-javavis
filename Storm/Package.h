@@ -92,6 +92,6 @@ namespace storm {
 	};
 
 	// Find the root package.
-	Package *STORM_ENGINE_FN rootPkg(Engine &e) ON(Compiler);
+	Package *STORM_ENGINE_FN rootPkg(EnginePtr e) ON(Compiler);
 
 }

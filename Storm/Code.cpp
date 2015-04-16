@@ -226,22 +226,7 @@ namespace storm {
 
 		original.set(ptr);
 
-		// Probably machine-specific...
-		Listing l;
-
-		if (!returnType.returnInReg()) {
-			l << pop(ptrA);
-			l << pop(ptrC);
-			l << push(engine().engineRef);
-			l << push(ptrC);
-			l << push(ptrA);
-		} else {
-			l << pop(ptrA); // get the return address...
-			l << push(engine().engineRef);
-			l << push(ptrA); // put it back.
-		}
-		l << jmp(original);
-
+		Listing l = enginePtrThunk(engine(), returnType, original);
 		code = new Binary(engine().arena, L"static engine code", l);
 	}
 

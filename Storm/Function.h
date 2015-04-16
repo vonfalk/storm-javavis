@@ -80,6 +80,10 @@ namespace storm {
 		// Does not generate any meaningful result unless 'runOn' returns a state other than 'any'.
 		virtual code::Variable findThread(Par<CodeGen> to, const Actuals &params);
 
+		// Figure out which kind of call we shall use and do the right thing based on what the 'runOn' member
+		// in 'to' is indicating. Always uses lookup.
+		void autoCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result);
+
 		// Generate code for this function call, assuming we are performing the call the same thread as the
 		// currently running thread. if 'useLookup' is false, we will not use the lookup function (ie VTables).
 		void localCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result, bool useLookup);
@@ -182,5 +186,9 @@ namespace storm {
 	// Create a dynamic function.
 	Function *dynamicFunction(Engine &e, Value result, const String &name,
 							const vector<Value> &params, const code::Listing &listing);
+
+	// Create a lazy function.
+	Function *lazyFunction(Engine &e, Value result, const String &name,
+						const vector<Value> &params, const Fn<CodeGen *, void> &generate);
 
 }

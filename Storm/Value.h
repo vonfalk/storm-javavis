@@ -5,6 +5,7 @@
 #include "Code/Value.h"
 #include "Code/Size.h"
 #include "Utils/TypeInfo.h"
+#include "EnginePtr.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -118,7 +119,7 @@ namespace storm {
 	};
 
 	// toS
-	Str *STORM_ENGINE_FN toS(Engine &e, const Value &from);
+	Str *STORM_ENGINE_FN toS(EnginePtr e, const Value &from);
 
 	/**
 	 * Compute the common denominator of two values so that
@@ -211,8 +212,11 @@ namespace storm {
 	Value fnResultType(const Scope &scope, Par<Name> fn);
 
 	// Array of values.
+	typedef vector<Value> ValList;
+
 #ifdef VS
-	vector<Value> valList(nat count, ...);
+	// This function uses a VS specific extension for variable arguments.
+	ValList valList(nat count, ...);
 #else
 #error "Define valList for C++11 here"
 #endif

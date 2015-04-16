@@ -384,16 +384,16 @@ namespace storm {
 	}
 
 
-	Str *toS(Engine &e, Int v) {
-		return CREATE(Str, e, ::toS(v));
+	Str *toS(EnginePtr e, Int v) {
+		return CREATE(Str, e.v, ::toS(v));
 	}
 
-	Str *toS(Engine &e, Nat v) {
-		return CREATE(Str, e, ::toS(v));
+	Str *toS(EnginePtr e, Nat v) {
+		return CREATE(Str, e.v, ::toS(v));
 	}
 
-	Str *toS(Engine &e, Byte v) {
-		return CREATE(Str, e, ::toS(v));
+	Str *toS(EnginePtr e, Byte v) {
+		return CREATE(Str, e.v, ::toS(v));
 	}
 
 }

@@ -263,6 +263,7 @@ namespace code {
 	Value intPtrConst(Int v) { return Value(Word(v), Size::sPtr); }
 	Value natPtrConst(Nat v) { return Value(Word(v), Size::sPtr); }
 	Value intPtrConst(Offset v) { return Value(v, Size::sPtr); }
+	Value natPtrConst(Size v) { return Value(v, Size::sPtr); }
 	Value ptrConst(Size v) { return Value(v, Size::sPtr); }
 	Value ptrConst(void *v) { return Value(Word(v), Size::sPtr); }
 

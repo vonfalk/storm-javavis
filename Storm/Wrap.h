@@ -9,6 +9,8 @@ namespace storm {
 	class Object;
 	class Type;
 	class FnPtrBase;
+	class ArrayBase;
+	class Str;
 
 	/**
 	 * Contains wrappers to call various C++ functions from machine code.
@@ -32,6 +34,9 @@ namespace storm {
 	bool fnPtrNeedsCopy(FnPtrBase *b);
 	void fnPtrCallRaw(FnPtrBase *b, void *output, BasicTypeInfo *type, code::FnParams *params);
 
+	// Implemented in ArrayTemplate.cpp
+	Str *valArrayToSMember(ArrayBase *array, Str *(CODECALL *elemToS)(void *));
+	Str *valArrayToSAdd(ArrayBase *array, const void *fn);
 
 	class FutureBase;
 
