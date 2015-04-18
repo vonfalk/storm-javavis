@@ -141,14 +141,16 @@ namespace storm {
 			// What state was completed to make this advance (if any)?
 			StatePtr completed;
 
+			// The priority of the rule that completed this state (if any)?
+			int completedPriority;
+
 			// Create empty state.
-			State() : from(0) {}
+			State() : from(0), completedPriority(0) {}
 
 			// Create a state.
 			State(const OptionIter &ri, nat from,
-				const StatePtr &prev = StatePtr(),
-				const StatePtr &completed = StatePtr())
-				: pos(ri), from(from), prev(prev), completed(completed) {}
+				const StatePtr &prev, const StatePtr &completed, int completedPrio)
+				: pos(ri), from(from), prev(prev), completed(completed), completedPriority(completedPrio) {}
 
 			// Equality.
 			inline bool operator ==(const State &o) const {
@@ -193,13 +195,19 @@ namespace storm {
 			virtual void output(wostream &to) const;
 		};
 
+		// Create some states.
+		State firstState();
+		State completedState(const OptionIter &ri, nat from, const StatePtr &prev, const StatePtr &completedBy);
+		State predictedState(const OptionIter &ri, nat from);
+		State scannedState(const OptionIter &ri, nat from, const StatePtr &prev);
+
 		/**
 		 * Define a state set.
 		 */
 		class StateSet : public vector<State> {
 		public:
-			// returns true if inserted. Does not insert invalid positions.
-			bool insert(const State &s);
+			// Does not insert invalid positions.
+			void insert(const State &s);
 		};
 
 		// State sets.

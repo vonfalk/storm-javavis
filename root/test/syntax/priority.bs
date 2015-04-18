@@ -1,0 +1,28 @@
+use core;
+use core:lang;
+
+class Buffer {
+	StrBuf content;
+
+	ctor() {
+		init() {}
+	}
+
+	void add(Str v) {
+		content.add(v);
+	}
+
+	void add(SStr v) {
+		content.add(v.v);
+	}
+
+	void add(Buffer b) {
+		content.add("(");
+		content.add(b.toS);
+		content.add(")");
+	}
+
+	Str toS() {
+		content.toS;
+	}
+}

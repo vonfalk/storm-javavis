@@ -82,6 +82,7 @@ BEGIN_TEST(RegexTest) {
 	 */
 	CHECK_EQ(matchRegex(L"[ab]*bcd..", L"abababcdba"), 10);
 	CHECK_EQ(matchRegex(L"[ab]*bcd[ab]*", L"abababcdba"), 10);
+	CHECK_EQ(matchRegex(L" *", L""), 0);
 
 	/**
 	 * Check correct indexing when not searching from the start.

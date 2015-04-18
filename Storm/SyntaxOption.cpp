@@ -6,7 +6,7 @@
 namespace storm {
 
 	SyntaxOption::SyntaxOption(const SrcPos &pos, const Scope &scope, const String &owner)
-		: scope(scope), pos(pos), owner(owner), markStart(0), markEnd(0), markType(mNone) {}
+		: scope(scope), pos(pos), owner(owner), markStart(0), markEnd(0), markType(mNone), priority(0) {}
 
 	SyntaxOption::~SyntaxOption() {
 		::clear(tokens);
@@ -19,6 +19,7 @@ namespace storm {
 		matchFn = String();
 		matchFnParams.clear();
 		markCapture = L"";
+		priority = 0;
 	}
 
 	int SyntaxOption::outputMark(std::wostream &to, nat i, nat marker) const {
@@ -66,7 +67,7 @@ namespace storm {
 				if (i > 0) to << L", ";
 				to << matchFnParams[i];
 			}
-			to << L") : ";
+			to << L") :[" << priority << L"] ";
 		}
 
 		bool lastComma = false;

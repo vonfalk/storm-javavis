@@ -56,3 +56,38 @@ BEGIN_TEST(ParserTest) {
 	CHECK_EQ(parse(set, L"Empty2", L"()"), 2);
 
 } END_TEST
+
+namespace storm {
+	extern bool parserDebug;
+}
+
+String parseStr(Par<SyntaxSet> set, const String &root, const String &str) {
+	Auto<Url> empty = CREATE(Url, *gEngine);
+	Auto<Str> s = CREATE(Str, *gEngine, str);
+	Auto<Parser> p = CREATE(Parser, *gEngine, set, s, empty);
+	parserDebug = true;
+	p->parse(root);
+	parserDebug = false;
+	if (p->hasError())
+		throw p->error();
+
+	Auto<Object> o = p->transform();
+	return ::toS(o);
+}
+
+BEGIN_TEST_(ParseOrderTest) {
+	Engine &e = *gEngine;
+
+	Package *simple = e.package(L"test.syntax");
+	simple->syntax();
+
+	Auto<SyntaxSet> set = CREATE(SyntaxSet, e);
+	set->add(simple);
+
+	// CHECK_EQ(parseStr(set, L"Prio", L"a b"), L"ab");
+	// CHECK_EQ(parseStr(set, L"Prio", L"var b"), L"b");
+	// CHECK_EQ(parseStr(set, L"Prio", L"async b"), L"b");
+
+	// CHECK_EQ(parseStr(set, L"Rec", L"a.b.c.d.e"), L"(((a)(b))(c))(d)");
+	CHECK_EQ(parseStr(set, L"Rec", L"a,b,c,d,e"), L"(a)((b)((c)(d)))");
+} END_TEST

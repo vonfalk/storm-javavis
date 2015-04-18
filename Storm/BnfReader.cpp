@@ -227,11 +227,27 @@ namespace storm {
 		}
 	}
 
+	void parsePriority(SyntaxOption &o, Tokenizer &tok) {
+		if (tok.peek().token != L"[")
+			return;
+		tok.next();
+
+		String prio = tok.next().token;
+		if (prio == L"-" || prio == L"+")
+			prio = prio + tok.next().token;
+		o.priority = prio.toInt();
+
+		Token end = tok.next();
+		if (end.token != L"]")
+			throw SyntaxError(end.pos, L"Expected a closing bracket.");
+	}
+
 	void parseRule(SyntaxRule &to, Tokenizer &tok, const Scope &scope, const String &delimiter) {
 		SyntaxOption *option = new SyntaxOption(tok.position(), scope, to.name());
 
 		try {
 			parseCall(*option, tok);
+			parsePriority(*option, tok);
 			parseTokens(*option, tok, delimiter);
 
 			to.add(option);

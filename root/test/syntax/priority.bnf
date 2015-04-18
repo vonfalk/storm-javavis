@@ -1,0 +1,13 @@
+delimiter: Whitespace;
+Whitespace => void : "[ \n\r\t]*";
+
+// Test some priority. This example is from a variable declaration with reserved keywords.
+Name => n : "[A-Za-z]*" n;
+Prio => Buffer() :[10] "async", Name -> add;
+Prio => Buffer() :[20] Name -> add, Name -> add;
+Prio => Buffer() :[10] "var", Name -> add;
+
+Rec => Buffer() :[0] Name -> add;
+Rec => Buffer() :[+1] Rec -> add, "\.", Rec -> add;
+Rec => Buffer() :[-1] Rec -> add, "\,", Rec -> add;
+

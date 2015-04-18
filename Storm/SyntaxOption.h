@@ -60,6 +60,9 @@ namespace storm {
 		// This rule's position.
 		const SrcPos pos;
 
+		// This option's priority.
+		int priority;
+
 	protected:
 		virtual void output(std::wostream &to) const;
 		void output(std::wostream &to, nat marker) const;

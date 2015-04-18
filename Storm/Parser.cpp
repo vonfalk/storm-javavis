@@ -8,6 +8,8 @@
 
 namespace storm {
 
+	bool parserDebug = false;
+
 	/**
 	 * Parser implementation.
 	 */
@@ -17,6 +19,23 @@ namespace storm {
 
 	Parser::Parser(Par<SyntaxSet> set, Par<Str> src, Par<Url> file)
 		: syntax(set), srcStr(src), src(src->v), srcPos(file, 0), rootOption(SrcPos(), Scope(), L"") {}
+
+	Parser::State Parser::firstState() {
+		return State(OptionIter::firstA(rootOption), 0, StatePtr(), StatePtr(), 0);
+	}
+
+	Parser::State Parser::completedState(const OptionIter &ri, nat from, const StatePtr &prev, const StatePtr &by) {
+		int prio = state(by).pos.option().priority;
+		return State(ri, from, prev, by, prio);
+	}
+
+	Parser::State Parser::predictedState(const OptionIter &ri, nat from) {
+		return State(ri, from, StatePtr(), StatePtr(), 0);
+	}
+
+	Parser::State Parser::scannedState(const OptionIter &ri, nat from, const StatePtr &prev) {
+		return State(ri, from, prev, StatePtr(), 0);
+	}
 
 	Nat Parser::noMatch() const {
 		return NO_MATCH;
@@ -37,7 +56,7 @@ namespace storm {
 		rootOption.add(new TypeToken(rootType, L"root"));
 
 		steps = vector<StateSet>(src.size() + 1);
-		steps[pos].insert(State(OptionIter::firstA(rootOption), 0));
+		steps[pos].insert(firstState());
 
 		nat len = NO_MATCH;
 
@@ -55,7 +74,8 @@ namespace storm {
 
 		for (nat i = 0; i < s.size(); i++) {
 			StatePtr ptr(step, i);
-			// PLN(ptr << ": " << s[i]);
+			if (parserDebug)
+				PLN(ptr << ": " << s[i]);
 
 			predictor(s, s[i], ptr);
 			completer(s, s[i], ptr);
@@ -84,8 +104,8 @@ namespace storm {
 		for (nat i = 0; i < t.size(); i++) {
 			SyntaxOption *rule = t[i];
 			// Todo: We need to find possible lookahead strings!
-			s.insert(State(OptionIter::firstA(*rule), ptr.step));
-			s.insert(State(OptionIter::firstB(*rule), ptr.step));
+			s.insert(predictedState(OptionIter::firstA(*rule), ptr.step));
+			s.insert(predictedState(OptionIter::firstB(*rule), ptr.step));
 		}
 
 		if (matchesEmpty(t)) {
@@ -107,7 +127,7 @@ namespace storm {
 					continue;
 
 				StatePtr completedBy(ptr.step, i);
-				State ns(state.pos.nextA(), state.from, ptr, completedBy);
+				State ns = completedState(state.pos.nextA(), state.from, ptr, completedBy);
 				s.insert(ns);
 				// if (ns.pos.valid())
 				// 	PLN("=>" << ns);
@@ -135,7 +155,7 @@ namespace storm {
 		if (matched >= steps.size())
 			return;
 
-		State ns(state.pos.nextA(), state.from, ptr);
+		State ns = scannedState(state.pos.nextA(), state.from, ptr);
 		steps[matched].insert(ns);
 
 		ns.pos = state.pos.nextB();
@@ -154,7 +174,8 @@ namespace storm {
 			if (!st.isRule(completed))
 				continue;
 
-			State ns(st.pos.nextA(), st.from, stPtr, ptr);
+			int prioa = this->state(ptr).pos.option().priority;
+			State ns(st.pos.nextA(), st.from, stPtr, ptr, prioa);
 			s.insert(ns);
 			// if (ns.pos.valid())
 			// 	PLN("->" << ns);
@@ -486,7 +507,7 @@ namespace storm {
 	 */
 	void Parser::State::output(wostream &to) const {
 		to << "{State: " << pos << ", from: " << from;
-		to << ", prev: " << prev << ", completed: " << completed << "}";
+		to << ", prev: " << prev << ", completed: " << completed << "[" << completedPriority << "]}";
 	}
 
 	bool Parser::State::isRule() const {
@@ -545,16 +566,24 @@ namespace storm {
 	 * State set.
 	 */
 
-	bool Parser::StateSet::insert(const State &state) {
+	void Parser::StateSet::insert(const State &state) {
 		if (!state.pos.valid())
-			return true;
+			return;
 
-		for (nat i = 0; i < size(); i++)
-			if ((*this)[i] == state)
-				return false;
+		for (nat i = 0; i < size(); i++) {
+			State &c = (*this)[i];
+			if (c == state) {
+				int cPrio = c.completedPriority;
+				int sPrio = state.completedPriority;
+				if (cPrio > sPrio) {
+					c = state;
+				}
+				return;
+			}
+		}
 
 		push_back(state);
-		return true;
+		return;
 	}
 
 	/**
