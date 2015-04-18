@@ -16,9 +16,11 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
+Futures left unused (hopefully deleted) cause a runtime error on shutdown in the REPL.
+
 Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
 This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.
-New regex parser written, optimize it (the new is about 2x slower when running ReplTest) and verify.
+New regex parser written. Verify.
 Make sure to decrease the stack size in UThread after this is done!
 
 When calling functions on other threads, we should use the same CloneEnv for all parameters!
