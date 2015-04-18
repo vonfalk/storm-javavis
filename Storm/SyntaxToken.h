@@ -71,8 +71,6 @@ namespace storm {
 	 */
 	class DelimToken : public TypeToken {
 	public:
-		DelimToken();
-	protected:
-		virtual void output(std::wostream &to) const;
+		DelimToken(const String &name);
 	};
 }

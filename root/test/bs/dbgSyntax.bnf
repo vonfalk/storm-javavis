@@ -1,4 +1,6 @@
 // Syntax for debugging...
+delimiter: BSDelimiter;
+
 Stmt => dumpExpr(e, str) : "dump:", ( Expr(block) e ) str, ";";
 
 // Weak parens.

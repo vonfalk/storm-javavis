@@ -1,10 +1,11 @@
 // This is the syntax for the basic storm language, used to build the
 // real storm language.
 
-Whitespace => void : "[ \n\r\t]*";
+delimiter: BSDelimiter;
 
-DELIMITER => void : Whitespace;
-DELIMITER => void : Whitespace - "//[^\n\r]*[\n\r]" - DELIMITER; // "[ \n\r\t]*//.*[\n\r][ \n\r\t]*";
+Whitespace => void : "[ \n\r\t]*";
+BSDelimiter => void : Whitespace;
+BSDelimiter => void : Whitespace - "//[^\n\r]*[\n\r]" - BSDelimiter; // "[ \n\r\t]*//.*[\n\r][ \n\r\t]*";
 
 // Name rule returns a String, created by taking the 'name' parameter.
 Name => SStr(name) : "[A-Za-z][A-Za-z0-9]*" name;
@@ -36,7 +37,7 @@ StrContent => void : "[^\"\\]*";
 StrContent => void : StrContent - "\\." - StrContent;
 
 // Parameter list (possibly empty)
-Params => Params() : DELIMITER;
+Params => Params() : BSDelimiter;
 Params => Params() : Type -> add, Name -> add, (",", Type -> add, Name -> add, )*;
 
 // Function
@@ -72,12 +73,12 @@ ReplUse => pkg : "use", Package pkg, ";?";
 
 // Parameter list
 Values(Block block);
-Values => Actual() : DELIMITER;
+Values => Actual() : BSDelimiter;
 Values => Actual() : Expr(block) -> add, (",", Expr(block) -> add)*;
 
 // Parameter list with/without parens.
 FnValues(Block block);
-FnValues => Actual() : DELIMITER;
+FnValues => Actual() : BSDelimiter;
 FnValues => v : "(", Values(block) v, ")";
 
 // Block.
@@ -110,7 +111,7 @@ PrePost => v : "--" v;
 
 // Initializer list for arrays.
 ArrayInitList(Block block);
-ArrayInitList => Array<Expr>() : DELIMITER;
+ArrayInitList => Array<Expr>() : BSDelimiter;
 ArrayInitList => Array<Expr>() : Expr(block) -> push (, ", ", Expr(block) -> push)*;
 
 // Atoms, for example constants and variables/function calls.
@@ -167,7 +168,7 @@ Stmt => e : Loop(block) e;
 
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);
-FunctionBody => FnBody(fn) : DELIMITER - (Stmt(me) -> add, )* - DELIMITER;
+FunctionBody => FnBody(fn) : BSDelimiter - (Stmt(me) -> add, )* - BSDelimiter;
 
 // Special statement for calling super constructor.
 SuperCall(CtorBody block);
@@ -183,14 +184,14 @@ Initializer => Initializer(name, params) : Name name, FnValues(block) params;
 
 // Root rule for parsing constructor bodies.
 CtorBody(BSCtor fn);
-CtorBody => CtorBody(fn) : DELIMITER - CtorStmts(me) -> add, SuperCall(me) -> add, CtorStmts(me) -> add;
+CtorBody => CtorBody(fn) : BSDelimiter - CtorStmts(me) -> add, SuperCall(me) -> add, CtorStmts(me) -> add;
 
 CtorStmts(Block block);
 CtorStmts => Array<Expr>() : (Stmt(block) -> push, )*;
 
 // Constructor parameters. May include a nameless first parameter.
 NoName => s : "" s;
-CtorParams => Params() : DELIMITER;
+CtorParams => Params() : BSDelimiter;
 CtorParams => Params() : Type -> add, Name -> add, (",", Type -> add, Name -> add, )*;
 CtorParams => Params() : Type -> add, NoName -> add, (",", Type -> add, Name -> add, )*;
 
@@ -204,5 +205,5 @@ ClassItem => classCtor(owner, pos, params, contents) :
 
 // Root rule for parsing classes and values.
 ClassBody(Class owner);
-ClassBody => ClassBody() : DELIMITER - (ClassItem(owner) -> add, )*;
+ClassBody => ClassBody() : BSDelimiter - (ClassItem(owner) -> add, )*;
 

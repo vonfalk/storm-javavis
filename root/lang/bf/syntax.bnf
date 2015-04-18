@@ -3,8 +3,8 @@
 // brainfuck program. Each file will be declared as its
 // own function. A function takes a string for input, and
 // returns a string, which is the output from the program.
-
-DELIMITER => void : "[ \n\r\t]*";
+delimiter: BFDelimiter;
+BFDelimiter => void : "[ \n\r\t]*";
 
 Number => v : "[0-9]+" v;
 

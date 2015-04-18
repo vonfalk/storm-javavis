@@ -1,4 +1,5 @@
 // Syntax extensions useful when generating code or manipulating the syntax tree.
+delimiter: BSDelimiter;
 
 // Use type{a:b:c} to build a type name quickly and easily.
 Expr => createType(block, type) : "name", "{", Type type, "}";

@@ -1,7 +1,9 @@
 // TODO: Make sure to check types somewhere!
 // The main syntax follows:
 
-DELIMITER => void : "[ \t\r\n]+";
+delimiter: STODelimiter;
+
+STODelimiter => void : "[ \t\r\n]+";
 
 NL => void : "[ \t\r\n]+";
 

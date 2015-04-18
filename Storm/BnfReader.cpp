@@ -187,7 +187,7 @@ namespace storm {
 		return result;
 	}
 
-	void parseTokens(SyntaxOption &to, Tokenizer &tok) {
+	void parseTokens(SyntaxOption &to, Tokenizer &tok, const String &delimiter) {
 		bool end = false;
 		while (!end) {
 			SyntaxToken *st = parseToken(tok);
@@ -198,7 +198,11 @@ namespace storm {
 			if (sep.token == L";") {
 				end = true;
 			} else if (sep.token == L",") {
-				to.add(new DelimToken());
+				if (delimiter.empty())
+					throw SyntaxError(sep.pos, L"Can not use the comma delimiter before a delimiter "
+									L"rule has been declared."
+									L"Use delimiter: <rule>; in each file before using ','.");
+				to.add(new DelimToken(delimiter));
 			} else if (sep.token == L"-") {
 			} else if (sep.token == L"(") {
 				if (to.hasMark())
@@ -223,12 +227,12 @@ namespace storm {
 		}
 	}
 
-	void parseRule(SyntaxRule &to, Tokenizer &tok, const Scope &scope) {
+	void parseRule(SyntaxRule &to, Tokenizer &tok, const Scope &scope, const String &delimiter) {
 		SyntaxOption *option = new SyntaxOption(tok.position(), scope, to.name());
 
 		try {
 			parseCall(*option, tok);
-			parseTokens(*option, tok);
+			parseTokens(*option, tok, delimiter);
 
 			to.add(option);
 		} catch (...) {
@@ -265,14 +269,30 @@ namespace storm {
 			throw SyntaxError(paren.pos, L"Expected ;");
 	}
 
+	void parseOption(const Token &option, Tokenizer &tok, String &delimiterRule) {
+		if (option.token != L"delimiter")
+			throw SyntaxError(option.pos, L"Unknown option: " + option.token);
+
+		Token delim = tok.next();
+		Token end = tok.next();
+		if (end.token != L";")
+			throw SyntaxError(option.pos, L"Expected ;");
+
+		delimiterRule = delim.token;
+	}
+
 	void parseBnf(SyntaxRules &types, Tokenizer &tok, const Scope &scope) {
+		String delimiterRule;
+
 		while (tok.more()) {
 			// What we have here is either a rule or a rule declaration.
 			Token ruleName = tok.next();
 			Token delim = tok.next();
 
-			if (delim.token == L"=>") {
-				parseRule(getRule(types, ruleName.token, scope), tok, scope);
+			if (delim.token == L":") {
+				parseOption(ruleName, tok, delimiterRule);
+			} else if (delim.token == L"=>") {
+				parseRule(getRule(types, ruleName.token, scope), tok, scope, delimiterRule);
 			} else if (delim.token == L"(") {
 				parseDeclaration(getRule(types, ruleName.token, scope), tok);
 			} else {

@@ -1,6 +1,7 @@
 // Really simple syntax, mainly for testing the parser.
 
-DELIMITER => void : " *";
+delimiter: SimpleDelimiter;
+SimpleDelimiter => void : " *";
 
 // Root rule.
 Root => root() : SExpr e;
@@ -24,17 +25,17 @@ Rep4Root => SScope() : (AorB, "\.")?, AorB;
 // Capture strings.
 CaptureRoot => SStr(captured) : ( Rep1Root ) captured;
 Capture2Root => SStr(captured) : "-", (Rep1Root) captured, "-";
-CaptureEmpty => SStr(captured) : "-" - ( DELIMITER ) captured - "-";
+CaptureEmpty => SStr(captured) : "-" - ( SimpleDelimiter ) captured - "-";
 
 // Empty rules (really multiple instantiations of the same rule with zero length in some cases.
 Empty => void : "(", EmptyRule e, ")";
-Empty2 => void : "(" - DELIMITER - DELIMITER - ")";
-EmptyRule => void : DELIMITER;
+Empty2 => void : "(" - SimpleDelimiter - SimpleDelimiter - ")";
+EmptyRule => void : SimpleDelimiter;
 
 EmptyVal => consume(e) : "(", ConvertRule e, ")";
 
 ConvertRule => convert(e) : EmptyValRule e;
 
-EmptyValRule => Array<SStr>() : DELIMITER;
+EmptyValRule => Array<SStr>() : SimpleDelimiter;
 EmptyValRule => Array<SStr>() : EmptyCont -> push;
 EmptyCont => s : "[abc]+" s;
