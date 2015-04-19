@@ -17,6 +17,12 @@ BEGIN_TEST(BasicSyntax) {
 	CHECK_EQ(runFn(L"test.bs.ifTest", 3), 5);
 	CHECK_EQ(runFn(L"test.bs.ifTest2", 3), 4);
 	CHECK_EQ(runFn(L"test.bs.ifTest2", 0), -1);
+	CHECK_EQ(runFn(L"test.bs.ifTest3", 0), 10);
+	CHECK_EQ(runFn(L"test.bs.ifTest3", 1), 20);
+	CHECK_EQ(runFn(L"test.bs.ifTest4", 0), 10);
+	CHECK_EQ(runFn(L"test.bs.ifTest4", 1), 20);
+	CHECK_EQ(runFn(L"test.bs.ifTest5", 1), 15);
+	CHECK_EQ(runFn(L"test.bs.ifTest5", 3), 14);
 
 	CHECK_EQ(runFn(L"test.bs.assign", 1), 2);
 	CHECK_EQ(runFn(L"test.bs.while", 10), 1024);

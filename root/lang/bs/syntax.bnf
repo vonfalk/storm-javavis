@@ -87,14 +87,14 @@ Block => ExprBlock(parent) : "{", (Stmt(me) -> add, )*, "}";
 
 // If.
 If(Block block);
-If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr;
-If => If(block) : "if", "(", Expr(me) -> cond, ")", Expr(me) -> trueExpr, "else", Expr(me) -> falseExpr;
+If => If(block) : "if", "(", Expr(me) -> cond, ")", Stmt(me) -> trueExpr;
+If => If(block) : "if", "(", Expr(me) -> cond, ")", Stmt(me) -> trueExpr, "else", Stmt(me) -> falseExpr;
 If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfAsTrue(me) -> trueExpr;
-If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfAsTrue(me) -> trueExpr, "else", Expr(me) -> falseExpr;
+If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfAsTrue(me) -> trueExpr, "else", Stmt(me) -> falseExpr;
 
 // Scoping for the <as> expression.
 IfAsTrue(IfAs parent);
-IfAsTrue => IfAsTrue(parent) : Expr(me) -> set;
+IfAsTrue => IfAsTrue(parent) : Stmt(me) -> set;
 
 // Loops.
 Loop(Block block);
@@ -155,9 +155,10 @@ Operator => ConcatOperator(op, 300) : "#" op;
 Expr(Block block);
 Expr => e : Atom(block) e;
 Expr => mkOperator(block, lhs, op, rhs) : Atom(block) lhs, Operator op, Expr(block) rhs;
-Expr => Var(block, t, name, actual) : Type t, Name name, FnValues(block) actual;
-Expr => Var(block, t, name, init) : Type t, Name name, "=", Expr(block) init;
-Expr => Var(block, name, init) : "var", Name name, "=", Expr(block) init;
+// This must be larger than operators, since templates may be seen as the < operator otherwise.
+Expr => Var(block, t, name, actual) :[10] Type t, Name name, FnValues(block) actual;
+Expr => Var(block, t, name, init) :[10] Type t, Name name, "=", Expr(block) init;
+Expr => Var(block, name, init) :[20] "var ", Name name, "=", Expr(block) init;
 
 // Statement
 Stmt(Block block);

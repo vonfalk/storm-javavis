@@ -54,6 +54,26 @@ Int ifTest2(Int v) {
     }
 }
 
+Int ifTest3(Int v) {
+	Int r = 10;
+	if (v == 1)
+		r = r + 10;
+	r;
+}
+
+Int ifTest4(Int v) {
+	Dbg a(10);
+	Dbg b(20);
+	if (v == 0)
+		a.get;
+	else
+		b.get;
+}
+
+Int ifTest5(Int v) {
+	7 + if (v == 3) 4; else 5; + 3;
+}
+
 Int assign(Int v) {
     Int z = v;
     if (z == 1) {
