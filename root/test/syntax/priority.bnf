@@ -13,3 +13,8 @@ Rec => Buffer() :[0] Name -> add;
 Rec => Buffer() :[-1] Rec -> add, "\.", Rec -> add;
 Rec => Buffer() :[+1] Rec -> add, "\,", Rec -> add;
 
+// Try parsing groups of 3 as well (not as common, but tests robustness).
+Rec3 => Buffer() :[0] Name -> add;
+Rec3 => Buffer() :[-1] Rec3 -> add, "\.", Rec3 -> add, "\.", Rec3 -> add;
+Rec3 => Buffer() :[+1] Rec3 -> add, ",", Rec3 -> add, ",", Rec3 -> add;
+

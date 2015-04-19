@@ -57,17 +57,11 @@ BEGIN_TEST(ParserTest) {
 
 } END_TEST
 
-namespace storm {
-	extern bool parserDebug;
-}
-
 String parseStr(Par<SyntaxSet> set, const String &root, const String &str) {
 	Auto<Url> empty = CREATE(Url, *gEngine);
 	Auto<Str> s = CREATE(Str, *gEngine, str);
 	Auto<Parser> p = CREATE(Parser, *gEngine, set, s, empty);
-	parserDebug = true;
 	p->parse(root);
-	parserDebug = false;
 	if (p->hasError())
 		throw p->error();
 
@@ -75,7 +69,7 @@ String parseStr(Par<SyntaxSet> set, const String &root, const String &str) {
 	return ::toS(o);
 }
 
-BEGIN_TEST_(ParseOrderTest) {
+BEGIN_TEST(ParseOrderTest) {
 	Engine &e = *gEngine;
 
 	Package *simple = e.package(L"test.syntax");
@@ -92,4 +86,7 @@ BEGIN_TEST_(ParseOrderTest) {
 	CHECK_EQ(parseStr(set, L"Rec", L"a,b,c,d"), L"(a)((b)((c)(d)))");
 	CHECK_EQ(parseStr(set, L"Rec", L"a.b.c.d.e"), L"((((a)(b))(c))(d))(e)");
 	CHECK_EQ(parseStr(set, L"Rec", L"a,b,c,d,e"), L"(a)((b)((c)((d)(e))))");
+
+	CHECK_EQ(parseStr(set, L"Rec3", L"a.b.c.d.e.f.g"), L"(((a)(b)(c))(d)(e))(f)(g)");
+	CHECK_EQ(parseStr(set, L"Rec3", L"a,b,c,d,e,f,g"), L"(a)(b)((c)(d)((e)(f)(g)))");
 } END_TEST

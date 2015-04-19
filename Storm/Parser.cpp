@@ -8,8 +8,6 @@
 
 namespace storm {
 
-	bool parserDebug = false;
-
 	/**
 	 * Parser implementation.
 	 */
@@ -567,13 +565,8 @@ namespace storm {
 		for (nat i = 0; i < into.size(); i++) {
 			State &c = into[i];
 			if (c == state) {
-				// TODO: Depending on how execOrder handles cases where both states are not
-				// valid, we may be able to remove this check.
-				if (c.completed.valid() && state.completed.valid()) {
-					if (execOrder(state.completed, c.completed) == before) {
-						c = state;
-					}
-				}
+				if (execOrder(state.completed, c.completed) == before)
+					c = state;
 				return;
 			}
 		}
@@ -582,11 +575,7 @@ namespace storm {
 	}
 
 	Parser::ExecOrder Parser::execOrder(const StatePtr &a, const StatePtr &b) {
-		// Speed hack during development!
-		if (!parserDebug)
-			return none;
-
-		// TODO: How to order these cases?
+		// Invalid states have no ordering.
 		if (!a.valid())
 			return none;
 		if (!b.valid())
@@ -603,32 +592,31 @@ namespace storm {
 		if (sA.priority() != sB.priority())
 			return (sA.priority() > sB.priority()) ? before : after;
 
-		vector<StatePtr> aStates = prevStates(a);
-		vector<StatePtr> bStates = prevStates(b);
-		for (nat i = 0; i < min(aStates.size(), bStates.size()); i++) {
+		// If they are different options and have the same priority, the ordering is undefined.
+		if (&sA.pos.option() != &sB.pos.option())
+			return none;
+
+		// Find out the ordering of the respective parts by a simple lexiographic ordering.
+		StateArray aStates = prevStates(a);
+		StateArray bStates = prevStates(b);
+		for (nat i = 0; i < min(aStates.count(), bStates.count()); i++) {
 			ExecOrder order = execOrder(aStates[i], bStates[i]);
 			if (order != none)
 				return order;
 		}
 
 		// The shorter one wins if they are equal so far. TODO: Is this good?
-		if (aStates.size() < bStates.size())
+		if (aStates.count() < bStates.count())
 			return before;
 		else
 			return after;
 	}
 
-	vector<Parser::StatePtr> Parser::prevStates(const StatePtr &end) {
-		vector<StatePtr> r;
+	Parser::StateArray Parser::prevStates(const StatePtr &end) {
+		StateArray r;
 		for (StatePtr now = state(end).prev; now.valid(); now = state(now).prev)
-			r.push_back(now);
-		std::reverse(r.begin(), r.end());
-
-		static nat max = 0;
-		if (r.size() > max) {
-			max = r.size();
-			PLN("Max: " << max);
-		}
+			r.push(now);
+		r.reverse();
 		return r;
 	}
 

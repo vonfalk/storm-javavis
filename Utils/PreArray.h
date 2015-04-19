@@ -18,13 +18,13 @@ public:
 	// Copy.
 	PreArray(const PreArray &o) : dyn(null), size(0), capacity(n) {
 		try {
-			ensure(o.size());
+			ensure(o.size);
 			for (size = 0; size < o.size; size++) {
 				new (ptr(size)) T(o[size]);
 			}
 			size = o.size;
 		} catch (...) {
-			~PreArray();
+			clear();
 			throw;
 		}
 	}
@@ -72,6 +72,15 @@ public:
 	// # of elements
 	inline nat count() const {
 		return size;
+	}
+
+	// Reverse.
+	void reverse() {
+		nat first = 0; nat last = size;
+		while ((first != last) && (first != --last)) {
+			swap((*this)[first], (*this)[last]);
+			++first;
+		}
 	}
 
 private:

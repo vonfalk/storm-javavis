@@ -6,6 +6,7 @@
 #include "SyntaxNode.h"
 #include "Exception.h"
 #include "Lib/TObject.h"
+#include "Utils/PreArray.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -235,8 +236,13 @@ namespace storm {
 		// Rules with equal priority are considered to have no relation.
 		ExecOrder execOrder(const StatePtr &a, const StatePtr &b);
 
+		// Size of the PreArray. Should be large enough to accommodate the common length of rules
+		// to not lose too much performance.
+		static const nat preStates = 10;
+		typedef PreArray<StatePtr, preStates> StateArray;
+
 		// Find all previous states of the given state. The given state is _not_ included.
-		vector<StatePtr> prevStates(const StatePtr &end);
+		StateArray prevStates(const StatePtr &end);
 
 		// The root rule.
 		SyntaxOption rootOption;
