@@ -84,10 +84,12 @@ BEGIN_TEST_(ParseOrderTest) {
 	Auto<SyntaxSet> set = CREATE(SyntaxSet, e);
 	set->add(simple);
 
-	// CHECK_EQ(parseStr(set, L"Prio", L"a b"), L"ab");
-	// CHECK_EQ(parseStr(set, L"Prio", L"var b"), L"b");
-	// CHECK_EQ(parseStr(set, L"Prio", L"async b"), L"b");
+	CHECK_EQ(parseStr(set, L"Prio", L"a b"), L"ab");
+	CHECK_EQ(parseStr(set, L"Prio", L"var b"), L"b");
+	CHECK_EQ(parseStr(set, L"Prio", L"async b"), L"asyncb");
 
-	// CHECK_EQ(parseStr(set, L"Rec", L"a.b.c.d.e"), L"(((a)(b))(c))(d)");
-	CHECK_EQ(parseStr(set, L"Rec", L"a,b,c,d,e"), L"(a)((b)((c)(d)))");
+	CHECK_EQ(parseStr(set, L"Rec", L"a.b.c.d"), L"(((a)(b))(c))(d)");
+	CHECK_EQ(parseStr(set, L"Rec", L"a,b,c,d"), L"(a)((b)((c)(d)))");
+	CHECK_EQ(parseStr(set, L"Rec", L"a.b.c.d.e"), L"((((a)(b))(c))(d))(e)");
+	CHECK_EQ(parseStr(set, L"Rec", L"a,b,c,d,e"), L"(a)((b)((c)((d)(e))))");
 } END_TEST

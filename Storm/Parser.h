@@ -94,7 +94,7 @@ namespace storm {
 		class StatePtr : public Printable {
 		public:
 			// Invalid ptr.
-			inline StatePtr() : step(-1), id(-1) {}
+			inline StatePtr() : step(invalid), id(invalid) {}
 			// Reference something.
 			inline StatePtr(nat step, nat id) : step(step), id(id) {}
 
@@ -104,10 +104,12 @@ namespace storm {
 			// Id in that step.
 			nat id;
 
+			// Invalid id.
+			static const nat invalid = -1;
+
 			// Valid reference?
 			inline bool valid() const {
-				nat z = -1;
-				return step != z && id != z;
+				return step != invalid && id != invalid;
 			}
 		protected:
 			virtual void output(wostream &to) const;
@@ -141,16 +143,13 @@ namespace storm {
 			// What state was completed to make this advance (if any)?
 			StatePtr completed;
 
-			// The priority of the rule that completed this state (if any)?
-			int completedPriority;
-
 			// Create empty state.
-			State() : from(0), completedPriority(0) {}
+			State() : from(0) {}
 
 			// Create a state.
 			State(const OptionIter &ri, nat from,
-				const StatePtr &prev, const StatePtr &completed, int completedPrio)
-				: pos(ri), from(from), prev(prev), completed(completed), completedPriority(completedPrio) {}
+				const StatePtr &prev, const StatePtr &completed)
+				: pos(ri), from(from), prev(prev), completed(completed) {}
 
 			// Equality.
 			inline bool operator ==(const State &o) const {
@@ -191,6 +190,9 @@ namespace storm {
 			// Does this state represent a state where we are done?
 			bool finish(const SyntaxOption *rootOption) const;
 
+			// Get the priority of this rule.
+			inline int priority() const { return pos.option().priority; }
+
 		protected:
 			virtual void output(wostream &to) const;
 		};
@@ -207,7 +209,7 @@ namespace storm {
 		class StateSet : public vector<State> {
 		public:
 			// Does not insert invalid positions.
-			void insert(const State &s);
+			// void insert(const State &s); // use 'insert' in 'Parser' instead.
 		};
 
 		// State sets.
@@ -216,6 +218,25 @@ namespace storm {
 		/**
 		 * Helpers.
 		 */
+
+		// Insert a state if it is valid and not duplicated. May modify the 'completed by' to
+		// correctly respond to priority of the options.
+		void insert(StateSet &into, const State &state);
+
+		// Execution order of two states.
+		enum ExecOrder {
+			before,
+			after,
+			none,
+		};
+
+		// Determine the order in which the states 'a' and 'b' would have been executed if we
+		// would follow the semantics of a PEG parser with respect to the priorities of the rules.
+		// Rules with equal priority are considered to have no relation.
+		ExecOrder execOrder(const StatePtr &a, const StatePtr &b);
+
+		// Find all previous states of the given state. The given state is _not_ included.
+		vector<StatePtr> prevStates(const StatePtr &end);
 
 		// The root rule.
 		SyntaxOption rootOption;

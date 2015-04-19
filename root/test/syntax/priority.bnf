@@ -5,9 +5,11 @@ Whitespace => void : "[ \n\r\t]*";
 Name => n : "[A-Za-z]*" n;
 Prio => Buffer() :[10] "async", Name -> add;
 Prio => Buffer() :[20] Name -> add, Name -> add;
-Prio => Buffer() :[10] "var", Name -> add;
+Prio => Buffer() :[30] "var", Name -> add;
 
+// a.b.c should match like this: (a.b).c
+// a,b,c should match like this: a,(b,c)
 Rec => Buffer() :[0] Name -> add;
-Rec => Buffer() :[+1] Rec -> add, "\.", Rec -> add;
-Rec => Buffer() :[-1] Rec -> add, "\,", Rec -> add;
+Rec => Buffer() :[-1] Rec -> add, "\.", Rec -> add;
+Rec => Buffer() :[+1] Rec -> add, "\,", Rec -> add;
 

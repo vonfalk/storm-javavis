@@ -11,13 +11,13 @@ NL => void : "[ \t\r\n]+";
 
 Name => createName(name) : "[A-Za-z][^ ]." name;
 
-Package => createPkg(src) : Name src[] (, "\.", Name src[])*;
+Package => createPkg(src) : Name src (, "\.", Name src)*;
 
 Type => createTypePkg(pkg, name) : Package pkg, "\.", Name name;
 Type => createType(name) : Name name;
 
 // Basic syntax
 
-Expr => createBlock(expr) : "{", (Expr expr[], )*, "}";
+Expr => createBlock(expr) : "{", (Expr expr, )*, "}";
 Expr => createAssignment(n1, n2) : Name n1, "=", Name n2, ";";
 

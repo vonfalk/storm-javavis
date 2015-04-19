@@ -21,20 +21,19 @@ namespace storm {
 		: syntax(set), srcStr(src), src(src->v), srcPos(file, 0), rootOption(SrcPos(), Scope(), L"") {}
 
 	Parser::State Parser::firstState() {
-		return State(OptionIter::firstA(rootOption), 0, StatePtr(), StatePtr(), 0);
+		return State(OptionIter::firstA(rootOption), 0, StatePtr(), StatePtr());
 	}
 
 	Parser::State Parser::completedState(const OptionIter &ri, nat from, const StatePtr &prev, const StatePtr &by) {
-		int prio = state(by).pos.option().priority;
-		return State(ri, from, prev, by, prio);
+		return State(ri, from, prev, by);
 	}
 
 	Parser::State Parser::predictedState(const OptionIter &ri, nat from) {
-		return State(ri, from, StatePtr(), StatePtr(), 0);
+		return State(ri, from, StatePtr(), StatePtr());
 	}
 
 	Parser::State Parser::scannedState(const OptionIter &ri, nat from, const StatePtr &prev) {
-		return State(ri, from, prev, StatePtr(), 0);
+		return State(ri, from, prev, StatePtr());
 	}
 
 	Nat Parser::noMatch() const {
@@ -56,7 +55,7 @@ namespace storm {
 		rootOption.add(new TypeToken(rootType, L"root"));
 
 		steps = vector<StateSet>(src.size() + 1);
-		steps[pos].insert(firstState());
+		insert(steps[pos], firstState());
 
 		nat len = NO_MATCH;
 
@@ -74,8 +73,8 @@ namespace storm {
 
 		for (nat i = 0; i < s.size(); i++) {
 			StatePtr ptr(step, i);
-			if (parserDebug)
-				PLN(ptr << ": " << s[i]);
+			// if (parserDebug)
+			// 	PLN(ptr << ": " << s[i]);
 
 			predictor(s, s[i], ptr);
 			completer(s, s[i], ptr);
@@ -104,8 +103,8 @@ namespace storm {
 		for (nat i = 0; i < t.size(); i++) {
 			SyntaxOption *rule = t[i];
 			// Todo: We need to find possible lookahead strings!
-			s.insert(predictedState(OptionIter::firstA(*rule), ptr.step));
-			s.insert(predictedState(OptionIter::firstB(*rule), ptr.step));
+			insert(s, predictedState(OptionIter::firstA(*rule), ptr.step));
+			insert(s, predictedState(OptionIter::firstB(*rule), ptr.step));
 		}
 
 		if (matchesEmpty(t)) {
@@ -128,12 +127,12 @@ namespace storm {
 
 				StatePtr completedBy(ptr.step, i);
 				State ns = completedState(state.pos.nextA(), state.from, ptr, completedBy);
-				s.insert(ns);
+				insert(s, ns);
 				// if (ns.pos.valid())
 				// 	PLN("=>" << ns);
 
 				ns.pos = state.pos.nextB();
-				s.insert(ns);
+				insert(s, ns);
 				// if (ns.pos.valid())
 				// 	PLN("=>" << ns);
 			}
@@ -156,10 +155,10 @@ namespace storm {
 			return;
 
 		State ns = scannedState(state.pos.nextA(), state.from, ptr);
-		steps[matched].insert(ns);
+		insert(steps[matched], ns);
 
 		ns.pos = state.pos.nextB();
-		steps[matched].insert(ns);
+		insert(steps[matched], ns);
 	}
 
 	void Parser::completer(StateSet &s, State state, StatePtr ptr) {
@@ -174,14 +173,13 @@ namespace storm {
 			if (!st.isRule(completed))
 				continue;
 
-			int prioa = this->state(ptr).pos.option().priority;
-			State ns(st.pos.nextA(), st.from, stPtr, ptr, prioa);
-			s.insert(ns);
+			State ns = completedState(st.pos.nextA(), st.from, stPtr, ptr);
+			insert(s, ns);
 			// if (ns.pos.valid())
 			// 	PLN("->" << ns);
 
 			ns.pos = st.pos.nextB();
-			s.insert(ns);
+			insert(s, ns);
 			// if (ns.pos.valid())
 			// 	PLN("->" << ns);
 		}
@@ -231,8 +229,8 @@ namespace storm {
 				return true;
 
 			if (matchesEmpty(now.token())) {
-				insert(q, now.nextA());
-				insert(q, now.nextB());
+				storm::insert(q, now.nextA());
+				storm::insert(q, now.nextB());
 			}
 		}
 
@@ -507,7 +505,7 @@ namespace storm {
 	 */
 	void Parser::State::output(wostream &to) const {
 		to << "{State: " << pos << ", from: " << from;
-		to << ", prev: " << prev << ", completed: " << completed << "[" << completedPriority << "]}";
+		to << ", prev: " << prev << ", completed: " << completed << "}";
 	}
 
 	bool Parser::State::isRule() const {
@@ -562,28 +560,76 @@ namespace storm {
 		// We could check pos.from here as well, but we can never instantiate that rule more than once!
 	}
 
-	/**
-	 * State set.
-	 */
-
-	void Parser::StateSet::insert(const State &state) {
+	void Parser::insert(StateSet &into, const State &state) {
 		if (!state.pos.valid())
 			return;
 
-		for (nat i = 0; i < size(); i++) {
-			State &c = (*this)[i];
+		for (nat i = 0; i < into.size(); i++) {
+			State &c = into[i];
 			if (c == state) {
-				int cPrio = c.completedPriority;
-				int sPrio = state.completedPriority;
-				if (cPrio > sPrio) {
-					c = state;
+				// TODO: Depending on how execOrder handles cases where both states are not
+				// valid, we may be able to remove this check.
+				if (c.completed.valid() && state.completed.valid()) {
+					if (execOrder(state.completed, c.completed) == before) {
+						c = state;
+					}
 				}
 				return;
 			}
 		}
 
-		push_back(state);
-		return;
+		into.push_back(state);
+	}
+
+	Parser::ExecOrder Parser::execOrder(const StatePtr &a, const StatePtr &b) {
+		// Speed hack during development!
+		if (!parserDebug)
+			return none;
+
+		// TODO: How to order these cases?
+		if (!a.valid())
+			return none;
+		if (!b.valid())
+			return none;
+
+		// The one created earliest in the sequence goes before.
+		if (a.step != b.step)
+			return (a.step < b.step) ? before : after;
+
+		const State &sA = state(a);
+		const State &sB = state(b);
+
+		// Highest priority goes first.
+		if (sA.priority() != sB.priority())
+			return (sA.priority() > sB.priority()) ? before : after;
+
+		vector<StatePtr> aStates = prevStates(a);
+		vector<StatePtr> bStates = prevStates(b);
+		for (nat i = 0; i < min(aStates.size(), bStates.size()); i++) {
+			ExecOrder order = execOrder(aStates[i], bStates[i]);
+			if (order != none)
+				return order;
+		}
+
+		// The shorter one wins if they are equal so far. TODO: Is this good?
+		if (aStates.size() < bStates.size())
+			return before;
+		else
+			return after;
+	}
+
+	vector<Parser::StatePtr> Parser::prevStates(const StatePtr &end) {
+		vector<StatePtr> r;
+		for (StatePtr now = state(end).prev; now.valid(); now = state(now).prev)
+			r.push_back(now);
+		std::reverse(r.begin(), r.end());
+
+		static nat max = 0;
+		if (r.size() > max) {
+			max = r.size();
+			PLN("Max: " << max);
+		}
+		return r;
 	}
 
 	/**
