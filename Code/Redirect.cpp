@@ -19,6 +19,9 @@ namespace code {
 
 	Listing Redirect::code(const Value &fn, const Value &param) {
 		Listing l;
+		// TODO: This is not completely accurate since the this-ptr are always before
+		// the result parameter. In this case, the this ptr should not have a dtor, nor should
+		// the parameter, so this will probably work in many cases.
 
 		if (!resultBuiltIn) {
 			l.frame.createParameter(resultSize, false); // no dtor needed here.

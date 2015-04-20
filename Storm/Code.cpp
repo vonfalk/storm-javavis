@@ -75,6 +75,7 @@ namespace storm {
 		code::Redirect r;
 		loaded = false;
 
+		TODO(L"Double check this!");
 		r.result(owner->result.size(), !owner->result.returnInReg());
 
 		// parameters (no refcount on parameters), but we need to destroy value parameters
