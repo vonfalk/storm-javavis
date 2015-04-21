@@ -1,0 +1,20 @@
+use core:debug;
+
+void myPrint(Nat v) {
+	print(v.toS);
+	// print("*" * v);
+}
+
+Int slowFn(Int times) on Demo {
+	for (Int i = 0; i < times; i++) {
+		myPrint((i + 1).nat);
+		dbgSleep(5000);
+	}
+	print("Done!");
+	10;
+}
+
+
+void reloadMain() {
+	spawn slowFn(10);
+}

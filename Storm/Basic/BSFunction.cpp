@@ -42,6 +42,29 @@ namespace storm {
 		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, thread, name->pos, false);
 	}
 
+	void bs::FunctionDecl::update(Par<BSFunction> fn, const Scope &scope) {
+		static bool first = true;
+		if (first) {
+			WARNING(L"This is a hack, and should be solved better later!");
+			first = false;
+		}
+
+		Value result = this->result->resolve(scope);
+		vector<Value> params = this->params->cTypes(scope);
+		vector<String> names = this->params->cNames();
+
+		assert(fn->result == result);
+		assert(params.size() == fn->params.size());
+		for (nat i = 0; i < params.size(); i++)
+			assert(params[i] == fn->params[i]);
+
+		fn->update(names, contents, name->pos);
+	}
+
+	NamePart *bs::FunctionDecl::namePart(const Scope &scope) const {
+		return CREATE(NamePart, this, name->v->v, params->cTypes(scope));
+	}
+
 
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
 							const vector<String> &names, const Scope &scope, Par<SStr> contents,
@@ -58,7 +81,17 @@ namespace storm {
 		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
 	}
 
-	code::Variable createResultVar(code::Listing &l) {
+	void bs::BSFunction::update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos) {
+		paramNames = names;
+		this->contents = contents;
+		this->pos = pos;
+
+		// Could be done better...
+		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
+	}
+
+
+	static code::Variable createResultVar(code::Listing &l) {
 		// Note: We do not need to free this one, since we will copy a value to it (and thereby initialize it)
 		// the last thing we do in this function.
 		return l.frame.createParameter(Size::sPtr, false);

@@ -308,6 +308,12 @@ namespace storm {
 		if (o == null)
 			return null;
 
+		if (o->myType->isA(TObject::stormType(o->engine()))) {
+			// No need to clone TObjects.
+			o->addRef();
+			return o;
+		}
+
 		Object *result = env->cloned(o);
 		if (result)
 			return result;
@@ -325,6 +331,12 @@ namespace storm {
 		if (o == null)
 			// Hard work done!
 			return null;
+
+		if (o->myType->isA(TObject::stormType(o->engine()))) {
+			// We do not need to clone TObjects.
+			o->addRef();
+			return o;
+		}
 
 		Engine &e = o->engine();
 		Auto<CloneEnv> env = CREATE(CloneEnv, e);

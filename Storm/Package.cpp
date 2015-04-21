@@ -25,6 +25,10 @@ namespace storm {
 		return parentLookup;
 	}
 
+	Url *Package::url() const {
+		return pkgPath.ret();
+	}
+
 	void Package::init() {
 		loaded = false;
 		loading = false;

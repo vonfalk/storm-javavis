@@ -65,6 +65,12 @@ Expr exploreType(Block block, TypeName typeName) {
 	namedExpr(block, name{core:debug:print}, Actual(named));
 }
 
+Expr reloadName(Block block, TypeName typeName) {
+	Expr type = createType(block, typeName);
+	Expr callIt = namedExpr(block, name{lang:bs:macro:reload}, Actual(type));
+	callIt;
+}
+
 
 Expr printExpr(SStr text, Expr expr) {
 	if (expr as Operator) {

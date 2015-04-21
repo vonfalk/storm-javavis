@@ -16,7 +16,7 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
-Futures left unused (hopefully deleted) cause a runtime error on shutdown in the REPL.
+Futures returing <void> not supported. This means you can not do spawn on a void-function.
 
 Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
 This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.

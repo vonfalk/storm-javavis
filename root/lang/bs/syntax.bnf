@@ -66,7 +66,7 @@ FileItem => t : NamedThread t;
 File => Contents() : , (FileItem -> add, )*;
 
 // Root rule for parsing includes.
-Includes => Includes() : , ("use", Package -> add, ";", )*;
+Includes => Array<TypeName>() : , ("use", Package -> push, ";", )*;
 
 // Specific use-rule in the top loop.
 ReplUse => pkg : "use", Package pkg, ";?";

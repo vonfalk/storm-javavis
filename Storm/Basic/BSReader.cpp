@@ -2,7 +2,6 @@
 #include "BSReader.h"
 #include "Parser.h"
 #include "SyntaxTransform.h"
-#include "BSIncludes.h"
 #include "BSContents.h"
 #include "BSClass.h"
 #include "Io/Text.h"
@@ -29,27 +28,27 @@ namespace storm {
 
 	void bs::File::readTypes() {
 		readContents();
-		for (nat i = 0; i < contents->types.size(); i++) {
-			pkg->add(contents->types[i].borrow());
+		for (nat i = 0; i < contents->types->count(); i++) {
+			pkg->add(contents->types->at(i).borrow());
 		}
 
-		for (nat i = 0; i < contents->threads.size(); i++) {
-			pkg->add(contents->threads[i].borrow());
+		for (nat i = 0; i < contents->threads->count(); i++) {
+			pkg->add(contents->threads->at(i).borrow());
 		}
 	}
 
 	void bs::File::resolveTypes() {
 		readContents();
-		for (nat i = 0; i < contents->types.size(); i++) {
-			if (Class *c = as<Class>(contents->types[i].borrow()))
+		for (nat i = 0; i < contents->types->count(); i++) {
+			if (Class *c = as<Class>(contents->types->at(i).borrow()))
 				c->lookupTypes();
 		}
 	}
 
 	void bs::File::readFunctions() {
 		readContents();
-		for (nat i = 0; i < contents->functions.size(); i++) {
-			pkg->add(steal(contents->functions[i]->asFunction(scope)));
+		for (nat i = 0; i < contents->functions->count(); i++) {
+			pkg->add(steal(contents->functions->at(i)->asFunction(scope)));
 		}
 	}
 
@@ -68,8 +67,6 @@ namespace storm {
 	}
 
 	void bs::File::readIncludes() {
-		Auto<Object> includes;
-
 		syntax->add(syntaxPackage());
 		syntax->add(pkg);
 
@@ -78,19 +75,19 @@ namespace storm {
 		if (headerSize == Parser::NO_MATCH)
 			throw parser->error();
 
-		includes = parser->transform();
+		Auto<Object> includes = parser->transform();
 
-		if (Includes *inc = as<Includes>(includes.borrow())) {
-			setIncludes(inc->names);
+		if (ArrayP<TypeName> *inc = as<ArrayP<TypeName>>(includes.borrow())) {
+			setIncludes(inc);
 		}
 	}
 
-	void bs::File::setIncludes(const vector<Auto<TypeName> > &inc) {
-		for (nat i = 0; i < inc.size(); i++) {
-			Auto<Name> name = inc[i]->toName(scope);
+	void bs::File::setIncludes(Par<ArrayP<TypeName>> inc) {
+		for (nat i = 0; i < inc->count(); i++) {
+			Auto<Name> name = inc->at(i)->toName(scope);
 			Package *p = pkg->engine().package(name);
 			if (!p)
-				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(inc[i]));
+				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(inc->at(i)));
 
 			addInclude(scope, p);
 		}

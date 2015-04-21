@@ -223,10 +223,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Basic\BSIncludes.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Basic\BSNamed.cpp"
 				>
 			</File>
@@ -614,10 +610,6 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSIf.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSIncludes.h"
 				>
 			</File>
 			<File

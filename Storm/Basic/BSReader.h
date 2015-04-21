@@ -64,7 +64,7 @@ namespace storm {
 			void readIncludes();
 
 			// Find included packages.
-			void setIncludes(const vector<Auto<TypeName> > &includes);
+			void setIncludes(Par<ArrayP<TypeName>> includes);
 
 			// Set 'contents' to something good.
 			void readContents();

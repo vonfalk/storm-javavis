@@ -11,6 +11,8 @@ namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
+		class BSFunction;
+
 		/**
 		 * Function declaration. This holds the needed information to create each function
 		 * later on. It would be nice to make this one inherit from Function, but that
@@ -33,15 +35,21 @@ namespace storm {
 									Par<SStr> contents);
 
 			// Values.
-			SrcPos pos;
-			Auto<SStr> name;
-			Auto<TypeName> result;
-			Auto<Params> params;
-			Auto<TypeName> thread; // may be null
-			Auto<SStr> contents;
+			STORM_VAR SrcPos pos;
+			STORM_VAR Auto<SStr> name;
+			STORM_VAR Auto<TypeName> result;
+			STORM_VAR Auto<Params> params;
+			STORM_VAR Auto<TypeName> thread; // may be null
+			STORM_VAR Auto<SStr> contents;
 
 			// Create a corresponding function.
-			Function *asFunction(const Scope &scope);
+			Function *STORM_FN asFunction(const Scope &scope);
+
+			// Temporary solution for updating a function.
+			void STORM_FN update(Par<BSFunction> fn, const Scope &scope);
+
+			// Get our name as a NamePart.
+			NamePart *STORM_FN namePart(const Scope &scope) const;
 		};
 
 
@@ -54,6 +62,9 @@ namespace storm {
 			BSFunction(Value result, const String &name, const vector<Value> &params,
 					const vector<String> &names, const Scope &scope, Par<SStr> contents,
 					Par<NamedThread> thread, const SrcPos &pos, bool isMember);
+
+			// Temporary solution for updating a function.
+			void update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos);
 
 			// Declared at.
 			SrcPos pos;

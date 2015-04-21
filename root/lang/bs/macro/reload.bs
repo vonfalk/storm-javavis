@@ -1,0 +1,102 @@
+use core:lang;
+use core:debug;
+use core:io;
+use lang:bs;
+
+// Very hacky proof-of-concept code reloads.
+
+void reload(TypeName name) on Compiler {
+	Named pkg = name.find(rootScope);
+	if (pkg as Package) {
+		print("Reloading " # name # "...");
+		reloadPkg(pkg);
+		print("OK!");
+	} else {
+		print("We can only reload packages at the moment.");
+	}
+}
+
+void reloadPkg(Package pkg) on Compiler {
+	print("WARNING: This is a very hacky reload that is only for convenience until the " #
+		"real version is done. Will only reload functions, and does not provide any decent " #
+		"error messages!");
+
+	Url url = pkg.url;
+	if (url.isNull) {
+		print("This package is virtual. Can not reload it!");
+	} else {
+		Url[] children = url.children;
+		for (Nat i = 0.nat; i < children.count; i++) {
+			reloadUrl(pkg, children[i]);
+		}
+	}
+}
+
+void reloadUrl(Package pkg, Url url) on Compiler {
+	if (url.dir) {
+	} else if (url.ext.equals("bs")) {
+		reloadBsUrl(pkg, url);
+	} else {
+		print("Ignoring non BS-file: " # url);
+	}
+}
+
+void reloadBsUrl(Package pkg, Url url) on Compiler {
+	SyntaxSet syntax = bfSyntax;
+	Str text = url.read.readText.readAll;
+	Parser parser(syntax, text, url);
+	Nat len = parser.parse("Includes");
+	if (len == parser.noMatch)
+		parser.throwError;
+
+	Scope scope(pkg, BSScope(url));
+	Object tfm = parser.transform([Object:]);
+	if (tfm as TypeName[])
+		addIncludes(syntax, scope, tfm);
+
+	parser.parse("File", len);
+	if (parser.hasError)
+		parser.throwError;
+
+	Object contents = parser.transform([Object:]);
+	if (contents as Contents)
+		reloadContents(pkg, scope, contents);
+}
+
+void reloadContents(Package pkg, Scope scope, Contents c) on Compiler {
+	for (Nat i = 0.nat; i < c.functions.count; i++) {
+		FunctionDecl decl = c.functions[i];
+		NamePart name = decl.namePart(scope);
+		Named found = scope.find(Name(name));
+		if (found as BSFunction) {
+			decl.update(found, scope);
+		} else if (found.isNull) {
+			print("New function: " # name);
+			pkg.add(decl.asFunction(scope));
+		} else {
+			print("Could not update " # name # ", the previous function was not found,"
+				# " or not declared in Basic Storm.");
+		}
+	}
+}
+
+// Why can't I use TypeName[] here?
+void addIncludes(SyntaxSet to, Scope scope, Array<TypeName> from) on Compiler {
+	for (Nat i = 0.nat; i < from.count; i++) {
+		Named p = from[i].find(rootScope);
+		if (p as Package) {
+			to.add(p);
+			scope.addInclude(p);
+		} else {
+			print("Failed to include " # from[i]);
+		}
+	}
+}
+
+SyntaxSet bfSyntax() on Compiler {
+	SyntaxSet s;
+	Named n = (name{lang:bs}).find(rootScope);
+	if (n as Package)
+		s.add(n);
+	s;
+}

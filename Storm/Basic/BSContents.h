@@ -26,13 +26,13 @@ namespace storm {
 			void STORM_FN add(Par<NamedThread> thread);
 
 			// All types.
-			vector<Auto<Type> > types;
+			STORM_VAR Auto<ArrayP<Type>> types;
 
 			// All function definitions.
-			vector<Auto<FunctionDecl> > functions;
+			STORM_VAR Auto<ArrayP<FunctionDecl>> functions;
 
 			// All named threads.
-			vector<Auto<NamedThread> > threads;
+			STORM_VAR Auto<ArrayP<NamedThread>> threads;
 
 			// Set the scope for all contents that needs it.
 			void setScope(const Scope &scope);

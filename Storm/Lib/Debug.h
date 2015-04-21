@@ -49,6 +49,10 @@ namespace storm {
 	// Yeild from the currenlty running UThread. How should this be implemented later?
 	void STORM_FN dbgYeild();
 
+	// Check for null. Should be integrated nicely in the language by special type (notations)!
+	Bool STORM_FN isNull(Object *o);
+	Bool STORM_FN isNull(TObject *o);
+
 	// Value implemented in C++ for testing. Tracks live instances!
 	class DbgVal {
 		STORM_VALUE;
