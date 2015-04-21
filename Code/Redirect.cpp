@@ -17,23 +17,28 @@ namespace code {
 		params.push_back(p);
 	}
 
-	Listing Redirect::code(const Value &fn, const Value &param) {
+	void Redirect::addParam(code::Listing &to, const Param &p) {
+		FreeOpt o = freeOnException;
+		if (p.byPtr)
+			o |= freePtr;
+		to.frame.createParameter(p.size, false, p.dtor, o);
+	}
+
+	Listing Redirect::code(const Value &fn, bool memberFn, const Value &param) {
 		Listing l;
-		// TODO: This is not completely accurate since the this-ptr are always before
-		// the result parameter. In this case, the this ptr should not have a dtor, nor should
-		// the parameter, so this will probably work in many cases.
+		nat start = 0;
 
-		if (!resultBuiltIn) {
+		if (memberFn) {
+			assert(params.size() >= 1, "Member functions require at least one parameter.");
+			addParam(l, params[0]);
+			start = 1;
+		}
+
+		if (!resultBuiltIn)
 			l.frame.createParameter(resultSize, false); // no dtor needed here.
-		}
 
-		for (nat i = 0; i < params.size(); i++) {
-			Param &p = params[i];
-			FreeOpt o = freeOnException;
-			if (p.byPtr)
-				o |= freePtr;
-			l.frame.createParameter(p.size, false, p.dtor, o);
-		}
+		for (nat i = start; i < params.size(); i++)
+			addParam(l, params[i]);
 
 		l << prolog();
 

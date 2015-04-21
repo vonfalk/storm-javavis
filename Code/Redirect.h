@@ -22,11 +22,11 @@ namespace code {
 		// Add a parameter to the function.
 		void param(Size size, Value dtor, bool byPtr);
 
-		// Set return value.
+		// Set return value. Built in types are returned in registers on most platforms.
 		void result(Size size, bool builtIn);
 
 		// Create the code (platform dependent).
-		Listing code(const Value &fn, const Value &param);
+		Listing code(const Value &fn, bool memberFn, const Value &param);
 
 	private:
 		// All data we need about a parameter.
@@ -44,6 +44,9 @@ namespace code {
 
 		// Result built into the C++ compiler?
 		bool resultBuiltIn;
+
+		// Add a single parameter?
+		void addParam(code::Listing &to, const Param &p);
 	};
 
 }

@@ -79,7 +79,7 @@ BEGIN_TEST(TestChainedException) {
 	Redirect redirect;
 	redirect.param(Size::sInt, Ref(intCleanup), false);
 	redirect.result(Size::sInt, true);
-	Binary inner(arena, L"inner", redirect.code(Ref(throwEx), Value()));
+	Binary inner(arena, L"inner", redirect.code(Ref(throwEx), false, Value()));
 	RefSource innerRef(arena, L"inner");
 	inner.update(innerRef);
 

@@ -75,8 +75,7 @@ namespace storm {
 		code::Redirect r;
 		loaded = false;
 
-		TODO(L"Double check this!");
-		r.result(owner->result.size(), !owner->result.returnInReg());
+		r.result(owner->result.size(), owner->result.returnInReg());
 
 		// parameters (no refcount on parameters), but we need to destroy value parameters
 		// if there is an exception...
@@ -89,7 +88,7 @@ namespace storm {
 		}
 
 		engine().fnRefs.lazyCodeFn.set(address(&LazyCode::updateCode));
-		setCode(r.code(engine().fnRefs.lazyCodeFn, code::ptrConst(this)));
+		setCode(r.code(engine().fnRefs.lazyCodeFn, owner->isMember(), code::ptrConst(this)));
 	}
 
 	const void *LazyCode::updateCode(LazyCode *c) {

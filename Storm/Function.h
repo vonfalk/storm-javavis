@@ -21,10 +21,6 @@ namespace storm {
 	 *
 	 * Note that the "implicit" this-pointer is actually explicit here.
 	 *
-	 * TODO: Add concept of a lookup function, that is supposed to look
-	 * up which function is to be executed. This is where vtable dispatch
-	 * is implemented! Maybe this will be an explicit subclass of Function?
-	 *
 	 * TODO: Add concept of invalidators to at least LazyFn.
 	 */
 	class Function : public Named {
