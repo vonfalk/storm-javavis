@@ -165,16 +165,20 @@ namespace storm {
 		fnCall = null;
 	}
 
-	Value bs::Operator::result() {
+	bs::Expr *bs::Operator::meaning() {
 		if (!fnCall)
 			fnCall = op->meaning(block, lhs, rhs);
-		return fnCall->result();
+		return fnCall.ret();
+	}
+
+	Value bs::Operator::result() {
+		Auto<Expr> m = meaning();
+		return m->result();
 	}
 
 	void bs::Operator::code(Par<CodeGen> s, Par<CodeResult> r) {
-		if (!fnCall)
-			fnCall = op->meaning(block, lhs, rhs);
-		return fnCall->code(s, r);
+		Auto<Expr> m = meaning();
+		return m->code(s, r);
 	}
 
 	void bs::Operator::output(wostream &to) const {

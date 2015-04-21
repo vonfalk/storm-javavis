@@ -95,6 +95,9 @@ namespace storm {
 			// Invalidate the cached function we are about to call. Call if you alter 'lhs' or 'rhs.
 			void invalidate();
 
+			// Get the meaning from the operator (intended for debugging or further transforms).
+			virtual Expr *STORM_FN meaning();
+
 			// Result.
 			virtual Value STORM_FN result();
 

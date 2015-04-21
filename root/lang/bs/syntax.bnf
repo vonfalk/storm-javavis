@@ -121,7 +121,7 @@ Atom => intConstant(nr) : "\-[0-9]+" nr;
 Atom => strConstant(str) : "\"" - ( StrContent ) str - "\"";
 Atom => namedExpr(block, name, params) : Type name, FnValues(block) params;
 Atom => namedExpr(block, name, dotExpr, params) : Atom(block) dotExpr, "\.", Name name, FnValues(block) params;
-Atom => spawnExpr(expr) : Atom(block) expr, "&"; // Better syntax? spawn X conflicts with variable declarations.
+Atom => spawnExpr(expr) : "spawn ", Atom(block) expr;
 Atom => ParenExpr(e) : "(", Expr(block) e, ")";
 Atom => e : Block(block) e;
 Atom => e : If(block) e;
@@ -153,7 +153,7 @@ Operator => ConcatOperator(op, 300) : "#" op;
 
 // Expression
 Expr(Block block);
-Expr => e : Atom(block) e;
+Expr => e :[20] Atom(block) e;
 Expr => mkOperator(block, lhs, op, rhs) : Atom(block) lhs, Operator op, Expr(block) rhs;
 // This must be larger than operators, since templates may be seen as the < operator otherwise.
 Expr => Var(block, t, name, actual) :[10] Type t, Name name, FnValues(block) actual;

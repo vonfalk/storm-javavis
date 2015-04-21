@@ -62,7 +62,13 @@ int launchMainLoop(Engine &engine, const String &lang) {
 			wcout << L"Unhandled exception from 'eval': " << e << endl;
 			line = Auto<Str>();
 		}
+
+		// Run some other code. We should allow this while doing the input...
+		code::UThread::leave();
 	}
+
+	// Allow all our UThreads to exit.
+	while (code::UThread::leave());
 
 	return 0;
 }

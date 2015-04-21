@@ -74,6 +74,8 @@ struct TInterop {
 };
 
 BEGIN_TEST(UThreadInterop) {
+	TODO(L"This crashes sometimes, that is _bad_!");
+
 	var = 0;
 	Thread::spawn(simpleVoidFn(uthreadInterop));
 	stopSema.down();

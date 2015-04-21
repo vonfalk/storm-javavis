@@ -64,3 +64,13 @@ Expr exploreType(Block block, TypeName typeName) {
 	Expr named = namedExpr(block, SStr("find"), type, Actual(rootScope));
 	namedExpr(block, name{core:debug:print}, Actual(named));
 }
+
+
+Expr printExpr(SStr text, Expr expr) {
+	if (expr as Operator) {
+        core:debug:print(text.v # " <=> " # expr.meaning);
+	} else {
+	    core:debug:print(text.v # " <=> " # expr);
+	}
+	expr;
+}

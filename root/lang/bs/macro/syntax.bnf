@@ -4,3 +4,7 @@ delimiter: BSDelimiter;
 // Use type{a:b:c} to build a type name quickly and easily.
 Expr => createType(block, type) : "name", "{", Type type, "}";
 Expr => exploreType(block, type) : "explore", "{", Type type, "}";
+
+// Debug things by printing expressions at compile-time.
+Expr => printExpr(t, stmt) : "dump", "{", (Stmt(block) stmt) t, "}";
+Expr => printExpr(t, expr) : "dump", "{", (Expr(block) expr) t, "}";
