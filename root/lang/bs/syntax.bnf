@@ -122,6 +122,7 @@ Atom => strConstant(str) : "\"" - ( StrContent ) str - "\"";
 Atom => namedExpr(block, name, params) : Type name, FnValues(block) params;
 Atom => namedExpr(block, name, dotExpr, params) : Atom(block) dotExpr, "\.", Name name, FnValues(block) params;
 Atom => spawnExpr(expr) : "spawn ", Atom(block) expr;
+Atom => spawnExpr(expr) : "spawn", "{", Atom(block) expr, "}"; // TODO: This should not be needed...
 Atom => ParenExpr(e) : "(", Expr(block) e, ")";
 Atom => e : Block(block) e;
 Atom => e : If(block) e;

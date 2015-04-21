@@ -1,0 +1,24 @@
+use core:debug;
+
+thread Demo;
+
+Int threadDemo(Str data, Int times) on Demo {
+	for (Int i = 0; i < times; i++) {
+		print(data * (i + 1).nat);
+		dbgSleep(500);
+		dbgYeild;
+	}
+	times * 2;
+}
+
+Int seq() on Compiler {
+	var a = threadDemo("A", 10);
+	var b = threadDemo("B", 10);
+	a + b;
+}
+
+Int spawn() on Compiler {
+	var a = spawn threadDemo("A", 10);
+	var b = spawn threadDemo("B", 10);
+	a.result + b.result;
+}

@@ -190,6 +190,10 @@ namespace storm {
 		Sleep(ms);
 	}
 
+	void dbgYeild() {
+		code::UThread::leave();
+	}
+
 	Dbg::Dbg() : v(10) {}
 
 	Dbg::Dbg(Par<Dbg> o) : v(o->v) {}
