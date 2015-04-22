@@ -11,6 +11,45 @@
 using namespace std;
 using namespace storm;
 
+// Read that is not locking up the compiler loop. Should be implemeted better when there
+// is "real" IO in storm!
+static code::Thread *ioThread = null;
+
+void ioThreadMain() {
+	// We use 'uThreads' to synchronize this!
+}
+
+bool ioRead(String &to) {
+	getline(wcin, to);
+	if (!wcin)
+		return false;
+	else
+		return true;
+}
+
+void stopIo() {
+	if (ioThread) {
+		del(ioThread);
+		// Let the io thread exit cleanly.
+		Sleep(200);
+	}
+}
+
+void startIo() {
+	if (ioThread)
+		return;
+	ioThread = new code::Thread(code::Thread::spawn(simpleVoidFn(&ioThreadMain)));
+}
+
+bool readLine(String &to) {
+	startIo();
+	code::Future<bool> fut;
+	code::FnParams p;
+	p.add(&to);
+	code::UThread::spawn(&ioRead, false, p, fut, ioThread);
+	return fut.result();
+}
+
 // Launch a main loop.
 int launchMainLoop(Engine &engine, const String &lang) {
 	// Launch a main loop!
@@ -46,8 +85,7 @@ int launchMainLoop(Engine &engine, const String &lang) {
 			wcout << lang << L"> ";
 
 		String data;
-		getline(wcin, data);
-		if (!wcin)
+		if (!readLine(data))
 			break;
 
 		if (!line)
@@ -62,9 +100,6 @@ int launchMainLoop(Engine &engine, const String &lang) {
 			wcout << L"Unhandled exception from 'eval': " << e << endl;
 			line = Auto<Str>();
 		}
-
-		// Run some other code. We should allow this while doing the input...
-		code::UThread::leave();
 	}
 
 	// Allow all our UThreads to exit.
@@ -77,6 +112,8 @@ int launchMainLoop(Engine &engine, const String &lang) {
 int _tmain(int argc, _TCHAR* argv[]) {
 	try {
 		wcout << L"Welcome to the Storm compiler!" << endl;
+
+		startIo();
 
 #ifdef DEBUG
 		Path path = Path::dbgRoot() + L"root";
@@ -98,14 +135,18 @@ int _tmain(int argc, _TCHAR* argv[]) {
 		try {
 			// Todo: We probably want more launch options here, for example run a specific
 			// function as our main and so on...
-			return launchMainLoop(engine, lang);
+			int r = launchMainLoop(engine, lang);
+			stopIo();
+			return r;
 		} catch (const Exception &e) {
 			// We need an extra so that errrors depending on the engine will not crash at least!";
 			wcout << L"Unhandled exception: " << e << endl;
+			stopIo();
 			return 2;
 		}
 	} catch (const Exception &e) {
 		wcout << L"Unhandled exception: " << e << endl;
+		stopIo();
 		return 2;
 	}
 }
