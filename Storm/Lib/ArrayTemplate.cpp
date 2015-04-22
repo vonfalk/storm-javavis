@@ -38,7 +38,7 @@ namespace storm {
 
 		// Find out the handle.
 		ArrayType *arr = as<ArrayType>(type);
-		const Handle &handle = arr->param.type->handle();
+		const Handle &handle = arr->param.handle();
 
 		// Create it!
 		new (mem) ArrayBase(handle);

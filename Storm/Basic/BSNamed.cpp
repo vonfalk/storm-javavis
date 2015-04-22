@@ -106,7 +106,7 @@ namespace storm {
 			// not strictly need to in all cases.
 			Function *fn = toExecute.borrow();
 			if (fn->runOn().state == RunOn::any)
-				throw SyntaxError(pos, L"The function " + fn->identifier() + L" does not specify a thread"
+				throw SyntaxError(pos, L"The function " + fn->identifier() + L" does not specify a thread "
 								L"to execute on, and can therefore not be spawned using the async syntax.");
 
 			Variable threadVar = fn->findThread(s, vars);

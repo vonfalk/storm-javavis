@@ -14,6 +14,7 @@ namespace storm {
 	class Engine;
 	class SrcPos;
 	class Str;
+	class Handle;
 
 	Type *boolType(Engine &e);
 	Type *intType(Engine &e);
@@ -45,6 +46,9 @@ namespace storm {
 
 		// Get the type. TODO: Rename/replace with read-only version of 'type' member variable.
 		Type *STORM_FN getType() const;
+
+		// Get a handle for this type.
+		const Handle &handle() const;
 
 		// Get the size of this type.
 		Size size() const;

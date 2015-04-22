@@ -4,6 +4,7 @@
 #include "Scope.h"
 #include "Function.h"
 #include "Exception.h"
+#include "Lib/Handle.h"
 
 namespace storm {
 
@@ -38,6 +39,15 @@ namespace storm {
 	Type *Value::getType() const {
 		type->addRef();
 		return type;
+	}
+
+	const Handle &Value::handle() const {
+		if (type) {
+			assert(!ref, "Handles to references is not yet supported!");
+			return type->handle();
+		} else {
+			return storm::handle<void>();
+		}
 	}
 
 	void Value::deepCopy(Par<CloneEnv> env) {

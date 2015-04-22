@@ -82,6 +82,16 @@ namespace storm {
 
 	};
 
+	template <>
+	class HandleHelper<void> {
+	public:
+		static size_t size() {
+			return 0;
+		}
+		static void CODECALL destroy(void *) {}
+		static void CODECALL create(void *, const void *) {}
+	};
+
 	template <class T, bool hasDeepCopy>
 	class HandleDeepHelper {
 	public:

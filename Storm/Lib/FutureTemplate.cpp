@@ -28,7 +28,7 @@ namespace storm {
 		Type *type = OFFSET_IN(mem, offset, Type *);
 
 		FutureType *t = as<FutureType>(type);
-		const Handle &handle = t->param.type->handle();
+		const Handle &handle = t->param.handle();
 
 		new (mem) FutureBase(handle);
 	}
@@ -46,7 +46,15 @@ namespace storm {
 
 		Listing l;
 
-		if (param.isBuiltIn()) {
+		if (param == Value()) {
+			Variable future = l.frame.createPtrParam();
+			l << prolog();
+			l << fnParam(future);
+			l << fnParam(natPtrConst(0));
+			l << fnCall(engine.fnRefs.futureResult, Size());
+			l << epilog();
+			l << ret(Size());
+		} else if (param.isBuiltIn()) {
 			Variable future = l.frame.createPtrParam();
 			Variable tmpVar = l.frame.createVariable(l.frame.root(), param.size());
 			l << prolog();

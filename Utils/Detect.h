@@ -49,4 +49,10 @@
 	class detect_##X<bool> {											\
 	public:																\
 	enum { value = false };												\
+	};																	\
+	template <>															\
+	class detect_##X<void> {											\
+	public:																\
+	enum { value = false };												\
 	};
+

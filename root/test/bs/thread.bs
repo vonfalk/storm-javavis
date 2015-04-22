@@ -243,3 +243,12 @@ Int asyncObject() {
 		0;
 	}
 }
+
+void voidThreadFn() on Other {
+	// Nothing here!
+}
+
+void spawnVoid() {
+	var fut = spawn voidThreadFn();
+	fut.result;
+}

@@ -41,5 +41,6 @@ BEGIN_TEST(ThreadTest) {
 	Sleep(100);
 	CHECK(DbgVal::clear());
 	CHECK_EQ(runFn(L"test.bs.asyncObject"), 15);
+	CHECK_RUNS(runFn(L"test.bs.spawnVoid"));
 
 } END_TEST
