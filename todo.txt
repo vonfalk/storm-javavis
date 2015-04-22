@@ -70,6 +70,8 @@ search to find islands of code that are separated from the rest of the reference
 
 Rename Value to Operand to avoid confusion?
 
+Mul does not support constants, like this: mul(v, intConst(2)); crashes.
+
 Check thread safety in the reference management class.
 
 Basic
