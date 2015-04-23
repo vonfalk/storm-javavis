@@ -29,6 +29,7 @@ namespace storm {
 
 	static void CODECALL copyValue(void *mem, ArrayBase *from) {
 		new (mem) ArrayBase(from);
+		setVTable((Object *)mem);
 	}
 
 	static void CODECALL createValue(void *mem) {
@@ -42,9 +43,7 @@ namespace storm {
 
 		// Create it!
 		new (mem) ArrayBase(handle);
-
-		// Set our vtable.
-		arr->vtable.update((Object *)mem);
+		setVTable((Object *)mem);
 	}
 
 	static ArrayP<Object> *CODECALL pushClass(ArrayP<Object> *to, Par<Object> o) {

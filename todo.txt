@@ -16,8 +16,6 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
-Template classes for values (like Array<T>) do not correctly set their vtable to the one provided by Storm!
-
 Move the logic for lazy loading into the NameSet class? Now it is duplicated in Type and Package, and the NameSet
 can not ask the class to load itself, for example when calling "contents".
 

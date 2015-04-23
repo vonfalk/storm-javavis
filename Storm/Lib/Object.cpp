@@ -297,4 +297,8 @@ namespace storm {
 		Object::operator delete(mem);
 	}
 
+	void setVTable(Object *o) {
+		o->myType->vtable.update(o);
+	}
+
 }

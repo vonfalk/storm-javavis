@@ -202,6 +202,9 @@ namespace storm {
 		v.clear();
 	}
 
+	// Update the VTable of an object. Only needed when you are playing with templates.
+	void setVTable(Object *o);
+
 }
 
 // Custom as<> implementation.

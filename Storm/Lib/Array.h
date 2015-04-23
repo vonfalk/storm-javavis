@@ -90,10 +90,10 @@ namespace storm {
 		static Type *stormType(Engine &e) { return arrayType(e, value<T>(e)); }
 
 		// Empty array.
-		Array() : ArrayBase(storm::handle<T>()) {}
+		Array() : ArrayBase(storm::handle<T>()) { setVTable(this); }
 
 		// Copy array.
-		Array(Par<Array<T>> o) : ArrayBase(o) {}
+		Array(Par<Array<T>> o) : ArrayBase(o) { setVTable(this); }
 
 		// Element access.
 		T &at(Nat i) {

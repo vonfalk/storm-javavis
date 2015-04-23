@@ -22,6 +22,12 @@ BEGIN_TEST(ToSTest) {
 	Auto<Array<Int>> arr = runFn<Array<Int> *>(L"test.bs.createIntArray");
 	CHECK_EQ(::toS(arr), L"[1, 2, 3]");
 
+	arr = CREATE(Array<Int>, *gEngine);
+	arr->push(1);
+	arr->push(2);
+	arr->push(3);
+	CHECK_EQ(::toS(arr), L"[1, 2, 3]");
+
 	Auto<Array<Value>> valArr = runFn<Array<Value> *>(L"test.bs.createValueArray");
 	valArr->push(value<StrBuf *>(*gEngine));
 	valArr->push(value<CloneEnv *>(*gEngine));
