@@ -150,6 +150,16 @@ class BfExpr extends lang:bs:Expr {
 		// Generate the result.
 		state.createResult(to);
 	}
+
+	Str toS() {
+		StrBuf o;
+		o.add("bf(" # input # ", " # space # ") {");
+		for (Nat i = 0.nat; i < tokens.count; i++) {
+			o.add(tokens[i].toS);
+		}
+		o.add("}");
+		o.toS;
+	}
 }
 
 // State passed around.
@@ -226,12 +236,14 @@ class BfBack extends BfToken {
 	void code(BfState state, CodeGen to) {
 		to.l << sub(Operand(ptrA), intPtrConst(1));
 	}
+	Str toS() { "<"; }
 }
 
 class BfFwd extends BfToken {
 	void code(BfState state, CodeGen to) {
 		to.l << add(Operand(ptrA), intPtrConst(1));
 	}
+	Str toS() { ">"; }
 }
 
 class BfInput extends BfToken {
@@ -247,6 +259,7 @@ class BfInput extends BfToken {
 		to.l << pop(Operand(ptrA));
 		to.l << mov(byteRel(ptrA, Offset()), byteRel(ptrC, Offset()));
 	}
+	Str toS() { ","; }
 }
 
 class BfOutput extends BfToken {
@@ -263,18 +276,21 @@ class BfOutput extends BfToken {
 
 		to.l << pop(Operand(ptrA));
 	}
+	Str toS() { "."; }
 }
 
 class BfInc extends BfToken {
 	void code(BfState state, CodeGen to) {
 		to.l << add(byteRel(ptrA, Offset()), byteConst(1.byte));
 	}
+	Str toS() { "+"; }
 }
 
 class BfDec extends BfToken {
 	void code(BfState state, CodeGen to) {
 		to.l << sub(byteRel(ptrA, Offset()), byteConst(1.byte));
 	}
+	Str toS() { "-"; }
 }
 
 class BfLoop extends BfToken {
@@ -303,4 +319,13 @@ class BfLoop extends BfToken {
 		to.l << end;
 	}
 
+	Str toS() {
+		StrBuf t;
+		t.add("[");
+		for (Nat i = 0.nat; i < tokens.count; i++) {
+			t.add(tokens[i].toS);
+		}
+		t.add("]");
+		t.toS;
+	}
 }
