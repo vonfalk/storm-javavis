@@ -46,6 +46,7 @@ namespace storm {
 
 		// Get the type. TODO: Rename/replace with read-only version of 'type' member variable.
 		Type *STORM_FN getType() const;
+		Bool STORM_FN isRef() const;
 
 		// Get a handle for this type.
 		const Handle &handle() const;

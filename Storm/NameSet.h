@@ -82,6 +82,9 @@ namespace storm {
 		vector<Auto<Type>> findTypes() const;
 		void findTypes(vector<Auto<Type>> &t) const;
 
+		// Get all members.
+		virtual ArrayP<Named> *STORM_FN contents();
+
 	protected:
 		// Find a NamePart (returns borrowed ptr).
 		virtual Named *findHere(const String &name, const vector<Value> &params);

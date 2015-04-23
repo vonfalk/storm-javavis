@@ -18,6 +18,11 @@ namespace storm {
 		return parentLookup;
 	}
 
+	void NameLookup::setParent(Par<NameLookup> lookup) {
+		parentLookup = lookup.borrow();
+	}
+
+
 	Named::Named(Par<Str> name) : name(name->v), matchFlags(matchDefault) {}
 
 	static vector<Value> toVec(Par<Array<Value>> p) {
@@ -69,6 +74,17 @@ namespace storm {
 		}
 		Auto<Name> p = path();
 		return ::toS(p);
+	}
+
+	Str *name(Par<Named> named) {
+		return CREATE(Str, named, named->name);
+	}
+
+	Array<Value> *params(Par<Named> named) {
+		Auto<Array<Value>> r = CREATE(Array<Value>, named);
+		for (nat i = 0; i < named->params.size(); i++)
+			r->push(named->params[i]);
+		return r.ret();
 	}
 
 }

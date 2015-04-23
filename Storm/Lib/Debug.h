@@ -49,6 +49,10 @@ namespace storm {
 	// Yeild from the currenlty running UThread. How should this be implemented later?
 	void STORM_FN dbgYeild();
 
+	// Get the type of an object (debug).
+	Type *STORM_FN dbgTypeOf(Object *o);
+	Type *STORM_FN dbgTypeOf(TObject *o);
+
 	// Check for null. Should be integrated nicely in the language by special type (notations)!
 	Bool STORM_FN isNull(Object *o);
 	Bool STORM_FN isNull(TObject *o);

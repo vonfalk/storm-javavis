@@ -16,7 +16,10 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
-Futures returing <void> not supported. This means you can not do spawn on a void-function.
+Template classes for values (like Array<T>) do not correctly set their vtable to the one provided by Storm!
+
+Move the logic for lazy loading into the NameSet class? Now it is duplicated in Type and Package, and the NameSet
+can not ask the class to load itself, for example when calling "contents".
 
 Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
 This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.

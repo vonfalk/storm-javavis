@@ -64,6 +64,11 @@ namespace storm {
 			update->extra(addrs);
 	}
 
+	void StormVTable::clearRefs() {
+		for (nat i = 0; i < size; i++)
+			del(src[i]);
+	}
+
 	void StormVTable::slot(nat i, VTableSlot *update) {
 		assert(i < size);
 		delete src[i];

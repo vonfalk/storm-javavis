@@ -202,6 +202,17 @@ namespace storm {
 		code::UThread::leave();
 	}
 
+	Type *dbgTypeOf(Object *o) {
+		o->myType->addRef();
+		return o->myType;
+	}
+
+	Type *dbgTypeOf(TObject *o) {
+		o->myType->addRef();
+		return o->myType;
+	}
+
+
 	Dbg::Dbg() : v(10) {}
 
 	Dbg::Dbg(Par<Dbg> o) : v(o->v) {}

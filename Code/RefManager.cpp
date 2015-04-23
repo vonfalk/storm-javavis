@@ -51,6 +51,11 @@ namespace code {
 		if (!shutdown) {
 			if (info->lightCount != 0 || !info->references.empty()) {
 				PLN(info->source->getTitle() << L" still has live references!");
+				PLN(L"Light references: " << info->lightCount);
+				PLN(L"Other: ");
+				util::InlineSet<Reference> &r = info->references;
+				for (util::InlineSet<Reference>::iterator i = r.begin(), end = r.end(); i != end; i++)
+					PLN(**i);
 			}
 			assert(info->lightCount == 0);
 			assert(info->references.empty());

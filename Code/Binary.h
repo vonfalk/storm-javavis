@@ -45,6 +45,9 @@ namespace code {
 		// Dump handlers.
 		void dbg_dump();
 
+		// Clear any references monitored from here.
+		void dbg_clearReferences();
+
 	private:
 		// Title.
 		String title;

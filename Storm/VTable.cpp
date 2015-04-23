@@ -30,6 +30,11 @@ namespace storm {
 		clear(cppSlots);
 	}
 
+	void VTable::clearRefs() {
+		clear(cppSlots);
+		storm.clearRefs();
+	}
+
 	void VTable::createCpp(void *cppVTable) {
 		assert(replaced == null && this->cppVTable == null);
 		this->cppVTable = cppVTable;

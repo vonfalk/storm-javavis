@@ -24,6 +24,9 @@ namespace storm {
 		// Clear entire contents.
 		void clear();
 
+		// Clear references.
+		void clearRefs();
+
 		// Ensure a specific size.
 		void ensure(nat size);
 

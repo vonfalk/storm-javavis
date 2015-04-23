@@ -30,6 +30,9 @@ namespace storm {
 		// override 'parent' in order to return null.
 		NameLookup *parentLookup;
 
+		// Set the parent lookup from Storm (for now...)
+		virtual void STORM_FN setParent(Par<NameLookup> lookup);
+
 	protected:
 		// Find something here. This one is called by both the public overloads.
 		virtual Named *findHere(const String &name, const vector<Value> &params);
@@ -56,10 +59,13 @@ namespace storm {
 		// Create with parameters.
 		Named(const String &name, const vector<Value> &params);
 
+		// Note: take care if replacing 'name' and 'params' with Storm classes. The
+		// start-up process will have to be modified in that case!
+
 		// Our name.
 		const String name;
 
-		// Our parameters. TODO? Replace with Auto<Array<Value>>?
+		// Our parameters.
 		const vector<Value> params;
 
 		// Match flags.
@@ -75,5 +81,9 @@ namespace storm {
 		// Find our closest named parent.
 		Named *closestNamed() const;
 	};
+
+	// Get name from a Named.
+	Str *STORM_FN name(Par<Named> named);
+	Array<Value> *STORM_FN params(Par<Named> named);
 
 }

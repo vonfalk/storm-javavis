@@ -64,6 +64,12 @@ void reloadBsUrl(Package pkg, Url url) on Compiler {
 }
 
 void reloadContents(Package pkg, Scope scope, Contents c) on Compiler {
+	c.setScope(scope);
+	reloadFunctions(pkg, scope, c);
+	reloadTypes(pkg, scope, c);
+}
+
+void reloadFunctions(Package pkg, Scope scope, Contents c) on Compiler {
 	for (Nat i = 0.nat; i < c.functions.count; i++) {
 		FunctionDecl decl = c.functions[i];
 		NamePart name = decl.namePart(scope);
@@ -76,6 +82,54 @@ void reloadContents(Package pkg, Scope scope, Contents c) on Compiler {
 		} else {
 			print("Could not update " # name # ", the previous function was not found,"
 				# " or not declared in Basic Storm.");
+		}
+	}
+}
+
+void reloadTypes(Package pkg, Scope scope, Contents c) on Compiler {
+	for (Nat i = 0.nat; i < c.types.count; i++) {
+		Type t = c.types[i];
+		if (t as Class) {
+			NamePart name(t.name);
+			Named found = scope.find(Name(name));
+			if (found as Class) {
+				// We need lookups to work... Hack...
+				t.setParent(pkg);
+				reloadClass(found, t);
+			} else if (found.isNull) {
+				print("New type: " # name);
+				pkg.add(t);
+			} else {
+				print("Could not update " # name # ", the previous function was not found,"
+					# " or not declared in Basic Storm.");
+			}
+		} else {
+			print(t # " is not a Class from Basic Storm, can not replace it.");
+		}
+	}
+}
+
+void reloadClass(Class found, Type candidate) on Compiler {
+	Scope scope(found);
+	Named[] members = candidate.contents;
+	for (Nat i = 0.nat; i < members.count; i++) {
+		Named member = members[i];
+		if (member as BSFunction) {
+			// Replace the this ptr.
+			Value[] params = member.params;
+			params[0.nat] = Value(found, params[0.nat].isRef);
+
+			NamePart name(member.name, params);
+			Named replace = scope.find(Name(name));
+			if (replace as BSFunction) {
+				replace.update(member);
+			} else if (replace.isNull) {
+				print(name # " not found.");
+			} else {
+				print("Ignoring " # replace # ", not declared in Basic Storm.");
+			}
+		} else if (member as BSCtor) {
+			// print("Ignoring constructor " # member # ", constructors not supported yet.");
 		}
 	}
 }

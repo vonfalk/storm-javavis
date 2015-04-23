@@ -51,7 +51,12 @@ namespace storm {
 		}
 	}
 
-	Type::~Type() {}
+	Type::~Type() {
+		// Clear any references from our vtable first.
+		vtable.clearRefs();
+		// Clear any ctors before the vtable dies.
+		NameSet::clear();
+	}
 
 	void Type::allowLazyLoad(bool allow) {
 		lazyLoading = !allow;
@@ -432,6 +437,11 @@ namespace storm {
 		vector<Type *> children = chain.children();
 		for (nat i = 0; i < children.size(); i++)
 			children[i]->insertOverloads(fn);
+	}
+
+	ArrayP<Named> *Type::contents() {
+		ensureLoaded();
+		return NameSet::contents();
 	}
 
 }

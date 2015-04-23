@@ -43,6 +43,9 @@ namespace storm {
 		// Dtor.
 		~VTable();
 
+		// Clear any references we have.
+		void clearRefs();
+
 		// Create from a C++ vtable. This can only be done once. If you want a Storm VTable, use parent() only.
 		void createCpp(void *cppVTable);
 

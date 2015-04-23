@@ -30,7 +30,7 @@ namespace code {
 	// therefore not be copied easily.
 
 	class Reference;
-	class Reference : NoCopy, public util::SetMember<Reference> {
+	class Reference : NoCopy, public util::SetMember<Reference>, public Printable {
 		friend class Ref;
 	public:
 		Reference(const RefSource &source, const String &title);
@@ -44,6 +44,9 @@ namespace code {
 		// Note: onAddressChanged will _not_ be called for the initial address.
 		virtual void onAddressChanged(void *newAddress);
 		inline void *address() const { return lastAddress; }
+
+	protected:
+		virtual void output(wostream &to) const;
 
 	private:
 		String title;

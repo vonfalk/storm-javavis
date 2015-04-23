@@ -17,6 +17,10 @@ namespace code {
 		arena.refManager.removeReference(this, referring);
 	}
 
+	void Reference::output(wostream &to) const {
+		to << title;
+	}
+
 	void Reference::set(RefSource &source) {
 		arena.refManager.removeReference(this, referring);
 		referring = source.getId();

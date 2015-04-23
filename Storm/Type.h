@@ -134,6 +134,9 @@ namespace storm {
 		// VTable for this type. Not too useful if we're a value type, but maintained anyway for simplicity.
 		VTable vtable;
 
+		// Lazy load ourselves when someone wants our contents.
+		virtual ArrayP<Named> *STORM_FN contents();
+
 	protected:
 		virtual void output(wostream &to) const;
 

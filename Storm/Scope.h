@@ -94,7 +94,7 @@ namespace storm {
 	};
 
 	// Storm implementation of 'find'. TODO: Storm does not like that this one may return null!
-	Named *STORM_FN find(const Scope &scope, Par<Name> name);
+	Named *STORM_FN find(const Scope &scope, Par<Name> name) ON(Compiler);
 
 
 	/**

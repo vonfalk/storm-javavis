@@ -142,6 +142,15 @@ namespace storm {
 		}
 	}
 
+	ArrayP<Named> *NameSet::contents() {
+		Auto<ArrayP<Named>> r = CREATE(ArrayP<Named>, this);
+		for (iterator i = begin(), end = this->end(); i != end; ++i) {
+			r->push(*i);
+		}
+		return r.ret();
+	}
+
+
 	/**
 	 * The iterator.
 	 */

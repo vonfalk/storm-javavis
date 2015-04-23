@@ -35,7 +35,7 @@ namespace storm {
 			STORM_VAR Auto<ArrayP<NamedThread>> threads;
 
 			// Set the scope for all contents that needs it.
-			void setScope(const Scope &scope);
+			void STORM_FN setScope(const Scope &scope);
 		};
 
 	}

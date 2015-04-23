@@ -61,7 +61,6 @@ int main(int argc, const char **argv) {
 	int r = system(compile.c_str());
 
 	if (r == 0 && all) {
-
 		vector<string> paths = findFiles(build + "\\*Test.exe");
 		for (nat i = 0; i < paths.size(); i++) {
 			string cmd = build + "\\" + paths[i];

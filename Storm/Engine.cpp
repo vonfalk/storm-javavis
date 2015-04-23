@@ -207,7 +207,11 @@ namespace storm {
 	}
 
 	void Engine::destroy(code::Binary *b) {
-		toDestroy.push_back(b);
+		if (b) {
+			// TODO: Find a better solution for this...
+			b->dbg_clearReferences();
+			toDestroy.push_back(b);
+		}
 	}
 
 	code::Ref Engine::virtualCall(VTablePos pos) const {

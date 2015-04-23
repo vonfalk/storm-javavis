@@ -41,6 +41,10 @@ namespace storm {
 		return type;
 	}
 
+	Bool Value::isRef() const {
+		return ref;
+	}
+
 	const Handle &Value::handle() const {
 		if (type) {
 			assert(!ref, "Handles to references is not yet supported!");

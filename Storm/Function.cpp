@@ -20,12 +20,12 @@ namespace storm {
 
 	Function::~Function() {
 		// Correct destruction order.
-		code = null;
 		lookup = null;
-		delete codeRef;
-		delete lookupRef;
+		code = null;
 		engine().destroy(threadThunkCode);
 		delete threadThunkRef;
+		delete lookupRef;
+		delete codeRef;
 	}
 
 	RunOn Function::runOn() const {

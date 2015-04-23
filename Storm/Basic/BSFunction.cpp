@@ -90,6 +90,15 @@ namespace storm {
 		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
 	}
 
+	void bs::BSFunction::update(Par<BSFunction> from) {
+		assert(paramNames.size() == from->paramNames.size());
+		paramNames = from->paramNames;
+		contents = from->contents;
+		pos = from->pos;
+
+		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
+	}
+
 
 	static code::Variable createResultVar(code::Listing &l) {
 		// Note: We do not need to free this one, since we will copy a value to it (and thereby initialize it)

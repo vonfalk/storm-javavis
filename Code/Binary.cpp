@@ -91,6 +91,11 @@ namespace code {
 		}
 	}
 
+	void Binary::dbg_clearReferences() {
+		// For use when delaying removal of code, can be dangerous!
+		clear(references);
+	}
+
 	void Binary::set(const Listing &listing) {
 		void *oldMem = memory;
 		nat oldSize = size;
