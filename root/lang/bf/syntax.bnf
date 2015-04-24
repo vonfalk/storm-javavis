@@ -8,7 +8,7 @@ BFDelimiter => void : "[ \n\r\t]*";
 
 Number => v : "[0-9]+" v;
 
-BfFile => BfExpr(space, code) : Number space, BfRoot code;
+BfFile => BfExpr(space, code) : Number space - BfComment - BfRoot code;
 
 // Note: the {} chars are used to end blocks in other languages.
 BfComment => void : "[^<>,\.\+\-\[\]{}]*";
