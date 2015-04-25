@@ -5,13 +5,12 @@ void myPrint(Nat v) {
 	// print("*" * v);
 }
 
-Int slowFn(Int times) on Demo {
+void slowFn(Int times) on Demo {
 	for (Int i = 0; i < times; i++) {
 		myPrint((i + 1).nat);
 		dbgSleep(5000);
 	}
 	print("Done!");
-	10;
 }
 
 

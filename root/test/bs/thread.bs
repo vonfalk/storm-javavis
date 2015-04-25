@@ -214,6 +214,13 @@ Int asyncDbgVal() {
 	fut.result;
 }
 
+// Alternate syntax.
+Int asyncDbgVal2() {
+	DbgVal val(10);
+	var fut = spawn val.otherDbgValFn();
+	fut.result;
+}
+
 Int slowFn(DbgVal v) on Other {
 	dbgSleep(10);
 	33;

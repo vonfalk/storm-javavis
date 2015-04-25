@@ -36,6 +36,7 @@ BEGIN_TEST(ThreadTest) {
 	// Check 'spawn'.
 	DbgVal::clear();
 	CHECK_EQ(runFn(L"test.bs.asyncDbgVal"), 18);
+	CHECK_EQ(runFn(L"test.bs.asyncDbgVal2"), 18);
 	CHECK(DbgVal::clear());
 	CHECK_EQ(runFn(L"test.bs.unusedDbgVal"), 33);
 	Sleep(100);
