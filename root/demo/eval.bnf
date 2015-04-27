@@ -1,0 +1,7 @@
+delimiter: Whitespace;
+Whitespace => void : "[ \n\r\t]*";
+
+E => add(lhs, rhs) : E lhs, "\+", E rhs;
+E => negate(v) : "\-", E v;
+E => number(n) : "[0-9]+" n;
+E => v : "(", E v, ")";

@@ -1,0 +1,46 @@
+use core:debug;
+use core:lang;
+use core:io;
+use lang:bs:macro;
+
+class Value {
+	Int value;
+	ctor(Int v) {
+		init() { value = v; }
+	}
+	Str toS() {
+		value.toS;
+	}
+}
+
+Value number(SStr v) {
+	Value(v.v.toInt);
+}
+
+Value negate(Value v) {
+	Value(0 - v.value);
+}
+
+Value add(Value l, Value r) {
+	Value(l.value + r.value);
+}
+
+
+// Evaluate things using the syntax!
+void eval(Str v) {
+	SyntaxSet syntax = syntaxSet();
+	Parser p(syntax, v, Url());
+	p.parse("E");
+	if (p.hasError)
+		p.throwError;
+	Object result = p.transform([Object:]);
+	print(v # " = " # result);
+}
+
+SyntaxSet syntaxSet() {
+	SyntaxSet set;
+	Named n = (name{demo}).find(rootScope);
+	if (n as Package)
+		set.add(n);
+	set;
+}

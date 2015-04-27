@@ -7,6 +7,8 @@
 #include "Code/Debug.h"
 #include <iomanip>
 
+#include "Utils/Lock.h"
+
 namespace storm {
 
 	Bool isNull(Object *o) {
@@ -33,6 +35,9 @@ namespace storm {
 	}
 
 	void print(Object *s) {
+		static util::Lock lock;
+		util::Lock::L w(lock);
+
 		if (s == null) {
 			PLN("null");
 			return;
