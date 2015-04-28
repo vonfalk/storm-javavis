@@ -1,0 +1,55 @@
+Storm
+=======
+
+Storm is a language that focus on extensibility on many levels. To be extensible, the Storm compiler
+itself is more of a framework for creating languages rather than a complete compiler. Of course, the
+compiler includes languages as well, but these are implemented apart from the core itself and could
+therefore be moved into external libraries in the future.
+
+The core compiler consists of a type system, to allow different languages to communicate, a parser,
+to allow a standard way of defining languages, an assembler, to generate machine code, and a
+standard library. Aside from this, the compiler includes two languages: [Basic Storm][1] and a [BNF
+Syntax][2] language. If the compiler would not include any languages at all, it would be difficult
+to do anything useful with the compiler.
+
+This section will discuss core concepts of the Storm compiler itself. If you are interested in
+writing code, please have a look at [Basic Storm][1]. However, the language documentation assumes
+you have basic knowledge about how types, threads and to some extent syntax works.
+
+Extensibility
+-------------
+
+As mentioned before, Storm puts a lot of effort into being extensible. The structure of Storm allows
+programmers to easily create new languages, either by transforming languages into an already
+existing language, or by going directly at generating machine code. You can even choose which
+language within Storm you want to use to implement your new language. Aside from implementing new
+languages, Storm also allows and encourages extending languages to suit your needs. This is mainly
+done through the built-in parser and the syntax rules present there. The built in parser let you
+treat syntax as regular members of a package, so you can mix and match as you see fit for the
+problem at hand. Using the syntax language, it is easy to extend an already existing syntax rule of
+your favorite language so that it better matches the problem you try to solve.
+
+Threading
+----------
+
+Aside from being extensible, Storm also attempts to make it easier to deal with threads. Storm knows
+about threads, and depending on the language you are using, provides different levels of protection
+against common threading problems. The threading model of the compiler is implemented in Basic
+Storm, but other languages may choose to do differently.
+
+Interactivity
+--------------
+
+Another important design goal of the Storm compiler is to make the compiler into a programmers
+friend that keeps running alongside your program and helping you along the way, instead of being a
+tool that you start whenever you need some work done. Taking this approach, you launch the compiler,
+and then the compiler worries about how to build your program, rather than relying on other external
+tools for the job. Since the compiler will be running alongside your program, it will be possible to
+ask the compiler for information about your program (like "Where is this function declared?"), and
+also opens up for features like reloading parts of the running program without restarting it. Taking
+this approach, Storm aims to help you to focus on the important parts of your program, rather than
+how to build and re-built it efficiently.
+
+
+[1]: md://02-Basic_Storm
+[2]: md://03-BNF_Syntax
