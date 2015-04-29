@@ -9,6 +9,12 @@ for common tasks. Since Basic Storm is implemented using the parser in Storm, it
 the same extensibility that Storm provides all languages, even though Basic Storm is strictly not
 implemented completely inside Storm.
 
+The philosophy of Basic Storm is, just like LISP, that everything is an expression. In many cases,
+it is safe to ignore this fact, but it opens up a lot of flexibility, especially when generating
+code. One of the more outstanding differences is that blocks and if-statements are expressions, not
+statements. A block returns the last expression written in it, which allows the programmer to
+introduce temporary variables in the middle of an expressions among other things.
+
 Most of Basic Storm is implemented in C++, alongside the compiler. However, some parts are
 implemented in Basic Storm itself. Examples of this are the array syntax (`T[]`), array
 initialization (`[T: x, y, z]`) and the string concatenation syntax (`x # y`). The implementation of
@@ -23,3 +29,5 @@ currently does _not_ load it. To make sure that the package or type is loaded, s
 something inside it first by just trying to call something. It probably will not compile, but it
 still causes things to get loaded. This is a slight oversight in the compiler, and will be addressed
 in the future.
+
+Basic Storm source code is saved in `.bs`-files.
