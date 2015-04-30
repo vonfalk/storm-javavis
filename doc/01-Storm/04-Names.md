@@ -43,3 +43,5 @@ a overload-by-overload basis if desired. `NameSet` also implements support for t
 `Template` is an object that can generate `Named` objects on demand. Whenever the `NameSet` is
 requested for a name with parameters it does not find a match for, it asks a `Template` with the
 same name (if it is present) to generate the match.
+
+Member functions and variables always have an explicit this pointer as their first parameter.
