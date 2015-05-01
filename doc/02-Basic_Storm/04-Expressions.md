@@ -148,6 +148,42 @@ accept new function calls from other threads. If you wish to not wait for a resu
 keyword right before the function call. This makes the function call return a `Futre<T>` instead,
 and you can choose when and if you want to get the result back.
 
+Downcasting
+------------
+
+When you have a variable of a base type, say `Object`, and want to test if it is an instance of a
+more specific type, you can use `if-as` syntax:
+
+```
+if (o as Foo) {
+    // o has the type Foo inside of here.
+}
+```
+
+Which will cause the variable to the left of `of` to be treated as the more specific type inside the
+block of the if-branch. This only works if the variable to the left of `of` is a local variable or a
+parameter. Otherwise, the check is made, but it will not be possible to access the derived type. An
+alternate syntax will probably fix this problem later, maybe:
+
+`if (o = a.b as Foo)`
+
+References and null
+--------------------
+
+At the moment, Storm has no support for null references. All reference variables (referring classes
+or actors) are initialized to something when they are created, there is no null keyword and there is
+no good way of testing for null references. The idea is to provide a special, nullable type, for
+this purpose. This type will probably be written as `T?`, and will not be accessable until there has
+been an explicit check for null, probably using:
+
+```
+if (o) {
+    // o now has type T, not T?
+}
+```
+
+Implementation details of this type is not finished yet. It may be a regular templated type (just as
+`Array<T>`) or a more specific type.
 
 Syntax
 -------
