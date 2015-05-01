@@ -6,8 +6,8 @@ type system. This system is then used to implement other languages, like Basic S
 definitions in the compiled are designed so that it is easy to choose a set of packages and combine
 their syntax, and in that way extend the language you are using.
 
-This section will not discuss how syntax rules are written, please refer to [BNF
-Syntax](md://03-BNF_Syntax) to learn how to use the built in syntax definition language.
+This section will not discuss how syntax rules are written, please refer to [BNF Syntax](md://BNF_Syntax)
+to learn how to use the built in syntax definition language.
 
 Definition
 -----------
@@ -80,5 +80,65 @@ create an array or other similar container, and instruct the parser to call the 
 array for each item in the repetition syntax. When the result is created it is bound to the
 variable `me` in case it is needed.
 
+Before the result is returned, if the object inherits from `core.lang.SObject`, the `pos` member is
+set to the position where the option match started. This is why strings expand to `core.lang.SStr`
+instead of regular strings. The `SStr` inherits from `SObject` and includes the position of the
+string in the source file.
+
 To ease the development of transforms, syntax rules may also be declared to take a number of
 parameters. These parameters are treated as regular variables.
+
+Everything in the syntax is resolved lazily. This means, for example, that any rules you refer to
+does not need to be declared until the rule is actually considered by the parser. This can be
+convenient if you know that the user will always include another package when using your syntax, or
+something similar. The same holds true for function calls. The actual function and overload to be
+called is not decided until the call is about to be made. This means that function calls does not
+neccessarily have to be valid if they are never used, and that it is possible to express some kind
+of overloads that are not possible in other, more static, languages. For example, a rule could call
+the function `a(x)`, where `x` can be either a `A` or a `B`. In this case, we can declare two
+versions of `a()`: `a(A x)` and `a(B x)`, even though `A` and `B` are not related. In other
+languages it is neccessary to declare it like `a(Object x)`, and then manually check which type was
+actually sent to `a`. Another convenient usage of this is that it is possible to indicate that
+options should not return anything by specifying them returning the function call `void` (or
+anything, really). Since the function call will never be used unless it actually has to be used, the
+parser will work without problems as long as no one tries to get the result from the rule.
+
+Parsing and threading
+------------------------
+
+At the moment, the parser is always executed on the `Compiler` thread. When creating the syntax
+tree, only classes and actors are supported. Furthermore, actors have to be declared to run on the
+compiler thread, since the parser does not yet implement support for message passing. This
+restriction will probably be lifted in the future.
+
+
+Representation
+-----------------
+
+NOTE: The representation is not exposed to the type system at the moment. This will be done in the
+future.
+
+NOTE: The location of these types is not decided yet. They will probably live in `core.syntax`, but
+that is not decided yet.
+
+The core compiler only knows of the in-memory representation of syntax. In each package, there is a
+variable of the type `SyntaxRules`. A `SyntaxRules` object is a map from `Str` to `SyntaxRule`. Each
+`SyntaxRule` in turn is a list of `SyntaxOption`s along with the declaration of the rule (if
+present).
+
+`SyntaxOption`s are what contains all tokens and the information required to build a node in the
+syntax tree from the match. The tokens present in a `SyntaxOption` can not be accessed directly,
+instead the `OptionIter` should be used. The `OptionIter` only allows forward iteration, but since
+options can include repetition, sometimes it is not clear which token is the next one. Therefore,
+the iterator provides all possible next states. Since there are only ever two next states, it simply
+provides two "next" functions: `nextA` and `nextB`. Sometimes these functions will return an invalid
+iterator, which means that that move was not possible, or that we are at the end of the option.
+
+Lastly, tokens are represented by classes derived from `SyntaxToken`. The `SyntaxToken` class
+contains information about any variable that is bound to the result of the token. Aside from that,
+there are two subclasses: `RegexToken` and `TypeToken`, which represent a regular expression and
+reference to another rule, respectively.
+
+When combining syntax from different packages, `SyntaxSet` is useful. It provides a quick way of
+merging all syntax in different packages for later use in the parser. This is what is used in Basic
+Storm to compose the active syntax for parsing the file.

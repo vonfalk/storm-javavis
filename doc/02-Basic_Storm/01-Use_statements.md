@@ -14,6 +14,6 @@ a:b<c:d>:e
 ```
 
 Where the `<>` are used to indicate parameters to that specific part (see
-[Names](md://01-Storm/04-Names.md) for an explanation of names in Storm). Also note that the `.`
+[Names](md://Storm/Names) for an explanation of names in Storm). Also note that the `.`
 operator is not used to separate names. This operator is only used when accessing members of a
 value, much like in C++ (using the `::` operator).

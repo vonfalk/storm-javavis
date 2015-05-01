@@ -30,7 +30,7 @@ Function calls looks much like function calls in most other languages, with some
 easiest way to explain these differences is to explain how Basic Storms treats function
 calls. Whenever Basic Storm sees an identifier (`foo`, or `foo(a, b)`), it constructs a `Name`
 object that represents the seen identifier (resolving the type of any parameters in the process) and
-asks the type system to look it up (see [Names](md://01-Storm/04-Names.md)). This means since `foo`
+asks the type system to look it up (see [Names](md://Storm/Names.md)). This means since `foo`
 and `foo()` are represented by the same `Name`, they are treated equally. Basic Storm then examines
 the `Named` returned by the lookup and acts accordingly. If it is a function, it calls the
 function. If it is a variable it loads the value of the variable.

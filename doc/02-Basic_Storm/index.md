@@ -35,8 +35,5 @@ Another tool that helps developing new syntax in Basic Storm is the `dump{}` syn
 brackets using the standard print function. This can be used to see what different syntaxes actually
 represent. To see how it works, try `dump{ "A" # "B" }` or `dump{ [Int: 1, 2, 3, 4] }`.
 
-Basic Storm source code is saved in `.bs`-files. Source files can be encoded in UTF-8, or UTF-16
-(big or little endian). The compiler detects which encoding was used based on the presence of the
-BOM (byte order mark). If no BOM is present, the source file is assumed to be encoded using
-UTF-8. If the BOM is present, its appearance is used to determine which of the coding systems are
-used.
+Basic Storm source code is saved in `.bs`-files. Files are read using the standard text input of
+Storm, and therefore supports all formats described [here](md://Storm/Input).

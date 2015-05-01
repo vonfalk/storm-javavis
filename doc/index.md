@@ -4,6 +4,16 @@ Storm
 Storm is a work in progress language that focuses on extensibility on many levels. Read more about
 it [here](md://01-Storm/).
 
+Documentation
+--------------
+
+The documentation provided here aims to provide an understanding of the language itself. It will not
+generally discuss specific API:s or the standard library in depth. For documentation on specific
+functions, objects or packages, please refer to the built-in documentation in Storm.
+
+When using Basic Storm, import the package `lang.bs.macro` and use the `explore{name}` syntax to
+output information about packages, types, functions or most other named things in the system. Sadly,
+the built-in documentation is not finished yet.
 
 Downloads
 ----------

@@ -51,5 +51,5 @@ this approach, Storm aims to help you to focus on the important parts of your pr
 how to build and re-built it efficiently.
 
 
-[1]: md://02-Basic_Storm
-[2]: md://03-BNF_Syntax
+[1]: md://Basic_Storm
+[2]: md://BNF_Syntax
