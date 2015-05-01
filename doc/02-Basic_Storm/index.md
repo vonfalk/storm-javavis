@@ -36,4 +36,4 @@ brackets using the standard print function. This can be used to see what differe
 represent. To see how it works, try `dump{ "A" # "B" }` or `dump{ [Int: 1, 2, 3, 4] }`.
 
 Basic Storm source code is saved in `.bs`-files. Files are read using the standard text input of
-Storm, and therefore supports all formats described [here](md://Storm/Input).
+Storm, and therefore supports all formats described [here](md://Storm/Text_IO).

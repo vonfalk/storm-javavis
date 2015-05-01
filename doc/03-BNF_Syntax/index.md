@@ -12,7 +12,7 @@ Input
 
 To use the BNF Syntax language, create a text file with the extension `bnf`. BNF Syntax is read
 using the standard input in Storm, and therefore supports everything that is described
-[here](md://Storm/Input).
+[here](md://Storm/Text_IO).
 
 Name lookup and types
 ----------------------
