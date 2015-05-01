@@ -123,6 +123,7 @@ StackTrace stackTrace(nat skip) {
 	HANDLE process = GetCurrentProcess();
 	HANDLE thread = GetCurrentThread();
 	STACKFRAME64 frame;
+	zeroMem(frame);
 	initFrame(context, frame);
 
 	StackTrace r;
@@ -181,7 +182,7 @@ static NT_TIB *getTIB() {
 }
 
 StackTrace stackTrace(nat skip) {
-	NT_TIB *tib = machineX86::getTIB();
+	NT_TIB *tib = getTIB();
 	void *stackMax = tib->StackBase;
 	void *stackMin = tib->StackLimit;
 
