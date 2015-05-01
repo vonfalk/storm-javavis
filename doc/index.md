@@ -29,3 +29,8 @@ the compiler itself is not availiable at the moment, but it will probably be rel
 
 [Download Storm](storm.zip)
 
+To run the compiler, simply unpack the zip-file and run `StormMain.exe`, and the top loop for Basic
+Storm should start. The compiler does not need any external libraries except for "dbghlp.dll" and
+maybe the Visual Studio 2008 runtime (should be statically linked). It even runs on Wine, except
+that it crashes whenever an exception is thrown. My guess is that Wines implementation of
+"dbghlp.dll" is either incomplete or nonexistent, but I have not yet investigated this problem.
