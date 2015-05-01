@@ -2,7 +2,7 @@ Storm
 ========
 
 Storm is a work in progress language that focuses on extensibility on many levels. Read more about
-it [here](md://01-Storm/).
+it [here](md://Storm/).
 
 Documentation
 --------------
