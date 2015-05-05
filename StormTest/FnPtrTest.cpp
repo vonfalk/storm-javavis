@@ -67,4 +67,8 @@ BEGIN_TEST(FnPtrTest) {
 	CHECK_EQ(runFnInt(L"test.bs.runFnPtr", dbgFn), 21);
 
 	TODO(L"Verify that clone works.");
+
+	// Return a function pointer from Storm!
+	Auto<FnPtr<Int, Int>> v = runFn<FnPtr<Int, Int> *>(L"test.bs.createIntInt");
+	CHECK_EQ(v->call(10), 20);
 } END_TEST

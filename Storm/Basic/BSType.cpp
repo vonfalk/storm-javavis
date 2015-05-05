@@ -6,7 +6,9 @@ namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
-		bs::TypePart::TypePart(Par<SStr> name) : name(name->v) {}
+		bs::TypePart::TypePart(Par<SStr> name) : name(name->v) {
+			pos = name->pos;
+		}
 
 		bs::TypePart::TypePart(Par<Str> name) : name(name) {}
 

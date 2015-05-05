@@ -546,6 +546,10 @@
 				RelativePath=".\EnginePtr.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSFnPtr.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -934,6 +938,10 @@
 			</File>
 			<File
 				RelativePath=".\EnginePtr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSFnPtr.h"
 				>
 			</File>
 		</Filter>

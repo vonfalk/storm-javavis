@@ -28,3 +28,11 @@ Int runFnPtr(FnPtr<DbgVal, Int> v) {
 Int runFnPtr(FnPtr<Dbg, Int> v) {
 	v.call(21).get;
 }
+
+Int intIntFn(Int v) {
+	v + 10;
+}
+
+FnPtr<Int, Int> createIntInt() {
+	&intIntFn(Int);
+}

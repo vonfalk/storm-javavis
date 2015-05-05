@@ -86,6 +86,8 @@ Basic
 ------
 Variable accesses are currently racy. Fix this!
 
+Allow function pointers (that are not ambiguous) to be specified without their formal parameter types.
+
 In basic storm: Allow the dot operator to be used as scope resolution as well (maybe another in BS? like in cpp?)
 
 In bs: check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should
