@@ -95,9 +95,6 @@ namespace code {
 		Ref(const RefSource &source);
 		Ref(const Reference &reference);
 
-		// Reference a raw address instead.
-		explicit Ref(void *addr);
-
 		Ref(const Ref &o);
 		~Ref();
 		Ref &operator =(const Ref &o);
@@ -111,10 +108,7 @@ namespace code {
 	private:
 		Arena *arena;
 
-		union {
-			nat referring;
-			void *raw;
-		};
+		nat referring;
 
 		void addRef();
 	};

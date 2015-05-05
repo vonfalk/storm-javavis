@@ -35,6 +35,9 @@ namespace storm {
 		// Create.
 		FnPtrBase(const code::Ref &ref, Object *thisPtr = null, bool strongThis = false);
 
+		// Create with C++ fn.
+		FnPtrBase(const void *fn, Object *thisPtr = null, bool strongThis = false);
+
 		// Copy.
 		STORM_CTOR FnPtrBase(Par<FnPtrBase> o);
 
@@ -76,6 +79,9 @@ namespace storm {
 		// Function to call.
 		code::Ref fnRef;
 
+		// Raw function pointer (if fnRef points to nothing).
+		const void *rawFn;
+
 		// Thread to execute on.
 		Auto<Thread> thread;
 
@@ -84,6 +90,9 @@ namespace storm {
 
 		// Strong this pointer?
 		bool strongThisPtr;
+
+		// Init.
+		void init();
 
 	};
 
@@ -105,6 +114,7 @@ namespace storm {
 
 		// Create.
 		FnPtr(const code::Ref &r, Object *thisPtr, bool strongThis) : FnPtrBase(r, thisPtr, strongThis) {}
+		FnPtr(const void *r, Object *thisPtr, bool strongThis) : FnPtrBase(r, thisPtr, strongThis) {}
 
 		R call(P1 p1) {
 			if (needsCopy()) {
@@ -129,6 +139,7 @@ namespace storm {
 		static Type *stormType(Engine &e) { return fnPtrType(e, valList(1, value<R>(e))); }
 
 		FnPtr(const code::Ref &r, Object *thisPtr, bool strongThis) : FnPtrBase(r, thisPtr, strongThis) {}
+		FnPtr(const void *r, Object *thisPtr, bool strongThis) : FnPtrBase(r, thisPtr, strongThis) {}
 
 		R call() {
 			return callRaw<R>(code::FnParams());
@@ -143,32 +154,32 @@ namespace storm {
 	// than one parameter (problem with the pre-processor).
 	template <class R, class P1>
 	FnPtr<R, P1> *fnPtr(Engine &e, R (*fn)(P1)) {
-		return CREATE(FN_PTR(R, P1), e, code::Ref((void *)fn), null, false);
+		return CREATE(FN_PTR(R, P1), e, fn, null, false);
 	}
 
 	template <class R>
 	FnPtr<R> *fnPtr(Engine &e, R (*fn)()) {
-		return CREATE(FN_PTR(R), e, code::Ref((void *)fn), null, false);
+		return CREATE(FN_PTR(R), e, fn, null, false);
 	}
 
 	template <class R, class P1, class C>
 	FnPtr<R, P1> *memberWeakPtr(Engine &e, Par<C> thisPtr, R (CODECALL C::*fn)(P1)) {
-		return CREATE(FN_PTR(R, P1), e, code::Ref(address(fn)), thisPtr.borrow(), false);
+		return CREATE(FN_PTR(R, P1), e, address(fn), thisPtr.borrow(), false);
 	}
 
 	template <class R, class C>
 	FnPtr<R> *memberWeakPtr(Engine &e, Par<C> thisPtr, R (CODECALL C::*fn)()) {
-		return CREATE(FN_PTR(R), e, code::Ref(address(fn)), thisPtr.borrow(), false);
+		return CREATE(FN_PTR(R), e, address(fn), thisPtr.borrow(), false);
 	}
 
 	template <class R, class P1, class C>
 	FnPtr<R, P1> *memberWeakPtr(Engine &e, Auto<C> thisPtr, R (CODECALL C::*fn)(P1)) {
-		return CREATE(FN_PTR(R, P1), e, code::Ref(address(fn)), thisPtr.borrow(), false);
+		return CREATE(FN_PTR(R, P1), e, address(fn), thisPtr.borrow(), false);
 	}
 
 	template <class R, class C>
 	FnPtr<R> *memberWeakPtr(Engine &e, Auto<C> thisPtr, R (CODECALL C::*fn)()) {
-		return CREATE(FN_PTR(R), e, code::Ref(address(fn)), thisPtr.borrow(), false);
+		return CREATE(FN_PTR(R), e, address(fn), thisPtr.borrow(), false);
 	}
 
 
