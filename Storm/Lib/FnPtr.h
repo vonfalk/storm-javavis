@@ -152,6 +152,9 @@ namespace storm {
 
 	// Create functions. The CREATE macro does not play well with templates where there is more
 	// than one parameter (problem with the pre-processor).
+
+	// Note that all these fnPtr does not respect any threading mode on static functions. Therefore:
+	// be careful when creating pointers to non-member functions with a threading directive!
 	template <class R, class P1>
 	FnPtr<R, P1> *fnPtr(Engine &e, R (*fn)(P1)) {
 		return CREATE(FN_PTR(R, P1), e, fn, null, false);

@@ -21,6 +21,9 @@ Core
 Move the logic for lazy loading into the NameSet class? Now it is duplicated in Type and Package, and the NameSet
 can not ask the class to load itself, for example when calling "contents".
 
+Maybe move thread calls to be another level of lookup as well? This would simplify the implementation of FnPtr,
+since it would not have to deal with copying parameters.
+
 Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
 This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.
 New regex parser written. Verify.
