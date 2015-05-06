@@ -185,6 +185,45 @@ if (o) {
 Implementation details of this type is not finished yet. It may be a regular templated type (just as
 `Array<T>`) or a more specific type.
 
+Function pointers
+------------------
+
+Function pointers are represented by the type `core:FnPtr<A, B, ...>`, where the first parameter
+to the template is the return type, and the rest are parameter types. To create a pointer to a
+function, use this syntax:
+
+```
+FnPtr<Int, Int> ptr = &myFunction(Int);
+```
+
+In this case, we assume that `myFunction` returns an `Int`. As you can see, the parameters of the
+function has to be declared explicitly. This may not be neccessary later on.
+
+Function pointers may also contain a this-pointer of an object or an actor (not a value). This is
+done like this:
+
+```
+FnPtr<Int, Int> ptr = &myObject.myFunction(Int);
+```
+
+or
+
+```
+FnPtr<Int, Int> ptr = &myObject->myFunction(Int);
+```
+
+The difference between the two syntaxes is that the first one (using `.`) creates a function pointer
+with a strong reference to `myObject` while the second one (using `->`) creates a weak reference. As
+Storm does not yet fully support weak references, it is your job to keep the object alive if you use
+a weak reference, otherwise the program crashes whenever the function pointer is used. This will be
+improved as soon as Storm has proper weak references.
+
+As you can see, the type of a function pointer bound with an associated object is identical to that
+of a function pointer without an associated object. This means that you can easily create pointers
+to functions associated with some kind of state and treat them just like regular functions.
+
+To call the function from the function pointer, use the `call` member of the `FnPtr` object.
+
 Syntax
 -------
 
