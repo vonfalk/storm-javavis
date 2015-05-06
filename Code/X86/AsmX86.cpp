@@ -25,9 +25,19 @@ namespace code {
 		}
 
 		void lea(Output &to, Params p, const Instruction &instr) {
-			to.putByte(0x8D);
-			// dest is a register.
-			modRm(to, registerId(instr.dest().reg()), instr.src());
+			const Value &src = instr.src();
+			const Value &dest = instr.dest();
+			assert(dest.type() == Value::tRegister);
+			nat regId = registerId(dest.reg());
+
+			if (src.type() == Value::tReference) {
+				// Special meaning, load the reference's index instead.
+				to.putByte(0xB8 + regId);
+				to.putRefId(src.reference());
+			} else {
+				to.putByte(0x8D);
+				modRm(to, regId, src);
+			}
 		}
 
 		void push(Output &to, Params p, const Instruction &instr) {

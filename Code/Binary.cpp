@@ -59,6 +59,12 @@ namespace code {
 			references.push_back(new BinaryUpdater(r.reference, title, (cpuNat *)(baseAddr + r.offset), true));
 		}
 
+		for (nat i = 0; i < from.indexedRefs.size(); i++) {
+			// We need to tell the reference system we're using these, even if we do not need to update them.
+			const Output::UsedRef &r = from.indexedRefs[i];
+			references.push_back(new Reference(r.reference, title));
+		}
+
 		std::swap(references, this->references);
 		clear(references);
 	}

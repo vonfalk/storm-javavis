@@ -115,10 +115,12 @@ namespace code {
 		switch (from.type()) {
 		case Value::tRelative:
 		case Value::tVariable:
+		case Value::tReference:
 			// These are ok.
 			break;
 		default:
-			throw InvalidValue(L"lea must be used with a complex addressing mode. (Got " + toS(from) + L")");
+			throw InvalidValue(L"lea must be used with a complex addressing mode or a reference."
+							L" (Got " + toS(from) + L")");
 		}
 		return createLoose(op::lea, to, destWrite, from);
 	}

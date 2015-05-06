@@ -19,7 +19,7 @@ namespace code {
 				putLong(Word(w));
 				break;
 			default:
-				assert(false);
+				assert(false, L"Unsupported size: " + ::toS(size));
 				break;
 		}
 	}
@@ -56,6 +56,15 @@ namespace code {
 
 		UsedRef r = { ref, offset };
 		relativeRefs.push_back(r);
+	}
+
+	void Output::putRefId(const Ref &ref) {
+		nat offset = tell();
+
+		putPtr(ref.id());
+
+		UsedRef r = { ref, offset };
+		indexedRefs.push_back(r);
 	}
 
 	void Output::markLabel(Label lbl) {
@@ -108,7 +117,11 @@ namespace code {
 	// Memory specialization
 	//////////////////////////////////////////////////////////////////////////
 
-	MemoryOutput::MemoryOutput(void *to, SizeOutput &metrics) : labelOffsets(metrics.labelOffsets), dest((byte *)to), size(metrics.tell()), at(0) {}
+	MemoryOutput::MemoryOutput(void *to, SizeOutput &metrics) :
+		labelOffsets(metrics.labelOffsets),
+		dest((byte *)to),
+		size(metrics.tell()),
+		at(0) {}
 
 	void MemoryOutput::putByte(Byte b) {
 		assert(at + 1 <= size);

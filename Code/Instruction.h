@@ -60,12 +60,15 @@ namespace code {
 
 	// Functions for creating Instruction objects.
 	Instruction mov(const Value &to, const Value &from);
-	Instruction lea(const Value &to, const Value &from);
 	Instruction push(const Value &v);
 	Instruction pop(const Value &to);
 	Instruction jmp(const Value &to, CondFlag cond = ifAlways);
 	Instruction call(const Value &to, Size returnSize);
 	Instruction ret(Size returnSize);
+
+	// This one has somewhat special semantics, when used with a reference as 'from', it loads a representative
+	// value that can be passed to 'Ref::fromLea' to re-create the reference.
+	Instruction lea(const Value &to, const Value &from);
 
 	// Set a byte to the result of an operation.
 	Instruction setCond(const Value &to, CondFlag cond);

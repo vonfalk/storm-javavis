@@ -23,6 +23,9 @@ namespace code {
 		void putAddress(const Ref &ref);
 		void putRelative(const Ref &ref);
 
+		// Write the id of the reference (pointer-sized).
+		void putRefId(const Ref &ref);
+
 		// Mark the current position as label "id".
 		void markLabel(Label lbl);
 
@@ -38,8 +41,16 @@ namespace code {
 			Ref reference;
 			nat offset;
 		};
+
+		// All absolute refs (putAddress).
 		vector<UsedRef> absoluteRefs;
+
+		// All relative refs (putRelative).
 		vector<UsedRef> relativeRefs;
+
+		// All reference indices (putRefId). The offset is usually not needed here, but is included
+		// for symmetry with the other ones.
+		vector<UsedRef> indexedRefs;
 
 	protected:
 		virtual cpuNat lookupLabel(nat id) = 0;

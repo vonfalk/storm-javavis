@@ -265,6 +265,10 @@
 				RelativePath=".\TestParts.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\StoreRef.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

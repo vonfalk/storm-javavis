@@ -5,11 +5,17 @@
 
 namespace code {
 
-	Reference::Reference(const RefSource &source, const String &title) : title(title), arena(source.arena), referring(source.getId()) {
+	Reference::Reference(const RefSource &source, const String &title) :
+		title(title),
+		arena(source.arena),
+		referring(source.getId()) {
 		lastAddress = arena.refManager.addReference(this, referring);
 	}
 
-	Reference::Reference(const Ref &copy, const String &title) : title(title), arena(*copy.arena), referring(copy.referring) {
+	Reference::Reference(const Ref &copy, const String &title) :
+		title(title),
+		arena(*copy.arena),
+		referring(copy.referring) {
 		lastAddress = arena.refManager.addReference(this, referring);
 	}
 
@@ -65,6 +71,10 @@ namespace code {
 
 	Ref::Ref() : arena(null), referring(0) {}
 
+	Ref::Ref(Arena &arena, nat id) : arena(&arena), referring(id) {
+		addRef();
+	}
+
 	Ref::Ref(const RefSource &source) : arena(&source.arena), referring(source.getId()) {
 		addRef();
 	}
@@ -80,6 +90,10 @@ namespace code {
 
 	Ref::Ref(const Ref &o) : arena(o.arena), referring(o.referring) {
 		addRef();
+	}
+
+	Ref Ref::fromLea(Arena &arena, void *data) {
+		return Ref(arena, (nat)data);
 	}
 
 	Ref &Ref::operator =(const Ref &o) {

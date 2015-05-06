@@ -314,7 +314,7 @@ namespace code {
 					break;
 				default:
 					// Not implemented yet, there are many more!
-					assert(false);
+					assert(false, L"This modRm mode is not implemented yet.");
 					break;
 			}
 		}

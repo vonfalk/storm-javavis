@@ -105,7 +105,17 @@ namespace code {
 		void *address() const;
 		// Get the name we're referring to.
 		String targetName() const;
+
+		// Get our unique identifier. Mostly intended for backends.
+		inline nat id() const { return referring; }
+
+		// Create a Ref from the value we get when doing:
+		// lea(ptrX, ref);
+		static Ref fromLea(Arena &arena, void *data);
+
 	private:
+		Ref(Arena &arena, nat id);
+
 		Arena *arena;
 
 		nat referring;
