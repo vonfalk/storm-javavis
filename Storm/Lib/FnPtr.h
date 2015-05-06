@@ -44,6 +44,9 @@ namespace storm {
 		// Destroy.
 		~FnPtrBase();
 
+		// Helper to create FnPtrs.
+		static FnPtrBase *CODECALL createRaw(Type *type, void *refData, Thread *t, Object *thisPtr, bool strongThis);
+
 		// Deep copy.
 		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
 

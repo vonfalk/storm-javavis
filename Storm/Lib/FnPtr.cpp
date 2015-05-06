@@ -2,8 +2,22 @@
 #include "FnPtr.h"
 #include "TObject.h"
 #include "Code/Future.h"
+#include "Type.h"
+#include "Engine.h"
 
 namespace storm {
+
+	FnPtrBase *FnPtrBase::createRaw(Type *type, void *refData, Thread *t, Object *thisPtr, bool strongThis) {
+		Engine &e = type->engine;
+		PLN("Creating a function pointer!");
+		FnPtrBase *result = new (type) FnPtrBase(code::Ref::fromLea(e.arena, refData), thisPtr, strongThis);
+
+		if (t != null && result->thread == null) {
+			result->thread = capture(t);
+		}
+		type->vtable.update(result);
+		return result;
+	}
 
 	FnPtrBase::FnPtrBase(const code::Ref &ref, Object *thisPtr, bool strongThis) :
 		fnRef(ref),

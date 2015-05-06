@@ -15,7 +15,7 @@ namespace storm {
 		public:
 			// Create.
 			STORM_CTOR FnPtr(Par<Block> block, Par<TypeName> name, Par<ArrayP<TypeName>> formal);
-			STORM_CTOR FnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal);
+			STORM_CTOR FnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal, Bool strong);
 
 			// Result.
 			virtual Value STORM_FN result();
@@ -32,8 +32,14 @@ namespace storm {
 
 			// Found function.
 			Auto<Function> target;
+
+			// Strong this ptr?
+			bool strongThis;
 		};
 
+		// Helpers for creation.
+		FnPtr *STORM_FN strongFnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal);
+		FnPtr *STORM_FN weakFnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal);
 
 	}
 }

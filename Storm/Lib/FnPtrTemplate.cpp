@@ -16,6 +16,10 @@ namespace storm {
 		me->deepCopy(env);
 	}
 
+	static void CODECALL destroyPtr(FnPtrBase *me) {
+		me->~FnPtrBase();
+	}
+
 	Bool CODECALL fnPtrNeedsCopy(FnPtrBase *me) {
 		return me->needsCopy();
 	}
@@ -186,6 +190,7 @@ namespace storm {
 		vector<Value> fnCall = params;
 		fnCall[0] = t;
 		add(steal(dynamicFunction(e, params[0], L"call", fnCall, callCode(this))));
+		add(steal(nativeDtor(e, this, &destroyPtr)));
 	}
 
 	static Named *generateFnPtr(Par<NamePart> part) {

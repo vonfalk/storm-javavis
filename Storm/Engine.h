@@ -61,7 +61,7 @@ namespace storm {
 		code::RefSource arrayToSMember, arrayToSAdd;
 
 		// Helpers for the FnPtr object.
-		code::RefSource fnPtrCopy, fnPtrCall;
+		code::RefSource fnPtrCopy, fnPtrCall, fnPtrCreate;
 	};
 
 	/**

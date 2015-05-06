@@ -8,6 +8,7 @@
 #include "Code/FnParams.h"
 #include "Lib/Str.h"
 #include "Lib/Future.h"
+#include "Lib/FnPtr.h"
 
 namespace storm {
 
@@ -33,7 +34,8 @@ namespace storm {
 		  fnParamsCtor(arena, L"FnParams::ctor"), fnParamsDtor(arena, L"FnParams::dtor"),
 		  fnParamsAdd(arena, L"FnParams::add"),
 		  arrayToSMember(arena, L"valArrayToSMember"), arrayToSAdd(arena, L"valArrayToSAdd"),
-		  fnPtrCopy(arena, L"FnPtrBase::needsCopy"), fnPtrCall(arena, L"FnPtrBase::callRaw")
+		  fnPtrCopy(arena, L"FnPtrBase::needsCopy"), fnPtrCall(arena, L"FnPtrBase::callRaw"),
+		  fnPtrCreate(arena, L"FnPtrBase::createRaw")
 	{
 
 		addRef.set(address(&Object::addRef));
@@ -61,6 +63,7 @@ namespace storm {
 		arrayToSAdd.set(address(&storm::valArrayToSAdd));
 		fnPtrCopy.set(address(&storm::fnPtrNeedsCopy));
 		fnPtrCall.set(address(&storm::fnPtrCallRaw));
+		fnPtrCreate.set(address(&storm::FnPtrBase::createRaw));
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode)
