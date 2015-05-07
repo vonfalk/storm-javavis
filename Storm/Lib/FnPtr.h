@@ -111,6 +111,9 @@ namespace storm {
 
 		// Which thread shall we run on?
 		Thread *runOn(TObject *first) const;
+
+		// Output.
+		virtual void output(wostream &to) const;
 	};
 
 	// Get a parameter as a TObject if applicable.

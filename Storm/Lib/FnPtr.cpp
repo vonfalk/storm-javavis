@@ -35,6 +35,25 @@ namespace storm {
 		init();
 	}
 
+	void FnPtrBase::output(wostream &to) const {
+		to << L"fn(";
+		for (nat i = 1; i < myType->params.size(); i++) {
+			if (i != 1)
+				to << ", ";
+			to << myType->params[i];
+		}
+		to << L")->";
+		if (myType->params.size() > 0)
+			to << myType->params[0];
+
+		to << L": ";
+		if (fnRef == code::Ref()) {
+			to << L"<unknown> @" << toHex(rawFn);
+		} else {
+			to << fnRef.targetName();
+		}
+	}
+
 	void FnPtrBase::init() {
 		if (strongThisPtr)
 			thisPtr->addRef();

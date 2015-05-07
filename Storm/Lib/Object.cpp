@@ -184,7 +184,7 @@ namespace storm {
 	}
 
 	void Object::output(wostream &to) const {
-		to << myType->name << L": " << toHex(this);
+		to << myType->identifier() << L": " << toHex(this);
 	}
 
 	Bool Object::equals(Par<Object> o) {
