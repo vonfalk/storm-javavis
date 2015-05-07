@@ -8,8 +8,6 @@ namespace storm {
 	NameLookup::NameLookup() : parentLookup(null) {}
 
 	Named *NameLookup::findHere(const String &name, const vector<Value> &params) {
-		PLN("Implement findHere on " << myType->identifier());
-		assert(false); // Implement me!
 		return null;
 	}
 

@@ -248,6 +248,23 @@ a function that can run on any thread). The rule for this is simple, whenever th
 to is to be executed on a different thread than the currently executed one, we send a message. At
 the moment, it is not possible to do `spawn` when calling functions using function pointers.
 
+The function pointer type can also be declared as follows:
+
+```
+fn(Int, Int)->Int => Fn<Int, Int, Int>
+```
+
+Different parts of can be left out. The following lines are equivalent:
+
+```
+fn()->void
+fn->void
+fn()->
+fn->
+```
+
+This syntax is implemented in `lang:bs:fnPtr.bs`.
+
 Syntax
 -------
 

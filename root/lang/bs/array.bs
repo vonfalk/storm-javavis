@@ -1,5 +1,4 @@
 use core:lang;
-use core:debug;
 
 // Implement support for Int[] instead of Array<Int>
 TypeName arrayType(TypeName t) {

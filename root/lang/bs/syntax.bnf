@@ -22,6 +22,10 @@ Package => t : Type t;
 // Array type.
 Type => arrayType(t) : Type t, "\[\]";
 
+// Function pointers.
+Type => fnPtrType(result, params) : "fn", FnTypes params, "->", Type result;
+Type => fnPtrType(params) : "fn", FnTypes params, "->";
+
 // Skip a block, assuming matching {} and well-behaved strings.
 SkipBlock => cont : ( SkipContent ) cont;
 SkipContent => void : Whitespace - SkipContent - Whitespace - SkipContent - Whitespace;

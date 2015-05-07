@@ -1,0 +1,21 @@
+use core:lang;
+
+TypeName fnPtrType(TypeName result, Array<TypeName> params) {
+	TypePart core("core");
+	TypePart fn("Fn");
+	fn.add(result);
+	for (Nat i = 0.nat; i < params.count; i++)
+		fn.add(params[i]);
+
+	TypeName name;
+	name.add(core);
+	name.add(fn);
+	name;
+}
+
+TypeName fnPtrType(Array<TypeName> params) {
+	TypePart v("void");
+	TypeName n;
+	n.add(v);
+	fnPtrType(n, params);
+}
