@@ -44,16 +44,22 @@ class Types;
 
 class CppType : public Printable {
 public:
-	CppType() : isConst(false), isPtr(false), isRef(false), isAuto(false), isPar(false), isArray(false), isArrayP(false) {}
+	CppType() :
+		isConst(false), isPtr(false), isRef(false),
+		isAuto(false), isPar(false), isArray(false),
+		isArrayP(false), isFnPtr(false) {}
 
-	// name of the type.
+	// name of the type. In the case of a function pointer, this is not relevant.
 	CppName type;
 
+	// Parameters to the function call. The first is the return value.
+	vector<CppType> fnParams;
+
 	// modifiers
-	bool isConst, isPtr, isRef, isAuto, isPar, isArray, isArrayP;
+	bool isConst, isPtr, isRef, isAuto, isPar, isArray, isArrayP, isFnPtr;
 
 	// Clear.
-	inline void clear() { type.clear(); isConst = isPtr = isRef = isAuto = isArray = isArrayP = false; }
+	inline void clear() { type.clear(); isConst = isPtr = isRef = isAuto = isArray = isArrayP = isFnPtr = false; }
 
 	// Read!
 	static CppType read(Tokenizer &tok);

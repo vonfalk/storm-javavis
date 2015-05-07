@@ -5,6 +5,7 @@
 #include "Std.h"
 #include "CodeGen.h"
 #include "Lib/TObject.h"
+#include "Lib/FnPtr.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -92,7 +93,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// The 'generate' function will be called when code needs to be updated.
-		LazyCode(const Fn<CodeGen *, void> &generate);
+		STORM_CTOR LazyCode(Par<FnPtr<CodeGen *>> generate);
 
 		// Dtor.
 		~LazyCode();
@@ -106,7 +107,7 @@ namespace storm {
 		code::Binary *code;
 
 		// Generate code using this function.
-		Fn<CodeGen *, void> load;
+		Auto<FnPtr<CodeGen *>> load;
 
 		// Code loaded?
 		bool loaded;
@@ -125,23 +126,6 @@ namespace storm {
 
 		// Create a Binary from a Listing.
 		void setCode(const code::Listing &listing);
-	};
-
-	/**
-	 * Temporary solution for using LazyCode without function pointers.
-	 * TODO: Remove.
-	 */
-	class TmpLazyCode : public LazyCode {
-		STORM_CLASS;
-	public:
-		STORM_CTOR TmpLazyCode();
-
-		// Called when we need to load code. Override in Storm.
-		virtual CodeGen *STORM_FN load();
-
-	private:
-		// Adapter fn for 'load'.
-		CodeGen *loadCode();
 	};
 
 
@@ -192,7 +176,7 @@ namespace storm {
 		Fn<void, InlinedParams> generate;
 
 		// Generate non-inline version as well.
-		CodeGen *generatePtr();
+		CodeGen *CODECALL generatePtr();
 	};
 
 	/**

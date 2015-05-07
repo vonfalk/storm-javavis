@@ -550,7 +550,7 @@ namespace storm {
 	}
 
 	Function *lazyFunction(Engine &e, Value result, const String &name,
-						const vector<Value> &params, const Fn<CodeGen *, void> &generate) {
+						const vector<Value> &params, Par<FnPtr<CodeGen *>> generate) {
 		Auto<Function> f = CREATE(Function, e, result, name, params);
 		Auto<LazyCode> c = CREATE(LazyCode, e, generate);
 		f->setCode(c);

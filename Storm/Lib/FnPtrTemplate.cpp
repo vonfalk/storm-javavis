@@ -230,6 +230,8 @@ namespace storm {
 		tName->add(L"core");
 		tName->add(L"Fn", params);
 		Type *r = as<Type>(e.scope()->find(tName));
+		if (!r)
+			PLN(*e.rootPackage());
 		assert(r, "The Fn type was not found!");
 		return r;
 	}

@@ -58,7 +58,7 @@ namespace storm {
 	 * Lazily loaded code.
 	 */
 
-	LazyCode::LazyCode(const Fn<CodeGen *, void> &fn) : code(null), loaded(false), loading(false), load(fn) {}
+	LazyCode::LazyCode(Par<FnPtr<CodeGen *>> fn) : code(null), loaded(false), loading(false), load(fn) {}
 
 	LazyCode::~LazyCode() {
 		if (code)
@@ -115,7 +115,7 @@ namespace storm {
 
 			c->loading = true;
 			try {
-				Auto<CodeGen> r = c->load();
+				Auto<CodeGen> r = c->load->call();
 				r->to << *r->data;
 				c->setCode(r->to);
 			} catch (...) {
@@ -142,20 +142,6 @@ namespace storm {
 
 
 	/**
-	 * TmpLazyCode.
-	 */
-
-	TmpLazyCode::TmpLazyCode() : LazyCode(memberVoidFn(this, &TmpLazyCode::loadCode)) {}
-
-	CodeGen *TmpLazyCode::load() {
-		return CREATE(CodeGen, this, owner->runOn());
-	}
-
-	CodeGen *TmpLazyCode::loadCode() {
-		return load();
-	}
-
-	/**
 	 * Delegated code.
 	 */
 
@@ -178,7 +164,7 @@ namespace storm {
 	 */
 
 	InlinedCode::InlinedCode(Fn<void, InlinedParams> gen)
-		: LazyCode(memberVoidFn(this, &InlinedCode::generatePtr)), generate(gen) {}
+		: LazyCode(steal(memberWeakPtr(engine(), this, &InlinedCode::generatePtr))), generate(gen) {}
 
 	void InlinedCode::code(Par<CodeGen> state, const vector<code::Value> &params, Par<CodeResult> result) {
 		InlinedParams p = { engine(), state, params, result };

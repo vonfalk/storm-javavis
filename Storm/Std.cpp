@@ -32,25 +32,42 @@ namespace storm {
 		return null;
 	}
 
-	static Value findValue(const Scope &src, const ValueRef &val, Engine &e) {
+	static Value createValue(const ValueInnerRef &val, Type *t) {
+		Value r(t, (val.options & ValueRef::ref) != ValueRef::nothing);
+
+		if (val.options & ValueRef::array) {
+			Type *array = arrayType(t->engine, r);
+			r = Value(array);
+		}
+
+		return r;
+	}
+
+	static Value findInnerValue(const Scope &src, const ValueInnerRef &val, Engine &e) {
 		if (val.name == null)
 			return Value();
 
 		Auto<Name> name = parseSimpleName(e, val.name);
 		Named *f = src.find(name);
-		if (Type *t = as<Type>(f)) {
-			Value r(t, (val.options & ValueRef::ref) != ValueRef::nothing);
-
-			if (val.options & ValueRef::array) {
-				Type *array = arrayType(e, r);
-				r = Value(array);
-			}
-
-			return r;
-		}
+		if (Type *t = as<Type>(f))
+			return createValue(val, t);
 
 		throw BuiltInError(L"Type " + ::toS(val.name) + L" was not found.");
 	}
+
+	static Value findValue(const Scope &src, const ValueRef &val, Engine &e) {
+		if (val.options & ValueRef::fnPtr) {
+			vector<Value> params;
+			params.push_back(findInnerValue(src, val.result, e));
+			for (nat i = 0; i < ValueRef::maxParams; i++)
+				if (val.params[i].name)
+					params.push_back(findInnerValue(src, val.params[i], e));
+			return createValue(val, fnPtrType(e, params));
+		} else {
+			return findInnerValue(src, val, e);
+		}
+	}
+
 
 	static void addBuiltIn(Engine &to, const BuiltInFunction *fn, const vector<NamedThread *> &threads, Type *insertInto = null) {
 		Named *into = null;
@@ -192,10 +209,6 @@ namespace storm {
 	}
 
 	static void addBuiltIn(Engine &to) {
-		// This should be done first, since package lookup may require the use of as<>.
-		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
-			addSuper(to, t);
-		}
 		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
 			addToPkg(to, t);
 		}
@@ -248,6 +261,11 @@ namespace storm {
 			cached[i] = CREATE(Type, to, t.name, TypeFlags(t.typeFlags) | typeManualSuper, Size(t.typeSize), t.cppVTable);
 		}
 		TODO(L"Find a way to compute the size of types for 64-bit as well!");
+
+		// This should be done first, since package lookup may require the use of as<>.
+		for (const BuiltInType *t = builtInTypes(); t->name; t++) {
+			addSuper(to, t);
+		}
 	}
 
 
@@ -255,14 +273,15 @@ namespace storm {
 		// Place core types in the core package.
 		Auto<Name> coreName = CREATE(Name, to, L"core");
 		Package *core = to.package(coreName, true);
+		addFnPtrTemplate(core); // needed early.
+		core->add(steal(cloneTemplate(to))); // also needed early
+
 		core->add(steal(intType(to)));
 		core->add(steal(natType(to)));
 		core->add(steal(byteType(to)));
 		core->add(steal(boolType(to)));
 		addArrayTemplate(core);
-		addFnPtrTemplate(core);
 		core->add(steal(futureTemplate(to)));
-		core->add(steal(cloneTemplate(to)));
 
 		addBuiltIn(to);
 	}

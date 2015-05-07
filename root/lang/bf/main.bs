@@ -32,17 +32,16 @@ class BfFile extends FileReader {
 }
 
 class BfFunction extends Function {
+	Url file;
 
 	ctor(Str name, Url file) {
 		Value strVal = (name{core:Str}).resolve(rootScope);
-		init(strVal, name, [Value: strVal]) {}
+		init(strVal, name, [Value: strVal]) {
+			file = file;
+		}
 
-		setCode(BfCode(file));
+		setCode(LazyCode(&this->load()));
 	}
-}
-
-class BfCode extends TmpLazyCode {
-	Url file;
 
 	ctor(Url file) {
 		init() {

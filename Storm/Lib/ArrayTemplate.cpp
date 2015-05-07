@@ -169,7 +169,7 @@ namespace storm {
 		add(steal(nativeDtor(e, this, &destroyValue)));
 
 		Value strType = Value::thisPtr(Str::stormType(e));
-		add(steal(lazyFunction(e, strType, L"toS", valList(1, t), memberVoidFn(this, &ArrayType::valueToS))));
+		add(steal(lazyFunction(e, strType, L"toS", valList(1, t), steal(memberWeakPtr(e, this, &ArrayType::valueToS)))));
 	}
 
 	CodeGen *ArrayType::valueToS() {

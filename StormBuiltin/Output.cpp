@@ -194,20 +194,33 @@ static String valueRef(const CppType &type, const CppName &scope, const Types &t
 
 	if (type.isArray || type.isArrayP)
 		out << L"arrayRef(";
-	else
+
+	if (type.isFnPtr) {
+		out << L"ptrRef(";
+		for (nat i = 0; i < type.fnParams.size(); i++) {
+			if (i != 0)
+				out << L", ";
+			out << valueRef(type.fnParams[i], scope, types);
+		}
+		out << L")";
+	} else {
 		out << L"valueRef(";
 
-	if (!type.isVoid()) {
-		Type full = types.find(type.type, scope);
-		out << L"L\"";
-		out << full.fullName();
-		out << L"\", ";
-		if (full.value && (type.isRef || type.isPtr))
-			out << L"true";
-		else
-			out << L"false";
+		if (!type.isVoid()) {
+			Type full = types.find(type.type, scope);
+			out << L"L\"";
+			out << full.fullName();
+			out << L"\", ";
+			if (full.value && (type.isRef || type.isPtr))
+				out << L"true";
+			else
+				out << L"false";
+		}
+		out << L")";
 	}
-	out << L")";
+
+	if (type.isArray || type.isArrayP)
+		out << L")";
 	return out.str();
 }
 

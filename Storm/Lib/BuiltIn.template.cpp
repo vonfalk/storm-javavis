@@ -16,29 +16,65 @@
 namespace storm {
 
 	/**
-	 * Create a ValueRef.
+	 * Null value.
 	 */
-	ValueRef valueRef(const wchar *name, bool ref) {
-		ValueRef r = { name, ref ? ValueRef::ref : ValueRef::nothing };
+	ValueRef valueRef() {
+		ValueRef r;
+		zeroMem(r);
 		return r;
 	}
 
 	/**
-	 * Null value.
+	 * Create a ValueRef.
 	 */
-	ValueRef valueRef() {
-		ValueRef r = { null, ValueRef::nothing };
+	ValueRef valueRef(const wchar *name, bool ref) {
+		ValueRef r = valueRef();
+		r.name = name;
+		r.options = ref ? ValueRef::ref : ValueRef::nothing;
 		return r;
 	}
 
 	/**
 	 * Create a valueref pointing to an array of type "t".
 	 */
-	ValueRef arrayRef(const wchar *name, bool ref) {
-		ValueRef r = valueRef(name, ref);
-		r.options = r.options | ValueRef::array;
+	ValueRef arrayRef(ValueRef r) {
+		r.options |= ValueRef::array;
 		return r;
 	}
+
+	/**
+	 * Make sure a ValueRef is not a function pointer.
+	 */
+	void ensureInner(const ValueRef &v) {
+		assert((v.options & ValueRef::fnPtr) == 0, L"Recursive function pointer definitions not supported!");
+	}
+
+	/**
+	 * Create a valueref for a function pointer.
+	 */
+	ValueRef ptrRef(ValueRef result) {
+		ensureInner(result);
+		ValueRef r = valueRef();
+		r.name = L"";
+		r.options |= ValueRef::fnPtr;
+		r.result = result;
+		return r;
+	}
+
+	ValueRef ptrRef(ValueRef result, ValueRef p1) {
+		ensureInner(p1);
+		ValueRef r = ptrRef(result);
+		r.params[0] = p1;
+		return r;
+	}
+
+	ValueRef ptrRef(ValueRef result, ValueRef p1, ValueRef p2) {
+		ensureInner(p2);
+		ValueRef r = ptrRef(result, p1);
+		r.params[1] = p2;
+		return r;
+	}
+
 
 	/**
 	 * Wrap the default generated assignment operator. Since the calling convention differ,

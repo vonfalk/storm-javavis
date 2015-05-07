@@ -185,6 +185,6 @@ namespace storm {
 
 	// Create a lazy function.
 	Function *lazyFunction(Engine &e, Value result, const String &name,
-						const vector<Value> &params, const Fn<CodeGen *, void> &generate);
+						const vector<Value> &params, Par<FnPtr<CodeGen *>> generate);
 
 }

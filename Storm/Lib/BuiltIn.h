@@ -51,7 +51,7 @@ namespace storm {
 	/**
 	 * Value reference. This can be used to look up an actual value runtime.
 	 */
-	struct ValueRef {
+	struct ValueInnerRef {
 		// Name of the type.
 		const wchar *name;
 
@@ -65,11 +65,34 @@ namespace storm {
 			// Type is Array<'name'>. If combined with ref, it is Array<'name' &>. Reference
 			// to an array (like Array<T> &) is not allowed here.
 			array = 0x2,
+
+			// Type is a function pointer. This means that this is an instance of 'ValueRef'.
+			// Function pointers are "inside" of arrays, which means that if 'array' and 'fnPtr' are
+			// set, the type is Array<FnPtr<...>>
+			fnPtr = 0x4,
 		};
 		Options options;
 	};
 
-	BITMASK_OPERATORS(ValueRef::Options);
+	BITMASK_OPERATORS(ValueInnerRef::Options);
+
+	/**
+	 * Value reference, also supports function pointers. Note that this structure does not support
+	 * functions taking functions as parameters, even though the Storm type system does that. This
+	 * situation is quite rare and not present in the C++ code anyway, so ignoring that special case
+	 * makes the structure static and much simpler to deal with.
+	 */
+	struct ValueRef : ValueInnerRef {
+		// Max # of function parameters.
+		static const nat maxParams = 2;
+
+		// Result of function pointer.
+		ValueInnerRef result;
+
+		// Parameters of function pointer.
+		ValueInnerRef params[2];
+	};
+
 
 	/**
 	 * A list of all built-in functions.

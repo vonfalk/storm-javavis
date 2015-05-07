@@ -232,6 +232,16 @@ namespace storm {
 	}
 
 	template <class R, class P1, class C>
+	FnPtr<R, P1> *memberWeakPtr(Engine &e, C *thisPtr, R (CODECALL C::*fn)(P1)) {
+		return CREATE(FN_PTR(R, P1), e, address(fn), thisPtr, false);
+	}
+
+	template <class R, class C>
+	FnPtr<R> *memberWeakPtr(Engine &e, C *thisPtr, R (CODECALL C::*fn)()) {
+		return CREATE(FN_PTR(R), e, address(fn), thisPtr, false);
+	}
+
+	template <class R, class P1, class C>
 	FnPtr<R, P1> *memberWeakPtr(Engine &e, Auto<C> thisPtr, R (CODECALL C::*fn)(P1)) {
 		return CREATE(FN_PTR(R, P1), e, address(fn), thisPtr.borrow(), false);
 	}

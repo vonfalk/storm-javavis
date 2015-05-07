@@ -172,6 +172,9 @@ static void outputSymbol(wostream &to, ULONG64 base, DWORD index) {
 		outputSymbol(to, base, tmp);
 		// There may be a name here somewhere!
 		break;
+	case SymTagFunctionType:
+		to << L"<function ptr>";
+		break;
 		// ...
 	default:
 		to << L"<tag: " << tag << L">";
@@ -212,7 +215,7 @@ static void outputSymbol(wostream &to, SymInfo &symbol) {
 	for (nat i = 0; i < nat(children); i++) {
 		if (i != 0)
 			to << L", ";
-		outputSymbol(to, symbol.ModBase, params->ChildId[i]); //type);
+		outputSymbol(to, symbol.ModBase, params->ChildId[i]);
 	}
 
 	delete []mem;

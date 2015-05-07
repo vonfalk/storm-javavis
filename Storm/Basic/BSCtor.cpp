@@ -31,7 +31,8 @@ namespace storm {
 		// Rename until it is initialized!
 		paramNames[0] = L" this";
 
-		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSCtor::generateCode))));
+		Auto<FnPtr<CodeGen *>> ptr = memberWeakPtr(engine(), this, &BSCtor::generateCode);
+		setCode(steal(CREATE(LazyCode, this, ptr)));
 	}
 
 	code::Variable bs::BSCtor::findThread(Par<CodeGen> s, const Actuals &params) {

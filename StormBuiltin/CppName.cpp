@@ -102,7 +102,16 @@ CppType CppType::read(Tokenizer &tok) {
 		tok.next();
 	}
 
-	t.type = CppName::read(tok);
+	if (tok.peek() == L"FnPtr") {
+		tok.next();
+		tok.expect(L"<");
+		t.isFnPtr = true;
+		t.fnParams.push_back(CppType::read(tok));
+		while (tok.next() == L",")
+			t.fnParams.push_back(CppType::read(tok));
+	} else {
+		t.type = CppName::read(tok);
+	}
 
 	if (tok.peek() == L"*") {
 		t.isPtr = true;
@@ -126,7 +135,13 @@ void CppType::output(wostream &to) const {
 		to << L"storm::ArrayP<";
 	if (isConst)
 		to << L"const ";
-	to << type;
+	if (isFnPtr) {
+		to << L"storm::FnPtr<";
+		join(to, fnParams, L", ");
+		to << L">";
+	} else {
+		to << type;
+	}
 	if (isArray)
 		to << L">";
 	if (isArrayP)
@@ -165,7 +180,13 @@ CppType CppType::typePtr() {
 
 CppType CppType::fullName(const Types &t, const CppName &scope) const {
 	CppType c = *this;
-	c.type = t.find(type, scope).cppName;
+	if (isFnPtr) {
+		for (nat i = 0; i < fnParams.size(); i++) {
+			c.fnParams[i] = fnParams[i].fullName(t, scope);
+		}
+	} else {
+		c.type = t.find(type, scope).cppName;
+	}
 	return c;
 }
 

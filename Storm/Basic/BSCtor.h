@@ -42,7 +42,7 @@ namespace storm {
 			SrcPos pos;
 
 			// Generate code.
-			CodeGen *generateCode();
+			CodeGen *CODECALL generateCode();
 
 			// Parse.
 			CtorBody *parse();

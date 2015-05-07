@@ -39,10 +39,11 @@ namespace storm {
 		if (strongThisPtr)
 			thisPtr->addRef();
 
-		// Since Object and TObject are disjoint in the Storm type system, it is safer to use dynamic_cast here.
-		// as<> would probably work, but I do not know.
+		// Note: do not use dynamic_cast here, as the this-ptr is sometimes not fully initialized
+		// when we are called... Storm's type system is, however, initialized earlier and therefore
+		// we can safely use as<>.
 		if (thread == null)
-			if (TObject *t = dynamic_cast<TObject*>(thisPtr))
+			if (TObject *t = as<TObject>(thisPtr))
 				thread = t->thread;
 	}
 

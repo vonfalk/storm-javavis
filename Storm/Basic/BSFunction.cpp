@@ -78,7 +78,8 @@ namespace storm {
 		if (result.ref)
 			throw SyntaxError(pos, L"Returning references is not a good idea at this point!");
 
-		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
+		Auto<FnPtr<CodeGen *>> fn = memberWeakPtr(engine(), this, &BSFunction::generateCode);
+		setCode(steal(CREATE(LazyCode, this, fn)));
 	}
 
 	void bs::BSFunction::update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos) {
@@ -87,7 +88,8 @@ namespace storm {
 		this->pos = pos;
 
 		// Could be done better...
-		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
+		Auto<FnPtr<CodeGen *>> fn = memberWeakPtr(engine(), this, &BSFunction::generateCode);
+		setCode(steal(CREATE(LazyCode, this, fn)));
 	}
 
 	void bs::BSFunction::update(Par<BSFunction> from) {
@@ -96,7 +98,8 @@ namespace storm {
 		contents = from->contents;
 		pos = from->pos;
 
-		setCode(steal(CREATE(LazyCode, this, memberVoidFn(this, &BSFunction::generateCode))));
+		Auto<FnPtr<CodeGen *>> fn = memberWeakPtr(engine(), this, &BSFunction::generateCode);
+		setCode(steal(CREATE(LazyCode, this, fn)));
 	}
 
 

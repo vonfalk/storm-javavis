@@ -84,7 +84,7 @@ namespace storm {
 			vector<String> paramNames;
 
 			// Generate code.
-			CodeGen *generateCode();
+			CodeGen *CODECALL generateCode();
 
 			// Is a member function (ie this as first param?)
 			bool isMember;
