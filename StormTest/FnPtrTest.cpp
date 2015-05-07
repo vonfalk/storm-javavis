@@ -55,9 +55,6 @@ BEGIN_TEST(FnPtrTest) {
 
 	Auto<DbgActor> actor = CREATE(DbgActor, e);
 	Auto<FnPtr<Str *, Par<Str>>> strFn = memberWeakPtr(e, actor, &DbgActor::echo);
-	Auto<Str> original = CREATE(Str, e, L"A");
-	Auto<Str> copy = strFn->call(original);
-	CHECK(original.borrow() != copy.borrow());
 
 	Auto<FnPtr<DbgVal, Int>> dbgValFn = fnPtr(e, &returnDbgVal);
 	CHECK_EQ(dbgValFn->call(23), DbgVal(23));
@@ -81,7 +78,6 @@ BEGIN_TEST(FnPtrTest) {
 	CHECK_EQ(runFnInt(L"test.bs.runFnPtr", dbgValFn), 23);
 	CHECK_EQ(runFnInt(L"test.bs.runFnPtr", dbgFn), 21);
 
-	TODO(L"Verify that clone works.");
 } END_TEST
 
 
@@ -115,4 +111,69 @@ BEGIN_TEST(StormFnPtrTest) {
 		CHECK_EQ(actorFn(1)->call(actor), DbgVal(11));
 	}
 
+} END_TEST
+
+// Run the function pointer both through Storm and C++ and compare the results.
+static int runPtr(Par<FnPtr<Int, Par<Dbg>>> ptr, int start) {
+	Auto<Dbg> dbg = runFn<Dbg *>(L"test.bs.dbgTrack", start);
+	int storm = runFnInt(L"test.bs.runPtr", ptr, dbg);
+	int cpp = ptr->call(dbg);
+	if (storm != cpp) {
+		PLN("Storm and C++ gives different results!");
+		return -1;
+	}
+	return storm;
+}
+
+// Run the function pointer through another thread (only Storm) and see the result.
+static int runPtrOther(Par<FnPtr<Int, Par<Dbg>>> ptr, int start) {
+	Auto<Dbg> dbg = runFn<Dbg *>(L"test.bs.dbgTrack", start);
+	return runFnInt(L"test.bs.runPtrOther", ptr, dbg);
+}
+
+
+static Auto<FnPtr<Int, Par<Dbg>>> dbgPtr(int id) {
+	return runFn<FnPtr<Int, Par<Dbg>> *>(L"test.bs.trackParam", id);
+}
+
+BEGIN_TEST(FnPtrThreadTest) {
+	Engine &e = *gEngine;
+
+	CHECK_EQ(runPtr(dbgPtr(0), 1), 1);
+	CHECK_EQ(runPtr(dbgPtr(1), 1), 10101);
+	CHECK_EQ(runPtr(dbgPtr(2), 1), 1);
+	CHECK_EQ(runPtr(dbgPtr(3), 1), 10101);
+	CHECK_EQ(runPtr(dbgPtr(4), 1), 1);
+
+	// Note: these are always copied once because we're switching to another thread before calling the
+	// function pointer.
+	CHECK_EQ(runPtrOther(dbgPtr(0), 1), 10101);
+	CHECK_EQ(runPtrOther(dbgPtr(1), 1), 10101);
+	CHECK_EQ(runPtrOther(dbgPtr(2), 1), 20201);
+	CHECK_EQ(runPtrOther(dbgPtr(3), 1), 10101);
+	CHECK_EQ(runPtrOther(dbgPtr(4), 1), 20201);
+
+	Auto<FnPtr<Int, Par<Dbg>>> fromDbg = fnPtr(e, &::fromDbg);
+	CHECK_EQ(runPtrOther(dbgPtr(0), 1), 10101);
+
+	// Actor as the first parameter...
+	{
+		Auto<Dbg> dbg = runFn<Dbg *>(L"test.bs.dbgTrack", 1);
+		Auto<TObject> dbgActor = runFn<TObject *>(L"test.bs.createInActor");
+		Auto<FnPtr<Int, Par<TObject>, Par<Dbg>>> fn =
+			runFn<FnPtr<Int, Par<TObject>, Par<Dbg>> *>(L"test.bs.trackActor");
+		int storm = runFnInt(L"test.bs.runPtrActor", fn, dbg);
+		int cpp = fn->call(dbgActor, dbg);
+		CHECK_EQ(storm, 10101);
+		CHECK_EQ(cpp, 10101);
+	}
+
+	// Return values.
+	{
+		Auto<FnPtr<Dbg *>> fn = runFn<FnPtr<Dbg *> *>(L"test.bs.dbgFnPtr");
+		Auto<Dbg> cpp = fn->call();
+		int storm = runFnInt(L"test.bs.callDbgFnPtr", fn);
+		CHECK_EQ(storm, 10101);
+		CHECK_EQ(cpp->get(), 10101);
+	}
 } END_TEST

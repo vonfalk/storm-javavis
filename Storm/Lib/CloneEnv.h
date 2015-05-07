@@ -45,10 +45,10 @@ namespace storm {
 
 	// Assumes we have ownership of the pointer...
 	template <class T>
-	void clone(T *v, Par<CloneEnv> env) {
+	void clone(T *&v, Par<CloneEnv> env) {
 		T *tmp = (T *)cloneObjectEnv(v, env.borrow());
 		swap(tmp, v);
-		v->release();
+		tmp->release();
 	}
 
 	// Built-in types do not need anything special.

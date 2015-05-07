@@ -130,11 +130,40 @@ namespace storm {
 	to.add(borrow(t ## param));
 
 	/**
-	 * Compatible C++ class. Up to 3 parameters currently.
+	 * Compatible C++ class. Up to 2 parameters currently.
 	 * In future releases, this may be implemented using variadic templates.
 	 */
-	template <class R, class P1 = void>
+	template <class R, class P1 = void, class P2 = void>
 	class FnPtr : public FnPtrBase {
+		TYPE_EXTRA_CODE;
+	public:
+		static Type *stormType(Engine &e) { return fnPtrType(e, valList(3, value<R>(e), value<P1>(e), value<P2>(e))); }
+
+		// Create.
+		FnPtr(const void *r, Object *thisPtr, bool strongThis) : FnPtrBase(r, thisPtr, strongThis) {}
+
+		R call(P1 p1, P2 p2) {
+			TObject *first = asTObject(p1);
+
+			if (needsCopy(first)) {
+				Auto<CloneEnv> env = CREATE(CloneEnv, engine());
+				code::FnParams params;
+
+				ADD_COPY(params, P1, p1, env);
+				ADD_COPY(params, P2, p2, env);
+
+				return callRaw<R>(params, first);
+			} else {
+				code::FnParams params;
+				params.add(p1);
+				params.add(p2);
+				return callRaw<R>(params, first);
+			}
+		}
+	};
+
+	template <class R, class P1>
+	class FnPtr<R, P1, void> : public FnPtrBase {
 		TYPE_EXTRA_CODE;
 	public:
 		static Type *stormType(Engine &e) { return fnPtrType(e, valList(2, value<R>(e), value<P1>(e))); }
@@ -161,7 +190,7 @@ namespace storm {
 	};
 
 	template <class R>
-	class FnPtr<R, void> : public FnPtrBase {
+	class FnPtr<R, void, void> : public FnPtrBase {
 		TYPE_EXTRA_CODE;
 	public:
 		static Type *stormType(Engine &e) { return fnPtrType(e, valList(1, value<R>(e))); }

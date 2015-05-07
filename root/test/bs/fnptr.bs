@@ -89,3 +89,109 @@ FnPtr<DbgVal, DbgActor> createActorFn(Int type) {
 		&incDbgActor(DbgActor);
 	}
 }
+
+// Counts how many copies have been made.
+class CloneTrack extends Dbg {
+	ctor(Int v) {
+		init(v) {}
+	}
+
+	ctor(CloneTrack t) {
+		init(t) {}
+		set(get + 10000);
+	}
+
+	void deepCopy(CloneEnv env) {
+		super:deepCopy(env);
+		set(get + 100);
+	}
+}
+
+// Create the tracker.
+Dbg dbgTrack(Int v) {
+	CloneTrack(v);
+}
+
+// Run a function pointer.
+Int runPtr(FnPtr<Int, Dbg> ptr, Dbg v) {
+	ptr.call(v);
+}
+
+// Run a function pointer on another thread.
+Int runPtrOther(FnPtr<Int, Dbg> ptr, Dbg value) {
+	runPtrOtherHelp(ptr, value);
+}
+
+Int runPtrOtherHelp(FnPtr<Int, Dbg> ptr, Dbg value) on Other {
+	ptr.call(value);
+}
+
+// Create various function pointers.
+FnPtr<Int, Dbg> trackParam(Int t) {
+	if (t == 0) {
+		// Normal function - no clones.
+		&trackFree(Dbg);
+	} else if (t == 1) {
+		// Call to another thread - possibly clones.
+		&trackOnOther(Dbg);
+	} else if (t == 2) {
+		// Call to another thread - possibly clones.
+		&trackOnCompiler(Dbg);
+	} else if (t == 3) {
+		// Call to another thread - possibly clones.
+		InActor actor(Other);
+		&actor.trackInActor(Dbg);
+	} else {
+		// Call to another thread - possibly clones.
+		InActor actor(Compiler);
+		&actor.trackInActor(Dbg);
+	}
+}
+
+// Actor.
+FnPtr<Int, InActor, Dbg> trackActor() {
+	&InActor:trackInActor(InActor, Dbg);
+}
+
+InActor createInActor() {
+	InActor(Other);
+}
+
+// C++ does not know of TObject, so we use TObject instead. It is ugly, but it works for testing.
+Int runPtrActor(FnPtr<Int, TObject, Dbg> fn, Dbg dbg) {
+	fn.call(createInActor, dbg);
+}
+
+Int trackFree(Dbg v) {
+	v.get;
+}
+
+Int trackOnOther(Dbg v) on Other {
+	v.get;
+}
+
+Int trackOnCompiler(Dbg v) on Compiler {
+	v.get;
+}
+
+class InActor on ? {
+	ctor(Thread) {
+		init() {}
+	}
+
+	Int trackInActor(Dbg v) {
+		v.get;
+	}
+}
+
+FnPtr<Dbg> dbgFnPtr() {
+	&returnDbg;
+}
+
+Dbg returnDbg() on Other {
+	CloneTrack(1);
+}
+
+Int callDbgFnPtr(FnPtr<Dbg> fn) {
+	fn.call().get;
+}

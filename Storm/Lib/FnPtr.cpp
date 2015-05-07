@@ -81,7 +81,7 @@ namespace storm {
 
 	Thread *FnPtrBase::runOn(TObject *first) const {
 		Thread *t = thread.borrow();
-		if (!t && first)
+		if (isMember && !t && first)
 			t = first->thread.borrow();
 		return t;
 	}
@@ -90,7 +90,7 @@ namespace storm {
 		Thread *t = runOn(first);
 		if (!t)
 			return false;
-		return t->thread == code::Thread::current();
+		return t->thread != code::Thread::current();
 	}
 
 	static void doCall(void *output, const BasicTypeInfo &type,

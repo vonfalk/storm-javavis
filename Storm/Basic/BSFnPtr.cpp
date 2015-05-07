@@ -70,8 +70,6 @@ namespace storm {
 
 		Value type = result();
 
-		bool memberFn = target->isMember();
-
 		// Note: initialized to zero if not needed.
 		VarInfo thisPtr = variable(to, type);
 
@@ -84,6 +82,7 @@ namespace storm {
 			Engine &e = engine();
 			VarInfo z = r->location(to);
 			RunOn runOn = target->runOn();
+			bool memberFn = target->isMember();
 
 			to->to << lea(ptrA, target->ref());
 			to->to << fnParam(type.type->typeRef);

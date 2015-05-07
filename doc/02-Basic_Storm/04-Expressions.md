@@ -220,9 +220,33 @@ improved as soon as Storm has proper weak references.
 
 As you can see, the type of a function pointer bound with an associated object is identical to that
 of a function pointer without an associated object. This means that you can easily create pointers
-to functions associated with some kind of state and treat them just like regular functions.
+to functions associated with some kind of state and treat them just like regular functions. Function
+pointers are also as flexible as the regular function calls. This means that if both:
+
+```
+&object.function(A);
+```
+
+and
+
+```
+&function(Object, A);
+```
+
+Works. In the first case, the function pointer will only take one parameter, while it will take two
+in the second case. Bu utilizing this, it is possible to choose if the first parameter of a function
+should be bound or not.
 
 To call the function from the function pointer, use the `call` member of the `FnPtr` object.
+
+Note that the threading semantics is a little different when using function pointers compared to
+regular function calls. Since the function pointer does know where it is invoked from (and to make
+interaction with C++ easier), the function pointer decides runtime if it should send a message or
+not. This means that in some cases, the function pointer sees that a message is not needed when a
+regular call would have sent a message (for example, calling a function associated to a thread from
+a function that can run on any thread). The rule for this is simple, whenever the function pointed
+to is to be executed on a different thread than the currently executed one, we send a message. At
+the moment, it is not possible to do `spawn` when calling functions using function pointers.
 
 Syntax
 -------
