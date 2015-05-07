@@ -7,23 +7,22 @@
 
 namespace storm {
 
-	FnPtrBase *FnPtrBase::createRaw(Type *type, void *refData, Thread *t, Object *thisPtr, bool strongThis) {
+	FnPtrBase *FnPtrBase::createRaw(Type *type, void *refData,
+									Thread *t, Object *thisPtr,
+									bool strongThis, bool member) {
 		Engine &e = type->engine;
-		PLN("Creating a function pointer!");
-		FnPtrBase *result = new (type) FnPtrBase(code::Ref::fromLea(e.arena, refData), thisPtr, strongThis);
-
-		if (t != null && result->thread == null) {
-			result->thread = capture(t);
-		}
+		FnPtrBase *result = new (type) FnPtrBase(code::Ref::fromLea(e.arena, refData), t, member, thisPtr, strongThis);
 		type->vtable.update(result);
 		return result;
 	}
 
-	FnPtrBase::FnPtrBase(const code::Ref &ref, Object *thisPtr, bool strongThis) :
+	FnPtrBase::FnPtrBase(const code::Ref &ref, Par<Thread> thread, bool member, Object *thisPtr, bool strongThis) :
 		fnRef(ref),
 		rawFn(null),
 		thisPtr(thisPtr),
-		strongThisPtr(strongThis) {
+		thread(thread),
+		strongThisPtr(strongThis),
+		isMember(member) {
 		init();
 	}
 
@@ -31,7 +30,8 @@ namespace storm {
 		fnRef(),
 		rawFn(fn),
 		thisPtr(thisPtr),
-		strongThisPtr(strongThis) {
+		strongThisPtr(strongThis),
+		isMember(thisPtr != null) {
 		init();
 	}
 
@@ -39,9 +39,11 @@ namespace storm {
 		if (strongThisPtr)
 			thisPtr->addRef();
 
-		// Note: We may not be able to use as<> here, since we treat Object and TObject as separate types!
-		if (TObject *t = dynamic_cast<TObject *>(thisPtr))
-			thread = t->thread;
+		// Since Object and TObject are disjoint in the Storm type system, it is safer to use dynamic_cast here.
+		// as<> would probably work, but I do not know.
+		if (thread == null)
+			if (TObject *t = dynamic_cast<TObject*>(thisPtr))
+				thread = t->thread;
 	}
 
 	FnPtrBase::FnPtrBase(Par<FnPtrBase> o) :
@@ -49,7 +51,8 @@ namespace storm {
 		rawFn(o->rawFn),
 		thread(o->thread),
 		thisPtr(o->thisPtr),
-		strongThisPtr(o->strongThisPtr) {
+		strongThisPtr(o->strongThisPtr),
+		isMember(o->isMember) {
 		if (strongThisPtr)
 			thisPtr->addRef();
 	}
@@ -76,37 +79,58 @@ namespace storm {
 		}
 	}
 
-	void FnPtrBase::callRaw(void *output, const BasicTypeInfo &type, const code::FnParams &params) const {
+	Thread *FnPtrBase::runOn(TObject *first) const {
+		Thread *t = thread.borrow();
+		if (!t && first)
+			t = first->thread.borrow();
+		return t;
+	}
+
+	bool FnPtrBase::needsCopy(TObject *first) const {
+		Thread *t = runOn(first);
+		if (!t)
+			return false;
+		return t->thread == code::Thread::current();
+	}
+
+	static void doCall(void *output, const BasicTypeInfo &type,
+					const code::FnParams &params, Par<Thread> thread,
+					const void *toCall, bool member) {
+
+		bool spawn = false;
+		if (thread)
+			spawn = thread->thread != code::Thread::current();
+
+		if (spawn) {
+			code::FutureSema<code::Sema> future(output);
+			code::UThread::spawn(toCall, member, params, future, type, &thread->thread);
+			future.result();
+		} else {
+			code::call(toCall, member, params, output, type);
+		}
+	}
+
+	void FnPtrBase::callRaw(void *out, const BasicTypeInfo &type, const code::FnParams &params, TObject *first) const {
 		const void *toCall = rawFn;
 		if (toCall == null)
 			toCall = fnRef.address();
 
-		bool isMember = false;
+		Thread *thread = runOn(first);
+
 		if (thisPtr) {
-			isMember = true;
-			// Note: We never need to copy the this-ptr here. Either the object is a TObject, and then
-			// we have a thread or the this ptr is not a TObject and then we can not have a thread.
+			Auto<Object> tPtr = capture(thisPtr);
+			if (needsCopy(first)) {
+				Auto<CloneEnv> env = CREATE(CloneEnv, this);
+				clone(tPtr, env);
+			}
 
 			// TODO: In the case of a thread call, we can avoid this allocation.
 			code::FnParams p = params;
-			p.addFirst(thisPtr);
+			p.addFirst(tPtr.borrow());
 
-			if (thread) {
-				code::FutureSema<code::Sema> future(output);
-				code::UThread::spawn(toCall, isMember, p, future, type, &thread->thread);
-				future.result();
-			} else {
-				code::call(toCall, isMember, p, output, type);
-			}
+			doCall(out, type, p, thread, toCall, isMember);
 		} else {
-			if (thread) {
-				code::FutureSema<code::Sema> future(output);
-				code::UThread::spawn(fnRef.address(), isMember, params, future, type, &thread->thread);
-				future.result();
-			} else {
-				// No need to do anything special.
-				code::call(toCall, isMember, params, output, type);
-			}
+			doCall(out, type, params, thread, toCall, isMember);
 		}
 	}
 

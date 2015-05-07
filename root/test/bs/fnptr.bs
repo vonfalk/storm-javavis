@@ -29,10 +29,63 @@ Int runFnPtr(FnPtr<Dbg, Int> v) {
 	v.call(21).get;
 }
 
-Int intIntFn(Int v) {
+
+Int addTen(Int v) {
 	v + 10;
 }
 
-FnPtr<Int, Int> createIntInt() {
-	&intIntFn(Int);
+FnPtr<Int, Int> createIntFn() {
+	&addTen(Int);
+}
+
+DbgVal addTen(Dbg dbg) {
+	DbgVal(dbg.get + 10);
+}
+
+DbgVal addDbg(Dbg a, Dbg b) {
+	DbgVal(a.get + b.get);
+}
+
+FnPtr<DbgVal, Dbg> createDbgFn(Int type) {
+	if (type == 0) {
+		&addTen(Dbg);
+	} else if (type == 1) {
+		Dbg z(20);
+		&z.addDbg(Dbg);
+	} else {
+		&addTen(Dbg);
+	}
+}
+
+DbgVal createDbgVal() {
+	DbgVal(22);
+}
+
+FnPtr<DbgVal> createVoidFn(Int type) {
+	if (type == 0) {
+		Dbg z(20);
+		&z.asDbgVal();
+	} else if (type == 1) {
+		DbgActor z(12);
+		&z.asDbgVal();
+	} else {
+		&createDbgVal();
+	}
+}
+
+DbgVal addDbgActor(DbgActor a, DbgActor b) {
+	DbgVal(a.get + b.get);
+}
+
+DbgVal incDbgActor(DbgActor a) {
+	DbgVal(a.get + 4);
+}
+
+FnPtr<DbgVal, DbgActor> createActorFn(Int type) {
+	if (type == 0) {
+		DbgActor tmp(20);
+		&tmp.addDbgActor(DbgActor);
+	} else {
+		&incDbgActor(DbgActor);
+	}
 }

@@ -136,9 +136,9 @@ Atom => accessExpr(block, lhs, par) : Atom(block) lhs, "\[", Expr(block) par, "\
 Atom => prefixOperator(block, o, e) : PrePost o, Expr(block) e;
 Atom => postfixOperator(block, o, e) : Expr(block) e, PrePost o;
 Atom => arrayInit(block, t, list) : "\[", Type t, ":", ArrayInitList(block) list, "\]";
-Atom => FnPtr(block, name, params) :[10] "&", Type name, FnTypes params;
-Atom => strongFnPtr(block, dotExpr, name, params) :[10] "&", Atom(block) dotExpr, "\.", Name name, FnTypes params;
-Atom => weakFnPtr(block, dotExpr, name, params) :[10] "&", Atom(block) dotExpr, "\->", Name name, FnTypes params;
+Atom => FnPtr(block, name, params) :[20] "&", Type name, FnTypes params;
+Atom => strongFnPtr(block, dotExpr, name, params) :[20] "&", Atom(block) dotExpr, "\.", Name name, FnTypes params;
+Atom => weakFnPtr(block, dotExpr, name, params) :[20] "&", Atom(block) dotExpr, "\->", Name name, FnTypes params;
 
 // Operators.
 Operator => lOperator(op, 900) : "\*" op;

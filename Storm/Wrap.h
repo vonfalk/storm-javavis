@@ -7,6 +7,7 @@
 namespace storm {
 
 	class Object;
+	class TObject;
 	class Type;
 	class FnPtrBase;
 	class ArrayBase;
@@ -31,8 +32,8 @@ namespace storm {
 					code::FnParams::DestroyFn destroy, nat size, const void *value);
 
 	// Implemented in FnPtrTemplate.cpp
-	bool fnPtrNeedsCopy(FnPtrBase *b);
-	void fnPtrCallRaw(FnPtrBase *b, void *output, BasicTypeInfo *type, code::FnParams *params);
+	bool fnPtrNeedsCopy(FnPtrBase *b, TObject *first);
+	void fnPtrCallRaw(FnPtrBase *b, void *output, BasicTypeInfo *type, code::FnParams *params, TObject *first);
 
 	// Implemented in ArrayTemplate.cpp
 	Str *valArrayToSMember(ArrayBase *array, Str *(CODECALL *elemToS)(void *));

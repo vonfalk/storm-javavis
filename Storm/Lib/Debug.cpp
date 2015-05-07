@@ -382,4 +382,8 @@ namespace storm {
 		return v.ret();
 	}
 
+	DbgVal DbgActor::asDbgVal() {
+		return DbgVal(v);
+	}
+
 }

@@ -29,11 +29,11 @@ T runFn(const String &fn, Int p) {
 	return fun->call<T>(code::FnParams().add(p));
 }
 
-template <class T, class Par>
-T runFn(const String &fn, const Par &par) {
+template <class T, class ParT>
+T runFn(const String &fn, const ParT &par) {
 	Engine &e = *gEngine;
 	Auto<Name> fName = parseSimpleName(e, fn);
-	fName = fName->withParams(vector<Value>(1, Par::stormType(e)));
+	fName = fName->withParams(vector<Value>(1, ParT::stormType(e)));
 	Function *fun = as<Function>(e.scope()->find(fName));
 	if (!fun)
 		throw TestError(L"Function " + fn + L" was not found.");

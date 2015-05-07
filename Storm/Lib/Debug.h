@@ -142,8 +142,11 @@ namespace storm {
 		STORM_CTOR DbgActor();
 		STORM_CTOR DbgActor(Int z);
 
-		void STORM_FN set(Int v);
-		Int STORM_FN get() const;
+		virtual void STORM_FN set(Int v);
+		virtual Int STORM_FN get() const;
+
+		// To dbgVal
+		virtual DbgVal STORM_FN asDbgVal();
 
 		// Echo a string (to verify that copies are being made).
 		Str *STORM_FN echo(Par<Str> str);

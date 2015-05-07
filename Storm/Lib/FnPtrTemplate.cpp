@@ -20,12 +20,12 @@ namespace storm {
 		me->~FnPtrBase();
 	}
 
-	Bool CODECALL fnPtrNeedsCopy(FnPtrBase *me) {
-		return me->needsCopy();
+	Bool CODECALL fnPtrNeedsCopy(FnPtrBase *me, TObject *first) {
+		return me->needsCopy(first);
 	}
 
-	void CODECALL fnPtrCallRaw(FnPtrBase *b, void *output, BasicTypeInfo *type, code::FnParams *params) {
-		return b->callRaw(output, *type, *params);
+	void CODECALL fnPtrCallRaw(FnPtrBase *b, void *output, BasicTypeInfo *type, code::FnParams *params, TObject *first) {
+		return b->callRaw(output, *type, *params, first);
 	}
 
 
@@ -69,12 +69,19 @@ namespace storm {
 				params[i] = s->frame.createParameter(t.size(), false, t.destructor());
 		}
 
+		// Decide if the first parameter is a TObject, and pass either that or null to functions
+		// that needs to know.
+		code::Value firstTObject = natPtrConst(0);
+		if (type->params.size() > 1 && type->params[1].type->isA(TObject::stormType(e)))
+			firstTObject = params[0];
+
 		// Create the FnParams object.
 		Variable fnParams = createFnParams(s, type->params.size() - 1).v;
 
 		// Should we clone the result?
 		Variable needClone = s->frame.createByteVar(s->block.v);
 		s->to << fnParam(thisParam);
+		s->to << fnParam(firstTObject);
 		s->to << fnCall(e.fnRefs.fnPtrCopy, Size::sByte);
 		s->to << mov(needClone, al);
 
@@ -100,6 +107,7 @@ namespace storm {
 			s->to << fnParam(resultParam);
 			s->to << fnParam(ptrB);
 			s->to << fnParam(ptrC);
+			s->to << fnParam(firstTObject);
 			s->to << fnCall(e.fnRefs.fnPtrCall, Size());
 
 			// Need to copy?
@@ -134,6 +142,7 @@ namespace storm {
 			s->to << fnParam(ptrA);
 			s->to << fnParam(ptrB);
 			s->to << fnParam(ptrC);
+			s->to << fnParam(firstTObject);
 			s->to << fnCall(e.fnRefs.fnPtrCall, Size());
 
 			// Need to copy?
@@ -164,6 +173,7 @@ namespace storm {
 			s->to << fnParam(ptrA);
 			s->to << fnParam(ptrB);
 			s->to << fnParam(ptrC);
+			s->to << fnParam(firstTObject);
 			s->to << fnCall(e.fnRefs.fnPtrCall, Size());
 			if (result.size() != Size()) // void
 				s->to << mov(asSize(ptrA, result.size()), tmp);
