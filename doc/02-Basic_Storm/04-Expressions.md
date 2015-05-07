@@ -188,12 +188,12 @@ Implementation details of this type is not finished yet. It may be a regular tem
 Function pointers
 ------------------
 
-Function pointers are represented by the type `core:FnPtr<A, B, ...>`, where the first parameter
+Function pointers are represented by the type `core:Fn<A, B, ...>`, where the first parameter
 to the template is the return type, and the rest are parameter types. To create a pointer to a
 function, use this syntax:
 
 ```
-FnPtr<Int, Int> ptr = &myFunction(Int);
+Fn<Int, Int> ptr = &myFunction(Int);
 ```
 
 In this case, we assume that `myFunction` returns an `Int`. As you can see, the parameters of the
@@ -203,13 +203,13 @@ Function pointers may also contain a this-pointer of an object or an actor (not 
 done like this:
 
 ```
-FnPtr<Int, Int> ptr = &myObject.myFunction(Int);
+Fn<Int, Int> ptr = &myObject.myFunction(Int);
 ```
 
 or
 
 ```
-FnPtr<Int, Int> ptr = &myObject->myFunction(Int);
+Fn<Int, Int> ptr = &myObject->myFunction(Int);
 ```
 
 The difference between the two syntaxes is that the first one (using `.`) creates a function pointer
@@ -237,7 +237,7 @@ Works. In the first case, the function pointer will only take one parameter, whi
 in the second case. Bu utilizing this, it is possible to choose if the first parameter of a function
 should be bound or not.
 
-To call the function from the function pointer, use the `call` member of the `FnPtr` object.
+To call the function from the function pointer, use the `call` member of the `Fn` object.
 
 Note that the threading semantics is a little different when using function pointers compared to
 regular function calls. Since the function pointer does know where it is invoked from (and to make

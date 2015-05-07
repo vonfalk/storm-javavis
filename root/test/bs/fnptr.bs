@@ -1,31 +1,31 @@
 use core:debug;
 
-Int runFnPtr(FnPtr<Int, Int> v) {
+Int runFnPtr(Fn<Int, Int> v) {
 	v.call(10);
 }
 
-Int runFnPtr(FnPtr<Int> v) {
+Int runFnPtr(Fn<Int> v) {
 	v.call();
 }
 
-void consumeStr(FnPtr<void, Str> v) {
+void consumeStr(Fn<void, Str> v) {
 	v.call("22");
 }
 
-Int consumeDbg(FnPtr<Int, Dbg> v) {
+Int consumeDbg(Fn<Int, Dbg> v) {
 	v.call(Dbg(23));
 }
 
-Int runStrFnPtr(FnPtr<Str, Str> v) {
+Int runStrFnPtr(Fn<Str, Str> v) {
 	Str z = v.call("22");
 	z.toInt;
 }
 
-Int runFnPtr(FnPtr<DbgVal, Int> v) {
+Int runFnPtr(Fn<DbgVal, Int> v) {
 	v.call(23).get;
 }
 
-Int runFnPtr(FnPtr<Dbg, Int> v) {
+Int runFnPtr(Fn<Dbg, Int> v) {
 	v.call(21).get;
 }
 
@@ -34,7 +34,7 @@ Int addTen(Int v) {
 	v + 10;
 }
 
-FnPtr<Int, Int> createIntFn() {
+Fn<Int, Int> createIntFn() {
 	&addTen(Int);
 }
 
@@ -46,7 +46,7 @@ DbgVal addDbg(Dbg a, Dbg b) {
 	DbgVal(a.get + b.get);
 }
 
-FnPtr<DbgVal, Dbg> createDbgFn(Int type) {
+Fn<DbgVal, Dbg> createDbgFn(Int type) {
 	if (type == 0) {
 		&addTen(Dbg);
 	} else if (type == 1) {
@@ -61,7 +61,7 @@ DbgVal createDbgVal() {
 	DbgVal(22);
 }
 
-FnPtr<DbgVal> createVoidFn(Int type) {
+Fn<DbgVal> createVoidFn(Int type) {
 	if (type == 0) {
 		Dbg z(20);
 		&z.asDbgVal();
@@ -81,7 +81,7 @@ DbgVal incDbgActor(DbgActor a) {
 	DbgVal(a.get + 4);
 }
 
-FnPtr<DbgVal, DbgActor> createActorFn(Int type) {
+Fn<DbgVal, DbgActor> createActorFn(Int type) {
 	if (type == 0) {
 		DbgActor tmp(20);
 		&tmp.addDbgActor(DbgActor);
@@ -113,21 +113,21 @@ Dbg dbgTrack(Int v) {
 }
 
 // Run a function pointer.
-Int runPtr(FnPtr<Int, Dbg> ptr, Dbg v) {
+Int runPtr(Fn<Int, Dbg> ptr, Dbg v) {
 	ptr.call(v);
 }
 
 // Run a function pointer on another thread.
-Int runPtrOther(FnPtr<Int, Dbg> ptr, Dbg value) {
+Int runPtrOther(Fn<Int, Dbg> ptr, Dbg value) {
 	runPtrOtherHelp(ptr, value);
 }
 
-Int runPtrOtherHelp(FnPtr<Int, Dbg> ptr, Dbg value) on Other {
+Int runPtrOtherHelp(Fn<Int, Dbg> ptr, Dbg value) on Other {
 	ptr.call(value);
 }
 
 // Create various function pointers.
-FnPtr<Int, Dbg> trackParam(Int t) {
+Fn<Int, Dbg> trackParam(Int t) {
 	if (t == 0) {
 		// Normal function - no clones.
 		&trackFree(Dbg);
@@ -149,7 +149,7 @@ FnPtr<Int, Dbg> trackParam(Int t) {
 }
 
 // Actor.
-FnPtr<Int, InActor, Dbg> trackActor() {
+Fn<Int, InActor, Dbg> trackActor() {
 	&InActor:trackInActor(InActor, Dbg);
 }
 
@@ -158,7 +158,7 @@ InActor createInActor() {
 }
 
 // C++ does not know of TObject, so we use TObject instead. It is ugly, but it works for testing.
-Int runPtrActor(FnPtr<Int, TObject, Dbg> fn, Dbg dbg) {
+Int runPtrActor(Fn<Int, TObject, Dbg> fn, Dbg dbg) {
 	fn.call(createInActor, dbg);
 }
 
@@ -184,7 +184,7 @@ class InActor on ? {
 	}
 }
 
-FnPtr<Dbg> dbgFnPtr() {
+Fn<Dbg> dbgFnPtr() {
 	&returnDbg;
 }
 
@@ -192,6 +192,6 @@ Dbg returnDbg() on Other {
 	CloneTrack(1);
 }
 
-Int callDbgFnPtr(FnPtr<Dbg> fn) {
+Int callDbgFnPtr(Fn<Dbg> fn) {
 	fn.call().get;
 }

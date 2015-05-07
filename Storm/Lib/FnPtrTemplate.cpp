@@ -184,7 +184,7 @@ namespace storm {
 		return s->to;
 	}
 
-	FnPtrType::FnPtrType(const vector<Value> &v) : Type(L"FnPtr", typeClass, v) {
+	FnPtrType::FnPtrType(const vector<Value> &v) : Type(L"Fn", typeClass, v) {
 		setSuper(FnPtrBase::stormType(engine));
 		matchFlags = matchNoInheritance;
 	}
@@ -221,16 +221,16 @@ namespace storm {
 	}
 
 	void addFnPtrTemplate(Par<Package> to) {
-		Auto<Template> t = CREATE(Template, to, L"FnPtr", simpleFn(&generateFnPtr));
+		Auto<Template> t = CREATE(Template, to, L"Fn", simpleFn(&generateFnPtr));
 		to->add(t);
 	}
 
 	Type *fnPtrType(Engine &e, const vector<Value> &params) {
 		Auto<Name> tName = CREATE(Name, e);
 		tName->add(L"core");
-		tName->add(L"FnPtr", params);
+		tName->add(L"Fn", params);
 		Type *r = as<Type>(e.scope()->find(tName));
-		assert(r, "The FnPtr type was not found!");
+		assert(r, "The Fn type was not found!");
 		return r;
 	}
 
