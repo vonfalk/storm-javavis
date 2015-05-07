@@ -35,6 +35,10 @@ public:
 		return *this;
 	}
 
+	inline bool ok() const {
+		return failed == 0 && crashed == 0;
+	}
+
 	friend std::wostream &operator <<(std::wostream &to, const TestResult &r);
 };
 

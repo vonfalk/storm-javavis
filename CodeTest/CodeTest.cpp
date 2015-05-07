@@ -127,7 +127,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 
 	initDebug();
 
-	Tests::run();
+	TestResult r = Tests::run();
 
 	// Arena arena;
 	// testReplace(arena);
@@ -136,6 +136,6 @@ int _tmain(int argc, _TCHAR* argv[]) {
 
 	// testFunction(arena);
 
-	return 0;
+	return r.ok() ? 0 : 1;
 }
 

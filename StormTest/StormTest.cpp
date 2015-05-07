@@ -10,6 +10,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	Timestamp start;
 
+	TestResult r;
+
 	try {
 		// Initialize our engine.
 		Path root = Path::executable() + Path(L"../root/");
@@ -18,7 +20,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		PLN("Compiler boot: " << (Timestamp() - start));
 
-		Tests::run();
+		r = Tests::run();
 
 		gEngine = null;
 		Timestamp tests;
@@ -31,6 +33,6 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	Object::dumpLeaks();
 
-	return 0;
+	return r.ok() ? 0 : 1;
 }
 
