@@ -347,8 +347,6 @@ namespace storm {
 	VTableCalls::~VTableCalls() {
 		clear(stormCreated);
 		clear(cppCreated);
-        // This is OK to not use Engine::destroy, since this will be done very late in compiler shutdown.
-		clear(binaries);
 	}
 
 	code::Ref VTableCalls::call(VTablePos pos) {
@@ -397,8 +395,6 @@ namespace storm {
 		l << jmp(ptrA);
 
 		Binary *b = new Binary(engine.arena, l);
-		binaries.push_back(b);
-
 		RefSource *s = new RefSource(engine.arena, L"stormVtableCall" + ::toS(i));
 		s->set(b);
 		return s;
@@ -426,8 +422,6 @@ namespace storm {
 		l << jmp(ptrA);
 
 		Binary *b = new Binary(engine.arena, l);
-		binaries.push_back(b);
-
 		RefSource *s = new RefSource(engine.arena, L"cppVtableCall" + ::toS(i));
 		s->set(b);
 		return s;

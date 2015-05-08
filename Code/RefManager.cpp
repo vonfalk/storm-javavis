@@ -21,15 +21,23 @@ namespace code {
 	void RefManager::clear() {
 		// We need to clean out everything. All sources should be dead by now, which means
 		// that everything is an island and can be cleared.
-		for (SourceMap::iterator i = sources.begin(), end = sources.end(); i != end; ++i) {
-			SourceInfo *source = i->second;
+		vector<SourceInfo *> toDestroy;
+		toDestroy.reserve(sources.size());
+
+		// Avoid circular misery. Eg. when destoying a Content destroys more references and so on...
+		for (SourceMap::iterator i = sources.begin(), end = sources.end(); i != end; ++i)
+			toDestroy.push_back(i->second);
+		sources.clear();
+
+
+		for (nat i = 0; i < toDestroy.size(); i++) {
+			SourceInfo *source = toDestroy[i];
 			assert(!source->alive, L"Source " + source->name + L" outlives the RefManager.");
 
 			detachContent(source);
 			delete source;
 		}
 
-		sources.clear();
 		assert(contents.empty(), L"Some content still left!");
 		contents.clear();
 	}
@@ -178,8 +186,9 @@ namespace code {
 	}
 
 	void RefManager::removeLightRef(nat id) {
-		if (sources.count(id) == 1) {
-			atomicDecrement(sources[id]->lightRefs);
+		SourceMap::const_iterator i = sources.find(id);
+		if (i != sources.end()) {
+			atomicDecrement(i->second->lightRefs);
 		}
 	}
 
@@ -191,8 +200,9 @@ namespace code {
 	}
 
 	void RefManager::removeReference(Reference *r, nat id) {
-		if (sources.count(id) == 1) {
-			SourceInfo *src = sources[id];
+		SourceMap::const_iterator i = sources.find(id);
+		if (i != sources.end()) {
+			SourceInfo *src = i->second;
 			src->refs.erase(r);
 		}
 	}

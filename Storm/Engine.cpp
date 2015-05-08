@@ -115,9 +115,11 @@ namespace storm {
 	}
 
 	Engine::~Engine() {
-		// Disable warnings for unneeded references at this point... We do not know the correct
-		// destruction order, and it would not be worth it to compute it.
+		// Tell the arena that we will remove everything shortly, so that it knows it is not worth
+		// the effort to compute which RefSources it can remove early.
 		arena.preShutdown();
+
+		PLN("Shutting down...");
 
 		// We need to destroy all types last, otherwise we will crash badly!
 		vector<Auto<Type>> types = rootPkg->findTypes();
@@ -143,6 +145,7 @@ namespace storm {
 		}
 		types.clear();
 		cached.clear();
+
 		delete vcalls;
 
 		t->release();

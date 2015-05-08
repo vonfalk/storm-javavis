@@ -152,9 +152,6 @@ namespace storm {
 		vector<code::RefSource *> stormCreated;
 		vector<code::RefSource *> cppCreated;
 
-		// Created binary objects. 'random' order.
-		vector<code::Binary *> binaries;
-
 		// Get the call.
 		code::Ref call(nat i, vector<code::RefSource *> &src, code::RefSource *(VTableCalls::*create)(nat));
 

@@ -151,6 +151,7 @@ namespace storm {
 		reference(ref, *content),
 		added(false) {
 		reference.onChange = memberFn(this, &DelegatedCode::updated);
+		content->set(ref.address());
 	}
 
 	DelegatedCode::~DelegatedCode() {
