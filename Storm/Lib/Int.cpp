@@ -102,7 +102,7 @@ namespace storm {
 
 	IntType::IntType() : Type(L"Int", typeValue | typeFinal, Size::sInt, null) {}
 
-	void IntType::lazyLoad() {
+	bool IntType::loadAll() {
 		vector<Value> r(1, Value(this, true));
 		vector<Value> ii(2, Value(this));
 		Value b(boolType(engine));
@@ -131,6 +131,8 @@ namespace storm {
 
 		vector<Value> rr(2, Value(this, true));
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&intCopyCtor))));
+
+		return Type::loadAll();
 	}
 
 
@@ -230,7 +232,7 @@ namespace storm {
 
 	NatType::NatType() : Type(L"Nat", typeValue | typeFinal, Size::sNat, null) {}
 
-	void NatType::lazyLoad() {
+	bool NatType::loadAll() {
 		vector<Value> r(1, Value(this, true));
 		vector<Value> ii(2, Value(this));
 		Value b(boolType(engine));
@@ -258,6 +260,8 @@ namespace storm {
 
 		vector<Value> rr(2, Value(this, true));
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&natCopyCtor))));
+
+		return Type::loadAll();
 	}
 
 
@@ -345,7 +349,7 @@ namespace storm {
 
 	ByteType::ByteType() : Type(L"Byte", typeValue | typeFinal, Size::sByte, null) {}
 
-	void ByteType::lazyLoad() {
+	bool ByteType::loadAll() {
 		vector<Value> r(1, Value(this, true));
 		vector<Value> ii(2, Value(this));
 		Value b(boolType(engine));
@@ -371,6 +375,8 @@ namespace storm {
 
 		vector<Value> rr(2, Value(this, true));
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&byteCopyCtor))));
+
+		return Type::loadAll();
 	}
 
 

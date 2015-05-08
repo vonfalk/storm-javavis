@@ -38,13 +38,15 @@ namespace storm {
 			// Associated thread (if any).
 			Auto<TypeName> thread;
 
-		protected:
 			// Load the contents lazily.
-			virtual void lazyLoad();
+			virtual bool loadAll();
 
 		private:
 			// Contents of the class.
 			Auto<SStr> content;
+
+			// Allowing lazy loads?
+			bool allowLazyLoad;
 		};
 
 

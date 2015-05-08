@@ -18,9 +18,8 @@ namespace storm {
 		// Create. (first parameter is return value).
 		FnPtrType(const vector<Value> &params);
 
-	protected:
 		// Lazy loading.
-		virtual void lazyLoad();
+		virtual bool loadAll();
 	};
 
 	// See FnPtr.h for 'fnPtrType' function.

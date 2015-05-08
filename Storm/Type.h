@@ -134,21 +134,15 @@ namespace storm {
 		// VTable for this type. Not too useful if we're a value type, but maintained anyway for simplicity.
 		VTable vtable;
 
-		// Lazy load ourselves when someone wants our contents.
-		virtual ArrayP<Named> *STORM_FN contents();
+		// Lazy loading callback from NameSet. Note: remember to call this function, at least when the load
+		// succeeded!
+		virtual bool loadAll();
 
 	protected:
 		virtual void output(wostream &to) const;
 
 		// Find stuff.
 		virtual Named *findHere(const String &name, const vector<Value> &params);
-
-		// Called before the first time any information is wanted.
-		// NOTE: Inheritance information is assumed to be set up in a non-lazy way!
-		virtual void lazyLoad();
-
-		// Call to inhibit lazy-loading until later.
-		void allowLazyLoad(bool v);
 
 	private:
 		// Validate parameters to added members.
@@ -168,12 +162,6 @@ namespace storm {
 
 		// Which thread should we be running on?
 		Auto<NamedThread> thread;
-
-		// Loaded the lazy parts?
-		bool lazyLoaded;
-
-		// Loading the lazy parts?
-		bool lazyLoading;
 
 		// Update the handle.
 		void updateHandle(bool force);

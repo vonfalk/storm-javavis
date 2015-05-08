@@ -2,6 +2,10 @@ Syntax
 ---------
 Check so that *, + and ? are greedy in ambiguous cases!
 
+Something weird is going on when parsing expressions like: &a.foo(). If the priority of the
+fnPtr-rule is decreased from 20 to 10, it parses like this: (&a).foo(), which is strange because
+there is no other ambiguous options in the same rule that should interfere. Investigate!
+
 Some kind of namespace support for the syntax rules. For example: the delimiter in BF and BS are quite different!
 
 Consider adding the -> syntax for captures in BNF rules, to be symmetric with other variables.
@@ -18,8 +22,9 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
-Move the logic for lazy loading into the NameSet class? Now it is duplicated in Type and Package, and the NameSet
-can not ask the class to load itself, for example when calling "contents".
+Replace functions that take 'name' + 'params' with a version that takes 'NamePart' instead. Expose to Storm where possible.
+
+Make sure that lazy-loading packages like 'Lang' does not succeed on Windows when the folder is named 'lang'.
 
 Maybe move thread calls to be another level of lookup as well? This would simplify the implementation of FnPtr,
 since it would not have to deal with copying parameters.

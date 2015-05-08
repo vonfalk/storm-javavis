@@ -189,7 +189,7 @@ namespace storm {
 		matchFlags = matchNoInheritance;
 	}
 
-	void FnPtrType::lazyLoad() {
+	bool FnPtrType::loadAll() {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
 		Value cloneEnv = Value::thisPtr(CloneEnv::stormType(e));
@@ -201,6 +201,8 @@ namespace storm {
 		fnCall[0] = t;
 		add(steal(dynamicFunction(e, params[0], L"call", fnCall, callCode(this))));
 		add(steal(nativeDtor(e, this, &destroyPtr)));
+
+		return Type::loadAll();
 	}
 
 	static Named *generateFnPtr(Par<NamePart> part) {

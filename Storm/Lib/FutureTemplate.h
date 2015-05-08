@@ -24,9 +24,8 @@ namespace storm {
 		// Parameter type.
 		const Value param;
 
-	protected:
 		// Lazy loading.
-		virtual void lazyLoad();
+		virtual bool loadAll();
 
 	private:
 		// Load functions assuming param is an object.

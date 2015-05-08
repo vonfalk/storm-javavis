@@ -21,7 +21,6 @@ namespace storm {
 
 		syntax = CREATE(SyntaxSet, this);
 		fileContents = readAllText(path);
-		readIncludes();
 	}
 
 	bs::File::~File() {}
@@ -55,6 +54,8 @@ namespace storm {
 	void bs::File::readContents() {
 		if (contents)
 			return;
+
+		readIncludes();
 
 		Auto<Parser> parser = CREATE(Parser, this, syntax, fileContents, file);
 		parser->parse(L"File", headerSize);

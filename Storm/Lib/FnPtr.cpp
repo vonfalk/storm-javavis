@@ -12,7 +12,7 @@ namespace storm {
 									bool strongThis, bool member) {
 		Engine &e = type->engine;
 		FnPtrBase *result = new (type) FnPtrBase(code::Ref::fromLea(e.arena, refData), t, member, thisPtr, strongThis);
-		type->vtable.update(result);
+		setVTable(result);
 		return result;
 	}
 

@@ -125,7 +125,7 @@ namespace storm {
 		matchFlags = matchNoInheritance;
 	}
 
-	void ArrayType::lazyLoad() {
+	bool ArrayType::loadAll() {
 		if (param.ref)
 			throw InternalError(L"References are not supported by the array yet.");
 
@@ -134,7 +134,7 @@ namespace storm {
 		else
 			loadValueFns();
 
-		// TODO: We want to generate a toS!
+		return Type::loadAll();
 	}
 
 	void ArrayType::loadClassFns() {

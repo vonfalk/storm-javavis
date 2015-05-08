@@ -46,7 +46,7 @@ namespace storm {
 
 
 	bs::Class::Class(TypeFlags flags, const SrcPos &pos, const String &name, Par<SStr> content)
-		: Type(name, flags), declared(pos), content(content) {}
+		: Type(name, flags), declared(pos), content(content), allowLazyLoad(true) {}
 
 
 	void bs::Class::setScope(const Scope &scope) {
@@ -54,28 +54,36 @@ namespace storm {
 	}
 
 	void bs::Class::lookupTypes() {
-		allowLazyLoad(false);
+		allowLazyLoad = false;
+		try {
 
-		if (base) {
-			Value t = base->resolve(scope);
-			setSuper(t.type);
-			base = null;
+			if (base) {
+				Value t = base->resolve(scope);
+				setSuper(t.type);
+				base = null;
+			}
+
+			if (thread) {
+				Auto<Name> name = thread->toName(scope);
+				NamedThread *t = as<NamedThread>(scope.find(name));
+				if (!t)
+					throw SyntaxError(thread->pos, L"Can not find the thread " + ::toS(name) + L".");
+
+				setThread(t);
+				thread = null;
+			}
+
+		} catch (...) {
+			allowLazyLoad = true;
+			throw;
 		}
-
-		if (thread) {
-			Auto<Name> name = thread->toName(scope);
-			NamedThread *t = as<NamedThread>(scope.find(name));
-			if (!t)
-				throw SyntaxError(thread->pos, L"Can not find the thread " + ::toS(name) + L".");
-
-			setThread(t);
-			thread = null;
-		}
-
-		allowLazyLoad(true);
+		allowLazyLoad = true;
 	}
 
-	void bs::Class::lazyLoad() {
+	bool bs::Class::loadAll() {
+		if (!allowLazyLoad)
+			return false;
+
 		Auto<SyntaxSet> syntax = getSyntax(scope);
 
 		Auto<Parser> parser = CREATE(Parser, this, syntax, content->v, content->pos);
@@ -117,6 +125,9 @@ namespace storm {
 		if (flags & typeValue) {
 			add(steal(CREATE(TypeAssignFn, engine, this)));
 		}
+
+		// Super needs to be called!
+		return Type::loadAll();
 	}
 
 	/**

@@ -4,9 +4,14 @@
 
 namespace storm {
 
-	NameSet::NameSet(Par<Str> name) : Named(name) {}
-	NameSet::NameSet(const String &name) : Named(name) {}
-	NameSet::NameSet(const String &name, const vector<Value> &params) : Named(name, params) {}
+	NameSet::NameSet(Par<Str> name) : Named(name) { init(); }
+	NameSet::NameSet(const String &name) : Named(name) { init(); }
+	NameSet::NameSet(const String &name, const vector<Value> &params) : Named(name, params) { init(); }
+
+	void NameSet::init() {
+		loaded = false;
+		loading = false;
+	}
 
 	NameSet::~NameSet() {
 		clear();
@@ -14,6 +19,7 @@ namespace storm {
 
 	void NameSet::clear() {
 		clearMap(overloads);
+		init();
 	}
 
 	NameSet::Overload::Overload() {}
@@ -49,19 +55,38 @@ namespace storm {
 	}
 
 	Named *NameSet::findHere(const String &name, const vector<Value> &params) {
+		if (Named *found = tryFind(name, params))
+			return found;
+
+		if (loaded)
+			return null;
+
+		if (Named *found = loadName(name, params)) {
+			add(found);
+			found->release();
+			return found;
+		}
+
+		forceLoad();
+		return tryFind(name, params);
+	}
+
+	Named *NameSet::tryFind(const String &name, const vector<Value> &params) {
 		OverloadMap::const_iterator i = overloads.find(name);
 		if (i == overloads.end())
 			return null;
 
 		Overload *o = i->second;
-		if (Named *n = findHere(o, params))
+		if (Named *n = tryFind(o, params))
 			return n;
 
 		if (o->templ) {
 			Auto<NamePart> part = CREATE(NamePart, this, name, params);
 			if (Auto<Named> n = o->templ->generate(part)) {
+				assert(n->name == name, L"The template " + o->templ->name + L" returned a mismatched Name: " + n->name);
+				if (n->name != name)
+					return null;
 				add(n);
-				assert(n->name == name, L"A template returned a Named that did not match the name of the template!");
 				return n.borrow();
 			}
 		}
@@ -69,15 +94,7 @@ namespace storm {
 		return null;
 	}
 
-	void NameSet::add(Overload *to, Par<Named> n) {
-		if (findHere(to, n->params))
-			throw TypedefError(::toS(n) + L" is already defined in " + identifier());
-
-		to->items.push_back(n);
-		n->parentLookup = this;
-	}
-
-	Named *NameSet::findHere(Overload *from, const vector<Value> &params) {
+	Named *NameSet::tryFind(Overload *from, const vector<Value> &params) {
 		for (nat i = 0; i < from->items.size(); i++) {
 			Named *c = from->items[i].borrow();
 			if (candidate(c->matchFlags, c->params, params))
@@ -97,7 +114,47 @@ namespace storm {
 				return false;
 
 		return true;
+	}
 
+	void NameSet::add(Overload *to, Par<Named> n) {
+		if (tryFind(to, n->params)) {
+			DebugBreak();
+			throw TypedefError(::toS(n) + L" is already defined in " + identifier());
+		}
+
+		to->items.push_back(n);
+		n->parentLookup = this;
+	}
+
+	Named *NameSet::loadName(const String &name, const vector<Value> &params) {
+		// Implemented in derived classes. Indicate 'not found'.
+		return null;
+	}
+
+	bool NameSet::loadAll() {
+		// Implemented in derived classes.
+		return true;
+	}
+
+	void NameSet::forceLoad() {
+		if (loaded)
+			return;
+
+		if (loading) {
+			// This happens quite a lot...
+			// WARNING(L"Recursive loading attempt of " << identifier());
+			return;
+		}
+
+		loading = true;
+		try {
+			if (loadAll())
+				loaded = true;
+		} catch (...) {
+			loading = false;
+			throw;
+		}
+		loading = false;
 	}
 
 	NameSet::iterator NameSet::begin() const {
@@ -143,6 +200,8 @@ namespace storm {
 	}
 
 	ArrayP<Named> *NameSet::contents() {
+		forceLoad();
+
 		Auto<ArrayP<Named>> r = CREATE(ArrayP<Named>, this);
 		for (iterator i = begin(), end = this->end(); i != end; ++i) {
 			r->push(*i);

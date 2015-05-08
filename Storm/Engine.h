@@ -99,6 +99,9 @@ namespace storm {
 		// Find the given package. Returns null on failure. If 'create' is
 		// true, then all packages that does not yet exist are created. All returns
 		// a borrowed ptr.
+		// The package(path, create) function will, when create is true, try its best to not
+		// lazy-load package contents (except sub-packages) to make it usable during compiler boot,
+		// before it is possible to load packages.
 		Package *package(Par<Name> path, bool create = false);
 		Package *package(const String &name);
 		Package *rootPackage();

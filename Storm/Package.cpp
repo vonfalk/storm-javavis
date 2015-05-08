@@ -12,14 +12,9 @@
 
 namespace storm {
 
-	Package::Package(const String &name) : NameSet(name), pkgPath(null) {
-		init();
-	}
+	Package::Package(const String &name) : NameSet(name), pkgPath(null), syntaxLoaded(false) {}
 
-	Package::Package(Par<Url> path) : NameSet(steal(path->title())->v) {
-		pkgPath = path;
-		init();
-	}
+	Package::Package(Par<Url> path) : NameSet(steal(path->title())->v), pkgPath(path), syntaxLoaded(false) {}
 
 	NameLookup *Package::parent() const {
 		return parentLookup;
@@ -27,11 +22,6 @@ namespace storm {
 
 	Url *Package::url() const {
 		return pkgPath.ret();
-	}
-
-	void Package::init() {
-		loaded = false;
-		loading = false;
 	}
 
 	Package::~Package() {}
@@ -60,69 +50,75 @@ namespace storm {
 		}
 	}
 
-	Named *Package::findHere(const String &name, const vector<Value> &params) {
-		if (Named *named = NameSet::findHere(name, params))
-			return named;
-
-		if (params.size() == 0)
-			if (Package *pkg = loadPackage(name))
+	Named *Package::loadName(const String &name, const vector<Value> &params) {
+		// We are only loading packages this way at the moment.
+		if (params.size() == 0) {
+			if (Package *pkg = loadPackage(name)) {
 				return pkg;
+			}
+		}
 
-		if (loaded)
-			return null;
+		return null;
+	}
 
-		load();
-		return NameSet::findHere(name, params);
+	bool Package::loadAll() {
+		// Do not load things during compiler startup. Doing that will most probably fail
+		// since we are in the process of setting things up.
+		if (!engine().initialized())
+			return false;
+
+		if (!pkgPath)
+			return true;
+
+		Auto<ArrayP<Url>> children = pkgPath->children();
+
+		// Load any remaining packages...
+		for (nat i = 0; i < children->count(); i++) {
+			Auto<Url> &now = children->at(i);
+			if (now->dir()) {
+				Auto<Str> name = now->name();
+				if (tryFind(name->v, vector<Value>()) == null) {
+					add(steal(loadPackage(name->v)));
+				}
+			}
+		}
+
+		// Load all code.
+		loadFiles(children);
+
+		return true;
 	}
 
 	Package *Package::loadPackage(const String &name) {
-		assert(NameSet::findHere(name, vector<Value>()) == null);
-
 		// Virtual package, can not be auto loaded.
 		if (pkgPath == null)
 			return null;
 
+		// TODO: Make sure this is case sensitive!
 		Auto<Url> sub = pkgPath->push(name);
 		if (!sub->exists())
 			return null;
 
-		Auto<Package> pkg = CREATE(Package, this, sub);
-		add(pkg);
-		return pkg.borrow();
+		return CREATE(Package, this, sub);
 	}
 
-	SyntaxRules &Package::syntax() {
-		load();
+	const SyntaxRules &Package::syntax() {
+		if (!syntaxLoaded)
+			forceLoad();
 		return syntaxRules;
 	}
 
-	void Package::load() {
-		if (!engine().initialized())
-			return;
-		if (loaded)
-			return;
-		if (!pkgPath)
-			return;
-		if (loading)
-			return;
-		loading = true;
-		try {
-			loadAlways();
-		} catch (...) {
-			loading = false;
-			throw;
-		}
-		loading = false;
-		loaded = true;
+	SyntaxRules &Package::loadSyntaxTo() {
+		return syntaxRules;
 	}
 
-	void Package::loadAlways() {
+	void Package::loadFiles(Auto<ArrayP<Url>> children) {
 		typedef hash_map<Auto<Name>, Auto<PkgFiles> > M;
 		M files;
 		vector<Auto<PkgReader> > toLoad;
 
 		try {
-			files = syntaxPkg(pkgPath->children());
+			files = syntaxPkg(children);
 
 			Auto<Name> myName = path();
 
@@ -138,6 +134,8 @@ namespace storm {
 			for (nat i = 0; i < toLoad.size(); i++) {
 				toLoad[i]->readSyntax();
 			}
+
+			syntaxLoaded = true;
 
 			// Load all types.
 			for (nat i = 0; i < toLoad.size(); i++) {
@@ -158,10 +156,10 @@ namespace storm {
 			// We did nothing...
 			syntaxRules.clear();
 			NameSet::clear();
+			syntaxLoaded = false;
 			TODO(L"We can not clear everything here, that removes potential built-in types in the same pkg!");
 			throw;
 		}
-
 	}
 
 	PkgReader *Package::createReader(Par<Name> pkg, Par<PkgFiles> files) {

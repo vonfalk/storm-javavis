@@ -7,6 +7,14 @@
 
 namespace storm {
 
+	static void CODECALL destroyClass(FutureP<Object> *v) {
+		v->~FutureP<Object>();
+	}
+
+	static void CODECALL destroyValue(FutureBase *v) {
+		v->~FutureBase();
+	}
+
 	static void CODECALL createClass(void *mem) {
 		new (mem) FutureP<Object>();
 	}
@@ -100,7 +108,7 @@ namespace storm {
 		setSuper(FutureBase::stormType(engine));
 	}
 
-	void FutureType::lazyLoad() {
+	bool FutureType::loadAll() {
 		if (param.ref)
 			throw InternalError(L"References are not supported by the Future yet.");
 
@@ -108,6 +116,8 @@ namespace storm {
 			loadClassFns();
 		else
 			loadValueFns();
+
+		return Type::loadAll();
 	}
 
 	void FutureType::loadClassFns() {
@@ -120,6 +130,7 @@ namespace storm {
 		add(steal(nativeFunction(e, Value(), L"post", valList(2, t, param), address(&postClass))));
 		add(steal(nativeFunction(e, param, L"result", valList(1, t), address(&resultClass))));
 		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&FutureBase::deepCopy))));
+		add(steal(nativeDtor(e, this, &destroyClass)));
 	}
 
 	void FutureType::loadValueFns() {
@@ -133,6 +144,7 @@ namespace storm {
 		add(steal(nativeFunction(e, Value(), L"post", valList(2, t, ref), address(&postValue))));
 		add(steal(dynamicFunction(e, param, L"result", valList(1, t), resultValue())));
 		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&FutureBase::deepCopy))));
+		add(steal(nativeDtor(e, this, &destroyValue)));
 	}
 
 	Type *futureType(Engine &e, const Value &type) {

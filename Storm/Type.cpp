@@ -36,9 +36,6 @@ namespace storm {
 	}
 
 	void Type::init(TypeFlags flags) {
-		lazyLoading = false;
-		lazyLoaded = false;
-
 		typeRef.set(this);
 
 		// Enforce that all objects inherit from Object. Note that the flag 'typeManualSuper' is
@@ -58,28 +55,10 @@ namespace storm {
 		NameSet::clear();
 	}
 
-	void Type::allowLazyLoad(bool allow) {
-		lazyLoading = !allow;
-	}
-
-	void Type::lazyLoad() {}
-
-	void Type::ensureLoaded() {
-		if (!lazyLoaded) {
-			if (lazyLoading)
-				throw InternalError(L"Cyclic loading of " + identifier() + L" detected!");
-
-			lazyLoading = true;
-			try {
-				lazyLoad();
-			} catch (...) {
-				lazyLoading = false;
-				throw;
-			}
-			lazyLoading = false;
-			updateVirtual();
-		}
-		lazyLoaded = true;
+	bool Type::loadAll() {
+		// We need to update the VTables on successful load!
+		updateVirtual();
+		return true;
 	}
 
 	void Type::clear() {
@@ -119,7 +98,7 @@ namespace storm {
 
 	Size Type::size() {
 		if (mySize == Size()) {
-			ensureLoaded();
+			forceLoad();
 
 			Size s = superSize();
 			mySize = layout.size(s);
@@ -229,9 +208,6 @@ namespace storm {
 	}
 
 	Named *Type::findHere(const String &name, const vector<Value> &params) {
-		if (!lazyLoading)
-			ensureLoaded();
-
 		if (Named *n = NameSet::findHere(name, params))
 			return n;
 
@@ -252,8 +228,6 @@ namespace storm {
 
 		if (super())
 			to << L" : " << super()->identifier();
-		if (!lazyLoaded)
-			to << L"(not loaded)";
 		to << ":";
 
 		if (flags & typeClass)
@@ -423,7 +397,7 @@ namespace storm {
 		// Replace the 'this' parameter, otherwise we would never get a match!
 		vector<Value> params = to->params;
 		params[0] = Value::thisPtr(this);
-		Function *match = as<Function>(NameSet::findHere(to->name, params));
+		Function *match = as<Function>(NameSet::tryFind(to->name, params));
 		if (to == match)
 			return null;
 		return match;
@@ -437,11 +411,6 @@ namespace storm {
 		vector<Type *> children = chain.children();
 		for (nat i = 0; i < children.size(); i++)
 			children[i]->insertOverloads(fn);
-	}
-
-	ArrayP<Named> *Type::contents() {
-		ensureLoaded();
-		return NameSet::contents();
 	}
 
 }

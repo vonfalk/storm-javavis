@@ -40,7 +40,11 @@ namespace storm {
 
 		// Get a list of all syntax options in this package.
 		// The options are still owned by this class.
-		SyntaxRules &syntax();
+		const SyntaxRules &syntax();
+
+		// Get the object that stores all syntax here. The Rules will not be populated before, since
+		// this function is only intended to be used when actually loading syntax.
+		SyntaxRules &loadSyntaxTo();
 
 		// Get parent.
 		virtual NameLookup *parent() const;
@@ -48,10 +52,11 @@ namespace storm {
 		// Get our url. TODO: Should not return null for Storm!
 		virtual Url *STORM_FN url() const;
 
-	protected:
-		// Find a name here.
-		virtual Named *findHere(const String &name, const vector<Value> &params);
+		// Lazy-loading.
+		virtual Named *loadName(const String &name, const vector<Value> &params);
+		virtual bool loadAll();
 
+	protected:
 		// Output.
 		virtual void output(std::wostream &to) const;
 
@@ -62,18 +67,8 @@ namespace storm {
 		// Rules present in this package.
 		SyntaxRules syntaxRules;
 
-		/**
-		 * Lazy-loading status:
-		 */
-
-		// All code files (.sto among others) examined?
-		bool loaded, loading;
-
-		// Load code if not done yet. (need something more complex when supporting re-loads).
-		void load();
-
-		// Load code unconditionally. Use load()
-		void loadAlways();
+		// Syntax loaded?
+		bool syntaxLoaded;
 
 		// Create a PkgReader from 'pkg'.
 		PkgReader *createReader(Par<Name> pkg, Par<PkgFiles> files);
@@ -82,16 +77,14 @@ namespace storm {
 		void addReader(vector<Auto<PkgReader> > &to, Par<Name> pkg, Par<PkgFiles> files);
 
 		/**
-		 * Init.
-		 */
-		void init();
-
-		/**
 		 * Loading of sub-packages.
 		 */
 
 		// Try to load a sub-package. Returns null on failure.
 		Package *loadPackage(const String &name);
+
+		// Load all files in the package.
+		void loadFiles(Auto<ArrayP<Url>> children);
 	};
 
 	// Find the root package.

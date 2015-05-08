@@ -16,8 +16,7 @@ namespace storm {
 		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::signedNr; }
 		virtual Function *destructor() { return null; }
 
-	protected:
-		virtual void lazyLoad();
+		virtual bool loadAll();
 	};
 
 
@@ -30,7 +29,7 @@ namespace storm {
 		virtual Function *destructor() { return null; }
 
 	protected:
-		virtual void lazyLoad();
+		virtual bool loadAll();
 	};
 
 	class ByteType : public Type {
@@ -42,7 +41,7 @@ namespace storm {
 		virtual Function *destructor() { return null; }
 
 	protected:
-		virtual void lazyLoad();
+		virtual bool loadAll();
 	};
 
 	// ToS for these types!
