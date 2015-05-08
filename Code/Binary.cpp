@@ -4,14 +4,14 @@
 
 namespace code {
 
-	Binary::Binary(Arena &arena, const String &title, const Listing &listing)
-		: title(title), arena(arena), memory(null), size(0) {
+	Binary::Binary(Arena &arena, const Listing &listing) :
+		Content(arena), arena(arena) {
 		try {
 			set(listing);
 		} catch (...) {
 			clear(references);
 			clear(parts);
-			arena.codeFree(memory);
+			arena.codeFree(address());
 			throw;
 		}
 	}
@@ -19,11 +19,11 @@ namespace code {
 	Binary::~Binary() {
 		clear(references);
 		clear(parts);
-		arena.codeFree(memory);
+		arena.codeFree(address());
 	}
 
-	void Binary::update(RefSource &ref) {
-		ref.set(memory, size);
+	void Binary::update(const Listing &listing) {
+		set(listing);
 	}
 
 	Binary::Part *Binary::Part::create(const Frame &frame, const code::Part &p) {
@@ -51,18 +51,18 @@ namespace code {
 
 		for (nat i = 0; i < from.absoluteRefs.size(); i++) {
 			const Output::UsedRef &r = from.absoluteRefs[i];
-			references.push_back(new BinaryUpdater(r.reference, title, (cpuNat *)(baseAddr + r.offset), false));
+			references.push_back(new BinaryUpdater(r.reference, *this, (cpuNat *)(baseAddr + r.offset), false));
 		}
 
 		for (nat i = 0; i < from.relativeRefs.size(); i++) {
 			const Output::UsedRef &r = from.relativeRefs[i];
-			references.push_back(new BinaryUpdater(r.reference, title, (cpuNat *)(baseAddr + r.offset), true));
+			references.push_back(new BinaryUpdater(r.reference, *this, (cpuNat *)(baseAddr + r.offset), true));
 		}
 
 		for (nat i = 0; i < from.indexedRefs.size(); i++) {
 			// We need to tell the reference system we're using these, even if we do not need to update them.
 			const Output::UsedRef &r = from.indexedRefs[i];
-			references.push_back(new Reference(r.reference, title));
+			references.push_back(new Reference(r.reference, *this));
 		}
 
 		std::swap(references, this->references);
@@ -97,15 +97,7 @@ namespace code {
 		}
 	}
 
-	void Binary::dbg_clearReferences() {
-		// For use when delaying removal of code, can be dangerous!
-		clear(references);
-	}
-
 	void Binary::set(const Listing &listing) {
-		void *oldMem = memory;
-		nat oldSize = size;
-
 		Listing transformed = machine::transform(listing, this);
 		// PLN("After transformation:" << transformed);
 
@@ -113,8 +105,8 @@ namespace code {
 		SizeOutput sizeOutput(transformed.getLabelCount());
 		machine::output(sizeOutput, arena, transformed);
 
-		size = sizeOutput.tell();
-		memory = arena.codeAlloc(size);
+		nat size = sizeOutput.tell();
+		void *memory = arena.codeAlloc(size);
 
 		try {
 			MemoryOutput memOutput(memory, sizeOutput);
@@ -126,16 +118,17 @@ namespace code {
 			metadata = (machine::FnMeta *)memOutput.lookup(transformed.metadata());
 		} catch (...) {
 			arena.codeFree(memory);
-			memory = oldMem;
-			size = oldSize;
 			throw;
 		}
 
-		arena.codeFree(oldMem);
-	}
+		// This could be dangerous...
+		if (address()) {
+			WARNING(L"Freeing code may be dangerous in a multi-threaded environment."
+					L" Consider creating a new Binary object.");
+		}
 
-	const void *Binary::getData() const {
-		return memory;
+		arena.codeFree(address());
+		Content::set(memory, size);
 	}
 
 	void Binary::destroyFrame(const machine::StackFrame &frame) const {
@@ -215,8 +208,8 @@ namespace code {
 	}
 
 
-	BinaryUpdater::BinaryUpdater(const Ref &ref, const String &title, cpuNat *at, bool relative)
-		: Reference(ref, title), at(at), relative(relative) {}
+	BinaryUpdater::BinaryUpdater(const Ref &ref, const Content &owner, cpuNat *at, bool relative)
+		: Reference(ref, owner), at(at), relative(relative) {}
 
 	void BinaryUpdater::onAddressChanged(void *newAddress) {
 		Reference::onAddressChanged(newAddress);

@@ -158,7 +158,7 @@ namespace storm {
 		TypeLayout layout;
 
 		// Type handle.
-		RefHandle typeHandle;
+		RefHandle *typeHandle;
 
 		// Which thread should we be running on?
 		Auto<NamedThread> thread;

@@ -11,8 +11,8 @@ BEGIN_TEST(TestPreserve) {
 	l << epilog();
 	l << ret(Size::sInt);
 
-	Binary b(arena, L"TestPreserve", l);
-	CHECK_EQ(callFn(b.getData(), 0), 0x00);
+	Binary b(arena, l);
+	CHECK_EQ(callFn(b.address(), 0), 0x00);
 } END_TEST
 
 static void dummy(void *ptr) {}
@@ -33,6 +33,6 @@ BEGIN_TEST(TestPreserveEx) {
 	l << epilog();
 	l << ret(Size::sInt);
 
-	Binary b(arena, L"TestPreserveEx", l);
-	CHECK_EQ(callFn(b.getData(), 0), 0x00);
+	Binary b(arena, l);
+	CHECK_EQ(callFn(b.address(), 0), 0x00);
 } END_TEST

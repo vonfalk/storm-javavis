@@ -19,10 +19,10 @@ BEGIN_TEST(TestVoid) {
 	l << epilog();
 	l << ret(Size());
 
-	Binary b(arena, L"code", l);
+	Binary b(arena, l);
 
 	tmpVar = 0;
-	call<void>(b.getData(), false);
+	call<void>(b.address(), false);
 	CHECK_EQ(tmpVar, 3);
 
 } END_TEST

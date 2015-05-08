@@ -135,15 +135,22 @@ namespace storm {
 	class DelegatedCode : public Code {
 		STORM_CLASS;
 	public:
-		DelegatedCode(code::Ref ref, const String &title);
+		DelegatedCode(code::Ref ref);
+		~DelegatedCode();
 
 	protected:
 		// Update ref.
 		virtual void newRef();
 
 	private:
+		// Our content.
+		code::Content *content;
+
 		// We refer something else here!
 		code::CbReference reference;
+
+		// Content added?
+		bool added;
 
 		// Updated.
 		void updated(void *n);

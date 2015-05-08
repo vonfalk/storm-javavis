@@ -21,9 +21,9 @@ BEGIN_TEST(TestBool) {
 	l << epilog();
 	l << ret(Size::sByte);
 
-	Binary b(arena, L"TestBool", l);
+	Binary b(arena, l);
 	typedef bool (*Fn)(cpuInt);
-	Fn fn = (Fn)b.getData();
+	Fn fn = (Fn)b.address();
 
 	CHECK((*fn)(0));
 	CHECK((*fn)(-1));

@@ -29,8 +29,8 @@ BEGIN_TEST(TestCall) {
 	l << ret(Size::sInt);
 
 	// PVAR(l);
-	Binary b(arena, L"MyFn", l);
-	const void *f = b.getData();
+	Binary b(arena, l);
+	const void *f = b.address();
 
 	copied = 0;
 	CHECK_EQ(call<cpuInt>(f, false), 22);

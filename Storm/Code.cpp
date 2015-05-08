@@ -32,7 +32,7 @@ namespace storm {
 	StaticCode::StaticCode(void *ptr) : ptr(ptr) {}
 
 	void StaticCode::newRef() {
-		toUpdate->set(ptr);
+		toUpdate->setPtr(ptr);
 	}
 
 
@@ -41,7 +41,7 @@ namespace storm {
 	 */
 
 	DynamicCode::DynamicCode(const code::Listing &src) {
-		code = new code::Binary(engine().arena, L"dynamic code", src);
+		code = new code::Binary(engine().arena, src);
 	}
 
 	DynamicCode::~DynamicCode() {
@@ -50,7 +50,7 @@ namespace storm {
 	}
 
 	void DynamicCode::newRef() {
-		code->update(*toUpdate);
+		toUpdate->set(code);
 	}
 
 
@@ -68,7 +68,7 @@ namespace storm {
 	void LazyCode::newRef() {
 		if (!code)
 			createRedirect();
-		code->update(*toUpdate);
+		toUpdate->set(code);
 	}
 
 	void LazyCode::createRedirect() {
@@ -87,7 +87,8 @@ namespace storm {
 			}
 		}
 
-		engine().fnRefs.lazyCodeFn.set(address(&LazyCode::updateCode));
+		code::RefSource &src = engine().fnRefs.lazyCodeFn;
+		src.setPtr(address(&LazyCode::updateCode));
 		setCode(r.code(engine().fnRefs.lazyCodeFn, owner->isMember(), code::ptrConst(this)));
 	}
 
@@ -126,18 +127,18 @@ namespace storm {
 			c->loaded = true;
 		}
 
-		return c->code->getData();
+		return c->code->address();
 	}
 
 	void LazyCode::setCode(const code::Listing &l) {
 		// PLN("New code for " << owner->identifier() << ":" << l);
-		code::Binary *newCode = new code::Binary(engine().arena, owner->identifier(), l);
+		code::Binary *newCode = new code::Binary(engine().arena, l);
 
 		if (code)
 			engine().destroy(code);
 		code = newCode;
 		if (toUpdate)
-			code->update(*toUpdate);
+			toUpdate->set(code);
 	}
 
 
@@ -145,17 +146,25 @@ namespace storm {
 	 * Delegated code.
 	 */
 
-	DelegatedCode::DelegatedCode(code::Ref ref, const String &title) : reference(ref, title) {
+	DelegatedCode::DelegatedCode(code::Ref ref) :
+		content(new code::Content(engine().arena)),
+		reference(ref, *content),
+		added(false) {
 		reference.onChange = memberFn(this, &DelegatedCode::updated);
 	}
 
+	DelegatedCode::~DelegatedCode() {
+		if (!added)
+			delete content;
+	}
+
 	void DelegatedCode::newRef() {
-		updated(reference.address());
+		toUpdate->set(content);
+		added = true;
 	}
 
 	void DelegatedCode::updated(void *p) {
-		if (toUpdate)
-			toUpdate->set(p);
+		content->set(p);
 	}
 
 
@@ -210,18 +219,18 @@ namespace storm {
 	StaticEngineCode::StaticEngineCode(const Value &returnType, void *ptr) : original(engine().arena, L"ref-to") {
 		using namespace code;
 
-		original.set(ptr);
+		original.setPtr(ptr);
 
 		Listing l = enginePtrThunk(engine(), returnType, original);
-		code = new Binary(engine().arena, L"static engine code", l);
+		code = new Binary(engine().arena, l);
 	}
 
 	StaticEngineCode::~StaticEngineCode() {
-		delete code;
+		engine().destroy(code);
 	}
 
 	void StaticEngineCode::newRef() {
-		code->update(*toUpdate);
+		toUpdate->set(code);
 	}
 
 }

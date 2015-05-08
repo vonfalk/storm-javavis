@@ -6,7 +6,7 @@
 namespace storm {
 
 	VTableSlot::VTableSlot(VTable &owner, Function *fn, VTablePos pos)
-		: Reference(fn->directRef(), L"vtable"), owner(owner), fn(fn), id(pos) {}
+		: Reference(fn->directRef(), *owner.ref.contents()), owner(owner), fn(fn), id(pos) {}
 
 	void VTableSlot::onAddressChanged(void *na) {
 		Reference::onAddressChanged(na);

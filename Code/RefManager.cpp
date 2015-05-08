@@ -5,177 +5,196 @@
 
 namespace code {
 
-	const nat RefManager::invalid = std::numeric_limits<nat>::max();
-
 	static nat nextId(nat c) {
-		return (c == RefManager::invalid - 1) ? 0 : c + 1;
+		if (++c == RefManager::invalid)
+			return 0;
+		else
+			return c;
 	}
 
-	RefManager::RefManager() : firstFreeIndex(0), shutdown(false) {}
+	RefManager::RefManager() : firstFreeIndex(0) {}
 
-	RefManager::~RefManager() {}
+	RefManager::~RefManager() {
+		clear();
+	}
+
+	void RefManager::clear() {
+		// We need to clean out everything. All sources should be dead by now, which means
+		// that everything is an island and can be cleared.
+		for (SourceMap::iterator i = sources.begin(), end = sources.end(); i != end; ++i) {
+			SourceInfo *source = i->second;
+			assert(!source->alive, L"Source " + source->name + L" outlives the RefManager.");
+
+			detachContent(source);
+			delete source;
+		}
+
+		sources.clear();
+		assert(contents.empty(), L"Some content still left!");
+		contents.clear();
+	}
 
 	void RefManager::preShutdown() {
-		assert(!shutdown);
-		shutdown = true;
+		// Not implemented yet.
 	}
 
-	nat RefManager::addSource(RefSource *source) {
-		// This will fail in the unlikely event that we have 2^32 elements in our
-		// array, in which case we would already be out of memory.
-		while (infoMap.count(firstFreeIndex) == 1)
-			firstFreeIndex = nextId(firstFreeIndex);
-
-		nat id = firstFreeIndex;
-		firstFreeIndex = nextId(firstFreeIndex);
-
-		Info *info = new Info;
-		info->address = null;
-		info->size = 0;
-		info->lightCount = 0;
-		info->source = source;
-
-		infoMap[id] = info;
-		addAddr(info->address, id);
-
-		return id;
-	}
-
-	void RefManager::removeSource(nat id) {
-		InfoMap::iterator i = infoMap.find(id);
-		assert(i != infoMap.end());
-		if (i == infoMap.end())
+	void RefManager::detachContent(SourceInfo *from) {
+		ContentInfo *content = from->content;
+		if (!content)
 			return;
 
-		Info *info = i->second;
-		if (!shutdown) {
-			if (info->lightCount != 0 || !info->references.empty()) {
-				PLN(info->source->getTitle() << L" still has live references!");
-				PLN(L"Light references: " << info->lightCount);
-				PLN(L"Other: ");
-				util::InlineSet<Reference> &r = info->references;
-				for (util::InlineSet<Reference>::iterator i = r.begin(), end = r.end(); i != end; i++)
-					PLN(**i);
-			}
-			assert(info->lightCount == 0);
-			assert(info->references.empty());
+		content->sources.erase(from);
+		from->content = null;
+
+		if (content->sources.empty()) {
+			// We're free to go!
+			// Do we need any more checks here?
+			contents.erase(content->content);
+			delete content->content;
+			delete content;
 		}
-		infoMap.erase(id);
-		removeAddr(info->address, id);
-		delete info;
 	}
 
-	void RefManager::setAddress(nat id, void *address, nat size) {
-		assert(infoMap.count(id));
-		Info *info = infoMap[id];
+	void RefManager::attachContent(SourceInfo *to, Content *content) {
+		ContentInfo *info;
+		ContentMap::iterator i = contents.find(content);
+		if (i == contents.end()) {
+			info = new ContentInfo;
+			info->content = content;
+			contents.insert(make_pair(content, info));
+		} else {
+			info = i->second;
+		}
+		attachContent(to, info);
+	}
 
-		removeAddr(info->address, id);
-		info->address = address;
-		info->size = size;
-		addAddr(info->address, id);
+	void RefManager::attachContent(SourceInfo *to, ContentInfo *content) {
+		assert(to->content == null, L"Content needs to be detached first!");
+		to->content = content;
+		content->sources.insert(to);
 
-		typedef util::InlineSet<Reference>::iterator iter;
-		iter end = info->references.end();
-		for (iter i = info->references.begin(); i != end; ++i) {
+		broadcast(to, content->content->address());
+	}
+
+	void RefManager::broadcast(SourceInfo *to, void *address) {
+		for (RefSet::iterator i = to->refs.begin(), end = to->refs.end(); i != end; ++i) {
+			Reference *ref = *i;
 			i->onAddressChanged(address);
 		}
 	}
 
-	nat RefManager::ownerOf(void *addr) const {
-		byte *val = (byte *)addr;
-		AddrMap::const_iterator candidate = addresses.upper_bound(val+1);
-
-		if (candidate == addresses.end())
-			return invalid;
-
-		nat id = candidate->second;
-		Info *info = infoMap.find(id)->second;
-		byte *from = (byte *)info->address;
-		if (nat(val - from) < info->size) {
-			return id;
-		} else {
-			return invalid;
+	void RefManager::broadcast(ContentInfo *to, void *address) {
+		for (SourceSet::iterator i = to->sources.begin(), end = to->sources.end(); i != end; ++i) {
+			broadcast(*i, address);
 		}
+	}
+
+	nat RefManager::freeId() {
+		// This will fail in the unlikely event that we have 2^32 elements in our
+		// array, in which case we would already be out of memory.
+		nat id = firstFreeIndex;
+		while (sources.count(id) > 0)
+			id = nextId(id);
+
+		firstFreeIndex = nextId(id);
+		return id;
+	}
+
+	nat RefManager::addSource(RefSource *source, const String &name) {
+		nat id = freeId();
+
+		SourceInfo *src = new SourceInfo;
+		src->lightRefs = 0;
+		src->content = null;
+		src->name = name;
+		src->alive = true;
+
+		sources.insert(make_pair(id, src));
+		return id;
+	}
+
+	void RefManager::removeSource(nat id) {
+		SourceMap::iterator i = sources.find(id);
+		assert(i != sources.end(), L"ID not found!");
+		if (i == sources.end())
+			return;
+
+		SourceInfo *source = i->second;
+		source->alive = false;
+
+		// Clean up stuff here if we can!
+	}
+
+	void RefManager::setContent(nat id, Content *content) {
+		SourceMap::iterator i = sources.find(id);
+		assert(i != sources.end(), L"ID not found!");
+		if (i == sources.end())
+			return;
+
+		SourceInfo *source = i->second;
+		detachContent(source);
+		attachContent(source, content);
+	}
+
+	void RefManager::updateAddress(Content *content) {
+		ContentMap::iterator i = contents.find(content);
+		if (i == contents.end())
+			return;
+
+		broadcast(i->second, content->address());
+	}
+
+	void RefManager::contentDestroyed(Content *content) {
+		assert(contents.count(content) == 0, L"Content was being destroyed after have been 'set' to something!");
+	}
+
+	nat RefManager::ownerOf(void *addr) const {
+		assert(false, L"Not implemented yet!");
+	}
+
+	void *RefManager::address(SourceInfo *from) {
+		ContentInfo *c = from->content;
+		if (c)
+			return c->content->address();
+		else
+			return null;
 	}
 
 	void *RefManager::address(nat id) const {
-		InfoMap::const_iterator i = infoMap.find(id);
-		assert(i != infoMap.end());
-		return i->second->address;
+		SourceMap::const_iterator i = sources.find(id);
+		assert(i != sources.end());
+		return address(i->second);
 	}
 
 	const String &RefManager::name(nat id) const {
-		return source(id)->getTitle();
-	}
-
-	RefSource *RefManager::source(nat id) const {
-		InfoMap::const_iterator i = infoMap.find(id);
-		assert(i != infoMap.end());
-		return i->second->source;
+		SourceMap::const_iterator i = sources.find(id);
+		assert(i != sources.end());
+		return i->second->name;
 	}
 
 	void RefManager::addLightRef(nat id) {
-		assert(infoMap.count(id) == 1);
-		atomicIncrement(infoMap[id]->lightCount);
+		assert(sources.count(id) == 1);
+		atomicIncrement(sources[id]->lightRefs);
 	}
 
 	void RefManager::removeLightRef(nat id) {
-		if (!shutdown) {
-			assert(infoMap.count(id) == 1);
-		}
-
-		if (infoMap.count(id) == 1) {
-			atomicDecrement(infoMap[id]->lightCount);
+		if (sources.count(id) == 1) {
+			atomicDecrement(sources[id]->lightRefs);
 		}
 	}
 
 	void *RefManager::addReference(Reference *r, nat id) {
-		assert(infoMap.count(id) == 1);
-		Info *info = infoMap[id];
-		info->references.insert(r);
-		return info->address;
+		assert(sources.count(id) == 1);
+		SourceInfo *src = sources[id];
+		src->refs.insert(r);
+		return address(src);
 	}
 
 	void RefManager::removeReference(Reference *r, nat id) {
-		// TODO: This could be solved nicer by removing RefSources only
-		// when their refcount reaches zero.
-		if (!shutdown) {
-			assert(infoMap.count(id) == 1);
-		}
-
-		if (infoMap.count(id) == 1) {
-			Info *info = infoMap[id];
-			info->references.erase(r);
+		if (sources.count(id) == 1) {
+			SourceInfo *src = sources[id];
+			src->refs.erase(r);
 		}
 	}
 
-	void RefManager::addAddr(void *addr, nat id) {
-		// Do not store "null".
-		if (addr == null)
-			return;
-
-		addresses.insert(make_pair(addr, id));
-	}
-
-	void RefManager::removeAddr(void *addr, nat id) {
-		// "null" is not stored.
-		if (addr == null)
-			return;
-
-		AddrMap::iterator first = addresses.lower_bound(addr);
-		AddrMap::iterator last = addresses.upper_bound(addr);
-
-		nat removed = 0;
-
-		while (first != last) {
-			if (first->second == id) {
-				first = addresses.erase(first);
-				assert(++removed <= 1);
-			} else {
-				++first;
-			}
-		}
-
-		assert(removed > 0);
-	}
 }

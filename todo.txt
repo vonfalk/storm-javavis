@@ -73,7 +73,9 @@ Overloads with derived types: pick the "best" overload in some sense.
 
 Code generation
 ----------------
-Replace RefSource with a hierarchy where RefSource can keep track of which References are used by that reference. Thereby it will be possible to delay removing the contents of Binary objects whenever the entire cycle has been removed and check for usages in the compiler.
+Replace RefSource with a hierarchy where RefSource can keep track of which References are used by
+that reference. Thereby it will be possible to delay removing the contents of Binary objects
+whenever the entire cycle has been removed and check for usages in the compiler.
 
 Optimization pass in Code that looks for the pattern: addRef -> never written -> release() in dtor.
 

@@ -3,7 +3,11 @@
 
 namespace storm {
 
-	RefHandle::RefHandle() : destroyUpdater(null), createUpdater(null), deepCopyUpdater(null) {}
+	RefHandle::RefHandle(const code::Content &content) :
+		destroyUpdater(null),
+		createUpdater(null),
+		deepCopyUpdater(null),
+		content(content) {}
 
 	RefHandle::~RefHandle() {
 		delete destroyUpdater;
@@ -15,7 +19,7 @@ namespace storm {
 		if (destroyUpdater)
 			destroyUpdater->set(ref);
 		else
-			destroyUpdater = new code::AddrReference((void **)&destroy, ref, L"handle-destroy");
+			destroyUpdater = new code::AddrReference((void **)&destroy, ref, content);
 	}
 
 	void RefHandle::destroyRef() {
@@ -27,7 +31,7 @@ namespace storm {
 		if (deepCopyUpdater)
 			deepCopyUpdater->set(ref);
 		else
-			deepCopyUpdater = new code::AddrReference((void **)&deepCopy, ref, L"handle-deep-copy");
+			deepCopyUpdater = new code::AddrReference((void **)&deepCopy, ref, content);
 	}
 
 	void RefHandle::deepCopyRef() {
@@ -39,7 +43,7 @@ namespace storm {
 		if (createUpdater)
 			createUpdater->set(ref);
 		else
-			createUpdater = new code::AddrReference((void **)&create, ref, L"handle-create");
+			createUpdater = new code::AddrReference((void **)&create, ref, content);
 	}
 
 }

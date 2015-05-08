@@ -14,9 +14,9 @@ BEGIN_TEST(TestMul) {
 	l << epilog();
 	l << ret(Size::sInt);
 
-	Binary b(arena, L"MulTest", l);
+	Binary b(arena, l);
 	typedef cpuInt (*F)(cpuInt, cpuInt);
-	F f = (F)b.getData();
+	F f = (F)b.address();
 
 	CHECK_EQ((*f)(2, 2), 4);
 

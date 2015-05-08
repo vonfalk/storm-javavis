@@ -43,10 +43,10 @@ BEGIN_TEST(TestException) {
 	l << epilog();
 	l << ret(Size::sInt);
 
-	Binary output(arena, L"MyFunction", l);
+	Binary output(arena, l);
 
 	typedef cpuInt (*fn)(cpuInt);
-	fn p = (fn)output.getData();
+	fn p = (fn)output.address();
 
 	destroyed = 0;
 	throwError = true;
@@ -79,9 +79,9 @@ BEGIN_TEST(TestChainedException) {
 	Redirect redirect;
 	redirect.param(Size::sInt, Ref(intCleanup), false);
 	redirect.result(Size::sInt, true);
-	Binary inner(arena, L"inner", redirect.code(Ref(throwEx), false, Value()));
+	Binary *inner = new Binary(arena, redirect.code(Ref(throwEx), false, Value()));
 	RefSource innerRef(arena, L"inner");
-	inner.update(innerRef);
+	innerRef.set(inner);
 
 	// Outermost function is a regular function.
 	Listing l;
@@ -96,16 +96,16 @@ BEGIN_TEST(TestChainedException) {
 	l << epilog();
 	l << ret(Size::sInt);
 
-	Binary outer(arena, L"outer", l);
+	Binary outer(arena, l);
 
 	throwError = true;
 	destroyed = 0;
-	CHECK_ERROR(call<cpuInt>(outer.getData(), false), Error);
+	CHECK_ERROR(call<cpuInt>(outer.address(), false), Error);
 	CHECK_EQ(destroyed, 6);
 
 	throwError = false;
 	destroyed = 0;
-	CHECK_EQ(call<cpuInt>(outer.getData(), false), 3);
+	CHECK_EQ(call<cpuInt>(outer.address(), false), 3);
 	CHECK_EQ(destroyed, 5);
 } END_TEST
 
@@ -125,10 +125,10 @@ BEGIN_TEST(TestNoException) {
 	l << epilog();
 	l << ret(Size::sInt);
 
-	Binary output(arena, L"MyFn", l);
+	Binary output(arena, l);
 
 	typedef cpuInt (*Fn)(cpuInt, cpuInt);
-	Fn fn = (Fn)output.getData();
+	Fn fn = (Fn)output.address();
 
 	CHECK_EQ((*fn)(1, 2), 3);
 } END_TEST
@@ -153,9 +153,9 @@ BEGIN_TEST(TestRefException) {
 	l << epilog();
 	l << ret(Size::sInt);
 
-	Binary output(arena, L"MyFn", l);
+	Binary output(arena, l);
 
-	const void *fn = output.getData();
+	const void *fn = output.address();
 
 	destroyed = 0;
 	throwError = true;
@@ -190,9 +190,9 @@ BEGIN_TEST(TestMultipleEx) {
 	l << epilog();
 	l << ret(Size());
 
-	Binary output(arena, L"MyFn", l);
+	Binary output(arena, l);
 	typedef void (*FnPtr)();
-	FnPtr fn = (FnPtr)output.getData();
+	FnPtr fn = (FnPtr)output.address();
 
 #if defined(X86) && defined(SEH)
 	void *sehTop, *after;
@@ -264,9 +264,9 @@ BEGIN_TEST(TestDtor) {
 	l << epilog();
 	l << ret(Size());
 
-	Binary output(arena, L"MyFunction", l);
+	Binary output(arena, l);
 	typedef void (*Fn)(Large);
-	Fn fn = (Fn)output.getData();
+	Fn fn = (Fn)output.address();
 	Large obj;
 
 	correct = true;

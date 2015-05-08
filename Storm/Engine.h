@@ -178,8 +178,8 @@ namespace storm {
 		// Initialized?
 		bool inited;
 
-		// Binary objects to destroy. TODO: Be more eager!
-		vector<code::Binary *> toDestroy;
+		// Objects we are keeping alive since they may be used by other threads. TODO: Be more eager!
+		vector<code::RefSource *> toDestroy;
 
 		// The cache of virtual function call stubs.
 		VTableCalls *vcalls;

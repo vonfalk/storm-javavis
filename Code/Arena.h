@@ -16,6 +16,7 @@ namespace code {
 		friend class RefSource;
 		friend class Reference;
 		friend class Ref;
+		friend class Content;
 
 		RefManager refManager;
 

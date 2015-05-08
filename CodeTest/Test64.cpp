@@ -17,8 +17,8 @@ BEGIN_TEST(Test64Asm) {
 	l << epilog();
 	l << ret(Size::sLong);
 
-	Binary b(arena, L"Test64Asm", l);
-	CHECK_EQ(callFn(b.getData(), int64(0)), 0xBBBBBBBBBB);
+	Binary b(arena, l);
+	CHECK_EQ(callFn(b.address(), int64(0)), 0xBBBBBBBBBB);
 
 } END_TEST
 
@@ -38,8 +38,8 @@ BEGIN_TEST(Test64Preserve) {
 	l << epilog();
 	l << ret(Size::sLong);
 
-	Binary b(arena, L"Test64Preserve", l);
-	CHECK_EQ(callFn(b.getData(), int64(0)), 0x123456789A);
+	Binary b(arena, l);
+	CHECK_EQ(callFn(b.address(), int64(0)), 0x123456789A);
 } END_TEST
 
 static CondFlag cf[] = {
@@ -144,8 +144,8 @@ BEGIN_TEST(Test64Cmp) {
 	l << epilog();
 	l << ret(Size::sInt);
 
-	Binary b(arena, L"Test64Cmp", l);
-	const void *p = b.getData();
+	Binary b(arena, l);
+	const void *p = b.address();
 	CHECK(check(0, 0, p));
 	CHECK(check(1, 0, p));
 	CHECK(check(0, 1, p));

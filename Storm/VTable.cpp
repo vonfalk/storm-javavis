@@ -38,7 +38,7 @@ namespace storm {
 	void VTable::createCpp(void *cppVTable) {
 		assert(replaced == null && this->cppVTable == null);
 		this->cppVTable = cppVTable;
-		ref.set(cppVTable);
+		ref.setPtr(cppVTable);
 
 		nat cppCount = 0;
 		if (cppVTable)
@@ -82,7 +82,7 @@ namespace storm {
 				replaced->replace(cppVTable);
 		}
 
-		ref.set(replaced->ptr());
+		ref.setPtr(replaced->ptr());
 		storm.clear();
 		storm.ensure(1); // For the destructor.
 		cppSlots = vector<VTableSlot*>(replaced->count(), null);
@@ -347,6 +347,7 @@ namespace storm {
 	VTableCalls::~VTableCalls() {
 		clear(stormCreated);
 		clear(cppCreated);
+        // This is OK to not use Engine::destroy, since this will be done very late in compiler shutdown.
 		clear(binaries);
 	}
 
@@ -395,11 +396,11 @@ namespace storm {
 		l << epilog();
 		l << jmp(ptrA);
 
-		Binary *b = new Binary(engine.arena, L"stormVtableCall" + ::toS(i), l);
+		Binary *b = new Binary(engine.arena, l);
 		binaries.push_back(b);
 
 		RefSource *s = new RefSource(engine.arena, L"stormVtableCall" + ::toS(i));
-		b->update(*s);
+		s->set(b);
 		return s;
 	}
 
@@ -424,11 +425,11 @@ namespace storm {
 		l << epilog();
 		l << jmp(ptrA);
 
-		Binary *b = new Binary(engine.arena, L"cppVtableCall" + ::toS(i), l);
+		Binary *b = new Binary(engine.arena, l);
 		binaries.push_back(b);
 
 		RefSource *s = new RefSource(engine.arena, L"cppVtableCall" + ::toS(i));
-		b->update(*s);
+		s->set(b);
 		return s;
 	}
 

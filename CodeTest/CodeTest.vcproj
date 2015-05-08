@@ -269,6 +269,14 @@
 				RelativePath=".\StoreRef.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestReplace.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestDestroy.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

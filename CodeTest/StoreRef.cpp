@@ -5,7 +5,7 @@ BEGIN_TEST(StoreRef) {
 	Arena arena;
 
 	RefSource src(arena, L"dummy");
-	src.set((void *)0xDEADBEEF);
+	src.setPtr((void *)0xDEADBEEF);
 
 	Listing l;
 
@@ -16,9 +16,9 @@ BEGIN_TEST(StoreRef) {
 	l << epilog();
 	l << ret(Size::sPtr);
 
-	Binary b(arena, L"storeRef", l);
+	Binary b(arena, l);
 	typedef void *(* Fn)();
-	Fn fn = (Fn)b.getData();
+	Fn fn = (Fn)b.address();
 	void *r = (*fn)();
 
 	Ref reclaimed = Ref::fromLea(arena, r);

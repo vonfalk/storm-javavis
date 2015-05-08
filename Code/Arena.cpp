@@ -7,10 +7,12 @@ namespace code {
 	Arena::Arena() : refManager(), addRef(*this, L"addRef"), releaseRef(*this, L"releaseRef") {}
 
 	Arena::~Arena() {
+		clear(externalRefs);
+		addRef.clear();
+		releaseRef.clear();
+		refManager.clear();
 		if (!alloc.empty())
 			PLN("Memory leak in code allocations detected!");
-		// assert(alloc.empty(), "Memory leak detected!");
-		clear(externalRefs);
 	}
 
 	void *Arena::codeAlloc(nat size) {
@@ -18,13 +20,13 @@ namespace code {
 	}
 
 	void Arena::codeFree(void *ptr) {
-		if (ptr != null)
+		if (ptr)
 			alloc.free(ptr);
 	}
 
 	Ref Arena::external(const String &name, void *ptr) {
 		RefSource *r = new RefSource(*this, name);
-		r->set(ptr);
+		r->setPtr(ptr);
 		externalRefs.push_back(r);
 		return Ref(*r);
 	}

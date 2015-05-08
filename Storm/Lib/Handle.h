@@ -43,7 +43,7 @@ namespace storm {
 	class RefHandle : public Handle {
 	public:
 		// Ctor.
-		RefHandle();
+		RefHandle(const code::Content &content);
 
 		// Dtor.
 		~RefHandle();
@@ -60,6 +60,7 @@ namespace storm {
 		code::AddrReference *destroyUpdater;
 		code::AddrReference *createUpdater;
 		code::AddrReference *deepCopyUpdater;
+		const code::Content &content;
 	};
 
 	/**

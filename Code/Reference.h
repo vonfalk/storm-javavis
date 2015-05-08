@@ -8,33 +8,34 @@ namespace code {
 
 	class Arena;
 
-	// There are two kinds of references: A lightweight one
-	// and a more robust one.
-	//
-	// The lightweight one (Ref) are
-	// for use during shorter time intervals, for example
-	// while generating code, or in anonymous places such
-	// as function pointers. This kind of reference can not
-	// be serialized to files, as the system has no way of
-	// knowing what is referencing code. On the other hand,
-	// they can be treated as simple value types, and they
-	// have low overhead in run-time and size. This one can
-	// also be moved around freely, as long as the ctor is
-	// called as many times as the dtor is called.
-	//
-	// The other one (Reference) is intended for more permanent
-	// storage, such as in the referenced code. This one has support
-	// for update notifications when the code has moved. It
-	// also supports serialization to file. The downside is
-	// that it requires you to use it by pointer and it can
-	// therefore not be copied easily.
+	/**
+	 * There are two kinds of references: A lightweight one and a more robust one.
+	 *
+	 * The lightweight one (Ref) are for use during shorter time intervals, for example while
+	 * generating code, or in anonymous places such as function pointers. This kind of reference can
+	 * not be serialized to files, as the system has no way of knowing what is referencing code. On
+	 * the other hand, they can be treated as simple value types, and they have low overhead in
+	 * run-time and size. This one can also be moved around freely, as long as the ctor is called as
+	 * many times as the dtor is called.
+	 *
+	 * The other one (Reference) is intended for more permanent storage, such as in the referenced
+	 * code. This one has support for update notifications when the code has moved. It also supports
+	 * serialization to file. The downside is that it requires you to use it by pointer and it can
+	 * therefore not be copied easily. Reference also allows cycle detection by requiring the user
+	 * of it to specify which 'RefSource' it is located inside. This allows the reference system to
+	 * detect cycles and resolve these correctly.
+	 */
 
 	class Reference;
 	class Reference : NoCopy, public util::SetMember<Reference>, public Printable {
 		friend class Ref;
 	public:
-		Reference(const RefSource &source, const String &title);
-		Reference(const Ref &copy, const String &title);
+		// The first parameter here is what the reference should refer _to_, while the second
+		// indicates what the reference provides. Eg, when a reference updates a piece of code,
+		// it is located in that code and should therefore be thought of as _inside_ that
+		// RefSource.
+		Reference(const RefSource &to, const Content &inside);
+		Reference(const Ref &copy, const Content &inside);
 		~Reference();
 
 		// Set to a new source.
@@ -49,8 +50,6 @@ namespace code {
 		virtual void output(wostream &to) const;
 
 	private:
-		String title;
-
 		// The Arena we belong to.
 		Arena &arena;
 
@@ -67,8 +66,8 @@ namespace code {
 	 */
 	class CbReference : public Reference {
 	public:
-		CbReference(RefSource &source, const String &title);
-		CbReference(const Ref &copy, const String &title);
+		CbReference(RefSource &source, const Content &in);
+		CbReference(const Ref &copy, const Content &in);
 
 		Fn<void, void*> onChange;
 		virtual void onAddressChanged(void *addr);
@@ -79,8 +78,8 @@ namespace code {
 	 */
 	class AddrReference : public Reference {
 	public:
-		AddrReference(void **update, RefSource &source, const String &title);
-		AddrReference(void **update, const Ref &source, const String &title);
+		AddrReference(void **update, RefSource &source, const Content &in);
+		AddrReference(void **update, const Ref &source, const Content &in);
 
 		void **update;
 		virtual void onAddressChanged(void *addr);

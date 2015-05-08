@@ -3,6 +3,7 @@
 #include "Arena.h"
 #include "Listing.h"
 #include "MachineCode.h"
+#include "RefSource.h"
 
 namespace code {
 
@@ -13,19 +14,16 @@ namespace code {
 	 * of the generated code and so on. The Binary object is therefore
 	 * created from a listing and remains static afterwards.
 	 *
-	 * The title is used to identify who is referring a specific object, and
-	 * should therefore be a human-readable string.
+	 * The title is used as the title of the RefSource object.
 	 */
-	class Binary : NoCopy {
+	class Binary : public Content {
 	public:
-		Binary(Arena &arena, const String &title, const Listing &listing);
+		Binary(Arena &arena, const Listing &listing);
 		~Binary();
 
 		// Update a refsource with our data.
-		void update(RefSource &ref);
-
-		// Get the current pointer to the underlying binary data.
-		const void *getData() const;
+		// Consider creating a new Binary instead, as this can lead to trouble in multi-threaded environments.
+		void update(const Listing &listing);
 
 		// Find the active block, given a specific location in the generated code.
 		Block blockAt(void *ip);
@@ -45,17 +43,7 @@ namespace code {
 		// Dump handlers.
 		void dbg_dump();
 
-		// Clear any references monitored from here.
-		void dbg_clearReferences();
-
 	private:
-		// Title.
-		String title;
-
-		// Allocated code chunk
-		void *memory;
-		nat size;
-
 		// The address of the backend's code metadata region.
 		machine::FnMeta *metadata;
 
@@ -89,7 +77,7 @@ namespace code {
 		// All parts in this code. The backend keeps track of which is the currently active part.
 		vector<Part *> parts;
 
-		// Update the contents of this binary.
+		// Update the contents of this binary. Bonus: overrides set() in RefSource for us!
 		void set(const Listing &listing);
 
 		void updateReferences(void *addr, const Output &from);
@@ -102,7 +90,7 @@ namespace code {
 	// Reference updater for addresses, used within the Binary class itself.
 	class BinaryUpdater : public Reference {
 	public:
-		BinaryUpdater(const Ref &ref, const String &title, cpuNat *at, bool relative);
+		BinaryUpdater(const Ref &ref, const Content &owner, cpuNat *at, bool relative);
 
 		virtual void onAddressChanged(void *newAddress);
 	private:

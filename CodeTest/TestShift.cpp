@@ -27,9 +27,9 @@ BEGIN_TEST(TestShift) {
 	l << epilog();
 	l << ret(Size::sInt);
 
-	Binary b(arena, L"TestShift", l);
+	Binary b(arena, l);
 	typedef cpuInt (*F)(cpuInt, cpuInt);
-	F f = (F)b.getData();
+	F f = (F)b.address();
 
 	CHECK_EQ((*f)(1, 16), 0x10001);
 

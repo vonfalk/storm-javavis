@@ -38,38 +38,38 @@ namespace storm {
 		  fnPtrCreate(arena, L"FnPtrBase::createRaw")
 	{
 
-		addRef.set(address(&Object::addRef));
-		release.set(address(&Object::release));
-		copyRefPtr.set(address(&storm::copyRefPtr));
-		releasePtr.set(address(&storm::releasePtr));
-		allocRef.set(address(&stormMalloc));
-		freeRef.set(address(&stormFree));
-		createStrFn.set(address(&Str::createStr));
-		asFn.set(address(&objectAs));
+		addRef.setPtr(address(&Object::addRef));
+		release.setPtr(address(&Object::release));
+		copyRefPtr.setPtr(address(&storm::copyRefPtr));
+		releasePtr.setPtr(address(&storm::releasePtr));
+		allocRef.setPtr(address(&stormMalloc));
+		freeRef.setPtr(address(&stormFree));
+		createStrFn.setPtr(address(&Str::createStr));
+		asFn.setPtr(address(&objectAs));
 
-		spawnLater.set(address(&code::UThread::spawnLater));
-		spawnParam.set(address(&code::UThread::spawnParamMem));
-		abortSpawn.set(address(&code::UThread::abortSpawn));
+		spawnLater.setPtr(address(&code::UThread::spawnLater));
+		spawnParam.setPtr(address(&code::UThread::spawnParamMem));
+		abortSpawn.setPtr(address(&code::UThread::abortSpawn));
 
-		spawnResult.set(address(&storm::spawnThreadResult));
-		spawnFuture.set(address(&storm::spawnThreadFuture));
+		spawnResult.setPtr(address(&storm::spawnThreadResult));
+		spawnFuture.setPtr(address(&storm::spawnThreadFuture));
 
-		futureResult.set(address(&FutureBase::resultRaw));
+		futureResult.setPtr(address(&FutureBase::resultRaw));
 
-		fnParamsCtor.set(address(&storm::fnParamsCtor));
-		fnParamsDtor.set(address(&storm::fnParamsDtor));
-		fnParamsAdd.set(address(&storm::fnParamsAdd));
-		arrayToSMember.set(address(&storm::valArrayToSMember));
-		arrayToSAdd.set(address(&storm::valArrayToSAdd));
-		fnPtrCopy.set(address(&storm::fnPtrNeedsCopy));
-		fnPtrCall.set(address(&storm::fnPtrCallRaw));
-		fnPtrCreate.set(address(&storm::FnPtrBase::createRaw));
+		fnParamsCtor.setPtr(address(&storm::fnParamsCtor));
+		fnParamsDtor.setPtr(address(&storm::fnParamsDtor));
+		fnParamsAdd.setPtr(address(&storm::fnParamsAdd));
+		arrayToSMember.setPtr(address(&storm::valArrayToSMember));
+		arrayToSAdd.setPtr(address(&storm::valArrayToSAdd));
+		fnPtrCopy.setPtr(address(&storm::fnPtrNeedsCopy));
+		fnPtrCall.setPtr(address(&storm::fnPtrCallRaw));
+		fnPtrCreate.setPtr(address(&storm::FnPtrBase::createRaw));
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode)
 		: inited(false), rootPath(root), rootScope(null), arena(), fnRefs(arena), engineRef(arena, L"engine") {
 
-		engineRef.set(this);
+		engineRef.setPtr(this);
 
 		cppVTableSize = maxVTableCount();
 		vcalls = new VTableCalls(*this);
@@ -213,9 +213,10 @@ namespace storm {
 
 	void Engine::destroy(code::Binary *b) {
 		if (b) {
-			// TODO: Find a better solution for this...
-			b->dbg_clearReferences();
-			toDestroy.push_back(b);
+			// Todo: this could be solved better...
+			code::RefSource *src = new code::RefSource(arena, L"*keepalive*");
+			src->set(b);
+			toDestroy.push_back(src);
 		}
 	}
 

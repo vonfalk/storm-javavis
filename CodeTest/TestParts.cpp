@@ -56,7 +56,7 @@ BEGIN_TEST(TestParts) {
 	l << epilog();
 	l << ret(Size());
 
-	Binary bin(arena, L"TestParts", l);
+	Binary bin(arena, l);
 
 	int v = 0;
 	FnParams params;
@@ -64,22 +64,22 @@ BEGIN_TEST(TestParts) {
 
 	v = 0;
 	sum = 0;
-	CHECK_ERROR(call<void>(bin.getData(), false, params), InvalidValue);
+	CHECK_ERROR(call<void>(bin.address(), false, params), InvalidValue);
 	CHECK_EQ(sum, 1);
 
 	v = 1;
 	sum = 0;
-	CHECK_ERROR(call<void>(bin.getData(), false, params), InvalidValue);
+	CHECK_ERROR(call<void>(bin.address(), false, params), InvalidValue);
 	CHECK_EQ(sum, 3);
 
 	v = 2;
 	sum = 0;
-	CHECK_ERROR(call<void>(bin.getData(), false, params), InvalidValue);
+	CHECK_ERROR(call<void>(bin.address(), false, params), InvalidValue);
 	CHECK_EQ(sum, 6);
 
 	v = 3;
 	sum = 0;
-	CHECK_RUNS(call<void>(bin.getData(), false, params));
+	CHECK_RUNS(call<void>(bin.address(), false, params));
 	CHECK_EQ(sum, 6);
 
 } END_TEST
@@ -151,7 +151,7 @@ BEGIN_TEST(TestNestedPartsException) {
 	l << epilog();
 	l << ret(Size());
 
-	Binary bin(arena, L"TestParts", l);
+	Binary bin(arena, l);
 
 	nat results[] = {
 		1, 5, 1, 3, 8, 3, 6, 12, 6
@@ -164,13 +164,13 @@ BEGIN_TEST(TestNestedPartsException) {
 	for (nat i = 0; i < ARRAY_SIZE(results); i++) {
 		v = i;
 		sum = 0;
-		CHECK_ERROR(call<void>(bin.getData(), false, params), InvalidValue);
+		CHECK_ERROR(call<void>(bin.address(), false, params), InvalidValue);
 		CHECK_EQ(sum, results[i]);
 	}
 
 	v = ARRAY_SIZE(results);
 	sum = 0;
-	CHECK_RUNS(call<void>(bin.getData(), false, params));
+	CHECK_RUNS(call<void>(bin.address(), false, params));
 	CHECK_EQ(sum, 0);
 
 } END_TEST
@@ -231,7 +231,7 @@ BEGIN_TEST(TestNestedParts) {
 	l << epilog();
 	l << ret(Size());
 
-	Binary bin(arena, L"TestParts", l);
+	Binary bin(arena, l);
 
 	nat results[] = {
 		1, 5, 5, 7, 12, 12, 15, 21, 21
@@ -244,18 +244,18 @@ BEGIN_TEST(TestNestedParts) {
 	for (nat i = 0; i < ARRAY_SIZE(results); i++) {
 		v = i;
 		sum = 0;
-		CHECK_ERROR(call<void>(bin.getData(), false, params), InvalidValue);
+		CHECK_ERROR(call<void>(bin.address(), false, params), InvalidValue);
 		CHECK_EQ(sum, results[i]);
 
 		v = i + 100;
 		sum = 0;
-		CHECK_RUNS(call<void>(bin.getData(), false, params));
+		CHECK_RUNS(call<void>(bin.address(), false, params));
 		CHECK_EQ(sum, results[i]);
 	}
 
 	v = ARRAY_SIZE(results);
 	sum = 0;
-	CHECK_RUNS(call<void>(bin.getData(), false, params));
+	CHECK_RUNS(call<void>(bin.address(), false, params));
 	CHECK_EQ(sum, 21);
 
 } END_TEST

@@ -387,10 +387,9 @@ namespace storm {
 		else
 			l << ret(Size::sPtr);
 
-		String id = identifier() + L"<thunk>";
-		threadThunkCode = new Binary(engine().arena, id, l);
-		threadThunkRef = new RefSource(engine().arena, id);
-		threadThunkCode->update(*threadThunkRef);
+		threadThunkCode = new Binary(engine().arena, l);
+		threadThunkRef = new RefSource(engine().arena, identifier() + L"<thunk>");
+		threadThunkRef->set(threadThunkCode);
 		return threadThunkRef;
 	}
 
@@ -408,7 +407,7 @@ namespace storm {
 			lookup->detach();
 
 		if (code == null && codeRef != null)
-			lookup = CREATE(DelegatedCode, engine(), *codeRef, lookupRef->getTitle());
+			lookup = CREATE(DelegatedCode, engine(), *codeRef);
 		else
 			lookup = code;
 
@@ -432,7 +431,7 @@ namespace storm {
 			assert(parent(), "Too early!");
 			lookupRef = new code::RefSource(engine().arena, identifier() + L"<l>");
 			if (!lookup) {
-				lookup = CREATE(DelegatedCode, engine(), *codeRef, lookupRef->getTitle());
+				lookup = CREATE(DelegatedCode, engine(), *codeRef);
 				lookup->attach(this);
 			}
 			lookup->update(*lookupRef);

@@ -36,7 +36,8 @@ namespace storm {
 	}
 
 	void Type::init(TypeFlags flags) {
-		typeRef.set(this);
+		typeRef.setPtr(this);
+		typeHandle = new RefHandle(*typeRef.contents());
 
 		// Enforce that all objects inherit from Object. Note that the flag 'typeManualSuper' is
 		// set when we create Types before the Object::type has been initialized.
@@ -53,6 +54,7 @@ namespace storm {
 		vtable.clearRefs();
 		// Clear any ctors before the vtable dies.
 		NameSet::clear();
+		delete typeHandle;
 	}
 
 	bool Type::loadAll() {
@@ -107,13 +109,13 @@ namespace storm {
 	}
 
 	const Handle &Type::handle() {
-		if (typeHandle.size == 0)
+		if (typeHandle->size == 0)
 			updateHandle(true);
-		return typeHandle;
+		return *typeHandle;
 	}
 
 	void Type::updateHandle(bool force) {
-		if (typeHandle.size == 0 && !force)
+		if (typeHandle->size == 0 && !force)
 			return;
 
 		Function *dtor = destructor();
@@ -122,16 +124,16 @@ namespace storm {
 		if (!create)
 			throw RuntimeError(L"The type " + identifier() + L" does not have a copy constructor.");
 
-		typeHandle.size = size().current();
+		typeHandle->size = size().current();
 		if (dtor)
-			typeHandle.destroyRef(dtor->ref());
+			typeHandle->destroyRef(dtor->ref());
 		else
-			typeHandle.destroyRef();
+			typeHandle->destroyRef();
 		if (deepCopy)
-			typeHandle.deepCopyRef(deepCopy->ref());
+			typeHandle->deepCopyRef(deepCopy->ref());
 		else
-			typeHandle.deepCopyRef();
-		typeHandle.createRef(create->ref());
+			typeHandle->deepCopyRef();
+		typeHandle->createRef(create->ref());
 	}
 
 	void Type::setSuper(Par<Type> super) {
@@ -366,7 +368,7 @@ namespace storm {
 		// If we're a built in type, we do not want to mess with the lookup. A great one is already provided
 		// by the C++ compiler! Aside from that, it will destroy the special lookup for the destructor.
 		if (!vtable.builtIn() && pos.type != VTablePos::tNone) {
-			Auto<DelegatedCode> lookup = CREATE(DelegatedCode, engine, engine.virtualCall(pos), identifier());
+			Auto<DelegatedCode> lookup = CREATE(DelegatedCode, engine, engine.virtualCall(pos));
 			fn->setLookup(lookup);
 		}
 	}

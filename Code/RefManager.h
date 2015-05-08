@@ -8,19 +8,33 @@ namespace code {
 
 	class RefSource;
 
-	// The class responsible for managing all references withing a single arena.
-	// This class is tightly coupled with the Arena, and is not designed to be
-	// used outside the arena.
+	/**
+	 * This class is responsible for keeping track of all references within an arena. It has
+	 * ownership of all added Content objects, and it traverses the reference graph to figure out
+	 * which ones can be safely deleted. The RefSource that are destroyed are actually kept alive
+	 * until they do not have any more references (as ID:s).
+	 *
+	 * TODO? Make sure everything is thread-safe?
+	 */
 	class RefManager : NoCopy {
 	public:
 		RefManager();
 		~RefManager();
 
-		static const nat invalid;
+		// Clear all data.
+		void clear();
 
-		nat addSource(RefSource *source);
+		// Invalid id.
+		static const nat invalid = -1;
+
+		// Source operations.
+		nat addSource(RefSource *source, const String &title);
 		void removeSource(nat id);
-		void setAddress(nat id, void *address, nat size);
+		void setContent(nat id, Content *content);
+
+		// Content operations.
+		void updateAddress(Content *content);
+		void contentDestroyed(Content *content);
 
 		// Get the source that is currently associated with the address at "addr". Returns "invalid" if none exists.
 		// Works under the assumption that no sources refer overlapped chunks of memory.
@@ -30,8 +44,6 @@ namespace code {
 		void *address(nat id) const;
 		// Get the name of RefSource "id".
 		const String &name(nat id) const;
-		// Get the RefSource of "id".
-		RefSource *source(nat id) const;
 
 		// Reference counting used for the Ref class (light references).
 		void addLightRef(nat id);
@@ -41,43 +53,72 @@ namespace code {
 		void *addReference(Reference *r, nat id);
 		void removeReference(Reference *r, nat id);
 
-		// Disable checking of dead references (during shutdown).
+		// PreShutdown. Optimization that skips any checks for unreachable islands, intended to
+		// be used when we know that all references will be destroyed soon anyway.
 		void preShutdown();
 
 	private:
-		struct Info {
-			RefSource *source;
+		struct ContentInfo;
 
-			// The size and position of the used data.
-			void *address;
-			nat size;
+		typedef util::InlineSet<Reference> RefSet;
 
-			// Number of light references
-			nat lightCount;
+		// Represents a RefSource. These are kept alive until they are deemed unreachable from
+		// any live RefSource objects.
+		struct SourceInfo : public util::SetMember<SourceInfo> {
+			// Number of light references.
+			nat lightRefs;
 
-			// All "hard" references
-			util::InlineSet<Reference> references;
+			// All heavy references.
+			RefSet refs;
+
+			// Currently active content.
+			ContentInfo *content;
+
+			// Name of this SourceInfo.
+			String name;
+
+			// Is the RefSource alive?
+			bool alive;
 		};
 
-		// Map from indices to info-structs.
-		typedef hash_map<nat, Info *> InfoMap;
-		InfoMap infoMap;
+		typedef util::InlineSet<SourceInfo> SourceSet;
+
+		// Extra data about a Content object.
+		struct ContentInfo {
+			// All Source objects that have this Content set at the moment.
+			SourceSet sources;
+
+			// The actual Content object. We own this pointer.
+			Content *content;
+		};
+
+		// index->SourceInfo
+		typedef hash_map<nat, SourceInfo *> SourceMap;
+		SourceMap sources;
+
+		// Content*->ContentInfo
+		typedef hash_map<Content *, ContentInfo *> ContentMap;
+		ContentMap contents;
 
 		// First possible free index.
 		nat firstFreeIndex;
 
-		// Map containing current addresses mapping to indices.
-		typedef std::multimap<void *, nat> AddrMap;
-		AddrMap addresses;
+		// Generate a new free id.
+		nat freeId();
 
-		// Are we shutting down?
-		bool shutdown;
+		// Get an address from a SourceInfo.
+		static void *address(SourceInfo *info);
 
-		// Register an address.
-		void addAddr(void *addr, nat id);
+		// Detach content from a SourceInfo.
+		void detachContent(SourceInfo *from);
 
-		// Remove an address.
-		void removeAddr(void *addr, nat id);
+		// Attach content to a SourceInfo.
+		void attachContent(SourceInfo *to, Content *content);
+		void attachContent(SourceInfo *to, ContentInfo *content);
+
+		// Broadcast address updates.
+		void broadcast(SourceInfo *to, void *address);
+		void broadcast(ContentInfo *to, void *address);
 	};
 
 }

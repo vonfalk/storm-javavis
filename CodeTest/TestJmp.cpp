@@ -32,9 +32,9 @@ BEGIN_TEST(TestJmp) {
 
 	sumVar = 0;
 
-	Binary b(arena, L"TestJmp", l);
+	Binary b(arena, l);
 	typedef void (*Fn)();
-	Fn f = (Fn)b.getData();
+	Fn f = (Fn)b.address();
 	(*f)();
 
 	CHECK_EQ(sumVar, 55);
@@ -70,9 +70,9 @@ BEGIN_TEST(TestSetCond) {
 
 	sumVar = 0;
 
-	Binary bin(arena, L"TestSetCond", l);
+	Binary bin(arena, l);
 	typedef void (*Fn)();
-	Fn f = (Fn)bin.getData();
+	Fn f = (Fn)bin.address();
 	(*f)();
 
 	CHECK_EQ(sumVar, 55);
