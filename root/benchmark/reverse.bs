@@ -1,0 +1,55 @@
+use core:debug;
+
+class Nil {
+
+	ctor() {
+		init() {}
+	}
+
+	Str toS() {
+		"";
+	}
+}
+
+class Cons extends Nil {
+	Int value;
+	Nil next;
+
+	ctor(Int v, Nil n) {
+		init() { value = v; next = n; }
+	}
+
+	Str toS() {
+		value.toS # " " # next.toS;
+	}
+}
+
+Nil create(Int len) {
+	if (len > 0) {
+		Cons(len, create(len - 1));
+	} else {
+		Nil();
+	}
+}
+
+Nil append(Nil a, Nil b) {
+	if (a as Cons) {
+		Cons(a.value, append(a.next, b));
+	} else {
+		b;
+	}
+}
+
+Nil reverse(Nil a) {
+	if (a as Cons) {
+		append(reverse(a.next), Cons(a.value, Nil));
+	} else {
+		Nil;
+	}
+}
+
+// takes 14s
+void testReverse() {
+	for (Int i = 0; i < 100; i++)
+		reverse(create(1000));
+}

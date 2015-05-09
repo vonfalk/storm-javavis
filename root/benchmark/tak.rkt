@@ -18,3 +18,5 @@
        (display (string-append "=> " (number->string (tak at 0 (- 0 at))) "\n"))
        (runTakInt (+ 1 at)))
       0))
+
+(runTak)
