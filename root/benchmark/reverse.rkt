@@ -23,5 +23,5 @@
      (my-reverse (create 1000))
      (repeat (- x 1)))))
 
-# takes 2.5s
+;; takes 2.5s
 (consume (repeat 100))
