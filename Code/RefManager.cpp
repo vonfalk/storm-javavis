@@ -140,12 +140,19 @@ namespace code {
 		SourceInfo *source = i->second;
 		source->alive = false;
 
+		cleanSource(id, source);
+	}
+
+	void RefManager::cleanSource(nat id, SourceInfo *source) {
+		if (source->alive)
+			return;
+
 		// We do not want to do this (possibly expensive) cleanup if we're
 		// terminating soon anyway!
 		if (shutdown)
 			return;
 
-		// If we have no references to us, we can remove ourselvesl.
+		// If we have no references to us, we can remove ourselves.
 		if (source->refs.empty()) {
 			detachContent(source);
 			sources.erase(id);
@@ -223,10 +230,12 @@ namespace code {
 
 	void RefManager::removeReference(Reference *r, nat id) {
 		SourceMap::const_iterator i = sources.find(id);
-		if (i != sources.end()) {
-			SourceInfo *src = i->second;
-			src->refs.erase(r);
-		}
+		if (i == sources.end())
+			return;
+
+		SourceInfo *src = i->second;
+		src->refs.erase(r);
+		cleanSource(id, src);
 	}
 
 }

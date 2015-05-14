@@ -122,6 +122,9 @@ namespace code {
 		// Broadcast address updates.
 		void broadcast(SourceInfo *to, void *address);
 		void broadcast(ContentInfo *to, void *address);
+
+		// Remove a source if it has zero references (or is free in other ways).
+		void cleanSource(nat id, SourceInfo *source);
 	};
 
 }
