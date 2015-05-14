@@ -5,13 +5,6 @@
 
 namespace code {
 
-	static nat nextId(nat c) {
-		if (++c == RefManager::invalid)
-			return 0;
-		else
-			return c;
-	}
-
 	RefManager::RefManager() : firstFreeIndex(0) {}
 
 	RefManager::~RefManager() {
@@ -24,10 +17,12 @@ namespace code {
 		vector<SourceInfo *> toDestroy;
 		toDestroy.reserve(sources.size());
 
-		// Avoid circular misery. Eg. when destoying a Content destroys more references and so on...
+		// Tell ourselves that it is OK to not make graph searches.
+		preShutdown();
+
+		// Destroying things may alter the map itself.
 		for (SourceMap::iterator i = sources.begin(), end = sources.end(); i != end; ++i)
 			toDestroy.push_back(i->second);
-		sources.clear();
 
 
 		for (nat i = 0; i < toDestroy.size(); i++) {
@@ -35,9 +30,16 @@ namespace code {
 			assert(!source->alive, L"Source " + source->name + L" outlives the RefManager.");
 
 			detachContent(source);
+		}
+
+		// We need to delay actually deleting the sources, otherwise destroy calls may try to access
+		// dangling pointers.
+		for (nat i = 0; i < toDestroy.size(); i++) {
+			SourceInfo *source = toDestroy[i];
 			delete source;
 		}
 
+		sources.clear();
 		assert(contents.empty(), L"Some content still left!");
 		contents.clear();
 	}
@@ -87,7 +89,7 @@ namespace code {
 	void RefManager::broadcast(SourceInfo *to, void *address) {
 		for (RefSet::iterator i = to->refs.begin(), end = to->refs.end(); i != end; ++i) {
 			Reference *ref = *i;
-			i->onAddressChanged(address);
+			ref->onAddressChanged(address);
 		}
 	}
 
@@ -95,6 +97,13 @@ namespace code {
 		for (SourceSet::iterator i = to->sources.begin(), end = to->sources.end(); i != end; ++i) {
 			broadcast(*i, address);
 		}
+	}
+
+	static nat nextId(nat c) {
+		if (++c == RefManager::invalid)
+			return 0;
+		else
+			return c;
 	}
 
 	nat RefManager::freeId() {
