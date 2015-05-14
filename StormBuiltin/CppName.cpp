@@ -56,6 +56,17 @@ bool CppName::isObject() const {
 CppType CppType::read(Tokenizer &tok) {
 	CppType t;
 
+	if (tok.peek() == L"MAYBE") {
+		tok.next();
+		tok.expect(L"(");
+
+		t = CppType::read(tok);
+		t.isMaybe = true;
+
+		tok.expect(L")");
+		return t;
+	}
+
 	if (tok.peek() == L"Par") {
 		tok.next();
 		tok.expect(L"<");

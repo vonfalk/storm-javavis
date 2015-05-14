@@ -70,6 +70,9 @@ namespace storm {
 			// Function pointers are "inside" of arrays, which means that if 'array' and 'fnPtr' are
 			// set, the type is Array<FnPtr<...>>
 			fnPtr = 0x4,
+
+			// Type is a 'maybe' pointer. Always outermost, Array<Maybe<T>> is not supported.
+			maybe = 0x8,
 		};
 		Options options;
 	};

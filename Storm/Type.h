@@ -28,6 +28,13 @@ namespace storm {
 		// Final (not possible to override)?
 		typeFinal = 0x10,
 
+		// Used together with the class type, and indicates that this type is a raw pointer of some kind.
+		// This means several things: no vtables will be used (just like values), reference counting is
+		// assumed to be in place, and constructors are assumed to take a void ** as the first parameter,
+		// instead of void * (as values do).
+		// Used to implement Maybe<T>, and other special pointer types. Use with typeClass.
+		typeRawPtr = 0x20,
+
 		// Do not setup inheritance automatically (cleared in the constructor). If set,
 		// you are required to manually set classes to inherit from Object.
 		typeManualSuper = 0x80,
@@ -48,7 +55,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create a type that exists in Storm.
-		Type(const String &name, TypeFlags flags, const vector<Value> &params = vector<Value>());
+		Type(const String &name, TypeFlags flags, const vector<Value> &params = vector<Value>(), Size size = Size());
 
 		// Create a type declared in C++.
 		Type(const String &name, TypeFlags flags, Size size, void *cppVTable);

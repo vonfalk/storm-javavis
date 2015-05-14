@@ -34,6 +34,9 @@
 // 'Printable' interface to Storm. Example: class Object : public STORM_IGNORE(Printable) {};
 #define STORM_IGNORE(x) x
 
+// Mark a nullable pointer.
+#define MAYBE(x) x
+
 // Type code.
 #define TYPE_CODE									\
 	public:											\

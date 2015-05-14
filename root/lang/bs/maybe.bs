@@ -1,0 +1,13 @@
+use core:lang;
+
+// Implement support for Foo? instead of Maybe<Foo>
+TypeName maybeType(TypeName t) {
+	TypePart core("core");
+	TypePart maybe("Maybe");
+	maybe.add(t);
+
+	TypeName name;
+	name.add(core);
+	name.add(maybe);
+	name;
+}

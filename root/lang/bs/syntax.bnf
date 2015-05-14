@@ -22,6 +22,9 @@ Package => t : Type t;
 // Array type.
 Type => arrayType(t) : Type t, "\[\]";
 
+// Maybe type.
+Type => maybeType(t) : Type t, "?";
+
 // Function pointers.
 Type => fnPtrType(result, params) : "fn", FnTypes params, "->", Type result;
 Type => fnPtrType(params) : "fn", FnTypes params, "->";
@@ -97,14 +100,14 @@ Block => ExprBlock(parent) : "{", (Stmt(me) -> add, )*, "}";
 
 // If.
 If(Block block);
-If => If(block) : "if", "(", Expr(me) -> cond, ")", Stmt(me) -> trueExpr;
-If => If(block) : "if", "(", Expr(me) -> cond, ")", Stmt(me) -> trueExpr, "else", Stmt(me) -> falseExpr;
-If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfAsTrue(me) -> trueExpr;
-If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfAsTrue(me) -> trueExpr, "else", Stmt(me) -> falseExpr;
+If => If(block) : "if", "(", Expr(me) -> cond, ")", IfTrue(me) -> trueExpr;
+If => If(block) : "if", "(", Expr(me) -> cond, ")", IfTrue(me) -> trueExpr, "else", Stmt(me) -> falseExpr;
+If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfTrue(me) -> trueExpr;
+If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfTrue(me) -> trueExpr, "else", Stmt(me) -> falseExpr;
 
-// Scoping for the <as> expression.
-IfAsTrue(IfAs parent);
-IfAsTrue => IfAsTrue(parent) : Stmt(me) -> set;
+// Scoping for the if and as expressions.
+IfTrue(Block parent); // Really only If and IfAs...
+IfTrue => IfTrue(parent) : Stmt(me) -> set;
 
 // Loops.
 Loop(Block block);

@@ -93,8 +93,8 @@ namespace storm {
 		void STORM_FN deepCopy(Par<CloneEnv> env);
 	};
 
-	// Storm implementation of 'find'. TODO: Storm does not like that this one may return null!
-	Named *STORM_FN find(const Scope &scope, Par<Name> name) ON(Compiler);
+	// Storm implementation of 'find'.
+	MAYBE(Named) *STORM_FN find(const Scope &scope, Par<Name> name) ON(Compiler);
 
 
 	/**

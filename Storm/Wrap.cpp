@@ -5,6 +5,7 @@
 namespace storm {
 
 	Bool objectAs(Object *obj, Type *as) {
+		// PLN(obj << " as? " << as->identifier());
 		if (obj == null)
 			return false;
 		return obj->myType->isA(as);

@@ -13,29 +13,32 @@ static inline bool aligned(volatile void *v) {
 	return (i & 0x3) == 0;
 }
 
+#define check_aligned(v) \
+	assert(aligned(&v), toHex((void *)&v) + L" is not properly aligned");
+
 nat atomicIncrement(volatile nat &v) {
-	assert(aligned(&v));
+	check_aligned(v);
 	return (nat)InterlockedIncrement((volatile LONG *)&v);
 }
 
 nat atomicDecrement(volatile nat &v) {
-	assert(aligned(&v));
+	check_aligned(v);
 	return (nat)InterlockedDecrement((volatile LONG *)&v);
 }
 
 nat atomicCAS(volatile nat &v, nat compare, nat exchange) {
-	assert(aligned(&v));
+	check_aligned(v);
 	return (nat)InterlockedCompareExchange((volatile LONG *)&v, (LONG)exchange, (LONG)compare);
 }
 
 nat atomicRead(volatile nat &v) {
-	assert(aligned(&v));
+	check_aligned(v);
 	// Volatile reads are atomic on X86/X64 as long as they are aligned.
 	return v;
 }
 
 void atomicWrite(volatile nat &v, nat value) {
-	assert(aligned(&v));
+	check_aligned(v);
 	// Volatile writes are atomic on X86/X64 as long as they are aligned.
 	v = value;
 }

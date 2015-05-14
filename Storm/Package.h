@@ -49,8 +49,8 @@ namespace storm {
 		// Get parent.
 		virtual NameLookup *parent() const;
 
-		// Get our url. TODO: Should not return null for Storm!
-		virtual Url *STORM_FN url() const;
+		// Get our url.
+		virtual MAYBE(Url) *STORM_FN url() const;
 
 		// Lazy-loading.
 		virtual Named *loadName(const String &name, const vector<Value> &params);

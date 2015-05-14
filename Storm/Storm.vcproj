@@ -550,6 +550,10 @@
 				RelativePath=".\Basic\BSFnPtr.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\Maybe.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -942,6 +946,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSFnPtr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Maybe.h"
 				>
 			</File>
 		</Filter>

@@ -379,7 +379,8 @@ namespace storm {
 			return result.ret();
 		} else {
 			// Value. Copy ctor + call deepCopy with an env.
-			Listing l;
+			Auto<CodeGen> s = CREATE(CodeGen, e, RunOn());
+			Listing &l = s->l->v;
 			Variable to = l.frame.createParameter(Size::sPtr, false);
 			Variable from = l.frame.createParameter(Size::sPtr, false);
 			l << prolog();
@@ -389,7 +390,7 @@ namespace storm {
 
 			Type *envType = CloneEnv::stormType(e);
 			Variable env = variable(l.frame, l.frame.root(), Value(envType)).var();
-			allocObject(l, l.frame.root(), envType->defaultCtor(), vector<code::Value>(), env);
+			allocObject(s, envType->defaultCtor(), vector<code::Value>(), env);
 
 			l << fnParam(to);
 			l << fnParam(env);

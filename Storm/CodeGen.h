@@ -144,9 +144,8 @@ namespace storm {
 
 	// Create an object on the heap. Store it in variable 'to'. Only work for heap-allocated objects.
 	// TODO: Expose to Storm!
-	code::Variable allocObject(Par<CodeGen> s, Par<Function> ctor, vector<code::Value> params);
-	void allocObject(Par<CodeGen> s, Par<Function> ctor, vector<code::Value> params, code::Variable to);
-	void allocObject(code::Listing &l, code::Block b, Par<Function> ctor, vector<code::Value> params, code::Variable to);
+	code::Variable allocObject(Par<CodeGen> s, Par<Function> ctor, const vector<code::Value> &params);
+	void allocObject(Par<CodeGen> s, Par<Function> ctor, const vector<code::Value> &params, code::Variable to);
 
 	// Generate code that creates a FnParams object on the stack. Issueas a function call, and does not
 	// preserve any register values. 'memory' will be passed to the FnParams ctor as the memory to be used.

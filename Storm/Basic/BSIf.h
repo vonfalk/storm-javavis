@@ -5,6 +5,8 @@ namespace storm {
 	namespace bs {
 		STORM_PKG(lang.bs);
 
+		class IfTrue;
+
 		/**
 		 * If-statement.
 		 */
@@ -13,11 +15,14 @@ namespace storm {
 		public:
 			STORM_CTOR If(Par<Block> parent);
 
+			// Created variable that overrides the one in 'expression'.
+			LocalVar *override();
+
 			// Condition expression
 			Auto<Expr> condition;
 
 			// True branch.
-			Auto<Expr> trueCode;
+			Auto<IfTrue> trueCode;
 
 			// False branch, may be null.
 			Auto<Expr> falseCode;
@@ -26,7 +31,7 @@ namespace storm {
 			virtual void STORM_FN cond(Par<Expr> e);
 
 			// Set true/false code.
-			virtual void STORM_FN trueExpr(Par<Expr> e);
+			virtual void STORM_FN trueExpr(Par<IfTrue> e);
 			virtual void STORM_FN falseExpr(Par<Expr> e);
 
 			// Result.
@@ -34,10 +39,12 @@ namespace storm {
 
 			// Code.
 			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> r);
+
+		private:
+			// Overridden variable.
+			Auto<LocalVar> created;
 		};
 
-
-		class IfAsTrue;
 
 		/**
 		 * If-as statement.
@@ -55,7 +62,7 @@ namespace storm {
 			LocalVar *override();
 
 			// True branch.
-			Auto<IfAsTrue> trueCode;
+			Auto<IfTrue> trueCode;
 
 			// False branch, may be null.
 			Auto<Expr> falseCode;
@@ -65,7 +72,7 @@ namespace storm {
 			void STORM_FN type(Par<TypeName> t);
 
 			// Set true/false code.
-			void STORM_FN trueExpr(Par<IfAsTrue> e);
+			void STORM_FN trueExpr(Par<IfTrue> e);
 			void STORM_FN falseExpr(Par<Expr> e);
 
 			// Result.
@@ -81,15 +88,19 @@ namespace storm {
 			// Validate types.
 			void validate();
 
+			// Get the candidate type (peels away Maybe)
+			Value eValue();
+
 		};
 
 		/**
 		 * Block which knows about our variable!
 		 */
-		class IfAsTrue : public Block {
+		class IfTrue : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR IfAsTrue(Par<IfAs> parent);
+			STORM_CTOR IfTrue(Par<IfAs> parent);
+			STORM_CTOR IfTrue(Par<If> parent);
 
 			// Single contained expression.
 			Auto<Expr> expr;

@@ -2,18 +2,40 @@
 #include "BSIf.h"
 #include "Exception.h"
 #include "BSNamed.h"
+#include "Lib/Maybe.h"
 
 namespace storm {
 
 	bs::If::If(Par<Block> parent) : Block(parent) {}
 
+	bs::LocalVar *bs::If::override() {
+		if (created)
+			return created.ret();
+
+		Auto<LocalVarAccess> var = condition.as<LocalVarAccess>();
+		if (var) {
+			Value t = condition->result();
+			if (MaybeType *m = as<MaybeType>(t.type)) {
+				created = CREATE(LocalVar, this, var->var->name, m->param, var->pos);
+			}
+		}
+		return created.ret();
+	}
+
 	void bs::If::cond(Par<Expr> e) {
-		if (e->result() != Value(boolType(engine())))
-			throw TypeError(e->pos, L"The expression must evaluate to Bool.");
+		// TODO: Some kind of general interface for this?
+		Value t = e->result();
+		if (as<MaybeType>(t.type))
+			;
+		else if (e->result() == Value(boolType(engine())))
+			;
+		else
+			throw TypeError(e->pos, L"The expression must evaluate to Bool or Maybe<T>.");
+
 		condition = e;
 	}
 
-	void bs::If::trueExpr(Par<Expr> e) {
+	void bs::If::trueExpr(Par<IfTrue> e) {
 		trueCode = e;
 	}
 
@@ -34,14 +56,30 @@ namespace storm {
 	void bs::If::blockCode(Par<CodeGen> state, Par<CodeResult> r) {
 		using namespace code;
 
-		Auto<CodeResult> condResult = CREATE(CodeResult, this, Value::stdBool(engine()), state->block);
+		Value condType = condition->result().asRef(false);
+		Auto<CodeResult> condResult = CREATE(CodeResult, this, condType, state->block);
 		condition->code(state, condResult);
 
 		Label lblElse = state->to.label();
 		Label lblDone = state->to.label();
 
-		state->to << cmp(condResult->location(state).var(), byteConst(0));
-		state->to << jmp(lblElse, ifEqual);
+		VarInfo c = condResult->location(state);
+		if (as<MaybeType>(condType.type)) {
+			state->to << cmp(c.var(), natPtrConst(0));
+			state->to << jmp(lblElse, ifEqual);
+			if (created) {
+				// We cheat and create the variable here. It does not hurt, since it is not visible
+				// in the false branch anyway.
+				created->create(state);
+				state->to << mov(created->var.var(), c.var());
+				if (condType.refcounted())
+					state->to << code::addRef(created->var.var());
+				created->var.created(state);
+			}
+		} else {
+			state->to << cmp(condResult->location(state).var(), byteConst(0));
+			state->to << jmp(lblElse, ifEqual);
+		}
 
 		trueCode->code(state, r);
 
@@ -83,7 +121,7 @@ namespace storm {
 		return created.ret();
 	}
 
-	void bs::IfAs::trueExpr(Par<IfAsTrue> e) {
+	void bs::IfAs::trueExpr(Par<IfTrue> e) {
 		trueCode = e;
 	}
 
@@ -101,8 +139,16 @@ namespace storm {
 		}
 	}
 
+	Value bs::IfAs::eValue() {
+		Value r = expression->result();
+		if (MaybeType *t = as<MaybeType>(r.type)) {
+			r = t->param;
+		}
+		return r;
+	}
+
 	void bs::IfAs::validate() {
-		Value eResult = expression->result();
+		Value eResult = eValue();
 		if (!eResult.isClass())
 			throw SyntaxError(pos, L"The as operator is only applicable to class types.");
 		if (!target->isA(eResult.type))
@@ -118,8 +164,8 @@ namespace storm {
 
 		validate();
 
-		Value eResult = expression->result();
-		Auto<CodeResult> expr = CREATE(CodeResult, this, expression->result(), state->block);
+		Value eResult = eValue();
+		Auto<CodeResult> expr = CREATE(CodeResult, this, expression->result().asRef(eResult.ref), state->block);
 		expression->code(state, expr);
 		Variable exprVar = expr->location(state).var();
 
@@ -165,22 +211,29 @@ namespace storm {
 		}
 	}
 
-	bs::IfAsTrue::IfAsTrue(Par<IfAs> parent) : Block(parent) {
+	bs::IfTrue::IfTrue(Par<IfAs> parent) : Block(parent) {
 		Auto<LocalVar> override = parent->override();
 		if (override) {
 			add(override);
 		}
 	}
 
-	void bs::IfAsTrue::set(Par<Expr> e) {
+	bs::IfTrue::IfTrue(Par<If> parent) : Block(parent) {
+		Auto<LocalVar> override = parent->override();
+		if (override) {
+			add(override);
+		}
+	}
+
+	void bs::IfTrue::set(Par<Expr> e) {
 		expr = e;
 	}
 
-	Value bs::IfAsTrue::result() {
+	Value bs::IfTrue::result() {
 		return expr->result();
 	}
 
-	void bs::IfAsTrue::blockCode(Par<CodeGen> state, Par<CodeResult> to) {
+	void bs::IfTrue::blockCode(Par<CodeGen> state, Par<CodeResult> to) {
 		expr->code(state, to);
 	}
 

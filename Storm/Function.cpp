@@ -12,11 +12,20 @@
 
 namespace storm {
 
+	void validateParams(const vector<Value> &params) {
+		for (nat i = 0; i < params.size(); i++)
+			assert(params[i] != Value(), L"void parameters will get strange errors, beware!");
+	}
+
 	Function::Function(Value result, const String &name, const vector<Value> &params)
-		: Named(name, params), result(result), lookupRef(null), codeRef(null) {}
+		: Named(name, params), result(result), lookupRef(null), codeRef(null) {
+		validateParams(params);
+	}
 
 	Function::Function(Value result, Par<Str> name, Par<Array<Value>> params)
-		: Named(name, params), result(result), lookupRef(null), codeRef(null) {}
+		: Named(name, params), result(result), lookupRef(null), codeRef(null) {
+		validateParams(this->params);
+	}
 
 	Function::~Function() {
 		// Correct destruction order.
@@ -318,7 +327,8 @@ namespace storm {
 			return null;
 
 
-		Listing l;
+		Auto<CodeGen> s = CREATE(CodeGen, this, RunOn());
+		Listing &l = s->l->v;
 		l << prolog();
 
 		Variable resultParam;
@@ -354,16 +364,16 @@ namespace storm {
 		} else if (result.isValue()) {
 			l << fnCall(ref(), Size::sPtr);
 
-			Block subBlock = l.frame.createChild(l.frame.root());
+			Auto<CodeGen> sub = s->child(l.frame.createChild(l.frame.root()));
 			// Keep track of the result object.
-			Variable freeResult = l.frame.createPtrVar(subBlock, result.destructor(), freeOnException);
-			l << begin(subBlock);
+			Variable freeResult = l.frame.createPtrVar(sub->block.v, result.destructor(), freeOnException);
+			l << begin(sub->block.v);
 			l << mov(freeResult, resultParam);
 
 			// We need to create a CloneEnv object.
 			Type *envType = CloneEnv::stormType(engine());
 			Variable cloneEnv = l.frame.createPtrVar(l.frame.root(), engine().fnRefs.release);
-			allocObject(l, subBlock, envType->defaultCtor(), Actuals(), cloneEnv);
+			allocObject(sub, envType->defaultCtor(), Actuals(), cloneEnv);
 
 			// Find 'deepCopy'.
 			Function *deepCopy = result.type->deepCopyFn();
@@ -375,7 +385,7 @@ namespace storm {
 			l << fnParam(cloneEnv);
 			l << fnCall(deepCopy->ref(), Size::sPtr);
 
-			l << end(subBlock);
+			l << end(sub->block.v);
 			l << mov(ptrA, resultParam);
 		} else {
 			l << fnCall(ref(), result.size());

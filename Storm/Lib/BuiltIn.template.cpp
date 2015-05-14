@@ -43,6 +43,14 @@ namespace storm {
 	}
 
 	/**
+	 * Create a valueref indicating a MAYBE on the outermost level.
+	 */
+	ValueRef maybeRef(ValueRef r) {
+		r.options |= ValueRef::maybe;
+		return r;
+	}
+
+	/**
 	 * Make sure a ValueRef is not a function pointer.
 	 */
 	void ensureInner(const ValueRef &v) {

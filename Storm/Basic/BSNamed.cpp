@@ -143,6 +143,8 @@ namespace storm {
 	void bs::CtorCall::code(Par<CodeGen> s, Par<CodeResult> to) {
 		if (toCreate.isValue())
 			createValue(s, to);
+		else if (toCreate.type->flags & typeRawPtr)
+			createRawPtr(s, to);
 		else
 			createClass(s, to);
 	}
@@ -178,6 +180,8 @@ namespace storm {
 
 	void bs::CtorCall::createClass(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
+
+		// TODO: Refactor to use allocObject!
 
 		Engine &e = Object::engine();
 
@@ -216,6 +220,23 @@ namespace storm {
 		s->to << end(subBlock);
 	}
 
+	void bs::CtorCall::createRawPtr(Par<CodeGen> s, Par<CodeResult> to) {
+		using namespace code;
+
+		VarInfo r = to->location(s);
+		s->to << lea(ptrA, r.var());
+
+		// Parameters
+		vector<Value> values = ctor->params;
+		vector<code::Value> vars(values.size());
+		vars[0] = ptrA;
+		for (nat i = 1; i < values.size(); i++)
+			vars[i] = params->code(i - 1, s, values[i]);
+
+		// Call
+		Auto<CodeResult> voidTo = CREATE(CodeResult, this, Value(), s->block);
+		callFn(ctor, s, vars, voidTo, false, false);
+	}
 
 	bs::CtorCall *bs::defaultCtor(const SrcPos &pos, Par<Type> t) {
 		Function *f = t->defaultCtor();

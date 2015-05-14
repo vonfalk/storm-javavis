@@ -47,7 +47,7 @@ public:
 	CppType() :
 		isConst(false), isPtr(false), isRef(false),
 		isAuto(false), isPar(false), isArray(false),
-		isArrayP(false), isFnPtr(false) {}
+		isArrayP(false), isFnPtr(false), isMaybe(false) {}
 
 	// name of the type. In the case of a function pointer, this is not relevant.
 	CppName type;
@@ -56,10 +56,13 @@ public:
 	vector<CppType> fnParams;
 
 	// modifiers
-	bool isConst, isPtr, isRef, isAuto, isPar, isArray, isArrayP, isFnPtr;
+	bool isConst, isPtr, isRef, isAuto, isPar, isArray, isArrayP, isFnPtr, isMaybe;
 
 	// Clear.
-	inline void clear() { type.clear(); isConst = isPtr = isRef = isAuto = isArray = isArrayP = isFnPtr = false; }
+	inline void clear() {
+		type.clear();
+		isConst = isPtr = isRef = isAuto = isArray = isArrayP = isFnPtr = isMaybe = false;
+	}
 
 	// Read!
 	static CppType read(Tokenizer &tok);

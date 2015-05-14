@@ -8,6 +8,7 @@
 #include "Lib/ArrayTemplate.h"
 #include "Lib/FutureTemplate.h"
 #include "Lib/FnPtrTemplate.h"
+#include "Lib/Maybe.h"
 #include "Exception.h"
 #include "Function.h"
 #include "Engine.h"
@@ -38,6 +39,11 @@ namespace storm {
 		if (val.options & ValueRef::array) {
 			Type *array = arrayType(t->engine, r);
 			r = Value(array);
+		}
+
+		if (val.options & ValueRef::maybe) {
+			Type *maybe = maybeType(t->engine, r);
+			r = Value(maybe);
 		}
 
 		return r;
@@ -274,6 +280,7 @@ namespace storm {
 		Auto<Name> coreName = CREATE(Name, to, L"core");
 		Package *core = to.package(coreName, true);
 		addFnPtrTemplate(core); // needed early.
+		addMaybeTemplate(core);
 		core->add(steal(cloneTemplate(to))); // also needed early
 
 		core->add(steal(intType(to)));

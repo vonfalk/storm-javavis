@@ -1,0 +1,29 @@
+use core:debug;
+
+Dbg? maybe(Int v) {
+	Dbg? result;
+	if (v == 1) {
+		result = Dbg(v);
+	} else if (v == 2) {
+		DerivedDbg z;
+		z.set(2);
+		z.b = 2;
+		result = z;
+	}
+	result;
+}
+
+Int testMaybe(Int v) {
+	Dbg? r = maybe(v);
+	Int z = 0;
+
+	if (r as DerivedDbg) {
+		z = z + r.b;
+	}
+
+	if (r) {
+		z = z + r.get;
+	}
+
+	z;
+}

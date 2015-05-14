@@ -158,6 +158,21 @@ void Header::parse(Tokenizer &tok) {
 			tok.expect(L">");
 
 			wasType = true;
+		} else if (token == L"FnPtr" && tok.peek() == L"<") {
+			tok.next();
+			lastType.clear();
+			lastType.isFnPtr = true;
+			lastType.fnParams.push_back(CppType::read(tok));
+			while (tok.next() == L",")
+				lastType.fnParams.push_back(CppType::read(tok));
+
+			wasType = true;
+		} else if (token == L"MAYBE" && tok.peek() == L"(") {
+			tok.next();
+			lastType = CppType::read(tok);
+			lastType.isMaybe = true;
+			wasType = true;
+			tok.expect(L")");
 		} else if (token == L"*") {
 			if (!lastType.type.empty()) {
 				wasType = true;

@@ -192,6 +192,9 @@ String vtableCode(const Types &types) {
 static String valueRef(const CppType &type, const CppName &scope, const Types &types) {
 	std::wostringstream out;
 
+	if (type.isMaybe)
+		out << L"maybeRef(";
+
 	if (type.isArray || type.isArrayP)
 		out << L"arrayRef(";
 
@@ -221,6 +224,10 @@ static String valueRef(const CppType &type, const CppName &scope, const Types &t
 
 	if (type.isArray || type.isArrayP)
 		out << L")";
+
+	if (type.isMaybe)
+		out << L")";
+
 	return out.str();
 }
 

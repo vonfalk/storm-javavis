@@ -18,9 +18,9 @@ namespace storm {
 		return flags & ~typeManualSuper;
 	}
 
-	Type::Type(const String &name, TypeFlags f, const vector<Value> &params)
+	Type::Type(const String &name, TypeFlags f, const vector<Value> &params, Size size)
 		: NameSet(name, params), engine(Object::engine()), flags(maskFlags(f)), typeRef(engine.arena, L"typeRef"),
-		  mySize(), chain(this), vtable(engine) {
+		  mySize(size), chain(this), vtable(engine) {
 
 		init(f);
 	}
@@ -38,6 +38,11 @@ namespace storm {
 	void Type::init(TypeFlags flags) {
 		typeRef.setPtr(this);
 		typeHandle = new RefHandle(*typeRef.contents());
+
+		if (flags & typeRawPtr) {
+			assert(flags & typeClass, L"typeRawPtr has to be used with typeClass");
+		}
+
 
 		// Enforce that all objects inherit from Object. Note that the flag 'typeManualSuper' is
 		// set when we create Types before the Object::type has been initialized.
@@ -232,7 +237,9 @@ namespace storm {
 			to << L" : " << super()->identifier();
 		to << ":";
 
-		if (flags & typeClass)
+		if (flags & typeRawPtr)
+			to << L" (raw class ptr)";
+		else if (flags & typeClass)
 			to << L" (class)";
 		else if (flags & typeValue)
 			to << L" (value)";
@@ -263,13 +270,23 @@ namespace storm {
 							::toS(Value(this)) + L" for " + o->name);
 
 		if (o->name == CTOR) {
+			if (flags & typeClass) {
+				if (first.ref)
+					throw TypedefError(L"Class constructors should not be declared to take references as "
+									L"their first parameter. At: " + ::toS(*o));
+			} else if (flags & typeValue) {
+				if (!first.ref)
+					throw TypedefError(L"Value constructors should be declared to take references as "
+									L"their first parameter. At: " + ::toS(*o));
+			}
+
 			Function *fn = as<Function>(o);
 			if (!fn)
-				throw TypedefError(L"Constructors must be functions.");
+				throw TypedefError(L"Constructors must be functions. Not: " + ::toS(*o));
 			if (fn->result != Value())
-				throw TypedefError(L"Constructors may not return a value.");
+				throw TypedefError(L"Constructors may not return a value. At: " + ::toS(*o));
 			if (fn->params.size() == 2 && fn->params[1].type == this && fn->params[1] != Value::thisPtr(this))
-				throw TypedefError(L"The copy constructor must take a reference!");
+				throw TypedefError(L"The copy constructor must take a reference! At: " + ::toS(*o));
 		}
 
 		if (o->name == DTOR) {
@@ -320,6 +337,8 @@ namespace storm {
 		// Value types does not need vtables.
 		if (flags & typeValue)
 			return;
+		if (flags & typeRawPtr)
+			return;
 
 		for (NameSet::iterator i = begin(), end = this->end(); i != end; ++i) {
 			updateVirtual(i->borrow());
@@ -336,6 +355,8 @@ namespace storm {
 			return;
 
 		if (flags & typeValue)
+			return;
+		if (flags & typeRawPtr)
 			return;
 
 		Function *fn = as<Function>(named);

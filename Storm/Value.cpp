@@ -200,12 +200,13 @@ namespace storm {
 	BasicTypeInfo Value::typeInfo() const {
 		BasicTypeInfo::Kind kind = BasicTypeInfo::nothing;
 
-		if (isClass())
+		if (isClass()) {
 			kind = BasicTypeInfo::ptr;
-		else if (isValue())
+		} else if (isValue()) {
 			kind = BasicTypeInfo::user;
-		else if (type != null)
+		} else if (type != null) {
 			kind = type->builtInType();
+		}
 
 		BasicTypeInfo r = {
 			size().current(),
