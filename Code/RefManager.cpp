@@ -5,7 +5,7 @@
 
 namespace code {
 
-	RefManager::RefManager() : firstFreeIndex(0) {}
+	RefManager::RefManager() : firstFreeIndex(0), shutdown(false) {}
 
 	RefManager::~RefManager() {
 		clear();
@@ -42,10 +42,11 @@ namespace code {
 		sources.clear();
 		assert(contents.empty(), L"Some content still left!");
 		contents.clear();
+		shutdown = false;
 	}
 
 	void RefManager::preShutdown() {
-		// Not implemented yet.
+		shutdown = true;
 	}
 
 	void RefManager::detachContent(SourceInfo *from) {
@@ -139,7 +140,19 @@ namespace code {
 		SourceInfo *source = i->second;
 		source->alive = false;
 
-		// Clean up stuff here if we can!
+		// We do not want to do this (possibly expensive) cleanup if we're
+		// terminating soon anyway!
+		if (shutdown)
+			return;
+
+		// If we have no references to us, we can remove ourselvesl.
+		if (source->refs.empty()) {
+			detachContent(source);
+			sources.erase(id);
+			delete source;
+		} else {
+			// TODO: We may be a part of a dead cycle!
+		}
 	}
 
 	void RefManager::setContent(nat id, Content *content) {

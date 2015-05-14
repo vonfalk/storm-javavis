@@ -103,6 +103,9 @@ namespace code {
 		// First possible free index.
 		nat firstFreeIndex;
 
+		// Currently shutting down?
+		bool shutdown;
+
 		// Generate a new free id.
 		nat freeId();
 
