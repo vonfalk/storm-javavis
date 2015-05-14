@@ -27,10 +27,6 @@ BEGIN_TEST(ParserTest) {
 
 	Engine &engine = *gEngine;
 
-	// Try to get the syntax for the 'sto' file format.
-	Package *coreSto = engine.package(L"lang.sto");
-	coreSto->syntax();
-
 	// Try parsing a file with the simple syntax.
 	Package *simple = engine.package(L"lang.simple");
 	simple->syntax();

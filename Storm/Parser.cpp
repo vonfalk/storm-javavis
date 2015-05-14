@@ -71,8 +71,7 @@ namespace storm {
 
 		for (nat i = 0; i < s.size(); i++) {
 			StatePtr ptr(step, i);
-			// if (parserDebug)
-			// 	PLN(ptr << ": " << s[i]);
+			// PLN(ptr << ": " << s[i]);
 
 			predictor(s, s[i], ptr);
 			completer(s, s[i], ptr);

@@ -22,9 +22,9 @@ BEGIN_TEST(PkgTest) {
 	CHECK(rootPkg != null);
 
 	name->add(L"lang");
-	name->add(L"sto");
-	CHECK_EQ(toS(name), L"lang.sto");
-	Package *coreSto = e.package(name);
-	CHECK(coreSto != null);
+	name->add(L"bs");
+	CHECK_EQ(toS(name), L"lang.bs");
+	Package *coreBs = e.package(name);
+	CHECK(coreBs != null);
 
 } END_TEST
