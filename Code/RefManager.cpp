@@ -24,7 +24,6 @@ namespace code {
 		for (SourceMap::iterator i = sources.begin(), end = sources.end(); i != end; ++i)
 			toDestroy.push_back(i->second);
 
-
 		for (nat i = 0; i < toDestroy.size(); i++) {
 			SourceInfo *source = toDestroy[i];
 			assert(!source->alive, L"Source " + source->name + L" outlives the RefManager.");
@@ -122,6 +121,7 @@ namespace code {
 		nat id = freeId();
 
 		SourceInfo *src = new SourceInfo;
+		src->id = id;
 		src->lightRefs = 0;
 		src->content = null;
 		src->name = name;
@@ -132,19 +132,49 @@ namespace code {
 	}
 
 	void RefManager::removeSource(nat id) {
-		SourceMap::iterator i = sources.find(id);
-		assert(i != sources.end(), L"ID not found!");
-		if (i == sources.end())
+		SourceInfo *source = this->source(id);
+		if (!source)
 			return;
 
-		SourceInfo *source = i->second;
 		source->alive = false;
-
 		cleanSource(id, source);
+	}
+
+	RefManager::SourceInfo *RefManager::source(nat id) const {
+		SourceMap::const_iterator i = sources.find(id);
+		assert(i != sources.end(), L"ID not found!");
+		if (i == sources.end())
+			return null;
+		return i->second;
+	}
+
+	RefManager::SourceInfo *RefManager::sourceUnsafe(nat id) const {
+		SourceMap::const_iterator i = sources.find(id);
+		if (i == sources.end())
+			return null;
+		return i->second;
+	}
+
+	RefManager::ContentInfo *RefManager::content(const Content *src) const {
+		ContentMap::const_iterator i = contents.find(const_cast<Content *>(src));
+		assert(i != contents.end(), L"Content not found!");
+		if (i == contents.end())
+			return null;
+		return i->second;
+	}
+
+	RefManager::ContentInfo *RefManager::contentUnsafe(const Content *src) const {
+		ContentMap::const_iterator i = contents.find(const_cast<Content *>(src));
+		if (i == contents.end())
+			return null;
+		return i->second;
 	}
 
 	void RefManager::cleanSource(nat id, SourceInfo *source) {
 		if (source->alive)
+			return;
+
+		if (atomicRead(source->lightRefs) > 0)
 			return;
 
 		// We do not want to do this (possibly expensive) cleanup if we're
@@ -158,27 +188,66 @@ namespace code {
 			sources.erase(id);
 			delete source;
 		} else {
-			// TODO: We may be a part of a dead cycle!
+			ReachableSet cycle;
+			if (liveReachable(cycle, source)) {
+				// We are reachable by a live RefSource.
+				return;
+			}
+
+			// Break the cycle!
+			source->refs.clear();
+			// Erase has to be before 'detachContent' so that we inhibit further clean-events
+			// for this source.
+			sources.erase(id);
+			detachContent(source);
+			delete source;
 		}
 	}
 
+	bool RefManager::liveReachable(ReachableSet &reachable, SourceInfo *at) const {
+		// PLN("At: " << at->name);
+		// for (set<SourceInfo*>::iterator i = reachable.begin(); i != reachable.end(); i++)
+		// 	PLN("=> " << (*i)->name);
+
+		if (at->alive || atomicRead(at->lightRefs) > 0)
+			return true;
+
+		// Cycle found.
+		if (reachable.count(at))
+			return false;
+
+		reachable.insert(at);
+
+		for (RefSet::iterator i = at->refs.begin(), end = at->refs.end(); i != end; ++i) {
+			ContentInfo *c = contentUnsafe(&i->content());
+			if (!c)
+				// If we get here, we're in the process of destroying a cycle somewhere.
+				continue;
+
+			for (SourceSet::iterator i = c->sources.begin(), end = c->sources.end(); i != end; ++i) {
+				if (liveReachable(reachable, *i))
+					return true;
+			}
+		}
+
+		return false;
+	}
+
 	void RefManager::setContent(nat id, Content *content) {
-		SourceMap::iterator i = sources.find(id);
-		assert(i != sources.end(), L"ID not found!");
-		if (i == sources.end())
+		SourceInfo *source = this->source(id);
+		if (!source)
 			return;
 
-		SourceInfo *source = i->second;
 		detachContent(source);
 		attachContent(source, content);
 	}
 
 	void RefManager::updateAddress(Content *content) {
-		ContentMap::iterator i = contents.find(content);
-		if (i == contents.end())
+		ContentInfo *info = this->contentUnsafe(content);
+		if (!info)
 			return;
 
-		broadcast(i->second, content->address());
+		broadcast(info, content->address());
 	}
 
 	void RefManager::contentDestroyed(Content *content) {
@@ -198,44 +267,42 @@ namespace code {
 	}
 
 	void *RefManager::address(nat id) const {
-		SourceMap::const_iterator i = sources.find(id);
-		assert(i != sources.end());
-		return address(i->second);
+		SourceInfo *s = source(id);
+		if (s)
+			return address(s);
+		else
+			return null;
 	}
 
 	const String &RefManager::name(nat id) const {
-		SourceMap::const_iterator i = sources.find(id);
-		assert(i != sources.end());
-		return i->second->name;
+		return source(id)->name;
 	}
 
 	void RefManager::addLightRef(nat id) {
-		assert(sources.count(id) == 1);
-		atomicIncrement(sources[id]->lightRefs);
+		SourceInfo *s = source(id);
+		if (s)
+			atomicIncrement(s->lightRefs);
 	}
 
 	void RefManager::removeLightRef(nat id) {
-		SourceMap::const_iterator i = sources.find(id);
-		if (i != sources.end()) {
-			atomicDecrement(i->second->lightRefs);
-		}
+		SourceInfo *s = sourceUnsafe(id);
+		if (s)
+			atomicDecrement(s->lightRefs);
 	}
 
 	void *RefManager::addReference(Reference *r, nat id) {
-		assert(sources.count(id) == 1);
-		SourceInfo *src = sources[id];
+		SourceInfo *src = source(id);
+		assert(src);
 		src->refs.insert(r);
 		return address(src);
 	}
 
 	void RefManager::removeReference(Reference *r, nat id) {
-		SourceMap::const_iterator i = sources.find(id);
-		if (i == sources.end())
-			return;
-
-		SourceInfo *src = i->second;
-		src->refs.erase(r);
-		cleanSource(id, src);
+		SourceInfo *src = sourceUnsafe(id);
+		if (src) {
+			src->refs.erase(r);
+			cleanSource(id, src);
+		}
 	}
 
 }

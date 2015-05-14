@@ -15,6 +15,9 @@ namespace code {
 	 * until they do not have any more references (as ID:s).
 	 *
 	 * TODO? Make sure everything is thread-safe?
+	 *
+	 * TODO? Prepare the reference manager for a lot of changes, and make it do a GC afterwards, instead
+	 *  of checking dead objects always?
 	 */
 	class RefManager : NoCopy {
 	public:
@@ -65,6 +68,9 @@ namespace code {
 		// Represents a RefSource. These are kept alive until they are deemed unreachable from
 		// any live RefSource objects.
 		struct SourceInfo : public util::SetMember<SourceInfo> {
+			// Our ID.
+			nat id;
+
 			// Number of light references.
 			nat lightRefs;
 
@@ -125,6 +131,18 @@ namespace code {
 
 		// Remove a source if it has zero references (or is free in other ways).
 		void cleanSource(nat id, SourceInfo *source);
+
+		// Get the SourceInfo from an id.
+		SourceInfo *source(nat id) const;
+		SourceInfo *sourceUnsafe(nat id) const;
+
+		// Get the ContentInfo from a Content ptr.
+		ContentInfo *content(const Content *ptr) const;
+		ContentInfo *contentUnsafe(const Content *ptr) const;
+
+		// See if any live SourceInfo is reachable.
+		typedef set<SourceInfo *> ReachableSet;
+		bool liveReachable(ReachableSet &reachable, SourceInfo *at) const;
 	};
 
 }

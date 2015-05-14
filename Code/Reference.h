@@ -46,6 +46,9 @@ namespace code {
 		virtual void onAddressChanged(void *newAddress);
 		inline void *address() const { return lastAddress; }
 
+		// Get the content we're associated with.
+		inline const Content &content() const { return inside; }
+
 	protected:
 		virtual void output(wostream &to) const;
 
@@ -58,6 +61,9 @@ namespace code {
 
 		// The last seen address.
 		void *lastAddress;
+
+		// The content we're inside.
+		const Content &inside;
 	};
 
 

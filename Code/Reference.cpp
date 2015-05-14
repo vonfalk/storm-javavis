@@ -7,13 +7,15 @@ namespace code {
 
 	Reference::Reference(const RefSource &source, const Content &inside) :
 		arena(source.arena),
-		referring(source.getId()) {
+		referring(source.getId()),
+		inside(inside) {
 		lastAddress = arena.refManager.addReference(this, referring);
 	}
 
 	Reference::Reference(const Ref &copy, const Content &inside) :
 		arena(*copy.arena),
-		referring(copy.referring) {
+		referring(copy.referring),
+		inside(inside) {
 		lastAddress = arena.refManager.addReference(this, referring);
 	}
 

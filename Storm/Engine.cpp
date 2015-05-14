@@ -119,8 +119,6 @@ namespace storm {
 		// the effort to compute which RefSources it can remove early.
 		arena.preShutdown();
 
-		PLN("Shutting down...");
-
 		// We need to destroy all types last, otherwise we will crash badly!
 		vector<Auto<Type>> types = rootPkg->findTypes();
 
