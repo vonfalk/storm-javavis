@@ -45,3 +45,19 @@ Str maybeToS(Int p) {
 
 	r.toS;
 }
+
+Int mTest(Str v) {
+	1;
+}
+
+Int mTest(Str? v) {
+	if (v)
+		2;
+	else
+		0;
+}
+
+Int maybeCast() {
+	Str foo = "a";
+	mTest(?foo);
+}

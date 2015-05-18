@@ -172,7 +172,7 @@ BEGIN_TEST(StrConcatTest) {
 	CHECK_ERROR(runFn<Str *>(L"test.bs.strConcatError"), SyntaxError);
 } END_TEST
 
-BEGIN_TEST_(MaybeTest) {
+BEGIN_TEST(MaybeTest) {
 	CHECK_EQ(runFn(L"test.bs.testMaybe", 0), 0);
 	CHECK_EQ(runFn(L"test.bs.testMaybe", 1), 1);
 	CHECK_EQ(runFn(L"test.bs.testMaybe", 2), 4);
@@ -181,6 +181,8 @@ BEGIN_TEST_(MaybeTest) {
 
 	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 0), CREATE(Str, *gEngine, L"null"));
 	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 1), CREATE(Str, *gEngine, L"ok"));
+
+	CHECK_EQ(runFn(L"test.bs.maybeCast"), 2);
 } END_TEST
 
 // Test the REPL of BS programmatically.

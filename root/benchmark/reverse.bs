@@ -34,11 +34,10 @@ Cons create(Int len) {
 }
 
 Cons? append(Cons? a, Cons? b) {
-	Cons? r;
 	if (a) {
-		r = Cons(a.value, append(a.next, b));
+		?Cons(a.value, append(a.next, b));
 	} else {
-		r = b;
+		b;
 	}
 }
 
@@ -54,5 +53,5 @@ Cons? reverse(Cons? a) {
 // takes 14s
 void testReverse() {
 	for (Int i = 0; i < 100; i++)
-		reverse(create(1000));
+		reverse(?create(1000));
 }

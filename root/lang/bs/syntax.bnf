@@ -147,6 +147,9 @@ Atom => FnPtr(block, name, params) :[20] "&", Type name, FnTypes params;
 Atom => strongFnPtr(block, dotExpr, name, params) :[20] "&", Atom(block) dotExpr, "\.", Name name, FnTypes params;
 Atom => weakFnPtr(block, dotExpr, name, params) :[20] "&", Atom(block) dotExpr, "\->", Name name, FnTypes params;
 
+// Temporary, to turn a value of type T into Maybe<T>, this should be done automatically in the future.
+Atom => asMaybe(block, expr) : "?", Atom(block) expr;
+
 // Operators.
 Operator => lOperator(op, 900) : "\*" op;
 Operator => lOperator(op, 900) : "/" op;

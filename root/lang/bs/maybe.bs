@@ -11,3 +11,26 @@ TypeName maybeType(TypeName t) {
 	name.add(maybe);
 	name;
 }
+
+// Temporary solution for casting to maybe.
+Expr asMaybe(Block block, Expr expr) on Compiler {
+	Expr result = expr;
+	Value eType = expr.result;
+
+	NamePart core("core");
+	NamePart maybe("Maybe", [Value: eType]);
+	Name name;
+	name.add(core);
+	name.add(maybe);
+
+	Named? t = block.scope.find(name);
+	if (t as Type) {
+		NamePart ctor("__ctor", [Value: Value(t), eType ]);
+		Named? c = Scope(t).find(Name(ctor));
+		if (c as Function) {
+			result = CtorCall(c, Actual(expr));
+		}
+	}
+
+	result;
+}

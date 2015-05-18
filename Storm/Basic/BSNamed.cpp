@@ -129,6 +129,7 @@ namespace storm {
 	 */
 
 	bs::CtorCall::CtorCall(Par<Function> ctor, Par<Actual> params) : ctor(ctor), params(params) {
+		assert(params->expressions.size() == ctor->params.size() - 1, L"Invalid number of parameters to constructor!");
 		toCreate = ctor->params[0].asRef(false);
 	}
 
