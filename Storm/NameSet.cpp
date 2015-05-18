@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "NameSet.h"
 #include "Exception.h"
+#include "Type.h"
 
 namespace storm {
 

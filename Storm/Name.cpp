@@ -3,6 +3,7 @@
 #include "Lib/Str.h"
 #include "Tokenizer.h"
 #include "Exception.h"
+#include "Type.h"
 
 namespace storm {
 

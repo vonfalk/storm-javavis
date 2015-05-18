@@ -3,7 +3,7 @@
 
 #include "SrcPos.h"
 #include "Value.h"
-#include "Type.h"
+// #include "Type.h"
 
 namespace storm {
 
@@ -61,10 +61,7 @@ namespace storm {
 	 */
 	class InternalTypeError : public InternalError {
 	public:
-		inline InternalTypeError(const String &context, const Type *expected, const Type *got)
-			: InternalError(context + L": expected " +
-							expected->identifier() + L", got " +
-							(got ? got->identifier() : String(L"null"))) {}
+		InternalTypeError(const String &context, const Type *expected, const Type *got);
 	};
 
 
