@@ -16,6 +16,36 @@ This section will discuss core concepts of the Storm compiler itself. If you are
 writing code, please have a look at [Basic Storm][1]. However, the language documentation assumes
 you have basic knowledge about how types, threads and to some extent syntax works.
 
+Note that all references to the source code are expressed as file and offset rather than file and
+line number. The offset indicates how many character into the file the error is present. The
+following Emacs-LISP code can be used to go to a byte in the file, independent on the line endings
+used in the file:
+
+```
+(defun newline-on-disk ()
+  (let* ((sym buffer-file-coding-system)
+	 (name (symbol-name sym))
+	 (end (substring name -4)))
+    (if (equal end "-dos")
+	2
+      1)))
+
+(defun goto-byte (byte)
+  (interactive "nGoto byte: ")
+  (setq pos 0)
+  (setq lines 0)
+  (setq last-line-nr (line-number-at-pos pos))
+  (setq line-weight (- (newline-on-disk) 1))
+  (while (<= (+ pos lines) byte)
+    (setq line-nr (line-number-at-pos pos))
+    (setq pos (+ pos 1))
+    (if (not (= last-line-nr line-nr))
+	(setq lines (+ lines line-weight)))
+    (setq last-line-nr line-nr))
+  (goto-char pos))
+
+```
+
 Extensibility
 -------------
 
