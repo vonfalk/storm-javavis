@@ -71,6 +71,13 @@ namespace storm {
 		return o != null;
 	}
 
+	static Str *anyToS(EnginePtr e, Object *o) {
+		if (o == null)
+			return CREATE(Str, e.v, L"null");
+		else
+			return o->toS();
+	}
+
 	// Disallow inheritance from this type, that will not work as the type system expects...
 	MaybeType::MaybeType(const Value &param) :
 		Type(L"Maybe", typeClass | typeFinal | typeRawPtr, vector<Value>(1, param), Size::sPtr),
@@ -90,6 +97,7 @@ namespace storm {
 		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), &storm::deepCopyMaybe)));
 		add(steal(nativeFunction(e, Value(boolType(e)), L"empty", valList(1, t), &storm::emptyMaybe)));
 		add(steal(nativeFunction(e, Value(boolType(e)), L"any", valList(1, t), &storm::anyMaybe)));
+		add(steal(nativeEngineFunction(e, Value(Str::stormType(e)), L"toS", valList(1, t), &storm::anyToS)));
 		add(steal(nativeDtor(e, this, &storm::destroyMaybe)));
 		return Type::loadAll();
 	}

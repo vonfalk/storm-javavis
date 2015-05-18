@@ -224,7 +224,6 @@ namespace storm {
 		using namespace code;
 
 		VarInfo r = to->location(s);
-		s->to << lea(ptrA, r.var());
 
 		// Parameters
 		vector<Value> values = ctor->params;
@@ -233,6 +232,7 @@ namespace storm {
 		for (nat i = 1; i < values.size(); i++)
 			vars[i] = params->code(i - 1, s, values[i]);
 
+		s->to << lea(ptrA, r.var());
 		// Call
 		Auto<CodeResult> voidTo = CREATE(CodeResult, this, Value(), s->block);
 		callFn(ctor, s, vars, voidTo, false, false);

@@ -6,7 +6,7 @@ use lang:bs;
 // Very hacky proof-of-concept code reloads.
 
 void reload(TypeName name) on Compiler {
-	Named pkg = name.find(rootScope);
+	Named? pkg = name.find(rootScope);
 	if (pkg as Package) {
 		print("Reloading " # name # "...");
 		reloadPkg(pkg);
@@ -21,14 +21,14 @@ void reloadPkg(Package pkg) on Compiler {
 		"real version is done. Will only reload functions, and does not provide any decent " #
 		"error messages!");
 
-	Url url = pkg.url;
-	if (url.isNull) {
-		print("This package is virtual. Can not reload it!");
-	} else {
+	Url? url = pkg.url;
+	if (url) {
 		Url[] children = url.children;
 		for (Nat i = 0.nat; i < children.count; i++) {
 			reloadUrl(pkg, children[i]);
 		}
+	} else {
+		print("This package is virtual. Can not reload it!");
 	}
 }
 
@@ -73,7 +73,7 @@ void reloadFunctions(Package pkg, Scope scope, Contents c) on Compiler {
 	for (Nat i = 0.nat; i < c.functions.count; i++) {
 		FunctionDecl decl = c.functions[i];
 		NamePart name = decl.namePart(scope);
-		Named found = scope.find(Name(name));
+		Named? found = scope.find(Name(name));
 		if (found as BSFunction) {
 			decl.update(found, scope);
 		} else if (found.isNull) {
@@ -91,7 +91,7 @@ void reloadTypes(Package pkg, Scope scope, Contents c) on Compiler {
 		Type t = c.types[i];
 		if (t as Class) {
 			NamePart name(t.name);
-			Named found = scope.find(Name(name));
+			Named? found = scope.find(Name(name));
 			if (found as Class) {
 				// We need lookups to work... Hack...
 				t.setParent(pkg);
@@ -120,7 +120,7 @@ void reloadClass(Class found, Type candidate) on Compiler {
 			params[0.nat] = Value(found, params[0.nat].isRef);
 
 			NamePart name(member.name, params);
-			Named replace = scope.find(Name(name));
+			Named? replace = scope.find(Name(name));
 			if (replace as BSFunction) {
 				replace.update(member);
 			} else if (replace.isNull) {
@@ -137,7 +137,7 @@ void reloadClass(Class found, Type candidate) on Compiler {
 // Why can't I use TypeName[] here?
 void addIncludes(SyntaxSet to, Scope scope, Array<TypeName> from) on Compiler {
 	for (Nat i = 0.nat; i < from.count; i++) {
-		Named p = from[i].find(rootScope);
+		Named? p = from[i].find(rootScope);
 		if (p as Package) {
 			to.add(p);
 			scope.addInclude(p);
@@ -149,7 +149,7 @@ void addIncludes(SyntaxSet to, Scope scope, Array<TypeName> from) on Compiler {
 
 SyntaxSet bfSyntax() on Compiler {
 	SyntaxSet s;
-	Named n = (name{lang:bs}).find(rootScope);
+	Named? n = (name{lang:bs}).find(rootScope);
 	if (n as Package)
 		s.add(n);
 	s;

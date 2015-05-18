@@ -11,14 +11,6 @@
 
 namespace storm {
 
-	Bool isNull(Object *o) {
-		return o == null;
-	}
-
-	Bool isNull(TObject *o) {
-		return o == null;
-	}
-
 	void dbgBreak() {
 		DebugBreak();
 	}

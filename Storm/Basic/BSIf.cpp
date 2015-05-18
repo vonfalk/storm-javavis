@@ -12,11 +12,16 @@ namespace storm {
 		if (created)
 			return created.ret();
 
-		Auto<LocalVarAccess> var = condition.as<LocalVarAccess>();
-		if (var) {
+		String varName;
+		if (LocalVarAccess *var = as<LocalVarAccess>(condition.borrow()))
+			varName = var->var->name;
+		else if (MemberVarAccess *var = as<MemberVarAccess>(condition.borrow()))
+			varName = var->var->name;
+
+		if (!varName.empty()) {
 			Value t = condition->result();
 			if (MaybeType *m = as<MaybeType>(t.type)) {
-				created = CREATE(LocalVar, this, var->var->name, m->param, var->pos);
+				created = CREATE(LocalVar, this, varName, m->param, condition->pos);
 			}
 		}
 		return created.ret();
@@ -115,9 +120,14 @@ namespace storm {
 
 		validate();
 
-		Auto<LocalVarAccess> var = expression.as<LocalVarAccess>();
-		if (var)
-			created = CREATE(LocalVar, this, var->var->name, Value(target), var->pos);
+		String varName;
+		if (LocalVarAccess *var = as<LocalVarAccess>(expression.borrow()))
+			varName = var->var->name;
+		else if (MemberVarAccess *var = as<MemberVarAccess>(expression.borrow()))
+			varName = var->var->name;
+
+		if (!varName.empty())
+			created = CREATE(LocalVar, this, varName, Value(target), expression->pos);
 		return created.ret();
 	}
 

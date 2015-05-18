@@ -1,51 +1,54 @@
 use core:debug;
 
-class Nil {
-
-	ctor() {
-		init() {}
-	}
-
-	Str toS() {
-		"";
-	}
-}
-
-class Cons extends Nil {
+class Cons {
 	Int value;
-	Nil next;
+	Cons? next;
 
-	ctor(Int v, Nil n) {
-		init() { value = v; next = n; }
+	ctor(Int value) {
+		init() { value = value; }
+	}
+
+	ctor(Int value, Cons next) {
+		init() { value = value; next = next; }
+	}
+
+	ctor(Int value, Cons? next) {
+		init() { value = value; next = next; }
 	}
 
 	Str toS() {
-		value.toS # " " # next.toS;
+		if (next) {
+			value # ", " # next;
+		} else {
+			value.toS;
+		}
 	}
 }
 
-Nil create(Int len) {
+Cons create(Int len) {
 	if (len > 0) {
 		Cons(len, create(len - 1));
 	} else {
-		Nil();
+		Cons(len);
 	}
 }
 
-Nil append(Nil a, Nil b) {
-	if (a as Cons) {
-		Cons(a.value, append(a.next, b));
+Cons? append(Cons? a, Cons? b) {
+	Cons? r;
+	if (a) {
+		r = Cons(a.value, append(a.next, b));
 	} else {
-		b;
+		r = b;
 	}
 }
 
-Nil reverse(Nil a) {
-	if (a as Cons) {
-		append(reverse(a.next), Cons(a.value, Nil));
-	} else {
-		Nil;
+Cons? reverse(Cons? a) {
+	Cons? r;
+	if (a) {
+		Cons? n = Cons(a.value);
+		r = append(reverse(a.next), n);
 	}
+	r;
 }
 
 // takes 14s

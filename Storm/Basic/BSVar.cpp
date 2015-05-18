@@ -34,8 +34,11 @@ namespace storm {
 		}
 
 		void bs::Var::initTo(Par<Expr> e) {
-			variable->result.mustStore(e->result(), variable->pos);
-			initExpr = e;
+			if (variable->result.canStore(e->result()))
+				initExpr = e;
+			else
+				// Use a ctor...
+				initTo(steal(CREATE(Actual, engine(), e)));
 		}
 
 		void bs::Var::initTo(Par<Actual> actuals) {

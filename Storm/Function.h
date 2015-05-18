@@ -164,7 +164,7 @@ namespace storm {
 	// Create a function referring a pre-compiled function.
 	Function *nativeFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr);
 
-	// Create a function referring a pre-compiled function, adding 'Engine &' as the first parameter.
+	// Create a function referring a pre-compiled function, adding 'EnginePtr' as the first parameter.
 	Function *nativeEngineFunction(Engine &e, Value result, const String &name, const vector<Value> &params, void *ptr);
 
 	// Create a function referring a pre-compiled function that is possibly using vtable calls.

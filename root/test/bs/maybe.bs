@@ -27,3 +27,21 @@ Int testMaybe(Int v) {
 
 	z;
 }
+
+Int assignMaybe() {
+	Dbg? r = Dbg(20);
+
+	if (r)
+		1;
+	else
+		0;
+}
+
+Str maybeToS(Int p) {
+	Str? r;
+
+	if (p == 1)
+		r = "ok";
+
+	r.toS;
+}

@@ -14,11 +14,14 @@ class Repl extends LangRepl {
 
 	// Pre-processing.
 	ctor() {
-		Named repl = (name{lang:bs:Repl}).find(rootScope);
+		Named? repl = (name{lang:bs:Repl}).find(rootScope);
+		Scope s;
+		if (repl)
+			s = Scope(repl, BSScope());
 
 		init() {
 			done = false;
-			scope = Scope(repl, BSScope());
+			scope = s;
 		}
 
 		addPkg(name{core});
@@ -27,7 +30,7 @@ class Repl extends LangRepl {
 	}
 
 	void addPkg(TypeName name) {
-		Named pkg = name.find(rootScope);
+		Named? pkg = name.find(rootScope);
 		if (pkg as Package) {
 			scope.addInclude(pkg);
 		}
@@ -66,7 +69,7 @@ class Repl extends LangRepl {
 	}
 
 	void addUse(TypeName name) {
-		Named pkg = name.find(rootScope);
+		Named? pkg = name.find(rootScope);
 		if (pkg as Package) {
 			if (scope.addInclude(pkg)) {
 				print("Using " # name # ".");
@@ -100,7 +103,7 @@ class Repl extends LangRepl {
 	}
 
 	void evalExpr(Str line, ReplBlock block, LocalVar thisPtr, Expr expr) {
-		Named replaceFn = (name{lang:bs:ReplSandbox:evalFn<lang:bs:ReplSandbox>}).find(rootScope);
+		Named? replaceFn = (name{lang:bs:ReplSandbox:evalFn<lang:bs:ReplSandbox>}).find(rootScope);
 		if (replaceFn as core:lang:Function) {
 			ReplCode code(block, thisPtr, expr);
 			replaceFn.setCode(LazyCode(&code.load()));
@@ -168,7 +171,7 @@ class ReplCode on Compiler {
 
 		Value result = expr.result;
 		Name name(NamePart("toS", [Value: result]));
-		Named toSFn = root.scope.find(name);
+		Named? toSFn = root.scope.find(name);
 		if (toSFn as Function) {
 			// It exists, use the result.
 			FnCall toSCall(toSFn, Actual(expr));

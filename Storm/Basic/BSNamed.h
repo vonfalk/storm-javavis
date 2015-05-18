@@ -153,6 +153,9 @@ namespace storm {
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
 
+			// Variable to access.
+			Auto<TypeVar> var;
+
 		protected:
 			// Output.
 			virtual void output(wostream &to) const;
@@ -160,9 +163,6 @@ namespace storm {
 		private:
 			// Member in which the variable is.
 			Auto<Expr> member;
-
-			// Variable to access.
-			Auto<TypeVar> var;
 
 			// Generate code for a value access.
 			void valueCode(Par<CodeGen> s, Par<CodeResult> to);
