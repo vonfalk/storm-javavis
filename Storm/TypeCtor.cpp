@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "TypeCtor.h"
 #include "Exception.h"
+#include "Type.h"
+#include "Engine.h"
 #include "Code/Instruction.h"
 #include "Code/FnParams.h"
 #include "Lib/CloneEnv.h"

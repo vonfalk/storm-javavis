@@ -4,6 +4,7 @@
 #include "Scope.h"
 #include "Function.h"
 #include "Exception.h"
+#include "Engine.h"
 #include "Lib/Handle.h"
 
 namespace storm {

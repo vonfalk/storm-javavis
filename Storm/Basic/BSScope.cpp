@@ -3,6 +3,9 @@
 #include "BSBlock.h"
 #include "BSVar.h"
 #include "PkgReader.h"
+#include "Scope.h"
+#include "Type.h"
+#include "Engine.h"
 
 namespace storm {
 

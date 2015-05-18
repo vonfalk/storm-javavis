@@ -1,6 +1,7 @@
 #pragma once
 #include "Code/RefSource.h"
 #include "Code/Reference.h"
+#include "Code/Binary.h"
 #include "AsmWrap.h"
 #include "Std.h"
 #include "CodeGen.h"

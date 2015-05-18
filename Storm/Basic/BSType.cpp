@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "BSType.h"
 #include "Exception.h"
+#include "Scope.h"
+#include "Type.h"
 
 namespace storm {
 	namespace bs {

@@ -3,7 +3,8 @@
 #include "BSBlock.h"
 #include "Lib/Int.h"
 #include "Exception.h"
-#include "function.h"
+#include "Function.h"
+#include "Engine.h"
 
 namespace storm {
 

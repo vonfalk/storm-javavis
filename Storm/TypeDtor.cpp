@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "TypeDtor.h"
+#include "Type.h"
 #include "Code/VTable.h"
 
 namespace storm {

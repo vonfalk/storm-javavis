@@ -4,6 +4,8 @@
 #include "Exception.h"
 #include "Thread.h"
 #include "Wrap.h"
+#include "VTable.h"
+#include "Type.h"
 #include "Code/UThread.h"
 #include "Code/FnParams.h"
 #include "Lib/Str.h"

@@ -68,7 +68,7 @@ namespace storm {
 		explicit STORM_CTOR Scope();
 
 		// Create the default lookup with a given topmost object.
-		STORM_CTOR Scope(Par<NameLookup> top);
+		explicit STORM_CTOR Scope(Par<NameLookup> top);
 
 		// Create a custom lookup.
 		STORM_CTOR Scope(Par<NameLookup> top, Par<ScopeLookup> lookup);

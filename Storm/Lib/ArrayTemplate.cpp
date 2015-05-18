@@ -7,6 +7,7 @@
 #include "CloneEnv.h"
 #include "StrBuf.h"
 #include "TypeDtor.h"
+#include "Engine.h"
 
 namespace storm {
 

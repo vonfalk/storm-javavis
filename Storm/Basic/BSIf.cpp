@@ -3,6 +3,7 @@
 #include "Exception.h"
 #include "BSNamed.h"
 #include "Lib/Maybe.h"
+#include "Engine.h"
 
 namespace storm {
 

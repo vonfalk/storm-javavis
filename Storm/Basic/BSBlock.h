@@ -1,6 +1,7 @@
 #pragma once
 #include "BSExpr.h"
 #include "BSVar.h"
+#include "Scope.h"
 
 namespace storm {
 	namespace bs {

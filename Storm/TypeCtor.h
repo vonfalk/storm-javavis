@@ -1,4 +1,6 @@
 #pragma once
+#include "Std.h"
+#include "Template.h"
 #include "Function.h"
 
 namespace storm {

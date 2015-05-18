@@ -2,6 +2,8 @@
 #include "CodeGen.h"
 #include "Exception.h"
 #include "Function.h"
+#include "Type.h"
+#include "Engine.h"
 
 namespace storm {
 

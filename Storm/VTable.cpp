@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "VTable.h"
+#include "Type.h"
 #include "Engine.h"
 #include "Code/VTable.h"
 #include "Code/Binary.h"

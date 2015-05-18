@@ -4,6 +4,7 @@
 #include "BSActual.h"
 #include "Function.h"
 #include "NamedThread.h"
+#include "TypeVar.h"
 
 namespace storm {
 	namespace bs {

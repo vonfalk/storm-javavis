@@ -1,11 +1,12 @@
 #pragma once
-#include "Engine.h"
 
-#include "Lib/Int.h"
 #include "Lib/Str.h"
+#include "Lib/Types.h"
 #include "Lib/Object.h"
+#include "Value.h"
 
 namespace storm {
+	class Engine;
 
 	/**
 	 * Add types from the built-in types. This will only add the types to

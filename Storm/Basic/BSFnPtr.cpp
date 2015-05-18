@@ -3,6 +3,8 @@
 #include "Lib/FnPtr.h"
 #include "Function.h"
 #include "Exception.h"
+#include "Type.h"
+#include "Engine.h"
 
 namespace storm {
 	namespace bs {

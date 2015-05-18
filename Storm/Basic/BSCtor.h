@@ -3,6 +3,7 @@
 #include "Function.h"
 #include "SyntaxObject.h"
 #include "BSBlock.h"
+#include "TypeVar.h"
 #include "Lib/Array.h"
 
 namespace storm {

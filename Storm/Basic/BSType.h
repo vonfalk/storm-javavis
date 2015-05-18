@@ -2,6 +2,7 @@
 #include "Storm/Std.h"
 #include "Storm/SyntaxObject.h"
 #include "Storm/Name.h"
+#include "Storm/Named.h"
 
 namespace storm {
 	namespace bs {

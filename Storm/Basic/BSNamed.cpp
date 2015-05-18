@@ -4,6 +4,8 @@
 #include "Exception.h"
 #include "Function.h"
 #include "Lib/Future.h"
+#include "Type.h"
+#include "Engine.h"
 
 namespace storm {
 
