@@ -11,6 +11,7 @@
 #include "Lib/Str.h"
 #include "Lib/Future.h"
 #include "Lib/FnPtr.h"
+#include "Io/Url.h"
 
 namespace storm {
 

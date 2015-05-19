@@ -4,6 +4,7 @@
 #include "Tokenizer.h"
 #include "Exception.h"
 #include "Type.h"
+#include "Io/Url.h"
 
 namespace storm {
 

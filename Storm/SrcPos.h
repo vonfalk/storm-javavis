@@ -1,7 +1,5 @@
 #pragma once
 #include "Lib/Object.h"
-#include "Io/Url.h"
-
 #include "Utils/Lock.h"
 
 namespace storm {
@@ -43,6 +41,9 @@ namespace storm {
 		// Copy
 		SrcPos(const SrcPos &o);
 		SrcPos &operator =(const SrcPos &o);
+
+		// Dtor, so we do not have to declare Url.
+		~SrcPos();
 
 		// Deep copy.
 		void STORM_FN deepCopy(Par<CloneEnv> env);

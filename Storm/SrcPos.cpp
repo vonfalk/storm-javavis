@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SrcPos.h"
 
+#include "Io/Url.h"
 #include "Io/Text.h"
 #include "Lib/CloneEnv.h"
 #include "Code/Sync.h"
@@ -24,6 +25,8 @@ namespace storm {
 	SrcPos::SrcPos(Par<Url> file, nat offset) : file(file), offset(offset) {}
 
 	SrcPos::SrcPos(const SrcPos &o) : file(o.file), offset(o.offset) {}
+
+	SrcPos::~SrcPos() {}
 
 	SrcPos &SrcPos::operator =(const SrcPos &o) {
 		offset = o.offset;

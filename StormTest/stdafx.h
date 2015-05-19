@@ -12,6 +12,7 @@
 #include "Storm/Std.h"
 #include "Storm/Lib/Array.h"
 #include "Storm/Lib/Debug.h"
+#include "Storm/Io/Url.h"
 
 #include "Exception.h"
 
