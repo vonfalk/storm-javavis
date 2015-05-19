@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "Code.h"
 #include "Function.h"
+#include "CodeGen.h"
 
 namespace storm {
 

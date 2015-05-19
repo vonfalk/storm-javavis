@@ -9,6 +9,7 @@
 #include "Lib/Future.h"
 #include "Code/Instruction.h"
 #include "Code/VTable.h"
+#include "CodeGen.h"
 
 namespace storm {
 

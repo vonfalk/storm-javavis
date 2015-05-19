@@ -2,6 +2,7 @@
 #include "FnPtrTemplate.h"
 #include "Engine.h"
 #include "CloneEnv.h"
+#include "CodeGen.h"
 #include "FnPtr.h"
 #include "Function.h"
 #include "Exception.h"

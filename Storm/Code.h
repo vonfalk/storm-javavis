@@ -4,7 +4,7 @@
 #include "Code/Binary.h"
 #include "AsmWrap.h"
 #include "Std.h"
-#include "CodeGen.h"
+#include "CodeGenFwd.h"
 #include "Lib/TObject.h"
 #include "Lib/FnPtr.h"
 

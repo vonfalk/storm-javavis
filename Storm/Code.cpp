@@ -3,6 +3,7 @@
 #include "Function.h"
 #include "Exception.h"
 #include "Engine.h"
+#include "CodeGen.h"
 #include "Code/Redirect.h"
 #include "Code/Future.h"
 

@@ -952,6 +952,10 @@
 				RelativePath=".\Lib\Maybe.h"
 				>
 			</File>
+			<File
+				RelativePath=".\CodeGenFwd.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

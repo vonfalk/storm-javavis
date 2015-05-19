@@ -1,6 +1,6 @@
 #pragma once
 #include "Code.h"
-#include "CodeGen.h"
+#include "CodeGenFwd.h"
 #include "Thread.h"
 #include "NamedThread.h"
 #include "Utils/Bitmask.h"
