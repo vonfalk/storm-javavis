@@ -85,9 +85,6 @@ namespace storm {
 
 			// Create a class.
 			void createClass(Par<CodeGen> s, Par<CodeResult> to);
-
-			// Create a raw ptr.
-			void createRawPtr(Par<CodeGen> s, Par<CodeResult> to);
 		};
 
 		// Call the default constructor for T.

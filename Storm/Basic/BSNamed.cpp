@@ -13,17 +13,13 @@ namespace storm {
 
 		static void callOnThread(Par<Function> fn, Par<CodeGen> s, const Function::Actuals &actuals,
 								Par<CodeResult> to, bool lookup, bool sameObject) {
-			RunOn target = fn->runOn();
-			if (sameObject || s->runOn.canRun(target)) {
-				// Regular function call is  enough.
+
+			if (sameObject) {
+				// Regular function call is enough.
 				fn->localCall(s, actuals, to, lookup);
-				return;
+			} else {
+				fn->autoCall(s, actuals, to);
 			}
-
-			assert(target.state != RunOn::any);
-
-			code::Variable threadVar = fn->findThread(s, actuals);
-			fn->threadCall(s, actuals, to, threadVar);
 		}
 
 		// Call the function and handle the result correctly.
@@ -146,8 +142,6 @@ namespace storm {
 	void bs::CtorCall::code(Par<CodeGen> s, Par<CodeResult> to) {
 		if (toCreate.isValue())
 			createValue(s, to);
-		else if (toCreate.type->flags & typeRawPtr)
-			createRawPtr(s, to);
 		else
 			createClass(s, to);
 	}
@@ -184,61 +178,17 @@ namespace storm {
 	void bs::CtorCall::createClass(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 
-		// TODO: Refactor to use allocObject!
-
 		Engine &e = Object::engine();
 
-		code::Block subBlock = s->frame.createChild(s->frame.last(s->block.v));
-		s->to << begin(subBlock);
-		Auto<CodeGen> subState = s->child(subBlock);
-
-		// Only free this one automatically on an exception. If there is no exception,
-		// the memory will be owned by the object itself.
-		Variable rawMemory = s->frame.createPtrVar(subBlock, e.fnRefs.freeRef, freeOnException);
-
-		// Allocate memory into our temporary variable.
-		s->to << fnParam(toCreate.type->typeRef);
-		s->to << fnCall(e.fnRefs.allocRef, Size::sPtr);
-		s->to << mov(rawMemory, ptrA);
-
-		// Call the constructor:
 		vector<Value> values = ctor->params;
-		vector<code::Value> vars(values.size());
+		vector<code::Value> vars(values.size() - 1);
 
-		// Load parameters.
-		vars[0] = rawMemory;
+		for (nat i = 0; i < values.size() - 1; i++)
+			vars[i] = params->code(i, s, values[i + 1]);
 
-		for (nat i = 1; i < values.size(); i++)
-			vars[i] = params->code(i - 1, subState, values[i]);
-
-		// Call!
-		Auto<CodeResult> voidTo = CREATE(CodeResult, this, Value(), subBlock);
-		callFn(ctor, subState, vars, voidTo, false, false);
-
-		// Store our result.
-		VarInfo created = to->location(subState);
-		s->to << mov(created.var(), rawMemory);
+		VarInfo created = to->location(s);
+		allocObject(s, ctor, vars, created.var());
 		created.created(s);
-
-		s->to << end(subBlock);
-	}
-
-	void bs::CtorCall::createRawPtr(Par<CodeGen> s, Par<CodeResult> to) {
-		using namespace code;
-
-		VarInfo r = to->location(s);
-
-		// Parameters
-		vector<Value> values = ctor->params;
-		vector<code::Value> vars(values.size());
-		vars[0] = ptrA;
-		for (nat i = 1; i < values.size(); i++)
-			vars[i] = params->code(i - 1, s, values[i]);
-
-		s->to << lea(ptrA, r.var());
-		// Call
-		Auto<CodeResult> voidTo = CREATE(CodeResult, this, Value(), s->block);
-		callFn(ctor, s, vars, voidTo, false, false);
 	}
 
 	bs::CtorCall *bs::defaultCtor(const SrcPos &pos, Par<Type> t) {

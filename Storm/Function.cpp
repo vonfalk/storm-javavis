@@ -99,7 +99,7 @@ namespace storm {
 	void Function::autoCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result) {
 		RunOn r = runOn();
 		if (to->runOn.canRun(r)) {
-			localCall(to, params, result, false);
+			localCall(to, params, result, true);
 		} else {
 			code::Variable v = findThread(to, params);
 			threadCall(to, params, result, v);

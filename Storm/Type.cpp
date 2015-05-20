@@ -19,14 +19,14 @@ namespace storm {
 	}
 
 	Type::Type(const String &name, TypeFlags f, const vector<Value> &params, Size size)
-		: NameSet(name, params), engine(Object::engine()), flags(maskFlags(f)), typeRef(engine.arena, L"typeRef"),
+		: NameSet(name, params), engine(Object::engine()), flags(maskFlags(f)), typeRef(engine.arena, L"typeRef:" + name),
 		  mySize(size), chain(this), vtable(engine) {
 
 		init(f);
 	}
 
 	Type::Type(const String &name, TypeFlags f, Size size, void *cppVTable)
-		: NameSet(name), engine(Object::engine()), flags(maskFlags(f)), typeRef(engine.arena, L"typeRef"),
+		: NameSet(name), engine(Object::engine()), flags(maskFlags(f)), typeRef(engine.arena, L"typeRef:" + name),
 		  mySize(size), chain(this), vtable(engine) {
 
 		// Create the VTable first, otherwise init() may get strange ideas...

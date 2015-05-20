@@ -180,10 +180,9 @@ namespace storm {
 		s->to << fnCall(e.fnRefs.allocRef, Size::sPtr);
 		s->to << mov(rawMem, ptrA);
 
-		// TODO: Always localCall?
 		Auto<CodeResult> r = CREATE(CodeResult, s);
-		params.insert(params.begin(), code::Value(ptrA));
-		ctor->localCall(steal(s->child(b)), params, r, false);
+		params.insert(params.begin(), code::Value(rawMem));
+		ctor->autoCall(steal(s->child(b)), params, r);
 
 		s->to << mov(to, rawMem);
 		s->to << end(b);
@@ -191,17 +190,15 @@ namespace storm {
 
 	static void allocRawObject(Par<CodeGen> s, Par<Function> ctor, vector<code::Value> params, code::Variable to) {
 		using namespace code;
-		assert(ctor->params[0].ref, L"RawPtr constructors should take a reference as the first parameter.");
 
 		Type *type = ctor->params[0].type;
 		Engine &e = ctor->engine();
 
 		s->to << lea(ptrA, to);
 
-		// TODO: Always localCall?
 		Auto<CodeResult> r = CREATE(CodeResult, s);
 		params.insert(params.begin(), code::Value(ptrA));
-		ctor->localCall(s, params, r, false);
+		ctor->autoCall(s, params, r);
 	}
 
 	void allocObject(Par<CodeGen> s, Par<Function> ctor, const vector<code::Value> &params, code::Variable to) {
