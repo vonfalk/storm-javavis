@@ -36,8 +36,6 @@ Make sure to decrease the stack size in UThread after this is done!
 
 When calling functions on other threads, we should use the same CloneEnv for all parameters!
 
-Test and rething toS function in Object. It does not always call the Storm version correctly...
-
 Replace the parameter CodeResult with a return value? Is this possible?
 
 Enable the SyntaxRules among others to be accessible from Storm.
