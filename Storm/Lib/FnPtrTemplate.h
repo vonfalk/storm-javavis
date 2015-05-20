@@ -2,6 +2,7 @@
 #include "FnPtr.h"
 #include "Template.h"
 #include "Type.h"
+#include "CodeGenFwd.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -20,6 +21,10 @@ namespace storm {
 
 		// Lazy loading.
 		virtual bool loadAll();
+
+	private:
+		// Generate code for function calls.
+		CodeGen *CODECALL callCode();
 	};
 
 	// See FnPtr.h for 'fnPtrType' function.

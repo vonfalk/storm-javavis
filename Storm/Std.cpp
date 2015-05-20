@@ -281,13 +281,13 @@ namespace storm {
 		Package *core = to.package(coreName, true);
 		addFnPtrTemplate(core); // needed early.
 		addMaybeTemplate(core);
+		addArrayTemplate(core);
 		core->add(steal(cloneTemplate(to))); // also needed early
 
 		core->add(steal(intType(to)));
 		core->add(steal(natType(to)));
 		core->add(steal(byteType(to)));
 		core->add(steal(boolType(to)));
-		addArrayTemplate(core);
 		core->add(steal(futureTemplate(to)));
 
 		addBuiltIn(to);

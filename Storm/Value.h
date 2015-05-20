@@ -91,7 +91,7 @@ namespace storm {
 		bool canStore(Type *x) const;
 		bool canStore(const Value &v) const;
 
-		// Matches another value, according to MatchFlags? Note that this relation is not transitive.
+		// Matches another value, according to MatchFlags? Note that this relation is not reflexive.
 		// If flags == matchDefault, then it is equivalent to 'canStore'.
 		bool matches(const Value &v, MatchFlags match) const;
 

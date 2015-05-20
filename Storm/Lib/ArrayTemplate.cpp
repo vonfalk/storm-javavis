@@ -176,17 +176,17 @@ namespace storm {
 	CodeGen *ArrayType::valueToS() {
 		// If the StrBuf has the member, we can use that as well.
 		Value strBufT = value<StrBuf *>(engine);
-		Function *addFn = as<Function>(strBufT.type->find(L"add", valList(2, strBufT, param)));
+		Function *addFn = as<Function>(strBufT.type->findCpp(L"add", valList(2, strBufT, param)));
 		if (addFn)
 			return valueToSAdd(addFn);
 
-		Function *toSFn = as<Function>(param.type->find(L"toS", valList(1, param.asRef(true))));
+		Function *toSFn = as<Function>(param.type->findCpp(L"toS", valList(1, param.asRef(true))));
 		if (toSFn)
 			return valueToSMember(toSFn);
 
 		// Look in the direct parent.
 		NameLookup *parent = param.type->parent();
-		toSFn = as<Function>(parent->find(L"toS", valList(1, param.asRef(true))));
+		toSFn = as<Function>(parent->findCpp(L"toS", valList(1, param.asRef(true))));
 		if (toSFn)
 			return valueToSMember(toSFn);
 

@@ -107,11 +107,11 @@ namespace storm {
 		parentLookup = prev;
 	}
 
-	Named *bs::BlockLookup::findHere(const String &name, const vector<Value> &params) {
-		if (!params.empty())
-			return null;
+	Named *bs::BlockLookup::find(Par<NamePart> part) {
+		if (part->params.empty())
+			return block->variable(part->name);
 
-		return block->variable(name);
+		return null;
 	}
 
 }

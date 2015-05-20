@@ -180,7 +180,7 @@ namespace storm {
 
 	void bs::SuperCall::init(Par<Initializer> init) {
 		const String &name = init->name->v->v;
-		TypeVar *v = as<TypeVar>(thisPtr.type->find(name, vector<Value>(1, thisPtr)));
+		TypeVar *v = as<TypeVar>(thisPtr.type->findCpp(name, vector<Value>(1, thisPtr)));
 		if (v == null || v->params[0].type != thisPtr.type)
 			throw SyntaxError(init->name->pos, L"The member variable " + name + L" was not found in "
 							+ ::toS(thisPtr));
@@ -210,7 +210,7 @@ namespace storm {
 		if (hiddenThread)
 			values.insert(values.begin() + 1, Value::thisPtr(Thread::stormType(engine())));
 
-		Function *ctor = as<Function>(parent->find(Type::CTOR, values));
+		Function *ctor = as<Function>(parent->findCpp(Type::CTOR, values));
 		if (!ctor)
 			throw SyntaxError(pos, L"No constructor (" + join(values, L", ") + L") found in " + parent->identifier());
 
@@ -238,7 +238,7 @@ namespace storm {
 		// Find the constructor of TObject.
 		Type *parent = TObject::stormType(engine());
 		vector<Value> values = valList(2, Value(parent), Value(Thread::stormType(engine())));
-		Function *ctor = as<Function>(parent->find(Type::CTOR, values));
+		Function *ctor = as<Function>(parent->findCpp(Type::CTOR, values));
 		if (!ctor)
 			throw InternalError(L"The constructor of TObject: __ctor(TObject, Thread) was not found!");
 
@@ -349,7 +349,7 @@ namespace storm {
 		vector<Value> values = to->values();
 		values.insert(values.begin(), Value::thisPtr(toCreate));
 
-		Function *ctor = as<Function>(toCreate->find(Type::CTOR, values));
+		Function *ctor = as<Function>(toCreate->findCpp(Type::CTOR, values));
 		if (ctor == null)
 			throw SyntaxError(to->pos, L"No constructor for " + ::toS(t) + L"(" + join(values, L", ") + L").");
 

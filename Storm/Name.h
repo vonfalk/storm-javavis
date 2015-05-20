@@ -7,6 +7,9 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class Named;
+	class NameOverloads;
+
 	/**
 	 * Represents one part of a name. Each part is a string and zero or more
 	 * parameters (think templates in C++).
@@ -17,7 +20,7 @@ namespace storm {
 		// Create with only a name.
 		STORM_CTOR NamePart(Par<Str> name);
 
-		// Create with name and params.
+		// Create with name and params. Creates a NameParamList.
 		STORM_CTOR NamePart(Par<Str> name, Par<Array<Value>> params);
 
 		// Create from C++.
@@ -29,8 +32,12 @@ namespace storm {
 		// The name here.
 		const String name;
 
-		// Any parameters present.
+		// Parameters.
 		const vector<Value> params;
+
+		// Choose a specific Named from a set of overloads. Subclass and override to
+		// alter the default behavior.
+		virtual Named *STORM_FN choose(Par<NameOverloads> overloads);
 
 		// Equality check.
 		bool operator ==(const NamePart &o) const;
@@ -39,6 +46,10 @@ namespace storm {
 	protected:
 		// Output.
 		virtual void output(std::wostream &to) const;
+
+	private:
+		// Compute the badness of a candidate. Returns -1 on no match.
+		int matches(Named *candidate) const;
 	};
 
 	/**

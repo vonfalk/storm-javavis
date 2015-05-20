@@ -5,6 +5,7 @@
 #include "Exception.h"
 #include "Type.h"
 #include "Io/Url.h"
+#include <limits>
 
 namespace storm {
 
@@ -15,13 +16,21 @@ namespace storm {
 		return r;
 	}
 
-	NamePart::NamePart(Par<Str> name) : name(name->v) {}
+	/**
+	 * Name part
+	 */
 
-	NamePart::NamePart(Par<Str> name, Par<Array<Value>> values) : name(name->v), params(toVec(values)) {}
+	NamePart::NamePart(Par<Str> name) :
+		name(name->v), params() {}
 
-	NamePart::NamePart(const String &name) : name(name) {}
+	NamePart::NamePart(Par<Str> name, Par<Array<Value>> values) :
+		name(name->v), params(toVec(values)) {}
 
-	NamePart::NamePart(const String &name, const vector<Value> &params) : name(name), params(params) {}
+	NamePart::NamePart(const String &name) :
+		name(name), params() {}
+
+	NamePart::NamePart(const String &name, const vector<Value> &params) :
+		name(name), params(params) {}
 
 	void NamePart::output(wostream &to) const {
 		to << name;
@@ -36,6 +45,55 @@ namespace storm {
 		return name == o.name
 			&& params == o.params;
 	}
+
+	Named *NamePart::choose(Par<NameOverloads> from) {
+		vector<Named *> candidates;
+		int worst = std::numeric_limits<int>::max();
+
+		for (nat i = 0; i < from->count(); i++) {
+			Named *candidate = from->at(i);
+			int badness = matches(candidate);
+			if (badness >= 0 && badness <= worst) {
+				if (badness != worst)
+					candidates.clear();
+				candidates.push_back(candidate);
+			}
+		}
+
+		if (candidates.size() == 0) {
+			return null;
+		} else if (candidates.size() == 1) {
+			return capture(candidates[0]).ret();
+		} else {
+			std::wostringstream msg;
+			msg << L"Multiple possible matches for: " << from << endl;
+			for (nat i = 0; i < candidates.size(); i++) {
+				msg << L"Could be: " << candidates[i]->identifier();
+			}
+			PVAR(msg.str());
+			TODO(L"Require a SrcPos for NameParamList!");
+			throw TypeError(SrcPos(), msg.str());
+		}
+	}
+
+	int NamePart::matches(Named *candidate) const {
+		const vector<Value> &c = candidate->params;
+		if (c.size() != params.size())
+			return -1;
+
+		for (nat i = 0; i < c.size(); i++) {
+			if (!c[i].matches(params[i], candidate->matchFlags))
+				return -1;
+		}
+
+		TODO(L"Compute the actual distance!");
+		return 0;
+	}
+
+
+	/**
+	 * Name
+	 */
 
 	Name::Name() {}
 
@@ -63,18 +121,6 @@ namespace storm {
 	void Name::add(const String &part, const vector<Value> &params) {
 		parts.push_back(CREATE(NamePart, this, part, params));
 	}
-
-	// Name &Name::operator +=(const Name &o) {
-	// 	for (nat i = 0; i < o.parts.size(); i++)
-	// 		parts.push_back(o.parts[i]);
-	// 	return *this;
-	// }
-
-	// Name Name::operator +(const Name &o) const {
-	// 	Name t(*this);
-	// 	t += o;
-	// 	return t;
-	// }
 
 	Name *Name::parent() const {
 		Name *n = CREATE(Name, this, this);

@@ -79,7 +79,7 @@ namespace storm {
 				Object::operator delete(this);
 		}
 #endif
-		// Some data, to make sure we're a nonzero size.
+		// Some data, to make sure we have a nonzero size.
 		void *dummy;
 	};
 

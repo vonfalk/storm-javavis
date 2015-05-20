@@ -476,7 +476,7 @@ namespace storm {
 		vector<Value> params = actual->values();
 		params.insert(params.begin(), Value::thisPtr(t));
 
-		Function *ctor = as<Function>(t->find(Type::CTOR, params));
+		Function *ctor = as<Function>(t->findCpp(Type::CTOR, params));
 		if (!ctor)
 			throw SyntaxError(pos, L"No constructor " + t->identifier() + L"(" + join(params, L", ") + L")");
 
@@ -528,7 +528,7 @@ namespace storm {
 		NamePart *p = name->at(0);
 		if (p->name != L"super")
 			return false;
-		return p->params.size() == 0;
+		return p->params.empty();
 	}
 
 	// Find a target assuming we should use the this-pointer.

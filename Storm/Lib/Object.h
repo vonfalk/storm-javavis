@@ -218,11 +218,11 @@ To *customAs(storm::Object *from) {
 }
 
 template <class To>
-To *customAs(const storm::Object *from) {
+const To *customAs(const storm::Object *from) {
 	if (from == null)
 		return null;
-	if (from->isA(To::type(from->engine())))
-		return static_cast<To*>(from);
+	if (from->isA(To::stormType(from->engine())))
+		return static_cast<const To*>(from);
 	return null;
 }
 

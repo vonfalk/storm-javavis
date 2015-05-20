@@ -89,7 +89,7 @@ namespace storm {
 			throw SyntaxTypeError(option->pos, L"Only objects are supported in the syntax. "
 								+ ::toS(find) + L" is a value or a built-in type.");
 
-		Function *ctor = as<Function>(t->find(Type::CTOR, types(t, p)));
+		Function *ctor = as<Function>(t->findCpp(Type::CTOR, types(t, p)));
 		if (!ctor)
 			return Auto<ActualBase>(null);
 
@@ -121,7 +121,7 @@ namespace storm {
 		types[0] = me->type();
 		types[1] = param->type();
 
-		if (Function *f = as<Function>(t->find(name, types))) {
+		if (Function *f = as<Function>(t->findCpp(name, types))) {
 			code::FnParams call;
 			me->add(call);
 			param->add(call);

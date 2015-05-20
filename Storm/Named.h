@@ -19,8 +19,10 @@ namespace storm {
 		STORM_CTOR NameLookup();
 
 		// Find the specified NamePart in here, returns null if not found. BORROWED PTR.
-		inline Named *find(Par<NamePart> name) { return findHere(name->name, name->params); }
-		inline Named *find(const String &name, const vector<Value> &params) { return findHere(name, params); }
+		virtual Named *find(Par<NamePart> name);
+
+		// Helper function for C++. (differently named due to the overloading rules in C++)
+		Named *findCpp(const String &name, const vector<Value> &params);
 
 		// Get the parent object to this lookup, or null if none.
 		virtual NameLookup *parent() const;
@@ -32,10 +34,6 @@ namespace storm {
 
 		// Set the parent lookup from Storm (for now...)
 		virtual void STORM_FN setParent(Par<NameLookup> lookup);
-
-	protected:
-		// Find something here. This one is called by both the public overloads.
-		virtual Named *findHere(const String &name, const vector<Value> &params);
 	};
 
 

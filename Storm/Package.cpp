@@ -50,10 +50,10 @@ namespace storm {
 		}
 	}
 
-	Named *Package::loadName(const String &name, const vector<Value> &params) {
+	Named *Package::loadName(Par<NamePart> part) {
 		// We are only loading packages this way at the moment.
-		if (params.size() == 0) {
-			if (Package *pkg = loadPackage(name)) {
+		if (part->params.empty()) {
+			if (Package *pkg = loadPackage(part->name)) {
 				return pkg;
 			}
 		}
@@ -77,7 +77,8 @@ namespace storm {
 			Auto<Url> &now = children->at(i);
 			if (now->dir()) {
 				Auto<Str> name = now->name();
-				if (tryFind(name->v, vector<Value>()) == null) {
+				Auto<NamePart> part = CREATE(NamePart, this, name);
+				if (tryFind(part) == null) {
 					add(steal(loadPackage(name->v)));
 				}
 			}
@@ -178,7 +179,7 @@ namespace storm {
 		paramTypes[1] = Value(PkgFiles::stormType(this));
 		paramTypes[2] = Value(Package::stormType(this));
 
-		Function *ctor = as<Function>(readerT->find(Type::CTOR, paramTypes));
+		Function *ctor = as<Function>(readerT->findCpp(Type::CTOR, paramTypes));
 		if (!ctor)
 			throw RuntimeError(::toS(rName) + L": no constructor taking PkgFiles found!");
 

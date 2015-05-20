@@ -341,7 +341,7 @@ namespace storm {
 
 		Value str = value<Str *>(e);
 		Value thisPtr = Value::thisPtr(type.type);
-		Function *fn = as<Function>(type.type->find(L"toS", valList(1, thisPtr)));
+		Function *fn = as<Function>(type.type->findCpp(L"toS", valList(1, thisPtr)));
 		if (!fn)
 			throw InternalError(L"The type " + ::toS(thisPtr) + L" does not have a toS function.");
 

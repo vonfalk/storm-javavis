@@ -5,6 +5,50 @@
 
 namespace storm {
 
+	NameOverloads::NameOverloads() {}
+
+	Nat NameOverloads::count() const {
+		return items.size();
+	}
+
+	Named *NameOverloads::operator [](Nat id) const {
+		return items[id].ret();
+	}
+
+	Named *NameOverloads::at(nat id) const {
+		return items[id].borrow();
+	}
+
+	void NameOverloads::add(Par<Named> item) {
+		for (nat i = 0; i < items.size(); i++)
+			if (items[i]->params == item->params)
+				throw TypedefError(::toS(item) + L" is already defined as " + items[i]->identifier());
+
+		items.push_back(item);
+	}
+
+	Named *NameOverloads::fromTemplate(Par<NamePart> params, Par<NameSet> owner) {
+		if (!templ)
+			return null;
+
+		Auto<Named> named = templ->generate(params);
+		if (!named)
+			return null;
+
+		assert(named->name == params->name, L"A template generated an unexpected name!");
+		add(named);
+		named->parentLookup = owner.borrow();
+		return named.ret();
+	}
+
+	void NameOverloads::output(wostream &to) const {
+		for (nat i = 0; i < items.size(); i++)
+			to << items[i] << endl;
+		if (templ)
+			to << L"<template>" << endl;
+	}
+
+
 	NameSet::NameSet(Par<Str> name) : Named(name) { init(); }
 	NameSet::NameSet(const String &name) : Named(name) { init(); }
 	NameSet::NameSet(const String &name, const vector<Value> &params) : Named(name, params) { init(); }
@@ -19,116 +63,72 @@ namespace storm {
 	}
 
 	void NameSet::clear() {
-		clearMap(overloads);
+		overloads.clear();
 		init();
 	}
-
-	NameSet::Overload::Overload() {}
-
-	NameSet::Overload::~Overload() {}
 
 	void NameSet::add(Par<Named> p) {
 		OverloadMap::iterator i = overloads.find(p->name);
 
-		Overload *o = null;
+		NameOverloads *o = null;
 		if (i == overloads.end()) {
-			o = new Overload();
-			overloads.insert(make_pair(p->name, o));
+			o = CREATE(NameOverloads, this);
+			overloads.insert(make_pair(p->name, steal(o)));
 		} else {
-			o = i->second;
+			o = i->second.borrow();
 		}
 
-		add(o, p);
+		o->add(p);
+		p->parentLookup = this;
 	}
 
 	void NameSet::add(Par<Template> p) {
 		OverloadMap::iterator i = overloads.find(p->name);
 
-		Overload *o = null;
+		NameOverloads *o = null;
 		if (i == overloads.end()) {
-			o = new Overload();
-			overloads.insert(make_pair(p->name, o));
+			o = CREATE(NameOverloads, this);
+			overloads.insert(make_pair(p->name, steal(o)));
 		} else {
-			o = i->second;
+			o = i->second.borrow();
 		}
 
 		o->templ = p;
 	}
 
-	Named *NameSet::findHere(const String &name, const vector<Value> &params) {
-		if (Named *found = tryFind(name, params))
+	Named *NameSet::find(Par<NamePart> part) {
+		if (Named *found = tryFind(part))
 			return found;
 
 		if (loaded)
 			return null;
 
-		if (Named *found = loadName(name, params)) {
+		if (Named *found = loadName(part)) {
 			add(found);
 			found->release();
 			return found;
 		}
 
 		forceLoad();
-		return tryFind(name, params);
+		return tryFind(part);
 	}
 
-	Named *NameSet::tryFind(const String &name, const vector<Value> &params) {
-		OverloadMap::const_iterator i = overloads.find(name);
+	Named *NameSet::tryFind(Par<NamePart> part) {
+		OverloadMap::const_iterator i = overloads.find(part->name);
 		if (i == overloads.end())
 			return null;
 
-		Overload *o = i->second;
-		if (Named *n = tryFind(o, params))
-			return n;
+		// TODO: Refactor so that the find function also returns a non-borrowed pointer!
+		Auto<Named> result = part->choose(i->second);
+		if (result)
+			return result.borrow();
 
-		if (o->templ) {
-			Auto<NamePart> part = CREATE(NamePart, this, name, params);
-			if (Auto<Named> n = o->templ->generate(part)) {
-				assert(n->name == name, L"The template " + o->templ->name + L" returned a mismatched Name: " + n->name);
-				if (n->name != name)
-					return null;
-				add(n);
-				return n.borrow();
-			}
-		}
-
-		return null;
+		result = i->second->fromTemplate(part, this);
+		return result.borrow();
 	}
 
-	Named *NameSet::tryFind(Overload *from, const vector<Value> &params) {
-		for (nat i = 0; i < from->items.size(); i++) {
-			Named *c = from->items[i].borrow();
-			if (candidate(c->matchFlags, c->params, params))
-				return c;
-		}
-		return null;
-	}
-
-	bool NameSet::candidate(MatchFlags flags, const vector<Value> &our, const vector<Value> &ref) const {
-		nat params = our.size();
-		// No support for default-parameters here!
-		if (params != ref.size())
-			return false;
-
-		for (nat i = 0; i < params; i++)
-			if (!our[i].matches(ref[i], flags))
-				return false;
-
-		return true;
-	}
-
-	void NameSet::add(Overload *to, Par<Named> n) {
-		if (tryFind(to, n->params)) {
-			DebugBreak();
-			throw TypedefError(::toS(n) + L" is already defined in " + identifier());
-		}
-
-		to->items.push_back(n);
-		n->parentLookup = this;
-	}
-
-	Named *NameSet::loadName(const String &name, const vector<Value> &params) {
-		// Implemented in derived classes. Indicate 'not found'.
+	Named *NameSet::loadName(Par<NamePart> part) {
+		// Implemented in derived classes. Indicates 'not found'.
 		return null;
 	}
 
@@ -179,8 +179,9 @@ namespace storm {
 	}
 
 	void NameSet::output(wostream &to) const {
-		for (iterator i = begin(); i != end(); ++i)
-			to << *i << endl;
+		for (OverloadMap::const_iterator i = overloads.begin(), end = overloads.end(); i != end; ++i) {
+			to << i->second;
+		}
 	}
 
 	vector<Auto<Type>> NameSet::findTypes() const {

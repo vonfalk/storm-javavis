@@ -31,7 +31,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	Timestamp end;
 	PLN("Total time: " << (end - start));
 
-	Object::dumpLeaks();
+	// Object::dumpLeaks(); // Done earlier, in ~Engine
 
 	return r.ok() ? 0 : 1;
 }

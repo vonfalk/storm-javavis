@@ -57,7 +57,7 @@ namespace storm {
 			Type *t = variable->result.type;
 			vector<Value> params = actuals->values();
 			params.insert(params.begin(), Value::thisPtr(t));
-			Function *ctor = as<Function>(t->find(Type::CTOR, params));
+			Function *ctor = as<Function>(t->findCpp(Type::CTOR, params));
 			if (!ctor)
 				throw SyntaxError(variable->pos, L"No constructor " + ::toS(variable->result)
 								+ L"(" + join(params, L", ") + L") found. Can not initialize "

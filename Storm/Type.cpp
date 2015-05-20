@@ -214,13 +214,13 @@ namespace storm {
 		return RunOn(RunOn::any);
 	}
 
-	Named *Type::findHere(const String &name, const vector<Value> &params) {
-		if (Named *n = NameSet::findHere(name, params))
+	Named *Type::find(Par<NamePart> part) {
+		if (Named *n = NameSet::find(part))
 			return n;
 
-		if (name != CTOR)
+		if (part->name != CTOR)
 			if (Type *s = super())
-				return s->findHere(name, params);
+				return s->find(part);
 
 		return null;
 	}
@@ -301,11 +301,11 @@ namespace storm {
 	}
 
 	Function *Type::destructor() {
-		return as<Function>(find(DTOR, vector<Value>(1, Value::thisPtr(this))));
+		return as<Function>(findCpp(DTOR, vector<Value>(1, Value::thisPtr(this))));
 	}
 
 	Function *Type::copyCtor() {
-		return as<Function>(find(CTOR, vector<Value>(2, Value::thisPtr(this))));
+		return as<Function>(findCpp(CTOR, vector<Value>(2, Value::thisPtr(this))));
 	}
 
 	const void *Type::copyCtorFn() {
@@ -313,15 +313,15 @@ namespace storm {
 	}
 
 	Function *Type::assignFn() {
-		return as<Function>(find(L"=", vector<Value>(2, Value::thisPtr(this))));
+		return as<Function>(findCpp(L"=", vector<Value>(2, Value::thisPtr(this))));
 	}
 
 	Function *Type::defaultCtor() {
-		return as<Function>(find(CTOR, vector<Value>(1, Value::thisPtr(this))));
+		return as<Function>(findCpp(CTOR, vector<Value>(1, Value::thisPtr(this))));
 	}
 
 	Function *Type::deepCopyFn() {
-		return as<Function>(find(L"deepCopy", valList(2, Value::thisPtr(this), Value(CloneEnv::stormType(engine)))));
+		return as<Function>(findCpp(L"deepCopy", valList(2, Value::thisPtr(this), Value(CloneEnv::stormType(engine)))));
 	}
 
 
@@ -420,7 +420,8 @@ namespace storm {
 		// Replace the 'this' parameter, otherwise we would never get a match!
 		vector<Value> params = to->params;
 		params[0] = Value::thisPtr(this);
-		Function *match = as<Function>(NameSet::tryFind(to->name, params));
+		Auto<NamePart> part = CREATE(NamePart, this, to->name, params);
+		Function *match = as<Function>(NameSet::tryFind(part));
 		if (to == match)
 			return null;
 		return match;

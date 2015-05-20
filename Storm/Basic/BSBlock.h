@@ -91,9 +91,8 @@ namespace storm {
 			// Risk of cycles, no ref.
 			Block *block;
 
-		protected:
 			// Find a variable here.
-			virtual Named *findHere(const String &name, const vector<Value> &params);
+			virtual Named *find(Par<NamePart> part);
 		};
 
 	}

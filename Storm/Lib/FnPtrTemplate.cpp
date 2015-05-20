@@ -44,26 +44,26 @@ namespace storm {
 		}
 	}
 
-	static code::Listing callCode(Par<FnPtrType> type) {
+	CodeGen *FnPtrType::callCode() {
 		using namespace code;
-		Engine &e = type->engine;
-		Auto<CodeGen> s = CREATE(CodeGen, type, RunOn());
+		Engine &e = engine;
+		Auto<CodeGen> s = CREATE(CodeGen, this, RunOn());
 		s->to << prolog();
 
 		// This parameter.
 		Variable thisParam = s->frame.createPtrParam();
 
 		// Result parameter.
-		const Value &result = type->params[0];
+		const Value &result = this->params[0];
 		Variable resultParam;
 		if (!result.returnInReg()) {
 			resultParam = s->frame.createPtrParam();
 		}
 
 		// Create parameters.
-		vector<code::Value> params(type->params.size() - 1);
+		vector<code::Value> params(this->params.size() - 1);
 		for (nat i = 0; i < params.size(); i++) {
-			const Value &t = type->params[i + 1];
+			const Value &t = this->params[i + 1];
 			if (t.isClass())
 				params[i] = s->frame.createPtrParam();
 			else
@@ -73,11 +73,11 @@ namespace storm {
 		// Decide if the first parameter is a TObject, and pass either that or null to functions
 		// that needs to know.
 		code::Value firstTObject = natPtrConst(0);
-		if (type->params.size() > 1 && type->params[1].type->isA(TObject::stormType(e)))
+		if (this->params.size() > 1 && this->params[1].type->isA(TObject::stormType(e)))
 			firstTObject = params[0];
 
 		// Create the FnParams object.
-		Variable fnParams = createFnParams(s, type->params.size() - 1).v;
+		Variable fnParams = createFnParams(s, this->params.size() - 1).v;
 
 		// Should we clone the result?
 		Variable needClone = s->frame.createByteVar(s->block.v);
@@ -91,10 +91,10 @@ namespace storm {
 		Label done = s->to.label();
 		s->to << cmp(needClone, byteConst(1));
 		s->to << jmp(doCopy, ifEqual);
-		callPlainCode(type, s, fnParams, params);
+		callPlainCode(this, s, fnParams, params);
 		s->to << jmp(done);
 		s->to << doCopy;
-		callCopyCode(type, s, fnParams, params);
+		callCopyCode(this, s, fnParams, params);
 		s->to << done;
 
 		// Return type info.
@@ -182,7 +182,7 @@ namespace storm {
 			s->to << ret(result.size());
 		}
 
-		return s->to;
+		return s.ret();
 	}
 
 	FnPtrType::FnPtrType(const vector<Value> &v) : Type(L"Fn", typeClass, v) {
@@ -200,27 +200,23 @@ namespace storm {
 
 		vector<Value> fnCall = params;
 		fnCall[0] = t;
-		add(steal(dynamicFunction(e, params[0], L"call", fnCall, callCode(this))));
+		add(steal(lazyFunction(e, params[0], L"call", fnCall, steal(memberWeakPtr(e, this, &FnPtrType::callCode)))));
 		add(steal(nativeDtor(e, this, &destroyPtr)));
 
 		return Type::loadAll();
 	}
 
 	static Named *generateFnPtr(Par<NamePart> part) {
-		const vector<Value> &params = part->params;
-
-		if (params.size() < 1)
+		if (part->params.size() < 1)
 			return null;
 
-		for (nat i = 0; i < params.size(); i++) {
+		for (nat i = 0; i < part->params.size(); i++) {
 			// References not allowed.
-			if (params[i].ref)
+			if (part->params[i].ref)
 				return null;
 		}
 
-		Engine &e = part->engine();
-		Type *r = CREATE(FnPtrType, e, params);
-		return r;
+		return CREATE(FnPtrType, part, part->params);
 	}
 
 	void addFnPtrTemplate(Par<Package> to) {
@@ -233,8 +229,6 @@ namespace storm {
 		tName->add(L"core");
 		tName->add(L"Fn", params);
 		Type *r = as<Type>(e.scope()->find(tName));
-		if (!r)
-			PLN(*e.rootPackage());
 		assert(r, "The Fn type was not found!");
 		return r;
 	}

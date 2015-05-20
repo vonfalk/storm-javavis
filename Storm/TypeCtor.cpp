@@ -216,7 +216,7 @@ namespace storm {
 
 		if (super) {
 			// Find parent function.
-			if (Function *f = as<Function>(super->find(name, params))) {
+			if (Function *f = as<Function>(super->findCpp(name, params))) {
 				before = f;
 			} else {
 				throw InternalError(L"Could not find the clone function of " + super->identifier());
@@ -265,7 +265,7 @@ namespace storm {
 			Offset offset = v->offset();
 			if (t.isValue()) {
 				// Call 'deepCopy' directly.
-				Function *fn = as<Function>(t.type->find(L"deepCopy", params));
+				Function *fn = as<Function>(t.type->findCpp(L"deepCopy", params));
 				if (!fn)
 					throw InternalError(L"The type " + ::toS(t) + L" does not have a 'deepCopy' member.");
 
@@ -277,7 +277,7 @@ namespace storm {
 
 			} else {
 				// Find the clone function for us:
-				Function *fn = as<Function>(core->find(L"clone", params));
+				Function *fn = as<Function>(core->findCpp(L"clone", params));
 				if (!fn)
 					throw InternalError(L"Failed to find the 'clone(T, CloneEnv) for T = " + ::toS(params[0]));
 
@@ -300,7 +300,7 @@ namespace storm {
 
 	// Find the deepCopy member in a Type.
 	Function *deepCopy(Type *in) {
-		Named *n = in->find(L"deepCopy", valList(2, Value::thisPtr(in), Value(CloneEnv::stormType(in))));
+		Named *n = in->findCpp(L"deepCopy", valList(2, Value::thisPtr(in), Value(CloneEnv::stormType(in))));
 		if (Function *f = as<Function>(n))
 			return f;
 		throw InternalError(L"The class " + in->identifier() + L" does not have a deepClone(CloneEnv) member.");
@@ -460,17 +460,18 @@ namespace storm {
 		return null;
 	}
 
-	Named *stdClone(Par<NamePart> param) {
+	Named *generateStdClone(Par<NamePart> part) {
 		using namespace code;
-		Engine &e = param->engine();
+		Engine &e = part->engine();
 
 		Named *result = null;
 
-		if (param->params.size() == 1)
-			result = stdClone(e, param->name, param->params[0].asRef(false));
+		const vector<Value> &params = part->params;
+		if (params.size() == 1)
+			result = stdClone(e, part->name, params[0].asRef(false));
 
-		else if (param->params.size() == 2)
-			result = stdClone(e, param->name, param->params[0].asRef(false), param->params[1].asRef(false));
+		else if (params.size() == 2)
+			result = stdClone(e, part->name, params[0].asRef(false), params[1].asRef(false));
 
 		if (result)
 			result->matchFlags = matchNoInheritance;
@@ -479,8 +480,6 @@ namespace storm {
 	}
 
 	Template *cloneTemplate(Engine &to) {
-		Template *t = CREATE(Template, to, L"clone");
-		t->generateFn = simpleFn(stdClone);
-		return t;
+		return CREATE(Template, to, L"clone", simpleFn(&generateStdClone));
 	}
 }

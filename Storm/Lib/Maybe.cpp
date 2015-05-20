@@ -24,7 +24,7 @@ namespace storm {
 		if (param.ref)
 			return null;
 
-		return CREATE(MaybeType, part->engine(), param);
+		return CREATE(MaybeType, part, param);
 	}
 
 	void addMaybeTemplate(Par<Package> to) {

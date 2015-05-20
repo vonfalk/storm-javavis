@@ -155,6 +155,8 @@ namespace storm {
 		clear(toDestroy);
 
 		delete rootScope;
+
+		Object::dumpLeaks();
 	}
 
 	void Engine::setSpecialBuiltIn(Special t, Par<Type> z) {

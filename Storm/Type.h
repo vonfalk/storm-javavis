@@ -145,11 +145,11 @@ namespace storm {
 		// succeeded!
 		virtual bool loadAll();
 
+		// Find stuff.
+		virtual Named *find(Par<NamePart> part);
+
 	protected:
 		virtual void output(wostream &to) const;
-
-		// Find stuff.
-		virtual Named *findHere(const String &name, const vector<Value> &params);
 
 	private:
 		// Validate parameters to added members.

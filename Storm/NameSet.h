@@ -5,6 +5,47 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class NameSet;
+
+	/**
+	 * Represents all Named objects sharing the same name. Used mainly inside NameSet, but is
+	 * exposed since it is needed during lookup.
+	 */
+	class NameOverloads : public Object {
+		STORM_CLASS;
+
+		friend class NameSet;
+	public:
+		// Create.
+		STORM_CTOR NameOverloads();
+
+		// Get the number of items in here.
+		Nat STORM_FN count() const;
+
+		// Get item #n in here.
+		Named *STORM_FN operator [](Nat id) const;
+
+		// For C++, borrowed ptr.
+		Named *at(nat id) const;
+
+		// Add an element.
+		void add(Par<Named> item);
+
+		// Create an element from the template (returns null on failure).
+		virtual MAYBE(Named) *STORM_FN fromTemplate(Par<NamePart> part, Par<NameSet> owner);
+
+	protected:
+		// Output.
+		virtual void output(wostream &to) const;
+
+	private:
+		// All named items in here.
+		vector<Auto<Named>> items;
+
+		// Template inside?
+		Auto<Template> templ;
+	};
+
 	/**
 	 * A set of named objects. Implements an interface that easily retrieves other named members.
 	 *
@@ -15,25 +56,8 @@ namespace storm {
 		STORM_CLASS;
 
 	private:
-		// A set of overloads.
-		class Overload : NoCopy {
-		public:
-			// Ctor.
-			Overload();
-
-			// Dtor.
-			~Overload();
-
-			// Contents.
-			vector<Auto<Named> > items;
-
-			// Template inside?
-			// TODO: Allow multiple with the same name?
-			Auto<Template> templ;
-		};
-
 		// Overloads.
-		typedef hash_map<String, Overload*> OverloadMap;
+		typedef hash_map<String, Auto<NameOverloads>> OverloadMap;
 
 	public:
 		// Ctors.
@@ -100,7 +124,7 @@ namespace storm {
 		 */
 
 		// Called in case of #1, find a specific name. The returned value will be inserted.
-		virtual Named *loadName(const String &name, const vector<Value> &params);
+		virtual Named *loadName(Par<NamePart> part);
 
 		// Called in case of #2, load everything. 'loadAll' is supposed to call 'add' for all contents.
 		// Returns false if something went wrong and the loading should be re-tried. Throwing an exception
@@ -110,13 +134,10 @@ namespace storm {
 		// Force a this NameSet to be loaded if it has not already been done.
 		void forceLoad();
 
-	protected:
 		// Find a NamePart (returns borrowed ptr).
-		virtual Named *findHere(const String &name, const vector<Value> &params);
+		virtual Named *find(Par<NamePart> part);
 
-		// Compare two parameter lists. 'our' is stored in here, 'asked' is what is asked for.
-		virtual bool candidate(MatchFlags flags, const vector<Value> &our, const vector<Value> &asked) const;
-
+	protected:
 		// Output.
 		virtual void output(wostream &to) const;
 
@@ -124,17 +145,11 @@ namespace storm {
 		void clear();
 
 		// Find a named here. Does not care about lazy-loading.
-		Named *tryFind(const String &name, const vector<Value> &params);
+		Named *tryFind(Par<NamePart> part);
 
 	private:
 		// Overloads.
 		OverloadMap overloads;
-
-		// Add to a specific overload.
-		void add(Overload *to, Par<Named> item);
-
-		// Find from a specific overload.
-		Named *tryFind(Overload *from, const vector<Value> &params);
 
 		// Lazy-loading done?
 		bool loaded;
