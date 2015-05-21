@@ -4,7 +4,7 @@ TypeName fnPtrType(TypeName result, Array<TypeName> params) {
 	TypePart core("core");
 	TypePart fn("Fn");
 	fn.add(result);
-	for (Nat i = 0.nat; i < params.count; i++)
+	for (Nat i = 0; i < params.count; i++)
 		fn.add(params[i]);
 
 	TypeName name;

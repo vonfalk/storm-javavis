@@ -142,7 +142,7 @@ class BfExpr extends lang:bs:Expr {
 		state.createOutput();
 
 		// Generate code!
-		for (Nat i = 0.nat; i < tokens.count; i++) {
+		for (Nat i = 0; i < tokens.count; i++) {
 			tokens[i].code(state, g);
 		}
 
@@ -153,7 +153,7 @@ class BfExpr extends lang:bs:Expr {
 	Str toS() {
 		StrBuf o;
 		o.add("bf(" # input # ", " # space # ") {");
-		for (Nat i = 0.nat; i < tokens.count; i++) {
+		for (Nat i = 0; i < tokens.count; i++) {
 			o.add(tokens[i].toS);
 		}
 		o.add("}");
@@ -310,7 +310,7 @@ class BfLoop extends BfToken {
 		to.l << jmp(Operand(end), ifEqual);
 
 		// Inner code...
-		for (Nat i = 0.nat; i < tokens.count; i++) {
+		for (Nat i = 0; i < tokens.count; i++) {
 			tokens[i].code(state, to);
 		}
 
@@ -321,7 +321,7 @@ class BfLoop extends BfToken {
 	Str toS() {
 		StrBuf t;
 		t.add("[");
-		for (Nat i = 0.nat; i < tokens.count; i++) {
+		for (Nat i = 0; i < tokens.count; i++) {
 			t.add(tokens[i].toS);
 		}
 		t.add("]");

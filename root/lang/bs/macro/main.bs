@@ -29,7 +29,7 @@ Expr createTypePart(Block block, TypePart part) {
 	b.add(base);
 	LocalVarAccess bAccess(base.var);
 
-	for (Nat i = 0.nat; i < part.count; i++) {
+	for (Nat i = 0; i < part.count; i++) {
 		Expr created = createType(b, part[i]);
 		b.add(namedExpr(b, SStr("add"), bAccess, Actual(created)));
 	}
@@ -48,7 +48,7 @@ Expr createType(Block block, TypeName type) {
 	b.add(base);
 
 	LocalVarAccess bAccess(base.var);
-	for (Nat i = 0.nat; i < type.count; i++) {
+	for (Nat i = 0; i < type.count; i++) {
 		Expr created = createTypePart(b, type[i]);
 		b.add(namedExpr(b, SStr("add"), bAccess, Actual(created)));
 	}

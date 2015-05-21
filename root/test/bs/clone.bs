@@ -73,7 +73,7 @@ Int testCloneArray() {
 	Dbg[] c = array.clone;
 
 	Int sum = 0;
-	for (Nat i = 0.nat; i < c.count; i++) {
+	for (Nat i = 0; i < c.count; i++) {
 		if (disjoint(array[i], c[i])) {
 			sum = sum + c[i].get;
 		}

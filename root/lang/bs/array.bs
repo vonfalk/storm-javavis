@@ -21,7 +21,7 @@ Expr arrayInit(Block block, TypeName type, Array<Expr> list) {
 
 	Expr varAccess = namedExpr(b, arrayName, Actual());
 	SStr push("push"); // TODO: Add position as well!
-	for (Nat i = 0.nat; i < list.count; i++) {
+	for (Nat i = 0; i < list.count; i++) {
 		Actual params;
 		params.add(list[i]);
 		b.add(namedExpr(b, push, varAccess, params));
