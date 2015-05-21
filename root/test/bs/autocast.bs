@@ -1,0 +1,33 @@
+use core:debug;
+
+Int byteFn(Byte v) {
+	if (v == 1)
+		10;
+	else
+		0;
+}
+
+Int natFn(Nat v) {
+	if (v == 2)
+		10;
+	else
+		0;
+}
+
+Int castToNat() {
+	Nat a = 10;
+	Byte b = 20;
+	byteFn(1) + natFn(2);
+}
+
+Int maybeFn(Dbg? t) {
+	if (t)
+		20;
+	else
+		10;
+}
+
+Int castToMaybe() {
+	Dbg v(10);
+	maybeFn(v);
+}

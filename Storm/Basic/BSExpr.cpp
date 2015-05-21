@@ -18,7 +18,13 @@ namespace storm {
 		assert(!var->needed());
 	}
 
+	Bool bs::Expr::castable(Value to) {
+		return false;
+	}
+
 	bs::Constant::Constant(Int v) : cType(tInt), intValue(v) {}
+
+	bs::Constant::Constant(int64 v) : cType(tInt), intValue(v) {}
 
 	bs::Constant::Constant(Str *v) : cType(tStr), strValue(v->v.unescape()) {}
 
@@ -53,6 +59,24 @@ namespace storm {
 			TODO("Implement missing type");
 			return Value();
 		}
+	}
+
+	Bool bs::Constant::castable(Value to) {
+		if (cType != tInt)
+			return false;
+
+		if (to.ref)
+			return false;
+
+		Engine &e = engine();
+		if (to.type == intType(e))
+			return (intValue & 0x7FFFFFFF) == intValue;
+		if (to.type == natType(e))
+			return (intValue & 0xFFFFFFFF) == intValue;
+		if (to.type == byteType(e))
+			return (intValue & 0xFF) == intValue;
+
+		return false;
 	}
 
 	void bs::Constant::code(Par<CodeGen> s, Par<CodeResult> r) {
@@ -97,7 +121,18 @@ namespace storm {
 		using namespace code;
 
 		VarInfo to = r->location(s);
-		s->to << mov(to.var(), intConst(intValue));
+
+		Type *t = r->type().type;
+		Engine &e = engine();
+		if (t == intType(e))
+			s->to << mov(to.var(), intConst(int(intValue)));
+		else if (t == natType(e))
+			s->to << mov(to.var(), natConst(nat(intValue)));
+		else if (t == byteType(e))
+			s->to << mov(to.var(), byteConst(byte(intValue)));
+		else
+			assert(false, L"Unknown type for an integer constant.");
+
 		to.created(s);
 	}
 
@@ -123,7 +158,7 @@ namespace storm {
 	}
 
 	bs::Constant *bs::intConstant(Par<SStr> v) {
-		return CREATE(Constant, v->engine(), v->v->v.toInt());
+		return CREATE(Constant, v->engine(), v->v->v.toInt64());
 	}
 
 	bs::Constant *bs::strConstant(Par<SStr> v) {

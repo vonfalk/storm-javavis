@@ -69,7 +69,7 @@ int launchMainLoop(Engine &engine, const String &lang) {
 		return 1;
 	}
 
-	Function *replCtor = as<Function>(replType->find(Type::CTOR, vector<Value>(1, Value::thisPtr(replType))));
+	Function *replCtor = as<Function>(replType->findCpp(Type::CTOR, vector<Value>(1, Value::thisPtr(replType))));
 	if (!replCtor) {
 		wcout << L"No suitable constructor found for " << replName << L"." << endl;
 		return 1;

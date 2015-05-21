@@ -53,5 +53,5 @@ Cons? reverse(Cons? a) {
 // takes 14s
 void testReverse() {
 	for (Int i = 0; i < 100; i++)
-		reverse(?create(1000));
+		reverse(create(1000));
 }

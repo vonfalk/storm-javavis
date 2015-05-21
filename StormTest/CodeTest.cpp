@@ -57,6 +57,12 @@ BEGIN_TEST(OverloadTest) {
 	CHECK_EQ(runFn(L"test.bs.testOverload", 0), 2);
 } END_TEST
 
+BEGIN_TEST(AutocastTest) {
+	// Check auto-casting from int to nat.
+	CHECK_EQ(runFn(L"test.bs.castToNat"), 20);
+	CHECK_EQ(runFn(L"test.bs.castToMaybe"), 20);
+} END_TEST
+
 BEGIN_TEST(InheritanceTest) {
 	// Some inheritance testing.
 	CHECK_EQ(runFn(L"test.bs.testBase"), 10);
@@ -187,8 +193,6 @@ BEGIN_TEST(MaybeTest) {
 
 	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 0), CREATE(Str, *gEngine, L"null"));
 	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 1), CREATE(Str, *gEngine, L"ok"));
-
-	CHECK_EQ(runFn(L"test.bs.maybeCast"), 2);
 } END_TEST
 
 // Test the REPL of BS programmatically.

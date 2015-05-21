@@ -265,6 +265,66 @@ fn->
 
 This syntax is implemented in `lang:bs:fnPtr.bs`.
 
+
+Null and maybe
+---------------
+
+By default, reference variables (class or actor types) can not contain the value null. Sometimes,
+however, it is useful to be able to return a special value for special condition. For this reason,
+Storm contains the special type `Maybe<T>`. This type is a reference, just like regular pointers,
+but it may contain a special value that indicates that there is no object (null). In Basic Storm,
+the shorthand `T?` can be used instead of `Maybe<T>`.
+
+`Maybe<T>` can not be used to access the underlying object without explicitly checking for
+null. Null checking is done like this:
+
+```
+Str? obj;
+if (obj) {
+    // In here, obj is a regular Str object.
+}
+```
+
+Automatic type conversions are done when calling functions, so you can call a functions taking
+formal parameter of type `T?` with an actual parameter of type `T`.
+
+At the moment, type conversions does not happen on return values, so in some cases it is neccessary
+to help the compiler by manually casting a `T` into a `T?`. This can be easily done by writing
+`?expr`. For example:
+
+```
+Str? fn2() {
+    ?"foo";
+}
+
+Str? fn() {
+    if (condition) {
+        fn2();
+    } else {
+        ?"bar";
+    }
+}
+
+```
+
+In this case, we need to help the compiler in two places, at the return in `fn2`, where no type casting
+is currently taking place, and in the if statement in `fn`, otherwise the compiler would not realize that
+the if statement returns something useful. Also note that `Base?` and `Derived?` are treated as completely
+separate entities in many cases still. This will all be fixed in the future.
+
+
+Automatic type conversions
+---------------------------
+
+Automatic type conversions are done only for a few built-in types at the moment. Integer literals
+are automatically converted from the standard `Int` type to either `Nat` or `Byte` as
+suitable. Apart from this, `T` can be automatically casted to `T?` if needed. Currently, there are
+no way of implementing custom conversions. This will probably be included later!
+
+If two or more functions are callable after type conversions, the one which requires the least
+amount of conversions is called. Casts from `T` to `T?`, as well as integer literal casts costs more
+than the regular calls. In the case of equal distance calls, an error will be shown.
+
 Syntax
 -------
 

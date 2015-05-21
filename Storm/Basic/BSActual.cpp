@@ -1,7 +1,28 @@
 #include "stdafx.h"
 #include "BSActual.h"
+#include "Lib/Maybe.h"
 
 namespace storm {
+
+	// Modify the formal parameter to match 'actual' if neccessary.
+	// These modifications are always 100% binary compatible. This will probably be extended
+	// in the future to support calling constructors in between.
+	static bool autoCast(Value &formal, const Value &actual) {
+		MaybeType *formalT = as<MaybeType>(formal.type);
+		MaybeType *actualT = as<MaybeType>(actual.type);
+
+		if (formalT != null && actualT == null) {
+			// Preserve the 'ref' parameter!
+			formal.type = formalT->param.type;
+			return true;
+		}
+
+		return false;
+	}
+
+	bool bs::callable(const Value &formal, const Value &actual, Par<Expr> src) {
+		return formal.canStore(actual) || src->castable(formal);
+	}
 
 	bs::Actual::Actual() {}
 
@@ -25,17 +46,21 @@ namespace storm {
 		expressions.insert(expressions.begin(), e);
 	}
 
-
 	/**
 	 * Helper to compute an actual parameter. Takes care of ref/non-ref conversions.
 	 * Returns the value into which the resulting parameter were placed.
 	 */
-	code::Value bs::Actual::code(nat id, Par<CodeGen> s, const Value &param) {
+	code::Value bs::Actual::code(nat id, Par<CodeGen> s, Value param) {
 		using namespace code;
 
 		Expr *expr = expressions[id].borrow();
 		Value exprResult = expr->result();
-		assert(param.canStore(exprResult));
+
+		if (!callable(param, exprResult, expr))
+			autoCast(param, exprResult);
+
+		assert(callable(param, exprResult, expr),
+			L"Can not use " + ::toS(exprResult) + L" as an actual value for parameter " + ::toS(param));
 
 		if (param.ref && !exprResult.ref) {
 			// We need to create a temporary variable and make a reference to it.
@@ -59,5 +84,45 @@ namespace storm {
 		to << L"(";
 		join(to, expressions, L", ");
 		to << L")";
+	}
+
+
+	bs::BSNamePart::BSNamePart(Par<Str> name, Par<Actual> params) :
+		NamePart(name->v, params->values()), exprs(params->expressions) {}
+
+	bs::BSNamePart::BSNamePart(const String &name, Par<Actual> params) :
+		NamePart(name, params->values()), exprs(params->expressions) {}
+
+	void bs::BSNamePart::insert(Value first) {
+		params.insert(params.begin(), first);
+		exprs.insert(exprs.begin(), null);
+	}
+
+	Int bs::BSNamePart::matches(Par<Named> candidate) {
+		const vector<Value> &c = candidate->params;
+		if (c.size() != params.size())
+			return -1;
+
+		int distance = 0;
+
+		for (nat i = 0; i < c.size(); i++) {
+			Value to = c[i];
+			const Value &from = params[i];
+
+			if (autoCast(to, from))
+				distance += 100; // Penalty
+
+			if (to.matches(from, candidate->matchFlags)) {
+				if (from.type)
+					distance += from.type->distanceFrom(to.type);
+			} else if (exprs[i] && exprs[i]->castable(from)) {
+				// Penalty for this casting...
+				distance += 100;
+			} else {
+				return -1;
+			}
+		}
+
+		return distance;
 	}
 }

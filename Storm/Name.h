@@ -33,11 +33,14 @@ namespace storm {
 		const String name;
 
 		// Parameters.
-		const vector<Value> params;
+		vector<Value> params;
 
 		// Choose a specific Named from a set of overloads. Subclass and override to
 		// alter the default behavior.
 		virtual Named *STORM_FN choose(Par<NameOverloads> overloads);
+
+		// Compute the badness of a candidate. Returns -1 on no match.
+		virtual Int STORM_FN matches(Par<Named> candidate);
 
 		// Equality check.
 		bool operator ==(const NamePart &o) const;
@@ -46,10 +49,6 @@ namespace storm {
 	protected:
 		// Output.
 		virtual void output(std::wostream &to) const;
-
-	private:
-		// Compute the badness of a candidate. Returns -1 on no match.
-		int matches(Named *candidate) const;
 	};
 
 	/**
@@ -100,8 +99,14 @@ namespace storm {
 		// Last element.
 		NamePart *STORM_FN last() const;
 
+		// Name of last element (convenience).
+		const String &lastName() const;
+
 		// Stick parameters to the last element.
 		Name *withParams(const vector<Value> &v) const;
+
+		// Replace the last element.
+		Name *STORM_FN withLast(Par<NamePart> last) const;
 
 		// All elements from 'n'.
 		Name *STORM_FN from(Nat n) const;

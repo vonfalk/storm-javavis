@@ -17,11 +17,14 @@ namespace storm {
 		public:
 			STORM_CTOR Expr();
 
-			// Result of an expression. Default is null. TODO: STORM_FN
+			// Result of an expression. Default is null.
 			virtual Value STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
+
+			// Is it possible to cast this one expression to 'to'?
+			virtual Bool STORM_FN castable(Value to);
 		};
 
 
@@ -32,6 +35,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Constant(Int i);
+			Constant(int64 i);
 			STORM_CTOR Constant(Str *str);
 			STORM_CTOR Constant(Bool b);
 
@@ -46,7 +50,7 @@ namespace storm {
 			CType cType;
 
 			// Value (if integer).
-			Int intValue;
+			int64 intValue;
 
 			// Value (if string).
 			String strValue;
@@ -59,6 +63,9 @@ namespace storm {
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
+
+			// Castable to?
+			virtual Bool STORM_FN castable(Value to);
 
 		protected:
 			virtual void output(wostream &out) const;

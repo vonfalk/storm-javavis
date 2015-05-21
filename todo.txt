@@ -93,6 +93,8 @@ Basic
 ------
 Variable accesses are currently racy. Fix this!
 
+Type casting could be done better in more places. For example: if (x) { T?; } else { T; }
+
 The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
 packages from the root always (not urgent).
 

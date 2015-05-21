@@ -524,6 +524,8 @@ namespace storm {
 	static bool isSuperName(Par<Name> name) {
 		if (name->size() <= 1)
 			return false;
+		if (name->size() > 2)
+			return false;
 
 		NamePart *p = name->at(0);
 		if (p->name != L"super")
@@ -541,8 +543,8 @@ namespace storm {
 		if (!thisVar)
 			return null;
 
-		vector<Value> vals = params->values();
-		vals.insert(vals.begin(), thisVar->result);
+		Auto<BSNamePart> lastPart = CREATE(BSNamePart, name, name->lastName(), params);
+		lastPart->insert(thisVar->result);
 		bool useLookup = true;
 
 		if (isSuperName(name)) {
@@ -552,11 +554,11 @@ namespace storm {
 			if (!super)
 				throw SyntaxError(pos, L"No super type for " + ::toS(thisVar->result) + L", can not use 'super' here.");
 
-			candidate = storm::find(super, steal(part->withParams(vals)));
+			candidate = storm::find(super, steal(part->withLast(lastPart)));
 			useLookup = false;
 		} else {
 			// May be anything.
-			candidate = scope.find(steal(name->withParams(vals)));
+			candidate = scope.find(steal(name->withLast(lastPart)));
 			useLookup = true;
 		}
 
@@ -578,18 +580,18 @@ namespace storm {
 		if (Type *t = as<Type>(scope.find(name)))
 			return findCtor(t, params, pos);
 
-		// Try without the this pointer first.
-		Named *n = scope.find(steal(name->withParams(params->values())));
-
-		if (Expr *e = findTarget(n, null, params, pos, true))
-			return e;
-
 		// If we have a this-pointer, try to use it!
 		Named *candidate = null;
 		if (useThis)
 			if (Expr *e = findTargetThis(block, name, params, pos, candidate))
 				return e;
 
+		// Try without the this pointer first.
+		Auto<BSNamePart> last = CREATE(BSNamePart, name, name->lastName(), params);
+		Named *n = scope.find(steal(name->withLast(last)));
+
+		if (Expr *e = findTarget(n, null, params, pos, true))
+			return e;
 
 		if (!n && !candidate)
 			throw SyntaxError(pos, L"Can not find " + ::toS(name) + L"("

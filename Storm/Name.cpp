@@ -77,7 +77,7 @@ namespace storm {
 		}
 	}
 
-	int NamePart::matches(Named *candidate) const {
+	Int NamePart::matches(Par<Named> candidate) {
 		const vector<Value> &c = candidate->params;
 		if (c.size() != params.size())
 			return -1;
@@ -140,10 +140,22 @@ namespace storm {
 			return parts.back().ret();
 	}
 
+	const String &Name::lastName() const {
+		assert(!root());
+		return parts.back()->name;
+	}
+
 	Name *Name::withParams(const vector<Value> &v) const {
 		assert(!root());
 		Name *r = parent();
 		r->add(parts.back()->name, v);
+		return r;
+	}
+
+	Name *Name::withLast(Par<NamePart> last) const {
+		assert(!root());
+		Name *r = parent();
+		r->add(last);
 		return r;
 	}
 

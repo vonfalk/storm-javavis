@@ -200,7 +200,17 @@ int String::toInt() const {
 
 nat String::toNat() const {
 	wchar_t *end;
-	return (nat)wcstol(c_str(), &end, 10);
+	return wcstoul(c_str(), &end, 10);
+}
+
+int64 String::toInt64() const {
+	wchar_t *end;
+	return _wcstoi64(c_str(), &end, 10);
+}
+
+nat64 String::toNat64() const {
+	wchar_t *end;
+	return _wcstoui64(c_str(), &end, 10);
 }
 
 nat String::toIntHex() const {

@@ -64,6 +64,8 @@ public:
 	double toDouble() const;
 	int toInt() const;
 	nat toNat() const;
+	int64 toInt64() const;
+	nat64 toNat64() const;
 	nat toIntHex() const;
 
 	// Is the string an integer?

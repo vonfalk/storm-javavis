@@ -34,7 +34,7 @@ namespace storm {
 		}
 
 		void bs::Var::initTo(Par<Expr> e) {
-			if (variable->result.canStore(e->result()))
+			if (callable(variable->result, e->result(), e))
 				initExpr = e;
 			else
 				// Use a ctor...
