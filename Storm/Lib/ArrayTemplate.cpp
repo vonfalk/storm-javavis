@@ -71,7 +71,9 @@ namespace storm {
 		if (part->params.size() != 1)
 			return null;
 
-		return CREATE(ArrayType, part->engine(), part->params[0]);
+		Type *t = CREATE(ArrayType, part->engine(), part->params[0]);
+		t->matchFlags = matchNoInheritance;
+		return t;
 	}
 
 	// This one only deals with value types, so we will never have to worry about

@@ -5,6 +5,7 @@
 #include "Exception.h"
 #include "Type.h"
 #include "Io/Url.h"
+#include "Utils/PreArray.h"
 #include <limits>
 
 namespace storm {
@@ -47,30 +48,30 @@ namespace storm {
 	}
 
 	Named *NamePart::choose(Par<NameOverloads> from) {
-		vector<Named *> candidates;
-		int worst = std::numeric_limits<int>::max();
+		PreArray<Named *, 4> candidates;
+		int best = std::numeric_limits<int>::max();
 
 		for (nat i = 0; i < from->count(); i++) {
 			Named *candidate = from->at(i);
 			int badness = matches(candidate);
-			if (badness >= 0 && badness <= worst) {
-				if (badness != worst)
+			if (badness >= 0 && badness <= best) {
+				if (badness != best)
 					candidates.clear();
-				candidates.push_back(candidate);
+				best = badness;
+				candidates.push(candidate);
 			}
 		}
 
-		if (candidates.size() == 0) {
+		if (candidates.count() == 0) {
 			return null;
-		} else if (candidates.size() == 1) {
+		} else if (candidates.count() == 1) {
 			return capture(candidates[0]).ret();
 		} else {
 			std::wostringstream msg;
-			msg << L"Multiple possible matches for: " << from << endl;
-			for (nat i = 0; i < candidates.size(); i++) {
-				msg << L"Could be: " << candidates[i]->identifier();
+			msg << L"Multiple possible matches for: " << *this << endl;
+			for (nat i = 0; i < candidates.count(); i++) {
+				msg << L"Could be: " << candidates[i]->identifier() << endl;
 			}
-			PVAR(msg.str());
 			TODO(L"Require a SrcPos for NameParamList!");
 			throw TypeError(SrcPos(), msg.str());
 		}
@@ -81,13 +82,16 @@ namespace storm {
 		if (c.size() != params.size())
 			return -1;
 
+		int distance = 0;
+
 		for (nat i = 0; i < c.size(); i++) {
 			if (!c[i].matches(params[i], candidate->matchFlags))
 				return -1;
+			if (params[i].type)
+				distance += params[i].type->distanceFrom(c[i].type);
 		}
 
-		TODO(L"Compute the actual distance!");
-		return 0;
+		return distance;
 	}
 
 

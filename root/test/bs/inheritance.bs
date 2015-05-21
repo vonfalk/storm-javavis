@@ -103,3 +103,19 @@ Int testCpp(Int type) {
 	extract(b);
 }
 
+
+Int overloaded(Dbg base) {
+	1;
+}
+
+Int overloaded(DerivedDbg derived) {
+	2;
+}
+
+Int testOverload(Int id) {
+	if (id == 1) {
+		overloaded(Dbg(1));
+	} else {
+		overloaded(DerivedDbg());
+	}
+}

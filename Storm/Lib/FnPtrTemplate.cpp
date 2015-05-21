@@ -216,7 +216,9 @@ namespace storm {
 				return null;
 		}
 
-		return CREATE(FnPtrType, part, part->params);
+		Type *t = CREATE(FnPtrType, part, part->params);
+		t->matchFlags = matchNoInheritance;
+		return t;
 	}
 
 	void addFnPtrTemplate(Par<Package> to) {

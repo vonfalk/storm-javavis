@@ -51,6 +51,12 @@ BEGIN_TEST(PriorityTest) {
 	CHECK_EQ(runFn(L"test.bs.prio9"), 2);
 } END_TEST
 
+BEGIN_TEST(OverloadTest) {
+	// If this fails, the compiler does not choose the correct overload in the case of ambiguities.
+	CHECK_EQ(runFn(L"test.bs.testOverload", 1), 1);
+	CHECK_EQ(runFn(L"test.bs.testOverload", 0), 2);
+} END_TEST
+
 BEGIN_TEST(InheritanceTest) {
 	// Some inheritance testing.
 	CHECK_EQ(runFn(L"test.bs.testBase"), 10);

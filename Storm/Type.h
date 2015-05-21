@@ -102,6 +102,9 @@ namespace storm {
 		// Any super type the given type?
 		bool isA(Type *super) const;
 
+		// Distance in the inheritance chain? Negative if !isA(from)
+		int distanceFrom(Type *from) const;
+
 		// Add new members.
 		virtual void STORM_FN add(Par<Named> m);
 

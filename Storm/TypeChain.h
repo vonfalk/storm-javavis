@@ -26,6 +26,10 @@ namespace storm {
 		bool isA(TypeChain *o) const;
 		bool isA(Type *o) const;
 
+		// Distance from another type.
+		int distance(TypeChain *o) const;
+		int distance(Type *o) const;
+
 		// Get all currently known direct children. Note that the result is not
 		// ordered in any way at all, even though it is a vector.
 		vector<Type *> children() const;

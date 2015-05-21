@@ -59,6 +59,16 @@ namespace storm {
 		return isA(&o->chain);
 	}
 
+	int TypeChain::distance(TypeChain *o) const {
+		if (!isA(o))
+			return -1;
+		return int(count - o->count);
+	}
+
+	int TypeChain::distance(Type *o) const {
+		return distance(&o->chain);
+	}
+
 	void TypeChain::updateSuper(const TypeChain &o) {
 		delete []chain;
 

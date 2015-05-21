@@ -86,6 +86,10 @@ namespace storm {
 		return chain.isA(o);
 	}
 
+	int Type::distanceFrom(Type *o) const {
+		return chain.distance(o);
+	}
+
 	Size Type::superSize() const {
 		if (super())
 			return super()->size();
