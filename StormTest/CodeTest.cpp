@@ -193,6 +193,8 @@ BEGIN_TEST(MaybeTest) {
 
 	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 0), CREATE(Str, *gEngine, L"null"));
 	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 1), CREATE(Str, *gEngine, L"ok"));
+
+	CHECK_EQ(runFn(L"test.bs.maybeInheritance"), 10);
 } END_TEST
 
 // Test the REPL of BS programmatically.

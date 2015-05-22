@@ -20,7 +20,7 @@ namespace storm {
 		}
 
 		bs::Var::Var(Par<Block> block, Par<SStr> name, Par<Expr> init) {
-			this->init(block, init->result(), name);
+			this->init(block, init->result().asRef(false), name);
 			initTo(init);
 		}
 
@@ -46,7 +46,7 @@ namespace storm {
 				// Assignment is the same as initialization here...
 				nat size = actuals->expressions.size();
 				if (size == 1) {
-					initTo(Par<Expr>(actuals->expressions[0]));
+					initExpr = actuals->expressions[0];
 					return;
 				} else if (size == 0) {
 					// No constructor, initialized to zero!

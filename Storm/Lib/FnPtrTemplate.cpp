@@ -187,7 +187,6 @@ namespace storm {
 
 	FnPtrType::FnPtrType(const vector<Value> &v) : Type(L"Fn", typeClass, v) {
 		setSuper(FnPtrBase::stormType(engine));
-		matchFlags = matchNoInheritance;
 	}
 
 	bool FnPtrType::loadAll() {
@@ -216,9 +215,7 @@ namespace storm {
 				return null;
 		}
 
-		Type *t = CREATE(FnPtrType, part, part->params);
-		t->matchFlags = matchNoInheritance;
-		return t;
+		return CREATE(FnPtrType, part, part->params);
 	}
 
 	void addFnPtrTemplate(Par<Package> to) {

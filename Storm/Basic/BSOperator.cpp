@@ -41,10 +41,15 @@ namespace storm {
 	bs::AssignOpInfo::AssignOpInfo(Par<SStr> op, Int prio, Bool leftAssoc) : OpInfo(op, prio, leftAssoc) {}
 
 	bs::Expr *bs::AssignOpInfo::meaning(Par<Block> block, Par<Expr> lhs, Par<Expr> rhs) {
-		if (lhs->result().isClass())
+		Value l = lhs->result();
+		Value r = rhs->result();
+
+		if (l.isClass() && l.ref && l.asRef(false).canStore(r)) {
+			// TODO: Consider conversion rules here as well!
 			return CREATE(ClassAssign, block, lhs, rhs);
-		else
+		} else {
 			return OpInfo::meaning(block, lhs, rhs);
+		}
 	}
 
 

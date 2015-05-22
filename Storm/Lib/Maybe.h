@@ -13,6 +13,8 @@ namespace storm {
 	/**
 	 * Implements the Maybe<T> type in Storm. This type acts like a pointer, but is nullable.
 	 * This type does not exist in C++, use the MAYBE() macro to mark pointers as nullable.
+	 *
+	 * TODO: Copy the parent's thread value as well?
 	 */
 	class MaybeType : public Type {
 		STORM_CLASS;
@@ -25,6 +27,12 @@ namespace storm {
 		// Lazy loading.
 		virtual bool loadAll();
 
+	private:
+		// Create copy ctors.
+		Named *createCopy(Par<NamePart> part);
+
+		// Create assignment operators.
+		Named *createAssign(Par<NamePart> part);
 	};
 
 }

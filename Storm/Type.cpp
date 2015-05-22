@@ -39,6 +39,9 @@ namespace storm {
 		typeRef.setPtr(this);
 		typeHandle = new RefHandle(*typeRef.contents());
 
+		// Generally, we want this on types!
+		matchFlags |= matchNoInheritance;
+
 		if (flags & typeRawPtr) {
 			assert(flags & typeClass, L"typeRawPtr has to be used with typeClass");
 		}

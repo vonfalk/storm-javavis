@@ -101,6 +101,15 @@ namespace storm {
 		}
 	}
 
+	void bs::If::output(wostream &to) const {
+		to << L"if (" << condition << L") ";
+		to << trueCode;
+		if (falseCode) {
+			to << L" else ";
+			to << falseCode;
+		}
+	}
+
 	/**
 	 * IfAs
 	 */
@@ -222,6 +231,16 @@ namespace storm {
 		}
 	}
 
+	void bs::IfAs::output(wostream &to) const {
+		to << L"if (" << expression << L") ";
+		to << trueCode;
+		if (falseCode) {
+			to << L" else ";
+			to << falseCode;
+		}
+	}
+
+
 	bs::IfTrue::IfTrue(Par<IfAs> parent) : Block(parent) {
 		Auto<LocalVar> override = parent->override();
 		if (override) {
@@ -246,6 +265,10 @@ namespace storm {
 
 	void bs::IfTrue::blockCode(Par<CodeGen> state, Par<CodeResult> to) {
 		expr->code(state, to);
+	}
+
+	void bs::IfTrue::output(wostream &to) const {
+		to << expr;
 	}
 
 }

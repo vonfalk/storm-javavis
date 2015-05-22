@@ -45,3 +45,16 @@ Str maybeToS(Int p) {
 
 	r.toS;
 }
+
+Int maybeInheritance() {
+	DerivedDbg? foo = DerivedDbg(10);
+	Dbg? bar = foo;
+	// Check assignment as well.
+	bar = foo;
+
+	if (bar) {
+		bar.get;
+	} else {
+		0;
+	}
+}

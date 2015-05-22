@@ -71,9 +71,7 @@ namespace storm {
 		if (part->params.size() != 1)
 			return null;
 
-		Type *t = CREATE(ArrayType, part->engine(), part->params[0]);
-		t->matchFlags = matchNoInheritance;
-		return t;
+		return CREATE(ArrayType, part->engine(), part->params[0]);
 	}
 
 	// This one only deals with value types, so we will never have to worry about
@@ -125,7 +123,6 @@ namespace storm {
 
 	ArrayType::ArrayType(const Value &param) : Type(L"Array", typeClass, valList(1, param)), param(param) {
 		setSuper(ArrayBase::stormType(engine));
-		matchFlags = matchNoInheritance;
 	}
 
 	bool ArrayType::loadAll() {

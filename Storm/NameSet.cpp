@@ -27,7 +27,7 @@ namespace storm {
 		items.push_back(item);
 	}
 
-	Named *NameOverloads::fromTemplate(Par<NamePart> params, Par<NameSet> owner) {
+	Named *NameOverloads::fromTemplate(Par<NamePart> params) {
 		if (!templ)
 			return null;
 
@@ -36,8 +36,6 @@ namespace storm {
 			return null;
 
 		assert(named->name == params->name, L"A template generated an unexpected name!");
-		add(named);
-		named->parentLookup = owner.borrow();
 		return named.ret();
 	}
 
@@ -123,7 +121,9 @@ namespace storm {
 		if (result)
 			return result.borrow();
 
-		result = i->second->fromTemplate(part, this);
+		result = i->second->fromTemplate(part);
+		if (result)
+			add(result);
 		return result.borrow();
 	}
 

@@ -106,16 +106,16 @@ namespace storm {
 		int distance = 0;
 
 		for (nat i = 0; i < c.size(); i++) {
-			Value to = c[i];
-			const Value &from = params[i];
+			Value formal = c[i];
+			const Value &actual = params[i];
 
-			if (autoCast(to, from))
+			if (autoCast(formal, actual))
 				distance += 100; // Penalty
 
-			if (to.matches(from, candidate->matchFlags)) {
-				if (from.type)
-					distance += from.type->distanceFrom(to.type);
-			} else if (exprs[i] && exprs[i]->castable(from)) {
+			if (formal.matches(actual, candidate->matchFlags)) {
+				if (actual.type)
+					distance += actual.type->distanceFrom(formal.type);
+			} else if (exprs[i] && exprs[i]->castable(actual)) {
 				// Penalty for this casting...
 				distance += 100;
 			} else {

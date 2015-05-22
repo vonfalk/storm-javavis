@@ -230,6 +230,9 @@ namespace storm {
 	}
 
 	Value common(const Value &a, const Value &b) {
+		if (a.type == null || b.type == null)
+			return Value();
+
 		for (Type *t = a.type; t; t = t->super()) {
 			if (b.type->isA(t))
 				return Value(t);

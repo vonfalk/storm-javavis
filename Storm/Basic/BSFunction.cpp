@@ -187,7 +187,10 @@ namespace storm {
 			l << ret(Size::sPtr);
 		}
 
-		// PLN(identifier() << L": " << l);
+		// if (!identifier().startsWith(L"lang.bs")) {
+		// 	PLN(body);
+		// 	PLN(identifier() << L": " << l);
+		// }
 		return state.ret();
 	}
 

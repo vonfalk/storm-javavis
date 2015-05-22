@@ -106,6 +106,7 @@ namespace storm {
 		int distanceFrom(Type *from) const;
 
 		// Add new members.
+		using NameSet::add;
 		virtual void STORM_FN add(Par<Named> m);
 
 		// Clear contents. Mainly used for clean exits.

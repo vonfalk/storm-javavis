@@ -114,7 +114,9 @@ namespace storm {
 		if (needed())
 			return location(s);
 		else if (variable.var() == Variable::invalid)
-			return variable = storm::variable(s, t);
+			// Generate a temporary variable. Do not save it, it will mess up cases like
+			// if, where two different branches may end up in different blocks!
+			return storm::variable(s, t);
 		else
 			return variable;
 	}

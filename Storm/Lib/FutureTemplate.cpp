@@ -95,10 +95,8 @@ namespace storm {
 
 		Engine &e = part->engine();
 		const Value &type = part->params[0];
-		Type *r = CREATE(FutureType, e, type);
-		r->setSuper(FutureBase::stormType(e));
-		r->matchFlags = matchNoInheritance;
-		return r;
+
+		return CREATE(FutureType, e, type);
 	}
 
 	Template *futureTemplate(Engine &e) {

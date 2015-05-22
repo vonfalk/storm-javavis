@@ -408,6 +408,11 @@ namespace storm {
 							L" at the moment. Please implement an assignment operator for your type.");
 		if (!r.ref)
 			throw TypeError(to->pos, L"Can not assign to a non-reference.");
+
+		if (!r.asRef(false).canStore(value->result())) {
+			TODO(L"Consider automatic type conversions here!");
+			throw TypeError(to->pos, L"Can not store a " + ::toS(value->result()) + L" in " + ::toS(r));
+		}
 	}
 
 	Value bs::ClassAssign::result() {
@@ -473,12 +478,12 @@ namespace storm {
 
 	// Find a constructor.
 	static bs::Expr *bs::findCtor(Type *t, Par<Actual> actual, const SrcPos &pos) {
-		vector<Value> params = actual->values();
-		params.insert(params.begin(), Value::thisPtr(t));
+		Auto<BSNamePart> part = CREATE(BSNamePart, t->engine, Type::CTOR, actual);
+		part->insert(Value::thisPtr(t));
 
-		Function *ctor = as<Function>(t->findCpp(Type::CTOR, params));
+		Function *ctor = as<Function>(t->find(part));
 		if (!ctor)
-			throw SyntaxError(pos, L"No constructor " + t->identifier() + L"(" + join(params, L", ") + L")");
+			throw SyntaxError(pos, L"No constructor " + t->identifier() + ::toS(part) + L")");
 
 		return CREATE(CtorCall, t, ctor, actual);
 	}

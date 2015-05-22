@@ -75,6 +75,14 @@ Int testAsExpr(Int v) {
 class DerivedDbg extends Dbg {
 	Int b;
 
+	ctor() {
+		init() {}
+	}
+
+	ctor(Int a) {
+		init() { b = a; }
+	}
+
 	Int get() {
 		b;
 	}

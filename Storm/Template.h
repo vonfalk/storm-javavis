@@ -14,6 +14,8 @@ namespace storm {
 	 * and therefore has the chance to generate a Named that will be used as a substitute.
 	 * Any created Named will be added to the NameSet as usual to ensure proper operation
 	 * of the rest of the system.
+	 *
+	 * TODO: Replace Fn with FnPtr!
 	 */
 	class Template : public Object {
 		STORM_CLASS;

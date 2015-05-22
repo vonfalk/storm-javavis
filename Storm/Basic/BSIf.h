@@ -40,6 +40,10 @@ namespace storm {
 			// Code.
 			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> r);
 
+		protected:
+			// Output.
+			virtual void output(wostream &to) const;
+
 		private:
 			// Overridden variable.
 			Auto<LocalVar> created;
@@ -81,6 +85,10 @@ namespace storm {
 			// Code.
 			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> r);
 
+		protected:
+			// Output.
+			virtual void output(wostream &to) const;
+
 		private:
 			// Overridden variable.
 			Auto<LocalVar> created;
@@ -109,6 +117,9 @@ namespace storm {
 			// Generate code.
 			virtual Value STORM_FN result();
 			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> to);
+
+		protected:
+			virtual void output(wostream &to) const;
 		};
 
 	}

@@ -31,8 +31,8 @@ namespace storm {
 		// Add an element.
 		void add(Par<Named> item);
 
-		// Create an element from the template (returns null on failure).
-		virtual MAYBE(Named) *STORM_FN fromTemplate(Par<NamePart> part, Par<NameSet> owner);
+		// Create an element from the template (returns null on failure). Does _not_ add it!
+		virtual MAYBE(Named) *STORM_FN fromTemplate(Par<NamePart> part);
 
 	protected:
 		// Output.
