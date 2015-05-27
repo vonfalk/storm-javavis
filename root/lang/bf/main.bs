@@ -50,7 +50,7 @@ class BfFunction extends Function {
 	}
 
 	CodeGen load() {
-		Named myPkg = (name{lang:bf}).find(rootScope);
+		Named? myPkg = (name{lang:bf}).find(rootScope);
 		SyntaxSet syntax;
 
 		if (myPkg as Package) {
