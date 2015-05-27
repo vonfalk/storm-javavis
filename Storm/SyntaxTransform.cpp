@@ -85,7 +85,7 @@ namespace storm {
 		if (!t)
 			return Auto<ActualBase>(null);
 
-		if ((t->flags & typeClass) == 0)
+		if ((t->typeFlags & typeClass) == 0)
 			throw SyntaxTypeError(option->pos, L"Only objects are supported in the syntax. "
 								+ ::toS(find) + L" is a value or a built-in type.");
 

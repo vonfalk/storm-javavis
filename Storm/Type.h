@@ -74,7 +74,7 @@ namespace storm {
 		Engine &engine;
 
 		// Type flags.
-		const TypeFlags flags;
+		const TypeFlags typeFlags;
 
 		// Reference to this Type that will be kept updated through any renames.
 		code::RefSource typeRef;
@@ -180,8 +180,8 @@ namespace storm {
 		// Ensure that any lazy-loaded parts are loaded.
 		void ensureLoaded();
 
-		// Init (shared parts of constructors).
-		void init(TypeFlags flags);
+		// Init (shared parts of constructors). Note that this takes unmasked flags!
+		void init(TypeFlags typeFlags);
 
 		// Update the need for virtual calls for all members.
 		void updateVirtual();

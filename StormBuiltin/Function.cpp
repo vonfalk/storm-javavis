@@ -9,13 +9,15 @@ void Function::output(wostream &to) const {
 	to << L"), " << cppScope;
 }
 
-Function Function::read(bool eFn, const String &package, const CppScope &scope, const CppType &result, Tokenizer &tok) {
+Function Function::read(bool eFn, bool virtualFn, const String &package,
+						const CppScope &scope, const CppType &result, Tokenizer &tok) {
 	Function r;
 	r.result = result;
 	r.cppScope = scope;
 	r.name = tok.next();
 	r.isConst = false;
 	r.engineFn = eFn;
+	r.virtualFn = virtualFn;
 	r.package = package;
 
 	if (r.name == L"operator") {
@@ -61,6 +63,7 @@ Function Function::dtor(const String &package, const CppScope &scope) {
 	r.name = L"__dtor";
 	r.isConst = false;
 	r.engineFn = false;
+	r.virtualFn = true;
 	r.package = package;
 	return r;
 }
@@ -72,6 +75,7 @@ Function Function::copyCtor(const String &package, const CppScope &scope) {
 	r.name = L"__ctor";
 	r.isConst = false;
 	r.engineFn = false;
+	r.virtualFn = false;
 	r.package = package;
 
 	CppType z;
@@ -90,6 +94,7 @@ Function Function::assignment(const String &package, const CppScope &scope) {
 	r.name = L"operator =";
 	r.isConst = false;
 	r.engineFn = false;
+	r.virtualFn = false; // Default function is not virtual...
 	r.package = package;
 
 	CppType z;

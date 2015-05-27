@@ -85,7 +85,7 @@ namespace storm {
 		int distance = 0;
 
 		for (nat i = 0; i < c.size(); i++) {
-			if (!c[i].matches(params[i], candidate->matchFlags))
+			if (!c[i].matches(params[i], candidate->flags))
 				return -1;
 			if (params[i].type)
 				distance += params[i].type->distanceFrom(c[i].type);

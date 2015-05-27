@@ -113,8 +113,11 @@ namespace storm {
 			// Run on a thread.
 			onThread = 0x10,
 
-			// Hide a 'engine' as the first parameter.
+			// The function takes a 'engine' as the firt parameter, not visible to storm.
 			hiddenEngine = 0x20,
+
+			// This function is declared virtual.
+			virtualFunction = 0x40,
 		};
 
 		// Mode.

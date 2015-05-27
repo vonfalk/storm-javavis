@@ -1,5 +1,5 @@
 #pragma once
-#include "MatchFlags.h"
+#include "NamedFlags.h"
 #include "Lib/Types.h"
 #include "Lib/Auto.h"
 #include "Code/Value.h"
@@ -92,8 +92,8 @@ namespace storm {
 		bool canStore(const Value &v) const;
 
 		// Matches another value, according to MatchFlags? Note that this relation is not reflexive.
-		// If flags == matchDefault, then it is equivalent to 'canStore'.
-		bool matches(const Value &v, MatchFlags match) const;
+		// If no special flags are set, then it is equivalent to 'canStore'.
+		bool matches(const Value &v, NamedFlags match) const;
 
 		// Ensure that we can store another type.
 		void mustStore(const Value &v, const SrcPos &pos) const;

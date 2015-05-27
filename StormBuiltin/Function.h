@@ -34,8 +34,12 @@ public:
 	// Has a hidden 'Engine &' parameter?
 	bool engineFn;
 
+	// Is it declared virtual?
+	bool virtualFn;
+
 	// Read a function.
-	static Function read(bool engineFn, const String &package, const CppScope &scope, const CppType &result, Tokenizer &tok);
+	static Function read(bool engineFn, bool virtualFn, const String &package,
+						const CppScope &scope, const CppType &result, Tokenizer &tok);
 
 	// Create a destructor for a type.
 	static Function dtor(const String &package, const CppScope &scope);

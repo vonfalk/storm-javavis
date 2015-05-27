@@ -66,8 +66,8 @@ namespace storm {
 		// Our parameters.
 		const vector<Value> params;
 
-		// Match flags.
-		MatchFlags matchFlags;
+		// Flags.
+		NamedFlags flags;
 
 		// Full path.
 		virtual Name *path() const;

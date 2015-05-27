@@ -127,6 +127,10 @@ namespace storm {
 			toAdd->runOn(threads[fn->threadId]);
 		}
 
+		if (typeMember && (fn->mode & BuiltInFunction::virtualFunction) == 0) {
+			toAdd->flags |= namedFinal;
+		}
+
 		if (Package *p = as<Package>(into)) {
 			p->add(toAdd.borrow());
 		} else if (Type *t = as<Type>(into)) {
@@ -179,7 +183,7 @@ namespace storm {
 			if (!super)
 				throw BuiltInError(L"Failed to locate super type with id " + ::toS(t->super));
 			tc->setSuper(super);
-		} else if (tc->flags & typeClass) {
+		} else if (tc->typeFlags & typeClass) {
 			Type *obj = Object::stormType(to);
 			Type *tObj = TObject::stormType(to);
 

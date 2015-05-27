@@ -122,7 +122,7 @@ namespace storm {
 			add(steal(CREATE(TypeDeepCopy, engine, this)));
 
 		// Temporary solution.
-		if (flags & typeValue) {
+		if (typeFlags & typeValue) {
 			add(steal(CREATE(TypeAssignFn, engine, this)));
 		}
 

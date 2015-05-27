@@ -119,7 +119,7 @@ namespace storm {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
 		Named *n = nativeFunction(e, Value(), CTOR, valList(2, t, Value::thisPtr(param)), &storm::initMaybe);
-		n->matchFlags |= matchAutoCast;
+		n->flags |= namedMatchAutoCast;
 		return n;
 	}
 

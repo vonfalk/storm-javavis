@@ -261,7 +261,7 @@ namespace storm {
 		Type *type = thisPtr.type;
 
 		// Set our VTable.
-		if (type->flags & typeClass) {
+		if (type->typeFlags & typeClass) {
 			// TODO: maybe symbolic offset here?
 			s->to << mov(ptrA, dest);
 			s->to << mov(ptrRel(ptrA), type->vtable.ref);

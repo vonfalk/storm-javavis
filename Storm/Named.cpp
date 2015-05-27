@@ -25,7 +25,7 @@ namespace storm {
 	}
 
 
-	Named::Named(Par<Str> name) : name(name->v), matchFlags(matchDefault) {}
+	Named::Named(Par<Str> name) : name(name->v), flags(namedDefault) {}
 
 	static vector<Value> toVec(Par<Array<Value>> p) {
 		vector<Value> r(p->count());
@@ -34,11 +34,11 @@ namespace storm {
 		return r;
 	}
 
-	Named::Named(Par<Str> name, Par<Array<Value>> p) : name(name->v), params(toVec(p)), matchFlags(matchDefault) {}
+	Named::Named(Par<Str> name, Par<Array<Value>> p) : name(name->v), params(toVec(p)), flags(namedDefault) {}
 
-	Named::Named(const String &name) : name(name), matchFlags(matchDefault) {}
+	Named::Named(const String &name) : name(name), flags(namedDefault) {}
 
-	Named::Named(const String &name, const vector<Value> &params) : name(name), params(params), matchFlags(matchDefault) {}
+	Named::Named(const String &name, const vector<Value> &params) : name(name), params(params), flags(namedDefault) {}
 
 	Named *Named::closestNamed() const {
 		for (NameLookup *p = parent(); p; p = p->parent()) {

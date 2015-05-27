@@ -205,9 +205,9 @@ namespace storm {
 
 	void allocObject(Par<CodeGen> s, Par<Function> ctor, const vector<code::Value> &params, code::Variable to) {
 		Type *type = ctor->params[0].type;
-		assert(type->flags & typeClass, L"Must allocate class types.");
+		assert(type->typeFlags & typeClass, L"Must allocate class types.");
 
-		if (type->flags & typeRawPtr)
+		if (type->typeFlags & typeRawPtr)
 			allocRawObject(s, ctor, params, to);
 		else
 			allocNormalObject(s, ctor, params, to);

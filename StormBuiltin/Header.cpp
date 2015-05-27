@@ -70,6 +70,7 @@ void Header::parse(Tokenizer &tok) {
 	String pkg;
 	CppScope scope;
 	CppType lastType;
+	bool wasVirtual = false;
 
 	int depth = 0;
 
@@ -94,11 +95,11 @@ void Header::parse(Tokenizer &tok) {
 			};
 			threads.push_back(t);
 		} else if (token == L"STORM_FN") {
-			functions.push_back(Function::read(false, pkg, scope, lastType, tok));
+			functions.push_back(Function::read(false, wasVirtual, pkg, scope, lastType, tok));
 		} else if (token == L"STORM_VAR") {
 			variables.push_back(Variable::read(scope, tok));
 		} else if (token == L"STORM_ENGINE_FN") {
-			functions.push_back(Function::read(true, pkg, scope, lastType, tok));
+			functions.push_back(Function::read(true, wasVirtual, pkg, scope, lastType, tok));
 			checkEngineFn(functions.back());
 		} else if (token == L"STORM_CLASS" || token == L"STORM_VALUE") {
 			if (!scope.isType())
@@ -120,7 +121,7 @@ void Header::parse(Tokenizer &tok) {
 		} else if (token == L"STORM_PKG") {
 			pkg = parsePkg(tok);
 		} else if (token == L"STORM_CTOR") {
-			Function ctor = Function::read(false, pkg, scope, CppType::tVoid(), tok);
+			Function ctor = Function::read(false, false, pkg, scope, CppType::tVoid(), tok);
 			ctor.name = L"__ctor";
 			functions.push_back(ctor);
 		} else if (token == L"class" || token == L"struct") {
@@ -186,6 +187,9 @@ void Header::parse(Tokenizer &tok) {
 		} else if (token == L"const") {
 			lastType.isConst = true;
 			wasType = true;
+		} else if (token == L"virtual") {
+			wasVirtual = true;
+			wasType = true;
 		} else {
 			if (!lastType.type.empty())
 				lastType.clear();
@@ -193,7 +197,9 @@ void Header::parse(Tokenizer &tok) {
 			wasType = true;
 		}
 
-		if (!wasType)
+		if (!wasType) {
 			lastType.clear();
+			wasVirtual = false;
+		}
 	}
 }

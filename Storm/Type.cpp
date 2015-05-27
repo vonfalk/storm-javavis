@@ -15,18 +15,19 @@ namespace storm {
 	const String Type::DTOR = L"__dtor";
 
 	static TypeFlags maskFlags(TypeFlags flags) {
+		// We do not want to store the typeManualSuper flag! That is only for the init function.
 		return flags & ~typeManualSuper;
 	}
 
 	Type::Type(const String &name, TypeFlags f, const vector<Value> &params, Size size)
-		: NameSet(name, params), engine(Object::engine()), flags(maskFlags(f)), typeRef(engine.arena, L"typeRef:" + name),
+		: NameSet(name, params), engine(Object::engine()), typeFlags(maskFlags(f)), typeRef(engine.arena, L"typeRef:" + name),
 		  mySize(size), chain(this), vtable(engine) {
 
 		init(f);
 	}
 
 	Type::Type(const String &name, TypeFlags f, Size size, void *cppVTable)
-		: NameSet(name), engine(Object::engine()), flags(maskFlags(f)), typeRef(engine.arena, L"typeRef:" + name),
+		: NameSet(name), engine(Object::engine()), typeFlags(maskFlags(f)), typeRef(engine.arena, L"typeRef:" + name),
 		  mySize(size), chain(this), vtable(engine) {
 
 		// Create the VTable first, otherwise init() may get strange ideas...
@@ -35,22 +36,22 @@ namespace storm {
 		init(f);
 	}
 
-	void Type::init(TypeFlags flags) {
+	void Type::init(TypeFlags typeFlags) {
 		typeRef.setPtr(this);
 		typeHandle = new RefHandle(*typeRef.contents());
 
 		// Generally, we want this on types!
-		matchFlags |= matchNoInheritance;
+		flags |= namedMatchNoInheritance;
 
-		if (flags & typeRawPtr) {
-			assert(flags & typeClass, L"typeRawPtr has to be used with typeClass");
+		if (typeFlags & typeRawPtr) {
+			assert(typeFlags & typeClass, L"typeRawPtr has to be used with typeClass");
 		}
 
 
 		// Enforce that all objects inherit from Object. Note that the flag 'typeManualSuper' is
 		// set when we create Types before the Object::type has been initialized.
-		if ((flags & typeManualSuper) == 0) {
-			if (flags & typeClass) {
+		if ((typeFlags & typeManualSuper) == 0) {
+			if (typeFlags & typeClass) {
 				assert(Object::stormType(engine), L"Please use the 'typeManualSuper' flag before Object has been created.");
 				setSuper(Object::stormType(engine));
 			}
@@ -97,12 +98,12 @@ namespace storm {
 		if (super())
 			return super()->size();
 
-		if (flags & typeClass) {
+		if (typeFlags & typeClass) {
 			if (this == Object::stormType(engine))
 				return Object::baseSize();
 			else if (this == TObject::stormType(engine))
 				return TObject::baseSize();
-		} else if (flags & typeValue) {
+		} else if (typeFlags & typeValue) {
 			return Size(0);
 		}
 
@@ -151,21 +152,21 @@ namespace storm {
 	void Type::setSuper(Par<Type> super) {
 		TypeFlags superFlags;
 		if (super)
-			superFlags = super->flags;
+			superFlags = super->typeFlags;
 		else
-			superFlags = flags & ~typeFinal;
+			superFlags = typeFlags & ~typeFinal;
 
 		if (superFlags & typeFinal)
 			throw InternalError(super->identifier() +
 								L" is final and can not be inherited from by " +
 								identifier());
 
-		if (flags & typeClass) {
+		if (typeFlags & typeClass) {
 			if (super == null && this != Object::stormType(engine) && this != TObject::stormType(engine))
 				throw InternalError(identifier() + L" must at least inherit from Object. Not:" + super->identifier());
 			if (!(superFlags & typeClass))
 				throw InternalError(identifier() + L" may only inherit from other objects. Not: " + super->identifier());
-		} else if (flags & typeValue) {
+		} else if (typeFlags & typeValue) {
 			if (!(superFlags & typeValue))
 				throw InternalError(identifier() + L" may only inherit from other values. Not: " + super->identifier());
 		}
@@ -193,7 +194,7 @@ namespace storm {
 	}
 
 	void Type::setThread(Par<NamedThread> thread) {
-		if (!(flags & typeClass))
+		if (!(typeFlags & typeClass))
 			throw InternalError(identifier() + L": Can not be associated with a thread unless it is a class.");
 		Type *s = super();
 		if (s != Object::stormType(engine) && s != TObject::stormType(engine))
@@ -244,11 +245,11 @@ namespace storm {
 			to << L" : " << super()->identifier();
 		to << ":";
 
-		if (flags & typeRawPtr)
+		if (typeFlags & typeRawPtr)
 			to << L" (raw class ptr)";
-		else if (flags & typeClass)
+		else if (typeFlags & typeClass)
 			to << L" (class)";
-		else if (flags & typeValue)
+		else if (typeFlags & typeValue)
 			to << L" (value)";
 
 		to << endl;
@@ -277,11 +278,11 @@ namespace storm {
 							::toS(Value(this)) + L" for " + o->name);
 
 		if (o->name == CTOR) {
-			if (flags & typeClass) {
+			if (typeFlags & typeClass) {
 				if (first.ref)
 					throw TypedefError(L"Class constructors should not be declared to take references as "
 									L"their first parameter. At: " + ::toS(*o));
-			} else if (flags & typeValue) {
+			} else if (typeFlags & typeValue) {
 				if (!first.ref)
 					throw TypedefError(L"Value constructors should be declared to take references as "
 									L"their first parameter. At: " + ::toS(*o));
@@ -342,9 +343,9 @@ namespace storm {
 
 	void Type::updateVirtual() {
 		// Value types does not need vtables.
-		if (flags & typeValue)
+		if (typeFlags & typeValue)
 			return;
-		if (flags & typeRawPtr)
+		if (typeFlags & typeRawPtr)
 			return;
 
 		for (NameSet::iterator i = begin(), end = this->end(); i != end; ++i) {
@@ -361,9 +362,9 @@ namespace storm {
 		if (named->name == CTOR)
 			return;
 
-		if (flags & typeValue)
+		if (typeFlags & typeValue)
 			return;
-		if (flags & typeRawPtr)
+		if (typeFlags & typeRawPtr)
 			return;
 
 		Function *fn = as<Function>(named);
@@ -374,8 +375,14 @@ namespace storm {
 
 		for (Type *s = super(); s; s = s->super()) {
 			Function *base = s->overloadTo(fn);
-			if (base)
+			if (base) {
+				if (base->flags & namedFinal)
+					// TODO: Refer a location!
+					throw TypedefError(L"The function " + named->identifier() + L" overloads the final function " +
+									base->identifier() + L".");
+
 				s->enableLookup(base);
+			}
 		}
 	}
 

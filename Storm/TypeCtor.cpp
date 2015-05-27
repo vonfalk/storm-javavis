@@ -55,7 +55,7 @@ namespace storm {
 			}
 		}
 
-		if (type->flags & typeClass) {
+		if (type->typeFlags & typeClass) {
 			// Set the vtable. (TODO: maybe a symbolic offset here?)
 			l << mov(ptrA, dest);
 			l << mov(ptrRel(ptrA), type->vtable.ref);
@@ -122,7 +122,7 @@ namespace storm {
 			}
 		}
 
-		if (type->flags & typeClass) {
+		if (type->typeFlags & typeClass) {
 			// Set the vtable.
 			l << mov(ptrA, dest);
 			l << mov(ptrRel(ptrA), type->vtable.ref);
@@ -193,7 +193,7 @@ namespace storm {
 			}
 		}
 
-		if (type->flags & typeClass) {
+		if (type->typeFlags & typeClass) {
 			// Set the vtable.
 			l << mov(ptrA, dest);
 			l << mov(ptrRel(ptrA), type->vtable.ref);
@@ -474,7 +474,7 @@ namespace storm {
 			result = stdClone(e, part->name, params[0].asRef(false), params[1].asRef(false));
 
 		if (result)
-			result->matchFlags = matchNoInheritance;
+			result->flags = namedMatchNoInheritance;
 
 		return result;
 	}

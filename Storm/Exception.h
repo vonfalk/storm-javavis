@@ -100,6 +100,7 @@ namespace storm {
 
 	/**
 	 * Error in type definitions.
+	 * TODO: Require a SrcPos!
 	 */
 	class TypedefError : public CodeError {
 	public:

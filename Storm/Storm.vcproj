@@ -865,7 +865,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MatchFlags.h"
+				RelativePath=".\NamedFlags.h"
 				>
 			</File>
 			<File

@@ -210,7 +210,7 @@ namespace storm {
 	void *Object::operator new(size_t size, Type *type) {
 		size_t s = type->size().current();
 
-		assert(type->flags & typeClass);
+		assert(type->typeFlags & typeClass);
 		assert(size <= s || size == 0, L"Not enough memory for " + type->name
 			+ L". From C++: " + ::toS(size) + L" from storm: " + ::toS(s));
 
@@ -251,7 +251,7 @@ namespace storm {
 	void Object::operator delete[](void *ptr) { assert(false); }
 
 	Object *createObj(Type *type, const void *ctor, code::FnParams params) {
-		assert(type->flags & typeClass);
+		assert(type->typeFlags & typeClass);
 
 		void *mem = Object::operator new(type->size().current(), type);
 

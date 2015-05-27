@@ -500,7 +500,7 @@ namespace storm {
 		void *plain = null;
 		Function *fn = null;
 
-		if (member->flags & typeClass) {
+		if (member->typeFlags & typeClass) {
 			plain = code::deVirtualize(ptr, vtable);
 
 			// Note: the findSlot here is predictable even after optimizations since we can rely on

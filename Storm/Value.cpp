@@ -14,19 +14,19 @@ namespace storm {
 	}
 
 	bool isClass(Type *t) {
-		return (t->flags & typeClass) != 0;
+		return (t->typeFlags & typeClass) != 0;
 	}
 
 	Value Value::thisPtr(Type *t) {
 		bool ref = false;
-		if (t->flags & typeValue) {
+		if (t->typeFlags & typeValue) {
 			ref = true;
-		} else if (t->flags & typeClass) {
+		} else if (t->typeFlags & typeClass) {
 			ref = false;
 		} else {
 			assert(false, "You do want to set either typeValue or typeClass on your types!");
 		}
-		return Value(t, (t->flags & typeValue) != 0);
+		return Value(t, (t->typeFlags & typeValue) != 0);
 	}
 
 	Value::Value() : type(null), ref(false) {}
@@ -66,7 +66,7 @@ namespace storm {
 		} else if (!type) {
 			// null
 			return Size();
-		} else if (type->flags & typeClass) {
+		} else if (type->typeFlags & typeClass) {
 			// by pointer
 			return Size::sPtr;
 		} else {
@@ -93,7 +93,7 @@ namespace storm {
 			return false;
 		if (isBuiltIn())
 			return false;
-		return (type->flags & typeValue) == typeValue;
+		return (type->typeFlags & typeValue) == typeValue;
 	}
 
 	bool Value::isClass() const {
@@ -101,14 +101,14 @@ namespace storm {
 			return false;
 		if (isBuiltIn())
 			return false;
-		return (type->flags & typeClass) == typeClass;
+		return (type->typeFlags & typeClass) == typeClass;
 	}
 
 	code::Value Value::destructor() const {
 		if (ref) {
 			return code::Value();
 		} else if (type) {
-			if (type->flags & typeClass)
+			if (type->typeFlags & typeClass)
 				return type->engine.fnRefs.release;
 			else if (Function *dtor = type->destructor())
 				return dtor->ref();
@@ -123,7 +123,7 @@ namespace storm {
 		if (ref) {
 			return code::Value();
 		} else if (type) {
-			if (type->flags & typeClass)
+			if (type->typeFlags & typeClass)
 				return code::Value();
 			else if (Function *ctor = type->copyCtor())
 				return ctor->ref();
@@ -160,7 +160,7 @@ namespace storm {
 	bool Value::refcounted() const {
 		if (!type)
 			return false;
-		return (type->flags & typeClass) != 0;
+		return (type->typeFlags & typeClass) != 0;
 	}
 
 	Value Value::asRef(bool z) const {
@@ -186,9 +186,9 @@ namespace storm {
 		return canStore(v.type);
 	}
 
-	bool Value::matches(const Value &v, MatchFlags flags) const {
+	bool Value::matches(const Value &v, NamedFlags flags) const {
 		bool r = canStore(v);
-		if (flags & matchNoInheritance)
+		if (flags & namedMatchNoInheritance)
 			r &= type == v.type;
 		return r;
 	}
@@ -247,7 +247,7 @@ namespace storm {
 			return Value();
 		} else if (Type *t = as<Type>(f)) {
 			// We do not correctly handle this yet.
-			assert(t->flags & typeClass);
+			assert(t->typeFlags & typeClass);
 			return Value(t);
 		} else if (Function *fn = as<Function>(f)) {
 			return fn->result;

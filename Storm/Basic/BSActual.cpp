@@ -112,7 +112,7 @@ namespace storm {
 			if (autoCast(formal, actual))
 				distance += 100; // Penalty
 
-			if (formal.matches(actual, candidate->matchFlags)) {
+			if (formal.matches(actual, candidate->flags)) {
 				if (actual.type)
 					distance += actual.type->distanceFrom(formal.type);
 			} else if (exprs[i] && exprs[i]->castable(actual)) {

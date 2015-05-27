@@ -312,7 +312,7 @@ namespace storm {
 			return;
 		}
 
-		if (var->owner()->flags & typeValue) {
+		if (var->owner()->typeFlags & typeValue) {
 			valueCode(s, to);
 		} else {
 			classCode(s, to);
@@ -403,7 +403,7 @@ namespace storm {
 
 	bs::ClassAssign::ClassAssign(Par<Expr> to, Par<Expr> value) : to(to), value(value) {
 		Value r = to->result();
-		if ((r.type->flags & typeClass) != typeClass)
+		if ((r.type->typeFlags & typeClass) != typeClass)
 			throw TypeError(to->pos, L"The default assignment can not be used with other types than classes"
 							L" at the moment. Please implement an assignment operator for your type.");
 		if (!r.ref)

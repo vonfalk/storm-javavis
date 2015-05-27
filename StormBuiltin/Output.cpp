@@ -254,10 +254,13 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 			out << L"BuiltInFunction::typeMember";
 		else
 			out << L"BuiltInFunction::noMember";
+
 		if (!fn.thread.empty())
-			out << L"| BuiltInFunction::onThread";
+			out << L" | BuiltInFunction::onThread";
 		if (fn.engineFn)
-			out << L"| BuiltInFunction::hiddenEngine";
+			out << L" | BuiltInFunction::hiddenEngine";
+		if (fn.virtualFn)
+			out << L" | BuiltInFunction::virtualFunction";
 		out << L", ";
 
 		// Member of?

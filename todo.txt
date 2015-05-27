@@ -22,8 +22,6 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
-Enforce C++ functions declared without virtual to be "final" in Storm.
-
 Replace functions that take 'name' + 'params' with a version that takes 'NamePart' instead. Expose to Storm where possible.
 
 Make sure that lazy-loading packages like 'Lang' does not succeed on Windows when the folder is named 'lang'.
