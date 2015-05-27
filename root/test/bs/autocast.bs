@@ -32,3 +32,7 @@ Int castToMaybe() {
 	maybeFn(v);
 }
 
+Int downcastMaybe() {
+	DerivedDbg? z = DerivedDbg(10);
+	maybeFn(z);
+}

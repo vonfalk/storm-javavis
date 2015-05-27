@@ -74,6 +74,9 @@ namespace storm {
 			// Code generation.
 			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> to);
 
+			// Auto-casting should work across the boundaries of an expression.
+			virtual Bool STORM_FN castable(Value to);
+
 		private:
 			virtual void output(wostream &to) const;
 		};

@@ -554,6 +554,10 @@
 				RelativePath=".\Lib\Maybe.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSAutocast.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -954,6 +958,10 @@
 			</File>
 			<File
 				RelativePath=".\CodeGenFwd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSAutocast.h"
 				>
 			</File>
 		</Filter>

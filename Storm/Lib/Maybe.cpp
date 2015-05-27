@@ -88,7 +88,11 @@ namespace storm {
 
 		add(steal(nativeFunction(e, Value(), CTOR, valList(1, t), &storm::createMaybe)));
 		add(steal(nativeFunction(e, Value(), CTOR, valList(2, t, t), &storm::initMaybe)));
-		add(steal(nativeFunction(e, Value(), CTOR, valList(2, t, param), &storm::initMaybe)));
+
+		// Ctor for the wrapped type.
+		Auto<Function> f = nativeFunction(e, Value(), CTOR, valList(2, t, param), &storm::initMaybe);
+		f->flags |= namedAutoCast;
+		add(f);
 
 		// Create copy ctors for derived versions of Maybe.
 		add(steal(CREATE(Template, e, CTOR, memberFn(this, &MaybeType::createCopy))));
@@ -119,7 +123,7 @@ namespace storm {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
 		Named *n = nativeFunction(e, Value(), CTOR, valList(2, t, Value::thisPtr(param)), &storm::initMaybe);
-		n->flags |= namedMatchAutoCast;
+		n->flags |= namedAutoCast;
 		return n;
 	}
 

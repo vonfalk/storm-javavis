@@ -61,6 +61,7 @@ BEGIN_TEST(AutocastTest) {
 	// Check auto-casting from int to nat.
 	CHECK_EQ(runFn(L"test.bs.castToNat"), 20);
 	CHECK_EQ(runFn(L"test.bs.castToMaybe"), 20);
+	CHECK_EQ(runFn(L"test.bs.downcastMaybe"), 20);
 } END_TEST
 
 BEGIN_TEST(InheritanceTest) {

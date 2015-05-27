@@ -2,8 +2,8 @@
 #include "BSVar.h"
 #include "BSBlock.h"
 #include "BSNamed.h"
+#include "BSAutocast.h"
 #include "Exception.h"
-
 #include "Lib/Debug.h"
 
 namespace storm {
@@ -34,8 +34,8 @@ namespace storm {
 		}
 
 		void bs::Var::initTo(Par<Expr> e) {
-			if (callable(variable->result, e->result(), e))
-				initExpr = e;
+			if (Expr *z = castTo(e, variable->result))
+				initExpr = z;
 			else
 				// Use a ctor...
 				initTo(steal(CREATE(Actual, engine(), e)));

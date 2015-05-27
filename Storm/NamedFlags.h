@@ -19,7 +19,7 @@ namespace storm {
 		namedMatchNoInheritance = 0x01,
 
 		// This function is suitable for automatic casts (only constructors).
-		namedMatchAutoCast = 0x02,
+		namedAutoCast = 0x02,
 
 		/**
 		 * Overloading. (mostly useful for functions)

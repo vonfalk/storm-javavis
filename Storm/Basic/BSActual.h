@@ -36,10 +36,8 @@ namespace storm {
 		};
 
 		/**
-		 * Extension to the name part class that takes care of the automatic casts supported by Basic
-		 * Storm. Currently, these are:
-		 * - Int => Nat (constants only)
-		 * - Foo => Foo?
+		 * Extension to the name part class that takes care of the automatic casts supported by
+		 * Basic Storm. It delegates these checks to the BSAutocast-header.
 		 *
 		 * Note that Actual needs to be updated (to some degree) to make some casts work.
 		 */
@@ -63,7 +61,5 @@ namespace storm {
 			vector<Auto<Expr>> exprs;
 		};
 
-		// Is the parameter 'actual' callable using 'formal' (originating from 'src')?
-		bool callable(const Value &formal, const Value &actual, Par<Expr> src);
 	}
 }

@@ -87,5 +87,21 @@ namespace storm {
 
 		Constant *STORM_FN strConstant(Par<SStr> str);
 
+		/**
+		 * Dummy expression, tells that we're returning a value of a specific type, but will not
+		 * generate any code.
+		 */
+		class DummyExpr : public Expr {
+			STORM_CLASS;
+		public:
+			STORM_CTOR DummyExpr(Value type);
+
+			virtual Value STORM_FN result();
+			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
+
+		private:
+			Value type;
+		};
+
 	}
 }

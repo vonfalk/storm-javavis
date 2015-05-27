@@ -88,6 +88,12 @@ namespace storm {
 		exprs[exprs.size() - 1]->code(state, to);
 	}
 
+	Bool bs::ExprBlock::castable(Value to) {
+		if (exprs.empty())
+			return false;
+		return exprs.back()->castable(to);
+	}
+
 	void bs::ExprBlock::output(wostream &to) const {
 		to << L"{" << endl;
 		{

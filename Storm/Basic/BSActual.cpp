@@ -1,28 +1,9 @@
 #include "stdafx.h"
 #include "BSActual.h"
+#include "BSAutocast.h"
 #include "Lib/Maybe.h"
 
 namespace storm {
-
-	// Modify the formal parameter to match 'actual' if neccessary.
-	// These modifications are always 100% binary compatible. This will probably be extended
-	// in the future to support calling constructors in between.
-	static bool autoCast(Value &formal, const Value &actual) {
-		MaybeType *formalT = as<MaybeType>(formal.type);
-		MaybeType *actualT = as<MaybeType>(actual.type);
-
-		if (formalT != null && actualT == null) {
-			// Preserve the 'ref' parameter!
-			formal.type = formalT->param.type;
-			return true;
-		}
-
-		return false;
-	}
-
-	bool bs::callable(const Value &formal, const Value &actual, Par<Expr> src) {
-		return formal.canStore(actual) || src->castable(formal);
-	}
 
 	bs::Actual::Actual() {}
 
@@ -53,15 +34,11 @@ namespace storm {
 	code::Value bs::Actual::code(nat id, Par<CodeGen> s, Value param) {
 		using namespace code;
 
-		Expr *expr = expressions[id].borrow();
+		Auto<Expr> expr = castTo(expressions[id], param);
+		assert(expr,
+			L"Can not use " + ::toS(expressions[id]->result()) + L" as an actual value for parameter " + ::toS(param));
+
 		Value exprResult = expr->result();
-
-		if (!callable(param, exprResult, expr))
-			autoCast(param, exprResult);
-
-		assert(callable(param, exprResult, expr),
-			L"Can not use " + ::toS(exprResult) + L" as an actual value for parameter " + ::toS(param));
-
 		if (param.ref && !exprResult.ref) {
 			// We need to create a temporary variable and make a reference to it.
 			VarInfo tmpV = variable(s, exprResult);
@@ -95,9 +72,10 @@ namespace storm {
 
 	void bs::BSNamePart::insert(Value first) {
 		params.insert(params.begin(), first);
-		exprs.insert(exprs.begin(), null);
+		exprs.insert(exprs.begin(), CREATE(DummyExpr, this, first));
 	}
 
+	// TODO: Consider using 'max' for match weights instead?
 	Int bs::BSNamePart::matches(Par<Named> candidate) {
 		const vector<Value> &c = candidate->params;
 		if (c.size() != params.size())
@@ -106,21 +84,14 @@ namespace storm {
 		int distance = 0;
 
 		for (nat i = 0; i < c.size(); i++) {
-			Value formal = c[i];
-			const Value &actual = params[i];
+			const Value &formal = c[i];
+			Par<Expr> actual = exprs[i];
 
-			if (autoCast(formal, actual))
-				distance += 100; // Penalty
-
-			if (formal.matches(actual, candidate->flags)) {
-				if (actual.type)
-					distance += actual.type->distanceFrom(formal.type);
-			} else if (exprs[i] && exprs[i]->castable(actual)) {
-				// Penalty for this casting...
-				distance += 100;
-			} else {
+			int penalty = castPenalty(actual, formal, candidate->flags);
+			if (penalty >= 0)
+				distance += penalty;
+			else
 				return -1;
-			}
 		}
 
 		return distance;

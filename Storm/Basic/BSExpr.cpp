@@ -165,4 +165,18 @@ namespace storm {
 		return CREATE(Constant, v->engine(), v->v.borrow());
 	}
 
+	/**
+	 * Dummy expression.
+	 */
+
+	bs::DummyExpr::DummyExpr(Value type) : type(type) {}
+
+	Value bs::DummyExpr::result() {
+		return type;
+	}
+
+	void bs::DummyExpr::code(Par<CodeGen> s, Par<CodeResult> r) {
+		throw InternalError(L"Tried to generate code from a DummyExpr!");
+	}
+
 }
