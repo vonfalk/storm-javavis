@@ -60,7 +60,7 @@ class Repl extends LangRepl {
 	}
 
 	void addUse(Parser parser) {
-		TObject type = parser.transformT([TObject:]);
+		TObject type = parser.transformT(TObject:[]);
 		if (type as TypeName) {
 			addUse(type);
 		} else {

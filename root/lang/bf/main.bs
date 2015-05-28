@@ -63,7 +63,7 @@ class BfFunction extends Function {
 			parser.throwError;
 		}
 
-		TObject o = parser.transformT([TObject:]);
+		TObject o = parser.transformT(TObject:[]);
 		BfExpr def;
 		if (o as BfExpr) {
 			def = o;

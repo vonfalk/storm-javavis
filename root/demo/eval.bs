@@ -33,7 +33,7 @@ void eval(Str v) {
 	p.parse("E");
 	if (p.hasError)
 		p.throwError;
-	Object result = p.transform([Object:]);
+	Object result = p.transform(Object:[]);
 	print(v # " = " # result);
 }
 
