@@ -142,6 +142,7 @@ BEGIN_TEST(StormArrayTest) {
 	CHECK_EQ(runFn(L"test.bs.testValArray"), 250);
 	CHECK_EQ(runFn(L"test.bs.testIntArray"), 95);
 	CHECK_EQ(runFn(L"test.bs.testInitArray"), 1337);
+	CHECK_EQ(runFn(L"test.bs.testInitAutoArray"), 1234);
 
 	// Interoperability.
 	Auto<Array<DbgVal>> r = runFn<Array<DbgVal>*>(L"test.bs.createValArray");

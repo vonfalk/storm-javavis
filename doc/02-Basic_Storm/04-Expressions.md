@@ -21,9 +21,9 @@ Basic Storm supports the following literals:
   the `nat` or `byte` method on the `Int` object, like this: `1.nat`, or `nat(1)`.
 * __Booleans:__ the reserved words `true` or `false`. Evaluates to `core:Bool`.
 * __Arrays:__ enclosed in square brackets (`[]`), separated with comma (`,`). The literal starts with
-  the desired type of the array followed by a colon (`:`). In future releases it will be possible to
-  leave out the type, but not yet. Arrays evaluate to an instance of the type `core:Array<T>`. Example:
-  `[Int: 1, 2, 3]`. Array literals are implemented completely in Basic Storm, have a look at `lang:bs:array.bs`.
+  the desired type of the array followed by a colon (`:`). Arrays evaluate to an instance of the type 
+  `core:Array<T>`. Example: `Int:[1, 2, 3]` or `[1, 2, 3]`. Array literals are implemented completely
+  in Basic Storm, have a look at `lang:bs:array.bs`.
 
 Function calls
 ---------------

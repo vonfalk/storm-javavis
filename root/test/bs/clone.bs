@@ -69,7 +69,7 @@ Bool testCloneValue() {
 }
 
 Int testCloneArray() {
-	Dbg[] array = [Dbg: Dbg(1), Dbg(2), Dbg(3), Dbg(4)];
+	Dbg[] array = Dbg:[Dbg(1), Dbg(2), Dbg(3), Dbg(4)];
 	Dbg[] c = array.clone;
 
 	Int sum = 0;

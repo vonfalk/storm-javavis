@@ -1,7 +1,7 @@
 use core:lang;
 
 // Implement support for Int[] instead of Array<Int>
-TypeName arrayType(TypeName t) {
+TypeName arrayType(TypeName t) on Compiler {
 	TypePart core("core");
 	TypePart array("Array");
 	array.add(t);
@@ -12,7 +12,7 @@ TypeName arrayType(TypeName t) {
 	name;
 }
 
-Expr arrayInit(Block block, TypeName type, Array<Expr> list) {
+Expr arrayInit(Block block, TypeName type, Array<Expr> list) on Compiler {
 	ExprBlock b(block);
 
 	SStr arrayName("tmp");
@@ -29,4 +29,17 @@ Expr arrayInit(Block block, TypeName type, Array<Expr> list) {
 
 	b.add(varAccess);
 	b;
+}
+
+// TODO: Return a custom type here that automatically casts to the right type!
+Expr arrayInit(Block block, Array<Expr> list, SrcPos pos) on Compiler {
+	if (list.count == 0)
+		throwSyntaxError(pos,
+						"At least one element has to be given to the array initialization unless a type is given.");
+
+	Value result = list[0].result;
+	for (Nat i = 1; i < list.count; i++)
+		result = common(result, list[i].result);
+
+	arrayInit(block, TypeName(result), list);
 }

@@ -81,7 +81,7 @@ class ConcatExpr extends Expr {
 		Value v = strBufType.resolve(rootScope);
 		Type t = v.getType;
 		Scope findIn = outer.scope.child(t);
-		NamePart part("add", [Value: v, e.result]);
+		NamePart part("add", Value:[v, e.result]);
 		Named? member = findIn.find(Name(part));
 		if (member as Function) {
 			Actual params;
@@ -98,7 +98,7 @@ class ConcatExpr extends Expr {
 	Bool appendToS(Expr e) {
 		Value r = e.result;
 		Scope findIn = outer.scope.child(r.getType);
-		NamePart part("toS", [Value: r]);
+		NamePart part("toS", Value:[r]);
 		Named? member = findIn.find(Name(part));
 		if (member as Function) {
 			FnCall call(member, Actual(e));

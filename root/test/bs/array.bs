@@ -52,7 +52,7 @@ Int testIntArray() {
 }
 
 Int testInitArray() {
-	Int[] a = [Int: 1, 3, 3, 7];
+	Int[] a = Int:[1, 3, 3, 7];
 
 	Int sum;
 	for (Nat i = 0; i < a.count; i++)
@@ -64,6 +64,16 @@ Int testInitArray() {
 	// for foo () {
 	// }
 	// Hope not!
+}
+
+Int testInitAutoArray() {
+	var a = [1, 2, 3, 4];
+
+	Int sum;
+	for (Nat i = 0; i < a.count; i++)
+		sum = sum * 10 + a[i];
+
+	sum;
 }
 
 Array<DbgVal> createValArray() {

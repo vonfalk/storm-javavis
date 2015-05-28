@@ -14,6 +14,13 @@ namespace storm {
 
 		bs::TypePart::TypePart(Par<Str> name) : name(name) {}
 
+		bs::TypePart::TypePart(Par<NamePart> src) {
+			name = CREATE(Str, this, src->name);
+			for (nat i = 0; i < src->params.size(); i++) {
+				params.push_back(CREATE(TypeName, this, src->params[i]));
+			}
+		}
+
 		Str *bs::TypePart::title() const {
 			return name.ret();
 		}
@@ -51,6 +58,19 @@ namespace storm {
 		}
 
 		bs::TypeName::TypeName() {}
+
+		bs::TypeName::TypeName(Value v) {
+			Type *from = v.type;
+			if (from == null) {
+				Auto<Str> s = CREATE(Str, this, L"void");
+				parts.push_back(CREATE(TypePart, this, s));
+			} else {
+				Auto<Name> p = from->path();
+				for (nat i = 0; i < p->size(); i++) {
+					parts.push_back(CREATE(TypePart, this, p->at(i)));
+				}
+			}
+		}
 
 		void bs::TypeName::add(Par<TypePart> part) {
 			parts.push_back(part);

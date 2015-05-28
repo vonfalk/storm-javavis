@@ -91,7 +91,13 @@ Check thread safety in the reference management class.
 
 Basic
 ------
+There is a memory leak when calling functions on other threads, for example: try removing "on Compiler" 
+from arrayInit(Block, Expr[], SrcPos)!
+
 Variable accesses are currently racy. Fix this!
+
+Make sure expressions like: Str[] = []; works. This should be done by implementing a special class
+for array initializers that knows it can be casted to other array types.
 
 The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
 packages from the root always (not urgent).

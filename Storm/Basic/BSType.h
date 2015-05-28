@@ -22,6 +22,9 @@ namespace storm {
 			// SStr.
 			STORM_CTOR TypePart(Par<Str> name);
 
+			// Create from a NamePart.
+			STORM_CTOR TypePart(Par<NamePart> name);
+
 			// Add parameter.
 			void STORM_FN add(Par<TypeName> t);
 
@@ -56,6 +59,9 @@ namespace storm {
 		public:
 			// Ctor.
 			STORM_CTOR TypeName();
+
+			// Convert from a Value (maybe remove?)
+			STORM_CTOR TypeName(Value from);
 
 			// Add a part.
 			void STORM_FN add(Par<TypePart> part);
