@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "BSOperator.h"
 #include "BSNamed.h"
+#include "BSAutocast.h"
 
 namespace storm {
 
@@ -44,8 +45,7 @@ namespace storm {
 		Value l = lhs->result();
 		Value r = rhs->result();
 
-		if (l.isClass() && l.ref && l.asRef(false).canStore(r)) {
-			// TODO: Consider conversion rules here as well!
+		if (l.isClass() && l.ref && castable(rhs, l.asRef(false))) {
 			return CREATE(ClassAssign, block, lhs, rhs);
 		} else {
 			return OpInfo::meaning(block, lhs, rhs);

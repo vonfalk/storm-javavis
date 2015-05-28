@@ -229,7 +229,7 @@ namespace storm {
 		return type == o.type && ref == o.ref;
 	}
 
-	Value common(const Value &a, const Value &b) {
+	Value common(Value a, Value b) {
 		if (a.type == null || b.type == null)
 			return Value();
 

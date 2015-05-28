@@ -1,14 +1,13 @@
 #include "stdafx.h"
 #include "BSWhile.h"
-#include "Exception.h"
+#include "BSAutocast.h"
 
 namespace storm {
 
 	bs::While::While(Par<Block> parent) : Block(parent) {}
 
 	void bs::While::cond(Par<Expr> e) {
-		e->result().mustStore(Value::stdBool(engine()), e->pos);
-		condExpr = e;
+		condExpr = expectCastTo(e, Value::stdBool(engine()));
 	}
 
 	void bs::While::body(Par<Expr> e) {

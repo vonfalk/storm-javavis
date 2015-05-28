@@ -132,7 +132,7 @@ namespace storm {
 	 * type. In case 'a' and 'b' are unrelated, Value() - void
 	 * is returned.
 	 */
-	Value common(const Value &a, const Value &b);
+	Value STORM_FN common(Value a, Value b);
 
 	/**
 	 * Template magic for finding the Value of a C++ type.

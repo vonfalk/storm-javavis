@@ -23,6 +23,8 @@ namespace storm {
 			return null;
 		if (param.ref)
 			return null;
+		if (isMaybe(param))
+			return null;
 
 		return CREATE(MaybeType, part, param);
 	}
@@ -141,6 +143,23 @@ namespace storm {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
 		return nativeFunction(e, t, L"=", valList(2, t.asRef(true), Value::thisPtr(param)), &storm::assignMaybe);
+	}
+
+	Bool isMaybe(Value v) {
+		return as<MaybeType>(v.type) != null;
+	}
+
+	Value unwrapMaybe(Value v) {
+		if (MaybeType *t = as<MaybeType>(v.type))
+			return t->param;
+		else
+			return v;
+	}
+
+	Value wrapMaybe(Value v) {
+		if (isMaybe(v))
+			return v;
+		return Value(maybeType(v.type->engine, v));
 	}
 
 }

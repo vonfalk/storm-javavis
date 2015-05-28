@@ -4,6 +4,8 @@
 #include "BSNamed.h"
 #include "Type.h"
 #include "Function.h"
+#include "Exception.h"
+#include "Lib/Maybe.h"
 
 namespace storm {
 	using namespace bs;
@@ -14,7 +16,9 @@ namespace storm {
 	// Our rules. We do not care about Maybe<T> here, it is done later.
 	static bool canStore(const Value &from, const Value &to) {
 		if (to.type == null)
-			return from.type == null;
+			return true;
+		if (from.type == null)
+			return false;
 
 		// Respect inheritance.
 		if (!from.type->isA(to.type))
@@ -61,7 +65,7 @@ namespace storm {
 
 		// No work needed?
 		if (canStore(f, to)) {
-			if (f.type)
+			if (f.type != null && to.type != null)
 				return f.type->distanceFrom(to.type);
 			else
 				return 0;
@@ -106,8 +110,34 @@ namespace storm {
 		return null;
 	}
 
+	Expr *bs::expectCastTo(Par<Expr> from, Value to) {
+		if (Expr *r = castTo(from, to))
+			return r;
+		throw TypeError(from->pos, to, from->result());
+	}
+
 	Value bs::common(Par<Expr> a, Par<Expr> b) {
-		TODO(L"Implement me!");
+		Value at = a->result();
+		Value bt = b->result();
+
+		if (isMaybe(at) || isMaybe(bt)) {
+			Value r = common(unwrapMaybe(at), unwrapMaybe(bt));
+			if (r != Value())
+				return wrapMaybe(r);
+		}
+
+		// Simple inheritance?
+		Value r = common(at, bt);
+		if (r != Value())
+			return r;
+
+		// Simple casting?
+		if (castable(a, bt))
+			return bt;
+		if (castable(b, at))
+			return at;
+
+		// Nothing possible...
 		return Value();
 	}
 

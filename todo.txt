@@ -22,6 +22,8 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
+The Maybe<> type inherits from object. This may be bad since programs may assume that regular object pointers are never null!
+
 Replace functions that take 'name' + 'params' with a version that takes 'NamePart' instead. Expose to Storm where possible.
 
 Make sure that lazy-loading packages like 'Lang' does not succeed on Windows when the folder is named 'lang'.
@@ -91,8 +93,6 @@ Basic
 ------
 Variable accesses are currently racy. Fix this!
 
-Type casting could be done better in more places. For example: if (x) { T?; } else { T; }
-
 The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
 packages from the root always (not urgent).
 
@@ -102,8 +102,6 @@ In basic storm: Allow the dot operator to be used as scope resolution as well (m
 
 In bs: check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should
 be something like the same statement instead).
-
-Replace the syntax foo() & with something cleaner?
 
 Exceptions in constructors does not work well at all at the moment.
 

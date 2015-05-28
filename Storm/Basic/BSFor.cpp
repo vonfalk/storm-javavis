@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "BSFor.h"
+#include "BSAutocast.h"
 
 namespace storm {
 
 	bs::For::For(Par<Block> parent) : Block(parent) {}
 
 	void bs::For::test(Par<Expr> e) {
-		e->result().mustStore(Value::stdBool(engine()), e->pos);
-		testExpr = e;
+		testExpr = expectCastTo(e, Value::stdBool(engine()));
 	}
 
 	void bs::For::update(Par<Expr> e) {

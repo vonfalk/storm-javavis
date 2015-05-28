@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "BSNamed.h"
 #include "BSBlock.h"
+#include "BSAutocast.h"
 #include "Exception.h"
 #include "Function.h"
 #include "Lib/Future.h"
@@ -401,7 +402,7 @@ namespace storm {
 	 * Assignment.
 	 */
 
-	bs::ClassAssign::ClassAssign(Par<Expr> to, Par<Expr> value) : to(to), value(value) {
+	bs::ClassAssign::ClassAssign(Par<Expr> to, Par<Expr> value) : to(to) {
 		Value r = to->result();
 		if ((r.type->typeFlags & typeClass) != typeClass)
 			throw TypeError(to->pos, L"The default assignment can not be used with other types than classes"
@@ -409,10 +410,9 @@ namespace storm {
 		if (!r.ref)
 			throw TypeError(to->pos, L"Can not assign to a non-reference.");
 
-		if (!r.asRef(false).canStore(value->result())) {
-			TODO(L"Consider automatic type conversions here!");
+		this->value = castTo(value, r.asRef(false));
+		if (!this->value)
 			throw TypeError(to->pos, L"Can not store a " + ::toS(value->result()) + L" in " + ::toS(r));
-		}
 	}
 
 	Value bs::ClassAssign::result() {

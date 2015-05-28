@@ -14,10 +14,12 @@ Basic Storm supports the following literals:
   object. Since `Str` objects are immutable, it is undefined wether each evaluation will return
   the same or a different `Str` object. (at the moment, they differ).
 * __Integers:__ a simple number. Negative numbers are not supported (the unary `-` operator is 
-  not implemented yet). Use `0 - 1` instead. Integer literals evaluate to a `core:Int`. There are
-  not yet any support for unsigned numbers (`core:Nat`), but `1.nat` (or `nat(1)`) can be used to 
-  type-cast.
-* __Booleans:__ the reserved words `true` or `false`. Evaluates to `core:Bool`. (not implemented yet).
+  not implemented yet). Use `0 - 1` instead. Integer literals evaluate to a `core:Int` by default, 
+  but the compiler will cast the literal to `core:Nat` or `core:Byte` automatically if the context 
+  requires it, and the literal fits inside the target type without truncation. In some cases, it 
+  is neccessary to manually help the compiler by doing the casts manually. This is done by calling
+  the `nat` or `byte` method on the `Int` object, like this: `1.nat`, or `nat(1)`.
+* __Booleans:__ the reserved words `true` or `false`. Evaluates to `core:Bool`.
 * __Arrays:__ enclosed in square brackets (`[]`), separated with comma (`,`). The literal starts with
   the desired type of the array followed by a colon (`:`). In future releases it will be possible to
   leave out the type, but not yet. Arrays evaluate to an instance of the type `core:Array<T>`. Example:
@@ -147,6 +149,28 @@ message and wait until the called function has returned. During this time the cu
 accept new function calls from other threads. If you wish to not wait for a result, use the `async`
 keyword right before the function call. This makes the function call return a `Futre<T>` instead,
 and you can choose when and if you want to get the result back.
+
+Automatic type casting
+----------------------
+
+Basic Storm has support for automatic type casting, in a way that is similar to C++. However, in
+Basic Storm, less conversions are implicit. Automatic conversions only upcast types (ie to a more
+general type), or if a constructor is declared as `cast ctor(T from)`. For the built in types, very
+few constructors are declared like this, so Basic Storm does not generally do anything unexpected.
+
+The major usage of automatic casts in the standard library is the `Maybe` type, this is used to
+allow `Maybe`-types to behave like regular object references.
+
+In the `if` statement, Basic Storm tries to find a type that can store both the result from the true
+and the false branch. At the moment, this is not too sophisticated. A common base class is chosen if
+present (this works for `Maybe` as well). Otherwise, Basic Storm tries to cast one type to the
+other, and chooses the combination that is possible. If all of these fails, Basic Storm considers it
+is not possible to find a common type, even if there is an unrelated type that both the true and
+false branch can be casted to. In this case, it is neccessary to explicitly help the compiler to
+figure out the type.
+
+The automatic casting of literals is limited to very simple cases at the moment, and sometimes it is
+neccessary to explicitly cast literals (for example in `if` statements).
 
 Downcasting
 ------------

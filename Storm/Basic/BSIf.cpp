@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "BSIf.h"
+#include "BSAutocast.h"
 #include "Exception.h"
 #include "BSNamed.h"
 #include "Lib/Maybe.h"
@@ -51,9 +52,7 @@ namespace storm {
 
 	Value bs::If::result() {
 		if (falseCode && trueCode) {
-			Value t = trueCode->result();
-			Value f = falseCode->result();
-			return common(t, f);
+			return common(trueCode, falseCode);
 		} else {
 			return Value();
 		}
@@ -87,13 +86,16 @@ namespace storm {
 			state->to << jmp(lblElse, ifEqual);
 		}
 
-		trueCode->code(state, r);
+		Value rType = result();
+		Auto<Expr> t = expectCastTo(trueCode, rType);
+		t->code(state, r);
 
 		if (falseCode) {
 			state->to << jmp(lblDone);
 			state->to << lblElse;
 
-			falseCode->code(state, r);
+			Auto<Expr> f = expectCastTo(falseCode, rType);
+			f->code(state, r);
 
 			state->to << lblDone;
 		} else {
@@ -151,9 +153,7 @@ namespace storm {
 
 	Value bs::IfAs::result() {
 		if (falseCode && trueCode) {
-			Value t = trueCode->result();
-			Value f = falseCode->result();
-			return common(t, f);
+			return common(trueCode, falseCode);
 		} else {
 			return Value();
 		}
@@ -218,12 +218,16 @@ namespace storm {
 			created->var.created(state);
 		}
 
-		trueCode->code(state, r);
+		Value rType = result();
+		Auto<Expr> t = expectCastTo(trueCode, rType);
+		t->code(state, r);
+
 		if (falseCode) {
 			state->to << jmp(lblDone);
 			state->to << lblElse;
 
-			falseCode->code(state, r);
+			Auto<Expr> f = expectCastTo(falseCode, rType);
+			f->code(state, r);
 
 			state->to << lblDone;
 		} else {

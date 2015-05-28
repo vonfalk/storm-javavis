@@ -2,6 +2,7 @@
 #include "Type.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	// Add the maybe template.
 	void addMaybeTemplate(Par<Package> to);
@@ -34,5 +35,14 @@ namespace storm {
 		// Create assignment operators.
 		Named *createAssign(Par<NamePart> part);
 	};
+
+	// Check if a value represents a Maybe type.
+	Bool STORM_FN isMaybe(Value v);
+
+	// Get the value of a maybe type. If 'v' is not a maybe, 'v' is returned without modification.
+	Value STORM_FN unwrapMaybe(Value v);
+
+	// Wrap a type in maybe.
+	Value STORM_FN wrapMaybe(Value v);
 
 }

@@ -222,6 +222,8 @@ ClassItem => classFn(owner, pos, name, result, params, contents) :
   Type result, Name name, "(", Params params, ")", "{" - SkipBlock contents - "}";
 ClassItem => classCtor(owner, pos, params, contents) : 
   "ctor", "(", CtorParams params, ")", "{" - SkipBlock contents - "}";
+ClassItem => classCastCtor(owner, pos, params, contents) :
+  "cast", "ctor", "(", CtorParams params, ")", "{" - SkipBlock contents - "}";
 
 // Root rule for parsing classes and values.
 ClassBody(Class owner);

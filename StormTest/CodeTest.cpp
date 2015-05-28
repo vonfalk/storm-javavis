@@ -62,6 +62,8 @@ BEGIN_TEST(AutocastTest) {
 	CHECK_EQ(runFn(L"test.bs.castToNat"), 20);
 	CHECK_EQ(runFn(L"test.bs.castToMaybe"), 20);
 	CHECK_EQ(runFn(L"test.bs.downcastMaybe"), 20);
+	CHECK_RUNS(runFn(L"test.bs.ifCast"));
+	CHECK_EQ(runFn(L"test.bs.autoCast", 5), 10);
 } END_TEST
 
 BEGIN_TEST(InheritanceTest) {

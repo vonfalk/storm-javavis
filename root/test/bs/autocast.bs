@@ -36,3 +36,32 @@ Int downcastMaybe() {
 	DerivedDbg? z = DerivedDbg(10);
 	maybeFn(z);
 }
+
+void ifCast() {
+	DerivedDbg? root;
+	Dbg? result = if (1 == 3) {
+		root;
+	} else {
+		Dbg(20);
+	};
+}
+
+value AutoCast {
+	Int v;
+
+	cast ctor(Int v) {
+		init() { v = v; }
+	}
+
+	cast ctor(Dbg d) {
+		init() { v = d.get; }
+	}
+}
+
+Int autoCast(Int v) {
+	Dbg dbg(v);
+	AutoCast a = v;
+	AutoCast b = dbg;
+
+	a.v + b.v;
+}

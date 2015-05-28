@@ -106,6 +106,11 @@ namespace storm {
 									Par<Params> params,
 									Par<SStr> contents);
 
+		BSCtor *STORM_FN classCastCtor(Par<Class> owner,
+									SrcPos pos,
+									Par<Params> params,
+									Par<SStr> contents);
+
 		BSCtor *STORM_FN classDefaultCtor(Par<Class> owner);
 
 	}

@@ -179,6 +179,16 @@ namespace storm {
 		return CREATE(BSCtor, owner->engine, values, names, owner->scope, contents, pos);
 	}
 
+	bs::BSCtor *STORM_FN bs::classCastCtor(Par<Class> owner,
+										SrcPos pos,
+										Par<Params> params,
+										Par<SStr> contents) {
+		BSCtor *r = classCtor(owner, pos, params, contents);
+		r->flags |= namedAutoCast;
+		return r;
+	}
+
+
 	bs::BSCtor *STORM_FN bs::classDefaultCtor(Par<Class> owner) {
 		Auto<Params> params = CREATE(Params, owner);
 

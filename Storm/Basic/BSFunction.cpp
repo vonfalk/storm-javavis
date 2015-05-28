@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "BSFunction.h"
+#include "BSAutocast.h"
 #include "Code/Instruction.h"
 #include "Parser.h"
 #include "PkgReader.h"
@@ -120,7 +121,8 @@ namespace storm {
 		Auto<Object> c = parser->transform(vector<Object *>(1, this));
 		Auto<FnBody> body = c.expect<FnBody>(engine(), L"While evaluating FunctionBody");
 
-		result.mustStore(body->result(), pos);
+		// Expression possibly wrapped around the body (casting the value if needed).
+		Auto<Expr> bodyExpr = expectCastTo(body, result);
 
 		// Generate code!
 		using namespace code;
@@ -155,13 +157,13 @@ namespace storm {
 
 		if (result == Value()) {
 			Auto<CodeResult> r = CREATE(CodeResult, this);
-			body->code(state, r);
+			bodyExpr->code(state, r);
 			l << epilog();
 			l << ret(Size());
 		} else if (result.returnInReg()) {
 			Auto<CodeResult> r = CREATE(CodeResult, this, result, l.frame.root());
 
-			body->code(state, r);
+			bodyExpr->code(state, r);
 
 			VarInfo rval = r->location(state);
 			l << mov(asSize(ptrA, result.size()), rval.var());
@@ -172,7 +174,7 @@ namespace storm {
 			l << ret(result.size());
 		} else {
 			Auto<CodeResult> r = CREATE(CodeResult, this, result, l.frame.root());
-			body->code(state, r);
+			bodyExpr->code(state, r);
 
 			VarInfo rval = r->location(state);
 			l << lea(ptrA, ptrRel(rval.var()));
@@ -188,7 +190,7 @@ namespace storm {
 		}
 
 		// if (!identifier().startsWith(L"lang.bs")) {
-		// 	PLN(body);
+		// 	PLN(bodyExpr);
 		// 	PLN(identifier() << L": " << l);
 		// }
 		return state.ret();

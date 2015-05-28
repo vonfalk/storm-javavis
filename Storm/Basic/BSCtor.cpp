@@ -4,6 +4,7 @@
 #include "BSScope.h"
 #include "BSNamed.h"
 #include "BSClass.h"
+#include "BSAutocast.h"
 #include "Lib/TObject.h"
 
 namespace storm {
@@ -326,8 +327,9 @@ namespace storm {
 		assert(to->expr || to->params);
 
 		if (to->expr) {
-			if (t.isClass() && t.canStore(to->expr->result())) {
-				initVarAssign(s, v, to->expr);
+			Auto<Expr> init = castTo(to->expr, t);
+			if (t.isClass() && init) {
+				initVarAssign(s, v, init);
 			} else {
 				Auto<Actual> p = CREATE(Actual, this);
 				p->add(to->expr);
