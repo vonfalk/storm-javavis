@@ -23,4 +23,4 @@ BfToken => BfDec() : "\-";
 BfToken => BfLoop(c) : "\[", BfRoot c, "\]";
 
 // Integration with BS.
-Expr => BfExpr(space, code, input) : "bf", "(", Expr(block) input, ",", Number space, ")", "{", BfRoot code, "}";
+Atom => BfExpr(space, code, input) : "bf", "(", Expr(block) input, ",", Number space, ")", "{", BfRoot code, "}";

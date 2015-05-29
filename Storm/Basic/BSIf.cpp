@@ -34,7 +34,7 @@ namespace storm {
 		Value t = e->result();
 		if (as<MaybeType>(t.type))
 			;
-		else if (e->result() == Value(boolType(engine())))
+		else if (e->result().asRef(false) == Value(boolType(engine())))
 			;
 		else
 			throw TypeError(e->pos, L"The expression must evaluate to Bool or Maybe<T>.");

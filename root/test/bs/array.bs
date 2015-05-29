@@ -81,6 +81,13 @@ Int testAutoArray() {
 	a.count.int;
 }
 
+Int testCastArray() {
+	Dbg a(10);
+	Dbg b(20);
+	Object[] z = [a, b];
+	z.count.int;
+}
+
 Array<DbgVal> createValArray() {
 	Array<DbgVal> a;
 

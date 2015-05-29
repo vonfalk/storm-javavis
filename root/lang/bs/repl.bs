@@ -60,7 +60,7 @@ class Repl extends LangRepl {
 	}
 
 	void addUse(Parser parser) {
-		TObject type = parser.transformT(TObject:[]);
+		TObject type = parser.transformT([]);
 		if (type as TypeName) {
 			addUse(type);
 		} else {
@@ -95,7 +95,7 @@ class Repl extends LangRepl {
 			LocalVar thisPtr("this", (name{lang:bs:ReplSandbox}).resolve(rootScope), SrcPos(), true);
 			block.add(thisPtr);
 
-			TObject stmt = parser.transformT([TObject: block]);
+			TObject stmt = parser.transformT([block]);
 			if (stmt as Expr) {
 				evalExpr(line, block, thisPtr, stmt);
 			}
@@ -170,7 +170,7 @@ class ReplCode on Compiler {
 		thisPtr.createParam(g);
 
 		Value result = expr.result;
-		Name name(NamePart("toS", [Value: result]));
+		Name name(NamePart("toS", [result]));
 		Named? toSFn = root.scope.find(name);
 		if (toSFn as Function) {
 			// It exists, use the result.

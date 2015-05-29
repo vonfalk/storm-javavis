@@ -96,9 +96,6 @@ Remove the special TypeName class, use the general Name instead.
 
 Variable accesses are currently racy. Fix this!
 
-Make sure expressions like: Str[] = []; works. This should be done by implementing a special class
-for array initializers that knows it can be casted to other array types.
-
 The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
 packages from the root always (not urgent).
 

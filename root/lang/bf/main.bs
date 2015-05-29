@@ -36,7 +36,7 @@ class BfFunction extends Function {
 
 	ctor(Str name, Url file) {
 		Value strVal = (name{core:Str}).resolve(rootScope);
-		init(strVal, name, [Value: strVal]) {
+		init(strVal, name, [strVal]) {
 			file = file;
 		}
 
@@ -63,7 +63,7 @@ class BfFunction extends Function {
 			parser.throwError;
 		}
 
-		TObject o = parser.transformT(TObject:[]);
+		TObject o = parser.transformT([]);
 		BfExpr def;
 		if (o as BfExpr) {
 			def = o;

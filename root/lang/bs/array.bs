@@ -77,8 +77,10 @@ class ArrayInit extends Expr {
 	// Is the type 't' acceptable for all values?
 	Bool acceptable(Value t) {
 		Bool ok = true;
-		for (Nat i = 0; i < values.count; i++)
-			ok = ok & castable(values[i], t);
+		for (Nat i = 0; i < values.count; i++) {
+			ok = ok & lang:bs:castable(values[i], t);
+		}
+
 		ok;
 	}
 }
