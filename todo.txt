@@ -89,11 +89,9 @@ Mul does not support constants, like this: mul(v, intConst(2)); crashes.
 
 Check thread safety in the reference management class.
 
-Basic
-------
-There is a memory leak when calling functions on other threads, for example: try removing "on Compiler" 
-from arrayInit(Block, Expr[], SrcPos)!
 
+Basic Storm
+------------
 Variable accesses are currently racy. Fix this!
 
 Make sure expressions like: Str[] = []; works. This should be done by implementing a special class

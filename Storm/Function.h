@@ -118,6 +118,9 @@ namespace storm {
 		// Get the thread thunk, generates it if needed. Returns null if no thunk is needed.
 		code::RefSource *threadThunk();
 
+		// Forward parameter #id for the thread thunk.
+		void threadThunkParam(nat id, code::Listing &to);
+
 		// Run on a specific thread.
 		Auto<NamedThread> runOnThread;
 

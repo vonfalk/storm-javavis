@@ -185,3 +185,8 @@ Int testVirtualVal3() {
 Dbg testVirtualVal4() {
 	DbgDerived(10);
 }
+
+Int testActorVal() {
+	DbgActor a(10);
+	a.asDbgVal.get;
+}

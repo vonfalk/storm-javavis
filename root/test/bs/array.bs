@@ -84,3 +84,12 @@ Array<DbgVal> createValArray() {
 
 	a;
 }
+
+Array<DbgActor> createActorArray() {
+	Array<DbgActor> dbg;
+	for (Int i = 0; i < 4; i++)
+		dbg << DbgActor(i + 1);
+
+	dbg;
+}
+

@@ -135,6 +135,9 @@ BEGIN_TEST(ValueMemberTest) {
 	// itself instead.
 	Auto<Dbg> v = runFn<Dbg *>(L"test.bs.testVirtualVal4");
 	CHECK_EQ(v->asDbgVal().v, 20);
+
+	// Does the thread thunks correctly account for the special handling of member functions?
+	CHECK_EQ(runFn(L"test.bs.testActorVal"), 10);
 } END_TEST
 
 BEGIN_TEST(StormArrayTest) {

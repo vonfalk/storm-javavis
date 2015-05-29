@@ -60,4 +60,7 @@ namespace storm {
 		s->to << jmp(begin, ifNotEqual);
 	}
 
+	void bs::For::output(wostream &to) const {
+		to << L"for (" << testExpr << L"; " << updateExpr << L") " << bodyExpr;
+	}
 }

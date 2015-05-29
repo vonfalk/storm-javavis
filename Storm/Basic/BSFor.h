@@ -31,6 +31,10 @@ namespace storm {
 
 			// Code.
 			virtual void blockCode(Par<CodeGen> s, Par<CodeResult> to, const code::Block &block);
+
+		protected:
+			// ToS.
+			virtual void output(wostream &to) const;
 		};
 
 	}

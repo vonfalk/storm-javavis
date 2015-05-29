@@ -312,6 +312,25 @@ namespace storm {
 		to->to << end(b);
 	}
 
+	void Function::threadThunkParam(nat id, code::Listing &l) {
+		using namespace code;
+
+		const Value &t = params[id];
+		if (id == 0 && name == Type::CTOR) {
+			Variable v = l.frame.createPtrParam();
+			l << fnParam(v);
+		} else if (t.isClass()) {
+			Variable v = l.frame.createPtrParam(engine().fnRefs.release);
+			l << fnParam(v);
+		} else if (t.isBuiltIn()) {
+			Variable v = l.frame.createParameter(t.size(), false);
+			l << fnParam(v);
+		} else {
+			Variable v = l.frame.createParameter(t.size(), false, t.destructor(), freeOnBoth | freePtr);
+			l << fnParam(v, t.copyCtor());
+		}
+	}
+
 	code::RefSource *Function::threadThunk() {
 		using namespace code;
 
@@ -332,28 +351,22 @@ namespace storm {
 		Listing &l = s->l->v;
 		l << prolog();
 
+		nat firstParam = 0;
+
+		if (isMember()) {
+			// The this-ptr goes before any result parameter!
+			threadThunkParam(0, l);
+			firstParam = 1;
+		}
+
 		Variable resultParam;
 		if (result.isValue()) {
 			resultParam = l.frame.createPtrParam();
 			l << fnParam(resultParam);
 		}
 
-		for (nat i = 0; i < params.size(); i++) {
-			const Value &t = params[i];
-			if (i == 0 && name == Type::CTOR) {
-				Variable v = l.frame.createPtrParam();
-				l << fnParam(v);
-			} else if (t.isClass()) {
-				Variable v = l.frame.createPtrParam(engine().fnRefs.release);
-				l << fnParam(v);
-			} else if (t.isBuiltIn()) {
-				Variable v = l.frame.createParameter(t.size(), false);
-				l << fnParam(v);
-			} else {
-				Variable v = l.frame.createParameter(t.size(), false, t.destructor(), freeOnBoth | freePtr);
-				l << fnParam(v, t.copyCtor());
-			}
-		}
+		for (nat i = firstParam; i < params.size(); i++)
+			threadThunkParam(i, l);
 
 		if (result.isClass()) {
 			Variable t = l.frame.createPtrVar(l.frame.root(), engine().fnRefs.release);
