@@ -272,9 +272,15 @@
       (equal proj "Utils")
       (equal proj "StormBuiltin")))))
 
+(defun namespace-name ()
+  (let ((name (downcase (subproject buffer-file-name))))
+    (if (string-equal name "lib")
+	"storm"
+      name)))
+
 (defun insert-namespace ()
   (insert "namespace ")
-  (insert (downcase (subproject buffer-file-name)))
+  (insert (namespace-name))
   (insert " {\n\n")
   (let ((pos (point)))
     (insert "\n\n}\n")

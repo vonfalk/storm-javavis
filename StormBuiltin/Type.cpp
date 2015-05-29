@@ -36,14 +36,20 @@ void Types::output(wostream &to) const {
 	join(to, types, L"\n");
 }
 
+bool Types::forCompiler = false;
+
+
 vector<Type> Types::getTypes() const {
 	vector<Type> r;
 	CppName n;
 	n.parts.push_back(L"storm");
 	n.parts.push_back(L"Type");
-	if (types.count(n) == 0)
-		throw Error(L"Can not find the storm::Type type! This is needed for the compiler to work!");
-	r.push_back(types.find(n)->second);
+	if (types.count(n) == 0) {
+		if (forCompiler)
+			throw Error(L"Can not find the storm::Type type! This is needed for the compiler to work!");
+	} else {
+		r.push_back(types.find(n)->second);
+	}
 
 	for (T::const_iterator i = types.begin(); i != types.end(); ++i) {
 		if (i->second.exported && i->first != n)

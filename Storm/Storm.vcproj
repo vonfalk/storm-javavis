@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\BuiltIn.template.cpp $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -99,7 +99,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Storm\Lib\BuiltIn.template.cpp $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Lib\BuiltIn.template.cpp $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -653,10 +653,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\BuiltIn.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Code.h"
 				>
 			</File>
@@ -750,10 +746,6 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Storm.h"
 				>
 			</File>
 			<File

@@ -104,21 +104,29 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	Path output, asmOutput;
 
 	if (argc < 4) {
-		std::wcout << L"Error: <root> <scanDir> <input> <output> [<asmOutput>] required!" << std::endl;
+		std::wcout << L"Error: [dll] <root> <scanDir> <input> <output> [<asmOutput>] required!" << std::endl;
 		return 1;
 	}
 
-	root = Path(String(argv[1]));
-	scanDir = Path(String(argv[2]));
-	input = Path(String(argv[3]));
-	output = Path(String(argv[4]));
+	int argId = 1;
+	if (String(argv[argId]) == L"dll") {
+		Types::forCompiler = false;
+		argId++;
+	} else {
+		Types::forCompiler = true;
+	}
+
+	root = Path(String(argv[argId++]));
+	scanDir = Path(String(argv[argId++]));
+	input = Path(String(argv[argId++]));
+	output = Path(String(argv[argId++]));
 
 	bool forceUpdate = false;
 #endif
 
 	Timestamp outputModified = output.mTime();
-	if (argc >= 6) {
-		asmOutput = Path(String(argv[5]));
+	if (argc >= argId + 1) {
+		asmOutput = Path(String(argv[argId]));
 		limitMin(outputModified, asmOutput.mTime());
 	}
 

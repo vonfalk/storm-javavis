@@ -1,5 +1,4 @@
 #pragma once
-#include "Name.h"
 #include "Utils/Bitmask.h"
 
 namespace storm {
@@ -198,5 +197,20 @@ namespace storm {
 	 * Get the list of built in threads. Ends with a null entry.
 	 */
 	const BuiltInThread *builtInThreads();
+
+	/**
+	 * Struct holding all built-in things.
+	 */
+	struct BuiltIn {
+		const BuiltInType *types;
+		const BuiltInFunction *functions;
+		const BuiltInVar *variables;
+		const BuiltInThread *threads;
+	};
+
+	/**
+	 * Get all built-in things from here.
+	 */
+	const BuiltIn *builtIn();
 
 }

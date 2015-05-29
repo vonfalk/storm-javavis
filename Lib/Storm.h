@@ -2,6 +2,11 @@
 
 #include "Code/Code.h"
 
+// Are we being compiled as a DLL or as the compiler?
+#ifndef STORM_COMPILER
+#define STORM_DLL
+#endif
+
 // Mark the current package when exporting functions. Places all following
 // functions in 'pkg'. For example: STORM_PKG(core)
 #define STORM_PKG(pkg)
@@ -118,6 +123,7 @@ namespace storm {
 		// Force the thread to something already created.
 		void force(Engine &e, Thread *to);
 	};
+
 
 	// Get the Engine from an object (implemented in Object.cpp)
 	Engine &engine(const Object *o);

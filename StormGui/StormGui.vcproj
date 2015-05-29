@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="StormTest"
-	ProjectGUID="{CD876CBD-BCAA-4B83-8618-9EE9852FA74B}"
-	RootNamespace="StormTest"
+	Name="StormGui"
+	ProjectGUID="{546EFB3F-2D78-4B25-AFEF-0522A24E5B36}"
+	RootNamespace="StormGui"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -14,20 +14,28 @@
 		/>
 	</Platforms>
 	<ToolFiles>
+		<DefaultToolFile
+			FileName="masm.rules"
+		/>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="2"
 			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Updating list of built-in functions..."
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe dll $(SolutionDir)StormGui\ $(SolutionDir)StormGui\ $(SolutionDir)Lib\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp $(SolutionDir)StormGui\Lib\VTables.asm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="MASM"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -42,7 +50,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;STORMGUI_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -62,9 +70,8 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="2"
-				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
-				SubSystem="1"
+				SubSystem="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -93,15 +100,20 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="2"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Updating list of built-in functions..."
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe dll $(SolutionDir)StormGui\ $(SolutionDir)StormGui\ $(SolutionDir)Lib\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp $(SolutionDir)StormGui\Lib\VTables.asm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="MASM"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -117,7 +129,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;STORMGUI_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -136,9 +148,8 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="1"
-				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
-				SubSystem="1"
+				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
@@ -175,43 +186,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\ArrayTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CloneTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CodeTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FnPtrTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\HashTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\LayoutTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ParserTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PkgTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RegexTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SrcPosTest.cpp"
+				RelativePath=".\Lib\BuiltIn.cpp"
 				>
 			</File>
 			<File
@@ -235,35 +210,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\StormTest.cpp"
+				RelativePath=".\StormGui.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\TextTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ThreadTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TokenizerTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ToSTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TransformTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\UrlTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\VTableTest.cpp"
+				RelativePath=".\Lib\VTables.asm"
 				>
 			</File>
 		</Filter>
@@ -273,31 +224,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\Exception.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Fn.h"
-				>
-			</File>
-			<File
-				RelativePath=".\HashTest.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
 			<File
 				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ThreadTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\UrlTest.cpp"
 				>
 			</File>
 		</Filter>

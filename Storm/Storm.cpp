@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Storm.h"
+#include "Lib/Storm.h"
 #include "Engine.h"
 
 namespace storm {

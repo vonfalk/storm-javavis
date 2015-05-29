@@ -1,3 +1,8 @@
+Build
+------
+The current StormTest is set up to depend on StormGui, which means that it links in the exported functions
+from the StormGui dll. This should not be done, but I could not find a better way of doing it.
+
 Syntax
 ---------
 Check so that *, + and ? are greedy in ambiguous cases!
@@ -22,6 +27,8 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
+Some kind of versioning scheme when connecting DLLS and the Storm executable is required.
+
 The Maybe<> type inherits from object. This may be bad since programs may assume that regular object pointers are never null!
 
 Replace functions that take 'name' + 'params' with a version that takes 'NamePart' instead. Expose to Storm where possible.

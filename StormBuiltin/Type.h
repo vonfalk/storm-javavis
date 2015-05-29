@@ -58,6 +58,9 @@ public:
 	// Get all types in here.
 	vector<Type> getTypes() const;
 
+	// Special case when we're giving types to the compiler.
+	static bool forCompiler;
+
 protected:
 	virtual void output(wostream &to) const;
 
