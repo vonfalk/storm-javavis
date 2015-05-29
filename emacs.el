@@ -392,3 +392,18 @@
     ("\\.h\\'" (".cpp" ".c"))
     ))
 
+(defun check-buffer ()
+  "If the buffer has been modified, ask the user to revert it, just like find-file does."
+  (interactive)
+  (if (and (not (verify-visited-file-modtime))
+	   (not (buffer-modified-p))
+	   (yes-or-no-p
+	    (format "File %s changed on disk. Reread from disk? " (file-name-nondirectory (buffer-file-name)))))
+      (revert-buffer t t)))
+
+(defadvice switch-to-buffer
+  (after check-buffer-modified)
+  (check-buffer))
+
+(ad-activate 'switch-to-buffer)
+
