@@ -105,8 +105,8 @@ namespace storm {
 		// TODO: implement
 
 		// Type equality.
-		bool operator ==(const Value &o) const;
-		inline bool operator !=(const Value &o) const { return !(*this == o); }
+		Bool STORM_FN operator ==(const Value &o) const;
+		inline Bool STORM_FN operator !=(const Value &o) const { return !(*this == o); }
 
 		// Some standard types.
 		static inline Value stdBool(Engine &e) { return Value(boolType(e)); }

@@ -21,7 +21,7 @@ namespace storm {
 	}
 
 	static void CODECALL copyClass(void *mem, FutureP<Object> *from) {
-		new (mem) FutureP<Object>();
+		new (mem) FutureP<Object>(from);
 	}
 
 	static void CODECALL postClass(FutureP<Object> *to, Par<Object> obj) {
@@ -89,6 +89,26 @@ namespace storm {
 		return l;
 	}
 
+	static void createVoid(void *mem) {
+		new (mem) Future<void>();
+	}
+
+	static void copyVoid(void *mem, Future<void> *from) {
+		new (mem) Future<void>(from);
+	}
+
+	static void destroyVoid(Future<void> *o) {
+		o->~Future<void>();
+	}
+
+	static void postVoid(Future<void> *to) {
+		to->post();
+	}
+
+	static void resultVoid(Future<void> *from) {
+		from->result();
+	}
+
 	static Named *generateFuture(Par<NamePart> part) {
 		if (part->params.size() != 1)
 			return null;
@@ -111,7 +131,9 @@ namespace storm {
 		if (param.ref)
 			throw InternalError(L"References are not supported by the Future yet.");
 
-		if (param.isClass())
+		if (param == Value())
+			loadVoidFns();
+		else if (param.isClass())
 			loadClassFns();
 		else
 			loadValueFns();
@@ -144,6 +166,19 @@ namespace storm {
 		add(steal(dynamicFunction(e, param, L"result", valList(1, t), resultValue())));
 		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&FutureBase::deepCopy))));
 		add(steal(nativeDtor(e, this, &destroyValue)));
+	}
+
+	void FutureType::loadVoidFns() {
+		Engine &e = engine;
+		Value t = Value::thisPtr(this);
+		Value cloneEnv = Value(CloneEnv::stormType(e));
+
+		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createVoid))));
+		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&copyVoid))));
+		add(steal(nativeFunction(e, Value(), L"post", valList(1, t), address(&postVoid))));
+		add(steal(nativeFunction(e, Value(), L"result", valList(1, t), address(&resultVoid))));
+		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&FutureBase::deepCopy))));
+		add(steal(nativeDtor(e, this, &destroyVoid)));
 	}
 
 	Type *futureType(Engine &e, const Value &type) {

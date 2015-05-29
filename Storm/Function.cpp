@@ -13,19 +13,20 @@
 
 namespace storm {
 
-	void validateParams(const vector<Value> &params) {
+	void validateParams(const vector<Value> &params, Function *from) {
 		for (nat i = 0; i < params.size(); i++)
-			assert(params[i] != Value(), L"void parameters will get strange errors, beware!");
+			assert(params[i] != Value(), L"void parameters will get strange errors, beware! " +
+				from->name);
 	}
 
 	Function::Function(Value result, const String &name, const vector<Value> &params)
 		: Named(name, params), result(result), lookupRef(null), codeRef(null) {
-		validateParams(params);
+		validateParams(params, this);
 	}
 
 	Function::Function(Value result, Par<Str> name, Par<Array<Value>> params)
 		: Named(name, params), result(result), lookupRef(null), codeRef(null) {
-		validateParams(this->params);
+		validateParams(this->params, this);
 	}
 
 	Function::~Function() {

@@ -47,4 +47,13 @@ namespace storm {
 
 	// See Array.h for 'arrayType' function.
 
+	// Check if a value represents a Array type.
+	Bool STORM_FN isArray(Value v);
+
+	// Get the value of a array type. If 'v' is not a array, 'v' is returned without modification.
+	Value STORM_FN unwrapArray(Value v);
+
+	// Wrap a type in array.
+	Value STORM_FN wrapArray(Value v);
+
 }

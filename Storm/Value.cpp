@@ -226,6 +226,9 @@ namespace storm {
 	}
 
 	bool Value::operator ==(const Value &o) const {
+		// No point in having references to null...
+		if (type == null)
+			return o.type == null;
 		return type == o.type && ref == o.ref;
 	}
 

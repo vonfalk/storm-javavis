@@ -130,6 +130,33 @@ namespace storm {
 		}
 	};
 
+	/**
+	 * Special case for 'void'
+	 */
+	template <>
+	class Future<void> : public FutureBase {
+		TYPE_EXTRA_CODE;
+	public:
+		// Type lookup.
+		static Type *stormType(Engine &e) { return futureType(e, Value()); }
+
+		// Create.
+		Future() : FutureBase(storm::handle<void>()) {}
+
+		// Copy.
+		Future(const Future<void> *o) : FutureBase(o) {}
+
+		// Post.
+		void post() {
+			postRaw(null);
+		}
+
+		// Get result.
+		void result() {
+			resultRaw(null);
+		}
+	};
+
 
 	/**
 	 * Use a future of pointer, equal to Future<Auto<T>>

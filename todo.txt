@@ -92,6 +92,8 @@ Check thread safety in the reference management class.
 
 Basic Storm
 ------------
+Remove the special TypeName class, use the general Name instead.
+
 Variable accesses are currently racy. Fix this!
 
 Make sure expressions like: Str[] = []; works. This should be done by implementing a special class

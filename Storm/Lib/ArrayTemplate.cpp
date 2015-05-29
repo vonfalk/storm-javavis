@@ -248,4 +248,21 @@ namespace storm {
 		return r;
 	}
 
+	Bool isArray(Value v) {
+		return as<ArrayType>(v.type) != null;
+	}
+
+	Value unwrapArray(Value v) {
+		if (ArrayType *t = as<ArrayType>(v.type))
+			return t->param;
+		else
+			return v;
+	}
+
+	Value wrapArray(Value v) {
+		if (isArray(v))
+			return v;
+		return Value(arrayType(v.type->engine, v));
+	}
+
 }

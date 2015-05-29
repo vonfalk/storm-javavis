@@ -34,6 +34,9 @@ namespace storm {
 		// Load functions assuming param is a value.
 		void loadValueFns();
 
+		// Load functions for the void type.
+		void loadVoidFns();
+
 		// Generate code for post and result functions.
 		code::Listing resultValue();
 	};

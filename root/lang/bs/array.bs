@@ -31,15 +31,54 @@ Expr arrayInit(Block block, TypeName type, Array<Expr> list) on Compiler {
 	b;
 }
 
-// TODO: Return a custom type here that automatically casts to the right type!
-Expr arrayInit(Block block, Array<Expr> list, SrcPos pos) on Compiler {
-	if (list.count == 0)
-		throwSyntaxError(pos,
-						"At least one element has to be given to the array initialization unless a type is given.");
+class ArrayInit extends Expr {
+	Array<Expr> values;
 
-	Value result = list[0].result;
-	for (Nat i = 1; i < list.count; i++)
-		result = common(result, list[i].result);
+	// TODO: Replace this one with a weak pointer directly to our parent.
+	ExprBlock block;
 
-	arrayInit(block, TypeName(result), list);
+	ctor(Block parent, Array<Expr> values) {
+		init() {
+			values = values;
+			block = ExprBlock(parent);
+		}
+	}
+
+	Value result() {
+		if (values.any) {
+			// TODO: Use the common function that takes Expr parameters?
+			Value r = values[0].result;
+			for (Nat i = 0; i < values.count; i++) {
+				r = common(r, values[i].result);
+			}
+			wrapArray(r);
+		} else {
+			Value();
+		}
+	}
+
+	Bool castable(Value to) {
+		if (to.isRef) {
+			false;
+		} else {
+			acceptable(unwrapArray(to));
+		}
+	}
+
+	void code(CodeGen g, CodeResult r) {
+		Value v = unwrapArray(r.type);
+		if (v == Value())
+			throwSyntaxError(pos, "Can not figure out the type of the array. Please use the syntax T:[...] instead.");
+
+		Expr e = arrayInit(block, TypeName(v), values);
+		e.code(g, r);
+	}
+
+	// Is the type 't' acceptable for all values?
+	Bool acceptable(Value t) {
+		Bool ok = true;
+		for (Nat i = 0; i < values.count; i++)
+			ok = ok & castable(values[i], t);
+		ok;
+	}
 }

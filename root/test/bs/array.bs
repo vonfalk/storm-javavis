@@ -76,6 +76,11 @@ Int testInitAutoArray() {
 	sum;
 }
 
+Int testAutoArray() {
+	Int[] a = [];
+	a.count.int;
+}
+
 Array<DbgVal> createValArray() {
 	Array<DbgVal> a;
 
