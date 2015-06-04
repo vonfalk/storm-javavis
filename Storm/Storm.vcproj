@@ -555,7 +555,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\DynamicLibs.cpp"
+				RelativePath=".\LoadedLibs.cpp"
 				>
 			</File>
 		</Filter>
@@ -945,7 +945,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\DynamicLibs.h"
+				RelativePath=".\LoadedLibs.h"
 				>
 			</File>
 		</Filter>

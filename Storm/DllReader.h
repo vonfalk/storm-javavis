@@ -1,6 +1,7 @@
 #pragma once
 #include "PkgReader.h"
 #include "Shared/BuiltIn.h"
+#include "LoadedLibs.h"
 
 namespace storm {
 	namespace dll {
@@ -34,7 +35,7 @@ namespace storm {
 
 		private:
 			// Contents.
-			const BuiltIn *contents;
+			LibData *data;
 		};
 	}
 }

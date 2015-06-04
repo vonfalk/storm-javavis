@@ -11,7 +11,7 @@ namespace storm {
 	}
 
 	Type *Engine::builtIn(nat id) {
-		return (*interface->builtIn)(this, id);
+		return (*interface->builtIn)(*this, interface->data, id);
 	}
 
 	/**

@@ -45,7 +45,7 @@ namespace storm {
 	void CODECALL stormFree(void *mem);
 	void setVTable(Object *o);
 
-	// Get a DllInterface for us!
+	// Get a DllInterface for us! Note that 'builtIn' nor 'data' are set from here!
 	DllInterface dllInterface();
 
 }

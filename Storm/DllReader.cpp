@@ -13,7 +13,7 @@ namespace storm {
 	}
 
 	DllReader::DllReader(Par<Url> file, Par<Package> into) : FileReader(file, into) {
-		contents = engine().dynamicLibs.load(file);
+		data = engine().loadedLibs.load(file);
 	}
 
 	void DllReader::readTypes() {}
