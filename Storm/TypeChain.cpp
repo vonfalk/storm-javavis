@@ -50,22 +50,22 @@ namespace storm {
 			clearSuper();
 	}
 
-	bool TypeChain::isA(TypeChain *o) const {
+	bool TypeChain::isA(const TypeChain *o) const {
 		return count >= o->count
 			&& chain[o->count - 1] == o;
 	}
 
-	bool TypeChain::isA(Type *o) const {
+	bool TypeChain::isA(const Type *o) const {
 		return isA(&o->chain);
 	}
 
-	int TypeChain::distance(TypeChain *o) const {
+	int TypeChain::distance(const TypeChain *o) const {
 		if (!isA(o))
 			return -1;
 		return int(count - o->count);
 	}
 
-	int TypeChain::distance(Type *o) const {
+	int TypeChain::distance(const Type *o) const {
 		return distance(&o->chain);
 	}
 

@@ -2,7 +2,7 @@
 #include "Test/Test.h"
 #include "Fn.h"
 #include "Storm/Lib/StrBuf.h"
-#include "Storm/Lib/CloneEnv.h"
+#include "Shared/CloneEnv.h"
 
 /**
  * Test interaction between Storm:s toS and C++ toS.

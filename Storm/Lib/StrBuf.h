@@ -1,6 +1,6 @@
 #pragma once
 #include "Object.h"
-#include "Str.h"
+#include "Shared/Str.h"
 
 namespace storm {
 

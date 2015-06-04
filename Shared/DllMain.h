@@ -21,7 +21,7 @@ namespace storm {
 }
 
 // This is the entry point Storm uses to get everything contained in this package.
-DLLEXPORT void *stormBuiltIn(storm::DllInterface *interface) {
+DLLEXPORT void *ENTRY_POINT_NAME(storm::DllInterface *interface) {
 	storm::Engine::setup(interface);
 	return (void *)storm::builtIn();
 }
@@ -33,3 +33,4 @@ DLLEXPORT void *stormBuiltIn(storm::DllInterface *interface) {
 
 // Needed source files:
 #include "DllEngine.cpp"
+#include "Types.cpp"

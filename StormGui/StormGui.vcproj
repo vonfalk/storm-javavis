@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe dll $(SolutionDir)StormGui\ $(SolutionDir)StormGui\ $(SolutionDir)Lib\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp $(SolutionDir)StormGui\Lib\VTables.asm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)StormGui\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp -a $(SolutionDir)StormGui\Lib\VTables.asm $(SolutionDir)StormGui\ $(SolutionDir)Shared\ --using storm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -49,7 +49,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../"
+				AdditionalIncludeDirectories="../;./"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;STORMGUI_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -107,7 +107,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe dll $(SolutionDir)StormGui\ $(SolutionDir)StormGui\ $(SolutionDir)Lib\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp $(SolutionDir)StormGui\Lib\VTables.asm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)StormGui\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp -a $(SolutionDir)StormGui\Lib\VTables.asm $(SolutionDir)StormGui\ $(SolutionDir)Shared\ --using storm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -128,7 +128,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../"
+				AdditionalIncludeDirectories="../;./"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;STORMGUI_EXPORTS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -225,6 +225,10 @@
 			>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StormGui.h"
 				>
 			</File>
 			<File

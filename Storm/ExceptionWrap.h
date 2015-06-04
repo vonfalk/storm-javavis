@@ -1,6 +1,6 @@
 #pragma once
 #include "SrcPos.h"
-#include "Lib/Str.h"
+#include "Shared/Str.h"
 
 namespace storm {
 	STORM_PKG(core.lang);

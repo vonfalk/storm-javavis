@@ -25,9 +25,10 @@ bool compare(const Header *a, const Header *b) {
 	return a->file < b->file;
 }
 
-vector<Header*> findHeaders(const Path &p) {
+vector<Header*> findHeaders(const vector<Path> &p) {
 	vector<Header*> h;
-	findHeaders(h, p);
+	for (nat i = 0; i < p.size(); i++)
+		findHeaders(h, p[i]);
 	sort(h.begin(), h.end(), compare);
 	return h;
 }
@@ -42,8 +43,12 @@ Timestamp lastTime(const vector<Header *> &headers) {
 	return latest;
 }
 
-Types allTypes(vector<Header *> &headers) {
-	Types t;
+Types allTypes(vector<Header *> &headers, bool forCompiler, const vector<String> &namespaces) {
+	Types t(forCompiler);
+
+	for (nat i = 0; i < namespaces.size(); i++) {
+		t.usedNamespaces.push_back(CppName(namespaces[i].split(L"::")));
+	}
 
 	// built in types!
 	t.add(Type(L"void", L""));
@@ -61,6 +66,7 @@ Types allTypes(vector<Header *> &headers) {
 			t.add(types[i]);
 		}
 	}
+
 	return t;
 }
 
@@ -81,58 +87,84 @@ vector<Thread> allThreads(vector<Header *> &headers) {
 	return threads;
 }
 
+void usage(const String &msg) {
+	using namespace std;
+	wcout << L"Error: " << msg << endl;
+	wcout << L"Options:" << endl;
+	wcout << L"[--compiler]          - Generate table for the compiler itself (not a DLL)." << endl;
+	wcout << L"[-a <asmOutput>]      - ASM output file." << endl;
+	wcout << L"[--using <namespace>] - A global 'using namespace <namespace> is present somewhere." << endl;
+	wcout << L"<root>                - Specify the root directory. All paths are relative this." << endl;
+	wcout << L"<template input>      - Input template for the function list." << endl;
+	wcout << L"<template output>     - Output file for the template." << endl;
+	wcout << L"<input>               - (multiple) input directories to be scanned for header files." << endl;
+}
+
 int _tmain(int argc, _TCHAR* argv[]) {
 	initDebug();
 
 	Timestamp start;
 
+	vector<String> namespaces;
+
 #ifdef DEBUG_MODE
 	// For debugging.
 	Path root = Path::executable() + Path(L"../Storm/");
-	Path scanDir = root;
+	vector<Path> scanDirs(1, root);
 
 	Path input = root + Path(L"Lib/BuiltIn.template.cpp");
 	Path output = root + Path(L"Lib/BuiltIn.cpp");
 	Path asmOutput = root + Path(L"Lib/VTables.asm");
 
+	bool forCompiler = true;
 	bool forceUpdate = true;
 #else
 
+	bool forCompiler = false;
 	// Inputs
-	Path root, scanDir, input;
+	Path root, input;
+	vector<Path> scanDirs;
 	// Outputs
 	Path output, asmOutput;
 
 	if (argc < 4) {
-		std::wcout << L"Error: [dll] <root> <scanDir> <input> <output> [<asmOutput>] required!" << std::endl;
+		usage(L"Too few parameters.");
 		return 1;
 	}
 
-	int argId = 1;
-	if (String(argv[argId]) == L"dll") {
-		Types::forCompiler = false;
-		argId++;
-	} else {
-		Types::forCompiler = true;
+	nat pos = 0;
+	for (int i = 1; i < argc; i++) {
+		String s = argv[i];
+		if (s == L"--compiler") {
+			forCompiler = true;
+		} else if (s == L"--using") {
+			namespaces.push_back(argv[++i]);
+		} else if (s == L"-a") {
+			asmOutput = Path(String(argv[++i]));
+		} else if (pos == 0) {
+			root = Path(s);
+			pos++;
+		} else if (pos == 1) {
+			input = Path(s);
+			pos++;
+		} else if (pos == 2) {
+			output = Path(s);
+			pos++;
+		} else if (pos == 3) {
+			scanDirs.push_back(Path(s));
+		}
 	}
-
-	root = Path(String(argv[argId++]));
-	scanDir = Path(String(argv[argId++]));
-	input = Path(String(argv[argId++]));
-	output = Path(String(argv[argId++]));
 
 	bool forceUpdate = false;
 #endif
 
 	Timestamp outputModified = output.mTime();
-	if (argc >= argId + 1) {
-		asmOutput = Path(String(argv[argId]));
+	if (asmOutput.exists())
 		limitMin(outputModified, asmOutput.mTime());
-	}
 
-	vector<Header*> headers = findHeaders(root);
+	vector<Header*> headers = findHeaders(scanDirs);
 	if (headers.size() == 0) {
-		std::wcout << L"Error: No input files!" << endl;
+		usage(L"No input files!");
 		return 1;
 	}
 
@@ -148,7 +180,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 		std::wcout << L"Already up to date!" << std::endl;
 	} else {
 		try {
-			Types t = allTypes(headers);
+			Types t = allTypes(headers, forCompiler, namespaces);
 			vector<Thread> threads = allThreads(headers);
 			FileData d;
 			d.typeList = typeList(t, threads);

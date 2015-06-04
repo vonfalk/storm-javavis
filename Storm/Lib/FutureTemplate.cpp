@@ -3,7 +3,7 @@
 #include "Exception.h"
 #include "Function.h"
 #include "TypeCtor.h"
-#include "CloneEnv.h"
+#include "Shared/CloneEnv.h"
 #include "Engine.h"
 
 namespace storm {

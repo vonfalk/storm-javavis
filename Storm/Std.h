@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Lib/Str.h"
-#include "Lib/Types.h"
+#include "Shared/Str.h"
+#include "Shared/Types.h"
 #include "Lib/Object.h"
 #include "Value.h"
 

@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe --compiler $(SolutionDir)Storm\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)Storm\Lib\BuiltIn.cpp -a $(SolutionDir)Storm\Lib\VTables.asm $(SolutionDir)Storm\ $(SolutionDir)Shared\"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -99,7 +99,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Storm\ $(SolutionDir)Storm\ $(SolutionDir)Lib\BuiltIn.template.cpp $(SolutionDir)Storm\Lib\BuiltIn.cpp $(SolutionDir)Storm\Lib\VTables.asm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe --compiler $(SolutionDir)Storm\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)Storm\Lib\BuiltIn.cpp -a $(SolutionDir)Storm\Lib\VTables.asm $(SolutionDir)Storm\ $(SolutionDir)Shared\"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -367,10 +367,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Str.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\SyntaxNode.cpp"
 				>
 			</File>
@@ -460,10 +456,6 @@
 			</File>
 			<File
 				RelativePath=".\Wrap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\CloneEnv.cpp"
 				>
 			</File>
 			<File
@@ -570,10 +562,6 @@
 			</File>
 			<File
 				RelativePath=".\Lib\ArrayTemplate.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Auto.h"
 				>
 			</File>
 			<File
@@ -753,10 +741,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Str.h"
-				>
-			</File>
-			<File
 				RelativePath=".\SyntaxNode.h"
 				>
 			</File>
@@ -829,10 +813,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Types.h"
-				>
-			</File>
-			<File
 				RelativePath=".\TypeVar.h"
 				>
 			</File>
@@ -854,10 +834,6 @@
 			</File>
 			<File
 				RelativePath=".\Wrap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\CloneEnv.h"
 				>
 			</File>
 			<File

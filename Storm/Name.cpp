@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Name.h"
-#include "Lib/Str.h"
+#include "Shared/Str.h"
 #include "Tokenizer.h"
 #include "Exception.h"
 #include "Type.h"

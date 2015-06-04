@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Utils/Bitmask.h"
-#include "Storm/Lib/Object.h"
-#include "Storm/Lib/Str.h"
+#include "Shared/Object.h"
+#include "Shared/Str.h"
 #include "Storm/Lib/Array.h"
 #include "Utils/Exception.h"
 #include "Protocol.h"

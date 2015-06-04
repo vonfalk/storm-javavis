@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Protocol.h"
-#include "Storm/Lib/Str.h"
+#include "Shared/Str.h"
 #include "Url.h"
 #include "FileStream.h"
 

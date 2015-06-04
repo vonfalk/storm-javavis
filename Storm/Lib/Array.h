@@ -1,6 +1,6 @@
 #pragma once
 #include "Object.h"
-#include "Types.h"
+#include "Shared/Types.h"
 #include "Handle.h"
 #include "Storm/Value.h"
 

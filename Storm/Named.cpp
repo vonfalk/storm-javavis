@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Named.h"
-#include "Lib/Str.h"
+#include "Shared/Str.h"
 #include "Type.h"
 
 namespace storm {

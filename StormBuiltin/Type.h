@@ -48,6 +48,7 @@ protected:
  */
 class Types : public Printable {
 public:
+	explicit Types(bool forCompiler);
 
 	// Add a type.
 	void add(const Type &type);
@@ -59,7 +60,10 @@ public:
 	vector<Type> getTypes() const;
 
 	// Special case when we're giving types to the compiler.
-	static bool forCompiler;
+	bool forCompiler;
+
+	// Using namespaces globally?
+	vector<CppName> usedNamespaces;
 
 protected:
 	virtual void output(wostream &to) const;
@@ -68,4 +72,5 @@ private:
 	// Known types.
 	typedef map<CppName, Type> T;
 	T types;
+
 };

@@ -1,6 +1,8 @@
 use core;
 use core:debug;
 
+// No fancy syntax, makes debugging of core issueas easier!
+
 class Foo {
     Int a;
     Int b;
@@ -146,13 +148,9 @@ void voidFn() {
 
 void emptyVoidFn() {}
 
-Int demo() {
-    3;
-}
-
 Int testCtor() {
 	Dbg b(20);
-	extract(b);
+	b.get;
 }
 
 Int testIntCtor() {

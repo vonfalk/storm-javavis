@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Std.h"
-#include "Lib/BuiltIn.h"
+#include "Shared/BuiltIn.h"
 #include "Lib/Int.h"
 #include "Lib/Bool.h"
 #include "Lib/Object.h"

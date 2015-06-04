@@ -4,7 +4,7 @@
 #include "Engine.h"
 #include "Lib/Object.h"
 #include "Lib/TObject.h"
-#include "Lib/CloneEnv.h"
+#include "Shared/CloneEnv.h"
 #include "Std.h"
 #include "Package.h"
 #include "Function.h"
@@ -78,15 +78,16 @@ namespace storm {
 	}
 
 	Type *Type::createType(Engine &engine, const String &name, TypeFlags flags) {
-		void *mem = allocDumb(engine, sizeof(Type));
+		void *mem = noTypeAlloc(engine, sizeof(Type)).mem;
 		size_t typeOffset = OFFSET_OF(Object, myType);
 		size_t engineOffset = sizeof(NameSet);
 		OFFSET_IN(mem, typeOffset, Type *) = (Type *)mem;
 		OFFSET_IN(mem, engineOffset, Engine *) = &engine;
+		// We do not need to use the unsafe version here, we set the type!
 		return new (mem) Type(name, flags, Size(sizeof(Type)), Type::cppVTable());
 	}
 
-	bool Type::isA(Type *o) const {
+	bool Type::isA(const Type *o) const {
 		return chain.isA(o);
 	}
 

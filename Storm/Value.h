@@ -1,7 +1,7 @@
 #pragma once
 #include "NamedFlags.h"
-#include "Lib/Types.h"
-#include "Lib/Auto.h"
+#include "Shared/Types.h"
+#include "Shared/Auto.h"
 #include "Code/Value.h"
 #include "Code/Size.h"
 #include "Utils/TypeInfo.h"

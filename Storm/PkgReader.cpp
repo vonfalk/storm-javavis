@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "PkgReader.h"
-#include "Lib/Str.h"
+#include "Shared/Str.h"
 #include "Engine.h"
 #include "Scope.h"
 #include "Exception.h"

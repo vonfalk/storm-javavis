@@ -1,7 +1,8 @@
 #include "stdafx.h"
-#include "Lib/BuiltIn.h"
+#include "Shared/BuiltIn.h"
+#include "Shared/TypeFlags.h"
 #ifdef STORM_DLL
-#include "Lib/DllEngine.h"
+#include "Shared/DllEngine.h"
 #else
 #include "Engine.h"
 #endif
@@ -205,16 +206,17 @@ namespace storm {
 	}
 
 	/**
-	 * Get all things.
+	 * All built in stuff.
 	 */
 	const BuiltIn *builtIn() {
-		static BuiltIn b = {
+		static BuiltIn stuff = {
 			builtInTypes(),
 			builtInFunctions(),
 			builtInVars(),
 			builtInThreads(),
 		};
-		return &b;
+		return &stuff;
 	}
 
 }
+

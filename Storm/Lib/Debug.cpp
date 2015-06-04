@@ -2,7 +2,7 @@
 #include "Debug.h"
 #include "Code/VTable.h"
 #include "Type.h"
-#include "Str.h"
+#include "Shared/Str.h"
 #include "Exception.h"
 #include "Code/Debug.h"
 #include <iomanip>

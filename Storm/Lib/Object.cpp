@@ -2,7 +2,7 @@
 #include "Object.h"
 #include "Type.h"
 #include "Function.h"
-#include "Lib/Str.h"
+#include "Shared/Str.h"
 #include "Code/Sync.h"
 #include "Code/VTable.h"
 #include "Code/Memory.h"
@@ -14,13 +14,18 @@
 // program termination. DEBUG_USE checks at each addRef
 // and release call so that the pointer is valid. Requires
 // DEBUG_LEAKS.
-// #define DEBUG_REFS
+//#define DEBUG_REFS
+//#define DEBUG_USE
 #define DEBUG_LEAKS
 #define DEBUG_PTRS
 
 #endif
 
 namespace storm {
+
+	/**
+	 * Object lifetime tracking.
+	 */
 
 #ifdef DEBUG_LEAKS
 	map<Object *, String> live;
@@ -43,7 +48,7 @@ namespace storm {
 	void Object::dumpLeaks() {}
 #endif
 
-	static void created(Object *o) {
+	void objectCreated(Object *o) {
 #if defined(DEBUG) && defined(X86)
 		if ((nat)o->myType == 0xCCCCCCCC) {
 			PLN("Do not stack allocate Objects, stupid!");
@@ -76,44 +81,21 @@ namespace storm {
 #endif
 	}
 
-	// Note the hack: myType(myType). myType is initialized in operator new.
-	Object::Object() : myType(myType), refs(1) {
-		created(this);
-	}
-
-	// Nothing to copy, really. Added to avoid special cases in other parts of the compiler.
-	Object::Object(Object *) : myType(myType), refs(1) {
-		created(this);
-	}
-
-	Object::~Object() {
-		// assert(refs == 0); // When an exception is thrown in a ctor, this would trigger!
+	void objectDestroyed(Object *o) {
 #ifdef DEBUG_REFS
-		if (myType == this) {
-			PLN("Destroying " << this << ", Type");
+		if (o->myType == o) {
+			PLN("Destroying " << o << ", Type");
 		} else {
-			PLN("Destroying " << this << ", " << myType->name);
+			PLN("Destroying " << o << ", " << o->myType->name);
 		}
 #endif
 
 #ifdef DEBUG_LEAKS
 		Lock::L z(liveLock);
-		if (live.count(this) == 0) {
+		if (live.count(o) == 0) {
 			PLN("Found a double-free!");
 		}
-		live.erase(this);
-#endif
-	}
-
-	void Object::setTypeLate(Par<Type> t) {
-		assert(myType == null, L"You may not use SET_TYPE_LATE to change the type of an object!");
-		size_t typeOffset = OFFSET_OF(Object, myType);
-		OFFSET_IN(this, typeOffset, Type *) = t.borrow();
-
-#ifdef DEBUG_LEAKS
-		if (live.count(this)) {
-			live[this] = t->name;
-		}
+		live.erase(o);
 #endif
 	}
 
@@ -129,126 +111,83 @@ namespace storm {
 #endif
 	}
 
-	Size Object::baseSize() {
-		// TODO: Maybe automate this?
-		Size s;
-		s += Size::sPtr; // vtable
-		s += Size::sPtr; // myType
-		s += Size::sNat; // refs
-		assert(s.current() == sizeof(Object), L"Forgot to update baseSize!");
-		return s;
-	}
-
-	Engine &engine(const Object *o) {
-		return o->myType->engine;
-	}
-
-	Engine &Object::engine() const {
-		return myType->engine;
-	}
-
-	bool Object::isA(Type *t) const {
-		return myType->isA(t);
-	}
-
-	Str *Object::toS() {
-		std::wostringstream out;
-		out << *this;
-		return CREATE(Str, this, out.str());
-	}
-
-	wostream &operator <<(wostream &to, const Object &o) {
-		// If someone has overloaded toS, we need to call that. Otherwise we can simply call
-		// the output function.
-		static void *toSFn = code::deVirtualize(address(&Object::toS), Object::cppVTable());
-		static nat toSSlot = code::findSlot(toSFn, Object::cppVTable());
-
-		bool overridden = false;
-		if (toSSlot != code::VTable::invalid) {
-			void *vtable = code::vtableOf(&o);
-			if (code::getSlot(vtable, toSSlot) != toSFn) {
-				overridden = true;
-			}
-		} else {
-			WARNING(L"Can not find toS in Object's vtable! Output from C++ will be broken.");
-		}
-
-		if (overridden) {
-			// Sorry about the const-cast...
-			Auto<Str> s = const_cast<Object &>(o).toS();
-			to << s->v;
-		} else {
-			o.output(to);
-		}
-		return to;
-	}
-
-	void Object::output(wostream &to) const {
-		to << myType->identifier() << L": " << toHex(this);
-	}
-
-	Bool Object::equals(Par<Object> o) {
-		if (!o)
-			return false;
-		if (o->myType != myType)
-			return false;
-		return true;
-	}
-
-	void Object::deepCopy(Par<CloneEnv> env) {}
-
 	/**
-	 * Memory management.
+	 * Memory allocation/deallocation.
 	 */
 
-	void *Object::allocDumb(Engine &e, size_t size) {
+	static void *allocMem(Engine &e, size_t size) {
 		void *mem = malloc(size);
 		memset(mem, 0, size);
 		return mem;
 	}
 
-	void *Object::operator new(size_t size, Type *type) {
+	Object::unsafe noTypeAlloc(Engine &e, size_t size) {
+		return Object::unsafe(allocMem(e, size));
+	}
+
+	void *allocObject(Type *type, size_t reportedSize) {
 		size_t s = type->size().current();
 
-		assert(type->typeFlags & typeClass);
-		assert(size <= s || size == 0, L"Not enough memory for " + type->name
-			+ L". From C++: " + ::toS(size) + L" from storm: " + ::toS(s));
+		assert(type->typeFlags & typeClass, L"Don't do 'new' on value types.");
+		assert(reportedSize <= s || reportedSize == 0, L"Not enough memory for " + type->name +
+			L". From C++: " + ::toS(reportedSize) + L" from Storm: " + ::toS(s) +
+			L". Is the class correctly exposed to Storm?");
 
-		void *mem = allocDumb(type->engine, s);
+		void *mem = allocMem(type->engine, s);
 		size_t typeOffset = OFFSET_OF(Object, myType);
 		OFFSET_IN(mem, typeOffset, Type *) = type;
 
 		return mem;
 	}
 
-	void *Object::operator new(size_t size, void *mem) {
+	void freeObject(void *memory) {
+		free(memory);
+	}
+
+	/**
+	 * Late types.
+	 */
+
+	void setTypeLate(Par<Object> obj, Par<Type> t) {
+		Object *o = obj.borrow();
+		assert(o->myType == null, L"You may not use SET_TYPE_LATE to change the type of an object!");
 		size_t typeOffset = OFFSET_OF(Object, myType);
-		assert(OFFSET_IN(mem, typeOffset, Type *));
-		return mem;
+		OFFSET_IN(o, typeOffset, Type *) = t.borrow();
+
+#ifdef DEBUG_LEAKS
+		if (live.count(o)) {
+			live[o] = t->name;
+		}
+#endif
 	}
 
-	void *Object::operator new(size_t size, Engine &e) {
-		return allocDumb(e, size);
+	/**
+	 * Type management.
+	 */
+
+	Engine &engine(const Object *o) {
+		return o->myType->engine;
 	}
 
-	void Object::operator delete(void *mem, Type *type) {
-		Object::operator delete(mem);
+	bool objectIsA(const Object *o, const Type *t) {
+		return o->myType->isA(t);
 	}
 
-	void Object::operator delete(void *ptr, void *mem) {
-		// No need...
+	String typeIdentifier(const Type *t) {
+		return t->identifier();
 	}
 
-	void Object::operator delete(void *mem, Engine &e) {
-		Object::operator delete(mem);
-	}
+	/**
+	 * Convenience functions.
+	 */
 
-	void Object::operator delete(void *mem) {
-		free(mem);
+	Object *createObj(Function *ctor, code::FnParams params) {
+		assert(ctor->name == Type::CTOR, "Don't use create() with other functions than constructors.");
+		assert(ctor->params.size() == params.count() + 1,
+			"Wrong number of parameters to constructor! The first one is filled in automatically.");
+		Type *type = ctor->params[0].type;
+		return createObj(type, ctor->pointer(), params);
 	}
-
-	void *Object::operator new[](size_t size, Type *type) { assert(false); return null; }
-	void Object::operator delete[](void *ptr) { assert(false); }
 
 	Object *createObj(Type *type, const void *ctor, code::FnParams params) {
 		assert(type->typeFlags & typeClass);
@@ -263,14 +202,6 @@ namespace storm {
 			throw;
 		}
 		return (Object *)mem;
-	}
-
-	Object *createObj(Function *ctor, code::FnParams params) {
-		assert(ctor->name == Type::CTOR, "Don't use create() with other functions than constructors.");
-		assert(ctor->params.size() == params.count() + 1,
-			"Wrong number of parameters to constructor! The first one is filled in automatically.");
-		Type *type = ctor->params[0].type;
-		return createObj(type, ctor->pointer(), params);
 	}
 
 	Object *createCopy(const void *copyCtor, Object *old) {

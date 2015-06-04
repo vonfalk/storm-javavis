@@ -23,12 +23,12 @@ namespace storm {
 		Type *super() const;
 
 		// Is this derived from 'o'?
-		bool isA(TypeChain *o) const;
-		bool isA(Type *o) const;
+		bool isA(const TypeChain *o) const;
+		bool isA(const Type *o) const;
 
 		// Distance from another type.
-		int distance(TypeChain *o) const;
-		int distance(Type *o) const;
+		int distance(const TypeChain *o) const;
+		int distance(const Type *o) const;
 
 		// Get all currently known direct children. Note that the result is not
 		// ordered in any way at all, even though it is a vector.

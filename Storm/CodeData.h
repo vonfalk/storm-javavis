@@ -1,7 +1,7 @@
 #pragma once
 #include "Utils/Function.h"
 #include "Code/Listing.h"
-#include "Lib/Auto.h"
+#include "Shared/Auto.h"
 #include "Lib/TObject.h"
 #include "Thread.h"
 

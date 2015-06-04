@@ -1,6 +1,6 @@
 #pragma once
 #include "Stream.h"
-#include "Storm/Lib/Str.h"
+#include "Shared/Str.h"
 
 namespace storm {
 	STORM_PKG(core.io);

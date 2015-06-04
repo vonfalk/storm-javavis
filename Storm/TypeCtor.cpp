@@ -6,7 +6,7 @@
 #include "CodeGen.h"
 #include "Code/Instruction.h"
 #include "Code/FnParams.h"
-#include "Lib/CloneEnv.h"
+#include "Shared/CloneEnv.h"
 
 namespace storm {
 

@@ -12,5 +12,6 @@
 #include <windows.h>
 
 #include "Utils/Utils.h"
-#include "Lib/Storm.h"
+#include "Shared/Storm.h"
 
+using namespace storm;

@@ -15,4 +15,4 @@
 #define STORM_COMPILER
 #include "Utils/Utils.h"
 #include "Code/Code.h"
-#include "Lib/Storm.h"
+#include "Shared/Storm.h"

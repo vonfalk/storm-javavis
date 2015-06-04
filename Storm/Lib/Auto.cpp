@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Auto.h"
+#include "Shared/Auto.h"
 #include "Exception.h"
 
 namespace storm {

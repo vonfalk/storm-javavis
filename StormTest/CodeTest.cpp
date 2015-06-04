@@ -8,35 +8,38 @@
 
 
 BEGIN_TEST(BasicSyntax) {
-	CHECK_RUNS(runFn(L"test.bs.voidFn"));
-	CHECK_RUNS(runFn(L"test.bs.emptyVoidFn"));
+	// These tests are placed separatly, making it easier to debug core problems that causes
+	// syntax extensions to not work and therefore complicate debugging.
+	CHECK_RUNS(runFn(L"test.bs-simple.voidFn"));
+	CHECK_RUNS(runFn(L"test.bs-simple.emptyVoidFn"));
 
-	CHECK_EQ(runFn(L"test.bs.bar"), 3);
-	CHECK_EQ(runFn(L"test.bs.ifTest", 1), 3);
-	CHECK_EQ(runFn(L"test.bs.ifTest", 2), 4);
-	CHECK_EQ(runFn(L"test.bs.ifTest", 3), 5);
-	CHECK_EQ(runFn(L"test.bs.ifTest2", 3), 4);
-	CHECK_EQ(runFn(L"test.bs.ifTest2", 0), -1);
-	CHECK_EQ(runFn(L"test.bs.ifTest3", 0), 10);
-	CHECK_EQ(runFn(L"test.bs.ifTest3", 1), 20);
-	CHECK_EQ(runFn(L"test.bs.ifTest4", 0), 10);
-	CHECK_EQ(runFn(L"test.bs.ifTest4", 1), 20);
-	CHECK_EQ(runFn(L"test.bs.ifTest5", 1), 15);
-	CHECK_EQ(runFn(L"test.bs.ifTest5", 3), 14);
+	CHECK_EQ(runFn(L"test.bs-simple.bar"), 3);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest", 1), 3);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest", 2), 4);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest", 3), 5);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest2", 3), 4);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest2", 0), -1);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest3", 0), 10);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest3", 1), 20);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest4", 0), 10);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest4", 1), 20);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest5", 1), 15);
+	CHECK_EQ(runFn(L"test.bs-simple.ifTest5", 3), 14);
 
-	CHECK_EQ(runFn(L"test.bs.assign", 1), 2);
-	CHECK_EQ(runFn(L"test.bs.while", 10), 1024);
-	CHECK_EQ(runFn(L"test.bs.for", 10), 1024);
 
-	CHECK_EQ(runFn(L"test.bs.createFoo"), 3);
+	CHECK_EQ(runFn(L"test.bs-simple.assign", 1), 2);
+	CHECK_EQ(runFn(L"test.bs-simple.while", 10), 1024);
+	CHECK_EQ(runFn(L"test.bs-simple.for", 10), 1024);
 
-	CHECK_EQ(runFn(L"test.bs.testCtor"), 20);
-	CHECK_EQ(runFn(L"test.bs.testIntCtor"), 20);
+	CHECK_EQ(runFn(L"test.bs-simple.createFoo"), 3);
 
-	CHECK_EQ(runFn(L"test.bs.testStr"), 12);
-	CHECK_ERROR(runFn(L"test.bs.forError", 10), DebugError);
-	CHECK_RUNS(runFn(L"test.bs.forScope"));
-	CHECK_RUNS(runFn(L"test.bs.forScopeVal"));
+	CHECK_EQ(runFn(L"test.bs-simple.testCtor"), 20);
+	CHECK_EQ(runFn(L"test.bs-simple.testIntCtor"), 20);
+
+	CHECK_EQ(runFn(L"test.bs-simple.testStr"), 12);
+	CHECK_ERROR(runFn(L"test.bs-simple.forError", 10), DebugError);
+	CHECK_RUNS(runFn(L"test.bs-simple.forScope"));
+	CHECK_RUNS(runFn(L"test.bs-simple.forScopeVal"));
 } END_TEST
 
 BEGIN_TEST(PriorityTest) {

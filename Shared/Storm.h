@@ -42,6 +42,13 @@
 // Mark a nullable pointer.
 #define MAYBE(x) x
 
+// Define the name of the entry point in dynamic libraries based on if we're a debug build or not.
+#ifdef DEBUG
+#define ENTRY_POINT_NAME stormDbgMain
+#else
+#define ENTRY_POINT_NAME stormMain
+#endif
+
 // Type code.
 #define TYPE_CODE									\
 	public:											\

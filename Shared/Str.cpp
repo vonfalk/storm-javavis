@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Str.h"
-#include "Type.h"
 
 namespace storm {
 
@@ -57,4 +56,5 @@ namespace storm {
 	Str *Str::createStr(Type *type, const wchar *str) {
 		return new (type) Str(str);
 	}
+
 }

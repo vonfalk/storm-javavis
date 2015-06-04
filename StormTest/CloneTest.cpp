@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Fn.h"
-#include "Storm/Lib/CloneEnv.h"
+#include "Shared/CloneEnv.h"
 #include "Storm/Lib/Debug.h"
 
 BEGIN_TEST(CloneTest) {

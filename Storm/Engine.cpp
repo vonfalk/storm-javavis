@@ -8,10 +8,13 @@
 #include "Type.h"
 #include "Code/UThread.h"
 #include "Code/FnParams.h"
-#include "Lib/Str.h"
+#include "Shared/Str.h"
 #include "Lib/Future.h"
 #include "Lib/FnPtr.h"
 #include "Io/Url.h"
+
+// The one place we include all shared implementations.
+#include "Shared/Types.cpp"
 
 namespace storm {
 

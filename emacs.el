@@ -274,7 +274,7 @@
 
 (defun namespace-name ()
   (let ((name (downcase (subproject buffer-file-name))))
-    (if (string-equal name "lib")
+    (if (string-equal name "shared")
 	"storm"
       name)))
 

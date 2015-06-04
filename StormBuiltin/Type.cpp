@@ -29,6 +29,13 @@ Type Types::find(const CppName &name, const CppName &scope) const {
 	if (i != types.end())
 		return i->second;
 
+	// Relative to some of the global "using namespace" declarations?
+	for (nat z = 0; z < usedNamespaces.size(); z++) {
+		T::const_iterator i = types.find(usedNamespaces[z] + name);
+		if (i != types.end())
+			return i->second;
+	}
+
 	throw Error(L"Type " + ::toS(name) + L" not found in " + ::toS(scope));
 }
 
@@ -36,8 +43,7 @@ void Types::output(wostream &to) const {
 	join(to, types, L"\n");
 }
 
-bool Types::forCompiler = false;
-
+Types::Types(bool fc) : forCompiler(fc) {}
 
 vector<Type> Types::getTypes() const {
 	vector<Type> r;

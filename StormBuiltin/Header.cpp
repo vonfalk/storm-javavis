@@ -132,6 +132,9 @@ void Header::parse(Tokenizer &tok) {
 				scope.push(true, name, findSuper(tok));
 				tok.expect(L"{");
 			}
+		} else if (token == L"using") {
+			// Consume 'namespace' to avoid misinterpretation.
+			tok.next();
 		} else if (token == L"namespace") {
 			scope.push(false, tok.next());
 			tok.expect(L"{");
