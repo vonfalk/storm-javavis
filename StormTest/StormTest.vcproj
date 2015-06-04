@@ -266,6 +266,10 @@
 				RelativePath=".\VTableTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\DllTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

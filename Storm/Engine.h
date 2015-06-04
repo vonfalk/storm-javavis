@@ -4,6 +4,7 @@
 #include "Package.h"
 #include "Scope.h"
 #include "VTablePos.h"
+#include "DynamicLibs.h"
 #include "Code/Arena.h"
 #include "Code/Binary.h"
 
@@ -147,6 +148,9 @@ namespace storm {
 
 		// Get the maxium size needed for any C++ vtable.
 		inline nat maxCppVTable() const { return cppVTableSize; }
+
+		// Dynamic libraries.
+		DynamicLibs dynamicLibs;
 
 	private:
 		// Path to root directory.

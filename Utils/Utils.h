@@ -3,6 +3,9 @@
 #define _WIDEN(X) L ## X
 #define WIDEN(X) _WIDEN(X)
 
+#define _STRING(X) L ## #X
+#define STRING(X) _STRING(X)
+
 #if defined(_DEBUG) && !defined(DEBUG)
 #define DEBUG
 #endif

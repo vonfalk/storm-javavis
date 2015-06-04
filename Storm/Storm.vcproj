@@ -550,6 +550,14 @@
 				RelativePath=".\Basic\BSAutocast.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\DllReader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DynamicLibs.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -930,6 +938,14 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSAutocast.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DllReader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DynamicLibs.h"
 				>
 			</File>
 		</Filter>

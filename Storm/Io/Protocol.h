@@ -89,12 +89,12 @@ namespace storm {
 		// Exists?
 		virtual Bool STORM_FN exists(Par<Url> url);
 
+		// Convert an Url to a string suitable for other C-api:s.
+		String format(Par<Url> url);
+
 	protected:
 		// output
 		virtual void output(wostream &to) const;
-
-		// Convert an Url to a string.
-		String format(Par<Url> url);
 	};
 
 

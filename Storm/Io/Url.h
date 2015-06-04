@@ -108,6 +108,9 @@ namespace storm {
 		// Does this Url exist?
 		virtual Bool STORM_FN exists();
 
+		// Format for other C-api:s. May not work for all kinds of URL:s.
+		virtual String format();
+
 	protected:
 		// Output.
 		virtual void output(wostream &to) const;

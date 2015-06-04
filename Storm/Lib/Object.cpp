@@ -232,4 +232,21 @@ namespace storm {
 		o->myType->vtable.update(o);
 	}
 
+
+	DllInterface dllInterface() {
+		DllInterface i = {
+			null, // TODO!
+			&objectCreated,
+			&objectDestroyed,
+			&allocObject,
+			&freeObject,
+			&storm::engine,
+			&objectIsA,
+			&typeIdentifier,
+#ifdef DEBUG
+			&checkLive,
+#endif
+		};
+		return i;
+	}
 }

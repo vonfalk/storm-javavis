@@ -1,0 +1,7 @@
+use ui;
+use core:debug;
+
+void uiDllTest() {
+	Test t;
+	print(t.test);
+}

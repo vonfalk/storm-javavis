@@ -1,6 +1,7 @@
 #pragma once
 // Include the shared implementation.
 #include "Shared/Object.h"
+#include "Shared/DllInterface.h"
 
 namespace storm {
 
@@ -43,6 +44,9 @@ namespace storm {
 	void *CODECALL stormMalloc(Type *type);
 	void CODECALL stormFree(void *mem);
 	void setVTable(Object *o);
+
+	// Get a DllInterface for us!
+	DllInterface dllInterface();
 
 }
 

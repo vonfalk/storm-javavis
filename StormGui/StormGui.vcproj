@@ -69,6 +69,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -94,6 +95,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copying dll..."
+				CommandLine="$(SolutionDir)scripts\copyDll.bat $(OutDir)\$(ProjectName).dll $(SolutionDir)root\ui $(ProjectName)$(ConfigurationName).dll"
 			/>
 		</Configuration>
 		<Configuration
@@ -147,6 +150,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -174,6 +178,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copying dll..."
+				CommandLine="$(SolutionDir)scripts\copyDll.bat $(OutDir)\$(ProjectName).dll $(SolutionDir)root\ui $(ProjectName)$(ConfigurationName).dll"
 			/>
 		</Configuration>
 	</Configurations>

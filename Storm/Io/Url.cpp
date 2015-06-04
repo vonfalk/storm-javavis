@@ -287,6 +287,13 @@ namespace storm {
 		return protocol->exists(this);
 	}
 
+	// Format.
+	String Url::format() {
+		if (FileProtocol *fp = as<FileProtocol>(protocol.borrow()))
+			return fp->format(this);
+		throw ProtocolNotSupported(L"format", L"<none>");
+	}
+
 
 	/**
 	 * Parsing
