@@ -20,6 +20,9 @@ namespace storm {
 	/**
 	 * Keeps track of dynamically loaded libraries, and makes sure we unload them when we do not
 	 * need them anymore (currently only at shutdown).
+	 *
+	 * TODO: If two engines in the same process loads the same lib, that lib will be confused of
+	 * what its data pointer should be. Fix this!
 	 */
 	class LoadedLibs : NoCopy {
 	public:
@@ -78,6 +81,9 @@ namespace storm {
 
 		// Get types for this lib. Called from the lib itself.
 		static Type *libBuiltIn(Engine &e, void *data, nat id);
+
+		// Get vtables for this lib. Called from the lib itself.
+		static void *libVTable(void *data, nat id);
 	};
 
 }

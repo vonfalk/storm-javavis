@@ -15,9 +15,7 @@ namespace storm {
 	}
 
 	void *cppVTable(nat id) {
-		assert(false, L"IMPLEMENT ME!");
-		TODO(L"IMPLEMENT ME!");
-		return null;
+		return (*interface->cppVTable)(interface->data, id);
 	}
 
 	/**

@@ -12,6 +12,9 @@ namespace storm {
 		typedef Type *(*BuiltIn)(Engine &e, void *data, nat id);
 		BuiltIn builtIn;
 
+		typedef void *(*CppVTable)(void *data, nat id);
+		CppVTable cppVTable;
+
 		// Data to the lookup-function. Specific to this DLL.
 		void *data;
 

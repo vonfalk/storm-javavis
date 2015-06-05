@@ -237,6 +237,7 @@ namespace storm {
 		DllInterface i = {
 			null, // Set later.
 			null,
+			null,
 			&objectCreated,
 			&objectDestroyed,
 			&allocObject,

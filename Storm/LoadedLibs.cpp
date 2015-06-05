@@ -96,6 +96,11 @@ namespace storm {
 		return me->types[id].borrow();
 	}
 
+	void *LibData::libVTable(void *data, nat id) {
+		LibData *me = (LibData *)data;
+		return me->types[id]->vtable.baseVTable();
+	}
+
 	BuiltInLoader *LibData::loader(Engine &e, Package *root) {
 		if (builtIn) {
 			BuiltInLoader *loader = new BuiltInLoader(e, types, *builtIn, root);
