@@ -85,8 +85,6 @@ String typeList(const Types &types, const vector<Thread> &threads) {
 	vector<Type> t = types.getTypes();
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
-		if (type.package == L"-")
-			continue;
 
 		out << L"{ L\"" << type.package << L"\", ";
 		out << L"L\"" << type.name << L"\", ";
@@ -94,7 +92,11 @@ String typeList(const Types &types, const vector<Thread> &threads) {
 		out << i << L" /* id */, ";
 
 		const CppSuper &super = type.super;
-		if (super.isThread) {
+		bool external = types.external(type);
+		if (external) {
+			out << 0 << L" /* ignored */, ";
+			out << L"BuiltInType::superExternal, ";
+		} else if (super.isThread) {
 			nat threadId = ::threadId(threads, super.name, type.cppName.parent());
 			out << threadId << L" /* " << super.name << L" */, ";
 			out << L"BuiltInType::superThread, ";
@@ -119,7 +121,7 @@ String typeList(const Types &types, const vector<Thread> &threads) {
 			out << L"typeClass, ";
 		}
 
-		if (type.value) {
+		if (type.value || external) {
 			out << L"null ";
 		} else {
 			out << type.cppName << L"::cppVTable() ";
@@ -135,14 +137,16 @@ String typeFunctions(const Types &types) {
 	vector<Type> t = types.getTypes();
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
-		if (type.package == L"-")
-			continue;
 
 		String fn = vtableFnName(type.cppName);
 
 		out << L"storm::Type *" << type.cppName << L"::stormType(Engine &e) { return e.builtIn(" << i << L"); }\n";
-		if (!type.value) {
+		if (type.value) {
 			// Values do not have type information.
+		} else if (types.external(type)) {
+			// Forward the vtable request to the main Engine for external types.
+			out << L"void *" << type.cppName << L"::cppVTable() { return storm::cppVTable(" << i << L"); }\n";
+		} else {
 			out << L"extern \"C\" void *" << fn << L"();\n";
 			out << L"void *" << type.cppName << L"::cppVTable() { return " << fn << L"(); }\n";
 		}
@@ -161,7 +165,7 @@ String vtableCode(const Types &types) {
 
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
-		if (type.value || type.package == L"-")
+		if (type.value || types.external(type))
 			continue;
 
 		vtableSymbolName(out, type.cppName);
@@ -173,7 +177,7 @@ String vtableCode(const Types &types) {
 
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
-		if (type.value || type.package == L"-")
+		if (type.value || types.external(type))
 			continue;
 
 		String fn = vtableFnName(type.cppName);
@@ -244,10 +248,16 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 	for (nat i = 0; i < fns.size(); i++) {
 		const Function &fn = fns[i];
 		CppName scope = fn.cppScope.scopeName();
+		bool member = fn.cppScope.isType();
+		Type memberOf;
+
+		if (member) {
+			memberOf = types.find(fn.cppScope.cppName(), scope);
+			if (types.external(memberOf))
+				continue;
+		}
 
 		out << L"{ ";
-
-		bool member = fn.cppScope.isType();
 
 		// Flags.
 		if (member)
@@ -265,9 +275,8 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 
 		// Member of?
 		if (member) {
-			Type member = types.find(fn.cppScope.cppName(), scope);
 			out << L"null, ";
-			out << typeId(typeList, member.cppName) << L" /* " << member.fullName() << L" */, ";
+			out << typeId(typeList, memberOf.cppName) << L" /* " << memberOf.fullName() << L" */, ";
 		} else {
 			out << "L\"" << fn.package << L"\", 0 /* -invalid- */, ";
 		}
@@ -356,6 +365,10 @@ void variableList(std::wostream &to, const vector<Variable> &vars, const Types &
 
 	for (nat i = 0; i < vars.size(); i++) {
 		const Variable &v = vars[i];
+
+		Type memberOf = types.find(v.cppScope.cppName(), CppName());
+		if (types.external(memberOf))
+			continue;
 
 		to << L"{ ";
 

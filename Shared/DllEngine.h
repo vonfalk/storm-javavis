@@ -14,8 +14,13 @@ namespace storm {
 		// within the same process, so we store the interface in a global variable.
 		static void setup(const DllInterface *interface);
 
+		// Get a built in type.
 		Type *builtIn(nat id);
+
 	};
+
+	// Get the C++ vtable for a type. Used for external types.
+	void *cppVTable(nat id);
 
 }
 

@@ -17,13 +17,13 @@
 namespace storm {
 	// Found in the BuiltIn cpp-file.
 	struct BuiltIn;
-	const BuiltIn *builtIn();
+	const BuiltIn &builtIn();
 }
 
 // This is the entry point Storm uses to get everything contained in this package.
 extern "C" DLLEXPORT const storm::BuiltIn *ENTRY_POINT_NAME(const storm::DllInterface *interface) {
 	storm::Engine::setup(interface);
-	return storm::builtIn();
+	return &storm::builtIn();
 }
 
 

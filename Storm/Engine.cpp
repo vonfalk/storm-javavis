@@ -77,7 +77,8 @@ namespace storm {
 
 		engineRef.setPtr(this);
 
-		cppVTableSize = maxVTableCount();
+		BuiltInLoader loader(*this, cached, storm::builtIn(), null);
+		cppVTableSize = loader.vtableCapacity();
 		vcalls = new VTableCalls(*this);
 		specialCached.resize(specialCount);
 
@@ -93,7 +94,9 @@ namespace storm {
 		Compiler::force(*this, compilerThread.borrow());
 
 		// Create the standard types in the compiler (like Type, among others).
-		createStdTypes(*this, cached);
+		cached.resize(1);
+		cached[0] = Type::createType(*this, L"Type", typeClass | typeManualSuper);
+		loader.createTypes();
 
 		// Make sure the 'compilerThread' object gets its type mark at last!
 		SET_TYPE_LATE(compilerThread, Thread::stormType(*this));
@@ -101,13 +104,14 @@ namespace storm {
 		// Now, all the types are created, so we can create packages!
 		Auto<Url> rootUrl = parsePath(*this, root.toS());
 		rootPkg = CREATE(Package, *this, rootUrl);
+		loader.setRoot(rootPkg.borrow());
 
 		defScopeLookup = CREATE(ScopeLookup, *this);
 		rootScope = new Scope(rootPkg);
 
 		try {
 			// And finally insert everything into their correct packages.
-			addStdLib(*this);
+			addStdLib(*this, loader);
 			inited = true;
 		} catch (const Exception &e) {
 			// For some reason this code crashes, so better echo any exceptions at this point!
@@ -148,6 +152,7 @@ namespace storm {
 			types[i]->clear();
 		}
 		types.clear();
+		loadedLibs.clearTypes();
 		cached.clear();
 
 		delete vcalls;
@@ -188,10 +193,14 @@ namespace storm {
 	}
 
 	Package *Engine::package(Par<Name> path, bool create) {
-		if (!create)
-			return as<Package>(find(rootPkg, path));
+		return package(rootPkg, path, create);
+	}
 
-		return createPackage(rootPkg.borrow(), path);
+	Package *Engine::package(Par<Package> rel, Par<Name> path, bool create) {
+		if (!create)
+			return as<Package>(find(rel, path));
+
+		return createPackage(rel.borrow(), path);
 	}
 
 	Package *Engine::createPackage(Package *pkg, Par<Name> path, nat pos) {

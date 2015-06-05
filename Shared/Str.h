@@ -9,7 +9,7 @@ namespace storm {
 	 * The string type used by the generated code.
 	 */
 	class Str : public Object {
-		STORM_CLASS;
+		STORM_SHARED_CLASS;
 	public:
 		// The value of this 'str' object.
 		String v;

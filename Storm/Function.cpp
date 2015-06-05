@@ -82,7 +82,7 @@ namespace storm {
 		switch (on.state) {
 		case RunOn::runtime:
 			// Should be a this-ptr. Does not work well for constructors.
-			assert(name != Type::CTOR, L"Please specify for your constructor semantics!");
+			assert(name != Type::CTOR, L"Please overload 'findThread' your constructor '" + identifier() + L"'!");
 			s->to << mov(ptrA, params[0]);
 			s->to << mov(r, ptrRel(ptrA, TObject::threadOffset()));
 			break;

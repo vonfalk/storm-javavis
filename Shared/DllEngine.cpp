@@ -14,6 +14,12 @@ namespace storm {
 		return (*interface->builtIn)(*this, interface->data, id);
 	}
 
+	void *cppVTable(nat id) {
+		assert(false, L"IMPLEMENT ME!");
+		TODO(L"IMPLEMENT ME!");
+		return null;
+	}
+
 	/**
 	 * Implementation of functions required by Object.
 	 */

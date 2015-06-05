@@ -66,6 +66,24 @@ void checkEngineFn(const Function &fn) {
 					L" must have a EnginePtr as the first parameter.");
 }
 
+void Header::addType(const CppScope &scope, const String &pkg, bool value, bool shared) {
+	if (!scope.isType())
+		throw Error(L"STORM_CLASS or STORM_VALUE only allowed in classes and structs!");
+
+	Type t(scope.name(), scope.super(), pkg, scope.cppName(), value, shared);
+	types.push_back(t);
+
+	// Destructor.
+	functions.push_back(Function::dtor(pkg, scope));
+
+	// Values need their destructor as well as copy and assignment operators.
+	if (value) {
+		functions.push_back(Function::copyCtor(pkg, scope));
+		functions.push_back(Function::assignment(pkg, scope));
+		// TODO: May need other functions as well.
+	}
+}
+
 void Header::parse(Tokenizer &tok) {
 	String pkg;
 	CppScope scope;
@@ -80,8 +98,12 @@ void Header::parse(Tokenizer &tok) {
 
 		if (token[0] == '#') {
 			// Ignore preprocessor text.
-			if (token == L"#define")
+			if (token == L"#define") {
 				tok.next();
+				// We need a special case for: #define STORM_SHARED_CLASS STORM_CLASS.
+				if (tok.peek() == L"STORM_VALUE" || tok.peek() == L"STORM_CLASS")
+					tok.next();
+			}
 		} else if (token == L"STORM_THREAD") {
 			tok.expect(L"(");
 			String name = tok.next();
@@ -101,23 +123,14 @@ void Header::parse(Tokenizer &tok) {
 		} else if (token == L"STORM_ENGINE_FN") {
 			functions.push_back(Function::read(true, wasVirtual, pkg, scope, lastType, tok));
 			checkEngineFn(functions.back());
-		} else if (token == L"STORM_CLASS" || token == L"STORM_VALUE") {
-			if (!scope.isType())
-				throw Error(L"STORM_CLASS or STORM_VALUE only allowed in classes and structs!");
-			bool isValue = token == L"STORM_VALUE";
-
-			Type t(scope.name(), scope.super(), pkg, scope.cppName(), isValue);
-			types.push_back(t);
-
-			// Declare the destructor.
-			functions.push_back(Function::dtor(pkg, scope));
-
-			// Values need their destructor as well as copy and assignment operators.
-			if (isValue) {
-				functions.push_back(Function::copyCtor(pkg, scope));
-				functions.push_back(Function::assignment(pkg, scope));
-				// TODO: May need other functions as well.
-			}
+		} else if (token == L"STORM_CLASS") {
+			addType(scope, pkg, false, false);
+		} else if (token == L"STORM_VALUE") {
+			addType(scope, pkg, true, false);
+		} else if (token == L"STORM_SHARED_CLASS") {
+			addType(scope, pkg, false, true);
+		} else if (token == L"STORM_SHARED_VALUE") {
+			addType(scope, pkg, true, true);
 		} else if (token == L"STORM_PKG") {
 			pkg = parsePkg(tok);
 		} else if (token == L"STORM_CTOR") {

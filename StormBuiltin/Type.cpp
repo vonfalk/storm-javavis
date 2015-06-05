@@ -63,3 +63,7 @@ vector<Type> Types::getTypes() const {
 	}
 	return r;
 }
+
+bool Types::external(const Type &t) const {
+	return t.shared && !forCompiler;
+}

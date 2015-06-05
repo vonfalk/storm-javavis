@@ -10,10 +10,13 @@ public:
 
 	// Built-in type.
 	Type(const String &name, const String &pkg, bool value = false)
-		: name(name), super(), package(pkg), cppName(vector<String>(1,name)), exported(false), value(value) {}
+		: name(name), super(), package(pkg), cppName(vector<String>(1,name)),
+		  exported(false), value(value), shared(false) {}
 
-	Type(const String &name, const CppSuper &super, const String &pkg, const CppName &cppName, bool value = false)
-		: name(name), super(super), package(pkg), cppName(cppName), exported(true), value(value) {}
+	Type(const String &name, const CppSuper &super, const String &pkg, const CppName &cppName,
+		bool value = false, bool shared = false)
+		: name(name), super(super), package(pkg), cppName(cppName),
+		  exported(true), value(value), shared(shared) {}
 
 	// Name of the class.
 	String name;
@@ -32,6 +35,9 @@ public:
 
 	// Value type?
 	bool value;
+
+	// Shared type?
+	bool shared;
 
 	// Concat 'name' and 'package'.
 	String fullName() const;
@@ -58,6 +64,9 @@ public:
 
 	// Get all types in here.
 	vector<Type> getTypes() const;
+
+	// Is this an external type?
+	bool external(const Type &t) const;
 
 	// Special case when we're giving types to the compiler.
 	bool forCompiler;

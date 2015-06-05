@@ -558,6 +558,10 @@
 				RelativePath=".\LoadedLibs.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\BuiltInLoader.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -946,6 +950,10 @@
 			</File>
 			<File
 				RelativePath=".\LoadedLibs.h"
+				>
+			</File>
+			<File
+				RelativePath=".\BuiltInLoader.h"
 				>
 			</File>
 		</Filter>

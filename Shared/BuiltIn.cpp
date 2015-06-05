@@ -208,14 +208,14 @@ namespace storm {
 	/**
 	 * All built in stuff.
 	 */
-	const BuiltIn *builtIn() {
+	const BuiltIn &builtIn() {
 		static BuiltIn stuff = {
 			builtInTypes(),
 			builtInFunctions(),
 			builtInVars(),
 			builtInThreads(),
 		};
-		return &stuff;
+		return stuff;
 	}
 
 }

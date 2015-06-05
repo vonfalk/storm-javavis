@@ -12,6 +12,8 @@ namespace storm {
 	class Url;
 	class LibData;
 	struct BuiltIn;
+	class BuiltInLoader;
+	class Package;
 
 	typedef const BuiltIn *(*LibMain)(const DllInterface *);
 
@@ -26,6 +28,9 @@ namespace storm {
 
 		// Clear libraries.
 		void clear();
+
+		// Clear loaded types.
+		void clearTypes();
 
 		// Load a library. (borrowed ptr).
 		LibData *load(Par<Url> lib);
@@ -46,11 +51,14 @@ namespace storm {
 
 		~LibData();
 
+		// Clear our type list.
+		void clearTypes();
+
 		// The library has been loaded again for some reason.
 		void newRef();
 
-		// Load the library. Increases the # of times loaded.
-		const BuiltIn *load();
+		// Get a BuiltInLoader for this library. Caller owns the loader. Not intended to be done multiple times.
+		BuiltInLoader *loader(Engine &e, Package *root);
 
 	private:
 		// The library itself.

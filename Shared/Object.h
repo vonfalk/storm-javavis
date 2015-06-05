@@ -59,7 +59,7 @@ namespace storm {
 	 */
 	class Object {
 	public:
-		STORM_CLASS;
+		STORM_SHARED_CLASS;
 	public:
 		// Initialize object to 1 reference.
 		STORM_CTOR Object();

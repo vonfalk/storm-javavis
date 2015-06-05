@@ -14,7 +14,7 @@ namespace storm {
 	 * Keeps track of objects already cloned.
 	 */
 	class CloneEnv : public Object {
-		STORM_CLASS;
+		STORM_SHARED_CLASS;
 	public:
 		// Create.
 		STORM_CTOR CloneEnv();

@@ -27,6 +27,8 @@ namespace storm {
 			// Create.
 			STORM_CTOR DllReader(Par<Url> file, Par<Package> into);
 
+			~DllReader();
+
 			// Syntax is not implemented yet, place it in a separate .bnf file!
 
 			virtual void STORM_FN readTypes();
@@ -34,8 +36,8 @@ namespace storm {
 			virtual void STORM_FN readFunctions();
 
 		private:
-			// Contents.
-			LibData *data;
+			// Loader.
+			BuiltInLoader *loader;
 		};
 	}
 }

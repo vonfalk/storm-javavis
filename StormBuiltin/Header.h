@@ -52,4 +52,6 @@ private:
 	void parse();
 	void parse(Tokenizer &tok);
 
+	// Add a type.
+	void addType(const CppScope &scope, const String &pkg, bool isValue, bool isShared);
 };

@@ -103,6 +103,7 @@ namespace storm {
 		// The package(path, create) function will, when create is true, try its best to not
 		// lazy-load package contents (except sub-packages) to make it usable during compiler boot,
 		// before it is possible to load packages.
+		Package *package(Par<Package> relative, Par<Name> path, bool create = false);
 		Package *package(Par<Name> path, bool create = false);
 		Package *package(const String &name);
 		Package *rootPackage();

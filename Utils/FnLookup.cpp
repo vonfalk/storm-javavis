@@ -175,6 +175,9 @@ static void outputSymbol(wostream &to, ULONG64 base, DWORD index) {
 	case SymTagFunctionType:
 		to << L"<function ptr>";
 		break;
+	case SymTagEnum:
+		to << L"<enum>";
+		break;
 		// ...
 	default:
 		to << L"<tag: " << tag << L">";

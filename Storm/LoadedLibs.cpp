@@ -2,7 +2,10 @@
 #include "LoadedLibs.h"
 #include "Shared/BuiltIn.h"
 #include "Type.h"
+#include "BuiltInLoader.h"
 #include "Io/Url.h"
+#include "Engine.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -39,6 +42,11 @@ namespace storm {
 		loaded.clear();
 	}
 
+	void LoadedLibs::clearTypes() {
+		for (LibMap::iterator i = loaded.begin(), end = loaded.end(); i != end; ++i)
+			i->second->clearTypes();
+	}
+
 	LibData *LoadedLibs::load(Par<Url> url) {
 		LibHandle lib = storm::load(url);
 		if (!lib)
@@ -68,8 +76,15 @@ namespace storm {
 	}
 
 	LibData::~LibData() {
+		// We clear types first, it is a _bad_ idea to try to execute destructors possibly in
+		// the unloaded dll after we have unloaded it!
+		clearTypes();
 		for (nat i = 0; i < timesLoaded; i++)
 			unload(lib);
+	}
+
+	void LibData::clearTypes() {
+		types.clear();
 	}
 
 	void LibData::newRef() {
@@ -79,6 +94,19 @@ namespace storm {
 	Type *LibData::libBuiltIn(Engine &e, void *data, nat id) {
 		LibData *me = (LibData *)data;
 		return me->types[id].borrow();
+	}
+
+	BuiltInLoader *LibData::loader(Engine &e, Package *root) {
+		if (builtIn) {
+			BuiltInLoader *loader = new BuiltInLoader(e, types, *builtIn, root);
+			if (loader->vtableCapacity() > e.maxCppVTable()) {
+				TODO(L"Do something better here!");
+				throw BuiltInError(L"VTables in the library are too large " + ::toS(loader->vtableCapacity()));
+			}
+			return loader;
+		} else {
+			return null;
+		}
 	}
 
 }

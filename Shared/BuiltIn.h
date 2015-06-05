@@ -20,9 +20,12 @@ namespace storm {
 			superHidden,
 			// Reference to a thread (these objects always inherit from TObject anyway).
 			superThread,
+			// Import the type from another place. This means that 'pkg' is never relative.
+			// 'super' is not used in this case.
+			superExternal,
 		};
 
-		// Location (package).
+		// Location (package). Relative to the package root in case of an external library, otherwise absolute.
 		const wchar *pkg;
 
 		// Name of the type (null in the last element).
@@ -211,6 +214,6 @@ namespace storm {
 	/**
 	 * Get all built-in things from here.
 	 */
-	const BuiltIn *builtIn();
+	const BuiltIn &builtIn();
 
 }
