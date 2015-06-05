@@ -52,8 +52,10 @@ namespace storm {
 		if (!lib)
 			return null;
 		LibMain e = libMain(lib);
-		if (!e)
+		if (!e) {
+			unload(lib);
 			return null;
+		}
 
 		LibMap::iterator i = loaded.find(lib);
 		if (i == loaded.end()) {
