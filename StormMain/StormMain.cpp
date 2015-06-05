@@ -5,7 +5,7 @@
 #include "Storm/Engine.h"
 #include "Storm/Repl.h"
 #include "Storm/Type.h"
-#include "Storm/Lib/Str.h"
+#include "Shared/Str.h"
 #include "Storm/Function.h"
 
 using namespace std;

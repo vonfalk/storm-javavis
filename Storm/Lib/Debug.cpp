@@ -16,7 +16,9 @@ namespace storm {
 	}
 
 	void printVTable(Object *obj) {
+#ifdef DEBUG
 		checkLive(obj);
+#endif
 		void *v = code::vtableOf(obj);
 		PLN("Vtable of: " << obj << " is " << v);
 		PLN(" Refs: " << obj->dbg_refs());
@@ -36,7 +38,9 @@ namespace storm {
 			return;
 		}
 
+#ifdef DEBUG
 		checkLive(s);
+#endif
 
 		Auto<Str> z = s->toS();
 		PLN(z);
@@ -52,7 +56,9 @@ namespace storm {
 			return;
 		}
 
+#ifdef DEBUG
 		checkLive(s);
+#endif
 		Auto<Str> z = s->toS();
 		PLN(z);
 		PLN(*s->myType);
