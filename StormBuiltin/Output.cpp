@@ -55,18 +55,6 @@ String fixPath(String str) {
 }
 
 /**
- * Find the id of a type via CppName.
- */
-nat typeId(const vector<Type> &ordered, const CppName &ref) {
-	for (nat i = 0; i < ordered.size(); i++) {
-		if (ordered[i].cppName == ref)
-			return i;
-	}
-
-	throw Error(L"Could not find " + ::toS(ref) + L" in the list of types!");
-}
-
-/**
  * Find the id of a thread via CppName.
  */
 nat threadId(const vector<Thread> &threads, const CppName &ref, const CppName &scope) {
@@ -86,9 +74,9 @@ nat threadId(const vector<Thread> &threads, const CppName &ref, const CppName &s
 
 String typeList(const Types &types, const vector<Thread> &threads) {
 	std::wostringstream out;
-	vector<Type> t = types.getTypes();
+	const vector<Type> &t = types.getTypes();
 	for (nat i = 0; i < t.size(); i++) {
-		Type &type = t[i];
+		const Type &type = t[i];
 
 		out << L"{ L\"" << type.package << L"\", ";
 		out << L"L\"" << type.name << L"\", ";
@@ -109,7 +97,7 @@ String typeList(const Types &types, const vector<Thread> &threads) {
 			out << L"BuiltInType::superNone, ";
 		} else {
 			Type st = types.find(super.name, type.cppName.parent());
-			out << typeId(t, st.cppName) << L" /* " << st.fullName() << " */, ";
+			out << types.typeId(st.cppName) << L" /* " << st.fullName() << " */, ";
 
 			if (super.isHidden)
 				out << L"BuiltInType::superHidden, ";
@@ -138,9 +126,9 @@ String typeList(const Types &types, const vector<Thread> &threads) {
 
 String typeFunctions(const Types &types) {
 	std::wostringstream out;
-	vector<Type> t = types.getTypes();
+	const vector<Type> &t = types.getTypes();
 	for (nat i = 0; i < t.size(); i++) {
-		Type &type = t[i];
+		const Type &type = t[i];
 
 		String fn = vtableFnName(type.cppName);
 
@@ -166,14 +154,14 @@ String typeFunctions(const Types &types) {
 
 String vtableCode(const Types &types) {
 	std::wostringstream out;
-	vector<Type> t = types.getTypes();
+	const vector<Type> &t = types.getTypes();
 
 	out << L".386\n";
 	out << L".model flat, c\n\n";
 	out << L".data\n\n";
 
 	for (nat i = 0; i < t.size(); i++) {
-		Type &type = t[i];
+		const Type &type = t[i];
 		if (type.value || ignoreVTable(type, types))
 			continue;
 
@@ -185,7 +173,7 @@ String vtableCode(const Types &types) {
 	out << L"\n.code\n\n";
 
 	for (nat i = 0; i < t.size(); i++) {
-		Type &type = t[i];
+		const Type &type = t[i];
 		if (type.value || ignoreVTable(type, types))
 			continue;
 
@@ -252,8 +240,6 @@ static String stormName(const String &cppName) {
 }
 
 void functionList(wostream &out, const vector<Function> &fns, const Types &types, const vector<Thread> &threads) {
-	vector<Type> typeList = types.getTypes();
-
 	for (nat i = 0; i < fns.size(); i++) {
 		const Function &fn = fns[i];
 		CppName scope = fn.cppScope.scopeName();
@@ -285,7 +271,7 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 		// Member of?
 		if (member) {
 			out << L"null, ";
-			out << typeId(typeList, memberOf.cppName) << L" /* " << memberOf.fullName() << L" */, ";
+			out << types.typeId(memberOf.cppName) << L" /* " << memberOf.fullName() << L" */, ";
 		} else {
 			out << "L\"" << fn.package << L"\", 0 /* -invalid- */, ";
 		}
@@ -370,8 +356,6 @@ String functionList(const vector<Header *> &headers, const Types &types, const v
 }
 
 void variableList(std::wostream &to, const vector<Variable> &vars, const Types &types) {
-	vector<Type> typeList = types.getTypes();
-
 	for (nat i = 0; i < vars.size(); i++) {
 		const Variable &v = vars[i];
 
@@ -383,7 +367,7 @@ void variableList(std::wostream &to, const vector<Variable> &vars, const Types &
 
 		// Member of.
 		CppName scope = v.cppScope.cppName();
-		to << typeId(typeList, scope) << L" /* " << scope << L" */, ";
+		to << types.typeId(scope) << L" /* " << scope << L" */, ";
 
 		// Type.
 		to << valueRef(v.type, scope, types) << L", ";

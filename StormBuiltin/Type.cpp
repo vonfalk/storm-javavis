@@ -2,6 +2,8 @@
 #include "Type.h"
 #include "Exception.h"
 
+Types::Types(bool fc) : forCompiler(fc), cacheValid(false) {}
+
 void Type::output(wostream &to) const {
 	to << name << L"(" << package << L")";
 }
@@ -14,6 +16,7 @@ String Type::fullName() const {
 }
 
 void Types::add(const Type &type) {
+	invalidate();
 	types.insert(make_pair(type.cppName, type));
 }
 
@@ -43,10 +46,16 @@ void Types::output(wostream &to) const {
 	join(to, types, L"\n");
 }
 
-Types::Types(bool fc) : forCompiler(fc) {}
+void Types::invalidate() const {
+	cacheValid = false;
+}
 
-vector<Type> Types::getTypes() const {
-	vector<Type> r;
+void Types::create() const {
+	if (cacheValid)
+		return;
+
+	ordered.clear();
+
 	CppName n;
 	n.parts.push_back(L"storm");
 	n.parts.push_back(L"Type");
@@ -54,14 +63,36 @@ vector<Type> Types::getTypes() const {
 		if (forCompiler)
 			throw Error(L"Can not find the storm::Type type! This is needed for the compiler to work!");
 	} else {
-		r.push_back(types.find(n)->second);
+		ordered.push_back(types.find(n)->second);
 	}
 
 	for (T::const_iterator i = types.begin(); i != types.end(); ++i) {
 		if (i->second.exported && i->first != n)
-			r.push_back(i->second);
+			ordered.push_back(i->second);
 	}
-	return r;
+
+	typeIds.clear();
+	for (nat i = 0; i < ordered.size(); i++) {
+		typeIds.insert(make_pair(ordered[i].cppName, i));
+	}
+
+	cacheValid = true;
+}
+
+const vector<Type> &Types::getTypes() const {
+	create();
+	return ordered;
+}
+
+nat Types::typeId(const CppName &name) const {
+	create();
+
+	Tid::const_iterator i = typeIds.find(name);
+	if (i == typeIds.end()) {
+		throw Error(L"Could not find " + ::toS(name) + L" in the list of types!");
+	} else {
+		return i->second;
+	}
 }
 
 bool Types::external(const Type &t) const {

@@ -63,7 +63,10 @@ public:
 	Type find(const CppName &name, const CppName &scope) const;
 
 	// Get all types in here.
-	vector<Type> getTypes() const;
+	const vector<Type> &getTypes() const;
+
+	// Get a type:s id (based on its name).
+	nat typeId(const CppName &name) const;
 
 	// Is this an external type?
 	bool external(const Type &t) const;
@@ -82,4 +85,19 @@ private:
 	typedef map<CppName, Type> T;
 	T types;
 
+	// Order of types (initialized when calling 'getTypes').
+	typedef map<CppName, nat> Tid;
+	mutable Tid typeIds;
+
+	// Cached types.
+	mutable vector<Type> ordered;
+
+	// Cached data valid?
+	mutable bool cacheValid;
+
+	// Invalidate any cached data.
+	void invalidate() const;
+
+	// Create cached data.
+	void create() const;
 };

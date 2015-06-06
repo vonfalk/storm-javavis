@@ -181,6 +181,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	} else {
 		try {
 			Types t = allTypes(headers, forCompiler, namespaces);
+			vector<Type> types = t.getTypes();
 			vector<Thread> threads = allThreads(headers);
 			FileData d;
 			d.typeList = typeList(t, threads);
