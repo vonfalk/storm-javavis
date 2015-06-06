@@ -2,6 +2,7 @@
 #include "Write.h"
 #include "Utils/FileStream.h"
 #include "Utils/TextReader.h"
+#include "StreamBuffer.h"
 
 using namespace util;
 
@@ -115,7 +116,8 @@ vector<String> readFile(const Path &file, const FileData &data) {
 }
 
 void writeFile(const Path &to, const vector<String> &lines, FileFmt format) {
-	TextWriter *w = TextWriter::create(new FileStream(to, Stream::mWrite), format.fmt);
+	Stream *s = new StreamBuffer(new FileStream(to, Stream::mWrite));
+	TextWriter *w = TextWriter::create(s, format.fmt);
 
 	for (nat i = 0; i < lines.size(); i++) {
 		if (i > 0)

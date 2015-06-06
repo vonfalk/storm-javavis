@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Object.h"
 #include "Bitmask.h"
 
 // A basic stream class.
@@ -12,7 +12,7 @@
 // Note that even though the type of the parameter to "write" can be deduced, it is the standard
 // to write it out, so that innocent changes to datatypes does not break the file structure without
 // warnings.
-class Stream {
+class Stream : NoCopy {
 public:
 	enum Mode { mNone = 0x0, mRead = 0x1, mWrite = 0x2, mRandom = 0x3 };
 

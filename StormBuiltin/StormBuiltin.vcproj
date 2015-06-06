@@ -236,6 +236,10 @@
 				RelativePath=".\Variable.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\StreamBuffer.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -300,6 +304,10 @@
 			</File>
 			<File
 				RelativePath=".\Variable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StreamBuffer.h"
 				>
 			</File>
 		</Filter>
