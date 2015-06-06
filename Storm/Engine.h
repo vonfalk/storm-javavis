@@ -153,6 +153,13 @@ namespace storm {
 		// Dynamic libraries.
 		LoadedLibs loadedLibs;
 
+		// Is the de-virtualized function a Object::toS
+		bool rootToS(void *fn);
+
+		// Add/remove root-toS-functions.
+		void addRootToS(void *fn);
+		void removeRootToS(void *fn);
+
 	private:
 		// Path to root directory.
 		Path rootPath;
@@ -191,6 +198,10 @@ namespace storm {
 
 		// Set T to the type, reporting any errors.
 		void setType(Type *&t, const String &name);
+
+		// Remember all toS functions in the root Object class. There may be multiple root
+		// toS functions since we're loading DLL:s. Map fn -> refcount.
+		map<void *, nat> toSRoot;
 	};
 
 }

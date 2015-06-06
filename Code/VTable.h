@@ -89,7 +89,7 @@ namespace code {
 	nat findSlot(void *fn, void *vtable, nat size = 0);
 
 	// Get a slot in a vtable.
-	void *getSlot(void *fn, nat slot);
+	void *getSlot(void *vtable, nat slot);
 
 	// Compute the size of a VTable.
 	nat vtableCount(void *vtable);

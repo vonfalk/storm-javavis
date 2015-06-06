@@ -6,6 +6,7 @@
 #include "Code/Sync.h"
 #include "Code/VTable.h"
 #include "Code/Memory.h"
+#include "Engine.h"
 
 #ifdef DEBUG
 
@@ -232,6 +233,43 @@ namespace storm {
 		o->myType->vtable.update(o);
 	}
 
+	// Keep track of all known toS implementations.
+	static map<void *, nat> toSFunctions;
+
+	bool toSOverridden(const Object *o) {
+		static nat slotId = code::findSlot(address(&Object::toS), Object::cppVTable());
+		if (slotId == code::VTable::invalid) {
+			WARNING(L"Can not find toS in Object's vtable. Output from C++ will be broken or crash.");
+		}
+
+		void *vtable = code::vtableOf(o);
+		void *active = code::getSlot(vtable, slotId);
+		return !o->engine().rootToS(active);
+	}
+
+	Size objectBaseSize() {
+		// TODO: Maybe automate this?
+		Size s;
+		s += Size::sPtr; // vtable
+		s += Size::sPtr; // myType
+		s += Size::sNat; // refs
+		assert(s.current() == sizeof(Object), L"Forgot to update baseSize!");
+		return s;
+	}
+
+	Size tObjectBaseSize() {
+		Size s = objectBaseSize();
+		s += Size::sPtr; // thread
+		assert(s.current() == sizeof(Object), L"Forgot to update baseSize!");
+		return s;
+	}
+
+	Offset tObjectThreadOffset() {
+		Offset r(objectBaseSize());
+		assert(r.current() == OFFSET_OF(TObject, thread), L"Forgot to update threadOffset!");
+		return r;
+	}
+
 
 	DllInterface dllInterface() {
 		DllInterface i = {
@@ -249,6 +287,7 @@ namespace storm {
 			&isClass,
 			&cloneObjectEnv,
 			&arrayType,
+			&toSOverridden,
 #ifdef DEBUG
 			&checkLive,
 #endif

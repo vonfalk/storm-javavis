@@ -101,9 +101,9 @@ namespace storm {
 
 		if (typeFlags & typeClass) {
 			if (this == Object::stormType(engine))
-				return Object::baseSize();
+				return objectBaseSize();
 			else if (this == TObject::stormType(engine))
-				return TObject::baseSize();
+				return tObjectBaseSize();
 		} else if (typeFlags & typeValue) {
 			return Size(0);
 		}

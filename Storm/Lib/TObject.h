@@ -31,12 +31,6 @@ namespace storm {
 		// Dtor.
 		~TObject();
 
-		// Get the size.
-		static Size baseSize();
-
-		// Get the offset of the 'thread' member.
-		static Offset threadOffset();
-
 		// This is more or less a dummy object to make the Object and TObject to be separate.
 
 		// The thread we should be running on.

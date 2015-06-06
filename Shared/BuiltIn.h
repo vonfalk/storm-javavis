@@ -209,6 +209,9 @@ namespace storm {
 		const BuiltInFunction *functions;
 		const BuiltInVar *variables;
 		const BuiltInThread *threads;
+
+		// The VTable for our version of Object (to make toS work well).
+		const void *objectVTable;
 	};
 
 	/**

@@ -43,16 +43,6 @@ namespace storm {
 #endif
 	}
 
-	Size Object::baseSize() {
-		// TODO: Maybe automate this?
-		Size s;
-		s += Size::sPtr; // vtable
-		s += Size::sPtr; // myType
-		s += Size::sNat; // refs
-		assert(s.current() == sizeof(Object), L"Forgot to update baseSize!");
-		return s;
-	}
-
 	Engine &Object::engine() const {
 		return storm::engine(this);
 	}
@@ -67,25 +57,10 @@ namespace storm {
 		return CREATE(Str, this, out.str());
 	}
 
+	bool toSOverridden(const Object *o);
+
 	wostream &operator <<(wostream &to, const Object &o) {
-		// TODO: This may be broken when using different DLL:s...
-
-		// If someone has overloaded toS, we need to call that. Otherwise we can simply call
-		// the output function.
-		static void *toSFn = code::deVirtualize(address(&Object::toS), Object::cppVTable());
-		static nat toSSlot = code::findSlot(toSFn, Object::cppVTable());
-
-		bool overridden = false;
-		if (toSSlot != code::VTable::invalid) {
-			void *vtable = code::vtableOf(&o);
-			if (code::getSlot(vtable, toSSlot) != toSFn) {
-				overridden = true;
-			}
-		} else {
-			WARNING(L"Can not find toS in Object's vtable! Output from C++ will be broken.");
-		}
-
-		if (overridden) {
+		if (toSOverridden(&o)) {
 			// Sorry about the const-cast...
 			Auto<Str> s = const_cast<Object &>(o).toS();
 			to << s->v;

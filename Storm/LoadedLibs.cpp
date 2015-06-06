@@ -6,6 +6,7 @@
 #include "Io/Url.h"
 #include "Engine.h"
 #include "Exception.h"
+#include "Code/VTable.h"
 
 namespace storm {
 
@@ -59,7 +60,7 @@ namespace storm {
 
 		LibMap::iterator i = loaded.find(lib);
 		if (i == loaded.end()) {
-			LibData *d = new LibData(lib, e);
+			LibData *d = new LibData(url->engine(), lib, e);
 			loaded.insert(make_pair(lib, d));
 			return d;
 		} else {
@@ -69,19 +70,23 @@ namespace storm {
 	}
 
 
-	LibData::LibData(LibHandle l, LibMain e) : lib(l), timesLoaded(1) {
+	LibData::LibData(Engine &engine, LibHandle l, LibMain e) : engine(engine), lib(l), timesLoaded(1) {
 		dllInterface = storm::dllInterface();
 		dllInterface.builtIn = &LibData::libBuiltIn;
 		dllInterface.cppVTable = &LibData::libVTable;
 		dllInterface.data = this;
 
 		builtIn = (*e)(&dllInterface);
+
+		toSFn = code::deVirtualize(address(&Object::toS), (void *)builtIn->objectVTable);
+		engine.addRootToS(toSFn);
 	}
 
 	LibData::~LibData() {
 		// We clear types first, it is a _bad_ idea to try to execute destructors possibly in
 		// the unloaded dll after we have unloaded it!
 		clearTypes();
+		engine.removeRootToS(toSFn);
 		for (nat i = 0; i < timesLoaded; i++)
 			unload(lib);
 	}

@@ -50,7 +50,7 @@ namespace storm {
 	 */
 	class LibData : NoCopy {
 	public:
-		LibData(LibHandle lib, LibMain fn);
+		LibData(Engine &engine, LibHandle lib, LibMain fn);
 
 		~LibData();
 
@@ -64,6 +64,8 @@ namespace storm {
 		BuiltInLoader *loader(Engine &e, Package *root);
 
 	private:
+		Engine &engine;
+
 		// The library itself.
 		LibHandle lib;
 
@@ -78,6 +80,9 @@ namespace storm {
 
 		// Types inserted from here.
 		vector<Auto<Type>> types;
+
+		// The ToS-function from this DLL.
+		void *toSFn;
 
 		// Get types for this lib. Called from the lib itself.
 		static Type *libBuiltIn(Engine &e, void *data, nat id);

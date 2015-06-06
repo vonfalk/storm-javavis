@@ -216,6 +216,7 @@ namespace storm {
 			builtInFunctions(),
 			builtInVars(),
 			builtInThreads(),
+			cppVTable_storm__Object(),
 		};
 		return stuff;
 	}

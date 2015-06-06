@@ -2,8 +2,7 @@
 #include "Test/Test.h"
 #include "Fn.h"
 
-BEGIN_TEST_(DllTest) {
+BEGIN_TEST(DllTest) {
 	// Test running something in the GUI dll!
-
-	runFn(L"test.bs.uiDllTest");
+	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.uiDllTest"), CREATE(Str, *gEngine, L"testAB"));
 } END_TEST

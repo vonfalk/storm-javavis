@@ -67,9 +67,6 @@ namespace storm {
 		// The type of this object.
 		Type *const myType;
 
-		// Get the size.
-		static Size baseSize();
-
 		// Get the engine somehow.
 		Engine &engine() const;
 

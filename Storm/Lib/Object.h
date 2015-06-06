@@ -45,6 +45,16 @@ namespace storm {
 	void CODECALL stormFree(void *mem);
 	void setVTable(Object *o);
 
+	// Size of Object.
+	Size objectBaseSize();
+
+	// Size of TObject.
+	Size tObjectBaseSize();
+
+	// Offset of TObject::thread.
+	Offset tObjectThreadOffset();
+
+
 	// Get a DllInterface for us! Note that 'builtIn' nor 'data' are set from here!
 	DllInterface dllInterface();
 

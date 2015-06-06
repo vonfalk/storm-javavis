@@ -147,12 +147,17 @@ String typeFunctions(const Types &types) {
 		out << L"storm::Type *" << type.cppName << L"::stormType(Engine &e) { return e.builtIn(" << i << L"); }\n";
 		if (type.value) {
 			// Values do not have type information.
-		} else if (ignoreVTable(type, types)) {
-			// Forward the vtable request to the main Engine for external types.
-			out << L"void *" << type.cppName << L"::cppVTable() { return storm::cppVTable(" << i << L"); }\n";
 		} else {
-			out << L"extern \"C\" void *" << fn << L"();\n";
-			out << L"void *" << type.cppName << L"::cppVTable() { return " << fn << L"(); }\n";
+			if (!ignoreVTable(type, types)) {
+				out << L"extern \"C\" void *" << fn << L"();\n";
+			}
+
+			if (types.external(type)) {
+				// Forward the vtable request to the main Engine for external types.
+				out << L"void *" << type.cppName << L"::cppVTable() { return storm::cppVTable(" << i << L"); }\n";
+			} else {
+				out << L"void *" << type.cppName << L"::cppVTable() { return " << fn << L"(); }\n";
+			}
 		}
 	}
 

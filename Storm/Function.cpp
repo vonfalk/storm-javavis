@@ -84,7 +84,7 @@ namespace storm {
 			// Should be a this-ptr. Does not work well for constructors.
 			assert(name != Type::CTOR, L"Please overload 'findThread' your constructor '" + identifier() + L"'!");
 			s->to << mov(ptrA, params[0]);
-			s->to << mov(r, ptrRel(ptrA, TObject::threadOffset()));
+			s->to << mov(r, ptrRel(ptrA, tObjectThreadOffset()));
 			break;
 		case RunOn::named:
 			s->to << mov(r, on.thread->ref());

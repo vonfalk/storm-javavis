@@ -73,6 +73,10 @@ namespace storm {
 		return (*interface->arrayType)(e, v);
 	}
 
+	bool toSOverridden(const Object *o) {
+		return (*interface->toSOverridden)(o);
+	}
+
 #ifdef DEBUG
 	void checkLive(void *ptr) {
 		(*interface->checkLive)(ptr);

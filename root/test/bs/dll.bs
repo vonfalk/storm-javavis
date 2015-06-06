@@ -1,8 +1,13 @@
-use ui;
 use core:debug;
 
-void uiDllTest() {
-	Test t;
-	print(t.test);
-	print(t.testArray);
+Str uiDllTest() {
+    ui:Test t;
+
+	StrBuf r;
+	r.add(t.test);
+	Str[] arr = t.testArray;
+	for (Nat i = 0; i < arr.count; i++)
+		r.add(arr[i]);
+
+	r.toS;
 }

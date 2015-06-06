@@ -8,6 +8,7 @@
 #include "Type.h"
 #include "Code/UThread.h"
 #include "Code/FnParams.h"
+#include "Code/VTable.h"
 #include "Shared/Str.h"
 #include "Lib/Future.h"
 #include "Lib/FnPtr.h"
@@ -71,6 +72,8 @@ namespace storm {
 
 	Engine::Engine(const Path &root, ThreadMode mode)
 		: inited(false), rootPath(root), rootScope(null), arena(), fnRefs(arena), engineRef(arena, L"engine") {
+
+		addRootToS(code::deVirtualize(address(&Object::toS), Object::cppVTable()));
 
 		engineRef.setPtr(this);
 
@@ -161,6 +164,9 @@ namespace storm {
 
 		delete rootScope;
 
+		// Unload libs now. This dtor will use a map in here, causing a crash, unless we clear it first.
+		loadedLibs.clear();
+
 		Object::dumpLeaks();
 	}
 
@@ -237,6 +243,30 @@ namespace storm {
 
 	code::Ref Engine::virtualCall(VTablePos pos) const {
 		return vcalls->call(pos);
+	}
+
+	bool Engine::rootToS(void *fn) {
+		return toSRoot.count(fn) != 0;
+	}
+
+	void Engine::addRootToS(void *addr) {
+		map<void *, nat>::iterator i = toSRoot.find(addr);
+		if (i == toSRoot.end()) {
+			toSRoot.insert(make_pair(addr, nat(1)));
+		} else {
+			i->second++;
+		}
+	}
+
+	void Engine::removeRootToS(void *addr) {
+		map<void *, nat>::iterator i = toSRoot.find(addr);
+		if (i == toSRoot.end()) {
+			WARNING(L"Trying to remove an unknown toS function.");
+		} else if (i->second <= 1) {
+			toSRoot.erase(i);
+		} else {
+			i->second--;
+		}
 	}
 
 }

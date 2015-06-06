@@ -49,6 +49,9 @@ namespace storm {
 		typedef Type *(*ArrayType)(Engine &e, const ValueData &v);
 		ArrayType arrayType;
 
+		typedef bool (*ToSOverridden)(const Object *o);
+		ToSOverridden toSOverridden;
+
 #ifdef DEBUG
 		typedef void (*CheckLive)(void *mem);
 		CheckLive checkLive;

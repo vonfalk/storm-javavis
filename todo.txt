@@ -29,11 +29,7 @@ Core
 -------
 Some kind of versioning scheme when connecting DLLS and the Storm executable is required.
 
-Automatically manage cpp-files in the Shared/ directory.
-
 Rename Shared/ to Lib/ ?
-
-Remove the depency on Code from external DLL:s.
 
 The Maybe<> type inherits from object. This may be bad since programs may assume that regular object pointers are never null!
 
