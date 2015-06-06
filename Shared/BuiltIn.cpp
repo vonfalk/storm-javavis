@@ -1,4 +1,6 @@
 #include "stdafx.h"
+// Protect agains accidental compilation from the Shared project.
+#ifndef STORM_LIB
 #include "Shared/BuiltIn.h"
 #include "Shared/TypeFlags.h"
 #ifdef STORM_DLL
@@ -220,3 +222,4 @@ namespace storm {
 
 }
 
+#endif

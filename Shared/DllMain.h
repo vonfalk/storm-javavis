@@ -2,7 +2,7 @@
 
 /**
  * Include this file _once_ from any extension DLL to storm. This file declares the entry points
- * that storm excepts to find.
+ * that storm expects to find.
  */
 
 
@@ -33,4 +33,3 @@ extern "C" DLLEXPORT const storm::BuiltIn *ENTRY_POINT_NAME(const storm::DllInte
 
 // Needed source files:
 #include "DllEngine.cpp"
-#include "Types.cpp"

@@ -13,9 +13,6 @@
 #include "Lib/FnPtr.h"
 #include "Io/Url.h"
 
-// The one place we include all shared implementations.
-#include "Shared/Types.cpp"
-
 namespace storm {
 
 	static void copyRefPtr(Object **to, Object **from) {

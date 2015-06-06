@@ -3,7 +3,8 @@
 #include "Code/Code.h"
 
 // Are we being compiled as a DLL or as the compiler?
-#ifndef STORM_COMPILER
+#if defined(STORM_LIB)
+#elif !defined(STORM_COMPILER)
 #define STORM_DLL
 #endif
 
@@ -144,3 +145,9 @@ namespace storm {
 	Engine &engine(const Object *o);
 
 }
+
+#include "Types.h"
+
+#ifdef STORM_DLL
+#include "Str.h"
+#endif
