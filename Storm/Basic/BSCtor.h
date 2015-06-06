@@ -4,7 +4,7 @@
 #include "SyntaxObject.h"
 #include "BSBlock.h"
 #include "TypeVar.h"
-#include "Lib/Array.h"
+#include "Shared/Array.h"
 
 namespace storm {
 	namespace bs {

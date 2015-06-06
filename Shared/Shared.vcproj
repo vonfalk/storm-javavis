@@ -190,6 +190,14 @@
 				RelativePath=".\Str.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Array.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Value.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -250,6 +258,18 @@
 			</File>
 			<File
 				RelativePath=".\Types.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Handle.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Array.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Value.h"
 				>
 			</File>
 		</Filter>

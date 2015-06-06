@@ -6,6 +6,10 @@
  * Helpers
  */
 
+static bool ignoreVTable(const Type &t, const Types &types) {
+	return types.external(t) && t.name != L"Object";
+}
+
 void vtableSymbolName(wostream &to, const CppName &name) {
 	to << L"??_7";
 	for (nat i = name.parts.size(); i > 0; i--) {
@@ -143,7 +147,7 @@ String typeFunctions(const Types &types) {
 		out << L"storm::Type *" << type.cppName << L"::stormType(Engine &e) { return e.builtIn(" << i << L"); }\n";
 		if (type.value) {
 			// Values do not have type information.
-		} else if (types.external(type)) {
+		} else if (ignoreVTable(type, types)) {
 			// Forward the vtable request to the main Engine for external types.
 			out << L"void *" << type.cppName << L"::cppVTable() { return storm::cppVTable(" << i << L"); }\n";
 		} else {
@@ -165,7 +169,7 @@ String vtableCode(const Types &types) {
 
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
-		if (type.value || types.external(type))
+		if (type.value || ignoreVTable(type, types))
 			continue;
 
 		vtableSymbolName(out, type.cppName);
@@ -177,7 +181,7 @@ String vtableCode(const Types &types) {
 
 	for (nat i = 0; i < t.size(); i++) {
 		Type &type = t[i];
-		if (type.value || types.external(type))
+		if (type.value || ignoreVTable(type, types))
 			continue;
 
 		String fn = vtableFnName(type.cppName);

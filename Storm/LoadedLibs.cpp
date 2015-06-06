@@ -72,6 +72,7 @@ namespace storm {
 	LibData::LibData(LibHandle l, LibMain e) : lib(l), timesLoaded(1) {
 		dllInterface = storm::dllInterface();
 		dllInterface.builtIn = &LibData::libBuiltIn;
+		dllInterface.cppVTable = &LibData::libVTable;
 		dllInterface.data = this;
 
 		builtIn = (*e)(&dllInterface);

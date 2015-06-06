@@ -8,6 +8,13 @@ namespace storm {
 
 	void Engine::setup(const DllInterface *i) {
 		interface = i;
+
+#ifdef DEBUG
+		void **d = (void **)i;
+		for (nat z = 0; z < sizeof(*i) / sizeof(void *); z++) {
+			assert(d[z] != null, L"Pointer at offset " + ::toS(z) + L" is null in DllInterface!");
+		}
+#endif
 	}
 
 	Type *Engine::builtIn(nat id) {
@@ -48,6 +55,22 @@ namespace storm {
 
 	String typeIdentifier(const Type *t) {
 		return (*interface->typeIdentifier)(t);
+	}
+
+	void setVTable(Object *o) {
+		return (*interface->setVTable)(o);
+	}
+
+	bool isClass(Type *t) {
+		return (*interface->isClass)(t);
+	}
+
+	Object *cloneObjectEnv(Object *o, CloneEnv *env) {
+		return (*interface->cloneObjectEnv)(o, env);
+	}
+
+	Type *arrayType(Engine &e, const ValueData &v) {
+		return (*interface->arrayType)(e, v);
 	}
 
 #ifdef DEBUG

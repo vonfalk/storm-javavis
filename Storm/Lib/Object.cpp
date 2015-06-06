@@ -245,6 +245,10 @@ namespace storm {
 			&storm::engine,
 			&objectIsA,
 			&typeIdentifier,
+			&setVTable,
+			&isClass,
+			&cloneObjectEnv,
+			&arrayType,
 #ifdef DEBUG
 			&checkLive,
 #endif

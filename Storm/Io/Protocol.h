@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Storm/Lib/Object.h"
-#include "Storm/Lib/Array.h"
+#include "Shared/Array.h"
 #include "Utils/Exception.h"
 #include "Stream.h"
 

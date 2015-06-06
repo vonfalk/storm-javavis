@@ -29,13 +29,15 @@ namespace storm {
 		return Value(t, (t->typeFlags & typeValue) != 0);
 	}
 
-	Value::Value() : type(null), ref(false) {}
+	Value::Value() : ValueData() {}
 
-	Value::Value(Type *t, bool ref) : type(t), ref(ref) {}
+	Value::Value(Type *t, bool ref) : ValueData(t, ref) {}
 
-	Value::Value(Par<Type> t) : type(t.borrow()), ref(false) {}
+	Value::Value(const ValueData &from) : ValueData(from) {}
 
-	Value::Value(Par<Type> t, Bool ref) : type(t.borrow()), ref(ref) {}
+	Value::Value(Par<Type> t) : ValueData(t.borrow(), false) {}
+
+	Value::Value(Par<Type> t, Bool ref) : ValueData(t.borrow(), ref) {}
 
 	Type *Value::getType() const {
 		type->addRef();
@@ -226,10 +228,7 @@ namespace storm {
 	}
 
 	bool Value::operator ==(const Value &o) const {
-		// No point in having references to null...
-		if (type == null)
-			return o.type == null;
-		return type == o.type && ref == o.ref;
+		return ValueData::operator ==(o);
 	}
 
 	Value common(Value a, Value b) {

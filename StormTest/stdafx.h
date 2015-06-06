@@ -10,7 +10,7 @@
 #include "Storm/Exception.h"
 #include "Storm/Engine.h"
 #include "Storm/Std.h"
-#include "Storm/Lib/Array.h"
+#include "Shared/Array.h"
 #include "Storm/Lib/Debug.h"
 #include "Storm/Io/Url.h"
 

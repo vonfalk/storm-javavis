@@ -13,11 +13,6 @@ namespace storm {
 
 	STORM_PKG(core);
 
-	/**
-	 * Get the name of a type.
-	 */
-	String typeIdentifier(const Type *t);
-
 #ifdef DEBUG
 	// When debugging, checks that objects are alive.
 	void checkLive(void *obj);

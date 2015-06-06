@@ -9,6 +9,8 @@ namespace stormgui {
 		STORM_CTOR Test();
 
 		Str *STORM_FN test();
+
+		ArrayP<Str> *STORM_FN testArray();
 	};
 
 }

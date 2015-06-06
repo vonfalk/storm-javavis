@@ -3,7 +3,7 @@
 #include "Utils/Bitmask.h"
 #include "Shared/Object.h"
 #include "Shared/Str.h"
-#include "Storm/Lib/Array.h"
+#include "Shared/Array.h"
 #include "Utils/Exception.h"
 #include "Protocol.h"
 #include "Stream.h"

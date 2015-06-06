@@ -2,7 +2,7 @@
 #include "Test/Test.h"
 #include "Fn.h"
 
-BEGIN_TEST(DllTest) {
+BEGIN_TEST_(DllTest) {
 	// Test running something in the GUI dll!
 
 	runFn(L"test.bs.uiDllTest");

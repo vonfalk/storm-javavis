@@ -1,5 +1,5 @@
 #pragma once
-#include "Array.h"
+#include "Shared/Array.h"
 #include "Template.h"
 #include "Type.h"
 #include "Storm/CodeGen.h"

@@ -1,4 +1,5 @@
 #pragma once
+#include "Shared/Value.h"
 #include "NamedFlags.h"
 #include "Shared/Types.h"
 #include "Shared/Auto.h"
@@ -25,24 +26,24 @@ namespace storm {
 	 * A value is a 'handle' to a type. The value itself is to be considered
 	 * a handle to any type in the system, possible along with modifiers. For
 	 * example, if the pointer (if relevant) may be null.
+	 *
+	 * Note: This object is assumed to be binary compatible with SValue, no fields
+	 * may therefore be added here. Add any fields in Shared/Value.h instead!
 	 * TODO: ValueT instead?
 	 */
-	class Value : public STORM_IGNORE(Printable) {
+	class Value : public STORM_IGNORE(ValueData) {
 		STORM_VALUE;
 	public:
 		// Create the 'null' value.
 		STORM_CTOR Value();
 
+		// Convert from ValueData.
+		Value(const ValueData &data);
+
 		// Create a value based on a type.
 		Value(Type *type, bool ref = false);
 		STORM_CTOR Value(Par<Type> type);
 		STORM_CTOR Value(Par<Type> type, Bool ref);
-
-		// The type referred.
-		Type *type;
-
-		// Reference? Not a good idea for return values.
-		bool ref;
 
 		// Get the type. TODO: Rename/replace with read-only version of 'type' member variable.
 		Type *STORM_FN getType() const;
@@ -104,7 +105,6 @@ namespace storm {
 		// Any extra modifiers goes here:
 		// TODO: implement
 
-		// Type equality.
 		Bool STORM_FN operator ==(const Value &o) const;
 		inline Bool STORM_FN operator !=(const Value &o) const { return !(*this == o); }
 
@@ -134,78 +134,6 @@ namespace storm {
 	 */
 	Value STORM_FN common(Value a, Value b);
 
-	/**
-	 * Template magic for finding the Value of a C++ type.
-	 */
-
-	template <class T>
-	struct LookupValue {
-		static Type *type(Engine &e) {
-			return T::stormType(e);
-		}
-	};
-
-	template <class T>
-	struct LookupValue<T *> {
-		static Type *type(Engine &e) {
-			return T::stormType(e);
-		}
-	};
-
-	template <class T>
-	struct LookupValue<T &> {
-		static Type *type(Engine &e) {
-			return T::stormType(e);
-		}
-	};
-
-	template <>
-	struct LookupValue<Int> {
-		static Type *type(Engine &e) {
-			return intType(e);
-		}
-	};
-
-	template <>
-	struct LookupValue<Nat> {
-		static Type *type(Engine &e) {
-			return natType(e);
-		}
-	};
-
-	template <>
-	struct LookupValue<Byte> {
-		static Type *type(Engine &e) {
-			return byteType(e);
-		}
-	};
-
-	template <>
-	struct LookupValue<Bool> {
-		static Type *type(Engine &e) {
-			return boolType(e);
-		}
-	};
-
-	// Helper...
-	bool isClass(Type *t);
-
-	template <class T>
-	Value value(typename EnableIf<!IsVoid<T>::value, Engine>::t &e) {
-		bool isRef = !typeInfo<T>().plain() || IsAuto<T>::v;
-		Type *t = LookupValue<T>::type(e);
-		if (isClass(t)) {
-			assert(isRef, "Class type tried to be used by value!");
-			isRef = false;
-		}
-		return Value(t, isRef);
-	}
-
-	// Special case for void.
-	template <class T>
-	Value value(typename EnableIf<IsVoid<T>::value, Engine>::t &e) {
-		return Value();
-	}
 
 	/**
 	 * Various helper functions.
@@ -225,5 +153,4 @@ namespace storm {
 #else
 #error "Define valList for C++11 here"
 #endif
-
 }

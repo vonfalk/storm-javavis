@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "ArrayTemplate.h"
-#include "Array.h"
+#include "Shared/Array.h"
 #include "Function.h"
 #include "Exception.h"
 #include "TypeCtor.h"
@@ -228,7 +228,7 @@ namespace storm {
 	}
 
 
-	Type *arrayType(Engine &e, const Value &type) {
+	Type *arrayType(Engine &e, const ValueData &type) {
 		Value strParam(Str::stormType(e));
 		if (type == strParam) {
 			// We need this during early compiler startup, so we can not look this one up regularly...

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Simple.h"
-#include "Lib/Array.h"
+#include "Shared/Array.h"
 
 namespace storm {
 

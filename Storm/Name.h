@@ -2,7 +2,7 @@
 #include "Value.h"
 #include "Shared/Types.h"
 #include "Lib/Object.h"
-#include "Lib/Array.h"
+#include "Shared/Array.h"
 
 namespace storm {
 	STORM_PKG(core.lang);

@@ -1,4 +1,5 @@
 #pragma once
+#include "Value.h"
 
 namespace storm {
 
@@ -35,6 +36,18 @@ namespace storm {
 
 		typedef String (*TypeIdentifier)(const Type *t);
 		TypeIdentifier typeIdentifier;
+
+		typedef void (*SetVTable)(Object *to);
+		SetVTable setVTable;
+
+		typedef bool (*IsClass)(Type *t);
+		IsClass isClass;
+
+		typedef Object *(CODECALL *CloneObjectEnv)(Object *o, CloneEnv *env);
+		CloneObjectEnv cloneObjectEnv;
+
+		typedef Type *(*ArrayType)(Engine &e, const ValueData &v);
+		ArrayType arrayType;
 
 #ifdef DEBUG
 		typedef void (*CheckLive)(void *mem);

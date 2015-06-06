@@ -1,8 +1,8 @@
 #pragma once
 #include "Object.h"
-#include "Shared/Types.h"
+#include "Types.h"
 #include "Handle.h"
-#include "Storm/Value.h"
+#include "Value.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -13,13 +13,13 @@ namespace storm {
 
 	// This function is implemented in ArrayTemplate.cpp
 	// Look up a specific array type (create it if it is not already created). Implemented in ArrayTemplate.cpp
-	Type *arrayType(Engine &e, const Value &type);
+	Type *arrayType(Engine &e, const ValueData &type);
 
 	/**
 	 * The base class that is used in Storm, use the derived class in C++.
 	 */
 	class ArrayBase : public Object {
-		STORM_CLASS;
+		STORM_SHARED_CLASS;
 	public:
 		// Empty array.
 		ArrayBase(const Handle &type);

@@ -1,7 +1,7 @@
 #pragma once
 #include "Std.h"
 #include "SyntaxObject.h"
-#include "Lib/Array.h"
+#include "Shared/Array.h"
 
 namespace storm {
 

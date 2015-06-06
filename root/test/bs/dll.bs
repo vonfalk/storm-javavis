@@ -4,4 +4,5 @@ use core:debug;
 void uiDllTest() {
 	Test t;
 	print(t.test);
+	print(t.testArray);
 }

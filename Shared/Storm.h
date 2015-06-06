@@ -120,6 +120,7 @@ namespace storm {
 	class Engine;
 	class Object;
 	class Thread;
+	class Type;
 
 	using code::Size;
 	using code::Offset;
@@ -144,10 +145,15 @@ namespace storm {
 	// Get the Engine from an object (implemented in Object.cpp)
 	Engine &engine(const Object *o);
 
+	/**
+	 * Get the name of a type.
+	 */
+	String typeIdentifier(const Type *t);
 }
 
 #include "Types.h"
 
 #ifdef STORM_DLL
 #include "Str.h"
+#include "Array.h"
 #endif

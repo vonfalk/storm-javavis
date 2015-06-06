@@ -6,7 +6,7 @@
 #include "Function.h"
 #include "Code/VTable.h"
 #include "Lib/Maybe.h"
-#include "Lib/Array.h"
+#include "Shared/Array.h"
 #include "Lib/FnPtrTemplate.h"
 #include "Lib/FutureTemplate.h"
 
