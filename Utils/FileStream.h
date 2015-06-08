@@ -24,13 +24,36 @@ public:
 	virtual void seek(nat64 to);
 
 	virtual bool valid() const;
+
+	// Flush buffer.
+	void flush();
+
 private:
+	static const nat bufferSize = 10 * 1024;
+
 	Path name;
 	HANDLE file;
 	Mode mode;
 	nat64 fileSize;
 
+	// The buffer is always flushed when seeking. When reading data,
+	// the buffer is pre-loaded until bufferFill. When writing, the buffer may
+	// contain dirty data until bufferPos.
+	// The seek-pointer of the underlying file will always point to the beginning of this buffer.
+	nat64 bufferStart;
+	byte *buffer;
+	nat bufferPos;
+	nat bufferFill;
+	bool bufferDirty;
+
+	// Fill the buffer from the file. Returns false if eof.
+	bool fillBuffer();
+
 	void openFile(const String &name, Mode mode);
+
+	// Raw seek, does not affect the buffer.
+	void rawSeek(nat64 to);
+	nat64 rawPos() const;
 };
 
 
