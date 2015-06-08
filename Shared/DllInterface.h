@@ -40,6 +40,9 @@ namespace storm {
 		typedef String (*TypeIdentifier)(const Type *t);
 		TypeIdentifier typeIdentifier;
 
+		typedef vector<ValueData> (*TypeParams)(const Type *t);
+		TypeParams typeParams;
+
 		typedef void (*SetVTable)(Object *to);
 		SetVTable setVTable;
 
@@ -49,11 +52,17 @@ namespace storm {
 		typedef Object *(CODECALL *CloneObjectEnv)(Object *o, CloneEnv *env);
 		CloneObjectEnv cloneObjectEnv;
 
+		typedef Type *(*StdType)(Engine &e);
+		StdType intType, natType, byteType, boolType;
+
 		typedef Type *(*ArrayType)(Engine &e, const ValueData &v);
 		ArrayType arrayType;
 
 		typedef Type *(*FutureType)(Engine &e, const ValueData &v);
 		FutureType futureType;
+
+		typedef Type *(*FnPtrType)(Engine &e, const vector<ValueData> &params);
+		FnPtrType fnPtrType;
 
 		typedef bool (*ToSOverridden)(const Object *o);
 		ToSOverridden toSOverridden;

@@ -179,6 +179,10 @@ namespace storm {
 		return t->identifier();
 	}
 
+	vector<ValueData> typeParams(const Type *t) {
+		return vector<ValueData>(t->params.begin(), t->params.end());
+	}
+
 	/**
 	 * Convenience functions.
 	 */
@@ -285,11 +289,17 @@ namespace storm {
 			&storm::engine,
 			&objectIsA,
 			&typeIdentifier,
+			&typeParams,
 			&setVTable,
 			&isClass,
 			&cloneObjectEnv,
+			&intType,
+			&natType,
+			&byteType,
+			&boolType,
 			&arrayType,
 			&futureType,
+			&fnPtrType,
 			&toSOverridden,
 #ifdef DEBUG
 			&checkLive,

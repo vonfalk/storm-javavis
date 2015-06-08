@@ -67,7 +67,7 @@ namespace storm {
 		arrayToSAdd.setPtr(address(&storm::valArrayToSAdd));
 		fnPtrCopy.setPtr(address(&storm::fnPtrNeedsCopy));
 		fnPtrCall.setPtr(address(&storm::fnPtrCallRaw));
-		fnPtrCreate.setPtr(address(&storm::FnPtrBase::createRaw));
+		fnPtrCreate.setPtr(address(&storm::createRawFnPtr));
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode)

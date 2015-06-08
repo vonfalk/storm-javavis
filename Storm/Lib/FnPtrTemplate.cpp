@@ -223,6 +223,10 @@ namespace storm {
 		to->add(t);
 	}
 
+	Type *fnPtrType(Engine &e, const vector<ValueData> &params) {
+		return fnPtrType(e, ValList(params.begin(), params.end()));
+	}
+
 	Type *fnPtrType(Engine &e, const vector<Value> &params) {
 		Auto<Name> tName = CREATE(Name, e);
 		tName->add(L"core");

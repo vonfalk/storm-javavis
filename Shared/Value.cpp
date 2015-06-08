@@ -23,4 +23,20 @@ namespace storm {
 		return type == o.type && ref == o.ref;
 	}
 
+#ifdef VS
+	vector<ValueData> valDataList(nat count, ...) {
+		vector<ValueData> r;
+		r.reserve(count);
+
+		va_list l;
+		va_start(l, count);
+
+		for (nat i = 0; i < count; i++) {
+			r.push_back(va_arg(l, ValueData));
+		}
+
+		va_end(l);
+		return r;
+	}
+#endif
 }

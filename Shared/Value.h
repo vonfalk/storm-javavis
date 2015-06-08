@@ -107,4 +107,14 @@ namespace storm {
 		return ValueData();
 	}
 
+	// Get parameters for the type T.
+	vector<ValueData> typeParams(const Type *t);
+
+#ifdef VS
+	// This function uses a VS specific extension for variable arguments.
+	vector<ValueData> valDataList(nat count, ...);
+#else
+#error "Define valDataList for C++11 here"
+#endif
+
 }

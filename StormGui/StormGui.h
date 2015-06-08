@@ -11,6 +11,11 @@ namespace stormgui {
 		Str *STORM_FN test();
 
 		ArrayP<Str> *STORM_FN testArray();
+
+		FnPtr<Str *, Int> *STORM_FN testPtr();
+
+	private:
+		Str *CODECALL testPtr(Int v);
 	};
 
 }

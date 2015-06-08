@@ -6,6 +6,7 @@
 #include "Std.h"
 #include "CodeGenFwd.h"
 #include "Shared/TObject.h"
+#include "Thread.h"
 #include "Lib/FnPtr.h"
 
 namespace storm {

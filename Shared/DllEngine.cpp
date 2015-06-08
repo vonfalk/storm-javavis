@@ -57,6 +57,10 @@ namespace storm {
 		return (*interface->typeIdentifier)(t);
 	}
 
+	vector<ValueData> typeParams(const Type *t) {
+		return (*interface->typeParams)(t);
+	}
+
 	void setVTable(Object *o) {
 		return (*interface->setVTable)(o);
 	}
@@ -69,12 +73,32 @@ namespace storm {
 		return (*interface->cloneObjectEnv)(o, env);
 	}
 
+	Type *intType(Engine &e) {
+		return (*interface->intType)(e);
+	}
+
+	Type *natType(Engine &e) {
+		return (*interface->natType)(e);
+	}
+
+	Type *byteType(Engine &e) {
+		return (*interface->byteType)(e);
+	}
+
+	Type *boolType(Engine &e) {
+		return (*interface->boolType)(e);
+	}
+
 	Type *arrayType(Engine &e, const ValueData &v) {
 		return (*interface->arrayType)(e, v);
 	}
 
 	Type *futureType(Engine &e, const ValueData &v) {
 		return (*interface->futureType)(e, v);
+	}
+
+	Type *fnPtrType(Engine &e, const vector<ValueData> &params) {
+		return (*interface->fnPtrType)(e, params);
 	}
 
 	bool toSOverridden(const Object *o) {

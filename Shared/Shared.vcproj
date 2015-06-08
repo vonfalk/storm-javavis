@@ -214,6 +214,10 @@
 				RelativePath=".\Thread.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\FnPtr.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -306,6 +310,10 @@
 			</File>
 			<File
 				RelativePath=".\Thread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FnPtr.h"
 				>
 			</File>
 		</Filter>

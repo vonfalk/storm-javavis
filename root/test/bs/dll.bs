@@ -9,5 +9,8 @@ Str uiDllTest() {
 	for (Nat i = 0; i < arr.count; i++)
 		r.add(arr[i]);
 
+	fn(Int)->Str f = t.testPtr;
+	r.add(f.call(1));
+
 	r.toS;
 }

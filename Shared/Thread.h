@@ -22,7 +22,7 @@ namespace storm {
 	 * 'myType' at creation in this class!
 	 */
 	class Thread : public Object {
-		STORM_CLASS;
+		STORM_SHARED_CLASS;
 	public:
 		// Create a thread.
 		STORM_CTOR Thread();

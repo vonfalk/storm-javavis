@@ -159,7 +159,7 @@ void Header::parse(Tokenizer &tok) {
 			scope.pop();
 		} else if (token == L";") {
 		} else if (token == L"::") {
-			if (!lastType.type.empty()) {
+			if (!lastType.isEmpty()) {
 				lastType.type.parts.push_back(tok.next());
 				wasType = true;
 			}
@@ -191,12 +191,12 @@ void Header::parse(Tokenizer &tok) {
 			wasType = true;
 			tok.expect(L")");
 		} else if (token == L"*") {
-			if (!lastType.type.empty()) {
+			if (!lastType.isEmpty()) {
 				wasType = true;
 				lastType.isPtr = true;
 			}
 		} else if (token == L"&") {
-			if (!lastType.type.empty()) {
+			if (!lastType.isEmpty()) {
 				wasType = true;
 				lastType.isRef = true;
 			}
@@ -207,7 +207,7 @@ void Header::parse(Tokenizer &tok) {
 			wasVirtual = true;
 			wasType = true;
 		} else {
-			if (!lastType.type.empty())
+			if (!lastType.isEmpty())
 				lastType.clear();
 			lastType.type.parts.push_back(token);
 			wasType = true;

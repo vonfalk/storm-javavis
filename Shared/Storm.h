@@ -143,15 +143,18 @@ namespace storm {
 	// Get the Engine from an object (implemented in Object.cpp)
 	Engine &engine(const Object *o);
 
-	/**
-	 * Get the name of a type.
-	 */
+	// Get the name of a type.
 	String typeIdentifier(const Type *t);
+
 }
 
 #include "Types.h"
 
 #ifdef STORM_DLL
+#include "Object.h"
+#include "TObject.h"
 #include "Str.h"
 #include "Array.h"
+#include "Future.h"
+#include "FnPtr.h"
 #endif
