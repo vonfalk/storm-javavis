@@ -103,6 +103,8 @@ void usage(const String &msg) {
 int _tmain(int argc, _TCHAR* argv[]) {
 	initDebug();
 
+	Sleep(2000);
+
 	Timestamp start;
 
 	vector<String> namespaces;
