@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "StrBuf.h"
-#include "SyntaxObject.h"
+#include "Str.h"
 
 namespace storm {
 
@@ -64,10 +64,6 @@ namespace storm {
 
 		addRef();
 		return this;
-	}
-
-	StrBuf *StrBuf::add(Par<SStr> str) {
-		return add(str->v);
 	}
 
 	void StrBuf::add(const String &str) {

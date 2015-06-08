@@ -5,7 +5,7 @@
 #include "Exception.h"
 #include "TypeCtor.h"
 #include "Shared/CloneEnv.h"
-#include "StrBuf.h"
+#include "Shared/StrBuf.h"
 #include "TypeDtor.h"
 #include "Engine.h"
 

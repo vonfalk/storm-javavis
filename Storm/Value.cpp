@@ -5,7 +5,7 @@
 #include "Function.h"
 #include "Exception.h"
 #include "Engine.h"
-#include "Lib/Handle.h"
+#include "RefHandle.h"
 
 namespace storm {
 

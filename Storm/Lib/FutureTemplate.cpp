@@ -181,7 +181,7 @@ namespace storm {
 		add(steal(nativeDtor(e, this, &destroyVoid)));
 	}
 
-	Type *futureType(Engine &e, const Value &type) {
+	Type *futureType(Engine &e, const ValueData &type) {
 		Auto<Name> tName = CREATE(Name, e);
 		tName->add(L"core");
 		tName->add(L"Future", vector<Value>(1, type));

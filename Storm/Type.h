@@ -7,7 +7,7 @@
 #include "TypeChain.h"
 #include "TypeLayout.h"
 #include "VTable.h"
-#include "Lib/Handle.h"
+#include "RefHandle.h"
 #include "Code/Value.h"
 #include "Shared/TypeFlags.h"
 

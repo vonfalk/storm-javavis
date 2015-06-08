@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Future.h"
-#include "Shared/CloneEnv.h"
+#include "CloneEnv.h"
 
 namespace storm {
 

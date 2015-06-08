@@ -1,7 +1,7 @@
 #pragma once
 #include "Object.h"
 #include "Handle.h"
-#include "Storm/Value.h"
+#include "Value.h"
 #include "OS/Future.h"
 #include "OS/Sync.h"
 
@@ -9,7 +9,7 @@ namespace storm {
 	STORM_PKG(core);
 
 	// Implemented in FutureTemplate.cpp, looks up a specific specialization.
-	Type *futureType(Engine &e, const Value &type);
+	Type *futureType(Engine &e, const ValueData &type);
 
 	/**
 	 * Future-object exposed to the runtime and built into function calls.
@@ -19,7 +19,7 @@ namespace storm {
 	 * correctly handles cases where the result is not waited for.
 	 */
 	class FutureBase : public Object {
-		STORM_CLASS;
+		STORM_SHARED_CLASS;
 	public:
 		// Create.
 		FutureBase(const Handle &type);
@@ -138,7 +138,7 @@ namespace storm {
 		TYPE_EXTRA_CODE;
 	public:
 		// Type lookup.
-		static Type *stormType(Engine &e) { return futureType(e, Value()); }
+		static Type *stormType(Engine &e) { return futureType(e, value<void>(e)); }
 
 		// Create.
 		Future() : FutureBase(storm::handle<void>()) {}

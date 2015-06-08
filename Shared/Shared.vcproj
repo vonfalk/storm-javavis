@@ -198,6 +198,14 @@
 				RelativePath=".\Value.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Future.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StrBuf.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -270,6 +278,14 @@
 			</File>
 			<File
 				RelativePath=".\Value.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Future.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StrBuf.h"
 				>
 			</File>
 		</Filter>

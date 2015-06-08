@@ -6,6 +6,7 @@
 #include "OS/Sync.h"
 #include "Code/VTable.h"
 #include "Code/Memory.h"
+#include "Shared/Future.h"
 #include "Engine.h"
 
 #ifdef DEBUG
@@ -288,6 +289,7 @@ namespace storm {
 			&isClass,
 			&cloneObjectEnv,
 			&arrayType,
+			&futureType,
 			&toSOverridden,
 #ifdef DEBUG
 			&checkLive,

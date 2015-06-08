@@ -171,10 +171,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Auto.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\BnfReader.cpp"
 				>
 			</File>
@@ -275,7 +271,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Handle.cpp"
+				RelativePath=".\RefHandle.cpp"
 				>
 			</File>
 			<File
@@ -467,10 +463,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Future.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Lib\FutureTemplate.cpp"
 				>
 			</File>
@@ -515,10 +507,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\StrBuf.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ExceptionWrap.cpp"
 				>
 			</File>
@@ -560,6 +548,10 @@
 			</File>
 			<File
 				RelativePath=".\OsShared.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Auto.cpp"
 				>
 			</File>
 		</Filter>
@@ -677,7 +669,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Handle.h"
+				RelativePath=".\RefHandle.h"
 				>
 			</File>
 			<File
@@ -857,10 +849,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Future.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Lib\FutureTemplate.h"
 				>
 			</File>
@@ -902,10 +890,6 @@
 			</File>
 			<File
 				RelativePath=".\AsmWrap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\StrBuf.h"
 				>
 			</File>
 			<File

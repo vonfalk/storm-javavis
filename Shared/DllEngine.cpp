@@ -73,6 +73,10 @@ namespace storm {
 		return (*interface->arrayType)(e, v);
 	}
 
+	Type *futureType(Engine &e, const ValueData &v) {
+		return (*interface->futureType)(e, v);
+	}
+
 	bool toSOverridden(const Object *o) {
 		return (*interface->toSOverridden)(o);
 	}

@@ -6,7 +6,7 @@
 #include "Exception.h"
 #include "Shared/CloneEnv.h"
 #include "Lib/TObject.h"
-#include "Lib/Future.h"
+#include "Shared/Future.h"
 #include "Code/Instruction.h"
 #include "Code/VTable.h"
 #include "CodeGen.h"

@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Handle.h"
+#include "RefHandle.h"
 
 namespace storm {
 

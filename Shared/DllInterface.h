@@ -52,6 +52,9 @@ namespace storm {
 		typedef Type *(*ArrayType)(Engine &e, const ValueData &v);
 		ArrayType arrayType;
 
+		typedef Type *(*FutureType)(Engine &e, const ValueData &v);
+		FutureType futureType;
+
 		typedef bool (*ToSOverridden)(const Object *o);
 		ToSOverridden toSOverridden;
 

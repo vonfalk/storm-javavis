@@ -1,19 +1,16 @@
 #pragma once
 #include "Object.h"
-#include "Shared/Str.h"
 
 namespace storm {
-
 	STORM_PKG(core);
 
 	class Str;
-	class SStr;
 
 	/**
 	 * Mutable string buffer for building strings easily and efficiently.
 	 */
 	class StrBuf : public Object {
-		STORM_CLASS;
+		STORM_SHARED_CLASS;
 	public:
 		// Create.
 		STORM_CTOR StrBuf();
@@ -31,7 +28,6 @@ namespace storm {
 
 		// Append stuff.
 		virtual StrBuf *STORM_FN add(Par<Str> str);
-		virtual StrBuf *STORM_FN add(Par<SStr> str);
 		virtual StrBuf *STORM_FN add(Int i);
 		virtual StrBuf *STORM_FN add(Nat i);
 

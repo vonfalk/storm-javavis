@@ -10,7 +10,7 @@
 #include "OS/FnParams.h"
 #include "Code/VTable.h"
 #include "Shared/Str.h"
-#include "Lib/Future.h"
+#include "Shared/Future.h"
 #include "Lib/FnPtr.h"
 #include "Io/Url.h"
 
