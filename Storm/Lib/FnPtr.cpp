@@ -7,32 +7,94 @@
 
 namespace storm {
 
+	class RefTarget : public FnPtrBase::Target {
+	public:
+		RefTarget(const code::Ref &ref) : ref(ref) {}
+
+		code::Ref ref;
+
+		virtual void cloneTo(void *to, size_t size) const {
+			assert(size >= sizeof(RefTarget));
+			new (to) RefTarget(*this);
+		}
+
+		virtual const void *target() const {
+			return ref.address();
+		}
+
+		virtual void output(wostream &to) const {
+			to << ref.targetName();
+		}
+	};
+
 	FnPtrBase *FnPtrBase::createRaw(Type *type, void *refData,
 									Thread *t, Object *thisPtr,
 									bool strongThis, bool member) {
 		Engine &e = type->engine;
-		FnPtrBase *result = new (type) FnPtrBase(code::Ref::fromLea(e.arena, refData), t, member, thisPtr, strongThis);
+		RefTarget target(code::Ref::fromLea(e.arena, refData));
+		FnPtrBase *result = new (type) FnPtrBase(target, t, member, thisPtr, strongThis);
 		setVTable(result);
 		return result;
 	}
 
-	FnPtrBase::FnPtrBase(const code::Ref &ref, Par<Thread> thread, bool member, Object *thisPtr, bool strongThis) :
-		fnRef(ref),
-		rawFn(null),
+	FnPtrBase::Target::~Target() {}
+
+	RawTarget::RawTarget(const void *fn) : fn(fn) {}
+
+	void RawTarget::cloneTo(void *to, size_t size) const {
+		assert(size >= sizeof(RawTarget));
+		new (to) RawTarget(*this);
+	}
+
+	const void *RawTarget::target() const {
+		return fn;
+	}
+
+	void RawTarget::output(wostream &to) const {
+		to << L"<unknown @" << fn << L">";
+	}
+
+	FnPtrBase::FnPtrBase(const Target &target, Par<Thread> thread, bool member, Object *thisPtr, bool strongThis) :
 		thisPtr(thisPtr),
 		thread(thread),
 		strongThisPtr(strongThis),
 		isMember(member) {
+
+		target.cloneTo(targetData, targetSize);
 		init();
 	}
 
 	FnPtrBase::FnPtrBase(const void *fn, Object *thisPtr, bool strongThis) :
-		fnRef(),
-		rawFn(fn),
 		thisPtr(thisPtr),
+		thread(thread),
 		strongThisPtr(strongThis),
 		isMember(thisPtr != null) {
+
+		RawTarget(fn).cloneTo(targetData, targetSize);
 		init();
+	}
+
+	FnPtrBase::FnPtrBase(Par<FnPtrBase> o) :
+		thread(o->thread),
+		thisPtr(o->thisPtr),
+		strongThisPtr(o->strongThisPtr),
+		isMember(o->isMember) {
+
+		o->target()->cloneTo(targetData, targetSize);
+		if (strongThisPtr)
+			thisPtr->addRef();
+	}
+
+	FnPtrBase::~FnPtrBase() {
+		if (strongThisPtr)
+			thisPtr->release();
+
+		target()->~Target();
+	}
+
+	const FnPtrBase::Target *FnPtrBase::target() const {
+		const void *d = targetData;
+		return (const Target *)d;
 	}
 
 	void FnPtrBase::output(wostream &to) const {
@@ -47,11 +109,7 @@ namespace storm {
 			to << myType->params[0];
 
 		to << L": ";
-		if (fnRef == code::Ref()) {
-			to << L"<unknown> @" << toHex(rawFn);
-		} else {
-			to << fnRef.targetName();
-		}
+		target()->output(to);
 	}
 
 	void FnPtrBase::init() {
@@ -64,22 +122,6 @@ namespace storm {
 		if (thread == null)
 			if (TObject *t = as<TObject>(thisPtr))
 				thread = t->thread;
-	}
-
-	FnPtrBase::FnPtrBase(Par<FnPtrBase> o) :
-		fnRef(o->fnRef),
-		rawFn(o->rawFn),
-		thread(o->thread),
-		thisPtr(o->thisPtr),
-		strongThisPtr(o->strongThisPtr),
-		isMember(o->isMember) {
-		if (strongThisPtr)
-			thisPtr->addRef();
-	}
-
-	FnPtrBase::~FnPtrBase() {
-		if (strongThisPtr)
-			thisPtr->release();
 	}
 
 	void FnPtrBase::deepCopy(Par<CloneEnv> env) {
@@ -131,9 +173,7 @@ namespace storm {
 	}
 
 	void FnPtrBase::callRaw(void *out, const BasicTypeInfo &type, const os::FnParams &params, TObject *first) const {
-		const void *toCall = rawFn;
-		if (toCall == null)
-			toCall = fnRef.address();
+		const void *toCall = target()->target();
 
 		Thread *thread = runOn(first);
 

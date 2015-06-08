@@ -39,12 +39,30 @@ namespace storm {
 	class FnPtrBase : public Object {
 		STORM_CLASS;
 	public:
-		// Create. 'thisPtr' may be null.
-		FnPtrBase(const code::Ref &ref, Par<Thread> thread, bool member, Object *thisPtr = null, bool strong = false);
+		/**
+		 * Interface for the actual pointer representation (so that we do not have to expose code::Ref to everyone).
+		 */
+		class Target {
+		public:
+			virtual ~Target();
 
-		// Create with C++ fn. If 'thisPtr' is set, 'fn' is assumed to be a member function. This is a restriction
-		// in the C++ api, since there is no other way of knowing.
-		FnPtrBase(const void *fn, Object *thisPtr = null, bool strongThis = false);
+			// Copy to memory location. Size is used to check.
+			virtual void cloneTo(void *to, size_t size) const = 0;
+
+			// Get the target function.
+			virtual const void *target() const = 0;
+
+			// Output.
+			virtual void output(wostream &to) const = 0;
+		};
+
+
+		// Create. 'thisPtr' may be null.
+		FnPtrBase(const Target &target, Par<Thread> thread, bool member, Object *thisPtr = null, bool strong = false);
+
+		// Alternative ctor. Intended for use with C++-functions. Tries to guess 'thread' and 'member' by looking at
+		// the 'thisPtr'. If 'thisPtr' != null, we assume this is a member functions.
+		FnPtrBase(const void *fn, Object *thisPtr, bool strong);
 
 		// Copy.
 		STORM_CTOR FnPtrBase(Par<FnPtrBase> o);
@@ -87,11 +105,14 @@ namespace storm {
 		bool needsCopy(TObject *first) const;
 
 	protected:
-		// Function to call.
-		code::Ref fnRef;
+		// Max size of the FnPtrTarget.
+		static const nat targetSize = 3 * sizeof(void *);
 
-		// Raw function pointer (if fnRef points to nothing).
-		const void *rawFn;
+		// Data for the FnPtrTarget.
+		byte targetData[targetSize];
+
+		// Get the target ptr.
+		const Target *target() const;
 
 		// The thread the function should be executed on. If 'thisPtr' is null, there may be
 		// a thread anyway, but that will not be known until we see the first parameter.
@@ -113,6 +134,20 @@ namespace storm {
 		Thread *runOn(TObject *first) const;
 
 		// Output.
+		virtual void output(wostream &to) const;
+	};
+
+	/**
+	 * Raw fn-ptr target implementation.
+	 */
+	class RawTarget : public FnPtrBase::Target {
+	public:
+		RawTarget(const void *fn);
+
+		const void *fn;
+
+		virtual void cloneTo(void *to, size_t size) const;
+		virtual const void *target() const;
 		virtual void output(wostream &to) const;
 	};
 
