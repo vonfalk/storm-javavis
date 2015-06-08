@@ -5,7 +5,7 @@
 #include "AsmWrap.h"
 #include "Std.h"
 #include "CodeGenFwd.h"
-#include "Lib/TObject.h"
+#include "Shared/TObject.h"
 #include "Lib/FnPtr.h"
 
 namespace storm {

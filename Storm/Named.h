@@ -1,6 +1,6 @@
 #pragma once
 #include "Lib/Object.h"
-#include "Lib/TObject.h"
+#include "Shared/TObject.h"
 #include "Shared/Array.h"
 #include "Thread.h"
 #include "Name.h"

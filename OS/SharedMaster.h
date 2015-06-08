@@ -1,4 +1,11 @@
-#include "stdafx.h"
+#pragma once
+
+/**
+ * This file should be included once from a project. It implements the shared variables needed
+ * for this project, but beware that if you use dynamic linking, these variables may not be unique!
+ */
+
+
 #include "OS/Shared.h"
 #include <process.h>
 
@@ -52,8 +59,8 @@ namespace os {
 
 #else
 
-	static void threadCreated() {}
-	static void threadTerminated() {}
+	void threadCreated() {}
+	void threadTerminated() {}
 
 #endif
 

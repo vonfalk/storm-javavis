@@ -8,7 +8,7 @@
 #include "TypeCtor.h"
 #include "TypeDtor.h"
 #include "Shared/CloneEnv.h"
-#include "Lib/TObject.h"
+#include "Shared/TObject.h"
 
 namespace storm {
 

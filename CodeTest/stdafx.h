@@ -28,6 +28,7 @@
 
 using namespace std;
 using namespace code;
+using namespace os;
 
 // Test code!
 #include "Test/Test.h"
@@ -35,3 +36,4 @@ using namespace code;
 // Call function, checking extra registers.
 int callFn(const void *fnPtr, int p);
 int64 callFn(const void *fnPtr, int64 p);
+

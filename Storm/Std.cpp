@@ -4,7 +4,7 @@
 #include "Lib/Int.h"
 #include "Lib/Bool.h"
 #include "Lib/Object.h"
-#include "Lib/TObject.h"
+#include "Shared/TObject.h"
 #include "Lib/ArrayTemplate.h"
 #include "Lib/FutureTemplate.h"
 #include "Lib/FnPtrTemplate.h"

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
-#include "Code/Thread.h"
-#include "Code/Future.h"
+#include "OS/Thread.h"
+#include "OS/Future.h"
 
 static void error() {
 	throw UserError(L"ERROR");

@@ -2,7 +2,7 @@
 #include "Utils/Function.h"
 #include "Code/Listing.h"
 #include "Shared/Auto.h"
-#include "Lib/TObject.h"
+#include "Shared/TObject.h"
 #include "Thread.h"
 
 namespace storm {

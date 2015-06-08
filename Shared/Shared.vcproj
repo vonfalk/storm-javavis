@@ -206,6 +206,14 @@
 				RelativePath=".\StrBuf.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -286,6 +294,18 @@
 			</File>
 			<File
 				RelativePath=".\StrBuf.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TObject.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.cpp"
 				>
 			</File>
 		</Filter>

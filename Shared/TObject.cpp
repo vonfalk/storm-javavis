@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "TObject.h"
-#include "Thread.h"
 
 namespace storm {
 

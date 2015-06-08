@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "FnPtr.h"
-#include "TObject.h"
+#include "Shared/TObject.h"
 #include "OS/Future.h"
 #include "Type.h"
 #include "Engine.h"

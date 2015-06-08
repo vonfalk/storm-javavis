@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Utils/Semaphore.h"
-#include "Code/Thread.h"
-#include "Code/UThread.h"
-#include "Code/Sync.h"
+#include "OS/Thread.h"
+#include "OS/UThread.h"
+#include "OS/Sync.h"
 #include "Tracker.h"
 
 static void returnVoid(bool error) {

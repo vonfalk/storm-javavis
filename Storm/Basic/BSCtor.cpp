@@ -5,7 +5,7 @@
 #include "BSNamed.h"
 #include "BSClass.h"
 #include "BSAutocast.h"
-#include "Lib/TObject.h"
+#include "Shared/TObject.h"
 
 namespace storm {
 

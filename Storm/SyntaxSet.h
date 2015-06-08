@@ -1,6 +1,6 @@
 #pragma once
 #include "Name.h"
-#include "Lib/TObject.h"
+#include "Shared/TObject.h"
 #include "Thread.h"
 
 namespace storm {

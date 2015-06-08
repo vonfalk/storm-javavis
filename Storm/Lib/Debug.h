@@ -1,6 +1,6 @@
 #pragma once
 #include "Object.h"
-#include "TObject.h"
+#include "Shared/TObject.h"
 #include "Int.h"
 #include "OS/Sync.h"
 

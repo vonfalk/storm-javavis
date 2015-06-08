@@ -3,7 +3,7 @@
 #include "Exception.h"
 #include "Engine.h"
 #include "Lib/Object.h"
-#include "Lib/TObject.h"
+#include "Shared/TObject.h"
 #include "Shared/CloneEnv.h"
 #include "Std.h"
 #include "Package.h"

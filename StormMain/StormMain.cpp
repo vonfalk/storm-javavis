@@ -13,7 +13,7 @@ using namespace storm;
 
 // Read that is not locking up the compiler loop. Should be implemeted better when there
 // is "real" IO in storm!
-static code::Thread *ioThread = null;
+static os::Thread *ioThread = null;
 
 void ioThreadMain() {
 	// We use 'uThreads' to synchronize this!
@@ -38,15 +38,15 @@ void stopIo() {
 void startIo() {
 	if (ioThread)
 		return;
-	ioThread = new code::Thread(code::Thread::spawn(simpleVoidFn(&ioThreadMain)));
+	ioThread = new os::Thread(os::Thread::spawn(simpleVoidFn(&ioThreadMain)));
 }
 
 bool readLine(String &to) {
 	startIo();
-	code::Future<bool> fut;
-	code::FnParams p;
+	os::Future<bool> fut;
+	os::FnParams p;
 	p.add(&to);
-	code::UThread::spawn(&ioRead, false, p, fut, ioThread);
+	os::UThread::spawn(&ioRead, false, p, fut, ioThread);
 	return fut.result();
 }
 
@@ -75,7 +75,7 @@ int launchMainLoop(Engine &engine, const String &lang) {
 		return 1;
 	}
 
-	Auto<LangRepl> repl = create<LangRepl>(replCtor, code::FnParams());
+	Auto<LangRepl> repl = create<LangRepl>(replCtor, os::FnParams());
 
 	Auto<Str> line;
 	while (!repl->exit()) {
@@ -103,7 +103,7 @@ int launchMainLoop(Engine &engine, const String &lang) {
 	}
 
 	// Allow all our UThreads to exit.
-	while (code::UThread::leave());
+	while (os::UThread::leave());
 
 	return 0;
 }

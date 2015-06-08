@@ -1,6 +1,6 @@
 #pragma once
 #include "Object.h"
-#include "TObject.h"
+#include "Shared/TObject.h"
 #include "Shared/CloneEnv.h"
 #include "Storm/Value.h"
 #include "Storm/Thread.h"

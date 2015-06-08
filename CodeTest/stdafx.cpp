@@ -68,3 +68,5 @@ int64 callFn(const void *fnPtr, int64 p) {
 	nat64 r = (nat64(rvh) << 32) | nat64(rvl);
 	return r;
 }
+
+#include "OS/SharedMaster.h"

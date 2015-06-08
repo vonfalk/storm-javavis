@@ -1,7 +1,7 @@
 #pragma once
 #include "Name.h"
 #include "Lib/Object.h"
-#include "Lib/TObject.h"
+#include "Shared/TObject.h"
 #include "NamedThread.h"
 #include "Io/Url.h"
 

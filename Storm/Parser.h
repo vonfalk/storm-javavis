@@ -5,7 +5,7 @@
 #include "SyntaxOption.h"
 #include "SyntaxNode.h"
 #include "Exception.h"
-#include "Lib/TObject.h"
+#include "Shared/TObject.h"
 #include "Utils/PreArray.h"
 
 namespace storm {
