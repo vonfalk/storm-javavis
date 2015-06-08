@@ -31,10 +31,10 @@ namespace storm {
 	Object::unsafe noTypeAlloc(Engine &e, size_t size);
 
 	// Create an object using the supplied constructor.
-	Object *createObj(Type *type, const void *ctor, code::FnParams params);
-	Object *createObj(Function *ctor, code::FnParams params);
+	Object *createObj(Type *type, const void *ctor, os::FnParams params);
+	Object *createObj(Function *ctor, os::FnParams params);
 	template <class T>
-	inline T *create(Function *ctor, const code::FnParams &params) {
+	inline T *create(Function *ctor, const os::FnParams &params) {
 		return (T *)createObj(ctor, params);
 	}
 

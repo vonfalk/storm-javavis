@@ -4,9 +4,7 @@
 #include "Utils/Condition.h"
 #include "UThread.h"
 
-namespace code {
-
-	class UThreadState;
+namespace os {
 
 	// Internal data.
 	class ThreadData;

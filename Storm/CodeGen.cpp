@@ -218,7 +218,7 @@ namespace storm {
 
 		Engine &e = s->engine();
 		Variable v = s->frame.createVariable(s->block.v,
-											FnParams::classSize(),
+											fnParamsSize(),
 											e.fnRefs.fnParamsDtor,
 											freeOnBoth | freePtr);
 		// Call the ctor!
@@ -233,7 +233,7 @@ namespace storm {
 	wrap::Variable createFnParams(Par<CodeGen> s, Nat params) {
 		using namespace code;
 		// Allocate space for the parameters on the stack.
-		Size total = FnParams::paramSize() * params;
+		Size total = fnParamSize() * params;
 		Variable v = s->frame.createVariable(s->block.v, total);
 		s->to << lea(ptrA, v);
 

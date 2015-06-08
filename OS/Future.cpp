@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Future.h"
 
-namespace code {
+namespace os {
 
 	FutureBase::FutureBase(void *target) : target(target), resultPosted(0) {}
 

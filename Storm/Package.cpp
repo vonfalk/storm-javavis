@@ -183,7 +183,7 @@ namespace storm {
 		if (!ctor)
 			throw RuntimeError(::toS(rName) + L": no constructor taking PkgFiles found!");
 
-		code::FnParams params;
+		os::FnParams params;
 		params.add(files.borrow());
 		params.add(this);
 		PkgReader *r = create<PkgReader>(ctor, params);

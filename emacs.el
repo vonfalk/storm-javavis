@@ -274,9 +274,8 @@
 
 (defun namespace-name ()
   (let ((name (downcase (subproject buffer-file-name))))
-    (if (string-equal name "shared")
-	"storm"
-      name)))
+    (cond ((string-equal name "shared") "storm")
+	  (t name))))
 
 (defun insert-namespace ()
   (insert "namespace ")
@@ -335,7 +334,7 @@
 
 (defun delete-proj-file ()
   (interactive)
-  (if (yes-or-no-p "Really delete?")
+  (if (yes-or-no-p "Really delete? ")
       (progn
 	(remove-file-project buffer-file-name)
 	(delete-file buffer-file-name)

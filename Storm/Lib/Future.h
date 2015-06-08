@@ -2,8 +2,8 @@
 #include "Object.h"
 #include "Handle.h"
 #include "Storm/Value.h"
-#include "Code/Future.h"
-#include "Code/Sync.h"
+#include "OS/Future.h"
+#include "OS/Sync.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -45,12 +45,12 @@ namespace storm {
 		// Get the underlying future object. Note: when you call this function,
 		// you are required to call either postRaw or error on the future object, otherwise
 		// we will leak resources!
-		code::FutureBase *rawFuture();
+		os::FutureBase *rawFuture();
 
 	private:
 		// Custom extension of the 'FutureSema' object, so that we may get a notification when a
 		// result has been posted.
-		class FutureSema : public code::FutureSema<Sema> {
+		class FutureSema : public os::FutureSema<Sema> {
 		public:
 			// Ctor.
 			FutureSema(void *data);

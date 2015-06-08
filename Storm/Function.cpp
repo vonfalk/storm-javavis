@@ -181,17 +181,17 @@ namespace storm {
 		}
 	}
 
-	void spawnThreadResult(const void *fn, bool member, const code::FnParams *params, void *result,
-						BasicTypeInfo *resultType, Thread *on, code::UThreadData *data) {
-		code::FutureSema<code::Sema> future(result);
-		code::UThread::spawn(fn, member, *params, future, *resultType, &on->thread, data);
+	void spawnThreadResult(const void *fn, bool member, const os::FnParams *params, void *result,
+						BasicTypeInfo *resultType, Thread *on, os::UThreadData *data) {
+		os::FutureSema<os::Sema> future(result);
+		os::UThread::spawn(fn, member, *params, future, *resultType, &on->thread, data);
 		future.result();
 	}
 
-	void spawnThreadFuture(const void *fn, bool member, const code::FnParams *params, FutureBase *result,
-								BasicTypeInfo *resultType, Thread *on, code::UThreadData *data) {
-		code::FutureBase *future = result->rawFuture();
-		code::UThread::spawn(fn, member, *params, *future, *resultType, &on->thread, data);
+	void spawnThreadFuture(const void *fn, bool member, const os::FnParams *params, FutureBase *result,
+								BasicTypeInfo *resultType, Thread *on, os::UThreadData *data) {
+		os::FutureBase *future = result->rawFuture();
+		os::UThread::spawn(fn, member, *params, *future, *resultType, &on->thread, data);
 	}
 
 	Function::PrepareResult Function::prepareThreadCall(Par<CodeGen> to, const Actuals &params) {

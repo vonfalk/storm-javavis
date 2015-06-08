@@ -26,7 +26,7 @@ T runFn(const String &fn, Int p) {
 	void *ptr = fun->pointer();
 	if (!ptr)
 		throw TestError(L"Function " + ::toS(fName) + L" did not return any code.");
-	return fun->call<T>(code::FnParams().add(p));
+	return fun->call<T>(os::FnParams().add(p));
 }
 
 template <class T, class ParT>
@@ -41,7 +41,7 @@ T runFn(const String &fn, const ParT &par) {
 	if (!ptr)
 		throw TestError(L"Function " + ::toS(fName) + L" did not return any code.");
 
-	return fun->call<T>(code::FnParams().add(par));
+	return fun->call<T>(os::FnParams().add(par));
 }
 
 template <class T, class ParT, class ParU>
@@ -59,7 +59,7 @@ T runFn(const String &fn, const ParT &par, const ParU &qar) {
 	if (!ptr)
 		throw TestError(L"Function " + ::toS(fName) + L" did not return any code.");
 
-	return fun->call<T>(code::FnParams().add(par).add(qar));
+	return fun->call<T>(os::FnParams().add(par).add(qar));
 }
 
 inline Int runFn(const String &fn) {

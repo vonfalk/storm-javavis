@@ -6,7 +6,7 @@
 #include <tchar.h>
 
 #include "Utils/Utils.h"
-#include "Shared/Storm.h"
+#include "Storm/Storm.h"
 #include "Storm/Exception.h"
 #include "Storm/Engine.h"
 #include "Storm/Std.h"

@@ -1,9 +1,10 @@
 #include "stdafx.h"
 #include "Thread.h"
 #include "UThread.h"
+#include "Shared.h"
 #include <process.h>
 
-namespace code {
+namespace os {
 
 	// Data to a started thread.
 	class ThreadStart {
@@ -33,9 +34,6 @@ namespace code {
 
 	// This one is system-specific
 	static void startThread(ThreadStart &start);
-
-	// This is 'null' for the first thread that is not spawned through 'startThread'.
-	static THREAD ThreadData *currThreadData = 0;
 
 	/**
 	 * Thread data.
@@ -82,8 +80,9 @@ namespace code {
 
 
 	Thread Thread::current() {
-		if (currThreadData)
-			return Thread(currThreadData);
+		ThreadData *t = currentThreadData();
+		if (t)
+			return Thread(t);
 
 		// The first thread, create its data...
 		static ThreadData firstData;
@@ -100,43 +99,13 @@ namespace code {
 		return Thread(start.data);
 	}
 
-#ifdef DEBUG
-	/**
-	 * Ensure that all threads have exited in debug builds!
-	 */
-	static nat aliveThreads = 0;
-
-	static void checkThreads() {
-		assert(aliveThreads == 0, L"Some threads have not terminated before process exit!");
-	}
-
-	static void threadStarted() {
-		static bool first = true;
-		if (first) {
-			atexit(&checkThreads);
-			first = false;
-		}
-		aliveThreads++;
-	}
-
-	static void threadTerminated() {
-		aliveThreads--;
-	}
-
-#else
-
-	static void threadStarted() {}
-	static void threadTerminated() {}
-
-#endif
-
 	void Thread::threadMain(ThreadStart &start) {
 		ThreadData d;
 
-		threadStarted();
+		threadCreated();
 
 		d.addRef();
-		currThreadData = &d;
+		currentThreadData(&d);
 		start.data = &d;
 		Fn<void, void> fn = start.startFn;
 
@@ -169,7 +138,7 @@ namespace code {
 		}
 
 		// Failsafe for the currThreadData.
-		currThreadData = null;
+		currentThreadData(null);
 
 		threadTerminated();
 	}

@@ -93,7 +93,7 @@ namespace storm {
 	}
 
 	Str *valArrayToSAdd(ArrayBase *array, const void *fn) {
-		byte buffer[2 * code::FnParams::elemSize];
+		byte buffer[2 * os::FnParams::elemSize];
 		Auto<StrBuf> r = CREATE(StrBuf, array);
 		const Handle &handle = array->handle;
 		r->add(L"[");
@@ -102,10 +102,10 @@ namespace storm {
 			if (i != 0)
 				r->add(L", ");
 			void *elem = array->atRaw(i);
-			code::FnParams params(buffer);
+			os::FnParams params(buffer);
 			params.add(r.borrow());
 			params.add(handle.create, handle.destroy, handle.size, elem);
-			Auto<StrBuf> t = code::call<StrBuf *>(fn, true, params);
+			Auto<StrBuf> t = os::call<StrBuf *>(fn, true, params);
 		}
 
 		r->add(L"]");

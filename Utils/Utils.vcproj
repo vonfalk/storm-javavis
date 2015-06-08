@@ -549,6 +549,10 @@
 				RelativePath=".\PrePODArray.h"
 				>
 			</File>
+			<File
+				RelativePath=".\Windows.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

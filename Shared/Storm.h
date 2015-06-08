@@ -111,7 +111,7 @@ private:
 	}														\
 	storm::DeclThread name::v;
 
-namespace code {
+namespace os {
 	class Lock;
 	class Sema;
 }
@@ -122,10 +122,8 @@ namespace storm {
 	class Thread;
 	class Type;
 
-	using code::Size;
-	using code::Offset;
-	using code::Lock;
-	using code::Sema;
+	using os::Lock;
+	using os::Sema;
 
 	/**
 	 * Class used when declaring named threads from C++.

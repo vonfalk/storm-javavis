@@ -2,7 +2,7 @@
 #include "Object.h"
 #include "TObject.h"
 #include "Int.h"
-#include "Code/Sync.h"
+#include "OS/Sync.h"
 
 namespace storm {
 	STORM_PKG(core.debug);

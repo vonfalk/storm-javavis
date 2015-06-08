@@ -25,7 +25,7 @@ namespace storm {
 		return me->needsCopy(first);
 	}
 
-	void CODECALL fnPtrCallRaw(FnPtrBase *b, void *output, BasicTypeInfo *type, code::FnParams *params, TObject *first) {
+	void CODECALL fnPtrCallRaw(FnPtrBase *b, void *output, BasicTypeInfo *type, os::FnParams *params, TObject *first) {
 		return b->callRaw(output, *type, *params, first);
 	}
 

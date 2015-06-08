@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "FnCall.h"
 
-namespace code {
+namespace os {
 
 #ifdef X86
 

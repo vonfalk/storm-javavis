@@ -1,6 +1,6 @@
 #pragma once
 
-namespace code {
+namespace os {
 
 	/**
 	 * A singly linked list that is placed inline in the

@@ -2,7 +2,7 @@
 #include "UThread.h"
 #include "Utils/Lock.h"
 
-namespace code {
+namespace os {
 
 	class UThread;
 	class UThreadData;

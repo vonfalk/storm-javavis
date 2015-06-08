@@ -3,7 +3,7 @@
 #include "Thread.h"
 #include "UThread.h"
 
-namespace code {
+namespace os {
 
 	Sema::Sema(nat count) : count(count) {}
 

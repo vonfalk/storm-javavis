@@ -6,8 +6,8 @@
 #include "Wrap.h"
 #include "VTable.h"
 #include "Type.h"
-#include "Code/UThread.h"
-#include "Code/FnParams.h"
+#include "OS/UThread.h"
+#include "OS/FnParams.h"
 #include "Code/VTable.h"
 #include "Shared/Str.h"
 #include "Lib/Future.h"
@@ -51,9 +51,9 @@ namespace storm {
 		createStrFn.setPtr(address(&Str::createStr));
 		asFn.setPtr(address(&objectAs));
 
-		spawnLater.setPtr(address(&code::UThread::spawnLater));
-		spawnParam.setPtr(address(&code::UThread::spawnParamMem));
-		abortSpawn.setPtr(address(&code::UThread::abortSpawn));
+		spawnLater.setPtr(address(&os::UThread::spawnLater));
+		spawnParam.setPtr(address(&os::UThread::spawnParamMem));
+		abortSpawn.setPtr(address(&os::UThread::abortSpawn));
 
 		spawnResult.setPtr(address(&storm::spawnThreadResult));
 		spawnFuture.setPtr(address(&storm::spawnThreadFuture));
@@ -87,7 +87,7 @@ namespace storm {
 		// a valid pointer that we will initialize later...
 		Auto<Thread> compilerThread;
 		if (mode == reuseMain) {
-			compilerThread = CREATE_NOTYPE(Thread, *this, code::Thread::current());
+			compilerThread = CREATE_NOTYPE(Thread, *this, os::Thread::current());
 		} else {
 			compilerThread = CREATE_NOTYPE(Thread, *this);
 		}

@@ -558,6 +558,10 @@
 				RelativePath=".\BuiltInLoader.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\OsShared.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -946,6 +950,14 @@
 			</File>
 			<File
 				RelativePath=".\BuiltInLoader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OsShared.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Storm.h"
 				>
 			</File>
 		</Filter>

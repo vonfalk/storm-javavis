@@ -74,7 +74,7 @@ namespace storm {
 			throw SyntaxTypeError(option->pos, L"Only objects are supported in the syntax. "
 								+ ::toS(f->result) + L" is a value or a built-in type.");
 
-		code::FnParams params;
+		os::FnParams params;
 		for (nat i = 0; i < p.size(); i++)
 			p[i]->add(params);
 		return new ActualObject(f->call<Object *>(params), option->pos);
@@ -93,7 +93,7 @@ namespace storm {
 		if (!ctor)
 			return Auto<ActualBase>(null);
 
-		code::FnParams params;
+		os::FnParams params;
 		for (nat i = 0; i < p.size(); i++)
 			p[i]->add(params);
 
@@ -122,7 +122,7 @@ namespace storm {
 		types[1] = param->type();
 
 		if (Function *f = as<Function>(t->findCpp(name, types))) {
-			code::FnParams call;
+			os::FnParams call;
 			me->add(call);
 			param->add(call);
 

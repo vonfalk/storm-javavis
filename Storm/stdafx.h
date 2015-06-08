@@ -7,12 +7,8 @@
 
 #include "targetver.h"
 
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-
-#include <windows.h>
-
 // Indicate we're the compiler!
 #define STORM_COMPILER
 #include "Utils/Utils.h"
 #include "Code/Code.h"
-#include "Shared/Storm.h"
+#include "Storm.h"

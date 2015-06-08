@@ -293,14 +293,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Sync.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\X86\Transform64.cpp"
 				>
 			</File>
@@ -317,10 +309,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\UThread.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Value.cpp"
 				>
 			</File>
@@ -333,23 +321,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FnParams.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Future.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FnCall.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Exception.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Memory.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FnParams.cpp"
 				>
 			</File>
 		</Filter>
@@ -396,10 +376,6 @@
 			</File>
 			<File
 				RelativePath=".\Frame.h"
-				>
-			</File>
-			<File
-				RelativePath=".\InlineList.h"
 				>
 			</File>
 			<File
@@ -471,19 +447,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Sync.h"
-				>
-			</File>
-			<File
 				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.h"
 				>
 			</File>
 			<File
@@ -503,10 +467,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\UThread.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Value.h"
 				>
 			</File>
@@ -523,15 +483,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Future.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FnCall.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Memory.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Codecall.h"
 				>
 			</File>
 		</Filter>

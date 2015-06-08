@@ -1,11 +1,6 @@
 #pragma once
-
 #include "Utils/Utils.h"
 #include "Utils/Platform.h"
-
-// Use standalone stack walking (ie no external libraries). This will not
-// always work well for optimized code. On windows, the default is to use the DbgHelp library.
-// #define STANDALONE_STACKWALK
 
 // This file defines some common types in the asm generator, such as word-sized types.
 // Defines one of the following symbols:
@@ -34,32 +29,16 @@
 // THREAD, eg. THREAD int foo;
 // Beware, this is not respected for UThread threads!
 
-// Checks that something is defined!
+// Make sure the current CPU architecture is supported.
 #if !defined(X86) && !defined(X64)
-#error "Unsupported architecture, currently supported are x86 and amd-64"
+#error "Unsupported architecture, currently only x86 and x86-64 are supported."
 #endif
 
 #if !defined(WINDOWS) && !defined(LINUX) && !defined(POSIX)
-#error "Unknown OS, currently known are Windows and Linux"
+#error "Unknown OS, currently known are Windows and Linux."
 #endif
 
 #ifdef WINDOWS
-
-#include <Windows.h>
-
-// Sometimes it re-defines "small" to "char", no good!
-#ifdef small
-#undef small
-#endif
-
-// We need to remove min and max macros...
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
-
 #define SEH
 
 namespace code {
@@ -75,22 +54,15 @@ namespace code {
 	typedef long long int Long;
 	typedef unsigned long long int Word;
 
-#define CODECALL __cdecl
-
 }
 
 #else
 
-#error "Unsupported system!";
+#error "Unsupported system!"
 
 #endif
 
-#ifndef CODECALL
-#error "someone forgot to declare CODECALL for your architecture"
-#endif
-
-#include "Code/Size.h"
+#include "Codecall.h"
 #include "Utils/Printable.h"
-#include "Utils/Memory.h" // OFFSET_OF, BASE_PTR
-
-
+#include "Utils/Memory.h"
+#include "Code/Size.h"

@@ -10,7 +10,7 @@
 #include <stdexcept>
 #endif
 
-namespace code {
+namespace os {
 #ifdef CUSTOM_EXCEPTION_PTR
 	struct CppExceptionType;
 #endif
@@ -138,7 +138,7 @@ namespace code {
 	 * if neccessary.
 	 * This class assumes that you will call 'result' at least once.
 	 */
-	template <class T, class Sema = code::Sema>
+	template <class T, class Sema = os::Sema>
 	class Future : NoCopy {
 	public:
 		// Create.

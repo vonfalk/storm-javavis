@@ -12,14 +12,14 @@ namespace storm {
 	}
 
 	void fnParamsCtor(void *memory, void *ptr) {
-		new (memory) code::FnParams(ptr);
+		new (memory) os::FnParams(ptr);
 	}
 
-	void fnParamsDtor(code::FnParams *obj) {
+	void fnParamsDtor(os::FnParams *obj) {
 		obj->~FnParams();
 	}
 
-	void fnParamsAdd(code::FnParams *obj, code::FnParams::CopyFn copy, code::FnParams::DestroyFn destroy,
+	void fnParamsAdd(os::FnParams *obj, os::FnParams::CopyFn copy, os::FnParams::DestroyFn destroy,
 					nat size, const void *value) {
 		obj->add(copy, destroy, size, value);
 	}

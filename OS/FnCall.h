@@ -2,7 +2,7 @@
 #include "FnParams.h"
 #include "Utils/Templates.h"
 
-namespace code {
+namespace os {
 
 	/**
 	 * Helpers for calling functions in various non-standard ways.
@@ -34,7 +34,7 @@ namespace code {
 	// Specific void implementation
 	template <>
 	inline void call(const void *fn, bool memberFn, const FnParams &params) {
-		code::call(fn, memberFn, params, null, typeInfo<void>());
+		os::call(fn, memberFn, params, null, typeInfo<void>());
 	}
 
 	// Reference function call.

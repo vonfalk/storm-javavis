@@ -85,4 +85,33 @@ namespace storm {
 
 }
 
+namespace os {
+	using namespace storm;
+
+	ThreadData *currentThreadData() {
+		return (*interface->osFns.getThreadData)();
+	}
+
+	void currentThreadData(ThreadData *data) {
+		(*interface->osFns.setThreadData)(data);
+	}
+
+	UThreadState *currentUThreadState() {
+		return (*interface->osFns.getUThreadState)();
+	}
+
+	void currentUThreadState(UThreadState *state) {
+		(*interface->osFns.setUThreadState)(state);
+	}
+
+	void threadCreated() {
+		(*interface->osFns.threadCreated)();
+	}
+
+	void threadTerminated() {
+		(*interface->osFns.threadTerminated)();
+	}
+
+}
+
 #endif

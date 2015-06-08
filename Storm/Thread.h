@@ -1,6 +1,6 @@
 #pragma once
 #include "Lib/Object.h"
-#include "Code/Thread.h"
+#include "OS/Thread.h"
 
 namespace storm {
 
@@ -33,13 +33,13 @@ namespace storm {
 		STORM_CTOR Thread(Thread *o);
 
 		// Create a thread and use a specific already existing code::Thread object.
-		Thread(code::Thread thread);
+		Thread(os::Thread thread);
 
 		// Destroy it. This does not enforce that the thread has actually terminated.
 		~Thread();
 
 		// Thread handle.
-		const code::Thread thread;
+		const os::Thread thread;
 
 	};
 

@@ -44,16 +44,16 @@ namespace storm {
 		}
 	}
 
-	code::FutureBase *FutureBase::rawFuture() {
+	os::FutureBase *FutureBase::rawFuture() {
 		if (atomicCAS(data->releaseOnResult, 0, 1) == 0)
 			data->addRef();
 		return &data->future;
 	}
 
-	FutureBase::FutureSema::FutureSema(void *data) : code::FutureSema<Sema>(data) {}
+	FutureBase::FutureSema::FutureSema(void *data) : os::FutureSema<Sema>(data) {}
 
 	void FutureBase::FutureSema::notify() {
-		code::FutureSema<Sema>::notify();
+		os::FutureSema<Sema>::notify();
 		Data::resultPosted(this);
 	}
 

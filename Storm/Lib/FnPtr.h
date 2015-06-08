@@ -66,7 +66,7 @@ namespace storm {
 		// and is used to decide if a thread call is to be made or not.
 		// Note: Does _not_ copy parameters if needed, but handles the return value.
 		template <class R>
-		R callRaw(const code::FnParams &params, TObject *first) const {
+		R callRaw(const os::FnParams &params, TObject *first) const {
 			byte d[sizeof(R)];
 			callRaw(d, typeInfo<R>(), params, first);
 			R *result = (R *)d;
@@ -81,7 +81,7 @@ namespace storm {
 		}
 
 		// Call function with a pointer to the return value.
-		void callRaw(void *output, const BasicTypeInfo &type, const code::FnParams &params, TObject *first) const;
+		void callRaw(void *output, const BasicTypeInfo &type, const os::FnParams &params, TObject *first) const;
 
 		// Do we need to copy the parameters? 'first' is the first parameter to the call, as a TObject.
 		bool needsCopy(TObject *first) const;
@@ -150,14 +150,14 @@ namespace storm {
 
 			if (needsCopy(first)) {
 				Auto<CloneEnv> env = CREATE(CloneEnv, engine());
-				code::FnParams params;
+				os::FnParams params;
 
 				ADD_COPY(params, P1, p1, env);
 				ADD_COPY(params, P2, p2, env);
 
 				return callRaw<R>(params, first);
 			} else {
-				code::FnParams params;
+				os::FnParams params;
 				params.add(p1);
 				params.add(p2);
 				return callRaw<R>(params, first);
@@ -179,13 +179,13 @@ namespace storm {
 
 			if (needsCopy(first)) {
 				Auto<CloneEnv> env = CREATE(CloneEnv, engine());
-				code::FnParams params;
+				os::FnParams params;
 
 				ADD_COPY(params, P1, p1, env);
 
 				return callRaw<R>(params, first);
 			} else {
-				code::FnParams params;
+				os::FnParams params;
 				params.add(p1);
 				return callRaw<R>(params, first);
 			}
@@ -201,7 +201,7 @@ namespace storm {
 		FnPtr(const void *r, Object *thisPtr, bool strongThis) : FnPtrBase(r, thisPtr, strongThis) {}
 
 		R call() {
-			return callRaw<R>(code::FnParams(), null);
+			return callRaw<R>(os::FnParams(), null);
 		}
 	};
 

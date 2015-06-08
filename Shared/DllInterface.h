@@ -1,5 +1,6 @@
 #pragma once
 #include "Value.h"
+#include "OS/Shared.h"
 
 namespace storm {
 
@@ -10,6 +11,8 @@ namespace storm {
 	 * Function pointers that makes up the interface between a master Engine and a slave Engine.
 	 */
 	struct DllInterface {
+		os::OsFns osFns;
+
 		typedef Type *(*BuiltIn)(Engine &e, void *data, nat id);
 		BuiltIn builtIn;
 

@@ -3,7 +3,7 @@
 #include "Type.h"
 #include "Function.h"
 #include "Shared/Str.h"
-#include "Code/Sync.h"
+#include "OS/Sync.h"
 #include "Code/VTable.h"
 #include "Code/Memory.h"
 #include "Engine.h"
@@ -182,7 +182,7 @@ namespace storm {
 	 * Convenience functions.
 	 */
 
-	Object *createObj(Function *ctor, code::FnParams params) {
+	Object *createObj(Function *ctor, os::FnParams params) {
 		assert(ctor->name == Type::CTOR, "Don't use create() with other functions than constructors.");
 		assert(ctor->params.size() == params.count() + 1,
 			"Wrong number of parameters to constructor! The first one is filled in automatically.");
@@ -190,14 +190,14 @@ namespace storm {
 		return createObj(type, ctor->pointer(), params);
 	}
 
-	Object *createObj(Type *type, const void *ctor, code::FnParams params) {
+	Object *createObj(Type *type, const void *ctor, os::FnParams params) {
 		assert(type->typeFlags & typeClass);
 
 		void *mem = Object::operator new(type->size().current(), type);
 
 		try {
 			params.addFirst(mem);
-			code::call<void>(ctor, false, params);
+			os::call<void>(ctor, false, params);
 		} catch (...) {
 			Object::operator delete(mem, type);
 			throw;
@@ -273,6 +273,7 @@ namespace storm {
 
 	DllInterface dllInterface() {
 		DllInterface i = {
+			os::osFns(),
 			null, // Set later.
 			null,
 			null,

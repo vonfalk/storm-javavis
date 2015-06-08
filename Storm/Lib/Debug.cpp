@@ -203,7 +203,7 @@ namespace storm {
 	}
 
 	void dbgYeild() {
-		code::UThread::leave();
+		os::UThread::leave();
 	}
 
 	Type *dbgTypeOf(Object *o) {

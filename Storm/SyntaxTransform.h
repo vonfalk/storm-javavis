@@ -41,7 +41,7 @@ namespace storm {
 		}
 
 		// Add to fnParams.
-		virtual void add(code::FnParams &to) const = 0;
+		virtual void add(os::FnParams &to) const = 0;
 
 		// Get the type.
 		virtual Value type() const = 0;
@@ -60,7 +60,7 @@ namespace storm {
 
 		Value t;
 
-		void add(code::FnParams &to) const {
+		void add(os::FnParams &to) const {
 			to.add(v);
 		}
 
@@ -76,7 +76,7 @@ namespace storm {
 
 		Auto<Object> v;
 
-		inline void add(code::FnParams &to) const {
+		inline void add(os::FnParams &to) const {
 			to.add<Object *>(v.borrow());
 		}
 

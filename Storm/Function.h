@@ -4,7 +4,7 @@
 #include "Thread.h"
 #include "NamedThread.h"
 #include "Utils/Bitmask.h"
-#include "Code/FnCall.h"
+#include "OS/FnCall.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -40,8 +40,8 @@ namespace storm {
 
 		// Easy call of functions. No support for references yet.
 		template <class Result>
-		inline Result call(const code::FnParams &params = code::FnParams()) {
-			return code::call<Result>(pointer(), isMember(), params);
+		inline Result call(const os::FnParams &params = os::FnParams()) {
+			return os::call<Result>(pointer(), isMember(), params);
 		}
 
 		// Get the code for this function. Do not assume it is static! Use

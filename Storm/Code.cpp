@@ -5,7 +5,7 @@
 #include "Engine.h"
 #include "CodeGen.h"
 #include "Code/Redirect.h"
-#include "Code/Future.h"
+#include "OS/Future.h"
 
 namespace storm {
 
@@ -100,11 +100,11 @@ namespace storm {
 		// TODO? Always allocate a new UThread? This will make sure the compiler
 		// always has a predictable amount of stack space in some causes, which could be beneficial.
 		Thread *cThread = Compiler::thread(c->engine());
-		if (cThread->thread != code::Thread::current()) {
+		if (cThread->thread != os::Thread::current()) {
 			// Note, we're blocking the calling thread entirely since we would otherwise
 			// possibly let other UThreads run where it was not expected!
-			code::Future<const void *, Semaphore> result;
-			code::UThread::spawn(&LazyCode::updateCodeLocal, true, code::FnParams().add(c), result, &cThread->thread);
+			os::Future<const void *, Semaphore> result;
+			os::UThread::spawn(&LazyCode::updateCodeLocal, true, os::FnParams().add(c), result, &cThread->thread);
 			return result.result();
 		} else {
 			return c->updateCodeLocal(c);

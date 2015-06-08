@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "FnPtr.h"
 #include "TObject.h"
-#include "Code/Future.h"
+#include "OS/Future.h"
 #include "Type.h"
 #include "Engine.h"
 
@@ -110,27 +110,27 @@ namespace storm {
 		Thread *t = runOn(first);
 		if (!t)
 			return false;
-		return t->thread != code::Thread::current();
+		return t->thread != os::Thread::current();
 	}
 
 	static void doCall(void *output, const BasicTypeInfo &type,
-					const code::FnParams &params, Par<Thread> thread,
+					const os::FnParams &params, Par<Thread> thread,
 					const void *toCall, bool member) {
 
 		bool spawn = false;
 		if (thread)
-			spawn = thread->thread != code::Thread::current();
+			spawn = thread->thread != os::Thread::current();
 
 		if (spawn) {
-			code::FutureSema<code::Sema> future(output);
-			code::UThread::spawn(toCall, member, params, future, type, &thread->thread);
+			os::FutureSema<os::Sema> future(output);
+			os::UThread::spawn(toCall, member, params, future, type, &thread->thread);
 			future.result();
 		} else {
-			code::call(toCall, member, params, output, type);
+			os::call(toCall, member, params, output, type);
 		}
 	}
 
-	void FnPtrBase::callRaw(void *out, const BasicTypeInfo &type, const code::FnParams &params, TObject *first) const {
+	void FnPtrBase::callRaw(void *out, const BasicTypeInfo &type, const os::FnParams &params, TObject *first) const {
 		const void *toCall = rawFn;
 		if (toCall == null)
 			toCall = fnRef.address();
@@ -145,7 +145,7 @@ namespace storm {
 			}
 
 			// TODO: In the case of a thread call, we can avoid this allocation.
-			code::FnParams p = params;
+			os::FnParams p = params;
 			p.addFirst(tPtr.borrow());
 
 			doCall(out, type, p, thread, toCall, isMember);

@@ -5,7 +5,7 @@
 #include "Utils/Lock.h"
 #include "Future.h"
 
-namespace code {
+namespace os {
 
 	class Thread;
 	class ThreadData;

@@ -2,11 +2,11 @@
 #include "UThread.h"
 #include "Thread.h"
 #include "FnCall.h"
+#include "Shared.h"
 #include "Utils/Math.h"
 #include "Utils/Lock.h"
 
-
-namespace code {
+namespace os {
 
 	/**
 	 * Forward declare machine specific functions at the bottom.
@@ -206,7 +206,7 @@ namespace code {
 
 	UThreadData *UThreadData::create() {
 		UThreadData *t = new UThreadData();
-		t->stackSize = code::stackSize;
+		t->stackSize = os::stackSize;
 		t->stackBase = allocStack(t->stackSize);
 		t->esp = initialEsp(t->stackBase, t->stackSize);
 		return t;
@@ -225,10 +225,8 @@ namespace code {
 	 * UThread state.
 	 */
 
-	static THREAD UThreadState *threadState = null;
-
 	UThreadState::UThreadState(ThreadData *owner) : owner(owner) {
-		threadState = this;
+		currentUThreadState(this);
 
 		running = UThreadData::createFirst();
 		running->owner = this;
@@ -238,7 +236,7 @@ namespace code {
 	}
 
 	UThreadState::~UThreadState() {
-		threadState = null;
+		currentUThreadState(null);
 		if (running) {
 			running->release();
 			atomicDecrement(aliveCount);
@@ -248,8 +246,9 @@ namespace code {
 	}
 
 	UThreadState *UThreadState::current() {
-		assert(threadState);
-		return threadState;
+		UThreadState *s = currentUThreadState();
+		assert(s);
+		return s;
 	}
 
 	bool UThreadState::any() {

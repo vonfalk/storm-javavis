@@ -1,5 +1,9 @@
 #pragma once
 
+// Use standalone stack walking (ie no external libraries). This will not
+// always work well for optimized code. On windows, the default is to use the DbgHelp library.
+// #define STANDALONE_STACKWALK
+
 #define _WIDEN(X) L ## X
 #define WIDEN(X) _WIDEN(X)
 
@@ -15,8 +19,8 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 
-#undef min
-#undef max
+// Include 'windows.h' if needed.
+#include "Windows.h"
 
 #include <algorithm>
 
