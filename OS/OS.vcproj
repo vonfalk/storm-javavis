@@ -233,10 +233,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Thread.cpp"
 				>
 			</File>
@@ -254,6 +250,10 @@
 			</File>
 			<File
 				RelativePath=".\SharedMaster.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Types.h"
 				>
 			</File>
 		</Filter>

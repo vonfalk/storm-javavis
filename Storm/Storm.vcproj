@@ -773,10 +773,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Template.h"
 				>
 			</File>

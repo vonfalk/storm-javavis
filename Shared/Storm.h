@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Code/Code.h"
+#include "Utils/Utils.h"
+#include "Code/Codecall.h"
 
 // Are we being compiled as a DLL or as the compiler?
 #if defined(STORM_LIB)

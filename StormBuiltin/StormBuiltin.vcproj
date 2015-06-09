@@ -247,10 +247,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Function.h"
 				>
 			</File>

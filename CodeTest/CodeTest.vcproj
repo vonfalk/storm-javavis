@@ -296,10 +296,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
 				RelativePath=".\TestShift.cpp"
 				>
 			</File>

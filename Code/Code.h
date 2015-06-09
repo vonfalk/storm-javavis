@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/Utils.h"
 #include "Utils/Platform.h"
+#include "OS/Types.h"
 
 // This file defines some common types in the asm generator, such as word-sized types.
 // Defines one of the following symbols:
@@ -28,7 +29,6 @@
 // Thread local storage:
 // THREAD, eg. THREAD int foo;
 // Beware, this is not respected for UThread threads!
-#include "OS/Types.h"
 
 // Make sure the current CPU architecture is supported.
 #if !defined(X86) && !defined(X64)

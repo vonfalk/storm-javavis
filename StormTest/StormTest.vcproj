@@ -297,10 +297,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ThreadTest.cpp"
 				>
 			</File>

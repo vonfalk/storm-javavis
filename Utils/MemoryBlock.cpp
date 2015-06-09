@@ -255,7 +255,7 @@ namespace memory {
 	// Compare
 	//////////////////////////////////////////////////////////////////////////
 
-	bool Block::Compare::operator ()(const Block *a, const Block *b) {
+	bool Block::Compare::operator ()(const Block *a, const Block *b) const {
 		if (a->largestFree() == b->largestFree()) return a->data < b->data;
 		return a->largestFree() < b->largestFree();
 	}

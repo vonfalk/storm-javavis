@@ -27,6 +27,10 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
+Move Memorymanager to Code?
+
+Move Code/Codecall somewhere else?
+
 Some kind of versioning scheme when connecting DLLS and the Storm executable is required.
 
 Rename Shared/ to Lib/ ?

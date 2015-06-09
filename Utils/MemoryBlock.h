@@ -24,7 +24,7 @@ namespace memory {
 
 		class Compare {
 		public:
-			bool operator ()(const Block *a, const Block *b);
+			bool operator ()(const Block *a, const Block *b) const;
 		};
 
 		friend std::wostream &operator <<(std::wostream &to, const Block &block);

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN // Exclude rarely-used stuff from Windows headers.
+#endif
+
 // Use standalone stack walking (ie no external libraries). This will not
 // always work well for optimized code. On windows, the default is to use the DbgHelp library.
 // #define STANDALONE_STACKWALK
@@ -14,7 +18,16 @@
 #define DEBUG
 #endif
 
+#ifdef DEBUG
+// We don't need iterator debugging, it's slow!
+#define _HAS_ITERATOR_DEBUGGING 0
+#endif
+
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(*x))
+
+#include <stdio.h>
+#include <tchar.h>
+#include "targetver.h"
 
 #define _USE_MATH_DEFINES
 #include <cmath>

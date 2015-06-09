@@ -2,6 +2,7 @@
 #include "Object.h"
 #include "Str.h"
 #include "Code/VTable.h"
+#include "Utils/Memory.h"
 
 namespace storm {
 

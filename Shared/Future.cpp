@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Future.h"
 #include "CloneEnv.h"
+#include "Utils/Memory.h"
 
 namespace storm {
 
