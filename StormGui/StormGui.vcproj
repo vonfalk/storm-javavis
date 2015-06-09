@@ -223,6 +223,10 @@
 				RelativePath=".\Lib\VTables.asm"
 				>
 			</File>
+			<File
+				RelativePath=".\Test.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -239,6 +243,10 @@
 			</File>
 			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Test.h"
 				>
 			</File>
 		</Filter>
