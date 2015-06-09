@@ -38,6 +38,10 @@ namespace storm {
 		return (LibData *)(*interface->getData)(*this, interface->data);
 	}
 
+	Thread *Engine::thread(uintptr_t id) {
+		return (*interface->getThread)(*this, id);
+	}
+
 	void *cppVTable(nat id) {
 		return (*interface->cppVTable)(interface->data, id);
 	}
@@ -140,6 +144,9 @@ namespace storm {
 	}
 #endif
 
+	Thread *DeclThread::thread(Engine &e) const {
+		return e.thread((uintptr_t)&dummy);
+	}
 }
 
 namespace os {

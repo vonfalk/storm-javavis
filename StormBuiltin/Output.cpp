@@ -421,7 +421,7 @@ String threadList(const vector<Thread> &threads) {
 
 		out << L"{ L\"" << t.pkg << L"\", ";
 		out << L"L\"" << t.name << L"\", ";
-		out << L"&" << t.cppName << "::v },\n";
+		out << L"&" << t.cppName << "::decl },\n";
 	}
 
 	return out.str();

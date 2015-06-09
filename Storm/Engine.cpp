@@ -91,7 +91,7 @@ namespace storm {
 		} else {
 			compilerThread = CREATE_NOTYPE(Thread, *this);
 		}
-		Compiler::force(*this, compilerThread.borrow());
+		Compiler::decl.force(*this, compilerThread.borrow());
 
 		// Create the standard types in the compiler (like Type, among others).
 		cached.resize(1);

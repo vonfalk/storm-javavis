@@ -47,24 +47,23 @@ namespace storm {
 		throw BuiltInError(L"Type " + String(val.name) + L" was not found.");
 	}
 
-	static Value findValue(const ValueRef &val, Engine &e) {
-		Scope &src = *e.scope();
-
+	static Value findValue(const Scope &scope, const ValueRef &val, Engine &e) {
 		if (val.options & ValueRef::fnPtr) {
 			vector<Value> params;
-			params.push_back(findInnerValue(src, val.result, e));
+			params.push_back(findInnerValue(scope, val.result, e));
 			for (nat i = 0; i < ValueRef::maxParams; i++)
 				if (val.params[i].name)
-					params.push_back(findInnerValue(src, val.params[i], e));
+					params.push_back(findInnerValue(scope, val.params[i], e));
 			return createValue(val, fnPtrType(e, params));
 		} else {
-			return findInnerValue(src, val, e);
+			return findInnerValue(scope, val, e);
 		}
 	}
 
 	// Create a type (or find it if it is referring to an external type).
 	static Type *createType(Engine &e, const BuiltInType &t) {
 		if (t.superMode == BuiltInType::superExternal) {
+			// External types have an absolute name!
 			Auto<Name> name = parseSimpleName(e, t.pkg);
 			name->add(steal(CREATE(NamePart, e, t.name)));
 			Type *t = as<Type>(e.scope()->find(name));
@@ -243,10 +242,11 @@ namespace storm {
 			params.push_back(Value::thisPtr(memberOf));
 		}
 
-		Value result = findValue(fn.result, e);
+		Scope scope(root);
+		Value result = findValue(scope, fn.result, e);
 
 		for (nat i = 0; i < fn.params.size(); i++)
-			params.push_back(findValue(fn.params[i], e));
+			params.push_back(findValue(scope, fn.params[i], e));
 
 		Auto<Function> r;
 		if (memberOf != null && fn.name == Type::DTOR) {
@@ -298,7 +298,7 @@ namespace storm {
 	}
 
 	void BuiltInLoader::addVar(const BuiltInVar &var, Type *into) {
-		Value type = findValue(var.type, e);
+		Value type = findValue(Scope(root), var.type, e);
 		Auto<TypeVarCpp> v = CREATE(TypeVarCpp, e, into, type, var.name, Offset(var.offset));
 		into->add(v);
 

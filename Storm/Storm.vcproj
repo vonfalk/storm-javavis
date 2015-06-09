@@ -351,10 +351,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Storm.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\StormVTable.cpp"
 				>
 			</File>

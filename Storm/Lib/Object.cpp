@@ -275,6 +275,9 @@ namespace storm {
 		return r;
 	}
 
+	static Thread *getThread(Engine &e, uintptr_t id) {
+		return e.thread(id);
+	}
 
 	DllInterface dllInterface() {
 		DllInterface i = {
@@ -283,6 +286,7 @@ namespace storm {
 			null,
 			null,
 			null,
+			&getThread,
 			&objectCreated,
 			&objectDestroyed,
 			&allocObject,

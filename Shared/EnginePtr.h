@@ -10,6 +10,9 @@ namespace storm {
 	 */
 	class EnginePtr {
 	public:
+		// Ctor, so that we can call EnginePtr functions from C++ as well.
+		inline EnginePtr(Engine &e) : v(e) {}
+
 		// The engine itself.
 		Engine &v;
 

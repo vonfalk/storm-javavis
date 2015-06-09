@@ -8,3 +8,9 @@
 #include "Utils/Windows.h"
 
 using namespace storm;
+
+namespace stormgui {
+	STORM_THREAD(Ui);
+}
+
+#include "Shared/DllEngine.h"

@@ -8,7 +8,7 @@ namespace storm {
 	class LibData;
 
     /**
-     * Implementation of the Engine type for DLL:s. This type does not contain any data, and will only
+     * Implementation of the Engine type for DLL:s. This type can not contain any data, and will only
      * pass through calls to the owning Engine. This Engine is hereby referred to as a slave Engine.
      */
 	class Engine {
@@ -22,6 +22,9 @@ namespace storm {
 
 		// Get the data.
 		LibData *data();
+
+		// Get a specific thread object.
+		Thread *thread(uintptr_t id);
 
 	};
 

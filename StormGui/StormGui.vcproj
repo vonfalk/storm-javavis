@@ -227,6 +227,22 @@
 				RelativePath=".\Test.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\App.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Window.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Message.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Frame.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -243,6 +259,22 @@
 			</File>
 			<File
 				RelativePath=".\Test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\App.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Window.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Frame.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Message.h"
 				>
 			</File>
 		</Filter>

@@ -90,19 +90,16 @@ private:
 #define STORM_THREAD(name)										\
 	struct name {												\
 		static storm::Thread *thread(storm::Engine &e);			\
-		static void force(storm::Engine &e, storm::Thread *to);	\
-		static storm::DeclThread v;								\
+		static storm::DeclThread decl;							\
 	};
 
 // Define the thread.
 #define DEFINE_STORM_THREAD(name)							\
 	storm::Thread *name::thread(storm::Engine &e) {			\
-		return v.thread(e);									\
+		return decl.thread(e);								\
 	}														\
-	void name::force(storm::Engine &e, storm::Thread *to) { \
-		v.force(e, to);										\
-	}														\
-	storm::DeclThread name::v;
+	storm::DeclThread name::decl;
+
 
 namespace os {
 	class Lock;
@@ -128,8 +125,10 @@ namespace storm {
 		// Get the thread we are representing.
 		Thread *thread(Engine &e) const;
 
+#ifdef STORM_COMPILER
 		// Force the thread to something already created.
 		void force(Engine &e, Thread *to);
+#endif
 	};
 
 
@@ -144,10 +143,12 @@ namespace storm {
 #include "Types.h"
 
 #ifdef STORM_DLL
+// For convenience.
 #include "Object.h"
 #include "TObject.h"
 #include "Str.h"
 #include "Array.h"
 #include "Future.h"
 #include "FnPtr.h"
+#include "EnginePtr.h"
 #endif

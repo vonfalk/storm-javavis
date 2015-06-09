@@ -1,5 +1,9 @@
 #pragma once
 
+namespace stormgui {
+	class App;
+}
+
 namespace storm {
 
 	/**
@@ -9,6 +13,9 @@ namespace storm {
 	public:
 		LibData();
 		~LibData();
+
+		// The one and only App object. Created when needed.
+		Auto<stormgui::App> app;
 	};
 
 }

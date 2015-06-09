@@ -26,6 +26,9 @@ namespace storm {
 		// Data to the lookup-function. Specific to this DLL.
 		void *data;
 
+		typedef Thread *(*GetThread)(Engine &e, uintptr_t id);
+		GetThread getThread;
+
 		typedef void (*ObjectFn)(Object *o);
 		ObjectFn objectCreated, objectDestroyed;
 

@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Shared/Storm.h"
+#include "Storm.h"
 #include "Engine.h"
 
 namespace storm {
@@ -12,5 +12,5 @@ namespace storm {
 		e.thread((uintptr_t)&dummy, to);
 	}
 
-}
 
+}
