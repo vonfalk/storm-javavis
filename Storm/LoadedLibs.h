@@ -15,7 +15,7 @@ namespace storm {
 	class BuiltInLoader;
 	class Package;
 
-	typedef const BuiltIn *(*LibMain)(const DllInterface *);
+	typedef DllInfo (*LibMain)(const DllInterface *);
 
 	/**
 	 * Keeps track of dynamically loaded libraries, and makes sure we unload them when we do not
@@ -75,8 +75,8 @@ namespace storm {
 		// DllInterface for us. NOTE: 'interface' seems to be reserved by MSVC in this context.
 		DllInterface dllInterface;
 
-		// Built in functions in this lib.
-		const BuiltIn *builtIn;
+		// Built in stuff from this lib.
+		DllInfo info;
 
 		// Types inserted from here.
 		vector<Auto<Type>> types;
@@ -89,6 +89,9 @@ namespace storm {
 
 		// Get vtables for this lib. Called from the lib itself.
 		static void *libVTable(void *data, nat id);
+
+		// Get the data for this lib. Called from the lib itself.
+		static void *libData(Engine &e, void *data);
 	};
 
 }

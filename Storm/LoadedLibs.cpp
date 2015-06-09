@@ -74,15 +74,19 @@ namespace storm {
 		dllInterface = storm::dllInterface();
 		dllInterface.builtIn = &LibData::libBuiltIn;
 		dllInterface.cppVTable = &LibData::libVTable;
+		dllInterface.getData = &LibData::libData;
 		dllInterface.data = this;
 
-		builtIn = (*e)(&dllInterface);
+		info = (*e)(&dllInterface);
 
-		toSFn = code::deVirtualize(address(&Object::toS), (void *)builtIn->objectVTable);
+		toSFn = code::deVirtualize(address(&Object::toS), (void *)info.builtIn->objectVTable);
 		engine.addRootToS(toSFn);
 	}
 
 	LibData::~LibData() {
+		// Free the data.
+		(*info.destroyData)(info.data);
+
 		// We clear types first, it is a _bad_ idea to try to execute destructors possibly in
 		// the unloaded dll after we have unloaded it!
 		clearTypes();
@@ -96,6 +100,7 @@ namespace storm {
 	}
 
 	void LibData::newRef() {
+		assert(false, L"This will not be good, 'info' contains instantiation-specific data!");
 		timesLoaded++;
 	}
 
@@ -109,9 +114,14 @@ namespace storm {
 		return me->types[id]->vtable.baseVTable();
 	}
 
+	void *LibData::libData(Engine &e, void *data) {
+		LibData *me = (LibData *)data;
+		return me->info.data;
+	}
+
 	BuiltInLoader *LibData::loader(Engine &e, Package *root) {
-		if (builtIn) {
-			BuiltInLoader *loader = new BuiltInLoader(e, types, *builtIn, root);
+		if (info.builtIn) {
+			BuiltInLoader *loader = new BuiltInLoader(e, types, *info.builtIn, root);
 			if (loader->vtableCapacity() > e.maxCppVTable()) {
 				TODO(L"Do something better here!");
 				throw BuiltInError(L"VTables in the library are too large " + ::toS(loader->vtableCapacity()));

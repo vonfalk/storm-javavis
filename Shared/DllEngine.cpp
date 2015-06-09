@@ -1,12 +1,18 @@
 #include "stdafx.h"
 #include "DllEngine.h"
 #ifdef STORM_DLL
+#include "BuiltIn.h"
 
 namespace storm {
 
 	static const DllInterface *interface = null;
 
-	void Engine::setup(const DllInterface *i) {
+	static void destroyLibData(void *data) {
+		LibData *d = (LibData *)data;
+		delete d;
+	}
+
+	DllInfo Engine::setup(const DllInterface *i) {
 		interface = i;
 
 #ifdef DEBUG
@@ -15,10 +21,21 @@ namespace storm {
 			assert(d[z] != null, L"Pointer at offset " + ::toS(z) + L" is null in DllInterface!");
 		}
 #endif
+
+		DllInfo info = {
+			&storm::builtIn(),
+			new LibData(),
+			&destroyLibData,
+		};
+		return info;
 	}
 
 	Type *Engine::builtIn(nat id) {
 		return (*interface->builtIn)(*this, interface->data, id);
+	}
+
+	LibData *Engine::data() {
+		return (LibData *)(*interface->getData)(*this, interface->data);
 	}
 
 	void *cppVTable(nat id) {

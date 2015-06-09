@@ -3,6 +3,9 @@
 /**
  * Include this file _once_ from any extension DLL to storm. This file declares the entry points
  * that storm expects to find.
+ *
+ * We assume that a class named 'LibData' exists, which can contain any static objects required
+ * by the DLL. One 'LibData' is allocated per engine that loads the dll.
  */
 
 
@@ -14,16 +17,9 @@
 
 #define DLLEXPORT __declspec(dllexport)
 
-namespace storm {
-	// Found in the BuiltIn cpp-file.
-	struct BuiltIn;
-	const BuiltIn &builtIn();
-}
-
 // This is the entry point Storm uses to get everything contained in this package.
-extern "C" DLLEXPORT const storm::BuiltIn *ENTRY_POINT_NAME(const storm::DllInterface *interface) {
-	storm::Engine::setup(interface);
-	return &storm::builtIn();
+extern "C" DLLEXPORT storm::DllInfo ENTRY_POINT_NAME(const storm::DllInterface *interface) {
+	return storm::Engine::setup(interface);
 }
 
 

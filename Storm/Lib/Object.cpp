@@ -282,6 +282,7 @@ namespace storm {
 			null, // Set later.
 			null,
 			null,
+			null,
 			&objectCreated,
 			&objectDestroyed,
 			&allocObject,

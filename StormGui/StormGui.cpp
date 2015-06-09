@@ -2,6 +2,10 @@
 #include "StormGui.h"
 #include "Shared/DllMain.h"
 
-namespace stormgui {
+namespace storm {
+
+	LibData::LibData() { PLN(L"DATA CREATED"); }
+
+	LibData::~LibData() { PLN(L"DATA DESTROYED"); }
 
 }

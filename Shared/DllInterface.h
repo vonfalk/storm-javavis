@@ -19,6 +19,10 @@ namespace storm {
 		typedef void *(*CppVTable)(void *data, nat id);
 		CppVTable cppVTable;
 
+		// Get the library-defined data.
+		typedef void *(*GetData)(Engine &e, void *data);
+		GetData getData;
+
 		// Data to the lookup-function. Specific to this DLL.
 		void *data;
 
@@ -71,6 +75,23 @@ namespace storm {
 		typedef void (*CheckLive)(void *mem);
 		CheckLive checkLive;
 #endif
+	};
+
+	struct BuiltIn;
+
+	/**
+	 * Data returned from the DLL entry-point.
+	 */
+	struct DllInfo {
+		// Built in functions, variables and so on.
+		const BuiltIn *builtIn;
+
+		// Data object created for this instance.
+		void *data;
+
+		// Function to destroy the data at shutdown.
+		typedef void (*DestroyFn)(void *);
+		DestroyFn destroyData;
 	};
 
 }
