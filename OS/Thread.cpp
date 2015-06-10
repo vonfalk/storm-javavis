@@ -19,8 +19,11 @@ namespace os {
 		// Function to execute.
 		const Fn<void, void> &startFn;
 
+		// ThreadWait behavior. May be null.
+		ThreadWait *wait;
+
 		// Init.
-		ThreadStart(const Fn<void, void> &fn) : sema(0), startFn(fn) {}
+		ThreadStart(const Fn<void, void> &fn, ThreadWait *wait) : sema(0), startFn(fn), wait(wait) {}
 
 		// Remove one reference from 'data', if present. The started thread
 		// should set one reference in 'data', so that it may not exit
@@ -92,29 +95,55 @@ namespace os {
 	}
 
 	Thread Thread::spawn(const Fn<void, void> &fn) {
-		ThreadStart start(fn);
+		ThreadStart start(fn, null);
 		startThread(start);
 		start.sema.down();
 
 		return Thread(start.data);
 	}
 
-	void Thread::threadMain(ThreadStart &start) {
+	Thread Thread::spawn(ThreadWait *wait) {
+		Fn<void, void> f;
+		ThreadStart start(f, wait);
+		startThread(start);
+		start.sema.down();
+
+		return Thread(start.data);
+	}
+
+	void ThreadData::threadMain(ThreadStart &start) {
 		ThreadData d;
 
 		threadCreated();
 
-		d.addRef();
-		currentThreadData(&d);
-		start.data = &d;
+		// Read data from 'start'.
 		Fn<void, void> fn = start.startFn;
+		ThreadWait *wait = start.wait;
+		d.wait = wait;
+		d.addRef();
 
+		// Remember our identity.
+		currentThreadData(&d);
+
+		// Report back.
+		start.data = &d;
 		start.sema.up();
 		// From here on, do not touch 'start'.
 
 		fn();
 
-		// NOTE: The following logic is _not_ correct when we introduce waiting threads.
+		// Specific wait behavior?
+		if (wait) {
+			do {
+				// Run any spawned UThreads.
+				while (UThread::leave())
+					;
+
+			} while (d.wait && wait->wait());
+
+			// Clean up the 'wait' structure.
+			d.wait = null; // No more notifications, but we can not delete it yet!
+		}
 
 		while (true) {
 			// Either we have more references, or more UThreads to run.
@@ -137,10 +166,29 @@ namespace os {
 			d.wakeCond.wait();
 		}
 
+		// Now, no one has any knowledge of our existence, we can safely delete the 'wait' now.
+		delete wait;
+
 		// Failsafe for the currThreadData.
 		currentThreadData(null);
 
 		threadTerminated();
+	}
+
+	void ThreadData::reportWake() {
+		// We need to signal both in case we're in the process of exiting from the 'wait' behaviour.
+		wakeCond.signal();
+		if (wait)
+			wait->signal();
+	}
+
+	void ThreadData::waitForWork() {
+		if (wait) {
+			if (!wait->wait())
+				wait = null;
+		} else {
+			wakeCond.wait();
+		}
 	}
 
 #ifdef WINDOWS
@@ -148,7 +196,7 @@ namespace os {
 
 	static void winThreadMain(void *param) {
 		ThreadStart *s = (ThreadStart *)param;
-		Thread::threadMain(*s);
+		ThreadData::threadMain(*s);
 	}
 
 	static void startThread(ThreadStart &start) {

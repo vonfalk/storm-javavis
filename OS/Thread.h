@@ -10,6 +10,9 @@ namespace os {
 	class ThreadData;
 	class ThreadStart;
 
+	// Interface for interaction with OS-specific waits. See below.
+	class ThreadWait;
+
 	/**
 	 * OS thread.
 	 *
@@ -39,11 +42,11 @@ namespace os {
 		// Start a thread.
 		static Thread spawn(const Fn<void, void> &start);
 
+		// Start a thread with a specific 'ThreadWait' behaviour. Will take ownership over 'wait'.
+		static Thread spawn(ThreadWait *wait);
+
 		// Get the current thread.
 		static Thread current();
-
-		// Thread main function.
-		static void threadMain(ThreadStart &start);
 
 	protected:
 		virtual void output(wostream &to) const;
@@ -57,15 +60,13 @@ namespace os {
 	};
 
 
-	// Internal thread data.
+	/**
+	 * Internal thread data.
+	 */
 	class ThreadData {
 	public:
 		// Number of references.
 		nat references;
-
-		// Condition variable for waking up the thread when there is more work to do
-		// or when it is time to exit.
-		Condition wakeCond;
 
 		// Data used for the UThreads. Make sure to always run constructors and destructors
 		// from the thread this ThreadData is representing.
@@ -88,9 +89,44 @@ namespace os {
 				reportZero();
 		}
 
+		// Report that an UThread has been awoken and wants to be scheduled.
+		void reportWake();
+
+		// Wait for another UThread to be scheduled.
+		void waitForWork();
+
+		// Thread main function.
+		static void threadMain(ThreadStart &start);
+
 	private:
+		// Condition variable for waking up the thread when there is more work to do
+		// or when it is time to exit.
+		Condition wakeCond;
+
+		// Current wait behavior.
+		ThreadWait *wait;
+
 		// Report zero references.
 		void reportZero();
+	};
+
+
+	/**
+	 * Thread wait logic. Implement this to interact better with other events from the OS for a
+	 * specific thread. Spawning a thread using a ThreadWait interface lets you control how long the
+	 * thread should be kept alive, and allows you to implement custom waiting conditions.
+	 */
+	class ThreadWait {
+	public:
+		// Called when the thread should wait for an event of some kind. This functions should
+		// return either when 'signal' has been called, but may return in other cases as well.
+		// The thread is kept alive until 'wait' returns false. At this point, 'wait' will not be
+		// called any more, and the ThreadWait will eventually be destroyed.
+		virtual bool wait() = 0;
+
+		// Called to indicate that any thread held by 'wait' should be awoken. May be called from
+		// any thread. Calls to 'signal' after the last call to 'wait' may occur.
+		virtual void signal() = 0;
 	};
 
 }

@@ -23,7 +23,7 @@ namespace os {
 		UThreadState *state = data->owner;
 		state->wake(data);
 		// Wake the OS thread, in case it is waiting for this thread.
-		state->owner->wakeCond.signal();
+		state->owner->reportWake();
 	}
 
 	void Sema::down() {

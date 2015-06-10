@@ -49,7 +49,7 @@ namespace os {
 		UThread result(data);
 
 		d->uState.insert(data);
-		d->wakeCond.signal();
+		d->reportWake();
 
 		return result;
 	}
@@ -294,7 +294,7 @@ namespace os {
 				break;
 
 			// Wait for the signal.
-			owner->wakeCond.wait();
+			owner->waitForWork();
 		}
 
 		// Now, we have something to do!
@@ -336,7 +336,7 @@ namespace os {
 			}
 
 			// Nothing to do in the meantime...
-			owner->wakeCond.wait();
+			owner->waitForWork();
 		}
 
 		reap();
