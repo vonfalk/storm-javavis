@@ -98,12 +98,21 @@ private:
 	storm::Thread *name::thread(storm::Engine &e) {			\
 		return decl.thread(e);								\
 	}														\
-	storm::DeclThread name::decl;
+	storm::DeclThread name::decl = { null };
+
+// Define the tread, using a custom ThreadWait structure. 'fnPtr' is a pointer to a function like:
+// os::Thread foo(Engine &), and that function is executed to create the thread.
+#define DEFINE_STORM_THREAD_WAIT(name, fnPtr)			\
+	storm::Thread *name::thread(storm::Engine &e) {		\
+		return decl.thread(e);							\
+	}													\
+	storm::DeclThread name::decl = { fnPtr };
 
 
 namespace os {
 	class Lock;
 	class Sema;
+	class Thread;
 }
 
 namespace storm {
@@ -119,8 +128,10 @@ namespace storm {
 	 * Class used when declaring named threads from C++.
 	 */
 	struct DeclThread {
+		// Function used to create the ThreadWait (if any).
 		// The address of this member is our unique identifier.
-		nat dummy;
+		typedef os::Thread (*CreateFn)(Engine &);
+		CreateFn createFn;
 
 		// Get the thread we are representing.
 		Thread *thread(Engine &e) const;

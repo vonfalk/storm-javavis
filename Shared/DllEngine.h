@@ -24,7 +24,7 @@ namespace storm {
 		LibData *data();
 
 		// Get a specific thread object.
-		Thread *thread(uintptr_t id);
+		Thread *thread(uintptr_t id, DeclThread::CreateFn fn);
 
 	};
 

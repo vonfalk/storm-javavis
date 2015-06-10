@@ -13,4 +13,6 @@ namespace stormgui {
 	STORM_THREAD(Ui);
 }
 
+#define WM_THREAD_SIGNAL (WM_APP + 1)
+
 #include "Shared/DllEngine.h"

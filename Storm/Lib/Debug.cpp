@@ -57,7 +57,7 @@ namespace storm {
 
 	void print(TObject *s) {
 		// Make sure to execute on the right thread!
-		const os::Thread &target = s->thread->thread;
+		const os::Thread &target = s->thread->thread();
 		if (os::Thread::current() != target) {
 			os::Future<void> fut;
 			os::FnParams p; p.add(s);

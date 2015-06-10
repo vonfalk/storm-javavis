@@ -3,12 +3,20 @@
 
 namespace storm {
 
-	Thread::Thread() : thread(os::Thread::spawn(Fn<void, void>())) {}
+	Thread::Thread() : osThread(os::Thread::spawn(Fn<void, void>())) {}
 
-	Thread::Thread(Thread *from) : thread(from->thread) {}
+	Thread::Thread(Thread *from) : osThread(from->thread()) {}
 
-	Thread::Thread(os::Thread t) : thread(t) {}
+	Thread::Thread(os::Thread t) : osThread(t) {}
+
+	Thread::Thread(DeclThread::CreateFn fn) : osThread(os::Thread::invalid), create(fn) {}
 
 	Thread::~Thread() {}
+
+	const os::Thread &Thread::thread() {
+		if (osThread == os::Thread::invalid)
+			osThread = (*create)(engine());
+		return osThread;
+	}
 
 }

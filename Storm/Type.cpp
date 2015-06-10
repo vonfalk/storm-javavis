@@ -114,7 +114,7 @@ namespace storm {
 
 	Size Type::size() {
 		if (mySize == Size()) {
-			const os::Thread &t = TObject::thread->thread;
+			const os::Thread &t = TObject::thread->thread();
 			if (t == os::Thread::current()) {
 				// Already on the Compiler thread.
 				forceLoad();

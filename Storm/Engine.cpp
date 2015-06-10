@@ -174,10 +174,15 @@ namespace storm {
 		specialCached[nat(t)] = z;
 	}
 
-	Thread *Engine::thread(uintptr_t id) {
+	Thread *Engine::thread(uintptr_t id, DeclThread::CreateFn fn) {
 		ThreadMap::const_iterator i = threads.find(id);
 		if (i == threads.end()) {
-			Auto<Thread> t = CREATE(Thread, *this);
+			Auto<Thread> t;
+			if (fn) {
+				t = CREATE(Thread, *this, fn);
+			} else {
+				t = CREATE(Thread, *this);
+			}
 			threads.insert(make_pair(id, t));
 			return t.borrow();
 		} else {

@@ -120,7 +120,7 @@ namespace storm {
 
 		// Find threads. The threads declared by STORM_THREAD are looked up this way. They live
 		// as long as the compiler does. Returns a borrowed ptr.
-		Thread *thread(uintptr_t id);
+		Thread *thread(uintptr_t id, DeclThread::CreateFn create);
 
 		// Set a specific thread to be used as a specific id.
 		void thread(uintptr_t id, Par<Thread> thread);

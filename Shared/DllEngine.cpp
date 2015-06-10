@@ -38,8 +38,8 @@ namespace storm {
 		return (LibData *)(*interface->getData)(*this, interface->data);
 	}
 
-	Thread *Engine::thread(uintptr_t id) {
-		return (*interface->getThread)(*this, id);
+	Thread *Engine::thread(uintptr_t id, DeclThread::CreateFn fn) {
+		return (*interface->getThread)(*this, id, fn);
 	}
 
 	void *cppVTable(nat id) {
@@ -145,7 +145,7 @@ namespace storm {
 #endif
 
 	Thread *DeclThread::thread(Engine &e) const {
-		return e.thread((uintptr_t)&dummy);
+		return e.thread((uintptr_t)&createFn, createFn);
 	}
 }
 

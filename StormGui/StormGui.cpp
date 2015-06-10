@@ -5,7 +5,11 @@
 
 namespace stormgui {
 
-	DEFINE_STORM_THREAD(Ui);
+	os::Thread spawnAppWait(Engine &e) {
+		return os::Thread::spawn(new AppWait(e));
+	}
+
+	DEFINE_STORM_THREAD_WAIT(Ui, &spawnAppWait);
 
 }
 
@@ -13,6 +17,8 @@ namespace storm {
 
 	LibData::LibData() {}
 
-	LibData::~LibData() {}
+	LibData::~LibData() {
+		app->terminate();
+	}
 
 }

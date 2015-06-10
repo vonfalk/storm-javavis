@@ -31,7 +31,7 @@ namespace storm {
 		// Compute the maxium vtable size needed here.
 		nat vtableCapacity();
 
-		// Load threads.
+		// Load threads, sets all named threads to the UI thread, to avoid any initialization troubles.
 		void loadThreads();
 
 		// Load types. Assumes threads are loaded.

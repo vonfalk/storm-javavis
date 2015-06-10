@@ -1,6 +1,8 @@
 use core:debug;
 
 Str uiDllTest() {
+    ui:App a = ui:app();
+
     ui:Test t;
 
 	StrBuf r;

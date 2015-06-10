@@ -48,6 +48,9 @@ namespace os {
 		// Get the current thread.
 		static Thread current();
 
+		// Invalid thread.
+		static Thread invalid;
+
 	protected:
 		virtual void output(wostream &to) const;
 
@@ -58,7 +61,6 @@ namespace os {
 		// Thread data.
 		ThreadData *data;
 	};
-
 
 	/**
 	 * Internal thread data.
@@ -118,6 +120,13 @@ namespace os {
 	 */
 	class ThreadWait {
 	public:
+		// The destructor will always be executed in the thread that has been 'wait'ing on this object.
+		virtual ~ThreadWait();
+
+		// Called before any work is done, on the thread that will call wait later on. Note that the
+		// constructor will probably _not_ run on the same thread as 'init' will be run on.
+		virtual void init();
+
 		// Called when the thread should wait for an event of some kind. This functions should
 		// return either when 'signal' has been called, but may return in other cases as well.
 		// The thread is kept alive until 'wait' returns false. At this point, 'wait' will not be
@@ -127,6 +136,10 @@ namespace os {
 		// Called to indicate that any thread held by 'wait' should be awoken. May be called from
 		// any thread. Calls to 'signal' after the last call to 'wait' may occur.
 		virtual void signal() = 0;
+
+		// Called from the root UThread as per the regular round-robin fashion. Will not be called
+		// after 'wait' has returned false. Default implementation does nothing.
+		virtual void work();
 	};
 
 }

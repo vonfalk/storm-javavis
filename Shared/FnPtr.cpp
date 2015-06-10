@@ -123,7 +123,7 @@ namespace storm {
 		Thread *t = runOn(first);
 		if (!t)
 			return false;
-		return t->thread != os::Thread::current();
+		return t->thread() != os::Thread::current();
 	}
 
 	static void doCall(void *output, const BasicTypeInfo &type,
@@ -132,11 +132,11 @@ namespace storm {
 
 		bool spawn = false;
 		if (thread)
-			spawn = thread->thread != os::Thread::current();
+			spawn = thread->thread() != os::Thread::current();
 
 		if (spawn) {
 			os::FutureSema<os::Sema> future(output);
-			os::UThread::spawn(toCall, member, params, future, type, &thread->thread);
+			os::UThread::spawn(toCall, member, params, future, type, &thread->thread());
 			future.result();
 		} else {
 			os::call(toCall, member, params, output, type);

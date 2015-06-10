@@ -184,7 +184,7 @@ namespace storm {
 	void spawnThreadResult(const void *fn, bool member, const os::FnParams *params, void *result,
 						BasicTypeInfo *resultType, Thread *on, os::UThreadData *data) {
 		os::FutureSema<os::Sema> future(result);
-		const os::Thread *thread = on ? &on->thread : null;
+		const os::Thread *thread = on ? &on->thread() : null;
 		os::UThread::spawn(fn, member, *params, future, *resultType, thread, data);
 		future.result();
 	}
@@ -192,7 +192,7 @@ namespace storm {
 	void spawnThreadFuture(const void *fn, bool member, const os::FnParams *params, FutureBase *result,
 								BasicTypeInfo *resultType, Thread *on, os::UThreadData *data) {
 		os::FutureBase *future = result->rawFuture();
-		const os::Thread *thread = on ? &on->thread : null;
+		const os::Thread *thread = on ? &on->thread() : null;
 		os::UThread::spawn(fn, member, *params, *future, *resultType, thread, data);
 	}
 

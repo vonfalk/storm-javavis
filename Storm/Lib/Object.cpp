@@ -275,8 +275,8 @@ namespace storm {
 		return r;
 	}
 
-	static Thread *getThread(Engine &e, uintptr_t id) {
-		return e.thread(id);
+	static Thread *getThread(Engine &e, uintptr_t id, DeclThread::CreateFn fn) {
+		return e.thread(id, fn);
 	}
 
 	DllInterface dllInterface() {

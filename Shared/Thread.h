@@ -34,12 +34,21 @@ namespace storm {
 		// Create a thread and use a specific already existing code::Thread object.
 		Thread(os::Thread thread);
 
+		// Lazily create the underlying thread.
+		Thread(DeclThread::CreateFn fn);
+
 		// Destroy it. This does not enforce that the thread has actually terminated.
 		~Thread();
 
-		// Thread handle.
-		const os::Thread thread;
+		// Get the thread handle.
+		const os::Thread &thread();
 
+	private:
+		// Thread handle.
+		os::Thread osThread;
+
+		// Create using.
+		DeclThread::CreateFn create;
 	};
 
 }

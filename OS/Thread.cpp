@@ -55,21 +55,26 @@ namespace os {
 	 */
 
 	Thread::Thread(ThreadData *data) : data(data) {
-		data->addRef();
+		if (data)
+			data->addRef();
 	}
 
 	Thread::Thread(const Thread &o) : data(o.data) {
-		data->addRef();
+		if (data)
+			data->addRef();
 	}
 
 	Thread::~Thread() {
-		data->release();
+		if (data)
+			data->release();
 	}
 
 	Thread &Thread::operator =(const Thread &o) {
-		data->release();
+		if (data)
+			data->release();
 		data = o.data;
-		data->addRef();
+		if (data)
+			data->addRef();
 		return *this;
 	}
 
@@ -93,6 +98,8 @@ namespace os {
 		static Thread first(&firstData);
 		return first;
 	}
+
+	Thread Thread::invalid = Thread(null);
 
 	Thread Thread::spawn(const Fn<void, void> &fn) {
 		ThreadStart start(fn, null);
@@ -120,10 +127,18 @@ namespace os {
 		Fn<void, void> fn = start.startFn;
 		ThreadWait *wait = start.wait;
 		d.wait = wait;
+
+		// One reference is consumed when 'threadWait' is terminated.
+		d.addRef();
+		// One is used to prevent signaling the semaphore before we have finished doing our main job.
 		d.addRef();
 
 		// Remember our identity.
 		currentThreadData(&d);
+
+		// Initialize any 'wait' struct before anyone is able to call 'signal' on it.
+		if (wait)
+			wait->init();
 
 		// Report back.
 		start.data = &d;
@@ -135,15 +150,20 @@ namespace os {
 		// Specific wait behavior?
 		if (wait) {
 			do {
-				// Run any spawned UThreads.
-				while (UThread::leave())
-					;
+				// Run any spawned UThreads, interleave with anything we need to do.
+				do {
+					if (d.wait)
+						wait->work();
+				} while (UThread::leave());
 
 			} while (d.wait && wait->wait());
 
 			// Clean up the 'wait' structure.
 			d.wait = null; // No more notifications, but we can not delete it yet!
 		}
+
+		// Go back to zero references, so that we may terminate!
+		d.release();
 
 		while (true) {
 			// Either we have more references, or more UThreads to run.
@@ -204,5 +224,11 @@ namespace os {
 	}
 
 #endif
+
+	ThreadWait::~ThreadWait() {}
+
+	void ThreadWait::init() {}
+
+	void ThreadWait::work() {}
 
 }
