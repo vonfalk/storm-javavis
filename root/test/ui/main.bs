@@ -1,0 +1,29 @@
+use ui;
+use core:geometry;
+use core:debug;
+
+class MainWin extends Frame {
+	Button? btn;
+
+	ctor() {
+		init() {}
+
+		create("Test window", Size(300, 300));
+		initDone();
+
+		btn = Button("Test", this);
+	}
+}
+
+thread Waiter;
+
+void closeLater(MainWin w) on Waiter {
+	dbgSleep(4000);
+	w.close;
+}
+
+void main() {
+	MainWin win;
+	// spawn closeLater(win);
+	win.waitForClose;
+}

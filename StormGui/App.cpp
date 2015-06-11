@@ -2,19 +2,64 @@
 #include "App.h"
 #include "Window.h"
 #include "Frame.h"
+#include <Objbase.h>
+
 
 namespace stormgui {
 
-	App::App() : appWait(null) {
-		windowClass = registerWindowClass();
+	// The app object owned by this thread. Updated by 'processMessage'.
+	static THREAD App *currentApp = null;
+
+	App::App() : appWait(null), creating(null) {
+		// TODO: Is this ok in our case? This returns the HINSTANCE of the exe-file, but that is
+		// probably what we want in this case.
+		hInstance = GetModuleHandle(NULL);
+		initCommonControls();
+		initCom();
+		hWindowClass = registerWindowClass();
 	}
 
 	App::~App() {
 		TODO(L"Reap any live windows!");
 	}
 
+	ATOM App::windowClass() {
+		return hWindowClass;
+	}
+
+	HINSTANCE App::instance() {
+		return hInstance;
+	}
+
+	bool App::resumeEvent(Window *window, os::Event &e) {
+		return liveWindows.count(window) == 0 || e.isSet();
+	}
+
+	void App::waitForEvent(Window *window, os::Event &e) {
+		if (os::UThread::current() != appWait->uThread) {
+			e.wait();
+			return;
+		}
+
+		// We need to run the message loop while checking the event.
+		while (!resumeEvent(window, e)) {
+			do {
+				appWait->work();
+				if (resumeEvent(window, e))
+					return;
+			} while (os::UThread::leave());
+
+			if (resumeEvent(window, e))
+				return;
+
+			if (!appWait->wait())
+				// Exiting message loop, return.
+				return;
+		}
+	}
+
 	Frame *App::findRoot(HWND wnd) {
-		HWND parent = GetParent(wnd);
+		HWND parent = GetAncestor(wnd, GA_PARENT);
 		WindowMap::iterator i = windows.find(parent);
 		if (i == windows.end()) {
 			assert(false, L"Parent not found!");
@@ -24,20 +69,35 @@ namespace stormgui {
 		return i->second->rootFrame();
 	}
 
+	void App::preCreate(Window *w) {
+		assert(creating == null, L"Trying to create multiple windows simultaneously is not yet supported.");
+		creating = w;
+	}
+
+	void App::createAborted(Window *w) {
+		assert(creating == w, L"The specified window did not try to create a window.");
+		creating = null;
+	}
+
 	Frame *App::addWindow(Window *w) {
+		if (creating == w)
+			creating = null;
+
 		HWND handle = w->handle();
 
 		windows.insert(make_pair(handle, w));
+		liveWindows.insert(w);
 
 		if (Frame *f = as<Frame>(w)) {
 			return f;
 		} else {
-			return findRoot(handle);
+			return steal(findRoot(handle)).borrow();
 		}
 	}
 
 	void App::removeWindow(Window *w) {
 		windows.erase(w->handle());
+		liveWindows.erase(w);
 	}
 
 	void App::terminate() {
@@ -66,36 +126,47 @@ namespace stormgui {
 
 	void App::processMessage(MSG &msg) {
 		WindowMap::iterator i = windows.find(msg.hwnd);
-		if (i == windows.end()) {
-			WARNING(L"Unknown window: " << msg.hwnd << L", ignoring message.");
-			return;
+		if (i != windows.end()) {
+			Window *w = i->second;
+
+			// Dialog message?
+			Auto<Frame> root = w->rootFrame();
+			if (root && IsDialogMessage(root->handle(), &msg))
+				return;
 		}
 
-		Window *w = i->second;
-
-		// Dialog message?
-		Frame *root = w->rootFrame();
-		if (root && IsDialogMessage(root->handle(), &msg))
-			return;
-
-		// Translate.
+		// Translate and dispatch to Window Proc.
 		TranslateMessage(&msg);
+		currentApp = this; // Just to make sure!
+		DispatchMessage(&msg);
+	}
 
-		// Now, we can handle it! Since it is a mess to use the window-proc parameter in the
-		// window class and passing extra parameters, we intercept the message before we do that
-		// and process it if needed. Else, we send it on to the window-proc (which is the default
-		// window proc in our case), to handle it. This actually allows us to override messages in
-		// common controls if we want to, and maybe we do not need the preTranslateMessage!
-		// TODO: This approach will _not_ work well when we're handling messages sent from this thread
-		// sent using SendMessage (possibly from Common Controls).
-		MsgResult r = w->onMessage(msg);
-		if (!r.any) {
-			// Unhandled message, leave it to the default window proc.
-			DispatchMessage(&msg);
-		} else {
-			if (InSendMessage())
-				ReplyMessage(r.result);
+	MsgResult App::handleMessage(HWND hwnd, const Message &msg) {
+		App *app = currentApp;
+		if (!app) {
+			WARNING(L"No current app. Ignoring " << msg << L".");
+			return noResult();
 		}
+
+		Window *w = app->creating;
+		WindowMap::iterator i = app->windows.find(hwnd);
+		if (i != app->windows.end())
+			w = i->second;
+
+		if (w == null) {
+			WARNING(L"Unknwon window: " << hwnd << L", ignoring " << msg << L".");
+			return noResult();
+		}
+
+		return w->onMessage(msg);
+	}
+
+	LRESULT App::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+		MsgResult r = handleMessage(hwnd, Message(msg, wParam, lParam));
+		if (r.any)
+			return r.result;
+
+		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 
 	ATOM App::registerWindowClass() {
@@ -105,10 +176,6 @@ namespace stormgui {
 		if (c)
 			return c;
 
-		// TODO: Is this ok in our case? This returns the HINSTANCE of the exe-file, but that is
-		// probably what we want in this case.
-		HINSTANCE instance = GetModuleHandle(NULL);
-
 		WNDCLASSEX wc;
 		zeroMem(wc);
 		wc.cbSize = sizeof(WNDCLASSEX);
@@ -116,10 +183,10 @@ namespace stormgui {
 		// HICON icon = LoadIcon(HINSTANCE, MAKEINTRESOURCE(iconResource));
 		HICON icon = LoadIcon(NULL, IDI_APPLICATION);
 		wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
-		wc.lpfnWndProc = &DefWindowProc;
+		wc.lpfnWndProc = &App::windowProc;
 		wc.cbClsExtra = 0;
 		wc.cbWndExtra = 0;
-		wc.hInstance = instance;
+		wc.hInstance = hInstance;
 		wc.hIcon = icon;
 		wc.hIconSm = icon;
 		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
@@ -131,6 +198,18 @@ namespace stormgui {
 		c = RegisterClassEx(&wc);
 		assert(c);
 		return c;
+	}
+
+	void App::initCommonControls() {
+		INITCOMMONCONTROLSEX cc;
+		zeroMem(cc);
+		cc.dwSize = sizeof(cc);
+		cc.dwICC = ICC_WIN95_CLASSES | ICC_USEREX_CLASSES;
+		InitCommonControlsEx(&cc);
+	}
+
+	void App::initCom() {
+		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
 	}
 
 	App *app(EnginePtr ptr) {
@@ -145,7 +224,7 @@ namespace stormgui {
 	 * Threading logic
 	 */
 
-	AppWait::AppWait(Engine &e) {
+	AppWait::AppWait(Engine &e) : uThread(os::UThread::invalid) {
 		app = stormgui::app(e);
 		app->release(); // We do not want to hold a ref here.
 		app->appWait = this;
@@ -155,6 +234,8 @@ namespace stormgui {
 	void AppWait::init() {
 		threadId = GetCurrentThreadId();
 		signalSent = 0;
+		currentApp = app;
+		uThread = os::UThread::current();
 
 		// Make sure we get a message queue.
 		if (!IsGUIThread(TRUE)) {
@@ -181,8 +262,10 @@ namespace stormgui {
 	}
 
 	void AppWait::work() {
-		if (!app->processMessages())
+		if (!app->processMessages()) {
+			uThread = os::UThread::invalid;
 			done = true;
+		}
 	}
 
 	void AppWait::terminate() {

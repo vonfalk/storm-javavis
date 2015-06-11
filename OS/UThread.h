@@ -136,6 +136,9 @@ namespace os {
 		// Get the thread data. Mainly for internal use.
 		inline UThreadData *threadData() { return data; }
 
+		// Value representing no thread.
+		static const UThread invalid;
+
 	private:
 		// Create
 		UThread(UThreadData *data);

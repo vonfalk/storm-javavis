@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)StormGui\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp -a $(SolutionDir)StormGui\Lib\VTables.asm +$(SolutionDir)StormGui\ $(SolutionDir)Shared\ --using storm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)StormGui\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp -a $(SolutionDir)StormGui\Lib\VTables.asm +$(SolutionDir)StormGui\ $(SolutionDir)Shared\ --using storm --using storm::geometry"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -110,7 +110,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)StormGui\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp -a $(SolutionDir)StormGui\Lib\VTables.asm +$(SolutionDir)StormGui\ $(SolutionDir)Shared\ --using storm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)StormGui\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp -a $(SolutionDir)StormGui\Lib\VTables.asm +$(SolutionDir)StormGui\ $(SolutionDir)Shared\ --using storm --using storm::geometry"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -243,6 +243,18 @@
 				RelativePath=".\Frame.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\MsgName.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Button.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Container.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -275,6 +287,18 @@
 			</File>
 			<File
 				RelativePath=".\Message.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MsgName.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Button.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Container.h"
 				>
 			</File>
 		</Filter>

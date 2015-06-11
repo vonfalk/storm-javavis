@@ -218,6 +218,10 @@
 				RelativePath=".\FnPtr.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Geometry\Size.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -310,6 +314,14 @@
 			</File>
 			<File
 				RelativePath=".\FnPtr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Size.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry.h"
 				>
 			</File>
 		</Filter>

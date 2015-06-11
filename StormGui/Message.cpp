@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Message.h"
+#include "MsgName.h"
 
 namespace stormgui {
 
@@ -7,6 +8,10 @@ namespace stormgui {
 
 	Message::Message(UINT msg, WPARAM wParam, LPARAM lParam) :
 		msg(msg), wParam(wParam), lParam(lParam) {}
+
+	void Message::output(wostream &to) const {
+		to << msgName(msg) << L" (" << msg << L"), " << wParam << L", " << lParam;
+	}
 
 	MsgResult noResult() {
 		MsgResult r = { false, 0 };

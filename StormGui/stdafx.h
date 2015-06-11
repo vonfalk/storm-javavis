@@ -16,3 +16,17 @@ namespace stormgui {
 #define WM_THREAD_SIGNAL (WM_APP + 1)
 
 #include "Shared/DllEngine.h"
+#include "Shared/Geometry.h"
+
+using namespace storm::geometry;
+
+#include <Commctrl.h>
+
+
+namespace stormgui {
+	// Various flags for child windows.
+	const DWORD childFlags = WS_CHILD | WS_VISIBLE;
+	const DWORD controlFlags = childFlags | WS_TABSTOP;
+	const DWORD buttonFlags = controlFlags | BS_PUSHBUTTON;
+
+}

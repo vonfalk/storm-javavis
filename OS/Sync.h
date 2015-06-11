@@ -78,4 +78,40 @@ namespace os {
 		Sema sema;
 	};
 
+
+	/**
+	 * Event. The event starts cleared, which means that calls to 'wait' will block until the event
+	 * is 'set'.
+	 */
+	class Event : NoCopy {
+	public:
+		// Create.
+		Event();
+
+		// Destroy. Sets the event to not loose any threads.
+		~Event();
+
+		// Set.
+		void set();
+
+		// Clear.
+		void clear();
+
+		// Check set or cleared.
+		bool isSet();
+
+		// Wait.
+		void wait();
+
+	private:
+		// Lock for ourselves.
+		util::Lock lock;
+
+		// Waiting threads.
+		InlineList<UThreadData> waiting;
+
+		// Is the event set?
+		nat s;
+	};
+
 }

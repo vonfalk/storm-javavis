@@ -1,5 +1,6 @@
 #pragma once
 #include "StormGui.h"
+#include "Message.h"
 
 namespace stormgui {
 
@@ -18,7 +19,14 @@ namespace stormgui {
 		// Destroy.
 		~App();
 
-		// Add a new window, returns the root frame.
+		// Indicate that 'w' is about to create a window and attach it. This makes us forward any
+		// messages to an unknown window to 'w'. This is only done until addWindow('w') is done.
+		void preCreate(Window *w);
+
+		// Abort creation on failure.
+		void createAborted(Window *w);
+
+		// Add a new window, returns the root frame as a borrowed ptr.
 		Frame *addWindow(Window *w);
 
 		// Remove a window.
@@ -26,6 +34,16 @@ namespace stormgui {
 
 		// Terminate this app. Terminates the message loop. TODO? Reap windows early?
 		void terminate();
+
+		// Wait for an event, making sure that we're not blocking the message loop. Also returns when
+		// 'window' is no longer alive.
+		void waitForEvent(Window *owner, os::Event &event);
+
+		// Get the window class for frame windows.
+		ATOM windowClass();
+
+		// Get our instance.
+		HINSTANCE instance();
 
 	private:
 		friend class AppWait;
@@ -43,9 +61,19 @@ namespace stormgui {
 		// Process a single message. It is assumed to not be WM_QUIT.
 		void processMessage(MSG &msg);
 
+		// Check if either the event is set or the window is removed.
+		bool resumeEvent(Window *w, os::Event &e);
+
 		// Keep track of all windows. These are borrowed pointers, but we get notified about them being destroyed.
 		typedef hash_map<HWND, Window *> WindowMap;
 		WindowMap windows;
+
+		// Keep track of all known windows.
+		typedef hash_set<Window *> WindowSet;
+		WindowSet liveWindows;
+
+		// The window class that is currently trying to create a window (if any).
+		Window *creating;
 
 		// Find the root frame for a window.
 		Frame *findRoot(HWND wnd);
@@ -53,11 +81,22 @@ namespace stormgui {
 		// Register our window class.
 		ATOM registerWindowClass();
 
+		// Set up other needed things.
+		void initCommonControls();
+		void initCom();
+
 		// Our window class.
-		ATOM windowClass;
+		ATOM hWindowClass;
+
+		// Our instance.
+		HINSTANCE hInstance;
 
 		// The AppWait object that is in charge of our thread.
 		AppWait *appWait;
+
+		// Window proc.
+		static LRESULT WINAPI windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+		static MsgResult handleMessage(HWND hwnd, const Message &msg);
 	};
 
 
@@ -81,6 +120,9 @@ namespace stormgui {
 
 		// Ask us to terminate.
 		void terminate();
+
+		// The UThread that runs the message pump.
+		os::UThread uThread;
 
 	private:
 		// Our thread id (win32 thread id).

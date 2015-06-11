@@ -5,7 +5,7 @@ namespace stormgui {
 	/**
 	 * Wrapper around the windows MSG struct.
 	 */
-	class Message {
+	class Message : public Printable {
 	public:
 		Message(const MSG &msg);
 		Message(UINT msg, WPARAM wParam, LPARAM lParam);
@@ -15,6 +15,9 @@ namespace stormgui {
 		LPARAM lParam;
 
 		// May be extended in the future.
+
+	protected:
+		virtual void output(wostream &to) const;
 	};
 
 	/**

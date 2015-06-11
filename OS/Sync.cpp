@@ -71,4 +71,54 @@ namespace os {
 		sema.up();
 	}
 
+	/**
+	 * Event.
+	 */
+
+	Event::Event() : s(0) {}
+
+	Event::~Event() {
+		set();
+	}
+
+	void Event::set() {
+		atomicWrite(s, 1);
+
+		// Wake all threads.
+		util::Lock::L z(lock);
+		while (UThreadData *data = waiting.pop()) {
+			// Wake the thread up.
+			UThreadState *state = data->owner;
+			state->wake(data);
+			// Wake the OS thread, in case it is waiting for this thread.
+			state->owner->reportWake();
+		}
+	}
+
+	void Event::clear() {
+		atomicWrite(s, 0);
+	}
+
+	bool Event::isSet() {
+		return atomicRead(s) == 1;
+	}
+
+	void Event::wait() {
+		if (atomicRead(s) == 1)
+			return;
+
+		// Wait...
+
+		UThreadState *state = null;
+		{
+			util::Lock::L z(lock);
+			// Add us to the waiting queue.
+			state = UThreadState::current();
+			waiting.push(state->runningThread());
+		}
+
+		// Wait until we're woken up again.
+		state->wait();
+	}
+
 }

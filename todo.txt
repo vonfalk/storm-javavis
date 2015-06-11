@@ -29,7 +29,8 @@ Core
 -------
 Include float/non float inside Size?
 
-Move Memorymanager to Code?
+Move Memorymanager to Code? We can actually elliminate the need of the MemoryManager entirely by using a custom heap
+with the flag HEAP_CREATE_ENABLE_EXECUTE (to HeapCreate).
 
 Check so that threads are created on the correct thread when created from copyObject and similar.
 
@@ -134,6 +135,12 @@ Exceptions in constructors does not work well at all at the moment.
 
 Exceptions while running copy-constructors to functions may cause leaks at the moment, since Code does not
 support attaching exception handlers to the values we have copied with fnParam.
+
+Gui
+-----
+
+Think about the threading model. Is it possibe (and a good idea) to create new UThreads for new messages, so that
+a bad message handler does not block everything? This could interfere with Win32:s expectations (lots of global state).
 
 
 Others

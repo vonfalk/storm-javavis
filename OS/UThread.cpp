@@ -40,6 +40,7 @@ namespace os {
 	UThread UThread::insert(UThreadData *data, const Thread *on) {
 		ThreadData *d = null;
 		if (on) {
+			assert(*on != Thread::invalid);
 			d = on->threadData();
 		} else {
 			d = Thread::current().threadData();
@@ -59,23 +60,30 @@ namespace os {
 		UThreadState::current()->exit();
 	}
 
+	const UThread UThread::invalid(null);
+
 	UThread::UThread(UThreadData *data) : data(data) {
-		data->addRef();
+		if (data)
+			data->addRef();
 	}
 
 	UThread::UThread(const UThread &o) : data(o.data) {
-		data->addRef();
+		if (data)
+			data->addRef();
 	}
 
 	UThread &UThread::operator =(const UThread &o) {
-		data->release();
+		if (data)
+			data->release();
 		data = o.data;
-		data->addRef();
+		if (data)
+			data->addRef();
 		return *this;
 	}
 
 	UThread::~UThread() {
-		data->release();
+		if (data)
+			data->release();
 	}
 
 	bool UThread::leave() {

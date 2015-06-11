@@ -52,22 +52,22 @@
 #endif
 
 // Type code.
-#define TYPE_CODE									\
-	public:											\
-	static Type *stormType(Engine &e);
-
-#define TYPE_EXTRA_CODE									\
+#define TYPE_CODE										\
 	public:												\
-	static inline Type *stormType(const Object *o) {	\
-		return stormType(storm::engine(o));				\
-	}													\
-	template <class Z>									\
-	static inline Type *stormType(const Auto<Z> &o) {	\
-		return stormType(o.borrow());					\
-	}													\
-	template <class Z>									\
-	static inline Type *stormType(const Par<Z> &o) {	\
-		return stormType(o.borrow());					\
+	static storm::Type *stormType(storm::Engine &e);
+
+#define TYPE_EXTRA_CODE												\
+	public:															\
+	static inline storm::Type *stormType(const storm::Object *o) {	\
+		return stormType(storm::engine(o));							\
+	}																\
+	template <class Z>												\
+	static inline storm::Type *stormType(const storm::Auto<Z> &o) {	\
+		return stormType(o.borrow());								\
+	}																\
+	template <class Z>												\
+	static inline storm::Type *stormType(const storm::Par<Z> &o) {	\
+		return stormType(o.borrow());								\
 	}
 
 // Mark a value-type.
@@ -120,6 +120,12 @@ namespace storm {
 	class Object;
 	class Thread;
 	class Type;
+
+	template <class T>
+	class Auto;
+
+	template <class T>
+	class Par;
 
 	using os::Lock;
 	using os::Sema;
