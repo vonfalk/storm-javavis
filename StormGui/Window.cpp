@@ -33,9 +33,17 @@ namespace stormgui {
 
 	void Window::attachParent(Container *parent) {
 		myParent = parent;
+		if (parent == this)
+			myRoot = as<Frame>(this);
+		else
+			myRoot = parent->myRoot;
 	}
 
 	void Window::parentCreated(nat id) {
+		assert(myParent);
+
+		myRoot = myParent->myRoot;
+
 		if (!created())
 			if (!create(myParent->handle(), id))
 				WARNING(L"Failed to create a window...");
@@ -62,6 +70,10 @@ namespace stormgui {
 			return msgResult(0);
 		}
 		return noResult();
+	}
+
+	bool Window::onCommand(nat id) {
+		return false;
 	}
 
 	Bool Window::visible() {

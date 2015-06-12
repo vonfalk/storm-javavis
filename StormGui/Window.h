@@ -60,6 +60,10 @@ namespace stormgui {
 		// or any message procedure declared by the window we're handling.
 		virtual MsgResult onMessage(const Message &msg);
 
+		// Called when a WM_COMMAND has been sent to (by) us. Return 'true' if it is handled. Type
+		// is the notification code specified by the message (eg BN_CLICK).
+		virtual bool onCommand(nat type);
+
 		// Visibility.
 		Bool STORM_FN visible();
 		void STORM_SETTER visible(Bool show);

@@ -92,6 +92,11 @@ namespace storm {
 			return copy;
 		}
 
+		template <>
+		void callRaw(const os::FnParams &params, TObject *first) const {
+			callRaw(null, typeInfo<void>(), params, first);
+		}
+
 		// Call function with a pointer to the return value.
 		void callRaw(void *output, const BasicTypeInfo &type, const os::FnParams &params, TObject *first) const;
 

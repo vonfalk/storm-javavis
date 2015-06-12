@@ -26,6 +26,9 @@ namespace stormgui {
 		// Message!
 		virtual MsgResult onMessage(const Message &msg);
 
+		// Set size.
+		void STORM_FN size(Size s);
+
 	private:
 		// Helper to create the window.
 		bool createWindow(bool sizeable);

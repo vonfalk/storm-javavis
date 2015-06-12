@@ -7,8 +7,9 @@ class MainWin extends Frame {
 
 	ctor() {
 		init("Test window") {
-			btn("Click me!");
+			btn("Click me!", &btnClicked(Button));
 		}
+		size(Size(150, 150));
 
 		add(btn);
 
@@ -21,6 +22,11 @@ class MainWin extends Frame {
 		Size sz = s - 2*border;
 		btn.pos(Rect(tl, sz));
 	}
+
+}
+
+void btnClicked(Button btn) {
+	btn.text("Well done!");
 }
 
 thread Waiter;
@@ -32,6 +38,6 @@ void closeLater(MainWin w) on Waiter {
 
 void main() {
 	MainWin win;
-	// spawn closeLater(win);
+	spawn closeLater(win);
 	win.waitForClose;
 }

@@ -64,4 +64,30 @@ namespace stormgui {
 		ids.insert(make_pair(id, window));
 	}
 
+	MsgResult Container::onMessage(const Message &msg) {
+		switch (msg.msg) {
+		case WM_COMMAND:
+			if (onCommand(msg))
+				return msgResult(0);
+			break;
+		}
+
+		return Window::onMessage(msg);
+	}
+
+	bool Container::onCommand(const Message &msg) {
+		nat type = HIWORD(msg.wParam);
+		nat id = LOWORD(msg.wParam);
+
+		// Menus and accelerators. Not implemented yet.
+		if (msg.lParam == 0)
+			return false;
+
+		IdMap::iterator i = ids.find(id);
+		if (i == ids.end())
+			return false;
+
+		return i->second->onCommand(type);
+	}
+
 }

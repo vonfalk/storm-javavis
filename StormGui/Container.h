@@ -21,6 +21,9 @@ namespace stormgui {
 		// Called when our parent is created.
 		virtual void parentCreated(nat id);
 
+		// Handle messages.
+		virtual MsgResult onMessage(const Message &msg);
+
 	private:
 		// Currently used ids.
 		typedef map<nat, Auto<Window>> IdMap;
@@ -32,6 +35,9 @@ namespace stormgui {
 		// Allocate a window with a suggested id. Fails if that id is already in use.
 		// An id of 0 is special. That means you do not want any callbacks from that control.
 		void allocate(Par<Window> window, nat id);
+
+		// Forward WM_COMMAND messages to the right window.
+		bool onCommand(const Message &msg);
 	};
 
 }

@@ -37,8 +37,9 @@ namespace stormgui {
 	}
 
 	Frame::Frame(Par<Str> title) {
+		attachParent(this);
 		text(title);
-		pos(Rect(-1, -1, -2, -2));
+		pos(Rect(-10000, -10000, -10002, -10002));
 	}
 
 	void Frame::create() {
@@ -72,7 +73,12 @@ namespace stormgui {
 			return msgResult(0);
 		}
 
-		return Window::onMessage(msg);
+		return Container::onMessage(msg);
 	}
 
+	void Frame::size(Size s) {
+		Rect p = pos();
+		p.size(s);
+		pos(p);
+	}
 }
