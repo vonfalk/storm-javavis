@@ -15,7 +15,18 @@ then
     rm Release/storm.zip
 fi
 
-7z a Release/storm.zip ./Release/StormMain.exe readme.txt Storm.txt root/ > /dev/null
+7z a Release/storm.zip ./Release/StormMain.exe readme.txt Storm.txt > /dev/null
+find root/ -name "*.bs" -or -name "*.bnf" -or -name "*.txt" | xargs --delimiter='\n' 7z a Release/storm.zip > /dev/null
+
+# Add dlls, we need to rename them first...
+IFS=$'\n'
+for j in `find root/ -name "*Release.dll"`
+do
+    name=`echo $j | sed 's/Release\.dll/.dll/g'`
+    cp $j $name
+    7z a Release/storm.zip $name > /dev/null
+    rm $name
+done
 
 echo "Checking so that the release works..."
 if [[ -e Release/storm ]]

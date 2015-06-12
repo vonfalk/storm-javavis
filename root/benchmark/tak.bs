@@ -16,6 +16,6 @@ Int tak(Int x, Int y, Int z) {
 void testTak() {
 	for (Int i = 0; i < 13; i++) {
 		print("Tak " # i);
-		print("=> " # tak(i, 0, 0-i));
+		print("=> " # tak(2*i, i, 0));
 	}
 }

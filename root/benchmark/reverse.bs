@@ -35,7 +35,7 @@ Cons create(Int len) {
 
 Cons? append(Cons? a, Cons? b) {
 	if (a) {
-		?Cons(a.value, append(a.next, b));
+		Cons(a.value, append(a.next, b));
 	} else {
 		b;
 	}

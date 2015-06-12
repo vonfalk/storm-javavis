@@ -15,7 +15,7 @@
   (if (< at 13)
       (begin
        (display (string-append "Tac " (number->string at) "\n"))
-       (display (string-append "=> " (number->string (tak at 0 (- 0 at))) "\n"))
+       (display (string-append "=> " (number->string (tak (* 2 at) at 0)) "\n"))
        (runTakInt (+ 1 at)))
       0))
 
