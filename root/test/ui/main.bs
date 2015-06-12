@@ -3,15 +3,23 @@ use core:geometry;
 use core:debug;
 
 class MainWin extends Frame {
-	Button? btn;
+	Button btn;
 
 	ctor() {
-		init() {}
+		init("Test window") {
+			btn("Click me!");
+		}
 
-		create("Test window", Size(300, 300));
-		initDone();
+		add(btn);
 
-		btn = Button("Test", this);
+		create();
+	}
+
+	void resized(Size s) {
+		Size border = 8;
+		Point tl = border;
+		Size sz = s - 2*border;
+		btn.pos(Rect(tl, sz));
 	}
 }
 

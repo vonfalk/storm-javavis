@@ -29,4 +29,8 @@ namespace stormgui {
 	const DWORD controlFlags = childFlags | WS_TABSTOP;
 	const DWORD buttonFlags = controlFlags | BS_PUSHBUTTON;
 
+	// Helpers.
+	Rect convert(const RECT &r);
+	Rect convert(const POINT &a, const POINT &b);
+	RECT convert(const Rect &r);
 }

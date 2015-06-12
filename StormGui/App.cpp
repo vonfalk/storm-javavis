@@ -58,17 +58,6 @@ namespace stormgui {
 		}
 	}
 
-	Frame *App::findRoot(HWND wnd) {
-		HWND parent = GetAncestor(wnd, GA_PARENT);
-		WindowMap::iterator i = windows.find(parent);
-		if (i == windows.end()) {
-			assert(false, L"Parent not found!");
-			return null;
-		}
-
-		return i->second->rootFrame();
-	}
-
 	void App::preCreate(Window *w) {
 		assert(creating == null, L"Trying to create multiple windows simultaneously is not yet supported.");
 		creating = w;
@@ -79,7 +68,7 @@ namespace stormgui {
 		creating = null;
 	}
 
-	Frame *App::addWindow(Window *w) {
+	void App::addWindow(Window *w) {
 		if (creating == w)
 			creating = null;
 
@@ -87,12 +76,6 @@ namespace stormgui {
 
 		windows.insert(make_pair(handle, w));
 		liveWindows.insert(w);
-
-		if (Frame *f = as<Frame>(w)) {
-			return f;
-		} else {
-			return steal(findRoot(handle)).borrow();
-		}
 	}
 
 	void App::removeWindow(Window *w) {

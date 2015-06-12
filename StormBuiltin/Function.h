@@ -19,6 +19,9 @@ enum FnFlags {
 
 	// External function (ie, not to be exported?)
 	fnExternal = 0x10,
+
+	// Setter function (can be used like bar.foo = 3)
+	fnSetter = 0x20,
 };
 
 BITMASK_OPERATORS(FnFlags);

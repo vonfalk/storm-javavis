@@ -47,6 +47,9 @@ Some kind of versioning scheme when connecting DLLS and the Storm executable is 
 
 Rename Shared/ to Lib/ ?
 
+Do not make a big deal out of values that have no deepCopy function, they probably do not need it,
+alternatively generate a default one or warn early if absent.
+
 The Maybe<> type inherits from object. This may be bad since programs may assume that regular object pointers are never null!
 
 Replace functions that take 'name' + 'params' with a version that takes 'NamePart' instead. Expose to Storm where possible.

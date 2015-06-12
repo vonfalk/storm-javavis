@@ -8,7 +8,7 @@ namespace stormgui {
 	// Null is a failure code from eg. GetParent function, should be OK to use as invalid.
 	const HWND Window::invalid = (HWND)NULL;
 
-	Window::Window() : myHandle(invalid), root(null) {}
+	Window::Window() : myHandle(invalid), myParent(null), myRoot(null), myVisible(true), myPos(0, 0, 10, 10) {}
 
 	Window::~Window() {
 		if (myHandle != invalid) {
@@ -17,13 +17,28 @@ namespace stormgui {
 		}
 	}
 
+	Container *Window::parent() {
+		myParent->addRef();
+		return myParent;
+	}
+
 	Frame *Window::rootFrame() {
-		root->addRef();
-		return root;
+		myRoot->addRef();
+		return myRoot;
 	}
 
 	HWND Window::handle() const {
 		return myHandle;
+	}
+
+	void Window::attachParent(Container *parent) {
+		myParent = parent;
+	}
+
+	void Window::parentCreated(nat id) {
+		if (!created())
+			if (!create(myParent->handle(), id))
+				WARNING(L"Failed to create a window...");
 	}
 
 	void Window::handle(HWND handle) {
@@ -36,57 +51,130 @@ namespace stormgui {
 
 		myHandle = handle;
 		if (myHandle != invalid) {
-			root = a->addWindow(this);
+			a->addWindow(this);
 		}
 	}
 
 	MsgResult Window::onMessage(const Message &msg) {
+		switch (msg.msg) {
+		case WM_SIZE:
+			resized(pos().size());
+			return msgResult(0);
+		}
 		return noResult();
 	}
 
-	void Window::show(Bool show) {
-		ShowWindow(handle(), show ? TRUE : FALSE);
+	Bool Window::visible() {
+		return myVisible;
 	}
 
-	void Window::show() {
-		show(true);
+	void Window::visible(Bool show) {
+		if (created())
+			ShowWindow(handle(), show ? TRUE : FALSE);
 	}
 
-	void Window::initDone() {
-		show();
-		update();
+	Str *Window::text() {
+		if (created())
+			TODO(L"Get the actual window text!");
+		return CREATE(Str, this, myText);
+	}
+
+	void Window::text(Par<Str> s) {
+		text(s->v);
+	}
+
+	void Window::text(const String &s) {
+		myText = s;
+		if (created())
+			SetWindowText(handle(), s.c_str());
+	}
+
+	Rect Window::pos() {
+		if (created()) {
+			RECT r;
+			HWND h = handle();
+			GetClientRect(h, &r);
+			POINT a = { r.left, r.top };
+			ClientToScreen(h, &a);
+			POINT b = { r.right, r. bottom };
+			ClientToScreen(h, &b);
+			myPos = convert(a, b);
+		}
+		return myPos;
+	}
+
+	void Window::pos(Rect r) {
+		myPos = r;
+		if (created()) {
+			RECT z = convert(r);
+			HWND h = handle();
+			DWORD style = GetWindowLong(h, GWL_STYLE);
+			DWORD exStyle = GetWindowLong(h, GWL_EXSTYLE);
+			AdjustWindowRectEx(&z, style, FALSE, exStyle);
+			// Todo: keep track if we need to repaint.
+			MoveWindow(handle(), z.left, z.top, z.right - z.left, z.bottom - z.top, TRUE);
+		}
 	}
 
 	void Window::update() {
 		UpdateWindow(handle());
 	}
 
-	bool Window::create(LPCTSTR className, LPCTSTR windowName, DWORD style,
-						int x, int y, int w, int h,
-						HWND parent, HMENU menu) {
-		assert(handle() == invalid);
-
-		Auto<App> app = stormgui::app(engine());
-		app->preCreate(this);
-		HWND z = CreateWindow(className, windowName, style, x, y, w, h, parent, menu, app->instance(), NULL);
-
-		if (z == NULL) {
-			app->createAborted(this);
-			return false;
-		} else {
-			handle(z);
-			return true;
-		}
+	void Window::resized(Size size) {
+		// Nothing here, override when needed.
 	}
 
-	bool Window::createEx(DWORD exStyle, LPCTSTR className, LPCTSTR windowName, DWORD style,
-						int x, int y, int w, int h,
-						HWND parent, HMENU menu) {
+	bool Window::create(HWND parent, nat id) {
+		return createEx(NULL, childFlags, 0, parent, id);
+	}
+
+	bool Window::createEx(LPCTSTR className, DWORD style, DWORD exStyle, HWND parent, nat id, CreateFlags flags) {
 		assert(handle() == invalid);
 
 		Auto<App> app = stormgui::app(engine());
+
+		if (className == null)
+			className = (LPCTSTR)app->windowClass();
+
+		if (cManualVisibility & ~flags)
+			if (myVisible)
+				style |= WS_VISIBLE;
+
+		Point p = myPos.p0;
+		Size s = myPos.size();
+
+		if (WS_CHILD & ~style) {
+			RECT r = convert(myPos);
+			AdjustWindowRectEx(&r, style & ~WS_OVERLAPPED, FALSE, exStyle);
+			p.x = r.left; p.y = r.top;
+			s.w = r.right - r.left; s.h = r.bottom - r.top;
+		}
+
+		if (flags & cAutoPos) {
+			// Outside the screen?
+			if (myPos.p1.x < 0 && myPos.p1.y < 0) {
+				p.x = CW_USEDEFAULT;
+				p.y = 0;
+			}
+
+			// Invalid size?
+			if (!myPos.size().valid()) {
+				s.w = CW_USEDEFAULT;
+				s.h = 0;
+			}
+		}
+
+		// Position controls before creation.
+		if (myPos.size().valid())
+			resized(myPos.size());
+
+		HINSTANCE instance = app->instance();
+		LPCTSTR windowName = myText.c_str();
+
 		app->preCreate(this);
-		HWND z = CreateWindowEx(exStyle, className, windowName, style, x, y, w, h, parent, menu, app->instance(), NULL);
+		HWND z = CreateWindowEx(exStyle, className, windowName, style,
+								p.x, p.y, s.w, s.h,
+								parent, (HMENU)id, instance, NULL);
 
 		if (z == NULL) {
 			app->createAborted(this);

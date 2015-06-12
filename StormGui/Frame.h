@@ -12,13 +12,10 @@ namespace stormgui {
 		STORM_CLASS;
 	public:
 		// Note: does not create an actual frame. Use 'create' below to do that.
-		STORM_CTOR Frame();
+		STORM_CTOR Frame(Par<Str> title);
 
-		// Create a frame with a default size (either system default, or remembered from earlier).
-		void STORM_FN create(Par<Str> title);
-
-		// Create a frame with a specific size.
-		void STORM_FN create(Par<Str> title, Size size);
+		// Create the frame and show it.
+		void STORM_FN create();
 
 		// Close this frame.
 		void STORM_FN close();
@@ -31,7 +28,7 @@ namespace stormgui {
 
 	private:
 		// Helper to create the window.
-		bool createWindow(const String &title, Size size, bool sizeable);
+		bool createWindow(bool sizeable);
 
 		// Event that fires when we're closed.
 		os::Event onClose;

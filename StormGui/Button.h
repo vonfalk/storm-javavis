@@ -1,5 +1,5 @@
 #pragma once
-#include "Container.h"
+#include "Window.h"
 
 namespace stormgui {
 
@@ -9,7 +9,10 @@ namespace stormgui {
 	class Button : public Window {
 		STORM_CLASS;
 	public:
-		STORM_CTOR Button(Par<Str> text, Par<Container> parent);
+		STORM_CTOR Button(Par<Str> title);
+
+	protected:
+		virtual bool create(HWND parent, nat id);
 	};
 
 }

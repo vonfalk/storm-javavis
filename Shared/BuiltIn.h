@@ -120,6 +120,9 @@ namespace storm {
 
 			// This function is declared virtual.
 			virtualFunction = 0x40,
+
+			// This function is declared as a setter.
+			setterFunction = 0x80,
 		};
 
 		// Mode.

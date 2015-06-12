@@ -26,8 +26,8 @@ namespace stormgui {
 		// Abort creation on failure.
 		void createAborted(Window *w);
 
-		// Add a new window, returns the root frame as a borrowed ptr.
-		Frame *addWindow(Window *w);
+		// Add a new window.
+		void addWindow(Window *w);
 
 		// Remove a window.
 		void removeWindow(Window *w);

@@ -21,6 +21,9 @@ namespace storm {
 		// This function is suitable for automatic casts (only constructors).
 		namedAutoCast = 0x02,
 
+		// This function is suitable for setter semantics (ie foo.bar = baz).
+		namedSetter = 0x04,
+
 		/**
 		 * Overloading. (mostly useful for functions)
 		 * TODO: Add member meaning: expected to overload something.

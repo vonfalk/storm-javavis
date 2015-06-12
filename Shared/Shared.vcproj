@@ -222,6 +222,14 @@
 				RelativePath=".\Geometry\Size.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Geometry\Point.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Rect.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -322,6 +330,14 @@
 			</File>
 			<File
 				RelativePath=".\Geometry.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Point.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Rect.h"
 				>
 			</File>
 		</Filter>

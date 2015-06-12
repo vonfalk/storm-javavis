@@ -301,6 +301,14 @@
 				RelativePath=".\Container.h"
 				>
 			</File>
+			<File
+				RelativePath=".\ContainerIds.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Exception.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

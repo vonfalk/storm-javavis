@@ -12,9 +12,7 @@ namespace stormgui {
 	}
 
 	// Helper to create the actual handle.
-	bool Frame::createWindow(const String &caption, Size size, bool sizeable) {
-		Auto<App> app = stormgui::app(engine());
-
+	bool Frame::createWindow(bool sizeable) {
 		DWORD exStyles = WS_EX_CONTROLPARENT;
 		DWORD styles = 0;
 		if (sizeable)
@@ -24,35 +22,30 @@ namespace stormgui {
 
 		styles |= WS_CLIPCHILDREN;
 
-		nat w = CW_USEDEFAULT;
-		nat h = 0;
-		if (size.w > 0 && size.h > 0) {
-			size = clientToWindow(size, styles, exStyles);
-			w = size.w;
-			h = size.h;
+		if (!createEx(NULL, styles, exStyles, NULL, 0, cManualVisibility | cAutoPos))
+			return false;
+
+		// Create child windows (little of a hack, sorry!)
+		parentCreated(0);
+
+		if (visible()) {
+			ShowWindow(handle(), TRUE);
+			update();
 		}
 
-		return createEx(exStyles,
-						(LPCTSTR)app->windowClass(),
-						caption.c_str(),
-						styles,
-						CW_USEDEFAULT, 0,
-						w, h,
-						NULL,
-						NULL);
+		return true;
 	}
 
-	Frame::Frame() {}
-
-	void Frame::create(Par<Str> title) {
-		create(title, Size());
+	Frame::Frame(Par<Str> title) {
+		text(title);
+		pos(Rect(-1, -1, -2, -2));
 	}
 
-	void Frame::create(Par<Str> title, Size size) {
+	void Frame::create() {
 		if (handle() != invalid)
 			return;
 
-		if (createWindow(title->v, size, true)) {
+		if (createWindow(true)) {
 			// Add an extra reference to keep ourselves alive until we're closed.
 			addRef();
 		}
@@ -71,7 +64,6 @@ namespace stormgui {
 		Auto<App> app = stormgui::app(engine());
 		app->waitForEvent(this, onClose);
 	}
-
 
 	MsgResult Frame::onMessage(const Message &msg) {
 		switch (msg.msg) {

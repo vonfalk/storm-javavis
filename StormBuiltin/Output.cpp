@@ -262,6 +262,8 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 			out << L" | BuiltInFunction::hiddenEngine";
 		if (fn.flags & fnVirtual)
 			out << L" | BuiltInFunction::virtualFunction";
+		if (fn.flags & fnSetter)
+			out << L" | BuiltInFunction::setterFunction";
 		out << L", ";
 
 		// Member of?

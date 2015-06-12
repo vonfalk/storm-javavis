@@ -18,6 +18,9 @@
 // For example: Str *STORM_FN foo();
 #define STORM_FN CODECALL
 
+// Mark built-in functions that should work as setters. No special treatment is done so far.
+#define STORM_SETTER CODECALL
+
 // Expose a data member to Storm. Example: STORM_VAR Auto<Str> foo;
 #define STORM_VAR
 

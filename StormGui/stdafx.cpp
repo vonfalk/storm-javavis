@@ -8,3 +8,21 @@
 // and not in this file
 
 #pragma comment (lib, "Comctl32.lib")
+
+
+namespace stormgui {
+
+	Rect convert(const RECT &r) {
+		return Rect(r.left, r.top, r.right, r.bottom);
+	}
+
+	Rect convert(const POINT &a, const POINT &b) {
+		return Rect(a.x, a.y, b.x, b.y);
+	}
+
+	RECT convert(const Rect &r) {
+		RECT z = { r.p0.x, r.p0.y, r.p1.x, r.p1.y };
+		return z;
+	}
+
+}
