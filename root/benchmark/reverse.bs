@@ -35,7 +35,7 @@ Cons create(Int len) {
 
 Cons? append(Cons? a, Cons? b) {
 	if (a) {
-		Cons(a.value, append(a.next, b));
+		?Cons(a.value, append(a.next, b));
 	} else {
 		b;
 	}
@@ -44,8 +44,7 @@ Cons? append(Cons? a, Cons? b) {
 Cons? reverse(Cons? a) {
 	Cons? r;
 	if (a) {
-		Cons? n = Cons(a.value);
-		r = append(reverse(a.next), n);
+		r = append(reverse(a.next), Cons(a.value));
 	}
 	r;
 }
