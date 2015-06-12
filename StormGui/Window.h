@@ -1,5 +1,6 @@
 #pragma once
 #include "Message.h"
+#include "Font.h"
 #include "Utils/Bitmask.h"
 
 namespace stormgui {
@@ -77,6 +78,10 @@ namespace stormgui {
 		Rect STORM_FN pos();
 		void STORM_SETTER pos(Rect r);
 
+		// Font.
+		Font *STORM_FN font();
+		void STORM_SETTER font(Par<Font> font);
+
 		// Update the window (ie repaint it).
 		virtual void STORM_FN update();
 
@@ -119,6 +124,9 @@ namespace stormgui {
 
 		// Position.
 		Rect myPos;
+
+		// Font.
+		Auto<Font> myFont;
 	};
 
 	BITMASK_OPERATORS(Window::CreateFlags);

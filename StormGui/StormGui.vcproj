@@ -255,6 +255,10 @@
 				RelativePath=".\Container.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Font.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -307,6 +311,10 @@
 			</File>
 			<File
 				RelativePath=".\Exception.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Font.h"
 				>
 			</File>
 		</Filter>

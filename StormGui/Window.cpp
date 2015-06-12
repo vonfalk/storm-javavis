@@ -8,7 +8,9 @@ namespace stormgui {
 	// Null is a failure code from eg. GetParent function, should be OK to use as invalid.
 	const HWND Window::invalid = (HWND)NULL;
 
-	Window::Window() : myHandle(invalid), myParent(null), myRoot(null), myVisible(true), myPos(0, 0, 10, 10) {}
+	Window::Window() : myHandle(invalid), myParent(null), myRoot(null), myVisible(true), myPos(0, 0, 10, 10) {
+		myFont = steal(app(engine()))->defaultFont;
+	}
 
 	Window::~Window() {
 		if (myHandle != invalid) {
@@ -128,6 +130,16 @@ namespace stormgui {
 		}
 	}
 
+	Font *Window::font() {
+		return myFont.ret();
+	}
+
+	void Window::font(Par<Font> font) {
+		myFont = font;
+		if (created())
+			SendMessage(handle(), WM_SETFONT, (WPARAM)font->handle(), TRUE);
+	}
+
 	void Window::update() {
 		UpdateWindow(handle());
 	}
@@ -193,6 +205,7 @@ namespace stormgui {
 			return false;
 		} else {
 			handle(z);
+			SendMessage(handle(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
 			return true;
 		}
 	}

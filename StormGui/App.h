@@ -1,6 +1,7 @@
 #pragma once
 #include "StormGui.h"
 #include "Message.h"
+#include "Font.h"
 
 namespace stormgui {
 
@@ -38,6 +39,9 @@ namespace stormgui {
 		// Wait for an event, making sure that we're not blocking the message loop. Also returns when
 		// 'window' is no longer alive.
 		void waitForEvent(Window *owner, os::Event &event);
+
+		// Default font.
+		STORM_VAR Auto<Font> defaultFont;
 
 		// Get the window class for frame windows.
 		ATOM windowClass();

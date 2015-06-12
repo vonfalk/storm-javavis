@@ -17,6 +17,8 @@ namespace stormgui {
 		initCommonControls();
 		initCom();
 		hWindowClass = registerWindowClass();
+
+		defaultFont = stormgui::defaultFont(engine());
 	}
 
 	App::~App() {
