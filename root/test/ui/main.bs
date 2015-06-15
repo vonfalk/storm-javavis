@@ -4,13 +4,19 @@ use core:debug;
 
 class MainWin extends Frame {
 	Button btn;
+	Edit input;
 
 	ctor() {
 		init("Test window") {
-			btn("Click me!", &btnClicked(Button));
+			btn("Click me!");
 		}
 		size(Size(150, 150));
 
+		input.text("Hej");
+		input.onReturn = &this->enterPressed(Edit);
+		add(input);
+
+		btn.onClick = &this->btnClicked(Button);
 		add(btn);
 
 		create();
@@ -18,21 +24,28 @@ class MainWin extends Frame {
 
 	void resized(Size s) {
 		Size border = 8;
-		Point tl = border;
+		Point w = border;
 		Size sz = s - 2*border;
-		btn.pos(Rect(tl, sz));
+		input.pos(Rect(w, Size(sz.w, 20)));
+		w.y = w.y + 28;
+		sz.h = sz.h - 28;
+
+		btn.pos(Rect(w, sz));
 	}
 
-}
+	void btnClicked(Button btn) {
+		btn.text("Well done: " + input.text);
+	}
 
-void btnClicked(Button btn) {
-	btn.text("Well done!");
+	void enterPressed(Edit edit) {
+		btn.text("Well edited: " + input.text);
+	}
 }
 
 thread Waiter;
 
 void closeLater(MainWin w) on Waiter {
-	dbgSleep(4000);
+	dbgSleep(6000);
 	w.close;
 }
 

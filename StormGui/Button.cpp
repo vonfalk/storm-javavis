@@ -5,6 +5,7 @@ namespace stormgui {
 
 	Button::Button(Par<Str> title) {
 		text(title);
+		onClick = NullFn<void, Par<Button>>::create(engine());
 	}
 
 	Button::Button(Par<Str> title, Par<FnPtr<void, Par<Button>>> click) : onClick(click) {

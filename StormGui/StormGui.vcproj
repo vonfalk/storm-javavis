@@ -259,6 +259,10 @@
 				RelativePath=".\Font.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Edit.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -315,6 +319,10 @@
 			</File>
 			<File
 				RelativePath=".\Font.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Edit.h"
 				>
 			</File>
 		</Filter>

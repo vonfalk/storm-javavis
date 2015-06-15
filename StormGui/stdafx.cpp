@@ -25,4 +25,8 @@ namespace stormgui {
 		return z;
 	}
 
+	bool pressed(nat keycode) {
+		return (GetKeyState(keycode) & 0x8000) != 0;
+	}
+
 }

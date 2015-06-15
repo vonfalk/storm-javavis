@@ -288,7 +288,9 @@ namespace storm {
 		return CREATE(FN_PTR(R), e, address(fn), thisPtr.borrow(), false);
 	}
 
-
 #undef FN_PTR
 
 }
+
+
+#include "NullFn.h"

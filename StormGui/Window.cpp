@@ -74,6 +74,32 @@ namespace stormgui {
 		return noResult();
 	}
 
+	MsgResult Window::beforeMessage(const Message &msg) {
+		switch (msg.msg) {
+		case WM_KEYUP:
+			if (onKey(false, msg.wParam))
+				return msgResult(0);
+			break;
+		case WM_KEYDOWN:
+			if (onKey(true, msg.wParam))
+				return msgResult(0);
+			break;
+		case WM_CHAR:
+			if (onChar(msg.wParam))
+				return msgResult(0);
+			break;
+		}
+		return noResult();
+	}
+
+	Bool Window::onKey(Bool down, Nat id) {
+		return false;
+	}
+
+	Bool Window::onChar(Nat id) {
+		return false;
+	}
+
 	bool Window::onCommand(nat id) {
 		return false;
 	}
@@ -88,16 +114,25 @@ namespace stormgui {
 	}
 
 	Str *Window::text() {
-		if (created())
-			TODO(L"Get the actual window text!");
-		return CREATE(Str, this, myText);
+		return CREATE(Str, this, cText());
 	}
 
 	void Window::text(Par<Str> s) {
-		text(s->v);
+		cText(s->v);
 	}
 
-	void Window::text(const String &s) {
+	const String &Window::cText() {
+		if (created()) {
+			int len = GetWindowTextLength(handle());
+			wchar *buffer = new wchar[len + 1];
+			GetWindowText(handle(), buffer, len + 1);
+			myText = buffer;
+			delete []buffer;
+		}
+		return myText;
+	}
+
+	void Window::cText(const String &s) {
 		myText = s;
 		if (created())
 			SetWindowText(handle(), s.c_str());

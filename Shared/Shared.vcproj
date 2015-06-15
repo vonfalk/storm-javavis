@@ -340,6 +340,10 @@
 				RelativePath=".\Geometry\Rect.h"
 				>
 			</File>
+			<File
+				RelativePath=".\NullFn.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

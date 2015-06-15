@@ -114,6 +114,14 @@ namespace stormgui {
 		if (i != windows.end()) {
 			Window *w = i->second;
 
+			// Intercepted?
+			MsgResult r = w->beforeMessage(msg);
+			if (r.any) {
+				if (InSendMessage())
+					ReplyMessage(r.result);
+				return;
+			}
+
 			// Dialog message?
 			Auto<Frame> root = w->rootFrame();
 			if (root && IsDialogMessage(root->handle(), &msg))

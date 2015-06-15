@@ -57,9 +57,14 @@ namespace stormgui {
 		// Note: 'parent' need to be set before calling this function. This initializes the creation of our window.
 		virtual void parentCreated(nat id);
 
-		// Called when a regular message has been received. If no result is returned, calls the default window proc,
-		// or any message procedure declared by the window we're handling.
+		// Called when a regular message has been received. If no result is returned, calls the
+		// default window proc, or any message procedure declared by the window we're handling. Only
+		// works for windows with the default window class provided by App. Otherwise, use 'preTranslateMessage'.
 		virtual MsgResult onMessage(const Message &msg);
+
+		// Called before a message is dispatched to the window procedure. Return a result to inhibit the regular
+		// dispatch.
+		virtual MsgResult beforeMessage(const Message &msg);
 
 		// Called when a WM_COMMAND has been sent to (by) us. Return 'true' if it is handled. Type
 		// is the notification code specified by the message (eg BN_CLICK).
@@ -72,7 +77,8 @@ namespace stormgui {
 		// Window text.
 		Str *STORM_FN text();
 		void STORM_SETTER text(Par<Str> str);
-		void text(const String &str);
+		const String &cText();
+		void cText(const String &str);
 
 		// Window position. Always relative to the client area (even in Frames).
 		Rect STORM_FN pos();
@@ -87,6 +93,10 @@ namespace stormgui {
 
 		// Called when the window is resized.
 		virtual void STORM_FN resized(Size size);
+
+		// Key events. Return 'true' if the message was handled and should not propagate further.
+		virtual Bool STORM_FN onKey(Bool pressed, Nat keycode);
+		virtual Bool STORM_FN onChar(Nat charCode);
 
 		// Modifiers for the create function.
 		enum CreateFlags {

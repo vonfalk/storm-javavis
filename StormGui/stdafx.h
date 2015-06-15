@@ -28,9 +28,13 @@ namespace stormgui {
 	const DWORD childFlags = WS_CHILD | WS_VISIBLE;
 	const DWORD controlFlags = childFlags | WS_TABSTOP;
 	const DWORD buttonFlags = controlFlags | BS_PUSHBUTTON;
+	const DWORD editFlags = controlFlags | ES_AUTOHSCROLL;
 
 	// Helpers.
 	Rect convert(const RECT &r);
 	Rect convert(const POINT &a, const POINT &b);
 	RECT convert(const Rect &r);
+
+	// Key state (as of the last processed message, only valid in the msg thread).
+	bool pressed(nat keycode);
 }
