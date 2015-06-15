@@ -14,12 +14,19 @@ namespace stormgui {
 		onReturn = NullFn<void, Par<Edit>>::create(engine());
 	}
 
+	Edit::Edit(Par<Str> cue) {
+		myCue = cue->v;
+	}
+
 	bool Edit::create(HWND parent, nat id) {
 		if (!Window::createEx(WC_EDIT, controlFlags, WS_EX_CLIENTEDGE, parent, id))
 			return false;
 
 		// Update selection.
 		selected(sel);
+
+		// Cue banner.
+		SendMessage(handle(), EM_SETCUEBANNER, 0, (LPARAM)myCue.c_str());
 
 		return true;
 	}
@@ -56,6 +63,16 @@ namespace stormgui {
 		this->sel = sel;
 		if (created())
 			SendMessage(handle(), EM_SETSEL, (WPARAM)sel.start, (LPARAM)sel.end);
+	}
+
+	Str *Edit::cue() {
+		return CREATE(Str, this, myCue);
+	}
+
+	void Edit::cue(Par<Str> s) {
+		myCue = s->v;
+		if (created())
+			SendMessage(handle(), EM_SETCUEBANNER, 0, (LPARAM)myCue.c_str());
 	}
 
 	void Edit::removeLastWord() {

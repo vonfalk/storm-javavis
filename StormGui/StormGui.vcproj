@@ -263,6 +263,10 @@
 				RelativePath=".\Edit.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Label.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -323,6 +327,10 @@
 			</File>
 			<File
 				RelativePath=".\Edit.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Label.h"
 				>
 			</File>
 		</Filter>

@@ -3,16 +3,20 @@ use core:geometry;
 use core:debug;
 
 class MainWin extends Frame {
-	Button btn;
+	Label lbl;
 	Edit input;
+	Button btn;
 
 	ctor() {
 		init("Test window") {
+			lbl("Name:");
+			input("Your name");
 			btn("Click me!");
 		}
 		size(Size(150, 150));
 
-		input.text("Hej");
+		add(lbl);
+
 		input.onReturn = &this->enterPressed(Edit);
 		add(input);
 
@@ -26,6 +30,11 @@ class MainWin extends Frame {
 		Size border = 8;
 		Point w = border;
 		Size sz = s - 2*border;
+
+		lbl.pos(Rect(w, Size(sz.w, 20)));
+		w.y = w.y + 28;
+		sz.h = sz.h - 28;
+
 		input.pos(Rect(w, Size(sz.w, 20)));
 		w.y = w.y + 28;
 		sz.h = sz.h - 28;
