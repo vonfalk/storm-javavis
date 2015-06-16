@@ -59,7 +59,7 @@ namespace storm {
 	 * We need a struct in order to be able to use __thiscall.
 	 */
 	struct RedirectDtor {
-#if defined(X86) && defined(VS)
+#if defined(X86) && defined(VISUAL_STUDIO)
 		// on VS, there is a hidden int parameter that is 1 if we shall run
 		// delete on the memory after destruction. We fall back on the operator
 		// delete in Object for this, since it is most likely an object in this
@@ -88,7 +88,7 @@ namespace storm {
 	}
 
 
-#if defined(X86) && defined(VS)
+#if defined(X86) && defined(VISUAL_STUDIO)
 	/**
 	 * On VS, we need to add a hidden parameter that tells the delete fn
 	 * that we do not want to run operator delete afterwards. Aside from

@@ -259,7 +259,7 @@ namespace storm {
 		}
 	}
 
-#ifdef VS
+#ifdef VISUAL_STUDIO
 	ValList valList(nat count, ...) {
 		vector<Value> r;
 		r.reserve(count);

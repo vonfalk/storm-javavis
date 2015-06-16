@@ -4,7 +4,7 @@
 
 // In Visual Studio 2008, we do not have exception_ptr, so we implement our own
 // solution in that case!
-#if VS <= 2008
+#if VISUAL_STUDIO <= 2008
 #define CUSTOM_EXCEPTION_PTR
 #else
 #include <stdexcept>

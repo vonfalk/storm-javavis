@@ -23,7 +23,7 @@ namespace storm {
 		return type == o.type && ref == o.ref;
 	}
 
-#ifdef VS
+#ifdef VISUAL_STUDIO
 	vector<ValueData> valDataList(nat count, ...) {
 		vector<ValueData> r;
 		r.reserve(count);

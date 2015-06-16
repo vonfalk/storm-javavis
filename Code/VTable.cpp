@@ -6,7 +6,7 @@
 
 namespace code {
 
-#if defined(VS) || defined(GCC)
+#if defined(VISUAL_STUDIO) || defined(GCC)
 	void *vtableOf(const void *object) {
 		void **o = (void **)object;
 		return *o;
@@ -22,7 +22,7 @@ namespace code {
 	 * Helpers for handling VTables, these contain most of the platform-specifics.
 	 */
 
-#if defined(VS) && VS == 2008
+#if defined(VISUAL_STUDIO) && VISUAL_STUDIO == 2008
 
 	int VTable::extraOffset = -2;
 	int VTable::dtorOffset = 0;

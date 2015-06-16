@@ -299,7 +299,7 @@ namespace storm {
 
 }
 
-#ifdef VS
+#ifdef VISUAL_STUDIO
 namespace stdext {
 
 	/**

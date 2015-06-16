@@ -147,7 +147,7 @@ namespace storm {
 	// Array of values.
 	typedef vector<Value> ValList;
 
-#ifdef VS
+#ifdef VISUAL_STUDIO
 	// This function uses a VS specific extension for variable arguments.
 	ValList valList(nat count, ...);
 #else

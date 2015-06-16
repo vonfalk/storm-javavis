@@ -29,7 +29,7 @@
 
 /**
  * Compilers:
- * VS - Visual Studio compiler. Set to the version, eg 2008 for VS2008.
+ * VISUAL_STUDIO - Visual Studio compiler. Set to the version, eg 2008 for VS2008.
  * GCC - GCC compiler, TODO: version?
  */
 
@@ -56,13 +56,13 @@
 #if defined(_MSC_VER)
 // Visual Studio compiler!
 #if _MSC_VER >= 1800
-#define VS 2013
+#define VISUAL_STUDIO 2013
 #elif _MSC_VER >= 1700
-#define VS 2012
+#define VISUAL_STUDIO 2012
 #elif _MSC_VER >= 1600
-#define VS 2010
+#define VISUAL_STUDIO 2010
 #elif _MSC_VER >= 1500
-#define VS 2008
+#define VISUAL_STUDIO 2008
 #else
 #error "Too early VS version, earliest supported is VS2008"
 #endif
@@ -73,7 +73,7 @@
 
 #endif
 
-#ifdef VS
+#ifdef VISUAL_STUDIO
 #define THREAD __declspec(thread)
 #define NAKED __declspec(naked)
 #endif
