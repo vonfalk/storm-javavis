@@ -2,6 +2,7 @@
 
 namespace stormgui {
 	class App;
+	class RenderMgr;
 }
 
 namespace storm {
@@ -16,6 +17,9 @@ namespace storm {
 
 		// The one and only App object. Created when needed.
 		Auto<stormgui::App> app;
+
+		// The render manager. Created when needed.
+		Auto<stormgui::RenderMgr> renderMgr;
 	};
 
 }

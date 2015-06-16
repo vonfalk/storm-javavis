@@ -2,6 +2,7 @@
 #include "StormGui.h"
 #include "Shared/DllMain.h"
 #include "App.h"
+#include "RenderMgr.h"
 
 namespace stormgui {
 
@@ -11,6 +12,7 @@ namespace stormgui {
 
 	DEFINE_STORM_THREAD_WAIT(Ui, &spawnAppWait);
 
+	DEFINE_STORM_THREAD(Render);
 }
 
 namespace storm {

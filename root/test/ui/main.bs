@@ -59,6 +59,7 @@ void closeLater(MainWin w) on Waiter {
 }
 
 void main() {
+	renderMgr;
 	MainWin win;
 	spawn closeLater(win);
 	win.waitForClose;

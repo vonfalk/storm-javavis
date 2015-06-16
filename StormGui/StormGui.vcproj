@@ -267,6 +267,14 @@
 				RelativePath=".\Label.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Painter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RenderMgr.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -331,6 +339,14 @@
 			</File>
 			<File
 				RelativePath=".\Label.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Painter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RenderMgr.h"
 				>
 			</File>
 		</Filter>

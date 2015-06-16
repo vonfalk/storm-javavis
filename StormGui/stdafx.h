@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "Utils/Utils.h"
 #include "Shared/Storm.h"
 
@@ -11,6 +10,7 @@ using namespace storm;
 
 namespace stormgui {
 	STORM_THREAD(Ui);
+	STORM_THREAD(Render);
 }
 
 #define WM_THREAD_SIGNAL (WM_APP + 1)
@@ -38,3 +38,19 @@ namespace stormgui {
 	// Key state (as of the last processed message, only valid in the msg thread).
 	bool pressed(nat keycode);
 }
+
+// D2D for rendering.
+#include <d2d1.h>
+
+// It defines a macro 'interface' that messes with the rest of the system...
+#undef interface
+
+// Release COM objects.
+template <class T>
+void release(T *&v) {
+	if (v)
+		v->Release();
+	v = null;
+}
+
+
