@@ -2,6 +2,7 @@
 #include "Window.h"
 #include "Frame.h"
 #include "App.h"
+#include "Painter.h"
 
 namespace stormgui {
 
@@ -62,6 +63,7 @@ namespace stormgui {
 		myHandle = handle;
 		if (myHandle != invalid) {
 			a->addWindow(this);
+			notifyPainter();
 		}
 	}
 
@@ -243,6 +245,32 @@ namespace stormgui {
 			SendMessage(handle(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
 			return true;
 		}
+	}
+
+	void Window::painter(Par<Painter> p) {
+		Engine &e = engine();
+		if (myPainter) {
+			// Detach previous.
+			os::Future<void> result;
+			os::FnParams params;
+			params.add(myPainter.borrow());
+			os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
+			result.result();
+		}
+
+		myPainter = p;
+
+		if (created())
+			notifyPainter();
+	}
+
+	void Window::notifyPainter() {
+		Engine &e = engine();
+		os::Future<void> result;
+		os::FnParams params;
+		params.add(myPainter.borrow()).add(this);
+		os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
+		result.result();
 	}
 
 }

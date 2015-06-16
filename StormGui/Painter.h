@@ -1,6 +1,7 @@
 #pragma once
 
 namespace stormgui {
+	class Window;
 
 	/**
 	 * Painter interface for window graphics. Running in a separate thread for now.
@@ -10,11 +11,28 @@ namespace stormgui {
 		STORM_CLASS;
 	public:
 		STORM_CTOR Painter();
+		~Painter();
 
 		// Called to render the window. Return 'true' if you want to render the next frame as well.
 		// Before this call, the background is filled with the background color specified.
 		Bool STORM_FN render(Size size);
 
+
+		// Attach to a specific window.
+		void attach(Par<Window> to);
+
+		// Detach from the previous window.
+		void detach();
+
+	private:
+		// Attached HWND.
+		HWND attachedTo;
+
+		// Create any resources connected to the current device.
+		void create();
+
+		// Destroy any resources connected to the current device.
+		void destroy();
 	};
 
 }

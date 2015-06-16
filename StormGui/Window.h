@@ -7,6 +7,7 @@ namespace stormgui {
 
 	class Container;
 	class Frame;
+	class Painter;
 
 	/**
 	 * Base class for windows and controls.
@@ -98,6 +99,9 @@ namespace stormgui {
 		virtual Bool STORM_FN onKey(Bool pressed, Nat keycode);
 		virtual Bool STORM_FN onChar(Nat charCode);
 
+		// Set window contents (custom drawing).
+		void STORM_SETTER painter(Par<Painter> to);
+
 		// Modifiers for the create function.
 		enum CreateFlags {
 			cNormal = 0x0,
@@ -137,6 +141,12 @@ namespace stormgui {
 
 		// Font.
 		Auto<Font> myFont;
+
+		// Painter.
+		Auto<Painter> myPainter;
+
+		// Notify our painter of our new HWND.
+		void notifyPainter();
 	};
 
 	BITMASK_OPERATORS(Window::CreateFlags);

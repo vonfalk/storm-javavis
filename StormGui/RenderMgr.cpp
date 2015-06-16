@@ -4,15 +4,15 @@
 
 namespace stormgui {
 
-	RenderMgr::RenderMgr() {
-		PLN(L"Creating render manager...");
 #ifdef DEBUG
-		D2D1_FACTORY_OPTIONS options = { D2D1_DEBUG_LEVEL_INFORMATION };
+	static D2D1_FACTORY_OPTIONS options = { D2D1_DEBUG_LEVEL_INFORMATION };
 #else
-		D2D1_FACTORY_OPTIONS options = { D2D1_DEBUG_LEVEL_NONE };
+	static D2D1_FACTORY_OPTIONS options = { D2D1_DEBUG_LEVEL_NONE };
 #endif
+
+	RenderMgr::RenderMgr() {
+		factory = null;
 		D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), &options, (void **)&factory);
-		PVAR(factory);
 	}
 
 	RenderMgr::~RenderMgr() {
