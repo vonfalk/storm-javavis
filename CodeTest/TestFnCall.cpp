@@ -58,7 +58,14 @@ struct Dummy {
 	LargeType CODECALL large() {
 		return data;
 	}
+
+	void CODECALL voidMember(int a, int b) {
+		assert((int)this == 10);
+		assert(a == 20);
+		assert(b == 30);
+	}
 };
+
 
 static int sum = 0;
 static void testVoid(int p1, int p2) {
@@ -84,6 +91,15 @@ BEGIN_TEST(FnCallTest) {
 	FnParams q;
 	q.add(&dummy);
 	CHECK_EQ(call<LargeType>(address(&Dummy::large), true, q), LargeType(2, 3, 4, 5));
+
+	{
+		void *a = (void *)10;
+		int b = 20;
+		int c = 30;
+		FnParams p; p.add(a).add(b).add(c);
+		CHECK_RUNS(call<void>(address(&Dummy::voidMember), true, p));
+	}
+
 
 } END_TEST
 

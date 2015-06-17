@@ -1,6 +1,7 @@
 #pragma once
 
 namespace stormgui {
+	class Painter;
 
 	/**
 	 * Singleton class in charge of managing window repaints.
@@ -11,6 +12,12 @@ namespace stormgui {
 		// Destroy.
 		virtual ~RenderMgr();
 
+		// Attach a Painter.
+		ID2D1HwndRenderTarget *attach(Par<Painter> painter, HWND window);
+
+		// Detach a Painter.
+		void detach(Par<Painter> painter);
+
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
 
@@ -19,6 +26,9 @@ namespace stormgui {
 
 		// The D2D-factory.
 		ID2D1Factory *factory;
+
+		// Live painters (weak pointers).
+		hash_set<Painter *> painters;
 	};
 
 	// Create/get the singleton render manager.

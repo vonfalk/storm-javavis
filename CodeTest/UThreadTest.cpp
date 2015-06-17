@@ -11,6 +11,19 @@ static void returnVoid(bool error) {
 		throw UserError(L"ERROR");
 }
 
+static void voidParams(int a, int b) {
+	assert(a == 10);
+	assert(b == 20);
+}
+
+struct Dummy {
+	void CODECALL voidMember(int a, int b) {
+		assert((int)this == 10);
+		assert(a == 20);
+		assert(b == 30);
+	}
+};
+
 static int returnInt(int v) {
 	return v;
 }
@@ -63,6 +76,24 @@ BEGIN_TEST(UThreadResultTest) {
 		Future<void> r2;
 		UThread::spawn(returnVoid, false, params, r2);
 		CHECK_ERROR(r2.result(), UserError);
+	}
+
+	{
+		Future<void> r;
+		int a = 10, b = 20;
+		FnParams p; p.add(a).add(b);
+		UThread::spawn(voidParams, false, p, r);
+		CHECK_RUNS(r.result());
+	}
+
+	{
+		Future<void> r;
+		void *a = (void *)10;
+		int b = 20;
+		int c = 30;
+		FnParams p; p.add(a).add(b).add(c);
+		UThread::spawn(address(&Dummy::voidMember), true, p, r);
+		CHECK_RUNS(r.result());
 	}
 
 	{

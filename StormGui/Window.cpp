@@ -69,9 +69,14 @@ namespace stormgui {
 
 	MsgResult Window::onMessage(const Message &msg) {
 		switch (msg.msg) {
-		case WM_SIZE:
-			resized(pos().size());
+		case WM_SIZE: {
+			Size s = pos().size();
+			notifyPainter(s);
+			resized(s);
 			return msgResult(0);
+		}
+		case WM_PAINT:
+			return onPaint();
 		}
 		return noResult();
 	}
@@ -265,12 +270,37 @@ namespace stormgui {
 	}
 
 	void Window::notifyPainter() {
-		Engine &e = engine();
-		os::Future<void> result;
-		os::FnParams params;
-		params.add(myPainter.borrow()).add(this);
-		os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
-		result.result();
+		if (myPainter) {
+			Engine &e = engine();
+			os::Future<void> result;
+			os::FnParams params;
+			params.add(myPainter.borrow()).add(this);
+			os::UThread::spawn(address(&Painter::attach), true, params, result, &Render::thread(e)->thread());
+			result.result();
+		}
+	}
+
+	void Window::notifyPainter(Size s) {
+		if (myPainter) {
+			Engine &e = engine();
+			os::FnParams params; params.add(myPainter.borrow()).add(s);
+			os::UThread::spawn(address(&Painter::resize), true, params, &Render::thread(e)->thread());
+		}
+	}
+
+	MsgResult Window::onPaint() {
+		if (myPainter) {
+			Engine &e = engine();
+			os::FnParams params; params.add(myPainter.borrow());
+			os::UThread::spawn(address(&Painter::repaint), true, params, &Render::thread(e)->thread());
+			// TODO: Maybe block here?
+			// Tell Windows we've taken care of re-painting our window (we will soon, at least...)
+			ValidateRect(handle(), NULL);
+
+			return msgResult(0);
+		} else {
+			return noResult();
+		}
 	}
 
 }

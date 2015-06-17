@@ -23,6 +23,8 @@ namespace stormgui {
 
 	App::~App() {
 		TODO(L"Reap any live windows!");
+
+		CoUninitialize();
 	}
 
 	ATOM App::windowClass() {

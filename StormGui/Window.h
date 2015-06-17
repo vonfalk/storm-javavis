@@ -147,6 +147,12 @@ namespace stormgui {
 
 		// Notify our painter of our new HWND.
 		void notifyPainter();
+
+		// Tell our painter we've been resized.
+		void notifyPainter(Size s);
+
+		// Handle on paint events.
+		MsgResult onPaint();
 	};
 
 	BITMASK_OPERATORS(Window::CreateFlags);

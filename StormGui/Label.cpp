@@ -8,7 +8,6 @@ namespace stormgui {
 	}
 
 	bool Label::create(HWND parent, nat id) {
-		PLN("Created!");
 		return createEx(WC_STATIC, childFlags, 0, parent, id);
 	}
 

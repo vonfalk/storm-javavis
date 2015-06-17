@@ -2,6 +2,10 @@ use ui;
 use core:geometry;
 use core:debug;
 
+class MainPainter extends Painter {
+	ctor() { init() {} }
+}
+
 class MainWin extends Frame {
 	Label lbl;
 	Edit input;
@@ -23,6 +27,8 @@ class MainWin extends Frame {
 		btn.onClick = &this->btnClicked(Button);
 		add(btn);
 
+		painter(MainPainter());
+
 		create();
 	}
 
@@ -39,7 +45,7 @@ class MainWin extends Frame {
 		w.y = w.y + 28;
 		sz.h = sz.h - 28;
 
-		btn.pos(Rect(w, sz));
+		btn.pos(Rect(w, Size(sz.w, 20)));
 	}
 
 	void btnClicked(Button btn) {
@@ -59,7 +65,6 @@ void closeLater(MainWin w) on Waiter {
 }
 
 void main() {
-	renderMgr;
 	MainWin win;
 	spawn closeLater(win);
 	win.waitForClose;
