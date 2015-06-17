@@ -3,7 +3,27 @@ use core:geometry;
 use core:debug;
 
 class MainPainter extends Painter {
-	ctor() { init() {} }
+	SolidBrush brush;
+	SolidBrush brush2;
+	SolidBrush brush3;
+
+	ctor() {
+		init(false) {
+			brush = red;
+			brush2 = blue;
+			brush3 = green.withAlpha(0.5);
+		}
+	}
+
+	void render(Size size, Graphics g) {
+		Point from(0, 0);
+		Point to(size.w, size.h);
+		Size border = 10;
+
+		g.line(from, to, brush);
+		g.line(Point(0, size.h), Point(size.w, 0), brush2);
+		g.fillRect(Rect(from + border, to - border), brush3);
+	}
 }
 
 class MainWin extends Frame {

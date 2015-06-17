@@ -139,7 +139,13 @@ void Header::parse(Tokenizer &tok) {
 		} else if (token == L"STORM_PKG") {
 			pkg = parsePkg(tok);
 		} else if (token == L"STORM_CTOR") {
-			Function ctor = Function::read(fnFlags & ~fnVirtual, pkg, scope, CppType::tVoid(), tok);
+			fnFlags &= ~fnVirtual;
+			Function ctor = Function::read(fnFlags, pkg, scope, CppType::tVoid(), tok);
+			ctor.name = L"__ctor";
+			functions.push_back(ctor);
+		} else if (token == L"STORM_CAST_CTOR") {
+			fnFlags &= ~fnVirtual;
+			Function ctor = Function::read(fnFlags | fnCastCtor, pkg, scope, CppType::tVoid(), tok);
 			ctor.name = L"__ctor";
 			functions.push_back(ctor);
 		} else if (token == L"class" || token == L"struct") {

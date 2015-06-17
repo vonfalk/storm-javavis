@@ -22,6 +22,11 @@ using namespace storm::geometry;
 
 #include <Commctrl.h>
 
+// D2D for rendering.
+#include <d2d1.h>
+
+// It defines a macro 'interface' that messes with the rest of the system...
+#undef interface
 
 namespace stormgui {
 	// Various flags for child windows.
@@ -34,16 +39,21 @@ namespace stormgui {
 	Rect convert(const RECT &r);
 	Rect convert(const POINT &a, const POINT &b);
 	RECT convert(const Rect &r);
+	Size convert(const D2D1_SIZE_F &s);
+
+	// Color conversion.
+	COLORREF colorref(const Color &color);
+	Color color(COLORREF c);
+
+	// DX conversions.
+	D2D1_COLOR_F dx(const Color &color);
+	D2D1_POINT_2F dx(const Point &pt);
+	D2D1_RECT_F dx(const Rect &rect);
+
 
 	// Key state (as of the last processed message, only valid in the msg thread).
 	bool pressed(nat keycode);
 }
-
-// D2D for rendering.
-#include <d2d1.h>
-
-// It defines a macro 'interface' that messes with the rest of the system...
-#undef interface
 
 // Release COM objects.
 template <class T>

@@ -14,19 +14,19 @@ namespace storm {
 			STORM_VALUE;
 		public:
 			STORM_CTOR Size();
-			STORM_CTOR Size(Int wh);
-			STORM_CTOR Size(Int w, Int h);
+			STORM_CAST_CTOR Size(Float wh);
+			STORM_CTOR Size(Float w, Float h);
 
-			STORM_VAR Int w;
-			STORM_VAR Int h;
+			STORM_VAR Float w;
+			STORM_VAR Float h;
 
 			Bool STORM_FN valid() const;
 		};
 
 		Size STORM_FN operator +(Size a, Size b);
 		Size STORM_FN operator -(Size a, Size b);
-		Size STORM_FN operator *(Int s, Size a);
-		Size STORM_FN operator *(Size a, Int s);
+		Size STORM_FN operator *(Float s, Size a);
+		Size STORM_FN operator *(Size a, Float s);
 
 		inline Bool STORM_FN operator ==(Size a, Size b) { return a.w == b.w && a.h == b.h; }
 		inline Bool STORM_FN operator !=(Size a, Size b) { return !(a == b); }

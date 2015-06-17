@@ -11,7 +11,7 @@ namespace storm {
 
 		Rect::Rect(Point topLeft, Point bottomRight) : p0(topLeft), p1(bottomRight) {}
 
-		Rect::Rect(Int left, Int top, Int right, Int bottom) : p0(left, top), p1(right, bottom) {}
+		Rect::Rect(Float left, Float top, Float right, Float bottom) : p0(left, top), p1(right, bottom) {}
 
 		wostream &operator <<(wostream &to, Rect r) {
 			return to << r.p0 << L"-" << r.p1;

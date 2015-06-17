@@ -14,14 +14,14 @@ namespace storm {
 			STORM_CTOR Point();
 
 			// Initialize.
-			STORM_CTOR Point(Int x, Int y);
+			STORM_CTOR Point(Float x, Float y);
 
 			// Convert.
 			explicit STORM_CTOR Point(Size s);
 
 			// Coordinates.
-			STORM_VAR Int x;
-			STORM_VAR Int y;
+			STORM_VAR Float x;
+			STORM_VAR Float y;
 		};
 
 		wostream &operator <<(wostream &to, const Point &s);
@@ -29,7 +29,9 @@ namespace storm {
 
 		// Operations.
 		Point STORM_FN operator +(Point a, Size b);
+		Point STORM_FN operator +(Point a, Point b);
 		Size STORM_FN operator -(Point a, Point b);
+		Point STORM_FN operator -(Point a, Size b);
 
 		inline Bool STORM_FN operator ==(Point a, Point b) { return a.x == b.x && a.y == b.y; }
 		inline Bool STORM_FN operator !=(Point a, Point b) { return !(a == b); }

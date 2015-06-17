@@ -46,7 +46,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -111,7 +111,7 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -173,6 +173,10 @@
 			</File>
 			<File
 				RelativePath=".\Debug.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Endian.cpp"
 				>
 			</File>
 			<File
@@ -315,10 +319,6 @@
 				RelativePath=".\Utils.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\Endian.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -327,6 +327,10 @@
 			>
 			<File
 				RelativePath=".\Assert.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Bitmask.h"
 				>
 			</File>
 			<File
@@ -359,6 +363,10 @@
 			</File>
 			<File
 				RelativePath=".\Detect.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Endian.h"
 				>
 			</File>
 			<File
@@ -454,6 +462,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PreArray.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PrePODArray.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Printable.h"
 				>
 			</File>
@@ -531,22 +547,6 @@
 			</File>
 			<File
 				RelativePath=".\Utils.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Bitmask.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Endian.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PreArray.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PrePODArray.h"
 				>
 			</File>
 			<File

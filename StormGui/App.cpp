@@ -153,7 +153,14 @@ namespace stormgui {
 			return noResult();
 		}
 
-		return w->onMessage(msg);
+		try {
+			return w->onMessage(msg);
+		} catch (const Exception &e) {
+			PLN(L"Unhandled exception in window thread: " << e);
+			if (app->appWait)
+				app->appWait->terminate();
+			return noResult();
+		}
 	}
 
 	LRESULT App::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -257,9 +264,14 @@ namespace stormgui {
 	}
 
 	void AppWait::work() {
-		if (!app->processMessages()) {
-			uThread = os::UThread::invalid;
-			done = true;
+		try {
+			if (!app->processMessages()) {
+				uThread = os::UThread::invalid;
+				done = true;
+			}
+		} catch (const Exception &e) {
+			PLN(L"Unhandled exception in window thread: " << e);
+			terminate();
 		}
 	}
 

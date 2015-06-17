@@ -98,10 +98,19 @@ namespace os {
 		return UThread(UThreadState::current()->runningThread());
 	}
 
+	static void printException() {
+		try {
+			throw;
+		} catch (const Exception &e) {
+			PLN(e);
+		}
+	}
+
 	static void spawnFn(Fn<void, void> *fn) {
 		try {
 			(*fn)();
 		} catch (...) {
+			printException();
 			assert(false, L"Uncaught exception!");
 		}
 
@@ -117,17 +126,35 @@ namespace os {
 		// Member function?
 		bool memberFn;
 
-		// The future to post the result to.
-		FutureBase *future;
-
 		// The type to be passed to the future object.
 		BasicTypeInfo resultType;
+	};
+
+	struct FutureParams : Params {
+		// The future to post the result to.
+		FutureBase *future;
 	};
 
 	// 'actuals' is the location on our stack of the parameters to use when calling the function in 'params'.
 	// We disable the initialization check since it clears massive amounts of unused stack space.
 #pragma runtime_checks("", off)
-	static void spawnFuture(Params *params, void *actuals) {
+	static void spawnParams(Params *params, void *actuals) {
+		// Note: Do not call anything strange before we call p->toCall, otherwise
+		// we may overwrite parameters already on the stack!
+
+		try {
+			// Call the function and place the result in the future.
+			call(params->fn, params->memberFn, actuals, null, params->resultType);
+		} catch (...) {
+			printException();
+			assert(false, L"Uncaught exception!");
+		}
+
+		// Terminate ourselves.
+		exitUThread();
+	}
+
+	static void spawnFuture(FutureParams *params, void *actuals) {
 		// Note: Do not call anything strange before we call p->toCall, otherwise
 		// we may overwrite parameters already on the stack!
 
@@ -159,12 +186,19 @@ namespace os {
 		if (t == null)
 			t = UThreadData::create();
 
-#ifndef X86
-#error "You may need to consider 'memberFn' here. On X86 it is OK as long as we return void."
-#endif
+		// Copy parameters to the stack of the new thread.
+		Params *p = (Params *)t->alloc(sizeof(Params));
+		p->fn = fn;
+		p->memberFn = memberFn;
+		p->resultType = typeInfo<void>();
 
-		t->pushParams(&exitUThread, params);
-		t->pushContext(fn);
+		// Copy parameters a bit over the top of the stack. Some temporary stack space between is
+		// inserted by the 'pushParams' function, to suit the current platform.
+		void *paramsPos = t->pushParams(params, 0);
+
+		// Set up the call!
+		t->pushParams(null, p, paramsPos);
+		t->pushContext(&spawnParams);
 
 		// Done!
 		return insert(t, on);
@@ -177,7 +211,7 @@ namespace os {
 			t = UThreadData::create();
 
 		// Copy parameters to the stack of the new thread.
-		Params *p = (Params *)t->alloc(sizeof(Params));
+		FutureParams *p = (FutureParams *)t->alloc(sizeof(FutureParams));
 		p->fn = fn;
 		p->memberFn = memberFn;
 		p->future = &result;

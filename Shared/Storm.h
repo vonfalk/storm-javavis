@@ -89,6 +89,9 @@ private:
 // Mark a constructor.
 #define STORM_CTOR
 
+// Mark an auto-cast constructor
+#define STORM_CAST_CTOR
+
 // Declare a thread.
 #define STORM_THREAD(name)										\
 	struct name {												\

@@ -46,7 +46,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -122,7 +122,7 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -182,6 +182,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ExceptionTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -202,31 +206,15 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\StoreRef.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Test64.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\TestPreserve.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestException.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestMul.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestJmp.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestShift.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestVoid.cpp"
+				RelativePath=".\TestBool.cpp"
 				>
 			</File>
 			<File
@@ -234,7 +222,51 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TestDestroy.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestException.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestFloat.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TestFnCall.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestJmp.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestMul.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestParts.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestPreserve.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestReplace.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestShift.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestTrace.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestVoid.cpp"
 				>
 			</File>
 			<File
@@ -246,39 +278,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TestTrace.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\UThreadTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ExceptionTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestBool.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestParts.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\StoreRef.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestReplace.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestDestroy.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestFloat.cpp"
 				>
 			</File>
 			<File

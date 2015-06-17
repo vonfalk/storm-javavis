@@ -52,7 +52,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -120,7 +120,7 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="./;../"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -189,7 +189,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Exception.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FnLookup.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FnParams.cpp"
 				>
 			</File>
 			<File
@@ -214,6 +222,10 @@
 			</File>
 			<File
 				RelativePath=".\X86\MachineCodeX86.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Memory.cpp"
 				>
 			</File>
 			<File
@@ -320,18 +332,6 @@
 				RelativePath=".\VTable.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\Exception.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Memory.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FnParams.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -359,6 +359,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Codecall.h"
+				>
+			</File>
+			<File
 				RelativePath=".\CondFlag.h"
 				>
 			</File>
@@ -372,6 +376,10 @@
 			</File>
 			<File
 				RelativePath=".\FnLookup.h"
+				>
+			</File>
+			<File
+				RelativePath=".\FnParams.h"
 				>
 			</File>
 			<File
@@ -400,6 +408,10 @@
 			</File>
 			<File
 				RelativePath=".\X86\MachineCodeX86.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Memory.h"
 				>
 			</File>
 			<File
@@ -472,18 +484,6 @@
 			</File>
 			<File
 				RelativePath=".\VTable.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FnParams.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Memory.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Codecall.h"
 				>
 			</File>
 		</Filter>

@@ -22,6 +22,9 @@ enum FnFlags {
 
 	// Setter function (can be used like bar.foo = 3)
 	fnSetter = 0x20,
+
+	// Cast constructor.
+	fnCastCtor = 0x40,
 };
 
 BITMASK_OPERATORS(FnFlags);

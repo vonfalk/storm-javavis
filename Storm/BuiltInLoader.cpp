@@ -267,9 +267,12 @@ namespace storm {
 			r->flags |= namedFinal;
 		}
 
-		if (fn.mode & BuiltInFunction::setterFunction) {
+
+		if (fn.mode & BuiltInFunction::setterFunction)
 			r->flags |= namedSetter;
-		}
+
+		if (fn.mode & BuiltInFunction::castCtor)
+			r->flags |= namedAutoCast;
 
 		return r.ret();
 	}

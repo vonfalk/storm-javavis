@@ -212,8 +212,9 @@ namespace stormgui {
 		if (WS_CHILD & ~style) {
 			RECT r = convert(myPos);
 			AdjustWindowRectEx(&r, style & ~WS_OVERLAPPED, FALSE, exStyle);
-			p.x = r.left; p.y = r.top;
-			s.w = r.right - r.left; s.h = r.bottom - r.top;
+			Rect c = convert(r);
+			p = c.p0;
+			s = c.size();
 		}
 
 		if (flags & cAutoPos) {
@@ -239,7 +240,7 @@ namespace stormgui {
 
 		app->preCreate(this);
 		HWND z = CreateWindowEx(exStyle, className, windowName, style,
-								p.x, p.y, s.w, s.h,
+								(int)p.x, (int)p.y, (int)s.w, (int)s.h,
 								parent, (HMENU)id, instance, NULL);
 
 		if (z == NULL) {
@@ -293,7 +294,7 @@ namespace stormgui {
 			Engine &e = engine();
 			os::FnParams params; params.add(myPainter.borrow());
 			os::UThread::spawn(address(&Painter::repaint), true, params, &Render::thread(e)->thread());
-			// TODO: Maybe block here?
+
 			// Tell Windows we've taken care of re-painting our window (we will soon, at least...)
 			ValidateRect(handle(), NULL);
 

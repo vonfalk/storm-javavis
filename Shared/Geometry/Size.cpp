@@ -7,12 +7,12 @@ namespace storm {
 
 		Size::Size() : w(0), h(0) {}
 
-		Size::Size(Int wh) : w(wh), h(wh) {}
+		Size::Size(Float wh) : w(wh), h(wh) {}
 
-		Size::Size(Int w, Int h) : w(w), h(h) {}
+		Size::Size(Float w, Float h) : w(w), h(h) {}
 
 		Bool Size::valid() const {
-			return w >= 0 && h >= 0;
+			return w >= 0.0f && h >= 0.0f;
 		}
 
 		wostream &operator <<(wostream &to, const Size &s) {
@@ -31,11 +31,11 @@ namespace storm {
 			return Size(a.w - b.w, a.h - b.h);
 		}
 
-		Size STORM_FN operator *(Int s, Size a) {
+		Size STORM_FN operator *(Float s, Size a) {
 			return Size(a.w * s, a.h * s);
 		}
 
-		Size STORM_FN operator *(Size a, Int s) {
+		Size STORM_FN operator *(Size a, Float s) {
 			return Size(a.w * s, a.h * s);
 		}
 

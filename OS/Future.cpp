@@ -23,13 +23,13 @@ namespace os {
 
 	void FutureBase::posted() {
 		nat p = atomicCAS(resultPosted, 0, 1);
-		assert(p == 0, L"A future may not be used more than once!");
+		assert(p == 0, L"A future may not be used more than once! this=" + ::toHex(this));
 		notify();
 	}
 
 	void FutureBase::error() {
 		nat p = atomicCAS(resultPosted, 0, 1);
-		assert(p == 0, L"A future may not be used more than once!");
+		assert(p == 0, L"A future may not be used more than once! this=" + ::toHex(this));
 		saveError();
 		notify();
 	}

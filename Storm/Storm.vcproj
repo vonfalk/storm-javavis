@@ -53,7 +53,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -122,7 +122,7 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../;./"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -171,6 +171,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AsmWrap.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Auto.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\BnfReader.cpp"
 				>
 			</File>
@@ -180,6 +188,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSActual.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSAutocast.cpp"
 				>
 			</File>
 			<File
@@ -203,6 +215,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Basic\BSFnPtr.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Basic\BSFor.cpp"
 				>
 			</File>
@@ -216,6 +232,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSNamed.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSOperator.cpp"
 				>
 			</File>
 			<File
@@ -247,6 +267,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\BuiltInLoader.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Code.cpp"
 				>
 			</File>
@@ -263,7 +287,39 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DllReader.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Engine.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\EnginePtr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Exception.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ExceptionWrap.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\FileStream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Float.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\FnPtr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\FnPtrTemplate.cpp"
 				>
 			</File>
 			<File
@@ -271,11 +327,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\RefHandle.cpp"
+				RelativePath=".\Lib\FutureTemplate.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Lib\Int.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LoadedLibs.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Maybe.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\MemStream.cpp"
 				>
 			</File>
 			<File
@@ -311,7 +379,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Io\Protocol.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RefHandle.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Regex.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Repl.cpp"
 				>
 			</File>
 			<File
@@ -351,7 +431,15 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\Storm.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\StormVTable.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Stream.cpp"
 				>
 			</File>
 			<File
@@ -391,6 +479,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Io\Text.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Thread.cpp"
 				>
 			</File>
@@ -423,6 +515,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Io\Url.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf16Text.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf8Text.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Value.cpp"
 				>
 			</File>
@@ -444,110 +548,6 @@
 			</File>
 			<File
 				RelativePath=".\Wrap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Exception.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSOperator.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\FutureTemplate.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Repl.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Url.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Protocol.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Stream.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Text.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Utf16Text.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Utf8Text.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\MemStream.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\FileStream.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\AsmWrap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ExceptionWrap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\FnPtr.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\FnPtrTemplate.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\EnginePtr.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSFnPtr.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Maybe.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSAutocast.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DllReader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\LoadedLibs.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\BuiltInLoader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Auto.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Storm.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Float.cpp"
 				>
 			</File>
 			<File
@@ -573,6 +573,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AsmWrap.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Basic\Basic.h"
 				>
 			</File>
@@ -586,6 +590,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSActual.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSAutocast.h"
 				>
 			</File>
 			<File
@@ -609,6 +617,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Basic\BSFnPtr.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Basic\BSFor.h"
 				>
 			</File>
@@ -622,6 +634,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSNamed.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSOperator.h"
 				>
 			</File>
 			<File
@@ -649,6 +665,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\BuiltInLoader.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Code.h"
 				>
 			</File>
@@ -661,7 +681,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CodeGenFwd.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\Debug.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DllReader.h"
 				>
 			</File>
 			<File
@@ -669,7 +697,31 @@
 				>
 			</File>
 			<File
+				RelativePath=".\EnginePtr.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Exception.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ExceptionWrap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\FileStream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Float.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\FnPtr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\FnPtrTemplate.h"
 				>
 			</File>
 			<File
@@ -677,11 +729,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\RefHandle.h"
+				RelativePath=".\Lib\FutureTemplate.h"
 				>
 			</File>
 			<File
 				RelativePath=".\Lib\Int.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LoadedLibs.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Maybe.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\MemStream.h"
 				>
 			</File>
 			<File
@@ -690,6 +754,10 @@
 			</File>
 			<File
 				RelativePath=".\Named.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NamedFlags.h"
 				>
 			</File>
 			<File
@@ -717,7 +785,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Io\Protocol.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RefHandle.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Regex.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Repl.h"
 				>
 			</File>
 			<File
@@ -741,7 +821,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Storm.h"
+				>
+			</File>
+			<File
 				RelativePath=".\StormVTable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Stream.h"
 				>
 			</File>
 			<File
@@ -781,6 +869,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Io\Text.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Tokenizer.h"
 				>
 			</File>
@@ -809,6 +905,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Io\Url.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf16Text.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf8Text.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Value.h"
 				>
 			</File>
@@ -826,114 +934,6 @@
 			</File>
 			<File
 				RelativePath=".\Wrap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NamedFlags.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSOperator.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\FutureTemplate.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Repl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Url.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Protocol.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Stream.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Text.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Utf16Text.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Utf8Text.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\MemStream.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\FileStream.h"
-				>
-			</File>
-			<File
-				RelativePath=".\AsmWrap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ExceptionWrap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\FnPtr.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\FnPtrTemplate.h"
-				>
-			</File>
-			<File
-				RelativePath=".\EnginePtr.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSFnPtr.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Maybe.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CodeGenFwd.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSAutocast.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DllReader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\LoadedLibs.h"
-				>
-			</File>
-			<File
-				RelativePath=".\BuiltInLoader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Storm.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Float.h"
 				>
 			</File>
 			<File

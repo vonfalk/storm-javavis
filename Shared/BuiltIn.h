@@ -107,22 +107,25 @@ namespace storm {
 		// Flags.
 		enum Mode {
 			// Not a member.
-			noMember = 0x01,
+			noMember = 0x0001,
 
 			// Member of a type.
-			typeMember = 0x02,
+			typeMember = 0x0002,
 
 			// Run on a thread.
-			onThread = 0x10,
+			onThread = 0x0010,
 
 			// The function takes a 'engine' as the firt parameter, not visible to storm.
-			hiddenEngine = 0x20,
+			hiddenEngine = 0x0020,
 
 			// This function is declared virtual.
-			virtualFunction = 0x40,
+			virtualFunction = 0x0040,
 
 			// This function is declared as a setter.
-			setterFunction = 0x80,
+			setterFunction = 0x0080,
+
+			// This function is declared as an auto-cast constructor.
+			castCtor = 0x0100,
 		};
 
 		// Mode.

@@ -45,7 +45,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -117,7 +117,7 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -173,6 +173,26 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\CppName.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Function.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Header.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Output.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Parse.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -197,7 +217,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Function.cpp"
+				RelativePath=".\Thread.cpp"
 				>
 			</File>
 			<File
@@ -205,35 +225,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Header.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CppName.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Parse.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Type.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Output.cpp"
+				RelativePath=".\Variable.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Write.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Variable.cpp"
 				>
 			</File>
 		</Filter>
@@ -243,15 +243,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Function.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Tokenizer.h"
+				RelativePath=".\CppName.h"
 				>
 			</File>
 			<File
@@ -259,19 +251,11 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Function.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Header.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Type.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CppName.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Parse.h"
 				>
 			</File>
 			<File
@@ -279,15 +263,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Write.h"
+				RelativePath=".\Parse.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Thread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
+				RelativePath=".\stdafx.h"
 				>
 			</File>
 			<File
@@ -295,7 +275,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Thread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Tokenizer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Type.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Variable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Write.h"
 				>
 			</File>
 		</Filter>

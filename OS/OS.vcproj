@@ -45,7 +45,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -107,7 +107,7 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -201,10 +201,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\OS.h"
-				>
-			</File>
-			<File
 				RelativePath=".\FnCall.h"
 				>
 			</File>
@@ -221,7 +217,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\OS.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Shared.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SharedMaster.h"
 				>
 			</File>
 			<File
@@ -241,19 +245,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Types.h"
+				>
+			</File>
+			<File
 				RelativePath=".\UThread.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\UThread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SharedMaster.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Types.h"
 				>
 			</File>
 		</Filter>

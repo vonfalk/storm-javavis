@@ -45,7 +45,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -107,7 +107,7 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../;./"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -151,6 +151,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\Array.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\BuiltIn.cpp"
 				>
 			</File>
@@ -159,11 +163,35 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Geometry\Color.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\DllEngine.cpp"
 				>
 			</File>
 			<File
+				RelativePath=".\FnPtr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Future.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Object.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Point.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Rect.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Size.cpp"
 				>
 			</File>
 			<File
@@ -191,23 +219,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Array.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Value.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Future.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\StrBuf.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TObject.cpp"
 				>
 			</File>
 			<File
@@ -215,19 +227,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\FnPtr.cpp"
+				RelativePath=".\TObject.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Geometry\Size.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Geometry\Point.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Geometry\Rect.cpp"
+				RelativePath=".\Value.cpp"
 				>
 			</File>
 		</Filter>
@@ -236,6 +240,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\Array.h"
+				>
+			</File>
 			<File
 				RelativePath=".\Auto.h"
 				>
@@ -246,6 +254,10 @@
 			</File>
 			<File
 				RelativePath=".\CloneEnv.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Color.h"
 				>
 			</File>
 			<File
@@ -265,7 +277,39 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FnPtr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Future.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Handle.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NullFn.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Object.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Point.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Rect.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Size.h"
 				>
 			</File>
 			<File
@@ -281,6 +325,22 @@
 				>
 			</File>
 			<File
+				RelativePath=".\StrBuf.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Thread.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TObject.h"
+				>
+			</File>
+			<File
 				RelativePath=".\TypeFlags.h"
 				>
 			</File>
@@ -289,59 +349,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Handle.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Array.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Value.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Future.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StrBuf.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TObject.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FnPtr.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Geometry\Size.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Geometry.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Geometry\Point.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Geometry\Rect.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NullFn.h"
 				>
 			</File>
 		</Filter>

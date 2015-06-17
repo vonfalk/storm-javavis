@@ -36,9 +36,6 @@ Check so that threads are created on the correct thread when created from copyOb
 
 Think about how templates interacts with the new function lookup with respect to typecasts.
 
-Move Memorymanager to Code? We can actually elliminate the need of the MemoryManager entirely by using a custom heap
-with the flag HEAP_CREATE_ENABLE_EXECUTE (to HeapCreate).
-
 Some kind of fuzzy equals for floating-point values.
 
 Move Code/Codecall somewhere else?
@@ -144,6 +141,9 @@ Gui
 
 Think about the threading model. Is it possibe (and a good idea) to create new UThreads for new messages, so that
 a bad message handler does not block everything? This could interfere with Win32:s expectations (lots of global state).
+
+Currently: parts of the message loop may be executed from other UThreads than the intended one (possibly interleaving),
+which could confuse parts of the Win32-api. This is caused by calling Create for example.
 
 
 Others

@@ -6,9 +6,9 @@ namespace stormgui {
 
 	// Convert a client size to the actual window size.
 	static Size clientToWindow(Size s, DWORD windowStyles, DWORD windowExStyles) {
-		RECT r = { 0, 0, s.w, s.h };
+		RECT r = { 0, 0, (LONG)s.w, (LONG)s.h };
 		AdjustWindowRectEx(&r, windowStyles & ~WS_OVERLAPPED, FALSE, windowExStyles);
-		return Size(r.right - r.left, r.bottom - r.top);
+		return Size(Float(r.right - r.left), Float(r.bottom - r.top));
 	}
 
 	// Helper to create the actual handle.

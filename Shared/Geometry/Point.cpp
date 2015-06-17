@@ -7,7 +7,7 @@ namespace storm {
 
 		Point::Point() : x(0), y(0) {}
 
-		Point::Point(Int x, Int y) : x(x), y(y) {}
+		Point::Point(Float x, Float y) : x(x), y(y) {}
 
 		Point::Point(Size s) : x(s.w), y(s.h) {}
 
@@ -23,8 +23,16 @@ namespace storm {
 			return Point(a.x + b.w, a.y + b.h);
 		}
 
+		Point operator +(Point a, Point b) {
+			return Point(a.x + b.x, a.y + b.y);
+		}
+
 		Size operator -(Point a, Point b) {
 			return Size(a.x - b.x, a.y - b.y);
+		}
+
+		Point operator -(Point a, Size b) {
+			return Point(a.x - b.w, a.y - b.h);
 		}
 
 	}

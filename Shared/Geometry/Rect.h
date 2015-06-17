@@ -21,7 +21,7 @@ namespace storm {
 			STORM_CTOR Rect(Point topLeft, Point bottomRight);
 
 			// Initialize to raw coordinates.
-			STORM_CTOR Rect(Int left, Int top, Int right, Int bottom);
+			STORM_CTOR Rect(Float left, Float top, Float right, Float bottom);
 
 			// Data.
 			STORM_VAR Point p0;

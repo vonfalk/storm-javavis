@@ -53,7 +53,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;STORMGUI_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -133,7 +133,7 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../;./"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;STORMGUI_EXPORTS"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -192,7 +192,59 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\App.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\BuiltIn.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Button.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Container.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Edit.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Font.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Frame.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Graphics.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Label.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Message.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MsgName.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Painter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RenderMgr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RenderResource.cpp"
 				>
 			</File>
 			<File
@@ -220,59 +272,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\VTables.asm"
-				>
-			</File>
-			<File
 				RelativePath=".\Test.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\App.cpp"
+				RelativePath=".\Lib\VTables.asm"
 				>
 			</File>
 			<File
 				RelativePath=".\Window.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Message.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Frame.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MsgName.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Button.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Container.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Font.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Edit.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Label.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Painter.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RenderMgr.cpp"
 				>
 			</File>
 		</Filter>
@@ -282,35 +290,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StormGui.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Test.h"
-				>
-			</File>
-			<File
 				RelativePath=".\App.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Window.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Frame.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Message.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MsgName.h"
 				>
 			</File>
 			<File
@@ -326,6 +306,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Edit.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Exception.h"
 				>
 			</File>
@@ -334,11 +318,27 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Edit.h"
+				RelativePath=".\Frame.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Graphics.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Graphics.h"
 				>
 			</File>
 			<File
 				RelativePath=".\Label.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Message.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MsgName.h"
 				>
 			</File>
 			<File
@@ -347,6 +347,26 @@
 			</File>
 			<File
 				RelativePath=".\RenderMgr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RenderResource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StormGui.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Test.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Window.h"
 				>
 			</File>
 		</Filter>
