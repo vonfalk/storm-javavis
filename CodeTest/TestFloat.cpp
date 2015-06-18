@@ -32,3 +32,32 @@ BEGIN_TEST(TestFloat) {
 	CHECK_EQ(r, 271); // Rounds up according to the FPU state
 
 } END_TEST
+
+
+BEGIN_TEST_(TestReturnFloat) {
+	Arena arena;
+	Listing l;
+
+	Variable p1 = l.frame.createFloatParam();
+	Variable p2 = l.frame.createFloatParam();
+	Variable res = l.frame.createFloatVar(l.frame.root());
+
+	l << prolog();
+
+	l << fld(p1);
+	l << fld(p2);
+	l << fmulp();
+	l << fstp(res);
+	l << mov(eax, res);
+
+	l << epilog();
+	l << retFloat(Size::sFloat); // Returns the float stored in 'eax'
+
+	Binary b(arena, l);
+	typedef Float (*Fn)(Float, Float);
+	Fn fn = (Fn)b.address();
+
+	float r = (*fn)(12.3f, 2.2f);
+	CHECK_EQ(int(r * 100), 2706);
+
+} END_TEST

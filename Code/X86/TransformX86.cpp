@@ -287,6 +287,16 @@ namespace code {
 			tfm.restore(preserve, saved, line, to);
 		}
 
+		void retFloatTfm(const Transform &tfm, Listing &to, nat line) {
+			const Instruction &instr = tfm.from[line];
+			const Size &s = instr.src().size();
+
+			to << push(instr.src());
+			to << fld(xRel(s, ptrStack));
+			to << add(ptrStack, intPtrConst(Offset(s)));
+			to << ret(s);
+		}
+
 	}
 }
 

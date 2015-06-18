@@ -57,6 +57,7 @@ namespace code {
 		void sarTfm(const Transform &tfm, Listing &to, nat line);
 		void addRefTfm(const Transform &tfm, Listing &to, nat line);
 		void releaseRefTfm(const Transform &tfm, Listing &to, nat line);
+		void retFloatTfm(const Transform &tfm, Listing &to, nat line);
 
 	}
 }

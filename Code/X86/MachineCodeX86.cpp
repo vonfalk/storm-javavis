@@ -90,6 +90,8 @@ namespace code {
 			TRANSFORM(shr),
 			TRANSFORM(sar),
 
+			TRANSFORM(retFloat),
+
 			TRANSFORM(addRef),
 			TRANSFORM(releaseRef),
 		};

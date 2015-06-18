@@ -67,6 +67,7 @@ namespace code {
 		case op::fnCall:
 		case op::call:
 			used = Registers();
+			// Intentional fall-thru.
 
 		default:
 			addIndirect(used, instr);

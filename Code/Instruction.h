@@ -110,6 +110,14 @@ namespace code {
 	Instruction fdivp();
 	Instruction fwait();
 
+	// Special return for the float stored in the register 'eax' 'rax' or similar.
+	// Expands to approx:
+	// push(eax)
+	// fld(ptrStack + 0)
+	// add(ptrStack, 4)
+	// ret()
+	Instruction retFloat(const Size &s);
+
 	// Data
 	Instruction dat(const Value &v);
 

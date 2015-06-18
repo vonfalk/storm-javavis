@@ -46,6 +46,7 @@ namespace code {
 		OP_CODE(fmulp),
 		OP_CODE(fdivp),
 		OP_CODE(fwait),
+		OP_CODE(retFloat),
 		OP_CODE(dat),
 		OP_CODE(addRef),
 		OP_CODE(releaseRef),

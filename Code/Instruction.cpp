@@ -291,6 +291,11 @@ namespace code {
 		return create(op::fwait);
 	}
 
+	Instruction retFloat(const Size &s) {
+		Value r = sizedReg(ptrA, s);
+		return createSrc(op::retFloat, r);
+	}
+
 
 	Instruction dat(const Value &v) {
 		switch (v.type()) {

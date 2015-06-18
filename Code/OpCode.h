@@ -39,6 +39,7 @@ namespace code {
 			fmulp,
 			fdivp,
 			fwait,
+			retFloat,
 
 			// Data
 			dat,
