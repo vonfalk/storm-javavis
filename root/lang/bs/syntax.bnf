@@ -172,10 +172,15 @@ Operator => lOperator(op, 470) : "|" op;
 Operator => assignOperator(op, 100) : "=" op;
 Operator => ConcatOperator(op, 300) : "#" op;
 
+// Operator combined with assignment. Eg. +=.
+// This one has higher priority so that we treat '==' as its own operator, and not a strange variant of the assignment.
+COperator => v :[100] Operator v;
+COperator => CombinedOperator(op, 100) :[0] Operator op, "=";
+
 // Expression
 Expr(Block block);
 Expr => e :[20] Atom(block) e;
-Expr => mkOperator(block, lhs, op, rhs) : Atom(block) lhs, Operator op, Expr(block) rhs;
+Expr => mkOperator(block, lhs, op, rhs) : Atom(block) lhs, COperator op, Expr(block) rhs;
 // This must be larger than operators, since templates may be seen as the < operator otherwise.
 Expr => Var(block, t, name, actual) :[10] Type t, Name name, FnValues(block) actual;
 Expr => Var(block, t, name, init) :[10] Type t, Name name, "=", Expr(block) init;

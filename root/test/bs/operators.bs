@@ -39,3 +39,24 @@ Int prio8() {
 Int prio9() {
 	5 #- 4 - 1;
 }
+
+
+// Combined operators.
+
+// 'int' should overload these, as we can make them better than their expanded versions.
+Int combOp1() {
+	Int a = 10;
+	a += 3;
+	a -= 1;
+	a *= 2;
+	a;
+}
+
+// 'float' does not overload them, and we can therefore check if the combination logic works.
+Int combOp2() {
+	Float a = 10;
+	a += 3;
+	a -= 1;
+	a *= 2;
+	a.int;
+}

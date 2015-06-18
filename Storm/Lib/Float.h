@@ -14,6 +14,7 @@ namespace storm {
 		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::floatNr; }
 		virtual Function *destructor() { return null; }
 
+	protected:
 		virtual bool loadAll();
 	};
 

@@ -69,6 +69,25 @@ namespace storm {
 		OpInfo *STORM_FN assignOperator(Par<SStr> op, Int priority);
 
 		/**
+		 * Combined operator, ie an operator that combines assignment with another operator.  First
+		 * looks for a specific overload of the operator, if it is not found, turns the expression
+		 * into 'lhs = lhs + rhs'.
+		 */
+		class CombinedOperator : public OpInfo {
+			STORM_CLASS;
+		public:
+			// Ctor.
+			STORM_CTOR CombinedOperator(Par<OpInfo> op, Int prio);
+
+			// Meaning.
+			virtual Expr *STORM_FN meaning(Par<Block> block, Par<Expr> lhs, Par<Expr> rhs);
+
+		private:
+			// Wrapped operator.
+			Auto<OpInfo> op;
+		};
+
+		/**
 		 * Represents a binary operator. We need a special representation for it
 		 * since we are not handling priority in the parser. Unary operators are
 		 * easy to get right directly in the parser, so we do them right there.

@@ -16,6 +16,20 @@ namespace storm {
 		}
 	}
 
+	static void intInc(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << add(intRel(ptrA), p.params[1]);
+		if (p.result->needed())
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+	}
+
+	static void intDec(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << sub(intRel(ptrA), p.params[1]);
+		if (p.result->needed())
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+	}
+
 	static void intPrefixInc(InlinedParams p) {
 		p.state->to << mov(ptrA, p.params[0]);
 		p.state->to << add(intRel(ptrA), intConst(1));
@@ -140,6 +154,8 @@ namespace storm {
 		ri[0] = Value(this, true);
 		ri[1] = Value(this);
 		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&intAssign))));
+		add(steal(inlinedFunction(engine, Value(this), L"+=", ri, simpleFn(&intInc))));
+		add(steal(inlinedFunction(engine, Value(this), L"-=", ri, simpleFn(&intDec))));
 
 		vector<Value> rr(2, Value(this, true));
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&intCopyCtor))));
@@ -163,6 +179,20 @@ namespace storm {
 			p.state->to << mov(result, p.params[0]);
 			p.state->to << add(result, p.params[1]);
 		}
+	}
+
+	static void natInc(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << add(intRel(ptrA), p.params[1]);
+		if (p.result->needed())
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+	}
+
+	static void natDec(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << sub(intRel(ptrA), p.params[1]);
+		if (p.result->needed())
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
 	}
 
 	static void natPrefixInc(InlinedParams p) {
@@ -269,6 +299,8 @@ namespace storm {
 		ri[0] = Value(this, true);
 		ri[1] = Value(this);
 		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&natAssign))));
+		add(steal(inlinedFunction(engine, Value(this), L"+=", ri, simpleFn(&natInc))));
+		add(steal(inlinedFunction(engine, Value(this), L"-=", ri, simpleFn(&natDec))));
 
 		vector<Value> rr(2, Value(this, true));
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&natCopyCtor))));
@@ -294,31 +326,45 @@ namespace storm {
 		}
 	}
 
+	static void byteInc(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << add(byteRel(ptrA), p.params[1]);
+		if (p.result->needed())
+			p.state->to << mov(p.result->location(p.state).var(), byteRel(ptrA));
+	}
+
+	static void byteDec(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << sub(byteRel(ptrA), p.params[1]);
+		if (p.result->needed())
+			p.state->to << mov(p.result->location(p.state).var(), byteRel(ptrA));
+	}
+
 	static void bytePrefixInc(InlinedParams p) {
 		p.state->to << mov(ptrA, p.params[0]);
-		p.state->to << add(intRel(ptrA), byteConst(1));
+		p.state->to << add(byteRel(ptrA), byteConst(1));
 		if (p.result->needed())
-			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+			p.state->to << mov(p.result->location(p.state).var(), byteRel(ptrA));
 	}
 
 	static void bytePostfixInc(InlinedParams p) {
 		p.state->to << mov(ptrA, p.params[0]);
 		if (p.result->needed())
-			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+			p.state->to << mov(p.result->location(p.state).var(), byteRel(ptrA));
 		p.state->to << add(byteRel(ptrA), byteConst(1));
 	}
 
 	static void bytePrefixDec(InlinedParams p) {
 		p.state->to << mov(ptrA, p.params[0]);
-		p.state->to << sub(intRel(ptrA), byteConst(1));
+		p.state->to << sub(byteRel(ptrA), byteConst(1));
 		if (p.result->needed())
-			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+			p.state->to << mov(p.result->location(p.state).var(), byteRel(ptrA));
 	}
 
 	static void bytePostfixDec(InlinedParams p) {
 		p.state->to << mov(ptrA, p.params[0]);
 		if (p.result->needed())
-			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+			p.state->to << mov(p.result->location(p.state).var(), byteRel(ptrA));
 		p.state->to << sub(byteRel(ptrA), byteConst(1));
 	}
 
@@ -384,6 +430,8 @@ namespace storm {
 		ri[0] = Value(this, true);
 		ri[1] = Value(this);
 		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&byteAssign))));
+		add(steal(inlinedFunction(engine, Value(this), L"+=", ri, simpleFn(&byteInc))));
+		add(steal(inlinedFunction(engine, Value(this), L"-=", ri, simpleFn(&byteDec))));
 
 		vector<Value> rr(2, Value(this, true));
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&byteCopyCtor))));

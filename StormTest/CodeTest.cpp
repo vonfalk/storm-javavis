@@ -54,6 +54,11 @@ BEGIN_TEST(PriorityTest) {
 	CHECK_EQ(runFn<Int>(L"test.bs.prio9"), 2);
 } END_TEST
 
+BEGIN_TEST(CombinedTest) {
+	CHECK_EQ(runFn<Int>(L"test.bs.combOp1"), 24);
+	CHECK_EQ(runFn<Int>(L"test.bs.combOp2"), 24);
+} END_TEST
+
 BEGIN_TEST(OverloadTest) {
 	// If this fails, the compiler does not choose the correct overload in the case of ambiguities.
 	CHECK_EQ(runFn<Int>(L"test.bs.testOverload", 1), 1);

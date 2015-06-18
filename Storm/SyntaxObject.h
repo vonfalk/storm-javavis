@@ -14,6 +14,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		STORM_CTOR SObject();
+		STORM_CTOR SObject(SrcPos pos);
 
 		// The position of this SObject. Initialized to nothing.
 		STORM_VAR SrcPos pos;
@@ -28,8 +29,9 @@ namespace storm {
 	public:
 		STORM_CTOR SStr(Par<Str> src);
 		STORM_CTOR SStr(Par<SStr> src);
-		STORM_CTOR SStr(Par<Str> src, const SrcPos &pos);
+		STORM_CTOR SStr(Par<Str> src, SrcPos pos);
 		SStr(const String &str);
+		SStr(const String &str, const SrcPos &pos);
 
 		// The string captured.
 		STORM_VAR Auto<Str> v;

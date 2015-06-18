@@ -46,6 +46,14 @@ namespace storm {
 		p.state->to << fwait();
 	}
 
+	static void floatAssign(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(floatRel(ptrA), p.params[1]);
+		if (p.result->needed())
+			if (!p.result->suggest(p.state, p.params[0]))
+				p.state->to << mov(p.result->location(p.state).var(), floatRel(ptrA));
+	}
+
 	static void floatToInt(InlinedParams p) {
 		if (!p.result->needed())
 			return;
@@ -60,6 +68,9 @@ namespace storm {
 		vector<Value> v(1, Value(this));
 		vector<Value> rr(2, Value(this, true));
 		vector<Value> vv(2, Value(this));
+		vector<Value> ri(2);
+		ri[0] = Value(this, true);
+		ri[1] = Value(this);
 		Value b(boolType(engine));
 
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&floatCopyCtor))));
@@ -69,6 +80,8 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"/", vv, simpleFn(&floatDiv))));
 
 		add(steal(inlinedFunction(engine, Value(intType(engine)), L"int", v, simpleFn(&floatToInt))));
+
+		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&floatAssign))));
 
 
 		return Type::loadAll();

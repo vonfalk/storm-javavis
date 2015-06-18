@@ -615,6 +615,7 @@ namespace storm {
 	}
 
 	bs::Expr *bs::namedExpr(Par<Block> block, Par<TypeName> name, Par<Actual> params) {
+		// TODO: Make this nicer with our new priorities!
 		if (name->count() == 1 && params->expressions.size() == 0) {
 			TypePart *part = name->parts[0].borrow();
 			if (part->params.empty()) {

@@ -2,6 +2,7 @@
 #include "BSOperator.h"
 #include "BSNamed.h"
 #include "BSAutocast.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -63,6 +64,33 @@ namespace storm {
 
 	bs::OpInfo *bs::assignOperator(Par<SStr> op, Int p) {
 		return CREATE(AssignOpInfo, op, op, p, false);
+	}
+
+	bs::CombinedOperator::CombinedOperator(Par<OpInfo> info, Int prio) :
+		OpInfo(steal(CREATE(SStr, engine(), info->name->v + L"=", info->pos)), prio, true), op(info) {
+	}
+
+	bs::Expr *bs::CombinedOperator::meaning(Par<Block> block, Par<Expr> lhs, Par<Expr> rhs) {
+		try {
+			// Is this operator overloaded?
+			return OpInfo::meaning(block, lhs, rhs);
+		} catch (const TypeError &) {
+			// It's ok. We have a backup plan!
+		} catch (const SyntaxError &) {
+			// It's ok. We have a backup plan!
+		}
+
+		try {
+			// Create: 'lhs = lhs <op> rhs'
+			Auto<SStr> eqOp = CREATE(SStr, this, L"=", pos);
+			Auto<OpInfo> assign = CREATE(AssignOpInfo, this, eqOp, 100, true);
+
+			Auto<Expr> middle = op->meaning(block, lhs, rhs);
+			return assign->meaning(block, lhs, middle);
+		} catch (...) {
+			TODO(L"Better error message when using combined operators.");
+			throw;
+		}
 	}
 
 	bs::Operator::Operator(Par<Block> block, Par<Expr> lhs, Par<OpInfo> op, Par<Expr> rhs)

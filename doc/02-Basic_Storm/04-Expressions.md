@@ -87,6 +87,20 @@ member of `StrBuf`. `StrBuf` contains overloads for strings, integers and boolea
 overload is not found, the value is converted to a string using the `toS` function for the object
 (either member or non-member, just like function calls).
 
+To implement operators like `+=`, Basic Storm takes a slightly different approach compared to
+C++. This kind of operators (hereby called _combined operators_), are implemented by a syntax rule
+that is applied before the regular `Operator` rule. This rule is named `COperator`, and only has two
+options, one which passes the `Operator` rule through it, and one that matches an `Operator` with an
+`=` on the end. When the second option is matched, an instance of the `CombinedOperator` class is
+created for the combined operator. This will first attempt to call the member function, just like
+the default operators would do, for example `a += 1` tries to call `a.+=(1)`. If this is not
+possible for some reason, it falls back to rewriting the expression from `<lhs> <op>= <rhs>` to
+`<lhs> = <lhs> <op> <rhs>`. This means that if `a.+=(1)` is not callable in the example above, 
+`a = a + 1` will be tried. This means that you get all the combined operators for free in Basic
+Storm, but you can still provide more efficient implementations if you want. In C++, you always have
+to implement these operators, even though the meaning is seldom ambiguous.
+
+
 Variables
 ----------
 
