@@ -237,6 +237,61 @@ namespace code {
 		return createLoose(op::sar, dest, destRead | destWrite, src);
 	}
 
+	Instruction fstp(const Value &dest) {
+		if (dest.type() == Value::tRegister)
+			throw InvalidValue(L"Can not store to register.");
+		if (dest.size() != Size::sFloat)
+			throw InvalidValue(L"Invalid size.");
+		return createDest(op::fstp, dest, destWrite);
+	}
+
+	Instruction fistp(const Value &dest) {
+		if (dest.size() != Size::sInt)
+			throw InvalidValue(L"Invalid size.");
+		return createDest(op::fistp, dest, destWrite);
+	}
+
+	Instruction fld(const Value &src) {
+		if (src.type() == Value::tRegister)
+			throw InvalidValue(L"Can not load from register.");
+		if (src.type() == Value::tConstant)
+			throw InvalidValue(L"Can not load from a constant.");
+		if (src.size() != Size::sFloat)
+			throw InvalidValue(L"Invalid size.");
+		return createSrc(op::fld, src);
+	}
+
+	Instruction fild(const Value &src) {
+		if (src.type() == Value::tRegister)
+			throw InvalidValue(L"Can not load from register.");
+		if (src.type() == Value::tConstant)
+			throw InvalidValue(L"Can not load from a constant.");
+		if (src.size() != Size::sInt)
+			throw InvalidValue(L"Invalid size.");
+		return createSrc(op::fild, src);
+	}
+
+	Instruction faddp() {
+		return create(op::faddp);
+	}
+
+	Instruction fsubp() {
+		return create(op::fsubp);
+	}
+
+	Instruction fmulp() {
+		return create(op::fmulp);
+	}
+
+	Instruction fdivp() {
+		return create(op::fdivp);
+	}
+
+	Instruction fwait() {
+		return create(op::fwait);
+	}
+
+
 	Instruction dat(const Value &v) {
 		switch (v.type()) {
 			case Value::tConstant:

@@ -29,6 +29,16 @@ namespace code {
 		void shr(Output &to, Params p, const Instruction &instr);
 		void sar(Output &to, Params p, const Instruction &instr);
 
+		void fstp(Output &to, Params p, const Instruction &instr);
+		void fistp(Output &to, Params p, const Instruction &instr);
+		void fld(Output &to, Params p, const Instruction &instr);
+		void fild(Output &to, Params p, const Instruction &instr);
+		void faddp(Output &to, Params p, const Instruction &instr);
+		void fsubp(Output &to, Params p, const Instruction &instr);
+		void fmulp(Output &to, Params p, const Instruction &instr);
+		void fdivp(Output &to, Params p, const Instruction &instr);
+		void fwait(Output &to, Params p, const Instruction &instr);
+
 		void dat(Output &to, Params p, const Instruction &instr);
 
 		void threadLocal(Output &to, Params p, const Instruction &instr);

@@ -277,6 +277,10 @@
 				RelativePath=".\TestDestroy.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestFloat.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

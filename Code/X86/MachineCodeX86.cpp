@@ -47,6 +47,16 @@ namespace code {
 			OUTPUT(shr),
 			OUTPUT(sar),
 
+			OUTPUT(fstp),
+			OUTPUT(fistp),
+			OUTPUT(fld),
+			OUTPUT(fild),
+			OUTPUT(faddp),
+			OUTPUT(fsubp),
+			OUTPUT(fmulp),
+			OUTPUT(fdivp),
+			OUTPUT(fwait),
+
 			OUTPUT(dat),
 
 			OUTPUT(threadLocal),

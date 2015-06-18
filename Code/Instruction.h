@@ -99,6 +99,17 @@ namespace code {
 	Instruction shr(const Value &dest, const Value &src);
 	Instruction sar(const Value &dest, const Value &src);
 
+	// Floating point math.
+	Instruction fstp(const Value &dest);
+	Instruction fistp(const Value &dest);
+	Instruction fld(const Value &src);
+	Instruction fild(const Value &src);
+	Instruction faddp();
+	Instruction fsubp();
+	Instruction fmulp();
+	Instruction fdivp();
+	Instruction fwait();
+
 	// Data
 	Instruction dat(const Value &v);
 

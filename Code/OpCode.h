@@ -29,6 +29,17 @@ namespace code {
 			shr,
 			sar,
 
+			// Floating point.
+			fstp,
+			fistp,
+			fld,
+			fild,
+			faddp,
+			fsubp,
+			fmulp,
+			fdivp,
+			fwait,
+
 			// Data
 			dat,
 

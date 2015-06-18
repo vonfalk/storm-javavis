@@ -362,6 +362,50 @@ namespace code {
 			shiftOp(to, instr.dest(), instr.src(), 7);
 		}
 
+		void fstp(Output &to, Params p, const Instruction &instr) {
+			to.putByte(0xD9);
+			modRm(to, 3, instr.dest());
+		}
+
+		void fistp(Output &to, Params p, const Instruction &instr) {
+			to.putByte(0xDB);
+			modRm(to, 3, instr.dest());
+		}
+
+		void fld(Output &to, Params p, const Instruction &instr) {
+			to.putByte(0xD9);
+			modRm(to, 0, instr.src());
+		}
+
+		void fild(Output &to, Params p, const Instruction &instr) {
+			to.putByte(0xDB);
+			modRm(to, 0, instr.src());
+		}
+
+		void faddp(Output &to, Params p, const Instruction &instr) {
+			to.putByte(0xDE);
+			to.putByte(0xC1);
+		}
+
+		void fsubp(Output &to, Params p, const Instruction &instr) {
+			to.putByte(0xDE);
+			to.putByte(0xE9);
+		}
+
+		void fmulp(Output &to, Params p, const Instruction &instr) {
+			to.putByte(0xDE);
+			to.putByte(0xC9);
+		}
+
+		void fdivp(Output &to, Params p, const Instruction &instr) {
+			to.putByte(0xDE);
+			to.putByte(0xF9);
+		}
+
+		void fwait(Output &to, Params p, const Instruction &instr) {
+			to.putByte(0x9B);
+		}
+
 		void dat(Output &to, Params p, const Instruction &instr) {
 			const Value &v = instr.src();
 			switch (v.type()) {

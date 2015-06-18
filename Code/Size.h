@@ -38,6 +38,9 @@ namespace code {
 		static Size sLong;
 		static Size sWord;
 
+		// Float sizes.
+		static Size sFloat;
+
 		// Addition (note that we do not have subtraction).
 		Size &operator +=(const Size &o);
 		Size operator +(const Size &o) const;

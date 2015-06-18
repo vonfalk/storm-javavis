@@ -17,6 +17,8 @@ namespace code {
 	Size Size::sLong = Size(8);
 	Size Size::sWord = Size(8);
 
+	Size Size::sFloat = Size(4);
+
 	nat Size::current() const {
 		switch (sizeof(void *)) {
 		case 4:

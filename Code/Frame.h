@@ -108,6 +108,9 @@ namespace code {
 		inline Variable createPtrVar(Part in, Value free = Value(), FreeOpt on = freeDef) {
 			return createVariable(in, Size::sPtr, free, on);
 		}
+		inline Variable createFloatVar(Part in, Value free = Value(), FreeOpt on = freeDef) {
+			return createVariable(in, Size::sFloat, free, on);
+		}
 
 		// Custom variable creation.
 		Variable createVariable(Part in, Size size, Value free = Value(), FreeOpt when = freeDef);
@@ -132,6 +135,9 @@ namespace code {
 		}
 		inline Variable createPtrParam(Value free = Value(), FreeOpt on = freeDef) {
 			return createParameter(Size::sPtr, false, free, on);
+		}
+		inline Variable createFloatParam(Value free = Value(), FreeOpt on = freeDef) {
+			return createParameter(Size::sFloat, true, free, on);
 		}
 
 		// Custom parameter creation.
