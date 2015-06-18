@@ -179,7 +179,10 @@ namespace storm {
 			if (result.size() != Size()) // void
 				s->to << mov(asSize(ptrA, result.size()), tmp);
 			s->to << epilog();
-			s->to << ret(result.size());
+			if (result.isFloat())
+				s->to << retFloat(result.size());
+			else
+				s->to << ret(result.size());
 		}
 
 		return s.ret();

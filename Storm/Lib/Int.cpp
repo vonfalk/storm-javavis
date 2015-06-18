@@ -6,119 +6,130 @@
 #include "CodeGen.h"
 
 namespace storm {
+	using namespace code;
 
 	static void intAdd(InlinedParams p) {
 		if (p.result->needed()) {
 			code::Value result = p.result->location(p.state).var();
-			p.state->to << code::mov(result, p.params[0]);
-			p.state->to << code::add(result, p.params[1]);
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << add(result, p.params[1]);
 		}
 	}
 
 	static void intPrefixInc(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::add(intRel(code::ptrA), code::intConst(1));
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << add(intRel(ptrA), intConst(1));
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
 	}
 
 	static void intPostfixInc(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << mov(ptrA, p.params[0]);
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
-		p.state->to << code::add(intRel(code::ptrA), code::intConst(1));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+		p.state->to << add(intRel(ptrA), intConst(1));
 	}
 
 	static void intPrefixDec(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::sub(intRel(code::ptrA), code::intConst(1));
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << sub(intRel(ptrA), intConst(1));
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
 	}
 
 	static void intPostfixDec(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << mov(ptrA, p.params[0]);
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
-		p.state->to << code::sub(intRel(code::ptrA), code::intConst(1));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+		p.state->to << sub(intRel(ptrA), intConst(1));
 	}
 
 	static void intSub(InlinedParams p) {
 		if (p.result->needed()) {
 			code::Value result = p.result->location(p.state).var();
-			p.state->to << code::mov(result, p.params[0]);
-			p.state->to << code::sub(result, p.params[1]);
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << sub(result, p.params[1]);
 		}
 	}
 
 	static void intMul(InlinedParams p) {
 		if (p.result->needed()) {
 			code::Value result = p.result->location(p.state).var();
-			p.state->to << code::mov(result, p.params[0]);
-			p.state->to << code::mul(result, p.params[1]);
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << mul(result, p.params[1]);
 		}
 	}
 
-	template <code::CondFlag f>
+	template <CondFlag f>
 	static void intCmp(InlinedParams p) {
 		if (p.result->needed()) {
 			code::Value result = p.result->location(p.state).var();
-			p.state->to << code::cmp(p.params[0], p.params[1]);
-			p.state->to << code::setCond(result, f);
+			p.state->to << cmp(p.params[0], p.params[1]);
+			p.state->to << setCond(result, f);
 		}
 	}
 
 	static void intAssign(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::mov(code::intRel(code::ptrA), p.params[1]);
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(intRel(ptrA), p.params[1]);
 		if (p.result->needed()) {
 			if (p.result->type().ref) {
 				if (!p.result->suggest(p.state, p.params[0]))
-					p.state->to << code::mov(p.result->location(p.state).var(), code::ptrA);
+					p.state->to << mov(p.result->location(p.state).var(), ptrA);
 			} else {
 				if (!p.result->suggest(p.state, p.params[1]))
-					p.state->to << code::mov(p.result->location(p.state).var(), p.params[1]);
+					p.state->to << mov(p.result->location(p.state).var(), p.params[1]);
 			}
 		}
 	}
 
 	static void intCopyCtor(InlinedParams p) {
-		p.state->to << code::mov(code::ptrC, p.params[1]);
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::mov(code::intRel(code::ptrA), code::intRel(code::ptrC));
+		p.state->to << mov(ptrC, p.params[1]);
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(intRel(ptrA), intRel(ptrC));
 	}
 
 
 	static void intToNat(InlinedParams p) {
-		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), p.params[0]);
+		if (!p.result->needed())
+			return;
+		p.state->to << mov(p.result->location(p.state).var(), p.params[0]);
 	}
 
 	static void intToByte(InlinedParams p) {
-		if (p.result->needed()) {
-			p.state->to << code::lea(code::ptrA, p.params[0]);
-			p.state->to << code::mov(p.result->location(p.state).var(), code::byteRel(code::ptrA));
-		}
+		if (!p.result->needed())
+			return;
+		p.state->to << lea(ptrA, p.params[0]);
+		p.state->to << mov(p.result->location(p.state).var(), byteRel(ptrA));
+	}
+
+	static void intToFloat(InlinedParams p) {
+		if (!p.result->needed())
+			return;
+		p.state->to << fild(p.params[0]);
+		p.state->to << fstp(p.result->location(p.state).var());
 	}
 
 	IntType::IntType() : Type(L"Int", typeValue | typeFinal, Size::sInt, null) {}
 
 	bool IntType::loadAll() {
 		vector<Value> r(1, Value(this, true));
+		vector<Value> i(1, Value(this));
 		vector<Value> ii(2, Value(this));
 		Value b(boolType(engine));
 		add(steal(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&intAdd))));
 		add(steal(inlinedFunction(engine, Value(this), L"-", ii, simpleFn(&intSub))));
 		add(steal(inlinedFunction(engine, Value(this), L"*", ii, simpleFn(&intMul))));
-		add(steal(inlinedFunction(engine, b, L"==", ii, simpleFn(&intCmp<code::ifEqual>))));
-		add(steal(inlinedFunction(engine, b, L"!=", ii, simpleFn(&intCmp<code::ifNotEqual>))));
-		add(steal(inlinedFunction(engine, b, L"<", ii, simpleFn(&intCmp<code::ifLess>))));
-		add(steal(inlinedFunction(engine, b, L">", ii, simpleFn(&intCmp<code::ifGreater>))));
-		add(steal(inlinedFunction(engine, b, L"<=", ii, simpleFn(&intCmp<code::ifLessEqual>))));
-		add(steal(inlinedFunction(engine, b, L">=", ii, simpleFn(&intCmp<code::ifGreaterEqual>))));
+		add(steal(inlinedFunction(engine, b, L"==", ii, simpleFn(&intCmp<ifEqual>))));
+		add(steal(inlinedFunction(engine, b, L"!=", ii, simpleFn(&intCmp<ifNotEqual>))));
+		add(steal(inlinedFunction(engine, b, L"<", ii, simpleFn(&intCmp<ifLess>))));
+		add(steal(inlinedFunction(engine, b, L">", ii, simpleFn(&intCmp<ifGreater>))));
+		add(steal(inlinedFunction(engine, b, L"<=", ii, simpleFn(&intCmp<ifLessEqual>))));
+		add(steal(inlinedFunction(engine, b, L">=", ii, simpleFn(&intCmp<ifGreaterEqual>))));
 
-		add(steal(inlinedFunction(engine, Value(natType(engine)), L"nat", valList(1, Value(this)), simpleFn(&intToNat))));
-		add(steal(inlinedFunction(engine, Value(byteType(engine)), L"byte", valList(1, Value(this)), simpleFn(&intToByte))));
+		add(steal(inlinedFunction(engine, Value(natType(engine)), L"nat", i, simpleFn(&intToNat))));
+		add(steal(inlinedFunction(engine, Value(byteType(engine)), L"byte", i, simpleFn(&intToByte))));
+		add(steal(inlinedFunction(engine, Value(floatType(engine)), L"float", i, simpleFn(&intToFloat))));
 
 		add(steal(inlinedFunction(engine, Value(this), L"*++", r, simpleFn(&intPostfixInc))));
 		add(steal(inlinedFunction(engine, Value(this), L"++*", r, simpleFn(&intPrefixInc))));
@@ -149,85 +160,85 @@ namespace storm {
 	static void natAdd(InlinedParams p) {
 		if (p.result->needed()) {
 			code::Value result = p.result->location(p.state).var();
-			p.state->to << code::mov(result, p.params[0]);
-			p.state->to << code::add(result, p.params[1]);
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << add(result, p.params[1]);
 		}
 	}
 
 	static void natPrefixInc(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::add(intRel(code::ptrA), code::natConst(1));
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << add(intRel(ptrA), natConst(1));
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
 	}
 
 	static void natPostfixInc(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << mov(ptrA, p.params[0]);
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
-		p.state->to << code::add(intRel(code::ptrA), code::natConst(1));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+		p.state->to << add(intRel(ptrA), natConst(1));
 	}
 
 	static void natPrefixDec(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::sub(intRel(code::ptrA), code::natConst(1));
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << sub(intRel(ptrA), natConst(1));
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
 	}
 
 	static void natPostfixDec(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << mov(ptrA, p.params[0]);
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
-		p.state->to << code::sub(intRel(code::ptrA), code::natConst(1));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+		p.state->to << sub(intRel(ptrA), natConst(1));
 	}
 
 	static void natSub(InlinedParams p) {
 		if (p.result->needed()) {
 			code::Value result = p.result->location(p.state).var();
-			p.state->to << code::mov(result, p.params[0]);
-			p.state->to << code::sub(result, p.params[1]);
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << sub(result, p.params[1]);
 		}
 	}
 
-	template <code::CondFlag f>
+	template <CondFlag f>
 	static void natCmp(InlinedParams p) {
 		if (p.result->needed()) {
 			code::Value result = p.result->location(p.state).var();
-			p.state->to << code::cmp(p.params[0], p.params[1]);
-			p.state->to << code::setCond(result, f);
+			p.state->to << cmp(p.params[0], p.params[1]);
+			p.state->to << setCond(result, f);
 		}
 	}
 
 	static void natAssign(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::mov(code::intRel(code::ptrA), p.params[1]);
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(intRel(ptrA), p.params[1]);
 		if (p.result->needed()) {
 			if (p.result->type().ref) {
 				if (!p.result->suggest(p.state, p.params[0]))
-					p.state->to << code::mov(p.result->location(p.state).var(), code::ptrA);
+					p.state->to << mov(p.result->location(p.state).var(), ptrA);
 			} else {
 				if (!p.result->suggest(p.state, p.params[1]))
-					p.state->to << code::mov(p.result->location(p.state).var(), p.params[1]);
+					p.state->to << mov(p.result->location(p.state).var(), p.params[1]);
 			}
 		}
 	}
 
 	static void natCopyCtor(InlinedParams p) {
-		p.state->to << code::mov(code::ptrC, p.params[1]);
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::mov(code::intRel(code::ptrA), code::intRel(code::ptrC));
+		p.state->to << mov(ptrC, p.params[1]);
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(intRel(ptrA), intRel(ptrC));
 	}
 
 	static void natToInt(InlinedParams p) {
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), p.params[0]);
+			p.state->to << mov(p.result->location(p.state).var(), p.params[0]);
 	}
 
 	static void natToByte(InlinedParams p) {
 		if (p.result->needed()) {
-			p.state->to << code::lea(code::ptrA, p.params[0]);
-			p.state->to << code::mov(p.result->location(p.state).var(), code::byteRel(code::ptrA));
+			p.state->to << lea(ptrA, p.params[0]);
+			p.state->to << mov(p.result->location(p.state).var(), byteRel(ptrA));
 		}
 	}
 
@@ -240,12 +251,12 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&natAdd))));
 		add(steal(inlinedFunction(engine, Value(this), L"-", ii, simpleFn(&natSub))));
 		// add(steal(inlinedFunction(engine, Value(this), L"*", ii, simpleFn(&natMul))));
-		add(steal(inlinedFunction(engine, b, L"==", ii, simpleFn(&natCmp<code::ifEqual>))));
-		add(steal(inlinedFunction(engine, b, L"!=", ii, simpleFn(&natCmp<code::ifNotEqual>))));
-		add(steal(inlinedFunction(engine, b, L"<", ii, simpleFn(&natCmp<code::ifBelow>))));
-		add(steal(inlinedFunction(engine, b, L">", ii, simpleFn(&natCmp<code::ifAbove>))));
-		add(steal(inlinedFunction(engine, b, L"<=", ii, simpleFn(&natCmp<code::ifBelowEqual>))));
-		add(steal(inlinedFunction(engine, b, L">=", ii, simpleFn(&natCmp<code::ifAboveEqual>))));
+		add(steal(inlinedFunction(engine, b, L"==", ii, simpleFn(&natCmp<ifEqual>))));
+		add(steal(inlinedFunction(engine, b, L"!=", ii, simpleFn(&natCmp<ifNotEqual>))));
+		add(steal(inlinedFunction(engine, b, L"<", ii, simpleFn(&natCmp<ifBelow>))));
+		add(steal(inlinedFunction(engine, b, L">", ii, simpleFn(&natCmp<ifAbove>))));
+		add(steal(inlinedFunction(engine, b, L"<=", ii, simpleFn(&natCmp<ifBelowEqual>))));
+		add(steal(inlinedFunction(engine, b, L">=", ii, simpleFn(&natCmp<ifAboveEqual>))));
 		add(steal(inlinedFunction(engine, Value(intType(engine)), L"int", valList(1, Value(this)), simpleFn(&natToInt))));
 		add(steal(inlinedFunction(engine, Value(byteType(engine)), L"byte", valList(1, Value(this)), simpleFn(&natToByte))));
 
@@ -278,74 +289,74 @@ namespace storm {
 	static void byteAdd(InlinedParams p) {
 		if (p.result->needed()) {
 			code::Value result = p.result->location(p.state).var();
-			p.state->to << code::mov(result, p.params[0]);
-			p.state->to << code::add(result, p.params[1]);
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << add(result, p.params[1]);
 		}
 	}
 
 	static void bytePrefixInc(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::add(intRel(code::ptrA), code::byteConst(1));
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << add(intRel(ptrA), byteConst(1));
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
 	}
 
 	static void bytePostfixInc(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << mov(ptrA, p.params[0]);
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
-		p.state->to << code::add(byteRel(code::ptrA), code::byteConst(1));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+		p.state->to << add(byteRel(ptrA), byteConst(1));
 	}
 
 	static void bytePrefixDec(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::sub(intRel(code::ptrA), code::byteConst(1));
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << sub(intRel(ptrA), byteConst(1));
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
 	}
 
 	static void bytePostfixDec(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
+		p.state->to << mov(ptrA, p.params[0]);
 		if (p.result->needed())
-			p.state->to << code::mov(p.result->location(p.state).var(), intRel(code::ptrA));
-		p.state->to << code::sub(byteRel(code::ptrA), code::byteConst(1));
+			p.state->to << mov(p.result->location(p.state).var(), intRel(ptrA));
+		p.state->to << sub(byteRel(ptrA), byteConst(1));
 	}
 
 	static void byteSub(InlinedParams p) {
 		if (p.result->needed()) {
 			code::Value result = p.result->location(p.state).var();
-			p.state->to << code::mov(result, p.params[0]);
-			p.state->to << code::sub(result, p.params[1]);
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << sub(result, p.params[1]);
 		}
 	}
 
-	template <code::CondFlag f>
+	template <CondFlag f>
 	static void byteCmp(InlinedParams p) {
 		if (p.result->needed()) {
 			code::Value result = p.result->location(p.state).var();
-			p.state->to << code::cmp(p.params[0], p.params[1]);
-			p.state->to << code::setCond(result, f);
+			p.state->to << cmp(p.params[0], p.params[1]);
+			p.state->to << setCond(result, f);
 		}
 	}
 
 	static void byteAssign(InlinedParams p) {
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::mov(code::byteRel(code::ptrA), p.params[1]);
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(byteRel(ptrA), p.params[1]);
 		if (p.result->needed()) {
 			if (p.result->type().ref) {
 				if (!p.result->suggest(p.state, p.params[0]))
-					p.state->to << code::mov(p.result->location(p.state).var(), code::ptrA);
+					p.state->to << mov(p.result->location(p.state).var(), ptrA);
 			} else {
 				if (!p.result->suggest(p.state, p.params[1]))
-					p.state->to << code::mov(p.result->location(p.state).var(), p.params[1]);
+					p.state->to << mov(p.result->location(p.state).var(), p.params[1]);
 			}
 		}
 	}
 
 	static void byteCopyCtor(InlinedParams p) {
-		p.state->to << code::mov(code::ptrC, p.params[1]);
-		p.state->to << code::mov(code::ptrA, p.params[0]);
-		p.state->to << code::mov(code::byteRel(code::ptrA), code::byteRel(code::ptrC));
+		p.state->to << mov(ptrC, p.params[1]);
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(byteRel(ptrA), byteRel(ptrC));
 	}
 
 	ByteType::ByteType() : Type(L"Byte", typeValue | typeFinal, Size::sByte, null) {}
@@ -357,12 +368,12 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&byteAdd))));
 		add(steal(inlinedFunction(engine, Value(this), L"-", ii, simpleFn(&byteSub))));
 		// add(steal(inlinedFunction(engine, Value(this), L"*", ii, simpleFn(&byteMul))));
-		add(steal(inlinedFunction(engine, b, L"==", ii, simpleFn(&byteCmp<code::ifEqual>))));
-		add(steal(inlinedFunction(engine, b, L"!=", ii, simpleFn(&byteCmp<code::ifNotEqual>))));
-		add(steal(inlinedFunction(engine, b, L"<", ii, simpleFn(&byteCmp<code::ifBelow>))));
-		add(steal(inlinedFunction(engine, b, L">", ii, simpleFn(&byteCmp<code::ifAbove>))));
-		add(steal(inlinedFunction(engine, b, L"<=", ii, simpleFn(&byteCmp<code::ifBelowEqual>))));
-		add(steal(inlinedFunction(engine, b, L">=", ii, simpleFn(&byteCmp<code::ifAboveEqual>))));
+		add(steal(inlinedFunction(engine, b, L"==", ii, simpleFn(&byteCmp<ifEqual>))));
+		add(steal(inlinedFunction(engine, b, L"!=", ii, simpleFn(&byteCmp<ifNotEqual>))));
+		add(steal(inlinedFunction(engine, b, L"<", ii, simpleFn(&byteCmp<ifBelow>))));
+		add(steal(inlinedFunction(engine, b, L">", ii, simpleFn(&byteCmp<ifAbove>))));
+		add(steal(inlinedFunction(engine, b, L"<=", ii, simpleFn(&byteCmp<ifBelowEqual>))));
+		add(steal(inlinedFunction(engine, b, L">=", ii, simpleFn(&byteCmp<ifAboveEqual>))));
 
 		add(steal(inlinedFunction(engine, Value(this), L"*++", r, simpleFn(&bytePostfixInc))));
 		add(steal(inlinedFunction(engine, Value(this), L"++*", r, simpleFn(&bytePrefixInc))));

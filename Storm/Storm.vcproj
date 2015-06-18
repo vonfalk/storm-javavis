@@ -546,6 +546,14 @@
 				RelativePath=".\Lib\Auto.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Storm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Float.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -926,6 +934,10 @@
 			</File>
 			<File
 				RelativePath=".\Thread.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Float.h"
 				>
 			</File>
 		</Filter>

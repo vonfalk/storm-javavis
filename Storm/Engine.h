@@ -19,6 +19,7 @@ namespace storm {
 		specialInt = 0,
 		specialNat,
 		specialByte,
+		specialFloat,
 		specialBool,
 
 		// Array<Str>, we need this during startup in Url.

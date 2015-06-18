@@ -368,8 +368,34 @@ namespace code {
 		}
 
 		void fistp(Output &to, Params p, const Instruction &instr) {
+			// Use space just above the stack for this.
+			Value modified = intRel(ptrStack, -Offset(4));
+			Value old = intRel(ptrStack, -Offset(2));
+
+			// Set rounding mode to 'truncate':
+
+			// FNSTCW [esp - 2]
+			to.putByte(0xD9);
+			modRm(to, 7, old);
+
+			// FNSTCW [esp - 4]
+			to.putByte(0xD9);
+			modRm(to, 7, modified);
+
+			// OR [esp - 4], #0xC00  Set bits 10 and 11 to 1.
+			or(to, p, code::or(modified, natConst(0xC00)));
+
+			// FLDCW [esp - 4]
+			to.putByte(0xD9);
+			modRm(to, 5, modified);
+
+			// FISTP 'dest'
 			to.putByte(0xDB);
 			modRm(to, 3, instr.dest());
+
+			// FNLDCW [esp - 2]  restore old mode
+			to.putByte(0xD9);
+			modRm(to, 5, old);
 		}
 
 		void fld(Output &to, Params p, const Instruction &instr) {

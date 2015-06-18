@@ -270,6 +270,10 @@
 				RelativePath=".\DllTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\FloatTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

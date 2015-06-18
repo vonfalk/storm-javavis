@@ -27,15 +27,15 @@ BEGIN_TEST(TestFloat) {
 	Binary b(arena, l);
 
 	float pa = 12.3f, pb = 2.2f;
-	// Should be 27.06 rounded (depending on FPU-flags).
+	// Should be 27.06, is then rounded (depending on FPU-flags).
 	FnParams p; p.add(pa).add(pb);
 	int r = call<int>(b.address(), false, p);
-	CHECK_EQ(r, 271); // Rounds up according to the FPU state
+	CHECK_EQ(r, 270); // Rounds up according to the FPU state
 
 } END_TEST
 
 
-BEGIN_TEST_(TestReturnFloat) {
+BEGIN_TEST(TestReturnFloat) {
 	Arena arena;
 	Listing l;
 
@@ -61,5 +61,24 @@ BEGIN_TEST_(TestReturnFloat) {
 	FnParams p; p.add(pa).add(pb);
 	float r = call<float>(b.address(), false, p);
 	CHECK_EQ(int(r * 100), 2706);
+
+} END_TEST
+
+BEGIN_TEST(TestFloatConst) {
+	Arena arena;
+	Listing l;
+
+	l << prolog();
+
+	l << mov(eax, floatConst(10.2f));
+
+	l << epilog();
+	l << retFloat(Size::sFloat); // Returns the float stored in 'eax'
+
+	Binary b(arena, l);
+
+	FnParams p;
+	float r = call<float>(b.address(), false, p);
+	CHECK_EQ(r, 10.2f);
 
 } END_TEST

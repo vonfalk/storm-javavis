@@ -297,6 +297,7 @@ namespace storm {
 			&intType,
 			&natType,
 			&byteType,
+			&floatType,
 			&boolType,
 			&arrayType,
 			&futureType,

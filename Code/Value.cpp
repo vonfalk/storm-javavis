@@ -13,6 +13,7 @@ namespace code {
 	Value::Value(Word v, Size sz) : valType(tConstant), iConstant(v), valSize(sz), iOffset(0) {}
 	Value::Value(Size v, Size sz) : valType(tSizeConstant), iSize(v), valSize(sz), iOffset(0) {}
 	Value::Value(Offset v, Size sz) : valType(tOffsetConstant), iOffset(v), valSize(sz) {}
+	Value::Value(Float v, Size sz) : valType(tFloatConstant), fConstant(v), valSize(sz) {}
 
 	Value::Value(Label lbl) : valType(tLabel), labelId(lbl.id), valSize(Size::sPtr), iOffset(0) {}
 
@@ -48,11 +49,14 @@ namespace code {
 	}
 
 	Value::Type Value::type() const {
-		if (valType == tSizeConstant)
+		switch (valType) {
+		case tSizeConstant:
+		case tOffsetConstant:
+		case tFloatConstant:
 			return tConstant;
-		if (valType == tOffsetConstant)
-			return tConstant;
-		return valType;
+		default:
+			return valType;
+		}
 	}
 
 	Size Value::size() const {
@@ -98,6 +102,8 @@ namespace code {
 			return iSize == o.iSize;
 		case tOffsetConstant:
 			return iOffset == o.iOffset;
+		case tFloatConstant:
+			return fConstant == o.fConstant;
 		case tRegister:
 			return iRegister == o.iRegister;
 		case tLabel:
@@ -174,6 +180,9 @@ namespace code {
 		case tOffsetConstant:
 			to << L"#" << iOffset.format(true);
 			break;
+		case tFloatConstant:
+			to << L"#" << fConstant;
+			break;
 		case tLabel:
 			to << L"#" << label().toS() << L":";
 			break;
@@ -206,15 +215,29 @@ namespace code {
 
 	}
 
+	static Word toWord(Float f) {
+		union {
+			Nat n;
+			Float z;
+		};
+		z = f;
+		return Word(n);
+	}
+
 	Word Value::constant() const {
-		if (valType == tConstant)
+		switch (valType) {
+		case tConstant:
 			return iConstant;
-		if (valType == tSizeConstant)
+		case tSizeConstant:
 			return iSize.current();
-		if (valType == tOffsetConstant)
+		case tOffsetConstant:
 			return iOffset.current();
-		assert(false, "Tried to get constant value from non-constant.");
-		return 0;
+		case tFloatConstant:
+			return toWord(fConstant);
+		default:
+			assert(false, "Tried to get constant value from non-constant.");
+			return 0;
+		}
 	}
 
 	Register Value::reg() const {
@@ -260,6 +283,7 @@ namespace code {
 	Value natConst(Size v) { return Value(v, Size::sNat); }
 	Value longConst(Long v) { return Value(Word(v), Size::sLong); }
 	Value wordConst(Word v) { return Value(Word(v), Size::sWord); }
+	Value floatConst(Float v) { return Value(v, Size::sFloat); }
 	Value intPtrConst(Int v) { return Value(Word(v), Size::sPtr); }
 	Value natPtrConst(Nat v) { return Value(Word(v), Size::sPtr); }
 	Value intPtrConst(Offset v) { return Value(v, Size::sPtr); }
@@ -270,12 +294,14 @@ namespace code {
 	Value byteRel(Register reg, Offset offset) { return Value(reg, offset, Size::sByte); }
 	Value intRel(Register reg, Offset offset) { return Value(reg, offset, Size::sInt); }
 	Value longRel(Register reg, Offset offset) { return Value(reg, offset, Size::sLong); }
+	Value floatRel(Register reg, Offset offset) { return Value(reg, offset, Size::sFloat); }
 	Value ptrRel(Register reg, Offset offset) { return Value(reg, offset, Size::sPtr); }
 	Value xRel(Size size, Register reg, Offset offset) { return Value(reg, offset, size); }
 
 	Value byteRel(Variable v, Offset offset) { return Value(v, offset, Size::sByte); }
 	Value intRel(Variable v, Offset offset) { return Value(v, offset, Size::sInt); }
 	Value longRel(Variable v, Offset offset) { return Value(v, offset, Size::sLong); }
+	Value floatRel(Variable v, Offset offset) { return Value(v, offset, Size::sFloat); }
 	Value ptrRel(Variable v, Offset offset) { return Value(v, offset, Size::sPtr); }
 	Value xRel(Size size, Variable v, Offset offset) { return Value(v, offset, size); }
 }

@@ -30,6 +30,8 @@ namespace storm {
 		virtual StrBuf *STORM_FN add(Par<Str> str);
 		virtual StrBuf *STORM_FN add(Int i);
 		virtual StrBuf *STORM_FN add(Nat i);
+		virtual StrBuf *STORM_FN add(Byte i);
+		virtual StrBuf *STORM_FN add(Float i);
 
 		// C++-specific.
 		void add(const String &v);

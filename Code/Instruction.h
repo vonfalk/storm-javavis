@@ -101,7 +101,7 @@ namespace code {
 
 	// Floating point math.
 	Instruction fstp(const Value &dest);
-	Instruction fistp(const Value &dest);
+	Instruction fistp(const Value &dest); // Truncates results.
 	Instruction fld(const Value &src);
 	Instruction fild(const Value &src);
 	Instruction faddp();

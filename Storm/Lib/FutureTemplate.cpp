@@ -73,7 +73,10 @@ namespace storm {
 			l << fnCall(engine.fnRefs.futureResult, Size());
 			l << mov(asSize(ptrA, param.size()), tmpVar);
 			l << epilog();
-			l << ret(param.size());
+			if (param.isFloat())
+				l << retFloat(param.size());
+			else
+				l << ret(param.size());
 		} else {
 			Variable future = l.frame.createPtrParam();
 			Variable valRef = l.frame.createPtrParam();

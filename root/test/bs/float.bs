@@ -1,0 +1,42 @@
+
+Float floatParams(Float a, Float b) {
+	// Test the Float ctor.
+	Float(a);
+}
+
+Float floatAdd(Float a, Float b) {
+	a + b;
+}
+
+Float floatSub(Float a, Float b) {
+	a - b;
+}
+
+Float floatMul(Float a, Float b) {
+	a * b;
+}
+
+Float floatDiv(Float a, Float b) {
+	a / b;
+}
+
+Float floatLiteral() {
+	10.5 + 1;
+}
+
+Float floatThread(Float p) on Other {
+	10.5 + p;
+}
+
+Float floatThread() on Compiler {
+	floatThread(1);
+}
+
+Float floatFuture() on Compiler {
+	var f = spawn floatThread(1);
+	f.result + 1;
+}
+
+Int floatRound(Float v) {
+	v.int;
+}

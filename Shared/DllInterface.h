@@ -57,7 +57,7 @@ namespace storm {
 		CloneObjectEnv cloneObjectEnv;
 
 		typedef Type *(*StdType)(Engine &e);
-		StdType intType, natType, byteType, boolType;
+		StdType intType, natType, byteType, floatType, boolType;
 
 		typedef Type *(*ArrayType)(Engine &e, const ValueData &v);
 		ArrayType arrayType;

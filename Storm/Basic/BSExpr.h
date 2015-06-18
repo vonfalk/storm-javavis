@@ -36,12 +36,15 @@ namespace storm {
 		public:
 			STORM_CTOR Constant(Int i);
 			Constant(int64 i);
+			STORM_CTOR Constant(Float f);
+			Constant(double d);
 			STORM_CTOR Constant(Str *str);
 			STORM_CTOR Constant(Bool b);
 
 			// Types
 			enum CType {
 				tInt,
+				tFloat,
 				tStr,
 				tBool,
 			};
@@ -51,6 +54,9 @@ namespace storm {
 
 			// Value (if integer).
 			int64 intValue;
+
+			// Value (if float).
+			double floatValue;
 
 			// Value (if string).
 			String strValue;
@@ -76,6 +82,9 @@ namespace storm {
 			// Code for an int label.
 			void intCode(Par<CodeGen> state, Par<CodeResult> r);
 
+			// Code for a float label.
+			void floatCode(Par<CodeGen> state, Par<CodeResult> r);
+
 			// Code for a bool label.
 			void boolCode(Par<CodeGen> state, Par<CodeResult> r);
 
@@ -86,6 +95,8 @@ namespace storm {
 		Constant *STORM_FN intConstant(Par<SStr> str);
 
 		Constant *STORM_FN strConstant(Par<SStr> str);
+
+		Constant *STORM_FN floatConstant(Par<SStr> str);
 
 		/**
 		 * Dummy expression, tells that we're returning a value of a specific type, but will not

@@ -26,6 +26,10 @@ namespace storm {
 
 	bs::Constant::Constant(int64 v) : cType(tInt), intValue(v) {}
 
+	bs::Constant::Constant(Float v) : cType(tFloat), floatValue(v) {}
+
+	bs::Constant::Constant(double v) : cType(tFloat), floatValue(v) {}
+
 	bs::Constant::Constant(Str *v) : cType(tStr), strValue(v->v.unescape()) {}
 
 	bs::Constant::Constant(Bool v) : cType(tBool), boolValue(v) {}
@@ -34,6 +38,9 @@ namespace storm {
 		switch (cType) {
 		case tInt:
 			to << intValue << L"i";
+			break;
+		case tFloat:
+			to << floatValue << L"f";
 			break;
 		case tStr:
 			to << L"\"" << strValue << L"\"";
@@ -51,6 +58,8 @@ namespace storm {
 		switch (cType) {
 		case tInt:
 			return Value(intType(engine()));
+		case tFloat:
+			return Value(floatType(engine()));
 		case tStr:
 			return Value(Str::stormType(engine()));
 		case tBool:
@@ -75,6 +84,9 @@ namespace storm {
 			return (intValue & 0xFFFFFFFF) == intValue;
 		if (to.type == byteType(e))
 			return (intValue & 0xFF) == intValue;
+		if (to.type == floatType(e))
+			// We allow up to 16 bits to automatically cast.
+			return (intValue & 0xFFFF) == intValue;
 
 		return false;
 	}
@@ -88,6 +100,9 @@ namespace storm {
 		switch (cType) {
 		case tInt:
 			intCode(s, r);
+			break;
+		case tFloat:
+			floatCode(s, r);
 			break;
 		case tStr:
 			strCode(s, r);
@@ -130,8 +145,24 @@ namespace storm {
 			s->to << mov(to.var(), natConst(nat(intValue)));
 		else if (t == byteType(e))
 			s->to << mov(to.var(), byteConst(byte(intValue)));
+		else if (t == floatType(e))
+			s->to << mov(to.var(), floatConst(float(intValue)));
 		else
 			assert(false, L"Unknown type for an integer constant.");
+
+		to.created(s);
+	}
+
+	void bs::Constant::floatCode(Par<CodeGen> s, Par<CodeResult> r) {
+		using namespace code;
+
+		VarInfo to = r->location(s);
+		Type *t = r->type().type;
+		Engine &e = engine();
+		if (t != floatType(e))
+			assert(false, L"Unknown type for a float constant.");
+
+		s->to << mov(to.var(), floatConst(float(floatValue)));
 
 		to.created(s);
 	}
@@ -159,6 +190,10 @@ namespace storm {
 
 	bs::Constant *bs::intConstant(Par<SStr> v) {
 		return CREATE(Constant, v->engine(), v->v->v.toInt64());
+	}
+
+	bs::Constant *bs::floatConstant(Par<SStr> v) {
+		return CREATE(Constant, v->engine(), v->v->v.toDouble());
 	}
 
 	bs::Constant *bs::strConstant(Par<SStr> v) {

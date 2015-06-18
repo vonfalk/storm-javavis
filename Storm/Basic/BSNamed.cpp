@@ -141,7 +141,7 @@ namespace storm {
 	}
 
 	void bs::CtorCall::code(Par<CodeGen> s, Par<CodeResult> to) {
-		if (toCreate.isValue())
+		if (toCreate.isValue() || toCreate.isBuiltIn())
 			createValue(s, to);
 		else
 			createClass(s, to);

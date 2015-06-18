@@ -171,7 +171,11 @@ namespace storm {
 				l << code::addRef(ptrA);
 
 			l << epilog();
-			l << ret(result.size());
+
+			if (result.isFloat())
+				l << retFloat(result.size());
+			else
+				l << ret(result.size());
 		} else {
 			Auto<CodeResult> r = CREATE(CodeResult, this, result, l.frame.root());
 			bodyExpr->code(state, r);

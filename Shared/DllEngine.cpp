@@ -102,6 +102,10 @@ namespace storm {
 		return (*interface->byteType)(e);
 	}
 
+	Type *floatType(Engine &e) {
+		return (*interface->floatType)(e);
+	}
+
 	Type *boolType(Engine &e) {
 		return (*interface->boolType)(e);
 	}

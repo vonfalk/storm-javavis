@@ -42,7 +42,7 @@ namespace code {
 			tRelative,
 
 			// Internal, appears as a constant. Stored in iSize/iOffset.
-			tSizeConstant, tOffsetConstant,
+			tSizeConstant, tOffsetConstant, tFloatConstant,
 		};
 
 		Value();
@@ -90,6 +90,7 @@ namespace code {
 		Value(Word c, Size size);
 		Value(Size s, Size size);
 		Value(Offset s, Size size);
+		Value(Float c, Size size);
 
 		// Reference
 		Value(Register r, Offset offset, Size size);
@@ -106,6 +107,8 @@ namespace code {
 		union {
 			// tConstant:
 			Word iConstant;
+			// float constant.
+			Float fConstant;
 			// tRegister:
 			Register iRegister;
 			// label id
@@ -137,6 +140,7 @@ namespace code {
 		friend Value natConst(Size v);
 		friend Value longConst(Long v);
 		friend Value wordConst(Word v);
+		friend Value floatConst(Float v);
 		friend Value intPtrConst(Int v);
 		friend Value natPtrConst(Nat v);
 		friend Value intPtrConst(Offset v);
@@ -146,11 +150,13 @@ namespace code {
 		friend Value byteRel(Register reg, Offset offset);
 		friend Value intRel(Register reg, Offset offset);
 		friend Value longRel(Register reg, Offset offset);
+		friend Value floatRel(Register reg, Offset offset);
 		friend Value ptrRel(Register reg, Offset offset);
 		friend Value xRel(Size size, Register reg, Offset offset);
 		friend Value byteRel(Variable v, Offset offset);
 		friend Value intRel(Variable v, Offset offset);
 		friend Value longRel(Variable v, Offset offset);
+		friend Value floatRel(Variable v, Offset offset);
 		friend Value ptrRel(Variable v, Offset offset);
 		friend Value xRel(Size size, Variable v, Offset offset);
 	};
@@ -163,6 +169,7 @@ namespace code {
 	Value natConst(Size v);
 	Value longConst(Long v);
 	Value wordConst(Word v);
+	Value floatConst(Float v);
 
 	// size_t like constants. Cannot be more than 32-bits for compatibility.
 	Value intPtrConst(Int v);
@@ -176,6 +183,7 @@ namespace code {
 	Value byteRel(Register reg, Offset offset = Offset(0));
 	Value intRel(Register reg, Offset offset = Offset(0));
 	Value longRel(Register reg, Offset offset = Offset(0));
+	Value floatRel(Register reg, Offset offset = Offset(0));
 	Value ptrRel(Register reg, Offset offset = Offset(0));
 	Value xRel(Size size, Register reg, Offset offset = Offset(0));
 
@@ -183,6 +191,7 @@ namespace code {
 	Value byteRel(Variable v, Offset offset = Offset(0));
 	Value intRel(Variable v, Offset offset = Offset(0));
 	Value longRel(Variable v, Offset offset = Offset(0));
+	Value floatRel(Variable v, Offset offset = Offset(0));
 	Value ptrRel(Variable v, Offset offset = Offset(0));
 	Value xRel(Size size, Variable v, Offset offset = Offset(0));
 }

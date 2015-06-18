@@ -39,49 +39,56 @@ namespace storm {
 	 */
 
 	template <class T>
-	struct LookupValue {
+	struct StormType {
 		static Type *type(Engine &e) {
 			return T::stormType(e);
 		}
 	};
 
 	template <class T>
-	struct LookupValue<T *> {
+	struct StormType<T *> {
 		static Type *type(Engine &e) {
 			return T::stormType(e);
 		}
 	};
 
 	template <class T>
-	struct LookupValue<T &> {
+	struct StormType<T &> {
 		static Type *type(Engine &e) {
 			return T::stormType(e);
 		}
 	};
 
 	template <>
-	struct LookupValue<Int> {
+	struct StormType<Int> {
 		static Type *type(Engine &e) {
 			return intType(e);
 		}
 	};
 
 	template <>
-	struct LookupValue<Nat> {
+	struct StormType<Nat> {
 		static Type *type(Engine &e) {
 			return natType(e);
 		}
 	};
 
 	template <>
-	struct LookupValue<Byte> {
+	struct StormType<Byte> {
 		static Type *type(Engine &e) {
 			return byteType(e);
 		}
 	};
 
 	template <>
-	struct LookupValue<Bool> {
+	struct StormType<Float> {
+		static Type *type(Engine &e) {
+			return floatType(e);
+		}
+	};
+
+	template <>
+	struct StormType<Bool> {
 		static Type *type(Engine &e) {
 			return boolType(e);
 		}
@@ -90,10 +97,16 @@ namespace storm {
 	// Helper...
 	bool isClass(Type *t);
 
+	// Get the storm type from a type in C++.
+	template <class T>
+	Type *stormType(Engine &e) {
+		return StormType<T>::type(e);
+	}
+
 	template <class T>
 	ValueData value(typename EnableIf<!IsVoid<T>::value, Engine>::t &e) {
 		bool isRef = !typeInfo<T>().plain() || IsAuto<T>::v;
-		Type *t = LookupValue<T>::type(e);
+		Type *t = StormType<T>::type(e);
 		if (isClass(t)) {
 			assert(isRef, "Class type tried to be used by value!");
 			isRef = false;

@@ -131,6 +131,7 @@ ArrayInitList => Array<Expr>() : Expr(block) -> push (, ", ", Expr(block) -> pus
 Atom(Block block);
 Atom => intConstant(nr) : "[0-9]+" nr;
 Atom => intConstant(nr) : "\-[0-9]+" nr;
+Atom => floatConstant(nr) : "\-?[0-9]+\.[0-9]+" nr;
 Atom => strConstant(str) : "\"" - ( StrContent ) str - "\"";
 Atom => namedExpr(block, name, params) : Type name, FnValues(block) params;
 Atom => namedExpr(block, name, dotExpr, params) :[10] Atom(block) dotExpr, "\.", Name name, FnValues(block) params;

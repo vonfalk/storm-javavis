@@ -28,6 +28,7 @@
 // Thread local storage:
 // THREAD, eg. THREAD int foo;
 // Beware, this is not respected for UThread threads!
+#include "OS/Types.h"
 
 // Make sure the current CPU architecture is supported.
 #if !defined(X86) && !defined(X64)
@@ -39,6 +40,7 @@
 #endif
 
 #ifdef WINDOWS
+
 #define SEH
 
 namespace code {
@@ -47,13 +49,6 @@ namespace code {
 	typedef UINT_PTR cpuNat;
 	typedef INT_PTR cpuInt;
 
-	typedef char Char;
-	typedef unsigned char Byte;
-	typedef int Int;
-	typedef unsigned int Nat;
-	typedef long long int Long;
-	typedef unsigned long long int Word;
-
 }
 
 #else
@@ -61,6 +56,17 @@ namespace code {
 #error "Unsupported system!"
 
 #endif
+
+// Reuse some types from OS.
+namespace code {
+	typedef os::Char Char;
+	typedef os::Byte Byte;
+	typedef os::Int Int;
+	typedef os::Nat Nat;
+	typedef os::Long Long;
+	typedef os::Word Word;
+	typedef os::Float Float;
+}
 
 #include "Codecall.h"
 #include "Utils/Printable.h"

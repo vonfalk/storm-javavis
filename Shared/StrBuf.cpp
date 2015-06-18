@@ -133,6 +133,19 @@ namespace storm {
 		return this;
 	}
 
+	StrBuf *StrBuf::add(Byte i) {
+		return add(Nat(i));
+	}
+
+	StrBuf *StrBuf::add(Float i) {
+		const nat max = 20;
+		ensure(pos + max);
+		_snwprintf_s(buffer + pos, max, max, L"%f", i);
+
+		addRef();
+		return this;
+	}
+
 	// Add a single char.
 	void StrBuf::addChar(Nat p) {
 		if (p >= 0xD800 && p < 0xE000) {
