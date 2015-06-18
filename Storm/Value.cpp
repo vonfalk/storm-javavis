@@ -90,6 +90,12 @@ namespace storm {
 		return type->builtInType() != BasicTypeInfo::user;
 	}
 
+	bool Value::isFloat() const {
+		if (type == null)
+			return false;
+		return type->builtInType() == BasicTypeInfo::floatNr;
+	}
+
 	bool Value::isValue() const {
 		if (type == null)
 			return false;

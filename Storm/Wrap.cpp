@@ -20,8 +20,8 @@ namespace storm {
 	}
 
 	void fnParamsAdd(os::FnParams *obj, os::FnParams::CopyFn copy, os::FnParams::DestroyFn destroy,
-					nat size, const void *value) {
-		obj->add(copy, destroy, size, value);
+					nat size, bool isFloat, const void *value) {
+		obj->add(copy, destroy, size, isFloat, value);
 	}
 
 }

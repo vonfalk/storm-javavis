@@ -104,7 +104,7 @@ namespace storm {
 			void *elem = array->atRaw(i);
 			os::FnParams params(buffer);
 			params.add(r.borrow());
-			params.add(handle.create, handle.destroy, handle.size, elem);
+			params.add(handle.create, handle.destroy, handle.size, handle.isFloat, elem);
 			Auto<StrBuf> t = os::call<StrBuf *>(fn, true, params);
 		}
 

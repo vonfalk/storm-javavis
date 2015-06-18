@@ -267,6 +267,7 @@ namespace storm {
 			s->to << fnParam(e.fnRefs.copyRefPtr);
 			s->to << fnParam(e.fnRefs.releasePtr);
 			s->to << fnParam(natConst(type.size()));
+			s->to << fnParam(byteConst(0));
 			s->to << fnParam(ptrA);
 			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		} else if (type.isClass() && !thunk) {
@@ -275,6 +276,7 @@ namespace storm {
 			s->to << fnParam(intPtrConst(0));
 			s->to << fnParam(intPtrConst(0));
 			s->to << fnParam(natConst(type.size()));
+			s->to << fnParam(byteConst(0));
 			s->to << fnParam(v.v);
 			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		} else if (type.ref || type.isBuiltIn()) {
@@ -283,6 +285,7 @@ namespace storm {
 			s->to << fnParam(intPtrConst(0));
 			s->to << fnParam(intPtrConst(0));
 			s->to << fnParam(natConst(type.size()));
+			s->to << fnParam(byteConst(type.isFloat() ? 1 : 0));
 			s->to << fnParam(v.v);
 			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		} else {
@@ -296,6 +299,7 @@ namespace storm {
 			s->to << fnParam(type.copyCtor());
 			s->to << fnParam(dtor);
 			s->to << fnParam(natConst(type.size()));
+			s->to << fnParam(byteConst(0));
 			s->to << fnParam(ptrA);
 			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		}
@@ -332,6 +336,7 @@ namespace storm {
 			s->to << fnParam(stdCloneFn(type).v);
 			s->to << fnParam(dtor);
 			s->to << fnParam(natConst(type.size()));
+			s->to << fnParam(byteConst(0));
 			s->to << fnParam(ptrA);
 			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
 		}

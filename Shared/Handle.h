@@ -1,4 +1,5 @@
 #pragma once
+#include "Utils/Templates.h"
 
 CREATE_DETECTOR(deepCopy);
 
@@ -30,10 +31,13 @@ namespace storm {
 		typedef void (CODECALL *DeepCopy)(void *, CloneEnv *);
 		DeepCopy deepCopy;
 
+		// Floating point value?
+		bool isFloat;
+
 		inline Handle()
-			: size(0), destroy(null), create(null), deepCopy(null) {}
-		inline Handle(size_t size, Destroy destroy, Create create, DeepCopy deep)
-			: size(size), destroy(destroy), create(create), deepCopy(deep) {}
+			: size(0), destroy(null), create(null), deepCopy(null), isFloat(false) {}
+		inline Handle(size_t size, Destroy destroy, Create create, DeepCopy deep, bool isFloat)
+			: size(size), destroy(destroy), create(create), deepCopy(deep), isFloat(isFloat) {}
 	};
 
 	/**
@@ -90,7 +94,8 @@ namespace storm {
 			HandleHelper<T>::size(),
 			&HandleHelper<T>::destroy,
 			&HandleHelper<T>::create,
-			HandleDeepHelper<T, detect_deepCopy<T>::value>::deepCopy()
+			HandleDeepHelper<T, detect_deepCopy<T>::value>::deepCopy(),
+			IsFloat<T>::value
 			);
 		return h;
 	}

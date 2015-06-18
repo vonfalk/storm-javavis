@@ -43,15 +43,17 @@ namespace os {
 		delete []n;
 	}
 
-	void FnParams::add(CopyFn copy, DestroyFn destroy, nat paramSize, const void *value) {
+	void FnParams::add(CopyFn copy, DestroyFn destroy, nat paramSize, bool isFloat, const void *value) {
 		if (capacity != 0 && capacity == size)
 			resize(capacity * 2);
 
-		Param p = { copy, destroy, value, paramSize };
+		Param p = { copy, destroy, value };
+		p.isFloat = isFloat ? 1 : 0;
+		p.size = paramSize;
 		params[size++] = p;
 	}
 
-	void FnParams::addFirst(CopyFn copy, DestroyFn destroy, nat paramSize, const void *value) {
+	void FnParams::addFirst(CopyFn copy, DestroyFn destroy, nat paramSize, bool isFloat, const void *value) {
 		if (capacity != 0 && capacity == size)
 			resize(capacity * 2);
 
@@ -59,7 +61,9 @@ namespace os {
 			params[i] = params[i - 1];
 		size++;
 
-		Param p = { copy, destroy, value, paramSize };
+		Param p = { copy, destroy, value };
+		p.isFloat = isFloat ? 1 : 0;
+		p.size = paramSize;
 		params[0] = p;
 	}
 

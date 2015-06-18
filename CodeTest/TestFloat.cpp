@@ -25,10 +25,11 @@ BEGIN_TEST(TestFloat) {
 	l << ret(Size::sInt);
 
 	Binary b(arena, l);
-	typedef int (*Fn)(float, float);
-	Fn fn = (Fn)b.address();
 
-	int r = (*fn)(12.3f, 2.2f); // Should be 27.06
+	float pa = 12.3f, pb = 2.2f;
+	// Should be 27.06 rounded (depending on FPU-flags).
+	FnParams p; p.add(pa).add(pb);
+	int r = call<int>(b.address(), false, p);
 	CHECK_EQ(r, 271); // Rounds up according to the FPU state
 
 } END_TEST
@@ -54,10 +55,11 @@ BEGIN_TEST_(TestReturnFloat) {
 	l << retFloat(Size::sFloat); // Returns the float stored in 'eax'
 
 	Binary b(arena, l);
-	typedef Float (*Fn)(Float, Float);
-	Fn fn = (Fn)b.address();
 
-	float r = (*fn)(12.3f, 2.2f);
+	float pa = 12.3f, pb = 2.2f;
+	// Should be 27.06 rounded (depending on FPU-flags).
+	FnParams p; p.add(pa).add(pb);
+	float r = call<float>(b.address(), false, p);
 	CHECK_EQ(int(r * 100), 2706);
 
 } END_TEST

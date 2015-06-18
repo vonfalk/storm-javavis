@@ -79,6 +79,9 @@ namespace storm {
 		// Is this type built into the C++ compiler? (not pointers or references)
 		bool isBuiltIn() const;
 
+		// Is this a built-in float type?
+		bool isFloat() const;
+
 		// Refcounted value?
 		bool refcounted() const;
 

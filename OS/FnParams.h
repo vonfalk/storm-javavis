@@ -24,7 +24,10 @@ namespace os {
 			CopyFn copy;
 			DestroyFn destroy;
 			const void *value;
-			nat size;
+			struct {
+				nat isFloat : 1;
+				nat size : 31;
+			};
 		};
 
 		enum {
@@ -52,21 +55,22 @@ namespace os {
 		~FnParams();
 
 		// Add a parameter (low-level). Use null, null to indicate that 'value' is the value to be used.
-		void add(CopyFn copy, DestroyFn destroy, nat size, const void *value);
+		void add(CopyFn copy, DestroyFn destroy, nat size, bool isFloat, const void *value);
 
 		// Add a parameter to the front (low-level).
-		void addFirst(CopyFn copy, DestroyFn destroy, nat size, const void *value);
+		void addFirst(CopyFn copy, DestroyFn destroy, nat size, bool isFloat, const void *value);
 
 		// Add a parameter (high-level). Note that a reference is treated like the value itself
 		// since we can not have a reference to a reference in the parameter.
 		template <class T>
 		inline FnParams &add(const T &p) {
-			if (!typeInfo<T>().plain()) {
+			TypeInfo i = typeInfo<T>();
+			if (!i.plain()) {
 				// Pointer or reference, copy it directly.
 				// we know that sizeof(T) == sizeof(void *)
-				add(null, null, sizeof(T), *(void **)&p);
+				add(null, null, sizeof(T), false, *(void **)&p);
 			} else {
-				add(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), &p);
+				add(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), i.kind == TypeInfo::floatNr, &p);
 			}
 			return *this;
 		}
@@ -74,12 +78,13 @@ namespace os {
 		// Add a parameter to the front (high-level).
 		template <class T>
 		inline FnParams &addFirst(const T &p) {
-			if (!typeInfo<T>().plain()) {
+			TypeInfo i = typeInfo<T>();
+			if (!i.plain()) {
 				// Pointer or reference, copy it directly.
 				// we know that sizeof(T) == sizeof(void *)
-				addFirst(null, null, sizeof(T), *(void **)&p);
+				addFirst(null, null, sizeof(T), false, *(void **)&p);
 			} else {
-				addFirst(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), &p);
+				addFirst(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), i.kind == TypeInfo::floatNr, &p);
 			}
 			return *this;
 		}

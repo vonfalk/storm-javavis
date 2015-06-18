@@ -52,3 +52,19 @@ struct EnableIf {};
 
 template <class T>
 struct EnableIf<true, T> { typedef T t; };
+
+// Is T a floating point value?
+template <class T>
+struct IsFloat {
+	enum { value = false };
+};
+
+template <>
+struct IsFloat<float> {
+	enum { value = true };
+};
+
+template <>
+struct IsFloat<double> {
+	enum { value = true };
+};
