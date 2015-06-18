@@ -21,13 +21,13 @@ Storm provides a few basic numeric types:
 * Byte - unsigned 8-bit integer.
 * Int - signed 32-bit integer.
 * Nat - unsigned 32-bit integer.
+* Float - single-precision floating point number (32-bit).
 
 More types are planned (changes may be introduced):
 
 * Long - signed 64-bit integer.
 * Word - unsigned 64-bit integer.
-* Float - floating point number.
-* Double - double-precision floating point number.
+* Double - double-precision floating point number (64-bit).
 
 All types in storm have a fixed size across all platforms. Values may still be promoted during
 calculations, so do not rely on overflow semantics. At the moment, the compiler does not optimize as
@@ -40,12 +40,14 @@ Other types
 Storm also provides some higher-level types:
 
 * Str - string, immutable.
+* StrBuf - string buffer for more efficient string concatenations.
 * Array<T> - array template.
 * Thread - represents a OS thread.
 * Future<T> - future, for inter-thread communication.
+* FnPtr<R, ...> - function pointer.
 
 The `Str` class currently stores characters in UTF-16, but does not provide an API to access
-individual characters, not to cut strings based on character positions. This is partly because the
+individual characters or to cut strings based on character positions. This is partly because the
 actual representation and semantics has not yet been decided. It is, however, possible to read
 characters from a string in UTF-32 using streams. The function `core.io.readStr` creates a
 `TextReader` that allows you to read character by character from the string.
