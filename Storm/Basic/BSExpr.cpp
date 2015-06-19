@@ -200,6 +200,14 @@ namespace storm {
 		return CREATE(Constant, v->engine(), v->v.borrow());
 	}
 
+	bs::Constant *bs::trueConstant(EnginePtr e) {
+		return CREATE(Constant, e.v, true);
+	}
+
+	bs::Constant *bs::falseConstant(EnginePtr e) {
+		return CREATE(Constant, e.v, false);
+	}
+
 	/**
 	 * Dummy expression.
 	 */

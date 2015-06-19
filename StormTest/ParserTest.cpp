@@ -57,6 +57,9 @@ String parseStr(Par<SyntaxSet> set, const String &root, const String &str) {
 	Auto<Url> empty = CREATE(Url, *gEngine);
 	Auto<Str> s = CREATE(Str, *gEngine, str);
 	Auto<Parser> p = CREATE(Parser, *gEngine, set, s, empty);
+#ifdef DEBUG
+	p->debugOn = true;
+#endif
 	p->parse(root);
 	if (p->hasError())
 		throw p->error();
@@ -85,4 +88,5 @@ BEGIN_TEST(ParseOrderTest) {
 
 	CHECK_EQ(parseStr(set, L"Rec3", L"a.b.c.d.e.f.g"), L"(((a)(b)(c))(d)(e))(f)(g)");
 	CHECK_EQ(parseStr(set, L"Rec3", L"a,b,c,d,e,f,g"), L"(a)(b)((c)(d)((e)(f)(g)))");
+
 } END_TEST

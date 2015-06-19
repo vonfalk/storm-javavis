@@ -6,6 +6,12 @@
 #include <iomanip>
 #include <deque>
 
+#ifdef DEBUG
+#define PLND(x) if (debugOn) { PLN(x); }
+#else
+#define PLND(x)
+#endif
+
 namespace storm {
 
 	/**
@@ -13,10 +19,18 @@ namespace storm {
 	 */
 
 	Parser::Parser(Par<SyntaxSet> set, Par<Str> src, const SrcPos &pos)
-		: syntax(set), srcStr(src), src(src->v), srcPos(pos), rootOption(SrcPos(), Scope(), L"") {}
+		: syntax(set), srcStr(src), src(src->v), srcPos(pos), rootOption(SrcPos(), Scope(), L"") {
+#ifdef DEBUG
+		debugOn = false;
+#endif
+	}
 
 	Parser::Parser(Par<SyntaxSet> set, Par<Str> src, Par<Url> file)
-		: syntax(set), srcStr(src), src(src->v), srcPos(file, 0), rootOption(SrcPos(), Scope(), L"") {}
+		: syntax(set), srcStr(src), src(src->v), srcPos(file, 0), rootOption(SrcPos(), Scope(), L"") {
+#ifdef DEBUG
+		debugOn = false;
+#endif
+	}
 
 	Parser::State Parser::firstState() {
 		return State(OptionIter::firstA(rootOption), 0, StatePtr(), StatePtr());
@@ -71,7 +85,7 @@ namespace storm {
 
 		for (nat i = 0; i < s.size(); i++) {
 			StatePtr ptr(step, i);
-			// PLN(ptr << ": " << s[i]);
+			// PLND(ptr << ": " << s[i]);
 
 			predictor(s, s[i], ptr);
 			completer(s, s[i], ptr);

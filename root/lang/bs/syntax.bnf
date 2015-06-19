@@ -133,6 +133,8 @@ Atom => intConstant(nr) : "[0-9]+" nr;
 Atom => intConstant(nr) : "\-[0-9]+" nr;
 Atom => floatConstant(nr) : "\-?[0-9]+\.[0-9]+" nr;
 Atom => strConstant(str) : "\"" - ( StrContent ) str - "\"";
+Atom => trueConstant()  :[20] "true";
+Atom => falseConstant() :[20] "false";
 Atom => namedExpr(block, name, params) : Type name, FnValues(block) params;
 Atom => namedExpr(block, name, dotExpr, params) :[10] Atom(block) dotExpr, "\.", Name name, FnValues(block) params;
 Atom => spawnExpr(expr) :[20] "spawn ", Expr(block) expr;
@@ -235,4 +237,3 @@ ClassItem => classCastCtor(owner, pos, params, contents) :
 // Root rule for parsing classes and values.
 ClassBody(Class owner);
 ClassBody => ClassBody() : BSDelimiter - (ClassItem(owner) -> add, )*;
-

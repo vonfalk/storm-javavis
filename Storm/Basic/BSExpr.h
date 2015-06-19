@@ -98,6 +98,9 @@ namespace storm {
 
 		Constant *STORM_FN floatConstant(Par<SStr> str);
 
+		Constant *STORM_ENGINE_FN trueConstant(EnginePtr e);
+		Constant *STORM_ENGINE_FN falseConstant(EnginePtr e);
+
 		/**
 		 * Dummy expression, tells that we're returning a value of a specific type, but will not
 		 * generate any code.

@@ -78,6 +78,11 @@ namespace storm {
 
 		Object *transform(const vector<Object *> &params = vector<Object *>());
 
+#ifdef DEBUG
+		// Debug output.
+		bool debugOn;
+#endif
+
 	private:
 		// Syntax source.
 		Auto<SyntaxSet> syntax;
