@@ -68,7 +68,7 @@ namespace storm {
 		STORM_CTOR Name(Par<Str> v);
 
 		// Create with one entry.
-		Name(const String &p);
+		Name(const String &p, const vector<Value> &params = vector<Value>());
 
 		// Copy ctor.
 		STORM_CTOR Name(Par<const Name> n);

@@ -75,6 +75,16 @@ namespace storm {
 		exprs.insert(exprs.begin(), CREATE(DummyExpr, this, first));
 	}
 
+	void bs::BSNamePart::insert(Value first, Nat at) {
+		params.insert(params.begin() + at, first);
+		exprs.insert(exprs.begin() + at, CREATE(DummyExpr, this, first));
+	}
+
+	void bs::BSNamePart::alter(Nat at, Value to) {
+		params[at] = to;
+		exprs[at] = CREATE(DummyExpr, this, to);
+	}
+
 	// TODO: Consider using 'max' for match weights instead?
 	Int bs::BSNamePart::matches(Par<Named> candidate) {
 		const vector<Value> &c = candidate->params;
@@ -96,4 +106,13 @@ namespace storm {
 
 		return distance;
 	}
+
+	Name *bs::bsName(Par<Str> name, Par<Actual> params) {
+		return CREATE(Name, params, steal(CREATE(BSNamePart, params, name, params)));
+	}
+
+	Name *bs::bsName(const String &name, Par<Actual> params) {
+		return CREATE(Name, params, steal(CREATE(BSNamePart, params, name, params)));
+	}
+
 }

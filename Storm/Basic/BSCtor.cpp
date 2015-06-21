@@ -205,26 +205,26 @@ namespace storm {
 		}
 
 		// Find something to call.
-		vector<Value> values = params->values();
-		values[0].type = parent;
+		Auto<BSNamePart> values = CREATE(BSNamePart, this, Type::CTOR, params);
+		values->alter(0, parent);
 
 		if (hiddenThread)
-			values.insert(values.begin() + 1, Value::thisPtr(Thread::stormType(engine())));
+			values->insert(Value::thisPtr(Thread::stormType(engine())), 1);
 
-		Function *ctor = as<Function>(parent->findCpp(Type::CTOR, values));
+		Function *ctor = as<Function>(parent->find(values));
 		if (!ctor)
-			throw SyntaxError(pos, L"No constructor (" + join(values, L", ") + L") found in " + parent->identifier());
+			throw SyntaxError(pos, L"No constructor (" + ::toS(values) + L") found in " + parent->identifier());
 
 		vector<code::Value> actuals;
-		actuals.reserve(values.size());
+		actuals.reserve(values->params.size());
 
 		if (hiddenThread) {
 			actuals.push_back(params->code(0, s, ctor->params[0]));
 			actuals.push_back(rootBlock->threadParam->var.var());
-			for (nat i = 2; i < values.size(); i++)
+			for (nat i = 2; i < values->params.size(); i++)
 				actuals.push_back(params->code(i - 1, s, ctor->params[i]));
 		} else {
-			for (nat i = 0; i < values.size(); i++)
+			for (nat i = 0; i < values->params.size(); i++)
 				actuals.push_back(params->code(i, s, ctor->params[i]));
 		}
 
@@ -348,12 +348,12 @@ namespace storm {
 		Variable dest = thisVar->var.var();
 		Type *toCreate = t.type;
 
-		vector<Value> values = to->values();
-		values.insert(values.begin(), Value::thisPtr(toCreate));
+		Auto<BSNamePart> values = CREATE(BSNamePart, this, Type::CTOR, to);
+		values->insert(Value::thisPtr(toCreate));
 
-		Function *ctor = as<Function>(toCreate->findCpp(Type::CTOR, values));
+		Function *ctor = as<Function>(toCreate->find(values));
 		if (ctor == null)
-			throw SyntaxError(to->pos, L"No constructor for " + ::toS(t) + L"(" + join(values, L", ") + L").");
+			throw SyntaxError(to->pos, L"No constructor for " + ::toS(t) + L"(" + ::toS(values) + L").");
 
 		if (t.isClass()) {
 			// Easy way, call the constructor as normal.
@@ -368,8 +368,8 @@ namespace storm {
 		} else {
 			// Now we're left with the values!
 
-			vector<code::Value> actuals(values.size());
-			for (nat i = 1; i < values.size(); i++)
+			vector<code::Value> actuals(values->params.size());
+			for (nat i = 1; i < values->params.size(); i++)
 				actuals[i] = to->code(i - 1, s, ctor->params[i]);
 
 			s->to << mov(ptrA, dest);

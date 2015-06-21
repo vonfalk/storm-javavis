@@ -52,6 +52,10 @@ namespace storm {
 
 			// Insert a type as the first parameter (used for this pointers).
 			void STORM_FN insert(Value first);
+			void STORM_FN insert(Value first, Nat at);
+
+			// Alter an expression.
+			void STORM_FN alter(Nat id, Value to);
 
 			// Matches?
 			Int STORM_FN matches(Par<Named> candidate);
@@ -61,5 +65,8 @@ namespace storm {
 			vector<Auto<Expr>> exprs;
 		};
 
+		// Helper to create a Name with one BSNamePart inside of it.
+		Name *STORM_FN bsName(Par<Str> name, Par<Actual> params);
+		Name *bsName(const String &name, Par<Actual> params);
 	}
 }

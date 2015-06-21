@@ -72,6 +72,7 @@ BEGIN_TEST(AutocastTest) {
 	CHECK_EQ(runFn<Int>(L"test.bs.downcastMaybe"), 20);
 	CHECK_RUNS(runFn<Int>(L"test.bs.ifCast"));
 	CHECK_EQ(runFn<Int>(L"test.bs.autoCast", 5), 10);
+	CHECK_EQ(runFn<Float>(L"test.bs.promoteCtor"), 2);
 } END_TEST
 
 BEGIN_TEST(InheritanceTest) {

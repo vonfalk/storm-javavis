@@ -65,3 +65,15 @@ Int autoCast(Int v) {
 
 	a.v + b.v;
 }
+
+value ACPromote {
+	Float v;
+	ctor(Float v) {
+		init() { v = v; }
+	}
+}
+
+Float promoteCtor() {
+	ACPromote z = 2;
+	z.v;
+}

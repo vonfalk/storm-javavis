@@ -108,8 +108,8 @@ namespace storm {
 		add(v);
 	}
 
-	Name::Name(const String &part) {
-		add(part);
+	Name::Name(const String &part, const vector<Value> &params) {
+		add(part, params);
 	}
 
 	Name::Name(Par<const Name> o) : parts(o->parts) {}
