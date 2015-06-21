@@ -98,11 +98,13 @@ namespace os {
 		return UThread(UThreadState::current()->runningThread());
 	}
 
-	static void printException() {
+	static void onUncaughtException() {
 		try {
 			throw;
 		} catch (const Exception &e) {
-			PLN(e);
+			PLN("Uncaught exception from UThread: " << e);
+		} catch (...) {
+			PLN("Uncaught exception from UThread: <unknown>");
 		}
 	}
 
@@ -110,8 +112,7 @@ namespace os {
 		try {
 			(*fn)();
 		} catch (...) {
-			printException();
-			assert(false, L"Uncaught exception!");
+			onUncaughtException();
 		}
 
 		delete fn;
@@ -146,8 +147,7 @@ namespace os {
 			// Call the function and place the result in the future.
 			call(params->fn, params->memberFn, actuals, null, params->resultType);
 		} catch (...) {
-			printException();
-			assert(false, L"Uncaught exception!");
+			onUncaughtException();
 		}
 
 		// Terminate ourselves.
