@@ -12,8 +12,25 @@ namespace stormgui {
 		// Destroy.
 		virtual ~RenderMgr();
 
+		// Values returned from 'attach'
+		struct RenderInfo {
+			ID2D1RenderTarget *target;
+			IDXGISurface *surface;
+			IDXGISwapChain *swapChain;
+
+			// Create
+			inline RenderInfo() : target(null), surface(null), swapChain(null) {}
+
+			// Release all members.
+			inline void release() {
+				::release(target);
+				::release(surface);
+				::release(swapChain);
+			}
+		};
+
 		// Attach a Painter.
-		ID2D1HwndRenderTarget *attach(Par<Painter> painter, HWND window);
+		RenderInfo attach(Par<Painter> painter, HWND window);
 
 		// Detach a Painter.
 		void detach(Par<Painter> painter);
@@ -26,9 +43,15 @@ namespace stormgui {
 
 		// The D2D-factory.
 		ID2D1Factory *factory;
+		IDXGIFactory *giFactory;
+
+		// D3D device and dxgi device.
+		ID3D10Device1 *device;
+		IDXGIDevice *giDevice;
 
 		// Live painters (weak pointers).
 		hash_set<Painter *> painters;
+
 	};
 
 	// Create/get the singleton render manager.

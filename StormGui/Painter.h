@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics.h"
+#include "RenderMgr.h"
 
 namespace stormgui {
 	class Window;
@@ -40,7 +41,7 @@ namespace stormgui {
 		void CODECALL repaint();
 
 		// Get our render target.
-		inline ID2D1RenderTarget *renderTarget() { return target; }
+		inline ID2D1RenderTarget *renderTarget() { return target.target; }
 
 		// Add a resource. Resources are invalidated whenever we have to re-create the render target.
 		void addResource(Par<RenderResource> resource);
@@ -50,8 +51,8 @@ namespace stormgui {
 		// Attached HWND.
 		HWND attachedTo;
 
-		// Current render target.
-		ID2D1HwndRenderTarget *target;
+		// Rendering information.
+		RenderMgr::RenderInfo target;
 
 		// Graphics object.
 		Auto<Graphics> graphics;

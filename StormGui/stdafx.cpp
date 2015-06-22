@@ -8,6 +8,7 @@
 // and not in this file
 
 #pragma comment (lib, "Comctl32.lib")
+#pragma comment (lib, "d3d10_1.lib")
 #pragma comment (lib, "d2d1.lib")
 
 namespace stormgui {

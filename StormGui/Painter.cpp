@@ -41,16 +41,20 @@ namespace stormgui {
 	}
 
 	void Painter::resize(Size sz) {
-		if (target) {
-			D2D1_SIZE_U s = { (UINT32)sz.w, (UINT32)sz.h };
-			target->Resize(s);
+		if (target.swapChain) {
+			HRESULT r = target.swapChain->ResizeBuffers(1, (UINT)sz.w, (UINT)sz.h, DXGI_FORMAT_UNKNOWN, 0);
+			if (FAILED(r))
+				WARNING(L"Failed to resize: " << r);
 		}
 	}
 
 	void Painter::create() {
 		Auto<RenderMgr> mgr = renderMgr(engine());
 		target = mgr->attach(this, attachedTo);
-		graphics = CREATE(Graphics, this, target, this);
+		graphics = CREATE(Graphics, this, target.target, this);
+
+		// Otherwise resize will not work.
+		::release(target.surface);
 	}
 
 	void Painter::destroy() {
@@ -58,7 +62,7 @@ namespace stormgui {
 			(*i)->destroy();
 
 		graphics = null;
-		::release(target);
+		target.release();
 
 		Auto<RenderMgr> mgr = renderMgr(engine());
 		mgr->detach(this);
@@ -73,22 +77,29 @@ namespace stormgui {
 	}
 
 	void Painter::repaint() {
-		if (!target)
+		if (!target.target)
+			return;
+		if (!target.swapChain)
 			return;
 
-		target->BeginDraw();
-		target->SetTransform(D2D1::Matrix3x2F::Identity());
-		target->Clear(dx(bgColor));
+		target.target->BeginDraw();
+		target.target->SetTransform(D2D1::Matrix3x2F::Identity());
+		target.target->Clear(dx(bgColor));
 
 		try {
 			render(graphics->size(), graphics);
 		} catch (...) {
-			target->EndDraw();
+			target.target->EndDraw();
 			throw;
 		}
 
-		HRESULT r = target->EndDraw();
-		if (r == D2DERR_RECREATE_TARGET) {
+		HRESULT r = target.target->EndDraw();
+
+		if (SUCCEEDED(r)) {
+			r = target.swapChain->Present(0, 0);
+		}
+
+		if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {
 			// Re-create our render target.
 			destroy();
 			create();

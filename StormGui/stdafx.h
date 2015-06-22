@@ -22,10 +22,13 @@ using namespace storm::geometry;
 
 #include <Commctrl.h>
 
+// D3D for rendering using D2D..
+#include <d3d10_1.h>
+
 // D2D for rendering.
 #include <d2d1.h>
 
-// It defines a macro 'interface' that messes with the rest of the system...
+// It defines a macro 'interface' that messes with the rest of the system... (defined to 'struct')
 #undef interface
 
 namespace stormgui {
@@ -62,5 +65,4 @@ void release(T *&v) {
 		v->Release();
 	v = null;
 }
-
 
