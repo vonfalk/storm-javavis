@@ -67,7 +67,7 @@ void Types::create() const {
 	}
 
 	for (T::const_iterator i = types.begin(); i != types.end(); ++i) {
-		if (i->second.exported && i->first != n)
+		if (!i->second.primitive && i->first != n)
 			ordered.push_back(i->second);
 	}
 
@@ -93,8 +93,4 @@ nat Types::typeId(const CppName &name) const {
 	} else {
 		return i->second;
 	}
-}
-
-bool Types::external(const Type &t) const {
-	return t.shared && !forCompiler;
 }

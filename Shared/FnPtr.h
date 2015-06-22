@@ -36,7 +36,7 @@ namespace storm {
 	 * Base class for a function.
 	 */
 	class FnPtrBase : public Object {
-		STORM_SHARED_CLASS;
+		STORM_CLASS;
 	public:
 		/**
 		 * Interface for the actual pointer representation (so that we do not have to expose code::Ref to everyone).

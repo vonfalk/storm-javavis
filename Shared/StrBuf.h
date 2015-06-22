@@ -10,7 +10,7 @@ namespace storm {
 	 * Mutable string buffer for building strings easily and efficiently.
 	 */
 	class StrBuf : public Object {
-		STORM_SHARED_CLASS;
+		STORM_CLASS;
 	public:
 		// Create.
 		STORM_CTOR StrBuf();

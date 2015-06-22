@@ -19,7 +19,7 @@ namespace storm {
 	 * correctly handles cases where the result is not waited for.
 	 */
 	class FutureBase : public Object {
-		STORM_SHARED_CLASS;
+		STORM_CLASS;
 	public:
 		// Create.
 		FutureBase(const Handle &type);

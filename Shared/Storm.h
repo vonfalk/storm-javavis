@@ -82,14 +82,6 @@ private:
 	static void *cppVTable();					\
 private:
 
-// Mark a shared class. Shared classes are treated a little differently when they are used from
-// external libraries. Types marked with *_SHARED_* are treated as library imports from external
-// libraries, which means that the external library will not actually declare the class, it will
-// import it from the compiler itself. *_SHARED_* types work like regular types when the type list
-// for the compiler is generated.
-#define STORM_SHARED_VALUE STORM_VALUE
-#define STORM_SHARED_CLASS STORM_CLASS
-
 // Mark a constructor.
 #define STORM_CTOR
 

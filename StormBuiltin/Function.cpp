@@ -9,15 +9,13 @@ void Function::output(wostream &to) const {
 	to << L"), " << cppScope;
 }
 
-Function Function::read(bool eFn, bool virtualFn, const String &package,
+Function Function::read(FnFlags flags, const String &package,
 						const CppScope &scope, const CppType &result, Tokenizer &tok) {
 	Function r;
 	r.result = result;
 	r.cppScope = scope;
 	r.name = tok.next();
-	r.isConst = false;
-	r.engineFn = eFn;
-	r.virtualFn = virtualFn;
+	r.flags = flags;
 	r.package = package;
 
 	if (r.name == L"operator") {
@@ -42,7 +40,7 @@ Function Function::read(bool eFn, bool virtualFn, const String &package,
 	tok.expect(L")");
 
 	if (tok.peek() == L"const") {
-		r.isConst = true;
+		r.flags |= fnConst;
 		tok.next();
 	}
 
@@ -56,26 +54,26 @@ Function Function::read(bool eFn, bool virtualFn, const String &package,
 	return r;
 }
 
-Function Function::dtor(const String &package, const CppScope &scope) {
+Function Function::dtor(const String &package, const CppScope &scope, bool external) {
 	Function r;
 	r.result = CppType::tVoid();
 	r.cppScope = scope;
 	r.name = L"__dtor";
-	r.isConst = false;
-	r.engineFn = false;
-	r.virtualFn = true;
+	r.flags = fnVirtual;
+	if (external)
+		r.flags |= fnExternal;
 	r.package = package;
 	return r;
 }
 
-Function Function::copyCtor(const String &package, const CppScope &scope) {
+Function Function::copyCtor(const String &package, const CppScope &scope, bool external) {
 	Function r;
 	r.result = CppType::tVoid();
 	r.cppScope = scope;
 	r.name = L"__ctor";
-	r.isConst = false;
-	r.engineFn = false;
-	r.virtualFn = false;
+	r.flags = fnNone;
+	if (external)
+		r.flags |= fnExternal;
 	r.package = package;
 
 	CppType z;
@@ -87,14 +85,14 @@ Function Function::copyCtor(const String &package, const CppScope &scope) {
 	return r;
 }
 
-Function Function::assignment(const String &package, const CppScope &scope) {
+Function Function::assignment(const String &package, const CppScope &scope, bool external) {
 	Function r;
 	r.result = CppType::tVoid();
 	r.cppScope = scope;
 	r.name = L"operator =";
-	r.isConst = false;
-	r.engineFn = false;
-	r.virtualFn = false; // Default function is not virtual...
+	r.flags = fnNone;
+	if (external)
+		r.flags |= fnExternal;
 	r.package = package;
 
 	CppType z;

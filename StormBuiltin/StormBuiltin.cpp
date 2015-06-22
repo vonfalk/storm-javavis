@@ -8,15 +8,15 @@
 
 // #define DEBUG_MODE
 
-static void findHeaders(vector<Header*> &output, const Path &p) {
+static void findHeaders(vector<Header*> &output, const Path &p, bool external) {
 	vector<Path> children = p.children();
 	for (nat i = 0; i < children.size(); i++) {
 		Path &c = children[i];
 
 		if (c.isDir()) {
-			findHeaders(output, c);
+			findHeaders(output, c, external);
 		} else if (c.hasExt(L"h")) {
-			output.push_back(new Header(c));
+			output.push_back(new Header(c, external));
 		}
 	}
 }
@@ -25,10 +25,14 @@ bool compare(const Header *a, const Header *b) {
 	return a->file < b->file;
 }
 
-vector<Header*> findHeaders(const vector<Path> &p) {
+vector<Header*> findHeaders(const vector<Path> &our, const vector<Path> &external) {
 	vector<Header*> h;
-	for (nat i = 0; i < p.size(); i++)
-		findHeaders(h, p[i]);
+
+	for (nat i = 0; i < our.size(); i++)
+		findHeaders(h, our[i], false);
+	for (nat i = 0; i < external.size(); i++)
+		findHeaders(h, external[i], true);
+
 	sort(h.begin(), h.end(), compare);
 	return h;
 }
@@ -98,6 +102,7 @@ void usage(const String &msg) {
 	wcout << L"<template input>      - Input template for the function list." << endl;
 	wcout << L"<template output>     - Output file for the template." << endl;
 	wcout << L"<input>               - (multiple) input directories to be scanned for header files." << endl;
+	wcout << L"+<input>              - (multiple) input directories to be scanned and exported.." << endl;
 }
 
 int _tmain(int argc, _TCHAR* argv[]) {
@@ -111,6 +116,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	// For debugging.
 	Path root = Path::executable() + Path(L"../Storm/");
 	vector<Path> scanDirs(1, root);
+	vector<Path> importDirs;
 
 	Path input = root + Path(L"Lib/BuiltIn.template.cpp");
 	Path output = root + Path(L"Lib/BuiltIn.cpp");
@@ -123,7 +129,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	bool forCompiler = false;
 	// Inputs
 	Path root, input;
-	vector<Path> scanDirs;
+	vector<Path> scanDirs, importDirs;
 	// Outputs
 	Path output, asmOutput;
 
@@ -151,7 +157,10 @@ int _tmain(int argc, _TCHAR* argv[]) {
 			output = Path(s);
 			pos++;
 		} else if (pos == 3) {
-			scanDirs.push_back(Path(s));
+			if (s.left(1) == L"+")
+				scanDirs.push_back(Path(s.mid(1)));
+			else
+				importDirs.push_back(Path(s));
 		}
 	}
 
@@ -162,7 +171,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	if (asmOutput.exists())
 		limitMin(outputModified, asmOutput.mTime());
 
-	vector<Header*> headers = findHeaders(scanDirs);
+	vector<Header*> headers = findHeaders(scanDirs, importDirs);
 	if (headers.size() == 0) {
 		usage(L"No input files!");
 		return 1;

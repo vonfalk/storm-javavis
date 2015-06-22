@@ -7,7 +7,7 @@
 #include "Utils/FileStream.h"
 using namespace util;
 
-Header::Header(const Path &p) : file(p), parsed(false) {}
+Header::Header(const Path &p, bool external) : file(p), external(external), parsed(false) {}
 
 void Header::output(wostream &to) const {
 	to << L"Header: " << file;
@@ -66,20 +66,20 @@ void checkEngineFn(const Function &fn) {
 					L" must have a EnginePtr as the first parameter.");
 }
 
-void Header::addType(const CppScope &scope, const String &pkg, bool value, bool shared) {
+void Header::addType(const CppScope &scope, const String &pkg, bool value) {
 	if (!scope.isType())
 		throw Error(L"STORM_CLASS or STORM_VALUE only allowed in classes and structs!");
 
-	Type t(scope.name(), scope.super(), pkg, scope.cppName(), value, shared);
+	Type t(scope.name(), scope.super(), pkg, scope.cppName(), value, external);
 	types.push_back(t);
 
 	// Destructor.
-	functions.push_back(Function::dtor(pkg, scope));
+	functions.push_back(Function::dtor(pkg, scope, external));
 
 	// Values need their destructor as well as copy and assignment operators.
 	if (value) {
-		functions.push_back(Function::copyCtor(pkg, scope));
-		functions.push_back(Function::assignment(pkg, scope));
+		functions.push_back(Function::copyCtor(pkg, scope, external));
+		functions.push_back(Function::assignment(pkg, scope, external));
 		// TODO: May need other functions as well.
 	}
 }
@@ -95,6 +95,12 @@ void Header::parse(Tokenizer &tok) {
 	while (tok.more()) {
 		String token = tok.next();
 		bool wasType = false;
+		FnFlags fnFlags = fnNone;
+		if (wasVirtual)
+			fnFlags |= fnVirtual;
+		if (external)
+			fnFlags |= fnExternal;
+
 
 		if (token[0] == '#') {
 			// Ignore preprocessor text.
@@ -117,24 +123,20 @@ void Header::parse(Tokenizer &tok) {
 			};
 			threads.push_back(t);
 		} else if (token == L"STORM_FN") {
-			functions.push_back(Function::read(false, wasVirtual, pkg, scope, lastType, tok));
+			functions.push_back(Function::read(fnFlags, pkg, scope, lastType, tok));
 		} else if (token == L"STORM_VAR") {
-			variables.push_back(Variable::read(scope, tok));
+			variables.push_back(Variable::read(external, scope, tok));
 		} else if (token == L"STORM_ENGINE_FN") {
-			functions.push_back(Function::read(true, wasVirtual, pkg, scope, lastType, tok));
+			functions.push_back(Function::read(fnFlags | fnEngine, pkg, scope, lastType, tok));
 			checkEngineFn(functions.back());
 		} else if (token == L"STORM_CLASS") {
-			addType(scope, pkg, false, false);
+			addType(scope, pkg, false);
 		} else if (token == L"STORM_VALUE") {
-			addType(scope, pkg, true, false);
-		} else if (token == L"STORM_SHARED_CLASS") {
-			addType(scope, pkg, false, true);
-		} else if (token == L"STORM_SHARED_VALUE") {
-			addType(scope, pkg, true, true);
+			addType(scope, pkg, true);
 		} else if (token == L"STORM_PKG") {
 			pkg = parsePkg(tok);
 		} else if (token == L"STORM_CTOR") {
-			Function ctor = Function::read(false, false, pkg, scope, CppType::tVoid(), tok);
+			Function ctor = Function::read(fnFlags & ~fnVirtual, pkg, scope, CppType::tVoid(), tok);
 			ctor.name = L"__ctor";
 			functions.push_back(ctor);
 		} else if (token == L"class" || token == L"struct") {

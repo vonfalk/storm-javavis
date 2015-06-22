@@ -20,7 +20,7 @@ namespace storm {
 	 * should the 'equals' exist here? Clone (implemented as a no-op)?
 	 */
 	class TObject : public STORM_HIDDEN(Object) {
-		STORM_SHARED_CLASS;
+		STORM_CLASS;
 	public:
 		// Create an object that should live on 'thread'.
 		STORM_CTOR TObject(Par<Thread> thread);

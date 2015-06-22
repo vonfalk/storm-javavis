@@ -6,8 +6,8 @@
  * Helpers
  */
 
-static bool ignoreVTable(const Type &t, const Types &types) {
-	return types.external(t) && t.name != L"Object";
+static bool ignoreVTable(const Type &t) {
+	return t.external && t.name != L"Object";
 }
 
 void vtableSymbolName(wostream &to, const CppName &name) {
@@ -37,13 +37,13 @@ void fnPtr(wostream &to, const Function &fn, const Types &types) {
 	for (nat i = 0; i < fn.params.size(); i++) {
 		if (i != 0)
 			to << L", ";
-		if (fn.engineFn && i == 0)
+		if ((fn.flags & fnEngine) != 0 && i == 0)
 			to << L"storm::EnginePtr";
 		else
 			to << fn.params[i].fullName(types, scope);
 	}
 	to << L")";
-	if (fn.isConst)
+	if (fn.flags & fnConst)
 		to << L" const";
 }
 
@@ -84,7 +84,7 @@ String typeList(const Types &types, const vector<Thread> &threads) {
 		out << i << L" /* id */, ";
 
 		const CppSuper &super = type.super;
-		bool external = types.external(type);
+		bool external = type.external;
 		if (external) {
 			out << 0 << L" /* ignored */, ";
 			out << L"BuiltInType::superExternal, ";
@@ -136,11 +136,11 @@ String typeFunctions(const Types &types) {
 		if (type.value) {
 			// Values do not have type information.
 		} else {
-			if (!ignoreVTable(type, types)) {
+			if (!ignoreVTable(type)) {
 				out << L"extern \"C\" void *" << fn << L"();\n";
 			}
 
-			if (types.external(type)) {
+			if (type.external) {
 				// Forward the vtable request to the main Engine for external types.
 				out << L"void *" << type.cppName << L"::cppVTable() { return storm::cppVTable(" << i << L"); }\n";
 			} else {
@@ -162,7 +162,7 @@ String vtableCode(const Types &types) {
 
 	for (nat i = 0; i < t.size(); i++) {
 		const Type &type = t[i];
-		if (type.value || ignoreVTable(type, types))
+		if (type.value || ignoreVTable(type))
 			continue;
 
 		vtableSymbolName(out, type.cppName);
@@ -174,7 +174,7 @@ String vtableCode(const Types &types) {
 
 	for (nat i = 0; i < t.size(); i++) {
 		const Type &type = t[i];
-		if (type.value || ignoreVTable(type, types))
+		if (type.value || ignoreVTable(type))
 			continue;
 
 		String fn = vtableFnName(type.cppName);
@@ -244,13 +244,9 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 		const Function &fn = fns[i];
 		CppName scope = fn.cppScope.scopeName();
 		bool member = fn.cppScope.isType();
-		Type memberOf;
 
-		if (member) {
-			memberOf = types.find(fn.cppScope.cppName(), scope);
-			if (types.external(memberOf))
-				continue;
-		}
+		if (fn.flags & fnExternal)
+			continue;
 
 		out << L"{ ";
 
@@ -262,14 +258,15 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 
 		if (!fn.thread.empty())
 			out << L" | BuiltInFunction::onThread";
-		if (fn.engineFn)
+		if (fn.flags & fnEngine)
 			out << L" | BuiltInFunction::hiddenEngine";
-		if (fn.virtualFn)
+		if (fn.flags & fnVirtual)
 			out << L" | BuiltInFunction::virtualFunction";
 		out << L", ";
 
 		// Member of?
 		if (member) {
+			Type memberOf = types.find(fn.cppScope.cppName(), scope);
 			out << L"null, ";
 			out << types.typeId(memberOf.cppName) << L" /* " << memberOf.fullName() << L" */, ";
 		} else {
@@ -286,7 +283,7 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 
 		// Params
 		vector<CppType> params = fn.params;
-		if (fn.engineFn) {
+		if (fn.flags & fnEngine) {
 			// Ignore the first one!
 			if (params.size() == 0)
 				throw Error(toS(name) + L" is marked with STORM_ENGINE_FN and must take an Engine as the first parameter.");
@@ -359,8 +356,7 @@ void variableList(std::wostream &to, const vector<Variable> &vars, const Types &
 	for (nat i = 0; i < vars.size(); i++) {
 		const Variable &v = vars[i];
 
-		Type memberOf = types.find(v.cppScope.cppName(), CppName());
-		if (types.external(memberOf))
+		if (v.external)
 			continue;
 
 		to << L"{ ";
@@ -420,6 +416,8 @@ String threadList(const vector<Thread> &threads) {
 
 	for (nat i = 0; i < threads.size(); i++) {
 		const Thread &t = threads[i];
+		if (t.external)
+			continue;
 
 		out << L"{ L\"" << t.pkg << L"\", ";
 		out << L"L\"" << t.name << L"\", ";

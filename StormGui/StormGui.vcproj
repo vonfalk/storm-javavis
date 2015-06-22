@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)StormGui\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp -a $(SolutionDir)StormGui\Lib\VTables.asm $(SolutionDir)StormGui\ $(SolutionDir)Shared\ --using storm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)StormGui\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp -a $(SolutionDir)StormGui\Lib\VTables.asm +$(SolutionDir)StormGui\ $(SolutionDir)Shared\ --using storm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -110,7 +110,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Updating list of built-in functions..."
-				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)StormGui\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp -a $(SolutionDir)StormGui\Lib\VTables.asm $(SolutionDir)StormGui\ $(SolutionDir)Shared\ --using storm"
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)StormGui\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)StormGui\Lib\BuiltIn.cpp -a $(SolutionDir)StormGui\Lib\VTables.asm +$(SolutionDir)StormGui\ $(SolutionDir)Shared\ --using storm"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"

@@ -11,11 +11,14 @@
  */
 class Header : public Printable, NoCopy {
 public:
-	// Create the object.
-	Header(const Path &file);
+	// Create the object. If 'external', treat anything found here as an external type.
+	Header(const Path &file, bool external);
 
 	// Header file.
 	const Path file;
+
+	// External?
+	const bool external;
 
 	// Get the contents of this header:
 	const vector<Type> &getTypes();
@@ -53,5 +56,5 @@ private:
 	void parse(Tokenizer &tok);
 
 	// Add a type.
-	void addType(const CppScope &scope, const String &pkg, bool isValue, bool isShared);
+	void addType(const CppScope &scope, const String &pkg, bool isValue);
 };

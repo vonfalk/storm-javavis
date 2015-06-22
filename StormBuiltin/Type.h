@@ -11,12 +11,12 @@ public:
 	// Built-in type.
 	Type(const String &name, const String &pkg, bool value = false)
 		: name(name), super(), package(pkg), cppName(vector<String>(1,name)),
-		  exported(false), value(value), shared(false) {}
+		  primitive(true), external(true), value(value) {}
 
 	Type(const String &name, const CppSuper &super, const String &pkg, const CppName &cppName,
-		bool value = false, bool shared = false)
+		bool value = false, bool external = false)
 		: name(name), super(super), package(pkg), cppName(cppName),
-		  exported(true), value(value), shared(shared) {}
+		  primitive(false), external(external), value(value) {}
 
 	// Name of the class.
 	String name;
@@ -30,14 +30,14 @@ public:
 	// C++-name.
 	CppName cppName;
 
-	// Export this type?
-	bool exported;
+	// Primitive (built-in) type?
+	bool primitive;
 
 	// Value type?
 	bool value;
 
-	// Shared type?
-	bool shared;
+	// External type?
+	bool external;
 
 	// Concat 'name' and 'package'.
 	String fullName() const;
@@ -67,9 +67,6 @@ public:
 
 	// Get a type:s id (based on its name).
 	nat typeId(const CppName &name) const;
-
-	// Is this an external type?
-	bool external(const Type &t) const;
 
 	// Special case when we're giving types to the compiler.
 	bool forCompiler;

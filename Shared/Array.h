@@ -19,7 +19,7 @@ namespace storm {
 	 * The base class that is used in Storm, use the derived class in C++.
 	 */
 	class ArrayBase : public Object {
-		STORM_SHARED_CLASS;
+		STORM_CLASS;
 	public:
 		// Empty array.
 		ArrayBase(const Handle &type);

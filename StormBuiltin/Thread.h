@@ -13,6 +13,9 @@ public:
 	// Package in storm.
 	String pkg;
 
+	// External?
+	bool external;
+
 	// Compare.
 	bool operator <(const Thread &o) const;
 };
