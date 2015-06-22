@@ -283,6 +283,10 @@
 				RelativePath=".\Window.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Brush.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -367,6 +371,14 @@
 			</File>
 			<File
 				RelativePath=".\Window.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Brush.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Brush.cpp"
 				>
 			</File>
 		</Filter>

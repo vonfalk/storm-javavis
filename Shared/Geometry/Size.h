@@ -27,6 +27,7 @@ namespace storm {
 		Size STORM_FN operator -(Size a, Size b);
 		Size STORM_FN operator *(Float s, Size a);
 		Size STORM_FN operator *(Size a, Float s);
+		Size STORM_FN operator /(Size a, Float s);
 
 		inline Bool STORM_FN operator ==(Size a, Size b) { return a.w == b.w && a.h == b.h; }
 		inline Bool STORM_FN operator !=(Size a, Size b) { return !(a == b); }

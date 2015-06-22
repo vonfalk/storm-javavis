@@ -1,5 +1,5 @@
 #pragma once
-#include "RenderResource.h"
+#include "Brush.h"
 
 namespace stormgui {
 	class Painter;
@@ -37,11 +37,17 @@ namespace stormgui {
 		// Draw rounded rectangle.
 		void STORM_FN rect(Rect rect, Size edges, Par<Brush> brush);
 
+		// Draw an oval.
+		void STORM_FN oval(Rect rect, Par<Brush> brush);
+
 		// Fill a rectangle.
 		void STORM_FN fillRect(Rect rect, Par<Brush> brush);
 
 		// Fill rounded rectangle.
 		void STORM_FN fillRect(Rect rect, Size edgex, Par<Brush> brush);
+
+		// Fill an oval.
+		void STORM_FN fillOval(Rect rect, Par<Brush> brush);
 
 	private:
 		// Render target.

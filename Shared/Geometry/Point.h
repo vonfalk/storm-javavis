@@ -3,6 +3,7 @@
 
 namespace storm {
 	namespace geometry {
+		STORM_PKG(core.geometry);
 
 		/**
 		 * A point in 2D-space.
@@ -25,13 +26,17 @@ namespace storm {
 		};
 
 		wostream &operator <<(wostream &to, const Point &s);
-		Str *toS(EnginePtr e, Point s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Point s);
 
 		// Operations.
 		Point STORM_FN operator +(Point a, Size b);
 		Point STORM_FN operator +(Point a, Point b);
 		Size STORM_FN operator -(Point a, Point b);
 		Point STORM_FN operator -(Point a, Size b);
+
+		Point STORM_FN operator *(Point a, Float b);
+		Point STORM_FN operator *(Float a, Point b);
+		Point STORM_FN operator /(Point a, Float b);
 
 		inline Bool STORM_FN operator ==(Point a, Point b) { return a.x == b.x && a.y == b.y; }
 		inline Bool STORM_FN operator !=(Point a, Point b) { return !(a == b); }

@@ -34,6 +34,12 @@ namespace stormgui {
 		target->DrawRoundedRectangle(r, style->brush(owner));
 	}
 
+	void Graphics::oval(Rect rect, Par<Brush> style) {
+		Size s = rect.size() / 2;
+		D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
+		target->DrawEllipse(e, style->brush(owner));
+	}
+
 	void Graphics::fillRect(Rect rect, Par<Brush> style) {
 		target->FillRectangle(dx(rect), style->brush(owner));
 	}
@@ -41,6 +47,12 @@ namespace stormgui {
 	void Graphics::fillRect(Rect rect, Size edges, Par<Brush> style) {
 		D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
 		target->FillRoundedRectangle(r, style->brush(owner));
+	}
+
+	void Graphics::fillOval(Rect rect, Par<Brush> style) {
+		Size s = rect.size() / 2;
+		D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
+		target->FillEllipse(e, style->brush(owner));
 	}
 
 }

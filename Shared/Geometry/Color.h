@@ -1,6 +1,9 @@
 #pragma once
+#include "EnginePtr.h"
 
 namespace storm {
+	class Str;
+
 	namespace geometry {
 		STORM_PKG(core.geometry);
 
@@ -39,6 +42,9 @@ namespace storm {
 			// Get a variant with a different alpha value.
 			Color STORM_FN withAlpha(Float f) const;
 		};
+
+		wostream &operator <<(wostream &to, const Color &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Color s);
 
 		// Some default colors.
 		Color STORM_FN transparent(); // Based on black.

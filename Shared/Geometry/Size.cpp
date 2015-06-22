@@ -39,5 +39,9 @@ namespace storm {
 			return Size(a.w * s, a.h * s);
 		}
 
+		Size STORM_FN operator /(Size a, Float s) {
+			return Size(a.w / s, a.h / s);
+		}
+
 	}
 }

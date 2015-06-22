@@ -4,6 +4,7 @@
 
 namespace storm {
 	namespace geometry {
+		STORM_PKG(core.geometry);
 
 		/**
 		 * 2D rectangle represented by two points p0 and p1 (top left, bottom right).
@@ -33,7 +34,7 @@ namespace storm {
 			inline Rect STORM_FN sized(Size to) { Rect r = *this; r.size(to); return r; }
 
 			// Center.
-			inline Point STORM_FN center() const { return Point((p0.x + p1.x) / 2, (p0.y + p1.y) / 2); }
+			inline Point STORM_FN center() const { return (p0 + p1) / 2; }
 
 			// Move.
 			inline Rect STORM_FN at(Point to) const { return Rect(to, size()); }

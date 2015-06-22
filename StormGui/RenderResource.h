@@ -16,7 +16,7 @@ namespace stormgui {
 		~RenderResource();
 
 		// Destroy the resource, lazily created again later.
-		void destroy();
+		virtual void destroy();
 
 		// Forget our owner.
 		void forgetOwner();
@@ -34,6 +34,11 @@ namespace stormgui {
 			return static_cast<As*>(resource);
 		}
 
+		template <class As>
+		As *peek() {
+			return static_cast<As*>(resource);
+		}
+
 		// Create the resource.
 		virtual void create(Painter *owner, ID2D1Resource **out);
 
@@ -43,31 +48,6 @@ namespace stormgui {
 
 		// Our owner (if any).
 		Painter *owner;
-	};
-
-	/**
-	 * Brush (abstract).
-	 */
-	class Brush : public RenderResource {
-		STORM_CLASS;
-	public:
-
-		// Get a brush.
-		inline ID2D1Brush *brush(Painter *owner) { return get<ID2D1Brush>(owner); }
-	};
-
-	/**
-	 * Solid brush.
-	 */
-	class SolidBrush : public Brush {
-		STORM_CLASS;
-	public:
-		STORM_CTOR SolidBrush(Color color);
-
-		virtual void create(Painter *owner, ID2D1Resource **out);
-
-	private:
-		Color color;
 	};
 
 }

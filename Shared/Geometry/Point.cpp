@@ -35,5 +35,17 @@ namespace storm {
 			return Point(a.x - b.w, a.y - b.h);
 		}
 
+		Point operator *(Point a, Float b) {
+			return Point(a.x * b, a.y * b);
+		}
+
+		Point operator *(Float a, Point b) {
+			return Point(a * b.x, a * b.y);
+		}
+
+		Point operator /(Point a, Float b) {
+			return Point(a.x / b, a.y / b);
+		}
+
 	}
 }

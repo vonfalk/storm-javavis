@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Color.h"
+#include "Str.h"
 
 namespace storm {
 	namespace geometry {
@@ -41,6 +42,14 @@ namespace storm {
 
 		Color Color::withAlpha(Float a) const {
 			return Color(r, g, b, a);
+		}
+
+		wostream &operator <<(wostream &to, const Color &s) {
+			return to << L"(" << s.r << L", " << s.g << L", " << s.b << L", " << s.a << L")";
+		}
+
+		Str *toS(EnginePtr e, Color s) {
+			return CREATE(Str, e.v, ::toS(s));
 		}
 
 		Color transparent() { return Color(0.0f, 0.0f, 0.0f, 0.0f); }

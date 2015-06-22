@@ -22,10 +22,4 @@ namespace stormgui {
 
 	void RenderResource::create(Painter *from, ID2D1Resource **out) {}
 
-	SolidBrush::SolidBrush(Color c) : color(c) {}
-
-	void SolidBrush::create(Painter *owner, ID2D1Resource **out) {
-		owner->renderTarget()->CreateSolidColorBrush(dx(color), (ID2D1SolidColorBrush **)out);
-	}
-
 }

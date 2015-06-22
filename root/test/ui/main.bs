@@ -5,13 +5,13 @@ use core:debug;
 class MainPainter extends Painter {
 	SolidBrush brush;
 	SolidBrush brush2;
-	SolidBrush brush3;
+	LinearGradient brush3;
 
 	ctor() {
 		init(false) {
 			brush = red;
 			brush2 = blue;
-			brush3 = green.withAlpha(0.5);
+			brush3([GradientStop(0, red), GradientStop(1, green)], Point(0, 0), Point(100, 100));
 		}
 	}
 
@@ -22,7 +22,7 @@ class MainPainter extends Painter {
 
 		g.line(from, to, brush);
 		g.line(Point(0, size.h), Point(size.w, 0), brush2);
-		g.fillRect(Rect(from + border, to - border), brush3);
+		g.fillOval(Rect(from + border, to - border), brush3);
 	}
 }
 
