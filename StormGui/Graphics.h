@@ -23,6 +23,9 @@ namespace stormgui {
 		// Called when the target is destroyed.
 		void destroyed();
 
+		// Update the target.
+		void updateTarget(ID2D1RenderTarget *target);
+
 
 		/**
 		 * Draw stuff.

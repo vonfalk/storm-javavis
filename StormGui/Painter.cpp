@@ -42,9 +42,11 @@ namespace stormgui {
 
 	void Painter::resize(Size sz) {
 		if (target.swapChain) {
-			HRESULT r = target.swapChain->ResizeBuffers(1, (UINT)sz.w, (UINT)sz.h, DXGI_FORMAT_UNKNOWN, 0);
-			if (FAILED(r))
-				WARNING(L"Failed to resize: " << r);
+			destroyResources();
+			Auto<RenderMgr> mgr = renderMgr(engine());
+			mgr->resize(target, sz);
+			if (graphics)
+				graphics->updateTarget(target.target);
 		}
 	}
 
@@ -52,20 +54,21 @@ namespace stormgui {
 		Auto<RenderMgr> mgr = renderMgr(engine());
 		target = mgr->attach(this, attachedTo);
 		graphics = CREATE(Graphics, this, target.target, this);
-
-		// Otherwise resize will not work.
-		::release(target.surface);
 	}
 
 	void Painter::destroy() {
-		for (hash_set<RenderResource *>::iterator i = resources.begin(), end = resources.end(); i != end; ++i)
-			(*i)->destroy();
+		destroyResources();
 
 		graphics = null;
 		target.release();
 
 		Auto<RenderMgr> mgr = renderMgr(engine());
 		mgr->detach(this);
+	}
+
+	void Painter::destroyResources() {
+		for (hash_set<RenderResource *>::iterator i = resources.begin(), end = resources.end(); i != end; ++i)
+			(*i)->destroy();
 	}
 
 	void Painter::addResource(Par<RenderResource> r) {

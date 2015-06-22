@@ -65,6 +65,9 @@ namespace stormgui {
 
 		// Destroy any resources connected to the current device.
 		void destroy();
+
+		// Destroy loaded resources.
+		void destroyResources();
 	};
 
 }

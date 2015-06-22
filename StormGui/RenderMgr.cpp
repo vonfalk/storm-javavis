@@ -17,8 +17,7 @@ namespace stormgui {
 	static UINT deviceFlags = D3D10_CREATE_DEVICE_BGRA_SUPPORT;
 
 	String throwError(const String &msg, HRESULT r) {
-		_com_error z(r);
-		throw GuiError(msg + _com_error(r).ErrorMessage());
+		throw GuiError(msg + ::toS(r));
 	}
 
 
@@ -125,8 +124,38 @@ namespace stormgui {
 			throwError(L"Failed to create a swap chain: ", h);
 		}
 
-		if (FAILED(h = r.swapChain->GetBuffer(0, __uuidof(IDXGISurface), (void **)&r.surface))) {
+		try {
+			r.target = createTarget(r.swapChain);
+		} catch (...) {
 			r.release();
+			throw;
+		}
+
+		painters.insert(painter.borrow());
+		return r;
+	}
+
+	void RenderMgr::detach(Par<Painter> painter) {
+		painters.erase(painter.borrow());
+	}
+
+	void RenderMgr::resize(RenderInfo &info, Size sz) {
+		::release(info.target);
+
+		HRESULT r;
+		if (FAILED(r = info.swapChain->ResizeBuffers(1, (UINT)sz.w, (UINT)sz.h, DXGI_FORMAT_UNKNOWN, 0))) {
+			throwError(L"Failed to resize buffers: " , r);
+		}
+
+		info.target = createTarget(info.swapChain);
+	}
+
+	ID2D1RenderTarget *RenderMgr::createTarget(IDXGISwapChain *swapChain) {
+		HRESULT h;
+		ID2D1RenderTarget *target;
+		ComPtr<IDXGISurface> surface;
+
+		if (FAILED(h = swapChain->GetBuffer(0, __uuidof(IDXGISurface), (void **)&surface))) {
 			throwError(L"Failed to get the surface: ", h);
 		}
 
@@ -137,17 +166,11 @@ namespace stormgui {
 			D2D1_RENDER_TARGET_USAGE_NONE,
 			D2D1_FEATURE_LEVEL_10, // Use _DEFAULT?
 		};
-		if (FAILED(h = factory->CreateDxgiSurfaceRenderTarget(r.surface, &props, &r.target))) {
-			r.release();
+		if (FAILED(h = factory->CreateDxgiSurfaceRenderTarget(surface.v, &props, &target))) {
 			throwError(L"Failed to create a render target: ", h);
 		}
 
-		painters.insert(painter.borrow());
-		return r;
-	}
-
-	void RenderMgr::detach(Par<Painter> painter) {
-		painters.erase(painter.borrow());
+		return target;
 	}
 
 	RenderMgr *renderMgr(EnginePtr e) {

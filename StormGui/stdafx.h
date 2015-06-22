@@ -28,6 +28,9 @@ using namespace storm::geometry;
 // D2D for rendering.
 #include <d2d1.h>
 
+// HRESULT to string.
+String toS(HRESULT r);
+
 // It defines a macro 'interface' that messes with the rest of the system... (defined to 'struct')
 #undef interface
 
@@ -66,3 +69,4 @@ void release(T *&v) {
 	v = null;
 }
 
+#include "ComPtr.h"

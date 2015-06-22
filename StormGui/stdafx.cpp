@@ -11,6 +11,14 @@
 #pragma comment (lib, "d3d10_1.lib")
 #pragma comment (lib, "d2d1.lib")
 
+#undef null
+#include <comdef.h>
+#define null NULL
+
+String toS(HRESULT r) {
+	return _com_error(r).ErrorMessage();
+}
+
 namespace stormgui {
 
 	Rect convert(const RECT &r) {

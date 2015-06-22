@@ -12,6 +12,10 @@ namespace stormgui {
 		return convert(target->GetSize());
 	}
 
+	void Graphics::updateTarget(ID2D1RenderTarget *target) {
+		this->target = target;
+	}
+
 	void Graphics::destroyed() {
 		target = null;
 		owner = null;

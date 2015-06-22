@@ -15,16 +15,14 @@ namespace stormgui {
 		// Values returned from 'attach'
 		struct RenderInfo {
 			ID2D1RenderTarget *target;
-			IDXGISurface *surface;
 			IDXGISwapChain *swapChain;
 
 			// Create
-			inline RenderInfo() : target(null), surface(null), swapChain(null) {}
+			inline RenderInfo() : target(null), swapChain(null) {}
 
 			// Release all members.
 			inline void release() {
 				::release(target);
-				::release(surface);
 				::release(swapChain);
 			}
 		};
@@ -34,6 +32,9 @@ namespace stormgui {
 
 		// Detach a Painter.
 		void detach(Par<Painter> painter);
+
+		// Resize the RenderInfo to a new size. 'target' will be re-created.
+		void resize(RenderInfo &info, Size size);
 
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
@@ -52,6 +53,8 @@ namespace stormgui {
 		// Live painters (weak pointers).
 		hash_set<Painter *> painters;
 
+		// Create a render target.
+		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
 	};
 
 	// Create/get the singleton render manager.
