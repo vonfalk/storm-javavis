@@ -3,6 +3,7 @@
 #include "Storm/Function.h"
 #include "Code/FnParams.h"
 #include "Fn.h"
+#include "Shared/Timing.h"
 
 #include "Storm/Basic/BSType.h"
 
@@ -226,6 +227,10 @@ BEGIN_TEST(CompileTest) {
 	// Compile all code in core and lang. Not everything in test is supposed to compile cleanly.
 	CHECK_RUNS(gEngine->package(L"core")->compile());
 	CHECK_RUNS(gEngine->package(L"lang")->compile());
+} END_TEST
+
+BEGIN_TEST(UnitTest) {
+	CHECK_EQ(runFn<Duration>(L"test.bs.testUnit"), ms(1) + s(1));
 } END_TEST
 
 // Test the REPL of BS programmatically.

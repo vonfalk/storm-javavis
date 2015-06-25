@@ -174,4 +174,5 @@ namespace storm {
 #include "Future.h"
 #include "FnPtr.h"
 #include "EnginePtr.h"
+#include "Timing.h"
 #endif

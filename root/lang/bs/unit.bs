@@ -1,0 +1,14 @@
+use core:lang;
+
+// Transform expressions of the type '10 s' to s(10).
+Expr unit(Block block, Expr value, TypeName unit) {
+	namedExpr(block, unit, Actual(value));
+}
+
+// Create unit expressions.
+TypeName timeUnit(SStr name) {
+	TypeName n;
+	n.add(TypePart("core"));
+	n.add(TypePart(name));
+	n;
+}

@@ -1,0 +1,4 @@
+
+Duration testUnit() {
+	1 ms + 1 s;
+}

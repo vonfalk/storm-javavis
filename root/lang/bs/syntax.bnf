@@ -127,6 +127,13 @@ ArrayInitList(Block block);
 ArrayInitList => Array<Expr>() : BSDelimiter;
 ArrayInitList => Array<Expr>() : Expr(block) -> push (, ", ", Expr(block) -> push)*;
 
+// Units. Returns a TypeName which is supposed to convert this unit to an object of some kind.
+Unit => timeUnit(u) : "h" u;
+Unit => timeUnit(u) : "min" u;
+Unit => timeUnit(u) : "s" u;
+Unit => timeUnit(u) : "ms" u;
+Unit => timeUnit(u) : "us" u;
+
 // Atoms, for example constants and variables/function calls.
 Atom(Block block);
 Atom => intConstant(nr) : "[0-9]+" nr;
@@ -150,6 +157,7 @@ Atom => ArrayInit(block, list) : "\[", ArrayInitList(block) list, "\]";
 Atom => FnPtr(block, name, params) :[20] "&", Type name, FnTypes params;
 Atom => strongFnPtr(block, dotExpr, name, params) :[20] "&", Atom(block) dotExpr, "\.", Name name, FnTypes params;
 Atom => weakFnPtr(block, dotExpr, name, params) :[20] "&", Atom(block) dotExpr, "\->", Name name, FnTypes params;
+Atom => unit(block, value, unit) : Atom(block) value, Unit unit;
 
 // Temporary, to turn a value of type T into Maybe<T>, this should be done automatically in the future.
 Atom => asMaybe(block, expr) : "?", Atom(block) expr;
