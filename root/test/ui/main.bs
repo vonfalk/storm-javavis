@@ -12,7 +12,7 @@ class MainPainter extends Painter {
 		init() {
 			brush = red;
 			brush2 = blue;
-			brush3([GradientStop(0, red), GradientStop(1, green)], Point(0, 0), Point(100, 100));
+			brush3([GradientStop(0, red), GradientStop(1, green)], Point(0, 0), Point(1, 1));
 		}
 	}
 
@@ -44,7 +44,7 @@ class MainWin extends Frame {
 			input("Your name");
 			btn("Click me!");
 		}
-		size(Size(150, 150));
+		size(Size(200, 200));
 
 		add(lbl);
 

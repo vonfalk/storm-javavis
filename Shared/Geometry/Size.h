@@ -32,6 +32,8 @@ namespace storm {
 		inline Bool STORM_FN operator ==(Size a, Size b) { return a.w == b.w && a.h == b.h; }
 		inline Bool STORM_FN operator !=(Size a, Size b) { return !(a == b); }
 
+		Size STORM_FN abs(Size a);
+
 		wostream &operator <<(wostream &to, const Size &s);
 		Str *STORM_ENGINE_FN toS(EnginePtr e, Size s);
 	}

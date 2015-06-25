@@ -41,5 +41,7 @@ namespace storm {
 		inline Bool STORM_FN operator ==(Point a, Point b) { return a.x == b.x && a.y == b.y; }
 		inline Bool STORM_FN operator !=(Point a, Point b) { return !(a == b); }
 
+		Point STORM_FN abs(Point a);
+
 	}
 }

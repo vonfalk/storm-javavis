@@ -43,5 +43,9 @@ namespace storm {
 			return Size(a.w / s, a.h / s);
 		}
 
+		Size STORM_FN abs(Size a) {
+			return Size(::abs(a.w), ::abs(a.h));
+		}
+
 	}
 }

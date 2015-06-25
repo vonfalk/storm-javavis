@@ -11,7 +11,10 @@ namespace stormgui {
 	public:
 
 		// Get a brush.
-		inline ID2D1Brush *brush(Painter *owner) { return get<ID2D1Brush>(owner); }
+		inline ID2D1Brush *brush(Painter *owner, const Size &size) { prepare(size); return get<ID2D1Brush>(owner); }
+
+		// Prepare for drawing a bounding box of 'size'.
+		virtual void prepare(const Size &size);
 	};
 
 	/**
@@ -70,7 +73,6 @@ namespace stormgui {
 
 	/**
 	 * Linear gradient.
-	 * TODO? Make so that it respects the geometry of the drawn figure?
 	 */
 	class LinearGradient : public Gradient {
 		STORM_CLASS;
@@ -83,6 +85,9 @@ namespace stormgui {
 		// Create.
 		virtual void create(Painter *owner, ID2D1Resource **out);
 
+		// Prepare.
+		virtual void prepare(const Size &s);
+
 		// Get/set start and end points.
 		Point STORM_FN start();
 		Point STORM_FN end();
@@ -91,6 +96,7 @@ namespace stormgui {
 
 	private:
 		Point myStart, myEnd;
+		Point tfmStart, tfmEnd;
 	};
 
 }

@@ -47,5 +47,9 @@ namespace storm {
 			return Point(a.x / b, a.y / b);
 		}
 
+		Point STORM_FN abs(Point a) {
+			return Point(::abs(a.x), ::abs(a.y));
+		}
+
 	}
 }
