@@ -161,14 +161,14 @@ BEGIN_TEST(TestNestedPartsException) {
 	FnParams params;
 	params.add(v);
 
-	for (nat i = 0; i < ARRAY_SIZE(results); i++) {
+	for (nat i = 0; i < ARRAY_COUNT(results); i++) {
 		v = i;
 		sum = 0;
 		CHECK_ERROR(call<void>(bin.address(), false, params), InvalidValue);
 		CHECK_EQ(sum, results[i]);
 	}
 
-	v = ARRAY_SIZE(results);
+	v = ARRAY_COUNT(results);
 	sum = 0;
 	CHECK_RUNS(call<void>(bin.address(), false, params));
 	CHECK_EQ(sum, 0);
@@ -241,7 +241,7 @@ BEGIN_TEST(TestNestedParts) {
 	FnParams params;
 	params.add(v);
 
-	for (nat i = 0; i < ARRAY_SIZE(results); i++) {
+	for (nat i = 0; i < ARRAY_COUNT(results); i++) {
 		v = i;
 		sum = 0;
 		CHECK_ERROR(call<void>(bin.address(), false, params), InvalidValue);
@@ -253,7 +253,7 @@ BEGIN_TEST(TestNestedParts) {
 		CHECK_EQ(sum, results[i]);
 	}
 
-	v = ARRAY_SIZE(results);
+	v = ARRAY_COUNT(results);
 	sum = 0;
 	CHECK_RUNS(call<void>(bin.address(), false, params));
 	CHECK_EQ(sum, 21);

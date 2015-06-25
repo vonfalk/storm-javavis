@@ -234,6 +234,10 @@
 				RelativePath=".\Value.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Timing.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -350,6 +354,10 @@
 			</File>
 			<File
 				RelativePath=".\Value.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Timing.h"
 				>
 			</File>
 		</Filter>

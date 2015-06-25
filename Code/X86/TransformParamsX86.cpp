@@ -54,7 +54,7 @@ namespace code {
 		void TfmParams::before(Listing &to) {}
 
 		void TfmParams::transform(Listing &to, nat line) {
-			static OpTable<TransformParFn> transforms(transformMap, ARRAY_SIZE(transformMap));
+			static OpTable<TransformParFn> transforms(transformMap, ARRAY_COUNT(transformMap));
 
 			Instruction i(from[line]);
 			lookupVars(i);

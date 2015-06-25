@@ -23,7 +23,7 @@ namespace code {
 		Register Transform::unusedReg(const Registers &regs) const {
 			Register order[] = { ptrD, ptrSi, ptrDi };
 
-			for (nat i = 0; i < ARRAY_SIZE(order); i++) {
+			for (nat i = 0; i < ARRAY_COUNT(order); i++) {
 				if (!regs.contains(order[i]))
 					return order[i];
 			}

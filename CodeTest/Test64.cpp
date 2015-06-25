@@ -105,7 +105,7 @@ static bool bit(int v, int b) {
 }
 
 static bool bit(int v, CondFlag f) {
-	for (nat i = 0; i < ARRAY_SIZE(cf); i++) {
+	for (nat i = 0; i < ARRAY_COUNT(cf); i++) {
 		if (cf[i] == f)
 			return bit(v, i);
 	}
@@ -126,7 +126,7 @@ static bool check(int64 a, int64 b, const void *fn) {
 	bool result = true;
 
 	// Folded...
-	for (nat i = 0; i < ARRAY_SIZE(cf); i++) {
+	for (nat i = 0; i < ARRAY_COUNT(cf); i++) {
 		if (bit(r, i) != bit(r, i + 16)) {
 			PLN(name(cf[i]) << " differs when using setCond and jmp!");
 			result = false;
@@ -165,7 +165,7 @@ BEGIN_TEST(Test64Cmp) {
 
 	l << prolog();
 
-	for (nat i = 0; i < ARRAY_SIZE(cf); i++) {
+	for (nat i = 0; i < ARRAY_COUNT(cf); i++) {
 		l << mov(eax, intConst(0));
 		l << cmp(v1, v2);
 		l << setCond(al, cf[i]);
@@ -173,7 +173,7 @@ BEGIN_TEST(Test64Cmp) {
 		l << or(r, eax);
 	}
 
-	for (nat i = 0; i < ARRAY_SIZE(cf); i++) {
+	for (nat i = 0; i < ARRAY_COUNT(cf); i++) {
 		Label lbl = l.label();
 
 		l << cmp(v1, v2);

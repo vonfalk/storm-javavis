@@ -119,6 +119,9 @@ Basic Storm
 ------------
 Remove the special TypeName class, use the general Name instead.
 
+Operators should not only look for the operator in the currently visible scope, but also in the
+scope where the lhs and rhs types have been defined.
+
 Variable accesses are currently racy. Fix this!
 
 The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving

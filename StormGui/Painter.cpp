@@ -42,7 +42,10 @@ namespace stormgui {
 
 	void Painter::resize(Size sz) {
 		if (target.swapChain) {
-			destroyResources();
+			// This seems to not be neccessary. Probably because the resources are actually
+			// associated to the underlying D3D device, and not the RenderTarget.
+			// If the resize call fails for some reason, this is probably the cause.
+			// destroyResources();
 			Auto<RenderMgr> mgr = renderMgr(engine());
 			mgr->resize(target, sz);
 			if (graphics)
@@ -99,7 +102,7 @@ namespace stormgui {
 		HRESULT r = target.target->EndDraw();
 
 		if (SUCCEEDED(r)) {
-			r = target.swapChain->Present(0, 0);
+			r = target.swapChain->Present(1, 0);
 		}
 
 		if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {

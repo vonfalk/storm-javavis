@@ -36,7 +36,7 @@ Indent::int_type Indent::overflow(int_type ch) {
 			startOfLine = false;
 			if (at != begin)
 				to->sputn(begin, at - begin);
-			to->sputn(indentStr, ARRAY_SIZE(indentStr) - 1);
+			to->sputn(indentStr, ARRAY_COUNT(indentStr) - 1);
 			begin = at;
 		}
 	}

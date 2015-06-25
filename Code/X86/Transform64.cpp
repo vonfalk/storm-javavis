@@ -36,7 +36,7 @@ namespace code {
 		Transform64::Transform64(const Listing &from) : Transformer(from), registers(from) {}
 
 		void Transform64::transform(Listing &to, nat line) {
-			static OpTable<Tfm64Fn> tfm(transform64Map, ARRAY_SIZE(transform64Map));
+			static OpTable<Tfm64Fn> tfm(transform64Map, ARRAY_COUNT(transform64Map));
 
 			const Instruction &instr = from[line];
 			Tfm64Fn f = tfm[instr.op()];

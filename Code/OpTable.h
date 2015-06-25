@@ -16,7 +16,7 @@ namespace code {
 	public:
 		// Create the table.
 		OpTable(const OpEntry<T> *entries, nat count) {
-			for (nat i = 0; i < ARRAY_SIZE(data); i++)
+			for (nat i = 0; i < ARRAY_COUNT(data); i++)
 				data[i] = null;
 
 			for (nat i = 0; i < count; i++) {
@@ -42,7 +42,7 @@ namespace code {
 	public:
 		// Create.
 		inline OpSet(const OpCode *opCodes, nat count) {
-			for (nat i = 0; i < ARRAY_SIZE(data); i++)
+			for (nat i = 0; i < ARRAY_COUNT(data); i++)
 				data[i] = false;
 
 			for (nat i = 0; i < count; i++) {

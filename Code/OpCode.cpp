@@ -63,7 +63,7 @@ namespace code {
 	};
 
 	const wchar_t *name(OpCode opCode) {
-		static OpTable<const wchar_t *> names(descs, ARRAY_SIZE(descs));
+		static OpTable<const wchar_t *> names(descs, ARRAY_COUNT(descs));
 
 		const wchar_t *found = names[opCode];
 		if (!found)

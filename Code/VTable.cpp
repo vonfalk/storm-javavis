@@ -122,7 +122,7 @@ namespace code {
 		};
 
 		byte *data = (byte *)fn;
-		nat size = ARRAY_SIZE(fnData);
+		nat size = ARRAY_COUNT(fnData);
 		if (memcmp(fnData, data, size) != 0) {
 			return VTable::invalid;
 			// For debug:

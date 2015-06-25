@@ -108,7 +108,7 @@ namespace code {
 		// Transform function.
 		TransformFn transformFn(OpCode op) {
 			using namespace machine;
-			static OpTable<TransformFn> t(transformMap, ARRAY_SIZE(transformMap));
+			static OpTable<TransformFn> t(transformMap, ARRAY_COUNT(transformMap));
 			return t[op];
 		}
 
@@ -437,7 +437,7 @@ namespace code {
 		}
 
 		void output(Output &to, Arena &arena, const Frame &frame, const Instruction &from) {
-			static OpTable<OutputFn> outputs(outputMap, ARRAY_SIZE(outputMap));
+			static OpTable<OutputFn> outputs(outputMap, ARRAY_COUNT(outputMap));
 
 			OutputFn output = outputs[from.op()];
 			assert(output, "Unknown op-code"); // Possibly forgotten output

@@ -36,8 +36,8 @@ namespace stormgui {
 			D3D10_FEATURE_LEVEL_9_1,
 		};
 
-		for (nat t = 0; t < ARRAY_SIZE(types); t++) {
-			for (nat f = 0; f < ARRAY_SIZE(featureLevels); f++) {
+		for (nat t = 0; t < ARRAY_COUNT(types); t++) {
+			for (nat f = 0; f < ARRAY_COUNT(featureLevels); f++) {
 				r = D3D10CreateDevice1(NULL,
 									types[t],
 									NULL,

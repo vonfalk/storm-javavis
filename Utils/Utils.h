@@ -23,7 +23,7 @@
 #define _HAS_ITERATOR_DEBUGGING 0
 #endif
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*x))
+#define ARRAY_COUNT(x) (sizeof(x) / sizeof(*(x)))
 
 #include <stdio.h>
 #include <tchar.h>
