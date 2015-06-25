@@ -6,14 +6,9 @@
 
 namespace stormgui {
 
-	Painter::Painter(Bool continuous) {
+	Painter::Painter() : continuous(false), repaintCounter(0) {
 		attachedTo = Window::invalid;
 		bgColor = color(GetSysColor(COLOR_3DFACE));
-
-		if (continuous) {
-			WARNING(L"Continuous updates are not yet supported.");
-			TODO(L"Implement using another kind of render target (DXGI)");
-		}
 	}
 
 	Painter::~Painter() {
@@ -23,11 +18,14 @@ namespace stormgui {
 		detach();
 	}
 
-	void Painter::render(Size size, Par<Graphics> graphics) {}
+	Bool Painter::render(Size size, Par<Graphics> graphics) {
+		return false;
+	}
 
 	void Painter::attach(Par<Window> to) {
 		HWND handle = to->handle();
 		if (handle != attachedTo) {
+			detach();
 			attachedTo = handle;
 			create();
 		}
@@ -83,6 +81,16 @@ namespace stormgui {
 	}
 
 	void Painter::repaint() {
+		if (continuous) {
+			nat old = repaintCounter;
+			while (old == repaintCounter)
+				os::UThread::leave();
+		} else {
+			doRepaint();
+		}
+	}
+
+	void Painter::doRepaint() {
 		if (!target.target)
 			return;
 		if (!target.swapChain)
@@ -92,10 +100,13 @@ namespace stormgui {
 		target.target->SetTransform(D2D1::Matrix3x2F::Identity());
 		target.target->Clear(dx(bgColor));
 
+		bool more = false;
+
 		try {
-			render(graphics->size(), graphics);
+			more = render(graphics->size(), graphics);
 		} catch (...) {
 			target.target->EndDraw();
+			repaintCounter++;
 			throw;
 		}
 
@@ -109,6 +120,18 @@ namespace stormgui {
 			// Re-create our render target.
 			destroy();
 			create();
+			// We probably want to re-draw ourselves here...
+		}
+
+		repaintCounter++;
+
+		if (more != continuous) {
+			continuous = more;
+			if (more) {
+				// Register!
+				Auto<RenderMgr> mgr = renderMgr(engine());
+				mgr->newContinuous();
+			}
 		}
 	}
 

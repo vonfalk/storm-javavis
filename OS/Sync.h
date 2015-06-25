@@ -88,7 +88,7 @@ namespace os {
 		// Create.
 		Event();
 
-		// Destroy. Sets the event to not loose any threads.
+		// Destroy. Sets the event to not lose any threads.
 		~Event();
 
 		// Set.

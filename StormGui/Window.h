@@ -146,7 +146,8 @@ namespace stormgui {
 		Auto<Painter> myPainter;
 
 		// Notify our painter of our new HWND.
-		void notifyPainter();
+		void attachPainter();
+		void detachPainter();
 
 		// Tell our painter we've been resized.
 		void notifyPainter(Size s);

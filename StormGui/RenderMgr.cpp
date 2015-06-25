@@ -2,10 +2,7 @@
 #include "RenderMgr.h"
 #include "StormGui.h"
 #include "Exception.h"
-
-#undef null
-#include <comdef.h>
-#define null 0
+#include "Painter.h"
 
 namespace stormgui {
 
@@ -54,7 +51,7 @@ namespace stormgui {
 		return r;
 	}
 
-	RenderMgr::RenderMgr() {
+	RenderMgr::RenderMgr() : exiting(false) {
 		// Start COM for this thread.
 		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
 
@@ -82,6 +79,10 @@ namespace stormgui {
 	}
 
 	RenderMgr::~RenderMgr() {
+		exiting = true;
+		waitEvent.set();
+		exitSema.down();
+
 		::release(giDevice);
 		::release(device);
 		::release(factory);
@@ -171,6 +172,39 @@ namespace stormgui {
 		}
 
 		return target;
+	}
+
+	void RenderMgr::main() {
+		vector<Auto<Painter>> toRedraw;
+
+		while (!exiting) {
+			// Will generally not free any backing storage.
+			toRedraw.clear();
+
+			// Figure out which we need to redraw this frame. Copy them since others may modify the
+			// hash set as soon as we do UThread::leave.
+			for (hash_set<Painter *>::iterator i = painters.begin(), end = painters.end(); i != end; ++i) {
+				Painter *p = *i;
+				if (p->continuous)
+					toRedraw.push_back(capture(p));
+			}
+
+			for (nat i = 0; i < toRedraw.size(); i++) {
+				toRedraw[i]->doRepaint();
+				os::UThread::leave();
+			}
+
+			if (toRedraw.size() == 0)
+				waitEvent.wait();
+			waitEvent.clear();
+		}
+
+		exitSema.up();
+	}
+
+	void RenderMgr::newContinuous() {
+		PLN(L"New continuous!");
+		waitEvent.set();
 	}
 
 	RenderMgr *renderMgr(EnginePtr e) {

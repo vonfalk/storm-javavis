@@ -36,9 +36,9 @@ namespace storm {
 		int64 v;
 
 		// Get the value in various units.
-		inline Int STORM_FN asUs() { return Int(v); }
-		inline Int STORM_FN asMs() { return Int(v / 1000); }
-		inline Int STORM_FN asS() { return Int(v / 1000000); }
+		inline Int STORM_FN inUs() { return Int(v); }
+		inline Int STORM_FN inMs() { return Int(v / 1000); }
+		inline Int STORM_FN inS() { return Int(v / 1000000); }
 	};
 
 	// Create durations in various units. TODO: Larger type for parameter?

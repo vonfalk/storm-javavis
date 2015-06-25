@@ -36,6 +36,12 @@ namespace stormgui {
 		// Resize the RenderInfo to a new size. 'target' will be re-created.
 		void resize(RenderInfo &info, Size size);
 
+		// Main thread entry point.
+		void main();
+
+		// Notify that a new window wants continuous repaints.
+		void newContinuous();
+
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
 
@@ -55,6 +61,15 @@ namespace stormgui {
 
 		// Create a render target.
 		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
+
+		// Event to wait for either: new continuous windows, or: termination.
+		os::Event waitEvent;
+
+		// Semaphore to synchronize shutdown.
+		os::Sema exitSema;
+
+		// Exiting?
+		bool exiting;
 	};
 
 	// Create/get the singleton render manager.

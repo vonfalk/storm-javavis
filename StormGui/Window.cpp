@@ -63,7 +63,9 @@ namespace stormgui {
 		myHandle = handle;
 		if (myHandle != invalid) {
 			a->addWindow(this);
-			notifyPainter();
+			attachPainter();
+		} else {
+			detachPainter();
 		}
 	}
 
@@ -255,28 +257,32 @@ namespace stormgui {
 
 	void Window::painter(Par<Painter> p) {
 		Engine &e = engine();
-		if (myPainter) {
-			// Detach previous.
-			os::Future<void> result;
-			os::FnParams params;
-			params.add(myPainter.borrow());
-			os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
-			result.result();
-		}
+		detachPainter();
 
 		myPainter = p;
 
 		if (created())
-			notifyPainter();
+			attachPainter();
 	}
 
-	void Window::notifyPainter() {
+	void Window::attachPainter() {
 		if (myPainter) {
 			Engine &e = engine();
 			os::Future<void> result;
 			os::FnParams params;
 			params.add(myPainter.borrow()).add(this);
 			os::UThread::spawn(address(&Painter::attach), true, params, result, &Render::thread(e)->thread());
+			result.result();
+		}
+	}
+
+	void Window::detachPainter() {
+		if (myPainter) {
+			Engine &e = engine();
+			os::Future<void> result;
+			os::FnParams params;
+			params.add(myPainter.borrow());
+			os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
 			result.result();
 		}
 	}
