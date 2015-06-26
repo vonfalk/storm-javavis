@@ -1,6 +1,5 @@
 #pragma once
-
-#include "Storm/Lib/Object.h"
+#include "Shared/Object.h"
 
 namespace storm {
 	STORM_PKG(storm.io);

@@ -307,10 +307,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Io\FileStream.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Lib\Float.cpp"
 				>
 			</File>
@@ -343,10 +339,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Io\MemStream.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Name.cpp"
 				>
 			</File>
@@ -376,10 +368,6 @@
 			</File>
 			<File
 				RelativePath=".\PkgReader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Protocol.cpp"
 				>
 			</File>
 			<File
@@ -439,10 +427,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Io\Stream.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\SyntaxNode.cpp"
 				>
 			</File>
@@ -479,10 +463,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Io\Text.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Thread.cpp"
 				>
 			</File>
@@ -512,18 +492,6 @@
 			</File>
 			<File
 				RelativePath=".\TypeVar.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Url.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Utf16Text.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Utf8Text.cpp"
 				>
 			</File>
 			<File
@@ -709,10 +677,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Io\FileStream.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Lib\Float.h"
 				>
 			</File>
@@ -742,10 +706,6 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Maybe.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\MemStream.h"
 				>
 			</File>
 			<File
@@ -782,10 +742,6 @@
 			</File>
 			<File
 				RelativePath=".\PkgReader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Protocol.h"
 				>
 			</File>
 			<File
@@ -826,10 +782,6 @@
 			</File>
 			<File
 				RelativePath=".\StormVTable.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Stream.h"
 				>
 			</File>
 			<File
@@ -902,18 +854,6 @@
 			</File>
 			<File
 				RelativePath=".\TypeVar.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Url.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Utf16Text.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Utf8Text.h"
 				>
 			</File>
 			<File

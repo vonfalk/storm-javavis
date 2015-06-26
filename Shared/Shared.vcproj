@@ -163,7 +163,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Geometry\Color.cpp"
+				RelativePath=".\Graphics\Color.cpp"
 				>
 			</File>
 			<File
@@ -238,6 +238,42 @@
 				RelativePath=".\Timing.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Graphics\Image.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Url.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Protocol.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Stream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\FileStream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\MemStream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Text.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf8Text.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf16Text.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -261,7 +297,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Geometry\Color.h"
+				RelativePath=".\Graphics\Color.h"
 				>
 			</File>
 			<File
@@ -358,6 +394,50 @@
 			</File>
 			<File
 				RelativePath=".\Timing.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Graphics\Image.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Graphics\Image.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Graphics.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Url.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Protocol.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Stream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\FileStream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\MemStream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Text.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf8Text.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf16Text.h"
 				>
 			</File>
 		</Filter>

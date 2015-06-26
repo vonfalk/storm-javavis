@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
-#include "Storm/Io/Url.h"
-#include "Storm/Io/Text.h"
+#include "Shared/Io/Url.h"
+#include "Shared/Io/Text.h"
 
 BEGIN_TEST(UrlTest) {
 

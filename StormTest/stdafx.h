@@ -7,7 +7,7 @@
 #include "Storm/Std.h"
 #include "Shared/Array.h"
 #include "Storm/Lib/Debug.h"
-#include "Storm/Io/Url.h"
+#include "Shared/Io/Url.h"
 
 #include "Exception.h"
 

@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "SrcPos.h"
 
-#include "Io/Url.h"
-#include "Io/Text.h"
+#include "Shared/Io/Url.h"
+#include "Shared/Io/Text.h"
 #include "Shared/CloneEnv.h"
 #include "OS/Sync.h"
 #include "Utils/TextFile.h"

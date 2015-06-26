@@ -2,7 +2,7 @@
 #include "Std.h"
 #include "SyntaxSet.h"
 #include "Scope.h"
-#include "Storm/Io/Url.h"
+#include "Shared/Io/Url.h"
 #include "Package.h"
 
 namespace storm {

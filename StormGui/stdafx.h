@@ -17,6 +17,7 @@ namespace stormgui {
 
 #include "Shared/DllEngine.h"
 #include "Shared/Geometry.h"
+#include "Shared/Graphics.h"
 
 using namespace storm::geometry;
 

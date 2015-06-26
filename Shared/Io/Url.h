@@ -1,5 +1,4 @@
 #pragma once
-
 #include "Utils/Bitmask.h"
 #include "Shared/Object.h"
 #include "Shared/Str.h"
@@ -9,7 +8,6 @@
 #include "Stream.h"
 
 namespace storm {
-
 	STORM_PKG(core.io);
 
 	class Protocol;

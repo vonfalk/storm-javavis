@@ -1,5 +1,6 @@
 use ui;
 use core:geometry;
+use graphics;
 use core:debug;
 
 class MainPainter extends Painter {
@@ -92,6 +93,7 @@ void closeLater(MainWin w) on Waiter {
 }
 
 void main() {
+	loadImage(core:io:parsePath("C:/Users/Filip/Pictures/Roligt/Random/1ZqBDvT.jpg"));
 	MainWin win;
 	spawn closeLater(win);
 	win.waitForClose;

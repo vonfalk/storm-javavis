@@ -3,7 +3,7 @@
 #include "Lib/Object.h"
 #include "Shared/TObject.h"
 #include "NamedThread.h"
-#include "Io/Url.h"
+#include "Shared/Io/Url.h"
 
 namespace storm {
 	STORM_PKG(lang);

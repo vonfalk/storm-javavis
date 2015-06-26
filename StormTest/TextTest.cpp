@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "Test/Test.h"
-#include "Storm/Io/Text.h"
-#include "Storm/Io/MemStream.h"
-#include "Storm/Io/Utf8Text.h"
-#include "Storm/Io/Utf16Text.h"
+#include "Shared/Io/Text.h"
+#include "Shared/Io/MemStream.h"
+#include "Shared/Io/Utf8Text.h"
+#include "Shared/Io/Utf16Text.h"
 
 #include <locale>
 

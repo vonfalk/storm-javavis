@@ -5,7 +5,7 @@
 #include "BSContents.h"
 #include "BSClass.h"
 #include "Engine.h"
-#include "Io/Text.h"
+#include "Shared/Io/Text.h"
 
 
 namespace storm {

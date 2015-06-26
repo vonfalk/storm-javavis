@@ -12,7 +12,7 @@
 #include "Shared/Str.h"
 #include "Shared/Future.h"
 #include "Lib/FnPtr.h"
-#include "Io/Url.h"
+#include "Shared/Io/Url.h"
 
 namespace storm {
 

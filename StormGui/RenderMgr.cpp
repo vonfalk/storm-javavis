@@ -203,7 +203,6 @@ namespace stormgui {
 	}
 
 	void RenderMgr::newContinuous() {
-		PLN(L"New continuous!");
 		waitEvent.set();
 	}
 

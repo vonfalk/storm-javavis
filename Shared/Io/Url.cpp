@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include "Url.h"
-#include "Shared/CloneEnv.h"
+#include "CloneEnv.h"
 #include "Protocol.h"
-#include "Type.h"
 
 namespace storm {
 

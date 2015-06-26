@@ -7,7 +7,7 @@
 #include "Utils/TextFile.h"
 #include "Tokenizer.h"
 #include "Package.h"
-#include "Io/Text.h"
+#include "Shared/Io/Text.h"
 
 namespace storm {
 
