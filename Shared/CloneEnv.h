@@ -58,6 +58,8 @@ namespace storm {
 	inline void clone(Nat &v, Par<CloneEnv> env) {}
 	template <>
 	inline void clone(Bool &v, Par<CloneEnv> env) {}
+	template <>
+	inline void clone(Float &v, Par<CloneEnv> env) {}
 
 	/**
 	 * Clone not inplace.

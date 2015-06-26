@@ -9,7 +9,7 @@ namespace graphics {
 	// A wrapper around storm::IStream to support the com object IStream.
 	// It assumes that the Stream will exist the entire lifetime of the StreamWrapper object.
 	class StreamWrapper : public ComStream {
-		StreamWrapper(Par<storm::IStream> src) : src(src) {
+		StreamWrapper(Par<storm::IStream> src) : src(src->randomAccess()) {
 			refcount = 1;
 		}
 
@@ -86,50 +86,35 @@ namespace graphics {
 		}
 
 		virtual HRESULT STDMETHODCALLTYPE Seek(LARGE_INTEGER liDistanceToMove, DWORD dwOrigin, ULARGE_INTEGER* lpNewFilePointer) {
-			PLN("Trying to seek!");
+			int64 p = liDistanceToMove.QuadPart;
+
 			switch (dwOrigin) {
 			case STREAM_SEEK_SET:
-				PLN("SET" << liDistanceToMove.QuadPart);
+				src->seek(Word(p));
 				break;
 			case STREAM_SEEK_CUR:
-				if (liDistanceToMove.QuadPart == 0)
-					return S_OK;
-				PLN("CUR" << liDistanceToMove.QuadPart);
+				src->seek(Word(src->tell() + p));
 				break;
 			case STREAM_SEEK_END:
-				PLN("END" << liDistanceToMove.QuadPart);
+				src->seek(Word(src->length() + p));
 				break;
+			default:
+				return STG_E_INVALIDFUNCTION;
 			}
 
-			return STG_E_INVALIDFUNCTION;
-			// switch(dwOrigin) {
-			// 	case STREAM_SEEK_SET:
-			// 		src.seek(nat(liDistanceToMove.QuadPart));
-			// 		break;
-			// 	case STREAM_SEEK_CUR:
-			// 		src.seek(nat(liDistanceToMove.QuadPart + src.pos()));
-			// 		break;
-			// 	case STREAM_SEEK_END:
-			// 		src.seek(nat(liDistanceToMove.QuadPart - src.length()));
-			// 		break;
-			// 	default:
-			// 		return STG_E_INVALIDFUNCTION;
-			// 		break;
-			// }
-
-			// return S_OK;
+			if (lpNewFilePointer)
+				lpNewFilePointer->QuadPart = src->tell();
+			return S_OK;
 		}
 
 		virtual HRESULT STDMETHODCALLTYPE Stat(STATSTG* pStatstg, DWORD grfStatFlag) {
-			PLN("Trying to get size!");
-			return E_NOTIMPL;
-			// pStatstg->cbSize.QuadPart = src.length();
-			// return S_OK;
+			pStatstg->cbSize.QuadPart = src->length();
+			return S_OK;
 		}
 
 	private:
 		LONG refcount;
-		Auto<storm::IStream> src;
+		Auto<storm::RIStream> src;
 	};
 
 }

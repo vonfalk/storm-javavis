@@ -6,7 +6,7 @@ namespace storm {
 	/**
 	 * Simple memory stream.
 	 */
-	class IMemStream : public IStream {
+	class IMemStream : public RIStream {
 		STORM_CLASS;
 	public:
 		// Create from a buffer.
@@ -26,6 +26,15 @@ namespace storm {
 
 		// Peek.
 		virtual Nat STORM_FN peek(Buffer &to);
+
+		// Seek.
+		virtual void STORM_FN seek(Word to);
+
+		// Tell.
+		virtual Word STORM_FN tell();
+
+		// Length.
+		virtual Word STORM_FN length();
 
 	private:
 		// Data

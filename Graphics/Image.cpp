@@ -115,9 +115,13 @@ namespace graphics {
 			Auto<Image> image = CREATE(Image, e, width, height);
 			r = converted->CopyPixels(NULL, image->stride(), image->bufferSize(), image->buffer());
 
-			TODO(L"We probably need to swap red and blue");
-			// Image::Component source[4] = { Image::cRed, Image::cGreen, Image::cBlue, Image::cAlpha };
-			// image->remapPixels(source);
+			// Swap red and blue...
+			for (nat y = 0; y < height; y++) {
+				for (nat x = 0; x < width; x++) {
+					byte *px = image->buffer(x, y);
+					swap(px[0], px[2]);
+				}
+			}
 
 			if (FAILED(r))
 				error = L"Failed to copy bitmap data";

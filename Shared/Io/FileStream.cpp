@@ -75,6 +75,25 @@ namespace storm {
 		return r;
 	}
 
+	void IFileStream::seek(Word to) {
+		LARGE_INTEGER pos;
+		pos.QuadPart = to;
+		SetFilePointerEx((HANDLE)handle, pos, NULL, FILE_BEGIN);
+	}
+
+	Word IFileStream::tell() {
+		LARGE_INTEGER pos;
+		pos.QuadPart = 0;
+		SetFilePointerEx((HANDLE)handle, pos, &pos, FILE_CURRENT);
+		return pos.QuadPart;
+	}
+
+	Word IFileStream::length() {
+		LARGE_INTEGER len;
+		GetFileSizeEx((HANDLE)handle, &len);
+		return len.QuadPart;
+	}
+
 	void IFileStream::output(wostream &to) const {
 		to << L"IFile: " << name;
 	}

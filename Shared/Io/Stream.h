@@ -63,6 +63,7 @@ namespace storm {
 	// Output
 	wostream &operator <<(wostream &to, const Buffer &b);
 
+	class RIStream;
 
 	/**
 	 * Input stream.
@@ -84,6 +85,35 @@ namespace storm {
 
 		// Peek data.
 		virtual Nat STORM_FN peek(Buffer &to);
+
+		// Get a random access IStream. May return the same stream!
+		virtual RIStream *STORM_FN randomAccess();
+	};
+
+	/**
+	 * Random access input stream.
+	 */
+	class RIStream : public IStream {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR RIStream();
+		STORM_CTOR RIStream(Par<RIStream> o);
+
+		// This implementation returns the same object.
+		virtual RIStream *STORM_FN randomAccess();
+
+		// Extended interface.
+		// TODO: Replace Nat with Word when 64-bit types are supported in Storm.
+
+		// Seek relative the start.
+		virtual void STORM_FN seek(Word to);
+
+		// Get current position.
+		virtual Word STORM_FN tell();
+
+		// Get length.
+		virtual Word STORM_FN length();
 	};
 
 

@@ -74,4 +74,9 @@ namespace storm {
 		return data;
 	}
 
+	byte *Image::buffer(nat x, nat y) {
+		return data + offset(x, y);
+	}
+
+
 }

@@ -42,6 +42,7 @@ namespace storm {
 
 		// Raw buffer access.
 		byte *buffer();
+		byte *buffer(nat x, nat y);
 
 	private:
 		// Data.

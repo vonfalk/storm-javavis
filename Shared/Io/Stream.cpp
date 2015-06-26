@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Stream.h"
+#include "LazyMemStream.h"
 
 namespace storm {
 
@@ -62,6 +63,29 @@ namespace storm {
 	Nat IStream::peek(Buffer &to) {
 		return 0;
 	}
+
+	RIStream *IStream::randomAccess() {
+		return lazyIMemStream(this);
+	}
+
+	/**
+	 * RIStream.
+	 */
+
+	RIStream::RIStream() {}
+	RIStream::RIStream(Par<RIStream> o) {}
+
+	void RIStream::seek(Word to) {}
+
+	Word RIStream::tell() { return 0; }
+
+	Word RIStream::length() { return 0; }
+
+	RIStream *RIStream::randomAccess() {
+		addRef();
+		return this;
+	}
+
 
 	/**
 	 * OStream.

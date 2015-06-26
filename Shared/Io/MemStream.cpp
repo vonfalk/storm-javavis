@@ -32,6 +32,18 @@ namespace storm {
 		return rem;
 	}
 
+	void IMemStream::seek(Word to) {
+		pos = min(nat(to), data.count());
+	}
+
+	Word IMemStream::tell() {
+		return pos;
+	}
+
+	Word IMemStream::length() {
+		return data.count();
+	}
+
 	/**
 	 * Output.
 	 */

@@ -274,6 +274,10 @@
 				RelativePath=".\Io\Utf16Text.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Io\LazyMemStream.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -438,6 +442,10 @@
 			</File>
 			<File
 				RelativePath=".\Io\Utf16Text.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\LazyMemStream.h"
 				>
 			</File>
 		</Filter>

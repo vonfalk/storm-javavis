@@ -7,7 +7,7 @@ namespace storm {
 	/**
 	 * File IO. This is tightly linked to the FileProtocol, and the classes should be created from there.
 	 */
-	class IFileStream : public IStream {
+	class IFileStream : public RIStream {
 		STORM_CLASS;
 	public:
 		// Create. Create from an Url.
@@ -27,6 +27,15 @@ namespace storm {
 
 		// Peek.
 		virtual Nat STORM_FN peek(Buffer &to);
+
+		// Seek.
+		virtual void STORM_FN seek(Word to);
+
+		// Tell.
+		virtual Word STORM_FN tell();
+
+		// Length.
+		virtual Word STORM_FN length();
 
 	protected:
 		// Output.
