@@ -83,7 +83,7 @@ namespace code {
 	Instruction fnParam(const Variable &src, const Value &copyFn);
 	Instruction fnCall(const Value &src, Size returnSize);
 
-	// Integer math (signed)
+	// Integer math (signed/unsigned)
 	Instruction add(const Value &dest, const Value &src);
 	Instruction adc(const Value &dest, const Value &src);
 	Instruction or(const Value &dest, const Value &src);
@@ -93,6 +93,14 @@ namespace code {
 	Instruction xor(const Value &dest, const Value &src);
 	Instruction cmp(const Value &dest, const Value &src);
 	Instruction mul(const Value &dest, const Value &src);
+
+	// Signed math
+	Instruction idiv(const Value &dest, const Value &src); // div a, b <=> a = a / b
+	Instruction imod(const Value &dest, const Value &src);
+
+	// Unsigned math
+	Instruction udiv(const Value &dest, const Value &src);
+	Instruction umod(const Value &dest, const Value &src);
 
 	// Shifts. Src.size() == 1
 	Instruction shl(const Value &dest, const Value &src);

@@ -43,6 +43,8 @@ namespace code {
 			OUTPUT(xor),
 			OUTPUT(cmp),
 			OUTPUT(mul),
+			OUTPUT(idiv),
+			OUTPUT(udiv),
 			OUTPUT(shl),
 			OUTPUT(shr),
 			OUTPUT(sar),
@@ -63,13 +65,6 @@ namespace code {
 		};
 
 		/**
-		 * Tell which op-codes are implemented using immediate values.
-		 */
-		static OpCode immReg[] = {
-			op::mov, op::add, op::adc, op::or, op::and, op::sub, op::sbb, op::xor, op::cmp
-		};
-
-		/**
 		 * Transform functions. immReg op-codes overrides these!
 		 */
 		static OpEntry<machineX86::TransformFn> transformMap[] = {
@@ -85,6 +80,10 @@ namespace code {
 
 			TRANSFORM(lea),
 			TRANSFORM(mul),
+			TRANSFORM(idiv),
+			TRANSFORM(udiv),
+			TRANSFORM(imod),
+			TRANSFORM(umod),
 			TRANSFORM(setCond),
 			TRANSFORM(shl),
 			TRANSFORM(shr),

@@ -19,5 +19,7 @@ BEGIN_TEST(TestMul) {
 	F f = (F)b.address();
 
 	CHECK_EQ((*f)(2, 2), 4);
+	CHECK_EQ((*f)(-2, -2), 4);
+	CHECK_EQ((*f)(-2, 2), -4);
 
 } END_TEST

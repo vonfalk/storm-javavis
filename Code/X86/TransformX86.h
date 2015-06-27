@@ -51,6 +51,10 @@ namespace code {
 		void immRegTfm(const Transform &tfm, Listing &to, nat line);
 		void leaTfm(const Transform &tfm, Listing &to, nat line);
 		void mulTfm(const Transform &tfm, Listing &to, nat line);
+		void idivTfm(const Transform &tfm, Listing &to, nat line);
+		void udivTfm(const Transform &tfm, Listing &to, nat line);
+		void imodTfm(const Transform &tfm, Listing &to, nat line);
+		void umodTfm(const Transform &tfm, Listing &to, nat line);
 		void setCondTfm(const Transform &tfm, Listing &to, nat line);
 		void shlTfm(const Transform &tfm, Listing &to, nat line);
 		void shrTfm(const Transform &tfm, Listing &to, nat line);

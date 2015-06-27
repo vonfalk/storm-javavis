@@ -295,7 +295,7 @@ namespace code {
 
 		void cmp(Output &to, Params p, const Instruction &instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 7,
+				0x82, 7, // NOTE: it seems like this can also be encoded as 0x80 (preferred by some sources).
 				0x38,
 				0x3A
 			};
@@ -315,6 +315,29 @@ namespace code {
 			modRm(to, registerId(instr.dest().reg()), instr.src());
 		}
 
+		void idiv(Output &to, Params p, const Instruction &instr) {
+			assert(instr.dest().type() == Value::tRegister);
+			assert(asSize(instr.dest().reg(), 0) == ptrA);
+			if (instr.size() == Size::sByte) {
+				to.putByte(0xF6);
+			} else {
+				to.putByte(0x99); // CDQ
+				to.putByte(0xF7);
+			}
+			modRm(to, 7, instr.src());
+		}
+
+		void udiv(Output &to, Params p, const Instruction &instr) {
+			assert(instr.dest().type() == Value::tRegister);
+			assert(asSize(instr.dest().reg(), 0) == ptrA);
+			if (instr.size() == Size::sByte) {
+				to.putByte(0xF6);
+			} else {
+				to.putByte(0x33); to.putByte(0xD2); // xor edx, edx
+				to.putByte(0xF7);
+			}
+			modRm(to, 6, instr.src());
+		}
 
 		/**
 		 * Shift op-codes.

@@ -24,6 +24,8 @@ namespace code {
 		void xor(Output &to, Params p, const Instruction &instr);
 		void cmp(Output &to, Params p, const Instruction &instr);
 		void mul(Output &to, Params p, const Instruction &instr);
+		void idiv(Output &to, Params p, const Instruction &instr);
+		void udiv(Output &to, Params p, const Instruction &instr);
 
 		void shl(Output &to, Params p, const Instruction &instr);
 		void shr(Output &to, Params p, const Instruction &instr);

@@ -41,7 +41,7 @@ namespace code {
 		// Add all 64-bit pairs to the Registers object.
 		void add64(Registers &r);
 
-		// Does the given listing contain anu 64-bit instructions?
+		// Does the given listing contain any 64-bit instructions?
 		bool has64(const Listing &l);
 
 		// Get the register containing the high bits of a 64-bit virtual register.

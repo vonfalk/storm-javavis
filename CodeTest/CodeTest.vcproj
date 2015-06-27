@@ -281,6 +281,10 @@
 				RelativePath=".\TestFloat.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestDiv.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

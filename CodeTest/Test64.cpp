@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 // Test 64-bit code.
-BEGIN_TEST(Test64Asm) {
+BEGIN_TEST(Test64Add) {
 	Arena arena;
 	Listing l;
 
@@ -22,6 +22,48 @@ BEGIN_TEST(Test64Asm) {
 
 } END_TEST
 
+BEGIN_TEST(Test64Sub) {
+	Arena arena;
+	Listing l;
+
+	Variable v = l.frame.createLongVar(l.frame.root());
+	Variable v2 = l.frame.createLongVar(l.frame.root());
+
+	l << prolog();
+	l << mov(v, longConst(0xA987654321));
+	l << mov(v2, longConst(0x123456789A));
+	l << sub(v, v2);
+	l << mov(rax, v);
+
+	l << epilog();
+	l << ret(Size::sLong);
+
+	Binary b(arena, l);
+	CHECK_EQ(callFn(b.address(), int64(0)), 0x97530ECA87);
+
+} END_TEST
+
+BEGIN_TEST(Test64Mul) {
+	Arena arena;
+	Listing l;
+
+	Variable v = l.frame.createLongVar(l.frame.root());
+	Variable v2 = l.frame.createLongVar(l.frame.root());
+
+	l << prolog();
+	l << mov(rax, longConst(0x100000001)); // Make sure we preserve other registers.
+	l << mov(v, longConst(0xA987654321));
+	l << mov(v2, longConst(0x123456789A));
+	l << mul(v, v2);
+	l << add(rax, v);
+
+	l << epilog();
+	l << ret(Size::sLong);
+
+	Binary b(arena, l);
+	CHECK_EQ(callFn(b.address(), int64(0)), 0x2DE2A36D2B77D9DB);
+
+} END_TEST
 
 BEGIN_TEST(Test64Preserve) {
 	Arena arena;

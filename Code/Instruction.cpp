@@ -219,6 +219,22 @@ namespace code {
 		return createDestSrc(op::mul, dest, destRead | destWrite, src);
 	}
 
+	Instruction idiv(const Value &dest, const Value &src) {
+		return createDestSrc(op::idiv, dest, destRead | destWrite, src);
+	}
+
+	Instruction udiv(const Value &dest, const Value &src) {
+		return createDestSrc(op::udiv, dest, destRead | destWrite, src);
+	}
+
+	Instruction imod(const Value &dest, const Value &src) {
+		return createDestSrc(op::imod, dest, destRead | destWrite, src);
+	}
+
+	Instruction umod(const Value &dest, const Value &src) {
+		return createDestSrc(op::umod, dest, destRead | destWrite, src);
+	}
+
 	Instruction shl(const Value &dest, const Value &src) {
 		if (src.size() != Size::sByte)
 			throw InvalidValue(L"Size must be 1");

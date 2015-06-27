@@ -189,6 +189,76 @@ namespace code {
 			}
 		}
 
+		void idivTfm(const Transform &tfm, Listing &to, nat line) {
+			const Instruction &instr = tfm.from[line];
+			const Value &dest = instr.dest();
+
+			if (dest.type() == Value::tRegister && asSize(dest.reg(), 0) == ptrA) {
+				// Supported!
+				to << instr;
+				return;
+			}
+
+			// The 64-bit transform has been executed before, so we are sure that size is <= sInt
+			bool isByte = dest.size() == Size::sByte;
+
+			Registers used = tfm.registers[line];
+			add64(used);
+
+			// Move dest into eax first.
+			if (used.contains(eax))
+				to << push(eax);
+			if (!isByte && used.contains(edx))
+				to << push(edx);
+			to << mov(eax, dest);
+			to << instr.alterDest(eax);
+			to << mov(dest, eax);
+
+			if (!isByte && used.contains(edx))
+				to << pop(edx);
+			if (used.contains(eax))
+				to << pop(eax);
+		}
+
+		void udivTfm(const Transform &tfm, Listing &to, nat line) {
+			idivTfm(tfm, to, line);
+		}
+
+		void imodTfm(const Transform &tfm, Listing &to, nat line) {
+			const Instruction &instr = tfm.from[line];
+			const Value &dest = instr.dest();
+
+			bool eaxDest = (dest.type() == Value::tRegister && asSize(dest.reg(), 0) == ptrA);
+
+			// The 64-bit transform has been executed before, so we are sure that size is <= sInt
+			bool isByte = dest.size() == Size::sByte;
+
+			Registers used = tfm.registers[line];
+			add64(used);
+
+			// Move dest into eax first.
+			if (!eaxDest && used.contains(eax))
+				to << push(eax);
+			if (!isByte && used.contains(edx))
+				to << push(edx);
+			to << mov(eax, dest);
+			if (instr.op() == op::imod)
+				to << idiv(eax, instr.src());
+			else
+				to << udiv(eax, instr.src());
+			to << mov(dest, edx);
+
+			if (!isByte && used.contains(edx))
+				to << pop(edx);
+			if (!eaxDest && used.contains(eax))
+				to << pop(eax);
+		}
+
+		void umodTfm(const Transform &tfm, Listing &to, nat line) {
+			imodTfm(tfm, to, line);
+		}
+
+
 		void setCondTfm(const Transform &tfm, Listing &to, nat line) {
 			const Instruction &instr = tfm.from[line];
 			switch (instr.src().condFlag()) {
