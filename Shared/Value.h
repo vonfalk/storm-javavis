@@ -74,6 +74,20 @@ namespace storm {
 	};
 
 	template <>
+	struct StormType<Long> {
+		static Type *type(Engine &e) {
+			return longType(e);
+		}
+	};
+
+	template <>
+	struct StormType<Word> {
+		static Type *type(Engine &e) {
+			return wordType(e);
+		}
+	};
+
+	template <>
 	struct StormType<Byte> {
 		static Type *type(Engine &e) {
 			return byteType(e);

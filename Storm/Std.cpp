@@ -31,6 +31,8 @@ namespace storm {
 
 		core->add(steal(intType(to)));
 		core->add(steal(natType(to)));
+		core->add(steal(longType(to)));
+		core->add(steal(wordType(to)));
 		core->add(steal(byteType(to)));
 		core->add(steal(floatType(to)));
 		core->add(steal(boolType(to)));

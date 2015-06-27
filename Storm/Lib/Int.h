@@ -20,7 +20,6 @@ namespace storm {
 		virtual bool loadAll();
 	};
 
-
 	class NatType : public Type {
 		STORM_CLASS;
 	public:

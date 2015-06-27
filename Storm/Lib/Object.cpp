@@ -296,6 +296,8 @@ namespace storm {
 			&cloneObjectEnv,
 			&intType,
 			&natType,
+			&longType,
+			&wordType,
 			&byteType,
 			&floatType,
 			&boolType,

@@ -74,6 +74,22 @@ namespace storm {
 		}
 	}
 
+	static void intDiv(InlinedParams p) {
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << idiv(result, p.params[1]);
+		}
+	}
+
+	static void intMod(InlinedParams p) {
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << imod(result, p.params[1]);
+		}
+	}
+
 	template <CondFlag f>
 	static void intCmp(InlinedParams p) {
 		if (p.result->needed()) {
@@ -134,6 +150,8 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&intAdd))));
 		add(steal(inlinedFunction(engine, Value(this), L"-", ii, simpleFn(&intSub))));
 		add(steal(inlinedFunction(engine, Value(this), L"*", ii, simpleFn(&intMul))));
+		add(steal(inlinedFunction(engine, Value(this), L"/", ii, simpleFn(&intDiv))));
+		add(steal(inlinedFunction(engine, Value(this), L"%", ii, simpleFn(&intMod))));
 		add(steal(inlinedFunction(engine, b, L"==", ii, simpleFn(&intCmp<ifEqual>))));
 		add(steal(inlinedFunction(engine, b, L"!=", ii, simpleFn(&intCmp<ifNotEqual>))));
 		add(steal(inlinedFunction(engine, b, L"<", ii, simpleFn(&intCmp<ifLess>))));
@@ -162,7 +180,6 @@ namespace storm {
 
 		return Type::loadAll();
 	}
-
 
 	Type *intType(Engine &e) {
 		Type *t = e.specialBuiltIn(specialInt);
@@ -231,6 +248,30 @@ namespace storm {
 		}
 	}
 
+	static void natMul(InlinedParams p) {
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << mul(result, p.params[1]);
+		}
+	}
+
+	static void natDiv(InlinedParams p) {
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << udiv(result, p.params[1]);
+		}
+	}
+
+	static void natMod(InlinedParams p) {
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << mov(result, p.params[0]);
+			p.state->to << umod(result, p.params[1]);
+		}
+	}
+
 	template <CondFlag f>
 	static void natCmp(InlinedParams p) {
 		if (p.result->needed()) {
@@ -272,6 +313,10 @@ namespace storm {
 		}
 	}
 
+	static void natFromByte(Nat *to, Byte f) {
+		*to = f;
+	}
+
 	NatType::NatType() : Type(L"Nat", typeValue | typeFinal, Size::sNat, null) {}
 
 	bool NatType::loadAll() {
@@ -280,7 +325,9 @@ namespace storm {
 		Value b(boolType(engine));
 		add(steal(inlinedFunction(engine, Value(this), L"+", ii, simpleFn(&natAdd))));
 		add(steal(inlinedFunction(engine, Value(this), L"-", ii, simpleFn(&natSub))));
-		// add(steal(inlinedFunction(engine, Value(this), L"*", ii, simpleFn(&natMul))));
+		add(steal(inlinedFunction(engine, Value(this), L"*", ii, simpleFn(&natMul))));
+		add(steal(inlinedFunction(engine, Value(this), L"/", ii, simpleFn(&natDiv))));
+		add(steal(inlinedFunction(engine, Value(this), L"%", ii, simpleFn(&natMod))));
 		add(steal(inlinedFunction(engine, b, L"==", ii, simpleFn(&natCmp<ifEqual>))));
 		add(steal(inlinedFunction(engine, b, L"!=", ii, simpleFn(&natCmp<ifNotEqual>))));
 		add(steal(inlinedFunction(engine, b, L"<", ii, simpleFn(&natCmp<ifBelow>))));
@@ -304,6 +351,12 @@ namespace storm {
 
 		vector<Value> rr(2, Value(this, true));
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&natCopyCtor))));
+
+		// TODO? Inline?
+		vector<Value> rb = valList(2, Value(this, true), Value(byteType(engine)));
+		Auto<Function> f = nativeFunction(engine, Value(), Type::CTOR, rb, &natFromByte);
+		f->flags |= namedAutoCast;
+		add(f);
 
 		return Type::loadAll();
 	}

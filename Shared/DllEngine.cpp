@@ -98,6 +98,14 @@ namespace storm {
 		return (*interface->natType)(e);
 	}
 
+	Type *longType(Engine &e) {
+		return (*interface->longType)(e);
+	}
+
+	Type *wordType(Engine &e) {
+		return (*interface->wordType)(e);
+	}
+
 	Type *byteType(Engine &e) {
 		return (*interface->byteType)(e);
 	}

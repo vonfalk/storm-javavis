@@ -58,6 +58,8 @@ Types allTypes(vector<Header *> &headers, bool forCompiler, const vector<String>
 	t.add(Type(L"void", L""));
 	t.add(Type(L"Int", L"core"));
 	t.add(Type(L"Nat", L"core"));
+	t.add(Type(L"Long", L"core"));
+	t.add(Type(L"Word", L"core"));
 	t.add(Type(L"Byte", L"core"));
 	t.add(Type(L"Float", L"core"));
 	t.add(Type(L"Bool", L"core"));

@@ -18,6 +18,8 @@ namespace storm {
 	enum Special {
 		specialInt = 0,
 		specialNat,
+		specialLong,
+		specialWord,
 		specialByte,
 		specialFloat,
 		specialBool,
