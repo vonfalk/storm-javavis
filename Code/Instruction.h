@@ -107,6 +107,10 @@ namespace code {
 	Instruction shr(const Value &dest, const Value &src);
 	Instruction sar(const Value &dest, const Value &src);
 
+	// Resize operands. Works like a mov, but sign-extends if needed.
+	Instruction icast(const Value &dest, const Value &src);
+	Instruction ucast(const Value &dest, const Value &src);
+
 	// Floating point math.
 	Instruction fstp(const Value &dest);
 	Instruction fistp(const Value &dest); // Truncates results.

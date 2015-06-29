@@ -41,6 +41,8 @@ namespace code {
 		OP_CODE(shl),
 		OP_CODE(shr),
 		OP_CODE(sar),
+		OP_CODE(icast),
+		OP_CODE(ucast),
 		OP_CODE(fstp),
 		OP_CODE(fistp),
 		OP_CODE(fld),

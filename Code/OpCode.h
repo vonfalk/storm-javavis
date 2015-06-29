@@ -32,6 +32,8 @@ namespace code {
 			shl,
 			shr,
 			sar,
+			icast,
+			ucast,
 
 			// Floating point.
 			fstp,

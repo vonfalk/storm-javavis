@@ -253,6 +253,14 @@ namespace code {
 		return createLoose(op::sar, dest, destRead | destWrite, src);
 	}
 
+	Instruction icast(const Value &dest, const Value &src) {
+		return createLoose(op::icast, dest, destWrite, src);
+	}
+
+	Instruction ucast(const Value &dest, const Value &src) {
+		return createLoose(op::ucast, dest, destWrite, src);
+	}
+
 	Instruction fstp(const Value &dest) {
 		if (dest.type() == Value::tRegister)
 			throw InvalidValue(L"Can not store to register.");

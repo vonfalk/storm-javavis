@@ -285,6 +285,10 @@
 				RelativePath=".\TestDiv.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestCast.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

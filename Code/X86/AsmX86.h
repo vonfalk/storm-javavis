@@ -31,6 +31,9 @@ namespace code {
 		void shr(Output &to, Params p, const Instruction &instr);
 		void sar(Output &to, Params p, const Instruction &instr);
 
+		void icast(Output &to, Params p, const Instruction &instr);
+		void ucast(Output &to, Params p, const Instruction &instr);
+
 		void fstp(Output &to, Params p, const Instruction &instr);
 		void fistp(Output &to, Params p, const Instruction &instr);
 		void fld(Output &to, Params p, const Instruction &instr);

@@ -335,6 +335,50 @@ namespace code {
 			shlTfm(tfm, to, line);
 		}
 
+		void icastTfm(const Transform &tfm, Listing &to, nat line) {
+			const Instruction &instr = tfm.from[line];
+			nat sFrom = instr.src().size().current();
+			nat sTo = instr.dest().size().current();
+
+			if (instr.dest() == Value(asSize(eax, sTo))) {
+				to << instr;
+				return;
+			}
+
+			Registers used = tfm.registers[line];
+			add64(used);
+			bool preserveEax = used.contains(eax);
+			bool preserveEdx = used.contains(edx);
+
+			if (preserveEax)
+				to << push(eax);
+			if (preserveEdx)
+				to << push(edx);
+
+			if (min(sFrom, sTo) == 1 && max(sFrom, sTo) == 8) {
+				to << instr.alterDest(eax);
+				to << instr.altered(asSize(eax, sTo), eax);
+			} else {
+				to << instr.alterDest(asSize(eax, sTo));
+			}
+
+			if (sTo == 8) {
+				to << mov(low32(instr.dest()), eax);
+				to << mov(high32(instr.dest()), edx);
+			} else if (sTo <= 4) {
+				to << mov(instr.dest(), asSize(eax, sTo));
+			}
+
+			if (preserveEdx)
+				to << push(edx);
+			if (preserveEax)
+				to << pop(eax);
+		}
+
+		void ucastTfm(const Transform &tfm, Listing &to, nat line) {
+			icastTfm(tfm, to, line);
+		}
+
 		void addRefTfm(const Transform &tfm, Listing &to, nat line) {
 			vector<Register> preserve = regsNotPreserved();
 			vector<Register> saved = tfm.preserve(preserve, line, to);

@@ -48,6 +48,8 @@ namespace code {
 			OUTPUT(shl),
 			OUTPUT(shr),
 			OUTPUT(sar),
+			OUTPUT(icast),
+			OUTPUT(ucast),
 
 			OUTPUT(fstp),
 			OUTPUT(fistp),
@@ -88,6 +90,8 @@ namespace code {
 			TRANSFORM(shl),
 			TRANSFORM(shr),
 			TRANSFORM(sar),
+			TRANSFORM(icast),
+			TRANSFORM(ucast),
 
 			TRANSFORM(retFloat),
 

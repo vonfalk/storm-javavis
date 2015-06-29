@@ -385,6 +385,61 @@ namespace code {
 			shiftOp(to, instr.dest(), instr.src(), 7);
 		}
 
+		void icast(Output &to, Params p, const Instruction &instr) {
+			nat sFrom = instr.src().size().current();
+			nat sTo = instr.dest().size().current();
+			assert(asSize(instr.dest().reg(), 0) == ptrA, L"Only rax, eax or al supported as a target here.");
+			bool srcEax = instr.src().type() == Value::tRegister && asSize(instr.src().reg(), 0) == ptrA;
+
+			if (sFrom == 1 && sTo == 4) {
+				// movcx
+				to.putByte(0x0F);
+				to.putByte(0xBE);
+				modRm(to, registerId(eax), instr.src());
+			} else if (sFrom == 4 && sTo == 8) {
+				// mov (if needed).
+				if (!srcEax)
+					mov(to, p, code::mov(eax, instr.src()));
+				to.putByte(0x99); // CDQ
+			} else if (sFrom == 8 && sTo == 4) {
+				if (!srcEax)
+					mov(to, p, code::mov(eax, low32(instr.src())));
+			} else if (sFrom == 4 && sTo == 1) {
+				if (!srcEax)
+					mov(to, p, code::mov(eax, instr.src()));
+			} else {
+				assert(false, L"Unsupported icast mode: " + ::toS(instr));
+			}
+		}
+
+		void ucast(Output &to, Params p, const Instruction &instr) {
+			nat sFrom = instr.src().size().current();
+			nat sTo = instr.dest().size().current();
+			assert(asSize(instr.dest().reg(), 0) == ptrA, L"Only rax, eax or al supported as a target here.");
+			bool srcEax = instr.src().type() == Value::tRegister && asSize(instr.src().reg(), 0) == ptrA;
+
+			if (sFrom == 1 && sTo == 4) {
+				// movzx
+				to.putByte(0x0F);
+				to.putByte(0xB6);
+				modRm(to, registerId(eax), instr.src());
+			} else if (sFrom == 4 && sTo == 8) {
+				// mov (if needed).
+				if (!srcEax)
+					mov(to, p, code::mov(eax, instr.src()));
+				to.putByte(0x33); // xor edx, edx
+				to.putByte(0xD2);
+			} else if (sFrom == 8 && sTo == 4) {
+				if (!srcEax)
+					mov(to, p, code::mov(eax, low32(instr.src())));
+			} else if (sFrom == 4 && sTo == 1) {
+				if (!srcEax)
+					mov(to, p, code::mov(eax, instr.src()));
+			} else {
+				assert(false, L"Unsupported ucast mode: " + ::toS(instr));
+			}
+		}
+
 		void fstp(Output &to, Params p, const Instruction &instr) {
 			to.putByte(0xD9);
 			modRm(to, 3, instr.dest());

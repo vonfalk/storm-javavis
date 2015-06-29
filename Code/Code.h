@@ -59,13 +59,13 @@ namespace code {
 
 // Reuse some types from OS.
 namespace code {
-	typedef os::Char Char;
-	typedef os::Byte Byte;
-	typedef os::Int Int;
-	typedef os::Nat Nat;
-	typedef os::Long Long;
-	typedef os::Word Word;
-	typedef os::Float Float;
+	using os::Char;
+	using os::Byte;
+	using os::Int;
+	using os::Nat;
+	using os::Long;
+	using os::Word;
+	using os::Float;
 }
 
 #include "Codecall.h"

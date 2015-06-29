@@ -59,6 +59,8 @@ namespace code {
 		void shlTfm(const Transform &tfm, Listing &to, nat line);
 		void shrTfm(const Transform &tfm, Listing &to, nat line);
 		void sarTfm(const Transform &tfm, Listing &to, nat line);
+		void icastTfm(const Transform &tfm, Listing &to, nat line);
+		void ucastTfm(const Transform &tfm, Listing &to, nat line);
 		void addRefTfm(const Transform &tfm, Listing &to, nat line);
 		void releaseRefTfm(const Transform &tfm, Listing &to, nat line);
 		void retFloatTfm(const Transform &tfm, Listing &to, nat line);
