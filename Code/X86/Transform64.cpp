@@ -28,6 +28,7 @@ namespace code {
 			TFM64(imod),
 			TFM64(umod),
 
+			TFM64(fnParam),
 			TFM64(push),
 			TFM64(pop),
 		};
@@ -67,18 +68,50 @@ namespace code {
 			}
 		}
 
+		static bool isPreserved(Register reg) {
+			vector<Register> r = regsNotPreserved();
+			for (nat i = 0; i < r.size(); i++)
+				if (asSize(r[i], 0) == asSize(reg, 0))
+					return false;
+			return true;
+		}
+
 		// Call a function instead.
-		static void callFn(Listing &to, const Instruction &instr, const Registers &used, void *fn) {
-			pushUsed(to, used);
-			to << code::push(high32(instr.src()));
-			to << code::push(low32(instr.src()));
-			to << code::push(high32(instr.dest()));
-			to << code::push(low32(instr.dest()));
-			to << code::call(ptrConst(fn), Size::sLong);
-			to << code::add(ptrStack, intPtrConst(4 * 4));
-			to << code::mov(high32(instr.dest()), high32(rax));
-			to << code::mov(low32(instr.dest()), low32(rax));
-			popUsed(to, used);
+		static void callFn(Listing &out, const Instruction &instr, const Registers &used, void *fn) {
+			Value to = instr.dest();
+			Register destOriginal = noReg;
+			if (to.type() == Value::tRelative && !isPreserved(to.reg())) {
+				// We need to preserve this register. Save it!
+				destOriginal = to.reg();
+				// We will use ptrC later, that is always safe to do!
+				to = longRel(ptrC, to.offset());
+			}
+
+			pushUsed(out, used);
+			if (destOriginal != noReg) {
+				// Need to preserve ptrC?
+				if (used.contains(ptrC))
+					out << code::push(ptrC);
+				// Preserve our target register.
+				out << code::push(destOriginal);
+			}
+			out << code::push(high32(instr.src()));
+			out << code::push(low32(instr.src()));
+			out << code::push(high32(instr.dest()));
+			out << code::push(low32(instr.dest()));
+			out << code::call(ptrConst(fn), Size::sLong);
+			out << code::add(ptrStack, intPtrConst(4 * 4));
+
+			// Restore our target if needed.
+			if (destOriginal != noReg)
+				out << code::pop(ptrC);
+			out << code::mov(high32(to), high32(rax));
+			out << code::mov(low32(to), low32(rax));
+
+			// Restore whatever was in ptrC before (if needed).
+			if (destOriginal != noReg && used.contains(ptrC))
+				out << code::pop(ptrC);
+			popUsed(out, used);
 		}
 
 		void Transform64::movTfm(Listing &to, const Instruction &instr, const Registers &used) {
@@ -177,6 +210,17 @@ namespace code {
 		void Transform64::popTfm(Listing &to, const Instruction &instr, const Registers &used) {
 			to << code::pop(low32(instr.src()));
 			to << code::pop(high32(instr.src()));
+		}
+
+		void Transform64::fnParamTfm(Listing &to, const Instruction &instr, const Registers &used) {
+			const Value &param = instr.src();
+			const Value &copy = instr.dest();
+			if (copy == Value()) {
+				to << code::fnParam(low32(param));
+				to << code::fnParam(high32(param));
+			} else {
+				to << instr;
+			}
 		}
 
 	}

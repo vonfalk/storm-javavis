@@ -32,6 +32,7 @@ namespace code {
 			void imodTfm(Listing &to, const Instruction &instr, const Registers &used);
 			void umodTfm(Listing &to, const Instruction &instr, const Registers &used);
 
+			void fnParamTfm(Listing &to, const Instruction &instr, const Registers &used);
 			void pushTfm(Listing &to, const Instruction &instr, const Registers &used);
 			void popTfm(Listing &to, const Instruction &instr, const Registers &used);
 		};
