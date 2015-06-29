@@ -1,0 +1,118 @@
+// For now, we are reading the last number of the function name to see what the result should be.
+// This should be replaced with real tests inside Storm, whenever we implement a proper test syntax.
+
+// Int
+Int const20() { 20; }
+Int add12() { 10 + 2; }
+Int sub5() { 10 - 5; }
+Int subN5() { 5 - 10; }
+Int mul8() { 2 * 4; }
+Int mulN8() { (0-2) * 4; }
+Int div8() { 16 / 2; }
+Int mod8() { 18 % 10; }
+Int inc10() { Int i = 5; i += 5; i; }
+Int dec10() { Int i = 15; i -= 5; i; }
+Int inc12() { Int i = 10; i++; ++i; }
+Int inc11() { Int i = 10; ++i; i++; }
+Int dec8() { Int i = 10; i--; --i; }
+Int dec9() { Int i = 10; --i; i--; }
+Int assign10() { Int i = 10; Int j = 5; j = i; j; }
+
+// Nat
+Nat const21() { 21; }
+Nat add22() { 20.nat + 2.nat; }
+Nat sub10() { 15.nat - 5.nat; }
+Nat mul10() { 2.nat * 5.nat; }
+Nat div6() { 12.nat / 2.nat; }
+Nat mod2() { 12.nat % 10.nat; }
+Nat inc1() { Nat i = 0; i += 1; i; }
+Nat dec1() { Nat i = 6; i -= 5; i; }
+Nat inc8() { Nat i = 6; i++; ++i; }
+Nat inc7() { Nat i = 6; ++i; i++; }
+Nat dec4() { Nat i = 6; i--; --i; }
+Nat dec5() { Nat i = 6; --i; i--; }
+Nat assign12() { Nat i = 12; Nat j = 5; j = i; j; }
+
+// Byte
+Byte const22() { 22; }
+Byte add23() { 21.byte + 2.byte; }
+Byte sub11() { 15.byte - 4.byte; }
+// Byte mul11() { 2.byte * 5.byte; }
+// Byte div7() { 12.byte / 2.byte; }
+// Byte mod3() { 12.byte % 10.byte; }
+Byte inc2() { Byte i = 0; i += 2; i; }
+Byte dec2() { Byte i = 6; i -= 4; i; }
+Byte inc18() { Byte i = 16; i++; ++i; }
+Byte inc17() { Byte i = 16; ++i; i++; }
+Byte dec14() { Byte i = 16; i--; --i; }
+Byte dec15() { Byte i = 16; --i; i--; }
+Byte assign13() { Byte i = 13; Byte j = 5; j = i; j; }
+
+// Long
+Long const31() { 31; }
+Long add32() { 30.long + 2.long; }
+Long sub20() { 25.long - 5.long; }
+Long mul20() { 4.long * 5.long; }
+Long div60() { 120.long / 2.long; }
+Long mod20() { 120.long % 100.long; }
+Long inc14() { Long i = 10; i += 4; i; }
+Long dec16() { Long i = 18; i -= 2; i; }
+Long inc28() { Long i = 26; i++; ++i; }
+Long inc27() { Long i = 26; ++i; i++; }
+Long dec24() { Long i = 26; i--; --i; }
+Long dec25() { Long i = 26; --i; i--; }
+Long assign22() { Long i = 22; Long j = 5; j = i; j; }
+
+// Word
+Word const131() { 131; }
+Word add132() { 130.word + 2.word; }
+Word sub120() { 125.word - 5.word; }
+Word mul120() { 24.word * 5.word; }
+Word div160() { 320.word / 2.word; }
+Word mod120() { 1120.word % 1000.word; }
+Word inc114() { Word i = 110; i += 4; i; }
+Word dec116() { Word i = 118; i -= 2; i; }
+Word inc128() { Word i = 126; i++; ++i; }
+Word inc127() { Word i = 126; ++i; i++; }
+Word dec124() { Word i = 126; i--; --i; }
+Word dec125() { Word i = 126; --i; i--; }
+Word assign122() { Word i = 122; Word j = 5; j = i; j; }
+
+// Conversion tests.
+// Int ->
+Byte intByte20() { 20.byte; }
+Nat intNat20() { 20.nat; }
+Long intLong20() { 20.long; }
+Word intWord20() { 20.word; }
+Byte autoIntByte20() { 20; }
+Nat autoIntNat20() { 20; }
+Long autoIntLong20() { 20; }
+Word autoIntWord20() { 20; }
+Long autoIntLong12() { 12.nat.int; }
+
+// Nat ->
+Byte natByte20() { 20.nat.byte; }
+Int natInt20() { 20.nat.int; }
+Long natLong20() { 20.nat.long; }
+Word natWord20() { 20.nat.word; }
+Word autoNatWord12() { 12.nat; }
+
+// Byte ->
+Int byteInt20() { 20.byte.int; }
+Nat byteNat20() { 20.byte.nat; }
+Long byteLong20() { 20.byte.long; }
+Word byteWord20() { 20.byte.word; }
+Nat autoByteNat20() { 20.byte; }
+Word autoByteWord20() { 20.byte; }
+
+// Long ->
+Byte longByte20() { 20.long.byte; }
+Int longInt20() { 20.long.int; }
+Nat longNat20() { 20.long.nat; }
+Word longWord20() { 20.long.word; }
+
+// Word ->
+Byte wordByte20() { 20.word.byte; }
+Int wordInt20() { 20.word.int; }
+Nat wordNat20() { 20.word.nat; }
+Long wordLong20() { 20.word.long; }

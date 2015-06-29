@@ -407,6 +407,14 @@ namespace code {
 			} else if (sFrom == 4 && sTo == 1) {
 				if (!srcEax)
 					mov(to, p, code::mov(eax, instr.src()));
+			} else if (sFrom == 8 && sTo == 8) {
+				if (!srcEax) {
+					mov(to, p, code::mov(eax, low32(instr.src())));
+					mov(to, p, code::mov(edx, high32(instr.src())));
+				}
+			} else if (sFrom == sTo) {
+				if (!srcEax)
+					mov(to, p, code::mov(eax, instr.src()));
 			} else {
 				assert(false, L"Unsupported icast mode: " + ::toS(instr));
 			}
@@ -433,6 +441,14 @@ namespace code {
 				if (!srcEax)
 					mov(to, p, code::mov(eax, low32(instr.src())));
 			} else if (sFrom == 4 && sTo == 1) {
+				if (!srcEax)
+					mov(to, p, code::mov(eax, instr.src()));
+			} else if (sFrom == 8 && sTo == 8) {
+				if (!srcEax) {
+					mov(to, p, code::mov(eax, low32(instr.src())));
+					mov(to, p, code::mov(edx, high32(instr.src())));
+				}
+			} else if (sFrom == sTo) {
 				if (!srcEax)
 					mov(to, p, code::mov(eax, instr.src()));
 			} else {

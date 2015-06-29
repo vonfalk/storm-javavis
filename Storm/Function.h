@@ -190,4 +190,6 @@ namespace storm {
 	Function *lazyFunction(Engine &e, Value result, const String &name,
 						const vector<Value> &params, Par<FnPtr<CodeGen *>> generate);
 
+	// Steal and add the autocast flag.
+	inline Auto<Function> stealAutoCast(Function *ptr) { ptr->flags |= namedAutoCast; return Auto<Function>(ptr); }
 }

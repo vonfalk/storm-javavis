@@ -558,6 +558,10 @@
 				RelativePath=".\Lib\Long.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\Number.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -942,6 +946,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Long.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Number.h"
 				>
 			</File>
 		</Filter>

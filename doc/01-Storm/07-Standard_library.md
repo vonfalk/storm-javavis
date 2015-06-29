@@ -21,12 +21,12 @@ Storm provides a few basic numeric types:
 * Byte - unsigned 8-bit integer.
 * Int - signed 32-bit integer.
 * Nat - unsigned 32-bit integer.
+* Long - signed 64-bit integer.
+* Word - unsigned 64-bit integer.
 * Float - single-precision floating point number (32-bit).
 
 More types are planned (changes may be introduced):
 
-* Long - signed 64-bit integer.
-* Word - unsigned 64-bit integer.
 * Double - double-precision floating point number (64-bit).
 
 All types in storm have a fixed size across all platforms. Values may still be promoted during

@@ -87,6 +87,10 @@ namespace storm {
 		if (to.type == floatType(e))
 			// We allow up to 16 bits to automatically cast.
 			return (intValue & 0xFFFF) == intValue;
+		if (to.type == longType(e))
+			return true;
+		if (to.type == wordType(e))
+			return true;
 
 		return false;
 	}
@@ -147,6 +151,10 @@ namespace storm {
 			s->to << mov(to.var(), byteConst(byte(intValue)));
 		else if (t == floatType(e))
 			s->to << mov(to.var(), floatConst(float(intValue)));
+		else if (t == longType(e))
+			s->to << mov(to.var(), longConst(Long(intValue)));
+		else if (t == wordType(e))
+			s->to << mov(to.var(), wordConst(Word(intValue)));
 		else
 			assert(false, L"Unknown type for an integer constant.");
 

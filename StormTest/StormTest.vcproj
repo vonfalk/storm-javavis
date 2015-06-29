@@ -274,6 +274,10 @@
 				RelativePath=".\FloatTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\EvalTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

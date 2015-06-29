@@ -99,7 +99,7 @@ namespace storm {
 			nat pos;
 		};
 
-		// Iterators:
+		// Iterators: Note: do not attempt to lazy-load this NameSet!
 		iterator begin() const;
 		iterator end() const;
 		iterator begin(const String &name) const;

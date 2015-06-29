@@ -31,6 +31,8 @@ Move Memorymanager to Code?
 
 Move Code/Codecall somewhere else?
 
+Comparision operators for Float!
+
 Some kind of versioning scheme when connecting DLLS and the Storm executable is required.
 
 Rename Shared/ to Lib/ ?

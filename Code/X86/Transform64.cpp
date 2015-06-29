@@ -23,6 +23,10 @@ namespace code {
 			TFM64(xor),
 			TFM64(cmp),
 			TFM64(mul),
+			TFM64(idiv),
+			TFM64(udiv),
+			TFM64(imod),
+			TFM64(umod),
 
 			TFM64(push),
 			TFM64(pop),
