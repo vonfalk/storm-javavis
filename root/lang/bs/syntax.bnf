@@ -134,14 +134,17 @@ Unit => timeUnit(u) : "s" u;
 Unit => timeUnit(u) : "ms" u;
 Unit => timeUnit(u) : "us" u;
 
+// Constants (for use along with Units).
+Const => intConstant(nr) : "[0-9]+" nr;
+Const => intConstant(nr) : "\-[0-9]+" nr;
+Const => floatConstant(nr) : "\-?[0-9]+\.[0-9]+" nr;
+Const => strConstant(str) : "\"" - ( StrContent ) str - "\"";
+Const => trueConstant()  :[20] "true";
+Const => falseConstant() :[20] "false";
+
 // Atoms, for example constants and variables/function calls.
 Atom(Block block);
-Atom => intConstant(nr) : "[0-9]+" nr;
-Atom => intConstant(nr) : "\-[0-9]+" nr;
-Atom => floatConstant(nr) : "\-?[0-9]+\.[0-9]+" nr;
-Atom => strConstant(str) : "\"" - ( StrContent ) str - "\"";
-Atom => trueConstant()  :[20] "true";
-Atom => falseConstant() :[20] "false";
+Atom => v : Const v;
 Atom => namedExpr(block, name, params) : Type name, FnValues(block) params;
 Atom => namedExpr(block, name, dotExpr, params) :[10] Atom(block) dotExpr, "\.", Name name, FnValues(block) params;
 Atom => spawnExpr(expr) :[20] "spawn ", Expr(block) expr;
@@ -157,7 +160,7 @@ Atom => ArrayInit(block, list) : "\[", ArrayInitList(block) list, "\]";
 Atom => FnPtr(block, name, params) :[20] "&", Type name, FnTypes params;
 Atom => strongFnPtr(block, dotExpr, name, params) :[20] "&", Atom(block) dotExpr, "\.", Name name, FnTypes params;
 Atom => weakFnPtr(block, dotExpr, name, params) :[20] "&", Atom(block) dotExpr, "\->", Name name, FnTypes params;
-Atom => unit(block, value, unit) : Atom(block) value, Unit unit;
+Atom => unit(block, value, unit) : Const value, Unit unit;
 
 // Temporary, to turn a value of type T into Maybe<T>, this should be done automatically in the future.
 Atom => asMaybe(block, expr) : "?", Atom(block) expr;
