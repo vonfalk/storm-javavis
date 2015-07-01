@@ -311,6 +311,10 @@ namespace code {
 		return create(op::fdivp);
 	}
 
+	Instruction fcompp() {
+		return create(op::fcompp);
+	}
+
 	Instruction fwait() {
 		return create(op::fwait);
 	}

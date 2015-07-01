@@ -44,6 +44,7 @@ namespace code {
 			fsubp,
 			fmulp,
 			fdivp,
+			fcompp,
 			fwait,
 			retFloat,
 

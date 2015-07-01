@@ -120,6 +120,7 @@ namespace code {
 	Instruction fsubp();
 	Instruction fmulp();
 	Instruction fdivp();
+	Instruction fcompp();
 	Instruction fwait();
 
 	// Special return for the float stored in the register 'eax' 'rax' or similar.

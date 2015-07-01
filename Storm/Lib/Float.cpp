@@ -61,6 +61,17 @@ namespace storm {
 		p.state->to << fistp(p.result->location(p.state).var());
 	}
 
+	template <CondFlag f>
+	static void floatCmp(InlinedParams p) {
+		if (p.result->needed()) {
+			code::Value result = p.result->location(p.state).var();
+			p.state->to << fld(p.params[1]);
+			p.state->to << fld(p.params[0]);
+			p.state->to << fcompp();
+			p.state->to << setCond(result, f);
+		}
+	}
+
 	FloatType::FloatType() : Type(L"Float", typeValue | typeFinal, Size::sFloat, null) {}
 
 	bool FloatType::loadAll() {
@@ -78,6 +89,13 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"-", vv, simpleFn(&floatSub))));
 		add(steal(inlinedFunction(engine, Value(this), L"*", vv, simpleFn(&floatMul))));
 		add(steal(inlinedFunction(engine, Value(this), L"/", vv, simpleFn(&floatDiv))));
+
+		add(steal(inlinedFunction(engine, b, L">", vv, simpleFn(&floatCmp<ifFAbove>))));
+		add(steal(inlinedFunction(engine, b, L">=", vv, simpleFn(&floatCmp<ifFAboveEqual>))));
+		add(steal(inlinedFunction(engine, b, L"<", vv, simpleFn(&floatCmp<ifFBelow>))));
+		add(steal(inlinedFunction(engine, b, L"<=", vv, simpleFn(&floatCmp<ifFBelowEqual>))));
+		add(steal(inlinedFunction(engine, b, L"==", vv, simpleFn(&floatCmp<ifEqual>))));
+		add(steal(inlinedFunction(engine, b, L"!=", vv, simpleFn(&floatCmp<ifNotEqual>))));
 
 		add(steal(inlinedFunction(engine, Value(intType(engine)), L"int", v, simpleFn(&floatToInt))));
 

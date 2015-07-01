@@ -33,6 +33,14 @@ namespace code {
 			return L"greater/equal";
 		case ifGreater:
 			return L"greater";
+		case ifFBelow:
+			return L"ifFBelow";
+		case ifFBelowEqual:
+			return L"ifFBelowEqual";
+		case ifFAboveEqual:
+			return L"ifFAboveEqual";
+		case ifFAbove:
+			return L"ifFAbove";
 		}
 
 		TODO(L"Implement!");
@@ -70,6 +78,14 @@ namespace code {
 			return ifLess;
 		case ifGreater:
 			return ifLessEqual;
+		case ifFBelow:
+			return ifFAboveEqual;
+		case ifFBelowEqual:
+			return ifFAbove;
+		case ifFAboveEqual:
+			return ifFBelow;
+		case ifFAbove:
+			ifFBelowEqual;
 		}
 
 		TODO(L"Implement!");

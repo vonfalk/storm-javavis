@@ -196,8 +196,13 @@ namespace storm {
 		}
 
 		Auto<ActualBase> result = transform(env, node, p, pos);
-		if (ActualObject *o = as<ActualObject>(result.borrow()))
-			return o->v;
+		if (ActualObject *o = as<ActualObject>(result.borrow())) {
+			Auto<Object> r = o->v;
+			if (pos)
+				if (SObject *s = as<SObject>(r.borrow()))
+					s->pos = *pos;
+			return r;
+		}
 
 		throw SyntaxTypeError(SrcPos(), L"The root rule has to return an Object.");
 	}

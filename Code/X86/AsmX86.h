@@ -42,6 +42,7 @@ namespace code {
 		void fsubp(Output &to, Params p, const Instruction &instr);
 		void fmulp(Output &to, Params p, const Instruction &instr);
 		void fdivp(Output &to, Params p, const Instruction &instr);
+		void fcompp(Output &to, Params p, const Instruction &instr);
 		void fwait(Output &to, Params p, const Instruction &instr);
 
 		void dat(Output &to, Params p, const Instruction &instr);

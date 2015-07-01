@@ -138,12 +138,16 @@ namespace code {
 			case ifNotEqual:
 				return 0x5;
 			case ifBelow:
+			case ifFBelow:
 				return 0x2;
 			case ifBelowEqual:
+			case ifFBelowEqual:
 				return 0x6;
 			case ifAboveEqual:
+			case ifFAboveEqual:
 				return 0x3;
 			case ifAbove:
+			case ifFAbove:
 				return 0x7;
 			case ifLess:
 				return 0xC;
@@ -520,6 +524,16 @@ namespace code {
 		void fdivp(Output &to, Params p, const Instruction &instr) {
 			to.putByte(0xDE);
 			to.putByte(0xF9);
+		}
+
+		void fcompp(Output &to, Params p, const Instruction &instr) {
+			// fcomip ST1
+			to.putByte(0xDF);
+			to.putByte(0xF0 + 1);
+
+			// fstp ST0 (effectively only a pop)
+			to.putByte(0xDD);
+			to.putByte(0xD8 + 0);
 		}
 
 		void fwait(Output &to, Params p, const Instruction &instr) {

@@ -19,6 +19,15 @@ int64 findResult(const String &name) {
 	return r;
 }
 
+bool findBoolResult(const String &name) {
+	wchar last = name[name.size() - 1];
+	if (last == 'T')
+		return true;
+	if (last == 'F')
+		return false;
+	throw TestError(L"Tests returning booleans must end with either T or F!");
+}
+
 BEGIN_TEST(EvalTest) {
 	Engine &e = *gEngine;
 	Package *pkg = e.package(L"test.eval");
@@ -32,6 +41,12 @@ BEGIN_TEST(EvalTest) {
 		Auto<Function> fn = i->as<Function>();
 		if (!fn)
 			continue;
+
+		if (fn->result == value<Bool>(e)) {
+			bool b = findBoolResult(fn->name);
+			CHECK_EQ_TITLE(fn->call<Bool>(), b, fn->identifier());
+			continue;
+		}
 
 		int64 nr = findResult(fn->name);
 		if (fn->result == value<Byte>(e)) {

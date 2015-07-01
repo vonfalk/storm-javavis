@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "OpCode.h"
 
+#include "OpTable.h"
 #include "Utils/HashMap.h"
 
 using namespace code::op;
@@ -9,12 +10,7 @@ using namespace code::op;
 
 namespace code {
 
-	struct OpDesc {
-		OpCode opCode;
-		const wchar_t *name;
-	};
-
-	static OpDesc descs[] = {
+	static OpEntry<const wchar_t *> descs[] = {
 		OP_CODE(mov),
 		OP_CODE(lea),
 		OP_CODE(push),
@@ -51,6 +47,7 @@ namespace code {
 		OP_CODE(fsubp),
 		OP_CODE(fmulp),
 		OP_CODE(fdivp),
+		OP_CODE(fcompp),
 		OP_CODE(fwait),
 		OP_CODE(retFloat),
 		OP_CODE(dat),
@@ -64,17 +61,9 @@ namespace code {
 	};
 
 	const wchar_t *name(OpCode opCode) {
-		static bool initialized = false;
-		static const wchar_t *opNames[op::numOpCodes] = {};
+		static OpTable<const wchar_t *> names(descs, ARRAY_SIZE(descs));
 
-		if (!initialized) {
-			for (nat i = 0; i < ARRAY_SIZE(descs); i++) {
-				opNames[descs[i].opCode] = descs[i].name;
-			}
-		}
-
-		const wchar_t *found = opNames[opCode];
-		assert(found);
+		const wchar_t *found = names[opCode];
 		if (!found)
 			found = L"INVALID";
 		return found;

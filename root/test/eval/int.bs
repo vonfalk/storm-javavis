@@ -2,81 +2,162 @@
 // This should be replaced with real tests inside Storm, whenever we implement a proper test syntax.
 
 // Int
-Int const20() { 20; }
-Int add12() { 10 + 2; }
-Int sub5() { 10 - 5; }
-Int subN5() { 5 - 10; }
-Int mul8() { 2 * 4; }
-Int mulN8() { (0-2) * 4; }
-Int div8() { 16 / 2; }
-Int mod8() { 18 % 10; }
-Int inc10() { Int i = 5; i += 5; i; }
-Int dec10() { Int i = 15; i -= 5; i; }
-Int inc12() { Int i = 10; i++; ++i; }
-Int inc11() { Int i = 10; ++i; i++; }
-Int dec8() { Int i = 10; i--; --i; }
-Int dec9() { Int i = 10; --i; i--; }
-Int assign10() { Int i = 10; Int j = 5; j = i; j; }
+Int iConst20() { 20; }
+Int iAdd12() { 10 + 2; }
+Int iSub5() { 10 - 5; }
+Int iSubN5() { 5 - 10; }
+Int iMul8() { 2 * 4; }
+Int iMulN8() { (0-2) * 4; }
+Int iDiv8() { 16 / 2; }
+Int iMod8() { 18 % 10; }
+Int iInc10() { Int i = 5; i += 5; i; }
+Int iDec10() { Int i = 15; i -= 5; i; }
+Int iInc12() { Int i = 10; i++; ++i; }
+Int iInc11() { Int i = 10; ++i; i++; }
+Int iDec8() { Int i = 10; i--; --i; }
+Int iDec9() { Int i = 10; --i; i--; }
+Int iAssign10() { Int i = 10; Int j = 5; j = i; j; }
+Bool iLessF() { 20 < 10; }
+Bool iLessT() { 20 < 21; }
+Bool iLessEqF() { 20 <= 19; }
+Bool iLessEqT() { 20 <= 20; }
+Bool iGreaterF() { 20 > 30; }
+Bool iGreaterT() { 20 > 10; }
+Bool iGreaterEqF() { 20 >= 21; }
+Bool iGreaterEqT() { 20 >= 20; }
+Bool iEqF() { 20 == 22; }
+Bool iEqT() { 20 == 20; }
+Bool iNeqF() { 20 != 20; }
+Bool iNeqT() { 20 != 22; }
 
 // Nat
-Nat const21() { 21; }
-Nat add22() { 20.nat + 2.nat; }
-Nat sub10() { 15.nat - 5.nat; }
-Nat mul10() { 2.nat * 5.nat; }
-Nat div6() { 12.nat / 2.nat; }
-Nat mod2() { 12.nat % 10.nat; }
-Nat inc1() { Nat i = 0; i += 1; i; }
-Nat dec1() { Nat i = 6; i -= 5; i; }
-Nat inc8() { Nat i = 6; i++; ++i; }
-Nat inc7() { Nat i = 6; ++i; i++; }
-Nat dec4() { Nat i = 6; i--; --i; }
-Nat dec5() { Nat i = 6; --i; i--; }
-Nat assign12() { Nat i = 12; Nat j = 5; j = i; j; }
+Nat nConst21() { 21; }
+Nat nAdd22() { 20.nat + 2.nat; }
+Nat nSub10() { 15.nat - 5.nat; }
+Nat nMul10() { 2.nat * 5.nat; }
+Nat nDiv6() { 12.nat / 2.nat; }
+Nat nMod2() { 12.nat % 10.nat; }
+Nat nInc1() { Nat i = 0; i += 1; i; }
+Nat nDec1() { Nat i = 6; i -= 5; i; }
+Nat nInc8() { Nat i = 6; i++; ++i; }
+Nat nInc7() { Nat i = 6; ++i; i++; }
+Nat nDec4() { Nat i = 6; i--; --i; }
+Nat nDec5() { Nat i = 6; --i; i--; }
+Nat nAssign12() { Nat i = 12; Nat j = 5; j = i; j; }
+Bool nLessF() { 20.nat < 10.nat; }
+Bool nLessT() { 20.nat < 21.nat; }
+Bool nLessEqF() { 20.nat <= 19.nat; }
+Bool nLessEqT() { 20.nat <= 20.nat; }
+Bool nGreaterF() { 20.nat > 30.nat; }
+Bool nGreaterT() { 20.nat > 10.nat; }
+Bool nGreaterEqF() { 20.nat >= 21.nat; }
+Bool nGreaterEqT() { 20.nat >= 20.nat; }
+Bool nEqF() { 20.nat == 22.nat; }
+Bool nEqT() { 20.nat == 20.nat; }
+Bool nNeqF() { 20.nat != 20.nat; }
+Bool nNeqT() { 20.nat != 22.nat; }
 
 // Byte
-Byte const22() { 22; }
-Byte add23() { 21.byte + 2.byte; }
-Byte sub11() { 15.byte - 4.byte; }
-// Byte mul11() { 2.byte * 5.byte; }
-// Byte div7() { 12.byte / 2.byte; }
-// Byte mod3() { 12.byte % 10.byte; }
-Byte inc2() { Byte i = 0; i += 2; i; }
-Byte dec2() { Byte i = 6; i -= 4; i; }
-Byte inc18() { Byte i = 16; i++; ++i; }
-Byte inc17() { Byte i = 16; ++i; i++; }
-Byte dec14() { Byte i = 16; i--; --i; }
-Byte dec15() { Byte i = 16; --i; i--; }
-Byte assign13() { Byte i = 13; Byte j = 5; j = i; j; }
+Byte bConst22() { 22; }
+Byte bAdd23() { 21.byte + 2.byte; }
+Byte bSub11() { 15.byte - 4.byte; }
+// Byte bMul11() { 2.byte * 5.byte; }
+// Byte bDiv7() { 12.byte / 2.byte; }
+// Byte bMod3() { 12.byte % 10.byte; }
+Byte bInc2() { Byte i = 0; i += 2; i; }
+Byte bDec2() { Byte i = 6; i -= 4; i; }
+Byte bInc18() { Byte i = 16; i++; ++i; }
+Byte bInc17() { Byte i = 16; ++i; i++; }
+Byte bDec14() { Byte i = 16; i--; --i; }
+Byte bDec15() { Byte i = 16; --i; i--; }
+Byte bAssign13() { Byte i = 13; Byte j = 5; j = i; j; }
+Bool bLessF() { 20.byte < 10.byte; }
+Bool bLessT() { 20.byte < 21.byte; }
+Bool bLessEqF() { 20.byte <= 19.byte; }
+Bool bLessEqT() { 20.byte <= 20.byte; }
+Bool bGreaterF() { 20.byte > 30.byte; }
+Bool bGreaterT() { 20.byte > 10.byte; }
+Bool bGreaterEqF() { 20.byte >= 21.byte; }
+Bool bGreaterEqT() { 20.byte >= 20.byte; }
+Bool bEqF() { 20.byte == 22.byte; }
+Bool bEqT() { 20.byte == 20.byte; }
+Bool bNeqF() { 20.byte != 20.byte; }
+Bool bNeqT() { 20.byte != 22.byte; }
 
 // Long
-Long const31() { 31; }
-Long add32() { 30.long + 2.long; }
-Long sub20() { 25.long - 5.long; }
-Long mul20() { 4.long * 5.long; }
-Long div60() { 120.long / 2.long; }
-Long mod20() { 120.long % 100.long; }
-Long inc14() { Long i = 10; i += 4; i; }
-Long dec16() { Long i = 18; i -= 2; i; }
-Long inc28() { Long i = 26; i++; ++i; }
-Long inc27() { Long i = 26; ++i; i++; }
-Long dec24() { Long i = 26; i--; --i; }
-Long dec25() { Long i = 26; --i; i--; }
-Long assign22() { Long i = 22; Long j = 5; j = i; j; }
+Long lConst31() { 31; }
+Long lAdd32() { 30.long + 2.long; }
+Long lSub20() { 25.long - 5.long; }
+Long lMul20() { 4.long * 5.long; }
+Long lDiv60() { 120.long / 2.long; }
+Long lMod20() { 120.long % 100.long; }
+Long lInc14() { Long i = 10; i += 4; i; }
+Long lDec16() { Long i = 18; i -= 2; i; }
+Long lInc28() { Long i = 26; i++; ++i; }
+Long lInc27() { Long i = 26; ++i; i++; }
+Long lDec24() { Long i = 26; i--; --i; }
+Long lDec25() { Long i = 26; --i; i--; }
+Long lAssign22() { Long i = 22; Long j = 5; j = i; j; }
+Bool lLessF() { 20.long < 10.long; }
+Bool lLessT() { 20.long < 21.long; }
+Bool lLessEqF() { 20.long <= 19.long; }
+Bool lLessEqT() { 20.long <= 20.long; }
+Bool lGreaterF() { 20.long > 30.long; }
+Bool lGreaterT() { 20.long > 10.long; }
+Bool lGreaterEqF() { 20.long >= 21.long; }
+Bool lGreaterEqT() { 20.long >= 20.long; }
+Bool lEqF() { 20.long == 22.long; }
+Bool lEqT() { 20.long == 20.long; }
+Bool lNeqF() { 20.long != 20.long; }
+Bool lNeqT() { 20.long != 22.long; }
 
 // Word
-Word const131() { 131; }
-Word add132() { 130.word + 2.word; }
-Word sub120() { 125.word - 5.word; }
-Word mul120() { 24.word * 5.word; }
-Word div160() { 320.word / 2.word; }
-Word mod120() { 1120.word % 1000.word; }
-Word inc114() { Word i = 110; i += 4; i; }
-Word dec116() { Word i = 118; i -= 2; i; }
-Word inc128() { Word i = 126; i++; ++i; }
-Word inc127() { Word i = 126; ++i; i++; }
-Word dec124() { Word i = 126; i--; --i; }
-Word dec125() { Word i = 126; --i; i--; }
-Word assign122() { Word i = 122; Word j = 5; j = i; j; }
+Word wConst131() { 131; }
+Word wAdd132() { 130.word + 2.word; }
+Word wSub120() { 125.word - 5.word; }
+Word wMul120() { 24.word * 5.word; }
+Word wDiv160() { 320.word / 2.word; }
+Word wMod120() { 1120.word % 1000.word; }
+Word wInc114() { Word i = 110; i += 4; i; }
+Word wDec116() { Word i = 118; i -= 2; i; }
+Word wInc128() { Word i = 126; i++; ++i; }
+Word wInc127() { Word i = 126; ++i; i++; }
+Word wDec124() { Word i = 126; i--; --i; }
+Word wDec125() { Word i = 126; --i; i--; }
+Word wAssign122() { Word i = 122; Word j = 5; j = i; j; }
+Bool wLessF() { 20.word < 10.word; }
+Bool wLessT() { 20.word < 21.word; }
+Bool wLessEqF() { 20.word <= 19.word; }
+Bool wLessEqT() { 20.word <= 20.word; }
+Bool wGreaterF() { 20.word > 30.word; }
+Bool wGreaterT() { 20.word > 10.word; }
+Bool wGreaterEqF() { 20.word >= 21.word; }
+Bool wGreaterEqT() { 20.word >= 20.word; }
+Bool wEqF() { 20.word == 22.word; }
+Bool wEqT() { 20.word == 20.word; }
+Bool wNeqF() { 20.word != 20.word; }
+Bool wNeqT() { 20.word != 22.word; }
+
+// Float
+Float fConst120() { 120; }
+Float fConst121() { 121.0; }
+Float fAdd124() { 123.5 + 0.5; }
+Float fSub100() { 120.5 - 20.5; }
+Float fMul20() { 8.0 * 2.5; }
+Float fDiv8() { 20.0 / 2.5; }
+Float fAssign20() { Float f = 20.0; Float g = 2.0; g = f; g; }
+Bool fLessF() { 20.0 < 10.0; }
+Bool fLessT() { 20.0 < 20.1; }
+Bool fLessEqF() { 20.0 <= 19.0; }
+Bool fLessEqT() { 20.0 <= 20.0; }
+Bool fGreaterF() { 20.0 > 30.0; }
+Bool fGreaterT() { 20.0 > 10.0; }
+Bool fGreaterEqF() { 20.0 >= 21.0; }
+Bool fGreaterEqT() { 20.0 >= 20.0; }
+Bool fEqF() { 20.0 == 20.1; }
+Bool fEqT() { 20.0 == 20.0; }
+Bool fNeqF() { 20.0 != 20.0; }
+Bool fNeqT() { 20.0 != 20.1; }
 
 // Conversion tests.
 // Int ->

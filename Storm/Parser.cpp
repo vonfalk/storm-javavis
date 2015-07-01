@@ -483,7 +483,7 @@ namespace storm {
 			return null;
 
 		try {
-			Auto<Object> result = storm::transform(engine(), *syntax, *root, params);
+			Auto<Object> result = storm::transform(engine(), *syntax, *root, params, &srcPos);
 			delete root;
 			return result.ret();
 		} catch (...) {

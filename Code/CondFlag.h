@@ -25,6 +25,12 @@ namespace code {
 		ifLessEqual,
 		ifGreaterEqual,
 		ifGreater,
+
+		// Float comparision.
+		ifFBelow,
+		ifFBelowEqual,
+		ifFAboveEqual,
+		ifFAbove,
 	};
 
 	// Get the string name.

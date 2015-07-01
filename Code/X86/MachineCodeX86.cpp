@@ -59,6 +59,7 @@ namespace code {
 			OUTPUT(fsubp),
 			OUTPUT(fmulp),
 			OUTPUT(fdivp),
+			OUTPUT(fcompp),
 			OUTPUT(fwait),
 
 			OUTPUT(dat),
