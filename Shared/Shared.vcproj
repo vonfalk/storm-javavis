@@ -278,6 +278,14 @@
 				RelativePath=".\Io\LazyMemStream.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Geometry\Vector.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Transform.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -446,6 +454,14 @@
 			</File>
 			<File
 				RelativePath=".\Io\LazyMemStream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Vector.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Transform.h"
 				>
 			</File>
 		</Filter>
