@@ -59,4 +59,12 @@ namespace stormgui {
 		target->FillEllipse(e, style->brush(owner, rect.size()));
 	}
 
+	void Graphics::draw(Par<Bitmap> bitmap, Point topLeft) {
+		draw(bitmap, Rect(topLeft, topLeft + bitmap->size()));
+	}
+
+	void Graphics::draw(Par<Bitmap> bitmap, Rect rect) {
+		target->DrawBitmap(bitmap->bitmap(owner), &dx(rect), 1, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
+	}
+
 }

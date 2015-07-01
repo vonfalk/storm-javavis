@@ -530,6 +530,10 @@
 				RelativePath=".\TypeToS.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Url.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -886,6 +890,10 @@
 			</File>
 			<File
 				RelativePath=".\TypeToS.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Url.h"
 				>
 			</File>
 		</Filter>

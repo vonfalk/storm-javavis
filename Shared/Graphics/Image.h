@@ -23,6 +23,11 @@ namespace storm {
 		// Destroy.
 		~Image();
 
+		// Get size.
+		inline Nat STORM_FN width() { return w; }
+		inline Nat STORM_FN height() { return h; }
+		geometry::Size STORM_FN size();
+
 		// TODO: Replace at leas one of these with foo[pt] = color;
 		// Get pixel at point.
 		Color STORM_FN get(Nat x, Nat y);
@@ -34,7 +39,7 @@ namespace storm {
 
 		// Raw buffer information:
 
-		// Stride, difference between each row.
+		// Stride, difference between each row (in bytes).
 		nat stride() const;
 
 		// Size of buffer.

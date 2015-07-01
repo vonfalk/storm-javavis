@@ -16,7 +16,8 @@ then
 fi
 
 7z a Release/storm.zip ./Release/StormMain.exe readme.txt Storm.txt > /dev/null
-find root/ -name "*.bs" -or -name "*.bnf" -or -name "*.txt" | xargs --delimiter='\n' 7z a Release/storm.zip > /dev/null
+find root/ -name "*.bs" -or -name "*.bnf" -or -name "*.txt" -or -name "*.png" \
+  | xargs --delimiter='\n' 7z a Release/storm.zip > /dev/null
 
 # Add dlls, we need to rename them first...
 IFS=$'\n'

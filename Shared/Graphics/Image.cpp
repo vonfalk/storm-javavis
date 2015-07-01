@@ -37,6 +37,10 @@ namespace storm {
 		delete []data;
 	}
 
+	geometry::Size Image::size() {
+		return geometry::Size(Float(w), Float(h));
+	}
+
 	nat Image::offset(nat x, nat y) {
 		return (y * w + x) * 4;
 	}

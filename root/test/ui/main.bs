@@ -1,5 +1,6 @@
 use ui;
 use core:geometry;
+use core:io;
 use graphics;
 use core:debug;
 
@@ -8,12 +9,17 @@ class MainPainter extends Painter {
 	SolidBrush brush2;
 	LinearGradient brush3;
 	Moment started;
+	Bitmap bitmap;
 
 	ctor() {
+		Url f = rootUrl / "res" / "ui_alpha.png";
+		Image img = graphics:loadImage(f);
+
 		init() {
 			brush = red;
 			brush2 = blue;
 			brush3([GradientStop(0, red), GradientStop(1, green)], Point(0, 0), Point(1, 1));
+			bitmap = img;
 		}
 	}
 
@@ -30,7 +36,19 @@ class MainPainter extends Painter {
 		Float y = (now - started).inMs.float / 50.0;
 		g.line(Point(0, y), Point(size.w, y), brush);
 
+		g.draw(bitmap, Point(y, y));
+
 		true;
+	}
+}
+
+class PaintWin extends Frame {
+	ctor() {
+		init("Graphics!") {}
+		size(Size(400, 400));
+		painter(MainPainter());
+
+		create();
 	}
 }
 
@@ -54,8 +72,6 @@ class MainWin extends Frame {
 
 		btn.onClick = &this->btnClicked(Button);
 		add(btn);
-
-		painter(MainPainter());
 
 		create();
 	}
@@ -87,14 +103,14 @@ class MainWin extends Frame {
 
 thread Waiter;
 
-void closeLater(MainWin w) on Waiter {
+void closeLater(Frame w) on Waiter {
 	dbgSleep(6000);
 	w.close;
 }
 
 void main() {
-	loadImage(core:io:parsePath("C:/Users/Filip/Pictures/Roligt/Random/1ZqBDvT.jpg"));
-	MainWin win;
+	// MainWin win;
+	PaintWin win;
 	spawn closeLater(win);
 	win.waitForClose;
 }

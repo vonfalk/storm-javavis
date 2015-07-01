@@ -1,5 +1,6 @@
 #pragma once
 #include "Brush.h"
+#include "Bitmap.h"
 
 namespace stormgui {
 	class Painter;
@@ -51,6 +52,10 @@ namespace stormgui {
 
 		// Fill an oval.
 		void STORM_FN fillOval(Rect rect, Par<Brush> brush);
+
+		// Draw a bitmap.
+		void STORM_FN draw(Par<Bitmap> bitmap, Point topLeft);
+		void STORM_FN draw(Par<Bitmap> bitmap, Rect rect);
 
 	private:
 		// Render target.

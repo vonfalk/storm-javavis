@@ -16,24 +16,23 @@ namespace graphics {
 	// check the header in the stream
 	// zeroTerm - Zero-terminated string in the file?
 	bool checkHeader(Par<storm::IStream> file, char *header, bool zeroTerm) {
-		bool result = true;
-
 		nat len = strlen(header);
 		if (zeroTerm)
 			len++;
 
 		Buffer buffer(len);
 		nat r = file->peek(buffer);
-		if (r != len)
+		if (r != len) {
 			return false;
+		}
 
-		for (nat i = 0; i < len; i++)
+		for (nat i = 0; i < len; i++) {
 			if (byte(buffer[i]) != byte(header[i])) {
-				PLN("Mismatch: " << toHex(buffer[i]) << ", " << toHex(header[i]));
 				return false;
 			}
+		}
 
-		return result;
+		return true;
 	}
 
 	Image *loadImage(Par<Url> file) {
@@ -45,7 +44,7 @@ namespace graphics {
 		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
 
 		Auto<Image> loaded;
-		const wchar *error = L"The file type was not recognized.";
+		const wchar *error = L"The image file type was not recognized.";
 
 		if (checkHeader(from, "\xff\xd8", false)) {
 			// JPEG file

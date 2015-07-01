@@ -141,6 +141,9 @@ namespace storm {
 		return c;
 	}
 
+	Url *Url::operator /(Par<Str> p) {
+		return push(p);
+	}
 
 	Url *Url::pushDir(const String &p) {
 		Auto<Str> z = CREATE(Str, engine(), p);
@@ -171,6 +174,10 @@ namespace storm {
 		simplifyInplace(c->parts);
 		c->flags = (flags & ~isDir) | (url->flags & isDir);
 		return c;
+	}
+
+	Url *Url::operator /(Par<Url> p) {
+		return push(p);
 	}
 
 	Url *Url::parent() const {

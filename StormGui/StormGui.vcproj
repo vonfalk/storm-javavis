@@ -287,6 +287,10 @@
 				RelativePath=".\Brush.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Bitmap.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -383,6 +387,10 @@
 			</File>
 			<File
 				RelativePath=".\ComPtr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Bitmap.h"
 				>
 			</File>
 		</Filter>

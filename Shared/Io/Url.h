@@ -56,10 +56,12 @@ namespace storm {
 
 		// Append another path to this one. The other one has to be a relative path.
 		Url *STORM_FN push(Par<Url> url);
+		Url *STORM_FN operator /(Par<Url> url);
 
 		// Append another part to this one.
 		Url *STORM_FN push(Par<Str> part);
 		Url *push(const String &part);
+		Url *STORM_FN operator /(Par<Str> url);
 
 		// Append another part to this one, making the resulting Url into a directory.
 		Url *STORM_FN pushDir(Par<Str> part);
