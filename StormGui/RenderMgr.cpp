@@ -59,6 +59,7 @@ namespace stormgui {
 		device = null;
 		giDevice = null;
 		giFactory = null;
+		writeFactory = null;
 
 		HRESULT h;
 
@@ -76,6 +77,10 @@ namespace stormgui {
 		if (FAILED(h = adapter->GetParent(__uuidof(IDXGIFactory), (void **)&giFactory)))
 			throwError(L"Failed to get the GI factory: ", h);
 		::release(adapter);
+
+		DWRITE_FACTORY_TYPE type = DWRITE_FACTORY_TYPE_SHARED;
+		if (FAILED(h = DWriteCreateFactory(type, __uuidof(IDWriteFactory), (IUnknown **)&writeFactory)))
+			throwError(L"Failed to initialize Direct Write: ", h);
 	}
 
 	RenderMgr::~RenderMgr() {
@@ -87,6 +92,7 @@ namespace stormgui {
 		::release(device);
 		::release(factory);
 		::release(giFactory);
+		::release(writeFactory);
 
 		CoUninitialize();
 	}

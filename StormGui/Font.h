@@ -54,6 +54,12 @@ namespace stormgui {
 		// Get a Win32 handle. Will be alive at least as long as this object.
 		HFONT handle();
 
+		// Get TextFormat for D2D. This class retains ownership over the returned object.
+		IDWriteTextFormat *textFormat();
+
+	protected:
+		virtual void output(wostream &to) const;
+
 	private:
 		// Shared data. Be careful with this!
 		FontData *shared;

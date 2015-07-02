@@ -115,7 +115,10 @@ namespace storm {
 	}
 
 	Str *toS(EnginePtr e, Float v) {
-		return CREATE(Str, e.v, ::toS(v));
+		const nat max = 20;
+		wchar buf[max + 1];
+		_snwprintf_s(buf, max, max, L"%f", v);
+		return CREATE(Str, e.v, buf);
 	}
 
 }

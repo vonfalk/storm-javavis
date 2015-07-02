@@ -1,6 +1,7 @@
 #pragma once
 #include "Brush.h"
 #include "Bitmap.h"
+#include "Font.h"
 
 namespace stormgui {
 	class Painter;
@@ -78,6 +79,9 @@ namespace stormgui {
 		void STORM_FN draw(Par<Bitmap> bitmap);
 		void STORM_FN draw(Par<Bitmap> bitmap, Point topLeft);
 		void STORM_FN draw(Par<Bitmap> bitmap, Rect rect);
+
+		// Draw text.
+		void STORM_FN text(Par<Str> text, Par<Font> font, Par<Brush> brush, Rect rect);
 
 	private:
 		// Render target.

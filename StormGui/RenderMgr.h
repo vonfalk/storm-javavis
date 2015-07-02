@@ -42,6 +42,9 @@ namespace stormgui {
 		// Notify that a new window wants continuous repaints.
 		void newContinuous();
 
+		// Get the DWrite factory object.
+		inline IDWriteFactory *dWrite() { return writeFactory; }
+
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
 
@@ -51,6 +54,7 @@ namespace stormgui {
 		// The D2D-factory.
 		ID2D1Factory *factory;
 		IDXGIFactory *giFactory;
+		IDWriteFactory *writeFactory;
 
 		// D3D device and dxgi device.
 		ID3D10Device1 *device;

@@ -29,6 +29,9 @@ using namespace storm::geometry;
 // D2D for rendering.
 #include <d2d1.h>
 
+// Direct Write for text rendering.
+#include <dwrite.h>
+
 // HRESULT to string.
 String toS(HRESULT r);
 

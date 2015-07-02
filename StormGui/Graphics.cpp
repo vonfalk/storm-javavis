@@ -119,4 +119,9 @@ namespace stormgui {
 		target->DrawBitmap(bitmap->bitmap(owner), &dx(rect), 1, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
 	}
 
+	void Graphics::text(Par<Str> text, Par<Font> font, Par<Brush> brush, Rect rect) {
+		ID2D1Brush *b = brush->brush(owner, rect.size());
+		target->DrawText(text->v.c_str(), text->v.size(), font->textFormat(), dx(rect), b);
+	}
+
 }

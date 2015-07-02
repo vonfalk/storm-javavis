@@ -10,6 +10,7 @@ class MainPainter extends Painter {
 	LinearGradient brush3;
 	Moment started;
 	Bitmap bitmap;
+	Font font;
 
 	ctor() {
 		Url f = rootUrl / "res" / "ui_alpha.png";
@@ -20,7 +21,10 @@ class MainPainter extends Painter {
 			brush2 = blue;
 			brush3([GradientStop(0, red), GradientStop(1, green)], Point(0, 0), Point(1, 1));
 			bitmap = img;
+			font = defaultFont;
 		}
+
+		font.height(font.height * 3);
 	}
 
 	Bool render(Size size, Graphics g) {
@@ -42,6 +46,9 @@ class MainPainter extends Painter {
 		g.push();
 		g.transform(translate(Point(y, y)) * rotate(45 deg));
 		g.draw(bitmap);
+		g.pop();
+
+		g.text("Hello World!", font, brush2, Rect(from, to));
 
 		true;
 	}

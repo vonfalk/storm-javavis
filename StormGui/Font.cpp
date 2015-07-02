@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Font.h"
+#include "RenderMgr.h"
 
 namespace stormgui {
 
@@ -13,6 +14,7 @@ namespace stormgui {
 		// Create.
 		FontData() : refs(1) {
 			hFont = (HFONT)INVALID_HANDLE_VALUE;
+			textFmt = null;
 		}
 
 		// Destroy.
@@ -51,10 +53,14 @@ namespace stormgui {
 			if (hFont != INVALID_HANDLE_VALUE)
 				DeleteObject(hFont);
 			hFont = (HFONT)INVALID_HANDLE_VALUE;
+			::release(textFmt);
 		}
 
 		// WIN32 font.
 		HFONT hFont;
+
+		// TextFormat.
+		IDWriteTextFormat *textFmt;
 
 		// Lock for modifying any members.
 		os::Lock lock;
@@ -83,7 +89,7 @@ namespace stormgui {
 
 	Font::Font(LOGFONT &f) {
 		fName = f.lfFaceName;
-		fHeight = (float)f.lfHeight;
+		fHeight = (float)abs(f.lfHeight);
 		fWeight = (int)f.lfWeight;
 		fItalic = f.lfItalic == TRUE;
 		fUnderline = f.lfUnderline == TRUE;
@@ -129,12 +135,24 @@ namespace stormgui {
 		shared = shared->invalidate();
 	}
 
+	void Font::output(wostream &to) const {
+		to << fName << L", " << fHeight << L" pt";
+		if (fWeight > FW_NORMAL)
+			to << L", bold";
+		if (fItalic)
+			to << L", italic";
+		if (fUnderline)
+			to << L", underline";
+		if (fStrikeOut)
+			to << L", strike out";
+	}
+
 	HFONT Font::handle() {
 		os::Lock::L z(shared->lock);
 		if (shared->hFont == INVALID_HANDLE_VALUE) {
 			LOGFONT lf;
 			zeroMem(lf);
-			lf.lfHeight = (LONG)fHeight;
+			lf.lfHeight = (LONG)-fHeight;
 			lf.lfWidth = 0;
 			lf.lfEscapement = 0;
 			lf.lfOrientation = 0;
@@ -151,6 +169,28 @@ namespace stormgui {
 			shared->hFont = CreateFontIndirect(&lf);
 		}
 		return shared->hFont;
+	}
+
+	IDWriteTextFormat *Font::textFormat() {
+		os::Lock::L z(shared->lock);
+		if (!shared->textFmt) {
+			Auto<RenderMgr> mgr = renderMgr(engine());
+			DWRITE_FONT_STYLE style = fItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
+			DWRITE_FONT_STRETCH stretch = DWRITE_FONT_STRETCH_NORMAL;
+			float dip = fHeight * 72.0f / 92.0f;
+			HRESULT r = mgr->dWrite()->CreateTextFormat(fName.c_str(),
+														NULL,
+														(DWRITE_FONT_WEIGHT)fWeight,
+														style,
+														stretch,
+														dip,
+														L"en-us",
+														&shared->textFmt);
+			if (FAILED(r)) {
+				WARNING(L"Failed to create font: " << ::toS(r));
+			}
+		}
+		return shared->textFmt;
 	}
 
 	Font *defaultFont(EnginePtr e) {

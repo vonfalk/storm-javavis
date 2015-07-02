@@ -133,6 +133,53 @@ namespace storm {
 		return this;
 	}
 
+	// 64-bit numbers does never need more than 21 digits, including a - sign.
+	static const nat maxDigits64 = 21;
+
+	StrBuf *StrBuf::add(Long i) {
+		ensure(pos + maxDigits64);
+
+		bool negative = i < 0;
+		if (i < 0)
+			buffer[pos++] = '-';
+
+		nat p = 0;
+		while (p < maxDigits64) {
+			Int last = i % 10;
+			// % of negative numbers is not defined by the standard...
+			if (last > 0 && negative)
+				last -= 10;
+			buffer[pos + p++] = wchar(abs(last) + '0');
+			i /= 10;
+			if (i == 0)
+				break;
+		}
+
+		reverse(buffer + pos, buffer + pos + p);
+		pos += p;
+
+		addRef();
+		return this;
+	}
+
+	StrBuf *StrBuf::add(Word i) {
+		ensure(pos + maxDigits64);
+
+		nat p = 0;
+		while (p < maxDigits64) {
+			buffer[pos + p++] = wchar((i % 10) + '0');
+			i /= 10;
+			if (i == 0)
+				break;
+		}
+
+		reverse(buffer + pos, buffer + pos + p);
+		pos += p;
+
+		addRef();
+		return this;
+	}
+
 	StrBuf *StrBuf::add(Byte i) {
 		return add(Nat(i));
 	}
@@ -140,7 +187,7 @@ namespace storm {
 	StrBuf *StrBuf::add(Float i) {
 		const nat max = 20;
 		ensure(pos + max);
-		_snwprintf_s(buffer + pos, max, max, L"%f", i);
+		pos += _snwprintf_s(buffer + pos, max, max, L"%f", i);
 
 		addRef();
 		return this;

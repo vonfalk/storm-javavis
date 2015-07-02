@@ -14,7 +14,7 @@ namespace storm {
 			STORM_VALUE;
 		public:
 			STORM_CTOR Size();
-			STORM_CAST_CTOR Size(Float wh);
+			STORM_CTOR Size(Float wh);
 			STORM_CTOR Size(Float w, Float h);
 
 			STORM_VAR Float w;

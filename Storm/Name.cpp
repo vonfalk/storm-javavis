@@ -68,7 +68,7 @@ namespace storm {
 			return capture(candidates[0]).ret();
 		} else {
 			std::wostringstream msg;
-			msg << L"Multiple possible matches for: " << *this << endl;
+			msg << L"Multiple possible matches for " << *this << L", all with badness " << best << endl;
 			for (nat i = 0; i < candidates.count(); i++) {
 				msg << L"Could be: " << candidates[i]->identifier() << endl;
 			}
