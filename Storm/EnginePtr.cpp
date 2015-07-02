@@ -23,9 +23,9 @@ namespace storm {
 			l << push(ptrA); // store the return value ptr once more.
 		}
 
-		l << call(fn, returnType.size());
+		l << call(fn, returnType.retVal());
 		l << add(ptrStack, natPtrConst(Size::sPtr * 2));
-		l << ret(returnType.size());
+		l << ret(returnType.retVal());
 
 		return l;
 	}

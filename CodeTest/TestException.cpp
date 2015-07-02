@@ -37,11 +37,11 @@ BEGIN_TEST(TestException) {
 	l << begin(myBlock);
 	l << mov(result, par);
 	l << add(result, intConst(4));
-	l << fnCall(ex, Size::sInt);
+	l << fnCall(ex, retVal(Size::sInt, false));
 	l << add(result, eax);
 	l << mov(eax, result);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary output(arena, l);
 
@@ -92,9 +92,9 @@ BEGIN_TEST(TestChainedException) {
 	l << mov(result, intConst(3));
 	l << mov(r2, intConst(2));
 	l << fnParam(result);
-	l << fnCall(Ref(innerRef), Size::sInt);
+	l << fnCall(Ref(innerRef), retVal(Size::sInt, false));
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary outer(arena, l);
 
@@ -123,7 +123,7 @@ BEGIN_TEST(TestNoException) {
 	l << add(var1, par2);
 	l << mov(eax, var1);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary output(arena, l);
 
@@ -148,10 +148,10 @@ BEGIN_TEST(TestRefException) {
 
 	l << prolog();
 	l << mov(v, intConst(103));
-	l << fnCall(Ref(throwEx), Size::sInt);
+	l << fnCall(Ref(throwEx), retVal(Size::sInt, false));
 	l << mov(v, eax);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary output(arena, l);
 
@@ -186,9 +186,9 @@ BEGIN_TEST(TestMultipleEx) {
 
 	l << prolog();
 	l << mov(v, intConst(103));
-	l << fnCall(Ref(throwEx), Size::sInt);
+	l << fnCall(Ref(throwEx), retVal(Size::sInt, false));
 	l << epilog();
-	l << ret(Size());
+	l << ret(retVoid());
 
 	Binary output(arena, l);
 	typedef void (*FnPtr)();
@@ -259,10 +259,10 @@ BEGIN_TEST(TestDtor) {
 	l << mov(eax, intRel(param, Offset::sInt * 2));
 	l << mov(intRel(var, Offset::sInt * 2), eax);
 
-	l << fnCall(error, Size());
+	l << fnCall(error, retVoid());
 
 	l << epilog();
-	l << ret(Size());
+	l << ret(retVoid());
 
 	Binary output(arena, l);
 	typedef void (*Fn)(Large);

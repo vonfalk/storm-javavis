@@ -128,7 +128,7 @@ namespace storm {
 		Label data = s->to.label();
 		s->to << fnParam(Str::stormType(e)->typeRef);
 		s->to << fnParam(data);
-		s->to << fnCall(e.fnRefs.createStrFn, Size::sPtr);
+		s->to << fnCall(e.fnRefs.createStrFn, retPtr());
 		VarInfo to = r->location(s);
 		s->to << mov(to.var(), ptrA);
 		to.created(s);

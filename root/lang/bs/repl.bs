@@ -185,7 +185,7 @@ class ReplCode on Compiler {
 		g.l << addRef(Operand(resultVar.v));
 		g.l << mov(Operand(ptrA), Operand(resultVar.v));
 		g.l << epilog();
-		g.l << ret(sizePtr);
+		g.l << ret(RetVal(sizePtr, false));
 
 		g;
 	}

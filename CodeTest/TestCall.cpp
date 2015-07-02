@@ -24,9 +24,9 @@ BEGIN_TEST(TestCall) {
 	l << prolog();
 	l << mov(v, intConst(20));
 	l << fnParam(v, copy);
-	l << fnCall(intFn, Size::sInt);
+	l << fnCall(intFn, retVal(Size::sInt, false));
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	// PVAR(l);
 	Binary b(arena, l);

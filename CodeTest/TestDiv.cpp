@@ -12,7 +12,7 @@ BEGIN_TEST(TestIDiv) {
 	l << idiv(p1, p2);
 	l << mov(eax, p1);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	typedef cpuInt (*F)(cpuInt, cpuInt);
@@ -35,7 +35,7 @@ BEGIN_TEST(TestUDiv) {
 	l << udiv(p1, p2);
 	l << mov(eax, p1);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	typedef cpuInt (*F)(cpuInt, cpuInt);
@@ -57,7 +57,7 @@ BEGIN_TEST(TestIMod) {
 	l << imod(p1, p2);
 	l << mov(eax, p1);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	typedef cpuInt (*F)(cpuInt, cpuInt);
@@ -80,7 +80,7 @@ BEGIN_TEST(TestUMod) {
 	l << umod(p1, p2);
 	l << mov(eax, p1);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	typedef cpuInt (*F)(cpuInt, cpuInt);

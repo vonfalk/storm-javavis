@@ -12,7 +12,7 @@ BEGIN_TEST(TestMul) {
 	l << mul(p1, p2);
 	l << mov(eax, p1);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	typedef cpuInt (*F)(cpuInt, cpuInt);

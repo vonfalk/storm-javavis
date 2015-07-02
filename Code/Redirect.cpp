@@ -44,7 +44,7 @@ namespace code {
 
 		if (param != Value())
 			l << fnParam(param);
-		l << fnCall(fn, Size::sPtr);
+		l << fnCall(fn, retPtr());
 
 		l << epilog(); // preserves ptrA
 		l << jmp(ptrA);

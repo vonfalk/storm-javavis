@@ -64,6 +64,8 @@ namespace code {
 			used = Registers();
 			break;
 
+		case op::callFloat:
+		case op::fnCallFloat:
 		case op::fnCall:
 		case op::call:
 			used = Registers();

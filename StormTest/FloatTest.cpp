@@ -4,6 +4,8 @@
 
 BEGIN_TEST(FloatTest) {
 
+	CHECK_EQ(runFn<Float>(L"test.bs.floatCall"), 33.0f);
+
 	CHECK_EQ(runFn<Float>(L"test.bs.floatParams", 10.2f, 1.0f), 10.2f);
 	CHECK_EQ(runFn<Float>(L"test.bs.floatAdd", 10.2f, 1.0f), 11.2f);
 	CHECK_EQ(runFn<Float>(L"test.bs.floatSub", 10.2f, 1.0f), 9.2f);

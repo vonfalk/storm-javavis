@@ -40,3 +40,9 @@ Float floatFuture() on Compiler {
 Int floatRound(Float v) {
 	v.int;
 }
+
+
+Float floatCall() {
+	Float v = core:debug:dbgFloat();
+	floatAdd(v, 10.0);
+}

@@ -104,7 +104,7 @@ namespace storm {
 		body->code(state, r);
 
 		l << epilog();
-		l << ret(Size());
+		l << ret(retVoid());
 
 		// PLN(identifier() << L": " << l);
 		return state.ret();
@@ -296,7 +296,7 @@ namespace storm {
 			s->to << mov(ptrA, dest);
 			s->to << add(ptrA, intPtrConst(v->offset()));
 			s->to << fnParam(ptrA);
-			s->to << fnCall(t.defaultCtor(), Size());
+			s->to << fnCall(t.defaultCtor(), retVoid());
 		} else if (t.isBuiltIn()) {
 			// Default value is already there.
 		} else {

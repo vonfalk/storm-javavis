@@ -76,6 +76,10 @@ namespace storm {
 		}
 	}
 
+	code::RetVal Value::retVal() const {
+		return code::retVal(size(), isFloat());
+	}
+
 	bool Value::returnInReg() const {
 		if (ref)
 			return true;

@@ -97,7 +97,7 @@ namespace storm {
 			to->to << fnParam(thisPtr.v.v);
 			to->to << fnParam(byteConst(strongThis ? 1 : 0));
 			to->to << fnParam(byteConst(memberFn ? 1 : 0));
-			to->to << fnCall(e.fnRefs.fnPtrCreate, Size::sPtr);
+			to->to << fnCall(e.fnRefs.fnPtrCreate, retPtr());
 			to->to << mov(z.v.v, ptrA);
 			z.created(to);
 		}

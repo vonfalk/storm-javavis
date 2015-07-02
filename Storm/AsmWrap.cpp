@@ -339,9 +339,26 @@ namespace storm {
 		return code::epilog();
 	}
 
-	wrap::Instruction wrap::ret(Size s) {
-		return code::ret(s.v);
+	wrap::Instruction wrap::call(Operand to, RetVal r) {
+		return code::call(to.v, r.v());
 	}
+
+	wrap::Instruction wrap::ret(RetVal s) {
+		return code::ret(s.v());
+	}
+
+	wrap::Instruction wrap::fnCall(Operand to, RetVal ret) {
+		return code::fnCall(to.v, ret.v());
+	}
+
+	wrap::Instruction wrap::fnParam(Operand param) {
+		return code::fnParam(param.v);
+	}
+
+	wrap::Instruction wrap::fnParam(Variable param, Operand copy) {
+		return code::fnParam(param.v, copy.v);
+	}
+
 
 	wrap::Instruction wrap::jmp(Operand to) {
 		return code::jmp(to.v);

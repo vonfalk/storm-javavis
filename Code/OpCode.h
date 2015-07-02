@@ -46,7 +46,9 @@ namespace code {
 			fdivp,
 			fcompp,
 			fwait,
+			callFloat,
 			retFloat,
+			fnCallFloat,
 
 			// Data
 			dat,

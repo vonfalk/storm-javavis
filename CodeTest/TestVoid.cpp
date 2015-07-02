@@ -15,9 +15,9 @@ BEGIN_TEST(TestVoid) {
 	Listing l;
 	l << prolog();
 	l << fnParam(intConst(3));
-	l << fnCall(r, Size());
+	l << fnCall(r, retVoid());
 	l << epilog();
-	l << ret(Size());
+	l << ret(retVoid());
 
 	Binary b(arena, l);
 

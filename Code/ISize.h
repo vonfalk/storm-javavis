@@ -46,7 +46,7 @@ namespace code {
 
 		// Data.
 		struct {
-			// Upper 4 bits used to indicate align
+			// Upper 4 bits used to indicate alignment
 			nat align : 4;
 			// lower 28 for size.
 			nat size : 28;

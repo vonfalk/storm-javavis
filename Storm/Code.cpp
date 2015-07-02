@@ -209,7 +209,7 @@ namespace storm {
 		}
 
 		l << epilog();
-		l << ret(owner->result.size());
+		l << ret(owner->result.retVal());
 
 		return state.ret();
 	}

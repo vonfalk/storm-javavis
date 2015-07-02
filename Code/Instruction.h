@@ -7,14 +7,40 @@
 
 namespace code {
 
+	/**
+	 * Type for a return value, as we need to know if the value is a float or not.
+	 */
+	struct RetVal {
+		Size size;
+		bool isFloat;
+	};
+
+	inline RetVal retVal(const Size &size, bool isFloat) {
+		RetVal r = { size, isFloat };
+		return r;
+	}
+
+	inline RetVal retVoid() {
+		return retVal(Size(), false);
+	}
+
+	inline RetVal retPtr() {
+		return retVal(Size::sPtr, false);
+	}
+
+	/**
+	 * What is done to the dest field of an instruction?
+	 */
 	enum DestMode {
 		destNone = 0x0,
 		destRead = 0x1,
 		destWrite = 0x2,
 	};
 
-	// Value type describing a single ASM instruction and its parameters.
-	// Use the functions below to create op-code objects.
+	/**
+	 * Value type describing a single ASM instruction and its parameters.
+	 * Use the functions below to create op-code objects.
+	 */
 	class Instruction : public Printable {
 	public:
 		Instruction();
@@ -63,8 +89,8 @@ namespace code {
 	Instruction push(const Value &v);
 	Instruction pop(const Value &to);
 	Instruction jmp(const Value &to, CondFlag cond = ifAlways);
-	Instruction call(const Value &to, Size returnSize);
-	Instruction ret(Size returnSize);
+	Instruction call(const Value &to, RetVal ret);
+	Instruction ret(RetVal ret); // Returns whatever is in eax register.
 
 	// This one has somewhat special semantics, when used with a reference as 'from', it loads a representative
 	// value that can be passed to 'Ref::fromLea' to re-create the reference.
@@ -81,7 +107,7 @@ namespace code {
 	// to have the signature <ptr or void> copy(void *dest, void *src), like copy ctors in C++.
 	Instruction fnParam(const Value &src);
 	Instruction fnParam(const Variable &src, const Value &copyFn);
-	Instruction fnCall(const Value &src, Size returnSize);
+	Instruction fnCall(const Value &src, RetVal ret);
 
 	// Integer math (signed/unsigned)
 	Instruction add(const Value &dest, const Value &src);
@@ -122,14 +148,6 @@ namespace code {
 	Instruction fdivp();
 	Instruction fcompp();
 	Instruction fwait();
-
-	// Special return for the float stored in the register 'eax' 'rax' or similar.
-	// Expands to approx:
-	// push(eax)
-	// fld(ptrStack + 0)
-	// add(ptrStack, 4)
-	// ret()
-	Instruction retFloat(const Size &s);
 
 	// Data
 	Instruction dat(const Value &v);

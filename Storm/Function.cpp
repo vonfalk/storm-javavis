@@ -164,20 +164,20 @@ namespace storm {
 		if (result == Value()) {
 			addParams(to, params, code::Variable());
 
-			to->to << fnCall(ref, Size());
+			to->to << fnCall(ref, retVoid());
 		} else {
-			VarInfo result = res->safeLocation(to, this->result);
-			addParams(to, params, result.var());
+			VarInfo rVar = res->safeLocation(to, this->result);
+			addParams(to, params, rVar.var());
 
 			if (this->result.returnInReg()) {
-				to->to << fnCall(ref, result.var().size());
-				to->to << mov(result.var(), asSize(ptrA, result.var().size()));
+				to->to << fnCall(ref, result.retVal());
+				to->to << mov(rVar.var(), asSize(ptrA, result.size()));
 			} else {
 				// Ignore return value...
-				to->to << fnCall(ref, Size());
+				to->to << fnCall(ref, retVoid());
 			}
 
-			result.created(to);
+			rVar.created(to);
 		}
 	}
 
@@ -201,12 +201,12 @@ namespace storm {
 
 		// Create a UThreadData object.
 		Variable data = to->frame.createPtrVar(to->block.v, e.fnRefs.abortSpawn, freeOnException);
-		to->to << fnCall(e.fnRefs.spawnLater, Size::sPtr);
+		to->to << fnCall(e.fnRefs.spawnLater, retPtr());
 		to->to << mov(data, ptrA);
 
 		// Find out the pointer to the data and create FnParams object.
 		to->to << fnParam(ptrA);
-		to->to << fnCall(e.fnRefs.spawnParam, Size::sPtr);
+		to->to << fnCall(e.fnRefs.spawnParam, retPtr());
 		Variable fnParams = createFnParams(to, code::Value(ptrA)).v;
 
 		// Add all parameters.
@@ -268,7 +268,7 @@ namespace storm {
 		to->to << fnParam(ptrC);
 		to->to << fnParam(thread);
 		to->to << fnParam(r.data);
-		to->to << fnCall(e.fnRefs.spawnResult, Size());
+		to->to << fnCall(e.fnRefs.spawnResult, retVoid());
 
 		to->to << end(b);
 		resultPos.created(to);
@@ -308,7 +308,7 @@ namespace storm {
 		to->to << fnParam(ptrC);
 		to->to << fnParam(t);
 		to->to << fnParam(r.data);
-		to->to << fnCall(e.fnRefs.spawnFuture, Size());
+		to->to << fnCall(e.fnRefs.spawnFuture, retVoid());
 
 		to->to << end(b);
 	}
@@ -371,13 +371,13 @@ namespace storm {
 
 		if (result.isClass()) {
 			Variable t = l.frame.createPtrVar(l.frame.root(), engine().fnRefs.release);
-			l << fnCall(ref(), Size::sPtr);
+			l << fnCall(ref(), retPtr());
 			l << mov(t, ptrA);
 			// Copy it...
 			l << fnParam(ptrA);
-			l << fnCall(stdCloneFn(result).v, Size::sPtr);
+			l << fnCall(stdCloneFn(result).v, retPtr());
 		} else if (result.isValue()) {
-			l << fnCall(ref(), Size::sPtr);
+			l << fnCall(ref(), retPtr());
 
 			Auto<CodeGen> sub = s->child(l.frame.createChild(l.frame.root()));
 			// Keep track of the result object.
@@ -398,19 +398,19 @@ namespace storm {
 			// Copy by calling 'deepCopy'.
 			l << fnParam(resultParam);
 			l << fnParam(cloneEnv);
-			l << fnCall(deepCopy->ref(), Size::sPtr);
+			l << fnCall(deepCopy->ref(), retPtr());
 
 			l << end(sub->block.v);
 			l << mov(ptrA, resultParam);
 		} else {
-			l << fnCall(ref(), result.size());
+			l << fnCall(ref(), result.retVal());
 		}
 
 		l << epilog();
 		if (result.isBuiltIn())
-			l << ret(result.size());
+			l << ret(result.retVal());
 		else
-			l << ret(Size::sPtr);
+			l << ret(retPtr());
 
 		threadThunkCode = new Binary(engine().arena, l);
 		threadThunkRef = new RefSource(engine().arena, identifier() + L"<thunk>");

@@ -99,7 +99,7 @@ namespace code {
 			out << code::push(low32(instr.src()));
 			out << code::push(high32(instr.dest()));
 			out << code::push(low32(instr.dest()));
-			out << code::call(ptrConst(fn), Size::sLong);
+			out << code::call(ptrConst(fn), retVal(Size::sLong, false));
 			out << code::add(ptrStack, intPtrConst(4 * 4));
 
 			// Restore our target if needed.

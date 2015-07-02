@@ -41,20 +41,20 @@ BEGIN_TEST(TestParts) {
 
 	l << fnParam(p);
 	l << fnParam(intConst(0));
-	l << fnCall(error, Size());
+	l << fnCall(error, retVoid());
 
 	l << begin(part2);
 	l << fnParam(p);
 	l << fnParam(intConst(1));
-	l << fnCall(error, Size());
+	l << fnCall(error, retVoid());
 
 	l << begin(part3);
 	l << fnParam(p);
 	l << fnParam(intConst(2));
-	l << fnCall(error, Size());
+	l << fnCall(error, retVoid());
 
 	l << epilog();
-	l << ret(Size());
+	l << ret(retVoid());
 
 	Binary bin(arena, l);
 
@@ -87,12 +87,12 @@ BEGIN_TEST(TestParts) {
 void breakOn(Listing &to, Ref error, Variable p, int n) {
 	to << fnParam(p);
 	to << fnParam(intConst(n));
-	to << fnCall(error, Size::sInt);
+	to << fnCall(error, retVal(Size::sInt, false));
 	Label l = to.label();
 	to << cmp(eax, intConst(0));
 	to << jmp(l, ifEqual);
 	to << epilog();
-	to << ret(Size());
+	to << ret(retVoid());
 	to << l;
 }
 
@@ -149,7 +149,7 @@ BEGIN_TEST(TestNestedPartsException) {
 	breakOn(l, error, p, 8);
 
 	l << epilog();
-	l << ret(Size());
+	l << ret(retVoid());
 
 	Binary bin(arena, l);
 
@@ -229,7 +229,7 @@ BEGIN_TEST(TestNestedParts) {
 	breakOn(l, error, p, 8);
 
 	l << epilog();
-	l << ret(Size());
+	l << ret(retVoid());
 
 	Binary bin(arena, l);
 

@@ -27,6 +27,8 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
+Include float/non float inside Size?
+
 Move Memorymanager to Code?
 
 Move Code/Codecall somewhere else?

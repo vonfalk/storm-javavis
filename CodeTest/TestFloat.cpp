@@ -22,7 +22,7 @@ BEGIN_TEST(TestFloat) {
 	l << mov(eax, v1);
 
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 
@@ -52,7 +52,7 @@ BEGIN_TEST(TestReturnFloat) {
 	l << mov(eax, res);
 
 	l << epilog();
-	l << retFloat(Size::sFloat); // Returns the float stored in 'eax'
+	l << ret(retVal(Size::sFloat, true)); // Returns the float stored in 'eax'
 
 	Binary b(arena, l);
 
@@ -73,7 +73,7 @@ BEGIN_TEST(TestFloatConst) {
 	l << mov(eax, floatConst(10.2f));
 
 	l << epilog();
-	l << retFloat(Size::sFloat); // Returns the float stored in 'eax'
+	l << ret(retVal(Size::sFloat, true)); // Returns the float stored in 'eax'
 
 	Binary b(arena, l);
 

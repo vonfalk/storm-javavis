@@ -145,19 +145,21 @@ namespace code {
 		return createLoose(op::setCond, to, destWrite, cond);
 	}
 
-	Instruction call(const Value &to, Size returnSize) {
+	Instruction call(const Value &to, RetVal ret) {
 		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer.");
 
-		return createLoose(op::call, sizedReg(ptrA, returnSize), destWrite, to);
+		OpCode op = ret.isFloat ? op::callFloat : op::call;
+		return createLoose(op, sizedReg(ptrA, ret.size), destWrite, to);
 	}
 
-	Instruction ret(Size returnSize) {
-		Value r = sizedReg(ptrA, returnSize);
+	Instruction ret(RetVal ret) {
+		Value r = sizedReg(ptrA, ret.size);
+		OpCode op = ret.isFloat ? op::retFloat : op::ret;
 		if (r.type() == Value::tNone)
-			return create(op::ret);
+			return create(op);
 		else
-			return createSrc(op::ret, r);
+			return createSrc(op, r);
 	}
 
 	Instruction fnParam(const Value &src) {
@@ -174,13 +176,14 @@ namespace code {
 		return createLoose(op::fnParam, copyFn, destRead, src);
 	}
 
-	Instruction fnCall(const Value &src, Size returnSize) {
+	Instruction fnCall(const Value &src, RetVal ret) {
 		if (src.type() == Value::tConstant)
 			throw InvalidValue(L"Should not call constant values, use references instead!");
 		if (src.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer.");
 
-		return createLoose(op::fnCall, sizedReg(ptrA, returnSize), destWrite, src);
+		OpCode op = ret.isFloat ? op::fnCallFloat : op::fnCall;
+		return createLoose(op, sizedReg(ptrA, ret.size), destWrite, src);
 	}
 
 	Instruction add(const Value &dest, const Value &src) {

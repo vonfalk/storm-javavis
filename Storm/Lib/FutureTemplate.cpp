@@ -60,9 +60,9 @@ namespace storm {
 			l << prolog();
 			l << fnParam(future);
 			l << fnParam(natPtrConst(0));
-			l << fnCall(engine.fnRefs.futureResult, Size());
+			l << fnCall(engine.fnRefs.futureResult, retVoid());
 			l << epilog();
-			l << ret(Size());
+			l << ret(retVoid());
 		} else if (param.isBuiltIn()) {
 			Variable future = l.frame.createPtrParam();
 			Variable tmpVar = l.frame.createVariable(l.frame.root(), param.size());
@@ -70,23 +70,20 @@ namespace storm {
 			l << lea(ptrA, tmpVar);
 			l << fnParam(future);
 			l << fnParam(ptrA);
-			l << fnCall(engine.fnRefs.futureResult, Size());
+			l << fnCall(engine.fnRefs.futureResult, retVoid());
 			l << mov(asSize(ptrA, param.size()), tmpVar);
 			l << epilog();
-			if (param.isFloat())
-				l << retFloat(param.size());
-			else
-				l << ret(param.size());
+			l << ret(param.retVal());
 		} else {
 			Variable future = l.frame.createPtrParam();
 			Variable valRef = l.frame.createPtrParam();
 			l << prolog();
 			l << fnParam(future);
 			l << fnParam(valRef);
-			l << fnCall(engine.fnRefs.futureResult, Size());
+			l << fnCall(engine.fnRefs.futureResult, retVoid());
 			l << mov(ptrA, valRef);
 			l << epilog();
-			l << ret(Size::sPtr);
+			l << ret(retPtr());
 		}
 
 		return l;

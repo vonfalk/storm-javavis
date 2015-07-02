@@ -14,7 +14,7 @@ BEGIN_TEST(StoreRef) {
 	// index of the reference instead of the reference itself.
 	l << lea(ptrA, src);
 	l << epilog();
-	l << ret(Size::sPtr);
+	l << ret(retPtr());
 
 	Binary b(arena, l);
 	typedef void *(* Fn)();

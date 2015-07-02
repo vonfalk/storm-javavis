@@ -385,7 +385,7 @@ namespace code {
 
 			const Instruction &instr = tfm.from[line];
 			to << fnParam(instr.src());
-			to << fnCall(Ref(tfm.arena.addRef), Size());
+			to << fnCall(Ref(tfm.arena.addRef), retVoid());
 
 			tfm.restore(preserve, saved, line, to);
 		}
@@ -396,7 +396,7 @@ namespace code {
 
 			const Instruction &instr = tfm.from[line];
 			to << fnParam(instr.src());
-			to << fnCall(Ref(tfm.arena.releaseRef), Size());
+			to << fnCall(Ref(tfm.arena.releaseRef), retVoid());
 
 			tfm.restore(preserve, saved, line, to);
 		}
@@ -407,8 +407,30 @@ namespace code {
 
 			to << push(instr.src());
 			to << fld(xRel(s, ptrStack));
-			to << add(ptrStack, intPtrConst(Offset(s)));
-			to << ret(s);
+			to << add(ptrStack, natPtrConst(s));
+			to << ret(retVal(s, false));
+		}
+
+		void callFloatTfm(const Transform &tfm, Listing &to, nat line) {
+			const Instruction &instr = tfm.from[line];
+			const Value &dest = instr.dest();
+			const Size &s = dest.size();
+
+			to << call(instr.src(), retVal(s, false));
+			to << sub(ptrStack, natPtrConst(s));
+			to << fstp(xRel(s, ptrStack));
+			to << pop(dest);
+		}
+
+		void fnCallFloatTfm(const Transform &tfm, Listing &to, nat line) {
+			const Instruction &instr = tfm.from[line];
+			const Value &dest = instr.dest();
+			const Size &s = dest.size();
+
+			to << fnCall(instr.src(), retVal(s, false));
+			to << sub(ptrStack, natPtrConst(s));
+			to << fstp(xRel(s, ptrStack));
+			to << pop(dest);
 		}
 
 	}

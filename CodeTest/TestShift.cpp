@@ -25,7 +25,7 @@ BEGIN_TEST(TestShift) {
 	l << shr(eax, byteConst(2));
 
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	typedef cpuInt (*F)(cpuInt, cpuInt);

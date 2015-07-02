@@ -246,6 +246,18 @@ namespace storm {
 		Operand STORM_FN ptrRel(Variable v, Offset offset);
 		Operand STORM_FN xRel(Size size, Variable v, Offset offset);
 
+		// RetVal.
+		class RetVal {
+			STORM_VALUE;
+		public:
+			inline STORM_CTOR RetVal(Size s, Bool isFloat) : size(s), isFloat(isFloat) {}
+
+			STORM_VAR Size size;
+			STORM_VAR Bool isFloat;
+
+			inline code::RetVal v() { return code::retVal(size.v, isFloat); }
+		};
+
 		// Instruction.
 		class Instruction {
 			STORM_VALUE;
@@ -262,9 +274,14 @@ namespace storm {
 		// Create instructions.
 		Instruction STORM_FN prolog();
 		Instruction STORM_FN epilog();
-		Instruction STORM_FN ret(Size s);
+		Instruction STORM_FN call(Operand to, RetVal r);
+		Instruction STORM_FN ret(RetVal s);
 		Instruction STORM_FN jmp(Operand to);
 		Instruction STORM_FN jmp(Operand to, CondFlag cond);
+
+		Instruction STORM_FN fnCall(Operand to, RetVal ret);
+		Instruction STORM_FN fnParam(Operand param);
+		Instruction STORM_FN fnParam(Variable param, Operand copy);
 
 		Instruction STORM_FN addRef(Operand v);
 		Instruction STORM_FN releaseRef(Operand v);

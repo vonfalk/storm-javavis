@@ -16,8 +16,8 @@ BEGIN_TEST(TestReplace) {
 	Ref paramFun = arena.external(L"paramFn", &paramFn);
 
 	Listing l2;
-	l2 << call(fun, Size::sPtr);
-	l2 << ret(Size::sPtr);
+	l2 << call(fun, retPtr());
+	l2 << ret(retPtr());
 
 	Binary *middleBlob = new Binary(arena, l2);
 	RefSource middle(arena, L"middle");
@@ -27,10 +27,10 @@ BEGIN_TEST(TestReplace) {
 	Label lbl = l.label();
 
 	l << jmp(lbl);
-	l << call(fun, Size::sPtr);
+	l << call(fun, retPtr());
 	l << lbl;
-	l << call(Ref(middle), Size::sPtr);
-	l << ret(Size::sPtr);
+	l << call(Ref(middle), retPtr());
+	l << ret(retPtr());
 
 	Binary output(arena, l);
 
@@ -41,8 +41,8 @@ BEGIN_TEST(TestReplace) {
 	l2 = Listing();
 	l2 << fnParam(natConst(128));
 	l2 << fnParam(natConst(20));
-	l2 << fnCall(paramFun, Size::sPtr);
-	l2 << ret(Size::sPtr);
+	l2 << fnCall(paramFun, retPtr());
+	l2 << ret(retPtr());
 	Binary *middle2 = new Binary(arena, l2);
 	middle.set(middle2);
 

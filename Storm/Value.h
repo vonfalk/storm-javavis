@@ -55,6 +55,9 @@ namespace storm {
 		// Get the size of this type.
 		Size size() const;
 
+		// Return value type.
+		code::RetVal retVal() const;
+
 		// As a reference.
 		Value asRef(bool v = true) const;
 

@@ -12,7 +12,7 @@ BEGIN_TEST(TestCastIntLong) {
 	l << icast(r, p);
 	l << mov(rax, r);
 	l << epilog();
-	l << ret(Size::sLong);
+	l << ret(retVal(Size::sLong, false));
 
 	Binary b(arena, l);
 	typedef Long (*F)(Int);
@@ -34,7 +34,7 @@ BEGIN_TEST(TestCastCharInt) {
 	l << icast(r, p);
 	l << mov(eax, r);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	typedef Int (*F)(Char);
@@ -56,7 +56,7 @@ BEGIN_TEST(TestCastCharLong) {
 	l << icast(r, p);
 	l << mov(rax, r);
 	l << epilog();
-	l << ret(Size::sLong);
+	l << ret(retVal(Size::sLong, false));
 
 	Binary b(arena, l);
 	typedef Long (*F)(Char);
@@ -78,7 +78,7 @@ BEGIN_TEST(TestCastLongInt) {
 	l << icast(r, p);
 	l << mov(eax, r);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	typedef Int (*F)(Long);
@@ -100,7 +100,7 @@ BEGIN_TEST(TestCastIntChar) {
 	l << icast(r, p);
 	l << mov(al, r);
 	l << epilog();
-	l << ret(Size::sByte);
+	l << ret(retVal(Size::sByte, false));
 
 	Binary b(arena, l);
 	typedef Char (*F)(Int);
@@ -122,7 +122,7 @@ BEGIN_TEST(TestCastLongChar) {
 	l << icast(r, p);
 	l << mov(al, r);
 	l << epilog();
-	l << ret(Size::sByte);
+	l << ret(retVal(Size::sByte, false));
 
 	Binary b(arena, l);
 	typedef Char (*F)(Long);
@@ -148,7 +148,7 @@ BEGIN_TEST(TestCastNatWord) {
 	l << ucast(r, p);
 	l << mov(rax, r);
 	l << epilog();
-	l << ret(Size::sWord);
+	l << ret(retVal(Size::sWord, false));
 
 	Binary b(arena, l);
 	typedef Word (*F)(Nat);
@@ -170,7 +170,7 @@ BEGIN_TEST(TestCastByteNat) {
 	l << ucast(r, p);
 	l << mov(eax, r);
 	l << epilog();
-	l << ret(Size::sNat);
+	l << ret(retVal(Size::sNat, false));
 
 	Binary b(arena, l);
 	typedef Nat (*F)(Byte);
@@ -192,7 +192,7 @@ BEGIN_TEST(TestCastByteWord) {
 	l << ucast(r, p);
 	l << mov(rax, r);
 	l << epilog();
-	l << ret(Size::sWord);
+	l << ret(retVal(Size::sWord, false));
 
 	Binary b(arena, l);
 	typedef Word (*F)(Byte);
@@ -214,7 +214,7 @@ BEGIN_TEST(TestCastWordNat) {
 	l << ucast(r, p);
 	l << mov(eax, r);
 	l << epilog();
-	l << ret(Size::sNat);
+	l << ret(retVal(Size::sNat, false));
 
 	Binary b(arena, l);
 	typedef Nat (*F)(Word);
@@ -235,7 +235,7 @@ BEGIN_TEST(TestCastNatByte) {
 	l << ucast(r, p);
 	l << mov(al, r);
 	l << epilog();
-	l << ret(Size::sByte);
+	l << ret(retVal(Size::sByte, false));
 
 	Binary b(arena, l);
 	typedef Byte (*F)(Nat);
@@ -256,7 +256,7 @@ BEGIN_TEST(TestCastWordByte) {
 	l << ucast(r, p);
 	l << mov(al, r);
 	l << epilog();
-	l << ret(Size::sByte);
+	l << ret(retVal(Size::sByte, false));
 
 	Binary b(arena, l);
 	typedef Byte (*F)(Word);

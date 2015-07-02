@@ -179,7 +179,7 @@ namespace storm {
 
 		s->to << begin(b);
 		s->to << fnParam(type->typeRef);
-		s->to << fnCall(e.fnRefs.allocRef, Size::sPtr);
+		s->to << fnCall(e.fnRefs.allocRef, retPtr());
 		s->to << mov(rawMem, ptrA);
 
 		Auto<CodeResult> r = CREATE(CodeResult, s);
@@ -225,7 +225,7 @@ namespace storm {
 		s->to << lea(ptrC, v);
 		s->to << fnParam(ptrC);
 		s->to << fnParam(memory.v);
-		s->to << fnCall(e.fnRefs.fnParamsCtor, Size());
+		s->to << fnCall(e.fnRefs.fnParamsCtor, retVoid());
 
 		return v;
 	}
@@ -269,7 +269,7 @@ namespace storm {
 			s->to << fnParam(natConst(type.size()));
 			s->to << fnParam(byteConst(0));
 			s->to << fnParam(ptrA);
-			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+			s->to << fnCall(e.fnRefs.fnParamsAdd, retVoid());
 		} else if (type.isClass() && !thunk) {
 			s->to << lea(ptrC, fnParams.v);
 			s->to << fnParam(ptrC);
@@ -278,7 +278,7 @@ namespace storm {
 			s->to << fnParam(natConst(type.size()));
 			s->to << fnParam(byteConst(0));
 			s->to << fnParam(v.v);
-			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+			s->to << fnCall(e.fnRefs.fnParamsAdd, retVoid());
 		} else if (type.ref || type.isBuiltIn()) {
 			s->to << lea(ptrC, fnParams.v);
 			s->to << fnParam(ptrC);
@@ -287,7 +287,7 @@ namespace storm {
 			s->to << fnParam(natConst(type.size()));
 			s->to << fnParam(byteConst(type.isFloat() ? 1 : 0));
 			s->to << fnParam(v.v);
-			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+			s->to << fnCall(e.fnRefs.fnParamsAdd, retVoid());
 		} else {
 			// Value.
 			code::Value dtor = type.destructor();
@@ -301,7 +301,7 @@ namespace storm {
 			s->to << fnParam(natConst(type.size()));
 			s->to << fnParam(byteConst(0));
 			s->to << fnParam(ptrA);
-			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+			s->to << fnCall(e.fnRefs.fnParamsAdd, retVoid());
 		}
 	}
 
@@ -313,7 +313,7 @@ namespace storm {
 		if (type.isClass()) {
 			Variable clone = s->frame.createPtrVar(s->block.v, e.fnRefs.release);
 			s->to << fnParam(v.v);
-			s->to << fnCall(stdCloneFn(type).v, Size::sPtr);
+			s->to << fnCall(stdCloneFn(type).v, retPtr());
 			s->to << mov(clone, ptrA);
 
 			// Regular parameter add.
@@ -338,7 +338,7 @@ namespace storm {
 			s->to << fnParam(natConst(type.size()));
 			s->to << fnParam(byteConst(0));
 			s->to << fnParam(ptrA);
-			s->to << fnCall(e.fnRefs.fnParamsAdd, Size());
+			s->to << fnCall(e.fnRefs.fnParamsAdd, retVoid());
 		}
 	}
 

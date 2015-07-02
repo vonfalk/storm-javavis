@@ -15,7 +15,7 @@ BEGIN_TEST(Test64Add) {
 	l << mov(rax, v);
 
 	l << epilog();
-	l << ret(Size::sLong);
+	l << ret(retVal(Size::sLong, false));
 
 	Binary b(arena, l);
 	CHECK_EQ(callFn(b.address(), int64(0)), 0xBBBBBBBBBB);
@@ -36,7 +36,7 @@ BEGIN_TEST(Test64Sub) {
 	l << mov(rax, v);
 
 	l << epilog();
-	l << ret(Size::sLong);
+	l << ret(retVal(Size::sLong, false));
 
 	Binary b(arena, l);
 	CHECK_EQ(callFn(b.address(), int64(0)), 0x97530ECA87);
@@ -58,7 +58,7 @@ BEGIN_TEST(Test64Mul) {
 	l << add(rax, v);
 
 	l << epilog();
-	l << ret(Size::sLong);
+	l << ret(retVal(Size::sLong, false));
 
 	Binary b(arena, l);
 	CHECK_EQ(callFn(b.address(), int64(0)), 0x2DE2A36D2B77D9DB);
@@ -78,7 +78,7 @@ BEGIN_TEST(Test64Preserve) {
 	l << mov(rax, v);
 	l << add(v, v2);
 	l << epilog();
-	l << ret(Size::sLong);
+	l << ret(retVal(Size::sLong, false));
 
 	Binary b(arena, l);
 	CHECK_EQ(callFn(b.address(), int64(0)), 0x123456789A);
@@ -184,7 +184,7 @@ BEGIN_TEST(Test64Cmp) {
 
 	l << mov(eax, r);
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	const void *p = b.address();

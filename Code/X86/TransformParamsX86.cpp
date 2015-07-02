@@ -213,7 +213,7 @@ namespace code {
 						fnParamTfm(to, params, i);
 					}
 
-					Instruction i = code::fnCall(dtor, Size());
+					Instruction i = code::fnCall(dtor, retVoid());
 					params.lookupVars(i);
 					fnCallTfm(to, params, i);
 
@@ -280,11 +280,11 @@ namespace code {
 				to << code::push(ptrA);
 				to << code::lea(ptrA, ptrRel(ptrStack, destOffset));
 				to << code::push(ptrA);
-				to << code::call(src.copy, Size());
+				to << code::call(src.copy, retVoid());
 				to << code::add(ptrStack, natPtrConst(2 * sizeof(cpuNat)));
 			}
 
-			to << code::call(instr.src(), instr.dest().size());
+			to << code::call(instr.src(), retVal(instr.dest().size(), false));
 
 			if (totalSize > 0)
 				to << code::add(ptrStack, natPtrConst(totalSize));

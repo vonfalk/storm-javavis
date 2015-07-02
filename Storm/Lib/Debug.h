@@ -14,6 +14,9 @@ namespace storm {
 
 	void STORM_FN dbgBreak();
 
+	// Return a float from C++.
+	Float STORM_FN dbgFloat();
+
 	// Print the VTable of an object.
 	void STORM_FN printVTable(Object *obj);
 

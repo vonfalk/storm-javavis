@@ -15,6 +15,10 @@ namespace storm {
 		DebugBreak();
 	}
 
+	Float dbgFloat() {
+		return 23.0f;
+	}
+
 	void printVTable(Object *obj) {
 #ifdef DEBUG
 		checkLive(obj);

@@ -83,7 +83,7 @@ namespace storm {
 		Variable needClone = s->frame.createByteVar(s->block.v);
 		s->to << fnParam(thisParam);
 		s->to << fnParam(firstTObject);
-		s->to << fnCall(e.fnRefs.fnPtrCopy, Size::sByte);
+		s->to << fnCall(e.fnRefs.fnPtrCopy, retVal(Size::sByte, false));
 		s->to << mov(needClone, al);
 
 		// Handle parameters...
@@ -109,7 +109,7 @@ namespace storm {
 			s->to << fnParam(ptrB);
 			s->to << fnParam(ptrC);
 			s->to << fnParam(firstTObject);
-			s->to << fnCall(e.fnRefs.fnPtrCall, Size());
+			s->to << fnCall(e.fnRefs.fnPtrCall, retVoid());
 
 			// Need to copy?
 			Label noCopy = s->to.label();
@@ -126,12 +126,12 @@ namespace storm {
 
 			s->to << fnParam(resultParam);
 			s->to << fnParam(cloneEnv);
-			s->to << fnCall(deepCopy->ref(), Size::sPtr);
+			s->to << fnCall(deepCopy->ref(), retPtr());
 
 			s->to << noCopy;
 			s->to << mov(ptrA, resultParam);
 			s->to << epilog();
-			s->to << ret(Size::sPtr);
+			s->to << ret(retPtr());
 		} else if (result.isClass()) {
 			// If 'tmp' is refcounted, we do not need to add references. That is
 			// already done by the callee!
@@ -144,7 +144,7 @@ namespace storm {
 			s->to << fnParam(ptrB);
 			s->to << fnParam(ptrC);
 			s->to << fnParam(firstTObject);
-			s->to << fnCall(e.fnRefs.fnPtrCall, Size());
+			s->to << fnCall(e.fnRefs.fnPtrCall, retVoid());
 
 			// Need to copy?
 			Label noCopy = s->to.label();
@@ -154,7 +154,7 @@ namespace storm {
 
 			// Copy.
 			s->to << fnParam(tmp);
-			s->to << fnCall(stdCloneFn(result).v, Size::sPtr);
+			s->to << fnCall(stdCloneFn(result).v, retPtr());
 			s->to << jmp(done);
 
 			s->to << noCopy;
@@ -163,7 +163,7 @@ namespace storm {
 
 			s->to << done;
 			s->to << epilog();
-			s->to << ret(Size::sPtr);
+			s->to << ret(retPtr());
 		} else {
 			// This is a primitive, we never have to copy it!
 			Variable tmp = s->frame.createVariable(s->block.v, result.size());
@@ -175,14 +175,11 @@ namespace storm {
 			s->to << fnParam(ptrB);
 			s->to << fnParam(ptrC);
 			s->to << fnParam(firstTObject);
-			s->to << fnCall(e.fnRefs.fnPtrCall, Size());
+			s->to << fnCall(e.fnRefs.fnPtrCall, retVoid());
 			if (result.size() != Size()) // void
 				s->to << mov(asSize(ptrA, result.size()), tmp);
 			s->to << epilog();
-			if (result.isFloat())
-				s->to << retFloat(result.size());
-			else
-				s->to << ret(result.size());
+			s->to << ret(result.retVal());
 		}
 
 		return s.ret();

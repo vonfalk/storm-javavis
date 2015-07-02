@@ -159,7 +159,7 @@ namespace storm {
 			Auto<CodeResult> r = CREATE(CodeResult, this);
 			bodyExpr->code(state, r);
 			l << epilog();
-			l << ret(Size());
+			l << ret(retVoid());
 		} else if (result.returnInReg()) {
 			Auto<CodeResult> r = CREATE(CodeResult, this, result, l.frame.root());
 
@@ -172,10 +172,7 @@ namespace storm {
 
 			l << epilog();
 
-			if (result.isFloat())
-				l << retFloat(result.size());
-			else
-				l << ret(result.size());
+			l << ret(result.retVal());
 		} else {
 			Auto<CodeResult> r = CREATE(CodeResult, this, result, l.frame.root());
 			bodyExpr->code(state, r);
@@ -184,13 +181,13 @@ namespace storm {
 			l << lea(ptrA, ptrRel(rval.var()));
 			l << fnParam(returnValue);
 			l << fnParam(ptrA);
-			l << fnCall(result.copyCtor(), Size::sPtr);
+			l << fnCall(result.copyCtor(), retPtr());
 			// We need to provide the address of the return value as our result. The copy ctor
 			// does not neccessarily return an address to the created value.
 			l << mov(ptrA, returnValue);
 
 			l << epilog();
-			l << ret(Size::sPtr);
+			l << ret(retPtr());
 		}
 
 		// if (!identifier().startsWith(L"lang.bs")) {

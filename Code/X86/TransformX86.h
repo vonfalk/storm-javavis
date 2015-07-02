@@ -63,7 +63,9 @@ namespace code {
 		void ucastTfm(const Transform &tfm, Listing &to, nat line);
 		void addRefTfm(const Transform &tfm, Listing &to, nat line);
 		void releaseRefTfm(const Transform &tfm, Listing &to, nat line);
+		void callFloatTfm(const Transform &tfm, Listing &to, nat line);
 		void retFloatTfm(const Transform &tfm, Listing &to, nat line);
+		void fnCallFloatTfm(const Transform &tfm, Listing &to, nat line);
 
 	}
 }

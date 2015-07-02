@@ -202,10 +202,10 @@ namespace storm {
 
 		g->to << fnParam(thisPtr);
 		g->to << fnParam(toSFn->ref());
-		g->to << fnCall(engine.fnRefs.arrayToSMember, Size::sPtr);
+		g->to << fnCall(engine.fnRefs.arrayToSMember, retPtr());
 
 		g->to << epilog();
-		g->to << ret(Size::sPtr);
+		g->to << ret(retPtr());
 
 		return g.ret();
 	}
@@ -219,10 +219,10 @@ namespace storm {
 
 		g->to << fnParam(thisPtr);
 		g->to << fnParam(fn->ref());
-		g->to << fnCall(engine.fnRefs.arrayToSAdd, Size::sPtr);
+		g->to << fnCall(engine.fnRefs.arrayToSAdd, retPtr());
 
 		g->to << epilog();
-		g->to << ret(Size::sPtr);
+		g->to << ret(retPtr());
 
 		return g.ret();
 	}

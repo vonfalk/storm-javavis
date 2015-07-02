@@ -11,7 +11,7 @@ void testPush(Arena &arena) {
 		Listing l;
 		l << push(natConst(i));
 		l << pop(eax);
-		l << ret(Size::sInt);
+		l << ret(retVal(Size::sInt, false));
 
 		Binary b(arena, l);
 
@@ -51,12 +51,12 @@ void testFunction(Arena &arena) {
 	l << begin(myBlock);
 	l << mov(result, natConst(1));
 	l << add(result, par);
-	l << fnCall(ex, Size::sInt);
+	l << fnCall(ex, retVal(Size::sInt, false));
 	l << mov(eax, result);
-	l << epilog() << ret(Size::sInt);
+	l << epilog() << ret(retVal(Size::sInt, false));
 
 	l << end(myBlock);
-	l << epilog() << ret(Size::sInt);
+	l << epilog() << ret(retVal(Size::sInt, false));
 
 	PLN("Before:" << l);
 

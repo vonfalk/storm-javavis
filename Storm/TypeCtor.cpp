@@ -38,7 +38,7 @@ namespace storm {
 
 		if (before) {
 			l << fnParam(dest);
-			l << fnCall(before->ref(), Size());
+			l << fnCall(before->ref(), retVoid());
 		}
 
 		vector<Auto<TypeVar> > vars = type->variables();
@@ -49,7 +49,7 @@ namespace storm {
 				l << mov(ptrA, dest);
 				l << add(ptrA, intPtrConst(v->offset()));
 				l << fnParam(ptrA);
-				l << fnCall(t.defaultCtor(), Size());
+				l << fnCall(t.defaultCtor(), retVoid());
 			} else {
 				// TODO: Initialize references using their constructor?
 			}
@@ -62,7 +62,7 @@ namespace storm {
 		}
 
 		l << epilog();
-		l << ret(Size());
+		l << ret(retVoid());
 
 		setCode(steal(CREATE(DynamicCode, this, l)));
 	}
@@ -95,7 +95,7 @@ namespace storm {
 		if (before) {
 			l << fnParam(dest);
 			l << fnParam(src);
-			l << fnCall(before->ref(), Size());
+			l << fnCall(before->ref(), retVoid());
 		}
 
 		// Copy data members.
@@ -111,7 +111,7 @@ namespace storm {
 				l << add(ptrC, intPtrConst(v->offset()));
 				l << fnParam(ptrA);
 				l << fnParam(ptrC);
-				l << fnCall(t.copyCtor(), Size());
+				l << fnCall(t.copyCtor(), retVoid());
 			} else {
 				// TODO: Call clone!
 				code::Value to = xRel(t.size(), ptrA, v->offset());
@@ -129,7 +129,7 @@ namespace storm {
 		}
 
 		l << epilog();
-		l << ret(Size());
+		l << ret(retVoid());
 
 		setCode(steal(CREATE(DynamicCode, this, l)));
 	}
@@ -163,7 +163,7 @@ namespace storm {
 		if (before) {
 			l << fnParam(dest);
 			l << fnParam(src);
-			l << fnCall(before->ref(), Size::sPtr);
+			l << fnCall(before->ref(), retPtr());
 			if (before->result.refcounted())
 				l << code::releaseRef(ptrA);
 		}
@@ -181,7 +181,7 @@ namespace storm {
 				l << add(ptrC, intPtrConst(v->offset()));
 				l << fnParam(ptrA);
 				l << fnParam(ptrC);
-				l << fnCall(t.assignFn(), Size());
+				l << fnCall(t.assignFn(), retPtr());
 			} else {
 				code::Value to = xRel(t.size(), ptrA, v->offset());
 				code::Value from = xRel(t.size(), ptrC, v->offset());
@@ -200,7 +200,7 @@ namespace storm {
 		}
 
 		l << epilog();
-		l << ret(Size());
+		l << ret(retVoid());
 
 		setCode(steal(CREATE(DynamicCode, this, l)));
 	}
@@ -240,7 +240,7 @@ namespace storm {
 		if (before) {
 			l << fnParam(me);
 			l << fnParam(env);
-			l << fnCall(before->directRef(), Size());
+			l << fnCall(before->directRef(), retVoid());
 		}
 
 		// Find the clone function for objects.
@@ -273,7 +273,7 @@ namespace storm {
 				l << add(ptrA, intPtrConst(offset));
 				l << fnParam(ptrA);
 				l << fnParam(env);
-				l << fnCall(fn->ref(), Size());
+				l << fnCall(fn->ref(), retVoid());
 
 			} else {
 				// Find the clone function for us:
@@ -284,7 +284,7 @@ namespace storm {
 				l << mov(ptrA, me);
 				l << fnParam(ptrRel(ptrA, offset));
 				l << fnParam(env);
-				l << fnCall(fn->ref(), Size::sPtr);
+				l << fnCall(fn->ref(), retPtr());
 				l << mov(ptrC, me);
 				l << add(ptrC, intPtrConst(offset));
 				l << code::releaseRef(ptrRel(ptrC));
@@ -293,7 +293,7 @@ namespace storm {
 		}
 
 		l << epilog();
-		l << ret(Size());
+		l << ret(retVoid());
 
 		setCode(steal(CREATE(DynamicCode, this, l)));
 	}
@@ -375,7 +375,7 @@ namespace storm {
 			l << prolog();
 			l << mov(asSize(ptrA, par.size()), par);
 			l << epilog();
-			l << ret(t.size());
+			l << ret(t.retVal());
 
 			Auto<Function> result = CREATE(Function, e, t, name, valList(1, t));
 			result->setCode(steal(CREATE(DynamicCode, e, l)));
@@ -389,7 +389,7 @@ namespace storm {
 			l << prolog();
 			l << fnParam(to);
 			l << fnParam(from);
-			l << fnCall(t.copyCtor(), Size());
+			l << fnCall(t.copyCtor(), retVoid());
 
 			Type *envType = CloneEnv::stormType(e);
 			Variable env = variable(l.frame, l.frame.root(), Value(envType)).var();
@@ -397,10 +397,10 @@ namespace storm {
 
 			l << fnParam(to);
 			l << fnParam(env);
-			l << fnCall(deepCopy(t.type)->ref(), Size());
+			l << fnCall(deepCopy(t.type)->ref(), retVoid());
 			l << mov(ptrA, to);
 			l << epilog();
-			l << ret(Size::sPtr);
+			l << ret(retPtr());
 
 			Auto<Function> result = CREATE(Function, e, t, name, valList(1, t.asRef()));
 			result->setCode(steal(CREATE(DynamicCode, e, l)));
@@ -431,7 +431,7 @@ namespace storm {
 			l << prolog();
 			l << mov(asSize(ptrA, par.size()), par);
 			l << epilog();
-			l << ret(t.size());
+			l << ret(t.retVal());
 
 			Auto<Function> result = CREATE(Function, e, t, name, valList(1, t));
 			result->setCode(steal(CREATE(DynamicCode, e, l)));
@@ -445,13 +445,13 @@ namespace storm {
 			l << prolog();
 			l << fnParam(to);
 			l << fnParam(from);
-			l << fnCall(t.copyCtor(), Size());
+			l << fnCall(t.copyCtor(), retVoid());
 			l << fnParam(to);
 			l << fnParam(env);
-			l << fnCall(deepCopy(t.type)->ref(), Size());
+			l << fnCall(deepCopy(t.type)->ref(), retVoid());
 			l << mov(ptrA, to);
 			l << epilog();
-			l << ret(Size::sPtr);
+			l << ret(retPtr());
 
 			Auto<Function> result = CREATE(Function, e, t, name, valList(1, t.asRef()));
 			result->setCode(steal(CREATE(DynamicCode, e, l)));

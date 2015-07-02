@@ -200,7 +200,7 @@ namespace storm {
 			state->to << fnParam(exprVar);
 		}
 		state->to << fnParam(target->typeRef);
-		state->to << fnCall(engine().fnRefs.asFn, Size::sByte);
+		state->to << fnCall(engine().fnRefs.asFn, retVal(Size::sByte, false));
 		state->to << cmp(al, byteConst(0));
 		state->to << jmp(lblElse, ifEqual);
 

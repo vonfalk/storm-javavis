@@ -19,7 +19,7 @@ BEGIN_TEST(TestBool) {
 	l << setCond(al, ifEqual);
 
 	l << epilog();
-	l << ret(Size::sByte);
+	l << ret(retVal(Size::sByte, false));
 
 	Binary b(arena, l);
 	typedef bool (*Fn)(cpuInt);

@@ -94,7 +94,9 @@ namespace code {
 			TRANSFORM(icast),
 			TRANSFORM(ucast),
 
+			TRANSFORM(callFloat),
 			TRANSFORM(retFloat),
+			TRANSFORM(fnCallFloat),
 
 			TRANSFORM(addRef),
 			TRANSFORM(releaseRef),

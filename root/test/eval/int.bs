@@ -146,6 +146,7 @@ Float fSub100() { 120.5 - 20.5; }
 Float fMul20() { 8.0 * 2.5; }
 Float fDiv8() { 20.0 / 2.5; }
 Float fAssign20() { Float f = 20.0; Float g = 2.0; g = f; g; }
+Float fCall124() { fConst120() + 4.0; }
 Bool fLessF() { 20.0 < 10.0; }
 Bool fLessT() { 20.0 < 20.1; }
 Bool fLessEqF() { 20.0 <= 19.0; }

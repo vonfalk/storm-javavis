@@ -39,17 +39,17 @@ namespace storm {
 					l << mov(ptrA, ptrRel(ptrA));
 
 				l << fnParam(ptrA);
-				l << fnCall(dtor, Size());
+				l << fnCall(dtor, retVoid());
 			}
 		}
 
 		if (before) {
 			l << fnParam(dest);
-			l << fnCall(before->directRef(), Size());
+			l << fnCall(before->directRef(), retVoid());
 		}
 
 		l << epilog();
-		l << ret(Size());
+		l << ret(retVoid());
 
 		setCode(steal(CREATE(DynamicCode, this, l)));
 	}

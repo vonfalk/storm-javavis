@@ -9,7 +9,7 @@ BEGIN_TEST(TestPreserve) {
 	l << mov(rbx, wordConst(0x01));
 	l << mov(rcx, wordConst(0x02));
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	CHECK_EQ(callFn(b.address(), 0), 0x00);
@@ -31,7 +31,7 @@ BEGIN_TEST(TestPreserveEx) {
 	l << mov(rbx, wordConst(0x01));
 	l << mov(rcx, wordConst(0x02));
 	l << epilog();
-	l << ret(Size::sInt);
+	l << ret(retVal(Size::sInt, false));
 
 	Binary b(arena, l);
 	CHECK_EQ(callFn(b.address(), 0), 0x00);

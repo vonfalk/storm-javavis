@@ -98,7 +98,7 @@ class BfFunction extends Function {
 		l << addRef(Operand(resultVar));
 		l << mov(Operand(ptrA), Operand(resultVar));
 		l << epilog();
-		l << ret(sizePtr);
+		l << ret(RetVal(sizePtr, false));
 
 		r;
 	}

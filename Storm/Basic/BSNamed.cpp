@@ -49,7 +49,7 @@ namespace storm {
 				s->to << lea(ptrA, ptrRel(r.var()));
 				s->to << fnParam(ptrA);
 				s->to << fnParam(t->location(s).var());
-				s->to << fnCall(to->type().copyCtor(), Size());
+				s->to << fnCall(to->type().copyCtor(), retVoid());
 			} else {
 				// Regular machine operations suffice!
 				s->to << mov(ptrA, t->location(s).var());
@@ -242,7 +242,7 @@ namespace storm {
 				s->to << lea(ptrC, v.var());
 				s->to << fnParam(ptrC);
 				s->to << fnParam(ptrA);
-				s->to << fnCall(var->result.copyCtor(), Size());
+				s->to << fnCall(var->result.copyCtor(), retVoid());
 			} else {
 				s->to << mov(v.var(), var->var.var());
 				if (var->result.refcounted())
@@ -282,7 +282,7 @@ namespace storm {
 				s->to << lea(ptrC, v.var());
 				s->to << fnParam(ptrC);
 				s->to << fnParam(ptrA);
-				s->to << fnCall(type.copyCtor(), Size());
+				s->to << fnCall(type.copyCtor(), retVoid());
 			} else {
 				s->to << mov(v.var(), var.v);
 				if (type.refcounted())
@@ -364,7 +364,7 @@ namespace storm {
 			s->to << lea(ptrC, result.var());
 			s->to << fnParam(ptrC);
 			s->to << fnParam(ptrA);
-			s->to << fnCall(var->varType.copyCtor(), Size());
+			s->to << fnCall(var->varType.copyCtor(), retVoid());
 		} else {
 			s->to << mov(result.var(), xRel(result.var().size(), ptrA, var->offset()));
 			if (var->varType.refcounted())
