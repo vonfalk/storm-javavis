@@ -175,11 +175,11 @@ namespace stormgui {
 	}
 
 	Font *Window::font() {
-		return myFont.ret();
+		return CREATE(Font, this, myFont);
 	}
 
 	void Window::font(Par<Font> font) {
-		myFont = font;
+		myFont = CREATE(Font, this, font);
 		if (created())
 			SendMessage(handle(), WM_SETFONT, (WPARAM)font->handle(), TRUE);
 	}
