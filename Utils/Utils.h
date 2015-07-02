@@ -74,6 +74,11 @@ inline void limit(T &toLimit, const T &minLimit, const T &maxLimit) {
 	toLimit = min(maxLimit, max(minLimit, toLimit));
 }
 
+template <class T>
+inline T clamp(const T &v, const T &minV, const T &maxV) {
+	return min(maxV, min(minV, v));
+}
+
 #define null NULL
 
 inline float degToRad(float angle) {

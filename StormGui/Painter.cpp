@@ -103,6 +103,7 @@ namespace stormgui {
 		bool more = false;
 
 		try {
+			graphics->reset();
 			more = render(graphics->size(), graphics);
 		} catch (...) {
 			target.target->EndDraw();

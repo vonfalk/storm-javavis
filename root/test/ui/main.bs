@@ -33,10 +33,15 @@ class MainPainter extends Painter {
 		g.fillOval(Rect(from + border, to - border), brush3);
 
 		Moment now;
-		Float y = (now - started).inMs.float / 50.0;
+		Float y = (now - started).inMs.float / 30.0;
+		Point center = size / 2;
+		g.transform(rotate(y * 5 deg, center));
+
 		g.line(Point(0, y), Point(size.w, y), brush);
 
-		g.draw(bitmap, Point(y, y));
+		g.push();
+		g.transform(translate(Point(y, y)) * rotate(45 deg));
+		g.draw(bitmap);
 
 		true;
 	}

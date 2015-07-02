@@ -56,7 +56,11 @@ namespace stormgui {
 	D2D1_COLOR_F dx(const Color &color);
 	D2D1_POINT_2F dx(const Point &pt);
 	D2D1_RECT_F dx(const Rect &rect);
+	D2D1_MATRIX_3X2_F dx(Par<Transform> tfm);
+	D2D1_MATRIX_3X2_F dxUnit();
+	D2D1_MATRIX_3X2_F dxMultiply(const D2D1_MATRIX_3X2_F &a, const D2D1_MATRIX_3X2_F &b);
 
+	wostream &operator <<(wostream &to, const D2D1_MATRIX_3X2_F &m);
 
 	// Key state (as of the last processed message, only valid in the msg thread).
 	bool pressed(nat keycode);

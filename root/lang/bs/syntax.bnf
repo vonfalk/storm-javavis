@@ -133,6 +133,8 @@ Unit => timeUnit(u) : "min" u;
 Unit => timeUnit(u) : "s" u;
 Unit => timeUnit(u) : "ms" u;
 Unit => timeUnit(u) : "us" u;
+Unit => degUnit(u) : "deg" u;
+Unit => degUnit(u) : "rad" u;
 
 // Constants (for use along with Units).
 Const => intConstant(nr) : "[0-9]+" nr;

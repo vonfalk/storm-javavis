@@ -286,6 +286,10 @@
 				RelativePath=".\Geometry\Transform.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Geometry\Angle.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -462,6 +466,10 @@
 			</File>
 			<File
 				RelativePath=".\Geometry\Transform.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Angle.h"
 				>
 			</File>
 		</Filter>

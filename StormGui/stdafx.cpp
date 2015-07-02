@@ -13,7 +13,10 @@
 
 #undef null
 #include <comdef.h>
+// #unclude <comdef.h>
 #define null NULL
+
+#include <iomanip>
 
 String toS(HRESULT r) {
 	return _com_error(r).ErrorMessage();
@@ -75,5 +78,41 @@ namespace stormgui {
 		return r;
 	}
 
+	D2D1_MATRIX_3X2_F dx(Par<Transform> tfm) {
+		// Note that we are taking the transpose of the matrix, since DX uses a
+		// row vector when multiplying while we're using a column vector.
+		D2D1_MATRIX_3X2_F m = {
+			tfm->at(0, 0), tfm->at(1, 0),
+			tfm->at(0, 1), tfm->at(1, 1),
+			tfm->at(0, 3), tfm->at(1, 3),
+		};
+		return m;
+	}
+
+	D2D1_MATRIX_3X2_F dxUnit() {
+		D2D1_MATRIX_3X2_F m = {
+			1, 0, 0, 1, 0, 0,
+		};
+		return m;
+	}
+
+	D2D1_MATRIX_3X2_F dxMultiply(const D2D1_MATRIX_3X2_F &a, const D2D1_MATRIX_3X2_F &b) {
+		D2D1_MATRIX_3X2_F r;
+		r._11 = a._11*b._11 + a._12*b._21;
+		r._12 = a._11*b._12 + a._12*b._22;
+		r._21 = a._21*b._11 + a._22*b._21;
+		r._22 = a._21*b._12 + a._22*b._22;
+		r._31 = a._31*b._11 + a._32*b._21 + b._31;
+		r._32 = a._31*b._12 + a._32*b._22 + b._32;
+		return r;
+	}
+
+	wostream &operator <<(wostream &to, const D2D1_MATRIX_3X2_F &m) {
+		to << std::fixed << std::setprecision(3);
+		to << endl << m._11 << L", " << m._12;
+		to << endl << m._21 << L", " << m._22;
+		to << endl << m._31 << L", " << m._32;
+		return to;
+	}
 
 }

@@ -12,3 +12,12 @@ TypeName timeUnit(SStr name) {
 	n.add(TypePart(name));
 	n;
 }
+
+// DegUnit
+TypeName degUnit(SStr name) {
+	TypeName n;
+	n.add(TypePart("core"));
+	n.add(TypePart("geometry"));
+	n.add(TypePart(name));
+	n;
+}
