@@ -48,9 +48,6 @@ namespace stormgui {
 		// Set the line width (in relation to the previous state).
 		void STORM_SETTER lineWidth(Float w);
 
-		// Set the opacity (in relation to the previous state). TODO: Implement or remove.
-		void STORM_SETTER opacity(Float o);
-
 		/**
 		 * Draw stuff.
 		 */
@@ -102,9 +99,6 @@ namespace stormgui {
 
 			// Line size.
 			float lineWidth;
-
-			// Opacity.
-			float opacity;
 		};
 
 		// default state.

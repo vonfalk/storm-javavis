@@ -32,7 +32,6 @@ namespace stormgui {
 		State s = {
 			dxUnit(),
 			1.0f,
-			1.0f,
 		};
 		return s;
 	}
@@ -64,10 +63,6 @@ namespace stormgui {
 
 	void Graphics::lineWidth(Float w) {
 		state.lineWidth = oldStates.back().lineWidth * w;
-	}
-
-	void Graphics::opacity(Float w) {
-		state.opacity = oldStates.back().opacity * clamp(w, 0.0f, 1.0f);
 	}
 
 	/**
