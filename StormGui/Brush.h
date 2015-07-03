@@ -73,6 +73,7 @@ namespace stormgui {
 
 	/**
 	 * Linear gradient.
+	 * TODO: Change the start and end point to an angle instead.
 	 */
 	class LinearGradient : public Gradient {
 		STORM_CLASS;

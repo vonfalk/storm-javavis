@@ -307,5 +307,38 @@ namespace storm {
 			return CREATE(Transform, e.v, d);
 		}
 
+		Transform *skewX(EnginePtr e, Angle angle) {
+			float t = -tan(angle.rad());
+			float d[] = {
+				1, t, t, 0,
+				0, 1, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1,
+			};
+			return CREATE(Transform, e.v, d);
+		}
+
+		Transform *skewY(EnginePtr e, Angle angle) {
+			float t = -tan(angle.rad());
+			float d[] = {
+				1, 0, 0, 0,
+				t, 1, t, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1,
+			};
+			return CREATE(Transform, e.v, d);
+		}
+
+		Transform *skewZ(EnginePtr e, Angle angle) {
+			float t = -tan(angle.rad());
+			float d[] = {
+				1, 0, 0, 0,
+				0, 1, 0, 0,
+				t, t, 1, 0,
+				0, 0, 0, 1,
+			};
+			return CREATE(Transform, e.v, d);
+		}
+
 	}
 }

@@ -2,6 +2,7 @@
 #include "Brush.h"
 #include "Bitmap.h"
 #include "Font.h"
+#include "Text.h"
 
 namespace stormgui {
 	class Painter;
@@ -47,7 +48,7 @@ namespace stormgui {
 		// Set the line width (in relation to the previous state).
 		void STORM_SETTER lineWidth(Float w);
 
-		// Set the opacity (in relation to the previous state).
+		// Set the opacity (in relation to the previous state). TODO: Implement or remove.
 		void STORM_SETTER opacity(Float o);
 
 		/**
@@ -82,6 +83,9 @@ namespace stormgui {
 
 		// Draw text.
 		void STORM_FN text(Par<Str> text, Par<Font> font, Par<Brush> brush, Rect rect);
+
+		// Draw pre-formatted text.
+		void STORM_FN draw(Par<Text> text, Par<Brush> brush, Point origin);
 
 	private:
 		// Render target.

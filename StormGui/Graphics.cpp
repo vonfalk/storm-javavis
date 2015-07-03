@@ -44,6 +44,7 @@ namespace stormgui {
 
 	Bool Graphics::pop() {
 		state = oldStates.back();
+		target->SetTransform(state.transform);
 		if (oldStates.size() > 1) {
 			oldStates.pop_back();
 			return true;
@@ -122,6 +123,10 @@ namespace stormgui {
 	void Graphics::text(Par<Str> text, Par<Font> font, Par<Brush> brush, Rect rect) {
 		ID2D1Brush *b = brush->brush(owner, rect.size());
 		target->DrawText(text->v.c_str(), text->v.size(), font->textFormat(), dx(rect), b);
+	}
+
+	void Graphics::draw(Par<Text> text, Par<Brush> brush, Point origin) {
+		target->DrawTextLayout(dx(origin), text->layout(), brush->brush(owner, text->size()));
 	}
 
 }
