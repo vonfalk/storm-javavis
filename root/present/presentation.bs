@@ -1,0 +1,27 @@
+use graphics;
+
+/**
+ * Presentation.
+ */
+class Presentation {
+	// Title.
+	Str title;
+
+	// Slides.
+	Slide[] slides;
+
+	// Background color. (replace with brush?)
+	Color bg;
+
+	// Foreground color.
+	Color text;
+
+	// Create.
+	ctor(Str title) {
+		init() {
+			title = title;
+			bg = white;
+			text = black;
+		}
+	}
+}

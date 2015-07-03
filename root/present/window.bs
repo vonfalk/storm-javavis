@@ -1,0 +1,101 @@
+use ui;
+use core:geometry;
+use core:debug;
+use graphics;
+
+/**
+ * Main presentation window.
+ */
+class PresentWindow extends Frame {
+	// Presentation we're showing.
+	Presentation p;
+
+	// Painter.
+	PresentPainter paint;
+
+	// Current slide.
+	Nat slide;
+
+	// Temporary next button.
+	Button next;
+
+	ctor(Presentation show) {
+		init(show.title) {
+			p = show;
+			paint(SlideStyle(show));
+			slide = 0;
+			next("Next");
+		}
+
+		size(Size(500, 500));
+		painter(paint);
+
+		next.pos(Rect(0, 0, 30, 30));
+		next.onClick = &this->onNext(Button);
+		add(next);
+
+		show(slide);
+
+		create();
+	}
+
+	// Show a new slide.
+	void show(Nat s) {
+		slide = s;
+		Slide? show;
+		if (slide < p.slides.count)
+			show = p.slides[slide];
+
+		paint.show(show);
+		repaint();
+	}
+
+	// Next button clicked somehow.
+	void onNext(Button src) {
+		show(slide + 1);
+	}
+
+}
+
+
+/**
+ * Painter for the presentation window.
+ */
+class PresentPainter extends Painter {
+	// Current slide.
+	Slide? slide;
+
+	// End of presentation brush.
+	SolidBrush endColor;
+
+	// Style.
+	SlideStyle style;
+
+	ctor() {
+		init() {
+			endColor = black;
+			style = style;
+		}
+	}
+
+	// Show a slide.
+	void show(Slide? s) {
+		slide = s;
+	}
+
+	Bool render(Size s, Graphics g) {
+		// This should work without a temporary! I think the problem is that member variables
+		// are chosen before variables in the local scope.
+		Slide? z = slide;
+		if (z) {
+			Point p = s;
+			Size dim = (s.w + s.h) / 2;
+			g.transform(translate(s.center - dim.center) * scale(dim.w / 100));
+			z.draw(Size(100), g);
+		} else {
+			g.fillRect(Rect(Point(), s), endColor);
+			false;
+		}
+	}
+
+}

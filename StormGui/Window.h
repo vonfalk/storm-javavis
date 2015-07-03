@@ -92,6 +92,9 @@ namespace stormgui {
 		// Update the window (ie repaint it).
 		virtual void STORM_FN update();
 
+		// Repaint the window when we have time.
+		virtual void STORM_FN repaint();
+
 		// Called when the window is resized.
 		virtual void STORM_FN resized(Size size);
 

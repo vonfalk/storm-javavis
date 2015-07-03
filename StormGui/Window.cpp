@@ -185,7 +185,13 @@ namespace stormgui {
 	}
 
 	void Window::update() {
-		UpdateWindow(handle());
+		if (created())
+			UpdateWindow(handle());
+	}
+
+	void Window::repaint() {
+		if (created())
+			InvalidateRect(handle(), NULL, FALSE);
 	}
 
 	void Window::resized(Size size) {

@@ -1,0 +1,9 @@
+use core:debug;
+
+void test() {
+	Presentation p("Test");
+	p.slides << TitleSlide("Test!", "Filip Strömbäck");
+
+	PresentWindow win(p);
+	win.waitForClose;
+}

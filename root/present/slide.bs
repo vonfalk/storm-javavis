@@ -1,0 +1,81 @@
+use ui;
+use core:geometry;
+use core:debug;
+use graphics;
+
+/**
+ * Create some default fonts.
+ */
+Font titleFont() {
+	Font("Arial", 15);
+}
+
+Font subTitleFont() {
+	Font("Arial", 10);
+}
+
+/**
+ * Style for the slides.
+ */
+class SlideStyle on Render {
+	SolidBrush bg;
+	SolidBrush text;
+
+	ctor(Presentation p) {
+		init() {
+			bg = p.bg;
+			text = p.text;
+		}
+	}
+}
+
+/**
+ * Single slide in a presentation.
+ */
+class Slide on Render {
+
+	// Render this slide.
+	Bool draw(SlideStyle s, Size s, Graphics g) {
+		false;
+	}
+
+}
+
+
+/**
+ * Title slide.
+ */
+class TitleSlide extends Slide {
+	Text title;
+	Text subTitle;
+	SolidBrush brush;
+
+	ctor(Str title) {
+		init() {
+			title(title, titleFont);
+			subTitle("", subtitleFont);
+			brush = black;
+		}
+	}
+
+	ctor(Str title, Str sub) {
+		init() {
+			title(title, titleFont);
+			subTitle(sub, subTitleFont);
+			brush = black;
+		}
+	}
+
+	Bool draw(SlideStyle s, Size s, Graphics g) {
+		Point titlePos = s.center;
+		titlePos.y *= 4.0 / 5.0;
+		g.draw(title, brush, titlePos - title.size.center);
+
+		Point subPos = s.center;
+		subPos.y *= 6.0 / 5.0;
+		g.draw(subTitle, brush, subPos - subTitle.size.center);
+
+		false;
+	}
+
+}
