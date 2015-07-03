@@ -20,6 +20,9 @@ public:
 	// Get a path to the root of the debug environment (only valid during debug).
 	static Path dbgRoot();
 
+	// Current working directory.
+	static Path cwd();
+
 	// Create an empty path.
 	Path();
 

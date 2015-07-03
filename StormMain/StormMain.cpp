@@ -1,5 +1,4 @@
 #include "stdafx.h"
-
 #include "Utils/Timestamp.h"
 #include "Utils/Exception.h"
 #include "Storm/Engine.h"
@@ -28,6 +27,9 @@ bool ioRead(String &to) {
 }
 
 void stopIo() {
+	// Allow all our UThreads to exit.
+	while (os::UThread::leave());
+
 	if (ioThread) {
 		del(ioThread);
 		// Let the io thread exit cleanly.
@@ -50,8 +52,35 @@ bool readLine(String &to) {
 	return fut.result();
 }
 
+void runMainLoop(Engine &engine, const String &lang, Par<LangRepl> repl) {
+	Auto<Str> line;
+	while (!repl->exit()) {
+		if (line)
+			wcout << L"? ";
+		else
+			wcout << lang << L"> ";
+
+		String data;
+		if (!readLine(data))
+			break;
+
+		if (!line)
+			line = CREATE(Str, engine, data);
+		else
+			line = CREATE(Str, engine, line->v + L"\n" + data);
+
+		try {
+			if (repl->eval(line))
+				line = Auto<Str>();
+		} catch (const Exception &e) {
+			wcout << L"Unhandled exception from 'eval': " << e << endl;
+			line = Auto<Str>();
+		}
+	}
+}
+
 // Launch a main loop.
-int launchMainLoop(Engine &engine, const String &lang) {
+int launchMainLoop(Engine &engine, const String &lang, const String &command) {
 	// Launch a main loop!
 	Auto<Name> replName = CREATE(Name, engine);
 	replName->add(L"lang");
@@ -77,33 +106,11 @@ int launchMainLoop(Engine &engine, const String &lang) {
 
 	Auto<LangRepl> repl = create<LangRepl>(replCtor, os::FnParams());
 
-	Auto<Str> line;
-	while (!repl->exit()) {
-		if (line)
-			wcout << L"? ";
-		else
-			wcout << lang << L"> ";
-
-		String data;
-		if (!readLine(data))
-			break;
-
-		if (!line)
-			line = CREATE(Str, engine, data);
-		else
-			line = CREATE(Str, engine, line->v + L"\n" + data);
-
-		try {
-			if (repl->eval(line))
-				line = Auto<Str>();
-		} catch (const Exception &e) {
-			wcout << L"Unhandled exception from 'eval': " << e << endl;
-			line = Auto<Str>();
-		}
+	if (command == L"") {
+		runMainLoop(engine, lang, repl);
+	} else {
+		repl->eval(steal(CREATE(Str, engine, command)));
 	}
-
-	// Allow all our UThreads to exit.
-	while (os::UThread::leave());
 
 	return 0;
 }
@@ -148,11 +155,17 @@ enum LaunchMode {
 struct Launch {
 	LaunchMode mode;
 
+	// Root path.
+	Path root;
+
 	// Which function to launch?
 	String fn;
 
 	// Which language's repl to launch?
 	String repl;
+
+	// Repl command (if any).
+	String replCmd;
 };
 
 void help() {
@@ -162,32 +175,69 @@ void help() {
 	wcout << L"storm -f <function> - run <function>, then exit." << endl;
 }
 
+struct StatePtr;
+typedef StatePtr (*State)(const String &, Launch &);
+
+struct StatePtr {
+	StatePtr() : p(null) {}
+    StatePtr(State p) : p(p) {}
+	StatePtr operator () (const String &s, Launch &l) { return (*p)(s, l); }
+	operator bool() { return p != null; }
+    State p;
+};
+
+StatePtr parseStart(const String &arg, Launch &result);
+
+StatePtr parseFunction(const String &arg, Launch &result) {
+	result.fn = arg;
+	return &parseStart;
+}
+
+StatePtr parseReplCommand(const String &arg, Launch &result) {
+	result.replCmd = arg;
+	return &parseStart;
+}
+
+StatePtr parseRoot(const String &arg, Launch &result) {
+	Path p(arg);
+	if (p.isAbsolute())
+		result.root = p;
+	else
+		result.root = Path::cwd() + p;
+	return &parseStart;
+}
+
+StatePtr parseStart(const String &arg, Launch &result) {
+	if (arg == L"-?") {
+		result.mode = launchHelp;
+	} else if (arg == L"-f") {
+		result.mode = launchFunction;
+		return &parseFunction;
+	} else if (arg == L"-c") {
+		return &parseReplCommand;
+	} else if (arg == L"-r") {
+		return &parseRoot;
+	} else {
+		result.mode = launchRepl;
+		result.repl = arg;
+		return &parseStart;
+	}
+
+	return StatePtr();
+}
+
 bool parseParams(int argc, wchar *argv[], Launch &result) {
 	result.mode = launchRepl;
 	result.repl = L"bs";
-	nat unknownCount = 0;
+	StatePtr state = &parseStart;
 
 	for (int i = 1; i < argc; i++) {
 		String arg = argv[i];
-		if (arg == L"-?") {
-			result.mode = launchHelp;
-			return true;
-		} else if (arg == L"-f") {
-			result.mode = launchFunction;
+		if (state) {
+			state = state(arg, result);
 		} else {
-			if (unknownCount++ > 0)
-				return false;
-
-			switch (result.mode) {
-			case launchRepl:
-				result.repl = arg;
-				break;
-			case launchFunction:
-				result.fn = arg;
-				break;
-			default:
-				return false;
-			}
+			wcout << L"Unknown parameter: " << arg << endl;
+			return false;
 		}
 	}
 
@@ -199,31 +249,27 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	initDebug();
 
 	try {
-		wcout << L"Welcome to the Storm compiler!" << endl;
-
-		startIo();
-
-#ifdef DEBUG
-		Path path = Path::dbgRoot() + L"root";
-#else
-		Path path = Path::executable() + L"root";
-#endif
-		wcout << L"Root directory: " << path << endl;
-
 		Launch launch;
+#ifdef DEBUG
+		launch.root = Path::dbgRoot() + L"root";
+#else
+		launch.root = Path::executable() + L"root";
+#endif
+
 		if (!parseParams(argc, argv, launch)) {
-			wcout << L"Invalid parameters." << endl;
+			wcout << L"Error parsing command-line parameters." << endl;
 			help();
 			return 1;
 		}
 
-		if (launch.mode == launchHelp) {
-			help();
-			return 0;
-		}
+		wcout << L"Welcome to the Storm compiler!" << endl;
+
+		startIo();
+
+		wcout << L"Root directory: " << launch.root << endl;
 
 		Timestamp start;
-		Engine engine(path, Engine::reuseMain);
+		Engine engine(launch.root, Engine::reuseMain);
 		Timestamp end;
 
 		wcout << L"Compiler boot in " << (end - start) << endl;
@@ -237,7 +283,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 				r = 0;
 				break;
 			case launchRepl:
-				r = launchMainLoop(engine, launch.repl);
+				r = launchMainLoop(engine, launch.repl, launch.replCmd);
 				break;
 			case launchFunction:
 				r = launchFn(engine, launch.fn);

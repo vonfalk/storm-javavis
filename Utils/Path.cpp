@@ -37,6 +37,12 @@ Path Path::dbgRoot() {
 	return executable().parent();
 }
 
+Path Path::cwd() {
+	wchar_t tmp[MAX_PATH + 1];
+	_wgetcwd(tmp, MAX_PATH + 1);
+	return Path(tmp);
+}
+
 Path::Path(const String &path) : isDirectory(false) {
 	parseStr(path);
 	simplify();
