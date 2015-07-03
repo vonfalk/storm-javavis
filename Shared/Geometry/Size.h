@@ -5,6 +5,7 @@ namespace storm {
 	class Str;
 
 	namespace geometry {
+		class Point;
 		STORM_PKG(core.geometry);
 
 		/**
@@ -16,6 +17,7 @@ namespace storm {
 			STORM_CTOR Size();
 			STORM_CTOR Size(Float wh);
 			STORM_CTOR Size(Float w, Float h);
+			STORM_CTOR Size(Point pt);
 
 			STORM_VAR Float w;
 			STORM_VAR Float h;

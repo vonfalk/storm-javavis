@@ -49,6 +49,7 @@ namespace storm {
 
 		// Translation transform.
 		Transform *STORM_ENGINE_FN translate(EnginePtr e, Vector v);
+		Transform *STORM_ENGINE_FN translate(EnginePtr e, Point v);
 		Transform *STORM_ENGINE_FN translate(EnginePtr e, Size v);
 		Transform *STORM_ENGINE_FN rotateX(EnginePtr e, Angle angle);
 		Transform *STORM_ENGINE_FN rotateX(EnginePtr e, Angle angle, Vector origin);

@@ -40,8 +40,8 @@ namespace storm {
 		}
 
 		// Dot and cross product.
-		Vector operator *(Vector a, Vector b) {
-			return Vector(a.x * b.x, a.y * b.y, a.z * b.z);
+		Float operator *(Vector a, Vector b) {
+			return a.x * b.x + a.y * b.y + a.z * b.z;
 		}
 
 		Vector operator /(Vector a, Vector b) {

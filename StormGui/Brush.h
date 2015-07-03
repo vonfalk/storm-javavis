@@ -73,12 +73,11 @@ namespace stormgui {
 
 	/**
 	 * Linear gradient.
-	 * TODO: Change the start and end point to an angle instead.
 	 */
 	class LinearGradient : public Gradient {
 		STORM_CLASS;
 	public:
-		STORM_CTOR LinearGradient(Par<Array<GradientStop>> stops, Point start, Point end);
+		STORM_CTOR LinearGradient(Par<Array<GradientStop>> stops, Angle angle);
 
 		// Get the brush.
 		inline ID2D1LinearGradientBrush *brush(Painter *owner) { return get<ID2D1LinearGradientBrush>(owner); }
@@ -89,15 +88,12 @@ namespace stormgui {
 		// Prepare.
 		virtual void prepare(const Size &s);
 
-		// Get/set start and end points.
-		Point STORM_FN start();
-		Point STORM_FN end();
-		void STORM_SETTER start(Point p);
-		void STORM_SETTER end(Point p);
+		// The angle.
+		STORM_VAR Angle angle;
 
 	private:
-		Point myStart, myEnd;
-		Point tfmStart, tfmEnd;
+		// Compute points.
+		void compute(const Size &sz, Point &start, Point &end);
 	};
 
 }

@@ -9,10 +9,17 @@ namespace stormgui {
 	class Text : public ObjectOn<Render> {
 		STORM_CLASS;
 	public:
+		// Create a single line of text.
+		STORM_CTOR Text(Par<Str> text, Par<Font> font);
+
+		// Create text that fits inside a square 'size' units big.
 		STORM_CTOR Text(Par<Str> text, Par<Font> font, Size size);
 
 		// Layout size.
-		inline Size STORM_FN size() const { return s; }
+		Size STORM_FN size();
+
+		// We can add formatting options for parts of the string here. For example, it is possible
+		// to apply a font to a specific part of the string.
 
 		// Get the layout.
 		inline IDWriteTextLayout *layout() const { return l; }
@@ -20,8 +27,8 @@ namespace stormgui {
 		// The layout itself.
 		IDWriteTextLayout *l;
 
-		// Layout size.
-		Size s;
+		// Create layout.
+		void init(Par<Str> text, Par<Font> font, Size size);
 	};
 
 }

@@ -209,6 +209,10 @@ namespace storm {
 			return CREATE(Transform, e.v, d);
 		}
 
+		Transform *translate(EnginePtr e, Point v) {
+			return translate(e, Vector(v));
+		}
+
 		Transform *translate(EnginePtr e, Size v) {
 			return translate(e, Point(v));
 		}

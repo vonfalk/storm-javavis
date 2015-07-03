@@ -31,9 +31,12 @@ namespace stormgui {
 		inline Str *STORM_FN name() { return CREATE(Str, this, fName); }
 		void STORM_SETTER name(Par<Str> name);
 
-		// Font height.
+		// Font height (pt).
 		inline Float STORM_FN height() { return fHeight; }
 		void STORM_SETTER height(Float h);
+
+		// Font height (dip).
+		inline Float STORM_FN pxHeight() { return fHeight * 92.0f / 72.0f; }
 
 		// Font weight. TODO: Make constants for weight.
 		inline Int STORM_FN weight() { return fWeight; }

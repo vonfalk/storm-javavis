@@ -50,39 +50,31 @@ namespace stormgui {
 		destroy();
 	}
 
-	LinearGradient::LinearGradient(Par<Array<GradientStop>> stops, Point start, Point end) :
-		Gradient(stops), myStart(start), myEnd(end) {}
+	LinearGradient::LinearGradient(Par<Array<GradientStop>> stops, Angle angle) : Gradient(stops), angle(angle) {}
 
 	void LinearGradient::create(Painter *owner, ID2D1Resource **out) {
-		D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES p = { dx(myStart), dx(myEnd) };
+		Point start, end;
+		compute(Size(1, 1), start, end);
+		D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES p = { dx(start), dx(end) };
 		owner->renderTarget()->CreateLinearGradientBrush(p, dxStops(owner), (ID2D1LinearGradientBrush**)out);
 	}
 
 	void LinearGradient::prepare(const Size &size) {
-		tfmStart.x = myStart.x * size.w;
-		tfmStart.y = myStart.y * size.h;
-		tfmEnd.x = myEnd.x * size.w;
-		tfmEnd.y = myEnd.y * size.h;
+		Point start, end;
+		compute(size, start, end);
 		if (ID2D1LinearGradientBrush *o = peek<ID2D1LinearGradientBrush>()) {
-			o->SetStartPoint(dx(tfmStart));
-			o->SetEndPoint(dx(tfmEnd));
+			o->SetStartPoint(dx(start));
+			o->SetEndPoint(dx(end));
 		}
 	}
 
-	Point LinearGradient::start() {
-		return myStart;
-	}
+	void LinearGradient::compute(const Size &size, Point &start, Point &end) {
+		Point dir = storm::geometry::angle(angle);
+		Point c = center(size);
 
-	Point LinearGradient::end() {
-		return myEnd;
-	}
-
-	void LinearGradient::start(Point p) {
-		myStart = p;
-	}
-
-	void LinearGradient::end(Point p) {
-		myEnd = p;
+		float w = max(size.w, size.h);
+		start = c + dir * -w;
+		end = c + dir * w;
 	}
 
 }

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Size.h"
 #include "Str.h"
+#include "Point.h"
 
 namespace storm {
 	namespace geometry {
@@ -10,6 +11,8 @@ namespace storm {
 		Size::Size(Float wh) : w(wh), h(wh) {}
 
 		Size::Size(Float w, Float h) : w(w), h(h) {}
+
+		Size::Size(Point pt) : w(pt.x), h(pt.y) {}
 
 		Bool Size::valid() const {
 			return w >= 0.0f && h >= 0.0f;

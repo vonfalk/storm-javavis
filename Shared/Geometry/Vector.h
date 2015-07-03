@@ -39,7 +39,7 @@ namespace storm {
 		Vector STORM_FN operator /(Vector a, Float b);
 
 		// Dot and cross product.
-		Vector STORM_FN operator *(Vector a, Vector b);
+		Float STORM_FN operator *(Vector a, Vector b);
 		Vector STORM_FN operator /(Vector a, Vector b);
 
 		inline Bool STORM_FN operator ==(Vector a, Vector b) { return a.x == b.x && a.y == b.y && a.z == b.z; }

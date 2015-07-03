@@ -177,13 +177,12 @@ namespace stormgui {
 			Auto<RenderMgr> mgr = renderMgr(engine());
 			DWRITE_FONT_STYLE style = fItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
 			DWRITE_FONT_STRETCH stretch = DWRITE_FONT_STRETCH_NORMAL;
-			float dip = fHeight * 72.0f / 92.0f;
 			HRESULT r = mgr->dWrite()->CreateTextFormat(fName.c_str(),
 														NULL,
 														(DWRITE_FONT_WEIGHT)fWeight,
 														style,
 														stretch,
-														dip,
+														pxHeight(),
 														L"en-us",
 														&shared->textFmt);
 			if (FAILED(r)) {
