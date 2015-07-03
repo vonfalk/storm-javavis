@@ -29,6 +29,13 @@ int main(int argc, const char **argv) {
 	string project;
 	getline(config, project);
 
+	string params;
+	size_t split = project.find('#');
+	if (split != string::npos) {
+		params = " " + project.substr(split + 1);
+		project = project.substr(0, split);
+	}
+
 	bool clean = false;
 	bool all = false;
 	bool release = false;
@@ -70,7 +77,7 @@ int main(int argc, const char **argv) {
 	} else if (r == 0 && !clean && !release) {
 		cout << endl;
 
-		string cmd = build + "\\" + project;
+		string cmd = build + "\\" + project + params;
 		if (valgrind) {
 			cmd = "drmemory.exe -logdir Debug -batch -results_to_stderr -- " + cmd;
 		}

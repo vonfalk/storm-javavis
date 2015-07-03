@@ -69,6 +69,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				IgnoreImportLibrary="true"
 				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
@@ -150,6 +151,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				IgnoreImportLibrary="true"
 				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
@@ -193,6 +195,14 @@
 			>
 			<File
 				RelativePath=".\App.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Bitmap.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Brush.cpp"
 				>
 			</File>
 			<File
@@ -276,23 +286,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Text.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\VTables.asm"
 				>
 			</File>
 			<File
 				RelativePath=".\Window.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Brush.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Bitmap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Text.cpp"
 				>
 			</File>
 		</Filter>
@@ -306,7 +308,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Bitmap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Brush.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Brush.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Button.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ComPtr.h"
 				>
 			</File>
 			<File
@@ -378,27 +396,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Window.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Brush.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Brush.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ComPtr.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Bitmap.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Text.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Window.h"
 				>
 			</File>
 		</Filter>

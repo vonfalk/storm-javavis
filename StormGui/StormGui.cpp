@@ -26,7 +26,8 @@ namespace storm {
 	LibData::LibData() {}
 
 	LibData::~LibData() {
-		app->terminate();
+		if (app)
+			app->terminate();
 	}
 
 }

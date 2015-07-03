@@ -191,6 +191,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DllTest.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\EvalTest.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FloatTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FloatTest.cpp"
 				>
 			</File>
@@ -272,18 +284,6 @@
 			</File>
 			<File
 				RelativePath=".\VTableTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DllTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FloatTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\EvalTest.cpp"
 				>
 			</File>
 		</Filter>

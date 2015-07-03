@@ -108,6 +108,92 @@ int launchMainLoop(Engine &engine, const String &lang) {
 	return 0;
 }
 
+int launchFn(Engine &e, const String &fnName) {
+	Auto<Name> name = parseSimpleName(e, fnName);
+	Named *named = e.scope()->find(name);
+	if (!named) {
+		wcout << L"Could not find " << fnName << L"!" << endl;
+		return 1;
+	}
+
+	Function *fn = as<Function>(named);
+	if (!fn) {
+		wcout << fnName << L" is not a function." << endl;
+		return 1;
+	}
+
+	Value r = fn->result;
+	if (r.isBuiltIn()) {
+		// We can just ignore the return value.
+		fn->call<void>();
+	} else if (r.isValue()) {
+		wcout << L"Functions returning values are not supported yet." << endl;
+		return 1;
+	} else if (r.isClass()) {
+		Auto<Object> o = fn->call<Object *>();
+	} else {
+		wcout << L"Unknown return type for the function." << endl;
+		return 1;
+	}
+
+	return 0;
+}
+
+enum LaunchMode {
+	launchHelp,
+	launchRepl,
+	launchFunction,
+};
+
+struct Launch {
+	LaunchMode mode;
+
+	// Which function to launch?
+	String fn;
+
+	// Which language's repl to launch?
+	String repl;
+};
+
+void help() {
+	wcout << L"Usage:" << endl;
+	wcout << L"storm               - launch the default REPL." << endl;
+	wcout << L"storm <language>    - launc the REPL for <language>" << endl;
+	wcout << L"storm -f <function> - run <function>, then exit." << endl;
+}
+
+bool parseParams(int argc, wchar *argv[], Launch &result) {
+	result.mode = launchRepl;
+	result.repl = L"bs";
+	nat unknownCount = 0;
+
+	for (int i = 1; i < argc; i++) {
+		String arg = argv[i];
+		if (arg == L"-?") {
+			result.mode = launchHelp;
+			return true;
+		} else if (arg == L"-f") {
+			result.mode = launchFunction;
+		} else {
+			if (unknownCount++ > 0)
+				return false;
+
+			switch (result.mode) {
+			case launchRepl:
+				result.repl = arg;
+				break;
+			case launchFunction:
+				result.fn = arg;
+				break;
+			default:
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 
 int _tmain(int argc, _TCHAR* argv[]) {
 	initDebug();
@@ -124,9 +210,17 @@ int _tmain(int argc, _TCHAR* argv[]) {
 #endif
 		wcout << L"Root directory: " << path << endl;
 
-		String lang = L"bs";
-		if (argc >= 2)
-			lang = argv[1];
+		Launch launch;
+		if (!parseParams(argc, argv, launch)) {
+			wcout << L"Invalid parameters." << endl;
+			help();
+			return 1;
+		}
+
+		if (launch.mode == launchHelp) {
+			help();
+			return 0;
+		}
 
 		Timestamp start;
 		Engine engine(path, Engine::reuseMain);
@@ -135,9 +229,25 @@ int _tmain(int argc, _TCHAR* argv[]) {
 		wcout << L"Compiler boot in " << (end - start) << endl;
 
 		try {
-			// Todo: We probably want more launch options here, for example run a specific
-			// function as our main and so on...
-			int r = launchMainLoop(engine, lang);
+			int r = 0;
+
+			switch (launch.mode) {
+			case launchHelp:
+				help();
+				r = 0;
+				break;
+			case launchRepl:
+				r = launchMainLoop(engine, launch.repl);
+				break;
+			case launchFunction:
+				r = launchFn(engine, launch.fn);
+				break;
+			default:
+				wcout << L"Unknown launch mode. Exiting..." << endl;
+				r = 1;
+				break;
+			}
+
 			stopIo();
 			return r;
 		} catch (const Exception &e) {
