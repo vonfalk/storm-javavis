@@ -29,6 +29,7 @@ class SlideStyle on Render {
 	}
 }
 
+
 /**
  * Single slide in a presentation.
  */
@@ -48,13 +49,11 @@ class Slide on Render {
 class TitleSlide extends Slide {
 	Text title;
 	Text subTitle;
-	SolidBrush brush;
 
 	ctor(Str title) {
 		init() {
 			title(title, titleFont);
 			subTitle("", subtitleFont);
-			brush = black;
 		}
 	}
 
@@ -62,18 +61,17 @@ class TitleSlide extends Slide {
 		init() {
 			title(title, titleFont);
 			subTitle(sub, subTitleFont);
-			brush = black;
 		}
 	}
 
-	Bool draw(SlideStyle s, Size s, Graphics g) {
+	Bool draw(SlideStyle style, Size s, Graphics g) {
 		Point titlePos = s.center;
 		titlePos.y *= 4.0 / 5.0;
-		g.draw(title, brush, titlePos - title.size.center);
+		g.draw(title, style.text, titlePos - title.size.center);
 
 		Point subPos = s.center;
 		subPos.y *= 6.0 / 5.0;
-		g.draw(subTitle, brush, subPos - subTitle.size.center);
+		g.draw(subTitle, style.text, subPos - subTitle.size.center);
 
 		false;
 	}

@@ -16,23 +16,15 @@ class PresentWindow extends Frame {
 	// Current slide.
 	Nat slide;
 
-	// Temporary next button.
-	Button next;
-
 	ctor(Presentation show) {
 		init(show.title) {
 			p = show;
 			paint(SlideStyle(show));
 			slide = 0;
-			next("Next");
 		}
 
 		size(Size(500, 500));
 		painter(paint);
-
-		next.pos(Rect(0, 0, 30, 30));
-		next.onClick = &this->onNext(Button);
-		add(next);
 
 		show(slide);
 
@@ -41,18 +33,42 @@ class PresentWindow extends Frame {
 
 	// Show a new slide.
 	void show(Nat s) {
-		slide = s;
 		Slide? show;
-		if (slide < p.slides.count)
-			show = p.slides[slide];
+		slide = s;
+		if (s < p.slides.count) {
+			show = p.slides[s];
+		}
 
 		paint.show(show);
 		repaint();
 	}
 
-	// Next button clicked somehow.
-	void onNext(Button src) {
-		show(slide + 1);
+	// Next slide.
+	void next() {
+		if (slide < p.slides.count)
+			show(slide + 1);
+	}
+
+	// Prev slide.
+	void prev() {
+		if (slide > 0)
+			show(slide - 1);
+	}
+
+	// Key handling.
+	Bool onKey(Bool down, Nat id) {
+		if (down) {
+			if (id == 13 | id == 39) {
+				next;
+			} else if (id == 37) {
+				prev;
+			} else if (id == 27) {
+				close;
+			} else {
+				print("Key: " # id);
+			}
+		}
+		super:onKey(down, id);
 	}
 
 }
@@ -71,7 +87,7 @@ class PresentPainter extends Painter {
 	// Style.
 	SlideStyle style;
 
-	ctor() {
+	ctor(SlideStyle style) {
 		init() {
 			endColor = black;
 			style = style;
@@ -91,7 +107,7 @@ class PresentPainter extends Painter {
 			Point p = s;
 			Size dim = (s.w + s.h) / 2;
 			g.transform(translate(s.center - dim.center) * scale(dim.w / 100));
-			z.draw(Size(100), g);
+			z.draw(style, Size(100), g);
 		} else {
 			g.fillRect(Rect(Point(), s), endColor);
 			false;
