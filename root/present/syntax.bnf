@@ -1,0 +1,17 @@
+delimiter: BSDelimiter;
+
+Expr => PExpr(block, title) : "presentation", String title, "{", (Slide(block, me) -> add, ";", )* "}";
+
+// A single slide:
+Slide(lang.bs.Block block, PExpr p);
+Slide => SExpr(p, type, params) : Name type, SlideParams(block) params, "{", (Item(block) -> add, ";", )* "}";
+Slide => SExpr(p, type, params) : Name type, SlideParams(block) params;
+
+// Parameters to a slide.
+SlideParams(lang.bs.Block b);
+SlideParams => lang.bs.Actual() : BSDelimiter;
+SlideParams => lang.bs.Actual() : Expr(b) -> add (, ",", Expr(b) -> add)*;
+
+// Items inside a slide.
+Item(lang.bs.Block block);
+Item => itemExpr(block, name, params) : Name name, SlideParams(block) params;

@@ -70,6 +70,9 @@ namespace stormgui {
 		// Fill rounded rectangle.
 		void STORM_FN fillRect(Rect rect, Size edgex, Par<Brush> brush);
 
+		// Fill the entire area.
+		void STORM_FN fill(Par<Brush> brush);
+
 		// Fill an oval.
 		void STORM_FN fillOval(Rect rect, Par<Brush> brush);
 

@@ -25,4 +25,9 @@ class Presentation {
 			text = black;
 		}
 	}
+
+	// Add a slide.
+	void add(Slide slide) {
+		slides << slide;
+	}
 }

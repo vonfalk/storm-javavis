@@ -1,8 +1,23 @@
 use core:debug;
+use graphics;
 
 void test() {
-	Presentation p("Test");
-	p.slides << TitleSlide("Test!", "Filip Strömbäck");
+	var p = presentation "Test" {
+		Title "Test presentation" {
+			Text "Filip Strömbäck";
+		};
+		Content "Test list" {
+			List [
+				"First point",
+				"Second point",
+				"Third point"
+				];
+			List [
+				"Second column!",
+				"Works!"
+				];
+		};
+	};
 
 	PresentWindow win(p);
 	win.waitForClose;

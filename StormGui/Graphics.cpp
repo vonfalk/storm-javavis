@@ -97,6 +97,11 @@ namespace stormgui {
 		target->FillRoundedRectangle(r, style->brush(owner, rect.size()));
 	}
 
+	void Graphics::fill(Par<Brush> brush) {
+		Size s = size();
+		target->FillRectangle(dx(Rect(Point(), s)), brush->brush(owner, s));
+	}
+
 	void Graphics::fillOval(Rect rect, Par<Brush> style) {
 		Size s = rect.size() / 2;
 		D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };

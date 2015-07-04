@@ -49,6 +49,8 @@ SkipContent => void : "'\\.'";
 StrContent => void : "[^\"\\]*";
 StrContent => void : StrContent - "\\." - StrContent;
 
+String => v : "\"" - (StrContent) v - "\"";
+
 // Parameter list (possibly empty)
 Params => Params() : BSDelimiter;
 Params => Params() : Type -> add, Name -> add, (",", Type -> add, Name -> add, )*;
@@ -131,7 +133,7 @@ PrePost => v : "--" v;
 // Initializer list for arrays.
 ArrayInitList(Block block);
 ArrayInitList => Array<Expr>() : BSDelimiter;
-ArrayInitList => Array<Expr>() : Expr(block) -> push (, ", ", Expr(block) -> push)*;
+ArrayInitList => Array<Expr>() : Expr(block) -> push (, ",", Expr(block) -> push)*;
 
 // Units. Returns a TypeName which is supposed to convert this unit to an object of some kind.
 Unit => timeUnit(u) : "h" u;
@@ -146,7 +148,7 @@ Unit => degUnit(u) : "rad" u;
 Const => intConstant(nr) : "[0-9]+" nr;
 Const => intConstant(nr) : "\-[0-9]+" nr;
 Const => floatConstant(nr) : "\-?[0-9]+\.[0-9]+" nr;
-Const => strConstant(str) : "\"" - ( StrContent ) str - "\"";
+Const => strConstant(str) : String str;
 Const => trueConstant()  :[20] "true";
 Const => falseConstant() :[20] "false";
 

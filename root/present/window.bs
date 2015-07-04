@@ -23,7 +23,7 @@ class PresentWindow extends Frame {
 			slide = 0;
 		}
 
-		size(Size(500, 500));
+		size(Size(640, 480));
 		painter(paint);
 
 		show(slide);
@@ -100,16 +100,22 @@ class PresentPainter extends Painter {
 	}
 
 	Bool render(Size s, Graphics g) {
-		// This should work without a temporary! I think the problem is that member variables
-		// are chosen before variables in the local scope.
-		Slide? z = slide;
-		if (z) {
+		Size target(640, 480);
+
+		if (slide) {
+			g.fill(style.bg);
+
+			Float scaleFactor = s.h / target.h;
+			if (s.w / target.w < scaleFactor)
+				scaleFactor = s.w / target.w;
+
 			Point p = s;
-			Size dim = (s.w + s.h) / 2;
-			g.transform(translate(s.center - dim.center) * scale(dim.w / 100));
-			z.draw(style, Size(100), g);
+			Size scaled = target * scaleFactor;
+			g.transform(translate(s.center - scaled.center) * scale(scaleFactor));
+			g.push();
+			slide.draw(style, target, g);
 		} else {
-			g.fillRect(Rect(Point(), s), endColor);
+			g.fill(endColor);
 			false;
 		}
 	}

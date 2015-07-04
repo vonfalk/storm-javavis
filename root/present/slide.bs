@@ -7,11 +7,11 @@ use graphics;
  * Create some default fonts.
  */
 Font titleFont() {
-	Font("Arial", 15);
+	Font("Arial", 45);
 }
 
 Font subTitleFont() {
-	Font("Arial", 10);
+	Font("Arial", 30);
 }
 
 /**
@@ -31,9 +31,17 @@ class SlideStyle on Render {
 
 
 /**
- * Single slide in a presentation.
+ * Single slide in a presentation. Slides are in charge of formatting the slide.
  */
 class Slide on Render {
+
+	// Objects in this slide.
+	SlideItem[] items;
+
+	// Add an item.
+	void add(SlideItem item) {
+		items << item;
+	}
 
 	// Render this slide.
 	Bool draw(SlideStyle s, Size s, Graphics g) {
@@ -48,32 +56,197 @@ class Slide on Render {
  */
 class TitleSlide extends Slide {
 	Text title;
-	Text subTitle;
 
 	ctor(Str title) {
 		init() {
 			title(title, titleFont);
-			subTitle("", subtitleFont);
-		}
-	}
-
-	ctor(Str title, Str sub) {
-		init() {
-			title(title, titleFont);
-			subTitle(sub, subTitleFont);
 		}
 	}
 
 	Bool draw(SlideStyle style, Size s, Graphics g) {
-		Point titlePos = s.center;
-		titlePos.y *= 4.0 / 5.0;
-		g.draw(title, style.text, titlePos - title.size.center);
+		Bool cont = false;
 
-		Point subPos = s.center;
-		subPos.y *= 6.0 / 5.0;
-		g.draw(subTitle, style.text, subPos - subTitle.size.center);
+		Point pos = s.center;
+		pos.y *= 4.0 / 5.0;
+		g.draw(title, style.text, pos - title.size.center);
+
+		pos.y += title.size.h / 2 + 1.0;
+		for (Nat i = 0; i < items.count; i++) {
+			Size size = items[i].size;
+			Rect r(pos, size);
+			r.p0.x -= size.center.x;
+			cont |= items[i].draw(style, r, g);
+			pos.y += size.h + 1;
+		}
+
+		cont;
+	}
+
+}
+
+
+/**
+ * Content slide.
+ */
+class ContentSlide extends Slide {
+	Text title;
+	Size margin;
+
+	ctor(Str title) {
+		init() {
+			title(title, titleFont);
+			margin(10.0, 20.0);
+		}
+	}
+
+	Bool draw(SlideStyle style, Size s, Graphics g) {
+		Bool cont = false;
+
+		Size titleSize = title.size;
+		Point pos = s.center - titleSize.center;
+		pos.y = margin.h;
+		g.draw(title, style.text, pos);
+		pos.y += title.size.h + margin.h;
+
+		if (items.count > 0) {
+			Size size = s;
+			size.h -= pos.y;
+			size.w -= (items.count + 1).int.float * margin.w;
+			size.w /= items.count.int.float;
+
+			pos.x = margin.w;
+			for (Nat i = 0; i < items.count; i++) {
+				Rect r(pos, size);
+				items[i].draw(style, r, g);
+
+				pos.x += size.w + margin.w;
+			}
+		}
+
+		cont;
+	}
+
+}
+
+
+/**
+ * An object in a slide.
+ */
+class SlideItem on Render {
+	// Render this item.
+	Bool draw(SlideStyle s, Rect pos, Graphics g) {
+		false;
+	}
+
+	// Get our size.
+	Size size() {
+		Size(0, 0);
+	}
+}
+
+
+class TextItem extends SlideItem {
+	Text t;
+	Brush? color;
+
+	ctor(Str text) {
+		init() {
+			t(text, subTitleFont);
+		}
+	}
+
+	ctor(Str text, Color color) {
+		init() {
+			t(text, font);
+			color = SolidBrush(color);
+		}
+	}
+
+	ctor(Str text, Font font) {
+		init() {
+			t(text, font);
+		}
+	}
+
+	ctor(Str text, Font font, Color color) {
+		init() {
+			t(text, font);
+			color = SolidBrush(color);
+		}
+	}
+
+	Bool draw(SlideStyle s, Rect pos, Graphics g) {
+		Brush b = if (color) { color; } else { s.text; };
+		g.draw(t, b, pos.p0);
+		false;
+	}
+
+	Size size() {
+		t.size;
+	}
+
+}
+
+class ListItem extends SlideItem {
+	Text[] texts;
+	Brush? color;
+	Float ballSize;
+	Float ballInner;
+
+	ctor(Str[] text) {
+		init() {}
+		initText(text, subTitleFont);
+	}
+
+	ctor(Str[] text, Color color) {
+		init() { color = SolidBrush(color); }
+		initText(text, subTitleFont);
+	}
+
+	ctor(Str[] text, Font font) {
+		init() {}
+		initText(text, font);
+	}
+
+	ctor(Str[] text, Font font, Color color) {
+		init() { color = SolidBrush(color); }
+		initText(text, font);
+	}
+
+	// Create our text!
+	void initText(Str[] text, Font font) {
+		for (Nat i = 0; i < text.count; i++)
+			texts << Text(text[i], font);
+		ballSize = font.pxHeight;
+		ballInner = ballSize / 4;
+	}
+
+	Bool draw(SlideStyle s, Rect pos, Graphics g) {
+		Point at = pos.p0;
+		Brush b = if (color) { color; } else { s.text; };
+		for (Nat i = 0; i < texts.count; i++) {
+			Float offset = (ballSize - ballInner) / 2;
+			Rect ball(at + Point(offset, offset*1.2), Size(ballInner));
+			g.fillOval(ball, b);
+
+			g.draw(texts[i], b, at + Point(ballSize, 0));
+			at.y += texts[i].size.h;
+		}
 
 		false;
+	}
+
+	Size size() {
+		Size s;
+		for (Nat i = 0; i < texts.count; i++) {
+			Size n = texts[i].size;
+			if (n.w > s.w)
+				s.w = n.w;
+			s.h += n.h;
+		}
+
+		s.w += ballSize;
+		s;
 	}
 
 }

@@ -85,4 +85,18 @@ class ArrayInit extends Expr {
 
 		ok;
 	}
+
+	Str toS() {
+		StrBuf b;
+		b.add("[");
+
+		for (Nat i = 0; i < values.count; i++) {
+			if (i > 0)
+				b.add(", ");
+			b.add(values[i].toS);
+		}
+
+		b.add("]");
+		b.toS;
+	}
 }
