@@ -265,7 +265,11 @@ namespace storm {
 			end = true;
 
 		while (!end) {
-			Token type = tok.next();
+			String type = tok.next().token;
+			while (tok.peek().token == L".") {
+				tok.next();
+				type = type + L"." + tok.next().token;
+			}
 			Token name = tok.next();
 
 			Token delim = tok.next();
@@ -274,7 +278,7 @@ namespace storm {
 			else if (delim.token != L",")
 				throw SyntaxError(delim.pos, L"Expected , or )");
 
-			SyntaxRule::Param p = { type.token, name.token };
+			SyntaxRule::Param p = { type, name.token };
 			to.params.push_back(p);
 		}
 
