@@ -84,6 +84,9 @@ namespace storm {
 
 		// Insert a variable.
 		void addVar(const BuiltInVar &var, Type *into);
+
+		// Check if the type has all required members (such as deepCopy).
+		void checkType(Type *type);
 	};
 
 }

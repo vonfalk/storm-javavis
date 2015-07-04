@@ -4,6 +4,7 @@
 #include "Exception.h"
 #include "Engine.h"
 #include "Function.h"
+#include "TypeCtor.h"
 #include "Code/VTable.h"
 #include "Lib/Maybe.h"
 #include "Shared/Array.h"
@@ -217,6 +218,13 @@ namespace storm {
 		}
 	}
 
+	void BuiltInLoader::checkType(Type *type) {
+		if (type->runOn().state == RunOn::any && !type->deepCopyFn()) {
+			// PLN(L"Adding deepCopy to " << type->identifier());
+			type->add(steal(CREATE(TypeDeepCopy, type, type)));
+		}
+	}
+
 	void BuiltInLoader::loadFunctions() {
 		for (nat i = 0; src.functions[i].fnPtr; i++) {
 			const BuiltInFunction &fn = src.functions[i];
@@ -231,6 +239,16 @@ namespace storm {
 				assert(false, L"Unknown function mode. Either typeMember or noMember should be set!");
 				continue;
 			}
+		}
+
+		// See if we need to generate any missing functions...
+		for (nat i = 0; src.types[i].name; i++) {
+			const BuiltInType &t = src.types[i];
+			if (t.superMode == BuiltInType::superExternal)
+				continue;
+
+			Type *type = types[i].borrow();
+			checkType(type);
 		}
 	}
 

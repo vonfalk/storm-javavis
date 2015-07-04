@@ -44,6 +44,15 @@ namespace storm {
 		// Convert to nat.
 		Nat STORM_FN toNat() const;
 
+		// Convert to long.
+		Long STORM_FN toLong() const;
+
+		// Convert to word.
+		Word STORM_FN toWord() const;
+
+		// Convert to float.
+		Float STORM_FN toFloat() const;
+
 		// ToS
 		virtual Str *STORM_FN toS();
 

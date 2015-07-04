@@ -44,6 +44,18 @@ namespace storm {
 		return v.toNat();
 	}
 
+	Long Str::toLong() const {
+		return v.toInt64();
+	}
+
+	Word Str::toWord() const {
+		return v.toNat64();
+	}
+
+	Float Str::toFloat() const {
+		return (Float)v.toDouble();
+	}
+
 	void Str::output(wostream &to) const {
 		to << v;
 	}

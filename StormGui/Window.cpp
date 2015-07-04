@@ -86,6 +86,7 @@ namespace stormgui {
 	MsgResult Window::beforeMessage(const Message &msg) {
 		switch (msg.msg) {
 		case WM_KEYUP:
+			PLN("KEYUP");
 			if (onKey(false, msg.wParam))
 				return msgResult(0);
 			break;
