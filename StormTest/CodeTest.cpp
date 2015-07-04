@@ -215,6 +215,10 @@ BEGIN_TEST(MaybeTest) {
 	CHECK_EQ(runFn<Int>(L"test.bs.maybeInheritance"), 10);
 } END_TEST
 
+BEGIN_TEST(ScopeTest) {
+	CHECK_EQ(runFn<Int>(L"test.bs.testScopeCls"), 10);
+} END_TEST
+
 // Test the REPL of BS programmatically.
 BEGIN_TESTX(ReplTest) {
 	runFn<void>(L"test.bs.replTest");

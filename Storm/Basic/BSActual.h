@@ -25,6 +25,9 @@ namespace storm {
 			// 'type' may differ slightly from 'expressions[id]->result()'.
 			code::Value code(nat id, Par<CodeGen> s, Value type);
 
+			// Empty?
+			inline Bool STORM_FN empty() { return expressions.empty(); }
+
 			// Add a parameter.
 			void STORM_FN add(Par<Expr> expr);
 

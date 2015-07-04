@@ -1,0 +1,17 @@
+class ScopeCls {
+	Int v;
+
+	ctor() {
+		init() { v = 20; }
+	}
+
+	Int get() {
+		Int v = 10;
+		v;
+	}
+}
+
+Int testScopeCls() {
+	ScopeCls c;
+	c.get;
+}

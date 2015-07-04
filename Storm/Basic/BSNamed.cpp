@@ -582,8 +582,14 @@ namespace storm {
 									bool useThis) {
 		const Scope &scope = block->scope;
 
-		if (Type *t = as<Type>(scope.find(name)))
-			return findCtor(t, params, pos);
+		// Type ctors and local variables have priority.
+		{
+			Named *n = scope.find(name);
+			if (Type *t = as<Type>(n))
+				return findCtor(t, params, pos);
+			else if (as<LocalVar>(n) != null && params->empty())
+				return findTarget(n, null, params, pos, false);
+		}
 
 		// If we have a this-pointer, try to use it!
 		Named *candidate = null;
