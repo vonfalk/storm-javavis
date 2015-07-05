@@ -196,7 +196,8 @@ namespace stormgui {
 			}
 
 			for (nat i = 0; i < toRedraw.size(); i++) {
-				toRedraw[i]->doRepaint();
+				// TODO: We probably want to wait for VSync once only, and not block this thread while doing so.
+				toRedraw[i]->doRepaint(true);
 				os::UThread::leave();
 			}
 

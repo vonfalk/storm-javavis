@@ -79,7 +79,7 @@ namespace stormgui {
 		volatile nat repaintCounter;
 
 		// Do repaints (always).
-		void doRepaint();
+		void doRepaint(bool waitForVSync);
 	};
 
 }

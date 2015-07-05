@@ -86,11 +86,11 @@ namespace stormgui {
 			while (old == repaintCounter)
 				os::UThread::leave();
 		} else {
-			doRepaint();
+			doRepaint(false);
 		}
 	}
 
-	void Painter::doRepaint() {
+	void Painter::doRepaint(bool waitForVSync) {
 		if (!target.target)
 			return;
 		if (!target.swapChain)
@@ -114,7 +114,11 @@ namespace stormgui {
 		HRESULT r = target.target->EndDraw();
 
 		if (SUCCEEDED(r)) {
-			r = target.swapChain->Present(1, 0);
+			if (waitForVSync) {
+				r = target.swapChain->Present(1, 0);
+			} else {
+				r = target.swapChain->Present(0, 0);
+			}
 		}
 
 		if (r == D2DERR_RECREATE_TARGET || r == DXGI_ERROR_DEVICE_RESET) {
