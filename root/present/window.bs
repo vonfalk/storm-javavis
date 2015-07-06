@@ -100,7 +100,7 @@ class PresentPainter extends Painter {
 	}
 
 	Bool render(Size s, Graphics g) {
-		Size target(640, 480);
+		Size target(1024, 768);
 
 		if (slide) {
 			g.fill(style.bg);

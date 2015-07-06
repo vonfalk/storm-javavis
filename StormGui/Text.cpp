@@ -33,4 +33,13 @@ namespace stormgui {
 		return Size(metrics.left + metrics.width, metrics.top + metrics.height);
 	}
 
+	Size Text::layoutBorder() {
+		return Size(l->GetMaxWidth(), l->GetMaxHeight());
+	}
+
+	void Text::layoutBorder(Size s) {
+		l->SetMaxWidth(s.w);
+		l->SetMaxHeight(s.h);
+	}
+
 }

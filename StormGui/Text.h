@@ -15,8 +15,12 @@ namespace stormgui {
 		// Create text that fits inside a square 'size' units big.
 		STORM_CTOR Text(Par<Str> text, Par<Font> font, Size size);
 
-		// Layout size.
+		// Size of the text inside the layout.
 		Size STORM_FN size();
+
+		// Layout border size.
+		Size STORM_FN layoutBorder();
+		void STORM_SETTER layoutBorder(Size size);
 
 		// We can add formatting options for parts of the string here. For example, it is possible
 		// to apply a font to a specific part of the string.
