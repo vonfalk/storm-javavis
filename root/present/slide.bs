@@ -7,11 +7,11 @@ use graphics;
  * Create some default fonts.
  */
 Font titleFont() {
-	Font("Arial", 45);
+	Font("Arial", 28);
 }
 
 Font subTitleFont() {
-	Font("Arial", 30);
+	Font("Arial", 18);
 }
 
 /**
