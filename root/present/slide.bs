@@ -14,6 +14,10 @@ Font subTitleFont() {
 	Font("Arial", 32);
 }
 
+Font monospaceFont() {
+	Font("Courier New", 14);
+}
+
 /**
  * Default margin.
  */
@@ -41,18 +45,72 @@ class SlideStyle on Render {
  * Single slide in a presentation. Slides are in charge of formatting the slide.
  */
 class Slide on Render {
+	// Animation objects!
+	Fn<Bool, Duration>? animateFn;
+
+	// Animation started.
+	Moment aniStarted;
 
 	// Objects in this slide.
 	SlideItem[] items;
+
+	// Repaint function.
+	Fn<void>? repaintFn;
+
+	// Repaint this slide.
+	void repaint() {
+		if (repaintFn)
+			repaintFn.call;
+	}
 
 	// Add an item.
 	void add(SlideItem item) {
 		items << item;
 	}
 
+	// Called when the slide is to be shown.
+	void show() {}
+
 	// Render this slide.
 	Bool draw(SlideStyle s, Size s, Graphics g) {
 		false;
+	}
+
+	// Handle animations.
+	Bool animate() {
+		Bool r = false;
+		if (animateFn) {
+			Moment now;
+			r = animateFn.call(now - aniStarted);
+		}
+
+		if (r == false) {
+			stopAnimate;
+		}
+
+		r;
+	}
+
+	// Callback on next frame.
+	void animate(fn(Duration)->Bool fn) {
+		animateFn = fn;
+		aniStarted = Moment;
+		repaint;
+	}
+
+	// Start external animation.
+	void startAnimate() {
+		animate(&this->dummyAnimate(Duration));
+	}
+
+	// Stop any animations.
+	void stopAnimate() {
+		animateFn = Fn<Bool, Duration>?;
+	}
+
+	// Dummy animation.
+	Bool dummyAnimate(Duration d) {
+		true;
 	}
 
 }
@@ -131,6 +189,77 @@ class ContentSlide extends Slide {
 		cont;
 	}
 
+}
+
+/**
+ * Terminal-style slide.
+ */
+class TerminalSlide extends Slide {
+	Font font;
+	Size chSize;
+	SolidBrush bg;
+	SolidBrush fg;
+	Str[] lines;
+	Nat width;
+	Nat height;
+
+	ctor(Color bg, Color fg) {
+		Font f = monospaceFont;
+		Text t("A", f);
+
+		init() {
+			font = f;
+			bg = bg;
+			fg = fg;
+			chSize = t.size;
+
+			// TODO: Do not hard-code these!
+			width = (1024.nat / t.size.w.int.nat) - 1;
+			height = (768.nat / t.size.h.int.nat) - 1;
+		}
+	}
+
+	// Always a new line!
+	void pln(Str str) {
+		if (lines.count >= height) {
+			// Shift up one step
+			for (Nat i = 1; i < lines.count; i++) {
+				lines[i - 1] = lines[i];
+			}
+			lines[height - 1] = str;
+		} else {
+			lines << str;
+		}
+	}
+
+	// Replace the last line
+	void replace(Str str) {
+		if (lines.count > 0) {
+			lines[lines.count - 1] = str;
+		} else {
+			lines << str;
+		}
+	}
+
+	// Clear.
+	void clear() {
+		lines = Str[];
+	}
+
+	Point posOf(Nat x, Nat y) {
+		Point(x.int.float * chSize.w, y.int.float * chSize.h);
+	}
+
+	Bool draw(SlideStyle style, Size s, Graphics g) {
+		g.fill(bg);
+
+		for (Nat y = 0; y < lines.count; y++) {
+			Rect r(posOf(0, y), Size(s.w, chSize.h));
+			g.text(lines[y], font, fg, r);
+		}
+
+		false;
+	}
 }
 
 

@@ -10,7 +10,7 @@ follow different rules in calling conventions than a user-defined type of the sa
 using the cdecl calling convention in C++, user-defined objects are always returned on the stack,
 while primitive types (pointers, integers, and so on) are always returned in the `eax`
 register. Primitive types in Storm will of course follow these conventions to be compatible with C++
-and to not loose execution speed.
+and to not lose execution speed.
 
 Primitive types
 ----------------
@@ -45,6 +45,8 @@ Storm also provides some higher-level types:
 * Thread - represents a OS thread.
 * Future<T> - future, for inter-thread communication.
 * FnPtr<R, ...> - function pointer.
+* Moment - timestamp from a high-resolution timer.
+* Duration - difference between two `Moment`s.
 
 The `Str` class currently stores characters in UTF-16, but does not provide an API to access
 individual characters or to cut strings based on character positions. This is partly because the

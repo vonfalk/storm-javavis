@@ -119,6 +119,7 @@ namespace stormgui {
 
 		virtual void init();
 		virtual bool wait();
+		virtual bool wait(nat ms);
 		virtual void signal();
 		virtual void work();
 

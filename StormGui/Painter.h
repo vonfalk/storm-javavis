@@ -38,7 +38,7 @@ namespace stormgui {
 		void CODECALL resize(Size to);
 
 		// Called when the attached window wants to be repainted.
-		void CODECALL repaint();
+		void STORM_FN repaint();
 
 		// Get our render target.
 		inline ID2D1RenderTarget *renderTarget() { return target.target; }

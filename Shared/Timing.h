@@ -36,17 +36,20 @@ namespace storm {
 		int64 v;
 
 		// Get the value in various units.
-		inline Int STORM_FN inUs() { return Int(v); }
-		inline Int STORM_FN inMs() { return Int(v / 1000); }
-		inline Int STORM_FN inS() { return Int(v / 1000000); }
+		inline Long STORM_FN inUs() { return Long(v); }
+		inline Long STORM_FN inMs() { return Long(v / 1000); }
+		inline Long STORM_FN inS() { return Long(v / 1000000); }
 	};
 
 	// Create durations in various units. TODO: Larger type for parameter?
-	Duration STORM_FN h(Int v);
-	Duration STORM_FN min(Int v);
-	Duration STORM_FN s(Int v);
-	Duration STORM_FN ms(Int v);
-	Duration STORM_FN us(Int v);
+	Duration STORM_FN h(Long v);
+	Duration STORM_FN min(Long v);
+	Duration STORM_FN s(Long v);
+	Duration STORM_FN ms(Long v);
+	Duration STORM_FN us(Long v);
+
+	// Sleep. Do not expect more than ms precision.
+	void STORM_FN sleep(Duration d);
 
 	// Output.
 	wostream &operator <<(wostream &to, Moment m);
@@ -66,7 +69,7 @@ namespace storm {
 	inline Duration STORM_FN operator -(Duration a, Duration b) { return Duration(a.v - b.v); }
 	inline Duration STORM_FN operator *(Duration a, Int factor) { return Duration(a.v * factor); }
 	inline Duration STORM_FN operator /(Duration a, Int factor) { return Duration(a.v / factor); }
-	inline Int STORM_FN operator /(Duration a, Duration b) { return int(a.v / b.v); }
+	inline Float STORM_FN operator /(Duration a, Duration b) { return float(double(a.v) / double(b.v)); }
 	inline Duration STORM_FN operator %(Duration a, Duration b) { return Duration(a.v % b.v); }
 	inline Duration &STORM_FN operator +=(Duration &a, Duration b) { a.v += b.v; return a; }
 	inline Duration &STORM_FN operator -=(Duration &a, Duration b) { a.v -= b.v; return a; }

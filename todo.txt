@@ -29,6 +29,8 @@ Core
 -------
 Include float/non float inside Size?
 
+Think about how templates interacts with the new function lookup with respect to typecasts.
+
 Move Memorymanager to Code? We can actually elliminate the need of the MemoryManager entirely by using a custom heap
 with the flag HEAP_CREATE_ENABLE_EXECUTE (to HeapCreate).
 
@@ -118,6 +120,8 @@ Check thread safety in the reference management class.
 Basic Storm
 ------------
 Remove the special TypeName class, use the general Name instead.
+
+The shorthand for function pointers (fn()->v) is ambiguous when used with maybe, like: fn()->Foo?
 
 Operators should not only look for the operator in the currently visible scope, but also in the
 scope where the lhs and rhs types have been defined.

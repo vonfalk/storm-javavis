@@ -257,6 +257,17 @@ namespace stormgui {
 		return !done;
 	}
 
+	bool AppWait::wait(nat ms) {
+		if (done) {
+			return false;
+		}
+
+		MsgWaitForMultipleObjects(0, NULL, FALSE, ms, QS_ALLPOSTMESSAGE);
+		atomicWrite(signalSent, 0);
+
+		return !done;
+	}
+
 	void AppWait::signal() {
 		// Only the first thread posts the message if needed.
 		if (atomicCAS(signalSent, 0, 1) == 0)

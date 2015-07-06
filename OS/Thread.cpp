@@ -211,6 +211,15 @@ namespace os {
 		}
 	}
 
+	void ThreadData::waitForWork(nat msTimeout) {
+		if (wait) {
+			if (!wait->wait(msTimeout))
+				wait = null;
+		} else {
+			wakeCond.wait(msTimeout);
+		}
+	}
+
 #ifdef WINDOWS
 	// Windows-specific implementation.
 

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Timing.h"
 #include "Str.h"
+#include "OS/UThread.h"
 #include <iomanip>
 
 namespace storm {
@@ -83,24 +84,28 @@ namespace storm {
 		return CREATE(Str, e.v, ::toS(d));
 	}
 
-	Duration h(Int v) {
+	Duration h(Long v) {
 		return Duration(int64(v) * int64(60) * int64(60) * int64(1000) * int64(1000));
 	}
 
-	Duration min(Int v) {
+	Duration min(Long v) {
 		return Duration(int64(v) * int64(60) * int64(1000) * int64(1000));
 	}
 
-	Duration s(Int v) {
+	Duration s(Long v) {
 		return Duration(int64(v) * int64(1000) * int64(1000));
 	}
 
-	Duration ms(Int v) {
+	Duration ms(Long v) {
 		return Duration(int64(v) * 1000);
 	}
 
-	Duration us(Int v) {
+	Duration us(Long v) {
 		return Duration(v);
+	}
+
+	void sleep(Duration d) {
+		os::UThread::sleep(nat(d.inMs()));
 	}
 
 }

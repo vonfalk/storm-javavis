@@ -1,5 +1,7 @@
 use core:debug;
+use core:geometry;
 use graphics;
+use ui;
 
 void test() {
 	var p = presentation "Test" {
@@ -17,6 +19,7 @@ void test() {
 				"Works!"
 				];
 		};
+		Bsod {};
 	};
 
 	PresentWindow win(p);

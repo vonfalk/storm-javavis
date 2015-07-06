@@ -27,6 +27,14 @@ static Str *echoStr(Par<Str> v) {
 	return v.ret();
 }
 
+static Bool bool1() {
+	return true;
+}
+
+static Bool bool2() {
+	return false;
+}
+
 static void consumeStr(Par<Str> v) {}
 
 static Auto<FnPtr<DbgVal, Par<Dbg>>> dbgFn(int id) {
@@ -68,6 +76,11 @@ BEGIN_TEST(FnPtrTest) {
 	Auto<FnPtr<Int, Par<Dbg>>> consumeDbg = fnPtr(e, &::fromDbg);
 	CHECK_EQ(consumeDbg->call(steal(CREATE(Dbg, e, 2))), 2);
 
+	Auto<FnPtr<Bool>> b1 = fnPtr(e, &::bool1);
+	Auto<FnPtr<Bool>> b2 = fnPtr(e, &::bool2);
+	CHECK_EQ(b1->call(), true);
+	CHECK_EQ(b2->call(), false);
+
 	// Run some code in Storm!
 	CHECK_RUNS(runFnInt(L"test.bs.consumeStr", consumeStr));
 	CHECK_EQ(runFnInt(L"test.bs.consumeDbg", consumeDbg), 23);
@@ -77,6 +90,15 @@ BEGIN_TEST(FnPtrTest) {
 	CHECK_EQ(runFnInt(L"test.bs.runStrFnPtr", echoStr), 22);
 	CHECK_EQ(runFnInt(L"test.bs.runFnPtr", dbgValFn), 23);
 	CHECK_EQ(runFnInt(L"test.bs.runFnPtr", dbgFn), 21);
+	CHECK_EQ(runFnInt(L"test.bs.runBoolFn", b1), 1);
+	CHECK_EQ(runFnInt(L"test.bs.runBoolFn", b2), 0);
+
+	b1 = runFn<FnPtr<Bool> *>(L"test.bs.createBoolFn", true);
+	b2 = runFn<FnPtr<Bool> *>(L"test.bs.createBoolFn", false);
+	CHECK_EQ(b1->call(), true);
+	CHECK_EQ(b2->call(), false);
+	CHECK_EQ(runFnInt(L"test.bs.runBoolFn", b1), 1);
+	CHECK_EQ(runFnInt(L"test.bs.runBoolFn", b2), 0);
 
 } END_TEST
 

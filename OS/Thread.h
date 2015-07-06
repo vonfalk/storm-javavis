@@ -97,6 +97,9 @@ namespace os {
 		// Wait for another UThread to be scheduled.
 		void waitForWork();
 
+		// Wait for another UThread to be scheduled (using timeout!)
+		void waitForWork(nat msTimeout);
+
 		// Thread main function.
 		static void threadMain(ThreadStart &start);
 
@@ -132,6 +135,9 @@ namespace os {
 		// The thread is kept alive until 'wait' returns false. At this point, 'wait' will not be
 		// called any more, and the ThreadWait will eventually be destroyed.
 		virtual bool wait() = 0;
+
+		// Called when wait() should be called, but when a timeout is also present.
+		virtual bool wait(nat msTimeout) = 0;
 
 		// Called to indicate that any thread held by 'wait' should be awoken. May be called from
 		// any thread. Calls to 'signal' after the last call to 'wait' may occur.

@@ -14,3 +14,10 @@ void Condition::wait() {
 	sema.down();
 	atomicCAS(signaled, 1, 0);
 }
+
+bool Condition::wait(nat msTimeout) {
+	bool r = sema.down(msTimeout);
+	if (r)
+		atomicCAS(signaled, 1, 0);
+	return r;
+}

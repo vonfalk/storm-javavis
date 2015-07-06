@@ -29,7 +29,6 @@ Int runFnPtr(fn(Int)->Dbg v) {
 	v.call(21).get;
 }
 
-
 Int addTen(Int v) {
 	v + 10;
 }
@@ -194,4 +193,30 @@ Dbg returnDbg() on Other {
 
 Int callDbgFnPtr(fn->Dbg fn) {
 	fn.call().get;
+}
+
+Bool returnBool1() {
+	true;
+}
+
+Bool returnBool2() {
+	false;
+}
+
+fn->Bool createBoolFn(Bool v) {
+	if (v) {
+		&returnBool1;
+	} else {
+		&returnBool2;
+	}
+}
+
+Int runBoolFn(fn->Bool fn) {
+	Bool z = false;
+	z |= fn.call();
+	if (z) {
+		1;
+	} else {
+		0;
+	}
 }

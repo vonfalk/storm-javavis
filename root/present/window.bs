@@ -31,6 +31,12 @@ class PresentWindow extends Frame {
 		create();
 	}
 
+	// Closed.
+	void close() {
+		paint.cleanup();
+		super:close();
+	}
+
 	// Show a new slide.
 	void show(Nat s) {
 		Slide? show;
@@ -96,11 +102,17 @@ class PresentPainter extends Painter {
 
 	// Show a slide.
 	void show(Slide? s) {
+		cleanup;
 		slide = s;
+		if (slide) {
+			slide.repaintFn = &this->repaint;
+			slide.show;
+		}
 	}
 
 	Bool render(Size s, Graphics g) {
 		Size target(1024, 768);
+		Bool animate = false;
 
 		if (slide) {
 			g.fill(style.bg);
@@ -113,10 +125,18 @@ class PresentPainter extends Painter {
 			Size scaled = target * scaleFactor;
 			g.transform(translate(s.center - scaled.center) * scale(scaleFactor));
 			g.push();
-			slide.draw(style, target, g);
+			animate |= slide.animate();
+			animate |= slide.draw(style, target, g);
 		} else {
 			g.fill(endColor);
-			false;
+		}
+
+		animate;
+	}
+
+	void cleanup() {
+		if (slide) {
+			slide.repaintFn = Fn<void>?;
 		}
 	}
 

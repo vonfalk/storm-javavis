@@ -18,7 +18,7 @@ namespace stormgui {
 		void STORM_FN create();
 
 		// Close this frame.
-		void STORM_FN close();
+		virtual void STORM_FN close();
 
 		// Wait until this frame is closed.
 		void STORM_FN waitForClose();

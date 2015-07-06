@@ -17,3 +17,7 @@ void Semaphore::down() {
 	WaitForSingleObject(semaphore, INFINITE);
 }
 
+bool Semaphore::down(nat msTimeout) {
+	DWORD result = WaitForSingleObject(semaphore, msTimeout);
+	return result != WAIT_TIMEOUT;
+}

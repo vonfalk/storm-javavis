@@ -33,7 +33,7 @@ class MainPainter extends Painter {
 		Point to(size.w, size.h);
 		Size border = 10;
 		Moment now;
-		Float time = (now - started).inMs.float / 30.0;
+		Float time = (now - started) / 30 ms;
 
 		brush3.angle = time * 3 deg;
 

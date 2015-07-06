@@ -72,6 +72,9 @@ namespace os {
 		// threads were run between the call and the return.
 		static bool leave();
 
+		// Yeild for a specific amount of time.
+		static void sleep(nat ms);
+
 		// Any more UThreads to run here?
 		static bool any();
 
@@ -243,6 +246,9 @@ namespace os {
 
 		// Schedule the next thread.
 		bool leave();
+
+		// Sleep.
+		void sleep(nat ms);
 
 		// Exits from the current thread and does not schedule it until
 		// it is 'inserted' again. Make sure to call 'wake' on the current thread later,

@@ -25,6 +25,10 @@ public:
 	// Wait for someone to signal the condition.
 	void wait();
 
+	// Wait for someone to signal the condition or until the timeout has passed.
+	// true = signaled, false = timeout
+	bool wait(nat msTimeout);
+
 private:
 	// Is the semaphore signaled?
 	nat signaled;

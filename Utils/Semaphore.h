@@ -11,6 +11,9 @@ public:
 
 	void up();
 	void down();
+
+	// Timeout. Returns true if the semaphore was lowered normally, false if the timeout passed.
+	bool down(nat msTimeout);
 private:
 	HANDLE semaphore;
 };

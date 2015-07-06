@@ -1,0 +1,76 @@
+use core:debug;
+use core:geometry;
+use graphics;
+use ui;
+
+thread Animation;
+
+void animateSlide(BsodSlide this) on Animation {
+	startAnimate;
+	sleep(300 ms);
+
+	pln("A problem has been detected and Windows has been shut down to prevent damage");
+	pln("to your computer.");
+	pln("");
+	sleep(10 ms);
+	pln("The problem seems to be caused by the following file: Storm.exe");
+	pln("");
+	pln("ATTEMPTED_WRITE_TO_READONLY_MEMORY");
+	sleep(10 ms);
+	pln("");
+	pln("If this is the first time you've seen this Stop error screen,");
+	pln("restart your computer. If this screen appears again, follow");
+	pln("these steps:");
+	sleep(10 ms);
+	pln("");
+	pln("Check to make sure any new hardware or software is properly installed.");
+	pln("If this is a new installation, ask your hardware or software manufacturer");
+	pln("for any Windows updates you might need.");
+	sleep(10 ms);
+	pln("");
+	pln("If problems continue, disable or remove any newly installed hardware");
+	pln("or software. Disable BIOS memory options such as caching or shadowing.");
+	sleep(10 ms);
+	pln("If you need to use Safe Mode to remove or disable components, restart");
+	pln("your computer, press F8 to select Advanced Startup Options, and then");
+	pln("select Safe Mode.");
+	sleep(10 ms);
+	pln("");
+	pln("Technical information:");
+	pln("");
+	pln("*** STOP: 0xFE00BA82 (0xA389FA92,0xDEADBEEF,0xCDCDCDCD,0xAF83CE90)");
+	sleep(10 ms);
+	pln("");
+	pln("");
+	pln("*** Storm.exe - Address 0x705012F3 base at 0x705010F0, DateStamp 6aa338ca");
+	pln("");
+	sleep(400 ms);
+	pln("Collecting data for crash dump ...");
+	sleep(100 ms);
+	pln("Initializing disk for crash dump ...");
+	sleep(300 ms);
+	pln("Beginning dump of physical memory ...");
+	sleep(200 ms);
+	pln("");
+	for (Nat i = 0; i < 101; i += 5) {
+		replace("Dumping physical memory to disk: " # i);
+		sleep(150 ms);
+	}
+
+	pln("Physical memory dump complete.");
+	pln("Contact your system admin or technical support group for further assistance.");
+	stopAnimate;
+}
+
+class BsodSlide extends TerminalSlide {
+	ctor() {
+		init(blue, white) {}
+	}
+
+	void show() {
+		clear();
+
+		spawn animateSlide(this);
+	}
+
+}

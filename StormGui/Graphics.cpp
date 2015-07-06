@@ -99,7 +99,9 @@ namespace stormgui {
 
 	void Graphics::fill(Par<Brush> brush) {
 		Size s = size();
+		target->SetTransform(D2D1::Matrix3x2F::Identity());
 		target->FillRectangle(dx(Rect(Point(), s)), brush->brush(owner, s));
+		target->SetTransform(state.transform);
 	}
 
 	void Graphics::fillOval(Rect rect, Par<Brush> style) {

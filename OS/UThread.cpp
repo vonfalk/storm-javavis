@@ -31,6 +31,16 @@ namespace os {
 	// Compute the initial esp for this architecture.
 	static void **initialEsp(void *base, nat size);
 
+	// Get a platform-dependent highly accurate timestamp in some unit. This should be monotonically
+	// increasing.
+	static int64 timestamp();
+
+	// Convert a millisecond interval into the units of the high frequency unit.
+	static int64 msInTimestamp(nat ms);
+
+	// Check how much time remains until a given timestamp (in ms).
+	static nat remainingMs(int64 timestamp);
+
 
 	/**
 	 * UThread.
@@ -88,6 +98,10 @@ namespace os {
 
 	bool UThread::leave() {
 		return UThreadState::current()->leave();
+	}
+
+	void UThread::sleep(nat ms) {
+		UThreadState::current()->sleep(ms);
 	}
 
 	bool UThread::any() {
@@ -321,6 +335,22 @@ namespace os {
 		return true;
 	}
 
+	void UThreadState::sleep(nat ms) {
+		int64 doneAt = timestamp() + msInTimestamp(ms);
+		bool done = false;
+
+		while (!done) {
+			do {
+				done = doneAt < timestamp();
+			} while (leave() && !done);
+
+			if (!done) {
+				owner->waitForWork(remainingMs(doneAt));
+				done = doneAt < timestamp();
+			}
+		}
+	}
+
 	void UThreadState::exit() {
 		// Do we have something to exit to?
 		UThreadData *prev = running;
@@ -399,6 +429,28 @@ namespace os {
 	 */
 
 #ifdef X86
+
+	static int64 timestamp() {
+		LARGE_INTEGER v;
+		QueryPerformanceCounter(&v);
+		return v.QuadPart;
+	}
+
+	static int64 msInTimestamp(nat ms) {
+		LARGE_INTEGER v;
+		QueryPerformanceFrequency(&v);
+		return (v.QuadPart * ms) / 1000;
+	}
+
+	static nat remainingMs(int64 target) {
+		int64 now = timestamp();
+		if (target <= now)
+			return 0;
+
+		LARGE_INTEGER v;
+		QueryPerformanceFrequency(&v);
+		return nat((1000 * (target - now)) / v.QuadPart);
+	}
 
 	static nat pageSize() {
 		static nat sz = 0;
