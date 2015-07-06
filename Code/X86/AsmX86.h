@@ -7,6 +7,8 @@ namespace code {
 	namespace machineX86 {
 		void mov(Output &to, Params p, const Instruction &instr);
 		void lea(Output &to, Params p, const Instruction &instr);
+
+		// Note: push is one of the few op-codes that actually manages 64-bit operands at this level.
 		void push(Output &to, Params p, const Instruction &instr);
 		void pop(Output &to, Params p, const Instruction &instr);
 

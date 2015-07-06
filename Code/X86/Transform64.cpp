@@ -28,7 +28,6 @@ namespace code {
 			TFM64(imod),
 			TFM64(umod),
 
-			TFM64(fnParam),
 			TFM64(push),
 			TFM64(pop),
 		};
@@ -203,6 +202,7 @@ namespace code {
 		}
 
 		void Transform64::pushTfm(Listing &to, const Instruction &instr, const Registers &used) {
+			// NOTE: Push actually manages 64-bit op-codes, but we do it here for clarity.
 			to << code::push(high32(instr.src()));
 			to << code::push(low32(instr.src()));
 		}
@@ -210,17 +210,6 @@ namespace code {
 		void Transform64::popTfm(Listing &to, const Instruction &instr, const Registers &used) {
 			to << code::pop(low32(instr.src()));
 			to << code::pop(high32(instr.src()));
-		}
-
-		void Transform64::fnParamTfm(Listing &to, const Instruction &instr, const Registers &used) {
-			const Value &param = instr.src();
-			const Value &copy = instr.dest();
-			if (copy == Value()) {
-				to << code::fnParam(low32(param));
-				to << code::fnParam(high32(param));
-			} else {
-				to << instr;
-			}
 		}
 
 	}

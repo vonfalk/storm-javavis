@@ -253,13 +253,13 @@ namespace code {
 
 			for (nat i = fnParams.size(); i > 0; i--) {
 				TfmParams::FnParam &p = fnParams[i-1];
+				nat s = roundUp(p.param.size().current(), sizeof(cpuNat));
 				if (p.copy == Value()) {
 					// Nothing special...
 					to << code::push(p.param);
-					totalSize += sizeof(cpuNat);
+					totalSize += s;
 				} else {
 					// Reserve some empty space on the stack...
-					nat s = roundUp(p.param.size().current(), sizeof(cpuNat));
 					totalSize += s;
 					to << code::sub(ptrStack, natPtrConst(s));
 					ParamOffset par = { totalSize, i - 1 };

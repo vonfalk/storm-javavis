@@ -40,11 +40,7 @@ namespace code {
 			}
 		}
 
-		void push(Output &to, Params p, const Instruction &instr) {
-			// Size == 1 is covered by pushing whatever garbage is in the register. We need to keep the alignment
-			// of the stack anyway!
-			assert(instr.currentSize() <= 4, toS(instr) + L": Only size 4 is supported now.");
-			const Value &src = instr.src();
+		static void push(Output &to, Params p, const Value &src) {
 			switch (src.type()) {
 			case Value::tConstant:
 				if (singleByte(src.constant())) {
@@ -73,6 +69,19 @@ namespace code {
 			default:
 				assert(false);
 				break;
+			}
+		}
+
+		void push(Output &to, Params p, const Instruction &instr) {
+			// Size == 1 is covered by pushing whatever garbage is in the register. We need to keep the alignment
+			// of the stack anyway!
+			const Value &src = instr.src();
+			if (instr.currentSize() > 4) {
+				assert(instr.currentSize() == 8, toS(instr) + L": Sizes above 8 are not supported.");
+				push(to, p, high32(src));
+				push(to, p, low32(src));
+			} else {
+				push(to, p, src);
 			}
 		}
 
