@@ -52,7 +52,7 @@ class SExpr extends Expr {
 	ExprBlock into;
 	LocalVar sVar;
 
-	ctor(PExpr p, SStr type, Actual params) {
+	ctor(PExpr p, SStr type, Actual params, Transition t) {
 		ExprBlock o(p.into);
 		ExprBlock b(o);
 
@@ -90,6 +90,18 @@ class SExpr extends Expr {
 	}
 }
 
+class Transition {
+	// Name of the transition (if any).
+	Str? name;
+
+	ctor() {
+		init() {}
+	}
+
+	ctor(SStr name) {
+		init() { name = name.v # "Transition"; }
+	}
+}
 
 Expr itemExpr(Block block, SStr name, Actual params) {
 	name.v = name.v + "Item";

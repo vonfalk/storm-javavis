@@ -4,8 +4,12 @@ Expr => PExpr(block, title) : "presentation", String title, "{", (Slide(block, m
 
 // A single slide:
 Slide(lang.bs.Block block, PExpr p);
-Slide => SExpr(p, type, params) : Name type, SlideParams(block) params, "{", (Item(block) -> add, ";", )* "}";
-Slide => SExpr(p, type, params) : Name type, SlideParams(block) params;
+Slide => SExpr(p, type, params, t) : Name type, SlideParams(block) params, "{", (Item(block) -> add, ";", )* "}", Transition t;
+Slide => SExpr(p, type, params, t) : Name type, SlideParams(block) params, Transition t;
+
+// Slide transition:
+Transition => Transition(type) : "->", Name type;
+Transition => Transition() : "";
 
 // Parameters to a slide.
 SlideParams(lang.bs.Block b);

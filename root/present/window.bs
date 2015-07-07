@@ -136,7 +136,7 @@ class PresentPainter extends Painter {
 
 	void cleanup() {
 		if (slide) {
-			slide.repaintFn = Fn<void>?;
+			slide.repaintFn = null;
 		}
 	}
 

@@ -105,7 +105,7 @@ class Slide on Render {
 
 	// Stop any animations.
 	void stopAnimate() {
-		animateFn = Fn<Bool, Duration>?;
+		animateFn = null;
 	}
 
 	// Dummy animation.

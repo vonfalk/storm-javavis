@@ -7,7 +7,7 @@ void test() {
 	var p = presentation "Test" {
 		Title "Test presentation" {
 			Text "Filip Strömbäck";
-		};
+		} -> Fade;
 		Content "Test list" {
 			List [
 				"First point",
@@ -19,7 +19,7 @@ void test() {
 				"Works!"
 				];
 		};
-		Bsod {};
+		Bsod;
 	};
 
 	PresentWindow win(p);
