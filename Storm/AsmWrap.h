@@ -1,16 +1,12 @@
 #pragma once
 #include "Code/Listing.h"
 #include "Code/Instruction.h"
+#include "Shared/EnginePtr.h"
 #include "Lib/Object.h"
 
 namespace storm {
 
 	namespace wrap {
-
-		/**
-		 * TODO: Create toS or similar functions for these types!
-		 */
-
 
 		// Wrapper for the code listing.
 		STORM_PKG(core.asm);
@@ -38,6 +34,9 @@ namespace storm {
 			// Deep copy.
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
+
+		wostream &operator <<(wostream &to, const Size &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Size s);
 
 		// Get some pre-defined sizes.
 		Size STORM_FN sizeChar();
@@ -69,6 +68,9 @@ namespace storm {
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
+		wostream &operator <<(wostream &to, const Offset &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Offset s);
+
 		// Get some pre-defined offsets.
 		Offset STORM_FN offsetChar();
 		Offset STORM_FN offsetByte();
@@ -90,6 +92,9 @@ namespace storm {
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
+		wostream &operator <<(wostream &to, const Variable &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Variable s);
+
 		// Block.
 		class Block {
 			STORM_VALUE;
@@ -102,18 +107,25 @@ namespace storm {
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
+		wostream &operator <<(wostream &to, const Block &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Block s);
+
 		// Part.
 		class Part {
 			STORM_VALUE;
 		public:
 			inline STORM_CTOR Part() {}
-			inline STORM_CTOR Part(Block b) : v(b.v) {}
+			inline STORM_CAST_CTOR Part(Block b) : v(b.v) {}
 			inline Part(code::Part v) : v(v) {}
 			code::Part v;
 
 			// Deep copy.
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
+
+		wostream &operator <<(wostream &to, const Part &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Part s);
+
 
 		// Label.
 		class Label {
@@ -126,6 +138,9 @@ namespace storm {
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
+		wostream &operator <<(wostream &to, const Label &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Label s);
+
 		// Wrapper for the Register type.
 		class Register {
 			STORM_VALUE;
@@ -137,6 +152,9 @@ namespace storm {
 			// Deep copy.
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
+
+		wostream &operator <<(wostream &to, const Register &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Register s);
 
 		// Create registers.
 		Register STORM_FN ptrStack();
@@ -167,6 +185,9 @@ namespace storm {
 			// Deep copy.
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
+
+		wostream &operator <<(wostream &to, const CondFlag &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, CondFlag s);
 
 		// Create.
 		CondFlag STORM_FN ifAlways();
@@ -226,6 +247,9 @@ namespace storm {
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
 
+		wostream &operator <<(wostream &to, const Operand &o);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Operand o);
+
 		// Create. (some types does not yet exist in Storm).
 		// See Code/Value.h for documentation.
 		Operand STORM_FN byteConst(Byte v);
@@ -258,6 +282,9 @@ namespace storm {
 			inline code::RetVal v() { return code::retVal(size.v, isFloat); }
 		};
 
+		wostream &operator <<(wostream &to, const RetVal &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, RetVal s);
+
 		// Instruction.
 		class Instruction {
 			STORM_VALUE;
@@ -270,6 +297,9 @@ namespace storm {
 			// Deep copy.
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
+
+		wostream &operator <<(wostream &to, const Instruction &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, Instruction s);
 
 		// Create instructions.
 		Instruction STORM_FN prolog();
@@ -317,6 +347,9 @@ namespace storm {
 			// Deep copy.
 			inline void STORM_FN deepCopy(Par<CloneEnv> e) {}
 		};
+
+		wostream &operator <<(wostream &to, const FreeOn &s);
+		Str *STORM_ENGINE_FN toS(EnginePtr e, FreeOn s);
 
 		// Create.
 		FreeOn STORM_FN freeOnNone();

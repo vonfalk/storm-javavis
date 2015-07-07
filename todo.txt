@@ -7,6 +7,8 @@ Syntax
 ---------
 Check so that *, + and ? are greedy in ambiguous cases!
 
+Include use statements (or similar) for types inside the syntax files.
+
 Something weird is going on when parsing expressions like: &a.foo(). If the priority of the
 fnPtr-rule is decreased from 20 to 10, it parses like this: (&a).foo(), which is strange because
 there is no other ambiguous options in the same rule that should interfere. Investigate!

@@ -464,4 +464,24 @@ namespace storm {
 			children[i]->insertOverloads(fn);
 	}
 
+	Function *emptyCtor(Par<Type> t) {
+		return capture(t->defaultCtor()).ret();
+	}
+
+	Function *dtor(Par<Type> t) {
+		return capture(t->destructor()).ret();
+	}
+
+	Function *copyCtor(Par<Type> t) {
+		return capture(t->copyCtor()).ret();
+	}
+
+	Function *assignFn(Par<Type> t) {
+		return capture(t->assignFn()).ret();
+	}
+
+	Function *deepCopyFn(Par<Type> t) {
+		return capture(t->deepCopyFn()).ret();
+	}
+
 }

@@ -1,4 +1,5 @@
 use core:lang;
+use core:asm;
 
 // Implement support for Foo? instead of Maybe<Foo>
 TypeName maybeType(TypeName t) {
@@ -33,4 +34,41 @@ Expr asMaybe(Block block, Expr expr) on Compiler {
 	}
 
 	result;
+}
+
+/**
+ * Null for use with maybe-types. Only usable in contexts where it can be auto-casted
+ * to something usable.
+ */
+class NullExpr extends Expr {
+	Value result() {
+		// Standard result is void.
+		Value();
+	}
+
+	// Always castable to a 'maybe' type.
+	Int castPenalty(Value to) {
+		if (to.isMaybe) {
+			1;
+		} else {
+			-1;
+		}
+	}
+
+	// Generate code.
+	void code(CodeGen g, CodeResult r) {
+		Type t = r.type.getType;
+		Function? ctor = t.emptyCtor;
+		if (ctor) {
+			VarInfo info = r.location(g);
+			allocObject(g, ctor, Array<Operand>(), info.v);
+			info.created(g);
+		} else {
+			throwSyntaxError(pos, "Failed to locate the default constructor of " + r.type.toS);
+		}
+	}
+
+	Str toS() {
+		"null";
+	}
 }

@@ -158,6 +158,7 @@ Atom => v : Const v;
 Atom => namedExpr(block, name, params) : Type name, FnValues(block) params;
 Atom => namedExpr(block, name, dotExpr, params) :[10] Atom(block) dotExpr, "\.", Name name, FnValues(block) params;
 Atom => spawnExpr(expr) :[20] "spawn ", Expr(block) expr;
+Atom => NullExpr() :[20] "null";
 Atom => ParenExpr(e) : "(", Expr(block) e, ")";
 Atom => e : Block(block) e;
 Atom => e : If(block) e;

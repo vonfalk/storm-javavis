@@ -9,11 +9,11 @@
 
 namespace storm {
 
-	static void CODECALL copyCtor(void *mem, Par<FnPtrBase> o) {
+	static void CODECALL fnCopyCtor(void *mem, Par<FnPtrBase> o) {
 		new (mem) FnPtrBase(o);
 	}
 
-	static void CODECALL deepCopy(Par<FnPtrBase> me, Par<CloneEnv> env) {
+	static void CODECALL fnDeepCopy(Par<FnPtrBase> me, Par<CloneEnv> env) {
 		me->deepCopy(env);
 	}
 
@@ -194,8 +194,8 @@ namespace storm {
 		Value t = Value::thisPtr(this);
 		Value cloneEnv = Value::thisPtr(CloneEnv::stormType(e));
 
-		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&storm::copyCtor))));
-		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&storm::deepCopy))));
+		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&storm::fnCopyCtor))));
+		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&storm::fnDeepCopy))));
 
 		vector<Value> fnCall = params;
 		fnCall[0] = t;

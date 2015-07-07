@@ -147,6 +147,10 @@ namespace storm {
 	code::Variable allocObject(Par<CodeGen> s, Par<Function> ctor, const vector<code::Value> &params);
 	void allocObject(Par<CodeGen> s, Par<Function> ctor, const vector<code::Value> &params, code::Variable to);
 
+	// Storm wrapper for allocObject.
+	void STORM_FN allocObject(Par<CodeGen> s, Par<Function> ctor, Par<Array<wrap::Operand>> params, wrap::Variable to);
+	wrap::Variable STORM_FN allocObject(Par<CodeGen> s, Par<Function> ctor, Par<Array<wrap::Operand>> params);
+
 	// Generate code that creates a FnParams object on the stack. Issueas a function call, and does not
 	// preserve any register values. 'memory' will be passed to the FnParams ctor as the memory to be used.
 	// Uses 'ptrC' before 'memory' is used.

@@ -180,4 +180,10 @@ namespace storm {
 		void insertOverloads(Function *base);
 	};
 
+	// STORM versions of the 'getDefaultXxx'
+	MAYBE(Function) *STORM_FN emptyCtor(Par<Type> t);
+	MAYBE(Function) *STORM_FN copyCtor(Par<Type> t);
+	MAYBE(Function) *STORM_FN dtor(Par<Type> t);
+	MAYBE(Function) *STORM_FN assignFn(Par<Type> t);
+	MAYBE(Function) *STORM_FN deepCopyFn(Par<Type> t);
 }

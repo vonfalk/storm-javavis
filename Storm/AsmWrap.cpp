@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "AsmWrap.h"
+#include "Shared/Str.h"
 
 namespace storm {
 
@@ -54,6 +55,14 @@ namespace storm {
 		return code::Size::sPtr;
 	}
 
+	wostream &wrap::operator <<(wostream &to, const wrap::Size &s) {
+		return to << s.v;
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::Size s) {
+		return CREATE(Str, e.v, ::toS(s));
+	}
+
 	/**
 	 * Offset.
 	 */
@@ -73,6 +82,14 @@ namespace storm {
 	wrap::Offset &wrap::Offset::operator +=(const Offset &o) {
 		v += o.v;
 		return *this;
+	}
+
+	wostream &wrap::operator <<(wostream &to, const wrap::Offset &s) {
+		return to << s.v;
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::Offset s) {
+		return CREATE(Str, e.v, ::toS(s));
 	}
 
 	wrap::Offset wrap::offsetChar() {
@@ -104,10 +121,66 @@ namespace storm {
 	}
 
 	/**
+	 * Variable
+	 */
+
+	wostream &wrap::operator <<(wostream &to, const wrap::Variable &s) {
+		return to << code::Value(s.v);
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::Variable s) {
+		return CREATE(Str, e.v, ::toS(s));
+	}
+
+	/**
+	 * Block.
+	 */
+
+	wostream &wrap::operator <<(wostream &to, const wrap::Block &s) {
+		return to << code::Value(s.v);
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::Block s) {
+		return CREATE(Str, e.v, ::toS(s));
+	}
+
+	/**
+	 * Part.
+	 */
+
+	wostream &wrap::operator <<(wostream &to, const wrap::Part &s) {
+		return to << code::Value(s.v);
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::Part s) {
+		return CREATE(Str, e.v, ::toS(s));
+	}
+
+	/**
+	 * Label.
+	 */
+
+	wostream &wrap::operator <<(wostream &to, const wrap::Label &s) {
+		return to << s.v.toS();
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::Label s) {
+		return CREATE(Str, e.v, ::toS(s));
+	}
+
+	/**
 	 * Register.
 	 */
 
 	wrap::Register::Register() : v(code::noReg) {}
+
+	wostream &wrap::operator <<(wostream &to, const wrap::Register &s) {
+		return to << s.v;
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::Register s) {
+		return CREATE(Str, e.v, ::toS(s));
+	}
 
 	wrap::Register wrap::ptrStack() {
 		return Register(code::ptrStack);
@@ -168,6 +241,14 @@ namespace storm {
 	/**
 	 * CondFlag.
 	 */
+	wostream &wrap::operator <<(wostream &to, const wrap::CondFlag &s) {
+		return to << name(s.v);
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::CondFlag s) {
+		return CREATE(Str, e.v, ::toS(s));
+	}
+
 	wrap::CondFlag wrap::CondFlag::inverse() const {
 		return code::inverse(v);
 	}
@@ -256,6 +337,14 @@ namespace storm {
 		return v.size();
 	}
 
+	wostream &wrap::operator <<(wostream &to, const wrap::Operand &o) {
+		return to << o.v;
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::Operand o) {
+		return CREATE(Str, e.v, ::toS(o));
+	}
+
 	wrap::Operand wrap::byteConst(Byte v) {
 		return code::byteConst(v);
 	}
@@ -324,12 +413,34 @@ namespace storm {
 		return code::xRel(size.v, v.v, offset.v);
 	}
 
+	/**
+	 * RetVal.
+	 */
+
+	wostream &wrap::operator <<(wostream &to, const wrap::RetVal &s) {
+		if (s.isFloat)
+			to << L"float:";
+		to << s.size;
+		return to;
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::RetVal s) {
+		return CREATE(Str, e.v, ::toS(s));
+	}
 
 	/**
 	 * Instruction.
 	 */
 
 	wrap::Instruction::Instruction(const code::Instruction &v) : v(v) {}
+
+	wostream &wrap::operator <<(wostream &to, const wrap::Instruction &i) {
+		return to << i.v;
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::Instruction i) {
+		return CREATE(Str, e.v, ::toS(i));
+	}
 
 	wrap::Instruction wrap::prolog() {
 		return code::prolog();
@@ -432,6 +543,14 @@ namespace storm {
 	/**
 	 * FreeOn.
 	 */
+
+	wostream &wrap::operator <<(wostream &to, const wrap::FreeOn &v) {
+		return to << v.v;
+	}
+
+	Str *wrap::toS(EnginePtr e, wrap::FreeOn o) {
+		return CREATE(Str, e.v, ::toS(o));
+	}
 
 	wrap::FreeOn wrap::freeOnNone() {
 		return code::freeOnNone;

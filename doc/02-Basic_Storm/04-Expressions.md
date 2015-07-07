@@ -351,6 +351,29 @@ is currently taking place, and in the if statement in `fn`, otherwise the compil
 the if statement returns something useful. Also note that `Base?` and `Derived?` are treated as completely
 separate entities in many cases still. This will all be fixed in the future.
 
+`Maybe` instances are initialized to null, but sometimes it is desirable to assign a null value to
+them after creation. In Basic Storm, there are two ways of doing this. Either by assigning a newly
+created `Maybe` instance, or using the special keyword `null`. `null` can be a part of an
+expression, but it has no meaning unless it is used in a context where it can be automatically
+casted to a `Maybe` type. For example:
+
+```
+Str? v = "Hello, World";
+
+// Set 'v' to null.
+v = null;
+
+// Equivalent, but more verbose.
+v = Str?();
+```
+
+Note that this has no meaning:
+
+```
+// 'v' vill have the type 'void' here. 'null' does not have 
+// a type unless it can be automatically casted to something usable.
+var v = null;
+```
 
 Automatic type conversions
 ---------------------------

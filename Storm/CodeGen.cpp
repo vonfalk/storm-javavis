@@ -161,6 +161,14 @@ namespace storm {
 		return r;
 	}
 
+	wrap::Variable allocObject(Par<CodeGen> s, Par<Function> ctor, Par<Array<wrap::Operand>> params) {
+		vector<code::Value> p(params->count());
+		for (nat i = 0; i < params->count(); i++)
+			p[i] = params->at(i).v;
+
+		return allocObject(s, ctor, p);
+	}
+
 	code::Variable allocObject(Par<CodeGen> s, Par<Function> ctor, const vector<code::Value> &params) {
 		Engine &e = s->engine();
 		code::Variable r = s->frame.createPtrVar(s->block.v, e.fnRefs.release);
@@ -201,6 +209,14 @@ namespace storm {
 		Auto<CodeResult> r = CREATE(CodeResult, s);
 		params.insert(params.begin(), code::Value(ptrA));
 		ctor->autoCall(s, params, r);
+	}
+
+	void allocObject(Par<CodeGen> s, Par<Function> ctor, Par<Array<wrap::Operand>> params, wrap::Variable to) {
+		vector<code::Value> p(params->count());
+		for (nat i = 0; i < params->count(); i++)
+			p[i] = params->at(i).v;
+
+		allocObject(s, ctor, p, to.v);
 	}
 
 	void allocObject(Par<CodeGen> s, Par<Function> ctor, const vector<code::Value> &params, code::Variable to) {
