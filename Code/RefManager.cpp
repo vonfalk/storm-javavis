@@ -1,9 +1,13 @@
 #include "StdAfx.h"
 #include "RefManager.h"
 
+#include "OS/Thread.h"
+
 #include <limits>
 
 namespace code {
+	using util::Lock;
+
 
 	RefManager::RefManager() : firstFreeIndex(0), shutdown(false) {}
 
@@ -12,6 +16,9 @@ namespace code {
 	}
 
 	void RefManager::clear() {
+		// Note: It is OK to not take the source lock here since clearing is expected to be done as a final
+		// operation, alone.
+
 		// We need to clean out everything. All sources should be dead by now, which means
 		// that everything is an island and can be cleared.
 		vector<SourceInfo *> toDestroy;
@@ -55,6 +62,7 @@ namespace code {
 
 		content->sources.erase(from);
 		from->content = null;
+		from->address = null;
 
 		if (content->sources.empty()) {
 			// We're free to go!
@@ -87,6 +95,7 @@ namespace code {
 	}
 
 	void RefManager::broadcast(SourceInfo *to, void *address) {
+		to->address = address;
 		for (RefSet::iterator i = to->refs.begin(), end = to->refs.end(); i != end; ++i) {
 			Reference *ref = *i;
 			ref->onAddressChanged(address);
@@ -107,6 +116,8 @@ namespace code {
 	}
 
 	nat RefManager::freeId() {
+		Lock::L z(sourceLock);
+
 		// This will fail in the unlikely event that we have 2^32 elements in our
 		// array, in which case we would already be out of memory.
 		nat id = firstFreeIndex;
@@ -118,6 +129,7 @@ namespace code {
 	}
 
 	nat RefManager::addSource(RefSource *source, const String &name) {
+		Lock::L z(sourceLock);
 		nat id = freeId();
 
 		SourceInfo *src = new SourceInfo;
@@ -141,6 +153,7 @@ namespace code {
 	}
 
 	RefManager::SourceInfo *RefManager::source(nat id) const {
+		Lock::L z(sourceLock);
 		SourceMap::const_iterator i = sources.find(id);
 		assert(i != sources.end(), L"ID not found!");
 		if (i == sources.end())
@@ -149,6 +162,7 @@ namespace code {
 	}
 
 	RefManager::SourceInfo *RefManager::sourceUnsafe(nat id) const {
+		Lock::L z(sourceLock);
 		SourceMap::const_iterator i = sources.find(id);
 		if (i == sources.end())
 			return null;
@@ -171,6 +185,8 @@ namespace code {
 	}
 
 	void RefManager::cleanSource(nat id, SourceInfo *source) {
+		Lock::L z(sourceLock);
+
 		if (source->alive)
 			return;
 
@@ -205,6 +221,8 @@ namespace code {
 	}
 
 	bool RefManager::liveReachable(ReachableSet &reachable, SourceInfo *at) const {
+		Lock::L z(sourceLock);
+
 		// PLN("At: " << at->name);
 		// for (set<SourceInfo*>::iterator i = reachable.begin(); i != reachable.end(); i++)
 		// 	PLN("=> " << (*i)->name);
@@ -278,16 +296,39 @@ namespace code {
 		return source(id)->name;
 	}
 
-	void RefManager::addLightRef(nat id) {
-		SourceInfo *s = source(id);
+	void RefManager::addLightRef(void *v) {
+		SourceInfo *s = (SourceInfo *)v;
 		if (s)
 			atomicIncrement(s->lightRefs);
 	}
 
-	void RefManager::removeLightRef(nat id) {
-		SourceInfo *s = sourceUnsafe(id);
-		if (s)
+	void RefManager::removeLightRef(void *v) {
+		SourceInfo *s = (SourceInfo *)v;
+		if (s) {
+			assert(s->lightRefs > 0);
 			atomicDecrement(s->lightRefs);
+		}
+	}
+
+	nat RefManager::refId(void *v) {
+		SourceInfo *s = (SourceInfo *)v;
+		return s->id;
+	}
+
+	void *RefManager::lightRefPtr(nat id) {
+		void *r = sourceUnsafe(id);
+		addLightRef(r);
+		return r;
+	}
+
+	void *RefManager::address(void *v) {
+		SourceInfo *s = (SourceInfo *)v;
+		return s->address;
+	}
+
+	const String &RefManager::name(void *v) {
+		SourceInfo *s = (SourceInfo *)v;
+		return s->name;
 	}
 
 	void *RefManager::addReference(Reference *r, nat id) {

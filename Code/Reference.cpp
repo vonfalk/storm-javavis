@@ -14,7 +14,7 @@ namespace code {
 
 	Reference::Reference(const Ref &copy, const Content &inside) :
 		arena(*copy.arena),
-		referring(copy.referring),
+		referring(RefManager::refId(copy.refPtr)),
 		inside(inside) {
 		lastAddress = arena.refManager.addReference(this, referring);
 	}
@@ -36,7 +36,7 @@ namespace code {
 
 	void Reference::set(const Ref &source) {
 		arena.refManager.removeReference(this, referring);
-		referring = source.referring;
+		referring = RefManager::refId(source.refPtr);
 		lastAddress = arena.refManager.addReference(this, referring);
 		onAddressChanged(lastAddress);
 	}
@@ -69,27 +69,21 @@ namespace code {
 		*update = a;
 	}
 
-	Ref::Ref() : arena(null), referring(0) {}
+	Ref::Ref() : arena(null), refPtr(null) {}
 
-	Ref::Ref(Arena &arena, nat id) : arena(&arena), referring(id) {
-		addRef();
-	}
+	Ref::Ref(Arena &arena, nat id) : arena(&arena), refPtr(arena.refManager.lightRefPtr(id)) {}
 
-	Ref::Ref(const RefSource &source) : arena(&source.arena), referring(source.getId()) {
-		addRef();
-	}
+	Ref::Ref(const RefSource &source) : arena(&source.arena), refPtr(arena->refManager.lightRefPtr(source.getId())) {}
 
-	Ref::Ref(const Reference &reference) : arena(&reference.arena), referring(reference.referring) {
-		addRef();
+	Ref::Ref(const Reference &reference) : arena(&reference.arena), refPtr(arena->refManager.lightRefPtr(reference.referring)) {}
+
+	Ref::Ref(const Ref &o) : arena(o.arena), refPtr(o.refPtr) {
+		RefManager::addLightRef(refPtr);
 	}
 
 	Ref::~Ref() {
 		if (arena)
-			arena->refManager.removeLightRef(referring);
-	}
-
-	Ref::Ref(const Ref &o) : arena(o.arena), referring(o.referring) {
-		addRef();
+			RefManager::removeLightRef(refPtr);
 	}
 
 	Ref Ref::fromLea(Arena &arena, void *data) {
@@ -103,26 +97,23 @@ namespace code {
 	}
 
 	bool Ref::operator ==(const Ref &o) const {
-		return arena == o.arena && referring == o.referring;
+		return refPtr == o.refPtr;
 	}
 
 	void swap(Ref &a, Ref &b) {
 		std::swap(a.arena, b.arena);
-		std::swap(a.referring, b.referring);
+		std::swap(a.refPtr, b.refPtr);
 	}
 
 	void *Ref::address() const {
-		return arena->refManager.address(referring);
+		return RefManager::address(refPtr);
 	}
 
 	String Ref::targetName() const {
-		return arena->refManager.name(referring);
+		return RefManager::name(refPtr);
 	}
 
-	void Ref::addRef() {
-		if (arena)
-			arena->refManager.addLightRef(referring);
+	nat Ref::id() const {
+		return RefManager::refId(refPtr);
 	}
-
-
 }

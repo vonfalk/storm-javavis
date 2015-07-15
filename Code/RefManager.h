@@ -2,6 +2,7 @@
 
 #include "Utils/HashMap.h"
 #include "Utils/InlineSet.h"
+#include "Utils/Lock.h"
 #include "Reference.h"
 
 namespace code {
@@ -49,8 +50,16 @@ namespace code {
 		const String &name(nat id) const;
 
 		// Reference counting used for the Ref class (light references).
-		void addLightRef(nat id);
-		void removeLightRef(nat id);
+		static void addLightRef(void *v);
+		static void removeLightRef(void *v);
+
+		// Other utilities for the Ref class.
+		static void *address(void *v);
+		static const String &name(void *v);
+		static nat refId(void *v);
+
+		// Note: not thread safe. Get the pointer for an ID. Calls 'addLightRef'.
+		void *lightRefPtr(nat id);
 
 		// Reference management for the Reference class.
 		void *addReference(Reference *r, nat id);
@@ -67,6 +76,9 @@ namespace code {
 
 		// Represents a RefSource. These are kept alive until they are deemed unreachable from
 		// any live RefSource objects.
+		// NOTE: This is implicitly shared by pointer to the Ref class to allow safe manipulations
+		// from other threads than the owning thread. This is done to avoid needing to synchronize the
+		// hash maps.
 		struct SourceInfo : public util::SetMember<SourceInfo> {
 			// Our ID.
 			nat id;
@@ -83,6 +95,9 @@ namespace code {
 			// Name of this SourceInfo.
 			String name;
 
+			// Last known address.
+			void *address;
+
 			// Is the RefSource alive?
 			bool alive;
 		};
@@ -98,9 +113,12 @@ namespace code {
 			Content *content;
 		};
 
-		// index->SourceInfo
+		// index->SourceInfo. Locked by 'sourceLock'
 		typedef hash_map<nat, SourceInfo *> SourceMap;
 		SourceMap sources;
+
+		// Lock for 'sources'.
+		mutable util::Lock sourceLock;
 
 		// Content*->ContentInfo
 		typedef hash_map<Content *, ContentInfo *> ContentMap;

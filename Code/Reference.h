@@ -24,6 +24,8 @@ namespace code {
 	 * therefore not be copied easily. Reference also allows cycle detection by requiring the user
 	 * of it to specify which 'RefSource' it is located inside. This allows the reference system to
 	 * detect cycles and resolve these correctly.
+	 *
+	 * It is assumed that all references, except Ref, are handled from a single thread.
 	 */
 
 	class Reference;
@@ -92,6 +94,9 @@ namespace code {
 	};
 
 
+	/**
+	 * It is safe to manipulate this from a thread other than the thread owning the RefManager.
+	 */
 	class Ref {
 		friend class Reference;
 		friend void swap(Ref &a, Ref &b);
@@ -112,7 +117,7 @@ namespace code {
 		String targetName() const;
 
 		// Get our unique identifier. Mostly intended for backends.
-		inline nat id() const { return referring; }
+		nat id() const;
 
 		// Create a Ref from the value we get when doing:
 		// lea(ptrX, ref);
@@ -123,7 +128,7 @@ namespace code {
 
 		Arena *arena;
 
-		nat referring;
+		void *refPtr;
 
 		void addRef();
 	};
