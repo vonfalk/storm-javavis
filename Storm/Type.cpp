@@ -114,10 +114,21 @@ namespace storm {
 
 	Size Type::size() {
 		if (mySize == Size()) {
-			forceLoad();
+			const os::Thread &t = TObject::thread->thread;
+			if (t == os::Thread::current()) {
+				// Already on the Compiler thread.
+				forceLoad();
 
-			Size s = superSize();
-			mySize = layout.size(s);
+				Size s = superSize();
+				mySize = layout.size(s);
+			} else {
+				// We need to run on the Compiler thread. Note the 'Semaphore', this is to ensure
+				// that we do not break any semantics regarding to the threading model.
+				os::Future<Size, Semaphore> f;
+				os::FnParams p; p.add(this);
+				os::UThread::spawn(address(&Type::size), true, p, f, &t);
+				return f.result();
+			}
 		}
 		return mySize;
 	}

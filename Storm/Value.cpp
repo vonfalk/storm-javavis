@@ -19,7 +19,9 @@ namespace storm {
 
 	Value Value::thisPtr(Type *t) {
 		bool ref = false;
-		if (t->typeFlags & typeValue) {
+		if (!t) {
+			ref = false;
+		} else if (t->typeFlags & typeValue) {
 			ref = true;
 		} else if (t->typeFlags & typeClass) {
 			ref = false;

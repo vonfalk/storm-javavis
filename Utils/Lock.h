@@ -2,9 +2,9 @@
 #include "Windows.h"
 
 namespace util {
-/**
- * A simple lock.
- */
+	/**
+	 * A simple lock. Allows recursive entry.
+	 */
 	class Lock : NoCopy {
 	public:
 		// Create.

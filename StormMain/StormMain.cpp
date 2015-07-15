@@ -110,6 +110,8 @@ int launchMainLoop(Engine &engine, const String &lang) {
 
 
 int _tmain(int argc, _TCHAR* argv[]) {
+	initDebug();
+
 	try {
 		wcout << L"Welcome to the Storm compiler!" << endl;
 

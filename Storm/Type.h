@@ -53,8 +53,8 @@ namespace storm {
 		// Reference to this Type that will be kept updated through any renames.
 		code::RefSource typeRef;
 
-		// Get the size of this type.
-		Size size(); // const;
+		// Get the size of this type. NOTE: This is safe to call from any thread (the only one that is safe).
+		Size CODECALL size(); // const;
 
 		// Get a handle to this type. It will be updated as long as this type lives.
 		const Handle &handle();

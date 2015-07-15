@@ -31,6 +31,15 @@ Include float/non float inside Size?
 
 Move Memorymanager to Code?
 
+Check so that threads are created on the correct thread when created from copyObject and similar.
+
+Think about how templates interacts with the new function lookup with respect to typecasts.
+
+Move Memorymanager to Code? We can actually elliminate the need of the MemoryManager entirely by using a custom heap
+with the flag HEAP_CREATE_ENABLE_EXECUTE (to HeapCreate).
+
+Some kind of fuzzy equals for floating-point values.
+
 Move Code/Codecall somewhere else?
 
 Comparision operators for Float!
