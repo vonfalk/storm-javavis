@@ -151,6 +151,7 @@ namespace storm {
 		if (thisPtr) {
 			Auto<Object> tPtr = capture(thisPtr);
 			if (needsCopy(first)) {
+				// Note: in case 'thisPtr' is a threaded object, cloning is a no-op!
 				Auto<CloneEnv> env = CREATE(CloneEnv, this);
 				clone(tPtr, env);
 			}

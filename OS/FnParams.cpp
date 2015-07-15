@@ -10,6 +10,11 @@ namespace os {
 
 	FnParams::FnParams(const FnParams &o) : params(null), size(o.size) {
 		capacity = max(o.capacity, size);
+
+		// This happens if 'o' is allocated using a separate buffer, and it contains zero parameters.
+		if (capacity == 0)
+			capacity = initialCapacity;
+
 		params = new Param[capacity];
 		for (nat i = 0; i < size; i++)
 			params[i] = o.params[i];
@@ -38,9 +43,10 @@ namespace os {
 		for (nat i = 0; i < size; i++)
 			n[i] = params[i];
 
-		swap(n, params);
+		if (capacity)
+			delete []params;
+		params = n;
 		capacity = to;
-		delete []n;
 	}
 
 	void FnParams::add(CopyFn copy, DestroyFn destroy, nat paramSize, bool isFloat, const void *value) {
