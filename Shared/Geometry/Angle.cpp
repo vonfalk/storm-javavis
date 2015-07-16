@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Angle.h"
 #include "Str.h"
+#include "Point.h"
 
 namespace storm {
 	namespace geometry {
@@ -21,16 +22,44 @@ namespace storm {
 			return Angle(v);
 		}
 
-		Angle STORM_FN operator *(Angle a, Float b) {
+		Angle operator *(Angle a, Float b) {
 			return Angle(a.rad() * b);
 		}
 
-		Angle STORM_FN operator *(Float a, Angle b) {
+		Angle operator *(Float a, Angle b) {
 			return Angle(a * b.rad());
 		}
 
-		Angle STORM_FN operator /(Angle a, Float b) {
+		Angle operator /(Angle a, Float b) {
 			return Angle(a.rad() / b);
+		}
+
+		Float sin(Angle v) {
+			return ::sin(v.rad());
+		}
+
+		Float cos(Angle v) {
+			return ::cos(v.rad());
+		}
+
+		Float tan(Angle v) {
+			return ::tan(v.rad());
+		}
+
+		Angle asin(Float v) {
+			return rad(::asin(v));
+		}
+
+		Angle acos(Float v) {
+			return rad(::acos(v));
+		}
+
+		Angle atan(Float v) {
+			return rad(::atan(v));
+		}
+
+		Angle atan(Point pt) {
+			return rad(::atan2(pt.y, pt.x));
 		}
 
 	}

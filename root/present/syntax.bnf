@@ -19,3 +19,5 @@ SlideParams => lang.bs.Actual() : Expr(b) -> add (, ",", Expr(b) -> add)*;
 // Items inside a slide.
 Item(lang.bs.Block block);
 Item => itemExpr(block, name, params) : Name name, SlideParams(block) params;
+Item => itemClickExpr(block, name, params) : "\+", Name name, SlideParams(block) params;
+Item => itemTimeExpr(block, time, name, params) : "\+", Atom(block) time, ":", Name name, SlideParams(block) params;

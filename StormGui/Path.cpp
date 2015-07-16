@@ -5,7 +5,7 @@
 
 namespace stormgui {
 
-	Path::Path() : g(null) {}
+	Path::Path() : g(null), started(false) {}
 
 	Path::~Path() {
 		::release(g);
@@ -19,6 +19,7 @@ namespace stormgui {
 
 	void Path::clear() {
 		elements.clear();
+		started = false;
 		b = Rect();
 		invalidate();
 	}
@@ -31,6 +32,15 @@ namespace stormgui {
 			b = Rect(pt, Size());
 		else
 			b = b.include(pt);
+
+		started = true;
+		invalidate();
+	}
+
+	void Path::close() {
+		Element e = { tClose };
+		elements.push_back(e);
+		started = false;
 		invalidate();
 	}
 
@@ -43,7 +53,7 @@ namespace stormgui {
 	}
 
 	void Path::point(Point to) {
-		if (elements.size() == 0)
+		if (!started)
 			start(to);
 		else
 			line(to);
@@ -94,9 +104,14 @@ namespace stormgui {
 				switch (e.t) {
 				case tStart:
 					if (started)
-						sink->EndFigure(D2D1_FIGURE_END_CLOSED);
+						sink->EndFigure(D2D1_FIGURE_END_OPEN);
 					sink->BeginFigure(e.start.pt, D2D1_FIGURE_BEGIN_FILLED);
 					started = true;
+					break;
+				case tClose:
+					if (started)
+						sink->EndFigure(D2D1_FIGURE_END_CLOSED);
+					started = false;
 					break;
 				case tLine:
 					if (started)
@@ -116,8 +131,9 @@ namespace stormgui {
 					break;
 				}
 			}
+
 			if (started)
-				sink->EndFigure(D2D1_FIGURE_END_CLOSED);
+				sink->EndFigure(D2D1_FIGURE_END_OPEN);
 
 			r = sink->Close();
 		}

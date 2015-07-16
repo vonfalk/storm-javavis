@@ -41,6 +41,7 @@ class MainPainter extends Painter {
 				p *= 2.0;
 			star.point(p);
 		}
+		star.close();
 	}
 
 	Bool render(Size size, Graphics g) {

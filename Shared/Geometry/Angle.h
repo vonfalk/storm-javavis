@@ -4,6 +4,7 @@
 namespace storm {
 	class Str;
 	namespace geometry {
+		class Point;
 		STORM_PKG(core.geometry);
 
 		/**
@@ -43,6 +44,17 @@ namespace storm {
 		// Create an angle.
 		Angle STORM_FN deg(Float v);
 		Angle STORM_FN rad(Float v);
+
+		// Sin and cos of angles.
+		Float STORM_FN sin(Angle v);
+		Float STORM_FN cos(Angle v);
+		Float STORM_FN tan(Angle v);
+
+		// Asin, acos.
+		Angle STORM_FN asin(Float v);
+		Angle STORM_FN acos(Float v);
+		Angle STORM_FN atan(Float v);
+		Angle STORM_FN atan(Point pt);
 
 	}
 }

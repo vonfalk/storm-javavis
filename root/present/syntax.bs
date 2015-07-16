@@ -73,8 +73,13 @@ class SExpr extends Expr {
 		o.add(LocalVarAccess(sVar));
 	}
 
-	void add(Expr e) {
-		into.add(namedExpr(into, SStr("add"), LocalVarAccess(sVar), Actual(e)));
+	void add(ItemInfo i) {
+		Str name = if (i.direct) { "add"; } else { "addDelayed"; };
+		Actual actual(i.item);
+		Expr? time = i.time;
+		if (time)
+			actual.add(time);
+		into.add(namedExpr(into, SStr(name), LocalVarAccess(sVar), actual));
 	}
 
 	Value result() {
@@ -103,7 +108,39 @@ class Transition {
 	}
 }
 
-Expr itemExpr(Block block, SStr name, Actual params) {
+class ItemInfo {
+	Expr item;
+
+	Bool direct;
+	Expr? time;
+
+	ctor(Expr item, Bool direct) {
+		init() {
+			item = item;
+			direct = direct;
+		}
+	}
+
+	ctor(Expr item, Expr time) {
+		init() {
+			item = item;
+			direct = false;
+			time = time;
+		}
+	}
+}
+
+ItemInfo itemExpr(Block block, SStr name, Actual params) {
 	name.v = name.v + "Item";
-	namedExpr(block, name, params);
+	ItemInfo(namedExpr(block, name, params), true);
+}
+
+ItemInfo itemClickExpr(Block block, SStr name, Actual params) {
+	name.v = name.v + "Item";
+	ItemInfo(namedExpr(block, name, params), false);
+}
+
+ItemInfo itemTimeExpr(Block block, Expr time, SStr name, Actual params) {
+	name.v = name.v + "Item";
+	ItemInfo(namedExpr(block, name, params), time);
 }

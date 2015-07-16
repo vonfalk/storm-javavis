@@ -40,6 +40,23 @@ class SlideStyle on Render {
 	}
 }
 
+/**
+ * Information about animations related to an item.
+ */
+value SlideAni {
+	SlideItem i;
+	Duration delay;
+	Bool click;
+
+	ctor(SlideItem i, Bool click, Duration delay) {
+		init() {
+			i = i;
+			click = click;
+			delay = delay;
+		}
+	}
+}
+
 
 /**
  * Single slide in a presentation. Slides are in charge of formatting the slide.
@@ -54,6 +71,12 @@ class Slide on Render {
 	// Objects in this slide.
 	SlideItem[] items;
 
+	// Pending animations in this slide.
+	SlideAni[] animations;
+
+	// Current animation position.
+	Nat animationPos;
+
 	// Repaint function.
 	Fn<void>? repaintFn;
 
@@ -66,10 +89,51 @@ class Slide on Render {
 	// Add an item.
 	void add(SlideItem item) {
 		items << item;
+		item.show();
+	}
+
+	// Add an item with an animation.
+	void addDelayed(SlideItem item) {
+		add(item);
+		animations << SlideAni(item, true, 0 ms);
+	}
+
+	void addDelayed(SlideItem item, Duration time) {
+		items << item;
+		animations << SlideAni(item, false, time);
 	}
 
 	// Called when the slide is to be shown.
-	void show() {}
+	void show() {
+		for (Nat i = 0; i < animations.count; i++) {
+			animations[i].i.hide;
+		}
+
+		animationPos = 0;
+		spawn doAnimation(false);
+	}
+
+	// Handle the upcoming animation (blocking).
+	Bool doAnimation(Bool clicked) {
+		if (animationPos < animations.count) {
+			SlideAni a = animations[animationPos];
+			if (a.click == clicked) {
+				sleep(a.delay);
+
+				animationPos++;
+				a.i.show;
+				repaint;
+
+				spawn doAnimation(false);
+
+				true;
+			} else {
+				false;
+			}
+		} else {
+			false;
+		}
+	}
 
 	// Render this slide.
 	Bool draw(SlideStyle s, Size s, Graphics g) {
@@ -267,6 +331,24 @@ class TerminalSlide extends Slide {
  * An object in a slide.
  */
 class SlideItem on Render {
+	Bool visible;
+
+	ctor() {
+		init() {
+			visible = false;
+		}
+	}
+
+	// Start animating this item.
+	void show() {
+		visible = true;
+	}
+
+	// Hide this item again.
+	void hide() {
+		visible = false;
+	}
+
 	// Render this item.
 	Bool draw(SlideStyle s, Rect pos, Graphics g) {
 		false;
@@ -310,9 +392,12 @@ class TextItem extends SlideItem {
 	}
 
 	Bool draw(SlideStyle s, Rect pos, Graphics g) {
-		Brush b = if (color) { color; } else { s.text; };
-		t.layoutBorder(pos.size);
-		g.draw(t, b, pos.p0);
+		if (visible) {
+			Brush b = if (color) { color; } else { s.text; };
+			t.layoutBorder(pos.size);
+			g.draw(t, b, pos.p0);
+		}
+
 		false;
 	}
 
@@ -357,17 +442,19 @@ class ListItem extends SlideItem {
 	}
 
 	Bool draw(SlideStyle s, Rect pos, Graphics g) {
-		Point at = pos.p0;
-		Brush b = if (color) { color; } else { s.text; };
-		for (Nat i = 0; i < texts.count; i++) {
-			Float offset = (ballSize - ballInner) / 2;
-			Rect ball(at + Point(offset, offset*1.2), Size(ballInner));
-			g.fillOval(ball, b);
+		if (visible) {
+			Point at = pos.p0;
+			Brush b = if (color) { color; } else { s.text; };
+			for (Nat i = 0; i < texts.count; i++) {
+				Float offset = (ballSize - ballInner) / 2;
+				Rect ball(at + Point(offset, offset*1.2), Size(ballInner));
+				g.fillOval(ball, b);
 
-			Text t = texts[i];
-			t.layoutBorder(Size(pos.size.w, t.layoutBorder.h));
-			g.draw(t, b, at + Point(ballSize, 0));
-			at.y += t.size.h;
+				Text t = texts[i];
+				t.layoutBorder(Size(pos.size.w, t.layoutBorder.h));
+				g.draw(t, b, at + Point(ballSize, 0));
+				at.y += t.size.h;
+			}
 		}
 
 		false;

@@ -5,6 +5,9 @@ namespace stormgui {
 
 	/**
 	 * A point-by-point path to draw.
+	 *
+	 * Paths can be either open or closed when they are drawn as an outline. When filling, it is
+	 * assumed that all paths are closed with a line from the last point to the first point.
 	 */
 	class Path : public ObjectOn<Render> {
 		STORM_CLASS;
@@ -33,6 +36,9 @@ namespace stormgui {
 		// Add a bezier segment with two control points and an endpoint.
 		void STORM_FN bezier(Point c1, Point c2, Point to);
 
+		// Close the previous path.
+		void STORM_FN close();
+
 		// Get the bounding box of this path.
 		inline Rect STORM_FN bound() { return b; }
 
@@ -42,6 +48,7 @@ namespace stormgui {
 	private:
 		// Element type.
 		enum Type {
+			tClose,
 			tStart,
 			tLine,
 			tBezier2,
@@ -83,6 +90,9 @@ namespace stormgui {
 
 		// All elements.
 		vector<Element> elements;
+
+		// Any path started?
+		bool started;
 
 		// Bound.
 		Rect b;

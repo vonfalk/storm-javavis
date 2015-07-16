@@ -51,8 +51,10 @@ class PresentWindow extends Frame {
 
 	// Next slide.
 	void next() {
-		if (slide < p.slides.count)
+		if (paint.advance) {
+		} else if (slide < p.slides.count) {
 			show(slide + 1);
+		}
 	}
 
 	// Prev slide.
@@ -97,6 +99,15 @@ class PresentPainter extends Painter {
 		init() {
 			endColor = black;
 			style = style;
+		}
+	}
+
+	// Advance the current slide.
+	Bool advance() {
+		if (slide) {
+			slide.doAnimation(true);
+		} else {
+			false;
 		}
 	}
 

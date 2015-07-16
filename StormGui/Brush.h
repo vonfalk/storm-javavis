@@ -54,6 +54,7 @@ namespace stormgui {
 	class Gradient : public Brush {
 		STORM_CLASS;
 	public:
+		Gradient();
 		Gradient(Par<Array<GradientStop>> stops);
 		~Gradient();
 
@@ -81,6 +82,9 @@ namespace stormgui {
 	public:
 		STORM_CTOR LinearGradient(Par<Array<GradientStop>> stops, Angle angle);
 
+		// Create two stops at 0 and 1.
+		STORM_CTOR LinearGradient(Color c1, Color c2, Angle angle);
+
 		// Get the brush.
 		inline ID2D1LinearGradientBrush *brush(Painter *owner) { return get<ID2D1LinearGradientBrush>(owner); }
 
@@ -94,8 +98,11 @@ namespace stormgui {
 		STORM_VAR Angle angle;
 
 	private:
+		// Last prepared rect.
+		Rect prepared;
+
 		// Compute points.
-		void compute(const Size &sz, Point &start, Point &end);
+		void compute(const Rect &sz, Point &start, Point &end);
 	};
 
 }
