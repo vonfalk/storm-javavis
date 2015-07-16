@@ -88,6 +88,10 @@ namespace stormgui {
 		target->DrawEllipse(e, style->brush(owner, rect.size()), state.lineWidth);
 	}
 
+	void Graphics::draw(Par<Path> path, Par<Brush> brush) {
+		target->DrawGeometry(path->geometry(), brush->brush(owner, path->bound()), state.lineWidth);
+	}
+
 	void Graphics::fillRect(Rect rect, Par<Brush> style) {
 		target->FillRectangle(dx(rect), style->brush(owner, rect.size()));
 	}
@@ -108,6 +112,10 @@ namespace stormgui {
 		Size s = rect.size() / 2;
 		D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
 		target->FillEllipse(e, style->brush(owner, rect.size()));
+	}
+
+	void Graphics::fill(Par<Path> path, Par<Brush> brush) {
+		target->FillGeometry(path->geometry(), brush->brush(owner, path->bound()));
 	}
 
 	void Graphics::draw(Par<Bitmap> bitmap) {

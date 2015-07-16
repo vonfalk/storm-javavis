@@ -33,6 +33,7 @@ namespace storm {
 		// Scale.
 		Angle STORM_FN operator *(Angle a, Float b);
 		Angle STORM_FN operator *(Float a, Angle b);
+		Angle STORM_FN operator /(Angle a, Float b);
 
 
 		// To String.

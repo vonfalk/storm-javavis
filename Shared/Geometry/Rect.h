@@ -38,6 +38,14 @@ namespace storm {
 
 			// Move.
 			inline Rect STORM_FN at(Point to) const { return Rect(to, size()); }
+
+			Rect STORM_FN operator +(Point pt) const;
+			Rect STORM_FN operator -(Point pt) const;
+			Rect &STORM_FN operator +=(Point pt);
+			Rect &STORM_FN operator -=(Point pt);
+
+			// Include a point.
+			Rect STORM_FN include(Point to) const;
 		};
 
 		// ToS.

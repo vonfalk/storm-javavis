@@ -45,6 +45,9 @@ namespace stormgui {
 		// Get the DWrite factory object.
 		inline IDWriteFactory *dWrite() { return writeFactory; }
 
+		// Get the D2D factory object.
+		inline ID2D1Factory *d2d() { return factory; }
+
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
 

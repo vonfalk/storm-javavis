@@ -29,5 +29,9 @@ namespace storm {
 			return Angle(a * b.rad());
 		}
 
+		Angle STORM_FN operator /(Angle a, Float b) {
+			return Angle(a.rad() / b);
+		}
+
 	}
 }

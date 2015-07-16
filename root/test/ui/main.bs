@@ -7,10 +7,12 @@ use core:debug;
 class MainPainter extends Painter {
 	SolidBrush brush;
 	SolidBrush brush2;
+	SolidBrush yellow;
 	LinearGradient brush3;
 	Moment started;
 	Bitmap bitmap;
 	Text text;
+	Path star;
 
 	ctor() {
 		Url f = rootUrl / "res" / "ui_alpha.png";
@@ -23,8 +25,21 @@ class MainPainter extends Painter {
 			brush = red;
 			brush2 = blue;
 			brush3([GradientStop(0, red), GradientStop(1, green)], 135 deg);
+			yellow = yellow;
 			bitmap = img;
 			text("Hello World!", font);
+		}
+
+		Int edges = 5;
+		Int stops = edges * 2;
+		for (Int i = 0; i < stops; i++) {
+			Angle a = 360 deg / stops.float;
+			a *= i.float;
+
+			Point p = angle(a) * 20.0;
+			if (i % 2 == 0)
+				p *= 2.0;
+			star.point(p);
 		}
 	}
 
@@ -43,6 +58,7 @@ class MainPainter extends Painter {
 
 		Float y = time;
 		Point center = size / 2;
+		g.push();
 		g.transform(rotate(y * 5 deg, center));
 
 		g.line(Point(0, y), Point(size.w, y), brush);
@@ -58,6 +74,15 @@ class MainPainter extends Painter {
 		g.push();
 		g.transform(skewX(10 deg));
 		g.draw(text, brush2, from);
+		g.pop();
+
+		g.pop();
+		g.pop();
+
+		g.push();
+		g.transform(translate(Point(100, 100)) * rotate(y * 4 deg));
+		g.lineWidth(5);
+		g.fill(star, yellow);
 
 		true;
 	}

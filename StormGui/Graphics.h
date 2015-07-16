@@ -3,6 +3,7 @@
 #include "Bitmap.h"
 #include "Font.h"
 #include "Text.h"
+#include "Path.h"
 
 namespace stormgui {
 	class Painter;
@@ -64,6 +65,9 @@ namespace stormgui {
 		// Draw an oval.
 		void STORM_FN oval(Rect rect, Par<Brush> brush);
 
+		// Draw a path.
+		void STORM_FN draw(Par<Path> path, Par<Brush> brush);
+
 		// Fill a rectangle.
 		void STORM_FN fillRect(Rect rect, Par<Brush> brush);
 
@@ -72,6 +76,9 @@ namespace stormgui {
 
 		// Fill the entire area.
 		void STORM_FN fill(Par<Brush> brush);
+
+		// Fill a path.
+		void STORM_FN fill(Par<Path> path, Par<Brush> brush);
 
 		// Fill an oval.
 		void STORM_FN fillOval(Rect rect, Par<Brush> brush);
@@ -86,6 +93,7 @@ namespace stormgui {
 
 		// Draw pre-formatted text.
 		void STORM_FN draw(Par<Text> text, Par<Brush> brush, Point origin);
+
 
 	private:
 		// Render target.

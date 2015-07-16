@@ -4,7 +4,7 @@
 
 namespace stormgui {
 
-	void Brush::prepare(const Size &s) {}
+	void Brush::prepare(const Rect &r) {}
 
 	SolidBrush::SolidBrush(Color c) : color(c) {}
 
@@ -59,9 +59,11 @@ namespace stormgui {
 		owner->renderTarget()->CreateLinearGradientBrush(p, dxStops(owner), (ID2D1LinearGradientBrush**)out);
 	}
 
-	void LinearGradient::prepare(const Size &size) {
+	void LinearGradient::prepare(const Rect &rect) {
 		Point start, end;
-		compute(size, start, end);
+		compute(rect.size(), start, end);
+		start += rect.p0;
+		end += rect.p0;
 		if (ID2D1LinearGradientBrush *o = peek<ID2D1LinearGradientBrush>()) {
 			o->SetStartPoint(dx(start));
 			o->SetEndPoint(dx(end));

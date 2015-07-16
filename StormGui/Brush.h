@@ -12,9 +12,11 @@ namespace stormgui {
 
 		// Get a brush.
 		inline ID2D1Brush *brush(Painter *owner, const Size &size) { prepare(size); return get<ID2D1Brush>(owner); }
+		inline ID2D1Brush *brush(Painter *owner, const Rect &rect) { prepare(rect); return get<ID2D1Brush>(owner); }
 
-		// Prepare for drawing a bounding box of 'size'.
-		virtual void prepare(const Size &size);
+		// Prepare for drawing a bounding box of 'bound'.
+		virtual void prepare(const Rect &bound);
+		inline void prepare(const Size &size) { prepare(Rect(Point(), size)); }
 	};
 
 	/**
@@ -86,7 +88,7 @@ namespace stormgui {
 		virtual void create(Painter *owner, ID2D1Resource **out);
 
 		// Prepare.
-		virtual void prepare(const Size &s);
+		virtual void prepare(const Rect &s);
 
 		// The angle.
 		STORM_VAR Angle angle;
