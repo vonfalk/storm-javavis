@@ -126,6 +126,15 @@ namespace stormgui {
 		// Ask us to terminate.
 		void terminate();
 
+		// Notify that we are currently inside a message handler and should not consider new window
+		// messages for the time being. (recursive, calling 'disable' twice and 'enable' once leaves
+		// it disables).  This is done since the Win32 api gets very confused if we pre-empt a
+		// thread with Win32 api calls on the stack. This happens when another UThread called some
+		// Win32-function that invokes a callback to the Window proc, which in turn needs to wait
+		// for something (eg redraws).
+		void disableMsg();
+		void enableMsg();
+
 		// The UThread that runs the message pump.
 		os::UThread uThread;
 
@@ -135,6 +144,12 @@ namespace stormgui {
 
 		// # of WM_THREAD_SIGNAL messages sent. Not actually increased above 1
 		nat signalSent;
+
+		// Message checking disabled?
+		nat msgDisabled;
+
+		// Condition for use when messages are disabled.
+		Condition fallback;
 
 		// This thread's App object. Not owned since the DllData keeps it alive.
 		App *app;

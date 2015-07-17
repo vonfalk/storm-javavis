@@ -29,6 +29,9 @@ namespace os {
 		// Create the future, indicating a location for the result.
 		FutureBase(void *target);
 
+		// Detect unhandled exceptions and print them.
+		~FutureBase();
+
 		// Wait for the result. This function will either return
 		// normally, indicating the result is written to 'target',
 		// or throw an exception posted.
@@ -105,6 +108,9 @@ namespace os {
 
 		// Anything posted? 0 or 1
 		nat resultPosted;
+
+		// Anything read?
+		nat resultRead;
 	};
 
 	/**

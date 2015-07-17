@@ -3,11 +3,26 @@
 
 namespace os {
 
-	FutureBase::FutureBase(void *target) : target(target), resultPosted(0) {}
+	FutureBase::FutureBase(void *target) : target(target), resultPosted(0), resultRead(0) {}
+
+	FutureBase::~FutureBase() {
+		if (resultRead == 0) {
+			if (hasError()) {
+				try {
+					throwError();
+				} catch (const Exception &e) {
+					PLN(L"Unhandled exception from abandoned future: " << e);
+				} catch (...) {
+					PLN(L"Unknown unhandled exception from abandoned future.");
+				}
+			}
+		}
+	}
 
 	void FutureBase::result() {
 		// Block the first thread, and allow any subsequent threads to enter.
 		wait();
+		atomicWrite(resultRead, 1);
 		if (hasError()) {
 			throwError();
 		}

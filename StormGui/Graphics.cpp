@@ -127,7 +127,11 @@ namespace stormgui {
 	}
 
 	void Graphics::draw(Par<Bitmap> bitmap, Rect rect) {
-		target->DrawBitmap(bitmap->bitmap(owner), &dx(rect), 1, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
+		draw(bitmap, rect, 1);
+	}
+
+	void Graphics::draw(Par<Bitmap> bitmap, Rect rect, Float opacity) {
+		target->DrawBitmap(bitmap->bitmap(owner), &dx(rect), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
 	}
 
 	void Graphics::text(Par<Str> text, Par<Font> font, Par<Brush> brush, Rect rect) {

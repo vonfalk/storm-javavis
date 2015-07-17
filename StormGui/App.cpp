@@ -149,18 +149,26 @@ namespace stormgui {
 			w = i->second;
 
 		if (w == null) {
-			WARNING(L"Unknwon window: " << hwnd << L", ignoring " << msg << L".");
+			WARNING(L"Unknown window: " << hwnd << L", ignoring " << msg << L".");
 			return noResult();
 		}
 
+		// From here on, this thread may yeild, causing the main UThread to want to dispatch more
+		// messages. Prevent this to avoid confusing the Win32 api by pre-empting calls on the stack there.
+		MsgResult r = noResult();
+		app->appWait->disableMsg();
+
 		try {
-			return w->onMessage(msg);
+			r = w->onMessage(msg);
 		} catch (const Exception &e) {
 			PLN(L"Unhandled exception in window thread: " << e);
 			if (app->appWait)
 				app->appWait->terminate();
-			return noResult();
 		}
+
+
+		app->appWait->enableMsg();
+		return r;
 	}
 
 	LRESULT App::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -226,7 +234,7 @@ namespace stormgui {
 	 * Threading logic
 	 */
 
-	AppWait::AppWait(Engine &e) : uThread(os::UThread::invalid) {
+	AppWait::AppWait(Engine &e) : uThread(os::UThread::invalid), msgDisabled(0) {
 		app = stormgui::app(e);
 		app->release(); // We do not want to hold a ref here.
 		app->appWait = this;
@@ -251,8 +259,12 @@ namespace stormgui {
 			return false;
 		}
 
-		WaitMessage();
-		atomicWrite(signalSent, 0);
+		if (msgDisabled) {
+			fallback.wait();
+		} else {
+			WaitMessage();
+			atomicWrite(signalSent, 0);
+		}
 
 		return !done;
 	}
@@ -262,8 +274,12 @@ namespace stormgui {
 			return false;
 		}
 
-		MsgWaitForMultipleObjects(0, NULL, FALSE, ms, QS_ALLPOSTMESSAGE);
-		atomicWrite(signalSent, 0);
+		if (msgDisabled) {
+			fallback.wait(ms);
+		} else {
+			MsgWaitForMultipleObjects(0, NULL, FALSE, ms, QS_ALLPOSTMESSAGE);
+			atomicWrite(signalSent, 0);
+		}
 
 		return !done;
 	}
@@ -272,13 +288,18 @@ namespace stormgui {
 		// Only the first thread posts the message if needed.
 		if (atomicCAS(signalSent, 0, 1) == 0)
 			PostThreadMessage(threadId, WM_THREAD_SIGNAL, 0, 0);
+
+		fallback.signal();
 	}
 
 	void AppWait::work() {
 		try {
-			if (!app->processMessages()) {
-				uThread = os::UThread::invalid;
-				done = true;
+			// Do not handle messages if they are disabled.
+			if (msgDisabled == 0) {
+				if (!app->processMessages()) {
+					uThread = os::UThread::invalid;
+					done = true;
+				}
 			}
 		} catch (const Exception &e) {
 			PLN(L"Unhandled exception in window thread: " << e);
@@ -288,6 +309,16 @@ namespace stormgui {
 
 	void AppWait::terminate() {
 		PostThreadMessage(threadId, WM_QUIT, 0, 0);
+	}
+
+	void AppWait::disableMsg() {
+		msgDisabled++;
+	}
+
+	void AppWait::enableMsg() {
+		assert(msgDisabled > 0, L"You messed up with enable/disable.");
+		if (msgDisabled > 0)
+			msgDisabled--;
 	}
 
 }

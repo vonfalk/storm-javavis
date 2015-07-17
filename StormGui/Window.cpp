@@ -3,6 +3,7 @@
 #include "Frame.h"
 #include "App.h"
 #include "Painter.h"
+#include "Exception.h"
 
 namespace stormgui {
 
@@ -304,10 +305,11 @@ namespace stormgui {
 	MsgResult Window::onPaint() {
 		if (myPainter) {
 			Engine &e = engine();
+			os::Future<void> result;
 			os::FnParams params; params.add(myPainter.borrow());
-			os::UThread::spawn(address(&Painter::repaint), true, params, &Render::thread(e)->thread());
+			os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
 
-			// Tell Windows we've taken care of re-painting our window (we will soon, at least...)
+			result.result();
 			ValidateRect(handle(), NULL);
 
 			return msgResult(0);

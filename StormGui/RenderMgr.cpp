@@ -197,7 +197,13 @@ namespace stormgui {
 
 			for (nat i = 0; i < toRedraw.size(); i++) {
 				// TODO: We probably want to wait for VSync once only, and not block this thread while doing so.
-				toRedraw[i]->doRepaint(true);
+				try {
+					toRedraw[i]->doRepaint(true);
+				} catch (const Exception &e) {
+					PLN(L"Error while rendering: " << e);
+				} catch (...) {
+					PLN(L"Unknown error while rendering.");
+				}
 				os::UThread::leave();
 			}
 

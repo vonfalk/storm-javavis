@@ -125,7 +125,7 @@ namespace stormgui {
 			// Re-create our render target.
 			destroy();
 			create();
-			// We probably want to re-draw ourselves here...
+			// TODO: We probably want to re-draw ourselves here...
 		}
 
 		repaintCounter++;
