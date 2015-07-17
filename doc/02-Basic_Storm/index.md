@@ -17,7 +17,7 @@ introduce temporary variables in the middle of an expressions among other things
 
 Most of Basic Storm is implemented in C++, alongside the compiler. However, some parts are
 implemented in Basic Storm itself. Examples of this are the array syntax (`T[]`), array
-initialization (`[T: x, y, z]`) and the string concatenation syntax (`x # y`). The implementation of
+initialization (`T:[x, y, z]`) and the string concatenation syntax (`x # y`). The implementation of
 these operators are present in the `lang.bs` package alongside the entire syntax of Basic Storm.
 
 To make it easier to manipulate syntax, Basic Storm provides a set of convenient syntax extensions
@@ -33,7 +33,7 @@ in the future.
 Another tool that helps developing new syntax in Basic Storm is the `dump{}` syntax. Whenever the
 `dump{}` syntax is encountered compile time, it will print whatever syntax object is inside the
 brackets using the standard print function. This can be used to see what different syntaxes actually
-represent. To see how it works, try `dump{ "A" # "B" }` or `dump{ [Int: 1, 2, 3, 4] }`.
+represent. To see how it works, try `dump{ "A" # "B" }` or `dump{ Int:[1, 2, 3, 4] }`.
 
 Basic Storm source code is saved in `.bs`-files. Files are read using the standard text input of
 Storm, and therefore supports all formats described [here](md://Storm/Text_IO).
