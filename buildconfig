@@ -1,4 +1,4 @@
 Release
-StormMain#-r root/ -f final.main
+StormMain#-i final external/final/ -r root/ -f final.main
 StormMain#-r root/ -f present.test
 StormTest

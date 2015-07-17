@@ -5,6 +5,7 @@
 #include "Storm/Repl.h"
 #include "Storm/Type.h"
 #include "Shared/Str.h"
+#include "Shared/Io/Url.h"
 #include "Storm/Function.h"
 
 using namespace std;
@@ -152,6 +153,14 @@ enum LaunchMode {
 	launchFunction,
 };
 
+struct Import {
+	// Import path.
+	Path path;
+
+	// Import name.
+	String name;
+};
+
 struct Launch {
 	LaunchMode mode;
 
@@ -166,13 +175,58 @@ struct Launch {
 
 	// Repl command (if any).
 	String replCmd;
+
+	// Import paths (if any).
+	vector<Import> imports;
 };
 
-void help() {
+void help(const wchar *cmd) {
 	wcout << L"Usage:" << endl;
-	wcout << L"storm               - launch the default REPL." << endl;
-	wcout << L"storm <language>    - launc the REPL for <language>" << endl;
-	wcout << L"storm -f <function> - run <function>, then exit." << endl;
+	wcout << cmd << L"                  - launch the default REPL." << endl;
+	wcout << cmd << L" <language>       - launch the REPL for <language>" << endl;
+	wcout << cmd << L" -f <function>    - run <function>, then exit." << endl;
+	wcout << cmd << L" -i <name> <path> - import package outside of root." << endl;
+}
+
+// Load imports.
+void loadImport(Engine &to, const Import &i) {
+	Auto<Url> url = parsePath(to, i.path.toS());
+	if (!url->exists()) {
+		wcerr << L"The path " << url << L" does not exist. Can not import " << i.name << L"." << endl;
+		return;
+	}
+
+	Auto<Name> name = parseSimpleName(to, i.name);
+	Auto<Name> parent = name->parent();
+
+	Package *into = to.package(parent, true);
+	if (!into) {
+		wcerr << L"Failed to create " << parent << L" can not import " << url << L"." << endl;
+		return;
+	}
+
+	if (Named *prev = into->find(steal(name->last()))) {
+		wcerr << L"Something named " << name << L" already exists. Please chose a different name." << endl;
+		wcerr << L"Could not import " << url << L" as " << name << L"." << endl;
+		return;
+	}
+
+	// Safe to create a new package!
+	into->add(steal(CREATE(Package, to, url)));
+}
+
+void loadImports(Engine &to, const Launch &launch) {
+	for (nat i = 0; i < launch.imports.size(); i++) {
+		loadImport(to, launch.imports[i]);
+	}
+}
+
+// Make 'path' absolute.
+Path absolute(const Path &path) {
+	if (path.isAbsolute())
+		return path;
+	else
+		return Path::cwd() + path;
 }
 
 struct StatePtr;
@@ -199,12 +253,20 @@ StatePtr parseReplCommand(const String &arg, Launch &result) {
 }
 
 StatePtr parseRoot(const String &arg, Launch &result) {
-	Path p(arg);
-	if (p.isAbsolute())
-		result.root = p;
-	else
-		result.root = Path::cwd() + p;
+	result.root = absolute(Path(arg));
 	return &parseStart;
+}
+
+StatePtr parseImportPath(const String &arg, Launch &result) {
+	result.imports.back().path = absolute(Path(arg));
+	return &parseStart;
+}
+
+StatePtr parseImport(const String &arg, Launch &result) {
+	Import i;
+	i.name = arg;
+	result.imports.push_back(i);
+	return &parseImportPath;
 }
 
 StatePtr parseStart(const String &arg, Launch &result) {
@@ -217,6 +279,8 @@ StatePtr parseStart(const String &arg, Launch &result) {
 		return &parseReplCommand;
 	} else if (arg == L"-r") {
 		return &parseRoot;
+	} else if (arg == L"-i") {
+		return &parseImport;
 	} else {
 		result.mode = launchRepl;
 		result.repl = arg;
@@ -258,7 +322,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 
 		if (!parseParams(argc, argv, launch)) {
 			wcout << L"Error parsing command-line parameters." << endl;
-			help();
+			help(argv[0]);
 			return 1;
 		}
 
@@ -270,6 +334,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 
 		Timestamp start;
 		Engine engine(launch.root, Engine::reuseMain);
+		loadImports(engine, launch);
 		Timestamp end;
 
 		wcout << L"Compiler boot in " << (end - start) << endl;
@@ -279,7 +344,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 
 			switch (launch.mode) {
 			case launchHelp:
-				help();
+				help(argv[0]);
 				r = 0;
 				break;
 			case launchRepl:

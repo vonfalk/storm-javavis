@@ -55,3 +55,7 @@ ReadMe.txt
 *.aps
 
 \#*\#
+
+# External code in other git repos. #
+#####################################
+External/
