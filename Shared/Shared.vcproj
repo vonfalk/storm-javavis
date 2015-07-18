@@ -112,6 +112,7 @@
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				UseFullPaths="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -151,6 +152,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\Geometry\Angle.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Array.cpp"
 				>
 			</File>
@@ -171,6 +176,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Io\FileStream.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\FnPtr.cpp"
 				>
 			</File>
@@ -179,11 +188,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Graphics\Image.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\LazyMemStream.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\MemStream.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Object.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Geometry\Point.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Protocol.cpp"
 				>
 			</File>
 			<File
@@ -223,43 +248,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Thread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TObject.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Value.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Timing.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Graphics\Image.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Url.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Protocol.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Io\Stream.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\FileStream.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\MemStream.cpp"
 				>
 			</File>
 			<File
@@ -267,19 +256,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Io\Utf8Text.cpp"
+				RelativePath=".\Thread.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Io\Utf16Text.cpp"
+				RelativePath=".\Timing.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Io\LazyMemStream.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Geometry\Vector.cpp"
+				RelativePath=".\TObject.cpp"
 				>
 			</File>
 			<File
@@ -287,7 +272,23 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Geometry\Angle.cpp"
+				RelativePath=".\Io\Url.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf16Text.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Utf8Text.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Value.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Vector.cpp"
 				>
 			</File>
 		</Filter>
@@ -296,6 +297,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\Geometry\Angle.h"
+				>
+			</File>
 			<File
 				RelativePath=".\Array.h"
 				>
@@ -333,6 +338,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Io\FileStream.h"
+				>
+			</File>
+			<File
 				RelativePath=".\FnPtr.h"
 				>
 			</File>
@@ -345,7 +354,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Graphics.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Handle.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Graphics\Image.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Graphics\Image.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\LazyMemStream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\MemStream.h"
 				>
 			</File>
 			<File
@@ -358,6 +387,10 @@
 			</File>
 			<File
 				RelativePath=".\Geometry\Point.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Protocol.h"
 				>
 			</File>
 			<File
@@ -385,6 +418,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Io\Stream.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Io\Text.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Thread.cpp"
 				>
 			</File>
@@ -393,7 +434,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Timing.h"
+				>
+			</File>
+			<File
 				RelativePath=".\TObject.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Geometry\Transform.h"
 				>
 			</File>
 			<File
@@ -405,51 +454,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Value.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Timing.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Graphics\Image.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Graphics\Image.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Graphics.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Io\Url.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Protocol.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Stream.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\FileStream.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\MemStream.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Text.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Io\Utf8Text.h"
 				>
 			</File>
 			<File
@@ -457,19 +462,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Io\LazyMemStream.h"
+				RelativePath=".\Io\Utf8Text.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Value.h"
 				>
 			</File>
 			<File
 				RelativePath=".\Geometry\Vector.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Geometry\Transform.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Geometry\Angle.h"
 				>
 			</File>
 		</Filter>

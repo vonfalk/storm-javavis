@@ -139,6 +139,7 @@
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				UseFullPaths="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -250,6 +251,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Path.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\RenderMgr.cpp"
 				>
 			</File>
@@ -295,10 +300,6 @@
 			</File>
 			<File
 				RelativePath=".\Window.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Path.cpp"
 				>
 			</File>
 		</Filter>
@@ -380,6 +381,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Path.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Path.h"
+				>
+			</File>
+			<File
 				RelativePath=".\RenderMgr.h"
 				>
 			</File>
@@ -405,14 +414,6 @@
 			</File>
 			<File
 				RelativePath=".\Window.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Path.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Path.cpp"
 				>
 			</File>
 		</Filter>

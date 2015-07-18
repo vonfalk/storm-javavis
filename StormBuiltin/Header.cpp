@@ -106,9 +106,6 @@ void Header::parse(Tokenizer &tok) {
 			// Ignore preprocessor text.
 			if (token == L"#define") {
 				tok.next();
-				// We need a special case for: #define STORM_SHARED_CLASS STORM_CLASS.
-				if (tok.peek() == L"STORM_VALUE" || tok.peek() == L"STORM_CLASS")
-					tok.next();
 			}
 		} else if (token == L"STORM_THREAD") {
 			tok.expect(L"(");

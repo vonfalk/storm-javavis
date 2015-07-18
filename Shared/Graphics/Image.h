@@ -1,5 +1,5 @@
 #pragma once
-#include "Object.h"
+#include "Shared/Object.h"
 #include "Shared/Geometry/Point.h"
 #include "Shared/Geometry/Size.h"
 #include "Color.h"

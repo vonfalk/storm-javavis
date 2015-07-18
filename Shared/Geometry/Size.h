@@ -1,5 +1,5 @@
 #pragma once
-#include "EnginePtr.h"
+#include "Shared/EnginePtr.h"
 
 namespace storm {
 	class Str;

@@ -127,6 +127,7 @@
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				UseFullPaths="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -335,6 +336,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lib\Long.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\Maybe.cpp"
 				>
 			</File>
@@ -352,6 +357,10 @@
 			</File>
 			<File
 				RelativePath=".\NameSet.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Number.cpp"
 				>
 			</File>
 			<File
@@ -495,6 +504,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Url.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Value.cpp"
 				>
 			</File>
@@ -519,19 +532,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Long.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Number.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\TypeToS.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Url.cpp"
 				>
 			</File>
 		</Filter>
@@ -709,6 +710,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lib\Long.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\Maybe.h"
 				>
 			</File>
@@ -730,6 +735,10 @@
 			</File>
 			<File
 				RelativePath=".\NameSet.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Number.h"
 				>
 			</File>
 			<File
@@ -861,6 +870,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Url.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Value.h"
 				>
 			</File>
@@ -881,19 +894,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Lib\Long.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\Number.h"
-				>
-			</File>
-			<File
 				RelativePath=".\TypeToS.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Url.h"
 				>
 			</File>
 		</Filter>

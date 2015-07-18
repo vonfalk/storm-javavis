@@ -127,6 +127,7 @@
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				UseFullPaths="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -222,7 +223,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TestCast.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TestDestroy.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TestDiv.cpp"
 				>
 			</File>
 			<File
@@ -279,14 +288,6 @@
 			</File>
 			<File
 				RelativePath=".\UThreadTest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestDiv.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestCast.cpp"
 				>
 			</File>
 		</Filter>
