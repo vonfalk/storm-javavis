@@ -7,10 +7,10 @@ namespace sound {
 	OggSound::OggSound(OggVorbis_File file, bool seekable) : file(file), seekable(seekable) {
 		/**
 		 * NOTE: There seems to be possible to have multiple streams inside a vorbis file,
-		 * we do not handle that correctly at the moment. Fix that!
+		 * we do not handle that correctly at the moment. Now we only show the first stream.
 		 */
 
-		vi = ov_info(&file, -1);
+		vi = ov_info(&file, 0);
 	}
 
 	OggSound::~OggSound() {
@@ -30,7 +30,7 @@ namespace sound {
 	}
 
 	Word OggSound::length() {
-		return ov_pcm_total(&file, -1);
+		return ov_pcm_total(&file, 0);
 	}
 
 	Nat OggSound::sampleFreq() const {
@@ -57,6 +57,10 @@ namespace sound {
 		}
 
 		return samples * ch;
+	}
+
+	Bool OggSound::more() {
+		return ov_pcm_tell(&file) < ov_pcm_total(&file, 0);
 	}
 
 	struct OggData {

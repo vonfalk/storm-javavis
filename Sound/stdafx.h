@@ -9,6 +9,9 @@
 
 using namespace storm;
 
+namespace sound {
+	class AudioMgr;
+}
 
 namespace storm {
 
@@ -20,13 +23,18 @@ namespace storm {
 		LibData();
 		~LibData();
 
-		// Nothing here yet.
+
+		// AudioMgr object.
+		Auto<sound::AudioMgr> audio;
 	};
 
 }
 
 namespace sound {
 	typedef storm::LibData LibData;
+
+	// Audio thread.
+	STORM_THREAD(Audio);
 
     /**
 	 * Error.
@@ -38,7 +46,26 @@ namespace sound {
 	private:
 		String msg;
 	};
+
 }
 
+#include <mmreg.h> // Ignored when using WIN32_LEAN_AND_MEAN
+#include <initguid.h>
+#include <ks.h> // GUID_NULL is defined here and not included with 'initguid'...
+#include <dsound.h>
+
+#undef interface
+
+// Release COM objects.
+template <class T>
+void release(T *&v) {
+	if (v)
+		v->Release();
+	v = null;
+}
 
 #include "Shared/Io/Stream.h"
+namespace sound {
+	// Avoid name collisions.
+	using storm::IStream;
+}

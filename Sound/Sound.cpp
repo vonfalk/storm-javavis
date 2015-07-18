@@ -79,8 +79,12 @@ namespace sound {
 		return 0;
 	}
 
+	Bool Sound::more() {
+		return false;
+	}
+
 	void Sound::output(wostream &to) const {
-		to << L"Sound " << channels() << L"ch @" << sampleFreq() << L"Hz";
+		to << L"Sound " << channels() << L" ch " << sampleFreq() << L" Hz";
 	}
 
 

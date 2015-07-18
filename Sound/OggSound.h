@@ -28,6 +28,7 @@ namespace sound {
 
 		// Get data.
 		virtual Nat STORM_FN read(SoundBuffer &to);
+		virtual Bool STORM_FN more();
 
 	private:
 		// The ogg file.
@@ -42,7 +43,7 @@ namespace sound {
 
 
 	// Open a vorbis file. Returns null on failure.
-	OggSound *STORM_FN openOgg(Par<RIStream> src);
-	OggSound *STORM_FN openStreamingOgg(Par<IStream> src);
+	OggSound *STORM_FN openOgg(Par<RIStream> src) ON(Audio);
+	OggSound *STORM_FN openStreamingOgg(Par<IStream> src) ON(Audio);
 
 }

@@ -58,7 +58,7 @@ namespace sound {
 	/**
 	 * Sound source. Interface that provides sound.
 	 */
-	class Sound : public Object {
+	class Sound : public ObjectOn<Audio> {
 		STORM_CLASS;
 	public:
 		// Create the sound, indicate if we're seekable or not.
@@ -85,13 +85,16 @@ namespace sound {
 		// For 3 channels: L, C, R
 		virtual Nat STORM_FN read(SoundBuffer &to);
 
+		// More data?
+		virtual Bool STORM_FN more();
+
 	protected:
 		virtual void output(wostream &to) const;
 	};
 
 	// Open a sound file.
-	Sound *STORM_FN openSound(Par<IStream> src);
+	Sound *STORM_FN openSound(Par<IStream> src) ON(Audio);
 
 	// Open sound from a streaming source.
-	Sound *STORM_FN openStreamingSound(Par<IStream> src);
+	Sound *STORM_FN openStreamingSound(Par<IStream> src) ON(Audio);
 }
