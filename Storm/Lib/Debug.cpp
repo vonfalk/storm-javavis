@@ -51,7 +51,17 @@ namespace storm {
 	}
 
 	void print(TObject *s) {
-		print((Object *)s);
+		// Make sure to execute on the right thread!
+		const os::Thread &target = s->thread->thread;
+		if (os::Thread::current() != target) {
+			os::Future<void> fut;
+			os::FnParams p; p.add(s);
+			typedef void (*PrintFn)(Object *);
+			os::UThread::spawn((PrintFn)&print, false, p, fut, &target);
+			fut.result();
+		} else {
+			print((Object *)s);
+		}
 	}
 
 	void printInfo(Object *s) {
