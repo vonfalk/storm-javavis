@@ -8,10 +8,12 @@ namespace sound {
 	static const nat bufferPartTime = 1;
 	static const nat bufferParts = 3;
 
-	Player::Player(Par<Sound> src) : src(src), buffer(null), event(null), lastFilled(0) {
-		nat freq = src->sampleFreq();
+	Player::Player(Par<Sound> src) : src(src), buffer(null), event(null), lastFilled(0), bufferPlaying(false) {
+		finishEvent.set();
+		freq = src->sampleFreq();
 		channels = src->channels();
-		partSize = sizeof(float) * bufferPartTime * freq;
+		sampleSize = sizeof(float) * channels;
+		partSize = sampleSize * bufferPartTime * freq;
 		bufferSize = partSize * bufferParts;
 
 		if (channels > 2)
@@ -82,8 +84,51 @@ namespace sound {
 	}
 
 	void Player::play() {
-		if (buffer)
+		if (buffer) {
 			buffer->Play(0, 0, DSBPLAY_LOOPING);
+			finishEvent.clear();
+			bufferPlaying = true;
+		}
+	}
+
+	void Player::pause() {
+		if (buffer) {
+			bufferPlaying = false;
+			buffer->Stop();
+		}
+	}
+
+	void Player::stop() {
+		if (buffer) {
+			bufferPlaying = false;
+			buffer->Stop();
+			finishEvent.set();
+
+			// Reset position.
+			src->seek(0);
+			fill();
+		}
+	}
+
+	Bool Player::playing() {
+		return bufferPlaying;
+	}
+
+	void Player::waitUntilDone() {
+		finishEvent.wait();
+	}
+
+	Duration Player::time() {
+		DWORD pos = 0;
+		buffer->GetCurrentPosition(&pos, NULL);
+
+		nat part = pos / partSize;
+		nat64 sample = partSample[part] + (pos % partSize) / sampleSize;
+
+		sample *= 1000000;
+		sample /= freq;
+
+		return us(sample);
 	}
 
 	static nat next(nat part) {
@@ -98,8 +143,12 @@ namespace sound {
 		buffer->GetCurrentPosition(&play, NULL);
 		nat playPart = play / partSize;
 
-		for (nat at = next(lastFilled); at != playPart; at = next(at))
-			fill(at);
+		if (afterEnd[playPart]) {
+			stop();
+		} else {
+			for (nat at = next(lastFilled); at != playPart; at = next(at))
+				fill(at);
+		}
 	}
 
 	void Player::fill() {
@@ -108,30 +157,38 @@ namespace sound {
 	}
 
 	void Player::fill(nat part) {
+		partSample[part] = src->tell();
+		afterEnd[part] = false;
+
 		void *buf1 = null, *buf2 = null;
 		DWORD size1 = 0, size2 = 0;
 		buffer->Lock(partSize * part, partSize, &buf1, &size1, &buf2, &size2, 0);
 
-		fill(buf1, size1);
-		fill(buf2, size2);
+		afterEnd[part] |= fill(buf1, size1);
+		afterEnd[part] |= fill(buf2, size2);
 
 		buffer->Unlock(buf1, size1, buf2, size2);
 
 		lastFilled = part;
 	}
 
-	void Player::fill(void *buf, nat size) {
-		size /= sizeof(float);
+	bool Player::fill(void *buf, nat size) {
+		bool afterEnd = false;
 		float *to = (float *)buf;
 		nat at = 0;
+		size /= sizeof(float);
+
 		while (at < size) {
 			if (src->more()) {
 				at += src->read(SoundBuffer(to + at, size - at));
 			} else {
+				afterEnd = true;
 				for (; at < size; at++)
 					to[at] = 0.0f;
 			}
 		}
+
+		return afterEnd;
 	}
 
 }
