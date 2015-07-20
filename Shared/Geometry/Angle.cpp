@@ -6,9 +6,9 @@
 namespace storm {
 	namespace geometry {
 
-		Angle::Angle(Float rad) : v(rad) {
+		Angle Angle::normalized() const {
 			Int sub = Int(floor(v / (2 * M_PI)));
-			v -= Float(sub * (2 * M_PI));
+			return Angle(v - Float(sub * (2 * M_PI)));
 		}
 
 		wostream &operator <<(wostream &to, Angle a) {

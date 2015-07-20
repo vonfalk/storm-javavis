@@ -19,7 +19,10 @@ namespace storm {
 
 			// Angle in radians (intentionally not visible to Storm).
 			// Normalizes the angle to 0..2*PI
-			Angle(Float rad);
+			inline Angle(Float rad) : v(rad) {}
+
+			// Normalized.
+			Angle STORM_FN normalized() const;
 
 			// Convert to radians.
 			inline Float STORM_FN rad() const { return v; }
