@@ -8,7 +8,7 @@ namespace storm {
 		STORM_PKG(core.geometry);
 
 		/**
-		 * Angle in radians.
+		 * Angle in radians. 0 deg is assumed to be upward in screen-space (ie 0, -1)
 		 * TODO: Some kind of comparisons for angles.
 		 */
 		class Angle {
@@ -18,7 +18,8 @@ namespace storm {
 			inline STORM_CTOR Angle() : v(0) {}
 
 			// Angle in radians (intentionally not visible to Storm).
-			inline Angle(Float rad) : v(rad) {}
+			// Normalizes the angle to 0..2*PI
+			Angle(Float rad);
 
 			// Convert to radians.
 			inline Float STORM_FN rad() const { return v; }
@@ -30,6 +31,10 @@ namespace storm {
 			// Value (intentionally not visible to Storm).
 			Float v;
 		};
+
+		// Add/subtract.
+		Angle STORM_FN operator +(Angle a, Angle b);
+		Angle STORM_FN operator -(Angle a, Angle b);
 
 		// Scale.
 		Angle STORM_FN operator *(Angle a, Float b);
@@ -54,7 +59,7 @@ namespace storm {
 		Angle STORM_FN asin(Float v);
 		Angle STORM_FN acos(Float v);
 		Angle STORM_FN atan(Float v);
-		Angle STORM_FN atan(Point pt);
+		Angle STORM_FN angle(Point pt);
 
 	}
 }

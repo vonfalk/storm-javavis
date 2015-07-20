@@ -380,6 +380,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lib\Random.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\RefHandle.cpp"
 				>
 			</File>
@@ -755,6 +759,10 @@
 			</File>
 			<File
 				RelativePath=".\PkgReader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Random.h"
 				>
 			</File>
 			<File
