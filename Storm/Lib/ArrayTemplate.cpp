@@ -92,6 +92,26 @@ namespace storm {
 		return r->toS();
 	}
 
+	Str *valArrayToSFree(ArrayBase *array, const void *fn) {
+		byte buffer[2 * os::FnParams::elemSize];
+		Auto<StrBuf> r = CREATE(StrBuf, array);
+		const Handle &handle = array->handle;
+		r->add(L"[");
+
+		for (nat i = 0; i < array->count(); i++) {
+			if (i != 0)
+				r->add(L", ");
+			void *elem = array->atRaw(i);
+			os::FnParams params(buffer);
+			params.add(handle.create, handle.destroy, handle.size, handle.isFloat, elem);
+			Auto<Str> v = os::call<Str *>(fn, false, params);
+			Auto<StrBuf> t = r->add(v);
+		}
+
+		r->add(L"]");
+		return r->toS();
+	}
+
 	Str *valArrayToSAdd(ArrayBase *array, const void *fn) {
 		byte buffer[2 * os::FnParams::elemSize];
 		Auto<StrBuf> r = CREATE(StrBuf, array);
@@ -202,7 +222,11 @@ namespace storm {
 
 		g->to << fnParam(thisPtr);
 		g->to << fnParam(toSFn->ref());
-		g->to << fnCall(engine.fnRefs.arrayToSMember, retPtr());
+
+		if (toSFn->params[0].ref)
+			g->to << fnCall(engine.fnRefs.arrayToSMember, retPtr());
+		else
+			g->to << fnCall(engine.fnRefs.arrayToSFree, retPtr());
 
 		g->to << epilog();
 		g->to << ret(retPtr());

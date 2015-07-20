@@ -37,6 +37,7 @@ namespace storm {
 
 	// Implemented in ArrayTemplate.cpp
 	Str *valArrayToSMember(ArrayBase *array, Str *(CODECALL *elemToS)(void *));
+	Str *valArrayToSFree(ArrayBase *array, const void *fn);
 	Str *valArrayToSAdd(ArrayBase *array, const void *fn);
 
 	class FutureBase;

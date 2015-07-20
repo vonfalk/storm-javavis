@@ -62,7 +62,7 @@ namespace storm {
 		code::RefSource futureResult;
 
 		// Helpers for the Array type.
-		code::RefSource arrayToSMember, arrayToSAdd;
+		code::RefSource arrayToSMember, arrayToSFree, arrayToSAdd;
 
 		// Helpers for the FnPtr object.
 		code::RefSource fnPtrCopy, fnPtrCall, fnPtrCreate;

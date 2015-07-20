@@ -37,7 +37,8 @@ namespace storm {
 		  futureResult(arena, L"futureResult"),
 		  fnParamsCtor(arena, L"FnParams::ctor"), fnParamsDtor(arena, L"FnParams::dtor"),
 		  fnParamsAdd(arena, L"FnParams::add"),
-		  arrayToSMember(arena, L"valArrayToSMember"), arrayToSAdd(arena, L"valArrayToSAdd"),
+		  arrayToSMember(arena, L"valArrayToSMember"), arrayToSFree(arena, L"valArrayToSFree"),
+		  arrayToSAdd(arena, L"valArrayToSAdd"),
 		  fnPtrCopy(arena, L"FnPtrBase::needsCopy"), fnPtrCall(arena, L"FnPtrBase::callRaw"),
 		  fnPtrCreate(arena, L"FnPtrBase::createRaw")
 	{
@@ -64,6 +65,7 @@ namespace storm {
 		fnParamsDtor.setPtr(address(&storm::fnParamsDtor));
 		fnParamsAdd.setPtr(address(&storm::fnParamsAdd));
 		arrayToSMember.setPtr(address(&storm::valArrayToSMember));
+		arrayToSFree.setPtr(address(&storm::valArrayToSFree));
 		arrayToSAdd.setPtr(address(&storm::valArrayToSAdd));
 		fnPtrCopy.setPtr(address(&storm::fnPtrNeedsCopy));
 		fnPtrCall.setPtr(address(&storm::fnPtrCallRaw));
