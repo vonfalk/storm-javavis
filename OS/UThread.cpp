@@ -36,16 +36,22 @@ namespace os {
 	 * UThread.
 	 */
 
-	// Insert on a specific thread.
-	static void insert(UThreadData *data, const Thread *on) {
-		ThreadData *d;
-		if (on)
+	// Insert on a specific thread. Makes sure to keep 'data' alive until the function has returned at least.
+	UThread UThread::insert(UThreadData *data, const Thread *on) {
+		ThreadData *d = null;
+		if (on) {
 			d = on->threadData();
-		else
+		} else {
 			d = Thread::current().threadData();
+		}
+
+		// We need to take our reference here, from the moment we call 'insert', 'data' may be deleted otherwise!
+		UThread result(data);
 
 		d->uState.insert(data);
 		d->wakeCond.signal();
+
+		return result;
 	}
 
 	// End the current thread.
@@ -138,8 +144,7 @@ namespace os {
 		t->pushParams(null, new Fn<void, void>(fn));
 		t->pushContext(&spawnFn);
 
-		insert(t, on);
-		return UThread(t);
+		return insert(t, on);
 	}
 
 	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params, const Thread *on, UThreadData *t) {
@@ -153,8 +158,8 @@ namespace os {
 		t->pushParams(&exitUThread, params);
 		t->pushContext(fn);
 
-		insert(t, on);
-		return UThread(t);
+		// Done!
+		return insert(t, on);
 	}
 
 	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params,
@@ -179,8 +184,7 @@ namespace os {
 		t->pushContext(&spawnFuture);
 
 		// Done!
-		insert(t, on);
-		return UThread(t);
+		return insert(t, on);
 	}
 
 	UThreadData *UThread::spawnLater() {

@@ -142,6 +142,9 @@ namespace os {
 
 		// Referenced data.
 		UThreadData *data;
+
+		// Insert an UThread.
+		static UThread insert(UThreadData *data, const Thread *on);
 	};
 
 
@@ -250,6 +253,8 @@ namespace os {
 		void exit();
 
 		// Add a new thread as 'ready'. Safe to call from other OS threads.
+		// Note: make sure to add a reference to the thread before calling insert, otherwise
+		// it may be deleted before 'insert' returns.
 		void insert(UThreadData *data);
 
 		// Get the currently running thread.
