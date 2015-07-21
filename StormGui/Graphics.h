@@ -49,6 +49,9 @@ namespace stormgui {
 		// Set the line width (in relation to the previous state).
 		void STORM_SETTER lineWidth(Float w);
 
+		// Set the opacity of all drawing operations (1 is opaque, 0 is transparent).
+		void STORM_SETTER opacity(Float o);
+
 		/**
 		 * Draw stuff.
 		 */
@@ -57,10 +60,10 @@ namespace stormgui {
 		void STORM_FN line(Point from, Point to, Par<Brush> brush);
 
 		// Draw a rectangle.
-		void STORM_FN rect(Rect rect, Par<Brush> brush);
+		void STORM_FN draw(Rect rect, Par<Brush> brush);
 
 		// Draw rounded rectangle.
-		void STORM_FN rect(Rect rect, Size edges, Par<Brush> brush);
+		void STORM_FN draw(Rect rect, Size edges, Par<Brush> brush);
 
 		// Draw an oval.
 		void STORM_FN oval(Rect rect, Par<Brush> brush);
@@ -69,10 +72,10 @@ namespace stormgui {
 		void STORM_FN draw(Par<Path> path, Par<Brush> brush);
 
 		// Fill a rectangle.
-		void STORM_FN fillRect(Rect rect, Par<Brush> brush);
+		void STORM_FN fill(Rect rect, Par<Brush> brush);
 
 		// Fill rounded rectangle.
-		void STORM_FN fillRect(Rect rect, Size edgex, Par<Brush> brush);
+		void STORM_FN fill(Rect rect, Size edges, Par<Brush> brush);
 
 		// Fill the entire area.
 		void STORM_FN fill(Par<Brush> brush);
@@ -111,6 +114,9 @@ namespace stormgui {
 
 			// Line size.
 			float lineWidth;
+
+			// Opacity.
+			float opacity;
 		};
 
 		// default state.

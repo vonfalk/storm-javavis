@@ -21,6 +21,12 @@ namespace storm {
 
 	Image::Image() : data(null), w(0), h(0) {}
 
+	Image::Image(Par<Image> o) : data(null), w(o->w), h(o->h) {
+		nat s = w * h * 4;
+		data = new byte[s];
+		memcpy(data, o->data, s);
+	}
+
 	Image::Image(Size size) : data(null), w(nat(size.w)), h(nat(size.h)) {
 		nat s = w * h * 4;
 		data = new byte[s];

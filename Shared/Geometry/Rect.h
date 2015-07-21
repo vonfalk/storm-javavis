@@ -28,6 +28,9 @@ namespace storm {
 			STORM_VAR Point p0;
 			STORM_VAR Point p1;
 
+			// Normalized.
+			Rect STORM_FN normalized() const;
+
 			// Size.
 			inline Size STORM_FN size() const { return p1 - p0; }
 			inline void STORM_SETTER size(Size to) { p1 = p0 + to; }

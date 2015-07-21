@@ -13,6 +13,13 @@ namespace storm {
 
 		Rect::Rect(Float left, Float top, Float right, Float bottom) : p0(left, top), p1(right, bottom) {}
 
+		Rect Rect::normalized() const {
+			return Rect(
+				Point(min(p0.x, p1.x), min(p0.y, p1.y)),
+				Point(max(p0.x, p1.x), max(p0.y, p1.y))
+				);
+		}
+
 		Rect Rect::operator +(Point pt) const {
 			return Rect(p0 + pt, p1 + pt);
 		}

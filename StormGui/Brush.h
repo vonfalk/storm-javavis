@@ -2,6 +2,7 @@
 #include "RenderResource.h"
 
 namespace stormgui {
+	class Bitmap;
 
 	/**
 	 * Brush (abstract).
@@ -11,12 +12,15 @@ namespace stormgui {
 	public:
 
 		// Get a brush.
-		inline ID2D1Brush *brush(Painter *owner, const Size &size) { prepare(size); return get<ID2D1Brush>(owner); }
-		inline ID2D1Brush *brush(Painter *owner, const Rect &rect) { prepare(rect); return get<ID2D1Brush>(owner); }
+		inline ID2D1Brush *brush(Painter *owner, const Rect &rect, Float opacity) {
+			ID2D1Brush *b = get<ID2D1Brush>(owner);
+			prepare(rect, b);
+			b->SetOpacity(opacity);
+			return b;
+		}
 
 		// Prepare for drawing a bounding box of 'bound'.
-		virtual void prepare(const Rect &bound);
-		inline void prepare(const Size &size) { prepare(Rect(Point(), size)); }
+		virtual void prepare(const Rect &bound, ID2D1Brush *b);
 	};
 
 	/**
@@ -31,6 +35,21 @@ namespace stormgui {
 
 	private:
 		Color color;
+	};
+
+	/**
+	 * Bitmap brush.
+	 */
+	class BitmapBrush : public Brush {
+		STORM_CLASS;
+	public:
+		STORM_CTOR BitmapBrush(Par<Bitmap> bitmap);
+
+		virtual void create(Painter *owner, ID2D1Resource **out);
+
+		virtual void prepare(const Rect &bound, ID2D1Brush *b);
+	private:
+		Auto<Bitmap> bitmap;
 	};
 
 	/**
@@ -92,15 +111,12 @@ namespace stormgui {
 		virtual void create(Painter *owner, ID2D1Resource **out);
 
 		// Prepare.
-		virtual void prepare(const Rect &s);
+		virtual void prepare(const Rect &s, ID2D1Brush *b);
 
 		// The angle.
 		STORM_VAR Angle angle;
 
 	private:
-		// Last prepared rect.
-		Rect prepared;
-
 		// Compute points.
 		void compute(const Rect &sz, Point &start, Point &end);
 	};

@@ -16,6 +16,9 @@ namespace storm {
 		// Empty image.
 		STORM_CTOR Image();
 
+		// Copy.
+		STORM_CTOR Image(Par<Image> o);
+
 		// Specific size (truncated).
 		STORM_CTOR Image(geometry::Size size);
 		STORM_CTOR Image(Nat w, Nat h);

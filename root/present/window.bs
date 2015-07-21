@@ -95,9 +95,13 @@ class PresentPainter extends Painter {
 	// Style.
 	SlideStyle style;
 
+	// Brush used outside the slide's limit.
+	SolidBrush outsideColor;
+
 	ctor(SlideStyle style) {
 		init() {
 			endColor = black;
+			outsideColor = black;
 			style = style;
 		}
 	}
@@ -126,7 +130,7 @@ class PresentPainter extends Painter {
 		Bool animate = false;
 
 		if (slide) {
-			g.fill(style.bg);
+			g.fill(outsideColor);
 
 			Float scaleFactor = s.h / target.h;
 			if (s.w / target.w < scaleFactor)
@@ -136,6 +140,7 @@ class PresentPainter extends Painter {
 			Size scaled = target * scaleFactor;
 			g.transform(translate(s.center - scaled.center) * scale(scaleFactor));
 			g.push();
+			g.fill(Rect(Point(), target), style.bg);
 			animate |= slide.animate();
 			animate |= slide.draw(style, target, g);
 		} else {

@@ -32,6 +32,7 @@ namespace stormgui {
 		State s = {
 			dxUnit(),
 			1.0f,
+			1.0f,
 		};
 		return s;
 	}
@@ -65,57 +66,61 @@ namespace stormgui {
 		state.lineWidth = oldStates.back().lineWidth * w;
 	}
 
+	void Graphics::opacity(Float o) {
+		state.opacity = oldStates.back().opacity * o;
+	}
+
 	/**
 	 * Draw stuff.
 	 */
 
 	void Graphics::line(Point from, Point to, Par<Brush> style) {
-		target->DrawLine(dx(from), dx(to), style->brush(owner, abs(to - from)), state.lineWidth);
+		target->DrawLine(dx(from), dx(to), style->brush(owner, Rect(from, to).normalized(), state.opacity), state.lineWidth);
 	}
 
-	void Graphics::rect(Rect rect, Par<Brush> style) {
-		target->DrawRectangle(dx(rect), style->brush(owner, rect.size()), state.lineWidth);
+	void Graphics::draw(Rect rect, Par<Brush> style) {
+		target->DrawRectangle(dx(rect), style->brush(owner, rect, state.opacity), state.lineWidth);
 	}
 
-	void Graphics::rect(Rect rect, Size edges, Par<Brush> style) {
+	void Graphics::draw(Rect rect, Size edges, Par<Brush> style) {
 		D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
-		target->DrawRoundedRectangle(r, style->brush(owner, rect.size()), state.lineWidth);
+		target->DrawRoundedRectangle(r, style->brush(owner, rect, state.opacity), state.lineWidth);
 	}
 
 	void Graphics::oval(Rect rect, Par<Brush> style) {
 		Size s = rect.size() / 2;
 		D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
-		target->DrawEllipse(e, style->brush(owner, rect.size()), state.lineWidth);
+		target->DrawEllipse(e, style->brush(owner, rect, state.opacity), state.lineWidth);
 	}
 
 	void Graphics::draw(Par<Path> path, Par<Brush> brush) {
-		target->DrawGeometry(path->geometry(), brush->brush(owner, path->bound()), state.lineWidth);
+		target->DrawGeometry(path->geometry(), brush->brush(owner, path->bound(), state.opacity), state.lineWidth);
 	}
 
-	void Graphics::fillRect(Rect rect, Par<Brush> style) {
-		target->FillRectangle(dx(rect), style->brush(owner, rect.size()));
+	void Graphics::fill(Rect rect, Par<Brush> style) {
+		target->FillRectangle(dx(rect), style->brush(owner, rect, state.opacity));
 	}
 
-	void Graphics::fillRect(Rect rect, Size edges, Par<Brush> style) {
+	void Graphics::fill(Rect rect, Size edges, Par<Brush> style) {
 		D2D1_ROUNDED_RECT r = { dx(rect), edges.w, edges.h };
-		target->FillRoundedRectangle(r, style->brush(owner, rect.size()));
+		target->FillRoundedRectangle(r, style->brush(owner, rect, state.opacity));
 	}
 
 	void Graphics::fill(Par<Brush> brush) {
-		Size s = size();
+		Rect s = Rect(Point(), size());
 		target->SetTransform(D2D1::Matrix3x2F::Identity());
-		target->FillRectangle(dx(Rect(Point(), s)), brush->brush(owner, s));
+		target->FillRectangle(dx(s), brush->brush(owner, s, state.opacity));
 		target->SetTransform(state.transform);
 	}
 
 	void Graphics::fillOval(Rect rect, Par<Brush> style) {
 		Size s = rect.size() / 2;
 		D2D1_ELLIPSE e = { dx(rect.center()), s.w, s.h };
-		target->FillEllipse(e, style->brush(owner, rect.size()));
+		target->FillEllipse(e, style->brush(owner, rect, state.opacity));
 	}
 
 	void Graphics::fill(Par<Path> path, Par<Brush> brush) {
-		target->FillGeometry(path->geometry(), brush->brush(owner, path->bound()));
+		target->FillGeometry(path->geometry(), brush->brush(owner, path->bound(), state.opacity));
 	}
 
 	void Graphics::draw(Par<Bitmap> bitmap) {
@@ -131,16 +136,17 @@ namespace stormgui {
 	}
 
 	void Graphics::draw(Par<Bitmap> bitmap, Rect rect, Float opacity) {
+		opacity *= state.opacity;
 		target->DrawBitmap(bitmap->bitmap(owner), &dx(rect), opacity, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, NULL);
 	}
 
 	void Graphics::text(Par<Str> text, Par<Font> font, Par<Brush> brush, Rect rect) {
-		ID2D1Brush *b = brush->brush(owner, rect.size());
+		ID2D1Brush *b = brush->brush(owner, rect, state.opacity);
 		target->DrawText(text->v.c_str(), text->v.size(), font->textFormat(), dx(rect), b);
 	}
 
 	void Graphics::draw(Par<Text> text, Par<Brush> brush, Point origin) {
-		target->DrawTextLayout(dx(origin), text->layout(), brush->brush(owner, text->size()));
+		target->DrawTextLayout(dx(origin), text->layout(), brush->brush(owner, Rect(origin, text->size()), state.opacity));
 	}
 
 }

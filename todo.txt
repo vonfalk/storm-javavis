@@ -31,6 +31,8 @@ Core
 -------
 Include float/non float inside Size?
 
+When converting a value of -1.ind to an int, we get a value of -<something large>, it should rather be zero.
+
 Think about how templates interacts with the new function lookup with respect to typecasts.
 
 Move Memorymanager to Code? We can actually elliminate the need of the MemoryManager entirely by using a custom heap
