@@ -83,10 +83,14 @@ class FadeIntro extends SlideIntro {
 
 		if (old) {
 			g.opacity(1.0 - f);
+			g.push();
 			old.draw(s, size, g);
+			g.pop();
 		}
 		g.opacity(f);
+		g.push();
 		new.draw(s, size, g);
+		g.pop();
 
 		f < 1.0;
 	}
@@ -304,7 +308,7 @@ class ContentSlide extends Slide {
 			pos.x = margin.w;
 			for (Nat i = 0; i < items.count; i++) {
 				Rect r(pos, size);
-				items[i].draw(style, r, g);
+				cont |= items[i].draw(style, r, g);
 
 				pos.x += size.w + margin.w;
 			}
@@ -342,7 +346,7 @@ class VContentSlide extends Slide {
 				Size size = items[i].size;
 
 				Rect r(Point((s.w - size.w) / 2.0, pos.y), size);
-				items[i].draw(style, r, g);
+				cont |= items[i].draw(style, r, g);
 
 				pos.y += size.h + margin.h;
 			}
