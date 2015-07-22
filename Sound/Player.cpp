@@ -8,7 +8,11 @@ namespace sound {
 	static const nat bufferPartTime = 1;
 	static const nat bufferParts = 3;
 
-	Player::Player(Par<Sound> src) : src(src), buffer(null), event(null), lastFilled(0), bufferPlaying(false) {
+	Player::Player(Par<Sound> src) :
+		src(src), buffer(null), event(null),
+		lastFilled(0), bufferPlaying(false),
+		fVolume(1.0f) {
+
 		finishEvent.set();
 		freq = src->sampleFreq();
 		channels = src->channels();
@@ -81,6 +85,20 @@ namespace sound {
 		mgr->removePlayer(this);
 		::release(buffer);
 		CloseHandle(event);
+	}
+
+	void Player::volume(Float to) {
+		fVolume = to;
+		// TODO? Transform the 'to' somehow first? Values below ~0.5 are almost not hearable.
+		// Re-scale 'to' from [0 - 1] to [DSBVOLUME_MIN - DSBVOLUME_MAX].
+		Float v = DSBVOLUME_MIN + to * (Float(DSBVOLUME_MAX) - Float(DSBVOLUME_MIN));
+		if (buffer) {
+			buffer->SetVolume(LONG(v));
+		}
+	}
+
+	Float Player::volume() {
+		return fVolume;
 	}
 
 	void Player::play() {

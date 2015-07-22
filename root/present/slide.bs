@@ -1,4 +1,5 @@
 use ui;
+use core:io;
 use core:geometry;
 use core:debug;
 use graphics;
@@ -18,11 +19,15 @@ Font monospaceFont() {
 	Font("Courier New", 14);
 }
 
+Font bigMonospaceFont() {
+	Font("Courier New", 32);
+}
+
 /**
  * Default margin.
  */
 Size margin() {
-	Size(20.0, 40.0);
+	Size(60.0, 60.0);
 }
 
 /**
@@ -37,6 +42,53 @@ class SlideStyle on Render {
 			bg = p.bg;
 			text = p.text;
 		}
+	}
+}
+
+/**
+ * Slide transition.
+ */
+class SlideIntro on Render {
+	// Starts the animation.
+	void start() {}
+
+	// Returns true while the intro is going.
+	Bool draw(Slide? old, Slide new, SlideStyle s, Size size, Graphics g) {
+		new.draw(s, size, g);
+		false;
+	}
+}
+
+/**
+ * Fade transition.
+ */
+class FadeIntro extends SlideIntro {
+	Duration duration;
+	Moment started;
+
+	ctor(Duration d) {
+		init() {
+			duration = d;
+		}
+	}
+
+	void start() {
+		started = Moment;
+	}
+
+	Bool draw(Slide? old, Slide new, SlideStyle s, Size size, Graphics g) {
+		Float f = (Moment - started) / duration;
+		if (f > 1.0)
+			f = 1.0;
+
+		if (old) {
+			g.opacity(1.0 - f);
+			old.draw(s, size, g);
+		}
+		g.opacity(f);
+		new.draw(s, size, g);
+
+		f < 1.0;
 	}
 }
 
@@ -74,11 +126,19 @@ class Slide on Render {
 	// Pending animations in this slide.
 	SlideAni[] animations;
 
+	// Intro transition.
+	SlideIntro? intro;
+
 	// Current animation position.
 	Nat animationPos;
 
 	// Repaint function.
 	Fn<void>? repaintFn;
+
+	// Set the intro (for thread-safety reasons).
+	void setIntro(SlideIntro i) {
+		intro = i;
+	}
 
 	// Repaint this slide.
 	void repaint() {
@@ -247,6 +307,44 @@ class ContentSlide extends Slide {
 				items[i].draw(style, r, g);
 
 				pos.x += size.w + margin.w;
+			}
+		}
+
+		cont;
+	}
+
+}
+
+/**
+ * Vertical content slide.
+ */
+class VContentSlide extends Slide {
+	Text title;
+
+	ctor(Str title) {
+		init() {
+			title(title, titleFont);
+		}
+	}
+
+	Bool draw(SlideStyle style, Size s, Graphics g) {
+		Bool cont = false;
+
+		Size titleSize = title.size;
+		Point pos = s.center - titleSize.center;
+		pos.y = margin.h;
+		g.draw(title, style.text, pos);
+		pos.y += title.size.h + margin.h;
+
+		if (items.count > 0) {
+			pos.x = margin.w;
+			for (Nat i = 0; i < items.count; i++) {
+				Size size = items[i].size;
+
+				Rect r(Point((s.w - size.w) / 2.0, pos.y), size);
+				items[i].draw(style, r, g);
+
+				pos.y += size.h + margin.h;
 			}
 		}
 
@@ -473,4 +571,41 @@ class ListItem extends SlideItem {
 		s;
 	}
 
+}
+
+class ImageItem extends SlideItem {
+	Bitmap image;
+	Float scale;
+
+	ctor(Url image) {
+		init() {
+			image = image.loadImage;
+			scale = 1.0;
+		}
+	}
+
+	ctor(Url image, Float scale) {
+		init() {
+			image = image.loadImage;
+			scale = scale;
+		}
+	}
+
+	Bool draw(SlideStyle style, Rect pos, Graphics g) {
+		Float scaleX = pos.size.w / image.size.w;
+		Float scaleY = pos.size.h / image.size.h;
+		pos.p1.y -= margin.h;
+
+		Float scale = if (scaleX < scaleY) { scaleX; } else { scaleY; };
+		Size s = image.size * scale;
+
+		if (visible)
+			g.draw(image, Rect(pos.center - s.center, s));
+
+		false;
+	}
+
+	Size size() {
+		image.size * scale;
+	}
 }

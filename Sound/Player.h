@@ -16,6 +16,10 @@ namespace sound {
 		// Destroy.
 		~Player();
 
+		// Sound volume (0-1)
+		void STORM_SETTER volume(Float level);
+		Float STORM_FN volume();
+
 		// Play.
 		void STORM_FN play();
 
@@ -49,6 +53,9 @@ namespace sound {
 
 		// Source.
 		Auto<Sound> src;
+
+		// Current volume (so that we do not have to convert back to a float again...).
+		Float fVolume;
 
 		// Sound buffer.
 		IDirectSoundBuffer8 *buffer;

@@ -1,6 +1,5 @@
 use graphics;
 
-
 /**
  * Presentation.
  */
@@ -30,4 +29,5 @@ class Presentation {
 	void add(Slide slide) {
 		slides << slide;
 	}
+
 }

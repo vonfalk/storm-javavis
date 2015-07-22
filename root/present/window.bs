@@ -86,8 +86,14 @@ class PresentWindow extends Frame {
  * Painter for the presentation window.
  */
 class PresentPainter extends Painter {
+	// Last slide.
+	Slide? lastSlide;
+
 	// Current slide.
 	Slide? slide;
+
+	// Current intro.
+	SlideIntro? intro;
 
 	// End of presentation brush.
 	SolidBrush endColor;
@@ -118,10 +124,16 @@ class PresentPainter extends Painter {
 	// Show a slide.
 	void show(Slide? s) {
 		cleanup;
+		lastSlide = slide;
 		slide = s;
 		if (slide) {
+			intro = slide.intro;
 			slide.repaintFn = &this->repaint;
 			slide.show;
+
+			if (intro) {
+				intro.start;
+			}
 		}
 	}
 
@@ -141,8 +153,17 @@ class PresentPainter extends Painter {
 			g.transform(translate(s.center - scaled.center) * scale(scaleFactor));
 			g.push();
 			g.fill(Rect(Point(), target), style.bg);
+
 			animate |= slide.animate();
-			animate |= slide.draw(style, target, g);
+
+			if (intro) {
+				animate = true;
+				Bool more = intro.draw(lastSlide, slide, style, target, g);
+				if (more == false)
+					this.intro = null;
+			} else {
+				animate |= slide.draw(style, target, g);
+			}
 		} else {
 			g.fill(endColor);
 		}
