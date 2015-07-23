@@ -324,10 +324,19 @@ class ContentSlide extends Slide {
  */
 class VContentSlide extends Slide {
 	Text title;
+	Float space;
 
 	ctor(Str title) {
 		init() {
 			title(title, titleFont);
+			space = margin.h / 2;
+		}
+	}
+
+	ctor(Str title, Float space) {
+		init() {
+			title(title, titleFont);
+			space = space;
 		}
 	}
 
@@ -348,7 +357,7 @@ class VContentSlide extends Slide {
 				Rect r(Point((s.w - size.w) / 2.0, pos.y), size);
 				cont |= items[i].draw(style, r, g);
 
-				pos.y += size.h + margin.h;
+				pos.y += size.h + space;
 			}
 		}
 
