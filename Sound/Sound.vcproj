@@ -236,6 +236,10 @@
 				RelativePath=".\Lib\VTables.asm"
 				>
 			</File>
+			<File
+				RelativePath=".\SoundLoop.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -256,6 +260,10 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SoundLoop.h"
 				>
 			</File>
 		</Filter>
