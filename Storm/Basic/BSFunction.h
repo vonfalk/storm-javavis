@@ -65,6 +65,7 @@ namespace storm {
 
 			// Temporary solution for updating a function.
 			void update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos);
+			Bool STORM_FN update(Par<ArrayP<Str>> names, Par<SStr> contents);
 			void STORM_FN update(Par<BSFunction> from);
 
 			// Declared at.

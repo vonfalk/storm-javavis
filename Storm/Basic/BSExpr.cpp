@@ -30,7 +30,9 @@ namespace storm {
 
 	bs::Constant::Constant(double v) : cType(tFloat), floatValue(v) {}
 
-	bs::Constant::Constant(Str *v) : cType(tStr), strValue(v->v.unescape()) {}
+	bs::Constant::Constant(Str *v) : cType(tStr), strValue(v->v) {}
+
+	bs::Constant::Constant(const String &s) : cType(tStr), strValue(s) {}
 
 	bs::Constant::Constant(Bool v) : cType(tBool), boolValue(v) {}
 
@@ -206,6 +208,10 @@ namespace storm {
 	}
 
 	bs::Constant *bs::strConstant(Par<SStr> v) {
+		return CREATE(Constant, v->engine(), v->v->v.unescape());
+	}
+
+	bs::Constant *bs::rawStrConstant(Par<SStr> v) {
 		return CREATE(Constant, v->engine(), v->v.borrow());
 	}
 

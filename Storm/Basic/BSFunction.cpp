@@ -93,6 +93,20 @@ namespace storm {
 		setCode(steal(CREATE(LazyCode, this, fn)));
 	}
 
+	Bool bs::BSFunction::update(Par<ArrayP<Str>> names, Par<SStr> contents) {
+		if (names->count() != params.size())
+			return false;
+
+		vector<String> n(names->count());
+		for (nat i = 0; i < names->count(); i++) {
+			n[i] = names->at(i)->v;
+		}
+
+		update(n, contents, pos);
+
+		return true;
+	}
+
 	void bs::BSFunction::update(Par<BSFunction> from) {
 		assert(paramNames.size() == from->paramNames.size());
 		paramNames = from->paramNames;

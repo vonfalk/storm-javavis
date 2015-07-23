@@ -31,6 +31,9 @@ namespace storm {
 			// Normalized.
 			Rect STORM_FN normalized() const;
 
+			// Contains a point?
+			Bool STORM_FN contains(Point pt) const;
+
 			// Size.
 			inline Size STORM_FN size() const { return p1 - p0; }
 			inline void STORM_SETTER size(Size to) { p1 = p0 + to; }
@@ -50,6 +53,9 @@ namespace storm {
 			// Include a point.
 			Rect STORM_FN include(Point to) const;
 		};
+
+		// Point inside.
+		Bool STORM_FN inside(Point pt, Rect r);
 
 		// ToS.
 		wostream &operator <<(wostream &to, Rect r);

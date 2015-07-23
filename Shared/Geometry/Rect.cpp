@@ -20,6 +20,15 @@ namespace storm {
 				);
 		}
 
+		Bool Rect::contains(Point p) const {
+			return (p0.x <= p.x) && (p.x < p1.x)
+				&& (p0.y <= p.y) && (p.y < p1.y);
+		}
+
+		Bool inside(Point pt, Rect r) {
+			return r.contains(pt);
+		}
+
 		Rect Rect::operator +(Point pt) const {
 			return Rect(p0 + pt, p1 + pt);
 		}

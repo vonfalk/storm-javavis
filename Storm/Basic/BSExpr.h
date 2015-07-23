@@ -40,6 +40,7 @@ namespace storm {
 			Constant(double d);
 			STORM_CTOR Constant(Str *str);
 			STORM_CTOR Constant(Bool b);
+			Constant(const String &str);
 
 			// Types
 			enum CType {
@@ -95,6 +96,7 @@ namespace storm {
 		Constant *STORM_FN intConstant(Par<SStr> str);
 
 		Constant *STORM_FN strConstant(Par<SStr> str);
+		Constant *STORM_FN rawStrConstant(Par<SStr> str);
 
 		Constant *STORM_FN floatConstant(Par<SStr> str);
 

@@ -149,6 +149,7 @@ Const => intConstant(nr) : "[0-9]+" nr;
 Const => intConstant(nr) : "\-[0-9]+" nr;
 Const => floatConstant(nr) : "\-?[0-9]+\.[0-9]+" nr;
 Const => strConstant(str) : String str;
+Const => rawStrConstant(str) : "str", "{" - (SkipBlock) str - "}";
 Const => trueConstant()  :[20] "true";
 Const => falseConstant() :[20] "false";
 
