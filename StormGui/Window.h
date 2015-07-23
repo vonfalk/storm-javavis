@@ -55,6 +55,12 @@ namespace stormgui {
 		// Attach to a parent container and creation. To be called from 'container'.
 		void attachParent(Container *parent);
 
+		// Detach from our parent. This destroys the window.
+		void detachParent();
+
+		// Called when this window is about to be destroyed.
+		virtual void windowDestroyed();
+
 		// Note: 'parent' need to be set before calling this function. This initializes the creation of our window.
 		virtual void parentCreated(nat id);
 

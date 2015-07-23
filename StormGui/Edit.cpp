@@ -11,15 +11,21 @@ namespace stormgui {
 
 
 	Edit::Edit() {
+		myMultiline = false;
 		onReturn = NullFn<void, Par<Edit>>::create(engine());
 	}
 
 	Edit::Edit(Par<Str> cue) {
+		myMultiline = false;
 		myCue = cue->v;
 	}
 
 	bool Edit::create(HWND parent, nat id) {
-		if (!Window::createEx(WC_EDIT, controlFlags, WS_EX_CLIENTEDGE, parent, id))
+		DWORD flags = editFlags;
+		if (myMultiline)
+			flags |= ES_MULTILINE | WS_VSCROLL | ES_WANTRETURN;
+
+		if (!Window::createEx(WC_EDIT, flags, WS_EX_CLIENTEDGE, parent, id))
 			return false;
 
 		// Update selection.
@@ -40,7 +46,7 @@ namespace stormgui {
 	}
 
 	Bool Edit::onKey(Bool pressed, Nat code) {
-		if (pressed && code == VK_RETURN) {
+		if (!myMultiline && pressed && code == VK_RETURN) {
 			if (onReturn) {
 				onReturn->call(this);
 				return true;
@@ -73,6 +79,16 @@ namespace stormgui {
 		myCue = s->v;
 		if (created())
 			SendMessage(handle(), EM_SETCUEBANNER, 0, (LPARAM)myCue.c_str());
+	}
+
+	void Edit::multiline(Bool v) {
+		myMultiline = v;
+		if (created())
+			WARNING(L"Setting multiline after creation is not yet implemented.");
+	}
+
+	Bool Edit::multiline() {
+		return myMultiline;
 	}
 
 	void Edit::removeLastWord() {

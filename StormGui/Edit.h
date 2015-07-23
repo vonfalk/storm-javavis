@@ -18,8 +18,7 @@ namespace stormgui {
 	};
 
 	/**
-	 * Text input field. Either singleline or multiline.
-	 * TODO: Implement multiline support.
+	 * Text input field.
 	 */
 	class Edit : public Window {
 		STORM_CLASS;
@@ -44,6 +43,10 @@ namespace stormgui {
 		void STORM_SETTER cue(Par<Str> t);
 		Str *STORM_FN cue();
 
+		// Multiline. You can currently only set multiline before the control is created.
+		void STORM_SETTER multiline(Bool v);
+		Bool STORM_FN multiline();
+
 	protected:
 		virtual bool create(HWND parent, nat id);
 
@@ -53,6 +56,9 @@ namespace stormgui {
 
 		// Cue banner.
 		String myCue;
+
+		// Multiline?
+		bool myMultiline;
 
 		// Remove the last word of our contents.
 		void removeLastWord();

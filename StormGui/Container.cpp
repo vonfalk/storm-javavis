@@ -21,6 +21,16 @@ namespace stormgui {
 			child->parentCreated(id);
 	}
 
+	void Container::remove(Par<Window> child) {
+		WinMap::iterator i = windows.find(child.borrow());
+		if (i == windows.end())
+			return;
+
+		child->detachParent();
+		ids.erase(i->second);
+		windows.erase(i);
+	}
+
 	void Container::parentCreated(nat id) {
 		Window::parentCreated(id);
 
@@ -29,6 +39,16 @@ namespace stormgui {
 			Window *w = i->second.borrow();
 			if (!w->created())
 				w->parentCreated(i->first);
+		}
+	}
+
+	void Container::windowDestroyed() {
+		Window::windowDestroyed();
+
+		for (IdMap::iterator i = ids.begin(), end = ids.end(); i != end; ++i) {
+			Window *w = i->second.borrow();
+			if (w->created())
+				w->handle(invalid);
 		}
 	}
 
@@ -51,6 +71,7 @@ namespace stormgui {
 		}
 
 		ids.insert(make_pair(firstFree, window));
+		windows.insert(make_pair(window.borrow(), firstFree));
 		return firstFree;
 	}
 
@@ -62,6 +83,7 @@ namespace stormgui {
 			throw GuiError(L"The id " + ::toS(id) + L" is already in use.");
 
 		ids.insert(make_pair(id, window));
+		windows.insert(make_pair(window.borrow(), id));
 	}
 
 	MsgResult Container::onMessage(const Message &msg) {

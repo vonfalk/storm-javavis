@@ -43,6 +43,13 @@ namespace stormgui {
 			myRoot = parent->myRoot;
 	}
 
+	void Window::detachParent() {
+		handle(invalid);
+		myRoot = null;
+	}
+
+	void Window::windowDestroyed() {}
+
 	void Window::parentCreated(nat id) {
 		assert(myParent);
 
@@ -56,6 +63,7 @@ namespace stormgui {
 	void Window::handle(HWND handle) {
 		Auto<App> a = app(engine());
 		if (myHandle != invalid) {
+			windowDestroyed();
 			// Sends WM_CLOSE, which may be handled by this class.
 			DestroyWindow(myHandle);
 			a->removeWindow(this);
