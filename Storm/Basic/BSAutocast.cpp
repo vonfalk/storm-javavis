@@ -75,6 +75,12 @@ namespace storm {
 		if (from->castable(to))
 			return 100; // Quite large penalty, so that we prefer functions without casting.
 
+		// If 'to' is a value, we can create a reference to it without problem.
+		if (!to.isClass() && to.ref) {
+			if (from->castable(to.asRef(false)))
+				return 100;
+		}
+
 		// Find a cast ctor!
 		if (castCtor(f, to))
 			return 1000; // Larger than casting literals.
@@ -100,6 +106,10 @@ namespace storm {
 		// Supported cast?
 		if (from->castable(to))
 			return from.ret();
+
+		if (!to.isClass() && to.ref)
+			if (from->castable(to.asRef(false)))
+				return from.ret();
 
 		// Cast ctor?
 		if (Function *ctor = castCtor(f, to)) {

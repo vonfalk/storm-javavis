@@ -41,6 +41,7 @@ namespace storm {
 		Value exprResult = expr->result();
 		if (param.ref && !exprResult.ref) {
 			// We need to create a temporary variable and make a reference to it.
+			exprResult = param.asRef(false); // We need this since type casting can be done late by the Expr itself.
 			VarInfo tmpV = variable(s, exprResult);
 			Auto<CodeResult> gr = CREATE(CodeResult, this, exprResult, tmpV);
 			expr->code(s, gr);

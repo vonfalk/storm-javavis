@@ -71,9 +71,19 @@ value ACPromote {
 	ctor(Float v) {
 		init() { v = v; }
 	}
+
+	ctor() {
+		init() { v = 8; }
+	}
+
 }
 
 Float promoteCtor() {
 	ACPromote z = 2;
+	z.v;
+}
+
+Float promoteInit() {
+	ACPromote z;
 	z.v;
 }
