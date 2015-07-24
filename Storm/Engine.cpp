@@ -80,7 +80,7 @@ namespace storm {
 		engineRef.setPtr(this);
 
 		BuiltInLoader loader(*this, cached, storm::builtIn(), null);
-		cppVTableSize = loader.vtableCapacity();
+		cppVTableSize = loader.vtableCapacity() + 20; // Hack for now. TODO: Fixme!
 		vcalls = new VTableCalls(*this);
 		specialCached.resize(specialCount);
 
