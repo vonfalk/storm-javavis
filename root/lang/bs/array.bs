@@ -57,11 +57,13 @@ class ArrayInit extends Expr {
 		}
 	}
 
-	Bool castable(Value to) {
+	Int castPenalty(Value to) {
 		if (to.isRef) {
-			false;
+			-1;
+		} else if (acceptable(unwrapArray(to))) {
+			1;
 		} else {
-			acceptable(unwrapArray(to));
+			-1;
 		}
 	}
 

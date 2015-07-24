@@ -18,7 +18,7 @@ namespace storm {
 		 * later on. It would be nice to make this one inherit from Function, but that
 		 * can not be done until we have proper support for arrays.
 		 */
-		class FunctionDecl : public Object {
+		class FunctionDecl : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
 			STORM_CTOR FunctionDecl(SrcPos pos,

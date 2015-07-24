@@ -18,8 +18,8 @@ namespace storm {
 		assert(!var->needed());
 	}
 
-	Bool bs::Expr::castable(Value to) {
-		return false;
+	Int bs::Expr::castPenalty(Value to) {
+		return -1;
 	}
 
 	bs::Constant::Constant(Int v) : cType(tInt), intValue(v) {}
@@ -70,29 +70,30 @@ namespace storm {
 		}
 	}
 
-	Bool bs::Constant::castable(Value to) {
+	Int bs::Constant::castPenalty(Value to) {
 		if (cType != tInt)
-			return false;
+			return -1;
 
 		if (to.ref)
-			return false;
+			return -1;
 
+		// Prefer bigger types if multiple are possible.
 		Engine &e = engine();
-		if (to.type == intType(e))
-			return (intValue & 0x7FFFFFFF) == intValue;
-		if (to.type == natType(e))
-			return (intValue & 0xFFFFFFFF) == intValue;
-		if (to.type == byteType(e))
-			return (intValue & 0xFF) == intValue;
-		if (to.type == floatType(e))
-			// We allow up to 16 bits to automatically cast.
-			return (intValue & 0xFFFF) == intValue;
 		if (to.type == longType(e))
-			return true;
+			return 1;
 		if (to.type == wordType(e))
-			return true;
+			return 1;
+		if (to.type == intType(e) && (intValue & 0x7FFFFFFF) == intValue)
+			return 2;
+		if (to.type == natType(e) && (intValue & 0xFFFFFFFF) == intValue)
+			return 2;
+		if (to.type == byteType(e) && (intValue & 0xFF) == intValue)
+			return 3;
+		if (to.type == floatType(e) && (intValue & 0xFFFF) == intValue)
+			// We allow up to 16 bits to automatically cast.
+			return 3;
 
-		return false;
+		return -1;
 	}
 
 	void bs::Constant::code(Par<CodeGen> s, Par<CodeResult> r) {

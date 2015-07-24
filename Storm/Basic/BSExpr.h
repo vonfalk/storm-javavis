@@ -23,8 +23,8 @@ namespace storm {
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
 
-			// Is it possible to cast this one expression to 'to'?
-			virtual Bool STORM_FN castable(Value to);
+			// Is it possible to cast this one expression to 'to'? < 0, no cast possible.
+			virtual Int STORM_FN castPenalty(Value to);
 		};
 
 
@@ -71,7 +71,7 @@ namespace storm {
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
 
 			// Castable to?
-			virtual Bool STORM_FN castable(Value to);
+			virtual Int STORM_FN castPenalty(Value to);
 
 		protected:
 			virtual void output(wostream &out) const;

@@ -72,13 +72,15 @@ namespace storm {
 		}
 
 		// Special cast supported directly by the Expr?
-		if (from->castable(to))
-			return 100; // Quite large penalty, so that we prefer functions without casting.
+		Int penalty = from->castPenalty(to);
+		if (penalty >= 0)
+			return 100 * penalty; // Quite large penalty, so that we prefer functions without casting.
 
 		// If 'to' is a value, we can create a reference to it without problem.
 		if (!to.isClass() && to.ref) {
-			if (from->castable(to.asRef(false)))
-				return 100;
+			Int penalty = from->castPenalty(to.asRef(false));
+			if (penalty >= 0)
+				return 100 * penalty;
 		}
 
 		// Find a cast ctor!
@@ -104,11 +106,11 @@ namespace storm {
 			return from.ret();
 
 		// Supported cast?
-		if (from->castable(to))
+		if (from->castPenalty(to) >= 0)
 			return from.ret();
 
 		if (!to.isClass() && to.ref)
-			if (from->castable(to.asRef(false)))
+			if (from->castPenalty(to.asRef(false)) >= 0)
 				return from.ret();
 
 		// Cast ctor?

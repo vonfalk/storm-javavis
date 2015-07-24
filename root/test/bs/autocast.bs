@@ -87,3 +87,15 @@ Float promoteInit() {
 	ACPromote z;
 	z.v;
 }
+
+value ACCast {
+	Nat v;
+	ctor() {
+		init() { v = 20; }
+	}
+}
+
+Nat initNat() {
+	ACCast v;
+	v.v;
+}

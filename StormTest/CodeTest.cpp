@@ -74,6 +74,7 @@ BEGIN_TEST(AutocastTest) {
 	CHECK_EQ(runFn<Int>(L"test.bs.autoCast", 5), 10);
 	CHECK_EQ(runFn<Float>(L"test.bs.promoteCtor"), 2);
 	CHECK_EQ(runFn<Float>(L"test.bs.promoteInit"), 8);
+	CHECK_EQ(runFn<Nat>(L"test.bs.initNat"), 20);
 } END_TEST
 
 BEGIN_TEST(InheritanceTest) {
