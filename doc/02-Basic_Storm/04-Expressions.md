@@ -161,7 +161,7 @@ Async
 
 When Basic Storm calls a function that should run on another thread, it will by default send the
 message and wait until the called function has returned. During this time the current thread will
-accept new function calls from other threads. If you wish to not wait for a result, use the `async`
+accept new function calls from other threads. If you wish to not wait for a result, use the `spawn`
 keyword right before the function call. This makes the function call return a `Futre<T>` instead,
 and you can choose when and if you want to get the result back.
 

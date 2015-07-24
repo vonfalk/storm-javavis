@@ -85,11 +85,17 @@ namespace storm {
 		void localCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result, bool useLookup);
 
 		// Generate code for this function call, assuming we want to run on a different thread.
-		void threadCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result, const code::Value &thread);
+		void threadCall(Par<CodeGen> to,
+						const Actuals &params,
+						Par<CodeResult> result,
+						const code::Value &thread = code::natPtrConst(0));
 
 		// Generate code for this function call, assuming we want to run on a different thread, returning a Future
 		// object.
-		void asyncThreadCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result, const code::Value &thread);
+		void asyncThreadCall(Par<CodeGen> to,
+							const Actuals &params,
+							Par<CodeResult> result,
+							const code::Value &thread = code::natPtrConst(0));
 
 		// Code to be executed.
 		void STORM_FN setCode(Par<Code> code);

@@ -104,12 +104,12 @@ namespace storm {
 			// We will here more or less force to run on another uthread, even though we would
 			// not strictly need to in all cases.
 			Function *fn = toExecute.borrow();
-			if (fn->runOn().state == RunOn::any)
-				throw SyntaxError(pos, L"The function " + fn->identifier() + L" does not specify a thread "
-								L"to execute on, and can therefore not be spawned using the async syntax.");
-
-			Variable threadVar = fn->findThread(s, vars);
-			fn->asyncThreadCall(s, vars, to, threadVar);
+			if (fn->runOn().state == RunOn::any) {
+				fn->asyncThreadCall(s, vars, to);
+			} else {
+				Variable threadVar = fn->findThread(s, vars);
+				fn->asyncThreadCall(s, vars, to, threadVar);
+			}
 		} else {
 			callFn(toExecute, s, vars, to, lookup, sameObject);
 		}
