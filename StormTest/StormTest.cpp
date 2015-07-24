@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "Test/TestMgr.h"
+#include "Shared/Timing.h"
 
 Engine *gEngine = null;
 
@@ -8,7 +9,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	initDebug();
 
-	Timestamp start;
+	Moment start;
 
 	TestResult r;
 
@@ -18,7 +19,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		Engine e(root, Engine::reuseMain);
 		gEngine = &e;
 
-		PLN("Compiler boot: " << (Timestamp() - start));
+		PLN("Compiler boot: " << (Moment() - start));
 
 		r = Tests::run();
 
@@ -28,7 +29,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		PLN("Creation error: " << e.what());
 	}
 
-	Timestamp end;
+	Moment end;
 	PLN("Total time: " << (end - start));
 
 	// Object::dumpLeaks(); // Done earlier, in ~Engine

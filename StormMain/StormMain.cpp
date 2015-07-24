@@ -1,11 +1,11 @@
 #include "stdafx.h"
-#include "Utils/Timestamp.h"
 #include "Utils/Exception.h"
 #include "Storm/Engine.h"
 #include "Storm/Repl.h"
 #include "Storm/Type.h"
 #include "Shared/Str.h"
 #include "Shared/Io/Url.h"
+#include "Shared/Timing.h"
 #include "Storm/Function.h"
 
 using namespace std;
@@ -332,10 +332,10 @@ int _tmain(int argc, _TCHAR* argv[]) {
 
 		wcout << L"Root directory: " << launch.root << endl;
 
-		Timestamp start;
+		Moment start;
 		Engine engine(launch.root, Engine::reuseMain);
 		loadImports(engine, launch);
-		Timestamp end;
+		Moment end;
 
 		wcout << L"Compiler boot in " << (end - start) << endl;
 
