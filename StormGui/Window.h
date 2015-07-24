@@ -58,7 +58,9 @@ namespace stormgui {
 		// Detach from our parent. This destroys the window.
 		void detachParent();
 
-		// Called when this window is about to be destroyed.
+		// Called when this window has been destroyed. This function is intended as a notification
+		// for child classes in C++ (eg. Container). If you want to be notified when the window is
+		// about to be destroyed, handle WM_CLOSE instead.
 		virtual void windowDestroyed();
 
 		// Note: 'parent' need to be set before calling this function. This initializes the creation of our window.
@@ -94,6 +96,9 @@ namespace stormgui {
 		// Font.
 		Font *STORM_FN font();
 		void STORM_SETTER font(Par<Font> font);
+
+		// Set focus.
+		virtual void STORM_FN focus();
 
 		// Update the window (ie repaint it).
 		virtual void STORM_FN update();

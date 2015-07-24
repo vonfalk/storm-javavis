@@ -45,11 +45,13 @@ namespace stormgui {
 		return false;
 	}
 
-	Bool Edit::onKey(Bool pressed, Nat code) {
-		if (!myMultiline && pressed && code == VK_RETURN) {
-			if (onReturn) {
-				onReturn->call(this);
-				return true;
+	Bool Edit::onKey(Bool down, Nat code) {
+		if (down && code == VK_RETURN) {
+			if (!myMultiline || pressed(VK_CONTROL)) {
+				if (onReturn) {
+					onReturn->call(this);
+					return true;
+				}
 			}
 		}
 		return false;

@@ -24,7 +24,7 @@ namespace stormgui {
 		// Called when our parent is created.
 		virtual void parentCreated(nat id);
 
-		// Called when we're about to be destroyed.
+		// Called when we've been destroyed.
 		virtual void windowDestroyed();
 
 		// Handle messages.

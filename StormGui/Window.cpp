@@ -63,9 +63,22 @@ namespace stormgui {
 	void Window::handle(HWND handle) {
 		Auto<App> a = app(engine());
 		if (myHandle != invalid) {
+
+			if (myParent == null) {
+				// We're a frame (or orphaned).
+				DestroyWindow(myHandle);
+			} else if (!myParent->created()) {
+				// Parent has already been destroyed. This means we're destroyed,
+				// by our parent, even though we have a handle.
+			} else {
+				DestroyWindow(myHandle);
+			}
+
+			// Notify we've been destroyed.
+			myHandle = invalid;
 			windowDestroyed();
-			// Sends WM_CLOSE, which may be handled by this class.
-			DestroyWindow(myHandle);
+
+			// DestroyWindow sends WM_CLOSE, which may be handled by this class.
 			a->removeWindow(this);
 		}
 
@@ -181,6 +194,11 @@ namespace stormgui {
 			// Todo: keep track if we need to repaint.
 			MoveWindow(handle(), z.left, z.top, z.right - z.left, z.bottom - z.top, TRUE);
 		}
+	}
+
+	void Window::focus() {
+		if (created())
+			SetFocus(handle());
 	}
 
 	Font *Window::font() {
