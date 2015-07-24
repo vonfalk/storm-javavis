@@ -5,8 +5,6 @@
 namespace sound {
 
 	AudioMgr::AudioMgr() : wait(null), dsound(null) {
-		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
-
 		if (FAILED(DirectSoundCreate8(NULL, &dsound, NULL))) {
 			WARNING(L"Failed to initialize DirectSound.");
 		} else {
@@ -18,8 +16,6 @@ namespace sound {
 
 	AudioMgr::~AudioMgr() {
 		::release(dsound);
-
-		CoUninitialize();
 	}
 
 	void AudioMgr::addPlayer(Player *player, HANDLE event) {

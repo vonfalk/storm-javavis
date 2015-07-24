@@ -87,7 +87,6 @@ namespace stormgui {
 
 		// Set up other needed things.
 		void initCommonControls();
-		void initCom();
 
 		// Our window class.
 		ATOM hWindowClass;

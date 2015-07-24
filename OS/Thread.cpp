@@ -4,6 +4,11 @@
 #include "Shared.h"
 #include <process.h>
 
+#ifdef WINDOWS
+// For COM - CoInitializeEx
+#include <Objbase.h>
+#endif
+
 namespace os {
 
 	// Data to a started thread.
@@ -121,6 +126,7 @@ namespace os {
 	void ThreadData::threadMain(ThreadStart &start) {
 		ThreadData d;
 
+		Thread::initThread();
 		threadCreated();
 
 		// Read data from 'start'.
@@ -193,6 +199,7 @@ namespace os {
 		currentThreadData(null);
 
 		threadTerminated();
+		Thread::cleanThread();
 	}
 
 	void ThreadData::reportWake() {
@@ -231,6 +238,20 @@ namespace os {
 	static void startThread(ThreadStart &start) {
 		_beginthread(&winThreadMain, 0, &start);
 	}
+
+	void Thread::initThread() {
+		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
+	}
+
+	void Thread::cleanThread() {
+		CoUninitialize();
+	}
+
+#else
+
+	void Thread::initThread() {}
+
+	void Thread::cleanThread() {}
 
 #endif
 

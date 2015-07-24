@@ -40,9 +40,6 @@ namespace graphics {
 	}
 
 	Image *loadImage(Par<storm::IStream> from) {
-		TODO(L"Move CoInitializeEx to a better place!");
-		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
-
 		Auto<Image> loaded;
 		const wchar *error = L"The image file type was not recognized.";
 

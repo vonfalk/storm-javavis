@@ -20,6 +20,11 @@ namespace os {
 	 * use the == operator to see if two threads are the same. The underlying OS
 	 * thread will be kept running (even though it is not doing anything useful)
 	 * as long as there are any Thread objects referring the thread.
+	 *
+	 * For windows:
+	 * CoInitializeEx will be called for every thread created from this class. For
+	 * other threads, please call initThread and cleanThread when before using the
+	 * thread.
 	 */
 	class Thread : public Printable {
 	public:
@@ -50,6 +55,10 @@ namespace os {
 
 		// Invalid thread.
 		static Thread invalid;
+
+		// Initialize a thread with any OS specific resources.
+		static void initThread();
+		static void cleanThread();
 
 	protected:
 		virtual void output(wostream &to) const;

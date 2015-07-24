@@ -15,7 +15,6 @@ namespace stormgui {
 		// probably what we want in this case.
 		hInstance = GetModuleHandle(NULL);
 		initCommonControls();
-		initCom();
 		hWindowClass = registerWindowClass();
 
 		defaultFont = stormgui::defaultFont(engine());
@@ -23,8 +22,6 @@ namespace stormgui {
 
 	App::~App() {
 		TODO(L"Reap any live windows!");
-
-		CoUninitialize();
 	}
 
 	ATOM App::windowClass() {
@@ -216,10 +213,6 @@ namespace stormgui {
 		cc.dwSize = sizeof(cc);
 		cc.dwICC = ICC_WIN95_CLASSES | ICC_USEREX_CLASSES;
 		InitCommonControlsEx(&cc);
-	}
-
-	void App::initCom() {
-		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
 	}
 
 	App *app(EnginePtr ptr) {

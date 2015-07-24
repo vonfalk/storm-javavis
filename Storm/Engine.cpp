@@ -88,7 +88,9 @@ namespace storm {
 		// allocate some memory for the Compiler thread object, so that we can give those objects
 		// a valid pointer that we will initialize later...
 		Auto<Thread> compilerThread;
+		this->threadMode = mode;
 		if (mode == reuseMain) {
+			os::Thread::initThread();
 			compilerThread = CREATE_NOTYPE(Thread, *this, os::Thread::current());
 		} else {
 			compilerThread = CREATE_NOTYPE(Thread, *this);
@@ -170,6 +172,12 @@ namespace storm {
 		loadedLibs.clear();
 
 		Object::dumpLeaks();
+
+		if (threadMode == reuseMain) {
+			// We're assuming that we are destroyed from the same thread that we were created from.
+			// This is usually the case.
+			os::Thread::cleanThread();
+		}
 	}
 
 	void Engine::setSpecialBuiltIn(Special t, Par<Type> z) {

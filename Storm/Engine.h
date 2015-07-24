@@ -205,6 +205,9 @@ namespace storm {
 		// Remember all toS functions in the root Object class. There may be multiple root
 		// toS functions since we're loading DLL:s. Map fn -> refcount.
 		map<void *, nat> toSRoot;
+
+		// Thread mode.
+		ThreadMode threadMode;
 	};
 
 }

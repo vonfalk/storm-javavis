@@ -52,9 +52,6 @@ namespace stormgui {
 	}
 
 	RenderMgr::RenderMgr() : exiting(false) {
-		// Start COM for this thread.
-		CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
-
 		factory = null;
 		device = null;
 		giDevice = null;
@@ -93,8 +90,6 @@ namespace stormgui {
 		::release(factory);
 		::release(giFactory);
 		::release(writeFactory);
-
-		CoUninitialize();
 	}
 
 	static void create(DXGI_SWAP_CHAIN_DESC &desc, HWND window) {
