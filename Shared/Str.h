@@ -63,4 +63,11 @@ namespace storm {
 		virtual void output(wostream &to) const;
 	};
 
+
+	// Remove a fixed length of whitespace in front of each line in the string. This function either
+	// removes n spaces or n tabs, not both. Think of this operation as removing one level of
+	// indentation in a block of code. Empty lines are ignored.
+    // TODO: Maybe this is too specific to be a public API? Whenever we have some string
+	// manipulation, this can be done inside Storm itself.
+	Str *STORM_FN removeIndent(Par<Str> src);
 }
