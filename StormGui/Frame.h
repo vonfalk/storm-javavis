@@ -3,6 +3,13 @@
 
 namespace stormgui {
 
+	// Position data from when we were not in fullscreen mode.
+	struct FrameInfo {
+		LONG style;
+		RECT rect;
+	};
+
+
 	/**
 	 * A frame is a window with a border, present on the desktop. Creating the Frame does not make it visible.
 	 *
@@ -27,7 +34,15 @@ namespace stormgui {
 		virtual MsgResult onMessage(const Message &msg);
 
 		// Set size.
-		void STORM_FN size(Size s);
+		virtual void STORM_FN size(Size s);
+
+		// Set position.
+		virtual void STORM_SETTER pos(Rect r);
+		using Window::pos;
+
+		// Set fullscreen mode.
+		void STORM_SETTER fullscreen(Bool f);
+		Bool STORM_FN fullscreen();
 
 	private:
 		// Helper to create the window.
@@ -35,6 +50,12 @@ namespace stormgui {
 
 		// Event that fires when we're closed.
 		os::Event onClose;
+
+		// Fullscreen mode?
+		bool full;
+
+		// Info. Not valid if we're not in fullscreen mode.
+		FrameInfo info;
 	};
 
 }

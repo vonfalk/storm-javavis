@@ -11,6 +11,34 @@ namespace stormgui {
 		return Size(Float(r.right - r.left), Float(r.bottom - r.top));
 	}
 
+	// Make 'wnd' go fullscreen.
+	static void goFull(HWND wnd, FrameInfo &to) {
+		to.style = GetWindowLong(wnd, GWL_STYLE);
+		GetWindowRect(wnd, &to.rect);
+
+		HMONITOR m = MonitorFromWindow(wnd, MONITOR_DEFAULTTONEAREST);
+		MONITORINFO mi = { sizeof(mi) };
+		GetMonitorInfo(m, &mi);
+
+		SetWindowLong(wnd, GWL_STYLE, to.style & ~(WS_CAPTION | WS_THICKFRAME));
+
+		LONG l = mi.rcMonitor.left;
+		LONG r = mi.rcMonitor.right;
+		LONG t = mi.rcMonitor.top;
+		LONG b = mi.rcMonitor.bottom;
+		SetWindowPos(wnd, NULL, l, t, r - l, b - t, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+	}
+
+	static void goBack(HWND wnd, FrameInfo &to) {
+		LONG l = to.rect.left;
+		LONG r = to.rect.right;
+		LONG t = to.rect.top;
+		LONG b = to.rect.bottom;
+
+		SetWindowLong(wnd, GWL_STYLE, to.style);
+		SetWindowPos(wnd, NULL, l, t, r - l, b - t, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+	}
+
 	// Helper to create the actual handle.
 	bool Frame::createWindow(bool sizeable) {
 		DWORD exStyles = WS_EX_CONTROLPARENT;
@@ -33,10 +61,14 @@ namespace stormgui {
 			update();
 		}
 
+		if (full) {
+			goFull(handle(), info);
+		}
+
 		return true;
 	}
 
-	Frame::Frame(Par<Str> title) {
+	Frame::Frame(Par<Str> title) : full(false) {
 		attachParent(this);
 		text(title);
 		pos(Rect(-10000, -10000, -10002, -10002));
@@ -77,8 +109,33 @@ namespace stormgui {
 	}
 
 	void Frame::size(Size s) {
-		Rect p = pos();
-		p.size(s);
-		pos(p);
+		if (!full) {
+			Rect p = pos();
+			p.size(s);
+			pos(p);
+		}
 	}
+
+	void Frame::pos(Rect r) {
+		if (!full) {
+			Window::pos(r);
+		}
+	}
+
+	void Frame::fullscreen(Bool v) {
+		if (created() && full != v) {
+			if (v) {
+				goFull(handle(), info);
+			} else {
+				goBack(handle(), info);
+			}
+		}
+
+		full = v;
+	}
+
+	Bool Frame::fullscreen() {
+		return full;
+	}
+
 }

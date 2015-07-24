@@ -74,6 +74,12 @@ class PresentWindow extends Frame {
 				close;
 			} else if (id == 83) { // s
 				paint.surpriseKey();
+			} else if (id == 70) { // f
+				if (fullscreen) {
+					fullscreen(false);
+				} else {
+					fullscreen(true);
+				}
 			} else {
 				print("Key: " # id);
 			}

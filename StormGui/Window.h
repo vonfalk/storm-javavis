@@ -91,7 +91,7 @@ namespace stormgui {
 
 		// Window position. Always relative to the client area (even in Frames).
 		Rect STORM_FN pos();
-		void STORM_SETTER pos(Rect r);
+		virtual void STORM_SETTER pos(Rect r);
 
 		// Font.
 		Font *STORM_FN font();
