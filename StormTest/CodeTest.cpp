@@ -171,6 +171,7 @@ BEGIN_TEST(StormCtorTest) {
 	CHECK_EQ(runFn<Int>(L"test.bs.ctorTest"), 50);
 	CHECK_EQ(runFn<Int>(L"test.bs.ctorTest", 10), 30);
 	CHECK_EQ(runFn<Int>(L"test.bs.ctorTestDbg", 10), 30);
+	CHECK_RUNS(runFn<void>(L"test.bs.ignoreCtor"));
 	CHECK_EQ(runFn<Int>(L"test.bs.ctorDerTest", 2), 6);
 	CHECK_ERROR(runFn<Int>(L"test.bs.ctorErrorTest"), CodeError);
 	CHECK_ERROR(runFn<Int>(L"test.bs.memberAssignErrorTest"), CodeError);

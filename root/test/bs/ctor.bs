@@ -49,6 +49,10 @@ Int ctorTestDbg(Int v) {
 	}
 }
 
+void ignoreCtor() {
+	CtorClass(10);
+}
+
 class CtorBase {
 
 	Int base;

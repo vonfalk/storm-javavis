@@ -187,7 +187,7 @@ namespace storm {
 		for (nat i = 0; i < values.size() - 1; i++)
 			vars[i] = params->code(i, s, values[i + 1]);
 
-		VarInfo created = to->location(s);
+		VarInfo created = to->safeLocation(s, toCreate);
 		allocObject(s, ctor, vars, created.var());
 		created.created(s);
 	}
