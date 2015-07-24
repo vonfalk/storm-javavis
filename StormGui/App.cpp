@@ -159,8 +159,8 @@ namespace stormgui {
 			r = w->onMessage(msg);
 		} catch (const Exception &e) {
 			PLN(L"Unhandled exception in window thread: " << e);
-			if (app->appWait)
-				app->appWait->terminate();
+			// if (app->appWait)
+			// 	app->appWait->terminate();
 		}
 
 
@@ -296,7 +296,7 @@ namespace stormgui {
 			}
 		} catch (const Exception &e) {
 			PLN(L"Unhandled exception in window thread: " << e);
-			terminate();
+			// terminate();
 		}
 	}
 

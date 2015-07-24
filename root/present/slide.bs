@@ -139,6 +139,9 @@ class Slide on Render {
 	// Repaint function.
 	Fn<void>? repaintFn;
 
+	// Surprise key pressed.
+	void onSurprise() {}
+
 	// Set the intro (for thread-safety reasons).
 	void setIntro(SlideIntro i) {
 		intro = i;

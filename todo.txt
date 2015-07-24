@@ -123,6 +123,8 @@ Check thread safety in the reference management class.
 
 Basic Storm
 ------------
+It seems it is not legal to do something like: Str("Foo") without taking care of the return value.
+
 Remove the special TypeName class, use the general Name instead.
 
 The shorthand for function pointers (fn()->v) is ambiguous when used with maybe, like: fn()->Foo?

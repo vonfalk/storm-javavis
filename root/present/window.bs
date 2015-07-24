@@ -72,6 +72,8 @@ class PresentWindow extends Frame {
 				prev;
 			} else if (id == 27) {
 				close;
+			} else if (id == 83) { // s
+				paint.surpriseKey();
 			} else {
 				print("Key: " # id);
 			}
@@ -110,6 +112,12 @@ class PresentPainter extends Painter {
 			outsideColor = black;
 			style = style;
 		}
+	}
+
+	// Surprise key pressed.
+	void surpriseKey() {
+		if (slide)
+			slide.onSurprise();
 	}
 
 	// Advance the current slide.
