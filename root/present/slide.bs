@@ -390,6 +390,8 @@ class TerminalSlide extends Slide {
 	Nat width;
 	Nat height;
 
+	Bool autoRepaint;
+
 	ctor(Color bg, Color fg) {
 		Font f = monospaceFont;
 		Text t("A", f);
@@ -399,10 +401,11 @@ class TerminalSlide extends Slide {
 			bg = bg;
 			fg = fg;
 			chSize = t.size;
+			autoRepaint = true;
 
 			// TODO: Do not hard-code these!
-			width = (1024.nat / t.size.w.int.nat) - 1;
-			height = (768.nat / t.size.h.int.nat) - 1;
+			width = (1024.0 / t.size.w).int.nat;
+			height = (768.0 / t.size.h).int.nat;
 		}
 	}
 
@@ -417,7 +420,9 @@ class TerminalSlide extends Slide {
 		} else {
 			lines << str;
 		}
-		repaint();
+
+		if (autoRepaint)
+			repaint();
 	}
 
 	// Replace the last line
@@ -427,13 +432,15 @@ class TerminalSlide extends Slide {
 		} else {
 			lines << str;
 		}
-		repaint();
+		if (autoRepaint)
+			repaint();
 	}
 
 	// Clear.
 	void clear() {
 		lines = Str[];
-		repaint();
+		if (autoRepaint)
+			repaint();
 	}
 
 	Point posOf(Nat x, Nat y) {
@@ -441,7 +448,7 @@ class TerminalSlide extends Slide {
 	}
 
 	Bool draw(SlideStyle style, Size s, Graphics g) {
-		g.fill(bg);
+		g.fill(Rect(Point(), s), bg);
 
 		for (Nat y = 0; y < lines.count; y++) {
 			Rect r(posOf(0, y), Size(s.w, chSize.h));

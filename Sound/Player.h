@@ -38,7 +38,7 @@ namespace sound {
 
 		// Wait until a specific time has passed since start. Returns if the player is stopped as well.
 		// Do not call from the UThread managing callbacks!
-		void STORM_FN wait(Duration t);
+		void STORM_FN waitUntil(Duration t);
 
 		// Get the time of playback.
 		Duration STORM_FN time();

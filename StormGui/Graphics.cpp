@@ -131,6 +131,10 @@ namespace stormgui {
 		draw(bitmap, Rect(topLeft, topLeft + bitmap->size()));
 	}
 
+	void Graphics::draw(Par<Bitmap> bitmap, Point topLeft, Float opacity) {
+		draw(bitmap, Rect(topLeft, topLeft + bitmap->size()), opacity);
+	}
+
 	void Graphics::draw(Par<Bitmap> bitmap, Rect rect) {
 		draw(bitmap, rect, 1);
 	}

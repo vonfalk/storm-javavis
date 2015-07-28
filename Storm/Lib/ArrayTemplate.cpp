@@ -6,6 +6,7 @@
 #include "TypeCtor.h"
 #include "Shared/CloneEnv.h"
 #include "Shared/StrBuf.h"
+#include "Lib/Random.h"
 #include "TypeDtor.h"
 #include "Engine.h"
 
@@ -64,6 +65,16 @@ namespace storm {
 	}
 
 	static void *CODECALL getValue(ArrayBase *from, Nat id) {
+		return from->atRaw(id);
+	}
+
+	static void *CODECALL randomClass(ArrayP<Object> *from) {
+		Nat id = rand(Nat(0), from->count());
+		return from->atRaw(id);
+	}
+
+	static void *CODECALL randomValue(ArrayP<Object> *from) {
+		Nat id = rand(Nat(0), from->count());
 		return from->atRaw(id);
 	}
 
@@ -168,6 +179,7 @@ namespace storm {
 		add(steal(nativeFunction(e, t, L"<<", valList(2, t, param), address(&pushClass))));
 		add(steal(nativeFunction(e, t, L"push", valList(2, t, param), address(&pushClass))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getClass))));
+		add(steal(nativeFunction(e, refParam, L"random", valList(1, t), address(&randomClass))));
 		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&ArrayBase::deepCopy))));
 		add(steal(nativeDtor(e, this, &destroyClass)));
 
@@ -185,6 +197,7 @@ namespace storm {
 		add(steal(nativeFunction(e, t, L"<<", valList(2, t, refParam), address(&pushValue))));
 		add(steal(nativeFunction(e, t, L"push", valList(2, t, refParam), address(&pushValue))));
 		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getValue))));
+		add(steal(nativeFunction(e, refParam, L"random", valList(1, t), address(&randomValue))));
 		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&ArrayBase::deepCopy))));
 		add(steal(nativeDtor(e, this, &destroyValue)));
 

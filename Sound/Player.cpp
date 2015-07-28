@@ -136,7 +136,7 @@ namespace sound {
 		finishEvent.wait();
 	}
 
-	void Player::wait(Duration t) {
+	void Player::waitUntil(Duration t) {
 		while (bufferPlaying) {
 			Duration at = time();
 

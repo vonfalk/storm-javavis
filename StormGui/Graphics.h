@@ -89,6 +89,7 @@ namespace stormgui {
 		// Draw a bitmap.
 		void STORM_FN draw(Par<Bitmap> bitmap);
 		void STORM_FN draw(Par<Bitmap> bitmap, Point topLeft);
+		void STORM_FN draw(Par<Bitmap> bitmap, Point topLeft, Float opacity);
 		void STORM_FN draw(Par<Bitmap> bitmap, Rect rect);
 		void STORM_FN draw(Par<Bitmap> bitmap, Rect rect, Float opacity);
 
