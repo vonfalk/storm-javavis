@@ -132,8 +132,26 @@ namespace sound {
 		return bufferPlaying;
 	}
 
-	void Player::waitUntilDone() {
+	void Player::wait() {
 		finishEvent.wait();
+	}
+
+	void Player::wait(Duration t) {
+		while (bufferPlaying) {
+			Duration at = time();
+
+			if (at >= t)
+				break;
+
+			Duration r = at - t;
+			if (r > ms(400)) {
+				// Long interval, yeild to other threads.
+				os::UThread::sleep(nat(r.inMs() - 100));
+			} else {
+				// Short interval left, poll as much as we can.
+				os::UThread::leave();
+			}
+		}
 	}
 
 	Duration Player::time() {

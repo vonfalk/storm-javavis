@@ -32,8 +32,13 @@ namespace sound {
 		// Playing?
 		Bool STORM_FN playing();
 
-		// Wait until done. Do not call from the UThread managing callbacks!
-		void STORM_FN waitUntilDone();
+		// Wait until playback is done or until playback is stopped.
+		// Do not call from the UThread managing callbacks!
+		void STORM_FN wait();
+
+		// Wait until a specific time has passed since start. Returns if the player is stopped as well.
+		// Do not call from the UThread managing callbacks!
+		void STORM_FN wait(Duration t);
 
 		// Get the time of playback.
 		Duration STORM_FN time();
