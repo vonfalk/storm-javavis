@@ -19,6 +19,7 @@ namespace storm {
 
 	// Print the VTable of an object.
 	void STORM_FN printVTable(Object *obj);
+	void STORM_FN printVTable(TObject *obj);
 
 	// Crude printing (not final version).
 	void STORM_FN print(Object *obj);

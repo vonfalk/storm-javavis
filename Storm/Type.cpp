@@ -412,8 +412,9 @@ namespace storm {
 		// PLN(*fn << " got " << pos);
 		// vtable.dbg_dump();
 
-		// If we're a built in type, we do not want to mess with the lookup. A great one is already provided
-		// by the C++ compiler! Aside from that, it will destroy the special lookup for the destructor.
+		// If we're a built in type, we do not want to mess with the lookup, since a great one is
+		// already provided by the C++ compiler! Aside from that, it will destroy the special lookup
+		// for the destructor.
 		if (!vtable.builtIn() && pos.type != VTablePos::tNone) {
 			Auto<DelegatedCode> lookup = CREATE(DelegatedCode, engine, engine.virtualCall(pos));
 			fn->setLookup(lookup);

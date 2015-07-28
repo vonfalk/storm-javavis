@@ -39,6 +39,7 @@ namespace storm {
 	void VTable::createCpp(void *cppVTable) {
 		assert(replaced == null && this->cppVTable == null);
 		this->cppVTable = cppVTable;
+		assert(ref.address() == cppVTable || ref.address() == null, L"Moving a VTable can not be done safely.");
 		ref.setPtr(cppVTable);
 
 		nat cppCount = 0;
@@ -83,6 +84,7 @@ namespace storm {
 				replaced->replace(cppVTable);
 		}
 
+		assert(ref.address() == replaced->ptr() || ref.address() == null, L"Moving a VTable can not be done safely.");
 		ref.setPtr(replaced->ptr());
 		storm.clear();
 		storm.ensure(1); // For the destructor.
@@ -184,8 +186,12 @@ namespace storm {
 
 	VTablePos VTable::findSlot(Function *fn) {
 		// Destructor? (always in slot 0)
-		if (fn->name == Type::DTOR)
+		if (fn->name == Type::DTOR) {
+			// Make sure we have room.
+			if (storm.count() < 1)
+				expand(0, 1);
 			return VTablePos::storm(0);
+		}
 
 		// Cpp function?
 		if (builtIn()) {
@@ -214,9 +220,9 @@ namespace storm {
 		if (VTablePos s = findBase(fn))
 			return s;
 
-		// Find an unused slot. Do not use any from the parents range.
+		// Find an unused slot. Do not use any from the parents range, nor #0.
 		if (parent)
-			slot = storm.emptySlot(parent->storm.count());
+			slot = storm.emptySlot(max(parent->storm.count(), nat(1)));
 		else
 			slot = storm.emptySlot(1);
 
@@ -224,8 +230,13 @@ namespace storm {
 			return VTablePos::storm(slot);
 
 		// Allocate a new slot.
-		slot = storm.count();
-		expand(slot, 1);
+		if (storm.count() == 0) {
+			slot = 1;
+			expand(0, 2);
+		} else {
+			slot = storm.count();
+			expand(slot, 1);
+		}
 		assert(slot >= 1, "Double-allocated the destructor!");
 		return VTablePos::storm(slot);
 	}
@@ -282,7 +293,8 @@ namespace storm {
 
 	void VTable::dbg_dump() {
 		wostream &to = std::wcout;
-		to << L"Vtable: @" << this << L", parent: @" << parent << endl;
+		to << L"Vtable: Object @" << this << L", parent: @" << parent << endl;
+		to << L"Ref: @" << ref.address() << endl;
 		to << L"Data: ";
 		if (replaced)
 			to << replaced->ptr() << L", " << replaced->extra();
@@ -294,6 +306,8 @@ namespace storm {
 		if (builtIn()) {
 			to << L"Built in class. C++ vtable:" << endl;
 			void **src = (void **)cppVTable;
+			to << " -2: " << src[-2] << endl;
+			to << " -1: " << src[-1] << endl;
 			for (nat i = 0; i < cppSlots.size(); i++) {
 				to << std::setw(3) << i << L": ";
 
@@ -306,7 +320,14 @@ namespace storm {
 
 		} else {
 
-			to << "C++:" << endl;
+			to << "C++: @" << replaced->ptr() << endl;
+			to << "Extra: " << replaced->extra() << endl;
+#ifdef VISUAL_STUDIO
+			// Debug visual studios way of storing the extra data.
+			void **src = (void **)replaced->ptr();
+			to << " -2: " << src[-2] << endl;
+			to << " -1: " << src[-1] << endl;
+#endif
 			for (nat i = 0; i < cppSlots.size(); i++) {
 				to << std::setw(3) << i << L": " << replaced->get(i) << L" (";
 
@@ -333,8 +354,8 @@ namespace storm {
 
 		}
 
-		for (ChildSet::iterator i = children.begin(); i != children.end(); ++i)
-			(*i)->dbg_dump();
+		// for (ChildSet::iterator i = children.begin(); i != children.end(); ++i)
+		// 	(*i)->dbg_dump();
 	}
 
 

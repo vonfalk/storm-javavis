@@ -27,6 +27,11 @@ namespace storm {
 		PLN("Vtable of: " << obj << " is " << v);
 		PLN(" Refs: " << obj->dbg_refs());
 		PLN(" Class: " << obj->myType->name);
+		// PLN(" VTable info: "); obj->myType->vtable.dbg_dump();
+	}
+
+	void printVTable(TObject *obj) {
+		printVTable((Object *)obj);
 	}
 
 	void ptrace(Int z) {
