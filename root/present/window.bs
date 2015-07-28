@@ -7,26 +7,16 @@ use graphics;
  * Main presentation window.
  */
 class PresentWindow extends Frame {
-	// Presentation we're showing.
-	Presentation p;
-
 	// Painter.
 	PresentPainter paint;
 
-	// Current slide.
-	Nat slide;
-
 	ctor(Presentation show) {
 		init(show.title) {
-			p = show;
-			paint(SlideStyle(show));
-			slide = 0;
+			paint(show);
 		}
 
 		size(Size(640, 480));
 		painter(paint);
-
-		show(slide);
 
 		create();
 	}
@@ -37,43 +27,17 @@ class PresentWindow extends Frame {
 		super:close();
 	}
 
-	// Show a new slide.
-	void show(Nat s) {
-		Slide? show;
-		slide = s;
-		if (s < p.slides.count) {
-			show = p.slides[s];
-		}
-
-		paint.show(show);
-		repaint();
-	}
-
-	// Next slide.
-	void next() {
-		if (paint.advance) {
-		} else if (slide < p.slides.count) {
-			show(slide + 1);
-		}
-	}
-
-	// Prev slide.
-	void prev() {
-		if (slide > 0)
-			show(slide - 1);
-	}
-
 	// Key handling.
 	Bool onKey(Bool down, Nat id) {
 		if (down) {
 			if (id == 13 | id == 39) {
-				next;
+				paint.next;
 			} else if (id == 37) {
-				prev;
+				paint.prev;
 			} else if (id == 27) {
 				close;
 			} else if (id == 83) { // s
-				paint.surpriseKey();
+				paint.surpriseKey;
 			} else if (id == 70) { // f
 				if (fullscreen) {
 					fullscreen(false);
@@ -94,11 +58,17 @@ class PresentWindow extends Frame {
  * Painter for the presentation window.
  */
 class PresentPainter extends Painter {
-	// Last slide.
-	Slide? lastSlide;
+	// The presentation.
+	Presentation p;
+
+	// Current slide #.
+	Nat slideNr;
 
 	// Current slide.
 	Slide? slide;
+
+	// Previous slide (for animations).
+	Slide? lastSlide;
 
 	// Current intro.
 	SlideIntro? intro;
@@ -112,11 +82,34 @@ class PresentPainter extends Painter {
 	// Brush used outside the slide's limit.
 	SolidBrush outsideColor;
 
-	ctor(SlideStyle style) {
+	ctor(Presentation p) {
 		init() {
+			p = p;
+			slideNr = 0;
+			style(p);
 			endColor = black;
 			outsideColor = black;
-			style = style;
+		}
+
+		if (p.slides.count > 0)
+			show(p.slides[0]);
+	}
+
+	void next() {
+		if (advance() == false) {
+			Nat n = slideNr + 1;
+			if (n >= p.slides.count) {
+				show(null);
+			} else {
+				slideNr = n;
+				show(p.slides[n]);
+			}
+		}
+	}
+
+	void prev() {
+		if (slideNr > 0) {
+			show(p.slides[--slideNr]);
 		}
 	}
 
@@ -143,12 +136,15 @@ class PresentPainter extends Painter {
 		if (slide) {
 			intro = slide.intro;
 			slide.repaintFn = &this->repaint;
-			slide.show;
+			slide.advanceFn = &this->next;
+			slide.show();
 
 			if (intro) {
 				intro.start;
 			}
 		}
+
+		repaint();
 	}
 
 	Bool render(Size s, Graphics g) {
@@ -188,6 +184,7 @@ class PresentPainter extends Painter {
 	void cleanup() {
 		if (slide) {
 			slide.repaintFn = null;
+			slide.advanceFn = null;
 		}
 	}
 

@@ -79,6 +79,12 @@ namespace storm {
 		return CREATE(Str, this, o.str());
 	}
 
+	Bool TextReader::more() {
+		if (first)
+			peek();
+		return next != 0;
+	}
+
 	TextWriter::TextWriter() {}
 
 	void TextWriter::write(Nat codepoint) {}

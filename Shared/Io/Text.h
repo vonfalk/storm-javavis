@@ -42,8 +42,11 @@ namespace storm {
 		// since we need to remove BOM marks.
 		virtual Nat STORM_FN readPoint();
 
+		// More data in the file?
+		virtual Bool STORM_FN more();
+
 	private:
-		// Cached code point.
+		// Cached code point. 0 if at end of stream.
 		Nat next;
 
 		// First code point?

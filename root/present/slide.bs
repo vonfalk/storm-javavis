@@ -139,6 +139,9 @@ class Slide on Render {
 	// Repaint function.
 	Fn<void>? repaintFn;
 
+	// Advance to the next slide.
+	Fn<void>? advanceFn;
+
 	// Surprise key pressed.
 	void onSurprise() {}
 
@@ -151,6 +154,12 @@ class Slide on Render {
 	void repaint() {
 		if (repaintFn)
 			repaintFn.call;
+	}
+
+	// Advance to the next slide.
+	void advance() {
+		if (advanceFn)
+			advanceFn.call;
 	}
 
 	// Add an item.
@@ -408,6 +417,7 @@ class TerminalSlide extends Slide {
 		} else {
 			lines << str;
 		}
+		repaint();
 	}
 
 	// Replace the last line
@@ -417,11 +427,13 @@ class TerminalSlide extends Slide {
 		} else {
 			lines << str;
 		}
+		repaint();
 	}
 
 	// Clear.
 	void clear() {
 		lines = Str[];
+		repaint();
 	}
 
 	Point posOf(Nat x, Nat y) {
