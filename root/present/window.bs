@@ -138,11 +138,13 @@ class PresentPainter extends Painter {
 			intro = slide.intro;
 			slide.repaintFn = &this->repaint;
 			slide.advanceFn = &this->next;
-			slide.show();
 
+			// Start the intro first, otherwise we may repaint the intro before it has been properly
+			// started due to animations in 'show'.
 			if (intro) {
 				intro.start;
 			}
+			slide.show();
 		}
 
 		repaint();
