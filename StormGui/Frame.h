@@ -44,6 +44,10 @@ namespace stormgui {
 		void STORM_SETTER fullscreen(Bool f);
 		Bool STORM_FN fullscreen();
 
+		// Hide cursor on this window.
+		void STORM_SETTER cursorVisible(Bool v);
+		Bool STORM_FN cursorVisible();
+
 	private:
 		// Helper to create the window.
 		bool createWindow(bool sizeable);
@@ -53,6 +57,9 @@ namespace stormgui {
 
 		// Fullscreen mode?
 		bool full;
+
+		// Cursor visible?
+		bool showCursor;
 
 		// Info. Not valid if we're not in fullscreen mode.
 		FrameInfo info;

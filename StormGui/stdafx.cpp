@@ -42,6 +42,10 @@ namespace stormgui {
 		return Size(s.width, s.height);
 	}
 
+	Point convert(const POINT &a) {
+		return Point(Float(a.x), Float(a.y));
+	}
+
 	bool pressed(nat keycode) {
 		return (GetKeyState(keycode) & 0x8000) != 0;
 	}

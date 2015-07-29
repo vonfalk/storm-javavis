@@ -50,6 +50,7 @@ namespace stormgui {
 	Rect convert(const POINT &a, const POINT &b);
 	RECT convert(const Rect &r);
 	Size convert(const D2D1_SIZE_F &s);
+	Point convert(const POINT &a);
 
 	// Color conversion.
 	COLORREF colorref(const Color &color);

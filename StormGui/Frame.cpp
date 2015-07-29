@@ -68,7 +68,7 @@ namespace stormgui {
 		return true;
 	}
 
-	Frame::Frame(Par<Str> title) : full(false) {
+	Frame::Frame(Par<Str> title) : full(false), showCursor(true) {
 		attachParent(this);
 		text(title);
 		pos(Rect(-10000, -10000, -10002, -10002));
@@ -103,6 +103,12 @@ namespace stormgui {
 		case WM_CLOSE:
 			close();
 			return msgResult(0);
+		case WM_SETCURSOR:
+			if (LOWORD(msg.lParam) == HTCLIENT && !showCursor) {
+				SetCursor(NULL);
+				return msgResult(TRUE);
+			}
+			break;
 		}
 
 		return Container::onMessage(msg);
@@ -136,6 +142,15 @@ namespace stormgui {
 
 	Bool Frame::fullscreen() {
 		return full;
+	}
+
+	void Frame::cursorVisible(Bool v) {
+		// Will be altered soon anyway, we do not need to do anything here.
+		showCursor = v;
+	}
+
+	Bool Frame::cursorVisible() {
+		return showCursor;
 	}
 
 }
