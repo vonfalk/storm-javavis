@@ -212,7 +212,7 @@ class Slide on Render {
 	}
 
 	// Render this slide.
-	Bool draw(SlideStyle s, Size s, Graphics g) {
+	Bool draw(SlideStyle style, Size s, Graphics g) {
 		false;
 	}
 
@@ -506,7 +506,7 @@ class TextItem extends SlideItem {
 
 	ctor(Str text, Color color) {
 		init() {
-			t(text, font);
+			t(text, subTitleFont);
 			color = SolidBrush(color);
 		}
 	}
