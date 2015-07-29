@@ -211,6 +211,15 @@ namespace storm {
 		return r.ret();
 	}
 
+	void NameSet::compile() {
+		forceLoad();
+
+		for (iterator i = begin(), end = this->end(); i != end; ++i) {
+			const Auto<Named> &named = *i;
+			named->compile();
+			os::UThread::leave();
+		}
+	}
 
 	/**
 	 * The iterator.

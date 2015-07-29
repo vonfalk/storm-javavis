@@ -7,6 +7,7 @@
 #include "BSCtor.h"
 #include "TypeCtor.h"
 #include "TypeDtor.h"
+#include "TypeToS.h"
 #include "Shared/CloneEnv.h"
 #include "Shared/TObject.h"
 
@@ -120,6 +121,11 @@ namespace storm {
 
 		if (!hasDeepCopy && runOn().state == RunOn::any)
 			add(steal(CREATE(TypeDeepCopy, engine, this)));
+
+		// If noone has a toS function, create one (this is the case with values, this may change in the future).
+		if (as<Function>(findCpp(L"toS", valList(1, Value::thisPtr(this)))) == null) {
+			add(steal(CREATE(TypeToS, engine, this)));
+		}
 
 		// Temporary solution.
 		if (typeFlags & typeValue) {

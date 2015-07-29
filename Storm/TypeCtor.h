@@ -19,7 +19,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create the constructor.
-		TypeDefaultCtor(Type *owner);
+		STORM_CTOR TypeDefaultCtor(Type *owner);
 
 	private:
 		// Generate code.
@@ -41,7 +41,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		TypeCopyCtor(Type *owner);
+		STORM_CTOR TypeCopyCtor(Type *owner);
 
 	private:
 		// Generate code.
@@ -62,7 +62,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		TypeAssignFn(Type *owner);
+		STORM_CTOR TypeAssignFn(Type *owner);
 
 	private:
 		// Generate code.
@@ -77,7 +77,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		TypeDeepCopy(Type *type);
+		STORM_CTOR TypeDeepCopy(Type *type);
 
 	private:
 		// Generate code.

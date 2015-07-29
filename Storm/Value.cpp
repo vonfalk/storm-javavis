@@ -99,6 +99,8 @@ namespace storm {
 	bool Value::isFloat() const {
 		if (type == null)
 			return false;
+		if (ref)
+			return false;
 		return type->builtInType() == BasicTypeInfo::floatNr;
 	}
 

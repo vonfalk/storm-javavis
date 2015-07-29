@@ -26,6 +26,8 @@ namespace storm {
 		newRef();
 	}
 
+	void Code::compile() {}
+
 
 	/**
 	 * Static code.
@@ -134,13 +136,26 @@ namespace storm {
 
 	void LazyCode::setCode(const code::Listing &l) {
 		// PLN("New code for " << owner->identifier() << ":" << l);
-		code::Binary *newCode = new code::Binary(engine().arena, l);
+		code::Binary *newCode = null;
+		try {
+			newCode = new code::Binary(engine().arena, l);
+		} catch (const Exception &e) {
+			PLN(L"Erroneous machine code for " << owner->identifier() << L":" << e.what() << l);
+			throw;
+		}
 
 		if (code)
 			engine().destroy(code);
 		code = newCode;
 		if (toUpdate)
 			toUpdate->set(code);
+	}
+
+	void LazyCode::compile() {
+		// We're always running on the Compiler thread here, it is safe to call 'updateCodeLocal'.
+		if (!loading) {
+			updateCodeLocal(this);
+		}
 	}
 
 

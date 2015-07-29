@@ -222,6 +222,12 @@ BEGIN_TEST(ScopeTest) {
 	CHECK_EQ(runFn<Int>(L"test.bs.testScopeCls"), 10);
 } END_TEST
 
+BEGIN_TEST(CompileTest) {
+	// Compile all code in core and lang. Not everything in test is supposed to compile cleanly.
+	CHECK_RUNS(gEngine->package(L"core")->compile());
+	CHECK_RUNS(gEngine->package(L"lang")->compile());
+} END_TEST
+
 // Test the REPL of BS programmatically.
 BEGIN_TESTX(ReplTest) {
 	runFn<void>(L"test.bs.replTest");

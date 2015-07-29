@@ -39,7 +39,7 @@ void eval(Str v) {
 
 SyntaxSet syntaxSet() {
 	SyntaxSet set;
-	Named n = (name{demo}).find(rootScope);
+	Named? n = (name{demo}).find(rootScope);
 	if (n as Package)
 		set.add(n);
 	set;

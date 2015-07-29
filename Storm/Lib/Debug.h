@@ -94,6 +94,9 @@ namespace storm {
 		static Lock liveLock;
 	};
 
+	Str *STORM_ENGINE_FN toS(EnginePtr e, DbgVal v);
+
+
 	// Class partly implemented in C++, we'll try to override this in Storm.
 	// NOTE: We are _not_ overriding toS here to see if overriding functions from
 	// classes other than the direct parent is working.

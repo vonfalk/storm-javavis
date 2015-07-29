@@ -37,6 +37,9 @@ namespace storm {
 		// object.
 		void update(code::RefSource &ref);
 
+		// Compile this code (if needed and possible).
+		virtual void STORM_FN compile();
+
 	protected:
 		// A new reference has been found.
 		virtual void newRef() = 0;
@@ -68,7 +71,7 @@ namespace storm {
 	};
 
 	/**
-	 * Simple subclass for dynamic generated code.
+	 * Simple subclass for dynamic generated code (eagerly compiled).
 	 */
 	class DynamicCode : public Code {
 		STORM_CLASS;
@@ -89,7 +92,7 @@ namespace storm {
 
 
 	/**
-	 * Lazily loaded code.
+	 * Lazily compiled code.
 	 */
 	class LazyCode : public Code {
 		STORM_CLASS;
@@ -99,6 +102,9 @@ namespace storm {
 
 		// Dtor.
 		~LazyCode();
+
+		// Compile.
+		virtual void STORM_FN compile();
 
 	protected:
 		// Update ref.
@@ -180,6 +186,7 @@ namespace storm {
 
 		// Generate inlined code.
 		virtual void code(Par<CodeGen> state, const vector<code::Value> &params, Par<CodeResult> result);
+
 	private:
 		// Generation fn.
 		Fn<void, InlinedParams> generate;

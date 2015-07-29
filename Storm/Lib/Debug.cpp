@@ -384,6 +384,10 @@ namespace storm {
 		// Nothing needed.
 	}
 
+	Str *toS(EnginePtr e, DbgVal v) {
+		return CREATE(Str, e.v, ::toS(v));
+	}
+
 	DbgActor::DbgActor() : v(0) {}
 
 	DbgActor::DbgActor(Int v) : v(v) {}

@@ -103,6 +103,9 @@ namespace storm {
 		// Set lookup code. (default one provided!, use 'null' to restore default).
 		void setLookup(Par<Code> lookup);
 
+		// Forcefully compile this function.
+		void STORM_FN compile();
+
 	protected:
 		virtual void output(wostream &to) const;
 

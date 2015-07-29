@@ -446,6 +446,13 @@ namespace storm {
 		}
 	}
 
+	void Function::compile() {
+		if (code)
+			code->compile();
+		if (lookup)
+			lookup->compile();
+	}
+
 	void Function::initRefs() {
 		if (!codeRef) {
 			assert(parent(), "Too early!");

@@ -562,6 +562,10 @@
 				RelativePath=".\Lib\Number.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TypeToS.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -693,10 +697,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NamedThread.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\NamedThread.h"
 				>
 			</File>
@@ -782,10 +782,6 @@
 			</File>
 			<File
 				RelativePath=".\Template.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
 				>
 			</File>
 			<File
@@ -950,6 +946,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Number.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TypeToS.h"
 				>
 			</File>
 		</Filter>

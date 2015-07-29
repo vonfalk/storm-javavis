@@ -75,6 +75,9 @@ namespace storm {
 		// Generate a unique, human-readable identifier (for use in Code api:s).
 		virtual String identifier() const;
 
+		// Compile everything below this Named that is not already compiled.
+		virtual void STORM_FN compile();
+
 	private:
 		// Find our closest named parent.
 		Named *closestNamed() const;

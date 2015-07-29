@@ -78,6 +78,10 @@ namespace storm {
 		return ::toS(p);
 	}
 
+	void Named::compile() {
+		// Nothing to compile here.
+	}
+
 	Str *name(Par<Named> named) {
 		return CREATE(Str, named, named->name);
 	}

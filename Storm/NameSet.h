@@ -11,7 +11,7 @@ namespace storm {
 	 * Represents all Named objects sharing the same name. Used mainly inside NameSet, but is
 	 * exposed since it is needed during lookup.
 	 */
-	class NameOverloads : public Object {
+	class NameOverloads : public ObjectOn<Compiler> {
 		STORM_CLASS;
 
 		friend class NameSet;
@@ -136,6 +136,9 @@ namespace storm {
 
 		// Find a NamePart (returns borrowed ptr).
 		virtual Named *find(Par<NamePart> part);
+
+		// Compile this NameSet and anything below it.
+		virtual void STORM_FN compile();
 
 	protected:
 		// Output.
