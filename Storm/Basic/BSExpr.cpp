@@ -83,13 +83,13 @@ namespace storm {
 			return 1;
 		if (to.type == wordType(e))
 			return 1;
-		if (to.type == intType(e) && (intValue & 0x7FFFFFFF) == intValue)
+		if (to.type == intType(e) && (abs(intValue) & 0x7FFFFFFF) == abs(intValue))
 			return 2;
 		if (to.type == natType(e) && (intValue & 0xFFFFFFFF) == intValue)
 			return 2;
 		if (to.type == byteType(e) && (intValue & 0xFF) == intValue)
 			return 3;
-		if (to.type == floatType(e) && (intValue & 0xFFFF) == intValue)
+		if (to.type == floatType(e) && (abs(intValue) & 0xFFFF) == abs(intValue))
 			// We allow up to 16 bits to automatically cast.
 			return 3;
 
