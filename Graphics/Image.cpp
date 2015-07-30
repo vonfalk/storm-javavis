@@ -146,7 +146,7 @@ namespace graphics {
 			IWICBitmapDecoder *decoder = null;
 			if (SUCCEEDED(r)) {
 				r = wicFactory->CreateDecoderFromStream(wicStream, NULL, WICDecodeMetadataCacheOnLoad, &decoder);
-				err = L"Failed to create a WIC decoder";
+				err = L"Failed to create a WIC decoder (possibly corrupt image)";
 			}
 
 			IWICBitmapFrameDecode *frame = null;
