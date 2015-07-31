@@ -132,8 +132,8 @@ PrePost => v : "--" v;
 
 // Initializer list for arrays.
 ArrayInitList(Block block);
-ArrayInitList => Array<Expr>() : BSDelimiter;
-ArrayInitList => Array<Expr>() : Expr(block) -> push (, ",", Expr(block) -> push)*;
+ArrayInitList => Array<Expr>() : BSDelimiter, ",?";
+ArrayInitList => Array<Expr>() : Expr(block) -> push (, ",", Expr(block) -> push)*, ",?";
 
 // Units. Returns a TypeName which is supposed to convert this unit to an object of some kind.
 Unit => timeUnit(u) : "h" u;
