@@ -5,6 +5,8 @@
 
 namespace stormgui {
 
+	Brush::Brush() : opacity(1.0f) {}
+
 	void Brush::prepare(const Rect &r, ID2D1Brush *b) {}
 
 	SolidBrush::SolidBrush(Color c) : color(c) {}

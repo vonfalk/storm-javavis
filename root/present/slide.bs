@@ -82,13 +82,13 @@ class FadeIntro extends SlideIntro {
 			f = 1.0;
 
 		if (old) {
-			g.opacity(1.0 - f);
 			g.push();
 			old.draw(s, size, g);
 			g.pop();
 		}
-		g.opacity(f);
-		g.push();
+
+		g.push(f);
+		g.fill(Rect(Point(), size), s.bg);
 		new.draw(s, size, g);
 		g.pop();
 

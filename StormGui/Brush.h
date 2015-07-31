@@ -10,9 +10,10 @@ namespace stormgui {
 	class Brush : public RenderResource {
 		STORM_CLASS;
 	public:
+		Brush();
 
 		// Get a brush.
-		inline ID2D1Brush *brush(Painter *owner, const Rect &rect, Float opacity) {
+		inline ID2D1Brush *brush(Painter *owner, const Rect &rect) {
 			ID2D1Brush *b = get<ID2D1Brush>(owner);
 			prepare(rect, b);
 			b->SetOpacity(opacity);
@@ -21,6 +22,9 @@ namespace stormgui {
 
 		// Prepare for drawing a bounding box of 'bound'.
 		virtual void prepare(const Rect &bound, ID2D1Brush *b);
+
+		// Opacity.
+		STORM_VAR Float opacity;
 	};
 
 	/**

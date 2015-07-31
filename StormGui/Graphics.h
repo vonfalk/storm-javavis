@@ -30,6 +30,12 @@ namespace stormgui {
 		// Update the target.
 		void updateTarget(ID2D1RenderTarget *target);
 
+		// Prepare the rendering.
+		void beforeRender();
+
+		// Do any housekeeping after rendering.
+		void afterRender();
+
 		/**
 		 * General format. Use push and pop to save/restore the state.
 		 */
@@ -40,6 +46,15 @@ namespace stormgui {
 		// Push the current state.
 		void STORM_FN push();
 
+		// Push the current state with a modified opacity.
+		void STORM_FN push(Float opacity);
+
+		// Push the current state with a clipping rectangle.
+		void STORM_FN push(Rect clip);
+
+		// Push current state, clipping and opacity.
+		void STORM_FN push(Rect clip, Float opacity);
+
 		// Pop the previous state. Returns false if nothing more to pop.
 		Bool STORM_FN pop();
 
@@ -48,9 +63,6 @@ namespace stormgui {
 
 		// Set the line width (in relation to the previous state).
 		void STORM_SETTER lineWidth(Float w);
-
-		// Set the opacity of all drawing operations (1 is opaque, 0 is transparent).
-		void STORM_SETTER opacity(Float o);
 
 		/**
 		 * Draw stuff.
@@ -116,8 +128,8 @@ namespace stormgui {
 			// Line size.
 			float lineWidth;
 
-			// Opacity.
-			float opacity;
+			// Layer pushed with this state. May be null.
+			ID2D1Layer *layer;
 		};
 
 		// default state.
@@ -128,6 +140,24 @@ namespace stormgui {
 
 		// Current state.
 		State state;
+
+		// # of layers to remember.
+		enum {
+			layerHistory = 10,
+		};
+
+		// Keep track of how many layers we have used the last few frames, so that we can destroy
+		// unneeded layers if they are not used.
+		nat layerCount[layerHistory];
+
+		// Minimum number of free layers during the rendering.
+		nat minFreeLayers;
+
+		// Keep track of layers used.
+		vector<ID2D1Layer *> layers;
+
+		// Get a layer.
+		ID2D1Layer *layer();
 	};
 
 }

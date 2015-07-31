@@ -166,8 +166,10 @@ class PresentPainter extends Painter {
 			Point p = s;
 			Size scaled = target * scaleFactor;
 			g.transform(translate(s.center - scaled.center) * scale(scaleFactor));
-			g.push();
-			g.fill(Rect(Point(), target), style.bg);
+
+			Rect targetRect(Point(), target);
+			g.push(targetRect);
+			g.fill(targetRect, style.bg);
 
 			animate |= slide.animate();
 

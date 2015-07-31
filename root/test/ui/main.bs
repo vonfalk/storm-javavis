@@ -148,10 +148,8 @@ class MainWin extends Frame {
 	}
 }
 
-thread Waiter;
-
-void closeLater(Frame w) on Waiter {
-	dbgSleep(6000);
+void closeLater(Frame w) {
+	sleep(6 s);
 	w.close;
 }
 
