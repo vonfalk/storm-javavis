@@ -36,11 +36,26 @@ Size margin() {
 class SlideStyle on Render {
 	SolidBrush bg;
 	SolidBrush text;
+	Bitmap? bgImage;
 
 	ctor(Presentation p) {
 		init() {
 			bg = p.bg;
 			text = p.text;
+		}
+
+		Image? z = p.bgImage;
+		if (z) {
+			bgImage = Bitmap(z);
+		}
+	}
+
+	void fill(Graphics g, Size size) {
+		Rect r(Point(), size);
+		if (bgImage) {
+			g.draw(bgImage, r);
+		} else {
+			g.fill(r, bg);
 		}
 	}
 }
@@ -88,7 +103,6 @@ class FadeIntro extends SlideIntro {
 		}
 
 		g.push(f);
-		g.fill(Rect(Point(), size), s.bg);
 		new.draw(s, size, g);
 		g.pop();
 
@@ -211,8 +225,14 @@ class Slide on Render {
 		}
 	}
 
+	// Render the background of this slide. Called from 'draw' if needed.
+	void drawBg(SlideStyle style, Size s, Graphics g) {
+		style.fill(g, s);
+	}
+
 	// Render this slide.
 	Bool draw(SlideStyle style, Size s, Graphics g) {
+		drawBg(style, s, g);
 		false;
 	}
 
@@ -269,6 +289,8 @@ class TitleSlide extends Slide {
 	}
 
 	Bool draw(SlideStyle style, Size s, Graphics g) {
+		drawBg(style, s, g);
+
 		Bool cont = false;
 
 		Point pos = s.center;
@@ -303,6 +325,8 @@ class ContentSlide extends Slide {
 	}
 
 	Bool draw(SlideStyle style, Size s, Graphics g) {
+		drawBg(style, s, g);
+
 		Bool cont = false;
 
 		Size titleSize = title.size;
@@ -353,6 +377,8 @@ class VContentSlide extends Slide {
 	}
 
 	Bool draw(SlideStyle style, Size s, Graphics g) {
+		drawBg(style, s, g);
+
 		Bool cont = false;
 
 		Size titleSize = title.size;

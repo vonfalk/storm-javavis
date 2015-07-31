@@ -169,8 +169,6 @@ class PresentPainter extends Painter {
 
 			Rect targetRect(Point(), target);
 			g.push(targetRect);
-			g.fill(targetRect, style.bg);
-
 			animate |= slide.animate();
 
 			if (intro) {

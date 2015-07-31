@@ -14,6 +14,9 @@ class Presentation on Render {
 	// Background color. (replace with brush?)
 	Color bg;
 
+	// Background image (if any).
+	Image? bgImage;
+
 	// Foreground color.
 	Color text;
 
