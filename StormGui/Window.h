@@ -116,6 +116,15 @@ namespace stormgui {
 		// Set window contents (custom drawing).
 		void STORM_SETTER painter(Par<Painter> to);
 
+		// Window timer.
+		virtual void STORM_FN onTimer();
+
+		// Set timer.
+		void STORM_FN setTimer(Duration interval);
+
+		// Stop timer.
+		void STORM_FN clearTimer();
+
 		// Modifiers for the create function.
 		enum CreateFlags {
 			cNormal = 0x0,
@@ -158,6 +167,9 @@ namespace stormgui {
 
 		// Painter.
 		Auto<Painter> myPainter;
+
+		// Timer timeout (nonzero = set).
+		Duration timerInterval;
 
 		// Notify our painter of our new HWND.
 		void attachPainter();

@@ -21,6 +21,10 @@ class PresentWindow extends Frame {
 		size(Size(1024, 768));
 		painter(paint);
 
+		if (show.showTimer) {
+			setTimer(5 s);
+		}
+
 		create();
 	}
 
@@ -52,6 +56,11 @@ class PresentWindow extends Frame {
 			}
 		}
 		super:onKey(down, id);
+	}
+
+	// Repaint, the timer on screen needs to be redrawn.
+	void onTimer() {
+		repaint();
 	}
 
 }

@@ -20,6 +20,9 @@ class Presentation on Render {
 	// Foreground color.
 	Color text;
 
+	// Show timer?
+	Bool showTimer;
+
 	// Create.
 	ctor(Str title) {
 		init() {
@@ -34,4 +37,10 @@ class Presentation on Render {
 		slides << slide;
 	}
 
+	// Temporary solution to safely set the background image from other threads.
+	void setBg(Image image) {
+		bgImage = image;
+	}
+
 }
+

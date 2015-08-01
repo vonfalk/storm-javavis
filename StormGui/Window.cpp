@@ -101,6 +101,12 @@ namespace stormgui {
 		}
 		case WM_PAINT:
 			return onPaint();
+		case WM_TIMER: {
+			if (msg.wParam == 1) {
+				onTimer();
+				return msgResult(0);
+			}
+		}
 		}
 		return noResult();
 	}
@@ -283,6 +289,9 @@ namespace stormgui {
 			return false;
 		} else {
 			handle(z);
+			if (timerInterval.inMs() != 0) {
+				setTimer(timerInterval);
+			}
 			SendMessage(handle(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
 			return true;
 		}
@@ -342,6 +351,19 @@ namespace stormgui {
 		} else {
 			return noResult();
 		}
+	}
+
+	void Window::onTimer() {}
+
+	void Window::setTimer(Duration interval) {
+		timerInterval = interval;
+		if (created()) {
+			SetTimer(handle(), 1, (UINT)interval.inMs(), NULL);
+		}
+	}
+
+	void Window::clearTimer() {
+		KillTimer(handle(), 1);
 	}
 
 }

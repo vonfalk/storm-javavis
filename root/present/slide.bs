@@ -38,10 +38,24 @@ class SlideStyle on Render {
 	SolidBrush text;
 	Bitmap? bgImage;
 
+	// Show a timer?
+	Bool showTimer;
+
+	// Timer started.
+	Moment timerStarted;
+
+	// Timer color.
+	SolidBrush timerColor;
+	SolidBrush timerColor2;
+
 	ctor(Presentation p) {
 		init() {
 			bg = p.bg;
 			text = p.text;
+			showTimer = p.showTimer;
+			timerColor = blue.withAlpha(0.6);
+			timerColor2 = red.withAlpha(0.6);
+			timerStarted = Moment;
 		}
 
 		Image? z = p.bgImage;
@@ -56,6 +70,35 @@ class SlideStyle on Render {
 			g.draw(bgImage, r);
 		} else {
 			g.fill(r, bg);
+		}
+
+		if (showTimer) {
+			drawTimer(g, size);
+		}
+	}
+
+	void drawTimer(Graphics g, Size s) {
+		Float space = 10;
+		Int dots = ((Moment - timerStarted) / 15 s).int;
+
+		Point pos(s.w, s.h);
+		Int row = -1;
+
+		for (Int i = 0; i < dots; i++) {
+			if (i % 4 == 0) {
+				pos.x = s.w;
+				pos.y -= space;
+				row++;
+			}
+			pos.x -= space;
+
+			Rect r(pos, Size(space / 2.0));
+
+			if ((row / 5) % 2 == 0) {
+				g.fillOval(r, timerColor);
+			} else {
+				g.fillOval(r, timerColor2);
+			}
 		}
 	}
 }
