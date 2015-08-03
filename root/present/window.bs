@@ -10,9 +10,13 @@ class PresentWindow extends Frame {
 	// Painter.
 	PresentPainter paint;
 
+	// Number typed currently.
+	Nat typedNumber;
+
 	ctor(Presentation show) {
 		init(show.title) {
 			paint(show);
+			typedNumber = 0;
 		}
 
 		cursorVisible(false);
@@ -37,7 +41,14 @@ class PresentWindow extends Frame {
 	// Key handling.
 	Bool onKey(Bool down, Nat id) {
 		if (down) {
-			if (id == 13 | id == 39) {
+			if (id == 13) {
+				if (typedNumber != 0) {
+					paint.jumpTo(typedNumber);
+					typedNumber = 0;
+				} else {
+					paint.next;
+				}
+			} else if (id == 39) {
 				paint.next;
 			} else if (id == 37) {
 				paint.prev;
@@ -52,7 +63,8 @@ class PresentWindow extends Frame {
 					fullscreen(true);
 				}
 			} else if (id >= 48 & id <= 57) {
-				paint.jumpTo(id - 48);
+				typedNumber *= 10;
+				typedNumber += id - 48;
 			} else {
 				print("Key: " # id);
 			}
