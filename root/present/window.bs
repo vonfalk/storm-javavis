@@ -51,6 +51,8 @@ class PresentWindow extends Frame {
 				} else {
 					fullscreen(true);
 				}
+			} else if (id >= 48 & id <= 57) {
+				paint.jumpTo(id - 48);
 			} else {
 				print("Key: " # id);
 			}
@@ -107,10 +109,22 @@ class PresentPainter extends Painter {
 			show(p.slides[0]);
 	}
 
+	void jumpTo(Nat n) {
+		var max = p.slides.count;
+		if (n >= max) {
+			slideNr = max;
+			show(null);
+		} else {
+			slideNr = n;
+			show(p.slides[n]);
+		}
+	}
+
 	void next() {
 		if (advance() == false) {
 			Nat n = slideNr + 1;
 			if (n >= p.slides.count) {
+				slideNr = p.slides.count;
 				show(null);
 			} else {
 				slideNr = n;
