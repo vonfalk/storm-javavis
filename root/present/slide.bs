@@ -77,6 +77,11 @@ class SlideStyle on Render {
 		}
 	}
 
+	// Reset the timer.
+	void resetTimer() {
+		timerStarted = Moment;
+	}
+
 	void drawTimer(Graphics g, Size s) {
 		Float space = 10;
 		Int dots = ((Moment - timerStarted) / 15 s).int;

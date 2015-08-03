@@ -54,6 +54,8 @@ class PresentWindow extends Frame {
 				paint.prev;
 			} else if (id == 27) {
 				close;
+			} else if (id == 82) { // r
+				paint.resetTimer;
 			} else if (id == 83) { // s
 				paint.surpriseKey;
 			} else if (id == 70) { // f
@@ -149,6 +151,12 @@ class PresentPainter extends Painter {
 		if (slideNr > 0) {
 			show(p.slides[--slideNr]);
 		}
+	}
+
+	// Reset the timer.
+	void resetTimer() {
+		style.resetTimer();
+		repaint();
 	}
 
 	// Surprise key pressed.
