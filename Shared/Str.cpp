@@ -167,4 +167,37 @@ namespace storm {
 
 		return CREATE(Str, str, to.str());
 	}
+
+	Str *trimBlankLines(Par<Str> str) {
+		const String &src = str->v;
+
+		nat start = 0;
+		nat end = 0;
+		nat at = 0;
+
+		for (nat at = 0; at < src.size(); at = nextLine(src, at)) {
+			if (!emptyLine(src, at)) {
+				end = start = at;
+				break;
+			}
+		}
+
+		for (nat at = start; at < src.size(); at = nextLine(src, at)) {
+			if (!emptyLine(src, at)) {
+				end = at;
+			}
+		}
+
+		end = nextLine(src, end);
+		while (end > 0) {
+			wchar ch = src[end-1];
+			if (ch == '\n' || ch == '\r')
+				end--;
+			else
+				break;
+		}
+
+		return CREATE(Str, str, src.substr(start, end - start));
+	}
+
 }

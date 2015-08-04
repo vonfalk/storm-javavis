@@ -5,6 +5,9 @@
 
 namespace stormgui {
 
+	// Small extra space added around the border to prevent unneeded wrapping.
+	static const float borderExtra = 0.001f;
+
 	Text::Text(Par<Str> text, Par<Font> font) {
 		float maxFloat = std::numeric_limits<float>::max();
 		init(text, font, Size(maxFloat, maxFloat));
@@ -30,16 +33,16 @@ namespace stormgui {
 	Size Text::size() {
 		DWRITE_TEXT_METRICS metrics;
 		l->GetMetrics(&metrics);
-		return Size(metrics.left + metrics.width, metrics.top + metrics.height);
+		return Size(metrics.width, metrics.height);
 	}
 
 	Size Text::layoutBorder() {
-		return Size(l->GetMaxWidth(), l->GetMaxHeight());
+		return Size(l->GetMaxWidth() - borderExtra, l->GetMaxHeight() - borderExtra);
 	}
 
 	void Text::layoutBorder(Size s) {
-		l->SetMaxWidth(s.w);
-		l->SetMaxHeight(s.h);
+		l->SetMaxWidth(s.w + borderExtra);
+		l->SetMaxHeight(s.h + borderExtra);
 	}
 
 }

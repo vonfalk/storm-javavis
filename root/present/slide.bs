@@ -336,6 +336,12 @@ class TitleSlide extends Slide {
 		}
 	}
 
+	ctor(Str title, Font font) {
+		init() {
+			title(title, font);
+		}
+	}
+
 	Bool draw(SlideStyle style, Size s, Graphics g) {
 		drawBg(style, s, g);
 

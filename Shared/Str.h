@@ -70,4 +70,7 @@ namespace storm {
     // TODO: Maybe this is too specific to be a public API? Whenever we have some string
 	// manipulation, this can be done inside Storm itself.
 	Str *STORM_FN removeIndent(Par<Str> src);
+
+	// Remove leading and trailing empty lines from a string.
+	Str *STORM_FN trimBlankLines(Par<Str> src);
 }
