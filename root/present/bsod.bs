@@ -72,7 +72,7 @@ class BsodSlide extends TerminalSlide {
 		pln("");
 		for (Nat i = 0; i < 101; i += 5) {
 			replace("Dumping physical memory to disk: " # i);
-			sleep(150 ms);
+			sleep(100 ms);
 		}
 
 		pln("Physical memory dump complete.");
