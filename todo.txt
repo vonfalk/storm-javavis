@@ -31,6 +31,9 @@ Core
 -------
 Include float/non float inside Size?
 
+Turns out that the test:bs:NoToS does not get initialized properly if one creates an instance of
+it. Furthermore, returning it in the top-loop makes the compiler crash.
+
 When converting a value of -1.ind to an int, we get a value of -<something large>, it should rather be zero.
 
 Think about how templates interacts with the new function lookup with respect to typecasts.

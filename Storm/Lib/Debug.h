@@ -158,4 +158,13 @@ namespace storm {
 		Int v;
 	};
 
+
+	// Class without a ToS function.
+	class DbgNoToS {
+		STORM_VALUE;
+	public:
+		STORM_CTOR DbgNoToS() : dummy(0) {};
+		STORM_VAR Int dummy;
+	};
+
 }

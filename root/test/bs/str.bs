@@ -9,6 +9,6 @@ value NoToS {
 }
 
 Str strConcatError() {
-	NoToS z;
+	DbgNoToS z;
 	"a" # z # "b";
 }
