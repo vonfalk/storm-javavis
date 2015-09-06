@@ -45,7 +45,7 @@ then
     exit 1
 fi
 
-Release/storm/StormMain.exe -c bs("Hello",2){,[.,]} > /dev/null
+Release/storm/StormMain.exe -c 'bs("Hello",2){,[.,]}' > /dev/null
 if [[ $? -ne 0 ]]
 then
     echo "Failed to execute BS code. Test in Release/storm"
