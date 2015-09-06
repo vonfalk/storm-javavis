@@ -154,8 +154,15 @@ void closeLater(Frame w) {
 }
 
 void main() {
+	print("Opening main window...");
 	// MainWin win;
 	PaintWin win;
 	spawn closeLater(win);
 	win.waitForClose;
+}
+
+void redoMain() {
+	main();
+	sleep(1 s);
+	main();
 }

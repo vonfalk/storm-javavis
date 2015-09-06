@@ -256,7 +256,6 @@ namespace stormgui {
 			fallback.wait();
 		} else {
 			WaitMessage();
-			atomicWrite(signalSent, 0);
 		}
 
 		return !done;
@@ -271,7 +270,6 @@ namespace stormgui {
 			fallback.wait(ms);
 		} else {
 			MsgWaitForMultipleObjects(0, NULL, FALSE, ms, QS_ALLPOSTMESSAGE);
-			atomicWrite(signalSent, 0);
 		}
 
 		return !done;
@@ -293,6 +291,12 @@ namespace stormgui {
 					uThread = os::UThread::invalid;
 					done = true;
 				}
+
+				// The function 'processMessages' consumes the WM_THREAD_SIGNAL messages so if
+				// someone wants to wake us up, they need to send a new message from here on. It is
+				// safe to reset this flag here since we are going to let other threads run after
+				// this point in the code anyway.
+				atomicWrite(signalSent, 0);
 			}
 		} catch (const Exception &e) {
 			PLN(L"Unhandled exception in window thread: " << e);
