@@ -256,6 +256,7 @@ namespace stormgui {
 			fallback.wait();
 		} else {
 			WaitMessage();
+			atomicWrite(signalSent, 0);
 		}
 
 		return !done;
@@ -270,6 +271,7 @@ namespace stormgui {
 			fallback.wait(ms);
 		} else {
 			MsgWaitForMultipleObjects(0, NULL, FALSE, ms, QS_ALLPOSTMESSAGE);
+			atomicWrite(signalSent, 0);
 		}
 
 		return !done;
