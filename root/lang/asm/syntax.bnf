@@ -1,0 +1,52 @@
+// Syntax for inline asm and freestanding asm.
+// TODO: Try to remove depency on the lang.bs.Block class.
+
+// Delimiters.
+AsmDelimiter => void : "[ \n\r\t]*";
+delimiter: AsmDelimiter;
+
+// Root rule for asm code.
+AsmListing(lang.bs.Block block);
+AsmListing => AsmListing() : (AsmInstruction(block) -> add, ";", )*;
+
+// All possible asm values.
+AsmOperand(lang.bs.Block block);
+AsmOperand => v : AsmLiteral v;
+AsmOperand => v : AsmWritable(block) v;
+
+// All possible writable asm values.
+AsmWritable(lang.bs.Block block);
+AsmWritable => v : AsmReg v;
+AsmWritable => v :[-10] AsmVariableRef(block) v;
+
+// Separate rule for each, so that they can be chosen individually as well.
+
+// Registers: al, bl, cl, eax, ebx, ecx, rax, rcx, rdx as in x86-64. ptrA, ptrB, ptrC, ptrStack, ptrFrame as pointer-sized ones.
+AsmReg => rAl() : "al";
+AsmReg => rBl() : "bl";
+AsmReg => rCl() : "cl";
+AsmReg => rEax() : "eax";
+AsmReg => rEbx() : "ebx";
+AsmReg => rEcx() : "ecx";
+AsmReg => rRax() : "rax";
+AsmReg => rRbx() : "rbx";
+AsmReg => rRcx() : "rcx";
+AsmReg => rPtrA() : "ptrA";
+AsmReg => rPtrB() : "ptrB";
+AsmReg => rPtrC() : "ptrC";
+
+// Literals.
+AsmLiteral => number(size, value) : "[binlw]" size - "-?[0-9]+" value; // Numeric literal with size before it.
+
+// Reference to a variable in another language.
+AsmVariableRef(lang.bs.Block block);
+AsmVariableRef => VarRef(block, name) : "[A-Za-z]+" name;
+
+// All asm instructions.
+AsmInstruction(lang.bs.Block block);
+AsmInstruction => AddInstr(dest, src) : "add", AsmWritable(block) dest, ",", AsmOperand(block) src;
+AsmInstruction => SubInstr(dest, src) : "sub", AsmWritable(block) dest, ",", AsmOperand(block) src;
+AsmInstruction => MovInstr(dest, src) : "mov", AsmWritable(block) dest, ",", AsmOperand(block) src;
+
+// Integration into other languages.
+Stmt => r : "asm", "{", AsmListing(block) r, "}";

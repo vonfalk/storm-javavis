@@ -256,6 +256,8 @@ namespace storm {
 		Operand STORM_FN intConst(Int v);
 		Operand STORM_FN natConst(Nat v);
 		Operand STORM_FN natConst(Size v);
+		Operand STORM_FN longConst(Long v);
+		Operand STORM_FN wordConst(Word v);
 		Operand STORM_FN intPtrConst(Int v);
 		Operand STORM_FN natPtrConst(Nat v);
 		Operand STORM_FN ptrConst(Size v);

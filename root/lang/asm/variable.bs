@@ -1,0 +1,25 @@
+use core:debug;
+use core:lang;
+use core:asm;
+use lang:bs;
+
+class VarRef extends AsmOperand {
+	LocalVar? var;
+
+	ctor(lang:bs:Block block, SStr name) {
+		init();
+
+		Named? v = block.scope.find(Name(name.v));
+		if (v as LocalVar) {
+			var = v;
+		}
+	}
+
+	Operand v() {
+		if (var) {
+			Operand(var.var.v);
+		} else {
+			Operand();
+		}
+	}
+}

@@ -1,0 +1,13 @@
+use lang:asm;
+use lang:bs:macro;
+use core:debug;
+
+void testInline() {
+	Int i = 20;
+
+	asm {
+		add i, i1;
+	}
+
+	print("i=" # i);
+}

@@ -1,0 +1,67 @@
+use core:debug; // TODO: remove!
+use core:lang;
+use core:asm;
+use lang:bs; // TODO: Extract a generic code generation interface so that we do not have to rely on Expr from BS.
+
+/**
+ * Assembler listing. Stores a set of asm instructions for later conversion into the real asm
+ * listing format.
+ */
+class AsmListing extends Expr {
+	AsmInstr[] data;
+
+	void add(AsmInstr instr) {
+		data << instr;
+	}
+
+	Value result() {
+		Value(); // Always returns void.
+	}
+
+	void code(CodeGen state, CodeResult r) {
+		for (Nat i = 0; i < data.count; i++) {
+			data[i].output(state);
+		}
+	}
+
+	Str toS() {
+		StrBuf r;
+		for (Nat i = 0; i < data.count; i++) {
+			r.add(data[i].toS);
+			r.add("\n");
+		}
+		r.toS;
+	}
+}
+
+
+/**
+ * Base class for a single assembler instruction.
+ */
+class AsmInstr on Compiler {
+	void output(CodeGen to) {}
+}
+
+/**
+ * Wrapper for the Operand type so that we can use it as a heap-allocated object.
+ */
+class AsmOperand on Compiler {
+	Operand value;
+
+	ctor() {
+		init();
+	}
+
+	cast ctor(Operand v) {
+		init() { value = v; }
+	}
+
+	// May be overridden.
+	Operand v() {
+		value;
+	}
+
+	Str toS() {
+		v.toS;
+	}
+}

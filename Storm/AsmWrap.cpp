@@ -361,6 +361,14 @@ namespace storm {
 		return code::natConst(v.v);
 	}
 
+	wrap::Operand wrap::longConst(Long v) {
+		return code::longConst(v);
+	}
+
+	wrap::Operand wrap::wordConst(Word v) {
+		return code::wordConst(v);
+	}
+
 	wrap::Operand wrap::intPtrConst(Int v) {
 		return code::intPtrConst(v);
 	}

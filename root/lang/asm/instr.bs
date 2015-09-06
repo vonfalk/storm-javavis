@@ -1,0 +1,52 @@
+use core:asm;
+
+class AddInstr extends AsmInstr {
+	AsmOperand dest;
+	AsmOperand src;
+
+	ctor(AsmOperand dest, AsmOperand src) {
+		init() { dest = dest; src = src; }
+	}
+
+	void output(CodeGen to) {
+		to.l << add(dest.v, src.v);
+	}
+
+	Str toS() {
+		"add " # dest # ", " # src;
+	}
+}
+
+class SubInstr extends AsmInstr {
+	AsmOperand dest;
+	AsmOperand src;
+
+	ctor(AsmOperand dest, AsmOperand src) {
+		init() { dest = dest; src = src; }
+	}
+
+	void output(CodeGen to) {
+		to.l << sub(dest.v, src.v);
+	}
+
+	Str toS() {
+		"sub " # dest # ", " # src;
+	}
+}
+
+class MovInstr extends AsmInstr {
+	AsmOperand dest;
+	AsmOperand src;
+
+	ctor(AsmOperand dest, AsmOperand src) {
+		init() { dest = dest; src = src; }
+	}
+
+	void output(CodeGen to) {
+		to.l << mov(dest.v, src.v);
+	}
+
+	Str toS() {
+		"mov " # dest # ", " # src;
+	}
+}
