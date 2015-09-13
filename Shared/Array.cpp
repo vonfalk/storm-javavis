@@ -43,10 +43,6 @@ namespace storm {
 		capacity = 0;
 	}
 
-	Bool ArrayBase::any() {
-		return count() > 0;
-	}
-
 	void ArrayBase::erase(Nat id) {
 		assert(id < size);
 

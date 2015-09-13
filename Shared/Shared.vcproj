@@ -225,6 +225,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Map.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\BuiltIn.cpp"
 				>
 			</File>
@@ -379,6 +383,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Map.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Auto.h"
 				>
 			</File>
@@ -496,10 +504,6 @@
 			</File>
 			<File
 				RelativePath=".\Io\Text.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Thread.cpp"
 				>
 			</File>
 			<File

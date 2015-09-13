@@ -43,7 +43,10 @@ namespace storm {
 		void STORM_FN clear();
 
 		// Any elements?
-		Bool STORM_FN any();
+		inline Bool STORM_FN any() const { return count() > 0; }
+
+		// Empty?
+		inline Bool STORM_FN empty() const { return count() == 0; }
 
 		// Erase one element.
 		void STORM_FN erase(Nat id);
