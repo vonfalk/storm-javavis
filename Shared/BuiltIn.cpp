@@ -16,6 +16,11 @@
 // BEGIN INCLUDES
 // END INCLUDES
 
+// Turn off optimizations in this file. It takes quite a long time, and since it is only executed
+// during compiler startup, it is not very useful to optimize these functions, especially not during
+// debug builds.
+#pragma optimize ("", off)
+
 // BEGIN STATIC
 // END STATIC
 
@@ -223,5 +228,8 @@ namespace storm {
 	}
 
 }
+
+// Return optimizations to normal.
+#pragma optimize ("", on)
 
 #endif
