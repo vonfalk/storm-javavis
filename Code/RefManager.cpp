@@ -274,6 +274,7 @@ namespace code {
 
 	nat RefManager::ownerOf(void *addr) const {
 		assert(false, L"Not implemented yet!");
+		return invalid;
 	}
 
 	void *RefManager::address(SourceInfo *from) {

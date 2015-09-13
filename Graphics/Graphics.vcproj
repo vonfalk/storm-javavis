@@ -183,6 +183,92 @@
 				CommandLine="$(SolutionDir)scripts\copyDll.bat $(OutDir)\$(ProjectName).dll $(SolutionDir)root\graphics $(ProjectName)$(ConfigurationName).dll"
 			/>
 		</Configuration>
+		<Configuration
+			Name="FastRelease|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
+			CharacterSet="1"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+				Description="Updating list of built-in functions..."
+				CommandLine="$(SolutionDir)$(ConfigurationName)\StormBuiltin.exe $(SolutionDir)Graphics\ $(SolutionDir)Shared\BuiltIn.cpp $(SolutionDir)Graphics\Lib\BuiltIn.cpp -a $(SolutionDir)Graphics\Lib\VTables.asm +$(SolutionDir)Graphics\ $(SolutionDir)Shared\ --using storm"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="MASM"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				EnableIntrinsicFunctions="true"
+				WholeProgramOptimization="false"
+				AdditionalIncludeDirectories="../;./"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GRAPHICS_EXPORTS"
+				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="2"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+				UseFullPaths="true"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				IgnoreImportLibrary="true"
+				LinkIncremental="1"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				LinkTimeCodeGeneration="0"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				Description="Copying dll..."
+				CommandLine="$(SolutionDir)scripts\copyDll.bat $(OutDir)\$(ProjectName).dll $(SolutionDir)root\graphics $(ProjectName)$(ConfigurationName).dll"
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -217,6 +303,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="FastRelease|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
