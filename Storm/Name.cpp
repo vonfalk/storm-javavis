@@ -181,7 +181,7 @@ namespace storm {
 		return true;
 	}
 
-	size_t Name::hash() const {
+	Nat Name::hash() {
 		// djb2 hash
 		size_t r = 5381;
 		for (nat i = 0; i < parts.size(); i++) {

@@ -124,7 +124,7 @@ namespace storm {
 		inline Bool STORM_FN empty() const { return size() == 0; }
 
 		// Hash function.
-		size_t hash() const;
+		virtual Nat STORM_FN hash();
 
 	protected:
 		virtual void output(std::wostream &to) const;

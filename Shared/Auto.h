@@ -90,6 +90,19 @@ namespace storm {
 			return obj == o;
 		}
 
+		// Hash stuff.
+		inline nat hash() const {
+			if (obj)
+				return obj->hash;
+			else
+				return 0;
+		}
+
+		// Non-pointer equality (mainly for use with the Handles).
+		inline bool equals(Par<T> o) const {
+			return obj->equals(o);
+		}
+
 		static Type *stormType(Engine &e) { return T::stormType(e); }
 		static Type *stormType(const Object *o) { return T::stormType(o); }
 	private:
@@ -184,6 +197,19 @@ namespace storm {
 			T *n = (T *)cloneObjectEnv(obj, env.borrow());
 			obj->release();
 			obj = n;
+		}
+
+		// Hash stuff.
+		inline nat hash() const {
+			if (obj)
+				return obj->hash();
+			else
+				return 0;
+		}
+
+		// Non-pointer equality (mainly for use with the Handles).
+		inline bool equals(Par<T> o) const {
+			return obj->equals(o);
 		}
 
 		// Proxies for the type() so that Array<Auto<T>> works.

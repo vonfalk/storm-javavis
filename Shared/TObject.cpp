@@ -9,4 +9,12 @@ namespace storm {
 
 	TObject::~TObject() {}
 
+	Bool TObject::equals(Par<Object> o) {
+		return o.borrow() == this;
+	}
+
+	Nat TObject::hash() {
+		return Nat(this);
+	}
+
 }

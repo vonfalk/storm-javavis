@@ -36,9 +36,6 @@ namespace storm {
 		// The string captured.
 		STORM_VAR Auto<Str> v;
 
-		// Equals.
-		virtual Bool STORM_FN equals(Object *o);
-
 	protected:
 		virtual void output(wostream &to) const;
 	};

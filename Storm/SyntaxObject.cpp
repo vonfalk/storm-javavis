@@ -22,13 +22,6 @@ namespace storm {
 		v = CREATE(Str, engine(), str);
 	}
 
-	Bool SStr::equals(Object *o) {
-		if (!Object::equals(o))
-			return false;
-
-		return v->equals(((SStr *)o)->v.ref());
-	}
-
 	void SStr::output(wostream &to) const {
 		to << *v << L"@" << pos;
 	}

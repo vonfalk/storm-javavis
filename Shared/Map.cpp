@@ -6,7 +6,10 @@ namespace storm {
 	MapBase::MapBase(const Handle &key, const Handle &value) :
 		keyHandle(key), valHandle(value),
 		size(0), capacity(0),
-		info(null), key(null), val(null) {}
+		info(null), key(null), val(null) {
+
+		TODO(L"Check if the key has hash() and equals() before continuing!");
+	}
 
 	MapBase::MapBase(Par<MapBase> o) :
 		keyHandle(o->keyHandle), valHandle(o->valHandle),

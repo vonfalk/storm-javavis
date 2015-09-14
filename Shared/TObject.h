@@ -33,6 +33,17 @@ namespace storm {
 
 		// This is more or less a dummy object to make the Object and TObject to be separate.
 
+		// Equality check. This may be called from the 'wrong' thread, so this should not be
+		// overloadable in Storm (even though it currently is, TODO). NOTE: since we're not
+		// explicitly declaring this function as 'virtual', it should be 'final' in storm.
+		Bool STORM_FN equals(Par<Object> o);
+
+		// Hash function, may be called from the 'wrong' thread, so this should not be overloadable
+		// in Storm (even though it currently is, TODO). NOTE: since we're not explicitly declaring
+		// this function as 'virtual', it should be 'final' in storm.
+		Nat STORM_FN hash();
+
+
 		// The thread we should be running on.
 		Auto<Thread> thread;
 	};

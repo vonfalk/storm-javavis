@@ -81,6 +81,7 @@ namespace storm {
 		// Insert a member function.
 		void addFn(const BuiltInFunction &fn, Type *into);
 		void addFn(const BuiltInFunction &fn, Package *into);
+		void addFnToHidden(const BuiltInFunction &fn, Type *into, bool first = true);
 
 		// Insert a variable.
 		void addVar(const BuiltInVar &var, Type *into);

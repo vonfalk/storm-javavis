@@ -36,6 +36,15 @@ namespace storm {
 		return v == other->v;
 	}
 
+	Nat Str::hash() {
+		// djb2 hash
+		size_t r = 5381;
+		for (nat j = 0; j < v.size(); j++)
+			r = ((r << 5) + r) + v[j];
+
+		return r;
+	}
+
 	Int Str::toInt() const {
 		return v.toInt();
 	}

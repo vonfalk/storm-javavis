@@ -83,6 +83,10 @@ namespace storm {
 		return true;
 	}
 
+	Nat Object::hash() {
+		return Nat(this);
+	}
+
 	void Object::deepCopy(Par<CloneEnv> env) {}
 
 	/**

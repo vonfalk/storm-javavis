@@ -38,6 +38,9 @@ namespace storm {
 		// Equals.
 		virtual Bool STORM_FN equals(Par<Object> o);
 
+		// Hash.
+		virtual Nat STORM_FN hash();
+
 		// Convert to int.
 		Int STORM_FN toInt() const;
 

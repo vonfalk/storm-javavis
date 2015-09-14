@@ -281,7 +281,7 @@ namespace storm {
 
 	void Type::validate(Named *o) {
 		if (o->params.empty())
-			throw TypedefError(L"Member functions must have at least one parameter!");
+			throw TypedefError(L"Member functions must have at least one parameter! " + o->name + L" in " + name);
 
 		const Value &first = o->params.front();
 		if (!first.canStore(Value(this, true)))

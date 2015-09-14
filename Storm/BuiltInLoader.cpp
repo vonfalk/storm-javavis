@@ -220,7 +220,6 @@ namespace storm {
 
 	void BuiltInLoader::checkType(Type *type) {
 		if (type->runOn().state == RunOn::any && !type->deepCopyFn()) {
-			// PLN(L"Adding deepCopy to " << type->identifier());
 			type->add(steal(CREATE(TypeDeepCopy, type, type)));
 		}
 	}
@@ -238,6 +237,15 @@ namespace storm {
 			} else {
 				assert(false, L"Unknown function mode. Either typeMember or noMember should be set!");
 				continue;
+			}
+		}
+
+		// Add functions to classes with hidden bases.
+		for (nat i = 0; src.functions[i].fnPtr; i++) {
+			const BuiltInFunction &fn = src.functions[i];
+
+			if (fn.mode & BuiltInFunction::typeMember) {
+				addFnToHidden(fn, types[fn.memberId].borrow());
 			}
 		}
 
@@ -298,21 +306,32 @@ namespace storm {
 	void BuiltInLoader::addFn(const BuiltInFunction &fn, Type *into) {
 		Auto<Function> c = createFn(fn, into);
 		into->add(c);
-
-		if (fn.name != Type::CTOR && fn.name != Type::DTOR) {
-			CopyMembers::iterator i = copyMembers.find(into);
-			if (i != copyMembers.end()) {
-				vector<Type *> &t = i->second;
-				for (nat i = 0; i < t.size(); i++) {
-					addFn(fn, t[i]);
-				}
-			}
-		}
 	}
 
 	void BuiltInLoader::addFn(const BuiltInFunction &fn, Package *into) {
 		Auto<Function> c = createFn(fn, null);
 		into->add(c);
+	}
+
+	void BuiltInLoader::addFnToHidden(const BuiltInFunction &fn, Type *into, bool first) {
+		if (fn.name == Type::CTOR || fn.name == Type::DTOR)
+			return;
+
+		if (!first) {
+			// Insert here as well! But check if a similar function already exists first ('overloading' should work).
+			Auto<Function> c = createFn(fn, into);
+			Auto<NamePart> name = CREATE(NamePart, into, c->name, c->params);
+			if (into->find(name) == null)
+				into->add(c);
+		}
+
+		CopyMembers::iterator i = copyMembers.find(into);
+		if (i != copyMembers.end()) {
+			vector<Type *> &t = i->second;
+			for (nat i = 0; i < t.size(); i++) {
+				addFnToHidden(fn, t[i], false);
+			}
+		}
 	}
 
 	void BuiltInLoader::loadVariables() {

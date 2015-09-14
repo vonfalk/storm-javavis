@@ -131,8 +131,11 @@ namespace storm {
 		// To string. Note: this will _not_ be called whenever we do "oss << foo". Rethink?
 		virtual Str *STORM_FN toS();
 
-		// Compare for equality.
+		// Compare for equality. TODO: Remake so that we do not have to go the Java-path!
 		virtual Bool STORM_FN equals(Par<Object> o);
+
+		// Compute our hash-value. TODO: Should be automatically generated!
+		virtual Nat STORM_FN hash();
 
 		// Deep copy anything that requires a deep copy.
 		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
