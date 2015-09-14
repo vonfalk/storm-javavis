@@ -13,7 +13,10 @@ namespace storm {
 	 *
 	 * The implementation is inspired from the hashmap implementation found in Lua. All keys and
 	 * values are stored as a flat array. Chaining is done by maintaining pointers in each of the
-	 * slots of the array.
+	 * slots of the array. An entry is said to be in its primary position if it is in the location
+	 * computed by the hash function. This implementation maintains the invariant that for each hash
+	 * value, the element contained is either the element in the primary position, or that hash does
+	 * not exist in the hash map.
 	 */
 
 	/**
@@ -48,7 +51,7 @@ namespace storm {
 
 		// Key and value handles.
 		const Handle &keyHandle;
-		const Handle &valueHandle;
+		const Handle &valHandle;
 
 	private:
 		// # of contained elements.
@@ -77,14 +80,30 @@ namespace storm {
 		// 'capacity' elements large.
 		Info *info;
 		byte *key;
-		byte *value;
+		byte *val;
 
 		// Get the locations for keys or values.
 		inline void *keyPtr(nat id) { return key + (id * keyHandle.size); }
-		inline void *valuePtr(nat id) { return value + (id * valueHandle.size); }
+		inline void *valPtr(nat id) { return val + (id * valHandle.size); }
+
+		// Allocate data for a specific size. Assumes 'info', 'key' and 'val' are null.
+		void alloc(nat capacity);
 
 		// Grow to fit at least one more element.
 		void grow();
+
+		// Insert a node, given its hash is known (eg. when re-hashing).
+		void insert(const void *key, const void *val, nat hash);
+
+		// Compute the primary slot of data, given its hash.
+		nat primarySlot(nat hash);
+
+		// Find a free slot. Always succeeds as long as size != capacity.
+		nat freeSlot();
+
+		// Last seen free slot in this table. Used by 'freeSlot'.
+		nat lastFree;
+
 	};
 
 
