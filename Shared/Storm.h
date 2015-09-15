@@ -48,7 +48,9 @@
 #define MAYBE(x) x
 
 // Define the name of the entry point in dynamic libraries based on if we're a debug build or not.
-#ifdef DEBUG
+#if defined(FAST_DEBUG)
+#define ENTRY_POINT_NAME stormFastDbgMain
+#elif defined(DEBUG)
 #define ENTRY_POINT_NAME stormDbgMain
 #else
 #define ENTRY_POINT_NAME stormMain

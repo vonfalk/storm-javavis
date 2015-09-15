@@ -159,7 +159,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="FastRelease|Win32"
+			Name="FastDebug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
@@ -192,7 +192,7 @@
 				EnableIntrinsicFunctions="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="../;./"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;FAST_DEBUG"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -411,6 +411,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lib\MapTemplate.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Lib\Maybe.cpp"
 				>
 			</File>
@@ -502,7 +506,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="FastRelease|Win32"
+					Name="FastDebug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -609,13 +613,6 @@
 			<File
 				RelativePath=".\Lib\VTables.asm"
 				>
-				<FileConfiguration
-					Name="FastRelease|Win32"
-					>
-					<Tool
-						Name="MASM"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\VTableSlot.cpp"
@@ -623,10 +620,6 @@
 			</File>
 			<File
 				RelativePath=".\Wrap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\MapTemplate.cpp"
 				>
 			</File>
 		</Filter>
@@ -805,6 +798,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Long.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\MapTemplate.h"
 				>
 			</File>
 			<File
@@ -993,10 +990,6 @@
 			</File>
 			<File
 				RelativePath=".\Wrap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Lib\MapTemplate.h"
 				>
 			</File>
 		</Filter>

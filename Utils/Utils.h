@@ -18,6 +18,11 @@
 #define DEBUG
 #endif
 
+// Debug mode compiled in release mode!
+#if defined(FAST_DEBUG) && !defined(DEBUG)
+#define DEBUG
+#endif
+
 #ifdef DEBUG
 // We don't need iterator debugging, it's slow!
 #define _HAS_ITERATOR_DEBUGGING 0

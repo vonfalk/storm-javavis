@@ -198,4 +198,5 @@ BEGIN_TEST(FnPtrThreadTest) {
 		CHECK_EQ(storm, 10101);
 		CHECK_EQ(cpp->get(), 10101);
 	}
+
 } END_TEST

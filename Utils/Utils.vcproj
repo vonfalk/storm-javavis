@@ -148,7 +148,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="FastRelease|Win32"
+			Name="FastDebug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
@@ -177,7 +177,7 @@
 				EnableIntrinsicFunctions="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="../"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;FAST_DEBUG"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -343,7 +343,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="FastRelease|Win32"
+					Name="FastDebug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"

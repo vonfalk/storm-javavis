@@ -44,7 +44,7 @@ Thumbs.db
 *.user
 
 Debug/
-FastRelease/
+FastDebug/
 Release/
 *.ncb
 *.suo
