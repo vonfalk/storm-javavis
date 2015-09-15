@@ -2,8 +2,6 @@
 
 #!/bin/perl -w
 
-use Switch;
-
 $num_args = $#ARGV + 1;
 if ($num_args < 3) {
     print "Add:    -a project.vcproj file1...\n";
@@ -143,43 +141,38 @@ my $section = "";
 my $output = 1;
 
 while ($line = <FILE>) {
-    switch ($section) {
-	case "" {
+    if ($section eq "") {
+	$output = 1;
+	if ($line =~ m/\w*<Filter\w*/) {
+	    $section = "filter";
+	}
+    } elsif ($section eq "filter") {
+	$output = 1;
+	if ($line =~ m/\w*Name="([^"]*)"/) {
+	    $section = $1;
+	    $filepart = 0;
+	}
+    } elsif ($section eq "Header Files") {
+	$output = 0;
+	if (at_end($line)) {
+	    @r = grep(m/.*h/, @toInsert);
+	    putpages(@r);
+	    $section = "";
 	    $output = 1;
-	    if ($line =~ m/\w*<Filter\w*/) {
-		$section = "filter";
-	    }
+	} elsif (parsetag($line)) {
+	    striplist($filename);
+	    putpage($filename, $middle);
 	}
-	case "filter" {
+    } elsif ($section eq "Source Files") {
+	$output = 0;
+	if (at_end($line)) {
+	    @r = grep(m/.*cpp/, @toInsert);
+	    putpages(@r);
+	    $section = "";
 	    $output = 1;
-	    if ($line =~ m/\w*Name="([^"]*)"/) {
-		$section = $1;
-		$filepart = 0;
-	    }
-	}
-	case "Header Files" {
-	    $output = 0;
-	    if (at_end($line)) {
-		@r = grep(m/.*h/, @toInsert);
-		putpages(@r);
-		$section = "";
-		$output = 1;
-	    } elsif (parsetag($line)) {
-		striplist($filename);
-		putpage($filename, $middle);
-	    }
-	}
-	case "Source Files" {
-	    $output = 0;
-	    if (at_end($line)) {
-		@r = grep(m/.*cpp/, @toInsert);
-		putpages(@r);
-		$section = "";
-		$output = 1;
-	    } elsif (parsetag($line)) {
-		striplist($filename);
-		putpage($filename, $middle);
-	    }
+	} elsif (parsetag($line)) {
+	    striplist($filename);
+	    putpage($filename, $middle);
 	}
     }
 
