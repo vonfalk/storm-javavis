@@ -126,6 +126,10 @@ namespace storm {
 		return (*interface->arrayType)(e, v);
 	}
 
+	Type *mapType(Engine &e, const ValueData &k, const ValueData &v) {
+		return (*interface->mapType)(e, k, v);
+	}
+
 	Type *futureType(Engine &e, const ValueData &v) {
 		return (*interface->futureType)(e, v);
 	}

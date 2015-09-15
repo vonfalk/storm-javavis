@@ -1,6 +1,8 @@
 #pragma once
 #include "Object.h"
 #include "Handle.h"
+#include "Types.h"
+#include "Value.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -18,6 +20,11 @@ namespace storm {
 	 * value, the element contained is either the element in the primary position, or that hash does
 	 * not exist in the hash map.
 	 */
+
+	// This function is implemented in MapTemplate.cpp.
+	// Look up a specific array type (create it if it is not already created).
+	Type *mapType(Engine &e, const ValueData &key, const ValueData &value);
+
 
 	/**
 	 * The base class that is used in Storm, use the derived class in C++.
@@ -106,5 +113,22 @@ namespace storm {
 
 	};
 
+
+	/**
+	 * C++ version.
+	 */
+	template <class K, class V>
+	class Map : public ArrayBase {
+		TYPE_EXTRA_CODE;
+	public:
+		static Type *stormType(Engine &e) { return mapType(e, value<T>(e)); }
+
+		// Empty map.
+		Map() : ArrayBase(storm::handle<K>(), storm::handle<V>()) { setVTable(this); }
+
+		// Copy map.
+		Map(Par<Map<K, V>> o) : ArrayBase(o) { setVTable(this); }
+
+	};
 
 }

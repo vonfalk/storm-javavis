@@ -12,7 +12,7 @@ namespace storm {
 	 */
 
 	// This function is implemented in ArrayTemplate.cpp
-	// Look up a specific array type (create it if it is not already created). Implemented in ArrayTemplate.cpp
+	// Look up a specific array type (create it if it is not already created).
 	Type *arrayType(Engine &e, const ValueData &type);
 
 	/**
@@ -58,7 +58,7 @@ namespace storm {
 		}
 
 		void *atRaw(nat id) {
-			assert(id < size);
+			assert(id < size); // TODO: Throw a real exception here!
 			return ptr(id);
 		}
 

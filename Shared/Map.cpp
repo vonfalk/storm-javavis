@@ -159,7 +159,7 @@ namespace storm {
 			}
 		}
 
-		assert(info[into] == Info::free, L"Internal error, trying to overwrite a slot!");
+		assert(info[into].status == Info::free, L"Internal error, trying to overwrite a slot!");
 		info[into] = insert;
 		(*keyHandle.create)(keyPtr(into), key);
 		(*valHandle.create)(valPtr(into), val);

@@ -7,6 +7,7 @@
 #include "Code/VTable.h"
 #include "Code/Memory.h"
 #include "Shared/Future.h"
+#include "Shared/Map.h"
 #include "Engine.h"
 
 #ifdef DEBUG
@@ -306,6 +307,7 @@ namespace storm {
 			&floatType,
 			&boolType,
 			&arrayType,
+			&mapType,
 			&futureType,
 			&fnPtrType,
 			&toSOverridden,

@@ -65,6 +65,9 @@ namespace storm {
 		typedef Type *(*ArrayType)(Engine &e, const ValueData &v);
 		ArrayType arrayType;
 
+		typedef Type *(*MapType)(Engine &e, const ValueData &k, const ValueData &v);
+		MapType mapType;
+
 		typedef Type *(*FutureType)(Engine &e, const ValueData &v);
 		FutureType futureType;
 

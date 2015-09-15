@@ -27,8 +27,16 @@ bool tfm(Engine &e, Par<SyntaxSet> set, const String &root, const String &str, A
 	try {
 		Auto<Object> o = transform(e, *set.borrow(), *t);
 		bool result = true;
-		if (eqTo)
-			result = eqTo->equals(o);
+		if (eqTo) {
+			if (SStr *oo = as<SStr>(o.borrow())) {
+				result = false;
+				if (SStr *et = as<SStr>(eqTo.borrow())) {
+					result = oo->v->equals(et->v);
+				}
+			} else {
+				result = eqTo->equals(o);
+			}
+		}
 
 		if (!result) {
 			PLN("Got: " << *o << L", expected: " << *eqTo);

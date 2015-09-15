@@ -625,6 +625,10 @@
 				RelativePath=".\Wrap.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\MapTemplate.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -989,6 +993,10 @@
 			</File>
 			<File
 				RelativePath=".\Wrap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\MapTemplate.h"
 				>
 			</File>
 		</Filter>

@@ -8,6 +8,7 @@
 #include "Lib/ArrayTemplate.h"
 #include "Lib/FutureTemplate.h"
 #include "Lib/FnPtrTemplate.h"
+#include "Lib/MapTemplate.h"
 #include "Lib/Maybe.h"
 
 // TODO: Can we remove any of these?
@@ -27,6 +28,7 @@ namespace storm {
 		addFnPtrTemplate(core); // needed early.
 		addMaybeTemplate(core);
 		addArrayTemplate(core);
+		addMapTemplate(core);
 		core->add(steal(cloneTemplate(to))); // also needed early
 
 		core->add(steal(intType(to)));
