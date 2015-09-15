@@ -146,19 +146,33 @@ namespace storm {
 		Function *dtor = destructor();
 		Function *create = copyCtor();
 		Function *deepCopy = deepCopyFn();
+		Function *equals = equalsFn();
+		Function *hash = hashFn();
 		if (!create)
 			throw RuntimeError(L"The type " + identifier() + L" does not have a copy constructor.");
 
 		typeHandle->size = size().current();
+		typeHandle->createRef(create->ref());
+
 		if (dtor)
 			typeHandle->destroyRef(dtor->ref());
 		else
 			typeHandle->destroyRef();
+
 		if (deepCopy)
 			typeHandle->deepCopyRef(deepCopy->ref());
 		else
 			typeHandle->deepCopyRef();
-		typeHandle->createRef(create->ref());
+
+		if (equals)
+			typeHandle->equalsRef(equals->ref());
+		else
+			typeHandle->equalsRef();
+
+		if (hash)
+			typeHandle->hashRef(equals->ref());
+		else
+			typeHandle->hashRef();
 	}
 
 	void Type::setSuper(Par<Type> super) {
@@ -342,6 +356,14 @@ namespace storm {
 
 	Function *Type::deepCopyFn() {
 		return as<Function>(findCpp(L"deepCopy", valList(2, Value::thisPtr(this), Value(CloneEnv::stormType(engine)))));
+	}
+
+	Function *Type::equalsFn() {
+		return as<Function>(findCpp(L"equals", valList(2, Value::thisPtr(this), Value::thisPtr(this))));
+	}
+
+	Function *Type::hashFn() {
+		return as<Function>(findCpp(L"hash", valList(1, Value::thisPtr(this))));
 	}
 
 

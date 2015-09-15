@@ -107,6 +107,12 @@ namespace storm {
 		// Deep copy function.
 		Function *deepCopyFn();
 
+		// Equals function. Note: may be T.equals(T) or T.equals(Object), the latter may be removed in the future.
+		Function *equalsFn();
+
+		// Hash function.
+		Function *hashFn();
+
 		// Get the offset to a member. TODO: Maybe replace this one with RefSources in TypeVar?
 		Offset offset(const TypeVar *var) const;
 
