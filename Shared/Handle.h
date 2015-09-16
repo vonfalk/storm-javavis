@@ -84,17 +84,20 @@ namespace storm {
 	template <class T, bool hasDeepCopy>
 	class HandleDeepHelper {
 	public:
-		void CODECALL dummy(void *) {}
+		static void CODECALL dummy(void *, CloneEnv *) {}
 		static Handle::DeepCopy deepCopy() {
-			return (Handle::DeepCopy)address(&HandleDeepHelper::dummy);
+			return (Handle::DeepCopy)&HandleDeepHelper<T, hasDeepCopy>::dummy;
 		}
 	};
 
 	template <class T>
 	class HandleDeepHelper<T, true> {
 	public:
+		static void CODECALL call(T *o, CloneEnv *env) {
+			o->deepCopy(env);
+		}
 		static Handle::DeepCopy deepCopy() {
-			return (Handle::DeepCopy)address(&T::deepCopy);
+			return (Handle::DeepCopy)&HandleDeepHelper<T, true>::call;
 		}
 	};
 
@@ -112,7 +115,7 @@ namespace storm {
 		}
 
 		static Handle::Equals equals() {
-			return (Handle::Equals)&HandleEqualsHelper::eq;
+			return (Handle::Equals)&HandleEqualsHelper<T, true, w>::eq;
 		}
 	};
 
@@ -125,7 +128,7 @@ namespace storm {
 		}
 
 		static Handle::Equals equals() {
-			return (Handle::Equals)&HandleEqualsHelper::eq;
+			return (Handle::Equals)&HandleEqualsHelper<T, false, true>::eq;
 		}
 	};
 
@@ -138,12 +141,12 @@ namespace storm {
 	template <class T>
 	class HandleHashHelper<T, true> {
 	public:
-		static nat CODECALL hash(const T *v) {
+		static nat CODECALL call(const T *v) {
 			return v->hash();
 		}
 
 		static Handle::Hash hash() {
-			return (Handle::Hash)address(&T::hash);
+			return (Handle::Hash)&HandleHashHelper<T, true>::call;
 		}
 	};
 

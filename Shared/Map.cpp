@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Map.h"
+#include <iomanip>
 
 namespace storm {
 
@@ -64,6 +65,22 @@ namespace storm {
 	void MapBase::putRaw(const void *key, const void *value) {
 		nat hash = (*keyHandle.hash)(key);
 		PVAR(hash);
+		insert(key, value, hash);
+	}
+
+	void MapBase::dbg_print() {
+		std::wcout << L"Map contents:" << endl;
+		for (nat i = 0; i < capacity; i++) {
+			std::wcout << std::setw(2) << i << L": ";
+			if (info[i].status == Info::free) {
+				std::wcout << L"free";
+			} else if (info[i].status == Info::end) {
+				std::wcout << toHex(info[i].hash) << L" end";
+			} else {
+				std::wcout << toHex(info[i].hash) << L" -> " << info[i].status;
+			}
+			std::wcout << endl;
+		}
 	}
 
 	void MapBase::alloc(nat cap) {
@@ -140,8 +157,10 @@ namespace storm {
 			if (from == into) {
 				// It is in its primary position. Attach ourselves to the chain.
 				// TODO: We probably want to check each element in the chain for equality first!
-				into = freeSlot();
+				nat to = freeSlot();
 				insert.status = info[into].status;
+				info[into].status = to;
+				into = to;
 			} else {
 				// It is not. Move it somewhere else.
 

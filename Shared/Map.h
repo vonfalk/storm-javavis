@@ -67,6 +67,13 @@ namespace storm {
 		// Put a value.
 		void putRaw(const void *key, const void *value);
 
+		/**
+		 * Debug.
+		 */
+
+		// Print the current low-level layout.
+		void dbg_print();
+
 	private:
 		// # of contained elements.
 		nat size;

@@ -7,12 +7,14 @@ BEGIN_TEST_(MapTest) {
 
 	typedef Map<Auto<Str>, Int> SIMap;
 	Auto<SIMap> map = CREATE(SIMap, e);
-	PLN("Map created!");
 
-	map->put(steal(CREATE(Str, e, L"A")), 10);
-	map->put(steal(CREATE(Str, e, L"B")), 11);
-	map->put(steal(CREATE(Str, e, L"A")), 12);
+	map->put(CREATE(Str, e, L"A"), 10);
+	map->put(CREATE(Str, e, L"B"), 11);
+	map->put(CREATE(Str, e, L"A"), 12);
+	map->put(CREATE(Str, e, L"C"), 13);
 
-	CHECK_EQ(map->count(), 2);
+	map->dbg_print();
+
+	CHECK_EQ(map->count(), 3);
 
 } END_TEST
