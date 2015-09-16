@@ -61,6 +61,11 @@ namespace storm {
 		delete []val; val = null;
 	}
 
+	void MapBase::putRaw(const void *key, const void *value) {
+		nat hash = (*keyHandle.hash)(key);
+		PVAR(hash);
+	}
+
 	void MapBase::alloc(nat cap) {
 		assert(info == null);
 		assert(key == null);

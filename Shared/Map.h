@@ -60,6 +60,13 @@ namespace storm {
 		const Handle &keyHandle;
 		const Handle &valHandle;
 
+		/**
+		 * Low-level operations.
+		 */
+
+		// Put a value.
+		void putRaw(const void *key, const void *value);
+
 	private:
 		// # of contained elements.
 		nat size;
@@ -99,7 +106,8 @@ namespace storm {
 		// Grow to fit at least one more element.
 		void grow();
 
-		// Insert a node, given its hash is known (eg. when re-hashing).
+		// Insert a node, given its hash is known (eg. when re-hashing). Always inserts the node,
+		// does not check if the node already exists!
 		void insert(const void *key, const void *val, nat hash);
 
 		// Compute the primary slot of data, given its hash.
@@ -118,16 +126,21 @@ namespace storm {
 	 * C++ version.
 	 */
 	template <class K, class V>
-	class Map : public ArrayBase {
+	class Map : public MapBase {
 		TYPE_EXTRA_CODE;
 	public:
-		static Type *stormType(Engine &e) { return mapType(e, value<T>(e)); }
+		static Type *stormType(Engine &e) { return mapType(e, value<K>(e), value<V>(e)); }
 
 		// Empty map.
-		Map() : ArrayBase(storm::handle<K>(), storm::handle<V>()) { setVTable(this); }
+		Map() : MapBase(storm::handle<K>(), storm::handle<V>()) { setVTable(this); }
 
 		// Copy map.
-		Map(Par<Map<K, V>> o) : ArrayBase(o) { setVTable(this); }
+		Map(Par<Map<K, V>> o) : MapBase(o) { setVTable(this); }
+
+		// Insert a value into the map, or update the existing.
+		void put(const K &k, const V &v) {
+			putRaw(&k, &v);
+		}
 
 	};
 

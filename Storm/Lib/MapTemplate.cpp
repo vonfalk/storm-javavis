@@ -1,14 +1,22 @@
 #include "stdafx.h"
 #include "MapTemplate.h"
 #include "Engine.h"
+#include "Function.h"
 
 namespace storm {
+
+	static void destroyClass(MapBase *b) {
+		b->~MapBase();
+	}
 
 	static Named *generateMap(Par<NamePart> part) {
 		if (part->params.size() != 2)
 			return null;
 
-		return CREATE(MapType, part->engine(), part->params[0], part->params[1]);
+		const Value &key = part->params[0];
+		const Value &value = part->params[1];
+
+		return CREATE(MapType, part->engine(), key.asRef(false), value.asRef(false));
 	}
 
 	void addMapTemplate(Par<Package> to) {
@@ -26,10 +34,16 @@ namespace storm {
 	}
 
 	MapType::MapType(const Value &key, const Value &value) :
-		Type(L"Map", typeClass, valList(2, key, value)), key(key), value(value) {}
+		Type(L"Map", typeClass, valList(2, key, value)), key(key), value(value) {
+
+		setSuper(MapBase::stormType(engine));
+	}
 
 	bool MapType::loadAll() {
 		// TODO: Load any special functions here!
+
+		Engine &e = engine;
+		add(steal(nativeDtor(e, this, &destroyClass)));
 
 		return Type::loadAll();
 	}

@@ -374,6 +374,10 @@
 				RelativePath=".\VTableTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\MapTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
