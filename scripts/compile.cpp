@@ -23,6 +23,10 @@ vector<string> findFiles(const string &str) {
 }
 
 int main(int argc, const char **argv) {
+	// Git bash changes the error mode since around when they stopped doing preview releases. Reset
+	// it so that we can debug!
+	SetErrorMode(0);
+
 	ifstream config("buildconfig");
 	string build;
 	getline(config, build);
