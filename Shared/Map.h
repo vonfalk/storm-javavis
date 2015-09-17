@@ -3,6 +3,7 @@
 #include "Handle.h"
 #include "Types.h"
 #include "Value.h"
+#include "Utils/Exception.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -24,6 +25,17 @@ namespace storm {
 	// This function is implemented in MapTemplate.cpp.
 	// Look up a specific array type (create it if it is not already created).
 	Type *mapType(Engine &e, const ValueData &key, const ValueData &value);
+
+	/**
+	 * Exception thrown from the map.
+	 */
+	class MapError : public Exception {
+	public:
+		MapError(const String &msg) : msg(msg) {}
+		virtual String what() const { return L"Map error: " + msg; }
+	private:
+		String msg;
+	};
 
 
 	/**
@@ -66,6 +78,18 @@ namespace storm {
 
 		// Put a value.
 		void putRaw(const void *key, const void *value);
+
+		// Has a value?
+		bool hasRaw(const void *key);
+
+		// Get a value. Throws if the value does not exist.
+		void *getRaw(const void *key);
+
+		// Get a value. Create it if it does not exist.
+		void *getRaw(const void *key, const void *def);
+
+		// Remove a value. Removing a non-existing key is a no-op.
+		void removeRaw(const void *key);
 
 		/**
 		 * Debug.
@@ -113,9 +137,13 @@ namespace storm {
 		// Grow to fit at least one more element.
 		void grow();
 
-		// Insert a node, given its hash is known (eg. when re-hashing). Always inserts the node,
-		// does not check if the node already exists!
-		void insert(const void *key, const void *val, nat hash);
+		// Insert a node, given its hash is known (eg. when re-hashing). Assumes that no other node
+		// with the same key exists in the map, and will therefore always insert the element.
+		// Returns the slot inserted into.
+		nat insert(const void *key, const void *val, nat hash);
+
+		// Find the current location of 'key', hiven 'hash'. Returns 'Info::free' if none exists.
+		nat findSlot(const void *key, nat hash);
 
 		// Compute the primary slot of data, given its hash.
 		nat primarySlot(nat hash);
@@ -147,6 +175,28 @@ namespace storm {
 		// Insert a value into the map, or update the existing.
 		void put(const K &k, const V &v) {
 			putRaw(&k, &v);
+		}
+
+		// Contains a key?
+		bool has(const K &k) {
+			return hasRaw(&k);
+		}
+
+		// Get a value from the map. Throws if the key is not found.
+		V &get(const K &k) {
+			V *r = (T *)getRaw(&k);
+			return *r;
+		}
+
+		// Get a value from the map, creating it if it does not already exist.
+		V &get(const K &k, const V &def) {
+			V *r = (T *)getRaw(&k, &def);
+			return *r;
+		}
+
+		// Remove a value.
+		void remove(const K &k) {
+			removeRaw(&k);
 		}
 
 	};

@@ -11,10 +11,14 @@ BEGIN_TEST_(MapTest) {
 	map->put(CREATE(Str, e, L"A"), 10);
 	map->put(CREATE(Str, e, L"B"), 11);
 	map->put(CREATE(Str, e, L"A"), 12);
-	map->put(CREATE(Str, e, L"C"), 13);
+	map->put(CREATE(Str, e, L"E"), 13);
 
 	map->dbg_print();
 
-	CHECK_EQ(map->count(), 3);
+	map->remove(CREATE(Str, e, L"A"));
+
+	map->dbg_print();
+
+	CHECK_EQ(map->count(), 2);
 
 } END_TEST

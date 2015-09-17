@@ -64,8 +64,87 @@ namespace storm {
 
 	void MapBase::putRaw(const void *key, const void *value) {
 		nat hash = (*keyHandle.hash)(key);
-		PVAR(hash);
-		insert(key, value, hash);
+
+		nat old = findSlot(key, hash);
+		if (old == Info::free) {
+			insert(key, value, hash);
+		} else {
+			(*valHandle.destroy)(valPtr(old));
+			(*valHandle.create)(valPtr(old), value);
+		}
+	}
+
+	bool MapBase::hasRaw(const void *key) {
+		nat hash = (*keyHandle.hash)(key);
+		return findSlot(key, hash) != Info::free;
+	}
+
+	void *MapBase::getRaw(const void *key) {
+		nat hash = (*keyHandle.hash)(key);
+		nat slot = findSlot(key, hash);
+		if (slot == Info::free) {
+			TODO(L"Create one if possible..?");
+			throw MapError(L"Key not in map.");
+		}
+
+		return valPtr(slot);
+	}
+
+	void *MapBase::getRaw(const void *key, const void *def) {
+		nat hash = (*keyHandle.hash)(key);
+		nat slot = findSlot(key, hash);
+
+		if (slot == Info::free)
+			slot = insert(key, def, hash);
+
+		return valPtr(slot);
+	}
+
+	void MapBase::removeRaw(const void *key) {
+		// Will break 'primarySlot' otherwise.
+		if (capacity == 0)
+			return;
+
+		nat hash = (*keyHandle.hash)(key);
+		nat slot = findSlot(key, hash);
+
+		if (info[slot].status == Info::free)
+			return;
+
+		nat prev = Info::free;
+		do {
+			if (info[slot].hash == hash && (*keyHandle.equals)(key, keyPtr(slot))) {
+				// Is the node we're about to delete inside a chain?
+				if (prev != Info::free) {
+					// Unlink us from the chain.
+					info[prev].status = info[slot].status;
+				}
+
+				nat next = info[slot].status;
+
+				// Destroy the node.
+				info[slot].status = Info::free;
+				(*keyHandle.destroy)(keyPtr(slot));
+				(*valHandle.destroy)(valPtr(slot));
+
+				if (prev == Info::free && next != Info::end) {
+					// The removed node was in the primary slot, and we need to move the next one
+					// into our slot.
+					(*keyHandle.create)(keyPtr(slot), keyPtr(next));
+					(*valHandle.create)(valPtr(slot), valPtr(next));
+					info[slot] = info[next];
+					info[next].status = Info::free;
+					(*keyHandle.destroy)(keyPtr(next));
+					(*valHandle.destroy)(valPtr(next));
+				}
+
+				size--;
+				return;
+			}
+
+			prev = slot;
+			slot = info[slot].status;
+		} while (slot != Info::end);
 	}
 
 	void MapBase::dbg_print() {
@@ -144,7 +223,7 @@ namespace storm {
 		lastFree = 0;
 	}
 
-	void MapBase::insert(const void *key, const void *val, nat hash) {
+	nat MapBase::insert(const void *key, const void *val, nat hash) {
 		if (size == capacity)
 			grow();
 
@@ -188,6 +267,28 @@ namespace storm {
 		(*keyHandle.create)(keyPtr(into), key);
 		(*valHandle.create)(valPtr(into), val);
 		size++;
+
+		return into;
+	}
+
+	nat MapBase::findSlot(const void *key, nat hash) {
+		// Otherwise, primarySlot won't work.
+		if (capacity == 0)
+			return Info::free;
+
+		nat slot = primarySlot(hash);
+
+		if (info[slot].status == Info::free)
+			return Info::free;
+
+		do {
+			if (info[slot].hash == hash && (*keyHandle.equals)(key, keyPtr(slot)))
+					return slot;
+
+			slot = info[slot].status;
+		} while (slot != Info::end);
+
+		return Info::free;
 	}
 
 	nat MapBase::primarySlot(nat hash) {
