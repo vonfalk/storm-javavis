@@ -35,11 +35,6 @@ namespace storm {
 	bool fnPtrNeedsCopy(FnPtrBase *b, TObject *first);
 	void fnPtrCallRaw(FnPtrBase *b, void *output, BasicTypeInfo *type, os::FnParams *params, TObject *first);
 
-	// Implemented in ArrayTemplate.cpp
-	Str *valArrayToSMember(ArrayBase *array, Str *(CODECALL *elemToS)(void *));
-	Str *valArrayToSFree(ArrayBase *array, const void *fn);
-	Str *valArrayToSAdd(ArrayBase *array, const void *fn);
-
 	class FutureBase;
 
 	// Spawning a thread. Implemented in Function.cpp.

@@ -148,11 +148,9 @@ namespace storm {
 		Function *deepCopy = deepCopyFn();
 		Function *equals = equalsFn();
 		Function *hash = hashFn();
-		Function *toSFn = findToSFn(); // BEWARE: this may change over time, which is not properly handled right now.
 		if (!create)
 			throw RuntimeError(L"The type " + identifier() + L" does not have a copy constructor.");
 
-		typeHandle->isValue = (flags | typeValue) != 0;
 		typeHandle->isFloat = builtInType() == BasicTypeInfo::floatNr;
 		typeHandle->size = size().current();
 		typeHandle->createRef(create->ref());
@@ -177,10 +175,38 @@ namespace storm {
 		else
 			typeHandle->hashRef();
 
-		if (toSFn)
-			typeHandle->toSRef(toSFn->ref());
-		else
-			typeHandle->toSRef();
+		updateHandleOutput();
+	}
+
+	void Type::updateHandleOutput() {
+		// 1: Try to find the add() function for this type in StrBuf...
+		Type *s = StrBuf::stormType(engine);
+		if (Function *f = as<Function>(s->findCpp(L"add", valList(2, Value::thisPtr(s), Value(this))))) {
+			typeHandle->outputRef(f->ref(), RefHandle::outputAdd);
+			return;
+		}
+
+		// BEWARE: this may change over time, which is not properly handled right now.
+		if (Function *f = findToSFn()) {
+			if (f->isMember()) {
+				// Always by-ref if we've found a member function.
+				typeHandle->outputRef(f->ref(), RefHandle::outputByRefMember);
+			} else {
+				// We can always find a member function if 'this' is an object.
+				assert(flags | typeValue, L"Should be able to find 'toS' as a member for objects! " + name);
+
+				const Value &v = f->params[0];
+				if (v.ref) {
+					typeHandle->outputRef(f->ref(), RefHandle::outputByRef);
+				} else {
+					typeHandle->outputRef(f->ref(), RefHandle::outputByVal);
+				}
+			}
+
+			return;
+		}
+
+		typeHandle->outputRef();
 	}
 
 	void Type::setSuper(Par<Type> super) {

@@ -120,4 +120,24 @@ namespace storm {
 		}
 	}
 
+
+	Str *ArrayBase::toS() {
+		Auto<StrBuf> r = CREATE(StrBuf, this);
+
+		r->add(L"[");
+
+		if (count() > 0)
+			handle.output(ptr(0), r.borrow());
+
+		for (nat i = 1; i < count(); i++) {
+			r->add(L", ");
+			handle.output(ptr(i), r.borrow());
+		}
+
+		r->add(L"]");
+
+		return r->toS();
+	}
+
+
 }

@@ -62,6 +62,9 @@ namespace storm {
 			return ptr(id);
 		}
 
+		// To string.
+		virtual Str *STORM_FN toS();
+
 		// Handle
 		const Handle &handle;
 
@@ -123,19 +126,6 @@ namespace storm {
 		// Insert an element.
 		void push(const T &item) {
 			pushRaw(&item);
-		}
-
-	protected:
-		virtual void output(wostream &to) const {
-			to << L"[";
-
-			if (count() > 0)
-				to << ::toS(at(0));
-
-			for (nat i = 1; i < count(); i++)
-				to << L", " << ::toS(at(i));
-
-			to << L"]";
 		}
 
 	};

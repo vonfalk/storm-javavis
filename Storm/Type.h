@@ -162,6 +162,9 @@ namespace storm {
 		// Update the handle.
 		void updateHandle(bool force);
 
+		// Update the output part of the handle.
+		void updateHandleOutput();
+
 		// Ensure that any lazy-loaded parts are loaded.
 		void ensureLoaded();
 

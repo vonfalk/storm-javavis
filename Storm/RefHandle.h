@@ -26,14 +26,24 @@ namespace storm {
 		void equalsRef(const code::Ref &ref);
 		void hashRef();
 		void hashRef(const code::Ref &ref);
-		void toSRef();
-		void toSRef(const code::Ref &ref);
+
+		enum OutputMode {
+			outputNone,
+			// Add directly to StrBuf. 'outputFn' is StrBuf *(CODECALL *)(StrBuf *, T)
+			outputAdd,
+			// ToS by reference. 'outputFn' is Str *(CODECALL *)(T *) always member fn.
+			outputByRefMember,
+			// ToS by reference. 'outputFn' is Str *(CODECALL *)(T *) always non-member.
+			outputByRef,
+			// ToS by value. 'outputFn' is Str *(CODECALL *)(T) always non-member.
+			outputByVal,
+		};
+
+		void outputRef();
+		void outputRef(const code::Ref &ref, OutputMode mode);
 
 		// Output magic.
 		virtual void output(const void *object, StrBuf *to) const;
-
-		// Is this a value?
-		bool isValue;
 
 	private:
 		// References.
@@ -42,14 +52,14 @@ namespace storm {
 		code::AddrReference *deepCopyUpdater;
 		code::AddrReference *equalsUpdater;
 		code::AddrReference *hashUpdater;
-		code::AddrReference *toSUpdater;
+		code::AddrReference *outputUpdater;
 		const code::Content &content;
 
-		// ToS function. Always takes a single pointer to the object, even if the type we're
-		// describing implies an extra indirection. This is seen by the 'isValue' member set by
-		// 'Type'.
-		typedef Str *(CODECALL *ToS)(const void *o);
-		ToS toS;
+		// Function for output. Type depends on 'outputMode'.
+		const void *outputFn;
+
+		// Mode of 'outputFn'.
+		OutputMode outputMode;
 	};
 
 

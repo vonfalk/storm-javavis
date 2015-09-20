@@ -32,17 +32,6 @@ namespace storm {
 
 		// Load functions assuming param is a value.
 		void loadValueFns();
-
-		// Generate the toS function for values.
-		CodeGen *CODECALL valueToS();
-
-		// Generate the toS function for values, assuming that we have to call
-		// the add() function on the StrBuf object.
-		CodeGen *CODECALL valueToSAdd(Function *addFn);
-
-		// Generate the toS function for values, assuming that we should use the toS
-		// function of the object itself.
-		CodeGen *CODECALL valueToSMember(Function *member);
 	};
 
 	// See Array.h for 'arrayType' function.

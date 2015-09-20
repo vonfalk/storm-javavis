@@ -12,6 +12,8 @@ namespace os {
 	 * Since this class stores pointers to values, the user needs to take
 	 * care to not pass temporary values to 'param'. For example, the following
 	 * is wrong: FnParams().add(1), since 1 will be a temporary variable.
+	 *
+	 * TODO? Use the pre-allocated array to avoid heap allocations alltogether?
 	 */
 	class FnParams {
 	public:

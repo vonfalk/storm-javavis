@@ -1,17 +1,18 @@
 #include "stdafx.h"
 #include "RefHandle.h"
 #include "Shared/Str.h"
+#include "OS/FnCall.h"
 
 namespace storm {
 
 	RefHandle::RefHandle(const code::Content &content) :
-		isValue(false),
 		destroyUpdater(null),
 		createUpdater(null),
 		deepCopyUpdater(null),
 		equalsUpdater(null),
 		hashUpdater(null),
-		toSUpdater(null),
+		outputUpdater(null),
+		outputMode(outputNone),
 		content(content) {}
 
 	RefHandle::~RefHandle() {
@@ -20,25 +21,47 @@ namespace storm {
 		delete deepCopyUpdater;
 		delete equalsUpdater;
 		delete hashUpdater;
-		delete toSUpdater;
+		delete outputUpdater;
+	}
+
+	static void addParam(os::FnParams &to, const Handle &handle, const void *value) {
+		to.add(handle.create, handle.destroy, handle.size, handle.isFloat, value);
 	}
 
 	void RefHandle::output(const void *obj, StrBuf *to) const {
-		if (!toS) {
+		switch (outputMode) {
+		case outputNone: {
 			to->add(L"?");
-			return;
+			break;
 		}
-
-		Auto<Str> v;
-		if (isValue) {
-			// We can pass a direct pointer here.
-			v = (*toS)(obj);
-		} else {
-			// We need to de-reference one time.
-			const void **o = (const void **)obj;
-			v = (*toS)(*o);
+		case outputAdd: {
+			os::FnParams p;
+			p.add(to);
+			addParam(p, *this, obj);
+			steal(os::call<StrBuf *>(outputFn, true, p));
+			break;
 		}
-		steal(to->add(v));
+		case outputByRefMember: {
+			typedef Str *(CODECALL *Fn)(const void *);
+			Fn fn = (Fn)outputFn;
+			steal(to->add(steal((*fn)(obj))));
+			break;
+		}
+		case outputByRef: {
+			// Currently, this is exactly the same as above, but that may change when new
+			// architectures are introduced, with new, interesting calling conventions!
+			typedef Str *(CODECALL *Fn)(const void *);
+			Fn fn = (Fn)outputFn;
+			steal(to->add(steal((*fn)(obj))));
+			break;
+		}
+		case outputByVal: {
+			os::FnParams p;
+			addParam(p, *this, obj);
+			steal(to->add(steal(os::call<Str *>(outputFn, false, p))));
+			break;
+		}
+		}
 	}
 
 	void RefHandle::destroyRef(const code::Ref &ref) {
@@ -96,16 +119,18 @@ namespace storm {
 			hashUpdater = new code::AddrReference((void **)&hash, ref, content);
 	}
 
-	void RefHandle::toSRef() {
-		del(toSUpdater);
-		hash = null;
+	void RefHandle::outputRef() {
+		del(outputUpdater);
+		outputFn = null;
+		outputMode = outputNone;
 	}
 
-	void RefHandle::toSRef(const code::Ref &ref) {
-		if (toSUpdater)
-			toSUpdater->set(ref);
+	void RefHandle::outputRef(const code::Ref &ref, OutputMode mode) {
+		if (outputUpdater)
+			outputUpdater->set(ref);
 		else
-			toSUpdater = new code::AddrReference((void **)&toS, ref, content);
+			outputUpdater = new code::AddrReference((void **)&outputFn, ref, content);
+		outputMode = mode;
 	}
 
 }

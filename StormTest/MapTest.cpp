@@ -3,7 +3,7 @@
 #include "Shared/Map.h"
 #include "Storm/Url.h"
 
-BEGIN_TEST_(MapTest) {
+BEGIN_TEST(MapTest) {
 	Engine &e = *gEngine;
 
 	{
