@@ -1,4 +1,5 @@
 #pragma once
+#include "StrBuf.h"
 #include "Utils/Templates.h"
 
 CREATE_DETECTOR(deepCopy);
@@ -7,48 +8,53 @@ CREATE_DETECTOR_MEMBER(operatorEq, operator ==);
 CREATE_DETECTOR(equals);
 
 namespace storm {
+	class Str;
+	class StrBuf;
 	class CloneEnv;
 
 	/**
 	 * A type handle, ie information about a type without actually knowing
 	 * exactly what the type itself is.
 	 * Used to make it easier to implement templates usable in Storm from C++.
-	 *
-	 * NOTE: Do not copy, introducing NoCopy here crashes the static variable below
-	 * for some reason...
 	 */
-	class Handle {
+	class Handle : NoCopy {
 	public:
 		// Size of the type.
 		size_t size;
 
 		// Destructor (may be null).
-		typedef void (CODECALL *Destroy)(void *);
+		typedef void (CODECALL *Destroy)(void *object);
 		Destroy destroy;
 
 		// Copy-construct (to, from)
-		typedef void (CODECALL *Create)(void *, const void *);
+		typedef void (CODECALL *Create)(void *to, const void *from);
 		Create create;
 
 		// Deep-copy.
-		typedef void (CODECALL *DeepCopy)(void *, CloneEnv *);
+		typedef void (CODECALL *DeepCopy)(void *object, CloneEnv *env);
 		DeepCopy deepCopy;
 
 		// Equals.
-		typedef bool (CODECALL *Equals)(const void *, const void *);
+		typedef bool (CODECALL *Equals)(const void *object, const void *eq);
 		Equals equals;
 
 		// Hash.
-		typedef nat (CODECALL *Hash)(const void *);
+		typedef nat (CODECALL *Hash)(const void *object);
 		Hash hash;
+
+		// Output to StrBuf.
+		typedef void (CODECALL *Output)(const void *object, StrBuf *to);
+		Output output;
 
 		// Floating point value?
 		bool isFloat;
 
-		inline Handle()
-			: size(0), destroy(null), create(null), deepCopy(null), equals(null), hash(null), isFloat(false) {}
-		inline Handle(size_t size, Destroy destroy, Create create, DeepCopy deep, Equals equals, Hash hash, bool isFloat)
-			: size(size), destroy(destroy), create(create), deepCopy(deep), equals(equals), hash(hash), isFloat(isFloat) {}
+		inline Handle() :
+			size(0), destroy(null), create(null), deepCopy(null), equals(null), hash(null), isFloat(false) {}
+		inline Handle(size_t size, Destroy destroy, Create create, DeepCopy deep, Equals equals, Hash hash,
+					Output output, bool isFloat) :
+			size(size), destroy(destroy), create(create), deepCopy(deep), equals(equals), hash(hash),
+			output(output), isFloat(isFloat) {}
 	};
 
 	/**
@@ -150,6 +156,30 @@ namespace storm {
 		}
 	};
 
+	template <class T, bool directOutput>
+	class OutputHelper {
+	public:
+		static void CODECALL call(const T *v, StrBuf *to) {
+			to->add(L"FIXME");
+		}
+
+		static Handle::Output output() {
+			return (Handle::Output)&OutputHelper<T, false>::call;
+		}
+	};
+
+	template <class T>
+	class OutputHelper<T, true> {
+	public:
+		static void CODECALL call(const T *v, StrBuf *to) {
+			steal(to->add(*v));
+		}
+
+		static Handle::Output output() {
+			return (Handle::Output)&OutputHelper<T, true>::call;
+		}
+	};
+
 	/**
 	 * Create handles.
 	 */
@@ -162,6 +192,7 @@ namespace storm {
 			HandleDeepHelper<T, detect_deepCopy<T>::value>::deepCopy(),
 			HandleEqualsHelper<T, detect_equals<T>::value, detect_operatorEq<T>::value>::equals(),
 			HandleHashHelper<T, detect_hash<T>::value>::hash(),
+			OutputHelper<T, CanOutput<T>::value>::output(),
 			IsFloat<T>::value
 			);
 		return h;

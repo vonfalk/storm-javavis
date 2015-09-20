@@ -93,7 +93,7 @@ namespace storm {
 		// Hash stuff.
 		inline nat hash() const {
 			if (obj)
-				return obj->hash;
+				return obj->hash();
 			else
 				return 0;
 		}

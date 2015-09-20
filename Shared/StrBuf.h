@@ -1,5 +1,6 @@
 #pragma once
 #include "Object.h"
+#include "Utils/Templates.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -35,6 +36,9 @@ namespace storm {
 		virtual StrBuf *STORM_FN add(Byte i);
 		virtual StrBuf *STORM_FN add(Float i);
 
+		// Help the templating below...
+		StrBuf *CODECALL add(Str *str);
+
 		// C++-specific.
 		void add(const String &v);
 		void add(const wchar *v);
@@ -60,6 +64,28 @@ namespace storm {
 
 		// Insert a null terminator.
 		void nullTerminate() const;
+	};
+
+
+	/**
+	 * Template magic detecting if type X can be outputted using 'add' on StrBuf directly.
+	 */
+	template <class T>
+	class CanOutput {
+	private:
+		template <class U, U> struct Check;
+
+		template <class U>
+		static YesType check(Check<StrBuf *(CODECALL StrBuf::*)(U), &StrBuf::add> *);
+
+		// template <class U>
+		// static YesType check(Check<StrBuf *(CODECALL StrBuf::*)(Par<U>), &StrBuf::add> *);
+
+		template <class U>
+		static NoType check(...);
+
+	public:
+		enum { value = sizeof(check<typename AsPar<T>::v>(0)) == sizeof(YesType) };
 	};
 
 }

@@ -151,6 +151,8 @@ namespace storm {
 		if (!create)
 			throw RuntimeError(L"The type " + identifier() + L" does not have a copy constructor.");
 
+		TODO(L"Create an 'output' function as well!");
+
 		typeHandle->size = size().current();
 		typeHandle->createRef(create->ref());
 

@@ -14,10 +14,12 @@ BEGIN_TEST_(MapTest) {
 	map->put(CREATE(Str, e, L"E"), 13);
 
 	map->dbg_print();
+	PVAR(map);
 
 	map->remove(CREATE(Str, e, L"A"));
 
 	map->dbg_print();
+	PVAR(map);
 
 	CHECK_EQ(map->count(), 2);
 

@@ -147,6 +147,28 @@ namespace storm {
 		} while (slot != Info::end);
 	}
 
+	Str *MapBase::toS() {
+		Auto<StrBuf> b = CREATE(StrBuf, this);
+		b->add(L"{");
+
+		bool first = true;
+		for (nat i = 0; i < capacity; i++) {
+			if (info[i].status == Info::free)
+				continue;
+
+			if (!first)
+				b->add(L", ");
+			first = false;
+
+			(*keyHandle.output)(keyPtr(i), b.borrow());
+			b->add(L" -> ");
+			(*valHandle.output)(valPtr(i), b.borrow());
+		}
+
+		b->add(L"}");
+		return b->toS();
+	}
+
 	void MapBase::dbg_print() {
 		std::wcout << L"Map contents:" << endl;
 		for (nat i = 0; i < capacity; i++) {

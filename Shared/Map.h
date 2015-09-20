@@ -91,6 +91,9 @@ namespace storm {
 		// Remove a value. Removing a non-existing key is a no-op.
 		void removeRaw(const void *key);
 
+		// String representation.
+		Str *STORM_FN toS();
+
 		/**
 		 * Debug.
 		 */

@@ -56,6 +56,10 @@ namespace storm {
 	}
 
 	// Append stuff.
+	StrBuf *StrBuf::add(Str *str) {
+		return add(Par<Str>(str));
+	}
+
 	StrBuf *StrBuf::add(Par<Str> str) {
 		ensure(pos + str->count());
 		for (nat i = 0; i < str->count(); i++) {
