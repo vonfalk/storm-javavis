@@ -1,5 +1,6 @@
 #pragma once
 #include "Shared/TObject.h"
+#include "Shared/Str.h"
 #include "Thread.h"
 #include "SrcPos.h"
 

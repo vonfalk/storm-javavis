@@ -142,6 +142,10 @@ namespace storm {
 		return (*interface->toSOverridden)(o);
 	}
 
+	const Handle &typeHandle(Type *t) {
+		return (*interface->typeHandle)(t);
+	}
+
 #ifdef DEBUG
 	void checkLive(void *ptr) {
 		(*interface->checkLive)(ptr);

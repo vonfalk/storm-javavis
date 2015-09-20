@@ -148,11 +148,12 @@ namespace storm {
 		Function *deepCopy = deepCopyFn();
 		Function *equals = equalsFn();
 		Function *hash = hashFn();
+		Function *toSFn = findToSFn(); // BEWARE: this may change over time, which is not properly handled right now.
 		if (!create)
 			throw RuntimeError(L"The type " + identifier() + L" does not have a copy constructor.");
 
-		TODO(L"Create an 'output' function as well!");
-
+		typeHandle->isValue = (flags | typeValue) != 0;
+		typeHandle->isFloat = builtInType() == BasicTypeInfo::floatNr;
 		typeHandle->size = size().current();
 		typeHandle->createRef(create->ref());
 
@@ -172,9 +173,14 @@ namespace storm {
 			typeHandle->equalsRef();
 
 		if (hash)
-			typeHandle->hashRef(equals->ref());
+			typeHandle->hashRef(hash->ref());
 		else
 			typeHandle->hashRef();
+
+		if (toSFn)
+			typeHandle->toSRef(toSFn->ref());
+		else
+			typeHandle->toSRef();
 	}
 
 	void Type::setSuper(Par<Type> super) {
@@ -368,6 +374,19 @@ namespace storm {
 		return as<Function>(findCpp(L"hash", valList(1, Value::thisPtr(this))));
 	}
 
+	Function *Type::findToSFn() {
+		// 1: Local scope.
+		if (Function *f = as<Function>(findCpp(L"toS", valList(1, Value::thisPtr(this)))))
+			return f;
+
+		// 2: Surrounding scope.
+		if (Function *f = as<Function>(parent()->findCpp(L"toS", valList(1, Value(this)))))
+			return f;
+
+		// 3: Out of luck. We could look in language-specific parts here, but that gets really messy!
+		return null;
+	}
+
 
 	Offset Type::offset(const TypeVar *var) const {
 		return layout.offset(superSize(), var);
@@ -488,6 +507,11 @@ namespace storm {
 			children[i]->insertOverloads(fn);
 	}
 
+	// This is used in the DLL interface. It is declared in Shared/Types.h
+	const Handle &typeHandle(Type *t) {
+		return t->handle();
+	}
+
 	Function *emptyCtor(Par<Type> t) {
 		return capture(t->defaultCtor()).ret();
 	}
@@ -506,6 +530,18 @@ namespace storm {
 
 	Function *deepCopyFn(Par<Type> t) {
 		return capture(t->deepCopyFn()).ret();
+	}
+
+	Function *STORM_FN equalsFn(Par<Type> t) {
+		return capture(t->equalsFn()).ret();
+	}
+
+	Function *STORM_FN hashFn(Par<Type> t) {
+		return capture(t->hashFn()).ret();
+	}
+
+	Function *STORM_FN findToSFn(Par<Type> t) {
+		return capture(t->findToSFn()).ret();
 	}
 
 }

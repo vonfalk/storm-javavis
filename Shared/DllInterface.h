@@ -77,6 +77,9 @@ namespace storm {
 		typedef bool (*ToSOverridden)(const Object *o);
 		ToSOverridden toSOverridden;
 
+		typedef const Handle &(*TypeHandle)(Type *t);
+		TypeHandle typeHandle;
+
 #ifdef DEBUG
 		typedef void (*CheckLive)(void *mem);
 		CheckLive checkLive;

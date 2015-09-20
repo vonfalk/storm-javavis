@@ -160,9 +160,9 @@ namespace storm {
 				b->add(L", ");
 			first = false;
 
-			(*keyHandle.output)(keyPtr(i), b.borrow());
+			keyHandle.output(keyPtr(i), b.borrow());
 			b->add(L" -> ");
-			(*valHandle.output)(valPtr(i), b.borrow());
+			valHandle.output(valPtr(i), b.borrow());
 		}
 
 		b->add(L"}");

@@ -291,6 +291,15 @@ namespace storm {
 		static BorrowT borrow(const Par<T> &v) { return v.borrow(); }
 	};
 
+	template <>
+	struct IsAuto<void> {
+		static const bool v = false;
+
+		// Dummies to make IsAuto<> usable outside of borrow() with void at least.
+		typedef void BorrowT;
+		static void borrow() {}
+	};
+
 	/**
 	 * Convert Pars to Autos automagically.
 	 */

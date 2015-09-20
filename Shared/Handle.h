@@ -43,19 +43,83 @@ namespace storm {
 		Hash hash;
 
 		// Output to StrBuf.
-		typedef void (CODECALL *Output)(const void *object, StrBuf *to);
-		Output output;
+		virtual void output(const void *object, StrBuf *to) const = 0;
 
 		// Floating point value?
 		bool isFloat;
 
 		inline Handle() :
 			size(0), destroy(null), create(null), deepCopy(null), equals(null), hash(null), isFloat(false) {}
-		inline Handle(size_t size, Destroy destroy, Create create, DeepCopy deep, Equals equals, Hash hash,
-					Output output, bool isFloat) :
-			size(size), destroy(destroy), create(create), deepCopy(deep), equals(equals), hash(hash),
-			output(output), isFloat(isFloat) {}
 	};
+
+	/**
+	 * The handle used when we instantiate it from the handle<T> function below. This is templated,
+	 * since we need some information about the type to be able to retrieve the toS function among
+	 * others.
+	 */
+	template <class T>
+	class StaticHandle : public Handle {
+	public:
+
+		StaticHandle(size_t size, Destroy destroy, Create create, DeepCopy deep, Equals equals, Hash hash, bool isFloat) {
+			this->size = size;
+			this->destroy = destroy;
+			this->create = create;
+			this->deepCopy = deep;
+			this->equals = equals;
+			this->hash = hash;
+			this->isFloat = isFloat;
+		}
+
+		// Output.
+		virtual void output(const void *object, StrBuf *to) const {
+			out.output((const T *)object, to);
+		}
+
+	private:
+		// Helper for the output.
+		template <bool object, bool direct>
+		struct Output {
+			// Use the compiler-generated Handle for this functionality.
+			mutable const Handle *handle;
+
+			Output() : handle(null) {}
+
+			void output(const T *obj, StrBuf *to) const {
+				if (!handle) {
+					// Note: we can not get type info from 'obj', it is probably a value.
+					Type *t = stormType<T>(to->engine());
+					// Void.
+					if (!t)
+						return;
+					handle = &typeHandle(stormType<T>(to->engine()));
+				}
+
+				handle->output(obj, to);
+			}
+		};
+
+		// Prefer using the StrBuf directly if possible.
+		template <bool object>
+		struct Output<object, true> {
+			void output(const T *obj, StrBuf *to) const {
+				steal(to->add(*obj));
+			}
+		};
+
+		template <>
+		struct Output<true, false> {
+			void output(const T *obj, StrBuf *to) const {
+				// T is Auto<T> or Par<T>, which means it should have a ->toS that is reasonable to use!
+				steal(to->add(steal((*obj)->toS())));
+			}
+		};
+
+		// Any state needed by the output.
+		Output<IsAuto<T>::v, CanOutput<T>::v> out;
+
+	};
+
 
 	/**
 	 * Helper, this allows us to specialize for various types later on!
@@ -156,43 +220,19 @@ namespace storm {
 		}
 	};
 
-	template <class T, bool directOutput>
-	class OutputHelper {
-	public:
-		static void CODECALL call(const T *v, StrBuf *to) {
-			to->add(L"FIXME");
-		}
-
-		static Handle::Output output() {
-			return (Handle::Output)&OutputHelper<T, false>::call;
-		}
-	};
-
-	template <class T>
-	class OutputHelper<T, true> {
-	public:
-		static void CODECALL call(const T *v, StrBuf *to) {
-			steal(to->add(*v));
-		}
-
-		static Handle::Output output() {
-			return (Handle::Output)&OutputHelper<T, true>::call;
-		}
-	};
 
 	/**
 	 * Create handles.
 	 */
 	template <class T>
 	const Handle &handle() {
-		static Handle h = Handle(
+		static StaticHandle<T> h(
 			HandleHelper<T>::size(),
 			&HandleHelper<T>::destroy,
 			&HandleHelper<T>::create,
 			HandleDeepHelper<T, detect_deepCopy<T>::value>::deepCopy(),
 			HandleEqualsHelper<T, detect_equals<T>::value, detect_operatorEq<T>::value>::equals(),
 			HandleHashHelper<T, detect_hash<T>::value>::hash(),
-			OutputHelper<T, CanOutput<T>::value>::output(),
 			IsFloat<T>::value
 			);
 		return h;

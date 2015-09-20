@@ -5,6 +5,7 @@ namespace storm {
 
 	class Engine;
 	class Type;
+	class Handle;
 
 	typedef os::Int Int;
 	typedef os::Nat Nat;
@@ -22,4 +23,6 @@ namespace storm {
 	Type *boolType(Engine &to);
 
 
+	// Implemented in Storm/Type.cpp, redirected in DLL implementations.
+	const Handle &typeHandle(Type *t);
 }

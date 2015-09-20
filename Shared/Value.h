@@ -108,6 +108,13 @@ namespace storm {
 		}
 	};
 
+	template <>
+	struct StormType<void> {
+		static Type *type(Engine &e) {
+			return null;
+		}
+	};
+
 	// Helper...
 	bool isClass(Type *t);
 

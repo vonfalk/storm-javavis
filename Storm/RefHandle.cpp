@@ -1,14 +1,17 @@
 #include "stdafx.h"
 #include "RefHandle.h"
+#include "Shared/Str.h"
 
 namespace storm {
 
 	RefHandle::RefHandle(const code::Content &content) :
+		isValue(false),
 		destroyUpdater(null),
 		createUpdater(null),
 		deepCopyUpdater(null),
 		equalsUpdater(null),
 		hashUpdater(null),
+		toSUpdater(null),
 		content(content) {}
 
 	RefHandle::~RefHandle() {
@@ -17,6 +20,25 @@ namespace storm {
 		delete deepCopyUpdater;
 		delete equalsUpdater;
 		delete hashUpdater;
+		delete toSUpdater;
+	}
+
+	void RefHandle::output(const void *obj, StrBuf *to) const {
+		if (!toS) {
+			to->add(L"?");
+			return;
+		}
+
+		Auto<Str> v;
+		if (isValue) {
+			// We can pass a direct pointer here.
+			v = (*toS)(obj);
+		} else {
+			// We need to de-reference one time.
+			const void **o = (const void **)obj;
+			v = (*toS)(*o);
+		}
+		steal(to->add(v));
 	}
 
 	void RefHandle::destroyRef(const code::Ref &ref) {
@@ -72,6 +94,18 @@ namespace storm {
 			hashUpdater->set(ref);
 		else
 			hashUpdater = new code::AddrReference((void **)&hash, ref, content);
+	}
+
+	void RefHandle::toSRef() {
+		del(toSUpdater);
+		hash = null;
+	}
+
+	void RefHandle::toSRef(const code::Ref &ref) {
+		if (toSUpdater)
+			toSUpdater->set(ref);
+		else
+			toSUpdater = new code::AddrReference((void **)&toS, ref, content);
 	}
 
 }

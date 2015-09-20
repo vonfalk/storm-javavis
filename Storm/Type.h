@@ -113,6 +113,11 @@ namespace storm {
 		// Hash function.
 		Function *hashFn();
 
+		// ToS function. NOTE: This may return different values as the declaration changes (eg. toS
+		// is moved from the surrounding scope to this scope). This is not properly supported yet,
+		// and automatic updates of this will not be done.
+		Function *findToSFn();
+
 		// Get the offset to a member. TODO: Maybe replace this one with RefSources in TypeVar?
 		Offset offset(const TypeVar *var) const;
 
@@ -192,4 +197,7 @@ namespace storm {
 	MAYBE(Function) *STORM_FN dtor(Par<Type> t);
 	MAYBE(Function) *STORM_FN assignFn(Par<Type> t);
 	MAYBE(Function) *STORM_FN deepCopyFn(Par<Type> t);
+	MAYBE(Function) *STORM_FN equalsFn(Par<Type> t);
+	MAYBE(Function) *STORM_FN hashFn(Par<Type> t);
+	MAYBE(Function) *STORM_FN findToSFn(Par<Type> t);
 }

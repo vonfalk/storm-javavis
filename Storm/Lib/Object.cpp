@@ -311,6 +311,7 @@ namespace storm {
 			&futureType,
 			&fnPtrType,
 			&toSOverridden,
+			&typeHandle,
 #ifdef DEBUG
 			&checkLive,
 #endif

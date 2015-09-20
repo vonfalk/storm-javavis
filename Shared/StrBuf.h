@@ -85,7 +85,7 @@ namespace storm {
 		static NoType check(...);
 
 	public:
-		enum { value = sizeof(check<typename AsPar<T>::v>(0)) == sizeof(YesType) };
+		enum { v = sizeof(check<typename AsPar<T>::v>(0)) == sizeof(YesType) };
 	};
 
 }
