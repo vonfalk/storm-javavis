@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Map.h"
+#include "Utils/Math.h"
 #include <iomanip>
 
 namespace storm {
@@ -225,6 +226,7 @@ namespace storm {
 		assert(info == null);
 		assert(key == null);
 		assert(val == null);
+		assert(isPowerOfTwo(cap));
 		capacity = cap;
 		size = 0;
 
@@ -367,16 +369,16 @@ namespace storm {
 	}
 
 	nat MapBase::primarySlot(nat hash) const {
-		// TODO: Change to bitwise and by making capacity store log2 of capacity, and ensuring
-		// capacity is always a power of two.
-		return hash % capacity;
+		// We know that 'capacity' is a power of two, therefore the following is equivalent to:
+		// return hash % capacity;
+		return hash & (capacity - 1);
 	}
 
 	nat MapBase::freeSlot() {
 		while (info[lastFree].status != Info::free)
-			// TODO: if 'capacity' is a power of two, we can do this with a bitwise and.
-			if (++lastFree >= capacity)
-				lastFree = 0;
+			// We know that 'capacity' is a power of two. Therefore, the following is equivalent to:
+			// if (++lastFree >= capacity) lastFree = 0;
+			lastFree = (lastFree + 1) & (capacity - 1);
 		return lastFree++;
 	}
 

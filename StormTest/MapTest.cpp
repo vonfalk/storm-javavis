@@ -10,7 +10,21 @@ struct Foo {
 	int a;
 };
 
-BEGIN_TEST_(MapTest) {
+nat cppCollisions(const hash_map<Int, Int> &cpp) {
+	size_t r = 0;
+	for (nat i = 0; i < cpp.bucket_count(); i++)
+		r += max(size_t(1), cpp.bucket_size(i)) - 1;
+	return nat(r);
+}
+
+nat cppLongest(const hash_map<Int, Int> &cpp) {
+	size_t r = 0;
+	for (nat i = 0; i < cpp.bucket_count(); i++)
+		r = max(r, cpp.bucket_size(i));
+	return nat(r);
+}
+
+BEGIN_TEST(MapTest) {
 	Engine &e = *gEngine;
 
 	{
@@ -22,13 +36,13 @@ BEGIN_TEST_(MapTest) {
 		map->put(CREATE(Str, e, L"A"), 12);
 		map->put(CREATE(Str, e, L"E"), 13);
 
-		map->dbg_print();
-		PVAR(map);
+		// map->dbg_print();
+		// PVAR(map);
 
 		map->remove(CREATE(Str, e, L"A"));
 
-		map->dbg_print();
-		PVAR(map);
+		// map->dbg_print();
+		// PVAR(map);
 
 		CHECK_EQ(map->count(), 2);
 	}
@@ -39,7 +53,7 @@ BEGIN_TEST_(MapTest) {
 		Auto<SVMap> map = CREATE(SVMap, e);
 
 		map->put(CREATE(Str, e, L"A"), StrBuf::stormType(e));
-		PVAR(map);
+		// PVAR(map);
 	}
 
 	{
@@ -47,8 +61,10 @@ BEGIN_TEST_(MapTest) {
 		Auto<SVMap> map = CREATE(SVMap, e);
 
 		map->put(CREATE(Str, e, L"A"), rootUrl(e));
-		PVAR(map);
+		// PVAR(map);
 	}
+
+	break;
 
 	{
 		// Simple benchmark:
@@ -74,9 +90,18 @@ BEGIN_TEST_(MapTest) {
 			cpp.insert(make_pair(values[i], values[i]));
 		Moment cppInsertEnd;
 
-		PLN("Unique elements: " << storm->count());
-		PLN("Collisions: " << storm->collisions());
-		PLN("Longest chain: " << storm->maxChain());
+		CHECK_EQ(storm->count(), cpp.size());
+
+		PLN("Storm:");
+		PLN(" unique elements: " << storm->count());
+		PLN(" collisions: " << storm->collisions());
+		PLN(" longest chain: " << storm->maxChain());
+
+		PLN("C++:");
+		PLN(" unique elements: " << cpp.size());
+		PLN(" buckets: " << cpp.bucket_count());
+		PLN(" collisions: " << cppCollisions(cpp));
+		PLN(" longest chain: " << cppLongest(cpp));
 
 		// Lookup and verify.
 		for (nat i = 0; i < count; i++)

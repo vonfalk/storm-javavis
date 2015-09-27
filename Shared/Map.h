@@ -73,7 +73,9 @@ namespace storm {
 		void STORM_FN shrink();
 
 		// Count the number of collisions currently in the map. This is only intended as a way to
-		// benchmark hash-functions, computed in linear time.
+		// benchmark hash-functions, computed in linear time. Elements which end up in the same
+		// bucket are counted as collisions, but the first element in each bucket is excluded from
+		// the count.
 		Nat STORM_FN collisions() const;
 
 		// Find the single longest chain. Provided to benchmark, computed in linear time.
@@ -116,7 +118,10 @@ namespace storm {
 		// # of contained elements.
 		nat size;
 
-		// Capacity.
+		// Minimum capacity.
+		static const nat minCapacity = 4;
+
+		// Capacity, has to be a power of two.
 		nat capacity;
 
 		// Information about a slot.
@@ -134,9 +139,6 @@ namespace storm {
 			// Cached hash value.
 			nat hash;
 		};
-
-		// Minimum capacity.
-		static const nat minCapacity = 4;
 
 		// Allocated memory. This is split into three regions: info, key, value. Each of these are
 		// 'capacity' elements large.

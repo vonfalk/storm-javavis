@@ -7,7 +7,7 @@
 /**
  * Test interaction between Storm:s toS and C++ toS.
  */
-BEGIN_TEST_(ToSTest) {
+BEGIN_TEST(ToSTest) {
 	Auto<Dbg> a = runFn<Dbg *>(L"test.bs.toSDbg", 0);
 	Auto<Dbg> b = runFn<Dbg *>(L"test.bs.toSDbg", 1);
 

@@ -199,7 +199,6 @@ namespace storm {
 		}
 
 		static Handle::Equals equals() {
-			PLN(L"Found something comparable with ==!");
 			return (Handle::Equals)&HandleEqualsHelper<T, false, true>::eq;
 		}
 	};
