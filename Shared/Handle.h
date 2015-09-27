@@ -1,10 +1,11 @@
 #pragma once
 #include "StrBuf.h"
+#include "Hash.h"
 #include "Utils/Templates.h"
+#include "Utils/DetectOperator.h"
 
 CREATE_DETECTOR(deepCopy);
 CREATE_DETECTOR(hash);
-CREATE_DETECTOR_MEMBER(operatorEq, operator ==);
 CREATE_DETECTOR(equals);
 
 namespace storm {
@@ -198,6 +199,7 @@ namespace storm {
 		}
 
 		static Handle::Equals equals() {
+			PLN(L"Found something comparable with ==!");
 			return (Handle::Equals)&HandleEqualsHelper<T, false, true>::eq;
 		}
 	};
@@ -220,6 +222,51 @@ namespace storm {
 		}
 	};
 
+	template <>
+	class HandleHashHelper<Byte, false> {
+	public:
+		static nat CODECALL call(const Byte *v) { return byteHash(*v); }
+		static Handle::Hash hash() {
+			return (Handle::Hash)&HandleHashHelper<Byte, false>::call;
+		}
+	};
+
+	template <>
+	class HandleHashHelper<Int, false> {
+	public:
+		static nat CODECALL call(const Int *v) { return intHash(*v); }
+		static Handle::Hash hash() {
+			return (Handle::Hash)&HandleHashHelper<Int, false>::call;
+		}
+	};
+
+	template <>
+	class HandleHashHelper<Nat, false> {
+	public:
+		static nat CODECALL call(const Nat *v) { return natHash(*v); }
+		static Handle::Hash hash() {
+			return (Handle::Hash)&HandleHashHelper<Nat, false>::call;
+		}
+	};
+
+	template <>
+	class HandleHashHelper<Long, false> {
+	public:
+		static nat CODECALL call(const Long *v) { return longHash(*v); }
+		static Handle::Hash hash() {
+			return (Handle::Hash)&HandleHashHelper<Long, false>::call;
+		}
+	};
+
+	template <>
+	class HandleHashHelper<Word, false> {
+	public:
+		static nat CODECALL call(const Word *v) { return wordHash(*v); }
+		static Handle::Hash hash() {
+			return (Handle::Hash)&HandleHashHelper<Word, false>::call;
+		}
+	};
+
 
 	/**
 	 * Create handles.
@@ -231,7 +278,7 @@ namespace storm {
 			&HandleHelper<T>::destroy,
 			&HandleHelper<T>::create,
 			HandleDeepHelper<T, detect_deepCopy<T>::value>::deepCopy(),
-			HandleEqualsHelper<T, detect_equals<T>::value, detect_operatorEq<T>::value>::equals(),
+			HandleEqualsHelper<T, detect_equals<T>::value, detect_operator::equals<T>::value>::equals(),
 			HandleHashHelper<T, detect_hash<T>::value>::hash(),
 			IsFloat<T>::value
 			);

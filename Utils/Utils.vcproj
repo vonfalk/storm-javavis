@@ -629,6 +629,10 @@
 				RelativePath=".\Windows.h"
 				>
 			</File>
+			<File
+				RelativePath=".\DetectOperator.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

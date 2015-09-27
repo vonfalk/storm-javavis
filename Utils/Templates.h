@@ -12,8 +12,8 @@ namespace templates {
 
 
 // Yes and no type.
-struct YesType { byte z[1]; };
-struct NoType { byte z[2]; };
+struct YesType { bool z[1]; };
+struct NoType { bool z[2]; };
 
 // Can we convert From to To?
 template <class From, class To>
@@ -22,6 +22,17 @@ struct IsConvertible {
 	static YesType check(const To &);
 	static From &from;
 	enum { value = sizeof(check(from)) == sizeof(YesType) };
+};
+
+// Same type?
+template <class T, class U>
+struct SameType {
+	enum { value = false };
+};
+
+template <class T>
+struct SameType<T, T> {
+	enum { value = true };
 };
 
 // Is a reference?

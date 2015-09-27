@@ -393,7 +393,12 @@ namespace storm {
 	}
 
 	Function *Type::equalsFn() {
-		return as<Function>(findCpp(L"equals", valList(2, Value::thisPtr(this), Value::thisPtr(this))));
+		// TODO: Clean up the equals-mess when we have figured out a suitable API!
+		Function *r = as<Function>(findCpp(L"equals", valList(2, Value::thisPtr(this), Value::thisPtr(this))));
+		if (r)
+			return r;
+		r = as<Function>(findCpp(L"==", valList(2, Value::thisPtr(this), Value::thisPtr(this))));
+		return r;
 	}
 
 	Function *Type::hashFn() {

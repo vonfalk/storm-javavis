@@ -68,6 +68,17 @@ namespace storm {
 		// Clear.
 		void STORM_FN clear();
 
+		// Shrink to fit the contained entries as tightly as possible (while maintaining our
+		// power-of-two constraint).
+		void STORM_FN shrink();
+
+		// Count the number of collisions currently in the map. This is only intended as a way to
+		// benchmark hash-functions, computed in linear time.
+		Nat STORM_FN collisions() const;
+
+		// Find the single longest chain. Provided to benchmark, computed in linear time.
+		Nat STORM_FN maxChain() const;
+
 		// Key and value handles.
 		const Handle &keyHandle;
 		const Handle &valHandle;
@@ -124,6 +135,9 @@ namespace storm {
 			nat hash;
 		};
 
+		// Minimum capacity.
+		static const nat minCapacity = 4;
+
 		// Allocated memory. This is split into three regions: info, key, value. Each of these are
 		// 'capacity' elements large.
 		Info *info;
@@ -140,6 +154,9 @@ namespace storm {
 		// Grow to fit at least one more element.
 		void grow();
 
+		// Do a re-hash to a specific size.
+		void rehash(nat size);
+
 		// Insert a node, given its hash is known (eg. when re-hashing). Assumes that no other node
 		// with the same key exists in the map, and will therefore always insert the element.
 		// Returns the slot inserted into.
@@ -149,7 +166,7 @@ namespace storm {
 		nat findSlot(const void *key, nat hash);
 
 		// Compute the primary slot of data, given its hash.
-		nat primarySlot(nat hash);
+		nat primarySlot(nat hash) const;
 
 		// Find a free slot. Always succeeds as long as size != capacity.
 		nat freeSlot();
@@ -187,13 +204,13 @@ namespace storm {
 
 		// Get a value from the map. Throws if the key is not found.
 		V &get(const K &k) {
-			V *r = (T *)getRaw(&k);
+			V *r = (V *)getRaw(&k);
 			return *r;
 		}
 
 		// Get a value from the map, creating it if it does not already exist.
 		V &get(const K &k, const V &def) {
-			V *r = (T *)getRaw(&k, &def);
+			V *r = (V *)getRaw(&k, &def);
 			return *r;
 		}
 

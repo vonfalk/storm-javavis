@@ -368,6 +368,10 @@
 				RelativePath=".\Geometry\Vector.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Hash.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -548,6 +552,14 @@
 			</File>
 			<File
 				RelativePath=".\Geometry\Vector.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Hash.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Hash.cpp"
 				>
 			</File>
 		</Filter>

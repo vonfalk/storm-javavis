@@ -10,6 +10,11 @@ namespace storm {
 		info(null), key(null), val(null) {
 
 		TODO(L"Check if the key has hash() and equals() before continuing!");
+		if (!key.hash)
+			throw MapError(L"Hash function missing in the key type, can not continue.");
+
+		if (!key.equals)
+			throw MapError(L"Equals function missing in the key type, can not continue.");
 	}
 
 	MapBase::MapBase(Par<MapBase> o) :
@@ -106,7 +111,7 @@ namespace storm {
 			return;
 
 		nat hash = (*keyHandle.hash)(key);
-		nat slot = findSlot(key, hash);
+		nat slot = primarySlot(hash);
 
 		if (info[slot].status == Info::free)
 			return;
@@ -180,8 +185,40 @@ namespace storm {
 			} else {
 				std::wcout << toHex(info[i].hash) << L" -> " << info[i].status;
 			}
+
+			if (info[i].status != Info::free) {
+				std::wcout << "   ";
+				Auto<StrBuf> b = CREATE(StrBuf, this);
+				keyHandle.output(keyPtr(i), b.borrow());
+				std::wcout << b;
+			}
 			std::wcout << endl;
 		}
+	}
+
+	Nat MapBase::collisions() const {
+		Nat c = 0;
+		for (nat i = 0; i < capacity; i++) {
+			if (info[i].status != Info::free && i == primarySlot(info[i].hash)) {
+				for (nat at = i; info[i].status != Info::end; i++)
+					c++;
+			}
+		}
+		return c;
+	}
+
+	Nat MapBase::maxChain() const {
+		Nat c = 0;
+		for (nat i = 0; i < capacity; i++) {
+			if (info[i].status != Info::free && i == primarySlot(info[i].hash)) {
+				// Start of a chain, traverse from here!
+				Nat len = 1;
+				for (nat at = i; info[i].status != Info::end; i++)
+					len++;
+				c = max(c, len);
+			}
+		}
+		return c;
 	}
 
 	void MapBase::alloc(nat cap) {
@@ -202,47 +239,63 @@ namespace storm {
 	void MapBase::grow() {
 		if (capacity == 0) {
 			// Initial table size.
-			alloc(4);
+			alloc(minCapacity);
 		} else {
-			nat oldCapacity = capacity;
-			nat oldSize = size;
-			Info *oldInfo = info; info = null;
-			byte *oldKey = key; key = null;
-			byte *oldVal = val; val = null;
-
 			// Keep to a multiple of 2.
-			alloc(capacity * 2);
-
-			try {
-
-				// Insert all elements once again.
-				for (nat i = 0; i < oldCapacity; i++) {
-					if (oldInfo[i].status != Info::free) {
-						byte *key = oldKey + i*keyHandle.size;
-						byte *val = oldVal + i*valHandle.size;
-						insert(key, val, oldInfo[i].hash);
-						(*keyHandle.destroy)(key);
-						(*valHandle.destroy)(val);
-					}
-				}
-
-				delete []oldInfo;
-				delete []oldKey;
-				delete []oldVal;
-			} catch (...) {
-				clear();
-
-				// Restore old state.
-				swap(capacity, oldCapacity);
-				swap(size, oldSize);
-				swap(info, oldInfo);
-				swap(key, oldKey);
-				swap(val, oldVal);
-				throw;
-			}
+			rehash(capacity * 2);
 		}
 
 		lastFree = 0;
+	}
+
+	void MapBase::shrink() {
+		if (capacity == 0)
+			return;
+
+		nat to = minCapacity;
+		while (size > to)
+			to *= 2;
+
+		rehash(to);
+	}
+
+	void MapBase::rehash(nat cap) {
+		nat oldCapacity = capacity;
+		nat oldSize = size;
+
+		Info *oldInfo = info; info = null;
+		byte *oldKey = key; key = null;
+		byte *oldVal = val; val = null;
+
+		alloc(cap);
+
+		try {
+
+			// Insert all elements once again.
+			for (nat i = 0; i < oldCapacity; i++) {
+				if (oldInfo[i].status != Info::free) {
+					byte *key = oldKey + i*keyHandle.size;
+					byte *val = oldVal + i*valHandle.size;
+					insert(key, val, oldInfo[i].hash);
+					(*keyHandle.destroy)(key);
+					(*valHandle.destroy)(val);
+				}
+			}
+
+			delete []oldInfo;
+			delete []oldKey;
+			delete []oldVal;
+		} catch (...) {
+			clear();
+
+			// Restore old state.
+			swap(capacity, oldCapacity);
+			swap(size, oldSize);
+			swap(info, oldInfo);
+			swap(key, oldKey);
+			swap(val, oldVal);
+			throw;
+		}
 	}
 
 	nat MapBase::insert(const void *key, const void *val, nat hash) {
@@ -313,7 +366,7 @@ namespace storm {
 		return Info::free;
 	}
 
-	nat MapBase::primarySlot(nat hash) {
+	nat MapBase::primarySlot(nat hash) const {
 		// TODO: Change to bitwise and by making capacity store log2 of capacity, and ensuring
 		// capacity is always a power of two.
 		return hash % capacity;
