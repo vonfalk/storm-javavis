@@ -112,13 +112,27 @@ static void initFrame(CONTEXT &context, STACKFRAME64 &frame) {
 #error "Unknown windows platform!"
 #endif
 
+// Warning about not being able to protect from stack-overruns...
+#pragma warning ( disable : 4748 )
 
 StackTrace stackTrace(nat skip) {
 	// Initialize the library if it is not already done.
 	dbgHelp();
 
 	CONTEXT context;
+
+#ifdef X64
 	RtlCaptureContext(&context);
+#else
+	// Sometimes RtlCaptureContext crashes for X86, so we do it with inline-assembly instead!
+	__asm {
+	label:
+		mov [context.Ebp], ebp;
+		mov [context.Esp], esp;
+		mov eax, [label];
+		mov [context.Eip], eax;
+	}
+#endif
 
 	HANDLE process = GetCurrentProcess();
 	HANDLE thread = GetCurrentThread();
