@@ -5,6 +5,7 @@
 #include "Function.h"
 #include "CodeGen.h"
 #include "Number.h"
+#include "Shared/Hash.h"
 
 namespace storm {
 	using namespace code;
@@ -78,6 +79,8 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"%=", rv, simpleFn(&numIModEq<Int>))));
 
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&intCopyCtor))));
+
+		add(steal(nativeFunction(engine, Value(natType(engine)), L"hash", v, &intHash)));
 
 		return Type::loadAll();
 	}
@@ -163,6 +166,8 @@ namespace storm {
 		vector<Value> rb = valList(2, Value(this, true), Value(byteType(engine)));
 		add(stealAutoCast(inlinedFunction(engine, Value(), Type::CTOR, rb, simpleFn(&createNat))));
 
+		add(steal(nativeFunction(engine, Value(this), L"hash", v, &natHash)));
+
 		return Type::loadAll();
 	}
 
@@ -235,6 +240,8 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"-=", rv, simpleFn(&numDec<Byte>))));
 
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&byteCopyCtor))));
+
+		add(steal(nativeFunction(engine, Value(natType(engine)), L"hash", v, &byteHash)));
 
 		return Type::loadAll();
 	}
