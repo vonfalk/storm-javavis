@@ -193,10 +193,12 @@ BEGIN_TEST(FnPtrThreadTest) {
 	// Return values.
 	{
 		Auto<FnPtr<Dbg *>> fn = runFn<FnPtr<Dbg *> *>(L"test.bs.dbgFnPtr");
+
 		Auto<Dbg> cpp = fn->call();
-		int storm = runFnInt(L"test.bs.callDbgFnPtr", fn);
-		CHECK_EQ(storm, 10101);
 		CHECK_EQ(cpp->get(), 10101);
+
+		int storm = runFnInt(L"test.bs.callDbgFnPtr", fn.borrow());
+		CHECK_EQ(storm, 10101);
 	}
 
 } END_TEST
