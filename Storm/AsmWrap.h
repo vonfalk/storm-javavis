@@ -314,6 +314,7 @@ namespace storm {
 		Instruction STORM_FN fnCall(Operand to, RetVal ret);
 		Instruction STORM_FN fnParam(Operand param);
 		Instruction STORM_FN fnParam(Variable param, Operand copy);
+		Instruction STORM_FN fnParamRef(Operand param, Operand copy);
 
 		Instruction STORM_FN addRef(Operand v);
 		Instruction STORM_FN releaseRef(Operand v);

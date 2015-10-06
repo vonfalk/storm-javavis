@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Fn.h"
 #include "Test/Test.h"
 #include "Shared/Map.h"
 #include "Storm/Url.h"
@@ -61,6 +62,53 @@ BEGIN_TEST(MapTest) {
 
 	// We do not need the benchmark in regular use.
 	//benchmark();
+
+} END_TEST
+
+Array<Int> *createKeys() {
+	Array<Int> *keys = CREATE(Array<Int>, *gEngine);
+	int v = 20;
+	for (int i = 0; i < 20; i++) {
+		keys->push(v);
+		v = (v * 19) % 23;
+	}
+	return keys;
+}
+
+Array<Int> *createValues() {
+	Array<Int> *values = CREATE(Array<Int>, *gEngine);
+	for (int i = 0; i < 20; i++) {
+		values->push(i);
+	}
+	return values;
+}
+
+BEGIN_TEST(StormMapTest) {
+	Engine &e = *gEngine;
+	typedef Map<Int, Int> IIMap;
+
+	Auto<Array<Int>> keys = createKeys();
+	Auto<Array<Int>> values = createValues();
+
+	// Check if it works if we're creating the map in C++ and filling it from Storm.
+	{
+		Auto<Map<Int, Int>> map = CREATE(IIMap, e);
+		runFn<void>(L"test.bs.intMapAdd", map.borrow(), keys.borrow(), values.borrow());
+
+		for (nat i = 0; i < keys->count(); i++) {
+			CHECK_EQ(map->get(keys->at(i)), values->at(i));
+		}
+	}
+
+	// Check if we can create a map in Storm and fill it there to use it in C++ later.
+	{
+		Auto<Map<Int, Int>> map = runFn<Map<Int, Int> *>(L"test.bs.intMapTest", keys.borrow(), values.borrow());
+
+		for (nat i = 0; i < keys->count(); i++) {
+			CHECK_EQ(map->get(keys->at(i)), values->at(i));
+		}
+	}
+
 
 } END_TEST
 

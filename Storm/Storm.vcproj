@@ -622,6 +622,10 @@
 				RelativePath=".\Wrap.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\AsRef.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -990,6 +994,10 @@
 			</File>
 			<File
 				RelativePath=".\Wrap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AsRef.h"
 				>
 			</File>
 		</Filter>

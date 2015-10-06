@@ -37,6 +37,9 @@ namespace storm {
 	}
 
 	void Type::init(TypeFlags typeFlags) {
+		hashAsRef = null;
+		equalsAsRef = null;
+
 		typeRef.setPtr(this);
 		typeHandle = new RefHandle(*typeRef.contents());
 
@@ -59,6 +62,9 @@ namespace storm {
 	}
 
 	Type::~Type() {
+		delete hashAsRef;
+		delete equalsAsRef;
+
 		// Clear any references from our vtable first.
 		vtable.clearRefs();
 		// Clear any ctors before the vtable dies.
@@ -165,15 +171,21 @@ namespace storm {
 		else
 			typeHandle->deepCopyRef();
 
-		if (equals)
-			typeHandle->equalsRef(equals->ref());
-		else
+		if (equals) {
+			if (!equalsAsRef)
+				equalsAsRef = new AsRef(equals);
+			typeHandle->equalsRef(equalsAsRef->source);
+		} else {
 			typeHandle->equalsRef();
+		}
 
-		if (hash)
-			typeHandle->hashRef(hash->ref());
-		else
+		if (hash) {
+			if (!hashAsRef)
+				hashAsRef = new AsRef(hash);
+			typeHandle->hashRef(hashAsRef->source);
+		} else {
 			typeHandle->hashRef();
+		}
 
 		updateHandleOutput();
 	}

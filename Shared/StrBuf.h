@@ -27,6 +27,9 @@ namespace storm {
 		// Get the string we've built!
 		virtual Str *STORM_FN toS();
 
+		// C version.
+		virtual const wchar_t *c_str();
+
 		// Append stuff.
 		virtual StrBuf *STORM_FN add(Par<Str> str);
 		virtual StrBuf *STORM_FN add(Int i);

@@ -1,0 +1,15 @@
+use core:debug;
+
+void intMapAdd(Int->Int to, Int[] keys, Int[] values) {
+	if (keys.count == values.count) {
+		for (Nat i = 0; i < keys.count; i++) {
+			to.put(keys[i], values[i]);
+		}
+	}
+}
+
+Int->Int intMapTest(Int[] keys, Int[] values) {
+	Int->Int result;
+	intMapAdd(result, keys, values);
+	result;
+}

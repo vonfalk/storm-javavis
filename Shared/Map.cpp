@@ -56,8 +56,8 @@ namespace storm {
 				info[i].status = Info::free;
 
 				// We will leak if the key throws at the moment...
-				(*keyHandle.destroy)(keyPtr(i));
-				(*valHandle.destroy)(valPtr(i));
+				keyHandle.destroySafe(keyPtr(i));
+				valHandle.destroySafe(valPtr(i));
 			}
 		}
 
@@ -69,12 +69,11 @@ namespace storm {
 
 	void MapBase::putRaw(const void *key, const void *value) {
 		nat hash = (*keyHandle.hash)(key);
-
 		nat old = findSlot(key, hash);
 		if (old == Info::free) {
 			insert(key, value, hash);
 		} else {
-			(*valHandle.destroy)(valPtr(old));
+			valHandle.destroySafe(valPtr(old));
 			(*valHandle.create)(valPtr(old), value);
 		}
 	}
@@ -89,7 +88,10 @@ namespace storm {
 		nat slot = findSlot(key, hash);
 		if (slot == Info::free) {
 			TODO(L"Create one if possible..?");
-			throw MapError(L"Key not in map.");
+
+			Auto<StrBuf> s = CREATE(StrBuf, this);
+			keyHandle.output(key, s.borrow());
+			throw MapError(String(L"Key ") + s->c_str() + L" not in map.");
 		}
 
 		return valPtr(slot);
@@ -129,8 +131,8 @@ namespace storm {
 
 				// Destroy the node.
 				info[slot].status = Info::free;
-				(*keyHandle.destroy)(keyPtr(slot));
-				(*valHandle.destroy)(valPtr(slot));
+				keyHandle.destroySafe(keyPtr(slot));
+				valHandle.destroySafe(valPtr(slot));
 
 				if (prev == Info::free && next != Info::end) {
 					// The removed node was in the primary slot, and we need to move the next one
@@ -139,8 +141,8 @@ namespace storm {
 					(*valHandle.create)(valPtr(slot), valPtr(next));
 					info[slot] = info[next];
 					info[next].status = Info::free;
-					(*keyHandle.destroy)(keyPtr(next));
-					(*valHandle.destroy)(valPtr(next));
+					keyHandle.destroySafe(keyPtr(next));
+					valHandle.destroySafe(valPtr(next));
 				}
 
 				size--;
@@ -278,8 +280,8 @@ namespace storm {
 					byte *key = oldKey + i*keyHandle.size;
 					byte *val = oldVal + i*valHandle.size;
 					insert(key, val, oldInfo[i].hash);
-					(*keyHandle.destroy)(key);
-					(*valHandle.destroy)(val);
+					keyHandle.destroySafe(key);
+					valHandle.destroySafe(val);
 				}
 			}
 
@@ -332,8 +334,8 @@ namespace storm {
 				info[to] = info[into];
 				(*keyHandle.create)(keyPtr(to), keyPtr(into));
 				(*valHandle.create)(valPtr(to), valPtr(into));
-				(*keyHandle.destroy)(keyPtr(into));
-				(*valHandle.destroy)(valPtr(into));
+				keyHandle.destroySafe(keyPtr(into));
+				valHandle.destroySafe(valPtr(into));
 				info[into].status = Info::free;
 			}
 		}

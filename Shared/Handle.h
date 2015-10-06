@@ -27,6 +27,12 @@ namespace storm {
 		typedef void (CODECALL *Destroy)(void *object);
 		Destroy destroy;
 
+		// Safe destroy.
+		inline void destroySafe(void *object) const {
+			if (destroy)
+				(*destroy)(object);
+		}
+
 		// Copy-construct (to, from)
 		typedef void (CODECALL *Create)(void *to, const void *from);
 		Create create;

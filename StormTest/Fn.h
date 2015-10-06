@@ -48,6 +48,25 @@ T runFn(const String &fn, const ParT &par, const ParU &qar) {
 	return fun->call<T>(os::FnParams().add(par).add(qar));
 }
 
+template <class T, class ParT, class ParU, class ParV>
+T runFn(const String &fn, const ParT &par, const ParU &qar, const ParV &rar) {
+	Engine &e = *gEngine;
+	Auto<Name> fName = parseSimpleName(e, fn);
+	vector<Value> params(3);
+	params[0] = stormType<ParT>(e);
+	params[1] = stormType<ParU>(e);
+	params[2] = stormType<ParV>(e);
+	fName = fName->withParams(params);
+	Function *fun = as<Function>(e.scope()->find(fName));
+	if (!fun)
+		throw TestError(L"Function " + ::toS(fName) + L" was not found.");
+	void *ptr = fun->pointer();
+	if (!ptr)
+		throw TestError(L"Function " + ::toS(fName) + L" did not return any code.");
+
+	return fun->call<T>(os::FnParams().add(par).add(qar).add(rar));
+}
+
 template <class T>
 inline Int runFnInt(const String &fn, T p) {
 	return runFn<Int, typename AsPar<T>::v>(fn, p);

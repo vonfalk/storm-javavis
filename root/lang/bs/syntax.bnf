@@ -28,8 +28,11 @@ Package => t : Type t;
 // Array type.
 Type => arrayType(t) : Type t, "\[\]";
 
+// Map type.
+Type => mapType(k, v) :[-10] Type k, "->", Type v;
+
 // Maybe type.
-Type => maybeType(t) : Type t, "?";
+Type => maybeType(t) :[10] Type t, "?";
 
 // Function pointers.
 Type => fnPtrType(result, params) : "fn", FnTypes params, "->", Type result;

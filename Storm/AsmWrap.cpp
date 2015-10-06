@@ -478,6 +478,10 @@ namespace storm {
 		return code::fnParam(param.v, copy.v);
 	}
 
+	wrap::Instruction wrap::fnParamRef(Operand param, Operand copy) {
+		return code::fnParamRef(param.v, copy.v);
+	}
+
 
 	wrap::Instruction wrap::jmp(Operand to) {
 		return code::jmp(to.v);

@@ -10,6 +10,7 @@
 #include "RefHandle.h"
 #include "Code/Value.h"
 #include "Shared/TypeFlags.h"
+#include "AsRef.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -158,6 +159,9 @@ namespace storm {
 
 		// Which thread should we be running on?
 		Auto<NamedThread> thread;
+
+		// Convert the hash() function and the equals() function to take references if needed.
+		AsRef *hashAsRef, *equalsAsRef;
 
 		// Update the handle.
 		void updateHandle(bool force);

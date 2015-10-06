@@ -123,6 +123,9 @@ Mul does not support constants, like this: mul(v, intConst(2)); crashes.
 
 Check thread safety in the reference management class.
 
+Check why small negative offsets (like -4) use the full 32-bit representation and not the smaller
+8-bit representation
+
 
 Basic Storm
 ------------

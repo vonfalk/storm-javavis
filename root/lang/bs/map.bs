@@ -1,0 +1,17 @@
+use core:lang;
+
+// Implement support for Int->Int instead of Map<Int, Int>
+TypeName mapType(TypeName k, TypeName v) on Compiler {
+	TypePart core("core");
+	TypePart map("Map");
+	map.add(k);
+	map.add(v);
+
+	TypeName name;
+	name.add(core);
+	name.add(map);
+	name;
+}
+
+// TODO: Implement initializer syntax for maps.
+

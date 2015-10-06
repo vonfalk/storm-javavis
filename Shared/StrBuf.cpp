@@ -47,12 +47,15 @@ namespace storm {
 
 	// Get the string we've built!
 	Str *StrBuf::toS() {
-		if (buffer == null) {
-			return CREATE(Str, this, L"");
-		} else {
-			nullTerminate();
-			return CREATE(Str, this, buffer);
-		}
+		return CREATE(Str, this, c_str());
+	}
+
+	const wchar_t *StrBuf::c_str() {
+		if (buffer == null)
+			return L"";
+
+		nullTerminate();
+		return buffer;
 	}
 
 	// Append stuff.

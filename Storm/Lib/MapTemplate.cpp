@@ -5,8 +5,30 @@
 
 namespace storm {
 
-	static void destroyClass(MapBase *b) {
+	static void CODECALL createClass(void *mem) {
+		// Extract the type...
+		nat offset = OFFSET_OF(Object, myType);
+		Type *type = OFFSET_IN(mem, offset, Type *);
+
+		// Find out the handles.
+		MapType *mapType = as<MapType>(type);
+		const Handle &k = mapType->key.handle();
+		const Handle &v = mapType->value.handle();
+
+		// Create!
+		new (mem) MapBase(k, v);
+	}
+
+	static void CODECALL createClassCopy(void *mem, MapBase *original) {
+		new (mem) MapBase(original);
+	}
+
+	static void CODECALL destroyClass(MapBase *b) {
 		b->~MapBase();
+	}
+
+	static void CODECALL mapPush(MapBase *me, void *k, void *v) {
+		me->putRaw(k, v);
 	}
 
 	static Named *generateMap(Par<NamePart> part) {
@@ -41,8 +63,15 @@ namespace storm {
 
 	bool MapType::loadAll() {
 		// TODO: Load any special functions here!
-
 		Engine &e = engine;
+		Value t = Value::thisPtr(this);
+
+		Value kRef = key.asRef();
+		Value vRef = value.asRef();
+
+		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createClass))));
+		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&createClassCopy))));
+		add(steal(nativeFunction(e, Value(), L"put", valList(3, t, kRef, vRef), address(&mapPush))));
 		add(steal(nativeDtor(e, this, &destroyClass)));
 
 		return Type::loadAll();
