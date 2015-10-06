@@ -105,8 +105,11 @@ namespace code {
 	// calls myFn(10, 20).
 	// fnParam taking two parameters uses the function 'copy' to copy 'src' onto the stack. 'copy' is assumed
 	// to have the signature <ptr or void> copy(void *dest, void *src), like copy ctors in C++.
+	// fnParamRef is like the two-parameter version of fnParam, except that it dereferences the pointer at 'src' and
+	// uses that value instead of something contained inside a variable.
 	Instruction fnParam(const Value &src);
 	Instruction fnParam(const Variable &src, const Value &copyFn);
+	Instruction fnParamRef(const Value &src, const Value &copyFn);
 	Instruction fnCall(const Value &src, RetVal ret);
 
 	// Integer math (signed/unsigned)

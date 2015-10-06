@@ -179,7 +179,7 @@ namespace code {
 	Value ptrConst(Size v);
 	Value ptrConst(void *v); // careful with this, will break miserably if serialized and loaded.
 
-	// Create relative values.
+	// Create relative values (de-reference pointers).
 	Value byteRel(Register reg, Offset offset = Offset(0));
 	Value intRel(Register reg, Offset offset = Offset(0));
 	Value longRel(Register reg, Offset offset = Offset(0));

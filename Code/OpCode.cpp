@@ -20,6 +20,7 @@ namespace code {
 		OP_CODE(ret),
 		OP_CODE(setCond),
 		OP_CODE(fnParam),
+		OP_CODE(fnParamRef),
 		OP_CODE(fnCall),
 		OP_CODE(add),
 		OP_CODE(adc),

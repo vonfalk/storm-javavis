@@ -17,6 +17,7 @@ namespace code {
 
 		static OpEntry<TransformParFn> transformMap[] = {
 			TRANSFORM(fnParam),
+			TRANSFORM(fnParamRef),
 			TRANSFORM(fnCall),
 			TRANSFORM(prolog),
 			TRANSFORM(epilog),
@@ -234,16 +235,22 @@ namespace code {
 
 		void fnParamTfm(Listing &to, TfmParams &params, const Instruction &instr) {
 			// Remember the parameter...
-			TfmParams::FnParam p = { instr.src(), instr.dest() };
+			TfmParams::FnParam p = { instr.src(), instr.dest(), false };
 			params.fnParams.push_back(p);
 		}
 
-		struct ParamOffset {
-			nat fromStart;
-			nat valueId;
-		};
+		void fnParamRefTfm(Listing &to, TfmParams &params, const Instruction &instr) {
+			// Remember the parameter...
+			TfmParams::FnParam p = { instr.src(), instr.dest(), true };
+			params.fnParams.push_back(p);
+		}
 
 		void fnCallTfm(Listing &to, TfmParams &params, const Instruction &instr) {
+			struct ParamOffset {
+				nat fromStart;
+				nat valueId;
+			};
+
 			// Simple cdecl call.
 			vector<TfmParams::FnParam> &fnParams = params.fnParams;
 
@@ -276,8 +283,12 @@ namespace code {
 				Offset destOffset(totalSize - offset.fromStart + sizeof(cpuNat));
 
 				// Copy!
-				to << code::lea(ptrA, ptrRel(src.param.reg(), src.param.offset()));
-				to << code::push(ptrA);
+				if (src.ref) {
+					to << code::push(src.param);
+				} else {
+					to << code::lea(ptrA, ptrRel(src.param.reg(), src.param.offset()));
+					to << code::push(ptrA);
+				}
 				to << code::lea(ptrA, ptrRel(ptrStack, destOffset));
 				to << code::push(ptrA);
 				to << code::call(src.copy, retVoid());

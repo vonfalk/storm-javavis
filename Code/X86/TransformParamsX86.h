@@ -22,6 +22,7 @@ namespace code {
 			struct FnParam {
 				Value param;
 				Value copy;
+				bool ref;
 			};
 			vector<FnParam> fnParams;
 
@@ -58,6 +59,7 @@ namespace code {
 
 		// Transform function calls into regular asm-instructions.
 		void fnParamTfm(Listing &to, TfmParams &params, const Instruction &instr);
+		void fnParamRefTfm(Listing &to, TfmParams &params, const Instruction &instr);
 		void fnCallTfm(Listing &to, TfmParams &params, const Instruction &instr);
 
 		// Transform prolog and epilog.

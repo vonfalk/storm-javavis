@@ -15,6 +15,7 @@ namespace code {
 			ret,
 			setCond,
 			fnParam,
+			fnParamRef,
 			fnCall,
 			add,
 			adc,
