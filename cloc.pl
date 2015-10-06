@@ -1175,8 +1175,8 @@ foreach (my $F = 0; $F < scalar @fh - 1; $F++) {
                 $not_Filters_by_Language_Lang_LR = 1;
             }
         } else {
-            if (!defined(@{$Filters_by_Language{$Lang_L} }) or
-                !defined(@{$Filters_by_Language{$Lang_R} })) {
+            if (!@{$Filters_by_Language{$Lang_L} } or
+                !@{$Filters_by_Language{$Lang_R} }) {
                 $not_Filters_by_Language_Lang_LR = 1;
             }
         }
@@ -1507,7 +1507,7 @@ foreach my $file (sort keys %unique_source_file) {
         $Ignored{$file} = "--exclude-lang=$Language{$file}";
         next;
     }
-    my $Filters_by_Language_Language_file = !defined @{$Filters_by_Language{$Language{$file}} };
+    my $Filters_by_Language_Language_file = ! @{$Filters_by_Language{$Language{$file}} };
     if ($Filters_by_Language_Language_file) {
         if ($Language{$file} eq "(unknown)") {
             $Ignored{$file} = "language unknown (#1)";
@@ -1640,9 +1640,9 @@ sub combine_results {                        # {{{1
                    $}x) {
                 if ($report_type eq "by language") {
                     if ($PERL_516) {
-                        next unless         @{$rhaa_Filters_by_Language->{$1}};
+                        next unless @{$rhaa_Filters_by_Language->{$1}};
                     } else {
-                        next unless defined @{$rhaa_Filters_by_Language->{$1}};
+                        next unless @{$rhaa_Filters_by_Language->{$1}};
                     }
                     # above test necessary to avoid trying to sum reports
                     # of reports (which have no language breakdown).
@@ -2857,7 +2857,7 @@ sub print_language_info {                    # {{{1
 } # 1}}}
 sub print_language_filters {                 # {{{1
     my ($language,) = @_;
-    if (!defined @{$Filters_by_Language{$language}}) {
+    if (! @{$Filters_by_Language{$language}}) {
         warn "Unknown language: $language\n";
         warn "Use --show-lang to list all defined languages.\n";
         return;
@@ -4180,7 +4180,7 @@ sub determine_lit_type {                     # {{{1
 
   open (FILE, $file);
   while (<FILE>) {
-    if (m/^\\begin{code}/) { close FILE; return 2; }
+    if (m/^\\begin\{code\}/) { close FILE; return 2; }
     if (m/^>\s/) { close FILE; return 1; }
   }
 
@@ -4209,9 +4209,9 @@ sub remove_haskell_comments {                # {{{1
             if (!s/^>//) { s/.*//; }
         } elsif ($literate == 2) {
             if ($inlitblock) {
-                if (m/^\\end{code}/) { s/.*//; $inlitblock = 0; }
+                if (m/^\\end\{code\}/) { s/.*//; $inlitblock = 0; }
             } elsif (!$inlitblock) {
-                if (m/^\\begin{code}/) { s/.*//; $inlitblock = 1; }
+                if (m/^\\begin\{code\}/) { s/.*//; $inlitblock = 1; }
                 else { s/.*//; }
             }
         }
