@@ -10,7 +10,6 @@ namespace storm {
 		size(0), capacity(0),
 		info(null), key(null), val(null) {
 
-		TODO(L"Check if the key has hash() and equals() before continuing!");
 		if (!key.hash)
 			throw MapError(L"Hash function missing in the key type, can not continue.");
 

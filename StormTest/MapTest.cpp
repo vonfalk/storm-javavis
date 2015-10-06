@@ -6,9 +6,68 @@
 
 #include "Utils/DetectOperator.h"
 
-struct Foo {
-	int a;
-};
+// Benchmark the map.
+void benchmark();
+
+BEGIN_TEST(MapTest) {
+	Engine &e = *gEngine;
+
+	{
+		typedef Map<Auto<Str>, Int> SIMap;
+		Auto<SIMap> map = CREATE(SIMap, e);
+
+		map->put(CREATE(Str, e, L"A"), 10);
+		map->put(CREATE(Str, e, L"B"), 11);
+		map->put(CREATE(Str, e, L"A"), 12);
+		map->put(CREATE(Str, e, L"E"), 13);
+
+		CHECK_EQ(map->count(), 3);
+		CHECK_EQ(map->get(steal(CREATE(Str, e, L"A"))), 12);
+
+		map->remove(CREATE(Str, e, L"A"));
+
+		CHECK_EQ(map->count(), 2);
+		CHECK_EQ(map->get(steal(CREATE(Str, e, L"B"))), 11);
+		CHECK_EQ(map->get(steal(CREATE(Str, e, L"E"))), 13);
+	}
+
+
+	{
+		typedef Map<Auto<Str>, Value> SVMap;
+		Auto<SVMap> map = CREATE(SVMap, e);
+
+		map->put(CREATE(Str, e, L"A"), StrBuf::stormType(e));
+		map->put(CREATE(Str, e, L"A"), Str::stormType(e));
+		map->put(CREATE(Str, e, L"B"), intType(e));
+
+		CHECK_EQ(map->count(), 2);
+		CHECK_EQ(map->get(steal(CREATE(Str, e, L"A"))), Value(Str::stormType(e)));
+		CHECK_EQ(map->get(steal(CREATE(Str, e, L"B"))), Value(intType(e)));
+	}
+
+	{
+		typedef Map<Int, Auto<Str>> ISMap;
+		Auto<ISMap> map = CREATE(ISMap, e);
+
+		map->put(1, CREATE(Str, e, L"He"));
+		map->put(1, CREATE(Str, e, L"Hello"));
+		map->put(3, CREATE(Str, e, L"World"));
+
+		CHECK_EQ(map->count(), 2);
+		CHECK_OBJ_EQ(map->get(1), steal(CREATE(Str, e, L"Hello")));
+		CHECK_OBJ_EQ(map->get(3), steal(CREATE(Str, e, L"World")));
+	}
+
+
+	// We do not need the benchmark in regular use.
+	//benchmark();
+
+} END_TEST
+
+
+/**
+ * Benchmarking code.
+ */
 
 nat cppCollisions(const hash_map<Int, Int> &cpp) {
 	size_t r = 0;
@@ -24,111 +83,64 @@ nat cppLongest(const hash_map<Int, Int> &cpp) {
 	return nat(r);
 }
 
-BEGIN_TEST(MapTest) {
+void benchmark() {
 	Engine &e = *gEngine;
 
-	{
-		typedef Map<Auto<Str>, Int> SIMap;
-		Auto<SIMap> map = CREATE(SIMap, e);
+	// Simple benchmark:
+	const nat count = 1024 * 1024;
+	typedef Map<Int, Int> StormMap;
 
-		map->put(CREATE(Str, e, L"A"), 10);
-		map->put(CREATE(Str, e, L"B"), 11);
-		map->put(CREATE(Str, e, L"A"), 12);
-		map->put(CREATE(Str, e, L"E"), 13);
+	// Generate data.
+	vector<Int> values(count, 0);
+	for (nat i = 0; i < count; i++)
+		values[i] = rand();
 
-		// map->dbg_print();
-		// PVAR(map);
+	Auto<StormMap> storm = CREATE(StormMap, e);
+	hash_map<Int, Int> cpp;
 
-		map->remove(CREATE(Str, e, L"A"));
+	// Insert all of them.
+	Moment stormInsertStart;
+	for (nat i = 0; i < count; i++)
+		storm->put(values[i], values[i]);
+	Moment stormInsertEnd;
 
-		// map->dbg_print();
-		// PVAR(map);
+	Moment cppInsertStart;
+	for (nat i = 0; i < count; i++)
+		cpp.insert(make_pair(values[i], values[i]));
+	Moment cppInsertEnd;
 
-		CHECK_EQ(map->count(), 2);
+	assert(storm->count() == cpp.size());
+
+	PLN("Storm:");
+	PLN(" unique elements: " << storm->count());
+	PLN(" collisions: " << storm->collisions());
+	PLN(" longest chain: " << storm->maxChain());
+
+	PLN("C++:");
+	PLN(" unique elements: " << cpp.size());
+	PLN(" buckets: " << cpp.bucket_count());
+	PLN(" collisions: " << cppCollisions(cpp));
+	PLN(" longest chain: " << cppLongest(cpp));
+
+	// Remove all of them.
+	Moment stormRemoveStart;
+	for (nat i = 0; i < count; i++) {
+		storm->remove(values[i]);
 	}
+	Moment stormRemoveEnd;
 
+	Moment cppRemoveStart;
+	for (nat i = 0; i < count; i++)
+		cpp.erase(values[i]);
+	Moment cppRemoveEnd;
 
-	{
-		typedef Map<Auto<Str>, Value> SVMap;
-		Auto<SVMap> map = CREATE(SVMap, e);
+	assert(storm->count() == cpp.size());
 
-		map->put(CREATE(Str, e, L"A"), StrBuf::stormType(e));
-		// PVAR(map);
-	}
+	PLN("Storm:");
+	PLN(" insert: " << (stormInsertEnd - stormInsertStart));
+	PLN(" remove: " << (stormRemoveEnd - stormRemoveStart));
 
-	{
-		typedef Map<Auto<Str>, Auto<Url>> SVMap;
-		Auto<SVMap> map = CREATE(SVMap, e);
-
-		map->put(CREATE(Str, e, L"A"), rootUrl(e));
-		// PVAR(map);
-	}
-
-	break;
-
-	{
-		// Simple benchmark:
-		const nat count = 1024 * 1024;
-		typedef Map<Int, Int> StormMap;
-
-		// Generate data.
-		vector<Int> values(count, 0);
-		for (nat i = 0; i < count; i++)
-			values[i] = rand();
-
-		Auto<StormMap> storm = CREATE(StormMap, e);
-		hash_map<Int, Int> cpp;
-
-		// Insert all of them.
-		Moment stormInsertStart;
-		for (nat i = 0; i < count; i++)
-			storm->put(values[i], values[i]);
-		Moment stormInsertEnd;
-
-		Moment cppInsertStart;
-		for (nat i = 0; i < count; i++)
-			cpp.insert(make_pair(values[i], values[i]));
-		Moment cppInsertEnd;
-
-		CHECK_EQ(storm->count(), cpp.size());
-
-		PLN("Storm:");
-		PLN(" unique elements: " << storm->count());
-		PLN(" collisions: " << storm->collisions());
-		PLN(" longest chain: " << storm->maxChain());
-
-		PLN("C++:");
-		PLN(" unique elements: " << cpp.size());
-		PLN(" buckets: " << cpp.bucket_count());
-		PLN(" collisions: " << cppCollisions(cpp));
-		PLN(" longest chain: " << cppLongest(cpp));
-
-		// Lookup and verify.
-		for (nat i = 0; i < count; i++)
-			CHECK_EQ(storm->get(values[i]), values[i]);
-
-		// Remove all of them.
-		Moment stormRemoveStart;
-		for (nat i = 0; i < count; i++) {
-			storm->remove(values[i]);
-		}
-		Moment stormRemoveEnd;
-
-		Moment cppRemoveStart;
-		for (nat i = 0; i < count; i++)
-			cpp.erase(values[i]);
-		Moment cppRemoveEnd;
-
-		CHECK_EQ(storm->count(), cpp.size());
-
-		PLN("Storm:");
-		PLN(" insert: " << (stormInsertEnd - stormInsertStart));
-		PLN(" remove: " << (stormRemoveEnd - stormRemoveStart));
-
-		PLN("C++:");
-		PLN(" insert: " << (cppInsertEnd - cppInsertStart));
-		PLN(" remove: " << (cppRemoveEnd - cppRemoveStart));
-	}
-
-
-} END_TEST
+	PLN("C++:");
+	PLN(" insert: " << (cppInsertEnd - cppInsertStart));
+	PLN(" remove: " << (cppRemoveEnd - cppRemoveStart));
+}
