@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "----- Storm ----------------------------------------------"
-find Storm/ StormBuiltin/ StormTest/ -name "*.cpp" -or -name "*.h" | xargs perl cloc.pl
+find Storm/ StormBuiltin/ Shared/ StormTest/ -name "*.cpp" -or -name "*.h" | xargs perl cloc.pl
 echo "----- OS -------------------------------------------------"
 find OS/ -name "*.cpp" -or -name "*.h" | xargs perl cloc.pl
 echo "----- Code  ----------------------------------------------"
