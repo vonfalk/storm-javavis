@@ -110,6 +110,69 @@ BEGIN_TEST(StormMapTest) {
 	}
 
 
+	// Try to get integers from a map.
+	{
+		Auto<Map<Int, Int>> map = CREATE(IIMap, e);
+		map->put(1, 10);
+		map->put(2, 12);
+		map->put(5, 11);
+
+		CHECK_EQ(runFn<Int>(L"test.bs.readIntMap", map.borrow(), 1), 10);
+		CHECK_EQ(runFn<Int>(L"test.bs.readIntMap", map.borrow(), 2), 12);
+		CHECK_EQ(runFn<Int>(L"test.bs.readIntMap", map.borrow(), 3), 0);
+		CHECK_EQ(runFn<Int>(L"test.bs.readIntMap", map.borrow(), 5), 11);
+	}
+
+
+} END_TEST
+
+BEGIN_TEST(StormMapObjTest) {
+	Engine &e = *gEngine;
+	typedef Map<Auto<Str>, Auto<Str>> SSMap;
+
+	Auto<ArrayP<Str>> keys = CREATE(ArrayP<Str>, e);
+	keys->push(CREATE(Str, e, L"A"));
+	keys->push(CREATE(Str, e, L"B"));
+	keys->push(CREATE(Str, e, L"C"));
+	keys->push(CREATE(Str, e, L"D"));
+
+	Auto<ArrayP<Str>> vals = CREATE(ArrayP<Str>, e);
+	vals->push(CREATE(Str, e, L"Z"));
+	vals->push(CREATE(Str, e, L"W"));
+	vals->push(CREATE(Str, e, L"A"));
+	vals->push(CREATE(Str, e, L"Q"));
+
+	// Create a map in C++ and fill it in Storm?
+	{
+		Auto<SSMap> map = CREATE(SSMap, e);
+		runFn<void>(L"test.bs.strMapAdd", map.borrow(), keys.borrow(), vals.borrow());
+
+		for (nat i = 0; i < keys->count(); i++) {
+			CHECK_EQ(map->get(keys->at(i))->v, vals->at(i)->v);
+		}
+	}
+
+	// Create a map in Storm and use in C++?
+	{
+		Auto<SSMap> map = runFn<SSMap *>(L"test.bs.strMapTest", keys.borrow(), vals.borrow());
+
+		for (nat i = 0; i < keys->count(); i++) {
+			CHECK_EQ(map->get(keys->at(i))->v, vals->at(i)->v);
+		}
+	}
+
+	{
+		Auto<SSMap> map = CREATE(SSMap, e);
+		for (nat i = 0; i < keys->count(); i++)
+			map->put(keys->at(i), vals->at(i));
+
+		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), keys->at(0).borrow()))->v, L"Z");
+		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), keys->at(1).borrow()))->v, L"W");
+		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), keys->at(2).borrow()))->v, L"A");
+		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), keys->at(3).borrow()))->v, L"Q");
+		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), steal(CREATE(Str, e, L"Z")).borrow()))->v, L"");
+	}
+
 } END_TEST
 
 

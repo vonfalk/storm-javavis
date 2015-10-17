@@ -13,3 +13,33 @@ Int->Int intMapTest(Int[] keys, Int[] values) {
 	intMapAdd(result, keys, values);
 	result;
 }
+
+void strMapAdd(Str->Str to, Str[] keys, Str[] values) {
+	if (keys.count == values.count) {
+		for (Nat i = 0; i < keys.count; i++) {
+			to.put(keys[i], values[i]);
+		}
+	}
+}
+
+Str->Str strMapTest(Str[] keys, Str[] values) {
+	Str->Str result;
+	strMapAdd(result, keys, values);
+	result;
+}
+
+Int readIntMap(Int->Int src, Int k) {
+	if (src.has(k)) {
+		src.get(k);
+	} else {
+		0;
+	}
+}
+
+Str readStrMap(Str->Str src, Str k) {
+	if (src.has(k)) {
+		src.get(k);
+	} else {
+		"";
+	}
+}

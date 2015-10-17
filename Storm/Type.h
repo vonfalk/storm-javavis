@@ -173,6 +173,8 @@ namespace storm {
 		void ensureLoaded();
 
 		// Init (shared parts of constructors). Note that this takes unmasked flags!
+		// The reason for this is that we want to know about 'typeManualSuper', which is never
+		// present in typeFlags.
 		void init(TypeFlags typeFlags);
 
 		// Update the need for virtual calls for all members.

@@ -18,10 +18,13 @@ namespace storm {
 
 		// Set references.
 		void destroyRef(const code::Ref &ref);
+		void destroyRaw(const void *ptr);
 		void destroyRef();
 		void deepCopyRef(const code::Ref &ref);
+		void deepCopyRaw(const void *ptr);
 		void deepCopyRef();
 		void createRef(const code::Ref &ref);
+		void createRaw(const void *ptr);
 		void equalsRef();
 		void equalsRef(const code::Ref &ref);
 		void hashRef();

@@ -31,6 +31,14 @@ namespace storm {
 		me->putRaw(k, v);
 	}
 
+	static bool CODECALL mapHas(MapBase *me, void *k) {
+		return me->hasRaw(k);
+	}
+
+	static void *CODECALL mapGet(MapBase *me, void *k) {
+		return me->getRaw(k);
+	}
+
 	static Named *generateMap(Par<NamePart> part) {
 		if (part->params.size() != 2)
 			return null;
@@ -68,10 +76,13 @@ namespace storm {
 
 		Value kRef = key.asRef();
 		Value vRef = value.asRef();
+		Value b = boolType(e);
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createClass))));
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&createClassCopy))));
 		add(steal(nativeFunction(e, Value(), L"put", valList(3, t, kRef, vRef), address(&mapPush))));
+		add(steal(nativeFunction(e, b, L"has", valList(2, t, kRef), address(&mapHas))));
+		add(steal(nativeFunction(e, vRef, L"get", valList(2, t, kRef), address(&mapGet))));
 		add(steal(nativeDtor(e, this, &destroyClass)));
 
 		return Type::loadAll();

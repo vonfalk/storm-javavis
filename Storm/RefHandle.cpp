@@ -71,6 +71,11 @@ namespace storm {
 			destroyUpdater = new code::AddrReference((void **)&destroy, ref, content);
 	}
 
+	void RefHandle::destroyRaw(const void *ptr) {
+		del(destroyUpdater);
+		destroy = (Destroy)ptr;
+	}
+
 	void RefHandle::destroyRef() {
 		del(destroyUpdater);
 		destroy = null;
@@ -83,6 +88,11 @@ namespace storm {
 			deepCopyUpdater = new code::AddrReference((void **)&deepCopy, ref, content);
 	}
 
+	void RefHandle::deepCopyRaw(const void *ptr) {
+		del(deepCopyUpdater);
+		deepCopy = (DeepCopy)ptr;
+	}
+
 	void RefHandle::deepCopyRef() {
 		del(deepCopyUpdater);
 		deepCopy = null;
@@ -93,6 +103,11 @@ namespace storm {
 			createUpdater->set(ref);
 		else
 			createUpdater = new code::AddrReference((void **)&create, ref, content);
+	}
+
+	void RefHandle::createRaw(const void *ptr) {
+		del(createUpdater);
+		create = (Create)ptr;
 	}
 
 	void RefHandle::equalsRef() {

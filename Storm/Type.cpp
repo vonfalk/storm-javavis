@@ -158,19 +158,32 @@ namespace storm {
 			throw RuntimeError(L"The type " + identifier() + L" does not have a copy constructor.");
 
 		typeHandle->isFloat = builtInType() == BasicTypeInfo::floatNr;
-		typeHandle->size = size().current();
-		typeHandle->createRef(create->ref());
 
-		if (dtor)
-			typeHandle->destroyRef(dtor->ref());
-		else
-			typeHandle->destroyRef();
+		if (typeFlags & typeClass) {
+			// Borrow the copy, destroy, and create from regular handles. They are doing the right
+			// thing if we're an object!
+			const Handle &t = storm::handle<Auto<Object> >();
 
-		if (deepCopy)
-			typeHandle->deepCopyRef(deepCopy->ref());
-		else
-			typeHandle->deepCopyRef();
+			typeHandle->size = t.size;
+			typeHandle->createRaw(t.create);
+			typeHandle->destroyRaw(t.destroy);
+			typeHandle->deepCopyRaw(t.deepCopy);
+		} else {
+			typeHandle->size = size().current();
+			typeHandle->createRef(create->ref());
 
+			if (dtor)
+				typeHandle->destroyRef(dtor->ref());
+			else
+				typeHandle->destroyRef();
+
+			if (deepCopy)
+				typeHandle->deepCopyRef(deepCopy->ref());
+			else
+				typeHandle->deepCopyRef();
+		}
+
+		// TODO? Use the defaults when we're an object.
 		if (equals) {
 			if (!equalsAsRef)
 				equalsAsRef = new AsRef(equals);
@@ -389,7 +402,8 @@ namespace storm {
 	}
 
 	const void *Type::copyCtorFn() {
-		return handle().create;
+		// TODO: Cache this!
+		return copyCtor()->pointer();
 	}
 
 	Function *Type::assignFn() {
