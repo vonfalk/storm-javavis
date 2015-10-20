@@ -14,16 +14,18 @@ InComment => void : "/*" - InComment;
 InComment => void : "";
 
 // Name rule returns a String, created by taking the 'name' parameter.
-Name => SStr(name) : "[A-Za-z][A-Za-z0-9]*" name;
+Name => name : "[A-Za-z][A-Za-z0-9]*" name;
 
 // Part in a type name
 TypePart => TypePart(n) : Name n;
 TypePart => TypePart(n) : Name n, "<", ">";
 TypePart => TypePart(n) : Name n, "<", Type -> add, (",", Type -> add, )* ">";
 
-// Type or package (same thing).
+// Package. Separate entry so to not allow package names like: a:b[] or a:b->c:d.
+Package => TypeName() : TypePart -> add, (":", TypePart -> add, )*;
+
+// Type.
 Type => TypeName() : TypePart -> add, (":", TypePart -> add, )*;
-Package => t : Type t;
 
 // Array type.
 Type => arrayType(t) : Type t, "\[\]";
