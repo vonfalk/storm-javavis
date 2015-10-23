@@ -107,6 +107,19 @@ namespace storm {
 		return valPtr(slot);
 	}
 
+	void *MapBase::accessRaw(const void *key, CreateCtor fn) {
+		nat hash = (*keyHandle.hash)(key);
+		nat slot = findSlot(key, hash);
+
+		if (slot == Info::free) {
+			slot = insert(key, hash);
+			(*fn)(valPtr(slot));
+		}
+
+		return valPtr(slot);
+	}
+
+
 	void MapBase::removeRaw(const void *key) {
 		// Will break 'primarySlot' otherwise.
 		if (capacity == 0)
@@ -302,6 +315,12 @@ namespace storm {
 	}
 
 	nat MapBase::insert(const void *key, const void *val, nat hash) {
+		nat into = insert(key, hash);
+		(*valHandle.create)(valPtr(into), val);
+		return into;
+	}
+
+	nat MapBase::insert(const void *key, nat hash) {
 		if (size == capacity)
 			grow();
 
@@ -343,7 +362,6 @@ namespace storm {
 		assert(info[into].status == Info::free, L"Internal error, trying to overwrite a slot!");
 		info[into] = insert;
 		(*keyHandle.create)(keyPtr(into), key);
-		(*valHandle.create)(valPtr(into), val);
 		size++;
 
 		return into;

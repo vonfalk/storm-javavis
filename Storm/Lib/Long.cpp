@@ -35,6 +35,11 @@ namespace storm {
 		p.state->to << mov(longRel(ptrA), longRel(ptrC));
 	}
 
+	static void longInit(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(longRel(ptrA), longConst(0));
+	}
+
 	LongType::LongType() : Type(L"Long", typeValue | typeFinal, Size::sLong, null) {}
 
 	bool LongType::loadAll() {
@@ -76,6 +81,7 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"%=", rv, simpleFn(&numIModEq<Long>))));
 
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&longCopyCtor))));
+		add(steal(inlinedFunction(engine, Value(), Type::CTOR, r, simpleFn(&longInit))));
 
 		vector<Value> ri = valList(2, Value(this, true), Value(intType(engine)));
 		add(stealAutoCast(inlinedFunction(engine, Value(), Type::CTOR, ri, simpleFn(&createLong))));
@@ -98,6 +104,11 @@ namespace storm {
 	static void createWord(InlinedParams p) {
 		p.state->to << mov(ptrC, p.params[0]);
 		p.state->to << ucast(longRel(ptrC), p.params[1]);
+	}
+
+	static void initWord(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(longRel(ptrA), longConst(0));
 	}
 
 	WordType::WordType() : Type(L"Word", typeValue | typeFinal, Size::sWord, null) {}
@@ -145,6 +156,7 @@ namespace storm {
 		vector<Value> rb = valList(2, Value(this, true), Value(byteType(engine)));
 		add(stealAutoCast(inlinedFunction(engine, Value(), Type::CTOR, rn, simpleFn(&createWord))));
 		add(stealAutoCast(inlinedFunction(engine, Value(), Type::CTOR, rb, simpleFn(&createWord))));
+		add(stealAutoCast(inlinedFunction(engine, Value(), Type::CTOR, r, simpleFn(&initWord))));
 
 		add(steal(nativeFunction(engine, Value(natType(engine)), L"hash", v, &wordHash)));
 

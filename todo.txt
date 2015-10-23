@@ -31,6 +31,10 @@ Core
 -------
 Include float/non float inside Size?
 
+Why does map["hello"] not work?
+
+Maybe ctors for objects should take their first parameter as non-reference to be consistent with the convention?
+
 Turns out that the test:bs:NoToS does not get initialized properly if one creates an instance of
 it. Furthermore, returning it in the top-loop makes the compiler crash.
 

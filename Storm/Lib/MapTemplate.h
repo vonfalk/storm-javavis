@@ -24,6 +24,10 @@ namespace storm {
 
 		// Lazy loading.
 		virtual bool loadAll();
+
+	private:
+		// Add the [] operator.
+		void addAccess(code::RefSource *defaultCtor);
 	};
 
 	// See Map.h for 'mapType' function.

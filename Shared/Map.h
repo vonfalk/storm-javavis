@@ -104,6 +104,10 @@ namespace storm {
 		// Remove a value. Removing a non-existing key is a no-op.
 		void removeRaw(const void *key);
 
+		// Insert a value, creating it using the ctor-in 'fn'.
+		typedef void (*CreateCtor)(void *to);
+		void *CODECALL accessRaw(const void *key, CreateCtor fn);
+
 		// String representation.
 		Str *STORM_FN toS();
 
@@ -163,6 +167,11 @@ namespace storm {
 		// with the same key exists in the map, and will therefore always insert the element.
 		// Returns the slot inserted into.
 		nat insert(const void *key, const void *val, nat hash);
+
+		// Compute the insertion point of a new element. Does everything except copying the value
+		// into the array. Do not skip copying the value, as the map will be left in an inconsistent
+		// state.
+		nat insert(const void *key, nat hash);
 
 		// Find the current location of 'key', hiven 'hash'. Returns 'Info::free' if none exists.
 		nat findSlot(const void *key, nat hash);

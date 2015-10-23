@@ -30,6 +30,11 @@ namespace storm {
 		p.state->to << mov(intRel(ptrA), intRel(ptrC));
 	}
 
+	static void intInit(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(intRel(ptrA), intConst(0));
+	}
+
 
 	static void intToFloat(InlinedParams p) {
 		if (!p.result->needed())
@@ -79,6 +84,7 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"%=", rv, simpleFn(&numIModEq<Int>))));
 
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&intCopyCtor))));
+		add(steal(inlinedFunction(engine, Value(), Type::CTOR, r, simpleFn(&intInit))));
 
 		add(steal(nativeFunction(engine, Value(natType(engine)), L"hash", v, &intHash)));
 
@@ -112,6 +118,11 @@ namespace storm {
 		p.state->to << mov(ptrC, p.params[1]);
 		p.state->to << mov(ptrA, p.params[0]);
 		p.state->to << mov(intRel(ptrA), intRel(ptrC));
+	}
+
+	static void natInit(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(intRel(ptrA), intConst(0));
 	}
 
 
@@ -162,6 +173,7 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"%=", rv, simpleFn(&numUModEq<Nat>))));
 
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&natCopyCtor))));
+		add(steal(inlinedFunction(engine, Value(), Type::CTOR, r, simpleFn(&natInit))));
 
 		vector<Value> rb = valList(2, Value(this, true), Value(byteType(engine)));
 		add(stealAutoCast(inlinedFunction(engine, Value(), Type::CTOR, rb, simpleFn(&createNat))));
@@ -199,6 +211,11 @@ namespace storm {
 		p.state->to << mov(ptrC, p.params[1]);
 		p.state->to << mov(ptrA, p.params[0]);
 		p.state->to << mov(byteRel(ptrA), byteRel(ptrC));
+	}
+
+	static void byteInit(InlinedParams p) {
+		p.state->to << mov(ptrA, p.params[0]);
+		p.state->to << mov(byteRel(ptrA), byteConst(0));
 	}
 
 	ByteType::ByteType() : Type(L"Byte", typeValue | typeFinal, Size::sByte, null) {}
@@ -240,6 +257,7 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(this), L"-=", rv, simpleFn(&numDec<Byte>))));
 
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, rr, simpleFn(&byteCopyCtor))));
+		add(steal(inlinedFunction(engine, Value(), Type::CTOR, r, simpleFn(&byteInit))));
 
 		add(steal(nativeFunction(engine, Value(natType(engine)), L"hash", v, &byteHash)));
 

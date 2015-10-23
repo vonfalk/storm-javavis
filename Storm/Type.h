@@ -114,6 +114,11 @@ namespace storm {
 		// Hash function.
 		Function *hashFn();
 
+		// Default ctor function for a handle. Returns a void (*)(void *to), where to points to the
+		// memory to be filled out. In the case of pointers, this is a pointer to the pointer to be
+		// filled. Returns 'null' if defaultCtor() returns null.
+		code::RefSource *handleDefaultCtor();
+
 		// ToS function. NOTE: This may return different values as the declaration changes (eg. toS
 		// is moved from the surrounding scope to this scope). This is not properly supported yet,
 		// and automatic updates of this will not be done.
@@ -162,6 +167,10 @@ namespace storm {
 
 		// Convert the hash() function and the equals() function to take references if needed.
 		AsRef *hashAsRef, *equalsAsRef;
+
+		// Default constructor that writes its output to the target of a pointer. Intended for use
+		// with Handle things.
+		code::RefSource *handleDefaultCtorFn;
 
 		// Update the handle.
 		void updateHandle(bool force);

@@ -85,7 +85,34 @@ namespace storm {
 		add(steal(nativeFunction(e, vRef, L"get", valList(2, t, kRef), address(&mapGet))));
 		add(steal(nativeDtor(e, this, &destroyClass)));
 
+		if (code::RefSource *defCtor = value.type->handleDefaultCtor()) {
+			addAccess(defCtor);
+		}
+
 		return Type::loadAll();
+	}
+
+	void MapType::addAccess(code::RefSource *fn) {
+		using namespace code;
+		Listing l;
+
+		Variable me = l.frame.createPtrParam();
+		Variable k = l.frame.createPtrParam();
+
+		l << prolog();
+
+		l << fnParam(me);
+		l << fnParam(k);
+		l << fnParam(*fn);
+		l << fnCall(engine.fnRefs.mapAccess, retVoid());
+
+		l << epilog();
+		l << ret(retVoid());
+
+		Value t = Value::thisPtr(this);
+		Value kRef = key.asRef();
+		Value vRef = value.asRef();
+		add(steal(dynamicFunction(engine, vRef, L"[]", valList(2, t, kRef), l)));
 	}
 
 }

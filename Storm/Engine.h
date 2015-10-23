@@ -63,6 +63,9 @@ namespace storm {
 
 		// Helpers for the FnPtr object.
 		code::RefSource fnPtrCopy, fnPtrCall, fnPtrCreate;
+
+		// Helpers for the Map object.
+		code::RefSource mapAccess;
 	};
 
 	/**

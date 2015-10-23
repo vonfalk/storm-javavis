@@ -43,3 +43,18 @@ Str readStrMap(Str->Str src, Str k) {
 		"";
 	}
 }
+
+Int addMap() {
+	Int->Int m;
+	m[10] = 20;
+
+	m[10];
+}
+
+Int addMapStr() {
+	Int->Str m;
+
+	m[10] = "25";
+
+	m[10].toInt;
+}

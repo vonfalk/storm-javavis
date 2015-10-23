@@ -8,6 +8,7 @@
 #include "Std.h"
 #include "Package.h"
 #include "Function.h"
+#include "CodeGen.h"
 
 namespace storm {
 
@@ -39,6 +40,7 @@ namespace storm {
 	void Type::init(TypeFlags typeFlags) {
 		hashAsRef = null;
 		equalsAsRef = null;
+		handleDefaultCtorFn = null;
 
 		typeRef.setPtr(this);
 		typeHandle = new RefHandle(*typeRef.contents());
@@ -64,6 +66,7 @@ namespace storm {
 	Type::~Type() {
 		delete hashAsRef;
 		delete equalsAsRef;
+		delete handleDefaultCtorFn;
 
 		// Clear any references from our vtable first.
 		vtable.clearRefs();
@@ -429,6 +432,41 @@ namespace storm {
 
 	Function *Type::hashFn() {
 		return as<Function>(findCpp(L"hash", valList(1, Value::thisPtr(this))));
+	}
+
+	code::RefSource *Type::handleDefaultCtor() {
+		using namespace code;
+		Function *wrap = defaultCtor();
+		if (!wrap)
+			return null;
+
+		if (typeFlags & typeValue)
+			return &wrap->ref();
+
+		if (!handleDefaultCtorFn) {
+			// Create it!
+			Auto<CodeGen> g = CREATE(CodeGen, this, RunOn());
+			Listing &l = g->l->v;
+
+			Variable p = l.frame.createPtrParam();
+
+			l << prolog();
+
+			// Note: we're not using any automatic cleanup here. It will be immediatly moved to its
+			// proper location with automatic cleanup already in place. Otherwise we would have to
+			// call addRef one extra time.
+			Variable v = l.frame.createPtrVar(l.frame.root());
+			allocObject(g, wrap, vector<code::Value>(), v);
+			l << mov(ptrA, p);
+			l << mov(ptrRel(ptrA), v);
+
+			l << epilog();
+			l << ret(retVoid());
+
+			handleDefaultCtorFn = new code::RefSource(engine.arena, identifier() + L"<defctor>");
+			handleDefaultCtorFn->set(new Binary(engine.arena, l));
+		}
+		return handleDefaultCtorFn;
 	}
 
 	Function *Type::findToSFn() {

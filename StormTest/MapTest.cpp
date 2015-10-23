@@ -123,6 +123,10 @@ BEGIN_TEST(StormMapTest) {
 		CHECK_EQ(runFn<Int>(L"test.bs.readIntMap", map.borrow(), 5), 11);
 	}
 
+	// Use the [] operator.
+	{
+		CHECK_EQ(runFn<Int>(L"test.bs.addMap"), 20);
+	}
 
 } END_TEST
 
@@ -171,6 +175,11 @@ BEGIN_TEST(StormMapObjTest) {
 		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), keys->at(2).borrow()))->v, L"A");
 		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), keys->at(3).borrow()))->v, L"Q");
 		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), steal(CREATE(Str, e, L"Z")).borrow()))->v, L"");
+	}
+
+	// Use the [] operator.
+	{
+		CHECK_EQ(runFn<Int>(L"test.bs.addMapStr"), 25);
 	}
 
 } END_TEST

@@ -13,6 +13,7 @@
 #include "Shared/Future.h"
 #include "Lib/FnPtr.h"
 #include "Shared/Io/Url.h"
+#include "Shared/Map.h"
 
 namespace storm {
 
@@ -38,7 +39,8 @@ namespace storm {
 		  fnParamsCtor(arena, L"FnParams::ctor"), fnParamsDtor(arena, L"FnParams::dtor"),
 		  fnParamsAdd(arena, L"FnParams::add"),
 		  fnPtrCopy(arena, L"FnPtrBase::needsCopy"), fnPtrCall(arena, L"FnPtrBase::callRaw"),
-		  fnPtrCreate(arena, L"FnPtrBase::createRaw")
+		  fnPtrCreate(arena, L"FnPtrBase::createRaw"),
+		  mapAccess(arena, L"MapBase::accessRaw")
 	{
 
 		addRef.setPtr(address(&Object::addRef));
@@ -65,6 +67,8 @@ namespace storm {
 		fnPtrCopy.setPtr(address(&storm::fnPtrNeedsCopy));
 		fnPtrCall.setPtr(address(&storm::fnPtrCallRaw));
 		fnPtrCreate.setPtr(address(&storm::createRawFnPtr));
+
+		mapAccess.setPtr(address(&storm::MapBase::accessRaw));
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode)
