@@ -1,0 +1,54 @@
+use core:asm;
+
+class CondBox {
+	CondFlag v;
+
+	ctor() {
+		init() { v = ifAlways; }
+	}
+
+	ctor(CondFlag f) {
+		init() { v = f; }
+	}
+}
+
+CondBox ifEqualBox() {
+	CondBox(ifEqual);
+}
+
+CondBox ifNotEqualBox() {
+	CondBox(ifNotEqual);
+}
+
+CondBox ifAboveBox() {
+	CondBox(ifAbove);
+}
+
+CondBox ifAboveEqualBox() {
+	CondBox(ifAboveEqual);
+}
+
+CondBox ifBelowBox() {
+	CondBox(ifBelow);
+}
+
+CondBox ifBelowEqualBox() {
+	CondBox(ifBelowEqual);
+}
+
+CondBox ifGreaterBox() {
+	CondBox(ifGreater);
+}
+
+CondBox ifGreaterEqualBox() {
+	CondBox(ifGreaterEqual);
+}
+
+CondBox ifLessBox() {
+	CondBox(ifLess);
+}
+
+CondBox ifLessEqualBox() {
+	CondBox(ifLessEqual);
+}
+

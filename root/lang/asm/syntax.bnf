@@ -7,7 +7,12 @@ delimiter: AsmDelimiter;
 
 // Root rule for asm code.
 AsmListing(lang.bs.Block block);
-AsmListing => AsmListing() : (AsmInstruction(block) -> add, ";", )*;
+AsmListing => AsmListing() : (AsmAtom(block) -> add, )*;
+
+// Atom.
+AsmAtom(lang.bs.Block block);
+AsmAtom => v : AsmInstruction(block) v, ";";
+AsmAtom => AsmLabel(name) : "[A-Za-z]+" name, ":";
 
 // All possible asm values.
 AsmOperand(lang.bs.Block block);
@@ -42,11 +47,34 @@ AsmLiteral => number(size, value) : "[binlw]" size - "-?[0-9]+" value; // Numeri
 AsmVariableRef(lang.bs.Block block);
 AsmVariableRef => VarRef(block, name) : "[A-Za-z]+" name;
 
+// Reference to a label.
+AsmLabelRef => AsmLabelRef(name) : "@" - "[A-Za-z]+" name;
+
+// Conditional expression in asm.
+AsmCond => ifEqualBox() : "ifEqual";
+AsmCond => ifNotEqualBox() : "ifNotEqual";
+
+// Unsigned
+AsmCond => ifAboveBox() : "ifAbove";
+AsmCond => ifAboveEqualBox() : "ifAboveEqual";
+AsmCond => ifBelowBox() : "ifBelow";
+AsmCond => ifBelowEqualBox() : "ifBelowEqual";
+
+// Signed
+AsmCond => ifGreaterBox() : "ifGreater";
+AsmCond => ifGreaterEqualBox() : "ifGreaterEqual";
+AsmCond => ifLessBox() : "ifLess";
+AsmCond => ifLessEqualBox() : "ifLessEqual";
+
+
 // All asm instructions.
 AsmInstruction(lang.bs.Block block);
 AsmInstruction => AddInstr(dest, src) : "add", AsmWritable(block) dest, ",", AsmOperand(block) src;
 AsmInstruction => SubInstr(dest, src) : "sub", AsmWritable(block) dest, ",", AsmOperand(block) src;
 AsmInstruction => MovInstr(dest, src) : "mov", AsmWritable(block) dest, ",", AsmOperand(block) src;
+AsmInstruction => CmpInstr(a, b) : "cmp", AsmOperand(block) a, ",", AsmOperand(block) b;
+AsmInstruction => JmpInstr(to) : "jmp", AsmLabelRef to;
+AsmInstruction => JmpInstr(to, c) : "jmp", AsmCond c, ",", AsmLabelRef to;
 
 // Integration into other languages.
 Stmt => r : "asm", "{", AsmListing(block) r, "}";

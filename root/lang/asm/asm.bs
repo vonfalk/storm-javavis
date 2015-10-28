@@ -8,9 +8,9 @@ use lang:bs; // TODO: Extract a generic code generation interface so that we do 
  * listing format.
  */
 class AsmListing extends Expr {
-	AsmInstr[] data;
+	AsmAtom[] data;
 
-	void add(AsmInstr instr) {
+	void add(AsmAtom instr) {
 		data << instr;
 	}
 
@@ -19,8 +19,14 @@ class AsmListing extends Expr {
 	}
 
 	void code(CodeGen state, CodeResult r) {
+		Labels l(state);
+		// Create all labels.
 		for (Nat i = 0; i < data.count; i++) {
-			data[i].output(state);
+			data[i].create(l);
+		}
+
+		for (Nat i = 0; i < data.count; i++) {
+			data[i].output(state, l);
 		}
 	}
 
@@ -34,12 +40,62 @@ class AsmListing extends Expr {
 	}
 }
 
+/**
+ * Class keeping track of all labels.
+ * TODO: Check for mismatched labels!
+ */
+class Labels on Compiler {
+	CodeGen gen;
+	Str->Label labels;
+
+	ctor(CodeGen g) {
+		init() { gen = g; }
+	}
+
+	void create(SStr name) {
+		if (labels.has(name.v)) {
+			throwSyntaxError(name.pos, "Duplicate label " # name.v);
+		}
+
+		labels.put(name.v, gen.l.label());
+	}
+
+	Label get(Str name) {
+		// TODO: Better error message here.
+		labels.get(name);
+	}
+}
+
 
 /**
- * Base class for a single assembler instruction.
+ * Base class for a single assembler instruction or label.
  */
-class AsmInstr on Compiler {
-	void output(CodeGen to) {}
+class AsmAtom on Compiler {
+
+	// Create any resources we need.
+	void create(Labels l) {}
+
+	// Generate code.
+	void output(CodeGen to, Labels l) {}
+}
+
+/**
+ * Label for an asm listing.
+ */
+class AsmLabel extends AsmAtom {
+	SStr name;
+
+	ctor(SStr name) {
+		init() { name = name; }
+	}
+
+	void create(Labels l) {
+		l.create(name);
+	}
+
+	void output(CodeGen to, Labels l) {
+		to.l << l.get(name.v);
+	}
 }
 
 /**
@@ -57,11 +113,31 @@ class AsmOperand on Compiler {
 	}
 
 	// May be overridden.
-	Operand v() {
+	Operand v(Labels l) {
 		value;
 	}
 
 	Str toS() {
 		v.toS;
+	}
+}
+
+
+/**
+ * Label reference.
+ */
+class AsmLabelRef extends AsmOperand {
+	SStr name;
+
+	ctor(SStr name) {
+		init() { name = name; }
+	}
+
+	Operand v(Labels l) {
+		Operand(l.get(name.v));
+	}
+
+	Str toS() {
+		name.v # ":";
 	}
 }

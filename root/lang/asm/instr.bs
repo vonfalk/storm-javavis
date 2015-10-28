@@ -1,6 +1,6 @@
 use core:asm;
 
-class AddInstr extends AsmInstr {
+class AddInstr extends AsmAtom {
 	AsmOperand dest;
 	AsmOperand src;
 
@@ -8,8 +8,8 @@ class AddInstr extends AsmInstr {
 		init() { dest = dest; src = src; }
 	}
 
-	void output(CodeGen to) {
-		to.l << add(dest.v, src.v);
+	void output(CodeGen to, Labels l) {
+		to.l << add(dest.v(l), src.v(l));
 	}
 
 	Str toS() {
@@ -17,7 +17,7 @@ class AddInstr extends AsmInstr {
 	}
 }
 
-class SubInstr extends AsmInstr {
+class SubInstr extends AsmAtom {
 	AsmOperand dest;
 	AsmOperand src;
 
@@ -25,8 +25,8 @@ class SubInstr extends AsmInstr {
 		init() { dest = dest; src = src; }
 	}
 
-	void output(CodeGen to) {
-		to.l << sub(dest.v, src.v);
+	void output(CodeGen to, Labels l) {
+		to.l << sub(dest.v(l), src.v(l));
 	}
 
 	Str toS() {
@@ -34,7 +34,7 @@ class SubInstr extends AsmInstr {
 	}
 }
 
-class MovInstr extends AsmInstr {
+class MovInstr extends AsmAtom {
 	AsmOperand dest;
 	AsmOperand src;
 
@@ -42,11 +42,49 @@ class MovInstr extends AsmInstr {
 		init() { dest = dest; src = src; }
 	}
 
-	void output(CodeGen to) {
-		to.l << mov(dest.v, src.v);
+	void output(CodeGen to, Labels l) {
+		to.l << mov(dest.v(l), src.v(l));
 	}
 
 	Str toS() {
 		"mov " # dest # ", " # src;
+	}
+}
+
+class CmpInstr extends AsmAtom {
+	AsmOperand a;
+	AsmOperand b;
+
+	ctor(AsmOperand a, AsmOperand b) {
+		init() { a = a; b = b; }
+	}
+
+	void output(CodeGen to, Labels l) {
+		to.l << cmp(a.v(l), b.v(l));
+	}
+
+	Str toS() {
+		"cmp " # a ", " # b;
+	}
+}
+
+class JmpInstr extends AsmAtom {
+	AsmOperand to;
+	CondFlag flag;
+
+	ctor(AsmOperand to) {
+		init() { to = to; flag = ifAlways; }
+	}
+
+	ctor(AsmOperand to, CondBox c) {
+		init() { to = to; flag = c.v; }
+	}
+
+	void output(CodeGen g, Labels l) {
+		g.l << jmp(to.v(l), flag);
+	}
+
+	Str toS() {
+		"jmp " # to # ", " # flag;
 	}
 }

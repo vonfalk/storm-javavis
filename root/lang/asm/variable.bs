@@ -15,7 +15,7 @@ class VarRef extends AsmOperand {
 		}
 	}
 
-	Operand v() {
+	Operand v(Labels l) {
 		if (var) {
 			Operand(var.var.v);
 		} else {

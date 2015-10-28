@@ -11,3 +11,24 @@ void testInline() {
 
 	print("i=" # i);
 }
+
+void testInlineLabel() {
+	Int i = 20;
+	Int j = 10;
+
+	// Super-optimized multiplication!
+	asm {
+		mov eax, j;
+		mov ebx, i;
+		mov i, i0;
+	loop:
+		cmp eax, i0;
+		jmp ifEqual, @done;
+		add i, ebx;
+		sub eax, i1;
+		jmp @loop;
+	done:
+	}
+
+	print("i=" # i);
+}
