@@ -75,6 +75,25 @@ Storm, and this function makes sure to either clone or call `deepCopy` on any me
 that type. The `CloneEnv` remembers any objects that have been cloned, so that we can correctly
 handle any cycles or shared parts of the object graph.
 
+
+The clone methods are implemented like this:
+```
+void deepCopy(CloneEnv env) {
+    super.deepCopy(env);
+    a = clone(a, env);
+    // ...
+}
+
+T clone(T object, CloneEnv env) {
+    T result = env.cloned(object);
+    if (!result) {
+        result = new T(object);
+        result.deepCopy(object, env);
+    }
+    return result;
+}
+```
+
 Note that cloning an actor simply returns the actor itself, since actors are supposed to reference a
 single instance.
 

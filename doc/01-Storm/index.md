@@ -62,10 +62,30 @@ your favorite language so that it better matches the problem you try to solve.
 Threading
 ----------
 
-Aside from being extensible, Storm also attempts to make it easier to deal with threads. Storm knows
-about threads, and depending on the language you are using, provides different levels of protection
-against common threading problems. The threading model of the compiler is implemented in Basic
-Storm, but other languages may choose to do differently.
+
+The threading model in Storm is based around the idea that you declare which thread to use for
+different functions and objects, and let the compiler do the rest. This has at least two benefits:
+firstly this makes the intention of threading explicit in the code, and secondly the compiler will
+help you to avoid mistakes.
+
+In the compiler, each thread you declare is backed by an OS level thread. Each of these threads will
+then be processing messages from other threads. These messages are sent whenever another thread
+calls a function that is declared to execute on another thread.  Each of the OS threads are in turn
+running cooperatively scheduled user mode threads.  Each incoming message will be launched on its
+own thread, and may selectively yeild whenever it has to block for some reason (for example when
+waiting for a result from another thread).  This way makes recursive calls between threads (eg A ->
+B -> A) easier to handle, but it does not introduce a lot of possible race-conditions, at least not
+worse than regular function calls does.
+
+The programmer may declare actors, non-member functions and global variables to be executed on a
+specific thread. When a thread needs to send a message to another thread, all parameters of the
+function will be deep copied using the `clone` function, to ensure that there is no shared data
+between different OS level threads. The same is true about the return value. Non-member functions
+and global variables only support named threads, while actors can be assigned to a specific thread
+at runtime.
+
+Threading is explained more in-depth in the [Threads][3] section.
+
 
 Interactivity
 --------------
@@ -83,3 +103,4 @@ how to build and re-built it efficiently.
 
 [1]: md://Basic_Storm
 [2]: md://BNF_Syntax
+[3]: md://Threads

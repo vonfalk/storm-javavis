@@ -15,7 +15,7 @@ then
     rm Release/storm.zip
 fi
 
-7z a Release/storm.zip ./Release/StormMain.exe readme.txt Storm.txt > /dev/null
+7z a Release/storm.zip ./Release/StormMain.exe doc/ > /dev/null
 find root/ -name "*.bs" -or -name "*.bnf" -or -name "*.txt" -or -name "*.png" \
   | xargs --delimiter='\n' 7z a Release/storm.zip > /dev/null
 
