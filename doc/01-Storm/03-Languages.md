@@ -8,7 +8,7 @@ package, it examines the different file extensions present and creates a subclas
 each of them to load various parts of the language. This is to allow the different languages to find
 types declared in the same package but inside a different language.
 
-Because of this, it is quite easy to create a new languae. Simply create a new package named
+Because of this, it is quite easy to create a new language. Simply create a new package named
 `lang.a`, and Storm will load `.a`-files using your newly created `Reader`.
 
 Loading

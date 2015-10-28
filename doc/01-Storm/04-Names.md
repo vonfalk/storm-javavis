@@ -25,7 +25,7 @@ becomes cumbersome since we either have to specify full names of everything we a
 to restrict ourselves to only a part of the type system (there is nothing that is equivalent to `..`
 in names). Therefore, Storm has something that is called a Scope.
 
-A `Scope` is an entry point into the type hirerarcy along with a policy of how we want to traverse
+A `Scope` is an entry point into the type hierarchy along with a policy of how we want to traverse
 the type system. This policy might be: traverse from the entry point, if that fails, assume the name
 is an absolute name and traverse from the root of the type system. This can also be extended to look
 at any includes as well, or to do any number of interesting things. By this mechanism, possible for

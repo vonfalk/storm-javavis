@@ -202,7 +202,7 @@ namespace storm {
 			return i->second;
 
 		// Tell it matches nothing in case the rule is recursive!
-		// This will yeild correct results and prevent endless recursion.
+		// This will yield correct results and prevent endless recursion.
 		i = emptyCache.insert(make_pair(&rule, true)).first;
 
 		bool result = false;

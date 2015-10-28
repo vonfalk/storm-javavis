@@ -41,7 +41,7 @@ AsmReg => rPtrB() : "ptrB";
 AsmReg => rPtrC() : "ptrC";
 
 // Literals.
-AsmLiteral => number(size, value) : "[binlw]" size - "-?[0-9]+" value; // Numeric literal with size before it.
+AsmLiteral => number(size, value) : "[binlwp]" size - "-?[0-9]+" value; // Numeric literal with size before it.
 
 // Reference to a variable in another language.
 AsmVariableRef(lang.bs.Block block);

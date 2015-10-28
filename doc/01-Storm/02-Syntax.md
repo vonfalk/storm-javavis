@@ -93,11 +93,11 @@ does not need to be declared until the rule is actually considered by the parser
 convenient if you know that the user will always include another package when using your syntax, or
 something similar. The same holds true for function calls. The actual function and overload to be
 called is not decided until the call is about to be made. This means that function calls does not
-neccessarily have to be valid if they are never used, and that it is possible to express some kind
+necessarily have to be valid if they are never used, and that it is possible to express some kind
 of overloads that are not possible in other, more static, languages. For example, a rule could call
 the function `a(x)`, where `x` can be either a `A` or a `B`. In this case, we can declare two
 versions of `a()`: `a(A x)` and `a(B x)`, even though `A` and `B` are not related. In other
-languages it is neccessary to declare it like `a(Object x)`, and then manually check which type was
+languages it is necessary to declare it like `a(Object x)`, and then manually check which type was
 actually sent to `a`. Another convenient usage of this is that it is possible to indicate that
 options should not return anything by specifying them returning the function call `void` (or
 anything, really). Since the function call will never be used unless it actually has to be used, the

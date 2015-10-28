@@ -37,7 +37,7 @@ that no data is shared between different threads (and to help the programmer kee
 where, we will see this later on). To accomplish this, Storm takes an approach similar to the actor
 model. Each thread is an actor, and when calling a function on another thread a message is sent to
 the other thread. To ensure that no data is shared, anything that is sent in a message has to be
-copied. Values and classes fall into this cathegory, but actors are an exception to this rule, as
+copied. Values and classes fall into this category, but actors are an exception to this rule, as
 actors are only accessed through messages, which are thread safe anyway.
 
 Based on this information, we can see the type system from two different perspectives: when we are

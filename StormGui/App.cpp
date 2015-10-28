@@ -150,7 +150,7 @@ namespace stormgui {
 			return noResult();
 		}
 
-		// From here on, this thread may yeild, causing the main UThread to want to dispatch more
+		// From here on, this thread may yield, causing the main UThread to want to dispatch more
 		// messages. Prevent this to avoid confusing the Win32 api by pre-empting calls on the stack there.
 		MsgResult r = noResult();
 		app->appWait->disableMsg();

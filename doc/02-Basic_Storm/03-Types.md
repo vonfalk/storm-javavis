@@ -58,9 +58,8 @@ before the `init` block. The `init` statement looks like this:
 Where `<params>` are the parameters to be passed to the super class constructor, and `<init-list>`
 is a list of what to initialize all member variables to. If a member variable is not present in
 `<init-list>`, it is constructed using the empty constructor (we do not initialize things to null,
-the idea is to have a special type of nullable references later). `<init-list>` is a list of
-assignments (`<name> = <expr>`) or constructor calls (`<name>(<params>)`) separated by a semicolon
-(`;`).
+use Maybe<T>, or T? for that). `<init-list>` is a list of assignments (`<name> = <expr>`) or
+constructor calls (`<name>(<params>)`) separated by a semicolon (`;`).
 
 The constructor acts a little special when working with actors that have not been declared to be
 executed on a specific thread (using the `on ?` syntax). These constructors need to take a `Thread`

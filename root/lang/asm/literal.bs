@@ -14,6 +14,8 @@ AsmOperand number(SStr s, SStr value) {
 		longConst(value.v.toLong);
 	} else if (size.equals("w")) {
 		wordConst(value.v.toWord);
+	} else if (size.equals("p")) {
+		intPtrConst(value.v.toInt);
 	} else {
 		// Fallback.
 		intConst(value.v.toInt);

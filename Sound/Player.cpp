@@ -145,7 +145,7 @@ namespace sound {
 
 			Duration r = at - t;
 			if (r > ms(400)) {
-				// Long interval, yeild to other threads.
+				// Long interval, yield to other threads.
 				os::UThread::sleep(nat(r.inMs() - 100));
 			} else {
 				// Short interval left, poll as much as we can.

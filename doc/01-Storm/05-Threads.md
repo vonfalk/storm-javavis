@@ -5,7 +5,7 @@ Storm knows about two levels of threads: OS threads and user level threads (UThr
 are of course scheduled and managed by the operating system, while UThreads are scheduled
 cooperatively by the Storm runtime.
 
-Storm attempts to elliminate common threading problems by enforcing no shared memory between
+Storm attempts to eliminate common threading problems by enforcing no shared memory between
 threads. To do this, the compiler needs knowledge about existing threads, and which thread a each
 function will be executed on. Therefore, each function in the compiler has an associated thread,
 which can be one of these three:
@@ -38,7 +38,7 @@ As mentioned earlier, each message is implemented by spawning a new UThread on t
 thread, which means that each OS thread may have more than one running thread. Why does Storm allow
 multiple UThreads potentially sharing data? Won't that break the no shared memory policy? In a way
 it does, but it all boils down to the different scheduling of UThreads with respect to OS
-threads. UThreads are scheduled cooperatively, which means that one UThread must explicitly `yeild`
+threads. UThreads are scheduled cooperatively, which means that one UThread must explicitly `yield`
 in order for another UThread to be able to execute. This means that we know exactly where potential
 thread switches occur, and reasoning about your program becomes much easier. Most languages only
 allow thread switches when sending a message and waiting for the result. Thread switches may also

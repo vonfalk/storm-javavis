@@ -25,7 +25,7 @@ calls are written like this: `Type(a, b)`. This really means `Type.__ctor(a, b)`
 case, `Type<Int>(a, b)` is perfectly legal, as it means `Type<Int>.__ctor(a, b)`.
 
 Currently, there is no support for `use`-statements in the syntax language. Therefore, type lookups
-are always releative to:
+are always relative to:
 1. the current package
 2. the `core` package
 3. the root package
@@ -143,7 +143,7 @@ Which will match `a`, followed by zero or more `b`:s and finally a `c`. Each cha
 by the delimiter rule (not specified for this example). Note that parenthesis can be either before
 or after separators. There may even be separators on both side of the parenthesis. Currently, only
 one repetition per option is supported. Break the option into multiple rules if more repeats are
-needed. Due to the nature of repetitions, it is not practical to bind any maches inside a repeat to
+needed. Due to the nature of repetitions, it is not practical to bind any matches inside a repeat to
 a variable. Use the `->` syntax inside repetitions instead. What happens if you try to bind tokens
 inside a repetition to a variable is that the variable will either not have a value, or be assigned
 multiple times. Both of these cases will generate an error when the options are being

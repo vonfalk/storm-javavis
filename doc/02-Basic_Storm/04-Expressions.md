@@ -17,7 +17,7 @@ Basic Storm supports the following literals:
   not implemented yet). Use `0 - 1` instead. Integer literals evaluate to a `core:Int` by default, 
   but the compiler will cast the literal to `core:Nat` or `core:Byte` automatically if the context 
   requires it, and the literal fits inside the target type without truncation. In some cases, it 
-  is neccessary to manually help the compiler by doing the casts manually. This is done by calling
+  is necessary to manually help the compiler by doing the casts manually. This is done by calling
   the `nat` or `byte` method on the `Int` object, like this: `1.nat`, or `nat(1)`.
 * __Booleans:__ the reserved words `true` or `false`. Evaluates to `core:Bool`.
 * __Arrays:__ enclosed in square brackets (`[]`), separated with comma (`,`). The literal may start with
@@ -169,7 +169,7 @@ Automatic type casting
 ----------------------
 
 Basic Storm has support for automatic type casting, in a way that is similar to C++. However, in
-Basic Storm, less conversions are implicit. Automatic conversions only upcast types (ie to a more
+Basic Storm, less conversions are implicit. Automatic conversions only upcast types (ie. to a more
 general type), or if a constructor is declared as `cast ctor(T from)`. For the built in types, very
 few constructors are declared like this, so Basic Storm does not generally do anything unexpected.
 
@@ -181,11 +181,11 @@ and the false branch. At the moment, this is not too sophisticated. A common bas
 present (this works for `Maybe` as well). Otherwise, Basic Storm tries to cast one type to the
 other, and chooses the combination that is possible. If all of these fails, Basic Storm considers it
 is not possible to find a common type, even if there is an unrelated type that both the true and
-false branch can be casted to. In this case, it is neccessary to explicitly help the compiler to
+false branch can be casted to. In this case, it is necessary to explicitly help the compiler to
 figure out the type.
 
 The automatic casting of literals is limited to very simple cases at the moment, and sometimes it is
-neccessary to explicitly cast literals (for example in `if` statements).
+necessary to explicitly cast literals (for example in `if` statements).
 
 Downcasting
 ------------
@@ -212,7 +212,7 @@ References and null
 At the moment, Storm has no support for null references. All reference variables (referring classes
 or actors) are initialized to something when they are created, there is no null keyword and there is
 no good way of testing for null references. The idea is to provide a special, nullable type, for
-this purpose. This type will probably be written as `T?`, and will not be accessable until there has
+this purpose. This type will probably be written as `T?`, and will not be accessible until there has
 been an explicit check for null, probably using:
 
 ```
@@ -236,7 +236,7 @@ Fn<Int, Int> ptr = &myFunction(Int);
 ```
 
 In this case, we assume that `myFunction` returns an `Int`. As you can see, the parameters of the
-function has to be declared explicitly. This may not be neccessary later on.
+function has to be declared explicitly. This may not be necessary later on.
 
 Function pointers may also contain a this-pointer of an object or an actor (not a value). This is
 done like this:
@@ -327,13 +327,12 @@ if (obj) {
 Automatic type conversions are done when calling functions, so you can call a functions taking
 formal parameter of type `T?` with an actual parameter of type `T`.
 
-At the moment, type conversions does not happen on return values, so in some cases it is neccessary
-to help the compiler by manually casting a `T` into a `T?`. This can be easily done by writing
-`?expr`. For example:
+At the moment, automatic type casting does not always work as expected, mainly when the compiler has
+to deduce the type from two separate types. For example in the if-statement in `fn` below:
 
 ```
 Str? fn2() {
-    ?"foo";
+    "foo";
 }
 
 Str? fn() {
@@ -346,10 +345,10 @@ Str? fn() {
 
 ```
 
-In this case, we need to help the compiler in two places, at the return in `fn2`, where no type casting
-is currently taking place, and in the if statement in `fn`, otherwise the compiler would not realize that
-the if statement returns something useful. Also note that `Base?` and `Derived?` are treated as completely
-separate entities in many cases still. This will all be fixed in the future.
+In this case, we need to help the compiler deducing the return value of the if-statement. The
+compiler sees the types `Str` and `Str?`, and can fail to deduce the return type. This happens
+especially when a possible type is neither `Str`, nor `Str?`. To help the compiler, add a `?` before
+`"bar"` to cast it into a `Str?`.
 
 `Maybe` instances are initialized to null, but sometimes it is desirable to assign a null value to
 them after creation. In Basic Storm, there are two ways of doing this. Either by assigning a newly
