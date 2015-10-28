@@ -118,7 +118,7 @@ class AsmOperand on Compiler {
 	}
 
 	Str toS() {
-		v.toS;
+		value.toS;
 	}
 }
 
