@@ -395,3 +395,78 @@ a statement ends with a semicolon, while an expression does not. This distinctio
 blocks to not end in a semicolon, as they do in C. It is, however, possible to include blocks in a
 regular expression as well. After the syntax level, expressions and statements are treated equally,
 as expressions.
+
+
+Loops
+-------
+
+All kinds of loops that work in C++ work in Basic Storm. However, there are some differences.
+
+Firstly, the `do`, and the `while` loop has been combined into one. To illustrate this, consider the
+following two examples:
+
+```
+while (a < 10) {
+    a++;
+}
+```
+
+```
+do {
+    a++;
+} while (a < 10);
+```
+
+They are using the same keywords, and approximately in the same order. Furthermore consider this
+fairly common pattern:
+
+```
+int a = 0;
+while (true) {
+    cout << "Enter a positive integer: ";
+    cin >> a;
+    if (a > 0)
+        break;
+    cout << "Not correct. Only positive numbers." << endl;
+}
+```
+
+As we can see here, resort to using a `while(true)` loop with break rather than using the
+condition. If we would have used the condition, we would have to repeat other parts of the
+expression. Because of this, Basic Storm allows you to write:
+
+```
+Int a = 0;
+do {
+    print("Enter a positive integer: ");
+    a = readInt();
+} while (a <= 0) {
+    print("Not correct. Only positive numbers.");
+}
+```
+
+This works exactly as the C++ example above. Any sequence of statements can be omitted, and blocks
+can be replaced with a semicolon. From this, we can form all loops in C++ (except the `for` loop),
+but we also gain an alternative to the `while (true)` construct:
+
+```
+do {
+    // code repeated forever
+}
+```
+
+The do-while loop in Basic Storm has a bit special scoping rules. Normally, scope is resolved
+lexicographically, but both blocks in a do-while loop are considered to be one block. Look at the
+code below, where we declare a variable in one block and use it in the other:
+
+```
+Int i = 1;
+do {
+    Int j = 2*i;
+} while (j < 20) {
+    i += j;
+}
+```
+
+The for loop is also present in Basic Storm. It works just like in C++. The foreach-variant is not
+yet implemented.
