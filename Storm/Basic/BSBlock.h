@@ -40,12 +40,19 @@ namespace storm {
 			LocalVar *variable(const String &name);
 
 			// Add a variable
-			void STORM_FN add(Par<LocalVar> v);
+			virtual void STORM_FN add(Par<LocalVar> v);
+
+			// Lift all variables present inside 'o' into this block. Can only be used one step at a
+			// time to not cause strange scoping issues.
+			virtual void STORM_FN liftVars(Par<Block> from);
 
 		private:
 			// Variables in this block.
 			typedef hash_map<String, Auto<LocalVar> > VarMap;
 			VarMap variables;
+
+			// Check if 'x' is a child to us.
+			bool isParentTo(Par<Block> x);
 
 		};
 

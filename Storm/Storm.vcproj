@@ -331,10 +331,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Basic\BSWhile.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Lib\BuiltIn.cpp"
 				>
 			</File>
@@ -626,6 +622,10 @@
 				RelativePath=".\AsRef.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSLoop.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -722,10 +722,6 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSVar.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Basic\BSWhile.h"
 				>
 			</File>
 			<File
@@ -998,6 +994,10 @@
 			</File>
 			<File
 				RelativePath=".\AsRef.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSLoop.h"
 				>
 			</File>
 		</Filter>

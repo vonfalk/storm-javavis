@@ -17,7 +17,7 @@ namespace storm {
 		public:
 			STORM_CTOR Expr();
 
-			// Result of an expression. Default is null.
+			// Result of an expression. Default is void.
 			virtual Value STORM_FN result();
 
 			// Generate code.

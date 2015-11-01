@@ -67,6 +67,10 @@ T runFn(const String &fn, const ParT &par, const ParU &qar, const ParV &rar) {
 	return fun->call<T>(os::FnParams().add(par).add(qar).add(rar));
 }
 
+inline Int runFnInt(const String &fn) {
+	return runFn<Int>(fn);
+}
+
 template <class T>
 inline Int runFnInt(const String &fn, T p) {
 	return runFn<Int, typename AsPar<T>::v>(fn, p);

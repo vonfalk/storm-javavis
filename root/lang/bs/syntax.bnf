@@ -122,9 +122,10 @@ If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfTrue
 IfTrue(Block parent); // Really only If and IfAs...
 IfTrue => IfTrue(parent) : Stmt(me) -> set;
 
-// Loops.
+// The loop.
 Loop(Block block);
-Loop => While(block) : "while", "(", Expr(me) -> cond, ")", Stmt(me) -> body;
+Loop => Loop(block) : "do", Stmt(me) -> doBody, ("while", "(", Expr(me) -> cond, ")", Stmt(me) -> whileBody)?;
+Loop => Loop(block) : "while", "(", Expr(me) -> cond, ")", Stmt(me) -> whileBody;
 
 // The for loop is divided into two to get correct scoping.
 Loop => ExprBlock(block) : "for", "(", Expr(me) -> add, ";", ForInner(me) -> add;
@@ -220,9 +221,10 @@ Expr => Var(block, name, init) :[20] "var ", Name name, "=", Expr(block) init;
 // Statement
 Stmt(Block block);
 Stmt => expr : Expr(block) expr, ";";
+Stmt => Expr() : ";";
 Stmt => e : Block(block) e;
-Stmt => e : If(block) e;
-Stmt => e : Loop(block) e;
+Stmt => e :[10] If(block) e;
+Stmt => e :[10] Loop(block) e;
 
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);

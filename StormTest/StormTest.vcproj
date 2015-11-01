@@ -378,6 +378,10 @@
 				RelativePath=".\MapTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\LoopTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

@@ -141,6 +141,66 @@ void forScopeVal() {
 	}
 }
 
+// Loop variants.
+Int loop1() {
+	Int r = 1;
+	Int i = 0;
+
+	while (i < 10) {
+		r += r;
+		i++;
+	}
+
+	r;
+}
+
+Int loop2() {
+	Int r = 0;
+	Int i = 0;
+
+	do {
+		r++;
+		i++;
+	} while (i < 10) {
+		r += r;
+	}
+
+	r;
+}
+
+Int loop3() {
+	Int r = 1;
+	Int i = 0;
+
+	do {
+		r += r;
+		i++;
+	} while (i < 10);
+
+	r;
+}
+
+Int loop4() {
+	Int r = 1;
+	do
+		Int z = r * 2;
+	while (z < 20)
+		r += z;
+
+	r;
+}
+
+Int loop5() {
+	Int r = 1;
+	do {
+		Int z = r * 2;
+	} while (z < 20) {
+		r += z;
+	}
+
+	r;
+}
+
 void voidFn() {
     // Make sure we can return 'void'.
     3;

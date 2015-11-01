@@ -46,6 +46,20 @@ namespace storm {
 		variables.insert(make_pair(var->name, var));
 	}
 
+	void bs::Block::liftVars(Par<Block> from) {
+		assert(isParentTo(from), L"'liftVars' can only be used to move variables from child to parent, one step.");
+
+		for (VarMap::const_iterator i = from->variables.begin(); i != from->variables.end(); ++i) {
+			add(i->second);
+		}
+
+		from->variables.clear();
+	}
+
+	bool bs::Block::isParentTo(Par<Block> x) {
+		return x->lookup->parent() == lookup.borrow();
+	}
+
 	bs::LocalVar *bs::Block::variable(const String &name) {
 		VarMap::const_iterator i = variables.find(name);
 		if (i != variables.end())
