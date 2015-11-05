@@ -44,6 +44,10 @@ namespace storm {
 #endif
 	}
 
+	void Object::deleteMe() {
+		delete this;
+	}
+
 	Engine &Object::engine() const {
 		return storm::engine(this);
 	}

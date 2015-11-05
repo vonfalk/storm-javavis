@@ -46,6 +46,10 @@ namespace storm {
 
 		// The thread we should be running on.
 		Auto<Thread> thread;
+
+	protected:
+		// Delete on the owning thread.
+		virtual void deleteMe();
 	};
 
 

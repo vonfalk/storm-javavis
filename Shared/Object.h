@@ -92,7 +92,7 @@ namespace storm {
 				checkLive(this);
 #endif
 				if (atomicDecrement(refs) == 0)
-					delete this;
+					deleteMe();
 			}
 		}
 
@@ -145,6 +145,9 @@ namespace storm {
 	protected:
 		friend wostream &operator <<(wostream &to, const Object &o);
 		virtual void output(wostream &to) const;
+
+		// Helper for performing deletes on the correct thread.
+		virtual void deleteMe();
 
 	private:
 		Object(const Object &o);
