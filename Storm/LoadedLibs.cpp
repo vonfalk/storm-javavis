@@ -34,18 +34,23 @@ namespace storm {
 	LoadedLibs::LoadedLibs() {}
 
 	LoadedLibs::~LoadedLibs() {
-		clear();
+		unload();
 	}
 
-	void LoadedLibs::clear() {
+	void LoadedLibs::shutdown() {
 		for (LibMap::iterator i = loaded.begin(), end = loaded.end(); i != end; ++i)
-			delete i->second;
-		loaded.clear();
+			i->second->shutdown();
 	}
 
 	void LoadedLibs::clearTypes() {
 		for (LibMap::iterator i = loaded.begin(), end = loaded.end(); i != end; ++i)
 			i->second->clearTypes();
+	}
+
+	void LoadedLibs::unload() {
+		for (LibMap::iterator i = loaded.begin(), end = loaded.end(); i != end; ++i)
+			delete i->second;
+		loaded.clear();
 	}
 
 	LibData *LoadedLibs::load(Par<Url> url) {
@@ -54,7 +59,7 @@ namespace storm {
 			return null;
 		LibMain e = libMain(lib);
 		if (!e) {
-			unload(lib);
+			storm::unload(lib);
 			return null;
 		}
 
@@ -71,6 +76,8 @@ namespace storm {
 
 
 	LibData::LibData(Engine &engine, LibHandle l, LibMain e) : engine(engine), lib(l), timesLoaded(1) {
+		isShutdown = false;
+
 		dllInterface = storm::dllInterface();
 		dllInterface.builtIn = &LibData::libBuiltIn;
 		dllInterface.cppVTable = &LibData::libVTable;
@@ -84,18 +91,26 @@ namespace storm {
 	}
 
 	LibData::~LibData() {
-		// Free the data.
-		(*info.destroyData)(info.data);
-
 		// We clear types first, it is a _bad_ idea to try to execute destructors possibly in
 		// the unloaded dll after we have unloaded it!
 		clearTypes();
+
+		// Free the data.
+		(*info.destroyData)(info.data);
+
 		engine.removeRootToS(toSFn);
 		for (nat i = 0; i < timesLoaded; i++)
 			unload(lib);
 	}
 
+	void LibData::shutdown() {
+		if (!isShutdown)
+			(*info.shutdownData)(info.data);
+		isShutdown = true;
+	}
+
 	void LibData::clearTypes() {
+		shutdown();
 		types.clear();
 	}
 

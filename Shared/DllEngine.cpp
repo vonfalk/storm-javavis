@@ -7,12 +7,23 @@ namespace storm {
 
 	static const DllInterface *interface = null;
 
+	static void shutdownLibData(void *data) {
+		LibData *d = (LibData *)data;
+		d->shutdown();
+	}
+
 	static void destroyLibData(void *data) {
 		LibData *d = (LibData *)data;
 		delete d;
 	}
 
-	DllInfo Engine::setup(const DllInterface *i) {
+	LibData::LibData() {}
+
+	LibData::~LibData() {}
+
+	void LibData::shutdown() {}
+
+	DllInfo Engine::setup(const DllInterface *i, LibData *data) {
 		interface = i;
 
 #ifdef DEBUG
@@ -24,7 +35,8 @@ namespace storm {
 
 		DllInfo info = {
 			&storm::builtIn(),
-			new LibData(),
+			data,
+			&shutdownLibData,
 			&destroyLibData,
 		};
 		return info;

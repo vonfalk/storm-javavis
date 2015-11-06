@@ -34,7 +34,7 @@ namespace sound {
 	}
 
 	AudioMgr *audioMgr(EnginePtr e) {
-		LibData *d = e.v.data();
+		LibData *d = (sound::LibData *)e.v.data();
 		if (!d->audio)
 			d->audio = CREATE(AudioMgr, e.v);
 		return d->audio.ret();

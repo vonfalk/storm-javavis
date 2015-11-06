@@ -1,19 +1,23 @@
 #pragma once
+#include "Shared/DllEngine.h"
 
 namespace stormgui {
 	class App;
 	class RenderMgr;
-}
-
-namespace storm {
 
 	/**
 	 * Global data for our instance.
 	 */
-	class LibData : public NoCopy {
+	class LibData : public storm::LibData {
 	public:
+		// Create.
 		LibData();
+
+		// Destroy.
 		~LibData();
+
+		// Shut down.
+		void shutdown();
 
 		// The one and only App object. Created when needed.
 		Auto<stormgui::App> app;
@@ -22,8 +26,4 @@ namespace storm {
 		Auto<stormgui::RenderMgr> renderMgr;
 	};
 
-}
-
-namespace stormgui {
-	typedef storm::LibData LibData;
 }

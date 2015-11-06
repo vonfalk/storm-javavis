@@ -1,10 +1,13 @@
 #pragma once
+#include "Shared/DllInterface.h"
 
-namespace storm {
+namespace graphics {
 
-	// Instance data.
-	class LibData {};
+	class LibData : public storm::LibData {
+	public:
+		LibData() {}
+		~LibData() {}
+		void shutdown() {}
+	};
 
 }
-
-namespace graphics {}

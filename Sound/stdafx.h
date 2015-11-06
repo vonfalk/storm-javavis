@@ -11,27 +11,22 @@ using namespace storm;
 
 namespace sound {
 	class AudioMgr;
-}
-
-namespace storm {
 
 	/**
 	 * Global data.
 	 */
-	class LibData : public NoCopy {
+	class LibData : public storm::LibData {
 	public:
 		LibData();
 		~LibData();
+
+		// Shutdown.
+		void shutdown();
 
 
 		// AudioMgr object.
 		Auto<sound::AudioMgr> audio;
 	};
-
-}
-
-namespace sound {
-	typedef storm::LibData LibData;
 
 	// Audio thread.
 	STORM_THREAD(Audio);

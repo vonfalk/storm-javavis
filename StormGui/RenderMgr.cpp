@@ -175,6 +175,10 @@ namespace stormgui {
 		return target;
 	}
 
+	void RenderMgr::terminate() {
+		exiting = true;
+	}
+
 	void RenderMgr::main() {
 		vector<Auto<Painter>> toRedraw;
 
@@ -215,7 +219,7 @@ namespace stormgui {
 	}
 
 	RenderMgr *renderMgr(EnginePtr e) {
-		LibData *d = e.v.data();
+		LibData *d = (stormgui::LibData *)e.v.data();
 		if (!d->renderMgr)
 			d->renderMgr = CREATE(RenderMgr, e.v);
 		return d->renderMgr.ret();

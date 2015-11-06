@@ -27,6 +27,9 @@ namespace stormgui {
 			}
 		};
 
+		// Shutdown the rendering thread.
+		void terminate();
+
 		// Attach a Painter.
 		RenderInfo attach(Par<Painter> painter, HWND window);
 

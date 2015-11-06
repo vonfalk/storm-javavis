@@ -132,9 +132,13 @@ namespace storm {
 		// the effort to compute which RefSources it can remove early.
 		arena.preShutdown();
 
+		// Start shutting down the libraries now. This requires all types to be alive.
+		loadedLibs.shutdown();
+
 		// We need to destroy all types last, otherwise we will crash badly!
 		vector<Auto<Type>> types = rootPkg->findTypes();
 
+		// Clear out all types.
 		rootPkg = null;
 		rootScope->top = null; // keeps a reference to the root package.
 		rootScope->lookup = null;
@@ -145,6 +149,8 @@ namespace storm {
 
 		// Release any threads now.
 		threads.clear();
+
+		// TODO: Wait until threads have terminated properly.
 
 		// Keep the type type a little longer.
 		Type *t = Type::stormType(*this);
@@ -168,7 +174,7 @@ namespace storm {
 		delete rootScope;
 
 		// Unload libs now. This dtor will use a map in here, causing a crash, unless we clear it first.
-		loadedLibs.clear();
+		loadedLibs.unload();
 
 		Object::dumpLeaks();
 

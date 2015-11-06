@@ -29,11 +29,14 @@ namespace storm {
 		LoadedLibs();
 		~LoadedLibs();
 
-		// Clear libraries.
-		void clear();
+		// Prepare libraries for shutdown.
+		void shutdown();
 
-		// Clear loaded types.
+		// Clear loaded types. Implies 'shutdown'.
 		void clearTypes();
+
+		// Clear libraries. Implies 'clearTypes'
+		void unload();
 
 		// Load a library. (borrowed ptr).
 		LibData *load(Par<Url> lib);
@@ -53,6 +56,9 @@ namespace storm {
 		LibData(Engine &engine, LibHandle lib, LibMain fn);
 
 		~LibData();
+
+		// Shutdown this lib.
+		void shutdown();
 
 		// Clear our type list.
 		void clearTypes();
@@ -83,6 +89,9 @@ namespace storm {
 
 		// The ToS-function from this DLL.
 		void *toSFn;
+
+		// Have we been shutdown before?
+		bool isShutdown;
 
 		// Get types for this lib. Called from the lib itself.
 		static Type *libBuiltIn(Engine &e, void *data, nat id);

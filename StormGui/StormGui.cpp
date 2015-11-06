@@ -4,6 +4,8 @@
 #include "App.h"
 #include "RenderMgr.h"
 
+STORM_LIB_ENTRY_POINT(stormgui::LibData);
+
 namespace stormgui {
 
 	os::Thread spawnAppWait(Engine &e) {
@@ -19,15 +21,16 @@ namespace stormgui {
 	}
 
 	DEFINE_STORM_THREAD_WAIT(Render, &spawnRenderWait);
-}
-
-namespace storm {
 
 	LibData::LibData() {}
 
-	LibData::~LibData() {
+	LibData::~LibData() {}
+
+	void LibData::shutdown() {
 		if (app)
 			app->terminate();
+		if (renderMgr)
+			renderMgr->terminate();
 	}
 
 }

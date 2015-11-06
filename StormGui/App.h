@@ -49,6 +49,12 @@ namespace stormgui {
 		// Get our instance.
 		HINSTANCE instance();
 
+	protected:
+		// Allow any thread to delete this class, as threads may not be alive when we have come this far.
+		virtual void deleteMe() {
+			delete this;
+		}
+
 	private:
 		friend class AppWait;
 		friend App *app(EnginePtr);

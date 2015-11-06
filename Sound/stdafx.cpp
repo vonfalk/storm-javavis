@@ -2,21 +2,21 @@
 #include "Shared/DllMain.h"
 #include "Audio.h"
 
+STORM_LIB_ENTRY_POINT(sound::LibData);
+
 #pragma comment(lib, "dsound.lib")
 
-namespace storm {
+namespace sound {
 
 	LibData::LibData() {}
 
-	LibData::~LibData() {
+	LibData::~LibData() {}
+
+	void LibData::shutdown() {
 		if (audio)
 			audio->terminate();
 	}
 
-}
-
-
-namespace sound {
 
 	os::Thread spawnAudio(Engine &e) {
 		return os::Thread::spawn(new AudioWait(e));

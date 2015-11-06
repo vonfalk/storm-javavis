@@ -98,6 +98,10 @@ namespace storm {
 		// Data object created for this instance.
 		void *data;
 
+		// Function to prepare the library for shutdown.
+		typedef void (*ShutdownFn)(void *);
+		ShutdownFn shutdownData;
+
 		// Function to destroy the data at shutdown.
 		typedef void (*DestroyFn)(void *);
 		DestroyFn destroyData;

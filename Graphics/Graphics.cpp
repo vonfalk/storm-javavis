@@ -3,3 +3,5 @@
 #include "Shared/DllMain.h"
 
 
+STORM_LIB_ENTRY_POINT(graphics::LibData);
+

@@ -8,6 +8,7 @@
 namespace stormgui {
 
 	// The app object owned by this thread. Updated by 'processMessage'.
+	// TODO: Maybe store in LibData?
 	static THREAD App *currentApp = null;
 
 	App::App() : appWait(null), creating(null) {
@@ -216,7 +217,7 @@ namespace stormgui {
 	}
 
 	App *app(EnginePtr ptr) {
-		LibData *d = ptr.v.data();
+		LibData *d = (stormgui::LibData *)ptr.v.data();
 		if (!d->app)
 			d->app = CREATE(App, ptr.v);
 		return d->app.ret();

@@ -28,6 +28,12 @@ namespace sound {
 		// Terminate the audio thread.
 		void terminate();
 
+	protected:
+		// Allow any thread to delete us, as threading may not be available when we're removed.
+		virtual void deleteMe() {
+			delete this;
+		}
+
 	private:
 		friend class AudioWait;
 
