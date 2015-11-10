@@ -1,0 +1,71 @@
+delimiter: DDelimiter;
+DDelimiter => void : "[ \n\r\t]*";
+DDelimiter => void : DDelimiter - DDelimiter;
+DDelimiter => void : "//[^\n]\n";
+DDelimiter => void : "/\*.*\*/";
+DDelimiter => void : "{.*}";
+
+// Program declaration.
+Program => void : , "program", Identifier name, ";", Block, ".";
+
+Identifier => s : "[A-Za-z][A-Za-z0-9]*" s;
+Number => s : "[0-9]+" s;
+Type => t : TypeName t;
+Type => void : "array", "[", Constant t, "]", "of", TypeName type;
+TypeName => void : "integer";
+TypeName => void : "real";
+Variable => void : Identifier;
+Variable => void : Identifier, "[", Expression, "]";
+
+Block => void : Constants, Variables, Functions, "begin", Statements, "end";
+
+Constants => void : "const", (Identifier -> name, "=", Constant -> value)*;
+Constant => void : Number;
+Constant => void : Identifier;
+Constant => void : "'.'";
+
+Variables => void : "var", (Identifier -> name, ":", Type -> type)*;
+
+Functions => void : (Function -> add)*;
+Function => void : "function", Identifier name, Params params, ";", Block code, ";";
+Function => void : "procedure", Identifier name, Params params, "=", Type result, ";", Block code, ";";
+
+Params => void : "";
+Params => void : "(", Param -> add, (";", Param -> add,)* ")";
+Param => void : Identifier name, ":", Type type;
+
+Actuals => void : "()";
+Actuals => void : "(", Expression -> add, (",", Expression -> add, )* ")";
+
+Statements => void : (Statement, ";", )+;
+
+Statement => void : Variable, ":=", Expression;
+Statement => void : Identifier, Actuals;
+Statement => void : "if", Expression cond, "then", Statements, ("elsif", Expression, "then", Statements, )*, "end";
+Statement => void : "if", Expression cond, "then", Statements, ("elsif", Expression, "then", Statements, )*, "else", Statements, "end";
+Statement => void : "while", Expression cond, "do", Statements, "end";
+Statement => void : "return", Expression;
+
+Expression => void : SimpleExpression;
+Expression => void : SimpleExpression, "<", SimpleExpression;
+Expression => void : SimpleExpression, ">", SimpleExpression;
+Expression => void : SimpleExpression, "<>", SimpleExpression;
+Expression => void : SimpleExpression, "=", SimpleExpression;
+
+SimpleExpression => void : "[+-]?" sign, Term (, SimpleEnd)*;
+SimpleEnd => void : "+", Term;
+SimpleEnd => void : "-", Term;
+SimpleEnd => void : "OR", Term;
+
+Term => void : Factor (, FactorEnd)*;
+TermEnd => void : "*", Factor;
+TermEnd => void : "/", Factor;
+TermEnd => void : "DIV", Factor;
+TermEnd => void : "MOD", Factor;
+TermEnd => void : "AND", Factor;
+
+Factor => void : Identifier;
+Factor => void : Number;
+Factor => void : Identifier, Actuals;
+Factor => void : "(", Expression, ")";
+Factor => void : "not", Factor;
