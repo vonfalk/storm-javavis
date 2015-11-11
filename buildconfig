@@ -1,3 +1,4 @@
 FastDebug
+StormMain#-r root/ -f test.d.factorial
 StormTest
 StormMain#-r root/ -f test.asm.testInlineLabel

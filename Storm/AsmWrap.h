@@ -287,6 +287,9 @@ namespace storm {
 		wostream &operator <<(wostream &to, const RetVal &s);
 		Str *STORM_ENGINE_FN toS(EnginePtr e, RetVal s);
 
+		RetVal STORM_FN retVoid();
+		RetVal STORM_FN retPtr();
+
 		// Instruction.
 		class Instruction {
 			STORM_VALUE;

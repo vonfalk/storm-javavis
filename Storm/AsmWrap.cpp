@@ -436,6 +436,14 @@ namespace storm {
 		return CREATE(Str, e.v, ::toS(s));
 	}
 
+	wrap::RetVal wrap::retVoid() {
+		return RetVal(Size(), false);
+	}
+
+	wrap::RetVal wrap::retPtr() {
+		return RetVal(code::Size::sPtr, false);
+	}
+
 	/**
 	 * Instruction.
 	 */

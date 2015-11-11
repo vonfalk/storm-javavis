@@ -6,7 +6,7 @@ DDelimiter => void : "{[^}]*}";
 // TODO: Add support for /* */
 
 // Program declaration.
-Program => void : , "program", Identifier name, ";", Block, ".",;
+Program => Program(name) : , "program", Identifier name, ";", Block, ".",;
 
 Identifier => s : "[A-Za-z_][A-Za-z0-9_]*" s;
 Number => s : "[0-9]+" s;

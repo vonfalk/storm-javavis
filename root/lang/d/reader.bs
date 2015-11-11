@@ -33,23 +33,9 @@ class DieselFile extends FileReader {
 		}
 
 		TObject o = parser.transformT([]);
-		if (o as DieselProgram) {
+		if (o as Program) {
+			o.set();
 			pkg.add(o);
 		}
-	}
-}
-
-/**
- * Diesel function, allows hierarchical declarations.
- */
-class DieselFunction extends Function {
-	ctor(Str name) {
-		init(Value(), name, []) {}
-	}
-}
-
-class DieselProgram extends DieselFunction {
-	ctor(SStr name) {
-		init(name.v) {}
 	}
 }

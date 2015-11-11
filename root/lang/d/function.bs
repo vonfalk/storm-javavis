@@ -1,0 +1,30 @@
+use lang;
+use core:lang;
+use core:asm;
+
+/**
+ * Diesel function, allows hierarchical declarations.
+ */
+class Function extends core:lang:Function {
+	ctor(Str name) {
+		init(Value(), name, []) {}
+	}
+}
+
+class Program extends Function {
+	ctor(SStr name) {
+		init(name.v) {}
+	}
+
+	ctor(Str name) {
+		init(name) {}
+	}
+
+	// Compile code.
+	void set() {
+		Listing l;
+		l << ret(retVoid);
+		DynamicCode code(l);
+		setCode(code);
+	}
+}

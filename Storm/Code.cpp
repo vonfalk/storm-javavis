@@ -48,6 +48,10 @@ namespace storm {
 		code = new code::Binary(engine().arena, src);
 	}
 
+	DynamicCode::DynamicCode(Par<wrap::Listing> src) {
+		code = new code::Binary(engine().arena, src->v);
+	}
+
 	DynamicCode::~DynamicCode() {
 		if (code)
 			engine().destroy(code);

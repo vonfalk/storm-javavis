@@ -78,6 +78,7 @@ namespace storm {
 	public:
 		// Code to be executed.
 		DynamicCode(const code::Listing &listing);
+		STORM_CTOR DynamicCode(Par<wrap::Listing> listing);
 
 		~DynamicCode();
 
