@@ -309,8 +309,8 @@ namespace storm {
 
 		set<String> rules = rulesInProgress(steps[pos]);
 		if (!rules.empty()) {
-			oss << L"\nRules in progress: ";
-			join(oss, rules, L", ");
+			oss << L"\nRules in progress:\n";
+			join(oss, rules, L"\n");
 		}
 
 		return SyntaxError(srcPos + pos, oss.str());
@@ -360,9 +360,9 @@ namespace storm {
 		set<String> r;
 
 		for (nat i = 0; i < states.size(); i++) {
-			const String &n = states[i].pos.option().rule();
-			if (n != L"")
-				r.insert(n);
+			std::wostringstream s;
+			states[i].pos.output(s, false);
+			r.insert(s.str());
 		}
 
 		return r;

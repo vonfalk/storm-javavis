@@ -24,10 +24,13 @@ namespace storm {
 		// Invoke something?
 		inline bool invoke() const { return bindTo != L"" && method; }
 
+		// Output in specific manner.
+		virtual void output(wostream &to, bool bindings) const;
+
 		// More public interface here...
 
 	protected:
-		virtual void output(std::wostream &to) const;
+		virtual void output(wostream &to) const;
 	};
 
 
@@ -41,8 +44,8 @@ namespace storm {
 		// 'compiled' regex to match.
 		Regex regex;
 
-	protected:
-		virtual void output(std::wostream &to) const;
+		// Output
+		virtual void output(wostream &to, bool bindings) const;
 	};
 
 	/**
@@ -58,8 +61,8 @@ namespace storm {
 		// Parameters to the type (if any).
 		vector<String> params;
 
-	protected:
-		virtual void output(std::wostream &to) const;
+		// Output.
+		virtual void output(wostream &to, bool bindings) const;
 
 	private:
 		// Type to match.

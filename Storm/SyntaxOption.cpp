@@ -57,10 +57,10 @@ namespace storm {
 		output(to, -1);
 	}
 
-	void SyntaxOption::output(wostream &to, nat marker) const {
+	void SyntaxOption::output(wostream &to, nat marker, bool bindings) const {
 		to << owner;
 
-		if (matchFn != L"") {
+		if (bindings && matchFn != L"") {
 			to << L" => ";
 			to << matchFn << L"(";
 			for (nat i = 0; i < matchFnParams.size(); i++) {
@@ -68,6 +68,8 @@ namespace storm {
 				to << matchFnParams[i];
 			}
 			to << L") :[" << priority << L"] ";
+		} else {
+			to << " :[" << priority << L"] ";
 		}
 
 		bool lastComma = false;
@@ -97,7 +99,7 @@ namespace storm {
 					if (!lastComma && !lastMark)
 						to << L"- ";
 				}
-				to << *tokens[i];
+				tokens[i]->output(to, bindings);
 				lastComma = false;
 			}
 
@@ -219,9 +221,13 @@ namespace storm {
 		return optionP->tokens[tokenId];
 	}
 
+	void OptionIter::output(wostream &to, bool bindings) const {
+		optionP->output(to, tokenId, bindings);
+	}
+
 	void OptionIter::output(wostream &to) const {
-		to << "{";
+		// to << "{";
 		optionP->output(to, tokenId);
-		to << ", " << repCount << "}";
+		// to << ", " << repCount << "}";
 	}
 }

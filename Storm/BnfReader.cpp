@@ -68,7 +68,7 @@ namespace storm {
 	 * Parsing the bnf.
 	 */
 
-	vector<String> parseCallParams(Tokenizer &tok) {
+	static vector<String> parseCallParams(Tokenizer &tok) {
 		vector<String> r;
 		if (tok.peek().token == L")") {
 			tok.next();
@@ -92,7 +92,7 @@ namespace storm {
 		return r;
 	}
 
-	String parseFnName(Tokenizer &tok) {
+	static String parseFnName(Tokenizer &tok) {
 		std::wostringstream r;
 		r << tok.next().token;
 
@@ -107,7 +107,7 @@ namespace storm {
 		return r.str();
 	}
 
-	void parseCall(SyntaxOption &to, Tokenizer &tok) {
+	static void parseCall(SyntaxOption &to, Tokenizer &tok) {
 		String name = parseFnName(tok);
 		vector<String> params;
 		bool isCall = false;
@@ -130,7 +130,7 @@ namespace storm {
 		to.matchVar = !isCall;
 	}
 
-	bool isEndOfToken(const Token &t) {
+	static bool isEndOfToken(const Token &t) {
 		return (t.token == L",")
 			|| (t.token == L"-")
 			|| (t.token == L";")
@@ -138,18 +138,24 @@ namespace storm {
 			|| (t.token == L"(");
 	}
 
-	SyntaxToken *parseToken(Tokenizer &tok) {
+	// Returns the parsed token (if any), and wether or not a mark should be started after the
+	// returned token.
+	static std::pair<SyntaxToken *, bool> parseToken(Tokenizer &tok) {
 		if (isEndOfToken(tok.peek()))
-			return null;
+			return std::make_pair((SyntaxToken *)null, false);
 
+		bool startMark = false;
 		Token t = tok.next();
 		SyntaxToken *result = null;
 		vector<String> params;
 
 		if (tok.peek().token == L"(") {
 			tok.next();
-			if (tok.peek().token != L",")
+			if (tok.peek().token == L",") {
+				startMark = true;
+			} else {
 				params = parseCallParams(tok);
+			}
 		}
 
 		if (isEndOfToken(tok.peek())) {
@@ -183,15 +189,21 @@ namespace storm {
 			throw SyntaxError(t.pos, L"Regex can not take parameters.");
 		}
 
-		return result;
+		return std::make_pair(result, startMark);
 	}
 
-	void parseTokens(SyntaxOption &to, Tokenizer &tok, const String &delimiter) {
+	static void parseTokens(SyntaxOption &to, Tokenizer &tok, const String &delimiter) {
 		bool end = false;
 		while (!end) {
-			SyntaxToken *st = parseToken(tok);
-			if (st)
-				to.add(st);
+			std::pair<SyntaxToken *, bool> st = parseToken(tok);
+			if (st.first)
+				to.add(st.first);
+			if (st.second) {
+				if (to.hasMark())
+					// Note: not entirely correct position, but close enough.
+					throw SyntaxError(tok.position(), L"Only one mark per rule is allowed.");
+				to.startMark();
+			}
 
 			Token sep = tok.next();
 			if (sep.token == L";") {
@@ -226,7 +238,7 @@ namespace storm {
 		}
 	}
 
-	void parsePriority(SyntaxOption &o, Tokenizer &tok) {
+	static void parsePriority(SyntaxOption &o, Tokenizer &tok) {
 		if (tok.peek().token != L"[")
 			return;
 		tok.next();
@@ -241,7 +253,7 @@ namespace storm {
 			throw SyntaxError(end.pos, L"Expected a closing bracket.");
 	}
 
-	void parseRule(SyntaxRule &to, Tokenizer &tok, const Scope &scope, const String &delimiter) {
+	static void parseRule(SyntaxRule &to, Tokenizer &tok, const Scope &scope, const String &delimiter) {
 		SyntaxOption *option = new SyntaxOption(tok.position(), scope, to.name());
 
 		try {
@@ -256,7 +268,7 @@ namespace storm {
 		}
 	}
 
-	void parseDeclaration(SyntaxRule &to, Tokenizer &tok) {
+	static void parseDeclaration(SyntaxRule &to, Tokenizer &tok) {
 		if (!to.declared.unknown())
 			throw SyntaxError(tok.position(), L"There is already a declaration of " + to.name());
 		to.declared = tok.position();
@@ -288,7 +300,7 @@ namespace storm {
 			throw SyntaxError(paren.pos, L"Expected ;");
 	}
 
-	void parseOption(const Token &option, Tokenizer &tok, String &delimiterRule) {
+	static void parseOption(const Token &option, Tokenizer &tok, String &delimiterRule) {
 		if (option.token != L"delimiter")
 			throw SyntaxError(option.pos, L"Unknown option: " + option.token);
 

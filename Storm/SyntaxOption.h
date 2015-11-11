@@ -65,7 +65,7 @@ namespace storm {
 
 	protected:
 		virtual void output(std::wostream &to) const;
-		void output(std::wostream &to, nat marker) const;
+		void output(std::wostream &to, nat marker, bool bindings = true) const;
 
 	private:
 		// Our owner.
@@ -129,6 +129,9 @@ namespace storm {
 		inline bool operator !=(const OptionIter &o) const {
 			return !(*this == o);
 		}
+
+		// More versatile output function.
+		void output(wostream &to, bool bindings) const;
 
 	protected:
 		virtual void output(wostream &to) const;

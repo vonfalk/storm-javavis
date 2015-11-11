@@ -6,7 +6,11 @@ namespace storm {
 	SyntaxToken::SyntaxToken(const String &to, bool method) : bindTo(to), method(method) {}
 
 	void SyntaxToken::output(wostream &to) const {
-		if (bindTo != L"") {
+		output(to, true);
+	}
+
+	void SyntaxToken::output(wostream &to, bool bindings) const {
+		if (bindings && bindTo != L"") {
 			to << ' ';
 			if (method)
 				to << L"-> ";
@@ -21,9 +25,9 @@ namespace storm {
 	RegexToken::RegexToken(const String &regex, const String &to, bool method)
 		: SyntaxToken(to, method), regex(regex) {}
 
-	void RegexToken::output(std::wostream &to) const {
+	void RegexToken::output(std::wostream &to, bool bindings) const {
 		to << '"' << regex << '"';
-		SyntaxToken::output(to);
+		SyntaxToken::output(to, bindings);
 	}
 
 
@@ -34,14 +38,14 @@ namespace storm {
 	TypeToken::TypeToken(const String &name, const String &to, bool method)
 		: SyntaxToken(to, method), typeName(name) {}
 
-	void TypeToken::output(std::wostream &to) const {
+	void TypeToken::output(std::wostream &to, bool bindings) const {
 		to << typeName;
-		if (params.size() > 0) {
+		if (bindings && params.size() > 0) {
 			to << L"(";
 			join(to, params, L", ");
 			to << L")";
 		}
-		SyntaxToken::output(to);
+		SyntaxToken::output(to, bindings);
 	}
 
 	/**

@@ -39,7 +39,7 @@ var
     temp : integer;
 begin
     if n = 0 then
-    	return 1
+    	return 1;
     else
     	temp := fact(n - 1);
 	return n * temp;
