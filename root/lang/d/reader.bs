@@ -34,7 +34,6 @@ class DieselFile extends FileReader {
 
 		TObject o = parser.transformT([]);
 		if (o as Program) {
-			o.set();
 			pkg.add(o);
 		}
 	}

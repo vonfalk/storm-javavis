@@ -30,14 +30,23 @@ namespace storm {
 		// C version.
 		virtual const wchar_t *c_str();
 
-		// Append stuff.
-		virtual StrBuf *STORM_FN add(Par<Str> str);
-		virtual StrBuf *STORM_FN add(Int i);
-		virtual StrBuf *STORM_FN add(Nat i);
-		virtual StrBuf *STORM_FN add(Long i);
-		virtual StrBuf *STORM_FN add(Word i);
-		virtual StrBuf *STORM_FN add(Byte i);
-		virtual StrBuf *STORM_FN add(Float i);
+		// Append stuff. TODO: Remove these?
+		StrBuf *STORM_FN add(Par<Str> str);
+		StrBuf *STORM_FN add(Int i);
+		StrBuf *STORM_FN add(Nat i);
+		StrBuf *STORM_FN add(Long i);
+		StrBuf *STORM_FN add(Word i);
+		StrBuf *STORM_FN add(Byte i);
+		StrBuf *STORM_FN add(Float i);
+
+		// Operator <<
+		inline StrBuf *STORM_FN operator <<(Par<Str> str) { return add(str); }
+		inline StrBuf *STORM_FN operator <<(Int i) { return add(i); }
+		inline StrBuf *STORM_FN operator <<(Nat i) { return add(i); }
+		inline StrBuf *STORM_FN operator <<(Long i) { return add(i); }
+		inline StrBuf *STORM_FN operator <<(Word i) { return add(i); }
+		inline StrBuf *STORM_FN operator <<(Byte i) { return add(i); }
+		inline StrBuf *STORM_FN operator <<(Float i) { return add(i); }
 
 		// Help the templating below...
 		StrBuf *CODECALL add(Str *str);

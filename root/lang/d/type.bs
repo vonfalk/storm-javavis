@@ -1,0 +1,19 @@
+use lang;
+use core:lang;
+
+/**
+ * Type in the compiler.
+ */
+class DType on Compiler {
+	Str name;
+
+	ctor(SStr name) {
+		init() {
+			name = name.v;
+		}
+	}
+
+	Str toS() {
+		name;
+	}
+}

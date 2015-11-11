@@ -1,6 +1,7 @@
 use lang;
 use core:lang;
 use core:asm;
+use core:debug;
 
 /**
  * Diesel function, allows hierarchical declarations.
@@ -21,7 +22,8 @@ class Program extends Function {
 	}
 
 	// Compile code.
-	void set() {
+	void set(Block block) {
+		print("Adding block:\n" # block);
 		Listing l;
 		l << ret(retVoid);
 		DynamicCode code(l);

@@ -1,0 +1,81 @@
+use lang;
+use core:lang;
+use core:debug;
+
+/**
+ * A block in the diesel language.
+ */
+class Block on Compiler {
+	Constant[] constants;
+	Variable[] variables;
+
+	void add(Constant[] v) {
+		constants = v;
+	}
+
+	void add(Variable[] v) {
+		variables = v;
+	}
+
+	Str toS() {
+		StrBuf buf;
+		buf << "begin\n";
+
+		if (constants.count > 0) {
+			buf << "const\n";
+			for (Nat i = 0; i < constants.count; i++) {
+				buf << "  " << constants[i].toS << ";\n";
+			}
+		}
+
+		if (variables.count > 0) {
+			buf << "var\n";
+			for (Nat i = 0; i < variables.count; i++) {
+				buf << "  " << variables[i].toS << ";\n";
+			}
+		}
+
+		buf << "end\n";
+		buf.toS;
+	}
+}
+
+
+/**
+ * Constant.
+ */
+class Constant on Compiler {
+	SStr name;
+	SStr value;
+
+	// TODO: Check type of 'value'
+	ctor(SStr name, SStr value) {
+		init() {
+			name = name;
+			value = value;
+		}
+	}
+
+	Str toS() {
+		name.v # " = " # value.v;
+	}
+}
+
+/**
+ * Variable.
+ */
+class Variable on Compiler {
+	SStr name;
+	DType type;
+
+	ctor(SStr name, DType type) {
+		init() {
+			name = name;
+			type = type;
+		}
+	}
+
+	Str toS() {
+		name.v # " : " # type;
+	}
+}

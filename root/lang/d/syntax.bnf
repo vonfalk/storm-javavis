@@ -6,27 +6,31 @@ DDelimiter => void : "{[^}]*}";
 // TODO: Add support for /* */
 
 // Program declaration.
-Program => Program(name) : , "program", Identifier name, ";", Block, ".",;
+Program => Program(name) : , "program", Identifier name, ";", Block -> set, ".",;
 
 Identifier => s : "[A-Za-z_][A-Za-z0-9_]*" s;
 Number => s : "[0-9]+" s;
 Type => t : TypeName t;
-Type => void : "array", "\[", Constant t, "\]", "of", TypeName type;
-TypeName => void : "integer";
-TypeName => void : "real";
+Type => DType(name) : "array" name, "\[", ConstantValue t, "\]", "of", TypeName type;
+TypeName => DType(name) : "integer" name;
+TypeName => DType(name) : "real" name;
 Variable => void : Identifier;
 Variable => void : Identifier, "\[", Expression, "\]";
 
-Block => void : Constants, Variables, Functions, "begin", Statements, "end";
+Block => Block() : Constants -> add, Variables -> add, Functions, "begin", Statements, "end";
 
-Constants => void : "";
-Constants => void : "const", (Identifier -> name, "=", Constant -> value, ";", )*;
-Constant => void : Number;
-Constant => void : Identifier;
-Constant => void : "'.'";
+Constants => Array<Constant>() : "";
+Constants => Array<Constant>() : "const", (Constant -> push, ";", )*;
+Constant => Constant(name, value) : Identifier name, "=", ConstantValue value;
 
-Variables => void : "";
-Variables => void : "var", (Identifier -> name, ":", Type -> type, ";", )*;
+// TODO: Custom types here.
+ConstantValue => v : Number v;
+ConstantValue => v : Identifier v;
+ConstantValue => v : "'.'" v;
+
+Variables => Array<Variable>() : "";
+Variables => Array<Variable>() : "var", (Variable -> push, ";", )*;
+Variable => Variable(name, type) : Identifier name, ":", Type type;
 
 Functions => void : (Function -> add, )*;
 Function => void : "procedure", Identifier name, Params params, ";", Block code, ";";

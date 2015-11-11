@@ -1,5 +1,4 @@
 program factorial;
-
 var
     n : integer;
 
