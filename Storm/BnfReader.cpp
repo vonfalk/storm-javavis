@@ -148,7 +148,8 @@ namespace storm {
 
 		if (tok.peek().token == L"(") {
 			tok.next();
-			params = parseCallParams(tok);
+			if (tok.peek().token != L",")
+				params = parseCallParams(tok);
 		}
 
 		if (isEndOfToken(tok.peek())) {
