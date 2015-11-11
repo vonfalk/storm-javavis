@@ -1,0 +1,55 @@
+use lang;
+use core:io;
+use core:lang;
+use core:debug;
+use lang:bs:macro;
+
+class Reader extends FilesReader {
+	ctor(PkgFiles files, Package into) {
+		init(files, into) {}
+	}
+
+	FileReader createFile(Url path) {
+		DieselFile(path, pkg);
+	}
+}
+
+class DieselFile extends FileReader {
+	ctor(Url file, Package into) {
+		init(file, into) {}
+	}
+
+	void readFunctions() {
+		Named? myPkg = (name{lang:d}).find(rootScope);
+		SyntaxSet syntax;
+		if (myPkg as Package) {
+			syntax.add(myPkg);
+		}
+
+		Parser parser(syntax, file.readAllText, file);
+		parser.parse("Program");
+		if (parser.hasError) {
+			parser.throwError;
+		}
+
+		TObject o = parser.transformT([]);
+		if (o as DieselProgram) {
+			pkg.add(o);
+		}
+	}
+}
+
+/**
+ * Diesel function, allows hierarchical declarations.
+ */
+class DieselFunction extends Function {
+	ctor(Str name) {
+		init(Value(), name, []) {}
+	}
+}
+
+class DieselProgram extends DieselFunction {
+	ctor(SStr name) {
+		init(name.v) {}
+	}
+}
