@@ -1,19 +1,41 @@
 use lang;
 use core:lang;
+use lang:bs:macro;
 
 /**
  * Type in the compiler.
  */
 class DType on Compiler {
 	Str name;
+	Type? type;
 
 	ctor(SStr name) {
 		init() {
 			name = name.v;
+			type = findType(name.v);
 		}
 	}
 
 	Str toS() {
 		name;
 	}
+}
+
+
+/**
+ * Find the Storm type from a Diesel type.
+ */
+Type? findType(Str name) {
+	Named? r;
+	if (name.equals("integer")) {
+		r = (name{core:Int}).find(rootScope);
+	} else if (name.equals("real")) {
+		r = (name{core:Float}).find(rootScope);
+	}
+
+	Type? z;
+	if (r as Type) {
+		z = r;
+	}
+	z;
 }

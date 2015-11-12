@@ -4,14 +4,27 @@ use core:asm;
 use core:debug;
 
 /**
- * Diesel function, allows hierarchical declarations.
+ * Diesel function, allows hierarchical declarations. TODO: Integrate this with the regular lookup
+ * of Storm. This is not possible at the moment since 'find' in NameLookup does not follow the
+ * regular semantics used in Basic Storm.
  */
 class Function extends core:lang:Function {
+	// Contents
 	Block block;
+
+	// Sub-functions and variables.
+	Str->Named contents;
 
 	ctor(Str name, Block block) {
 		init(Value(), name, []) {
 			block = block;
+		}
+
+		Named[] c = block.buildNamed();
+		for (Nat i = 0; i < c.count; i++) {
+			// TODO: Why do we need a temporary here?
+			Str n = c[i].name;
+			contents.put(n, c[i]);
 		}
 	}
 
@@ -25,12 +38,12 @@ class Function extends core:lang:Function {
 
 	Str toS() {
 		StrBuf to;
-		Value[] p = this.params;
+		Value[] p = params;
 
 		if (p.count > 0) {
-			to << "function " << this.name << "()\n";
+			to << "function " << name << "()\n";
 		} else {
-			to << "procedure " << this.name << "\n";
+			to << "procedure " << name << "\n";
 		}
 		to << block.toS;
 		to.toS;

@@ -27,6 +27,21 @@ class Block extends Statement {
 		statements = v;
 	}
 
+	// Get all named things from here.
+	Named[] buildNamed() {
+		Named[] r;
+
+		for (Nat i = 0; i < functions.count; i++) {
+			r << functions[i];
+		}
+
+		for (Nat i = 0; i < variables.count; i++) {
+			r << variables[i];
+		}
+
+		r;
+	}
+
 	Str toS() {
 		StrBuf buf;
 		if (constants.count > 0) {
@@ -82,18 +97,16 @@ class Constant on Compiler {
 /**
  * Variable.
  */
-class Variable on Compiler {
-	SStr name;
+class Variable extends Named {
 	DType type;
 
 	ctor(SStr name, DType type) {
-		init() {
-			name = name;
+		init(name.v) {
 			type = type;
 		}
 	}
 
 	Str toS() {
-		name.v # " : " # type;
+		name # " : " # type;
 	}
 }

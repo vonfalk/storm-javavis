@@ -78,7 +78,7 @@ class WhileStmt extends Statement {
 
 	Str toS() {
 		StrBuf b;
-		b << "while " << cond.toS << "do\n";
+		b << "while " << cond.toS << " do\n";
 		for (Nat i = 0; i < code.count; i++) {
 			b << code[i].toS.indent << ";\n";
 		}

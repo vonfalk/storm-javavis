@@ -152,14 +152,6 @@ namespace storm {
 		if (typeHandle->size == 0 && !force)
 			return;
 
-		Function *dtor = destructor();
-		Function *create = copyCtor();
-		Function *deepCopy = deepCopyFn();
-		Function *equals = equalsFn();
-		Function *hash = hashFn();
-		if (!create)
-			throw RuntimeError(L"The type " + identifier() + L" does not have a copy constructor.");
-
 		typeHandle->isFloat = builtInType() == BasicTypeInfo::floatNr;
 
 		if (typeFlags & typeClass) {
@@ -172,6 +164,12 @@ namespace storm {
 			typeHandle->destroyRaw(t.destroy);
 			typeHandle->deepCopyRaw(t.deepCopy);
 		} else {
+			Function *dtor = destructor();
+			Function *create = copyCtor();
+			Function *deepCopy = deepCopyFn();
+			if (!create)
+				throw RuntimeError(L"The type " + identifier() + L" does not have a copy constructor.");
+
 			typeHandle->size = size().current();
 			typeHandle->createRef(create->ref());
 
@@ -185,6 +183,9 @@ namespace storm {
 			else
 				typeHandle->deepCopyRef();
 		}
+
+		Function *equals = equalsFn();
+		Function *hash = hashFn();
 
 		// TODO? Use the defaults when we're an object.
 		if (equals) {
