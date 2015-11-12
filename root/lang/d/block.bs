@@ -64,10 +64,10 @@ class Block extends Statement {
  */
 class Constant on Compiler {
 	SStr name;
-	SStr value;
+	Expression value; // Should only be constants...
 
 	// TODO: Check type of 'value'
-	ctor(SStr name, SStr value) {
+	ctor(SStr name, Expression value) {
 		init() {
 			name = name;
 			value = value;
@@ -75,7 +75,7 @@ class Constant on Compiler {
 	}
 
 	Str toS() {
-		name.v # " = " # value.v;
+		name.v # " = " # value.toS;
 	}
 }
 

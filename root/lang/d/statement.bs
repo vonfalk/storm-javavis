@@ -63,6 +63,31 @@ class IfStmt extends Statement {
 }
 
 /**
+ * While statement.
+ */
+class WhileStmt extends Statement {
+	Expression cond;
+	Statement[] code;
+
+	ctor(Expression cond, Statement[] code) {
+		init() {
+			cond = cond;
+			code = code;
+		}
+	}
+
+	Str toS() {
+		StrBuf b;
+		b << "while " << cond.toS << "do\n";
+		for (Nat i = 0; i < code.count; i++) {
+			b << code[i].toS.indent << ";\n";
+		}
+		b << "end";
+		b.toS;
+	}
+}
+
+/**
  * Return.
  */
 class Return extends Statement {
@@ -107,6 +132,24 @@ class Negate extends Expression {
 }
 
 /**
+ * Integer number.
+ */
+class IntNr extends Expression {
+	Int val;
+
+	ctor(SStr str) {
+		init() {
+			val = str.v.toInt;
+		}
+	}
+
+	Str toS() {
+		val.toS;
+	}
+}
+
+
+/**
  * Binary operator.
  */
 class Operators extends Expression {
@@ -125,9 +168,15 @@ class Operators extends Expression {
 
 	Str toS() {
 		StrBuf str;
+		if (ops.count > 0) {
+			str << "(";
+		}
 		str << lhs.toS;
 		for (Nat i = 0; i < ops.count; i++) {
 			str << " " << ops[i].toS;
+		}
+		if (ops.count > 0) {
+			str << ")";
 		}
 		str.toS;
 	}
@@ -156,7 +205,7 @@ class Operator on Compiler {
 /**
  * Variable reference.
  */
-class VarRef on Compiler {
+class VarRef extends Expression {
 	Str name;
 
 	// If not null, we're referring an array.
@@ -181,5 +230,60 @@ class VarRef on Compiler {
 		} else {
 			name;
 		}
+	}
+}
+
+
+/**
+ * Function call.
+ */
+class FnCall extends Expression {
+	Str name;
+	Expression[] params;
+
+	ctor(SStr name, Expression[] params) {
+		init() {
+			name = name.v;
+			params = params;
+		}
+	}
+
+	Str toS() {
+		StrBuf s;
+		s << name << "(";
+		for (Nat i = 0; i < params.count; i++) {
+			if (i > 0)
+				s << ", ";
+			s << params[i].toS;
+		}
+		s << ")";
+		s.toS;
+	}
+}
+
+/**
+ * Procedure call.
+ */
+class ProcCall extends Statement {
+	Str name;
+	Expression[] params;
+
+	ctor(SStr name, Expression[] params) {
+		init() {
+			name = name.v;
+			params = params;
+		}
+	}
+
+	Str toS() {
+		StrBuf s;
+		s << name << "(";
+		for (Nat i = 0; i < params.count; i++) {
+			if (i > 0)
+				s << ", ";
+			s << params[i].toS;
+		}
+		s << ")";
+		s.toS;
 	}
 }

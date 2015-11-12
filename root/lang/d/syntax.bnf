@@ -9,7 +9,7 @@ DDelimiter => void : "{[^}]*}";
 Program => Program(name, block) : , "program", Identifier name, ";", Block block, ".",;
 
 Identifier => s : "[A-Za-z_][A-Za-z0-9_]*" s;
-Number => s : "[0-9]+" s;
+Number => IntNr(s) : "[0-9]+" s;
 Type => t : TypeName t;
 Type => DType(name) : "array" name, "\[", ConstantValue t, "\]", "of", TypeName type;
 TypeName => DType(name) : "integer" name;
@@ -40,15 +40,15 @@ Params => void : "";
 Params => void : "(", Param -> add, (";", Param -> add,)* ")";
 Param => void : Identifier name, ":", Type type;
 
-Actuals => void : "()";
-Actuals => void : "(", Expression -> add, (",", Expression -> add, )* ")";
+Actuals => Array<Expression>() : "()";
+Actuals => Array<Expression>() : "(", Expression -> push, (",", Expression -> push, )* ")";
 
 Statements => Array<Statement>() : (Statement -> push, ";", )+;
 
 Statement => Assignment(to, src) : Variable to, ":=", Expression src;
-Statement => Statement() : Identifier, Actuals;
+Statement => ProcCall(name, actuals) : Identifier name, Actuals actuals;
 Statement => IfStmt(lbl, cond, code) : "if" lbl, Expression cond, "then", Statements code, (ElseStmt -> else, )? "end";
-Statement => Statement() : "while", Expression cond, "do", Statements, "end";
+Statement => WhileStmt(cond, code) : "while", Expression cond, "do", Statements code, "end";
 Statement => Return(expr) : "return", Expression expr;
 Statement => Return() : "return";
 
@@ -64,8 +64,8 @@ ExprEnd => Operator(op, rhs) : "=" op, SimpleExpression rhs;
 
 SimpleExpression => e : SimpleFirst e;
 SimpleExpression => Operators(first) : SimpleFirst first (, SimpleEnd -> add)+;
-SimpleFirst => e : Term e;
-SimpleFirst => Negate(e) : "[+\-]" sign, Term e;
+SimpleFirst => e : "\+?", Term e;
+SimpleFirst => Negate(e) : "\-" sign, Term e;
 SimpleEnd => Operator(op, rhs) : "\+" op, Term rhs;
 SimpleEnd => Operator(op, rhs) : "\-" op, Term rhs;
 SimpleEnd => Operator(op, rhs) : "or" op, Term rhs;
@@ -78,8 +78,8 @@ TermEnd => Operator(op, rhs) : "div" op, Factor rhs;
 TermEnd => Operator(op, rhs) : "mod" op, Factor rhs;
 TermEnd => Operator(op, rhs) : "and" op, Factor rhs;
 
-Factor => Expression() : Variable;
-Factor => Expression() : Number;
-Factor => Expression() : Identifier, Actuals;
+Factor => v : Variable v;
+Factor => nr : Number nr;
+Factor => FnCall(name, params) : Identifier name, Actuals params;
 Factor => e : "(", Expression e, ")";
 Factor => Expression() : "not", Factor;
