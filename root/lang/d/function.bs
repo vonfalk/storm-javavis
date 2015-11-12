@@ -7,26 +7,64 @@ use core:debug;
  * Diesel function, allows hierarchical declarations.
  */
 class Function extends core:lang:Function {
-	ctor(Str name) {
-		init(Value(), name, []) {}
-	}
-}
+	Block block;
 
-class Program extends Function {
-	ctor(SStr name) {
-		init(name.v) {}
-	}
-
-	ctor(Str name) {
-		init(name) {}
+	ctor(Str name, Block block) {
+		init(Value(), name, []) {
+			block = block;
+		}
 	}
 
 	// Compile code.
-	void set(Block block) {
-		print("Adding block:\n" # block);
+	void set() {
 		Listing l;
 		l << ret(retVoid);
 		DynamicCode code(l);
 		setCode(code);
 	}
+
+	Str toS() {
+		StrBuf to;
+		Value[] p = this.params;
+
+		if (p.count > 0) {
+			to << "function " << this.name << "()\n";
+		} else {
+			to << "procedure " << this.name << "\n";
+		}
+		to << block.toS;
+		to.toS;
+	}
+}
+
+class Program extends Function {
+	ctor(SStr name, Block code) {
+		init(name.v, code) {}
+	}
+
+	ctor(Str name, Block code) {
+		init(name, code) {}
+	}
+
+	Str toS() {
+		StrBuf to;
+		to << "program " << this.name << "\n";
+		to << block.toS;
+		to.toS;
+	}
+}
+
+
+/**
+ * Create a function.
+ */
+Function function(SStr name, Block code) {
+	Function(name.v, code);
+}
+
+/**
+ * Create a procedure.
+ */
+Function procedure(SStr name, Block code) {
+	Function(name.v, code);
 }

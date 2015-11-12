@@ -85,7 +85,7 @@ namespace storm {
 		nat count;
 	};
 
-	Indent indentOf(const String &str, nat start) {
+	static Indent indentOf(const String &str, nat start) {
 		Indent r = { 0, 0 };
 
 		if (str[start] != ' ' && str[start] != '\t')
@@ -98,7 +98,7 @@ namespace storm {
 		return r;
 	}
 
-	nat nextLine(const String &str, nat start) {
+	static nat nextLine(const String &str, nat start) {
 		for (; start < str.size() && str[start] != '\n'; start++)
 			;
 
@@ -111,7 +111,7 @@ namespace storm {
 		return start;
 	}
 
-	bool emptyLine(const String &str, nat start) {
+	static bool emptyLine(const String &str, nat start) {
 		nat end = nextLine(str, start);
 		for (nat i = start; i < end; i++) {
 			switch (str[i]) {
@@ -128,7 +128,7 @@ namespace storm {
 		return true;
 	}
 
-	Indent min(Indent a, Indent b) {
+	static Indent min(Indent a, Indent b) {
 		if (a.ch == 0)
 			return b;
 		if (b.ch == 0)
@@ -209,4 +209,26 @@ namespace storm {
 		return CREATE(Str, str, src.substr(start, end - start));
 	}
 
+	static void indent(wostream &to, const String &src, const wchar* prepend) {
+		nat at = 0;
+		while (at < src.size()) {
+			nat next = nextLine(src, at);
+			to << prepend;
+			for (nat i = at; i < next; i++)
+				to << src[i];
+			at = next;
+		}
+	}
+
+	Str *indent(Par<Str> str) {
+		std::wostringstream o;
+		indent(o, str->v, L"    ");
+		return CREATE(Str, str, o.str());
+	}
+
+	Str *indent(Par<Str> str, Par<Str> prepend) {
+		std::wostringstream o;
+		indent(o, str->v, prepend->v.c_str());
+		return CREATE(Str, str, o.str());
+	}
 }

@@ -5,9 +5,11 @@ use core:debug;
 /**
  * A block in the diesel language.
  */
-class Block on Compiler {
+class Block extends Statement {
 	Constant[] constants;
 	Variable[] variables;
+	Function[] functions;
+	Statement[] statements;
 
 	void add(Constant[] v) {
 		constants = v;
@@ -17,24 +19,40 @@ class Block on Compiler {
 		variables = v;
 	}
 
+	void add(Function[] v) {
+		functions = v;
+	}
+
+	void add(Statement[] v) {
+		statements = v;
+	}
+
 	Str toS() {
 		StrBuf buf;
-		buf << "begin\n";
-
 		if (constants.count > 0) {
 			buf << "const\n";
 			for (Nat i = 0; i < constants.count; i++) {
-				buf << "  " << constants[i].toS << ";\n";
+				buf << constants[i].toS.indent << ";\n";
 			}
 		}
 
 		if (variables.count > 0) {
 			buf << "var\n";
 			for (Nat i = 0; i < variables.count; i++) {
-				buf << "  " << variables[i].toS << ";\n";
+				buf << variables[i].toS.indent << ";\n";
 			}
 		}
 
+		if (functions.count > 0) {
+			for (Nat i = 0; i < functions.count; i++) {
+				buf << functions[i].toS.indent;
+			}
+		}
+
+		buf << "begin\n";
+		for (Nat i = 0; i < statements.count; i++) {
+			buf << statements[i].toS.indent << ";\n";
+		}
 		buf << "end\n";
 		buf.toS;
 	}

@@ -1,0 +1,185 @@
+use lang;
+use core:lang;
+
+/**
+ * Statement base class.
+ */
+class Statement on Compiler {}
+
+
+/**
+ * Assignment.
+ */
+class Assignment extends Statement {
+	VarRef to;
+	Expression expr;
+
+	ctor(VarRef to, Expression expr) {
+		init() {
+			to = to;
+			expr = expr;
+		}
+	}
+
+	Str toS() {
+		to # " := " # expr;
+	}
+}
+
+/**
+ * If statement.
+ */
+class IfStmt extends Statement {
+	Str label;
+	Expression cond;
+	Statement[] code;
+	Statement elseCode;
+
+	ctor(SStr label, Expression e, Statement[] code) {
+		init() {
+			label = label.v;
+			cond = e;
+			code = code;
+		}
+	}
+
+	void else(Statement c) {
+		elseCode = c;
+	}
+
+	Str toS() {
+		StrBuf b;
+		b << label << " " << cond.toS << " then\n";
+
+		for (Nat i = 0; i < code.count; i++) {
+			b << code[i].toS.indent << ";\n";
+		}
+
+		if (label.equals("if")) {
+			b << "end";
+		}
+		b.toS;
+	}
+}
+
+/**
+ * Return.
+ */
+class Return extends Statement {
+	Expression? expr;
+
+	ctor() {
+		init() {}
+	}
+
+	ctor(Expression e) {
+		init() { expr = e; }
+	}
+
+	Str toS() {
+		if (expr) {
+			"return " # expr;
+		} else {
+			"return";
+		}
+	}
+}
+
+
+/**
+ * Expression base class.
+ */
+class Expression on Compiler {}
+
+/**
+ * Negate an expression.
+ */
+class Negate extends Expression {
+	Expression expr;
+
+	ctor(Expression e) {
+		init() { expr = e; }
+	}
+
+	Str toS() {
+		"-" # expr;
+	}
+}
+
+/**
+ * Binary operator.
+ */
+class Operators extends Expression {
+	Expression lhs;
+	Operator[] ops;
+
+	ctor(Expression lhs) {
+		init() {
+			lhs = lhs;
+		}
+	}
+
+	void add(Operator op) {
+		ops << op;
+	}
+
+	Str toS() {
+		StrBuf str;
+		str << lhs.toS;
+		for (Nat i = 0; i < ops.count; i++) {
+			str << " " << ops[i].toS;
+		}
+		str.toS;
+	}
+}
+
+/**
+ * Operator application, this is an operator name and the rhs operator.
+ */
+class Operator on Compiler {
+	Str op;
+	Expression rhs;
+
+	ctor(SStr op, Expression rhs) {
+		init() {
+			op = op.v;
+			rhs = rhs;
+		}
+	}
+
+	Str toS() {
+		op # " " # rhs;
+	}
+}
+
+
+/**
+ * Variable reference.
+ */
+class VarRef on Compiler {
+	Str name;
+
+	// If not null, we're referring an array.
+	Expression? index;
+
+	ctor(SStr name) {
+		init() {
+			name = name.v;
+		}
+	}
+
+	ctor(SStr name, Expression index) {
+		init() {
+			name = name.v;
+			index = index;
+		}
+	}
+
+	Str toS() {
+		if (index) {
+			name # "[" # index # "]";
+		} else {
+			name;
+		}
+	}
+}

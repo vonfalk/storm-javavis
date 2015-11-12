@@ -6,7 +6,7 @@ DDelimiter => void : "{[^}]*}";
 // TODO: Add support for /* */
 
 // Program declaration.
-Program => Program(name) : , "program", Identifier name, ";", Block -> set, ".",;
+Program => Program(name, block) : , "program", Identifier name, ";", Block block, ".",;
 
 Identifier => s : "[A-Za-z_][A-Za-z0-9_]*" s;
 Number => s : "[0-9]+" s;
@@ -14,10 +14,10 @@ Type => t : TypeName t;
 Type => DType(name) : "array" name, "\[", ConstantValue t, "\]", "of", TypeName type;
 TypeName => DType(name) : "integer" name;
 TypeName => DType(name) : "real" name;
-Variable => void : Identifier;
-Variable => void : Identifier, "\[", Expression, "\]";
+Variable => VarRef(name) : Identifier name;
+Variable => VarRef(name) : Identifier name, "\[", Expression index, "\]";
 
-Block => Block() : Constants -> add, Variables -> add, Functions, "begin", Statements, "end";
+Block => Block() : Constants -> add, Variables -> add, Functions -> add, "begin", Statements -> add, "end";
 
 Constants => Array<Constant>() : "";
 Constants => Array<Constant>() : "const", (Constant -> push, ";", )*;
@@ -32,9 +32,9 @@ Variables => Array<Variable>() : "";
 Variables => Array<Variable>() : "var", (Variable -> push, ";", )*;
 Variable => Variable(name, type) : Identifier name, ":", Type type;
 
-Functions => void : (Function -> add, )*;
-Function => void : "procedure", Identifier name, Params params, ";", Block code, ";";
-Function => void : "function", Identifier name, Params params, ":", Type result, ";", Block code, ";";
+Functions => Array<Function>() : (Function -> push, )*;
+Function => procedure(name, code) : "procedure", Identifier name, Params params, ";", Block code, ";";
+Function => function(name, code) : "function", Identifier name, Params params, ":", Type result, ";", Block code, ";";
 
 Params => void : "";
 Params => void : "(", Param -> add, (";", Param -> add,)* ")";
@@ -43,37 +43,43 @@ Param => void : Identifier name, ":", Type type;
 Actuals => void : "()";
 Actuals => void : "(", Expression -> add, (",", Expression -> add, )* ")";
 
-Statements => void : (Statement, ";", )+;
+Statements => Array<Statement>() : (Statement -> push, ";", )+;
 
-Statement => void : Variable, ":=", Expression;
-Statement => void : Identifier, Actuals;
-Statement => void : "if", Expression cond, "then", Statements, ("elsif", Expression, "then", Statements, )*, "end";
-Statement => void : "if", Expression cond, "then", Statements, ("elsif", Expression, "then", Statements, )*, "else", Statements, "end";
-Statement => void : "while", Expression cond, "do", Statements, "end";
-Statement => void : "return", Expression;
-Statement => void : "return";
+Statement => Assignment(to, src) : Variable to, ":=", Expression src;
+Statement => Statement() : Identifier, Actuals;
+Statement => IfStmt(lbl, cond, code) : "if" lbl, Expression cond, "then", Statements code, (ElseStmt -> else, )? "end";
+Statement => Statement() : "while", Expression cond, "do", Statements, "end";
+Statement => Return(expr) : "return", Expression expr;
+Statement => Return() : "return";
 
-Expression => void : SimpleExpression;
-Expression => void : SimpleExpression, "<", SimpleExpression;
-Expression => void : SimpleExpression, ">", SimpleExpression;
-Expression => void : SimpleExpression, "<>", SimpleExpression;
-Expression => void : SimpleExpression, "=", SimpleExpression;
+ElseStmt => IfStmt(lbl, cond, code) : "elsif" lbl, Expression cond, "then", Statements code, (ElseStmt -> else)?;
+ElseStmt => Block() : "else", Statements -> add;
 
-SimpleExpression => void : Term (, SimpleEnd)*;
-SimpleExpression => void : "[+\-]" sign, Term (, SimpleEnd)*;
-SimpleEnd => void : "\+", Term;
-SimpleEnd => void : "\-", Term;
-SimpleEnd => void : "OR", Term;
+Expression => e : SimpleExpression e;
+Expression => Operators(first) : SimpleExpression first, ExprEnd -> add;
+ExprEnd => Operator(op, rhs) : "<" op, SimpleExpression rhs;
+ExprEnd => Operator(op, rhs) : ">" op, SimpleExpression rhs;
+ExprEnd => Operator(op, rhs) : "<>" op, SimpleExpression rhs;
+ExprEnd => Operator(op, rhs) : "=" op, SimpleExpression rhs;
 
-Term => void : Factor (, TermEnd)*;
-TermEnd => void : "\*", Factor;
-TermEnd => void : "/", Factor;
-TermEnd => void : "div", Factor;
-TermEnd => void : "mod", Factor;
-TermEnd => void : "and", Factor;
+SimpleExpression => e : SimpleFirst e;
+SimpleExpression => Operators(first) : SimpleFirst first (, SimpleEnd -> add)+;
+SimpleFirst => e : Term e;
+SimpleFirst => Negate(e) : "[+\-]" sign, Term e;
+SimpleEnd => Operator(op, rhs) : "\+" op, Term rhs;
+SimpleEnd => Operator(op, rhs) : "\-" op, Term rhs;
+SimpleEnd => Operator(op, rhs) : "or" op, Term rhs;
 
-Factor => void : Variable;
-Factor => void : Number;
-Factor => void : Identifier, Actuals;
-Factor => void : "(", Expression, ")";
-Factor => void : "not", Factor;
+Term => e : Factor e;
+Term => Operators(first) : Factor first (, TermEnd -> add)+;
+TermEnd => Operator(op, rhs) : "\*" op, Factor rhs;
+TermEnd => Operator(op, rhs) : "/" op, Factor rhs;
+TermEnd => Operator(op, rhs) : "div" op, Factor rhs;
+TermEnd => Operator(op, rhs) : "mod" op, Factor rhs;
+TermEnd => Operator(op, rhs) : "and" op, Factor rhs;
+
+Factor => Expression() : Variable;
+Factor => Expression() : Number;
+Factor => Expression() : Identifier, Actuals;
+Factor => e : "(", Expression e, ")";
+Factor => Expression() : "not", Factor;
