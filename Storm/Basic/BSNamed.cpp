@@ -466,22 +466,22 @@ namespace storm {
 	 * Look up a proper action from a name and a set of parameters.
 	 */
 	namespace bs {
-		static Expr *findCtor(Type *t, Par<Actual> actual, const SrcPos &pos);
-		static Expr *findTarget(Named *n, Par<LocalVar> first, Par<Actual> actual, const SrcPos &pos, bool useLookup);
+		static Expr *findCtor(Par<Type> t, Par<Actual> actual, const SrcPos &pos);
+		static Expr *findTarget(Par<Named> n, Par<LocalVar> first, Par<Actual> actual, const SrcPos &pos, bool useLookup);
 		static Expr *findTargetThis(Par<Block> block, Par<Name> name,
 									Par<Actual> params, const SrcPos &pos,
-									Named *&candidate);
+									Auto<Named> &candidate);
 		static Expr *findTarget(Par<Block> block, Par<Name> name,
 								const SrcPos &pos, Par<Actual> params,
 								bool useThis);
 	}
 
 	// Find a constructor.
-	static bs::Expr *bs::findCtor(Type *t, Par<Actual> actual, const SrcPos &pos) {
+	static bs::Expr *bs::findCtor(Par<Type> t, Par<Actual> actual, const SrcPos &pos) {
 		Auto<BSNamePart> part = CREATE(BSNamePart, t->engine, Type::CTOR, actual);
 		part->insert(Value::thisPtr(t));
 
-		Function *ctor = as<Function>(t->find(part));
+		Auto<Function> ctor = steal(t->findW(part)).as<Function>();
 		if (!ctor)
 			throw SyntaxError(pos, L"No constructor " + t->identifier() + ::toS(part) + L")");
 
@@ -491,7 +491,7 @@ namespace storm {
 
 	// Helper to create the actual type, given something found. If '!useLookup', then we will not use the lookup
 	// of the function or variable (ie use vtables).
-	static bs::Expr *bs::findTarget(Named *n, Par<LocalVar> first, Par<Actual> actual, const SrcPos &pos, bool useLookup) {
+	static bs::Expr *bs::findTarget(Par<Named> n, Par<LocalVar> first, Par<Actual> actual, const SrcPos &pos, bool useLookup) {
 		if (!n)
 			return null;
 
@@ -500,25 +500,25 @@ namespace storm {
 		if (n->name == Type::DTOR)
 			throw SyntaxError(pos, L"Manual invocations of destructors are forbidden.");
 
-		if (Function *f = as<Function>(n)) {
+		if (Auto<Function> f = n.as<Function>()) {
 			if (first)
 				actual->addFirst(steal(CREATE(LocalVarAccess, first, first)));
 			return CREATE(FnCall, n, f, actual, useLookup, first ? true : false);
 		}
 
-		if (LocalVar *v = as<LocalVar>(n)) {
+		if (Auto<LocalVar> v = n.as<LocalVar>()) {
 			assert(!first);
 			return CREATE(LocalVarAccess, n, v);
 		}
 
-		if (TypeVar *v = as<TypeVar>(n)) {
+		if (Auto<TypeVar> v = n.as<TypeVar>()) {
 			if (first)
 				return CREATE(MemberVarAccess, n, steal(CREATE(LocalVarAccess, first, first)), v);
 			else
 				return CREATE(MemberVarAccess, n, actual->expressions.front(), v);
 		}
 
-		if (NamedThread *v = as<NamedThread>(n)) {
+		if (Auto<NamedThread> v = n.as<NamedThread>()) {
 			assert(!first);
 			return CREATE(NamedThreadAccess, n, v);
 		}
@@ -541,10 +541,10 @@ namespace storm {
 	// Find a target assuming we should use the this-pointer.
 	static bs::Expr *bs::findTargetThis(Par<Block> block, Par<Name> name,
 										Par<Actual> params, const SrcPos &pos,
-										Named *&candidate) {
+										Auto<Named> &candidate) {
 		const Scope &scope = block->scope;
 
-		LocalVar *thisVar = block->variable(L"this");
+		Auto<LocalVar> thisVar = block->variableQ(L"this");
 		if (!thisVar)
 			return null;
 
@@ -559,16 +559,15 @@ namespace storm {
 			if (!super)
 				throw SyntaxError(pos, L"No super type for " + ::toS(thisVar->result) + L", can not use 'super' here.");
 
-			candidate = storm::find(super, steal(part->withLast(lastPart)));
+			candidate = storm::findW(super, steal(part->withLast(lastPart)));
 			useLookup = false;
 		} else {
 			// May be anything.
-			candidate = scope.find(steal(name->withLast(lastPart)));
+			candidate = scope.findW(steal(name->withLast(lastPart)));
 			useLookup = true;
 		}
 
-		Named *n = candidate;
-		Expr *e = findTarget(n, thisVar, params, pos, useLookup);
+		Expr *e = findTarget(candidate, thisVar, params, pos, useLookup);
 		if (e)
 			return e;
 
@@ -584,22 +583,22 @@ namespace storm {
 
 		// Type ctors and local variables have priority.
 		{
-			Named *n = scope.find(name);
-			if (Type *t = as<Type>(n))
+			Auto<Named> n = scope.findW(name);
+			if (Auto<Type> t = n.as<Type>())
 				return findCtor(t, params, pos);
-			else if (as<LocalVar>(n) != null && params->empty())
+			else if (as<LocalVar>(n.borrow()) != null && params->empty())
 				return findTarget(n, null, params, pos, false);
 		}
 
 		// If we have a this-pointer, try to use it!
-		Named *candidate = null;
+		Auto<Named> candidate;
 		if (useThis)
 			if (Expr *e = findTargetThis(block, name, params, pos, candidate))
 				return e;
 
 		// Try without the this pointer first.
 		Auto<BSNamePart> last = CREATE(BSNamePart, name, name->lastName(), params);
-		Named *n = scope.find(steal(name->withLast(last)));
+		Auto<Named> n = scope.findW(steal(name->withLast(last)));
 
 		if (Expr *e = findTarget(n, null, params, pos, true))
 			return e;

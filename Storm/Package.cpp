@@ -78,7 +78,8 @@ namespace storm {
 			if (now->dir()) {
 				Auto<Str> name = now->name();
 				Auto<NamePart> part = CREATE(NamePart, this, name);
-				if (tryFind(part) == null) {
+				Auto<Named> loaded = tryFindW(part);
+				if (!loaded) {
 					add(steal(loadPackage(name->v)));
 				}
 			}
@@ -165,7 +166,7 @@ namespace storm {
 
 	PkgReader *Package::createReader(Par<Name> pkg, Par<PkgFiles> files) {
 		Auto<Name> rName = readerName(pkg);
-		Type *readerT = as<Type>(engine().scope()->find(rName));
+		Auto<Type> readerT = steal(engine().scope()->findW(rName)).as<Type>();
 		if (!readerT) {
 			// Ignore files that are not known.
 			WARNING(L"Ignoring unknown filetype due to missing " << rName << L"(" << *files << L")");
@@ -179,7 +180,7 @@ namespace storm {
 		paramTypes[1] = Value(PkgFiles::stormType(this));
 		paramTypes[2] = Value(Package::stormType(this));
 
-		Function *ctor = as<Function>(readerT->findCpp(Type::CTOR, paramTypes));
+		Auto<Function> ctor = steal(readerT->findWCpp(Type::CTOR, paramTypes)).as<Function>();
 		if (!ctor)
 			throw RuntimeError(::toS(rName) + L": no constructor taking PkgFiles found!");
 

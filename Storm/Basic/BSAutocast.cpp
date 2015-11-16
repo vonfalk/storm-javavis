@@ -37,10 +37,11 @@ namespace storm {
 		if (!to.type)
 			return null;
 
-		Function *ctor = as<Function>(to.type->findCpp(Type::CTOR, valList(2, Value::thisPtr(to.type), from)));
+		Auto<Named> n = to.type->findWCpp(Type::CTOR, valList(2, Value::thisPtr(to.type), from));
+		Auto<Function> ctor = n.as<Function>();
 		if (ctor)
 			if (ctor->flags & namedAutoCast)
-				return ctor;
+				return ctor.borrow();
 
 		return null;
 	}

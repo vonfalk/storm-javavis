@@ -7,16 +7,16 @@
 
 namespace storm {
 
-	Named *find(Par<NameLookup> root, Par<Name> name) {
+	Named *findW(Par<NameLookup> root, Par<Name> name) {
 		if (name->size() == 0)
-			return as<Named>(root.borrow());
+			return root.as<Named>().ret();
 
-		Named *at = root->find(name->at(0));
+		Auto<Named> at = root->findW(name->at(0));
 		for (nat i = 1; at != null && i < name->size(); i++) {
-			at = at->find(name->at(i));
+			at = at->findW(name->at(i));
 		}
 
-		return at;
+		return at.ret();
 	}
 
 	/**
@@ -38,17 +38,15 @@ namespace storm {
 		// Should be OK to not do anything here... All our members are threaded objects.
 	}
 
-	Named *Scope::find(Par<Name> name) const {
+	Named *Scope::findW(Par<Name> name) const {
 		if (lookup)
-			return lookup->find(*this, name);
+			return lookup->findW(*this, name);
 
 		return null;
 	}
 
-	Named *find(const Scope &scope, Par<Name> name) {
-		Named *r = scope.find(name);
-		r->addRef();
-		return r;
+	Named *find(Scope scope, Par<Name> name) {
+		return scope.findW(name);
 	}
 
 
@@ -76,7 +74,7 @@ namespace storm {
 		Package *top = firstPkg(l);
 		Package *root = rootPkg(top);
 		Auto<NamePart> core = CREATE(NamePart, l, L"core");
-		return as<Package>(root->find(core));
+		return steal(root->findW(core)).as<Package>().borrow();
 	}
 
 	NameLookup *ScopeLookup::nextCandidate(NameLookup *prev) {
@@ -93,16 +91,16 @@ namespace storm {
 		}
 	}
 
-	Named *ScopeLookup::find(const Scope &in, Par<Name> name) {
+	Named *ScopeLookup::findW(const Scope &in, Par<Name> name) {
 		// Regular path.
 		for (NameLookup *at = in.top; at; at = nextCandidate(at)) {
-			if (Named *found = storm::find(at, name))
+			if (Named *found = storm::findW(at, name))
 				return found;
 		}
 
 		// Core.
 		if (Package *core = corePkg(in.top))
-			if (Named *found = storm::find(core, name))
+			if (Named *found = storm::findW(core, name))
 				return found;
 
 		// We failed!
@@ -115,12 +113,12 @@ namespace storm {
 
 	ScopeExtra::ScopeExtra() {}
 
-	Named *ScopeExtra::find(const Scope &in, Par<Name> name) {
-		if (Named *found = ScopeLookup::find(in, name))
+	Named *ScopeExtra::findW(const Scope &in, Par<Name> name) {
+		if (Named *found = ScopeLookup::findW(in, name))
 			return found;
 
 		for (nat i = 0; i < extra.size(); i++) {
-			if (Named *found = storm::find(extra[i], name))
+			if (Named *found = storm::findW(extra[i], name))
 				return found;
 		}
 

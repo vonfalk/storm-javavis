@@ -135,7 +135,7 @@ namespace storm {
 		void forceLoad();
 
 		// Find a NamePart (returns borrowed ptr).
-		virtual Named *find(Par<NamePart> part);
+		virtual MAYBE(Named) *STORM_FN findW(Par<NamePart> part);
 
 		// Compile this NameSet and anything below it.
 		virtual void STORM_FN compile();
@@ -148,7 +148,7 @@ namespace storm {
 		void clear();
 
 		// Find a named here. Does not care about lazy-loading.
-		Named *tryFind(Par<NamePart> part);
+		Named *tryFindW(Par<NamePart> part);
 
 	private:
 		// Overloads.

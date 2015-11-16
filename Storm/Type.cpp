@@ -210,7 +210,7 @@ namespace storm {
 	void Type::updateHandleOutput() {
 		// 1: Try to find the add() function for this type in StrBuf...
 		Type *s = StrBuf::stormType(engine);
-		if (Function *f = as<Function>(s->findCpp(L"add", valList(2, Value::thisPtr(s), Value(this))))) {
+		if (Auto<Function> f = steal(s->findWCpp(L"add", valList(2, Value::thisPtr(s), Value(this)))).as<Function>()) {
 			typeHandle->outputRef(f->ref(), RefHandle::outputAdd);
 			return;
 		}
@@ -311,13 +311,13 @@ namespace storm {
 		return RunOn(RunOn::any);
 	}
 
-	Named *Type::find(Par<NamePart> part) {
-		if (Named *n = NameSet::find(part))
+	Named *Type::findW(Par<NamePart> part) {
+		if (Named *n = NameSet::findW(part))
 			return n;
 
 		if (part->name != CTOR)
 			if (Type *s = super())
-				return s->find(part);
+				return s->findW(part);
 
 		return null;
 	}
@@ -398,11 +398,11 @@ namespace storm {
 	}
 
 	Function *Type::destructor() {
-		return as<Function>(findCpp(DTOR, vector<Value>(1, Value::thisPtr(this))));
+		return steal(findWCpp(DTOR, vector<Value>(1, Value::thisPtr(this)))).as<Function>().borrow();
 	}
 
 	Function *Type::copyCtor() {
-		return as<Function>(findCpp(CTOR, vector<Value>(2, Value::thisPtr(this))));
+		return steal(findWCpp(CTOR, vector<Value>(2, Value::thisPtr(this)))).as<Function>().borrow();
 	}
 
 	const void *Type::copyCtorFn() {
@@ -411,28 +411,31 @@ namespace storm {
 	}
 
 	Function *Type::assignFn() {
-		return as<Function>(findCpp(L"=", vector<Value>(2, Value::thisPtr(this))));
+		return steal(findWCpp(L"=", vector<Value>(2, Value::thisPtr(this)))).as<Function>().borrow();
 	}
 
 	Function *Type::defaultCtor() {
-		return as<Function>(findCpp(CTOR, vector<Value>(1, Value::thisPtr(this))));
+		return steal(findWCpp(CTOR, vector<Value>(1, Value::thisPtr(this)))).as<Function>().borrow();
 	}
 
 	Function *Type::deepCopyFn() {
-		return as<Function>(findCpp(L"deepCopy", valList(2, Value::thisPtr(this), Value(CloneEnv::stormType(engine)))));
+		Auto<Named> n = findWCpp(L"deepCopy", valList(2, Value::thisPtr(this), Value(CloneEnv::stormType(engine))));
+		return n.as<Function>().borrow();
 	}
 
 	Function *Type::equalsFn() {
 		// TODO: Clean up the equals-mess when we have figured out a suitable API!
-		Function *r = as<Function>(findCpp(L"equals", valList(2, Value::thisPtr(this), Value::thisPtr(this))));
+		Auto<Named> n = findWCpp(L"equals", valList(2, Value::thisPtr(this), Value::thisPtr(this)));
+		Function *r = as<Function>(n.borrow());
 		if (r)
 			return r;
-		r = as<Function>(findCpp(L"==", valList(2, Value::thisPtr(this), Value::thisPtr(this))));
+		n = findWCpp(L"==", valList(2, Value::thisPtr(this), Value::thisPtr(this)));
+		r = as<Function>(n.borrow());
 		return r;
 	}
 
 	Function *Type::hashFn() {
-		return as<Function>(findCpp(L"hash", valList(1, Value::thisPtr(this))));
+		return steal(findWCpp(L"hash", valList(1, Value::thisPtr(this)))).as<Function>().borrow();
 	}
 
 	code::RefSource *Type::handleDefaultCtor() {
@@ -472,11 +475,13 @@ namespace storm {
 
 	Function *Type::findToSFn() {
 		// 1: Local scope.
-		if (Function *f = as<Function>(findCpp(L"toS", valList(1, Value::thisPtr(this)))))
+		Auto<Named> n = findWCpp(L"toS", valList(1, Value::thisPtr(this)));
+		if (Function *f = as<Function>(n.borrow()))
 			return f;
 
 		// 2: Surrounding scope.
-		if (Function *f = as<Function>(parent()->findCpp(L"toS", valList(1, Value(this)))))
+		n = parent()->findWCpp(L"toS", valList(1, Value(this)));
+		if (Function *f = as<Function>(n.borrow()))
 			return f;
 
 		// 3: Out of luck. We could look in language-specific parts here, but that gets really messy!
@@ -525,14 +530,14 @@ namespace storm {
 		updateVirtualHere(fn);
 
 		for (Type *s = super(); s; s = s->super()) {
-			Function *base = s->overloadTo(fn);
+			Auto<Function> base = s->overloadTo(fn);
 			if (base) {
 				if (base->flags & namedFinal)
 					// TODO: Refer a location!
 					throw TypedefError(L"The function " + named->identifier() + L" overloads the final function " +
 									base->identifier() + L".");
 
-				s->enableLookup(base);
+				s->enableLookup(base.borrow());
 			}
 		}
 	}
@@ -573,7 +578,7 @@ namespace storm {
 		vector<Type *> children = chain.children();
 		for (nat i = 0; i < children.size(); i++) {
 			Type *c = children[i];
-			if (c->overloadTo(fn))
+			if (steal(c->overloadTo(fn)))
 				return true;
 			if (c->needsVirtual(fn))
 				return true;
@@ -587,16 +592,16 @@ namespace storm {
 		vector<Value> params = to->params;
 		params[0] = Value::thisPtr(this);
 		Auto<NamePart> part = CREATE(NamePart, this, to->name, params);
-		Function *match = as<Function>(NameSet::tryFind(part));
+		Auto<Function> match = steal(NameSet::tryFindW(part)).as<Function>();
 		if (to == match)
 			return null;
-		return match;
+		return match.ret();
 	}
 
 	void Type::insertOverloads(Function *fn) {
-		if (Function *f = overloadTo(fn))
+		if (Auto<Function> f = overloadTo(fn))
 			if (f != fn)
-				VTablePos pos = vtable.insert(f);
+				VTablePos pos = vtable.insert(f.borrow());
 
 		vector<Type *> children = chain.children();
 		for (nat i = 0; i < children.size(); i++)

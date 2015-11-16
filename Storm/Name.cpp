@@ -224,7 +224,7 @@ namespace storm {
 
 			while (tok.more() && tok.peek().token != L">") {
 				Auto<Name> n = parseName(e, scope, pos, tok);
-				if (Type *t = as<Type>(scope.find(n)))
+				if (Auto<Type> t = steal(scope.findW(n)).as<Type>())
 					params.push_back(Value(t));
 				else
 					throw SyntaxError(pos, L"Unknown type: " + ::toS(n));

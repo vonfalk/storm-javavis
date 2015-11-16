@@ -141,7 +141,7 @@ namespace storm {
 		virtual bool loadAll();
 
 		// Find stuff.
-		virtual Named *find(Par<NamePart> part);
+		virtual MAYBE(Named) *STORM_FN findW(Par<NamePart> part);
 
 	protected:
 		virtual void output(wostream &to) const;

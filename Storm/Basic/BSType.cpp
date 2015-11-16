@@ -99,7 +99,7 @@ namespace storm {
 
 		Named *bs::TypeName::find(const Scope &scope) {
 			Auto<Name> name = toName(scope);
-			return capture(scope.find(name)).ret();
+			return scope.findW(name);
 		}
 
 		Value bs::TypeName::resolve(const Scope &scope) {
@@ -107,7 +107,7 @@ namespace storm {
 			if (name->size() == 1 && name->at(0)->name == L"void")
 				return Value();
 
-			if (Type *found = as<Type>(scope.find(name)))
+			if (Auto<Type> found = steal(scope.findW(name)).as<Type>())
 				return Value(found);
 
 			throw SyntaxError(pos, L"Can not find the type " + ::toS(name) + L".");

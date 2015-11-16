@@ -221,7 +221,7 @@ namespace storm {
 
 	Package *Engine::package(Par<Package> rel, Par<Name> path, bool create) {
 		if (!create)
-			return as<Package>(find(rel, path));
+			return steal(findW(rel, path)).as<Package>().borrow();
 
 		return createPackage(rel.borrow(), path);
 	}
@@ -232,20 +232,19 @@ namespace storm {
 
 		assert(path->at(pos)->params.size() == 0);
 
-		Named *nextNamed = pkg->find(path->at(pos));
-		Package *next = as<Package>(nextNamed);
-		if (next == null && nextNamed == null) {
+		Auto<Named> nextNamed = pkg->findW(path->at(pos));
+		Auto<Package> next = nextNamed.as<Package>();
+		if (!next && !nextNamed) {
 			// Create a virtual package.
-			Auto<Package> r = CREATE(Package, *this, path->at(pos)->name);
-			next = r.borrow();
-			pkg->add(r);
+			next = CREATE(Package, *this, path->at(pos)->name);
+			pkg->add(next);
 		} else if (next == null) {
 			throw InternalError(L"Trying to create the package " + ::toS(path) +
 								L" but " + nextNamed->identifier() + L" already exists!");
 		}
 
 		// Tail recursive, we can make a loop here!
-		return createPackage(next, path, pos + 1);
+		return createPackage(next.borrow(), path, pos + 1);
 	}
 
 	Package *Engine::rootPackage() {

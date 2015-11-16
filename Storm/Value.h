@@ -121,6 +121,7 @@ namespace storm {
 
 		// Create a this-pointer for a type.
 		static Value thisPtr(Type *t);
+		static Value thisPtr(Par<Type> t);
 
 		// Deep copy.
 		void STORM_FN deepCopy(Par<CloneEnv> env);

@@ -33,9 +33,10 @@ namespace storm {
 	// Create an object using the supplied constructor.
 	Object *createObj(Type *type, const void *ctor, os::FnParams params);
 	Object *createObj(Function *ctor, os::FnParams params);
+
 	template <class T>
-	inline T *create(Function *ctor, const os::FnParams &params) {
-		return (T *)createObj(ctor, params);
+	inline T *create(Par<Function> ctor, const os::FnParams &params) {
+		return (T *)createObj(ctor.borrow(), params);
 	}
 
 	// Create a shallow copy of an object by calling the provided copy ctor.

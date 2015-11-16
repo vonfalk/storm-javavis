@@ -41,8 +41,8 @@ namespace storm {
 			return Value();
 
 		Auto<Name> name = parseSimpleName(e, val.name);
-		Named *f = src.find(name);
-		if (Type *t = as<Type>(f))
+		Auto<Named> f = src.findW(name);
+		if (Type *t = as<Type>(f.borrow()))
 			return createValue(val, t);
 
 		throw BuiltInError(L"Type " + String(val.name) + L" was not found.");
@@ -67,11 +67,10 @@ namespace storm {
 			// External types have an absolute name!
 			Auto<Name> name = parseSimpleName(e, t.pkg);
 			name->add(steal(CREATE(NamePart, e, t.name)));
-			Type *t = as<Type>(e.scope()->find(name));
+			Auto<Type> t = steal(e.scope()->findW(name)).as<Type>();
 			if (!t)
 				throw BuiltInError(L"The external type " + ::toS(name) + L" was not found.");
-			t->addRef();
-			return t;
+			return t.ret();
 		} else {
 			Size size(t.typeSize); // Note: this is not correct for anything but the current platform!
 			return CREATE(Type, e, t.name, TypeFlags(t.typeFlags) | typeManualSuper, size, t.cppVTable);
@@ -321,7 +320,7 @@ namespace storm {
 			// Insert here as well! But check if a similar function already exists first ('overloading' should work).
 			Auto<Function> c = createFn(fn, into);
 			Auto<NamePart> name = CREATE(NamePart, into, c->name, c->params);
-			if (into->find(name) == null)
+			if (!steal(into->findW(name)))
 				into->add(c);
 		}
 

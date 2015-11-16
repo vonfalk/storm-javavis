@@ -94,8 +94,8 @@ namespace storm {
 		o->templ = p;
 	}
 
-	Named *NameSet::find(Par<NamePart> part) {
-		if (Named *found = tryFind(part))
+	Named *NameSet::findW(Par<NamePart> part) {
+		if (Named *found = tryFindW(part))
 			return found;
 
 		if (loaded)
@@ -103,15 +103,14 @@ namespace storm {
 
 		if (Named *found = loadName(part)) {
 			add(found);
-			found->release();
 			return found;
 		}
 
 		forceLoad();
-		return tryFind(part);
+		return tryFindW(part);
 	}
 
-	Named *NameSet::tryFind(Par<NamePart> part) {
+	Named *NameSet::tryFindW(Par<NamePart> part) {
 		OverloadMap::const_iterator i = overloads.find(part->name);
 		if (i == overloads.end())
 			return null;
@@ -119,12 +118,12 @@ namespace storm {
 		// TODO: Refactor so that the find function also returns a non-borrowed pointer!
 		Auto<Named> result = part->choose(i->second);
 		if (result)
-			return result.borrow();
+			return result.ret();
 
 		result = i->second->fromTemplate(part);
 		if (result)
 			add(result);
-		return result.borrow();
+		return result.ret();
 	}
 
 	Named *NameSet::loadName(Par<NamePart> part) {

@@ -209,21 +209,20 @@ namespace storm {
 	 * Clone.
 	 */
 
-	TypeDeepCopy::TypeDeepCopy(Type *type)
-		: Function(Value(), L"deepCopy", valList(2, Value::thisPtr(type), Value(CloneEnv::stormType(type)))) {
-		Function *before = null;
+	TypeDeepCopy::TypeDeepCopy(Type *type) :
+		Function(Value(), L"deepCopy", valList(2, Value::thisPtr(type), Value(CloneEnv::stormType(type)))) {
+		Auto<Function> before;
 		Type *super = type->super();
 
 		if (super) {
 			// Find parent function.
-			if (Function *f = as<Function>(super->findCpp(name, params))) {
-				before = f;
-			} else {
+			before = steal(super->findWCpp(name, params)).as<Function>();
+			if (!before) {
 				throw InternalError(L"Could not find the clone function of " + super->identifier());
 			}
 		}
 
-		generateCode(type, before);
+		generateCode(type, before.borrow());
 	}
 
 	void TypeDeepCopy::generateCode(Type *type, Function *before) {
@@ -265,7 +264,7 @@ namespace storm {
 			Offset offset = v->offset();
 			if (t.isValue()) {
 				// Call 'deepCopy' directly.
-				Function *fn = as<Function>(t.type->findCpp(L"deepCopy", params));
+				Auto<Function> fn = steal(t.type->findWCpp(L"deepCopy", params)).as<Function>();
 				if (!fn)
 					throw InternalError(L"The type " + ::toS(t) + L" does not have a 'deepCopy' member.");
 
@@ -277,7 +276,7 @@ namespace storm {
 
 			} else {
 				// Find the clone function for us:
-				Function *fn = as<Function>(core->findCpp(L"clone", params));
+				Auto<Function> fn = steal(core->findWCpp(L"clone", params)).as<Function>();
 				if (!fn)
 					throw InternalError(L"Failed to find the 'clone(T, CloneEnv) for T = " + ::toS(params[0]));
 
@@ -300,8 +299,9 @@ namespace storm {
 
 	// Find the deepCopy member in a Type.
 	Function *deepCopy(Type *in) {
-		Named *n = in->findCpp(L"deepCopy", valList(2, Value::thisPtr(in), Value(CloneEnv::stormType(in))));
-		if (Function *f = as<Function>(n))
+		Auto<Named> n = in->findWCpp(L"deepCopy", valList(2, Value::thisPtr(in), Value(CloneEnv::stormType(in))));
+		if (Function *f = as<Function>(n.borrow()))
+			// This is a little risky, but should be ok.
 			return f;
 		throw InternalError(L"The class " + in->identifier() + L" does not have a deepClone(CloneEnv) member.");
 	}

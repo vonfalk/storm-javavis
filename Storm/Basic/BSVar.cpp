@@ -57,13 +57,13 @@ namespace storm {
 			Type *t = variable->result.type;
 			Auto<BSNamePart> name = CREATE(BSNamePart, this, Type::CTOR, actuals);
 			name->insert(Value::thisPtr(t));
-			Function *ctor = as<Function>(t->find(name));
+			Auto<Function> ctor = steal(t->findW(name)).as<Function>();
 			if (!ctor)
 				throw SyntaxError(variable->pos, L"No constructor " + ::toS(variable->result)
 								+ L"(" + ::toS(name) + L") found. Can not initialize "
 								+ variable->name + L".");
 
-			initCtor = CREATE(CtorCall, this, capture(ctor), actuals);
+			initCtor = CREATE(CtorCall, this, ctor, actuals);
 		}
 
 		Value bs::Var::result() {

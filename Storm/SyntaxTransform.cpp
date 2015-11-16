@@ -9,9 +9,10 @@
 namespace storm {
 
 	// Lookup a name.
-	Type *lookupType(TransformEnv &env, const SrcPos &pos, const Scope &scope, const String &name) {
+	static Auto<Type> lookupType(TransformEnv &env, const SrcPos &pos, const Scope &scope, const String &name) {
 		Auto<Name> n = parseTemplateName(env.e, scope, pos, name);
-		return as<Type>(scope.find(n));
+		Auto<Named> d = scope.findW(n);
+		return d.as<Type>();
 	}
 
 	ActualObject::ActualObject(const Auto<Object> &v, const SrcPos &pos) : v(v) {
@@ -53,9 +54,9 @@ namespace storm {
 		return r;
 	}
 
-	static vector<Value> types(Type *first, const vector<Auto<ActualBase>> &p) {
+	static vector<Value> types(Par<Type> first, const vector<Auto<ActualBase>> &p) {
 		vector<Value> r(p.size() + 1);
-		r[0] = Value::thisPtr(first);
+		r[0] = Value::thisPtr(first.borrow());
 		for (nat i = 0; i < p.size(); i++)
 			r[i + 1] = p[i]->type();
 		return r;
@@ -64,7 +65,7 @@ namespace storm {
 	static Auto<ActualBase> tryCallFn(const SyntaxOption *option, Auto<Name> find, const vector<Auto<ActualBase>> &p) {
 		vector<Value> t = types(p);
 		find = find->withParams(t);
-		Function *f = as<Function>(option->scope.find(find));
+		Auto<Function> f = steal(option->scope.findW(find)).as<Function>();
 		if (!f)
 			return Auto<ActualBase>(null);
 
@@ -81,7 +82,7 @@ namespace storm {
 	}
 
 	static Auto<ActualBase> tryCallCtor(const SyntaxOption *option, Auto<Name> find, const vector<Auto<ActualBase>> &p) {
-		Type *t = as<Type>(option->scope.find(find));
+		Auto<Type> t = steal(option->scope.findW(find)).as<Type>();
 		if (!t)
 			return Auto<ActualBase>(null);
 
@@ -89,7 +90,7 @@ namespace storm {
 			throw SyntaxTypeError(option->pos, L"Only objects are supported in the syntax. "
 								+ ::toS(find) + L" is a value or a built-in type.");
 
-		Function *ctor = as<Function>(t->findCpp(Type::CTOR, types(t, p)));
+		Auto<Function> ctor = steal(t->findWCpp(Type::CTOR, types(t, p))).as<Function>();
 		if (!ctor)
 			return Auto<ActualBase>(null);
 
@@ -97,7 +98,7 @@ namespace storm {
 		for (nat i = 0; i < p.size(); i++)
 			p[i]->add(params);
 
-		return new ActualObject(create<Object>(ctor, params), option->pos);
+		return new ActualObject(create<Object>(ctor.borrow(), params), option->pos);
 	}
 
 	static Auto<ActualBase> callFn(TransformEnv &env, const SyntaxOption *option, const vector<Auto<ActualBase>> &p) {
@@ -121,7 +122,7 @@ namespace storm {
 		types[0] = me->type();
 		types[1] = param->type();
 
-		if (Function *f = as<Function>(t->findCpp(name, types))) {
+		if (Auto<Function> f = steal(t->findWCpp(name, types)).as<Function>()) {
 			os::FnParams call;
 			me->add(call);
 			param->add(call);
@@ -233,8 +234,8 @@ namespace storm {
 
 		for (nat i = 0; i < params.size(); i++) {
 			const SyntaxRule::Param &p = rule->params[i];
-			Type *t = lookupType(env, rule->declared, rule->declScope, p.type);
-			if (t == null)
+			Auto<Type> t = lookupType(env, rule->declared, rule->declScope, p.type);
+			if (!t)
 				throw SyntaxTypeError(rule->declared, L"Unknown type: " + p.type);
 			Value(t).mustStore(params[i]->type(), option->pos);
 

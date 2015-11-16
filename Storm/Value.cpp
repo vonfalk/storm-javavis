@@ -31,6 +31,10 @@ namespace storm {
 		return Value(t, (t->typeFlags & typeValue) != 0);
 	}
 
+	Value Value::thisPtr(Par<Type> t) {
+		return thisPtr(t.borrow());
+	}
+
 	Value::Value() : ValueData() {}
 
 	Value::Value(Type *t, bool ref) : ValueData(t, ref) {}
@@ -258,14 +262,14 @@ namespace storm {
 
 
 	Value fnResultType(const Scope &scope, Par<Name> fn) {
-		Named *f = scope.find(fn);
-		if (f == null) {
+		Auto<Named> f = scope.findW(fn);
+		if (!f) {
 			return Value();
-		} else if (Type *t = as<Type>(f)) {
+		} else if (Type *t = as<Type>(f.borrow())) {
 			// We do not correctly handle this yet.
 			assert(t->typeFlags & typeClass);
 			return Value(t);
-		} else if (Function *fn = as<Function>(f)) {
+		} else if (Function *fn = as<Function>(f.borrow())) {
 			return fn->result;
 		} else {
 			assert(false); // Unhandled type!

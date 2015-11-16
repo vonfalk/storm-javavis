@@ -6,7 +6,7 @@ template <class T>
 T runFn(const String &fn) {
 	Engine &e = *gEngine;
 	Auto<Name> fName = parseSimpleName(e, fn);
-	Function *fun = as<Function>(e.scope()->find(fName));
+	Auto<Function> fun = steal(e.scope()->findW(fName)).as<Function>();
 	if (!fun)
 		throw TestError(L"Function " + ::toS(fName) + L" was not found.");
 	void *ptr = fun->pointer();
@@ -20,7 +20,7 @@ T runFn(const String &fn, const ParT &par) {
 	Engine &e = *gEngine;
 	Auto<Name> fName = parseSimpleName(e, fn);
 	fName = fName->withParams(vector<Value>(1, stormType<ParT>(e)));
-	Function *fun = as<Function>(e.scope()->find(fName));
+	Auto<Function> fun = steal(e.scope()->findW(fName)).as<Function>();
 	if (!fun)
 		throw TestError(L"Function " + ::toS(fName) + L" was not found.");
 	void *ptr = fun->pointer();
@@ -38,7 +38,7 @@ T runFn(const String &fn, const ParT &par, const ParU &qar) {
 	params[0] = stormType<ParT>(e);
 	params[1] = stormType<ParU>(e);
 	fName = fName->withParams(params);
-	Function *fun = as<Function>(e.scope()->find(fName));
+	Auto<Function> fun = steal(e.scope()->findW(fName)).as<Function>();
 	if (!fun)
 		throw TestError(L"Function " + ::toS(fName) + L" was not found.");
 	void *ptr = fun->pointer();
@@ -57,7 +57,7 @@ T runFn(const String &fn, const ParT &par, const ParU &qar, const ParV &rar) {
 	params[1] = stormType<ParU>(e);
 	params[2] = stormType<ParV>(e);
 	fName = fName->withParams(params);
-	Function *fun = as<Function>(e.scope()->find(fName));
+	Auto<Function> fun = steal(e.scope()->findW(fName)).as<Function>();
 	if (!fun)
 		throw TestError(L"Function " + ::toS(fName) + L" was not found.");
 	void *ptr = fun->pointer();

@@ -20,15 +20,14 @@ namespace storm {
 
 			resolved = resolved->withParams(params);
 
-			Named *found = scope.find(resolved);
+			Auto<Named> found = scope.findW(resolved);
 			if (!found)
 				throw SyntaxError(name->pos, L"Could not find " + ::toS(resolved));
-			Function *fn = as<Function>(found);
+			Auto<Function> fn = found.as<Function>();
 			if (!fn)
 				throw SyntaxError(name->pos, L"Can not take the pointer of anything else than a function, this is "
 								+ ::toS(*found) + L"!");
-			fn->addRef();
-			return fn;
+			return fn.ret();
 		}
 
 	}
