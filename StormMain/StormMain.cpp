@@ -87,7 +87,7 @@ int launchMainLoop(Engine &engine, const String &lang, const String &command) {
 	replName->add(L"lang");
 	replName->add(lang);
 	replName->add(L"Repl");
-	Auto<Type> replType = steal(engine.scope()->findW(replName)).as<Type>();
+	Auto<Type> replType = steal(engine.scope()->find(replName)).as<Type>();
 	if (!replType) {
 		wcout << L"Could not find a Repl class for " << lang << L" (" << replName << L")" << endl;
 		return 1;
@@ -99,7 +99,7 @@ int launchMainLoop(Engine &engine, const String &lang, const String &command) {
 		return 1;
 	}
 
-	Auto<Function> replCtor = steal(replType->findWCpp(Type::CTOR, vector<Value>(1, Value::thisPtr(replType)))).as<Function>();
+	Auto<Function> replCtor = steal(replType->findCpp(Type::CTOR, vector<Value>(1, Value::thisPtr(replType)))).as<Function>();
 	if (!replCtor) {
 		wcout << L"No suitable constructor found for " << replName << L"." << endl;
 		return 1;
@@ -118,7 +118,7 @@ int launchMainLoop(Engine &engine, const String &lang, const String &command) {
 
 int launchFn(Engine &e, const String &fnName) {
 	Auto<Name> name = parseSimpleName(e, fnName);
-	Auto<Named> named = e.scope()->findW(name);
+	Auto<Named> named = e.scope()->find(name);
 	if (!named) {
 		wcout << L"Could not find " << fnName << L"!" << endl;
 		return 1;
@@ -205,7 +205,7 @@ void loadImport(Engine &to, const Import &i) {
 		return;
 	}
 
-	if (Auto<Named> prev = into->findW(steal(name->last()))) {
+	if (Auto<Named> prev = into->find(steal(name->last()))) {
 		wcerr << L"Something named " << name << L" already exists. Please chose a different name." << endl;
 		wcerr << L"Could not import " << url << L" as " << name << L"." << endl;
 		return;

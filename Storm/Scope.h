@@ -18,7 +18,7 @@ namespace storm {
 	class Scope;
 
 	// Find a named from a Name.
-	MAYBE(Named) *STORM_FN findW(Par<NameLookup> root, Par<Name> name);
+	MAYBE(Named) *STORM_FN find(Par<NameLookup> root, Par<Name> name);
 
 
 	/**
@@ -30,7 +30,7 @@ namespace storm {
 		STORM_CTOR ScopeLookup();
 
 		// Find 'name' in 'in'.
-		virtual MAYBE(Named) *STORM_FN findW(const Scope &in, Par<Name> name);
+		virtual MAYBE(Named) *STORM_FN find(const Scope &in, Par<Name> name);
 
 	protected:
 		/**
@@ -88,7 +88,7 @@ namespace storm {
 		// Find the given NameRef, either by using an absulute path or something relative to the
 		// current object. NOTE: Not a STORM_FN since this function has to be executed on the
 		// Compiler thread.
-		MAYBE(Named) *findW(Par<Name> name) const;
+		MAYBE(Named) *find(Par<Name> name) const;
 
 		// Deep copy.
 		void STORM_FN deepCopy(Par<CloneEnv> env);
@@ -111,7 +111,7 @@ namespace storm {
 		vector<NameLookup *> extra;
 
 		// Find
-		virtual MAYBE(Named) *STORM_FN findW(const Scope &in, Par<Name> name);
+		virtual MAYBE(Named) *STORM_FN find(const Scope &in, Par<Name> name);
 
 	};
 

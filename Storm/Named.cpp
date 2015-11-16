@@ -7,11 +7,11 @@ namespace storm {
 
 	NameLookup::NameLookup() : parentLookup(null) {}
 
-	Named *NameLookup::findWCpp(const String &name, const vector<Value> &params) {
-		return findW(steal(CREATE(NamePart, this, name, params)));
+	Named *NameLookup::findCpp(const String &name, const vector<Value> &params) {
+		return find(steal(CREATE(NamePart, this, name, params)));
 	}
 
-	Named *NameLookup::findW(Par<NamePart> part) {
+	Named *NameLookup::find(Par<NamePart> part) {
 		return null;
 	}
 

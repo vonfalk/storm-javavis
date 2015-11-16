@@ -87,15 +87,15 @@ namespace storm {
 		// Parameters (first one is special).
 		{
 			Variable thisVar = l.frame.createParameter(params[0].size(), false);
-			Auto<LocalVar> hidden = body->variableQ(L" this");
-			Auto<LocalVar> normal = body->variableQ(L"this");
+			Auto<LocalVar> hidden = body->variable(L" this");
+			Auto<LocalVar> normal = body->variable(L"this");
 			hidden->var = VarInfo(thisVar);
 			normal->var = VarInfo(thisVar);
 		}
 
 		for (nat i = 1; i < params.size(); i++) {
 			const Value &t = params[i];
-			Auto<LocalVar> var = body->variableQ(paramNames[i]);
+			Auto<LocalVar> var = body->variable(paramNames[i]);
 			assert(var);
 			var->createParam(state);
 		}
@@ -162,7 +162,7 @@ namespace storm {
 		rootBlock = block.borrow();
 
 		// Add the regular this parameter!
-		thisVar = steal(block->variableQ(L" this"));
+		thisVar = steal(block->variable(L" this"));
 		thisPtr = thisVar->result;
 		Auto<LocalVar> created = CREATE(LocalVar, this, L"this", thisPtr, thisVar->pos, true);
 		created->constant = true;
@@ -181,7 +181,7 @@ namespace storm {
 
 	void bs::SuperCall::init(Par<Initializer> init) {
 		const String &name = init->name->v->v;
-		Auto<TypeVar> v = steal(thisPtr.type->findWCpp(name, vector<Value>(1, thisPtr))).as<TypeVar>();
+		Auto<TypeVar> v = steal(thisPtr.type->findCpp(name, vector<Value>(1, thisPtr))).as<TypeVar>();
 		if (v == null || v->params[0].type != thisPtr.type)
 			throw SyntaxError(init->name->pos, L"The member variable " + name + L" was not found in "
 							+ ::toS(thisPtr));
@@ -211,7 +211,7 @@ namespace storm {
 		if (hiddenThread)
 			values->insert(Value::thisPtr(Thread::stormType(engine())), 1);
 
-		Auto<Function> ctor = steal(parent->findW(values)).as<Function>();
+		Auto<Function> ctor = steal(parent->find(values)).as<Function>();
 		if (!ctor)
 			throw SyntaxError(pos, L"No constructor (" + ::toS(values) + L") found in " + parent->identifier());
 
@@ -239,7 +239,7 @@ namespace storm {
 		// Find the constructor of TObject.
 		Type *parent = TObject::stormType(engine());
 		vector<Value> values = valList(2, Value(parent), Value(Thread::stormType(engine())));
-		Auto<Function> ctor = steal(parent->findWCpp(Type::CTOR, values)).as<Function>();
+		Auto<Function> ctor = steal(parent->findCpp(Type::CTOR, values)).as<Function>();
 		if (!ctor)
 			throw InternalError(L"The constructor of TObject: __ctor(TObject, Thread) was not found!");
 
@@ -351,7 +351,7 @@ namespace storm {
 		Auto<BSNamePart> values = CREATE(BSNamePart, this, Type::CTOR, to);
 		values->insert(Value::thisPtr(toCreate));
 
-		Auto<Function> ctor = steal(toCreate->findW(values)).as<Function>();
+		Auto<Function> ctor = steal(toCreate->find(values)).as<Function>();
 		if (!ctor)
 			throw SyntaxError(to->pos, L"No constructor for " + ::toS(t) + L"(" + ::toS(values) + L").");
 

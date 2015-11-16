@@ -37,7 +37,7 @@ namespace storm {
 			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> to);
 
 			// Find a variable. Same semantics as 'find'.
-			MAYBE(LocalVar) *variableQ(const String &name);
+			MAYBE(LocalVar) *variable(const String &name);
 
 			// Add a variable
 			virtual void STORM_FN add(Par<LocalVar> v);
@@ -102,7 +102,7 @@ namespace storm {
 			Block *block;
 
 			// Find a variable here.
-			virtual MAYBE(Named) *STORM_FN findW(Par<NamePart> part);
+			virtual MAYBE(Named) *STORM_FN find(Par<NamePart> part);
 		};
 
 	}

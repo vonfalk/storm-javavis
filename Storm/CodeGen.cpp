@@ -265,7 +265,7 @@ namespace storm {
 		Auto<Name> name = CREATE(Name, e);
 		name->add(L"core");
 		name->add(L"clone", valList(1, type));
-		Auto<Function> f = steal(e.scope()->findW(name)).as<Function>();
+		Auto<Function> f = steal(e.scope()->find(name)).as<Function>();
 		if (!f)
 			throw InternalError(L"Could not find std.clone(" + ::toS(type) + L").");
 		return code::Value(f->ref());
@@ -364,7 +364,7 @@ namespace storm {
 
 		Value str = value<Str *>(e);
 		Value thisPtr = Value::thisPtr(type.type);
-		Auto<Function> fn = steal(type.type->findWCpp(L"toS", valList(1, thisPtr))).as<Function>();
+		Auto<Function> fn = steal(type.type->findCpp(L"toS", valList(1, thisPtr))).as<Function>();
 		if (!fn)
 			throw InternalError(L"The type " + ::toS(thisPtr) + L" does not have a toS function.");
 

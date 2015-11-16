@@ -187,7 +187,7 @@ namespace storm {
 		tName->add(L"Future", vector<Value>(1, type));
 
 		// Should be ok to return a borrowed ptr.
-		Auto<Named> n = e.scope()->findW(tName);
+		Auto<Named> n = e.scope()->find(tName);
 		Type *r = as<Type>(n.borrow());
 		assert(r, "The future type was not found!");
 		return r;

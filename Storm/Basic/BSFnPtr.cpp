@@ -20,7 +20,7 @@ namespace storm {
 
 			resolved = resolved->withParams(params);
 
-			Auto<Named> found = scope.findW(resolved);
+			Auto<Named> found = scope.find(resolved);
 			if (!found)
 				throw SyntaxError(name->pos, L"Could not find " + ::toS(resolved));
 			Auto<Function> fn = found.as<Function>();

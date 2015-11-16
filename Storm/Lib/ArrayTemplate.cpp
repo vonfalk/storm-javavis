@@ -157,7 +157,7 @@ namespace storm {
 		Auto<Name> tName = CREATE(Name, e);
 		tName->add(L"core");
 		tName->add(L"Array", vector<Value>(1, type));
-		Auto<Named> n = e.scope()->findW(tName);
+		Auto<Named> n = e.scope()->find(tName);
 
 		// Note: this is a bit dangerous, but should be fine since the Array type is kept alive by
 		// being located in the type graph.

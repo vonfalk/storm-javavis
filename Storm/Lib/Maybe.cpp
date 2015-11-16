@@ -11,7 +11,7 @@ namespace storm {
 		tName->add(L"Maybe", vector<Value>(1, type));
 
 		// It should be ok to return a borrowed reference here.
-		Auto<Named> n = e.scope()->findW(tName);
+		Auto<Named> n = e.scope()->find(tName);
 		Type *r = as<Type>(n.borrow());
 		assert(r, "The maybe type was not found!");
 		return r;

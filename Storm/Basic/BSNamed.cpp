@@ -481,7 +481,7 @@ namespace storm {
 		Auto<BSNamePart> part = CREATE(BSNamePart, t->engine, Type::CTOR, actual);
 		part->insert(Value::thisPtr(t));
 
-		Auto<Function> ctor = steal(t->findW(part)).as<Function>();
+		Auto<Function> ctor = steal(t->find(part)).as<Function>();
 		if (!ctor)
 			throw SyntaxError(pos, L"No constructor " + t->identifier() + ::toS(part) + L")");
 
@@ -544,7 +544,7 @@ namespace storm {
 										Auto<Named> &candidate) {
 		const Scope &scope = block->scope;
 
-		Auto<LocalVar> thisVar = block->variableQ(L"this");
+		Auto<LocalVar> thisVar = block->variable(L"this");
 		if (!thisVar)
 			return null;
 
@@ -559,11 +559,11 @@ namespace storm {
 			if (!super)
 				throw SyntaxError(pos, L"No super type for " + ::toS(thisVar->result) + L", can not use 'super' here.");
 
-			candidate = storm::findW(super, steal(part->withLast(lastPart)));
+			candidate = storm::find(super, steal(part->withLast(lastPart)));
 			useLookup = false;
 		} else {
 			// May be anything.
-			candidate = scope.findW(steal(name->withLast(lastPart)));
+			candidate = scope.find(steal(name->withLast(lastPart)));
 			useLookup = true;
 		}
 
@@ -583,7 +583,7 @@ namespace storm {
 
 		// Type ctors and local variables have priority.
 		{
-			Auto<Named> n = scope.findW(name);
+			Auto<Named> n = scope.find(name);
 			if (Auto<Type> t = n.as<Type>())
 				return findCtor(t, params, pos);
 			else if (as<LocalVar>(n.borrow()) != null && params->empty())
@@ -598,7 +598,7 @@ namespace storm {
 
 		// Try without the this pointer first.
 		Auto<BSNamePart> last = CREATE(BSNamePart, name, name->lastName(), params);
-		Auto<Named> n = scope.findW(steal(name->withLast(last)));
+		Auto<Named> n = scope.find(steal(name->withLast(last)));
 
 		if (Expr *e = findTarget(n, null, params, pos, true))
 			return e;

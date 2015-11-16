@@ -59,7 +59,7 @@ namespace storm {
 		tName->add(L"core");
 		tName->add(L"Map", valList(2, Value(key), Value(value)));
 
-		Auto<Named> n = e.scope()->findW(tName);
+		Auto<Named> n = e.scope()->find(tName);
 		Type *r = as<Type>(n.borrow());
 		assert(r, "The map type was not found!");
 		return r;

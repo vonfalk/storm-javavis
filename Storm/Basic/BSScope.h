@@ -30,7 +30,7 @@ namespace storm {
 			void addSyntax(const Scope &from, Par<SyntaxSet> to);
 
 			// Find stuff.
-			virtual Named *STORM_FN findW(const Scope &from, Par<Name> name);
+			virtual Named *STORM_FN find(const Scope &from, Par<Name> name);
 
 		private:
 			// Find helper.

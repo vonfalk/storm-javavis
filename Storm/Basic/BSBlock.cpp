@@ -60,14 +60,14 @@ namespace storm {
 		return x->lookup->parent() == lookup.borrow();
 	}
 
-	bs::LocalVar *bs::Block::variableQ(const String &name) {
+	bs::LocalVar *bs::Block::variable(const String &name) {
 		VarMap::const_iterator i = variables.find(name);
 		if (i != variables.end())
 			return i->second.ret();
 
 		BlockLookup *parent = as<BlockLookup>(lookup->parent());
 		if (parent)
-			return parent->block->variableQ(name);
+			return parent->block->variable(name);
 
 		return null;
 	}
@@ -127,9 +127,9 @@ namespace storm {
 		parentLookup = prev;
 	}
 
-	Named *bs::BlockLookup::findW(Par<NamePart> part) {
+	Named *bs::BlockLookup::find(Par<NamePart> part) {
 		if (part->params.empty())
-			return block->variableQ(part->name);
+			return block->variable(part->name);
 
 		return null;
 	}

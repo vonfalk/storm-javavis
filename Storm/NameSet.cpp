@@ -94,7 +94,7 @@ namespace storm {
 		o->templ = p;
 	}
 
-	Named *NameSet::findW(Par<NamePart> part) {
+	Named *NameSet::find(Par<NamePart> part) {
 		if (Named *found = tryFindW(part))
 			return found;
 

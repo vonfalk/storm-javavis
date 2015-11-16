@@ -135,7 +135,7 @@ namespace storm {
 		void forceLoad();
 
 		// Find a NamePart (returns borrowed ptr).
-		virtual MAYBE(Named) *STORM_FN findW(Par<NamePart> part);
+		virtual MAYBE(Named) *STORM_FN find(Par<NamePart> part);
 
 		// Compile this NameSet and anything below it.
 		virtual void STORM_FN compile();

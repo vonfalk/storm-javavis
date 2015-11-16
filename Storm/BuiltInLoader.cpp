@@ -41,7 +41,7 @@ namespace storm {
 			return Value();
 
 		Auto<Name> name = parseSimpleName(e, val.name);
-		Auto<Named> f = src.findW(name);
+		Auto<Named> f = src.find(name);
 		if (Type *t = as<Type>(f.borrow()))
 			return createValue(val, t);
 
@@ -67,7 +67,7 @@ namespace storm {
 			// External types have an absolute name!
 			Auto<Name> name = parseSimpleName(e, t.pkg);
 			name->add(steal(CREATE(NamePart, e, t.name)));
-			Auto<Type> t = steal(e.scope()->findW(name)).as<Type>();
+			Auto<Type> t = steal(e.scope()->find(name)).as<Type>();
 			if (!t)
 				throw BuiltInError(L"The external type " + ::toS(name) + L" was not found.");
 			return t.ret();
@@ -320,7 +320,7 @@ namespace storm {
 			// Insert here as well! But check if a similar function already exists first ('overloading' should work).
 			Auto<Function> c = createFn(fn, into);
 			Auto<NamePart> name = CREATE(NamePart, into, c->name, c->params);
-			if (!steal(into->findW(name)))
+			if (!steal(into->find(name)))
 				into->add(c);
 		}
 

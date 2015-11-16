@@ -233,7 +233,7 @@ namespace storm {
 		tName->add(L"Fn", params);
 
 		// Should be ok to return a borrowed ptr here.
-		Auto<Named> n = e.scope()->findW(tName);
+		Auto<Named> n = e.scope()->find(tName);
 		Type *r = as<Type>(n.borrow());
 		assert(r, "The Fn type was not found!");
 		return r;

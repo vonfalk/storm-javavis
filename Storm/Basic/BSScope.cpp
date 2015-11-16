@@ -14,18 +14,18 @@ namespace storm {
 	bs::BSScope::BSScope(Par<Url> file) : file(file) {}
 
 	Named *bs::BSScope::findHelper(const Scope &s, Par<Name> name) {
-		if (Named *found = ScopeLookup::findW(s, name))
+		if (Named *found = ScopeLookup::find(s, name))
 			return found;
 
 		for (nat i = 0; i < includes.size(); i++) {
-			if (Named *found = storm::findW(includes[i], name))
+			if (Named *found = storm::find(includes[i], name))
 				return found;
 		}
 
 		return null;
 	}
 
-	Named *bs::BSScope::findW(const Scope &s, Par<Name> name) {
+	Named *bs::BSScope::find(const Scope &s, Par<Name> name) {
 		if (Named *n = findHelper(s, name))
 			return n;
 
@@ -41,7 +41,7 @@ namespace storm {
 		if (v == Value())
 			return null;
 
-		return v.type->findW(last);
+		return v.type->find(last);
 	}
 
 	void bs::BSScope::addSyntax(const Scope &from, Par<SyntaxSet> to) {

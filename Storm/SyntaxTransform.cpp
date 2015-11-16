@@ -11,7 +11,7 @@ namespace storm {
 	// Lookup a name.
 	static Auto<Type> lookupType(TransformEnv &env, const SrcPos &pos, const Scope &scope, const String &name) {
 		Auto<Name> n = parseTemplateName(env.e, scope, pos, name);
-		Auto<Named> d = scope.findW(n);
+		Auto<Named> d = scope.find(n);
 		return d.as<Type>();
 	}
 
@@ -65,7 +65,7 @@ namespace storm {
 	static Auto<ActualBase> tryCallFn(const SyntaxOption *option, Auto<Name> find, const vector<Auto<ActualBase>> &p) {
 		vector<Value> t = types(p);
 		find = find->withParams(t);
-		Auto<Function> f = steal(option->scope.findW(find)).as<Function>();
+		Auto<Function> f = steal(option->scope.find(find)).as<Function>();
 		if (!f)
 			return Auto<ActualBase>(null);
 
@@ -82,7 +82,7 @@ namespace storm {
 	}
 
 	static Auto<ActualBase> tryCallCtor(const SyntaxOption *option, Auto<Name> find, const vector<Auto<ActualBase>> &p) {
-		Auto<Type> t = steal(option->scope.findW(find)).as<Type>();
+		Auto<Type> t = steal(option->scope.find(find)).as<Type>();
 		if (!t)
 			return Auto<ActualBase>(null);
 
@@ -90,7 +90,7 @@ namespace storm {
 			throw SyntaxTypeError(option->pos, L"Only objects are supported in the syntax. "
 								+ ::toS(find) + L" is a value or a built-in type.");
 
-		Auto<Function> ctor = steal(t->findWCpp(Type::CTOR, types(t, p))).as<Function>();
+		Auto<Function> ctor = steal(t->findCpp(Type::CTOR, types(t, p))).as<Function>();
 		if (!ctor)
 			return Auto<ActualBase>(null);
 
@@ -122,7 +122,7 @@ namespace storm {
 		types[0] = me->type();
 		types[1] = param->type();
 
-		if (Auto<Function> f = steal(t->findWCpp(name, types)).as<Function>()) {
+		if (Auto<Function> f = steal(t->findCpp(name, types)).as<Function>()) {
 			os::FnParams call;
 			me->add(call);
 			param->add(call);

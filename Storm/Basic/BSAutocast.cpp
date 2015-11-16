@@ -37,7 +37,7 @@ namespace storm {
 		if (!to.type)
 			return null;
 
-		Auto<Named> n = to.type->findWCpp(Type::CTOR, valList(2, Value::thisPtr(to.type), from));
+		Auto<Named> n = to.type->findCpp(Type::CTOR, valList(2, Value::thisPtr(to.type), from));
 		Auto<Function> ctor = n.as<Function>();
 		if (ctor)
 			if (ctor->flags & namedAutoCast)

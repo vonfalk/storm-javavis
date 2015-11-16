@@ -66,7 +66,7 @@ namespace storm {
 
 			if (thread) {
 				Auto<Name> name = thread->toName(scope);
-				Auto<NamedThread> t = steal(scope.findW(name)).as<NamedThread>();
+				Auto<NamedThread> t = steal(scope.find(name)).as<NamedThread>();
 				if (!t)
 					throw SyntaxError(thread->pos, L"Can not find the thread " + ::toS(name) + L".");
 
@@ -123,7 +123,7 @@ namespace storm {
 			add(steal(CREATE(TypeDeepCopy, engine, this)));
 
 		// If noone has a toS function, create one (this is the case with values, this may change in the future).
-		Auto<Named> toS = findWCpp(L"toS", valList(1, Value::thisPtr(this)));
+		Auto<Named> toS = findCpp(L"toS", valList(1, Value::thisPtr(this)));
 		if (!toS.as<Function>()) {
 			add(steal(CREATE(TypeToS, engine, this)));
 		}

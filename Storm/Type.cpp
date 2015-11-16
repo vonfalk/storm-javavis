@@ -210,7 +210,7 @@ namespace storm {
 	void Type::updateHandleOutput() {
 		// 1: Try to find the add() function for this type in StrBuf...
 		Type *s = StrBuf::stormType(engine);
-		if (Auto<Function> f = steal(s->findWCpp(L"add", valList(2, Value::thisPtr(s), Value(this)))).as<Function>()) {
+		if (Auto<Function> f = steal(s->findCpp(L"add", valList(2, Value::thisPtr(s), Value(this)))).as<Function>()) {
 			typeHandle->outputRef(f->ref(), RefHandle::outputAdd);
 			return;
 		}
@@ -311,13 +311,13 @@ namespace storm {
 		return RunOn(RunOn::any);
 	}
 
-	Named *Type::findW(Par<NamePart> part) {
-		if (Named *n = NameSet::findW(part))
+	Named *Type::find(Par<NamePart> part) {
+		if (Named *n = NameSet::find(part))
 			return n;
 
 		if (part->name != CTOR)
 			if (Type *s = super())
-				return s->findW(part);
+				return s->find(part);
 
 		return null;
 	}
@@ -398,11 +398,11 @@ namespace storm {
 	}
 
 	Function *Type::destructor() {
-		return steal(findWCpp(DTOR, vector<Value>(1, Value::thisPtr(this)))).as<Function>().borrow();
+		return steal(findCpp(DTOR, vector<Value>(1, Value::thisPtr(this)))).as<Function>().borrow();
 	}
 
 	Function *Type::copyCtor() {
-		return steal(findWCpp(CTOR, vector<Value>(2, Value::thisPtr(this)))).as<Function>().borrow();
+		return steal(findCpp(CTOR, vector<Value>(2, Value::thisPtr(this)))).as<Function>().borrow();
 	}
 
 	const void *Type::copyCtorFn() {
@@ -411,31 +411,31 @@ namespace storm {
 	}
 
 	Function *Type::assignFn() {
-		return steal(findWCpp(L"=", vector<Value>(2, Value::thisPtr(this)))).as<Function>().borrow();
+		return steal(findCpp(L"=", vector<Value>(2, Value::thisPtr(this)))).as<Function>().borrow();
 	}
 
 	Function *Type::defaultCtor() {
-		return steal(findWCpp(CTOR, vector<Value>(1, Value::thisPtr(this)))).as<Function>().borrow();
+		return steal(findCpp(CTOR, vector<Value>(1, Value::thisPtr(this)))).as<Function>().borrow();
 	}
 
 	Function *Type::deepCopyFn() {
-		Auto<Named> n = findWCpp(L"deepCopy", valList(2, Value::thisPtr(this), Value(CloneEnv::stormType(engine))));
+		Auto<Named> n = findCpp(L"deepCopy", valList(2, Value::thisPtr(this), Value(CloneEnv::stormType(engine))));
 		return n.as<Function>().borrow();
 	}
 
 	Function *Type::equalsFn() {
 		// TODO: Clean up the equals-mess when we have figured out a suitable API!
-		Auto<Named> n = findWCpp(L"equals", valList(2, Value::thisPtr(this), Value::thisPtr(this)));
+		Auto<Named> n = findCpp(L"equals", valList(2, Value::thisPtr(this), Value::thisPtr(this)));
 		Function *r = as<Function>(n.borrow());
 		if (r)
 			return r;
-		n = findWCpp(L"==", valList(2, Value::thisPtr(this), Value::thisPtr(this)));
+		n = findCpp(L"==", valList(2, Value::thisPtr(this), Value::thisPtr(this)));
 		r = as<Function>(n.borrow());
 		return r;
 	}
 
 	Function *Type::hashFn() {
-		return steal(findWCpp(L"hash", valList(1, Value::thisPtr(this)))).as<Function>().borrow();
+		return steal(findCpp(L"hash", valList(1, Value::thisPtr(this)))).as<Function>().borrow();
 	}
 
 	code::RefSource *Type::handleDefaultCtor() {
@@ -475,12 +475,12 @@ namespace storm {
 
 	Function *Type::findToSFn() {
 		// 1: Local scope.
-		Auto<Named> n = findWCpp(L"toS", valList(1, Value::thisPtr(this)));
+		Auto<Named> n = findCpp(L"toS", valList(1, Value::thisPtr(this)));
 		if (Function *f = as<Function>(n.borrow()))
 			return f;
 
 		// 2: Surrounding scope.
-		n = parent()->findWCpp(L"toS", valList(1, Value(this)));
+		n = parent()->findCpp(L"toS", valList(1, Value(this)));
 		if (Function *f = as<Function>(n.borrow()))
 			return f;
 

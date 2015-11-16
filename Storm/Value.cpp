@@ -262,7 +262,7 @@ namespace storm {
 
 
 	Value fnResultType(const Scope &scope, Par<Name> fn) {
-		Auto<Named> f = scope.findW(fn);
+		Auto<Named> f = scope.find(fn);
 		if (!f) {
 			return Value();
 		} else if (Type *t = as<Type>(f.borrow())) {

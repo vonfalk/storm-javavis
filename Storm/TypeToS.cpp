@@ -38,8 +38,8 @@ namespace storm {
 		// Create the StrBuf.
 		Variable strBuf = allocObject(g, strBufType.type->defaultCtor(), vector<code::Value>());
 
-		Auto<Function> addChar = steal(strBufType.type->findWCpp(L"addChar", valList(2, strBufType, natType))).as<Function>();
-		Auto<Function> addStr = steal(strBufType.type->findWCpp(L"add", valList(2, strBufType, strType))).as<Function>();
+		Auto<Function> addChar = steal(strBufType.type->findCpp(L"addChar", valList(2, strBufType, natType))).as<Function>();
+		Auto<Function> addStr = steal(strBufType.type->findCpp(L"add", valList(2, strBufType, strType))).as<Function>();
 
 		// Add leading {
 		addChar->autoCall(g, z(strBuf, natConst('{')), steal(CREATE(CodeResult, this)));
@@ -57,9 +57,9 @@ namespace storm {
 			Value type = v->varType;
 
 			Auto<Name> name = CREATE(Name, this, L"toS", valList(1, type));
-			Auto<Function> f = steal(storm::findW(type.type, name)).as<Function>();
+			Auto<Function> f = steal(storm::find(type.type, name)).as<Function>();
 			if (!f)
-				f = steal(storm::findW(engine().package(L"core"), name)).as<Function>();
+				f = steal(storm::find(engine().package(L"core"), name)).as<Function>();
 
 			if (!f) {
 				addChar->autoCall(g, z(strBuf, intConst('?')), steal(CREATE(CodeResult, this)));
@@ -84,7 +84,7 @@ namespace storm {
 
 
 		// Extract the actual string.
-		Auto<Function> toS = steal(strBufType.type->findWCpp(L"toS", valList(1, strBufType))).as<Function>();
+		Auto<Function> toS = steal(strBufType.type->findCpp(L"toS", valList(1, strBufType))).as<Function>();
 		Auto<CodeResult> result = CREATE(CodeResult, this, strType, g->block);
 		toS->autoCall(g, vector<code::Value>(1, strBuf), result);
 		g->to << code::addRef(result->location(g).var());

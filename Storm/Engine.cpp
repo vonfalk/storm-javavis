@@ -221,7 +221,7 @@ namespace storm {
 
 	Package *Engine::package(Par<Package> rel, Par<Name> path, bool create) {
 		if (!create)
-			return steal(findW(rel, path)).as<Package>().borrow();
+			return steal(find(rel, path)).as<Package>().borrow();
 
 		return createPackage(rel.borrow(), path);
 	}
@@ -232,7 +232,7 @@ namespace storm {
 
 		assert(path->at(pos)->params.size() == 0);
 
-		Auto<Named> nextNamed = pkg->findW(path->at(pos));
+		Auto<Named> nextNamed = pkg->find(path->at(pos));
 		Auto<Package> next = nextNamed.as<Package>();
 		if (!next && !nextNamed) {
 			// Create a virtual package.

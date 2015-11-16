@@ -152,7 +152,7 @@ namespace storm {
 		if (!result.returnInReg()) {
 			if (isMember) {
 				// In member functions, the this ptr comes first!
-				Auto<LocalVar> var = body->variableQ(paramNames[0]);
+				Auto<LocalVar> var = body->variable(paramNames[0]);
 				var->createParam(state);
 				start = 1;
 			}
@@ -162,7 +162,7 @@ namespace storm {
 
 		// Parameters
 		for (nat i = start; i < params.size(); i++) {
-			Auto<LocalVar> var = body->variableQ(paramNames[i]);
+			Auto<LocalVar> var = body->variable(paramNames[i]);
 			assert(var);
 			var->createParam(state);
 		}
