@@ -121,6 +121,7 @@ namespace os {
 	class Lock;
 	class Sema;
 	class Thread;
+	class ThreadGroup;
 }
 
 namespace storm {
@@ -163,6 +164,8 @@ namespace storm {
 	// Get the name of a type.
 	String typeIdentifier(const Type *t);
 
+	// Get a reference to the ThreadGroup for the current engine.
+	os::ThreadGroup &threadGroup(Engine &e);
 }
 
 #include "Types.h"

@@ -268,6 +268,10 @@
 				RelativePath=".\UThread.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ThreadGroup.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -328,6 +332,14 @@
 			</File>
 			<File
 				RelativePath=".\UThread.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ThreadGroup.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ThreadGroup.cpp"
 				>
 			</File>
 		</Filter>

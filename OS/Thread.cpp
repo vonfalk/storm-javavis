@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Thread.h"
 #include "UThread.h"
+#include "ThreadGroup.h"
 #include "Shared.h"
 #include <process.h>
 
@@ -27,8 +28,12 @@ namespace os {
 		// ThreadWait behavior. May be null.
 		ThreadWait *wait;
 
+		// Thread group.
+		ThreadGroupData *group;
+
 		// Init.
-		ThreadStart(const Fn<void, void> &fn, ThreadWait *wait) : sema(0), startFn(fn), wait(wait) {}
+		ThreadStart(const Fn<void, void> &fn, ThreadWait *wait, ThreadGroupData *group) :
+			sema(0), startFn(fn), wait(wait), group(group) {}
 
 		// Remove one reference from 'data', if present. The started thread
 		// should set one reference in 'data', so that it may not exit
@@ -106,17 +111,17 @@ namespace os {
 
 	Thread Thread::invalid = Thread(null);
 
-	Thread Thread::spawn(const Fn<void, void> &fn) {
-		ThreadStart start(fn, null);
+	Thread Thread::spawn(const Fn<void, void> &fn, ThreadGroup &group) {
+		ThreadStart start(fn, null, group.data);
 		startThread(start);
 		start.sema.down();
 
 		return Thread(start.data);
 	}
 
-	Thread Thread::spawn(ThreadWait *wait) {
+	Thread Thread::spawn(ThreadWait *wait, ThreadGroup &group) {
 		Fn<void, void> f;
-		ThreadStart start(f, wait);
+		ThreadStart start(f, wait, group.data);
 		startThread(start);
 		start.sema.down();
 
@@ -130,9 +135,14 @@ namespace os {
 		threadCreated();
 
 		// Read data from 'start'.
+		ThreadGroupData *group = start.group;
 		Fn<void, void> fn = start.startFn;
 		ThreadWait *wait = start.wait;
 		d.wait = wait;
+
+		// Initialize our group.
+		group->addRef();
+		group->threadStarted();
 
 		// One reference is consumed when 'threadWait' is terminated.
 		d.addRef();
@@ -194,6 +204,10 @@ namespace os {
 
 		// Now, no one has any knowledge of our existence, we can safely delete the 'wait' now.
 		delete wait;
+
+		// Report we terminated.
+		group->threadTerminated();
+		group->release();
 
 		// Failsafe for the currThreadData.
 		currentThreadData(null);

@@ -128,6 +128,8 @@ namespace storm {
 	}
 
 	Engine::~Engine() {
+		// NOTE: If we're launched with a separate thread as the compiler thread, we may fail here.
+
 		// Tell the arena that we will remove everything shortly, so that it knows it is not worth
 		// the effort to compute which RefSources it can remove early.
 		arena.preShutdown();
@@ -144,13 +146,25 @@ namespace storm {
 		rootScope->lookup = null;
 		defScopeLookup = null;
 
+		// Find all unique types and stop their threads so that we can do a join() later on.
+		set<Thread *> threads;
+		for (nat i = 0; i < types.size(); i++) {
+			RunOn on = types[i]->runOn();
+			if (on.thread)
+				threads.insert(on.thread->thread());
+		}
+
+		for (set<Thread *>::iterator i = threads.begin(), end = threads.end(); i != end; ++i)
+			(*i)->stopThread();
+
 		// Release more cached types. This needs to be above clearing other types.
 		specialCached.clear();
 
 		// Release any threads now.
-		threads.clear();
+		cppThreads.clear();
 
-		// TODO: Wait until threads have terminated properly.
+		// Wait until threads have terminated properly.
+		threadGroup.join();
 
 		// Keep the type type a little longer.
 		Type *t = Type::stormType(*this);
@@ -190,15 +204,15 @@ namespace storm {
 	}
 
 	Thread *Engine::thread(uintptr_t id, DeclThread::CreateFn fn) {
-		ThreadMap::const_iterator i = threads.find(id);
-		if (i == threads.end()) {
+		ThreadMap::const_iterator i = cppThreads.find(id);
+		if (i == cppThreads.end()) {
 			Auto<Thread> t;
 			if (fn) {
 				t = CREATE(Thread, *this, fn);
 			} else {
 				t = CREATE(Thread, *this);
 			}
-			threads.insert(make_pair(id, t));
+			cppThreads.insert(make_pair(id, t));
 			return t.borrow();
 		} else {
 			return i->second.borrow();
@@ -206,8 +220,8 @@ namespace storm {
 	}
 
 	void Engine::thread(uintptr_t id, Par<Thread> t) {
-		assert(threads.count(id) == 0, L"A thread with this id has already been created.");
-		threads.insert(make_pair(id, Auto<Thread>(t)));
+		assert(cppThreads.count(id) == 0, L"A thread with this id has already been created.");
+		cppThreads.insert(make_pair(id, Auto<Thread>(t)));
 	}
 
 	Package *Engine::package(const String &path) {

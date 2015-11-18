@@ -19,7 +19,7 @@ namespace sound {
 
 
 	os::Thread spawnAudio(Engine &e) {
-		return os::Thread::spawn(new AudioWait(e));
+		return os::Thread::spawn(new AudioWait(e), threadGroup(e));
 	}
 
 	DEFINE_STORM_THREAD_WAIT(Audio, &spawnAudio);

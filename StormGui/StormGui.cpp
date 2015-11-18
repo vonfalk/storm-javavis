@@ -9,7 +9,7 @@ STORM_LIB_ENTRY_POINT(stormgui::LibData);
 namespace stormgui {
 
 	os::Thread spawnAppWait(Engine &e) {
-		return os::Thread::spawn(new AppWait(e));
+		return os::Thread::spawn(new AppWait(e), threadGroup(e));
 	}
 
 	DEFINE_STORM_THREAD_WAIT(Ui, &spawnAppWait);
@@ -17,7 +17,7 @@ namespace stormgui {
 
 	os::Thread spawnRenderWait(Engine &e) {
 		Auto<RenderMgr> mgr = renderMgr(e);
-		return os::Thread::spawn(memberVoidFn(mgr.borrow(), &RenderMgr::main));
+		return os::Thread::spawn(memberVoidFn(mgr.borrow(), &RenderMgr::main), threadGroup(e));
 	}
 
 	DEFINE_STORM_THREAD_WAIT(Render, &spawnRenderWait);

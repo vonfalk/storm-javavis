@@ -80,6 +80,9 @@ namespace storm {
 		typedef const Handle &(*TypeHandle)(Type *t);
 		TypeHandle typeHandle;
 
+		typedef os::ThreadGroup &(*ThreadGroup)(Engine &e);
+		ThreadGroup threadGroup;
+
 #ifdef DEBUG
 		typedef void (*CheckLive)(void *mem);
 		CheckLive checkLive;

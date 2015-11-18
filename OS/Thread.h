@@ -13,6 +13,9 @@ namespace os {
 	// Interface for interaction with OS-specific waits. See below.
 	class ThreadWait;
 
+	// Thread group.
+	class ThreadGroup;
+
 	/**
 	 * OS thread.
 	 *
@@ -45,10 +48,10 @@ namespace os {
 		inline ThreadData *threadData() const { return data; }
 
 		// Start a thread.
-		static Thread spawn(const Fn<void, void> &start);
+		static Thread spawn(const Fn<void, void> &start, ThreadGroup &group);
 
-		// Start a thread with a specific 'ThreadWait' behaviour. Will take ownership over 'wait'.
-		static Thread spawn(ThreadWait *wait);
+		// Start a thread with a specific 'ThreadWait' behaviour. Will take ownership of 'wait'.
+		static Thread spawn(ThreadWait *wait, ThreadGroup &group);
 
 		// Get the current thread.
 		static Thread current();

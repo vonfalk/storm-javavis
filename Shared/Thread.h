@@ -40,6 +40,11 @@ namespace storm {
 		// Destroy it. This does not enforce that the thread has actually terminated.
 		~Thread();
 
+		// Stop the thread we're representing by setting us to the OS thread. This will cause all
+		// code from this point to be executed on the calling thread of this function. Only intended
+		// to be used during shutdown.
+		void stopThread();
+
 		// Get the thread handle.
 		const os::Thread &thread();
 

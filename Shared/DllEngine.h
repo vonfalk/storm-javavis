@@ -42,7 +42,6 @@ namespace storm {
 
 		// Get a specific thread object.
 		Thread *thread(uintptr_t id, DeclThread::CreateFn fn);
-
 	};
 
 	// Get the C++ vtable for a type. Used for external types.

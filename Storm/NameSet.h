@@ -105,7 +105,7 @@ namespace storm {
 		iterator begin(const String &name) const;
 		iterator end(const String &name) const;
 
-		// Find all types recursively.
+		// Find all types recursively. TODO: Make this more general.
 		vector<Auto<Type>> findTypes() const;
 		void findTypes(vector<Auto<Type>> &t) const;
 

@@ -7,6 +7,7 @@
 #include "LoadedLibs.h"
 #include "Code/Arena.h"
 #include "Code/Binary.h"
+#include "OS/ThreadGroup.h"
 
 namespace storm {
 
@@ -156,6 +157,9 @@ namespace storm {
 		// Dynamic libraries.
 		LoadedLibs loadedLibs;
 
+		// Thread group for our threads.
+		os::ThreadGroup threadGroup;
+
 		// Is the de-virtualized function a Object::toS
 		bool rootToS(void *fn);
 
@@ -183,9 +187,9 @@ namespace storm {
 		vector<Auto<Type> > cached;
 		vector<Auto<Type> > specialCached;
 
-		// Threads.
+		// Threads declared from C++
 		typedef hash_map<uintptr_t, Auto<Thread> > ThreadMap;
-		ThreadMap threads;
+		ThreadMap cppThreads;
 
 		// Maxium C++ VTable size.
 		nat cppVTableSize;

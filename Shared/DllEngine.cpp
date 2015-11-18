@@ -158,6 +158,10 @@ namespace storm {
 		return (*interface->typeHandle)(t);
 	}
 
+	os::ThreadGroup &threadGroup(Engine &e) {
+		return (*interface->threadGroup)(e);
+	}
+
 #ifdef DEBUG
 	void checkLive(void *ptr) {
 		(*interface->checkLive)(ptr);

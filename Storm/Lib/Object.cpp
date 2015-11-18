@@ -280,6 +280,10 @@ namespace storm {
 		return e.thread(id, fn);
 	}
 
+	os::ThreadGroup &threadGroup(Engine &e) {
+		return e.threadGroup;
+	}
+
 	DllInterface dllInterface() {
 		DllInterface i = {
 			os::osFns(),
@@ -312,6 +316,7 @@ namespace storm {
 			&fnPtrType,
 			&toSOverridden,
 			&typeHandle,
+			&threadGroup,
 #ifdef DEBUG
 			&checkLive,
 #endif
