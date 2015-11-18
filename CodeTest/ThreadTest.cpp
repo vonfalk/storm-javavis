@@ -2,6 +2,7 @@
 #include "Test/Test.h"
 #include "OS/Thread.h"
 #include "OS/UThread.h"
+#include "OS/ThreadGroup.h"
 #include "Code/Debug.h"
 #include "Utils/Exception.h"
 #include "Utils/Semaphore.h"
@@ -22,10 +23,12 @@ static void otherThread() {
 }
 
 BEGIN_TEST(ThreadTest) {
+	ThreadGroup g;
+
 	var = 0;
 	local = 1;
 	{
-		Thread t = Thread::spawn(simpleVoidFn(otherThread));
+		Thread t = Thread::spawn(simpleVoidFn(otherThread), g);
 		CHECK_NEQ(t, Thread::current());
 	}
 	Sleep(30);
@@ -33,7 +36,7 @@ BEGIN_TEST(ThreadTest) {
 	CHECK_EQ(var, 2);
 
 	{
-		Thread t = Thread::spawn(simpleVoidFn(otherThread));
+		Thread t = Thread::spawn(simpleVoidFn(otherThread), g);
 		CHECK_NEQ(t, Thread::current());
 	}
 	stopSema.down();
@@ -75,19 +78,20 @@ struct TInterop {
 
 BEGIN_TEST(UThreadInterop) {
 	TODO(L"This crashes sometimes, that is _bad_!");
+	ThreadGroup g;
 
 	var = 0;
-	Thread::spawn(simpleVoidFn(uthreadInterop));
+	Thread::spawn(simpleVoidFn(uthreadInterop), g);
 	stopSema.down();
 	CHECK_EQ(var, 1);
 
 	var = 0;
-	Thread::spawn(simpleVoidFn(uthreadInterop2));
+	Thread::spawn(simpleVoidFn(uthreadInterop2), g);
 	stopSema.down();
 	CHECK_EQ(var, 2);
 
 	var = 0;
-	Thread t = Thread::spawn(Fn<void, void>());
+	Thread t = Thread::spawn(Fn<void, void>(), g);
 	Sleep(20); // Make sure 't' enters the condition waiting.
 	UThread::spawn(simpleVoidFn(setVar), &t);
 	stopSema.down();
@@ -96,7 +100,7 @@ BEGIN_TEST(UThreadInterop) {
 	// Check so that futures work with regular semaphores as well.
 	{
 		TInterop i;
-		Thread::spawn(memberVoidFn(&i, &TInterop::run));
+		Thread::spawn(memberVoidFn(&i, &TInterop::run), g);
 		CHECK_EQ(i.result.result(), 42);
 		// Multiple times should also work.
 		CHECK_EQ(i.result.result(), 42);
@@ -133,8 +137,9 @@ struct Cond {
 
 BEGIN_TEST(ConditionTest) {
 	Cond z;
+	ThreadGroup g;
 
-	Thread::spawn(memberVoidFn(&z, &Cond::run));
+	Thread::spawn(memberVoidFn(&z, &Cond::run), g);
 
 	z.start.up();
 	Sleep(10); // Let the other thread run into c.wait()

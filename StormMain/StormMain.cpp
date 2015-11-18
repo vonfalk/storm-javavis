@@ -7,12 +7,14 @@
 #include "Shared/Io/Url.h"
 #include "Shared/Timing.h"
 #include "Storm/Function.h"
+#include "OS/ThreadGroup.h"
 
 using namespace std;
 using namespace storm;
 
 // Read that is not locking up the compiler loop. Should be implemeted better when there
 // is "real" IO in storm!
+static os::ThreadGroup *ioGroup = null;
 static os::Thread *ioThread = null;
 
 void ioThreadMain() {
@@ -34,14 +36,16 @@ void stopIo() {
 	if (ioThread) {
 		del(ioThread);
 		// Let the io thread exit cleanly.
-		Sleep(200);
+		ioGroup->join();
+		del(ioGroup);
 	}
 }
 
 void startIo() {
 	if (ioThread)
 		return;
-	ioThread = new os::Thread(os::Thread::spawn(simpleVoidFn(&ioThreadMain)));
+	ioGroup = new os::ThreadGroup();
+	ioThread = new os::Thread(os::Thread::spawn(simpleVoidFn(&ioThreadMain), *ioGroup));
 }
 
 bool readLine(String &to) {

@@ -3,6 +3,7 @@
 #include "Utils/Semaphore.h"
 #include "OS/Thread.h"
 #include "OS/UThread.h"
+#include "OS/ThreadGroup.h"
 #include "OS/Sync.h"
 #include "Tracker.h"
 
@@ -242,10 +243,11 @@ struct SemaInterop {
 
 BEGIN_TEST(UThreadSemaInterop) {
 	SemaInterop t;
+	ThreadGroup group;
 
 	// Make the main thread wait for a UThread that is not in its running state.
 	{
-		Thread on = Thread::spawn(memberVoidFn(&t, &SemaInterop::run));
+		Thread on = Thread::spawn(memberVoidFn(&t, &SemaInterop::run), group);
 		Sleep(30);
 		CHECK_EQ(t.state, 1);
 
@@ -266,7 +268,7 @@ BEGIN_TEST(UThreadSemaInterop) {
 
 	// No threads to schedule when a sema should block. This should make
 	// the other thread spin in UThread::wait() for a while.
-	Thread::spawn(memberVoidFn(&t, &SemaInterop::run));
+	Thread::spawn(memberVoidFn(&t, &SemaInterop::run), group);
 	Sleep(30);
 	CHECK_EQ(t.state, 1);
 	t.sema.up();
@@ -275,7 +277,7 @@ BEGIN_TEST(UThreadSemaInterop) {
 
 	// No threads to schedule when a sema would block while starting another UThread.
 	{
-		Thread on = Thread::spawn(memberVoidFn(&t, &SemaInterop::run));
+		Thread on = Thread::spawn(memberVoidFn(&t, &SemaInterop::run), group);
 		Sleep(30);
 		CHECK_EQ(t.state, 1);
 

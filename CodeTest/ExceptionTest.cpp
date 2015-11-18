@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "OS/Thread.h"
+#include "OS/ThreadGroup.h"
 #include "OS/Future.h"
 
 static void error() {
@@ -26,8 +27,9 @@ struct ExThread {
 // Test forwarding exceptions between threads.
 BEGIN_TEST(ExceptionTest) {
 	ExThread z;
+	ThreadGroup g;
 
-	Thread::spawn(memberVoidFn(&z, &ExThread::run));
+	Thread::spawn(memberVoidFn(&z, &ExThread::run), g);
 
 	try {
 		z.result.result();
@@ -38,6 +40,6 @@ BEGIN_TEST(ExceptionTest) {
 		CHECK(false);
 	}
 
-	Sleep(100);
+	g.join();
 
 } END_TEST
