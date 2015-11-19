@@ -551,6 +551,22 @@ namespace storm {
 		return code::mul(dest.v, src.v);
 	}
 
+	wrap::Instruction wrap::idiv(Operand dest, Operand src) {
+		return code::idiv(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::imod(Operand dest, Operand src) {
+		return code::imod(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::udiv(Operand dest, Operand src) {
+		return code::udiv(dest.v, src.v);
+	}
+
+	wrap::Instruction wrap::umod(Operand dest, Operand src) {
+		return code::umod(dest.v, src.v);
+	}
+
 	wrap::Instruction wrap::push(Operand v) {
 		return code::push(v.v);
 	}

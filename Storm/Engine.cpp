@@ -174,6 +174,8 @@ namespace storm {
 		for (nat i = 0; i < types.size(); i++) {
 			types[i]->clear();
 		}
+
+		delete rootScope;
 		types.clear();
 		loadedLibs.clearTypes();
 		cached.clear();
@@ -184,8 +186,6 @@ namespace storm {
 
 		TODO(L"Destroy these earlier if possible!"); // We can do this when we have proper threading.
 		clear(toDestroy);
-
-		delete rootScope;
 
 		// Unload libs now. This dtor will use a map in here, causing a crash, unless we clear it first.
 		loadedLibs.unload();

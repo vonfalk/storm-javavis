@@ -645,4 +645,8 @@ namespace storm {
 		return capture(t->findToSFn()).ret();
 	}
 
+	wrap::Size STORM_FN size(Par<Type> t) {
+		return t->size();
+	}
+
 }

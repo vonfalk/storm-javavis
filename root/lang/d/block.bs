@@ -1,11 +1,13 @@
 use lang;
 use core:lang;
+use core:asm;
 use core:debug;
 
 /**
  * A block in the diesel language.
  */
 class Block extends Statement {
+	// TODO: Move constants, variables and functions to Function subclass.
 	Constant[] constants;
 	Variable[] variables;
 	Function[] functions;
@@ -40,6 +42,22 @@ class Block extends Statement {
 		}
 
 		r;
+	}
+
+	void code(Listing to, Scope scope) {
+		for (Nat i = 0; i < variables.count; i++) {
+			Variable v = variables[i];
+			Type? t = v.type.type;
+			if (t) {
+				v.asmVar = to.createVariable(to.root, t.size(), Operand(), freeOnNone());
+			} else {
+				print("Error: Variable " # v # " does not have a proper type!");
+			}
+		}
+
+		for (Nat i = 0; i < statements.count; i++) {
+			statements[i].code(to, scope);
+		}
 	}
 
 	Str toS() {
@@ -99,6 +117,7 @@ class Constant on Compiler {
  */
 class Variable extends Named {
 	DType type;
+    core:asm:Variable asmVar;
 
 	ctor(SStr name, DType type) {
 		init(name.v) {

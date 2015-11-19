@@ -94,6 +94,17 @@ namespace storm {
 		return distance;
 	}
 
+	Str *name(Par<NamePart> p) {
+		return CREATE(Str, p, p->name);
+	}
+
+	Array<Value> *params(Par<NamePart> p) {
+		Auto<Array<Value>> r = CREATE(Array<Value>, p);
+		for (nat i = 0; i < p->params.size(); i++)
+			r->push(p->params[i]);
+		return r.ret();
+	}
+
 
 	/**
 	 * Name

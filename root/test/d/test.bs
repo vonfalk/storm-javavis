@@ -1,0 +1,5 @@
+use core:debug;
+
+void testFactorial() {
+	print(factorial:fact(10).toS);
+}

@@ -1,21 +1,29 @@
-use lang;
 use core:lang;
 use core:asm;
 use core:debug;
 
 /**
- * Diesel function, allows hierarchical declarations. TODO: Integrate this with the regular lookup
- * of Storm. This is not possible at the moment since 'find' in NameLookup does not follow the
- * regular semantics used in Basic Storm.
+ * Diesel function, allows hierarchical declarations.
  */
 class Function extends core:lang:Function {
 	// Contents
 	Block block;
 
+	// Parameters.
+	Param[] params;
+
 	// Sub-functions and variables.
 	Str->Named contents;
 
-	ctor(Str name, Block block) {
+	ctor(Str name, Block block, Param[] params) {
+		Value[] values;
+		for (Nat i = 0; i < params.count; i++) {
+			Type? t = params[i].type.type;
+			if (t) {
+				values << Value(t);
+			}
+		}
+
 		init(Value(), name, []) {
 			block = block;
 		}
@@ -23,22 +31,49 @@ class Function extends core:lang:Function {
 		Named[] c = block.buildNamed();
 		for (Nat i = 0; i < c.count; i++) {
 			// TODO: Why do we need a temporary here?
-			Str n = c[i].name;
+			Named named = c[i];
+			Str n = named.name;
 			contents.put(n, c[i]);
+			named.setParent(this);
 		}
+	}
+
+	// Find stuff here.
+	Named? find(NamePart part) {
+		Named? result;
+
+		// TODO: Why do we need a temporary here?
+		Str name = part.name;
+		if (contents.has(name)) {
+			Named v = contents.get(name);
+			print("Candidate: " # v);
+			if (part.matches(v) >= 0) {
+				result = v;
+			}
+		}
+
+		result;
 	}
 
 	// Compile code.
 	void set() {
 		Listing l;
+		Scope scope(this);
+		l << prolog();
+
+		block.code(l, scope);
+
+		l << epilog();
 		l << ret(retVoid);
+		print(l.toS);
+
 		DynamicCode code(l);
 		setCode(code);
 	}
 
 	Str toS() {
 		StrBuf to;
-		Value[] p = params;
+		Param[] p = params;
 
 		if (p.count > 0) {
 			to << "function " << name << "()\n";
@@ -52,11 +87,11 @@ class Function extends core:lang:Function {
 
 class Program extends Function {
 	ctor(SStr name, Block code) {
-		init(name.v, code) {}
+		init(name.v, code, []) {}
 	}
 
 	ctor(Str name, Block code) {
-		init(name, code) {}
+		init(name, code, []) {}
 	}
 
 	Str toS() {
@@ -67,17 +102,32 @@ class Program extends Function {
 	}
 }
 
+/**
+ * Formal parameter.
+ */
+class Param on Compiler {
+	Str name;
+	DType type;
+
+	ctor(SStr name, DType type) {
+		init() {
+			name = name.v;
+			type = type;
+		}
+	}
+}
 
 /**
  * Create a function.
  */
-Function function(SStr name, Block code) {
-	Function(name.v, code);
+Function function(SStr name, Block code, Param[] params) {
+	Function(name.v, code, params);
 }
 
 /**
  * Create a procedure.
  */
 Function procedure(SStr name, Block code) {
-	Function(name.v, code);
+	Function(name.v, code, Param[]);
 }
+

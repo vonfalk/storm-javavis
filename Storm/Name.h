@@ -51,6 +51,10 @@ namespace storm {
 		virtual void output(std::wostream &to) const;
 	};
 
+	// Storm wrappers.
+	Str *STORM_FN name(Par<NamePart> p);
+	Array<Value> *STORM_FN params(Par<NamePart> p);
+
 	/**
 	 * Representation of a name, either a relative name or an absolute
 	 * name including the full package path.

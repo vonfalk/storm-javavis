@@ -214,22 +214,22 @@ namespace storm {
 			STORM_CTOR Operand();
 
 			// Register.
-			STORM_CTOR Operand(Register r);
+			STORM_CAST_CTOR Operand(Register r);
 
 			// CondFlag.
-			STORM_CTOR Operand(CondFlag flag);
+			STORM_CAST_CTOR Operand(CondFlag flag);
 
 			// Variable.
-			STORM_CTOR Operand(Variable v);
+			STORM_CAST_CTOR Operand(Variable v);
 
 			// Part.
-			STORM_CTOR Operand(Part p);
+			STORM_CAST_CTOR Operand(Part p);
 
 			// Block.
-			STORM_CTOR Operand(Block b);
+			STORM_CAST_CTOR Operand(Block b);
 
 			// Variable.
-			STORM_CTOR Operand(Label l);
+			STORM_CAST_CTOR Operand(Label l);
 
 			// Convert.
 			Operand(const code::Value &v);
@@ -337,6 +337,11 @@ namespace storm {
 		Instruction STORM_FN xor(Operand dest, Operand src);
 		Instruction STORM_FN cmp(Operand dest, Operand src);
 		Instruction STORM_FN mul(Operand dest, Operand src);
+
+		Instruction STORM_FN idiv(Operand dest, Operand src);
+		Instruction STORM_FN imod(Operand dest, Operand src);
+		Instruction STORM_FN udiv(Operand dest, Operand src);
+		Instruction STORM_FN umod(Operand dest, Operand src);
 
 
 		// FreeOptions

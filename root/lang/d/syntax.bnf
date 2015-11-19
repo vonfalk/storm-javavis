@@ -34,11 +34,11 @@ Variable => Variable(name, type) : Identifier name, ":", Type type;
 
 Functions => Array<Function>() : (Function -> push, )*;
 Function => procedure(name, code) : "procedure", Identifier name, Params params, ";", Block code, ";";
-Function => function(name, code) : "function", Identifier name, Params params, ":", Type result, ";", Block code, ";";
+Function => function(name, code, params) : "function", Identifier name, Params params, ":", Type result, ";", Block code, ";";
 
-Params => void : "";
-Params => void : "(", Param -> add, (";", Param -> add,)* ")";
-Param => void : Identifier name, ":", Type type;
+Params => Array<Param>() : "";
+Params => Array<Param>() : "(", Param -> push, (";", Param -> push,)* ")";
+Param => Param(name, type) : Identifier name, ":", Type type;
 
 Actuals => Array<Expression>() : "()";
 Actuals => Array<Expression>() : "(", Expression -> push, (",", Expression -> push, )* ")";

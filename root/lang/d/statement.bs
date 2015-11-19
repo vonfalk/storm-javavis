@@ -1,10 +1,16 @@
 use lang;
 use core:lang;
+use core:asm;
+use core:debug;
 
 /**
  * Statement base class.
  */
-class Statement on Compiler {}
+class Statement on Compiler {
+	void code(Listing to, Scope scope) {
+		print("Override 'code' for " # this);
+	}
+}
 
 
 /**
@@ -19,6 +25,13 @@ class Assignment extends Statement {
 			to = to;
 			expr = expr;
 		}
+	}
+
+	void code(Listing l, Scope scope) {
+		Operand dest = to.ref(scope);
+
+		expr.code(l, scope);
+		//l << mov(dest,
 	}
 
 	Str toS() {
@@ -114,7 +127,12 @@ class Return extends Statement {
 /**
  * Expression base class.
  */
-class Expression on Compiler {}
+class Expression on Compiler {
+	// Places the result in ptrA. TODO: Return the result type.
+	void code(Listing t, Scope scope) {
+		print("Implement code for expr " # this);
+	}
+}
 
 /**
  * Negate an expression.
@@ -143,6 +161,10 @@ class IntNr extends Expression {
 		}
 	}
 
+	void code(Listing l, Scope scope) {
+		l << mov(eax, intConst(val));
+	}
+
 	Str toS() {
 		val.toS;
 	}
@@ -164,6 +186,21 @@ class Operators extends Expression {
 
 	void add(Operator op) {
 		ops << op;
+	}
+
+	void code(Listing l, Scope scope) {
+		lhs.code(l, scope);
+
+		if (ops.count > 0) {
+			Operand tmp = l.createIntVar(l.root, Operand(), freeOnNone);
+			l << mov(tmp, eax);
+			for (Nat i = 0; i < ops.count; i++) {
+				Operator op = ops[i];
+				op.rhs.code(l, scope);
+				l << op.instr(tmp, eax);
+			}
+			l << mov(eax, tmp);
+		}
 	}
 
 	Str toS() {
@@ -196,6 +233,24 @@ class Operator on Compiler {
 		}
 	}
 
+	Instruction instr(Operand a, Operand b) {
+		if (op.equals("+")) {
+			add(a, b);
+		} else if (op.equals("-")) {
+			sub(a, b);
+		} else if (op.equals("*")) {
+			mul(a, b);
+		} else if (op.equals("/")) {
+			idiv(a, b);
+		} else if (op.equals("mod")) {
+			imod(a, b);
+		} else if (op.equals("div")) {
+			idiv(a, b);
+		} else {
+			add(a, b);
+		}
+	}
+
 	Str toS() {
 		op # " " # rhs;
 	}
@@ -222,6 +277,26 @@ class VarRef extends Expression {
 			name = name.v;
 			index = index;
 		}
+	}
+
+	// Note: We're never using ptrA here.
+    Operand ref(Scope scope) {
+		if (index) {
+			print("Arrays are not supported yet!");
+			Operand();
+		} else {
+			Named? n = scope.find(Name(name));
+			if (n as Variable) {
+				Operand(n.asmVar);
+			} else {
+				print(name # " does not exist or is not a variable!");
+				Operand();
+			}
+		}
+	}
+
+	void code(Listing to, Scope scope) {
+		to << mov(eax, ref(scope));
 	}
 
 	Str toS() {

@@ -210,12 +210,14 @@ namespace storm {
 	};
 
 	// STORM versions of the 'getDefaultXxx'
-	MAYBE(Function) *STORM_FN emptyCtor(Par<Type> t);
-	MAYBE(Function) *STORM_FN copyCtor(Par<Type> t);
-	MAYBE(Function) *STORM_FN dtor(Par<Type> t);
-	MAYBE(Function) *STORM_FN assignFn(Par<Type> t);
-	MAYBE(Function) *STORM_FN deepCopyFn(Par<Type> t);
-	MAYBE(Function) *STORM_FN equalsFn(Par<Type> t);
-	MAYBE(Function) *STORM_FN hashFn(Par<Type> t);
-	MAYBE(Function) *STORM_FN findToSFn(Par<Type> t);
+	MAYBE(Function) *STORM_FN emptyCtor(Par<Type> t) ON(Compiler);
+	MAYBE(Function) *STORM_FN copyCtor(Par<Type> t) ON(Compiler);
+	MAYBE(Function) *STORM_FN dtor(Par<Type> t) ON(Compiler);
+	MAYBE(Function) *STORM_FN assignFn(Par<Type> t) ON(Compiler);
+	MAYBE(Function) *STORM_FN deepCopyFn(Par<Type> t) ON(Compiler);
+	MAYBE(Function) *STORM_FN equalsFn(Par<Type> t) ON(Compiler);
+	MAYBE(Function) *STORM_FN hashFn(Par<Type> t) ON(Compiler);
+	MAYBE(Function) *STORM_FN findToSFn(Par<Type> t) ON(Compiler);
+
+	wrap::Size STORM_FN size(Par<Type> t);
 }
