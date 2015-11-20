@@ -17,6 +17,9 @@ namespace storm {
 		// TODO: It would be good to know when the threads in the system has been killed, so that we
 		// can just delete the object without trying (in vain) to delete the object on another thread.
 
+		// TODO: This should be fixed so that we do not need to override 'deleteMe' for global
+		// scoped objects.
+
 		const os::Thread &on = thread->thread();
 		if (on == os::Thread::current()) {
 			// Correct thread.

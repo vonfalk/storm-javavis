@@ -154,8 +154,9 @@ namespace storm {
 				threads.insert(on.thread->thread());
 		}
 
-		for (set<Thread *>::iterator i = threads.begin(), end = threads.end(); i != end; ++i)
+		for (set<Thread *>::iterator i = threads.begin(), end = threads.end(); i != end; ++i) {
 			(*i)->stopThread();
+		}
 
 		// Release more cached types. This needs to be above clearing other types.
 		specialCached.clear();
@@ -176,8 +177,8 @@ namespace storm {
 		}
 
 		delete rootScope;
-		types.clear();
 		loadedLibs.clearTypes();
+		types.clear();
 		cached.clear();
 
 		delete vcalls;

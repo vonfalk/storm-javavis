@@ -51,6 +51,12 @@ namespace stormgui {
 		// Get the D2D factory object.
 		inline ID2D1Factory *d2d() { return factory; }
 
+	protected:
+		// Allow any thread to delete this class, as threads may not be alive when we have come this far.
+		virtual void deleteMe() {
+			delete this;
+		}
+
 	private:
 		friend RenderMgr *renderMgr(EnginePtr e);
 

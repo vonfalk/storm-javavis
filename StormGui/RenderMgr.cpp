@@ -81,9 +81,8 @@ namespace stormgui {
 	}
 
 	RenderMgr::~RenderMgr() {
-		exiting = true;
-		waitEvent.set();
-		exitSema.down();
+		if (!exiting)
+			terminate();
 
 		::release(giDevice);
 		::release(device);
@@ -177,6 +176,8 @@ namespace stormgui {
 
 	void RenderMgr::terminate() {
 		exiting = true;
+		waitEvent.set();
+		exitSema.down();
 	}
 
 	void RenderMgr::main() {
