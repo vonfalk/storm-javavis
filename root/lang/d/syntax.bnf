@@ -33,8 +33,8 @@ Variables => Array<Variable>() : "var", (Variable -> push, ";", )*;
 Variable => Variable(name, type) : Identifier name, ":", Type type;
 
 Functions => Array<Function>() : (Function -> push, )*;
-Function => procedure(name, code) : "procedure", Identifier name, Params params, ";", Block code, ";";
-Function => function(name, code, params) : "function", Identifier name, Params params, ":", Type result, ";", Block code, ";";
+Function => procedure(name, code, params) : "procedure", Identifier name, Params params, ";", Block code, ";";
+Function => function(name, code, params, result) : "function", Identifier name, Params params, ":", Type result, ";", Block code, ";";
 
 Params => Array<Param>() : "";
 Params => Array<Param>() : "(", Param -> push, (";", Param -> push,)* ")";
@@ -56,11 +56,10 @@ ElseStmt => IfStmt(lbl, cond, code) : "elsif" lbl, Expression cond, "then", Stat
 ElseStmt => Block() : "else", Statements -> add;
 
 Expression => e : SimpleExpression e;
-Expression => Operators(first) : SimpleExpression first, ExprEnd -> add;
-ExprEnd => Operator(op, rhs) : "<" op, SimpleExpression rhs;
-ExprEnd => Operator(op, rhs) : ">" op, SimpleExpression rhs;
-ExprEnd => Operator(op, rhs) : "<>" op, SimpleExpression rhs;
-ExprEnd => Operator(op, rhs) : "=" op, SimpleExpression rhs;
+Expression => RelOp(lhs, op, rhs) : SimpleExpression lhs, "<" op, SimpleExpression rhs;
+Expression => RelOp(lhs, op, rhs) : SimpleExpression lhs, ">" op, SimpleExpression rhs;
+Expression => RelOp(lhs, op, rhs) : SimpleExpression lhs, "<>" op, SimpleExpression rhs;
+Expression => RelOp(lhs, op, rhs) : SimpleExpression lhs, "=" op, SimpleExpression rhs;
 
 SimpleExpression => e : SimpleFirst e;
 SimpleExpression => Operators(first) : SimpleFirst first (, SimpleEnd -> add)+;

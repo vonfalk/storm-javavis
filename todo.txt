@@ -135,6 +135,9 @@ It seems it is not legal to do something like: Str("Foo") without taking care of
 
 Remove the special TypeName class, use the general Name instead.
 
+A shorthand for doing 'if (x)' and 'if (x as Foo)' on things inside another object would be nice, maybe
+'if (y = x.y)' and 'if (y = x.y as Foo)'?
+
 The shorthand for function pointers (fn()->v) is ambiguous when used with maybe, like: fn()->Foo?
 
 Operators should not only look for the operator in the currently visible scope, but also in the

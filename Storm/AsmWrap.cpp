@@ -499,6 +499,10 @@ namespace storm {
 		return code::jmp(to.v, cond.v);
 	}
 
+	wrap::Instruction wrap::setCond(Operand to, CondFlag cond) {
+		return code::setCond(to.v, cond.v);
+	}
+
 	wrap::Instruction wrap::mov(Operand to, Operand from) {
 		return code::mov(to.v, from.v);
 	}

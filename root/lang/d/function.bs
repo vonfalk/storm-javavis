@@ -15,7 +15,7 @@ class Function extends core:lang:Function {
 	// Sub-functions and variables.
 	Str->Named contents;
 
-	ctor(Str name, Block block, Param[] params) {
+	ctor(Str name, Block block, Param[] params, Value result) {
 		Value[] values;
 		for (Nat i = 0; i < params.count; i++) {
 			Type? t = params[i].type.type;
@@ -24,8 +24,9 @@ class Function extends core:lang:Function {
 			}
 		}
 
-		init(Value(), name, []) {
+		init(result, name, values) {
 			block = block;
+			params = params;
 		}
 
 		Named[] c = block.buildNamed();
@@ -36,6 +37,15 @@ class Function extends core:lang:Function {
 			contents.put(n, c[i]);
 			named.setParent(this);
 		}
+
+		for (Nat i = 0; i < params.count; i++) {
+			Param p = params[i];
+			Str name = p.name;
+			contents.put(name, p);
+			p.setParent(this);
+		}
+
+		set();
 	}
 
 	// Find stuff here.
@@ -46,7 +56,6 @@ class Function extends core:lang:Function {
 		Str name = part.name;
 		if (contents.has(name)) {
 			Named v = contents.get(name);
-			print("Candidate: " # v);
 			if (part.matches(v) >= 0) {
 				result = v;
 			}
@@ -61,11 +70,17 @@ class Function extends core:lang:Function {
 		Scope scope(this);
 		l << prolog();
 
+		// Parameters...
+		for (Nat i = 0; i < params.count; i++) {
+			Param p = params[i];
+			p.asmVar = l.createIntParam(Operand(), freeOnNone);
+		}
+
 		block.code(l, scope);
 
 		l << epilog();
 		l << ret(retVoid);
-		print(l.toS);
+		print("Code for " # name # ":" # l);
 
 		DynamicCode code(l);
 		setCode(code);
@@ -87,11 +102,11 @@ class Function extends core:lang:Function {
 
 class Program extends Function {
 	ctor(SStr name, Block code) {
-		init(name.v, code, []) {}
+		init(name.v, code, [], Value()) {}
 	}
 
 	ctor(Str name, Block code) {
-		init(name, code, []) {}
+		init(name, code, [], Value()) {}
 	}
 
 	Str toS() {
@@ -105,29 +120,29 @@ class Program extends Function {
 /**
  * Formal parameter.
  */
-class Param on Compiler {
-	Str name;
-	DType type;
-
+class Param extends Variable {
 	ctor(SStr name, DType type) {
-		init() {
-			name = name.v;
-			type = type;
-		}
+		init(name, type) {}
 	}
 }
 
 /**
  * Create a function.
  */
-Function function(SStr name, Block code, Param[] params) {
-	Function(name.v, code, params);
+Function function(SStr name, Block code, Param[] params, DType result) {
+	Value r;
+	Type? resType = result.type;
+	if (resType) {
+		r = Value(resType);
+	}
+
+	Function(name.v, code, params, r);
 }
 
 /**
  * Create a procedure.
  */
-Function procedure(SStr name, Block code) {
-	Function(name.v, code, Param[]);
+Function procedure(SStr name, Block code, Param[] params) {
+	Function(name.v, code, params, Value());
 }
 

@@ -31,7 +31,7 @@ class Assignment extends Statement {
 		Operand dest = to.ref(scope);
 
 		expr.code(l, scope);
-		//l << mov(dest,
+		l << mov(dest, eax);
 	}
 
 	Str toS() {
@@ -58,6 +58,20 @@ class IfStmt extends Statement {
 
 	void else(Statement c) {
 		elseCode = c;
+	}
+
+	void code(Listing to, Scope scope) {
+		Label elseLbl = to.label();
+		cond.code(to, scope);
+		to << cmp(eax, intConst(0));
+		to << jmp(elseLbl, ifEqual);
+
+		for (Nat i = 0; i < code.count; i++) {
+			code[i].code(to, scope);
+		}
+
+		to << elseLbl;
+		elseCode.code(to, scope);
 	}
 
 	Str toS() {
@@ -112,6 +126,17 @@ class Return extends Statement {
 
 	ctor(Expression e) {
 		init() { expr = e; }
+	}
+
+	void code(Listing l, Scope scope) {
+		if (expr) {
+			expr.code(l, scope);
+			l << epilog();
+			l << ret(RetVal(sizeInt, false));
+		} else {
+			l << epilog();
+			l << ret(retVoid);
+		}
 	}
 
 	Str toS() {
@@ -253,6 +278,46 @@ class Operator on Compiler {
 
 	Str toS() {
 		op # " " # rhs;
+	}
+}
+
+/**
+ * Relational operator.
+ */
+class RelOp extends Expression {
+	Expression lhs;
+	Expression rhs;
+	Str op;
+
+	ctor(Expression lhs, SStr op, Expression rhs) {
+		init() {
+			lhs = lhs;
+			op = op.v;
+			rhs = rhs;
+		}
+	}
+
+	void code(Listing l, Scope scope) {
+		Operand t = l.createIntVar(l.root, Operand(), freeOnNone);
+		lhs.code(l, scope);
+		l << mov(t, eax);
+		rhs.code(l, scope);
+
+		l << cmp(t, eax);
+		l << mov(eax, intConst(0));
+		if (op.equals("<")) {
+			l << setCond(al, ifLess);
+		} else if (op.equals(">")) {
+			l << setCond(al, ifGreater);
+		} else if (op.equals("<>")) {
+			l << setCond(al, ifNotEqual);
+		} else {
+			l << setCond(al, ifEqual);
+		}
+	}
+
+	Str toS() {
+		lhs # " " # op # " " # rhs;
 	}
 }
 

@@ -1,5 +1,7 @@
 use core:debug;
 
 void testFactorial() {
-	print(factorial:fact(10).toS);
+	for (Int i = 0; i < 6; i++) {
+		print(i # " => " # factorial:fact(i));
+	}
 }

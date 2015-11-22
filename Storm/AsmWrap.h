@@ -196,10 +196,14 @@ namespace storm {
 		CondFlag STORM_FN ifNoOverflow();
 		CondFlag STORM_FN ifEqual();
 		CondFlag STORM_FN ifNotEqual();
+
+		// Unsigned comparison.
 		CondFlag STORM_FN ifBelow();
 		CondFlag STORM_FN ifBelowEqual();
 		CondFlag STORM_FN ifAboveEqual();
 		CondFlag STORM_FN ifAbove();
+
+		// Signed comparison.
 		CondFlag STORM_FN ifLess();
 		CondFlag STORM_FN ifLessEqual();
 		CondFlag STORM_FN ifGreaterEqual();
@@ -313,6 +317,7 @@ namespace storm {
 		Instruction STORM_FN ret(RetVal s);
 		Instruction STORM_FN jmp(Operand to);
 		Instruction STORM_FN jmp(Operand to, CondFlag cond);
+		Instruction STORM_FN setCond(Operand to, CondFlag cond);
 
 		Instruction STORM_FN fnCall(Operand to, RetVal ret);
 		Instruction STORM_FN fnParam(Operand param);
