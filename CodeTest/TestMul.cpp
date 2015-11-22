@@ -23,3 +23,28 @@ BEGIN_TEST(TestMul) {
 	CHECK_EQ((*f)(-2, 2), -4);
 
 } END_TEST
+
+
+BEGIN_TEST(TestMulReg) {
+	Arena arena;
+
+	Listing l;
+	Variable p1 = l.frame.createIntParam();
+	Variable p2 = l.frame.createIntParam();
+
+	l << prolog();
+	l << mov(eax, p2);
+	l << mul(p1, eax);
+	l << mov(eax, p1);
+	l << epilog();
+	l << ret(retVal(Size::sInt, false));
+
+	Binary b(arena, l);
+	typedef cpuInt (*F)(cpuInt, cpuInt);
+	F f = (F)b.address();
+
+	CHECK_EQ((*f)(2, 2), 4);
+	CHECK_EQ((*f)(-2, -2), 4);
+	CHECK_EQ((*f)(-2, 2), -4);
+
+} END_TEST

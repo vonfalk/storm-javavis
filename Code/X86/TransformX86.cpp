@@ -167,7 +167,7 @@ namespace code {
 			Size size = instr.size();
 			assert(size != Size::sByte && size <= Size::sInt, "Bytes not supported yet");
 
-			if (instr.src().type() == Value::tRegister) {
+			if (instr.dest().type() == Value::tRegister) {
 				to << instr;
 				return;
 			}
