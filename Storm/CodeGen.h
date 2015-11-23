@@ -3,6 +3,7 @@
 #include "Value.h"
 #include "CodeData.h"
 #include "NamedThread.h"
+#include "RunOn.h"
 #include "AsmWrap.h"
 
 namespace storm {

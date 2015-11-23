@@ -45,7 +45,7 @@ class Function extends core:lang:Function {
 			p.setParent(this);
 		}
 
-		set();
+		setCode(LazyCode(&this->generateCode()));
 	}
 
 	// Find stuff here.
@@ -64,10 +64,11 @@ class Function extends core:lang:Function {
 		result;
 	}
 
-	// Compile code.
-	void set() {
-		Listing l;
+	// Generate code.
+	CodeGen generateCode() {
+		CodeGen code(runOnAny);
 		Scope scope(this);
+		Listing l = code.l;
 		l << prolog();
 
 		// Parameters...
@@ -76,14 +77,12 @@ class Function extends core:lang:Function {
 			p.asmVar = l.createIntParam(Operand(), freeOnNone);
 		}
 
-		block.code(l, scope);
+		block.code(code.l, scope);
 
 		l << epilog();
 		l << ret(retVoid);
-		print("Code for " # name # ":" # l);
 
-		DynamicCode code(l);
-		setCode(code);
+		code;
 	}
 
 	Str toS() {

@@ -3,6 +3,8 @@
 #include "CodeGenFwd.h"
 #include "Thread.h"
 #include "NamedThread.h"
+#include "RunOn.h"
+#include "CodeWrap.h"
 #include "Utils/Bitmask.h"
 #include "OS/FnCall.h"
 
@@ -201,4 +203,8 @@ namespace storm {
 
 	// Steal and add the autocast flag.
 	inline Auto<Function> stealAutoCast(Function *ptr) { ptr->flags |= namedAutoCast; return Auto<Function>(ptr); }
+
+	// Storm wrappers.
+	wrap::Ref STORM_FN ref(Par<Function> fn);
+	wrap::Ref STORM_FN directRef(Par<Function> fn);
 }

@@ -119,6 +119,11 @@ namespace storm {
 		add(v);
 	}
 
+	Name::Name(Par<Str> name, Par<Array<Value>> values) {
+		Auto<NamePart> v = CREATE(NamePart, this, name, values);
+		add(v);
+	}
+
 	Name::Name(const String &part, const vector<Value> &params) {
 		add(part, params);
 	}

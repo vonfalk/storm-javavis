@@ -78,6 +78,9 @@ namespace storm {
 		// Compile everything below this Named that is not already compiled.
 		virtual void STORM_FN compile();
 
+		// Better asserts for 'parent'.
+		virtual NameLookup *parent() const;
+
 	private:
 		// Find our closest named parent.
 		Named *closestNamed() const;

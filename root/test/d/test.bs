@@ -1,7 +1,15 @@
 use core:debug;
 
 void testFactorial() {
-	for (Int i = 0; i < 6; i++) {
-		print(i # " => " # factorial:fact(i));
+	for (Int i = 0; i < 10; i++) {
+		print("fact(" # i # ") => " # factorial:fact(i));
+	}
+
+	for (Int i = 0; i < 10; i++) {
+		print("fib(" # i # ") => " # factorial:fib(i));
+	}
+
+	for (Int i = 0; i < 10; i++) {
+		print("fib_iter(" # i # ") => " # factorial:fib_iter(i));
 	}
 }

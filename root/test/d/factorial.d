@@ -45,6 +45,36 @@ begin
     end;
 end;
 
+function fib(n : integer) : integer;
+begin
+   if n < 2 then
+      return n;
+   else
+      return fib(n - 1) + fib(n - 2);
+   end;
+end;
+
+function fib_iter(n : integer) : integer;
+var
+   tmp	: integer;
+   now	: integer;
+   prev	: integer;
+begin
+   if n = 0 then
+      return 0;
+   end;
+
+   prev := 0;
+   now := 1;
+   while n > 1 do
+      tmp := now + prev;
+      prev := now;
+      now := tmp;
+      n := n - 1;
+   end;
+   return now;
+end;
+
 begin
     n := read();
     n := n - 48;

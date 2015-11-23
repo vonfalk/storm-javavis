@@ -626,6 +626,14 @@
 				RelativePath=".\Basic\BSLoop.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\CodeWrap.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RunOn.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -998,6 +1006,14 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSLoop.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CodeWrap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RunOn.h"
 				>
 			</File>
 		</Filter>

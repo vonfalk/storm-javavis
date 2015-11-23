@@ -1,4 +1,5 @@
 #pragma once
+#include "CodeWrap.h"
 #include "Code/Listing.h"
 #include "Code/Instruction.h"
 #include "Shared/EnginePtr.h"
@@ -232,8 +233,11 @@ namespace storm {
 			// Block.
 			STORM_CAST_CTOR Operand(Block b);
 
-			// Variable.
+			// Label.
 			STORM_CAST_CTOR Operand(Label l);
+
+			// Reference.
+			STORM_CAST_CTOR Operand(Ref r);
 
 			// Convert.
 			Operand(const code::Value &v);

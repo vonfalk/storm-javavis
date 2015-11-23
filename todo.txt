@@ -24,8 +24,7 @@ Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 Core
 -------
-Decreasing the refcount on cloned objects during thread calls after the call potentially causes the
-wrong thread to call the destructor.
+Do not require a copy ctor on C++-objects that are ObjectOn<Xxx>
 
 Include float/non float inside Size?
 

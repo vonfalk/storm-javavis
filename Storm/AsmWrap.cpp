@@ -327,6 +327,8 @@ namespace storm {
 
 	wrap::Operand::Operand(Label l) : v(l.v) {}
 
+	wrap::Operand::Operand(Ref r) : v(r.v) {}
+
 	wrap::Operand::Operand(const code::Value &v) : v(v) {}
 
 	Bool wrap::Operand::operator ==(const Operand &o) const {

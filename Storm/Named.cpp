@@ -78,6 +78,11 @@ namespace storm {
 		return ::toS(p);
 	}
 
+	NameLookup *Named::parent() const {
+		assert(parentLookup, L"No parent for " + identifier());
+		return parentLookup;
+	}
+
 	void Named::compile() {
 		// Nothing to compile here.
 	}

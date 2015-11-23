@@ -590,4 +590,12 @@ namespace storm {
 		return f.ret();
 	}
 
+	wrap::Ref ref(Par<Function> fn) {
+		return wrap::Ref(fn->ref());
+	}
+
+	wrap::Ref directRef(Par<Function> fn) {
+		return wrap::Ref(fn->directRef());
+	}
+
 }

@@ -14,7 +14,7 @@ InComment => void : "/*" - InComment;
 InComment => void : "";
 
 // Name rule returns a String, created by taking the 'name' parameter.
-Name => name : "[A-Za-z][A-Za-z0-9]*" name;
+Name => name : "[A-Za-z_][A-Za-z0-9_]*" name;
 
 // Part in a type name
 TypePart => TypePart(n) : Name n;

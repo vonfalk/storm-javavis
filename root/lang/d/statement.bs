@@ -103,6 +103,24 @@ class WhileStmt extends Statement {
 		}
 	}
 
+	void code(Listing to, Scope scope) {
+		Label condLbl = to.label();
+		Label doneLbl = to.label();
+
+		to << condLbl;
+		cond.code(to, scope);
+		to << cmp(eax, intConst(0));
+		to << jmp(doneLbl, ifEqual);
+
+		for (Nat i = 0; i < code.count; i++) {
+			code[i].code(to, scope);
+		}
+
+		to << jmp(condLbl);
+
+		to << doneLbl;
+	}
+
 	Str toS() {
 		StrBuf b;
 		b << "while " << cond.toS << " do\n";
@@ -385,6 +403,39 @@ class FnCall extends Expression {
 		init() {
 			name = name.v;
 			params = params;
+		}
+	}
+
+	void code(Listing l, Scope scope) {
+		Value[] paramTypes;
+		Operand[] paramVals;
+
+		// Hack so far...
+		Value intType;
+		{
+			Type? iType = findType("integer");
+			if (iType) {
+				intType = Value(iType);
+			}
+		}
+
+		for (Nat i = 0; i < params.count; i++) {
+			params[i].code(l, scope);
+			paramTypes << intType; // TODO: Check the actual type here!
+			Operand o = l.createIntVar(l.root, Operand(), freeOnNone);
+			l << mov(o, eax);
+			paramVals << o;
+		}
+
+		Name fnName(name, paramTypes);
+		Named? toCall = scope.find(fnName);
+		if (toCall as core:lang:Function) {
+			for (Nat i = 0; i < params.count; i++) {
+				l << fnParam(paramVals[i]);
+			}
+			l << fnCall(toCall.ref, RetVal(sizeInt, false));
+		} else {
+			print(fnName # " was not found!");
 		}
 	}
 
