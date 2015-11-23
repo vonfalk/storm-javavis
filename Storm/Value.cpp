@@ -125,18 +125,29 @@ namespace storm {
 	}
 
 	code::Value Value::destructor() const {
-		if (ref) {
+		if (ref)
 			return code::Value();
-		} else if (type) {
+
+		if (type) {
 			if (type->typeFlags & typeClass)
 				return type->engine.fnRefs.release;
 			else if (Function *dtor = type->destructor())
 				return dtor->ref();
-			else
-				return code::Value();
-		} else {
-			return code::Value();
 		}
+
+		return code::Value();
+	}
+
+	code::Value Value::directDestructor() const {
+		if (ref)
+			return code::Value();
+
+		if (type) {
+			if (Function *dtor = type->destructor())
+				return dtor->directRef();
+		}
+
+		return code::Value();
 	}
 
 	code::Value Value::copyCtor() const {

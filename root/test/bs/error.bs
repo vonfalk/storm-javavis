@@ -51,3 +51,50 @@ DbgVal otherThreadError(DbgVal p, Int point) on Other {
 	errorOn(point, 3);
 	p;
 }
+
+// Throw an error during construction.
+class ErrorAt {
+	ctor(Int point, Int at) {
+		init() {}
+		errorOn(point, at);
+	}
+}
+
+class ErrorBase {
+	// Some members to initialize and keep track of. Try to initialize e1, v1, e2, but this order
+	// is not neccessarily the initialization order taken.
+	ErrorAt e1;
+	DbgVal v1;
+	ErrorAt e2;
+
+	ctor(Int point) {
+		errorOn(point, 2);
+		init() {
+			e1(point, 3);
+			v1(10);
+			e2(point, 4);
+		}
+		errorOn(point, 5);
+	}
+}
+
+class ErrorTest extends ErrorBase {
+	// Some members.
+	ErrorAt e4;
+	DbgVal v2;
+	ErrorAt e5;
+
+	ctor(Int point) {
+		errorOn(point, 1); // Error before initialization of super class.
+		init(point) {
+			e4(point, 6);
+			v2(20);
+			e5(point, 7);
+		}
+		errorOn(point, 8);
+	}
+}
+
+void ctorError(Int point) {
+	ErrorTest e(point);
+}

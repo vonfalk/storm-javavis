@@ -138,6 +138,7 @@ namespace code {
 		while (part < parts.size()) {
 			Part *b = parts[part];
 
+			// Useful to destroy in reverse order
 			for (nat i = 0; i < b->variables; i++) {
 				destroyVariable(frame, b->variable[i]);
 			}

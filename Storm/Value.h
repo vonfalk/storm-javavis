@@ -64,6 +64,11 @@ namespace storm {
 		// Get the destructor for this type. A destructor has the signature void dtor(T).
 		code::Value destructor() const;
 
+		// Get a direct reference for this type (if any). This means that no vtable will be used for
+		// the destructor. This kind of reference is only usable when you know you do not have
+		// inheritance, or when you know the exact runtime type (eg. in constructors/destructors).
+		code::Value directDestructor() const;
+
 		// Get the copy ctor for this type if there is any for this type.
 		code::Value copyCtor() const;
 

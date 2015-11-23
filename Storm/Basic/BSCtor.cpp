@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "BSCtor.h"
+#include "Engine.h"
 #include "Parser.h"
 #include "BSScope.h"
 #include "BSNamed.h"
@@ -258,36 +259,61 @@ namespace storm {
 		// Super class should be called first.
 		callParent(s);
 
-		// From here on, we should set up the destructor to clear 'this' by calling its destructor
-		// directly.
-
 		Variable dest = thisVar->var.var();
 		Type *type = thisPtr.type;
 
 		// Block for member variable cleanups.
-		// code::Block varBlock = s->frame.createChild(s->block.v);
-		// s->to << begin(varBlock);
+		code::Block varBlock = s->frame.createChildLast(s->block.v);
+		s->to << begin(varBlock);
+
+		// From here on, we should set up the destructor to clear 'this' by calling its destructor
+		// directly.
+		if (Type *super = type->super()) {
+			if (Function *fn = super->destructor()) {
+				Variable thisCleanup = s->frame.createPtrVar(varBlock, fn->directRef(), freeOnException);
+				s->to << mov(thisCleanup, dest);
+			}
+		}
 
 		// Initialize any member variables.
 		vector<Auto<TypeVar>> vars = type->variables();
 		for (nat i = 0; i < vars.size(); i++) {
-			// Auto<CodeGen> child = s->child(varBlock);
-			initVar(s, vars[i]);
+			Auto<TypeVar> var = vars[i];
+			Auto<CodeGen> child = s->child(varBlock);
+			initVar(child, var);
 
 			// If we get an exception, this variable should be cleared from here on.
-			// Part part = s->frame.createPart(varBlock);
-			// s->to << begin(part);
-			// TODO("FIXME");
+			Part part = s->frame.createPart(varBlock);
+			s->to << begin(part);
+
+			Value type = var->varType;
+			if (type.isClass()) {
+				Variable v = s->frame.createPtrVar(part, engine().fnRefs.release, freeOnException);
+				s->to << mov(ptrA, dest);
+				s->to << mov(v, ptrRel(ptrA, var->offset()));
+			} else {
+				Variable v = s->frame.createPtrVar(part, type.destructor(), freeOnException);
+				s->to << mov(v, dest);
+				s->to << add(v, intPtrConst(var->offset()));
+			}
 		}
 
 		// Remove all destructors here, since we can call the real destructor of 'this' now.
-		// s->to << end(varBlock);
+		s->to << end(varBlock);
 
 		// Set our VTable.
 		if (type->typeFlags & typeClass) {
 			// TODO: maybe symbolic offset here?
 			s->to << mov(ptrA, dest);
 			s->to << mov(ptrRel(ptrA), type->vtable.ref);
+		}
+
+		// From here on, we need to make sure that we're freeing our 'this' pointer properly.
+		if (Function *fn = type->destructor()) {
+			Part p = s->frame.createPart(s->block.v);
+			s->to << begin(p);
+			Variable thisCleanup = s->frame.createPtrVar(p, fn->directRef(), freeOnException);
+			s->to << mov(thisCleanup, dest);
 		}
 	}
 

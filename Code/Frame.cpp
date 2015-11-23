@@ -235,6 +235,10 @@ namespace code {
 		return Block(nextPartId++);
 	}
 
+	Block Frame::createChildLast(Part parent) {
+		return createChild(last(parent));
+	}
+
 	Part Frame::createPart(Part before) {
 		if (before == Part::invalid)
 			throw FrameError();

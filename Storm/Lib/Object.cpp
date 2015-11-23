@@ -32,12 +32,13 @@ namespace storm {
 
 #ifdef DEBUG_LEAKS
 	map<Object *, String> live;
+	set<void *> allocd;
 	Lock liveLock;
 
 	void Object::dumpLeaks() {
 		Lock::L z(liveLock);
 
-		if (live.size() > 0)
+		if (live.size() > 0 || allocd.size() > 0)
 			PLN(L"Leaks detected!");
 		for (map<Object *, String>::iterator i = live.begin(); i != live.end(); i++) {
 			if (code::readable(i->first)) {
@@ -45,6 +46,9 @@ namespace storm {
 			} else {
 				PLN(L"Object " << i->first << L": " << i->second << L" (dead)");
 			}
+		}
+		for (set<void *>::iterator i = allocd.begin(); i != allocd.end(); i++) {
+			PLN(L"Uninitialized object at " << *i);
 		}
 	}
 #else
@@ -74,6 +78,12 @@ namespace storm {
 
 #ifdef DEBUG_LEAKS
 		Lock::L z(liveLock);
+		if (allocd.count(o) == 0) {
+			WARNING(L"Creating object at " << o << L" non mallocd memory!");
+		} else {
+			allocd.erase(o);
+		}
+
 		if (o->myType == o) {
 			live.insert(make_pair(o, L"Type"));
 		} else if (o->myType == null) {
@@ -99,6 +109,7 @@ namespace storm {
 			PLN("Found a double-free!");
 		}
 		live.erase(o);
+		allocd.insert(o);
 #endif
 	}
 
@@ -121,6 +132,10 @@ namespace storm {
 	static void *allocMem(Engine &e, size_t size) {
 		void *mem = malloc(size);
 		memset(mem, 0, size);
+#ifdef DEBUG_LEAKS
+		Lock::L z(liveLock);
+		allocd.insert(mem);
+#endif
 		return mem;
 	}
 
@@ -144,6 +159,15 @@ namespace storm {
 	}
 
 	void freeObject(void *memory) {
+#ifdef DEBUG_LEAKS
+		Lock::L z(liveLock);
+		set<void *>::iterator i = allocd.find(memory);
+		if (i == allocd.end()) {
+			WARNING(L"Trying to free non-allocd block at " << memory);
+		} else {
+			allocd.erase(i);
+		}
+#endif
 		free(memory);
 	}
 

@@ -108,6 +108,9 @@ Overloads with derived types: pick the "best" overload in some sense.
 
 Code generation
 ----------------
+Make sure to destroy objects in reverse creation order, both in Binary.cpp (exception handling) and
+during regular cleanup.
+
 Replace RefSource with a hierarchy where RefSource can keep track of which References are used by
 that reference. Thereby it will be possible to delay removing the contents of Binary objects
 whenever the entire cycle has been removed and check for usages in the compiler.
@@ -153,8 +156,6 @@ In basic storm: Allow the dot operator to be used as scope resolution as well (m
 
 In bs: check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should
 be something like the same statement instead).
-
-Exceptions in constructors does not work well at all at the moment.
 
 Exceptions while running copy-constructors to functions may cause leaks at the moment, since Code does not
 support attaching exception handlers to the values we have copied with fnParam.

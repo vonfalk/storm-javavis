@@ -91,7 +91,12 @@ namespace code {
 		// Create a child block to 'parent'.
 		Block createChild(Part parent);
 
-		// Extend the block to contain another sub-section.
+		// Create a child block to the last part of 'parent'
+		Block createChildLast(Part parent);
+
+		// Extend the block to contain another sub-section. If 'after' is not the last part in the
+		// chain, the last part will be extended instead. This is because a part can not have two
+		// following parts.
 		Part createPart(Part after);
 
 		// Create a variable in a block. Free will be called once with this value as a parameter if
