@@ -31,10 +31,8 @@ class Function extends core:lang:Function {
 
 		Named[] c = block.buildNamed();
 		for (Nat i = 0; i < c.count; i++) {
-			// TODO: Why do we need a temporary here?
 			Named named = c[i];
-			Str n = named.name;
-			contents.put(n, c[i]);
+			contents.put(named.name, named);
 			named.setParent(this);
 		}
 
@@ -52,10 +50,8 @@ class Function extends core:lang:Function {
 	Named? find(NamePart part) {
 		Named? result;
 
-		// TODO: Why do we need a temporary here?
-		Str name = part.name;
-		if (contents.has(name)) {
-			Named v = contents.get(name);
+		if (contents.has(part.name)) {
+			Named v = contents.get(part.name);
 			if (part.matches(v) >= 0) {
 				result = v;
 			}
