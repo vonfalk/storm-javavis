@@ -258,20 +258,36 @@ namespace storm {
 		// Super class should be called first.
 		callParent(s);
 
+		// From here on, we should set up the destructor to clear 'this' by calling its destructor
+		// directly.
+
 		Variable dest = thisVar->var.var();
 		Type *type = thisPtr.type;
+
+		// Block for member variable cleanups.
+		// code::Block varBlock = s->frame.createChild(s->block.v);
+		// s->to << begin(varBlock);
+
+		// Initialize any member variables.
+		vector<Auto<TypeVar>> vars = type->variables();
+		for (nat i = 0; i < vars.size(); i++) {
+			// Auto<CodeGen> child = s->child(varBlock);
+			initVar(s, vars[i]);
+
+			// If we get an exception, this variable should be cleared from here on.
+			// Part part = s->frame.createPart(varBlock);
+			// s->to << begin(part);
+			// TODO("FIXME");
+		}
+
+		// Remove all destructors here, since we can call the real destructor of 'this' now.
+		// s->to << end(varBlock);
 
 		// Set our VTable.
 		if (type->typeFlags & typeClass) {
 			// TODO: maybe symbolic offset here?
 			s->to << mov(ptrA, dest);
 			s->to << mov(ptrRel(ptrA), type->vtable.ref);
-		}
-
-		// Initialize any member variables.
-		vector<Auto<TypeVar>> vars = type->variables();
-		for (nat i = 0; i < vars.size(); i++) {
-			initVar(s, vars[i]);
 		}
 	}
 
