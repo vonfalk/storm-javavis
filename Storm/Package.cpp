@@ -78,7 +78,7 @@ namespace storm {
 			if (now->dir()) {
 				Auto<Str> name = now->name();
 				Auto<NamePart> part = CREATE(NamePart, this, name);
-				Auto<Named> loaded = tryFindW(part);
+				Auto<Named> loaded = tryFind(part);
 				if (!loaded) {
 					add(steal(loadPackage(name->v)));
 				}

@@ -148,7 +148,7 @@ namespace storm {
 		void clear();
 
 		// Find a named here. Does not care about lazy-loading.
-		Named *tryFindW(Par<NamePart> part);
+		Named *tryFind(Par<NamePart> part);
 
 	private:
 		// Overloads.

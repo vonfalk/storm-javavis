@@ -35,6 +35,10 @@ namespace storm {
 		using namespace code;
 
 		Auto<Expr> expr = castTo(expressions[id], param);
+		if (param.ref) {
+			// If we failed, try to cast to a non-reference type and deal with that later.
+			expr = castTo(expressions[id], param.asRef(false));
+		}
 		assert(expr,
 			L"Can not use " + ::toS(expressions[id]->result()) + L" as an actual value for parameter " + ::toS(param));
 
@@ -88,9 +92,13 @@ namespace storm {
 
 	// TODO: Consider using 'max' for match weights instead?
 	Int bs::BSNamePart::matches(Par<Named> candidate) {
-		const vector<Value> &c = candidate->params;
+		vector<Value> c = candidate->params;
 		if (c.size() != params.size())
 			return -1;
+
+		// We can convert everything to references!
+		for (nat i = 0; i < c.size(); i++)
+			c[i].ref = false;
 
 		int distance = 0;
 

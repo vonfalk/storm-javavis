@@ -592,7 +592,7 @@ namespace storm {
 		vector<Value> params = to->params;
 		params[0] = Value::thisPtr(this);
 		Auto<NamePart> part = CREATE(NamePart, this, to->name, params);
-		Auto<Function> match = steal(NameSet::tryFindW(part)).as<Function>();
+		Auto<Function> match = steal(NameSet::tryFind(part)).as<Function>();
 		if (to == match)
 			return null;
 		return match.ret();

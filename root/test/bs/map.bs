@@ -44,6 +44,26 @@ Str readStrMap(Str->Str src, Str k) {
 	}
 }
 
+Str readStrLiteral(Str->Str src) {
+	if (src.has("A")) {
+		src.get("A");
+	} else {
+		"";
+	}
+}
+
+Str strA() {
+	"A";
+}
+
+Str readStrFn(Str->Str src) {
+	if (src.has(strA())) {
+		src.get(strA());
+	} else {
+		"";
+	}
+}
+
 Int addMap() {
 	Int->Int m;
 	m[10] = 20;

@@ -175,6 +175,8 @@ BEGIN_TEST(StormMapObjTest) {
 		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), keys->at(2).borrow()))->v, L"A");
 		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), keys->at(3).borrow()))->v, L"Q");
 		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrMap", map.borrow(), steal(CREATE(Str, e, L"Z")).borrow()))->v, L"");
+		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrLiteral", map.borrow()))->v, L"Z");
+		CHECK_EQ(steal(runFn<Str *>(L"test.bs.readStrFn", map.borrow()))->v, L"Z");
 	}
 
 	// Use the [] operator.
