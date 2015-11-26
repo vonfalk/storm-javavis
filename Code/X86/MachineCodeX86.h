@@ -74,7 +74,8 @@ namespace code {
 
 		// Describes a single instruction that takes either an immediate value, or a register.
 		struct ImmRegInstr {
-			// The op-code and mode when followed by an 8-bit immediate value. If modeImm8 == 0xFF the imm8 is not used.
+			// The op-code and mode when followed by an 8-bit immediate value. If 'modeImm8' == 0xFF
+			// the imm8 is not used. If 'modeImm8' == 0x0F (prefix), the opImm8 is treated as a prefixed op-code.
 			byte opImm8, modeImm8;
 			// The op-code and mode when followed by a 32-bit immediate value.
 			byte opImm32, modeImm32;

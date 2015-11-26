@@ -323,9 +323,30 @@ namespace code {
 
 		void mul(Output &to, Params p, const Instruction &instr) {
 			assert(instr.dest().type() == Value::tRegister);
-			to.putByte(0x0F);
-			to.putByte(0xAF);
-			modRm(to, registerId(instr.dest().reg()), instr.src());
+			const Value &src = instr.src();
+			switch (src.type()) {
+			case Value::tConstant:
+				if (singleByte(src.constant())) {
+					to.putByte(0x6B);
+					modRm(to, registerId(instr.dest().reg()), instr.dest());
+					to.putByte(src.constant() & 0xFF);
+				} else {
+					to.putByte(0x69);
+					modRm(to, registerId(instr.dest().reg()), instr.dest());
+					to.putInt(cpuNat(src.constant()));
+				}
+				break;
+			case Value::tLabel:
+			case Value::tReference:
+				assert(false, L"Multiplying an absolute address does not make sense.");
+				break;
+			default:
+				// Register or in memory, handled by the modRm variant.
+				to.putByte(0x0F);
+				to.putByte(0xAF);
+				modRm(to, registerId(instr.dest().reg()), instr.src());
+				break;
+			}
 		}
 
 		void idiv(Output &to, Params p, const Instruction &instr) {

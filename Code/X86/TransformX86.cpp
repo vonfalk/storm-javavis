@@ -192,31 +192,48 @@ namespace code {
 		void idivTfm(const Transform &tfm, Listing &to, nat line) {
 			const Instruction &instr = tfm.from[line];
 			const Value &dest = instr.dest();
+			bool srcConst = instr.src().type() == Value::tConstant;
+			bool destEax = false;
 
 			if (dest.type() == Value::tRegister && asSize(dest.reg(), 0) == ptrA) {
-				// Supported!
-				to << instr;
-				return;
+				destEax = true;
+
+				if (!srcConst) {
+					// Supported!
+					to << instr;
+					return;
+				}
 			}
 
 			// The 64-bit transform has been executed before, so we are sure that size is <= sInt
 			bool isByte = dest.size() == Size::sByte;
+			Value newSrc = instr.src();
 
 			Registers used = tfm.registers[line];
 			add64(used);
 
 			// Move dest into eax first.
-			if (used.contains(eax))
+			if (!destEax && used.contains(eax))
 				to << push(eax);
 			if (!isByte && used.contains(edx))
 				to << push(edx);
 			to << mov(eax, dest);
-			to << instr.alterDest(eax);
+
+			if (srcConst) {
+				if (used.contains(ebx))
+					to << push(ebx);
+				to << mov(ebx, instr.src());
+				newSrc = ebx;
+			}
+
+			to << instr.altered(eax, newSrc);
 			to << mov(dest, eax);
 
+			if (srcConst && used.contains(ebx))
+				to << pop(ebx);
 			if (!isByte && used.contains(edx))
 				to << pop(edx);
-			if (used.contains(eax))
+			if (destEax && used.contains(eax))
 				to << pop(eax);
 		}
 
@@ -227,7 +244,7 @@ namespace code {
 		void imodTfm(const Transform &tfm, Listing &to, nat line) {
 			const Instruction &instr = tfm.from[line];
 			const Value &dest = instr.dest();
-
+			bool srcConst = instr.src().type() == Value::tConstant;
 			bool eaxDest = (dest.type() == Value::tRegister && asSize(dest.reg(), 0) == ptrA);
 
 			// The 64-bit transform has been executed before, so we are sure that size is <= sInt
@@ -235,6 +252,7 @@ namespace code {
 
 			Registers used = tfm.registers[line];
 			add64(used);
+			Value newSrc = instr.src();
 
 			// Move dest into eax first.
 			if (!eaxDest && used.contains(eax))
@@ -242,12 +260,22 @@ namespace code {
 			if (!isByte && used.contains(edx))
 				to << push(edx);
 			to << mov(eax, dest);
+
+			if (srcConst) {
+				if (used.contains(ebx))
+					to << push(ebx);
+				to << mov(ebx, instr.src());
+				newSrc = ebx;
+			}
+
 			if (instr.op() == op::imod)
-				to << idiv(eax, instr.src());
+				to << idiv(eax, newSrc);
 			else
-				to << udiv(eax, instr.src());
+				to << udiv(eax, newSrc);
 			to << mov(dest, edx);
 
+			if (srcConst && used.contains(ebx))
+				to << pop(ebx);
 			if (!isByte && used.contains(edx))
 				to << pop(edx);
 			if (!eaxDest && used.contains(eax))
