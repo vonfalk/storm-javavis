@@ -50,6 +50,7 @@ namespace storm {
 
 		for (nat i = 0; i < vars.size(); i++) {
 			if (i != 0) {
+				addChar->autoCall(g, z(strBuf, intConst(',')), steal(CREATE(CodeResult, this)));
 				addChar->autoCall(g, z(strBuf, intConst(' ')), steal(CREATE(CodeResult, this)));
 			}
 
@@ -71,6 +72,10 @@ namespace storm {
 			if (type.isClass()) {
 				g->to << mov(ptrA, ptrRel(ptrA, v->offset()));
 				f->autoCall(g, vector<code::Value>(1, ptrA), r);
+			} else if (type.isBuiltIn()) {
+				const Size &size = type.size();
+				g->to << mov(asSize(ptrA, size), xRel(size, ptrA, v->offset()));
+				f->autoCall(g, vector<code::Value>(1, asSize(ptrA, size)), r);
 			} else {
 				g->to << add(ptrA, intPtrConst(v->offset()));
 				f->autoCall(g, vector<code::Value>(1, ptrA), r);

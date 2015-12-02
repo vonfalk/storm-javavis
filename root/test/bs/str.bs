@@ -4,11 +4,17 @@ Str strConcatTest() {
 	"a" # "b" # 1 # "c" # core:lang:Value();
 }
 
+Str strConcatError() {
+	DbgNoToS z;
+	"a" # z # "b";
+}
+
 value NoToS {
 	Int v;
 }
 
-Str strConcatError() {
-	DbgNoToS z;
-	"a" # z # "b";
+// Test the default toS function.
+Str defaultToS() {
+	NoToS q;
+	q.toS;
 }

@@ -1,38 +1,13 @@
-* Syntax [0/9]
+* Core [4/37]
 
- - [ ] Check so that *, + and ? are greedy in ambiguous cases!
+ - [ ] Re-think the equals() in object! Idea: use a global equals with cached specific implementations in Type. This
+   can also be used to implement > < and others!
 
- - [ ] Include use statements (or similar) for types inside the syntax files.
-
- - [ ] Something weird is going on when parsing expressions like: &a.foo(). If the priority of the
-   fnPtr-rule is decreased from 20 to 10, it parses like this: (&a).foo(), which is strange because
-   there is no other ambiguous options in the same rule that should interfere. Investigate!
-
- - [ ] Some kind of namespace support for the syntax rules. For example: the delimiter in BF and BS are quite different!
-
- - [ ] Consider adding the -> syntax for captures in BNF rules, to be symmetric with other variables.
-
- - [ ] In the parser: allow member variables to be assigned by the -> syntax as well! Useful in various places
-   in Basic.
-
- - [ ] Make sure we are only working on types either specified as belonging to the compiler thread or no thread.
-
- - [ ] Also - return types for rules may be specified.
-
- - NOTE: Note to self: Parsing works _bad_ on rules like this: ( DELIMITER )*.
-
-* Core [1/37]
+ - [ ] Maybe ctors for objects should take their first parameter as non-reference to be consistent with the convention?
 
  - [ ] Do not require a copy ctor on C++-objects that are ObjectOn<Xxx>
 
  - [ ] Include float/non float inside Size?
-
- - [ ] Why does map["hello"] not work?
-
- - [ ] Maybe ctors for objects should take their first parameter as non-reference to be consistent with the convention?
-
- - [ ] Turns out that the test:bs:NoToS does not get initialized properly if one creates an instance of
-   it. Furthermore, returning it in the top-loop makes the compiler crash.
 
  - [ ] When converting a value of -1.ind to an int, we get a value of -<something large>, it should rather be zero.
 
@@ -65,11 +40,6 @@
  - [ ] Maybe move thread calls to be another level of lookup as well? This would simplify the implementation of FnPtr,
    since it would not have to deal with copying parameters.
 
- - [ ] Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
-   This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.
-
- - [X] New regex parser written. Verify.
-
  - [ ] Make sure to decrease the stack size in UThread after this is done!
 
  - [ ] When calling functions on other threads, we should use the same CloneEnv for all parameters!
@@ -87,9 +57,6 @@
  - [ ] The size of built-in types is not entirely correct at the moment. The current architecture's size is
    used for both values in Size at the moment, which will not work when running saved code from x86 on x86-64.
 
- - [ ] Re-think the equals() in object! Idea: use a global equals with cached specific implementations in Type. This
-   can also be used to implement > < and others!
-
  - [ ] For member variables: make them use references instead of hard-coding offsets directly.
 
  - [ ] Check for circular dependencies while loading packages. Eg. .sto language requires core.lang, which contains a .sto file.
@@ -105,6 +72,38 @@
  - [ ] Check overloads with derived types. Eg base:foo(Base a), derived:foo(Derived a) is _not_ legal. The other way is!
 
  - [ ] Overloads with derived types: pick the "best" overload in some sense.
+
+ - [X] Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
+   This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.
+
+ - [X] Turns out that the test:bs:NoToS does not get initialized properly if one creates an instance of
+   it. Furthermore, returning it in the top-loop makes the compiler crash.
+
+ - [X] New regex parser written. Verify.
+
+ - [X] Why does map["hello"] not work?
+* Syntax [0/9]
+
+ - [ ] Check so that *, + and ? are greedy in ambiguous cases!
+
+ - [ ] Include use statements (or similar) for types inside the syntax files.
+
+ - [ ] Something weird is going on when parsing expressions like: &a.foo(). If the priority of the
+   fnPtr-rule is decreased from 20 to 10, it parses like this: (&a).foo(), which is strange because
+   there are no other ambiguous options in the same rule that should interfere. Investigate!
+
+ - [ ] Some kind of namespace support for the syntax rules. For example: the delimiter in BF and BS are quite different!
+
+ - [ ] Consider adding the -> syntax for captures in BNF rules, to be symmetric with other variables.
+
+ - [ ] In the parser: allow member variables to be assigned by the -> syntax as well! Useful in various places
+   in Basic.
+
+ - [ ] Make sure we are only working on types either specified as belonging to the compiler thread or no thread.
+
+ - [ ] Also - return types for rules may be specified.
+
+ - NOTE: Note to self: Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
 * Code generation [0/7]
 
@@ -127,7 +126,11 @@
 
  - [ ] See if we can generate better machine code for mov [memory], 0. Currently the zero uses 4 bytes.
 
-* Basic Storm [0/11]
+* Basic Storm [0/12]
+
+ - [ ] Implement return.
+
+ - [ ] Variable accesses are currently racy. Fix this!
 
  - [ ] It seems it is not legal to do something like: Str("Foo") without taking care of the return value.
 
@@ -136,25 +139,23 @@
  - [ ] A shorthand for doing 'if (x)' and 'if (x as Foo)' on things inside another object would be nice, maybe
    'if (y = x.y)' and 'if (y = x.y as Foo)'?
 
+ - [ ] check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should
+   be something like the same statement instead).
+
  - [ ] The shorthand for function pointers (fn()->v) is ambiguous when used with maybe, like: fn()->Foo?
 
  - [ ] Operators should not only look for the operator in the currently visible scope, but also in the
    scope where the lhs and rhs types have been defined.
 
- - [ ] Variable accesses are currently racy. Fix this!
-
- - [ ] The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
-   packages from the root always (not urgent).
-
  - [ ] Allow function pointers (that are not ambiguous) to be specified without their formal parameter types.
 
- - [ ] In basic storm: Allow the dot operator to be used as scope resolution as well (maybe another in BS? like in cpp?)
-
- - [ ] In bs: check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should
-   be something like the same statement instead).
+ - [ ] Allow the dot operator to be used as scope resolution as well (maybe another in BS? like in cpp?)
 
  - [ ] Exceptions while running copy-constructors to functions may cause leaks at the moment, since Code does not
    support attaching exception handlers to the values we have copied with fnParam.
+
+ - [ ] The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
+   packages from the root always (not urgent).
 
 * Gui [0/2]
 

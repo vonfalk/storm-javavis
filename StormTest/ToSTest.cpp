@@ -8,6 +8,8 @@
  * Test interaction between Storm:s toS and C++ toS.
  */
 BEGIN_TEST(ToSTest) {
+	CHECK_EQ(steal(runFn<Str *>(L"test.bs.defaultToS"))->v, L"{0}");
+
 	Auto<Dbg> a = runFn<Dbg *>(L"test.bs.toSDbg", 0);
 	Auto<Dbg> b = runFn<Dbg *>(L"test.bs.toSDbg", 1);
 
