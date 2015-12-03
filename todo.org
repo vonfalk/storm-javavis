@@ -157,7 +157,9 @@
  - [ ] The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
    packages from the root always (not urgent).
 
-* Gui [0/2]
+* Gui [0/3]
+
+ - [ ] The 'close after x seconds' operation used in test:ui:main does not seem to work twice in a single session.
 
  - [ ] Think about the threading model. Is it possibe (and a good idea) to create new UThreads for new messages, so that
    a bad message handler does not block everything? This could interfere with Win32:s expectations (lots of global state).
