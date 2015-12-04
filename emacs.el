@@ -17,7 +17,7 @@
 
 (setq compilation-w 100)
 (setq compilation-h 83)
-(setq compilation-adjust 160)
+(setq compilation-adjust 30)
 
 ;; Demo mode
 
