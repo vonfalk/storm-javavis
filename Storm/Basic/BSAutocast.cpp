@@ -50,6 +50,11 @@ namespace storm {
 		return castable(from, to, namedDefault);
 	}
 
+	void bs::expectCastable(Par<Expr> from, Value to) {
+		if (!castable(from, to))
+			throw TypeError(from->pos, to, from->result());
+	}
+
 	Bool bs::castable(Par<Expr> from, Value to, NamedFlags mode) {
 		return castPenalty(from, to, mode) >= 0;
 	}

@@ -14,6 +14,7 @@ namespace storm {
 		// Is the value 'from' castable to 'to'?
 		Bool castable(Par<Expr> from, Value to, NamedFlags mode);
 		Bool STORM_FN castable(Par<Expr> from, Value to);
+		void STORM_FN expectCastable(Par<Expr> from, Value to);
 
 		// What is the penalty of casting 'from' to 'to'? Returns -1 if not possible.
 		Int castPenalty(Par<Expr> from, Value to, NamedFlags mode);

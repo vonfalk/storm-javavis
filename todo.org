@@ -1,3 +1,10 @@
+* In progress [0/1]
+
+ - [ ] Implement return
+   Returning simple built-in values is working. 
+   Classes and void should work, but are untested.
+   Value types are not yet implemented
+
 * Core [4/37]
 
  - [ ] Re-think the equals() in object! Idea: use a global equals with cached specific implementations in Type. This
@@ -126,9 +133,12 @@
 
  - [ ] See if we can generate better machine code for mov [memory], 0. Currently the zero uses 4 bytes.
 
-* Basic Storm [0/12]
+* Basic Storm [0/13]
 
  - [ ] Implement return.
+
+ - [ ] See if we need to check if the expression generated for the return statement (and automatically 
+   in functions) is actually a reference, and needs to be de-referenced before.
 
  - [ ] Variable accesses are currently racy. Fix this!
 

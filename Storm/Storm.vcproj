@@ -634,6 +634,10 @@
 				RelativePath=".\RunOn.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSReturn.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1014,6 +1018,10 @@
 			</File>
 			<File
 				RelativePath=".\RunOn.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSReturn.h"
 				>
 			</File>
 		</Filter>

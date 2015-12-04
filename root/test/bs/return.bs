@@ -1,0 +1,9 @@
+use core:debug;
+
+Int returnInt(Int v) {
+	if (v > 20) {
+		return 20;
+	}
+
+	10;
+}

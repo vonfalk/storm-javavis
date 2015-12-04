@@ -118,6 +118,11 @@ If => If(block) : "if", "(", Expr(me) -> cond, ")", IfTrue(me) -> trueExpr, "els
 If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfTrue(me) -> trueExpr;
 If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfTrue(me) -> trueExpr, "else", Stmt(me) -> falseExpr;
 
+// Return.
+Return(Block block);
+Return => Return(pos, block) : "return";
+Return => Return(pos, block, expr) : "return", Expr(block) expr;
+
 // Scoping for the if and as expressions.
 IfTrue(Block parent); // Really only If and IfAs...
 IfTrue => IfTrue(parent) : Stmt(me) -> set;
@@ -225,6 +230,7 @@ Stmt => Expr() : ";";
 Stmt => e : Block(block) e;
 Stmt => e :[10] If(block) e;
 Stmt => e :[10] Loop(block) e;
+Stmt => e :[10] Return(block) e, ";";
 
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);

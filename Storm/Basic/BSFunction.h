@@ -99,6 +99,9 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR FnBody(Par<BSFunction> owner);
+
+			// Store the result type.
+			STORM_VAR Value type;
 		};
 
 	}

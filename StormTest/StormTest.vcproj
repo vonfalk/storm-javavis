@@ -386,6 +386,10 @@
 				RelativePath=".\ErrorTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ReturnTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

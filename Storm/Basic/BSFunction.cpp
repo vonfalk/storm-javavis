@@ -175,6 +175,7 @@ namespace storm {
 			l << epilog();
 			l << ret(retVoid());
 		} else if (result.returnInReg()) {
+			// TODO? Do we need to check if 'r' is a reference first?
 			Auto<CodeResult> r = CREATE(CodeResult, this, result, l.frame.root());
 
 			bodyExpr->code(state, r);
@@ -220,7 +221,7 @@ namespace storm {
 		}
 	}
 
-	bs::FnBody::FnBody(Par<BSFunction> owner) : ExprBlock(owner->scope) {
+	bs::FnBody::FnBody(Par<BSFunction> owner) : ExprBlock(owner->scope), type(owner->result) {
 		owner->addParams(this);
 	}
 
