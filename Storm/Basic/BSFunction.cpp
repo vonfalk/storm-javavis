@@ -146,63 +146,27 @@ namespace storm {
 
 		l << prolog();
 
-		// Return value parameter (if needed).
-		Variable returnValue;
-		nat start = 0;
-		if (!result.returnInReg()) {
-			if (isMember) {
-				// In member functions, the this ptr comes first!
-				Auto<LocalVar> var = body->variable(paramNames[0]);
-				var->createParam(state);
-				start = 1;
-			}
-
-			returnValue = createResultVar(l);
-		}
-
 		// Parameters
-		for (nat i = start; i < params.size(); i++) {
+		for (nat i = 0; i < params.size(); i++) {
 			Auto<LocalVar> var = body->variable(paramNames[i]);
 			assert(var);
 			var->createParam(state);
 		}
 
-		assert(result.returnInReg() || returnValue != Variable::invalid);
+		// Return type.
+		state->returnType(result, isMember);
 
 		if (result == Value()) {
 			Auto<CodeResult> r = CREATE(CodeResult, this);
 			bodyExpr->code(state, r);
-			l << epilog();
-			l << ret(retVoid());
-		} else if (result.returnInReg()) {
+			state->returnValue(wrap::Variable());
+		} else {
 			// TODO? Do we need to check if 'r' is a reference first?
 			Auto<CodeResult> r = CREATE(CodeResult, this, result, l.frame.root());
-
 			bodyExpr->code(state, r);
 
 			VarInfo rval = r->location(state);
-			l << mov(asSize(ptrA, result.size()), rval.var());
-			if (result.refcounted())
-				l << code::addRef(ptrA);
-
-			l << epilog();
-
-			l << ret(result.retVal());
-		} else {
-			Auto<CodeResult> r = CREATE(CodeResult, this, result, l.frame.root());
-			bodyExpr->code(state, r);
-
-			VarInfo rval = r->location(state);
-			l << lea(ptrA, ptrRel(rval.var()));
-			l << fnParam(returnValue);
-			l << fnParam(ptrA);
-			l << fnCall(result.copyCtor(), retPtr());
-			// We need to provide the address of the return value as our result. The copy ctor
-			// does not neccessarily return an address to the created value.
-			l << mov(ptrA, returnValue);
-
-			l << epilog();
-			l << ret(retPtr());
+			state->returnValue(rval.var());
 		}
 
 		// if (!identifier().startsWith(L"lang.bs")) {

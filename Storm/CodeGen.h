@@ -9,7 +9,8 @@
 namespace storm {
 
 	/**
-	 * Class that contains the state for code generation in many languages.
+	 * Class that contains the state for code generation in many languages. Has basic support for
+	 * return values as well.
 	 */
 	class CodeGen : public ObjectOn<Compiler> {
 		STORM_CLASS;
@@ -25,6 +26,21 @@ namespace storm {
 		// Create a child CodeGen object. It is the same as this one except that
 		// the Block member points to a different block.
 		CodeGen *STORM_FN child(wrap::Block block);
+
+		/**
+		 * Return values.
+		 */
+
+		// Add a return value. This should be done after any parameters has been added.
+		void STORM_FN returnType(Value type, Bool isMember);
+
+		// Get the return type.
+		Value STORM_FN returnType();
+
+		// Return a value. If the result type is a built-in type, 'value' is expected to contain
+		// that value. If the result type is a class, 'value' is a pointer there, and if it is a
+		// value, 'value' is the variable containing that value (not a reference).
+		void STORM_FN returnValue(wrap::Variable value);
 
 		/**
 		 * Members (these are the wrapper versions, so that Storm may access them).
@@ -49,6 +65,13 @@ namespace storm {
 	protected:
 		// Output.
 		virtual void output(wostream &to) const;
+
+	private:
+		// Return type.
+		Value retType;
+
+		// Return into this location (for values).
+		code::Variable returnParam;
 	};
 
 
@@ -127,6 +150,9 @@ namespace storm {
 		// Type.
 		Value t;
 	};
+
+	// Helper to create a variable from a parameter (this is common).
+	wrap::Variable STORM_FN parameter(Par<CodeGen> g, Value v);
 
 	// Helper to create a variable from a Value (this is common).
 	VarInfo variable(code::Frame &frame, code::Block block, const Value &v);

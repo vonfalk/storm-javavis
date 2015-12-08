@@ -1,11 +1,8 @@
 * In progress [0/1]
 
- - [ ] Implement return
-   Returning simple built-in values is working. 
-   Classes and void should work, but are untested.
-   Value types are not yet implemented
+ - [ ] Implement proper type-checking for return.
 
-* Core [4/37]
+* Core [4/38]
 
  - [ ] Re-think the equals() in object! Idea: use a global equals with cached specific implementations in Type. This
    can also be used to implement > < and others!
@@ -80,6 +77,8 @@
 
  - [ ] Overloads with derived types: pick the "best" overload in some sense.
 
+ - [ ] A lot of parameter-generating code can now be rewritten much nicer using the 'moveParam' function in Code::frame.
+
  - [X] Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
    This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.
 
@@ -112,7 +111,7 @@
 
  - NOTE: Note to self: Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
-* Code generation [0/7]
+* Code generation [0/8]
 
  - [ ] Make sure to destroy objects in reverse creation order, both in Binary.cpp (exception handling) and
    during regular cleanup.
@@ -133,9 +132,14 @@
 
  - [ ] See if we can generate better machine code for mov [memory], 0. Currently the zero uses 4 bytes.
 
-* Basic Storm [0/13]
+ - [ ] The Frame::prev() function currently does not traverse from a regular variable to the function parameters.
+   It should probably do that, but that may confuse already existing code.
 
- - [ ] Implement return.
+* Basic Storm [1/14]
+
+ - [ ] Implement proper type-checking for return. Ie, expressions in which a return occurs should return a special
+   type indicating that they do not return any value, and that they therefore should not generate an ambiguous type
+   in eg. if-statements.
 
  - [ ] See if we need to check if the expression generated for the return statement (and automatically 
    in functions) is actually a reference, and needs to be de-referenced before.
@@ -166,6 +170,8 @@
 
  - [ ] The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
    packages from the root always (not urgent).
+
+ - [X] Implement return.
 
 * Gui [0/3]
 

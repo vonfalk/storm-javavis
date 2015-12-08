@@ -43,17 +43,7 @@ namespace storm {
 		expr->code(state, r);
 
 		VarInfo rval = r->location(state);
-
-		if (returnType.returnInReg()) {
-			l << mov(asSize(ptrA, returnType.size()), rval.var());
-			if (returnType.refcounted())
-				l << code::addRef(ptrA);
-
-			l << epilog();
-			l << ret(returnType.retVal());
-		} else {
-			assert(false, L"Returning values can not be implemented yet!");
-		}
+		state->returnValue(rval.var());
 	}
 
 	Value bs::Return::findParentType(SrcPos pos, Par<Block> block) {

@@ -30,7 +30,9 @@ namespace storm {
 		runOn(o->runOn),
 		block(o->block),
 		to(o->to),
-		frame(o->frame) {}
+		frame(o->frame),
+		retType(o->retType),
+		returnParam(o->returnParam) {}
 
 	CodeGen *CodeGen::child(wrap::Block block) {
 		CodeGen *o = CREATE(CodeGen, this, this);
@@ -43,6 +45,50 @@ namespace storm {
 		to << L"Current block: " << code::Value(block.v) << endl;
 		to << l;
 	}
+
+	void CodeGen::returnType(Value type, Bool isMember) {
+		assert(retType == Value(), L"Trying to re-set the return type of CodeGen.");
+		retType = type;
+
+		if (type.isValue()) {
+			// We need a return value parameter as either the first or the second parameter!
+			returnParam = frame.createParameter(Size::sPtr, false);
+			frame.moveParam(returnParam, isMember ? 1 : 0);
+		}
+	}
+
+	Value CodeGen::returnType() {
+		return retType;
+	}
+
+	void CodeGen::returnValue(wrap::Variable value) {
+		using namespace code;
+
+		if (retType == Value()) {
+			to << epilog();
+			to << ret(retVoid());
+		} else if (retType.returnInReg()) {
+			to << mov(asSize(ptrA, retType.size()), value.v);
+			if (retType.refcounted())
+				to << code::addRef(ptrA);
+			to << epilog();
+			to << ret(retType.retVal());
+		} else {
+			to << lea(ptrA, ptrRel(value.v));
+			to << fnParam(returnParam);
+			to << fnParam(ptrA);
+			to << fnCall(retType.copyCtor(), retPtr());
+
+			// We need to provide the address of the return value as our result. The copy ctor does
+			// not neccessarily return an address to the created value. This is important in some
+			// optimized builds, where the compiler assumes that ptrA contains the address of the
+			// returned value. This is usually not the case in unoptimized builds.
+			to << mov(ptrA, returnParam);
+			to << epilog();
+			to << ret(retPtr());
+		}
+	}
+
 
 	/**
 	 * Variable info.
@@ -69,6 +115,17 @@ namespace storm {
 	/**
 	 * Create a variable.
 	 */
+
+	wrap::Variable parameter(Par<CodeGen> g, Value v) {
+		code::FreeOpt opt = code::freeOnNone;
+		code::Value dtor = v.destructor();
+
+		if (v.isValue()) {
+			opt = code::freeOnBoth | code::freePtr;
+		}
+
+		return g->frame.createParameter(v.size(), v.isFloat(), dtor, opt);
+	}
 
 	VarInfo variable(Frame &frame, Block block, const Value &v) {
 		code::FreeOpt opt = code::freeOnBoth;

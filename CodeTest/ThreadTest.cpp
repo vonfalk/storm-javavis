@@ -77,7 +77,6 @@ struct TInterop {
 };
 
 BEGIN_TEST(UThreadInterop) {
-	TODO(L"This crashes sometimes, that is _bad_!");
 	ThreadGroup g;
 
 	var = 0;

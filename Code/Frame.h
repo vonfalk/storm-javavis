@@ -148,8 +148,12 @@ namespace code {
 		// Custom parameter creation.
 		Variable createParameter(Size size, bool isFloat, Value free = Value(), FreeOpt when = freeDef);
 
+		// Move a parameter to a specific numeric index, moving the other parameters if needed.
+		void moveParam(Variable param, nat to);
+
 		// Get the variable located before the current variable (either in the same, or in another block).
 		// Returns an empty variable if none exists.
+		// NOTE: This does currently _not_ return parameters, which it probably should.
 		Variable prev(Variable v) const;
 
 		// Get the previous Part stored. If 'p' is the first one of the block, it returns the last
@@ -221,6 +225,9 @@ namespace code {
 
 	private:
 		struct Param {
+			// The parameter's index (ie first parameter? second parameter?)
+			nat index;
+
 			// The size of this parameter.
 			Size size;
 
@@ -277,8 +284,11 @@ namespace code {
 		// The root block always has id=0.
 		nat nextPartId, nextVariableId;
 
-		// All parameters. (sorted since order is important here!)
-		typedef map<nat, Param> ParamMap;
+		// Order of parameters.
+		vector<nat> parameterOrder;
+
+		// All parameters.
+		typedef hash_map<nat, Param> ParamMap;
 		ParamMap parameters;
 
 		// Stores each block.

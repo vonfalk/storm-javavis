@@ -377,6 +377,10 @@
 				RelativePath=".\UThreadTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\TestParam.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

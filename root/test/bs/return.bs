@@ -7,3 +7,19 @@ Int returnInt(Int v) {
 
 	10;
 }
+
+Str returnStr(Int v) {
+	if (v > 20) {
+		return v.toS;
+	}
+
+	"no";
+}
+
+DbgVal returnDbgVal(Int v) {
+	if (v > 20) {
+		return DbgVal(20);
+	}
+
+	DbgVal(10);
+}

@@ -125,13 +125,13 @@ namespace code {
 
 	Variable Frame::prev(Variable v) const {
 		if (isParam(v)) {
-			ParamMap::const_iterator i = parameters.find(v.id);
-			if (i == parameters.begin())
+			const Param &p = parameters.find(v.id)->second;
+			if (p.index == 0)
 				return Variable::invalid;
 
-			--i;
-			const Param &p = i->second;
-			return Variable(i->first, p.size);
+			nat prevId = parameterOrder[p.index - 1];
+			const Param &prev = parameters.find(prevId)->second;
+			return Variable(prevId, prev.size);
 		} else {
 			Part z = parent(v);
 			const InternalPart &p = parts.find(z.id)->second;
@@ -144,6 +144,7 @@ namespace code {
 				while (id == Variable::invalid.id) {
 					// ...
 					z = prevStored(z);
+					// TODO? Return the last parameter here?
 					if (z == Block::invalid)
 						return Variable::invalid;
 
@@ -286,10 +287,24 @@ namespace code {
 		if (checkFree(free, on))
 			anyDestructors = true;
 
-		Param p = { size, isFloat, free, on };
+		Param p = { parameterOrder.size(), size, isFloat, free, on };
 		parameters.insert(std::make_pair(nextVariableId, p));
+		parameterOrder.push_back(nextVariableId);
 
 		return Variable(nextVariableId++, size);
+	}
+
+	void Frame::moveParam(Variable param, nat to) {
+		assert(isParam(param), L"Trying to move a non-parameter variable!");
+		Param &p = parameters[param.id];
+		parameterOrder.erase(parameterOrder.begin() + p.index);
+		parameterOrder.insert(parameterOrder.begin() + to, param.id);
+
+		// Update all indices.
+		for (nat i = 0; i < parameterOrder.size(); i++) {
+			nat id = parameterOrder[i];
+			parameters[id].index = i;
+		}
 	}
 
 	void Frame::delay(Variable v, Part to) {
@@ -371,11 +386,9 @@ namespace code {
 
 		// Root part?
 		if (p.id == 0) {
-			ParamMap::const_iterator at = parameters.begin(), end = parameters.end();
-			for (; at != end; ++at) {
-				nat id = at->first;
-				Size size = at->second.size;
-				r.push_back(Variable(id, size));
+			for (nat i = 0; i < parameterOrder.size(); i++) {
+				nat id = parameterOrder[i];
+				r.push_back(Variable(id, size(id)));
 			}
 		}
 	}
