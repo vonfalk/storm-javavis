@@ -2,6 +2,7 @@
 #include "Std.h"
 #include "SyntaxObject.h"
 #include "CodeGen.h"
+#include "ExprResult.h"
 #include "Code/Listing.h"
 #include "Code/Block.h"
 
@@ -18,7 +19,7 @@ namespace storm {
 			STORM_CTOR Expr();
 
 			// Result of an expression. Default is void.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
@@ -66,7 +67,7 @@ namespace storm {
 			Bool boolValue;
 
 			// Return value.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
@@ -112,7 +113,7 @@ namespace storm {
 		public:
 			STORM_CTOR DummyExpr(Value type);
 
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
 
 		private:

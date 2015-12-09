@@ -118,7 +118,7 @@ namespace storm {
 			virtual Expr *STORM_FN meaning();
 
 			// Result.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> r);
@@ -145,7 +145,7 @@ namespace storm {
 			STORM_CTOR ParenExpr(Par<Expr> wrap);
 
 			// Result.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> r);

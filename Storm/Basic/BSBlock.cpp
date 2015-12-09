@@ -81,7 +81,7 @@ namespace storm {
 		exprs.push_back(expr);
 	}
 
-	Value bs::ExprBlock::result() {
+	ExprResult bs::ExprBlock::result() {
 		if (!exprs.empty())
 			return exprs.back()->result();
 		else

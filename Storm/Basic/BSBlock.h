@@ -73,7 +73,7 @@ namespace storm {
 			void STORM_FN add(Par<Expr> s);
 
 			// Result.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Optimization.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> to);

@@ -26,7 +26,7 @@ namespace storm {
 			void makeAsync();
 
 			// Result type.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
@@ -62,7 +62,7 @@ namespace storm {
 			STORM_CTOR CtorCall(Par<Function> ctor, Par<Actual> params);
 
 			// Result type.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
@@ -102,7 +102,7 @@ namespace storm {
 			STORM_CTOR LocalVarAccess(Par<LocalVar> var);
 
 			// Result type.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
@@ -123,7 +123,7 @@ namespace storm {
 			STORM_CTOR BareVarAccess(Value type, wrap::Variable var);
 
 			// Result.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
@@ -146,7 +146,7 @@ namespace storm {
 			STORM_CTOR MemberVarAccess(Par<Expr> member, Par<TypeVar> var);
 
 			// Result type.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
@@ -182,7 +182,7 @@ namespace storm {
 			STORM_CTOR NamedThreadAccess(Par<NamedThread> thread);
 
 			// Result type.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);
@@ -202,7 +202,7 @@ namespace storm {
 			STORM_CTOR ClassAssign(Par<Expr> to, Par<Expr> value);
 
 			// Result type.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> to);

@@ -19,9 +19,9 @@ namespace storm {
 		whileExpr = e;
 	}
 
-	Value bs::Loop::result() {
+	ExprResult bs::Loop::result() {
 		// No reliable value, the last expression in the do part could be used.
-		return Value();
+		return ExprResult();
 	}
 
 	void bs::Loop::blockCode(Par<CodeGen> s, Par<CodeResult> r, const code::Block &block) {

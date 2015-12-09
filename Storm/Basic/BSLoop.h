@@ -29,7 +29,7 @@ namespace storm {
 			void STORM_FN whileBody(Par<Expr> e);
 
 			// Result (always void).
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Code.
 			virtual void blockCode(Par<CodeGen> state, Par<CodeResult> r, const code::Block &b);

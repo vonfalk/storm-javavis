@@ -35,7 +35,7 @@ namespace storm {
 			virtual void STORM_FN falseExpr(Par<Expr> e);
 
 			// Result.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Code.
 			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> r);
@@ -80,7 +80,7 @@ namespace storm {
 			void STORM_FN falseExpr(Par<Expr> e);
 
 			// Result.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Code.
 			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> r);
@@ -115,7 +115,7 @@ namespace storm {
 			void STORM_FN set(Par<Expr> expr);
 
 			// Generate code.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> to);
 
 		protected:

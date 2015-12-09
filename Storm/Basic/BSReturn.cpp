@@ -16,9 +16,8 @@ namespace storm {
 		this->expr = expectCastTo(expr, returnType);
 	}
 
-	Value bs::Return::result() {
-		TODO(L"Return no-return value.");
-		return Value();
+	ExprResult bs::Return::result() {
+		return noReturn();
 	}
 
 	void bs::Return::code(Par<CodeGen> state, Par<CodeResult> r) {

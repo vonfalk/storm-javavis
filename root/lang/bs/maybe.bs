@@ -16,7 +16,7 @@ TypeName maybeType(TypeName t) {
 // Temporary solution for casting to maybe.
 Expr asMaybe(Block block, Expr expr) on Compiler {
 	Expr result = expr;
-	Value eType = expr.result;
+	Value eType = expr.result.type;
 
 	NamePart core("core");
 	NamePart maybe("Maybe", Value:[eType]);

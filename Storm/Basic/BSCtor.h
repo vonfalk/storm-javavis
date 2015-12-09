@@ -112,7 +112,7 @@ namespace storm {
 			STORM_CTOR SuperCall(Par<CtorBody> block, Par<Actual> params, Par<ArrayP<Initializer>> init);
 
 			// Result.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Code.
 			virtual void STORM_FN code(Par<CodeGen> s, Par<CodeResult> r);

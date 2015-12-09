@@ -18,8 +18,8 @@ namespace storm {
 		bodyExpr = e;
 	}
 
-	Value bs::For::result() {
-		return Value();
+	ExprResult bs::For::result() {
+		return ExprResult();
 	}
 
 	void bs::For::blockCode(Par<CodeGen> s, Par<CodeResult> to, const code::Block &block) {

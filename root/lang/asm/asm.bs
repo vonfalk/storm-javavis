@@ -14,8 +14,8 @@ class AsmListing extends Expr {
 		data << instr;
 	}
 
-	Value result() {
-		Value(); // Always returns void.
+	ExprResult result() {
+		ExprResult(); // Always returns void.
 	}
 
 	void code(CodeGen state, CodeResult r) {

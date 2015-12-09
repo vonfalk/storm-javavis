@@ -77,9 +77,9 @@ namespace storm {
 		async = true;
 	}
 
-	Value bs::FnCall::result() {
+	ExprResult bs::FnCall::result() {
 		if (async)
-			return futureType(engine(), toExecute->result);
+			return Value(futureType(engine(), toExecute->result));
 		else
 			return toExecute->result;
 	}
@@ -132,7 +132,7 @@ namespace storm {
 		toCreate = ctor->params[0].asRef(false);
 	}
 
-	Value bs::CtorCall::result() {
+	ExprResult bs::CtorCall::result() {
 		return toCreate.asRef(false);
 	}
 
@@ -217,7 +217,7 @@ namespace storm {
 	 */
 	bs::LocalVarAccess::LocalVarAccess(Par<LocalVar> var) : var(var) {}
 
-	Value bs::LocalVarAccess::result() {
+	ExprResult bs::LocalVarAccess::result() {
 		if (var->constant)
 			return var->result;
 		else
@@ -261,7 +261,7 @@ namespace storm {
 	 */
 	bs::BareVarAccess::BareVarAccess(Value type, wrap::Variable var) : type(type), var(var) {}
 
-	Value bs::BareVarAccess::result() {
+	ExprResult bs::BareVarAccess::result() {
 		return type;
 	}
 
@@ -301,7 +301,7 @@ namespace storm {
 	 */
 	bs::MemberVarAccess::MemberVarAccess(Par<Expr> member, Par<TypeVar> var) : member(member), var(var) {}
 
-	Value bs::MemberVarAccess::result() {
+	ExprResult bs::MemberVarAccess::result() {
 		return var->varType.asRef();
 	}
 
@@ -323,7 +323,7 @@ namespace storm {
 	void bs::MemberVarAccess::valueCode(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 
-		Value mType = member->result();
+		Value mType = member->result().type();
 		code::Variable memberPtr;
 
 		{
@@ -345,7 +345,7 @@ namespace storm {
 	void bs::MemberVarAccess::classCode(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 
-		Auto<CodeResult> mResult = CREATE(CodeResult, this, member->result().asRef(false), s->block);
+		Auto<CodeResult> mResult = CREATE(CodeResult, this, member->result().type().asRef(false), s->block);
 		member->code(s, mResult);
 		s->to << mov(ptrA, mResult->location(s).var());
 
@@ -384,7 +384,7 @@ namespace storm {
 
 	bs::NamedThreadAccess::NamedThreadAccess(Par<NamedThread> thread) : thread(thread) {}
 
-	Value bs::NamedThreadAccess::result() {
+	ExprResult bs::NamedThreadAccess::result() {
 		return Value(Thread::stormType(engine()));
 	}
 
@@ -403,7 +403,7 @@ namespace storm {
 	 */
 
 	bs::ClassAssign::ClassAssign(Par<Expr> to, Par<Expr> value) : to(to) {
-		Value r = to->result();
+		Value r = to->result().type();
 		if ((r.type->typeFlags & typeClass) != typeClass)
 			throw TypeError(to->pos, L"The default assignment can not be used with other types than classes"
 							L" at the moment. Please implement an assignment operator for your type.");
@@ -415,15 +415,15 @@ namespace storm {
 			throw TypeError(to->pos, L"Can not store a " + ::toS(value->result()) + L" in " + ::toS(r));
 	}
 
-	Value bs::ClassAssign::result() {
-		return to->result().asRef(false);
+	ExprResult bs::ClassAssign::result() {
+		return to->result().type().asRef(false);
 	}
 
 	void bs::ClassAssign::code(Par<CodeGen> s, Par<CodeResult> to) {
 		using namespace code;
 
 		// Type to work with.
-		Value t = this->to->result().asRef(false);
+		Value t = this->to->result().type().asRef(false);
 
 		// Target variable.
 		Auto<CodeResult> lhs = CREATE(CodeResult, this, t.asRef(true), s->block);

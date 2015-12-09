@@ -52,7 +52,7 @@ namespace storm {
 
 	void bs::expectCastable(Par<Expr> from, Value to) {
 		if (!castable(from, to))
-			throw TypeError(from->pos, to, from->result());
+			throw TypeError(from->pos, to, from->result().type());
 	}
 
 	Bool bs::castable(Par<Expr> from, Value to, NamedFlags mode) {
@@ -64,7 +64,7 @@ namespace storm {
 	}
 
 	Int bs::castPenalty(Par<Expr> from, Value to, NamedFlags mode) {
-		Value f = from->result();
+		Value f = from->result().type();
 
 		if (mode & namedMatchNoInheritance)
 			return (canStore(f, to) && f.type == to.type) ? 0 : -1;
@@ -105,7 +105,7 @@ namespace storm {
 		if (!castable(from, to, mode))
 			return null;
 
-		Value f = from->result();
+		Value f = from->result().type();
 
 		// No work?
 		if (canStore(f, to))
@@ -131,12 +131,13 @@ namespace storm {
 	Expr *bs::expectCastTo(Par<Expr> from, Value to) {
 		if (Expr *r = castTo(from, to))
 			return r;
-		throw TypeError(from->pos, to, from->result());
+		throw TypeError(from->pos, to, from->result().type());
 	}
 
 	Value bs::common(Par<Expr> a, Par<Expr> b) {
-		Value at = a->result();
-		Value bt = b->result();
+		TODO(L"In this file: adapt for ExprResult.");
+		Value at = a->result().type();
+		Value bt = b->result().type();
 
 		if (isMaybe(at) || isMaybe(bt)) {
 			Value r = common(unwrapMaybe(at), unwrapMaybe(bt));

@@ -176,8 +176,8 @@ namespace storm {
 		scope = block->scope;
 	}
 
-	Value bs::SuperCall::result() {
-		return Value();
+	ExprResult bs::SuperCall::result() {
+		return ExprResult();
 	}
 
 	void bs::SuperCall::init(Par<Initializer> init) {

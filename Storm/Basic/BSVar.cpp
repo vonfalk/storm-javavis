@@ -20,7 +20,7 @@ namespace storm {
 		}
 
 		bs::Var::Var(Par<Block> block, Par<SStr> name, Par<Expr> init) {
-			this->init(block, init->result().asRef(false), name);
+			this->init(block, init->result().type().asRef(false), name);
 			initTo(init);
 		}
 
@@ -66,7 +66,7 @@ namespace storm {
 			initCtor = CREATE(CtorCall, this, ctor, actuals);
 		}
 
-		Value bs::Var::result() {
+		ExprResult bs::Var::result() {
 			return variable->result.asRef();
 		}
 

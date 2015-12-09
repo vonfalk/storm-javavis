@@ -7,13 +7,13 @@ namespace storm {
 
 	ExprResult::ExprResult() : returns(true) {}
 
-	ExprResult::ExprResult(Value value) : type(value), returns(true) {}
+	ExprResult::ExprResult(Value value) : value(value), returns(true) {}
 
 	ExprResult::ExprResult(bool any) : returns(any) {}
 
-	Value ExprResult::result() const {
+	Value ExprResult::type() const {
 		if (returns)
-			return type;
+			return value;
 		else
 			return Value();
 	}
@@ -23,7 +23,7 @@ namespace storm {
 	}
 
 	Bool ExprResult::operator ==(const ExprResult &o) const {
-		return returns == o.returns && type == o.type;
+		return returns == o.returns && value == o.value;
 	}
 
 	Bool ExprResult::operator !=(const ExprResult &o) const {
@@ -32,7 +32,7 @@ namespace storm {
 
 	wostream &operator <<(wostream &to, const ExprResult &r) {
 		if (r.any()) {
-			to << r.result();
+			to << r.type();
 		} else {
 			to << "<never returns>";
 		}
@@ -40,7 +40,7 @@ namespace storm {
 	}
 
 	void ExprResult::deepCopy(Par<CloneEnv> env) {
-		type.deepCopy(env);
+		value.deepCopy(env);
 	}
 
 	ExprResult noReturn() {

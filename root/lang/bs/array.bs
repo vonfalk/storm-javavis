@@ -44,12 +44,12 @@ class ArrayInit extends Expr {
 		}
 	}
 
-	Value result() {
+	ExprResult result() {
 		if (values.any) {
 			// TODO: Use the common function that takes Expr parameters?
-			Value r = values[0].result;
+			Value r = values[0].result.type;
 			for (Nat i = 0; i < values.count; i++) {
-				r = common(r, values[i].result);
+				r = common(r, values[i].result.type);
 			}
 			wrapArray(r);
 		} else {

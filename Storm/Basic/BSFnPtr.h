@@ -18,7 +18,7 @@ namespace storm {
 			STORM_CTOR FnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal, Bool strong);
 
 			// Result.
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Code.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);

@@ -17,10 +17,10 @@ namespace storm {
 		STORM_CTOR ExprResult();
 
 		// Return a value.
-		STORM_CTOR ExprResult(Value value);
+		STORM_CAST_CTOR ExprResult(Value value);
 
 		// Result type. If equal to 'noReturn', we never return.
-		Value STORM_FN result() const;
+		Value STORM_FN type() const;
 
 		// Any result?
 		Bool STORM_FN any() const;
@@ -34,7 +34,7 @@ namespace storm {
 
 	private:
 		// Return type.
-		Value type;
+		Value value;
 
 		// Any result?
 		bool returns;

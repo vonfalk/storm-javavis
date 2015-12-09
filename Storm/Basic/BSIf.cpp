@@ -21,7 +21,7 @@ namespace storm {
 			varName = var->var->name;
 
 		if (!varName.empty()) {
-			Value t = condition->result();
+			Value t = condition->result().type();
 			if (MaybeType *m = as<MaybeType>(t.type)) {
 				created = CREATE(LocalVar, this, varName, m->param, condition->pos);
 			}
@@ -31,10 +31,10 @@ namespace storm {
 
 	void bs::If::cond(Par<Expr> e) {
 		// TODO: Some kind of general interface for this?
-		Value t = e->result();
+		Value t = e->result().type();
 		if (as<MaybeType>(t.type))
 			;
-		else if (e->result().asRef(false) == Value(boolType(engine())))
+		else if (t.asRef(false) == Value(boolType(engine())))
 			;
 		else
 			throw TypeError(e->pos, L"The expression must evaluate to Bool or Maybe<T>.");
@@ -50,18 +50,18 @@ namespace storm {
 		falseCode = e;
 	}
 
-	Value bs::If::result() {
+	ExprResult bs::If::result() {
 		if (falseCode && trueCode) {
 			return common(trueCode, falseCode);
 		} else {
-			return Value();
+			return ExprResult();
 		}
 	}
 
 	void bs::If::blockCode(Par<CodeGen> state, Par<CodeResult> r) {
 		using namespace code;
 
-		Value condType = condition->result().asRef(false);
+		Value condType = condition->result().type().asRef(false);
 		Auto<CodeResult> condResult = CREATE(CodeResult, this, condType, state->block);
 		condition->code(state, condResult);
 
@@ -86,7 +86,7 @@ namespace storm {
 			state->to << jmp(lblElse, ifEqual);
 		}
 
-		Value rType = result();
+		Value rType = result().type();
 		Auto<Expr> t = expectCastTo(trueCode, rType);
 		t->code(state, r);
 
@@ -151,16 +151,16 @@ namespace storm {
 		falseCode = e;
 	}
 
-	Value bs::IfAs::result() {
+	ExprResult bs::IfAs::result() {
 		if (falseCode && trueCode) {
 			return common(trueCode, falseCode);
 		} else {
-			return Value();
+			return ExprResult();
 		}
 	}
 
 	Value bs::IfAs::eValue() {
-		Value r = expression->result();
+		Value r = expression->result().type();
 		if (MaybeType *t = as<MaybeType>(r.type)) {
 			r = t->param;
 		}
@@ -185,7 +185,7 @@ namespace storm {
 		validate();
 
 		Value eResult = eValue();
-		Auto<CodeResult> expr = CREATE(CodeResult, this, expression->result().asRef(eResult.ref), state->block);
+		Auto<CodeResult> expr = CREATE(CodeResult, this, expression->result().type().asRef(eResult.ref), state->block);
 		expression->code(state, expr);
 		Variable exprVar = expr->location(state).var();
 
@@ -218,7 +218,7 @@ namespace storm {
 			created->var.created(state);
 		}
 
-		Value rType = result();
+		Value rType = result().type();
 		Auto<Expr> t = expectCastTo(trueCode, rType);
 		t->code(state, r);
 
@@ -263,7 +263,7 @@ namespace storm {
 		expr = e;
 	}
 
-	Value bs::IfTrue::result() {
+	ExprResult bs::IfTrue::result() {
 		return expr->result();
 	}
 

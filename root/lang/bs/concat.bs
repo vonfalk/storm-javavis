@@ -81,7 +81,7 @@ class ConcatExpr extends Expr {
 		Value v = strBufType.resolve(rootScope);
 		Type t = v.getType;
 		Scope findIn = outer.scope.child(t);
-		NamePart part("add", Value:[v, e.result]);
+		NamePart part("add", Value:[v, e.result.type]);
 		Named? member = findIn.find(Name(part));
 		if (member as Function) {
 			Actual params;
@@ -96,7 +96,7 @@ class ConcatExpr extends Expr {
 
 	// Append a node, trying to call toS on the object first.
 	Bool appendToS(Expr e) {
-		Value r = e.result;
+		Value r = e.result.type;
 		Scope findIn = outer.scope.child(r.getType);
 		NamePart part("toS", Value:[r]);
 		Named? member = findIn.find(Name(part));
@@ -109,7 +109,7 @@ class ConcatExpr extends Expr {
 	}
 
 	// Relay code generation and type info to the blocks.
-	Value result() {
+	ExprResult result() {
 		outer.result();
 	}
 

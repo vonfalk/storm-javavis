@@ -10,8 +10,8 @@ namespace storm {
 
 	bs::Expr::Expr() {}
 
-	Value bs::Expr::result() {
-		return Value();
+	ExprResult bs::Expr::result() {
+		return ExprResult();
 	}
 
 	void bs::Expr::code(Par<CodeGen> to, Par<CodeResult> var) {
@@ -56,7 +56,7 @@ namespace storm {
 		}
 	}
 
-	Value bs::Constant::result() {
+	ExprResult bs::Constant::result() {
 		switch (cType) {
 		case tInt:
 			return Value(intType(engine()));
@@ -229,7 +229,7 @@ namespace storm {
 
 	bs::DummyExpr::DummyExpr(Value type) : type(type) {}
 
-	Value bs::DummyExpr::result() {
+	ExprResult bs::DummyExpr::result() {
 		return type;
 	}
 

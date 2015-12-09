@@ -2,17 +2,18 @@ use lang:asm;
 use lang:bs:macro;
 use core:debug;
 
-void testInline() {
+Int testInline() {
 	Int i = 20;
 
 	asm {
 		add i, i1;
 	}
 
-	print("i=" # i);
+	// print("i=" # i);
+	i;
 }
 
-void testInlineLabel() {
+Int testInlineLabel() {
 	Int i = 20;
 	Int j = 10;
 
@@ -30,5 +31,6 @@ void testInlineLabel() {
 	done:
 	}
 
-	print("i=" # i);
+	//print("i=" # i);
+	i;
 }

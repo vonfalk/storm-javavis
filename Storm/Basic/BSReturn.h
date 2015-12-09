@@ -21,7 +21,7 @@ namespace storm {
 			STORM_VAR MAYBE(Auto<Expr>) expr;
 
 			// Result (never returns).
-			virtual Value STORM_FN result();
+			virtual ExprResult STORM_FN result();
 
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);

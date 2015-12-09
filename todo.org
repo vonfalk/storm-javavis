@@ -13,6 +13,8 @@
 
  - [ ] Include float/non float inside Size?
 
+ - [ ] Check return type of overloads.
+
  - [ ] When converting a value of -1.ind to an int, we get a value of -<something large>, it should rather be zero.
 
  - [ ] Think about how templates interacts with the new function lookup with respect to typecasts.
@@ -135,7 +137,7 @@
  - [ ] The Frame::prev() function currently does not traverse from a regular variable to the function parameters.
    It should probably do that, but that may confuse already existing code.
 
-* Basic Storm [1/14]
+* Basic Storm [1/15]
 
  - [ ] Implement proper type-checking for return. Ie, expressions in which a return occurs should return a special
    type indicating that they do not return any value, and that they therefore should not generate an ambiguous type
@@ -152,6 +154,9 @@
 
  - [ ] A shorthand for doing 'if (x)' and 'if (x as Foo)' on things inside another object would be nice, maybe
    'if (y = x.y)' and 'if (y = x.y as Foo)'?
+
+ - [ ] Implement proper typechecking for the array initialization literal, now the error messages generated when
+   using these are really bad.
 
  - [ ] check the lifetime of temporary objects! It is currently too long (same as the enclosing block, should
    be something like the same statement instead).

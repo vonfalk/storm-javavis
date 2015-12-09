@@ -14,7 +14,7 @@ namespace storm {
 	vector<Value> bs::Actual::values() {
 		vector<Value> v(expressions.size());
 		for (nat i = 0; i < expressions.size(); i++) {
-			v[i] = expressions[i]->result();
+			v[i] = expressions[i]->result().type();
 		}
 		return v;
 	}
@@ -42,7 +42,7 @@ namespace storm {
 		assert(expr,
 			L"Can not use " + ::toS(expressions[id]->result()) + L" as an actual value for parameter " + ::toS(param));
 
-		Value exprResult = expr->result();
+		Value exprResult = expr->result().type();
 		if (param.ref && !exprResult.ref) {
 			// We need to create a temporary variable and make a reference to it.
 			exprResult = param.asRef(false); // We need this since type casting can be done late by the Expr itself.

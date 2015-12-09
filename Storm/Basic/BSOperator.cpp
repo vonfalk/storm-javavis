@@ -43,8 +43,8 @@ namespace storm {
 	bs::AssignOpInfo::AssignOpInfo(Par<SStr> op, Int prio, Bool leftAssoc) : OpInfo(op, prio, leftAssoc) {}
 
 	bs::Expr *bs::AssignOpInfo::meaning(Par<Block> block, Par<Expr> lhs, Par<Expr> rhs) {
-		Value l = lhs->result();
-		Value r = rhs->result();
+		Value l = lhs->result().type();
+		Value r = rhs->result().type();
 
 		if (l.isClass() && l.ref && castable(rhs, l.asRef(false))) {
 			return CREATE(ClassAssign, block, lhs, rhs);
@@ -204,7 +204,7 @@ namespace storm {
 		return fnCall.ret();
 	}
 
-	Value bs::Operator::result() {
+	ExprResult bs::Operator::result() {
 		Auto<Expr> m = meaning();
 		return m->result();
 	}
@@ -237,7 +237,7 @@ namespace storm {
 
 	bs::ParenExpr::ParenExpr(Par<Expr> wrap) : wrap(wrap) {}
 
-	Value bs::ParenExpr::result() {
+	ExprResult bs::ParenExpr::result() {
 		return wrap->result();
 	}
 

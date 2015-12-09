@@ -14,7 +14,7 @@ namespace storm {
 
 			vector<Value> params;
 			if (dot)
-				params.push_back(dot->result());
+				params.push_back(dot->result().type());
 			for (nat i = 0; i < formal->count(); i++)
 				params.push_back(formal->at(i)->resolve(scope));
 
@@ -46,7 +46,7 @@ namespace storm {
 
 	bs::FnPtr::FnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal, Bool strong) :
 		dotExpr(dot), strongThis(strong) {
-		if (dotExpr->result().isValue())
+		if (dotExpr->result().type().isValue())
 			throw SyntaxError(dotExpr->pos, L"Only classes and actors can be bound to a function pointer. Not values.");
 
 		Auto<TypeName> tn = CREATE(TypeName, this);
@@ -54,7 +54,7 @@ namespace storm {
 		target = findTarget(block->scope, tn, formal, dot);
 	}
 
-	Value bs::FnPtr::result() {
+	ExprResult bs::FnPtr::result() {
 		// TODO: Parameters should be taken from 'formal'. Consider when a pointer wants to restrict
 		// a parameter to a derived class.
 		vector<Value> params = target->params;
@@ -69,7 +69,7 @@ namespace storm {
 	void bs::FnPtr::code(Par<CodeGen> to, Par<CodeResult> r) {
 		using namespace code;
 
-		Value type = result();
+		Value type = result().type();
 
 		// Note: initialized to zero if not needed.
 		VarInfo thisPtr = variable(to, type);
