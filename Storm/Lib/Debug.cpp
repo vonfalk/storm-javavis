@@ -165,7 +165,7 @@ namespace storm {
 			value = L"value:";
 		}
 
-		String type = toS(v) + L" = " + var->name;
+		String type = ::toS(v) + L" = " + var->name;
 		if (hilight)
 			PNN("->");
 		else

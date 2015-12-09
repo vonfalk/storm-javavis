@@ -638,6 +638,10 @@
 				RelativePath=".\Basic\BSReturn.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ExprResult.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1022,6 +1026,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSReturn.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ExprResult.h"
 				>
 			</File>
 		</Filter>

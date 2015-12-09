@@ -9,8 +9,18 @@
 
 namespace storm {
 
-	Str *toS(EnginePtr e, const Value &v) {
+	Str *toS(EnginePtr e, Value v) {
 		return CREATE(Str, e.v, ::toS(v));
+	}
+
+	wostream &operator <<(wostream &to, const Value &o) {
+		if (o.type == null)
+			to << L"void";
+		else
+			to << o.type->identifier();
+		if (o.ref)
+			to << "&";
+		return to;
 	}
 
 	bool isClass(Type *t) {
@@ -245,15 +255,6 @@ namespace storm {
 			kind,
 		};
 		return r;
-	}
-
-	void Value::output(wostream &to) const {
-		if (type == null)
-			to << L"void";
-		else
-			to << type->identifier();
-		if (ref)
-			to << "&";
 	}
 
 	bool Value::operator ==(const Value &o) const {

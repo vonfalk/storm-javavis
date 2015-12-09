@@ -7,13 +7,14 @@ namespace storm {
 
 	ValueData::ValueData(Type *t, bool ref) : type(t), ref(ref) {}
 
-	void ValueData::output(wostream &to) const {
-		if (type == null)
+	wostream &operator <<(wostream &to, const ValueData &o) {
+		if (o.type == null)
 			to << L"void";
 		else
-			to << typeIdentifier(type);
-		if (ref)
+			to << typeIdentifier(o.type);
+		if (o.ref)
 			to << "&";
+		return to;
 	}
 
 	bool ValueData::operator ==(const ValueData &o) const {

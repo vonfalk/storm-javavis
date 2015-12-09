@@ -81,7 +81,7 @@ namespace storm {
 		// Get the deep copy function.
 		code::Value deepCopyFn() const;
 
-		// Return in register?
+		// Return in register? (builtIn + pointers and references)
 		bool returnInReg() const;
 
 		// Is this type built into the C++ compiler? (not pointers or references)
@@ -130,13 +130,13 @@ namespace storm {
 
 		// Deep copy.
 		void STORM_FN deepCopy(Par<CloneEnv> env);
-
-	protected:
-		virtual void output(wostream &to) const;
 	};
 
+	// Output.
+	wostream &operator <<(wostream &to, const Value &from);
+
 	// toS
-	Str *STORM_ENGINE_FN toS(EnginePtr e, const Value &from);
+	Str *STORM_ENGINE_FN toS(EnginePtr e, Value from);
 
 	/**
 	 * Compute the common denominator of two values so that

@@ -11,7 +11,7 @@ namespace storm {
 	 * Shared version of the Value class. This is currently not exported to Storm, it is only
 	 * provided to allow templated classes to work.
 	 */
-	class ValueData : public Printable {
+	class ValueData {
 	public:
 		// Create the 'null' value.
 		ValueData();
@@ -28,10 +28,10 @@ namespace storm {
 		// Type equality.
 		bool operator ==(const ValueData &o) const;
 		inline bool operator !=(const ValueData &o) const { return !(*this == o); }
-
-	protected:
-		virtual void output(wostream &to) const;
 	};
+
+	// Output.
+	wostream &operator <<(wostream &to, const ValueData &data);
 
 
 	/**
