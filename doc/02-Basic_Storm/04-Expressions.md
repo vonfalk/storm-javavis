@@ -220,25 +220,9 @@ block of the if-branch. This only works if the variable to the left of `of` is a
 parameter. Otherwise, the check is made, but it will not be possible to access the derived type. An
 alternate syntax will probably fix this problem later, maybe:
 
-`if (o = a.b as Foo)`
-
-References and null
---------------------
-
-At the moment, Storm has no support for null references. All reference variables (referring classes
-or actors) are initialized to something when they are created, there is no null keyword and there is
-no good way of testing for null references. The idea is to provide a special, nullable type, for
-this purpose. This type will probably be written as `T?`, and will not be accessible until there has
-been an explicit check for null, probably using:
-
 ```
-if (o) {
-    // o now has type T, not T?
-}
+if (o = a.b as Foo)
 ```
-
-Implementation details of this type is not finished yet. It may be a regular templated type (just as
-`Array<T>`) or a more specific type.
 
 Function pointers
 ------------------

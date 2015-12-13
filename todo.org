@@ -1,4 +1,4 @@
-* Core [4/38]
+* Core [4/41]
 
  - [ ] Re-think the equals() in object! Idea: use a global equals with cached specific implementations in Type. This
    can also be used to implement > < and others!
@@ -78,6 +78,9 @@
  - [ ] Overloads with derived types: pick the "best" overload in some sense.
 
  - [ ] A lot of parameter-generating code can now be rewritten much nicer using the 'moveParam' function in Code::frame.
+
+ - [ ] Implement an interactive way of coding using 'reverse parsers'. In this case, it would be an autocomplete that knows the syntax
+   and suggests all valid parts at the cursor position. It may not be able to suggest names, but it could suggest syntax constructions.
 
  - [X] Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
    This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.
