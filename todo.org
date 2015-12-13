@@ -1,7 +1,3 @@
-* In progress [0/1]
-
- - [ ] Implement proper type-checking for return.
-
 * Core [4/38]
 
  - [ ] Re-think the equals() in object! Idea: use a global equals with cached specific implementations in Type. This
@@ -29,6 +25,8 @@
  - [ ] Some kind of fuzzy equals for floating-point values.
 
  - [ ] Move Code/Codecall somewhere else?
+
+ - [ ] Implement (safe) unions. Eg: Int | Float foo() returns either an int or a float.
 
  - [ ] Some kind of versioning scheme when connecting DLLS and the Storm executable is required.
 
@@ -137,11 +135,7 @@
  - [ ] The Frame::prev() function currently does not traverse from a regular variable to the function parameters.
    It should probably do that, but that may confuse already existing code.
 
-* Basic Storm [1/15]
-
- - [ ] Implement proper type-checking for return. Ie, expressions in which a return occurs should return a special
-   type indicating that they do not return any value, and that they therefore should not generate an ambiguous type
-   in eg. if-statements.
+* Basic Storm [2/15]
 
  - [ ] See if we need to check if the expression generated for the return statement (and automatically 
    in functions) is actually a reference, and needs to be de-referenced before.
@@ -175,6 +169,10 @@
 
  - [ ] The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
    packages from the root always (not urgent).
+
+ - [X] Implement proper type-checking for return. Ie, expressions in which a return occurs should return a special
+   type indicating that they do not return any value, and that they therefore should not generate an ambiguous type
+   in eg. if-statements.
 
  - [X] Implement return.
 

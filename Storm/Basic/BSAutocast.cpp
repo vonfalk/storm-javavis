@@ -52,7 +52,7 @@ namespace storm {
 
 	void bs::expectCastable(Par<Expr> from, Value to) {
 		if (!castable(from, to))
-			throw TypeError(from->pos, to, from->result().type());
+			throw TypeError(from->pos, to, from->result());
 	}
 
 	Bool bs::castable(Par<Expr> from, Value to, NamedFlags mode) {
@@ -64,7 +64,10 @@ namespace storm {
 	}
 
 	Int bs::castPenalty(Par<Expr> from, Value to, NamedFlags mode) {
-		Value f = from->result().type();
+		ExprResult r = from->result();
+		if (!r.any())
+			return 0;
+		Value f = r.type();
 
 		if (mode & namedMatchNoInheritance)
 			return (canStore(f, to) && f.type == to.type) ? 0 : -1;
@@ -105,7 +108,10 @@ namespace storm {
 		if (!castable(from, to, mode))
 			return null;
 
-		Value f = from->result().type();
+		ExprResult r = from->result();
+		if (!r.any())
+			return from.ret();
+		Value f = r.type();
 
 		// No work?
 		if (canStore(f, to))
@@ -131,33 +137,37 @@ namespace storm {
 	Expr *bs::expectCastTo(Par<Expr> from, Value to) {
 		if (Expr *r = castTo(from, to))
 			return r;
-		throw TypeError(from->pos, to, from->result().type());
+		throw TypeError(from->pos, to, from->result());
 	}
 
-	Value bs::common(Par<Expr> a, Par<Expr> b) {
-		TODO(L"In this file: adapt for ExprResult.");
-		Value at = a->result().type();
-		Value bt = b->result().type();
+	ExprResult bs::common(Par<Expr> a, Par<Expr> b) {
+		ExprResult ar = a->result();
+		ExprResult br = b->result();
 
-		if (isMaybe(at) || isMaybe(bt)) {
-			Value r = common(unwrapMaybe(at), unwrapMaybe(bt));
+		// Do we need to wrap/unwrap maybe types?
+		if (isMaybe(ar.type()) || isMaybe(br.type())) {
+			Value r = common(unwrapMaybe(ar.type()), unwrapMaybe(br.type()));
 			if (r != Value())
 				return wrapMaybe(r);
 		}
 
 		// Simple inheritance?
-		Value r = common(at, bt);
-		if (r != Value())
+		ExprResult r = common(ar, br);
+		if (r != ExprResult())
 			return r;
 
-		// Simple casting?
-		if (castable(a, bt))
-			return bt;
-		if (castable(b, at))
-			return at;
+		// Now, ar and br should have some type.
+		Value av = ar.type();
+		Value bv = br.type();
 
-		// Nothing possible...
-		return Value();
+		// Simple casting?
+		if (castable(a, bv))
+			return bv;
+		if (castable(b, av))
+			return av;
+
+		// Nothing possible... Return void.
+		return ExprResult();
 	}
 
 }

@@ -6,6 +6,7 @@
 #include "Exception.h"
 #include "Engine.h"
 #include "RefHandle.h"
+#include "ExprResult.h"
 
 namespace storm {
 
@@ -206,7 +207,8 @@ namespace storm {
 
 	Value Value::asRef(bool z) const {
 		Value v(*this);
-		v.ref = z;
+		if (type)
+			v.ref = z;
 		return v;
 	}
 
@@ -225,6 +227,13 @@ namespace storm {
 			if (isClass() && v.isClass())
 				return false;
 		return canStore(v.type);
+	}
+
+	bool Value::canStore(const ExprResult &v) const {
+		if (!v.any())
+			return true;
+
+		return canStore(v.type());
 	}
 
 	bool Value::matches(const Value &v, NamedFlags flags) const {

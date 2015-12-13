@@ -16,6 +16,7 @@ namespace storm {
 	class SrcPos;
 	class Str;
 	class Handle;
+	class ExprResult;
 
 	Type *boolType(Engine &e);
 	Type *intType(Engine &e);
@@ -102,6 +103,10 @@ namespace storm {
 		// Can this value store a type of 'x'?
 		bool canStore(Type *x) const;
 		bool canStore(const Value &v) const;
+
+		// Note: if !v.any(), then we deem the operation to be successful, as that means that this
+		// code will (probably) never be executed.
+		bool canStore(const ExprResult &v) const;
 
 		// Matches another value, according to MatchFlags? Note that this relation is not reflexive.
 		// If no special flags are set, then it is equivalent to 'canStore'.

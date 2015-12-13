@@ -26,6 +26,10 @@ namespace storm {
 			// Generate code.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);
 
+		protected:
+			// Output.
+			virtual void output(wostream &to) const;
+
 		private:
 			// Type to return.
 			Value returnType;

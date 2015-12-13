@@ -22,6 +22,10 @@ namespace storm {
 		return returns;
 	}
 
+	Bool ExprResult::empty() const {
+		return !returns;
+	}
+
 	Bool ExprResult::operator ==(const ExprResult &o) const {
 		return returns == o.returns && value == o.value;
 	}
@@ -30,11 +34,17 @@ namespace storm {
 		return !(*this == o);
 	}
 
+	ExprResult ExprResult::asRef(Bool r) const {
+		if (!any())
+			return *this;
+		return ExprResult(value.asRef(r));
+	}
+
 	wostream &operator <<(wostream &to, const ExprResult &r) {
 		if (r.any()) {
 			to << r.type();
 		} else {
-			to << "<never returns>";
+			to << "<nothing>";
 		}
 		return to;
 	}
@@ -51,5 +61,13 @@ namespace storm {
 		return CREATE(Str, e.v, ::toS(from));
 	}
 
+	ExprResult common(ExprResult a, ExprResult b) {
+		if (!a.any())
+			return b;
+		if (!b.any())
+			return a;
+
+		return common(a.type(), b.type());
+	}
 
 }

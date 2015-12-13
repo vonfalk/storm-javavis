@@ -29,7 +29,7 @@ namespace storm {
 		Expr *STORM_FN expectCastTo(Par<Expr> from, Value to);
 
 		// Get the lowest common type that can store both expressions.
-		Value STORM_FN common(Par<Expr> a, Par<Expr> b);
+		ExprResult STORM_FN common(Par<Expr> a, Par<Expr> b);
 
 	}
 }

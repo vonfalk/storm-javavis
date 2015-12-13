@@ -18,4 +18,9 @@ BEGIN_TEST(ReturnTest) {
 	CHECK_EQ(runFn<DbgVal>(L"test.bs.returnDbgVal", 30).get(), 20);
 	CHECK(DbgVal::clear());
 
+	// Return type checking, interaction with 'no-return' returns.
+	CHECK_EQ(runFn<Int>(L"test.bs.returnAlways", 22), 22);
+	CHECK_EQ(runFn<Int>(L"test.bs.deduceType", 21), 22);
+	CHECK_EQ(runFn<Int>(L"test.bs.prematureReturn", 20), 30);
+
 } END_TEST

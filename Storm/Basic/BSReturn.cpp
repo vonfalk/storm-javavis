@@ -59,4 +59,10 @@ namespace storm {
 		throw SyntaxError(pos, L"A return statement is not located inside a function.");
 	}
 
+	void bs::Return::output(wostream &to) const {
+		to << L"return";
+		if (expr)
+			to << L" " << expr;
+	}
+
 }

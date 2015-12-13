@@ -152,9 +152,25 @@ hard, if not impossible, to do using regular C-style macros.
 Return
 -------
 
-Return is not implemented yet. Return values by placing an expression evaluating to the desired
-return value as the last expression in a function. Return will be implemented later along with break
-and continue.
+There are two ways of returning values in Basic Storm. By default the last expression in a block
+will be considered as that block's return value, just like `progn` in lisp. The second version is to
+use an explicit `return` statement. When a `return` statement is used inside a block, that block
+will not be considered to return a value to any enclosing expression. This means that expressions
+like this will still work as expected:
+
+```
+Str result = if (x == 3) {
+    return 12;
+} else {
+    "hello";
+}
+```
+
+Here, the compiler can see that the non-string result returned from the block inside the if-branch
+inside the if-statement never returns normally, and therefore considers the if-statement to always
+return a string.
+
+Of course, return can also be used to exit functions returning `void`.
 
 Async
 ------

@@ -65,9 +65,6 @@ namespace storm {
 			ExprBlock(const Scope &scope);
 			STORM_CTOR ExprBlock(Par<Block> parent);
 
-			// Expressions here.
-			vector<Auto<Expr> > exprs;
-
 			// Add an expression.
 			using Block::add;
 			void STORM_FN add(Par<Expr> s);
@@ -84,8 +81,18 @@ namespace storm {
 			// Auto-casting should work across the boundaries of an expression.
 			virtual Int STORM_FN castPenalty(Value to);
 
-		private:
+		protected:
 			virtual void output(wostream &to) const;
+
+		private:
+			// Expressions here.
+			vector<Auto<Expr> > exprs;
+
+			// Index of first expression declaring it will never return. 'invalid' if none.
+			nat firstNoReturn;
+
+			// Invalid index.
+			static const nat invalid = -1;
 		};
 
 

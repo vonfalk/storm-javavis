@@ -24,6 +24,7 @@ namespace storm {
 
 		// Any result?
 		Bool STORM_FN any() const;
+		Bool STORM_FN empty() const;
 
 		// Same type?
 		Bool STORM_FN operator ==(const ExprResult &o) const;
@@ -31,6 +32,9 @@ namespace storm {
 
 		// Deep copy.
 		void STORM_FN deepCopy(Par<CloneEnv> env);
+
+		// Convert the result to a by-reference value.
+		ExprResult STORM_FN asRef(Bool v) const;
 
 	private:
 		// Return type.
@@ -54,5 +58,13 @@ namespace storm {
 
 	// Get the 'no return' value.
 	ExprResult STORM_FN noReturn();
+
+	/**
+	 * Compute the common denominator of two values so that it is possible to cast both 'a' and 'b'
+	 * to the resulting type. In case 'a' and 'b' are unrelated, Value() - void is returned. This
+	 * also handles cases where either 'a' or 'b' never returns. In the case one of them never
+	 * returns, the other value is returned unmodified. If both never returns, 'noReturn' is returned.
+	 */
+	ExprResult STORM_FN common(ExprResult a, ExprResult b);
 
 }

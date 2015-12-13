@@ -73,19 +73,26 @@ namespace storm {
 	}
 
 
-	bs::ExprBlock::ExprBlock(const Scope &scope) : Block(scope) {}
+	bs::ExprBlock::ExprBlock(const Scope &scope) : Block(scope), firstNoReturn(invalid) {}
 
-	bs::ExprBlock::ExprBlock(Par<Block> parent) : Block(parent) {}
+	bs::ExprBlock::ExprBlock(Par<Block> parent) : Block(parent), firstNoReturn(invalid) {}
 
 	void bs::ExprBlock::add(Par<Expr> expr) {
+		if (firstNoReturn == invalid)
+			if (expr->result().empty())
+				firstNoReturn = exprs.size();
+
 		exprs.push_back(expr);
 	}
 
 	ExprResult bs::ExprBlock::result() {
-		if (!exprs.empty())
+		if (firstNoReturn != invalid) {
+			return noReturn();
+		} else if (!exprs.empty()) {
 			return exprs.back()->result();
-		else
-			return Value();
+		} else {
+			return ExprResult();
+		}
 	}
 
 	void bs::ExprBlock::code(Par<CodeGen> state, Par<CodeResult> to) {
@@ -94,12 +101,24 @@ namespace storm {
 	}
 
 	void bs::ExprBlock::blockCode(Par<CodeGen> state, Par<CodeResult> to) {
-		for (nat i = 0; i < exprs.size() - 1; i++) {
-			Auto<CodeResult> s = CREATE(CodeResult, this);
-			exprs[i]->code(state, s);
-		}
+		if (firstNoReturn == invalid) {
+			// Generate code for the entire block. Skip the last expression, as that is supposed to
+			// return something.
+			for (nat i = 0; i < exprs.size() - 1; i++) {
+				Auto<CodeResult> s = CREATE(CodeResult, this);
+				exprs[i]->code(state, s);
+			}
 
-		exprs[exprs.size() - 1]->code(state, to);
+			// Pass the return value on to the last expression.
+			exprs[exprs.size() - 1]->code(state, to);
+
+		} else {
+			// Generate code until the first dead block.
+			for (nat i = 0; i <= firstNoReturn; i++) {
+				Auto<CodeResult> s = CREATE(CodeResult, this);
+				exprs[i]->code(state, s);
+			}
+		}
 	}
 
 	Int bs::ExprBlock::castPenalty(Value to) {
@@ -114,6 +133,8 @@ namespace storm {
 			Indent i(to);
 			for (nat i = 0; i < exprs.size(); i++) {
 				to << exprs[i] << L";" << endl;
+				if (i == firstNoReturn && i != exprs.size() - 1)
+					to << "// unreachable code:" << endl;
 			}
 		}
 		to << L"}";
