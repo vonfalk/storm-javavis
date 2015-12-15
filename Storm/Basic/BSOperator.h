@@ -174,5 +174,8 @@ namespace storm {
 		// Postfix operator.
 		Expr *STORM_FN postfixOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr);
 
+		// Prefix or postfix operator (there is only one variant).
+		Expr *STORM_FN prePostOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr);
+
 	}
 }

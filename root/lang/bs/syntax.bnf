@@ -177,8 +177,6 @@ Atom => e : Block(block) e;
 Atom => e : If(block) e;
 Atom => e : Loop(block) e; // For symmetry... I guess it is not really very useful!
 Atom => accessExpr(block, lhs, par) : Atom(block) lhs, "\[", Expr(block) par, "\]";
-Atom => prefixOperator(block, o, e) : PrePost o, Expr(block) e;
-Atom => postfixOperator(block, o, e) : Expr(block) e, PrePost o;
 Atom => arrayInit(block, t, list) : Type t, ":", "\[", ArrayInitList(block) list, "\]";
 Atom => ArrayInit(block, list) : "\[", ArrayInitList(block) list, "\]";
 Atom => FnPtr(block, name, params) :[20] "&", Type name, FnTypes params;
@@ -217,6 +215,9 @@ COperator => CombinedOperator(op, 100) :[0] Operator op, "=";
 // Expression
 Expr(Block block);
 Expr => e :[20] Atom(block) e;
+Expr => prePostOperator(block, o, e) : "!" o, Atom(block) e;
+Expr => prefixOperator(block, o, e) : PrePost o, Atom(block) e;
+Expr => postfixOperator(block, o, e) : Atom(block) e, PrePost o;
 Expr => mkOperator(block, lhs, op, rhs) : Atom(block) lhs, COperator op, Expr(block) rhs;
 // This must be larger than operators, since templates may be seen as the < operator otherwise.
 Expr => Var(block, t, name, actual) :[10] Type t, Name name, FnValues(block) actual;

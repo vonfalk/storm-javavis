@@ -275,5 +275,10 @@ namespace storm {
 		return namedExpr(block, o, actual);
 	}
 
+	bs::Expr *STORM_FN bs::prePostOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr) {
+		Auto<Actual> actual = CREATE(Actual, block);
+		actual->add(expr);
+		return namedExpr(block, o, actual);
+	}
 
 }
