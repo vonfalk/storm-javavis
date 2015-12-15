@@ -88,6 +88,7 @@ namespace storm {
 
 	// Get name from a Named.
 	Str *STORM_FN name(Par<Named> named);
+	Str *STORM_FN identifier(Par<Named> named) ON(Compiler);
 	Array<Value> *STORM_FN params(Par<Named> named);
 
 }

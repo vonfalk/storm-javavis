@@ -3,7 +3,15 @@ delimiter: BSDelimiter;
 
 // Use type{a:b:c} to build a type name quickly and easily.
 Expr => createType(block, type) : "name", "{", Type type, "}";
+
+// Use named{a:b:c} to refer to objects. Evaluates compile-time to the type of the actual object
+// in the compiler.
+Expr => referNamed(block, name) : "named", "{", Type name, "}";
+
+// Output a type.
 Expr => exploreType(block, type) : "explore", "{", Type type, "}";
+
+// Reload a package (TODO: Nicer syntax!)
 Expr => reloadName(block, type) : "reload", "{", Type type, "}";
 
 // Debug things by printing expressions at compile-time.

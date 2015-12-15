@@ -423,6 +423,14 @@ namespace storm {
 		return code::xRel(size.v, v.v, offset.v);
 	}
 
+	wrap::Operand wrap::ptrConst(Par<Object> object) {
+		return code::ptrConst(object.borrow());
+	}
+
+	wrap::Operand wrap::ptrConst(Par<TObject> object) {
+		return code::ptrConst(object.borrow());
+	}
+
 	/**
 	 * RetVal.
 	 */

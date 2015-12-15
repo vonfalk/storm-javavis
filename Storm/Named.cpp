@@ -91,6 +91,10 @@ namespace storm {
 		return CREATE(Str, named, named->name);
 	}
 
+	Str *identifier(Par<Named> named) {
+		return CREATE(Str, named, named->identifier());
+	}
+
 	Array<Value> *params(Par<Named> named) {
 		Auto<Array<Value>> r = CREATE(Array<Value>, named);
 		for (nat i = 0; i < named->params.size(); i++)

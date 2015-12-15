@@ -131,7 +131,7 @@ namespace code {
 	Instruction udiv(const Value &dest, const Value &src);
 	Instruction umod(const Value &dest, const Value &src);
 
-	// Shifts. Src.size() == 1
+	// Shifts. src.size() == 1
 	Instruction shl(const Value &dest, const Value &src);
 	Instruction shr(const Value &dest, const Value &src);
 	Instruction sar(const Value &dest, const Value &src);
@@ -152,7 +152,7 @@ namespace code {
 	Instruction fcompp();
 	Instruction fwait();
 
-	// Data
+	// Data.
 	Instruction dat(const Value &v);
 
 	// Reference counting.

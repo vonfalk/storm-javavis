@@ -114,7 +114,7 @@
 
  - NOTE: Note to self: Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
-* Code generation [0/8]
+* Code generation [0/9]
 
  - [ ] Make sure to destroy objects in reverse creation order, both in Binary.cpp (exception handling) and
    during regular cleanup.
@@ -138,7 +138,12 @@
  - [ ] The Frame::prev() function currently does not traverse from a regular variable to the function parameters.
    It should probably do that, but that may confuse already existing code.
 
-* Basic Storm [2/15]
+ - [ ] Separate data and code in the listing so that strange op-codes can not be formed using dat() anywhere?
+
+* Basic Storm [2/16]
+
+ - [ ] In lang:bs:macro, make sure that ReferNamed uses a symbolic reference instead of hard-coding the address
+   as it does now.
 
  - [ ] See if we need to check if the expression generated for the return statement (and automatically 
    in functions) is actually a reference, and needs to be de-referenced before.
@@ -189,7 +194,7 @@
  - [ ] Currently: parts of the message loop may be executed from other UThreads than the intended one (possibly interleaving),
    which could confuse parts of the Win32-api. This is caused by calling Create for example.
 
-* Others [0/3]
+* Others [0/4]
 
  - [ ] Verify that exceptions thrown in constructors are actually correctly propagated. Calling create1<DbgVal>(null) does
    not crash for some reason...
@@ -197,6 +202,8 @@
  - [ ] Check exceptions in UThreads!
 
  - [ ] Remove Printable::toS(), use the global toS() instead?
+
+ - [ ] Fix casing of StdAfx to stdafx in some files.
 
 * Future test cases [0/2]
 

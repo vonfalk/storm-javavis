@@ -3,6 +3,7 @@
 #include "Shared/CloneEnv.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	/**
 	 * Result from an expression. A result either returns a Value (which may be void), or a special

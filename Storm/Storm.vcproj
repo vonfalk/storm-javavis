@@ -642,6 +642,10 @@
 				RelativePath=".\ExprResult.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Lib\Reflection.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1030,6 +1034,10 @@
 			</File>
 			<File
 				RelativePath=".\ExprResult.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Lib\Reflection.h"
 				>
 			</File>
 		</Filter>

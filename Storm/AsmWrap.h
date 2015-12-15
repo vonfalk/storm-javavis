@@ -280,6 +280,12 @@ namespace storm {
 		Operand STORM_FN ptrRel(Variable v, Offset offset);
 		Operand STORM_FN xRel(Size size, Variable v, Offset offset);
 
+		// These could be really bad when we try to save the asm listing!
+		// They are currently used in lang:bs:macro to refer to named things easily.
+		Operand STORM_FN ptrConst(Par<Object> o);
+		Operand STORM_FN ptrConst(Par<TObject> o);
+
+
 		// RetVal.
 		class RetVal {
 			STORM_VALUE;

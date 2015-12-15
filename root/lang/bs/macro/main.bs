@@ -1,5 +1,6 @@
 use lang:bs;
 use core:lang;
+use core:asm;
 
 // Get the name of the TypeName type.
 TypeName typeName() {
@@ -55,6 +56,52 @@ Expr createType(Block block, TypeName type) {
 
 	b.add(bAccess);
 	b;
+}
+
+// Create a static reference to a Named object in the compiler.
+Expr referNamed(Block block, TypeName type) {
+	Named? referTo = type.find(block.scope);
+	if (referTo) {
+		ReferNamed(referTo);
+	} else {
+		throwSyntaxError(type.pos, "Could not resolve the name " + type.toS);
+		Expr(); // We need this until we can throw exceptions!
+	}
+}
+
+// Refer to a named object somewhere.
+class ReferNamed extends Expr {
+
+	// Object we're referring to.
+	Named referTo;
+
+	ctor(Named to) {
+		init() {
+			referTo = to;
+		}
+	}
+
+	ExprResult result() {
+		ExprResult(Value(typeOf(referTo)));
+	}
+
+	void code(CodeGen state, CodeResult result) {
+		if (!result.needed) {
+			return;
+		}
+
+		// At the moment, we can be fairly sure that named objects never die, so we do not need to
+		// take any precautions. This may not hold in the future, though!
+		// This solution is also bad when we want to serialize the code and load it later.
+		// We should use a reference to the named item instead.
+		VarInfo v = result.location(state);
+		state.l << mov(v.v, ptrConst(referTo));
+		state.l << addRef(v.v);
+	}
+
+	Str toS() {
+		"named{" # referTo.identifier # "}";
+	}
 }
 
 Expr exploreType(Block block, TypeName typeName) {
