@@ -4,6 +4,7 @@
 #include "Code/Code.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	/**
 	 * Long and Word implementations here:
@@ -33,7 +34,8 @@ namespace storm {
 	};
 
 
-
+	// toS!
+	STORM_PKG(core);
 	Str *STORM_ENGINE_FN toS(EnginePtr e, Long v);
 	Str *STORM_ENGINE_FN toS(EnginePtr e, Word v);
 

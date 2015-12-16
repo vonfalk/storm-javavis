@@ -7,6 +7,7 @@ use core:debug;
 
 class Repl extends LangRepl {
 
+	// Shall we terminate?
 	Bool done;
 
 	// Scope.
@@ -14,45 +15,38 @@ class Repl extends LangRepl {
 
 	// Pre-processing.
 	ctor() {
-		Named? repl = (name{lang:bs:Repl}).find(rootScope);
-		Scope s;
-		if (repl)
-			s = Scope(repl, BSScope());
+		Type repl = named{Repl};
 
 		init() {
 			done = false;
-			scope = s;
+			scope(repl, BSScope());
 		}
 
-		addPkg(name{core});
-		addPkg(name{lang:bs});
-		addPkg(name{lang:bs:macro});
-	}
-
-	void addPkg(TypeName name) {
-		Named? pkg = name.find(rootScope);
-		if (pkg as Package) {
-			scope.addInclude(pkg);
-		}
+		scope.addInclude(named{core});
+		scope.addInclude(named{lang:bs});
+		scope.addInclude(named{lang:bs:macro});
 	}
 
 	Bool eval(Str line) {
 		SyntaxSet syntax = scope.getSyntax;
 		Parser parser(syntax, line, Url());
 
+		// Check so that everything is matching.
 		parser.parse("SkipBlock");
 		if (parser.hasError) {
 			// Mismatched something. Let the user complete their input.
-			false;
-		} else {
-			parser.parse("ReplUse");
-			if (parser.hasError) {
-				evalLine(line, parser);
-			} else {
-				addUse(parser);
-			}
-			true;
+			return false;
 		}
+
+		// Check for use statements.
+		parser.parse("ReplUse");
+		if (!parser.hasError) {
+			addUse(parser);
+			return true;
+		}
+
+		evalLine(line, parser);
+		true;
 	}
 
 	Bool exit() {
@@ -90,30 +84,27 @@ class Repl extends LangRepl {
 
 		if (parser.hasError) {
 			print(parser.errorMsg);
-		} else {
-			ReplBlock block(scope);
-			LocalVar thisPtr("this", (name{lang:bs:ReplSandbox}).resolve(rootScope), SrcPos(), true);
-			block.add(thisPtr);
+			return;
+		}
 
-			TObject stmt = parser.transformT([block]);
-			if (stmt as Expr) {
-				evalExpr(line, block, thisPtr, stmt);
-			}
+		ReplBlock block(scope);
+		LocalVar thisPtr("this", (name{lang:bs:ReplSandbox}).resolve(rootScope), SrcPos(), true);
+		block.add(thisPtr);
+
+		TObject stmt = parser.transformT([block]);
+		if (stmt as Expr) {
+			evalExpr(line, block, thisPtr, stmt);
 		}
 	}
 
 	void evalExpr(Str line, ReplBlock block, LocalVar thisPtr, Expr expr) {
-		Named? replaceFn = (name{lang:bs:ReplSandbox:evalFn<lang:bs:ReplSandbox>}).find(rootScope);
-		if (replaceFn as core:lang:Function) {
-			ReplCode code(block, thisPtr, expr);
-			replaceFn.setCode(LazyCode(&code.load()));
+		Function replaceFn = named{ReplSandbox:evalFn<ReplSandbox>};
+		ReplCode code(block, thisPtr, expr);
+		replaceFn.setCode(LazyCode(&code.load()));
 
-			// Now, run the replaced function!
-			ReplSandbox sandbox(this);
-			print("=> " # sandbox.evalFn());
-		} else {
-			print("I AM ERROR");
-		}
+		// Now, run the replaced function!
+		ReplSandbox sandbox(this);
+		print("=> " # sandbox.evalFn());
 	}
 
 }
@@ -157,7 +148,7 @@ class ReplCode on Compiler {
 			root = root;
 			thisPtr = thisPtr;
 			expr = expr;
-			strType = (name{core:Str}).resolve(rootScope);
+			strType = named{Str};
 		}
 	}
 

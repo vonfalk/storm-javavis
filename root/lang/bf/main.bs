@@ -35,7 +35,7 @@ class BfFunction extends Function {
 	Url file;
 
 	ctor(Str name, Url file) {
-		Value strVal = (name{core:Str}).resolve(rootScope);
+		Value strVal = named{Str};
 		init(strVal, name, [strVal]) {
 			file = file;
 		}
@@ -51,12 +51,8 @@ class BfFunction extends Function {
 	}
 
 	CodeGen load() {
-		Named? myPkg = (name{lang:bf}).find(rootScope);
 		SyntaxSet syntax;
-
-		if (myPkg as Package) {
-			syntax.add(myPkg);
-		}
+		syntax.add(named{lang:bf}); // Would be nice to say 'current package'.
 
 		Parser parser(syntax, file.read.readText.readAll, file);
 		parser.parse("BfFile");
@@ -72,7 +68,7 @@ class BfFunction extends Function {
 			print("No function definition!");
 		}
 
-		Value strType = (name{core:Str}).resolve(rootScope);
+		Value strType = named{Str};
 
 		CodeGen r(runOnAny());
 		Listing l = r.l;
@@ -119,7 +115,7 @@ class BfExpr extends lang:bs:Expr {
 		init() {
 			space = space.v.toNat;
 			tokens = data;
-			input = BareVarAccess((name{core:Str}).resolve(rootScope), Variable());
+			input = BareVarAccess(Value(named{Str}), Variable());
 		}
 	}
 
@@ -131,8 +127,8 @@ class BfExpr extends lang:bs:Expr {
 		}
 	}
 
-	Value result() {
-		(name{core:Str}).resolve(rootScope);
+	ExprResult result() {
+		Value(named{Str});
 	}
 
 	void code(CodeGen g, CodeResult to) {
@@ -194,9 +190,9 @@ class BfState on Compiler {
 	ctor(CodeGen g, Nat size, Expr inputExpr) {
 		init() {
 			g = g;
-			strBuf = (name{core:StrBuf}).resolve(rootScope);
-			textReader = (name{core:io:TextReader}).resolve(rootScope);
-			natType = (name{core:Nat}).resolve(rootScope);
+			strBuf = named{StrBuf};
+			textReader = named{core:io:TextReader};
+			natType = named{Nat};
 			inputExpr = inputExpr;
 		}
 
