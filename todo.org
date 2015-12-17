@@ -140,7 +140,7 @@
 
  - [ ] Separate data and code in the listing so that strange op-codes can not be formed using dat() anywhere?
 
-* Basic Storm [2/16]
+* Basic Storm [3/17]
 
  - [ ] In lang:bs:macro, make sure that ReferNamed uses a symbolic reference instead of hard-coding the address
    as it does now.
@@ -150,12 +150,11 @@
 
  - [ ] Variable accesses are currently racy. Fix this!
 
+ - [ ] Inverse to the if (x as Foo) statement. Maybe: unless (x as Foo) return 3;
+
  - [ ] It seems it is not legal to do something like: Str("Foo") without taking care of the return value.
 
  - [ ] Remove the special TypeName class, use the general Name instead.
-
- - [ ] A shorthand for doing 'if (x)' and 'if (x as Foo)' on things inside another object would be nice, maybe
-   'if (y = x.y)' and 'if (y = x.y as Foo)'?
 
  - [ ] Implement proper typechecking for the array initialization literal, now the error messages generated when
    using these are really bad.
@@ -177,6 +176,9 @@
 
  - [ ] The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
    packages from the root always (not urgent).
+
+ - [X] A shorthand for doing 'if (x)' and 'if (x as Foo)' on things inside another object would be nice, maybe
+   'if (y = x.y)' and 'if (y = x.y as Foo)'?
 
  - [X] Implement proper type-checking for return. Ie, expressions in which a return occurs should return a special
    type indicating that they do not return any value, and that they therefore should not generate an ambiguous type
@@ -204,6 +206,16 @@
  - [ ] Remove Printable::toS(), use the global toS() instead?
 
  - [ ] Fix casing of StdAfx to stdafx in some files.
+
+* Future DSL:s [0/4]
+
+ - [ ] SQL
+
+ - [ ] Parallel computing language, implemented using OpenCL or DirectCompute.
+
+ - [ ] Layout language
+
+ - [ ] Reactive programming
 
 * Future test cases [0/2]
 

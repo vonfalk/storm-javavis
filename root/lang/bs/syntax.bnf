@@ -111,12 +111,23 @@ FnTypes => t : "(", Types t, ")";
 Block(Block parent);
 Block => ExprBlock(parent) : "{", (Stmt(me) -> add, )*, "}";
 
+// Weak casts, ie. casts that can fail. Note that if (x) is excluded from here, as it is difficult to
+// distinguish from the case where 'x' is a boolean by syntax. This part will probably contain more parts
+// in the future.
+WeakCast(Block block);
+WeakCast => weakAsCast(block, expr, type) : Expr(block) expr, "as", Type type;
+
+// All weak casts, including those that are only expressions.
+AllWeakCast(Block block);
+AllWeakCast => WeakMaybeCast(expr) : Expr(block) expr;
+AllWeakCast => r : WeakCast(block) r;
+
 // If.
 If(Block block);
-If => If(block) : "if", "(", Expr(me) -> cond, ")", IfTrue(me) -> trueExpr;
-If => If(block) : "if", "(", Expr(me) -> cond, ")", IfTrue(me) -> trueExpr, "else", Stmt(me) -> falseExpr;
-If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfTrue(me) -> trueExpr;
-If => IfAs(block) : "if", "(", Expr(me) -> expr, "as", Type -> type, ")", IfTrue(me) -> trueExpr, "else", Stmt(me) -> falseExpr;
+If => createIf(block, expr) : "if", "(", Expr(block) expr, ")", IfTrue(me) -> trueExpr (, "else", Stmt(me) -> falseExpr)?;
+
+If => IfWeak(block, cast) :[00] "if", "(", WeakCast(block) cast, ")", IfTrue(me) -> trueExpr (, "else", Stmt(me) -> falseExpr)?;
+If => IfWeak(block, cast, name) :[10] "if", "(", Name name, "=", AllWeakCast(block) cast, ")", IfTrue(me) -> trueExpr (, "else", Stmt(me) -> falseExpr)?;
 
 // Return.
 Return(Block block);

@@ -646,6 +646,10 @@
 				RelativePath=".\Lib\Reflection.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSWeakCast.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1038,6 +1042,10 @@
 			</File>
 			<File
 				RelativePath=".\Lib\Reflection.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSWeakCast.h"
 				>
 			</File>
 		</Filter>

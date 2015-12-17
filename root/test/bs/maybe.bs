@@ -25,6 +25,10 @@ Int testMaybe(Int v) {
 		z = z + r.get;
 	}
 
+	if (q = r) {
+		z = z + q.get;
+	}
+
 	z;
 }
 

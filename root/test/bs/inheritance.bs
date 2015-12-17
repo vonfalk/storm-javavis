@@ -72,6 +72,28 @@ Int testAsExpr(Int v) {
 	}
 }
 
+Int asExpr2(Base v) {
+	if (q = v as Derived) {
+		q.a + q.b;
+	} else {
+		v.a;
+	}
+}
+
+Int testAsExpr2(Int v) {
+	if (v == 1) {
+		Base z;
+		z.a = 12;
+		asExpr2(z);
+	} else {
+		Derived z;
+		z.a = 10;
+		z.b = 20;
+		asExpr2(z);
+	}
+}
+
+
 class DerivedDbg extends Dbg {
 	Int b;
 

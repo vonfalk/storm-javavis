@@ -203,11 +203,30 @@ figure out the type.
 The automatic casting of literals is limited to very simple cases at the moment, and sometimes it is
 necessary to explicitly cast literals (for example in `if` statements).
 
-Downcasting
-------------
+Weak casts
+-----------
 
-When you have a variable of a base type, say `Object`, and want to test if it is an instance of a
-more specific type, you can use `if-as` syntax:
+Aside from casts that always succeed, there are casts that might fail. These include downcasts, and
+casts from `Maybe<T>` to `T`. In basic storm, these have a special syntax coupled with the
+if-statement, to make sure that the casts are always checked for failure. Weak casts look like this:
+
+```
+if (<weak cast>) {
+    // The weak cast succeeded.
+}
+```
+
+or
+
+```
+if (x = <weak cast>) {
+    // The weak cast succeeded.
+}
+```
+
+If the variable name is omitted, the variable that was mentioned inside the weak cast is made to the
+type of the cast in the if-branch. For example: to cast the variable 'o' to a more specific type,
+one can write like this:
 
 ```
 if (o as Foo) {
@@ -215,13 +234,28 @@ if (o as Foo) {
 }
 ```
 
-Which will cause the variable to the left of `of` to be treated as the more specific type inside the
-block of the if-branch. This only works if the variable to the left of `of` is a local variable or a
-parameter. Otherwise, the check is made, but it will not be possible to access the derived type. An
-alternate syntax will probably fix this problem later, maybe:
+Which is equivalent to:
 
 ```
-if (o = a.b as Foo)
+if (o = o as Foo) {
+    // Success.
+}
+```
+
+Casting from `Maybe<T>` to `T` is done just like in C++:
+
+```
+if (x) {
+    // x is T here, not T?
+}
+```
+
+or
+
+```
+if (y = x.y) {
+    // y is T here, not T?
+}
 ```
 
 Function pointers

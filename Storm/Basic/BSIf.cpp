@@ -8,41 +8,12 @@
 
 namespace storm {
 
-	bs::If::If(Par<Block> parent) : Block(parent) {}
-
-	bs::LocalVar *bs::If::override() {
-		if (created)
-			return created.ret();
-
-		String varName;
-		if (LocalVarAccess *var = as<LocalVarAccess>(condition.borrow()))
-			varName = var->var->name;
-		else if (MemberVarAccess *var = as<MemberVarAccess>(condition.borrow()))
-			varName = var->var->name;
-
-		if (!varName.empty()) {
-			Value t = condition->result().type();
-			if (MaybeType *m = as<MaybeType>(t.type)) {
-				created = CREATE(LocalVar, this, varName, m->param, condition->pos);
-			}
-		}
-		return created.ret();
+	bs::If::If(Par<Block> parent, Par<Expr> cond) : Block(parent), condition(cond) {
+		if (cond->result().type().asRef(false) != Value(boolType(engine())))
+			throw TypeError(cond->pos, L"The expression must evaluate to Bool.");
 	}
 
-	void bs::If::cond(Par<Expr> e) {
-		// TODO: Some kind of general interface for this?
-		Value t = e->result().type();
-		if (as<MaybeType>(t.type))
-			;
-		else if (t.asRef(false) == Value(boolType(engine())))
-			;
-		else
-			throw TypeError(e->pos, L"The expression must evaluate to Bool or Maybe<T>.");
-
-		condition = e;
-	}
-
-	void bs::If::trueExpr(Par<IfTrue> e) {
+	void bs::If::trueExpr(Par<Expr> e) {
 		trueCode = e;
 	}
 
@@ -61,7 +32,7 @@ namespace storm {
 	void bs::If::blockCode(Par<CodeGen> state, Par<CodeResult> r) {
 		using namespace code;
 
-		Value condType = condition->result().type().asRef(false);
+		Value condType = boolType(engine());
 		Auto<CodeResult> condResult = CREATE(CodeResult, this, condType, state->block);
 		condition->code(state, condResult);
 
@@ -69,22 +40,9 @@ namespace storm {
 		Label lblDone = state->to.label();
 
 		VarInfo c = condResult->location(state);
-		if (as<MaybeType>(condType.type)) {
-			state->to << cmp(c.var(), natPtrConst(0));
-			state->to << jmp(lblElse, ifEqual);
-			if (created) {
-				// We cheat and create the variable here. It does not hurt, since it is not visible
-				// in the false branch anyway.
-				created->create(state);
-				state->to << mov(created->var.var(), c.var());
-				if (condType.refcounted())
-					state->to << code::addRef(created->var.var());
-				created->var.created(state);
-			}
-		} else {
-			state->to << cmp(condResult->location(state).var(), byteConst(0));
-			state->to << jmp(lblElse, ifEqual);
-		}
+		state->to << cmp(condResult->location(state).var(), byteConst(0));
+		state->to << jmp(lblElse, ifEqual);
+
 
 		Value rType = result().type();
 		Auto<Expr> t = expectCastTo(trueCode, rType);
@@ -113,45 +71,24 @@ namespace storm {
 	}
 
 	/**
-	 * IfAs
+	 * IfWeak.
 	 */
 
-	bs::IfAs::IfAs(Par<Block> parent) : Block(parent) {}
+	bs::IfWeak::IfWeak(Par<Block> parent, Par<WeakCast> cast) :
+		Block(parent), weakCast(cast) {}
 
-	void bs::IfAs::expr(Par<Expr> expr) {
-		expression = expr;
-	}
+	bs::IfWeak::IfWeak(Par<Block> parent, Par<WeakCast> cast, Par<SStr> name) :
+		Block(parent), weakCast(cast), varName(name) {}
 
-	void bs::IfAs::type(Par<TypeName> type) {
-		target = capture(type->resolve(scope).type);
-	}
-
-	bs::LocalVar *bs::IfAs::override() {
-		if (created)
-			return created.ret();
-
-		validate();
-
-		String varName;
-		if (LocalVarAccess *var = as<LocalVarAccess>(expression.borrow()))
-			varName = var->var->name;
-		else if (MemberVarAccess *var = as<MemberVarAccess>(expression.borrow()))
-			varName = var->var->name;
-
-		if (!varName.empty())
-			created = CREATE(LocalVar, this, varName, Value(target), expression->pos);
-		return created.ret();
-	}
-
-	void bs::IfAs::trueExpr(Par<IfTrue> e) {
+	void bs::IfWeak::trueExpr(Par<IfTrue> e) {
 		trueCode = e;
 	}
 
-	void bs::IfAs::falseExpr(Par<Expr> e) {
+	void bs::IfWeak::falseExpr(Par<Expr> e) {
 		falseCode = e;
 	}
 
-	ExprResult bs::IfAs::result() {
+	ExprResult bs::IfWeak::result() {
 		if (falseCode && trueCode) {
 			return common(trueCode, falseCode);
 		} else {
@@ -159,84 +96,8 @@ namespace storm {
 		}
 	}
 
-	Value bs::IfAs::eValue() {
-		Value r = expression->result().type();
-		if (MaybeType *t = as<MaybeType>(r.type)) {
-			r = t->param;
-		}
-		return r;
-	}
-
-	void bs::IfAs::validate() {
-		Value eResult = eValue();
-		if (!eResult.isClass())
-			throw SyntaxError(pos, L"The as operator is only applicable to class types.");
-		if (!target->isA(eResult.type))
-			throw SyntaxError(pos, L"Condition is always false. " + target->identifier() + L" does not inherit from "
-							+ eResult.type->identifier() + L".");
-		if (target == eResult.type)
-			throw SyntaxError(pos, L"Condition is always true. The type of the expression is the same as "
-							L"the one specified (" + target->identifier() + L").");
-	}
-
-	void bs::IfAs::blockCode(Par<CodeGen> state, Par<CodeResult> r) {
-		using namespace code;
-
-		validate();
-
-		Value eResult = eValue();
-		Auto<CodeResult> expr = CREATE(CodeResult, this, expression->result().type().asRef(eResult.ref), state->block);
-		expression->code(state, expr);
-		Variable exprVar = expr->location(state).var();
-
-		Label lblElse = state->to.label();
-		Label lblDone = state->to.label();
-
-		if (eResult.ref) {
-			state->to << mov(ptrA, exprVar);
-			state->to << mov(ptrA, ptrRel(ptrA));
-			state->to << fnParam(ptrA);
-		} else {
-			state->to << fnParam(exprVar);
-		}
-		state->to << fnParam(target->typeRef);
-		state->to << fnCall(engine().fnRefs.asFn, retVal(Size::sByte, false));
-		state->to << cmp(al, byteConst(0));
-		state->to << jmp(lblElse, ifEqual);
-
-		if (created) {
-			// We cheat and create the variable here. It does not hurt, since it is not visible
-			// in the false branch anyway.
-			created->create(state);
-			if (eResult.ref) {
-				state->to << mov(ptrA, exprVar);
-				state->to << mov(created->var.var(), ptrRel(ptrA));
-			} else {
-				state->to << mov(created->var.var(), exprVar);
-			}
-			state->to << code::addRef(created->var.var());
-			created->var.created(state);
-		}
-
-		Value rType = result().type();
-		Auto<Expr> t = expectCastTo(trueCode, rType);
-		t->code(state, r);
-
-		if (falseCode) {
-			state->to << jmp(lblDone);
-			state->to << lblElse;
-
-			Auto<Expr> f = expectCastTo(falseCode, rType);
-			f->code(state, r);
-
-			state->to << lblDone;
-		} else {
-			state->to << lblElse;
-		}
-	}
-
-	void bs::IfAs::output(wostream &to) const {
-		to << L"if (" << expression << L") ";
+	void bs::IfWeak::output(wostream &to) const {
+		to << L"if (" << weakCast << L") ";
 		to << trueCode;
 		if (falseCode) {
 			to << L" else ";
@@ -244,18 +105,87 @@ namespace storm {
 		}
 	}
 
+	bs::LocalVar *bs::IfWeak::overwrite() {
+		if (created)
+			return created.ret();
 
-	bs::IfTrue::IfTrue(Par<IfAs> parent) : Block(parent) {
-		Auto<LocalVar> override = parent->override();
-		if (override) {
-			add(override);
+		Auto<Str> name;
+		if (varName)
+			name = varName->v;
+		if (!name)
+			name = weakCast->override();
+		if (!name)
+			return null;
+
+		created = CREATE(LocalVar, this, name->v, weakCast->result(), weakCast->pos);
+		return created.ret();
+	}
+
+	void bs::IfWeak::blockCode(Par<CodeGen> state, Par<CodeResult> r) {
+		using namespace code;
+
+		// We can create the 'created' variable here. It is fine, since it is not visible in the
+		// 'false' branch anyway, and its lifetime is not going to hurt, since it does not live more
+		// than a few instructions extra compared to the correct version.
+		if (created)
+			created->create(state);
+
+		Auto<CodeResult> cond = CREATE(CodeResult, this, boolType(engine()), state->block);
+		weakCast->code(state, cond, created);
+
+		Label elseLbl = state->to.label();
+		Label doneLbl = state->to.label();
+
+		state->to << cmp(cond->location(state).var(), byteConst(0));
+		state->to << jmp(elseLbl, ifEqual);
+
+		Value rType = result().type();
+		Auto<Expr> t = expectCastTo(trueCode, rType);
+		t->code(state, r);
+
+		if (falseCode) {
+			state->to << jmp(doneLbl);
+		}
+
+		state->to << elseLbl;
+
+		if (falseCode) {
+			Auto<Expr> t = expectCastTo(falseCode, rType);
+			t->code(state, r);
+		}
+
+		state->to << doneLbl;
+	}
+
+
+	/**
+	 * Create appropriate if statement.
+	 */
+
+	bs::Expr *bs::createIf(Par<Block> parent, Par<Expr> cond) {
+		Value exprResult = cond->result().type().asRef(false);
+
+		if (exprResult == boolType(parent->engine())) {
+			return CREATE(If, parent, parent, cond);
+		} else if (isMaybe(exprResult)) {
+			Auto<WeakCast> cast = CREATE(WeakMaybeCast, cond, cond);
+			return CREATE(IfWeak, parent, parent, cast);
+		} else {
+			throw SyntaxError(cond->pos, L"You can not use the type: " + ::toS(exprResult) + L" in an if-statement!");
 		}
 	}
 
-	bs::IfTrue::IfTrue(Par<If> parent) : Block(parent) {
-		Auto<LocalVar> override = parent->override();
-		if (override) {
-			add(override);
+
+	/**
+	 * IfTrue
+	 */
+
+	bs::IfTrue::IfTrue(Par<Block> parent) : Block(parent) {
+		if (IfWeak *weak = as<IfWeak>(parent.borrow())) {
+			Auto<LocalVar> override = weak->overwrite();
+			if (override) {
+				add(override);
+			}
 		}
 	}
 

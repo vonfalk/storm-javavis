@@ -1,5 +1,4 @@
 FastDebug
-StormMain#-r root/ -c exit
 StormTest
 StormMain#-r root/ -f test.d.testFactorial
 StormMain#-r root/ -f test.asm.testInlineLabel

@@ -98,6 +98,8 @@ BEGIN_TEST(InheritanceTest) {
 	// Use of 'as'.
 	CHECK_EQ(runFn<Int>(L"test.bs.testAsExpr", 0), 30);
 	CHECK_EQ(runFn<Int>(L"test.bs.testAsExpr", 1), 12);
+	CHECK_EQ(runFn<Int>(L"test.bs.testAsExpr2", 0), 30);
+	CHECK_EQ(runFn<Int>(L"test.bs.testAsExpr2", 1), 12);
 } END_TEST
 
 BEGIN_TEST(ValueTest) {
@@ -170,8 +172,8 @@ BEGIN_TEST(StrConcatTest) {
 
 BEGIN_TEST(MaybeTest) {
 	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 0), 0);
-	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 1), 1);
-	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 2), 4);
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 1), 2);
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 2), 6);
 
 	CHECK_EQ(runFn<Int>(L"test.bs.assignMaybe"), 1);
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "BSBlock.h"
+#include "BSWeakCast.h"
 
 namespace storm {
 	namespace bs {
@@ -13,25 +14,19 @@ namespace storm {
 		class If : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR If(Par<Block> parent);
-
-			// Created variable that overrides the one in 'expression'.
-			LocalVar *override();
+			STORM_CTOR If(Par<Block> parent, Par<Expr> cond);
 
 			// Condition expression
 			Auto<Expr> condition;
 
 			// True branch.
-			Auto<IfTrue> trueCode;
+			Auto<Expr> trueCode;
 
 			// False branch, may be null.
 			Auto<Expr> falseCode;
 
-			// Set condition.
-			virtual void STORM_FN cond(Par<Expr> e);
-
 			// Set true/false code.
-			virtual void STORM_FN trueExpr(Par<IfTrue> e);
+			virtual void STORM_FN trueExpr(Par<Expr> e);
 			virtual void STORM_FN falseExpr(Par<Expr> e);
 
 			// Result.
@@ -51,19 +46,16 @@ namespace storm {
 
 
 		/**
-		 * If-as statement.
+		 * If-statement using a weak cast as its condition.
 		 */
-		class IfAs : public Block {
+		class IfWeak : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR IfAs(Par<Block> parent);
+			STORM_CTOR IfWeak(Par<Block> parent, Par<WeakCast> cast);
+			STORM_CTOR IfWeak(Par<Block> parent, Par<WeakCast> cast, Par<SStr> name);
 
-			// Expression and type.
-			Auto<Expr> expression;
-			Auto<Type> target;
-
-			// Created variable that overrides the one in 'expression'.
-			LocalVar *override();
+			// Weak cast to execute.
+			Auto<WeakCast> weakCast;
 
 			// True branch.
 			Auto<IfTrue> trueCode;
@@ -71,11 +63,7 @@ namespace storm {
 			// False branch, may be null.
 			Auto<Expr> falseCode;
 
-			// Use as if (<> as <>).
-			void STORM_FN expr(Par<Expr> e);
-			void STORM_FN type(Par<TypeName> t);
-
-			// Set true/false code.
+			// Set variables from the parser.
 			void STORM_FN trueExpr(Par<IfTrue> e);
 			void STORM_FN falseExpr(Par<Expr> e);
 
@@ -85,30 +73,32 @@ namespace storm {
 			// Code.
 			virtual void STORM_FN blockCode(Par<CodeGen> state, Par<CodeResult> r);
 
+			// Get the local variable we're overwriting (if any).
+			MAYBE(LocalVar) *overwrite();
+
 		protected:
 			// Output.
 			virtual void output(wostream &to) const;
 
 		private:
-			// Overridden variable.
+			// Overriden variable (lazily created).
 			Auto<LocalVar> created;
 
-			// Validate types.
-			void validate();
-
-			// Get the candidate type (peels away Maybe)
-			Value eValue();
-
+			// Custom variable name?
+			Auto<SStr> varName;
 		};
 
+
+		// Create an if-statement with a single expression.
+		Expr *STORM_FN createIf(Par<Block> block, Par<Expr> expr);
+
 		/**
-		 * Block which knows about our variable!
+		 * Block which knows about IfWeak's variable!
 		 */
 		class IfTrue : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR IfTrue(Par<IfAs> parent);
-			STORM_CTOR IfTrue(Par<If> parent);
+			STORM_CTOR IfTrue(Par<Block> parent);
 
 			// Single contained expression.
 			Auto<Expr> expr;
