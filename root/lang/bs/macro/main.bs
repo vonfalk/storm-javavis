@@ -121,9 +121,9 @@ Expr reloadName(Block block, TypeName typeName) {
 
 Expr printExpr(SStr text, Expr expr) {
 	if (expr as Operator) {
-        core:debug:print(text.v # " <=> " # expr.meaning);
+        core:debug:print(text.v.removeIndent # " <=> " # expr.meaning);
 	} else {
-	    core:debug:print(text.v # " <=> " # expr);
+	    core:debug:print(text.v.removeIndent # " <=> " # expr);
 	}
 	expr;
 }

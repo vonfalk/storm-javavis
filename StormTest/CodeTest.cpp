@@ -181,6 +181,12 @@ BEGIN_TEST(MaybeTest) {
 	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 1), CREATE(Str, *gEngine, L"ok"));
 
 	CHECK_EQ(runFn<Int>(L"test.bs.maybeInheritance"), 10);
+
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv", 0), 10);
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv", 1), 1);
+
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv2", 0), 10);
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv2", 1), 1);
 } END_TEST
 
 BEGIN_TEST(ScopeTest) {

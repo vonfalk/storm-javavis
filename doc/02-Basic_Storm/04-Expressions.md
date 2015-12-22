@@ -258,6 +258,49 @@ if (y = x.y) {
 }
 ```
 
+It is possible to combine these two weak casts. If you wish to cast a variable from `Maybe<T>` to a
+more specialized type of `T` at the same time, the `as` weak cast is enough.
+
+There is also an inverse form of weak casts, since in C++, it is sometimes common to check for
+something and then return early if that condition does not hold. This is something that is not
+possible using the regular weak casts. For example, in C++ one can do:
+
+```
+int foo(int *to) {
+    if (!to)
+        return -1;
+
+    return *to + 20;
+}
+```
+
+But in Basic Storm, one has to do:
+
+```
+void foo(Int? to) {
+    if (to) {
+        to + 20;
+    } else {
+        -1;
+    }
+}
+```
+
+which gets cumbersome if there are a lot of this kind of checks. Therefore, Basic Storm also
+provides the `unless` block for this kind of tests. `unless` only works with weak casts.
+
+```
+void foo(Int? to) {
+    unless (to)
+        return -1;
+
+    to + 20;
+}
+```
+
+This is, as we can see, more similar to the C++ version, but keeps the null-safety of Basic
+Storm. Aside from that, it is more readable if there are multiple checks for null and/or downcasts.
+
 Function pointers
 ------------------
 

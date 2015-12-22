@@ -113,7 +113,7 @@ namespace storm {
 		if (varName)
 			name = varName->v;
 		if (!name)
-			name = weakCast->override();
+			name = weakCast->overwrite();
 		if (!name)
 			return null;
 

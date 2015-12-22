@@ -1,4 +1,5 @@
 use core:debug;
+use lang:bs:macro;
 
 Dbg? maybe(Int v) {
 	Dbg? result;
@@ -61,4 +62,22 @@ Int maybeInheritance() {
 	} else {
 		0;
 	}
+}
+
+Int testMaybeInv(Int v) {
+	Dbg? r = maybe(v);
+
+	unless (r)
+		return 10;
+
+	r.get;
+}
+
+Int testMaybeInv2(Int v) {
+	Dbg? r = maybe(v);
+
+	unless (w = r)
+		return 10;
+
+	w.get;
 }

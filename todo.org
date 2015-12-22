@@ -1,4 +1,6 @@
-* Core [4/41]
+* Core [4/42]
+
+ - [ ] Str::removeIndent seems to be removing the entire first line of it's input.
 
  - [ ] Re-think the equals() in object! Idea: use a global equals with cached specific implementations in Type. This
    can also be used to implement > < and others!
@@ -140,7 +142,7 @@
 
  - [ ] Separate data and code in the listing so that strange op-codes can not be formed using dat() anywhere?
 
-* Basic Storm [3/17]
+* Basic Storm [4/18]
 
  - [ ] In lang:bs:macro, make sure that ReferNamed uses a symbolic reference instead of hard-coding the address
    as it does now.
@@ -149,8 +151,6 @@
    in functions) is actually a reference, and needs to be de-referenced before.
 
  - [ ] Variable accesses are currently racy. Fix this!
-
- - [ ] Inverse to the if (x as Foo) statement. Maybe: unless (x as Foo) return 3;
 
  - [ ] It seems it is not legal to do something like: Str("Foo") without taking care of the return value.
 
@@ -176,6 +176,10 @@
 
  - [ ] The # operator may behave slightly odd if someone overrides the core:StrBuf class locally, fix this by resolving
    packages from the root always (not urgent).
+
+ - [ ] Synonymous to unless (x as Foo) that evaluates to the result or returns, eg. var x = x as Foo or return 3;
+
+ - [X] Inverse to the if (x as Foo) statement. Maybe: unless (x as Foo) return 3;
 
  - [X] A shorthand for doing 'if (x)' and 'if (x as Foo)' on things inside another object would be nice, maybe
    'if (y = x.y)' and 'if (y = x.y as Foo)'?

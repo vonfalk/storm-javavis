@@ -16,7 +16,7 @@ namespace storm {
 
 			// Get the name of a local variable we want to save the result of the weak cast to. May
 			// return null if there is no obvious location to store the result in.
-			virtual MAYBE(Str) *STORM_FN override();
+			virtual MAYBE(Str) *STORM_FN overwrite();
 
 			// Get the resulting variable-type of this expression.
 			virtual Value STORM_FN result();
@@ -25,8 +25,8 @@ namespace storm {
 			// the result of the cast to be used in the 'true' branch.
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> boolResult, MAYBE(Par<LocalVar>) var);
 
-			// Default implementation of 'override'. Extracts the name from an expression if possible.
-			MAYBE(Str) *STORM_FN defaultOverride(Par<Expr> expr);
+			// Default implementation of 'overwrite'. Extracts the name from an expression if possible.
+			MAYBE(Str) *STORM_FN defaultOverwrite(Par<Expr> expr);
 		};
 
 
@@ -40,7 +40,7 @@ namespace storm {
 			STORM_CTOR WeakDowncast(Par<Block> block, Par<Expr> expr, Par<TypeName> type);
 
 			// Get variable we can write to.
-			virtual MAYBE(Str) *STORM_FN override();
+			virtual MAYBE(Str) *STORM_FN overwrite();
 
 			// Get the result type.
 			virtual Value STORM_FN result();
@@ -70,7 +70,7 @@ namespace storm {
 			STORM_CTOR WeakMaybeCast(Par<Expr> expr);
 
 			// Get variable we can write to.
-			virtual MAYBE(Str) *STORM_FN override();
+			virtual MAYBE(Str) *STORM_FN overwrite();
 
 			// Get the result type.
 			virtual Value STORM_FN result();

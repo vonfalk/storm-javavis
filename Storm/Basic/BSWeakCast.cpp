@@ -10,11 +10,11 @@ namespace storm {
 
 	bs::WeakCast::WeakCast() {}
 
-	MAYBE(Str) *bs::WeakCast::override() {
+	MAYBE(Str) *bs::WeakCast::overwrite() {
 		return null;
 	}
 
-	MAYBE(Str) *bs::WeakCast::defaultOverride(Par<Expr> expr) {
+	MAYBE(Str) *bs::WeakCast::defaultOverwrite(Par<Expr> expr) {
 		if (LocalVarAccess *var = as<LocalVarAccess>(expr.borrow()))
 			return CREATE(Str, this, var->var->name);
 
@@ -55,8 +55,8 @@ namespace storm {
 							L" does not inherit from " + ::toS(from) + L".");
 	}
 
-	MAYBE(Str) *bs::WeakDowncast::override() {
-		return defaultOverride(expr);
+	MAYBE(Str) *bs::WeakDowncast::overwrite() {
+		return defaultOverwrite(expr);
 	}
 
 	Value bs::WeakDowncast::result() {
@@ -103,8 +103,8 @@ namespace storm {
 
 	bs::WeakMaybeCast::WeakMaybeCast(Par<Expr> expr) : expr(expr) {}
 
-	MAYBE(Str) *bs::WeakMaybeCast::override() {
-		return defaultOverride(expr);
+	MAYBE(Str) *bs::WeakMaybeCast::overwrite() {
+		return defaultOverwrite(expr);
 	}
 
 	Value bs::WeakMaybeCast::result() {

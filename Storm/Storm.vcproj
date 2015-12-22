@@ -650,6 +650,10 @@
 				RelativePath=".\Basic\BSWeakCast.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Basic\BSUnless.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1046,6 +1050,10 @@
 			</File>
 			<File
 				RelativePath=".\Basic\BSWeakCast.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Basic\BSUnless.h"
 				>
 			</File>
 		</Filter>

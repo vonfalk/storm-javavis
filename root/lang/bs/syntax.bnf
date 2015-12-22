@@ -129,14 +129,14 @@ If => createIf(block, expr) : "if", "(", Expr(block) expr, ")", IfTrue(me) -> tr
 If => IfWeak(block, cast) :[00] "if", "(", WeakCast(block) cast, ")", IfTrue(me) -> trueExpr (, "else", Stmt(me) -> falseExpr)?;
 If => IfWeak(block, cast, name) :[10] "if", "(", Name name, "=", AllWeakCast(block) cast, ")", IfTrue(me) -> trueExpr (, "else", Stmt(me) -> falseExpr)?;
 
+// Scoping for the if and as expressions.
+IfTrue(Block parent); // Really only If and IfWeak...
+IfTrue => IfTrue(parent) : Stmt(me) -> set;
+
 // Return.
 Return(Block block);
 Return => Return(pos, block) : "return";
 Return => Return(pos, block, expr) : "return", Expr(block) expr;
-
-// Scoping for the if and as expressions.
-IfTrue(Block parent); // Really only If and IfAs...
-IfTrue => IfTrue(parent) : Stmt(me) -> set;
 
 // The loop.
 Loop(Block block);
@@ -147,6 +147,11 @@ Loop => Loop(block) : "while", "(", Expr(me) -> cond, ")", Stmt(me) -> whileBody
 Loop => ExprBlock(block) : "for", "(", Expr(me) -> add, ";", ForInner(me) -> add;
 ForInner(Block block);
 ForInner => For(block) : Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me) -> body;
+
+// Unless block.
+Unless(Block block);
+Unless => Unless(block, cast) :[00] "unless", "(", AllWeakCast(block) cast, ")", Stmt(me) -> fail (, Stmt(me) -> success)*;
+Unless => Unless(block, cast, name) :[10] "unless", "(", Name name, "=", AllWeakCast(block) cast, ")", Stmt(me) -> fail, (, Stmt(me) -> success)*;
 
 // Pre-and postfix operators.
 PrePost => v : "\+\+" v;
@@ -243,6 +248,7 @@ Stmt => e : Block(block) e;
 Stmt => e :[10] If(block) e;
 Stmt => e :[10] Loop(block) e;
 Stmt => e :[10] Return(block) e, ";";
+Stmt => e :[10] Unless(block) e;
 
 // Root rule for parsing function bodies.
 FunctionBody(BSFunction fn);
