@@ -45,7 +45,14 @@ then
     exit 1
 fi
 
-Release/storm/StormMain.exe -c 'bs("Hello",2){,[.,]}' > /dev/null
+Release/storm/StormMain.exe -c 'test:bf:inlineBf' > Release/storm/output.txt
+if [[ $? -ne 0 ]]
+then
+    echo "Failed to execute BS code. Test in Release/storm"
+    exit 1
+fi
+
+grep "1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89" Release/storm/output.txt > /dev/null
 if [[ $? -ne 0 ]]
 then
     echo "Failed to execute BS code. Test in Release/storm"
