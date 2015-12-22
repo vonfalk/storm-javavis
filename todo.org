@@ -1,4 +1,6 @@
-* Core [4/42]
+* Core [4/43]
+
+ - [ ] Implement some clever solution regarding iterators and deepCopy.
 
  - [ ] Str::removeIndent seems to be removing the entire first line of it's input.
 

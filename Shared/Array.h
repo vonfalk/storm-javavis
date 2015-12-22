@@ -68,6 +68,38 @@ namespace storm {
 		// Handle
 		const Handle &handle;
 
+		/**
+		 * Base class for the iterator. This is not exposed to Storm, but is used internally to make
+		 * the implementation easier.
+		 * TODO: How does this fit with deepCopy?
+		 */
+		class Iter {
+		public:
+			// Pointing to the end.
+			Iter();
+
+			// Pointing to a specific element in 'owner'.
+			Iter(Par<ArrayBase> owner, nat index = 0);
+
+			// Compare.
+			bool operator ==(const Iter &o) const;
+			bool operator !=(const Iter &o) const;
+
+			// Increase.
+			Iter &operator ++();
+			Iter operator ++(int);
+
+		protected:
+			// Array we're pointing to.
+			Auto<ArrayBase> owner;
+
+			// Index we're pointing to.
+			nat index;
+
+			// At end?
+			bool atEnd() const;
+		};
+
 	protected:
 		// Size.
 		nat size;
@@ -128,6 +160,33 @@ namespace storm {
 			pushRaw(&item);
 		}
 
+		/**
+		 * Iterator.
+		 */
+		class Iter : public ArrayBase::Iter {
+		public:
+			Iter() {}
+
+			Iter(Par<Array<T>> owner, nat index = 0) : ArrayBase::Iter(owner, index) {}
+
+			T &operator *() const {
+				Array<T> *t = (Array<T> *)owner.borrow();
+				return t->at(index);
+			}
+
+			T *operator ->() const {
+				return &operator *();
+			}
+		};
+
+		// Create iterators.
+		Iter begin() {
+			return Iter(this, nat(0));
+		}
+
+		Iter end() {
+			return Iter(this, count());
+		}
 	};
 
 	/**

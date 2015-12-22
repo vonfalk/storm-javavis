@@ -139,5 +139,36 @@ namespace storm {
 		return r->toS();
 	}
 
+	ArrayBase::Iter::Iter() : index(0) {}
+
+	ArrayBase::Iter::Iter(Par<ArrayBase> owner, nat index) : owner(owner), index(index) {}
+
+	bool ArrayBase::Iter::atEnd() const {
+		return !owner && index == owner->count();
+	}
+
+	bool ArrayBase::Iter::operator ==(const Iter &o) const {
+		if (atEnd() != o.atEnd())
+			return false;
+		if (atEnd())
+			return true;
+
+		return owner.borrow() == o.owner.borrow() && index == o.index;
+	}
+
+	bool ArrayBase::Iter::operator !=(const Iter &o) const {
+		return !(*this == o);
+	}
+
+	ArrayBase::Iter &ArrayBase::Iter::operator ++() {
+		index++;
+		return *this;
+	}
+
+	ArrayBase::Iter ArrayBase::Iter::operator ++(int) {
+		Iter c(*this);
+		index++;
+		return c;
+	}
 
 }

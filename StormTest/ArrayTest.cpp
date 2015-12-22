@@ -24,6 +24,14 @@ BEGIN_TEST(ArrayTest) {
 		CHECK_EQ(array->at(i).get(), i + 2);
 	}
 
+	// Try the iterator as well!
+	{
+		nat count = 2;
+		for (Array<DbgVal>::Iter i = array->begin(); i != array->end(); ++i) {
+			CHECK_EQ(i->get(), count++);
+		}
+	}
+
 	array->clear();
 
 	CHECK(DbgVal::clear());
