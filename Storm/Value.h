@@ -60,7 +60,8 @@ namespace storm {
 		code::RetVal retVal() const;
 
 		// As a reference.
-		Value asRef(bool v = true) const;
+		Value STORM_FN asRef() const;
+		Value STORM_FN asRef(Bool v) const;
 
 		// Get the destructor for this type. A destructor has the signature void dtor(T).
 		code::Value destructor() const;

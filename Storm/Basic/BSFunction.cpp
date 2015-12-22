@@ -148,7 +148,8 @@ namespace storm {
 
 		// Parameters
 		for (nat i = 0; i < params.size(); i++) {
-			Auto<LocalVar> var = body->variable(paramNames[i]);
+			Auto<NamePart> name = CREATE(NamePart, this, paramNames[i]);
+			Auto<LocalVar> var = body->variable(name);
 			assert(var);
 			var->createParam(state);
 		}

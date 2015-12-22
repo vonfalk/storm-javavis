@@ -148,6 +148,9 @@ Loop => ExprBlock(block) : "for", "(", Expr(me) -> add, ";", ForInner(me) -> add
 ForInner(Block block);
 ForInner => For(block) : Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me) -> body;
 
+// Range-based for loop.
+Loop => RangeFor(block, var, container) : "for", "(", Name var, "in", Expr(block) container, ")", Stmt(me) -> body;
+
 // Unless block.
 Unless(Block block);
 Unless => Unless(block, cast) :[00] "unless", "(", AllWeakCast(block) cast, ")", Stmt(me) -> fail (, Stmt(me) -> success)*;

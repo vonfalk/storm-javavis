@@ -1,0 +1,60 @@
+use core:lang;
+
+/**
+ * The range-based for-loop. Expands to (more or less):
+ * var i = c.begin();
+ * var end = c.end();
+ * for (; i != end; ++i) { name = i.v; ... }
+ */
+class RangeFor extends ExprBlock {
+	ExprBlock? loopBlock;
+	Str name;
+
+	ctor(Block parent, SStr name, Expr container) {
+		init(parent) {
+			name = name.v;
+		}
+
+		Var cont(this, SStr(" c"), container);
+		LocalVarAccess getCont(cont.var);
+		add(cont);
+
+		Var atDecl(this, SStr(" at"), namedExpr(this, SStr("begin"), getCont, Actual()));
+		LocalVarAccess getAt(atDecl.var);
+		add(atDecl);
+
+		Var endDecl(this, SStr(" end"), namedExpr(this, SStr("end"), getCont, Actual()));
+		LocalVarAccess getEnd(endDecl.var);
+		add(endDecl);
+
+		For loop(this);
+		add(loop);
+
+		ExprBlock body(loop);
+		loop.test(namedExpr(loop, SStr("!="), getAt, Actual(getEnd)));
+		loop.update(namedExpr(loop, SStr("++*"), getAt, Actual()));
+		loop.body(body);
+
+		body.add(Var(loop, name, namedExpr(loop, SStr("v"), getAt, Actual())));
+		loopBlock = body;
+	}
+
+	void body(Expr expr) {
+		unless (loopBlock)
+			return;
+
+		loopBlock.add(expr);
+	}
+
+	// Hide the fact that we're actually two nested blocks!
+	LocalVar? variable(NamePart part) {
+		if (part.name.equals(name)) {
+			if (loopBlock) {
+				return loopBlock.variable(part);
+			}
+		}
+
+		super:variable(part);
+	}
+
+}

@@ -598,4 +598,8 @@ namespace storm {
 		return wrap::Ref(fn->directRef());
 	}
 
+	Value result(Par<Function> fn) {
+		return fn->result;
+	}
+
 }

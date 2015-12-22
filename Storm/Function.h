@@ -174,6 +174,9 @@ namespace storm {
 		const nat vtableSlot;
 	};
 
+	// Get result from storm.
+	Value STORM_FN result(Par<Function> fn);
+
 
 	// Determine if 'a' is an overload of 'b'.
 	bool isOverload(Function *base, Function *overload);

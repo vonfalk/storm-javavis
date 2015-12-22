@@ -205,7 +205,11 @@ namespace storm {
 		return (type->typeFlags & typeClass) != 0;
 	}
 
-	Value Value::asRef(bool z) const {
+	Value Value::asRef() const {
+		return asRef(true);
+	}
+
+	Value Value::asRef(Bool z) const {
 		Value v(*this);
 		if (type)
 			v.ref = z;

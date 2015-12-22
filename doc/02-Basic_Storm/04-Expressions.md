@@ -545,5 +545,32 @@ do {
 }
 ```
 
-The for loop is also present in Basic Storm. It works just like in C++. The foreach-variant is not
-yet implemented.
+The for-loop
+-------------
+
+The for loop from C++ is also present in Basic Storm. It works just like in C++:
+
+```
+for (Int i = 0; i < 20; i++) {
+    // Repeated 20 times.
+}
+```
+
+There is also a variant that iterates through a container or a range:
+
+```
+Int[] array = [1, 2, 3, 4];
+for (x in array) {
+    // Repeated for each x in the array.
+}
+```
+
+This is equivalent to:
+
+```
+Int[] array = [1, 2, 3, 4];
+for (var i = array.begin(); i != array.end(); ++i) {
+    var x = i.v;
+    // Repeated...
+}
+```

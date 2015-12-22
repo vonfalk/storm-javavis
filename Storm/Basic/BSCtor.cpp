@@ -88,15 +88,18 @@ namespace storm {
 		// Parameters (first one is special).
 		{
 			Variable thisVar = l.frame.createParameter(params[0].size(), false);
-			Auto<LocalVar> hidden = body->variable(L" this");
-			Auto<LocalVar> normal = body->variable(L"this");
+			Auto<NamePart> hiddenName = CREATE(NamePart, this, L" this");
+			Auto<NamePart> normalName = CREATE(NamePart, this, L"this");
+			Auto<LocalVar> hidden = body->variable(hiddenName);
+			Auto<LocalVar> normal = body->variable(normalName);
 			hidden->var = VarInfo(thisVar);
 			normal->var = VarInfo(thisVar);
 		}
 
 		for (nat i = 1; i < params.size(); i++) {
 			const Value &t = params[i];
-			Auto<LocalVar> var = body->variable(paramNames[i]);
+			Auto<NamePart> name = CREATE(NamePart, this, paramNames[i]);
+			Auto<LocalVar> var = body->variable(name);
 			assert(var);
 			var->createParam(state);
 		}
@@ -163,7 +166,8 @@ namespace storm {
 		rootBlock = block.borrow();
 
 		// Add the regular this parameter!
-		thisVar = steal(block->variable(L" this"));
+		Auto<NamePart> name = CREATE(NamePart, this, L" this");
+		thisVar = steal(block->variable(name));
 		thisPtr = thisVar->result;
 		Auto<LocalVar> created = CREATE(LocalVar, this, L"this", thisPtr, thisVar->pos, true);
 		created->constant = true;
