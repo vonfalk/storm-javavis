@@ -89,6 +89,13 @@ namespace storm {
 			Iter &operator ++();
 			Iter operator ++(int);
 
+			// Raw get function.
+			void *getRaw() const;
+
+			// Raw pre- and post increment.
+			Iter CODECALL preIncRaw();
+			Iter CODECALL postIncRaw();
+
 		protected:
 			// Array we're pointing to.
 			Auto<ArrayBase> owner;
@@ -99,6 +106,10 @@ namespace storm {
 			// At end?
 			bool atEnd() const;
 		};
+
+		// Raw iterator interface.
+		Iter CODECALL beginRaw();
+		Iter CODECALL endRaw();
 
 	protected:
 		// Size.

@@ -139,6 +139,14 @@ namespace storm {
 		return r->toS();
 	}
 
+	ArrayBase::Iter ArrayBase::beginRaw() {
+		return Iter(this, 0);
+	}
+
+	ArrayBase::Iter ArrayBase::endRaw() {
+		return Iter(this, count());
+	}
+
 	ArrayBase::Iter::Iter() : index(0) {}
 
 	ArrayBase::Iter::Iter(Par<ArrayBase> owner, nat index) : owner(owner), index(index) {}
@@ -169,6 +177,19 @@ namespace storm {
 		Iter c(*this);
 		index++;
 		return c;
+	}
+
+	ArrayBase::Iter ArrayBase::Iter::preIncRaw() {
+		return ++(*this);
+	}
+
+	ArrayBase::Iter ArrayBase::Iter::postIncRaw() {
+		return (*this)++;
+	}
+
+	void *ArrayBase::Iter::getRaw() const {
+		assert(owner); // TODO: Throw real exception here.
+		return owner->atRaw(index);
 	}
 
 }

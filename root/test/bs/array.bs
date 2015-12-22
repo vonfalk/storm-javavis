@@ -105,3 +105,13 @@ Array<DbgActor> createActorArray() {
 	dbg;
 }
 
+Int testIterator() {
+	Int[] data = [1, 2, 3, 4, 5];
+	Int sum = 0;
+
+	for (var i = data.begin; i != data.end; ++i) {
+		sum += i.v;
+	}
+
+	sum;
+}

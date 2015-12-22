@@ -360,6 +360,10 @@ namespace storm {
 	}
 
 	void Type::validate(Named *o) {
+		// Types containing types is completely fine!
+		if (as<Type>(o))
+			return;
+
 		if (o->params.empty())
 			throw TypedefError(L"Member functions must have at least one parameter! " + o->name + L" in " + name);
 

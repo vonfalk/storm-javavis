@@ -5,7 +5,7 @@
 #include "Storm/CodeGen.h"
 
 namespace storm {
-	STORM_PKG(core);
+	STORM_PKG(core.lang);
 
 	// Add the map type to the package given.
 	void addMapTemplate(Par<Package> to);

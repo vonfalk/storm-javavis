@@ -5,7 +5,7 @@
 #include "Storm/CodeGen.h"
 
 namespace storm {
-	STORM_PKG(core);
+	STORM_PKG(core.lang);
 
 	// Add the array template class to the package given.
 	void addArrayTemplate(Par<Package> to);
@@ -26,12 +26,27 @@ namespace storm {
 		virtual bool loadAll();
 
 	private:
-
 		// Load functions assuming param is an object.
 		void loadClassFns();
 
 		// Load functions assuming param is a value.
 		void loadValueFns();
+	};
+
+	/**
+	 * The array iterator type.
+	 */
+	class ArrayIterType : public Type {
+		STORM_CLASS;
+	public:
+		// Ctor.
+		ArrayIterType(const Value &param);
+
+		// Parameter type.
+		const Value param;
+
+		// Lazy loading.
+		virtual bool loadAll();
 	};
 
 	// See Array.h for 'arrayType' function.

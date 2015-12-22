@@ -17,7 +17,7 @@ namespace code {
 
 			this->size = size;
 			// Generally, it is not useful to align to more than the machine word size.
-			this->align = min(ptr, size);
+			this->align = max(nat(1), min(ptr, size));
 		}
 
 		// Add another aligned size.

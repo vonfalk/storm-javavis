@@ -60,16 +60,7 @@ namespace storm {
 		return to;
 	}
 
-	static void *CODECALL getClass(ArrayP<Object> *from, Nat id) {
-		return from->atRaw(id);
-	}
-
 	static void *CODECALL getValue(ArrayBase *from, Nat id) {
-		return from->atRaw(id);
-	}
-
-	static void *CODECALL randomClass(ArrayP<Object> *from) {
-		Nat id = rand(Nat(0), from->count());
 		return from->atRaw(id);
 	}
 
@@ -102,10 +93,26 @@ namespace storm {
 		if (param.ref)
 			throw InternalError(L"References are not supported by the array yet.");
 
+		Auto<Type> iterator = CREATE(ArrayIterType, this, param);
+		add(iterator);
+
 		if (param.isClass())
 			loadClassFns();
 		else
 			loadValueFns();
+
+		// Shared functions.
+		Engine &e = engine;
+		Value t = Value::thisPtr(this);
+		Value iter(iterator.borrow());
+		Value cloneEnv(CloneEnv::stormType(e));
+		Value refParam = param.asRef(true);
+
+		add(steal(nativeFunction(e, iter, L"begin", valList(1, t), address(&ArrayBase::beginRaw))));
+		add(steal(nativeFunction(e, iter, L"end", valList(1, t), address(&ArrayBase::endRaw))));
+		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&ArrayBase::deepCopy))));
+		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getValue))));
+		add(steal(nativeFunction(e, refParam, L"random", valList(1, t), address(&randomValue))));
 
 		return Type::loadAll();
 	}
@@ -113,16 +120,11 @@ namespace storm {
 	void ArrayType::loadClassFns() {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
-		Value refParam = param.asRef(true);
-		Value cloneEnv(CloneEnv::stormType(e));
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createClass))));
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&copyClass))));
 		add(steal(nativeFunction(e, t, L"<<", valList(2, t, param), address(&pushClass))));
 		add(steal(nativeFunction(e, t, L"push", valList(2, t, param), address(&pushClass))));
-		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getClass))));
-		add(steal(nativeFunction(e, refParam, L"random", valList(1, t), address(&randomClass))));
-		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&ArrayBase::deepCopy))));
 		add(steal(nativeDtor(e, this, &destroyClass)));
 	}
 
@@ -130,15 +132,11 @@ namespace storm {
 		Engine &e = engine;
 		Value t = Value::thisPtr(this);
 		Value refParam = param.asRef(true);
-		Value cloneEnv(CloneEnv::stormType(e));
 
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createValue))));
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, t), address(&copyValue))));
 		add(steal(nativeFunction(e, t, L"<<", valList(2, t, refParam), address(&pushValue))));
 		add(steal(nativeFunction(e, t, L"push", valList(2, t, refParam), address(&pushValue))));
-		add(steal(nativeFunction(e, refParam, L"[]", valList(2, t, Value(natType(e))), address(&getValue))));
-		add(steal(nativeFunction(e, refParam, L"random", valList(1, t), address(&randomValue))));
-		add(steal(nativeFunction(e, Value(), L"deepCopy", valList(2, t, cloneEnv), address(&ArrayBase::deepCopy))));
 		add(steal(nativeDtor(e, this, &destroyValue)));
 	}
 
@@ -181,6 +179,60 @@ namespace storm {
 		if (isArray(v))
 			return v;
 		return Value(arrayType(v.type->engine, v));
+	}
+
+
+	/**
+	 * Array iterator.
+	 */
+
+	typedef ArrayBase::Iter Iter;
+
+	static void copyIterator(void *to, const Iter *from) {
+		new (to) Iter(*from);
+	}
+
+	static void destroyIterator(Iter *del) {
+		del->~Iter();
+	}
+
+	static bool iteratorEq(Iter &a, Iter &b) {
+		return a == b;
+	}
+
+	static bool iteratorNeq(Iter &a, Iter &b) {
+		return a != b;
+	}
+
+	static void *iteratorGet(const Iter &v) {
+		return v.getRaw();
+	}
+
+	static Size iterSize() {
+		Size s = Size::sPtr;
+		s += Size::sNat;
+		assert(s.current() == sizeof(Iter));
+		return s;
+	}
+
+	ArrayIterType::ArrayIterType(const Value &param) :
+		Type(L"Iter", typeValue, valList(1, param), iterSize()), param(param) {}
+
+	bool ArrayIterType::loadAll() {
+		Engine &e = engine;
+		Value val(this);
+		Value ref = val.asRef();
+		Value refParam = param.asRef(true);
+
+		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, ref, ref), address(&copyIterator))));
+		add(steal(nativeFunction(e, boolType(e), L"==", valList(2, ref, ref), address(&iteratorEq))));
+		add(steal(nativeFunction(e, boolType(e), L"!=", valList(2, ref, ref), address(&iteratorNeq))));
+		add(steal(nativeFunction(e, val, L"++*", valList(1, ref), address(&Iter::preIncRaw))));
+		add(steal(nativeFunction(e, val, L"*++", valList(1, ref), address(&Iter::postIncRaw))));
+		add(steal(nativeFunction(e, refParam, L"v", valList(1, ref), address(&iteratorGet))));
+		add(steal(nativeDtor(e, this, &destroyIterator)));
+
+		return Type::loadAll();
 	}
 
 }

@@ -5,7 +5,7 @@
 #include "CodeGenFwd.h"
 
 namespace storm {
-	STORM_PKG(core);
+	STORM_PKG(core.lang);
 
 	// Add the FnPtr template class to the package given.
 	void addFnPtrTemplate(Par<Package> to);

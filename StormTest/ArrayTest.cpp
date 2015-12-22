@@ -47,6 +47,7 @@ BEGIN_TEST(StormArrayTest) {
 	CHECK_EQ(runFn<Int>(L"test.bs.testInitAutoArray"), 1234);
 	CHECK_EQ(runFn<Int>(L"test.bs.testAutoArray"), 0);
 	CHECK_EQ(runFn<Int>(L"test.bs.testCastArray"), 2);
+	CHECK_EQ(runFn<Int>(L"test.bs.testIterator"), 15);
 
 	// Interoperability.
 	Auto<Array<DbgVal>> r = runFn<Array<DbgVal>*>(L"test.bs.createValArray");

@@ -5,7 +5,7 @@
 #include "Code/Listing.h"
 
 namespace storm {
-	STORM_PKG(core);
+	STORM_PKG(core.lang);
 
 	/**
 	 * The future template class used in Storm.
