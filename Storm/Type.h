@@ -162,6 +162,9 @@ namespace storm {
 		// Type handle.
 		RefHandle *typeHandle;
 
+		// Cache of the copy ctor (borrowed ptr). For some reason, this can not be Auto<>.
+		Function *copyCtorCache;
+
 		// Which thread should we be running on?
 		Auto<NamedThread> thread;
 

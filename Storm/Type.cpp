@@ -71,6 +71,7 @@ namespace storm {
 		// Clear any references from our vtable first.
 		vtable.clearRefs();
 		// Clear any ctors before the vtable dies.
+		copyCtorCache = null;
 		NameSet::clear();
 		delete typeHandle;
 	}
@@ -349,6 +350,8 @@ namespace storm {
 
 	void Type::add(Par<Named> o) {
 		validate(o.borrow());
+		if (o->name == CTOR)
+			copyCtorCache = null;
 
 		NameSet::add(o);
 		layout.add(o.borrow());
@@ -402,11 +405,15 @@ namespace storm {
 	}
 
 	Function *Type::copyCtor() {
-		return steal(findCpp(CTOR, vector<Value>(2, Value::thisPtr(this)))).as<Function>().borrow();
+		if (!copyCtorCache) {
+			Auto<Named> n = findCpp(CTOR, vector<Value>(2, Value::thisPtr(this)));
+			copyCtorCache = n.as<Function>().borrow();
+		}
+
+		return copyCtorCache;
 	}
 
 	const void *Type::copyCtorFn() {
-		// TODO: Cache this!
 		return copyCtor()->pointer();
 	}
 
