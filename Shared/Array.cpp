@@ -152,7 +152,7 @@ namespace storm {
 	ArrayBase::Iter::Iter(Par<ArrayBase> owner, nat index) : owner(owner), index(index) {}
 
 	bool ArrayBase::Iter::atEnd() const {
-		return !owner && index == owner->count();
+		return !owner || index >= owner->count();
 	}
 
 	bool ArrayBase::Iter::operator ==(const Iter &o) const {
@@ -179,7 +179,7 @@ namespace storm {
 		return c;
 	}
 
-	ArrayBase::Iter ArrayBase::Iter::preIncRaw() {
+	ArrayBase::Iter &ArrayBase::Iter::preIncRaw() {
 		return ++(*this);
 	}
 
@@ -188,8 +188,13 @@ namespace storm {
 	}
 
 	void *ArrayBase::Iter::getRaw() const {
-		assert(owner); // TODO: Throw real exception here.
+		if (atEnd())
+			throw ArrayError(L"Trying to access an invalid iterator!");
 		return owner->atRaw(index);
+	}
+
+	Nat ArrayBase::Iter::getIndex() const {
+		return index;
 	}
 
 }

@@ -118,7 +118,53 @@ namespace storm {
 		// Print the current low-level layout.
 		void dbg_print();
 
+		/**
+		 * Iterator. Not exposed to strom, but used internally to make the implementation easier.
+		 * TODO: How does this fit with deepCopy?
+		 */
+		class Iter {
+		public:
+			// Pointing to the end.
+			Iter();
+
+			// Pointing to the first element.
+			Iter(Par<MapBase> owner);
+
+			// Compare
+			bool operator ==(const Iter &o) const;
+			bool operator !=(const Iter &o) const;
+
+			// Increase.
+			Iter &operator ++();
+			Iter operator ++(int);
+
+			// Raw get function.
+			void *getRawKey() const;
+			void *getRawVal() const;
+
+			// Raw pre- and post increment.
+			Iter &CODECALL preIncRaw();
+			Iter CODECALL postIncRaw();
+
+		private:
+			// Map we're pointing to.
+			Auto<MapBase> owner;
+
+			// Index in the raw table we're pointing to.
+			nat index;
+
+			// At end?
+			bool atEnd() const;
+		};
+
+		// Raw begin and end.
+		Iter CODECALL beginRaw();
+		Iter CODECALL endRaw();
+
 	private:
+		// Befriend the iterator.
+		friend class Iter;
+
 		// # of contained elements.
 		nat size;
 
@@ -228,6 +274,36 @@ namespace storm {
 		// Remove a value.
 		void remove(const K &k) {
 			removeRaw(&k);
+		}
+
+		// Our iterator.
+		class Iter : public MapBase::Iter {
+		public:
+			Iter() : MapBase::Iter() {}
+
+			Iter(Par<Map<K, V>> owner) : MapBase::Iter(owner) {}
+
+			std::pair<K, V&> operator *() const {
+				return std::pair<K, V&>(*(K *)getRawKey(), *(V *)getRawVal());
+			}
+
+			// We can not provide the -> operator, so we have .key and .value instead.
+			const K &key() const {
+				return *(const K *)getRawKey();
+			}
+
+			V &val() const {
+				return *(V *)getRawVal();
+			}
+		};
+
+		// Access the iterator.
+		Iter begin() {
+			return Iter(this);
+		}
+
+		Iter end() {
+			return Iter();
 		}
 
 	};

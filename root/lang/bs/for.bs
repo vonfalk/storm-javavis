@@ -8,13 +8,27 @@ use core:lang;
  */
 class RangeFor extends ExprBlock {
 	ExprBlock? loopBlock;
-	Str name;
+	Str? keyName;
+	Str valName;
 
 	ctor(Block parent, SStr name, Expr container) {
 		init(parent) {
-			name = name.v;
+			valName = name.v;
 		}
 
+		createCode(container);
+	}
+
+	ctor(Block parent, SStr key, SStr value, Expr container) {
+		init(parent) {
+			keyName = key.v;
+			valName = value.v;
+		}
+
+		createCode(container);
+	}
+
+	void createCode(Expr container) {
 		Var cont(this, SStr(" c"), container);
 		LocalVarAccess getCont(cont.var);
 		add(cont);
@@ -35,7 +49,11 @@ class RangeFor extends ExprBlock {
 		loop.update(namedExpr(loop, SStr("++*"), getAt, Actual()));
 		loop.body(body);
 
-		body.add(Var(loop, name, namedExpr(loop, SStr("v"), getAt, Actual())));
+		if (keyName) {
+			body.add(Var(loop, SStr(keyName), namedExpr(loop, SStr("k"), getAt, Actual())));
+		}
+
+		body.add(Var(loop, SStr(valName), namedExpr(loop, SStr("v"), getAt, Actual())));
 		loopBlock = body;
 	}
 
@@ -48,9 +66,17 @@ class RangeFor extends ExprBlock {
 
 	// Hide the fact that we're actually two nested blocks!
 	LocalVar? variable(NamePart part) {
-		if (part.name.equals(name)) {
+		if (part.name.equals(valName)) {
 			if (loopBlock) {
 				return loopBlock.variable(part);
+			}
+		}
+
+		if (keyName) {
+			if (part.name.equals(keyName)) {
+				if (loopBlock) {
+					return loopBlock.variable(part);
+				}
 			}
 		}
 

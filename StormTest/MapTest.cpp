@@ -59,6 +59,26 @@ BEGIN_TEST(MapTest) {
 		CHECK_OBJ_EQ(map->get(3), steal(CREATE(Str, e, L"World")));
 	}
 
+	{
+		// Test the iterator.
+		typedef Map<Int, Int> IIMap;
+		Auto<IIMap> map = CREATE(IIMap, e);
+
+		std::map<int, int> ref;
+
+		map->put(1, 2); ref[1] = 2;
+		map->put(2, 3); ref[2] = 3;
+		map->put(3, 4); ref[3] = 4;
+
+		for (IIMap::Iter i = map->begin(); i != map->end(); i++) {
+			CHECK(ref.count(i.key()));
+			CHECK_EQ(ref[i.key()], i.val());
+
+			// Make sure we do not get duplicates!
+			ref.erase(i.key());
+		}
+	}
+
 
 	// We do not need the benchmark in regular use.
 	//benchmark();
@@ -126,6 +146,15 @@ BEGIN_TEST(StormMapTest) {
 	// Use the [] operator.
 	{
 		CHECK_EQ(runFn<Int>(L"test.bs.addMap"), 20);
+	}
+
+	// Use the iterator.
+	{
+		Auto<Map<Int, Int>> map = CREATE(IIMap, e);
+		map->put(1, 10);
+		map->put(2, 12);
+
+		CHECK_EQ(runFn<Int>(L"test.bs.iterateMap", map.borrow()), 34);
 	}
 
 } END_TEST

@@ -3,6 +3,7 @@
 #include "Types.h"
 #include "Handle.h"
 #include "Value.h"
+#include "Utils/Exception.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -14,6 +15,17 @@ namespace storm {
 	// This function is implemented in ArrayTemplate.cpp
 	// Look up a specific array type (create it if it is not already created).
 	Type *arrayType(Engine &e, const ValueData &type);
+
+	/**
+	 * Custom error type.
+	 */
+	class ArrayError : public Exception {
+	public:
+		ArrayError(const String &msg) : msg(msg) {}
+		virtual String what() const { return L"Array error: " + msg; }
+	private:
+		String msg;
+	};
 
 	/**
 	 * The base class that is used in Storm, use the derived class in C++.
@@ -52,13 +64,14 @@ namespace storm {
 		void STORM_FN erase(Nat id);
 
 		// Raw operations.
-		void pushRaw(const void *value) {
+		inline void pushRaw(const void *value) {
 			ensure(size + 1);
 			(*handle.create)(ptr(size++), value);
 		}
 
-		void *atRaw(nat id) {
-			assert(id < size); // TODO: Throw a real exception here!
+		inline void *atRaw(nat id) {
+			if (id >= size)
+				throw ArrayError(L"Out of bounds: " + ::toS(id) + L", count: " + ::toS(count()));
 			return ptr(id);
 		}
 
@@ -92,8 +105,11 @@ namespace storm {
 			// Raw get function.
 			void *getRaw() const;
 
+			// Get the current index.
+			Nat getIndex() const;
+
 			// Raw pre- and post increment.
-			Iter CODECALL preIncRaw();
+			Iter &CODECALL preIncRaw();
 			Iter CODECALL postIncRaw();
 
 		protected:
@@ -176,7 +192,7 @@ namespace storm {
 		 */
 		class Iter : public ArrayBase::Iter {
 		public:
-			Iter() {}
+			Iter() : MapBase::Iter() {}
 
 			Iter(Par<Array<T>> owner, nat index = 0) : ArrayBase::Iter(owner, index) {}
 

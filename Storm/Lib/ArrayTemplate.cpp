@@ -208,6 +208,10 @@ namespace storm {
 		return v.getRaw();
 	}
 
+	static Nat iteratorGetKey(const Iter &v) {
+		return v.getIndex();
+	}
+
 	static Size iterSize() {
 		Size s = Size::sPtr;
 		s += Size::sNat;
@@ -216,7 +220,7 @@ namespace storm {
 	}
 
 	ArrayIterType::ArrayIterType(const Value &param) :
-		Type(L"Iter", typeValue, valList(1, param), iterSize()), param(param) {}
+		Type(L"Iter", typeValue, valList(0), iterSize()), param(param) {}
 
 	bool ArrayIterType::loadAll() {
 		Engine &e = engine;
@@ -227,8 +231,9 @@ namespace storm {
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, ref, ref), address(&copyIterator))));
 		add(steal(nativeFunction(e, boolType(e), L"==", valList(2, ref, ref), address(&iteratorEq))));
 		add(steal(nativeFunction(e, boolType(e), L"!=", valList(2, ref, ref), address(&iteratorNeq))));
-		add(steal(nativeFunction(e, val, L"++*", valList(1, ref), address(&Iter::preIncRaw))));
+		add(steal(nativeFunction(e, ref, L"++*", valList(1, ref), address(&Iter::preIncRaw))));
 		add(steal(nativeFunction(e, val, L"*++", valList(1, ref), address(&Iter::postIncRaw))));
+		add(steal(nativeFunction(e, natType(e), L"k", valList(1, ref), address(&iteratorGetKey))));
 		add(steal(nativeFunction(e, refParam, L"v", valList(1, ref), address(&iteratorGet))));
 		add(steal(nativeDtor(e, this, &destroyIterator)));
 

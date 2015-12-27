@@ -574,3 +574,8 @@ for (var i = array.begin(); i != array.end(); ++i) {
     // Repeated...
 }
 ```
+
+When the container's iterator associates a key to each element, write `for (key, value in x)` to
+access the key in each step as well. `key` is extracted using the `k` member of the iterator, while
+`value` is extracted using the `v` member. See [iterators](md://Storm/Iterators.md) for more
+information.

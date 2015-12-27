@@ -115,3 +115,14 @@ Int testIterator() {
 
 	sum;
 }
+
+Int testIteratorIndex() {
+	Int[] data = [3, 2, 1, 4];
+	Int sum = 0;
+
+	for (k, v in data) {
+		sum += k.int * v;
+	}
+
+	sum;
+}

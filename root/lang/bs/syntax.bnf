@@ -150,6 +150,7 @@ ForInner => For(block) : Expr(me) -> test, ";", Expr(me) -> update, ")", Stmt(me
 
 // Range-based for loop.
 Loop => RangeFor(block, var, container) : "for", "(", Name var, "in", Expr(block) container, ")", Stmt(me) -> body;
+Loop => RangeFor(block, kVar, vVar, container) : "for", "(", Name kVar, ",", Name vVar, "in", Expr(block) container, ")", Stmt(me) -> body;
 
 // Unless block.
 Unless(Block block);

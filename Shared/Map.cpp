@@ -401,4 +401,76 @@ namespace storm {
 		return lastFree++;
 	}
 
+	MapBase::Iter MapBase::beginRaw() {
+		return Iter(this);
+	}
+
+	MapBase::Iter MapBase::endRaw() {
+		return Iter();
+	}
+
+	/**
+	 * The iterator.
+	 */
+
+	MapBase::Iter::Iter() : index(0) {}
+
+	MapBase::Iter::Iter(Par<MapBase> owner) : owner(owner), index(0) {
+		// Find the first used element and point there. This may cause us to point at the end.
+		while (!atEnd() && owner->info[index].status == Info::free)
+			index++;
+	}
+
+	bool MapBase::Iter::operator ==(const Iter &o) const {
+		if (atEnd() == o.atEnd() && atEnd())
+			return true;
+
+		return owner.borrow() == o.owner.borrow() && index == o.index;
+	}
+
+	bool MapBase::Iter::operator !=(const Iter &o) const {
+		return !(*this == o);
+	}
+
+	MapBase::Iter &MapBase::Iter::operator ++() {
+		// Find the next used entry:
+		if (!atEnd()) {
+			index++;
+			while (!atEnd() && owner->info[index].status == Info::free)
+				index++;
+		}
+
+		return *this;
+	}
+
+	MapBase::Iter MapBase::Iter::operator ++(int) {
+		Iter tmp(*this);
+		++(*this);
+		return tmp;
+	}
+
+	bool MapBase::Iter::atEnd() const {
+		return !owner || index >= owner->capacity;
+	}
+
+	MapBase::Iter &MapBase::Iter::preIncRaw() {
+		return ++(*this);
+	}
+
+	MapBase::Iter MapBase::Iter::postIncRaw() {
+		return (*this)++;
+	}
+
+	void *MapBase::Iter::getRawKey() const {
+		if (atEnd() || owner->info[index].status == Info::free)
+			throw MapError(L"Trying to access an invalid iterator!");
+		return owner->keyPtr(index);
+	}
+
+	void *MapBase::Iter::getRawVal() const {
+		if (atEnd() || owner->info[index].status == Info::free)
+			throw MapError(L"Trying to access an invalid iterator!");
+		return owner->valPtr(index);
+	}
+
 }

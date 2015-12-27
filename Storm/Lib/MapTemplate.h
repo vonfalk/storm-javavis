@@ -30,6 +30,22 @@ namespace storm {
 		void addAccess(code::RefSource *defaultCtor);
 	};
 
+	/**
+	 * The map iterator type.
+	 */
+	class MapIterType : public Type {
+		STORM_CLASS;
+	public:
+		// Ctor.
+		MapIterType(const Value &key, const Value &value);
+
+		// Parameter types.
+		const Value key, value;
+
+		// Lazy loading.
+		virtual bool loadAll();
+	};
+
 	// See Map.h for 'mapType' function.
 
 }

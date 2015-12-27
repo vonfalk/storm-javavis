@@ -42,6 +42,7 @@ Storm also provides some higher-level types:
 * Str - string, immutable.
 * StrBuf - string buffer for more efficient string concatenations.
 * Array<T> - array template.
+* Map<K, V> - map template.
 * Thread - represents a OS thread.
 * Future<T> - future, for inter-thread communication.
 * FnPtr<R, ...> - function pointer.

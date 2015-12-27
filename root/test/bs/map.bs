@@ -78,3 +78,11 @@ Int addMapStr() {
 
 	m[10].toInt;
 }
+
+Int iterateMap(Int->Int data) {
+	Int r = 0;
+	for (k, v in data) {
+		r += k*v;
+	}
+	r;
+}
