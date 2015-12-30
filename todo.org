@@ -1,4 +1,9 @@
-* Core [5/43]
+* Core [5/44]
+
+ - [ ] Make it possible to nest classes in C++ as well. Currently, everything works, but the inner class is not inside the
+   outer class in Storm. This probably needs a re-structuring of the format outputted by the pre-processor. Needed for 
+   Str:Iter. It seems like nesting classes confuses the preprocessor as well. Referring to the inner class in the outer class
+   does not work without a full qualifier.
 
  - [ ] Implement some clever solution regarding iterators and deepCopy.
 

@@ -217,8 +217,3 @@ Int testIntCtor() {
 	Int z(20);
 	z;
 }
-
-Nat testStr() {
-	Str s = "Hello World!";
-	s.count;
-}

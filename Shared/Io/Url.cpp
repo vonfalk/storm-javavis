@@ -132,7 +132,7 @@ namespace storm {
 		validate(p->v);
 
 		Url *c = copy();
-		if (p->count() == 0)
+		if (p->empty())
 			return c;
 
 		c->parts->push(p);
@@ -154,7 +154,7 @@ namespace storm {
 		validate(p->v);
 
 		Url *c = copy();
-		if (p->count() == 0)
+		if (p->empty())
 			return c;
 
 		c->parts->push(p);

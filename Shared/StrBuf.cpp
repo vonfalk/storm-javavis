@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "StrBuf.h"
 #include "Str.h"
+#include "Utf.h"
 
 namespace storm {
 
@@ -13,8 +14,8 @@ namespace storm {
 	}
 
 	StrBuf::StrBuf(Par<Str> str) : buffer(null), capacity(0), pos(0) {
-		ensure(str->count());
-		pos = str->count();
+		ensure(str->v.size());
+		pos = str->v.size();
 		for (nat i = 0; i < pos; i++)
 			buffer[i] = str->v[i];
 	}
@@ -64,8 +65,8 @@ namespace storm {
 	}
 
 	StrBuf *StrBuf::add(Par<Str> str) {
-		ensure(pos + str->count());
-		for (nat i = 0; i < str->count(); i++) {
+		ensure(pos + str->v.size());
+		for (nat i = 0; i < str->v.size(); i++) {
 			buffer[pos++] = str->v[i];
 		}
 
@@ -200,30 +201,28 @@ namespace storm {
 		return this;
 	}
 
+	StrBuf *StrBuf::add(Char ch) {
+		if (!utf16::valid(ch.value)) {
+			ensure(pos + 1);
+			buffer[pos++] = '?';
+		} else if (utf16::split(ch.value)) {
+			// Two needed!
+			ensure(pos + 2);
+			buffer[pos++] = utf16::splitLeading(ch.value);
+			buffer[pos++] = utf16::splitTrailing(ch.value);
+		} else {
+			// One!
+			ensure(pos + 1);
+			buffer[pos++] = wchar(ch.value);
+		}
+
+		addRef();
+		return this;
+	}
+
 	// Add a single char.
 	void StrBuf::addChar(Nat p) {
-		if (p >= 0xD800 && p < 0xE000) {
-			// Invalid codepoint.
-			// p = '?';
-			// We allow this here...
-		}
-
-		if (p >= 0x110000) {
-			// Too large for UTF16.
-			p = '?';
-		}
-
-		if (p < 0xFFFF) {
-			// One is enough!
-			ensure(pos + 1);
-			buffer[pos++] = (wchar)p;
-		} else {
-			// Surrogate pair.
-			p -= 0x010000;
-			ensure(pos + 2);
-			buffer[pos++] = wchar(((p >> 10) & 0x3FF) + 0xD800);
-			buffer[pos++] = wchar((p & 0x3FF) + 0xDC00);
-		}
+		Auto<StrBuf> x = add(Char(p));
 	}
 
 	void StrBuf::output(wostream &to) const {

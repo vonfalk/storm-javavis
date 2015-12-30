@@ -37,7 +37,6 @@ BEGIN_TEST(BasicSyntax) {
 	CHECK_EQ(runFn<Int>(L"test.bs-simple.testCtor"), 20);
 	CHECK_EQ(runFn<Int>(L"test.bs-simple.testIntCtor"), 20);
 
-	CHECK_EQ(runFn<Int>(L"test.bs-simple.testStr"), 12);
 	CHECK_ERROR(runFn<Int>(L"test.bs-simple.forError", 10), DebugError);
 	CHECK_RUNS(runFn<Int>(L"test.bs-simple.forScope"));
 	CHECK_RUNS(runFn<Int>(L"test.bs-simple.forScopeVal"));

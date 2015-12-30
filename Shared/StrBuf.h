@@ -1,5 +1,6 @@
 #pragma once
 #include "Object.h"
+#include "Char.h"
 #include "Utils/Templates.h"
 
 namespace storm {
@@ -38,6 +39,7 @@ namespace storm {
 		StrBuf *STORM_FN add(Word i);
 		StrBuf *STORM_FN add(Byte i);
 		StrBuf *STORM_FN add(Float i);
+		StrBuf *STORM_FN add(Char i);
 
 		// Operator <<
 		inline StrBuf *STORM_FN operator <<(Par<Str> str) { return add(str); }
@@ -47,6 +49,7 @@ namespace storm {
 		inline StrBuf *STORM_FN operator <<(Word i) { return add(i); }
 		inline StrBuf *STORM_FN operator <<(Byte i) { return add(i); }
 		inline StrBuf *STORM_FN operator <<(Float i) { return add(i); }
+		inline StrBuf *STORM_FN operator <<(Char i) { return add(i); }
 
 		// Help the templating below...
 		StrBuf *CODECALL add(Str *str);

@@ -1,10 +1,22 @@
 #pragma once
 #include "Object.h"
-#include "Array.h"
+#include "Char.h"
+#include "Utils/Exception.h"
 
 namespace storm {
 
 	STORM_PKG(core);
+
+	/**
+	 * Custom exception.
+	 */
+	class StrError : public Exception {
+	public:
+		StrError(const String &msg) : msg(L"String error: " + msg) {}
+		virtual String what() const { return msg; }
+	private:
+		String msg;
+	};
 
 	/**
 	 * The string type used in Basic Storm. This string type tries its best to hide the fact that
@@ -24,7 +36,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// The value of this 'str' object.
-		String v;
+		const String v;
 
 		// From literal ctor.
 		Str(const wchar *s);
@@ -35,11 +47,18 @@ namespace storm {
 		// Copy ctor
 		STORM_CTOR Str(Par<Str> copy);
 
+		// Create from char.
+		STORM_CAST_CTOR Str(Char ch);
+
 		// Create from regular string.
 		Str(const String &s);
 
-		// String length.
-		Nat STORM_FN count() const;
+		// String empty?
+		Bool STORM_FN empty() const;
+		Bool STORM_FN any() const;
+
+		// We can add a string length function that uses a cached length computed at creation-time,
+		// but is that useful?
 
 		// Concatenation.
 		Str *STORM_FN operator +(Par<Str> o);
@@ -74,8 +93,55 @@ namespace storm {
 		// Create a string from a literal. There is a reference in Engine to this function.
 		static Str *CODECALL createStr(Type *strType, const wchar *str);
 
+		// Iterator in the string.
+		class Iter {
+			STORM_VALUE;
+		public:
+
+			// Deep copy. No need to do anything, strings are immutable!
+			void STORM_FN deepCopy(Par<CloneEnv> env);
+
+			// Advance.
+			Iter &operator ++();
+			Iter operator ++(int);
+
+			// Compare.
+			Bool STORM_FN operator ==(const Iter &o) const;
+			Bool STORM_FN operator !=(const Iter &o) const;
+
+			// Get the value.
+			Char operator *() const;
+			Char STORM_FN v() const;
+
+		private:
+			friend class Str;
+
+			// Create iterator to start.
+			Iter(Par<Str> str);
+
+			// Create iterator to end.
+			Iter();
+
+			// String we're referring to.
+			Auto<Str> owner;
+
+			// First index of the character we're referring to.
+			Nat index;
+
+			// At the end?
+			bool atEnd() const;
+		};
+
+		// Begin and end.
+		Str::Iter STORM_FN begin();
+		Str::Iter STORM_FN end();
+
 	protected:
 		virtual void output(wostream &to) const;
+
+	private:
+		// Char to string.
+		static String toString(const Char &ch);
 	};
 
 

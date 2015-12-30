@@ -372,6 +372,10 @@
 				RelativePath=".\Hash.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\Char.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -560,6 +564,18 @@
 			</File>
 			<File
 				RelativePath=".\Hash.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Char.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Char.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Utf.h"
 				>
 			</File>
 		</Filter>

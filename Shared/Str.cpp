@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Str.h"
+#include "Utf.h"
 
 namespace storm {
 
@@ -9,10 +10,34 @@ namespace storm {
 
 	Str::Str(const String &o) : Object(), v(o) {}
 
+	Str::Str(Char ch) : Object(), v(toString(ch)) {}
+
 	Str::Str(const wchar *s) : Object(), v(s) {}
 
-	nat Str::count() const {
-		return v.size();
+	String Str::toString(const Char &ch) {
+		wchar buf[3];
+
+		if (!utf16::valid(ch.value)) {
+			buf[0] = '?';
+			buf[1] = 0;
+		} else if (utf16::split(ch.value)) {
+			buf[0] = utf16::splitLeading(ch.value);
+			buf[1] = utf16::splitTrailing(ch.value);
+			buf[2] = 0;
+		} else {
+			buf[0] = wchar(ch.value);
+			buf[1] = 0;
+		}
+
+		return String(buf);
+	}
+
+	Bool Str::empty() const {
+		return v.empty();
+	}
+
+	Bool Str::any() const {
+		return !v.empty();
 	}
 
 	Str *Str::operator +(Par<Str> o) {
@@ -78,6 +103,82 @@ namespace storm {
 		return new (type) Str(str);
 	}
 
+	Str::Iter Str::begin() {
+		return Iter(this);
+	}
+
+	Str::Iter Str::end() {
+		return Iter();
+	}
+
+	/**
+	 * Iterator.
+	 */
+
+	Str::Iter::Iter() : index(0) {}
+
+	Str::Iter::Iter(Par<Str> owner) : owner(owner), index(0) {}
+
+	void Str::Iter::deepCopy(Par<CloneEnv> x) {
+		// No need to do anything. Strings are immutable in Storm!
+	}
+
+	bool Str::Iter::atEnd() const {
+		return !owner || index >= owner->v.size();
+	}
+
+	Str::Iter &Str::Iter::operator ++() {
+		if (!atEnd()) {
+			if (utf16::leading(owner->v[index])) {
+				// Skip the trailing one as well!
+				index += 2;
+			} else {
+				// Single skip.
+				index++;
+			}
+		}
+
+		return *this;
+	}
+
+	Str::Iter Str::Iter::operator ++(int) {
+		Iter tmp(*this);
+		++(*this);
+		return tmp;
+	}
+
+	Bool Str::Iter::operator ==(const Iter &o) const {
+		if (atEnd() == o.atEnd() && atEnd())
+			return true;
+
+		return owner.borrow() == o.owner.borrow() && index == o.index;
+	}
+
+	Bool Str::Iter::operator !=(const Iter &o) const {
+		return !(*this == o);
+	}
+
+	Char Str::Iter::operator *() const {
+		if (atEnd())
+			throw StrError(L"Trying to dereference an invalid iterator!");
+
+		wchar now = owner->v[index];
+		if (utf16::leading(now)) {
+			wchar next = owner->v[index + 1];
+			nat joined = utf16::assemble(now, next);
+			return Char(joined);
+		} else {
+			return Char(now);
+		}
+	}
+
+	Char Str::Iter::v() const {
+		return **this;
+	}
+
+	/**
+	 * Utility functions.
+	 */
 
 	// Indentation...
 	struct Indent {

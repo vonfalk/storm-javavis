@@ -264,15 +264,15 @@ namespace storm {
 	bs::Expr *STORM_FN bs::prefixOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr) {
 		Auto<Actual> actual = CREATE(Actual, block);
 		actual->add(expr);
-		o->v->v = o->v->v + L"*";
-		return namedExpr(block, o, actual);
+		Auto<SStr> altered = CREATE(SStr, o, o->v->v + L"*", o->pos);
+		return namedExpr(block, altered, actual);
 	}
 
 	bs::Expr *STORM_FN bs::postfixOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr) {
 		Auto<Actual> actual = CREATE(Actual, block);
 		actual->add(expr);
-		o->v->v = L"*" + o->v->v;
-		return namedExpr(block, o, actual);
+		Auto<SStr> altered = CREATE(SStr, o, L"*" + o->v->v, o->pos);
+		return namedExpr(block, altered, actual);
 	}
 
 	bs::Expr *STORM_FN bs::prePostOperator(Par<Block> block, Par<SStr> o, Par<Expr> expr) {
