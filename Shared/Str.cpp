@@ -83,6 +83,8 @@ namespace storm {
 	struct Indent {
 		wchar ch;
 		nat count;
+
+		static const nat invalid = -1;
 	};
 
 	static Indent indentOf(const String &str, nat start) {
@@ -128,32 +130,39 @@ namespace storm {
 		return true;
 	}
 
-	static Indent min(Indent a, Indent b) {
+	static Indent min(const Indent &a, const Indent &b) {
+		nat count = Indent::invalid;
+
+		if (a.count == Indent::invalid)
+			count = b.count;
+		else if (b.count == Indent::invalid)
+			count = a.count;
+		else
+			count = ::min(a.count, b.count);
+
+		wchar ch = 0;
 		if (a.ch == 0)
-			return b;
-		if (b.ch == 0)
-			return a;
+			ch = b.ch;
+		else if (b.ch == 0)
+			ch = a.ch;
+		else if (a.ch == b.ch)
+			ch = a.ch;
 
-		if (a.ch != b.ch) {
-			a.count = 0;
-			return a;
-		}
-
-		a.count = ::min(a.count, b.count);
-		return a;
+		Indent r = { ch, count };
+		return r;
 	}
 
 	Str *removeIndent(Par<Str> str) {
 		const String &src = str->v;
 
 		// Examine the indentation of all lines...
-		Indent remove = { 0, 0 };
+		Indent remove = { 0, Indent::invalid };
 		for (nat at = 0; at < src.size(); at = nextLine(src, at)) {
 			if (!emptyLine(src, at))
 				remove = min(remove, indentOf(src, at));
 		}
 
-		if (remove.count == 0 || remove.ch == 0)
+		if (remove.count == Indent::invalid)
 			return str.ret();
 
 		// Now we have some kind of indentation.

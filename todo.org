@@ -1,8 +1,6 @@
-* Core [4/43]
+* Core [5/43]
 
  - [ ] Implement some clever solution regarding iterators and deepCopy.
-
- - [ ] Str::removeIndent seems to be removing the entire first line of it's input.
 
  - [ ] Re-think the equals() in object! Idea: use a global equals with cached specific implementations in Type. This
    can also be used to implement > < and others!
@@ -86,6 +84,8 @@
  - [ ] Implement an interactive way of coding using 'reverse parsers'. In this case, it would be an autocomplete that knows the syntax
    and suggests all valid parts at the cursor position. It may not be able to suggest names, but it could suggest syntax constructions.
 
+ - [X] Str::removeIndent seems to be removing the entire first line of it's input.
+
  - [X] Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
    This is bad for example in the rule SkipBlock when running on a UThread. Try parsing lang.bs.main.bs in a UThread.
 
@@ -118,7 +118,7 @@
 
  - NOTE: Note to self: Parsing works _bad_ on rules like this: ( DELIMITER )*.
 
-* Code generation [0/9]
+* Code generation [1/9]
 
  - [ ] Make sure to destroy objects in reverse creation order, both in Binary.cpp (exception handling) and
    during regular cleanup.
@@ -128,10 +128,6 @@
    whenever the entire cycle has been removed and check for usages in the compiler.
 
  - [ ] Optimization pass in Code that looks for the pattern: addRef -> never written -> release() in dtor.
-
- - [ ] In the reference system, Reference should instead of containing a human-readable string contain some kind
-   of reference to what it provides (at least in most cases), so that the reference system can do a graph
-   search to find islands of code that are separated from the rest of the references.
 
  - [ ] Rename Value to Operand to avoid confusion?
 
@@ -144,7 +140,14 @@
 
  - [ ] Separate data and code in the listing so that strange op-codes can not be formed using dat() anywhere?
 
-* Basic Storm [4/18]
+ - [X] In the reference system, Reference should instead of containing a human-readable string contain some kind
+   of reference to what it provides (at least in most cases), so that the reference system can do a graph
+   search to find islands of code that are separated from the rest of the references.
+
+* Basic Storm [4/19]
+
+ - [ ] Make sure strings are stored as shorts in the generated machine code (currently not possible due to
+   limitations in the Code backend).
 
  - [ ] In lang:bs:macro, make sure that ReferNamed uses a symbolic reference instead of hard-coding the address
    as it does now.

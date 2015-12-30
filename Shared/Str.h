@@ -7,7 +7,18 @@ namespace storm {
 	STORM_PKG(core);
 
 	/**
-	 * The string type used by the generated code.
+	 * The string type used in Basic Storm. This string type tries its best to hide the fact that
+	 * strings in unicode are complicated. This is done by disallowing low-level operations on the
+	 * string (such as refering to characters based on their index), iterators are always working a
+	 * logical character at a time, and so on. The interface should be agnostic to the actual
+	 * storage of the string (which is currently UTF16).
+	 *
+	 * Currently, a character is equal to one unicode codepoint, but this may change to be one
+	 * character and any extra marks contained. In this case, proper normalization is required.
+	 *
+	 * Later, we want to ensure that the data in the string class is always normalized, and stays
+	 * that way, so to not confuse programmers and users about the relation between multiple
+	 * seemingly equivalent strings.
 	 */
 	class Str : public Object {
 		STORM_CLASS;
@@ -60,7 +71,7 @@ namespace storm {
 		// ToS
 		virtual Str *STORM_FN toS();
 
-		// Create a string from a literal. There is a reference in Engine to this.
+		// Create a string from a literal. There is a reference in Engine to this function.
 		static Str *CODECALL createStr(Type *strType, const wchar *str);
 
 	protected:

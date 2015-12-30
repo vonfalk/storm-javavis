@@ -394,6 +394,10 @@
 				RelativePath=".\AsmTest.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\StrTest.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
