@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Test/Test.h"
+#include "Fn.h"
 
 BEGIN_TEST(RemoveIndentTest) {
 	Engine &e = *gEngine;
@@ -36,5 +37,15 @@ BEGIN_TEST(StrIteratorTest) {
 	}
 
 	CHECK_EQ(at, ARRAY_COUNT(codepoints));
+
+
+	CHECK_EQ(runFn<Int>(L"test.bs.iterateStr", v.borrow()), ARRAY_COUNT(codepoints));
+
+	Auto<Array<Char>> ref = CREATE(Array<Char>, e);
+	for (nat i = 0; i < ARRAY_COUNT(codepoints); i++) {
+		ref->push(Char(codepoints[i]));
+	}
+
+	CHECK_EQ(runFn<Int>(L"test.bs.verifyStr", v.borrow(), ref.borrow()), 1);
 
 } END_TEST

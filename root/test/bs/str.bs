@@ -18,3 +18,32 @@ Str defaultToS() {
 	NoToS q;
 	q.toS;
 }
+
+// Iterate through a string, count what is in it.
+Int iterateStr(Str v) {
+	Int count = 0;
+	for (x in v) {
+		count++;
+	}
+	count;
+}
+
+Int verifyStr(Str v, Char[] ref) {
+	Nat count = 0;
+
+	for (x in v) {
+		if (count < ref.count) {
+			if (x != ref[count])
+				return 0;
+		} else {
+			return 0;
+		}
+		count++;
+	}
+
+	if (count == ref.count) {
+		1;
+	} else {
+		0;
+	}
+}

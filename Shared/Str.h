@@ -102,8 +102,8 @@ namespace storm {
 			void STORM_FN deepCopy(Par<CloneEnv> env);
 
 			// Advance.
-			Iter &operator ++();
-			Iter operator ++(int);
+			Iter &STORM_FN operator ++();
+			Iter STORM_FN operator ++(int dummy);
 
 			// Compare.
 			Bool STORM_FN operator ==(const Iter &o) const;

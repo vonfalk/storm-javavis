@@ -50,10 +50,10 @@ class RangeFor extends ExprBlock {
 		loop.body(body);
 
 		if (keyName) {
-			body.add(Var(loop, SStr(keyName), namedExpr(loop, SStr("k"), getAt, Actual())));
+			body.add(Var(body, SStr(keyName), namedExpr(loop, SStr("k"), getAt, Actual())));
 		}
 
-		body.add(Var(loop, SStr(valName), namedExpr(loop, SStr("v"), getAt, Actual())));
+		body.add(Var(body, SStr(valName), namedExpr(loop, SStr("v"), getAt, Actual())));
 		loopBlock = body;
 	}
 

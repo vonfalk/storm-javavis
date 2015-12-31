@@ -53,6 +53,12 @@ bool CppName::isObject() const {
 	return parts[0] == L"storm" && parts[1] == L"Object";
 }
 
+bool CppName::isCppInt() const {
+	if (parts.size() != 1)
+		return false;
+	return parts[0] == L"int";
+}
+
 CppType CppType::read(Tokenizer &tok) {
 	CppType t;
 
@@ -191,7 +197,9 @@ CppType CppType::typePtr() {
 
 CppType CppType::fullName(const Types &t, const CppName &scope) const {
 	CppType c = *this;
-	if (isFnPtr) {
+	if (type.isCppInt()) {
+		// Do nothing.
+	} else if (isFnPtr) {
 		for (nat i = 0; i < fnParams.size(); i++) {
 			c.fnParams[i] = fnParams[i].fullName(t, scope);
 		}

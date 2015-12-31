@@ -17,8 +17,8 @@ namespace storm {
 		STORM_CTOR Char(Int codepoint);
 
 		// Compare.
-		Bool operator ==(const Char &o) const;
-		Bool operator !=(const Char &o) const;
+		Bool STORM_FN operator ==(const Char &o) const;
+		Bool STORM_FN operator !=(const Char &o) const;
 
 		// Hash.
 		Nat STORM_FN hash() const;

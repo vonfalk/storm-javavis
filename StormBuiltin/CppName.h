@@ -35,6 +35,9 @@ public:
 	// Is this the root Object class?
 	bool isObject() const;
 
+	// Is this a plain C++ integer?
+	bool isCppInt() const;
+
 protected:
 	virtual void output(wostream &to) const;
 

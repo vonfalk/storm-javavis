@@ -232,11 +232,41 @@ static String valueRef(const CppType &type, const CppName &scope, const Types &t
 	return out.str();
 }
 
-static String stormName(const String &cppName) {
-	if (cppName.left(9) == L"operator ")
-		return cppName.substr(9);
-	else
-		return cppName;
+static bool unaryOperator(const String &name) {
+	// Currently supported unary operators.
+	if (name == L"++")
+		return true;
+	if (name == L"--")
+		return true;
+	return false;
+}
+
+static String stormName(const Function &fn) {
+	const String &cppName = fn.name;
+	if (cppName.left(9) == L"operator ") {
+		String name = cppName.substr(9);
+		if (unaryOperator(name)) {
+			// Prefix or postfix?
+			// Note: we're assuming these are always member functions...
+			if (fn.params.size() == 0)
+				name += L"*";
+			else
+				name = L"*" + name;
+		}
+		return name;
+	}
+
+	return cppName;
+}
+
+static vector<CppType> stormParams(const Function &fn) {
+	if (fn.name.left(9) == L"operator ")
+		// Note: we're assuming these are always member functions...
+		if (unaryOperator(fn.name.substr(9)))
+			// It is OK to just ignore a parameter in CDECL calling convention.
+			return vector<CppType>();
+
+	return fn.params;
 }
 
 void functionList(wostream &out, const vector<Function> &fns, const Types &types, const vector<Thread> &threads) {
@@ -282,12 +312,12 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 		out << valueRef(fn.result, scope, types) << L", ";
 
 		// Name
-		out << L"L\"" << stormName(fn.name) << L"\", ";
+		out << L"L\"" << stormName(fn) << L"\", ";
 
 		CppName name = fn.cppScope.cppName() + CppName(vector<String>(1, fn.name));
 
 		// Params
-		vector<CppType> params = fn.params;
+		vector<CppType> params = stormParams(fn);
 		if (fn.flags & fnEngine) {
 			// Ignore the first one!
 			if (params.size() == 0)
@@ -309,7 +339,7 @@ void functionList(wostream &out, const vector<Function> &fns, const Types &types
 				CppType t = fn.params[i].fullName(types, scope);
 				if (t.isPar) {
 					// Efficiency hack: pass by ptr to the create-fn,
-					// it will be casted to Auto by C++ later and do
+					// it will be casted to Auto by C++ later and does
 					// the right thing in all cases anyway.
 					t.isPar = false;
 					t.isPtr = true;
