@@ -12,6 +12,19 @@ namespace storm {
 
 	Str::Str(Char ch) : Object(), v(toString(ch)) {}
 
+	static String repeat(const String &str, Nat times) {
+		String r(str.size() * times, ' ');
+		nat dest = 0;
+		for (nat i = 0; i < times; i++) {
+			for (nat j = 0; j < str.size(); j++)
+				r[dest++] = str[j];
+		}
+
+		return r;
+	}
+
+	Str::Str(Char ch, Nat times) : Object(), v(repeat(toString(ch), times)) {}
+
 	Str::Str(const wchar *s) : Object(), v(s) {}
 
 	String Str::toString(const Char &ch) {
@@ -45,13 +58,7 @@ namespace storm {
 	}
 
 	Str *Str::operator *(Nat times) {
-		String result(v.size() * times, ' ');
-		for (nat i = 0; i < times; i++) {
-			for (nat j = 0; j < v.size(); j++) {
-				result[i*v.size() + j] = v[j];
-			}
-		}
-		return CREATE(Str, this, result);
+		return CREATE(Str, this, repeat(v, times));
 	}
 
 	Bool Str::equals(Par<Object> o) {

@@ -50,6 +50,9 @@ namespace storm {
 		// Create from char.
 		STORM_CAST_CTOR Str(Char ch);
 
+		// Create from char, with repeition.
+		STORM_CTOR Str(Char ch, Nat times);
+
 		// Create from regular string.
 		Str(const String &s);
 
@@ -133,8 +136,8 @@ namespace storm {
 		};
 
 		// Begin and end.
-		Str::Iter STORM_FN begin();
-		Str::Iter STORM_FN end();
+		Iter STORM_FN begin();
+		Iter STORM_FN end();
 
 	protected:
 		virtual void output(wostream &to) const;

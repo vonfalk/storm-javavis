@@ -119,6 +119,15 @@ namespace storm {
 		root = pkg;
 	}
 
+	NameSet *BuiltInLoader::findNameSet(const String &pkg) {
+		Auto<Name> pkgName = parseSimpleName(e, pkg);
+		NameSet *r = e.nameSet(root, pkgName, true);
+		if (!r)
+			throw BuiltInError(L"Failed to locate package or type " + ::toS(pkg));
+
+		return r;
+	}
+
 	Package *BuiltInLoader::findPkg(const String &pkg) {
 		Auto<Name> pkgName = parseSimpleName(e, pkg);
 		Package *r = e.package(root, pkgName, true);
@@ -153,10 +162,10 @@ namespace storm {
 
 		for (nat i = 0; src.threads[i].name; i++) {
 			const BuiltInThread &t = src.threads[i];
-			Package *pkg = findPkg(t.pkg);
+			NameSet *into = findNameSet(t.pkg);
 			Thread *thread = t.decl->thread(e);
 			Auto<NamedThread> created = CREATE(NamedThread, e, String(t.name), thread);
-			pkg->add(created);
+			into->add(created);
 			threads.push_back(created);
 		}
 	}
@@ -210,7 +219,7 @@ namespace storm {
 				continue;
 
 			Type *type = types[i].borrow();
-			findPkg(t.pkg)->add(type);
+			findNameSet(t.pkg)->add(type);
 
 			if (t.superMode == BuiltInType::superThread)
 				type->setThread(threads[t.super]);
@@ -228,6 +237,7 @@ namespace storm {
 			const BuiltInFunction &fn = src.functions[i];
 
 			if (fn.mode & BuiltInFunction::noMember) {
+				// This is OK. Free functions should always reside in a package.
 				addFn(fn, findPkg(fn.pkg));
 			} else if (fn.mode & BuiltInFunction::typeMember) {
 				assert((fn.mode & BuiltInFunction::hiddenEngine) == 0, L"hidden engine not supported for members.");

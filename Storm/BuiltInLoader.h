@@ -5,6 +5,7 @@
 namespace storm {
 	class Engine;
 	class Package;
+	class NameSet;
 	class Type;
 	class Function;
 	class NamedThread;
@@ -72,7 +73,8 @@ namespace storm {
 		typedef map<Type *, vector<Type *>> CopyMembers;
 		CopyMembers copyMembers;
 
-		// Find a package relative our root.
+		// Find a name set relative our root.
+		NameSet *findNameSet(const String &pkg);
 		Package *findPkg(const String &pkg);
 
 		// Create a member function.

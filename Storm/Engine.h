@@ -112,6 +112,12 @@ namespace storm {
 		Package *package(const String &name);
 		Package *rootPackage();
 
+		// Same idea as 'package', but can find any kind of NameSet. If something is created, it
+		// always creates packages, and it never creates packages inside something that is not a
+		// package.
+		NameSet *nameSet(Par<Package> relative, Par<Name> path, bool create = false);
+		NameSet *nameSet(Par<Name> path, bool create = false);
+
 		// Get a built-in type.
 		inline Type *builtIn(nat id) const { return cached[id].borrow(); }
 

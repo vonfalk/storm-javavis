@@ -1,9 +1,4 @@
-* Core [5/44]
-
- - [ ] Make it possible to nest classes in C++ as well. Currently, everything works, but the inner class is not inside the
-   outer class in Storm. This probably needs a re-structuring of the format outputted by the pre-processor. Needed for 
-   Str:Iter. It seems like nesting classes confuses the preprocessor as well. Referring to the inner class in the outer class
-   does not work without a full qualifier.
+* Core [6/44]
 
  - [ ] Implement some clever solution regarding iterators and deepCopy.
 
@@ -89,6 +84,11 @@
  - [ ] Implement an interactive way of coding using 'reverse parsers'. In this case, it would be an autocomplete that knows the syntax
    and suggests all valid parts at the cursor position. It may not be able to suggest names, but it could suggest syntax constructions.
 
+ - [X] Make it possible to nest classes in C++ as well. Currently, everything works, but the inner class is not inside the
+   outer class in Storm. This probably needs a re-structuring of the format outputted by the pre-processor. Needed for 
+   Str:Iter. It seems like nesting classes confuses the preprocessor as well. Referring to the inner class in the outer class
+   does not work without a full qualifier.
+
  - [X] Str::removeIndent seems to be removing the entire first line of it's input.
 
  - [X] Better regex engine that does not cause stack overflows as easily... Easy example: [^abc]* to <long string without abc>
@@ -149,10 +149,12 @@
    of reference to what it provides (at least in most cases), so that the reference system can do a graph
    search to find islands of code that are separated from the rest of the references.
 
-* Basic Storm [4/19]
+* Basic Storm [4/20]
 
  - [ ] Make sure strings are stored as shorts in the generated machine code (currently not possible due to
    limitations in the Code backend).
+
+ - [ ] Implement support for setter functions. The preprocessor seems to have support for them already.
 
  - [ ] In lang:bs:macro, make sure that ReferNamed uses a symbolic reference instead of hard-coding the address
    as it does now.

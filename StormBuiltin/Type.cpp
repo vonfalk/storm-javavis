@@ -39,6 +39,7 @@ Type Types::find(const CppName &name, const CppName &scope) const {
 			return i->second;
 	}
 
+	DebugBreak();
 	throw Error(L"Type " + ::toS(name) + L" not found in " + ::toS(scope));
 }
 
@@ -48,6 +49,23 @@ void Types::output(wostream &to) const {
 
 void Types::invalidate() const {
 	cacheValid = false;
+}
+
+typedef map<CppName, vector<Type>> DelayMap;
+
+static void insertDelayed(vector<Type> &to, DelayMap &delayed, const Type &type) {
+	DelayMap::iterator i = delayed.find(type.cppName);
+	if (i == delayed.end())
+		return;
+
+	to.push_back(type);
+
+	vector<Type> toInsert = i->second;
+	delayed.erase(i);
+
+	for (nat i = 0; i < toInsert.size(); i++) {
+		insertDelayed(to, delayed, toInsert[i]);
+	}
 }
 
 void Types::create() const {
@@ -66,9 +84,36 @@ void Types::create() const {
 		ordered.push_back(types.find(n)->second);
 	}
 
+	// We need to make sure any classes contained within other classes are not added before their container.
+
+	// Any names in here have _not_ yet been added.
+	DelayMap delayed;
+
+	// Mark all types as not added, except primitive types and storm:Type.
 	for (T::const_iterator i = types.begin(); i != types.end(); ++i) {
 		if (!i->second.primitive && i->first != n)
-			ordered.push_back(i->second);
+			delayed.insert(make_pair(i->first, vector<Type>()));
+	}
+
+	// Add all types...
+	for (T::const_iterator i = types.begin(); i != types.end(); ++i) {
+		// This should not be added or has already been added.
+		if (delayed.count(i->first) == 0)
+			continue;
+
+		CppName parent = i->first.parent();
+		if (types.count(parent) != 0) {
+			// We're inside of another type. See if that type is already added!
+			DelayMap::iterator found = delayed.find(parent);
+			if (found != delayed.end()) {
+				// Not added, make sure it is added later!
+				found->second.push_back(i->second);
+				continue;
+			}
+		}
+
+		// Add the type now!
+		insertDelayed(ordered, delayed, i->second);
 	}
 
 	typeIds.clear();

@@ -66,9 +66,20 @@ void checkEngineFn(const Function &fn) {
 					L" must have a EnginePtr as the first parameter.");
 }
 
-void Header::addType(const CppScope &scope, const String &pkg, bool value) {
+void Header::addType(const CppScope &scope, const String &rawPkg, bool value) {
 	if (!scope.isType())
 		throw Error(L"STORM_CLASS or STORM_VALUE only allowed in classes and structs!");
+
+	String pkg = rawPkg;
+	CppScope tmpScope = scope;
+	tmpScope.pop();
+	while (tmpScope.isType()) {
+		if (pkg == L"")
+			pkg = tmpScope.name();
+		else
+			pkg += L"." + tmpScope.name();
+		tmpScope.pop();
+	}
 
 	Type t(scope.name(), scope.super(), pkg, scope.cppName(), value, external);
 	types.push_back(t);

@@ -241,6 +241,21 @@ namespace storm {
 		return createPackage(rel.borrow(), path);
 	}
 
+	NameSet *Engine::nameSet(Par<Name> path, bool create) {
+		return package(rootPkg, path, create);
+	}
+
+	NameSet *Engine::nameSet(Par<Package> rel, Par<Name> path, bool create) {
+		NameSet *found = steal(find(rel, path)).as<NameSet>().borrow();
+		if (found)
+			return found;
+
+		if (create)
+			return createPackage(rel.borrow(), path);
+
+		return null;
+	}
+
 	Package *Engine::createPackage(Package *pkg, Par<Name> path, nat pos) {
 		if (path->size() == pos)
 			return pkg;

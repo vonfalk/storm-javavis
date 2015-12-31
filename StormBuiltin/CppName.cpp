@@ -241,10 +241,10 @@ CppName CppScope::cppName() const {
 }
 
 CppName CppScope::scopeName() const {
-	if (isType())
-		return cppName().parent();
-	else
-		return cppName();
+	// if (isType())
+	// 	return cppName().parent();
+	// else
+	return cppName();
 }
 
 bool CppScope::isType() const {
