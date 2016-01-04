@@ -125,7 +125,12 @@ namespace storm {
 	void Function::addParam(Par<CodeGen> to, const Actuals &params, nat id) {
 		const Value &p = this->params[id];
 		if (!p.ref && p.isValue()) {
-			to->to << fnParam(params[id].variable(), p.copyCtor());
+			if (params[id].type() == code::Value::tVariable) {
+				to->to << fnParam(params[id].variable(), p.copyCtor());
+			} else {
+				// Has to be a reference to the value...
+				to->to << fnParamRef(params[id], p.copyCtor());
+			}
 		} else {
 			to->to << fnParam(params[id]);
 		}

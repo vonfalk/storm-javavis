@@ -34,7 +34,7 @@ class PExpr extends Expr {
 		into.add(namedExpr(into, SStr("add"), LocalVarAccess(pVar), Actual(e)));
 	}
 
-	Value result() {
+	ExprResult result() {
 		outer.result();
 	}
 
@@ -83,7 +83,7 @@ class SExpr extends Expr {
 		into.add(namedExpr(into, SStr(name), LocalVarAccess(sVar), actual));
 	}
 
-	Value result() {
+	ExprResult result() {
 		outer.result();
 	}
 

@@ -81,8 +81,9 @@ namespace storm {
 		// Figure out which kind of call we shall use and do the right thing based on what the
 		// 'runOn' member in 'to' is indicating. Always uses lookup. Parameters passed are as
 		// follows: If the type of the parameter is a class, the parameter is a pointer to the
-		// class, if the type is a value, the parameter is a pointer to the value; the value will be
-		// copied to the function. If the type is a built in type, the parameter is the actual value.
+		// class, if the type is a value, the parameter is a pointer to the value or a variable
+		// containing the value; the value will be copied to the function. If the type is a built in
+		// type, the parameter is the actual value.
 		void autoCall(Par<CodeGen> to, const Actuals &params, Par<CodeResult> result);
 
 		// Generate code for this function call, assuming we are performing the call the same thread as the

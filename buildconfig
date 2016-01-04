@@ -2,3 +2,4 @@ FastDebug
 StormTest
 StormMain#-r root/ -f test.d.testFactorial
 StormMain#-r root/ -f test.asm.testInlineLabel
+StormMain#-r root/ -i final External/final -f final.extendedMain
