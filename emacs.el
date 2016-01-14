@@ -370,22 +370,6 @@
 (add-to-list 'auto-mode-alist '("\\.h" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.bs" . java-mode))
 
-(setq display-buffer-alist
-      '(("\\*compilation\\*" .
-	 ((display-buffer-reuse-window
-	   get-compilation-window
-	   display-buffer-use-some-window
-	   display-buffer-pop-up-window)
-	  . ((reusable-frames . t)
-	     (inhibit-switch-frame . t))))
-	(".*" .
-	 ((display-buffer-reuse-window
-	   display-buffer-use-some-window
-	   display-buffer-pop-up-window) .
-	   nil))))
-
-
-
 (setq compilation-scroll-output 'first-error)
 
 (defvar my-cpp-other-file-alist
@@ -399,7 +383,7 @@
   (if (and (not (verify-visited-file-modtime))
 	   (not (buffer-modified-p))
 	   (yes-or-no-p
-	    (format "File %s changed on disk. Reread from disk? " (file-name-nondirectory (buffer-file-name)))))
+	    (format "File %s changed on disk. Reload from disk? " (file-name-nondirectory (buffer-file-name)))))
       (revert-buffer t t)))
 
 (defadvice switch-to-buffer
