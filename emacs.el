@@ -1,6 +1,6 @@
 ;; Configuration
 
-(setq font-lock-maximum-decoration 2)
+(modify-coding-system-alist 'file "\\.bs\\'" 'utf-8-dos)
 
 (setq use-compilation-window t)
 (setq project-root "~/Projects/storm/")
@@ -13,7 +13,6 @@
 (setq p-clean-command "scripts/compile -c")
 (setq p-release-command "scripts/compile -r")
 (setq p-all-command "scripts/compile -a")
-(setq read-buffer-completion-ignore-case t)
 
 (setq compilation-w 100)
 (setq compilation-h 83)
@@ -82,15 +81,13 @@
                          c-lineup-gcc-asm-reg
                          c-lineup-arglist-tabs-only))))
 	    ;; Enable kernel mode for the appropriate files
-	    (when t ;; (in-project buffer-file-name)
-	      (setq tab-width 4)
-	      (setq ff-other-file-alist my-cpp-other-file-alist)
-	      (setq ff-special-constructs nil)
-	      (setq indent-tabs-mode t)
-	      (c-set-style "linux-tabs-only")
-	      (whitespace-mode t)
-	      (setq c-basic-offset 4)
-	      )))
+	    (setq tab-width 4)
+	    (setq ff-other-file-alist my-cpp-other-file-alist)
+	    (setq ff-special-constructs nil)
+	    (setq indent-tabs-mode t)
+	    (c-set-style "linux-tabs-only")
+	    (whitespace-mode t)
+	    (setq c-basic-offset 4)))
 
 (defun storm-insert-comment ()
   "Insert a comment in c-mode"
@@ -147,7 +144,6 @@
 (global-set-key (kbd "M-g c") 'goto-byte)
 (global-set-key (kbd "M-g M-c") 'goto-byte)
 
-(global-set-key (kbd "M-p") 'compile-project)
 (global-set-key (kbd "C-c M-p") 'compile-project-valgrind)
 (global-set-key (kbd "C-c C-m") 'clean-project)
 (global-set-key (kbd "C-c C-r") 'compile-release)
