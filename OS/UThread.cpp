@@ -3,7 +3,7 @@
 #include "Thread.h"
 #include "FnCall.h"
 #include "Shared.h"
-#include "Utils/Math.h"
+#include "Utils/Bitwise.h"
 #include "Utils/Lock.h"
 
 namespace os {

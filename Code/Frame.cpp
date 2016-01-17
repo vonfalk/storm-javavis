@@ -1,9 +1,9 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "Frame.h"
 #include "Exception.h"
 
 #include "Utils/Indent.h"
-#include "Utils/Math.h"
+#include "Utils/Bitwise.h"
 
 namespace code {
 

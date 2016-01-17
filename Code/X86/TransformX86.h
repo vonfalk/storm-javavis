@@ -1,8 +1,8 @@
 #pragma once
 
 #ifdef X86
-#include "Listing.h"
-#include "UsedRegisters.h"
+#include "Code/Listing.h"
+#include "Code/UsedRegisters.h"
 
 namespace code {
 	namespace machineX86 {

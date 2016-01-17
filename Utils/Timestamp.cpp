@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "Timestamp.h"
 #include "Platform.h"
 #include <iomanip>

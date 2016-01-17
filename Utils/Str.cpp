@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "String.h"
+#include "Str.h"
 
 #include <sstream>
 #include <iomanip>

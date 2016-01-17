@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "Stream.h"
 
 Stream::Stream() : hasError(false) {}

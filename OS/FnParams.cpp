@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "FnParams.h"
-#include "Utils/Math.h"
+#include "Utils/Bitwise.h"
 
 namespace os {
 

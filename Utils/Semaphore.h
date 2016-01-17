@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Windows.h"
+#include "Win32.h"
 
 class Semaphore {
 public:

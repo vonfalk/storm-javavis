@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Math.h"
+#include "Bitwise.h"
 
 nat nextPowerOfTwo(nat number) {
 	--number;

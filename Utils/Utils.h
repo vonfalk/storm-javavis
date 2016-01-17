@@ -38,7 +38,7 @@
 #include <cmath>
 
 // Include 'windows.h' if needed.
-#include "Windows.h"
+#include "Win32.h"
 
 #include <algorithm>
 
@@ -237,3 +237,8 @@ struct as {
 
 // Use common controls.
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
+// Some other libraries we need on Windows.
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "ole32.lib")
+

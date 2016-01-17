@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Fn.h"
-#include "Storm/Lib/FnPtr.h"
+#include "Shared/FnPtr.h"
 
 static Int addTwo(Int v) {
 	return v + 2;

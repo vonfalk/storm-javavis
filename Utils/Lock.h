@@ -1,5 +1,5 @@
 #pragma once
-#include "Windows.h"
+#include "Win32.h"
 
 namespace util {
 	/**

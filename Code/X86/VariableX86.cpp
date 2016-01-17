@@ -2,7 +2,7 @@
 
 #ifdef X86
 #include "VariableX86.h"
-#include "Utils/Math.h"
+#include "Utils/Bitwise.h"
 
 namespace code {
 	namespace machineX86 {

@@ -1,0 +1,6 @@
+[]
+ext+=asm
+
+noIncludes+=*.asm
+
+compile+=*.asm:ml /c /nologo /Fo<output> /safeseh /W3 /Zi <file>

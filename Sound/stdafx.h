@@ -3,7 +3,7 @@
 #include "Utils/Utils.h"
 #include "Shared/Storm.h"
 
-#include "Utils/Windows.h"
+#include "Utils/Win32.h"
 
 #include "Shared/DllEngine.h"
 

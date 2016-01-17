@@ -4,7 +4,7 @@
 #include "Shared/Storm.h"
 
 // Windows headers.
-#include "Utils/Windows.h"
+#include "Utils/Win32.h"
 
 using namespace storm;
 

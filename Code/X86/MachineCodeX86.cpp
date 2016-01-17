@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "MachineCode.h"
 #ifdef X86
 #include "Binary.h"

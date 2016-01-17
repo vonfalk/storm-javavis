@@ -10,5 +10,5 @@ using std::vector;
 using std::map;
 using std::set;
 
-#include "String.h"
+#include "Str.h"
 #include "HashMap.h"

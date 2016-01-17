@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "FileTypes.h"
 
 FileTypes::FileTypes(const String &collName) : collName(collName) {}

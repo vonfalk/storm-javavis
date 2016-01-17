@@ -1,14 +1,14 @@
 #pragma once
 
 #ifdef X86
-#include "Instruction.h"
-#include "Listing.h"
-#include "Register.h"
-#include "Block.h"
+#include "Code/Instruction.h"
+#include "Code/Listing.h"
+#include "Code/Register.h"
+#include "Code/Block.h"
+#include "Code/UsedRegisters.h"
 #include "Seh.h"
 #include "VariableX86.h"
 #include "TransformX86.h"
-#include "UsedRegisters.h"
 
 namespace code {
 

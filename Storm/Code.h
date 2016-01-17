@@ -7,7 +7,7 @@
 #include "CodeGenFwd.h"
 #include "Shared/TObject.h"
 #include "Thread.h"
-#include "Lib/FnPtr.h"
+#include "Shared/FnPtr.h"
 
 namespace storm {
 	STORM_PKG(core.lang);

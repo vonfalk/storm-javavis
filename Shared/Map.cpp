@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Map.h"
-#include "Utils/Math.h"
+#include "Utils/Bitwise.h"
 #include <iomanip>
 
 namespace storm {

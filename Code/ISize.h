@@ -1,5 +1,5 @@
 #pragma once
-#include "Utils/Math.h"
+#include "Utils/Bitwise.h"
 
 namespace code {
 

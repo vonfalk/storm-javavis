@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "RefManager.h"
 
 #include "OS/Thread.h"

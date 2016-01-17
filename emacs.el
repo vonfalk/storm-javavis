@@ -1,32 +1,15 @@
 ;; Configuration
 
 (modify-coding-system-alist 'file "\\.bs\\'" 'utf-8-dos)
+(add-to-list 'auto-mode-alist '("\\.h" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.bs" . java-mode))
 
-(setq use-compilation-window t)
+(defvar my-cpp-other-file-alist
+  '(("\\.cpp\\'" (".h"))
+    ("\\.h\\'" (".cpp" ".c"))
+    ))
+
 (setq project-root "~/Projects/storm/")
-(setq project-file (concat project-root "storm.sln"))
-(setq add-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl -a"))
-(setq remove-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl -d"))
-(setq rename-file-cmd (concat "perl " (expand-file-name project-root) "scripts/add.pl -r"))
-(setq p-compile-command "scripts/compile")
-(setq p-compile-valgrind-command "scripts/compile -v")
-(setq p-clean-command "scripts/compile -c")
-(setq p-release-command "scripts/compile -r")
-(setq p-all-command "scripts/compile -a")
-
-(setq compilation-w 100)
-(setq compilation-h 83)
-(setq compilation-adjust 30)
-
-;; Demo mode
-
-(setq demo-mode nil)
-
-(defun start-demo (name)
-  (setq demo-mode t)
-  (set-face-attribute 'default nil :height 100))
-
-(add-to-list 'command-switch-alist '("demo" . start-demo))
 
 ;; Custom goto-char (including line endings)
 
@@ -53,7 +36,7 @@
   (goto-char pos))
 
 
-;; Setup code-style
+;; Setup code-style. From the Linux Kernel Coding style.
 
 (require 'whitespace)
 (setq whitespace-style '(face trailing lines-tail))
@@ -80,7 +63,6 @@
                         (arglist-cont-nonempty
                          c-lineup-gcc-asm-reg
                          c-lineup-arglist-tabs-only))))
-	    ;; Enable kernel mode for the appropriate files
 	    (setq tab-width 4)
 	    (setq ff-other-file-alist my-cpp-other-file-alist)
 	    (setq ff-special-constructs nil)
@@ -140,34 +122,24 @@
 
 ;; Setup keybindings
 
-(global-set-key (kbd "C-.") 'other-window)
 (global-set-key (kbd "M-g c") 'goto-byte)
 (global-set-key (kbd "M-g M-c") 'goto-byte)
 
-(global-set-key (kbd "C-c M-p") 'compile-project-valgrind)
-(global-set-key (kbd "C-c C-m") 'clean-project)
-(global-set-key (kbd "C-c C-r") 'compile-release)
-(global-set-key (kbd "C-M-p") 'compile-all)
-(global-set-key (kbd "C-c C-k") 'kill-compilation)
-(global-set-key (kbd "C-c C-v C-s") 'open-vs)
 
 (add-hook 'c-mode-common-hook
 	  (lambda ()
-	    (local-set-key (kbd "C-o") 'my-open-line)
 	    (local-set-key (kbd "M-o") 'ff-find-other-file)
+	    (local-set-key (kbd "C-o") 'storm-open-line)
 	    (local-set-key (kbd "RET") 'storm-return)
 	    (local-set-key (kbd "C-M-j") 'storm-cpp-singleline)
 	    (local-set-key (kbd "C-M-k") 'storm-insert-comment)
 	    (local-set-key (kbd "C->") "->")
-	    (local-set-key (kbd "M-n") 'next-error)
-	    (local-set-key (kbd "C-c C-f C-r") 'rename-proj-file)
-	    (local-set-key (kbd "C-c C-f C-d") 'delete-proj-file)
 	    )
 	  )
 
 ;; Helpers for bindings.
 
-(defun my-open-line ()
+(defun storm-open-line ()
   (interactive "*")
   (open-line 1)
   (let ((last (point)))
@@ -194,21 +166,6 @@
 (defun subproj-relative-file (filename)
   (let ((subproj (subproject filename)))
     (substring (subpath filename) (+ 1 (length subproj)))))
-
-(defun project-file (file)
-  (let ((subproj (subproject file)))
-    (concat (expand-file-name project-root) subproj "/" subproj ".vcproj")))
-
-(defun project-cmd-helper (files)
-  (if (eq (cdr files) nil)
-      (subproj-relative-file (car files))
-    (concat (subproj-relative-file (car files))
-	    " " (project-cmd-helper (cdr files)))))
-
-(defun project-cmd (cmd files)
-  (concat cmd
-	  " " (expand-file-name (project-file (car files)))
-	  " " (project-cmd-helper files)))
 
 (add-hook 'find-file-hooks 'maybe-add-cpp-template)
 (defun maybe-add-cpp-template ()
@@ -237,14 +194,12 @@
   (if (shall-have-namespace)
       (insert-namespace))
   (if (is-test-project)
-      (insert-test-template))
-  (add-file-to-project buffer-file-name))
+      (insert-test-template)))
 
 (defun add-header-template ()
   (insert "#pragma once\n\n")
   (if (shall-have-namespace)
-      (insert-namespace))
-  (add-file-to-project buffer-file-name))
+      (insert-namespace)))
 
 (defun insert-test-template ()
   (insert "BEGIN_TEST(")
@@ -282,100 +237,9 @@
     (goto-char pos)
     (indent-for-tab-command)))
 
-(defun add-file-to-project (file)
-  (shell-command-to-string (project-cmd add-file-cmd (list file))))
-
-(defun rename-file-project (from to)
-  (shell-command-to-string (project-cmd rename-file-cmd (list from to))))
-
-(defun remove-file-project (file)
-  (shell-command-to-string (project-cmd remove-file-cmd (list file))))
-
-(defun open-vs ()
-  (interactive)
-  (start-process-shell-command "vs" nil (concat "devenv " (expand-file-name project-file))))
-
-(defun compile-project ()
-  (interactive)
-  (if (in-project buffer-file-name)
-      (run-compile p-compile-command)
-    (call-interactively 'compile)))
-
-(defun compile-project-valgrind ()
-  (interactive)
-  (run-compile p-compile-valgrind-command))
-
-(defun clean-project ()
-  (interactive)
-  (run-compile p-clean-command))
-
-(defun compile-release ()
-  (interactive)
-  (run-compile p-release-command))
-
-(defun compile-all ()
-  (interactive)
-  (run-compile p-all-command))
-
-(defun run-compile (cmd)
-  (let ((default-directory project-root))
-    (compile cmd t)))
-
-(defun rename-proj-file ()
-  (interactive)
-  (let ((fn (read-file-name "New name:")))
-    (rename-file-project buffer-file-name fn)
-    (rename-file buffer-file-name fn)
-    (set-visited-file-name fn t t)))
-
-(defun delete-proj-file ()
-  (interactive)
-  (if (yes-or-no-p "Really delete? ")
-      (progn
-	(remove-file-project buffer-file-name)
-	(delete-file buffer-file-name)
-	(kill-buffer))
-    ))
-
-;; Create compilation window
-(setq compilation-window 'nil)
-(setq compilation-frame 'nil)
-
-(defun create-compilation-frame ()
-  (let* ((current-params (frame-parameters))
-	 (left-pos (cdr (assoc 'left current-params)))
-	 (height (cdr (assoc 'height current-params)))
-	 (created (make-frame '(inhibit-switch-frame))))
-    (setq compilation-frame created)
-    (setq compilation-window (frame-selected-window created))
-    (set-frame-size created compilation-w compilation-h)
-    (let* ((created-w (frame-pixel-width created)))
-      (set-frame-position created (- left-pos created-w compilation-adjust) 0)
-      )))
-
-(defun get-compilation-window (buffer e)
-  (if demo-mode
-      nil
-    (progn
-      (if (eq compilation-frame 'nil)
-	  (create-compilation-frame)
-	(if (not (frame-live-p compilation-frame))
-	    (create-compilation-frame)))
-      (window--display-buffer buffer compilation-window 'frame)
-      compilation-window)))
-
-
 ;; Behaviour.
 
-(add-to-list 'auto-mode-alist '("\\.h" . c++-mode))
-(add-to-list 'auto-mode-alist '("\\.bs" . java-mode))
-
 (setq compilation-scroll-output 'first-error)
-
-(defvar my-cpp-other-file-alist
-  '(("\\.cpp\\'" (".h"))
-    ("\\.h\\'" (".cpp" ".c"))
-    ))
 
 (defun check-buffer ()
   "If the buffer has been modified, ask the user to revert it, just like find-file does."

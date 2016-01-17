@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "Semaphore.h"
 
 Semaphore::Semaphore(long count, long maxCount) {

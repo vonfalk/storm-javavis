@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "FileStream.h"
 #include "TextReader.h"
 

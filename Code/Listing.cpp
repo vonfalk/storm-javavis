@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "Listing.h"
 
 #include "UsedRegisters.h"

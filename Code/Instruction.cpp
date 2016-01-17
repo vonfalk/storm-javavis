@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "Instruction.h"
 #include "Arena.h"
 #include "MachineCode.h"

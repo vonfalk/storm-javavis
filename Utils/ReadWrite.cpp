@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "ReadWrite.h"
 
 ReadWrite::ReadWrite() : writers(1) {}

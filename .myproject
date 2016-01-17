@@ -1,0 +1,68 @@
+[project]
+
+[project,release]
+input+=StormMain
+input+=StormTest
+input+=CodeTest
+execute=no
+
+[build,release]
+all+=release
+
+[build]
+
+#Regular libraries linked into Storm and/or any storm libraries.
+Code+=lib
+OS+=lib
+Shared+=lib
+Utils+=lib
+Storm+=lib
+
+#Libraries that needs to run the preprocessor.
+Shared+=stormpp
+Storm+=stormpp
+
+#Libraries linked into shared libraries loaded by Storm at runtime.
+Graphics+=sharedlib
+Sound+=sharedlib
+StormGui+=sharedlib
+
+
+[deps]
+Storm+=StormBuiltin
+#Storm+=Graphics
+#Storm+=Sound
+#Storm+=StormGui
+
+Graphics+=StormBuiltin
+Sound+=StormBuiltin
+StormGui+=StormBuiltin
+
+
+[]
+#Global build parameters
+pch=stdafx.h
+include+=./
+include+=../
+
+buildDir=build/
+execDir=../debug/
+
+[release]
+buildDir=release/
+execDir=../release/
+
+[windows]
+#Tell the Win32 API we're working in UTF16.
+define+=_UNICODE
+define+=UNICODE
+
+#Use full paths in output messages. Otherwise emacs 'jump to' will break.
+flags+=/FC
+
+#[stormpp]
+#stormpp=StormBuiltin
+#preBuild+=<execpath|stormpp> ./ ../Shared/BuiltIn.cpp Lib/BuiltIn.cpp -a Lib/VTables.asm +./ ../Shared/ --using storm
+
+[sharedlib]
+define+=STORM_DLL

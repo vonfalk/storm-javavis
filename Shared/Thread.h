@@ -1,6 +1,6 @@
 #pragma once
 #include "Object.h"
-#include "Os/Thread.h"
+#include "OS/Thread.h"
 
 namespace storm {
 	STORM_PKG(core);
