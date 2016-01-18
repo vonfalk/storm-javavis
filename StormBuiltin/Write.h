@@ -3,6 +3,7 @@
 #include "Utils/Path.h"
 
 struct FileData {
+	String engineInclude;
 	String typeList;
 	String typeFunctions;
 	String vtableCode;

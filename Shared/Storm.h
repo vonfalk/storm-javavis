@@ -5,6 +5,7 @@
 
 // Are we being compiled as a DLL or as the compiler?
 #if defined(STORM_LIB)
+// We're the Shared lib.
 #elif !defined(STORM_COMPILER)
 #define STORM_DLL
 #endif

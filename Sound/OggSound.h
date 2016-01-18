@@ -1,7 +1,7 @@
 #pragma once
 #include "Sound.h"
 
-#include "vorbis/vorbisfile.h"
+#include "LibOgg/vorbis/vorbisfile.h"
 
 namespace sound {
 

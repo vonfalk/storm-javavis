@@ -1,0 +1,10 @@
+[]
+ext+=c
+
+include+=vorbis/
+include+=ogg/
+include+=./
+include+=../
+
+#Disable warnings (libogg is a mess....)
+warnings=

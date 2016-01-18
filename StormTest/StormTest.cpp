@@ -5,8 +5,7 @@
 
 Engine *gEngine = null;
 
-int _tmain(int argc, _TCHAR* argv[])
-{
+int _tmain(int argc, _TCHAR* argv[]) {
 	initDebug();
 
 	Moment start;

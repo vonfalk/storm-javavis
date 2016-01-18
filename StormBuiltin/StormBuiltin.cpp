@@ -195,6 +195,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 			vector<Type> types = t.getTypes();
 			vector<Thread> threads = allThreads(headers);
 			FileData d;
+			d.engineInclude = forCompiler ? L"#include \"Engine.h\"" : L"#include \"Shared/DllEngine.h\"";
 			d.typeList = typeList(t, threads);
 			d.typeFunctions = typeFunctions(t);
 			d.vtableCode = vtableCode(t);

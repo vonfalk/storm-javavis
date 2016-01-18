@@ -4,11 +4,7 @@
 #include "Utils/Memory.h"
 #include "Shared/BuiltIn.h"
 #include "Shared/TypeFlags.h"
-#ifdef STORM_DLL
-#include "Shared/DllEngine.h"
-#else
-#include "Engine.h"
-#endif
+// INCLUDE ENGINE
 #include <stdarg.h>
 
 

@@ -1,3 +1,10 @@
+#Storm has a bit weird concept of release and debug configurations.
+#The default debug configuration, is acutally a release configuration,
+#but with some debug flags added. This is since Storm is painfully slow
+#without compiler optimizations on, and when using other debug features
+#like the debug heap. There is a mode, called "slow" that will enable
+#full debugging like this.
+
 [project]
 
 [project,release]
@@ -6,8 +13,19 @@ input+=StormTest
 input+=CodeTest
 execute=no
 
-[build,release]
+[build,!slow,!release]
+#Always 'release' mode, except when 'slow' is specified here.
 all+=release
+all+=storm_debug
+
+[build,release]
+#When compiling in release mode, use link-time code generation.
+all+=release
+all+=storm_release
+
+[build,slow]
+all+=storm_slow
+
 
 [build]
 
@@ -18,9 +36,15 @@ Shared+=lib
 Utils+=lib
 Storm+=lib
 
-#Libraries that needs to run the preprocessor.
-Shared+=stormpp
-Storm+=stormpp
+#External libraries, does not have precompiled headers and such.
+LibOgg+=lib
+LibOgg+=extern_lib
+
+#Libraries that need the storm preprocessor to be run. The Storm lib needs a lot special, so
+#that is in the .mymake file there instead.
+Graphics+=stormpp
+Sound+=stormpp
+StormGui+=stormpp
 
 #Libraries linked into shared libraries loaded by Storm at runtime.
 Graphics+=sharedlib
@@ -30,27 +54,48 @@ StormGui+=sharedlib
 
 [deps]
 Storm+=StormBuiltin
-#Storm+=Graphics
-#Storm+=Sound
-#Storm+=StormGui
+Storm+=Graphics
+Storm+=Sound
+Storm+=StormGui
 
 Graphics+=StormBuiltin
 Sound+=StormBuiltin
 StormGui+=StormBuiltin
 
 
-[]
+[!extern_lib]
 #Global build parameters
 pch=stdafx.h
 include+=./
 include+=../
 
+[storm_debug]
 buildDir=build/
 execDir=../debug/
 
-[release]
+#Generate pdb file.
+flags+=/Zi /Fd<path|buildDir>
+linkFlags+=/DEBUG /INCREMENTAL:NO /PDB:<path|execDir><titleNoExt|output>.pdb
+
+#Turn on some runtime checks (implemented purely in Storm).
+define+=FAST_DEBUG
+
+[storm_release]
 buildDir=release/
 execDir=../release/
+
+#Enable link-time code generation. Too slow to use regularly, but gives good performance!
+flags+=/GL
+linkFlags+=/LTCG
+
+[storm_release,lib,windows]
+#Need extra flag to the linker...
+link=lib /LTCG <files> /nologo /OUT:<output>
+
+[storm_slow]
+buildDir=slow/
+execDir=../slow/
+
 
 [windows]
 #Tell the Win32 API we're working in UTF16.
@@ -65,9 +110,20 @@ ext+=asm
 noIncludes+=*.asm
 compile+=*.asm:ml /c /nologo /Fo<output> /safeseh /W3 /Zi <file>
 
-#[stormpp]
-#stormpp=StormBuiltin
-#preBuild+=<execpath|stormpp> ./ ../Shared/BuiltIn.cpp Lib/BuiltIn.cpp -a Lib/VTables.asm +./ ../Shared/ --using storm
+[stormpp]
+stormppUsingCl=--using 
+stormppUsing=storm
+stormpp=StormBuiltin
+preBuild+=<execpath|stormpp> ./ ../Shared/BuiltIn.cpp Lib/BuiltIn.cpp -a Lib/VTables.asm +./ ../Shared/ <stormppUsingCl*stormppUsing>
 
 [sharedlib]
-define+=STORM_DLL
+packagePath=../root/<package>/
+postBuild+=if not exist "<path|packagePath>" mkdir <path|packagePath>
+postBuild+=copy <output> <path|packagePath><libPrefix><title|output>
+
+[sharedlib,storm_debug]
+libPrefix=Debug
+[sharedlib,storm_release]
+libPrefix=Release
+[sharedlib,storm_slow]
+libPrefix=Slow

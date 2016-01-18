@@ -61,7 +61,11 @@ vector<String> readFile(const Path &file, const FileData &data) {
 
 	while (r->more()) {
 		String line = r->getLine();
-		if (line.find(L"// BEGIN LIST") != String::npos) {
+		if (line.find(L"// INCLUDE ENGINE") != String::npos) {
+			keep = false;
+			lines.push_back(line);
+			lines.push_back(data.engineInclude);
+		} else if (line.find(L"// BEGIN LIST") != String::npos) {
 			keep = false;
 			lines.push_back(line);
 			addLines(lines, data.functionList, indentation(line));

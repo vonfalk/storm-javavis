@@ -1,6 +1,10 @@
 StormTest
-#FastDebug
-#StormTest
-#StormMain#-r root/ -f test.d.testFactorial
-#StormMain#-r root/ -f test.asm.testInlineLabel
-#StormMain#-r root/ -i final External/final -f final.extendedMain
+
+#Basic UI test.
+#StormMain -a -r ../root/ -f test.ui.main
+
+#StormMain -a -r ../root/ -f test.d.testFactorial
+#StormMain -a -r ../root/ -f test.asm.testInlineLabel
+
+#Presentation
+#StormMain -a -r ../root/ -i final ../External/final -f final.extendedMain

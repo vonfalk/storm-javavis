@@ -79,3 +79,5 @@ void release(T *&v) {
 }
 
 #include "ComPtr.h"
+
+#pragma comment(lib, "gdi32.lib")
