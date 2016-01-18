@@ -1,4 +1,4 @@
 []
 
 stormpp=StormBuiltin
-preBuild+=<execpath|stormpp> ./ ../Shared/BuiltIn.cpp Lib/BuiltIn.cpp -a Lib/VTables.asm +./ ../Shared/ --using storm
+preBuild+=<execpath|stormpp> --compiler ./ ../Shared/BuiltIn.cpp Lib/BuiltIn.cpp -a Lib/VTables.asm +./ +../Shared/ --using storm

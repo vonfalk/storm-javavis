@@ -93,7 +93,10 @@ void Path::simplify() {
 String Path::toS() const {
 	// On Windows, we do not need to know if the path is absolute or relative.
 	String result = join(parts, L"\\");
-	if (isDirectory) result += L"\\";
+	if (parts.size() == 0)
+		result = L".";
+	if (isDirectory)
+		result += L"\\";
 	return result;
 }
 
@@ -102,7 +105,10 @@ std::wostream &operator <<(std::wostream &to, const Path &path) {
 		if (i > 0) to << L"\\";
 		to << path.parts[i];
 	}
-	if (path.isDir()) to << L"\\";
+	if (path.parts.size() == 0)
+		to << L".";
+	if (path.isDir())
+		to << L"\\";
 	return to;
 }
 

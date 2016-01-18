@@ -39,7 +39,6 @@ Type Types::find(const CppName &name, const CppName &scope) const {
 			return i->second;
 	}
 
-	DebugBreak();
 	throw Error(L"Type " + ::toS(name) + L" not found in " + ::toS(scope));
 }
 

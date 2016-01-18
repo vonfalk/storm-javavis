@@ -60,6 +60,11 @@ define+=UNICODE
 #Use full paths in output messages. Otherwise emacs 'jump to' will break.
 flags+=/FC
 
+#Compile asm files on X86
+ext+=asm
+noIncludes+=*.asm
+compile+=*.asm:ml /c /nologo /Fo<output> /safeseh /W3 /Zi <file>
+
 #[stormpp]
 #stormpp=StormBuiltin
 #preBuild+=<execpath|stormpp> ./ ../Shared/BuiltIn.cpp Lib/BuiltIn.cpp -a Lib/VTables.asm +./ ../Shared/ --using storm
