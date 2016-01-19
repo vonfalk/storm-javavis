@@ -1,8 +1,6 @@
 #pragma once
 #include "Auto.h"
 #include "Shared/Types.h"
-#include "Code/Size.h"
-#include "Code/FnParams.h"
 
 namespace storm {
 

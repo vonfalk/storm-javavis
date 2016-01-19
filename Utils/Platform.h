@@ -39,6 +39,11 @@
  * NAKED - naked function call, ie no prolog/epilog. Maybe not supported for all compilers.
  */
 
+/**
+ * CODECALL:
+ * Calling convention used in the Code lib. This is not inside the Code lib, since it will make
+ * mymake think that Code is dependent on almost all projects, since they only need the CODECALL macro.
+ */
 
 
 // Detect the current architecture and platform.
@@ -88,3 +93,12 @@
 #error "someone forgot to declare THREAD for your architecture"
 #endif
 
+
+#ifdef WINDOWS
+#define CODECALL __cdecl
+#endif
+
+// Make sure it is defined.
+#ifndef CODECALL
+#error "Someone forgot to declare CODECALL for your architecture."
+#endif

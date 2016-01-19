@@ -2,6 +2,8 @@
 // Include the shared implementation.
 #include "Shared/Object.h"
 #include "Shared/DllInterface.h"
+#include "Code/FnParams.h"
+#include "Code/Size.h"
 
 namespace storm {
 
