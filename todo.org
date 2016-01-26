@@ -102,6 +102,9 @@
  - [X] Why does map["hello"] not work?
 * Syntax [0/9]
 
+ - [ ] Make it possible to capture raw parts of the syntax tree, to delay the transformation to 'raw'
+   objects until other parts of the syntax tree have been evaluated.
+
  - [ ] Check so that *, + and ? are greedy in ambiguous cases!
 
  - [ ] Include use statements (or similar) for types inside the syntax files.
@@ -212,7 +215,8 @@
  - [ ] Currently: parts of the message loop may be executed from other UThreads than the intended one (possibly interleaving),
    which could confuse parts of the Win32-api. This is caused by calling Create for example.
 
-* Others [0/4]
+* Others [0/5]
+ - [ ] Make sure that the Lib/ directory is created if needed during initial builds.
 
  - [ ] Verify that exceptions thrown in constructors are actually correctly propagated. Calling create1<DbgVal>(null) does
    not crash for some reason...
