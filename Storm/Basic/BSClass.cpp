@@ -179,13 +179,11 @@ namespace storm {
 		params->addThis(owner.borrow());
 		return CREATE(BSFunction, owner->engine,
 					result->resolve(owner->scope),
-					name->v->v,
-					params->cTypes(owner->scope),
-					params->cNames(),
+					name,
+					params,
 					owner->scope,
-					contents,
 					null, // thread
-					pos);
+					contents);
 	}
 
 	bs::BSCtor *STORM_FN bs::classCtor(Par<Class> owner,

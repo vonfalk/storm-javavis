@@ -12,6 +12,7 @@ namespace storm {
 		STORM_PKG(lang.bs);
 
 		class BSFunction;
+		class FnBody;
 
 		/**
 		 * Function declaration. This holds the needed information to create each function
@@ -52,21 +53,15 @@ namespace storm {
 			NamePart *STORM_FN namePart(const Scope &scope) const;
 		};
 
-
 		/**
-		 * Function in the BS language.
+		 * Raw function that will not read syntax trees by parsing a string.
 		 */
-		class BSFunction : public Function {
+		class BSRawFn : public Function {
 			STORM_CLASS;
 		public:
-			BSFunction(Value result, const String &name, const vector<Value> &params,
-					const vector<String> &names, const Scope &scope, Par<SStr> contents,
-					Par<NamedThread> thread, const SrcPos &pos);
-
-			// Temporary solution for updating a function.
-			void update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos);
-			Bool STORM_FN update(Par<ArrayP<Str>> names, Par<SStr> contents);
-			void STORM_FN update(Par<BSFunction> from);
+			// Create.
+			STORM_CTOR BSRawFn(Value result, Par<SStr> name, Par<Params> params,
+							Scope scope, MAYBE(Par<NamedThread>) thread);
 
 			// Declared at.
 			SrcPos pos;
@@ -74,13 +69,16 @@ namespace storm {
 			// Scope.
 			const Scope scope;
 
-			// Add function parameters to a block.
-			void addParams(Par<Block> block);
+			// Add function parameters to a block. Mainly for internal use.
+			void STORM_FN addParams(Par<Block> block);
 
-		private:
-			// Code.
-			Auto<SStr> contents;
+			// Override this to create the syntax tree to compile.
+			virtual FnBody *STORM_FN createBody();
 
+			// Re-compile at next execution.
+			void STORM_FN reset();
+
+		protected:
 			// Parameter names.
 			vector<String> paramNames;
 
@@ -90,12 +88,36 @@ namespace storm {
 
 
 		/**
+		 * Function in the BS language.
+		 */
+		class BSFunction : public BSRawFn {
+			STORM_CLASS;
+		public:
+			// Create a function.
+			STORM_CTOR BSFunction(Value result, Par<SStr> name, Par<Params> params, Scope scope,
+								MAYBE(Par<NamedThread>) thread, Par<SStr> contents);
+
+			// Temporary solution for updating a function.
+			void update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos);
+			Bool STORM_FN update(Par<ArrayP<Str>> names, Par<SStr> contents);
+			void STORM_FN update(Par<BSFunction> from);
+
+			// Create the body from our string.
+			virtual FnBody *STORM_FN createBody();
+
+		private:
+			// Code.
+			Auto<SStr> contents;
+		};
+
+
+		/**
 		 * Contents of a function.
 		 */
 		class FnBody : public ExprBlock {
 			STORM_CLASS;
 		public:
-			STORM_CTOR FnBody(Par<BSFunction> owner);
+			STORM_CTOR FnBody(Par<BSRawFn> owner);
 
 			// Store the result type.
 			STORM_VAR Value type;

@@ -27,8 +27,6 @@ namespace storm {
 
 	Function *bs::FunctionDecl::asFunction(const Scope &scope) {
 		Value result = this->result->resolve(scope);
-		vector<Value> params = this->params->cTypes(scope);
-		vector<String> names = this->params->cNames();
 		NamedThread *thread = null;
 
 		if (this->thread) {
@@ -40,7 +38,7 @@ namespace storm {
 			}
 		}
 
-		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, thread, name->pos);
+		return CREATE(BSFunction, this, result, name, params, scope, thread, contents);
 	}
 
 	void bs::FunctionDecl::update(Par<BSFunction> fn, const Scope &scope) {
@@ -67,11 +65,9 @@ namespace storm {
 	}
 
 
-	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
-							const vector<String> &names, const Scope &scope, Par<SStr> contents,
-							Par<NamedThread> thread, const SrcPos &pos)
-		: Function(result, name, params), scope(scope), contents(contents),
-		  paramNames(names), pos(pos) {
+	bs::BSRawFn::BSRawFn(Value result, Par<SStr> name, Par<Params> params,
+						Scope scope, MAYBE(Par<NamedThread>) thread) :
+		Function(result, name->v->v, params->cTypes(scope)), scope(scope), paramNames(params->cNames()), pos(name->pos) {
 
 		if (thread)
 			runOn(thread);
@@ -79,61 +75,16 @@ namespace storm {
 		if (result.ref)
 			throw SyntaxError(pos, L"Returning references is not a good idea at this point!");
 
-		Auto<FnPtr<CodeGen *>> fn = memberWeakPtr(engine(), this, &BSFunction::generateCode);
+		Auto<FnPtr<CodeGen *>> fn = memberWeakPtr(engine(), this, &BSRawFn::generateCode);
 		setCode(steal(CREATE(LazyCode, this, fn)));
 	}
 
-	void bs::BSFunction::update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos) {
-		paramNames = names;
-		this->contents = contents;
-		this->pos = pos;
-
-		// Could be done better...
-		Auto<FnPtr<CodeGen *>> fn = memberWeakPtr(engine(), this, &BSFunction::generateCode);
-		setCode(steal(CREATE(LazyCode, this, fn)));
+	bs::FnBody *bs::BSRawFn::createBody() {
+		throw InternalError(L"A BSRawFn can not be used without overriding 'createBody'!");
 	}
 
-	Bool bs::BSFunction::update(Par<ArrayP<Str>> names, Par<SStr> contents) {
-		if (names->count() != params.size())
-			return false;
-
-		vector<String> n(names->count());
-		for (nat i = 0; i < names->count(); i++) {
-			n[i] = names->at(i)->v;
-		}
-
-		update(n, contents, pos);
-
-		return true;
-	}
-
-	void bs::BSFunction::update(Par<BSFunction> from) {
-		assert(paramNames.size() == from->paramNames.size());
-		paramNames = from->paramNames;
-		contents = from->contents;
-		pos = from->pos;
-
-		Auto<FnPtr<CodeGen *>> fn = memberWeakPtr(engine(), this, &BSFunction::generateCode);
-		setCode(steal(CREATE(LazyCode, this, fn)));
-	}
-
-
-	static code::Variable createResultVar(code::Listing &l) {
-		// Note: We do not need to free this one, since we will copy a value to it (and thereby initialize it)
-		// the last thing we do in this function.
-		return l.frame.createParameter(Size::sPtr, false);
-	}
-
-	CodeGen *bs::BSFunction::generateCode() {
-		Auto<SyntaxSet> syntax = getSyntax(scope);
-
-		Auto<Parser> parser = CREATE(Parser, this, syntax, contents->v, contents->pos);
-		nat r = parser->parse(L"FunctionBody");
-		if (parser->hasError())
-			throw parser->error();
-
-		Auto<Object> c = parser->transform(vector<Object *>(1, this));
-		Auto<FnBody> body = c.expect<FnBody>(engine(), L"While evaluating FunctionBody");
+	CodeGen *bs::BSRawFn::generateCode() {
+		Auto<FnBody> body = createBody();
 
 		// Expression possibly wrapped around the body (casting the value if needed).
 		Auto<Expr> bodyExpr = expectCastTo(body, result);
@@ -177,7 +128,13 @@ namespace storm {
 		return state.ret();
 	}
 
-	void bs::BSFunction::addParams(Par<Block> to) {
+	void bs::BSRawFn::reset() {
+		// Could be done better...
+		Auto<FnPtr<CodeGen *>> fn = memberWeakPtr(engine(), this, &BSRawFn::generateCode);
+		setCode(steal(CREATE(LazyCode, this, fn)));
+	}
+
+	void bs::BSRawFn::addParams(Par<Block> to) {
 		for (nat i = 0; i < params.size(); i++) {
 			Auto<LocalVar> var = CREATE(LocalVar, this, paramNames[i], params[i], pos, true);
 			if (i == 0 && isMember())
@@ -186,7 +143,57 @@ namespace storm {
 		}
 	}
 
-	bs::FnBody::FnBody(Par<BSFunction> owner) : ExprBlock(owner->scope), type(owner->result) {
+
+	bs::BSFunction::BSFunction(Value result, Par<SStr> name, Par<Params> params, Scope scope,
+							MAYBE(Par<NamedThread>) thread, Par<SStr> contents) :
+		BSRawFn(result, name, params, scope, thread), contents(contents) {}
+
+	void bs::BSFunction::update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos) {
+		paramNames = names;
+		this->contents = contents;
+		this->pos = pos;
+
+		reset();
+	}
+
+	Bool bs::BSFunction::update(Par<ArrayP<Str>> names, Par<SStr> contents) {
+		if (names->count() != params.size())
+			return false;
+
+		vector<String> n(names->count());
+		for (nat i = 0; i < names->count(); i++) {
+			n[i] = names->at(i)->v;
+		}
+
+		update(n, contents, pos);
+
+		return true;
+	}
+
+	void bs::BSFunction::update(Par<BSFunction> from) {
+		assert(paramNames.size() == from->paramNames.size());
+		paramNames = from->paramNames;
+		contents = from->contents;
+		pos = from->pos;
+
+		reset();
+	}
+
+	bs::FnBody *bs::BSFunction::createBody() {
+		Auto<SyntaxSet> syntax = getSyntax(scope);
+		Auto<Parser> parser = CREATE(Parser, this, syntax, contents->v, contents->pos);
+		nat r = parser->parse(L"FunctionBody");
+		if (parser->hasError())
+			throw parser->error();
+
+		Auto<Object> c = parser->transform(vector<Object *>(1, this));
+		Auto<FnBody> body = c.expect<FnBody>(engine(), L"While evaluating FunctionBody");
+
+		return body.ret();
+	}
+
+
+	bs::FnBody::FnBody(Par<BSRawFn> owner) : ExprBlock(owner->scope), type(owner->result) {
 		owner->addParams(this);
 	}
 
