@@ -39,7 +39,7 @@ namespace storm {
 			STORM_VAR Auto<SStr> name;
 			STORM_VAR Auto<TypeName> result;
 			STORM_VAR Auto<Params> params;
-			STORM_VAR Auto<TypeName> thread; // may be null
+			STORM_VAR MAYBE(Auto<TypeName>) thread;
 			STORM_VAR Auto<SStr> contents;
 
 			// Create a corresponding function.
@@ -61,7 +61,7 @@ namespace storm {
 		public:
 			BSFunction(Value result, const String &name, const vector<Value> &params,
 					const vector<String> &names, const Scope &scope, Par<SStr> contents,
-					Par<NamedThread> thread, const SrcPos &pos, bool isMember);
+					Par<NamedThread> thread, const SrcPos &pos);
 
 			// Temporary solution for updating a function.
 			void update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos);
@@ -86,9 +86,6 @@ namespace storm {
 
 			// Generate code.
 			CodeGen *CODECALL generateCode();
-
-			// Is a member function (ie this as first param?)
-			bool isMember;
 		};
 
 

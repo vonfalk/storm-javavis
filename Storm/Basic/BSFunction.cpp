@@ -40,7 +40,7 @@ namespace storm {
 			}
 		}
 
-		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, thread, name->pos, false);
+		return CREATE(BSFunction, this, result, name->v->v, params, names, scope, contents, thread, name->pos);
 	}
 
 	void bs::FunctionDecl::update(Par<BSFunction> fn, const Scope &scope) {
@@ -69,9 +69,9 @@ namespace storm {
 
 	bs::BSFunction::BSFunction(Value result, const String &name, const vector<Value> &params,
 							const vector<String> &names, const Scope &scope, Par<SStr> contents,
-							Par<NamedThread> thread, const SrcPos &pos, bool isMember)
+							Par<NamedThread> thread, const SrcPos &pos)
 		: Function(result, name, params), scope(scope), contents(contents),
-		  paramNames(names), pos(pos), isMember(isMember) {
+		  paramNames(names), pos(pos) {
 
 		if (thread)
 			runOn(thread);
@@ -155,7 +155,7 @@ namespace storm {
 		}
 
 		// Return type.
-		state->returnType(result, isMember);
+		state->returnType(result, isMember());
 
 		if (result == Value()) {
 			Auto<CodeResult> r = CREATE(CodeResult, this);
@@ -180,7 +180,7 @@ namespace storm {
 	void bs::BSFunction::addParams(Par<Block> to) {
 		for (nat i = 0; i < params.size(); i++) {
 			Auto<LocalVar> var = CREATE(LocalVar, this, paramNames[i], params[i], pos, true);
-			if (i == 0 && isMember)
+			if (i == 0 && isMember())
 				var->constant = true;
 			to->add(var);
 		}

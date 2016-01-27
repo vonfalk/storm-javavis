@@ -185,8 +185,7 @@ namespace storm {
 					owner->scope,
 					contents,
 					null, // thread
-					pos,
-					true);
+					pos);
 	}
 
 	bs::BSCtor *STORM_FN bs::classCtor(Par<Class> owner,
