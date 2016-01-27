@@ -1,4 +1,6 @@
-* Core [6/44]
+* Core [6/45]
+
+ - [ ] Take care of Map<T, U> in the preprocessor. Maybe generalize a bit?
 
  - [ ] Implement some clever solution regarding iterators and deepCopy.
 

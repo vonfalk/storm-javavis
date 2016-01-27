@@ -3,9 +3,11 @@
 #include "SyntaxObject.h"
 #include "Type.h"
 #include "TypeVar.h"
+#include "Shared/Map.h"
 
 #include "BSType.h"
 #include "BSParams.h"
+#include "BSTemplate.h"
 
 namespace storm {
 	namespace bs {
@@ -74,8 +76,14 @@ namespace storm {
 			// Add content.
 			void STORM_FN add(Par<Named> item);
 
+			// Add template.
+			void STORM_FN add(Par<Template> t);
+
 			// Contents.
-			vector<Auto<Named> > items;
+			STORM_VAR Auto<ArrayP<Named>> items;
+
+			// Template contents. TODO: Add STORM_VAR.
+			Auto<MAP_PP(Str, TemplateAdapter)> templates;
 		};
 
 

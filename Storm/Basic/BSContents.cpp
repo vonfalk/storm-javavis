@@ -7,7 +7,8 @@ namespace storm {
 	bs::Contents::Contents() :
 		types(CREATE(ArrayP<Type>, this)),
 		functions(CREATE(ArrayP<FunctionDecl>, this)),
-		threads(CREATE(ArrayP<NamedThread>, this)) {}
+		threads(CREATE(ArrayP<NamedThread>, this)),
+		templates(CREATE(MAP_PP(Str, TemplateAdapter), this)) {}
 
 	void bs::Contents::add(Par<Type> t) {
 		types->push(t);
@@ -19,6 +20,18 @@ namespace storm {
 
 	void bs::Contents::add(Par<NamedThread> t) {
 		threads->push(t);
+	}
+
+	void bs::Contents::add(Par<Template> t) {
+		Auto<Str> k = CREATE(Str, this, t->name);
+		if (templates->has(k)) {
+			Auto<TemplateAdapter> &found = templates->get(k);
+			found->add(t);
+		} else {
+			Auto<TemplateAdapter> adapter = CREATE(TemplateAdapter, this, k);
+			adapter->add(t);
+			templates->put(k, adapter);
+		}
 	}
 
 	void bs::Contents::setScope(const Scope &scope) {

@@ -2,6 +2,8 @@
 #include "Std.h"
 #include "NamedThread.h"
 #include "Basic/BSFunction.h"
+#include "Basic/BSTemplate.h"
+#include "Shared/Map.h"
 
 namespace storm {
 	namespace bs {
@@ -25,6 +27,9 @@ namespace storm {
 			// Add a named thread.
 			void STORM_FN add(Par<NamedThread> thread);
 
+			// Add a template of some kind.
+			void STORM_FN add(Par<Template> templ);
+
 			// All types.
 			STORM_VAR Auto<ArrayP<Type>> types;
 
@@ -33,6 +38,9 @@ namespace storm {
 
 			// All named threads.
 			STORM_VAR Auto<ArrayP<NamedThread>> threads;
+
+			// All templates. TODO: Add STORM_VAR
+			Auto<MAP_PP(Str, TemplateAdapter)> templates;
 
 			// Set the scope for all contents that needs it.
 			void STORM_FN setScope(const Scope &scope);

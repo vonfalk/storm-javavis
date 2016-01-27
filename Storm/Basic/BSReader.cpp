@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "BSReader.h"
+#include "BSTemplate.h"
 #include "Parser.h"
 #include "SyntaxTransform.h"
 #include "BSContents.h"
@@ -49,6 +50,11 @@ namespace storm {
 		readContents();
 		for (nat i = 0; i < contents->functions->count(); i++) {
 			pkg->add(steal(contents->functions->at(i)->asFunction(scope)));
+		}
+
+		typedef MAP_PP(Str, TemplateAdapter)::Iter Iter;
+		for (Iter i = contents->templates->begin(), end = contents->templates->end(); i != end; i++) {
+			pkg->add(i.val());
 		}
 	}
 

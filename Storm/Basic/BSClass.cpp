@@ -100,8 +100,8 @@ namespace storm {
 		bool hasCopyCtor = false;
 		bool hasDeepCopy = false;
 
-		for (nat i = 0; i < body->items.size(); i++) {
-			Auto<Named> z = body->items[i];
+		for (nat i = 0; i < body->items->count(); i++) {
+			Auto<Named> &z = body->items->at(i);
 			if (z->name == Type::CTOR) {
 				if (z->params.size() == 2 && z->params[0] == z->params[1])
 					hasCopyCtor = true;
@@ -141,10 +141,24 @@ namespace storm {
 	 * Body
 	 */
 
-	bs::ClassBody::ClassBody() {}
+	bs::ClassBody::ClassBody() :
+		items(CREATE(ArrayP<Named>, this)),
+		templates(CREATE(MAP_PP(Str, TemplateAdapter), this)) {}
 
 	void bs::ClassBody::add(Par<Named> i) {
-		items.push_back(i);
+		items->push(i);
+	}
+
+	void bs::ClassBody::add(Par<Template> t) {
+		Auto<Str> k = CREATE(Str, this, t->name);
+		if (templates->has(k)) {
+			Auto<TemplateAdapter> &found = templates->get(k);
+			found->add(t);
+		} else {
+			Auto<TemplateAdapter> adapter = CREATE(TemplateAdapter, this, k);
+			adapter->add(t);
+			templates->put(k, adapter);
+		}
 	}
 
 	/**

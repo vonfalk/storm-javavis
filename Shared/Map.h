@@ -308,4 +308,11 @@ namespace storm {
 
 	};
 
+	/**
+	 * Map type for use in the CREATE macro. CREATE(Map<T, U>), does not work well...
+	 */
+#define MAP(tKey, tVal) Map<tKey, tVal>
+#define MAP_VP(tKey, tVal) Map<tKey, Auto<tVal> >
+#define MAP_PP(tKey, tVal) Map<Auto<tKey>, Auto<tVal> >
+
 }
