@@ -10,6 +10,7 @@
 #include "Code/Instruction.h"
 #include "Code/VTable.h"
 #include "CodeGen.h"
+#include "Lib/FnPtr.h"
 
 namespace storm {
 
@@ -605,6 +606,47 @@ namespace storm {
 
 	Value result(Par<Function> fn) {
 		return fn->result;
+	}
+
+	FnPtrBase *fnPtr(Par<Function> fn) {
+		return fnPtr(fn, Par<Object>());
+	}
+
+	FnPtrBase *STORM_FN fnPtr(Par<Function> fn, Par<Object> object) {
+		vector<Value> params;
+		params.push_back(fn->result);
+
+		Object *thisPtr = object.borrow();
+		Thread *thread = null;
+
+		if (fn->isMember()) {
+			if (thisPtr == null)
+				throw RuntimeError(L"A value for the this-pointer of " + fn->identifier() + L" is needed!");
+
+			if (TObject *t = as<TObject>(thisPtr))
+				thread = t->thread.borrow();
+
+			for (nat i = 1; i < fn->params.size(); i++)
+				params.push_back(fn->params[i]);
+		} else {
+			if (thisPtr)
+				throw RuntimeError(L"Can not provide a this-pointer to non-member " + fn->identifier() + L"!");
+
+			for (nat i = 0; i < fn->params.size(); i++)
+				params.push_back(fn->params[i]);
+		}
+
+		return createFnPtr(fn->engine(),
+						params,
+						fn->ref(),
+						thread,
+						thisPtr,
+						true,
+						fn->isMember());
+	}
+
+	FnPtrBase *STORM_FN fnPtr(Par<Function> fn, Par<TObject> object) {
+		return fnPtr(fn, Par<Object>(object));
 	}
 
 }

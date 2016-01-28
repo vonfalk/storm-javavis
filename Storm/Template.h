@@ -17,7 +17,7 @@ namespace storm {
 	 *
 	 * TODO: Replace Fn with FnPtr!
 	 */
-	class Template : public Object {
+	class Template : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
 		// Ctor.
@@ -36,7 +36,7 @@ namespace storm {
 		Fn<Named *, Par<NamePart>> generateFn;
 
 		// Called when something with our name is not found. Returns null if nothing is found.
-		virtual Named *STORM_FN generate(Par<NamePart> par);
+		virtual MAYBE(Named) *STORM_FN generate(Par<NamePart> par);
 	};
 
 }

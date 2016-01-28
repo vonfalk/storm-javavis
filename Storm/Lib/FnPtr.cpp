@@ -37,4 +37,15 @@ namespace storm {
 		return result;
 	}
 
+
+	FnPtrBase *createFnPtr(Engine &e, const vector<Value> &params,
+						const code::Ref &to, Thread *t, Object *thisPtr,
+						bool strongThis, bool member) {
+		Type *type = fnPtrType(e, params);
+		RefTarget target(to);
+		FnPtrBase *result = new (type) FnPtrBase(target, t, member, thisPtr, strongThis);
+		setVTable(result);
+		return result;
+	}
+
 }

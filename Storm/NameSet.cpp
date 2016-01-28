@@ -54,6 +54,7 @@ namespace storm {
 	void NameSet::init() {
 		loaded = false;
 		loading = false;
+		nextAnon = 0;
 	}
 
 	NameSet::~NameSet() {
@@ -92,6 +93,11 @@ namespace storm {
 		}
 
 		o->templ = p;
+	}
+
+	Str *NameSet::anonName() {
+		String r = L" @" + ::toS(nextAnon++);
+		return CREATE(Str, this, r);
 	}
 
 	Named *NameSet::find(Par<NamePart> part) {

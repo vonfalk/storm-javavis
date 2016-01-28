@@ -1,0 +1,112 @@
+use core:lang;
+use core:debug;
+
+/**
+ * Template class for generating new code according to the specified function.
+ */
+class Generate extends Template {
+	// Generated function.
+	BSFunction? fn;
+
+	// Function name.
+	SStr fnName;
+
+	// Parameter name.
+	SStr paramName;
+
+	// Function body.
+	SStr contents;
+
+	// Create.
+	ctor(SStr name, SStr param, SStr contents) {
+		init(name.v) {
+			fnName = name;
+			paramName = param;
+			contents = contents;
+		}
+	}
+
+	// Generate a Named object of some sort.
+	Named? generate(NamePart part) {
+		BSFunction fn = createFn();
+
+		FnPtrBase ptr = fn.fnPtr();
+		if (ptr as Fn<Named?, Value[]>) {
+			return ptr.call(part.params);
+		}
+
+		null;
+	}
+
+	// Create 'fn' if not already done.
+	BSFunction createFn() {
+		if (fn) {
+			return fn;
+		}
+
+		Package? into = thisPkg();
+
+		Value result = resultType();
+		print("Result: " # result);
+
+		Params params;
+		params.add(arrayType(valueType()));
+		params.add(paramName);
+
+		// FIX THIS:
+		Scope scope = rootScope;
+
+		SStr name = fnName;
+		if (into) {
+			name = SStr(into.anonName, name.pos);
+		}
+
+		// TODO: ignore fnName, making the function anonymous.
+		BSFunction r(result, name, params, scope, null, contents);
+		print("R: " # r);
+
+		if (into) {
+			into.add(r);
+		}
+
+		fn = r;
+		r;
+	}
+
+	// Find the type 'core:lang:Value?'
+	Value resultType() {
+		TypeName n;
+		n.add(TypePart("core"));
+		n.add(TypePart("lang"));
+		n.add(TypePart("Named"));
+
+		Named? ans = maybeType(n).find(rootScope);
+		if (ans as Type) {
+			Value(ans);
+		} else {
+			Value();
+		}
+	}
+
+	// Generate the type name 'core:lang:Value'
+	TypeName valueType() {
+		TypeName n;
+		n.add(TypePart("core"));
+		n.add(TypePart("lang"));
+		n.add(TypePart("Value"));
+		n;
+	}
+
+	// Find this package.
+	Package? thisPkg() {
+		TypeName n;
+		n.add(TypePart("lang"));
+		n.add(TypePart("bs"));
+
+		Named? ans = n.find(rootScope);
+		if (ans as Package) {
+			return ans;
+		}
+		null;
+	}
+}

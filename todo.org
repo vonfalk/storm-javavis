@@ -1,4 +1,4 @@
-* Core [6/45]
+* Core [6/46]
 
  - [ ] Take care of Map<T, U> in the preprocessor. Maybe generalize a bit?
 
@@ -83,8 +83,11 @@
 
  - [ ] A lot of parameter-generating code can now be rewritten much nicer using the 'moveParam' function in Code::frame.
 
- - [ ] Implement an interactive way of coding using 'reverse parsers'. In this case, it would be an autocomplete that knows the syntax
-   and suggests all valid parts at the cursor position. It may not be able to suggest names, but it could suggest syntax constructions.
+ - [ ] See why the parser crashes when an empty syntax set is given.
+
+ - [ ] Implement an interactive way of coding using 'reverse parsers'. In this case, it would be an autocomplete that
+   knows the syntax and suggests all valid parts at the cursor position. It may not be able to suggest names, but it 
+   could suggest syntax constructions.
 
  - [X] Make it possible to nest classes in C++ as well. Currently, everything works, but the inner class is not inside the
    outer class in Storm. This probably needs a re-structuring of the format outputted by the pre-processor. Needed for 

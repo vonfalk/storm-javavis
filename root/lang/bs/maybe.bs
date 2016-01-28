@@ -2,7 +2,7 @@ use core:lang;
 use core:asm;
 
 // Implement support for Foo? instead of Maybe<Foo>
-TypeName maybeType(TypeName t) {
+TypeName maybeType(TypeName t) on Compiler {
 	TypePart core("core");
 	TypePart maybe("Maybe");
 	maybe.add(t);

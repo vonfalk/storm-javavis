@@ -74,6 +74,9 @@ namespace storm {
 		// Add a template.
 		virtual void STORM_FN add(Par<Template> item);
 
+		// Get the next free anonymous name in this name set.
+		virtual Str *STORM_FN anonName();
+
 		// Iterator:
 		class iterator : public std::iterator<std::bidirectional_iterator_tag, Auto<Named> > {
 			friend NameSet;
@@ -159,6 +162,9 @@ namespace storm {
 
 		// Ongoing lazy-loading?
 		bool loading;
+
+		// Identifier for the next anonymous thing.
+		nat nextAnon;
 
 		// Initialize.
 		void init();

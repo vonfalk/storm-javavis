@@ -69,7 +69,10 @@
 	    (setq indent-tabs-mode t)
 	    (c-set-style "linux-tabs-only")
 	    (whitespace-mode t)
-	    (setq c-basic-offset 4)))
+	    (setq c-basic-offset 4)
+
+	    ;; Better handling of comment-indentation. Why needed?
+	    (c-set-offset 'comment-intro 0)))
 
 (defun storm-insert-comment ()
   "Insert a comment in c-mode"

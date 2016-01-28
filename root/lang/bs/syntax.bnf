@@ -77,10 +77,14 @@ Class => threadClass(pos, name, contents) : "class", Name name, "on", "\?", "{" 
 // Named thread declaration.
 NamedThread => NamedThread(name) : "thread", Name name, ";";
 
+// Generate source code.
+Generate => Generate(name, param, contents) : Name name, ":", "generate", "(", Name param, ")", "{" - SkipBlock contents - "}";
+
 // Possible root blocks.
 FileItem => fn : Function fn;
 FileItem => cls : Class cls;
 FileItem => t : NamedThread t;
+FileItem => g : Generate g;
 
 // Root rule, used to parse an entire file. (except use-statements).
 File => Contents() : , (FileItem -> add, )*;

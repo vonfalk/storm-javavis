@@ -214,4 +214,12 @@ namespace storm {
 	// Storm wrappers.
 	wrap::Ref STORM_FN ref(Par<Function> fn);
 	wrap::Ref STORM_FN directRef(Par<Function> fn);
+
+	// Create function pointers from Function objects.
+	FnPtrBase *STORM_FN fnPtr(Par<Function> fn);
+
+	// Taking a this parameter (needed for member functions). Currently always strong this-ptr.
+    // TODO: For value types as well?
+	FnPtrBase *STORM_FN fnPtr(Par<Function> fn, Par<Object> object);
+	FnPtrBase *STORM_FN fnPtr(Par<Function> fn, Par<TObject> object);
 }

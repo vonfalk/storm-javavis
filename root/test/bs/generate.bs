@@ -1,0 +1,17 @@
+use core:debug;
+
+// Type of params is Value[]
+genAdd: generate(params) {
+	print("In generate: " # params);
+
+	if (params.count != 1)
+		return null;
+
+
+
+	return null;
+}
+
+// Int genAdd(Int a, Int b) {
+// 	a + b;
+// }
