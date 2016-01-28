@@ -79,10 +79,10 @@ namespace storm {
 		// Create a child scope.
 		inline Scope STORM_FN child(Par<NameLookup> top) { return Scope(*this, top); }
 
-		// Topmost object.
+		// Topmost object (may be null).
 		NameLookup *top;
 
-		// Lookup object.
+		// Lookup object (may be null).
 		Auto<ScopeLookup> lookup;
 
 		// Find the given NameRef, either by using an absulute path or something relative to the

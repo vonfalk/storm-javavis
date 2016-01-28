@@ -77,7 +77,11 @@ namespace storm {
 			return to.ret();
 		} else {
 			WARNING(L"This is probably not what you want to do!");
-			return null;
+			Object *o = scope.top;
+			if (!o)
+				o = scope.lookup.borrow();
+			assert(o, L"Nothing useful in the scope.");
+			return CREATE(SyntaxSet, o);
 		}
 	}
 
