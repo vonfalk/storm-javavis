@@ -193,7 +193,8 @@ namespace storm {
 			Named *n = i->borrow();
 			if (Type *z = as<Type>(n)) {
 				t.push_back(capture(z));
-			} else if (NameSet *z = as<NameSet>(n)) {
+			}
+			if (NameSet *z = as<NameSet>(n)) {
 				z->findTypes(t);
 			}
 		}
