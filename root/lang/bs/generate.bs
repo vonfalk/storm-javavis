@@ -17,12 +17,16 @@ class Generate extends Template {
 	// Function body.
 	SStr contents;
 
+	// Scope.
+	Scope scope;
+
 	// Create.
-	ctor(SStr name, SStr param, SStr contents) {
+	ctor(SyntaxEnv env, SStr name, SStr param, SStr contents) {
 		init(name.v) {
 			fnName = name;
 			paramName = param;
 			contents = contents;
+			scope = env.scope;
 		}
 	}
 
@@ -47,14 +51,10 @@ class Generate extends Template {
 		Package? into = thisPkg();
 
 		Value result = resultType();
-		print("Result: " # result);
 
 		Params params;
 		params.add(arrayType(valueType()));
 		params.add(paramName);
-
-		// FIX THIS:
-		Scope scope = rootScope;
 
 		SStr name = fnName;
 		if (into) {
@@ -62,8 +62,7 @@ class Generate extends Template {
 		}
 
 		// TODO: ignore fnName, making the function anonymous.
-		BSFunction r(result, name, params, scope, null, contents);
-		print("R: " # r);
+		BSFunction r(result, name, params, scope, compilerThread, contents);
 
 		if (into) {
 			into.add(r);
@@ -109,4 +108,5 @@ class Generate extends Template {
 		}
 		null;
 	}
+
 }

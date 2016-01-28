@@ -18,7 +18,7 @@ namespace storm {
 	 * a free function. In the case of a member function, the 'this' pointer
 	 * is explicitly stated as the first parameter.
 	 * A function always causes a call, and is never inlined (so far at least).
-	 * If inline code is desired look at InlineCode (TODO).
+	 * If inline code is desired look at InlineCode.
 	 * This class is eventually supposed to act as a RefSource.
 	 *
 	 * Note that the "implicit" this-pointer is actually explicit here.

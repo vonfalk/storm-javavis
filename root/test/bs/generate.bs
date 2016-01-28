@@ -1,15 +1,32 @@
+use core:lang;
+use lang:bs;
 use core:debug;
+use lang:bs:macro;
 
-// Type of params is Value[]
+// Type of params is Value[], returns Named
 genAdd: generate(params) {
-	print("In generate: " # params);
-
-	if (params.count != 1)
+	if (params.count != 2)
 		return null;
 
+	if (params[0] != params[1])
+		return null;
 
+	Value t = params[0];
 
-	return null;
+	BSTreeFn fn(t, SStr("genAdd"), params, ["a", "b"], null);
+
+	Scope scope = rootScope.child(t.getType());
+
+	FnBody body(fn, scope);
+	fn.body(body);
+
+	Actual actual;
+	actual.add(namedExpr(body, SStr("a"), Actual()));
+	actual.add(namedExpr(body, SStr("b"), Actual()));
+
+	body.add(namedExpr(body, SStr("+"), actual));
+
+	return fn;
 }
 
 // Int genAdd(Int a, Int b) {

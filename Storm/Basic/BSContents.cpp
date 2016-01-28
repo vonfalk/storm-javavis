@@ -34,12 +34,4 @@ namespace storm {
 		}
 	}
 
-	void bs::Contents::setScope(const Scope &scope) {
-		for (nat i = 0; i < types->count(); i++) {
-			if (bs::Class *c = as<bs::Class>(types->at(i).borrow())) {
-				c->setScope(scope);
-			}
-		}
-	}
-
 }

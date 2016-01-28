@@ -171,10 +171,18 @@ namespace storm {
 		Type *t = Type::stormType(*this);
 		t->addRef();
 
-		// All of 'cached' should be in 'types' as well!
+		// Some of 'cached' may not be in 'types', since they may have been removed from the type
+		// tree. This should not happen, but it is annoying when this crashes due to another error,
+		// and this operation does not hurt performance by much at all.
 		for (nat i = 0; i < types.size(); i++) {
 			types[i]->clear();
 		}
+
+		for (nat i = 0; i < cached.size(); i++) {
+			cached[i]->clear();
+		}
+
+		// Now, all types should contain nothing. Start clearing types!
 
 		delete rootScope;
 		loadedLibs.clearTypes();

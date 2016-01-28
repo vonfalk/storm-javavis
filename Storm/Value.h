@@ -47,6 +47,7 @@ namespace storm {
 		STORM_CTOR Value(Par<Type> type, Bool ref);
 
 		// Get the type. TODO: Rename/replace with read-only version of 'type' member variable.
+		// NOTE: This should probably be MAYBE(Type *)
 		Type *STORM_FN getType() const;
 		Bool STORM_FN isRef() const;
 

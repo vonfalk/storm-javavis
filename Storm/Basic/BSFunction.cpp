@@ -10,22 +10,25 @@
 
 namespace storm {
 
-	bs::FunctionDecl::FunctionDecl(SrcPos pos,
-								Par<SStr> name,
+	bs::FunctionDecl::FunctionDecl(Par<SyntaxEnv> env,
 								Par<TypeName> result,
+								Par<SStr> name,
 								Par<Params> params,
-								Par<SStr> contents)
-		: pos(pos), name(name), result(result), params(params), thread(null), contents(contents) {}
+								Par<SStr> contents) :
+		env(env), name(name), result(result), params(params), thread(null), contents(contents) {}
 
-	bs::FunctionDecl::FunctionDecl(SrcPos pos,
-								Par<SStr> name,
+	bs::FunctionDecl::FunctionDecl(Par<SyntaxEnv> env,
 								Par<TypeName> result,
+								Par<SStr> name,
 								Par<Params> params,
 								Par<TypeName> thread,
-								Par<SStr> contents)
-		: pos(pos), name(name), result(result), params(params), thread(thread), contents(contents) {}
+								Par<SStr> contents) :
+		env(env), name(name), result(result), params(params), thread(thread), contents(contents) {}
 
-	Function *bs::FunctionDecl::asFunction(const Scope &scope) {
+
+	Function *bs::FunctionDecl::createFn() {
+		const Scope &scope = env->scope;
+
 		Value result = this->result->resolve(scope);
 		NamedThread *thread = null;
 
@@ -41,13 +44,14 @@ namespace storm {
 		return CREATE(BSFunction, this, result, name, params, scope, thread, contents);
 	}
 
-	void bs::FunctionDecl::update(Par<BSFunction> fn, const Scope &scope) {
+	void bs::FunctionDecl::update(Par<BSFunction> fn) {
 		static bool first = true;
 		if (first) {
 			WARNING(L"This is a hack, and should be solved better later!");
 			first = false;
 		}
 
+		const Scope &scope = env->scope;
 		Value result = this->result->resolve(scope);
 		vector<Value> params = this->params->cTypes(scope);
 		vector<String> names = this->params->cNames();
@@ -60,15 +64,29 @@ namespace storm {
 		fn->update(names, contents, name->pos);
 	}
 
-	NamePart *bs::FunctionDecl::namePart(const Scope &scope) const {
-		return CREATE(NamePart, this, name->v->v, params->cTypes(scope));
+	NamePart *bs::FunctionDecl::namePart() const {
+		return CREATE(NamePart, this, name->v->v, params->cTypes(env->scope));
 	}
 
+	bs::BSRawFn::BSRawFn(Value result, Par<SStr> name, Par<Array<Value>> params, Par<ArrayP<Str>> names,
+						MAYBE(Par<NamedThread>) thread) :
+		Function(result, name->v, params), pos(name->pos) {
 
-	bs::BSRawFn::BSRawFn(Value result, Par<SStr> name, Par<Params> params,
-						Scope scope, MAYBE(Par<NamedThread>) thread) :
-		Function(result, name->v->v, params->cTypes(scope)), scope(scope), paramNames(params->cNames()), pos(name->pos) {
+		for (nat i = 0; i < names->count(); i++) {
+			paramNames.push_back(names->at(i)->v);
+		}
 
+		init(thread);
+	}
+
+	bs::BSRawFn::BSRawFn(Value result, Par<SStr> name, const vector<Value> &params, const vector<String> &names,
+						MAYBE(Par<NamedThread>) thread) :
+		Function(result, name->v->v, params), paramNames(names), pos(name->pos) {
+
+		init(thread);
+	}
+
+	void bs::BSRawFn::init(Par<NamedThread> thread) {
 		if (thread)
 			runOn(thread);
 
@@ -137,8 +155,12 @@ namespace storm {
 	void bs::BSRawFn::addParams(Par<Block> to) {
 		for (nat i = 0; i < params.size(); i++) {
 			Auto<LocalVar> var = CREATE(LocalVar, this, paramNames[i], params[i], pos, true);
-			if (i == 0 && isMember())
-				var->constant = true;
+
+			// TODO: We do not want this if-statement!
+			if (parentLookup) {
+				if (i == 0 && isMember())
+					var->constant = true;
+			}
 			to->add(var);
 		}
 	}
@@ -146,7 +168,7 @@ namespace storm {
 
 	bs::BSFunction::BSFunction(Value result, Par<SStr> name, Par<Params> params, Scope scope,
 							MAYBE(Par<NamedThread>) thread, Par<SStr> contents) :
-		BSRawFn(result, name, params, scope, thread), contents(contents) {}
+		BSRawFn(result, name, params->cTypes(scope), params->cNames(), thread), scope(scope), contents(contents) {}
 
 	void bs::BSFunction::update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos) {
 		paramNames = names;
@@ -192,8 +214,32 @@ namespace storm {
 		return body.ret();
 	}
 
+	bs::BSTreeFn::BSTreeFn(Value result, Par<SStr> name, Par<Array<Value>> params,
+						Par<ArrayP<Str>> names, MAYBE(Par<NamedThread>) thread) :
+		BSRawFn(result, name, params, names, thread) {
+	}
 
-	bs::FnBody::FnBody(Par<BSRawFn> owner) : ExprBlock(owner->scope), type(owner->result) {
+	void bs::BSTreeFn::body(Par<FnBody> body) {
+		if (root)
+			reset();
+
+		root = body;
+	}
+
+	bs::FnBody *bs::BSTreeFn::createBody() {
+		if (!root)
+			throw RuntimeError(L"The body of " + identifier() + L"was not set before trying to use it.");
+
+		return root.ret();
+	}
+
+
+
+	bs::FnBody::FnBody(Par<BSRawFn> owner, Scope scope) : ExprBlock(scope), type(owner->result) {
+		owner->addParams(this);
+	}
+
+	bs::FnBody::FnBody(Par<BSFunction> owner) : ExprBlock(owner->scope), type(owner->result) {
 		owner->addParams(this);
 	}
 

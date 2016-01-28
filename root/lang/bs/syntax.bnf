@@ -61,33 +61,38 @@ Params => Params() : BSDelimiter;
 Params => Params() : Type -> add, Name -> add, (",", Type -> add, Name -> add, )*;
 
 // Function
-Function => FunctionDecl(pos, name, result, params, contents) :
+Function(SyntaxEnv env);
+Function => FunctionDecl(env, result, name, params, contents) :
 Type result, Name name, "(", Params params, ")", "{" - SkipBlock contents - "}";
-Function => FunctionDecl(pos, name, result, params, thread, contents) :
+Function => FunctionDecl(env, result, name, params, thread, contents) :
 Type result, Name name, "(", Params params, ")", "on", Type thread, "{" - SkipBlock contents - "}";
 
 // Class / value
-Class => createClass(pos, name, contents) : "class", Name name, "{" - SkipBlock contents - "}";
-Class => createValue(pos, name, contents) : "value", Name name, "{" - SkipBlock contents - "}";
-Class => extendClass(pos, name, base, contents) : "class", Name name, "extends", Type base, "{" - SkipBlock contents - "}";
-Class => extendClass(pos, name, base, contents) : "value", Name name, "extends", Type base, "{" - SkipBlock contents - "}";
-Class => threadClass(pos, name, thread, contents) : "class", Name name, "on", Type thread, "{" - SkipBlock contents - "}";
-Class => threadClass(pos, name, contents) : "class", Name name, "on", "\?", "{" - SkipBlock contents - "}";
+Class(SyntaxEnv env);
+Class => createClass(pos, env, name, contents) : "class", Name name, "{" - SkipBlock contents - "}";
+Class => createValue(pos, env, name, contents) : "value", Name name, "{" - SkipBlock contents - "}";
+Class => extendClass(pos, env, name, base, contents) : "class", Name name, "extends", Type base, "{" - SkipBlock contents - "}";
+Class => extendClass(pos, env, name, base, contents) : "value", Name name, "extends", Type base, "{" - SkipBlock contents - "}";
+Class => threadClass(pos, env, name, thread, contents) : "class", Name name, "on", Type thread, "{" - SkipBlock contents - "}";
+Class => threadClass(pos, env, name, contents) : "class", Name name, "on", "\?", "{" - SkipBlock contents - "}";
 
 // Named thread declaration.
 NamedThread => NamedThread(name) : "thread", Name name, ";";
 
 // Generate source code.
-Generate => Generate(name, param, contents) : Name name, ":", "generate", "(", Name param, ")", "{" - SkipBlock contents - "}";
+Generate(SyntaxEnv env);
+Generate => Generate(env, name, param, body) : Name name, ":", "generate", "(", Name param, ")", "{" - SkipBlock body - "}";
 
 // Possible root blocks.
-FileItem => fn : Function fn;
-FileItem => cls : Class cls;
+FileItem(SyntaxEnv env);
+FileItem => fn : Function(env) fn;
+FileItem => cls : Class(env) cls;
 FileItem => t : NamedThread t;
-FileItem => g : Generate g;
+FileItem => g : Generate(env) g;
 
 // Root rule, used to parse an entire file. (except use-statements).
-File => Contents() : , (FileItem -> add, )*;
+File(SyntaxEnv env);
+File => Contents() : , (FileItem(env) -> add, )*;
 
 // Root rule for parsing includes.
 Includes => Array<TypeName>() : , ("use", Package -> push, ";", )*;

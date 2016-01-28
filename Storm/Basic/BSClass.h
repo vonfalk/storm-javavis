@@ -3,6 +3,7 @@
 #include "SyntaxObject.h"
 #include "Type.h"
 #include "TypeVar.h"
+#include "SyntaxEnv.h"
 #include "Shared/Map.h"
 
 #include "BSType.h"
@@ -20,13 +21,10 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			Class(TypeFlags flags, const SrcPos &pos, const String &name, Par<SStr> content);
+			Class(TypeFlags flags, const SrcPos &pos, const Scope &scope, const String &name, Par<SStr> content);
 
 			// The scope used for this class.
-			Scope scope;
-
-			// Set the scope (done by BSContents).
-			void setScope(const Scope &scope);
+			const Scope scope;
 
 			// Lookup any additional types needed.
 			void lookupTypes();
@@ -53,16 +51,16 @@ namespace storm {
 
 
 		// Create a class not extended from anything.
-		Class *STORM_FN createClass(SrcPos pos, Par<SStr> name, Par<SStr> content);
-		Class *STORM_FN createValue(SrcPos pos, Par<SStr> name, Par<SStr> content);
+		Class *STORM_FN createClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content);
+		Class *STORM_FN createValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content);
 
 		// Create a class extended from a base class.
-		Class *STORM_FN extendClass(SrcPos pos, Par<SStr> name, Par<TypeName> from, Par<SStr> content);
-		Class *STORM_FN extendValue(SrcPos pos, Par<SStr> name, Par<TypeName> from, Par<SStr> content);
+		Class *STORM_FN extendClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> from, Par<SStr> content);
+		Class *STORM_FN extendValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> from, Par<SStr> content);
 
 		// Create an actor class.
-		Class *STORM_FN threadClass(SrcPos pos, Par<SStr> name, Par<SStr> content);
-		Class *STORM_FN threadClass(SrcPos pos, Par<SStr> name, Par<TypeName> thread, Par<SStr> content);
+		Class *STORM_FN threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content);
+		Class *STORM_FN threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> thread, Par<SStr> content);
 
 
 		/**

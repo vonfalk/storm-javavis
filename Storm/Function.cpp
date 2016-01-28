@@ -21,12 +21,14 @@ namespace storm {
 	}
 
 	Function::Function(Value result, const String &name, const vector<Value> &params)
-		: Named(name, params), result(result), lookupRef(null), codeRef(null) {
+		: Named(name, params), result(result), lookupRef(null), codeRef(null),
+		  threadThunkRef(null), threadThunkCode(null) {
 		validateParams(params, this);
 	}
 
 	Function::Function(Value result, Par<Str> name, Par<Array<Value>> params)
-		: Named(name, params), result(result), lookupRef(null), codeRef(null) {
+		: Named(name, params), result(result), lookupRef(null), codeRef(null),
+		  threadThunkRef(null), threadThunkCode(null) {
 		validateParams(this->params, this);
 	}
 

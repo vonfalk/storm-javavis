@@ -13,46 +13,42 @@
 
 namespace storm {
 
-	bs::Class *bs::createClass(SrcPos pos, Par<SStr> name, Par<SStr> content) {
-		return CREATE(Class, name, typeClass, pos, name->v->v, content);
+	bs::Class *bs::createClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content) {
+		return CREATE(Class, name, typeClass, pos, env->scope, name->v->v, content);
 	}
 
-	bs::Class *bs::createValue(SrcPos pos, Par<SStr> name, Par<SStr> content) {
-		return CREATE(Class, name, typeValue, pos, name->v->v, content);
+	bs::Class *bs::createValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content) {
+		return CREATE(Class, name, typeValue, pos, env->scope, name->v->v, content);
 	}
 
-	bs::Class *bs::extendClass(SrcPos pos, Par<SStr> name, Par<TypeName> from, Par<SStr> content) {
-		Class *c = CREATE(Class, name, typeClass, pos, name->v->v, content);
+	bs::Class *bs::extendClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> from, Par<SStr> content) {
+		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, content);
 		c->base = from;
 		return c;
 	}
 
-	bs::Class *bs::extendValue(SrcPos pos, Par<SStr> name, Par<TypeName> from, Par<SStr> content) {
-		Class *c = CREATE(Class, name, typeValue, pos, name->v->v, content);
+	bs::Class *bs::extendValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> from, Par<SStr> content) {
+		Class *c = CREATE(Class, name, typeValue, pos, env->scope, name->v->v, content);
 		c->base = from;
 		return c;
 	}
 
-	bs::Class *bs::threadClass(SrcPos pos, Par<SStr> name, Par<TypeName> thread, Par<SStr> content) {
-		Class *c = CREATE(Class, name, typeClass, pos, name->v->v, content);
+	bs::Class *bs::threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> thread, Par<SStr> content) {
+		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, content);
 		c->thread = thread;
 		return c;
 	}
 
-	bs::Class *bs::threadClass(SrcPos pos, Par<SStr> name, Par<SStr> content) {
-		Class *c = CREATE(Class, name, typeClass, pos, name->v->v, content);
+	bs::Class *bs::threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content) {
+		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, content);
 		c->setSuper(TObject::stormType(c->engine));
 		return c;
 	}
 
 
-	bs::Class::Class(TypeFlags flags, const SrcPos &pos, const String &name, Par<SStr> content)
-		: Type(name, flags), declared(pos), content(content), allowLazyLoad(true) {}
+	bs::Class::Class(TypeFlags flags, const SrcPos &pos, const Scope &scope, const String &name, Par<SStr> content)
+		: Type(name, flags), scope(scope), declared(pos), content(content), allowLazyLoad(true) {}
 
-
-	void bs::Class::setScope(const Scope &scope) {
-		this->scope = Scope(scope, this);
-	}
 
 	void bs::Class::lookupTypes() {
 		allowLazyLoad = false;

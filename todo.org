@@ -1,4 +1,9 @@
-* Core [6/46]
+* Core [6/48]
+
+ - [ ] Test and document the foo: generate()-syntax.
+
+ - [ ] Check the deepCopy function of Array (probably of strings, could be of Value as well), it seems to get into an
+   infinite loop sometimes due to incorrectly set vtables (vtable entry points to vtable stub).
 
  - [ ] Take care of Map<T, U> in the preprocessor. Maybe generalize a bit?
 
@@ -83,7 +88,8 @@
 
  - [ ] A lot of parameter-generating code can now be rewritten much nicer using the 'moveParam' function in Code::frame.
 
- - [ ] See why the parser crashes when an empty syntax set is given.
+ - [ ] See why Storm crashes when the root rule gets an invalid number of parameters. Seems like we free/forget to free an
+   object somewhere...
 
  - [ ] Implement an interactive way of coding using 'reverse parsers'. In this case, it would be an autocomplete that
    knows the syntax and suggests all valid parts at the cursor position. It may not be able to suggest names, but it 

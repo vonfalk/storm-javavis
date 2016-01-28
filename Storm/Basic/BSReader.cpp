@@ -6,6 +6,7 @@
 #include "BSContents.h"
 #include "BSClass.h"
 #include "Engine.h"
+#include "SyntaxEnv.h"
 #include "Shared/Io/Text.h"
 
 
@@ -49,7 +50,7 @@ namespace storm {
 	void bs::File::readFunctions() {
 		readContents();
 		for (nat i = 0; i < contents->functions->count(); i++) {
-			pkg->add(steal(contents->functions->at(i)->asFunction(scope)));
+			pkg->add(steal(contents->functions->at(i)->createFn()));
 		}
 
 		typedef MAP_PP(Str, TemplateAdapter)::Iter Iter;
@@ -69,9 +70,10 @@ namespace storm {
 		if (parser->hasError())
 			throw parser->error();
 
-		Auto<Object> includes = parser->transform();
+		Auto<SyntaxEnv> env = CREATE(SyntaxEnv, this, scope);
+
+		Auto<Object> includes = parser->transform(vector<Object *>(1, env.borrow()));
 		contents = includes.expect<Contents>(pkg->engine(), L"While evaluating File");
-		contents->setScope(scope);
 	}
 
 	void bs::File::readIncludes() {

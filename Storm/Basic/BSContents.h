@@ -13,7 +13,7 @@ namespace storm {
 		 * Contents of a source file. Contains type and function definitions
 		 * for a single source file.
 		 */
-		class Contents : public Object {
+		class Contents : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Contents();
@@ -41,9 +41,6 @@ namespace storm {
 
 			// All templates. TODO: Add STORM_VAR
 			Auto<MAP_PP(Str, TemplateAdapter)> templates;
-
-			// Set the scope for all contents that needs it.
-			void STORM_FN setScope(const Scope &scope);
 		};
 
 	}
