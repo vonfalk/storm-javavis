@@ -10,15 +10,15 @@ class Function extends core:lang:Function {
 	Block block;
 
 	// Parameters.
-	Param[] parameters;
+	Param[] params;
 
 	// Sub-functions and variables.
 	Str->Named contents;
 
-	ctor(Str name, Block block, Param[] parameters, Value result) {
+	ctor(Str name, Block block, Param[] params, Value result) {
 		Value[] values;
-		for (Nat i = 0; i < parameters.count; i++) {
-			Type? t = parameters[i].type.type;
+		for (Nat i = 0; i < params.count; i++) {
+			Type? t = params[i].type.type;
 			if (t) {
 				values << Value(t);
 			}
@@ -26,7 +26,7 @@ class Function extends core:lang:Function {
 
 		init(result, name, values) {
 			block = block;
-			parameters = parameters;
+			params = params;
 		}
 
 		Named[] c = block.buildNamed();
@@ -36,8 +36,8 @@ class Function extends core:lang:Function {
 			named.setParent(this);
 		}
 
-		for (Nat i = 0; i < parameters.count; i++) {
-			Param p = parameters[i];
+		for (Nat i = 0; i < params.count; i++) {
+			Param p = params[i];
 			Str name = p.name;
 			contents.put(name, p);
 			p.setParent(this);
@@ -68,8 +68,8 @@ class Function extends core:lang:Function {
 		l << prolog();
 
 		// Parameters...
-		for (Nat i = 0; i < parameters.count; i++) {
-			Param p = parameters[i];
+		for (Nat i = 0; i < params.count; i++) {
+			Param p = params[i];
 			p.asmVar = l.createIntParam(Operand(), freeOnNone);
 		}
 
@@ -83,8 +83,9 @@ class Function extends core:lang:Function {
 
 	Str toS() {
 		StrBuf to;
+		Param[] p = params;
 
-		if (parameters.count > 0) {
+		if (p.count > 0) {
 			to << "function " << name << "()\n";
 		} else {
 			to << "procedure " << name << "\n";
@@ -123,20 +124,20 @@ class Param extends Variable {
 /**
  * Create a function.
  */
-Function function(SStr name, Block code, Param[] parameters, DType result) {
+Function function(SStr name, Block code, Param[] params, DType result) {
 	Value r;
 	Type? resType = result.type;
 	if (resType) {
 		r = Value(resType);
 	}
 
-	Function(name.v, code, parameters, r);
+	Function(name.v, code, params, r);
 }
 
 /**
  * Create a procedure.
  */
-Function procedure(SStr name, Block code, Param[] parameters) {
-	Function(name.v, code, parameters, Value());
+Function procedure(SStr name, Block code, Param[] params) {
+	Function(name.v, code, params, Value());
 }
 

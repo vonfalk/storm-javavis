@@ -190,6 +190,8 @@ BEGIN_TEST(MaybeTest) {
 
 BEGIN_TEST(ScopeTest) {
 	CHECK_EQ(runFn<Int>(L"test.bs.testScopeCls"), 10);
+	CHECK_EQ(runFn<Int>(L"test.bs.testClassMember"), 20);
+	CHECK_EQ(runFn<Int>(L"test.bs.testClassNonmember"), 20);
 } END_TEST
 
 BEGIN_TEST(CompileTest) {

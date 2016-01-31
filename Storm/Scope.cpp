@@ -45,8 +45,37 @@ namespace storm {
 		return null;
 	}
 
+	wostream &operator <<(wostream &to, const Scope &s) {
+		if (!s.lookup) {
+			to << L"<empty>";
+		} else {
+			to << L"<using ";
+			to << s.lookup->myType->identifier();
+			to << L"> ";
+
+			bool first = true;
+			for (NameLookup *at = s.top; at; at = at->parentLookup) {
+				if (!first)
+					to << " -> ";
+				first = false;
+
+				if (Named *n = as<Named>(at)) {
+					to << n->identifier();
+				} else {
+					to << at->myType->identifier();
+				}
+			}
+		}
+
+		return to;
+	}
+
 	Named *find(Scope scope, Par<Name> name) {
 		return scope.find(name);
+	}
+
+	Str *toS(EnginePtr e, Scope scope) {
+		return CREATE(Str, e.v, ::toS(scope));
 	}
 
 

@@ -26,22 +26,18 @@ namespace storm {
 	}
 
 	Named *bs::BSScope::find(const Scope &s, Par<Name> name) {
-		if (Named *n = findHelper(s, name))
-			return n;
+		// Expressions of the form foo(x, y, z) are equal to x.foo(y, z),
+		// but only if name only contains one part (ie. not foo:bar(y, z)).
+		if (name->size() == 1) {
+			Auto<NamePart> last = name->last();
+			if (last->params.size() > 0 && last->params[0] != Value()) {
+				if (Named *r = last->params[0].type->find(last))
+					return r;
+			}
+		}
 
-		// Expressions of the form foo(x, y, z) are equal to x.foo(y, z).
-		if (name->size() > 1)
-			return null;
 
-		Auto<NamePart> last = name->last();
-		if (last->params.size() == 0)
-			return null;
-
-		const Value &v = last->params[0];
-		if (v == Value())
-			return null;
-
-		return v.type->find(last);
+		return findHelper(s, name);
 	}
 
 	void bs::BSScope::addSyntax(const Scope &from, Par<SyntaxSet> to) {

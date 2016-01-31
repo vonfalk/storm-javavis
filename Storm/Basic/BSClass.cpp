@@ -47,7 +47,7 @@ namespace storm {
 
 
 	bs::Class::Class(TypeFlags flags, const SrcPos &pos, const Scope &scope, const String &name, Par<SStr> content)
-		: Type(name, flags), scope(scope), declared(pos), content(content), allowLazyLoad(true) {}
+		: Type(name, flags), scope(scope, this), declared(pos), content(content), allowLazyLoad(true) {}
 
 
 	void bs::Class::lookupTypes() {

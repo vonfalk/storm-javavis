@@ -94,8 +94,14 @@ namespace storm {
 		void STORM_FN deepCopy(Par<CloneEnv> env);
 	};
 
+	// Output.
+	wostream &operator <<(wostream &to, const Scope &scope);
+
 	// Storm implementation of 'find'.
 	MAYBE(Named) *STORM_FN find(Scope scope, Par<Name> name) ON(Compiler);
+
+	// Convert to string.
+	Str *STORM_ENGINE_FN toS(EnginePtr e, Scope scope);
 
 
 	/**

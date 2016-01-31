@@ -625,6 +625,10 @@ namespace storm {
 		return findTarget(block, n, name->pos, params, true);
 	}
 
+	bs::Expr *bs::namedExpr(Par<Block> block, SrcPos pos, Par<Name> name, Par<Actual> params) {
+		return findTarget(block, name, pos, params, true);
+	}
+
 	bs::Expr *bs::namedExpr(Par<Block> block, Par<SStr> name, Par<Expr> first, Par<Actual> params) {
 		params->addFirst(first);
 		Auto<Name> n = parseSimpleName(name->engine(), name->v->v);

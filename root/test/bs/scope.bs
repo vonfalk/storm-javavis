@@ -9,9 +9,32 @@ class ScopeCls {
 		Int v = 10;
 		v;
 	}
+
+	Int testScope() {
+		tester();
+	}
+
+	Int tester() {
+		v;
+	}
+}
+
+Int tester(ScopeCls s) {
+	10;
 }
 
 Int testScopeCls() {
 	ScopeCls c;
 	c.get;
+}
+
+
+Int testClassMember() {
+	ScopeCls c;
+	c.testScope;
+}
+
+Int testClassNonmember() {
+	ScopeCls c;
+	c.tester;
 }
