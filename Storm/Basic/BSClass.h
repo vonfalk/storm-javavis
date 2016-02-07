@@ -24,7 +24,7 @@ namespace storm {
 			Class(TypeFlags flags, const SrcPos &pos, const Scope &scope, const String &name, Par<SStr> content);
 
 			// The scope used for this class.
-			const Scope scope;
+			STORM_VAR Scope scope;
 
 			// Lookup any additional types needed.
 			void lookupTypes();

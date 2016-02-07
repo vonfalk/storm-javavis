@@ -129,6 +129,10 @@ namespace storm {
 			add(steal(CREATE(TypeAssignFn, engine, this)));
 		}
 
+		for (MAP_PP(Str, TemplateAdapter)::Iter i = body->templates->begin(), end = body->templates->end(); i != end; ++i) {
+			add(i.val());
+		}
+
 		// Super needs to be called!
 		return Type::loadAll();
 	}

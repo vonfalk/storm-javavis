@@ -1,6 +1,4 @@
-* Core [6/48]
-
- - [ ] Test and document the foo: generate()-syntax.
+* Core [7/48]
 
  - [ ] Check the deepCopy function of Array (probably of strings, could be of Value as well), it seems to get into an
    infinite loop sometimes due to incorrectly set vtables (vtable entry points to vtable stub).
@@ -94,6 +92,8 @@
  - [ ] Implement an interactive way of coding using 'reverse parsers'. In this case, it would be an autocomplete that
    knows the syntax and suggests all valid parts at the cursor position. It may not be able to suggest names, but it 
    could suggest syntax constructions.
+
+ - [X] Test and document the foo: generate()-syntax.
 
  - [X] Make it possible to nest classes in C++ as well. Currently, everything works, but the inner class is not inside the
    outer class in Storm. This probably needs a re-structuring of the format outputted by the pre-processor. Needed for 

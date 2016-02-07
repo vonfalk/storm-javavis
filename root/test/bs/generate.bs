@@ -32,3 +32,48 @@ genAdd: generate(params) {
 // Int genAdd(Int a, Int b) {
 // 	a + b;
 // }
+
+
+// Inside a class?
+class GenClass {
+	Int v;
+
+	ctor(Int v) {
+		init() {
+			v = v;
+		}
+	}
+
+	// This is quite useless, as it will only work when the parameter is an integer.
+	addVal: generate(params) {
+		if (params.count != 2)
+			return null;
+
+		Type me = named{GenClass};
+		if (params[0].asRef(false) != Value(me))
+			return null;
+
+		Value t = params[1];
+		BSTreeFn fn(t, SStr("addVal"), [Value(me), t], ["this", "b"], null);
+
+		Scope scope(me, BSScope());
+
+		FnBody body(fn, scope);
+		fn.body(body);
+
+		Actual actual;
+		actual.add(namedExpr(body, SStr("v"), Actual()));
+		actual.add(namedExpr(body, SStr("b"), Actual()));
+
+		body.add(namedExpr(body, SStr("+="), actual));
+
+		return fn;
+	}
+}
+
+
+Int testGenClass(Int i) {
+	GenClass z(i);
+	z.addVal(2);
+	z.v;
+}

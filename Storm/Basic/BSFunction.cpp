@@ -93,6 +93,9 @@ namespace storm {
 		if (result.ref)
 			throw SyntaxError(pos, L"Returning references is not a good idea at this point!");
 
+		if (paramNames.size() != params.size())
+			throw SyntaxError(pos, L"The number of parameter names does not match up to the number of parameter types.");
+
 		Auto<FnPtr<CodeGen *>> fn = memberWeakPtr(engine(), this, &BSRawFn::generateCode);
 		setCode(steal(CREATE(LazyCode, this, fn)));
 	}

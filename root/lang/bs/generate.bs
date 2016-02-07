@@ -30,6 +30,16 @@ class Generate extends Template {
 		}
 	}
 
+	// Create.
+	ctor(Class env, SStr name, SStr param, SStr contents) {
+		init(name.v) {
+			fnName = name;
+			paramName = param;
+			contents = contents;
+			scope = env.scope;
+		}
+	}
+
 	// Generate a Named object of some sort.
 	Named? generate(NamePart part) {
 		BSFunction fn = createFn();

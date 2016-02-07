@@ -102,9 +102,6 @@ execDir=../slow/
 define+=_UNICODE
 define+=UNICODE
 
-#Use full paths in output messages. Otherwise emacs 'jump to' will break.
-flags+=/FC
-
 #Compile asm files on X86
 ext+=asm
 noIncludes+=*.asm

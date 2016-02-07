@@ -301,6 +301,9 @@ ClassItem => classCtor(owner, pos, params, contents) :
   "ctor", "(", CtorParams params, ")", "{" - SkipBlock contents - "}";
 ClassItem => classCastCtor(owner, pos, params, contents) :
   "cast", "ctor", "(", CtorParams params, ")", "{" - SkipBlock contents - "}";
+ClassItem => Generate(owner, name, param, body) :
+  Name name, ":", "generate", "(", Name param, ")", "{" - SkipBlock body - "}";
+
 
 // Root rule for parsing classes and values.
 ClassBody(Class owner);

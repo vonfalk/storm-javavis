@@ -21,7 +21,7 @@ namespace storm {
 			STORM_CTOR BSScope(Par<Url> file);
 
 			// File name.
-			STORM_VAR Auto<Url> file;
+			STORM_VAR MAYBE(Auto<Url>) file;
 
 			// Included packages. (risk of cycles here)
 			vector<Package *> includes;
