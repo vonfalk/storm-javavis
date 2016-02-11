@@ -5,6 +5,10 @@
 
 namespace storm {
 
+	wostream &operator <<(wostream &to, const Token &token) {
+		return to << token.token;
+	}
+
 	bool Token::isStr() const {
 		return token.size() >= 2
 			&& token[0] == '"'
@@ -51,8 +55,12 @@ namespace storm {
 
 	Token Tokenizer::next() {
 		Token t = peek();
-		nextToken = findNext();
+		skip();
 		return t;
+	}
+
+	void Tokenizer::skip() {
+		nextToken = findNext();
 	}
 
 	Token Tokenizer::peek() {
@@ -60,6 +68,17 @@ namespace storm {
 			throw SyntaxError(SrcPos(srcFile, pos), L"Unexpected end of file");
 
 		return nextToken;
+	}
+
+	void Tokenizer::expect(const String &tok) {
+		if (!more())
+			throw SyntaxError(SrcPos(srcFile, pos), L"Unexpected end of file");
+
+		if (nextToken.token != tok)
+			throw SyntaxError(nextToken.pos, L"Expected " + tok + L" but got " + nextToken.token);
+
+		// Skip ahead...
+		skip();
 	}
 
 	bool Tokenizer::more() const {

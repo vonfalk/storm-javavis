@@ -1,7 +1,9 @@
-* Core [7/48]
+* Core [7/49]
 
  - [ ] Check the deepCopy function of Array (probably of strings, could be of Value as well), it seems to get into an
    infinite loop sometimes due to incorrectly set vtables (vtable entry points to vtable stub).
+
+ - [ ] Check so that the toS function for all types using the Handle are dispatching to a correct thread!
 
  - [ ] Take care of Map<T, U> in the preprocessor. Maybe generalize a bit?
 

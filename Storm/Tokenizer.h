@@ -30,6 +30,9 @@ namespace storm {
 		String strVal() const;
 	};
 
+	// Output.
+	wostream &operator <<(wostream &to, const Token &t);
+
 
 	/**
 	 * Tokenizer designed to properly tokenize the contents of .bnf files.
@@ -46,8 +49,14 @@ namespace storm {
 		// has been reached.
 		Token next();
 
+		// Skip one token.
+		void skip();
+
 		// Peek.
 		Token peek();
+
+		// Expect a token.
+		void expect(const String &token);
 
 		// Current position.
 		inline SrcPos position() const { return SrcPos(srcFile, pos); }

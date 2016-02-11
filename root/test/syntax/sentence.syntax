@@ -1,0 +1,36 @@
+// New-style syntax!
+
+// Use these namespaces when looking up names (both rule names and type/function names).
+// Example:
+// use core.lang;
+
+// Delimiter in this file.
+delimiter = SDelim;
+
+// Delimiter rule. Returns nothing, which is why the return expression is omitted.
+void SDelim();
+SDelim : "[ \n\r\t]+";
+
+
+// Matching of a very small subset of natural-language sentences!
+
+SStr Verb();
+Verb => word : "run" word;
+Verb => word : "fly" word;
+Verb => word : "swim" word;
+Verb => word : "sleep" word;
+
+SStr Noun();
+Noun => word : "dog" word;
+Noun => word : "bird" word;
+Noun => word : "fish" word;
+
+SStr Plural();
+Plural => word : Noun - "s";
+
+
+Statement Sentence();
+
+Sentence[1] => Statement(noun, verb) : Plural noun, Verb verb = PluralAssert;
+Sentence[2] => Statement(noun, verb) : "the", Noun noun, Verb verb - "s" = SingularAssert;
+Sentence[3] => Statement(noun, verb) : "do", Plural noun, Verb verb, "\?" = Question;

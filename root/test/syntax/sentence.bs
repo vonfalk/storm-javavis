@@ -1,0 +1,22 @@
+use core:debug;
+
+// Type for storing a sentence.
+class Statement {
+	SStr noun;
+	SStr verb;
+
+	ctor(SStr noun, SStr verb) {
+		init() {
+			noun = noun;
+			verb = verb;
+		}
+	}
+}
+
+
+
+void testSentence() {
+	// Parse this:
+	Str s = "does birds fly?";
+	print("Parse: " # s);
+}
