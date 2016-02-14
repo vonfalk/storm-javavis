@@ -25,16 +25,6 @@ namespace storm {
 		TokenDecl::TokenDecl() {}
 
 		void TokenDecl::output(wostream &to) const {
-			if (params) {
-				to << '(';
-				for (Nat i = 0; i < params->count(); i++) {
-					if (i > 0)
-						to << L", ";
-					to << params->at(i);
-				}
-				to << ')';
-			}
-
 			if (store) {
 				to << L" " << store;
 			} else if (invoke) {
@@ -53,6 +43,16 @@ namespace storm {
 
 		void RuleTokenDecl::output(wostream &to) const {
 			to << rule;
+			if (params) {
+				to << '(';
+				for (Nat i = 0; i < params->count(); i++) {
+					if (i > 0)
+						to << L", ";
+					to << params->at(i);
+				}
+				to << ')';
+			}
+
 			TokenDecl::output(to);
 		}
 
@@ -65,7 +65,8 @@ namespace storm {
 		OptionDecl::OptionDecl(Par<Name> rule) :
 			rule(rule),
 			priority(0),
-			tokens(CREATE(ArrayP<TokenDecl>, this)) {}
+			tokens(CREATE(ArrayP<TokenDecl>, this)),
+			repStart(0), repEnd(0) {}
 
 		void OptionDecl::output(wostream &to) const {
 			to << rule;
@@ -85,25 +86,52 @@ namespace storm {
 				}
 			}
 
+			bool usingRep = false;
+			usingRep |= repType != repNone();
+			usingRep |= repCapture.borrow() != null;
+
 			to << L" : ";
 			bool prevDelim = false;
 			for (Nat i = 0; i < tokens->count(); i++) {
 				Auto<TokenDecl> token = tokens->at(i);
 				bool currentDelim = token.as<DelimTokenDecl>() != null;
 
+				if (usingRep && repEnd == i)
+					outputRepEnd(to);
+
 				if (i > 0 && !currentDelim && !prevDelim)
 					to << L" - ";
+
+				if (usingRep && repStart == i)
+					to << L"(";
 
 				to << token;
 
 				prevDelim = currentDelim;
 			}
 
+			if (usingRep && repEnd == tokens->count())
+				outputRepEnd(to);
+
 			if (name) {
 				to << L" = " << name;
 			}
 
 			to << L";";
+		}
+
+		void OptionDecl::outputRepEnd(wostream &to) const {
+			to << ')';
+
+			if (repType == repZeroOne()) {
+				to << '?';
+			} else if (repType == repOnePlus()) {
+				to << '+';
+			} else if (repType == repZeroPlus()) {
+				to << '*';
+			} else if (repCapture) {
+				to << repCapture;
+			}
 		}
 
 		Contents::Contents() :
@@ -240,11 +268,13 @@ namespace storm {
 			} else {
 				// Should be the name of something else.
 				Auto<Name> rule = parseName(tok, e);
-				result = CREATE(RuleTokenDecl, e, rule);
-			}
+				Auto<RuleTokenDecl> r = CREATE(RuleTokenDecl, e, rule);
 
-			// Any parameters?
-			result->params = parseActuals(tok, e);
+				// Any parameters?
+				r->params = parseActuals(tok, e);
+
+				result = r;
+			}
 
 			Token bind = tok.peek();
 			if (isTokenSep(bind))
@@ -272,9 +302,37 @@ namespace storm {
 
 			String lastToken = tok.peek().token;
 			while (lastToken != L";" && lastToken != L"=") {
-				Auto<TokenDecl> token = parseToken(tok, e);
-				if (token)
-					result->tokens->push(token);
+				if (lastToken == L"(") {
+					// Start of a capture/repeat!
+					result->repStart = result->tokens->count();
+					tok.skip();
+				} else if (lastToken == L")") {
+					// End of a capture/repeat!
+					result->repEnd = result->tokens->count();
+					tok.skip();
+
+					// Repeat or capture?
+					Token rep = tok.next();
+					if (rep.token == L"?") {
+						result->repType = repZeroOne();
+					} else if (rep.token == L"*") {
+						result->repType = repZeroPlus();
+					} else if (rep.token == L"+") {
+						result->repType = repOnePlus();
+					} else if (rep.token == L"->") {
+						Auto<TokenDecl> decl = CREATE(TokenDecl, e);
+						decl->invoke = CREATE(Str, e, tok.next().token);
+						result->repCapture = decl;
+					} else {
+						Auto<TokenDecl> decl = CREATE(TokenDecl, e);
+						decl->store = CREATE(Str, e, rep.token);
+						result->repCapture = decl;
+					}
+				} else {
+					Auto<TokenDecl> token = parseToken(tok, e);
+					if (token)
+						result->tokens->push(token);
+				}
 
 				lastToken = tok.peek().token;
 			}

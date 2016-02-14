@@ -96,6 +96,9 @@ link=lib /LTCG <files> /nologo /OUT:<output>
 buildDir=slow/
 execDir=../slow/
 
+[]
+#Ignore includes from the generated BuiltIn.cpp files.
+noIncludes+=BuiltIn.cpp
 
 [windows]
 #Tell the Win32 API we're working in UTF16.

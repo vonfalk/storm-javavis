@@ -26,7 +26,7 @@ Noun => word : "bird" word;
 Noun => word : "fish" word;
 
 SStr Plural();
-Plural => word : Noun - "s";
+Plural => word : Noun word - "s";
 
 
 Statement Sentence();

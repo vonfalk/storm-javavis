@@ -4,6 +4,7 @@
 #include "Thread.h"
 #include "Tokenizer.h"
 #include "Name.h"
+#include "RepType.h"
 
 namespace storm {
 	namespace syntax {
@@ -52,9 +53,6 @@ namespace storm {
 		public:
 			STORM_CTOR TokenDecl();
 
-			// Parameters to this token. null means not even parens was given.
-			STORM_VAR MAYBE(Auto<ArrayP<Str>>) params;
-
 			// Store this token as <store>.
 			STORM_VAR MAYBE(Auto<Str>) store;
 
@@ -90,6 +88,9 @@ namespace storm {
 
 			// Name to match.
 			STORM_VAR Auto<Name> rule;
+
+			// Parameters to this token. null means not even parens were given.
+			STORM_VAR MAYBE(Auto<ArrayP<Str>>) params;
 
 		protected:
 			virtual void output(wostream &to) const;
@@ -135,8 +136,19 @@ namespace storm {
 			// Parameters to result.
 			STORM_VAR MAYBE(Auto<ArrayP<Str>>) resultParams;
 
+			// Repeat.
+			STORM_VAR Nat repStart;
+			STORM_VAR Nat repEnd;
+			STORM_VAR RepType repType;
+
+			// Capture the repeat? Only supported if 'repType' is 'repNone'.
+			STORM_VAR MAYBE(Auto<TokenDecl>) repCapture;
+
 		protected:
 			virtual void output(wostream &to) const;
+
+			// Output the end of a repeat sequence.
+			void outputRepEnd(wostream &to) const;
 		};
 
 		/**
