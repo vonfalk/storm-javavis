@@ -116,7 +116,10 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR OptionDecl(Par<Name> memberOfRule);
+			STORM_CTOR OptionDecl(SrcPos pos, Par<Name> memberOfRule);
+
+			// Where was this rule declared?
+			STORM_VAR SrcPos pos;
 
 			// Which rule is this option a member of?
 			STORM_VAR Auto<Name> rule;
@@ -159,6 +162,9 @@ namespace storm {
 		public:
 			// Create.
 			STORM_CTOR Contents();
+
+			// Used packages.
+			STORM_VAR Auto<ArrayP<Name>> use;
 
 			// Name of the delimiter rule.
 			STORM_VAR MAYBE(Auto<Name>) delimiter;

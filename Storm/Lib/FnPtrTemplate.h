@@ -20,7 +20,7 @@ namespace storm {
 		FnPtrType(const vector<Value> &params);
 
 		// Lazy loading.
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 
 	private:
 		// Generate code for function calls.

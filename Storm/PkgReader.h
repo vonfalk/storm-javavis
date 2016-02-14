@@ -46,14 +46,13 @@ namespace storm {
 	 * this class to parse a language!
 	 *
 	 * The process is designed to be implemented as follows:
-	 * 1: get syntax
-	 * 2: get types (just information, should be lazy-loaded!)
-	 * 3: resolve types (ie set up inheritance, figure out how structs look...)
-	 * 4: get functions
+	 * 1: get syntax rules
+	 * 2: get syntax options
+	 * 3: get types (just information, should be lazy-loaded!)
+	 * 4: resolve types (ie set up inheritance, figure out how structs look...)
+	 * 5: get functions
 	 * This is to ensure that inter-depencies are resolved correctly. Within each language,
 	 * these rules may be implemented differently.
-	 *
-	 * TODO: expose the majority through STORM_FN.
 	 */
 	class PkgReader : public ObjectOn<Compiler> {
 		STORM_CLASS;
@@ -71,7 +70,10 @@ namespace storm {
 		STORM_VAR Auto<PkgFiles> pkgFiles;
 
 		// Get syntax. Override to implement syntax-loading.
-		virtual void STORM_FN readSyntax();
+		virtual void STORM_FN readSyntaxRules();
+
+		// Get syntax options. Override to implement syntax-loading.
+		virtual void STORM_FN readSyntaxOptions();
 
 		// Get all types. Override to implement type-loading.
 		virtual void STORM_FN readTypes();
@@ -100,7 +102,10 @@ namespace storm {
 		STORM_VAR Auto<Package> pkg;
 
 		// Read syntax from this file.
-		virtual void STORM_FN readSyntax();
+		virtual void STORM_FN readSyntaxRules();
+
+		// Read syntax from this file.
+		virtual void STORM_FN readSyntaxOptions();
 
 		// Read types from this file.
 		virtual void STORM_FN readTypes();
@@ -127,7 +132,8 @@ namespace storm {
 		STORM_CTOR FilesReader(Par<PkgFiles> files, Par<Package> pkg);
 
 		// Read contents from all files.
-		virtual void STORM_FN readSyntax();
+		virtual void STORM_FN readSyntaxRules();
+		virtual void STORM_FN readSyntaxOptions();
 		virtual void STORM_FN readTypes();
 		virtual void STORM_FN resolveTypes();
 		virtual void STORM_FN readFunctions();

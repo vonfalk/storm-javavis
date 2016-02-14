@@ -23,7 +23,7 @@ namespace storm {
 		const Value param;
 
 		// Lazy loading.
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 
 	private:
 		// Load functions assuming param is an object.
@@ -46,7 +46,7 @@ namespace storm {
 		const Value param;
 
 		// Lazy loading.
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 	};
 
 	// See Array.h for 'arrayType' function.

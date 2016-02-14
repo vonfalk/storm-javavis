@@ -134,7 +134,11 @@ namespace storm {
 
 			// Load all syntax.
 			for (nat i = 0; i < toLoad.size(); i++) {
-				toLoad[i]->readSyntax();
+				toLoad[i]->readSyntaxRules();
+			}
+
+			for (nat i = 0; i < toLoad.size(); i++) {
+				toLoad[i]->readSyntaxOptions();
 			}
 
 			syntaxLoaded = true;

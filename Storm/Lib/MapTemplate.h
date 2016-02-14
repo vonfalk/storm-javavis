@@ -23,7 +23,7 @@ namespace storm {
 		const Value key, value;
 
 		// Lazy loading.
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 
 	private:
 		// Add the [] operator.
@@ -43,7 +43,7 @@ namespace storm {
 		const Value key, value;
 
 		// Lazy loading.
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 	};
 
 	// See Map.h for 'mapType' function.

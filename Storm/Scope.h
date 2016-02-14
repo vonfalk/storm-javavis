@@ -116,6 +116,9 @@ namespace storm {
 		// Additional NameLookups to search (not recursively).
 		vector<NameLookup *> extra;
 
+		// Add an extra name lookup.
+		void STORM_FN add(Par<NameLookup> l);
+
 		// Find
 		virtual MAYBE(Named) *STORM_FN find(const Scope &in, Par<Name> name);
 

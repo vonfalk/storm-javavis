@@ -27,7 +27,7 @@ namespace storm {
 			STORM_CTOR Reader(Par<PkgFiles> files, Par<Package> pkg);
 
 			// Read files.
-			virtual void STORM_FN readSyntax();
+			virtual void STORM_FN readSyntaxRules();
 		};
 	}
 }

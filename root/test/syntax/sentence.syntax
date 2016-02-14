@@ -1,8 +1,8 @@
 // New-style syntax!
 
 // Use these namespaces when looking up names (both rule names and type/function names).
-// Example:
-// use core.lang;
+// Example: (not needed here)
+use core.lang;
 
 // Delimiter in this file.
 delimiter = SDelim;

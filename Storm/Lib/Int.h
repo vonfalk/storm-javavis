@@ -16,8 +16,7 @@ namespace storm {
 		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::signedNr; }
 		virtual Function *destructor() { return null; }
 
-	protected:
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 	};
 
 	class NatType : public Type {
@@ -28,8 +27,7 @@ namespace storm {
 		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::unsignedNr; }
 		virtual Function *destructor() { return null; }
 
-	protected:
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 	};
 
 	class ByteType : public Type {
@@ -40,8 +38,7 @@ namespace storm {
 		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::unsignedNr; }
 		virtual Function *destructor() { return null; }
 
-	protected:
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 	};
 
 	// ToS for these types!

@@ -39,7 +39,7 @@ namespace storm {
 			Auto<TypeName> thread;
 
 			// Load the contents lazily.
-			virtual bool loadAll();
+			virtual Bool STORM_FN loadAll();
 
 		private:
 			// Contents of the class.

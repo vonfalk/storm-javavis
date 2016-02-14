@@ -21,6 +21,8 @@ namespace storm {
 	 * Represents a type. This class contains information about
 	 * all type members, fields and so on.
 	 *
+	 * TODO: Make it possible to create a Type from Storm!
+	 *
 	 * The special name "__ctor" is reserved for the constructor.
 	 * A constructor is special in the way that it does not take a parameter
 	 * to the object itself as its first parameter. Instead it takes a parameter
@@ -138,7 +140,7 @@ namespace storm {
 
 		// Lazy loading callback from NameSet. Note: remember to call this function, at least when the load
 		// succeeded!
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 
 		// Find stuff.
 		virtual MAYBE(Named) *STORM_FN find(Par<NamePart> part);

@@ -1,6 +1,7 @@
 #pragma once
 #include "PkgReader.h"
 #include "Package.h"
+#include "Parse.h"
 
 namespace storm {
 	namespace syntax {
@@ -29,7 +30,18 @@ namespace storm {
 			STORM_CTOR File(Par<Url> file, Par<Package> into);
 
 			// Read syntax from the file.
-			virtual void STORM_FN readSyntax();
+			virtual void STORM_FN readSyntaxRules();
+			virtual void STORM_FN readSyntaxOptions();
+
+		private:
+			// Contents from the file.
+			Auto<Contents> contents;
+
+			// Scope. Loaded when 'contents' is loaded.
+			Scope scope;
+
+			// Make sure 'contents' is loaded.
+			void ensureLoaded();
 		};
 
 	}

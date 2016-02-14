@@ -26,7 +26,7 @@ namespace storm {
 		const Value param;
 
 		// Lazy loading.
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 
 	private:
 		// Create copy ctors.

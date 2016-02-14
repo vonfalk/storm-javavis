@@ -113,7 +113,8 @@
  - [X] New regex parser written. Verify.
 
  - [X] Why does map["hello"] not work?
-* Syntax [0/9]
+* Syntax [0/10]
+ - [ ] For the new syntax, make sure we're running relevant parts on the correct threads!
 
  - [ ] Make it possible to capture raw parts of the syntax tree, to delay the transformation to 'raw'
    objects until other parts of the syntax tree have been evaluated.

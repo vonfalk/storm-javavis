@@ -154,6 +154,10 @@ namespace storm {
 		return null;
 	}
 
+	void ScopeExtra::add(Par<NameLookup> l) {
+		extra.push_back(l.borrow());
+	}
+
 	/**
 	 * Helpers.
 	 */

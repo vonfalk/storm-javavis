@@ -62,7 +62,8 @@ namespace storm {
 			to << ", ";
 		}
 
-		OptionDecl::OptionDecl(Par<Name> rule) :
+		OptionDecl::OptionDecl(SrcPos pos, Par<Name> rule) :
+			pos(pos),
 			rule(rule),
 			priority(0),
 			tokens(CREATE(ArrayP<TokenDecl>, this)),
@@ -135,10 +136,15 @@ namespace storm {
 		}
 
 		Contents::Contents() :
+			use(CREATE(ArrayP<Name>, this)),
 			rules(CREATE(ArrayP<RuleDecl>, this)),
 			options(CREATE(ArrayP<OptionDecl>, this)) {}
 
 		void Contents::output(wostream &to) const {
+			for (Nat i = 0; i < use->count(); i++) {
+				to << endl << L"use " << use->at(i);
+			}
+
 			if (delimiter) {
 				to << endl << L"delimiter = " << delimiter;
 			}
@@ -183,9 +189,19 @@ namespace storm {
 			return result.ret();
 		}
 
+		// Checks if a name is a single word.
+		static bool isWord(Par<Name> name, const String &word) {
+			if (name->size() != 1)
+				return false;
+			NamePart *part = name->at(0);
+			if (part->params.size() != 0)
+				return false;
+			return part->name == word;
+		}
+
 		// Parses delimiter = X:
-		static Name *parseDelimiter(Tokenizer &tok, Engine &e, Auto<Name> lhs) {
-			if (lhs->size() == 1 && lhs->at(0)->name == L"delimiter" && lhs->at(0)->params.size() == 0) {
+		static Name *parseDelimiter(Tokenizer &tok, Engine &e, Par<Name> lhs) {
+			if (isWord(lhs, L"delimiter")) {
 				tok.skip();
 				return parseName(tok, e);
 			}
@@ -194,7 +210,7 @@ namespace storm {
 		}
 
 		// Parses a rule declaration.
-		static RuleDecl *parseRule(Tokenizer &tok, Engine &e, Auto<Name> resType) {
+		static RuleDecl *parseRule(Tokenizer &tok, Engine &e, Par<Name> resType) {
 			Token name = tok.next();
 
 			Auto<Str> nameStr = CREATE(Str, e, name.token);
@@ -295,10 +311,10 @@ namespace storm {
 		}
 
 		// Parses an option declaration, from the :.
-		static OptionDecl *parseOption(Tokenizer &tok, Engine &e, Auto<Name> member) {
+		static OptionDecl *parseOption(Tokenizer &tok, Engine &e, Par<Name> member) {
 			tok.expect(L":");
 
-			Auto<OptionDecl> result = CREATE(OptionDecl, e, member);
+			Auto<OptionDecl> result = CREATE(OptionDecl, e, tok.position(), member);
 
 			String lastToken = tok.peek().token;
 			while (lastToken != L";" && lastToken != L"=") {
@@ -346,7 +362,7 @@ namespace storm {
 		}
 
 		// Parses an option delcaration, from the =>.
-		static OptionDecl *parseOptionResult(Tokenizer &tok, Engine &e, Auto<Name> member) {
+		static OptionDecl *parseOptionResult(Tokenizer &tok, Engine &e, Par<Name> member) {
 			tok.expect(L"=>");
 
 			Auto<Name> name = parseName(tok, e);
@@ -361,7 +377,7 @@ namespace storm {
 		}
 
 		// Parses an option declaration with a priority, starting from the [.
-		static OptionDecl *parseOptionPriority(Tokenizer &tok, Engine &e, Auto<Name> member) {
+		static OptionDecl *parseOptionPriority(Tokenizer &tok, Engine &e, Par<Name> member) {
 			tok.expect(L"[");
 			Int prio = tok.next().token.toInt();
 			tok.expect(L"]");
@@ -400,6 +416,9 @@ namespace storm {
 				} else if (sep.token == L"[") {
 					Auto<OptionDecl> decl = parseOptionPriority(tok, e, name);
 					result->options->push(decl);
+				} else if (isWord(name, L"use")) {
+					Auto<Name> pkg = parseName(tok, e);
+					result->use->push(pkg);
 				} else {
 					Auto<RuleDecl> decl = parseRule(tok, e, name);
 					result->rules->push(decl);

@@ -127,12 +127,12 @@ namespace storm {
 		 */
 
 		// Called in case of #1, find a specific name. The returned value will be inserted.
-		virtual Named *loadName(Par<NamePart> part);
+		virtual Named *STORM_FN loadName(Par<NamePart> part);
 
 		// Called in case of #2, load everything. 'loadAll' is supposed to call 'add' for all contents.
 		// Returns false if something went wrong and the loading should be re-tried. Throwing an exception
 		// is equivalent to returning false in the aspect of lazy-loading.
-		virtual bool loadAll();
+		virtual Bool STORM_FN loadAll();
 
 		// Force a this NameSet to be loaded if it has not already been done.
 		void forceLoad();
