@@ -64,7 +64,7 @@ namespace storm {
 		return from->atRaw(id);
 	}
 
-	static void *CODECALL randomValue(ArrayP<Object> *from) {
+	static void *CODECALL randomValue(ArrayBase *from) {
 		Nat id = rand(Nat(0), from->count());
 		return from->atRaw(id);
 	}

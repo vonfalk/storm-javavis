@@ -1,4 +1,7 @@
-* Core [7/49]
+* Core [7/50]
+
+ - [ ] It might make sense to split core.lang into two packages; one with tools for generating languages and another
+   which contains the template classes (like ArrayType) that are more internal to Storm.
 
  - [ ] Check the deepCopy function of Array (probably of strings, could be of Value as well), it seems to get into an
    infinite loop sometimes due to incorrectly set vtables (vtable entry points to vtable stub).

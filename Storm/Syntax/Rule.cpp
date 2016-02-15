@@ -15,6 +15,7 @@ namespace storm {
 
 			// Add these last.
 			add(steal(CREATE(TypeDefaultCtor, this, this)));
+			add(steal(CREATE(TypeCopyCtor, this, this)));
 			add(steal(CREATE(TypeDeepCopy, this, this)));
 			add(steal(CREATE(TypeDefaultDtor, this, this)));
 

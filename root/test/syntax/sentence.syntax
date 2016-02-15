@@ -4,6 +4,9 @@
 // Example: (not needed here)
 use core.lang;
 
+// TODO? Import additional packages automatically? Eg:
+// import core; // would automatically add syntax from core.
+
 // Delimiter in this file.
 delimiter = SDelim;
 

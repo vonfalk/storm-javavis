@@ -48,7 +48,6 @@ namespace storm {
 				return;
 
 			contents = parseSyntax(file);
-			PVAR(contents);
 
 			Scope *root = engine().scope();
 
@@ -61,6 +60,12 @@ namespace storm {
 
 				lookup->add(found);
 			}
+
+			// Add core as well.
+			Package *core = engine().package(L"core");
+			if (core)
+				lookup->add(core);
+
 			scope = Scope(pkg, lookup);
 		}
 

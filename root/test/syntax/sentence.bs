@@ -1,4 +1,5 @@
 use core:debug;
+use lang:syntax;
 
 // Type for storing a sentence.
 class Statement {
@@ -17,6 +18,9 @@ class Statement {
 
 void testSentence() {
 	// Parse this:
-	Str s = "does birds fly?";
+	Str s = "do birds fly?";
 	print("Parse: " # s);
+
+	Parser<Sentence> parser;
+	print("Created parser: " # parser);
 }

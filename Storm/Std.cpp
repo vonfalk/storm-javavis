@@ -10,6 +10,7 @@
 #include "Lib/FnPtrTemplate.h"
 #include "Lib/MapTemplate.h"
 #include "Lib/Maybe.h"
+#include "Syntax/ParserTemplate.h"
 
 // TODO: Can we remove any of these?
 #include "Exception.h"
@@ -40,6 +41,7 @@ namespace storm {
 		core->add(steal(boolType(to)));
 		core->add(steal(futureTemplate(to)));
 
+		syntax::addParserTemplate(to);
 
 		loader.loadThreads();
 		loader.finalizeTypes();

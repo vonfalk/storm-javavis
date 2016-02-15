@@ -233,9 +233,9 @@ namespace storm {
 		cppThreads.insert(make_pair(id, Auto<Thread>(t)));
 	}
 
-	Package *Engine::package(const String &path) {
+	Package *Engine::package(const String &path, bool create) {
 		Auto<Name> name = parseSimpleName(*this, path);
-		return package(name);
+		return package(name, create);
 	}
 
 	Package *Engine::package(Par<Name> path, bool create) {

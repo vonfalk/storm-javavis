@@ -32,7 +32,6 @@ namespace storm {
 		// Find 'name' in 'in'.
 		virtual MAYBE(Named) *STORM_FN find(const Scope &in, Par<Name> name);
 
-	protected:
 		/**
 		 * Utility functions. All of these returns borrowed pointers.
 		 */

@@ -109,7 +109,7 @@ namespace storm {
 		// before it is possible to load packages.
 		Package *package(Par<Package> relative, Par<Name> path, bool create = false);
 		Package *package(Par<Name> path, bool create = false);
-		Package *package(const String &name);
+		Package *package(const String &name, bool create = false);
 		Package *rootPackage();
 
 		// Same idea as 'package', but can find any kind of NameSet. If something is created, it
