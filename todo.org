@@ -1,4 +1,6 @@
-* Core [7/50]
+* Core [7/51]
+
+ - [ ] Iterators are potentially not thread-safe if they are copied between threads.
 
  - [ ] It might make sense to split core.lang into two packages; one with tools for generating languages and another
    which contains the template classes (like ArrayType) that are more internal to Storm.

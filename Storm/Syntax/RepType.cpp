@@ -9,6 +9,16 @@ namespace storm {
 
 		RepType::RepType(V v) : v(v) {}
 
+		Bool RepType::skippable() const {
+			return v == repZeroOne
+				|| v == repZeroPlus;
+		}
+
+		Bool RepType::repeatable() const {
+			return v == repZeroPlus
+				|| v == repOnePlus;
+		}
+
 		void RepType::deepCopy(Par<CloneEnv> env) {}
 
 		wostream &operator <<(wostream &to, const RepType &m) {

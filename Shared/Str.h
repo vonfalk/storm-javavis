@@ -116,6 +116,9 @@ namespace storm {
 			Char operator *() const;
 			Char STORM_FN v() const;
 
+			// For C++: get the index of the character this iterator is referring to.
+			Nat charIndex() const;
+
 		private:
 			friend class Str;
 

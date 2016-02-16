@@ -183,6 +183,10 @@ namespace storm {
 		return **this;
 	}
 
+	Nat Str::Iter::charIndex() const {
+		return index;
+	}
+
 	/**
 	 * Utility functions.
 	 */

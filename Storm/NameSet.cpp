@@ -96,7 +96,7 @@ namespace storm {
 	}
 
 	Str *NameSet::anonName() {
-		String r = L" @" + ::toS(nextAnon++);
+		String r = L"@ " + ::toS(nextAnon++);
 		return CREATE(Str, this, r);
 	}
 

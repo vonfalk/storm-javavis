@@ -39,7 +39,7 @@ namespace storm {
 			TokenDecl::output(to);
 		}
 
-		RuleTokenDecl::RuleTokenDecl(Par<Name> rule) : rule(rule) {}
+		RuleTokenDecl::RuleTokenDecl(Par<Name> rule, SrcPos pos) : rule(rule), pos(pos) {}
 
 		void RuleTokenDecl::output(wostream &to) const {
 			to << rule;
@@ -283,8 +283,9 @@ namespace storm {
 				result = CREATE(RegexTokenDecl, e, regex);
 			} else {
 				// Should be the name of something else.
+				SrcPos pos = tok.position();
 				Auto<Name> rule = parseName(tok, e);
-				Auto<RuleTokenDecl> r = CREATE(RuleTokenDecl, e, rule);
+				Auto<RuleTokenDecl> r = CREATE(RuleTokenDecl, e, rule, pos);
 
 				// Any parameters?
 				r->params = parseActuals(tok, e);

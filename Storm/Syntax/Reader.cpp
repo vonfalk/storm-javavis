@@ -32,14 +32,25 @@ namespace storm {
 		void File::readSyntaxOptions() {
 			ensureLoaded();
 
+			Auto<Rule> delimiter;
+			if (contents->delimiter) {
+				Auto<Named> found = scope.find(contents->delimiter);
+				if (!found)
+					throw SyntaxError(SrcPos(file, 0), L"The delimiter " + ::toS(contents->delimiter) + L" was not found!");
+				delimiter = found.as<Rule>();
+				if (!delimiter)
+					throw SyntaxError(SrcPos(file, 0), L"The delimiter " + ::toS(contents->delimiter) + L" is not a rule.");
+			}
+
 			for (Nat i = 0; i < contents->options->count(); i++) {
 				Auto<OptionDecl> decl = contents->options->at(i);
 				Auto<Str> name = decl->name;
 				if (!name)
 					name = pkg->anonName();
 
-				Auto<Option> option = CREATE(Option, this, name, decl, scope);
+				Auto<Option> option = CREATE(Option, this, name, decl, delimiter, scope);
 				pkg->add(option);
+				PVAR(option);
 			}
 		}
 

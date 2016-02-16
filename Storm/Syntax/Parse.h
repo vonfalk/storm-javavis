@@ -84,7 +84,10 @@ namespace storm {
 		class RuleTokenDecl : public TokenDecl {
 			STORM_CLASS;
 		public:
-			STORM_CTOR RuleTokenDecl(Par<Name> rule);
+			STORM_CTOR RuleTokenDecl(Par<Name> rule, SrcPos pos);
+
+			// Where?
+			STORM_VAR SrcPos pos;
 
 			// Name to match.
 			STORM_VAR Auto<Name> rule;

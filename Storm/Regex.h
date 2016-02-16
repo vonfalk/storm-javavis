@@ -14,8 +14,6 @@ namespace storm {
 
 	/**
 	 * Regex matcher class, stores 'compiled' patterns.
-	 * KNOWN BUGS:
-	 * * We do not handle escaped characters in ranges (like this: [\--\+])
 	 *
 	 * Currently implemented as a NFA (nondeterministic finite automata) state machine.
 	 */

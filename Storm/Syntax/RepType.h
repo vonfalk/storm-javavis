@@ -39,6 +39,12 @@ namespace storm {
 				return v != o.v;
 			}
 
+			// Skippable?
+			Bool STORM_FN skippable() const;
+
+			// Repeatable?
+			Bool STORM_FN repeatable() const;
+
 			// Deep copy.
 			void STORM_FN deepCopy(Par<CloneEnv> env);
 		};
