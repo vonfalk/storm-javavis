@@ -36,4 +36,14 @@ Statement Sentence();
 
 Sentence[1] => Statement(noun, verb) : Plural noun, Verb verb = PluralAssert;
 Sentence[2] => Statement(noun, verb) : "the", Noun noun, Verb verb - "s" = SingularAssert;
-Sentence[3] => Statement(noun, verb) : "do", Plural noun, Verb verb, "\?" = Question;
+Sentence[3] => Statement(noun, verb) : "do", Plural noun, Verb verb - "\?" = Question;
+
+
+// Test so that empty rules still work.
+void SEDelim();
+void SEmpty();
+void SParen();
+
+SEDelim : " *";
+SEmpty : SEDelim;
+SParen : "(" - SEDelim - SEmpty - SEDelim - ")";

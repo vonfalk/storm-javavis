@@ -187,6 +187,10 @@ namespace storm {
 		return index;
 	}
 
+	void Str::Iter::charIndex(Nat i) {
+		index = i;
+	}
+
 	/**
 	 * Utility functions.
 	 */

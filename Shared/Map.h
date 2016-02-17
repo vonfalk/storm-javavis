@@ -20,6 +20,8 @@ namespace storm {
 	 * computed by the hash function. This implementation maintains the invariant that for each hash
 	 * value, the element contained is either the element in the primary position, or that hash does
 	 * not exist in the hash map.
+	 *
+	 * TODO: Add a find() member that returns an iterator.
 	 */
 
 	// This function is implemented in MapTemplate.cpp.
@@ -313,6 +315,7 @@ namespace storm {
 	 */
 #define MAP(tKey, tVal) Map<tKey, tVal>
 #define MAP_VP(tKey, tVal) Map<tKey, Auto<tVal> >
+#define MAP_PV(tKey, tVal) Map<Auto<tKey>, tVal>
 #define MAP_PP(tKey, tVal) Map<Auto<tKey>, Auto<tVal> >
 
 }

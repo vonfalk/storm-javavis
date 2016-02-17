@@ -5,5 +5,6 @@
 BEGIN_TEST_(SyntaxTest) {
 
 	CHECK_RUNS(runFn<int>(L"test.syntax.testSentence"));
+	CHECK_RUNS(runFn<int>(L"test.syntax.testEmpty"));
 
 } END_TEST

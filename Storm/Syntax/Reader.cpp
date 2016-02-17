@@ -48,9 +48,8 @@ namespace storm {
 				if (!name)
 					name = pkg->anonName();
 
-				Auto<Option> option = CREATE(Option, this, name, decl, delimiter, scope);
+				Auto<OptionType> option = CREATE(OptionType, this, name, decl, delimiter, scope);
 				pkg->add(option);
-				PVAR(option);
 			}
 		}
 

@@ -119,6 +119,10 @@ namespace storm {
 			// For C++: get the index of the character this iterator is referring to.
 			Nat charIndex() const;
 
+			// For C++: set the index of the character this iterator is referring to. Be careful not
+			// to set it outside the size of the string, or in the middle of a surrogate pair.
+			void charIndex(Nat i);
+
 		private:
 			friend class Str;
 
