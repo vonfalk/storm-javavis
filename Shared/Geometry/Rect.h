@@ -52,6 +52,9 @@ namespace storm {
 
 			// Include a point.
 			Rect STORM_FN include(Point to) const;
+
+			// Scale the entire rect around its center.
+			Rect STORM_FN scaled(Float scale) const;
 		};
 
 		// Point inside.

@@ -57,6 +57,18 @@ namespace storm {
 			return Rect(l, t, r, b);
 		}
 
+		Rect Rect::scaled(Float scale) const {
+			Size s = size() / 2;
+			Float dx = s.w * scale - s.w;
+			Float dy = s.h * scale - s.h;
+
+			Float l = p0.x - dx;
+			Float t = p0.y - dy;
+			Float r = p1.x + dx;
+			Float b = p1.y + dy;
+			return Rect(l, t, r, b);
+		}
+
 		wostream &operator <<(wostream &to, Rect r) {
 			return to << r.p0 << L"-" << r.p1;
 		}

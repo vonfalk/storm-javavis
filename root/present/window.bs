@@ -43,7 +43,7 @@ class PresentWindow extends Frame {
 		if (down) {
 			if (id == 13) {
 				if (typedNumber != 0) {
-					paint.jumpTo(typedNumber);
+					paint.jumpTo(typedNumber - 1);
 					typedNumber = 0;
 				} else {
 					paint.next;

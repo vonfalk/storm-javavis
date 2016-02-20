@@ -311,6 +311,16 @@ namespace storm {
 			return CREATE(Transform, e.v, d);
 		}
 
+		Transform *scale(EnginePtr e, Float scale, Vector center) {
+			float d[] = {
+				scale, 0, 0, center.x - scale*center.x,
+				0, scale, 0, center.y - scale*center.y,
+				0, 0, scale, center.z - scale*center.z,
+				0, 0, 0, 1,
+			};
+			return CREATE(Transform, e.v, d);
+		}
+
 		Transform *skewX(EnginePtr e, Angle angle) {
 			float t = -tan(angle.rad());
 			float d[] = {

@@ -23,6 +23,9 @@ class Presentation on Render {
 	// Show timer?
 	Bool showTimer;
 
+	// Show page number?
+	Bool showPage;
+
 	// Create.
 	ctor(Str title) {
 		init() {

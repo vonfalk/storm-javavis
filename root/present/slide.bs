@@ -159,6 +159,51 @@ class FadeIntro extends SlideIntro {
 }
 
 /**
+ * Zoom intro.
+ */
+class ZoomIntro extends SlideIntro {
+	Moment started;
+	Duration time;
+	Float xCenter;
+
+	ctor(Duration time) {
+		init() {
+			time = time;
+			xCenter = 0;
+		}
+	}
+
+	ctor(Duration time, Float xCenter) {
+		init() {
+			time = time;
+			xCenter = xCenter;
+		}
+	}
+
+	void start() {
+		started = Moment;
+	}
+
+	Bool draw(Slide? old, Slide new, SlideStyle s, Size size, Graphics g) {
+		Float progress = (Moment - started) / time;
+
+		new.draw(s, size, g);
+
+		if (old) {
+			Point center = size / 2;
+			center.x += center.x * xCenter;
+			g.push(1.0 - progress);
+			g.transform(scale(1.0 + progress*progress*4, center));
+			g.fill(Rect(Point(), size), s.bg);
+			old.draw(s, size, g);
+			g.pop();
+		}
+
+		progress < 1.0;
+	}
+}
+
+/**
  * Information about animations related to an item.
  */
 value SlideAni {
