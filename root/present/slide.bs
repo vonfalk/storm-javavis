@@ -41,6 +41,9 @@ class SlideStyle on Render {
 	// Show a timer?
 	Bool showTimer;
 
+	// Show page numbers?
+	Bool showPage;
+
 	// Timer started.
 	Moment timerStarted;
 
@@ -48,14 +51,19 @@ class SlideStyle on Render {
 	SolidBrush timerColor;
 	SolidBrush timerColor2;
 
+	// Page number font.
+	Font pageFont;
+
 	ctor(Presentation p) {
 		init() {
 			bg = p.bg;
 			text = p.text;
 			showTimer = p.showTimer;
+			showPage = p.showPage;
 			timerColor = blue.withAlpha(0.6);
 			timerColor2 = red.withAlpha(0.6);
 			timerStarted = Moment;
+			pageFont("Arial", 20);
 		}
 
 		Image? z = p.bgImage;
@@ -249,6 +257,12 @@ class Slide on Render {
 	// Advance to the next slide.
 	Fn<void>? advanceFn;
 
+	// Slide number text.
+	Text? numberText;
+
+	// Slide number (set by Presentation when we're added to it).
+	Nat number;
+
 	// Surprise key pressed.
 	void onSurprise() {}
 
@@ -318,9 +332,27 @@ class Slide on Render {
 		}
 	}
 
+	// Create text for the current slide number if needed.
+	Text slideNumberText(SlideStyle style) {
+		if (numberText)
+			return numberText;
+
+		Text t(number.toS, style.pageFont);
+		numberText = t;
+		t;
+	}
+
 	// Render the background of this slide. Called from 'draw' if needed.
 	void drawBg(SlideStyle style, Size s, Graphics g) {
 		style.fill(g, s);
+
+		// Draw slide number?
+		if (style.showPage) {
+			Text t = slideNumberText(style);
+			Point p = s;
+			p -= s / 14;
+			g.draw(t, style.text, p);
+		}
 	}
 
 	// Render this slide.

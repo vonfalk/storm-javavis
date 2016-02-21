@@ -1,6 +1,7 @@
 use ui;
 use core:geometry;
 use core:debug;
+use lang:bs:macro;
 use graphics;
 
 /**
@@ -56,6 +57,7 @@ class PresentWindow extends Frame {
 				close;
 			} else if (id == 82) { // r
 				paint.resetTimer;
+				repaint;
 			} else if (id == 83) { // s
 				paint.surpriseKey;
 			} else if (id == 70) { // f
@@ -67,6 +69,12 @@ class PresentWindow extends Frame {
 			} else if (id >= 48 & id <= 57) {
 				typedNumber *= 10;
 				typedNumber += id - 48;
+			} else if (id == 116) { // F5 - reload. Remove when the emacs integration can support this!
+				reload{present};
+				print("Compiling...");
+				compile(named{present});
+				print("Done!");
+				repaint;
 			} else {
 				print("Key: " # id);
 			}

@@ -38,6 +38,7 @@ class Presentation on Render {
 	// Add a slide.
 	void add(Slide slide) {
 		slides << slide;
+		slide.number = slides.count;
 	}
 
 	// Temporary solution to safely set the background image from other threads.
