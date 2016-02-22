@@ -566,6 +566,22 @@ class TerminalSlide extends Slide {
 		}
 	}
 
+	ctor(Color bg, Color fg, Font f) {
+		Text t("A", f);
+
+		init() {
+			font = f;
+			bg = bg;
+			fg = fg;
+			chSize = t.size;
+			autoRepaint = true;
+
+			// TODO: Do not hard-code these!
+			width = (1024.0 / t.size.w).int.nat;
+			height = (768.0 / t.size.h).int.nat;
+		}
+	}
+
 	// Always a new line!
 	void pln(Str str) {
 		if (lines.count >= height) {
