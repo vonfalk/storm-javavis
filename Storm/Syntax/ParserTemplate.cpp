@@ -27,6 +27,9 @@ namespace storm {
 			v->~ParserBase();
 		}
 
+		static Object *parserTree(ParserBase *me) {
+			return me->tree();
+		}
 
 		static Named *generateParser(Par<NamePart> part) {
 			if (part->params.size() != 1)
@@ -65,10 +68,12 @@ namespace storm {
 			Value t = Value::thisPtr(this);
 			Value pkg = Value::thisPtr(Package::stormType(e));
 			Value arr = Value::thisPtr(arrayType(e, pkg));
+			Value rule = Value::thisPtr(rootRule);
 
 			add(steal(nativeFunction(e, Value(), Type::CTOR, valList(1, t), address(&createParser))));
 			add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, pkg), address(&createParserPkg))));
 			add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, t, arr), address(&createParserArr))));
+			add(steal(nativeFunction(e, rule, L"tree", valList(1, t), address(&parserTree))));
 			add(steal(nativeDtor(e, this, &destroyParser)));
 
 			return Type::loadAll();

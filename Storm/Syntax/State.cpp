@@ -7,8 +7,8 @@ namespace storm {
 
 		State::State() : from(0), prev(null), completed(null) {}
 
-		State::State(const OptionIter &pos, nat from, State *prev, State *completed) :
-			pos(pos), from(from), prev(prev), completed(completed) {}
+		State::State(const OptionIter &pos, nat step, nat from, State *prev, State *completed) :
+			pos(pos), step(step), from(from), prev(prev), completed(completed) {}
 
 		bool State::finishes(Par<Option> option) const {
 			return pos.optionPtr() == option.borrow()
@@ -61,9 +61,9 @@ namespace storm {
 			return new (m) State(copy);
 		}
 
-		State *StateAlloc::alloc(const OptionIter &pos, nat from, State *prev, State *completed) {
+		State *StateAlloc::alloc(const OptionIter &pos, nat step, nat from, State *prev, State *completed) {
 			void *m = rawAlloc();
-			return new (m) State(pos, from, prev, completed);
+			return new (m) State(pos, step, from, prev, completed);
 		}
 
 		void *StateAlloc::rawAlloc() {

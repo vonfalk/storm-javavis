@@ -13,7 +13,8 @@ namespace storm {
 		 * This iterator does not follow the convention in Storm, as options are not
 		 * deterministic. This indeterminism is due to the ?,+ and *. However, it is only ever
 		 * possible to enter two new states from an existing state, which is why nextA and nextB
-		 * suffices.
+		 * suffice. firstA and nextA are just advancing through the linear stream of tokens while
+		 * firstB and nextB accounts for any jumps that can occur in the sequence.
 		 *
 		 * Note: the implementation of OptionIter breaks the thread-safety a bit, as it reads from
 		 * the Option from a thread that is not neccessarily the Compiler thread. Should not be too
@@ -92,6 +93,10 @@ namespace storm {
 			Rule *rulePtr() const;
 			MAYBE(Rule *) STORM_FN rule() const;
 
+			// Owning type.
+			OptionType *typePtr() const;
+			MAYBE(OptionType *) type() const;
+
 			// Tokens.
 			STORM_VAR Auto<ArrayP<Token>> tokens;
 
@@ -102,6 +107,9 @@ namespace storm {
 			STORM_VAR Nat repStart;
 			STORM_VAR Nat repEnd;
 			STORM_VAR RepType repType;
+
+			// Is the token at position x inside a repeat?
+			Bool STORM_FN inRepeat(Nat pos) const;
 
 			// Get an iterator into this option.
 			OptionIter STORM_FN firstA();
@@ -125,6 +133,9 @@ namespace storm {
 
 			// Add a single token to us.
 			void addToken(Par<TokenDecl> decl, Par<Rule> delim, const SrcPos &optionPos, const Scope &scope);
+
+			// Create a target for a token (if needed).
+			TypeVar *createTarget(Par<TokenDecl> decl, Par<Token> token, Nat pos);
 		};
 
 		/**
@@ -132,6 +143,17 @@ namespace storm {
 		 *
 		 * This is represented as a type, which inherits from a Rule type. This class will override
 		 * the 'eval' member of the parent type.
+		 *
+		 * These types contain variables representing the syntax trees for the captured parts of the
+		 * option. Parts that are captured outside of any repetition are stored as regular
+		 * variables, parts that are repeated zero or one time are stored as Maybe<T> and parts that
+		 * are repeated zero or more times are stored as Array<T>. Aside from that, the variable
+		 * 'pos' is created. It holds the SrcPos of the beginning of the match.
+		 *
+		 * Note: Types created by this class currently does _not_ have any constructor except a copy
+		 * constructor. The parser will instantiate these using a custom (read 'hacky') constructor
+		 * to keep it clean and simple. However, we do want to add a constructor that can initialize
+		 * all members properly.
 		 */
 		class OptionType : public Type {
 			STORM_CLASS;

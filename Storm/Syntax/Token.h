@@ -1,7 +1,8 @@
 #pragma once
-#include "Regex.h"
 #include "Shared/TObject.h"
+#include "Regex.h"
 #include "Thread.h"
+#include "TypeVar.h"
 
 namespace storm {
 	namespace syntax {
@@ -16,6 +17,11 @@ namespace storm {
 		class Token : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
+			// Create.
+			Token();
+
+			// If this token is captured, where to store it? (borrowed ptr).
+			TypeVar *target;
 
 		protected:
 			virtual void output(wostream &to) const;

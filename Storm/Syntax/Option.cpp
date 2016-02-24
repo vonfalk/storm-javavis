@@ -4,6 +4,8 @@
 #include "TypeCtor.h"
 #include "TypeDtor.h"
 #include "Exception.h"
+#include "Lib/Maybe.h"
+#include "Lib/ArrayTemplate.h"
 
 namespace storm {
 	namespace syntax {
@@ -57,7 +59,48 @@ namespace storm {
 				throw InternalError(L"Unknown sub-type to TokenDecl found: " + ::toS(decl));
 			}
 
+			Auto<TypeVar> r = createTarget(decl, token, tokens->count());
+			if (r) {
+				owner->add(r);
+				token->target = r.borrow();
+			}
+
 			tokens->push(token);
+		}
+
+		TypeVar *Option::createTarget(Par<TokenDecl> decl, Par<Token> token, Nat pos) {
+			Auto<TypeVar> r;
+			Value type;
+
+			if (as<RegexToken>(token.borrow())) {
+				type = Value::thisPtr(Str::stormType(engine()));
+			} else if (RuleToken *rule = as<RuleToken>(token.borrow())) {
+				type = Value::thisPtr(rule->rule);
+			} else {
+				assert(false);
+			}
+
+			if (inRepeat(pos)) {
+				if (repType == repZeroOne()) {
+					type = wrapMaybe(type);
+				} else {
+					type = wrapArray(type);
+				}
+			}
+
+			if (decl->store) {
+				r = CREATE(TypeVar, this, owner, type, decl->store->v);
+			} else if (decl->invoke) {
+				TODO(L"Invoke not supported yet!");
+			}
+
+			return r.ret();
+		}
+
+		Bool Option::inRepeat(Nat token) const {
+			return repType != repNone()
+				&& repStart >= token
+				&& repEnd < token;
 		}
 
 		Rule *Option::rulePtr() const {
@@ -71,6 +114,16 @@ namespace storm {
 			if (r)
 				r->addRef();
 			return r;
+		}
+
+		OptionType *Option::typePtr() const {
+			return owner;
+		}
+
+		OptionType *Option::type() const {
+			if (owner)
+				owner->addRef();
+			return owner;
 		}
 
 		void Option::output(wostream &to) const {
@@ -165,9 +218,54 @@ namespace storm {
 			return r;
 		}
 
+		// This is implemented in C++ since it does not really need to be fast, and would be painful
+		// to implement in machine code.
+		// Note: This may *not* work under x64 due to incompatible calling convention (thiscall vs cdecl).
+		Str *CODECALL optionToS(Object *me) {
+			std::wostringstream to;
+
+			// We know this is true, otherwise we would not be here...
+			OptionType *type = (OptionType *)me->myType;
+			Option *option = type->option.borrow();
+
+			typedef map<String, TypeVar *> Data;
+			Data data;
+
+			for (Nat i = 0; i < option->tokens->count(); i++) {
+				Token *t = option->tokens->at(i).borrow();
+				if (t->target)
+					data.insert(make_pair(t->target->name, t->target));
+			}
+
+			to << L"{\n";
+			{
+				Indent z(to);
+
+				for (Data::iterator i = data.begin(), end = data.end(); i != end; ++i) {
+					to << i->first << L" : ";
+					TypeVar *var = i->second;
+					Offset offset = var->offset();
+					// We can be fairly sure all of them are derived from Object.
+					Object *obj = OFFSET_IN(me, offset.current(), Object *);
+					if (obj) {
+						to << *obj;
+					} else {
+						to << L"null";
+					}
+					to << endl;
+				}
+			}
+
+			to << L"}";
+
+			return CREATE(Str, me, to.str());
+		}
 
 		bool OptionType::loadAll() {
 			// Load our functions!
+			Value me = Value::thisPtr(this);
+			Value str = Value::thisPtr(Str::stormType(this));
+			add(steal(nativeFunction(engine, str, L"toS", valList(1, me), &optionToS)));
 
 			// Add these last.
 			add(steal(CREATE(TypeDefaultCtor, this, this)));

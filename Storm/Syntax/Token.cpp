@@ -5,8 +5,14 @@
 namespace storm {
 	namespace syntax {
 
+		Token::Token() : target(null) {}
+
 		void Token::output(wostream &to) const {
 			// Output where to store the data.
+			if (target) {
+				// TODO: different syntax depending on how we use the data later on?
+				to << ' ' << target->name;
+			}
 		}
 
 		/**

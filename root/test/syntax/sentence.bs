@@ -23,12 +23,18 @@ void testSentence() {
 	print("Parse: " # s);
 
 	Parser<Sentence> parser;
-	print("Created parser: " # parser);
 	parser.parse(s, Url());
+	print("Used " # parser.stateCount # " states.");
+	if (parser.hasError)
+		parser.throwError;
+	print("Syntax tree: " # parser.tree);
 }
 
 void testEmpty() {
 	Str s = "()";
 	Parser<SParen> parser;
 	parser.parse(s, Url());
+	print("Used " # parser.stateCount # " states.");
+	if (parser.hasError)
+		parser.throwError;
 }

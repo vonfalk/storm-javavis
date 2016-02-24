@@ -14,10 +14,13 @@ namespace storm {
 		public:
 			// Create.
 			State();
-			State(const OptionIter &pos, nat from, State *prev = null, State *completed = null);
+			State(const OptionIter &pos, nat step, nat from, State *prev = null, State *completed = null);
 
 			// Position in the rule.
 			OptionIter pos;
+
+			// In which step does this state belong?
+			nat step;
 
 			// In which step was this rule instantiated?
 			nat from;
@@ -79,7 +82,7 @@ namespace storm {
 			// Allocate one State.
 			State *alloc();
 			State *alloc(const State &copy);
-			State *alloc(const OptionIter &pos, nat from, State *prev = null, State *completed = null);
+			State *alloc(const OptionIter &pos, nat step, nat from, State *prev = null, State *completed = null);
 
 		private:
 			// # of allocations in each pool.
@@ -121,6 +124,7 @@ namespace storm {
 
 			// Get an element in this set.
 			inline State *operator [](nat i) { return data[i]; }
+			inline State *operator [](nat i) const { return data[i]; }
 
 		private:
 			// State data.

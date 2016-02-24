@@ -11,7 +11,8 @@ namespace storm {
 
 		ParserBase::ParserBase() :
 			rules(CREATE(MAP_PP(Rule, ArrayP<Option>), this)),
-			emptyCache(CREATE(MAP_PV(Rule, Bool), this)) {
+			emptyCache(CREATE(MAP_PV(Rule, Bool), this)),
+			lastFinish(0) {
 
 			ParserType *type = as<ParserType>(myType);
 			assert(type, L"An instance of ParserBase was not correctly created. Use Parser instead!");
@@ -28,7 +29,7 @@ namespace storm {
 
 		void ParserBase::output(wostream &to) const {
 			Auto<Rule> r = rootRule();
-			to << L"Parser: " << r->name;
+			to << L"Parser for " << r->name << L", currently using " << stateCount() << L" states.";
 		}
 
 		Rule *ParserBase::rootRule() const {
@@ -85,8 +86,20 @@ namespace storm {
 			return parse(str, SrcPos(file, 0), start);
 		}
 
+		Nat ParserBase::stateCount() const {
+			return stateAlloc.count();
+		}
+
 		Bool ParserBase::hasError() {
-			return false;
+			// Unparsed text?
+			if (steps.back().count() == 0)
+				return true;
+
+			// Do we have the finish state?
+			if (finish())
+				return false;
+
+			return true;
 		}
 
 		SyntaxError ParserBase::error() const {
@@ -101,6 +114,22 @@ namespace storm {
 			return CREATE(Str, this, error().what());
 		}
 
+		nat ParserBase::lastStep() const {
+			for (nat i = steps.size() - 1; i > 0; i--) {
+				if (steps[i].count() > 0)
+					return i;
+			}
+
+			// First step is never empty.
+			return 0;
+		}
+
+		SrcPos ParserBase::posAt(nat i) const {
+			SrcPos c = srcPos;
+			c.offset += i;
+			return c;
+		}
+
 
 		/**
 		 * Parsing logic.
@@ -110,6 +139,7 @@ namespace storm {
 			// Remember what we parsed.
 			src = str;
 			srcPos = from;
+			lastFinish = 0;
 
 			// Set up storage.
 			stateAlloc.clear();
@@ -129,16 +159,17 @@ namespace storm {
 				return str->end();
 
 			// Set up the initial state.
-			steps[pos].push(State(rootOption->firstA(), 0), stateAlloc);
+			steps[pos].push(State(rootOption->firstA(), pos, 0), stateAlloc);
 
 			nat len = pos;
 			for (nat i = pos; i < steps.size(); i++) {
-				if (process(i))
+				if (process(i)) {
 					len = i;
+				}
 			}
 
-			PLN(L"Used " << stateAlloc.count() << L" entries.");
-			PVAR(len);
+			lastFinish = len;
+
 			// Note: as we're not fully compliant with unicode, we may end up in the middle of a
 			// surrogate pair here! This can be fixed by making the regex engine aware of surrogate
 			// pairs.
@@ -181,8 +212,8 @@ namespace storm {
 			ArrayP<Option> *opts = rules->get(rule->rule).borrow();
 			for (Nat i = 0; i < opts->count(); i++) {
 				Option *option = opts->at(i).borrow();
-				steps[step].push(State(option->firstA(), step), stateAlloc);
-				steps[step].push(State(option->firstB(), step), stateAlloc);
+				steps[step].push(State(option->firstA(), step, step), stateAlloc);
+				steps[step].push(State(option->firstB(), step, step), stateAlloc);
 			}
 
 			if (matchesEmpty(rule->rule)) {
@@ -208,8 +239,8 @@ namespace storm {
 					if (cRule != rule->rule.borrow())
 						continue;
 
-					src.push(State(state->pos.nextA(), state->from, state, now), stateAlloc);
-					src.push(State(state->pos.nextB(), state->from, state, now), stateAlloc);
+					src.push(State(state->pos.nextA(), i, state->from, state, now), stateAlloc);
+					src.push(State(state->pos.nextB(), i, state->from, state, now), stateAlloc);
 				}
 			}
 		}
@@ -228,8 +259,8 @@ namespace storm {
 				if (rule->rule.borrow() != completed)
 					continue;
 
-				steps[step].push(State(st->pos.nextA(), st->from, st, state), stateAlloc);
-				steps[step].push(State(st->pos.nextB(), st->from, st, state), stateAlloc);
+				steps[step].push(State(st->pos.nextA(), step, st->from, st, state), stateAlloc);
+				steps[step].push(State(st->pos.nextB(), step, st->from, st, state), stateAlloc);
 			}
 		}
 
@@ -246,8 +277,8 @@ namespace storm {
 			if (matched >= steps.size())
 				return;
 
-			steps[matched].push(State(state->pos.nextA(), state->from, state), stateAlloc);
-			steps[matched].push(State(state->pos.nextB(), state->from, state), stateAlloc);
+			steps[matched].push(State(state->pos.nextA(), matched, state->from, state), stateAlloc);
+			steps[matched].push(State(state->pos.nextB(), matched, state->from, state), stateAlloc);
 		}
 
 		bool ParserBase::matchesEmpty(const Auto<Rule> &rule) {
@@ -310,6 +341,81 @@ namespace storm {
 				assert(false, L"Unknown syntax token type.");
 				return false;
 			}
+		}
+
+
+		/**
+		 * Generate the syntax tree.
+		 */
+
+		Object *ParserBase::tree() const {
+			// Find the finish state...
+			State *from = finish();
+			if (!from)
+				throw error();
+
+			// The 'from' finishes the dummy 'rootOption', which the user is not interested in. The
+			// user is interested in the option that finished 'rootOption', which is located in
+			// 'from->completed'.
+			assert(from->completed, L"The root state was not completed by anything!");
+			return tree(from->completed);
+		}
+
+		Object *ParserBase::tree(State *from) const {
+			Auto<Object> result = allocTreeNode(from);
+
+			// Traverse the states backwards. The last token in the chain (the one created first) is
+			// skipped, as that does not contain any information.
+			for (State *at = from; at->prev; at = at->prev) {
+				State *prev = at->prev;
+				Token *token = prev->pos.tokenPtr();
+
+				// Don't bother if we do not need to store the result anywhere.
+				if (!token->target)
+					continue;
+
+				int offset = token->target->offset().current();
+				Object *&dest = OFFSET_IN(result.borrow(), offset, Object *);
+
+				// Note: currently assuming no arrays...
+				if (as<RegexToken>(token)) {
+					nat from = prev->step;
+					nat to = at->step;
+
+					Auto<SStr> match = CREATE(SStr, this, src->v.substr(from, to - from), posAt(from));
+					dest = match.ret();
+				} else if (as<RuleToken>(token)) {
+					assert(at->completed, L"Rule token not completed!");
+					dest = tree(at->completed);
+				}
+			}
+
+			return result.ret();
+		}
+
+		Object *ParserBase::allocTreeNode(State *from) const {
+			OptionType *type = from->pos.optionPtr()->typePtr();
+
+			// A bit ugly, but this is enough to be able to execute the destructor later on, and
+			// when populated it is as if we have executed the regular constructor.
+			void *mem = Object::operator new(type->size().current(), type);
+			Object *r = new (mem) Object();
+
+			// Make 'r' into the correct subclass.
+			setVTable(r);
+
+			return r;
+		}
+
+		State *ParserBase::finish() const {
+			const StateSet &states = steps[lastFinish];
+			for (nat i = 0; i < states.count(); i++) {
+				State *s = states[i];
+				if (s->finishes(rootOption))
+					return s;
+			}
+
+			return null;
 		}
 
 	}

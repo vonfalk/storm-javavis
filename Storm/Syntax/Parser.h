@@ -62,6 +62,11 @@ namespace storm {
 			// Get the error message.
 			Str *STORM_FN errorMsg() const;
 
+			// Get the number of entries used.
+			Nat STORM_FN stateCount() const;
+
+			// Get the syntax tree (only for C++). In Storm we will know what type of tree we will generate!
+			Object *tree() const;
 
 		protected:
 			// Output.
@@ -92,6 +97,9 @@ namespace storm {
 			// Steps. Each step corresponds to a character in the input string + an additional step at the end.
 			vector<StateSet> steps;
 
+			// Last state containing a finish step.
+			nat lastFinish;
+
 			// Process a single step.
 			bool process(nat step);
 
@@ -105,6 +113,21 @@ namespace storm {
 			bool matchesEmpty(const Auto<Rule> &rule);
 			bool matchesEmpty(Par<Option> opt);
 			bool matchesEmpty(Par<Token> tok);
+
+			// Find the last step which is not empty.
+			nat lastStep() const;
+
+			// Find the finishing state. Returns null if none.
+			State *finish() const;
+
+			// Create a tree for the option which ends at 'state'.
+			Object *tree(State *state) const;
+
+			// Create an object of the type suitable for the rule in 'state'.
+			Object *allocTreeNode(State *state) const;
+
+			// Generate an SrcPos for position 'i' in the string.
+			SrcPos posAt(nat i) const;
 		};
 
 
