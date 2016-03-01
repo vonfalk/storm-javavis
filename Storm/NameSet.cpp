@@ -27,7 +27,7 @@ namespace storm {
 		items.push_back(item);
 	}
 
-	Named *NameOverloads::fromTemplate(Par<NamePart> params) {
+	Named *NameOverloads::fromTemplate(Par<FoundParams> params) {
 		if (!templ)
 			return null;
 
@@ -100,7 +100,7 @@ namespace storm {
 		return CREATE(Str, this, r);
 	}
 
-	Named *NameSet::find(Par<NamePart> part) {
+	Named *NameSet::find(Par<FoundParams> part) {
 		if (Named *found = tryFind(part))
 			return found;
 
@@ -116,7 +116,7 @@ namespace storm {
 		return tryFind(part);
 	}
 
-	Named *NameSet::tryFind(Par<NamePart> part) {
+	Named *NameSet::tryFind(Par<FoundParams> part) {
 		OverloadMap::const_iterator i = overloads.find(part->name);
 		if (i == overloads.end())
 			return null;
@@ -131,7 +131,7 @@ namespace storm {
 		return result.ret();
 	}
 
-	Named *NameSet::loadName(Par<NamePart> part) {
+	Named *NameSet::loadName(Par<FoundParams> part) {
 		// Implemented in derived classes. Indicates 'not found'.
 		return null;
 	}

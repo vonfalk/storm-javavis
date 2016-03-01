@@ -14,10 +14,17 @@ namespace storm {
 
 		bs::TypePart::TypePart(Par<Str> name) : name(name) {}
 
-		bs::TypePart::TypePart(Par<NamePart> src) {
-			name = CREATE(Str, this, src->name);
-			for (nat i = 0; i < src->params.size(); i++) {
-				params.push_back(CREATE(TypeName, this, src->params[i]));
+		bs::TypePart::TypePart(Par<NamePart> s) {
+			name = CREATE(Str, this, s->name);
+
+			if (FoundParams *found = as<FoundParams>(s.borrow())) {
+				for (nat i = 0; i < found->count(); i++) {
+					params.push_back(CREATE(TypeName, this, found->param(i)));
+				}
+			} else if (NameParams *name = as<NameParams>(s.borrow())) {
+				for (nat i = 0; i < name->count(); i++) {
+					params.push_back(CREATE(TypeName, this, name->param(i)));
+				}
 			}
 		}
 
@@ -37,14 +44,14 @@ namespace storm {
 			params.push_back(param);
 		}
 
-		NamePart *bs::TypePart::toPart(const Scope &scope) {
+		FoundParams *bs::TypePart::toPart(const Scope &scope) {
 			vector<Value> v;
 			v.reserve(params.size());
 
 			for (nat i = 0; i < params.size(); i++)
 				v.push_back(params[i]->resolve(scope));
 
-			return CREATE(NamePart, this, name->v, v);
+			return CREATE(FoundParams, this, name->v, v);
 		}
 
 		void bs::TypePart::output(wostream &to) const {
@@ -69,6 +76,12 @@ namespace storm {
 				for (nat i = 0; i < p->size(); i++) {
 					parts.push_back(CREATE(TypePart, this, p->at(i)));
 				}
+			}
+		}
+
+		bs::TypeName::TypeName(Par<Name> n) {
+			for (nat i = 0; i < n->size(); i++) {
+				parts.push_back(CREATE(TypePart, this, n->at(i)));
 			}
 		}
 

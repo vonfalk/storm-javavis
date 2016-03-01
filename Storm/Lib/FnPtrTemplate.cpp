@@ -205,17 +205,19 @@ namespace storm {
 		return Type::loadAll();
 	}
 
-	static Named *generateFnPtr(Par<NamePart> part) {
-		if (part->params.size() < 1)
+	static Named *generateFnPtr(Par<FoundParams> part) {
+		if (part->empty())
 			return null;
 
-		for (nat i = 0; i < part->params.size(); i++) {
+		vector<Value> params(part->count());
+		for (nat i = 0; i < part->count(); i++) {
 			// References not allowed.
-			if (part->params[i].ref)
+			if (part->param(i).ref)
 				return null;
+			params[i] = part->param(i);
 		}
 
-		return CREATE(FnPtrType, part, part->params);
+		return CREATE(FnPtrType, part, params);
 	}
 
 	void addFnPtrTemplate(Par<Package> to) {

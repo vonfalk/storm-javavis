@@ -69,11 +69,11 @@ namespace storm {
 		return from->atRaw(id);
 	}
 
-	static Named *generateArray(Par<NamePart> part) {
-		if (part->params.size() != 1)
+	static Named *generateArray(Par<FoundParams> part) {
+		if (part->count() == 1)
 			return null;
 
-		return CREATE(ArrayType, part->engine(), part->params[0]);
+		return CREATE(ArrayType, part->engine(), part->param(0));
 	}
 
 	void addArrayTemplate(Par<Package> to) {

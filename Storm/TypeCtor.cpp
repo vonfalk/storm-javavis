@@ -460,7 +460,7 @@ namespace storm {
 		return null;
 	}
 
-	Named *generateStdClone(Par<NamePart> part) {
+	Named *generateStdClone(Par<FoundParams> part) {
 		using namespace code;
 		Engine &e = part->engine();
 

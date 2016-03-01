@@ -30,10 +30,10 @@ namespace storm {
 
 	private:
 		// Create copy ctors.
-		Named *createCopy(Par<NamePart> part);
+		Named *createCopy(Par<FoundParams> part);
 
 		// Create assignment operators.
-		Named *createAssign(Par<NamePart> part);
+		Named *createAssign(Par<FoundParams> part);
 	};
 
 	// Check if a value represents a Maybe type.

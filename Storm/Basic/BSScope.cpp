@@ -30,9 +30,12 @@ namespace storm {
 		// but only if name only contains one part (ie. not foo:bar(y, z)).
 		if (name->size() == 1) {
 			Auto<NamePart> last = name->last();
-			if (last->params.size() > 0 && last->params[0] != Value()) {
-				if (Named *r = last->params[0].type->find(last))
-					return r;
+			if (last->any()) {
+				Auto<FoundParams> found = last->find(s);
+				if (found != null && found->param(0) != Value()) {
+					if (Named *r = found->param(0).type->find(found))
+						return r;
+				}
 			}
 		}
 

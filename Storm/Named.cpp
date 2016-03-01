@@ -8,10 +8,10 @@ namespace storm {
 	NameLookup::NameLookup() : parentLookup(null) {}
 
 	Named *NameLookup::findCpp(const String &name, const vector<Value> &params) {
-		return find(steal(CREATE(NamePart, this, name, params)));
+		return find(steal(CREATE(FoundParams, this, name, params)));
 	}
 
-	Named *NameLookup::find(Par<NamePart> part) {
+	Named *NameLookup::find(Par<FoundParams> part) {
 		return null;
 	}
 
@@ -54,7 +54,7 @@ namespace storm {
 		Name *r = null;
 		if (parent) {
 			r = parent->path();
-			r->add(steal(CREATE(NamePart, this, name, params)));
+			r->add(steal(CREATE(FoundParams, this, name, params)));
 		} else {
 			r = CREATE(Name, this);
 		}

@@ -268,9 +268,10 @@ namespace storm {
 		if (path->size() == pos)
 			return pkg;
 
-		assert(path->at(pos)->params.size() == 0);
+		assert(path->at(pos)->empty());
 
-		Auto<Named> nextNamed = pkg->find(path->at(pos));
+		Auto<FoundParams> part = CREATE(FoundParams, *this, path->at(pos)->name);
+		Auto<Named> nextNamed = pkg->find(part);
 		Auto<Package> next = nextNamed.as<Package>();
 		if (!next && !nextNamed) {
 			// Create a virtual package.

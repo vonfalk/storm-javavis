@@ -109,12 +109,12 @@ namespace storm {
 		from->result();
 	}
 
-	static Named *generateFuture(Par<NamePart> part) {
-		if (part->params.size() != 1)
+	static Named *generateFuture(Par<FoundParams> part) {
+		if (part->count() != 1)
 			return null;
 
 		Engine &e = part->engine();
-		const Value &type = part->params[0];
+		const Value &type = part->param(0);
 
 		return CREATE(FutureType, e, type);
 	}

@@ -53,7 +53,7 @@ namespace storm {
 		virtual MAYBE(Url) *STORM_FN url() const;
 
 		// Lazy-loading.
-		virtual Named *STORM_FN loadName(Par<NamePart> part);
+		virtual Named *STORM_FN loadName(Par<FoundParams> part);
 		virtual Bool STORM_FN loadAll();
 
 	protected:

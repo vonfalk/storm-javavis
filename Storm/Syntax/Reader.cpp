@@ -71,7 +71,7 @@ namespace storm {
 				lookup->add(found);
 			}
 
-			// Add core as well.
+			// Add core as well. TODO: Needed?
 			Package *core = engine().package(L"core");
 			if (core)
 				lookup->add(core);

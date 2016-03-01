@@ -16,7 +16,7 @@ namespace storm {
 			TemplateAdapter(const String &name);
 
 			// Generate things.
-			virtual Named *STORM_FN generate(Par<NamePart> par);
+			virtual Named *STORM_FN generate(Par<FoundParams> par);
 
 			// Add a new template variant with this name.
 			virtual void STORM_FN add(Par<Template> t);

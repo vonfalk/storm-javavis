@@ -70,10 +70,10 @@ namespace storm {
 
 
 	bs::BSNamePart::BSNamePart(Par<Str> name, Par<Actual> params) :
-		NamePart(name->v, params->values()), exprs(params->expressions) {}
+		FoundParams(name->v, params->values()), exprs(params->expressions) {}
 
 	bs::BSNamePart::BSNamePart(const String &name, Par<Actual> params) :
-		NamePart(name, params->values()), exprs(params->expressions) {}
+		FoundParams(name, params->values()), exprs(params->expressions) {}
 
 	void bs::BSNamePart::insert(Value first) {
 		params.insert(params.begin(), first);

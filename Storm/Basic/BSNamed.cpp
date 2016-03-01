@@ -535,7 +535,7 @@ namespace storm {
 		NamePart *p = name->at(0);
 		if (p->name != L"super")
 			return false;
-		return p->params.empty();
+		return p->empty();
 	}
 
 	// Find a target assuming we should use the this-pointer.
@@ -544,7 +544,7 @@ namespace storm {
 										Auto<Named> &candidate) {
 		const Scope &scope = block->scope;
 
-		Auto<NamePart> thisPart = CREATE(NamePart, block, L"this");
+		Auto<FoundParams> thisPart = CREATE(FoundParams, block, L"this");
 		Auto<LocalVar> thisVar = block->variable(thisPart);
 		if (!thisVar)
 			return null;

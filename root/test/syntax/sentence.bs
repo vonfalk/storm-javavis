@@ -30,6 +30,17 @@ void testSentence() {
 	print("Syntax tree: " # parser.tree);
 }
 
+void testArray() {
+	Str s = "do birds fly? do sheep sleep?";
+
+	Parser<Paragraph> parser;
+	parser.parse(s, Url());
+	print("Used " # parser.stateCount # " states.");
+	if (parser.hasError)
+		parser.throwError;
+	print("Syntax tree: " # parser.tree);
+}
+
 void testEmpty() {
 	Str s = "()";
 	Parser<SParen> parser;

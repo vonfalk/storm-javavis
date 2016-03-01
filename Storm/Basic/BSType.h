@@ -11,6 +11,11 @@ namespace storm {
 		class TypeName;
 
 		/**
+		 * TODO: Merge this with the regular Name class, as it has the same capabilities now.
+		 */
+
+
+		/**
 		 * Parameters to a type.
 		 */
 		class TypePart : public SObject {
@@ -44,7 +49,7 @@ namespace storm {
 			TypeName *STORM_FN operator [](Nat id) const;
 
 			// As name part.
-			NamePart *toPart(const Scope &scope);
+			FoundParams *toPart(const Scope &scope);
 
 		protected:
 			// Output.
@@ -62,6 +67,7 @@ namespace storm {
 
 			// Convert from a Value (maybe remove?)
 			STORM_CTOR TypeName(Value from);
+			STORM_CTOR TypeName(Par<Name> from);
 
 			// Add a part.
 			void STORM_FN add(Par<TypePart> part);

@@ -44,7 +44,7 @@ namespace storm {
 		 *
 		 * Note that Actual needs to be updated (to some degree) to make some casts work.
 		 */
-		class BSNamePart : public NamePart {
+		class BSNamePart : public FoundParams {
 			STORM_CLASS;
 		public:
 			// Create.

@@ -50,9 +50,9 @@ namespace storm {
 		}
 	}
 
-	Named *Package::loadName(Par<NamePart> part) {
+	Named *Package::loadName(Par<FoundParams> part) {
 		// We are only loading packages this way at the moment.
-		if (part->params.empty()) {
+		if (part->empty()) {
 			if (Package *pkg = loadPackage(part->name)) {
 				return pkg;
 			}
@@ -77,7 +77,7 @@ namespace storm {
 			Auto<Url> &now = children->at(i);
 			if (now->dir()) {
 				Auto<Str> name = now->name();
-				Auto<NamePart> part = CREATE(NamePart, this, name);
+				Auto<FoundParams> part = CREATE(FoundParams, this, name);
 				Auto<Named> loaded = tryFind(part);
 				if (!loaded) {
 					add(steal(loadPackage(name->v)));

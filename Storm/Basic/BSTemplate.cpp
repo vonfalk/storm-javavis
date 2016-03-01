@@ -19,7 +19,7 @@ namespace storm {
 		}
 	}
 
-	Named *bs::TemplateAdapter::generate(Par<NamePart> par) {
+	Named *bs::TemplateAdapter::generate(Par<FoundParams> par) {
 		Auto<Named> result;
 		for (nat i = 0; i < data->count(); i++) {
 			Auto<Named> now = data->at(i)->generate(par);

@@ -40,12 +40,12 @@ namespace storm {
 		return me->getRaw(k);
 	}
 
-	static Named *generateMap(Par<NamePart> part) {
-		if (part->params.size() != 2)
+	static Named *generateMap(Par<FoundParams> part) {
+		if (part->count() != 2)
 			return null;
 
-		const Value &key = part->params[0];
-		const Value &value = part->params[1];
+		const Value &key = part->param(0);
+		const Value &value = part->param(1);
 
 		return CREATE(MapType, part->engine(), key.asRef(false), value.asRef(false));
 	}

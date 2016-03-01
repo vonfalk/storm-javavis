@@ -329,7 +329,7 @@ namespace storm {
 		if (!first) {
 			// Insert here as well! But check if a similar function already exists first ('overloading' should work).
 			Auto<Function> c = createFn(fn, into);
-			Auto<NamePart> name = CREATE(NamePart, into, c->name, c->params);
+			Auto<FoundParams> name = CREATE(FoundParams, into, c->name, c->params);
 			if (!steal(into->find(name)))
 				into->add(c);
 		}

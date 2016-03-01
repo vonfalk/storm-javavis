@@ -27,6 +27,7 @@ SStr Noun();
 Noun => word : "dog" word;
 Noun => word : "bird" word;
 Noun => word : "fish" word;
+Noun => word : "sheep" word;
 
 SStr Plural();
 Plural => word : Noun word - "s";
@@ -37,6 +38,11 @@ Statement Sentence();
 Sentence[1] => Statement(noun, verb) : Plural noun, Verb verb = PluralAssert;
 Sentence[2] => Statement(noun, verb) : "the", Noun noun, Verb verb - "s" = SingularAssert;
 Sentence[3] => Statement(noun, verb) : "do", Plural noun, Verb verb - "\?" = Question;
+
+// Test for repeated things.
+Array<Statement> Paragraph();
+
+Paragraph => Array<Statement>() : (Sentence -> push,);
 
 
 // Test so that empty rules still work.

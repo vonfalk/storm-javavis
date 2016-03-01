@@ -176,13 +176,22 @@ namespace storm {
 				first = false;
 
 				Token id = tok.next();
-				vector<Value> params;
 
 				if (tok.peek().token == L"<") {
-					throw SyntaxError(tok.position(), L"The <> syntax is not implemented yet!");
-				}
+					vector<Auto<Name>> params;
+					while (tok.peek().token != L">") {
+						if (tok.peek().token == L",")
+							tok.skip();
 
-				result->add(id.token, params);
+						Auto<Name> param = parseName(tok, e);
+						params.push_back(param);
+					}
+					tok.expect(L">");
+
+					result->add(id.token, params);
+				} else {
+					result->add(id.token);
+				}
 
 			} while (tok.peek().token == L".");
 
@@ -194,7 +203,7 @@ namespace storm {
 			if (name->size() != 1)
 				return false;
 			NamePart *part = name->at(0);
-			if (part->params.size() != 0)
+			if (part->any())
 				return false;
 			return part->name == word;
 		}

@@ -27,16 +27,16 @@ namespace storm {
 		Template(const String &name);
 
 		// Ctor.
-		Template(const String &name, Fn<Named *, Par<NamePart>> generateFn);
+		Template(const String &name, Fn<Named *, Par<FoundParams>> generateFn);
 
 		// Name.
 		const String name;
 
 		// Use to generate classes without overriding this class.
-		Fn<Named *, Par<NamePart>> generateFn;
+		Fn<Named *, Par<FoundParams>> generateFn;
 
 		// Called when something with our name is not found. Returns null if nothing is found.
-		virtual MAYBE(Named) *STORM_FN generate(Par<NamePart> par);
+		virtual MAYBE(Named) *STORM_FN generate(Par<FoundParams> par);
 	};
 
 }

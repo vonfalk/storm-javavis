@@ -17,11 +17,11 @@ namespace storm {
 		return r;
 	}
 
-	static Named *generateMaybe(Par<NamePart> part) {
-		if (part->params.size() != 1)
+	static Named *generateMaybe(Par<FoundParams> part) {
+		if (part->count() != 1)
 			return null;
 
-		const Value &param = part->params[0];
+		const Value &param = part->param(0);
 		if (!param.isClass())
 			return null;
 		if (param.ref)
@@ -114,11 +114,11 @@ namespace storm {
 		return Type::loadAll();
 	}
 
-	Named *MaybeType::createCopy(Par<NamePart> part) {
-		if (part->params.size() < 2)
+	Named *MaybeType::createCopy(Par<FoundParams> part) {
+		if (part->count() < 2)
 			return null;
 
-		MaybeType *param = as<MaybeType>(part->params[1].type);
+		MaybeType *param = as<MaybeType>(part->param(1).type);
 		if (!param)
 			return null;
 
@@ -132,11 +132,11 @@ namespace storm {
 		return n;
 	}
 
-	Named *MaybeType::createAssign(Par<NamePart> part) {
-		if (part->params.size() < 2)
+	Named *MaybeType::createAssign(Par<FoundParams> part) {
+		if (part->count() < 2)
 			return null;
 
-		MaybeType *param = as<MaybeType>(part->params[1].type);
+		MaybeType *param = as<MaybeType>(part->param(1).type);
 		if (!param)
 			return null;
 

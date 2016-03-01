@@ -32,7 +32,7 @@ namespace storm {
 		void add(Par<Named> item);
 
 		// Create an element from the template (returns null on failure). Does _not_ add it!
-		virtual MAYBE(Named) *STORM_FN fromTemplate(Par<NamePart> part);
+		virtual MAYBE(Named) *STORM_FN fromTemplate(Par<FoundParams> part);
 
 	protected:
 		// Output.
@@ -127,7 +127,7 @@ namespace storm {
 		 */
 
 		// Called in case of #1, find a specific name. The returned value will be inserted.
-		virtual Named *STORM_FN loadName(Par<NamePart> part);
+		virtual Named *STORM_FN loadName(Par<FoundParams> part);
 
 		// Called in case of #2, load everything. 'loadAll' is supposed to call 'add' for all contents.
 		// Returns false if something went wrong and the loading should be re-tried. Throwing an exception
@@ -137,8 +137,8 @@ namespace storm {
 		// Force a this NameSet to be loaded if it has not already been done.
 		void forceLoad();
 
-		// Find a NamePart (returns borrowed ptr).
-		virtual MAYBE(Named) *STORM_FN find(Par<NamePart> part);
+		// Find a FoundParams (returns borrowed ptr).
+		virtual MAYBE(Named) *STORM_FN find(Par<FoundParams> part);
 
 		// Compile this NameSet and anything below it.
 		virtual void STORM_FN compile();
@@ -151,7 +151,7 @@ namespace storm {
 		void clear();
 
 		// Find a named here. Does not care about lazy-loading.
-		Named *tryFind(Par<NamePart> part);
+		Named *tryFind(Par<FoundParams> part);
 
 	private:
 		// Overloads.

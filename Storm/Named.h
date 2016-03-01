@@ -19,7 +19,7 @@ namespace storm {
 		STORM_CTOR NameLookup();
 
 		// Find the specified NamePart in here, returns null if not found.
-		virtual MAYBE(Named) *STORM_FN find(Par<NamePart> name);
+		virtual MAYBE(Named) *STORM_FN find(Par<FoundParams> name);
 
 		// Helper function for C++. (differently named due to the overloading rules in C++)
 		MAYBE(Named) *findCpp(const String &name, const vector<Value> &params);

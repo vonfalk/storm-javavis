@@ -88,8 +88,8 @@ namespace storm {
 		// Parameters (first one is special).
 		{
 			Variable thisVar = l.frame.createParameter(params[0].size(), false);
-			Auto<NamePart> hiddenName = CREATE(NamePart, this, L" this");
-			Auto<NamePart> normalName = CREATE(NamePart, this, L"this");
+			Auto<FoundParams> hiddenName = CREATE(FoundParams, this, L" this");
+			Auto<FoundParams> normalName = CREATE(FoundParams, this, L"this");
 			Auto<LocalVar> hidden = body->variable(hiddenName);
 			Auto<LocalVar> normal = body->variable(normalName);
 			hidden->var = VarInfo(thisVar);
@@ -98,7 +98,7 @@ namespace storm {
 
 		for (nat i = 1; i < params.size(); i++) {
 			const Value &t = params[i];
-			Auto<NamePart> name = CREATE(NamePart, this, paramNames[i]);
+			Auto<FoundParams> name = CREATE(FoundParams, this, paramNames[i]);
 			Auto<LocalVar> var = body->variable(name);
 			assert(var);
 			var->createParam(state);
@@ -166,7 +166,7 @@ namespace storm {
 		rootBlock = block.borrow();
 
 		// Add the regular this parameter!
-		Auto<NamePart> name = CREATE(NamePart, this, L" this");
+		Auto<FoundParams> name = CREATE(FoundParams, this, L" this");
 		thisVar = steal(block->variable(name));
 		thisPtr = thisVar->result;
 		Auto<LocalVar> created = CREATE(LocalVar, this, L"this", thisPtr, thisVar->pos, true);
@@ -221,15 +221,15 @@ namespace storm {
 			throw SyntaxError(pos, L"No constructor (" + ::toS(values) + L") found in " + parent->identifier());
 
 		vector<code::Value> actuals;
-		actuals.reserve(values->params.size());
+		actuals.reserve(values->count());
 
 		if (hiddenThread) {
 			actuals.push_back(params->code(0, s, ctor->params[0]));
 			actuals.push_back(rootBlock->threadParam->var.var());
-			for (nat i = 2; i < values->params.size(); i++)
+			for (nat i = 2; i < values->count(); i++)
 				actuals.push_back(params->code(i - 1, s, ctor->params[i]));
 		} else {
-			for (nat i = 0; i < values->params.size(); i++)
+			for (nat i = 0; i < values->count(); i++)
 				actuals.push_back(params->code(i, s, ctor->params[i]));
 		}
 
@@ -414,8 +414,8 @@ namespace storm {
 		} else {
 			// Now we're left with the values!
 
-			vector<code::Value> actuals(values->params.size());
-			for (nat i = 1; i < values->params.size(); i++)
+			vector<code::Value> actuals(values->count());
+			for (nat i = 1; i < values->count(); i++)
 				actuals[i] = to->code(i - 1, s, ctor->params[i]);
 
 			s->to << mov(ptrA, dest);

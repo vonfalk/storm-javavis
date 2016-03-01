@@ -17,37 +17,79 @@ namespace storm {
 		return r;
 	}
 
+	static vector<Auto<Name>> toVec(Par<ArrayP<Name>> values) {
+		vector<Auto<Name>> r(values->count());
+		for (nat i = 0; i < values->count(); i++)
+			r[i] = values->at(i);
+		return r;
+	}
+
+
 	/**
-	 * Name part
+	 * Name part.
 	 */
 
-	NamePart::NamePart(Par<Str> name) :
-		name(name->v), params() {}
+	NamePart::NamePart(Par<NamePart> o) : name(o->name) {}
 
-	NamePart::NamePart(Par<Str> name, Par<Array<Value>> values) :
-		name(name->v), params(toVec(values)) {}
+	NamePart::NamePart(Par<Str> name) : name(name->v) {}
 
-	NamePart::NamePart(const String &name) :
-		name(name), params() {}
+	NamePart::NamePart(const String &name) : name(name) {}
 
-	NamePart::NamePart(const String &name, const vector<Value> &params) :
-		name(name), params(params) {}
+	Nat NamePart::count() {
+		return 0;
+	}
+
+	FoundParams *NamePart::find(const Scope &scope) {
+		return CREATE(FoundParams, this, name);
+	}
+
+	void NamePart::deepCopy(Par<CloneEnv> env) {
+		// Nothing needed here.
+	}
 
 	void NamePart::output(wostream &to) const {
 		to << name;
-		if (!params.empty()) {
-			to << L"(";
-			join(to, params, L", ");
-			to << L")";
-		}
 	}
 
-	bool NamePart::operator ==(const NamePart &o) const {
-		return name == o.name
-			&& params == o.params;
+	NamePart *namePart(Par<Str> name) {
+		return CREATE(FoundParams, name, name);
 	}
 
-	Named *NamePart::choose(Par<NameOverloads> from) {
+	NamePart *namePart(Par<Str> name, Par<Array<Value>> params) {
+		return CREATE(FoundParams, name, name, params);
+	}
+
+	NamePart *namePart(Par<Str> name, Par<ArrayP<Name>> params) {
+		return CREATE(NameParams, name, name, params);
+	}
+
+	Str *name(Par<NamePart> part) {
+		return CREATE(Str, part, part->name);
+	}
+
+	/**
+	 * FoundParams.
+	 */
+
+	FoundParams::FoundParams(Par<FoundParams> o) : NamePart(o), params(o->params) {}
+
+	FoundParams::FoundParams(Par<Str> name) : NamePart(name) {}
+
+	FoundParams::FoundParams(Par<Str> name, Par<Array<Value>> values) : NamePart(name), params(toVec(values)) {}
+
+	FoundParams::FoundParams(const String &name) : NamePart(name) {}
+
+	FoundParams::FoundParams(const String &name, const vector<Value> &values) : NamePart(name), params(values) {}
+
+	Nat FoundParams::count() {
+		return params.size();
+	}
+
+	Value FoundParams::operator[](Nat id) {
+		return params[id];
+	}
+
+	Named *FoundParams::choose(Par<NameOverloads> from) {
 		PreArray<Named *, 4> candidates;
 		int best = std::numeric_limits<int>::max();
 
@@ -77,7 +119,7 @@ namespace storm {
 		}
 	}
 
-	Int NamePart::matches(Par<Named> candidate) {
+	Int FoundParams::matches(Par<Named> candidate) {
 		const vector<Value> &c = candidate->params;
 		if (c.size() != params.size())
 			return -1;
@@ -94,17 +136,70 @@ namespace storm {
 		return distance;
 	}
 
-	Str *name(Par<NamePart> p) {
-		return CREATE(Str, p, p->name);
+	FoundParams *FoundParams::find(const Scope &scope) {
+		addRef();
+		return this;
 	}
 
-	Array<Value> *params(Par<NamePart> p) {
-		Auto<Array<Value>> r = CREATE(Array<Value>, p);
-		for (nat i = 0; i < p->params.size(); i++)
-			r->push(p->params[i]);
-		return r.ret();
+	void FoundParams::deepCopy(Par<CloneEnv> env) {
+		// Nothing needed here.
 	}
 
+	void FoundParams::output(wostream &to) const {
+		to << name;
+		if (!params.empty()) {
+			to << L"(";
+			join(to, params, L", ");
+			to << L")";
+		}
+	}
+
+	/**
+	 * NameParams.
+	 */
+
+	NameParams::NameParams(Par<NameParams> o) : NamePart(o), params(o->params) {}
+
+	NameParams::NameParams(Par<Str> name) : NamePart(name) {}
+
+	NameParams::NameParams(Par<Str> name, Par<ArrayP<Name>> values) : NamePart(name), params(toVec(values)) {}
+
+	NameParams::NameParams(const String &name) : NamePart(name) {}
+
+	NameParams::NameParams(const String &name, vector<Auto<Name>> values) : NamePart(name), params(values) {}
+
+	Nat NameParams::count() {
+		return params.size();
+	}
+
+	FoundParams *NameParams::find(const Scope &scope) {
+		vector<Value> v(params.size());
+		for (nat i = 0; i < params.size(); i++) {
+			Auto<Named> found = scope.find(params[i]);
+			if (Type *t = as<Type>(found.borrow())) {
+				v[i] = Value(t);
+			} else {
+				// Failed!
+				return null;
+			}
+		}
+
+		return CREATE(FoundParams, this, name, v);
+	}
+
+	void NameParams::deepCopy(Par<CloneEnv> env) {
+		for (nat i = 0; i < params.size(); i++)
+			params[i].deepCopy(env);
+	}
+
+	void NameParams::output(wostream &to) const {
+		to << name;
+		if (!params.empty()) {
+			to << L"(";
+			join(to, params, L", ");
+			to << L")";
+		}
+	}
 
 	/**
 	 * Name
@@ -115,12 +210,12 @@ namespace storm {
 	Name::Name(Par<NamePart> part) : parts(1, part) {}
 
 	Name::Name(Par<Str> part) {
-		Auto<NamePart> v = CREATE(NamePart, this, part);
+		Auto<NamePart> v = CREATE(FoundParams, this, part);
 		add(v);
 	}
 
 	Name::Name(Par<Str> name, Par<Array<Value>> values) {
-		Auto<NamePart> v = CREATE(NamePart, this, name, values);
+		Auto<NamePart> v = CREATE(FoundParams, this, name, values);
 		add(v);
 	}
 
@@ -130,16 +225,25 @@ namespace storm {
 
 	Name::Name(Par<const Name> o) : parts(o->parts) {}
 
+	void Name::deepCopy(Par<CloneEnv> o) {
+		for (nat i = 0; i < parts.size(); i++)
+			parts[i].deepCopy(o);
+	}
+
 	void Name::add(Par<NamePart> part) {
 		parts.push_back(part);
 	}
 
 	void Name::add(const String &part) {
-		parts.push_back(CREATE(NamePart, this, part));
+		parts.push_back(CREATE(FoundParams, this, part));
 	}
 
 	void Name::add(const String &part, const vector<Value> &params) {
-		parts.push_back(CREATE(NamePart, this, part, params));
+		parts.push_back(CREATE(FoundParams, this, part, params));
+	}
+
+	void Name::add(const String &part, const vector<Auto<Name>> &params) {
+		parts.push_back(CREATE(NameParams, this, part, params));
 	}
 
 	Name *Name::parent() const {
@@ -187,12 +291,14 @@ namespace storm {
 	}
 
 	bool Name::operator ==(const Name &o) const {
+		assert(false, L"TODO!");
+
 		if (parts.size() != o.parts.size())
 			return false;
 
-		for (nat i = 0; i < parts.size(); i++)
-			if (*parts[i] != *o.parts[i])
-				return false;
+		// for (nat i = 0; i < parts.size(); i++)
+		// 	if (*parts[i] != *o.parts[i])
+		// 		return false;
 
 		return true;
 	}
@@ -208,7 +314,7 @@ namespace storm {
 			// We are ignoring the actual values, since hash collisions will probably
 			// be rare enough as it is. The current use of hashes is to keep track of
 			// vastly different packages anyway.
-			r = ((r << 5) + r) + parts[i]->params.size();
+			r = ((r << 5) + r) + parts[i]->count();
 		}
 
 		return r;
@@ -226,24 +332,21 @@ namespace storm {
 
 
 	/**
-	 * parseTemplatename.
+	 * parseTemplateName.
 	 */
 
-	static Name *parseName(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok);
+	static Name *parseName(Engine &e, const SrcPos &pos, Tokenizer &tok);
 
-	static NamePart *parseNamePart(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok) {
+	static NamePart *parseNamePart(Engine &e, const SrcPos &pos, Tokenizer &tok) {
 		String name = tok.next().token;
-		vector<Value> params;
+		vector<Auto<Name>> params;
 
 		if (tok.more() && tok.peek().token == L"<") {
 			tok.next();
 
 			while (tok.more() && tok.peek().token != L">") {
-				Auto<Name> n = parseName(e, scope, pos, tok);
-				if (Auto<Type> t = steal(scope.find(n)).as<Type>())
-					params.push_back(Value(t));
-				else
-					throw SyntaxError(pos, L"Unknown type: " + ::toS(n));
+				Auto<Name> n = parseName(e, pos, tok);
+				params.push_back(n);
 
 				if (!tok.more())
 					throw SyntaxError(pos, L"Unbalanced <>");
@@ -257,15 +360,15 @@ namespace storm {
 			tok.next();
 		}
 
-		return CREATE(NamePart, e, name, params);
+		return CREATE(NameParams, e, name, params);
 	}
 
-	static Name *parseName(Engine &e, const Scope &scope, const SrcPos &pos, Tokenizer &tok) {
+	static Name *parseName(Engine &e, const SrcPos &pos, Tokenizer &tok) {
 		Auto<Name> r = CREATE(Name, e);
 		Auto<NamePart> part;
 
 		while (tok.more()) {
-			Auto<NamePart> part = parseNamePart(e, scope, pos, tok);
+			Auto<NamePart> part = parseNamePart(e, pos, tok);
 			r->add(part);
 
 			if (!tok.more())
@@ -284,10 +387,10 @@ namespace storm {
 		return r.ret();
 	}
 
-	Name *parseTemplateName(Engine &e, const Scope &scope, const SrcPos &pos, const String &src) {
+	Name *parseTemplateName(Engine &e, const SrcPos &pos, const String &src) {
 		Auto<Url> path = CREATE(Url, e); // TODO: Null?
 		Tokenizer tok(path, src, 0);
-		return parseName(e, scope, pos, tok);
+		return parseName(e, pos, tok);
 	}
 
 

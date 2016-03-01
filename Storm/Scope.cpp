@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Scope.h"
+#include "Name.h"
 #include "Named.h"
 #include "Package.h"
 #include "Engine.h"
@@ -72,6 +73,10 @@ namespace storm {
 
 	Named *find(Scope scope, Par<Name> name) {
 		return scope.find(name);
+	}
+
+	FoundParams *find(Par<NamePart> part, Scope scope) {
+		return part->find(scope);
 	}
 
 	Str *toS(EnginePtr e, Scope scope) {

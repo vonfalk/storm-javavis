@@ -1,12 +1,13 @@
 #pragma once
-#include "Name.h"
 #include "Value.h"
+#include "Name.h"
 #include "Lib/Object.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
 
 	class NameLookup;
+	class Name;
 	class Named;
 	class Package;
 
@@ -98,6 +99,7 @@ namespace storm {
 
 	// Storm implementation of 'find'.
 	MAYBE(Named) *STORM_FN find(Scope scope, Par<Name> name) ON(Compiler);
+	MAYBE(FoundParams) *STORM_FN find(Par<NamePart> part, Scope scope) ON(Compiler);
 
 	// Convert to string.
 	Str *STORM_ENGINE_FN toS(EnginePtr e, Scope scope);
