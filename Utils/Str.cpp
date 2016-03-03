@@ -11,9 +11,9 @@ String::String(const char *chars) {
 	wchar_t *outBuffer = new wchar_t[bufferSize];
 	outBuffer[0] = 0;
 
-	size_t outSize = 0;
-	errno_t error = mbstowcs_s(&outSize, outBuffer, bufferSize, chars, bufferSize - 1);
-	assert(error == 0);
+	int count = MultiByteToWideChar(CP_UTF8, 0, chars, size, outBuffer, bufferSize - 1);
+	assert(count >= 0);
+	outBuffer[count] = 0;
 
 	*this = outBuffer;
 
@@ -26,9 +26,9 @@ std::string String::toChar() const {
 	char *outBuffer = new char[bufferSize];
 	outBuffer[0] = 0;
 
-	size_t outSize = 0;
-	errno_t error = wcstombs_s(&outSize, outBuffer, bufferSize, c_str(), bufferSize - 1);
-	assert(error == 0);
+	int count = WideCharToMultiByte(CP_UTF8, 0, data(), size(), outBuffer, bufferSize - 1, NULL, NULL);
+	assert(count >= 0);
+	outBuffer[count] = 0;
 
 	std::string result(outBuffer);
 	delete []outBuffer;
