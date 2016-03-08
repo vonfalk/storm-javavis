@@ -40,6 +40,16 @@ namespace storm {
 		return findHelper(s, name);
 	}
 
+	Value bs::BSScope::value(const Scope &scope, Par<SimpleName> name, SrcPos pos) {
+		if (name->count() == 1) {
+			SimplePart *last = name->last().borrow();
+			if (last->name == L"void" && last->empty())
+				return Value();
+		}
+
+		return ScopeLookup::value(scope, name, pos);
+	}
+
 	void bs::BSScope::addSyntax(const Scope &from, Par<SyntaxSet> to) {
 		if (file) {
 			Auto<SimpleName> syntax = syntaxPkg(file);

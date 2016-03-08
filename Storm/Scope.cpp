@@ -41,7 +41,10 @@ namespace storm {
 
 	Named *Scope::find(Par<Name> name) const {
 		Auto<SimpleName> simple = name->simplify(*this);
-		return find(simple);
+		if (simple)
+			return find(simple);
+
+		return null;
 	}
 
 	Named *Scope::find(Par<SimpleName> name) const {
@@ -49,6 +52,16 @@ namespace storm {
 			return lookup->find(*this, name);
 
 		return null;
+	}
+
+	Value Scope::value(Par<Name> name, const SrcPos &pos) const {
+		if (lookup) {
+			Auto<SimpleName> simple = name->simplify(*this);
+			if (simple)
+				return lookup->value(*this, name, pos);
+		}
+
+		throw SyntaxError(pos, ::toS(name) + L" can not be resolved to a type!");
 	}
 
 	wostream &operator <<(wostream &to, const Scope &s) {
@@ -82,6 +95,10 @@ namespace storm {
 
 	Named *find(Scope scope, Par<SimpleName> name) {
 		return scope.find(name);
+	}
+
+	Value value(Scope scope, Par<Name> name, SrcPos pos) {
+		return scope.value(name, pos);
 	}
 
 	SimpleName *simplify(Par<Name> name, Scope scope) {
@@ -152,6 +169,15 @@ namespace storm {
 
 		// We failed!
 		return null;
+	}
+
+	Value ScopeLookup::value(const Scope &in, Par<SimpleName> name, SrcPos pos) {
+		// TODO: We may want to consider type aliases in the future, and implement 'void' that way.
+		Auto<Named> found = find(in, name);
+		if (!found)
+			throw SyntaxError(pos, ::toS(name) + L" can not be resolved to a type.");
+
+		return Value(found.borrow());
 	}
 
 	/**

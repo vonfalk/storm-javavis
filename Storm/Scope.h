@@ -26,13 +26,16 @@ namespace storm {
 	/**
 	 * This is the lookup for a scope. All lookups inherits from the standard one.
 	 */
-	class ScopeLookup : public Object {
+	class ScopeLookup : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
 		STORM_CTOR ScopeLookup();
 
 		// Find 'name' in 'in'.
 		virtual MAYBE(Named) *STORM_FN find(const Scope &in, Par<SimpleName> name);
+
+		// Resolve 'name' to a type.
+		virtual Value STORM_FN value(const Scope &in, Par<SimpleName> name, SrcPos pos);
 
 		/**
 		 * Utility functions. All of these returns borrowed pointers.
@@ -92,6 +95,10 @@ namespace storm {
 		MAYBE(Named) *find(Par<Name> name) const;
 		MAYBE(Named) *find(Par<SimpleName> name) const;
 
+		// Resolve a name to a type. Throws an exception on failure. Allows proper handling of void
+		// and type aliases in the future.
+		Value value(Par<Name> name, const SrcPos &pos) const;
+
 		// Deep copy.
 		void STORM_FN deepCopy(Par<CloneEnv> env);
 	};
@@ -102,7 +109,8 @@ namespace storm {
 	// Storm implementation of 'find'.
 	MAYBE(Named) *STORM_FN find(Scope scope, Par<Name> name) ON(Compiler);
 	MAYBE(Named) *STORM_FN find(Scope scope, Par<SimpleName> name) ON(Compiler);
-	MAYBE(SimpleName) *STORM_FN simplify(Par<Name> name, Scope scope);
+	Value STORM_FN value(Scope scope, Par<Name> name, SrcPos pos) ON(Compiler);
+	MAYBE(SimpleName) *STORM_FN simplify(Par<Name> name, Scope scope) ON(Compiler);
 	MAYBE(SimplePart) *STORM_FN find(Par<NamePart> part, Scope scope) ON(Compiler);
 
 	// Convert to string.
