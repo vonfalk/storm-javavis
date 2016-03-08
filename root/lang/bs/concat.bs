@@ -2,11 +2,11 @@ use core;
 use core:lang;
 use core:debug;
 
-// Generate the TypeName for the StrBuf type.
-TypeName strBufType() {
-	TypeName t;
-	t.add(TypePart("core"));
-	t.add(TypePart("StrBuf"));
+// Generate the SrcName for the StrBuf type.
+SrcName strBufType() {
+	SrcName t;
+	t.add("core");
+	t.add("StrBuf");
 	t;
 }
 
@@ -78,7 +78,7 @@ class ConcatExpr extends Expr {
 
 	// Append a node, trying to call add on the StrBuf directly.
 	Bool appendStrBuf(Expr e) {
-		Value v = strBufType.resolve(rootScope);
+		Value v = rootScope.value(strBufType);
 		Type t = v.getType;
 		Scope findIn = outer.scope.child(t);
 		var part = namePart("add", Value:[v, e.result.type]);

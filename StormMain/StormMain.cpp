@@ -121,7 +121,7 @@ int launchMainLoop(Engine &engine, const String &lang, const String &command) {
 }
 
 int launchFn(Engine &e, const String &fnName) {
-	Auto<Name> name = parseSimpleName(e, fnName);
+	Auto<SimpleName> name = parseSimpleName(e, fnName);
 	Auto<Named> named = e.scope()->find(name);
 	if (!named) {
 		wcout << L"Could not find " << fnName << L"!" << endl;
@@ -200,8 +200,8 @@ void loadImport(Engine &to, const Import &i) {
 		return;
 	}
 
-	Auto<Name> name = parseSimpleName(to, i.name);
-	Auto<Name> parent = name->parent();
+	Auto<SimpleName> name = parseSimpleName(to, i.name);
+	Auto<SimpleName> parent = name->parent();
 
 	Package *into = to.package(parent, true);
 	if (!into) {
@@ -209,7 +209,8 @@ void loadImport(Engine &to, const Import &i) {
 		return;
 	}
 
-	if (Auto<Named> prev = into->find(steal(name->last()))) {
+	Auto<SimplePart> last = name->last();
+	if (Auto<Named> prev = into->find(last)) {
 		wcerr << L"Something named " << name << L" already exists. Please chose a different name." << endl;
 		wcerr << L"Could not import " << url << L" as " << name << L"." << endl;
 		return;

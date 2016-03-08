@@ -37,7 +37,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR WeakDowncast(Par<Block> block, Par<Expr> expr, Par<TypeName> type);
+			STORM_CTOR WeakDowncast(Par<Block> block, Par<Expr> expr, Par<SrcName> type);
 
 			// Get variable we can write to.
 			virtual MAYBE(Str) *STORM_FN overwrite();
@@ -88,7 +88,7 @@ namespace storm {
 		};
 
 		// Figure out what kind of weak cast to create based on the type of the lhs of expressions like <lhs> as <type>.
-		WeakCast *STORM_FN weakAsCast(Par<Block> block, Par<Expr> expr, Par<TypeName> type);
+		WeakCast *STORM_FN weakAsCast(Par<Block> block, Par<Expr> expr, Par<SrcName> type);
 
 	}
 }

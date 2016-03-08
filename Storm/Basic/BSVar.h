@@ -1,6 +1,5 @@
 #pragma once
 #include "BSExpr.h"
-#include "BSType.h"
 #include "BSActual.h"
 
 namespace storm {
@@ -48,10 +47,10 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Initialize with initializer-list (like Foo(1))
-			STORM_CTOR Var(Par<Block> block, Par<TypeName> type, Par<SStr> name, Par<Actual> actual);
+			STORM_CTOR Var(Par<Block> block, Par<SrcName> type, Par<SStr> name, Par<Actual> actual);
 
 			// Initialize to an expression.
-			STORM_CTOR Var(Par<Block> block, Par<TypeName> type, Par<SStr> name, Par<Expr> init);
+			STORM_CTOR Var(Par<Block> block, Par<SrcName> type, Par<SStr> name, Par<Expr> init);
 
 			// Initialize to an expression (auto type).
 			STORM_CTOR Var(Par<Block> block, Par<SStr> name, Par<Expr> init);

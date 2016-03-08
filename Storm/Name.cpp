@@ -6,6 +6,7 @@
 #include "Type.h"
 #include "Shared/Io/Url.h"
 #include "Utils/PreArray.h"
+#include "SyntaxObject.h"
 #include <limits>
 
 namespace storm {
@@ -74,6 +75,8 @@ namespace storm {
 	SimplePart::SimplePart(Par<SimplePart> o) : NamePart(o), data(o->data) {}
 
 	SimplePart::SimplePart(Par<Str> name) : NamePart(name) {}
+
+	SimplePart::SimplePart(Par<SStr> name) : NamePart(name->v) {}
 
 	SimplePart::SimplePart(Par<Str> name, Par<Array<Value>> values) : NamePart(name), data(toVec(values)) {}
 
@@ -148,6 +151,10 @@ namespace storm {
 		return r;
 	}
 
+	void SimplePart::add(Value v) {
+		data.push_back(v);
+	}
+
 	void SimplePart::deepCopy(Par<CloneEnv> env) {
 		// Nothing needed here.
 	}
@@ -169,6 +176,8 @@ namespace storm {
 
 	RecNamePart::RecNamePart(Par<Str> name) : NamePart(name) {}
 
+	RecNamePart::RecNamePart(Par<SStr> name) : NamePart(name->v) {}
+
 	RecNamePart::RecNamePart(Par<Str> name, Par<ArrayP<Name>> values) : NamePart(name), params(toVec(values)) {}
 
 	RecNamePart::RecNamePart(const String &name) : NamePart(name) {}
@@ -182,16 +191,19 @@ namespace storm {
 	SimplePart *RecNamePart::find(const Scope &scope) {
 		vector<Value> v(params.size());
 		for (nat i = 0; i < params.size(); i++) {
-			Auto<Named> found = scope.find(params[i]);
-			if (Type *t = as<Type>(found.borrow())) {
-				v[i] = Value(t);
-			} else {
-				// Failed!
+			try {
+				v[i] = scope.value(params[i], SrcPos());
+			} catch (const Exception &) {
+				// Error, return null as per specification.
 				return null;
 			}
 		}
 
 		return CREATE(SimplePart, this, name, v);
+	}
+
+	void RecNamePart::add(Par<Name> name) {
+		params.push_back(name);
 	}
 
 	void RecNamePart::deepCopy(Par<CloneEnv> env) {
@@ -228,7 +240,7 @@ namespace storm {
 
 	Name::Name(Par<SimpleName> simple) : parts(simple->count()) {
 		for (nat i = 0; i < simple->count(); i++)
-			parts.push_back(simple->at(i));
+			parts[i] = simple->at(i);
 	}
 
 	Name::Name(const String &part, const vector<Value> &params) {
@@ -325,6 +337,29 @@ namespace storm {
 		}
 
 		return result.ret();
+	}
+
+	/**
+	 * SrcName.
+	 */
+
+	SrcName::SrcName() {}
+
+	SrcName::SrcName(SrcPos pos) : pos(pos) {}
+
+	SrcName::SrcName(SrcName *o) : Name(o), pos(o->pos) {}
+
+	SrcName::SrcName(Name *o) : Name(o) {}
+
+	SrcName::SrcName(Par<Name> o, SrcPos pos) : Name(o), pos(pos) {}
+
+	SrcName::SrcName(SimpleName *o) : Name(o) {}
+
+	SrcName::SrcName(Par<SimpleName> o, SrcPos pos) : Name(o), pos(pos) {}
+
+	void SrcName::deepCopy(Par<CloneEnv> o) {
+		Name::deepCopy(o);
+		pos.deepCopy(o);
 	}
 
 	/**
@@ -437,6 +472,13 @@ namespace storm {
 			copy->add(parts[i]);
 		}
 		return copy.ret();
+	}
+
+	SimpleName *SimpleName::parent() {
+		SimpleName *n = CREATE(SimpleName, this, this);
+		if (n->any())
+			n->parts.pop_back();
+		return n;
 	}
 
 	void SimpleName::deepCopy(Par<CloneEnv> env) {

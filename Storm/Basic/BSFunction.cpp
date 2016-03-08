@@ -11,17 +11,17 @@
 namespace storm {
 
 	bs::FunctionDecl::FunctionDecl(Par<SyntaxEnv> env,
-								Par<TypeName> result,
+								Par<SrcName> result,
 								Par<SStr> name,
 								Par<Params> params,
 								Par<SStr> contents) :
 		env(env), name(name), result(result), params(params), thread(null), contents(contents) {}
 
 	bs::FunctionDecl::FunctionDecl(Par<SyntaxEnv> env,
-								Par<TypeName> result,
+								Par<SrcName> result,
 								Par<SStr> name,
 								Par<Params> params,
-								Par<TypeName> thread,
+								Par<SrcName> thread,
 								Par<SStr> contents) :
 		env(env), name(name), result(result), params(params), thread(thread), contents(contents) {}
 
@@ -29,11 +29,11 @@ namespace storm {
 	Function *bs::FunctionDecl::createFn() {
 		const Scope &scope = env->scope;
 
-		Value result = this->result->resolve(scope);
+		Value result = scope.value(this->result);
 		NamedThread *thread = null;
 
 		if (this->thread) {
-			Auto<Named> n = this->thread->find(scope);
+			Auto<Named> n = scope.find(this->thread);
 			if (NamedThread *t = as<NamedThread>(n.borrow())) {
 				thread = t;
 			} else {
@@ -52,7 +52,7 @@ namespace storm {
 		}
 
 		const Scope &scope = env->scope;
-		Value result = this->result->resolve(scope);
+		Value result = scope.value(this->result);
 		vector<Value> params = this->params->cTypes(scope);
 		vector<String> names = this->params->cNames();
 

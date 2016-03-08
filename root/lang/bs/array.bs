@@ -1,18 +1,18 @@
 use core:lang;
 
 // Implement support for Int[] instead of Array<Int>
-TypeName arrayType(TypeName t) on Compiler {
-	TypePart core("core");
-	TypePart array("Array");
-	array.add(t);
+SrcName arrayType(SrcName t) on Compiler {
+	SrcName name(t.pos);
+	name.add("core");
 
-	TypeName name;
-	name.add(core);
-	name.add(array);
+	RecNamePart part("Array");
+	part.add(t);
+
+	name.add(part);
 	name;
 }
 
-Expr arrayInit(Block block, TypeName type, Array<Expr> list) on Compiler {
+Expr arrayInit(Block block, SrcName type, Array<Expr> list) on Compiler {
 	ExprBlock b(block);
 
 	SStr arrayName("tmp");
@@ -72,7 +72,7 @@ class ArrayInit extends Expr {
 		if (v == Value())
 			throwSyntaxError(pos, "Can not figure out the type of the array. Please use the syntax T:[...] instead.");
 
-		Expr e = arrayInit(block, TypeName(v), values);
+		Expr e = arrayInit(block, SrcName(v.getType.path()), values);
 		e.code(g, r);
 	}
 

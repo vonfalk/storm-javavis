@@ -214,7 +214,7 @@ namespace storm {
 
 		// Find out what the named expression means, and create proper object.
 		Expr *STORM_FN namedExpr(Par<Block> block, Par<SStr> name, Par<Actual> params);
-		Expr *STORM_FN namedExpr(Par<Block> block, Par<TypeName> name, Par<Actual> params);
+		Expr *STORM_FN namedExpr(Par<Block> block, Par<SrcName> name, Par<Actual> params);
 		Expr *STORM_FN namedExpr(Par<Block> block, SrcPos pos, Par<Name> name, Par<Actual> params);
 
 		// Special case of above, used when we find an expression like a.b(...). 'first' is inserted

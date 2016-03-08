@@ -57,8 +57,8 @@ class SExpr extends Expr {
 		ExprBlock b(o);
 
 		SStr varName = "slide";
-		TypeName name;
-		name.add(TypePart(type.v + "Slide"));
+		SrcName name;
+		name.add(type.v + "Slide");
 
 		Var var(o, name, varName, params);
 		o.add(var);

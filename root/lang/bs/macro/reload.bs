@@ -5,8 +5,8 @@ use lang:bs;
 
 // Very hacky proof-of-concept code reloads.
 
-void reload(TypeName name) on Compiler {
-	Named? pkg = name.find(rootScope);
+void reload(SrcName name) on Compiler {
+	Named? pkg = rootScope.find(name);
 	if (pkg as Package) {
 		print("Reloading " # name # "...");
 		reloadPkg(pkg);
@@ -51,7 +51,7 @@ void reloadBsUrl(Package pkg, Url url) on Compiler {
 
 	Scope scope(pkg, BSScope(url));
 	Object tfm = parser.transform(Object:[]);
-	if (tfm as TypeName[])
+	if (tfm as SrcName[])
 		addIncludes(syntax, scope, tfm);
 
 	parser.parse("File", len);
@@ -133,10 +133,10 @@ void reloadClass(Class found, Type candidate) on Compiler {
 	}
 }
 
-// Why can't I use TypeName[] here?
-void addIncludes(SyntaxSet to, Scope scope, Array<TypeName> from) on Compiler {
+// Why can't I use SrcName[] here?
+void addIncludes(SyntaxSet to, Scope scope, Array<SrcName> from) on Compiler {
 	for (Nat i = 0; i < from.count; i++) {
-		Named? p = from[i].find(rootScope);
+		Named? p = rootScope.find(from[i]);
 		if (p as Package) {
 			to.add(p);
 			scope.addInclude(p);
@@ -148,7 +148,7 @@ void addIncludes(SyntaxSet to, Scope scope, Array<TypeName> from) on Compiler {
 
 SyntaxSet bfSyntax() on Compiler {
 	SyntaxSet s;
-	Named? n = (name{lang:bs}).find(rootScope);
+	Named? n = rootScope.find(name{lang:bs});
 	if (n as Package)
 		s.add(n);
 	s;

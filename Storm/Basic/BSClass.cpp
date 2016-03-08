@@ -21,19 +21,19 @@ namespace storm {
 		return CREATE(Class, name, typeValue, pos, env->scope, name->v->v, content);
 	}
 
-	bs::Class *bs::extendClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> from, Par<SStr> content) {
+	bs::Class *bs::extendClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<SStr> content) {
 		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, content);
 		c->base = from;
 		return c;
 	}
 
-	bs::Class *bs::extendValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> from, Par<SStr> content) {
+	bs::Class *bs::extendValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<SStr> content) {
 		Class *c = CREATE(Class, name, typeValue, pos, env->scope, name->v->v, content);
 		c->base = from;
 		return c;
 	}
 
-	bs::Class *bs::threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> thread, Par<SStr> content) {
+	bs::Class *bs::threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> thread, Par<SStr> content) {
 		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, content);
 		c->thread = thread;
 		return c;
@@ -55,16 +55,19 @@ namespace storm {
 		try {
 
 			if (base) {
-				Value t = base->resolve(scope);
-				setSuper(t.type);
+				Auto<Named> n = scope.find(base);
+				Type *b = as<Type>(n.borrow());
+				if (!b)
+					throw SyntaxError(declared, L"Base class " + ::toS(base) + L" undefined!");
+
+				setSuper(b);
 				base = null;
 			}
 
 			if (thread) {
-				Auto<SimpleName> name = thread->toName(scope);
-				Auto<NamedThread> t = steal(scope.find(name)).as<NamedThread>();
+				Auto<NamedThread> t = steal(scope.find(thread)).as<NamedThread>();
 				if (!t)
-					throw SyntaxError(thread->pos, L"Can not find the thread " + ::toS(name) + L".");
+					throw SyntaxError(declared, L"Can not find the thread " + ::toS(name) + L".");
 
 				setThread(t);
 				thread = null;
@@ -165,20 +168,20 @@ namespace storm {
 	 * Member
 	 */
 
-	bs::ClassVar::ClassVar(Par<Class> owner, Par<TypeName> type, Par<SStr> name)
-		: TypeVar(owner.borrow(), type->resolve(owner->scope), name->v->v) {}
+	bs::ClassVar::ClassVar(Par<Class> owner, Par<SrcName> type, Par<SStr> name)
+		: TypeVar(owner.borrow(), owner->scope.value(type), name->v->v) {}
 
 
 	bs::BSFunction *STORM_FN bs::classFn(Par<Class> owner,
 										SrcPos pos,
 										Par<SStr> name,
-										Par<TypeName> result,
+										Par<Name> result,
 										Par<Params> params,
 										Par<SStr> contents) {
 
 		params->addThis(owner.borrow());
 		return CREATE(BSFunction, owner->engine,
-					result->resolve(owner->scope),
+					owner->scope.value(result, pos),
 					name,
 					params,
 					owner->scope,

@@ -17,15 +17,15 @@ InComment => void : "";
 Name => name : "[A-Za-z_][A-Za-z0-9_]*" name;
 
 // Part in a type name
-TypePart => TypePart(n) : Name n;
-TypePart => TypePart(n) : Name n, "<", ">";
-TypePart => TypePart(n) : Name n, "<", Type -> add, (",", Type -> add, )* ">";
+TypePart => SimplePart(n) : Name n;
+TypePart => SimplePart(n) : Name n, "<", ">";
+TypePart => RecNamePart(n) : Name n, "<", Type -> add, (",", Type -> add, )* ">";
 
 // Package. Separate entry so to not allow package names like: a:b[] or a:b->c:d.
-Package => TypeName() : TypePart -> add, (":", TypePart -> add, )*;
+Package => SrcName(pos) : TypePart -> add, (":", TypePart -> add, )*;
 
 // Type.
-Type => TypeName() : TypePart -> add, (":", TypePart -> add, )*;
+Type => SrcName(pos) : TypePart -> add, (":", TypePart -> add, )*;
 
 // Array type.
 Type => arrayType(t) : Type t, "\[\]";
@@ -95,7 +95,7 @@ File(SyntaxEnv env);
 File => Contents() : , (FileItem(env) -> add, )*;
 
 // Root rule for parsing includes.
-Includes => Array<TypeName>() : , ("use", Package -> push, ";", )*;
+Includes => Array<SrcName>() : , ("use", Package -> push, ";", )*;
 
 // Specific use-rule in the top loop.
 ReplUse => pkg : "use", Package pkg, ";?";
@@ -111,9 +111,9 @@ FnValues => Actual() : BSDelimiter;
 FnValues => v : "(", Values(block) v, ")";
 
 // Formal type parameter list.
-Types => Array<TypeName>() : BSDelimiter;
-Types => Array<TypeName>() : Type -> push, (",", Type -> push)*;
-FnTypes => Array<TypeName>() : BSDelimiter;
+Types => Array<SrcName>() : BSDelimiter;
+Types => Array<SrcName>() : Type -> push, (",", Type -> push)*;
+FnTypes => Array<SrcName>() : BSDelimiter;
 FnTypes => t : "(", Types t, ")";
 
 // Block.
@@ -175,7 +175,7 @@ ArrayInitList(Block block);
 ArrayInitList => Array<Expr>() : BSDelimiter, ",?";
 ArrayInitList => Array<Expr>() : Expr(block) -> push (, ",", Expr(block) -> push)*, ",?";
 
-// Units. Returns a TypeName which is supposed to convert this unit to an object of some kind.
+// Units. Returns a SrcName which is supposed to convert this unit to an object of some kind.
 Unit => timeUnit(u) : "h" u;
 Unit => timeUnit(u) : "min" u;
 Unit => timeUnit(u) : "s" u;

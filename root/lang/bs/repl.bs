@@ -54,16 +54,16 @@ class Repl extends LangRepl {
 	}
 
 	void addUse(Parser parser) {
-		TObject type = parser.transformT([]);
-		if (type as TypeName) {
+		Object type = parser.transform([]);
+		if (type as SrcName) {
 			addUse(type);
 		} else {
 			print("I AM ERROR");
 		}
 	}
 
-	void addUse(TypeName name) {
-		Named? pkg = name.find(rootScope);
+	void addUse(SrcName name) {
+		Named? pkg = rootScope.find(name);
 		if (pkg as Package) {
 			if (scope.addInclude(pkg)) {
 				print("Using " # name # ".");
@@ -88,7 +88,7 @@ class Repl extends LangRepl {
 		}
 
 		ReplBlock block(scope);
-		LocalVar thisPtr("this", (name{lang:bs:ReplSandbox}).resolve(rootScope), SrcPos(), true);
+		LocalVar thisPtr("this", rootScope.value(name{lang:bs:ReplSandbox}), SrcPos(), true);
 		block.add(thisPtr);
 
 		TObject stmt = parser.transformT([block]);

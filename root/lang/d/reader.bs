@@ -20,7 +20,7 @@ class DieselFile extends FileReader {
 	}
 
 	void readFunctions() {
-		Named? myPkg = (name{lang:d}).find(rootScope);
+		Named? myPkg = rootScope.find(name{lang:d});
 		SyntaxSet syntax;
 		if (myPkg as Package) {
 			syntax.add(myPkg);

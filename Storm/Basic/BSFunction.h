@@ -25,24 +25,24 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR FunctionDecl(Par<SyntaxEnv> env,
-									Par<TypeName> result,
+									Par<SrcName> result,
 									Par<SStr> name,
 									Par<Params> params,
 									Par<SStr> contents);
 
 			STORM_CTOR FunctionDecl(Par<SyntaxEnv> env,
-									Par<TypeName> result,
+									Par<SrcName> result,
 									Par<SStr> name,
 									Par<Params> params,
-									Par<TypeName> thread,
+									Par<SrcName> thread,
 									Par<SStr> contents);
 
 			// Values.
 			STORM_VAR Auto<SyntaxEnv> env;
 			STORM_VAR Auto<SStr> name;
-			STORM_VAR Auto<TypeName> result;
+			STORM_VAR Auto<SrcName> result;
 			STORM_VAR Auto<Params> params;
-			STORM_VAR MAYBE(Auto<TypeName>) thread;
+			STORM_VAR MAYBE(Auto<SrcName>) thread;
 			STORM_VAR Auto<SStr> contents;
 
 			// Create a corresponding function.

@@ -1,11 +1,12 @@
 #include "stdafx.h"
 #include "BSParams.h"
+#include "Scope.h"
 
 namespace storm {
 
 	bs::Params::Params() : thisType(null) {}
 
-	void bs::Params::add(Par<TypeName> type) {
+	void bs::Params::add(Par<SrcName> type) {
 		params.push_back(type);
 	}
 
@@ -32,7 +33,7 @@ namespace storm {
 			r.push_back(Value::thisPtr(thisType));
 
 		for (nat i = 0; i < params.size(); i++)
-			r.push_back(params[i]->resolve(scope));
+			r.push_back(scope.value(params[i]));
 
 		return r;
 	}

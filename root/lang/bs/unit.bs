@@ -1,23 +1,23 @@
 use core:lang;
 
 // Transform expressions of the type '10 s' to s(10).
-Expr unit(Block block, Expr value, TypeName unit) {
+Expr unit(Block block, Expr value, SrcName unit) {
 	namedExpr(block, unit, Actual(value));
 }
 
 // Create unit expressions.
-TypeName timeUnit(SStr name) {
-	TypeName n;
-	n.add(TypePart("core"));
-	n.add(TypePart(name));
+SrcName timeUnit(SStr name) {
+	SrcName n;
+	n.add("core");
+	n.add(name.v);
 	n;
 }
 
 // DegUnit
-TypeName degUnit(SStr name) {
-	TypeName n;
-	n.add(TypePart("core"));
-	n.add(TypePart("geometry"));
-	n.add(TypePart(name));
+SrcName degUnit(SStr name) {
+	SrcName n;
+	n.add("core");
+	n.add("geometry");
+	n.add(name.v);
 	n;
 }

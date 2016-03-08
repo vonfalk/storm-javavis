@@ -1,7 +1,9 @@
 #pragma once
 #include "Value.h"
 #include "Name.h"
-#include "Lib/Object.h"
+#include "Shared/Object.h"
+#include "Shared/TObject.h"
+#include "Thread.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -98,6 +100,7 @@ namespace storm {
 		// Resolve a name to a type. Throws an exception on failure. Allows proper handling of void
 		// and type aliases in the future.
 		Value value(Par<Name> name, const SrcPos &pos) const;
+		Value value(Par<SrcName> name) const;
 
 		// Deep copy.
 		void STORM_FN deepCopy(Par<CloneEnv> env);
@@ -110,6 +113,7 @@ namespace storm {
 	MAYBE(Named) *STORM_FN find(Scope scope, Par<Name> name) ON(Compiler);
 	MAYBE(Named) *STORM_FN find(Scope scope, Par<SimpleName> name) ON(Compiler);
 	Value STORM_FN value(Scope scope, Par<Name> name, SrcPos pos) ON(Compiler);
+	Value STORM_FN value(Scope scope, Par<SrcName> name) ON(Compiler);
 	MAYBE(SimpleName) *STORM_FN simplify(Par<Name> name, Scope scope) ON(Compiler);
 	MAYBE(SimplePart) *STORM_FN find(Par<NamePart> part, Scope scope) ON(Compiler);
 

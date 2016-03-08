@@ -6,7 +6,6 @@
 #include "SyntaxEnv.h"
 #include "Shared/Map.h"
 
-#include "BSType.h"
 #include "BSParams.h"
 #include "BSTemplate.h"
 
@@ -33,10 +32,10 @@ namespace storm {
 			const SrcPos declared;
 
 			// Base class (if any).
-			Auto<TypeName> base;
+			Auto<Name> base;
 
 			// Associated thread (if any).
-			Auto<TypeName> thread;
+			Auto<Name> thread;
 
 			// Load the contents lazily.
 			virtual Bool STORM_FN loadAll();
@@ -55,12 +54,12 @@ namespace storm {
 		Class *STORM_FN createValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content);
 
 		// Create a class extended from a base class.
-		Class *STORM_FN extendClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> from, Par<SStr> content);
-		Class *STORM_FN extendValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> from, Par<SStr> content);
+		Class *STORM_FN extendClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<SStr> content);
+		Class *STORM_FN extendValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<SStr> content);
 
 		// Create an actor class.
 		Class *STORM_FN threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content);
-		Class *STORM_FN threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<TypeName> thread, Par<SStr> content);
+		Class *STORM_FN threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> thread, Par<SStr> content);
 
 
 		/**
@@ -91,7 +90,7 @@ namespace storm {
 		class ClassVar : public TypeVar {
 			STORM_CLASS;
 		public:
-			STORM_CTOR ClassVar(Par<Class> owner, Par<TypeName> type, Par<SStr> name);
+			STORM_CTOR ClassVar(Par<Class> owner, Par<SrcName> type, Par<SStr> name);
 		};
 
 		/**
@@ -100,7 +99,7 @@ namespace storm {
 		BSFunction *STORM_FN classFn(Par<Class> owner,
 									SrcPos pos,
 									Par<SStr> name,
-									Par<TypeName> result,
+									Par<Name> result,
 									Par<Params> params,
 									Par<SStr> contents);
 

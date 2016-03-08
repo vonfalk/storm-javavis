@@ -1,5 +1,6 @@
 #pragma once
 #include "Value.h"
+#include "SrcPos.h"
 #include "Lib/Object.h"
 #include "Shared/Types.h"
 #include "Shared/Array.h"
@@ -8,6 +9,7 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class SStr;
 	class Scope;
 	class Named;
 	class NameOverloads;
@@ -68,6 +70,7 @@ namespace storm {
 
 		// Create with just a name.
 		STORM_CTOR SimplePart(Par<Str> name);
+		STORM_CTOR SimplePart(Par<SStr> name);
 
 		// Create with parameters as well.
 		STORM_CTOR SimplePart(Par<Str> name, Par<Array<Value>> params);
@@ -96,6 +99,9 @@ namespace storm {
 		// Get parameters.
 		Array<Value> *STORM_FN params();
 
+		// Add a parameter.
+		void STORM_FN add(Value v);
+
 		// Deep copy.
 		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
 
@@ -118,6 +124,7 @@ namespace storm {
 
 		// Create with just a name.
 		STORM_CTOR RecNamePart(Par<Str> name);
+		STORM_CTOR RecNamePart(Par<SStr> name);
 
 		// Create with parameters as well.
 		STORM_CTOR RecNamePart(Par<Str> name, Par<ArrayP<Name>> params);
@@ -137,6 +144,9 @@ namespace storm {
 
 		// Resolve names.
 		virtual MAYBE(SimplePart) *find(const Scope &scope);
+
+		// Add a parameter.
+		void STORM_FN add(Par<Name> name);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
@@ -213,8 +223,10 @@ namespace storm {
 		inline Bool STORM_FN root() const { return count() == 0; }
 
 		// Access to individual elements.
-		inline Nat count() const { return parts.size(); }
-		inline NamePart *operator [](Nat id) const { Auto<NamePart> r = parts[id]; return r.ret(); }
+		inline Nat STORM_FN count() const { return parts.size(); }
+		inline NamePart *STORM_FN operator [](Nat id) const { Auto<NamePart> r = parts[id]; return r.ret(); }
+
+		// Borrowed ptr, c++ only.
 		inline NamePart *at(Nat id) const { return parts[id].borrow(); }
 
 		// empty/any
@@ -233,6 +245,30 @@ namespace storm {
 	private:
 		// Store each part.
 		vector<Auto<NamePart>> parts;
+	};
+
+
+	/**
+	 * A name with a SrcPos attached.
+	 */
+	class SrcName : public Name {
+		STORM_CLASS;
+	public:
+		STORM_CTOR SrcName();
+		STORM_CTOR SrcName(SrcPos pos);
+		STORM_CTOR SrcName(Par<Name> o, SrcPos pos);
+		STORM_CTOR SrcName(Par<SimpleName> o, SrcPos pos);
+
+		// These two must be raw ptrs so they do not conflict.
+		STORM_CTOR SrcName(SrcName *o);
+		STORM_CTOR SrcName(Name *o);
+		STORM_CTOR SrcName(SimpleName *o);
+
+		// Where this name was located in source code.
+		STORM_VAR SrcPos pos;
+
+		// Deep copy.
+		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
 	};
 
 
@@ -281,6 +317,9 @@ namespace storm {
 
 		// Get a SimpleName with our contents from the 'n'th element.
 		SimpleName *STORM_FN from(Nat id) const;
+
+		// Get the parent.
+		SimpleName *STORM_FN parent();
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(Par<CloneEnv> env);

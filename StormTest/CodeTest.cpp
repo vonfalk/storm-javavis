@@ -5,9 +5,6 @@
 #include "Fn.h"
 #include "Shared/Timing.h"
 
-#include "Storm/Basic/BSType.h"
-
-
 BEGIN_TEST(BasicSyntax) {
 	// These tests are placed separatly, making it easier to debug core problems that causes
 	// syntax extensions to not work and therefore complicate debugging.

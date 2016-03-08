@@ -44,7 +44,7 @@ class BfFunction extends Function {
 	}
 
 	ctor(Url file) {
-		Value strVal = (name{core:Str}).resolve(rootScope);
+		Value strVal = rootScope.value(name{core:Str});
 		init(strVal, file.title, [strVal]) {
 			file = file;
 		}

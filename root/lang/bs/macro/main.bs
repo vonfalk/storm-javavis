@@ -2,37 +2,44 @@ use lang:bs;
 use core:lang;
 use core:asm;
 
-// Get the name of the TypeName type.
-TypeName typeName() {
-	TypeName name;
-	name.add(TypePart("lang"));
-	name.add(TypePart("bs"));
-	name.add(TypePart("TypeName"));
+// Get the name of the SrcName type.
+SrcName srcName() {
+	SrcName name;
+	name.add("core");
+	name.add("lang");
+	name.add("SrcName");
 	name;
 }
 
 // Get the name of the TypePart type.
-TypeName typePart() {
-	TypeName name;
-	name.add(TypePart("lang"));
-	name.add(TypePart("bs"));
-	name.add(TypePart("TypePart"));
+SrcName namePart() {
+	SrcName name;
+	name.add("core");
+	name.add("lang");
+	name.add("RecNamePart");
 	name;
 }
 
 // Create something that gives you a TypePart.
-Expr createTypePart(Block block, TypePart part) {
+Expr createTypePart(Block block, NamePart part) {
 	ExprBlock b(block);
-	TypeName partT = typePart();
+	SrcName partT = namePart();
 
-	Expr str = strConstant(SStr(part.title));
+	Expr str = strConstant(SStr(part.name));
 	Var base(b, partT, SStr("part"), Actual(str));
 	b.add(base);
 	LocalVarAccess bAccess(base.var);
 
-	for (Nat i = 0; i < part.count; i++) {
-		Expr created = createType(b, part[i]);
-		b.add(namedExpr(b, SStr("add"), bAccess, Actual(created)));
+	if (part as SimplePart) {
+		for (Nat i = 0; i < part.count; i++) {
+			Expr created = createType(b, Name(part[i].getType.path));
+			b.add(namedExpr(b, SStr("add"), bAccess, Actual(created)));
+		}
+	} else if (part as RecNamePart) {
+		for (Nat i = 0; i < part.count; i++) {
+			Expr created = createType(b, part[i]);
+			b.add(namedExpr(b, SStr("add"), bAccess, Actual(created)));
+		}
 	}
 
 	b.add(bAccess);
@@ -40,10 +47,10 @@ Expr createTypePart(Block block, TypePart part) {
 }
 
 // Create something that gives you a TypeName.
-Expr createType(Block block, TypeName type) {
+Expr createType(Block block, Name type) {
 	ExprBlock b(block);
-	TypeName nameT = typeName();
-	TypeName partT = typePart();
+	SrcName nameT = srcName();
+	SrcName partT = namePart();
 
 	Var base(b, nameT, SStr("name"), Actual());
 	b.add(base);
@@ -59,8 +66,8 @@ Expr createType(Block block, TypeName type) {
 }
 
 // Create a static reference to a Named object in the compiler.
-Expr referNamed(Block block, TypeName type) {
-	Named? referTo = type.find(block.scope);
+Expr referNamed(Block block, SrcName type) {
+	Named? referTo = block.scope.find(type);
 	if (referTo) {
 		ReferNamed(referTo);
 	} else {
@@ -104,7 +111,7 @@ class ReferNamed extends Expr {
 	}
 }
 
-Expr exploreType(Block block, TypeName typeName) {
+Expr exploreType(Block block, SrcName typeName) {
 	Expr type = createType(block, typeName);
 
 	Expr rootScope = namedExpr(block, name{core:lang:rootScope}, Actual());
@@ -112,7 +119,7 @@ Expr exploreType(Block block, TypeName typeName) {
 	namedExpr(block, name{core:debug:print}, Actual(named));
 }
 
-Expr reloadName(Block block, TypeName typeName) {
+Expr reloadName(Block block, SrcName typeName) {
 	Expr type = createType(block, typeName);
 	Expr callIt = namedExpr(block, name{lang:bs:macro:reload}, Actual(type));
 	callIt;

@@ -5,6 +5,7 @@
 #include "Package.h"
 #include "Engine.h"
 #include "Type.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -58,10 +59,14 @@ namespace storm {
 		if (lookup) {
 			Auto<SimpleName> simple = name->simplify(*this);
 			if (simple)
-				return lookup->value(*this, name, pos);
+				return lookup->value(*this, simple, pos);
 		}
 
 		throw SyntaxError(pos, ::toS(name) + L" can not be resolved to a type!");
+	}
+
+	Value Scope::value(Par<SrcName> name) const {
+		return value(name, name->pos);
 	}
 
 	wostream &operator <<(wostream &to, const Scope &s) {
@@ -99,6 +104,10 @@ namespace storm {
 
 	Value value(Scope scope, Par<Name> name, SrcPos pos) {
 		return scope.value(name, pos);
+	}
+
+	Value value(Scope scope, Par<SrcName> name) {
+		return scope.value(name, name->pos);
 	}
 
 	SimpleName *simplify(Par<Name> name, Scope scope) {
@@ -174,10 +183,11 @@ namespace storm {
 	Value ScopeLookup::value(const Scope &in, Par<SimpleName> name, SrcPos pos) {
 		// TODO: We may want to consider type aliases in the future, and implement 'void' that way.
 		Auto<Named> found = find(in, name);
-		if (!found)
+		Type *t = as<Type>(found.borrow());
+		if (!t)
 			throw SyntaxError(pos, ::toS(name) + L" can not be resolved to a type.");
 
-		return Value(found.borrow());
+		return Value(t);
 	}
 
 	/**

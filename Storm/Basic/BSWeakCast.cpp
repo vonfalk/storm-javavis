@@ -41,8 +41,8 @@ namespace storm {
 	 * 'as' cast.
 	 */
 
-	bs::WeakDowncast::WeakDowncast(Par<Block> block, Par<Expr> expr, Par<TypeName> type) : expr(expr) {
-		to = type->resolve(block->scope).type;
+	bs::WeakDowncast::WeakDowncast(Par<Block> block, Par<Expr> expr, Par<SrcName> type) : expr(expr) {
+		to = block->scope.value(type).type;
 
 		Value from = expr->result().type();
 		if (isMaybe(from))
@@ -134,7 +134,7 @@ namespace storm {
 	 * Helpers.
 	 */
 
-	bs::WeakCast *bs::weakAsCast(Par<Block> block, Par<Expr> expr, Par<TypeName> type) {
+	bs::WeakCast *bs::weakAsCast(Par<Block> block, Par<Expr> expr, Par<SrcName> type) {
 		// Currently, only downcast is supported.
 		return CREATE(WeakDowncast, expr, block, expr, type);
 	}

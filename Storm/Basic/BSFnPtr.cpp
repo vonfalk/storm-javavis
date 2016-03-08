@@ -9,14 +9,14 @@
 namespace storm {
 	namespace bs {
 		// Note: We do not (yet?) support implicit this pointer.
-		Function *findTarget(const Scope &scope, Par<TypeName> name, Par<ArrayP<TypeName>> formal, Par<Expr> dot) {
-			Auto<SimpleName> resolved = name->toName(scope);
+		Function *findTarget(const Scope &scope, Par<SrcName> name, Par<ArrayP<SrcName>> formal, Par<Expr> dot) {
+			Auto<SimpleName> resolved = name->simplify(scope);
 
 			vector<Value> params;
 			if (dot)
 				params.push_back(dot->result().type());
 			for (nat i = 0; i < formal->count(); i++)
-				params.push_back(formal->at(i)->resolve(scope));
+				params.push_back(scope.value(formal->at(i)));
 
 			Auto<SimplePart> last = CREATE(SimplePart, resolved, resolved->lastName(), params);
 			resolved->last() = last;
@@ -33,25 +33,25 @@ namespace storm {
 
 	}
 
-	bs::FnPtr *bs::strongFnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal) {
+	bs::FnPtr *bs::strongFnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<SrcName>> formal) {
 		return CREATE(FnPtr, block, block, dot, name, formal, true);
 	}
 
-	bs::FnPtr *bs::weakFnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal) {
+	bs::FnPtr *bs::weakFnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<SrcName>> formal) {
 		return CREATE(FnPtr, block, block, dot, name, formal, false);
 	}
 
-	bs::FnPtr::FnPtr(Par<Block> block, Par<TypeName> name, Par<ArrayP<TypeName>> formal) : strongThis(false) {
+	bs::FnPtr::FnPtr(Par<Block> block, Par<SrcName> name, Par<ArrayP<SrcName>> formal) : strongThis(false) {
 		target = findTarget(block->scope, name, formal, null);
 	}
 
-	bs::FnPtr::FnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal, Bool strong) :
+	bs::FnPtr::FnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<SrcName>> formal, Bool strong) :
 		dotExpr(dot), strongThis(strong) {
 		if (dotExpr->result().type().isValue())
 			throw SyntaxError(dotExpr->pos, L"Only classes and actors can be bound to a function pointer. Not values.");
 
-		Auto<TypeName> tn = CREATE(TypeName, this);
-		tn->add(steal(CREATE(TypePart, this, name)));
+		Auto<SrcName> tn = CREATE(SrcName, this);
+		tn->add(steal(CREATE(SimplePart, this, name->v)));
 		target = findTarget(block->scope, tn, formal, dot);
 	}
 

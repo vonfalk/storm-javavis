@@ -28,9 +28,9 @@ class DType on Compiler {
 Type? findType(Str name) {
 	Named? r;
 	if (name.equals("integer")) {
-		r = (name{core:Int}).find(rootScope);
+		r = rootScope.find(name{core:Int});
 	} else if (name.equals("real")) {
-		r = (name{core:Float}).find(rootScope);
+		r = rootScope.find(name{core:Float});
 	}
 
 	Type? z;

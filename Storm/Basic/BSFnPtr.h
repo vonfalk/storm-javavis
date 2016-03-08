@@ -1,6 +1,5 @@
 #pragma once
 #include "BSExpr.h"
-#include "BSType.h"
 #include "BSBlock.h"
 
 namespace storm {
@@ -14,8 +13,8 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR FnPtr(Par<Block> block, Par<TypeName> name, Par<ArrayP<TypeName>> formal);
-			STORM_CTOR FnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal, Bool strong);
+			STORM_CTOR FnPtr(Par<Block> block, Par<SrcName> name, Par<ArrayP<SrcName>> formal);
+			STORM_CTOR FnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<SrcName>> formal, Bool strong);
 
 			// Result.
 			virtual ExprResult STORM_FN result();
@@ -38,8 +37,8 @@ namespace storm {
 		};
 
 		// Helpers for creation.
-		FnPtr *STORM_FN strongFnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal);
-		FnPtr *STORM_FN weakFnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<TypeName>> formal);
+		FnPtr *STORM_FN strongFnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<SrcName>> formal);
+		FnPtr *STORM_FN weakFnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<SrcName>> formal);
 
 	}
 }

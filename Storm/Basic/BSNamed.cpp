@@ -606,8 +606,7 @@ namespace storm {
 			return e;
 
 		if (!n && !candidate)
-			throw SyntaxError(pos, L"Can not find " + ::toS(name) + L"("
-							+ join(params->values(), L", ") + L").");
+			throw SyntaxError(pos, L"Can not find " + ::toS(name) + L".");
 
 		if (!n)
 			n = candidate;
@@ -621,9 +620,8 @@ namespace storm {
 		return findTarget(block, n, name->pos, params, true);
 	}
 
-	bs::Expr *bs::namedExpr(Par<Block> block, Par<TypeName> name, Par<Actual> params) {
-		Auto<SimpleName> n = name->toName(block->scope);
-		return findTarget(block, n, name->pos, params, true);
+	bs::Expr *bs::namedExpr(Par<Block> block, Par<SrcName> name, Par<Actual> params) {
+		return namedExpr(block, name->pos, name, params);
 	}
 
 	bs::Expr *bs::namedExpr(Par<Block> block, SrcPos pos, Par<Name> name, Par<Actual> params) {

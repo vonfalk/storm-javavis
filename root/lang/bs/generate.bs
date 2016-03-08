@@ -84,12 +84,12 @@ class Generate extends Template {
 
 	// Find the type 'core:lang:Value?'
 	Value resultType() {
-		TypeName n;
-		n.add(TypePart("core"));
-		n.add(TypePart("lang"));
-		n.add(TypePart("Named"));
+		SrcName n;
+		n.add("core");
+		n.add("lang");
+		n.add("Named");
 
-		Named? ans = maybeType(n).find(rootScope);
+		Named? ans = rootScope.find(maybeType(n));
 		if (ans as Type) {
 			Value(ans);
 		} else {
@@ -98,21 +98,21 @@ class Generate extends Template {
 	}
 
 	// Generate the type name 'core:lang:Value'
-	TypeName valueType() {
-		TypeName n;
-		n.add(TypePart("core"));
-		n.add(TypePart("lang"));
-		n.add(TypePart("Value"));
+	SrcName valueType() {
+		SrcName n;
+		n.add("core");
+		n.add("lang");
+		n.add("Value");
 		n;
 	}
 
 	// Find this package.
 	Package? thisPkg() {
-		TypeName n;
-		n.add(TypePart("lang"));
-		n.add(TypePart("bs"));
+		SrcName n;
+		n.add("lang");
+		n.add("bs");
 
-		Named? ans = n.find(rootScope);
+		Named? ans = rootScope.find(n);
 		if (ans as Package) {
 			return ans;
 		}

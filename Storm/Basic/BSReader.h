@@ -64,7 +64,7 @@ namespace storm {
 			void readIncludes();
 
 			// Find included packages.
-			void setIncludes(Par<ArrayP<TypeName>> includes);
+			void setIncludes(Par<ArrayP<SrcName>> includes);
 
 			// Set 'contents' to something good.
 			void readContents();

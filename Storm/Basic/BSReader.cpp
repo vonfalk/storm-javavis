@@ -87,18 +87,22 @@ namespace storm {
 
 		Auto<Object> includes = parser->transform();
 
-		if (ArrayP<TypeName> *inc = as<ArrayP<TypeName>>(includes.borrow())) {
+		if (ArrayP<SrcName> *inc = as<ArrayP<SrcName>>(includes.borrow())) {
 			setIncludes(inc);
 		}
 	}
 
-	void bs::File::setIncludes(Par<ArrayP<TypeName>> inc) {
+	void bs::File::setIncludes(Par<ArrayP<SrcName>> inc) {
 		for (nat i = 0; i < inc->count(); i++) {
-			Auto<SimpleName> name = inc->at(i)->toName(scope);
+			Auto<SrcName> sName = inc->at(i);
+			Auto<SimpleName> name = sName->simplify(*pkg->engine().scope());
+			if (!name)
+				throw SyntaxError(sName->pos, L"Unknown parameters to package " + ::toS(sName));
+
 			Auto<Named> found = pkg->engine().scope()->find(name);
 			Package *p = as<Package>(found.borrow());
 			if (!p)
-				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(inc->at(i)));
+				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(sName));
 
 			addInclude(scope, p);
 		}
