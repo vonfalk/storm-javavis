@@ -161,7 +161,7 @@ class ReplCode on Compiler {
 		thisPtr.createParam(g);
 
 		Value result = expr.result.type;
-		Name name(NamePart("toS", [result]));
+		Name name("toS", [result]);
 		Named? toSFn = root.scope.find(name);
 		if (toSFn as Function) {
 			// It exists, use the result.

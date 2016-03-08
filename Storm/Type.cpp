@@ -312,7 +312,7 @@ namespace storm {
 		return RunOn(RunOn::any);
 	}
 
-	Named *Type::find(Par<FoundParams> part) {
+	Named *Type::find(Par<SimplePart> part) {
 		if (Named *n = NameSet::find(part))
 			return n;
 
@@ -602,7 +602,7 @@ namespace storm {
 		// Replace the 'this' parameter, otherwise we would never get a match!
 		vector<Value> params = to->params;
 		params[0] = Value::thisPtr(this);
-		Auto<FoundParams> part = CREATE(FoundParams, this, to->name, params);
+		Auto<SimplePart> part = CREATE(SimplePart, this, to->name, params);
 		Auto<Function> match = steal(NameSet::tryFind(part)).as<Function>();
 		if (to == match)
 			return null;

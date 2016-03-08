@@ -69,8 +69,8 @@ namespace storm {
 		return from->atRaw(id);
 	}
 
-	static Named *generateArray(Par<FoundParams> part) {
-		if (part->count() == 1)
+	static Named *generateArray(Par<SimplePart> part) {
+		if (part->count() != 1)
 			return null;
 
 		return CREATE(ArrayType, part->engine(), part->param(0));
@@ -152,7 +152,7 @@ namespace storm {
 			return t;
 		}
 
-		Auto<Name> tName = CREATE(Name, e);
+		Auto<SimpleName> tName = CREATE(SimpleName, e);
 		tName->add(L"core");
 		tName->add(L"Array", vector<Value>(1, type));
 		Auto<Named> n = e.scope()->find(tName);

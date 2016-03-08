@@ -53,7 +53,7 @@ namespace storm {
 		virtual MAYBE(Url) *STORM_FN url() const;
 
 		// Lazy-loading.
-		virtual Named *STORM_FN loadName(Par<FoundParams> part);
+		virtual Named *STORM_FN loadName(Par<SimplePart> part);
 		virtual Bool STORM_FN loadAll();
 
 	protected:
@@ -71,10 +71,10 @@ namespace storm {
 		bool syntaxLoaded;
 
 		// Create a PkgReader from 'pkg'.
-		PkgReader *createReader(Par<Name> pkg, Par<PkgFiles> files);
+		PkgReader *createReader(Par<SimpleName> pkg, Par<PkgFiles> files);
 
 		// Add a PkgReader to 'to'.
-		void addReader(vector<Auto<PkgReader> > &to, Par<Name> pkg, Par<PkgFiles> files);
+		void addReader(vector<Auto<PkgReader> > &to, Par<SimpleName> pkg, Par<PkgFiles> files);
 
 		/**
 		 * Loading of sub-packages.

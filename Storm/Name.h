@@ -11,7 +11,8 @@ namespace storm {
 	class Scope;
 	class Named;
 	class NameOverloads;
-	class FoundParams;
+	class SimplePart;
+	class SimpleName;
 
 	/**
 	 * Represents one part of a name. Each part is a string and zero or more parameters (think
@@ -39,7 +40,7 @@ namespace storm {
 		virtual Nat STORM_FN count();
 
 		// Resolve names, NOTE: Not exposed to Storm as it has to be executed on the compiler thread.
-		virtual MAYBE(FoundParams) *find(const Scope &scope);
+		virtual MAYBE(SimplePart) *find(const Scope &scope);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
@@ -48,7 +49,7 @@ namespace storm {
 		virtual void output(wostream &to) const;
 	};
 
-	// Create NameParts easily.
+	// Create Parts easily.
 	NamePart *STORM_FN namePart(Par<Str> name);
 	NamePart *STORM_FN namePart(Par<Str> name, Par<Array<Value>> params);
 	NamePart *STORM_FN namePart(Par<Str> name, Par<ArrayP<Name>> params);
@@ -59,28 +60,28 @@ namespace storm {
 	/**
 	 * A NamePart which has all parameters properly resolved to Values.
 	 */
-	class FoundParams : public NamePart {
+	class SimplePart : public NamePart {
 		STORM_CLASS;
 	public:
 		// Copy ctor.
-		STORM_CTOR FoundParams(Par<FoundParams> o);
+		STORM_CTOR SimplePart(Par<SimplePart> o);
 
 		// Create with just a name.
-		STORM_CTOR FoundParams(Par<Str> name);
+		STORM_CTOR SimplePart(Par<Str> name);
 
 		// Create with parameters as well.
-		STORM_CTOR FoundParams(Par<Str> name, Par<Array<Value>> params);
+		STORM_CTOR SimplePart(Par<Str> name, Par<Array<Value>> params);
 
 		// C++ versions.
-		FoundParams(const String &str);
-	    FoundParams(const String &str, const vector<Value> &params);
+		SimplePart(const String &str);
+	    SimplePart(const String &str, const vector<Value> &params);
 
 		// Parameter count.
 		virtual Nat STORM_FN count();
 
 		// Get a parameter.
 		Value STORM_FN operator [](Nat id);
-		inline const Value &param(Nat id) const { return params[id]; }
+		inline const Value &param(Nat id) const { return data[id]; }
 
 		// Choose a specific Named from a set of overloads. Subclass and override to alter the
 		// default behavior.
@@ -90,7 +91,10 @@ namespace storm {
 		virtual Int STORM_FN matches(Par<Named> candidate);
 
 		// Resolve names.
-		virtual MAYBE(FoundParams) *find(const Scope &scope);
+		virtual MAYBE(SimplePart) *find(const Scope &scope);
+
+		// Get parameters.
+		Array<Value> *STORM_FN params();
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
@@ -99,40 +103,40 @@ namespace storm {
 		virtual void output(wostream &to) const;
 
 		// Values. Note: We can not use Array<> here, as this class is used during early startup.
-		vector<Value> params;
+		vector<Value> data;
 	};
 
 	/**
-	 * A NamePart which has unresolved parameters.
+	 * A NamePart which has unresolved (recursive) parameters.
 	 * TODO: Support for reference parameters.
 	 */
-	class NameParams : public NamePart {
+	class RecNamePart : public NamePart {
 		STORM_CLASS;
 	public:
 		// Copy.
-		STORM_CTOR NameParams(Par<NameParams> o);
+		STORM_CTOR RecNamePart(Par<RecNamePart> o);
 
 		// Create with just a name.
-		STORM_CTOR NameParams(Par<Str> name);
+		STORM_CTOR RecNamePart(Par<Str> name);
 
 		// Create with parameters as well.
-		STORM_CTOR NameParams(Par<Str> name, Par<ArrayP<Name>> params);
+		STORM_CTOR RecNamePart(Par<Str> name, Par<ArrayP<Name>> params);
 
 		// C++ versions.
-		NameParams(const String &name);
-		NameParams(const String &name, const vector<Auto<Name>> params);
+		RecNamePart(const String &name);
+		RecNamePart(const String &name, const vector<Auto<Name>> params);
 
 		// Parameter count.
 		virtual Nat STORM_FN count();
 
 		// Get a parameter.
-		Name STORM_FN operator [](Nat id);
+		inline Name *STORM_FN operator [](Nat id) { return params[id].borrow(); }
 
 		// C++ version, returning borrowed ptr.
 		inline Name *param(Nat id) const { return params[id].borrow(); }
 
 		// Resolve names.
-		virtual MAYBE(FoundParams) *find(const Scope &scope);
+		virtual MAYBE(SimplePart) *find(const Scope &scope);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
@@ -146,13 +150,11 @@ namespace storm {
 	};
 
 
-	// Storm wrappers.
-	Str *STORM_FN name(Par<NamePart> p);
-	Array<Value> *STORM_FN params(Par<NamePart> p);
-
 	/**
 	 * Representation of a name, either a relative name or an absolute
 	 * name including the full package path.
+	 *
+	 * TODO: Strip some operations from here!
 	 */
 	class Name : public Object {
 		STORM_CLASS;
@@ -169,6 +171,9 @@ namespace storm {
 		// One entry.
 		STORM_CTOR Name(Par<Str> v, Par<Array<Value>> values);
 
+		// Convert from a SimpleName.
+		STORM_CTOR Name(Par<SimpleName> simple);
+
 		// Create with one entry.
 		Name(const String &p, const vector<Value> &params = vector<Value>());
 
@@ -177,24 +182,14 @@ namespace storm {
 
 		// Append a new entry.
 		void STORM_FN add(Par<NamePart> v);
+		void STORM_FN add(Par<Str> v);
+		void STORM_FN add(Par<Str> name, Par<Array<Value>> v);
+		void STORM_FN add(Par<Str> name, Par<ArrayP<Name>> v);
 
 		// Append a new simple entry for C++.
 		void add(const String &name);
 		void add(const String &name, const vector<Value> &params);
 		void add(const String &name, const vector<Auto<Name>> &params);
-
-		// Concat paths.
-		// Name operator +(const Name &o) const;
-		// Name operator +=(const Name &o) const;
-
-
-		// Equality.
-		bool operator ==(const Name &o) const;
-		inline bool operator !=(const Name &o) const { return !(*this == o); }
-
-		// Ordering.
-		// inline bool operator <(const Name &o) const { return parts < o.parts; }
-		// inline bool operator >(const Name &o) const { return parts > o.parts; }
 
 		// Get the parent.
 		Name *STORM_FN parent() const;
@@ -215,19 +210,19 @@ namespace storm {
 		Name *STORM_FN from(Nat n) const;
 
 		// Is this the root package?
-		inline Bool STORM_FN root() const { return size() == 0; }
+		inline Bool STORM_FN root() const { return count() == 0; }
 
-		// Access to individual elements (BORROWED PTR, not exposed to storm).
-		// TODO: Expose to Storm!
-		inline Nat size() const { return parts.size(); }
+		// Access to individual elements.
+		inline Nat count() const { return parts.size(); }
+		inline NamePart *operator [](Nat id) const { Auto<NamePart> r = parts[id]; return r.ret(); }
 		inline NamePart *at(Nat id) const { return parts[id].borrow(); }
 
 		// empty/any
-		inline Bool STORM_FN any() const { return size() > 0; }
-		inline Bool STORM_FN empty() const { return size() == 0; }
+		inline Bool STORM_FN any() const { return count() > 0; }
+		inline Bool STORM_FN empty() const { return count() == 0; }
 
-		// Hash function.
-		virtual Nat STORM_FN hash();
+		// Create a SimpleName from this name. Not exposed to Storm due to threading.
+		MAYBE(SimpleName) *simplify(const Scope &scope);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
@@ -237,15 +232,74 @@ namespace storm {
 
 	private:
 		// Store each part.
-		vector<Auto<NamePart> > parts;
+		vector<Auto<NamePart>> parts;
 	};
 
 
-	// Parse a name (does not support parameterized names).
-	Name *parseSimpleName(Engine &e, const String &s);
-
 	// Parse a name possibly containing template parameters (using <>)
 	Name *parseTemplateName(Engine &e, const SrcPos &pos, const String &src);
+
+
+	/**
+	 * A name that only contains resolved parts. Created by Scopes when starting to resolve a
+	 * regular name.
+	 */
+	class SimpleName : public Object {
+		STORM_CLASS;
+	public:
+		STORM_CTOR SimpleName();
+		STORM_CTOR SimpleName(Par<SimpleName> name);
+		STORM_CTOR SimpleName(Par<Str> part);
+		SimpleName(const String &part);
+		SimpleName(const String &part, const vector<Value> &params);
+
+		// Add a part.
+		void STORM_FN add(Par<SimplePart> part);
+		void STORM_FN add(Par<Str> v);
+		void add(const String &name);
+		void add(const String &name, const vector<Value> &params);
+
+		// Number of parts.
+		inline Nat STORM_FN count() const { return parts.size(); }
+
+		// Get a part (for C++).
+		inline const Auto<SimplePart> &at(Nat id) const { return parts[id]; }
+		inline Auto<SimplePart> &at(Nat id) { return parts[id]; }
+
+		// Get a part (for Storm).
+		inline Auto<SimplePart> &STORM_FN operator [](Nat id) { return parts[id]; }
+
+		// Empty/any?
+		inline Bool STORM_FN any() const { return count() > 0; }
+		inline Bool STORM_FN empty() const { return count() == 0; }
+
+		// Last element.
+		inline Auto<SimplePart> &STORM_FN last() { return parts.back(); }
+
+		// Name of last element.
+		const String &lastName() const;
+
+		// Get a SimpleName with our contents from the 'n'th element.
+		SimpleName *STORM_FN from(Nat id) const;
+
+		// Deep copy.
+		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
+
+		// Equality and hash.
+		bool operator ==(const SimpleName &o) const;
+		inline bool operator !=(const SimpleName &o) const { return !(*this == o); }
+		virtual Nat STORM_FN hash();
+
+	protected:
+		virtual void output(std::wostream &to) const;
+
+	private:
+		// Store each part.
+		vector<Auto<SimplePart>> parts;
+	};
+
+	// Parse a name.
+	SimpleName *parseSimpleName(Engine &e, const String &s);
 
 }
 

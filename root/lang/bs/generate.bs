@@ -41,7 +41,7 @@ class Generate extends Template {
 	}
 
 	// Generate a Named object of some sort.
-	Named? generate(NamePart part) {
+	Named? generate(SimplePart part) {
 		BSFunction fn = createFn();
 
 		FnPtrBase ptr = fn.fnPtr();

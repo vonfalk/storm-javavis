@@ -62,6 +62,18 @@ bool CppName::isCppInt() const {
 CppType CppType::read(Tokenizer &tok) {
 	CppType t;
 
+	if (tok.peek() == L"MAP_PP" || tok.peek() == L"MAP_VP" || tok.peek() == L"MAP_PV" || tok.peek() == L"MAP_VV") {
+		tok.next();
+		tok.expect(L"(");
+
+		// TODO: Store the parameters somewhere!
+
+		while (tok.next() != L")")
+			;
+
+		return t;
+	}
+
 	if (tok.peek() == L"MAYBE") {
 		tok.next();
 		tok.expect(L"(");
@@ -165,12 +177,12 @@ void CppType::output(wostream &to) const {
 		to << L">";
 	if (isPtr)
 		to << L" *";
-	else if (isRef)
-		to << L" &";
 	if (isAuto)
 		to << L">";
 	if (isPar)
 		to << L">";
+	if (isRef)
+		to << L" &";
 }
 
 bool CppType::isVoid() const {

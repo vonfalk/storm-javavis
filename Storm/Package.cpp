@@ -50,7 +50,7 @@ namespace storm {
 		}
 	}
 
-	Named *Package::loadName(Par<FoundParams> part) {
+	Named *Package::loadName(Par<SimplePart> part) {
 		// We are only loading packages this way at the moment.
 		if (part->empty()) {
 			if (Package *pkg = loadPackage(part->name)) {
@@ -77,7 +77,7 @@ namespace storm {
 			Auto<Url> &now = children->at(i);
 			if (now->dir()) {
 				Auto<Str> name = now->name();
-				Auto<FoundParams> part = CREATE(FoundParams, this, name);
+				Auto<SimplePart> part = CREATE(SimplePart, this, name);
 				Auto<Named> loaded = tryFind(part);
 				if (!loaded) {
 					add(steal(loadPackage(name->v)));
@@ -115,22 +115,22 @@ namespace storm {
 	}
 
 	void Package::loadFiles(Auto<ArrayP<Url>> children) {
-		typedef hash_map<Auto<Name>, Auto<PkgFiles> > M;
-		M files;
+		typedef MAP_PP(SimpleName, PkgFiles) M;
+		Auto<M> files;
 		vector<Auto<PkgReader> > toLoad;
 
 		try {
 			files = syntaxPkg(children);
 
-			Auto<Name> myName = path();
+			Auto<SimpleName> myName = path();
 
-			for (M::iterator i = files.begin(); i != files.end(); ++i) {
-				if (*(i->first) != *myName)
-					addReader(toLoad, i->first, i->second);
+			for (M::Iter i = files->begin(); i != files->end(); ++i) {
+				if (*i.key() != *myName)
+					addReader(toLoad, i.key(), i.val());
 			}
 
-			if (files.count(myName) == 1)
-				addReader(toLoad, myName, files[myName]);
+			if (files->has(myName))
+				addReader(toLoad, myName, files->get(myName));
 
 			// Load all syntax.
 			for (nat i = 0; i < toLoad.size(); i++) {
@@ -168,8 +168,8 @@ namespace storm {
 		}
 	}
 
-	PkgReader *Package::createReader(Par<Name> pkg, Par<PkgFiles> files) {
-		Auto<Name> rName = readerName(pkg);
+	PkgReader *Package::createReader(Par<SimpleName> pkg, Par<PkgFiles> files) {
+		Auto<SimpleName> rName = readerName(pkg);
 		Auto<Type> readerT = steal(engine().scope()->find(rName)).as<Type>();
 		if (!readerT) {
 			// Ignore files that are not known.
@@ -195,7 +195,7 @@ namespace storm {
 		return r;
 	}
 
-	void Package::addReader(vector<Auto<PkgReader> > &to, Par<Name> pkg, Par<PkgFiles> files) {
+	void Package::addReader(vector<Auto<PkgReader> > &to, Par<SimpleName> pkg, Par<PkgFiles> files) {
 		PkgReader *r = createReader(pkg, files);
 		if (r)
 			to.push_back(r);

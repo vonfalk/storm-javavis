@@ -10,7 +10,7 @@ namespace storm {
 	namespace bs {
 		// Note: We do not (yet?) support implicit this pointer.
 		Function *findTarget(const Scope &scope, Par<TypeName> name, Par<ArrayP<TypeName>> formal, Par<Expr> dot) {
-			Auto<Name> resolved = name->toName(scope);
+			Auto<SimpleName> resolved = name->toName(scope);
 
 			vector<Value> params;
 			if (dot)
@@ -18,7 +18,8 @@ namespace storm {
 			for (nat i = 0; i < formal->count(); i++)
 				params.push_back(formal->at(i)->resolve(scope));
 
-			resolved = resolved->withParams(params);
+			Auto<SimplePart> last = CREATE(SimplePart, resolved, resolved->lastName(), params);
+			resolved->last() = last;
 
 			Auto<Named> found = scope.find(resolved);
 			if (!found)

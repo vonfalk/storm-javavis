@@ -65,7 +65,7 @@ namespace storm {
 	}
 
 	NamePart *bs::FunctionDecl::namePart() const {
-		return CREATE(FoundParams, this, name->v->v, params->cTypes(env->scope));
+		return CREATE(SimplePart, this, name->v->v, params->cTypes(env->scope));
 	}
 
 	bs::BSRawFn::BSRawFn(Value result, Par<SStr> name, Par<Array<Value>> params, Par<ArrayP<Str>> names,
@@ -120,7 +120,7 @@ namespace storm {
 
 		// Parameters
 		for (nat i = 0; i < params.size(); i++) {
-			Auto<FoundParams> name = CREATE(FoundParams, this, paramNames[i]);
+			Auto<SimplePart> name = CREATE(SimplePart, this, paramNames[i]);
 			Auto<LocalVar> var = body->variable(name);
 			assert(var);
 			var->createParam(state);
@@ -146,6 +146,7 @@ namespace storm {
 		// 	PLN(bodyExpr);
 		// 	PLN(identifier() << L": " << l);
 		// }
+
 		return state.ret();
 	}
 

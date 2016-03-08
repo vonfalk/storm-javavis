@@ -47,7 +47,7 @@ class Function extends core:lang:Function {
 	}
 
 	// Find stuff here.
-	Named? find(NamePart part) {
+	Named? find(SimplePart part) {
 		Named? result;
 
 		if (contents.has(part.name)) {

@@ -6,7 +6,7 @@
 namespace storm {
 
 	Type *maybeType(Engine &e, const Value &type) {
-		Auto<Name> tName = CREATE(Name, e);
+		Auto<SimpleName> tName = CREATE(SimpleName, e);
 		tName->add(L"core");
 		tName->add(L"Maybe", vector<Value>(1, type));
 
@@ -17,7 +17,7 @@ namespace storm {
 		return r;
 	}
 
-	static Named *generateMaybe(Par<FoundParams> part) {
+	static Named *generateMaybe(Par<SimplePart> part) {
 		if (part->count() != 1)
 			return null;
 
@@ -114,7 +114,7 @@ namespace storm {
 		return Type::loadAll();
 	}
 
-	Named *MaybeType::createCopy(Par<FoundParams> part) {
+	Named *MaybeType::createCopy(Par<SimplePart> part) {
 		if (part->count() < 2)
 			return null;
 
@@ -132,7 +132,7 @@ namespace storm {
 		return n;
 	}
 
-	Named *MaybeType::createAssign(Par<FoundParams> part) {
+	Named *MaybeType::createAssign(Par<SimplePart> part) {
 		if (part->count() < 2)
 			return null;
 

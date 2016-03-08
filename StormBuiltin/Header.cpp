@@ -182,6 +182,25 @@ void Header::parse(Tokenizer &tok) {
 				lastType.type.parts.push_back(tok.next());
 				wasType = true;
 			}
+		} else if (token == L"Auto" && tok.peek() == L"<") {
+			tok.next();
+
+			lastType = CppType::read(tok);
+			lastType.isAuto = true;
+
+			tok.expect(L">");
+
+			if (tok.peek() == L"&") {
+				tok.next();
+				lastType.isRef = true;
+			}
+
+			if (tok.peek() == L"STORM_FN") {
+				if (!lastType.isRef)
+					throw Error(L"Functions marked STORM_FN shall either return a raw pointer or Auto<> &", file);
+			}
+
+			wasType = true;
 		} else if ((token == L"Array" || token == L"ArrayP") && tok.peek() == L"<") {
 			tok.next();
 

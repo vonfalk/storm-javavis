@@ -178,6 +178,8 @@ namespace storm {
 				Token id = tok.next();
 
 				if (tok.peek().token == L"<") {
+					tok.skip();
+
 					vector<Auto<Name>> params;
 					while (tok.peek().token != L">") {
 						if (tok.peek().token == L",")
@@ -200,7 +202,7 @@ namespace storm {
 
 		// Checks if a name is a single word.
 		static bool isWord(Par<Name> name, const String &word) {
-			if (name->size() != 1)
+			if (name->count() != 1)
 				return false;
 			NamePart *part = name->at(0);
 			if (part->any())
@@ -349,6 +351,8 @@ namespace storm {
 						Auto<TokenDecl> decl = CREATE(TokenDecl, e);
 						decl->invoke = CREATE(Str, e, tok.next().token);
 						result->repCapture = decl;
+					} else if (isTokenSep(rep)) {
+						throw SyntaxError(rep.pos, L"Expected ?, *, +, -> or identifier");
 					} else {
 						Auto<TokenDecl> decl = CREATE(TokenDecl, e);
 						decl->store = CREATE(Str, e, rep.token);

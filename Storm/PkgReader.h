@@ -2,6 +2,7 @@
 #include "Name.h"
 #include "Lib/Object.h"
 #include "Shared/TObject.h"
+#include "Shared/Map.h"
 #include "NamedThread.h"
 #include "Shared/Io/Url.h"
 
@@ -13,13 +14,13 @@ namespace storm {
 	class Package;
 
 	// Get the name of the 'reader' class from 'pkg'.
-	Name *STORM_FN readerName(Par<const Name> name);
+	SimpleName *STORM_FN readerName(Par<SimpleName> name);
 
 	// Get the name of the package containing the syntax to be used when parsing 'path'.
-	Name *syntaxPkg(Par<Url> path);
+	SimpleName *STORM_FN syntaxPkg(Par<Url> path);
 
 	// Same as above, but generates a map of all files with the same extension.
-	hash_map<Auto<Name>, Auto<PkgFiles> > syntaxPkg(Auto<ArrayP<Url>> paths);
+	MAP_PP(SimpleName, PkgFiles) *syntaxPkg(Auto<ArrayP<Url>> paths);
 
 	/**
 	 * Input set to a PkgReader.

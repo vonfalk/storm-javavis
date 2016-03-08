@@ -88,7 +88,7 @@ namespace storm {
 	/**
 	 * Generate a default clone function for the type passed. Used with a template.
 	 */
-	Named *stdClone(Par<FoundParams> par);
+	Named *stdClone(Par<SimplePart> par);
 
 	// Create the template.
 	Template *cloneTemplate(Engine &to);

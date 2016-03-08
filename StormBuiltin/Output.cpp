@@ -215,7 +215,9 @@ static String valueRef(const CppType &type, const CppName &scope, const Types &t
 			out << L"L\"";
 			out << full.fullName();
 			out << L"\", ";
-			if (full.value && (type.isRef || type.isPtr))
+			if (type.isAuto && type.isRef)
+				out << L"true";
+			else if (full.value && (type.isRef || type.isPtr))
 				out << L"true";
 			else
 				out << L"false";

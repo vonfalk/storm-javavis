@@ -31,11 +31,11 @@ namespace storm {
 			return me->tree();
 		}
 
-		static Named *generateParser(Par<NamePart> part) {
-			if (part->params.size() != 1)
+		static Named *generateParser(Par<SimplePart> part) {
+			if (part->empty())
 				return null;
 
-			Type *param = part->params[0].type;
+			Type *param = part->param(0).type;
 			if (Rule *root = as<Rule>(param)) {
 				return CREATE(ParserType, root, root);
 			}

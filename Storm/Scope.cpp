@@ -8,12 +8,12 @@
 
 namespace storm {
 
-	Named *find(Par<NameLookup> root, Par<Name> name) {
-		if (name->size() == 0)
+	Named *find(Par<NameLookup> root, Par<SimpleName> name) {
+		if (name->empty())
 			return root.as<Named>().ret();
 
 		Auto<Named> at = root->find(name->at(0));
-		for (nat i = 1; at != null && i < name->size(); i++) {
+		for (nat i = 1; at != null && i < name->count(); i++) {
 			at = at->find(name->at(i));
 		}
 
@@ -40,6 +40,11 @@ namespace storm {
 	}
 
 	Named *Scope::find(Par<Name> name) const {
+		Auto<SimpleName> simple = name->simplify(*this);
+		return find(simple);
+	}
+
+	Named *Scope::find(Par<SimpleName> name) const {
 		if (lookup)
 			return lookup->find(*this, name);
 
@@ -75,7 +80,15 @@ namespace storm {
 		return scope.find(name);
 	}
 
-	FoundParams *find(Par<NamePart> part, Scope scope) {
+	Named *find(Scope scope, Par<SimpleName> name) {
+		return scope.find(name);
+	}
+
+	SimpleName *simplify(Par<Name> name, Scope scope) {
+		return name->simplify(scope);
+	}
+
+	SimplePart *find(Par<NamePart> part, Scope scope) {
 		return part->find(scope);
 	}
 
@@ -107,7 +120,7 @@ namespace storm {
 	Package *ScopeLookup::corePkg(NameLookup *l) {
 		Package *top = firstPkg(l);
 		Package *root = rootPkg(top);
-		Auto<NamePart> core = CREATE(NamePart, l, L"core");
+		Auto<SimplePart> core = CREATE(SimplePart, l, L"core");
 		return steal(root->find(core)).as<Package>().borrow();
 	}
 
@@ -125,7 +138,7 @@ namespace storm {
 		}
 	}
 
-	Named *ScopeLookup::find(const Scope &in, Par<Name> name) {
+	Named *ScopeLookup::find(const Scope &in, Par<SimpleName> name) {
 		// Regular path.
 		for (NameLookup *at = in.top; at; at = nextCandidate(at)) {
 			if (Named *found = storm::find(at, name))
@@ -147,7 +160,7 @@ namespace storm {
 
 	ScopeExtra::ScopeExtra() {}
 
-	Named *ScopeExtra::find(const Scope &in, Par<Name> name) {
+	Named *ScopeExtra::find(const Scope &in, Par<SimpleName> name) {
 		if (Named *found = ScopeLookup::find(in, name))
 			return found;
 

@@ -3,9 +3,9 @@
 
 // Check so that hash maps can handle Auto<> correctly. Otherwise, things will break quickly.
 BEGIN_TEST(HashTest) {
-	hash_map<Auto<Name>, String> c;
+	hash_map<Auto<SimpleName>, String> c;
 
-	Auto<Name> n = parseSimpleName(*gEngine, L"a.b.c.d");
+	Auto<SimpleName> n = parseSimpleName(*gEngine, L"a.b.c.d");
 	c.insert(make_pair(n, L"A"));
 
 	n = parseSimpleName(*gEngine, L"c.d.e.f");

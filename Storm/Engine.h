@@ -107,16 +107,16 @@ namespace storm {
 		// The package(path, create) function will, when create is true, try its best to not
 		// lazy-load package contents (except sub-packages) to make it usable during compiler boot,
 		// before it is possible to load packages.
-		Package *package(Par<Package> relative, Par<Name> path, bool create = false);
-		Package *package(Par<Name> path, bool create = false);
+		Package *package(Par<Package> relative, Par<SimpleName> path, bool create = false);
+		Package *package(Par<SimpleName> path, bool create = false);
 		Package *package(const String &name, bool create = false);
 		Package *rootPackage();
 
 		// Same idea as 'package', but can find any kind of NameSet. If something is created, it
 		// always creates packages, and it never creates packages inside something that is not a
 		// package.
-		NameSet *nameSet(Par<Package> relative, Par<Name> path, bool create = false);
-		NameSet *nameSet(Par<Name> path, bool create = false);
+		NameSet *nameSet(Par<Package> relative, Par<SimpleName> path, bool create = false);
+		NameSet *nameSet(Par<SimpleName> path, bool create = false);
 
 		// Get a built-in type.
 		inline Type *builtIn(nat id) const { return cached[id].borrow(); }
@@ -181,7 +181,7 @@ namespace storm {
 		Auto<Package> rootPkg;
 
 		// Create the package (recursive).
-		Package *createPackage(Package *pkg, Par<Name> path, nat at = 0);
+		Package *createPackage(Package *pkg, Par<SimpleName> path, nat at = 0);
 
 		// Root scope.
 		Scope *rootScope;

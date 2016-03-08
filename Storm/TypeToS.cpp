@@ -57,7 +57,7 @@ namespace storm {
 			TypeVar *v = vars[i].borrow();
 			Value type = v->varType;
 
-			Auto<Name> name = CREATE(Name, this, L"toS", valList(1, type));
+			Auto<SimpleName> name = CREATE(SimpleName, this, L"toS", valList(1, type));
 			Auto<Function> f = steal(storm::find(type.type, name)).as<Function>();
 			if (!f)
 				f = steal(storm::find(engine().package(L"core"), name)).as<Function>();

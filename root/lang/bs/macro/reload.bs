@@ -90,17 +90,16 @@ void reloadTypes(Package pkg, Scope scope, Contents c) on Compiler {
 	for (Nat i = 0; i < c.types.count; i++) {
 		Type t = c.types[i];
 		if (t as Class) {
-			NamePart name(t.name);
-			Named? found = scope.find(Name(name));
+			Named? found = scope.find(Name(t.name));
 			if (found as Class) {
 				// We need lookups to work... Hack...
 				t.setParent(pkg);
 				reloadClass(found, t);
 			} else if (found.empty) {
-				print("New type: " # name);
+				print("New type: " # t.name);
 				pkg.add(t);
 			} else {
-				print("Could not update " # name # ", the previous function was not found,"
+				print("Could not update " # t.name # ", the previous function was not found,"
 					# " or not declared in Basic Storm.");
 			}
 		} else {
@@ -119,7 +118,7 @@ void reloadClass(Class found, Type candidate) on Compiler {
 			Value[] params = member.params;
 			params[0] = Value(found, params[0].isRef);
 
-			NamePart name(member.name, params);
+			SimplePart name(member.name, params);
 			Named? replace = scope.find(Name(name));
 			if (replace as BSFunction) {
 				replace.update(member);

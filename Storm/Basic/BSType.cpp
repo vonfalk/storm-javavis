@@ -17,11 +17,11 @@ namespace storm {
 		bs::TypePart::TypePart(Par<NamePart> s) {
 			name = CREATE(Str, this, s->name);
 
-			if (FoundParams *found = as<FoundParams>(s.borrow())) {
+			if (SimplePart *found = as<SimplePart>(s.borrow())) {
 				for (nat i = 0; i < found->count(); i++) {
 					params.push_back(CREATE(TypeName, this, found->param(i)));
 				}
-			} else if (NameParams *name = as<NameParams>(s.borrow())) {
+			} else if (RecNamePart *name = as<RecNamePart>(s.borrow())) {
 				for (nat i = 0; i < name->count(); i++) {
 					params.push_back(CREATE(TypeName, this, name->param(i)));
 				}
@@ -44,14 +44,14 @@ namespace storm {
 			params.push_back(param);
 		}
 
-		FoundParams *bs::TypePart::toPart(const Scope &scope) {
+		SimplePart *bs::TypePart::toPart(const Scope &scope) {
 			vector<Value> v;
 			v.reserve(params.size());
 
 			for (nat i = 0; i < params.size(); i++)
 				v.push_back(params[i]->resolve(scope));
 
-			return CREATE(FoundParams, this, name->v, v);
+			return CREATE(SimplePart, this, name->v, v);
 		}
 
 		void bs::TypePart::output(wostream &to) const {
@@ -72,15 +72,15 @@ namespace storm {
 				Auto<Str> s = CREATE(Str, this, L"void");
 				parts.push_back(CREATE(TypePart, this, s));
 			} else {
-				Auto<Name> p = from->path();
-				for (nat i = 0; i < p->size(); i++) {
+				Auto<SimpleName> p = from->path();
+				for (nat i = 0; i < p->count(); i++) {
 					parts.push_back(CREATE(TypePart, this, p->at(i)));
 				}
 			}
 		}
 
 		bs::TypeName::TypeName(Par<Name> n) {
-			for (nat i = 0; i < n->size(); i++) {
+			for (nat i = 0; i < n->count(); i++) {
 				parts.push_back(CREATE(TypePart, this, n->at(i)));
 			}
 		}
@@ -101,8 +101,8 @@ namespace storm {
 			join(to, parts, L".");
 		}
 
-		Name *bs::TypeName::toName(const Scope &scope) {
-			Auto<Name> n = CREATE(Name, this);
+		SimpleName *bs::TypeName::toName(const Scope &scope) {
+			Auto<SimpleName> n = CREATE(SimpleName, this);
 
 			for (nat i = 0; i < parts.size(); i++)
 				n->add(steal(parts[i]->toPart(scope)));
@@ -111,13 +111,13 @@ namespace storm {
 		}
 
 		Named *bs::TypeName::find(const Scope &scope) {
-			Auto<Name> name = toName(scope);
+			Auto<SimpleName> name = toName(scope);
 			return scope.find(name);
 		}
 
 		Value bs::TypeName::resolve(const Scope &scope) {
-			Auto<Name> name = toName(scope);
-			if (name->size() == 1 && name->at(0)->name == L"void")
+			Auto<SimpleName> name = toName(scope);
+			if (name->count() == 1 && name->at(0)->name == L"void")
 				return Value();
 
 			if (Auto<Type> found = steal(scope.find(name)).as<Type>())

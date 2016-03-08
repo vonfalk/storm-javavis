@@ -17,7 +17,7 @@ BEGIN_TEST(PkgTest) {
 	// Do some real things!
 	Engine &e = *gEngine;
 
-	Auto<Name> name = CREATE(Name, e);
+	Auto<SimpleName> name = CREATE(SimpleName, e);
 	Package *rootPkg = e.package(name);
 	CHECK(rootPkg != null);
 

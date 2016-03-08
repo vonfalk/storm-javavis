@@ -205,7 +205,7 @@ namespace storm {
 		return Type::loadAll();
 	}
 
-	static Named *generateFnPtr(Par<FoundParams> part) {
+	static Named *generateFnPtr(Par<SimplePart> part) {
 		if (part->empty())
 			return null;
 
@@ -230,7 +230,7 @@ namespace storm {
 	}
 
 	Type *fnPtrType(Engine &e, const vector<Value> &params) {
-		Auto<Name> tName = CREATE(Name, e);
+		Auto<SimpleName> tName = CREATE(SimpleName, e);
 		tName->add(L"core");
 		tName->add(L"Fn", params);
 

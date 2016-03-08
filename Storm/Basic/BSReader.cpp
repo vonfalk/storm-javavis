@@ -94,8 +94,9 @@ namespace storm {
 
 	void bs::File::setIncludes(Par<ArrayP<TypeName>> inc) {
 		for (nat i = 0; i < inc->count(); i++) {
-			Auto<Name> name = inc->at(i)->toName(scope);
-			Package *p = pkg->engine().package(name);
+			Auto<SimpleName> name = inc->at(i)->toName(scope);
+			Auto<Named> found = pkg->engine().scope()->find(name);
+			Package *p = as<Package>(found.borrow());
 			if (!p)
 				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(inc->at(i)));
 

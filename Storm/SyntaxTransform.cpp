@@ -10,7 +10,7 @@ namespace storm {
 
 	// Lookup a name.
 	static Auto<Type> lookupType(TransformEnv &env, const SrcPos &pos, const Scope &scope, const String &name) {
-		Auto<Name> n = parseTemplateName(env.e, scope, pos, name);
+		Auto<Name> n = parseTemplateName(env.e, pos, name);
 		Auto<Named> d = scope.find(n);
 		return d.as<Type>();
 	}
@@ -103,9 +103,9 @@ namespace storm {
 
 	static Auto<ActualBase> callFn(TransformEnv &env, const SyntaxOption *option, const vector<Auto<ActualBase>> &p) {
 		Auto<ActualBase> result;
-		Auto<Name> name = parseTemplateName(env.e, option->scope, option->pos, option->matchFn);
+		Auto<Name> name = parseTemplateName(env.e, option->pos, option->matchFn);
 		Auto<NamePart> last = name->last();
-		if (last->params.size() == 0)
+		if (last->empty())
 			if (result = tryCallFn(option, name, p))
 				return result;
 

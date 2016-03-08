@@ -30,11 +30,11 @@ namespace storm {
 			void addSyntax(const Scope &from, Par<SyntaxSet> to);
 
 			// Find stuff.
-			virtual Named *STORM_FN find(const Scope &from, Par<Name> name);
+			virtual Named *STORM_FN find(const Scope &from, Par<SimpleName> name);
 
 		private:
 			// Find helper.
-			virtual Named *findHelper(const Scope &from, Par<Name> name);
+			virtual Named *findHelper(const Scope &from, Par<SimpleName> name);
 		};
 
 		Bool STORM_FN addInclude(const Scope &to, Par<Package> p);

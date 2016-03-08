@@ -24,7 +24,7 @@ namespace storm {
 
 	void addStdLib(Engine &to, BuiltInLoader &loader) {
 		// Place core types in the core package.
-		Auto<Name> coreName = CREATE(Name, to, L"core");
+		Auto<SimpleName> coreName = CREATE(SimpleName, to, L"core");
 		Package *core = to.package(coreName, true);
 		addFnPtrTemplate(core); // needed early.
 		addMaybeTemplate(core);

@@ -116,8 +116,8 @@ namespace storm {
 	}
 
 	void bs::FnCall::output(wostream &to) const {
-		Auto<Name> p = toExecute->path();
-		p = p->withParams(vector<Value>());
+		Auto<SimpleName> p = toExecute->path();
+		p->last() = CREATE(SimplePart, p, p->lastName());
 		to << p << params;
 		if (async)
 			to << L"&";
@@ -468,10 +468,10 @@ namespace storm {
 	namespace bs {
 		static Expr *findCtor(Par<Type> t, Par<Actual> actual, const SrcPos &pos);
 		static Expr *findTarget(Par<Named> n, Par<LocalVar> first, Par<Actual> actual, const SrcPos &pos, bool useLookup);
-		static Expr *findTargetThis(Par<Block> block, Par<Name> name,
+		static Expr *findTargetThis(Par<Block> block, Par<SimpleName> name,
 									Par<Actual> params, const SrcPos &pos,
 									Auto<Named> &candidate);
-		static Expr *findTarget(Par<Block> block, Par<Name> name,
+		static Expr *findTarget(Par<Block> block, Par<SimpleName> name,
 								const SrcPos &pos, Par<Actual> params,
 								bool useThis);
 	}
@@ -526,25 +526,23 @@ namespace storm {
 		return null;
 	}
 
-	static bool isSuperName(Par<Name> name) {
-		if (name->size() <= 1)
-			return false;
-		if (name->size() > 2)
+	static bool isSuperName(Par<SimpleName> name) {
+		if (name->count() != 2)
 			return false;
 
-		NamePart *p = name->at(0);
+		const Auto<SimplePart> &p = name->at(0);
 		if (p->name != L"super")
 			return false;
 		return p->empty();
 	}
 
 	// Find a target assuming we should use the this-pointer.
-	static bs::Expr *bs::findTargetThis(Par<Block> block, Par<Name> name,
+	static bs::Expr *bs::findTargetThis(Par<Block> block, Par<SimpleName> name,
 										Par<Actual> params, const SrcPos &pos,
 										Auto<Named> &candidate) {
 		const Scope &scope = block->scope;
 
-		Auto<FoundParams> thisPart = CREATE(FoundParams, block, L"this");
+		Auto<SimplePart> thisPart = CREATE(SimplePart, block, L"this");
 		Auto<LocalVar> thisVar = block->variable(thisPart);
 		if (!thisVar)
 			return null;
@@ -554,17 +552,19 @@ namespace storm {
 		bool useLookup = true;
 
 		if (isSuperName(name)) {
-			Auto<Name> part = name->from(1);
+			Auto<SimpleName> part = name->from(1);
 			// It is something in the super type!
 			Type *super = thisVar->result.type->super();
 			if (!super)
 				throw SyntaxError(pos, L"No super type for " + ::toS(thisVar->result) + L", can not use 'super' here.");
 
-			candidate = storm::find(super, steal(part->withLast(lastPart)));
+			part->last() = lastPart;
+			candidate = storm::find(super, part);
 			useLookup = false;
 		} else {
 			// May be anything.
-			candidate = scope.find(steal(name->withLast(lastPart)));
+			name->last() = lastPart;
+			candidate = scope.find(name);
 			useLookup = true;
 		}
 
@@ -577,7 +577,7 @@ namespace storm {
 
 	// Find whatever is meant by the 'name' in this context. Return suitable expression. If
 	// 'useThis' is true, a 'this' pointer may be inserted as the first parameter.
-	static bs::Expr *bs::findTarget(Par<Block> block, Par<Name> name,
+	static bs::Expr *bs::findTarget(Par<Block> block, Par<SimpleName> name,
 									const SrcPos &pos, Par<Actual> params,
 									bool useThis) {
 		const Scope &scope = block->scope;
@@ -599,7 +599,8 @@ namespace storm {
 
 		// Try without the this pointer first.
 		Auto<BSNamePart> last = CREATE(BSNamePart, name, name->lastName(), params);
-		Auto<Named> n = scope.find(steal(name->withLast(last)));
+		name->last() = last;
+		Auto<Named> n = scope.find(name);
 
 		if (Expr *e = findTarget(n, null, params, pos, true))
 			return e;
@@ -616,22 +617,26 @@ namespace storm {
 	}
 
 	bs::Expr *bs::namedExpr(Par<Block> block, Par<SStr> name, Par<Actual> params) {
-		Auto<Name> n = parseSimpleName(name->engine(), name->v->v);
+		Auto<SimpleName> n = CREATE(SimpleName, name, name->v);
 		return findTarget(block, n, name->pos, params, true);
 	}
 
 	bs::Expr *bs::namedExpr(Par<Block> block, Par<TypeName> name, Par<Actual> params) {
-		Auto<Name> n = name->toName(block->scope);
+		Auto<SimpleName> n = name->toName(block->scope);
 		return findTarget(block, n, name->pos, params, true);
 	}
 
 	bs::Expr *bs::namedExpr(Par<Block> block, SrcPos pos, Par<Name> name, Par<Actual> params) {
-		return findTarget(block, name, pos, params, true);
+		Auto<SimpleName> simple = name->simplify(block->scope);
+		if (!simple)
+			throw SyntaxError(pos, L"Could not resolve parameters in " + ::toS(name));
+
+		return findTarget(block, simple, pos, params, true);
 	}
 
 	bs::Expr *bs::namedExpr(Par<Block> block, Par<SStr> name, Par<Expr> first, Par<Actual> params) {
 		params->addFirst(first);
-		Auto<Name> n = parseSimpleName(name->engine(), name->v->v);
+		Auto<SimpleName> n = CREATE(SimpleName, name, name->v);
 		return findTarget(block, n, name->pos, params, false);
 	}
 

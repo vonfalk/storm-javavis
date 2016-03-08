@@ -8,9 +8,9 @@ namespace storm {
 
 	Template::Template(const String &name) : name(name) {}
 
-	Template::Template(const String &name, Fn<Named *, Par<FoundParams>> fn) : name(name), generateFn(fn) {}
+	Template::Template(const String &name, Fn<Named *, Par<SimplePart>> fn) : name(name), generateFn(fn) {}
 
-	Named *Template::generate(Par<FoundParams> part) {
+	Named *Template::generate(Par<SimplePart> part) {
 		return generateFn(part);
 	}
 

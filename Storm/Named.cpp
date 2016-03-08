@@ -8,10 +8,10 @@ namespace storm {
 	NameLookup::NameLookup() : parentLookup(null) {}
 
 	Named *NameLookup::findCpp(const String &name, const vector<Value> &params) {
-		return find(steal(CREATE(FoundParams, this, name, params)));
+		return find(steal(CREATE(SimplePart, this, name, params)));
 	}
 
-	Named *NameLookup::find(Par<FoundParams> part) {
+	Named *NameLookup::find(Par<SimplePart> part) {
 		return null;
 	}
 
@@ -48,15 +48,15 @@ namespace storm {
 		return null;
 	}
 
-	Name *Named::path() const {
+	SimpleName *Named::path() const {
 		Named *parent = closestNamed();
 
-		Name *r = null;
+		SimpleName *r = null;
 		if (parent) {
 			r = parent->path();
-			r->add(steal(CREATE(FoundParams, this, name, params)));
+			r->add(steal(CREATE(SimplePart, this, name, params)));
 		} else {
-			r = CREATE(Name, this);
+			r = CREATE(SimpleName, this);
 		}
 
 		return r;
@@ -74,7 +74,7 @@ namespace storm {
 			}
 			return to.str();
 		}
-		Auto<Name> p = path();
+		Auto<SimpleName> p = path();
 		return ::toS(p);
 	}
 

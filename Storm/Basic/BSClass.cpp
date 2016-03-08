@@ -61,7 +61,7 @@ namespace storm {
 			}
 
 			if (thread) {
-				Auto<Name> name = thread->toName(scope);
+				Auto<SimpleName> name = thread->toName(scope);
 				Auto<NamedThread> t = steal(scope.find(name)).as<NamedThread>();
 				if (!t)
 					throw SyntaxError(thread->pos, L"Can not find the thread " + ::toS(name) + L".");

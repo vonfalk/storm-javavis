@@ -49,7 +49,7 @@ namespace storm {
 			TypeName *STORM_FN operator [](Nat id) const;
 
 			// As name part.
-			FoundParams *toPart(const Scope &scope);
+			SimplePart *toPart(const Scope &scope);
 
 		protected:
 			// Output.
@@ -82,7 +82,7 @@ namespace storm {
 			TypePart *STORM_FN operator [](Nat id) const;
 
 			// Convert to a Name.
-			Name *STORM_FN toName(const Scope &scope);
+			SimpleName *STORM_FN toName(const Scope &scope);
 
 			// Find.
 			MAYBE(Named) *STORM_FN find(const Scope &scope);

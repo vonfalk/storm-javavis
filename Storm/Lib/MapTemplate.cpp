@@ -40,7 +40,7 @@ namespace storm {
 		return me->getRaw(k);
 	}
 
-	static Named *generateMap(Par<FoundParams> part) {
+	static Named *generateMap(Par<SimplePart> part) {
 		if (part->count() != 2)
 			return null;
 
@@ -56,7 +56,7 @@ namespace storm {
 	}
 
 	Type *mapType(Engine &e, const ValueData &key, const ValueData &value) {
-		Auto<Name> tName = CREATE(Name, e);
+		Auto<SimpleName> tName = CREATE(SimpleName, e);
 		tName->add(L"core");
 		tName->add(L"Map", valList(2, Value(key), Value(value)));
 

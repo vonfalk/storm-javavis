@@ -70,30 +70,30 @@ namespace storm {
 
 
 	bs::BSNamePart::BSNamePart(Par<Str> name, Par<Actual> params) :
-		FoundParams(name->v, params->values()), exprs(params->expressions) {}
+		SimplePart(name->v, params->values()), exprs(params->expressions) {}
 
 	bs::BSNamePart::BSNamePart(const String &name, Par<Actual> params) :
-		FoundParams(name, params->values()), exprs(params->expressions) {}
+		SimplePart(name, params->values()), exprs(params->expressions) {}
 
 	void bs::BSNamePart::insert(Value first) {
-		params.insert(params.begin(), first);
+		data.insert(data.begin(), first);
 		exprs.insert(exprs.begin(), CREATE(DummyExpr, this, first));
 	}
 
 	void bs::BSNamePart::insert(Value first, Nat at) {
-		params.insert(params.begin() + at, first);
+		data.insert(data.begin() + at, first);
 		exprs.insert(exprs.begin() + at, CREATE(DummyExpr, this, first));
 	}
 
 	void bs::BSNamePart::alter(Nat at, Value to) {
-		params[at] = to;
+		data[at] = to;
 		exprs[at] = CREATE(DummyExpr, this, to);
 	}
 
 	// TODO: Consider using 'max' for match weights instead?
 	Int bs::BSNamePart::matches(Par<Named> candidate) {
 		vector<Value> c = candidate->params;
-		if (c.size() != params.size())
+		if (c.size() != data.size())
 			return -1;
 
 		// We can convert everything to references!

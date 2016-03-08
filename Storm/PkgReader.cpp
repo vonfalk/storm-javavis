@@ -8,42 +8,42 @@
 
 namespace storm {
 
-	Name *readerName(Par<const Name> name) {
-		Name *n = CREATE(Name, name, name);
-		n->add(steal(CREATE(NamePart, name, L"Reader")));
+	SimpleName *readerName(Par<SimpleName> name) {
+		SimpleName *n = CREATE(SimpleName, name, name);
+		n->add(steal(CREATE(SimplePart, name, L"Reader")));
 		return n;
 	}
 
-	Name *syntaxPkg(Par<Url> path) {
-		Name *n = CREATE(Name, path, L"lang");
-		Auto<NamePart> part = CREATE(NamePart, path, steal(path->ext()));
+	SimpleName *syntaxPkg(Par<Url> path) {
+		SimpleName *n = CREATE(SimpleName, path);
+		Auto<SimplePart> part = CREATE(SimplePart, path, L"lang");
+		n->add(part);
+		part = CREATE(SimplePart, path, steal(path->ext()));
 		n->add(part);
 		return n;
 	}
 
-	hash_map<Auto<Name>, Auto<PkgFiles> > syntaxPkg(Auto<ArrayP<Url>> paths) {
-		typedef hash_map<Auto<Name>, Auto<PkgFiles> > M;
-		M r;
+	MAP_PP(SimpleName, PkgFiles) *syntaxPkg(Auto<ArrayP<Url>> paths) {
+		Auto<MAP_PP(SimpleName, PkgFiles)> r = CREATE(MAP_PP(SimpleName, PkgFiles), paths);
 
 		for (nat i = 0; i < paths->count(); i++) {
 			if (paths->at(i)->dir())
 				continue;
 
-			Auto<Name> pkg = syntaxPkg(paths->at(i));
-			M::iterator found = r.find(pkg);
+			Auto<SimpleName> pkg = syntaxPkg(paths->at(i));
 
 			Auto<PkgFiles> into;
-			if (found == r.end()) {
-				into = CREATE(PkgFiles, paths);
-				r.insert(make_pair(pkg, into));
+			if (r->has(pkg)) {
+				into = r->get(pkg);
 			} else {
-				into = found->second;
+				into = CREATE(PkgFiles, paths);
+				r->put(pkg, into);
 			}
 
 			into->add(paths->at(i));
 		}
 
-		return r;
+		return r.ret();
 	}
 
 	/**
@@ -98,7 +98,7 @@ namespace storm {
 	void FileReader::readFunctions() {}
 
 	Package *FileReader::syntaxPackage() const {
-		Auto<Name> pkg = syntaxPkg(file);
+		Auto<SimpleName> pkg = syntaxPkg(file);
 		return engine().package(pkg);
 	}
 

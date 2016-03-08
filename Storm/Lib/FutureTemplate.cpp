@@ -109,7 +109,7 @@ namespace storm {
 		from->result();
 	}
 
-	static Named *generateFuture(Par<FoundParams> part) {
+	static Named *generateFuture(Par<SimplePart> part) {
 		if (part->count() != 1)
 			return null;
 
@@ -182,7 +182,7 @@ namespace storm {
 	}
 
 	Type *futureType(Engine &e, const ValueData &type) {
-		Auto<Name> tName = CREATE(Name, e);
+		Auto<SimpleName> tName = CREATE(SimpleName, e);
 		tName->add(L"core");
 		tName->add(L"Future", vector<Value>(1, type));
 

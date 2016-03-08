@@ -13,7 +13,7 @@ namespace storm {
 
 	bs::BSScope::BSScope(Par<Url> file) : file(file) {}
 
-	Named *bs::BSScope::findHelper(const Scope &s, Par<Name> name) {
+	Named *bs::BSScope::findHelper(const Scope &s, Par<SimpleName> name) {
 		if (Named *found = ScopeLookup::find(s, name))
 			return found;
 
@@ -25,17 +25,14 @@ namespace storm {
 		return null;
 	}
 
-	Named *bs::BSScope::find(const Scope &s, Par<Name> name) {
+	Named *bs::BSScope::find(const Scope &s, Par<SimpleName> name) {
 		// Expressions of the form foo(x, y, z) are equal to x.foo(y, z),
 		// but only if name only contains one part (ie. not foo:bar(y, z)).
-		if (name->size() == 1) {
-			Auto<NamePart> last = name->last();
-			if (last->any()) {
-				Auto<FoundParams> found = last->find(s);
-				if (found != null && found->param(0) != Value()) {
-					if (Named *r = found->param(0).type->find(found))
-						return r;
-				}
+		if (name->count() == 1) {
+			Auto<SimplePart> last = name->last();
+			if (last->any() && last->param(0) != Value()) {
+				if (Named *r = last->param(0).type->find(last))
+					return r;
 			}
 		}
 
@@ -45,7 +42,7 @@ namespace storm {
 
 	void bs::BSScope::addSyntax(const Scope &from, Par<SyntaxSet> to) {
 		if (file) {
-			Auto<Name> syntax = syntaxPkg(file);
+			Auto<SimpleName> syntax = syntaxPkg(file);
 			to->add(engine().package(syntax));
 		}
 

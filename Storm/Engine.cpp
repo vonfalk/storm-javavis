@@ -234,26 +234,26 @@ namespace storm {
 	}
 
 	Package *Engine::package(const String &path, bool create) {
-		Auto<Name> name = parseSimpleName(*this, path);
+		Auto<SimpleName> name = parseSimpleName(*this, path);
 		return package(name, create);
 	}
 
-	Package *Engine::package(Par<Name> path, bool create) {
+	Package *Engine::package(Par<SimpleName> path, bool create) {
 		return package(rootPkg, path, create);
 	}
 
-	Package *Engine::package(Par<Package> rel, Par<Name> path, bool create) {
+	Package *Engine::package(Par<Package> rel, Par<SimpleName> path, bool create) {
 		if (!create)
 			return steal(find(rel, path)).as<Package>().borrow();
-
-		return createPackage(rel.borrow(), path);
+		else
+			return createPackage(rel.borrow(), path);
 	}
 
-	NameSet *Engine::nameSet(Par<Name> path, bool create) {
+	NameSet *Engine::nameSet(Par<SimpleName> path, bool create) {
 		return package(rootPkg, path, create);
 	}
 
-	NameSet *Engine::nameSet(Par<Package> rel, Par<Name> path, bool create) {
+	NameSet *Engine::nameSet(Par<Package> rel, Par<SimpleName> path, bool create) {
 		NameSet *found = steal(find(rel, path)).as<NameSet>().borrow();
 		if (found)
 			return found;
@@ -264,13 +264,13 @@ namespace storm {
 		return null;
 	}
 
-	Package *Engine::createPackage(Package *pkg, Par<Name> path, nat pos) {
-		if (path->size() == pos)
+	Package *Engine::createPackage(Package *pkg, Par<SimpleName> path, nat pos) {
+		if (path->count() <= pos)
 			return pkg;
 
 		assert(path->at(pos)->empty());
 
-		Auto<FoundParams> part = CREATE(FoundParams, *this, path->at(pos)->name);
+		Auto<SimplePart> part = CREATE(SimplePart, *this, path->at(pos)->name);
 		Auto<Named> nextNamed = pkg->find(part);
 		Auto<Package> next = nextNamed.as<Package>();
 		if (!next && !nextNamed) {

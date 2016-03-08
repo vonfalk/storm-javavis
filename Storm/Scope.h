@@ -8,6 +8,7 @@ namespace storm {
 
 	class NameLookup;
 	class Name;
+	class SimpleName;
 	class Named;
 	class Package;
 
@@ -18,8 +19,8 @@ namespace storm {
 	 */
 	class Scope;
 
-	// Find a named from a Name.
-	MAYBE(Named) *STORM_FN find(Par<NameLookup> root, Par<Name> name);
+	// Find a named from a SimpleName.
+	MAYBE(Named) *STORM_FN find(Par<NameLookup> root, Par<SimpleName> name);
 
 
 	/**
@@ -31,7 +32,7 @@ namespace storm {
 		STORM_CTOR ScopeLookup();
 
 		// Find 'name' in 'in'.
-		virtual MAYBE(Named) *STORM_FN find(const Scope &in, Par<Name> name);
+		virtual MAYBE(Named) *STORM_FN find(const Scope &in, Par<SimpleName> name);
 
 		/**
 		 * Utility functions. All of these returns borrowed pointers.
@@ -89,6 +90,7 @@ namespace storm {
 		// current object. NOTE: Not a STORM_FN since this function has to be executed on the
 		// Compiler thread.
 		MAYBE(Named) *find(Par<Name> name) const;
+		MAYBE(Named) *find(Par<SimpleName> name) const;
 
 		// Deep copy.
 		void STORM_FN deepCopy(Par<CloneEnv> env);
@@ -99,7 +101,9 @@ namespace storm {
 
 	// Storm implementation of 'find'.
 	MAYBE(Named) *STORM_FN find(Scope scope, Par<Name> name) ON(Compiler);
-	MAYBE(FoundParams) *STORM_FN find(Par<NamePart> part, Scope scope) ON(Compiler);
+	MAYBE(Named) *STORM_FN find(Scope scope, Par<SimpleName> name) ON(Compiler);
+	MAYBE(SimpleName) *STORM_FN simplify(Par<Name> name, Scope scope);
+	MAYBE(SimplePart) *STORM_FN find(Par<NamePart> part, Scope scope) ON(Compiler);
 
 	// Convert to string.
 	Str *STORM_ENGINE_FN toS(EnginePtr e, Scope scope);
@@ -121,7 +125,7 @@ namespace storm {
 		void STORM_FN add(Par<NameLookup> l);
 
 		// Find
-		virtual MAYBE(Named) *STORM_FN find(const Scope &in, Par<Name> name);
+		virtual MAYBE(Named) *STORM_FN find(const Scope &in, Par<SimpleName> name);
 
 	};
 

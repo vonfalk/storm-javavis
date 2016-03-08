@@ -40,7 +40,7 @@ namespace storm {
 		if (val.name == null)
 			return Value();
 
-		Auto<Name> name = parseSimpleName(e, val.name);
+		Auto<SimpleName> name = parseSimpleName(e, val.name);
 		Auto<Named> f = src.find(name);
 		if (Type *t = as<Type>(f.borrow()))
 			return createValue(val, t);
@@ -65,8 +65,8 @@ namespace storm {
 	static Type *createType(Engine &e, const BuiltInType &t) {
 		if (t.superMode == BuiltInType::superExternal) {
 			// External types have an absolute name!
-			Auto<Name> name = parseSimpleName(e, t.pkg);
-			name->add(steal(CREATE(NamePart, e, t.name)));
+			Auto<SimpleName> name = parseSimpleName(e, t.pkg);
+			name->add(steal(CREATE(SimplePart, e, t.name)));
 			Auto<Type> t = steal(e.scope()->find(name)).as<Type>();
 			if (!t)
 				throw BuiltInError(L"The external type " + ::toS(name) + L" was not found.");
@@ -120,7 +120,7 @@ namespace storm {
 	}
 
 	NameSet *BuiltInLoader::findNameSet(const String &pkg) {
-		Auto<Name> pkgName = parseSimpleName(e, pkg);
+		Auto<SimpleName> pkgName = parseSimpleName(e, pkg);
 		NameSet *r = e.nameSet(root, pkgName, true);
 		if (!r)
 			throw BuiltInError(L"Failed to locate package or type " + ::toS(pkg));
@@ -129,7 +129,7 @@ namespace storm {
 	}
 
 	Package *BuiltInLoader::findPkg(const String &pkg) {
-		Auto<Name> pkgName = parseSimpleName(e, pkg);
+		Auto<SimpleName> pkgName = parseSimpleName(e, pkg);
 		Package *r = e.package(root, pkgName, true);
 		if (!r)
 			throw BuiltInError(L"Failed to locate package " + ::toS(pkg));
@@ -329,7 +329,7 @@ namespace storm {
 		if (!first) {
 			// Insert here as well! But check if a similar function already exists first ('overloading' should work).
 			Auto<Function> c = createFn(fn, into);
-			Auto<FoundParams> name = CREATE(FoundParams, into, c->name, c->params);
+			Auto<SimplePart> name = CREATE(SimplePart, into, c->name, c->params);
 			if (!steal(into->find(name)))
 				into->add(c);
 		}

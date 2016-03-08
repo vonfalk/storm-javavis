@@ -173,6 +173,8 @@
 
 * Basic Storm [4/20]
 
+ - [ ] Remove the special TypeName class, use the general Name instead.
+
  - [ ] Make sure strings are stored as shorts in the generated machine code (currently not possible due to
    limitations in the Code backend).
 
@@ -187,8 +189,6 @@
  - [ ] Variable accesses are currently racy. Fix this!
 
  - [ ] It seems it is not legal to do something like: Str("Foo") without taking care of the return value.
-
- - [ ] Remove the special TypeName class, use the general Name instead.
 
  - [ ] Implement proper typechecking for the array initialization literal, now the error messages generated when
    using these are really bad.

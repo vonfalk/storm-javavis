@@ -460,18 +460,17 @@ namespace storm {
 		return null;
 	}
 
-	Named *generateStdClone(Par<FoundParams> part) {
+	Named *generateStdClone(Par<SimplePart> part) {
 		using namespace code;
 		Engine &e = part->engine();
 
 		Named *result = null;
 
-		const vector<Value> &params = part->params;
-		if (params.size() == 1)
-			result = stdClone(e, part->name, params[0].asRef(false));
+		if (part->count() == 1)
+			result = stdClone(e, part->name, part->param(0).asRef(false));
 
-		else if (params.size() == 2)
-			result = stdClone(e, part->name, params[0].asRef(false), params[1].asRef(false));
+		else if (part->count() == 2)
+			result = stdClone(e, part->name, part->param(0).asRef(false), part->param(1).asRef(false));
 
 		if (result)
 			result->flags = namedMatchNoInheritance;

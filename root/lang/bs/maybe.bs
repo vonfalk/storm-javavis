@@ -18,16 +18,14 @@ Expr asMaybe(Block block, Expr expr) on Compiler {
 	Expr result = expr;
 	Value eType = expr.result.type;
 
-	NamePart core("core");
-	NamePart maybe("Maybe", Value:[eType]);
 	Name name;
-	name.add(core);
-	name.add(maybe);
+	name.add("core");
+	name.add("Maybe", Value:[eType]);
 
 	Named? t = block.scope.find(name);
 	if (t as Type) {
-		NamePart ctor("__ctor", Value:[ Value(t), eType ]);
-		Named? c = Scope(t).find(Name(ctor));
+		Name ctor("__ctor", Value:[ Value(t), eType ]);
+		Named? c = Scope(t).find(ctor);
 		if (c as Function) {
 			result = CtorCall(c, Actual(expr));
 		}

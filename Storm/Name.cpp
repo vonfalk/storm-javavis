@@ -39,8 +39,8 @@ namespace storm {
 		return 0;
 	}
 
-	FoundParams *NamePart::find(const Scope &scope) {
-		return CREATE(FoundParams, this, name);
+	SimplePart *NamePart::find(const Scope &scope) {
+		return CREATE(SimplePart, this, name);
 	}
 
 	void NamePart::deepCopy(Par<CloneEnv> env) {
@@ -52,15 +52,15 @@ namespace storm {
 	}
 
 	NamePart *namePart(Par<Str> name) {
-		return CREATE(FoundParams, name, name);
+		return CREATE(SimplePart, name, name);
 	}
 
 	NamePart *namePart(Par<Str> name, Par<Array<Value>> params) {
-		return CREATE(FoundParams, name, name, params);
+		return CREATE(SimplePart, name, name, params);
 	}
 
 	NamePart *namePart(Par<Str> name, Par<ArrayP<Name>> params) {
-		return CREATE(NameParams, name, name, params);
+		return CREATE(RecNamePart, name, name, params);
 	}
 
 	Str *name(Par<NamePart> part) {
@@ -68,28 +68,28 @@ namespace storm {
 	}
 
 	/**
-	 * FoundParams.
+	 * SimplePart.
 	 */
 
-	FoundParams::FoundParams(Par<FoundParams> o) : NamePart(o), params(o->params) {}
+	SimplePart::SimplePart(Par<SimplePart> o) : NamePart(o), data(o->data) {}
 
-	FoundParams::FoundParams(Par<Str> name) : NamePart(name) {}
+	SimplePart::SimplePart(Par<Str> name) : NamePart(name) {}
 
-	FoundParams::FoundParams(Par<Str> name, Par<Array<Value>> values) : NamePart(name), params(toVec(values)) {}
+	SimplePart::SimplePart(Par<Str> name, Par<Array<Value>> values) : NamePart(name), data(toVec(values)) {}
 
-	FoundParams::FoundParams(const String &name) : NamePart(name) {}
+	SimplePart::SimplePart(const String &name) : NamePart(name) {}
 
-	FoundParams::FoundParams(const String &name, const vector<Value> &values) : NamePart(name), params(values) {}
+	SimplePart::SimplePart(const String &name, const vector<Value> &values) : NamePart(name), data(values) {}
 
-	Nat FoundParams::count() {
-		return params.size();
+	Nat SimplePart::count() {
+		return data.size();
 	}
 
-	Value FoundParams::operator[](Nat id) {
-		return params[id];
+	Value SimplePart::operator[](Nat id) {
+		return data[id];
 	}
 
-	Named *FoundParams::choose(Par<NameOverloads> from) {
+	Named *SimplePart::choose(Par<NameOverloads> from) {
 		PreArray<Named *, 4> candidates;
 		int best = std::numeric_limits<int>::max();
 
@@ -119,60 +119,67 @@ namespace storm {
 		}
 	}
 
-	Int FoundParams::matches(Par<Named> candidate) {
+	Int SimplePart::matches(Par<Named> candidate) {
 		const vector<Value> &c = candidate->params;
-		if (c.size() != params.size())
+		if (c.size() != data.size())
 			return -1;
 
 		int distance = 0;
 
 		for (nat i = 0; i < c.size(); i++) {
-			if (!c[i].matches(params[i], candidate->flags))
+			if (!c[i].matches(data[i], candidate->flags))
 				return -1;
-			if (params[i].type)
-				distance += params[i].type->distanceFrom(c[i].type);
+			if (data[i].type)
+				distance += data[i].type->distanceFrom(c[i].type);
 		}
 
 		return distance;
 	}
 
-	FoundParams *FoundParams::find(const Scope &scope) {
+	SimplePart *SimplePart::find(const Scope &scope) {
 		addRef();
 		return this;
 	}
 
-	void FoundParams::deepCopy(Par<CloneEnv> env) {
+	Array<Value> *SimplePart::params() {
+		Array<Value> *r = CREATE(Array<Value>, this);
+		for (nat i = 0; i < data.size(); i++)
+			r->push(data[i]);
+		return r;
+	}
+
+	void SimplePart::deepCopy(Par<CloneEnv> env) {
 		// Nothing needed here.
 	}
 
-	void FoundParams::output(wostream &to) const {
+	void SimplePart::output(wostream &to) const {
 		to << name;
-		if (!params.empty()) {
+		if (!data.empty()) {
 			to << L"(";
-			join(to, params, L", ");
+			join(to, data, L", ");
 			to << L")";
 		}
 	}
 
 	/**
-	 * NameParams.
+	 * RecNamePart.
 	 */
 
-	NameParams::NameParams(Par<NameParams> o) : NamePart(o), params(o->params) {}
+	RecNamePart::RecNamePart(Par<RecNamePart> o) : NamePart(o), params(o->params) {}
 
-	NameParams::NameParams(Par<Str> name) : NamePart(name) {}
+	RecNamePart::RecNamePart(Par<Str> name) : NamePart(name) {}
 
-	NameParams::NameParams(Par<Str> name, Par<ArrayP<Name>> values) : NamePart(name), params(toVec(values)) {}
+	RecNamePart::RecNamePart(Par<Str> name, Par<ArrayP<Name>> values) : NamePart(name), params(toVec(values)) {}
 
-	NameParams::NameParams(const String &name) : NamePart(name) {}
+	RecNamePart::RecNamePart(const String &name) : NamePart(name) {}
 
-	NameParams::NameParams(const String &name, vector<Auto<Name>> values) : NamePart(name), params(values) {}
+	RecNamePart::RecNamePart(const String &name, vector<Auto<Name>> values) : NamePart(name), params(values) {}
 
-	Nat NameParams::count() {
+	Nat RecNamePart::count() {
 		return params.size();
 	}
 
-	FoundParams *NameParams::find(const Scope &scope) {
+	SimplePart *RecNamePart::find(const Scope &scope) {
 		vector<Value> v(params.size());
 		for (nat i = 0; i < params.size(); i++) {
 			Auto<Named> found = scope.find(params[i]);
@@ -184,15 +191,15 @@ namespace storm {
 			}
 		}
 
-		return CREATE(FoundParams, this, name, v);
+		return CREATE(SimplePart, this, name, v);
 	}
 
-	void NameParams::deepCopy(Par<CloneEnv> env) {
+	void RecNamePart::deepCopy(Par<CloneEnv> env) {
 		for (nat i = 0; i < params.size(); i++)
 			params[i].deepCopy(env);
 	}
 
-	void NameParams::output(wostream &to) const {
+	void RecNamePart::output(wostream &to) const {
 		to << name;
 		if (!params.empty()) {
 			to << L"(";
@@ -210,13 +217,18 @@ namespace storm {
 	Name::Name(Par<NamePart> part) : parts(1, part) {}
 
 	Name::Name(Par<Str> part) {
-		Auto<NamePart> v = CREATE(FoundParams, this, part);
+		Auto<NamePart> v = CREATE(SimplePart, this, part);
 		add(v);
 	}
 
 	Name::Name(Par<Str> name, Par<Array<Value>> values) {
-		Auto<NamePart> v = CREATE(FoundParams, this, name, values);
+		Auto<NamePart> v = CREATE(SimplePart, this, name, values);
 		add(v);
+	}
+
+	Name::Name(Par<SimpleName> simple) : parts(simple->count()) {
+		for (nat i = 0; i < simple->count(); i++)
+			parts.push_back(simple->at(i));
 	}
 
 	Name::Name(const String &part, const vector<Value> &params) {
@@ -234,16 +246,28 @@ namespace storm {
 		parts.push_back(part);
 	}
 
+	void Name::add(Par<Str> part) {
+		add(part->v);
+	}
+
+	void Name::add(Par<Str> name, Par<Array<Value>> v) {
+		parts.push_back(CREATE(SimplePart, this, name, v));
+	}
+
+	void Name::add(Par<Str> name, Par<ArrayP<Name>> v) {
+		parts.push_back(CREATE(RecNamePart, this, name, v));
+	}
+
 	void Name::add(const String &part) {
-		parts.push_back(CREATE(FoundParams, this, part));
+		parts.push_back(CREATE(SimplePart, this, part));
 	}
 
 	void Name::add(const String &part, const vector<Value> &params) {
-		parts.push_back(CREATE(FoundParams, this, part, params));
+		parts.push_back(CREATE(SimplePart, this, part, params));
 	}
 
 	void Name::add(const String &part, const vector<Auto<Name>> &params) {
-		parts.push_back(CREATE(NameParams, this, part, params));
+		parts.push_back(CREATE(RecNamePart, this, part, params));
 	}
 
 	Name *Name::parent() const {
@@ -290,46 +314,18 @@ namespace storm {
 		join(to, parts, L".");
 	}
 
-	bool Name::operator ==(const Name &o) const {
-		assert(false, L"TODO!");
+	SimpleName *Name::simplify(const Scope &scope) {
+		Auto<SimpleName> result = CREATE(SimpleName, this);
 
-		if (parts.size() != o.parts.size())
-			return false;
-
-		// for (nat i = 0; i < parts.size(); i++)
-		// 	if (*parts[i] != *o.parts[i])
-		// 		return false;
-
-		return true;
-	}
-
-	Nat Name::hash() {
-		// djb2 hash
-		size_t r = 5381;
 		for (nat i = 0; i < parts.size(); i++) {
-			const String &s = parts[i]->name;
-			for (nat j = 0; j < s.size(); j++)
-				r = ((r << 5) + r) + s[j];
-
-			// We are ignoring the actual values, since hash collisions will probably
-			// be rare enough as it is. The current use of hashes is to keep track of
-			// vastly different packages anyway.
-			r = ((r << 5) + r) + parts[i]->count();
+			Auto<SimplePart> p = parts[i]->find(scope);
+			if (!p)
+				return null;
+			result->add(p);
 		}
 
-		return r;
+		return result.ret();
 	}
-
-	Name *parseSimpleName(Engine &e, const String &name) {
-		Auto<Name> r = CREATE(Name, e);
-
-		vector<String> parts = name.split(L".");
-		for (nat i = 0; i < parts.size(); i++)
-			r->add(parts[i]);
-
-		return r.ret();
-	}
-
 
 	/**
 	 * parseTemplateName.
@@ -337,7 +333,7 @@ namespace storm {
 
 	static Name *parseName(Engine &e, const SrcPos &pos, Tokenizer &tok);
 
-	static NamePart *parseNamePart(Engine &e, const SrcPos &pos, Tokenizer &tok) {
+	static NamePart *parsePart(Engine &e, const SrcPos &pos, Tokenizer &tok) {
 		String name = tok.next().token;
 		vector<Auto<Name>> params;
 
@@ -360,7 +356,7 @@ namespace storm {
 			tok.next();
 		}
 
-		return CREATE(NameParams, e, name, params);
+		return CREATE(RecNamePart, e, name, params);
 	}
 
 	static Name *parseName(Engine &e, const SrcPos &pos, Tokenizer &tok) {
@@ -368,7 +364,7 @@ namespace storm {
 		Auto<NamePart> part;
 
 		while (tok.more()) {
-			Auto<NamePart> part = parseNamePart(e, pos, tok);
+			Auto<NamePart> part = parsePart(e, pos, tok);
 			r->add(part);
 
 			if (!tok.more())
@@ -393,5 +389,116 @@ namespace storm {
 		return parseName(e, pos, tok);
 	}
 
+
+	/**
+	 * SimpleName.
+	 */
+
+	SimpleName::SimpleName() {}
+
+	SimpleName::SimpleName(Par<SimpleName> o) : parts(o->parts) {}
+
+	SimpleName::SimpleName(Par<Str> part) {
+		parts.push_back(CREATE(SimplePart, this, part));
+	}
+
+	SimpleName::SimpleName(const String &part) {
+		parts.push_back(CREATE(SimplePart, this, part));
+	}
+
+	SimpleName::SimpleName(const String &part, const vector<Value> &params) {
+		parts.push_back(CREATE(SimplePart, this, part, params));
+	}
+
+	const String &SimpleName::lastName() const {
+		assert(!empty());
+		return parts.back()->name;
+	}
+
+	void SimpleName::add(Par<SimplePart> part) {
+		parts.push_back(part);
+	}
+
+	void SimpleName::add(Par<Str> part) {
+		add(part->v);
+	}
+
+	void SimpleName::add(const String &part) {
+		parts.push_back(CREATE(SimplePart, this, part));
+	}
+
+	void SimpleName::add(const String &part, const vector<Value> &params) {
+		parts.push_back(CREATE(SimplePart, this, part, params));
+	}
+
+	SimpleName *SimpleName::from(Nat id) const {
+		Auto<SimpleName> copy = CREATE(SimpleName, this);
+		for (nat i = id; i < parts.size(); i++) {
+			copy->add(parts[i]);
+		}
+		return copy.ret();
+	}
+
+	void SimpleName::deepCopy(Par<CloneEnv> env) {
+		for (nat i = 0; i < parts.size(); i++)
+			parts[i].deepCopy(env);
+	}
+
+	void SimpleName::output(wostream &to) const {
+		join(to, parts, L".");
+	}
+
+	bool SimpleName::operator ==(const SimpleName &o) const {
+		if (parts.size() != o.parts.size())
+			return false;
+
+		for (nat i = 0; i < parts.size(); i++) {
+			SimplePart *m = parts[i].borrow();
+			SimplePart *n = o.parts[i].borrow();
+
+			if (m->name != n->name)
+				return false;
+
+			if (m->count() != n->count())
+				return false;
+
+			for (nat j = 0; j < m->count(); j++) {
+				if (n->param(j) != m->param(j))
+					return false;
+			}
+		}
+
+		return true;
+	}
+
+	Nat SimpleName::hash() {
+		// djb2 hash
+		size_t r = 5381;
+		for (nat i = 0; i < parts.size(); i++) {
+			const String &s = parts[i]->name;
+			for (nat j = 0; j < s.size(); j++)
+				r = ((r << 5) + r) + s[j];
+
+			// We are ignoring the actual values, since hash collisions will probably
+			// be rare enough as it is. The current use of hashes is to keep track of
+			// vastly different packages anyway.
+			r = ((r << 5) + r) + parts[i]->count();
+		}
+
+		return r;
+	}
+
+
+	SimpleName *parseSimpleName(Engine &e, const String &name) {
+		Auto<SimpleName> r = CREATE(SimpleName, e);
+
+		vector<String> parts = name.split(L".");
+		for (nat i = 0; i < parts.size(); i++) {
+			Auto<SimplePart> p = CREATE(SimplePart, e, parts[i]);
+			r->add(p);
+		}
+
+		return r.ret();
+	}
 
 }

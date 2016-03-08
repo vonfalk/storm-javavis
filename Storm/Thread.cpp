@@ -10,7 +10,7 @@ namespace storm {
 	DEFINE_STORM_THREAD(Compiler);
 
 	NamedThread *STORM_ENGINE_FN compilerThread(EnginePtr e) {
-		Auto<Name> name = parseSimpleName(e.v, L"core.Compiler");
+		Auto<SimpleName> name = parseSimpleName(e.v, L"core.Compiler");
 		Auto<Named> found = e.v.scope()->find(name);
 
 		if (NamedThread *t = as<NamedThread>(found.borrow())) {
