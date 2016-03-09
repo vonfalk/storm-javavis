@@ -59,10 +59,12 @@ namespace storm {
 				throw InternalError(L"Unknown sub-type to TokenDecl found: " + ::toS(decl));
 			}
 
-			Auto<TypeVar> r = createTarget(decl, token, tokens->count());
-			if (r) {
-				owner->add(r);
-				token->target = r.borrow();
+			if (decl->store != null || decl->invoke != null) {
+				Auto<TypeVar> r = createTarget(decl, token, tokens->count());
+				if (r) {
+					owner->add(r);
+					token->target = r.borrow();
+				}
 			}
 
 			tokens->push(token);
@@ -99,8 +101,8 @@ namespace storm {
 
 		Bool Option::inRepeat(Nat token) const {
 			return repType != repNone()
-				&& repStart >= token
-				&& repEnd < token;
+				&& repStart <= token
+				&& repEnd > token;
 		}
 
 		Rule *Option::rulePtr() const {
@@ -130,7 +132,7 @@ namespace storm {
 			output(to, tokens->count() + 1);
 		}
 
-		void Option::output(wostream &to, nat mark) const {
+		void Option::output(wostream &to, nat mark, bool bindings) const {
 			if (Rule *r = rulePtr()) {
 				to << r->identifier() << ' ';
 			}
@@ -161,7 +163,7 @@ namespace storm {
 				if (currentDelim) {
 					to << L", ";
 				} else {
-					to << token;
+					token->output(to, bindings);
 				}
 
 				prevDelim = currentDelim;
@@ -191,11 +193,16 @@ namespace storm {
 		}
 
 
+		/**
+		 * OptionType.
+		 */
 
 		OptionType::OptionType(Par<Str> name, Par<OptionDecl> decl, Par<Rule> delim, Scope scope) :
 			Type(name->v, typeClass),
-			pos(pos),
-			option(CREATE(Option, this, this, decl, delim, scope)) {
+			pos(pos) {
+
+			// Can not be created in initializer list as it accesses the vector in 'add'.
+			option = CREATE(Option, this, this, decl, delim, scope);
 
 			Auto<Named> found = scope.find(decl->rule);
 			if (!found)
@@ -240,6 +247,7 @@ namespace storm {
 			to << L"{\n";
 			{
 				Indent z(to);
+				to << type->identifier() << endl;
 
 				for (Data::iterator i = data.begin(), end = data.end(); i != end; ++i) {
 					to << i->first << L" : ";
@@ -274,6 +282,16 @@ namespace storm {
 			add(steal(CREATE(TypeDefaultDtor, this, this)));
 
 			return Type::loadAll();
+		}
+
+		void OptionType::add(Par<Named> named) {
+			Type::add(named);
+
+			if (TypeVar *v = as<TypeVar>(named.borrow())) {
+				// Only arrays are interesting.
+				if (isArray(v->varType))
+					arrayMembers.push_back(v);
+			}
 		}
 
 		void OptionType::output(wostream &to) const {
@@ -373,7 +391,7 @@ namespace storm {
 
 		wostream &operator <<(wostream &to, const OptionIter &o) {
 			if (o.o) {
-				o.o->output(to, o.pos);
+				o.o->output(to, o.pos, false);
 			} else {
 				to << L"<invalid>";
 			}

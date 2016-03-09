@@ -23,6 +23,9 @@ namespace storm {
 			// If this token is captured, where to store it? (borrowed ptr).
 			TypeVar *target;
 
+			// More competent output function.
+			virtual void output(wostream &to, bool bindings) const;
+
 		protected:
 			virtual void output(wostream &to) const;
 		};
@@ -40,8 +43,8 @@ namespace storm {
 			// Regex to match.
 			Regex regex;
 
-		protected:
-			virtual void output(wostream &to) const;
+			// Output.
+			virtual void output(wostream &to, bool bindings) const;
 		};
 
 		/**
@@ -56,8 +59,8 @@ namespace storm {
 			// The rule we should match.
 			Auto<Rule> rule;
 
-		protected:
-			virtual void output(wostream &to) const;
+			// Output.
+			virtual void output(wostream &to, bool bindings) const;
 		};
 
 		/**

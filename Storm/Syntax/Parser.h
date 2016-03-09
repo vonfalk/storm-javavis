@@ -50,7 +50,8 @@ namespace storm {
 			 * Operations on the last parse.
 			 */
 
-			// Found any errors? If Str::Iter is not end, this is true.
+			// Found any errors? If Str::Iter is not end, this is true. Note that even if we have an
+			// error, it could be possible to extract a tree!
 			Bool STORM_FN hasError();
 
 			// Get the error.
@@ -64,6 +65,9 @@ namespace storm {
 
 			// Get the number of entries used.
 			Nat STORM_FN stateCount() const;
+
+			// Get the number of bytes used.
+			Nat STORM_FN byteCount() const;
 
 			// Get the syntax tree (only for C++). In Storm we will know what type of tree we will generate!
 			Object *tree() const;
@@ -126,8 +130,11 @@ namespace storm {
 			// Create an object of the type suitable for the rule in 'state'.
 			Object *allocTreeNode(State *state) const;
 
-			// Generate an SrcPos for position 'i' in the string.
-			SrcPos posAt(nat i) const;
+			// Reverse arrays in a node.
+			void reverseTreeNode(State *state, Object *node) const;
+
+			// Get all rules in progress for a specific state (for error messages).
+			map<String, set<String>> inProgress(const StateSet &step) const;
 		};
 
 

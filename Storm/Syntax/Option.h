@@ -116,7 +116,7 @@ namespace storm {
 			OptionIter STORM_FN firstB();
 
 			// Output which supports adding a marker.
-			void output(wostream &to, nat mark) const;
+			void output(wostream &to, nat mark, bool bindings = true) const;
 
 		protected:
 			virtual void output(wostream &to) const;
@@ -173,6 +173,12 @@ namespace storm {
 
 			// Load contents.
 			virtual Bool STORM_FN loadAll();
+
+			// All members needing initialization (arrays).
+			vector<TypeVar *> arrayMembers;
+
+			// Add members.
+			virtual void STORM_FN add(Par<Named> m);
 
 		protected:
 			virtual void output(wostream &to) const;

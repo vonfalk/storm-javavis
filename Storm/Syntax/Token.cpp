@@ -8,6 +8,13 @@ namespace storm {
 		Token::Token() : target(null) {}
 
 		void Token::output(wostream &to) const {
+			output(to, true);
+		}
+
+		void Token::output(wostream &to, bool bindings) const {
+			if (!bindings)
+				return;
+
 			// Output where to store the data.
 			if (target) {
 				// TODO: different syntax depending on how we use the data later on?
@@ -21,9 +28,9 @@ namespace storm {
 
 		RegexToken::RegexToken(Par<Str> regex) : regex(regex->v.unescape(true)) {}
 
-		void RegexToken::output(wostream &to) const {
+		void RegexToken::output(wostream &to, bool bindings) const {
 			to << '"' << regex << '"';
-			Token::output(to);
+			Token::output(to, bindings);
 		}
 
 		/**
@@ -32,9 +39,9 @@ namespace storm {
 
 		RuleToken::RuleToken(Par<Rule> rule) : rule(rule) {}
 
-		void RuleToken::output(wostream &to) const {
+		void RuleToken::output(wostream &to, bool bindings) const {
 			to << rule->identifier();
-			Token::output(to);
+			Token::output(to, bindings);
 		}
 
 

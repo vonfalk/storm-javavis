@@ -36,6 +36,20 @@ BEGIN_TEST(ArrayTest) {
 
 	CHECK(DbgVal::clear());
 
+
+	// Reverse it as well!
+	for (nat i = 0; i < 10; i++)
+		array->push(DbgVal(i));
+
+	array->reverse();
+
+	for (nat i = 0; i < 10; i++)
+		CHECK_EQ(array->at(i).get(), 9 - i);
+
+	array->clear();
+
+	CHECK(DbgVal::clear());
+
 } END_TEST
 
 

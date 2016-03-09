@@ -63,6 +63,9 @@ namespace storm {
 		// Erase one element.
 		void STORM_FN erase(Nat id);
 
+		// Reverse the array.
+		void STORM_FN reverse();
+
 		// Raw operations.
 		inline void pushRaw(const void *value) {
 			ensure(size + 1);

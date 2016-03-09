@@ -83,6 +83,51 @@ namespace storm {
 		}
 	}
 
+	void ArrayBase::reverse() {
+		if (size == 0)
+			return;
+
+		// Find space for one temporary element somewhere.
+		bool freeTemp = false;
+		byte *temp;
+		if (size >= capacity) {
+			freeTemp = true;
+			temp = new byte[handle.size];
+		} else {
+			// Take the element right after the last one.
+			temp = data + size*handle.size;
+		}
+
+		try {
+			nat first = 0;
+			nat last = size;
+
+			while ((first != last) && (first != --last)) {
+				// Swap [first] and [last]...
+				byte *firstPtr = data + first*handle.size;
+				byte *lastPtr = data + last*handle.size;
+
+				// If anything goes wrong here, we're kind of screwed, so I won't bother trying to
+				// fix the mess at the moment...
+				// TODO: Fix the mess!
+				(*handle.create)(temp, firstPtr);
+				(*handle.destroy)(firstPtr);
+				(*handle.create)(firstPtr, lastPtr);
+				(*handle.destroy)(lastPtr);
+				(*handle.create)(lastPtr, temp);
+				(*handle.destroy)(temp);
+
+				first++;
+			}
+
+			if (freeTemp)
+				delete []temp;
+		} catch (...) {
+			if (freeTemp)
+				delete []temp;
+		}
+	}
+
 	void ArrayBase::destroy(byte *data, nat elements) {
 		if (data == null)
 			return;

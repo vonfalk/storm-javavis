@@ -2,6 +2,8 @@
 #include "Parser.h"
 #include "ParserTemplate.h"
 #include "Exception.h"
+#include "Shared/Format.h"
+#include "Lib/ArrayTemplate.h"
 
 #include <deque>
 #include <algorithm>
@@ -29,7 +31,8 @@ namespace storm {
 
 		void ParserBase::output(wostream &to) const {
 			Auto<Rule> r = rootRule();
-			to << L"Parser for " << r->name << L", currently using " << stateCount() << L" states.";
+			to << L"Parser for " << r->name << L", currently using " << stateCount() << L" states = "
+			   << toBytes(byteCount()) << L".";
 		}
 
 		Rule *ParserBase::rootRule() const {
@@ -90,20 +93,60 @@ namespace storm {
 			return stateAlloc.count();
 		}
 
+		Nat ParserBase::byteCount() const {
+			return stateAlloc.count() * sizeof(State);
+		}
+
 		Bool ParserBase::hasError() {
-			// Unparsed text?
-			if (steps.back().count() == 0)
-				return true;
-
-			// Do we have the finish state?
-			if (finish())
-				return false;
-
-			return true;
+			return lastFinish < steps.size() - 1;
 		}
 
 		SyntaxError ParserBase::error() const {
-			return SyntaxError(SrcPos(), L"TODO!");
+			nat pos = lastStep();
+			std::wostringstream msg;
+
+			if (pos == steps.size() - 1)
+				msg << L"Unexpected end of stream.\n";
+			else
+				msg << L"Unexpected '" << String::escape(src->v[pos]) << L"'.\n";
+
+			msg << L"In progress:";
+
+			typedef map<String, set<String>> Data;
+			Data rules = inProgress(steps[pos]);
+			for (Data::iterator i = rules.begin(); i != rules.end(); ++i) {
+				msg << endl << i->first;
+
+				set<String> &v = i->second;
+				for (set<String>::iterator j = v.begin(); j != v.end(); ++j) {
+					msg << endl << L" from: " << *j;
+				}
+			}
+
+			return SyntaxError(srcPos + pos, msg.str());
+		}
+
+		map<String, set<String>> ParserBase::inProgress(const StateSet &step) const {
+			map<String, set<String>> r;
+
+			for (nat i = 0; i < step.count(); i++) {
+				State *now = step[i];
+				Rule *rule = now->pos.rulePtr();
+				String key = ::toS(now->pos);
+				set<String> &v = r[key];
+
+				// Find all states that instantiated this one.
+				const StateSet &src = steps[now->from];
+				for (nat j = 0; j < src.count(); j++) {
+					if (RuleToken *token = src[j]->getRule()) {
+						if (token->rule.borrow() == rule) {
+							v.insert(::toS(src[j]->pos));
+						}
+					}
+				}
+			}
+
+			return r;
 		}
 
 		void ParserBase::throwError() const {
@@ -122,12 +165,6 @@ namespace storm {
 
 			// First step is never empty.
 			return 0;
-		}
-
-		SrcPos ParserBase::posAt(nat i) const {
-			SrcPos c = srcPos;
-			c.offset += i;
-			return c;
 		}
 
 
@@ -375,20 +412,31 @@ namespace storm {
 					continue;
 
 				int offset = token->target->offset().current();
-				Object *&dest = OFFSET_IN(result.borrow(), offset, Object *);
 
-				// Note: currently assuming no arrays...
+				Object *match = null;
 				if (as<RegexToken>(token)) {
 					nat from = prev->step;
 					nat to = at->step;
 
-					Auto<SStr> match = CREATE(SStr, this, src->v.substr(from, to - from), posAt(from));
-					dest = match.ret();
+					match = CREATE(SStr, this, src->v.substr(from, to - from), srcPos + from);
 				} else if (as<RuleToken>(token)) {
 					assert(at->completed, L"Rule token not completed!");
-					dest = tree(at->completed);
+					match = tree(at->completed);
+				}
+
+				Object *&dest = OFFSET_IN(result.borrow(), offset, Object *);
+
+				if (isArray(token->target->varType)) {
+					// Arrays are initialized earlier.
+					ArrayP<Object> *array = (ArrayP<Object> *)dest;
+					array->push(match);
+				} else {
+					dest = match;
 				}
 			}
+
+			// Reverse all arrays in this node, as we're adding them backwards.
+			reverseTreeNode(from, result.borrow());
 
 			return result.ret();
 		}
@@ -404,7 +452,29 @@ namespace storm {
 			// Make 'r' into the correct subclass.
 			setVTable(r);
 
+			// Create any arrays needed.
+			for (nat i = 0; i < type->arrayMembers.size(); i++) {
+				TypeVar *v = type->arrayMembers[i];
+				int offset = v->offset().current();
+				Object *&dest = OFFSET_IN(r, offset, Object *);
+				// This will actually create the correct subtype, as long as we're creating
+				// something inherited from Object (which we are).
+				dest = new (v->varType.type) ArrayP<Object>();
+			}
+
 			return r;
+		}
+
+		void ParserBase::reverseTreeNode(State *from, Object *node) const {
+			OptionType *type = from->pos.optionPtr()->typePtr();
+
+			for (nat i = 0; i < type->arrayMembers.size(); i++) {
+				TypeVar *v = type->arrayMembers[i];
+				int offset = v->offset().current();
+
+				ArrayP<Object> *array = OFFSET_IN(node, offset, ArrayP<Object> *);
+				array->reverse();
+			}
 		}
 
 		State *ParserBase::finish() const {

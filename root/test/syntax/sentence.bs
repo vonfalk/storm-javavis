@@ -25,17 +25,19 @@ void testSentence() {
 	Parser<Sentence> parser;
 	parser.parse(s, Url());
 	print("Used " # parser.stateCount # " states.");
+	print("Used " # parser.byteCount.toBytes);
 	if (parser.hasError)
 		parser.throwError;
 	print("Syntax tree: " # parser.tree);
 }
 
 void testArray() {
-	Str s = "do birds fly? do sheep sleep?";
+	Str s = "do birds fly? do cats sleep?";
 
 	Parser<Paragraph> parser;
 	parser.parse(s, Url());
 	print("Used " # parser.stateCount # " states.");
+	print("Used " # parser.byteCount.toBytes);
 	if (parser.hasError)
 		parser.throwError;
 	print("Syntax tree: " # parser.tree);
@@ -46,6 +48,7 @@ void testEmpty() {
 	Parser<SParen> parser;
 	parser.parse(s, Url());
 	print("Used " # parser.stateCount # " states.");
+	print("Used " # parser.byteCount.toBytes);
 	if (parser.hasError)
 		parser.throwError;
 }
