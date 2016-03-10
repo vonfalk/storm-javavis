@@ -137,6 +137,9 @@ namespace storm {
 		// Start shutting down the libraries now. This requires all types to be alive.
 		loadedLibs.shutdown();
 
+		// Remove any thread names so they do not mess things up when freeing the name tree.
+		cppThreadNames.clear();
+
 		// We need to destroy all types last, otherwise we will crash badly!
 		vector<Auto<Type>> types = rootPkg->findTypes();
 
@@ -231,6 +234,18 @@ namespace storm {
 	void Engine::thread(uintptr_t id, Par<Thread> t) {
 		assert(cppThreads.count(id) == 0, L"A thread with this id has already been created.");
 		cppThreads.insert(make_pair(id, Auto<Thread>(t)));
+	}
+
+	NamedThread *Engine::threadName(uintptr_t id) {
+		ThreadNameMap::const_iterator i = cppThreadNames.find(id);
+		if (i == cppThreadNames.end())
+			return null;
+		else
+			return i->second.borrow();
+	}
+
+	void Engine::threadName(uintptr_t id, Par<NamedThread> t) {
+		cppThreadNames.insert(make_pair(id, Auto<NamedThread>(t)));
 	}
 
 	Package *Engine::package(const String &path, bool create) {

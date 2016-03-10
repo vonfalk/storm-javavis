@@ -5,7 +5,11 @@
 namespace storm {
 
 	Thread *DeclThread::thread(Engine &e) const {
-		return e.thread((uintptr_t)&createFn, createFn);
+		return e.thread(identifier(), createFn);
+	}
+
+	NamedThread *DeclThread::threadName(Engine &e) const {
+		return e.threadName(identifier());
 	}
 
 	void DeclThread::force(Engine &e, Thread *to) {

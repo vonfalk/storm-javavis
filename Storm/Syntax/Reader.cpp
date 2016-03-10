@@ -3,6 +3,7 @@
 #include "Parse.h"
 #include "Rule.h"
 #include "Option.h"
+#include "Lookup.h"
 #include "Engine.h"
 #include "Exception.h"
 
@@ -61,7 +62,7 @@ namespace storm {
 
 			Scope *root = engine().scope();
 
-			Auto<ScopeExtra> lookup = CREATE(ScopeExtra, this);
+			Auto<SyntaxLookup> lookup = CREATE(SyntaxLookup, this);
 			for (Nat i = 0; i < contents->use->count(); i++) {
 				Auto<Name> name = contents->use->at(i);
 				Auto<Named> found = root->find(name);
@@ -71,10 +72,7 @@ namespace storm {
 				lookup->add(found);
 			}
 
-			// Add core as well. TODO: Needed?
-			Package *core = engine().package(L"core");
-			if (core)
-				lookup->add(core);
+			// Nothing more to do. core is included by default, and SStr is properly resolved by SyntaxLookup.
 
 			scope = Scope(pkg, lookup);
 		}

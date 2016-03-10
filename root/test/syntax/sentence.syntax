@@ -41,7 +41,7 @@ Sentence[3] => Statement(noun, verb) : "do", Plural noun, Verb verb - "\?" = Que
 // Test for repeated things.
 Array<Statement> Paragraph();
 
-Paragraph => Array<Statement>() : (Sentence push - SEDelim)*;
+Paragraph => Array<Statement>() : (Sentence -> push - SEDelim)*;
 
 
 // Test so that empty rules still work.

@@ -132,10 +132,10 @@ namespace storm {
 			void loadTokens(Par<OptionDecl> decl, Par<Rule> delim, const Scope &scope);
 
 			// Add a single token to us.
-			void addToken(Par<TokenDecl> decl, Par<Rule> delim, const SrcPos &optionPos, const Scope &scope);
+			void addToken(Par<TokenDecl> decl, Par<Rule> delim, const SrcPos &pos, const Scope &scope, Nat &counter);
 
 			// Create a target for a token (if needed).
-			TypeVar *createTarget(Par<TokenDecl> decl, Par<Token> token, Nat pos);
+			TypeVar *createTarget(Par<TokenDecl> decl, Par<Token> token, Nat pos, Nat &counter);
 		};
 
 		/**

@@ -46,6 +46,25 @@ namespace storm {
 		to << l;
 	}
 
+	wrap::Variable CodeGen::addParam(Value type) {
+		return addParam(type, false);
+	}
+
+	wrap::Variable CodeGen::addParam(Value type, Bool addRef) {
+		using namespace code;
+
+		if (type.isValue()) {
+			return frame.createParameter(type.size(), type.isFloat(), type.destructor(), freeOnBoth | freePtr);
+		} else if (addRef) {
+			Variable v = frame.createParameter(type.size(), false, type.destructor());
+			if (type.refcounted())
+				to << code::addRef(v);
+			return v;
+		} else {
+			return frame.createParameter(type.size(), false);
+		}
+	}
+
 	void CodeGen::returnType(Value type, Bool isMember) {
 		assert(retType == Value(), L"Trying to re-set the return type of CodeGen.");
 		retType = type;
@@ -115,17 +134,6 @@ namespace storm {
 	/**
 	 * Create a variable.
 	 */
-
-	wrap::Variable parameter(Par<CodeGen> g, Value v) {
-		code::FreeOpt opt = code::freeOnNone;
-		code::Value dtor = v.destructor();
-
-		if (v.isValue()) {
-			opt = code::freeOnBoth | code::freePtr;
-		}
-
-		return g->frame.createParameter(v.size(), v.isFloat(), dtor, opt);
-	}
 
 	VarInfo variable(Frame &frame, Block block, const Value &v) {
 		code::FreeOpt opt = code::freeOnBoth;

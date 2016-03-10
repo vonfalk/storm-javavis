@@ -32,12 +32,14 @@ namespace storm {
 			repEnd = decl->repEnd;
 			repType = decl->repType;
 
+			Nat counter = 0;
+
 			for (Nat i = 0; i < decl->tokens->count(); i++) {
-				addToken(decl->tokens->at(i), delim, decl->pos, scope);
+				addToken(decl->tokens->at(i), delim, decl->pos, scope, counter);
 			}
 		}
 
-		void Option::addToken(Par<TokenDecl> decl, Par<Rule> delim, const SrcPos &optionPos, const Scope &scope) {
+		void Option::addToken(Par<TokenDecl> decl, Par<Rule> delim, const SrcPos &pos, const Scope &scope, Nat &counter) {
 			Auto<Token> token;
 
 			if (RegexTokenDecl *r = as<RegexTokenDecl>(decl.borrow())) {
@@ -53,14 +55,14 @@ namespace storm {
 				if (delim) {
 					token = CREATE(DelimToken, this, delim);
 				} else {
-					throw SyntaxError(optionPos, L"No delimiter was declare in this file.");
+					throw SyntaxError(pos, L"No delimiter was declare in this file.");
 				}
 			} else {
 				throw InternalError(L"Unknown sub-type to TokenDecl found: " + ::toS(decl));
 			}
 
 			if (decl->store != null || decl->invoke != null) {
-				Auto<TypeVar> r = createTarget(decl, token, tokens->count());
+				Auto<TypeVar> r = createTarget(decl, token, tokens->count(), counter);
 				if (r) {
 					owner->add(r);
 					token->target = r.borrow();
@@ -70,7 +72,7 @@ namespace storm {
 			tokens->push(token);
 		}
 
-		TypeVar *Option::createTarget(Par<TokenDecl> decl, Par<Token> token, Nat pos) {
+		TypeVar *Option::createTarget(Par<TokenDecl> decl, Par<Token> token, Nat pos, Nat &counter) {
 			Auto<TypeVar> r;
 			Value type;
 
@@ -93,7 +95,8 @@ namespace storm {
 			if (decl->store) {
 				r = CREATE(TypeVar, this, owner, type, decl->store->v);
 			} else if (decl->invoke) {
-				TODO(L"Invoke not supported yet!");
+				String name = decl->invoke->v + ::toS(counter++);
+				r = CREATE(TypeVar, this, owner, type, name);
 			}
 
 			return r.ret();

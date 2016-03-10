@@ -154,20 +154,8 @@ namespace storm {
 				return;
 			assert(var.var() == Variable::invalid, L"Already created!");
 
-			Variable z;
-			if (result.isValue()) {
-				z = state->frame.createParameter(result.size(), false, result.destructor(), freeOnBoth | freePtr);
-			} else if (constant) {
-				// Borrowed ptr.
-				z = state->frame.createParameter(result.size(), false);
-			} else {
-				z = state->frame.createParameter(result.size(), false, result.destructor());
-			}
-
+			Variable z = state->addParam(result, !constant).v;
 			var = VarInfo(z);
-
-			if (result.refcounted() && !constant)
-				state->to << code::addRef(var.var());
 		}
 
 	}

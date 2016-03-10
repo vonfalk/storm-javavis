@@ -87,7 +87,7 @@ namespace storm {
 		virtual void STORM_FN add(Par<Named> m);
 
 		// Clear contents. Mainly used for clean exits.
-		void clear();
+		virtual void clear();
 
 		// What kind of built-in type is this? Returns 'user' if it is not a built-in type.
 		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::user; }

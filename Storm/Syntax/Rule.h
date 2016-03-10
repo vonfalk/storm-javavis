@@ -24,10 +24,34 @@ namespace storm {
 			// Scope.
 			Scope scope;
 
-			// More to come...
+			// Get parameters and result.
+			Array<Value> *STORM_FN params();
+			Value STORM_FN result();
 
 			// Lazy-loading.
 			virtual Bool STORM_FN loadAll();
+
+			// Proper unloading.
+			virtual void clear();
+
+		private:
+			// The rule declaration. Set to null when it has been loaded.
+			Auto<RuleDecl> decl;
+
+			// Parameters to the transform function.
+			Auto<Array<Value>> tfmParams;
+
+			// Result from the transform function.
+			Value tfmResult;
+
+			// Remember our throwing function.
+			Auto<Function> throwFn;
+
+			// Initialize tfmParams and tfmResult.
+			void initTypes();
+
+			// Create the 'transform' function.
+			CodeGen *CODECALL createTransform();
 		};
 
 	}

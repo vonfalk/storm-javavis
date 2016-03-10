@@ -1,5 +1,6 @@
 use core:debug;
 use core:io;
+use core:lang;
 use lang:syntax;
 
 // Type for storing a sentence.
@@ -13,11 +14,15 @@ class Statement {
 			verb = verb;
 		}
 	}
+
+	Str toS() {
+		"Statement: " # noun.v # ", " # verb.v;
+	}
 }
 
 
 
-void testSentence() {
+void testSentence() on Compiler {
 	// Parse this:
 	Str s = "do birds fly?";
 	print("Parse: " # s);
@@ -28,10 +33,15 @@ void testSentence() {
 	print("Used " # parser.byteCount.toBytes);
 	if (parser.hasError)
 		parser.throwError;
-	print("Syntax tree: " # parser.tree);
+
+	var tree = parser.tree;
+	print("Syntax tree: " # tree);
+
+	var tfm = tree.transform();
+	print("Transformed: " # tfm);
 }
 
-void testArray() {
+void testArray() on Compiler {
 	Str s = "do birds fly? do cats sleep?";
 
 	Parser<Paragraph> parser;
@@ -43,7 +53,7 @@ void testArray() {
 	print("Syntax tree: " # parser.tree);
 }
 
-void testEmpty() {
+void testEmpty() on Compiler {
 	Str s = "()";
 	Parser<SParen> parser;
 	parser.parse(s, Url());

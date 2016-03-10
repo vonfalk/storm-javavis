@@ -9,9 +9,9 @@
 
 namespace storm {
 
-	bs::BSScope::BSScope() {}
+	bs::BSScope::BSScope() : ScopeLookup(L"void") {}
 
-	bs::BSScope::BSScope(Par<Url> file) : file(file) {}
+	bs::BSScope::BSScope(Par<Url> file) : ScopeLookup(L"void"), file(file) {}
 
 	Named *bs::BSScope::findHelper(const Scope &s, Par<SimpleName> name) {
 		if (Named *found = ScopeLookup::find(s, name))
@@ -38,16 +38,6 @@ namespace storm {
 
 
 		return findHelper(s, name);
-	}
-
-	Value bs::BSScope::value(const Scope &scope, Par<SimpleName> name, SrcPos pos) {
-		if (name->count() == 1) {
-			SimplePart *last = name->last().borrow();
-			if (last->name == L"void" && last->empty())
-				return Value();
-		}
-
-		return ScopeLookup::value(scope, name, pos);
 	}
 
 	void bs::BSScope::addSyntax(const Scope &from, Par<SyntaxSet> to) {

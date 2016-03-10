@@ -243,7 +243,7 @@ namespace storm {
 	// Helper macro to not get the preprocessor to choke on things like CREATE(FnPtr<A, B>);
 #define FN_PTR(...) FnPtr<__VA_ARGS__>
 
-	// Create functions. The CREATE macro does not play well with templates where there is more
+	// Create functions. The CREATE macro does not play well with templates where there are more
 	// than one parameter (problem with the pre-processor).
 
 	// Note that all these fnPtr does not respect any threading mode on static functions. Therefore:

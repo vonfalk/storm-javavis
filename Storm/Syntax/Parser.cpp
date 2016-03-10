@@ -27,6 +27,10 @@ namespace storm {
 			} else {
 				WARNING(L"The rule " << root << L" is not located in any package, not adding one by default.");
 			}
+
+			// Remember the thread for Rule objects (as we need to create them).
+			typeThread = root->runOn().thread->thread();
+			assert(typeThread, L"Make sure Rule is running on a thread!");
 		}
 
 		void ParserBase::output(wostream &to) const {
@@ -447,7 +451,7 @@ namespace storm {
 			// A bit ugly, but this is enough to be able to execute the destructor later on, and
 			// when populated it is as if we have executed the regular constructor.
 			void *mem = Object::operator new(type->size().current(), type);
-			Object *r = new (mem) Object();
+			Object *r = new (mem) TObject(typeThread);
 
 			// Make 'r' into the correct subclass.
 			setVTable(r);

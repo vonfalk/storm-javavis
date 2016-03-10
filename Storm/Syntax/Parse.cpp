@@ -166,7 +166,7 @@ namespace storm {
 
 		// Parses a name, eg foo.bar or foo<bar>.baz
 		static Name *parseName(Tokenizer &tok, Engine &e) {
-			Auto<Name> result = CREATE(Name, e);
+			Auto<SrcName> result = CREATE(SrcName, e);
 			bool first = true;
 
 			do {

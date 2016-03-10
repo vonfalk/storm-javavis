@@ -169,7 +169,7 @@ namespace storm {
 #endif
 
 	Thread *DeclThread::thread(Engine &e) const {
-		return e.thread((uintptr_t)&createFn, createFn);
+		return e.thread(identifier(), createFn);
 	}
 }
 

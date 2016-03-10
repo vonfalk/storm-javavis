@@ -129,8 +129,16 @@ namespace storm {
 		// as long as the compiler does. Returns a borrowed ptr.
 		Thread *thread(uintptr_t id, DeclThread::CreateFn create);
 
+		// Find the NamedThread object associated to a thread (if any). Threads declared by
+		// STORM_THREAD can be found this way. Returns a borrowed ptr. Returns null if no name is
+		// associated with this thread yet.
+		NamedThread *threadName(uintptr_t id);
+
 		// Set a specific thread to be used as a specific id.
 		void thread(uintptr_t id, Par<Thread> thread);
+
+		// Associate a name to a thread.
+		void threadName(uintptr_t id, Par<NamedThread> name);
 
 		// Get the default scope lookup.
 		inline Auto<ScopeLookup> scopeLookup() { assert(defScopeLookup); return defScopeLookup; }
@@ -193,9 +201,13 @@ namespace storm {
 		vector<Auto<Type> > cached;
 		vector<Auto<Type> > specialCached;
 
-		// Threads declared from C++
+		// Threads declared in C++
 		typedef hash_map<uintptr_t, Auto<Thread> > ThreadMap;
 		ThreadMap cppThreads;
+
+		// Threads named in C++
+		typedef hash_map<uintptr_t, Auto<NamedThread> > ThreadNameMap;
+		ThreadNameMap cppThreadNames;
 
 		// Maxium C++ VTable size.
 		nat cppVTableSize;

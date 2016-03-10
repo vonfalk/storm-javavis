@@ -32,6 +32,8 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		STORM_CTOR ScopeLookup();
+		STORM_CTOR ScopeLookup(Par<Str> voidName);
+		ScopeLookup(const String &voidName);
 
 		// Find 'name' in 'in'.
 		virtual MAYBE(Named) *STORM_FN find(const Scope &in, Par<SimpleName> name);
@@ -53,6 +55,9 @@ namespace storm {
 		static Package *corePkg(NameLookup *l);
 
 	private:
+		// What is 'void' called in this language (if any)?
+		String voidName;
+
 		// Find the next candidate for the standard algorithm. (not counting 'core').
 		static NameLookup *nextCandidate(NameLookup *prev);
 	};
@@ -129,6 +134,8 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR ScopeExtra();
+		STORM_CTOR ScopeExtra(Par<Str> voidName);
+		ScopeExtra(const String &voidName);
 
 		// Additional NameLookups to search (not recursively).
 		vector<NameLookup *> extra;

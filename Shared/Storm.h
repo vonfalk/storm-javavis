@@ -140,6 +140,10 @@ namespace storm {
 	using os::Lock;
 	using os::Sema;
 
+#ifdef STORM_COMPILER
+	class NamedThread;
+#endif
+
 	/**
 	 * Class used when declaring named threads from C++.
 	 */
@@ -152,7 +156,16 @@ namespace storm {
 		// Get the thread we are representing.
 		Thread *thread(Engine &e) const;
 
+		// Get our unique identifier.
+		inline uintptr_t identifier() const {
+			return (uintptr_t)&createFn;
+		}
+
 #ifdef STORM_COMPILER
+		// When in the compiler, we can also get the NamedThread object associated to this
+		// thread. It might be null during early startup or other inconvenient times.
+		NamedThread *threadName(Engine &e) const;
+
 		// Force the thread to something already created.
 		void force(Engine &e, Thread *to);
 #endif

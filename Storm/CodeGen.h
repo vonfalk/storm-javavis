@@ -28,6 +28,16 @@ namespace storm {
 		CodeGen *STORM_FN child(wrap::Block block);
 
 		/**
+		 * Parameters.
+		 */
+
+		// Add a parameter of 'type'. Calls the version below with 'addRef' = false.
+		wrap::Variable STORM_FN addParam(Value type);
+
+		// Add a parameter of 'type', if 'addRef' is true, then a reference is added to any object-parameters.
+		wrap::Variable STORM_FN addParam(Value type, Bool addRef);
+
+		/**
 		 * Return values.
 		 */
 
@@ -151,10 +161,7 @@ namespace storm {
 		Value t;
 	};
 
-	// Helper to create a variable from a parameter (this is common).
-	wrap::Variable STORM_FN parameter(Par<CodeGen> g, Value v);
-
-	// Helper to create a variable from a Value (this is common).
+	// Helper to create a variable from a Value (this is common). TODO: Move to CodeGen!
 	VarInfo variable(code::Frame &frame, code::Block block, const Value &v);
 
 	// Variations.

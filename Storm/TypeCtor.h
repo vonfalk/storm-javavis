@@ -23,7 +23,7 @@ namespace storm {
 
 	private:
 		// Generate code.
-		void generateCode(Type *type, Function *before);
+		void generateCode(Type *type, Function *before, NamedThread *beforeParam);
 	};
 
 

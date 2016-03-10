@@ -129,6 +129,10 @@ namespace storm {
 
 	ScopeLookup::ScopeLookup() {}
 
+	ScopeLookup::ScopeLookup(Par<Str> v) : voidName(v->v) {}
+
+	ScopeLookup::ScopeLookup(const String &v) : voidName(v) {}
+
 	Package *ScopeLookup::firstPkg(NameLookup *l) {
 		while (!as<Package>(l))
 			l = l->parent();
@@ -182,6 +186,12 @@ namespace storm {
 
 	Value ScopeLookup::value(const Scope &in, Par<SimpleName> name, SrcPos pos) {
 		// TODO: We may want to consider type aliases in the future, and implement 'void' that way.
+		if (!voidName.empty() && name->count() == 1) {
+			SimplePart *last = name->last().borrow();
+			if (last->name == voidName && last->empty())
+				return Value();
+		}
+
 		Auto<Named> found = find(in, name);
 		Type *t = as<Type>(found.borrow());
 		if (!t)
@@ -195,6 +205,10 @@ namespace storm {
 	 */
 
 	ScopeExtra::ScopeExtra() {}
+
+	ScopeExtra::ScopeExtra(Par<Str> v) : ScopeLookup(v) {}
+
+	ScopeExtra::ScopeExtra(const String &v) : ScopeLookup(v) {}
 
 	Named *ScopeExtra::find(const Scope &in, Par<SimpleName> name) {
 		if (Named *found = ScopeLookup::find(in, name))

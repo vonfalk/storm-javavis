@@ -14,21 +14,37 @@ namespace storm {
 		: Function(Value(), Type::CTOR, vector<Value>(1, Value::thisPtr(owner))) {
 
 		Function *before = null;
+		NamedThread *beforeParam = null;
 		Type *super = owner->super();
 
-		if (super) {
+		if (super == TObject::stormType(engine())) {
+			// Run the TObject constructor with a supplied parameter (if present).
+			RunOn on = owner->runOn();
+			if (on.state != RunOn::named)
+				throw InternalError(L"No thread supplied to TObject. Mark " + owner->identifier()
+									+ L" as running on a specific thread.");
+			assert(on.thread, L"No thread supplied even though state == named");
+
+			vector<Value> params(2);
+			params[0] = Value::thisPtr(super);
+			params[1] = Value::thisPtr(Thread::stormType(engine()));
+			Auto<SimplePart> part = CREATE(SimplePart, this, Type::CTOR, params);
+			Auto<Named> found = super->find(part);
+			before = as<Function>(found.borrow());
+
+			beforeParam = on.thread.borrow();
+		} else if (super) {
 			// We may need to run another function first...
 			before = super->defaultCtor();
-			if (!before)
-				throw InternalError(L"Did not find a default constructor in " + super->identifier());
-
-			// TODO: if the super class is TObject, we want to provide a default parameter here.
 		}
 
-		generateCode(owner, before);
+		if (!before)
+			throw InternalError(L"Did not find a default constructor in " + super->identifier());
+
+		generateCode(owner, before, beforeParam);
 	}
 
-	void TypeDefaultCtor::generateCode(Type *type, Function *before) {
+	void TypeDefaultCtor::generateCode(Type *type, Function *before, NamedThread *beforeParam) {
 		using namespace code;
 
 		Listing l;
@@ -38,6 +54,11 @@ namespace storm {
 
 		if (before) {
 			l << fnParam(dest);
+			if (beforeParam) {
+				// If this happens, we want to pass the parent thread to a TObject constructor.
+				l << fnParam(beforeParam->ref());
+			}
+
 			l << fnCall(before->ref(), retVoid());
 		}
 

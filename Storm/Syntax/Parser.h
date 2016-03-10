@@ -104,6 +104,9 @@ namespace storm {
 			// Last state containing a finish step.
 			nat lastFinish;
 
+			// Take note of the thread used for objects derived from Type.
+			Thread *typeThread;
+
 			// Process a single step.
 			bool process(nat step);
 

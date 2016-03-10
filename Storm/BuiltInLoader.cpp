@@ -166,6 +166,7 @@ namespace storm {
 			Thread *thread = t.decl->thread(e);
 			Auto<NamedThread> created = CREATE(NamedThread, e, String(t.name), thread);
 			into->add(created);
+			e.threadName(t.decl->identifier(), created);
 			threads.push_back(created);
 		}
 	}

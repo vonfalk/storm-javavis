@@ -32,9 +32,6 @@ namespace storm {
 			// Find stuff.
 			virtual Named *STORM_FN find(const Scope &from, Par<SimpleName> name);
 
-			// Find types.
-			virtual Value STORM_FN value(const Scope &from, Par<SimpleName> name, SrcPos pos);
-
 		private:
 			// Find helper.
 			virtual Named *findHelper(const Scope &from, Par<SimpleName> name);
