@@ -41,4 +41,7 @@ namespace storm {
 		virtual void output(wostream &to) const;
 	};
 
+	// C++ convenience.
+	Auto<SStr> sstr(Engine &e, const String &str);
+	Auto<SStr> sstr(Engine &e, const String &str, const SrcPos &pos);
 }

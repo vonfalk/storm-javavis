@@ -107,6 +107,9 @@ namespace storm {
 			// Take note of the thread used for objects derived from Type.
 			Thread *typeThread;
 
+			// Offset of 'pos' in all node objects.
+			int posOffset;
+
 			// Process a single step.
 			bool process(nat step);
 

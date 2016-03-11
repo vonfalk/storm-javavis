@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SyntaxObject.h"
 #include "Shared/Str.h"
+#include "Shared/Io/Url.h"
 
 namespace storm {
 
@@ -23,6 +24,15 @@ namespace storm {
 	}
 
 	void SStr::output(wostream &to) const {
-		to << *v << L"@" << pos;
+		to << *v << L"@" << steal(pos.file->name()) << '(' << pos.offset << ')';
 	}
+
+	Auto<SStr> sstr(Engine &e, const String &str) {
+		return CREATE(SStr, e, str);
+	}
+
+	Auto<SStr> sstr(Engine &e, const String &str, const SrcPos &pos) {
+		return CREATE(SStr, e, str, pos);
+	}
+
 }

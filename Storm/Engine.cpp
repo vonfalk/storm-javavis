@@ -177,6 +177,7 @@ namespace storm {
 		// Some of 'cached' may not be in 'types', since they may have been removed from the type
 		// tree. This should not happen, but it is annoying when this crashes due to another error,
 		// and this operation does not hurt performance by much at all.
+		// TODO? Call the destructor first, keeping the memory to avoid having a 'clear' function as well?
 		for (nat i = 0; i < types.size(); i++) {
 			types[i]->clear();
 		}

@@ -26,6 +26,7 @@ namespace storm {
 
 			// Get parameters and result.
 			Array<Value> *STORM_FN params();
+			ArrayP<Str> *STORM_FN names();
 			Value STORM_FN result();
 
 			// Lazy-loading.
@@ -40,6 +41,9 @@ namespace storm {
 
 			// Parameters to the transform function.
 			Auto<Array<Value>> tfmParams;
+
+			// Parameter names to the transform function.
+			Auto<ArrayP<Str>> tfmNames;
 
 			// Result from the transform function.
 			Value tfmResult;

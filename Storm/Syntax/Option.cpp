@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Option.h"
+#include "OptionTfm.h"
 #include "Rule.h"
 #include "TypeCtor.h"
 #include "TypeDtor.h"
@@ -66,6 +67,8 @@ namespace storm {
 				if (r) {
 					owner->add(r);
 					token->target = r.borrow();
+					if (decl->invoke)
+						token->invoke = decl->invoke;
 				}
 			}
 
@@ -77,7 +80,7 @@ namespace storm {
 			Value type;
 
 			if (as<RegexToken>(token.borrow())) {
-				type = Value::thisPtr(Str::stormType(engine()));
+				type = Value::thisPtr(SStr::stormType(engine()));
 			} else if (RuleToken *rule = as<RuleToken>(token.borrow())) {
 				type = Value::thisPtr(rule->rule);
 			} else {
@@ -202,7 +205,9 @@ namespace storm {
 
 		OptionType::OptionType(Par<Str> name, Par<OptionDecl> decl, Par<Rule> delim, Scope scope) :
 			Type(name->v, typeClass),
-			pos(pos) {
+			pos(pos),
+			decl(decl),
+			scope(scope) {
 
 			// Can not be created in initializer list as it accesses the vector in 'add'.
 			option = CREATE(Option, this, this, decl, delim, scope);
@@ -273,10 +278,15 @@ namespace storm {
 		}
 
 		bool OptionType::loadAll() {
+			assert(decl, L"loadAll called twice!");
+
 			// Load our functions!
+			Engine &e = engine;
 			Value me = Value::thisPtr(this);
 			Value str = Value::thisPtr(Str::stormType(this));
-			add(steal(nativeFunction(engine, str, L"toS", valList(1, me), &optionToS)));
+
+			add(steal(createTransformFn(decl, this, scope)));
+			add(steal(nativeFunction(e, str, L"toS", valList(1, me), &optionToS)));
 
 			// Add these last.
 			add(steal(CREATE(TypeDefaultCtor, this, this)));
@@ -284,7 +294,16 @@ namespace storm {
 			add(steal(CREATE(TypeDeepCopy, this, this)));
 			add(steal(CREATE(TypeDefaultDtor, this, this)));
 
+			// No need of remembering 'decl' anymore!
+			decl = null;
+
 			return Type::loadAll();
+		}
+
+		void OptionType::clear() {
+			decl = null;
+			scope = Scope();
+			Type::clear();
 		}
 
 		void OptionType::add(Par<Named> named) {

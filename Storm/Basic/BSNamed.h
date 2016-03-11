@@ -220,6 +220,7 @@ namespace storm {
 		// Special case of above, used when we find an expression like a.b(...). 'first' is inserted
 		// into the beginning of 'params' and used. This method inhibits automatic insertion of 'this'.
 		Expr *STORM_FN namedExpr(Par<Block> block, Par<SStr> name, Par<Expr> first, Par<Actual> params);
+		Expr *STORM_FN namedExpr(Par<Block> block, Par<SStr> name, Par<Expr> first);
 
 		// Make a regular function call return a future to the result instead of waiting for the result
 		// directly. Syntactically, this is made by adding 'spawn' to it.

@@ -38,10 +38,14 @@ Sentence[1] => Statement(noun, verb) : Plural noun, Verb verb = PluralAssert;
 Sentence[2] => Statement(noun, verb) : "the", Noun noun, Verb verb - "s" = SingularAssert;
 Sentence[3] => Statement(noun, verb) : "do", Plural noun, Verb verb - "\?" = Question;
 
+// Test for possibly nothing.
+Maybe<Statement> EmptySentence();
+EmptySentence => stmt : (Sentence stmt)?;
+
 // Test for repeated things.
 Array<Statement> Paragraph();
-
-Paragraph => Array<Statement>() : (Sentence -> push - SEDelim)*;
+Paragraph => stmt : (Sentence stmt - SEDelim)*;
+// Paragraph => Array<Statement>() : (Sentence -> push - SEDelim)*;
 
 
 // Test so that empty rules still work.

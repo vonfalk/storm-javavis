@@ -180,8 +180,18 @@ namespace storm {
 			// Add members.
 			virtual void STORM_FN add(Par<Named> m);
 
+			// Clear.
+			virtual void clear();
+
 		protected:
 			virtual void output(wostream &to) const;
+
+		private:
+			// The declaration (stored only until the first time 'loadAll' is called).
+			Auto<OptionDecl> decl;
+
+			// Save the scope for a while.
+			Scope scope;
 		};
 
 

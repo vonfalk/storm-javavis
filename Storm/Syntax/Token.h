@@ -23,6 +23,9 @@ namespace storm {
 			// If this token is captured, where to store it? (borrowed ptr).
 			TypeVar *target;
 
+			// If this token is to be sent to a member, which member?
+			STORM_VAR MAYBE(Auto<Str>) invoke;
+
 			// More competent output function.
 			virtual void output(wostream &to, bool bindings) const;
 

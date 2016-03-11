@@ -20,7 +20,20 @@ class Statement {
 	}
 }
 
+void testSimple() on Compiler {
+	Str s = "bird";
 
+	Parser<Noun> parser;
+	parser.parse(s, Url());
+	if (parser.hasError)
+		parser.throwError;
+
+	var tree = parser.tree;
+	print("Syntax tree: " # tree);
+
+	var tfm = tree.transform;
+	print("Transformed: " # tfm);
+}
 
 void testSentence() on Compiler {
 	// Parse this:
@@ -41,6 +54,17 @@ void testSentence() on Compiler {
 	print("Transformed: " # tfm);
 }
 
+void testMaybe() on Compiler {
+	Str s = "do birds fly?";
+
+	Parser<EmptySentence> parser;
+	parser.parse(s, Url());
+	var tree = parser.tree;
+	print("Syntax tree: " # tree);
+	Statement? tfm = tree.transform;
+	print("Transformed: " # tfm);
+}
+
 void testArray() on Compiler {
 	Str s = "do birds fly? do cats sleep?";
 
@@ -48,9 +72,10 @@ void testArray() on Compiler {
 	parser.parse(s, Url());
 	print("Used " # parser.stateCount # " states.");
 	print("Used " # parser.byteCount.toBytes);
-	if (parser.hasError)
-		parser.throwError;
-	print("Syntax tree: " # parser.tree);
+	var tree = parser.tree;
+	print("Syntax tree: " # tree);
+	Statement[] tfm = tree.transform;
+	print("Transformed: " # tfm);
 }
 
 void testEmpty() on Compiler {

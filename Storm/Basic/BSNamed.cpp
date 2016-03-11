@@ -638,6 +638,13 @@ namespace storm {
 		return findTarget(block, n, name->pos, params, false);
 	}
 
+	bs::Expr *bs::namedExpr(Par<Block> block, Par<SStr> name, Par<Expr> first) {
+		Auto<Actual> params = CREATE(Actual, block);
+		params->add(first);
+		Auto<SimpleName> n = CREATE(SimpleName, name, name->v);
+		return findTarget(block, n, name->pos, params, false);
+	}
+
 	bs::Expr *STORM_FN bs::spawnExpr(Par<Expr> expr) {
 		FnCall *fnCall = as<FnCall>(expr.borrow());
 		if (!fnCall)

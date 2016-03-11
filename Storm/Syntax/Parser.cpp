@@ -31,6 +31,12 @@ namespace storm {
 			// Remember the thread for Rule objects (as we need to create them).
 			typeThread = root->runOn().thread->thread();
 			assert(typeThread, L"Make sure Rule is running on a thread!");
+
+			Auto<SimplePart> part = CREATE(SimplePart, this, L"pos", valList(1, Value::thisPtr(root)));
+			Auto<Named> found = root->find(part);
+			TypeVar *posVar = as<TypeVar>(found.borrow());
+			assert(posVar, L"'pos' not found in syntax node types!");
+			posOffset = posVar->offset().current();
 		}
 
 		void ParserBase::output(wostream &to) const {
@@ -455,6 +461,10 @@ namespace storm {
 
 			// Make 'r' into the correct subclass.
 			setVTable(r);
+
+			// Fill 'pos'.
+			void *posMem = &OFFSET_IN(r, posOffset, SrcPos);
+			new (posMem) SrcPos(srcPos + from->step);
 
 			// Create any arrays needed.
 			for (nat i = 0; i < type->arrayMembers.size(); i++) {

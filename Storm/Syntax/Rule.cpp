@@ -15,7 +15,8 @@ namespace storm {
 			Type(decl->name->v, typeClass),
 			pos(decl->pos),
 			scope(scope),
-			decl(decl) {
+			decl(decl),
+			tfmNames(decl->paramNames) {
 
 			// Always run on the compiler thread for now.
 			setThread(Compiler::decl.threadName(engine));
@@ -46,6 +47,7 @@ namespace storm {
 			// We need to de-allocate anything that could cause trouble when we're destroyed (as
 			// we're destroyed very late).
 			tfmParams = null;
+			tfmNames = null;
 			decl = null;
 			scope = Scope();
 
@@ -57,6 +59,9 @@ namespace storm {
 
 			Engine &e = engine;
 			Value me = Value::thisPtr(this);
+
+			// Position in the source this node was instantiated.
+			add(steal(CREATE(TypeVar, this, this, Value(SrcPos::stormType(e)), L"pos")));
 
 			// Transform function. This should be overloaded by all options.
 			Auto<FnPtr<CodeGen *>> tfm = memberWeakPtr(e, this, &Rule::createTransform);
@@ -111,11 +116,20 @@ namespace storm {
 		}
 
 		Array<Value> *Rule::params() {
+			initTypes();
+
 			Auto<Array<Value>> t = tfmParams;
 			return t.ret();
 		}
 
+		ArrayP<Str> *Rule::names() {
+			Auto<ArrayP<Str>> t = tfmNames;
+			return t.ret();
+		}
+
 		Value Rule::result() {
+			initTypes();
+
 			return tfmResult;
 		}
 

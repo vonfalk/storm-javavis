@@ -153,7 +153,7 @@ namespace storm {
 			STORM_CTOR FnBody(Par<BSRawFn> owner, Scope scope);
 			STORM_CTOR FnBody(Par<BSFunction> owner);
 
-			// Store the result type.
+			// Store the result type (needed for 'return' among others).
 			STORM_VAR Value type;
 		};
 

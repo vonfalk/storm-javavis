@@ -14,8 +14,18 @@ namespace storm {
 			initTo(params);
 		}
 
+		bs::Var::Var(Par<Block> block, Value type, Par<SStr> name, Par<Actual> params) {
+			init(block, type.asRef(false), name);
+			initTo(params);
+		}
+
 		bs::Var::Var(Par<Block> block, Par<SrcName> type, Par<SStr> name, Par<Expr> init) {
 			this->init(block, block->scope.value(type), name);
+			initTo(init);
+		}
+
+		bs::Var::Var(Par<Block> block, Value type, Par<SStr> name, Par<Expr> init) {
+			this->init(block, type.asRef(false), name);
 			initTo(init);
 		}
 

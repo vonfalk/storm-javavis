@@ -17,8 +17,11 @@ namespace storm {
 
 			// Output where to store the data.
 			if (target) {
-				// TODO: different syntax depending on how we use the data later on?
-				to << ' ' << target->name;
+				if (invoke) {
+					to << L" -> " << invoke;
+				} else {
+					to << ' ' << target->name;
+				}
 			}
 		}
 
