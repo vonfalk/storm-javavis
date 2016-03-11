@@ -17,18 +17,20 @@ SDelim : "[ \n\r\t]+";
 
 // Matching of a very small subset of natural-language sentences!
 
-SStr Verb();
+// TODO: Make '"foo" word' return a Str instead of a SStr. SStr is returned by
+// '"foo" @word', similar to 'Foo @word' (@ syntax is subject to change).
+Str Verb();
 Verb => word : "run" word;
 Verb => word : "fly" word;
 Verb => word : "swim" word;
 Verb => word : "sleep" word;
 
-SStr Noun();
+Str Noun();
 Noun => word : "dog" word;
 Noun => word : "bird" word;
 Noun => word : "cat" word;
 
-SStr Plural();
+Str Plural();
 Plural => word : Noun word - "s";
 
 
@@ -45,8 +47,10 @@ EmptySentence => stmt : (Sentence stmt)?;
 // Test for repeated things.
 Array<Statement> Paragraph();
 Paragraph => stmt : (Sentence stmt - SEDelim)*;
-// Paragraph => Array<Statement>() : (Sentence -> push - SEDelim)*;
 
+// Test for -> syntax.
+Array<Statement> ParCall();
+ParCall => Array<Statement>() : Sentence -> push (, Sentence -> push)*;
 
 // Test so that empty rules still work.
 void SEDelim();

@@ -23,6 +23,10 @@ namespace storm {
 		v = CREATE(Str, engine(), str);
 	}
 
+	Str *SStr::transform() const {
+		return Auto<Str>(v).ret();
+	}
+
 	void SStr::output(wostream &to) const {
 		to << *v << L"@" << steal(pos.file->name()) << '(' << pos.offset << ')';
 	}

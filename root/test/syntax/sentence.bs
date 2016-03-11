@@ -5,10 +5,10 @@ use lang:syntax;
 
 // Type for storing a sentence.
 class Statement {
-	SStr noun;
-	SStr verb;
+	Str noun;
+	Str verb;
 
-	ctor(SStr noun, SStr verb) {
+	ctor(Str noun, Str verb) {
 		init() {
 			noun = noun;
 			verb = verb;
@@ -16,7 +16,7 @@ class Statement {
 	}
 
 	Str toS() {
-		"Statement: " # noun.v # ", " # verb.v;
+		"Statement: " # noun # ", " # verb;
 	}
 }
 
@@ -72,6 +72,17 @@ void testArray() on Compiler {
 	parser.parse(s, Url());
 	print("Used " # parser.stateCount # " states.");
 	print("Used " # parser.byteCount.toBytes);
+	var tree = parser.tree;
+	print("Syntax tree: " # tree);
+	Statement[] tfm = tree.transform;
+	print("Transformed: " # tfm);
+}
+
+void testCall() on Compiler {
+	Str s = "do birds fly? do cats sleep?";
+
+	Parser<ParCall> parser;
+	parser.parse(s, Url());
 	var tree = parser.tree;
 	print("Syntax tree: " # tree);
 	Statement[] tfm = tree.transform;

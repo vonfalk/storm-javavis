@@ -91,7 +91,7 @@ namespace storm {
 
 			if (me) {
 				// Execute members of 'me'.
-				TODO(L"Execute stuff!");
+				executeMe(root, me);
 
 				// Return 'me' if it was declared.
 				root->add(me);
@@ -100,6 +100,10 @@ namespace storm {
 			PVAR(root);
 			return root.ret();
 		}
+
+		/**
+		 * Variables.
+		 */
 
 		bs::Expr *TransformFn::createMe(Par<ExprBlock> in) {
 			if (!result)
@@ -161,13 +165,12 @@ namespace storm {
 		LocalVar *TransformFn::createVar(Par<ExprBlock> in, const String &name, nat pos) {
 			Token *token = source->tokens->at(pos).borrow();
 
-			if (RegexToken *regex = as<RegexToken>(token)) {
-				return createPlainVar(in, name, regex);
-			} else if (RuleToken *rule = as<RuleToken>(token)) {
-				return createRuleVar(in, name, rule, pos);
-			} else {
-				throw InternalError(L"Unknown subtype of Token found: " + token->myType->identifier());
-			}
+			// TODO:
+			// if (<raw tree>) {
+			// 	return createPlainVar(in, name, token);
+			// }
+
+			return createTfmVar(in, name, token, pos);
 		}
 
 		LocalVar *TransformFn::createPlainVar(Par<ExprBlock> in, const String &name, Par<Token> token) {
@@ -182,32 +185,16 @@ namespace storm {
 			return v->var();
 		}
 
-		LocalVar *TransformFn::createRuleVar(Par<ExprBlock> in, const String &name, Par<RuleToken> token, nat pos) {
+		LocalVar *TransformFn::createTfmVar(Par<ExprBlock> in, const String &name, Par<Token> token, nat pos) {
 			Engine &e = engine();
 
+			Type *srcType = tokenType(token);
 			TypeVar *src = token->target;
-			ArrayP<Str> *params = tokenParams->at(pos).borrow();
 			Auto<MemberVarAccess> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), src);
 
 			// Prepare parameters.
-			Auto<Actual> actuals = CREATE(Actual, this);
-			if (params) {
-				for (nat i = 0; i < params->count(); i++)
-					actuals->add(steal(findVar(in, params->at(i)->v)));
-			}
-
-			// Find the transform function to call on this rule.
-			vector<Value> types = actuals->values();
-			types.insert(types.begin(), Value::thisPtr(token->rule));
-
-			Auto<SimplePart> tfmName = CREATE(SimplePart, this, L"transform", types);
-			Auto<Named> foundTfm = token->rule->find(tfmName);
-			Function *tfmFn = as<Function>(foundTfm.borrow());
-			if (!tfmFn) {
-				throw SyntaxError(this->pos, L"Can not transform a " + ::toS(token->rule->identifier()) +
-								L" with parameters: " + join(actuals->values(), L", ") + L".");
-			}
-
+			Auto<Actual> actuals = createActuals(in, pos);
+			Function *tfmFn = findTransformFn(srcType, actuals);
 			Auto<SStr> varName = sstr(e, name, this->pos);
 
 			// Transform each part of this rule...
@@ -231,17 +218,18 @@ namespace storm {
 				check->trueExpr(branch);
 				in->add(check);
 
-				//assert(false, L"Not implemented yet!");
 			} else if (isArray(src->varType)) {
 				v = CREATE(Var, this, in, wrapArray(tfmFn->result), varName, steal(CREATE(Actual, this)));
 				in->add(v);
 				Auto<Expr> readV = CREATE(LocalVarAccess, this, steal(v->var()));
 
-				Auto<Var> i = CREATE(Var, this, in, natType(e), sstr(e, L"i"), steal(CREATE(Constant, this, 0)));
+				// Extra block to avoid name collisions.
+				Auto<ExprBlock> forBlock = CREATE(ExprBlock, this, in);
+				Auto<Var> i = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_i"), steal(CREATE(Constant, this, 0)));
 				Auto<Expr> readI = CREATE(LocalVarAccess, this, steal(i->var()));
-				in->add(i);
+				forBlock->add(i);
 
-				Auto<For> loop = CREATE(For, this, in);
+				Auto<For> loop = CREATE(For, this, forBlock);
 				Auto<Expr> arrayCount = callMember(L"count", srcAccess);
 				loop->test(steal(callMember(L"<", readI, arrayCount)));
 				loop->update(steal(callMember(L"++*", readI)));
@@ -250,7 +238,8 @@ namespace storm {
 				Auto<Expr> tfmCall = CREATE(FnCall, this, tfmFn, actuals);
 				loop->body(steal(callMember(L"push", readV, tfmCall)));
 
-				in->add(loop);
+				forBlock->add(loop);
+				in->add(forBlock);
 
 			} else {
 				// Add 'this' parameter for the call.
@@ -263,6 +252,134 @@ namespace storm {
 			}
 
 			return v->var();
+		}
+
+
+		/**
+		 * Member function calling.
+		 */
+
+		void TransformFn::executeMe(Par<ExprBlock> in, Par<Expr> me) {
+			nat tokens = source->tokens->count();
+			nat firstBreak = min(source->repStart, tokens);
+			nat secondBreak = min(source->repEnd, tokens);
+
+			// Tokens before the capture starts.
+			for (nat i = 0; i < firstBreak; i++)
+				executeToken(in, me, source->tokens->at(i), i);
+
+			// Tokens in the capture.
+			if (source->repType == repZeroOne()) {
+				// Only Maybe<T>. If statement is sufficient!
+			} else if (source->repType == repOnePlus() || source->repType == repZeroPlus()) {
+				// Only Array<T>. Embed inside for-loop.
+				executeTokenLoop(firstBreak, secondBreak, in, me);
+			} else {
+				// Nothing special!
+				for (nat i = firstBreak; i < secondBreak; i++)
+					executeToken(in, me, source->tokens->at(i), i);
+			}
+
+			// Tokens after the capture.
+			for (nat i = secondBreak; i < tokens; i++)
+				executeToken(in, me, source->tokens->at(i), i);
+		}
+
+		void TransformFn::executeToken(Par<ExprBlock> in, Par<Expr> me, Par<Token> token, nat pos) {
+			// Not a token that invokes things.
+			if (!token->invoke)
+				return;
+
+			Auto<Expr> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), token->target);
+			executeToken(in, me, srcAccess, token, pos);
+		}
+
+		void TransformFn::executeToken(Par<ExprBlock> in, Par<Expr> me, Par<Expr> src, Par<Token> token, nat pos) {
+			// Not a token that invokes things.
+			if (!token->invoke)
+				return;
+
+			Type *srcType = tokenType(token);
+			Auto<Actual> actuals = createActuals(in, pos);
+			Function *tfmFn = findTransformFn(srcType, actuals);
+
+			actuals->addFirst(src);
+
+			Auto<Expr> call = CREATE(FnCall, this, tfmFn, actuals);
+			Auto<Expr> invoke = callMember(token->invoke->v, me, call);
+			in->add(invoke);
+		}
+
+		void TransformFn::executeTokenLoop(nat from, nat to, Par<ExprBlock> in, Par<Expr> me) {
+			Engine &e = engine();
+
+			// Find the minimal length to iterate...
+			Auto<Expr> minExpr;
+			for (nat i = from; i < to; i++) {
+				Token *t = source->tokens->at(i).borrow();
+				if (!t->invoke)
+					// Not interesting...
+					continue;
+
+				Auto<MemberVarAccess> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), t->target);
+				Auto<Expr> read = callMember(L"count", srcAccess);
+
+				if (minExpr)
+					minExpr = callMember(L"min", minExpr, read);
+				else
+					minExpr = read;
+			}
+
+			if (!minExpr)
+				// Nothing to execute in here!
+				return;
+
+			Auto<ExprBlock> forBlock = CREATE(ExprBlock, this, in);
+
+			Auto<Var> end = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_end"), minExpr);
+			forBlock->add(end);
+			Auto<Expr> readEnd = CREATE(LocalVarAccess, this, steal(end->var()));
+
+			// Iterate...
+			Auto<Var> i = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_i"), steal(CREATE(Constant, this, 0)));
+			Auto<Expr> readI = CREATE(LocalVarAccess, this, steal(i->var()));
+			forBlock->add(i);
+
+			Auto<For> loop = CREATE(For, this, forBlock);
+			loop->test(steal(callMember(L"<", readI, readEnd)));
+			loop->update(steal(callMember(L"++*", readI)));
+
+			Auto<ExprBlock> inLoop = CREATE(ExprBlock, this, loop);
+
+			for (nat i = from; i < to; i++) {
+				Token *t = source->tokens->at(i).borrow();
+				if (!t->invoke)
+					continue;
+
+				Auto<MemberVarAccess> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), t->target);
+				Auto<Expr> element = callMember(L"[]", srcAccess, readI);
+				executeToken(inLoop, me, element, t, i);
+			}
+
+			loop->body(inLoop);
+			forBlock->add(loop);
+			in->add(forBlock);
+		}
+
+
+		/**
+		 * Utilities.
+		 */
+
+		Type *TransformFn::tokenType(Par<Token> token) {
+			const Value &v = token->target->varType;
+			if (isMaybe(v)) {
+				return unwrapMaybe(v).type;
+			} else if (isArray(v)) {
+				return unwrapArray(v).type;
+			} else {
+				return v.type;
+			}
 		}
 
 		Expr *TransformFn::thisVar(Par<ExprBlock> in) {
@@ -291,6 +408,36 @@ namespace storm {
 			return source->tokens->count();
 		}
 
+		Actual *TransformFn::createActuals(Par<ExprBlock> in, nat n) {
+			ArrayP<Str> *params = tokenParams->at(n).borrow();
+			Auto<Actual> actuals = CREATE(Actual, this);
+
+			if (params) {
+				for (nat i = 0; i < params->count(); i++)
+					actuals->add(findVar(in, params->at(i)->v));
+			}
+
+			return actuals.ret();
+		}
+
+		Function *TransformFn::findTransformFn(Par<Type> type, Par<Actual> actuals) {
+			vector<Value> types = actuals->values();
+			types.insert(types.begin(), Value::thisPtr(type));
+
+			Auto<SimplePart> tfmName = CREATE(SimplePart, this, L"transform", types);
+			Auto<Named> foundTfm = type->find(tfmName);
+			Function *tfmFn = as<Function>(foundTfm.borrow());
+			if (!tfmFn) {
+				throw SyntaxError(pos, L"Can not transform a " + ::toS(type->identifier()) +
+								L" with parameters: " + join(actuals->values(), L", ") + L".");
+			}
+			return tfmFn;
+		}
+
+
+		/**
+		 * Static helpers.
+		 */
 
 		Function *createTransformFn(Par<OptionDecl> decl, Par<OptionType> type, Scope scope) {
 			return CREATE(TransformFn, decl, decl, type, type->rulePtr(), scope);

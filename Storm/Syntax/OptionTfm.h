@@ -46,6 +46,11 @@ namespace storm {
 			// any cycles.
 			set<String> lookingFor;
 
+
+			/**
+			 * Create variables.
+			 */
+
 			// Create the variable 'me' from the expression (if needed).
 			bs::Expr *createMe(Par<bs::ExprBlock> in);
 
@@ -58,14 +63,47 @@ namespace storm {
 			// Create a variable by copying what is in the syntax tree (the case with RegexTokens).
 			bs::LocalVar *createPlainVar(Par<bs::ExprBlock> in, const String &name, Par<Token> token);
 
-			// Create a variable from a RuleToken.
-			bs::LocalVar *createRuleVar(Par<bs::ExprBlock> in, const String &name, Par<RuleToken> token, nat pos);
+			// Create a variable from by transforming the original syntax tree.
+			bs::LocalVar *createTfmVar(Par<bs::ExprBlock> in, const String &name, Par<Token> token, nat pos);
+
+
+			/**
+			 * Generate code for invocations.
+			 */
+
+			// Generate member function calls.
+			void executeMe(Par<bs::ExprBlock> in, Par<bs::Expr> me);
+
+			// Generate member function call for token #pos.
+			void executeToken(Par<bs::ExprBlock> in, Par<bs::Expr> me, Par<Token> token, nat pos);
+
+			// Generate a member function call for token #pos, where 'src' is already loaded from 'this'.
+			void executeToken(Par<bs::ExprBlock> in, Par<bs::Expr> me, Par<bs::Expr> src, Par<Token> token, nat pos);
+
+			// Generate a loop executing tokens as many times as needed.
+			void executeTokenLoop(nat from, nat to, Par<bs::ExprBlock> in, Par<bs::Expr> me);
+
+
+			/**
+			 * Helpers.
+			 */
 
 			// Get 'this.
 			bs::Expr *thisVar(Par<bs::ExprBlock> in);
 
+			// Get the underlying return type for a token (borrowed ptr).
+			Type *tokenType(Par<Token> token);
+
 			// Find the token storing to 'name'. Returns something larger than # of tokens on failure.
 			nat findToken(const String &name);
+
+			// Generate parameters required for invoking token #n (this parameter not added).
+			bs::Actual *createActuals(Par<bs::ExprBlock> in, nat pos);
+
+			// Find the transform function for a given set of parameters (this parameter added automatically).
+			Function *findTransformFn(Par<Type> type, Par<bs::Actual> params);
+
+
 		};
 
 		// Create a function that transforms an option.

@@ -115,7 +115,10 @@ Expr exploreType(Block block, SrcName typeName) {
 	Expr type = createType(block, typeName);
 
 	Expr rootScope = namedExpr(block, name{core:lang:rootScope}, Actual());
-	Expr named = namedExpr(block, SStr("find"), type, Actual(rootScope));
+	Actual params;
+	params.add(rootScope);
+	params.add(type);
+	Expr named = namedExpr(block, name{core:lang:find}, params);
 	namedExpr(block, name{core:debug:print}, Actual(named));
 }
 

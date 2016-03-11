@@ -87,6 +87,8 @@ namespace storm {
 		add(stealAutoCast(inlinedFunction(engine, Value(), Type::CTOR, ri, simpleFn(&createLong))));
 
 		add(steal(nativeFunction(engine, Value(natType(engine)), L"hash", v, &longHash)));
+		add(steal(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Long>))));
+		add(steal(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Long>))));
 
 		return Type::loadAll();
 	}
@@ -159,6 +161,8 @@ namespace storm {
 		add(stealAutoCast(inlinedFunction(engine, Value(), Type::CTOR, r, simpleFn(&initWord))));
 
 		add(steal(nativeFunction(engine, Value(natType(engine)), L"hash", v, &wordHash)));
+		add(steal(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Word>))));
+		add(steal(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Word>))));
 
 		return Type::loadAll();
 	}

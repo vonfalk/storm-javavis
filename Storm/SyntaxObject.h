@@ -37,6 +37,9 @@ namespace storm {
 		// The string captured.
 		STORM_VAR Auto<Str> v;
 
+		// Allow transforming an SStr.
+		Str *STORM_FN transform() const;
+
 	protected:
 		virtual void output(wostream &to) const;
 	};

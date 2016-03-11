@@ -87,6 +87,8 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, r, simpleFn(&intInit))));
 
 		add(steal(nativeFunction(engine, Value(natType(engine)), L"hash", v, &intHash)));
+		add(steal(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Int>))));
+		add(steal(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Int>))));
 
 		return Type::loadAll();
 	}
@@ -179,6 +181,8 @@ namespace storm {
 		add(stealAutoCast(inlinedFunction(engine, Value(), Type::CTOR, rb, simpleFn(&createNat))));
 
 		add(steal(nativeFunction(engine, Value(this), L"hash", v, &natHash)));
+		add(steal(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Nat>))));
+		add(steal(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Nat>))));
 
 		return Type::loadAll();
 	}
@@ -260,6 +264,8 @@ namespace storm {
 		add(steal(inlinedFunction(engine, Value(), Type::CTOR, r, simpleFn(&byteInit))));
 
 		add(steal(nativeFunction(engine, Value(natType(engine)), L"hash", v, &byteHash)));
+		add(steal(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Byte>))));
+		add(steal(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Byte>))));
 
 		return Type::loadAll();
 	}

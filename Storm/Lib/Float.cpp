@@ -4,6 +4,7 @@
 #include "CodeGen.h"
 #include "Function.h"
 #include "Engine.h"
+#include "Number.h"
 
 namespace storm {
 	using namespace code;
@@ -101,6 +102,8 @@ namespace storm {
 
 		add(steal(inlinedFunction(engine, Value(this, true), L"=", ri, simpleFn(&floatAssign))));
 
+		add(steal(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<float>))));
+		add(steal(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<float>))));
 
 		return Type::loadAll();
 	}

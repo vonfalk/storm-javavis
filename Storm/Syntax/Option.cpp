@@ -205,7 +205,7 @@ namespace storm {
 
 		OptionType::OptionType(Par<Str> name, Par<OptionDecl> decl, Par<Rule> delim, Scope scope) :
 			Type(name->v, typeClass),
-			pos(pos),
+			pos(decl->pos),
 			decl(decl),
 			scope(scope) {
 

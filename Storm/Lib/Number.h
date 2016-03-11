@@ -135,4 +135,15 @@ namespace storm {
 		p.state->to << sub(tRel(T(), ptrA), tConst(T(1)));
 	}
 
+
+	template <class T>
+	inline T CODECALL numMin(T a, T b) {
+		return min(a, b);
+	}
+
+	template <class T>
+	inline T CODECALL numMax(T a, T b) {
+		return max(a, b);
+	}
+
 }
