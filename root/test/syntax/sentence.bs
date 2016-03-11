@@ -89,6 +89,28 @@ void testCall() on Compiler {
 	print("Transformed: " # tfm);
 }
 
+void testRaw() on Compiler {
+	Str s = "do birds fly? do cats sleep?";
+
+	Parser<RawSentence> parser;
+	parser.parse(s, Url());
+	var tree = parser.tree;
+	print("Syntax tree: " # tree);
+	Sentence[] tfm = tree.transform;
+	print("Transformed: " # tfm);
+}
+
+void testRawCall() on Compiler {
+	Str s = "do birds fly? do cats sleep?";
+
+	Parser<RawCall> parser;
+	parser.parse(s, Url());
+	var tree = parser.tree;
+	print("Syntax tree: " # tree);
+	Sentence[] tfm = tree.transform;
+	print("Transformed: " # tfm);
+}
+
 void testEmpty() on Compiler {
 	Str s = "()";
 	Parser<SParen> parser;

@@ -67,8 +67,8 @@ namespace storm {
 				if (r) {
 					owner->add(r);
 					token->target = r.borrow();
-					if (decl->invoke)
-						token->invoke = decl->invoke;
+					token->invoke = decl->invoke;
+					token->raw = decl->raw;
 				}
 			}
 

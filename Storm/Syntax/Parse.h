@@ -59,6 +59,9 @@ namespace storm {
 			// Use this token to invoke <invoke>.
 			STORM_VAR MAYBE(Auto<Str>) invoke;
 
+			// Capture the raw syntax tree?
+			STORM_VAR Bool raw;
+
 		protected:
 			virtual void output(wostream &to) const;
 		};

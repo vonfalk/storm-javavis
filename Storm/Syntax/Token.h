@@ -26,6 +26,9 @@ namespace storm {
 			// If this token is to be sent to a member, which member?
 			STORM_VAR MAYBE(Auto<Str>) invoke;
 
+			// Capture raw syntax tree?
+			STORM_VAR Bool raw;
+
 			// More competent output function.
 			virtual void output(wostream &to, bool bindings) const;
 

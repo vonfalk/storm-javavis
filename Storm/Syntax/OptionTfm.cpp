@@ -44,6 +44,14 @@ namespace storm {
 			return CREATE(FnCall, me, toCall, actual);
 		}
 
+		Expr *callMember(const SrcPos &pos, const String &name, Par<Expr> me, Par<Expr> param = Par<Expr>()) {
+			try {
+				return callMember(name, me, param);
+			} catch (const InternalError &e) {
+				throw SyntaxError(pos, e.what());
+			}
+		}
+
 		static SStr *tfmName(Par<OptionDecl> decl) {
 			return CREATE(SStr, decl, L"transform", decl->pos);
 		}
@@ -139,7 +147,8 @@ namespace storm {
 
 			if (name == L"me")
 				throw SyntaxError(pos, L"Can not use 'me' this early!");
-			// TODO: Support for 'pos'.
+			if (name == L"pos")
+				return posVar(in);
 
 			// We need to create it...
 			if (lookingFor.count(name))
@@ -165,12 +174,11 @@ namespace storm {
 		LocalVar *TransformFn::createVar(Par<ExprBlock> in, const String &name, nat pos) {
 			Token *token = source->tokens->at(pos).borrow();
 
-			// TODO:
-			// if (<raw tree>) {
-			// 	return createPlainVar(in, name, token);
-			// }
-
-			return createTfmVar(in, name, token, pos);
+			if (token->raw) {
+				return createPlainVar(in, name, token);
+			} else {
+				return createTfmVar(in, name, token, pos);
+			}
 		}
 
 		LocalVar *TransformFn::createPlainVar(Par<ExprBlock> in, const String &name, Par<Token> token) {
@@ -299,14 +307,20 @@ namespace storm {
 			if (!token->invoke)
 				return;
 
-			Type *srcType = tokenType(token);
-			Auto<Actual> actuals = createActuals(in, pos);
-			Function *tfmFn = findTransformFn(srcType, actuals);
+			Auto<Expr> toStore;
+			if (token->raw) {
+				toStore = src;
+			} else {
+				Type *srcType = tokenType(token);
+				Auto<Actual> actuals = createActuals(in, pos);
+				Function *tfmFn = findTransformFn(srcType, actuals);
 
-			actuals->addFirst(src);
+				actuals->addFirst(src);
 
-			Auto<Expr> call = CREATE(FnCall, this, tfmFn, actuals);
-			Auto<Expr> invoke = callMember(token->invoke->v, me, call);
+				toStore = CREATE(FnCall, this, tfmFn, actuals);
+			}
+
+			Auto<Expr> invoke = callMember(this->pos, token->invoke->v, me, toStore);
 			in->add(invoke);
 		}
 
@@ -386,6 +400,18 @@ namespace storm {
 			Auto<LocalVar> var = in->variable(steal(CREATE(SimplePart, this, L"this")));
 			assert(var, L"'this' was not found!");
 			return CREATE(LocalVarAccess, this, var);
+		}
+
+		Expr *TransformFn::posVar(Par<ExprBlock> in) {
+			Rule *rule = source->rulePtr();
+
+			Auto<SimplePart> part = CREATE(SimplePart, this, L"pos", valList(1, Value::thisPtr(rule)));
+			Auto<Named> found = rule->find(part);
+
+			TypeVar *posVar = as<TypeVar>(found.borrow());
+			assert(posVar, L"'pos' not found in syntax node types!");
+
+			return CREATE(MemberVarAccess, this, steal(thisVar(in)), posVar);
 		}
 
 		nat TransformFn::findToken(const String &name) {

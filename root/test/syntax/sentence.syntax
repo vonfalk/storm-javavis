@@ -52,6 +52,13 @@ Paragraph => stmt : (Sentence stmt - SEDelim)*;
 Array<Statement> ParCall();
 ParCall => Array<Statement>() : Sentence -> push (, Sentence -> push)*;
 
+// Capture parts of the raw syntax tree.
+Array<Sentence> RawSentence();
+RawSentence => data : (Sentence@ data - SEDelim)*;
+
+Array<Sentence> RawCall();
+RawCall => Array<Sentence>() : Sentence@ -> push (, Sentence@ -> push)*;
+
 // Test so that empty rules still work.
 void SEDelim();
 void SEmpty();

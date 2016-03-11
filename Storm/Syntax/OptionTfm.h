@@ -88,8 +88,11 @@ namespace storm {
 			 * Helpers.
 			 */
 
-			// Get 'this.
+			// Get 'this'.
 			bs::Expr *thisVar(Par<bs::ExprBlock> in);
+
+			// Get 'pos'.
+			bs::Expr *posVar(Par<bs::ExprBlock> in);
 
 			// Get the underlying return type for a token (borrowed ptr).
 			Type *tokenType(Par<Token> token);

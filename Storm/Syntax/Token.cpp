@@ -5,7 +5,7 @@
 namespace storm {
 	namespace syntax {
 
-		Token::Token() : target(null) {}
+		Token::Token() : target(null), raw(false) {}
 
 		void Token::output(wostream &to) const {
 			output(to, true);
@@ -17,6 +17,9 @@ namespace storm {
 
 			// Output where to store the data.
 			if (target) {
+				if (raw)
+					to << '@';
+
 				if (invoke) {
 					to << L" -> " << invoke;
 				} else {

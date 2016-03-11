@@ -22,7 +22,7 @@ namespace storm {
 			to << L");";
 		}
 
-		TokenDecl::TokenDecl() {}
+		TokenDecl::TokenDecl() : raw(false) {}
 
 		void TokenDecl::output(wostream &to) const {
 			if (store) {
@@ -307,6 +307,15 @@ namespace storm {
 			Token bind = tok.peek();
 			if (isTokenSep(bind))
 				return result.ret();
+
+			if (bind.token == L"@") {
+				result->raw = true;
+
+				tok.skip();
+				bind = tok.peek();
+				if (isTokenSep(bind))
+					return result.ret();
+			}
 
 			if (bind.token == L"->") {
 				tok.skip();
