@@ -145,13 +145,13 @@ void testRawCapture() on Compiler {
 }
 
 void testParams() on Compiler {
-	Str s = "fly bird";
+	Str s = "a : fly bird";
 
 	Parser<PrefixWords> parser;
 	parser.parse(s, Url());
 	var tree = parser.tree;
 	print("Syntax tree: " # tree);
-	var tfm = tree.transform("a ");
+	var tfm = tree.transform;
 	print("Transformed: " # tfm);
 }
 

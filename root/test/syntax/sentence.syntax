@@ -81,8 +81,8 @@ SEmpty : SEDelim;
 SParen : "(" - SEDelim - SEmpty - SEDelim - ")";
 
 // Try some parameters!
-Array<StrBuf> PrefixWords(Str prefix);
-PrefixWords => Array<StrBuf>() : PrefixElem(prefix) -> push (, PrefixElem(prefix) -> push)*;
+Array<StrBuf> PrefixWords();
+PrefixWords => Array<StrBuf>() : "[a-z ]+" prefix - ":", (PrefixElem(prefix) -> push,)* PrefixElem(prefix) -> push;
 
 StrBuf PrefixElem(Str prefix);
 PrefixElem => StrBuf(prefix) : "[a-z]+" -> add;
