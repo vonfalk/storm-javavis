@@ -192,7 +192,8 @@ namespace storm {
 
 		// Convert to C/C++ array.
 		vector<T> toVector() {
-			vector<T> result(count());
+			vector<T> result;
+			result.reserve(count());
 
 			for (nat i = 0; i < count(); i++)
 				result.push_back(at(i));

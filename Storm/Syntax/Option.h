@@ -42,6 +42,10 @@ namespace storm {
 			Bool STORM_FN operator ==(const OptionIter &o) const;
 			Bool STORM_FN operator !=(const OptionIter &o) const;
 
+			// At start/end of repeat?
+			Bool STORM_FN repStart() const;
+			Bool STORM_FN repEnd() const;
+
 			// Get the rule this option is a part of (may be null).
 			Rule *rulePtr() const;
 
@@ -108,6 +112,9 @@ namespace storm {
 			STORM_VAR Nat repEnd;
 			STORM_VAR RepType repType;
 
+			// Capture a raw string between repStart and repEnd?
+			STORM_VAR MAYBE(Auto<Token>) repCapture;
+
 			// Is the token at position x inside a repeat?
 			Bool STORM_FN inRepeat(Nat pos) const;
 
@@ -126,7 +133,7 @@ namespace storm {
 			OptionType *owner;
 
 			// Output the end of a repetition.
-			void outputRepEnd(wostream &to) const;
+			void outputRepEnd(wostream &to, bool bindings) const;
 
 			// Load tokens from a declaration.
 			void loadTokens(Par<OptionDecl> decl, Par<Rule> delim, const Scope &scope);
@@ -136,6 +143,9 @@ namespace storm {
 
 			// Create a target for a token (if needed).
 			TypeVar *createTarget(Par<TokenDecl> decl, Par<Token> token, Nat pos, Nat &counter);
+
+			// Create a target for a token, assuming it is needed.
+			TypeVar *createTarget(Value type, Par<TokenDecl> token, Nat &counter);
 		};
 
 		/**

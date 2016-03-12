@@ -331,6 +331,21 @@ namespace storm {
 			return result.ret();
 		}
 
+		// Parse the bindings of a capture.
+		static TokenDecl *parseCapture(Tokenizer &tok, Engine &e, const Token &rep) {
+			if (rep.token == L"->") {
+				Auto<TokenDecl> decl = CREATE(TokenDecl, e);
+				decl->invoke = CREATE(Str, e, tok.next().token);
+				return decl.ret();
+			} else if (isTokenSep(rep)) {
+				throw SyntaxError(rep.pos, L"Expected -> or identifier.");
+			} else {
+				Auto<TokenDecl> decl = CREATE(TokenDecl, e);
+				decl->store = CREATE(Str, e, rep.token);
+				return decl.ret();
+			}
+		}
+
 		// Parses an option declaration, from the :.
 		static OptionDecl *parseOption(Tokenizer &tok, Engine &e, Par<Name> member) {
 			tok.expect(L":");
@@ -356,16 +371,14 @@ namespace storm {
 						result->repType = repZeroPlus();
 					} else if (rep.token == L"+") {
 						result->repType = repOnePlus();
-					} else if (rep.token == L"->") {
-						Auto<TokenDecl> decl = CREATE(TokenDecl, e);
-						decl->invoke = CREATE(Str, e, tok.next().token);
-						result->repCapture = decl;
+					} else if (rep.token == L"@") {
+						rep = tok.next();
+						result->repCapture = parseCapture(tok, e, rep);
+						result->repCapture->raw = true;
 					} else if (isTokenSep(rep)) {
-						throw SyntaxError(rep.pos, L"Expected ?, *, +, -> or identifier");
+						throw SyntaxError(rep.pos, L"Expected ?, *, +, ->, @ or identifier.");
 					} else {
-						Auto<TokenDecl> decl = CREATE(TokenDecl, e);
-						decl->store = CREATE(Str, e, rep.token);
-						result->repCapture = decl;
+						result->repCapture = parseCapture(tok, e, rep);
 					}
 				} else {
 					Auto<TokenDecl> token = parseToken(tok, e);

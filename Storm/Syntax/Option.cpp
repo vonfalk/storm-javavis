@@ -35,6 +35,17 @@ namespace storm {
 
 			Nat counter = 0;
 
+			if (decl->repCapture) {
+				Auto<TypeVar> r = createTarget(SStr::stormType(engine()), decl->repCapture, counter);
+				if (r) {
+					owner->add(r);
+					repCapture = CREATE(Token, this);
+					repCapture->target = r.borrow();
+					repCapture->invoke = decl->repCapture->invoke;
+					repCapture->raw = decl->repCapture->raw;
+				}
+			}
+
 			for (Nat i = 0; i < decl->tokens->count(); i++) {
 				addToken(decl->tokens->at(i), delim, decl->pos, scope, counter);
 			}
@@ -80,9 +91,9 @@ namespace storm {
 			Value type;
 
 			if (as<RegexToken>(token.borrow())) {
-				type = Value::thisPtr(SStr::stormType(engine()));
+				type = Value(SStr::stormType(engine()));
 			} else if (RuleToken *rule = as<RuleToken>(token.borrow())) {
-				type = Value::thisPtr(rule->rule);
+				type = Value(rule->rule);
 			} else {
 				assert(false);
 			}
@@ -95,14 +106,18 @@ namespace storm {
 				}
 			}
 
+			return createTarget(type, decl, counter);
+		}
+
+		TypeVar *Option::createTarget(Value type, Par<TokenDecl> decl, Nat &counter) {
 			if (decl->store) {
-				r = CREATE(TypeVar, this, owner, type, decl->store->v);
+				return CREATE(TypeVar, this, owner, type, decl->store->v);
 			} else if (decl->invoke) {
 				String name = decl->invoke->v + ::toS(counter++);
-				r = CREATE(TypeVar, this, owner, type, name);
+				return CREATE(TypeVar, this, owner, type, name);
+			} else {
+				return null;
 			}
-
-			return r.ret();
 		}
 
 		Bool Option::inRepeat(Nat token) const {
@@ -155,7 +170,7 @@ namespace storm {
 				bool currentDelim = as<DelimToken>(token.borrow()) != null;
 
 				if (usingRep && repEnd == i)
-					outputRepEnd(to);
+					outputRepEnd(to, bindings);
 
 				if (i > 0 && !currentDelim && !prevDelim)
 					to << L" - ";
@@ -176,7 +191,7 @@ namespace storm {
 			}
 
 			if (usingRep && repEnd == tokens->count())
-				outputRepEnd(to);
+				outputRepEnd(to, bindings);
 
 			if (mark == tokens->count())
 				to << L"<>";
@@ -186,7 +201,7 @@ namespace storm {
 			}
 		}
 
-		void Option::outputRepEnd(wostream &to) const {
+		void Option::outputRepEnd(wostream &to, bool bindings) const {
 			to << ')';
 
 			if (repType == repZeroOne()) {
@@ -195,6 +210,8 @@ namespace storm {
 				to << '+';
 			} else if (repType == repZeroPlus()) {
 				to << '*';
+			} else if (repCapture) {
+				repCapture->output(to, bindings);
 			}
 		}
 
@@ -209,9 +226,6 @@ namespace storm {
 			decl(decl),
 			scope(scope) {
 
-			// Can not be created in initializer list as it accesses the vector in 'add'.
-			option = CREATE(Option, this, this, decl, delim, scope);
-
 			Auto<Named> found = scope.find(decl->rule);
 			if (!found)
 				throw SyntaxError(pos, L"The rule " + ::toS(decl->rule) + L" was not found!");
@@ -219,6 +233,9 @@ namespace storm {
 			if (!r)
 				throw SyntaxError(pos, ::toS(decl->rule) + L" is not a rule.");
 			setSuper(r);
+
+			// Can not be created in initializer list as it accesses the vector in 'add'.
+			option = CREATE(Option, this, this, decl, delim, scope);
 		}
 
 		Rule *OptionType::rulePtr() const {
@@ -250,6 +267,11 @@ namespace storm {
 				Token *t = option->tokens->at(i).borrow();
 				if (t->target)
 					data.insert(make_pair(t->target->name, t->target));
+			}
+
+			if (option->repCapture && option->repCapture->target) {
+				TypeVar *var = option->repCapture->target;
+				data.insert(make_pair(var->name, var));
 			}
 
 			to << L"{\n";
@@ -382,6 +404,14 @@ namespace storm {
 
 		bool OptionIter::operator !=(const OptionIter &o) const {
 			return !(*this == o);
+		}
+
+		bool OptionIter::repStart() const {
+			return pos == o->repStart;
+		}
+
+		bool OptionIter::repEnd() const {
+			return pos == o->repEnd;
 		}
 
 		Rule *OptionIter::rulePtr() const {

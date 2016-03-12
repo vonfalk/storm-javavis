@@ -90,6 +90,11 @@ namespace storm {
 					tokenParams->push(null);
 				}
 			}
+
+			// The capture token is treated as being at the end of the token list. Add it if it
+			// exists (it never takes any parameters, just like RegexTokens).
+			if (source->repCapture)
+				tokenParams->push(null);
 		}
 
 		FnBody *TransformFn::createBody() {
@@ -140,6 +145,19 @@ namespace storm {
 			return CREATE(LocalVarAccess, this, steal(var->var()));
 		}
 
+		Expr *TransformFn::readVar(Par<Block> in, const String &name) {
+			Auto<SimplePart> part = CREATE(SimplePart, this, name);
+			if (LocalVar *r = in->variable(part))
+				return CREATE(LocalVarAccess, this, steal(r));
+
+			if (name == L"me")
+				throw SyntaxError(pos, L"Can not use 'me' this early!");
+			if (name == L"pos")
+				return posVar(in);
+
+			throw InternalError(L"The variable " + name + L" was not created before being read.");
+		}
+
 		Expr *TransformFn::findVar(Par<ExprBlock> in, const String &name) {
 			Auto<SimplePart> part = CREATE(SimplePart, this, name);
 			if (LocalVar *r = in->variable(part))
@@ -157,7 +175,7 @@ namespace storm {
 
 			try {
 				nat pos = findToken(name);
-				if (pos >= tokenParams->count())
+				if (pos >= tokenCount())
 					throw SyntaxError(this->pos, L"The variable " + name + L" is not declared!");
 
 				Auto<LocalVar> var = createVar(in, name, pos);
@@ -172,7 +190,7 @@ namespace storm {
 		}
 
 		LocalVar *TransformFn::createVar(Par<ExprBlock> in, const String &name, nat pos) {
-			Token *token = source->tokens->at(pos).borrow();
+			Token *token = getToken(pos);
 
 			if (token->raw) {
 				return createPlainVar(in, name, token);
@@ -218,7 +236,7 @@ namespace storm {
 				Auto<Expr> access = CREATE(LocalVarAccess, this, steal(check->overwrite()));
 
 				// Assign something to the variable!
-				Auto<IfTrue> branch = CREATE(IfTrue, this, in);
+				Auto<IfTrue> branch = CREATE(IfTrue, this, check);
 				actuals->addFirst(access);
 				Auto<Expr> tfmCall = CREATE(FnCall, this, tfmFn, actuals);
 				Auto<OpInfo> assignOp = assignOperator(sstr(e, L"="), 1);
@@ -268,29 +286,35 @@ namespace storm {
 		 */
 
 		void TransformFn::executeMe(Par<ExprBlock> in, Par<Expr> me) {
-			nat tokens = source->tokens->count();
+			nat tokens = tokenCount();
 			nat firstBreak = min(source->repStart, tokens);
 			nat secondBreak = min(source->repEnd, tokens);
 
+			// Resolve variables needed for execute steps.
+			for (nat i = 0; i < tokens; i++)
+				executeLoad(in, getToken(i), i);
+
 			// Tokens before the capture starts.
 			for (nat i = 0; i < firstBreak; i++)
-				executeToken(in, me, source->tokens->at(i), i);
+				executeToken(in, me, getToken(i), i);
 
 			// Tokens in the capture.
 			if (source->repType == repZeroOne()) {
 				// Only Maybe<T>. If statement is sufficient!
+				for (nat i = firstBreak; i < secondBreak; i++)
+					executeTokenIf(in, me, getToken(i), i);
 			} else if (source->repType == repOnePlus() || source->repType == repZeroPlus()) {
 				// Only Array<T>. Embed inside for-loop.
 				executeTokenLoop(firstBreak, secondBreak, in, me);
 			} else {
 				// Nothing special!
 				for (nat i = firstBreak; i < secondBreak; i++)
-					executeToken(in, me, source->tokens->at(i), i);
+					executeToken(in, me, getToken(i), i);
 			}
 
 			// Tokens after the capture.
 			for (nat i = secondBreak; i < tokens; i++)
-				executeToken(in, me, source->tokens->at(i), i);
+				executeToken(in, me, getToken(i), i);
 		}
 
 		void TransformFn::executeToken(Par<ExprBlock> in, Par<Expr> me, Par<Token> token, nat pos) {
@@ -299,20 +323,18 @@ namespace storm {
 				return;
 
 			Auto<Expr> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), token->target);
-			executeToken(in, me, srcAccess, token, pos);
+			in->add(steal(executeToken(in, me, srcAccess, token, pos)));
 		}
 
-		void TransformFn::executeToken(Par<ExprBlock> in, Par<Expr> me, Par<Expr> src, Par<Token> token, nat pos) {
-			// Not a token that invokes things.
-			if (!token->invoke)
-				return;
+		Expr *TransformFn::executeToken(Par<Block> in, Par<Expr> me, Par<Expr> src, Par<Token> token, nat pos) {
+			assert(token->invoke);
 
 			Auto<Expr> toStore;
 			if (token->raw) {
 				toStore = src;
 			} else {
 				Type *srcType = tokenType(token);
-				Auto<Actual> actuals = createActuals(in, pos);
+				Auto<Actual> actuals = readActuals(in, pos);
 				Function *tfmFn = findTransformFn(srcType, actuals);
 
 				actuals->addFirst(src);
@@ -320,8 +342,24 @@ namespace storm {
 				toStore = CREATE(FnCall, this, tfmFn, actuals);
 			}
 
-			Auto<Expr> invoke = callMember(this->pos, token->invoke->v, me, toStore);
-			in->add(invoke);
+		    return callMember(this->pos, token->invoke->v, me, toStore);
+		}
+
+		void TransformFn::executeTokenIf(Par<ExprBlock> in, Par<Expr> me, Par<Token> token, nat pos) {
+			if (!token->invoke)
+				return;
+
+			Auto<Expr> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), token->target);
+			Auto<WeakCast> cast = CREATE(WeakMaybeCast, this, srcAccess);
+			Auto<IfWeak> check = CREATE(IfWeak, this, in, cast);
+			Auto<IfTrue> trueBlock = CREATE(IfTrue, this, check);
+
+			Auto<LocalVar> overwrite = check->overwrite();
+			assert(overwrite, L"Weak cast did not overwrite variable as expected.");
+			Auto<Expr> e = executeToken(trueBlock, me, steal(CREATE(LocalVarAccess, this, overwrite)), token, pos);
+			trueBlock->set(e);
+			check->trueExpr(trueBlock);
+			in->add(check);
 		}
 
 		void TransformFn::executeTokenLoop(nat from, nat to, Par<ExprBlock> in, Par<Expr> me) {
@@ -330,7 +368,7 @@ namespace storm {
 			// Find the minimal length to iterate...
 			Auto<Expr> minExpr;
 			for (nat i = from; i < to; i++) {
-				Token *t = source->tokens->at(i).borrow();
+				Token *t = getToken(i);
 				if (!t->invoke)
 					// Not interesting...
 					continue;
@@ -366,19 +404,25 @@ namespace storm {
 			Auto<ExprBlock> inLoop = CREATE(ExprBlock, this, loop);
 
 			for (nat i = from; i < to; i++) {
-				Token *t = source->tokens->at(i).borrow();
+				Token *t = getToken(i);
 				if (!t->invoke)
 					continue;
 
 				Auto<MemberVarAccess> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), t->target);
 				Auto<Expr> element = callMember(L"[]", srcAccess, readI);
-				executeToken(inLoop, me, element, t, i);
+				inLoop->add(steal(executeToken(inLoop, me, element, t, i)));
 			}
 
 			loop->body(inLoop);
 			forBlock->add(loop);
 			in->add(forBlock);
 		}
+
+		void TransformFn::executeLoad(Par<bs::ExprBlock> in, Par<Token> token, nat pos) {
+			// Just requesting the parameters object is enough.
+			Auto<Actual> r = createActuals(in, pos);
+		}
+
 
 
 		/**
@@ -396,13 +440,13 @@ namespace storm {
 			}
 		}
 
-		Expr *TransformFn::thisVar(Par<ExprBlock> in) {
+		Expr *TransformFn::thisVar(Par<Block> in) {
 			Auto<LocalVar> var = in->variable(steal(CREATE(SimplePart, this, L"this")));
 			assert(var, L"'this' was not found!");
 			return CREATE(LocalVarAccess, this, var);
 		}
 
-		Expr *TransformFn::posVar(Par<ExprBlock> in) {
+		Expr *TransformFn::posVar(Par<Block> in) {
 			Rule *rule = source->rulePtr();
 
 			Auto<SimplePart> part = CREATE(SimplePart, this, L"pos", valList(1, Value::thisPtr(rule)));
@@ -415,8 +459,10 @@ namespace storm {
 		}
 
 		nat TransformFn::findToken(const String &name) {
-			for (nat i = 0; i < source->tokens->count(); i++) {
-				Token *token = source->tokens->at(i).borrow();
+			nat count = tokenCount();
+
+			for (nat i = 0; i < count; i++) {
+				Token *token = getToken(i);
 
 				if (token->invoke)
 					// Not interesting.
@@ -431,7 +477,34 @@ namespace storm {
 			}
 
 			// Failed.
-			return source->tokens->count();
+			return count;
+		}
+
+		Token *TransformFn::getToken(nat pos) {
+			ArrayP<Token> *tokens = source->tokens.borrow();
+			if (pos == tokens->count())
+				return source->repCapture.borrow();
+			else
+				return tokens->at(pos).borrow();
+		}
+
+		nat TransformFn::tokenCount() {
+			nat r = source->tokens->count();
+			if (source->repCapture)
+				r++;
+			return r;
+		}
+
+		Actual *TransformFn::readActuals(Par<Block> in, nat n) {
+			ArrayP<Str> *params = tokenParams->at(n).borrow();
+			Auto<Actual> actuals = CREATE(Actual, this);
+
+			if (params) {
+				for (nat i = 0; i < params->count(); i++)
+					actuals->add(steal(readVar(in, params->at(i)->v)));
+			}
+
+			return actuals.ret();
 		}
 
 		Actual *TransformFn::createActuals(Par<ExprBlock> in, nat n) {
@@ -440,7 +513,7 @@ namespace storm {
 
 			if (params) {
 				for (nat i = 0; i < params->count(); i++)
-					actuals->add(findVar(in, params->at(i)->v));
+					actuals->add(steal(findVar(in, params->at(i)->v)));
 			}
 
 			return actuals.ret();

@@ -52,12 +52,24 @@ Paragraph => stmt : (Sentence stmt - SEDelim)*;
 Array<Statement> ParCall();
 ParCall => Array<Statement>() : Sentence -> push (, Sentence -> push)*;
 
+// Test -> when using Maybe<T>.
+Array<Statement> MaybeCall();
+MaybeCall => Array<Statement>() : Sentence -> push (, Sentence -> push)?;
+
 // Capture parts of the raw syntax tree.
 Array<Sentence> RawSentence();
 RawSentence => data : (Sentence@ data - SEDelim)*;
 
 Array<Sentence> RawCall();
 RawCall => Array<Sentence>() : Sentence@ -> push (, Sentence@ -> push)*;
+
+// Capture part of a match as a string.
+Str Capture();
+Capture => s : "(" - (Verb, Noun) s - ")";
+
+// Get a raw capture.
+SStr RawCapture();
+RawCapture => s : "(" - (Verb, Noun)@ s - ")";
 
 // Test so that empty rules still work.
 void SEDelim();
@@ -67,3 +79,10 @@ void SParen();
 SEDelim : " *";
 SEmpty : SEDelim;
 SParen : "(" - SEDelim - SEmpty - SEDelim - ")";
+
+// Try some parameters!
+Array<StrBuf> PrefixWords(Str prefix);
+PrefixWords => Array<StrBuf>() : PrefixElem(prefix) -> push (, PrefixElem(prefix) -> push)*;
+
+StrBuf PrefixElem(Str prefix);
+PrefixElem => StrBuf(prefix) : "[a-z]+" -> add;

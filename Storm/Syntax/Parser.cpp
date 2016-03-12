@@ -410,12 +410,22 @@ namespace storm {
 
 		Object *ParserBase::tree(State *from) const {
 			Auto<Object> result = allocTreeNode(from);
+			Option *option = from->pos.optionPtr();
+
+			// Remember capture start and capture end.
+			nat repStart = 0;
+			nat repEnd = 0;
 
 			// Traverse the states backwards. The last token in the chain (the one created first) is
 			// skipped, as that does not contain any information.
 			for (State *at = from; at->prev; at = at->prev) {
 				State *prev = at->prev;
 				Token *token = prev->pos.tokenPtr();
+
+				if (at->pos.repStart())
+					repStart = at->step;
+				if (at->pos.repEnd())
+					repEnd = at->step;
 
 				// Don't bother if we do not need to store the result anywhere.
 				if (!token->target)
@@ -443,6 +453,13 @@ namespace storm {
 				} else {
 					dest = match;
 				}
+			}
+
+			// Remember the capture.
+			if (option->repCapture && option->repCapture->target && repStart <= repEnd) {
+				Object *r = CREATE(SStr, this, src->v.substr(repStart, repEnd - repStart), srcPos + repStart);
+				int offset = option->repCapture->target->offset().current();
+				OFFSET_IN(result.borrow(), offset, Object *) = r;
 			}
 
 			// Reverse all arrays in this node, as we're adding them backwards.

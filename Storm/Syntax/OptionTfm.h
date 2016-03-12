@@ -54,6 +54,9 @@ namespace storm {
 			// Create the variable 'me' from the expression (if needed).
 			bs::Expr *createMe(Par<bs::ExprBlock> in);
 
+			// Find a variable. Throws exception if it is not yet created.
+			bs::Expr *readVar(Par<bs::Block> in, const String &name);
+
 			// Find (and create if neccessary) a variable.
 			bs::Expr *findVar(Par<bs::ExprBlock> in, const String &name);
 
@@ -78,10 +81,16 @@ namespace storm {
 			void executeToken(Par<bs::ExprBlock> in, Par<bs::Expr> me, Par<Token> token, nat pos);
 
 			// Generate a member function call for token #pos, where 'src' is already loaded from 'this'.
-			void executeToken(Par<bs::ExprBlock> in, Par<bs::Expr> me, Par<bs::Expr> src, Par<Token> token, nat pos);
+			bs::Expr *executeToken(Par<bs::Block> in, Par<bs::Expr> me, Par<bs::Expr> src, Par<Token> token, nat pos);
+
+			// Execute tokens inside an if-statement.
+			void executeTokenIf(Par<bs::ExprBlock> in, Par<bs::Expr> me, Par<Token> token, nat pos);
 
 			// Generate a loop executing tokens as many times as needed.
 			void executeTokenLoop(nat from, nat to, Par<bs::ExprBlock> in, Par<bs::Expr> me);
+
+			// Load any variables required by Token.
+			void executeLoad(Par<bs::ExprBlock> in, Par<Token> token, nat pos);
 
 
 			/**
@@ -89,16 +98,23 @@ namespace storm {
 			 */
 
 			// Get 'this'.
-			bs::Expr *thisVar(Par<bs::ExprBlock> in);
+			bs::Expr *thisVar(Par<bs::Block> in);
 
 			// Get 'pos'.
-			bs::Expr *posVar(Par<bs::ExprBlock> in);
+			bs::Expr *posVar(Par<bs::Block> in);
 
 			// Get the underlying return type for a token (borrowed ptr).
 			Type *tokenType(Par<Token> token);
 
-			// Find the token storing to 'name'. Returns something larger than # of tokens on failure.
+			// Find the token storing to 'name'. Returns #tokens if none exists.
 			nat findToken(const String &name);
+
+			// Get a token (adds the capture token at the end if it exists). borrowed ptr.
+			Token *getToken(nat pos);
+			nat tokenCount();
+
+			// Generate parameters required for invoking token #n, only precomputed variables are used.
+			bs::Actual *readActuals(Par<bs::Block> in, nat pos);
 
 			// Generate parameters required for invoking token #n (this parameter not added).
 			bs::Actual *createActuals(Par<bs::ExprBlock> in, nat pos);
