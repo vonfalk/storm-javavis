@@ -277,6 +277,8 @@ namespace storm {
 			to << L"{\n";
 			{
 				Indent z(to);
+				if (Rule *r = option->rulePtr())
+					to << r->identifier() << L" : ";
 				to << type->identifier() << endl;
 
 				for (Data::iterator i = data.begin(), end = data.end(); i != end; ++i) {

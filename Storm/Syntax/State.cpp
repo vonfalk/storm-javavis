@@ -77,6 +77,7 @@ namespace storm {
 			if (current)
 				used.push_back(current);
 
+			firstFree = 0;
 			current = (Pool)malloc(sizeof(State) * poolCount);
 			if (!current)
 				throw InternalError(L"Out of memory while parsing.");
@@ -98,6 +99,10 @@ namespace storm {
 
 				free(current);
 			}
+
+			used.clear();
+			current = null;
+			firstFree = 0;
 		}
 
 		/**
@@ -109,6 +114,8 @@ namespace storm {
 				return;
 
 			for (nat i = 0; i < data.size(); i++) {
+				if (data.size() > 200)
+					PLN("Warning: large data: " << data.size());
 				State *c = data[i];
 				if (*c == state) {
 					// Found it already, shall we update the existing one?
@@ -139,7 +146,7 @@ namespace storm {
 				return (a->priority() > b->priority()) ? before : after;
 
 			// If they are different options and have the same priority, the ordering is undefined.
-			if (a->pos.optionPtr() == b->pos.optionPtr())
+			if (a->pos.optionPtr() != b->pos.optionPtr())
 				return none;
 
 			// Find out the ordering of the respective parts by a simple lexiographic ordering.
@@ -162,7 +169,7 @@ namespace storm {
 		}
 
 		void StateSet::prevStates(State *from, StateArray &to) const {
-			for (State *now = from->prev; now; now = from->prev)
+			for (State *now = from->prev; now; now = now->prev)
 				to.push(now);
 			to.reverse();
 		}
