@@ -27,121 +27,96 @@ void testSimple() on Compiler {
 	parser.parse(s, Url());
 	if (parser.hasError)
 		parser.throwError;
-
-	var tree = parser.tree;
-	print("Syntax tree: " # tree);
-
-	var tfm = tree.transform;
-	print("Transformed: " # tfm);
 }
 
-void testSentence() on Compiler {
-	// Parse this:
+Bool testSentence() on Compiler {
 	Str s = "do birds fly?";
-	print("Parse: " # s);
 
 	Parser<Sentence> parser;
 	parser.parse(s, Url());
-	print("Used " # parser.stateCount # " states.");
-	print("Used " # parser.byteCount.toBytes);
 	if (parser.hasError)
 		parser.throwError;
 
-	var tree = parser.tree;
-	print("Syntax tree: " # tree);
-
-	var tfm = tree.transform();
-	print("Transformed: " # tfm);
+	var tfm = parser.tree.transform();
+	"Statement: bird, fly".equals(tfm.toS);
 }
 
-void testMaybe() on Compiler {
+Bool testMaybe() on Compiler {
 	Str s = "do birds fly?";
 
 	Parser<EmptySentence> parser;
 	parser.parse(s, Url());
 	var tree = parser.tree;
-	print("Syntax tree: " # tree);
 	Statement? tfm = tree.transform;
-	print("Transformed: " # tfm);
+
+	if (tfm) {
+		"Statement: bird, fly".equals(tfm.toS);
+	} else {
+		false;
+	}
 }
 
-void testArray() on Compiler {
+Bool testArray() on Compiler {
 	Str s = "do birds fly? do cats sleep?";
 
 	Parser<Paragraph> parser;
 	parser.parse(s, Url());
-	print("Used " # parser.stateCount # " states.");
-	print("Used " # parser.byteCount.toBytes);
-	var tree = parser.tree;
-	print("Syntax tree: " # tree);
-	Statement[] tfm = tree.transform;
-	print("Transformed: " # tfm);
+	Statement[] tfm = parser.tree.transform;
+	"[Statement: bird, fly, Statement: cat, sleep]".equals(tfm.toS);
 }
 
-void testCall() on Compiler {
+Bool testCall() on Compiler {
 	Str s = "do birds fly? do cats sleep?";
 
 	Parser<ParCall> parser;
 	parser.parse(s, Url());
-	var tree = parser.tree;
-	print("Syntax tree: " # tree);
-	Statement[] tfm = tree.transform;
-	print("Transformed: " # tfm);
+	Statement[] tfm = parser.tree.transform;
+	"[Statement: bird, fly, Statement: cat, sleep]".equals(tfm.toS);
 }
 
-void testCallMaybe() on Compiler {
+Bool testCallMaybe() on Compiler {
 	Str s = "do birds fly? do cats sleep?";
 
 	Parser<MaybeCall> parser;
 	parser.parse(s, Url());
-	var tree = parser.tree;
-	print("Syntax tree: " # tree);
-	Statement[] tfm = tree.transform;
-	print("Transformed: " # tfm);
+	Statement[] tfm = parser.tree.transform;
+	"[Statement: bird, fly, Statement: cat, sleep]".equals(tfm.toS);
 }
 
-void testRaw() on Compiler {
+Nat testRaw() on Compiler {
 	Str s = "do birds fly? do cats sleep?";
 
 	Parser<RawSentence> parser;
 	parser.parse(s, Url());
-	var tree = parser.tree;
-	print("Syntax tree: " # tree);
-	Sentence[] tfm = tree.transform;
-	print("Transformed: " # tfm);
+	Sentence[] tfm = parser.tree.transform;
+	tfm.count;
 }
 
-void testRawCall() on Compiler {
+Nat testRawCall() on Compiler {
 	Str s = "do birds fly? do cats sleep?";
 
 	Parser<RawCall> parser;
 	parser.parse(s, Url());
-	var tree = parser.tree;
-	print("Syntax tree: " # tree);
-	Sentence[] tfm = tree.transform;
-	print("Transformed: " # tfm);
+	Sentence[] tfm = parser.tree.transform;
+	tfm.count;
 }
 
-void testCapture() on Compiler {
+Bool testCapture() on Compiler {
 	Str s = "(fly bird)";
 
 	Parser<Capture> parser;
 	parser.parse(s, Url());
-	var tree = parser.tree;
-	print("Syntax tree: " # tree);
-	var tfm = tree.transform;
-	print("Transformed: " # tfm);
+	Str tfm = parser.tree.transform;
+	"fly bird".equals(tfm);
 }
 
-void testRawCapture() on Compiler {
+Bool testRawCapture() on Compiler {
 	Str s = "(fly bird)";
 
 	Parser<RawCapture> parser;
 	parser.parse(s, Url());
-	var tree = parser.tree;
-	print("Syntax tree: " # tree);
-	var tfm = tree.transform;
-	print("Transformed: " # tfm);
+	SStr tfm = parser.tree.transform;
+	"fly bird".equals(tfm.v);
 }
 
 void testParams() on Compiler {
@@ -149,18 +124,6 @@ void testParams() on Compiler {
 
 	Parser<PrefixWords> parser;
 	parser.parse(s, Url());
-	var tree = parser.tree;
-	print("Syntax tree: " # tree);
-	var tfm = tree.transform;
-	print("Transformed: " # tfm);
-}
-
-void testEmpty() on Compiler {
-	Str s = "()";
-	Parser<SParen> parser;
-	parser.parse(s, Url());
-	print("Used " # parser.stateCount # " states.");
-	print("Used " # parser.byteCount.toBytes);
-	if (parser.hasError)
-		parser.throwError;
+	StrBuf[] tfm = parser.tree.transform;
+	"[a fly, a bird]".equals(tfm.toS());
 }

@@ -71,15 +71,6 @@ Capture => s : "(" - (Verb, Noun) s - ")";
 SStr RawCapture();
 RawCapture => s : "(" - (Verb, Noun)@ s - ")";
 
-// Test so that empty rules still work.
-void SEDelim();
-void SEmpty();
-void SParen();
-
-SEDelim : " *";
-SEmpty : SEDelim;
-SParen : "(" - SEDelim - SEmpty - SEDelim - ")";
-
 // Try some parameters!
 Array<StrBuf> PrefixWords();
 PrefixWords => Array<StrBuf>() : "[a-z ]+" prefix - ":", (PrefixElem(prefix) -> push,)* PrefixElem(prefix) -> push;

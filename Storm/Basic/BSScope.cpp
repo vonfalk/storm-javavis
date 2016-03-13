@@ -29,7 +29,7 @@ namespace storm {
 		// Expressions of the form foo(x, y, z) are equal to x.foo(y, z),
 		// but only if name only contains one part (ie. not foo:bar(y, z)).
 		if (name->count() == 1) {
-			Auto<SimplePart> last = name->last();
+			SimplePart *last = name->last().borrow();
 			if (last->any() && last->param(0) != Value()) {
 				if (Named *r = last->param(0).type->find(last))
 					return r;

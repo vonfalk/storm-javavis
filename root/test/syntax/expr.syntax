@@ -1,0 +1,27 @@
+delimiter = ExprDelim;
+
+void ExprDelim();
+ExprDelim : "[ \n\r\t]*";
+
+// Simple expression evaluation with variables.
+Int SExpr(Map<Str, Int> vars);
+Int SProd(Map<Str, Int> vars);
+Int SAtom(Map<Str, Int> vars);
+
+SExpr => a : SProd(vars) a;
+SExpr => +(a, b) : SExpr(vars) a, "\+", SProd(vars) b;
+
+SProd => a : SAtom(vars) a;
+SProd => *(a, b) : SProd(vars) a, "\*", SAtom(vars) b;
+
+SAtom => toInt(v) : "[0-9]+" v;
+SAtom => get(vars, name): "[a-z]+" name;
+
+// Test so that empty rules still work.
+void SEDelim();
+void SEmpty();
+void SParen();
+
+SEDelim : " *";
+SEmpty : SEDelim;
+SParen : "(" - SEDelim - SEmpty - SEDelim - ")";

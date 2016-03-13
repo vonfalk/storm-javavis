@@ -1,0 +1,22 @@
+use core:debug;
+use core:io;
+use core:lang;
+use lang:syntax;
+
+// Simple expression evaluator with parameters and other interesting features of the syntax language.
+Int testExpr() on Compiler {
+	Map<Str, Int> vars;
+	vars.put("a", 10);
+	vars.put("b", 20);
+
+	Parser<SExpr> parser;
+	parser.parse("2 * a + b", Url());
+	parser.tree.transform(vars);
+}
+
+// Make sure we can handle empty productions correctly.
+Bool testEmpty() on Compiler {
+	Parser<SParen> parser;
+	parser.parse("()", Url());
+	!parser.hasError;
+}
