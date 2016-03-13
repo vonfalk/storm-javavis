@@ -415,7 +415,13 @@ namespace storm {
 		// Parses an option declaration with a priority, starting from the [.
 		static OptionDecl *parseOptionPriority(Tokenizer &tok, Engine &e, Par<Name> member) {
 			tok.expect(L"[");
-			Int prio = tok.next().token.toInt();
+			Int prio = 0;
+			if (tok.peek().token == L"-") {
+				tok.skip();
+				prio = - tok.next().token.toInt();
+			} else {
+				prio = tok.next().token.toInt();
+			}
 			tok.expect(L"]");
 
 			Token sep = tok.peek();
