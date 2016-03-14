@@ -41,6 +41,9 @@ namespace storm {
 		hashAsRef = null;
 		equalsAsRef = null;
 		handleDefaultCtorFn = null;
+		copyCtorCache = null;
+		defaultCtorCache = null;
+		dtorCache = null;
 
 		typeRef.setPtr(this);
 		typeHandle = new RefHandle(*typeRef.contents());
@@ -72,6 +75,8 @@ namespace storm {
 		vtable.clearRefs();
 		// Clear any ctors before the vtable dies.
 		copyCtorCache = null;
+		defaultCtorCache = null;
+		dtorCache = null;
 		NameSet::clear();
 		delete typeHandle;
 	}
@@ -350,8 +355,12 @@ namespace storm {
 
 	void Type::add(Par<Named> o) {
 		validate(o.borrow());
-		if (o->name == CTOR)
+		if (o->name == CTOR) {
 			copyCtorCache = null;
+			defaultCtorCache = null;
+		} else if (o->name == DTOR) {
+			dtorCache = null;
+		}
 
 		NameSet::add(o);
 		layout.add(o.borrow());
@@ -405,13 +414,18 @@ namespace storm {
 	}
 
 	Function *Type::destructor() {
-		return steal(findCpp(DTOR, vector<Value>(1, Value::thisPtr(this)))).as<Function>().borrow();
+		if (!dtorCache) {
+			Auto<Named> n = findCpp(DTOR, vector<Value>(1, Value::thisPtr(this)));
+			dtorCache = as<Function>(n.borrow());
+		}
+
+		return dtorCache;
 	}
 
 	Function *Type::copyCtor() {
 		if (!copyCtorCache) {
 			Auto<Named> n = findCpp(CTOR, vector<Value>(2, Value::thisPtr(this)));
-			copyCtorCache = n.as<Function>().borrow();
+			copyCtorCache = as<Function>(n.borrow());
 		}
 
 		return copyCtorCache;
@@ -426,7 +440,12 @@ namespace storm {
 	}
 
 	Function *Type::defaultCtor() {
-		return steal(findCpp(CTOR, vector<Value>(1, Value::thisPtr(this)))).as<Function>().borrow();
+		if (!defaultCtorCache) {
+			Auto<Named> n = findCpp(CTOR, vector<Value>(1, Value::thisPtr(this)));
+			defaultCtorCache = as<Function>(n.borrow());
+		}
+
+		return defaultCtorCache;
 	}
 
 	Function *Type::deepCopyFn() {

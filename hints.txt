@@ -1,2 +1,13 @@
 Slow startuptimes after compilation can be fixed by adding the debug folder
 to excluded places in Windows Defender/Windows Security Essentials.
+
+If it starts running slow after a while, Windows may have enabled the fault-tolerant heap...
+Remove entry in: HKCU\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers\your_application.exe
+https://blogs.msdn.microsoft.com/oldnewthing/20120125-00/?p=8463
+
+https://msdn.microsoft.com/en-us/library/windows/desktop/dd744764%28v=vs.85%29.aspx
+Rundll32.exe fthsvc.dll,FthSysprepSpecialize
+
+Disable completely:
+set HKLM\Software\Microsoft\FTH\Enabled to 0
+There are some entries there as well, in State\...

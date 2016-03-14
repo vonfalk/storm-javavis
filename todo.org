@@ -1,4 +1,7 @@
-* Core [7/51]
+* Core [7/52]
+
+ - [ ] updateVirtual() in Type needs to be optimized. It is very noticable with the massive amount of types generated
+   by the syntax language.
 
  - [ ] Iterators are potentially not thread-safe if they are copied between threads.
 
