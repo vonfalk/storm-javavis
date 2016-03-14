@@ -11,6 +11,7 @@
 #include "Code/Value.h"
 #include "Shared/TypeFlags.h"
 #include "AsRef.h"
+#include "OverloadPart.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -200,20 +201,20 @@ namespace storm {
 		void updateVirtual(Named *named);
 
 		// Update the virtual state of a single function.
-		void updateVirtualHere(Function *fn);
+		void updateVirtualHere(Function *fn, OverloadPart *part);
 
 		// Check if 'x' needs to have a virtual dispatch.
-		bool needsVirtual(Function *fn);
+		bool needsVirtual(Function *fn, OverloadPart *part);
 
 		// Enable/disable vtable lookup for the given function.
-		void enableLookup(Function *fn);
+		void enableLookup(Function *fn, OverloadPart *part);
 		void disableLookup(Function *fn);
 
-		// Find a possible overload to a function. Does not attempt to lazy-load.
-		Function *overloadTo(Function *base);
+		// Find a possible overload to a function here. Does not attempt to lazy-load.
+		Function *overloadTo(Function *fn, OverloadPart *part);
 
 		// Insert all known overloads to 'fn' into the respective types vtables.
-		void insertOverloads(Function *base);
+		void insertOverloads(Function *fn, OverloadPart *base);
 	};
 
 	// STORM versions of the 'getDefaultXxx'

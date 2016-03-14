@@ -557,31 +557,36 @@ namespace storm {
 		if (fn == null)
 			return;
 
-		updateVirtualHere(fn);
+		// Create the part that will find 'named' in both this class and sub/super classes.
+		Auto<OverloadPart> part = CREATE(OverloadPart, this, fn);
 
+		// Update the virtual-ness of this function.
+		updateVirtualHere(fn, part.borrow());
+
+		// Check super classes if they need to update.
 		for (Type *s = super(); s; s = s->super()) {
-			Auto<Function> base = s->overloadTo(fn);
+			Auto<Function> base = s->overloadTo(fn, part.borrow());
 			if (base) {
 				if (base->flags & namedFinal)
 					// TODO: Refer a location!
 					throw TypedefError(L"The function " + named->identifier() + L" overloads the final function " +
 									base->identifier() + L".");
 
-				s->enableLookup(base.borrow());
+				s->enableLookup(base.borrow(), part.borrow());
 			}
 		}
 	}
 
-	void Type::updateVirtualHere(Function *fn) {
-		if (needsVirtual(fn))
-			enableLookup(fn);
+	void Type::updateVirtualHere(Function *fn, OverloadPart *part) {
+		if (needsVirtual(fn, part))
+			enableLookup(fn, part);
 		else
 			disableLookup(fn);
 	}
 
-	void Type::enableLookup(Function *fn) {
+	void Type::enableLookup(Function *fn, OverloadPart *part) {
 		VTablePos pos = vtable.insert(fn);
-		insertOverloads(fn);
+		insertOverloads(fn, part);
 
 		// PLN(*fn << " got " << pos);
 		// vtable.dbg_dump();
@@ -604,38 +609,36 @@ namespace storm {
 			fn->setLookup(null);
 	}
 
-	bool Type::needsVirtual(Function *fn) {
+	bool Type::needsVirtual(Function *fn, OverloadPart *part) {
 		vector<Type *> children = chain.children();
 		for (nat i = 0; i < children.size(); i++) {
 			Type *c = children[i];
-			if (steal(c->overloadTo(fn)))
+			// Any overload at this level?
+			if (steal(c->overloadTo(fn, part)))
 				return true;
-			if (c->needsVirtual(fn))
+			// Any overload at more specific levels?
+			if (c->needsVirtual(fn, part))
 				return true;
 		}
 
 		return false;
 	}
 
-	Function *Type::overloadTo(Function *to) {
-		// Replace the 'this' parameter, otherwise we would never get a match!
-		vector<Value> params = to->params;
-		params[0] = Value::thisPtr(this);
-		Auto<SimplePart> part = CREATE(SimplePart, this, to->name, params);
+	Function *Type::overloadTo(Function *fn, OverloadPart *part) {
 		Auto<Function> match = steal(NameSet::tryFind(part)).as<Function>();
-		if (to == match)
+		if (match == fn)
 			return null;
 		return match.ret();
 	}
 
-	void Type::insertOverloads(Function *fn) {
-		if (Auto<Function> f = overloadTo(fn))
+	void Type::insertOverloads(Function *fn, OverloadPart *part) {
+		if (Auto<Function> f = overloadTo(fn, part))
 			if (f != fn)
-				VTablePos pos = vtable.insert(f.borrow());
+				vtable.insert(f.borrow());
 
 		vector<Type *> children = chain.children();
 		for (nat i = 0; i < children.size(); i++)
-			children[i]->insertOverloads(fn);
+			children[i]->insertOverloads(fn, part);
 	}
 
 	// This is used in the DLL interface. It is declared in Shared/Types.h
