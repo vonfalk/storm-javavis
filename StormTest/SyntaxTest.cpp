@@ -19,9 +19,3 @@ BEGIN_TEST(SyntaxTest) {
 	CHECK_EQ(runFn<Int>(L"test.syntax.testExpr"), 40);
 
 } END_TEST
-
-BEGIN_TEST_(SynTest) {
-
-	CHECK_RUNS(runFn<int>(L"test.syntax.testBS"));
-
-} END_TEST

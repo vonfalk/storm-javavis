@@ -1,0 +1,85 @@
+// Syntax for inline asm and freestanding asm.
+// TODO: Try to remove depency on the lang.bs.Block class.
+
+use lang.bs;
+use core.asm;
+
+delimiter = SDelimiter;
+
+// Root rule for asm code.
+AsmListing SAsmListing(Block block);
+SAsmListing => AsmListing() : (SAsmAtom(block) -> add, )*;
+
+// Atom.
+AsmAtom SAsmAtom(Block block);
+SAsmAtom => v : SAsmInstruction(block) v, ";";
+SAsmAtom => AsmLabel(pos, name) : "[A-Za-z]+" name, ":";
+
+// All possible asm values.
+AsmOperand SAsmOperand(lang.bs.Block block);
+SAsmOperand => v : SAsmLiteral v;
+SAsmOperand => v : SAsmWritable(block) v;
+
+// All possible writable asm values.
+AsmOperand SAsmWritable(lang.bs.Block block);
+SAsmWritable => v : SAsmReg v;
+SAsmWritable[-10] => v : SAsmVariableRef(block) v;
+
+// Separate rule for each, so that they can be chosen individually as well.
+
+// Registers: al, bl, cl, eax, ebx, ecx, rax, rcx, rdx as in x86-64. ptrA, ptrB, ptrC, ptrStack, ptrFrame as pointer-sized ones.
+AsmOperand SAsmReg();
+SAsmReg => rAl() : "al";
+SAsmReg => rBl() : "bl";
+SAsmReg => rCl() : "cl";
+SAsmReg => rEax() : "eax";
+SAsmReg => rEbx() : "ebx";
+SAsmReg => rEcx() : "ecx";
+SAsmReg => rRax() : "rax";
+SAsmReg => rRbx() : "rbx";
+SAsmReg => rRcx() : "rcx";
+SAsmReg => rPtrA() : "ptrA";
+SAsmReg => rPtrB() : "ptrB";
+SAsmReg => rPtrC() : "ptrC";
+
+// Literals.
+AsmOperand SAsmLiteral();
+SAsmLiteral => number(size, value) : "[binlwp]" size - "-?[0-9]+" value; // Numeric literal with size before it.
+
+// Reference to a variable in another language.
+VarRef SAsmVariableRef(Block block);
+SAsmVariableRef => VarRef(pos, block, name) : "[A-Za-z]+" name;
+
+// Reference to a label.
+AsmLabelRef SAsmLabelRef();
+SAsmLabelRef => AsmLabelRef(name) : "@" - "[A-Za-z]+" name;
+
+// Conditional expression in asm.
+CondFlag SAsmCond();
+SAsmCond => ifEqual() : "ifEqual";
+SAsmCond => ifNotEqual() : "ifNotEqual";
+
+// Unsigned
+SAsmCond => ifAbove() : "ifAbove";
+SAsmCond => ifAboveEqual() : "ifAboveEqual";
+SAsmCond => ifBelow() : "ifBelow";
+SAsmCond => ifBelowEqual() : "ifBelowEqual";
+
+// Signed
+SAsmCond => ifGreater() : "ifGreater";
+SAsmCond => ifGreaterEqual() : "ifGreaterEqual";
+SAsmCond => ifLess() : "ifLess";
+SAsmCond => ifLessEqual() : "ifLessEqual";
+
+
+// All asm instructions.
+AsmAtom SAsmInstruction(lang.bs.Block block);
+SAsmInstruction => AddInstr(dest, src) : "add", SAsmWritable(block) dest, ",", SAsmOperand(block) src;
+SAsmInstruction => SubInstr(dest, src) : "sub", SAsmWritable(block) dest, ",", SAsmOperand(block) src;
+SAsmInstruction => MovInstr(dest, src) : "mov", SAsmWritable(block) dest, ",", SAsmOperand(block) src;
+SAsmInstruction => CmpInstr(a, b) : "cmp", SAsmOperand(block) a, ",", SAsmOperand(block) b;
+SAsmInstruction => JmpInstr(to) : "jmp", SAsmLabelRef to;
+SAsmInstruction => JmpInstr(to, c) : "jmp", SAsmCond c, ",", SAsmLabelRef to;
+
+// Integration into other languages.
+lang.bs.SStmt => r : "asm", "{", SAsmListing(block) r, "}";

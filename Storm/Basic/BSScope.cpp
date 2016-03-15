@@ -11,8 +11,6 @@ namespace storm {
 
 	bs::BSScope::BSScope() : ScopeLookup(L"void") {}
 
-	bs::BSScope::BSScope(Par<Url> file) : ScopeLookup(L"void"), file(file) {}
-
 	Named *bs::BSScope::findHelper(const Scope &s, Par<SimpleName> name) {
 		if (Named *found = ScopeLookup::find(s, name))
 			return found;
@@ -40,17 +38,12 @@ namespace storm {
 		return findHelper(s, name);
 	}
 
-	void bs::BSScope::addSyntax(const Scope &from, Par<SyntaxSet> to) {
-		if (file) {
-			Auto<SimpleName> syntax = syntaxPkg(file);
-			to->add(engine().package(syntax));
-		}
-
+	void bs::BSScope::addSyntax(const Scope &from, Par<syntax::ParserBase> to) {
 		// Current package.
-		to->add(firstPkg(from.top));
+		to->addSyntax(firstPkg(from.top));
 
 		for (nat i = 0; i < includes.size(); i++)
-			to->add(includes[i]);
+			to->addSyntax(includes[i]);
 	}
 
 	Bool bs::addInclude(const Scope &to, Par<Package> pkg) {
@@ -66,18 +59,11 @@ namespace storm {
 		}
 	}
 
-	SyntaxSet *bs::getSyntax(const Scope &scope) {
+	void bs::addSyntax(Scope scope, Par<syntax::ParserBase> to) {
 		if (Auto<BSScope> s = scope.lookup.as<BSScope>()) {
-			Auto<SyntaxSet> to = CREATE(SyntaxSet, s);
 			s->addSyntax(scope, to);
-			return to.ret();
 		} else {
 			WARNING(L"This is probably not what you want to do!");
-			Object *o = scope.top;
-			if (!o)
-				o = scope.lookup.borrow();
-			assert(o, L"Nothing useful in the scope.");
-			return CREATE(SyntaxSet, o);
 		}
 	}
 

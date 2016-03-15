@@ -14,16 +14,16 @@ namespace storm {
 								Par<SrcName> result,
 								Par<SStr> name,
 								Par<Params> params,
-								Par<SStr> contents) :
-		env(env), name(name), result(result), params(params), thread(null), contents(contents) {}
+								Par<syntax::Node> body) :
+		env(env), name(name), result(result), params(params), thread(null), body(body) {}
 
 	bs::FunctionDecl::FunctionDecl(Par<SyntaxEnv> env,
 								Par<SrcName> result,
 								Par<SStr> name,
 								Par<Params> params,
 								Par<SrcName> thread,
-								Par<SStr> contents) :
-		env(env), name(name), result(result), params(params), thread(thread), contents(contents) {}
+								Par<syntax::Node> body) :
+		env(env), name(name), result(result), params(params), thread(thread), body(body) {}
 
 
 	Function *bs::FunctionDecl::createFn() {
@@ -41,7 +41,7 @@ namespace storm {
 			}
 		}
 
-		return CREATE(BSFunction, this, result, name, params, scope, thread, contents);
+		return CREATE(BSFunction, this, result, name, params, scope, thread, body);
 	}
 
 	void bs::FunctionDecl::update(Par<BSFunction> fn) {
@@ -61,7 +61,7 @@ namespace storm {
 		for (nat i = 0; i < params.size(); i++)
 			assert(params[i] == fn->params[i]);
 
-		fn->update(names, contents, name->pos);
+		fn->update(names, body, name->pos);
 	}
 
 	NamePart *bs::FunctionDecl::namePart() const {
@@ -171,18 +171,18 @@ namespace storm {
 
 
 	bs::BSFunction::BSFunction(Value result, Par<SStr> name, Par<Params> params, Scope scope,
-							MAYBE(Par<NamedThread>) thread, Par<SStr> contents) :
-		BSRawFn(result, name, params->cTypes(scope), params->cNames(), thread), scope(scope), contents(contents) {}
+							MAYBE(Par<NamedThread>) thread, Par<syntax::Node> body) :
+		BSRawFn(result, name, params->cTypes(scope), params->cNames(), thread), scope(scope), body(body) {}
 
-	void bs::BSFunction::update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos) {
+	void bs::BSFunction::update(const vector<String> &names, Par<syntax::Node> body, const SrcPos &pos) {
 		paramNames = names;
-		this->contents = contents;
+		this->body = body;
 		this->pos = pos;
 
 		reset();
 	}
 
-	Bool bs::BSFunction::update(Par<ArrayP<Str>> names, Par<SStr> contents) {
+	Bool bs::BSFunction::update(Par<ArrayP<Str>> names, Par<syntax::Node> body) {
 		if (names->count() != params.size())
 			return false;
 
@@ -191,7 +191,7 @@ namespace storm {
 			n[i] = names->at(i)->v;
 		}
 
-		update(n, contents, pos);
+		update(n, body, pos);
 
 		return true;
 	}
@@ -199,23 +199,17 @@ namespace storm {
 	void bs::BSFunction::update(Par<BSFunction> from) {
 		assert(paramNames.size() == from->paramNames.size());
 		paramNames = from->paramNames;
-		contents = from->contents;
+		body = from->body;
 		pos = from->pos;
 
 		reset();
 	}
 
 	bs::FnBody *bs::BSFunction::createBody() {
-		Auto<SyntaxSet> syntax = getSyntax(scope);
-		Auto<Parser> parser = CREATE(Parser, this, syntax, contents->v, contents->pos);
-		nat r = parser->parse(L"FunctionBody");
-		if (parser->hasError())
-			throw parser->error();
-
-		Auto<Object> c = parser->transform(vector<Object *>(1, this));
-		Auto<FnBody> body = c.expect<FnBody>(engine(), L"While evaluating FunctionBody");
-
-		return body.ret();
+		if (!body) {
+			PVAR(identifier());
+		}
+		return syntax::transformNode<FnBody, BSFunction>(body, this);
 	}
 
 	bs::BSTreeFn::BSTreeFn(Value result, Par<SStr> name, Par<Array<Value>> params,

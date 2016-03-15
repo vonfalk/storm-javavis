@@ -5,6 +5,7 @@
 #include "TypeVar.h"
 #include "SyntaxEnv.h"
 #include "Shared/Map.h"
+#include "Syntax/Node.h"
 
 #include "BSParams.h"
 #include "BSTemplate.h"
@@ -20,7 +21,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			Class(TypeFlags flags, const SrcPos &pos, const Scope &scope, const String &name, Par<SStr> content);
+			Class(TypeFlags flags, const SrcPos &pos, const Scope &scope, const String &name, Par<syntax::Node> body);
 
 			// The scope used for this class.
 			STORM_VAR Scope scope;
@@ -37,12 +38,12 @@ namespace storm {
 			// Associated thread (if any).
 			Auto<Name> thread;
 
-			// Load the contents lazily.
+			// Load the body lazily.
 			virtual Bool STORM_FN loadAll();
 
 		private:
-			// Contents of the class.
-			Auto<SStr> content;
+			// Body of the class.
+			Auto<syntax::Node> body;
 
 			// Allowing lazy loads?
 			bool allowLazyLoad;
@@ -50,16 +51,16 @@ namespace storm {
 
 
 		// Create a class not extended from anything.
-		Class *STORM_FN createClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content);
-		Class *STORM_FN createValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content);
+		Class *STORM_FN createClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<syntax::Node> body);
+		Class *STORM_FN createValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<syntax::Node> body);
 
 		// Create a class extended from a base class.
-		Class *STORM_FN extendClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<SStr> content);
-		Class *STORM_FN extendValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<SStr> content);
+		Class *STORM_FN extendClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<syntax::Node> body);
+		Class *STORM_FN extendValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<syntax::Node> body);
 
 		// Create an actor class.
-		Class *STORM_FN threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content);
-		Class *STORM_FN threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> thread, Par<SStr> content);
+		Class *STORM_FN threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<syntax::Node> body);
+		Class *STORM_FN threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> thread, Par<syntax::Node> body);
 
 
 		/**
@@ -75,6 +76,9 @@ namespace storm {
 
 			// Add template.
 			void STORM_FN add(Par<Template> t);
+
+			// Add any of the above things.
+			void STORM_FN add(Par<TObject> t);
 
 			// Contents.
 			STORM_VAR Auto<ArrayP<Named>> items;
@@ -101,7 +105,7 @@ namespace storm {
 									Par<SStr> name,
 									Par<Name> result,
 									Par<Params> params,
-									Par<SStr> contents);
+									Par<syntax::Node> content);
 
 		/**
 		 * Class constructor.
@@ -109,12 +113,12 @@ namespace storm {
 		BSCtor *STORM_FN classCtor(Par<Class> owner,
 									SrcPos pos,
 									Par<Params> params,
-									Par<SStr> contents);
+									Par<syntax::Node> content);
 
 		BSCtor *STORM_FN classCastCtor(Par<Class> owner,
 									SrcPos pos,
 									Par<Params> params,
-									Par<SStr> contents);
+									Par<syntax::Node> content);
 
 		BSCtor *STORM_FN classDefaultCtor(Par<Class> owner);
 

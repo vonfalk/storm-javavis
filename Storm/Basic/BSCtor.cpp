@@ -11,8 +11,8 @@
 namespace storm {
 
 	bs::BSCtor::BSCtor(const vector<Value> &values, const vector<String> &names,
-				const Scope &scope, Par<SStr> contents, const SrcPos &pos)
-		: Function(Value(), Type::CTOR, values), scope(scope), contents(contents), paramNames(names), pos(pos) {
+				const Scope &scope, Par<syntax::Node> body, const SrcPos &pos)
+		: Function(Value(), Type::CTOR, values), scope(scope), body(body), paramNames(names), pos(pos) {
 
 		// If we inherit from a class that does not know which thread to run on, we need a Thread as the
 		// first parameter (#1, it is after the this ptr).
@@ -51,20 +51,10 @@ namespace storm {
 	}
 
 	bs::CtorBody *bs::BSCtor::parse() {
-		if (!contents)
+		if (!body)
 			return defaultParse();
 
-		Auto<SyntaxSet> syntax = getSyntax(scope);
-
-		Auto<Parser> parser = CREATE(Parser, this, syntax, contents->v, contents->pos);
-		nat parsed = parser->parse(L"CtorBody");
-		if (parser->hasError())
-			throw parser->error();
-
-		Auto<Object> c = parser->transform(vector<Object *>(1, this));
-		Auto<CtorBody> body = c.expect<CtorBody>(engine(), L"While evaluating CtorBody");
-
-		return body.ret();
+		return syntax::transformNode<CtorBody, BSCtor>(body, this);
 	}
 
 	bs::CtorBody *bs::BSCtor::defaultParse() {

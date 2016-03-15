@@ -9,6 +9,9 @@ namespace storm {
 		// Add the template.
 		void addParserTemplate(Engine &to);
 
+		// Get the array type (borrowed ptr).
+		Type *parserType(Engine &e, const Value &type);
+
 		/**
 		 * Type for the Parser template.
 		 */

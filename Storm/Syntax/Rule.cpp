@@ -5,6 +5,7 @@
 #include "Thread.h"
 #include "CodeGen.h"
 #include "Exception.h"
+#include "Node.h"
 
 namespace storm {
 	namespace syntax {
@@ -19,7 +20,7 @@ namespace storm {
 			tfmNames(decl->paramNames) {
 
 			// Always run on the compiler thread for now.
-			setThread(Compiler::decl.threadName(engine));
+			setSuper(Node::stormType(engine));
 		}
 
 		void Rule::initTypes() {
@@ -59,9 +60,6 @@ namespace storm {
 
 			Engine &e = engine;
 			Value me = Value::thisPtr(this);
-
-			// Position in the source this node was instantiated.
-			add(steal(CREATE(TypeVar, this, this, Value(SrcPos::stormType(e)), L"pos")));
 
 			// Transform function. This should be overloaded by all options.
 			Auto<FnPtr<CodeGen *>> tfm = memberWeakPtr(e, this, &Rule::createTransform);

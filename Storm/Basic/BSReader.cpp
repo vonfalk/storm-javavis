@@ -1,16 +1,17 @@
 #include "stdafx.h"
 #include "BSReader.h"
 #include "BSTemplate.h"
-#include "Parser.h"
-#include "SyntaxTransform.h"
 #include "BSContents.h"
 #include "BSClass.h"
+#include "Syntax/Parser.h"
 #include "Engine.h"
 #include "SyntaxEnv.h"
 #include "Shared/Io/Text.h"
 
 
 namespace storm {
+
+	using syntax::Parser;
 
 	bs::Reader::Reader(Par<PkgFiles> files, Par<Package> pkg) : FilesReader(files, pkg) {}
 
@@ -20,9 +21,8 @@ namespace storm {
 
 
 	bs::File::File(Par<Url> path, Par<Package> owner)
-		: FileReader(path, owner), scopeLookup(CREATE(BSScope, engine(), path)), scope(owner, scopeLookup) {
+		: FileReader(path, owner), scopeLookup(CREATE(BSScope, engine())), scope(owner, scopeLookup) {
 
-		syntax = CREATE(SyntaxSet, this);
 		fileContents = readAllText(path);
 	}
 
@@ -65,49 +65,38 @@ namespace storm {
 
 		readIncludes();
 
-		Auto<Parser> parser = CREATE(Parser, this, syntax, fileContents, file);
-		parser->parse(L"File", headerSize);
+		Auto<Parser> parser = Parser::create(syntaxPackage(), L"SFile");
+		addSyntax(scope, parser);
+
+		parser->parse(fileContents, file, headerEnd);
 		if (parser->hasError())
 			throw parser->error();
 
 		Auto<SyntaxEnv> env = CREATE(SyntaxEnv, this, scope);
-
-		Auto<Object> includes = parser->transform(vector<Object *>(1, env.borrow()));
-		contents = includes.expect<Contents>(pkg->engine(), L"While evaluating File");
+		contents = parser->transform<Contents, SyntaxEnv>(env);
 	}
 
 	void bs::File::readIncludes() {
-		syntax->add(syntaxPackage());
-		syntax->add(pkg);
+		Auto<Parser> parser = Parser::create(syntaxPackage(), L"SIncludes");
+		parser->addSyntax(pkg);
 
-		Auto<Parser> parser = CREATE(Parser, this, syntax, fileContents, file);
-		headerSize = parser->parse(L"Includes");
-		if (headerSize == Parser::NO_MATCH)
-			throw parser->error();
+		headerEnd = parser->parse(fileContents, file);
+		if (!parser->hasTree())
+			parser->throwError();
 
-		Auto<Object> includes = parser->transform();
-
-		if (ArrayP<SrcName> *inc = as<ArrayP<SrcName>>(includes.borrow())) {
-			setIncludes(inc);
-		}
+		setIncludes(steal(parser->transform<ArrayP<SrcName>>()));
 	}
 
 	void bs::File::setIncludes(Par<ArrayP<SrcName>> inc) {
 		for (nat i = 0; i < inc->count(); i++) {
-			Auto<SrcName> sName = inc->at(i);
-			Auto<SimpleName> name = sName->simplify(*pkg->engine().scope());
-			if (!name)
-				throw SyntaxError(sName->pos, L"Unknown parameters to package " + ::toS(sName));
-
+			Auto<SrcName> name = inc->at(i);
 			Auto<Named> found = pkg->engine().scope()->find(name);
 			Package *p = as<Package>(found.borrow());
 			if (!p)
-				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(sName));
+				throw SyntaxError(SrcPos(file, 0), L"Unknown package " + ::toS(name));
 
 			addInclude(scope, p);
 		}
-
-		syntax = getSyntax(scope);
 	}
 
 }

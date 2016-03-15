@@ -25,7 +25,7 @@ Expr createTypePart(Block block, NamePart part) {
 	ExprBlock b(block);
 	SrcName partT = namePart();
 
-	Expr str = strConstant(SStr(part.name));
+	Expr str = strConstant(SrcPos(), part.name);
 	Var base(b, partT, SStr("part"), Actual(str));
 	b.add(base);
 	LocalVarAccess bAccess(base.var);
@@ -129,11 +129,11 @@ Expr reloadName(Block block, SrcName typeName) {
 }
 
 
-Expr printExpr(SStr text, Expr expr) {
+Expr printExpr(Str text, Expr expr) {
 	if (expr as Operator) {
-        core:debug:print(text.v.removeIndent # " <=> " # expr.meaning);
+        core:debug:print(text.removeIndent # " <=> " # expr.meaning);
 	} else {
-	    core:debug:print(text.v.removeIndent # " <=> " # expr);
+	    core:debug:print(text.removeIndent # " <=> " # expr);
 	}
 	expr;
 }

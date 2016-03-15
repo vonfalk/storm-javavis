@@ -11,14 +11,13 @@ delimiter = SDelimiter;
 void SDelimiter();
 SDelimiter : "[ \n\r\t]*";
 SDelimiter : "[ \n\r\t]*//[^\n\r]*[\n\r]+" - SDelimiter;
-SDelimiter : "[ \n\r\t]*/\*" - SInComment - "\*/" - SDelimiter;
+SDelimiter : "[ \n\r\t]*/\*" - SInComment - SDelimiter;
 
-// Inside a multi-line comment.
+// Inside a multi-line comment. Consumes the ending */
 void SInComment();
-SInComment : "[^\*/]*"; // Everything except / and * are fine!
-SInComment : SInComment - "/\*" - SInComment - "\*/" - SInComment; // Nested comments are fine!
-SInComment : SInComment - "/" - SInComment; // Stray / are fine.
-SInComment : SInComment - "\*" - SInComment; // Stray * are fine.
+SInComment : "\*+/"; // End of the comment.
+SInComment : "[^\*]*" - SInComment; // Everything except * are fine!
+SInComment : "\*+[^\*/]" - SInComment;
 
 // A name in Storm. This should probably be extended to handle more of unicode.
 SStr SName();
@@ -115,9 +114,14 @@ SFile => Contents() : SDelimiter - (SFileItem(env) -> add, )*;
 Array<SrcName> SIncludes();
 SIncludes => p : (, "use", SPackage p, ";")*;
 
-// Specail use-rule in the top loop.
+// Special use-rule in the top loop.
 SrcName SReplUse();
 SReplUse => p : "use", SPackage p, ";?";
+
+// Root rule for the top loop.
+Expr SReplExpr(Block block);
+SReplExpr => p : SExpr(block) p;
+SReplExpr => p : SStmt(block) p;
 
 
 ////////////////////////////////////////////////////////////////////
@@ -132,7 +136,7 @@ SActuals => Actual() : SExpr(block) -> add (, ",", SExpr(block) -> add)*;
 // Actual parameters with/without parens.
 Actual SFnActuals(Block block);
 SFnActuals => Actual() : "";
-SFnActuals => v : "(", SActuals v, ")";
+SFnActuals => v : "(", SActuals(block) v, ")";
 
 // Block.
 Block SBlock(Block parent);
@@ -150,7 +154,7 @@ SAllWeakCast => WeakMaybeCast(expr) : SExpr(block) expr;
 SAllWeakCast => r : SWeakCast(block) r;
 
 // If.
-If SIf(Block block);
+IfExpr SIf(Block block);
 SIf[0] => createIf(block, expr) :
     "if", "(", SExpr(block) expr, ")", SIfTrue(me) -> trueExpr (, "else", SStmt(me) -> falseExpr)?;
 SIf[0] => IfWeak(block, cast) :
@@ -169,7 +173,7 @@ SReturn => Return(pos, block, expr) : "return", SExpr(block) expr;
 
 // The loop.
 Expr SLoop(Block block);
-SLoop => Loop(block) : "do", SStmt(me) -> doBody (, "while", "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody)?;
+SLoop => Loop(block) : "do[ \n\r\t]", SStmt(me) -> doBody (, "while", "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody)?;
 SLoop => Loop(block) : "while", "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody;
 
 // The for loop. Divided into two to get correct scoping.
@@ -196,14 +200,14 @@ SArrayInitList => Array<Expr>() : SExpr(block) -> push, (",", SExpr(block) -> pu
 
 // Constants that can be used with units.
 Expr SConst();
-SConst => intConstant(nr) : "-?[0-9]+" nr;
-SConst => floatConstant(nr) : "-?[0-9]+\.[0-9]+" nr;
-SConst => strConstant(str) : SString str;
-SConst[20] => trueConstant() : "true";
-SConst[20] => falseConstant() : "false";
+SConst => intConstant(pos, nr) : "-?[0-9]+" nr;
+SConst => floatConstant(pos, nr) : "-?[0-9]+\.[0-9]+" nr;
+SConst => strConstant(pos, str) : SString str;
+SConst[20] => trueConstant(pos) : "true";
+SConst[20] => falseConstant(pos) : "false";
 
 // Multiline string constants.
-SConst[10] => rawMultilineStrConstant(str) : "str", "{[ \t]*[\n\r]+" - SSkipBlock str - "}";
+SConst[10] => rawMultilineStrConstant(pos, str) : "str", "{[ \t]*[\n\r]+" - SSkipBlock str - "}";
 
 // Skip a block, assuming matching {} and well-behaved strings.
 Str SSkipBlock();
@@ -236,7 +240,7 @@ SAtom => e : SIf(block) e;
 SAtom => e : SLoop(block) e;
 SAtom => accessExpr(block, lhs, par) : SAtom(block) lhs, "\[", SExpr(block) par, "\]";
 SAtom => arrayInit(block, t, list) : SType t, ":", "\[", SArrayInitList(block) list, "\]";
-SAtom => arrayInit(block, list) : "\[", SArrayInitList(block) list, "\]";
+SAtom => ArrayInit(block, list) : "\[", SArrayInitList(block) list, "\]";
 SAtom[20] => FnPtr(block, name, params) : "&", SType name, SFnTypes params;
 SAtom[20] => strongFnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name, SFnTypes params;
 SAtom[20] => weakFnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "->", SName name, SFnTypes params;
@@ -252,43 +256,43 @@ SAtom => asMaybe(block, expr) : "\?", SAtom(block) expr;
 
 // Returns a SrcName of a function which is supposed to convert this unit to an object of some kind.
 SrcName SUnit();
-SUnit => timeUnit(u) : "h" u;
-SUnit => timeUnit(u) : "min" u;
-SUnit => timeUnit(u) : "s" u;
-SUnit => timeUnit(u) : "ms" u;
-SUnit => timeUnit(u) : "us" u;
-SUnit => degUnit(u) : "deg" u;
-SUnit => degUnit(u) : "rad" u;
+SUnit => timeUnit(u) : "h"@ u;
+SUnit => timeUnit(u) : "min"@ u;
+SUnit => timeUnit(u) : "s"@ u;
+SUnit => timeUnit(u) : "ms"@ u;
+SUnit => timeUnit(u) : "us"@ u;
+SUnit => degUnit(u) : "deg"@ u;
+SUnit => degUnit(u) : "rad"@ u;
 
 ////////////////////////////////////////////////////////////////////
 // Operators!
 ////////////////////////////////////////////////////////////////////
 
 // Pre-and postfix operators.
-Str SPrePost();
-SPrePost => v : "\+\+" v;
-SPrePost => v : "--" v;
+SStr SPrePost();
+SPrePost => v : "\+\+"@ v;
+SPrePost => v : "--"@ v;
 
 // Operators.
 OpInfo SOperator();
-SOperator => lOperator(op, 900) : "\*" op;
-SOperator => lOperator(op, 900) : "/" op;
-SOperator => lOperator(op, 900) : "%" op;
-SOperator => lOperator(op, 800) : "\+" op;
-SOperator => lOperator(op, 800) : "\-" op;
-SOperator => lOperator(op, 700) : "<<" op;
-SOperator => lOperator(op, 700) : ">>" op;
-SOperator => lOperator(op, 600) : ">" op;
-SOperator => lOperator(op, 600) : "<" op;
-SOperator => lOperator(op, 600) : ">=" op;
-SOperator => lOperator(op, 600) : "<=" op;
-SOperator => lOperator(op, 500) : "==" op;
-SOperator => lOperator(op, 500) : "!=" op;
-SOperator => lOperator(op, 490) : "&" op;
-SOperator => lOperator(op, 480) : "^" op;
-SOperator => lOperator(op, 470) : "|" op;
-SOperator => assignOperator(op, 100) : "=" op;
-SOperator => ConcatOperator(op, 300) : "#" op;
+SOperator => lOperator(op, 900) : "\*"@ op;
+SOperator => lOperator(op, 900) : "/"@ op;
+SOperator => lOperator(op, 900) : "%"@ op;
+SOperator => lOperator(op, 800) : "\+"@ op;
+SOperator => lOperator(op, 800) : "\-"@ op;
+SOperator => lOperator(op, 700) : "<<"@ op;
+SOperator => lOperator(op, 700) : ">>"@ op;
+SOperator => lOperator(op, 600) : ">"@ op;
+SOperator => lOperator(op, 600) : "<"@ op;
+SOperator => lOperator(op, 600) : ">="@ op;
+SOperator => lOperator(op, 600) : "<="@ op;
+SOperator => lOperator(op, 500) : "=="@ op;
+SOperator => lOperator(op, 500) : "!="@ op;
+SOperator => lOperator(op, 490) : "&"@ op;
+SOperator => lOperator(op, 480) : "^"@ op;
+SOperator => lOperator(op, 470) : "|"@ op;
+SOperator => assignOperator(op, 100) : "="@ op;
+SOperator => ConcatOperator(op, 300) : "#"@ op;
 
 // Operator combined with assignment. Eg. +=.
 // This one has higher priority so that we treat '==' as its own operator, and not a strange variant of the assignment.
@@ -302,9 +306,9 @@ SCombOp[0] => CombinedOperator(op, 100) : SOperator op, "=";
 
 Expr SExpr(Block block);
 SExpr[20] => e : SAtom(block) e;
-SExpr => prePostOperator(block, o, e) : "!" o, SAtom(block) e;
+SExpr => prePostOperator(block, o, e) : "!"@ o, SAtom(block) e;
 SExpr => prefixOperator(block, o, e) : SPrePost o, SAtom(block) e;
-SExpr => postfixOperator(block, o, e) : SPrePost o, SAtom(block) e;
+SExpr => postfixOperator(block, o, e) : SAtom(block) e, SPrePost o;
 SExpr => mkOperator(block, lhs, op, rhs) : SAtom(block) lhs, SCombOp op, SExpr(block) rhs;
 // This must be larger than operators, as templates may be seen as the < operator otherwise.
 SExpr[10] => Var(block, t, name, actual) : SType t, SName name, SFnActuals(block) actual;
@@ -351,11 +355,11 @@ SCtorStmts => v : (SStmt(block) v, )*;
 Params SCtorParams();
 SCtorParams => Params() : "";
 SCtorParams => Params() : SType -> add, SName -> add (, ",", SType -> add, SName -> add)*;
-SCtorParams => Params() : SType -> add, "" -> add (, ",", SType -> add, SName -> add)*;
+SCtorParams => Params() : SType -> add, ""@ -> add (, ",", SType -> add, SName -> add)*;
 
 // Possible contents of a class.
 TObject SClassItem(Class owner);
-SClassItem => classVar(owner, t, n) :
+SClassItem => ClassVar(owner, t, n) :
     SType t, SName n, ";";
 SClassItem => classFn(owner, pos, name, result, params, body) :
     SType result, SName name, "(", SFormals params, ")", "{", SFunctionBody@ body, "}";

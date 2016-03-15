@@ -4,6 +4,7 @@
 #include "Package.h"
 #include "Exception.h"
 
+#include "Node.h"
 #include "Rule.h"
 #include "Option.h"
 #include "State.h"
@@ -52,7 +53,10 @@ namespace storm {
 
 			// Found any errors? If Str::Iter is not end, this is true. Note that even if we have an
 			// error, it could be possible to extract a tree!
-			Bool STORM_FN hasError();
+			Bool STORM_FN hasError() const;
+
+			// Was it possible to extract a tree?
+			Bool STORM_FN hasTree() const;
 
 			// Get the error.
 			SyntaxError error() const;
@@ -70,7 +74,7 @@ namespace storm {
 			Nat STORM_FN byteCount() const;
 
 			// Get the syntax tree (only for C++). In Storm we will know what type of tree we will generate!
-			Object *tree() const;
+			Node *tree() const;
 
 		protected:
 			// Output.
@@ -104,12 +108,6 @@ namespace storm {
 			// Last state containing a finish step.
 			nat lastFinish;
 
-			// Take note of the thread used for objects derived from Type.
-			Thread *typeThread;
-
-			// Offset of 'pos' in all node objects.
-			int posOffset;
-
 			// Process a single step.
 			bool process(nat step);
 
@@ -131,13 +129,13 @@ namespace storm {
 			State *finish() const;
 
 			// Create a tree for the option which ends at 'state'.
-			Object *tree(State *state) const;
+			Node *tree(State *state) const;
 
 			// Create an object of the type suitable for the rule in 'state'.
-			Object *allocTreeNode(State *state) const;
+			Node *allocTreeNode(State *state) const;
 
 			// Reverse arrays in a node.
-			void reverseTreeNode(State *state, Object *node) const;
+			void reverseTreeNode(State *state, Node *node) const;
 
 			// Get all rules in progress for a specific state (for error messages).
 			map<String, set<String>> inProgress(const StateSet &step) const;
@@ -155,8 +153,58 @@ namespace storm {
 		 */
 		class Parser : public ParserBase {
 		public:
-			// TODO!
+			// Create a parser parsing a specific type.
+			static Parser *create(Par<Rule> root);
+
+			// Create a parser parsing the type named 'name' in 'pkg'.
+			static Parser *create(Par<Package> pkg, const String &name);
+
+			// Extract the syntax tree and transform it. Assumes that all types are derived from
+			// Object, and therefore wraps them in Auto.
+			template <class R>
+			R *transform() {
+				Auto<Node> t = tree();
+				return transformNode<R>(t);
+			}
+
+			template <class R, class P>
+			R *transform(Par<P> par) {
+				Auto<Node> t = tree();
+				return transformNode<R, P>(t, par);
+			}
+
+		private:
+			// Use 'create' to create parsers in C++.
+			Parser();
 		};
+
+
+		/**
+		 * Transform single syntax nodes. Assumes all in/out parameters are Objects.
+		 */
+
+		// Find the appropriate 'transform' function in a specific type. If 'param' is null, no
+		// params are assumed except the this pointer.
+		const void *transformFunction(Type *type, const Value &result, const Value &param);
+
+		template <class R>
+		R *transformNode(Par<Node> node) {
+			Engine &e = node->engine();
+			const void *fn = transformFunction(node->myType, value<R *>(e), Value());
+			os::FnParams p;
+			p.add(node.borrow());
+			return os::call<R *>(fn, true, p);
+		}
+
+		template <class R, class P>
+		R *transformNode(Par<Node> node, Par<P> par) {
+			Engine &e = node->engine();
+			const void *fn = transformFunction(node->myType, value<R *>(e), value<P *>(e));
+			os::FnParams p;
+			p.add(node.borrow());
+			p.add(par.borrow());
+			return os::call<R *>(fn, true, p);
+		}
 
 	}
 }

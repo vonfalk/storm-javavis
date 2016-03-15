@@ -6,12 +6,14 @@ use lang:bs;
 class VarRef extends AsmOperand {
 	LocalVar? var;
 
-	ctor(lang:bs:Block block, SStr name) {
+	ctor(SrcPos pos, lang:bs:Block block, Str name) {
 		init();
 
-		Named? v = block.scope.find(Name(name.v));
+		Named? v = block.scope.find(SimpleName(name));
 		if (v as LocalVar) {
 			var = v;
+		} else {
+			throwSyntaxError(pos, "Unknown variable: " # name # ". Note: Only local variables are supported.");
 		}
 	}
 

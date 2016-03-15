@@ -70,14 +70,16 @@ namespace storm {
 	}
 
 	void StormVTable::slot(nat i, VTableSlot *update) {
-		assert(i < size);
+		// assert(i < size);
+		ensure(i + 1);
 		delete src[i];
 		src[i] = update;
 		update->id.offset = i;
 	}
 
 	VTableSlot *StormVTable::slot(nat i) {
-		assert(i < size);
+		// assert(i < size);
+		ensure(i + 1);
 		return src[i];
 	}
 

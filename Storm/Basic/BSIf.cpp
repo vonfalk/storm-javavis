@@ -8,17 +8,20 @@
 
 namespace storm {
 
-	bs::If::If(Par<Block> parent, Par<Expr> cond) : Block(parent), condition(cond) {
-		if (cond->result().type().asRef(false) != Value(boolType(engine())))
-			throw TypeError(cond->pos, L"The expression must evaluate to Bool.");
-	}
+	bs::IfExpr::IfExpr(Par<Block> parent) : Block(parent) {}
 
-	void bs::If::trueExpr(Par<Expr> e) {
+	void bs::IfExpr::trueExpr(Par<IfTrue> e) {
 		trueCode = e;
 	}
 
-	void bs::If::falseExpr(Par<Expr> e) {
+	void bs::IfExpr::falseExpr(Par<Expr> e) {
 		falseCode = e;
+	}
+
+
+	bs::If::If(Par<Block> parent, Par<Expr> cond) : IfExpr(parent), condition(cond) {
+		if (cond->result().type().asRef(false) != Value(boolType(engine())))
+			throw TypeError(cond->pos, L"The expression must evaluate to Bool.");
 	}
 
 	ExprResult bs::If::result() {
@@ -75,18 +78,10 @@ namespace storm {
 	 */
 
 	bs::IfWeak::IfWeak(Par<Block> parent, Par<WeakCast> cast) :
-		Block(parent), weakCast(cast) {}
+		IfExpr(parent), weakCast(cast) {}
 
 	bs::IfWeak::IfWeak(Par<Block> parent, Par<WeakCast> cast, Par<SStr> name) :
-		Block(parent), weakCast(cast), varName(name) {}
-
-	void bs::IfWeak::trueExpr(Par<IfTrue> e) {
-		trueCode = e;
-	}
-
-	void bs::IfWeak::falseExpr(Par<Expr> e) {
-		falseCode = e;
-	}
+		IfExpr(parent), weakCast(cast), varName(name) {}
 
 	ExprResult bs::IfWeak::result() {
 		if (falseCode && trueCode) {
@@ -162,7 +157,7 @@ namespace storm {
 	 * Create appropriate if statement.
 	 */
 
-	bs::Expr *bs::createIf(Par<Block> parent, Par<Expr> cond) {
+	bs::IfExpr *bs::createIf(Par<Block> parent, Par<Expr> cond) {
 		Value exprResult = cond->result().type().asRef(false);
 
 		if (exprResult == boolType(parent->engine())) {

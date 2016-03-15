@@ -114,8 +114,6 @@ namespace storm {
 				return;
 
 			for (nat i = 0; i < data.size(); i++) {
-				if (data.size() > 200)
-					PLN("Warning: large data: " << data.size());
 				State *c = data[i];
 				if (*c == state) {
 					// Found it already, shall we update the existing one?

@@ -76,8 +76,8 @@ class JmpInstr extends AsmAtom {
 		init() { to = to; flag = ifAlways; }
 	}
 
-	ctor(AsmOperand to, CondBox c) {
-		init() { to = to; flag = c.v; }
+	ctor(AsmOperand to, CondFlag c) {
+		init() { to = to; flag = c; }
 	}
 
 	void output(CodeGen g, Labels l) {

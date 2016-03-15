@@ -30,6 +30,9 @@ namespace storm {
 			// Add a template of some kind.
 			void STORM_FN add(Par<Template> templ);
 
+			// Add either of the above types.
+			void STORM_FN add(Par<TObject> obj);
+
 			// All types.
 			STORM_VAR Auto<ArrayP<Type>> types;
 

@@ -483,7 +483,7 @@ namespace storm {
 
 		Auto<Function> ctor = steal(t->find(part)).as<Function>();
 		if (!ctor)
-			throw SyntaxError(pos, L"No constructor " + t->identifier() + ::toS(part) + L")");
+			throw SyntaxError(pos, L"No constructor " + t->identifier() + L"." + ::toS(part) + L")");
 
 		return CREATE(CtorCall, t, ctor, actual);
 	}

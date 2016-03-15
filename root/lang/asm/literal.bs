@@ -2,23 +2,22 @@ use core:debug;
 use core:asm;
 use core:lang;
 
-AsmOperand number(SStr s, SStr value) {
-	Str size = s.v;
+AsmOperand number(Str size, Str value) {
 	if (size.equals("b")) {
-		byteConst(value.v.toInt.byte);
+		byteConst(value.toInt.byte);
 	} else if (size.equals("i")) {
-		intConst(value.v.toInt);
+		intConst(value.toInt);
 	} else if (size.equals("n")) {
-		natConst(value.v.toNat);
+		natConst(value.toNat);
 	} else if (size.equals("l")) {
-		longConst(value.v.toLong);
+		longConst(value.toLong);
 	} else if (size.equals("w")) {
-		wordConst(value.v.toWord);
+		wordConst(value.toWord);
 	} else if (size.equals("p")) {
-		intPtrConst(value.v.toInt);
+		intPtrConst(value.toInt);
 	} else {
 		// Fallback.
-		intConst(value.v.toInt);
+		intConst(value.toInt);
 	}
 }
 

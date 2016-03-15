@@ -15,27 +15,27 @@ class Generate extends Template {
 	SStr paramName;
 
 	// Function body.
-	SStr contents;
+	SFunctionBody body;
 
 	// Scope.
 	Scope scope;
 
 	// Create.
-	ctor(SyntaxEnv env, SStr name, SStr param, SStr contents) {
+	ctor(SyntaxEnv env, SStr name, SStr param, SFunctionBody body) {
 		init(name.v) {
 			fnName = name;
 			paramName = param;
-			contents = contents;
+			body = body;
 			scope = env.scope;
 		}
 	}
 
 	// Create.
-	ctor(Class env, SStr name, SStr param, SStr contents) {
+	ctor(Class env, SStr name, SStr param, SFunctionBody body) {
 		init(name.v) {
 			fnName = name;
 			paramName = param;
-			contents = contents;
+			body = body;
 			scope = env.scope;
 		}
 	}
@@ -72,7 +72,7 @@ class Generate extends Template {
 		}
 
 		// TODO: ignore fnName, making the function anonymous.
-		BSFunction r(result, name, params, scope, compilerThread, contents);
+		BSFunction r(result, name, params, scope, compilerThread, body);
 
 		if (into) {
 			into.add(r);

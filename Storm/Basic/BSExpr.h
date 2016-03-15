@@ -36,7 +36,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Constant(Int i);
-			Constant(int64 i);
+			STORM_CTOR Constant(Long i);
 			STORM_CTOR Constant(Float f);
 			Constant(double d);
 			STORM_CTOR Constant(Str *str);
@@ -94,15 +94,17 @@ namespace storm {
 			void strData(code::Listing &to);
 		};
 
-		Constant *STORM_FN intConstant(Par<SStr> str);
+		// TODO: Take care of the 'pos' parameter in these functions!
 
-		Constant *STORM_FN strConstant(Par<SStr> str);
-		Constant *STORM_FN rawStrConstant(Par<SStr> str);
+		Constant *STORM_FN intConstant(SrcPos pos, Par<Str> str);
 
-		Constant *STORM_FN floatConstant(Par<SStr> str);
+		Constant *STORM_FN strConstant(SrcPos pos, Par<Str> str);
+		Constant *STORM_FN rawStrConstant(SrcPos pos, Par<Str> str);
 
-		Constant *STORM_ENGINE_FN trueConstant(EnginePtr e);
-		Constant *STORM_ENGINE_FN falseConstant(EnginePtr e);
+		Constant *STORM_FN floatConstant(SrcPos pos, Par<Str> str);
+
+		Constant *STORM_ENGINE_FN trueConstant(EnginePtr e, SrcPos pos);
+		Constant *STORM_ENGINE_FN falseConstant(EnginePtr e, SrcPos pos);
 
 		/**
 		 * Dummy expression, tells that we're returning a value of a specific type, but will not

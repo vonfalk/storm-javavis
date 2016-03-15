@@ -13,41 +13,41 @@
 
 namespace storm {
 
-	bs::Class *bs::createClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content) {
-		return CREATE(Class, name, typeClass, pos, env->scope, name->v->v, content);
+	bs::Class *bs::createClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<syntax::Node> body) {
+		return CREATE(Class, name, typeClass, pos, env->scope, name->v->v, body);
 	}
 
-	bs::Class *bs::createValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content) {
-		return CREATE(Class, name, typeValue, pos, env->scope, name->v->v, content);
+	bs::Class *bs::createValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<syntax::Node> body) {
+		return CREATE(Class, name, typeValue, pos, env->scope, name->v->v, body);
 	}
 
-	bs::Class *bs::extendClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<SStr> content) {
-		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, content);
+	bs::Class *bs::extendClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<syntax::Node> body) {
+		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, body);
 		c->base = from;
 		return c;
 	}
 
-	bs::Class *bs::extendValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<SStr> content) {
-		Class *c = CREATE(Class, name, typeValue, pos, env->scope, name->v->v, content);
+	bs::Class *bs::extendValue(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> from, Par<syntax::Node> body) {
+		Class *c = CREATE(Class, name, typeValue, pos, env->scope, name->v->v, body);
 		c->base = from;
 		return c;
 	}
 
-	bs::Class *bs::threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> thread, Par<SStr> content) {
-		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, content);
+	bs::Class *bs::threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<Name> thread, Par<syntax::Node> body) {
+		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, body);
 		c->thread = thread;
 		return c;
 	}
 
-	bs::Class *bs::threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<SStr> content) {
-		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, content);
+	bs::Class *bs::threadClass(SrcPos pos, Par<SyntaxEnv> env, Par<SStr> name, Par<syntax::Node> body) {
+		Class *c = CREATE(Class, name, typeClass, pos, env->scope, name->v->v, body);
 		c->setSuper(TObject::stormType(c->engine));
 		return c;
 	}
 
 
-	bs::Class::Class(TypeFlags flags, const SrcPos &pos, const Scope &scope, const String &name, Par<SStr> content)
-		: Type(name, flags), scope(scope, this), declared(pos), content(content), allowLazyLoad(true) {}
+	bs::Class::Class(TypeFlags flags, const SrcPos &pos, const Scope &scope, const String &name, Par<syntax::Node> body)
+		: Type(name, flags), scope(scope, this), declared(pos), body(body), allowLazyLoad(true) {}
 
 
 	void bs::Class::lookupTypes() {
@@ -84,15 +84,7 @@ namespace storm {
 		if (!allowLazyLoad)
 			return false;
 
-		Auto<SyntaxSet> syntax = getSyntax(scope);
-
-		Auto<Parser> parser = CREATE(Parser, this, syntax, content->v, content->pos);
-		parser->parse(L"ClassBody");
-		if (parser->hasError())
-			throw parser->error();
-
-		Auto<Object> z = parser->transform(vector<Object *>(1, this));
-		Auto<ClassBody> body = z.expect<ClassBody>(engine, L"From ClassBody rule");
+		Auto<ClassBody> body = syntax::transformNode<ClassBody, Class>(this->body, this);
 
 		// Found a CTOR?
 		bool hasCtor = false;
@@ -164,6 +156,16 @@ namespace storm {
 		}
 	}
 
+	void bs::ClassBody::add(Par<TObject> o) {
+		if (Named *n = as<Named>(o.borrow())) {
+			add(Par<Named>(n));
+		} else if (Template *t = as<Template>(o.borrow())) {
+			add(Par<Template>(t));
+		} else {
+			throw InternalError(L"Not a suitable type to ClassBody.add(): " + o->myType->identifier());
+		}
+	}
+
 	/**
 	 * Member
 	 */
@@ -177,7 +179,7 @@ namespace storm {
 										Par<SStr> name,
 										Par<Name> result,
 										Par<Params> params,
-										Par<SStr> contents) {
+										Par<syntax::Node> body) {
 
 		params->addThis(owner.borrow());
 		return CREATE(BSFunction, owner->engine,
@@ -186,25 +188,25 @@ namespace storm {
 					params,
 					owner->scope,
 					null, // thread
-					contents);
+					body);
 	}
 
 	bs::BSCtor *STORM_FN bs::classCtor(Par<Class> owner,
 										SrcPos pos,
 										Par<Params> params,
-										Par<SStr> contents) {
+										Par<syntax::Node> body) {
 		params->addThis(owner.borrow());
 		vector<String> names = params->cNames();
 		vector<Value> values = params->cTypes(owner->scope);
 
-		return CREATE(BSCtor, owner->engine, values, names, owner->scope, contents, pos);
+		return CREATE(BSCtor, owner->engine, values, names, owner->scope, body, pos);
 	}
 
 	bs::BSCtor *STORM_FN bs::classCastCtor(Par<Class> owner,
 										SrcPos pos,
 										Par<Params> params,
-										Par<SStr> contents) {
-		BSCtor *r = classCtor(owner, pos, params, contents);
+										Par<syntax::Node> body) {
+		BSCtor *r = classCtor(owner, pos, params, body);
 		r->flags |= namedAutoCast;
 		return r;
 	}

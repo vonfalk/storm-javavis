@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "BSContents.h"
 #include "BSClass.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -32,6 +33,19 @@ namespace storm {
 			adapter->add(t);
 			templates->put(k, adapter);
 		}
+	}
+
+	void bs::Contents::add(Par<TObject> o) {
+		if (Type *t = as<Type>(o.borrow()))
+			add(Par<Type>(t));
+		else if (FunctionDecl *fn = as<FunctionDecl>(o.borrow()))
+			add(Par<FunctionDecl>(fn));
+		else if (NamedThread *nt = as<NamedThread>(o.borrow()))
+			add(Par<NamedThread>(nt));
+		else if (Template *t = as<Template>(o.borrow()))
+			add(Par<Template>(t));
+		else
+			throw InternalError(L"add for Content does not expect " + o->myType->identifier());
 	}
 
 }

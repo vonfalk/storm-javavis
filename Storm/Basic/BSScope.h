@@ -1,9 +1,9 @@
 #pragma once
 #include "Std.h"
-#include "SyntaxSet.h"
 #include "Scope.h"
 #include "Shared/Io/Url.h"
 #include "Package.h"
+#include "Syntax/Parser.h"
 
 namespace storm {
 	namespace bs {
@@ -17,20 +17,14 @@ namespace storm {
 			// No atuomatic syntax.
 			STORM_CTOR BSScope();
 
-			// Automatically add the syntax package for 'file'.
-			STORM_CTOR BSScope(Par<Url> file);
-
-			// File name.
-			STORM_VAR MAYBE(Auto<Url>) file;
-
 			// Included packages. (risk of cycles here)
 			vector<Package *> includes;
 
-			// Get syntax.
-			void addSyntax(const Scope &from, Par<SyntaxSet> to);
-
 			// Find stuff.
 			virtual Named *STORM_FN find(const Scope &from, Par<SimpleName> name);
+
+			// Add syntax to a parser.
+			void addSyntax(const Scope &from, Par<syntax::ParserBase> to);
 
 		private:
 			// Find helper.
@@ -39,8 +33,8 @@ namespace storm {
 
 		Bool STORM_FN addInclude(const Scope &to, Par<Package> p);
 
-		// Get syntax from a scope.
-		SyntaxSet *STORM_FN getSyntax(const Scope &from);
+		// Add syntax to a Parser.
+		void STORM_FN addSyntax(Scope from, Par<syntax::ParserBase> to);
 
 	}
 }

@@ -1,8 +1,10 @@
 #pragma once
 #include "Std.h"
-#include "Basic/BSParams.h"
 #include "Function.h"
 #include "SyntaxEnv.h"
+#include "Syntax/Node.h"
+
+#include "BSParams.h"
 #include "BSBlock.h"
 #include "BSExpr.h"
 #include "BSScope.h"
@@ -28,14 +30,14 @@ namespace storm {
 									Par<SrcName> result,
 									Par<SStr> name,
 									Par<Params> params,
-									Par<SStr> contents);
+									Par<syntax::Node> body);
 
 			STORM_CTOR FunctionDecl(Par<SyntaxEnv> env,
 									Par<SrcName> result,
 									Par<SStr> name,
 									Par<Params> params,
 									Par<SrcName> thread,
-									Par<SStr> contents);
+									Par<syntax::Node> body);
 
 			// Values.
 			STORM_VAR Auto<SyntaxEnv> env;
@@ -43,7 +45,7 @@ namespace storm {
 			STORM_VAR Auto<SrcName> result;
 			STORM_VAR Auto<Params> params;
 			STORM_VAR MAYBE(Auto<SrcName>) thread;
-			STORM_VAR Auto<SStr> contents;
+			STORM_VAR Auto<syntax::Node> body;
 
 			// Create a corresponding function.
 			Function *STORM_FN createFn();
@@ -103,14 +105,14 @@ namespace storm {
 		public:
 			// Create a function.
 			STORM_CTOR BSFunction(Value result, Par<SStr> name, Par<Params> params, Scope scope,
-								MAYBE(Par<NamedThread>) thread, Par<SStr> contents);
+								MAYBE(Par<NamedThread>) thread, Par<syntax::Node> body);
 
 			// Scope.
 			const Scope scope;
 
 			// Temporary solution for updating a function.
-			void update(const vector<String> &names, Par<SStr> contents, const SrcPos &pos);
-			Bool STORM_FN update(Par<ArrayP<Str>> names, Par<SStr> contents);
+			void update(const vector<String> &names, Par<syntax::Node> body, const SrcPos &pos);
+			Bool STORM_FN update(Par<ArrayP<Str>> names, Par<syntax::Node> body);
 			void STORM_FN update(Par<BSFunction> from);
 
 			// Create the body from our string.
@@ -118,7 +120,7 @@ namespace storm {
 
 		private:
 			// Code.
-			Auto<SStr> contents;
+			Auto<syntax::Node> body;
 		};
 
 
@@ -145,7 +147,7 @@ namespace storm {
 
 
 		/**
-		 * Contents of a function.
+		 * Body of a function.
 		 */
 		class FnBody : public ExprBlock {
 			STORM_CLASS;

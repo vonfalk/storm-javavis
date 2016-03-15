@@ -52,16 +52,15 @@ class Labels on Compiler {
 		init() { gen = g; }
 	}
 
-	void create(SStr name) {
-		if (labels.has(name.v)) {
-			throwSyntaxError(name.pos, "Duplicate label " # name.v);
+	void create(SrcPos pos, Str name) {
+		if (labels.has(name)) {
+			throwSyntaxError(pos, "Duplicate label " # name);
 		}
 
-		labels.put(name.v, gen.l.label());
+		labels.put(name, gen.l.label());
 	}
 
 	Label get(Str name) {
-		// TODO: Better error message here.
 		labels.get(name);
 	}
 }
@@ -83,18 +82,19 @@ class AsmAtom on Compiler {
  * Label for an asm listing.
  */
 class AsmLabel extends AsmAtom {
-	SStr name;
+	SrcPos pos;
+	Str name;
 
-	ctor(SStr name) {
-		init() { name = name; }
+	ctor(SrcPos pos, Str name) {
+		init() { pos = pos; name = name; }
 	}
 
 	void create(Labels l) {
-		l.create(name);
+		l.create(pos, name);
 	}
 
 	void output(CodeGen to, Labels l) {
-		to.l << l.get(name.v);
+		to.l << l.get(name);
 	}
 }
 
@@ -127,17 +127,17 @@ class AsmOperand on Compiler {
  * Label reference.
  */
 class AsmLabelRef extends AsmOperand {
-	SStr name;
+	Str name;
 
-	ctor(SStr name) {
+	ctor(Str name) {
 		init() { name = name; }
 	}
 
 	Operand v(Labels l) {
-		Operand(l.get(name.v));
+		Operand(l.get(name));
 	}
 
 	Str toS() {
-		name.v # ":";
+		name # ":";
 	}
 }

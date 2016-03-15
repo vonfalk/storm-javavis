@@ -167,6 +167,12 @@ namespace storm {
 				throw SyntaxError(pos, L"Can not use 'me' this early!");
 			if (name == L"pos")
 				return posVar(in);
+			if (name.isInt())
+				return CREATE(Constant, this, name.toInt());
+			if (name == L"true")
+				return CREATE(Constant, this, true);
+			if (name == L"false")
+				return CREATE(Constant, this, false);
 
 			// We need to create it...
 			if (lookingFor.count(name))
@@ -251,16 +257,20 @@ namespace storm {
 
 				// Extra block to avoid name collisions.
 				Auto<ExprBlock> forBlock = CREATE(ExprBlock, this, in);
+				Auto<Expr> arrayCount = callMember(L"count", srcAccess);
+				Auto<Var> end = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_end"), arrayCount);
+				Auto<Expr> readEnd = CREATE(LocalVarAccess, this, steal(end->var()));
+				forBlock->add(end);
+
 				Auto<Var> i = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_i"), steal(CREATE(Constant, this, 0)));
 				Auto<Expr> readI = CREATE(LocalVarAccess, this, steal(i->var()));
 				forBlock->add(i);
 
 				Auto<For> loop = CREATE(For, this, forBlock);
-				Auto<Expr> arrayCount = callMember(L"count", srcAccess);
-				loop->test(steal(callMember(L"<", readI, arrayCount)));
+				loop->test(steal(callMember(L"<", readI, readEnd)));
 				loop->update(steal(callMember(L"++*", readI)));
 
-				actuals->add(steal(callMember(L"[]", srcAccess, readI)));
+				actuals->addFirst(steal(callMember(L"[]", srcAccess, readI)));
 				Auto<Expr> tfmCall = CREATE(FnCall, this, tfmFn, actuals);
 				loop->body(steal(callMember(L"push", readV, tfmCall)));
 
@@ -528,7 +538,7 @@ namespace storm {
 			Function *tfmFn = as<Function>(foundTfm.borrow());
 			if (!tfmFn) {
 				throw SyntaxError(pos, L"Can not transform a " + ::toS(type->identifier()) +
-								L" with parameters: " + join(actuals->values(), L", ") + L".");
+								L" with parameters: (" + join(actuals->values(), L", ") + L").");
 			}
 			return tfmFn;
 		}

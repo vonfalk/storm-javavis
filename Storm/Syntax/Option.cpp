@@ -155,13 +155,12 @@ namespace storm {
 
 		void Option::output(wostream &to, nat mark, bool bindings) const {
 			if (Rule *r = rulePtr()) {
-				to << r->identifier() << ' ';
+				to << r->identifier();
 			}
-
-			to << L":";
 			if (priority != 0)
 				to << '[' << priority << ']';
-			to << ' ';
+
+			to << L" : ";
 
 			bool usingRep = repStart < repEnd;
 			bool prevDelim = false;

@@ -100,6 +100,8 @@ namespace storm {
 		class Iter {
 			STORM_VALUE;
 		public:
+			// Create iterator to end.
+			STORM_CTOR Iter();
 
 			// Deep copy. No need to do anything, strings are immutable!
 			void STORM_FN deepCopy(Par<CloneEnv> env);
@@ -128,9 +130,6 @@ namespace storm {
 
 			// Create iterator to start.
 			Iter(Par<Str> str);
-
-			// Create iterator to end.
-			Iter();
 
 			// String we're referring to.
 			Auto<Str> owner;

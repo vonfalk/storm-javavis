@@ -44,24 +44,24 @@ void reloadUrl(Package pkg, Url url) on Compiler {
 void reloadBsUrl(Package pkg, Url url) on Compiler {
 	SyntaxSet syntax = bfSyntax;
 	Str text = url.read.readText.readAll;
-	Parser parser(syntax, text, url);
-	Nat len = parser.parse("Includes");
-	if (len == parser.noMatch)
-		parser.throwError;
+	Scope scope(pkg, BSScope());
 
-	Scope scope(pkg, BSScope(url));
-	Object tfm = parser.transform(Object:[]);
-	if (tfm as SrcName[])
-		addIncludes(syntax, scope, tfm);
+	lang:syntax:Parser<SIncludes> header;
+	header.addSyntax(pkg);
+	var headerEnd = header.parse(text, url);
+	if (!header.hasTree)
+		header.throwError;
 
-	parser.parse("File", len);
-	if (parser.hasError)
-		parser.throwError;
+	addIncludes(scope, header.tree.transform);
+
+	lang:syntax:Parser<SFile> body;
+	scope.addSyntax(body);
+	body.parse(text, url, headerEnd);
+	if (header.hasError)
+		header.throwError;
 
 	SyntaxEnv env(scope);
-	TObject contents = parser.transformT(TObject:[env]);
-	if (contents as Contents)
-		reloadContents(pkg, scope, contents);
+	reloadContents(pkg, scope, body.tree.transform(env));
 }
 
 void reloadContents(Package pkg, Scope scope, Contents c) on Compiler {
@@ -134,11 +134,10 @@ void reloadClass(Class found, Type candidate) on Compiler {
 }
 
 // Why can't I use SrcName[] here?
-void addIncludes(SyntaxSet to, Scope scope, Array<SrcName> from) on Compiler {
+void addIncludes(Scope scope, Array<SrcName> from) on Compiler {
 	for (Nat i = 0; i < from.count; i++) {
 		Named? p = rootScope.find(from[i]);
 		if (p as Package) {
-			to.add(p);
 			scope.addInclude(p);
 		} else {
 			print("Failed to include " # from[i]);

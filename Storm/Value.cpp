@@ -302,6 +302,10 @@ namespace storm {
 		}
 	}
 
+	Value thisPtr(Par<Type> t) {
+		return Value::thisPtr(t);
+	}
+
 #ifdef VISUAL_STUDIO
 	ValList valList(nat count, ...) {
 		vector<Value> r;

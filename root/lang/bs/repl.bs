@@ -28,38 +28,35 @@ class Repl extends LangRepl {
 	}
 
 	Bool eval(Str line) {
-		SyntaxSet syntax = scope.getSyntax;
-		Parser parser(syntax, line, Url());
-
-		// Check so that everything is matching.
-		parser.parse("SkipBlock");
-		if (parser.hasError) {
+		lang:syntax:Parser<SSkipBlock> skipBlock;
+		skipBlock.parse(line, Url());
+		if (skipBlock.hasError) {
 			// Mismatched something. Let the user complete their input.
 			return false;
 		}
 
-		// Check for use statements.
-		parser.parse("ReplUse");
-		if (!parser.hasError) {
-			addUse(parser);
+		lang:syntax:Parser<SReplUse> useStmt;
+		useStmt.parse(line, Url());
+		if (!useStmt.hasError) {
+			addUse(useStmt.tree.transform);
 			return true;
 		}
 
-		evalLine(line, parser);
+
+		lang:syntax:Parser<SReplExpr> root;
+		scope.addSyntax(root);
+		root.parse(line, Url());
+		if (root.hasError) {
+			print(root.errorMsg);
+			return true;
+		}
+
+		evalExpr(root.tree);
 		true;
 	}
 
 	Bool exit() {
 		done;
-	}
-
-	void addUse(Parser parser) {
-		Object type = parser.transform([]);
-		if (type as SrcName) {
-			addUse(type);
-		} else {
-			print("I AM ERROR");
-		}
 	}
 
 	void addUse(SrcName name) {
@@ -75,29 +72,13 @@ class Repl extends LangRepl {
 		}
 	}
 
-	void evalLine(Str line, Parser parser) {
-		parser.parse("Stmt");
-		if (parser.hasError) {
-			// Forgotten ;... Try treating it as an expression instead!
-			parser.parse("Expr");
-		}
-
-		if (parser.hasError) {
-			print(parser.errorMsg);
-			return;
-		}
-
+	void evalExpr(SReplExpr tree) {
 		ReplBlock block(scope);
-		LocalVar thisPtr("this", rootScope.value(name{lang:bs:ReplSandbox}), SrcPos(), true);
+		LocalVar thisPtr("this", thisPtr(named{lang:bs:ReplSandbox}), SrcPos(), true);
 		block.add(thisPtr);
 
-		TObject stmt = parser.transformT([block]);
-		if (stmt as Expr) {
-			evalExpr(line, block, thisPtr, stmt);
-		}
-	}
+		Expr expr = tree.transform(block);
 
-	void evalExpr(Str line, ReplBlock block, LocalVar thisPtr, Expr expr) {
 		Function replaceFn = named{ReplSandbox:evalFn<ReplSandbox>};
 		ReplCode code(block, thisPtr, expr);
 		replaceFn.setCode(LazyCode(&code.load()));
@@ -185,7 +166,7 @@ class ReplCode on Compiler {
 	void createDefaultResult(CodeGen g, Value resultType, VarInfo result) {
 		StrBuf s;
 		s.add("<").add(resultType.toS).add(">");
-		Expr constant = strConstant(SStr(s.toS));
+		Expr constant = strConstant(SrcPos(), s.toS);
 		constant.code(g, CodeResult(strType, result));
 	}
 

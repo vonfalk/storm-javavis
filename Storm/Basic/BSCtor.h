@@ -5,6 +5,7 @@
 #include "BSBlock.h"
 #include "TypeVar.h"
 #include "Shared/Array.h"
+#include "Syntax/Node.h"
 
 namespace storm {
 	namespace bs {
@@ -19,9 +20,9 @@ namespace storm {
 		class BSCtor : public Function {
 			STORM_CLASS;
 		public:
-			// Create. If contents is null, we will generate the default ctor.
+			// Create. If body is null, we will generate the default ctor.
 			BSCtor(const vector<Value> &values, const vector<String> &names,
-				const Scope &scope, Par<SStr> contents, const SrcPos &pos);
+				const Scope &scope, Par<syntax::Node> body, const SrcPos &pos);
 
 			// Scope.
 			const Scope scope;
@@ -36,8 +37,8 @@ namespace storm {
 			// Parameter names.
 			vector<String> paramNames;
 
-			// Contents
-			Auto<SStr> contents;
+			// Body
+			Auto<syntax::Node> body;
 
 			// Position.
 			SrcPos pos;
@@ -48,7 +49,7 @@ namespace storm {
 			// Parse.
 			CtorBody *parse();
 
-			// Default ctor contents.
+			// Default ctor body.
 			CtorBody *defaultParse();
 
 			// Do we need a 'hidden' thread parameter?
@@ -56,7 +57,7 @@ namespace storm {
 		};
 
 		/**
-		 * Contents of the constructor.
+		 * Body of the constructor.
 		 */
 		class CtorBody : public ExprBlock {
 			STORM_CLASS;

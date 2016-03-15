@@ -43,6 +43,18 @@ namespace storm {
 			return null;
 		}
 
+		Type *parserType(Engine &e, const Value &type) {
+			Auto<SimpleName> tName = CREATE(SimpleName, e);
+			tName->add(L"lang");
+			tName->add(L"syntax");
+			tName->add(L"Parser", vector<Value>(1, type));
+
+			Auto<Named> n = e.scope()->find(tName);
+			Type *r = as<Type>(n.borrow());
+			assert(r, L"The parser type was not where we expected it to be!");
+			return r;
+		}
+
 		void addParserTemplate(Engine &to) {
 			// TODO: New package later! See Parser.h.
 			Package *pkg = to.package(L"lang.syntax", true);

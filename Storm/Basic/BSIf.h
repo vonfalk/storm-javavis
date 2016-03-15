@@ -9,25 +9,34 @@ namespace storm {
 		class IfTrue;
 
 		/**
+		 * Basic if-statement.
+		 */
+		class IfExpr : public Block {
+			STORM_CLASS;
+		public:
+			STORM_CTOR IfExpr(Par<Block> parent);
+
+			// True branch.
+			Auto<IfTrue> trueCode;
+
+			// False branch, may be null.
+			Auto<Expr> falseCode;
+
+			// Set variables from the parser.
+			void STORM_FN trueExpr(Par<IfTrue> e);
+			void STORM_FN falseExpr(Par<Expr> e);
+		};
+
+		/**
 		 * If-statement.
 		 */
-		class If : public Block {
+		class If : public IfExpr {
 			STORM_CLASS;
 		public:
 			STORM_CTOR If(Par<Block> parent, Par<Expr> cond);
 
 			// Condition expression
 			Auto<Expr> condition;
-
-			// True branch.
-			Auto<Expr> trueCode;
-
-			// False branch, may be null.
-			Auto<Expr> falseCode;
-
-			// Set true/false code.
-			virtual void STORM_FN trueExpr(Par<Expr> e);
-			virtual void STORM_FN falseExpr(Par<Expr> e);
 
 			// Result.
 			virtual ExprResult STORM_FN result();
@@ -48,7 +57,7 @@ namespace storm {
 		/**
 		 * If-statement using a weak cast as its condition.
 		 */
-		class IfWeak : public Block {
+		class IfWeak : public IfExpr {
 			STORM_CLASS;
 		public:
 			STORM_CTOR IfWeak(Par<Block> parent, Par<WeakCast> cast);
@@ -56,16 +65,6 @@ namespace storm {
 
 			// Weak cast to execute.
 			Auto<WeakCast> weakCast;
-
-			// True branch.
-			Auto<IfTrue> trueCode;
-
-			// False branch, may be null.
-			Auto<Expr> falseCode;
-
-			// Set variables from the parser.
-			void STORM_FN trueExpr(Par<IfTrue> e);
-			void STORM_FN falseExpr(Par<Expr> e);
 
 			// Result.
 			virtual ExprResult STORM_FN result();
@@ -90,7 +89,7 @@ namespace storm {
 
 
 		// Create an if-statement with a single expression.
-		Expr *STORM_FN createIf(Par<Block> block, Par<Expr> expr);
+		IfExpr *STORM_FN createIf(Par<Block> block, Par<Expr> expr);
 
 		/**
 		 * Block which knows about IfWeak's variable!

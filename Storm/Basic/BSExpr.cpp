@@ -24,7 +24,7 @@ namespace storm {
 
 	bs::Constant::Constant(Int v) : cType(tInt), intValue(v) {}
 
-	bs::Constant::Constant(int64 v) : cType(tInt), intValue(v) {}
+	bs::Constant::Constant(Long v) : cType(tInt), intValue(v) {}
 
 	bs::Constant::Constant(Float v) : cType(tFloat), floatValue(v) {}
 
@@ -199,27 +199,27 @@ namespace storm {
 		to << dat(byteConst(0)) << dat(byteConst(0));
 	}
 
-	bs::Constant *bs::intConstant(Par<SStr> v) {
-		return CREATE(Constant, v->engine(), v->v->v.toInt64());
+	bs::Constant *bs::intConstant(SrcPos pos, Par<Str> v) {
+		return CREATE(Constant, v->engine(), v->v.toInt64());
 	}
 
-	bs::Constant *bs::floatConstant(Par<SStr> v) {
-		return CREATE(Constant, v->engine(), v->v->v.toDouble());
+	bs::Constant *bs::floatConstant(SrcPos pos, Par<Str> v) {
+		return CREATE(Constant, v->engine(), v->v.toDouble());
 	}
 
-	bs::Constant *bs::strConstant(Par<SStr> v) {
-		return CREATE(Constant, v->engine(), v->v->v.unescape());
+	bs::Constant *bs::strConstant(SrcPos pos, Par<Str> v) {
+		return CREATE(Constant, v->engine(), v->v.unescape());
 	}
 
-	bs::Constant *bs::rawStrConstant(Par<SStr> v) {
-		return CREATE(Constant, v->engine(), v->v.borrow());
+	bs::Constant *bs::rawStrConstant(SrcPos pos, Par<Str> v) {
+		return CREATE(Constant, v->engine(), v.borrow());
 	}
 
-	bs::Constant *bs::trueConstant(EnginePtr e) {
+	bs::Constant *bs::trueConstant(EnginePtr e, SrcPos pos) {
 		return CREATE(Constant, e.v, true);
 	}
 
-	bs::Constant *bs::falseConstant(EnginePtr e) {
+	bs::Constant *bs::falseConstant(EnginePtr e, SrcPos pos) {
 		return CREATE(Constant, e.v, false);
 	}
 

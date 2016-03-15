@@ -27,16 +27,6 @@ namespace storm {
 			} else {
 				WARNING(L"The rule " << root << L" is not located in any package, not adding one by default.");
 			}
-
-			// Remember the thread for Rule objects (as we need to create them).
-			typeThread = root->runOn().thread->thread();
-			assert(typeThread, L"Make sure Rule is running on a thread!");
-
-			Auto<SimplePart> part = CREATE(SimplePart, this, L"pos", valList(1, Value::thisPtr(root)));
-			Auto<Named> found = root->find(part);
-			TypeVar *posVar = as<TypeVar>(found.borrow());
-			assert(posVar, L"'pos' not found in syntax node types!");
-			posOffset = posVar->offset().current();
 		}
 
 		void ParserBase::output(wostream &to) const {
@@ -107,8 +97,12 @@ namespace storm {
 			return stateAlloc.count() * sizeof(State);
 		}
 
-		Bool ParserBase::hasError() {
+		Bool ParserBase::hasError() const {
 			return lastFinish < steps.size() - 1;
+		}
+
+		Bool ParserBase::hasTree() const {
+			return finish() != null;
 		}
 
 		SyntaxError ParserBase::error() const {
@@ -125,12 +119,9 @@ namespace storm {
 			typedef map<String, set<String>> Data;
 			Data rules = inProgress(steps[pos]);
 			for (Data::iterator i = rules.begin(); i != rules.end(); ++i) {
-				msg << endl << i->first;
-
-				set<String> &v = i->second;
-				for (set<String>::iterator j = v.begin(); j != v.end(); ++j) {
-					msg << endl << L" from: " << *j;
-				}
+				msg << endl;
+				join(msg, i->second, L"\n");
+				msg << i->first;
 			}
 
 			return SyntaxError(srcPos + pos, msg.str());
@@ -142,18 +133,21 @@ namespace storm {
 			for (nat i = 0; i < step.count(); i++) {
 				State *now = step[i];
 				Rule *rule = now->pos.rulePtr();
-				String key = ::toS(now->pos);
-				set<String> &v = r[key];
+				String ruleStr = ::toS(now->pos);
 
 				// Find all states that instantiated this one.
+				std::wostringstream from;
 				const StateSet &src = steps[now->from];
 				for (nat j = 0; j < src.count(); j++) {
 					if (RuleToken *token = src[j]->getRule()) {
 						if (token->rule.borrow() == rule) {
-							v.insert(::toS(src[j]->pos));
+							from << L"\n from: " << src[j]->pos;
 						}
 					}
 				}
+
+				// Bundle all rules originating from the same place together.
+				r[from.str()].insert(ruleStr);
 			}
 
 			return r;
@@ -395,7 +389,7 @@ namespace storm {
 		 * Generate the syntax tree.
 		 */
 
-		Object *ParserBase::tree() const {
+		Node *ParserBase::tree() const {
 			// Find the finish state...
 			State *from = finish();
 			if (!from)
@@ -408,8 +402,8 @@ namespace storm {
 			return tree(from->completed);
 		}
 
-		Object *ParserBase::tree(State *from) const {
-			Auto<Object> result = allocTreeNode(from);
+		Node *ParserBase::tree(State *from) const {
+			Auto<Node> result = allocTreeNode(from);
 			Option *option = from->pos.optionPtr();
 
 			// Remember capture start and capture end.
@@ -468,20 +462,16 @@ namespace storm {
 			return result.ret();
 		}
 
-		Object *ParserBase::allocTreeNode(State *from) const {
+		Node *ParserBase::allocTreeNode(State *from) const {
 			OptionType *type = from->pos.optionPtr()->typePtr();
 
 			// A bit ugly, but this is enough to be able to execute the destructor later on, and
 			// when populated it is as if we have executed the regular constructor.
 			void *mem = Object::operator new(type->size().current(), type);
-			Object *r = new (mem) TObject(typeThread);
+			Node *r = new (mem) Node(srcPos + from->from);
 
 			// Make 'r' into the correct subclass.
 			setVTable(r);
-
-			// Fill 'pos'.
-			void *posMem = &OFFSET_IN(r, posOffset, SrcPos);
-			new (posMem) SrcPos(srcPos + from->step);
 
 			// Create any arrays needed.
 			for (nat i = 0; i < type->arrayMembers.size(); i++) {
@@ -496,7 +486,7 @@ namespace storm {
 			return r;
 		}
 
-		void ParserBase::reverseTreeNode(State *from, Object *node) const {
+		void ParserBase::reverseTreeNode(State *from, Node *node) const {
 			OptionType *type = from->pos.optionPtr()->typePtr();
 
 			for (nat i = 0; i < type->arrayMembers.size(); i++) {
@@ -517,6 +507,49 @@ namespace storm {
 			}
 
 			return null;
+		}
+
+
+		/**
+		 * C++ interface.
+		 */
+
+		Parser::Parser() {}
+
+		Parser *Parser::create(Par<Rule> root) {
+			// Pick an appropriate type for it (!= the C++ type).
+			Type *t = parserType(root->engine, Value(root));
+			return new (t) Parser();
+		}
+
+		Parser *Parser::create(Par<Package> pkg, const String &name) {
+			Auto<SimplePart> part = CREATE(SimplePart, pkg, name);
+			Auto<Named> found = pkg->find(part);
+			if (Rule *r = as<Rule>(found.borrow())) {
+				return create(r);
+			} else {
+				throw InternalError(L"Can not find the rule " + name + L" in " + pkg->identifier());
+			}
+		}
+
+		const void *transformFunction(Type *type, const Value &result, const Value &param) {
+			vector<Value> par;
+			par.push_back(Value::thisPtr(type));
+			if (param != Value())
+				par.push_back(param);
+			Auto<SimplePart> part = CREATE(SimplePart, type, L"transform", par);
+			Auto<Named> found = type->find(part);
+			if (Function *fn = as<Function>(found.borrow())) {
+				if (!result.canStore(fn->result)) {
+					throw InternalError(L"The function " + fn->identifier() + L" returns " +
+										::toS(fn->result) + L", which is incompatible with " +
+										::toS(result));
+				}
+
+				return fn->pointer();
+			} else {
+				throw InternalError(L"Can not find " + ::toS(part) + L" in " + type->identifier());
+			}
 		}
 
 	}

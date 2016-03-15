@@ -1,6 +1,5 @@
 #pragma once
 #include "PkgReader.h"
-#include "SyntaxSet.h"
 #include "BSScope.h"
 #include "Basic/BSContents.h"
 
@@ -51,11 +50,8 @@ namespace storm {
 			// The file contents.
 			Auto<Str> fileContents;
 
-			// Length of header. The header is the use statements.
-			nat headerSize;
-
-			// Syntax to use while parsing.
-			Auto<SyntaxSet> syntax;
+			// Position of the end of the use statements of 'fileContents'.
+			Str::Iter headerEnd;
 
 			// Contents.
 			Auto<Contents> contents;

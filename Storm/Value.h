@@ -153,6 +153,9 @@ namespace storm {
 	 */
 	Value STORM_FN common(Value a, Value b);
 
+	// ThisPtr for Storm.
+	Value STORM_FN thisPtr(Par<Type> type);
+
 
 	/**
 	 * Various helper functions.
