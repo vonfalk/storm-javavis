@@ -1,11 +1,12 @@
 #pragma once
 #include "Shared/TObject.h"
-#include "Regex.h"
-#include "Thread.h"
-#include "TypeVar.h"
+#include "Storm/Regex.h"
+#include "Storm/Thread.h"
+#include "Storm/TypeVar.h"
 
 namespace storm {
 	namespace syntax {
+		STORM_PKG(lang.bnf);
 
 		class Rule;
 

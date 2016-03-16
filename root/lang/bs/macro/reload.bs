@@ -42,11 +42,10 @@ void reloadUrl(Package pkg, Url url) on Compiler {
 }
 
 void reloadBsUrl(Package pkg, Url url) on Compiler {
-	SyntaxSet syntax = bfSyntax;
 	Str text = url.read.readText.readAll;
 	Scope scope(pkg, BSScope());
 
-	lang:syntax:Parser<SIncludes> header;
+	Parser<SIncludes> header;
 	header.addSyntax(pkg);
 	var headerEnd = header.parse(text, url);
 	if (!header.hasTree)
@@ -54,7 +53,7 @@ void reloadBsUrl(Package pkg, Url url) on Compiler {
 
 	addIncludes(scope, header.tree.transform);
 
-	lang:syntax:Parser<SFile> body;
+	Parser<SFile> body;
 	scope.addSyntax(body);
 	body.parse(text, url, headerEnd);
 	if (header.hasError)
@@ -143,12 +142,4 @@ void addIncludes(Scope scope, Array<SrcName> from) on Compiler {
 			print("Failed to include " # from[i]);
 		}
 	}
-}
-
-SyntaxSet bfSyntax() on Compiler {
-	SyntaxSet s;
-	Named? n = rootScope.find(name{lang:bs});
-	if (n as Package)
-		s.add(n);
-	s;
 }

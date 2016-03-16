@@ -51,23 +51,13 @@ class BfFunction extends Function {
 	}
 
 	CodeGen load() {
-		SyntaxSet syntax;
-		syntax.add(named{lang:bf}); // Would be nice to say 'current package'.
-
-		Parser parser(syntax, file.read.readText.readAll, file);
-		parser.parse("BfFile");
+		Parser<SFile> parser;
+		parser.parse(file.read.readText.readAll, file);
 		if (parser.hasError) {
 			parser.throwError;
 		}
 
-		TObject o = parser.transformT([]);
-		BfExpr def;
-		if (o as BfExpr) {
-			def = o;
-		} else {
-			print("No function definition!");
-		}
-
+		BfExpr o = parser.tree.transform();
 		Value strType = named{Str};
 
 		CodeGen r(runOnAny());
@@ -78,18 +68,12 @@ class BfFunction extends Function {
 
 		CodeResult result(strType, r.block);
 
-		if (o as BfExpr) {
-			Expr oInput = o.input;
-			if (oInput as BareVarAccess) {
-				oInput.var = input;
-			}
-
-			o.code(r, result);
-		} else {
-			print("I AM ERROR");
-			l << mov(Operand(result.location(r).v), Operand(input));
-			l << addRef(Operand(input));
+		Expr oInput = o.input;
+		if (oInput as BareVarAccess) {
+			oInput.var = input;
 		}
+
+		o.code(r, result);
 
 		Variable resultVar = result.location(r).v;
 		l << addRef(Operand(resultVar));
@@ -111,17 +95,17 @@ class BfExpr extends lang:bs:Expr {
 		init() {}
 	}
 
-	ctor(SStr space, BfToken[] data) {
+	ctor(Str space, BfToken[] data) {
 		init() {
-			space = space.v.toNat;
+			space = space.toNat;
 			tokens = data;
 			input = BareVarAccess(Value(named{Str}), Variable());
 		}
 	}
 
-	ctor(SStr space, BfToken[] data, lang:bs:Expr input) {
+	ctor(Str space, BfToken[] data, lang:bs:Expr input) {
 		init() {
-			space = space.v.toNat;
+			space = space.toNat;
 			tokens = data;
 			input = input;
 		}

@@ -1,14 +1,15 @@
 #pragma once
 #include "Shared/TObject.h"
 #include "Shared/Array.h"
-#include "Thread.h"
-#include "Tokenizer.h"
-#include "Name.h"
+#include "Storm/Thread.h"
+#include "Storm/Tokenizer.h"
+#include "Storm/Name.h"
+
 #include "RepType.h"
 
 namespace storm {
 	namespace syntax {
-		STORM_PKG(lang.syntax);
+		STORM_PKG(lang.bnf);
 
 		/**
 		 * Logic for parsing syntax files.

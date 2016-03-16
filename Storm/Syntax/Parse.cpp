@@ -418,7 +418,10 @@ namespace storm {
 			Int prio = 0;
 			if (tok.peek().token == L"-") {
 				tok.skip();
-				prio = - tok.next().token.toInt();
+				prio = -tok.next().token.toInt();
+			} else if (tok.peek().token == L"+") {
+				tok.skip();
+				prio = tok.next().token.toInt();
 			} else {
 				prio = tok.next().token.toInt();
 			}

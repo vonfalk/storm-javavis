@@ -78,23 +78,27 @@ namespace storm {
 		virtual Str *STORM_FN anonName();
 
 		// Iterator:
-		class iterator : public std::iterator<std::bidirectional_iterator_tag, Auto<Named> > {
+		// class Iter : public STORM_IGNORE(std::iterator<std::bidirectional_iterator_tag, Auto<Named> >) {
+		class Iter {
 			friend NameSet;
+			STORM_VALUE;
 		public:
-			iterator();
+			STORM_CTOR Iter();
 
-			iterator &operator ++();
-			iterator operator ++(int);
-			iterator &operator --();
-			iterator operator --(int);
+			Iter &STORM_FN operator ++();
+			Iter STORM_FN operator ++(int dummy);
+			Iter &STORM_FN operator --();
+			Iter STORM_FN operator --(int dummy);
 
-			bool operator ==(const iterator &o) const;
-			bool operator !=(const iterator &o) const;
+			Bool STORM_FN operator ==(const Iter &o) const;
+			Bool STORM_FN operator !=(const Iter &o) const;
 
 			Auto<Named> &operator *() const;
 			Auto<Named> *operator ->() const;
+
+			Named *STORM_FN v() const;
 		private:
-			iterator(const OverloadMap &m, OverloadMap::const_iterator i, nat pos);
+			Iter(const OverloadMap &m, OverloadMap::const_iterator i, nat pos);
 
 			// State.
 			const OverloadMap *m;
@@ -102,11 +106,11 @@ namespace storm {
 			nat pos;
 		};
 
-		// Iterators: Note: do not attempt to lazy-load this NameSet!
-		iterator begin() const;
-		iterator end() const;
-		iterator begin(const String &name) const;
-		iterator end(const String &name) const;
+		// Iterators: Note: does not attempt to lazy-load this NameSet!
+		Iter begin() const;
+		Iter end() const;
+		Iter begin(const String &name) const;
+		Iter end(const String &name) const;
 
 		// Find all types recursively. TODO: Make this more general.
 		vector<Auto<Type>> findTypes() const;

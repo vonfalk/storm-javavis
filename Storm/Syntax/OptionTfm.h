@@ -5,6 +5,7 @@
 
 namespace storm {
 	namespace syntax {
+		STORM_PKG(lang.bnf);
 
 		class Rule;
 		class Option;

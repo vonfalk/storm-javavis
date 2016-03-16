@@ -1,6 +1,5 @@
 #pragma once
 #include "Name.h"
-#include "SyntaxRule.h"
 #include "Named.h"
 #include "Scope.h"
 #include "NameSet.h"
@@ -38,14 +37,6 @@ namespace storm {
 		// Dtor.
 		~Package();
 
-		// Get a list of all syntax options in this package.
-		// The options are still owned by this class.
-		const SyntaxRules &syntax();
-
-		// Get the object that stores all syntax here. The Rules will not be populated before, since
-		// this function is only intended to be used when actually loading syntax.
-		SyntaxRules &loadSyntaxTo();
-
 		// Get parent.
 		virtual NameLookup *parent() const;
 
@@ -63,12 +54,6 @@ namespace storm {
 	private:
 		// Our path. Points to null if this is a virtual package.
 		Auto<Url> pkgPath;
-
-		// Rules present in this package.
-		SyntaxRules syntaxRules;
-
-		// Syntax loaded?
-		bool syntaxLoaded;
 
 		// Create a PkgReader from 'pkg'.
 		PkgReader *createReader(Par<SimpleName> pkg, Par<PkgFiles> files);

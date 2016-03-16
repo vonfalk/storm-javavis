@@ -1,19 +1,21 @@
 // Syntax extensions useful when generating code or manipulating the syntax tree.
-delimiter: BSDelimiter;
+use lang.bs;
+
+delimiter = SDelimiter;
 
 // Use type{a:b:c} to build a type name quickly and easily.
-Expr => createType(block, type) : "name", "{", Type type, "}";
+SExpr => createType(block, type) : "name", "{", SType type, "}" = Bajs;
 
 // Use named{a:b:c} to refer to objects. Evaluates compile-time to the type of the actual object
 // in the compiler.
-Expr => referNamed(block, name) : "named", "{", Type name, "}";
+SExpr => referNamed(block, name) : "named", "{", SType name, "}";
 
 // Output a type.
-Expr => exploreType(block, type) : "explore", "{", Type type, "}";
+SExpr => exploreType(block, type) : "explore", "{", SType type, "}";
 
 // Reload a package (TODO: Nicer syntax!)
-Expr => reloadName(block, type) : "reload", "{", Type type, "}";
+SExpr => reloadName(block, type) : "reload", "{", SType type, "}";
 
 // Debug things by printing expressions at compile-time.
-Expr => printExpr(t, stmt) : "dump", "{", (Stmt(block) stmt) t, "}";
-Expr => printExpr(t, expr) : "dump", "{", (Expr(block) expr) t, "}";
+SExpr => printExpr(t, stmt) : "dump", "{", (SStmt(block) stmt) t, "}";
+SExpr => printExpr(t, expr) : "dump", "{", (SExpr(block) expr) t, "}";

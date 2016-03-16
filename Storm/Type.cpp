@@ -534,7 +534,7 @@ namespace storm {
 		if (typeFlags & typeRawPtr)
 			return;
 
-		for (NameSet::iterator i = begin(), end = this->end(); i != end; ++i) {
+		for (NameSet::Iter i = begin(), end = this->end(); i != end; ++i) {
 			updateVirtual(i->borrow());
 		}
 

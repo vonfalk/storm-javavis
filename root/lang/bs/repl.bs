@@ -28,14 +28,14 @@ class Repl extends LangRepl {
 	}
 
 	Bool eval(Str line) {
-		lang:syntax:Parser<SSkipBlock> skipBlock;
+		Parser<SSkipBlock> skipBlock;
 		skipBlock.parse(line, Url());
 		if (skipBlock.hasError) {
 			// Mismatched something. Let the user complete their input.
 			return false;
 		}
 
-		lang:syntax:Parser<SReplUse> useStmt;
+		Parser<SReplUse> useStmt;
 		useStmt.parse(line, Url());
 		if (!useStmt.hasError) {
 			addUse(useStmt.tree.transform);
@@ -43,7 +43,7 @@ class Repl extends LangRepl {
 		}
 
 
-		lang:syntax:Parser<SReplExpr> root;
+		Parser<SReplExpr> root;
 		scope.addSyntax(root);
 		root.parse(line, Url());
 		if (root.hasError) {

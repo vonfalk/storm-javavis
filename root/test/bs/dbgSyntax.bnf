@@ -1,12 +1,14 @@
 // Syntax for debugging...
-delimiter: BSDelimiter;
+use lang.bs;
 
-Stmt => dumpExpr(e, str) : "dump:", ( Expr(block) e ) str, ";";
+delimiter = SDelimiter;
+
+SStmt => dumpExpr(e, str) : "dump:", ( SExpr(block) e ) str, ";";
 
 // Weak parens.
-Atom => z : "#(", Expr(block) z, ")#";
+SAtom => z : "#(", SExpr(block) z, ")#";
 
 // Operators with different associativity
-Operator => lang.bs.rOperator(op, 900) : "#" - "\*" op;
-Operator => lang.bs.rOperator(op, 800) : "#" - "\+" op;
-Operator => lang.bs.rOperator(op, 800) : "#" - "\-" op;
+SOperator => lang.bs.rOperator(op, 900) : "#" - "\*"@ op;
+SOperator => lang.bs.rOperator(op, 800) : "#" - "\+"@ op;
+SOperator => lang.bs.rOperator(op, 800) : "#" - "\-"@ op;

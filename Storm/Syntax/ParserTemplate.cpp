@@ -45,8 +45,8 @@ namespace storm {
 
 		Type *parserType(Engine &e, const Value &type) {
 			Auto<SimpleName> tName = CREATE(SimpleName, e);
+			tName->add(L"core");
 			tName->add(L"lang");
-			tName->add(L"syntax");
 			tName->add(L"Parser", vector<Value>(1, type));
 
 			Auto<Named> n = e.scope()->find(tName);
@@ -56,8 +56,7 @@ namespace storm {
 		}
 
 		void addParserTemplate(Engine &to) {
-			// TODO: New package later! See Parser.h.
-			Package *pkg = to.package(L"lang.syntax", true);
+			Package *pkg = to.package(L"core.lang", true);
 
 			Auto<Template> t = CREATE(Template, to, L"Parser", simpleFn(&generateParser));
 			pkg->add(t);

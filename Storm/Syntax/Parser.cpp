@@ -44,7 +44,7 @@ namespace storm {
 		void ParserBase::addSyntax(Par<Package> pkg) {
 			// We need to make sure the pkg is loaded before we can iterate through it.
 			pkg->forceLoad();
-			for (NameSet::iterator i = pkg->begin(), end = pkg->end(); i != end; ++i) {
+			for (NameSet::Iter i = pkg->begin(), end = pkg->end(); i != end; ++i) {
 				Named *n = i->borrow();
 				if (Rule *rule = as<Rule>(n)) {
 					// We only keep track of these to get better error messages!

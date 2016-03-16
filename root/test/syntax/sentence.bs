@@ -1,7 +1,6 @@
 use core:debug;
 use core:io;
 use core:lang;
-use lang:syntax;
 
 // Type for storing a sentence.
 class Statement {

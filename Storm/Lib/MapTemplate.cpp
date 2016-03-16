@@ -178,8 +178,8 @@ namespace storm {
 		add(steal(nativeFunction(e, Value(), Type::CTOR, valList(2, ref, ref), address(&copyIterator))));
 		add(steal(nativeFunction(e, boolType(e), L"==", valList(2, ref, ref), address(&iteratorEq))));
 		add(steal(nativeFunction(e, boolType(e), L"!=", valList(2, ref, ref), address(&iteratorNeq))));
-		add(steal(nativeFunction(e, ref, L"++*", valList(1, ref), address(&Iter::preIncRaw))));
-		add(steal(nativeFunction(e, val, L"*++", valList(1, ref), address(&Iter::postIncRaw))));
+		add(steal(nativeFunction(e, ref, L"++*", valList(1, ref), address(&MapBase::Iter::preIncRaw))));
+		add(steal(nativeFunction(e, val, L"*++", valList(1, ref), address(&MapBase::Iter::postIncRaw))));
 		add(steal(nativeFunction(e, refKey, L"k", valList(1, ref), address(&iteratorGetKey))));
 		add(steal(nativeFunction(e, refValue, L"v", valList(1, ref), address(&iteratorGetVal))));
 		add(steal(nativeDtor(e, this, &destroyIterator)));

@@ -4,6 +4,7 @@
 
 namespace storm {
 	namespace syntax {
+		STORM_PKG(lang.bnf);
 
 		/**
 		 * State used during parsing (in Parser.h/cpp). Contains a location into an option, a step

@@ -1,11 +1,12 @@
 #pragma once
-#include "Type.h"
+#include "Storm/Type.h"
 #include "Parse.h"
 #include "Token.h"
 #include "Shared/EnginePtr.h"
 
 namespace storm {
 	namespace syntax {
+		STORM_PKG(lang.bnf);
 
 		/**
 		 * Iterator for an Option.

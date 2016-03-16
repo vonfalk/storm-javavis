@@ -1,10 +1,11 @@
 #pragma once
 #include "Shared/TObject.h"
-#include "Thread.h"
-#include "SrcPos.h"
+#include "Storm/Thread.h"
+#include "Storm/SrcPos.h"
 
 namespace storm {
 	namespace syntax {
+		STORM_PKG(lang.bnf);
 
 		/**
 		 * Base class for all syntax nodes. This class will be overridden by 'Rule' to add the

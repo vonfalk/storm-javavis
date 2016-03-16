@@ -1,8 +1,8 @@
 #pragma once
 #include "Shared/Map.h"
-#include "Thread.h"
-#include "Package.h"
-#include "Exception.h"
+#include "Storm/Thread.h"
+#include "Storm/Package.h"
+#include "Storm/Exception.h"
 
 #include "Node.h"
 #include "Rule.h"
@@ -11,9 +11,7 @@
 
 namespace storm {
 	namespace syntax {
-		// TODO: This should be moved to core.lang when the old parser is removed!
-		// Remember to change in ParserTemplate as well!
-		STORM_PKG(lang.syntax);
+		STORM_PKG(core.lang);
 
 		/**
 		 * Base class for the templated parser in Storm. In Storm, Parser<T> is to be

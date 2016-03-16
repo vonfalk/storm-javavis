@@ -1,7 +1,6 @@
 use core:debug;
 use core:io;
 use core:lang;
-use lang:syntax;
 
 // Simple expression evaluator with parameters and other interesting features of the syntax language.
 Int testExpr() on Compiler {

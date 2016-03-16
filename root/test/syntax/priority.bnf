@@ -1,20 +1,27 @@
-delimiter: Whitespace;
-Whitespace => void : "[ \n\r\t]*";
+delimiter = Whitespace;
+
+void Whitespace();
+Whitespace : "[ \n\r\t]*";
 
 // Test some priority. This example is from a variable declaration with reserved keywords.
+Str Name();
 Name => n : "[A-Za-z]*" n;
-Prio => Buffer() :[10] "async", Name -> add;
-Prio => Buffer() :[20] Name -> add, Name -> add;
-Prio => Buffer() :[30] "var", Name -> add;
+
+Buffer Prio();
+Prio[10] => Buffer() : "async", Name -> add;
+Prio[20] => Buffer() : Name -> add, Name -> add;
+Prio[30] => Buffer() : "var", Name -> add;
 
 // a.b.c should match like this: (a.b).c
 // a,b,c should match like this: a,(b,c)
-Rec => Buffer() :[0] Name -> add;
-Rec => Buffer() :[-1] Rec -> add, "\.", Rec -> add;
-Rec => Buffer() :[+1] Rec -> add, "\,", Rec -> add;
+Buffer Rec();
+Rec[0] => Buffer() : Name -> add;
+Rec[-1] => Buffer() : Rec -> add, "\.", Rec -> add;
+Rec[+1] => Buffer() : Rec -> add, "\,", Rec -> add;
 
 // Try parsing groups of 3 as well (not as common, but tests robustness).
-Rec3 => Buffer() :[0] Name -> add;
-Rec3 => Buffer() :[-1] Rec3 -> add, "\.", Rec3 -> add, "\.", Rec3 -> add;
-Rec3 => Buffer() :[+1] Rec3 -> add, ",", Rec3 -> add, ",", Rec3 -> add;
+Buffer Rec3();
+Rec3[0] => Buffer() : Name -> add;
+Rec3[-1] => Buffer() : Rec3 -> add, "\.", Rec3 -> add, "\.", Rec3 -> add;
+Rec3[+1] => Buffer() : Rec3 -> add, ",", Rec3 -> add, ",", Rec3 -> add;
 

@@ -3,24 +3,32 @@
 // brainfuck program. Each file will be declared as its
 // own function. A function takes a string for input, and
 // returns a string, which is the output from the program.
-delimiter: BFDelimiter;
-BFDelimiter => void : "[ \n\r\t]*";
+delimiter = BFDelimiter;
 
-Number => v : "[0-9]+" v;
+void BFDelimiter();
+BFDelimiter : "[ \n\r\t]*";
 
-BfFile => BfExpr(space, code) : Number space - BfComment - BfRoot code;
+Str SNumber();
+SNumber => v : "[0-9]+" v;
+
+BfExpr SFile();
+SFile => BfExpr(space, code) : SNumber space - SComment - SRoot code;
 
 // Note: the {} chars are used to end blocks in other languages.
-BfComment => void : "[^<>,\.\+\-\[\]{}]*";
-BfRoot => Array<BfToken>() : ( BfToken -> push - BfComment )*;
+void SComment();
+SComment : "[^<>,\.\+\-\[\]{}]*";
 
-BfToken => BfBack() : "<";
-BfToken => BfFwd() : ">";
-BfToken => BfInput() : ",";
-BfToken => BfOutput() : "\.";
-BfToken => BfInc() : "\+";
-BfToken => BfDec() : "\-";
-BfToken => BfLoop(c) : "\[", BfRoot c, "\]";
+Array<BfToken> SRoot();
+SRoot => Array<BfToken>() : ( SToken -> push - SComment )*;
+
+BfToken SToken();
+SToken => BfBack() : "<";
+SToken => BfFwd() : ">";
+SToken => BfInput() : ",";
+SToken => BfOutput() : "\.";
+SToken => BfInc() : "\+";
+SToken => BfDec() : "\-";
+SToken => BfLoop(c) : "\[", SRoot c, "\]";
 
 // Integration with BS.
-Atom => BfExpr(space, code, input) : "bf", "(", Expr(block) input, ",", Number space, ")", "{", BfRoot code, "}";
+lang.bs.SAtom => BfExpr(space, code, input) : "bf", "(", lang.bs.SExpr(block) input, ",", SNumber space, ")", "{", SRoot code, "}";

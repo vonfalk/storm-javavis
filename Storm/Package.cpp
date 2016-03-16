@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Package.h"
 
-#include "BnfReader.h"
 #include "Type.h"
 #include "Function.h"
 #include "PkgReader.h"
@@ -12,9 +11,9 @@
 
 namespace storm {
 
-	Package::Package(const String &name) : NameSet(name), pkgPath(null), syntaxLoaded(false) {}
+	Package::Package(const String &name) : NameSet(name), pkgPath(null) {}
 
-	Package::Package(Par<Url> path) : NameSet(steal(path->title())->v), pkgPath(path), syntaxLoaded(false) {}
+	Package::Package(Par<Url> path) : NameSet(steal(path->title())->v), pkgPath(path) {}
 
 	NameLookup *Package::parent() const {
 		return parentLookup;
@@ -41,12 +40,6 @@ namespace storm {
 		{
 			Indent i(to);
 			NameSet::output(to);
-		}
-
-		if (!syntaxRules.empty()) {
-			to << "Syntax:" << endl;
-			Indent i(to);
-			to << syntaxRules;
 		}
 	}
 
@@ -104,23 +97,18 @@ namespace storm {
 		return CREATE(Package, this, sub);
 	}
 
-	const SyntaxRules &Package::syntax() {
-		if (!syntaxLoaded)
-			forceLoad();
-		return syntaxRules;
-	}
-
-	SyntaxRules &Package::loadSyntaxTo() {
-		return syntaxRules;
-	}
-
 	void Package::loadFiles(Auto<ArrayP<Url>> children) {
 		typedef MAP_PP(SimpleName, PkgFiles) M;
-		Auto<M> files;
-		vector<Auto<PkgReader> > toLoad;
+
+		// Remember previous contents if things go wrong...
+		vector<Auto<Named>> prev;
+		for (Iter i = begin(), to = end(); i != to; ++i)
+			prev.push_back(*i);
 
 		try {
-			files = syntaxPkg(children);
+			// These are here, so that they are freed properly if things go south.
+			vector<Auto<PkgReader> > toLoad;
+			Auto<M> files = syntaxPkg(children);
 
 			Auto<SimpleName> myName = path();
 
@@ -141,8 +129,6 @@ namespace storm {
 				toLoad[i]->readSyntaxOptions();
 			}
 
-			syntaxLoaded = true;
-
 			// Load all types.
 			for (nat i = 0; i < toLoad.size(); i++) {
 				toLoad[i]->readTypes();
@@ -159,11 +145,31 @@ namespace storm {
 			}
 
 		} catch (...) {
-			// We did nothing...
-			syntaxRules.clear();
+			// Figure out which to remove and which to keep...
+			for (Iter i = begin(), to = end(); i != to; ++i) {
+				if (Type *t = as<Type>(i->borrow())) {
+					for (nat i = 0; i < prev.size(); i++) {
+						if (prev[i].borrow() == t) {
+							t->clear();
+							break;
+						}
+					}
+				}
+			}
+
+			// Remove all types and re-add the ones in 'prev' to restore the state.
 			NameSet::clear();
-			syntaxLoaded = false;
-			TODO(L"We can not clear everything here, that removes potential built-in types in the same pkg!");
+
+			for (nat i = 0; i < prev.size(); i++) {
+				NameSet::add(prev[i]);
+			}
+
+			prev.clear();
+
+			TODO(L"Handle templates as well! Not entirely bullet-proof solution either...");
+
+			//NameSet::clear();
+			//TODO(L"We can not clear everything here, that removes potential built-in types in the same pkg!");
 			throw;
 		}
 	}

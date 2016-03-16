@@ -162,24 +162,24 @@ namespace storm {
 		loading = false;
 	}
 
-	NameSet::iterator NameSet::begin() const {
-		return iterator(overloads, overloads.begin(), 0);
+	NameSet::Iter NameSet::begin() const {
+		return Iter(overloads, overloads.begin(), 0);
 	}
 
-	NameSet::iterator NameSet::end() const {
-		return iterator(overloads, overloads.end(), 0);
+	NameSet::Iter NameSet::end() const {
+		return Iter(overloads, overloads.end(), 0);
 	}
 
-	NameSet::iterator NameSet::begin(const String &name) const {
+	NameSet::Iter NameSet::begin(const String &name) const {
 		OverloadMap::const_iterator found = overloads.find(name);
-		return iterator(overloads, found, 0);
+		return Iter(overloads, found, 0);
 	}
 
-	NameSet::iterator NameSet::end(const String &end) const {
+	NameSet::Iter NameSet::end(const String &end) const {
 		OverloadMap::const_iterator found = overloads.find(name);
 		if (found != overloads.end())
 			++found;
-		return iterator(overloads, found, 0);
+		return Iter(overloads, found, 0);
 	}
 
 	void NameSet::output(wostream &to) const {
@@ -195,7 +195,7 @@ namespace storm {
 	}
 
 	void NameSet::findTypes(vector<Auto<Type>> &t) const {
-		for (NameSet::iterator i = begin(), end = this->end(); i != end; ++i) {
+		for (NameSet::Iter i = begin(), end = this->end(); i != end; ++i) {
 			Named *n = i->borrow();
 			if (Type *z = as<Type>(n)) {
 				t.push_back(capture(z));
@@ -210,7 +210,7 @@ namespace storm {
 		forceLoad();
 
 		Auto<ArrayP<Named>> r = CREATE(ArrayP<Named>, this);
-		for (iterator i = begin(), end = this->end(); i != end; ++i) {
+		for (Iter i = begin(), end = this->end(); i != end; ++i) {
 			r->push(*i);
 		}
 		return r.ret();
@@ -219,7 +219,7 @@ namespace storm {
 	void NameSet::compile() {
 		forceLoad();
 
-		for (iterator i = begin(), end = this->end(); i != end; ++i) {
+		for (Iter i = begin(), end = this->end(); i != end; ++i) {
 			const Auto<Named> &named = *i;
 			named->compile();
 			os::UThread::leave();
@@ -230,11 +230,11 @@ namespace storm {
 	 * The iterator.
 	 */
 
-	NameSet::iterator::iterator() : m(null), pos(0) {}
+	NameSet::Iter::Iter() : m(null), pos(0) {}
 
-	NameSet::iterator::iterator(const OverloadMap &m, OverloadMap::const_iterator i, nat pos) : m(&m), src(i), pos(pos) {}
+	NameSet::Iter::Iter(const OverloadMap &m, OverloadMap::const_iterator i, nat pos) : m(&m), src(i), pos(pos) {}
 
-	NameSet::iterator &NameSet::iterator::operator ++() {
+	NameSet::Iter &NameSet::Iter::operator ++() {
 		if (src->second->items.size() == ++pos) {
 			do {
 				++src;
@@ -246,13 +246,13 @@ namespace storm {
 		return *this;
 	}
 
-	NameSet::iterator NameSet::iterator::operator ++(int) {
-		iterator old(*this);
+	NameSet::Iter NameSet::Iter::operator ++(int) {
+		Iter old(*this);
 		++(*this);
 		return old;
 	}
 
-	NameSet::iterator &NameSet::iterator::operator --() {
+	NameSet::Iter &NameSet::Iter::operator --() {
 		if (pos == 0) {
 			do {
 				if (src == m->begin())
@@ -266,26 +266,30 @@ namespace storm {
 		return *this;
 	}
 
-	NameSet::iterator NameSet::iterator::operator --(int) {
-		iterator old(*this);
+	NameSet::Iter NameSet::Iter::operator --(int) {
+		Iter old(*this);
 		--(*this);
 		return old;
 	}
 
-	bool NameSet::iterator::operator ==(const iterator &o) const {
+	bool NameSet::Iter::operator ==(const Iter &o) const {
 		return (src == o.src) && (pos == o.pos);
 	}
 
-	bool NameSet::iterator::operator !=(const iterator &o) const {
+	bool NameSet::Iter::operator !=(const Iter &o) const {
 		return !(*this == o);
 	}
 
-	Auto<Named> &NameSet::iterator::operator *() const {
+	Auto<Named> &NameSet::Iter::operator *() const {
 		return src->second->items[pos];
 	}
 
-	Auto<Named> *NameSet::iterator::operator ->() const {
+	Auto<Named> *NameSet::Iter::operator ->() const {
 		return &src->second->items[pos];
+	}
+
+	Named *NameSet::Iter::v() const {
+		return src->second->items[pos].borrow();
 	}
 
 }

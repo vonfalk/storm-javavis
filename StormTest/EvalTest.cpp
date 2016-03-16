@@ -37,7 +37,7 @@ BEGIN_TEST(EvalTest) {
 
 	pkg->forceLoad();
 
-	for (NameSet::iterator i = pkg->begin(); i != pkg->end(); i++) {
+	for (NameSet::Iter i = pkg->begin(); i != pkg->end(); i++) {
 		Auto<Function> fn = i->as<Function>();
 		if (!fn)
 			continue;

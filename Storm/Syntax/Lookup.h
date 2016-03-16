@@ -3,6 +3,8 @@
 
 namespace storm {
 	namespace syntax {
+		STORM_PKG(lang.bnf);
+
 
 		/**
 		 * Custom lookup for the syntax language.

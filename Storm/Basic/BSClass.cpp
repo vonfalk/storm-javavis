@@ -1,7 +1,5 @@
 #include "stdafx.h"
 #include "BSClass.h"
-#include "SyntaxSet.h"
-#include "Parser.h"
 #include "BSScope.h"
 #include "BSFunction.h"
 #include "BSCtor.h"
