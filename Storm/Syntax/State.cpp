@@ -5,6 +5,10 @@
 namespace storm {
 	namespace syntax {
 
+#ifdef DEBUG
+		bool debugParser = false;
+#endif
+
 		State::State() : from(0), prev(null), completed(null) {}
 
 		State::State(const OptionIter &pos, nat step, nat from, State *prev, State *completed) :
@@ -117,8 +121,21 @@ namespace storm {
 				State *c = data[i];
 				if (*c == state) {
 					// Found it already, shall we update the existing one?
-					if (execOrder(state.completed, c->completed) == before)
+					if (execOrder(&state, c) == before) {
+						// Note: as * and + are greedy, we might end up in a case where we deem it
+						// beneficial to create a loop of states. Avoid that! Note: this is only
+						// possible for multiple zero-length rules and therefore only states in the
+						// current step need to be considered.
+						for (const State *at = c->prev; at && at->step == c->step; at = at->prev) {
+							// Loop found, avoid it!
+							if (at == c)
+								return;
+						}
+
+						// No loops. Go on!
 						*c = state;
+					}
+
 					return;
 				}
 			}
@@ -127,15 +144,18 @@ namespace storm {
 			data.push_back(s);
 		}
 
-		StateSet::Order StateSet::execOrder(State *a, State *b) const {
+		StateSet::Order StateSet::execOrder(const State *a, const State *b) const {
 			// Invalid states have no ordering.
 			if (!a)
 				return none;
 			if (!b)
 				return none;
 
+			// Same state, no difference.
+			if (a == b)
+				return none;
+
 			// The one created earliest in the sequence goes before.
-			// NOTE: This is modified slightly from the last incarnation of the parser!
 			if (a->from != b->from)
 				return (a->from < b->from) ? before : after;
 
@@ -154,20 +174,24 @@ namespace storm {
 
 			nat to = min(aStates.count(), bStates.count());
 			for (nat i = 0; i < to; i++) {
-				Order order = execOrder(aStates[i], bStates[i]);
+				Order order = execOrder(aStates[i]->completed, bStates[i]->completed);
 				if (order != none)
 					return order;
 			}
 
-			// The shortest one wins if they are equal this far.
-			if (aStates.count() < bStates.count())
+			// Pick the longer one in case they are equal so far. This makes * and + greedy.
+			if (aStates.count() > bStates.count()) {
 				return before;
-			else
+			} else if (aStates.count() < bStates.count()) {
 				return after;
+			}
+
+			// The rules are equal as far as we are concerned.
+			return none;
 		}
 
-		void StateSet::prevStates(State *from, StateArray &to) const {
-			for (State *now = from->prev; now; now = now->prev)
+		void StateSet::prevStates(const State *from, StateArray &to) const {
+			for (const State *now = from; now->prev; now = now->prev)
 				to.push(now);
 			to.reverse();
 		}

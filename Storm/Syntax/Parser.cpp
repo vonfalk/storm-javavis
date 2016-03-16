@@ -220,12 +220,14 @@ namespace storm {
 
 		bool ParserBase::process(nat step) {
 			bool seenFinish = false;
-			// PVAR(step);
+			// if (debugParser)
+			// 	PVAR(step);
 
 			StateSet &src = steps[step];
 			for (nat i = 0; i < src.count(); i++) {
 				State *at = src[i];
-				// PVAR(at);
+				// if (debugParser)
+				// 	PVAR(at);
 
 				predictor(step, at);
 				completer(step, at);

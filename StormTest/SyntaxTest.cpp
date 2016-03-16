@@ -29,12 +29,16 @@ String parseStr(const String &root, const String &parse) {
 
 	Auto<Url> empty = CREATE(Url, *gEngine);
 	Auto<Str> s = CREATE(Str, *gEngine, parse);
+
+	// debugParser = true;
 	p->parse(s, empty);
+	debugParser = false;
 
 	if (p->hasError())
 		p->throwError();
 
 	Auto<Object> r = p->transform<Object>();
+	// PLN(parse << L" => " << r);
 	return ::toS(r);
 }
 
@@ -43,6 +47,8 @@ BEGIN_TEST(ParseOrderTest) {
 	CHECK_EQ(parseStr(L"Prio", L"var b"), L"b");
 	CHECK_EQ(parseStr(L"Prio", L"async b"), L"asyncb");
 
+	CHECK_EQ(parseStr(L"Rec", L"a,b,c"), L"(a)((b)(c))");
+	CHECK_EQ(parseStr(L"Rec", L"a.b.c"), L"((a)(b))(c)");
 	CHECK_EQ(parseStr(L"Rec", L"a.b.c.d"), L"(((a)(b))(c))(d)");
 	CHECK_EQ(parseStr(L"Rec", L"a,b,c,d"), L"(a)((b)((c)(d)))");
 	CHECK_EQ(parseStr(L"Rec", L"a.b.c.d.e"), L"((((a)(b))(c))(d))(e)");
@@ -50,4 +56,6 @@ BEGIN_TEST(ParseOrderTest) {
 
 	CHECK_EQ(parseStr(L"Rec3", L"a.b.c.d.e.f.g"), L"(((a)(b)(c))(d)(e))(f)(g)");
 	CHECK_EQ(parseStr(L"Rec3", L"a,b,c,d,e,f,g"), L"(a)(b)((c)(d)((e)(f)(g)))");
+
+	CHECK_EQ(parseStr(L"Unless", L"a unless a b c"), L"(a)(a(b)(c))");
 } END_TEST

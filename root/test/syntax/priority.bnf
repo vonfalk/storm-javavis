@@ -5,23 +5,34 @@ Whitespace : "[ \n\r\t]*";
 
 // Test some priority. This example is from a variable declaration with reserved keywords.
 Str Name();
-Name => n : "[A-Za-z]*" n;
+Name => n : "[A-Za-z]+" n;
 
 Buffer Prio();
 Prio[10] => Buffer() : "async", Name -> add;
 Prio[20] => Buffer() : Name -> add, Name -> add;
 Prio[30] => Buffer() : "var", Name -> add;
 
+// Try something similar to 'unless' in BS.
+Buffer Unless();
+Unless => Buffer() : (Stmt -> add, )*;
+
+Buffer Stmt();
+Stmt[10] => Buffer() : "unless", Name -> add (, Stmt -> add)*;
+Stmt => Buffer() : Name -> add;
+
+// Unless[10] => Buffer() : "unless", Unless -> add (, Unless -> add)*;
+// Unless => Buffer() : Name -> add;
+
 // a.b.c should match like this: (a.b).c
 // a,b,c should match like this: a,(b,c)
 Buffer Rec();
 Rec[0] => Buffer() : Name -> add;
-Rec[-1] => Buffer() : Rec -> add, "\.", Rec -> add;
-Rec[+1] => Buffer() : Rec -> add, "\,", Rec -> add;
+Rec[+1] => Buffer() : Rec -> add, "\.", Rec -> add;
+Rec[-1] => Buffer() : Rec -> add, "\,", Rec -> add;
 
 // Try parsing groups of 3 as well (not as common, but tests robustness).
 Buffer Rec3();
 Rec3[0] => Buffer() : Name -> add;
-Rec3[-1] => Buffer() : Rec3 -> add, "\.", Rec3 -> add, "\.", Rec3 -> add;
-Rec3[+1] => Buffer() : Rec3 -> add, ",", Rec3 -> add, ",", Rec3 -> add;
+Rec3[+1] => Buffer() : Rec3 -> add, "\.", Rec3 -> add, "\.", Rec3 -> add;
+Rec3[-1] => Buffer() : Rec3 -> add, ",", Rec3 -> add, ",", Rec3 -> add;
 

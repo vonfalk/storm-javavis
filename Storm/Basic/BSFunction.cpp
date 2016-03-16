@@ -2,7 +2,7 @@
 #include "BSFunction.h"
 #include "BSAutocast.h"
 #include "Code/Instruction.h"
-#include "Parser.h"
+#include "Syntax/Parser.h"
 #include "PkgReader.h"
 #include "Exception.h"
 #include "Thread.h"
@@ -206,9 +206,6 @@ namespace storm {
 	}
 
 	bs::FnBody *bs::BSFunction::createBody() {
-		if (!body) {
-			PVAR(identifier());
-		}
 		return syntax::transformNode<FnBody, BSFunction>(body, this);
 	}
 

@@ -6,6 +6,13 @@ namespace storm {
 	namespace syntax {
 		STORM_PKG(lang.bnf);
 
+#ifdef DEBUG
+		// Debug the parser? Not well-defined behavior, but useful during debugging as the parser is
+		// being used from many places in the compiler, and only a fraction of those are interesting
+		// to debug.
+		extern bool debugParser;
+#endif
+
 		/**
 		 * State used during parsing (in Parser.h/cpp). Contains a location into an option, a step
 		 * where the option was instantiated, pointer to previous step, and optionally the step that
@@ -133,7 +140,7 @@ namespace storm {
 
 			// Size of the array for computing ordering. Should be large enough to accomodate the
 			// common length of rules to not lose too much performance.
-			typedef PreArray<State *, 20> StateArray;
+			typedef PreArray<const State *, 20> StateArray;
 
 			// Ordering.
 			enum Order {
@@ -143,10 +150,10 @@ namespace storm {
 			};
 
 			// Compute the execution order of two states when parsed by a top-down parser.
-			Order execOrder(State *a, State *b) const;
+			Order execOrder(const State *a, const State *b) const;
 
 			// Find previous states for a state.
-			void prevStates(State *end, StateArray &to) const;
+			void prevStates(const State *end, StateArray &to) const;
 		};
 
 	}

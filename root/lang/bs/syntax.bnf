@@ -326,7 +326,7 @@ SStmt => e : SBlock(block) e;
 SStmt[10] => e : SIf(block) e;
 SStmt[10] => e : SLoop(block) e;
 SStmt[10] => e : SReturn(block) e, ";";
-SStmt[10] => e : SUnless(block) e;
+SStmt[20] => e : SUnless(block) e;
 
 
 ////////////////////////////////////////////////////////////////////
