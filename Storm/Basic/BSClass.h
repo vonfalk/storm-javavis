@@ -30,7 +30,7 @@ namespace storm {
 			void lookupTypes();
 
 			// Declared at.
-			const SrcPos declared;
+			SrcPos declared;
 
 			// Base class (if any).
 			Auto<Name> base;
@@ -40,6 +40,9 @@ namespace storm {
 
 			// Load the body lazily.
 			virtual Bool STORM_FN loadAll();
+
+			// Clear during shutdown.
+			virtual void clear();
 
 		private:
 			// Body of the class.

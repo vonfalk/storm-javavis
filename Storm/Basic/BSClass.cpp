@@ -128,8 +128,19 @@ namespace storm {
 			add(i.val());
 		}
 
+		// We do not need the syntax tree anymore!
+		this->body = null;
+
 		// Super needs to be called!
 		return Type::loadAll();
+	}
+
+	void bs::Class::clear() {
+		body = null;
+		declared = SrcPos();
+		thread = null;
+		base = null;
+		Type::clear();
 	}
 
 	/**
