@@ -2,6 +2,14 @@ use lang:bs;
 use core:debug;
 use core:lang;
 
+/**
+ * Testing *** recursive comments /// with stuff in it.
+ * /**
+ *  * Works like a charm?
+ *  */
+ * Maybe not?
+ */
+
 Expr dumpExpr(Expr e, Str s) {
 	print(s.v + ": " + e.toS);
 	e;

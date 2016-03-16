@@ -16,8 +16,10 @@ SDelimiter : "[ \n\r\t]*/\*" - SInComment - SDelimiter;
 // Inside a multi-line comment. Consumes the ending */
 void SInComment();
 SInComment : "\*+/"; // End of the comment.
-SInComment : "[^\*]*" - SInComment; // Everything except * are fine!
+SInComment : "/\*+" - SInComment - SInComment; // Start of a nested comment.
+SInComment : "[^\*/]*" - SInComment; // Everything except * and / are fine!
 SInComment : "\*+[^\*/]" - SInComment;
+SInComment : "/+" - SInComment;
 
 // A name in Storm. This should probably be extended to handle more of unicode.
 SStr SName();
