@@ -165,8 +165,8 @@ namespace storm {
 		 */
 
 		// Parses a name, eg foo.bar or foo<bar>.baz
-		static Name *parseName(Tokenizer &tok, Engine &e) {
-			Auto<SrcName> result = CREATE(SrcName, e);
+		static SrcName *parseName(Tokenizer &tok, Engine &e) {
+			Auto<SrcName> result = CREATE(SrcName, e, tok.peek().pos);
 			bool first = true;
 
 			do {
@@ -347,10 +347,10 @@ namespace storm {
 		}
 
 		// Parses an option declaration, from the :.
-		static OptionDecl *parseOption(Tokenizer &tok, Engine &e, Par<Name> member) {
+		static OptionDecl *parseOption(Tokenizer &tok, Engine &e, Par<SrcName> member) {
 			tok.expect(L":");
 
-			Auto<OptionDecl> result = CREATE(OptionDecl, e, tok.position(), member);
+			Auto<OptionDecl> result = CREATE(OptionDecl, e, member->pos, member);
 
 			String lastToken = tok.peek().token;
 			while (lastToken != L";" && lastToken != L"=") {
@@ -398,7 +398,7 @@ namespace storm {
 		}
 
 		// Parses an option delcaration, from the =>.
-		static OptionDecl *parseOptionResult(Tokenizer &tok, Engine &e, Par<Name> member) {
+		static OptionDecl *parseOptionResult(Tokenizer &tok, Engine &e, Par<SrcName> member) {
 			tok.expect(L"=>");
 
 			Auto<Name> name = parseName(tok, e);
@@ -413,7 +413,7 @@ namespace storm {
 		}
 
 		// Parses an option declaration with a priority, starting from the [.
-		static OptionDecl *parseOptionPriority(Tokenizer &tok, Engine &e, Par<Name> member) {
+		static OptionDecl *parseOptionPriority(Tokenizer &tok, Engine &e, Par<SrcName> member) {
 			tok.expect(L"[");
 			Int prio = 0;
 			if (tok.peek().token == L"-") {
@@ -447,7 +447,7 @@ namespace storm {
 			Auto<Contents> result = CREATE(Contents, e);
 
 			while (tok.more()) {
-				Auto<Name> name = parseName(tok, e);
+				Auto<SrcName> name = parseName(tok, e);
 
 				Token sep = tok.peek();
 				if (sep.token == L"=") {

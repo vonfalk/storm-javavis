@@ -5,21 +5,17 @@
 
 namespace storm {
 
-	SObject::SObject() : pos() {}
-
-	SObject::SObject(SrcPos pos) : pos(pos) {}
-
 	SStr::SStr(Par<Str> s) : v(s) {}
 
-	SStr::SStr(Par<Str> src, SrcPos pos) : SObject(pos), v(src) {}
+	SStr::SStr(Par<Str> src, SrcPos pos) : pos(pos), v(src) {}
 
-	SStr::SStr(Par<SStr> s) : SObject(pos), v(s->v) {}
+	SStr::SStr(Par<SStr> s) : pos(pos), v(s->v) {}
 
 	SStr::SStr(const String &str) {
 		v = CREATE(Str, engine(), str);
 	}
 
-	SStr::SStr(const String &str, const SrcPos &pos) : SObject(pos){
+	SStr::SStr(const String &str, const SrcPos &pos) : pos(pos){
 		v = CREATE(Str, engine(), str);
 	}
 
@@ -29,6 +25,11 @@ namespace storm {
 
 	void SStr::output(wostream &to) const {
 		to << *v << L"@" << steal(pos.file->name()) << '(' << pos.offset << ')';
+	}
+
+	void SStr::deepCopy(Par<CloneEnv> env) {
+		pos.deepCopy(env);
+		v.deepCopy(env);
 	}
 
 	Auto<SStr> sstr(Engine &e, const String &str) {

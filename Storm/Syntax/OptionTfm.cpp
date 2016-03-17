@@ -41,7 +41,7 @@ namespace storm {
 			if (!toCall)
 				throw InternalError(::toS(part) + L" was not found!");
 
-			return CREATE(FnCall, me, toCall, actual);
+			return CREATE(FnCall, me, me->pos, toCall, actual);
 		}
 
 		Expr *callMember(const SrcPos &pos, const String &name, Par<Expr> me, Par<Expr> param = Par<Expr>()) {
@@ -142,13 +142,13 @@ namespace storm {
 			Auto<Var> var = CREATE(Var, this, in, name, init);
 			in->add(var);
 
-			return CREATE(LocalVarAccess, this, steal(var->var()));
+			return CREATE(LocalVarAccess, this, pos, steal(var->var()));
 		}
 
 		Expr *TransformFn::readVar(Par<Block> in, const String &name) {
 			Auto<SimplePart> part = CREATE(SimplePart, this, name);
 			if (LocalVar *r = in->variable(part))
-				return CREATE(LocalVarAccess, this, steal(r));
+				return CREATE(LocalVarAccess, this, pos, steal(r));
 
 			if (name == L"me")
 				throw SyntaxError(pos, L"Can not use 'me' this early!");
@@ -161,18 +161,18 @@ namespace storm {
 		Expr *TransformFn::findVar(Par<ExprBlock> in, const String &name) {
 			Auto<SimplePart> part = CREATE(SimplePart, this, name);
 			if (LocalVar *r = in->variable(part))
-				return CREATE(LocalVarAccess, this, steal(r));
+				return CREATE(LocalVarAccess, this, pos, steal(r));
 
 			if (name == L"me")
 				throw SyntaxError(pos, L"Can not use 'me' this early!");
 			if (name == L"pos")
 				return posVar(in);
 			if (name.isInt())
-				return CREATE(Constant, this, name.toInt());
+				return CREATE(Constant, this, pos, name.toInt());
 			if (name == L"true")
-				return CREATE(Constant, this, true);
+				return CREATE(Constant, this, pos, true);
 			if (name == L"false")
-				return CREATE(Constant, this, false);
+				return CREATE(Constant, this, pos, false);
 
 			// We need to create it...
 			if (lookingFor.count(name))
@@ -187,7 +187,7 @@ namespace storm {
 				Auto<LocalVar> var = createVar(in, name, pos);
 				lookingFor.erase(name);
 
-				return CREATE(LocalVarAccess, this, var);
+				return CREATE(LocalVarAccess, this, this->pos, var);
 			} catch (...) {
 				lookingFor.erase(name);
 				throw;
@@ -207,7 +207,7 @@ namespace storm {
 
 		LocalVar *TransformFn::createPlainVar(Par<ExprBlock> in, const String &name, Par<Token> token) {
 			TypeVar *src = token->target;
-			Auto<Expr> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), src);
+			Auto<Expr> srcAccess = CREATE(MemberVarAccess, this, pos, steal(thisVar(in)), src);
 
 			Auto<SStr> sName = CREATE(SStr, this, name);
 			Auto<Var> v = CREATE(Var, this, in, sName, srcAccess);
@@ -222,7 +222,7 @@ namespace storm {
 
 			Type *srcType = tokenType(token);
 			TypeVar *src = token->target;
-			Auto<MemberVarAccess> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), src);
+			Auto<MemberVarAccess> srcAccess = CREATE(MemberVarAccess, this, this->pos, steal(thisVar(in)), src);
 
 			// Prepare parameters.
 			Auto<Actual> actuals = createActuals(in, pos);
@@ -234,17 +234,17 @@ namespace storm {
 			if (isMaybe(src->varType)) {
 				v = CREATE(Var, this, in, wrapMaybe(tfmFn->result), varName, steal(CREATE(Actual, this)));
 				in->add(v);
-				Auto<Expr> readV = CREATE(LocalVarAccess, this, steal(v->var()));
+				Auto<Expr> readV = CREATE(LocalVarAccess, this, this->pos, steal(v->var()));
 
 				Auto<WeakCast> cast = CREATE(WeakMaybeCast, this, srcAccess);
 				Auto<IfWeak> check = CREATE(IfWeak, this, in, cast);
 				assert(steal(check->overwrite()), L"Weak cast should overwrite stuff!");
-				Auto<Expr> access = CREATE(LocalVarAccess, this, steal(check->overwrite()));
+				Auto<Expr> access = CREATE(LocalVarAccess, this, this->pos, steal(check->overwrite()));
 
 				// Assign something to the variable!
-				Auto<IfTrue> branch = CREATE(IfTrue, this, check);
+				Auto<IfTrue> branch = CREATE(IfTrue, this, this->pos, check);
 				actuals->addFirst(access);
-				Auto<Expr> tfmCall = CREATE(FnCall, this, tfmFn, actuals);
+				Auto<Expr> tfmCall = CREATE(FnCall, this, this->pos, tfmFn, actuals);
 				Auto<OpInfo> assignOp = assignOperator(sstr(e, L"="), 1);
 				branch->set(steal(CREATE(Operator, this, branch, readV, assignOp, tfmCall)));
 				check->trueExpr(branch);
@@ -253,25 +253,25 @@ namespace storm {
 			} else if (isArray(src->varType)) {
 				v = CREATE(Var, this, in, wrapArray(tfmFn->result), varName, steal(CREATE(Actual, this)));
 				in->add(v);
-				Auto<Expr> readV = CREATE(LocalVarAccess, this, steal(v->var()));
+				Auto<Expr> readV = CREATE(LocalVarAccess, this, this->pos, steal(v->var()));
 
 				// Extra block to avoid name collisions.
-				Auto<ExprBlock> forBlock = CREATE(ExprBlock, this, in);
+				Auto<ExprBlock> forBlock = CREATE(ExprBlock, this, this->pos, in);
 				Auto<Expr> arrayCount = callMember(L"count", srcAccess);
 				Auto<Var> end = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_end"), arrayCount);
-				Auto<Expr> readEnd = CREATE(LocalVarAccess, this, steal(end->var()));
+				Auto<Expr> readEnd = CREATE(LocalVarAccess, this, this->pos, steal(end->var()));
 				forBlock->add(end);
 
-				Auto<Var> i = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_i"), steal(CREATE(Constant, this, 0)));
-				Auto<Expr> readI = CREATE(LocalVarAccess, this, steal(i->var()));
+				Auto<Var> i = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_i"), steal(CREATE(Constant, this, this->pos, 0)));
+				Auto<Expr> readI = CREATE(LocalVarAccess, this, this->pos, steal(i->var()));
 				forBlock->add(i);
 
-				Auto<For> loop = CREATE(For, this, forBlock);
+				Auto<For> loop = CREATE(For, this, this->pos, forBlock);
 				loop->test(steal(callMember(L"<", readI, readEnd)));
 				loop->update(steal(callMember(L"++*", readI)));
 
 				actuals->addFirst(steal(callMember(L"[]", srcAccess, readI)));
-				Auto<Expr> tfmCall = CREATE(FnCall, this, tfmFn, actuals);
+				Auto<Expr> tfmCall = CREATE(FnCall, this, this->pos, tfmFn, actuals);
 				loop->body(steal(callMember(L"push", readV, tfmCall)));
 
 				forBlock->add(loop);
@@ -282,7 +282,7 @@ namespace storm {
 				actuals->addFirst(srcAccess);
 
 				// Call function and create variable!
-				Auto<FnCall> tfmCall = CREATE(FnCall, this, tfmFn, actuals);
+				Auto<FnCall> tfmCall = CREATE(FnCall, this, this->pos, tfmFn, actuals);
 				v = CREATE(Var, this, in, varName, tfmCall);
 				in->add(v);
 			}
@@ -332,7 +332,7 @@ namespace storm {
 			if (!token->invoke)
 				return;
 
-			Auto<Expr> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), token->target);
+			Auto<Expr> srcAccess = CREATE(MemberVarAccess, this, this->pos, steal(thisVar(in)), token->target);
 			in->add(steal(executeToken(in, me, srcAccess, token, pos)));
 		}
 
@@ -349,7 +349,7 @@ namespace storm {
 
 				actuals->addFirst(src);
 
-				toStore = CREATE(FnCall, this, tfmFn, actuals);
+				toStore = CREATE(FnCall, this, this->pos, tfmFn, actuals);
 			}
 
 		    return callMember(this->pos, token->invoke->v, me, toStore);
@@ -359,14 +359,14 @@ namespace storm {
 			if (!token->invoke)
 				return;
 
-			Auto<Expr> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), token->target);
+			Auto<Expr> srcAccess = CREATE(MemberVarAccess, this, this->pos, steal(thisVar(in)), token->target);
 			Auto<WeakCast> cast = CREATE(WeakMaybeCast, this, srcAccess);
 			Auto<IfWeak> check = CREATE(IfWeak, this, in, cast);
-			Auto<IfTrue> trueBlock = CREATE(IfTrue, this, check);
+			Auto<IfTrue> trueBlock = CREATE(IfTrue, this, this->pos, check);
 
 			Auto<LocalVar> overwrite = check->overwrite();
 			assert(overwrite, L"Weak cast did not overwrite variable as expected.");
-			Auto<Expr> e = executeToken(trueBlock, me, steal(CREATE(LocalVarAccess, this, overwrite)), token, pos);
+			Auto<Expr> e = executeToken(trueBlock, me, steal(CREATE(LocalVarAccess, this, this->pos, overwrite)), token, pos);
 			trueBlock->set(e);
 			check->trueExpr(trueBlock);
 			in->add(check);
@@ -383,7 +383,7 @@ namespace storm {
 					// Not interesting...
 					continue;
 
-				Auto<MemberVarAccess> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), t->target);
+				Auto<MemberVarAccess> srcAccess = CREATE(MemberVarAccess, this, this->pos, steal(thisVar(in)), t->target);
 				Auto<Expr> read = callMember(L"count", srcAccess);
 
 				if (minExpr)
@@ -396,29 +396,29 @@ namespace storm {
 				// Nothing to execute in here!
 				return;
 
-			Auto<ExprBlock> forBlock = CREATE(ExprBlock, this, in);
+			Auto<ExprBlock> forBlock = CREATE(ExprBlock, this, this->pos, in);
 
 			Auto<Var> end = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_end"), minExpr);
 			forBlock->add(end);
-			Auto<Expr> readEnd = CREATE(LocalVarAccess, this, steal(end->var()));
+			Auto<Expr> readEnd = CREATE(LocalVarAccess, this, this->pos, steal(end->var()));
 
 			// Iterate...
-			Auto<Var> i = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_i"), steal(CREATE(Constant, this, 0)));
-			Auto<Expr> readI = CREATE(LocalVarAccess, this, steal(i->var()));
+			Auto<Var> i = CREATE(Var, this, forBlock, natType(e), sstr(e, L"_i"), steal(CREATE(Constant, this, this->pos, 0)));
+			Auto<Expr> readI = CREATE(LocalVarAccess, this, this->pos, steal(i->var()));
 			forBlock->add(i);
 
-			Auto<For> loop = CREATE(For, this, forBlock);
+			Auto<For> loop = CREATE(For, this, this->pos, forBlock);
 			loop->test(steal(callMember(L"<", readI, readEnd)));
 			loop->update(steal(callMember(L"++*", readI)));
 
-			Auto<ExprBlock> inLoop = CREATE(ExprBlock, this, loop);
+			Auto<ExprBlock> inLoop = CREATE(ExprBlock, this, this->pos, loop);
 
 			for (nat i = from; i < to; i++) {
 				Token *t = getToken(i);
 				if (!t->invoke)
 					continue;
 
-				Auto<MemberVarAccess> srcAccess = CREATE(MemberVarAccess, this, steal(thisVar(in)), t->target);
+				Auto<MemberVarAccess> srcAccess = CREATE(MemberVarAccess, this, this->pos, steal(thisVar(in)), t->target);
 				Auto<Expr> element = callMember(L"[]", srcAccess, readI);
 				inLoop->add(steal(executeToken(inLoop, me, element, t, i)));
 			}
@@ -453,7 +453,7 @@ namespace storm {
 		Expr *TransformFn::thisVar(Par<Block> in) {
 			Auto<LocalVar> var = in->variable(steal(CREATE(SimplePart, this, L"this")));
 			assert(var, L"'this' was not found!");
-			return CREATE(LocalVarAccess, this, var);
+			return CREATE(LocalVarAccess, this, pos, var);
 		}
 
 		Expr *TransformFn::posVar(Par<Block> in) {
@@ -465,7 +465,7 @@ namespace storm {
 			TypeVar *posVar = as<TypeVar>(found.borrow());
 			assert(posVar, L"'pos' not found in syntax node types!");
 
-			return CREATE(MemberVarAccess, this, steal(thisVar(in)), posVar);
+			return CREATE(MemberVarAccess, this, pos, steal(thisVar(in)), posVar);
 		}
 
 		nat TransformFn::findToken(const String &name) {

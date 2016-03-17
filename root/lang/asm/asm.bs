@@ -10,6 +10,10 @@ use lang:bs; // TODO: Extract a generic code generation interface so that we do 
 class AsmListing extends Expr {
 	AsmAtom[] data;
 
+	ctor(SrcPos pos) {
+		init(pos);
+	}
+
 	void add(AsmAtom instr) {
 		data << instr;
 	}

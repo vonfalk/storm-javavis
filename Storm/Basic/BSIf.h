@@ -14,7 +14,7 @@ namespace storm {
 		class IfExpr : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR IfExpr(Par<Block> parent);
+			STORM_CTOR IfExpr(SrcPos pos, Par<Block> parent);
 
 			// True branch.
 			Auto<IfTrue> trueCode;
@@ -97,7 +97,7 @@ namespace storm {
 		class IfTrue : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR IfTrue(Par<Block> parent);
+			STORM_CTOR IfTrue(SrcPos pos, Par<Block> parent);
 
 			// Single contained expression.
 			Auto<Expr> expr;

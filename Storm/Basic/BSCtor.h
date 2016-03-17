@@ -27,6 +27,9 @@ namespace storm {
 			// Scope.
 			const Scope scope;
 
+			// Position.
+			const SrcPos pos;
+
 			// We may need to run on a specific thread based on the current actual parameters.
 			virtual code::Variable findThread(Par<CodeGen> s, const Actuals &params);
 
@@ -39,9 +42,6 @@ namespace storm {
 
 			// Body
 			Auto<syntax::Node> body;
-
-			// Position.
-			SrcPos pos;
 
 			// Generate code.
 			CodeGen *CODECALL generateCode();
@@ -109,8 +109,8 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR SuperCall(Par<CtorBody> block, Par<Actual> params);
-			STORM_CTOR SuperCall(Par<CtorBody> block, Par<Actual> params, Par<ArrayP<Initializer>> init);
+			STORM_CTOR SuperCall(SrcPos pos, Par<CtorBody> block, Par<Actual> params);
+			STORM_CTOR SuperCall(SrcPos pos, Par<CtorBody> block, Par<Actual> params, Par<ArrayP<Initializer>> init);
 
 			// Result.
 			virtual ExprResult STORM_FN result();

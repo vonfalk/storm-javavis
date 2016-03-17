@@ -18,8 +18,8 @@ namespace storm {
 		class Block : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR Block(const Scope &scope);
-			STORM_CTOR Block(Par<Block> parent);
+			STORM_CTOR Block(SrcPos pos, Scope scope);
+			STORM_CTOR Block(SrcPos pos, Par<Block> parent);
 
 			// Lookup node.
 			STORM_VAR Auto<BlockLookup> lookup;
@@ -62,8 +62,8 @@ namespace storm {
 		class ExprBlock : public Block {
 			STORM_CLASS;
 		public:
-			ExprBlock(const Scope &scope);
-			STORM_CTOR ExprBlock(Par<Block> parent);
+			STORM_CTOR ExprBlock(SrcPos pos, Scope scope);
+			STORM_CTOR ExprBlock(SrcPos pos, Par<Block> parent);
 
 			// Add an expression.
 			using Block::add;

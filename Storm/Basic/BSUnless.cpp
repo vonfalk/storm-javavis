@@ -4,16 +4,16 @@
 
 namespace storm {
 
-	bs::Unless::Unless(Par<Block> parent, Par<WeakCast> cast) : Block(parent), cast(cast) {
+	bs::Unless::Unless(Par<Block> parent, Par<WeakCast> cast) : Block(cast->pos, parent), cast(cast) {
 		init(null);
 	}
 
-	bs::Unless::Unless(Par<Block> parent, Par<WeakCast> cast, Par<SStr> name) : Block(parent), cast(cast) {
+	bs::Unless::Unless(Par<Block> parent, Par<WeakCast> cast, Par<SStr> name) : Block(cast->pos, parent), cast(cast) {
 		init(name->v);
 	}
 
 	void bs::Unless::init(Auto<Str> name) {
-		successBlock = CREATE(ExprBlock, this, this);
+		successBlock = CREATE(ExprBlock, this, pos, this);
 
 		if (!name)
 			name = cast->overwrite();

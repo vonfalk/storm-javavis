@@ -14,7 +14,7 @@ namespace storm {
 		class Loop : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR Loop(Par<Block> parent);
+			STORM_CTOR Loop(SrcPos pos, Par<Block> parent);
 
 			// Condition (if any).
 			Auto<Expr> condExpr;

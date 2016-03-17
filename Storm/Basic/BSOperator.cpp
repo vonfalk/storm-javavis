@@ -94,7 +94,7 @@ namespace storm {
 	}
 
 	bs::Operator::Operator(Par<Block> block, Par<Expr> lhs, Par<OpInfo> op, Par<Expr> rhs)
-		: block(block.borrow()), lhs(lhs), op(op), rhs(rhs), fnCall(null) {}
+		: Expr(op->pos), block(block.borrow()), lhs(lhs), op(op), rhs(rhs), fnCall(null) {}
 
 	// Left should be true if 'other' is 'our' left child.
 	static bool after(Par<bs::OpInfo> our, Par<bs::OpInfo> other, bool left) {
@@ -235,7 +235,7 @@ namespace storm {
 	 * Parens.
 	 */
 
-	bs::ParenExpr::ParenExpr(Par<Expr> wrap) : wrap(wrap) {}
+	bs::ParenExpr::ParenExpr(Par<Expr> wrap) : Expr(wrap->pos), wrap(wrap) {}
 
 	ExprResult bs::ParenExpr::result() {
 		return wrap->result();

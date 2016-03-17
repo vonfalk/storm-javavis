@@ -5,11 +5,13 @@
 
 namespace storm {
 
-	bs::Block::Block(const Scope &scope)
-		: lookup(CREATE(BlockLookup, engine(), this, scope.top)), scope(scope, lookup) {}
+	bs::Block::Block(SrcPos pos, Scope scope)
+		: Expr(pos),
+		  lookup(CREATE(BlockLookup, engine(), this, scope.top)), scope(scope, lookup) {}
 
-	bs::Block::Block(Par<Block> parent)
-		: lookup(CREATE(BlockLookup, engine(), this, parent->scope.top)), scope(parent->scope, lookup) {}
+	bs::Block::Block(SrcPos pos, Par<Block> parent)
+		: Expr(pos),
+		  lookup(CREATE(BlockLookup, engine(), this, parent->scope.top)), scope(parent->scope, lookup) {}
 
 	void bs::Block::code(Par<CodeGen> state, Par<CodeResult> to) {
 		using namespace code;
@@ -74,9 +76,9 @@ namespace storm {
 	}
 
 
-	bs::ExprBlock::ExprBlock(const Scope &scope) : Block(scope), firstNoReturn(invalid) {}
+	bs::ExprBlock::ExprBlock(SrcPos pos, Scope scope) : Block(pos, scope), firstNoReturn(invalid) {}
 
-	bs::ExprBlock::ExprBlock(Par<Block> parent) : Block(parent), firstNoReturn(invalid) {}
+	bs::ExprBlock::ExprBlock(SrcPos pos, Par<Block> parent) : Block(pos, parent), firstNoReturn(invalid) {}
 
 	void bs::ExprBlock::add(Par<Expr> expr) {
 		if (firstNoReturn == invalid)

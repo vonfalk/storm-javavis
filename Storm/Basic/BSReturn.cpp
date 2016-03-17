@@ -6,13 +6,13 @@
 
 namespace storm {
 
-	bs::Return::Return(SrcPos pos, Par<Block> block) : returnType(findParentType(pos, block)) {
+	bs::Return::Return(SrcPos pos, Par<Block> block) : Expr(pos), returnType(findParentType(pos, block)) {
 		if (returnType != Value()) {
 			throw SyntaxError(pos, L"Trying to return a value from a void function.");
 		}
 	}
 
-	bs::Return::Return(SrcPos pos, Par<Block> block, Par<Expr> expr) : returnType(findParentType(pos, block)) {
+	bs::Return::Return(SrcPos pos, Par<Block> block, Par<Expr> expr) : Expr(pos), returnType(findParentType(pos, block)) {
 		this->expr = expectCastTo(expr, returnType);
 	}
 

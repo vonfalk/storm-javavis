@@ -128,7 +128,7 @@ namespace storm {
 		// Cast ctor?
 		if (Function *ctor = castCtor(f, to)) {
 			Auto<Actual> params = CREATE(Actual, from, from);
-			return CREATE(CtorCall, from, ctor, params);
+			return CREATE(CtorCall, from, from->pos, ctor, params);
 		}
 
 		return null;

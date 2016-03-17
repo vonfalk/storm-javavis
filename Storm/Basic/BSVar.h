@@ -13,7 +13,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			LocalVar(const String &name, const Value &val, const SrcPos &pos, bool param = false);
-			STORM_CTOR LocalVar(Par<Str> name, const Value &val, const SrcPos &pos, Bool param);
+			STORM_CTOR LocalVar(Par<Str> name, Value val, SrcPos pos, Bool param);
 
 			// Type.
 			STORM_VAR Value result;

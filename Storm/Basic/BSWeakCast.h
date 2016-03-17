@@ -8,11 +8,14 @@ namespace storm {
 		/**
 		 * Weak cast, ie. a cast that may fail and has to be handled.
 		 */
-		class WeakCast : public SObject {
+		class WeakCast : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR WeakCast();
+			STORM_CTOR WeakCast(SrcPos pos);
+
+			// Position of this weak cast.
+			STORM_VAR SrcPos pos;
 
 			// Get the name of a local variable we want to save the result of the weak cast to. May
 			// return null if there is no obvious location to store the result in.

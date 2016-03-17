@@ -1,31 +1,15 @@
 #pragma once
-#include "Shared/TObject.h"
 #include "Shared/Str.h"
-#include "Thread.h"
+#include "Shared/CloneEnv.h"
 #include "SrcPos.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
 
 	/**
-	 * Object that all objects used in syntax has to be derived from. Contains
-	 * an additional SrcPos that is automatically set by the framework.
-	 */
-	class SObject : public ObjectOn<Compiler> {
-		STORM_CLASS;
-	public:
-		STORM_CTOR SObject();
-		STORM_CTOR SObject(SrcPos pos);
-
-		// The position of this SObject. Initialized to nothing.
-		STORM_VAR SrcPos pos;
-	};
-
-
-	/**
 	 * String object for use in the syntax.
 	 */
-	class SStr : public SObject {
+	class SStr : public Object {
 		STORM_CLASS;
 	public:
 		STORM_CTOR SStr(Par<Str> src);
@@ -34,11 +18,17 @@ namespace storm {
 		SStr(const String &str);
 		SStr(const String &str, const SrcPos &pos);
 
+		// Position of this string.
+		STORM_VAR SrcPos pos;
+
 		// The string captured.
 		STORM_VAR Auto<Str> v;
 
 		// Allow transforming an SStr.
 		Str *STORM_FN transform() const;
+
+		// Deep copy.
+		virtual void STORM_FN deepCopy(Par<CloneEnv> env);
 
 	protected:
 		virtual void output(wostream &to) const;

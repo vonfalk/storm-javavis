@@ -11,16 +11,16 @@ class RangeFor extends ExprBlock {
 	Str? keyName;
 	Str valName;
 
-	ctor(Block parent, SStr name, Expr container) {
-		init(parent) {
+	ctor(SrcPos pos, Block parent, SStr name, Expr container) {
+		init(pos, parent) {
 			valName = name.v;
 		}
 
 		createCode(container);
 	}
 
-	ctor(Block parent, SStr key, SStr value, Expr container) {
-		init(parent) {
+	ctor(SrcPos pos, Block parent, SStr key, SStr value, Expr container) {
+		init(pos, parent) {
 			keyName = key.v;
 			valName = value.v;
 		}
@@ -29,31 +29,31 @@ class RangeFor extends ExprBlock {
 	}
 
 	void createCode(Expr container) {
-		Var cont(this, SStr(" c"), container);
-		LocalVarAccess getCont(cont.var);
+		Var cont(this, SStr(" c", pos), container);
+		LocalVarAccess getCont(pos, cont.var);
 		add(cont);
 
-		Var atDecl(this, SStr(" at"), namedExpr(this, SStr("begin"), getCont, Actual()));
-		LocalVarAccess getAt(atDecl.var);
+		Var atDecl(this, SStr(" at", pos), namedExpr(this, SStr("begin", pos), getCont, Actual()));
+		LocalVarAccess getAt(pos, atDecl.var);
 		add(atDecl);
 
-		Var endDecl(this, SStr(" end"), namedExpr(this, SStr("end"), getCont, Actual()));
-		LocalVarAccess getEnd(endDecl.var);
+		Var endDecl(this, SStr(" end", pos), namedExpr(this, SStr("end", pos), getCont, Actual()));
+		LocalVarAccess getEnd(pos, endDecl.var);
 		add(endDecl);
 
-		For loop(this);
+		For loop(pos, this);
 		add(loop);
 
-		ExprBlock body(loop);
-		loop.test(namedExpr(loop, SStr("!="), getAt, Actual(getEnd)));
-		loop.update(namedExpr(loop, SStr("++*"), getAt, Actual()));
+		ExprBlock body(pos, loop);
+		loop.test(namedExpr(loop, SStr("!=", pos), getAt, Actual(getEnd)));
+		loop.update(namedExpr(loop, SStr("++*", pos), getAt, Actual()));
 		loop.body(body);
 
 		if (keyName) {
-			body.add(Var(body, SStr(keyName), namedExpr(loop, SStr("k"), getAt, Actual())));
+			body.add(Var(body, SStr(keyName, pos), namedExpr(loop, SStr("k", pos), getAt, Actual())));
 		}
 
-		body.add(Var(body, SStr(valName), namedExpr(loop, SStr("v"), getAt, Actual())));
+		body.add(Var(body, SStr(valName), namedExpr(loop, SStr("v", pos), getAt, Actual())));
 		loopBlock = body;
 	}
 

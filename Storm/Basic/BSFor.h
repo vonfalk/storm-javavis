@@ -12,7 +12,7 @@ namespace storm {
 		class For : public Block {
 			STORM_CLASS;
 		public:
-			STORM_CTOR For(Par<Block> parent);
+			STORM_CTOR For(SrcPos pos, Par<Block> parent);
 
 			// Test expression.
 			Auto<Expr> testExpr;

@@ -9,7 +9,7 @@ namespace storm {
 		/**
 		 * Actual parameters to a function.
 		 */
-		class Actual : public SObject {
+		class Actual : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Actual();
@@ -48,10 +48,11 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR BSNamePart(Par<Str> name, Par<Actual> params);
+			STORM_CTOR BSNamePart(Par<SStr> name, Par<Actual> params);
+			STORM_CTOR BSNamePart(Par<Str> name, SrcPos pos, Par<Actual> params);
 
 			// C++ version.
-			BSNamePart(const String &name, Par<Actual> params);
+			BSNamePart(const String &name, const SrcPos &pos, Par<Actual> params);
 
 			// Insert a type as the first parameter (used for this pointers).
 			void STORM_FN insert(Value first);
@@ -66,10 +67,14 @@ namespace storm {
 		private:
 			// Original expressions. (may contain null).
 			vector<Auto<Expr>> exprs;
+
+			// Position of this part.
+			SrcPos pos;
 		};
 
 		// Helper to create a Name with one BSNamePart inside of it.
-		Name *STORM_FN bsName(Par<Str> name, Par<Actual> params);
-		Name *bsName(const String &name, Par<Actual> params);
+		Name *STORM_FN bsName(Par<SStr> name, Par<Actual> params) ON(Compiler);
+		Name *STORM_FN bsName(Par<Str> name, SrcPos pos, Par<Actual> params) ON(Compiler);
+		Name *bsName(const String &name, const SrcPos &pos, Par<Actual> params);
 	}
 }

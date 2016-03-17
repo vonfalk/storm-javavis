@@ -13,14 +13,14 @@ SrcName arrayType(SrcName t) on Compiler {
 }
 
 Expr arrayInit(Block block, SrcName type, Array<Expr> list) on Compiler {
-	ExprBlock b(block);
+	ExprBlock b(type.pos, block);
 
-	SStr arrayName("tmp");
+	SStr arrayName("tmp", type.pos);
 	Var array(b, arrayName, namedExpr(b, arrayType(type), Actual()));
 	b.add(array);
 
 	Expr varAccess = namedExpr(b, arrayName, Actual());
-	SStr push("push"); // TODO: Add position as well!
+	SStr push("push", type.pos);
 	for (Nat i = 0; i < list.count; i++) {
 		Actual params;
 		params.add(list[i]);
@@ -37,10 +37,10 @@ class ArrayInit extends Expr {
 	// TODO: Replace this one with a weak pointer directly to our parent.
 	ExprBlock block;
 
-	ctor(Block parent, Array<Expr> values) {
-		init() {
+	ctor(SrcPos pos, Block parent, Array<Expr> values) {
+		init(pos) {
 			values = values;
-			block = ExprBlock(parent);
+			block = ExprBlock(pos, parent);
 		}
 	}
 

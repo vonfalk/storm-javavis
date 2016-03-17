@@ -8,7 +8,7 @@ delimiter = SDelimiter;
 
 // Root rule for asm code.
 AsmListing SAsmListing(Block block);
-SAsmListing => AsmListing() : (SAsmAtom(block) -> add, )*;
+SAsmListing => AsmListing(pos) : (SAsmAtom(block) -> add, )*;
 
 // Atom.
 AsmAtom SAsmAtom(Block block);

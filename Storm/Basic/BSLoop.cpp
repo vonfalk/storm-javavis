@@ -3,7 +3,7 @@
 
 namespace storm {
 
-	bs::Loop::Loop(Par<Block> parent) : Block(parent) {}
+	bs::Loop::Loop(SrcPos pos, Par<Block> parent) : Block(pos, parent) {}
 
 	void bs::Loop::cond(Par<Expr> e) {
 		condExpr = e;

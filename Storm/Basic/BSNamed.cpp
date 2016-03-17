@@ -67,11 +67,11 @@ namespace storm {
 	 * Function call.
 	 */
 
-	bs::FnCall::FnCall(Par<Function> toExecute, Par<Actual> params, Bool lookup, Bool sameObject)
-		: toExecute(toExecute), params(params), lookup(lookup), sameObject(sameObject), async(false) {}
+	bs::FnCall::FnCall(SrcPos pos, Par<Function> toExecute, Par<Actual> params, Bool lookup, Bool sameObject)
+		: Expr(pos), toExecute(toExecute), params(params), lookup(lookup), sameObject(sameObject), async(false) {}
 
-	bs::FnCall::FnCall(Par<Function> toExecute, Par<Actual> params)
-		: toExecute(toExecute), params(params), lookup(true), sameObject(false), async(false) {}
+	bs::FnCall::FnCall(SrcPos pos, Par<Function> toExecute, Par<Actual> params)
+		: Expr(pos), toExecute(toExecute), params(params), lookup(true), sameObject(false), async(false) {}
 
 	void bs::FnCall::makeAsync() {
 		async = true;
@@ -127,7 +127,9 @@ namespace storm {
 	 * Execute constructor.
 	 */
 
-	bs::CtorCall::CtorCall(Par<Function> ctor, Par<Actual> params) : ctor(ctor), params(params) {
+	bs::CtorCall::CtorCall(SrcPos pos, Par<Function> ctor, Par<Actual> params)
+		: Expr(pos), ctor(ctor), params(params) {
+
 		assert(params->expressions.size() == ctor->params.size() - 1, L"Invalid number of parameters to constructor!");
 		toCreate = ctor->params[0].asRef(false);
 	}
@@ -198,7 +200,7 @@ namespace storm {
 			throw SyntaxError(pos, L"No default constructor for " + t->identifier());
 
 		Auto<Actual> actual = CREATE(Actual, t);
-		return CREATE(CtorCall, t, f, actual);
+		return CREATE(CtorCall, t, pos, f, actual);
 	}
 
 	bs::CtorCall *bs::copyCtor(const SrcPos &pos, Par<Type> t, Par<Expr> src) {
@@ -208,14 +210,14 @@ namespace storm {
 
 		Auto<Actual> actual = CREATE(Actual, t);
 		actual->add(src);
-		return CREATE(CtorCall, t, f, actual);
+		return CREATE(CtorCall, t, pos, f, actual);
 	}
 
 
 	/**
 	 * Local variable.
 	 */
-	bs::LocalVarAccess::LocalVarAccess(Par<LocalVar> var) : var(var) {}
+	bs::LocalVarAccess::LocalVarAccess(SrcPos pos, Par<LocalVar> var) : Expr(pos), var(var) {}
 
 	ExprResult bs::LocalVarAccess::result() {
 		if (var->constant)
@@ -259,7 +261,7 @@ namespace storm {
 	/**
 	 * Bare local variable.
 	 */
-	bs::BareVarAccess::BareVarAccess(Value type, wrap::Variable var) : type(type), var(var) {}
+	bs::BareVarAccess::BareVarAccess(SrcPos pos, Value type, wrap::Variable var) : Expr(pos), type(type), var(var) {}
 
 	ExprResult bs::BareVarAccess::result() {
 		return type;
@@ -299,7 +301,8 @@ namespace storm {
 	/**
 	 * Member variable.
 	 */
-	bs::MemberVarAccess::MemberVarAccess(Par<Expr> member, Par<TypeVar> var) : member(member), var(var) {}
+	bs::MemberVarAccess::MemberVarAccess(SrcPos pos, Par<Expr> member, Par<TypeVar> var)
+		: Expr(pos), member(member), var(var) {}
 
 	ExprResult bs::MemberVarAccess::result() {
 		return var->varType.asRef();
@@ -382,7 +385,8 @@ namespace storm {
 	 * Named thread.
 	 */
 
-	bs::NamedThreadAccess::NamedThreadAccess(Par<NamedThread> thread) : thread(thread) {}
+	bs::NamedThreadAccess::NamedThreadAccess(SrcPos pos, Par<NamedThread> thread)
+		: Expr(pos), thread(thread) {}
 
 	ExprResult bs::NamedThreadAccess::result() {
 		return Value(Thread::stormType(engine()));
@@ -402,7 +406,7 @@ namespace storm {
 	 * Assignment.
 	 */
 
-	bs::ClassAssign::ClassAssign(Par<Expr> to, Par<Expr> value) : to(to) {
+	bs::ClassAssign::ClassAssign(Par<Expr> to, Par<Expr> value) : Expr(to->pos), to(to) {
 		Value r = to->result().type();
 		if ((r.type->typeFlags & typeClass) != typeClass)
 			throw TypeError(to->pos, L"The default assignment can not be used with other types than classes"
@@ -478,14 +482,14 @@ namespace storm {
 
 	// Find a constructor.
 	static bs::Expr *bs::findCtor(Par<Type> t, Par<Actual> actual, const SrcPos &pos) {
-		Auto<BSNamePart> part = CREATE(BSNamePart, t->engine, Type::CTOR, actual);
+		Auto<BSNamePart> part = CREATE(BSNamePart, t->engine, Type::CTOR, pos, actual);
 		part->insert(Value::thisPtr(t));
 
 		Auto<Function> ctor = steal(t->find(part)).as<Function>();
 		if (!ctor)
 			throw SyntaxError(pos, L"No constructor " + t->identifier() + L"." + ::toS(part) + L")");
 
-		return CREATE(CtorCall, t, ctor, actual);
+		return CREATE(CtorCall, t, pos, ctor, actual);
 	}
 
 
@@ -502,25 +506,25 @@ namespace storm {
 
 		if (Auto<Function> f = n.as<Function>()) {
 			if (first)
-				actual->addFirst(steal(CREATE(LocalVarAccess, first, first)));
-			return CREATE(FnCall, n, f, actual, useLookup, first ? true : false);
+				actual->addFirst(steal(CREATE(LocalVarAccess, first, pos, first)));
+			return CREATE(FnCall, n, pos, f, actual, useLookup, first ? true : false);
 		}
 
 		if (Auto<LocalVar> v = n.as<LocalVar>()) {
 			assert(!first);
-			return CREATE(LocalVarAccess, n, v);
+			return CREATE(LocalVarAccess, n, pos, v);
 		}
 
 		if (Auto<TypeVar> v = n.as<TypeVar>()) {
 			if (first)
-				return CREATE(MemberVarAccess, n, steal(CREATE(LocalVarAccess, first, first)), v);
+				return CREATE(MemberVarAccess, n, pos, steal(CREATE(LocalVarAccess, first, pos, first)), v);
 			else
-				return CREATE(MemberVarAccess, n, actual->expressions.front(), v);
+				return CREATE(MemberVarAccess, n, pos, actual->expressions.front(), v);
 		}
 
 		if (Auto<NamedThread> v = n.as<NamedThread>()) {
 			assert(!first);
-			return CREATE(NamedThreadAccess, n, v);
+			return CREATE(NamedThreadAccess, n, pos, v);
 		}
 
 		return null;
@@ -547,7 +551,7 @@ namespace storm {
 		if (!thisVar)
 			return null;
 
-		Auto<BSNamePart> lastPart = CREATE(BSNamePart, name, name->lastName(), params);
+		Auto<BSNamePart> lastPart = CREATE(BSNamePart, name, name->lastName(), pos, params);
 		lastPart->insert(thisVar->result);
 		bool useLookup = true;
 
@@ -598,7 +602,7 @@ namespace storm {
 				return e;
 
 		// Try without the this pointer first.
-		Auto<BSNamePart> last = CREATE(BSNamePart, name, name->lastName(), params);
+		Auto<BSNamePart> last = CREATE(BSNamePart, name, name->lastName(), pos, params);
 		name->last() = last;
 		Auto<Named> n = scope.find(name);
 

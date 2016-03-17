@@ -114,7 +114,7 @@ class ReplSandbox on Compiler {
 
 class ReplBlock extends Block {
 	ctor(Scope scope) {
-		init(scope) {}
+		init(SrcPos(), scope) {}
 	}
 }
 
@@ -146,7 +146,7 @@ class ReplCode on Compiler {
 		Named? toSFn = root.scope.find(name);
 		if (toSFn as Function) {
 			// It exists, use the result.
-			FnCall toSCall(toSFn, Actual(expr));
+			FnCall toSCall(SrcPos(), toSFn, Actual(expr));
 			toSCall.code(g, CodeResult(strType, resultVar));
 		} else {
 			// Just evaluate and print a dummy output.

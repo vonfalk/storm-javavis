@@ -230,11 +230,11 @@ namespace storm {
 
 
 
-	bs::FnBody::FnBody(Par<BSRawFn> owner, Scope scope) : ExprBlock(scope), type(owner->result) {
+	bs::FnBody::FnBody(Par<BSRawFn> owner, Scope scope) : ExprBlock(owner->pos, scope), type(owner->result) {
 		owner->addParams(this);
 	}
 
-	bs::FnBody::FnBody(Par<BSFunction> owner) : ExprBlock(owner->scope), type(owner->result) {
+	bs::FnBody::FnBody(Par<BSFunction> owner) : ExprBlock(owner->pos, owner->scope), type(owner->result) {
 		owner->addParams(this);
 	}
 

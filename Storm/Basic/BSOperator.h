@@ -21,16 +21,16 @@ namespace storm {
 			// associative operators, we simply treat each priority step
 			// as two steps depending on the associativity. Left associative
 			// operators have higher priority in this case.
-			Int priority;
+			STORM_VAR Int priority;
 
 			// Left associative.
-			Bool leftAssoc;
+			STORM_VAR Bool leftAssoc;
 
 			// Operator name.
-			Auto<Str> name;
+			STORM_VAR Auto<Str> name;
 
 			// Position.
-			SrcPos pos;
+			STORM_VAR SrcPos pos;
 
 			// Shall this operator be executed before 'o'?
 			// The equality segments defined by this function will only contain either

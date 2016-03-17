@@ -13,10 +13,13 @@ namespace storm {
 		/**
 		 * Base class for expressions. (no difference between statements and expressions here!)
 		 */
-		class Expr : public SObject {
+		class Expr : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
-			STORM_CTOR Expr();
+			STORM_CTOR Expr(SrcPos pos);
+
+			// Where is this expression located in the source code?
+			STORM_VAR SrcPos pos;
 
 			// Result of an expression. Default is void.
 			virtual ExprResult STORM_FN result();
@@ -35,13 +38,13 @@ namespace storm {
 		class Constant : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR Constant(Int i);
-			STORM_CTOR Constant(Long i);
-			STORM_CTOR Constant(Float f);
-			Constant(double d);
-			STORM_CTOR Constant(Str *str);
-			STORM_CTOR Constant(Bool b);
-			Constant(const String &str);
+			STORM_CTOR Constant(SrcPos pos, Int i);
+			STORM_CTOR Constant(SrcPos pos, Long i);
+			STORM_CTOR Constant(SrcPos pos, Float f);
+			Constant(SrcPos pos, double d);
+			STORM_CTOR Constant(SrcPos pos, Str *str); // Needs to be Str *, otherwise it collides with Bool-overload.
+			STORM_CTOR Constant(SrcPos pos, Bool b);
+			Constant(SrcPos pos, const String &str);
 
 			// Types
 			enum CType {
@@ -113,7 +116,7 @@ namespace storm {
 		class DummyExpr : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR DummyExpr(Value type);
+			STORM_CTOR DummyExpr(SrcPos pos, Value type);
 
 			virtual ExprResult STORM_FN result();
 			virtual void STORM_FN code(Par<CodeGen> state, Par<CodeResult> r);

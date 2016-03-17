@@ -12,13 +12,12 @@ SrcName strBufType() {
 
 // Implementation of the string concatenation operator (#).
 class ConcatOperator extends OpInfo {
-
 	ctor(SStr op, Int prio) {
 		init(op, prio, false) {}
 	}
 
 	Expr meaning(Block block, Expr lhs, Expr rhs) {
-		ConcatExpr r(block);
+		ConcatExpr r(pos, block);
 		appendTo(r, lhs);
 		appendTo(r, rhs);
 		r;
@@ -51,10 +50,10 @@ class ConcatExpr extends Expr {
 	Var strBufVar;
 
 	// Create the root node.
-	ctor(Block parent) {
-		ExprBlock outer(parent);
-		ExprBlock inner(outer);
-		init() {
+	ctor(SrcPos pos, Block parent) {
+		ExprBlock outer(pos, parent);
+		ExprBlock inner(pos, outer);
+		init(pos) {
 			outer = outer;
 			inner = inner;
 			strBufVar(outer, strBufType, SStr("b"), Actual());
@@ -63,7 +62,7 @@ class ConcatExpr extends Expr {
 		// Generate the outer parts.
 		outer.add(strBufVar);
 		outer.add(inner);
-		outer.add(namedExpr(outer, SStr("toS"), LocalVarAccess(strBufVar.var), Actual()));
+		outer.add(namedExpr(outer, SStr("toS"), LocalVarAccess(pos, strBufVar.var), Actual()));
 	}
 
 	// Append a node to the end of the concatenation.
@@ -85,9 +84,9 @@ class ConcatExpr extends Expr {
 		Named? member = findIn.find(Name(part));
 		if (member as Function) {
 			Actual params;
-			params.add(LocalVarAccess(strBufVar.var));
+			params.add(LocalVarAccess(pos, strBufVar.var));
 			params.add(e);
-			inner.add(FnCall(member, params));
+			inner.add(FnCall(pos, member, params));
 			true;
 		} else {
 			false;
@@ -101,7 +100,7 @@ class ConcatExpr extends Expr {
 		var part = namePart("toS", Value:[r]);
 		Named? member = findIn.find(Name(part));
 		if (member as Function) {
-			FnCall call(member, Actual(e));
+			FnCall call(pos, member, Actual(e));
 			appendStrBuf(call);
 		} else {
 			false;

@@ -91,20 +91,22 @@ class BfExpr extends lang:bs:Expr {
 	BfToken[] tokens;
 	Expr input;
 
-	ctor() {
-		init() {}
-	}
-
-	ctor(Str space, BfToken[] data) {
-		init() {
-			space = space.toNat;
-			tokens = data;
-			input = BareVarAccess(Value(named{Str}), Variable());
+	ctor(SrcPos pos) {
+		init(pos) {
+			input(pos);
 		}
 	}
 
-	ctor(Str space, BfToken[] data, lang:bs:Expr input) {
-		init() {
+	ctor(SrcPos pos, Str space, BfToken[] data) {
+		init(pos) {
+			space = space.toNat;
+			tokens = data;
+			input = BareVarAccess(pos, Value(named{Str}), Variable());
+		}
+	}
+
+	ctor(SrcPos pos, Str space, BfToken[] data, lang:bs:Expr input) {
+		init(pos) {
 			space = space.toNat;
 			tokens = data;
 			input = input;
@@ -120,7 +122,7 @@ class BfExpr extends lang:bs:Expr {
 		BfState state(g, space, input);
 
 		// Initialize some variables...
-		state.createOutput();
+		state.createOutput(pos);
 
 		// Generate code!
 		for (Nat i = 0; i < tokens.count; i++) {
@@ -128,7 +130,7 @@ class BfExpr extends lang:bs:Expr {
 		}
 
 		// Generate the result.
-		state.createResult(to);
+		state.createResult(pos, to);
 	}
 
 	Str toS() {
@@ -187,8 +189,8 @@ class BfState on Compiler {
 	}
 
 	// Create output. (TODO: Make use of createObject in CodeGen.h!)
-	void createOutput() {
-		Block block(rootScope);
+	void createOutput(SrcPos pos) {
+		Block block(pos, rootScope);
 		Expr ctor = namedExpr(block, name{core:StrBuf}, Actual());
 		ctor.code(g, CodeResult(strBuf, VarInfo(output)));
 
@@ -200,19 +202,26 @@ class BfState on Compiler {
 	}
 
 	// Create the result.
-	void createResult(CodeResult to) {
-		Block block(Scope(strBuf.getType));
-		BareVarAccess outAccess(strBuf, output);
-		Expr e = namedExpr(block, SStr("toS"), outAccess, Actual());
+	void createResult(SrcPos pos, CodeResult to) {
+		Block block(pos, Scope(strBuf.getType));
+		BareVarAccess outAccess(pos, strBuf, output);
+		Expr e = namedExpr(block, SStr("toS", pos), outAccess, Actual());
 		e.code(g, to);
 	}
 }
 
 class BfToken on Compiler {
+	SrcPos pos;
+
+	ctor(SrcPos pos) {
+		init { pos = pos; }
+	}
+
 	void code(BfState state, CodeGen to) {}
 }
 
 class BfBack extends BfToken {
+	ctor(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << sub(Operand(ptrA), intPtrConst(1));
 	}
@@ -220,6 +229,7 @@ class BfBack extends BfToken {
 }
 
 class BfFwd extends BfToken {
+	ctor(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << add(Operand(ptrA), intPtrConst(1));
 	}
@@ -227,12 +237,13 @@ class BfFwd extends BfToken {
 }
 
 class BfInput extends BfToken {
+	ctor(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << push(Operand(ptrA));
 
-		Block block(Scope(state.textReader.getType));
-		BareVarAccess inAccess(state.textReader, state.input);
-		Expr e = namedExpr(block, SStr("read"), inAccess, Actual());
+		Block block(pos, Scope(state.textReader.getType));
+		BareVarAccess inAccess(pos, state.textReader, state.input);
+		Expr e = namedExpr(block, SStr("read", pos), inAccess, Actual());
 		e.code(to, CodeResult(state.natType, VarInfo(state.tmpData)));
 
 		to.l << lea(Operand(ptrC), Operand(state.tmpData));
@@ -243,15 +254,16 @@ class BfInput extends BfToken {
 }
 
 class BfOutput extends BfToken {
+	ctor(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << push(Operand(ptrA));
 		to.l << lea(Operand(ptrC), Operand(state.tmpData));
 		to.l << mov(byteRel(ptrC, Offset()), byteRel(ptrA, Offset()));
 
-		Block block(Scope(state.strBuf.getType));
-		BareVarAccess outAccess(state.strBuf, state.output);
-		BareVarAccess tmpData(state.natType, state.tmpData);
-		Expr e = namedExpr(block, SStr("addChar"), outAccess, Actual(tmpData));
+		Block block(pos, Scope(state.strBuf.getType));
+		BareVarAccess outAccess(pos, state.strBuf, state.output);
+		BareVarAccess tmpData(pos, state.natType, state.tmpData);
+		Expr e = namedExpr(block, SStr("addChar", pos), outAccess, Actual(tmpData));
 		e.code(to, CodeResult());
 
 		to.l << pop(Operand(ptrA));
@@ -260,6 +272,7 @@ class BfOutput extends BfToken {
 }
 
 class BfInc extends BfToken {
+	ctor(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << add(byteRel(ptrA, Offset()), byteConst(1.byte));
 	}
@@ -267,6 +280,7 @@ class BfInc extends BfToken {
 }
 
 class BfDec extends BfToken {
+	ctor(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << sub(byteRel(ptrA, Offset()), byteConst(1.byte));
 	}
@@ -276,8 +290,8 @@ class BfDec extends BfToken {
 class BfLoop extends BfToken {
 	BfToken[] tokens;
 
-	ctor(BfToken[] tokens) {
-		init() {
+	ctor(SrcPos pos, BfToken[] tokens) {
+		init(pos) {
 			tokens = tokens;
 		}
 	}

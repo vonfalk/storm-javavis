@@ -19,8 +19,8 @@ namespace storm {
 			// if '!lookup', then the lookup functionality (such as vtables) will not be used.
 			// if 'sameObject', then we will not spawn other threads for this function call, as it
 			// is assumed that we are always calling the same object.
-			STORM_CTOR FnCall(Par<Function> toExecute, Par<Actual> params);
-			STORM_CTOR FnCall(Par<Function> toExecute, Par<Actual> params, Bool lookup, Bool sameObject);
+			STORM_CTOR FnCall(SrcPos pos, Par<Function> toExecute, Par<Actual> params);
+			STORM_CTOR FnCall(SrcPos pos, Par<Function> toExecute, Par<Actual> params, Bool lookup, Bool sameObject);
 
 			// Tell us to return a future instead.
 			void makeAsync();
@@ -59,7 +59,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Call a constructor.
-			STORM_CTOR CtorCall(Par<Function> ctor, Par<Actual> params);
+			STORM_CTOR CtorCall(SrcPos pos, Par<Function> ctor, Par<Actual> params);
 
 			// Result type.
 			virtual ExprResult STORM_FN result();
@@ -99,7 +99,7 @@ namespace storm {
 		class LocalVarAccess : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR LocalVarAccess(Par<LocalVar> var);
+			STORM_CTOR LocalVarAccess(SrcPos pos, Par<LocalVar> var);
 
 			// Result type.
 			virtual ExprResult STORM_FN result();
@@ -120,7 +120,7 @@ namespace storm {
 		class BareVarAccess : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR BareVarAccess(Value type, wrap::Variable var);
+			STORM_CTOR BareVarAccess(SrcPos pos, Value type, wrap::Variable var);
 
 			// Result.
 			virtual ExprResult STORM_FN result();
@@ -143,7 +143,7 @@ namespace storm {
 		class MemberVarAccess : public Expr {
 			STORM_CLASS;
 		public:
-			STORM_CTOR MemberVarAccess(Par<Expr> member, Par<TypeVar> var);
+			STORM_CTOR MemberVarAccess(SrcPos pos, Par<Expr> member, Par<TypeVar> var);
 
 			// Result type.
 			virtual ExprResult STORM_FN result();
@@ -179,7 +179,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR NamedThreadAccess(Par<NamedThread> thread);
+			STORM_CTOR NamedThreadAccess(SrcPos pos, Par<NamedThread> thread);
 
 			// Result type.
 			virtual ExprResult STORM_FN result();

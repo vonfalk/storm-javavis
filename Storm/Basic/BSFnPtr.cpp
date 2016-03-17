@@ -41,12 +41,15 @@ namespace storm {
 		return CREATE(FnPtr, block, block, dot, name, formal, false);
 	}
 
-	bs::FnPtr::FnPtr(Par<Block> block, Par<SrcName> name, Par<ArrayP<SrcName>> formal) : strongThis(false) {
+	bs::FnPtr::FnPtr(Par<Block> block, Par<SrcName> name, Par<ArrayP<SrcName>> formal)
+		: Expr(name->pos), strongThis(false) {
+
 		target = findTarget(block->scope, name, formal, null);
 	}
 
-	bs::FnPtr::FnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<SrcName>> formal, Bool strong) :
-		dotExpr(dot), strongThis(strong) {
+	bs::FnPtr::FnPtr(Par<Block> block, Par<Expr> dot, Par<SStr> name, Par<ArrayP<SrcName>> formal, Bool strong)
+		: Expr(name->pos), dotExpr(dot), strongThis(strong) {
+
 		if (dotExpr->result().type().isValue())
 			throw SyntaxError(dotExpr->pos, L"Only classes and actors can be bound to a function pointer. Not values.");
 

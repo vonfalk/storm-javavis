@@ -9,27 +9,27 @@
 namespace storm {
 	namespace bs {
 
-		bs::Var::Var(Par<Block> block, Par<SrcName> type, Par<SStr> name, Par<Actual> params) {
+		bs::Var::Var(Par<Block> block, Par<SrcName> type, Par<SStr> name, Par<Actual> params) : Expr(name->pos) {
 			init(block, block->scope.value(type), name);
 			initTo(params);
 		}
 
-		bs::Var::Var(Par<Block> block, Value type, Par<SStr> name, Par<Actual> params) {
+		bs::Var::Var(Par<Block> block, Value type, Par<SStr> name, Par<Actual> params) : Expr(name->pos) {
 			init(block, type.asRef(false), name);
 			initTo(params);
 		}
 
-		bs::Var::Var(Par<Block> block, Par<SrcName> type, Par<SStr> name, Par<Expr> init) {
+		bs::Var::Var(Par<Block> block, Par<SrcName> type, Par<SStr> name, Par<Expr> init) : Expr(name->pos) {
 			this->init(block, block->scope.value(type), name);
 			initTo(init);
 		}
 
-		bs::Var::Var(Par<Block> block, Value type, Par<SStr> name, Par<Expr> init) {
+		bs::Var::Var(Par<Block> block, Value type, Par<SStr> name, Par<Expr> init) : Expr(name->pos) {
 			this->init(block, type.asRef(false), name);
 			initTo(init);
 		}
 
-		bs::Var::Var(Par<Block> block, Par<SStr> name, Par<Expr> init) {
+		bs::Var::Var(Par<Block> block, Par<SStr> name, Par<Expr> init) : Expr(name->pos) {
 			this->init(block, init->result().type().asRef(false), name);
 			initTo(init);
 		}
@@ -65,7 +65,7 @@ namespace storm {
 			}
 
 			Type *t = variable->result.type;
-			Auto<BSNamePart> name = CREATE(BSNamePart, this, Type::CTOR, actuals);
+			Auto<BSNamePart> name = CREATE(BSNamePart, this, Type::CTOR, pos, actuals);
 			name->insert(Value::thisPtr(t));
 			Auto<Function> ctor = steal(t->find(name)).as<Function>();
 			if (!ctor)
@@ -73,7 +73,7 @@ namespace storm {
 								+ L"(" + ::toS(name) + L") found. Can not initialize "
 								+ variable->name + L".");
 
-			initCtor = CREATE(CtorCall, this, ctor, actuals);
+			initCtor = CREATE(CtorCall, this, pos, ctor, actuals);
 		}
 
 		ExprResult bs::Var::result() {
@@ -143,7 +143,7 @@ namespace storm {
 		bs::LocalVar::LocalVar(const String &name, const Value &t, const SrcPos &pos, bool param)
 			: Named(name), result(t), pos(pos), var(code::Variable::invalid), param(param), constant(false) {}
 
-		bs::LocalVar::LocalVar(Par<Str> name, const Value &val, const SrcPos &pos, Bool param)
+		bs::LocalVar::LocalVar(Par<Str> name, Value val, SrcPos pos, Bool param)
 			: Named(name->v), result(val), pos(pos), var(code::Variable::invalid), param(param), constant(false) {}
 
 		void LocalVar::create(Par<CodeGen> state) {

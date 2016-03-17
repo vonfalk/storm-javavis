@@ -1,12 +1,13 @@
 #include "stdafx.h"
-#include "BSCtor.h"
+#include "Syntax/Parser.h"
+#include "Shared/TObject.h"
 #include "Engine.h"
-#include "Parser.h"
+
+#include "BSCtor.h"
 #include "BSScope.h"
 #include "BSNamed.h"
 #include "BSClass.h"
 #include "BSAutocast.h"
-#include "Shared/TObject.h"
 
 namespace storm {
 
@@ -60,7 +61,7 @@ namespace storm {
 	bs::CtorBody *bs::BSCtor::defaultParse() {
 		Auto<CtorBody> r = CREATE(CtorBody, this, this);
 		Auto<Actual> actual = CREATE(Actual, this);
-		Auto<SuperCall> super = CREATE(SuperCall, this, r, actual);
+		Auto<SuperCall> super = CREATE(SuperCall, this, pos, r, actual);
 		super->pos = pos;
 		r->add(super);
 		return r.ret();
@@ -119,7 +120,7 @@ namespace storm {
 		return thread.ret();
 	}
 
-	bs::CtorBody::CtorBody(Par<BSCtor> ctor) : ExprBlock(ctor->scope) {
+	bs::CtorBody::CtorBody(Par<BSCtor> ctor) : ExprBlock(ctor->pos, ctor->scope) {
 		threadParam = ctor->addParams(this);
 	}
 
@@ -142,13 +143,15 @@ namespace storm {
 
 	bs::Initializer::Initializer(Par<SStr> name, Par<Actual> params) : name(name), params(params) {}
 
-	bs::SuperCall::SuperCall(Par<CtorBody> block, Par<Actual> params, Par<ArrayP<Initializer>> init) {
+	bs::SuperCall::SuperCall(SrcPos pos, Par<CtorBody> block, Par<Actual> params, Par<ArrayP<Initializer>> init)
+		: Expr(pos) {
+
 		this->init(block, params);
 		for (nat i = 0; i < init->count(); i++)
 			this->init(init->at(i));
 	}
 
-	bs::SuperCall::SuperCall(Par<CtorBody> block, Par<Actual> params) {
+	bs::SuperCall::SuperCall(SrcPos pos, Par<CtorBody> block, Par<Actual> params) : Expr(pos) {
 		init(block, params);
 	}
 
@@ -164,7 +167,7 @@ namespace storm {
 		block->add(created);
 
 		this->params = params;
-		Auto<LocalVarAccess> l = CREATE(LocalVarAccess, this, thisVar);
+		Auto<LocalVarAccess> l = CREATE(LocalVarAccess, this, pos, thisVar);
 		params->addFirst(l);
 
 		scope = block->scope;
@@ -200,7 +203,7 @@ namespace storm {
 		}
 
 		// Find something to call.
-		Auto<BSNamePart> values = CREATE(BSNamePart, this, Type::CTOR, params);
+		Auto<BSNamePart> values = CREATE(BSNamePart, this, Type::CTOR, pos, params);
 		values->alter(0, parent);
 
 		if (hiddenThread)
@@ -341,7 +344,7 @@ namespace storm {
 				throw SyntaxError(pos, L"Can not initialize " + v->name + L" by default-constructing it. In "
 								+ ::toS(thisPtr) + L", please initialize this member explicitly.");
 			Auto<Actual> params = CREATE(Actual, this);
-			Auto<CtorCall> ctorCall = CREATE(CtorCall, this, ctor, params);
+			Auto<CtorCall> ctorCall = CREATE(CtorCall, this, pos, ctor, params);
 			Auto<CodeResult> created = CREATE(CodeResult, this, t, s->block);
 			ctorCall->code(s, created);
 
@@ -384,16 +387,16 @@ namespace storm {
 		Variable dest = thisVar->var.var();
 		Type *toCreate = t.type;
 
-		Auto<BSNamePart> values = CREATE(BSNamePart, this, Type::CTOR, to);
+		Auto<BSNamePart> values = CREATE(BSNamePart, this, Type::CTOR, pos, to);
 		values->insert(Value::thisPtr(toCreate));
 
 		Auto<Function> ctor = steal(toCreate->find(values)).as<Function>();
 		if (!ctor)
-			throw SyntaxError(to->pos, L"No constructor for " + ::toS(t) + L"(" + ::toS(values) + L").");
+			throw SyntaxError(pos, L"No constructor for " + ::toS(t) + L"(" + ::toS(values) + L").");
 
 		if (t.isClass()) {
 			// Easy way, call the constructor as normal.
-			Auto<CtorCall> call = CREATE(CtorCall, this, ctor, to);
+			Auto<CtorCall> call = CREATE(CtorCall, this, pos, ctor, to);
 			Auto<CodeResult> created = CREATE(CodeResult, this, t, s->block);
 			call->code(s, created);
 			VarInfo loc = created->location(s);

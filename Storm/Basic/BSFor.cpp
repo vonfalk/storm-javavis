@@ -4,7 +4,7 @@
 
 namespace storm {
 
-	bs::For::For(Par<Block> parent) : Block(parent) {}
+	bs::For::For(SrcPos pos, Par<Block> parent) : Block(pos, parent) {}
 
 	void bs::For::test(Par<Expr> e) {
 		testExpr = expectCastTo(e, Value::stdBool(engine()));

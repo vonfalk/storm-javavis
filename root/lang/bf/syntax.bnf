@@ -12,7 +12,7 @@ Str SNumber();
 SNumber => v : "[0-9]+" v;
 
 BfExpr SFile();
-SFile => BfExpr(space, code) : SNumber space - SComment - SRoot code;
+SFile => BfExpr(pos, space, code) : SNumber space - SComment - SRoot code;
 
 // Note: the {} chars are used to end blocks in other languages.
 void SComment();
@@ -22,13 +22,14 @@ Array<BfToken> SRoot();
 SRoot => Array<BfToken>() : ( SToken -> push - SComment )*;
 
 BfToken SToken();
-SToken => BfBack() : "<";
-SToken => BfFwd() : ">";
-SToken => BfInput() : ",";
-SToken => BfOutput() : "\.";
-SToken => BfInc() : "\+";
-SToken => BfDec() : "\-";
-SToken => BfLoop(c) : "\[", SRoot c, "\]";
+SToken => BfBack(pos) : "<";
+SToken => BfFwd(pos) : ">";
+SToken => BfInput(pos) : ",";
+SToken => BfOutput(pos) : "\.";
+SToken => BfInc(pos) : "\+";
+SToken => BfDec(pos) : "\-";
+SToken => BfLoop(pos, c) : "\[", SRoot c, "\]";
 
 // Integration with BS.
-lang.bs.SAtom => BfExpr(space, code, input) : "bf", "(", lang.bs.SExpr(block) input, ",", SNumber space, ")", "{", SRoot code, "}";
+lang.bs.SAtom => BfExpr(pos, space, code, input) :
+    "bf", "(", lang.bs.SExpr(block) input, ",", SNumber space, ")", "{", SRoot code, "}";

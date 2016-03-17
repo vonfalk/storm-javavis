@@ -8,7 +8,7 @@
 
 namespace storm {
 
-	bs::Expr::Expr() {}
+	bs::Expr::Expr(SrcPos pos) : pos(pos) {}
 
 	ExprResult bs::Expr::result() {
 		return ExprResult();
@@ -22,19 +22,19 @@ namespace storm {
 		return -1;
 	}
 
-	bs::Constant::Constant(Int v) : cType(tInt), intValue(v) {}
+	bs::Constant::Constant(SrcPos pos, Int v) : Expr(pos), cType(tInt), intValue(v) {}
 
-	bs::Constant::Constant(Long v) : cType(tInt), intValue(v) {}
+	bs::Constant::Constant(SrcPos pos, Long v) : Expr(pos), cType(tInt), intValue(v) {}
 
-	bs::Constant::Constant(Float v) : cType(tFloat), floatValue(v) {}
+	bs::Constant::Constant(SrcPos pos, Float v) : Expr(pos), cType(tFloat), floatValue(v) {}
 
-	bs::Constant::Constant(double v) : cType(tFloat), floatValue(v) {}
+	bs::Constant::Constant(SrcPos pos, double v) : Expr(pos), cType(tFloat), floatValue(v) {}
 
-	bs::Constant::Constant(Str *v) : cType(tStr), strValue(v->v) {}
+	bs::Constant::Constant(SrcPos pos, Str *v) : Expr(pos), cType(tStr), strValue(v->v) {}
 
-	bs::Constant::Constant(const String &s) : cType(tStr), strValue(s) {}
+	bs::Constant::Constant(SrcPos pos, const String &s) : Expr(pos), cType(tStr), strValue(s) {}
 
-	bs::Constant::Constant(Bool v) : cType(tBool), boolValue(v) {}
+	bs::Constant::Constant(SrcPos pos, Bool v) : Expr(pos), cType(tBool), boolValue(v) {}
 
 	void bs::Constant::output(wostream &to) const {
 		switch (cType) {
@@ -200,34 +200,34 @@ namespace storm {
 	}
 
 	bs::Constant *bs::intConstant(SrcPos pos, Par<Str> v) {
-		return CREATE(Constant, v->engine(), v->v.toInt64());
+		return CREATE(Constant, v->engine(), pos, v->v.toInt64());
 	}
 
 	bs::Constant *bs::floatConstant(SrcPos pos, Par<Str> v) {
-		return CREATE(Constant, v->engine(), v->v.toDouble());
+		return CREATE(Constant, v->engine(), pos, v->v.toDouble());
 	}
 
 	bs::Constant *bs::strConstant(SrcPos pos, Par<Str> v) {
-		return CREATE(Constant, v->engine(), v->v.unescape());
+		return CREATE(Constant, v->engine(), pos, v->v.unescape());
 	}
 
 	bs::Constant *bs::rawStrConstant(SrcPos pos, Par<Str> v) {
-		return CREATE(Constant, v->engine(), v.borrow());
+		return CREATE(Constant, v->engine(), pos, v.borrow());
 	}
 
 	bs::Constant *bs::trueConstant(EnginePtr e, SrcPos pos) {
-		return CREATE(Constant, e.v, true);
+		return CREATE(Constant, e.v, pos, true);
 	}
 
 	bs::Constant *bs::falseConstant(EnginePtr e, SrcPos pos) {
-		return CREATE(Constant, e.v, false);
+		return CREATE(Constant, e.v, pos, false);
 	}
 
 	/**
 	 * Dummy expression.
 	 */
 
-	bs::DummyExpr::DummyExpr(Value type) : type(type) {}
+	bs::DummyExpr::DummyExpr(SrcPos pos, Value type) : Expr(pos), type(type) {}
 
 	ExprResult bs::DummyExpr::result() {
 		return type;

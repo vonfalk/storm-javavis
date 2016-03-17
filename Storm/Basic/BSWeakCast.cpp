@@ -8,7 +8,7 @@
 
 namespace storm {
 
-	bs::WeakCast::WeakCast() {}
+	bs::WeakCast::WeakCast(SrcPos pos) : pos(pos) {}
 
 	MAYBE(Str) *bs::WeakCast::overwrite() {
 		return null;
@@ -41,7 +41,9 @@ namespace storm {
 	 * 'as' cast.
 	 */
 
-	bs::WeakDowncast::WeakDowncast(Par<Block> block, Par<Expr> expr, Par<SrcName> type) : expr(expr) {
+	bs::WeakDowncast::WeakDowncast(Par<Block> block, Par<Expr> expr, Par<SrcName> type)
+		: WeakCast(expr->pos), expr(expr) {
+
 		to = block->scope.value(type).type;
 
 		Value from = expr->result().type();
@@ -101,7 +103,7 @@ namespace storm {
 	 * MaybeCast.
 	 */
 
-	bs::WeakMaybeCast::WeakMaybeCast(Par<Expr> expr) : expr(expr) {}
+	bs::WeakMaybeCast::WeakMaybeCast(Par<Expr> expr) : WeakCast(expr->pos), expr(expr) {}
 
 	MAYBE(Str) *bs::WeakMaybeCast::overwrite() {
 		return defaultOverwrite(expr);

@@ -8,7 +8,7 @@
 
 namespace storm {
 
-	bs::IfExpr::IfExpr(Par<Block> parent) : Block(parent) {}
+	bs::IfExpr::IfExpr(SrcPos pos, Par<Block> parent) : Block(pos, parent) {}
 
 	void bs::IfExpr::trueExpr(Par<IfTrue> e) {
 		trueCode = e;
@@ -19,7 +19,7 @@ namespace storm {
 	}
 
 
-	bs::If::If(Par<Block> parent, Par<Expr> cond) : IfExpr(parent), condition(cond) {
+	bs::If::If(Par<Block> parent, Par<Expr> cond) : IfExpr(cond->pos, parent), condition(cond) {
 		if (cond->result().type().asRef(false) != Value(boolType(engine())))
 			throw TypeError(cond->pos, L"The expression must evaluate to Bool.");
 	}
@@ -78,10 +78,10 @@ namespace storm {
 	 */
 
 	bs::IfWeak::IfWeak(Par<Block> parent, Par<WeakCast> cast) :
-		IfExpr(parent), weakCast(cast) {}
+		IfExpr(cast->pos, parent), weakCast(cast) {}
 
 	bs::IfWeak::IfWeak(Par<Block> parent, Par<WeakCast> cast, Par<SStr> name) :
-		IfExpr(parent), weakCast(cast), varName(name) {}
+		IfExpr(cast->pos, parent), weakCast(cast), varName(name) {}
 
 	ExprResult bs::IfWeak::result() {
 		if (falseCode && trueCode) {
@@ -175,7 +175,7 @@ namespace storm {
 	 * IfTrue
 	 */
 
-	bs::IfTrue::IfTrue(Par<Block> parent) : Block(parent) {
+	bs::IfTrue::IfTrue(SrcPos pos, Par<Block> parent) : Block(pos, parent) {
 		if (IfWeak *weak = as<IfWeak>(parent.borrow())) {
 			Auto<LocalVar> override = weak->overwrite();
 			if (override) {

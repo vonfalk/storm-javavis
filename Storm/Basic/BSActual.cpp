@@ -69,25 +69,28 @@ namespace storm {
 	}
 
 
-	bs::BSNamePart::BSNamePart(Par<Str> name, Par<Actual> params) :
-		SimplePart(name->v, params->values()), exprs(params->expressions) {}
+	bs::BSNamePart::BSNamePart(Par<SStr> name, Par<Actual> params) :
+		SimplePart(name->v->v, params->values()), pos(name->pos), exprs(params->expressions) {}
 
-	bs::BSNamePart::BSNamePart(const String &name, Par<Actual> params) :
-		SimplePart(name, params->values()), exprs(params->expressions) {}
+	bs::BSNamePart::BSNamePart(Par<Str> name, SrcPos pos, Par<Actual> params) :
+		SimplePart(name->v, params->values()), pos(pos), exprs(params->expressions) {}
+
+	bs::BSNamePart::BSNamePart(const String &name, const SrcPos &pos, Par<Actual> params) :
+		SimplePart(name, params->values()), pos(pos), exprs(params->expressions) {}
 
 	void bs::BSNamePart::insert(Value first) {
 		data.insert(data.begin(), first);
-		exprs.insert(exprs.begin(), CREATE(DummyExpr, this, first));
+		exprs.insert(exprs.begin(), CREATE(DummyExpr, this, pos, first));
 	}
 
 	void bs::BSNamePart::insert(Value first, Nat at) {
 		data.insert(data.begin() + at, first);
-		exprs.insert(exprs.begin() + at, CREATE(DummyExpr, this, first));
+		exprs.insert(exprs.begin() + at, CREATE(DummyExpr, this, pos, first));
 	}
 
 	void bs::BSNamePart::alter(Nat at, Value to) {
 		data[at] = to;
-		exprs[at] = CREATE(DummyExpr, this, to);
+		exprs[at] = CREATE(DummyExpr, this, pos, to);
 	}
 
 	// TODO: Consider using 'max' for match weights instead?
@@ -116,12 +119,16 @@ namespace storm {
 		return distance;
 	}
 
-	Name *bs::bsName(Par<Str> name, Par<Actual> params) {
+	Name *bs::bsName(Par<SStr> name, Par<Actual> params) {
 		return CREATE(Name, params, steal(CREATE(BSNamePart, params, name, params)));
 	}
 
-	Name *bs::bsName(const String &name, Par<Actual> params) {
-		return CREATE(Name, params, steal(CREATE(BSNamePart, params, name, params)));
+	Name *bs::bsName(Par<Str> name, SrcPos pos, Par<Actual> params) {
+		return CREATE(Name, params, steal(CREATE(BSNamePart, params, name, pos, params)));
+	}
+
+	Name *bs::bsName(const String &name, const SrcPos &pos, Par<Actual> params) {
+		return CREATE(Name, params, steal(CREATE(BSNamePart, params, name, pos, params)));
 	}
 
 }

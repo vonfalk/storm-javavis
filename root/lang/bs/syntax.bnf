@@ -142,7 +142,7 @@ SFnActuals => v : "(", SActuals(block) v, ")";
 
 // Block.
 Block SBlock(Block parent);
-SBlock => ExprBlock(parent) : "{", (SStmt(me) -> add, )* "}";
+SBlock => ExprBlock(pos, parent) : "{", (SStmt(me) -> add, )* "}";
 
 // Weak casts, ie. casts that can fail. Note that if (x) is excluded from here, as it is difficult
 // to distinguish from the case where 'c' is a boolean by syntax alone. This part will probably contain
@@ -166,7 +166,7 @@ SIf[5] => IfWeak(block, cast, name) :
 
 // Scoping for if and as expressions.
 IfTrue SIfTrue(Block parent); // Really only If and IfWeak.
-SIfTrue => IfTrue(parent) : SStmt(me) -> set;
+SIfTrue => IfTrue(pos, parent) : SStmt(me) -> set;
 
 // Return.
 Return SReturn(Block block);
@@ -175,18 +175,18 @@ SReturn => Return(pos, block, expr) : "return", SExpr(block) expr;
 
 // The loop.
 Expr SLoop(Block block);
-SLoop => Loop(block) : "do[ \n\r\t]", SStmt(me) -> doBody (, "while", "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody)?;
-SLoop => Loop(block) : "while", "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody;
+SLoop => Loop(pos, block) : "do[ \n\r\t]", SStmt(me) -> doBody (, "while", "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody)?;
+SLoop => Loop(pos, block) : "while", "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody;
 
 // The for loop. Divided into two to get correct scoping.
-SLoop => ExprBlock(block) : "for", "(", SExpr(me) -> add, ";", SForInner(me) -> add;
+SLoop => ExprBlock(pos, block) : "for", "(", SExpr(me) -> add, ";", SForInner(me) -> add;
 
 For SForInner(Block block);
-SForInner => For(block) : SExpr(me) -> test, ";", SExpr(me) -> update, ")", SStmt(me) -> body;
+SForInner => For(pos, block) : SExpr(me) -> test, ";", SExpr(me) -> update, ")", SStmt(me) -> body;
 
 // Range-based for loop.
-SLoop => RangeFor(block, var, in) : "for", "(", SName var, "in", SExpr(block) in, ")", SStmt(me) -> body;
-SLoop => RangeFor(block, k, v, in) : "for", "(", SName k, ",", SName v, "in", SExpr(block) in, ")", SStmt(me) -> body;
+SLoop => RangeFor(pos, block, var, in) : "for", "(", SName var, "in", SExpr(block) in, ")", SStmt(me) -> body;
+SLoop => RangeFor(pos, block, k, v, in) : "for", "(", SName k, ",", SName v, "in", SExpr(block) in, ")", SStmt(me) -> body;
 
 // Unless block.
 Unless SUnless(Block block);
@@ -235,14 +235,14 @@ SAtom => v : SConst v;
 SAtom => namedExpr(block, name, params) : SType name, SFnActuals(block) params;
 SAtom[10] => namedExpr(block, name, dotExpr, params) : SAtom(block) dotExpr, "\.", SName name, SFnActuals(block) params;
 SAtom[20] => spawnExpr(expr) : "spawn", SExpr(block) expr;
-SAtom[20] => NullExpr() : "null";
+SAtom[20] => NullExpr(pos) : "null";
 SAtom => ParenExpr(e) : "(", SExpr(block) e, ")";
 SAtom => e : SBlock(block) e;
 SAtom => e : SIf(block) e;
 SAtom => e : SLoop(block) e;
 SAtom => accessExpr(block, lhs, par) : SAtom(block) lhs, "\[", SExpr(block) par, "\]";
 SAtom => arrayInit(block, t, list) : SType t, ":", "\[", SArrayInitList(block) list, "\]";
-SAtom => ArrayInit(block, list) : "\[", SArrayInitList(block) list, "\]";
+SAtom => ArrayInit(pos, block, list) : "\[", SArrayInitList(block) list, "\]";
 SAtom[20] => FnPtr(block, name, params) : "&", SType name, SFnTypes params;
 SAtom[20] => strongFnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name, SFnTypes params;
 SAtom[20] => weakFnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "->", SName name, SFnTypes params;
@@ -321,7 +321,7 @@ SExpr[20] => Var(block, name, init) : "var", SName name, "=", SExpr(block) init;
 // Statement. A statement is either an expression with its attached ;, or a block without ;.
 Expr SStmt(Block block);
 SStmt => expr : SExpr(block) expr, ";";
-SStmt => Expr() : ";";
+SStmt => Expr(pos) : ";";
 SStmt => e : SBlock(block) e;
 SStmt[10] => e : SIf(block) e;
 SStmt[10] => e : SLoop(block) e;
@@ -339,8 +339,8 @@ SFunctionBody => FnBody(fn) : (SStmt(me) -> add, )*;
 
 // Special statement for calling super constructor.
 SuperCall SSuperCall(CtorBody block);
-SSuperCall => SuperCall(block, params) : "init", SFnActuals(block) params, ";";
-SSuperCall => SuperCall(block, params, init) : "init", SFnActuals(block) params, "{", (SInitializer(block) init, ";", )* "}";
+SSuperCall => SuperCall(pos, block, params) : "init", SFnActuals(block) params, ";";
+SSuperCall => SuperCall(pos, block, params, init) : "init", SFnActuals(block) params, "{", (SInitializer(block) init, ";", )* "}";
 
 Initializer SInitializer(Block block);
 SInitializer => Initializer(name, value) : SName name, "=", SExpr(block) value;
