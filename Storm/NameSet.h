@@ -107,10 +107,12 @@ namespace storm {
 		};
 
 		// Iterators: Note: does not attempt to lazy-load this NameSet!
-		Iter begin() const;
-		Iter end() const;
+		Iter STORM_FN begin() const;
+		Iter STORM_FN end() const;
 		Iter begin(const String &name) const;
 		Iter end(const String &name) const;
+		Iter STORM_FN begin(Par<Str> name) const;
+		Iter STORM_FN end(Par<Str> name) const;
 
 		// Find all types recursively. TODO: Make this more general.
 		vector<Auto<Type>> findTypes() const;

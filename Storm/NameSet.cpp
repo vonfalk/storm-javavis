@@ -175,11 +175,19 @@ namespace storm {
 		return Iter(overloads, found, 0);
 	}
 
-	NameSet::Iter NameSet::end(const String &end) const {
+	NameSet::Iter NameSet::end(const String &name) const {
 		OverloadMap::const_iterator found = overloads.find(name);
 		if (found != overloads.end())
 			++found;
 		return Iter(overloads, found, 0);
+	}
+
+	NameSet::Iter NameSet::begin(Par<Str> name) const {
+		return begin(name->v);
+	}
+
+	NameSet::Iter NameSet::end(Par<Str> name) const {
+		return end(name->v);
 	}
 
 	void NameSet::output(wostream &to) const {
