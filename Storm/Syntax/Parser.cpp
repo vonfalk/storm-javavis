@@ -98,7 +98,11 @@ namespace storm {
 		}
 
 		Bool ParserBase::hasError() const {
-			return lastFinish < steps.size() - 1;
+			if (lastFinish < steps.size() - 1)
+				return true;
+
+			// Tried to parse empty string?
+			return finish() == null;
 		}
 
 		Bool ParserBase::hasTree() const {
@@ -282,8 +286,8 @@ namespace storm {
 					if (cRule != rule->rule.borrow())
 						continue;
 
-					src.push(State(state->pos.nextA(), i, state->from, state, now), stateAlloc);
-					src.push(State(state->pos.nextB(), i, state->from, state, now), stateAlloc);
+					src.push(State(state->pos.nextA(), step, state->from, state, now), stateAlloc);
+					src.push(State(state->pos.nextB(), step, state->from, state, now), stateAlloc);
 				}
 			}
 		}

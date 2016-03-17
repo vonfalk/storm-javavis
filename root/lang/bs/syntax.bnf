@@ -124,6 +124,7 @@ SReplUse => p : "use", SPackage p, ";?";
 Expr SReplExpr(Block block);
 SReplExpr => p : SExpr(block) p;
 SReplExpr => p : SStmt(block) p;
+SReplExpr => Expr(pos) : "";
 
 
 ////////////////////////////////////////////////////////////////////
@@ -222,8 +223,7 @@ SSkipContent[10] : "//[^\n\r]*[\n\r]";
 SSkipContent : "/" - SSkipContent;
 SSkipContent : "{" - SSkipContent - "}";
 SSkipContent : "\"" - SStrContent - "\"";
-SSkipContent : "'[^']'";
-SSkipContent : "'\\.'";
+SSkipContent : "'" - SStrContent - "'";
 
 ////////////////////////////////////////////////////////////////////
 // Atoms!

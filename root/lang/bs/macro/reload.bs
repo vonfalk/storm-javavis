@@ -56,8 +56,8 @@ void reloadBsUrl(Package pkg, Url url) on Compiler {
 	Parser<SFile> body;
 	scope.addSyntax(body);
 	body.parse(text, url, headerEnd);
-	if (header.hasError)
-		header.throwError;
+	if (body.hasError)
+		body.throwError;
 
 	SyntaxEnv env(scope);
 	reloadContents(pkg, scope, body.tree.transform(env));

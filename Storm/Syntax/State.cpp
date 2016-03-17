@@ -121,12 +121,21 @@ namespace storm {
 				State *c = data[i];
 				if (*c == state) {
 					// Found it already, shall we update the existing one?
+
+					// Try to avoid cycles by disallowing replacing states that were completed by a
+					// rule matching nothing. These are prone to create cycles.
+					if (state.completed && state.prev->step == state.step)
+						return;
+
 					if (execOrder(&state, c) == before) {
 						// Note: as * and + are greedy, we might end up in a case where we deem it
 						// beneficial to create a loop of states. Avoid that! Note: this is only
 						// possible for multiple zero-length rules and therefore only states in the
-						// current step need to be considered.
-						for (const State *at = c->prev; at && at->step == c->step; at = at->prev) {
+						// current step need to be considered. We're looking for the case when we've
+						// been completed by the state we're trying to replace. Currently we're only
+						// looking at direct completions. In complex cases, more elaborate checks
+						// may become neccessary.
+						for (const State *at = state.completed; at && at->step == c->step; at = at->prev) {
 							// Loop found, avoid it!
 							if (at == c)
 								return;

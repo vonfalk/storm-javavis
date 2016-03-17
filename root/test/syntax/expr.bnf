@@ -25,3 +25,9 @@ void SParen();
 SEDelim : " *";
 SEmpty : SEDelim;
 SParen : "(" - SEDelim - SEmpty - SEDelim - ")";
+
+// A simplified version if lang.bs.SSkipContent, which crashed earlier.
+void Skip();
+Skip : " *" - Skip - " *" - Skip - " *";
+Skip : "[^{}]*";
+Skip : "{" - Skip - "}";

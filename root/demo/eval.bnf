@@ -1,7 +1,19 @@
-delimiter: Whitespace;
-Whitespace => void : "[ \n\r\t]*";
+delimiter = Whitespace;
 
-E => add(lhs, rhs) : E lhs, "\+", E rhs;
-E => negate(v) : "\-", E v;
-E => number(n) : "[0-9]+" n;
-E => v : "(", E v, ")";
+void Whitespace();
+Whitespace : "[ \n\r\t]*";
+
+Int Expr();
+Expr => +(a, b) : Expr a, "\+", Prod b;
+Expr => -(a, b) : Expr a, "\-", Prod b;
+Expr => v : Prod v;
+
+Int Prod();
+Prod => *(a, b) : Prod a, "\*", Atom b;
+Prod => /(a, b) : Prod a, "/", Atom b;
+Prod => v : Atom v;
+
+Int Atom();
+Atom => toInt(v) : "[0-9]+" v;
+Atom => v : "(", Expr v, ")";
+Atom => -(v) : "\-", Atom v;

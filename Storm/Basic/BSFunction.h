@@ -108,7 +108,7 @@ namespace storm {
 								MAYBE(Par<NamedThread>) thread, Par<syntax::Node> body);
 
 			// Scope.
-			const Scope scope;
+			STORM_VAR Scope scope;
 
 			// Temporary solution for updating a function.
 			void update(const vector<String> &names, Par<syntax::Node> body, const SrcPos &pos);

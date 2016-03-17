@@ -17,7 +17,7 @@ class Output on ? {
 	Int run() {
 		for (Int i = 0; i < times; i++) {
 			print(text * (i + 1).nat);
-			dbgSleep(500);
+			sleep(500 ms);
 		}
 		times * 2;
 	}

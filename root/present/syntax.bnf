@@ -1,24 +1,28 @@
-delimiter: BSDelimiter;
+use lang.bs;
 
-Expr => PExpr(block, title) : "presentation", String title, "{", (Slide(block, me) -> add, ";", )* "}";
+delimiter = SDelimiter;
+
+SExpr => PExpr(pos, block, title) : "presentation", SString title, "{", (SSlide(block, me) -> add, ";", )* "}";
 
 // A single slide:
-Slide(lang.bs.Block block, PExpr p);
-Slide => SExpr(p, type, params, t) : Intro(block) t, Name type, SlideParams(block) params, "{", (Item(block) -> add, ";", )* "}";
-Slide => SExpr(p, type, params, t) : Intro(block) t, Name type, SlideParams(block) params;
+SlideExpr SSlide(lang.bs.Block block, PExpr p);
+SSlide => SlideExpr(p, type, params, t) :
+    SIntro(block) t, SName type, SSlideParams(block) params, "{", (SItem(block) -> add, ";", )* "}";
+SSlide => SlideExpr(p, type, params, t) :
+    SIntro(block) t, SName type, SSlideParams(block) params;
 
 // Slide intro:
-Intro(lang.bs.Block b);
-Intro => IntroExpr(type, params) : Name type, SlideParams(b) params, "->";
-Intro => IntroExpr() : "";
+IntroExpr SIntro(lang.bs.Block b);
+SIntro => IntroExpr(type, params) : SName type, SSlideParams(b) params, "->";
+SIntro => IntroExpr() : "";
 
 // Parameters to a slide.
-SlideParams(lang.bs.Block b);
-SlideParams => lang.bs.Actual() : BSDelimiter;
-SlideParams => lang.bs.Actual() : Expr(b) -> add (, ",", Expr(b) -> add)*;
+Actual SSlideParams(lang.bs.Block b);
+SSlideParams => Actual() : "";
+SSlideParams => Actual() : SExpr(b) -> add (, ",", SExpr(b) -> add)*;
 
 // Items inside a slide.
-Item(lang.bs.Block block);
-Item => itemExpr(block, name, params) : Name name, SlideParams(block) params;
-Item => itemClickExpr(block, name, params) : "\+", Name name, SlideParams(block) params;
-Item => itemTimeExpr(block, time, name, params) : "\+", Atom(block) time, ":", Name name, SlideParams(block) params;
+ItemInfo SItem(Block block);
+SItem => itemExpr(block, name, params) : SName name, SSlideParams(block) params;
+SItem => itemClickExpr(block, name, params) : "\+", SName name, SSlideParams(block) params;
+SItem => itemTimeExpr(block, time, name, params) : "\+", SAtom(block) time, ":", SName name, SSlideParams(block) params;
