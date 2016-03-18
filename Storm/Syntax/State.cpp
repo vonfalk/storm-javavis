@@ -122,29 +122,11 @@ namespace storm {
 				if (*c == state) {
 					// Found it already, shall we update the existing one?
 
-					// Try to avoid cycles by disallowing replacing states that were completed by a
-					// rule matching nothing. These are prone to create cycles.
-					if (state.completed && state.prev->step == state.step)
+					// Order them lexiographically and keep the largest.
+					if (execOrder(&state, c) != before)
 						return;
 
-					if (execOrder(&state, c) == before) {
-						// Note: as * and + are greedy, we might end up in a case where we deem it
-						// beneficial to create a loop of states. Avoid that! Note: this is only
-						// possible for multiple zero-length rules and therefore only states in the
-						// current step need to be considered. We're looking for the case when we've
-						// been completed by the state we're trying to replace. Currently we're only
-						// looking at direct completions. In complex cases, more elaborate checks
-						// may become neccessary.
-						for (const State *at = state.completed; at && at->step == c->step; at = at->prev) {
-							// Loop found, avoid it!
-							if (at == c)
-								return;
-						}
-
-						// No loops. Go on!
-						*c = state;
-					}
-
+					*c = state;
 					return;
 				}
 			}
@@ -155,28 +137,22 @@ namespace storm {
 
 		StateSet::Order StateSet::execOrder(const State *a, const State *b) const {
 			// Invalid states have no ordering.
-			if (!a)
-				return none;
-			if (!b)
+			if (!a || !b)
 				return none;
 
-			// Same state, no difference.
+			// Same state, realize that quickly...
 			if (a == b)
 				return none;
 
-			// The one created earliest in the sequence goes before.
-			if (a->from != b->from)
-				return (a->from < b->from) ? before : after;
-
-			// Highest priority goes first.
+			// Check which has the highest priority.
 			if (a->priority() != b->priority())
 				return (a->priority() > b->priority()) ? before : after;
 
-			// If they are different options and have the same priority, the ordering is undefined.
+			// If they are different rules and noone has a higher priority than the other, the ordering is undefined.
 			if (a->pos.optionPtr() != b->pos.optionPtr())
 				return none;
 
-			// Find out the ordering of the respective parts by a simple lexiographic ordering.
+			// Order them lexiographically to see which has the highest priority.
 			StateArray aStates, bStates;
 			prevStates(a, aStates);
 			prevStates(b, bStates);
@@ -198,6 +174,7 @@ namespace storm {
 			// The rules are equal as far as we are concerned.
 			return none;
 		}
+
 
 		void StateSet::prevStates(const State *from, StateArray &to) const {
 			for (const State *now = from; now->prev; now = now->prev)
