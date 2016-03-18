@@ -14,7 +14,4 @@ namespace storm {
 
 	class NamedThread;
 
-	// Get the named thread for the compiler.
-	NamedThread *STORM_ENGINE_FN compilerThread(EnginePtr e) ON(Compiler);
-
 }

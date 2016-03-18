@@ -137,7 +137,7 @@ namespace storm {
 		virtual Nat STORM_FN count();
 
 		// Get a parameter.
-		inline Name *STORM_FN operator [](Nat id) { return params[id].borrow(); }
+		inline Name *STORM_FN operator [](Nat id) { return params[id].ref(); }
 
 		// C++ version, returning borrowed ptr.
 		inline Name *param(Nat id) const { return params[id].borrow(); }
@@ -224,7 +224,7 @@ namespace storm {
 
 		// Access to individual elements.
 		inline Nat STORM_FN count() const { return parts.size(); }
-		inline NamePart *STORM_FN operator [](Nat id) const { Auto<NamePart> r = parts[id]; return r.ret(); }
+		inline NamePart *STORM_FN operator [](Nat id) const { return parts[id].ref(); }
 
 		// Borrowed ptr, c++ only.
 		inline NamePart *at(Nat id) const { return parts[id].borrow(); }

@@ -35,8 +35,8 @@ void parse(const String &root, const String &parse) {
 	debugParser = false;
 }
 
-String parseStr(const String &root, const String &parse) {
-	Package *pkg = gEngine->package(L"test.syntax");
+String parseStr(const String &package, const String &root, const String &parse) {
+	Package *pkg = gEngine->package(package);
 	Auto<Parser> p = Parser::create(pkg, root);
 
 	Auto<Url> empty = CREATE(Url, *gEngine);
@@ -52,6 +52,10 @@ String parseStr(const String &root, const String &parse) {
 	Auto<Object> r = p->transform<Object>();
 	// PLN(parse << L" => " << r);
 	return ::toS(r);
+}
+
+String parseStr(const String &root, const String &parse) {
+	return parseStr(L"test.syntax", root, parse);
 }
 
 BEGIN_TEST(ParseOrderTest) {
@@ -73,4 +77,9 @@ BEGIN_TEST(ParseOrderTest) {
 
 	// Check if ()* are greedy if this fails...
 	CHECK_EQ(parseStr(L"Unless", L"a unless a b c"), L"(a)(a(b)(c))");
+} END_TEST
+
+// Previous odd crashes in the syntax.
+BEGIN_TEST(SyntaxCrashes) {
+	CHECK_EQ(::toS(steal(runFn<Name *>(L"test.syntax.complexName"))), L"a.b(c, d(e), f)");
 } END_TEST

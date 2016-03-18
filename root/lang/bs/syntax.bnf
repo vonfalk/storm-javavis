@@ -96,17 +96,11 @@ SClass => threadClass(pos, env, name, body) : "class", SName name, "on", "\?", "
 NamedThread SNamedThread();
 SNamedThread => NamedThread(name) : "thread", SName name, ";";
 
-// Generate code (basic building block for eg. templates).
-Generate SGenerate(SyntaxEnv env);
-SGenerate => Generate(env, name, param, body) : SName name, ":", "generate", "(", SName param, ")", "{", SFunctionBody@ body, "}";
-
- 
 // Possible root blocks in a file.
 TObject SFileItem(SyntaxEnv env);
 SFileItem => f : SFunction(env) f;
 SFileItem => c : SClass(env) c;
 SFileItem => t : SNamedThread t;
-SFileItem => g : SGenerate(env) g;
 
 // Root rule. Used to parse an entire file, except the use-statements).
 Contents SFile(SyntaxEnv env);
@@ -369,8 +363,6 @@ SClassItem => classCtor(owner, pos, params, body) :
     "ctor", "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
 SClassItem => classCastCtor(owner, pos, params, body) :
     "cast", "ctor", "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
-SClassItem => Generate(owner, name, param, body) :
-    SName name, ":", "generate", "(", SName param, ")", "{", SFunctionBody@ body, "}";
 
 // Root rule for parsing classes and values.
 ClassBody SClassBody(Class owner);

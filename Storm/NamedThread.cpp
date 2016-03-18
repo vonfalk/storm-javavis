@@ -5,18 +5,29 @@
 
 namespace storm {
 
-	NamedThread::NamedThread(const String &name) : Named(name), pos(), reference(null) {
-		myThread = CREATE(Thread, this);
+	NamedThread::NamedThread(const String &name) : Named(name), pos() {
+		init();
 	}
 
-	NamedThread::NamedThread(const String &name, Par<Thread> t) : Named(name), pos(), myThread(t), reference(null) {}
-
-	NamedThread::NamedThread(Par<Str> name) : Named(name->v), pos(), reference(null) {
-		myThread = CREATE(Thread, this);
+	NamedThread::NamedThread(const String &name, Par<Thread> t) : Named(name), pos() {
+		init(t.borrow());
 	}
 
-	NamedThread::NamedThread(Par<SStr> name) : Named(name->v->v), pos(name->pos), reference(null) {
-		myThread = CREATE(Thread, this);
+	NamedThread::NamedThread(Par<Str> name) : Named(name->v), pos() {
+		init();
+	}
+
+	NamedThread::NamedThread(Par<SStr> name) : Named(name->v->v), pos(name->pos) {
+		init();
+	}
+
+	void NamedThread::init(Thread *t) {
+		if (t) {
+			myThread = capture(t);
+		} else {
+			myThread = CREATE(Thread, this);
+		}
+		reference = null;
 	}
 
 	NamedThread::~NamedThread() {

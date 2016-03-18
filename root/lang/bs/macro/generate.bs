@@ -1,5 +1,6 @@
 use core:lang;
 use core:debug;
+use lang:bs;
 
 /**
  * Template class for generating new code according to the specified function.
@@ -72,7 +73,7 @@ class Generate extends Template {
 		}
 
 		// TODO: ignore fnName, making the function anonymous.
-		BSFunction r(result, name, params, scope, compilerThread, body);
+		BSFunction r(result, name, params, scope, named{Compiler}, body);
 
 		if (into) {
 			into.add(r);

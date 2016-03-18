@@ -412,8 +412,9 @@ namespace storm {
 			Auto<Node> result = allocTreeNode(from);
 			Option *option = from->pos.optionPtr();
 
-			// Remember capture start and capture end.
-			nat repStart = 0;
+			// Remember capture start and capture end. Set 'repStart' to first token since we will
+			// not find it in the loop if the repeat starts at the first token in this option.
+			nat repStart = from->from;
 			nat repEnd = 0;
 
 			// Traverse the states backwards. The last token in the chain (the one created first) is

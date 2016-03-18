@@ -1,0 +1,6 @@
+use core:lang;
+use lang:bs:macro;
+
+SrcName complexName() {
+	name{a:b<c, d<e>, f>};
+}

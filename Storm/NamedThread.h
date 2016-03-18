@@ -41,6 +41,9 @@ namespace storm {
 
 		// Reference.
 		code::RefSource *reference;
+
+		// Initialize.
+		void init(Thread *thread = null);
 	};
 
 

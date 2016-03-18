@@ -88,6 +88,11 @@ namespace storm {
 	}
 
 	void Type::clear() {
+		copyCtorCache = null;
+		defaultCtorCache = null;
+		dtorCache = null;
+		thread = null;
+
 		NameSet::clear();
 		chain.super(null);
 	}

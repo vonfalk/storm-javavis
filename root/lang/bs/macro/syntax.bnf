@@ -4,7 +4,7 @@ use lang.bs;
 delimiter = SDelimiter;
 
 // Use type{a:b:c} to build a type name quickly and easily.
-SExpr => createType(pos, block, type) : "name", "{", SType type, "}" = Bajs;
+SExpr => createType(pos, block, type) : "name", "{", SType type, "}";
 
 // Use named{a:b:c} to refer to objects. Evaluates compile-time to the type of the actual object
 // in the compiler.
@@ -19,3 +19,10 @@ SExpr => reloadName(block, type) : "reload", "{", SType type, "}";
 // Debug things by printing expressions at compile-time.
 SExpr => printExpr(t, stmt) : "dump", "{", (SStmt(block) stmt) t, "}";
 SExpr => printExpr(t, expr) : "dump", "{", (SExpr(block) expr) t, "}";
+
+
+// Generate things in classes and at top-level.
+SFileItem => Generate(env, name, param, body) :
+    SName name, ":", "generate", "(", SName param, ")", "{", SFunctionBody@ body, "}";
+SClassItem => Generate(owner, name, param, body) :
+    SName name, ":", "generate", "(", SName param, ")", "{", SFunctionBody@ body, "}";
