@@ -30,9 +30,13 @@ void parse(const String &root, const String &parse) {
 	Auto<Url> empty = CREATE(Url, *gEngine);
 	Auto<Str> s = CREATE(Str, *gEngine, parse);
 
+#ifdef DEBUG
 	// debugParser = true;
 	p->parse(s, empty);
 	debugParser = false;
+#else
+	p->parse(s, empty);
+#endif
 }
 
 String parseStr(const String &package, const String &root, const String &parse) {
@@ -42,9 +46,13 @@ String parseStr(const String &package, const String &root, const String &parse) 
 	Auto<Url> empty = CREATE(Url, *gEngine);
 	Auto<Str> s = CREATE(Str, *gEngine, parse);
 
+#ifdef DEBUG
 	// debugParser = true;
 	p->parse(s, empty);
 	debugParser = false;
+#else
+	p->parse(s, empty);
+#endif
 
 	if (p->hasError())
 		p->throwError();

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Building release..."
-mm release -ne
+mm release -ne || { echo "Compilation failed!"; exit 1; }
 
 echo "Done! Running the test suite..."
 release/CodeTest.exe || { echo "Tests failed!"; exit 1; }
