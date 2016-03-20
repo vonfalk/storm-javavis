@@ -7,6 +7,7 @@ StormTest
 #StormMain -a -r ../root/ -f test.asm.testInlineLabel
 
 #Presentation
+#StormMain -a -r ../root/ -i final ../External/final -f final.configura
 #StormMain -a -r ../root/ -i final ../External/final -f final.extendedMain
 #StormMain -a -r ../root/ -i green ../External/green -f green.main
 

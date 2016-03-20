@@ -172,19 +172,26 @@ class FadeIntro extends SlideIntro {
 class ZoomIntro extends SlideIntro {
 	Moment started;
 	Duration time;
-	Float xCenter;
+	Point center;
 
 	ctor(Duration time) {
 		init() {
 			time = time;
-			xCenter = 0;
+			center(0, 0);
 		}
 	}
 
 	ctor(Duration time, Float xCenter) {
 		init() {
 			time = time;
-			xCenter = xCenter;
+			center(xCenter, 0);
+		}
+	}
+
+	ctor(Duration time, Point center) {
+		init() {
+			time = time;
+			center = center;
 		}
 	}
 
@@ -198,10 +205,11 @@ class ZoomIntro extends SlideIntro {
 		new.draw(s, size, g);
 
 		if (old) {
-			Point center = size / 2;
-			center.x += center.x * xCenter;
+			Point c = size / 2;
+			c.x += c.x * center.x;
+			c.y += c.y * center.y;
 			g.push(1.0 - progress);
-			g.transform(scale(1.0 + progress*progress*4, center));
+			g.transform(scale(1.0 + progress*progress*4, c));
 			g.fill(Rect(Point(), size), s.bg);
 			old.draw(s, size, g);
 			g.pop();

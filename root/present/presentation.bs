@@ -1,5 +1,7 @@
 use graphics;
 use ui;
+use core:lang;
+use lang:bs:macro;
 
 /**
  * Presentation.
@@ -20,6 +22,9 @@ class Presentation on Render {
 	// Foreground color.
 	Color text;
 
+	// Package to reload.
+	Package reload;
+
 	// Show timer?
 	Bool showTimer;
 
@@ -32,6 +37,7 @@ class Presentation on Render {
 			title = title;
 			bg = white;
 			text = black;
+			reload = named{present};
 		}
 	}
 
