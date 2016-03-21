@@ -1,6 +1,7 @@
 use lang:bs;
 use core:lang;
 use core:asm;
+use core:debug;
 
 // Get the name of the SrcName type.
 SrcName srcName(SrcPos pos) {
@@ -131,9 +132,27 @@ Expr reloadName(Block block, SrcName typeName) {
 
 Expr printExpr(Str text, Expr expr) {
 	if (expr as Operator) {
-        core:debug:print(text.removeIndent # " <=> " # expr.meaning);
+		print(text.removeIndent # " <=> " # expr.meaning);
 	} else {
-	    core:debug:print(text.removeIndent # " <=> " # expr);
+	    print(text.removeIndent # " <=> " # expr);
 	}
 	expr;
+}
+
+class PrintAsm extends Expr {
+	ctor(SrcPos pos) {
+		init(pos);
+	}
+
+	Value result() {
+		Value();
+	}
+
+	void code(CodeGen state, CodeResult result) {
+		print(state.toS);
+	}
+
+	Str toS() {
+		"dumpAsm";
+	}
 }

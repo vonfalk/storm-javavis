@@ -20,6 +20,9 @@ SExpr => reloadName(block, type) : "reload", "{", SType type, "}";
 SExpr => printExpr(t, stmt) : "dump", "{", (SStmt(block) stmt) t, "}";
 SExpr => printExpr(t, expr) : "dump", "{", (SExpr(block) expr) t, "}";
 
+// Debug asm by printing asm at compile-time.
+SExpr[100] => PrintAsm(pos) : "dumpAsm";
+
 
 // Generate things in classes and at top-level.
 SFileItem => Generate(env, name, param, body) :

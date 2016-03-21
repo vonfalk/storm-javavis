@@ -141,7 +141,7 @@ namespace storm {
 		virtual Bool STORM_FN loadAll();
 
 		// Force a this NameSet to be loaded if it has not already been done.
-		void forceLoad();
+		void STORM_FN forceLoad();
 
 		// Find a SimplePart (returns borrowed ptr).
 		virtual MAYBE(Named) *STORM_FN find(Par<SimplePart> part);
