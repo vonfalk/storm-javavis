@@ -139,6 +139,30 @@ Expr printExpr(Str text, Expr expr) {
 	expr;
 }
 
+void summary(NameSet s) {
+	Type[] types;
+	Function[] fns;
+
+	for (i in s) {
+		if (i as Type) {
+			types << i;
+		} else if (i as Function) {
+			fns << i;
+		}
+	}
+
+	print("Types:");
+	for (i in types) {
+		print(" " # i.path);
+	}
+
+	print("");
+	print("Functions:");
+	for (i in fns) {
+		print(" " # i.path);
+	}
+}
+
 class PrintAsm extends Expr {
 	ctor(SrcPos pos) {
 		init(pos);

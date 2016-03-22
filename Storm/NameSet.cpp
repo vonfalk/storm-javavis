@@ -297,7 +297,7 @@ namespace storm {
 	}
 
 	Named *NameSet::Iter::v() const {
-		return src->second->items[pos].borrow();
+		return src->second->items[pos].ref();
 	}
 
 }
