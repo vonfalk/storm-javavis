@@ -5,7 +5,7 @@ thread Demo;
 Int threadDemo(Str data, Int times) on Demo {
 	for (Int i = 0; i < times; i++) {
 		print(data * (i + 1).nat);
-		dbgSleep(500);
+		dbgSleep(100);
 		dbgYeild;
 		// sleep(500 ms);
 	}
@@ -14,12 +14,16 @@ Int threadDemo(Str data, Int times) on Demo {
 
 Int seq() on Compiler {
 	var a = threadDemo("A", 10);
+	print("1");
 	var b = threadDemo("B", 10);
+	print("2");
 	a + b;
 }
 
 Int spawn() on Compiler {
 	var a = spawn threadDemo("A", 10);
+	print("1");
 	var b = spawn threadDemo("B", 10);
+	print("2");
 	a.result + b.result;
 }

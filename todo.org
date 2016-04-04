@@ -1,4 +1,6 @@
-* Core [7/52]
+* Core [7/54]
+
+ - [ ] UThread::sleep() when run in multiple UThreads will cause unneccessary CPU utilization.
 
  - [ ] updateVirtual() in Type needs to be optimized. It is very noticable with the massive amount of types generated
    by the syntax language.
@@ -102,6 +104,8 @@
  - [ ] Implement an interactive way of coding using 'reverse parsers'. In this case, it would be an autocomplete that
    knows the syntax and suggests all valid parts at the cursor position. It may not be able to suggest names, but it 
    could suggest syntax constructions.
+
+ - [ ] LazyCode::updateLocal should try to detect when a function is recursively loaded somehow. Currently it deadlocks.
 
  - [X] Test and document the foo: generate()-syntax.
 

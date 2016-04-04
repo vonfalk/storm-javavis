@@ -17,7 +17,7 @@ class Output on ? {
 	Int run() {
 		for (Int i = 0; i < times; i++) {
 			print(text * (i + 1).nat);
-			sleep(500 ms);
+			sleep(150 ms);
 		}
 		times * 2;
 	}
@@ -27,7 +27,9 @@ Int actorSeq() on Compiler {
 	Output a(Actor1, "A", 10);
 	Output b(Actor2, "B", 10);
 	var x = a.run();
+	print("1");
 	var y = b.run();
+	print("2");
 	x + y;
 }
 
@@ -35,6 +37,8 @@ Int actorSpawn() on Compiler {
 	Output a(Actor1, "A", 10);
 	Output b(Actor2, "B", 10);
 	var x = spawn a.run();
+	print("1");
 	var y = spawn b.run();
+	print("2");
 	x.result + y.result;
 }

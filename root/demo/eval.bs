@@ -11,3 +11,9 @@ Int eval(Str v) {
 	var tree = p.tree;
 	tree.transform;
 }
+
+Expr tree(Str v) {
+	Parser<Expr> p;
+	p.parse(v, Url());
+	p.tree;
+}

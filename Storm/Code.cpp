@@ -101,7 +101,6 @@ namespace storm {
 	}
 
 	const void *LazyCode::updateCode(LazyCode *c) {
-
 		// If we're on the compiler thread, we may call directly.
 		// TODO? Always allocate a new UThread? This will make sure the compiler
 		// always has a predictable amount of stack space in some causes, which could be beneficial.
@@ -118,6 +117,12 @@ namespace storm {
 	}
 
 	const void *LazyCode::updateCodeLocal(LazyCode *c) {
+		while (c->loading) {
+			// Wait for the other one loading this function.
+			// TODO: Try to detect when a function is recursively loaded!
+			os::UThread::leave();
+		}
+
 		if (!c->loaded) {
 			if (c->loading)
 				throw InternalError(L"Trying to update " + c->owner->identifier() + L" recursively!");
