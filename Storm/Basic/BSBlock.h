@@ -86,7 +86,7 @@ namespace storm {
 
 		private:
 			// Expressions here.
-			vector<Auto<Expr> > exprs;
+			Auto<ArrayP<Expr>> exprs;
 
 			// Index of first expression declaring it will never return. 'invalid' if none.
 			nat firstNoReturn;

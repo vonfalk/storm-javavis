@@ -76,30 +76,32 @@ namespace storm {
 	}
 
 
-	bs::ExprBlock::ExprBlock(SrcPos pos, Scope scope) : Block(pos, scope), firstNoReturn(invalid) {}
+	bs::ExprBlock::ExprBlock(SrcPos pos, Scope scope) :
+		Block(pos, scope), exprs(CREATE(ArrayP<Expr>, this)), firstNoReturn(invalid) {}
 
-	bs::ExprBlock::ExprBlock(SrcPos pos, Par<Block> parent) : Block(pos, parent), firstNoReturn(invalid) {}
+	bs::ExprBlock::ExprBlock(SrcPos pos, Par<Block> parent) :
+		Block(pos, parent), exprs(CREATE(ArrayP<Expr>, this)), firstNoReturn(invalid) {}
 
 	void bs::ExprBlock::add(Par<Expr> expr) {
 		if (firstNoReturn == invalid)
 			if (expr->result().empty())
-				firstNoReturn = exprs.size();
+				firstNoReturn = exprs->count();
 
-		exprs.push_back(expr);
+		exprs->push(expr);
 	}
 
 	ExprResult bs::ExprBlock::result() {
 		if (firstNoReturn != invalid) {
 			return noReturn();
-		} else if (!exprs.empty()) {
-			return exprs.back()->result();
+		} else if (exprs->any()) {
+			return exprs->last()->result();
 		} else {
 			return ExprResult();
 		}
 	}
 
 	void bs::ExprBlock::code(Par<CodeGen> state, Par<CodeResult> to) {
-		if (!exprs.empty())
+		if (exprs->any())
 			Block::code(state, to);
 	}
 
@@ -107,36 +109,36 @@ namespace storm {
 		if (firstNoReturn == invalid) {
 			// Generate code for the entire block. Skip the last expression, as that is supposed to
 			// return something.
-			for (nat i = 0; i < exprs.size() - 1; i++) {
+			for (nat i = 0; i < exprs->count() - 1; i++) {
 				Auto<CodeResult> s = CREATE(CodeResult, this);
-				exprs[i]->code(state, s);
+				exprs->at(i)->code(state, s);
 			}
 
 			// Pass the return value on to the last expression.
-			exprs[exprs.size() - 1]->code(state, to);
+			exprs->last()->code(state, to);
 
 		} else {
 			// Generate code until the first dead block.
 			for (nat i = 0; i <= firstNoReturn; i++) {
 				Auto<CodeResult> s = CREATE(CodeResult, this);
-				exprs[i]->code(state, s);
+				exprs->at(i)->code(state, s);
 			}
 		}
 	}
 
 	Int bs::ExprBlock::castPenalty(Value to) {
-		if (exprs.empty())
+		if (exprs->empty())
 			return -1;
-		return exprs.back()->castPenalty(to);
+		return exprs->last()->castPenalty(to);
 	}
 
 	void bs::ExprBlock::output(wostream &to) const {
 		to << L"{" << endl;
 		{
 			Indent i(to);
-			for (nat i = 0; i < exprs.size(); i++) {
-				to << exprs[i] << L";" << endl;
-				if (i == firstNoReturn && i != exprs.size() - 1)
+			for (nat i = 0; i < exprs->count(); i++) {
+				to << exprs->at(i) << L";" << endl;
+				if (i == firstNoReturn && i != exprs->count() - 1)
 					to << "// unreachable code:" << endl;
 			}
 		}
