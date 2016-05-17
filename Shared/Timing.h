@@ -91,4 +91,29 @@ namespace storm {
 	inline Bool STORM_FN operator <=(Duration a, Duration b) { return a.v <= b.v; }
 	inline Bool STORM_FN operator >=(Duration a, Duration b) { return a.v >= b.v; }
 
+	/**
+	 * Simple way of measuring accumulated time of calls. Results are printed at the end of the
+	 * program execution. No effort has been made to make it work through DLL boundaries.
+	 *
+	 * Usage:
+	 * CHECK_TIME(L"<identifier>");
+	 *
+	 * All timings with the same identifier are grouped together at the end.
+	 */
+	class CheckTime : NoCopy {
+	public:
+		CheckTime(const wchar *id) : id(id), started() {}
+
+		~CheckTime() {
+			save(id, Moment() - started);
+		}
+
+	private:
+		const wchar *id;
+		Moment started;
+
+		static void save(const wchar *id, const Duration &d);
+	};
+
+#define CHECK_TIME(id) CheckTime _x(id);
 }

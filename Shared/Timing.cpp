@@ -108,4 +108,41 @@ namespace storm {
 		os::UThread::sleep(nat(d.inMs()));
 	}
 
+
+	/**
+	 * Timing.
+	 */
+
+	class TimeKeeper : NoCopy {
+	public:
+		typedef map<String, Duration> Data;
+
+		~TimeKeeper() {
+			if (data.size() > 0) {
+				PLN(L"\nMeasured run-times:\n");
+			}
+
+			for (Data::iterator i = data.begin(); i != data.end(); ++i) {
+				PLN(std::setw(10) << i->first << L": " << i->second);
+			}
+		}
+
+		void save(const String &id, const Duration &d) {
+			data[id] += d;
+		}
+
+	private:
+		// All times currently known.
+		Data data;
+	};
+
+	static TimeKeeper &keeper() {
+		static TimeKeeper k;
+		return k;
+	}
+
+	void CheckTime::save(const wchar *id, const Duration &d) {
+		keeper().save(id, d);
+	}
+
 }
