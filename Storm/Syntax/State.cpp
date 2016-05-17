@@ -117,6 +117,7 @@ namespace storm {
 			if (!state.pos.valid())
 				return;
 
+			// TODO: Optimize this somehow. A lot of time is spent here!
 			for (nat i = 0; i < data.size(); i++) {
 				State *c = data[i];
 				if (*c == state) {
