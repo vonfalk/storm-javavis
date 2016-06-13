@@ -5,8 +5,9 @@
 (add-to-list 'auto-mode-alist '("\\.bs" . java-mode))
 
 (defvar my-cpp-other-file-alist
-  '(("\\.cpp\\'" (".h"))
+  '(("\\.cpp\\'" (".h" ".hpp"))
     ("\\.h\\'" (".cpp" ".c"))
+    ("\\.c\\'" (".h"))
     ))
 
 (setq project-root "~/Projects/storm/")
