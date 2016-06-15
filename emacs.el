@@ -230,6 +230,8 @@
 (defun namespace-name ()
   (let ((name (downcase (subproject buffer-file-name))))
     (cond ((string-equal name "shared") "storm")
+	  ((string-equal name "runtime") "storm")
+	  ((string-equal name "compiler") "storm")
 	  (t name))))
 
 (defun insert-namespace ()

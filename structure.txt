@@ -1,0 +1,21 @@
+The structure of Storm is currently:
+
+Code	      Code generation
+CodeTest      Tests for code generation
+Compiler      The storm compiler itself.
+External      External Storm code, not to be committed in the main repository
+Graphics      Graphics library (eg. loading images)
+LibOgg	      Sources for libogg
+OS	      OS-specific interface, provides threading, generic function calls and more.
+Runtime	      Runtime library for Storm.
+Shared	      Old shared library. Being migrated into Runtime
+Sound	      Sound playback.
+Storm	      Old core. Being migrated into Compiler
+StormBuiltin  Preprocessor for the C++ code.
+StormGui      UI library.
+StormMain     Entry-point for the standalone compiler. Rename into Storm later?
+StormTest     Tests for the Storm compiler.
+Test	      Library for tests in C++.
+TestData      Data required for some tests.
+Utils	      Generic C++ utilities. Majority of things here should be moved elsewhere.
+root	      Root for Storm code.

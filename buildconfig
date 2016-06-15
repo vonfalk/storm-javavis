@@ -1,4 +1,4 @@
-StormTest
+CompilerTest
 
 #Basic UI test.
 #StormMain -a -r ../root/ -f test.ui.main

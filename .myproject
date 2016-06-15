@@ -31,6 +31,7 @@ all+=storm_slow
 
 #Regular libraries linked into Storm and/or any storm libraries.
 Code+=lib
+Compiler+=lib
 OS+=lib
 Shared+=lib
 Utils+=lib
@@ -98,7 +99,7 @@ execDir=../slow/
 
 []
 #Ignore includes from the generated BuiltIn.cpp files.
-noIncludes+=BuiltIn.cpp
+noIncludes+=*/BuiltIn.cpp
 
 [windows]
 #Tell the Win32 API we're working in UTF16.
