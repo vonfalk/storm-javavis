@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Gc.h"
+
 // TODO: Do not depend on path!
 #include "Utils/Path.h"
 
@@ -35,6 +37,10 @@ namespace storm {
 
 		// Destroy. This will wait until all threads have terminated properly.
 		~Engine();
+
+	private:
+		// Interface to the GC we're using.
+		Gc gc;
 	};
 
 }

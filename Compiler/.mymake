@@ -1,6 +1,3 @@
-[]
-noIncludes+=gc/*
-
 #No PCH for c-files.
 [windows]
 compile+=*.c:cl <defines> <file> <includes> <flags> <warnings> /c /Fo<output>
