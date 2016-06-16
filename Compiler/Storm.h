@@ -10,6 +10,10 @@
  *
  * TODO: Add support for boehm GC as well: http://hboehm.info/gc/ (very liberal license, not as powerful).
  */
+
+// C-mode detection of debug mode.
+#include "Utils/Mode.h"
+
 #define STORM_GC_MPS
 // #define STORM_GC_BOEHM
 
