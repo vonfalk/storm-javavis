@@ -103,6 +103,9 @@ namespace storm {
 
 		// Allocation point for main thread (TODO: make sure to give each thread its own allocation point)
 		mps_ap_t allocPoint;
+
+		// Main thread's root.
+		mps_root_t mainRoot;
 #endif
 	};
 

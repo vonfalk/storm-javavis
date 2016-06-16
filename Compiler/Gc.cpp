@@ -244,6 +244,59 @@ namespace storm {
 		}
 	}
 
+	/**
+	 * Platform specific scanning of threads.
+	 *
+	 * We can not use everything MPS provides since we're implementing our own UThreads on top of
+	 * kernel threads. We need to scan those stacks as well, otherwise we would be in big
+	 * trouble. Sadly, this breaks some assumptions that MPS makes about how the stack behaves, so
+	 * we have to do some fairly ugly stuff...
+	 *
+	 * TODO: Move some of these to os::UThread to centralize the knowledge about threading on the
+	 * current platform.
+	 */
+#if defined(X86) && defined(WINDOWS)
+
+	// Set to 0xFFFFFF so that MPS will not discard this thread when we switch stacks. Note, it must
+	// be properly word-aligned.
+	static void * const stackDummy = (void *)((size_t)-1 & ~(wordSize - 1));
+
+	static mps_res_t mpsScanThread(mps_ss_t ss, void *base, void *limit, void *closure) {
+		void **from = (void **)base;
+		void **to = (void **)limit;
+
+		if (limit == stackDummy) {
+			// Read the current stack limit from thread-local storage.
+			__asm {
+				mov eax, fs:[4];
+				mov to, eax;
+			}
+
+			// Update the scanned size so that we do not accidentally surprise MPS.
+			// This is what we want to do, but cannot since we do not have access to that data.
+			// ss->scannedSize -= (char *)base - (char *)limit;
+		}
+
+		// Note: We're checking all word-aligned positions as we need to make sure we're scanning
+		// the return addresses into functions (which are also in this pool). MPS currently scans
+		// EIP as well, which is good as the currently executing function might otherwise be moved.
+		MPS_SCAN_BEGIN(ss) {
+			for (void **at = from; at < to; at++) {
+				mps_res_t r = MPS_FIX12(ss, at);
+				if (r != MPS_RES_OK)
+					return r;
+			}
+
+			// TODO: Scan other UThreads running on this thread as well!
+		} MPS_SCAN_END(ss);
+
+		return MPS_RES_OK;
+	}
+
+#else
+#error "Implement stack scanning for your machine!"
+#endif
+
 
 	// Check return codes from MPS.
 	static void check(mps_res_t result, const wchar *msg) {
@@ -292,9 +345,23 @@ namespace storm {
 			check(mps_pool_create_k(&pool, arena, mps_class_amc(), args), L"Failed to create a GC pool.");
 		} MPS_ARGS_END(args);
 
-		// TODO: Make this better! Register thread as a root.
+		// TODO: Make everything below here per thread:
+
 		// Register the current thread with MPS.
 		check(mps_thread_reg(&mainThread, arena), L"Failed to register thread.");
+
+		// Register the main thread's root. Note that we're fooling MPS on where the stack starts,
+		// as we will discover this ourselves later in a platform-specific manner depending on which
+		// UThread is currently running.
+		check(mps_root_create_thread_scanned(&mainRoot,
+												arena,
+												mps_rank_ambig(),
+												(mps_rm_t)0,
+												mainThread,
+												&mpsScanThread,
+												null,
+												stackDummy),
+			L"Failed creating thread root.");
 
 		// Create an allocation point for the current thread.
 		check(mps_ap_create_k(&allocPoint, pool, mps_args_none), L"Failed to create allocation point");
@@ -308,6 +375,7 @@ namespace storm {
 
 		// TODO: Fix threads
 		mps_ap_destroy(allocPoint);
+		mps_root_destroy(mainRoot);
 		mps_thread_dereg(mainThread);
 
 		// Destroy pools.
@@ -406,13 +474,6 @@ namespace storm {
 	};
 
 	void Gc::test() {
-		int base;
-
-		// Hack, as we do not yet register threads properly.
-		mps_root_t root;
-		check(mps_root_create_thread(&root, arena, mainThread, &base + 20), L"Failed to create thread's root.");
-
-
 		for (nat j = 0; j < 100; j++) {
 			GcLink *first = null;
 			GcLink *at = null;
@@ -442,10 +503,8 @@ namespace storm {
 				at = at->next;
 			}
 
-			PLN("Done!");
+			PLN("Done: " << j);
 		}
-
-		mps_root_destroy(root);
 	}
 
 }
