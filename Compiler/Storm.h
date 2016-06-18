@@ -27,6 +27,8 @@
 namespace storm {
 	using code::Size;
 	using code::Offset;
+
+	class Engine;
 }
 
 #endif

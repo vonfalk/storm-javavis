@@ -128,6 +128,7 @@ namespace storm {
 
 		switch (h->type) {
 		case GcType::tFixed:
+		case GcType::tType:
 			s = h->obj.stride;
 			break;
 		case GcType::tArray:
@@ -159,10 +160,18 @@ namespace storm {
 		return (byte *)at + mpsSize((byte *)at - headerSize);
 	}
 
+	// Helper for interpreting and scanning a GcType block.
+#define FIX_HEADER(header)									\
+	{														\
+		mps_addr_t *d = (mps_addr_t *)&((header).type);		\
+		mps_res_t r = MPS_FIX12(ss, d);						\
+		if (r != MPS_RES_OK)								\
+			return r;										\
+	}
 
 	// Helper for interpreting and scanning a block of data.
-#define FIX_GCTYPE(header, base)									\
-	for (nat _i = 0; _i < (header)->obj.count; _i++) {				\
+#define FIX_GCTYPE(header, start, base)								\
+	for (nat _i = (start); _i < (header)->obj.count; _i++) {		\
 		size_t offset = (header)->obj.offset[_i];					\
 		mps_addr_t *data = (mps_addr_t *)((byte *)(base) + offset);	\
 		mps_res_t r = MPS_FIX12(ss, data);							\
@@ -187,11 +196,23 @@ namespace storm {
 
 				switch (h->type) {
 				case GcType::tFixed:
-					FIX_GCTYPE(h, pos);
+					FIX_HEADER(h->obj);
+					FIX_GCTYPE(h, 0, pos);
 					break;
+				case GcType::tType: {
+					size_t offset = h->obj.offset[0];
+					GcType **data = (GcType **)((byte *)pos + offset);
+					FIX_HEADER(h->obj);
+					if (*data) {
+						FIX_HEADER(**data);
+					}
+					FIX_GCTYPE(h, 1, pos);
+					break;
+				}
 				case GcType::tArray:
+					FIX_HEADER(h->obj);
 					for (size_t i = 0; i < o->count; i++, pos = (byte *)pos + h->obj.stride) {
-						FIX_GCTYPE(h, pos);
+						FIX_GCTYPE(h, 0, pos);
 					}
 					break;
 				}
@@ -274,7 +295,7 @@ namespace storm {
 
 			// Update the scanned size so that we do not accidentally surprise MPS.
 			// This is what we want to do, but cannot since we do not have access to that data.
-			// ss->scannedSize -= (char *)base - (char *)limit;
+			mps_decrease_scanned(ss, (char *)base - (char *)limit);
 		}
 
 		// Note: We're checking all word-aligned positions as we need to make sure we're scanning
@@ -386,7 +407,7 @@ namespace storm {
 	}
 
 	void *Gc::alloc(const GcType *type) {
-		assert(type->type == GcType::tFixed, L"Wrong type for calling alloc().");
+		assert(type->kind == GcType::tFixed, L"Wrong type for calling alloc().");
 
 		size_t size = align(type->stride + headerSize);
 		mps_addr_t memory;
@@ -406,7 +427,7 @@ namespace storm {
 	}
 
 	void *Gc::allocArray(const GcType *type, size_t elements) {
-		assert(type->type == GcType::tArray, L"Wrong type for calling allocArray().");
+		assert(type->kind == GcType::tArray, L"Wrong type for calling allocArray().");
 
 		if (elements == 0)
 			return null;
@@ -442,6 +463,11 @@ namespace storm {
 		free(t);
 	}
 
+	const GcType *Gc::allocType(const void *mem) {
+		void *t = (byte *)mem - headerSize;
+		return &((MpsHeader *)t)->obj;
+	}
+
 }
 
 #else
@@ -468,6 +494,7 @@ namespace storm {
 
 	static const GcType linkType = {
 		GcType::tFixed,
+		null,
 		sizeof(GcLink),
 		1,
 		{ OFFSET_OF(GcLink, next) }

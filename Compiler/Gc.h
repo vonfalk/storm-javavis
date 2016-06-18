@@ -5,6 +5,8 @@
 
 namespace storm {
 
+	class Type;
+
 	/**
 	 * This file contains the interface to the garbage collector. To reliably run a GC, we need to
 	 * be able to describe where each type hides its pointers, and possibly what finalizers to
@@ -29,9 +31,13 @@ namespace storm {
 	 */
 	struct GcType {
 		// Possible variations in the description.
-		enum Type {
+		enum Kind {
 			// A type that has a fixed layout and size (ie. classes, structs).
 			tFixed,
+
+			// A variant of tFixed, where offset[0] points to a GcType to be scanned. Used by the
+			// Type type to properly scan its GcType member.
+			tType,
 
 			// Repeated occurence of another type (ie. an array). The number of repetitions is stored as
 			// a size_t in the first element of the allocation (to keep alignment), followed by a number
@@ -40,7 +46,18 @@ namespace storm {
 		};
 
 		// Type. size_t since we want to know the size properly. Has to be first.
-		size_t type;
+		size_t kind;
+
+		/**
+		 * Other useful data for the rest of the system:
+		 */
+
+		// (scanned) reference to the full description of this type.
+		Type *type;
+
+		/**
+		 * Description of pointer offsets:
+		 */
 
 		// Number of bytes to skip for each element.
 		size_t stride;
@@ -81,6 +98,9 @@ namespace storm {
 
 		// Deallocate a gc type.
 		void freeType(GcType *type);
+
+		// Get the gc type of an allocation.
+		static const GcType *allocType(const void *mem);
 
 		/**
 		 * Debugging/testing.

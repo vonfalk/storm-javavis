@@ -11,6 +11,9 @@ namespace storm {
 	 * Defines the root object of the compiler. This object contains everything needed by the
 	 * compiler itself, and shall be kept alive as long as anything from the compiler is used. Two
 	 * separate instances of this class can be used as two completely separate runtime environments.
+	 *
+	 * TODO? Break this into two parts; one that contains stuff needed from external libraries, and
+	 * one that is central to the compiler.
 	 */
 	class Engine : NoCopy {
 	public:
@@ -38,7 +41,6 @@ namespace storm {
 		// Destroy. This will wait until all threads have terminated properly.
 		~Engine();
 
-	private:
 		// Interface to the GC we're using.
 		Gc gc;
 	};
