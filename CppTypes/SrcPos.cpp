@@ -11,6 +11,6 @@ wostream &operator <<(wostream &to, const SrcPos &pos) {
 	if (pos.fileId == SrcPos::invalid)
 		to << L"<unknown location>";
 	else
-		to << SrcPos::files[pos.fileId] << L"(@" << pos.offset << L")";
+		to << SrcPos::files[pos.fileId] << L"(+" << pos.offset << L")";
 	return to;
 }

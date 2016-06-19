@@ -69,7 +69,13 @@ int _tmain(int argc, const wchar *argv[]) {
 	bool update = oldFile(modified, config.cppOut) || oldFile(modified, config.asmOut);
 
 	if (update) {
-		World world = parseWorld();
+		try {
+			World world = parseWorld();
+		} catch (const Exception &e) {
+			PVAR(e.what());
+			PLN("FAILED");
+			return 1;
+		}
 	}
 
 	Timestamp end;

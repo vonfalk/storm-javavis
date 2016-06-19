@@ -1,10 +1,15 @@
 #include "stdafx.h"
 #include "CppName.h"
 
+CppName::CppName() {}
+
 CppName::CppName(const String &name) : String(name) {}
 
 CppName CppName::operator +(const String &part) const {
-	return CppName(String::operator +(L"::" + part));
+	if (empty())
+		return CppName(part);
+	else
+		return CppName(String::operator +(L"::" + part));
 }
 
 static nat lastDots(const String &str) {

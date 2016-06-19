@@ -6,6 +6,9 @@
  */
 class CppName : public String {
 public:
+	// Create an empty name.
+	explicit CppName();
+
 	// Create from a string.
 	explicit CppName(const String &name);
 

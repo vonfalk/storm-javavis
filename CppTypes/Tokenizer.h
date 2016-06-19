@@ -17,6 +17,8 @@ public:
 	// Compare the actual token.
 	inline bool operator ==(const Token &o) const { return token == o.token; }
 	inline bool operator !=(const Token &o) const { return token != o.token; }
+	inline bool operator ==(const String &o) const { return token == o; }
+	inline bool operator !=(const String &o) const { return token != o; }
 
 	// Empty token?
 	inline bool empty() const { return token.size() == 0; }
@@ -48,6 +50,9 @@ public:
 	// has been reached.
 	Token next();
 
+	// Skip current token.
+	void skip();
+
 	// Peek.
 	Token peek();
 
@@ -56,6 +61,9 @@ public:
 
 	// Get a token and see it is the correct one.
 	void expect(const String &s);
+
+	// Skip the current token if it is 'str'.
+	bool skipIf(const String &s);
 
 private:
 	// Source string.

@@ -58,6 +58,10 @@ Token Tokenizer::next() {
 	return t;
 }
 
+void Tokenizer::skip() {
+	nextToken = findNext();
+}
+
 Token Tokenizer::peek() {
 	if (!more())
 		throw Error(L"End of file!", SrcPos(pathId, src.size()));
@@ -69,6 +73,16 @@ void Tokenizer::expect(const String &t) {
 	Token tok = next();
 	if (tok.token != t)
 		throw Error(L"Expected " + t + L" but got " + tok.token, tok.pos);
+}
+
+bool Tokenizer::skipIf(const String &t) {
+	Token tok = peek();
+	if (tok.token == t) {
+		skip();
+		return true;
+	} else {
+		return false;
+	}
 }
 
 bool Tokenizer::more() const {
