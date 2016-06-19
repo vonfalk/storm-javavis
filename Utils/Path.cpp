@@ -236,6 +236,13 @@ Path Path::makeRelative(const Path &to) const {
 	return result;
 }
 
+Path Path::makeAbsolute(const Path &to) const {
+	if (isAbsolute())
+		return to;
+	else
+		return to + *this;
+}
+
 bool Path::exists() const {
 	return PathFileExists(toS().c_str()) == TRUE;
 }

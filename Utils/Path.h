@@ -78,6 +78,9 @@ public:
 	// using the + operator above.
 	Path makeRelative(const Path &to) const;
 
+	// Make this path absolute (if it is not already).
+	Path makeAbsolute(const Path &to) const;
+
 	// Find the children of this path.
 	vector<Path> children() const;
 

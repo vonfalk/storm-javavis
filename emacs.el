@@ -225,6 +225,7 @@
      (or
       (is-test-project)
       (equal proj "Utils")
+      (equal proj "CppTypes")
       (equal proj "StormBuiltin")))))
 
 (defun namespace-name ()
