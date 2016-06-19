@@ -1,0 +1,3 @@
+[submodule "mps"]
+	path = mps
+	url = ../mps.git
