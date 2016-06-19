@@ -10,7 +10,7 @@ public:
 	explicit SrcPos();
 
 	// Give a path-id and an offset.
-	SrcPos(nat fileId, nat offset);
+	SrcPos(nat fileId, nat line, nat col);
 
 	// No file and no offset.
 	static const nat invalid = -1;
@@ -18,13 +18,13 @@ public:
 	// File #.
 	nat fileId;
 
-	// Offset.
-	nat offset;
+	// Line + column.
+	nat line, col;
 
 	// All files.
 	static vector<Path> files;
 
-	inline bool operator ==(const SrcPos &o) const { return fileId == o.fileId && offset == o.offset; }
+	inline bool operator ==(const SrcPos &o) const { return fileId == o.fileId && line == o.line && col == o.col; }
 	inline bool operator !=(const SrcPos &o) const { return !(*this == o); }
 };
 

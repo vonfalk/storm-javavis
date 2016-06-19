@@ -15,6 +15,7 @@ namespace storm {
 	 * - A destructor has been *explicitly declared* in a member, which is stored by value.
 	 */
 	class Object {
+		STORM_CLASS;
 	public:
 		// Default constructor.
 		Object();

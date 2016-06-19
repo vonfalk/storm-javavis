@@ -1,6 +1,7 @@
 #pragma once
 #include "SrcPos.h"
 #include "CppName.h"
+#include "CppType.h"
 
 /**
  * Describes a type in C++.

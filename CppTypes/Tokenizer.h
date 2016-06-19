@@ -44,7 +44,7 @@ wostream &operator <<(wostream &to, const Token &t);
 class Tokenizer : NoCopy {
 public:
 	// Tokenize data in 'SrcPos::files[pathId]' from 'start'.
-	Tokenizer(nat pathId, nat start);
+	Tokenizer(nat pathId);
 
 	// Get the next token in the stream. Throws an exception if the end of stream
 	// has been reached.
@@ -74,6 +74,9 @@ private:
 
 	// Current position.
 	nat pos;
+
+	// Current SrcPos.
+	SrcPos srcPos;
 
 	// Different states of the tokenizer.
 	enum State {

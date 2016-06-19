@@ -20,7 +20,7 @@ String Token::strVal() const {
 }
 
 static const wchar *operators = L"+?*&=.:";
-static const wchar *specials = L"(){},-;<>";
+static const wchar *specials = L"[](){},-;<>";
 
 static bool isOperator(wchar c) {
 	for (const wchar *p = operators; *p; p++)
@@ -47,8 +47,8 @@ static bool isWhitespace(wchar c) {
 	return false;
 }
 
-Tokenizer::Tokenizer(nat fileId, nat start)
-	: src(readTextFile(SrcPos::files[fileId])), pathId(fileId), pos(start), nextToken(L"", SrcPos()) {
+Tokenizer::Tokenizer(nat fileId)
+	: src(readTextFile(SrcPos::files[fileId])), pathId(fileId), pos(0), srcPos(fileId, 0, 0), nextToken(L"", SrcPos()) {
 	nextToken = findNext();
 }
 
@@ -64,7 +64,7 @@ void Tokenizer::skip() {
 
 Token Tokenizer::peek() {
 	if (!more())
-		throw Error(L"End of file!", SrcPos(pathId, src.size()));
+		throw Error(L"End of file!", srcPos);
 
 	return nextToken;
 }
@@ -92,12 +92,13 @@ bool Tokenizer::more() const {
 Token Tokenizer::findNext() {
 	State state = sStart;
 	nat start = pos;
+	SrcPos sStart = srcPos;
 
 	while (state != sDone) {
 		processChar(start, state);
 	}
 
-	return Token(src.substr(start, pos - start), SrcPos(pathId, start));
+	return Token(src.substr(start, pos - start), sStart);
 }
 
 void Tokenizer::processChar(nat &start, State &state) {
@@ -107,6 +108,8 @@ void Tokenizer::processChar(nat &start, State &state) {
 	}
 
 	wchar ch = src[pos];
+	nat oldPos = pos;
+
 
 	if (ch == '/' && pos+1 < src.size() && (src[pos+1] == '/' || src[pos+1] == '*')) {
 		switch (state) {
@@ -169,13 +172,22 @@ void Tokenizer::processChar(nat &start, State &state) {
 		break;
 	case sMlComment:
 		start = ++pos;
-		if (ch == '*' && pos < src.size() && src[pos] == '/')
+		if (ch == '*' && pos < src.size() && src[pos] == '/') {
+			pos++;
 			state = sStart;
+		}
 		break;
 	case sDone:
-		pos--;
+		// pos--;
 		break;
 	}
 
+	if (pos != oldPos) {
+		srcPos.col += pos - oldPos;
+		if (ch == '\n') {
+			srcPos.line++;
+			srcPos.col = 0;
+		}
+	}
 }
 

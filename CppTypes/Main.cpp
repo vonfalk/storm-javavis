@@ -72,7 +72,7 @@ int _tmain(int argc, const wchar *argv[]) {
 		try {
 			World world = parseWorld();
 		} catch (const Exception &e) {
-			PVAR(e.what());
+			PLN(e.what());
 			PLN("FAILED");
 			return 1;
 		}

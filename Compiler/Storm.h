@@ -17,6 +17,12 @@
 #define STORM_GC_MPS
 // #define STORM_GC_BOEHM
 
+/**
+ * Mark classes and values exposed to storm:
+ */
+#define STORM_CLASS
+#define STORM_VALUE
+
 // When compiling in C-mode, we do not want to include these:
 #ifdef __cplusplus
 

@@ -8,6 +8,7 @@ namespace storm {
 	 * Description of a type.
 	 */
 	class Type : public Object {
+		STORM_CLASS;
 	public:
 		// Create a type.
 		Type();
