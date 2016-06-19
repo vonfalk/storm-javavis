@@ -1,0 +1,167 @@
+#include "stdafx.h"
+#include "Tokenizer.h"
+#include "Exception.h"
+#include "Utils/TextReader.h"
+#include "Utils/FileStream.h"
+
+wostream &operator <<(wostream &to, const Token &token) {
+	return to << token.token;
+}
+
+bool Token::isStr() const {
+	return token.size() >= 2
+		&& token[0] == '"'
+		&& token[token.size()-1] == '"';
+}
+
+String Token::strVal() const {
+	assert(isStr());
+	return token.substr(1, token.size() - 2);
+}
+
+static const wchar *operators = L"+?*&=.:";
+static const wchar *specials = L"(){},-;<>";
+
+static bool isOperator(wchar c) {
+	for (const wchar *p = operators; *p; p++)
+		if (c == *p)
+			return true;
+	return false;
+}
+
+static bool isSpecial(wchar c) {
+	for (const wchar *p = specials; *p; p++)
+		if (c == *p)
+			return true;
+	return false;
+}
+
+static bool isWhitespace(wchar c) {
+	switch (c) {
+	case ' ':
+	case '\n':
+	case '\r':
+	case '\t':
+		return true;
+	}
+	return false;
+}
+
+Tokenizer::Tokenizer(nat fileId, nat start)
+	: src(readTextFile(SrcPos::files[fileId])), pathId(fileId), pos(start), nextToken(L"", SrcPos()) {
+	nextToken = findNext();
+}
+
+Token Tokenizer::next() {
+	Token t = peek();
+	nextToken = findNext();
+	return t;
+}
+
+Token Tokenizer::peek() {
+	if (!more())
+		throw Error(L"End of file!", SrcPos(pathId, src.size()));
+
+	return nextToken;
+}
+
+void Tokenizer::expect(const String &t) {
+	Token tok = next();
+	if (tok.token != t)
+		throw Error(L"Expected " + t + L" but got " + tok.token, tok.pos);
+}
+
+bool Tokenizer::more() const {
+	return !nextToken.empty();
+}
+
+Token Tokenizer::findNext() {
+	State state = sStart;
+	nat start = pos;
+
+	while (state != sDone) {
+		processChar(start, state);
+	}
+
+	return Token(src.substr(start, pos - start), SrcPos(pathId, start));
+}
+
+void Tokenizer::processChar(nat &start, State &state) {
+	if (pos >= src.size()) {
+		state = sDone;
+		return;
+	}
+
+	wchar ch = src[pos];
+
+	if (ch == '/' && pos+1 < src.size() && (src[pos+1] == '/' || src[pos+1] == '*')) {
+		switch (state) {
+		case sStart:
+			if (src[pos+1] == '*')
+				state = sMlComment;
+			else
+				state = sComment;
+			break;
+		case sString:
+		case sComment:
+			break;
+		default:
+			state = sDone;
+			return;
+		}
+	}
+
+	switch (state) {
+	case sStart:
+		pos++;
+		if (isWhitespace(ch)) {
+			start = pos;
+		} else if (isSpecial(ch)) {
+			state = sDone;
+		} else if (isOperator(ch)) {
+			state = sOperator;
+		} else if (ch == '"') {
+			state = sString;
+		} else {
+			state = sText;
+		}
+		break;
+	case sText:
+		if (isOperator(ch) || isWhitespace(ch) || isSpecial(ch) || ch == '"') {
+			state = sDone;
+		} else {
+			pos++;
+		}
+		break;
+	case sOperator:
+		if (!isOperator(ch)) {
+			state = sDone;
+		} else {
+			pos++;
+		}
+		break;
+	case sString:
+		pos++;
+		if (ch == '"') {
+			state = sDone;
+		} else if (ch == '\\') {
+			pos++;
+		}
+		break;
+	case sComment:
+		start = ++pos;
+		if (ch == '\n')
+			state = sStart;
+		break;
+	case sMlComment:
+		start = ++pos;
+		if (ch == '*' && pos < src.size() && src[pos] == '/')
+			state = sStart;
+		break;
+	case sDone:
+		pos--;
+		break;
+	}
+
+}
+
