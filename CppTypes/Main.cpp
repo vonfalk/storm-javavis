@@ -2,6 +2,8 @@
 #include "Config.h"
 #include "SrcPos.h"
 #include "World.h"
+#include "Write.h"
+#include "Output.h"
 
 void findHeaders(const Path &in, vector<Path> &out) {
 	vector<Path> c = in.children();
@@ -48,6 +50,10 @@ bool oldFile(const Timestamp &input, const Path &file) {
 	return file.mTime() < input;
 }
 
+void dummy(wostream &to, World &w) {
+	to << "A" << endl << "B" << endl;
+}
+
 int _tmain(int argc, const wchar *argv[]) {
 	if (!parse(argc, argv)) {
 		usage(argv[0]);
@@ -65,14 +71,27 @@ int _tmain(int argc, const wchar *argv[]) {
 
 	Timestamp modified = lastModified(SrcPos::files);
 	modified = max(modified, config.src);
+	{
+		Path me(argv[0]);
+		if (me.exists())
+			modified = max(modified, me.mTime());
+	}
 
 	bool update = oldFile(modified, config.cppOut) || oldFile(modified, config.asmOut);
 
 	if (update) {
 		try {
 			World world = parseWorld();
+
+			// TODO: More!
+			world.usingDecl.push_back(CppName(L"storm"));
+
+			world.prepare();
+			generateFile(config.src, config.cppOut, genMap(), world);
 		} catch (const Exception &e) {
-			PLN(e.what());
+			PLN(e);
+			// PLN(e.what());
+			// PVAR(e);
 			PLN("FAILED");
 			return 1;
 		}

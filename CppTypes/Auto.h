@@ -70,6 +70,13 @@ wostream &operator <<(wostream &to, const Auto<T> &p) {
 	return to << *p;
 }
 
+template <class T>
+Auto<T> capture(T *ptr) {
+	if (ptr)
+		ptr->addRef();
+	return Auto<T>(ptr);
+}
+
 
 /**
  * Refcounted object.
@@ -77,6 +84,7 @@ wostream &operator <<(wostream &to, const Auto<T> &p) {
 class Refcount : NoCopy {
 public:
 	Refcount() : refs(1) {}
+	Refcount(const Refcount &) : refs(1) {}
 
 	void addRef() {
 		refs++;

@@ -7,10 +7,33 @@
  */
 class World {
 public:
+	// Using namespace declarations.
+	vector<CppName> usingDecl;
+
 	// All types.
-	map<CppName, Type> types;
+	vector<Type> types;
+
+	// Quick lookup of all types.
+	map<CppName, nat> typeLookup;
 
 	// ...
+
+	// Add a type (and do the proper checking).
+	void add(const Type &type);
+
+	// Prepare the world for serialization (ie. resolving types, ...).
+	void prepare();
+
+	// Find a type.
+	Type *findType(const CppName &name, const SrcPos &pos);
+	Type *findTypeUnsafe(const CppName &name);
+
+private:
+	// Sort types so we get a deterministic order.
+	void orderTypes();
+
+	// Resolve all types in this world.
+	void resolveTypes();
 };
 
 // Parse all files in SrcPos::types and return what we found.

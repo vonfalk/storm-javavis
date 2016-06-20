@@ -3,6 +3,9 @@
 #include "SrcPos.h"
 #include "Auto.h"
 
+class Type;
+class World;
+
 /**
  * Represents a (written) type in C++.
  */
@@ -15,6 +18,15 @@ public:
 
 	// Is this type const?
 	bool constType;
+
+	// Get the size of this type.
+	virtual Size size() const = 0;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const = 0;
+
+	// Resolve type info.
+	virtual Auto<CppType> resolve(World &in) const = 0;
 
 	// Print.
 	virtual void print(wostream &to) const = 0;
@@ -37,6 +49,15 @@ public:
 	// Array member type.
 	Auto<CppType> of;
 
+	// Get the size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return true; }
+
+	// Resolve.
+	virtual Auto<CppType> resolve(World &in) const;
+
 	// Print.
 	virtual void print(wostream &to) const;
 };
@@ -50,6 +71,15 @@ public:
 
 	// Key and value types.
 	Auto<CppType> k, v;
+
+	// Get the size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return true; }
+
+	// Resolve.
+	virtual Auto<CppType> resolve(World &in) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -68,6 +98,15 @@ public:
 	// Template types.
 	vector<Auto<CppType>> params;
 
+	// Get the size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return false; }
+
+	// Resolve.
+	virtual Auto<CppType> resolve(World &in) const;
+
 	// Print.
 	virtual void print(wostream &to) const;
 };
@@ -81,6 +120,15 @@ public:
 
 	// Type.
 	Auto<CppType> of;
+
+	// Get the size of this type.
+	virtual Size size() const { return Size::sPtr; }
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return false; }
+
+	// Resolve.
+	virtual Auto<CppType> resolve(World &in) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -96,6 +144,15 @@ public:
 	// Type.
 	Auto<CppType> of;
 
+	// Get the size of this type.
+	virtual Size size() const { return Size::sPtr; }
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return false; }
+
+	// Resolve.
+	virtual Auto<CppType> resolve(World &in) const;
+
 	// Print.
 	virtual void print(wostream &to) const;
 };
@@ -109,6 +166,15 @@ public:
 
 	// Type.
 	Auto<PtrType> of;
+
+	// Get the size of this type.
+	virtual Size size() const { return of->size(); }
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return of->gcType(); }
+
+	// Resolve.
+	virtual Auto<CppType> resolve(World &in) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -125,6 +191,49 @@ public:
 	// Name.
 	CppName name;
 
+	// Get the size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return false; }
+
+	// Resolve.
+	virtual Auto<CppType> resolve(World &in) const;
+
 	// Print.
 	virtual void print(wostream &to) const;
 };
+
+/**
+ * Resolved type.
+ */
+class ResolvedType : public CppType {
+public:
+	ResolvedType(const CppType &templ, Type *type);
+
+	// Type.
+	Type *type;
+
+	// Get the size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const;
+
+	// Resolve.
+	virtual Auto<CppType> resolve(World &in) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+};
+
+
+inline bool isGcPtr(Auto<CppType> t) {
+	if (Auto<PtrType> p = t.as<PtrType>()) {
+		return p->of->gcType();
+	} else if (Auto<RefType> r = t.as<RefType>()) {
+		return r->of->gcType();
+	} else {
+		return false;
+	}
+}

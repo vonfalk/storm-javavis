@@ -139,6 +139,8 @@ void Tokenizer::processChar(nat &start, State &state) {
 			state = sOperator;
 		} else if (ch == '"') {
 			state = sString;
+		} else if (ch == '#') {
+			state = sPreproc;
 		} else {
 			state = sText;
 		}
@@ -176,6 +178,23 @@ void Tokenizer::processChar(nat &start, State &state) {
 			pos++;
 			state = sStart;
 		}
+		break;
+	case sPreproc:
+		start = ++pos;
+		if (ch == '\\') {
+			state = sPreprocExtend;
+		} else if (ch == '\n') {
+			state = sStart;
+		}
+		break;
+	case sPreprocExtend:
+		start = ++pos;
+		if (ch == '\n')
+			state = sPreproc;
+		else if (ch == '\r')
+			;
+		else
+			state = sPreproc;
 		break;
 	case sDone:
 		// pos--;

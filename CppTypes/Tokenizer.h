@@ -86,6 +86,8 @@ private:
 		sString,
 		sComment,
 		sMlComment,
+		sPreproc,
+		sPreprocExtend,
 		sDone,
 	};
 
