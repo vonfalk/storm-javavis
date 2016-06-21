@@ -94,7 +94,7 @@ namespace storm {
 		 */
 
 		// Allocate a gc type.
-		GcType *allocType(size_t entries);
+		GcType *allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries);
 
 		// Deallocate a gc type.
 		void freeType(GcType *type);

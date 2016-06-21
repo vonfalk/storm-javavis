@@ -21,6 +21,9 @@ namespace code {
 		// Initialize to a known size (platform independent).
 		explicit Size(nat s);
 
+		// Initialize to previously obtained values.
+		Size(nat size32, nat align32, nat size64, nat align64);
+
 		// Get the size for the current platform.
 		nat current() const;
 
@@ -59,6 +62,12 @@ namespace code {
 		bool operator >=(const Size &o) const;
 		bool operator <=(const Size &o) const;
 
+		// Find out the 32- and 64-bit sizes (for storage).
+		inline nat size32() const { return s32.size; }
+		inline nat size64() const { return s64.size; }
+		inline nat align32() const { return s32.align; }
+		inline nat align64() const { return s64.align; }
+
 		// Output.
 		friend wostream &operator <<(wostream &to, const Size &s);
 	private:
@@ -92,6 +101,9 @@ namespace code {
 
 		// Convert from Size.
 		explicit Offset(Size s);
+
+		// Initialize to specific values.
+		Offset(int s32, int s64);
 
 		// Get the size for the current platform.
 		int current() const;
@@ -148,14 +160,15 @@ namespace code {
 		// Formatted string output.
 		String format(bool sign) const;
 
+		// Find out the 32- and 64-bit sizes (for storage).
+		inline nat v32() const { return o32; }
+		inline nat v64() const { return o64; }
+
 		// Output.
 		friend wostream &operator <<(wostream &to, const Offset &s);
 
 		Offset abs() const;
 	private:
-		// Initialize to specific values.
-		Offset(int s32, int s64);
-
 		// 32-bit offset.
 		int o32;
 

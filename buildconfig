@@ -1,5 +1,5 @@
-#CompilerTest
-CppTypes -a ../Compiler/ --template ../Compiler/Gen/CppTypes.template.cpp --out ../Compiler/Gen/CppTypes.cpp --asm ../Compiler/Gen/CppTypes.asm
+CompilerTest
+#CppTypes -a ../Compiler/ --template ../Compiler/Gen/CppTypes.template.cpp --out ../Compiler/Gen/CppTypes.cpp --asm ../Compiler/Gen/CppTypes.asm
 
 #Basic UI test.
 #StormMain -a -r ../root/ -f test.ui.main

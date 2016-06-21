@@ -17,19 +17,34 @@ static String toVarName(const CppName &c) {
 	return s;
 }
 
+// Convert a Size or an Offset to a string representation.
+static String format(const Size &s) {
+	std::wostringstream to;
+	to << L"{ " << s.size32() << L", " << s.size64() << L", " << s.align32() << L", " << s.align64() << L" }";
+	return to.str();
+}
+
+static String format(const Offset &o) {
+	std::wostringstream to;
+	to << L"{ " << o.v32() << L", " << o.v64() << L" }";
+	return to.str();
+}
+
+static String offset(const Offset &o) {}
+
 static void genIncludes(wostream &to, World &w) {}
 
 static void genPtrOffsets(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
 		Type &t = w.types[i];
-		to << L"static size_t " << toVarName(t.name) << L"_offset[] = { ";
+		to << L"static CppOffset " << toVarName(t.name) << L"_offset[] = { ";
 
 		vector<Offset> o = t.ptrOffsets();
 		for (nat i = 0; i < o.size(); i++) {
-			to << o[i].current() << L", ";
+			to << format(o[i]) << L", ";
 		}
 
-		to << L"CppType::invalidOffset };\n";
+		to << L"CppOffset::invalid };\n";
 	}
 }
 
@@ -49,7 +64,7 @@ static void genTypes(wostream &to, World &w) {
 		}
 
 		// Size.
-		to << t.size().current() << L", ";
+		to << format(t.size()) << L", ";
 
 		// Pointer offsets.
 		to << toVarName(t.name) << L"_offset },\n";

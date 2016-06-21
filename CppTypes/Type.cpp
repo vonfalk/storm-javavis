@@ -33,14 +33,14 @@ Size Type::size() const {
 }
 
 vector<Offset> Type::ptrOffsets() const {
-	Offset o = Offset::sPtr; // VTable.
+	Size s = Size::sPtr; // VTable.
 	vector<Offset> r;
 
 	for (nat i = 0; i < variables.size(); i++) {
 		const Auto<CppType> &t = variables[i].type;
 		if (isGcPtr(t))
-			r.push_back(o);
-		o += variables[i].type->size();
+			r.push_back(Offset(s));
+		s += variables[i].type->size();
 	}
 
 	return r;

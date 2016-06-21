@@ -9,6 +9,8 @@ namespace code {
 
 	Size::Size(nat s32, nat s64) : s32(s32), s64(s64) {}
 
+	Size::Size(nat size32, nat align32, nat size64, nat align64) : s32(size32, align32), s64(size64, align64) {}
+
 	Size Size::sPtr = Size(4, 8);
 	Size Size::sChar = Size(1);
 	Size Size::sByte = Size(1);

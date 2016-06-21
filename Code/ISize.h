@@ -20,6 +20,12 @@ namespace code {
 			this->align = max(nat(1), min(ptr, size));
 		}
 
+		// Initialize to previously obtained values.
+		ISize(nat size, nat align) : size(size), align(align) {
+			assert((size & sizeMask) == size);
+			assert((ptr & alignMaskLow) == ptr);
+		}
+
 		// Add another aligned size.
 		ISize<ptr> &operator +=(const ISize &o) {
 			// Update our alignment requirement.

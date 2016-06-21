@@ -407,7 +407,7 @@ namespace storm {
 	}
 
 	void *Gc::alloc(const GcType *type) {
-		assert(type->kind == GcType::tFixed, L"Wrong type for calling alloc().");
+		assert(type->kind == GcType::tFixed || type->kind == GcType::tType, L"Wrong type for calling alloc().");
 
 		size_t size = align(type->stride + headerSize);
 		mps_addr_t memory;
@@ -451,10 +451,13 @@ namespace storm {
 		return (byte *)memory + headerSize;
 	}
 
-	GcType *Gc::allocType(size_t entries) {
+	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		size_t s = sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
 		GcType *t = (GcType *)malloc(s);
 		memset(t, 0, s);
+		t->kind = kind;
+		t->type = type;
+		t->stride = stride;
 		t->count = entries;
 		return t;
 	}

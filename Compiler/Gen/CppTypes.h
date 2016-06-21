@@ -7,6 +7,45 @@ namespace storm {
 	 */
 
 	/**
+	 * A size. Describes both x86 and x64 sizes.
+	 */
+	struct CppSize {
+		nat size32;
+		nat size64;
+		nat align32;
+		nat align64;
+
+		inline operator Size() const {
+			return Size(size32, align32, size64, align64);
+		}
+
+		static const CppSize invalid;
+	};
+
+	/**
+	 * An offset. Describes both x86 and x64 sizes.
+	 */
+	struct CppOffset {
+		int s32;
+		int s64;
+
+		inline bool operator ==(const CppOffset &o) const {
+			return s32 == o.s32 && s64 == o.s64;
+		}
+
+		inline bool operator !=(const CppOffset &o) const {
+			return !(*this == o);
+		}
+
+		inline operator Offset() const {
+			return Offset(s32, s64);
+		}
+
+		// Invalid mask of (-1, -1). Usable only whenever we expect positive offsets.
+		static const CppOffset invalid;
+	};
+
+	/**
 	 * List of C++ types.
 	 */
 	struct CppType {
@@ -17,13 +56,10 @@ namespace storm {
 		nat parent;
 
 		// Total size of the type.
-		size_t size;
+		CppSize size;
 
-		// Invalid pointer offset.
-		static size_t invalidOffset = -1;
-
-		// Pointer offsets. Ends with 'invalid_offset'.
-		size_t *ptrOffsets;
+		// Pointer offsets. Ends with 'CppSize::invalid'.
+		CppOffset *ptrOffsets;
 	};
 
 

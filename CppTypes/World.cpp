@@ -200,7 +200,7 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 
 	if (tok.skipIf(L"(")) {
 		// Function.
-		PLN(tok.peek().pos << ": function");
+		// PLN(tok.peek().pos << ": function");
 
 		if (!tok.skipIf(L")")) {
 			parseType(tok);
@@ -284,6 +284,9 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 		} else if (t.token == L"static") {
 			// Ignore static members. Maybe we should warn about this...
 			TODO(L"Warn about static members?");
+			while (!tok.skipIf(L";"))
+				tok.skip();
+		} else if (t.token == L"friend") {
 			while (!tok.skipIf(L";"))
 				tok.skip();
 		} else if (t.token == L"inline") {

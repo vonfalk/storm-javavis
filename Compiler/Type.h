@@ -4,11 +4,17 @@
 
 namespace storm {
 
+	// Description of a type in C++. Found in CppTypes.h
+	struct CppType;
+
 	/**
 	 * Description of a type.
 	 */
 	class Type : public Object {
 		STORM_CLASS;
+
+		// Let object access gcType.
+		friend void *Object::operator new(size_t, Type *);
 	public:
 		// Create a type.
 		Type();
@@ -20,11 +26,11 @@ namespace storm {
 		Engine &engine;
 
 		// Create the type for Type (as this is special). Assumed to be run while the gc is parked.
-		Type *createType(Engine &e);
+		static Type *createType(Engine &e, const CppType *type);
 
 	private:
 		// Special constructor for creating the first type.
-		Type(Engine &e);
+		Type(Engine &e, GcType *gcType);
 
 		// The description of the type we maintain for the GC. Not valid if we're a value-type.
 		// Note: care must be taken whenever this is manipulated!

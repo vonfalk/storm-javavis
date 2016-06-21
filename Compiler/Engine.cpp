@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Engine.h"
+#include "Init.h"
 
 namespace storm {
 
@@ -7,7 +8,8 @@ namespace storm {
 
 
 	Engine::Engine(const Path &root, ThreadMode mode) : gc(defaultArena) {
-		gc.test();
+		// Initialize the type system. This loads all types defined in the compiler.
+		initTypes(*this);
 	}
 
 	Engine::~Engine() {}

@@ -5,6 +5,7 @@ namespace storm {
 
 	class Engine;
 	class Type;
+	struct GcType;
 
 	/**
 	 * The Object root class. This is the base class of all objects allocated on the heap. As we're
@@ -52,6 +53,10 @@ namespace storm {
 
 		// Dummy matching deallocations.
 		static void operator delete(void *mem, Type *type);
+
+		// Special case for the first Type.
+		static void *operator new(size_t size, Engine &e, GcType *type);
+		static void operator delete(void *mem, Engine &e, GcType *type);
 	};
 
 }
