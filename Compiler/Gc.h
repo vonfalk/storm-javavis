@@ -1,5 +1,6 @@
 #pragma once
 #include "Utils/Exception.h"
+#include "Utils/Lock.h"
 
 #include "gc/mps.h"
 
@@ -130,6 +131,12 @@ namespace storm {
 		mps_fmt_t format;
 		mps_chain_t chain;
 
+		// Separate non-moving pool for storing Type-objects. Note: we only have one allocation
+		// point for the types since they are rarely allocated.
+		mps_pool_t typePool;
+		mps_ap_t typeAllocPoint;
+		util::Lock typeAllocLock;
+
 		// Main thread (TODO: make it better)
 		mps_thr_t mainThread;
 
@@ -138,6 +145,9 @@ namespace storm {
 
 		// Main thread's root.
 		mps_root_t mainRoot;
+
+		// Allocate an object in the Type pool.
+		void *allocType(const GcType *type);
 #endif
 	};
 

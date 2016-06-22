@@ -196,13 +196,13 @@ namespace storm {
 
 				switch (h->type) {
 				case GcType::tFixed:
-					// FIX_HEADER(h->obj);
+					FIX_HEADER(h->obj);
 					FIX_GCTYPE(h, 0, pos);
 					break;
 				case GcType::tType: {
 					size_t offset = h->obj.offset[0];
 					GcType **data = (GcType **)((byte *)pos + offset);
-					// FIX_HEADER(h->obj);
+					FIX_HEADER(h->obj);
 					if (*data) {
 						FIX_HEADER(**data);
 					}
@@ -210,7 +210,7 @@ namespace storm {
 					break;
 				}
 				case GcType::tArray:
-					// FIX_HEADER(h->obj);
+					FIX_HEADER(h->obj);
 					for (size_t i = 0; i < o->count; i++, pos = (byte *)pos + h->obj.stride) {
 						FIX_GCTYPE(h, 0, pos);
 					}
@@ -341,8 +341,9 @@ namespace storm {
 	 * TODO: Tweak these!
 	 */
 	static mps_gen_param_s generationParams[] = {
-		{ 150, 0.85 },
-		{ 170, 0.45 }
+		{ 1024, 0.85 }, // Nursery generation, 1MB
+		{ 2048, 0.45 }, // Intermediate generation, 2MB
+		{ 4096, 0.10 }, // Long-lived generation (for types, code and other things), 4MB
 	};
 
 	Gc::Gc(size_t arenaSize) {
@@ -377,6 +378,26 @@ namespace storm {
 			check(mps_pool_create_k(&pool, arena, mps_class_amc(), args), L"Failed to create a GC pool.");
 		} MPS_ARGS_END(args);
 
+		// Types are stored in a separate non-moving pool. This is to get around the limitation that
+		// no remote references (ie. references stored outside objects) are allowed by the MPS. In
+		// our GcType, however, we want to store a reference to the actual type so we can access it
+		// by reflection or the as<> operation. If Type-objects are allowed to move, then when one
+		// object scans and updates its GcType to point to the new position, which confuses MPS when
+		// it finds that other objects suddenly lost their reference to an object it thought they
+		// had. This is solved by putting Type objects in an AMS pool, which does not move
+		// objects. Therefore, our approach with a (nearly) constant remote reference works in this
+		// case, with full GC on types.
+		MPS_ARGS_BEGIN(args) {
+			MPS_ARGS_ADD(args, MPS_KEY_CHAIN, chain);
+			// Store types in the last generation, as they are very long-lived.
+			MPS_ARGS_ADD(args, MPS_KEY_GEN, ARRAY_COUNT(generationParams) - 1);
+			MPS_ARGS_ADD(args, MPS_KEY_FORMAT, format);
+			MPS_ARGS_ADD(args, MPS_KEY_AMS_SUPPORT_AMBIGUOUS, FALSE);
+			check(mps_pool_create_k(&typePool, arena, mps_class_ams(), args), L"Failed to create a GC pool for types.");
+		} MPS_ARGS_END(args);
+
+		check(mps_ap_create_k(&typeAllocPoint, typePool, mps_args_none), L"Failed to create type allocation point.");
+
 		// TODO: Make everything below here per thread:
 
 		// Register the current thread with MPS.
@@ -396,7 +417,7 @@ namespace storm {
 			L"Failed creating thread root.");
 
 		// Create an allocation point for the current thread.
-		check(mps_ap_create_k(&allocPoint, pool, mps_args_none), L"Failed to create allocation point");
+		check(mps_ap_create_k(&allocPoint, pool, mps_args_none), L"Failed to create allocation point.");
 
 		TODO(L"Fix scanning of the shared GcType somehow!");
 	}
@@ -412,15 +433,23 @@ namespace storm {
 		mps_root_destroy(mainRoot);
 		mps_thread_dereg(mainThread);
 
+		// Destroy the global allocation point.
+		mps_ap_destroy(typeAllocPoint);
+
 		// Destroy pools.
 		mps_pool_destroy(pool);
+		mps_pool_destroy(typePool);
 		mps_fmt_destroy(format);
 		mps_chain_destroy(chain);
 		mps_arena_destroy(arena);
 	}
 
 	void *Gc::alloc(const GcType *type) {
-		assert(type->kind == GcType::tFixed || type->kind == GcType::tType, L"Wrong type for calling alloc().");
+		// Types are special.
+		if (type->kind == GcType::tType)
+			return allocType(type);
+
+		assert(type->kind == GcType::tFixed, L"Wrong type for calling alloc().");
 
 		size_t size = align(type->stride + headerSize);
 		mps_addr_t memory;
@@ -434,6 +463,29 @@ namespace storm {
 			setHeader(memory, type);
 
 		} while (!mps_commit(allocPoint, memory, size));
+
+		// Exclude our header, and return the allocated memory.
+		return (byte *)memory + headerSize;
+	}
+
+	void *Gc::allocType(const GcType *type) {
+		assert(type->kind == GcType::tType, L"Wrong type for calling allocType().");
+
+		// Since we're sharing one allocation point, take the lock for it.
+		util::Lock::L z(typeAllocLock);
+
+		size_t size = align(type->stride + headerSize);
+		mps_addr_t memory;
+		do {
+			check(mps_reserve(&memory, typeAllocPoint, size), L"Out of memory.");
+
+			// Make sure we can scan the newly allocated memory:
+			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
+			memset(memory, 0, size);
+			// 2: Set the header.
+			setHeader(memory, type);
+
+		} while (!mps_commit(typeAllocPoint, memory, size));
 
 		// Exclude our header, and return the allocated memory.
 		return (byte *)memory + headerSize;
