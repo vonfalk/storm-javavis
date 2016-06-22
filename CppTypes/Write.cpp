@@ -75,5 +75,7 @@ void generateFile(const Path &src, const Path &dest, const GenerateMap &actions,
 
 		// Make sure we re-run later!
 		dest.deleteFile();
+
+		throw;
 	}
 }

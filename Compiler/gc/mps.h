@@ -18,6 +18,7 @@ extern "C" {
 #include "mps/code/mps.h" // MPS core
 #include "mps/code/mpsavm.h" // VM arena
 #include "mps/code/mpscamc.h" // AMC pool
+#include "mps/code/mpscams.h" // AMS pool
 
 	// Decrease the # of byte scanned for this scanned set (hack).
 	void mps_decrease_scanned(mps_ss_t ss, size_t decrease);

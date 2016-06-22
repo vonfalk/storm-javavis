@@ -47,6 +47,7 @@ public:
 
 	// Compute our pointer offsets.
 	vector<Offset> ptrOffsets() const;
+	void ptrOffsets(vector<Offset> &append) const;
 };
 
 wostream &operator <<(wostream &to, const Type &type);

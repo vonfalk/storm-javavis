@@ -7,6 +7,9 @@
  */
 class World {
 public:
+	// Create.
+	World();
+
 	// Using namespace declarations.
 	vector<CppName> usingDecl;
 
@@ -15,6 +18,9 @@ public:
 
 	// Quick lookup of all types.
 	map<CppName, nat> typeLookup;
+
+	// Built-in types (into C++).
+	map<String, Size> builtIn;
 
 	// ...
 
@@ -25,8 +31,8 @@ public:
 	void prepare();
 
 	// Find a type.
-	Type *findType(const CppName &name, const SrcPos &pos);
-	Type *findTypeUnsafe(const CppName &name);
+	Type *findType(const CppName &name, const CppName &context, const SrcPos &pos);
+	Type *findTypeUnsafe(const CppName &name, CppName context);
 
 private:
 	// Sort types so we get a deterministic order.

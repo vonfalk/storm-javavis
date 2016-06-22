@@ -2,6 +2,7 @@
 #include "Output.h"
 #include "CppName.h"
 #include "World.h"
+#include "Config.h"
 
 /**
  * TODO: Store both 32 and 64-bit pointers!
@@ -32,7 +33,29 @@ static String format(const Offset &o) {
 
 static String offset(const Offset &o) {}
 
-static void genIncludes(wostream &to, World &w) {}
+static void genIncludes(wostream &to, World &w) {
+	// Include all relevant files.
+	set<nat> files;
+	for (nat i = 0; i < w.types.size(); i++) {
+		files.insert(w.types[i].pos.fileId);
+	}
+
+	// TODO: include all files containing functions we're interested in as well!
+
+	for (set<nat>::iterator i = files.begin(); i != files.end(); ++i) {
+		if (*i != SrcPos::invalid)
+			to << L"#include \"" << SrcPos::files[*i].makeRelative(config.dir) << L"\"\n";
+	}
+}
+
+static void genGlobals(wostream &to, World &w) {
+	// Generate bodies for T::stormType():
+	for (nat i = 0; i < w.types.size(); i++) {
+		Type &t = w.types[i];
+
+		to << L"storm::Type *" << t.name << L"::stormType(Engine &e) { return e.cppType(" << i << L"); }\n";
+	}
+}
 
 static void genPtrOffsets(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
@@ -79,6 +102,7 @@ GenerateMap genMap() {
 
 	static E e[] = {
 		{ L"INCLUDES", &genIncludes },
+		{ L"GLOBALS", &genGlobals },
 		{ L"PTR_OFFSETS", &genPtrOffsets },
 		{ L"CPP_TYPES", &genTypes },
 	};

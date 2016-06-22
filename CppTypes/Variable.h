@@ -19,7 +19,7 @@ public:
 	Auto<CppType> type;
 
 	// Resolve types.
-	void resolveTypes(World &in);
+	void resolveTypes(World &in, const CppName &context);
 };
 
 wostream &operator <<(wostream &to, const Variable &v);

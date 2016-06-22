@@ -3,8 +3,8 @@
 
 Variable::Variable(const CppName &name, Auto<CppType> type, const SrcPos &pos) : name(name), type(type), pos(pos) {}
 
-void Variable::resolveTypes(World &in) {
-	type = type->resolve(in);
+void Variable::resolveTypes(World &in, const CppName &context) {
+	type = type->resolve(in, context);
 }
 
 wostream &operator <<(wostream &to, const Variable &v) {

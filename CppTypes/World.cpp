@@ -3,6 +3,31 @@
 #include "Tokenizer.h"
 #include "Exception.h"
 
+struct BuiltIn {
+	wchar *name;
+	const Size &size;
+};
+
+static BuiltIn builtIn[] = {
+	{ L"int", Size::sInt },
+	{ L"nat", Size::sNat },
+	{ L"Int", Size::sInt },
+	{ L"Nat", Size::sNat },
+	{ L"char", Size::sChar },
+	{ L"byte", Size::sByte },
+	{ L"Char", Size::sChar },
+	{ L"Byte", Size::sByte },
+	{ L"Long", Size::sLong },
+	{ L"Word", Size::sWord },
+	{ L"size_t", Size::sPtr },
+};
+
+World::World() {
+	for (nat i = 0; i < ARRAY_COUNT(::builtIn); i++) {
+		builtIn.insert(make_pair(::builtIn[i].name, ::builtIn[i].size));
+	}
+}
+
 void World::add(const Type &type) {
 	if (typeLookup.count(type.name))
 		throw Error(L"The type " + toS(type.name) + L" is defined twice!", type.pos);
@@ -35,11 +60,20 @@ void World::orderTypes() {
 	}
 }
 
-Type *World::findTypeUnsafe(const CppName &name) {
+Type *World::findTypeUnsafe(const CppName &name, CppName context) {
 	map<CppName, nat>::const_iterator i = typeLookup.find(name);
 	if (i != typeLookup.end())
 		return &types[i->second];
 
+	while (!context.empty()) {
+		i = typeLookup.find(context + name);
+		if (i != typeLookup.end())
+			return &types[i->second];
+
+		context = context.parent();
+	}
+
+	// Reachable via 'using namespace'?
 	for (nat j = 0; j < usingDecl.size(); j++) {
 		i = typeLookup.find(usingDecl[j] + name);
 		if (i != typeLookup.end())
@@ -49,8 +83,8 @@ Type *World::findTypeUnsafe(const CppName &name) {
 	return null;
 }
 
-Type *World::findType(const CppName &name, const SrcPos &pos) {
-	Type *t = findTypeUnsafe(name);
+Type *World::findType(const CppName &name, const CppName &context, const SrcPos &pos) {
+	Type *t = findTypeUnsafe(name, context);
 	if (!t)
 		throw Error(L"The type " + name + L" is not known to Storm.", pos);
 	return t;
@@ -272,6 +306,11 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 		} else if (t.token == L"}") {
 			tok.skip();
 			break;
+		} else if (t.token == L"template") {
+			// Skip until we find a {, and skip the body as well.
+			while (tok.skipIf(L"{"))
+				tok.skip();
+			parseBlock(tok);
 		} else if (t.token == L"public") {
 			tok.skip();
 			tok.expect(L":");
@@ -310,6 +349,11 @@ static void parseNamespace(Tokenizer &tok, World &world, const CppName &name) {
 		if (t.token == L"class" || t.token == L"struct") {
 			tok.skip();
 			parseTypeDecl(tok, world, name);
+		} else if (t.token == L"template") {
+			// Skip until we find a {, and skip the body as well.
+			while (tok.skipIf(L"{"))
+				tok.skip();
+			parseBlock(tok);
 		} else if (t.token == L"namespace") {
 			tok.skip();
 			Token n = tok.next();

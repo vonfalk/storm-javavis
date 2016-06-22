@@ -196,13 +196,13 @@ namespace storm {
 
 				switch (h->type) {
 				case GcType::tFixed:
-					FIX_HEADER(h->obj);
+					// FIX_HEADER(h->obj);
 					FIX_GCTYPE(h, 0, pos);
 					break;
 				case GcType::tType: {
 					size_t offset = h->obj.offset[0];
 					GcType **data = (GcType **)((byte *)pos + offset);
-					FIX_HEADER(h->obj);
+					// FIX_HEADER(h->obj);
 					if (*data) {
 						FIX_HEADER(**data);
 					}
@@ -210,7 +210,7 @@ namespace storm {
 					break;
 				}
 				case GcType::tArray:
-					FIX_HEADER(h->obj);
+					// FIX_HEADER(h->obj);
 					for (size_t i = 0; i < o->count; i++, pos = (byte *)pos + h->obj.stride) {
 						FIX_GCTYPE(h, 0, pos);
 					}
@@ -294,8 +294,7 @@ namespace storm {
 			}
 
 			// Update the scanned size so that we do not accidentally surprise MPS.
-			// This is what we want to do, but cannot since we do not have access to that data.
-			mps_decrease_scanned(ss, (char *)base - (char *)limit);
+			mps_decrease_scanned(ss, (char *)limit - (char *)to);
 		}
 
 		// Note: We're checking all word-aligned positions as we need to make sure we're scanning
@@ -317,6 +316,18 @@ namespace storm {
 #else
 #error "Implement stack scanning for your machine!"
 #endif
+
+	static mps_res_t mpsScanArray(mps_ss_t ss, void *base, size_t count) {
+		MPS_SCAN_BEGIN(ss) {
+			void **data = (void **)base;
+			for (nat i = 0; i < count; i++) {
+				mps_res_t r = MPS_FIX12(ss, &data[i]);
+				if (r != MPS_RES_OK)
+					return r;
+			}
+		} MPS_SCAN_END(ss);
+		return MPS_RES_OK;
+	}
 
 
 	// Check return codes from MPS.
@@ -386,6 +397,8 @@ namespace storm {
 
 		// Create an allocation point for the current thread.
 		check(mps_ap_create_k(&allocPoint, pool, mps_args_none), L"Failed to create allocation point");
+
+		TODO(L"Fix scanning of the shared GcType somehow!");
 	}
 
 	Gc::~Gc() {
@@ -468,9 +481,37 @@ namespace storm {
 
 	const GcType *Gc::allocType(const void *mem) {
 		void *t = (byte *)mem - headerSize;
-		return &((MpsHeader *)t)->obj;
+		return &(*(MpsHeader **)t)->obj;
 	}
 
+	struct Gc::Root {
+		mps_root_t root;
+	};
+
+	Gc::Root *Gc::createRoot(void *data, size_t count) {
+		Root *r = new Root;
+		try {
+			check(mps_root_create(&r->root,
+									arena,
+									mps_rank_exact(),
+									(mps_rm_t)0,
+									&mpsScanArray,
+									data,
+									count),
+				L"Failed to create a root.");
+		} catch (...) {
+			delete r;
+			throw;
+		}
+		return r;
+	}
+
+	void Gc::destroyRoot(Root *r) {
+		if (r) {
+			mps_root_destroy(r->root);
+			delete r;
+		}
+	}
 }
 
 #else

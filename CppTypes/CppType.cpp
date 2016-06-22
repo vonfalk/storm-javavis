@@ -11,9 +11,9 @@ Size ArrayType::size() const {
 	throw Error(L"Array<> should only be used as a pointer!", pos);
 }
 
-Auto<CppType> ArrayType::resolve(World &in) const {
+Auto<CppType> ArrayType::resolve(World &in, const CppName &context) const {
 	Auto<ArrayType> r = new ArrayType(*this);
-	r->of = of->resolve(in);
+	r->of = of->resolve(in, context);
 	return r;
 }
 
@@ -27,10 +27,10 @@ Size MapType::size() const {
 	throw Error(L"Map<> should only be used as a pointer!", pos);
 }
 
-Auto<CppType> MapType::resolve(World &in) const {
+Auto<CppType> MapType::resolve(World &in, const CppName &context) const {
 	Auto<MapType> r = new MapType(*this);
-	r->k = k->resolve(in);
-	r->v = k->resolve(in);
+	r->k = k->resolve(in, context);
+	r->v = k->resolve(in, context);
 	return r;
 }
 
@@ -44,11 +44,11 @@ Size TemplateType::size() const {
 	throw Error(L"Templates are unsupported in general!", pos);
 }
 
-Auto<CppType> TemplateType::resolve(World &in) const {
+Auto<CppType> TemplateType::resolve(World &in, const CppName &context) const {
 	if (name == L"Array" && params.size() == 1) {
-		return new ArrayType(params[0]->resolve(in));
+		return new ArrayType(params[0]->resolve(in, context));
 	} else if (name == L"Map" && params.size() == 2) {
-		return new MapType(params[0]->resolve(in), params[1]->resolve(in));
+		return new MapType(params[0]->resolve(in, context), params[1]->resolve(in, context));
 	} else {
 		throw Error(L"Unknown template type: " + toS(this), pos);
 	}
@@ -62,9 +62,9 @@ void TemplateType::print(wostream &to) const {
 
 PtrType::PtrType(Auto<CppType> of) : CppType(of->pos), of(of) {}
 
-Auto<CppType> PtrType::resolve(World &in) const {
+Auto<CppType> PtrType::resolve(World &in, const CppName &context) const {
 	Auto<PtrType> r = new PtrType(*this);
-	r->of = of->resolve(in);
+	r->of = of->resolve(in, context);
 	return r;
 }
 
@@ -74,9 +74,9 @@ void PtrType::print(wostream &to) const {
 
 RefType::RefType(Auto<CppType> of) : CppType(of->pos), of(of) {}
 
-Auto<CppType> RefType::resolve(World &in) const {
+Auto<CppType> RefType::resolve(World &in, const CppName &context) const {
 	Auto<RefType> r = new RefType(*this);
-	r->of = of->resolve(in);
+	r->of = of->resolve(in, context);
 	return r;
 }
 
@@ -91,9 +91,9 @@ MaybeType::MaybeType(Auto<CppType> of) : CppType(of->pos) {
 		throw Error(L"MAYBE() must contain a pointer.", of->pos);
 }
 
-Auto<CppType> MaybeType::resolve(World &in) const {
+Auto<CppType> MaybeType::resolve(World &in, const CppName &context) const {
 	Auto<MaybeType> r = new MaybeType(*this);
-	r->of = of->resolve(in).as<PtrType>();
+	r->of = of->resolve(in, context).as<PtrType>();
 	if (!r->of)
 		throw Error(L"MAYBE content turned into non-pointer.", of->pos);
 	return r;
@@ -111,8 +111,12 @@ Size NamedType::size() const {
 	throw Error(L"Unknown size of the non-exported type " + name, pos);
 }
 
-Auto<CppType> NamedType::resolve(World &in) const {
-	Type *t = in.findTypeUnsafe(name);
+Auto<CppType> NamedType::resolve(World &in, const CppName &context) const {
+	map<String, Size>::const_iterator i = in.builtIn.find(name);
+	if (i != in.builtIn.end())
+		return new BuiltInType(pos, name, i->second);
+
+	Type *t = in.findTypeUnsafe(name, context);
 	if (t)
 		return new ResolvedType(*this, t);
 	else
@@ -133,10 +137,20 @@ bool ResolvedType::gcType() const {
 	return !type->valueType;
 }
 
-Auto<CppType> ResolvedType::resolve(World &in) const {
+Auto<CppType> ResolvedType::resolve(World &in, const CppName &context) const {
 	return new ResolvedType(*this, type);
 }
 
 void ResolvedType::print(wostream &to) const {
 	to << type->name;
+}
+
+BuiltInType::BuiltInType(const SrcPos &pos, const String &name, Size size) : CppType(pos), name(name), tSize(size) {}
+
+Auto<CppType> BuiltInType::resolve(World &in, const CppName &context) const {
+	return new BuiltInType(pos, name, tSize);
+}
+
+void BuiltInType::print(wostream &to) const {
+	to << name;
 }

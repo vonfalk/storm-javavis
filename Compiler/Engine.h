@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Gc.h"
+#include "RootArray.h"
 
 // TODO: Do not depend on path!
 #include "Utils/Path.h"
@@ -43,6 +44,13 @@ namespace storm {
 
 		// Interface to the GC we're using.
 		Gc gc;
+
+		// Get a C++ type by its id.
+		inline Type *cppType(nat id) const { return cppTypes[id]; }
+
+	private:
+		// All C++ types.
+		RootArray<Type> cppTypes;
 	};
 
 }

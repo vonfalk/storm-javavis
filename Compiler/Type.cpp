@@ -5,9 +5,11 @@
 
 namespace storm {
 
-	Type::Type() : engine(Object::engine()), gcType(null) {}
+	Type::Type(TypeFlags flags) : engine(Object::engine()), gcType(null) {}
 
-	Type::Type(Engine &e, GcType *gcType) : engine(e), gcType(gcType) {
+	Type::Type(TypeFlags flags, Size size, GcType *gcType) : engine(Object::engine()), gcType(gcType) {}
+
+	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) : engine(e), gcType(gcType) {
 		gcType->type = this;
 	}
 
@@ -39,7 +41,14 @@ namespace storm {
 			t->offset[i+1] = Offset(type->ptrOffsets[i]).current();
 
 		// Now we can allocate the type and let the constructor handle the rest!
-		return new (e, t) Type(e, t);
+		return new (e, t) Type(e, typeClass, Size(type->size), t);
 	}
+
+	void *Type::operator new(size_t size, Engine &e, GcType *type) {
+		assert(size <= type->stride, L"Invalid type description found!");
+		return e.gc.alloc(type);
+	}
+
+	void Type::operator delete(void *mem, Engine &e, GcType *type) {}
 
 }

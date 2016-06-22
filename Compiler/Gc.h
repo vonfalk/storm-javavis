@@ -103,6 +103,18 @@ namespace storm {
 		static const GcType *allocType(const void *mem);
 
 		/**
+		 * Roots.
+		 */
+
+		struct Root;
+
+		// Allocate a root that scans an array of pointers.
+		Root *createRoot(void *data, size_t count);
+
+		// Destroy a root.
+		void destroyRoot(Root *root);
+
+		/**
 		 * Debugging/testing.
 		 */
 

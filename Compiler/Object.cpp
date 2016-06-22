@@ -22,17 +22,11 @@ namespace storm {
 	}
 
 	void *Object::operator new(size_t size, Type *type) {
-		assert(size <= type->gcType->stride, L"Invalid type description found!");
+		assert(size <= type->gcType->stride,
+			L"Invalid type description found! " + ::toS(size) + L" vs " + ::toS(type->gcType->stride));
 		return type->engine.gc.alloc(type->gcType);
 	}
 
 	void Object::operator delete(void *mem, Type *type) {}
-
-	void *Object::operator new(size_t size, Engine &e, GcType *type) {
-		assert(size <= type->stride, L"Invalid type description found!");
-		return e.gc.alloc(type);
-	}
-
-	void Object::operator delete(void *mem, Engine &e, GcType *type) {}
 
 }

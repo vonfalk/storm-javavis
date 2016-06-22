@@ -50,10 +50,6 @@ bool oldFile(const Timestamp &input, const Path &file) {
 	return file.mTime() < input;
 }
 
-void dummy(wostream &to, World &w) {
-	to << "A" << endl << "B" << endl;
-}
-
 int _tmain(int argc, const wchar *argv[]) {
 	if (!parse(argc, argv)) {
 		usage(argv[0]);

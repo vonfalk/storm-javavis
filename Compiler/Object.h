@@ -53,10 +53,6 @@ namespace storm {
 
 		// Dummy matching deallocations.
 		static void operator delete(void *mem, Type *type);
-
-		// Special case for the first Type.
-		static void *operator new(size_t size, Engine &e, GcType *type);
-		static void operator delete(void *mem, Engine &e, GcType *type);
 	};
 
 }

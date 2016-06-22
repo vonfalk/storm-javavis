@@ -1,7 +1,10 @@
 #include "stdafx.h"
 #include "CppTypes.h"
+#include "Engine.h"
 
 // INCLUDES
+
+// GLOBALS
 
 // Turn off optimizations in this file. It takes quite a long time, and since it is only executed
 // once during compiler startup, it is not very useful to optimize these functions. Especially not

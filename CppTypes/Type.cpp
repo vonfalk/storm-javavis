@@ -16,15 +16,23 @@ void Type::add(const Variable &v) {
 }
 
 void Type::resolveTypes(World &in) {
+	CppName ctx = name.parent();
+
 	if (!parent.empty())
-		parentType = in.findType(parent, pos);
+		parentType = in.findType(parent, ctx, pos);
 
 	for (nat i = 0; i < variables.size(); i++)
-		variables[i].resolveTypes(in);
+		variables[i].resolveTypes(in, ctx);
 }
 
 Size Type::size() const {
-	Size s = Size::sPtr; // VTable.
+	Size s;
+
+	if (parentType) {
+		s = parentType->size();
+	} else if (!valueType) {
+		s = Size::sPtr; // VTable.
+	}
 
 	for (nat i = 0; i < variables.size(); i++)
 		s += variables[i].type->size();
@@ -33,17 +41,40 @@ Size Type::size() const {
 }
 
 vector<Offset> Type::ptrOffsets() const {
-	Size s = Size::sPtr; // VTable.
 	vector<Offset> r;
+	ptrOffsets(r);
+	return r;
+}
+
+void Type::ptrOffsets(vector<Offset> &to) const {
+	Size s;
+
+	if (parentType) {
+		parentType->ptrOffsets(to);
+		s = parentType->size();
+	} else if (!valueType) {
+		s = Size::sPtr; // VTable.
+	}
 
 	for (nat i = 0; i < variables.size(); i++) {
 		const Auto<CppType> &t = variables[i].type;
-		if (isGcPtr(t))
-			r.push_back(Offset(s));
-		s += variables[i].type->size();
-	}
+		Size size = t->size();
 
-	return r;
+		// Make sure to properly align 's'.
+		s += size.align();
+
+		if (isGcPtr(t)) {
+			// TODO? Export all pointers, regardless if they are to a GC:d object or not?
+			to.push_back(Offset(s));
+		} else if (Auto<ResolvedType> res = t.as<ResolvedType>()) {
+			// Inline this type into ourselves.
+			vector<Offset> o = res->type->ptrOffsets();
+			for (nat i = 0; i < o.size(); i++)
+				to.push_back(o[i] + s);
+		}
+
+		s += size;
+	}
 }
 
 wostream &operator <<(wostream &to, const Type &type) {

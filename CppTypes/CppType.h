@@ -26,7 +26,7 @@ public:
 	virtual bool gcType() const = 0;
 
 	// Resolve type info.
-	virtual Auto<CppType> resolve(World &in) const = 0;
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const = 0;
 
 	// Print.
 	virtual void print(wostream &to) const = 0;
@@ -56,7 +56,7 @@ public:
 	virtual bool gcType() const { return true; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in) const;
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -79,7 +79,7 @@ public:
 	virtual bool gcType() const { return true; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in) const;
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -105,7 +105,7 @@ public:
 	virtual bool gcType() const { return false; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in) const;
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -128,7 +128,7 @@ public:
 	virtual bool gcType() const { return false; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in) const;
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -151,7 +151,7 @@ public:
 	virtual bool gcType() const { return false; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in) const;
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -174,7 +174,7 @@ public:
 	virtual bool gcType() const { return of->gcType(); }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in) const;
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -198,7 +198,7 @@ public:
 	virtual bool gcType() const { return false; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in) const;
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -221,7 +221,33 @@ public:
 	virtual bool gcType() const;
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in) const;
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+};
+
+/**
+ * Type built into C++.
+ */
+class BuiltInType : public CppType {
+public:
+	BuiltInType(const SrcPos &pos, const String &name, Size size);
+
+	// Name.
+	String name;
+
+	// Size.
+	Size tSize;
+
+	// Get the size of this type.
+	virtual Size size() const { return tSize; }
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return false; }
+
+	// Resolve.
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;

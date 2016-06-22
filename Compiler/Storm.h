@@ -17,14 +17,39 @@
 #define STORM_GC_MPS
 // #define STORM_GC_BOEHM
 
+// When compiling in C-mode, we do not want to include these:
+#ifdef __cplusplus
+
+/**
+ * Common parts of STORM_CLASS and STORM_VALUE
+ */
+#define STORM_COMMON													\
+	static Type *stormType(Engine &e);									\
+	static inline Type *stormType(Object *o) { return stormType(o->engine()); } \
+
 /**
  * Mark classes and values exposed to storm:
  */
-#define STORM_CLASS
-#define STORM_VALUE
+#define STORM_CLASS								\
+	public:										\
+	STORM_COMMON								\
+	static inline void *operator new (size_t s, Engine &e) { return Object::operator new (s, stormType(e)); } \
+	static inline void operator delete (void *m, Engine &e) {} \
+	static inline void *operator new (size_t s, Object *o) { return Object::operator new (s, stormType(o)); } \
+	static inline void operator delete (void *m, Object *o) {} \
+	private:
 
-// When compiling in C-mode, we do not want to include these:
-#ifdef __cplusplus
+#define STORM_VALUE								\
+	public:										\
+	STORM_COMMON								\
+	private:
+
+/**
+ * Create classes in storm. Usage: CREATE(Type, engine, param1, param2, ...)
+ */
+#define CREATE(type, engine, ...)				\
+	new (type::stormType(engine)) type(__VA_ARGS__)
+
 
 #include "Utils/Utils.h"
 #include "Utils/Platform.h"
@@ -35,6 +60,7 @@ namespace storm {
 	using code::Offset;
 
 	class Engine;
+	class Type;
 }
 
 #endif
