@@ -24,8 +24,8 @@ namespace storm {
 	class Type : public Object {
 		STORM_CLASS;
 
-		// Let object access gcType.
-		friend void *Object::operator new(size_t, Type *);
+		// Let allocation access gcType.
+		friend void *allocObject(size_t s, Type *t);
 
 	public:
 		// Create a type declared in Storm.

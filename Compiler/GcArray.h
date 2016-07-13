@@ -1,0 +1,18 @@
+#pragma once
+
+namespace storm {
+
+	/**
+	 * Helper struct to access gc:d arrays. The preprocessor recognices this class, so it is
+	 * properly marked for the gc.
+	 */
+	template <class T>
+	struct GcArray {
+		// Number of elements.
+		size_t count;
+
+		// Data.
+		T v[1];
+	};
+
+}

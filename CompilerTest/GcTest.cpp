@@ -50,7 +50,10 @@ BEGIN_TEST(GcTest1) {
 
 } END_TEST
 
-BEGIN_TEST(GcTest2) {
+/**
+ * Long-running stresstest of the GC logic. Too slow for regular use, but good when debugging.
+ */
+BEGIN_TESTX(GcTest2) {
 	Engine &e = *gEngine;
 
 	// Allocate this many nodes.

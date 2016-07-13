@@ -4,6 +4,8 @@
 
 #include "gc/mps.h"
 
+#include "GcArray.h"
+
 namespace storm {
 
 	class Type;
@@ -42,7 +44,7 @@ namespace storm {
 
 			// Repeated occurence of another type (ie. an array). The number of repetitions is stored as
 			// a size_t in the first element of the allocation (to keep alignment), followed by a number
-			// of repeated fixed size allocations.
+			// of repeated fixed size allocations. Use GcArray<T> for convenient access.
 			tArray,
 		};
 
@@ -53,7 +55,9 @@ namespace storm {
 		 * Other useful data for the rest of the system:
 		 */
 
-		// (scanned) reference to the full description of this type.
+		// (scanned) reference to the full description of this type. NOTE: Do not change this after
+		// the GcType has been created. Doing so may confuse the GC, as this is an unsupported
+		// remote reference. Not declared const due to how we are using it.
 		Type *type;
 
 		/**
@@ -89,6 +93,11 @@ namespace storm {
 
 		// Allocate an array of objects. Assumes type->type == tArray.
 		void *allocArray(const GcType *type, size_t count);
+
+		template <class T>
+		GcArray<T> *allocArray(const GcType *type, size_t count) {
+			return (GcArray<T> *)allocArray(type, count);
+		}
 
 		/**
 		 * Management of Gc types.

@@ -5,6 +5,7 @@ namespace storm {
 
 	class Engine;
 	class Type;
+	class Str;
 	struct GcType;
 
 	/**
@@ -42,17 +43,36 @@ namespace storm {
 
 
 		/**
-		 * Allocation/deallocation.
+		 * Members common to all objects.
 		 *
-		 * Deallocation is only here since C++ will automatically try to call operator delete in
-		 * some circumstances, and is effectively a no-op.
+		 * Note: only TObjects usually have a equals and hash that involve the pointer-wise identity
+		 * of the object. Make sure to note the compiler about any classes doing this, as it
+		 * otherwise may misbehave when using hash maps.
+		 *
+		 * TODO: Re-think the equals-api.
 		 */
 
-		// Allocates memory for the type provided.
-		static void *operator new(size_t size, Type *type);
+		// Deep copy of all objects in here.
+		virtual void STORM_FN deepCopy(CloneEnv *env);
 
-		// Dummy matching deallocations.
-		static void operator delete(void *mem, Type *type);
+		// Convert to string.
+		// TODO: Re-think using StrBuf!
+		virtual Str *STORM_FN toS() const;
+
+		// Equality check.
+		virtual Bool STORM_FN equals(Object *o) const;
+
+		// Hash function.
+		virtual Nat STORM_FN hash() const;
+
+		// Allow access.
+		friend void *allocObject(size_t s, Type *t);
 	};
 
+	// Allocate an object (called internally from the STORM_CLASS macro).
+	void *allocObject(size_t s, Type *t);
+
+	// Output an object.
+	wostream &operator <<(wostream &to, const Object *o);
+	wostream &operator <<(wostream &to, const Object &o);
 }

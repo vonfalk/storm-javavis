@@ -3,6 +3,7 @@
 #include "Gc.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Str.h"
 
 namespace storm {
 
@@ -21,12 +22,35 @@ namespace storm {
 		return false;
 	}
 
-	void *Object::operator new(size_t size, Type *type) {
+	void Object::deepCopy(CloneEnv *env) {}
+
+	Bool Object::equals(Object *o) const {
+		TODO(L"Implement me!");
+		return false;
+	}
+
+	Nat Object::hash() const {
+		TODO(L"Implement me!");
+		return 0;
+	}
+
+	Str *Object::toS() const {
+		TODO(L"Implement me!");
+		return null;
+	}
+
+	void *allocObject(size_t size, Type *type) {
 		assert(size <= type->gcType->stride,
 			L"Invalid type description found! " + ::toS(size) + L" vs " + ::toS(type->gcType->stride));
 		return type->engine.gc.alloc(type->gcType);
 	}
 
-	void Object::operator delete(void *mem, Type *type) {}
+	wostream &operator <<(wostream &to, const Object *o) {
+		return to << o->toS()->c_str();
+	}
+
+	wostream &operator <<(wostream &to, const Object &o) {
+		return to << o.toS()->c_str();
+	}
 
 }

@@ -132,7 +132,7 @@ namespace storm {
 			s = h->obj.stride;
 			break;
 		case GcType::tArray:
-			s = h->obj.stride * obj->count;
+			s = h->obj.stride*obj->count + wordSize;
 			break;
 		case mpsPad0:
 			s = 0;
@@ -211,6 +211,8 @@ namespace storm {
 				}
 				case GcType::tArray:
 					FIX_HEADER(h->obj);
+					// Skip the size.
+					pos = (byte *)pos + wordSize;
 					for (size_t i = 0; i < o->count; i++, pos = (byte *)pos + h->obj.stride) {
 						FIX_GCTYPE(h, 0, pos);
 					}
@@ -493,11 +495,10 @@ namespace storm {
 
 	void *Gc::allocArray(const GcType *type, size_t elements) {
 		assert(type->kind == GcType::tArray, L"Wrong type for calling allocArray().");
-
 		if (elements == 0)
 			return null;
 
-		size_t size = align(type->stride*elements + headerSize);
+		size_t size = align(type->stride*elements + headerSize + wordSize);
 		mps_addr_t memory;
 		do {
 			check(mps_reserve(&memory, allocPoint, size), L"Out of memory.");

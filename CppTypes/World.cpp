@@ -9,16 +9,18 @@ struct BuiltIn {
 };
 
 static BuiltIn builtIn[] = {
+	{ L"bool", Size::sByte },
+	{ L"Bool", Size::sByte },
 	{ L"int", Size::sInt },
 	{ L"nat", Size::sNat },
 	{ L"Int", Size::sInt },
 	{ L"Nat", Size::sNat },
 	{ L"char", Size::sChar },
 	{ L"byte", Size::sByte },
-	{ L"Char", Size::sChar },
 	{ L"Byte", Size::sByte },
 	{ L"Long", Size::sLong },
 	{ L"Word", Size::sWord },
+	{ L"Float", Size::sFloat },
 	{ L"size_t", Size::sPtr },
 };
 
@@ -220,6 +222,9 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 	if (!tok.more() || tok.skipIf(L";"))
 		return;
 
+	// Is this function supposed to be exported to Storm?
+	bool exportFn = tok.skipIf(L"STORM_FN");
+
 	Token name(L"", type->pos);
 	if (tok.peek().token != L"(") {
 		// Then, we should have the member's name.
@@ -249,6 +254,8 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 		}
 
 		tok.skipIf(L"const");
+
+		// Save if 'exportFn' is there.
 	} else if (tok.skipIf(L"[")) {
 		throw Error(L"C-style arrays not supported in classes exposed to Storm.", name.pos);
 	} else if (tok.skipIf(L";")) {
@@ -328,6 +335,9 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 		} else if (t.token == L"friend") {
 			while (!tok.skipIf(L";"))
 				tok.skip();
+		} else if (t.token == L"using") {
+			while (!tok.skipIf(L";"))
+				tok.skip();
 		} else if (t.token == L"inline") {
 			tok.skip();
 		} else if (t.token == L"virtual") {
@@ -354,6 +364,18 @@ static void parseNamespace(Tokenizer &tok, World &world, const CppName &name) {
 			while (tok.skipIf(L"{"))
 				tok.skip();
 			parseBlock(tok);
+		} else if (t.token == L"using") {
+			while (!tok.skipIf(L";"))
+				tok.skip();
+		} else if (t.token == L"STORM_PKG") {
+			tok.next();
+			tok.expect(L"(");
+			// TODO: Take care of this name properly!
+			tok.next();
+			while (tok.skipIf(L"."))
+				tok.next();
+			tok.expect(L")");
+			tok.expect(L";");
 		} else if (t.token == L"namespace") {
 			tok.skip();
 			Token n = tok.next();

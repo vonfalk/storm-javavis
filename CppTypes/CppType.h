@@ -253,6 +253,29 @@ public:
 	virtual void print(wostream &to) const;
 };
 
+/**
+ * GcArray-type.
+ */
+class GcArrayType : public CppType {
+public:
+	GcArrayType(const SrcPos &pos, Auto<CppType> of);
+
+	// Type of what?
+	Auto<CppType> of;
+
+	// Get the size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return true; }
+
+	// Resolve.
+	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+};
+
 
 inline bool isGcPtr(Auto<CppType> t) {
 	if (Auto<PtrType> p = t.as<PtrType>()) {

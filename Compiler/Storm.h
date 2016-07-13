@@ -25,7 +25,7 @@
  */
 #define STORM_COMMON													\
 	static Type *stormType(Engine &e);									\
-	static inline Type *stormType(Object *o) { return stormType(o->engine()); } \
+	static inline Type *stormType(const Object *o) { return stormType(o->engine()); } \
 
 /**
  * Mark classes and values exposed to storm:
@@ -33,10 +33,12 @@
 #define STORM_CLASS								\
 	public:										\
 	STORM_COMMON								\
+	static inline void *operator new (size_t s, Type *t) { return storm::allocObject(s, t); } \
+	static inline void operator delete (void *m, Type *t) {} \
 	static inline void *operator new (size_t s, Engine &e) { return Object::operator new (s, stormType(e)); } \
 	static inline void operator delete (void *m, Engine &e) {} \
-	static inline void *operator new (size_t s, Object *o) { return Object::operator new (s, stormType(o)); } \
-	static inline void operator delete (void *m, Object *o) {} \
+	static inline void *operator new (size_t s, const Object *o) { return Object::operator new (s, stormType(o)); } \
+	static inline void operator delete (void *m, const Object *o) {} \
 	private:
 
 #define STORM_VALUE								\
@@ -48,19 +50,28 @@
  * Create classes in storm. Usage: CREATE(Type, engine, param1, param2, ...)
  */
 #define CREATE(type, engine, ...)				\
-	new (type::stormType(engine)) type(__VA_ARGS__)
+	new (engine) type(__VA_ARGS__)
+
+/**
+ * Indicate which package to place things into (ignored by C++). (eg. STORM_PKG(foo.bar))
+ */
+#define STORM_PKG(pkg)
+
+/**
+ * Mark a function for export to Storm. (eg. void STORM_FN foo()).
+ * Makes sure we're using the correct calling convention for Storm.
+ */
+#define STORM_FN __cdecl
+
+/**
+ * Mark a constructor exported to Storm.
+ */
+#define STORM_CTOR
 
 
 #include "Utils/Utils.h"
 #include "Utils/Platform.h"
 #include "Code/Code.h"
-
-namespace storm {
-	using code::Size;
-	using code::Offset;
-
-	class Engine;
-	class Type;
-}
+#include "Types.h"
 
 #endif

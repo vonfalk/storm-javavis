@@ -49,6 +49,8 @@ Auto<CppType> TemplateType::resolve(World &in, const CppName &context) const {
 		return new ArrayType(params[0]->resolve(in, context));
 	} else if (name == L"Map" && params.size() == 2) {
 		return new MapType(params[0]->resolve(in, context), params[1]->resolve(in, context));
+	} else if (name == L"GcArray" && params.size() == 1) {
+		return new GcArrayType(pos, params[0]->resolve(in, context));
 	} else {
 		throw Error(L"Unknown template type: " + toS(this), pos);
 	}
@@ -153,4 +155,20 @@ Auto<CppType> BuiltInType::resolve(World &in, const CppName &context) const {
 
 void BuiltInType::print(wostream &to) const {
 	to << name;
+}
+
+GcArrayType::GcArrayType(const SrcPos &pos, Auto<CppType> of) : CppType(pos), of(of) {}
+
+Auto<CppType> GcArrayType::resolve(World &in, const CppName &context) const {
+	Auto<GcArrayType> r = new GcArrayType(*this);
+	r->of = of->resolve(in, context);
+	return r;
+}
+
+Size GcArrayType::size() const {
+	throw Error(L"Array<> should only be used as a pointer!", pos);
+}
+
+void GcArrayType::print(wostream &to) const {
+	to << L"storm::GcArray<" << of << L">";
 }
