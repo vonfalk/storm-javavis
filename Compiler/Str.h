@@ -72,6 +72,7 @@ namespace storm {
 
 		// To string.
 		virtual Str *STORM_FN toS() const;
+		virtual void STORM_FN toS(StrBuf *buf) const;
 
 		// Get a c-string.
 		wchar *c_str() const;

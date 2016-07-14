@@ -4,6 +4,7 @@
 #include "Type.h"
 #include "Engine.h"
 #include "Str.h"
+#include "StrBuf.h"
 
 namespace storm {
 
@@ -35,8 +36,13 @@ namespace storm {
 	}
 
 	Str *Object::toS() const {
-		TODO(L"Implement me!");
-		return null;
+		StrBuf *b = new (this) StrBuf();
+		toS(b);
+		return b->toS();
+	}
+
+	void Object::toS(StrBuf *buf) const {
+		*buf << L"<TODO: Type> @" << (void *)this;
 	}
 
 	void *allocObject(size_t size, Type *type) {

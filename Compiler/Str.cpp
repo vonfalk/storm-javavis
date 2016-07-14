@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Str.h"
+#include "StrBuf.h"
 #include "Engine.h"
 
 namespace storm {
@@ -165,6 +166,10 @@ namespace storm {
 	Str *Str::toS() const {
 		// We're not mutable anyway...
 		return (Str *)this;
+	}
+
+	void Str::toS(StrBuf *buf) const {
+		buf->add(this);
 	}
 
 	wchar *Str::c_str() const {

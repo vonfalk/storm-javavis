@@ -56,13 +56,15 @@ namespace storm {
 
 		// Get the string we built.
 		virtual Str *STORM_FN toS() const;
+		virtual void STORM_FN toS(StrBuf *buf) const;
 
 		// C version.
 		wchar *c_str() const;
 
 		// Append stuff (do we need these as well?)
 		StrBuf *add(const wchar *str);
-		StrBuf *STORM_FN add(Str *str);
+		StrBuf *STORM_FN add(const Str *str);
+		StrBuf *STORM_FN add(const Object *obj);
 		StrBuf *STORM_FN add(Bool b);
 		StrBuf *STORM_FN add(Byte i);
 		StrBuf *STORM_FN add(Int i);
@@ -72,8 +74,10 @@ namespace storm {
 		StrBuf *STORM_FN add(Float f);
 
 		// Append stuff with the << operator.
+		StrBuf &operator <<(const void *ptr);
 		StrBuf &operator <<(const wchar *str) { return *add(str); }
-		StrBuf &STORM_FN operator <<(Str *str) { return *add(str); }
+		StrBuf &STORM_FN operator <<(const Str *str) { return *add(str); }
+		StrBuf &STORM_FN operator <<(const Object *obj) { return *add(obj); }
 		StrBuf &STORM_FN operator <<(Bool b) { return *add(b); }
 		StrBuf &STORM_FN operator <<(Byte i) { return *add(i); }
 		StrBuf &STORM_FN operator <<(Int i) { return *add(i); }

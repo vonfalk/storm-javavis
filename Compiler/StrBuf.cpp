@@ -70,6 +70,10 @@ namespace storm {
 		return new (this) Str(to);
 	}
 
+	void StrBuf::toS(StrBuf *to) const {
+		to->add(c_str());
+	}
+
 	wchar *StrBuf::c_str() const {
 		return buf->v;
 	}
@@ -153,8 +157,13 @@ namespace storm {
 		return this;
 	}
 
-	StrBuf *StrBuf::add(Str *str) {
+	StrBuf *StrBuf::add(const Str *str) {
 		return add(str->c_str());
+	}
+
+	StrBuf *StrBuf::add(const Object *obj) {
+		// We're doing 'toS' to make the formatting predictable.
+		return add(obj->toS());
 	}
 
 	StrBuf *StrBuf::add(Bool b) {
@@ -287,6 +296,25 @@ namespace storm {
 	StrBuf &StrBuf::operator <<(StrFmt f) {
 		fmt.merge(f);
 		return *this;
+	}
+
+	StrBuf &StrBuf::operator <<(const void *ptr) {
+		size_t v = (size_t)ptr;
+		const nat digits = sizeof(size_t) * 2;
+		wchar buf[digits + 3];
+		buf[0] = '0';
+		buf[1] = 'x';
+		buf[digits + 2] = 0;
+
+		for (nat i = 0; i < digits; i++) {
+			nat digit = (v >> ((digits - i - 1) * 4)) & 0xF;
+			if (digit < 0xA)
+				buf[i + 2] = '0' + digit;
+			else
+				buf[i + 2] = 'A' + digit - 0xA;
+		}
+
+		return *add(buf);
 	}
 
 	Bool StrBuf::empty() const {

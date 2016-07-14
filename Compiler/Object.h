@@ -56,8 +56,8 @@ namespace storm {
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
 		// Convert to string.
-		// TODO: Re-think using StrBuf!
 		virtual Str *STORM_FN toS() const;
+		virtual void STORM_FN toS(StrBuf *to) const;
 
 		// Equality check.
 		virtual Bool STORM_FN equals(Object *o) const;
