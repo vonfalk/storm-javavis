@@ -2,8 +2,37 @@
 #include "StrBuf.h"
 #include "Engine.h"
 #include "Str.h"
+#include "Utf.h"
 
 namespace storm {
+
+	StrFmt::StrFmt() : width(0), fill(Char(' ')) {}
+
+	StrFmt::StrFmt(Nat width, Char fill) : width(width), fill(fill) {}
+
+	void StrFmt::reset() {
+		width = 0;
+	}
+
+	void StrFmt::clear() {
+		width = 0;
+		fill = Char(' ');
+	}
+
+	void StrFmt::merge(const StrFmt &o) {
+		if (o.width)
+			width = o.width;
+		if (o.fill != Char('\0'))
+			fill = o.fill;
+	}
+
+	StrFmt width(Nat w) {
+		return StrFmt(w, Char('\0'));
+	}
+
+	StrFmt fill(Char c) {
+		return StrFmt(0, c);
+	}
 
 	static const GcType bufType = {
 		GcType::tArray,
@@ -32,7 +61,13 @@ namespace storm {
 	}
 
 	Str *StrBuf::toS() const {
-		return new (this) Str(copyBuf(buf));
+		// We can not copy any extra data, so we can not use copyBuf()
+
+		GcArray<wchar> *to = engine().gc.allocArray<wchar>(&bufType, pos + 1);
+		for (nat i = 0; i < pos; i++)
+			to->v[i] = buf->v[i];
+
+		return new (this) Str(to);
 	}
 
 	wchar *StrBuf::c_str() const {
@@ -60,8 +95,33 @@ namespace storm {
 		}
 	}
 
+	void StrBuf::fill(nat toOutput) {
+		nat w = fmt.width;
+		Char fill = fmt.fill;
+		fmt.reset();
+
+		// Nothing to do?
+		if (toOutput >= w)
+			return;
+
+		wchar first = fill.leading();
+		wchar last = fill.trailing();
+		nat toFill = w - toOutput;
+		if (first)
+			ensure(pos + toFill*2);
+		else
+			ensure(pos + toFill);
+
+		for (nat i = 0; i < toFill; i++) {
+			if (first)
+				buf->v[pos++] = first;
+			buf->v[pos++] = last;
+		}
+	}
+
 	StrBuf *StrBuf::add(const wchar *data) {
 		nat len = 0;
+		nat points = 0;
 		nat iLen = indentStr->charCount();
 		nat iTot = iLen * indentation;
 
@@ -73,9 +133,15 @@ namespace storm {
 			if (data[at] == '\n' && data[at + 1] != '\0')
 				len += iLen;
 			len++;
+			if (!utf16::leading(data[at]))
+				points++;
 		}
 
-		// Reserve space.
+		// Add fill.
+		insertIndent();
+		fill(points);
+
+		// Reserve space (sometimes a bit too much, but that is fine).
 		ensure(pos + len);
 
 		// Copy.
@@ -119,12 +185,14 @@ namespace storm {
 	StrBuf *StrBuf::add(Long i) {
 		insertIndent();
 
-		ensure(pos + maxDigits);
+		nat worst = max(maxDigits, fmt.width * fmt.fill.size());
+
+		ensure(pos + worst);
 
 		bool negative = i < 0;
 
 		nat p = 0;
-		while (p < maxDigits) {
+		while (p < worst) {
 			Long last = i % 10;
 			if (last > 0 && negative)
 				last -= 10;
@@ -137,6 +205,18 @@ namespace storm {
 		if (negative)
 			buf->v[pos + p++] = '-';
 
+		// Fill if needed.
+		if (p < fmt.width) {
+			wchar lead = fmt.fill.leading();
+			wchar trail = fmt.fill.trailing();
+			for (nat i = p; i < fmt.width; i++) {
+				buf->v[pos + p++] = trail;
+				if (lead)
+					buf->v[pos + p++] = lead;
+			}
+			fmt.reset();
+		}
+
 		reverse(buf->v + pos, buf->v + pos + p);
 
 		pos += p;
@@ -146,14 +226,28 @@ namespace storm {
 	StrBuf *StrBuf::add(Word i) {
 		insertIndent();
 
-		ensure(pos + maxDigits);
+		nat worst = max(maxDigits, fmt.width * fmt.fill.size());
+
+		ensure(pos + worst);
 
 		nat p = 0;
-		while (p < maxDigits) {
+		while (p < worst) {
 			buf->v[pos + p++] = wchar((i % 10) + '0');
 			i /= 10;
 			if (i == 0)
 				break;
+		}
+
+		// Fill if needed.
+		if (p < fmt.width) {
+			wchar lead = fmt.fill.leading();
+			wchar trail = fmt.fill.trailing();
+			for (nat i = p; i < fmt.width; i++) {
+				buf->v[pos + p++] = trail;
+				if (lead)
+					buf->v[pos + p++] = lead;
+			}
+			fmt.reset();
 		}
 
 		reverse(buf->v + pos, buf->v + pos + p);
@@ -162,11 +256,20 @@ namespace storm {
 		return this;
 	}
 
+	StrBuf *StrBuf::add(Float f) {
+		const nat size = 100;
+		wchar buf[size];
+		_snwprintf_s(buf, size, size, L"%f", f);
+		// TODO: Improve!
+		return add(buf);
+	}
+
 	void StrBuf::clear() {
 		buf = null;
 		pos = 0;
 		indentStr = new (this) Str(L"    ");
 		indentation = 0;
+		fmt.clear();
 	}
 
 	void StrBuf::indent() {
@@ -179,6 +282,11 @@ namespace storm {
 
 	void StrBuf::indentBy(Str *str) {
 		indentStr = str;
+	}
+
+	StrBuf &StrBuf::operator <<(StrFmt f) {
+		fmt.merge(f);
+		return *this;
 	}
 
 	Bool StrBuf::empty() const {

@@ -1,11 +1,43 @@
 #pragma once
 #include "Object.h"
+#include "Char.h"
 #include "GcArray.h"
 
 namespace storm {
 	STORM_PKG(core);
 
 	class Str;
+
+	/**
+	 * Format description for a StrBuf.
+	 *
+	 * Use the helper functions to create instances of this object.
+	 */
+	class StrFmt {
+		STORM_VALUE;
+	public:
+		StrFmt();
+		StrFmt(Nat width, Char fill);
+
+		// Min width of the next output.
+		Nat width;
+
+		// Fill character.
+		Char fill;
+
+		// Reset after outputting something.
+		void reset();
+
+		// Clear. Restores all properties.
+		void clear();
+
+		// Merge with another StrFmt.
+		void merge(const StrFmt &o);
+	};
+
+	// Create formats.
+	StrFmt STORM_FN width(Nat w);
+	StrFmt STORM_FN fill(Char fill);
 
 	/**
 	 * Mutable string buffer for constructing strings quickly and easily. Approximates the ostream
@@ -50,6 +82,9 @@ namespace storm {
 		StrBuf &STORM_FN operator <<(Word i) { return *add(i); }
 		StrBuf &STORM_FN operator <<(Float f) { return *add(f); }
 
+		// Formatting options.
+		StrBuf &STORM_FN operator <<(StrFmt fmt);
+
 		// Clear.
 		void STORM_FN clear();
 
@@ -77,6 +112,9 @@ namespace storm {
 		// Current indentation.
 		Nat indentation;
 
+		// Current format.
+		StrFmt fmt;
+
 		// Ensure capacity (excluding the null-terminator).
 		void ensure(nat capacity);
 
@@ -85,6 +123,9 @@ namespace storm {
 
 		// Insert indentation here if needed.
 		void insertIndent();
+
+		// Insert fill character if needed.
+		void fill(nat toOutput);
 
 		// Copy a buffer.
 		GcArray<wchar> *copyBuf(GcArray<wchar> *buf) const;

@@ -1,5 +1,6 @@
 #pragma once
 #include "Object.h"
+#include "Char.h"
 #include "GcArray.h"
 
 namespace storm {
@@ -39,10 +40,9 @@ namespace storm {
 		// Copy a string.
 		STORM_CTOR Str(Str *o);
 
-		// TODO:
-		// // Create from a single char or series of chars.
-		// STORM_CTOR Str(Char ch);
-		// STORM_CTOR Str(Char ch, Nat count);
+		// Create from a single char or series of chars.
+		STORM_CTOR Str(Char ch);
+		STORM_CTOR Str(Char ch, Nat count);
 
 		// Empty?
 		Bool STORM_FN empty() const;
@@ -77,9 +77,8 @@ namespace storm {
 		wchar *c_str() const;
 
 		/**
-		 * Iterator.
+		 * Iterator (not implemented yet.)
 		 */
-
 		class Iter {
 			STORM_VALUE;
 		public:
@@ -98,8 +97,8 @@ namespace storm {
 			Bool STORM_FN operator !=(const Iter &o) const;
 
 			// Get the value.
-			// Char operator *() const;
-			// Char STORM_FN v() const;
+			Char operator *() const;
+			Char STORM_FN v() const;
 
 		private:
 			friend class Str;

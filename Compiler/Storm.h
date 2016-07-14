@@ -25,7 +25,7 @@
  */
 #define STORM_COMMON													\
 	static Type *stormType(Engine &e);									\
-	static inline Type *stormType(const Object *o) { return stormType(o->engine()); } \
+	static Type *stormType(const Object *o);
 
 /**
  * Mark classes and values exposed to storm:
@@ -60,8 +60,12 @@
 /**
  * Mark a function for export to Storm. (eg. void STORM_FN foo()).
  * Makes sure we're using the correct calling convention for Storm.
+ *
+ * If the function takes a EnginePtr as the first parameter (as a non-member), that parameter will
+ * be filled in by the runtime to contain a Engine reference.
  */
 #define STORM_FN __cdecl
+
 
 /**
  * Mark a constructor exported to Storm.

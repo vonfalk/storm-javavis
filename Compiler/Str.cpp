@@ -26,6 +26,38 @@ namespace storm {
 		data->v[count] = 0;
 	}
 
+	Str::Str(Char ch) {
+		wchar lead = ch.leading();
+		wchar trail = ch.trailing();
+
+		if (lead) {
+			allocData(3);
+			data->v[0] = lead;
+			data->v[1] = trail;
+		} else {
+			allocData(2);
+			data->v[0] = trail;
+		}
+	}
+
+	Str::Str(Char ch, Nat times) {
+		wchar lead = ch.leading();
+		wchar trail = ch.trailing();
+
+		if (lead) {
+			allocData(2*times + 1);
+			for (nat i = 0; i < times; i++) {
+				data->v[i*2] = lead;
+				data->v[i*2 + 1] = trail;
+			}
+		} else {
+			allocData(2*times + 1);
+			for (nat i = 0; i < times; i++) {
+				data->v[i] = trail;
+			}
+		}
+	}
+
 	Str::Str(GcArray<wchar> *data) : data(data) {}
 
 	// The data is immutable, no need to copy it!

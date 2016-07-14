@@ -13,6 +13,9 @@ BEGIN_TEST(StrTest) {
 	CHECK_EQ(toS(*s + t), L"Hello World");
 	CHECK_EQ(toS(*s * 3), L"HelloHelloHello");
 
+	Str *w = new (e) Str(Char('Z'), 5);
+	CHECK_EQ(toS(w), L"ZZZZZ");
+
 } END_TEST
 
 BEGIN_TEST(StrBufTest) {
@@ -40,4 +43,13 @@ BEGIN_TEST(StrBufTest) {
 	buf->indent();
 	*buf << 20;
 	CHECK_EQ(toS(buf), L"a\n-->20");
+
+	buf->clear();
+	*buf << width(5) << fill('z') << L"w";
+	CHECK_EQ(toS(buf), L"zzzzw");
+
+	buf->clear();
+	*buf << width(5) << 20 << width(5) << Nat(100) << width(5) << -3;
+	CHECK_EQ(toS(buf), L"   20  100   -3");
+
 } END_TEST

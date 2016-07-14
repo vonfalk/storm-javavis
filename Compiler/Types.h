@@ -15,8 +15,11 @@ namespace storm {
 	typedef code::Float Float; // 32-bit float
 
 	class Engine;
+	class Object;
 	class Type;
 	class CloneEnv;
+	class Str;
+	class StrBuf;
 
 	using code::Size;
 	using code::Offset;

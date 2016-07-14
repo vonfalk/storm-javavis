@@ -54,6 +54,7 @@ static void genGlobals(wostream &to, World &w) {
 		Type &t = w.types[i];
 
 		to << L"storm::Type *" << t.name << L"::stormType(Engine &e) { return e.cppType(" << i << L"); }\n";
+		to << L"storm::Type *" << t.name << L"::stormType(const Object *o) { return o->engine().cppType(" << i << L"); }\n";
 	}
 }
 
