@@ -2,6 +2,7 @@
 #include "CppLoader.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Str.h"
 
 namespace storm {
 
@@ -25,12 +26,20 @@ namespace storm {
 
 			// The array could be partially filled.
 			if (into[i] == null) {
-				into[i] = new (e) Type(typeClass, Size(type.size), createGcType(&type));
+				into[i] = new (e) Type(null, typeClass, Size(type.size), createGcType(&type));
 			}
 		}
 
 		// Now we can fill in the names properly!
-		// TODO!
+		for (nat i = 0; i < c; i++) {
+			CppType &type = world->types[i];
+
+			// Just to make sure...
+			if (!into[i])
+				break;
+
+			into[i]->name = new (e) Str(type.name);
+		}
 	}
 
 	GcType *CppLoader::createGcType(const CppType *type) {

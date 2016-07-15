@@ -51,10 +51,12 @@ static void genIncludes(wostream &to, World &w) {
 static void genGlobals(wostream &to, World &w) {
 	// Generate bodies for T::stormType():
 	for (nat i = 0; i < w.types.size(); i++) {
-		Type &t = *w.types[i];
+		Type *t = w.types[i].borrow();
 
-		to << L"storm::Type *" << t.name << L"::stormType(Engine &e) { return e.cppType(" << i << L"); }\n";
-		to << L"storm::Type *" << t.name << L"::stormType(const Object *o) { return o->engine().cppType(" << i << L"); }\n";
+		if (Class *c = as<Class>(t)) {
+			to << L"storm::Type *" << c->name << L"::stormType(Engine &e) { return e.cppType(" << i << L"); }\n";
+			to << L"storm::Type *" << c->name << L"::stormType(const Object *o) { return o->engine().cppType(" << i << L"); }\n";
+		}
 	}
 }
 

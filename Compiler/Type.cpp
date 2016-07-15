@@ -5,13 +5,15 @@
 
 namespace storm {
 
-	Type::Type(TypeFlags flags) : engine(Object::engine()), gcType(null) {}
+	Type::Type(Str *name, TypeFlags flags) : Named(name), engine(Object::engine()), gcType(null) {}
 
-	Type::Type(TypeFlags flags, Size size, GcType *gcType) : engine(Object::engine()), gcType(gcType) {
+	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType) :
+		Named(name), engine(Object::engine()), gcType(gcType) {
+
 		gcType->type = this;
 	}
 
-	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) : engine(e), gcType(gcType) {
+	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) : Named(null), engine(e), gcType(gcType) {
 		gcType->type = this;
 	}
 

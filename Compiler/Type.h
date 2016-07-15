@@ -19,10 +19,10 @@ namespace storm {
 
 	public:
 		// Create a type declared in Storm.
-		Type(TypeFlags flags);
+		STORM_CTOR Type(Str *name, TypeFlags flags);
 
 		// Create a type declared in C++.
-		Type(TypeFlags flags, Size size, GcType *gcType);
+		STORM_CTOR Type(Str *name, TypeFlags flags, Size size, GcType *gcType);
 
 		// Destroy our resources.
 		~Type();

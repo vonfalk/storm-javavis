@@ -39,7 +39,7 @@ namespace storm {
 		// Create with parameters (TODO).
 		// STORM_CTOR Named(Str *name, Array<Value> *params);
 
-		// Our name.
+		// Our name. Note: this can be null for a while when starting up the compiler.
 		Str *name;
 
 		// Our parameters (TODO).
