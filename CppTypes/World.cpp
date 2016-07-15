@@ -266,12 +266,32 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 	}
 }
 
+// Parse an enum declaration.
+static void parseEnumDecl(Tokenizer &tok, World &world, const CppName &inside) {
+	Token name = tok.next();
+
+	// Forward-declaration?
+	if (tok.skipIf(L";"))
+		return;
+
+	tok.expect(L"{");
+
+	// Skip the contents for now. Later, we want to represent enums as an int-sized value type.
+	parseBlock(tok);
+
+	// Add the type so that we know it exists. We probably want to add constructors and other members to it later.
+	CppName fullName = inside + name.token;
+	TODO(L"Add the enum '" << fullName << L"' properly!");
+
+	tok.expect(L";");
+}
+
 // Parse a type.
 static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 	Token name = tok.next();
 
 	// Forward-declaration?
-	if (tok.peek().token == L";")
+	if (tok.skipIf(L";"))
 		return;
 
 	CppName parent;
@@ -299,7 +319,8 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 	}
 	tok.expect(L";");
 
-	Type type(inside + name.token, name.pos, value);
+	CppName fullName = inside + name.token;
+	Type type(fullName, name.pos, value);
 	type.parent = parent;
 
 	nat depth = 0;
@@ -313,6 +334,12 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 		} else if (t.token == L"}") {
 			tok.skip();
 			break;
+		} else if (t.token == L"class" || t.token == L"struct") {
+			tok.skip();
+			parseTypeDecl(tok, world, fullName);
+		} else if (t.token == L"enum") {
+			tok.skip();
+			parseEnumDecl(tok, world, fullName);
 		} else if (t.token == L"template") {
 			// Skip until we find a {, and skip the body as well.
 			while (tok.skipIf(L"{"))
@@ -349,6 +376,8 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 	}
 
 	world.add(type);
+
+	tok.expect(L";");
 }
 
 // Parse in the context of a namespace.
@@ -359,6 +388,9 @@ static void parseNamespace(Tokenizer &tok, World &world, const CppName &name) {
 		if (t.token == L"class" || t.token == L"struct") {
 			tok.skip();
 			parseTypeDecl(tok, world, name);
+		} else if (t.token == L"enum") {
+			tok.skip();
+			parseEnumDecl(tok, world, name);
 		} else if (t.token == L"template") {
 			// Skip until we find a {, and skip the body as well.
 			while (tok.skipIf(L"{"))
@@ -386,6 +418,13 @@ static void parseNamespace(Tokenizer &tok, World &world, const CppName &name) {
 				tok.expect(L"{");
 				parseNamespace(tok, world, name + n.token);
 			}
+		} else if (t.token == L"BITMASK_OPERATORS") {
+			// Skip...
+			tok.skip();
+			tok.expect(L"(");
+			tok.skip();
+			tok.expect(L")");
+			tok.expect(L";");
 		} else if (t.token == L"{") {
 			tok.skip();
 			parseBlock(tok);

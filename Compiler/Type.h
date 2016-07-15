@@ -1,6 +1,7 @@
 #pragma once
-#include "Object.h"
+#include "Named.h"
 #include "Gc.h"
+#include "TypeFlags.h"
 
 namespace storm {
 
@@ -8,20 +9,9 @@ namespace storm {
 	struct CppType;
 
 	/**
-	 * Define different properties for a type.
-	 */
-	enum TypeFlags {
-		// Regular type.
-		typeClass = 0x00,
-
-		// Value type?
-		typeValue = 0x01,
-	};
-
-	/**
 	 * Description of a type.
 	 */
-	class Type : public Object {
+	class Type : public Named {
 		STORM_CLASS;
 
 		// Let allocation access gcType.
