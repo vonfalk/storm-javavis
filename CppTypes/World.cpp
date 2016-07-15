@@ -30,11 +30,11 @@ World::World() {
 	}
 }
 
-void World::add(const Type &type) {
-	if (typeLookup.count(type.name))
-		throw Error(L"The type " + toS(type.name) + L" is defined twice!", type.pos);
+void World::add(Auto<Type> type) {
+	if (typeLookup.count(type->name))
+		throw Error(L"The type " + toS(type->name) + L" is defined twice!", type->pos);
 
-	typeLookup.insert(make_pair(type.name, types.size()));
+	typeLookup.insert(make_pair(type->name, types.size()));
 	types.push_back(type);
 }
 
@@ -49,28 +49,28 @@ void World::orderTypes() {
 		std::swap(types[0], types[typePos]);
 
 	struct pred {
-		bool operator ()(const Type &l, const Type &r) const {
-			return l.name < r.name;
+		bool operator ()(const Auto<Type> &l, const Auto<Type> &r) const {
+			return l->name < r->name;
 		}
 	};
 
 	std::sort(types.begin() + 1, types.end(), pred());
 
 	for (nat i = 0; i < types.size(); i++) {
-		types[i].id = i;
-		typeLookup[types[i].name] = i;
+		types[i]->id = i;
+		typeLookup[types[i]->name] = i;
 	}
 }
 
 Type *World::findTypeUnsafe(const CppName &name, CppName context) {
 	map<CppName, nat>::const_iterator i = typeLookup.find(name);
 	if (i != typeLookup.end())
-		return &types[i->second];
+		return types[i->second].borrow();
 
 	while (!context.empty()) {
 		i = typeLookup.find(context + name);
 		if (i != typeLookup.end())
-			return &types[i->second];
+			return types[i->second].borrow();
 
 		context = context.parent();
 	}
@@ -79,7 +79,7 @@ Type *World::findTypeUnsafe(const CppName &name, CppName context) {
 	for (nat j = 0; j < usingDecl.size(); j++) {
 		i = typeLookup.find(usingDecl[j] + name);
 		if (i != typeLookup.end())
-			return &types[i->second];
+			return types[i->second].borrow();
 	}
 
 	return null;
@@ -94,7 +94,7 @@ Type *World::findType(const CppName &name, const CppName &context, const SrcPos 
 
 void World::resolveTypes() {
 	for (nat i = 0; i < types.size(); i++) {
-		types[i].resolveTypes(*this);
+		types[i]->resolveTypes(*this);
 	}
 }
 
@@ -132,13 +132,13 @@ static CppName parseName(Tokenizer &tok) {
 }
 
 // Read a type.
-static Auto<CppType> parseType(Tokenizer &tok) {
+static Auto<TypeRef> parseType(Tokenizer &tok) {
 	bool isConst = false;
 
 	if (tok.skipIf(L"const"))
 		isConst = true;
 
-	Auto<CppType> type;
+	Auto<TypeRef> type;
 	if (tok.skipIf(L"MAYBE")) {
 		tok.expect(L"(");
 		type = new MaybeType(parseType(tok));
@@ -146,6 +146,7 @@ static Auto<CppType> parseType(Tokenizer &tok) {
 	} else {
 		SrcPos pos = tok.peek().pos;
 		CppName n = parseName(tok);
+		// pos = tok.pos();
 
 		if (tok.skipIf(L"<")) {
 			// Template parameters.
@@ -173,7 +174,7 @@ static Auto<CppType> parseType(Tokenizer &tok) {
 
 		Token modifiers = tok.peek();
 		bool wrong = false;
-		Auto<CppType> nType = type;
+		Auto<TypeRef> nType = type;
 		for (nat i = 0; i < modifiers.token.size(); i++) {
 			if (modifiers.token[i] == '*') {
 				nType = new PtrType(nType);
@@ -211,7 +212,7 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 		return;
 
 	// First, we should have a type.
-	Auto<CppType> type;
+	Auto<TypeRef> type;
 	if (tok.skipIf(L"~")) {
 		type = new NamedType(tok.peek().pos, L"void");
 	} else {
@@ -229,8 +230,18 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 	if (tok.peek().token != L"(") {
 		// Then, we should have the member's name.
 		name = tok.next();
-		if (name.token == L"operator")
-			name.token += L" " + tok.next().token;
+		if (name.token == L"operator") {
+			// < and > are tokenized one at a time.
+			if (tok.skipIf(L"<")) {
+				tok.expect(L"<");
+				name.token += L" <<";
+			} else if (tok.skipIf(L">")) {
+				tok.expect(L">");
+				name.token += L" >>";
+			} else {
+				name.token += L" " + tok.next().token;
+			}
+		}
 	} else {
 		// Constructor
 		type = new NamedType(name.pos, L"void");
@@ -281,8 +292,9 @@ static void parseEnumDecl(Tokenizer &tok, World &world, const CppName &inside) {
 
 	// Add the type so that we know it exists. We probably want to add constructors and other members to it later.
 	CppName fullName = inside + name.token;
-	TODO(L"Add the enum '" << fullName << L"' properly!");
+	Auto<Enum> type = new Enum(fullName, name.pos);
 
+	world.add(type);
 	tok.expect(L";");
 }
 
@@ -320,8 +332,8 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 	tok.expect(L";");
 
 	CppName fullName = inside + name.token;
-	Type type(fullName, name.pos, value);
-	type.parent = parent;
+	Auto<Class> type = new Class(fullName, name.pos, value);
+	type->parent = parent;
 
 	nat depth = 0;
 
@@ -337,6 +349,8 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 		} else if (t.token == L"class" || t.token == L"struct") {
 			tok.skip();
 			parseTypeDecl(tok, world, fullName);
+		} else if (t.token == L"extern" || t.token == L"static") {
+			tok.skip();
 		} else if (t.token == L"enum") {
 			tok.skip();
 			parseEnumDecl(tok, world, fullName);
@@ -362,7 +376,7 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 		} else if (t.token == L"friend") {
 			while (!tok.skipIf(L";"))
 				tok.skip();
-		} else if (t.token == L"using") {
+		} else if (t.token == L"using" || t.token == L"typedef") {
 			while (!tok.skipIf(L";"))
 				tok.skip();
 		} else if (t.token == L"inline") {
@@ -371,7 +385,7 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 			// TODO: pass this on.
 			tok.skip();
 		} else {
-			parseMember(tok, type);
+			parseMember(tok, *type);
 		}
 	}
 
@@ -396,7 +410,12 @@ static void parseNamespace(Tokenizer &tok, World &world, const CppName &name) {
 			while (tok.skipIf(L"{"))
 				tok.skip();
 			parseBlock(tok);
-		} else if (t.token == L"using") {
+		} else if (t.token == L"extern") {
+			tok.skip();
+			tok.skipIf(L"\"C\""); // for 'extern "C" {}'
+		} else if (t.token == L"static") {
+			tok.skip();
+		} else if (t.token == L"using" || t.token == L"typedef") {
 			while (!tok.skipIf(L";"))
 				tok.skip();
 		} else if (t.token == L"STORM_PKG") {

@@ -99,4 +99,7 @@ private:
 
 	// Do one step in the state-machine.
 	void processChar(nat &start, State &state);
+
+	// Advance a srcPos.
+	void advance(SrcPos &pos, nat from, nat to) const;
 };

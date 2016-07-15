@@ -1,6 +1,7 @@
 #pragma once
 #include "SrcPos.h"
 #include "Type.h"
+#include "Auto.h"
 
 /**
  * Describes all types and functions known.
@@ -14,7 +15,7 @@ public:
 	vector<CppName> usingDecl;
 
 	// All types.
-	vector<Type> types;
+	vector<Auto<Type>> types;
 
 	// Quick lookup of all types.
 	map<CppName, nat> typeLookup;
@@ -25,7 +26,7 @@ public:
 	// ...
 
 	// Add a type (and do the proper checking).
-	void add(const Type &type);
+	void add(Auto<Type> type);
 
 	// Prepare the world for serialization (ie. resolving types, ...).
 	void prepare();

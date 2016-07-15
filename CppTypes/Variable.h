@@ -1,13 +1,13 @@
 #pragma once
 #include "CppName.h"
-#include "CppType.h"
+#include "TypeRef.h"
 #include "SrcPos.h"
 
 class World;
 
 class Variable {
 public:
-	Variable(const CppName &name, Auto<CppType> type, const SrcPos &pos);
+	Variable(const CppName &name, Auto<TypeRef> type, const SrcPos &pos);
 
 	// Position.
 	SrcPos pos;
@@ -16,7 +16,7 @@ public:
 	CppName name;
 
 	// Type.
-	Auto<CppType> type;
+	Auto<TypeRef> type;
 
 	// Resolve types.
 	void resolveTypes(World &in, const CppName &context);

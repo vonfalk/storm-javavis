@@ -9,9 +9,9 @@ class World;
 /**
  * Represents a (written) type in C++.
  */
-class CppType : public Refcount {
+class TypeRef : public Refcount {
 public:
-	CppType(const SrcPos &pos);
+	TypeRef(const SrcPos &pos);
 
 	// Position of this type.
 	SrcPos pos;
@@ -26,13 +26,13 @@ public:
 	virtual bool gcType() const = 0;
 
 	// Resolve type info.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const = 0;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const = 0;
 
 	// Print.
 	virtual void print(wostream &to) const = 0;
 };
 
-inline wostream &operator <<(wostream &to, const CppType &c) {
+inline wostream &operator <<(wostream &to, const TypeRef &c) {
 	c.print(to);
 	if (c.constType)
 		to << L" const";
@@ -42,12 +42,12 @@ inline wostream &operator <<(wostream &to, const CppType &c) {
 /**
  * Array type.
  */
-class ArrayType : public CppType {
+class ArrayType : public TypeRef {
 public:
-	ArrayType(Auto<CppType> of);
+	ArrayType(Auto<TypeRef> of);
 
 	// Array member type.
-	Auto<CppType> of;
+	Auto<TypeRef> of;
 
 	// Get the size of this type.
 	virtual Size size() const;
@@ -56,7 +56,7 @@ public:
 	virtual bool gcType() const { return true; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -65,12 +65,12 @@ public:
 /**
  * Map type.
  */
-class MapType : public CppType {
+class MapType : public TypeRef {
 public:
-	MapType(Auto<CppType> k, Auto<CppType> v);
+	MapType(Auto<TypeRef> k, Auto<TypeRef> v);
 
 	// Key and value types.
-	Auto<CppType> k, v;
+	Auto<TypeRef> k, v;
 
 	// Get the size of this type.
 	virtual Size size() const;
@@ -79,7 +79,7 @@ public:
 	virtual bool gcType() const { return true; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -88,7 +88,7 @@ public:
 /**
  * Generic templated type. Only templates in the last position are supported at the moment.
  */
-class TemplateType : public CppType {
+class TemplateType : public TypeRef {
 public:
 	TemplateType(const SrcPos &pos, const CppName &name);
 
@@ -96,7 +96,7 @@ public:
 	CppName name;
 
 	// Template types.
-	vector<Auto<CppType>> params;
+	vector<Auto<TypeRef>> params;
 
 	// Get the size of this type.
 	virtual Size size() const;
@@ -105,7 +105,7 @@ public:
 	virtual bool gcType() const { return false; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -114,12 +114,12 @@ public:
 /**
  * Pointer type.
  */
-class PtrType : public CppType {
+class PtrType : public TypeRef {
 public:
-	PtrType(Auto<CppType> of);
+	PtrType(Auto<TypeRef> of);
 
 	// Type.
-	Auto<CppType> of;
+	Auto<TypeRef> of;
 
 	// Get the size of this type.
 	virtual Size size() const { return Size::sPtr; }
@@ -128,7 +128,7 @@ public:
 	virtual bool gcType() const { return false; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -137,12 +137,12 @@ public:
 /**
  * Ref type.
  */
-class RefType : public CppType {
+class RefType : public TypeRef {
 public:
-	RefType(Auto<CppType> of);
+	RefType(Auto<TypeRef> of);
 
 	// Type.
-	Auto<CppType> of;
+	Auto<TypeRef> of;
 
 	// Get the size of this type.
 	virtual Size size() const { return Size::sPtr; }
@@ -151,7 +151,7 @@ public:
 	virtual bool gcType() const { return false; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -160,9 +160,9 @@ public:
 /**
  * Maybe type.
  */
-class MaybeType : public CppType {
+class MaybeType : public TypeRef {
 public:
-	MaybeType(Auto<CppType> of);
+	MaybeType(Auto<TypeRef> of);
 
 	// Type.
 	Auto<PtrType> of;
@@ -174,7 +174,7 @@ public:
 	virtual bool gcType() const { return of->gcType(); }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -183,7 +183,7 @@ public:
 /**
  * Named type.
  */
-class NamedType : public CppType {
+class NamedType : public TypeRef {
 public:
 	NamedType(const SrcPos &pos, const CppName &name);
 	NamedType(const SrcPos &pos, const String &name);
@@ -198,7 +198,7 @@ public:
 	virtual bool gcType() const { return false; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -207,9 +207,9 @@ public:
 /**
  * Resolved type.
  */
-class ResolvedType : public CppType {
+class ResolvedType : public TypeRef {
 public:
-	ResolvedType(const CppType &templ, Type *type);
+	ResolvedType(const TypeRef &templ, Type *type);
 
 	// Type.
 	Type *type;
@@ -221,7 +221,7 @@ public:
 	virtual bool gcType() const;
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -230,7 +230,7 @@ public:
 /**
  * Type built into C++.
  */
-class BuiltInType : public CppType {
+class BuiltInType : public TypeRef {
 public:
 	BuiltInType(const SrcPos &pos, const String &name, Size size);
 
@@ -247,7 +247,7 @@ public:
 	virtual bool gcType() const { return false; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
@@ -256,12 +256,12 @@ public:
 /**
  * GcArray-type.
  */
-class GcArrayType : public CppType {
+class GcArrayType : public TypeRef {
 public:
-	GcArrayType(const SrcPos &pos, Auto<CppType> of);
+	GcArrayType(const SrcPos &pos, Auto<TypeRef> of);
 
 	// Type of what?
-	Auto<CppType> of;
+	Auto<TypeRef> of;
 
 	// Get the size of this type.
 	virtual Size size() const;
@@ -270,14 +270,14 @@ public:
 	virtual bool gcType() const { return true; }
 
 	// Resolve.
-	virtual Auto<CppType> resolve(World &in, const CppName &context) const;
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
 
 	// Print.
 	virtual void print(wostream &to) const;
 };
 
 
-inline bool isGcPtr(Auto<CppType> t) {
+inline bool isGcPtr(Auto<TypeRef> t) {
 	if (Auto<PtrType> p = t.as<PtrType>()) {
 		return p->of->gcType();
 	} else if (Auto<RefType> r = t.as<RefType>()) {

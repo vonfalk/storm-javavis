@@ -45,6 +45,10 @@ public:
 		return Auto<U>(o);
 	}
 
+	T *borrow() const {
+		return ptr;
+	}
+
 	operator void *() const {
 		return ptr;
 	}
@@ -59,6 +63,11 @@ public:
 
 	T &operator *() const {
 		return *ptr;
+	}
+
+	// Make sure < works as if calling < on the value (good in maps).
+	bool operator <(const Auto<T> &o) const {
+		return *ptr < *o.ptr;
 	}
 
 private:

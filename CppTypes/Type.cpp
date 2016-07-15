@@ -4,10 +4,27 @@
 #include "Exception.h"
 #include "World.h"
 
-Type::Type(const CppName &name, const SrcPos &pos, bool valueType) :
-	id(0), valueType(valueType), name(name), parent(L""), parentType(null), pos(pos) {}
+Type::Type(const CppName &name, const SrcPos &pos) : id(0), name(name), pos(pos) {}
 
-void Type::add(const Variable &v) {
+vector<Offset> Type::ptrOffsets() const {
+	vector<Offset> r;
+	ptrOffsets(r);
+	return r;
+}
+
+wostream &operator <<(wostream &to, const Type &type) {
+	type.print(to);
+	return to;
+}
+
+/**
+ * Class.
+ */
+
+Class::Class(const CppName &name, const SrcPos &pos, bool valueType) :
+	Type(name, pos), valueType(valueType), parent(L""), parentType(null) {}
+
+void Class::add(const Variable &v) {
 	for (nat i = 0; i < variables.size(); i++)
 		if (variables[i].name == v.name)
 			throw Error(L"Member variable " + toS(v.name) + L" already declared!", v.pos);
@@ -15,7 +32,7 @@ void Type::add(const Variable &v) {
 	variables.push_back(v);
 }
 
-void Type::resolveTypes(World &in) {
+void Class::resolveTypes(World &in) {
 	CppName ctx = name.parent();
 
 	if (!parent.empty())
@@ -25,7 +42,7 @@ void Type::resolveTypes(World &in) {
 		variables[i].resolveTypes(in, ctx);
 }
 
-Size Type::size() const {
+Size Class::size() const {
 	Size s;
 
 	if (parentType) {
@@ -40,13 +57,7 @@ Size Type::size() const {
 	return s;
 }
 
-vector<Offset> Type::ptrOffsets() const {
-	vector<Offset> r;
-	ptrOffsets(r);
-	return r;
-}
-
-void Type::ptrOffsets(vector<Offset> &to) const {
+void Class::ptrOffsets(vector<Offset> &to) const {
 	Size s;
 
 	if (parentType) {
@@ -57,7 +68,7 @@ void Type::ptrOffsets(vector<Offset> &to) const {
 	}
 
 	for (nat i = 0; i < variables.size(); i++) {
-		const Auto<CppType> &t = variables[i].type;
+		const Auto<TypeRef> &t = variables[i].type;
 		Size size = t->size();
 
 		// Make sure to properly align 's'.
@@ -77,18 +88,37 @@ void Type::ptrOffsets(vector<Offset> &to) const {
 	}
 }
 
-wostream &operator <<(wostream &to, const Type &type) {
-	to << L"class " << type.name;
-	if (!type.parent.empty())
-		to << L" : " << type.parent;
+void Class::print(wostream &to) const {
+	to << L"class " << name;
+	if (!parent.empty())
+		to << L" : " << parent;
 	to << L" {\n";
 
 	{
 		Indent z(to);
-		for (nat i = 0; i < type.variables.size(); i++)
-			to << type.variables[i] << endl;
+		for (nat i = 0; i < variables.size(); i++)
+			to << variables[i] << endl;
 	}
 	to << L"}";
+}
 
-	return to;
+/**
+ * Enum.
+ */
+
+Enum::Enum(const CppName &name, const SrcPos &pos) : Type(name, pos) {}
+
+void Enum::resolveTypes(World &world) {}
+
+Size Enum::size() const {
+	enum Test { foo = 0x10 };
+	assert(Size::sInt.current() == sizeof(Test), L"Check the enum size on this machine!");
+	// We might want to use sPtr or similar. I don't know the enum size on x86-64.
+	return Size::sInt;
+}
+
+void Enum::ptrOffsets(vector<Offset> &append) const {}
+
+void Enum::print(wostream &to) const {
+	to << L"enum " << name << L"{}";
 }

@@ -19,7 +19,7 @@ String Token::strVal() const {
 	return token.substr(1, token.size() - 2);
 }
 
-static const wchar *operators = L"+?*&=.:";
+static const wchar *operators = L"+?*&=.:!";
 static const wchar *specials = L"[](){},-;<>";
 
 static bool isOperator(wchar c) {
@@ -89,16 +89,32 @@ bool Tokenizer::more() const {
 	return !nextToken.empty();
 }
 
+void Tokenizer::advance(SrcPos &pos, nat from, nat to) const {
+	for (nat i = from; i < to; i++) {
+		if (src[i] == '\n') {
+			pos.line++;
+			pos.col = 0;
+		} else {
+			pos.col++;
+		}
+	}
+}
+
 Token Tokenizer::findNext() {
 	State state = sStart;
 	nat start = pos;
+	nat from = pos; // from may be modified, while start may not.
 	SrcPos sStart = srcPos;
 
 	while (state != sDone) {
-		processChar(start, state);
+		processChar(from, state);
 	}
 
-	return Token(src.substr(start, pos - start), sStart);
+	// Advance line-counting.
+	advance(sStart, start, from);
+	advance(srcPos, start, pos);
+
+	return Token(src.substr(from, pos - from), sStart);
 }
 
 void Tokenizer::processChar(nat &start, State &state) {
@@ -199,14 +215,6 @@ void Tokenizer::processChar(nat &start, State &state) {
 	case sDone:
 		// pos--;
 		break;
-	}
-
-	if (pos != oldPos) {
-		srcPos.col += pos - oldPos;
-		if (ch == '\n') {
-			srcPos.line++;
-			srcPos.col = 0;
-		}
 	}
 }
 

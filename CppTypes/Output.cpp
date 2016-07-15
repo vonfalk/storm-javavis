@@ -37,7 +37,7 @@ static void genIncludes(wostream &to, World &w) {
 	// Include all relevant files.
 	set<nat> files;
 	for (nat i = 0; i < w.types.size(); i++) {
-		files.insert(w.types[i].pos.fileId);
+		files.insert(w.types[i]->pos.fileId);
 	}
 
 	// TODO: include all files containing functions we're interested in as well!
@@ -51,7 +51,7 @@ static void genIncludes(wostream &to, World &w) {
 static void genGlobals(wostream &to, World &w) {
 	// Generate bodies for T::stormType():
 	for (nat i = 0; i < w.types.size(); i++) {
-		Type &t = w.types[i];
+		Type &t = *w.types[i];
 
 		to << L"storm::Type *" << t.name << L"::stormType(Engine &e) { return e.cppType(" << i << L"); }\n";
 		to << L"storm::Type *" << t.name << L"::stormType(const Object *o) { return o->engine().cppType(" << i << L"); }\n";
@@ -60,7 +60,7 @@ static void genGlobals(wostream &to, World &w) {
 
 static void genPtrOffsets(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
-		Type &t = w.types[i];
+		Type &t = *w.types[i];
 		to << L"static CppOffset " << toVarName(t.name) << L"_offset[] = { ";
 
 		vector<Offset> o = t.ptrOffsets();
@@ -74,17 +74,22 @@ static void genPtrOffsets(wostream &to, World &w) {
 
 static void genTypes(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
-		Type &t = w.types[i];
+		Type &t = *w.types[i];
 		to << L"{ ";
 
 		// Name.
 		to << L"L\"" << t.name.last() << L"\", ";
 
 		// Parent class (if any).
-		if (t.parentType) {
-			to << t.parentType->id << L" /* " << t.parentType->name << " */, ";
-		} else {
-			to << L"-1 /* NONE */, ";
+		{
+			Type *parent = null;
+			if (Class *c = as<Class>(&t))
+				parent = c->parentType;
+			if (parent) {
+				to << parent->id << L" /* " << parent->name << " */, ";
+			} else {
+				to << L"-1 /* NONE */, ";
+			}
 		}
 
 		// Size.
