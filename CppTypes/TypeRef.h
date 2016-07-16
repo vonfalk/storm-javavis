@@ -7,7 +7,7 @@ class Type;
 class World;
 
 /**
- * Represents a (written) type in C++.
+ * Represents a reference to a type in C++. (ie. whenever we're using a type).
  */
 class TypeRef : public Refcount {
 public:
@@ -274,6 +274,51 @@ public:
 
 	// Print.
 	virtual void print(wostream &to) const;
+};
+
+/**
+ * Unknown type. These are to allow GC:d classes to contain types unknown to the preprocessor
+ * without having to allocate them separatly all the time.
+ *
+ * Supports various kind of external types:
+ * PTR_NOGC - pointer to non-gc object.
+ * PTR_GC - pointer to gc object.
+ * INT - integer sized object.
+ * LONG - long-sized object (ie. 64 bits according to Storm terminology).
+ */
+class UnknownType : public TypeRef {
+public:
+	// Create. 'id' is the kind of external type.
+	UnknownType(const String &id, Auto<TypeRef> of);
+
+	// Type of what?
+	Auto<TypeRef> of;
+
+	// Get the size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const;
+
+	// Resolve.
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+
+private:
+	// Description of an id.
+	struct ID {
+		const wchar *name;
+		const Size &size; // needs to be a reference for some reason.
+		bool gc;
+	};
+
+	// All known ids.
+	static const ID ids[];
+
+	// Current id.
+	const ID *id;
 };
 
 

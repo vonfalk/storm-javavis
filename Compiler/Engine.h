@@ -48,6 +48,9 @@ namespace storm {
 		// Get a C++ type by its id.
 		inline Type *cppType(nat id) const { return cppTypes[id]; }
 
+		// The threadgroup which all threads spawned from here shall belong to.
+		os::ThreadGroup threadGroup;
+
 	private:
 		// All C++ types.
 		RootArray<Type> cppTypes;

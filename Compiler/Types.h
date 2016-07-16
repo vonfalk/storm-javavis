@@ -1,4 +1,6 @@
 #pragma once
+#include "OS/Thread.h"
+#include "OS/Threadgroup.h"
 
 namespace storm {
 
@@ -20,8 +22,29 @@ namespace storm {
 	class CloneEnv;
 	class Str;
 	class StrBuf;
+	class Thread;
 
 	using code::Size;
 	using code::Offset;
+
+	/**
+	 * Class used when declaring named threads from C++.
+	 */
+	struct DeclThread {
+		// Function used to create the Thread (if any).
+		// The address of this member is our unique identifier.
+		typedef os::Thread (*CreateFn)(Engine &);
+		CreateFn createFn;
+
+		// Get the thread we are representing.
+		Thread *thread(Engine &e) const;
+
+		// Get our unique identifier.
+		inline uintptr_t identifier() const {
+			return (uintptr_t)&createFn;
+		}
+
+		// TODO: implement 'threadName' and 'force' here.
+	};
 
 }

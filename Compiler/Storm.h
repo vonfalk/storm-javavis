@@ -66,11 +66,43 @@
  */
 #define STORM_FN __cdecl
 
-
 /**
  * Mark a constructor exported to Storm.
  */
 #define STORM_CTOR
+
+/**
+ * Mark unknown types for the preprocessor. Ignored by C++.
+ */
+#define UNKNOWN(kind)
+
+/**
+ * Declare a thread.
+ */
+#define STORM_THREAD(name)								\
+	struct name {										\
+		static storm::Thread *thread(storm::Engine &e); \
+		static storm::DeclThread decl;					\
+	};
+
+/**
+ * Define a thread.
+ */
+#define STORM_DEFINE_THREAD(name)					\
+	storm::Thread *name::thread(storm::Engine &e) { \
+		return decl.thread(e);						\
+	}												\
+	storm::DeclThread name::decl = { null };
+
+/**
+ * Define a thread, using a custom ThreadWait structure. 'fnPtr' is a pointer to a function like:
+ * os::Thread foo(Engine &). That function is executed to create the thread.
+ */
+#define STORM_DEFINE_THREAD_WAIT(name, fnPtr)		\
+	storm::Thread *name::thread(storm::Engine &e) { \
+		return decl.thread(e);						\
+	}												\
+	storm::DeclThread name::decl = { fnPtr };
 
 
 #include "Utils/Utils.h"

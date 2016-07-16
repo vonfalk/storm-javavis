@@ -143,6 +143,11 @@ static Auto<TypeRef> parseType(Tokenizer &tok) {
 		tok.expect(L"(");
 		type = new MaybeType(parseType(tok));
 		tok.expect(L")");
+	} else if (tok.skipIf(L"UNKNOWN")) {
+		tok.expect(L"(");
+		Token kind = tok.next();
+		tok.expect(L")");
+		type = new UnknownType(kind.token, parseType(tok));
 	} else {
 		SrcPos pos = tok.peek().pos;
 		CppName n = parseName(tok);
@@ -460,6 +465,13 @@ static void parseNamespace(Tokenizer &tok, World &world, const CppName &name) {
 			} else {
 				throw Error(L"The type " + n.token + L" is not an enum.", n.pos);
 			}
+			tok.expect(L")");
+			tok.expect(L";");
+		} else if (t.token == L"STORM_THREAD") {
+			tok.skip();
+			tok.expect(L"(");
+			Token tName = tok.next();
+			TODO(L"Do not ignore thread " << tName);
 			tok.expect(L")");
 			tok.expect(L";");
 		} else if (t.token == L"{") {

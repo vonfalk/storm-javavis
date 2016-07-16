@@ -110,7 +110,8 @@ NamedType::NamedType(const SrcPos &pos, const CppName &name) : TypeRef(pos), nam
 NamedType::NamedType(const SrcPos &pos, const String &name) : TypeRef(pos), name(name) {}
 
 Size NamedType::size() const {
-	throw Error(L"Unknown size of the non-exported type " + name, pos);
+	throw Error(L"Unknown size of the non-exported type " + name +
+				L"\nUse PTR_NOGC or similar if this is the intent.", pos);
 }
 
 Auto<TypeRef> NamedType::resolve(World &in, const CppName &context) const {
@@ -171,4 +172,38 @@ Size GcArrayType::size() const {
 
 void GcArrayType::print(wostream &to) const {
 	to << L"storm::GcArray<" << of << L">";
+}
+
+const UnknownType::ID UnknownType::ids[] = {
+	{ L"PTR_NOGC", Size::sPtr, false },
+	{ L"PTR_GC", Size::sPtr, true },
+	{ L"INT", Size::sInt, false },
+};
+
+UnknownType::UnknownType(const String &kind, Auto<TypeRef> of) : TypeRef(of->pos), of(of), id(null) {
+	for (nat i = 0; i < ARRAY_COUNT(ids); i++) {
+		if (kind == ids[i].name) {
+			id = &ids[i];
+			break;
+		}
+	}
+
+	if (!id)
+		throw Error(L"Invalid UNKNOWN() declaration. " + kind + L" is not known.", of->pos);
+}
+
+Size UnknownType::size() const {
+	return id->size;
+}
+
+bool UnknownType::gcType() const {
+	return id->gc;
+}
+
+Auto<TypeRef> UnknownType::resolve(World &in, const CppName &ctx) const {
+	return new UnknownType(*this);
+}
+
+void UnknownType::print(wostream &to) const {
+	to << L"UNKNOWN(" << id->name << L") " << of;
 }
