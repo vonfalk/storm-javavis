@@ -287,15 +287,28 @@ static void parseEnumDecl(Tokenizer &tok, World &world, const CppName &inside) {
 
 	tok.expect(L"{");
 
-	// Skip the contents for now. Later, we want to represent enums as an int-sized value type.
-	parseBlock(tok);
-
-	// Add the type so that we know it exists. We probably want to add constructors and other members to it later.
+	// Add the type.
 	CppName fullName = inside + name.token;
 	Auto<Enum> type = new Enum(fullName, name.pos);
 
-	world.add(type);
+	do {
+		Token member = tok.next();
+		if (member.token == L"}")
+			break;
+
+		type->members.push_back(member.token);
+
+		if (tok.skipIf(L"=")) {
+			// Some expression for initialization. Skip it.
+			while (tok.peek().token != L"," && tok.peek().token != L"}")
+				tok.next();
+		}
+
+	} while (tok.skipIf(L","));
+	tok.skipIf(L"}");
 	tok.expect(L";");
+
+	world.add(type);
 }
 
 // Parse a type.
@@ -438,10 +451,15 @@ static void parseNamespace(Tokenizer &tok, World &world, const CppName &name) {
 				parseNamespace(tok, world, name + n.token);
 			}
 		} else if (t.token == L"BITMASK_OPERATORS") {
-			// Skip...
 			tok.skip();
 			tok.expect(L"(");
-			tok.skip();
+			Token n = tok.next();
+			Type *t = world.findType(CppName(n.token), name, n.pos);
+			if (Enum *e = as<Enum>(t)) {
+				e->bitmask = true;
+			} else {
+				throw Error(L"The type " + n.token + L" is not an enum.", n.pos);
+			}
 			tok.expect(L")");
 			tok.expect(L";");
 		} else if (t.token == L"{") {

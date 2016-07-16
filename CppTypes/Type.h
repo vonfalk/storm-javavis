@@ -91,6 +91,12 @@ public:
 	// Create.
 	Enum(const CppName &name, const SrcPos &pos);
 
+	// Members in the enum (not their values, we can easily generate code that fetches those for us).
+	vector<String> members;
+
+	// Is this enum used as a bitmask?
+	bool bitmask;
+
 	// Resolve types.
 	virtual void resolveTypes(World &world);
 

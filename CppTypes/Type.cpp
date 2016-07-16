@@ -106,7 +106,7 @@ void Class::print(wostream &to) const {
  * Enum.
  */
 
-Enum::Enum(const CppName &name, const SrcPos &pos) : Type(name, pos) {}
+Enum::Enum(const CppName &name, const SrcPos &pos) : Type(name, pos), bitmask(false) {}
 
 void Enum::resolveTypes(World &world) {}
 
@@ -120,5 +120,14 @@ Size Enum::size() const {
 void Enum::ptrOffsets(vector<Offset> &append) const {}
 
 void Enum::print(wostream &to) const {
-	to << L"enum " << name << L"{}";
+	to << L"enum ";
+	if (bitmask)
+		to << L"bitmask ";
+	to << name << L" {\n";
+	{
+		Indent z(to);
+		for (nat i = 0; i < members.size(); i++)
+			to << members[i] << L",\n";
+	}
+	to << L"}";
 }
