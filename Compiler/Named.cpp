@@ -13,7 +13,7 @@ namespace storm {
 	}
 
 
-	Named::Named(Str *name) : name(name) {}
+	Named::Named(Str *name) : name(name), flags(namedDefault) {}
 
 	NameLookup *Named::parent() const {
 		assert(parentLookup, L"No parent for " + ::toS(identifier()));

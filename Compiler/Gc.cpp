@@ -420,8 +420,6 @@ namespace storm {
 
 		// Create an allocation point for the current thread.
 		check(mps_ap_create_k(&allocPoint, pool, mps_args_none), L"Failed to create allocation point.");
-
-		TODO(L"Fix scanning of the shared GcType somehow!");
 	}
 
 	Gc::~Gc() {

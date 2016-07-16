@@ -55,7 +55,7 @@ namespace storm {
 		// Deep copy of all objects in here.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
-		// Convert to string.
+		// Convert to string. TODO? Move toS(StrBuf *) to protected. CppTypes can be a friend to all types.
 		virtual Str *STORM_FN toS() const;
 		virtual void STORM_FN toS(StrBuf *to) const;
 
