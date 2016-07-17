@@ -4,7 +4,9 @@
 
 // INCLUDES
 
-// GLOBALS
+// TYPE_GLOBALS
+
+// THREAD_GLOBALS
 
 // Turn off optimizations in this file. It takes quite a long time, and since it is only executed
 // once during compiler startup, it is not very useful to optimize these functions. Especially not
@@ -30,9 +32,18 @@ namespace storm {
 		return types;
 	}
 
+	static CppThread *cppThreads() {
+		static CppThread threads[] = {
+			// CPP_THREADS
+			{ null },
+		};
+		return threads;
+	}
+
 	const CppWorld *cppWorld() {
 		static CppWorld w = {
 			cppTypes(),
+			cppThreads(),
 		};
 		return &w;
 	}

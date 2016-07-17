@@ -27,11 +27,15 @@ namespace storm {
 		// Destroy our resources.
 		~Type();
 
-		// Owning engine.
+		// Owning engine. Must be the first data member of this class!
 		Engine &engine;
 
-		// Create the type for Type (as this is special). Assumed to be run while the gc is parked.
+		// Create the type for Type (as this is special).
 		static Type *createType(Engine &e, const CppType *type);
+
+		// Set this type onto another object. This can *not* be used to trick the system into
+		// resizing the object. This is only used once during startup.
+		void setType(Object *object) const;
 
 	private:
 		// Special constructor for creating the first type.

@@ -53,7 +53,7 @@ public:
 		return ptr;
 	}
 
-	bool operator ==(const T *o) const {
+	bool operator ==(const Auto<T> &o) const {
 		return ptr == o.ptr;
 	}
 

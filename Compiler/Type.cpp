@@ -5,6 +5,22 @@
 
 namespace storm {
 
+	// Set 'type->type' to 'me' while forwarding 'name'. This has to be done before invoking the
+	// parent constructor, since that relies on 'engine()' working properly, which is not the case
+	// for the first object otherwise.
+	static Str *setMyType(Str *name, Type *me, GcType *type, Engine &e) {
+		// Set the type properly.
+		type->type = me;
+
+		// We need to set the engine as well. Should be the first member of this class.
+		OFFSET_IN(me, sizeof(Named), Engine *) = &e;
+
+		// Check to see if we succeeded!
+		assert(&me->engine == &e, L"Type::engine must be the first data member declared in Type.");
+
+		return name;
+	}
+
 	Type::Type(Str *name, TypeFlags flags) : Named(name), engine(Object::engine()), gcType(null) {}
 
 	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType) :
@@ -13,9 +29,9 @@ namespace storm {
 		gcType->type = this;
 	}
 
-	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) : Named(null), engine(e), gcType(gcType) {
-		gcType->type = this;
-	}
+	// We need to set gcType->type first, therefore we call setMyType!
+	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) :
+		Named(setMyType(null, this, gcType, e)), engine(e), gcType(gcType) {}
 
 	Type::~Type() {
 		if (gcType->kind == GcType::tType) {
@@ -46,6 +62,10 @@ namespace storm {
 
 		// Now we can allocate the type and let the constructor handle the rest!
 		return new (e, t) Type(e, typeClass, Size(type->size), t);
+	}
+
+	void Type::setType(Object *onto) const {
+		engine.gc.switchType(onto, gcType);
 	}
 
 	void *Type::operator new(size_t size, Engine &e, GcType *type) {

@@ -4,11 +4,6 @@
 #include "World.h"
 #include "Config.h"
 
-/**
- * TODO: Store both 32 and 64-bit pointers!
- */
-
-
 // Convert from a fully-qualified (type) name to a suitable variable name.
 static String toVarName(const CppName &c) {
 	String s = c;
@@ -38,6 +33,10 @@ static void genIncludes(wostream &to, World &w) {
 	set<nat> files;
 	for (nat i = 0; i < w.types.size(); i++) {
 		files.insert(w.types[i]->pos.fileId);
+	}
+
+	for (nat i = 0; i < w.threads.size(); i++) {
+		files.insert(w.threads[i]->pos.fileId);
 	}
 
 	// TODO: include all files containing functions we're interested in as well!
@@ -86,7 +85,7 @@ static void genTypes(wostream &to, World &w) {
 		{
 			Type *parent = null;
 			if (Class *c = as<Class>(&t))
-				parent = c->parentType;
+				parent = c->hiddenParent ? null : c->parentType;
 			if (parent) {
 				to << parent->id << L" /* " << parent->name << " */, ";
 			} else {
@@ -102,6 +101,26 @@ static void genTypes(wostream &to, World &w) {
 	}
 }
 
+static void genThreadGlobals(wostream &to, World &w) {
+	for (nat i = 0; i < w.threads.size(); i++) {
+		Thread &t = *w.threads[i];
+
+		to << L"const storm::Nat " << t.name << L"::identifier = " << i << L";\n";
+	}
+}
+
+static void genThreads(wostream &to, World &w) {
+	for (nat i = 0; i < w.threads.size(); i++) {
+		Thread &t = *w.threads[i];
+		to << L"{ ";
+
+		// Name.
+		to << L"L\"" << t.name.last() << L"\"";
+
+		to << L" },\n";
+	}
+}
+
 GenerateMap genMap() {
 	struct E {
 		wchar *tag;
@@ -110,9 +129,11 @@ GenerateMap genMap() {
 
 	static E e[] = {
 		{ L"INCLUDES", &genIncludes },
-		{ L"GLOBALS", &genGlobals },
+		{ L"TYPE_GLOBALS", &genGlobals },
 		{ L"PTR_OFFSETS", &genPtrOffsets },
 		{ L"CPP_TYPES", &genTypes },
+		{ L"THREAD_GLOBALS", &genThreadGlobals },
+		{ L"CPP_THREADS", &genThreads },
 	};
 
 	GenerateMap g;

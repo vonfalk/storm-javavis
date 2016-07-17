@@ -8,6 +8,8 @@
 
 namespace storm {
 
+	class Thread;
+
 	/**
 	 * Defines the root object of the compiler. This object contains everything needed by the
 	 * compiler itself, and shall be kept alive as long as anything from the compiler is used. Two
@@ -46,7 +48,10 @@ namespace storm {
 		Gc gc;
 
 		// Get a C++ type by its id.
-		inline Type *cppType(nat id) const { return cppTypes[id]; }
+		Type *cppType(nat id) const;
+
+		// Get a C++ named thread by its id.
+		Thread *cppThread(nat id) const;
 
 		// The threadgroup which all threads spawned from here shall belong to.
 		os::ThreadGroup threadGroup;
@@ -54,6 +59,9 @@ namespace storm {
 	private:
 		// All C++ types.
 		RootArray<Type> cppTypes;
+
+		// All named threads declared in C++.
+		RootArray<Thread> cppThreads;
 	};
 
 }

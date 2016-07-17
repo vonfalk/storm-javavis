@@ -64,7 +64,7 @@ namespace storm {
 		 * Description of pointer offsets:
 		 */
 
-		// Number of bytes to skip for each element.
+		// Number of bytes to skip for each element. In the case of tFixed, the size of the allocation.
 		size_t stride;
 
 		// Number of offsets here.
@@ -111,6 +111,11 @@ namespace storm {
 
 		// Get the gc type of an allocation.
 		static const GcType *allocType(const void *mem);
+
+		// Change the gc type of an allocation. Used during startup to change header from a fake one
+		// (to allow basic scanning) to a real one (with a proper Type) when startup has progressed
+		// further.
+		static void switchType(void *mem, const GcType *to);
 
 		/**
 		 * Roots.

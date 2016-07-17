@@ -29,7 +29,7 @@ namespace os {
 	 * other threads, please call initThread and cleanThread when before using the
 	 * thread.
 	 */
-	class Thread : public Printable {
+	class Thread {
 	public:
 		// Copy.
 		Thread(const Thread &o);
@@ -63,9 +63,7 @@ namespace os {
 		static void initThread();
 		static void cleanThread();
 
-	protected:
-		virtual void output(wostream &to) const;
-
+		friend wostream &operator <<(wostream &to, const Thread &o);
 	private:
 		// Create.
 		explicit Thread(ThreadData *data);
@@ -73,6 +71,8 @@ namespace os {
 		// Thread data.
 		ThreadData *data;
 	};
+
+	wostream &operator <<(wostream &to, const Thread &o);
 
 	/**
 	 * Internal thread data.

@@ -1,7 +1,9 @@
 #pragma once
 #include "SrcPos.h"
 #include "Type.h"
+#include "Thread.h"
 #include "Auto.h"
+#include "NameMap.h"
 
 /**
  * Describes all types and functions known.
@@ -15,10 +17,10 @@ public:
 	vector<CppName> usingDecl;
 
 	// All types.
-	vector<Auto<Type>> types;
+	NameMap<Type> types;
 
-	// Quick lookup of all types.
-	map<CppName, nat> typeLookup;
+	// All threads.
+	NameMap<Thread> threads;
 
 	// Built-in types (into C++).
 	map<String, Size> builtIn;
@@ -31,13 +33,12 @@ public:
 	// Prepare the world for serialization (ie. resolving types, ...).
 	void prepare();
 
-	// Find a type.
-	Type *findType(const CppName &name, const CppName &context, const SrcPos &pos);
-	Type *findTypeUnsafe(const CppName &name, CppName context);
-
 private:
 	// Sort types so we get a deterministic order.
 	void orderTypes();
+
+	// Sort threads so we get a deterministic order.
+	void orderThreads();
 
 	// Resolve all types in this world.
 	void resolveTypes();

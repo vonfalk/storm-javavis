@@ -49,7 +49,7 @@ wostream &operator <<(wostream &to, const Type &type);
 class Class : public Type, public Namespace {
 public:
 	// Create a type with name X, where X is the fully qualified name of the type (eg. Foo::Bar::Baz).
-	Class(const CppName &name, const SrcPos &pos, bool valueType);
+	Class(const CppName &name, const SrcPos &pos);
 
 	// Is this a value-type?
 	bool valueType;
@@ -57,8 +57,14 @@ public:
 	// Parent class (if any).
 	CppName parent;
 
+	// Hidden parent?
+	bool hiddenParent;
+
 	// Actual type of the parent class.
 	Type *parentType;
+
+	// Which thread is this type associated to?
+	CppName thread;
 
 	// Member variables (non-static). All have their name relative to the enclosing type.
 	vector<Variable> variables;
@@ -112,4 +118,3 @@ public:
 	// Never allocated on heap.
 	virtual bool heapAlloc() const { return false; }
 };
-

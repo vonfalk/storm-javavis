@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Thread.h"
 #include "Engine.h"
+#include "Gc.h"
 
 namespace storm {
 
@@ -27,6 +28,20 @@ namespace storm {
 		return osThread;
 	}
 
+#ifdef STORM_COMPILER
+	static const GcType firstDesc = {
+		GcType::tFixed,
+		null, // Type
+		sizeof(Thread), // stride/size
+		0, // # of offsets
+	};
+
+	void *Thread::operator new(size_t s, First d) {
+		return d.e.gc.alloc(&firstDesc);
+	}
+
+	void Thread::operator delete(void *mem, First d) {}
+#endif
 
 	STORM_DEFINE_THREAD(Compiler);
 

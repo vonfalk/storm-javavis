@@ -6,6 +6,9 @@ namespace storm {
 
 	/**
 	 * A thread known by Storm.
+	 *
+	 * NOTE: due to the startup process, this thread may *not* contain any pointers to other Storm
+	 * object, as they are not reported to the GC during startup.
 	 */
 	class Thread : public Object {
 		STORM_CLASS;
@@ -27,6 +30,20 @@ namespace storm {
 
 		// Get the thread handle.
 		const os::Thread &thread();
+
+		/**
+		 * Allow stand-alone allocation of the first Thread.
+		 */
+
+#ifdef STORM_COMPILER
+		struct First {
+			Engine &e;
+			First(Engine &e) : e(e) {}
+		};
+
+		static void *operator new(size_t size, First t);
+		static void operator delete(void *mem, First t);
+#endif
 
 	private:
 		// Thread handle.

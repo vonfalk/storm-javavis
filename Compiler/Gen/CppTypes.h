@@ -62,6 +62,15 @@ namespace storm {
 		CppOffset *ptrOffsets;
 	};
 
+	/**
+	 * List of C++ named threads.
+	 */
+	struct CppThread {
+		// Name of the thread (null if last element).
+		const wchar *name;
+
+		// ...
+	};
 
 	/**
 	 * Contains all information about C++ types and functions required by Storm.
@@ -69,6 +78,9 @@ namespace storm {
 	struct CppWorld {
 		// List of types.
 		CppType *types;
+
+		// List of named threads.
+		CppThread *threads;
 	};
 
 	// Get the CppWorld for this module.

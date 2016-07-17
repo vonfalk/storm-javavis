@@ -24,72 +24,50 @@ static BuiltIn builtIn[] = {
 	{ L"size_t", Size::sPtr },
 };
 
-World::World() {
+World::World() : types(usingDecl), threads(usingDecl) {
 	for (nat i = 0; i < ARRAY_COUNT(::builtIn); i++) {
 		builtIn.insert(make_pair(::builtIn[i].name, ::builtIn[i].size));
 	}
 }
 
 void World::add(Auto<Type> type) {
-	if (typeLookup.count(type->name))
-		throw Error(L"The type " + toS(type->name) + L" is defined twice!", type->pos);
-
-	typeLookup.insert(make_pair(type->name, types.size()));
-	types.push_back(type);
+	types.insert(type);
 }
 
 // Sort the types.
 void World::orderTypes() {
-	CppName type(L"storm::Type");
-	if (typeLookup.count(type) == 0)
+	Type *type = types.findUnsafe(CppName(L"storm::Type"), CppName());
+	if (!type)
 		throw Error(L"The type storm::Type was not found!", SrcPos());
 
-	nat typePos = typeLookup[type];
-	if (typePos != 0)
-		std::swap(types[0], types[typePos]);
-
 	struct pred {
+		Type *type;
+
+		pred(Type *t) : type(t) {}
+
 		bool operator ()(const Auto<Type> &l, const Auto<Type> &r) const {
+			// Always put 'type' first.
+			if (l.borrow() == type)
+				return true;
+			if (r.borrow() == type)
+				return false;
+
+			// Then order by name.
 			return l->name < r->name;
 		}
 	};
 
-	std::sort(types.begin() + 1, types.end(), pred());
-
-	for (nat i = 0; i < types.size(); i++) {
-		types[i]->id = i;
-		typeLookup[types[i]->name] = i;
-	}
+	types.sort(pred(type));
 }
 
-Type *World::findTypeUnsafe(const CppName &name, CppName context) {
-	map<CppName, nat>::const_iterator i = typeLookup.find(name);
-	if (i != typeLookup.end())
-		return types[i->second].borrow();
+void World::orderThreads() {
+	struct pred {
+		bool operator ()(const Auto<Thread> &l, const Auto<Thread> &r) const {
+			return l->name < r->name;
+		}
+	};
 
-	while (!context.empty()) {
-		i = typeLookup.find(context + name);
-		if (i != typeLookup.end())
-			return types[i->second].borrow();
-
-		context = context.parent();
-	}
-
-	// Reachable via 'using namespace'?
-	for (nat j = 0; j < usingDecl.size(); j++) {
-		i = typeLookup.find(usingDecl[j] + name);
-		if (i != typeLookup.end())
-			return types[i->second].borrow();
-	}
-
-	return null;
-}
-
-Type *World::findType(const CppName &name, const CppName &context, const SrcPos &pos) {
-	Type *t = findTypeUnsafe(name, context);
-	if (!t)
-		throw Error(L"The type " + name + L" is not known to Storm.", pos);
-	return t;
+	threads.sort(pred());
 }
 
 void World::resolveTypes() {
@@ -100,6 +78,7 @@ void World::resolveTypes() {
 
 void World::prepare() {
 	orderTypes();
+	orderThreads();
 
 	resolveTypes();
 }
@@ -132,7 +111,7 @@ static CppName parseName(Tokenizer &tok) {
 }
 
 // Read a type.
-static Auto<TypeRef> parseType(Tokenizer &tok) {
+static Auto<TypeRef> parseTypeRef(Tokenizer &tok) {
 	bool isConst = false;
 
 	if (tok.skipIf(L"const"))
@@ -141,13 +120,13 @@ static Auto<TypeRef> parseType(Tokenizer &tok) {
 	Auto<TypeRef> type;
 	if (tok.skipIf(L"MAYBE")) {
 		tok.expect(L"(");
-		type = new MaybeType(parseType(tok));
+		type = new MaybeType(parseTypeRef(tok));
 		tok.expect(L")");
 	} else if (tok.skipIf(L"UNKNOWN")) {
 		tok.expect(L"(");
 		Token kind = tok.next();
 		tok.expect(L")");
-		type = new UnknownType(kind.token, parseType(tok));
+		type = new UnknownType(kind.token, parseTypeRef(tok));
 	} else {
 		SrcPos pos = tok.peek().pos;
 		CppName n = parseName(tok);
@@ -158,9 +137,9 @@ static Auto<TypeRef> parseType(Tokenizer &tok) {
 			Auto<TemplateType> t = new TemplateType(pos, n);
 
 			if (!tok.skipIf(L">")) {
-				t->params.push_back(parseType(tok));
+				t->params.push_back(parseTypeRef(tok));
 				while (tok.skipIf(L","))
-					t->params.push_back(parseType(tok));
+					t->params.push_back(parseTypeRef(tok));
 				tok.expect(L">");
 			}
 
@@ -221,7 +200,7 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 	if (tok.skipIf(L"~")) {
 		type = new NamedType(tok.peek().pos, L"void");
 	} else {
-		type = parseType(tok);
+		type = parseTypeRef(tok);
 	}
 
 	// Something else, skip.
@@ -258,11 +237,11 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 		// PLN(tok.peek().pos << ": function");
 
 		if (!tok.skipIf(L")")) {
-			parseType(tok);
+			parseTypeRef(tok);
 			tok.skip(); // Parameter name.
 
 			while (tok.more() && tok.skipIf(L",")) {
-				parseType(tok);
+				parseTypeRef(tok);
 				tok.skip();
 			}
 
@@ -283,7 +262,7 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 }
 
 // Parse an enum declaration.
-static void parseEnumDecl(Tokenizer &tok, World &world, const CppName &inside) {
+static void parseEnum(Tokenizer &tok, World &world, const CppName &inside) {
 	Token name = tok.next();
 
 	// Forward-declaration?
@@ -316,44 +295,62 @@ static void parseEnumDecl(Tokenizer &tok, World &world, const CppName &inside) {
 	world.add(type);
 }
 
+// Parse the parent class of a type.
+static Auto<Class> parseParent(Tokenizer &tok, const CppName &fullName, const SrcPos &pos) {
+	Auto<Class> result = new Class(fullName, pos);
+	if (!tok.skipIf(L":"))
+		return result;
+
+	if (tok.skipIf(L"public")) {
+		if (tok.skipIf(L"STORM_HIDDEN")) {
+			tok.expect(L"(");
+			result->parent = parseName(tok);
+			result->hiddenParent = true;
+			tok.expect(L")");
+		} else if (tok.skipIf(L"ObjectOn")) {
+			tok.expect(L"<");
+			result->parent = CppName(L"storm::TObject");
+			result->hiddenParent = false;
+			result->thread = parseName(tok);
+			tok.expect(L">");
+		} else {
+			result->parent = parseName(tok);
+			result->hiddenParent = false;
+		}
+	}
+
+	// Skip any multi-inheritance or private inheritance.
+	while (tok.peek().token != L"{")
+		tok.skip();
+
+	return result;
+}
+
 // Parse a type.
-static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
+static void parseType(Tokenizer &tok, World &world, const CppName &inside) {
 	Token name = tok.next();
 
 	// Forward-declaration?
 	if (tok.skipIf(L";"))
 		return;
 
-	CppName parent;
-	if (tok.skipIf(L":")) {
-		if (tok.skipIf(L"public"))
-			parent = parseName(tok);
-
-		// Skip any multi-inheritance or private inheritance.
-		while (tok.peek().token != L"{")
-			tok.skip();
-	}
+	CppName fullName = inside + name.token;
+	Auto<Class> type = parseParent(tok, fullName, name.pos);
 
 	tok.expect(L"{");
 
-	bool value = false;
 	// Are we interested in this class at all?
 	if (tok.skipIf(L"STORM_CLASS")) {
-		value = false;
+		type->valueType = false;
 	} else if (tok.skipIf(L"STORM_VALUE")) {
-		value = true;
+		type->valueType = true;
 	} else {
 		// No. Ignore the rest of the block!
 		parseBlock(tok);
 		return;
 	}
+
 	tok.expect(L";");
-
-	CppName fullName = inside + name.token;
-	Auto<Class> type = new Class(fullName, name.pos, value);
-	type->parent = parent;
-
-	nat depth = 0;
 
 	while (tok.more()) {
 		Token t = tok.peek();
@@ -366,12 +363,12 @@ static void parseTypeDecl(Tokenizer &tok, World &world, const CppName &inside) {
 			break;
 		} else if (t.token == L"class" || t.token == L"struct") {
 			tok.skip();
-			parseTypeDecl(tok, world, fullName);
+			parseType(tok, world, fullName);
 		} else if (t.token == L"extern" || t.token == L"static") {
 			tok.skip();
 		} else if (t.token == L"enum") {
 			tok.skip();
-			parseEnumDecl(tok, world, fullName);
+			parseEnum(tok, world, fullName);
 		} else if (t.token == L"template") {
 			// Skip until we find a {, and skip the body as well.
 			while (tok.skipIf(L"{"))
@@ -419,10 +416,10 @@ static void parseNamespace(Tokenizer &tok, World &world, const CppName &name) {
 
 		if (t.token == L"class" || t.token == L"struct") {
 			tok.skip();
-			parseTypeDecl(tok, world, name);
+			parseType(tok, world, name);
 		} else if (t.token == L"enum") {
 			tok.skip();
-			parseEnumDecl(tok, world, name);
+			parseEnum(tok, world, name);
 		} else if (t.token == L"template") {
 			// Skip until we find a {, and skip the body as well.
 			while (tok.skipIf(L"{"))
@@ -459,7 +456,7 @@ static void parseNamespace(Tokenizer &tok, World &world, const CppName &name) {
 			tok.skip();
 			tok.expect(L"(");
 			Token n = tok.next();
-			Type *t = world.findType(CppName(n.token), name, n.pos);
+			Type *t = world.types.find(CppName(n.token), name, n.pos);
 			if (Enum *e = as<Enum>(t)) {
 				e->bitmask = true;
 			} else {
@@ -471,7 +468,8 @@ static void parseNamespace(Tokenizer &tok, World &world, const CppName &name) {
 			tok.skip();
 			tok.expect(L"(");
 			Token tName = tok.next();
-			TODO(L"Do not ignore thread " << tName);
+			Auto<Thread> t = new Thread(name + tName.token, tName.pos);
+			world.threads.insert(t);
 			tok.expect(L")");
 			tok.expect(L";");
 		} else if (t.token == L"{") {

@@ -531,8 +531,19 @@ namespace storm {
 	}
 
 	const GcType *Gc::allocType(const void *mem) {
+		const void *t = (byte *)mem - headerSize;
+		const MpsObj *o = (const MpsObj *)t;
+		return &(o->header->obj);
+		// return &(*(MpsHeader **)t)->obj;
+	}
+
+	void Gc::switchType(void *mem, const GcType *type) {
+		assert(allocType(mem)->stride == type->stride, L"Can not change size of allocations.");
+		assert(allocType(mem)->kind == type->kind, L"Can not change kind of allocations.");
+
+		// Seems reasonable. Switch headers!
 		void *t = (byte *)mem - headerSize;
-		return &(*(MpsHeader **)t)->obj;
+		setHeader(t, type);
 	}
 
 	struct Gc::Root {

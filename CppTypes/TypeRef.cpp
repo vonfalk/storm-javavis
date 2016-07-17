@@ -119,7 +119,7 @@ Auto<TypeRef> NamedType::resolve(World &in, const CppName &context) const {
 	if (i != in.builtIn.end())
 		return new BuiltInType(pos, name, i->second);
 
-	Type *t = in.findTypeUnsafe(name, context);
+	Type *t = in.types.findUnsafe(name, context);
 	if (t)
 		return new ResolvedType(*this, t);
 	else

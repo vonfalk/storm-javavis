@@ -1,5 +1,5 @@
 #pragma once
-#include "Object.h"
+#include "TObject.h"
 #include "NamedFlags.h"
 
 namespace storm {
@@ -10,7 +10,7 @@ namespace storm {
 	/**
 	 * Interface for objects that can look up names.
 	 */
-	class NameLookup : public Object { // TODO: ObjectOn<Compiler>
+	class NameLookup : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
 		STORM_CTOR NameLookup();

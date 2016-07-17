@@ -92,8 +92,8 @@ namespace os {
 		return data == o.data;
 	}
 
-	void Thread::output(wostream &to) const {
-		to << L"thread @" << data;
+	wostream &operator <<(wostream &to, const Thread &o) {
+		return to << L"thread @" << o.data;
 	}
 
 

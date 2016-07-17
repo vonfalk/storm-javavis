@@ -21,6 +21,18 @@
 #ifdef __cplusplus
 
 /**
+ * Let other files know we're compiled as the compiler.
+ * TODO: Add logic to detect shared lib compilation.
+ */
+#define STORM_COMPILER
+
+/**
+ * Declare a super-class as hidden to Storm. This means that Storm will not know that the current
+ * class inherits from any parent-class, even if it does from C++'s point of view.
+ */
+#define STORM_HIDDEN(parent) parent
+
+/**
  * Common parts of STORM_CLASS and STORM_VALUE
  */
 #define STORM_COMMON													\
@@ -83,26 +95,27 @@
 	struct name {										\
 		static storm::Thread *thread(storm::Engine &e); \
 		static storm::DeclThread decl;					\
+		static const Nat identifier;					\
 	};
 
 /**
  * Define a thread.
  */
-#define STORM_DEFINE_THREAD(name)					\
-	storm::Thread *name::thread(storm::Engine &e) { \
-		return decl.thread(e);						\
-	}												\
-	storm::DeclThread name::decl = { null };
+#define STORM_DEFINE_THREAD(name)								\
+	storm::Thread *name::thread(storm::Engine &e) {				\
+		return decl.thread(e);									\
+	}															\
+	storm::DeclThread name::decl = { name::identifier, null };
 
 /**
  * Define a thread, using a custom ThreadWait structure. 'fnPtr' is a pointer to a function like:
  * os::Thread foo(Engine &). That function is executed to create the thread.
  */
-#define STORM_DEFINE_THREAD_WAIT(name, fnPtr)		\
-	storm::Thread *name::thread(storm::Engine &e) { \
-		return decl.thread(e);						\
-	}												\
-	storm::DeclThread name::decl = { fnPtr };
+#define STORM_DEFINE_THREAD_WAIT(name, fnPtr)					\
+	storm::Thread *name::thread(storm::Engine &e) {				\
+		return decl.thread(e);									\
+	}															\
+	storm::DeclThread name::decl = { name::identifier, fnPtr };
 
 
 #include "Utils/Utils.h"

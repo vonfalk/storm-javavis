@@ -21,8 +21,8 @@ wostream &operator <<(wostream &to, const Type &type) {
  * Class.
  */
 
-Class::Class(const CppName &name, const SrcPos &pos, bool valueType) :
-	Type(name, pos), valueType(valueType), parent(L""), parentType(null) {}
+Class::Class(const CppName &name, const SrcPos &pos) :
+	Type(name, pos), valueType(false), parent(L""), hiddenParent(false), parentType(null) {}
 
 void Class::add(const Variable &v) {
 	for (nat i = 0; i < variables.size(); i++)
@@ -36,7 +36,7 @@ void Class::resolveTypes(World &in) {
 	CppName ctx = name.parent();
 
 	if (!parent.empty())
-		parentType = in.findType(parent, ctx, pos);
+		parentType = in.types.find(parent, ctx, pos);
 
 	for (nat i = 0; i < variables.size(); i++)
 		variables[i].resolveTypes(in, ctx);
