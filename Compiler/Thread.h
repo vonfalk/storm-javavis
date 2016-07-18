@@ -16,8 +16,9 @@ namespace storm {
 		// Create a thread.
 		STORM_CTOR Thread();
 
-		// Create from a previously started os::Thread object.
-		STORM_CTOR Thread(const os::Thread &thread);
+		// Create from a previously started os::Thread object. This thread must have called the
+		// 'register' function previously.
+		Thread(const os::Thread &thread);
 
 		// Since we're not acting as an actor, we need to provide a copy ctor.
 		STORM_CTOR Thread(Thread *o);
@@ -25,17 +26,20 @@ namespace storm {
 		// Destroy this thread.
 		~Thread();
 
+		// Get the thread registration function.
+		static Fn<void, void> registerFn(Engine &e);
+
 		// Deep copy as well.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
 		// Get the thread handle.
 		const os::Thread &thread();
 
+#ifdef STORM_COMPILER
 		/**
 		 * Allow stand-alone allocation of the first Thread.
 		 */
 
-#ifdef STORM_COMPILER
 		struct First {
 			Engine &e;
 			First(Engine &e) : e(e) {}

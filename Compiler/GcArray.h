@@ -8,8 +8,8 @@ namespace storm {
 	 */
 	template <class T>
 	struct GcArray {
-		// Number of elements.
-		size_t count;
+		// Number of elements. Set on allocation and then not allowed to change.
+		const size_t count;
 
 		// Data.
 		T v[1];

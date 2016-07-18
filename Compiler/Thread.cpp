@@ -5,17 +5,19 @@
 
 namespace storm {
 
-	Thread::Thread() : osThread(os::Thread::spawn(Fn<void, void>(), engine().threadGroup)) {}
+	Thread::Thread() : osThread(os::Thread::spawn(Thread::registerFn(engine()), engine().threadGroup)) {}
 
 	Thread::Thread(const os::Thread &thread) : osThread(thread) {}
 
 	Thread::Thread(Thread *o) : osThread(o->thread()) {
 		// We're using thread() above to ensure that the thread has been properly
 		// initialized. Otherwise, we may get multiple initializations, which is bad.
+		engine().gc.reattachThread(osThread);
 	}
 
 	Thread::~Thread() {
-		// We only need the destructor declared to ensure it is executed!
+		if (osThread != os::Thread::invalid)
+			engine().gc.detachThread(osThread);
 	}
 
 	void Thread::deepCopy(CloneEnv *env) {
@@ -23,9 +25,15 @@ namespace storm {
 	}
 
 	const os::Thread &Thread::thread() {
-		if (osThread == os::Thread::invalid)
+		if (osThread == os::Thread::invalid) {
+			// TODO? make sure the newly created thread has been properly registered with the gc!
 			osThread = (*create)(engine());
+		}
 		return osThread;
+	}
+
+	Fn<void, void> Thread::registerFn(Engine &e) {
+		return Fn<void, void>(&e.gc, &Gc::attachThread);
 	}
 
 #ifdef STORM_COMPILER

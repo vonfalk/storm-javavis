@@ -9,24 +9,33 @@
 
 namespace storm {
 
-	static const size_t defaultArena = 32 * 1024 * 1024; // 32 MB should be enough for a start at least!
+	// Default arena size. 32 MB should be enough for a while at least.
+	static const size_t defaultArena = 32 * 1024 * 1024;
 
+	// Get the compiler thread from flags.
+	static os::Thread mainThread(Engine::ThreadMode mode, Engine &e) {
+		switch (mode) {
+		case Engine::newMain:
+			return os::Thread::spawn(Thread::registerFn(e), e.threadGroup);
+		case Engine::reuseMain:
+			Thread::registerFn(e)();
+			return os::Thread::current();
+		default:
+			assert(false, L"Unknown thread mode.");
+			WARNING(L"Unknown thread mode, defaulting to 'current'.");
+			return os::Thread::current();
+		}
+	}
 
 	Engine::Engine(const Path &root, ThreadMode mode) : gc(defaultArena), cppTypes(gc), cppThreads(gc) {
 		assert(Compiler::identifier == 0, L"Invalid ID for the compiler thread. Check CppTypes for errors!");
 
 		// Since all types in the name tree need the Compiler thread, we need to create that a bit early.
 		cppThreads.resize(1);
-		switch (mode) {
-		case newMain:
-			cppThreads[0] = new (Thread::First(*this)) Thread();
-			break;
-		case reuseMain:
-			cppThreads[0] = new (Thread::First(*this)) Thread(os::Thread::current());
-			break;
-		default:
-			assert(false, L"Unknown threadMode.");
-			return;
+		{
+			os::Thread t = mainThread(mode, *this);
+			// Ensure 'mainThread' is executed before operator new.
+			cppThreads[0] = new (Thread::First(*this)) Thread(t);
 		}
 
 		// Initialize the type system. This loads all types defined in the compiler.

@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/Exception.h"
 #include "Utils/Lock.h"
+#include "OS/Thread.h"
 
 #include "gc/mps.h"
 
@@ -75,6 +76,11 @@ namespace storm {
 	};
 
 	/**
+	 * Internal description of thread-local data for the garbage collector.
+	 */
+	struct GcThread;
+
+	/**
 	 * Interface to the garbage collector. Storm supports multiple garbage collectors, see Storm.h
 	 * on how to choose between them. An instance of this class represents an isolated gc arena,
 	 * from which we can allocate memory.
@@ -87,6 +93,23 @@ namespace storm {
 
 		// Destroy.
 		~Gc();
+
+		/**
+		 * Thread management.
+		 */
+
+		// Register the current thread for use with the gc.
+		void attachThread();
+
+		// Re-register a thread for use with the gc. Can not be used for new threads.
+		void reattachThread(const os::Thread &thread);
+
+		// Unregister a thread from the gc. This has to be done before the thread is destroyed.
+		void detachThread(const os::Thread &thread);
+
+		/**
+		 * Memory allocation.
+		 */
 
 		// Allocate an object of a specific type. Assumes type->type == tFixed.
 		void *alloc(const GcType *type);
@@ -151,17 +174,23 @@ namespace storm {
 		mps_ap_t typeAllocPoint;
 		util::Lock typeAllocLock;
 
-		// Main thread (TODO: make it better)
-		mps_thr_t mainThread;
+		// Description of all attached threads.
+		// TODO: Use a system-wide thread identifier instead of a ThreadData *.
+		typedef map<os::ThreadData *, GcThread *> ThreadMap;
+		ThreadMap threads;
 
-		// Allocation point for main thread (TODO: make sure to give each thread its own allocation point)
-		mps_ap_t allocPoint;
-
-		// Main thread's root.
-		mps_root_t mainRoot;
+		// Lock for manipulating the attached threads.
+		util::Lock threadLock;
 
 		// Allocate an object in the Type pool.
 		void *allocType(const GcType *type);
+
+		// Attach/detach thread. Sets up/tears down all members in Thread, nothing else.
+		void attach(GcThread *thread);
+		void detach(GcThread *thread);
+
+		// Find the allocation point for the current thread.
+		mps_ap_t &currentAllocPoint();
 #endif
 	};
 

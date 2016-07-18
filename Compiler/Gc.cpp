@@ -268,6 +268,34 @@ namespace storm {
 	}
 
 	/**
+	 * Thread description.
+	 */
+	struct GcThread {
+		// # of times attached.
+		nat attachCount;
+
+		// MPS thread description.
+		mps_thr_t thread;
+
+		// Allocation point.
+		mps_ap_t ap;
+
+		// Root for this thread.
+		mps_root_t root;
+
+#if defined(WINDOWS)
+		struct TIB {
+			void *sehFrame;
+			void *stackBase;
+			void *stackLimit;
+		};
+
+		// Location of the TIB for this thread.
+		TIB *tib;
+#endif
+	};
+
+	/**
 	 * Platform specific scanning of threads.
 	 *
 	 * We can not use everything MPS provides since we're implementing our own UThreads on top of
@@ -284,16 +312,24 @@ namespace storm {
 	// be properly word-aligned.
 	static void * const stackDummy = (void *)((size_t)-1 & ~(wordSize - 1));
 
+	static void mpsAttach(GcThread *thread) {
+		GcThread::TIB *tmp;
+		__asm {
+			// At offset 0x18, the linear address of the TIB is stored.
+			mov eax, fs:[0x18];
+			mov tmp, eax;
+		}
+		thread->tib = tmp;
+	}
+
 	static mps_res_t mpsScanThread(mps_ss_t ss, void *base, void *limit, void *closure) {
+		GcThread *thread = (GcThread *)closure;
 		void **from = (void **)base;
 		void **to = (void **)limit;
 
 		if (limit == stackDummy) {
-			// Read the current stack limit from thread-local storage.
-			__asm {
-				mov eax, fs:[4];
-				mov to, eax;
-			}
+			// Read the current stack base from TIB and replace the dummy.
+			to = (void **)thread->tib->stackBase;
 
 			// Update the scanned size so that we do not accidentally surprise MPS.
 			mps_decrease_scanned(ss, (char *)limit - (char *)to);
@@ -399,27 +435,6 @@ namespace storm {
 		} MPS_ARGS_END(args);
 
 		check(mps_ap_create_k(&typeAllocPoint, typePool, mps_args_none), L"Failed to create type allocation point.");
-
-		// TODO: Make everything below here per thread:
-
-		// Register the current thread with MPS.
-		check(mps_thread_reg(&mainThread, arena), L"Failed to register thread.");
-
-		// Register the main thread's root. Note that we're fooling MPS on where the stack starts,
-		// as we will discover this ourselves later in a platform-specific manner depending on which
-		// UThread is currently running.
-		check(mps_root_create_thread_scanned(&mainRoot,
-												arena,
-												mps_rank_ambig(),
-												(mps_rm_t)0,
-												mainThread,
-												&mpsScanThread,
-												null,
-												stackDummy),
-			L"Failed creating thread root.");
-
-		// Create an allocation point for the current thread.
-		check(mps_ap_create_k(&allocPoint, pool, mps_args_none), L"Failed to create allocation point.");
 	}
 
 	Gc::~Gc() {
@@ -428,10 +443,15 @@ namespace storm {
 
 		// TODO: We might want to run a full gc to get destructors properly called.
 
-		// TODO: Fix threads
-		mps_ap_destroy(allocPoint);
-		mps_root_destroy(mainRoot);
-		mps_thread_dereg(mainThread);
+		// Destroy all remaining threads (if any).
+		{
+			util::Lock::L z(threadLock);
+			for (ThreadMap::iterator i = threads.begin(); i != threads.end(); ++i) {
+				detach(i->second);
+				delete i->second;
+			}
+			threads.clear();
+		}
 
 		// Destroy the global allocation point.
 		mps_ap_destroy(typeAllocPoint);
@@ -444,6 +464,116 @@ namespace storm {
 		mps_arena_destroy(arena);
 	}
 
+	void Gc::attachThread() {
+		os::Thread thread = os::Thread::current();
+		util::Lock::L z(threadLock);
+
+		ThreadMap::iterator i = threads.find(thread.threadData());
+		if (i != threads.end()) {
+			// Already attached, increase the attached count.
+			i->second->attachCount++;
+		} else {
+			// New thread.
+		    // Note: we may leak memory here if a check() fails. This is rare enough
+			// for it not to be a problem.
+			GcThread *desc = new GcThread;
+			threads.insert(make_pair(thread.threadData(), desc));
+
+			// Register the thread with MPS.
+			attach(desc);
+		}
+	}
+
+	void Gc::reattachThread(const os::Thread &thread) {
+		util::Lock::L z(threadLock);
+
+		ThreadMap::iterator i = threads.find(thread.threadData());
+		if (i != threads.end()) {
+			i->second->attachCount++;
+		} else {
+			WARNING(L"Trying to re-attach a new thread!");
+			assert(false);
+		}
+	}
+
+	void Gc::detachThread(const os::Thread &thread) {
+		util::Lock::L z(threadLock);
+
+		ThreadMap::iterator i = threads.find(thread.threadData());
+		if (i == threads.end())
+			return;
+
+		if (i->second->attachCount > 1) {
+			// Wait a bit.
+			i->second->attachCount--;
+		} else {
+			// Detach the thread now.
+			GcThread *desc = i->second;
+			threads.erase(i);
+
+			// Detach from MPS.
+			detach(desc);
+			delete desc;
+		}
+	}
+
+	void Gc::attach(GcThread *desc) {
+		// Register the thread with MPS.
+		check(mps_thread_reg(&desc->thread, arena), L"Failed registering a thread with the gc.");
+
+		// Fill in anything else the MPS needs to scan.
+		mpsAttach(desc);
+
+		// Register the thread's root. Note that we're fooling MPS on where the stack starts, as
+		// we will discover this ourselves later in a platform-specific manner depending on
+		// which UThread is currently running.
+		check(mps_root_create_thread_scanned(&desc->root,
+												arena,
+												mps_rank_ambig(),
+												(mps_rm_t)0,
+												desc->thread,
+												&mpsScanThread,
+												desc,
+												stackDummy),
+			L"Failed creating thread root.");
+
+		// Create an allocation point for the thread.
+		check(mps_ap_create_k(&desc->ap, pool, mps_args_none), L"Failed to create an allocoation point.");
+	}
+
+	void Gc::detach(GcThread *desc) {
+		mps_ap_destroy(desc->ap);
+		mps_root_destroy(desc->root);
+		mps_thread_dereg(desc->thread);
+	}
+
+	// Thread-local variables for remembering the current thread's allocation point. We need some
+	// integrity checking to support the (rare) case of one thread allocating from different
+	// Engine:s. We do this by remembering which Gc-instance the saved ap is valid for.
+	static THREAD Gc *currentApOwner = null;
+	static THREAD mps_ap_t *currentAp = null;
+
+	mps_ap_t &Gc::currentAllocPoint() {
+		// Check if everything is as we left it. This should be fast as it is called for every allocation!
+		// Note: the 'currentApOwner' check should be sufficient.
+		// Note: we will currently not detect a thread that has been detached too early.
+		if (currentAp != null && currentApOwner == this) {
+			return *currentAp;
+		} else {
+			// Either first time or allocations from another Gc in this thread since last time.
+			// This is expected to happen rarely, so it is ok to be a bit slow here.
+			util::Lock::L z(threadLock);
+			os::Thread thread = os::Thread::current();
+			ThreadMap::const_iterator i = threads.find(thread.threadData());
+			if (i == threads.end())
+				throw GcError(L"Trying to allocate memory from a thread not registered with the GC.");
+
+			currentAp = &i->second->ap;
+			currentApOwner = this;
+			return *currentAp;
+		}
+	}
+
 	void *Gc::alloc(const GcType *type) {
 		// Types are special.
 		if (type->kind == GcType::tType)
@@ -452,9 +582,10 @@ namespace storm {
 		assert(type->kind == GcType::tFixed, L"Wrong type for calling alloc().");
 
 		size_t size = align(type->stride + headerSize);
+		mps_ap_t &ap = currentAllocPoint();
 		mps_addr_t memory;
 		do {
-			check(mps_reserve(&memory, allocPoint, size), L"Out of memory.");
+			check(mps_reserve(&memory, ap, size), L"Out of memory.");
 
 			// Make sure we can scan the newly allocated memory:
 			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
@@ -462,7 +593,7 @@ namespace storm {
 			// 2: Set the header.
 			setHeader(memory, type);
 
-		} while (!mps_commit(allocPoint, memory, size));
+		} while (!mps_commit(ap, memory, size));
 
 		// Exclude our header, and return the allocated memory.
 		return (byte *)memory + headerSize;
@@ -497,9 +628,10 @@ namespace storm {
 			return null;
 
 		size_t size = align(type->stride*elements + headerSize + wordSize);
+		mps_ap_t &ap = currentAllocPoint();
 		mps_addr_t memory;
 		do {
-			check(mps_reserve(&memory, allocPoint, size), L"Out of memory.");
+			check(mps_reserve(&memory, ap, size), L"Out of memory.");
 
 			// Make sure we can scan the newly allocated memory:
 			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
@@ -509,7 +641,7 @@ namespace storm {
 			// 3: Set size.
 			((MpsObj *)memory)->count = elements;
 
-		} while (!mps_commit(allocPoint, memory, size));
+		} while (!mps_commit(ap, memory, size));
 
 		// Exclude our header, and return the allocated memory.
 		return (byte *)memory + headerSize;
