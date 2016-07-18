@@ -20,8 +20,9 @@ extern "C" {
 #include "mps/code/mpscamc.h" // AMC pool
 #include "mps/code/mpscams.h" // AMS pool
 
-	// Decrease the # of byte scanned for this scanned set (hack).
+	// Decrease/increase the # of byte scanned for this scanned set (hack).
 	void mps_decrease_scanned(mps_ss_t ss, size_t decrease);
+	void mps_increase_scanned(mps_ss_t ss, size_t increase);
 
 #ifdef __cplusplus
 }

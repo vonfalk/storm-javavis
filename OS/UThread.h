@@ -1,6 +1,7 @@
 #pragma once
 #include "FnParams.h"
 #include "InlineList.h"
+#include "Utils/InlineSet.h"
 #include "Utils/Function.h"
 #include "Utils/Lock.h"
 #include "Future.h"
@@ -155,6 +156,29 @@ namespace os {
 
 
 	/**
+	 * Stack description for an UThread. This is exposed so that we can garbage collect them
+	 * properly.
+	 */
+	class UThreadStack : public util::SetMember<UThreadStack> {
+	public:
+		UThreadStack();
+
+		// Description.
+		struct Desc {
+			// Information about the current stack. 'high' is the currently highest used address
+			// (inclusive) and 'low' is the lowest used address (exclusive).
+			void *low;
+			void *dummy;
+			void *high;
+		};
+
+		// Current stack description. If null, then this UThread is currently running, and the
+		// current CPU state describes the stack of that thread.
+		Desc *desc;
+	};
+
+
+	/**
 	 * UThread data.
 	 */
 	class UThreadData : NoCopy {
@@ -190,10 +214,10 @@ namespace os {
 		// Destroy.
 		~UThreadData();
 
-		// The current stack pointer. This is not valid if the thread is running.
-		void **esp;
+		// A description of the current stack for this UThread.
+		UThreadStack stack;
 
-		// The current stack (lowest address and size). May be null.
+		// The stack we allocated for this UThread. May be null.
 		void *stackBase;
 		nat stackSize;
 
@@ -218,14 +242,13 @@ namespace os {
 
 		// Push the initial context to the stack.
 		void pushContext(const void *returnTo);
-
 	};
 
 	/**
 	 * Thread-specific state of the scheduler. It is designed to avoid
 	 * locks as far as possible, to ensure high performance in thread
 	 * switching.
-	 * This class is not threadsafe, unless where noted.
+	 * This class is not threadsafe, except where noted.
 	 */
 	class UThreadState : NoCopy {
 	public:
@@ -237,6 +260,11 @@ namespace os {
 
 		// The thread we belong to.
 		ThreadData *const owner;
+
+		// List of stacks for all UThreads running on this hardware thread. This includes any
+		// threads not on the ready-queue, and allows garbage collecting the UThreads.
+		// Protected by the same lock as the Ready-queue.
+		util::InlineSet<UThreadStack> stacks;
 
 		// Get the state for the current thread.
 		static UThreadState *current();
@@ -273,8 +301,8 @@ namespace os {
 		// Currently running thread here.
 		UThreadData *running;
 
-		// Lock for the 'ready' list. The 'exit' list is not protected,
-		// since it is only ever accessed from the OS thread owning this state.
+		// Lock for the 'ready' list and the 'stacks' set. The 'exit' list is not protected, since
+		// it is only ever accessed from the OS thread owning this state.
 		util::Lock lock;
 
 		// Ready threads. May be scheduled now.

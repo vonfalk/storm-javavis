@@ -47,6 +47,12 @@ namespace os {
 		// Get the thread data.
 		inline ThreadData *threadData() const { return data; }
 
+		// Get an unique identifier for this thread.
+		inline uintptr_t id() const { return (uintptr_t)data; }
+
+		// Get a list of UThreads running on this thread. Note that access to this list is not thread safe.
+		const util::InlineSet<UThreadStack> &stacks() const;
+
 		// Start a thread.
 		static Thread spawn(const Fn<void, void> &start, ThreadGroup &group);
 

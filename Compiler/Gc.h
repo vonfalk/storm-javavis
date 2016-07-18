@@ -175,8 +175,7 @@ namespace storm {
 		util::Lock typeAllocLock;
 
 		// Description of all attached threads.
-		// TODO: Use a system-wide thread identifier instead of a ThreadData *.
-		typedef map<os::ThreadData *, GcThread *> ThreadMap;
+		typedef map<uintptr_t, GcThread *> ThreadMap;
 		ThreadMap threads;
 
 		// Lock for manipulating the attached threads.
@@ -186,7 +185,7 @@ namespace storm {
 		void *allocType(const GcType *type);
 
 		// Attach/detach thread. Sets up/tears down all members in Thread, nothing else.
-		void attach(GcThread *thread);
+		void attach(GcThread *thread, const os::Thread &oThread);
 		void detach(GcThread *thread);
 
 		// Find the allocation point for the current thread.

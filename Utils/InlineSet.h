@@ -6,17 +6,16 @@
 
 namespace util {
 
-	// Defines a set implemented as a doubly-linked list within its elements.
-	// The elements are required to contain "next" and "prev" pointers of the
-	// same type as the template parameter to this class.
-	// This object is designed to keep track of a number of objects, and has
-	// therefore no support for multiple keys with the same "key". The key
-	// used in this set is the object pointer itself.
-	// The "prev" and "next" members are assumed to be initialized to zero
-	// at startup. Use the "SetMember" class to get this automatically.
-	// The iterators in the set are designed to manage removal of the current
-	// item. Eg, iterator a = foo.begin(); foo.erase(*a); a++; is legal. Insertions
-	// during iterations will however fail in some cases.
+	/**
+	 * Defines a set implemented as a doubly-linked list within its elements. The elements are
+	 * required to contain "next" and "prev" pointers of the same type as the template parameter to
+	 * this class. This object is designed to keep track of a number of objects, and has therefore
+	 * no support for multiple keys with the same "key". The key used in this set is the object
+	 * pointer itself. The "prev" and "next" members are assumed to be initialized to zero at
+	 * startup. Use the "SetMember" class to get this automatically.  The iterators in the set are
+	 * designed to manage removal of the current item. Eg, iterator a = foo.begin(); foo.erase(*a);
+	 * a++; is legal. Insertions during iterations will however fail in some cases.
+	 */
 	template <class T>
 	class InlineSet : NoCopy {
 	public:
@@ -66,8 +65,8 @@ namespace util {
 			typedef T &reference;
 		};
 
-		inline iterator begin() { return iterator(first); }
-		iterator end() { return iterator(null); }
+		inline iterator begin() const { return iterator(first); }
+		inline iterator end() const { return iterator(null); }
 	private:
 		T *first;
 		T *last;
@@ -78,11 +77,10 @@ namespace util {
 	};
 
 
-	//////////////////////////////////////////////////////////////////////////
-	// A simple class you can derive your data from to get a protected,
-	// correctly initialized prev and next member in your class.
-	//////////////////////////////////////////////////////////////////////////
-
+	/**
+	 * A simple class you can derive your data from to get a protected, correctly initialized prev
+	 * and next member in your class.
+	 */
 	template <class T>
 	class SetMember {
 	public:
@@ -98,9 +96,9 @@ namespace util {
 	};
 
 
-	//////////////////////////////////////////////////////////////////////////
-	// Implementation
-	//////////////////////////////////////////////////////////////////////////
+	/**
+	 * Implementation.
+	 */
 
 	template <class T>
 	InlineSet<T>::InlineSet() : first(null), last(null), count(0) {}
@@ -134,8 +132,10 @@ namespace util {
 		item->prev = last;
 		item->next = null;
 
-		if (last) last->next = item;
-		if (first == null) first = item;
+		if (last)
+			last->next = item;
+		if (first == null)
+			first = item;
 		last = item;
 	}
 
@@ -144,11 +144,15 @@ namespace util {
 		assert(count > 0);
 		--count;
 
-		if (item == first) first = item->next;
-		if (item == last) last = item->prev;
+		if (item == first)
+			first = item->next;
+		if (item == last)
+			last = item->prev;
 
-		if (item->prev) item->prev->next = item->next;
-		if (item->next) item->next->prev = item->prev;
+		if (item->prev)
+			item->prev->next = item->next;
+		if (item->next)
+			item->next->prev = item->prev;
 
 		item->prev = item->next = null;
 	}
@@ -156,7 +160,8 @@ namespace util {
 	template <class T>
 	bool InlineSet<T>::contains(T *item) const {
 		for (T *current = first; current != null; current = current->next) {
-			if (current == item) return true;
+			if (current == item)
+				return true;
 		}
 		return false;
 	}

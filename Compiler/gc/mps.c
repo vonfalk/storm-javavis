@@ -11,4 +11,9 @@ void mps_decrease_scanned(mps_ss_t mps_ss, size_t decrease) {
 	ss->scannedSize -= decrease;
 }
 
+void mps_increase_scanned(mps_ss_t mps_ss, size_t increase) {
+	ScanState ss = PARENT(ScanStateStruct, ss_s, mps_ss);
+	ss->scannedSize += increase;
+}
+
 #endif

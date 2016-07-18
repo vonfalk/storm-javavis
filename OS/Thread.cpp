@@ -111,6 +111,10 @@ namespace os {
 
 	Thread Thread::invalid = Thread(null);
 
+	const util::InlineSet<UThreadStack> &Thread::stacks() const {
+		return data->uState.stacks;
+	}
+
 	Thread Thread::spawn(const Fn<void, void> &fn, ThreadGroup &group) {
 		ThreadStart start(fn, null, group.data);
 		startThread(start);

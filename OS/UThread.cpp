@@ -12,6 +12,8 @@ namespace os {
 	 * Forward declare machine specific functions at the bottom.
 	 */
 
+	typedef UThreadStack::Desc StackDesc;
+
 	// Stack size. (we need about 30k on Windows to do cout).
 	// 40k is too small to run the compiler well.
     // TODO: Make compiler UThreads larger somehow? Maybe smaller stacks are enough in release builds...
@@ -20,7 +22,7 @@ namespace os {
 	// Switch the currently running threads. *oldEsp is set to the old esp.
 	// This returns as another thread, which may mean that it returns to the
 	// beginning of another function in the case of newly started UThreads.
-	void doSwitch(void *newEsp, void ***oldEsp); // can not be static for some reason...
+	void doSwitch(StackDesc **newEsp, StackDesc **oldEsp); // can not be static for some reason...
 
 	// Allocate a new stack.
 	static void *allocStack(nat size);
@@ -29,7 +31,7 @@ namespace os {
 	static void freeStack(void *base, nat size);
 
 	// Compute the initial esp for this architecture.
-	static void **initialEsp(void *base, nat size);
+	static StackDesc *initialStack(void *base, nat size);
 
 	// Get a platform-dependent highly accurate timestamp in some unit. This should be monotonically
 	// increasing.
@@ -254,10 +256,12 @@ namespace os {
 
 
 	/**
-	 * UThread data.
+	 * UThread data and UThreadStack.
 	 */
 
-	UThreadData::UThreadData() : references(0), next(null), owner(null), stackBase(null), stackSize(null), esp(null) {}
+	UThreadStack::UThreadStack() : desc(null) {}
+
+	UThreadData::UThreadData() : references(0), next(null), owner(null), stackBase(null), stackSize(null) {}
 
 	UThreadData *UThreadData::createFirst() {
 		// For the thread where the stack was allocated by the OS, we do not need to care.
@@ -268,17 +272,18 @@ namespace os {
 		UThreadData *t = new UThreadData();
 		t->stackSize = os::stackSize;
 		t->stackBase = allocStack(t->stackSize);
-		t->esp = initialEsp(t->stackBase, t->stackSize);
+		t->stack.desc = initialStack(t->stackBase, t->stackSize);
 		return t;
 	}
 
 	UThreadData::~UThreadData() {
+		// Remove from the global list in UThreadState.
 		if (stackBase)
 			freeStack(stackBase, stackSize);
 	}
 
 	void UThreadData::switchTo(UThreadData *to) {
-		doSwitch(to->esp, &esp);
+		doSwitch(&to->stack.desc, &stack.desc);
 	}
 
 	/**
@@ -292,17 +297,20 @@ namespace os {
 		running->owner = this;
 		running->addRef();
 
+		stacks.insert(&running->stack);
 		aliveCount = 1;
 	}
 
 	UThreadState::~UThreadState() {
 		currentUThreadState(null);
 		if (running) {
+			stacks.erase(&running->stack);
 			running->release();
 			atomicDecrement(aliveCount);
 		}
 
 		assert(aliveCount == 0, L"An OS thread tried to terminate before all its UThreads terminated.");
+		assert(stacks.empty(), L"Consistency issue. aliveCount says zero, but we still have stacks we can scan!");
 	}
 
 	UThreadState *UThreadState::current() {
@@ -369,7 +377,11 @@ namespace os {
 			owner->waitForWork();
 		}
 
-		// Now, we have something to do!
+		// Now, we have something else to do!
+		{
+			util::Lock::L z(lock);
+			stacks.erase(&prev->stack);
+		}
 		atomicDecrement(aliveCount);
 		exited.push(prev);
 		running = next;
@@ -384,6 +396,7 @@ namespace os {
 		atomicIncrement(aliveCount);
 
 		util::Lock::L z(lock);
+		stacks.insert(&data->stack);
 		ready.push(data);
 		data->addRef();
 	}
@@ -487,26 +500,34 @@ namespace os {
 		VirtualFree(mem, 0, MEM_RELEASE);
 	}
 
-	static void **initialEsp(void *base, nat size) {
+	static StackDesc *initialStack(void *base, nat size) {
 		byte *r = (byte *)base;
-		return (void **)(r + size);
+		return (StackDesc *)(r + size);
 	}
 
 	void UThreadData::push(void *v) {
+		void **esp = (void **)stack.desc;
 		*--esp = v;
+		stack.desc = (StackDesc *)esp;
 	}
 
 	void UThreadData::push(uintptr_t v) {
+		void **esp = (void **)stack.desc;
 		*--esp = (void *)v;
+		stack.desc = (StackDesc *)esp;
 	}
 
 	void UThreadData::push(intptr_t v) {
+		void **esp = (void **)stack.desc;
 		*--esp = (void *)v;
+		stack.desc = (StackDesc *)esp;
 	}
 
 	void *UThreadData::alloc(size_t s) {
 		s = roundUp(s, sizeof(void *));
+		void **esp = (void **)stack.desc;
 		esp -= s / 4;
+		stack.desc = (StackDesc *)esp;
 		return esp;
 	}
 
@@ -524,7 +545,9 @@ namespace os {
 	void UThreadData::pushParams(const void *returnTo, const FnParams &params) {
 		nat s = params.totalSize();
 		assert(s % 4 == 0);
+		void **esp = (void **)stack.desc;
 		esp -= s / 4;
+		stack.desc = (StackDesc *)esp;
 		params.copy(esp);
 		push((void *)returnTo);
 	}
@@ -543,7 +566,9 @@ namespace os {
 
 		nat s = params.totalSize();
 		assert(s % 4 == 0);
+		void **esp = (void **)stack.desc;
 		void **to = esp - (s + minSpace) / 4;
+		stack.desc = (StackDesc *)esp;
 		params.copy(to);
 		return to;
 	}
@@ -555,8 +580,9 @@ namespace os {
 		push(0); // esi
 		push(0); // edi
 		push(-1); // seh (end of list is -1)
-		push(initialEsp(stackBase, stackSize)); // stack base
+		push(initialStack(stackBase, stackSize)); // stack base
 		push(stackBase); // stack limit
+		push(stack.desc); // current stack-pointer (approximate, this is enough).
 	}
 
 
@@ -565,15 +591,15 @@ namespace os {
 	// for exceptions to work in our threads. These could be saved through the 'stack'
 	// member in the UThread itself, but this is much easier and only uses 8 bytes on the
 	// stack anyway.
-	NAKED void doSwitch(void *newEsp, void ***oldEsp) {
+	NAKED void doSwitch(StackDesc **newDesc, StackDesc **oldDesc) {
 		__asm {
 			// Prolog. Bonus: saves ebp!
 			push ebp;
 			mov ebp, esp;
 
 			// Store parameters.
-			mov eax, oldEsp;
-			mov ecx, newEsp;
+			mov eax, oldDesc;
+			mov ecx, newDesc;
 
 			// Store state.
 			push ebx;
@@ -583,17 +609,29 @@ namespace os {
 			push dword ptr fs:[4];
 			push dword ptr fs:[8];
 
-			// Swap stacks.
+			// Current stack pointer, overlaps with 'high' in StackDesc.
+			lea ebx, [esp-4];
+			push ebx;
+
+			// Report the state for the old thread. This makes it possible for the gc to scan that properly.
 			mov [eax], esp;
-			mov esp, ecx;
+
+			// Switch to the new stack. At this point, the GC will ignore the current thread, as it
+			// has seen it 'disabled' earlier.
+			mov esp, [ecx];
 
 			// Restore state.
+			add esp, 4; // skip 'high'.
 			pop dword ptr fs:[8];
 			pop dword ptr fs:[4];
 			pop dword ptr fs:[0];
 			pop edi;
 			pop esi;
 			pop ebx;
+
+			// Clear the new thread's description. This means that the gc will start scanning the
+			// stack based on esp rather than what is in the StackDesc.
+			mov DWORD PTR [ecx], 0;
 
 			// Epilog. Bonus: restores ebp!
 			pop ebp;

@@ -55,7 +55,7 @@ static void threadFn() {
 }
 
 BEGIN_TEST(ThreadTest) {
-	// Test so that other threads are properly GC:d. Note: we can not yet use UThreads.
+	// Test so that other threads are properly GC:d.
 	Engine &e = *gEngine;
 
 	os::Thread::spawn(simpleVoidFn(&threadFn), e.threadGroup);
@@ -67,4 +67,29 @@ BEGIN_TEST(ThreadTest) {
 	Link *start = createList(count);
 	CHECK(checkList(start, count));
 
+} END_TEST
+
+// Should be large enough to trigger a garbage collection.
+static const nat count = 50000;
+
+static void uthreadFn() {
+	Link *start = createList(count);
+	os::UThread::leave();
+	threadOk = checkList(start, count);
+}
+
+BEGIN_TEST(UThreadTest) {
+	Engine &e = *gEngine;
+
+	threadOk = false;
+
+	os::UThread::spawn(simpleVoidFn(&uthreadFn));
+	Link *start = createList(count);
+	os::UThread::leave();
+	createList(count);
+	os::UThread::leave();
+
+	// Should be done by now!
+	CHECK(threadOk);
+	CHECK(checkList(start, count));
 } END_TEST

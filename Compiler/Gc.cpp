@@ -283,6 +283,9 @@ namespace storm {
 		// Root for this thread.
 		mps_root_t root;
 
+		// All threads running on this thread.
+		const util::InlineSet<os::UThreadStack> *stacks;
+
 #if defined(WINDOWS)
 		struct TIB {
 			void *sehFrame;
@@ -322,6 +325,9 @@ namespace storm {
 		thread->tib = tmp;
 	}
 
+	// Note: We're checking all word-aligned positions as we need to make sure we're scanning
+	// the return addresses into functions (which are also in this pool). MPS currently scans
+	// EIP as well, which is good as the currently executing function might otherwise be moved.
 	static mps_res_t mpsScanThread(mps_ss_t ss, void *base, void *limit, void *closure) {
 		GcThread *thread = (GcThread *)closure;
 		void **from = (void **)base;
@@ -331,22 +337,67 @@ namespace storm {
 			// Read the current stack base from TIB and replace the dummy.
 			to = (void **)thread->tib->stackBase;
 
-			// Update the scanned size so that we do not accidentally surprise MPS.
-			mps_decrease_scanned(ss, (char *)limit - (char *)to);
+			// We shall scan the entire stack! This is a bit special, as we will more or less
+			// completely ignore what MPS told us and figure it out ourselves.
+
+			// Decrease the scanned size to zero. We update it again later.
+			mps_decrease_scanned(ss, (char *)limit - (char *)base);
+
+			// We scan all UThreads on this os thread, and watch out if 'to' is equal to a UThread
+			// we scanned. If that is the case, we're in the middle of a thread switch. That means
+			// that whatever is in 'from' and 'to' are not consistent, so we shall ignore
+			// them. However, that means that all UThreads have proper states saved to them, which
+			// we can scan anyway.
+			size_t bytesScanned = 0;
+			bool ignoreMainStack = false;
+
+			// Scan all UThreads.
+			MPS_SCAN_BEGIN(ss) {
+				util::InlineSet<os::UThreadStack>::iterator i = thread->stacks->begin();
+				for (nat id = 0; i != thread->stacks->end(); ++i, id++) {
+					os::UThreadStack::Desc *desc = i->desc;
+					if (!desc)
+						continue;
+
+					bytesScanned += (char *)desc->high - (char *)desc->low;
+					for (void **at = (void **)desc->low; at < (void **)desc->high; at++) {
+						mps_res_t r = MPS_FIX12(ss, at);
+						if (r != MPS_RES_OK)
+							return r;
+					}
+
+					// Ignore the main stack later?
+					ignoreMainStack |= desc->high == to;
+				}
+
+				// Scan the main stack if we need to.
+				if (ignoreMainStack) {
+#ifdef DEBUG
+					// To see if this ever happens, and if it is handled correctly. This is *really*
+					// rare, as we have to hit a window of ~6 machine instructions when pausing another thread.
+					PLN(L"------------ We found an UThread in the process of switching! ------------");
+#endif
+				} else {
+					bytesScanned += (char *)to - (char *)from;
+					for (void **at = from; at < to; at++) {
+						mps_res_t r = MPS_FIX12(ss, at);
+						if (r != MPS_RES_OK)
+							return r;
+					}
+				}
+			} MPS_SCAN_END(ss);
+
+			// Finally, write the new size back to MPS.
+			mps_increase_scanned(ss, bytesScanned);
+		} else {
+			MPS_SCAN_BEGIN(ss) {
+				for (void **at = from; at < to; at++) {
+					mps_res_t r = MPS_FIX12(ss, at);
+					if (r != MPS_RES_OK)
+						return r;
+				}
+			} MPS_SCAN_END(ss);
 		}
-
-		// Note: We're checking all word-aligned positions as we need to make sure we're scanning
-		// the return addresses into functions (which are also in this pool). MPS currently scans
-		// EIP as well, which is good as the currently executing function might otherwise be moved.
-		MPS_SCAN_BEGIN(ss) {
-			for (void **at = from; at < to; at++) {
-				mps_res_t r = MPS_FIX12(ss, at);
-				if (r != MPS_RES_OK)
-					return r;
-			}
-
-			// TODO: Scan other UThreads running on this thread as well!
-		} MPS_SCAN_END(ss);
 
 		return MPS_RES_OK;
 	}
@@ -468,7 +519,7 @@ namespace storm {
 		os::Thread thread = os::Thread::current();
 		util::Lock::L z(threadLock);
 
-		ThreadMap::iterator i = threads.find(thread.threadData());
+		ThreadMap::iterator i = threads.find(thread.id());
 		if (i != threads.end()) {
 			// Already attached, increase the attached count.
 			i->second->attachCount++;
@@ -477,17 +528,17 @@ namespace storm {
 		    // Note: we may leak memory here if a check() fails. This is rare enough
 			// for it not to be a problem.
 			GcThread *desc = new GcThread;
-			threads.insert(make_pair(thread.threadData(), desc));
+			threads.insert(make_pair(thread.id(), desc));
 
 			// Register the thread with MPS.
-			attach(desc);
+			attach(desc, thread);
 		}
 	}
 
 	void Gc::reattachThread(const os::Thread &thread) {
 		util::Lock::L z(threadLock);
 
-		ThreadMap::iterator i = threads.find(thread.threadData());
+		ThreadMap::iterator i = threads.find(thread.id());
 		if (i != threads.end()) {
 			i->second->attachCount++;
 		} else {
@@ -499,7 +550,7 @@ namespace storm {
 	void Gc::detachThread(const os::Thread &thread) {
 		util::Lock::L z(threadLock);
 
-		ThreadMap::iterator i = threads.find(thread.threadData());
+		ThreadMap::iterator i = threads.find(thread.id());
 		if (i == threads.end())
 			return;
 
@@ -517,9 +568,12 @@ namespace storm {
 		}
 	}
 
-	void Gc::attach(GcThread *desc) {
+	void Gc::attach(GcThread *desc, const os::Thread &thread) {
 		// Register the thread with MPS.
 		check(mps_thread_reg(&desc->thread, arena), L"Failed registering a thread with the gc.");
+
+		// Find all stacks on this os-thread.
+		desc->stacks = &thread.stacks();
 
 		// Fill in anything else the MPS needs to scan.
 		mpsAttach(desc);
@@ -564,7 +618,7 @@ namespace storm {
 			// This is expected to happen rarely, so it is ok to be a bit slow here.
 			util::Lock::L z(threadLock);
 			os::Thread thread = os::Thread::current();
-			ThreadMap::const_iterator i = threads.find(thread.threadData());
+			ThreadMap::const_iterator i = threads.find(thread.id());
 			if (i == threads.end())
 				throw GcError(L"Trying to allocate memory from a thread not registered with the GC.");
 
