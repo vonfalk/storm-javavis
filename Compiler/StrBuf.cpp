@@ -37,6 +37,7 @@ namespace storm {
 	static const GcType bufType = {
 		GcType::tArray,
 		null,
+		null,
 		sizeof(wchar),
 		0,
 		{},

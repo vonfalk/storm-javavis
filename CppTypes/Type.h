@@ -3,6 +3,7 @@
 #include "CppName.h"
 #include "TypeRef.h"
 #include "Variable.h"
+#include "Function.h"
 #include "Namespace.h"
 
 class World;
@@ -69,8 +70,17 @@ public:
 	// Member variables (non-static). All have their name relative to the enclosing type.
 	vector<Variable> variables;
 
+	// Member functions (exported, assumed non-static).
+	vector<Function> functions;
+
+	// Does this type have a declared destructor?
+	bool hasDtor() const;
+
 	// Add a variable.
 	void add(const Variable &v);
+
+	// Add a function.
+	void add(const Function &f);
 
 	// Resolve types in here.
 	virtual void resolveTypes(World &world);

@@ -32,6 +32,11 @@ void Class::add(const Variable &v) {
 	variables.push_back(v);
 }
 
+void Class::add(const Function &f) {
+	// Don't bother checking for duplicates... That is done by the C++ compiler and Storm during boot.
+	functions.push_back(f);
+}
+
 void Class::resolveTypes(World &in) {
 	CppName ctx = name.parent();
 
@@ -40,6 +45,9 @@ void Class::resolveTypes(World &in) {
 
 	for (nat i = 0; i < variables.size(); i++)
 		variables[i].resolveTypes(in, ctx);
+
+	for (nat i = 0; i < functions.size(); i++)
+		functions[i].resolveTypes(in, ctx);
 }
 
 Size Class::size() const {
@@ -88,6 +96,26 @@ void Class::ptrOffsets(vector<Offset> &to) const {
 	}
 }
 
+bool Class::hasDtor() const {
+	// Always give destructors for value types.
+	if (valueType)
+		return true;
+
+	// Ignore storm::Object.
+	if (name == L"storm::Object")
+		return false;
+
+	for (nat i = 0; i < functions.size(); i++) {
+		if (functions[i].name == Function::dtor)
+			return true;
+	}
+
+	if (Class *c = as<Class>(parentType))
+		return c->hasDtor();
+	else
+		return false;
+}
+
 void Class::print(wostream &to) const {
 	to << L"class " << name;
 	if (!parent.empty())
@@ -98,6 +126,9 @@ void Class::print(wostream &to) const {
 		Indent z(to);
 		for (nat i = 0; i < variables.size(); i++)
 			to << variables[i] << endl;
+
+		for (nat i = 0; i < functions.size(); i++)
+			to << functions[i] << endl;
 	}
 	to << L"}";
 }

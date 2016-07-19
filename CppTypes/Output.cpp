@@ -76,6 +76,7 @@ static void genPtrOffsets(wostream &to, World &w) {
 static void genTypes(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
 		Type &t = *w.types[i];
+		Class *c = as<Class>(&t);
 		to << L"{ ";
 
 		// Name.
@@ -84,7 +85,7 @@ static void genTypes(wostream &to, World &w) {
 		// Parent class (if any).
 		{
 			Type *parent = null;
-			if (Class *c = as<Class>(&t))
+			if (c)
 				parent = c->hiddenParent ? null : c->parentType;
 			if (parent) {
 				to << parent->id << L" /* " << parent->name << " */, ";
@@ -97,7 +98,16 @@ static void genTypes(wostream &to, World &w) {
 		to << format(t.size()) << L", ";
 
 		// Pointer offsets.
-		to << toVarName(t.name) << L"_offset },\n";
+		to << toVarName(t.name) << L"_offset, ";
+
+		// Destructor (if any).
+		if (c != null && c->hasDtor()) {
+			to << L"address(&destroy<" << c->name << L">), ";
+		} else {
+			to << L"null, ";
+		}
+
+		to << L"},\n";
 	}
 }
 

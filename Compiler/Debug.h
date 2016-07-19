@@ -41,5 +41,19 @@ namespace storm {
 			ValClass *next;
 		};
 
+
+		/**
+		 * Simple class with finalizer.
+		 *
+		 * The destructor prints 'value'.
+		 */
+		class DtorClass : public Object {
+			STORM_CLASS;
+		public:
+			DtorClass(int v);
+			~DtorClass();
+			int value;
+		};
+
 	}
 }

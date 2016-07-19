@@ -12,6 +12,9 @@ namespace storm {
 	// Default arena size. 32 MB should be enough for a while at least.
 	static const size_t defaultArena = 32 * 1024 * 1024;
 
+	// Default finalizer interval.
+	static const nat defaultFinalizer = 1000;
+
 	// Get the compiler thread from flags.
 	static os::Thread mainThread(Engine::ThreadMode mode, Engine &e) {
 		switch (mode) {
@@ -27,7 +30,9 @@ namespace storm {
 		}
 	}
 
-	Engine::Engine(const Path &root, ThreadMode mode) : gc(defaultArena), cppTypes(gc), cppThreads(gc) {
+	Engine::Engine(const Path &root, ThreadMode mode) :
+		gc(defaultArena, defaultFinalizer), cppTypes(gc), cppThreads(gc) {
+
 		assert(Compiler::identifier == 0, L"Invalid ID for the compiler thread. Check CppTypes for errors!");
 
 		// Since all types in the name tree need the Compiler thread, we need to create that a bit early.

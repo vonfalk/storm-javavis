@@ -94,7 +94,11 @@ public:
 
 	void add(const Variable &v) {
 		// Add stuff to 'world'.
-		PLN("Global variable " << v << " ignored.");
+		PLN(L"Global variable " << v << L" ignored.");
+	}
+
+	void add(const Function &f) {
+		PLN(L"Global exported function " << f << L" ignored.");
 	}
 };
 
@@ -195,10 +199,18 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 	if (!tok.more() || tok.skipIf(L";"))
 		return;
 
+	Token name(L"", SrcPos());
+	bool exportFn = tok.skipIf(L"STORM_CTOR");
+
+	bool isVirtual = tok.skipIf(L"virtual");
+	tok.skipIf(L"inline"); // The combination 'virtual inline' is insane, but we'll roll with it...
+
 	// First, we should have a type.
 	Auto<TypeRef> type;
 	if (tok.skipIf(L"~")) {
 		type = new NamedType(tok.peek().pos, L"void");
+		tok.skip(); // Ignore the name of the destructor.
+		name.token = Function::dtor;
 	} else {
 		type = parseTypeRef(tok);
 	}
@@ -208,9 +220,9 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 		return;
 
 	// Is this function supposed to be exported to Storm?
-	bool exportFn = tok.skipIf(L"STORM_FN");
+	exportFn |= tok.skipIf(L"STORM_FN");
 
-	Token name(L"", type->pos);
+	name.pos = type->pos;
 	if (tok.peek().token != L"(") {
 		// Then, we should have the member's name.
 		name = tok.next();
@@ -226,31 +238,36 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 				name.token += L" " + tok.next().token;
 			}
 		}
-	} else {
+	} else if (name.token != Function::dtor) {
 		// Constructor
 		type = new NamedType(name.pos, L"void");
-		name.token = L"ctor";
+		name.token = Function::ctor;
 	}
 
 	if (tok.skipIf(L"(")) {
 		// Function.
-		// PLN(tok.peek().pos << ": function");
+		Function f(CppName(name.token), name.pos, type);
+		f.isVirtual = isVirtual;
 
 		if (!tok.skipIf(L")")) {
-			parseTypeRef(tok);
+			f.params.push_back(parseTypeRef(tok));
 			tok.skip(); // Parameter name.
 
 			while (tok.more() && tok.skipIf(L",")) {
-				parseTypeRef(tok);
+				f.params.push_back(parseTypeRef(tok));
 				tok.skip();
 			}
 
 			tok.expect(L")");
 		}
 
-		tok.skipIf(L"const");
+		if (tok.skipIf(L"const"))
+			f.isConst = true;
 
 		// Save if 'exportFn' is there.
+		if (exportFn || f.name == Function::dtor) {
+			addTo.add(f);
+		}
 	} else if (tok.skipIf(L"[")) {
 		throw Error(L"C-style arrays not supported in classes exposed to Storm.", name.pos);
 	} else if (tok.skipIf(L";")) {
@@ -395,9 +412,6 @@ static void parseType(Tokenizer &tok, World &world, const CppName &inside) {
 			while (!tok.skipIf(L";"))
 				tok.skip();
 		} else if (t.token == L"inline") {
-			tok.skip();
-		} else if (t.token == L"virtual") {
-			// TODO: pass this on.
 			tok.skip();
 		} else {
 			parseMember(tok, *type);

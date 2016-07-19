@@ -274,6 +274,9 @@ namespace storm {
 		// # of times attached.
 		nat attachCount;
 
+		// # of allocations since last check for finalization messages.
+		nat lastFinalization;
+
 		// MPS thread description.
 		mps_thr_t thread;
 
@@ -435,7 +438,7 @@ namespace storm {
 		{ 4096, 0.10 }, // Long-lived generation (for types, code and other things), 4MB
 	};
 
-	Gc::Gc(size_t arenaSize) {
+	Gc::Gc(size_t arenaSize, nat finalizationInterval) : finalizationInterval(finalizationInterval) {
 		// We work under this assumption.
 		assert(wordSize == sizeof(size_t), L"Invalid word-size");
 		assert(wordSize == sizeof(void *), L"Invalid word-size");
@@ -467,6 +470,15 @@ namespace storm {
 			check(mps_pool_create_k(&pool, arena, mps_class_amc(), args), L"Failed to create a GC pool.");
 		} MPS_ARGS_END(args);
 
+		// GcType-objects are stored in a manually managed pool. We prefer this to just malloc()ing
+		// them since we can remove all of them easily whenever the Gc object is destroyed.
+		MPS_ARGS_BEGIN(args) {
+			MPS_ARGS_ADD(args, MPS_KEY_MEAN_SIZE, sizeof(GcType) + 10*sizeof(size_t));
+			MPS_ARGS_ADD(args, MPS_KEY_ALIGN, wordSize);
+			MPS_ARGS_ADD(args, MPS_KEY_SPARE, 0.50); // Low spare, as these objects are seldom allocated/deallocated.
+			check(mps_pool_create_k(&gcTypePool, arena, mps_class_mvff(), args), L"Failed to create a pool for types.");
+		} MPS_ARGS_END(args);
+
 		// Types are stored in a separate non-moving pool. This is to get around the limitation that
 		// no remote references (ie. references stored outside objects) are allowed by the MPS. In
 		// our GcType, however, we want to store a reference to the actual type so we can access it
@@ -486,14 +498,16 @@ namespace storm {
 		} MPS_ARGS_END(args);
 
 		check(mps_ap_create_k(&typeAllocPoint, typePool, mps_args_none), L"Failed to create type allocation point.");
+
+		// We want to receive finalization messages.
+		mps_message_type_enable(arena, mps_message_type_finalization());
+
+		// Initialize.
+		runningFinalizers = 0;
+		ignoreFreeType = false;
 	}
 
 	Gc::~Gc() {
-		// Park the arena, so nothing goes on during cleanup.
-		mps_arena_park(arena);
-
-		// TODO: We might want to run a full gc to get destructors properly called.
-
 		// Destroy all remaining threads (if any).
 		{
 			util::Lock::L z(threadLock);
@@ -504,12 +518,25 @@ namespace storm {
 			threads.clear();
 		}
 
+		// Collect the entire arena. We have no roots attached, so all objects with finalizers
+		// should be found. Leaves the arena in a parked state, so no garbage collections will start
+		// after this one.
+		mps_arena_collect(arena);
+
+		// See if any finalizers needs to be executed. Here, we should ignore freeing any GcTypes,
+		// as the finalization order for the last types is unknown.
+		ignoreFreeType = true;
+		checkFinalizersLocked();
+
 		// Destroy the global allocation point.
 		mps_ap_destroy(typeAllocPoint);
 
 		// Destroy pools.
 		mps_pool_destroy(pool);
 		mps_pool_destroy(typePool);
+		mps_pool_destroy(gcTypePool); // Has to be last, any formatted object may reference things in here.
+
+		// Destroy format and chains.
 		mps_fmt_destroy(format);
 		mps_chain_destroy(chain);
 		mps_arena_destroy(arena);
@@ -569,6 +596,9 @@ namespace storm {
 	}
 
 	void Gc::attach(GcThread *desc, const os::Thread &thread) {
+		desc->attachCount = 1;
+		desc->lastFinalization = 0;
+
 		// Register the thread with MPS.
 		check(mps_thread_reg(&desc->thread, arena), L"Failed registering a thread with the gc.");
 
@@ -604,15 +634,17 @@ namespace storm {
 	// Thread-local variables for remembering the current thread's allocation point. We need some
 	// integrity checking to support the (rare) case of one thread allocating from different
 	// Engine:s. We do this by remembering which Gc-instance the saved ap is valid for.
-	static THREAD Gc *currentApOwner = null;
-	static THREAD mps_ap_t *currentAp = null;
+	static THREAD Gc *currentInfoOwner = null;
+	static THREAD GcThread *currentInfo = null;
 
 	mps_ap_t &Gc::currentAllocPoint() {
+		GcThread *info = null;
+
 		// Check if everything is as we left it. This should be fast as it is called for every allocation!
-		// Note: the 'currentApOwner' check should be sufficient.
+		// Note: the 'currentInfoOwner' check should be sufficient.
 		// Note: we will currently not detect a thread that has been detached too early.
-		if (currentAp != null && currentApOwner == this) {
-			return *currentAp;
+		if (currentInfo != null && currentInfoOwner == this) {
+			info = currentInfo;
 		} else {
 			// Either first time or allocations from another Gc in this thread since last time.
 			// This is expected to happen rarely, so it is ok to be a bit slow here.
@@ -622,10 +654,17 @@ namespace storm {
 			if (i == threads.end())
 				throw GcError(L"Trying to allocate memory from a thread not registered with the GC.");
 
-			currentAp = &i->second->ap;
-			currentApOwner = this;
-			return *currentAp;
+			currentInfo = info = i->second;
+			currentInfoOwner = this;
 		}
+
+		// Shall we run any finalizers right now?
+		if (++info->lastFinalization >= finalizationInterval) {
+			info->lastFinalization = 0;
+			checkFinalizers();
+		}
+
+		return info->ap;
 	}
 
 	void *Gc::alloc(const GcType *type) {
@@ -650,7 +689,12 @@ namespace storm {
 		} while (!mps_commit(ap, memory, size));
 
 		// Exclude our header, and return the allocated memory.
-		return (byte *)memory + headerSize;
+		void *result = (byte *)memory + headerSize;
+
+		if (type->finalizer)
+			mps_finalize(arena, &result);
+
+		return result;
 	}
 
 	void *Gc::allocType(const GcType *type) {
@@ -673,7 +717,12 @@ namespace storm {
 		} while (!mps_commit(typeAllocPoint, memory, size));
 
 		// Exclude our header, and return the allocated memory.
-		return (byte *)memory + headerSize;
+		void *result = (byte *)memory + headerSize;
+
+		if (type->finalizer)
+			mps_finalize(arena, &result);
+
+		return result;
 	}
 
 	void *Gc::allocArray(const GcType *type, size_t elements) {
@@ -698,12 +747,18 @@ namespace storm {
 		} while (!mps_commit(ap, memory, size));
 
 		// Exclude our header, and return the allocated memory.
-		return (byte *)memory + headerSize;
+		void *result = (byte *)memory + headerSize;
+
+		if (type->finalizer)
+			mps_finalize(arena, &result);
+
+		return result;
 	}
 
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		size_t s = sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
-		GcType *t = (GcType *)malloc(s);
+		GcType *t;
+		check(mps_alloc((mps_addr_t *)&t, gcTypePool, s), L"Failed to allocate type info.");
 		memset(t, 0, s);
 		t->kind = kind;
 		t->type = type;
@@ -713,14 +768,17 @@ namespace storm {
 	}
 
 	void Gc::freeType(GcType *t) {
-		free(t);
+		if (ignoreFreeType)
+			return;
+
+		size_t s = sizeof(GcType) + t->count*sizeof(size_t) - sizeof(size_t);
+		mps_free(gcTypePool, t, s);
 	}
 
 	const GcType *Gc::allocType(const void *mem) {
 		const void *t = (byte *)mem - headerSize;
 		const MpsObj *o = (const MpsObj *)t;
 		return &(o->header->obj);
-		// return &(*(MpsHeader **)t)->obj;
 	}
 
 	void Gc::switchType(void *mem, const GcType *type) {
@@ -730,6 +788,51 @@ namespace storm {
 		// Seems reasonable. Switch headers!
 		void *t = (byte *)mem - headerSize;
 		setHeader(t, type);
+	}
+
+	void Gc::checkFinalizers() {
+		if (atomicCAS(runningFinalizers, 0, 1) != 0) {
+			// Someone else is already checking finalizers.
+			return;
+		}
+
+		try {
+			checkFinalizersLocked();
+		} catch (...) {
+			// Clear the flag.
+			atomicWrite(runningFinalizers, 0);
+			throw;
+		}
+
+		// Clear the flag.
+		atomicWrite(runningFinalizers, 0);
+	}
+
+	void Gc::checkFinalizersLocked() {
+		mps_message_t message;
+		while (mps_message_get(&message, arena, mps_message_type_finalization())) {
+			mps_addr_t obj;
+			mps_message_finalization_ref(&obj, arena, message);
+			mps_message_discard(arena, message);
+
+			finalizeObject(obj);
+		}
+	}
+
+	void Gc::finalizeObject(void *obj) {
+		const GcType *t = allocType(obj);
+
+		// Should always hold, but better safe than sorry!
+		if (t->finalizer) {
+			typedef void (*Fn)(void *);
+			Fn fn = (Fn)t->finalizer;
+			(*fn)(obj);
+		}
+
+		// Replace the object with padding, as it is not neccessary to scan it anymore.
+		obj = (char *)obj - headerSize;
+		size_t size = mpsSize(obj);
+		mpsMakePad(obj, size);
 	}
 
 	struct Gc::Root {
@@ -786,6 +889,7 @@ namespace storm {
 
 	static const GcType linkType = {
 		GcType::tFixed,
+		null,
 		null,
 		sizeof(GcLink),
 		1,

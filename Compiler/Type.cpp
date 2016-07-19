@@ -34,13 +34,17 @@ namespace storm {
 		Named(setMyType(null, this, gcType, e)), engine(e), gcType(gcType) {}
 
 	Type::~Type() {
-		if (gcType->kind == GcType::tType) {
-			TODO(L"Free this after everything is properly shut down!");
-		}
 		GcType *g = gcType;
 		gcType = null;
 		// Barrier here?
+
+		// The GC will ignore these during shutdown, when it is crucial not to destroy anything too
+		// early.
 		engine.gc.freeType(g);
+	}
+
+	static void destroyType(Type *t) {
+		t->~Type();
 	}
 
 	Type *Type::createType(Engine &e, const CppType *type) {
@@ -59,6 +63,9 @@ namespace storm {
 		t->offset[0] = OFFSET_OF(Type, gcType);
 		for (nat i = 0; i < entries; i++)
 			t->offset[i+1] = Offset(type->ptrOffsets[i]).current();
+
+		// Ensure we're finalized.
+		t->finalizer = address(&destroyType);
 
 		// Now we can allocate the type and let the constructor handle the rest!
 		return new (e, t) Type(e, typeClass, Size(type->size), t);

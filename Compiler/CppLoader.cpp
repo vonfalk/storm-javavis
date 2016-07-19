@@ -53,6 +53,8 @@ namespace storm {
 			t->offset[i] = Offset(type->ptrOffsets[i]).current();
 		}
 
+		t->finalizer = type->destructor;
+
 		return t;
 	}
 }

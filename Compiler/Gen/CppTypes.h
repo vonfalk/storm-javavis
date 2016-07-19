@@ -60,6 +60,9 @@ namespace storm {
 
 		// Pointer offsets. Ends with 'CppSize::invalid'.
 		CppOffset *ptrOffsets;
+
+		// Destructor to use for this type (if any).
+		const void *destructor;
 	};
 
 	/**

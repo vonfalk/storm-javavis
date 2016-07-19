@@ -2,6 +2,10 @@
 #include "CppTypes.h"
 #include "Engine.h"
 
+/**
+ * Template for the generated cpp file.
+ */
+
 // INCLUDES
 
 // TYPE_GLOBALS
@@ -13,21 +17,26 @@
 // during testing!
 #pragma optimize("", off)
 
-/**
- * Template for the generated cpp file.
- */
 namespace storm {
 
+	// Invalid size.
 	const CppSize CppSize::invalid = { -1, -1, -1, -1 };
 
+	// Invalid offset.
 	const CppOffset CppOffset::invalid = { -1, -1 };
+
+	// Wrap a destructor call.
+	template <class T>
+	void destroy(T *obj) {
+		obj->~T();
+	}
 
 	static CppType *cppTypes() {
 		// PTR_OFFSETS
 
 		static CppType types[] = {
 			// CPP_TYPES
-			{ null, 0, CppSize::invalid, null },
+			{ null, 0, CppSize::invalid, null, null },
 		};
 		return types;
 	}

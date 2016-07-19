@@ -61,6 +61,10 @@ namespace storm {
 		// remote reference. Not declared const due to how we are using it.
 		Type *type;
 
+		// Any finalizer to be run when this type is not reachable any more.
+		// NOTE: this pointer is *not* scanned, so it can not point to any generated code at the moment!
+		const void *finalizer;
+
 		/**
 		 * Description of pointer offsets:
 		 */
@@ -87,9 +91,11 @@ namespace storm {
 	 */
 	class Gc : NoCopy {
 	public:
-		// Create, gives an initial arena size. This is only an estimate that may be disregarded by
-		// the gc.
-		Gc(size_t initialArena);
+		// Create.
+		// 'initialArena' - an initial estimate of the arena size. May be disregarded by the gc if needed.
+		// 'finalizationInterval' - how seldom the gc should check for finalizations. An interval of 500 means
+		//                          every 500 allocations.
+		Gc(size_t initialArena, nat finalizationInterval);
 
 		// Destroy.
 		~Gc();
@@ -124,6 +130,10 @@ namespace storm {
 
 		/**
 		 * Management of Gc types.
+		 *
+		 * These objects are semi-managed by the GC. They are not collected automatically, but they
+		 * are destroyed together with the GC object. That means, small leaks of GcType objects are
+		 * not a problem as long as they don't grow over time.
 		 */
 
 		// Allocate a gc type.
@@ -160,6 +170,9 @@ namespace storm {
 		void test();
 
 	private:
+		// Finalization interval.
+		nat finalizationInterval;
+
 		// Internal variables which are implementation-specific:
 #ifdef STORM_GC_MPS
 		// Current arena, pool and format.
@@ -167,6 +180,9 @@ namespace storm {
 		mps_pool_t pool;
 		mps_fmt_t format;
 		mps_chain_t chain;
+
+		// Separate non-protected pool for GcType objects.
+		mps_pool_t gcTypePool;
 
 		// Separate non-moving pool for storing Type-objects. Note: we only have one allocation
 		// point for the types since they are rarely allocated.
@@ -188,8 +204,23 @@ namespace storm {
 		void attach(GcThread *thread, const os::Thread &oThread);
 		void detach(GcThread *thread);
 
-		// Find the allocation point for the current thread.
+		// Find the allocation point for the current thread. May run finalizers.
 		mps_ap_t &currentAllocPoint();
+
+		// See if there are any finalizers to run at the moment.
+		void checkFinalizers();
+
+		// Second stage. Assumes we have exclusive access to the message stream.
+		void checkFinalizersLocked();
+
+		// Finalize an object.
+		void finalizeObject(void *obj);
+
+		// Are we running finalizers at the moment? Used for synchronization.
+		volatile nat runningFinalizers;
+
+		// During destruction - ignore any freeType() calls?
+		bool ignoreFreeType;
 #endif
 	};
 

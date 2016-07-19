@@ -28,6 +28,7 @@ int _tmain(int argc, _TCHAR *argv[]) {
 
 	// Moment end;
 	// PLN(L"Total time: " << (end - start));
+	PLN(L"Total time: TODO");
 
 	return r.ok() ? 0 : 1;
 }
