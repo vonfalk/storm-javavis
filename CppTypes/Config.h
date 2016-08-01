@@ -5,8 +5,8 @@
  * Configuration for the current execution.
  */
 struct Config {
-	// Directory to scan for header files.
-	Path dir;
+	// Directories to scan for header files.
+	vector<Path> dirs;
 
 	// Template src.
 	Path src;

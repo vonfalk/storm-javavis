@@ -1,5 +1,5 @@
 #pragma once
-#include "Gc.h"
+#include "Runtime.h"
 
 namespace storm {
 
@@ -31,11 +31,13 @@ namespace storm {
 		virtual ~Object();
 
 		// Get the engine somehow.
-		Engine &engine() const;
+		inline Engine &engine() const {
+			return runtime::allocEngine(this);
+		}
 
 		// Get our type somehow.
 		inline Type *type() const {
-			return Gc::allocType(this)->type;
+			return runtime::allocType(this);
 		}
 
 		// Used to allow the as<Foo> using our custom (faster) type-checking.

@@ -5,7 +5,8 @@
 
 #include "gc/mps.h"
 
-#include "GcArray.h"
+#include "Core/GcArray.h"
+#include "Core/GcType.h"
 
 namespace storm {
 
@@ -23,61 +24,6 @@ namespace storm {
 	 * stored as 32-bit numbers instead of 64-bit numbers to save space.
 	 */
 
-
-	/**
-	 * Description of a type from the view of the garbage collector. In general, we maintain one
-	 * GcType for each Type in the system. A GcType is different from a Type as it only describes
-	 * the part of the memory layout relevant to the garbage collector (ie. pointer offsets). It
-	 * also does this in a flattened format, so that scanning is fast.
-	 *
-	 * Make sure to allocate these through the garbage collector interface, as these might need to
-	 * be kept separate from other data to ensure the garbage collector will work properly.
-	 */
-	struct GcType {
-		// Possible variations in the description.
-		enum Kind {
-			// A type that has a fixed layout and size (ie. classes, structs).
-			tFixed,
-
-			// A variant of tFixed, where offset[0] points to a GcType to be scanned. Used by the
-			// Type type to properly scan its GcType member.
-			tType,
-
-			// Repeated occurence of another type (ie. an array). The number of repetitions is stored as
-			// a size_t in the first element of the allocation (to keep alignment), followed by a number
-			// of repeated fixed size allocations. Use GcArray<T> for convenient access.
-			tArray,
-		};
-
-		// Type. size_t since we want to know the size properly. Has to be first.
-		size_t kind;
-
-		/**
-		 * Other useful data for the rest of the system:
-		 */
-
-		// (scanned) reference to the full description of this type. NOTE: Do not change this after
-		// the GcType has been created. Doing so may confuse the GC, as this is an unsupported
-		// remote reference. Not declared const due to how we are using it.
-		Type *type;
-
-		// Any finalizer to be run when this type is not reachable any more.
-		// NOTE: this pointer is *not* scanned, so it can not point to any generated code at the moment!
-		const void *finalizer;
-
-		/**
-		 * Description of pointer offsets:
-		 */
-
-		// Number of bytes to skip for each element. In the case of tFixed, the size of the allocation.
-		size_t stride;
-
-		// Number of offsets here.
-		size_t count;
-
-		// Pointer offsets within each element.
-		size_t offset[1];
-	};
 
 	/**
 	 * Internal description of thread-local data for the garbage collector.
@@ -122,11 +68,6 @@ namespace storm {
 
 		// Allocate an array of objects. Assumes type->type == tArray.
 		void *allocArray(const GcType *type, size_t count);
-
-		template <class T>
-		GcArray<T> *allocArray(const GcType *type, size_t count) {
-			return (GcArray<T> *)allocArray(type, count);
-		}
 
 		/**
 		 * Management of Gc types.

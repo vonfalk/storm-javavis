@@ -30,6 +30,7 @@ all+=storm_slow
 [build]
 
 #Regular libraries linked into Storm and/or any storm libraries.
+Core+=lib
 Code+=lib
 Compiler+=lib
 OS+=lib

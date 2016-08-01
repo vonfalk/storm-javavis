@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Type.h"
 #include "Engine.h"
-#include "Gen/CppTypes.h"
+#include "Core/Gen/CppTypes.h"
 
 namespace storm {
 

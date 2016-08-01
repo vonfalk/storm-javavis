@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Engine.h"
 #include "Init.h"
-#include "Thread.h"
+#include "Core/Thread.h"
 #include "Type.h"
 
 // Only included from here:

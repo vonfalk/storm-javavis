@@ -2,7 +2,7 @@
 #include "CppLoader.h"
 #include "Type.h"
 #include "Engine.h"
-#include "Str.h"
+#include "Core/Str.h"
 
 namespace storm {
 

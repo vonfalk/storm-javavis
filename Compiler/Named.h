@@ -1,5 +1,5 @@
 #pragma once
-#include "TObject.h"
+#include "Core/TObject.h"
 #include "NamedFlags.h"
 
 namespace storm {

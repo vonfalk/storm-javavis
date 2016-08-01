@@ -15,7 +15,7 @@ namespace storm {
 		STORM_CLASS;
 
 		// Let allocation access gcType.
-		friend void *allocObject(size_t s, Type *t);
+		friend void *runtime::allocObject(size_t s, Type *t);
 
 	public:
 		// Create a type declared in Storm.

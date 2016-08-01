@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Str.h"
 #include "StrBuf.h"
-#include "Engine.h"
+#include "GcType.h"
 
 namespace storm {
 
@@ -178,7 +178,7 @@ namespace storm {
 	}
 
 	void Str::allocData(nat count) {
-		data = engine().gc.allocArray<wchar>(&bufType, count);
+		data = runtime::allocArray<wchar>(engine(), &bufType, count);
 	}
 
 }

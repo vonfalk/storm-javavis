@@ -1,4 +1,5 @@
 #pragma once
+#include "OS/Types.h"
 #include "OS/Thread.h"
 #include "OS/Threadgroup.h"
 
@@ -9,12 +10,12 @@ namespace storm {
 	 */
 
 	typedef bool Bool; // 8-bit
-	typedef code::Byte Byte; // 8-bit, unsigned
-	typedef code::Int Int; // 32-bit, signed
-	typedef code::Nat Nat; // 32-bit, unsigned
-	typedef code::Long Long; // 64-bit, signed
-	typedef code::Word Word; // 64-bit, unsigned
-	typedef code::Float Float; // 32-bit float
+	typedef os::Byte Byte; // 8-bit, unsigned
+	typedef os::Int Int; // 32-bit, signed
+	typedef os::Nat Nat; // 32-bit, unsigned
+	typedef os::Long Long; // 64-bit, signed
+	typedef os::Word Word; // 64-bit, unsigned
+	typedef os::Float Float; // 32-bit float
 
 	class Engine;
 	class Object;
@@ -23,9 +24,6 @@ namespace storm {
 	class Str;
 	class StrBuf;
 	class Thread;
-
-	using code::Size;
-	using code::Offset;
 
 	/**
 	 * Class used when declaring named threads from C++.

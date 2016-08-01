@@ -17,9 +17,10 @@ void findHeaders(const Path &in, vector<Path> &out) {
 }
 
 // Find headers to process.
-vector<Path> findHeaders(const Path &in) {
+vector<Path> findHeaders(const vector<Path> &in) {
 	vector<Path> result;
-	findHeaders(in, result);
+	for (nat i = 0; i < in.size(); i++)
+		findHeaders(in[i], result);
 	return result;
 }
 
@@ -59,7 +60,7 @@ int _tmain(int argc, const wchar *argv[]) {
 	Timestamp start;
 
 	// Put the files in our global, so we can use SrcPos later on.
-	SrcPos::files = findHeaders(config.dir);
+	SrcPos::files = findHeaders(config.dirs);
 	if (SrcPos::files.empty()) {
 		PLN("No header files found.");
 		return 1;

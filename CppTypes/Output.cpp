@@ -43,7 +43,7 @@ static void genIncludes(wostream &to, World &w) {
 
 	for (set<nat>::iterator i = files.begin(); i != files.end(); ++i) {
 		if (*i != SrcPos::invalid)
-			to << L"#include \"" << SrcPos::files[*i].makeRelative(config.dir) << L"\"\n";
+			to << L"#include \"" << SrcPos::files[*i].makeRelative(config.cppOut.parent()) << L"\"\n";
 	}
 }
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "Gen/CppTypes.h"
+#include "Core/Gen/CppTypes.h"
 #include "RootArray.h"
 
 namespace storm {

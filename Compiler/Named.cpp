@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Named.h"
-#include "Str.h"
-#include "StrBuf.h"
+#include "Core/Str.h"
+#include "Core/StrBuf.h"
 
 namespace storm {
 

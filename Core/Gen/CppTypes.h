@@ -15,9 +15,12 @@ namespace storm {
 		nat align32;
 		nat align64;
 
+#ifdef STORM_COMPILER
+		// We do not know about code::Size if we're not the compiler.
 		inline operator Size() const {
 			return Size(size32, align32, size64, align64);
 		}
+#endif
 
 		static const CppSize invalid;
 	};
@@ -37,9 +40,12 @@ namespace storm {
 			return !(*this == o);
 		}
 
+#ifdef STORM_COMPILER
+		// We do not know about code::Offset if we're not the compiler.
 		inline operator Offset() const {
 			return Offset(s32, s64);
 		}
+#endif
 
 		// Invalid mask of (-1, -1). Usable only whenever we expect positive offsets.
 		static const CppOffset invalid;

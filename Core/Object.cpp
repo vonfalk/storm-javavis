@@ -1,8 +1,5 @@
 #include "stdafx.h"
 #include "Object.h"
-#include "Gc.h"
-#include "Type.h"
-#include "Engine.h"
 #include "Str.h"
 #include "StrBuf.h"
 
@@ -13,10 +10,6 @@ namespace storm {
 	Object::Object(const Object &o) {}
 
 	Object::~Object() {}
-
-	Engine &Object::engine() const {
-		return Gc::allocType(this)->type->engine;
-	}
 
 	bool Object::isA(const Type *o) const {
 		TODO(L"FIXME");
@@ -43,12 +36,6 @@ namespace storm {
 
 	void Object::toS(StrBuf *buf) const {
 		*buf << L"<TODO: Type> @" << (void *)this;
-	}
-
-	void *allocObject(size_t size, Type *type) {
-		assert(size <= type->gcType->stride,
-			L"Invalid type description found! " + ::toS(size) + L" vs " + ::toS(type->gcType->stride));
-		return type->engine.gc.alloc(type->gcType);
 	}
 
 	wostream &operator <<(wostream &to, const Object *o) {

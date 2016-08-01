@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
-#include "Compiler/Str.h"
-#include "Compiler/StrBuf.h"
+#include "Core/Str.h"
+#include "Core/StrBuf.h"
 
 BEGIN_TEST(StrTest) {
 	Engine &e = *gEngine;

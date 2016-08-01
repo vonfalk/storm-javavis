@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "StrBuf.h"
-#include "Engine.h"
 #include "Str.h"
 #include "Utf.h"
+#include "GcType.h"
+#include "GcArray.h"
 
 namespace storm {
 
@@ -50,11 +51,13 @@ namespace storm {
 	StrBuf::StrBuf(StrBuf *o) {
 		clear();
 		buf = copyBuf(o->buf);
+		pos = o->pos;
 	}
 
 	StrBuf::StrBuf(Str *src) {
 		clear();
 		buf = copyBuf(src->data);
+		pos = buf->count;
 	}
 
 	void StrBuf::deepCopy(CloneEnv *env) {
@@ -64,7 +67,7 @@ namespace storm {
 	Str *StrBuf::toS() const {
 		// We can not copy any extra data, so we can not use copyBuf()
 
-		GcArray<wchar> *to = engine().gc.allocArray<wchar>(&bufType, pos + 1);
+		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &bufType, pos + 1);
 		for (nat i = 0; i < pos; i++)
 			to->v[i] = buf->v[i];
 
@@ -338,7 +341,7 @@ namespace storm {
 		nat newCap = max(capacity, curr * 2);
 		newCap = max(newCap, nat(16));
 
-		GcArray<wchar> *to = engine().gc.allocArray<wchar>(&bufType, newCap + 1);
+		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &bufType, newCap + 1);
 		for (nat i = 0; i < pos; i++)
 			to->v[i] = buf->v[i];
 
@@ -346,7 +349,7 @@ namespace storm {
 	}
 
 	GcArray<wchar> *StrBuf::copyBuf(GcArray<wchar> *buf) const {
-		GcArray<wchar> *to = engine().gc.allocArray<wchar>(&bufType, buf->count);
+		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &bufType, buf->count);
 		for (nat i = 0; i < buf->count; i++)
 			to->v[i] = buf->v[i];
 		return to;

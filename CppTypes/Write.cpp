@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Write.h"
+#include "Exception.h"
 #include "Utils/FileStream.h"
 #include "Utils/TextReader.h"
 
@@ -45,7 +46,12 @@ static void generatePart(TextWriter *to, const String &indent, const String &end
 }
 
 void generateFile(const Path &src, const Path &dest, const GenerateMap &actions, World &world) {
-	TextReader *read = TextReader::create(new FileStream(src, Stream::mRead));
+	FileStream *rStream = new FileStream(src, Stream::mRead);
+	if (!rStream->valid()) {
+		delete rStream;
+		throw Error(L"Failed to open the template file: " + toS(src), SrcPos());
+	}
+	TextReader *read = TextReader::create(rStream);
 	TextWriter *write = TextWriter::create(new FileStream(dest, Stream::mWrite), read->format());
 	String endl = lineEnds(read);
 

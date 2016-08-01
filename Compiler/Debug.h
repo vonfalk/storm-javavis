@@ -1,5 +1,5 @@
 #pragma once
-#include "Object.h"
+#include "Core/Object.h"
 
 namespace storm {
 	namespace debug {
