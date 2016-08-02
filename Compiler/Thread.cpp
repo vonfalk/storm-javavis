@@ -18,6 +18,7 @@ namespace storm {
 		GcType::tFixed,
 		null, // Type
 		address(&destroyThread), // Finalizer
+		0, // header size
 		sizeof(Thread), // stride/size
 		0, // # of offsets
 	};

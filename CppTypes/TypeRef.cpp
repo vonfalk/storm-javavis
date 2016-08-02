@@ -51,6 +51,8 @@ Auto<TypeRef> TemplateType::resolve(World &in, const CppName &context) const {
 		return new MapType(params[0]->resolve(in, context), params[1]->resolve(in, context));
 	} else if (name == L"GcArray" && params.size() == 1) {
 		return new GcArrayType(pos, params[0]->resolve(in, context));
+	} else if (name == L"GcDynArray" && params.size() == 1) {
+		return new GcDynArrayType(pos, params[0]->resolve(in, context));
 	} else {
 		throw Error(L"Unknown template type: " + toS(this), pos);
 	}
@@ -172,6 +174,22 @@ Size GcArrayType::size() const {
 
 void GcArrayType::print(wostream &to) const {
 	to << L"storm::GcArray<" << of << L">";
+}
+
+GcDynArrayType::GcDynArrayType(const SrcPos &pos, Auto<TypeRef> of) : TypeRef(pos), of(of) {}
+
+Auto<TypeRef> GcDynArrayType::resolve(World &in, const CppName &context) const {
+	Auto<GcDynArrayType> r = new GcDynArrayType(*this);
+	r->of = of->resolve(in, context);
+	return r;
+}
+
+Size GcDynArrayType::size() const {
+	throw Error(L"Array<> should only be used as a pointer!", pos);
+}
+
+void GcDynArrayType::print(wostream &to) const {
+	to << L"storm::GcDynArray<" << of << L">";
 }
 
 const UnknownType::ID UnknownType::ids[] = {

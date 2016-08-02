@@ -132,7 +132,7 @@ namespace storm {
 			s = h->obj.stride;
 			break;
 		case GcType::tArray:
-			s = h->obj.stride*obj->count + wordSize;
+			s = h->obj.stride*obj->count + h->obj.header;
 			break;
 		case mpsPad0:
 			s = 0;
@@ -211,8 +211,8 @@ namespace storm {
 				}
 				case GcType::tArray:
 					FIX_HEADER(h->obj);
-					// Skip the size.
-					pos = (byte *)pos + wordSize;
+					// Skip the header.
+					pos = (byte *)pos + h->obj.header;
 					for (size_t i = 0; i < o->count; i++, pos = (byte *)pos + h->obj.stride) {
 						FIX_GCTYPE(h, 0, pos);
 					}
@@ -673,6 +673,7 @@ namespace storm {
 			return allocType(type);
 
 		assert(type->kind == GcType::tFixed, L"Wrong type for calling alloc().");
+		assert(type->header == 0, L"Nonzero headers not supported for regular allocations.");
 
 		size_t size = align(type->stride + headerSize);
 		mps_ap_t &ap = currentAllocPoint();
@@ -699,6 +700,7 @@ namespace storm {
 
 	void *Gc::allocType(const GcType *type) {
 		assert(type->kind == GcType::tType, L"Wrong type for calling allocType().");
+		assert(type->header == 0, L"Nonzero headers not supported for type allocations.");
 
 		// Since we're sharing one allocation point, take the lock for it.
 		util::Lock::L z(typeAllocLock);
@@ -727,10 +729,12 @@ namespace storm {
 
 	void *Gc::allocArray(const GcType *type, size_t elements) {
 		assert(type->kind == GcType::tArray, L"Wrong type for calling allocArray().");
+		assert(type->header >= wordSize, L"Header size for arrays must be at least sizeof(size_t).");
+		assert(type->header == align(type->header), L"Header size for arrays must be aligned.");
 		if (elements == 0)
 			return null;
 
-		size_t size = align(type->stride*elements + headerSize + wordSize);
+		size_t size = align(type->stride*elements + headerSize + type->header);
 		mps_ap_t &ap = currentAllocPoint();
 		mps_addr_t memory;
 		do {
@@ -784,6 +788,8 @@ namespace storm {
 	void Gc::switchType(void *mem, const GcType *type) {
 		assert(allocType(mem)->stride == type->stride, L"Can not change size of allocations.");
 		assert(allocType(mem)->kind == type->kind, L"Can not change kind of allocations.");
+		assert(type->kind != GcType::tArray || allocType(mem)->header == type->header,
+			L"Can not change the header size of array allocations.");
 
 		// Seems reasonable. Switch headers!
 		void *t = (byte *)mem - headerSize;

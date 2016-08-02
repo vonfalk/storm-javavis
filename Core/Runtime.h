@@ -1,5 +1,6 @@
 #pragma once
 #include "GcArray.h"
+#include "GcType.h"
 
 namespace storm {
 	struct GcType;
@@ -28,7 +29,14 @@ namespace storm {
 
 		template <class T>
 		inline GcArray<T> *allocArray(Engine &e, const GcType *type, nat count) {
+			assert(type->header == sizeof(size_t), L"Invalid header size.");
 			return (GcArray<T> *)allocArray(e, type, count);
+		}
+
+		template <class T>
+		inline GcDynArray<T> *allocDynArray(Engine &e, const GcType *type, nat count) {
+			assert(type->header == sizeof(size_t)*2, L"Invalid header size.");
+			return (GcDynArray<T> *)allocArray(e, type, count);
 		}
 
 		// Get the thread group to use for all threads.

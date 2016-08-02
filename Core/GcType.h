@@ -51,6 +51,10 @@ namespace storm {
 		 * Description of pointer offsets:
 		 */
 
+		// Number of bytes to skip at the beginning of an array (minimum of 4 since the size has to
+		// be there). Ignored in all other kinds.
+		size_t header;
+
 		// Number of bytes to skip for each element. In the case of tFixed, the size of the allocation.
 		size_t stride;
 

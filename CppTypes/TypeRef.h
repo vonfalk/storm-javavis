@@ -277,6 +277,29 @@ public:
 };
 
 /**
+ * GcArray-type.
+ */
+class GcDynArrayType : public TypeRef {
+public:
+	GcDynArrayType(const SrcPos &pos, Auto<TypeRef> of);
+
+	// Type of what?
+	Auto<TypeRef> of;
+
+	// Get the size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return true; }
+
+	// Resolve.
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+};
+
+/**
  * Unknown type. These are to allow GC:d classes to contain types unknown to the preprocessor
  * without having to allocate them separatly all the time.
  *
