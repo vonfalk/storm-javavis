@@ -53,6 +53,9 @@ namespace storm {
 		// Get a C++ named thread by its id.
 		Thread *cppThread(nat id) const;
 
+		// Get the one and only pointer handle.
+		const Handle &ptrHandle();
+
 		// The threadgroup which all threads spawned from here shall belong to.
 		os::ThreadGroup threadGroup;
 
@@ -62,6 +65,10 @@ namespace storm {
 
 		// All named threads declared in C++.
 		RootArray<Thread> cppThreads;
+
+		// The one and only pointer handle, along with its root.
+		Handle *pHandle;
+		Gc::Root *pHandleRoot;
 	};
 
 }

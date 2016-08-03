@@ -9,7 +9,6 @@ namespace storm {
 		GcType::tArray,
 		null,
 		null,
-		sizeof(size_t), // header size
 		sizeof(wchar), // element size
 		0,
 		{},

@@ -25,9 +25,10 @@ namespace storm {
 			// Type type to properly scan its GcType member.
 			tType,
 
-			// Repeated occurence of another type (ie. an array). The number of repetitions is stored as
-			// a size_t in the first element of the allocation (to keep alignment), followed by a number
-			// of repeated fixed size allocations. Use GcArray<T> for convenient access.
+			// Repeated occurence of another type (ie. an array). The number of repetitions is
+			// stored as a size_t in the first element of the allocation (to keep alignment) and a
+			// user-defined size_t, followed by a number of repeated fixed size allocations. Use
+			// GcArray<T> for convenient access.
 			tArray,
 		};
 
@@ -50,10 +51,6 @@ namespace storm {
 		/**
 		 * Description of pointer offsets:
 		 */
-
-		// Number of bytes to skip at the beginning of an array (minimum of 4 since the size has to
-		// be there). Ignored in all other kinds.
-		size_t header;
 
 		// Number of bytes to skip for each element. In the case of tFixed, the size of the allocation.
 		size_t stride;

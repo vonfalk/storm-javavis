@@ -11,12 +11,20 @@ namespace storm {
 		 * Implements the functions declared in 'Core/Runtime.h' for the compiler.
 		 */
 
-		Type *allocType(const Object *o) {
-			return Gc::allocType(o)->type;
+		Type *cppType(Engine &e, Nat id) {
+			return e.cppType(id);
+		}
+
+		const Handle &typeHandle(Type *t) {
+			return t->handle();
+		}
+
+		Type *typeOf(const Object *o) {
+			return Gc::typeOf(o)->type;
 		}
 
 		Engine &allocEngine(const Object *o) {
-			return allocType(o)->engine;
+			return typeOf(o)->engine;
 		}
 
 		void *allocObject(size_t size, Type *type) {

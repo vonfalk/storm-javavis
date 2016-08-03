@@ -24,6 +24,7 @@ namespace storm {
 	class Str;
 	class StrBuf;
 	class Thread;
+	class Handle;
 
 	/**
 	 * Class used when declaring named threads from C++.

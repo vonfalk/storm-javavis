@@ -34,7 +34,7 @@ public:
 	// Compute the size of this type.
 	virtual Size size() const = 0;
 
-	// Is this type heap-allocated?
+	// Is this type heap-allocated? (value types return false, class types return true).
 	virtual bool heapAlloc() const = 0;
 
 	// Compute pointer offsets into this type.

@@ -26,7 +26,8 @@
  */
 #define STORM_COMMON													\
 	static Type *stormType(Engine &e);									\
-	static Type *stormType(const Object *o);
+	static Type *stormType(const Object *o);							\
+	static inline const Handle &stormHandle(Engine &e) { return storm::runtime::typeHandle(stormType(e)); }
 
 /**
  * Mark classes and values exposed to storm:
@@ -110,3 +111,4 @@
 #include "Utils/Utils.h"
 #include "Utils/Platform.h"
 #include "Types.h"
+#include "Runtime.h"

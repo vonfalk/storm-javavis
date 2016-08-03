@@ -15,8 +15,14 @@ namespace storm {
 		 * delegates calls to the compiler linked at runtime).
 		 */
 
+		// Get the Storm type description for a C++ type given its ID (used by the generated type information code).
+		Type *cppType(Engine &e, Nat id);
+
+		// Get a type handle for 'type'.
+		const Handle &typeHandle(Type *t);
+
 		// Get the type of an allocation.
-		Type *allocType(const Object *o);
+		Type *typeOf(const Object *o);
 
 		// Get the engine object for an allocation.
 		Engine &allocEngine(const Object *o);
@@ -29,14 +35,7 @@ namespace storm {
 
 		template <class T>
 		inline GcArray<T> *allocArray(Engine &e, const GcType *type, nat count) {
-			assert(type->header == sizeof(size_t), L"Invalid header size.");
 			return (GcArray<T> *)allocArray(e, type, count);
-		}
-
-		template <class T>
-		inline GcDynArray<T> *allocDynArray(Engine &e, const GcType *type, nat count) {
-			assert(type->header == sizeof(size_t)*2, L"Invalid header size.");
-			return (GcDynArray<T> *)allocArray(e, type, count);
 		}
 
 		// Get the thread group to use for all threads.

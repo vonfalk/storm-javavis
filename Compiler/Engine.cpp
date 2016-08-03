@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "Engine.h"
 #include "Init.h"
-#include "Core/Thread.h"
 #include "Type.h"
+#include "Core/Thread.h"
+#include "Core/StrBuf.h"
+#include "Core/Handle.h"
 
 // Only included from here:
 #include "OS/SharedMaster.h"
@@ -31,7 +33,7 @@ namespace storm {
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode) :
-		gc(defaultArena, defaultFinalizer), cppTypes(gc), cppThreads(gc) {
+		gc(defaultArena, defaultFinalizer), cppTypes(gc), cppThreads(gc), pHandle(null), pHandleRoot(null) {
 
 		assert(Compiler::identifier == 0, L"Invalid ID for the compiler thread. Check CppTypes for errors!");
 
@@ -55,6 +57,10 @@ namespace storm {
 	Engine::~Engine() {
 		// We need to remove the root this array implies before the Gc is destroyed.
 		cppTypes.clear();
+
+		if (pHandleRoot) {
+			gc.destroyRoot(pHandleRoot);
+		}
 	}
 
 	Type *Engine::cppType(nat id) const {
@@ -63,6 +69,40 @@ namespace storm {
 
 	Thread *Engine::cppThread(nat id) const {
 		return cppThreads[id];
+	}
+
+	/**
+	 * Helpers for the pointer handle.
+	 */
+
+	static GcType ptrArray = {
+		GcType::tArray,
+		null,
+		null,
+		sizeof(void *),
+		1,
+		{ 0 },
+	};
+
+	static void objDeepCopy(void *obj, CloneEnv *env) {
+		((Object *)obj)->deepCopy(env);
+	}
+
+	static void objToS(void *obj, StrBuf *to) {
+		*to << ((Object *)obj)->toS();
+	}
+
+	const Handle &Engine::ptrHandle() {
+		if (!pHandle) {
+			pHandleRoot = gc.createRoot(&pHandle, 1);
+			pHandle = new (*this) Handle();
+			pHandle->size = sizeof(void *);
+			pHandle->gcArrayType = &ptrArray;
+			pHandle->copyFn = null; // No special function, use memcpy.
+			pHandle->deepCopyFn = &objDeepCopy;
+			pHandle->toSFn = &objToS;
+		}
+		return *pHandle;
 	}
 
 

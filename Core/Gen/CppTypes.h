@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/TypeFlags.h"
 
 namespace storm {
 
@@ -66,6 +67,9 @@ namespace storm {
 
 		// Pointer offsets. Ends with 'CppSize::invalid'.
 		CppOffset *ptrOffsets;
+
+		// Type flags (final? value type? etc.)
+		TypeFlags flags;
 
 		// Destructor to use for this type (if any).
 		const void *destructor;

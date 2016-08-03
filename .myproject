@@ -65,6 +65,7 @@ Sound+=StormBuiltin
 StormGui+=StormBuiltin
 
 Compiler+=CppTypes
+Core+=CppTypes
 
 [!extern_lib]
 #Global build parameters

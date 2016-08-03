@@ -1,7 +1,7 @@
 #pragma once
 #include "Named.h"
 #include "Gc.h"
-#include "TypeFlags.h"
+#include "Core/TypeFlags.h"
 
 namespace storm {
 
@@ -37,18 +37,37 @@ namespace storm {
 		// resizing the object. This is only used once during startup.
 		void setType(Object *object) const;
 
+		// Get a handle for this type.
+		const Handle &handle();
+
 	private:
 		// Special constructor for creating the first type.
 		Type(Engine &e, TypeFlags flags, Size size, GcType *gcType);
 
-		// The description of the type we maintain for the GC. Not valid if we're a value-type.
-		// Note: care must be taken whenever this is manipulated!
+		// The description of the type we maintain for the GC. If we're a value type,
+		// this will have 'kind' set to 'tArray'.
+		// Note: the type member of the GcType this is pointing to must never be changed after this
+		// member is changed. Otherwise we confuse the GC.
 		GcType *gcType;
 
+		// Handle (lazily created).
+		const Handle *tHandle;
+
+		// Flags for this type.
+		TypeFlags typeFlags;
+
+		// Is this a value type?
+		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
 
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);
 		static void operator delete(void *mem, Engine &e, GcType *type);
+
+		// Common initialization.
+		void init();
+
+		// Generate a handle for this type.
+		const Handle *buildHandle();
 	};
 
 

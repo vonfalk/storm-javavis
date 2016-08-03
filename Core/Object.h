@@ -1,5 +1,4 @@
 #pragma once
-#include "Runtime.h"
 
 namespace storm {
 
@@ -37,7 +36,7 @@ namespace storm {
 
 		// Get our type somehow.
 		inline Type *type() const {
-			return runtime::allocType(this);
+			return runtime::typeOf(this);
 		}
 
 		// Used to allow the as<Foo> using our custom (faster) type-checking.

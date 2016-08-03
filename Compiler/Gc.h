@@ -79,12 +79,13 @@ namespace storm {
 
 		// Allocate a gc type.
 		GcType *allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries);
+		GcType *allocType(const GcType *original);
 
 		// Deallocate a gc type.
 		void freeType(GcType *type);
 
 		// Get the gc type of an allocation.
-		static const GcType *allocType(const void *mem);
+		static const GcType *typeOf(const void *mem);
 
 		// Change the gc type of an allocation. Used during startup to change header from a fake one
 		// (to allow basic scanning) to a real one (with a proper Type) when startup has progressed
@@ -139,7 +140,7 @@ namespace storm {
 		util::Lock threadLock;
 
 		// Allocate an object in the Type pool.
-		void *allocType(const GcType *type);
+		void *allocTypeObj(const GcType *type);
 
 		// Attach/detach thread. Sets up/tears down all members in Thread, nothing else.
 		void attach(GcThread *thread, const os::Thread &oThread);

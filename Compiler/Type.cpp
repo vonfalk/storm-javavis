@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Core/Handle.h"
 #include "Core/Gen/CppTypes.h"
 
 namespace storm {
@@ -21,17 +22,24 @@ namespace storm {
 		return name;
 	}
 
-	Type::Type(Str *name, TypeFlags flags) : Named(name), engine(Object::engine()), gcType(null) {}
+	Type::Type(Str *name, TypeFlags flags) :
+		Named(name), engine(Object::engine()), gcType(null), tHandle(null), typeFlags(flags) {
+
+		init();
+	}
 
 	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType) :
-		Named(name), engine(Object::engine()), gcType(gcType) {
+		Named(name), engine(Object::engine()), gcType(gcType), tHandle(null), typeFlags(flags) {
 
 		gcType->type = this;
+		init();
 	}
 
 	// We need to set gcType->type first, therefore we call setMyType!
 	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) :
-		Named(setMyType(null, this, gcType, e)), engine(e), gcType(gcType) {}
+		Named(setMyType(null, this, gcType, e)), engine(e), gcType(gcType), tHandle(null), typeFlags(typeClass) {
+		init();
+	}
 
 	Type::~Type() {
 		GcType *g = gcType;
@@ -43,6 +51,15 @@ namespace storm {
 		engine.gc.freeType(g);
 	}
 
+	void Type::init() {
+		assert((typeFlags & typeValue) == typeValue || (typeFlags & typeClass) == typeClass, L"Invalid type flags!");
+
+		if (value()) {
+			gcType->kind = GcType::tArray;
+		}
+	}
+
+	// Our finalizer.
 	static void destroyType(Type *t) {
 		t->~Type();
 	}
@@ -73,6 +90,26 @@ namespace storm {
 
 	void Type::setType(Object *onto) const {
 		engine.gc.switchType(onto, gcType);
+	}
+
+	const Handle &Type::handle() {
+		if (!tHandle)
+			tHandle = buildHandle();
+		return *tHandle;
+	}
+
+	const Handle *Type::buildHandle() {
+		if (value()) {
+			Handle *h = new (engine) Handle();
+
+			h->size = gcType->stride;
+			h->gcArrayType = gcType;
+			assert(false, L"TODO: look up copy ctors and so on!");
+			return h;
+		} else {
+			// Standard pointer handle.
+			return &engine.ptrHandle();
+		}
 	}
 
 	void *Type::operator new(size_t size, Engine &e, GcType *type) {

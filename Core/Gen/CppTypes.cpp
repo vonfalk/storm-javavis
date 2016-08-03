@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Core/Gen/CppTypes.h"
-#include "Engine.h"
+#include "Core/Runtime.h"
 
 /**
  * Template for the generated cpp file.
@@ -36,7 +36,7 @@ namespace storm {
 
 		static CppType types[] = {
 			// CPP_TYPES
-			{ null, 0, CppSize::invalid, null, null },
+			{ null, 0, CppSize::invalid, null, typeNone, null },
 		};
 		return types;
 	}

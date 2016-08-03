@@ -7,6 +7,9 @@ namespace storm {
 	 * Define different properties for a type.
 	 */
 	enum TypeFlags {
+		// No info.
+		typeNone = 0x00,
+
 		// Regular type.
 		typeClass = 0x01,
 

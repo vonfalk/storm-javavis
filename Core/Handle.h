@@ -1,6 +1,7 @@
 #pragma once
 
 namespace storm {
+	STORM_PKG(core.lang); // TODO: Other package?
 
 	/**
 	 * A type handle, ie. information about a type without actually knowing exactly which type it
@@ -8,27 +9,29 @@ namespace storm {
 	 *
 	 * Note: we can always move objects with a memcpy (as this is what the gc does all the time). We
 	 * may, however, need to make copies using the copy constructor.
+	 *
+	 * Note: all function pointers are exported to the GC, as they may point to generated code (which is gc:d).
 	 */
-	class Handle {
+	class Handle : public Object {
+		STORM_CLASS;
 	public:
 		// Size of the type.
 		size_t size;
 
-		// GcType for arrays and dynamic arrays of the type.
+		// GcType for arrays of the type.
 		GcType *gcArrayType;
-		GcType *gcDynArrayType;
 
-		// Copy constructor.
+		// Copy constructor. Acts as an assignment (ie. never deeply copies heap-allocated types).
 		typedef void (*CopyFn)(void *dest, const void *src);
-		CopyFn copyFn;
+		UNKNOWN(PTR_GC) CopyFn copyFn;
 
 		// Deep copy an instance of this type.
 		typedef void (*DeepCopyFn)(void *obj, CloneEnv *env);
-		DeepCopyFn deepCopyFn;
+		UNKNOWN(PTR_GC) DeepCopyFn deepCopyFn;
 
 		// ToS implementation.
 		typedef void (*ToSFn)(void *obj, StrBuf *to);
-		ToSFn toSFn;
+		UNKNOWN(PTR_GC) ToSFn toSFn;
 	};
 
 }

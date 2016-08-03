@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Array.h"
-#include "Runtime.h"
 #include "StrBuf.h"
 
 namespace storm {
@@ -33,7 +32,7 @@ namespace storm {
 	}
 
 	void ArrayBase::ensure(Nat n) {
-		Nat oldCap = data ? data->capacity : 0;
+		Nat oldCap = data ? data->count : 0;
 		if (oldCap >= n)
 			return;
 
@@ -41,7 +40,7 @@ namespace storm {
 		Nat newCap = max(Nat(16), oldCap * 2);
 		if (newCap < n)
 			newCap = n;
-		GcDynArray<byte> *newData = runtime::allocDynArray<byte>(engine(), handle.gcDynArrayType, newCap);
+		GcArray<byte> *newData = runtime::allocArray<byte>(engine(), handle.gcArrayType, newCap);
 
 		// Move data.
 		if (data) {

@@ -18,6 +18,7 @@ namespace storm {
 
 	static const size_t wordSize = sizeof(void *);
 	static const size_t headerSize = wordSize;
+	static const size_t arrayHeaderSize = wordSize * 2;
 
 	// Word-align something.
 	static inline size_t align(size_t data) {
@@ -132,7 +133,7 @@ namespace storm {
 			s = h->obj.stride;
 			break;
 		case GcType::tArray:
-			s = h->obj.stride*obj->count + h->obj.header;
+			s = arrayHeaderSize + h->obj.stride*obj->count;
 			break;
 		case mpsPad0:
 			s = 0;
@@ -212,7 +213,7 @@ namespace storm {
 				case GcType::tArray:
 					FIX_HEADER(h->obj);
 					// Skip the header.
-					pos = (byte *)pos + h->obj.header;
+					pos = (byte *)pos + arrayHeaderSize;
 					for (size_t i = 0; i < o->count; i++, pos = (byte *)pos + h->obj.stride) {
 						FIX_GCTYPE(h, 0, pos);
 					}
@@ -670,10 +671,9 @@ namespace storm {
 	void *Gc::alloc(const GcType *type) {
 		// Types are special.
 		if (type->kind == GcType::tType)
-			return allocType(type);
+			return allocTypeObj(type);
 
 		assert(type->kind == GcType::tFixed, L"Wrong type for calling alloc().");
-		assert(type->header == 0, L"Nonzero headers not supported for regular allocations.");
 
 		size_t size = align(type->stride + headerSize);
 		mps_ap_t &ap = currentAllocPoint();
@@ -698,9 +698,8 @@ namespace storm {
 		return result;
 	}
 
-	void *Gc::allocType(const GcType *type) {
-		assert(type->kind == GcType::tType, L"Wrong type for calling allocType().");
-		assert(type->header == 0, L"Nonzero headers not supported for type allocations.");
+	void *Gc::allocTypeObj(const GcType *type) {
+		assert(type->kind == GcType::tType, L"Wrong type for calling allocTypeObj().");
 
 		// Since we're sharing one allocation point, take the lock for it.
 		util::Lock::L z(typeAllocLock);
@@ -729,12 +728,10 @@ namespace storm {
 
 	void *Gc::allocArray(const GcType *type, size_t elements) {
 		assert(type->kind == GcType::tArray, L"Wrong type for calling allocArray().");
-		assert(type->header >= wordSize, L"Header size for arrays must be at least sizeof(size_t).");
-		assert(type->header == align(type->header), L"Header size for arrays must be aligned.");
 		if (elements == 0)
 			return null;
 
-		size_t size = align(type->stride*elements + headerSize + type->header);
+		size_t size = align(type->stride*elements + headerSize + arrayHeaderSize);
 		mps_ap_t &ap = currentAllocPoint();
 		mps_addr_t memory;
 		do {
@@ -759,8 +756,12 @@ namespace storm {
 		return result;
 	}
 
+	static size_t typeSize(size_t entries) {
+		return sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
+	}
+
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
-		size_t s = sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
+		size_t s = typeSize(entries);
 		GcType *t;
 		check(mps_alloc((mps_addr_t *)&t, gcTypePool, s), L"Failed to allocate type info.");
 		memset(t, 0, s);
@@ -768,6 +769,14 @@ namespace storm {
 		t->type = type;
 		t->stride = stride;
 		t->count = entries;
+		return t;
+	}
+
+	GcType *Gc::allocType(const GcType *src) {
+		size_t s = typeSize(src->count);
+		GcType *t;
+		check(mps_alloc((mps_addr_t *)&t, gcTypePool, s), L"Failed to allocate type info.");
+		memcpy(t, src, s);
 		return t;
 	}
 
@@ -779,17 +788,15 @@ namespace storm {
 		mps_free(gcTypePool, t, s);
 	}
 
-	const GcType *Gc::allocType(const void *mem) {
+	const GcType *Gc::typeOf(const void *mem) {
 		const void *t = (byte *)mem - headerSize;
 		const MpsObj *o = (const MpsObj *)t;
 		return &(o->header->obj);
 	}
 
 	void Gc::switchType(void *mem, const GcType *type) {
-		assert(allocType(mem)->stride == type->stride, L"Can not change size of allocations.");
-		assert(allocType(mem)->kind == type->kind, L"Can not change kind of allocations.");
-		assert(type->kind != GcType::tArray || allocType(mem)->header == type->header,
-			L"Can not change the header size of array allocations.");
+		assert(typeOf(mem)->stride == type->stride, L"Can not change size of allocations.");
+		assert(typeOf(mem)->kind == type->kind, L"Can not change kind of allocations.");
 
 		// Seems reasonable. Switch headers!
 		void *t = (byte *)mem - headerSize;
@@ -826,7 +833,7 @@ namespace storm {
 	}
 
 	void Gc::finalizeObject(void *obj) {
-		const GcType *t = allocType(obj);
+		const GcType *t = typeOf(obj);
 
 		// Should always hold, but better safe than sorry!
 		if (t->finalizer) {

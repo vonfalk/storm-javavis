@@ -26,7 +26,7 @@ namespace storm {
 
 			// The array could be partially filled.
 			if (into[i] == null) {
-				into[i] = new (e) Type(null, typeClass, Size(type.size), createGcType(&type));
+				into[i] = new (e) Type(null, type.flags, Size(type.size), createGcType(&type));
 			}
 		}
 

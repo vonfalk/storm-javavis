@@ -110,15 +110,14 @@ namespace storm {
 
 	protected:
 		// Array contents (of bytes, to make addressing easier).
-		GcDynArray<byte> *data;
+		GcArray<byte> *data;
 
 		// Get the pointer to an element.
-		inline void *ptr(GcDynArray<byte> *data, Nat id) const { return data->v + (id * handle.size); }
+		inline void *ptr(GcArray<byte> *data, Nat id) const { return data->v + (id * handle.size); }
 		inline void *ptr(Nat id) const { return ptr(data, id); }
 
 		// Ensure 'data' can hold at least 'n' objects.
 		void ensure(Nat n);
 	};
-
 
 }

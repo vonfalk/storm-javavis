@@ -53,8 +53,8 @@ static void genGlobals(wostream &to, World &w) {
 		Type *t = w.types[i].borrow();
 
 		if (Class *c = as<Class>(t)) {
-			to << L"storm::Type *" << c->name << L"::stormType(Engine &e) { return e.cppType(" << i << L"); }\n";
-			to << L"storm::Type *" << c->name << L"::stormType(const Object *o) { return o->engine().cppType(" << i << L"); }\n";
+			to << L"storm::Type *" << c->name << L"::stormType(Engine &e) { return runtime::cppType(e, " << i << L"); }\n";
+			to << L"storm::Type *" << c->name << L"::stormType(const Object *o) { return runtime::cppType(o->engine(), " << i << L"); }\n";
 		}
 	}
 }
@@ -99,6 +99,13 @@ static void genTypes(wostream &to, World &w) {
 
 		// Pointer offsets.
 		to << toVarName(t.name) << L"_offset, ";
+
+		// Type flags.
+		if (t.heapAlloc()) {
+			to << L"typeClass, ";
+		} else {
+			to << L"typeValue, ";
+		}
 
 		// Destructor (if any).
 		if (c != null && c->hasDtor()) {
