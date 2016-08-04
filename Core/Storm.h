@@ -30,17 +30,32 @@
 	static inline const Handle &stormHandle(Engine &e) { return storm::runtime::typeHandle(stormType(e)); }
 
 /**
+ * Common parts for all heap-allocated objects.
+ */
+#define STORM_OBJ_COMMON												\
+	STORM_COMMON														\
+	static inline void *operator new (size_t s, Type *t) { return storm::runtime::allocObject(s, t); } \
+	static inline void operator delete (void *m, Type *t) {}			\
+	static inline void *operator new (size_t s, Engine &e) { return Object::operator new (s, stormType(e)); } \
+	static inline void operator delete (void *m, Engine &e) {}			\
+	static inline void *operator new (size_t s, const Object *o) { return Object::operator new (s, stormType(o)); } \
+	static inline void operator delete (void *m, const Object *o) {}
+
+/**
+ * Special case for storm::Object.
+ */
+#define STORM_OBJ_CLASS							\
+	public:										\
+	STORM_OBJ_COMMON							\
+	private:
+
+/**
  * Mark classes and values exposed to storm:
  */
 #define STORM_CLASS								\
 	public:										\
-	STORM_COMMON								\
-	static inline void *operator new (size_t s, Type *t) { return storm::runtime::allocObject(s, t); } \
-	static inline void operator delete (void *m, Type *t) {} \
-	static inline void *operator new (size_t s, Engine &e) { return Object::operator new (s, stormType(e)); } \
-	static inline void operator delete (void *m, Engine &e) {} \
-	static inline void *operator new (size_t s, const Object *o) { return Object::operator new (s, stormType(o)); } \
-	static inline void operator delete (void *m, const Object *o) {} \
+	STORM_OBJ_COMMON							\
+	using Object::toS;							\
 	private:
 
 #define STORM_VALUE								\

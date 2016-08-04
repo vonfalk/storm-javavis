@@ -85,11 +85,13 @@ namespace storm {
 	};
 
 	static void objDeepCopy(void *obj, CloneEnv *env) {
-		((Object *)obj)->deepCopy(env);
+		Object *o = *(Object **)obj;
+		o->deepCopy(env);
 	}
 
 	static void objToS(void *obj, StrBuf *to) {
-		*to << ((Object *)obj)->toS();
+		Object *o = *(Object **)obj;
+		*to << o;
 	}
 
 	const Handle &Engine::ptrHandle() {

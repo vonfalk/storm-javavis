@@ -11,11 +11,15 @@ namespace templates {
 }
 
 
-// Yes and no type.
+/**
+ * Yes and no types.
+ */
 struct YesType { bool z[1]; };
 struct NoType { bool z[2]; };
 
-// Can we convert From to To?
+/**
+ * Can we convert From to To?
+ */
 template <class From, class To>
 struct IsConvertible {
 	static NoType check(...);
@@ -24,7 +28,11 @@ struct IsConvertible {
 	enum { value = sizeof(check(from)) == sizeof(YesType) };
 };
 
-// Same type?
+
+/**
+ * Same type?
+ */
+
 template <class T, class U>
 struct SameType {
 	enum { value = false };
@@ -35,7 +43,11 @@ struct SameType<T, T> {
 	enum { value = true };
 };
 
-// Is a reference?
+
+/**
+ * Is it a reference?
+ */
+
 template <class T>
 struct IsReference {
 	enum { value = false };
@@ -46,7 +58,11 @@ struct IsReference<T &> {
 	enum { value = true };
 };
 
-// Is the type void?
+
+/**
+ * Is the type void?
+ */
+
 template <class T>
 struct IsVoid {
 	enum { value = false };
@@ -57,14 +73,22 @@ struct IsVoid<void> {
 	enum { value = true };
 };
 
-// Enable something if:
+
+/**
+ * Enable something if:
+ */
+
 template <bool Cond, class T>
 struct EnableIf {};
 
 template <class T>
 struct EnableIf<true, T> { typedef T t; };
 
-// Is T a floating point value?
+
+/**
+ * Is T a floating point value?
+ */
+
 template <class T>
 struct IsFloat {
 	enum { value = false };
@@ -79,3 +103,19 @@ template <>
 struct IsFloat<double> {
 	enum { value = true };
 };
+
+
+/**
+ * Get the base type. Eg. for T** returns T.
+ */
+
+template <class T>
+struct BaseType {
+	typedef T Type;
+};
+
+template <class T>
+struct BaseType<T *> : public BaseType<T> {};
+
+template <class T>
+struct BaseType<T &> : public BaseType<T> {};

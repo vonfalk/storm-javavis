@@ -206,7 +206,7 @@ namespace storm {
 		 */
 		class Iter : public ArrayBase::Iter {
 		public:
-			Iter() : MapBase::Iter() {}
+			Iter() : ArrayBase::Iter() {}
 
 			Iter(Par<Array<T>> owner, nat index = 0) : ArrayBase::Iter(owner, index) {}
 

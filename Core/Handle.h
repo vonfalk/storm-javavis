@@ -1,4 +1,5 @@
 #pragma once
+#include "Utils/Templates.h"
 
 namespace storm {
 	STORM_PKG(core.lang); // TODO: Other package?
@@ -34,4 +35,9 @@ namespace storm {
 		UNKNOWN(PTR_GC) ToSFn toSFn;
 	};
 
+	// Get a handle for T. (T may be pointer or reference).
+	template <class T>
+	const Handle &handle(Engine &e) {
+		return BaseType<T>::Type::stormHandle(e);
+	}
 }

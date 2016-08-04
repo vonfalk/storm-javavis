@@ -4,7 +4,7 @@
 
 namespace storm {
 
-	ArrayBase::ArrayBase(const Handle &type) : handle(handle), data(null) {}
+	ArrayBase::ArrayBase(const Handle &type) : handle(type), data(null) {}
 
 	ArrayBase::ArrayBase(ArrayBase *other) : handle(other->handle) {
 		nat count = other->count();
@@ -68,9 +68,21 @@ namespace storm {
 
 		for (nat i = 1; i < count(); i++) {
 			*to << L", ";
-			(*handle.toSFn)(ptr(0), to);
+			(*handle.toSFn)(ptr(i), to);
 		}
 		*to << L"]";
+	}
+
+	void ArrayBase::pushRaw(const void *element) {
+		Nat c = count();
+		ensure(c + 1);
+
+		if (handle.copyFn) {
+			(*handle.copyFn)(ptr(c), element);
+		} else {
+			memcpy(ptr(c), element, handle.size);
+		}
+		data->filled = c + 1;
 	}
 
 	ArrayBase::Iter::Iter() : owner(0), index(0) {}
@@ -82,6 +94,11 @@ namespace storm {
 			return true;
 		else
 			return index == o.index && owner == o.owner;
+	}
+
+	bool ArrayBase::Iter::atEnd() const {
+		return owner == null
+			|| owner->count() <= index;
 	}
 
 	bool ArrayBase::Iter::operator !=(const Iter &o) const {

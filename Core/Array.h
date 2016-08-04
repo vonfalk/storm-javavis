@@ -62,6 +62,10 @@ namespace storm {
 			return ptr(id);
 		}
 
+		// Push an element.
+		void CODECALL pushRaw(const void *element);
+
+
 		/**
 		 * Base class for the iterator. Not exposed to Storm, but it is used internally to make the
 		 * implementation of the Storm iterator easier.
@@ -118,6 +122,73 @@ namespace storm {
 
 		// Ensure 'data' can hold at least 'n' objects.
 		void ensure(Nat n);
+	};
+
+
+	/**
+	 * Class used from C++.
+	 *
+	 * TODO: Set vtables for class in constructors.
+	 */
+	template <class T>
+	class Array : public ArrayBase {
+		// STORM_TEMPLATE
+	public:
+		// Empty array.
+		Array() : ArrayBase(storm::handle<T>(engine())) {}
+
+		// Copy array.
+		Array(Array<T> *o) : ArrayBase(o) {}
+
+		// Element access.
+		T &at(Nat i) {
+			return *(T *)getRaw(i);
+		}
+
+		const T &at(Nat i) const {
+			return *(const T *)getRaw(i);
+		}
+
+		// Get the last element (if any).
+		T &last() {
+			return *(T *)lastRaw();
+		}
+
+		const T &last() const {
+			return *(const T *)lastRaw();
+		}
+
+		// Insert an element.
+		void push(const T &item) {
+			pushRaw(&item);
+		}
+
+		/**
+		 * Iterator.
+		 */
+		class Iter : public ArrayBase::Iter {
+		public:
+			Iter() : ArrayBase::Iter() {}
+
+			Iter(Array<T> *owner, Nat index = 0) : ArrayBase::Iter(owner, index) {}
+
+			T &operator *() const {
+				return *(T *)getRaw();
+			}
+
+			T *operator ->() const {
+				return (T *)getRaw();
+			}
+		};
+
+		// Create iterators.
+		Iter begin() {
+			return Iter(this, 0);
+		}
+
+		Iter end() {
+			return Iter(this, count());
+		}
 	};
 
 }
