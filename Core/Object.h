@@ -1,6 +1,7 @@
 #pragma once
 
 namespace storm {
+	STORM_PKG(core);
 
 	class Engine;
 	class Type;

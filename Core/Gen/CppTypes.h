@@ -7,6 +7,10 @@ namespace storm {
 	 * Describes the types declared in C++ which are garbage collected and exposed to Storm.
 	 */
 
+	// Classes which are not always present.
+	class ValueArray;
+	class Type;
+
 	/**
 	 * A size. Describes both x86 and x64 sizes.
 	 */
@@ -59,6 +63,9 @@ namespace storm {
 		// Name of the type (null if last element).
 		const wchar *name;
 
+		// Package the type is located inside (eg. a.b.c).
+		const wchar *pkg;
+
 		// Parent class' type id.
 		nat parent;
 
@@ -76,11 +83,29 @@ namespace storm {
 	};
 
 	/**
+	 * List of C++ templates.
+	 */
+	struct CppTemplate {
+		// Name of the template (null if last element).
+		const wchar *name;
+
+		// Package the template is located inside (eg. a.b.c).
+		const wchar *pkg;
+
+		// Generate templates using this function.
+		typedef Type *(*GenerateFn)(ValueArray *);
+		GenerateFn generate;
+	};
+
+	/**
 	 * List of C++ named threads.
 	 */
 	struct CppThread {
 		// Name of the thread (null if last element).
 		const wchar *name;
+
+		// Package the thread is located inside.
+		const wchar *pkg;
 
 		// ...
 	};
@@ -91,6 +116,9 @@ namespace storm {
 	struct CppWorld {
 		// List of types.
 		CppType *types;
+
+		// List of templates.
+		CppTemplate *templates;
 
 		// List of named threads.
 		CppThread *threads;

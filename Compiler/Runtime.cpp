@@ -15,6 +15,11 @@ namespace storm {
 			return e.cppType(id);
 		}
 
+		Type *cppTemplate(Engine &e, Nat id, Nat count, ...) {
+			TODO(L"Implement me!");
+			return null;
+		}
+
 		const Handle &typeHandle(Type *t) {
 			return t->handle();
 		}

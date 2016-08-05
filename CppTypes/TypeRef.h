@@ -4,6 +4,7 @@
 #include "Auto.h"
 
 class Type;
+class Template;
 class World;
 
 /**
@@ -40,57 +41,11 @@ inline wostream &operator <<(wostream &to, const TypeRef &c) {
 }
 
 /**
- * Array type.
- */
-class ArrayType : public TypeRef {
-public:
-	ArrayType(Auto<TypeRef> of);
-
-	// Array member type.
-	Auto<TypeRef> of;
-
-	// Get the size of this type.
-	virtual Size size() const;
-
-	// Is this a gc:d type?
-	virtual bool gcType() const { return true; }
-
-	// Resolve.
-	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
-
-	// Print.
-	virtual void print(wostream &to) const;
-};
-
-/**
- * Map type.
- */
-class MapType : public TypeRef {
-public:
-	MapType(Auto<TypeRef> k, Auto<TypeRef> v);
-
-	// Key and value types.
-	Auto<TypeRef> k, v;
-
-	// Get the size of this type.
-	virtual Size size() const;
-
-	// Is this a gc:d type?
-	virtual bool gcType() const { return true; }
-
-	// Resolve.
-	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
-
-	// Print.
-	virtual void print(wostream &to) const;
-};
-
-/**
  * Generic templated type. Only templates in the last position are supported at the moment.
  */
 class TemplateType : public TypeRef {
 public:
-	TemplateType(const SrcPos &pos, const CppName &name);
+	TemplateType(const SrcPos &pos, const CppName &name, const vector<Auto<TypeRef>> &params = vector<Auto<TypeRef>>());
 
 	// Name.
 	CppName name;
@@ -103,6 +58,32 @@ public:
 
 	// Is this a gc:d type?
 	virtual bool gcType() const { return false; }
+
+	// Resolve.
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+};
+
+/**
+ * Resolved templated type.
+ */
+class ResolvedTemplateType : public TypeRef {
+public:
+	ResolvedTemplateType(const SrcPos &pos, Template *templ, const vector<Auto<TypeRef>> &params);
+
+	// Template type.
+	Template *type;
+
+	// Template types.
+	vector<Auto<TypeRef>> params;
+
+	// Get size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return true; }
 
 	// Resolve.
 	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
@@ -259,29 +240,6 @@ public:
 class GcArrayType : public TypeRef {
 public:
 	GcArrayType(const SrcPos &pos, Auto<TypeRef> of);
-
-	// Type of what?
-	Auto<TypeRef> of;
-
-	// Get the size of this type.
-	virtual Size size() const;
-
-	// Is this a gc:d type?
-	virtual bool gcType() const { return true; }
-
-	// Resolve.
-	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
-
-	// Print.
-	virtual void print(wostream &to) const;
-};
-
-/**
- * GcArray-type.
- */
-class GcDynArrayType : public TypeRef {
-public:
-	GcDynArrayType(const SrcPos &pos, Auto<TypeRef> of);
 
 	// Type of what?
 	Auto<TypeRef> of;

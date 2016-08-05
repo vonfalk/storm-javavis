@@ -92,6 +92,13 @@ namespace storm {
 		engine.gc.switchType(onto, gcType);
 	}
 
+	const GcType *Type::gcArrayType() const {
+		if (value())
+			return gcType;
+		else
+			return engine.ptrHandle().gcArrayType;
+	}
+
 	const Handle &Type::handle() {
 		if (!tHandle)
 			tHandle = buildHandle();

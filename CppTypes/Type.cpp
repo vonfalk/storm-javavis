@@ -4,7 +4,7 @@
 #include "Exception.h"
 #include "World.h"
 
-Type::Type(const CppName &name, const SrcPos &pos) : id(0), name(name), pos(pos) {}
+Type::Type(const CppName &name, const String &pkg, const SrcPos &pos) : id(0), name(name), pkg(pkg), pos(pos) {}
 
 vector<Offset> Type::ptrOffsets() const {
 	vector<Offset> r;
@@ -21,8 +21,8 @@ wostream &operator <<(wostream &to, const Type &type) {
  * Class.
  */
 
-Class::Class(const CppName &name, const SrcPos &pos) :
-	Type(name, pos), valueType(false), parent(L""), hiddenParent(false), parentType(null) {}
+Class::Class(const CppName &name, const String &pkg, const SrcPos &pos) :
+	Type(name, pkg, pos), valueType(false), parent(L""), hiddenParent(false), parentType(null) {}
 
 void Class::add(const Variable &v) {
 	for (nat i = 0; i < variables.size(); i++)
@@ -137,7 +137,7 @@ void Class::print(wostream &to) const {
  * Enum.
  */
 
-Enum::Enum(const CppName &name, const SrcPos &pos) : Type(name, pos), bitmask(false) {}
+Enum::Enum(const CppName &name, const String &pkg, const SrcPos &pos) : Type(name, pkg, pos), bitmask(false) {}
 
 void Enum::resolveTypes(World &world) {}
 
@@ -162,3 +162,10 @@ void Enum::print(wostream &to) const {
 	}
 	to << L"}";
 }
+
+/**
+ * Template.
+ */
+
+Template::Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos) :
+	name(name), pkg(pkg), generator(generator), pos(pos) {}

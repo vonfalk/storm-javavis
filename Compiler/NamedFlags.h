@@ -2,6 +2,7 @@
 #include "Utils/Bitmask.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	/**
 	 * Misc. flags for lookup options.

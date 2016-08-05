@@ -2,6 +2,7 @@
 #include "Config.h"
 #include "SrcPos.h"
 #include "World.h"
+#include "Parse.h"
 #include "Write.h"
 #include "Output.h"
 

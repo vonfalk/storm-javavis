@@ -3,6 +3,7 @@
 
 namespace storm {
 	namespace debug {
+		STORM_PKG(debug);
 
 		/**
 		 * Various types used for debugging.

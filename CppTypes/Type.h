@@ -14,13 +14,16 @@ class World;
 class Type : public Refcount {
 public:
 	// Create a type with name X, where X is the fully qualified name of the type (eg. std::string, Foo:Bar::Baz).
-	Type(const CppName &name, const SrcPos &pos);
+	Type(const CppName &name, const String &pkg, const SrcPos &pos);
 
 	// The ID of this type. Set during world.prepare().
 	nat id;
 
 	// Name of this type.
 	CppName name;
+
+	// Package.
+	String pkg;
 
 	// Position of this type.
 	SrcPos pos;
@@ -50,7 +53,7 @@ wostream &operator <<(wostream &to, const Type &type);
 class Class : public Type, public Namespace {
 public:
 	// Create a type with name X, where X is the fully qualified name of the type (eg. Foo::Bar::Baz).
-	Class(const CppName &name, const SrcPos &pos);
+	Class(const CppName &name, const String &pkg, const SrcPos &pos);
 
 	// Is this a value-type?
 	bool valueType;
@@ -105,7 +108,7 @@ public:
 class Enum : public Type {
 public:
 	// Create.
-	Enum(const CppName &name, const SrcPos &pos);
+	Enum(const CppName &name, const String &pkg, const SrcPos &pos);
 
 	// Members in the enum (not their values, we can easily generate code that fetches those for us).
 	vector<String> members;
@@ -127,4 +130,28 @@ public:
 
 	// Never allocated on heap.
 	virtual bool heapAlloc() const { return false; }
+};
+
+/**
+ * Describe a template type from C++ (declared using STORM_TEMPLATE(x))
+ */
+class Template : public Refcount {
+public:
+	// Create.
+	Template(const CppName &name, const String &pkg, const CppName &generator, const SrcPos &pos);
+
+	// Our id. Set when added to the world.
+	nat id;
+
+	// Name.
+	CppName name;
+
+	// Package.
+	String pkg;
+
+	// Function generating Storm types (only in the compiler right now).
+	CppName generator;
+
+	// Position.
+	SrcPos pos;
 };

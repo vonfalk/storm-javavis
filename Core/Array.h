@@ -29,7 +29,7 @@ namespace storm {
 		ArrayBase(const Handle &type);
 
 		// Copy another array.
-		ArrayBase(ArrayBase *other);
+		STORM_CTOR ArrayBase(ArrayBase *other);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -124,6 +124,8 @@ namespace storm {
 		void ensure(Nat n);
 	};
 
+	// Declare the array's template in Storm.
+	STORM_TEMPLATE(Array, createArray);
 
 	/**
 	 * Class used from C++.
@@ -132,10 +134,15 @@ namespace storm {
 	 */
 	template <class T>
 	class Array : public ArrayBase {
-		// STORM_TEMPLATE
+		STORM_SPECIAL;
 	public:
+		// Get the Storm type for this object.
+		static Type *stormType(Engine &e) {
+			return runtime::cppTemplate(e, ArrayId, 1, TypeInfo<T>::id());
+		}
+
 		// Empty array.
-		Array() : ArrayBase(storm::handle<T>(engine())) {}
+		Array() : ArrayBase(TypeInfo<T>::handle(engine())) {}
 
 		// Copy array.
 		Array(Array<T> *o) : ArrayBase(o) {}

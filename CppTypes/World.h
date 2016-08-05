@@ -19,6 +19,9 @@ public:
 	// All types.
 	NameMap<Type> types;
 
+	// All templates.
+	NameMap<Template> templates;
+
 	// All threads.
 	NameMap<Thread> threads;
 
@@ -37,12 +40,12 @@ private:
 	// Sort types so we get a deterministic order.
 	void orderTypes();
 
+	// Sort templates.
+	void orderTemplates();
+
 	// Sort threads so we get a deterministic order.
 	void orderThreads();
 
 	// Resolve all types in this world.
 	void resolveTypes();
 };
-
-// Parse all files in SrcPos::types and return what we found.
-World parseWorld();

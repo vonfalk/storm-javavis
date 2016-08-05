@@ -25,9 +25,12 @@
  * Common parts of STORM_CLASS and STORM_VALUE
  */
 #define STORM_COMMON													\
-	static Type *stormType(Engine &e);									\
-	static Type *stormType(const Object *o);							\
 	static inline const Handle &stormHandle(Engine &e) { return storm::runtime::typeHandle(stormType(e)); }
+
+#define STORM_TYPE_DECL							\
+	static const Nat stormTypeId;				\
+	static Type *stormType(Engine &e);			\
+	static Type *stormType(const Object *o);
 
 /**
  * Common parts for all heap-allocated objects.
@@ -46,28 +49,59 @@
  */
 #define STORM_OBJ_CLASS							\
 	public:										\
+	STORM_TYPE_DECL								\
 	STORM_OBJ_COMMON							\
+	private:
+
+/**
+ * Mark classes that are not exported and provide their own 'stormType' implementation. Not
+ * automatically exposed to Storm.
+ */
+#define STORM_SPECIAL													\
+	public:																\
+	STORM_OBJ_COMMON													\
+	static Type *stormType(const Object *o) { return stormType(o->engine()); } \
+	using Object::toS;													\
 	private:
 
 /**
  * Mark classes and values exposed to storm:
  */
+
+// Mark a class or actor.
 #define STORM_CLASS								\
 	public:										\
+	STORM_TYPE_DECL								\
 	STORM_OBJ_COMMON							\
 	using Object::toS;							\
 	private:
 
+// Mark a value.
 #define STORM_VALUE								\
 	public:										\
+	STORM_TYPE_DECL								\
 	STORM_COMMON								\
 	private:
+
+/**
+ * Make a template type id. This will only make Storm aware of the template, you still have to
+ * implement the template class itself in the compiler somewhere. 'generator' is a function like
+ * MAYBE(Type) *foo(ValueArray *params). This can only be done in the compiler at the moment, since
+ * no other libraries can create types. TODO: allow 'generator' to be any function in Storm as well.
+ */
+#define STORM_TEMPLATE(name, generator)			\
+	extern const Nat name ## Id;
 
 /**
  * Create classes in storm. Usage: CREATE(Type, engine, param1, param2, ...)
  */
 #define CREATE(type, engine, ...)				\
 	new (engine) type(__VA_ARGS__)
+
+/**
+ * Declare a pointer that may be null. Ignored by C++.
+ */
+#define MAYBE(x) x
 
 /**
  * Indicate which package to place things into (ignored by C++). (eg. STORM_PKG(foo.bar))
@@ -86,7 +120,12 @@
 /**
  * Mark a constructor exported to Storm.
  */
-#define STORM_CTOR
+#define STORM_CTOR explicit
+
+/**
+ * Mark a constructor exported to Storm that can be used for automatic casts.
+ */
+#define STORM_CAST_CTOR
 
 /**
  * Mark unknown types for the preprocessor. Ignored by C++.

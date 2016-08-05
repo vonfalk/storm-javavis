@@ -8,10 +8,13 @@
  */
 class Thread : public Refcount {
 public:
-	Thread(const CppName &name, const SrcPos &pos);
+	Thread(const CppName &name, const String &pkg, const SrcPos &pos);
 
 	// Name.
 	CppName name;
+
+	// Package.
+	String pkg;
 
 	// Position.
 	SrcPos pos;

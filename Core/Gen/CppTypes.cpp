@@ -10,6 +10,8 @@
 
 // TYPE_GLOBALS
 
+// TEMPLATE_GLOBALS
+
 // THREAD_GLOBALS
 
 // Turn off optimizations in this file. It takes quite a long time, and since it is only executed
@@ -36,15 +38,23 @@ namespace storm {
 
 		static CppType types[] = {
 			// CPP_TYPES
-			{ null, 0, CppSize::invalid, null, typeNone, null },
+			{ null, null, 0, CppSize::invalid, null, typeNone, null },
 		};
 		return types;
+	}
+
+	static CppTemplate *cppTemplates() {
+		static CppTemplate templates[] = {
+			// CPP_TEMPLATES
+			{ null, null, null },
+		};
+		return templates;
 	}
 
 	static CppThread *cppThreads() {
 		static CppThread threads[] = {
 			// CPP_THREADS
-			{ null },
+			{ null, null },
 		};
 		return threads;
 	}
@@ -52,6 +62,7 @@ namespace storm {
 	const CppWorld *cppWorld() {
 		static CppWorld w = {
 			cppTypes(),
+			cppTemplates(),
 			cppThreads(),
 		};
 		return &w;

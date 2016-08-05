@@ -4,6 +4,7 @@
 #include "Core/TypeFlags.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	// Description of a type in C++. Found in CppTypes.h
 	struct CppType;
@@ -37,6 +38,12 @@ namespace storm {
 		// resizing the object. This is only used once during startup.
 		void setType(Object *object) const;
 
+		// Is this a value type?
+		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
+
+		// Get the array gc type for this type.
+		const GcType *gcArrayType() const;
+
 		// Get a handle for this type.
 		const Handle &handle();
 
@@ -55,9 +62,6 @@ namespace storm {
 
 		// Flags for this type.
 		TypeFlags typeFlags;
-
-		// Is this a value type?
-		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
 
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);

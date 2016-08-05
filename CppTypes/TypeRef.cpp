@@ -5,61 +5,53 @@
 
 TypeRef::TypeRef(const SrcPos &pos) : pos(pos), constType(false) {}
 
-ArrayType::ArrayType(Auto<TypeRef> of) : TypeRef(of->pos), of(of) {}
 
-Size ArrayType::size() const {
-	throw Error(L"Array<> should only be used as a pointer!", pos);
-}
-
-Auto<TypeRef> ArrayType::resolve(World &in, const CppName &context) const {
-	Auto<ArrayType> r = new ArrayType(*this);
-	r->of = of->resolve(in, context);
-	return r;
-}
-
-void ArrayType::print(wostream &to) const {
-	to << L"storm::Array<" << of << L">";
-}
-
-MapType::MapType(Auto<TypeRef> k, Auto<TypeRef> v) : TypeRef(k->pos), k(k), v(v) {}
-
-Size MapType::size() const {
-	throw Error(L"Map<> should only be used as a pointer!", pos);
-}
-
-Auto<TypeRef> MapType::resolve(World &in, const CppName &context) const {
-	Auto<MapType> r = new MapType(*this);
-	r->k = k->resolve(in, context);
-	r->v = k->resolve(in, context);
-	return r;
-}
-
-void MapType::print(wostream &to) const {
-	to << L"storm::Map<" << k << L", " << v << L">";
-}
-
-TemplateType::TemplateType(const SrcPos &pos, const CppName &name) : TypeRef(pos), name(name) {}
+TemplateType::TemplateType(const SrcPos &pos, const CppName &name, const vector<Auto<TypeRef>> &params) :
+	TypeRef(pos), name(name), params(params) {}
 
 Size TemplateType::size() const {
 	throw Error(L"Templates are unsupported in general!", pos);
 }
 
 Auto<TypeRef> TemplateType::resolve(World &in, const CppName &context) const {
-	if (name == L"Array" && params.size() == 1) {
-		return new ArrayType(params[0]->resolve(in, context));
-	} else if (name == L"Map" && params.size() == 2) {
-		return new MapType(params[0]->resolve(in, context), params[1]->resolve(in, context));
-	} else if (name == L"GcArray" && params.size() == 1) {
-		return new GcArrayType(pos, params[0]->resolve(in, context));
-	} else if (name == L"GcDynArray" && params.size() == 1) {
-		return new GcDynArrayType(pos, params[0]->resolve(in, context));
+	vector<Auto<TypeRef>> p = params;
+	for (nat i = 0; i < p.size(); i++)
+		p[i] = p[i]->resolve(in, context);
+
+	// This is special, as it is not exported to Storm, but we have to know about it to properly GC it.
+	if (name == L"GcArray" && p.size() == 1) {
+		return new GcArrayType(pos, p[0]);
+	} else if (Template *found = in.templates.findUnsafe(name, context)) {
+		// Found it!
+		return new ResolvedTemplateType(pos, found, p);
 	} else {
-		throw Error(L"Unknown template type: " + toS(this), pos);
+		// Nothing found. Remain a unique, non-gc:d type.
+		return new TemplateType(pos, name, params);
 	}
 }
 
 void TemplateType::print(wostream &to) const {
 	to << name << L"<";
+	join(to, params, L", ");
+	to << L">";
+}
+
+ResolvedTemplateType::ResolvedTemplateType(const SrcPos &pos, Template *templ, const vector<Auto<TypeRef>> &params) :
+	TypeRef(pos), type(templ), params(params) {}
+
+Size ResolvedTemplateType::size() const {
+	throw Error(L"Can not use templates as values, as their size is unknown.", pos);
+}
+
+Auto<TypeRef> ResolvedTemplateType::resolve(World &in, const CppName &context) const {
+	vector<Auto<TypeRef>> p = params;
+	for (nat i = 0; i < p.size(); i++)
+		p[i] = p[i]->resolve(in, context);
+	return new ResolvedTemplateType(pos, type, p);
+}
+
+void ResolvedTemplateType::print(wostream &to) const {
+	to << type->name << L"<";
 	join(to, params, L", ");
 	to << L">";
 }
@@ -169,28 +161,13 @@ Auto<TypeRef> GcArrayType::resolve(World &in, const CppName &context) const {
 }
 
 Size GcArrayType::size() const {
-	throw Error(L"Array<> should only be used as a pointer!", pos);
+	throw Error(L"GcArray<> should only be used as a pointer!", pos);
 }
 
 void GcArrayType::print(wostream &to) const {
 	to << L"storm::GcArray<" << of << L">";
 }
 
-GcDynArrayType::GcDynArrayType(const SrcPos &pos, Auto<TypeRef> of) : TypeRef(pos), of(of) {}
-
-Auto<TypeRef> GcDynArrayType::resolve(World &in, const CppName &context) const {
-	Auto<GcDynArrayType> r = new GcDynArrayType(*this);
-	r->of = of->resolve(in, context);
-	return r;
-}
-
-Size GcDynArrayType::size() const {
-	throw Error(L"Array<> should only be used as a pointer!", pos);
-}
-
-void GcDynArrayType::print(wostream &to) const {
-	to << L"storm::GcDynArray<" << of << L">";
-}
 
 const UnknownType::ID UnknownType::ids[] = {
 	{ L"PTR_NOGC", Size::sPtr, false },

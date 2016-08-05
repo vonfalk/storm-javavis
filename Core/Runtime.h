@@ -18,6 +18,10 @@ namespace storm {
 		// Get the Storm type description for a C++ type given its ID (used by the generated type information code).
 		Type *cppType(Engine &e, Nat id);
 
+		// Get the Storm type description for a C++ template, given its ID and template type ids (we
+		// do not support eg. Array<Array<X>> from C++.
+		Type *cppTemplate(Engine &e, Nat id, Nat count, ...);
+
 		// Get a type handle for 'type'.
 		const Handle &typeHandle(Type *t);
 

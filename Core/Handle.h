@@ -35,9 +35,17 @@ namespace storm {
 		UNKNOWN(PTR_GC) ToSFn toSFn;
 	};
 
-	// Get a handle for T. (T may be pointer or reference).
+	// Get limited type info for a type (may be pointer or reference).
 	template <class T>
-	const Handle &handle(Engine &e) {
-		return BaseType<T>::Type::stormHandle(e);
-	}
+	struct TypeInfo {
+		// Type id in Storm for this module.
+		static Nat id() {
+			return BaseType<T>::Type::stormTypeId;
+		}
+
+		// Get a handle for T.
+		static const Handle &handle(Engine &e) {
+			return BaseType<T>::Type::stormHandle(e);
+		}
+	};
 }

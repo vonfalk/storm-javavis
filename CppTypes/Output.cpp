@@ -53,6 +53,7 @@ static void genGlobals(wostream &to, World &w) {
 		Type *t = w.types[i].borrow();
 
 		if (Class *c = as<Class>(t)) {
+			to << L"const storm::Nat " << c->name << L"::stormTypeId = " << i << L";\n";
 			to << L"storm::Type *" << c->name << L"::stormType(Engine &e) { return runtime::cppType(e, " << i << L"); }\n";
 			to << L"storm::Type *" << c->name << L"::stormType(const Object *o) { return runtime::cppType(o->engine(), " << i << L"); }\n";
 		}
@@ -81,6 +82,11 @@ static void genTypes(wostream &to, World &w) {
 
 		// Name.
 		to << L"L\"" << t.name.last() << L"\", ";
+
+		// Package.
+		if (t.pkg.empty())
+			PLN(t.pos << L": warning: placing types in the root package.");
+		to << L"L\"" << t.pkg << L"\", ";
 
 		// Parent class (if any).
 		{
@@ -118,6 +124,35 @@ static void genTypes(wostream &to, World &w) {
 	}
 }
 
+static void genTemplateGlobals(wostream &to, World &w) {
+	for (nat i = 0; i < w.templates.size(); i++) {
+		Template &t = *w.templates[i];
+
+		to << L"const storm::Nat " << t.name << L"Id = " << i << L";\n";
+	}
+}
+
+static void genTemplates(wostream &to, World &w) {
+	for (nat i = 0; i < w.templates.size(); i++) {
+		Template &t = *w.templates[i];
+
+		to << L"{ ";
+
+		// Name.
+		to << L"L\"" << t.name.last() << L"\", ";
+
+		// Package.
+		if (t.pkg.empty())
+			PLN(t.pos << L": warning: placing templates in the root package.");
+		to << L"L\"" << t.pkg << L"\", ";
+
+		// Generator function (TODO: only emit for the compiler).
+		to << L"&" << t.generator << L" ";
+
+		to << L"},\n";
+	}
+}
+
 static void genThreadGlobals(wostream &to, World &w) {
 	for (nat i = 0; i < w.threads.size(); i++) {
 		Thread &t = *w.threads[i];
@@ -132,7 +167,12 @@ static void genThreads(wostream &to, World &w) {
 		to << L"{ ";
 
 		// Name.
-		to << L"L\"" << t.name.last() << L"\"";
+		to << L"L\"" << t.name.last() << L"\", ";
+
+		// Package.
+		if (t.pkg.empty())
+			PLN(t.pos << L": warning: placing threads in the root package.");
+		to << L"L\"" << t.pkg << L"\"";
 
 		to << L" },\n";
 	}
@@ -149,6 +189,8 @@ GenerateMap genMap() {
 		{ L"TYPE_GLOBALS", &genGlobals },
 		{ L"PTR_OFFSETS", &genPtrOffsets },
 		{ L"CPP_TYPES", &genTypes },
+		{ L"TEMPLATE_GLOBALS", &genTemplateGlobals },
+		{ L"CPP_TEMPLATES", &genTemplates },
 		{ L"THREAD_GLOBALS", &genThreadGlobals },
 		{ L"CPP_THREADS", &genThreads },
 	};
