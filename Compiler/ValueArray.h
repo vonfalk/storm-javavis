@@ -36,6 +36,9 @@ namespace storm {
 		// Empty?
 		inline Bool STORM_FN empty() const { return count() == 0; }
 
+		// Reserve things.
+		inline void STORM_FN reserve(Nat count) { ensure(count); }
+
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
