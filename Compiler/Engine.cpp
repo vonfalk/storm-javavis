@@ -108,9 +108,20 @@ namespace storm {
 		o->deepCopy(env);
 	}
 
-	static void objToS(void *obj, StrBuf *to) {
-		Object *o = *(Object **)obj;
+	static void objToS(const void *obj, StrBuf *to) {
+		const Object *o = *(const Object **)obj;
 		*to << o;
+	}
+
+	static Nat objHash(const void *obj) {
+		const Object *o = *(const Object **)obj;
+		return o->hash();
+	}
+
+	static Bool objEqual(const void *a, const void *b) {
+		Object *ao = *(Object **)a;
+		Object *bo = *(Object **)b;
+		return ao->equals(bo);
 	}
 
 	const Handle &Engine::ptrHandle() {
@@ -122,6 +133,8 @@ namespace storm {
 			pHandle->copyFn = null; // No special function, use memcpy.
 			pHandle->deepCopyFn = &objDeepCopy;
 			pHandle->toSFn = &objToS;
+			pHandle->hashFn = &objHash;
+			pHandle->equalFn = &objEqual;
 		}
 		return *pHandle;
 	}

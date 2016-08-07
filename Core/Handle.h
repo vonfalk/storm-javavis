@@ -26,13 +26,39 @@ namespace storm {
 		typedef void (*CopyFn)(void *dest, const void *src);
 		UNKNOWN(PTR_GC) CopyFn copyFn;
 
+		// Safe copy. Falls back on memcpy.
+		inline void safeCopy(void *dest, const void *src) const {
+			if (copyFn)
+				(*copyFn)(dest, src);
+			else
+				memcpy(dest, src, size);
+		}
+
+		// Destructor. May be null.
+		typedef void (*DestroyFn)(void *obj);
+		UNKNOWN(PTR_GC) DestroyFn destroyFn;
+
+		// Helper for safe destroying.
+		inline void safeDestroy(void *obj) const {
+			if (destroyFn)
+				(*destroyFn)(obj);
+		}
+
 		// Deep copy an instance of this type.
 		typedef void (*DeepCopyFn)(void *obj, CloneEnv *env);
 		UNKNOWN(PTR_GC) DeepCopyFn deepCopyFn;
 
 		// ToS implementation.
-		typedef void (*ToSFn)(void *obj, StrBuf *to);
+		typedef void (*ToSFn)(const void *obj, StrBuf *to);
 		UNKNOWN(PTR_GC) ToSFn toSFn;
+
+		// Hash function.
+		typedef Nat (*HashFn)(const void *obj);
+		UNKNOWN(PTR_GC) HashFn hashFn;
+
+		// Equals function.
+		typedef Bool (*EqualFn)(const void *a, const void *b);
+		UNKNOWN(PTR_GC) EqualFn equalFn;
 	};
 
 	// Get limited type info for a type (may be pointer or reference).

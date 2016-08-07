@@ -379,7 +379,7 @@ namespace storm {
 
 		do {
 			if (info[slot].hash == hash && (*keyHandle.equals)(key, keyPtr(slot)))
-					return slot;
+				return slot;
 
 			slot = info[slot].status;
 		} while (slot != Info::end);
@@ -398,7 +398,7 @@ namespace storm {
 			// We know that 'capacity' is a power of two. Therefore, the following is equivalent to:
 			// if (++lastFree >= capacity) lastFree = 0;
 			lastFree = (lastFree + 1) & (capacity - 1);
-		return lastFree++;
+		return lastFree;
 	}
 
 	MapBase::Iter MapBase::beginRaw() {

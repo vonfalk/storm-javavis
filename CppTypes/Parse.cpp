@@ -154,6 +154,9 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 	// Is this function supposed to be exported to Storm?
 	exportFn |= tok.skipIf(L"STORM_FN");
 
+	// Other markers...
+	tok.skipIf(L"CODECALL");
+
 	name.pos = type->pos;
 	if (tok.peek().token != L"(") {
 		// Then, we should have the member's name.
@@ -322,7 +325,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 		} else if (t.token == L"class" || t.token == L"struct") {
 			tok.skip();
 			parseType(tok, env, fullName);
-		} else if (t.token == L"extern" || t.token == L"static") {
+		} else if (t.token == L"extern") {
 			tok.skip();
 		} else if (t.token == L"enum") {
 			tok.skip();

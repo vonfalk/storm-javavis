@@ -106,8 +106,11 @@ namespace storm {
 	}
 
 	Bool Str::equals(Object *o) const {
-		TODO(L"Implement me! (we need as<>)");
-		return false;
+		if (type() != o->type())
+			return false;
+
+		Str *other = (Str *)o;
+		return wcscmp(c_str(), other->c_str()) == 0;
 	}
 
 	Nat Str::hash() const {
