@@ -55,6 +55,11 @@ namespace storm {
 		// Handle of the contained type.
 		const Handle &handle;
 
+		// Last element access.
+		inline void *CODECALL lastRaw() const {
+			return getRaw(count() - 1);
+		}
+
 		// Raw element access.
 		inline void *CODECALL getRaw(Nat id) const {
 			if (id > count())
@@ -146,6 +151,11 @@ namespace storm {
 
 		// Copy array.
 		Array(Array<T> *o) : ArrayBase(o) {}
+
+		// Create an array with one element in it.
+		Array(const T &item) : ArrayBase(StormInfo<T>::handle(engine())) {
+			push(item);
+		}
 
 		// Element access.
 		T &at(Nat i) {

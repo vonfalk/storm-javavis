@@ -21,6 +21,7 @@ namespace storm {
 	public:
 		// Create a type declared in Storm.
 		STORM_CTOR Type(Str *name, TypeFlags flags);
+		STORM_CTOR Type(Str *name, Array<Value> *params, TypeFlags flags);
 
 		// Create a type declared in C++.
 		STORM_CTOR Type(Str *name, TypeFlags flags, Size size, GcType *gcType);

@@ -57,10 +57,4 @@ namespace storm {
 		UNKNOWN(PTR_NOGC) DeclThread::CreateFn create;
 	};
 
-
-	/**
-	 * Declare the compiler thread, where the compiler itself is to run.
-	 */
-	STORM_THREAD(Compiler);
-
 }

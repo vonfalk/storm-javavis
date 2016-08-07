@@ -36,6 +36,8 @@ namespace storm {
 		gc(defaultArena, defaultFinalizer), cppTypes(gc), cppTemplates(gc),
 		cppThreads(gc), pHandle(null), pHandleRoot(null) {
 
+		bootStatus = bootNone;
+
 		assert(Compiler::identifier == 0, L"Invalid ID for the compiler thread. Check CppTypes for errors!");
 
 		// Since all types in the name tree need the Compiler thread, we need to create that a bit early.
@@ -53,6 +55,9 @@ namespace storm {
 		// point, doing as<> on that object will crash the system. However, that is not neccessary
 		// this early during compiler startup.
 		Thread::stormType(*this)->setType(cppThreads[0]);
+
+		// Done booting.
+		advance(bootDone);
 	}
 
 	Engine::~Engine() {
@@ -69,11 +74,20 @@ namespace storm {
 	}
 
 	TemplateList *Engine::cppTemplate(Nat id) const {
+		if (id >= cppTemplates.count())
+			return null;
 		return cppTemplates[id];
 	}
 
 	Thread *Engine::cppThread(Nat id) const {
 		return cppThreads[id];
+	}
+
+	void Engine::forNamed(NamedFn fn) {
+		for (nat i = 0; i < cppTypes.count(); i++)
+			(*fn)(cppTypes[i]);
+		for (nat i = 0; i < cppTemplates.count(); i++)
+			cppTemplates[i]->forNamed(fn);
 	}
 
 	/**
@@ -110,6 +124,11 @@ namespace storm {
 			pHandle->toSFn = &objToS;
 		}
 		return *pHandle;
+	}
+
+	void Engine::advance(BootStatus to) {
+		assert(to >= bootStatus, L"Trying to devolve the boot status.");
+		bootStatus = to;
 	}
 
 

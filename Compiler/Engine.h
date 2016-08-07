@@ -3,6 +3,7 @@
 #include "Gc.h"
 #include "RootArray.h"
 #include "TemplateList.h"
+#include "BootStatus.h"
 
 // TODO: Do not depend on path!
 #include "Utils/Path.h"
@@ -57,6 +58,16 @@ namespace storm {
 		// Get a C++ named thread by its id.
 		Thread *cppThread(Nat id) const;
 
+		// Current boot status.
+		inline BootStatus boot() const { return bootStatus; }
+
+		// Advance boot status.
+		void advance(BootStatus to);
+
+		// Run the function for all named objects in the cache.
+		typedef void (*NamedFn)(Named *);
+		void forNamed(NamedFn fn);
+
 		// Get the one and only pointer handle.
 		const Handle &ptrHandle();
 
@@ -72,6 +83,9 @@ namespace storm {
 
 		// All named threads declared in C++.
 		RootArray<Thread> cppThreads;
+
+		// How far along in the boot process?
+		BootStatus bootStatus;
 
 		// The one and only pointer handle, along with its root.
 		Handle *pHandle;

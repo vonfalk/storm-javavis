@@ -1,11 +1,13 @@
 #pragma once
 #include "Core/Object.h"
-#include "Core/TObject.h"
+#include "Thread.h"
 #include "Core/Gen/CppTypes.h"
 #include "ValueArray.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
+
+	class Named;
 
 	/**
 	 * Represents all instantiations of a template class available to C++.
@@ -22,6 +24,10 @@ namespace storm {
 
 		// Find an instantiaton. Generates it if neccessary.
 		Type *find(Nat *elems, Nat count);
+
+		// Run 'fn' for all named objects in here.
+		typedef void (*NamedFn)(Named *);
+		void forNamed(NamedFn fn);
 
 	private:
 		// Name of the template.
@@ -48,6 +54,9 @@ namespace storm {
 
 		// Generate a new template.
 		Type *generate(Nat *elems, Nat count);
+
+		// For each.
+		void forNamed(Node *at, NamedFn fn);
 	};
 
 }

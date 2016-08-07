@@ -29,4 +29,7 @@ namespace storm {
 
 	void Thread::operator delete(void *mem, First d) {}
 
+
+	STORM_DEFINE_THREAD(Compiler);
+
 }

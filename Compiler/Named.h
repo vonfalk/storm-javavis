@@ -1,11 +1,14 @@
 #pragma once
-#include "Core/TObject.h"
+#include "Core/Array.h"
+#include "Thread.h"
 #include "NamedFlags.h"
+#include "Value.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
 
 	class Named;
+	class SimpleName;
 
 	/**
 	 * Interface for objects that can look up names.
@@ -36,17 +39,23 @@ namespace storm {
 		// Create without parameters.
 		STORM_CTOR Named(Str *name);
 
-		// Create with parameters (TODO).
-		// STORM_CTOR Named(Str *name, Array<Value> *params);
+		// Create with parameters.
+		STORM_CTOR Named(Str *name, Array<Value> *params);
 
 		// Our name. Note: this can be null for a while when starting up the compiler.
 		Str *name;
 
-		// Our parameters (TODO).
-		// Array<Value> *params;
+		// Our parameters. Note: this can be null for a while when starting up the compiler.
+		Array<Value> *params;
 
 		// Flags for this named object.
 		NamedFlags flags;
+
+		// Late initialization. Called when the type-system is up enough to initialize templates. Otherwise not needed.
+		virtual void lateInit();
+
+		// Get a path to this Named.
+		SimpleName *path() const;
 
 		// Get an unique human-readable identifier for this named object.
 		Str *STORM_FN identifier() const;
@@ -56,6 +65,10 @@ namespace storm {
 
 		// String representation.
 		virtual void STORM_FN toS(StrBuf *buf) const;
+
+	private:
+		// Find closest named parent.
+		Named *closestNamed() const;
 	};
 
 }

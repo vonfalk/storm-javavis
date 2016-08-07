@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "TemplateList.h"
 #include "Engine.h"
+#include "Type.h"
 
 namespace storm {
 
@@ -80,6 +81,21 @@ namespace storm {
 			node = allocNode(node, now + 1);
 
 		insertAt(elems, count, insert, node->next[now], at + 1);
+	}
+
+	void TemplateList::forNamed(NamedFn fn) {
+		forNamed(root, fn);
+	}
+
+	void TemplateList::forNamed(Node *node, NamedFn fn) {
+		if (!node)
+			return;
+
+		if (node->done)
+			(*fn)(node->done);
+
+		for (nat i = 0; i < node->count; i++)
+			forNamed(node->next[i], fn);
 	}
 
 	TemplateList::Node *TemplateList::allocNode(Nat count) {

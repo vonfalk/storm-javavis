@@ -28,6 +28,12 @@ namespace storm {
 		init();
 	}
 
+	Type::Type(Str *name, Array<Value> *params, TypeFlags flags) :
+		Named(name, params), engine(Object::engine()), gcType(null), tHandle(null), typeFlags(flags) {
+
+		init();
+	}
+
 	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType) :
 		Named(name), engine(Object::engine()), gcType(gcType), tHandle(null), typeFlags(flags) {
 
@@ -118,7 +124,9 @@ namespace storm {
 
 			h->size = gcType->stride;
 			h->gcArrayType = gcType;
-			assert(false, L"TODO: look up copy ctors and so on!");
+			TODO(L"Look up copy ctors and so on!");
+			// For now: we do not have anything that needs special care when being copied, so we're
+			// fine with the defaults.
 			return h;
 		} else {
 			// Standard pointer handle.

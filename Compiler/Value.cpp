@@ -2,6 +2,7 @@
 #include "Value.h"
 #include "Type.h"
 #include "Core/Str.h"
+#include "Core/StrBuf.h"
 
 namespace storm {
 
@@ -45,6 +46,10 @@ namespace storm {
 		if (v.type != null && v.ref)
 			name = *name + new (e.v) Str(L"&");
 		return name;
+	}
+
+	StrBuf &operator <<(StrBuf &to, Value v) {
+		return to << toS(to.engine(), v);
 	}
 
 	wostream &operator <<(wostream &to, Value v) {

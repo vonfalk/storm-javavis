@@ -21,6 +21,9 @@ namespace storm {
 		// Create.
 		STORM_CTOR ArrayType(Str *name, Type *contents);
 
+		// Late init.
+		virtual void lateInit();
+
 	private:
 		// Content type.
 		Type *contents;

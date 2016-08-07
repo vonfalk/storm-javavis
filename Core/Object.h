@@ -78,3 +78,25 @@ namespace storm {
 	wostream &operator <<(wostream &to, const Object *o);
 	wostream &operator <<(wostream &to, const Object &o);
 }
+
+
+/**
+ * Custom casting.
+ */
+template <class To>
+To *customAs(storm::Object *from) {
+	if (from == null)
+		return null;
+	if (from->isA(To::stormType(from->engine())))
+		return static_cast<To *>(from);
+	return null;
+}
+
+template <class To>
+const To *customAs(const storm::Object *from) {
+	if (from == null)
+		return null;
+	if (from->isA(To::stormType(from->engine())))
+		return static_cast<To *>(from);
+	return null;
+}
