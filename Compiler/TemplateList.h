@@ -18,12 +18,15 @@ namespace storm {
 		typedef CppTemplate::GenerateFn GenerateFn;
 
 		// Create.
-		TemplateList(GenerateFn generate);
+		TemplateList(Str *name, GenerateFn generate);
 
 		// Find an instantiaton. Generates it if neccessary.
 		Type *find(Nat *elems, Nat count);
 
 	private:
+		// Name of the template.
+		Str *name;
+
 		// Remember what we generated.
 		UNKNOWN(PTR_GC) GenerateFn generateFn;
 

@@ -454,7 +454,6 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 static void parseFile(nat id, World &world) {
 	Tokenizer tok(id);
 	ParseEnv env = { L"", world };
-
 	parseNamespace(tok, env, CppName());
 }
 

@@ -37,7 +37,7 @@ namespace storm {
 
 	// Get limited type info for a type (may be pointer or reference).
 	template <class T>
-	struct TypeInfo {
+	struct StormInfo {
 		// Type id in Storm for this module.
 		static Nat id() {
 			return BaseType<T>::Type::stormTypeId;

@@ -33,7 +33,8 @@ namespace storm {
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode) :
-		gc(defaultArena, defaultFinalizer), cppTypes(gc), cppThreads(gc), pHandle(null), pHandleRoot(null) {
+		gc(defaultArena, defaultFinalizer), cppTypes(gc), cppTemplates(gc),
+		cppThreads(gc), pHandle(null), pHandleRoot(null) {
 
 		assert(Compiler::identifier == 0, L"Invalid ID for the compiler thread. Check CppTypes for errors!");
 
@@ -46,7 +47,7 @@ namespace storm {
 		}
 
 		// Initialize the type system. This loads all types defined in the compiler.
-		initTypes(*this, cppTypes);
+		initTypes(*this, cppTypes, cppTemplates);
 
 		// Now, we can give the Compiler thread object a proper header with a type. Until this
 		// point, doing as<> on that object will crash the system. However, that is not neccessary
@@ -63,11 +64,15 @@ namespace storm {
 		}
 	}
 
-	Type *Engine::cppType(nat id) const {
+	Type *Engine::cppType(Nat id) const {
 		return cppTypes[id];
 	}
 
-	Thread *Engine::cppThread(nat id) const {
+	TemplateList *Engine::cppTemplate(Nat id) const {
+		return cppTemplates[id];
+	}
+
+	Thread *Engine::cppThread(Nat id) const {
 		return cppThreads[id];
 	}
 

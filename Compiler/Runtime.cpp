@@ -16,8 +16,17 @@ namespace storm {
 		}
 
 		Type *cppTemplate(Engine &e, Nat id, Nat count, ...) {
-			TODO(L"Implement me!");
-			return null;
+			const nat maxCount = 16;
+			assert(count < maxCount, L"Too many template parameters used: " + ::toS(count) + L" max " + ::toS(maxCount));
+
+			Nat params[maxCount];
+			va_list l;
+			va_start(l, count);
+			for (nat i = 0; i < count; i++)
+				params[i] = va_arg(l, Nat);
+			va_end(l);
+
+			return e.cppTemplate(id)->find(params, count);
 		}
 
 		const Handle &typeHandle(Type *t) {

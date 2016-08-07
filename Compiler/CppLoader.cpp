@@ -9,8 +9,15 @@ namespace storm {
 	CppLoader::CppLoader(Engine &e, const CppWorld *world) : e(e), world(world) {}
 
 	nat CppLoader::typeCount() const {
-		int n;
+		nat n;
 		for (n = 0; world->types[n].name; n++)
+			;
+		return n;
+	}
+
+	nat CppLoader::templateCount() const {
+		nat n;
+		for (n = 0; world->templates[n].name; n++)
 			;
 		return n;
 	}
@@ -57,4 +64,17 @@ namespace storm {
 
 		return t;
 	}
+
+	void CppLoader::loadTemplates(RootArray<TemplateList> &into) {
+		nat c = templateCount();
+		into.resize(c);
+
+		for (nat i = 0; i < c; i++) {
+			CppTemplate &t = world->templates[i];
+
+			if (!into[i])
+				into[i] = new (e) TemplateList(new (e) Str(t.name), t.generate);
+		}
+	}
+
 }

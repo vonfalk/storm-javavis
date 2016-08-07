@@ -10,12 +10,20 @@ namespace storm {
 	 */
 
 	// Create types for unknown implementations.
-	Type *createArray(ValueArray *params);
+	Type *createArray(Str *name, ValueArray *params);
 
-	// Type for arrays.
+	/**
+	 * Type for arrays.
+	 */
 	class ArrayType : public Type {
 		STORM_CLASS;
 	public:
+		// Create.
+		STORM_CTOR ArrayType(Str *name, Type *contents);
+
+	private:
+		// Content type.
+		Type *contents;
 	};
 
 }

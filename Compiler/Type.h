@@ -38,6 +38,9 @@ namespace storm {
 		// resizing the object. This is only used once during startup.
 		void setType(Object *object) const;
 
+		// Set the super-class for this type.
+		void STORM_FN setSuper(Type *to);
+
 		// Is this a value type?
 		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
 
@@ -62,6 +65,9 @@ namespace storm {
 
 		// Flags for this type.
 		TypeFlags typeFlags;
+
+		// Super type.
+		Type *superType;
 
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);

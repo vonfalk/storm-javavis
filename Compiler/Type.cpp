@@ -92,6 +92,13 @@ namespace storm {
 		engine.gc.switchType(onto, gcType);
 	}
 
+	void Type::setSuper(Type *to) {
+		superType = to;
+
+		// For now, this is sufficient.
+		gcType = engine.gc.allocType(to->gcType);
+	}
+
 	const GcType *Type::gcArrayType() const {
 		if (value())
 			return gcType;

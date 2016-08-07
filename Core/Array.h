@@ -138,11 +138,11 @@ namespace storm {
 	public:
 		// Get the Storm type for this object.
 		static Type *stormType(Engine &e) {
-			return runtime::cppTemplate(e, ArrayId, 1, TypeInfo<T>::id());
+			return runtime::cppTemplate(e, ArrayId, 1, StormInfo<T>::id());
 		}
 
 		// Empty array.
-		Array() : ArrayBase(TypeInfo<T>::handle(engine())) {}
+		Array() : ArrayBase(StormInfo<T>::handle(engine())) {}
 
 		// Copy array.
 		Array(Array<T> *o) : ArrayBase(o) {}

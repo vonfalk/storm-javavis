@@ -93,7 +93,7 @@ namespace storm {
 		const wchar *pkg;
 
 		// Generate templates using this function.
-		typedef Type *(*GenerateFn)(ValueArray *);
+		typedef Type *(*GenerateFn)(Str *name, ValueArray *);
 		GenerateFn generate;
 	};
 

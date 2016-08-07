@@ -2,6 +2,7 @@
 
 #include "Gc.h"
 #include "RootArray.h"
+#include "TemplateList.h"
 
 // TODO: Do not depend on path!
 #include "Utils/Path.h"
@@ -48,10 +49,13 @@ namespace storm {
 		Gc gc;
 
 		// Get a C++ type by its id.
-		Type *cppType(nat id) const;
+		Type *cppType(Nat id) const;
+
+		// Get a C++ template by its id.
+		TemplateList *cppTemplate(Nat id) const;
 
 		// Get a C++ named thread by its id.
-		Thread *cppThread(nat id) const;
+		Thread *cppThread(Nat id) const;
 
 		// Get the one and only pointer handle.
 		const Handle &ptrHandle();
@@ -62,6 +66,9 @@ namespace storm {
 	private:
 		// All C++ types.
 		RootArray<Type> cppTypes;
+
+		// All C++ templates.
+		RootArray<TemplateList> cppTemplates;
 
 		// All named threads declared in C++.
 		RootArray<Thread> cppThreads;
