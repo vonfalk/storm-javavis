@@ -96,7 +96,7 @@ namespace storm {
 
 		// Get a value. Create using the constructor if it does not exist.
 		typedef void (*CreateCtor)(void *to, Engine &e);
-		void *CODECALL accessRaw(const void *key, CreateCtor fn);
+		void *CODECALL atRaw(const void *key, CreateCtor fn);
 
 		// Remove a value.
 		void CODECALL removeRaw(const void *key);
@@ -118,8 +118,6 @@ namespace storm {
 	private:
 		// # of contained elements.
 		Nat size;
-
-		Nat z;
 
 		// Minimum capacity.
 		static const nat minCapacity = 4;
@@ -191,6 +189,147 @@ namespace storm {
 		// Helper for copying arrays.
 		GcArray<Info> *copyArray(const GcArray<Info> *src);
 		GcArray<byte> *copyArray(const GcArray<byte> *src, const GcArray<Info> *info, const Handle &type);
+
+	public:
+
+		/**
+		 * Iterator.
+		 *
+		 * Note: since reading an element is potentially a destructive operation (we may have to
+		 * rehash the table due to moved entries), we keep pointers to the data from the map in here
+		 * so that iterators do not break when that happens.
+		 */
+		class Iter {
+		public:
+			// Pointing to the end.
+			Iter();
+
+			// Pointing to the first element.
+			Iter(MapBase *owner);
+
+			// Compare.
+			bool CODECALL operator ==(const Iter &o) const;
+			bool CODECALL operator !=(const Iter &o) const;
+
+			// Advance.
+			Iter &operator ++();
+			Iter operator ++(int);
+
+			// Raw get functions.
+			void *rawKey() const;
+			void *rawVal() const;
+
+			// Raw pre- and post increment.
+			Iter &CODECALL preIncRaw();
+			Iter CODECALL postIncRaw();
+
+		private:
+			// The three gc arrays from the map.
+			// TODO: as the key and value arrays will eventually need to contain information about
+			// which elements are free, we can elliminate 'info' eventually.
+			GcArray<Info> *info;
+			GcArray<byte> *key;
+			GcArray<byte> *val;
+
+			// Current position.
+			Nat pos;
+
+			// At end?
+			bool atEnd() const;
+		};
+
+		// Raw begin and end.
+		Iter CODECALL beginRaw();
+		Iter CODECALL endRaw();
+
+		// Friend.
+		friend Iter;
 	};
 
+	// Let Storm know about the Map template.
+	STORM_TEMPLATE(Map, createMap);
+
+	/**
+	 * C++ interface.
+	 *
+	 * TODO: Set vtables for class in constructors.
+	 */
+	template <class K, class V>
+	class Map : public MapBase {
+		STORM_SPECIAL;
+	public:
+		// Get the Storm type for this object.
+		static Type *stormType(Engine &e) {
+			return runtime::cppTemplate(e, MapId, 2, StormInfo<K>::id(), StormInfo<V>::id());
+		}
+
+		// Empty map.
+		Map() : MapBase(StormInfo<K>::handle(engine()), StormInfo<V>::handle(engine())) {}
+
+		// Copy map.
+		Map(Map<K, V> *o) : MapBase(o) {}
+
+		// Insert a value into the map, or update the existing one.
+		void put(const K &k, const V &v) {
+			putRaw(&k, &v);
+		}
+
+		// Contains a key?
+		Bool has(const K &k) {
+			hasRaw(&k);
+		}
+
+		// Get a value. Throws if not found.
+		V &get(const K &k) {
+			return *(V *)getRaw(&k);
+		}
+
+		// Get a value. Returns the default element if none found.
+		V &get(const K &k, const V &def) {
+			return *(V *)getRaw(&k, &def);
+		}
+
+		// Get a value, create it if not alredy existing.
+		V &at(const K &k) {
+			return *(V *)atRaw(&k, &CreateFn<V>::fn);
+		}
+
+		// Remove a value.
+		void remove(const K &k) {
+			removeRaw(&k);
+		}
+
+		/**
+		 * Iterator.
+		 */
+		class Iter : public MapBase::Iter {
+		public:
+			Iter() : MapBase::Iter() {}
+			Iter(Map<K, V> *owner) : MapBase::Iter(owner) {}
+
+			std::pair<K, V&> operator *() const {
+				return std::make_pair(*(K *)rawKey(), *(V *)rawVal());
+			}
+
+			// We can not provide the -> operator, so we adhere to the Storm convention of using k()
+			// and v() instead.
+
+			const K &k() const {
+				return *(const K *)rawKey();
+			}
+
+			V &v() const {
+				return *(V *)rawVal();
+			}
+		};
+
+		// Create the iterator.
+		Iter begin() {
+			return Iter(this);
+		}
+
+		Iter end() {
+			return Iter();
+		}
+	};
 }

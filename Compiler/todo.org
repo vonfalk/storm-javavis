@@ -1,4 +1,5 @@
-* Loose ends so far [0/2]
+* Loose ends so far [0/3]
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Implement shrink() for Map<> as well.
+  - [ ] Handles and templates does not work with built-in types (like Int).

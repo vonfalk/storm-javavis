@@ -61,7 +61,9 @@ namespace storm {
 		UNKNOWN(PTR_GC) EqualFn equalFn;
 	};
 
-	// Get limited type info for a type (may be pointer or reference).
+	/**
+	 * Get limited type info for a type (may be pointer or reference).
+	 */
 	template <class T>
 	struct StormInfo {
 		// Type id in Storm for this module.
@@ -72,6 +74,26 @@ namespace storm {
 		// Get a handle for T.
 		static const Handle &handle(Engine &e) {
 			return BaseType<T>::Type::stormHandle(e);
+		}
+	};
+
+	/**
+	 * Helper for figuring out how to create objects.
+	 */
+	template <class T>
+	struct CreateFn {
+		// Create a value.
+		static void fn(void *to, Engine &e) {
+			new (to) T();
+		}
+	};
+
+	template <class T>
+	struct CreateFn<T *> {
+		// Create an object or an actor.
+		static void fn(void *to, Engine &e) {
+			T **o = (T **)to;
+			*o = new (e) T();
 		}
 	};
 }

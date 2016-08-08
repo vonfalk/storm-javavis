@@ -90,8 +90,8 @@ namespace storm {
 	ArrayBase::Iter::Iter(ArrayBase *owner, Nat index) : owner(owner), index(index) {}
 
 	bool ArrayBase::Iter::operator ==(const Iter &o) const {
-		if (atEnd() && o.atEnd())
-			return true;
+		if (atEnd() || o.atEnd())
+			return atEnd() == o.atEnd();
 		else
 			return index == o.index && owner == o.owner;
 	}

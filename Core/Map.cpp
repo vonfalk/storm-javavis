@@ -82,7 +82,7 @@ namespace storm {
 			insert(key, value, hash);
 		} else {
 			valT.safeDestroy(valPtr(old));
-			(*valT.copyFn)(valPtr(old), value);
+			valT.safeCopy(valPtr(old), value);
 		}
 	}
 
@@ -114,7 +114,7 @@ namespace storm {
 		return valPtr(slot);
 	}
 
-	void *MapBase::accessRaw(const void *key, CreateCtor fn) {
+	void *MapBase::atRaw(const void *key, CreateCtor fn) {
 		nat hash = (*keyT.hashFn)(key);
 		nat slot = findSlot(key, hash);
 
@@ -389,6 +389,75 @@ namespace storm {
 		}
 
 		return dest;
+	}
+
+	MapBase::Iter::Iter() : info(null), key(null), val(null), pos(0) {}
+
+	MapBase::Iter::Iter(MapBase *owner) : info(owner->info), key(owner->key), val(owner->val), pos(0) {
+		// Find the first occupied position. This may place us at the end.
+		while (!atEnd() && info->v[pos].status == Info::free)
+			pos++;
+	}
+
+	bool MapBase::Iter::operator ==(const Iter &o) const {
+		if (atEnd() && o.atEnd())
+			return true;
+		else
+			return key == o.key && val == o.val && pos == o.pos;
+	}
+
+	bool MapBase::Iter::operator !=(const Iter &o) const {
+		return !(*this == o);
+	}
+
+	MapBase::Iter &MapBase::Iter::operator ++() {
+		if (!atEnd())
+			pos++;
+
+		// Find the next occupied position.
+		while (!atEnd() && info->v[pos].status == Info::free)
+			pos++;
+
+		return *this;
+	}
+
+	MapBase::Iter MapBase::Iter::operator ++(int) {
+		Iter t(*this);
+		++*this;
+		return t;
+	}
+
+	void *MapBase::Iter::rawKey() const {
+		size_t s = runtime::gcTypeOf(key)->stride;
+		return key->v + pos*s;
+	}
+
+	void *MapBase::Iter::rawVal() const {
+		size_t s = runtime::gcTypeOf(val)->stride;
+		return val->v + pos*s;
+	}
+
+	MapBase::Iter &MapBase::Iter::preIncRaw() {
+		return operator ++();
+	}
+
+	MapBase::Iter MapBase::Iter::postIncRaw() {
+		return operator ++(0);
+	}
+
+	bool MapBase::Iter::atEnd() const {
+		if (key)
+			return pos == key->count;
+		else
+			return true;
+	}
+
+	MapBase::Iter MapBase::beginRaw() {
+		return Iter(this);
+	}
+
+	MapBase::Iter MapBase::endRaw() {
+		return Iter();
 	}
 
 }
