@@ -24,7 +24,7 @@ namespace code {
 		// Initialize to previously obtained values.
 		Size(nat size32, nat align32, nat size64, nat align64);
 
-		// Get the size for the current platform.
+		// Get the size for the current platform, the size being properly aligned.
 		nat current() const;
 
 		// Get a Size of zero, only with the align of this Size.

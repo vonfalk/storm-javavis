@@ -24,9 +24,9 @@ namespace code {
 	nat Size::current() const {
 		switch (sizeof(void *)) {
 		case 4:
-			return s32.size;
+			return roundUp(s32.size, s32.align);
 		case 8:
-			return s64.size;
+			return roundUp(s64.size, s64.align);
 		default:
 			assert(false, "Only 32 and 64-bit platforms are supported now.");
 			return 0;

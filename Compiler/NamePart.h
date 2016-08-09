@@ -8,6 +8,8 @@ namespace storm {
 	class SimplePart;
 	class Scope;
 	class Name;
+	class Named;
+	class NameOverloads;
 
 	/**
 	 * Represents one part of a name. Each part is a string and zero or more parameters (think
@@ -56,6 +58,12 @@ namespace storm {
 
 		// Resolve names.
 		virtual MAYBE(SimplePart *) find(const Scope &scope);
+
+		// Choose an overload.
+		virtual MAYBE(Named *) STORM_FN choose(NameOverloads *from) const;
+
+		// Compute the badness of a candidate. Returns -1 on no match.
+		virtual Int STORM_FN matches(Named *candidate) const;
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

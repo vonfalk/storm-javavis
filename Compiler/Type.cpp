@@ -14,7 +14,7 @@ namespace storm {
 		type->type = me;
 
 		// We need to set the engine as well. Should be the first member of this class.
-		OFFSET_IN(me, sizeof(Named), Engine *) = &e;
+		OFFSET_IN(me, sizeof(NameSet), Engine *) = &e;
 
 		// Check to see if we succeeded!
 		assert(&me->engine == &e, L"Type::engine must be the first data member declared in Type.");
@@ -23,19 +23,19 @@ namespace storm {
 	}
 
 	Type::Type(Str *name, TypeFlags flags) :
-		Named(name), engine(Object::engine()), gcType(null), tHandle(null), typeFlags(flags) {
+		NameSet(name), engine(Object::engine()), gcType(null), tHandle(null), typeFlags(flags) {
 
 		init();
 	}
 
 	Type::Type(Str *name, Array<Value> *params, TypeFlags flags) :
-		Named(name, params), engine(Object::engine()), gcType(null), tHandle(null), typeFlags(flags) {
+		NameSet(name, params), engine(Object::engine()), gcType(null), tHandle(null), typeFlags(flags) {
 
 		init();
 	}
 
 	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType) :
-		Named(name), engine(Object::engine()), gcType(gcType), tHandle(null), typeFlags(flags) {
+		NameSet(name), engine(Object::engine()), gcType(gcType), tHandle(null), typeFlags(flags) {
 
 		gcType->type = this;
 		init();
@@ -43,7 +43,7 @@ namespace storm {
 
 	// We need to set gcType->type first, therefore we call setMyType!
 	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) :
-		Named(setMyType(null, this, gcType, e)), engine(e), gcType(gcType), tHandle(null), typeFlags(typeClass) {
+		NameSet(setMyType(null, this, gcType, e)), engine(e), gcType(gcType), tHandle(null), typeFlags(typeClass) {
 		init();
 	}
 
@@ -73,7 +73,7 @@ namespace storm {
 	Type *Type::createType(Engine &e, const CppType *type) {
 		assert(wcscmp(type->name, L"Type") == 0, L"storm::Type was not found!");
 		assert(Size(type->size).current() == sizeof(Type),
-			L"The computed size of storm::Type is wrong: " + ::toS(Size(type->size)) + L" vs " + ::toS(sizeof(Type)));
+			L"The computed size of storm::Type is wrong: " + ::toS(Size(type->size).current()) + L" vs " + ::toS(sizeof(Type)));
 
 		// Generate our layout description for the GC:
 		nat entries = 0;

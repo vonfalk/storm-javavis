@@ -1,5 +1,5 @@
 #pragma once
-#include "Named.h"
+#include "NameSet.h"
 #include "Gc.h"
 #include "Core/TypeFlags.h"
 
@@ -12,7 +12,7 @@ namespace storm {
 	/**
 	 * Description of a type.
 	 */
-	class Type : public Named {
+	class Type : public NameSet {
 		STORM_CLASS;
 
 		// Let allocation access gcType.

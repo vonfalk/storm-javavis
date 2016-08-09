@@ -1,9 +1,7 @@
 #pragma once
 #include "Utils/Exception.h"
-
 #include "SrcPos.h"
 #include "Value.h"
-#include "ExprResult.h"
 
 namespace storm {
 
@@ -87,8 +85,8 @@ namespace storm {
 	class TypeError : public CodeError {
 	public:
 		inline TypeError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
-		inline TypeError(const SrcPos &where, const Value &expected, const ExprResult &got)
-			: CodeError(where), msg(L"Expected " + ::toS(expected) + L" but got " + ::toS(got)) {}
+		// inline TypeError(const SrcPos &where, const Value &expected, const ExprResult &got)
+		// 	: CodeError(where), msg(L"Expected " + ::toS(expected) + L" but got " + ::toS(got)) {}
 		inline TypeError(const SrcPos &where, const Value &expected, const Value &got)
 			: CodeError(where), msg(L"Expected " + ::toS(expected) + L" but got " + ::toS(got)) {}
 
@@ -123,6 +121,5 @@ namespace storm {
 	private:
 		String msg;
 	};
-
 
 }

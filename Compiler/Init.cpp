@@ -3,6 +3,10 @@
 #include "CppLoader.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Core/Map.h"
+#include "Core/Array.h"
+#include "Core/Str.h"
+#include "NameSet.h"
 
 namespace storm {
 
@@ -27,9 +31,10 @@ namespace storm {
 		// Load templates.
 		loader.loadTemplates(templates);
 
-		// Poke the Array<Value> type so that it does not go into infinite recursion when creating
-		// Types (which contain Array<Value> instances).
+		// Poke at some template types needed to instantiate a Type properly. This causes them to be
+		// properly instantiated before we report that templates are fully functional.
 		Array<Value>::stormType(e);
+		Map<Str *, NameOverloads *>::stormType(e);
 
 		// Now we can declare templates fully functional.
 		e.advance(bootTemplates);

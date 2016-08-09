@@ -32,7 +32,11 @@ namespace code {
 			align = max(align, o.align);
 
 			// Align and add.
-			size = roundUp(size, align) + o.size;
+			// Note: our alignment is not always important; consider the following example:
+			// int, bool, bool, where the booleans do not have to be aligned to 4 bytes like
+			// the int. If we had used 'align' instead of 'o.align' we would have aligned them
+			// too strict.
+			size = roundUp(size, o.align) + o.size;
 			return *this;
 		}
 

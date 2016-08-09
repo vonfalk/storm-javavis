@@ -14,4 +14,6 @@ namespace storm {
 		void deepCopy(CloneEnv *env);
 	};
 
+	// Output.
+	wostream &operator <<(wostream &to, const SrcPos &p);
 }
