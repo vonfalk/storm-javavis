@@ -1,8 +1,7 @@
 #pragma once
-#include "Core/Object.h"
 #include "Thread.h"
 #include "Core/Gen/CppTypes.h"
-#include "ValueArray.h"
+#include "Template.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -17,10 +16,8 @@ namespace storm {
 	class TemplateList : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
-		typedef CppTemplate::GenerateFn GenerateFn;
-
 		// Create.
-		TemplateList(Str *name, GenerateFn generate);
+		TemplateList(TemplateFn *t);
 
 		// Find an instantiaton. Generates it if neccessary.
 		Type *find(Nat *elems, Nat count);
@@ -30,11 +27,8 @@ namespace storm {
 		void forNamed(NamedFn fn);
 
 	private:
-		// Name of the template.
-		Str *name;
-
-		// Remember what we generated.
-		UNKNOWN(PTR_GC) GenerateFn generateFn;
+		// Template we're representing.
+		TemplateFn *templ;
 
 		// A node in the list.
 		struct Node;

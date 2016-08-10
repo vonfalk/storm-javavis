@@ -1,6 +1,8 @@
 #pragma once
 #include "Name.h"
 #include "Named.h"
+#include "ValueArray.h"
+#include "Core/Gen/CppTypes.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -25,7 +27,27 @@ namespace storm {
 		Str *name;
 
 		// Called when something with our name is not found. Returns null if nothing is found.
-		virtual MAYBE(Named *) STORM_FN generate(SimplePart *par);
+		virtual MAYBE(Named *) STORM_FN generate(SimplePart *part);
 	};
+
+	/**
+	 * Template generated from a function in C++.
+	 */
+	class TemplateFn : public Template {
+		STORM_CLASS;
+	public:
+		typedef CppTemplate::GenerateFn GenerateFn;
+
+		// Ctor.
+		TemplateFn(Str *name, GenerateFn fn);
+
+		// Generate function.
+		UNKNOWN(PTR_GC) GenerateFn fn;
+
+		// Generate stuff.
+		virtual MAYBE(Named *) STORM_FN generate(SimplePart *part);
+		virtual MAYBE(Type *) STORM_FN generate(ValueArray *part);
+	};
+
 
 }

@@ -49,6 +49,9 @@ namespace storm {
 		// Empty?
 		inline Bool STORM_FN empty() const { return count() == 0; }
 
+		// Erase an element.
+		void STORM_FN erase(Nat id);
+
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 

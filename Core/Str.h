@@ -34,6 +34,9 @@ namespace storm {
 		// Create from a string literal.
 		STORM_CTOR Str(const wchar *s);
 
+		// Create from a substring of a c-string.
+		Str(const wchar *from, const wchar *to);
+
 		// Create a string from a buffer.
 		Str(GcArray<wchar> *data);
 
@@ -91,7 +94,7 @@ namespace storm {
 
 			// Advance.
 			Iter &STORM_FN operator ++();
-			Iter &STORM_FN operator ++(int dummy);
+			Iter STORM_FN operator ++(int dummy);
 
 			// Compare.
 			Bool STORM_FN operator ==(const Iter &o) const;
@@ -105,21 +108,26 @@ namespace storm {
 			friend class Str;
 
 			// Create iterator to start.
-			Iter(Str *str);
+			Iter(const Str *str);
 
 			// String we're referring to.
-			Str *owner;
-			Nat index;
+			const Str *owner;
+			Nat pos;
 
 			// At the end?
 			bool atEnd() const;
 		};
 
 		// Begin and end.
-		Iter STORM_FN begin();
-		Iter STORM_FN end();
+		Iter STORM_FN begin() const;
+		Iter STORM_FN end() const;
+
+		// Substring.
+		Str *substr(Iter to);
+		Str *substr(Iter from, Iter to);
 
 	private:
+		friend class Iter;
 		friend class StrBuf;
 
 		// Data we're storing. Always null-terminated or null.
@@ -136,6 +144,9 @@ namespace storm {
 
 		// Allocate 'data'.
 		void allocData(nat count);
+
+		// Convert an iterator to a pointer.
+		wchar *toPtr(const Iter &i);
 	};
 
 }

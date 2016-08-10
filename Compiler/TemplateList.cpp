@@ -32,7 +32,7 @@ namespace storm {
 		{ 0 }, // ... at offset 0.
 	};
 
-	TemplateList::TemplateList(Str *name, GenerateFn generate) : name(name), generateFn(generate) {}
+	TemplateList::TemplateList(TemplateFn *t) : templ(t) {}
 
 	Type *TemplateList::find(Nat *elems, Nat count) {
 		TODO(L"Lock me!");
@@ -123,7 +123,7 @@ namespace storm {
 			types->push(Value(t));
 		}
 
-		Type *r = (*generateFn)(name, types);
+		Type *r = templ->generate(types);
 		assert(r, L"Invalid template usage for types " + ::toS(types));
 		return r;
 	}

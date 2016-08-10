@@ -72,8 +72,11 @@ namespace storm {
 		for (nat i = 0; i < c; i++) {
 			CppTemplate &t = world->templates[i];
 
-			if (!into[i])
-				into[i] = new (e) TemplateList(new (e) Str(t.name), t.generate);
+			if (!into[i]) {
+				Str *n = new (e) Str(t.name);
+				TemplateFn *templ = new (e) TemplateFn(n, t.generate);
+				into[i] = new (e) TemplateList(templ);
+			}
 		}
 	}
 

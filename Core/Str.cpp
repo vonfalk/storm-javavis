@@ -2,6 +2,7 @@
 #include "Str.h"
 #include "StrBuf.h"
 #include "GcType.h"
+#include "Utf.h"
 
 namespace storm {
 
@@ -25,6 +26,14 @@ namespace storm {
 		allocData(count + 1);
 		for (nat i = 0; i < count; i++)
 			data->v[i] = s[i];
+		data->v[count] = 0;
+	}
+
+	Str::Str(const wchar *from, const wchar *to) {
+		nat count = to - from;
+		allocData(count + 1);
+		for (nat i = 0; i < count; i++)
+			data->v[i] = from[i];
 		data->v[count] = 0;
 	}
 
@@ -106,7 +115,7 @@ namespace storm {
 	}
 
 	Bool Str::equals(Object *o) const {
-		if (type() != o->type())
+		if (!Object::equals(o))
 			return false;
 
 		Str *other = (Str *)o;
@@ -182,6 +191,88 @@ namespace storm {
 
 	void Str::allocData(nat count) {
 		data = runtime::allocArray<wchar>(engine(), &bufType, count);
+	}
+
+	Str::Iter Str::begin() const {
+		return Iter(this);
+	}
+
+	Str::Iter Str::end() const {
+		return Iter();
+	}
+
+	Str *Str::substr(Iter start) {
+		return substr(start, end());
+	}
+
+	wchar *Str::toPtr(const Iter &i) {
+		if (i.atEnd())
+			return data->v + data->count;
+		else if (i.owner == this)
+			return data->v + i.pos;
+		else
+			// Fallback if it is referring to the wrong object.
+			return data->v;
+	}
+
+	Str *Str::substr(Iter start, Iter end) {
+		return new (this) Str(toPtr(start), toPtr(end));
+	}
+
+	Str::Iter::Iter() : owner(null), pos(0) {}
+
+	Str::Iter::Iter(const Str *owner) : owner(owner), pos(0) {}
+
+	void Str::Iter::deepCopy(CloneEnv *env) {}
+
+	Str::Iter &Str::Iter::operator ++() {
+		if (atEnd())
+			return *this;
+
+		if (utf16::leading(owner->data->v[pos]))
+			pos += 2;
+		else
+			pos++;
+
+		return *this;
+	}
+
+	Str::Iter Str::Iter::operator ++(int dummy) {
+		Iter t = *this;
+		++*this;
+		return t;
+	}
+
+	Bool Str::Iter::operator ==(const Iter &o) const {
+		if (atEnd() || o.atEnd())
+			return atEnd() == o.atEnd();
+
+		return owner == o.owner && pos == o.pos;
+	}
+
+	Bool Str::Iter::operator !=(const Iter &o) const {
+		return !(*this == o);
+	}
+
+	// Get the value.
+	Char Str::Iter::operator *() const {
+		return v();
+	}
+
+	Char Str::Iter::v() const {
+		if (atEnd())
+			return Char(Nat(0));
+
+		wchar p = owner->data->v[pos];
+		if (utf16::leading(p)) {
+			return Char(utf16::assemble(p, owner->data->v[pos + 1]));
+		} else {
+			return Char(p);
+		}
+	}
+
+	Bool Str::Iter::atEnd() const {
+		return owner ? pos + 1 == owner->data->count : true;
 	}
 
 }

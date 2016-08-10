@@ -61,6 +61,20 @@ namespace storm {
 		data = null;
 	}
 
+	void ArrayBase::erase(Nat id) {
+		if (id >= count())
+			throw ArrayError(L"Index " + ::toS(id) + L" out of bounds (of " + ::toS(count()) + L".");
+
+		if (handle.copyFn) {
+			handle.safeDestroy(ptr(id));
+			for (nat i = id + 1; i < count(); i++)
+				handle.copyFn(ptr(i - 1), ptr(i));
+		} else {
+			memmove(ptr(id), ptr(id + 1), (count() - id - 1)*handle.size);
+		}
+		data->filled--;
+	}
+
 	void ArrayBase::toS(StrBuf *to) const {
 		*to << L"[";
 		if (count() > 1)

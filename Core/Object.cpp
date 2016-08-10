@@ -19,8 +19,10 @@ namespace storm {
 	void Object::deepCopy(CloneEnv *env) {}
 
 	Bool Object::equals(Object *o) const {
-		TODO(L"Implement me!");
-		return false;
+		if (o)
+			return type() == o->type();
+		else
+			return false;
 	}
 
 	Nat Object::hash() const {
