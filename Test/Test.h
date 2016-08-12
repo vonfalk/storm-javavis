@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Utils/Utils.h"
 #include "Utils/Exception.h"
 #include "Utils/Object.h"
 
@@ -57,39 +58,63 @@ inline std::wostream &operator <<(std::wostream &to, const TestResult &r) {
 }
 
 class Test;
+class Suite;
 
 class Tests : Singleton {
 public:
-	inline Tests() : only(null) {}
+	inline Tests() : singleSuite(null), singleTest(null) {}
 
-	//Run all tests, returns the statistics.
+	// Run all tests, returns the statistics.
 	static TestResult run();
 
 private:
+	typedef map<int, Suite *> SuiteMap;
+	SuiteMap suites;
+
 	typedef map<String, Test *> TestMap;
 	TestMap tests;
 
-	Test *only;
+	Suite *singleSuite;
+	Test *singleTest;
 
 	static Tests &instance();
-	static void addTest(Test *t, bool single); //Takes ownership of the test.
+	static void addTest(Test *t, bool single);
+	static void addSuite(Suite *t, bool single);
 
 	friend class Test;
+	friend class Suite;
+
+	void runTests(TestResult &result);
+	void runSuite(Suite *s, TestResult &result);
+	int countSuite(Suite *s);
 };
 
-//Base class for all the tests. Keeps track of instances.
+// Base class for all test suites.
+class Suite : NoCopy {
+public:
+	const String name;
+	const int order;
+
+protected:
+	Suite(const String &name, int order, bool single, bool ignore) : name(name), order(order) {
+		if (!ignore) {
+			Tests::instance().addSuite(this, single);
+		}
+	}
+};
+
+// Base class for all the tests. Keeps track of instances.
 class Test : NoCopy {
 public:
 	virtual TestResult run() const = 0;
 
-	inline const String &getName() const { return name; }
+	const String name;
+	Suite *const suite;
+
 protected:
-	Test(const String &name, bool single=false) : name(name) {
+	Test(const String &name, Suite *suite = null, bool single = false) : name(name), suite(suite) {
 		Tests::instance().addTest(this, single);
 	}
-
-private:
-	String name;
 };
 
 
@@ -117,13 +142,37 @@ void verifyNeq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	std::wcout << L"Crashed " << expr << L": " << error << std::endl; \
 	__result__.crashed++
 
-#define DEFINE_TEST(name, single)		\
-	class name : public Test {			\
-	public:								\
-	virtual TestResult run() const;		\
-	private:							\
-	name() : Test(_T(#name), single) {}	\
-	static name instance;				\
+#define DEFINE_SUITE(name, order, single, disable)			\
+	class name : public Suite {								\
+	private:												\
+	name() : Suite(WIDEN(#name), order, single, disable) {}	\
+	public:													\
+	static Suite &instance() {								\
+		static name s;										\
+		return s;											\
+	}														\
+	}
+
+#define EXPAND(x) x // Hack for msvc
+#define PICK_FIRST(a, ...) a
+#define PICK_NO_3(a, b, c, ...) c
+#define NUM_ARGS(...) EXPAND(PICK_NO_3(__VA_ARGS__, 1, 0))
+
+#define SUITE_OR_NULL_0(dummy)     null
+#define SUITE_OR_NULL_1(dummy, type) &type::instance()
+
+#define SUITE_OR_NULL3(cond, ...) EXPAND(SUITE_OR_NULL_ ## cond (__VA_ARGS__))
+#define SUITE_OR_NULL2(cond, ...) SUITE_OR_NULL3(cond, __VA_ARGS__)
+#define SUITE_OR_NULL(...) SUITE_OR_NULL2(NUM_ARGS(__VA_ARGS__), __VA_ARGS__)
+
+// Name is the first parameter. It has to be inside of VA_ARGS for SUITE_OR_NULL to work...
+#define DEFINE_TEST(name, suite, single)			\
+	class name : public Test {						\
+	public:											\
+	virtual TestResult run() const;					\
+	private:										\
+	name() : Test(STRING(name), suite, single) {}	\
+	static name instance;							\
 	}
 
 
@@ -199,20 +248,30 @@ void verifyNeq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 		OUTPUT_ERROR(#expr, "unknown crash");	\
 	}
 
+#define SUITE(name, order)						\
+	DEFINE_SUITE(name, order, false, false)
 
-#define BEGIN_TEST(name)						\
-	DEFINE_TEST(name, false);					\
+#define SUITE_(name, order)						\
+	DEFINE_SUITE(name, order, true, false)
+
+#define SUITEX(name, order)						\
+	DEFINE_SUITE(name, order, false, true)
+
+#define BEGIN_TEST_HELP(name, suite, single)	\
+	DEFINE_TEST(name, suite, single);			\
 	name name::instance;						\
 	TestResult name::run() const {				\
 	TestResult __result__; do
 
-#define BEGIN_TEST_(name)						\
-	DEFINE_TEST(name, true);					\
-	name name::instance;						\
-	TestResult name::run() const {				\
-	TestResult __result__; do
+// Parameters: name, suite (suite is optional).
+#define BEGIN_TEST(...)											\
+	BEGIN_TEST_HELP(PICK_FIRST(__VA_ARGS__), SUITE_OR_NULL(__VA_ARGS__), false)
 
-#define BEGIN_TESTX(name)						\
+// Parameters: name, suite (suite is optional).
+#define BEGIN_TEST_(...)										\
+	BEGIN_TEST_HELP(PICK_FIRST(__VA_ARGS__), SUITE_OR_NULL(__VA_ARGS__), true)
+
+#define BEGIN_TESTX(name, ...)					\
 	TestResult name() {							\
 	TestResult __result__; do
 

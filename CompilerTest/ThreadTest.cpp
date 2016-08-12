@@ -54,7 +54,7 @@ static void threadFn() {
 	waitSema.up();
 }
 
-BEGIN_TEST(ThreadTest) {
+BEGIN_TEST(ThreadTest, GcThreads) {
 	// Test so that other threads are properly GC:d.
 	Engine &e = *gEngine;
 
@@ -78,7 +78,7 @@ static void uthreadFn() {
 	threadOk = checkList(start, count);
 }
 
-BEGIN_TEST(UThreadTest) {
+BEGIN_TEST(UThreadTest, GcThreads) {
 	Engine &e = *gEngine;
 
 	threadOk = false;

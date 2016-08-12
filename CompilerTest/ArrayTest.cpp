@@ -3,7 +3,7 @@
 #include "Core/Array.h"
 #include "Core/Str.h"
 
-BEGIN_TEST(ArrayTest) {
+BEGIN_TEST(ArrayTest, Runtime) {
 	Engine &e = *gEngine;
 
 	Array<Str *> *t = new (e) Array<Str *>();

@@ -3,7 +3,7 @@
 #include "Core/Io/Url.h"
 #include "Core/Str.h"
 
-BEGIN_TEST(UrlTest) {
+BEGIN_TEST(UrlTest, Runtime) {
 	Engine &e = *gEngine;
 
 	Url *root = parsePath(e, L"/home/dev/other/");

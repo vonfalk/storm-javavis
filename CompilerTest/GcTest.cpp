@@ -39,7 +39,7 @@ static bool checkList(Link *first, nat n) {
 	return at == null;
 }
 
-BEGIN_TEST(GcTest1) {
+BEGIN_TEST(GcTest1, GcScan) {
 	Engine &e = *gEngine;
 
 	// Allocate this many nodes to make sure MPS will try to GC at least once!
@@ -53,7 +53,7 @@ BEGIN_TEST(GcTest1) {
 /**
  * Long-running stresstest of the GC logic. Too slow for regular use, but good when debugging.
  */
-BEGIN_TESTX(GcTest2) {
+BEGIN_TEST(GcTest2, Stress) {
 	Engine &e = *gEngine;
 
 	// Allocate this many nodes.

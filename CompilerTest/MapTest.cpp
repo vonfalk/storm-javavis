@@ -3,7 +3,7 @@
 #include "Core/Map.h"
 #include "Core/Str.h"
 
-BEGIN_TEST(MapTest) {
+BEGIN_TEST(MapTest, Runtime) {
 	Engine &e = *gEngine;
 
 	{
