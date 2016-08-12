@@ -87,9 +87,18 @@ namespace storm {
 		// How far along in the boot process?
 		BootStatus bootStatus;
 
-		// The one and only pointer handle, along with its root.
-		Handle *pHandle;
-		Gc::Root *pHandleRoot;
+		/**
+		 * GC:d objects.
+		 */
+		struct GcRoot {
+			// The one and only pointer handle, along with its root.
+			Handle *pHandle;
+		};
+
+		GcRoot o;
+
+		// Root for GcRoot.
+		Gc::Root *objRoot;
 	};
 
 }

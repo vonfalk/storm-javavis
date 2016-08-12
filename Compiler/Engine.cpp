@@ -34,9 +34,13 @@ namespace storm {
 
 	Engine::Engine(const Path &root, ThreadMode mode) :
 		gc(defaultArena, defaultFinalizer), cppTypes(gc), cppTemplates(gc),
-		cppThreads(gc), pHandle(null), pHandleRoot(null) {
+		cppThreads(gc), objRoot(null) {
 
 		bootStatus = bootNone;
+
+		// Initialize the roots we need.
+		memset(&o, 0, sizeof(GcRoot));
+		objRoot = gc.createRoot(&o, sizeof(GcRoot) / sizeof(void *));
 
 		assert(Compiler::identifier == 0, L"Invalid ID for the compiler thread. Check CppTypes for errors!");
 
@@ -64,9 +68,7 @@ namespace storm {
 		// We need to remove the root this array implies before the Gc is destroyed.
 		cppTypes.clear();
 
-		if (pHandleRoot) {
-			gc.destroyRoot(pHandleRoot);
-		}
+		gc.destroyRoot(objRoot);
 	}
 
 	Type *Engine::cppType(Nat id) const {
@@ -125,18 +127,17 @@ namespace storm {
 	}
 
 	const Handle &Engine::ptrHandle() {
-		if (!pHandle) {
-			pHandleRoot = gc.createRoot(&pHandle, 1);
-			pHandle = new (*this) Handle();
-			pHandle->size = sizeof(void *);
-			pHandle->gcArrayType = &ptrArray;
-			pHandle->copyFn = null; // No special function, use memcpy.
-			pHandle->deepCopyFn = &objDeepCopy;
-			pHandle->toSFn = &objToS;
-			pHandle->hashFn = &objHash;
-			pHandle->equalFn = &objEqual;
+		if (!o.pHandle) {
+			o.pHandle = new (*this) Handle();
+			o.pHandle->size = sizeof(void *);
+			o.pHandle->gcArrayType = &ptrArray;
+			o.pHandle->copyFn = null; // No special function, use memcpy.
+			o.pHandle->deepCopyFn = &objDeepCopy;
+			o.pHandle->toSFn = &objToS;
+			o.pHandle->hashFn = &objHash;
+			o.pHandle->equalFn = &objEqual;
 		}
-		return *pHandle;
+		return *o.pHandle;
 	}
 
 	void Engine::advance(BootStatus to) {
