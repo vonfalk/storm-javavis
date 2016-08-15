@@ -11,13 +11,16 @@ namespace storm {
 	class CppLoader : NoCopy {
 	public:
 		// Create, note which set of functions to be loaded.
-		CppLoader(Engine &e, const CppWorld *world);
+		CppLoader(Engine &e, const CppWorld *world, RootArray<Type> &types, RootArray<TemplateList> &templ);
 
 		// Load all types into a RootArray. This makes it possible to create instances of these types from C++.
-		void loadTypes(RootArray<Type> &into);
+		void loadTypes();
 
 		// Load all templates into a RootArray. This makes template instantiations possible.
-		void loadTemplates(RootArray<TemplateList> &into);
+		void loadTemplates();
+
+		// Insert types and templates into their correct packages.
+		void loadPackages();
 
 	private:
 		// Engine to load into.
@@ -25,6 +28,12 @@ namespace storm {
 
 		// Source.
 		const CppWorld *world;
+
+		// Load types into here.
+		RootArray<Type> &types;
+
+		// Load templates into here.
+		RootArray<TemplateList> &templates;
 
 		// Get the number of types.
 		nat typeCount() const;

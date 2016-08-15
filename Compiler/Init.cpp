@@ -16,7 +16,7 @@ namespace storm {
 
 	void initTypes(Engine &e, RootArray<Type> &types, RootArray<TemplateList> &templates) {
 		const CppWorld *world = cppWorld();
-		CppLoader loader(e, world);
+		CppLoader loader(e, world, types, templates);
 
 		types.resize(1);
 
@@ -24,12 +24,12 @@ namespace storm {
 		types[0] = Type::createType(e, &world->types[0]);
 
 		// Then we can go on loading the rest of the types.
-		loader.loadTypes(types);
+		loader.loadTypes();
 
 		e.advance(bootTypes);
 
 		// Load templates.
-		loader.loadTemplates(templates);
+		loader.loadTemplates();
 
 		// Poke at some template types needed to instantiate a Type properly. This causes them to be
 		// properly instantiated before we report that templates are fully functional.
@@ -41,6 +41,9 @@ namespace storm {
 
 		// Do the late initialization on all previously created types.
 		e.forNamed(&lateInit);
+
+		// Insert everything into their packages.
+		loader.loadPackages();
 	}
 
 }

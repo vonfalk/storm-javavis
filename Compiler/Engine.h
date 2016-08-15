@@ -11,6 +11,8 @@
 namespace storm {
 
 	class Thread;
+	class Package;
+	class NameSet;
 
 	/**
 	 * Defines the root object of the compiler. This object contains everything needed by the
@@ -60,6 +62,7 @@ namespace storm {
 
 		// Current boot status.
 		inline BootStatus boot() const { return bootStatus; }
+		inline bool has(BootStatus s) { return boot() >= s; }
 
 		// Advance boot status.
 		void advance(BootStatus to);
@@ -73,6 +76,20 @@ namespace storm {
 
 		// The threadgroup which all threads spawned from here shall belong to.
 		os::ThreadGroup threadGroup;
+
+		/**
+		 * Packages.
+		 */
+
+		// Get the root package.
+		Package *package();
+
+		// Get a package relative to the root. If 'create', the package will be created. No
+		// parameters are supported in the name.
+		Package *package(SimpleName *name, bool create = false);
+
+		// Find a NameSet relative to the root. If 'create', creates packages along the way.
+		NameSet *nameSet(SimpleName *name, bool create = false);
 
 	private:
 		// All C++ types.
@@ -93,6 +110,9 @@ namespace storm {
 		struct GcRoot {
 			// The one and only pointer handle, along with its root.
 			Handle *pHandle;
+
+			// Root package.
+			Package *root;
 		};
 
 		GcRoot o;

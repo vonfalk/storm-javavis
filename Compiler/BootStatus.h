@@ -16,6 +16,9 @@ namespace storm {
 		// Template types can be created.
 		bootTemplates,
 
+		// Packages are working and populated.
+		bootPackages,
+
 		// ...
 
 		// Everything is working.

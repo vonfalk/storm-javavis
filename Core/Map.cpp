@@ -336,7 +336,6 @@ namespace storm {
 			return Info::free;
 
 		nat slot = primarySlot(hash);
-
 		if (info->v[slot].status == Info::free)
 			return Info::free;
 

@@ -2,6 +2,7 @@
 #include "Name.h"
 #include "Core/CloneEnv.h"
 #include "Core/StrBuf.h"
+#include "Core/Str.h"
 
 namespace storm {
 
@@ -148,6 +149,30 @@ namespace storm {
 			for (nat i = 1; i < parts->count(); i++)
 				*to << L"." << parts->at(i);
 		}
+	}
+
+
+	/**
+	 * Parsing.
+	 */
+
+	SimpleName *parseSimpleName(Str *str) {
+		return parseSimpleName(str->engine(), str->c_str());
+	}
+
+	SimpleName *parseSimpleName(Engine &e, const wchar *str) {
+		SimpleName *r = new (e) SimpleName();
+
+		const wchar *last = str;
+		for (const wchar *at = str; *at; at++) {
+			if (*at == '.') {
+				if (last < at)
+					r->add(new (e) Str(last, at));
+				last = at + 1;
+			}
+		}
+
+		return r;
 	}
 
 }

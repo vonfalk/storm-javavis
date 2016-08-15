@@ -34,7 +34,7 @@ namespace storm {
 	Bool Package::loadAll() {
 		// Do not load things before the compiler has properly started. As everything is a chaos at
 		// that time, loading anything external will most likely fail. So we retry later.
-		if (engine().boot() < bootDone)
+		if (!engine().has(bootDone))
 			return false;
 
 		// Nothing to load.

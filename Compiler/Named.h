@@ -9,6 +9,7 @@ namespace storm {
 
 	class Named;
 	class SimpleName;
+	class SimplePart;
 
 	/**
 	 * Interface for objects that can look up names.
@@ -18,7 +19,8 @@ namespace storm {
 	public:
 		STORM_CTOR NameLookup();
 
-		// TODO: add the find() api here!
+		// Find the specified NamePart in here. Returns null if not found.
+		virtual MAYBE(Named *) STORM_FN find(SimplePart *part);
 
 		// Get the parent object to this lookup, or null if none.
 		virtual NameLookup *STORM_FN parent() const;

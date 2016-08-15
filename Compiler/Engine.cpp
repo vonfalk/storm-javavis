@@ -2,7 +2,9 @@
 #include "Engine.h"
 #include "Init.h"
 #include "Type.h"
+#include "Package.h"
 #include "Core/Thread.h"
+#include "Core/Str.h"
 #include "Core/StrBuf.h"
 #include "Core/Handle.h"
 
@@ -143,6 +145,64 @@ namespace storm {
 	void Engine::advance(BootStatus to) {
 		assert(to >= bootStatus, L"Trying to devolve the boot status.");
 		bootStatus = to;
+	}
+
+	Package *Engine::package() {
+		if (!o.root) {
+			assert(has(bootTypes), L"Can not create packages yet.");
+			o.root = new (*this) Package(new (*this) Str(L"<root>"));
+		}
+		return o.root;
+	}
+
+	Package *Engine::package(SimpleName *name, bool create) {
+		Package *now = package();
+
+		for (nat i = 0; i < name->count(); i++) {
+			SimplePart *p = name->at(i);
+
+			// Not supported.
+			if (p->params->any())
+				return null;
+
+			Named *next = now->find(p);
+			if (!next) {
+				Package *pkg = new (*this) Package(p->name);
+				now->add(pkg);
+				now = pkg;
+			} else if (Package *p = as<Package>(next)) {
+				now = p;
+			} else {
+				return null;
+			}
+		}
+
+		return now;
+	}
+
+	NameSet *Engine::nameSet(SimpleName *name, bool create) {
+		NameSet *now = package();
+
+		for (nat i = 0; i < name->count(); i++) {
+			SimplePart *p = name->at(i);
+
+			// Not supported.
+			if (p->params->any())
+				return null;
+
+			Named *next = now->find(p);
+			if (!next) {
+				Package *pkg = new (*this) Package(p->name);
+				now->add(pkg);
+				now = pkg;
+			} else if (NameSet *p = as<NameSet>(next)) {
+				now = p;
+			} else {
+				return null;
+			}
+		}
+
+		return now;
 	}
 
 

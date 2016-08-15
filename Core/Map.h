@@ -276,7 +276,7 @@ namespace storm {
 
 		// Contains a key?
 		Bool has(const K &k) {
-			hasRaw(&k);
+			return hasRaw(&k);
 		}
 
 		// Get a value. Throws if not found.

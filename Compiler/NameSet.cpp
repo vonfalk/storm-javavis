@@ -88,7 +88,7 @@ namespace storm {
 		loading = false;
 		nextAnon = null;
 
-		if (engine().boot() >= bootTemplates)
+		if (engine().has(bootTemplates))
 			lateInit();
 	}
 
@@ -158,10 +158,10 @@ namespace storm {
 	}
 
 	Named *NameSet::tryFind(SimplePart *part) {
-		NameOverloads *found = overloads->get(part->name, null);
-		if (!found)
+		if (!overloads->has(part->name))
 			return false;
 
+		NameOverloads *found = overloads->get(part->name);
 		Named *result = part->choose(found);
 		if (result)
 			return result;

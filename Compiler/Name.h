@@ -133,4 +133,9 @@ namespace storm {
 		// Data.
 		Array<SimplePart *> *parts;
 	};
+
+	// Parse a string containing a dot-separated name.
+	SimpleName *STORM_FN parseSimpleName(Str *str);
+	SimpleName *parseSimpleName(Engine &e, const wchar *str);
+
 }

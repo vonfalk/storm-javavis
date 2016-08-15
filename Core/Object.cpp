@@ -41,11 +41,15 @@ namespace storm {
 	}
 
 	wostream &operator <<(wostream &to, const Object *o) {
-		return to << o->toS()->c_str();
+		if (o) {
+			return to << o->toS()->c_str();
+		} else {
+			return to << L"<null>";
+		}
 	}
 
 	wostream &operator <<(wostream &to, const Object &o) {
-		return to << o.toS()->c_str();
+		return operator <<(to, &o);
 	}
 
 }

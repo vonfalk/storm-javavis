@@ -14,9 +14,13 @@ namespace storm {
 		return parentLookup;
 	}
 
+	Named *NameLookup::find(SimplePart *part) {
+		return null;
+	}
+
 
 	Named::Named(Str *name) : name(name), flags(namedDefault) {
-		if (engine().boot() >= bootTemplates) {
+		if (engine().has(bootTemplates)) {
 			params = new (this) Array<Value>();
 		}
 	}

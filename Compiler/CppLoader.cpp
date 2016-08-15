@@ -2,11 +2,13 @@
 #include "CppLoader.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Package.h"
 #include "Core/Str.h"
 
 namespace storm {
 
-	CppLoader::CppLoader(Engine &e, const CppWorld *world) : e(e), world(world) {}
+	CppLoader::CppLoader(Engine &e, const CppWorld *world, RootArray<Type> &types, RootArray<TemplateList> &templ) :
+		e(e), world(world), types(types), templates(templ) {}
 
 	nat CppLoader::typeCount() const {
 		nat n;
@@ -22,9 +24,9 @@ namespace storm {
 		return n;
 	}
 
-	void CppLoader::loadTypes(RootArray<Type> &into) {
+	void CppLoader::loadTypes() {
 		nat c = typeCount();
-		into.resize(c);
+		types.resize(c);
 
 		// Note: we do not set any names yet, as the Str type is not neccessarily available until
 		// after we've created the types here.
@@ -32,8 +34,8 @@ namespace storm {
 			CppType &type = world->types[i];
 
 			// The array could be partially filled.
-			if (into[i] == null) {
-				into[i] = new (e) Type(null, type.flags, Size(type.size), createGcType(&type));
+			if (types[i] == null) {
+				types[i] = new (e) Type(null, type.flags, Size(type.size), createGcType(&type));
 			}
 		}
 
@@ -42,10 +44,10 @@ namespace storm {
 			CppType &type = world->types[i];
 
 			// Just to make sure...
-			if (!into[i])
+			if (!types[i])
 				break;
 
-			into[i]->name = new (e) Str(type.name);
+			types[i]->name = new (e) Str(type.name);
 		}
 	}
 
@@ -65,19 +67,33 @@ namespace storm {
 		return t;
 	}
 
-	void CppLoader::loadTemplates(RootArray<TemplateList> &into) {
+	void CppLoader::loadTemplates() {
 		nat c = templateCount();
-		into.resize(c);
+		templates.resize(c);
 
 		for (nat i = 0; i < c; i++) {
 			CppTemplate &t = world->templates[i];
 
-			if (!into[i]) {
+			if (!templates[i]) {
 				Str *n = new (e) Str(t.name);
 				TemplateFn *templ = new (e) TemplateFn(n, t.generate);
-				into[i] = new (e) TemplateList(templ);
+				templates[i] = new (e) TemplateList(templ);
 			}
 		}
+	}
+
+	void CppLoader::loadPackages() {
+		nat c = typeCount();
+		for (nat i = 0; i < c; i++) {
+			CppType &t = world->types[i];
+
+			SimpleName *pkgName = parseSimpleName(e, t.pkg);
+			NameSet *into = e.nameSet(pkgName);
+			assert(into, L"Failed to find the package " + String(t.pkg));
+			into->add(types[i]);
+		}
+
+		PLN(L"Loaded types!");
 	}
 
 }

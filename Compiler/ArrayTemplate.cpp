@@ -17,7 +17,7 @@ namespace storm {
 	}
 
 	ArrayType::ArrayType(Str *name, Type *contents) : Type(name, typeClass), contents(contents) {
-		if (engine.boot() >= bootTemplates)
+		if (engine.has(bootTemplates))
 			lateInit();
 
 		setSuper(ArrayBase::stormType(engine));
