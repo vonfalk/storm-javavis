@@ -22,6 +22,9 @@ namespace storm {
 		// GcType for arrays of the type.
 		GcType *gcArrayType;
 
+		// Is this type hashed based off its pointer somehow?
+		bool locationHash;
+
 		// Copy constructor. Acts as an assignment (ie. never deeply copies heap-allocated types).
 		typedef void (*CopyFn)(void *dest, const void *src);
 		UNKNOWN(PTR_GC) CopyFn copyFn;
@@ -44,7 +47,7 @@ namespace storm {
 				(*destroyFn)(obj);
 		}
 
-		// Deep copy an instance of this type.
+		// Deep copy an instance of this type. May be null.
 		typedef void (*DeepCopyFn)(void *obj, CloneEnv *env);
 		UNKNOWN(PTR_GC) DeepCopyFn deepCopyFn;
 

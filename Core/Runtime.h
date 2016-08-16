@@ -4,6 +4,7 @@
 
 namespace storm {
 	struct GcType;
+	class RootObject;
 
 	namespace runtime {
 
@@ -26,16 +27,16 @@ namespace storm {
 		const Handle &typeHandle(Type *t);
 
 		// Get the type of an allocation.
-		Type *typeOf(const Object *o);
+		Type *typeOf(const RootObject *o);
 
 		// Get the GcType for an allocation.
 		const GcType *gcTypeOf(const void *alloc);
 
 		// Is type A an instance of type B?
-		bool isA(const Object *a, const Type *b);
+		bool isA(const RootObject *a, const Type *b);
 
 		// Get the engine object for an allocation.
-		Engine &allocEngine(const Object *o);
+		Engine &allocEngine(const RootObject *o);
 
 		// Allocate an object of the given type (size used for sanity checking).
 		void *allocObject(size_t size, Type *type);

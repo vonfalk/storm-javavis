@@ -1,5 +1,5 @@
 #pragma once
-#include "Object.h"
+#include "RootObject.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -8,15 +8,9 @@ namespace storm {
 
 	/**
 	 * Root object for threaded objects. This object acts like 'Object' when the object is
-	 * associated with a statically named thread. In C++, this object inherits from Object so that
-	 * we do not have to duplicate a lot of code, however this is hidden in Storm and the as<>
-	 * operator. Otherwise, it would be possible to call any member function of 'Object' in the
-	 * wrong threading context by simply casting to 'Object' first.
-	 *
-	 * TODO: Should this object have a different public interface compared to Object? For example,
-	 * should the 'equals' exist here? Clone (implemented as a no-op)?
+	 * associated with a statically named thread.
 	 */
-	class TObject : public STORM_HIDDEN(Object) {
+	class TObject : public STORM_HIDDEN(RootObject) {
 		STORM_CLASS;
 	public:
 		// Create an object that should live on 'thread'.
@@ -27,22 +21,6 @@ namespace storm {
 
 		// The thread we should be running on.
 		Thread *thread;
-
-		/**
-		 * Overrides for the parts different from Object:
-		 */
-
-		// Equality check. This may be called from the 'wrong' thread, so this should not be
-		// overloadable in Storm.
-		Bool STORM_FN equals(Object *o) const;
-
-		// Hash function. May be called from the 'wrong' thread, so it should not be overloadable in
-		// Storm.
-		Nat STORM_FN hash() const;
-
-		/**
-		 * Re-implementation of the public interface, as the Object base class is hidden from Storm.
-		 */
 
 		// Convert to string.
 		virtual Str *STORM_FN toS() const;

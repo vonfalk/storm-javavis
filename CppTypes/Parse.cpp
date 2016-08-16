@@ -301,7 +301,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	// Are we interested in this class at all?
 	if (tok.skipIf(L"STORM_CLASS")) {
 		type->valueType = false;
-	} else if (tok.skipIf(L"STORM_OBJ_CLASS")) {
+	} else if (tok.skipIf(L"STORM_ROOT_CLASS")) {
 		type->valueType = false;
 	} else if (tok.skipIf(L"STORM_VALUE")) {
 		type->valueType = true;

@@ -30,7 +30,7 @@
 #define STORM_TYPE_DECL							\
 	static const Nat stormTypeId;				\
 	static Type *stormType(Engine &e);			\
-	static Type *stormType(const Object *o);
+	static Type *stormType(const RootObject *o);
 
 /**
  * Common parts for all heap-allocated objects.
@@ -39,13 +39,13 @@
 	STORM_COMMON														\
 	static inline void *operator new (size_t s, Engine &e) { return storm::runtime::allocObject(s, stormType(e)); } \
 	static inline void operator delete (void *m, Engine &e) {}			\
-	static inline void *operator new (size_t s, const Object *o) { return storm::runtime::allocObject(s, stormType(o)); } \
-	static inline void operator delete (void *m, const Object *o) {}
+	static inline void *operator new (size_t s, const RootObject *o) { return storm::runtime::allocObject(s, stormType(o)); } \
+	static inline void operator delete (void *m, const RootObject *o) {}
 
 /**
- * Special case for storm::Object.
+ * Special case for storm::RootObject.
  */
-#define STORM_OBJ_CLASS							\
+#define STORM_ROOT_CLASS						\
 	public:										\
 	STORM_TYPE_DECL								\
 	STORM_OBJ_COMMON							\
@@ -58,8 +58,8 @@
 #define STORM_SPECIAL													\
 	public:																\
 	STORM_OBJ_COMMON													\
-	static Type *stormType(const Object *o) { return stormType(o->engine()); } \
-	using Object::toS;													\
+	static Type *stormType(const RootObject *o) { return stormType(o->engine()); } \
+	using RootObject::toS;													\
 	private:
 
 /**
@@ -71,7 +71,7 @@
 	public:										\
 	STORM_TYPE_DECL								\
 	STORM_OBJ_COMMON							\
-	using Object::toS;							\
+	using RootObject::toS;						\
 	private:
 
 // Mark a value.

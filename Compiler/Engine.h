@@ -71,8 +71,9 @@ namespace storm {
 		typedef void (*NamedFn)(Named *);
 		void forNamed(NamedFn fn);
 
-		// Get the one and only pointer handle.
-		const Handle &ptrHandle();
+		// Get the one and only pointer handle for Object and TObject.
+		const Handle &objHandle();
+		const Handle &tObjHandle();
 
 		// The threadgroup which all threads spawned from here shall belong to.
 		os::ThreadGroup threadGroup;
@@ -108,8 +109,9 @@ namespace storm {
 		 * GC:d objects.
 		 */
 		struct GcRoot {
-			// The one and only pointer handle, along with its root.
-			Handle *pHandle;
+			// Handles for Object and TObject.
+			Handle *objHandle;
+			Handle *tObjHandle;
 
 			// Root package.
 			Package *root;

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Core/Str.h"
 #include "Core/Handle.h"
 #include "Core/Gen/CppTypes.h"
 
@@ -23,19 +24,19 @@ namespace storm {
 	}
 
 	Type::Type(Str *name, TypeFlags flags) :
-		NameSet(name), engine(Object::engine()), gcType(null), tHandle(null), typeFlags(flags) {
+		NameSet(name), engine(RootObject::engine()), gcType(null), tHandle(null), typeFlags(flags & ~typeCpp) {
 
 		init();
 	}
 
 	Type::Type(Str *name, Array<Value> *params, TypeFlags flags) :
-		NameSet(name, params), engine(Object::engine()), gcType(null), tHandle(null), typeFlags(flags) {
+		NameSet(name, params), engine(RootObject::engine()), gcType(null), tHandle(null), typeFlags(flags & ~typeCpp) {
 
 		init();
 	}
 
 	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType) :
-		NameSet(name), engine(Object::engine()), gcType(gcType), tHandle(null), typeFlags(flags) {
+		NameSet(name), engine(RootObject::engine()), gcType(gcType), tHandle(null), typeFlags(flags | typeCpp) {
 
 		gcType->type = this;
 		init();
@@ -43,7 +44,9 @@ namespace storm {
 
 	// We need to set gcType->type first, therefore we call setMyType!
 	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) :
-		NameSet(setMyType(null, this, gcType, e)), engine(e), gcType(gcType), tHandle(null), typeFlags(typeClass) {
+		NameSet(setMyType(null, this, gcType, e)), engine(e), gcType(gcType),
+		tHandle(null), typeFlags(typeClass | typeCpp) {
+
 		init();
 	}
 
@@ -73,6 +76,8 @@ namespace storm {
 
 		if (!chain) {
 			chain = new (this) TypeChain(this);
+			if (!value())
+				setSuper(Object::stormType(engine));
 		}
 	}
 
@@ -112,18 +117,34 @@ namespace storm {
 	void Type::setSuper(Type *to) {
 		if (!chain)
 			chain = new (this) TypeChain(this);
+
+		// Nothing to do?
+		if (to == chain->super())
+			return;
+
+		// Which thread to use?
+		Type *tObj = TObject::stormType(engine);
+		if (to->chain == null || tObj->chain == null || !to->chain->isA(tObj)) {
+			useThread = null;
+		} else if (to != tObj) {
+			useThread = to->useThread;
+			assert(useThread, L"No thread on a threaded object!");
+		}
+
+		// Set the type-chain properly.
 		chain->super(to);
 
 		// For now, this is sufficient.
-		if (!gcType)
+		// TODO: Propagate changes to any child types.
+		if ((typeFlags & typeCpp) != typeCpp)
 			gcType = engine.gc.allocType(to->gcType);
 	}
 
-	const GcType *Type::gcArrayType() const {
-		if (value())
-			return gcType;
-		else
-			return engine.ptrHandle().gcArrayType;
+	void Type::setThread(NamedThread *thread) {
+		useThread = thread;
+		setSuper(TObject::stormType(engine));
+
+		// TODO: Propagate the current thread to any child types.
 	}
 
 	const Handle &Type::handle() {
@@ -142,9 +163,12 @@ namespace storm {
 			// For now: we do not have anything that needs special care when being copied, so we're
 			// fine with the defaults.
 			return h;
+		} else if (useThread) {
+			// Standard tObject handle.
+			return &engine.tObjHandle();
 		} else {
 			// Standard pointer handle.
-			return &engine.ptrHandle();
+			return &engine.objHandle();
 		}
 	}
 

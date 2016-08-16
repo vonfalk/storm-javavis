@@ -3,6 +3,7 @@
 #include "Init.h"
 #include "Type.h"
 #include "Package.h"
+#include "Hash.h"
 #include "Core/Thread.h"
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
@@ -136,18 +137,54 @@ namespace storm {
 		return ao->equals(bo);
 	}
 
-	const Handle &Engine::ptrHandle() {
-		if (!o.pHandle) {
-			o.pHandle = new (*this) Handle();
-			o.pHandle->size = sizeof(void *);
-			o.pHandle->gcArrayType = &ptrArray;
-			o.pHandle->copyFn = null; // No special function, use memcpy.
-			o.pHandle->deepCopyFn = &objDeepCopy;
-			o.pHandle->toSFn = &objToS;
-			o.pHandle->hashFn = &objHash;
-			o.pHandle->equalFn = &objEqual;
+	const Handle &Engine::objHandle() {
+		if (!o.objHandle) {
+			o.objHandle = new (*this) Handle();
+			o.objHandle->size = sizeof(void *);
+			o.objHandle->locationHash = false;
+			o.objHandle->gcArrayType = &ptrArray;
+			o.objHandle->copyFn = null; // No special function, use memcpy.
+			o.objHandle->deepCopyFn = &objDeepCopy;
+			o.objHandle->toSFn = &objToS;
+			o.objHandle->hashFn = &objHash;
+			o.objHandle->equalFn = &objEqual;
 		}
-		return *o.pHandle;
+		return *o.objHandle;
+	}
+
+	static void tObjToS(const void *obj, StrBuf *to) {
+		TODO(L"Call to another thread here!");
+		const TObject *o = *(const TObject **)obj;
+		*to << o;
+	}
+
+	static Nat tObjHash(const void *obj) {
+		const void *ptr = *(const void **)obj;
+		if (sizeof(ptr) == sizeof(Nat))
+			return natHash(Nat(ptr));
+		else
+			return wordHash(Word(ptr));
+	}
+
+	static Bool tObjEqual(const void *a, const void *b) {
+		const void *aa = *(const void **)a;
+		const void *bb = *(const void **)b;
+		return aa == bb;
+	}
+
+	const Handle &Engine::tObjHandle() {
+		if (!o.tObjHandle) {
+			o.tObjHandle = new (*this) Handle();
+			o.tObjHandle->size = sizeof(void *);
+			o.objHandle->locationHash = true;
+			o.tObjHandle->gcArrayType = &ptrArray;
+			o.tObjHandle->copyFn = null; // No special function, use memcpy.
+			o.tObjHandle->deepCopyFn = null; // No need for deepCopy.
+			o.tObjHandle->toSFn = &tObjToS;
+			o.tObjHandle->hashFn = &tObjHash;
+			o.tObjHandle->equalFn = &tObjEqual;
+		}
+		return *o.tObjHandle;
 	}
 
 	void Engine::advance(BootStatus to) {

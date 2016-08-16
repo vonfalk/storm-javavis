@@ -1,4 +1,5 @@
 #pragma once
+#include "RootObject.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -16,40 +17,17 @@ namespace storm {
 	 * - A destructor has been *explicitly declared* in a class or any of its base- or derived classes.
 	 * - A destructor has been *explicitly declared* in a member, which is stored by value.
 	 */
-	class Object {
-		STORM_OBJ_CLASS;
+	class Object : public STORM_HIDDEN(RootObject) {
+		STORM_CLASS;
 	public:
 		// Default constructor.
-		Object();
+		STORM_CTOR Object();
 
 		// Default copy-constructor.
-		Object(const Object &o);
-
-		// Make sure destructors are virtual (we rely on this later on). Note: this special case is
-		// excluded from the rules above. This destructor does not ensure that destructors are
-		// actually called.
-		virtual ~Object();
-
-		// Get the engine somehow.
-		inline Engine &engine() const {
-			return runtime::allocEngine(this);
-		}
-
-		// Get our type somehow.
-		inline Type *type() const {
-			return runtime::typeOf(this);
-		}
-
-		// Used to allow the as<Foo> using our custom (faster) type-checking.
-		bool isA(const Type *o) const;
-
+		STORM_CTOR Object(const Object &o);
 
 		/**
 		 * Members common to all objects.
-		 *
-		 * Note: only TObjects usually have a equals and hash that involve the pointer-wise identity
-		 * of the object. Make sure to note the compiler about any classes doing this, as it
-		 * otherwise may misbehave when using hash maps.
 		 *
 		 * TODO: Re-think the equals-api.
 		 */
@@ -66,37 +44,7 @@ namespace storm {
 
 		// Hash function.
 		virtual Nat STORM_FN hash() const;
-
-		// Allow access.
-		friend void *allocObject(size_t s, Type *t);
 	};
 
-	// Allocate an object (called internally from the STORM_CLASS macro).
-	void *allocObject(size_t s, Type *t);
-
-	// Output an object.
-	wostream &operator <<(wostream &to, const Object *o);
-	wostream &operator <<(wostream &to, const Object &o);
 }
 
-
-/**
- * Custom casting.
- */
-template <class To>
-To *customAs(storm::Object *from) {
-	if (from == null)
-		return null;
-	if (from->isA(To::stormType(from->engine())))
-		return static_cast<To *>(from);
-	return null;
-}
-
-template <class To>
-const To *customAs(const storm::Object *from) {
-	if (from == null)
-		return null;
-	if (from->isA(To::stormType(from->engine())))
-		return static_cast<To *>(from);
-	return null;
-}

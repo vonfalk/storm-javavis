@@ -26,10 +26,19 @@ namespace storm {
 	}
 
 	void MapBase::deepCopy(CloneEnv *env) {
-		for (size_t i = 0; i < capacity(); i++) {
-			if (info->v[i].status != Info::free) {
-				(*keyT.deepCopyFn)(keyPtr(i), env);
-				(*valT.deepCopyFn)(valPtr(i), env);
+		if (keyT.deepCopyFn) {
+			for (size_t i = 0; i < capacity(); i++) {
+				if (info->v[i].status != Info::free) {
+					(*keyT.deepCopyFn)(keyPtr(i), env);
+				}
+			}
+		}
+
+		if (valT.deepCopyFn) {
+			for (size_t i = 0; i < capacity(); i++) {
+				if (info->v[i].status != Info::free) {
+					(*valT.deepCopyFn)(valPtr(i), env);
+				}
 			}
 		}
 	}

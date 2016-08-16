@@ -9,6 +9,7 @@ namespace storm {
 
 	// Description of a type in C++. Found in CppTypes.h
 	struct CppType;
+	class NamedThread;
 
 	/**
 	 * Description of a type.
@@ -43,11 +44,11 @@ namespace storm {
 		// Set the super-class for this type.
 		void STORM_FN setSuper(Type *to);
 
+		// Set the thread for this type. This will force the super-type to be TObject.
+		void STORM_FN setThread(NamedThread *t);
+
 		// Is this a value type?
 		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
-
-		// Get the array gc type for this type.
-		const GcType *gcArrayType() const;
 
 		// Get a handle for this type.
 		const Handle &handle();
@@ -55,8 +56,11 @@ namespace storm {
 		// Late initialization.
 		virtual void lateInit();
 
-		// Inheritance chain and membership lookup.
+		// Inheritance chain and membership lookup. TODO: Make private?
 		TypeChain *chain;
+
+		// Helpers for the chain.
+		inline Bool STORM_FN isA(const Type *o) const { return chain->isA(o); }
 
 	private:
 		// Special constructor for creating the first type.
@@ -73,6 +77,9 @@ namespace storm {
 
 		// Flags for this type.
 		TypeFlags typeFlags;
+
+		// Thread we should be running on if we indirectly inherit from TObject.
+		NamedThread *useThread;
 
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);

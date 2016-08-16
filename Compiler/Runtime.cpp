@@ -3,6 +3,7 @@
 #include "Gc.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Core/Str.h"
 
 namespace storm {
 	namespace runtime {
@@ -37,7 +38,7 @@ namespace storm {
 			return t->handle();
 		}
 
-		Type *typeOf(const Object *o) {
+		Type *typeOf(const RootObject *o) {
 			return Gc::typeOf(o)->type;
 		}
 
@@ -45,15 +46,18 @@ namespace storm {
 			return Gc::typeOf(alloc);
 		}
 
-		bool isA(const Object *a, const Type *t) {
+		bool isA(const RootObject *a, const Type *t) {
 			return typeOf(a)->chain->isA(t);
 		}
 
-		Engine &allocEngine(const Object *o) {
+		Engine &allocEngine(const RootObject *o) {
 			return typeOf(o)->engine;
 		}
 
 		void *allocObject(size_t size, Type *type) {
+			if (size > type->gcType->stride) {
+				PLN(type->name);
+			}
 			assert(size <= type->gcType->stride,
 				L"Invalid type description found! " + ::toS(size) + L" vs " + ::toS(type->gcType->stride));
 			return type->engine.gc.alloc(type->gcType);

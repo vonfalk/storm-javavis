@@ -18,6 +18,9 @@ namespace storm {
 		typeValue = 0x02,
 
 		// More to come!
+
+		// This is a type that comes from C++.
+		typeCpp = 0x1000,
 	};
 
 	BITMASK_OPERATORS(TypeFlags);
