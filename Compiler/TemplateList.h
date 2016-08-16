@@ -40,6 +40,9 @@ namespace storm {
 		// Multi-level list of generated templates.
 		UNKNOWN(PTR_GC) Node *root;
 
+		// Added to a NameSet? If non-null, we shall add any newly-generated templates here.
+		NameSet *addedTo;
+
 		// Find a template specialization inside the structure.
 		Type *findAt(Nat *elems, Nat count, Node *node, Nat at);
 

@@ -2,6 +2,7 @@
 #include "TemplateList.h"
 #include "Engine.h"
 #include "Type.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -35,8 +36,8 @@ namespace storm {
 	TemplateList::TemplateList(TemplateFn *t) : templ(t) {}
 
 	void TemplateList::addTo(NameSet *to) {
+		addedTo = to;
 		to->add(templ);
-
 		addTo(root, to);
 	}
 
@@ -47,9 +48,9 @@ namespace storm {
 		try {
 			if (at->done)
 				to->add(at->done);
-		} catch (const Exception &e) {
+		} catch (const TypedefError &e) {
+			// Sometimes we have a different notion of what is acceptable.
 			WARNING(e);
-			TODO(L"FIXME!");
 		}
 
 		for (nat i = 0; i < at->count; i++)
@@ -147,7 +148,14 @@ namespace storm {
 
 		Type *r = templ->generate(types);
 		assert(r, L"Invalid template usage for types " + ::toS(types));
-		TODO(L"We need to add our template to the NameSet, if one is present.");
+		if (addedTo) {
+			try {
+				addedTo->add(r);
+			} catch (const TypedefError &e) {
+				// Sometimes, we have a different notion of what is acceptable together.
+				WARNING(e);
+			}
+		}
 		return r;
 	}
 

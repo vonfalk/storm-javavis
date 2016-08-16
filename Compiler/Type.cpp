@@ -155,12 +155,17 @@ namespace storm {
 		return *tHandle;
 	}
 
+	static void defToS(const void *obj, StrBuf *to) {
+		*to << L"<unknown>";
+	}
+
 	const Handle *Type::buildHandle() {
 		if (value()) {
 			Handle *h = new (engine) Handle();
 
 			h->size = gcType->stride;
 			h->gcArrayType = gcType;
+			h->toSFn = &defToS;
 			TODO(L"Look up copy ctors and so on!");
 			// For now: we do not have anything that needs special care when being copied, so we're
 			// fine with the defaults.

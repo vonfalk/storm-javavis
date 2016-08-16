@@ -52,7 +52,7 @@ namespace storm {
 		return to << toS(to.engine(), v);
 	}
 
-	wostream &operator <<(wostream &to, Value v) {
+	wostream &operator <<(wostream &to, const Value &v) {
 		if (v.type) {
 			to << v.type->name;
 			if (v.ref)
