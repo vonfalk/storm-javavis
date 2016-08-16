@@ -37,11 +37,9 @@
  */
 #define STORM_OBJ_COMMON												\
 	STORM_COMMON														\
-	static inline void *operator new (size_t s, Type *t) { return storm::runtime::allocObject(s, t); } \
-	static inline void operator delete (void *m, Type *t) {}			\
-	static inline void *operator new (size_t s, Engine &e) { return Object::operator new (s, stormType(e)); } \
+	static inline void *operator new (size_t s, Engine &e) { return storm::runtime::allocObject(s, stormType(e)); } \
 	static inline void operator delete (void *m, Engine &e) {}			\
-	static inline void *operator new (size_t s, const Object *o) { return Object::operator new (s, stormType(o)); } \
+	static inline void *operator new (size_t s, const Object *o) { return storm::runtime::allocObject(s, stormType(o)); } \
 	static inline void operator delete (void *m, const Object *o) {}
 
 /**
