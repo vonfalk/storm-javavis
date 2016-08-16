@@ -1,9 +1,8 @@
 #pragma once
 
 #include "Gc.h"
-#include "RootArray.h"
-#include "TemplateList.h"
 #include "BootStatus.h"
+#include "World.h"
 
 // TODO: Do not depend on path!
 #include "Utils/Path.h"
@@ -93,14 +92,8 @@ namespace storm {
 		NameSet *nameSet(SimpleName *name, bool create = false);
 
 	private:
-		// All C++ types.
-		RootArray<Type> cppTypes;
-
-		// All C++ templates.
-		RootArray<TemplateList> cppTemplates;
-
-		// All named threads declared in C++.
-		RootArray<Thread> cppThreads;
+		// The compiler C++ world.
+		World world;
 
 		// How far along in the boot process?
 		BootStatus bootStatus;

@@ -122,6 +122,9 @@ namespace storm {
 		// Package the thread is located inside.
 		const wchar *pkg;
 
+		// Thread declaration.
+		DeclThread *decl;
+
 		// ...
 	};
 

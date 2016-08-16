@@ -22,7 +22,7 @@ wostream &operator <<(wostream &to, const Type &type) {
  */
 
 Class::Class(const CppName &name, const String &pkg, const SrcPos &pos) :
-	Type(name, pkg, pos), valueType(false), parent(L""), hiddenParent(false), parentType(null) {}
+	Type(name, pkg, pos), valueType(false), parent(L""), hiddenParent(false), parentType(null), threadType(null) {}
 
 void Class::add(const Variable &v) {
 	for (nat i = 0; i < variables.size(); i++)
@@ -42,6 +42,9 @@ void Class::resolveTypes(World &in) {
 
 	if (!parent.empty())
 		parentType = in.types.find(parent, ctx, pos);
+
+	if (!thread.empty())
+		threadType = in.threads.find(thread, ctx, pos);
 
 	for (nat i = 0; i < variables.size(); i++)
 		variables[i].resolveTypes(in, ctx);

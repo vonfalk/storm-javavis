@@ -5,6 +5,7 @@
 #include "Variable.h"
 #include "Function.h"
 #include "Namespace.h"
+#include "Thread.h"
 
 class World;
 
@@ -69,6 +70,9 @@ public:
 
 	// Which thread is this type associated to?
 	CppName thread;
+
+	// The thread object we're associated with (only for the classes directly inheriting from ObjectOn<T>).
+	Thread *threadType;
 
 	// Member variables (non-static). All have their name relative to the enclosing type.
 	vector<Variable> variables;

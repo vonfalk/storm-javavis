@@ -20,6 +20,9 @@ namespace storm {
 		// 'register' function previously.
 		Thread(const os::Thread &thread);
 
+		// Lazily create the underlying thread when needed.
+		Thread(DeclThread::CreateFn fn);
+
 		// Since we're not acting as an actor, we need to provide a copy ctor.
 		STORM_CTOR Thread(Thread *o);
 

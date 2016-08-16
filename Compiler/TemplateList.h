@@ -7,6 +7,7 @@ namespace storm {
 	STORM_PKG(core.lang);
 
 	class Named;
+	class NameSet;
 
 	/**
 	 * Represents all instantiations of a template class available to C++.
@@ -18,6 +19,9 @@ namespace storm {
 	public:
 		// Create.
 		TemplateList(TemplateFn *t);
+
+		// Add everything in here to NameSet.
+		void addTo(NameSet *to);
 
 		// Find an instantiaton. Generates it if neccessary.
 		Type *find(Nat *elems, Nat count);
@@ -51,6 +55,9 @@ namespace storm {
 
 		// For each.
 		void forNamed(Node *at, NamedFn fn);
+
+		// Add to a NameSet.
+		void addTo(Node *at, NameSet *to);
 	};
 
 }

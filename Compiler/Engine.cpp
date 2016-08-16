@@ -36,9 +36,7 @@ namespace storm {
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode) :
-		gc(defaultArena, defaultFinalizer), cppTypes(gc), cppTemplates(gc),
-		cppThreads(gc), objRoot(null)
-	{
+		gc(defaultArena, defaultFinalizer), world(gc), objRoot(null) {
 
 		bootStatus = bootNone;
 
@@ -50,20 +48,20 @@ namespace storm {
 
 		try {
 			// Since all types in the name tree need the Compiler thread, we need to create that a bit early.
-			cppThreads.resize(1);
+			world.threads.resize(1);
 			{
 				os::Thread t = mainThread(mode, *this);
 				// Ensure 'mainThread' is executed before operator new.
-				cppThreads[0] = new (Thread::First(*this)) Thread(t);
+				world.threads[0] = new (Thread::First(*this)) Thread(t);
 			}
 
 			// Initialize the type system. This loads all types defined in the compiler.
-			initTypes(*this, cppTypes, cppTemplates);
+			initTypes(*this, world);
 
 			// Now, we can give the Compiler thread object a proper header with a type. Until this
 			// point, doing as<> on that object will crash the system. However, that is not neccessary
 			// this early during compiler startup.
-			Thread::stormType(*this)->setType(cppThreads[0]);
+			Thread::stormType(*this)->setType(world.threads[0]);
 
 			// Done booting.
 			advance(bootDone);
@@ -75,32 +73,27 @@ namespace storm {
 
 	Engine::~Engine() {
 		// We need to remove the root this array implies before the Gc is destroyed.
-		cppTypes.clear();
-		cppTemplates.clear();
-		cppThreads.clear();
+		world.clear();
 
 		gc.destroyRoot(objRoot);
 	}
 
 	Type *Engine::cppType(Nat id) const {
-		return cppTypes[id];
+		return world.types[id];
 	}
 
 	TemplateList *Engine::cppTemplate(Nat id) const {
-		if (id >= cppTemplates.count())
+		if (id >= world.templates.count())
 			return null;
-		return cppTemplates[id];
+		return world.templates[id];
 	}
 
 	Thread *Engine::cppThread(Nat id) const {
-		return cppThreads[id];
+		return world.threads[id];
 	}
 
 	void Engine::forNamed(NamedFn fn) {
-		for (nat i = 0; i < cppTypes.count(); i++)
-			(*fn)(cppTypes[i]);
-		for (nat i = 0; i < cppTemplates.count(); i++)
-			cppTemplates[i]->forNamed(fn);
+		world.forNamed(fn);
 	}
 
 	/**

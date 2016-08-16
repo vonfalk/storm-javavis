@@ -91,12 +91,16 @@ static void genTypes(wostream &to, World &w) {
 		// Parent class (if any).
 		{
 			Type *parent = null;
-			if (c)
+			Thread *thread = null;
+			if (c) {
 				parent = c->hiddenParent ? null : c->parentType;
+				thread = c->threadType;
+			}
 
-			if (parent) {
-				// TODO: See if parent is a thread!
-				to << L"CppType::superClass, " << parent->id << L" /* " << parent->name << " */, ";
+			if (thread) {
+				to << L"CppType::superThread, " << thread->id << L" /* " << thread->name << L" */, ";
+			} else if (parent) {
+				to << L"CppType::superClass, " << parent->id << L" /* " << parent->name << L" */, ";
 			} else {
 				to << L"CppType::superNone, 0, ";
 			}
@@ -174,7 +178,10 @@ static void genThreads(wostream &to, World &w) {
 		// Package.
 		if (t.pkg.empty())
 			PLN(t.pos << L": warning: placing threads in the root package.");
-		to << L"L\"" << t.pkg << L"\"";
+		to << L"L\"" << t.pkg << L"\", ";
+
+		// Declaration.
+		to << L"&" << t.name << L"::decl";
 
 		to << L" },\n";
 	}

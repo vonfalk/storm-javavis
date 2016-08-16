@@ -34,6 +34,28 @@ namespace storm {
 
 	TemplateList::TemplateList(TemplateFn *t) : templ(t) {}
 
+	void TemplateList::addTo(NameSet *to) {
+		to->add(templ);
+
+		addTo(root, to);
+	}
+
+	void TemplateList::addTo(Node *at, NameSet *to) {
+		if (!at)
+			return;
+
+		try {
+			if (at->done)
+				to->add(at->done);
+		} catch (const Exception &e) {
+			WARNING(e);
+			TODO(L"FIXME!");
+		}
+
+		for (nat i = 0; i < at->count; i++)
+			addTo(at->next[i], to);
+	}
+
 	Type *TemplateList::find(Nat *elems, Nat count) {
 		TODO(L"Lock me!");
 
@@ -125,6 +147,7 @@ namespace storm {
 
 		Type *r = templ->generate(types);
 		assert(r, L"Invalid template usage for types " + ::toS(types));
+		TODO(L"We need to add our template to the NameSet, if one is present.");
 		return r;
 	}
 

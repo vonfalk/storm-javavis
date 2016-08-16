@@ -70,6 +70,7 @@ TestResult Tests::run() {
 	try {
 		t.runTests(r);
 
+		std::wcout << L"--- Results ---" << endl;
 		std::wcout << r << std::endl;
 
 	} catch (const Exception &e) {

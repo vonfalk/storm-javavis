@@ -14,17 +14,18 @@ namespace storm {
 		n->lateInit();
 	}
 
-	void initTypes(Engine &e, RootArray<Type> &types, RootArray<TemplateList> &templates) {
+	void initTypes(Engine &e, World &into) {
 		const CppWorld *world = cppWorld();
-		CppLoader loader(e, world, types, templates);
+		CppLoader loader(e, world, into);
 
-		types.resize(1);
+		into.types.resize(1);
 
 		// We need to start by creating the Type-type.
-		types[0] = Type::createType(e, &world->types[0]);
+		into.types[0] = Type::createType(e, &world->types[0]);
 
 		// Then we can go on loading the rest of the types.
 		loader.loadTypes();
+		loader.loadThreads();
 		loader.loadSuper();
 
 		e.advance(bootTypes);

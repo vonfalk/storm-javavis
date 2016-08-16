@@ -62,6 +62,9 @@ namespace storm {
 		// Helpers for the chain.
 		inline Bool STORM_FN isA(const Type *o) const { return chain->isA(o); }
 
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
+
 	private:
 		// Special constructor for creating the first type.
 		Type(Engine &e, TypeFlags flags, Size size, GcType *gcType);

@@ -51,7 +51,7 @@ namespace storm {
 			p->add(new (this) SimplePart(name, params));
 			return p;
 		} else {
-			return new (this) SimpleName(name, params);
+			return new (this) SimpleName();
 		}
 	}
 

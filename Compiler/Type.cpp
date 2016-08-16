@@ -1,9 +1,11 @@
 #include "stdafx.h"
 #include "Type.h"
 #include "Engine.h"
+#include "NamedThread.h"
 #include "Core/Str.h"
 #include "Core/Handle.h"
 #include "Core/Gen/CppTypes.h"
+#include "Core/StrBuf.h"
 
 namespace storm {
 
@@ -169,6 +171,25 @@ namespace storm {
 		} else {
 			// Standard pointer handle.
 			return &engine.objHandle();
+		}
+	}
+
+	void Type::toS(StrBuf *to) const {
+		if (value()) {
+			*to << L"value ";
+		} else {
+			*to << L"class ";
+		}
+
+		if (params)
+			*to << new (this) SimplePart(name, params);
+		else
+			*to << new (this) SimplePart(name);
+
+		if (useThread) {
+			*to << L" on " << useThread->identifier();
+		} else if (chain != null && chain->super() != null) {
+			*to << L" extends " << chain->super()->identifier();
 		}
 	}
 

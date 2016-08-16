@@ -54,7 +54,7 @@ namespace storm {
 	static CppThread *cppThreads() {
 		static CppThread threads[] = {
 			// CPP_THREADS
-			{ null, null },
+			{ null, null, null },
 		};
 		return threads;
 	}

@@ -7,8 +7,8 @@
 
 namespace storm {
 
-	CppLoader::CppLoader(Engine &e, const CppWorld *world, RootArray<Type> &types, RootArray<TemplateList> &templ) :
-		e(e), world(world), types(types), templates(templ) {}
+	CppLoader::CppLoader(Engine &e, const CppWorld *world, World &into) :
+		e(e), world(world), into(into), threads(e.gc) {}
 
 	nat CppLoader::typeCount() const {
 		nat n;
@@ -24,9 +24,16 @@ namespace storm {
 		return n;
 	}
 
+	nat CppLoader::threadCount() const {
+		nat n;
+		for (n = 0; world->threads[n].name; n++)
+			;
+		return n;
+	}
+
 	void CppLoader::loadTypes() {
 		nat c = typeCount();
-		types.resize(c);
+		into.types.resize(c);
 
 		// Note: we do not set any names yet, as the Str type is not neccessarily available until
 		// after we've created the types here.
@@ -34,8 +41,8 @@ namespace storm {
 			CppType &type = world->types[i];
 
 			// The array could be partially filled.
-			if (types[i] == null) {
-				types[i] = new (e) Type(null, type.flags, Size(type.size), createGcType(&type));
+			if (into.types[i] == null) {
+				into.types[i] = new (e) Type(null, type.flags, Size(type.size), createGcType(&type));
 			}
 		}
 
@@ -44,10 +51,26 @@ namespace storm {
 			CppType &type = world->types[i];
 
 			// Just to make sure...
-			if (!types[i])
+			if (!into.types[i])
 				break;
 
-			types[i]->name = new (e) Str(type.name);
+			into.types[i]->name = new (e) Str(type.name);
+		}
+	}
+
+	void CppLoader::loadThreads() {
+		nat c = threadCount();
+		into.threads.resize(c);
+		threads.resize(c);
+
+		for (nat i = 0; i < c; i++) {
+			CppThread &thread = world->threads[i];
+
+			if (into.threads[i]) {
+				into.threads[i] = new (e) Thread(thread.decl->createFn);
+			}
+
+			threads[i] = new (e) NamedThread(new (e) Str(thread.name), into.threads[i]);
 		}
 	}
 
@@ -75,10 +98,10 @@ namespace storm {
 					if (!updated[type.super])
 						continue;
 
-					types[i]->setSuper(types[type.super]);
+					into.types[i]->setSuper(into.types[type.super]);
 					break;
 				case CppType::superThread:
-					assert(false, L"Can not set threads as super class yet.");
+					into.types[i]->setThread(threads[type.super]);
 					break;
 				}
 
@@ -105,31 +128,46 @@ namespace storm {
 
 	void CppLoader::loadTemplates() {
 		nat c = templateCount();
-		templates.resize(c);
+		into.templates.resize(c);
 
 		for (nat i = 0; i < c; i++) {
 			CppTemplate &t = world->templates[i];
 
-			if (!templates[i]) {
+			if (!into.templates[i]) {
 				Str *n = new (e) Str(t.name);
 				TemplateFn *templ = new (e) TemplateFn(n, t.generate);
-				templates[i] = new (e) TemplateList(templ);
+				into.templates[i] = new (e) TemplateList(templ);
 			}
 		}
+	}
+
+	NameSet *CppLoader::findPkg(const wchar *name) {
+		SimpleName *pkgName = parseSimpleName(e, name);
+		NameSet *r = e.nameSet(pkgName);
+		assert(r, L"Failed to find the package " + String(name));
+		return r;
 	}
 
 	void CppLoader::loadPackages() {
 		nat c = typeCount();
 		for (nat i = 0; i < c; i++) {
 			CppType &t = world->types[i];
-
-			SimpleName *pkgName = parseSimpleName(e, t.pkg);
-			NameSet *into = e.nameSet(pkgName);
-			assert(into, L"Failed to find the package " + String(t.pkg));
-			into->add(types[i]);
+			findPkg(t.pkg)->add(into.types[i]);
 		}
 
-		PLN(L"Loaded types!");
+		c = templateCount();
+		for (nat i = 0; i < c; i++) {
+			CppTemplate &t = world->templates[i];
+
+			NameSet *to = findPkg(t.pkg);
+			into.templates[i]->addTo(to);
+		}
+
+		c = threadCount();
+		for (nat i = 0; i < c; i++) {
+			CppThread &t = world->threads[i];
+			findPkg(t.pkg)->add(threads[i]);
+		}
 	}
 
 }
