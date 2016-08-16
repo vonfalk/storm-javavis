@@ -16,7 +16,10 @@ namespace storm {
 	Thread::~Thread() {
 		if (osThread != os::Thread::invalid) {
 			TODO(L"Make sure we do not detach a thread until it has stopped running (which may happen after the destructor is called)");
-			runtime::detachThread(engine(), osThread);
+			// Sometimes the GcType is not properly set for thread objects, try not to crash in that case.
+			if (type()) {
+				runtime::detachThread(engine(), osThread);
+			}
 		}
 	}
 

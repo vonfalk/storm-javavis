@@ -2,7 +2,7 @@
 #include "Core/Object.h"
 
 namespace storm {
-	STORM_PKG(storm.io);
+	STORM_PKG(core.io);
 
 	/**
 	 * Input and Output streams for Storm. These are abstract base classes

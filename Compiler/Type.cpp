@@ -63,6 +63,17 @@ namespace storm {
 		if (value()) {
 			gcType->kind = GcType::tArray;
 		}
+
+		if (engine.has(bootTemplates))
+			lateInit();
+	}
+
+	void Type::lateInit() {
+		NameSet::lateInit();
+
+		if (!chain) {
+			chain = new (this) TypeChain(this);
+		}
 	}
 
 	// Our finalizer.
@@ -99,10 +110,13 @@ namespace storm {
 	}
 
 	void Type::setSuper(Type *to) {
-		superType = to;
+		if (!chain)
+			chain = new (this) TypeChain(this);
+		chain->super(to);
 
 		// For now, this is sufficient.
-		gcType = engine.gc.allocType(to->gcType);
+		if (!gcType)
+			gcType = engine.gc.allocType(to->gcType);
 	}
 
 	const GcType *Type::gcArrayType() const {

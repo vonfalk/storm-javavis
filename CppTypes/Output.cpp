@@ -93,10 +93,12 @@ static void genTypes(wostream &to, World &w) {
 			Type *parent = null;
 			if (c)
 				parent = c->hiddenParent ? null : c->parentType;
+
 			if (parent) {
-				to << parent->id << L" /* " << parent->name << " */, ";
+				// TODO: See if parent is a thread!
+				to << L"CppType::superClass, " << parent->id << L" /* " << parent->name << " */, ";
 			} else {
-				to << L"-1 /* NONE */, ";
+				to << L"CppType::superNone, 0, ";
 			}
 		}
 

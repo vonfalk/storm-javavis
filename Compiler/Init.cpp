@@ -25,6 +25,7 @@ namespace storm {
 
 		// Then we can go on loading the rest of the types.
 		loader.loadTypes();
+		loader.loadSuper();
 
 		e.advance(bootTypes);
 

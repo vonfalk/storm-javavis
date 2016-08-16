@@ -36,7 +36,8 @@ namespace storm {
 
 	Engine::Engine(const Path &root, ThreadMode mode) :
 		gc(defaultArena, defaultFinalizer), cppTypes(gc), cppTemplates(gc),
-		cppThreads(gc), objRoot(null) {
+		cppThreads(gc), objRoot(null)
+	{
 
 		bootStatus = bootNone;
 
@@ -46,29 +47,36 @@ namespace storm {
 
 		assert(Compiler::identifier == 0, L"Invalid ID for the compiler thread. Check CppTypes for errors!");
 
-		// Since all types in the name tree need the Compiler thread, we need to create that a bit early.
-		cppThreads.resize(1);
-		{
-			os::Thread t = mainThread(mode, *this);
-			// Ensure 'mainThread' is executed before operator new.
-			cppThreads[0] = new (Thread::First(*this)) Thread(t);
+		try {
+			// Since all types in the name tree need the Compiler thread, we need to create that a bit early.
+			cppThreads.resize(1);
+			{
+				os::Thread t = mainThread(mode, *this);
+				// Ensure 'mainThread' is executed before operator new.
+				cppThreads[0] = new (Thread::First(*this)) Thread(t);
+			}
+
+			// Initialize the type system. This loads all types defined in the compiler.
+			initTypes(*this, cppTypes, cppTemplates);
+
+			// Now, we can give the Compiler thread object a proper header with a type. Until this
+			// point, doing as<> on that object will crash the system. However, that is not neccessary
+			// this early during compiler startup.
+			Thread::stormType(*this)->setType(cppThreads[0]);
+
+			// Done booting.
+			advance(bootDone);
+		} catch (...) {
+			this->~Engine();
+			throw;
 		}
-
-		// Initialize the type system. This loads all types defined in the compiler.
-		initTypes(*this, cppTypes, cppTemplates);
-
-		// Now, we can give the Compiler thread object a proper header with a type. Until this
-		// point, doing as<> on that object will crash the system. However, that is not neccessary
-		// this early during compiler startup.
-		Thread::stormType(*this)->setType(cppThreads[0]);
-
-		// Done booting.
-		advance(bootDone);
 	}
 
 	Engine::~Engine() {
 		// We need to remove the root this array implies before the Gc is destroyed.
 		cppTypes.clear();
+		cppTemplates.clear();
+		cppThreads.clear();
 
 		gc.destroyRoot(objRoot);
 	}

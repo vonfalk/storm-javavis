@@ -16,6 +16,9 @@ namespace storm {
 		// Load all types into a RootArray. This makes it possible to create instances of these types from C++.
 		void loadTypes();
 
+		// Set super types for all types here.
+		void loadSuper();
+
 		// Load all templates into a RootArray. This makes template instantiations possible.
 		void loadTemplates();
 

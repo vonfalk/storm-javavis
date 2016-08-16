@@ -38,7 +38,7 @@ namespace storm {
 
 		static CppType types[] = {
 			// CPP_TYPES
-			{ null, null, 0, CppSize::invalid, null, typeNone, null },
+			{ null, null, CppType::superNone, 0, CppSize::invalid, null, typeNone, null },
 		};
 		return types;
 	}

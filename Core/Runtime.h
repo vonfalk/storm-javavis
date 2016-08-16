@@ -31,6 +31,9 @@ namespace storm {
 		// Get the GcType for an allocation.
 		const GcType *gcTypeOf(const void *alloc);
 
+		// Is type A an instance of type B?
+		bool isA(const Object *a, const Type *b);
+
 		// Get the engine object for an allocation.
 		Engine &allocEngine(const Object *o);
 

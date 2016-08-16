@@ -12,8 +12,7 @@ namespace storm {
 	Object::~Object() {}
 
 	bool Object::isA(const Type *o) const {
-		TODO(L"FIXME");
-		return false;
+		return runtime::isA(this, o);
 	}
 
 	void Object::deepCopy(CloneEnv *env) {}

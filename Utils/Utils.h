@@ -184,6 +184,13 @@ bool operator <(const vector<T> &a, const vector<T> &b) {
 	return a.size() < b.size();
 }
 
+inline bool all(const vector<bool> &v) {
+	for (nat i = 0; i < v.size(); i++)
+		if (!v[i])
+			return false;
+	return true;
+}
+
 template <class From, class To, bool custom>
 struct my_cast {
 	inline To *cast(From *f) { return dynamic_cast<To *>(f); }

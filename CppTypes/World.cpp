@@ -39,10 +39,10 @@ void World::orderTypes() {
 	if (!type)
 		throw Error(L"The type storm::Type was not found!", SrcPos());
 
-	struct pred {
+	struct NamePred {
 		Type *type;
 
-		pred(Type *t) : type(t) {}
+		NamePred(Type *t) : type(t) {}
 
 		bool operator ()(const Auto<Type> &l, const Auto<Type> &r) const {
 			// Always put 'type' first.
@@ -51,12 +51,17 @@ void World::orderTypes() {
 			if (r.borrow() == type)
 				return false;
 
+			// Then order by package first, then by name. This is so any nested classes shall have
+			// their outer class appear before them.
+			if (l->pkg != r->pkg)
+				return l->pkg < r->pkg;
+
 			// Then order by name.
 			return l->name < r->name;
 		}
 	};
 
-	types.sort(pred(type));
+	types.sort(NamePred(type));
 }
 
 void World::orderTemplates() {

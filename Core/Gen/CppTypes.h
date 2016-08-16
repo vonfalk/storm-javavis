@@ -66,8 +66,23 @@ namespace storm {
 		// Package the type is located inside (eg. a.b.c).
 		const wchar *pkg;
 
-		// Parent class' type id.
-		nat parent;
+		// What kind of parent do we have?
+		enum SuperKind {
+			// No parent.
+			superNone,
+
+			// Parent is a class in this table.
+			superClass,
+
+			// Parent is a thread id (we inherit from TObject).
+			superThread,
+		};
+
+		// Parent kind.
+		SuperKind kind;
+
+		// Super class' type id.
+		nat super;
 
 		// Total size of the type.
 		CppSize size;

@@ -39,7 +39,7 @@ namespace storm {
 			}
 		}
 
-		// Now we can fill in the names properly!
+		// Now we can fill in the names and superclasses properly!
 		for (nat i = 0; i < c; i++) {
 			CppType &type = world->types[i];
 
@@ -49,6 +49,42 @@ namespace storm {
 
 			types[i]->name = new (e) Str(type.name);
 		}
+	}
+
+	void CppLoader::loadSuper() {
+		nat c = typeCount();
+
+		// Remember which ones we've already set.
+		vector<bool> updated(c, false);
+
+		do {
+			// Try to add super classes to all classes until we're done. We're only adding classes
+			// as a super class when they have their super classes added, to avoid re-computation of
+			// lookup tables and similar.
+			for (nat i = 0; i < c; i++) {
+				CppType &type = world->types[i];
+				if (updated[i])
+					continue;
+
+				switch (type.kind) {
+				case CppType::superNone:
+					// Nothing to do.
+					break;
+				case CppType::superClass:
+					// Delay update?
+					if (!updated[type.super])
+						continue;
+
+					types[i]->setSuper(types[type.super]);
+					break;
+				case CppType::superThread:
+					assert(false, L"Can not set threads as super class yet.");
+					break;
+				}
+
+				updated[i] = true;
+			}
+		} while (!all(updated));
 	}
 
 	GcType *CppLoader::createGcType(const CppType *type) {

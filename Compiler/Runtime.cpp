@@ -37,12 +37,16 @@ namespace storm {
 			return t->handle();
 		}
 
+		Type *typeOf(const Object *o) {
+			return Gc::typeOf(o)->type;
+		}
+
 		const GcType *gcTypeOf(const void *alloc) {
 			return Gc::typeOf(alloc);
 		}
 
-		Type *typeOf(const Object *o) {
-			return Gc::typeOf(o)->type;
+		bool isA(const Object *a, const Type *t) {
+			return typeOf(a)->chain->isA(t);
 		}
 
 		Engine &allocEngine(const Object *o) {

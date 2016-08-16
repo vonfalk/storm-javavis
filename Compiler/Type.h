@@ -1,5 +1,6 @@
 #pragma once
 #include "NameSet.h"
+#include "TypeChain.h"
 #include "Gc.h"
 #include "Core/TypeFlags.h"
 
@@ -51,6 +52,12 @@ namespace storm {
 		// Get a handle for this type.
 		const Handle &handle();
 
+		// Late initialization.
+		virtual void lateInit();
+
+		// Inheritance chain and membership lookup.
+		TypeChain *chain;
+
 	private:
 		// Special constructor for creating the first type.
 		Type(Engine &e, TypeFlags flags, Size size, GcType *gcType);
@@ -66,9 +73,6 @@ namespace storm {
 
 		// Flags for this type.
 		TypeFlags typeFlags;
-
-		// Super type.
-		Type *superType;
 
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);
