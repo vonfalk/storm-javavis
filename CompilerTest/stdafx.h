@@ -17,10 +17,12 @@ extern Engine *gEngine;
 
 // Basic gc operation, scanning simple objects without anything strange.
 SUITE(GcScan, 1);
+// Gc operation on Storm objects declared in C++.
+SUITE(GcObjects, 2);
 // GC along with threads.
-SUITE(GcThreads, 2);
+SUITE(GcThreads, 3);
 // Basic operation of the runtime. No code generation yet.
-SUITE(Runtime, 3);
+SUITE(Runtime, 4);
 
 // Stress tests (takes time).
 SUITEX(Stress, 100);

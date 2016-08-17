@@ -4,6 +4,7 @@
 
 namespace storm {
 	struct GcType;
+	class GcWatch;
 	class RootObject;
 
 	namespace runtime {
@@ -51,6 +52,9 @@ namespace storm {
 
 		// Get the thread group to use for all threads.
 		os::ThreadGroup &threadGroup(Engine &e);
+
+		// Create a GcWatch object.
+		GcWatch *createWatch(Engine &e);
 
 		// Attach the current thread with the given engine.
 		void attachThread(Engine &e);

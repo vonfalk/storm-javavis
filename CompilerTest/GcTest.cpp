@@ -4,6 +4,12 @@
 
 using namespace storm::debug;
 
+BEGIN_TEST(GcTest1, GcScan) {
+	Engine &e = *gEngine;
+
+	CHECK(e.gc.test());
+} END_TEST
+
 // Create a list of links, containing elements 0 to n-1
 static Link *createList(nat n) {
 	Link *start = null;
@@ -39,7 +45,7 @@ static bool checkList(Link *first, nat n) {
 	return at == null;
 }
 
-BEGIN_TEST(GcTest1, GcScan) {
+BEGIN_TEST(GcTest2, GcObjects) {
 	Engine &e = *gEngine;
 
 	// Allocate this many nodes to make sure MPS will try to GC at least once!
@@ -53,7 +59,7 @@ BEGIN_TEST(GcTest1, GcScan) {
 /**
  * Long-running stresstest of the GC logic. Too slow for regular use, but good when debugging.
  */
-BEGIN_TEST(GcTest2, Stress) {
+BEGIN_TEST(GcTest3, Stress) {
 	Engine &e = *gEngine;
 
 	// Allocate this many nodes.

@@ -7,6 +7,7 @@
 
 #include "Core/GcArray.h"
 #include "Core/GcType.h"
+#include "Core/GcWatch.h"
 
 namespace storm {
 
@@ -45,6 +46,18 @@ namespace storm {
 
 		// Destroy.
 		~Gc();
+
+		/**
+		 * Manual garbage collection hints.
+		 */
+
+		// Do a full garbage collection now.
+		void collect();
+
+		// Spend approx 'time' ms on an incremental collection if possible. Returns true if there is more to do.
+		bool collect(nat time);
+
+		// TODO: Add interface for managing pause times and getting information about allocations.
 
 		/**
 		 * Thread management.
@@ -107,11 +120,17 @@ namespace storm {
 		void destroyRoot(Root *root);
 
 		/**
+		 * Watch object.
+		 */
+
+		GcWatch *createWatch();
+
+		/**
 		 * Debugging/testing.
 		 */
 
 		// Stress-test the gc by allocating a large number of objects.
-		void test();
+		bool test(nat times = 100);
 
 	private:
 		// Finalization interval.
@@ -119,6 +138,8 @@ namespace storm {
 
 		// Internal variables which are implementation-specific:
 #ifdef STORM_GC_MPS
+		friend class MpsGcWatch;
+
 		// Current arena, pool and format.
 		mps_arena_t arena;
 		mps_pool_t pool;

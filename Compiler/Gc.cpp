@@ -543,6 +543,17 @@ namespace storm {
 		mps_arena_destroy(arena);
 	}
 
+	void Gc::collect() {
+		mps_arena_collect(arena);
+		mps_arena_release(arena);
+	}
+
+	bool Gc::collect(nat time) {
+		TODO(L"Better value for 'multiplier' here?");
+		// mps_bool_t != bool...
+		return mps_arena_step(arena, time / 1000.0, 1) ? true : false;
+	}
+
 	void Gc::attachThread() {
 		os::Thread thread = os::Thread::current();
 		util::Lock::L z(threadLock);
@@ -876,6 +887,55 @@ namespace storm {
 			delete r;
 		}
 	}
+
+	class MpsGcWatch : public GcWatch {
+	public:
+		MpsGcWatch(Gc &gc) : gc(gc) {
+			mps_ld_reset(&ld, gc.arena);
+		}
+
+		MpsGcWatch(Gc &gc, const mps_ld_s &ld) : gc(gc), ld(ld) {}
+
+		virtual void add(const void *addr) {
+			mps_ld_add(&ld, gc.arena, (mps_addr_t)addr);
+		}
+
+		virtual void remove(const void *addr) {
+			// Not supported by the MPS. Ignore it, as it will 'just' generate false positives, not
+			// break anything.
+		}
+
+		virtual void clear() {
+			mps_ld_reset(&ld, gc.arena);
+		}
+
+		virtual bool moved(const void *addr) {
+			return mps_ld_isstale(&ld, gc.arena, (mps_addr_t)addr) ? true : false;
+		}
+
+		virtual GcWatch *clone() const {
+			return new (gc.alloc(&type)) MpsGcWatch(gc, ld);
+		}
+
+		static const GcType type;
+
+	private:
+		Gc &gc;
+		mps_ld_s ld;
+	};
+
+	const GcType MpsGcWatch::type = {
+		GcType::tFixed,
+		null,
+		null,
+		sizeof(MpsGcWatch),
+		0,
+		{},
+	};
+
+	GcWatch *Gc::createWatch() {
+		return new (alloc(&MpsGcWatch::type)) MpsGcWatch(*this);
+	}
 }
 
 #else
@@ -909,8 +969,10 @@ namespace storm {
 		{ OFFSET_OF(GcLink, next) }
 	};
 
-	void Gc::test() {
-		for (nat j = 0; j < 100; j++) {
+	bool Gc::test(nat times) {
+		bool ok = true;
+
+		for (nat j = 0; j < times && ok; j++) {
 			GcLink *first = null;
 			GcLink *at = null;
 			for (nat i = 0; i < 10000; i++) {
@@ -925,22 +987,24 @@ namespace storm {
 				}
 			}
 
-			PLN("Verifying it...");
 			at = first;
 			for (nat i = 0; i < 10000; i++) {
 				if (!at) {
 					PLN("Premature end at " << i);
+					ok = false;
 					break;
 				}
 
-				if (at->value != i)
+				if (at->value != i) {
 					PLN("Failed: " << at->value << " should be " << i);
+					ok = false;
+				}
 
 				at = at->next;
 			}
-
-			PLN("Done: " << j);
 		}
+
+		return ok;
 	}
 
 }

@@ -235,7 +235,7 @@ public:
 };
 
 /**
- * GcArray-type.
+ * GcArray type.
  */
 class GcArrayType : public TypeRef {
 public:
@@ -248,6 +248,26 @@ public:
 	virtual Size size() const;
 
 	// Is this a gc:d type?
+	virtual bool gcType() const { return true; }
+
+	// Resolve.
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+};
+
+/**
+ * GcWatch type.
+ */
+class GcWatchType : public TypeRef {
+public:
+	GcWatchType(const SrcPos &pos);
+
+	// Size of this type.
+	virtual Size size() const;
+
+	// Gc:d type?
 	virtual bool gcType() const { return true; }
 
 	// Resolve.

@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Object.h"
+#include "Thread.h"
 
 namespace storm {
 	namespace debug {
@@ -54,6 +55,25 @@ namespace storm {
 			DtorClass(int v);
 			~DtorClass();
 			int value;
+		};
+
+
+		/**
+		 * Class using pointer-equality in maps.
+		 */
+		class PtrKey : public ObjectOn<Compiler> {
+			STORM_CLASS;
+		public:
+			PtrKey();
+
+			// Have we moved recently?
+			bool moved() const;
+
+			// Reset moved.
+			void reset();
+
+		private:
+			size_t oldPos;
 		};
 
 	}

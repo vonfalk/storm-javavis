@@ -126,11 +126,13 @@ namespace storm {
 
 		// Which thread to use?
 		Type *tObj = TObject::stormType(engine);
-		if (to->chain == null || tObj->chain == null || !to->chain->isA(tObj)) {
-			useThread = null;
-		} else if (to != tObj) {
-			useThread = to->useThread;
-			assert(useThread, L"No thread on a threaded object!");
+		if (to->chain != null && tObj->chain != null) {
+			if (!to->chain->isA(tObj)) {
+				useThread = null;
+			} else if (to != tObj) {
+				useThread = to->useThread;
+				assert(useThread, L"No thread on a threaded object!");
+			}
 		}
 
 		// Set the type-chain properly.

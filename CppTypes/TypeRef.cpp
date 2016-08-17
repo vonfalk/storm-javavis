@@ -116,6 +116,8 @@ Auto<TypeRef> NamedType::resolve(World &in, const CppName &context) const {
 	Type *t = in.types.findUnsafe(name, context);
 	if (t)
 		return new ResolvedType(*this, t);
+	else if (name == L"GcWatch" || name == L"storm::GcWatch")
+		return new GcWatchType(pos);
 	else
 		return new NamedType(*this);
 }
@@ -168,6 +170,19 @@ void GcArrayType::print(wostream &to) const {
 	to << L"storm::GcArray<" << of << L">";
 }
 
+GcWatchType::GcWatchType(const SrcPos &pos) : TypeRef(pos) {}
+
+Auto<TypeRef> GcWatchType::resolve(World &in, const CppName &context) const {
+	return new GcWatchType(*this);
+}
+
+Size GcWatchType::size() const {
+	throw Error(L"GcWatch should only be used as a pointer!", pos);
+}
+
+void GcWatchType::print(wostream &to) const {
+	to << L"storm::GcWatch";
+}
 
 const UnknownType::ID UnknownType::ids[] = {
 	{ L"PTR_NOGC", Size::sPtr, false },

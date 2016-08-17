@@ -98,8 +98,8 @@ namespace storm {
 		typedef void (*CreateCtor)(void *to, Engine &e);
 		void *CODECALL atRaw(const void *key, CreateCtor fn);
 
-		// Remove a value.
-		void CODECALL removeRaw(const void *key);
+		// Remove a value. Returns 'true' if we found one to remove.
+		Bool CODECALL removeRaw(const void *key);
 
 		/**
 		 * Benchmarking functions. Usually slow, only intended as a way of exploring performance
@@ -144,6 +144,9 @@ namespace storm {
 		GcArray<byte> *key;
 		GcArray<byte> *val;
 
+		// Watch if objects move (if needed).
+		GcWatch *watch;
+
 		// Our capacity.
 		inline nat capacity() const { return info ? info->count : 0; }
 
@@ -165,6 +168,17 @@ namespace storm {
 		// Do a re-hash to a specific size (asssumed to be power of two).
 		void rehash(nat size);
 
+		// Do a re-hash while looking for an element. Assumes 'watch' is non-null, and that some object have moved.
+		nat rehashFind(nat size, const void *key);
+
+		// Do a re-hash while removing an element. Assumes 'watch' is non-null, and that some object have moved.
+		bool rehashRemove(nat size, const void *key);
+
+		// Compute the hash for an element, taking into account the required location
+		// dependency. Use only when inserting things, as we will then falsly react whenever that
+		// object is moved.
+		nat newHash(const void *key);
+
 		// Insert a node, given its hash is known (eg. when re-hashing). Assumes no other node with
 		// the same key exists, and will therefore always insert the element.
 		// Returns the slot inserted into.
@@ -174,8 +188,14 @@ namespace storm {
 		// into the array. Do not skip copying the value, as the map will be left in an inconsistent state.
 		nat insert(const void *key, nat hash);
 
+		// Remove an element, ignoring any moved objects. Returns 'true' if an object was removed.
+		bool remove(const void *key);
+
 		// Find the current location of 'key', given 'hash'. Returns 'Info::free' if none exists.
 		nat findSlot(const void *key, nat hash);
+
+		// Helper for 'findSlot'. Does not work properly if objects have moved.
+		nat findSlotI(const void *key, nat hash);
 
 		// Compute the primary slot for a node, given its hash.
 		nat primarySlot(nat hash) const;

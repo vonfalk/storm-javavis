@@ -10,6 +10,18 @@ namespace storm {
 			PVAR(value);
 		}
 
+		PtrKey::PtrKey() {
+			reset();
+		}
+
+		void PtrKey::reset() {
+			oldPos = size_t(this);
+		}
+
+		bool PtrKey::moved() const {
+			return size_t(this) != oldPos;
+		}
+
 	}
 }
 

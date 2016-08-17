@@ -23,15 +23,10 @@ void Tests::addSuite(Suite *s, bool single) {
 }
 
 void Tests::runSuite(Suite *s, TestResult &r) {
-	if (singleTest) {
-		std::wcout << L"Running " << singleTest->name << L"(single)..." << std::endl;
-		r += singleTest->run();
-	} else {
-		for (TestMap::const_iterator i = tests.begin(); i != tests.end(); i++) {
-			if (i->second->suite == s) {
-				std::wcout << L"Running " << i->first << L"..." << std::endl;
-				r += i->second->run();
-			}
+	for (TestMap::const_iterator i = tests.begin(); i != tests.end(); i++) {
+		if (i->second->suite == s) {
+			std::wcout << L"Running " << i->first << L"..." << std::endl;
+			r += i->second->run();
 		}
 	}
 }
@@ -47,7 +42,10 @@ int Tests::countSuite(Suite *s) {
 }
 
 void Tests::runTests(TestResult &r) {
-	if (singleSuite) {
+	if (singleTest) {
+		std::wcout << L"Running " << singleTest->name << L"(single)..." << std::endl;
+		r += singleTest->run();
+	} else if (singleSuite) {
 		runSuite(singleSuite, r);
 	} else {
 		for (SuiteMap::const_iterator i = suites.begin(); i != suites.end(); i++) {

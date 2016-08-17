@@ -169,7 +169,7 @@ namespace storm {
 		if (!o.tObjHandle) {
 			o.tObjHandle = new (*this) Handle();
 			o.tObjHandle->size = sizeof(void *);
-			o.objHandle->locationHash = true;
+			o.tObjHandle->locationHash = true;
 			o.tObjHandle->gcArrayType = &ptrArray;
 			o.tObjHandle->copyFn = null; // No special function, use memcpy.
 			o.tObjHandle->deepCopyFn = null; // No need for deepCopy.

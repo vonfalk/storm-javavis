@@ -67,6 +67,10 @@ namespace storm {
 			return e.gc.allocArray(type, count);
 		}
 
+		GcWatch *createWatch(Engine &e) {
+			return e.gc.createWatch();
+		}
+
 		os::ThreadGroup &threadGroup(Engine &e) {
 			return e.threadGroup;
 		}

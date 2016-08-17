@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Map.h"
 #include "StrBuf.h"
+#include "GcWatch.h"
 #include "Utils/Bitwise.h"
 #include <iomanip>
 
@@ -15,14 +16,20 @@ namespace storm {
 		{},
 	};
 
-	MapBase::MapBase(const Handle &k, const Handle &v) : keyT(k), valT(v) {}
+	MapBase::MapBase(const Handle &k, const Handle &v) : keyT(k), valT(v), watch(null) {
+		if (k.locationHash)
+			watch = runtime::createWatch(engine());
+	}
 
-	MapBase::MapBase(MapBase *o) : keyT(o->keyT), valT(o->valT) {
+	MapBase::MapBase(MapBase *o) : keyT(o->keyT), valT(o->valT), watch(null) {
 		size = o->size;
 		lastFree = o->lastFree;
 		info = copyArray(o->info);
 		key = copyArray(o->key, info, keyT);
 		val = copyArray(o->val, info, valT);
+
+		if (o->watch)
+			watch = o->watch->clone();
 	}
 
 	void MapBase::deepCopy(CloneEnv *env) {
@@ -84,10 +91,25 @@ namespace storm {
 		*to << L"}";
 	}
 
+	nat MapBase::newHash(const void *key) {
+		if (watch) {
+			// Place the pointer on the stack to prevent it from moving around while we're
+			// registering we're depending on it.
+			const void *kPtr = *(const void **)key;
+			watch->add(kPtr);
+			return (*keyT.hashFn)(key);
+		} else {
+			return (*keyT.hashFn)(key);
+		}
+	}
+
 	void MapBase::putRaw(const void *key, const void *value) {
 		nat hash = (*keyT.hashFn)(key);
 		nat old = findSlot(key, hash);
 		if (old == Info::free) {
+			if (watch)
+				// In case the object moved, we need to re-compute the hash.
+				hash = newHash(key);
 			insert(key, value, hash);
 		} else {
 			valT.safeDestroy(valPtr(old));
@@ -117,8 +139,12 @@ namespace storm {
 		nat hash = (*keyT.hashFn)(key);
 		nat slot = findSlot(key, hash);
 
-		if (slot == Info::free)
+		if (slot == Info::free) {
+			if (watch)
+				// In case the object moved, we need to re-compute the hash.
+				hash = newHash(key);
 			slot = insert(key, def, hash);
+		}
 
 		return valPtr(slot);
 	}
@@ -128,6 +154,9 @@ namespace storm {
 		nat slot = findSlot(key, hash);
 
 		if (slot == Info::free) {
+			if (watch)
+				// In case the object moved, we need to re-compute the hash.
+				hash = newHash(key);
 			slot = insert(key, hash);
 			(*fn)(valPtr(slot), engine());
 		}
@@ -135,17 +164,27 @@ namespace storm {
 		return valPtr(slot);
 	}
 
-	void MapBase::removeRaw(const void *key) {
+	Bool MapBase::removeRaw(const void *key) {
 		// Will break 'primarySlot' otherwise.
 		if (capacity() == 0)
-			return;
+			return false;
 
+		if (remove(key)) {
+			return true;
+		} else if (watch != null && watch->moved(key)) {
+			return rehashRemove(capacity(), key);
+		} else {
+			return false;
+		}
+	}
+
+	bool MapBase::remove(const void *key) {
 		nat hash = (*keyT.hashFn)(key);
 		nat slot = primarySlot(hash);
 
 		// Not in the map?
 		if (info->v[slot].status == Info::free)
-			return;
+			return false;
 
 		nat prev = Info::free;
 		do {
@@ -174,12 +213,16 @@ namespace storm {
 				}
 
 				size--;
-				return;
+				if (watch)
+					watch->remove(key);
+				return true;
 			}
 
 			prev = slot;
 			slot = info->v[slot].status;
 		} while (slot != Info::end);
+
+		return false;
 	}
 
 	Nat MapBase::countCollisions() const {
@@ -289,6 +332,103 @@ namespace storm {
 		}
 	}
 
+	nat MapBase::rehashFind(nat cap, const void *find) {
+		nat oldSize = size;
+
+		GcArray<Info> *oldInfo = info; info = null;
+		GcArray<byte> *oldKey = key; key = null;
+		GcArray<byte> *oldVal = val; val = null;
+
+		alloc(cap);
+
+		// Anything to do?
+		if (oldInfo == null)
+			return Info::free;
+
+		watch->clear();
+
+		try {
+			nat found = Info::free;
+
+			// Insert all elements once again.
+			for (nat i = 0; i < oldInfo->count; i++) {
+				if (oldInfo->v[i].status == Info::free)
+					continue;
+
+				// We need to re-hash here, as some object have moved.
+				const void *k = keyPtr(oldKey, i);
+				nat hash = newHash(k);
+				nat into = insert(k, valPtr(oldVal, i), hash);
+
+				// Is this the key we're looking for?
+				if ((*keyT.equalFn)(k, find))
+					found = into;
+			}
+
+			// The Gc will destroy the old arrays and all elements in there later on.
+			return found;
+		} catch (...) {
+			clear();
+
+			// Restore old state.
+			swap(oldSize, size);
+			swap(oldInfo, info);
+			swap(oldKey, key);
+			swap(oldVal, val);
+			throw;
+		}
+	}
+
+	bool MapBase::rehashRemove(nat cap, const void *remove) {
+		nat oldSize = size;
+
+		GcArray<Info> *oldInfo = info; info = null;
+		GcArray<byte> *oldKey = key; key = null;
+		GcArray<byte> *oldVal = val; val = null;
+
+		alloc(cap);
+
+		// Anything to do?
+		if (oldInfo == null)
+			return false;
+
+		watch->clear();
+
+		try {
+			bool found = false;
+
+			// Insert all elements once again.
+			for (nat i = 0; i < oldInfo->count; i++) {
+				if (oldInfo->v[i].status == Info::free)
+					continue;
+
+				const void *k = keyPtr(oldKey, i);
+
+				// Is this the key we're looking for?
+				if ((*keyT.equalFn)(k, remove)) {
+					found = true;
+					continue;
+				}
+
+				// We need to re-hash here, as some object have moved.
+				nat hash = newHash(k);
+				nat into = insert(k, valPtr(oldVal, i), hash);
+			}
+
+			// The Gc will destroy the old arrays and all elements in there later on.
+			return found;
+		} catch (...) {
+			clear();
+
+			// Restore old state.
+			swap(oldSize, size);
+			swap(oldInfo, info);
+			swap(oldKey, key);
+			swap(oldVal, val);
+			throw;
+		}
+	}
+
 	nat MapBase::insert(const void *key, const void *val, nat hash) {
 		nat into = insert(key, hash);
 		valT.safeCopy(valPtr(into), val);
@@ -344,6 +484,18 @@ namespace storm {
 		if (capacity() == 0)
 			return Info::free;
 
+		nat r = findSlotI(key, hash);
+		if (r == Info::free && watch != null) {
+			if (watch->moved(key))
+				// The object has moved. We need to rebuild the hash map.
+				r = rehashFind(capacity(), key);
+		}
+
+		return r;
+	}
+
+	nat MapBase::findSlotI(const void *key, nat hash) {
+		// We assume 'capacity() > 0', as checked by 'findSlot'.
 		nat slot = primarySlot(hash);
 		if (info->v[slot].status == Info::free)
 			return Info::free;
