@@ -71,18 +71,24 @@ namespace storm {
 			// No parent.
 			superNone,
 
-			// Parent is a class in this table.
+			// 'super' is a class in this table.
 			superClass,
 
-			// Parent is a thread id (we inherit from TObject).
+			// 'super' is a thread id (we inherit from TObject).
 			superThread,
+
+			// 'super' is a pointer to a function CreateFn that generates the type to use.
+			superCustom,
 		};
 
 		// Parent kind.
 		SuperKind kind;
 
-		// Super class' type id.
-		nat super;
+		// The create function that 'super' is if 'kind == superCustom'.
+		typedef Type *(*CreateFn)(Str *name, Size size, GcType *type);
+
+		// Super class' type id, see 'kind' for the exact meaning.
+		size_t super;
 
 		// Total size of the type.
 		CppSize size;

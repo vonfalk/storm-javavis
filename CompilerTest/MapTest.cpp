@@ -30,6 +30,26 @@ BEGIN_TEST(MapTest, Runtime) {
 		CHECK_EQ(::toS(map->get(new (e) Str(L"A"), new (e) Str(L"-"))), L"-")
 	}
 
+	// Do primitives work as values?
+	{
+		Map<Str *, Int> *map = new (e) Map<Str *, Int>();
+
+		map->put(new (e) Str(L"A"), 10);
+		map->put(new (e) Str(L"B"), 11);
+		map->put(new (e) Str(L"A"), 12);
+		map->put(new (e) Str(L"E"), 13);
+
+		CHECK_EQ(map->count(), 3);
+		CHECK_EQ(map->get(new (e) Str(L"A")), 12);
+
+		map->remove(new (e) Str(L"A"));
+
+		CHECK_EQ(map->count(), 2);
+		CHECK_EQ(map->get(new (e) Str(L"B")), 11);
+		CHECK_EQ(map->get(new (e) Str(L"E")), 13);
+		CHECK_EQ(map->get(new (e) Str(L"A"), 99), 99);
+	}
+
 	// TODO: More tests here!
 
 } END_TEST

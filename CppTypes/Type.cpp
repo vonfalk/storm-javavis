@@ -137,6 +137,37 @@ void Class::print(wostream &to) const {
 }
 
 /**
+ * Primitive.
+ */
+
+Primitive::Primitive(const CppName &name, const String &pkg, const CppName &generate, const SrcPos &pos) :
+	Type(name, pkg, pos), generate(generate) {}
+
+void Primitive::print(wostream &to) const {
+	to << L"primitive " << name;
+}
+
+void Primitive::resolveTypes(World &world) {
+	map<String, Size>::const_iterator i = world.builtIn.find(name.last());
+	if (i == world.builtIn.end())
+		throw Error(L"Unknown built-in type: " + name, pos);
+
+	mySize = i->second;
+}
+
+Size Primitive::size() const {
+	return mySize;
+}
+
+bool Primitive::heapAlloc() const {
+	return false;
+}
+
+void Primitive::ptrOffsets(vector<Offset> &append) const {
+	// None.
+}
+
+/**
  * Enum.
  */
 

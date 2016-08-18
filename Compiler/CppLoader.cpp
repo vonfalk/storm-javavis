@@ -41,9 +41,22 @@ namespace storm {
 			CppType &type = world->types[i];
 
 			// The array could be partially filled.
-			if (into.types[i] == null) {
+			if (into.types[i] == null && type.kind != CppType::superCustom) {
 				into.types[i] = new (e) Type(null, type.flags, Size(type.size), createGcType(&type));
 			}
+		}
+
+		// Create all types with custom types.
+		for (nat i = 0; i < c; i++) {
+			CppType &type = world->types[i];
+
+			if (type.kind != CppType::superCustom)
+				continue;
+			if (into.types[i])
+				continue;
+
+			CppType::CreateFn fn = (CppType::CreateFn)type.super;
+			into.types[i] = (*fn)(new (e) Str(type.name), Size(type.size), createGcType(&type));
 		}
 
 		// Now we can fill in the names and superclasses properly!
@@ -102,6 +115,12 @@ namespace storm {
 					break;
 				case CppType::superThread:
 					into.types[i]->setThread(threads[type.super]);
+					break;
+				case CppType::superCustom:
+					// Already done.
+					break;
+				default:
+					assert(false, L"Unknown kind on type " + ::toS(type.name) + L": " + ::toS(type.kind) + L".");
 					break;
 				}
 

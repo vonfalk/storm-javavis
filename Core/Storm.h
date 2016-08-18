@@ -91,6 +91,22 @@
 	extern const Nat name ## Id;
 
 /**
+ * Make a primitive type-id. This is used to declare the primitive types known to Storm in Handle.h,
+ * so that StormInfo<T> works on them too.
+ */
+#define STORM_PRIMITIVE(name, generator)								\
+	extern const Nat name ## Id;										\
+	template <>															\
+	struct StormInfo<name> {											\
+		static Nat id() {												\
+			return name ## Id;											\
+		}																\
+		static const Handle &handle(Engine &e) {						\
+			return runtime::typeHandle(runtime::cppType(e, name ## Id)); \
+		}																\
+	}
+
+/**
  * Create classes in storm. Usage: CREATE(Type, engine, param1, param2, ...)
  */
 #define CREATE(type, engine, ...)				\

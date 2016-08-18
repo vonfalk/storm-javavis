@@ -47,6 +47,17 @@ static void genIncludes(wostream &to, World &w) {
 	}
 }
 
+static void genPrimitiveGlobals(wostream &to, World &w) {
+	// Generate bodies for T::stormType():
+	for (nat i = 0; i < w.types.size(); i++) {
+		Type *t = w.types[i].borrow();
+
+		if (Primitive *p = as<Primitive>(t)) {
+			to << L"const storm::Nat " << p->name << L"Id = " << i << L";\n";
+		}
+	}
+}
+
 static void genGlobals(wostream &to, World &w) {
 	// Generate bodies for T::stormType():
 	for (nat i = 0; i < w.types.size(); i++) {
@@ -78,6 +89,7 @@ static void genTypes(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
 		Type &t = *w.types[i];
 		Class *c = as<Class>(&t);
+		Primitive *p = as<Primitive>(&t);
 		to << L"{ ";
 
 		// Name.
@@ -97,7 +109,9 @@ static void genTypes(wostream &to, World &w) {
 				thread = c->threadType;
 			}
 
-			if (thread) {
+			if (p) {
+				to << L"CppType::superCustom, size_t(&" << p->generate << L"), ";
+			} else if (thread) {
 				to << L"CppType::superThread, " << thread->id << L" /* " << thread->name << L" */, ";
 			} else if (parent) {
 				to << L"CppType::superClass, " << parent->id << L" /* " << parent->name << L" */, ";
@@ -195,6 +209,7 @@ GenerateMap genMap() {
 
 	static E e[] = {
 		{ L"INCLUDES", &genIncludes },
+		{ L"PRIMITIVE_GLOBALS", &genPrimitiveGlobals },
 		{ L"TYPE_GLOBALS", &genGlobals },
 		{ L"PTR_OFFSETS", &genPtrOffsets },
 		{ L"CPP_TYPES", &genTypes },

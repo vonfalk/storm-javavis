@@ -121,7 +121,7 @@ static void parseBlock(Tokenizer &tok) {
 		Token t = tok.next();
 		if (t.token == L"{")
 			parseBlock(tok);
-		if (t.token == L"}")
+		else if (t.token == L"}")
 			break;
 	}
 }
@@ -332,7 +332,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 			parseEnum(tok, env, fullName);
 		} else if (t.token == L"template") {
 			// Skip until we find a {, and skip the body as well.
-			while (tok.skipIf(L"{"))
+			while (!tok.skipIf(L"{"))
 				tok.skip();
 			parseBlock(tok);
 		} else if (t.token == L"public") {
@@ -380,7 +380,7 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			parseEnum(tok, env, name);
 		} else if (t.token == L"template") {
 			// Skip until we find a {, and skip the body as well.
-			while (tok.skipIf(L"{"))
+			while (!tok.skipIf(L"{"))
 				tok.skip();
 			parseBlock(tok);
 		} else if (t.token == L"extern") {
@@ -433,6 +433,16 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			env.world.templates.insert(t);
 			tok.expect(L")");
 			tok.expect(L";");
+		} else if (t.token == L"STORM_PRIMITIVE") {
+			tok.skip();
+			tok.expect(L"(");
+			Token tName = tok.next();
+			tok.expect(L",");
+			CppName gen = parseName(tok);
+			Auto<Primitive> p = new Primitive(name + tName.token, env.pkg, gen, tName.pos);
+			env.world.types.insert(p);
+			tok.expect(L")");
+			tok.expect(L";");
 		} else if (t.token == L"STORM_THREAD") {
 			tok.skip();
 			tok.expect(L"(");
@@ -447,6 +457,9 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 		} else if (t.token == L"}") {
 			tok.skip();
 			break;
+		} else if (t.token == L";") {
+			// Stray semicolon, skip it.
+			tok.skip();
 		} else {
 			parseMember(tok, WorldNamespace(env.world, name));
 		}
