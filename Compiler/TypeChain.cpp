@@ -1,12 +1,31 @@
 #include "stdafx.h"
 #include "TypeChain.h"
 #include "Type.h"
+#include "Engine.h"
 #include "Core/Runtime.h"
+#include "Core/Str.h"
 
 namespace storm {
 
-	TypeChain::TypeChain(Type *owner) : owner(owner), chain(null) {
+	TypeChain::TypeChain(Type *owner) : owner(owner), chain(null), child(null) {
+		if (engine().has(bootTemplates))
+			child = new (engine()) Set<TypeChain *>();
+
 		clearSuper();
+	}
+
+	void TypeChain::lateInit() {
+		if (child)
+			return;
+
+		child = new (engine()) Set<TypeChain *>();
+		TypeChain *super = superChain();
+		if (super) {
+			if (!super->child)
+				super->lateInit();
+			super->child->put(this);
+			super->notify();
+		}
 	}
 
 	TypeChain *TypeChain::superChain() const {
@@ -35,10 +54,10 @@ namespace storm {
 		if (n == old)
 			return;
 
-		// if (old)
-		// 	old->child.erase(this);
-		// if (n)
-		// 	n->child.insert(this);
+		if (old && old->child)
+			old->child->remove(this);
+		if (n && n->child)
+			n->child->put(this);
 
 		if (n)
 			updateSuper(n);
@@ -92,7 +111,24 @@ namespace storm {
 	}
 
 	void TypeChain::notify() const {
-		// TODO: notify children!
+		if (!child)
+			return;
+
+		Set<TypeChain *>::Iter i, end = child->end();
+		for (i = child->begin(); i != end; ++i) {
+			i.v()->updateSuper(this);
+		}
+	}
+
+	Array<Type *> *TypeChain::children() const {
+		Array<Type *> *r = new (this) Array<Type *>();
+		r->reserve(child->count());
+
+		Set<TypeChain *>::Iter i, end = child->end();
+		for (i = child->begin(); i != end; ++i)
+			r->push(i.v()->owner);
+
+		return r;
 	}
 
 }

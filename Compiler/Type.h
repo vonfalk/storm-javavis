@@ -93,6 +93,9 @@ namespace storm {
 
 		// Generate a handle for this type.
 		const Handle *buildHandle();
+
+		// Notify that the thread changed.
+		void notifyThread(NamedThread *t);
 	};
 
 

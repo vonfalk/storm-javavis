@@ -81,6 +81,8 @@ namespace storm {
 			if (!value())
 				setSuper(Object::stormType(engine));
 		}
+
+		chain->lateInit();
 	}
 
 	// Our finalizer.
@@ -117,6 +119,10 @@ namespace storm {
 	}
 
 	void Type::setSuper(Type *to) {
+		// So that Object does not inherit from TObject.
+		if (to == this)
+			return;
+
 		if (!chain)
 			chain = new (this) TypeChain(this);
 
@@ -139,7 +145,6 @@ namespace storm {
 		chain->super(to);
 
 		// For now, this is sufficient.
-		// TODO: Propagate changes to any child types.
 		if ((typeFlags & typeCpp) != typeCpp)
 			gcType = engine.gc.allocType(to->gcType);
 	}
@@ -148,7 +153,19 @@ namespace storm {
 		useThread = thread;
 		setSuper(TObject::stormType(engine));
 
-		// TODO: Propagate the current thread to any child types.
+		// Propagate the current thread to any child types.
+		notifyThread(thread);
+	}
+
+	void Type::notifyThread(NamedThread *thread) {
+		useThread = thread;
+
+		if (chain != null && engine.has(bootTemplates)) {
+			Array<Type *> *children = chain->children();
+			for (nat i = 0; i < children->count(); i++) {
+				children->at(i)->notifyThread(thread);
+			}
+		}
 	}
 
 	const Handle &Type::handle() {

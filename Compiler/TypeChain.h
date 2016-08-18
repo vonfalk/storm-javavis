@@ -1,6 +1,8 @@
 #pragma once
 #include "Thread.h"
 #include "Core/GcArray.h"
+#include "Core/Array.h"
+#include "Core/Set.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -8,6 +10,8 @@ namespace storm {
 	/**
 	 * Implements a representation of the type-hierarchy in Storm where it is O(1) to check if a
 	 * class is a subclass of another. Using Cohen's algorithm.
+	 *
+	 * TODO: Realize when a type died and remove it from any other TypeChain:s then!
 	 */
 	class TypeChain : public ObjectOn<Compiler> {
 		STORM_CLASS;
@@ -30,6 +34,12 @@ namespace storm {
 		Int STORM_FN distance(const TypeChain *o) const;
 		Int STORM_FN distance(const Type *o) const;
 
+		// Get all currently known direct children. The result is _not_ ordered in any way.
+		Array<Type *> *children() const;
+
+		// Late initialization. Requires templates.
+		void lateInit();
+
 	private:
 		// Our owner.
 		Type *owner;
@@ -37,7 +47,8 @@ namespace storm {
 		// Chain of super types (eg. our supertype, that supertype, and so on).
 		GcArray<TypeChain *> *chain;
 
-		// TODO: Remember the children in this chain.
+		// Children. NOTE: This should probably be a weak set.
+		Set<TypeChain *> *child;
 
 		// Update our type chain.
 		void updateSuper(const TypeChain *from);

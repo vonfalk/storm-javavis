@@ -55,9 +55,6 @@ namespace storm {
 		}
 
 		void *allocObject(size_t size, Type *type) {
-			if (size > type->gcType->stride) {
-				PLN(type->name);
-			}
 			assert(size <= type->gcType->stride,
 				L"Invalid type description found! " + ::toS(size) + L" vs " + ::toS(type->gcType->stride));
 			return type->engine.gc.alloc(type->gcType);
