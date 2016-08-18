@@ -130,6 +130,9 @@ namespace storm {
 		if (to == chain->super())
 			return;
 
+		if (!to->chain)
+			to->chain = new (this) TypeChain(to);
+
 		// Which thread to use?
 		Type *tObj = TObject::stormType(engine);
 		if (to->chain != null && tObj->chain != null) {

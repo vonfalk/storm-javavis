@@ -30,6 +30,12 @@ namespace storm {
 			// user-defined size_t, followed by a number of repeated fixed size allocations. Use
 			// GcArray<T> for convenient access.
 			tArray,
+
+			// Array of weak pointers. Much like tArray, but with some quirks:
+			// - The allocation may *only* contain pointers.
+			// - Any non-pointers must be tagged so their pointer-value is not aligned (eg. or with 1).
+			// Use GcWeakArray<T> for help with these constraints.
+			tWeakArray,
 		};
 
 		// Type. size_t since we want to know the size properly. Has to be first.

@@ -239,10 +239,13 @@ public:
  */
 class GcArrayType : public TypeRef {
 public:
-	GcArrayType(const SrcPos &pos, Auto<TypeRef> of);
+	GcArrayType(const SrcPos &pos, Auto<TypeRef> of, bool weak);
 
 	// Type of what?
 	Auto<TypeRef> of;
+
+	// Weak?
+	bool weak;
 
 	// Get the size of this type.
 	virtual Size size() const;

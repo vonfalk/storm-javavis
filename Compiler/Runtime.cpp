@@ -64,6 +64,10 @@ namespace storm {
 			return e.gc.allocArray(type, count);
 		}
 
+		void *allocWeakArray(Engine &e, size_t count) {
+			return e.gc.allocWeakArray(count);
+		}
+
 		GcWatch *createWatch(Engine &e) {
 			return e.gc.createWatch();
 		}

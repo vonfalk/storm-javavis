@@ -114,6 +114,9 @@ namespace storm {
 					into.types[i]->setSuper(into.types[type.super]);
 					break;
 				case CppType::superThread:
+					if (TObject::stormType(e) == null)
+						continue;
+
 					into.types[i]->setThread(threads[type.super]);
 					break;
 				case CppType::superCustom:

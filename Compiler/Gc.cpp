@@ -90,6 +90,14 @@ namespace storm {
 	static const size_t headerFwd = mpsFwd;
 
 	/**
+	 * Weak object data. Note that these members are tagged with a 1 in the lowest bit.
+	 */
+	struct MpsWeakHead {
+		size_t count;
+		size_t splatted;
+	};
+
+	/**
 	 * Object on the heap (for convenience). Note that the 'header' is not inside objects when
 	 * visible to Storm.
 	 */
@@ -101,6 +109,10 @@ namespace storm {
 			// If header->type == tArray, this is the number of elements in the array.
 			size_t count;
 
+			// If header->type == tWeakArray, this is valid. Use 'weakCount' and 'weakSplat' to avoid
+			// destroying the tag bit.
+			MpsWeakHead weak;
+
 			// Special MPS objects.
 			MpsPad0 pad0;
 			MpsPad pad;
@@ -109,9 +121,17 @@ namespace storm {
 		};
 	};
 
-	/**
-	 * Set the header of the object.
-	 */
+	// Return the size of a weak array.
+	static inline size_t weakCount(MpsObj *o) {
+		return o->weak.count >> 1;
+	}
+
+	// Splat an additional reference in a weak array.
+	static inline void weakSplat(MpsObj *o) {
+		o->weak.splatted = (o->weak.splatted + 0x10) | 0x01;
+	}
+
+	// Set the header of the object.
 	static inline void setHeader(mps_addr_t o, const void *to) {
 		((MpsObj *)o)->header = (MpsHeader *)to;
 	}
@@ -134,6 +154,9 @@ namespace storm {
 			break;
 		case GcType::tArray:
 			s = arrayHeaderSize + h->obj.stride*obj->count;
+			break;
+		case GcType::tWeakArray:
+			s = arrayHeaderSize + h->obj.stride*weakCount(obj);
 			break;
 		case mpsPad0:
 			s = 0;
@@ -216,6 +239,25 @@ namespace storm {
 					pos = (byte *)pos + arrayHeaderSize;
 					for (size_t i = 0; i < o->count; i++, pos = (byte *)pos + h->obj.stride) {
 						FIX_GCTYPE(h, 0, pos);
+					}
+					break;
+				case GcType::tWeakArray:
+					FIX_HEADER(h->obj);
+					// Skip the header.
+					pos = (byte *)pos + arrayHeaderSize;
+					for (size_t i = 0; i < weakCount(o); i++, pos = (byte *)pos + h->obj.stride) {
+						for (nat j = 0; j < h->obj.count; j++) {
+							size_t offset = h->obj.offset[j];
+							mps_addr_t *data = (mps_addr_t *)((byte *)pos + offset);
+							if (MPS_FIX1(ss, *data)) {
+								mps_res_t r = MPS_FIX2(ss, data);
+								if (r != MPS_RES_OK)
+									return r;
+								// Splatted?
+								if (*data == null)
+									weakSplat(o);
+							}
+						}
 					}
 					break;
 				}
@@ -500,6 +542,20 @@ namespace storm {
 
 		check(mps_ap_create_k(&typeAllocPoint, typePool, mps_args_none), L"Failed to create type allocation point.");
 
+		// Weak references are stored in a separate pool which supports weak references.
+		MPS_ARGS_BEGIN(args) {
+			MPS_ARGS_ADD(args, MPS_KEY_CHAIN, chain);
+			MPS_ARGS_ADD(args, MPS_KEY_FORMAT, format);
+			// Store weak tables in the second generation, as they are usually quite long-lived.
+			MPS_ARGS_ADD(args, MPS_KEY_GEN, 2);
+			check(mps_pool_create_k(&weakPool, arena, mps_class_awl(), args), L"Failed to create a weak GC pool.");
+		} MPS_ARGS_END(args);
+
+		MPS_ARGS_BEGIN(args) {
+			MPS_ARGS_ADD(args, MPS_KEY_RANK, mps_rank_weak());
+			check(mps_ap_create_k(&weakAllocPoint, weakPool, args), L"Failed to create weak allocation point.");
+		} MPS_ARGS_END(args);
+
 		// We want to receive finalization messages.
 		mps_message_type_enable(arena, mps_message_type_finalization());
 
@@ -529,11 +585,13 @@ namespace storm {
 		ignoreFreeType = true;
 		checkFinalizersLocked();
 
-		// Destroy the global allocation point.
+		// Destroy the global allocation points.
 		mps_ap_destroy(typeAllocPoint);
+		mps_ap_destroy(weakAllocPoint);
 
 		// Destroy pools.
 		mps_pool_destroy(pool);
+		mps_pool_destroy(weakPool);
 		mps_pool_destroy(typePool);
 		mps_pool_destroy(gcTypePool); // Has to be last, any formatted object may reference things in here.
 
@@ -767,6 +825,34 @@ namespace storm {
 		return result;
 	}
 
+	void *Gc::allocWeakArray(size_t elements) {
+		if (elements == 0)
+			return null;
+
+		util::Lock::L z(weakAllocLock);
+
+		const GcType *type = &weakArrayType;
+		size_t size = align(type->stride*elements + headerSize + arrayHeaderSize);
+		mps_ap_t &ap = weakAllocPoint;
+		mps_addr_t memory;
+		do {
+			check(mps_reserve(&memory, ap, size), L"Out of memory.");
+
+			// Make sure we can scan the newly allocated memory:
+			// 1: Clear all to zero.
+			memset(memory, 0, size);
+			// 2: Set the header.
+			setHeader(memory, type);
+			// 3: Set size (tagged).
+			((MpsObj *)memory)->weak.count = (elements << 1) | 0x1;
+			((MpsObj *)memory)->weak.splatted = 0x1;
+
+		} while (!mps_commit(ap, memory, size));
+
+		// Exclude our header, and return the allocated memory.
+		return (byte *)memory + headerSize;
+	}
+
 	static size_t typeSize(size_t entries) {
 		return sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
 	}
@@ -951,6 +1037,14 @@ namespace storm {
 	 * Shared stuff.
 	 */
 
+	const GcType Gc::weakArrayType = {
+		GcType::tWeakArray,
+		null,
+		null,
+		sizeof(void *),
+		1,
+		{}
+	};
 
 	/**
 	 * Simple linked list to test gc.

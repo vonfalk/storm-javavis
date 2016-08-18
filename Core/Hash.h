@@ -10,5 +10,6 @@ namespace storm {
 	Nat CODECALL natHash(Nat v);
 	Nat CODECALL longHash(Long v);
 	Nat CODECALL wordHash(Word v);
+	Nat CODECALL ptrHash(const void *v);
 
 }

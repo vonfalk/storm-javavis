@@ -18,4 +18,26 @@ namespace storm {
 		T v[1];
 	};
 
+	/**
+	 * A GcArray of weak pointers.
+	 */
+	template <class T>
+	struct GcWeakArray {
+		// Number of elements. Tagged so the GC does not think it is a pointer.
+		const size_t countI;
+
+		// Number of splatted elements since reset. Tagged.
+		size_t splattedI;
+
+		// Data.
+		T *v[1];
+
+		// Number of elements.
+		inline size_t count() const { return countI >> 1; }
+
+		// Splatted elements.
+		inline size_t splatted() const { return splattedI >> 1; }
+		inline void splatted(size_t v) { splattedI = (v << 1) | 0x1; }
+	};
+
 }

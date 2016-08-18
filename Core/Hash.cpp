@@ -40,4 +40,11 @@ namespace storm {
 		return Nat(v);
 	}
 
+	Nat ptrHash(const void *v) {
+		if (sizeof(v) == sizeof(Nat))
+			return natHash(Nat(v));
+		else
+			return wordHash(Word(v));
+	}
+
 }

@@ -82,6 +82,9 @@ namespace storm {
 		// Allocate an array of objects. Assumes type->type == tArray.
 		void *allocArray(const GcType *type, size_t count);
 
+		// Allocate an array of weak pointers.
+		void *allocWeakArray(size_t count);
+
 		/**
 		 * Management of Gc types.
 		 *
@@ -133,6 +136,9 @@ namespace storm {
 		bool test(nat times = 100);
 
 	private:
+		// GcType for weak arrays.
+		static const GcType weakArrayType;
+
 		// Finalization interval.
 		nat finalizationInterval;
 
@@ -154,6 +160,11 @@ namespace storm {
 		mps_pool_t typePool;
 		mps_ap_t typeAllocPoint;
 		util::Lock typeAllocLock;
+
+		// Pool for objects with weak references.
+		mps_pool_t weakPool;
+		mps_ap_t weakAllocPoint;
+		util::Lock weakAllocLock;
 
 		// Description of all attached threads.
 		typedef map<uintptr_t, GcThread *> ThreadMap;

@@ -3,7 +3,7 @@
 #include "Init.h"
 #include "Type.h"
 #include "Package.h"
-#include "Hash.h"
+#include "Core/Hash.h"
 #include "Core/Thread.h"
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
@@ -153,10 +153,7 @@ namespace storm {
 
 	static Nat tObjHash(const void *obj) {
 		const void *ptr = *(const void **)obj;
-		if (sizeof(ptr) == sizeof(Nat))
-			return natHash(Nat(ptr));
-		else
-			return wordHash(Word(ptr));
+		return ptrHash(ptr);
 	}
 
 	static Bool tObjEqual(const void *a, const void *b) {

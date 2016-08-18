@@ -24,7 +24,7 @@ namespace storm {
 	 */
 
 	/**
-	 * Exception thrown from the map.
+	 * Exception thrown from the set.
 	 */
 	class SetError : public Exception {
 	public:
@@ -60,7 +60,7 @@ namespace storm {
 		// # of contained elements.
 		inline Nat STORM_FN count() const { return size; }
 
-		// Any elements.
+		// Any elements?
 		inline Bool STORM_FN any() const { return size > 0; }
 
 		// Empty?
@@ -123,7 +123,7 @@ namespace storm {
 			// Used? Part of a chain?
 			nat status;
 
-			// Status cudes (at the end of the nat interval to not interfere).
+			// Status codes (at the end of the nat interval to not interfere).
 			static const nat free = -1;
 			static const nat end = -2;
 
@@ -209,6 +209,9 @@ namespace storm {
 			// Pointing to the end.
 			Iter();
 
+			// Copy.
+			Iter(const Iter &o);
+
 			// Pointing to the first element.
 			Iter(SetBase *owner);
 
@@ -228,7 +231,7 @@ namespace storm {
 			Iter CODECALL postIncRaw();
 
 		private:
-			// The three gc arrays from the set.
+			// The two gc arrays from the set.
 			// TODO: as the key and value arrays will eventually need to contain information about
 			// which elements are free, we can elliminate 'info' eventually.
 			GcArray<Info> *info;
@@ -293,8 +296,8 @@ namespace storm {
 		}
 
 		// Remove a value.
-		void remove(const K &k) {
-			removeRaw(&k);
+		Bool remove(const K &k) {
+			return removeRaw(&k);
 		}
 
 		/**

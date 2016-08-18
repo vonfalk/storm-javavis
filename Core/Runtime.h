@@ -46,8 +46,16 @@ namespace storm {
 		void *allocArray(Engine &e, const GcType *type, size_t count);
 
 		template <class T>
-		inline GcArray<T> *allocArray(Engine &e, const GcType *type, nat count) {
+		inline GcArray<T> *allocArray(Engine &e, const GcType *type, size_t count) {
 			return (GcArray<T> *)allocArray(e, type, count);
+		}
+
+		// Allocate a weak array of pointers.
+		void *allocWeakArray(Engine &e, size_t count);
+
+		template <class T>
+		inline GcWeakArray<T> *allocWeakArray(Engine &e, size_t count) {
+			return (GcWeakArray<T> *)allocWeakArray(e, count);
 		}
 
 		// Get the thread group to use for all threads.

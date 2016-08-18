@@ -128,7 +128,7 @@ namespace storm {
 			// Used? Part of a chain?
 			nat status;
 
-			// Status cudes (at the end of the nat interval to not interfere).
+			// Status codes (at the end of the nat interval to not interfere).
 			static const nat free = -1;
 			static const nat end = -2;
 
@@ -222,6 +222,9 @@ namespace storm {
 			// Pointing to the end.
 			Iter();
 
+			// Copy.
+			Iter(const Iter &o);
+
 			// Pointing to the first element.
 			Iter(MapBase *owner);
 
@@ -313,8 +316,8 @@ namespace storm {
 		}
 
 		// Remove a value.
-		void remove(const K &k) {
-			removeRaw(&k);
+		Bool remove(const K &k) {
+			return removeRaw(&k);
 		}
 
 		/**

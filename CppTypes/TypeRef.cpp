@@ -20,7 +20,9 @@ Auto<TypeRef> TemplateType::resolve(World &in, const CppName &context) const {
 
 	// This is special, as it is not exported to Storm, but we have to know about it to properly GC it.
 	if (name == L"GcArray" && p.size() == 1) {
-		return new GcArrayType(pos, p[0]);
+		return new GcArrayType(pos, p[0], false);
+	} else if (name == L"GcWeakArray" && p.size() == 1) {
+		return new GcArrayType(pos, p[0], true);
 	} else if (Template *found = in.templates.findUnsafe(name, context)) {
 		// Found it!
 		return new ResolvedTemplateType(pos, found, p);
@@ -154,7 +156,7 @@ void BuiltInType::print(wostream &to) const {
 	to << name;
 }
 
-GcArrayType::GcArrayType(const SrcPos &pos, Auto<TypeRef> of) : TypeRef(pos), of(of) {}
+GcArrayType::GcArrayType(const SrcPos &pos, Auto<TypeRef> of, bool weak) : TypeRef(pos), of(of), weak(weak) {}
 
 Auto<TypeRef> GcArrayType::resolve(World &in, const CppName &context) const {
 	Auto<GcArrayType> r = new GcArrayType(*this);
@@ -167,7 +169,10 @@ Size GcArrayType::size() const {
 }
 
 void GcArrayType::print(wostream &to) const {
-	to << L"storm::GcArray<" << of << L">";
+	if (weak)
+		to << L"storm::GcWeakArray<" << of << L">";
+	else
+		to << L"storm::GcArray<" << of << L">";
 }
 
 GcWatchType::GcWatchType(const SrcPos &pos) : TypeRef(pos) {}
