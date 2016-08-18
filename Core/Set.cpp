@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Map.h"
+#include "Set.h"
 #include "StrBuf.h"
 #include "GcWatch.h"
 #include "Utils/Bitwise.h"
@@ -7,7 +7,7 @@
 
 namespace storm {
 
-	const GcType MapBase::infoType = {
+	const GcType SetBase::infoType = {
 		GcType::tArray,
 		null,
 		null,
@@ -16,23 +16,22 @@ namespace storm {
 		{},
 	};
 
-	MapBase::MapBase(const Handle &k, const Handle &v) : keyT(k), valT(v), watch(null) {
+	SetBase::SetBase(const Handle &k) : keyT(k), watch(null) {
 		if (k.locationHash)
 			watch = runtime::createWatch(engine());
 	}
 
-	MapBase::MapBase(MapBase *o) : keyT(o->keyT), valT(o->valT), watch(null) {
+	SetBase::SetBase(SetBase *o) : keyT(o->keyT), watch(null) {
 		size = o->size;
 		lastFree = o->lastFree;
 		info = copyArray(o->info);
 		key = copyArray(o->key, info, keyT);
-		val = copyArray(o->val, info, valT);
 
 		if (o->watch)
 			watch = o->watch->clone();
 	}
 
-	void MapBase::deepCopy(CloneEnv *env) {
+	void SetBase::deepCopy(CloneEnv *env) {
 		if (keyT.deepCopyFn) {
 			for (size_t i = 0; i < capacity(); i++) {
 				if (info->v[i].status != Info::free) {
@@ -40,24 +39,15 @@ namespace storm {
 				}
 			}
 		}
-
-		if (valT.deepCopyFn) {
-			for (size_t i = 0; i < capacity(); i++) {
-				if (info->v[i].status != Info::free) {
-					(*valT.deepCopyFn)(valPtr(i), env);
-				}
-			}
-		}
 	}
 
-	void MapBase::clear() {
+	void SetBase::clear() {
 		size = 0;
 		info = null;
 		key = null;
-		val = null;
 	}
 
-	void MapBase::shrink() {
+	void SetBase::shrink() {
 		if (size == 0) {
 			clear();
 			return;
@@ -67,7 +57,7 @@ namespace storm {
 		rehash(to);
 	}
 
-	void MapBase::toS(StrBuf *to) const {
+	void SetBase::toS(StrBuf *to) const {
 		*to << L"{";
 		bool first = true;
 
@@ -81,14 +71,12 @@ namespace storm {
 			}
 
 			(*keyT.toSFn)(keyPtr(i), to);
-			*to << L" -> ";
-			(*valT.toSFn)(valPtr(i), to);
 		}
 
 		*to << L"}";
 	}
 
-	nat MapBase::newHash(const void *key) {
+	nat SetBase::newHash(const void *key) {
 		if (watch) {
 			// Place the pointer on the stack to prevent it from moving around while we're
 			// registering we're depending on it.
@@ -100,26 +88,26 @@ namespace storm {
 		}
 	}
 
-	void MapBase::putRaw(const void *key, const void *value) {
+	void SetBase::putRaw(const void *key) {
 		nat hash = (*keyT.hashFn)(key);
 		nat old = findSlot(key, hash);
 		if (old == Info::free) {
 			if (watch)
 				// In case the object moved, we need to re-compute the hash.
 				hash = newHash(key);
-			insert(key, value, hash);
+			insert(key, hash);
 		} else {
-			valT.safeDestroy(valPtr(old));
-			valT.safeCopy(valPtr(old), value);
+			keyT.safeDestroy(keyPtr(old));
+			keyT.safeCopy(keyPtr(old), key);
 		}
 	}
 
-	Bool MapBase::hasRaw(const void *key) {
+	Bool SetBase::hasRaw(const void *key) {
 		nat hash = (*keyT.hashFn)(key);
 		return findSlot(key, hash) != Info::free;
 	}
 
-	void *MapBase::getRaw(const void *key) {
+	void *SetBase::getRaw(const void *key) {
 		nat hash = (*keyT.hashFn)(key);
 		nat slot = findSlot(key, hash);
 		if (slot == Info::free) {
@@ -127,26 +115,12 @@ namespace storm {
 			*buf << L"The key ";
 			(*keyT.toSFn)(key, buf);
 			*buf << L" is not in the map.";
-			throw MapError(::toS(buf));
+			throw SetError(::toS(buf));
 		}
-		return valPtr(slot);
+		return keyPtr(slot);
 	}
 
-	void *MapBase::getRaw(const void *key, const void *def) {
-		nat hash = (*keyT.hashFn)(key);
-		nat slot = findSlot(key, hash);
-
-		if (slot == Info::free) {
-			if (watch)
-				// In case the object moved, we need to re-compute the hash.
-				hash = newHash(key);
-			slot = insert(key, def, hash);
-		}
-
-		return valPtr(slot);
-	}
-
-	void *MapBase::atRaw(const void *key, CreateCtor fn) {
+	void *SetBase::atRaw(const void *key) {
 		nat hash = (*keyT.hashFn)(key);
 		nat slot = findSlot(key, hash);
 
@@ -155,13 +129,12 @@ namespace storm {
 				// In case the object moved, we need to re-compute the hash.
 				hash = newHash(key);
 			slot = insert(key, hash);
-			(*fn)(valPtr(slot), engine());
 		}
 
-		return valPtr(slot);
+		return keyPtr(slot);
 	}
 
-	Bool MapBase::removeRaw(const void *key) {
+	Bool SetBase::removeRaw(const void *key) {
 		// Will break 'primarySlot' otherwise.
 		if (capacity() == 0)
 			return false;
@@ -175,7 +148,7 @@ namespace storm {
 		}
 	}
 
-	bool MapBase::remove(const void *key) {
+	bool SetBase::remove(const void *key) {
 		nat hash = (*keyT.hashFn)(key);
 		nat slot = primarySlot(hash);
 
@@ -197,16 +170,13 @@ namespace storm {
 				// Destroy the node.
 				info->v[slot].status = Info::free;
 				keyT.safeDestroy(keyPtr(slot));
-				valT.safeDestroy(valPtr(slot));
 
 				if (prev == Info::free && next != Info::end) {
 					// The removed node was in the primary slot, and we need to move the next one into our slot.
 					keyT.safeCopy(keyPtr(slot), keyPtr(next));
-					valT.safeCopy(valPtr(slot), valPtr(next));
 					info->v[slot] = info->v[next];
 					info->v[next].status = Info::free;
 					keyT.safeDestroy(keyPtr(next));
-					valT.safeDestroy(valPtr(next));
 				}
 
 				size--;
@@ -222,7 +192,7 @@ namespace storm {
 		return false;
 	}
 
-	Nat MapBase::countCollisions() const {
+	Nat SetBase::countCollisions() const {
 		Nat c = 0;
 		for (nat i = 0; i < capacity(); i++) {
 			if (info->v[i].status != Info::free && i == primarySlot(info->v[i].hash)) {
@@ -233,7 +203,7 @@ namespace storm {
 		return c;
 	}
 
-	Nat MapBase::countMaxChain() const {
+	Nat SetBase::countMaxChain() const {
 		Nat c = 0;
 		for (nat i = 0; i < capacity(); i++) {
 			if (info->v[i].status != Info::free && i == primarySlot(info->v[i].hash)) {
@@ -246,7 +216,7 @@ namespace storm {
 		return c;
 	}
 
-	void MapBase::dbg_print() {
+	void SetBase::dbg_print() {
 		std::wcout << L"Map contents:" << endl;
 		for (nat i = 0; i < capacity(); i++) {
 			std::wcout << std::setw(2) << i << L": ";
@@ -268,22 +238,20 @@ namespace storm {
 		}
 	}
 
-	void MapBase::alloc(nat cap) {
+	void SetBase::alloc(nat cap) {
 		assert(info == null);
 		assert(key == null);
-		assert(val == null);
 		assert(isPowerOfTwo(cap));
 
 		size = 0;
 		info = runtime::allocArray<Info>(engine(), &infoType, cap);
 		key = runtime::allocArray<byte>(engine(), keyT.gcArrayType, cap);
-		val = runtime::allocArray<byte>(engine(), valT.gcArrayType, cap);
 
 		for (nat i = 0; i < cap; i++)
 			info->v[i].status = Info::free;
 	}
 
-	void MapBase::grow() {
+	void SetBase::grow() {
 		nat c = capacity();
 		if (c == 0) {
 			// Initial table size.
@@ -294,12 +262,11 @@ namespace storm {
 		}
 	}
 
-	void MapBase::rehash(nat cap) {
+	void SetBase::rehash(nat cap) {
 		nat oldSize = size;
 
 		GcArray<Info> *oldInfo = info; info = null;
 		GcArray<byte> *oldKey = key; key = null;
-		GcArray<byte> *oldVal = val; val = null;
 
 		alloc(cap);
 
@@ -313,7 +280,7 @@ namespace storm {
 				if (oldInfo->v[i].status == Info::free)
 					continue;
 
-				insert(keyPtr(oldKey, i), valPtr(oldVal, i), oldInfo->v[i].hash);
+				insert(keyPtr(oldKey, i), oldInfo->v[i].hash);
 			}
 
 			// The Gc will destroy the old arrays and all elements in there later on.
@@ -324,17 +291,15 @@ namespace storm {
 			swap(oldSize, size);
 			swap(oldInfo, info);
 			swap(oldKey, key);
-			swap(oldVal, val);
 			throw;
 		}
 	}
 
-	nat MapBase::rehashFind(nat cap, const void *find) {
+	nat SetBase::rehashFind(nat cap, const void *find) {
 		nat oldSize = size;
 
 		GcArray<Info> *oldInfo = info; info = null;
 		GcArray<byte> *oldKey = key; key = null;
-		GcArray<byte> *oldVal = val; val = null;
 
 		alloc(cap);
 
@@ -355,7 +320,7 @@ namespace storm {
 				// We need to re-hash here, as some objects have moved.
 				const void *k = keyPtr(oldKey, i);
 				nat hash = newHash(k);
-				nat into = insert(k, valPtr(oldVal, i), hash);
+				nat into = insert(k, hash);
 
 				// Is this the key we're looking for?
 				if ((*keyT.equalFn)(k, find))
@@ -371,17 +336,15 @@ namespace storm {
 			swap(oldSize, size);
 			swap(oldInfo, info);
 			swap(oldKey, key);
-			swap(oldVal, val);
 			throw;
 		}
 	}
 
-	bool MapBase::rehashRemove(nat cap, const void *remove) {
+	bool SetBase::rehashRemove(nat cap, const void *remove) {
 		nat oldSize = size;
 
 		GcArray<Info> *oldInfo = info; info = null;
 		GcArray<byte> *oldKey = key; key = null;
-		GcArray<byte> *oldVal = val; val = null;
 
 		alloc(cap);
 
@@ -409,7 +372,7 @@ namespace storm {
 
 				// We need to re-hash here, as some objects have moved.
 				nat hash = newHash(k);
-				nat into = insert(k, valPtr(oldVal, i), hash);
+				nat into = insert(k, hash);
 			}
 
 			// The Gc will destroy the old arrays and all elements in there later on.
@@ -421,18 +384,11 @@ namespace storm {
 			swap(oldSize, size);
 			swap(oldInfo, info);
 			swap(oldKey, key);
-			swap(oldVal, val);
 			throw;
 		}
 	}
 
-	nat MapBase::insert(const void *key, const void *val, nat hash) {
-		nat into = insert(key, hash);
-		valT.safeCopy(valPtr(into), val);
-		return into;
-	}
-
-	nat MapBase::insert(const void *key, nat hash) {
+	nat SetBase::insert(const void *key, nat hash) {
 		grow();
 
 		Info insert = { Info::end, hash };
@@ -461,9 +417,7 @@ namespace storm {
 				// Move the node itself.
 				info->v[to] = info->v[into];
 				keyT.safeCopy(keyPtr(to), keyPtr(into));
-				valT.safeCopy(valPtr(to), valPtr(into));
 				keyT.safeDestroy(keyPtr(into));
-				valT.safeDestroy(valPtr(into));
 				info->v[into].status = Info::free;
 			}
 		}
@@ -476,7 +430,7 @@ namespace storm {
 		return into;
 	}
 
-	nat MapBase::findSlot(const void *key, nat hash) {
+	nat SetBase::findSlot(const void *key, nat hash) {
 		// Otherwise, primarySlot won't work.
 		if (capacity() == 0)
 			return Info::free;
@@ -491,7 +445,7 @@ namespace storm {
 		return r;
 	}
 
-	nat MapBase::findSlotI(const void *key, nat hash) {
+	nat SetBase::findSlotI(const void *key, nat hash) {
 		// We assume 'capacity() > 0', as checked by 'findSlot'.
 		nat slot = primarySlot(hash);
 		if (info->v[slot].status == Info::free)
@@ -507,13 +461,13 @@ namespace storm {
 		return Info::free;
 	}
 
-	nat MapBase::primarySlot(nat hash) const {
+	nat SetBase::primarySlot(nat hash) const {
 		// We know that 'capacity' is a power of two, therefore the following is equivalent to:
 		// return hash % capacity;
 		return hash & (capacity() - 1);
 	}
 
-	nat MapBase::freeSlot() {
+	nat SetBase::freeSlot() {
 		while (info->v[lastFree].status != Info::free)
 			// We know that 'capacity' is a power of two. Therefore, the following is equivalent to:
 			// if (++lastFree >= capacity) lastFree = 0;
@@ -522,13 +476,13 @@ namespace storm {
 		return lastFree;
 	}
 
-	GcArray<MapBase::Info> *MapBase::copyArray(const GcArray<Info> *src) {
+	GcArray<SetBase::Info> *SetBase::copyArray(const GcArray<Info> *src) {
 		GcArray<Info> *dest = runtime::allocArray<Info>(engine(), &infoType, src->count);
 		memcpy(dest->v, src->v, src->count*sizeof(Info));
 		return dest;
 	}
 
-	GcArray<byte> *MapBase::copyArray(const GcArray<byte> *src, const GcArray<Info> *info, const Handle &type) {
+	GcArray<byte> *SetBase::copyArray(const GcArray<byte> *src, const GcArray<Info> *info, const Handle &type) {
 		GcArray<byte> *dest = runtime::allocArray<byte>(engine(), type.gcArrayType, src->count);
 
 		if (type.copyFn) {
@@ -548,26 +502,26 @@ namespace storm {
 		return dest;
 	}
 
-	MapBase::Iter::Iter() : info(null), key(null), val(null), pos(0) {}
+	SetBase::Iter::Iter() : info(null), key(null), pos(0) {}
 
-	MapBase::Iter::Iter(MapBase *owner) : info(owner->info), key(owner->key), val(owner->val), pos(0) {
+	SetBase::Iter::Iter(SetBase *owner) : info(owner->info), key(owner->key), pos(0) {
 		// Find the first occupied position. This may place us at the end.
 		while (!atEnd() && info->v[pos].status == Info::free)
 			pos++;
 	}
 
-	bool MapBase::Iter::operator ==(const Iter &o) const {
+	bool SetBase::Iter::operator ==(const Iter &o) const {
 		if (atEnd() && o.atEnd())
 			return true;
 		else
-			return key == o.key && val == o.val && pos == o.pos;
+			return key == o.key && pos == o.pos;
 	}
 
-	bool MapBase::Iter::operator !=(const Iter &o) const {
+	bool SetBase::Iter::operator !=(const Iter &o) const {
 		return !(*this == o);
 	}
 
-	MapBase::Iter &MapBase::Iter::operator ++() {
+	SetBase::Iter &SetBase::Iter::operator ++() {
 		if (!atEnd())
 			pos++;
 
@@ -578,42 +532,37 @@ namespace storm {
 		return *this;
 	}
 
-	MapBase::Iter MapBase::Iter::operator ++(int) {
+	SetBase::Iter SetBase::Iter::operator ++(int) {
 		Iter t(*this);
 		++*this;
 		return t;
 	}
 
-	void *MapBase::Iter::rawKey() const {
+	void *SetBase::Iter::rawVal() const {
 		size_t s = runtime::gcTypeOf(key)->stride;
 		return key->v + pos*s;
 	}
 
-	void *MapBase::Iter::rawVal() const {
-		size_t s = runtime::gcTypeOf(val)->stride;
-		return val->v + pos*s;
-	}
-
-	MapBase::Iter &MapBase::Iter::preIncRaw() {
+	SetBase::Iter &SetBase::Iter::preIncRaw() {
 		return operator ++();
 	}
 
-	MapBase::Iter MapBase::Iter::postIncRaw() {
+	SetBase::Iter SetBase::Iter::postIncRaw() {
 		return operator ++(0);
 	}
 
-	bool MapBase::Iter::atEnd() const {
+	bool SetBase::Iter::atEnd() const {
 		if (key)
 			return pos == key->count;
 		else
 			return true;
 	}
 
-	MapBase::Iter MapBase::beginRaw() {
+	SetBase::Iter SetBase::beginRaw() {
 		return Iter(this);
 	}
 
-	MapBase::Iter MapBase::endRaw() {
+	SetBase::Iter SetBase::endRaw() {
 		return Iter();
 	}
 

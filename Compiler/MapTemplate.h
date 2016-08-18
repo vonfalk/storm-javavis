@@ -22,7 +22,7 @@ namespace storm {
 		STORM_CTOR MapType(Str *name, Type *k, Type *v);
 
 	private:
-		// Content type.
+		// Content types.
 		Type *k;
 		Type *v;
 	};

@@ -1,33 +1,32 @@
 #include "stdafx.h"
 #include "Test/Test.h"
-#include "Core/Map.h"
+#include "Core/Set.h"
 #include "Core/Str.h"
 #include "Compiler/Debug.h"
 
 using debug::PtrKey;
 
-
-BEGIN_TEST(MapTest, Runtime) {
+BEGIN_TEST(SetTest, Runtime) {
 	Engine &e = *gEngine;
 
 	// Basic operation:
 	{
-		Map<Str *, Str *> *map = new (e) Map<Str *, Str *>();
+		Set<Str *> *set = new (e) Set<Str *>();
 
-		map->put(new (e) Str(L"A"), new (e) Str(L"10"));
-		map->put(new (e) Str(L"B"), new (e) Str(L"11"));
-		map->put(new (e) Str(L"A"), new (e) Str(L"12"));
-		map->put(new (e) Str(L"E"), new (e) Str(L"13"));
+		set->put(new (e) Str(L"A"));
+		set->put(new (e) Str(L"B"));
+		set->put(new (e) Str(L"A"));
+		set->put(new (e) Str(L"E"));
 
-		CHECK_EQ(map->count(), 3);
-		CHECK_EQ(::toS(map->get(new (e) Str(L"A"))), L"12");
+		CHECK_EQ(set->count(), 3);
+		CHECK(set->has(new (e) Str(L"A")));
 
-		map->remove(new (e) Str(L"A"));
+		set->remove(new (e) Str(L"A"));
 
-		CHECK_EQ(map->count(), 2);
-		CHECK_EQ(::toS(map->get(new (e) Str(L"B"))), L"11");
-		CHECK_EQ(::toS(map->get(new (e) Str(L"E"))), L"13");
-		CHECK_EQ(::toS(map->get(new (e) Str(L"A"), new (e) Str(L"-"))), L"-")
+		CHECK_EQ(set->count(), 2);
+		CHECK(set->has(new (e) Str(L"B")));
+		CHECK(set->has(new (e) Str(L"E")));
+		CHECK(!set->has(new (e) Str(L"A")));
 	}
 
 	// TODO: More tests here!
@@ -48,7 +47,7 @@ static bool moveObjects(Array<PtrKey *> *k) {
 	return false;
 }
 
-BEGIN_TEST(MapTestMove, Runtime) {
+BEGIN_TEST(SetTestMove, Runtime) {
 	// Do we handle moving objects properly?
 	Engine &e = *gEngine;
 
@@ -56,17 +55,15 @@ BEGIN_TEST(MapTestMove, Runtime) {
 
 	// Store these in arrays so the GC can move them properly.
 	Array<PtrKey *> *k = new (e) Array<PtrKey *>();
-	Array<Str *> *v = new (e) Array<Str *>();
 
 	for (nat i = 0; i < count; i++) {
 		k->push(new (e) PtrKey());
-		v->push(new (e) Str(::toS(i).c_str()));
 	}
 
-	Map<PtrKey *, Str *> *map = new (e) Map<PtrKey *, Str *>();
+	Set<PtrKey *> *set = new (e) Set<PtrKey *>();
 
 	for (nat i = 0; i < count; i++) {
-		map->put(k->at(i), v->at(i));
+		set->put(k->at(i));
 		k->at(i)->reset();
 	}
 
@@ -74,9 +71,9 @@ BEGIN_TEST(MapTestMove, Runtime) {
 	// Note: if we're using a non-moving collector, the following tests will fail.
 	CHECK(moveObjects(k));
 
-	// Try to find all objects in the map:
+	// Try to find all objects in the set:
 	for (nat i = 0; i < count; i++) {
-		CHECK_OBJ_EQ(map->get(k->at(i)), v->at(i));
+		CHECK_EQ(set->get(k->at(i)), k->at(i));
 	}
 
 	// Move the objects once more, so we can try 'remove' properly.
@@ -84,15 +81,15 @@ BEGIN_TEST(MapTestMove, Runtime) {
 
 	// Try to remove an object.
 	for (nat i = 0; i < count; i++) {
-		map->remove(k->at(i));
-		CHECK_EQ(map->count(), count - i - 1);
+		set->remove(k->at(i));
+		CHECK_EQ(set->count(), count - i - 1);
 
 		// Validate the others.
 		for (nat j = 0; j < count; j++) {
 			if (j <= i) {
-				CHECK(!map->has(k->at(j)));
+				CHECK(!set->has(k->at(j)));
 			} else {
-				CHECK_OBJ_EQ(map->get(k->at(j)), v->at(j));
+				CHECK(set->has(k->at(j)));
 			}
 		}
 	}

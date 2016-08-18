@@ -6,17 +6,17 @@ namespace storm {
 	STORM_PKG(core);
 
 	/**
-	 * Map for use in Storm and in C++.
+	 * Set for use in Storm and in C++.
 	 *
 	 * Note: actors are currently supported by disallowing custom hash functions being associated
 	 * with them, and always using their address as the value for hashing.
 	 *
-	 * The implementation is inspired from the hash map implementation found in Lua. All keys and
-	 * values are stored as a flat array. Chaining is done by maintaining pointers in each of the
-	 * slots of the array. An entry is said to be in its primary position if it is in the location
-	 * computed by the hash function. This implementation maintains the invariant that for each hash
-	 * value, the element contained is either the element in the primary position, or that hash does
-	 * not exist in the hash map.
+	 * The implementation is inspired from the hash map implementation found in Lua. All keys are
+	 * stored as a flat array. Chaining is done by maintaining pointers in each of the slots of the
+	 * array. An entry is said to be in its primary position if it is in the location computed by
+	 * the hash function. This implementation maintains the invariant that for each hash value, the
+	 * element contained is either the element in the primary position, or that hash does not exist
+	 * in the hashmap.
 	 *
 	 * Special quirks when using a moving Gc with pointer-based hashes: as objects may be moved and
 	 * thus pointers may be updated at any point, the hash map must be aware of this and act
@@ -26,33 +26,32 @@ namespace storm {
 	/**
 	 * Exception thrown from the map.
 	 */
-	class MapError : public Exception {
+	class SetError : public Exception {
 	public:
-		MapError(const String &msg) : msg(msg) {}
-		virtual String what() const { return L"Map error: " + msg; }
+		SetError(const String &msg) : msg(msg) {}
+		virtual String what() const { return L"Set error: " + msg; }
 	private:
 		String msg;
 	};
 
 
 	/**
-	 * The base class used in Storm. Use derived Map<> in C++.
+	 * The base class used in Storm. Use derived Set<> in C++.
 	 */
-	class MapBase : public Object {
+	class SetBase : public Object {
 		STORM_CLASS;
 	public:
-		// Empty map.
-		MapBase(const Handle &key, const Handle &value);
+		// Empty set.
+		SetBase(const Handle &key);
 
-		// Copy another map.
-		STORM_CTOR MapBase(MapBase *other);
+		// Copy another set.
+		STORM_CTOR SetBase(SetBase *other);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
 		// Key and value handle.
 		const Handle &keyT;
-		const Handle &valT;
 
 		/**
 		 * Non-generic public interface.
@@ -81,20 +80,16 @@ namespace storm {
 		 */
 
 		// Put a value.
-		void CODECALL putRaw(const void *key, const void *value);
+		void CODECALL putRaw(const void *key);
 
 		// Contains value?
 		Bool CODECALL hasRaw(const void *key);
 
-		// Get a value. Throws if it does not exist.
+		// Get the key previously stored which is considered equal to 'key'. Throws if it does not exist.
 		void *CODECALL getRaw(const void *key);
 
-		// Get a value. Create it if it does not exist.
-		void *CODECALL getRaw(const void *key, const void *def);
-
-		// Get a value. Create using the constructor if it does not exist.
-		typedef void (*CreateCtor)(void *to, Engine &e);
-		void *CODECALL atRaw(const void *key, CreateCtor fn);
+		// Get a key considered equal to 'key', or insert and return 'key' if none exists.
+		void *CODECALL atRaw(const void *key);
 
 		// Remove a value. Returns 'true' if we found one to remove.
 		Bool CODECALL removeRaw(const void *key);
@@ -136,11 +131,10 @@ namespace storm {
 			nat hash;
 		};
 
-		// Allocated memory. Split into three regions: info, key and value. Each of these are the
-		// same number of elements in size.
+		// Allocated memory. Split into two regions: info and key. Each of these are the same number
+		// of elements in size.
 		GcArray<Info> *info;
 		GcArray<byte> *key;
-		GcArray<byte> *val;
 
 		// Watch if objects move (if needed).
 		GcWatch *watch;
@@ -150,12 +144,9 @@ namespace storm {
 
 		// Get locations for keys or values.
 		inline void *keyPtr(nat id) { return key->v + id*keyT.size; }
-		inline void *valPtr(nat id) { return val->v + id*valT.size; }
 		inline const void *keyPtr(nat id) const { return key->v + id*keyT.size; }
-		inline const void *valPtr(nat id) const { return val->v + id*valT.size; }
 
 		inline void *keyPtr(GcArray<byte> *a, nat id) { return a->v + id*keyT.size; }
-		inline void *valPtr(GcArray<byte> *a, nat id) { return a->v + id*valT.size; }
 
 		// Allocate data for a specific capacity. Assumes 'info', 'key' and 'value' are null.
 		void alloc(nat capacity);
@@ -180,10 +171,6 @@ namespace storm {
 		// Insert a node, given its hash is known (eg. when re-hashing). Assumes no other node with
 		// the same key exists, and will therefore always insert the element.
 		// Returns the slot inserted into.
-		nat insert(const void *key, const void *val, nat hash);
-
-		// Compute the insertion point for a new element. Does everything except copying the value
-		// into the array. Do not skip copying the value, as the map will be left in an inconsistent state.
 		nat insert(const void *key, nat hash);
 
 		// Remove an element, ignoring any moved objects. Returns 'true' if an object was removed.
@@ -214,7 +201,7 @@ namespace storm {
 		 * Iterator.
 		 *
 		 * Note: since reading an element is potentially a destructive operation (we may have to
-		 * rehash the table due to moved entries), we keep pointers to the data from the map in here
+		 * rehash the table due to moved entries), we keep pointers to the data from the set in here
 		 * so that iterators do not break when that happens.
 		 */
 		class Iter {
@@ -223,7 +210,7 @@ namespace storm {
 			Iter();
 
 			// Pointing to the first element.
-			Iter(MapBase *owner);
+			Iter(SetBase *owner);
 
 			// Compare.
 			bool CODECALL operator ==(const Iter &o) const;
@@ -234,7 +221,6 @@ namespace storm {
 			Iter operator ++(int);
 
 			// Raw get functions.
-			void *rawKey() const;
 			void *rawVal() const;
 
 			// Raw pre- and post increment.
@@ -242,12 +228,11 @@ namespace storm {
 			Iter CODECALL postIncRaw();
 
 		private:
-			// The three gc arrays from the map.
+			// The three gc arrays from the set.
 			// TODO: as the key and value arrays will eventually need to contain information about
 			// which elements are free, we can elliminate 'info' eventually.
 			GcArray<Info> *info;
 			GcArray<byte> *key;
-			GcArray<byte> *val;
 
 			// Current position.
 			Nat pos;
@@ -264,32 +249,32 @@ namespace storm {
 		friend Iter;
 	};
 
-	// Let Storm know about the Map template.
-	STORM_TEMPLATE(Map, createMap);
+	// Let Storm know about the Set template.
+	STORM_TEMPLATE(Set, createSet);
 
 	/**
 	 * C++ interface.
 	 *
 	 * TODO: Set vtables for class in constructors.
 	 */
-	template <class K, class V>
-	class Map : public MapBase {
+	template <class K>
+	class Set : public SetBase {
 		STORM_SPECIAL;
 	public:
 		// Get the Storm type for this object.
 		static Type *stormType(Engine &e) {
-			return runtime::cppTemplate(e, MapId, 2, StormInfo<K>::id(), StormInfo<V>::id());
+			return runtime::cppTemplate(e, SetId, 1, StormInfo<K>::id());
 		}
 
-		// Empty map.
-		Map() : MapBase(StormInfo<K>::handle(engine()), StormInfo<V>::handle(engine())) {}
+		// Empty set.
+		Set() : SetBase(StormInfo<K>::handle(engine())) {}
 
-		// Copy map.
-		Map(Map<K, V> *o) : MapBase(o) {}
+		// Copy set.
+		Set(Set<K> *o) : SetBase(o) {}
 
-		// Insert a value into the map, or update the existing one.
-		void put(const K &k, const V &v) {
-			putRaw(&k, &v);
+		// Insert a value into the set, or update the existing one.
+		void put(const K &k) {
+			putRaw(&k);
 		}
 
 		// Contains a key?
@@ -297,19 +282,14 @@ namespace storm {
 			return hasRaw(&k);
 		}
 
-		// Get a value. Throws if not found.
-		V &get(const K &k) {
-			return *(V *)getRaw(&k);
+		// Get a previously inserted key. Throws if not found.
+		K &get(const K &k) {
+			return *(K *)getRaw(&k);
 		}
 
-		// Get a value. Returns the default element if none found.
-		V &get(const K &k, const V &def) {
-			return *(V *)getRaw(&k, &def);
-		}
-
-		// Get a value, create it if not alredy existing.
-		V &at(const K &k) {
-			return *(V *)atRaw(&k, &CreateFn<V>::fn);
+		// Get a previously inserted key. Inserts and returns 'k' if not found.
+		K &at(const K &k) {
+			return *(K *)atRaw(&k);
 		}
 
 		// Remove a value.
@@ -320,24 +300,18 @@ namespace storm {
 		/**
 		 * Iterator.
 		 */
-		class Iter : public MapBase::Iter {
+		class Iter : public SetBase::Iter {
 		public:
-			Iter() : MapBase::Iter() {}
-			Iter(Map<K, V> *owner) : MapBase::Iter(owner) {}
+			Iter() : SetBase::Iter() {}
+			Iter(Set<K> *owner) : SetBase::Iter(owner) {}
 
-			std::pair<K, V&> operator *() const {
-				return std::make_pair(*(K *)rawKey(), *(V *)rawVal());
+			K operator *() const {
+				return *(K *)rawVal();
 			}
 
-			// We can not provide the -> operator, so we adhere to the Storm convention of using k()
-			// and v() instead.
-
-			const K &k() const {
-				return *(const K *)rawKey();
-			}
-
-			V &v() const {
-				return *(V *)rawVal();
+			// We're using 'v' as a lone 'k' is meaningless to Storm.
+			const K &v() const {
+				return *(const K *)rawVal();
 			}
 		};
 

@@ -21,6 +21,8 @@ static Link *createList(nat n) {
 		prev = now;
 	}
 
+	// Trigger a GC to shake things up a bit!
+	gEngine->gc.collect();
 	return start;
 }
 
@@ -45,7 +47,7 @@ static bool threadOk = false;
 static void threadFn() {
 	gEngine->gc.attachThread();
 
-	const nat count = 100000;
+	const nat count = 10000;
 
 	Link *start = createList(count);
 	threadOk = checkList(start, count);
@@ -63,14 +65,14 @@ BEGIN_TEST(ThreadTest, GcThreads) {
 	CHECK(threadOk);
 
 	// Now run in this thread as well to ensure we did not break anything by deattaching the thread.
-	const nat count = 100000;
+	const nat count = 10000;
 	Link *start = createList(count);
 	CHECK(checkList(start, count));
 
 } END_TEST
 
 // Should be large enough to trigger a garbage collection.
-static const nat count = 50000;
+static const nat count = 5000;
 
 static void uthreadFn() {
 	Link *start = createList(count);
