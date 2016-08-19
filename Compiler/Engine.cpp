@@ -146,7 +146,6 @@ namespace storm {
 	}
 
 	static void tObjToS(const void *obj, StrBuf *to) {
-		TODO(L"Call to another thread here!");
 		const TObject *o = *(const TObject **)obj;
 		*to << o;
 	}

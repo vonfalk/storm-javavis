@@ -95,7 +95,8 @@ namespace storm {
 			if (watch)
 				// In case the object moved, we need to re-compute the hash.
 				hash = newHash(key);
-			insert(key, hash);
+			nat w = Info::free;
+			insert(key, hash, w);
 		} else {
 			keyT.safeDestroy(keyPtr(old));
 			keyT.safeCopy(keyPtr(old), key);
@@ -128,7 +129,8 @@ namespace storm {
 			if (watch)
 				// In case the object moved, we need to re-compute the hash.
 				hash = newHash(key);
-			slot = insert(key, hash);
+			nat w = Info::free;
+			slot = insert(key, hash, w);
 		}
 
 		return keyPtr(slot);
@@ -264,7 +266,6 @@ namespace storm {
 
 	void SetBase::rehash(nat cap) {
 		nat oldSize = size;
-
 		GcArray<Info> *oldInfo = info; info = null;
 		GcArray<byte> *oldKey = key; key = null;
 
@@ -275,12 +276,14 @@ namespace storm {
 			return;
 
 		try {
+			nat w = Info::free;
+
 			// Insert all elements once again.
 			for (nat i = 0; i < oldInfo->count; i++) {
 				if (oldInfo->v[i].status == Info::free)
 					continue;
 
-				insert(keyPtr(oldKey, i), oldInfo->v[i].hash);
+				insert(keyPtr(oldKey, i), oldInfo->v[i].hash, w);
 			}
 
 			// The Gc will destroy the old arrays and all elements in there later on.
@@ -297,17 +300,15 @@ namespace storm {
 
 	nat SetBase::rehashFind(nat cap, const void *find) {
 		nat oldSize = size;
-
 		GcArray<Info> *oldInfo = info; info = null;
 		GcArray<byte> *oldKey = key; key = null;
+		GcWatch *oldWatch = watch; watch = runtime::createWatch(engine());
 
 		alloc(cap);
 
 		// Anything to do?
 		if (oldInfo == null)
 			return Info::free;
-
-		watch->clear();
 
 		try {
 			nat found = Info::free;
@@ -320,7 +321,7 @@ namespace storm {
 				// We need to re-hash here, as some objects have moved.
 				const void *k = keyPtr(oldKey, i);
 				nat hash = newHash(k);
-				nat into = insert(k, hash);
+				nat into = insert(k, hash, found);
 
 				// Is this the key we're looking for?
 				if ((*keyT.equalFn)(k, find))
@@ -336,15 +337,16 @@ namespace storm {
 			swap(oldSize, size);
 			swap(oldInfo, info);
 			swap(oldKey, key);
+			swap(oldWatch, watch);
 			throw;
 		}
 	}
 
 	bool SetBase::rehashRemove(nat cap, const void *remove) {
 		nat oldSize = size;
-
 		GcArray<Info> *oldInfo = info; info = null;
 		GcArray<byte> *oldKey = key; key = null;
+		GcWatch *oldWatch = watch; watch = runtime::createWatch(engine());
 
 		alloc(cap);
 
@@ -356,6 +358,7 @@ namespace storm {
 
 		try {
 			bool found = false;
+			nat w = Info::free;
 
 			// Insert all elements once again.
 			for (nat i = 0; i < oldInfo->count; i++) {
@@ -372,7 +375,7 @@ namespace storm {
 
 				// We need to re-hash here, as some objects have moved.
 				nat hash = newHash(k);
-				nat into = insert(k, hash);
+				nat into = insert(k, hash, w);
 			}
 
 			// The Gc will destroy the old arrays and all elements in there later on.
@@ -384,11 +387,12 @@ namespace storm {
 			swap(oldSize, size);
 			swap(oldInfo, info);
 			swap(oldKey, key);
+			swap(oldWatch, watch);
 			throw;
 		}
 	}
 
-	nat SetBase::insert(const void *key, nat hash) {
+	nat SetBase::insert(const void *key, nat hash, nat &watch) {
 		grow();
 
 		Info insert = { Info::end, hash };
@@ -419,6 +423,10 @@ namespace storm {
 				keyT.safeCopy(keyPtr(to), keyPtr(into));
 				keyT.safeDestroy(keyPtr(into));
 				info->v[into].status = Info::free;
+
+				// Update watched slot.
+				if (watch == into)
+					watch = to;
 			}
 		}
 

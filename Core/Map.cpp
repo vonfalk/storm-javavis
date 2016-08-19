@@ -107,7 +107,8 @@ namespace storm {
 			if (watch)
 				// In case the object moved, we need to re-compute the hash.
 				hash = newHash(key);
-			insert(key, value, hash);
+			nat w = Info::free;
+			insert(key, value, hash, w);
 		} else {
 			valT.safeDestroy(valPtr(old));
 			valT.safeCopy(valPtr(old), value);
@@ -140,7 +141,8 @@ namespace storm {
 			if (watch)
 				// In case the object moved, we need to re-compute the hash.
 				hash = newHash(key);
-			slot = insert(key, def, hash);
+			nat w = Info::free;
+			slot = insert(key, def, hash, w);
 		}
 
 		return valPtr(slot);
@@ -154,7 +156,8 @@ namespace storm {
 			if (watch)
 				// In case the object moved, we need to re-compute the hash.
 				hash = newHash(key);
-			slot = insert(key, hash);
+			nat w = Info::free;
+			slot = insert(key, hash, w);
 			(*fn)(valPtr(slot), engine());
 		}
 
@@ -259,9 +262,13 @@ namespace storm {
 			}
 
 			if (info->v[i].status != Info::free) {
-				std::wcout << "   ";
+				std::wcout << "  \t";
 				StrBuf *b = new (this) StrBuf();
 				(*keyT.toSFn)(keyPtr(i), b);
+				if (valT.toSFn) {
+					*b << L"\t";
+					(*valT.toSFn)(valPtr(i), b);
+				}
 				std::wcout << b;
 			}
 			std::wcout << endl;
@@ -308,12 +315,14 @@ namespace storm {
 			return;
 
 		try {
+			nat w = Info::free;
+
 			// Insert all elements once again.
 			for (nat i = 0; i < oldInfo->count; i++) {
 				if (oldInfo->v[i].status == Info::free)
 					continue;
 
-				insert(keyPtr(oldKey, i), valPtr(oldVal, i), oldInfo->v[i].hash);
+				insert(keyPtr(oldKey, i), valPtr(oldVal, i), oldInfo->v[i].hash, w);
 			}
 
 			// The Gc will destroy the old arrays and all elements in there later on.
@@ -331,18 +340,16 @@ namespace storm {
 
 	nat MapBase::rehashFind(nat cap, const void *find) {
 		nat oldSize = size;
-
 		GcArray<Info> *oldInfo = info; info = null;
 		GcArray<byte> *oldKey = key; key = null;
 		GcArray<byte> *oldVal = val; val = null;
+		GcWatch *oldWatch = watch; watch = runtime::createWatch(engine());
 
 		alloc(cap);
 
-		// Anything to do?
+		// Anything to do
 		if (oldInfo == null)
 			return Info::free;
-
-		watch->clear();
 
 		try {
 			nat found = Info::free;
@@ -355,7 +362,7 @@ namespace storm {
 				// We need to re-hash here, as some objects have moved.
 				const void *k = keyPtr(oldKey, i);
 				nat hash = newHash(k);
-				nat into = insert(k, valPtr(oldVal, i), hash);
+				nat into = insert(k, valPtr(oldVal, i), hash, found);
 
 				// Is this the key we're looking for?
 				if ((*keyT.equalFn)(k, find))
@@ -372,16 +379,17 @@ namespace storm {
 			swap(oldInfo, info);
 			swap(oldKey, key);
 			swap(oldVal, val);
+			swap(oldWatch, watch);
 			throw;
 		}
 	}
 
 	bool MapBase::rehashRemove(nat cap, const void *remove) {
 		nat oldSize = size;
-
 		GcArray<Info> *oldInfo = info; info = null;
 		GcArray<byte> *oldKey = key; key = null;
 		GcArray<byte> *oldVal = val; val = null;
+		GcWatch *oldWatch = watch; watch = runtime::createWatch(engine());
 
 		alloc(cap);
 
@@ -389,10 +397,9 @@ namespace storm {
 		if (oldInfo == null)
 			return false;
 
-		watch->clear();
-
 		try {
 			bool found = false;
+			nat w = Info::free;
 
 			// Insert all elements once again.
 			for (nat i = 0; i < oldInfo->count; i++) {
@@ -409,7 +416,7 @@ namespace storm {
 
 				// We need to re-hash here, as some objects have moved.
 				nat hash = newHash(k);
-				nat into = insert(k, valPtr(oldVal, i), hash);
+				nat into = insert(k, valPtr(oldVal, i), hash, w);
 			}
 
 			// The Gc will destroy the old arrays and all elements in there later on.
@@ -422,17 +429,18 @@ namespace storm {
 			swap(oldInfo, info);
 			swap(oldKey, key);
 			swap(oldVal, val);
+			swap(oldWatch, watch);
 			throw;
 		}
 	}
 
-	nat MapBase::insert(const void *key, const void *val, nat hash) {
-		nat into = insert(key, hash);
+	nat MapBase::insert(const void *key, const void *val, nat hash, nat &watch) {
+		nat into = insert(key, hash, watch);
 		valT.safeCopy(valPtr(into), val);
 		return into;
 	}
 
-	nat MapBase::insert(const void *key, nat hash) {
+	nat MapBase::insert(const void *key, nat hash, nat &watch) {
 		grow();
 
 		Info insert = { Info::end, hash };
@@ -465,6 +473,10 @@ namespace storm {
 				keyT.safeDestroy(keyPtr(into));
 				valT.safeDestroy(valPtr(into));
 				info->v[into].status = Info::free;
+
+				// Update watched slot.
+				if (watch == into)
+					watch = to;
 			}
 		}
 

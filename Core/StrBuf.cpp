@@ -167,7 +167,21 @@ namespace storm {
 
 	StrBuf *StrBuf::add(const Object *obj) {
 		// We're doing 'toS' to make the formatting predictable.
-		return add(obj->toS());
+		if (obj) {
+			return add(obj->toS());
+		} else {
+			return add(L"null");
+		}
+	}
+
+	StrBuf *StrBuf::add(const TObject *obj) {
+		// We're doing 'toS' to make the formatting predictable.
+		if (obj) {
+			TODO(L"Call on proper thread!");
+			return add(obj->toS());
+		} else {
+			return add(L"null");
+		}
 	}
 
 	StrBuf *StrBuf::add(Bool b) {

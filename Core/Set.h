@@ -169,9 +169,9 @@ namespace storm {
 		nat newHash(const void *key);
 
 		// Insert a node, given its hash is known (eg. when re-hashing). Assumes no other node with
-		// the same key exists, and will therefore always insert the element.
-		// Returns the slot inserted into.
-		nat insert(const void *key, nat hash);
+		// the same key exists, and will therefore always insert the element. Returns the slot
+		// inserted into. 'watch' is a slot that needs to be updated whenever a slot is moved.
+		nat insert(const void *key, nat hash, nat &watch);
 
 		// Remove an element, ignoring any moved objects. Returns 'true' if an object was removed.
 		bool remove(const void *key);

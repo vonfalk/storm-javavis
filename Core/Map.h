@@ -178,13 +178,16 @@ namespace storm {
 		nat newHash(const void *key);
 
 		// Insert a node, given its hash is known (eg. when re-hashing). Assumes no other node with
-		// the same key exists, and will therefore always insert the element.
-		// Returns the slot inserted into.
-		nat insert(const void *key, const void *val, nat hash);
+		// the same key exists, and will therefore always insert the element. Returns the slot
+		// inserted into. 'watch' is a slot number that shall be updated if the contents of that
+		// slot is ever moved.
+		nat insert(const void *key, const void *val, nat hash, nat &watch);
 
 		// Compute the insertion point for a new element. Does everything except copying the value
-		// into the array. Do not skip copying the value, as the map will be left in an inconsistent state.
-		nat insert(const void *key, nat hash);
+		// into the array. Do not skip copying the value, as the map will be left in an inconsistent
+		// state. 'watch' is a slot number that shall be updated if the contents of that slot is
+		// ever moved.
+		nat insert(const void *key, nat hash, nat &watch);
 
 		// Remove an element, ignoring any moved objects. Returns 'true' if an object was removed.
 		bool remove(const void *key);

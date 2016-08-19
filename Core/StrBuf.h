@@ -1,5 +1,6 @@
 #pragma once
 #include "Object.h"
+#include "TObject.h"
 #include "Char.h"
 #include "GcArray.h"
 
@@ -65,6 +66,7 @@ namespace storm {
 		StrBuf *add(const wchar *str);
 		StrBuf *STORM_FN add(const Str *str);
 		StrBuf *STORM_FN add(const Object *obj);
+		StrBuf *STORM_FN add(const TObject *obj);
 		StrBuf *STORM_FN add(Bool b);
 		StrBuf *STORM_FN add(Byte i);
 		StrBuf *STORM_FN add(Int i);
@@ -78,6 +80,7 @@ namespace storm {
 		StrBuf &operator <<(const wchar *str) { return *add(str); }
 		StrBuf &STORM_FN operator <<(const Str *str) { return *add(str); }
 		StrBuf &STORM_FN operator <<(const Object *obj) { return *add(obj); }
+		StrBuf &STORM_FN operator <<(const TObject *obj) { return *add(obj); }
 		StrBuf &STORM_FN operator <<(Bool b) { return *add(b); }
 		StrBuf &STORM_FN operator <<(Byte i) { return *add(i); }
 		StrBuf &STORM_FN operator <<(Int i) { return *add(i); }

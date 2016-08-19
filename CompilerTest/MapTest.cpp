@@ -2,6 +2,7 @@
 #include "Test/Test.h"
 #include "Core/Map.h"
 #include "Core/Str.h"
+#include "Core/Hash.h"
 #include "Compiler/Debug.h"
 
 using debug::PtrKey;
@@ -117,4 +118,47 @@ BEGIN_TEST(MapTestMove, Runtime) {
 		}
 	}
 
+} END_TEST
+
+static bool verify(Array<PtrKey *> *k, Array<Str *> *v, Map<PtrKey *, Str *> *map) {
+	if (!moveObjects(k))
+		return false;
+
+	for (nat i = 0; i < k->count(); i++) {
+		Str *found = map->get(k->at(i), null);
+		if (found != v->at(i)) {
+			PLN(L"Failed: " << (void *)k->at(i) << L" (" << (void *)ptrHash(k->at(i)) << L"), got " << found << L", expected " << v->at(i));
+			map->dbg_print();
+			return false;
+		}
+	}
+
+	return true;
+}
+
+BEGIN_TEST(MapTestMoveStress, Stress) {
+	Engine &e = *gEngine;
+	const nat count = 500;
+	const nat times = 1000;
+
+	Array<PtrKey *> *k = new (e) Array<PtrKey *>();
+	Array<Str *> *v = new (e) Array<Str *>();
+
+	for (nat i = 0; i < count; i++) {
+		k->push(new (e) PtrKey());
+		v->push(new (e) Str(::toS(i).c_str()));
+	}
+
+	Map<PtrKey *, Str *> *map = new (e) Map<PtrKey *, Str *>();
+
+	for (nat i = 0; i < count; i++) {
+		map->put(k->at(i), v->at(i));
+	}
+
+	for (nat i = 0; i < times; i++) {
+		bool z = verify(k, v, map);
+		CHECK(z);
+		if (!z)
+			break;
+	}
 } END_TEST

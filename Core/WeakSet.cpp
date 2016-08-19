@@ -67,7 +67,8 @@ namespace storm {
 				watch->add(key);
 				hash = ptrHash(key);
 			}
-			insert(key, hash);
+			nat w = Info::free;
+			insert(key, hash, w);
 		} else {
 			data->v[old] = key;
 		}
@@ -193,6 +194,7 @@ namespace storm {
 
 		GcArray<Info> *oldInfo = info; info = null;
 		GcWeakArray<TObject> *oldData = data; data = null;
+		GcWatch *oldWatch = watch; watch = runtime::createWatch(engine());
 
 		alloc(cap);
 
@@ -200,9 +202,9 @@ namespace storm {
 		if (oldInfo == null)
 			return;
 
-		watch->clear();
-
 		try {
+			nat w = Info::free;
+
 			// Insert all elements once again.
 			for (nat i = 0; i < oldInfo->count; i++) {
 				TObject *k = oldData->v[i];
@@ -211,7 +213,7 @@ namespace storm {
 
 				watch->add(k);
 				nat hash = ptrHash(k);
-				insert(k, hash);
+				insert(k, hash, w);
 			}
 
 			// The Gc will destroy the old arrays and all elements in there later on.
@@ -222,6 +224,7 @@ namespace storm {
 			swap(oldSize, size);
 			swap(oldInfo, info);
 			swap(oldData, data);
+			swap(oldWatch, watch);
 			throw;
 		}
 	}
@@ -231,14 +234,13 @@ namespace storm {
 
 		GcArray<Info> *oldInfo = info; info = null;
 		GcWeakArray<TObject> *oldData = data; data = null;
+		GcWatch *oldWatch = watch; watch = runtime::createWatch(engine());
 
 		alloc(cap);
 
 		// Anything to do?
 		if (oldInfo == null)
 			return Info::free;
-
-		watch->clear();
 
 		try {
 			nat found = Info::free;
@@ -252,7 +254,7 @@ namespace storm {
 				// We need to re-hash here, as some objects have moved.
 				watch->add(k);
 				nat hash = ptrHash(k);
-				nat into = insert(k, hash);
+				nat into = insert(k, hash, found);
 
 				// Is this the key we're looking for?
 				if (find == k)
@@ -268,6 +270,7 @@ namespace storm {
 			swap(oldSize, size);
 			swap(oldInfo, info);
 			swap(oldData, data);
+			swap(oldWatch, watch);
 			throw;
 		}
 	}
@@ -277,6 +280,7 @@ namespace storm {
 
 		GcArray<Info> *oldInfo = info; info = null;
 		GcWeakArray<TObject> *oldData = data; data = null;
+		GcWatch *oldWatch = watch; watch = runtime::createWatch(engine());
 
 		alloc(cap);
 
@@ -284,10 +288,9 @@ namespace storm {
 		if (oldInfo == null)
 			return false;
 
-		watch->clear();
-
 		try {
 			bool found = false;
+			nat w = Info::free;
 
 			// Insert all elements once again.
 			for (nat i = 0; i < oldInfo->count; i++) {
@@ -305,7 +308,7 @@ namespace storm {
 				// We need to re-hash here, as some objects have moved.
 				watch->add(k);
 				nat hash = ptrHash(k);
-				nat into = insert(k, hash);
+				nat into = insert(k, hash, w);
 			}
 
 			// The Gc will destroy the old arrays and all elements in there later on.
@@ -317,11 +320,12 @@ namespace storm {
 			swap(oldSize, size);
 			swap(oldInfo, info);
 			swap(oldData, data);
+			swap(oldWatch, watch);
 			throw;
 		}
 	}
 
-	nat WeakSetBase::insert(TObject *key, nat hash) {
+	nat WeakSetBase::insert(TObject *key, nat hash, nat &watch) {
 		grow();
 
 		Info insert = { Info::end, hash };
@@ -352,6 +356,10 @@ namespace storm {
 				data->v[to] = data->v[into];
 				data->v[into] = null;
 				info->v[into].status = Info::free;
+
+				// Update watched slot.
+				if (watch == into)
+					watch = to;
 			}
 		}
 
