@@ -2,6 +2,7 @@
 #include "CppName.h"
 #include "SrcPos.h"
 #include "Auto.h"
+#include "Size.h"
 
 class Type;
 class Template;

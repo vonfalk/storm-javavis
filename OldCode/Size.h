@@ -1,7 +1,7 @@
 #pragma once
+#include "ISize.h"
 
 namespace code {
-	STORM_PKG(core.asm);
 
 	/**
 	 * Machine-independent size description. This class allows composition
@@ -13,24 +13,22 @@ namespace code {
 	 * suffice for a while, and may be extended in the future.
 	 */
 	class Size {
-		STORM_VALUE;
-
 		friend class Offset;
 	public:
 		// Initialize to zero.
-		STORM_CTOR Size();
+		Size();
 
 		// Initialize to a known size (platform independent).
-		STORM_CTOR Size(Nat s);
+		explicit Size(nat s);
 
 		// Initialize to previously obtained values.
 		Size(nat size32, nat align32, nat size64, nat align64);
 
 		// Get the size for the current platform, the size being properly aligned.
-		Nat STORM_FN current() const;
+		nat current() const;
 
 		// Get a Size of zero, only with the align of this Size.
-		Size STORM_FN align() const;
+		Size align() const;
 
 		// Pointer size.
 		static Size sPtr;
@@ -47,28 +45,28 @@ namespace code {
 		static Size sFloat;
 
 		// Addition (note that we do not have subtraction).
-		Size &STORM_FN operator +=(const Size &o);
-		Size STORM_FN operator +(const Size &o) const;
+		Size &operator +=(const Size &o);
+		Size operator +(const Size &o) const;
 
 		// Multiplication with positive. Equal to repeated addition.
-		Size &STORM_FN operator *=(nat o);
-		Size STORM_FN operator *(nat o) const;
+		Size &operator *=(nat o);
+		Size operator *(nat o) const;
 
 		// Equality check.
-		Bool STORM_FN operator ==(const Size &o) const;
-		Bool STORM_FN operator !=(const Size &o) const;
+		bool operator ==(const Size &o) const;
+		bool operator !=(const Size &o) const;
 
 		// Greater/lesser?
-		Bool STORM_FN operator <(const Size &o) const;
-		Bool STORM_FN operator >(const Size &o) const;
-		Bool STORM_FN operator >=(const Size &o) const;
-		Bool STORM_FN operator <=(const Size &o) const;
+		bool operator <(const Size &o) const;
+		bool operator >(const Size &o) const;
+		bool operator >=(const Size &o) const;
+		bool operator <=(const Size &o) const;
 
 		// Find out the 32- and 64-bit sizes (for storage).
-		nat size32() const;
-		nat size64() const;
-		nat align32() const;
-		nat align64() const;
+		inline nat size32() const { return s32.size; }
+		inline nat size64() const { return s64.size; }
+		inline nat align32() const { return s32.align; }
+		inline nat align64() const { return s64.align; }
 
 		// Output.
 		friend wostream &operator <<(wostream &to, const Size &s);
@@ -76,42 +74,39 @@ namespace code {
 		// Initialize to specific values.
 		Size(nat s32, nat s64);
 
-		// 32-bit ptr size and offset.
-		Nat s32;
+		// 32-bit ptr size.
+		ISize<4> s32;
 
-		// 64-bit ptr size and offset.
-		Nat s64;
+		// 64-bit ptr size.
+		ISize<8> s64;
 	};
 
 	/**
 	 * Output.
 	 */
 	wostream &operator <<(wostream &to, const Size &s);
-	StrBuf &STORM_FN operator <<(StrBuf &to, Size s);
 
 
 	/**
 	 * Offset. Differently from size, an offset does not keep alignment!
 	 */
 	class Offset {
-		STORM_VALUE;
-
 		friend class Size;
 	public:
 		// Initialize to zero.
-		STORM_CTOR Offset();
+		Offset();
 
 		// Initialize to a known size (platform independent).
-		STORM_CTOR Offset(Int s);
+		explicit Offset(int s);
 
 		// Convert from Size.
-		STORM_CTOR Offset(Size s);
+		explicit Offset(Size s);
 
 		// Initialize to specific values.
 		Offset(int s32, int s64);
 
 		// Get the size for the current platform.
-		Int STORM_FN current() const;
+		int current() const;
 
 		// Pointer size.
 		static Offset sPtr;
@@ -124,33 +119,46 @@ namespace code {
 		static Offset sLong;
 		static Offset sWord;
 
-		Offset &STORM_FN operator +=(const Offset &o);
-		Offset &STORM_FN operator -=(const Offset &o);
-		Offset STORM_FN operator +(const Offset &o) const;
-		Offset STORM_FN operator -(const Offset &o) const;
+		// Addition and subtraction
+		template <class O>
+		Offset operator +(const O &o) const {
+			Offset t = *this;
+			t += o;
+			return t;
+		}
+		template <class O>
+		Offset operator -(const O &o) const {
+			Offset t = *this;
+			t -= o;
+			return t;
+		}
+
+		Offset &operator +=(const Offset &o);
+		Offset &operator -=(const Offset &o);
 
 		// Addition/subtraction with Size
-		Offset &STORM_FN operator +=(const Size &o);
-		Offset &STORM_FN operator -=(const Size &o);
-		Offset STORM_FN operator +(const Size &o) const;
-		Offset STORM_FN operator -(const Size &o) const;
+		Offset &operator +=(const Size &o);
+		Offset &operator -=(const Size &o);
 
 		// Multiplication.
-		Offset &STORM_FN operator *=(int o);
-		Offset STORM_FN operator *(int o) const;
+		Offset &operator *=(int o);
+		Offset operator *(int o) const;
 
 		// Negation. 'add' will still move further from zero.
-		Offset STORM_FN operator -() const;
+		Offset operator -() const;
 
 		// Equality check.
-		Bool STORM_FN operator ==(const Offset &o) const;
-		Bool STORM_FN operator !=(const Offset &o) const;
+		bool operator ==(const Offset &o) const;
+		bool operator !=(const Offset &o) const;
 
 		// Greater/lesser?
-		Bool STORM_FN operator <(const Offset &o) const;
-		Bool STORM_FN operator >(const Offset &o) const;
-		Bool STORM_FN operator >=(const Offset &o) const;
-		Bool STORM_FN operator <=(const Offset &o) const;
+		bool operator <(const Offset &o) const;
+		bool operator >(const Offset &o) const;
+		bool operator >=(const Offset &o) const;
+		bool operator <=(const Offset &o) const;
+
+		// Formatted string output.
+		String format(bool sign) const;
 
 		// Find out the 32- and 64-bit sizes (for storage).
 		inline nat v32() const { return o32; }
@@ -159,22 +167,22 @@ namespace code {
 		// Output.
 		friend wostream &operator <<(wostream &to, const Offset &s);
 
-		Offset STORM_FN abs() const;
+		Offset abs() const;
 	private:
 		// 32-bit offset.
-		Int o32;
+		int o32;
 
 		// 64-bit offset.
-		Int o64;
+		int o64;
 	};
 
 	/**
 	 * Output.
 	 */
-	wostream &operator <<(wostream &to, const Offset &s);
-	StrBuf &STORM_FN operator <<(StrBuf &to, Offset s);
+	wostream &operator <<(wostream &to, const Size &s);
 
 }
 
 // Abs.
 code::Offset abs(code::Offset s);
+

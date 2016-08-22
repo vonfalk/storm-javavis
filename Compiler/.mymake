@@ -1,6 +1,6 @@
 []
 stormpp=CppTypes
-preBuild+=<execpath|stormpp> ./ ../Core/ --template ../Core/Gen/CppTypes.cpp --out Gen/CppTypes.cpp --asm Gen/CppTypes.asm
+preBuild+=<execpath|stormpp> ./ ../Core/ ../Code/ --template ../Core/Gen/CppTypes.cpp --out Gen/CppTypes.cpp --asm Gen/CppTypes.asm
 
 #No PCH for c-files.
 [windows]

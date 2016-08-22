@@ -6,6 +6,7 @@
 #include "Core/Handle.h"
 #include "Core/Gen/CppTypes.h"
 #include "Core/StrBuf.h"
+#include "Utils/Memory.h"
 
 namespace storm {
 

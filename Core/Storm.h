@@ -27,20 +27,24 @@
 #define STORM_COMMON													\
 	static inline const Handle &stormHandle(Engine &e) { return storm::runtime::typeHandle(stormType(e)); }
 
-#define STORM_TYPE_DECL							\
-	static const Nat stormTypeId;				\
-	static Type *stormType(Engine &e);			\
-	static Type *stormType(const RootObject *o);
+#define STORM_TYPE_DECL									\
+	static const storm::Nat stormTypeId;				\
+	static storm::Type *stormType(storm::Engine &e);			\
+	static storm::Type *stormType(const storm::RootObject *o);
 
 /**
  * Common parts for all heap-allocated objects.
  */
 #define STORM_OBJ_COMMON												\
 	STORM_COMMON														\
-	static inline void *operator new (size_t s, Engine &e) { return storm::runtime::allocObject(s, stormType(e)); } \
-	static inline void operator delete (void *m, Engine &e) {}			\
-	static inline void *operator new (size_t s, const RootObject *o) { return storm::runtime::allocObject(s, stormType(o)); } \
-	static inline void operator delete (void *m, const RootObject *o) {}
+	static inline void *operator new (size_t s, storm::Engine &e) {		\
+		return storm::runtime::allocObject(s, stormType(e));			\
+	}																	\
+	static inline void operator delete (void *m, storm::Engine &e) {}	\
+	static inline void *operator new (size_t s, const storm::RootObject *o) { \
+		return storm::runtime::allocObject(s, stormType(o));			\
+	}																	\
+	static inline void operator delete (void *m, const storm::RootObject *o) {}
 
 /**
  * Special case for storm::RootObject.
@@ -58,7 +62,7 @@
 #define STORM_SPECIAL													\
 	public:																\
 	STORM_OBJ_COMMON													\
-	static Type *stormType(const RootObject *o) { return stormType(o->engine()); } \
+	static storm::Type *stormType(const storm::RootObject *o) { return stormType(o->engine()); } \
 	using RootObject::toS;													\
 	private:
 
@@ -102,7 +106,7 @@
 		static Nat id() {												\
 			return name ## Id;											\
 		}																\
-		static const Handle &handle(Engine &e) {						\
+		static const Handle &handle(storm::Engine &e) {					\
 			return runtime::typeHandle(runtime::cppType(e, name ## Id)); \
 		}																\
 	}

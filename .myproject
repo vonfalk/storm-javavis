@@ -66,6 +66,7 @@ StormGui+=StormBuiltin
 
 Compiler+=CppTypes
 Core+=CppTypes
+Code+=CppTypes
 
 [!extern_lib]
 #Global build parameters

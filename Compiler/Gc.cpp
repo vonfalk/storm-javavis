@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Gc.h"
+#include "Utils/Memory.h"
 
 #ifdef STORM_GC_MPS
 

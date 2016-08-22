@@ -1,15 +1,86 @@
 #include "stdafx.h"
 #include "Size.h"
+#include "Utils/Bitwise.h"
+#include "Core/StrBuf.h"
 
 namespace code {
 
-	Size::Size() {}
+	// Helpers for the bitmasks. Stores size+align as: 0xasssssss
+	static const Nat sizeMask = 0x0FFFFFFF;
+	static const Nat alignMask = 0xF0000000;
+	static const Nat alignShift = 28;
 
-	Size::Size(nat s) : s32(s), s64(s) {}
+	static inline Nat size(Nat in) {
+		return in & sizeMask;
+	}
 
-	Size::Size(nat s32, nat s64) : s32(s32), s64(s64) {}
+	static inline void size(Nat &in, Nat size) {
+		in = (in & ~sizeMask) | (size & sizeMask);
+	}
 
-	Size::Size(nat size32, nat align32, nat size64, nat align64) : s32(size32, align32), s64(size64, align64) {}
+	static inline Nat align(Nat in) {
+		return (in & alignMask) >> alignShift;
+	}
+
+	static inline void align(Nat &in, Nat align, Nat maxAlign) {
+		align = min(align, maxAlign);
+		in = (in & ~alignMask) | ((align << alignShift) & alignMask);
+	}
+
+	static inline void set(Nat &in, Nat size, Nat maxAlign) {
+		code::size(in, size);
+		align(in, size, maxAlign);
+	}
+
+	static inline void add(Nat &in, Nat other, Nat maxAlign) {
+		// Update alignment requirement.
+		nat a = max(align(in), align(other));
+		align(in, a, maxAlign);
+
+		// Alignd and add.
+		// Note: our alignment is not always important; consider the following example:
+		// int, bool, bool, where the booleans do not have to be aligned to 4 bytes like the int.
+		// If we had used 'align' instead of 'align(other)', we would have aligned them too strict.
+		nat s = roundUp(size(in), align(other)) + size(other);
+		size(in, s);
+	}
+
+	static inline void mul(Nat &in, Nat other, Nat maxAlign) {
+		if (other == 0) {
+			// Nothing.
+			size(in, 0);
+		} else if (other == 1) {
+			// Identity.
+		} else {
+			nat extra = 0;
+			size(extra, (other - 1) * roundUp(size(in), align(in)));
+			align(extra, align(in), maxAlign);
+			add(in, extra, maxAlign);
+		}
+	}
+
+	static void output(wostream &to, Int v) {
+		to << toHex(size(v)) << L"/" << toHex(align(v));
+	}
+
+	Size::Size() : s32(0), s64(0) {}
+
+	Size::Size(Nat s) : s32(0), s64(0) {
+		set(s32, s, 4);
+		set(s64, s, 8);
+	}
+
+	Size::Size(nat s32, nat s64) : s32(0), s64(0) {
+		set(this->s32, s32, 4);
+		set(this->s64, s64, 8);
+	}
+
+	Size::Size(nat size32, nat align32, nat size64, nat align64) : s32(0), s64(0) {
+		code::size(s32, size32);
+		code::align(s32, align32, 4);
+		code::size(s64, size64);
+		code::align(s64, align64, 8);
+	}
 
 	Size Size::sPtr = Size(4, 8);
 	Size Size::sChar = Size(1);
@@ -24,9 +95,9 @@ namespace code {
 	nat Size::current() const {
 		switch (sizeof(void *)) {
 		case 4:
-			return roundUp(s32.size, s32.align);
+			return roundUp(code::size(s32), code::align(s32));
 		case 8:
-			return roundUp(s64.size, s64.align);
+			return roundUp(code::size(s64), code::align(s64));
 		default:
 			assert(false, "Only 32 and 64-bit platforms are supported now.");
 			return 0;
@@ -34,15 +105,12 @@ namespace code {
 	}
 
 	Size Size::align() const {
-		Size s;
-		s.s32.align = s32.align;
-		s.s64.align = s64.align;
-		return s;
+		return Size(0, code::align(s32), 0, code::align(s64));
 	}
 
 	Size &Size::operator +=(const Size &o) {
-		s32 += o.s32;
-		s64 += o.s64;
+		add(s32, o.s32, 4);
+		add(s64, o.s64, 8);
 		return *this;
 	}
 
@@ -53,8 +121,8 @@ namespace code {
 	}
 
 	Size &Size::operator *=(nat o) {
-		s32 *= o;
-		s64 *= o;
+		mul(s32, o, 4);
+		mul(s64, o, 8);
 		return *this;
 	}
 
@@ -65,7 +133,7 @@ namespace code {
 	}
 
 	bool Size::operator ==(const Size &o) const {
-		return s32.size == o.s32.size && s64.size == o.s64.size;
+		return code::size(s32) == code::size(o.s32) && code::size(s64) == code::size(o.s64);
 	}
 
 	bool Size::operator !=(const Size &o) const {
@@ -73,37 +141,44 @@ namespace code {
 	}
 
 	wostream &operator <<(wostream &to, const Size &s) {
-		if (s.s32.size == s.s64.size && s.s32.align == s.s32.align)
-			to << s.s32;
-		else
-			to << s.s32 << "/" << s.s64;
+		if (code::size(s.s32) == code::size(s.s64) && code::size(s.s32) == code::size(s.s32)) {
+			output(to, s.s32);
+		} else {
+			output(to, s.s32);
+			to << L"/";
+			output(to, s.s64);
+		}
 		return to;
 	}
 
+	StrBuf &operator <<(StrBuf &to, Size s) {
+		return to << ::toS(s).c_str();
+	}
+
 	bool Size::operator <(const Size &o) const {
-		return s32.size < o.s32.size;
+		return code::size(s32) < code::size(o.s32);
 	}
 
 	bool Size::operator >(const Size &o) const {
-		return s32.size > o.s32.size;
+		return code::size(s32) > code::size(o.s32);
 	}
 
 	bool Size::operator >=(const Size &o) const {
-		return s32.size >= o.s32.size;
+		return code::size(s32) >= code::size(o.s32);
 	}
 
 	bool Size::operator <=(const Size &o) const {
-		return s32.size <= o.s32.size;
+		return code::size(s32) <= code::size(o.s32);
 	}
 
 
 	Offset::Offset() : o32(0), o64(0) {}
 
-	Offset::Offset(int s) : o32(s), o64(s) {}
+	Offset::Offset(Int s) : o32(s), o64(s) {}
 
-	Offset::Offset(Size s) : o32(int(s.s32.size)), o64(int(s.s64.size)) {}
+	Offset::Offset(Size s) : o32(Int(size(s.s32))), o64(Int(size(s.s64))) {}
 
-	Offset::Offset(int o32, int o64) : o32(o32), o64(o64) {}
+	Offset::Offset(Int o32, Int o64) : o32(o32), o64(o64) {}
 
 	Offset Offset::sPtr = Offset(4, 8);
 	Offset Offset::sChar = Offset(1);
@@ -113,7 +188,7 @@ namespace code {
 	Offset Offset::sLong = Offset(8);
 	Offset Offset::sWord = Offset(8);
 
-	int Offset::current() const {
+	Int Offset::current() const {
 		switch (sizeof(void *)) {
 		case 4:
 			return o32;
@@ -137,25 +212,49 @@ namespace code {
 		return *this;
 	}
 
+	Offset Offset::operator +(const Offset &o) const {
+		Offset t = *this;
+		t += o;
+		return t;
+	}
+
+	Offset Offset::operator -(const Offset &o) const {
+		Offset t = *this;
+		t -= o;
+		return t;
+	}
+
 	Offset &Offset::operator +=(const Size &o) {
-		o32 += o.s32.size;
-		o64 += o.s64.size;
+		o32 += roundUp(size(o.s32), align(o.s32));
+		o64 += roundUp(size(o.s64), align(o.s64));
 		return *this;
 	}
 
 	Offset &Offset::operator -=(const Size &o) {
-		o32 -= o.s32.size;
-		o64 -= o.s64.size;
+		o32 -= roundUp(size(o.s32), align(o.s32));
+		o64 -= roundUp(size(o.s64), align(o.s64));
 		return *this;
 	}
 
-	Offset &Offset::operator *=(int o) {
+	Offset Offset::operator +(const Size &o) const {
+		Offset t = *this;
+		t += o;
+		return t;
+	}
+
+	Offset Offset::operator -(const Size &o) const {
+		Offset t = *this;
+		t -= o;
+		return t;
+	}
+
+	Offset &Offset::operator *=(Int o) {
 		o32 *= o;
 		o64 *= o;
 		return *this;
 	}
 
-	Offset Offset::operator *(int o) const {
+	Offset Offset::operator *(Int o) const {
 		Offset z = *this;
 		z *= o;
 		return z;
@@ -174,11 +273,19 @@ namespace code {
 	}
 
 	wostream &operator <<(wostream &to, const Offset &s) {
-		if (s.o32 == s.o64)
-			to << toHex(s.o32, true);
+		if (s.o32 < 0)
+			to << L"+";
 		else
-			to << toHex(s.o32, true) << "/" << toHex(s.o64, true);
+			to << L"-";
+		if (s.o32 == s.o64)
+			to << toHex(abs(s.o32), true);
+		else
+			to << toHex(abs(s.o32), true) << "/" << toHex(abs(s.o64), true);
 		return to;
+	}
+
+	StrBuf &operator <<(StrBuf &to, Offset s) {
+		return to << ::toS(s).c_str();
 	}
 
 	bool Offset::operator <(const Offset &o) const {
@@ -195,18 +302,6 @@ namespace code {
 
 	bool Offset::operator <=(const Offset &o) const {
 		return o32 <= o.o32;
-	}
-
-	String Offset::format(bool sign) const {
-		std::wostringstream o;
-		if (sign) {
-			if (*this < Offset())
-				o << L"-";
-			else
-				o << L"+";
-		}
-		o << abs();
-		return o.str();
 	}
 
 	Offset Offset::abs() const {
