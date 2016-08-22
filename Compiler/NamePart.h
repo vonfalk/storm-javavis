@@ -31,8 +31,8 @@ namespace storm {
 		// Our name.
 		Str *name;
 
-		// Resolve names. NOTE: Not exposed to Storm as it has to be executed on the compiler thread.
-		virtual MAYBE(SimplePart *) find(const Scope &scope);
+		// Resolve names.
+		virtual MAYBE(SimplePart *) find(const Scope &scope) ON(Compiler);
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

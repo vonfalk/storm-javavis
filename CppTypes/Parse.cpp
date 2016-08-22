@@ -210,6 +210,12 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 		if (tok.skipIf(L"const"))
 			f.isConst = true;
 
+		if (tok.skipIf(L"ON")) {
+			tok.expect(L"(");
+			f.thread = parseName(tok);
+			tok.expect(L")");
+		}
+
 		// Save if 'exportFn' is there.
 		if (exportFn || f.name == Function::dtor) {
 			addTo.add(f);

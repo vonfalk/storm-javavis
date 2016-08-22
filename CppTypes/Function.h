@@ -31,6 +31,9 @@ public:
 	// Leading 'virtual' modifier?
 	bool isVirtual;
 
+	// Run on a specific thread?
+	CppName thread;
+
 	// Resolve types.
 	void resolveTypes(World &w, CppName &ctx);
 };

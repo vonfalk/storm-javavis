@@ -25,6 +25,9 @@ wostream &operator <<(wostream &to, const Function &fn) {
 	if (fn.isConst)
 		to << L" const";
 
+	if (!fn.thread.empty())
+		to << L"ON(" << fn.thread << L")";
+
 	to << L";";
 	return to;
 }

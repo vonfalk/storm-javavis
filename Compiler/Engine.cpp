@@ -181,6 +181,17 @@ namespace storm {
 		bootStatus = to;
 	}
 
+	ScopeLookup *Engine::scopeLookup() {
+		if (!o.rootLookup)
+			o.rootLookup = new (*this) ScopeLookup();
+
+		return o.rootLookup;
+	}
+
+	Scope Engine::scope() {
+		return Scope(package(), scopeLookup());
+	}
+
 	Package *Engine::package() {
 		if (!o.root) {
 			assert(has(bootTypes), L"Can not create packages yet.");

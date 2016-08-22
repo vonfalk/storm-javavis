@@ -81,6 +81,7 @@
 	STORM_COMMON								\
 	private:
 
+
 /**
  * Make a template type id. This will only make Storm aware of the template, you still have to
  * implement the template class itself in the compiler somewhere. 'generator' is a function like
@@ -140,6 +141,12 @@
  * Mark a constructor exported to Storm that can be used for automatic casts.
  */
 #define STORM_CAST_CTOR
+
+/**
+ * Mark a function needing to be executed on a specific thread. Can be used on global functions and
+ * in values. Example: void STORM_FN foo() ON(Compiler);
+ */
+#define ON(x)
 
 /**
  * Mark unknown types for the preprocessor. Ignored by C++.

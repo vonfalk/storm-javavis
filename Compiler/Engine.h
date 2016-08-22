@@ -3,6 +3,7 @@
 #include "Gc.h"
 #include "BootStatus.h"
 #include "World.h"
+#include "Scope.h"
 
 // TODO: Do not depend on path!
 #include "Utils/Path.h"
@@ -12,6 +13,7 @@ namespace storm {
 	class Thread;
 	class Package;
 	class NameSet;
+	class ScopeLookup;
 
 	/**
 	 * Defines the root object of the compiler. This object contains everything needed by the
@@ -91,6 +93,16 @@ namespace storm {
 		// Find a NameSet relative to the root. If 'create', creates packages along the way.
 		NameSet *nameSet(SimpleName *name, bool create = false);
 
+		/**
+		 * Scopes.
+		 */
+
+		// Get the root scope.
+		Scope scope();
+
+		// Get the default scope lookup.
+		ScopeLookup *scopeLookup();
+
 	private:
 		// The compiler C++ world.
 		World world;
@@ -108,6 +120,9 @@ namespace storm {
 
 			// Root package.
 			Package *root;
+
+			// Root scope lookup.
+			ScopeLookup *rootLookup;
 		};
 
 		GcRoot o;
