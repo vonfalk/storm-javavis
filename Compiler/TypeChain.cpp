@@ -9,7 +9,7 @@ namespace storm {
 
 	TypeChain::TypeChain(Type *owner) : owner(owner), chain(null), child(null) {
 		if (engine().has(bootTemplates))
-			child = new (engine()) Set<TypeChain *>();
+			child = new (engine()) WeakSet<TypeChain>();
 
 		clearSuper();
 	}
@@ -18,7 +18,7 @@ namespace storm {
 		if (child)
 			return;
 
-		child = new (engine()) Set<TypeChain *>();
+		child = new (engine()) WeakSet<TypeChain>();
 		TypeChain *super = superChain();
 		if (super) {
 			if (!super->child)
@@ -114,19 +114,17 @@ namespace storm {
 		if (!child)
 			return;
 
-		Set<TypeChain *>::Iter i, end = child->end();
-		for (i = child->begin(); i != end; ++i) {
-			i.v()->updateSuper(this);
-		}
+		WeakSet<TypeChain>::Iter i = child->iter();
+		while (TypeChain *t = i.next())
+			t->updateSuper(this);
 	}
 
 	Array<Type *> *TypeChain::children() const {
 		Array<Type *> *r = new (this) Array<Type *>();
-		r->reserve(child->count());
 
-		Set<TypeChain *>::Iter i, end = child->end();
-		for (i = child->begin(); i != end; ++i)
-			r->push(i.v()->owner);
+		WeakSet<TypeChain>::Iter i = child->iter();
+		while (TypeChain *t = i.next())
+			r->push(t->owner);
 
 		return r;
 	}

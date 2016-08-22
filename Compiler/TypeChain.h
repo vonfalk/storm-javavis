@@ -2,7 +2,7 @@
 #include "Thread.h"
 #include "Core/GcArray.h"
 #include "Core/Array.h"
-#include "Core/Set.h"
+#include "Core/WeakSet.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -47,8 +47,8 @@ namespace storm {
 		// Chain of super types (eg. our supertype, that supertype, and so on).
 		GcArray<TypeChain *> *chain;
 
-		// Children. NOTE: This should probably be a weak set.
-		Set<TypeChain *> *child;
+		// Children.
+		WeakSet<TypeChain> *child;
 
 		// Update our type chain.
 		void updateSuper(const TypeChain *from);

@@ -444,7 +444,7 @@ namespace storm {
 	WeakSetBase::Iter::Iter(WeakSetBase *owner) : data(owner->data), pos(0) {}
 
 	TObject *WeakSetBase::Iter::nextRaw() {
-		while (pos < data->count()) {
+		while (data != null && pos < data->count()) {
 			nat last = pos++;
 			if (data->v[last])
 				return data->v[last];
