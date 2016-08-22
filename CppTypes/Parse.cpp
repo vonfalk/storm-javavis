@@ -164,11 +164,15 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 		if (name.token == L"operator") {
 			// < and > are tokenized one at a time.
 			if (tok.skipIf(L"<")) {
-				tok.expect(L"<");
-				name.token += L" <<";
+				if (tok.skipIf(L"<"))
+					name.token += L" <<";
+				else
+					name.token += L" <";
 			} else if (tok.skipIf(L">")) {
-				tok.expect(L">");
-				name.token += L" >>";
+				if (tok.skipIf(L">"))
+					name.token += L" >>";
+				else
+					name.token += L" >";
 			} else {
 				name.token += L" " + tok.next().token;
 			}
