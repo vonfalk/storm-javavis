@@ -19,7 +19,7 @@ public:
 	}
 
 	void add(const Function &f) {
-		PLN(L"Global exported function " << f << L" ignored.");
+		// PLN(L"Global exported function " << f << L" ignored.");
 	}
 };
 
@@ -40,7 +40,7 @@ static CppName parseName(Tokenizer &tok) {
 	out << tok.next().token;
 
 	while (tok.more() && tok.skipIf(L"::")) {
-		out << tok.next().token;
+		out << L"::" << tok.next().token;
 	}
 
 	return CppName(out.str());
@@ -66,7 +66,6 @@ static Auto<TypeRef> parseTypeRef(Tokenizer &tok) {
 	} else {
 		SrcPos pos = tok.peek().pos;
 		CppName n = parseName(tok);
-		// pos = tok.pos();
 
 		if (tok.skipIf(L"<")) {
 			// Template parameters.

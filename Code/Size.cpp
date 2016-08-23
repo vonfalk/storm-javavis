@@ -171,6 +171,22 @@ namespace code {
 		return code::size(s32) <= code::size(o.s32);
 	}
 
+	Nat Size::size32() const {
+		return roundUp(code::size(s32), code::align(s32));
+	}
+
+	Nat Size::size64() const {
+		return roundUp(code::size(s64), code::align(s64));
+	}
+
+	Nat Size::align32() const {
+		return code::size(s32);
+	}
+
+	Nat Size::align64() const {
+		return code::size(s64);
+	}
+
 
 	Offset::Offset() : o32(0), o64(0) {}
 
