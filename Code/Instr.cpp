@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Instr.h"
 #include "Exception.h"
+#include "Register.h"
 #include "Core/StrBuf.h"
 
 namespace code {
@@ -94,6 +95,302 @@ namespace code {
 
 	Instr *instrLoose(EnginePtr e, op::Code op, Operand dest, Operand src) {
 		return new (e.v) Instr(op, dest, src);
+	}
+
+	RetVal::RetVal(Size size, Bool isFloat) : size(size), isFloat(isFloat) {}
+
+	RetVal retVal(Size size, Bool isFloat) {
+		return RetVal(size, isFloat);
+	}
+
+	RetVal retVoid() {
+		return RetVal(Size(), false);
+	}
+
+	RetVal retPtr() {
+		return RetVal(Size::sPtr, false);
+	}
+
+	/**
+	 * Instructions.
+	 */
+
+	static Operand sizedReg(Register base, Size size) {
+		Register s = asSize(base, size);
+		if (s == noReg) {
+			if (size == Size())
+				return Operand();
+			else
+				throw InvalidValue(L"The return size must fit in a register (ie < 8 bytes).");
+		} else {
+			return Operand(s);
+		}
+	}
+
+	Instr *mov(EnginePtr e, Operand to, Operand from) {
+		return instrDestSrc(e, op::mov, to, from);
+	}
+
+	Instr *lea(EnginePtr e, Operand to, Operand from) {
+		if (to.size() != Size::sPtr)
+			throw InvalidValue(L"Lea must update a pointer.");
+
+		switch (from.type()) {
+		case opRelative:
+		case opVariable:
+		case opReference:
+			// These are ok.
+			break;
+		default:
+			throw InvalidValue(L"lea must be used with a complex addressing mode or a reference."
+							L" (Got " + toS(from) + L")");
+		}
+		return instrLoose(e, op::lea, to, from);
+	}
+
+	Instr *push(EnginePtr e, Operand v) {
+		return instrSrc(e, op::push, v);
+	}
+
+	Instr *pop(EnginePtr e, Operand to) {
+		return instrDest(e, op::pop, to);
+	}
+
+	Instr *jmp(EnginePtr e, Operand to, CondFlag cond) {
+		if (to.size() != Size::sPtr)
+			throw InvalidValue(L"Must jump to a pointer, trying to jump to " + toS(to));
+		return instrLoose(e, op::jmp, to, cond);
+	}
+
+	Instr *setCond(EnginePtr e, Operand to, CondFlag cond) {
+		if (to.size() != Size::sByte)
+			throw InvalidValue(L"Must set a byte.");
+		return instrLoose(e, op::setCond, to, cond);
+	}
+
+	Instr *call(EnginePtr e, Operand to, RetVal ret) {
+		if (to.size() != Size::sPtr)
+			throw InvalidValue(L"Must call a pointer.");
+
+		op::Code op = ret.isFloat ? op::callFloat : op::call;
+		return instrLoose(e, op, sizedReg(ptrA, ret.size), to);
+	}
+
+	Instr *ret(EnginePtr e, RetVal ret) {
+		Operand r = sizedReg(ptrA, ret.size);
+		op::Code op = ret.isFloat ? op::retFloat : op::ret;
+		if (r.type() == opNone)
+			return instr(e, op);
+		else
+			return instrSrc(e, op, r);
+	}
+
+	Instr *fnParam(EnginePtr e, Operand src) {
+		return instrSrc(e, op::fnParam, src);
+	}
+
+	// Instr *fnParam(EnginePtr e, const Variable &src, Operand copyFn) {
+	// 	if (copyFn.type() != opNone) {
+	// 		if (copyFn.type() == opConstant)
+	// 			throw InvalidValue(L"Should not call constant values, use references instead!");
+	// 		if (copyFn.size() != Size::sPtr)
+	// 			throw InvalidValue(L"Must call a pointer.");
+	// 	}
+	// 	return instrLoose(op::fnParam, copyFn, destRead, src);
+	// }
+
+	Instr *fnParamRef(EnginePtr e, Operand src, Operand copyFn) {
+		if (copyFn.type() != opNone) {
+			if (copyFn.type() == opConstant)
+				throw InvalidValue(L"Should not call constant values, use references instead!");
+			if (copyFn.size() != Size::sPtr)
+				throw InvalidValue(L"Must call a pointer.");
+		}
+		return instrLoose(e, op::fnParamRef, copyFn, src);
+	}
+
+	Instr *fnCall(EnginePtr e, Operand src, RetVal ret) {
+		if (src.type() == opConstant)
+			throw InvalidValue(L"Should not call constant values, use references instead!");
+		if (src.size() != Size::sPtr)
+			throw InvalidValue(L"Must call a pointer.");
+
+		op::Code op = ret.isFloat ? op::fnCallFloat : op::fnCall;
+		return instrLoose(e, op, sizedReg(ptrA, ret.size), src);
+	}
+
+	Instr *add(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::add, dest, src);
+	}
+
+	Instr *adc(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::adc, dest, src);
+	}
+
+	Instr *or(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::or, dest, src);
+	}
+
+	Instr *and(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::and, dest, src);
+	}
+
+	Instr *sub(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::sub, dest, src);
+	}
+
+	Instr *sbb(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::sbb, dest, src);
+	}
+
+	Instr *xor(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::xor, dest, src);
+	}
+
+	Instr *cmp(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::cmp, dest, src);
+	}
+
+	Instr *mul(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::mul, dest, src);
+	}
+
+	Instr *idiv(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::idiv, dest, src);
+	}
+
+	Instr *udiv(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::udiv, dest, src);
+	}
+
+	Instr *imod(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::imod, dest, src);
+	}
+
+	Instr *umod(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::umod, dest, src);
+	}
+
+	Instr *shl(EnginePtr e, Operand dest, Operand src) {
+		if (src.size() != Size::sByte)
+			throw InvalidValue(L"Size must be 1");
+		return instrLoose(e, op::shl, dest, src);
+	}
+
+	Instr *shr(EnginePtr e, Operand dest, Operand src) {
+		if (src.size() != Size::sByte)
+			throw InvalidValue(L"Size must be 1");
+		return instrLoose(e, op::shr, dest, src);
+	}
+
+	Instr *sar(EnginePtr e, Operand dest, Operand src) {
+		if (src.size() != Size::sByte)
+			throw InvalidValue(L"Size must be 1");
+		return instrLoose(e, op::sar, dest, src);
+	}
+
+	Instr *icast(EnginePtr e, Operand dest, Operand src) {
+		return instrLoose(e, op::icast, dest, src);
+	}
+
+	Instr *ucast(EnginePtr e, Operand dest, Operand src) {
+		return instrLoose(e, op::ucast, dest, src);
+	}
+
+	Instr *fstp(EnginePtr e, Operand dest) {
+		if (dest.type() == opRegister)
+			throw InvalidValue(L"Can not store to register.");
+		if (dest.size() != Size::sFloat)
+			throw InvalidValue(L"Invalid size.");
+		return instrDest(e, op::fstp, dest);
+	}
+
+	Instr *fistp(EnginePtr e, Operand dest) {
+		if (dest.size() != Size::sInt)
+			throw InvalidValue(L"Invalid size.");
+		return instrDest(e, op::fistp, dest);
+	}
+
+	Instr *fld(EnginePtr e, Operand src) {
+		if (src.type() == opRegister)
+			throw InvalidValue(L"Can not load from register.");
+		if (src.type() == opConstant)
+			throw InvalidValue(L"Can not load from a constant.");
+		if (src.size() != Size::sFloat)
+			throw InvalidValue(L"Invalid size.");
+		return instrSrc(e, op::fld, src);
+	}
+
+	Instr *fild(EnginePtr e, Operand src) {
+		if (src.type() == opRegister)
+			throw InvalidValue(L"Can not load from register.");
+		if (src.type() == opConstant)
+			throw InvalidValue(L"Can not load from a constant.");
+		if (src.size() != Size::sInt)
+			throw InvalidValue(L"Invalid size.");
+		return instrSrc(e, op::fild, src);
+	}
+
+	Instr *faddp(EnginePtr e) {
+		return instr(e, op::faddp);
+	}
+
+	Instr *fsubp(EnginePtr e) {
+		return instr(e, op::fsubp);
+	}
+
+	Instr *fmulp(EnginePtr e) {
+		return instr(e, op::fmulp);
+	}
+
+	Instr *fdivp(EnginePtr e) {
+		return instr(e, op::fdivp);
+	}
+
+	Instr *fcompp(EnginePtr e) {
+		return instr(e, op::fcompp);
+	}
+
+	Instr *fwait(EnginePtr e) {
+		return instr(e, op::fwait);
+	}
+
+	Instr *retFloat(EnginePtr e, const Size &s) {
+		Operand r = sizedReg(ptrA, s);
+		return instrSrc(e, op::retFloat, r);
+	}
+
+
+	Instr *dat(EnginePtr e, Operand v) {
+		switch (v.type()) {
+			case opConstant:
+			case opLabel:
+			case opReference:
+				break;
+			default:
+				throw InvalidValue(L"Cannot store other than references, constants and labels in dat");
+		}
+		return instrSrc(e, op::dat, v);
+	}
+
+	Instr *prolog(EnginePtr e) {
+		return instr(e, op::prolog);
+	}
+
+	Instr *epilog(EnginePtr e) {
+		return instr(e, op::epilog);
+	}
+
+	// Instr *begin(EnginePtr e, Part block) {
+	// 	return instrLoose(op::beginBlock, Value(), destNone, block);
+	// }
+
+	// Instr *end(EnginePtr e, Part block) {
+	// 	return instrLoose(op::endBlock, Value(), destNone, Part(block));
+	// }
+
+	Instr *threadLocal(EnginePtr e) {
+		return instr(e, op::threadLocal);
 	}
 
 }

@@ -21,6 +21,8 @@ namespace code {
 
 	Operand::Operand(Register r) : opType(opRegister), opNum(r), opSize(code::size(r)) {}
 
+	Operand::Operand(CondFlag c) : opType(opCondFlag), opNum(c), opSize(Size()) {}
+
 	Operand::Operand(Word c, Size size) : opType(opConstant), opNum(c), opSize(size) {}
 
 	Operand::Operand(Size s, Size size) : opType(opDualConstant), opNum(dual(s.size32(), s.size64())), opSize(size) {}
@@ -41,10 +43,12 @@ namespace code {
 		case opConstant:
 		case opDualConstant:
 		case opRegister:
+		case opCondFlag:
 			return opNum == o.opNum;
 		case opRelative:
 			return opNum == o.opNum && opOffset == o.opOffset;
 		case opVariable:
+		case opReference:
 		default:
 			assert(false, L"Unknown type!");
 			return false;
@@ -73,6 +77,7 @@ namespace code {
 	Bool Operand::readable() const {
 		switch (opType) {
 		case opNone:
+		case opCondFlag:
 			// TODO: Add more returning false here.
 			return false;
 		default:
@@ -122,6 +127,11 @@ namespace code {
 		return opOffset;
 	}
 
+	CondFlag Operand::condFlag() const {
+		assert(type() == opCondFlag, L"Not a CondFlag!");
+		return CondFlag(opNum);
+	}
+
 	wostream &operator <<(wostream &to, const Operand &o) {
 		switch (o.type()) {
 		case opNone:
@@ -134,6 +144,10 @@ namespace code {
 			return to << L"[" << code::name(o.reg()) << o.offset() << L"]";
 		case opVariable:
 			return to << L"TODO";
+		case opReference:
+			return to << L"TODO";
+		case opCondFlag:
+			return to << code::name(o.condFlag());
 		default:
 			assert(false, L"Unknown type!");
 			return to << L"<invalid>";

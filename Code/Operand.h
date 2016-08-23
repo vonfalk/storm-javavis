@@ -1,6 +1,7 @@
 #pragma once
 #include "Register.h"
 #include "OpCode.h"
+#include "CondFlag.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -42,6 +43,18 @@ namespace code {
 
 		// Variable (+ offset).
 		opVariable,
+
+		// Label.
+		opLabel,
+
+		// Block or part.
+		opBlock,
+
+		// Reference to another object.
+		opReference,
+
+		// Condition flag.
+		opCondFlag,
 	};
 
 	/**
@@ -54,7 +67,10 @@ namespace code {
 		STORM_CTOR Operand();
 
 		// Register.
-		STORM_CTOR Operand(Register reg);
+		STORM_CAST_CTOR Operand(Register reg);
+
+		// CondFlag
+		STORM_CAST_CTOR Operand(CondFlag flag);
 
 		/**
 		 * The following constructors are mainly intended for use in the helpers below. They are
@@ -103,6 +119,7 @@ namespace code {
 		Word STORM_FN constant() const;
 		Register STORM_FN reg() const; // "register" is a reserved word.
 		Offset STORM_FN offset() const;
+		CondFlag STORM_FN condFlag() const;
 
 	private:
 		// Our type.

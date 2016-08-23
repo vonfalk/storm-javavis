@@ -23,6 +23,8 @@ SUITE(GcObjects, 2);
 SUITE(GcThreads, 3);
 // Basic operation of the runtime. No code generation yet.
 SUITE(Runtime, 4);
+// Tests of the code generation backend.
+SUITE_(Code, 5);
 
 // Stress tests (takes time).
 SUITEX(Stress, 100);

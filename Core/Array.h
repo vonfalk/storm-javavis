@@ -183,6 +183,11 @@ namespace storm {
 			pushRaw(&item);
 		}
 
+		Array<T> &operator <<(const T &item) {
+			push(item);
+			return *this;
+		}
+
 		/**
 		 * Iterator.
 		 */

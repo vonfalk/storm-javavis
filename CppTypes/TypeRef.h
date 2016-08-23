@@ -333,7 +333,7 @@ inline bool isGcPtr(Auto<TypeRef> t) {
 	} else if (Auto<RefType> r = t.as<RefType>()) {
 		return r->of->gcType();
 	} else if (Auto<MaybeType> r = t.as<MaybeType>()) {
-		return r->of->gcType();
+		return isGcPtr(r->of);
 	} else if (Auto<UnknownType> r = t.as<UnknownType>()) {
 		return r->gcType();
 	} else {
