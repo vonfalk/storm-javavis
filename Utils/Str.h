@@ -109,6 +109,7 @@ String toS(nat i);
 String toS(int64 i);
 String toS(nat64 i);
 String toS(double i);
+String toS(const wchar *w);
 const String &toS(const String &s);
 
 template <class A, class B>

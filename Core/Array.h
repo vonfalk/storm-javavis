@@ -58,6 +58,11 @@ namespace storm {
 		// Handle of the contained type.
 		const Handle &handle;
 
+		// First element access.
+		inline void *CODECALL firstRaw() const {
+			return getRaw(0);
+		}
+
 		// Last element access.
 		inline void *CODECALL lastRaw() const {
 			return getRaw(count() - 1);
@@ -66,7 +71,7 @@ namespace storm {
 		// Raw element access.
 		inline void *CODECALL getRaw(Nat id) const {
 			if (id > count())
-				throw ArrayError(L"Index " + ::toS(id) + L" out of bounds (of " + ::toS(count()) + L".");
+				throw ArrayError(L"Index " + ::toS(id) + L" out of bounds (of " + ::toS(count()) + L").");
 			return ptr(id);
 		}
 
@@ -172,6 +177,10 @@ namespace storm {
 		// Get the last element (if any).
 		T &last() {
 			return *(T *)lastRaw();
+		}
+
+		const T &first() const {
+			return *(const T *)firstRaw();
 		}
 
 		const T &last() const {

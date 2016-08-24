@@ -60,7 +60,7 @@ namespace code {
 	}
 
 	static void output(wostream &to, Int v) {
-		to << toHex(size(v)) << L"/" << toHex(align(v));
+		to << toHex(size(v)) << L"(" << toHex(align(v)) << L")";
 	}
 
 	Size::Size() : s32(0), s64(0) {}

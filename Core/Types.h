@@ -43,4 +43,9 @@ namespace storm {
 		// TODO: implement 'threadName' and 'force' here.
 	};
 
+	/**
+	 * Struct used to get access to private members of other classes.
+	 */
+	struct CppMeta;
+
 }

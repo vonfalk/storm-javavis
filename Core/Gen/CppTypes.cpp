@@ -23,6 +23,12 @@
 
 namespace storm {
 
+	struct CppMeta {
+		static CppType *cppTypes();
+		static CppTemplate *cppTemplates();
+		static CppThread *cppThreads();
+	};
+
 	// Invalid size.
 	const CppSize CppSize::invalid = { -1, -1, -1, -1 };
 
@@ -35,7 +41,7 @@ namespace storm {
 		obj->~T();
 	}
 
-	static CppType *cppTypes() {
+	CppType *CppMeta::cppTypes() {
 		// PTR_OFFSETS
 
 		static CppType types[] = {
@@ -45,7 +51,7 @@ namespace storm {
 		return types;
 	}
 
-	static CppTemplate *cppTemplates() {
+	CppTemplate *CppMeta::cppTemplates() {
 		static CppTemplate templates[] = {
 			// CPP_TEMPLATES
 			{ null, null, null },
@@ -53,7 +59,7 @@ namespace storm {
 		return templates;
 	}
 
-	static CppThread *cppThreads() {
+	CppThread *CppMeta::cppThreads() {
 		static CppThread threads[] = {
 			// CPP_THREADS
 			{ null, null, null },
@@ -63,9 +69,9 @@ namespace storm {
 
 	const CppWorld *cppWorld() {
 		static CppWorld w = {
-			cppTypes(),
-			cppTemplates(),
-			cppThreads(),
+			CppMeta::cppTypes(),
+			CppMeta::cppTemplates(),
+			CppMeta::cppThreads(),
 		};
 		return &w;
 	}

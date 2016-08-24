@@ -25,6 +25,7 @@
  * Common parts of STORM_CLASS and STORM_VALUE
  */
 #define STORM_COMMON													\
+	friend struct storm::CppMeta;										\
 	static inline const Handle &stormHandle(Engine &e) { return storm::runtime::typeHandle(stormType(e)); }
 
 #define STORM_TYPE_DECL									\

@@ -8,6 +8,13 @@ BEGIN_TEST(CodeTest, Code) {
 	Engine &e = *gEngine;
 
 	Listing *l = new (e) Listing();
+
+	Part p = l->createPart(l->root());
+	Block b = l->createBlock(l->root());
+	l->createVar(l->root(), Size::sLong);
+	l->createVar(b, Size::sInt);
+	l->createVar(p, Size::sInt);
+
 	*l << mov(e, eax, ebx);
 
 	PVAR(l);

@@ -186,6 +186,7 @@ String toS(nat i) { return genericToS(i); }
 String toS(int64 i) { return genericToS(i); }
 String toS(nat64 i) { return genericToS(i); }
 String toS(double i) { return genericToS(i); }
+String toS(const wchar *s) { return String(s); }
 const String &toS(const String &s) { return s; }
 
 double String::toDouble() const {
