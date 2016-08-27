@@ -5,6 +5,7 @@
 #include "Label.h"
 #include "Variable.h"
 #include "Block.h"
+#include "ValType.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -52,6 +53,8 @@ namespace code {
 	 * you should attempt to execute any destructors there. This scenario is not possible to do with
 	 * blocks, as the memory is not ready before the block has been activated and the exception is
 	 * activated before the memory has been initialized.
+	 *
+	 * TODO: Keep track of our return type? This could make ret() simpler to use.
 	 */
 	class Listing : public Object {
 		STORM_CLASS;
@@ -118,7 +121,10 @@ namespace code {
 		// Delay the creation of a variable to a later part.
 		void STORM_FN delay(Variable v, Part to);
 
-		// Get the previous variable. Either in the current part, or in the parent block.
+		// Get the variable stored just before 'v' in this stack frame. Within a single block, it
+		// just returns the variable added before 'v'. If 'v' is the first variable in that block,
+		// the last variable of the previous block is returned. This will give all variables visible
+		// at the same time as the start variable of the iteration. Parameters are returned lastly.
 		Variable STORM_FN prev(Variable v) const;
 
 		// Get the previous part. If this is the first part in a block, returns the parent part of the block.
@@ -133,6 +139,42 @@ namespace code {
 		// Get the last part in the chain.
 		Part STORM_FN last(Part p) const;
 
+		// Get the parent part to a variable or a block.
+		Part STORM_FN parent(Part b) const;
+		Part STORM_FN parent(Variable b) const;
+
+		// See if the variable 'v' is accessible in the part 'p'. This is almost equivalent to
+		// checking if any parent blocks of 'p' contains the variable.
+		Bool STORM_FN accessible(Variable v, Block b) const;
+
+		// See if the part 'q' is an indirect parent to 'parent'.
+		Bool STORM_FN isParent(Block parent, Part q) const;
+
+		// Is this a parameter?
+		Bool STORM_FN isParam(Variable v) const;
+
+		// Get all blocks.
+		Array<Block> *STORM_FN allBlocks() const;
+
+		// Get all parts.
+		Array<Part> *STORM_FN allParts() const;
+
+		// Get all variables.
+		Array<Variable> *STORM_FN allVars() const;
+
+		// Get all variables in a block.
+		Array<Variable> *STORM_FN allVars(Block b) const;
+
+		// Get all variables in a part. Note that there may be more variables in other parts in the
+		// same block, which are also visible.
+		Array<Variable> *STORM_FN partVars(Part p) const;
+
+		// Get all parameters.
+		Array<Variable> *STORM_FN allParams() const;
+
+		// Do this block need an exception handler?
+		inline Bool STORM_FN exceptionHandler() const { return needEH; }
+
 		/**
 		 * Create variables.
 		 */
@@ -140,6 +182,11 @@ namespace code {
 		inline Variable STORM_FN createVar(Part in, Size size) { return createVar(in, size, Operand(), freeDef); }
 		inline Variable STORM_FN createVar(Part in, Size size, Operand free) { return createVar(in, size, free, freeDef); }
 		Variable STORM_FN createVar(Part in, Size size, Operand free, FreeOpt when);
+
+		inline Variable STORM_FN createParam(ValType type) { return createParam(type, Operand(), freeDef); }
+		inline Variable STORM_FN createParam(ValType type, Operand free) { return createParam(type, free, freeDef); }
+		Variable STORM_FN createParam(ValType type, Operand free, FreeOpt when);
+
 
 		/**
 		 * Misc.
@@ -159,6 +206,9 @@ namespace code {
 			// Size of this variable.
 			Size size;
 
+			// Is this a parameter?
+			Bool isParam;
+
 			// Is this a float value (only relevant for parameters).
 			Bool isFloat;
 
@@ -169,7 +219,7 @@ namespace code {
 			FreeOpt freeOpt;
 
 			// Create.
-			IVar(Nat parent, Size size, Bool isFloat, Operand freeFn, FreeOpt opt);
+			IVar(Nat parent, Size size, Bool isParam, Bool isFloat, Operand freeFn, FreeOpt opt);
 		};
 
 		// Block information.
@@ -217,12 +267,22 @@ namespace code {
 		Nat nextLabel;
 
 		// Store variables, parts and blocks. Note that part and block ids refer into the 'parts' array.
+		Array<Nat> *params;
 		Array<IVar> *vars;
 		Array<IBlock> *blocks;
 		Array<IPart> *parts;
 
+		// Do we need an exception handler.
+		Bool needEH;
+
 		// Find the block id for a part.
 		Nat findBlock(Nat partId) const;
+
+		// Find an ID in a Nat array. Returns size if none exists.
+		static Nat findId(Array<Nat> *in, Nat val);
+
+		// Create a variable from its index.
+		Variable createVar(Nat index) const;
 
 		/**
 		 * Output helpers.

@@ -11,12 +11,21 @@ BEGIN_TEST(CodeTest, Code) {
 
 	Part p = l->createPart(l->root());
 	Block b = l->createBlock(l->root());
-	l->createVar(l->root(), Size::sLong);
-	l->createVar(b, Size::sInt);
-	l->createVar(p, Size::sInt);
+	Variable v0 = l->createVar(l->root(), Size::sLong);
+	Variable v1 = l->createVar(b, Size::sInt);
+	Variable v2 = l->createVar(p, Size::sInt);
+	Variable v3 = l->createVar(p, Size::sInt);
+	Variable par = l->createParam(valPtr());
 
 	*l << mov(e, eax, ebx);
+	*l << mov(e, v2, intConst(10));
 
 	PVAR(l);
+
+	CHECK_EQ(l->prev(v1), v3);
+	CHECK_EQ(l->prev(v3), v2);
+	CHECK_EQ(l->prev(v2), v0);
+	CHECK_EQ(l->prev(v0), par);
+	CHECK_EQ(l->prev(par), Variable());
 
 } END_TEST

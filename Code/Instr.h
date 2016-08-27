@@ -2,6 +2,7 @@
 #include "OpCode.h"
 #include "Operand.h"
 #include "CondFlag.h"
+#include "ValType.h"
 #include "Core/Object.h"
 #include "Core/EnginePtr.h"
 #include "Utils/Bitmask.h"
@@ -72,22 +73,6 @@ namespace code {
 	Instr *STORM_FN instrLoose(EnginePtr e, op::Code op, Operand dest, Operand src);
 
 	/**
-	 * Minimal description of a return value from a function.
-	 */
-	class RetVal {
-		STORM_VALUE;
-	public:
-		STORM_CTOR RetVal(Size size, Bool isFloat);
-
-		Size size;
-		Bool isFloat;
-	};
-
-	RetVal STORM_FN retVal(Size size, Bool isFloat);
-	RetVal STORM_FN retVoid();
-	RetVal STORM_FN retPtr();
-
-	/**
 	 * Create instructions:
 	 */
 
@@ -96,8 +81,8 @@ namespace code {
 	Instr *STORM_FN pop(EnginePtr e, Operand to);
 	Instr *STORM_FN jmp(EnginePtr e, Operand to);
 	Instr *STORM_FN jmp(EnginePtr e, Operand to, CondFlag cond);
-	Instr *STORM_FN call(EnginePtr e, Operand to, RetVal ret);
-	Instr *STORM_FN ret(EnginePtr e, RetVal ret); // Returns whatever is in eax register.
+	Instr *STORM_FN call(EnginePtr e, Operand to, ValType ret);
+	Instr *STORM_FN ret(EnginePtr e, ValType ret); // Returns whatever is in eax register.
 
 	// This one has somewhat special semantics, when used with a reference as 'from', it loads a representative
 	// value that can be passed to 'Ref::fromLea' to re-create the reference.
@@ -117,7 +102,7 @@ namespace code {
 	Instr *fnParam(EnginePtr e, Operand src);
 	// Instr *fnParam(EnginePtr e, Variable src, Operand copyFn);
 	Instr *fnParamRef(EnginePtr e, Operand src, Operand copyFn);
-	// Instr *fnCall(EnginePtr e, Operand src, RetVal ret);
+	// Instr *fnCall(EnginePtr e, Operand src, ValType ret);
 
 	// Integer math (signed/unsigned)
 	Instr *STORM_FN add(EnginePtr e, Operand dest, Operand src);

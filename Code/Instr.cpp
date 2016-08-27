@@ -97,20 +97,6 @@ namespace code {
 		return new (e.v) Instr(op, dest, src);
 	}
 
-	RetVal::RetVal(Size size, Bool isFloat) : size(size), isFloat(isFloat) {}
-
-	RetVal retVal(Size size, Bool isFloat) {
-		return RetVal(size, isFloat);
-	}
-
-	RetVal retVoid() {
-		return RetVal(Size(), false);
-	}
-
-	RetVal retPtr() {
-		return RetVal(Size::sPtr, false);
-	}
-
 	/**
 	 * Instructions.
 	 */
@@ -168,7 +154,7 @@ namespace code {
 		return instrLoose(e, op::setCond, to, cond);
 	}
 
-	Instr *call(EnginePtr e, Operand to, RetVal ret) {
+	Instr *call(EnginePtr e, Operand to, ValType ret) {
 		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer.");
 
@@ -176,7 +162,7 @@ namespace code {
 		return instrLoose(e, op, sizedReg(ptrA, ret.size), to);
 	}
 
-	Instr *ret(EnginePtr e, RetVal ret) {
+	Instr *ret(EnginePtr e, ValType ret) {
 		Operand r = sizedReg(ptrA, ret.size);
 		op::Code op = ret.isFloat ? op::retFloat : op::ret;
 		if (r.type() == opNone)
@@ -209,7 +195,7 @@ namespace code {
 		return instrLoose(e, op::fnParamRef, copyFn, src);
 	}
 
-	Instr *fnCall(EnginePtr e, Operand src, RetVal ret) {
+	Instr *fnCall(EnginePtr e, Operand src, ValType ret) {
 		if (src.type() == opConstant)
 			throw InvalidValue(L"Should not call constant values, use references instead!");
 		if (src.size() != Size::sPtr)

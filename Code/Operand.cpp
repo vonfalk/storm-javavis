@@ -23,6 +23,8 @@ namespace code {
 
 	Operand::Operand(CondFlag c) : opType(opCondFlag), opNum(c), opSize(Size()) {}
 
+	Operand::Operand(Variable v) : opType(opVariable), opNum(v.id), opSize(v.size()) {}
+
 	Operand::Operand(Word c, Size size) : opType(opConstant), opNum(c), opSize(size) {}
 
 	Operand::Operand(Size s, Size size) : opType(opDualConstant), opNum(dual(s.size32(), s.size64())), opSize(size) {}
@@ -32,6 +34,8 @@ namespace code {
 	}
 
 	Operand::Operand(Register r, Offset offset, Size size) : opType(opRelative), opNum(r), opOffset(offset), opSize(size) {}
+
+	Operand::Operand(Variable v, Offset offset, Size size) : opType(opVariable), opNum(v.id), opOffset(offset), opSize(size) {}
 
 	Bool Operand::operator ==(const Operand &o) const {
 		if (opType != o.opType)
@@ -45,9 +49,9 @@ namespace code {
 		case opRegister:
 		case opCondFlag:
 			return opNum == o.opNum;
+		case opVariable:
 		case opRelative:
 			return opNum == o.opNum && opOffset == o.opOffset;
-		case opVariable:
 		case opReference:
 		default:
 			assert(false, L"Unknown type!");
@@ -132,7 +136,24 @@ namespace code {
 		return CondFlag(opNum);
 	}
 
+	Variable Operand::variable() const {
+		assert(type() == opVariable, L"Not a variable!");
+		return Variable(Nat(opNum), opSize);
+	}
+
 	wostream &operator <<(wostream &to, const Operand &o) {
+		if (o.type() != opRegister && o.type() != opCondFlag) {
+			Size s = o.size();
+			if (s == Size::sPtr)
+				to << L"p";
+			else if (s == Size::sByte)
+				to << L"b";
+			else if (s == Size::sInt)
+				to << L"i";
+			else if (s == Size::sLong)
+				to << L"l";
+		}
+
 		switch (o.type()) {
 		case opNone:
 			return to << L"<none>";
@@ -143,7 +164,11 @@ namespace code {
 		case opRelative:
 			return to << L"[" << code::name(o.reg()) << o.offset() << L"]";
 		case opVariable:
-			return to << L"TODO";
+			if (o.offset() != Offset()) {
+				return to << L"[Var" << o.opNum << o.offset() << L"]";
+			} else {
+				return to << L"[Var" << o.opNum << L"]";
+			}
 		case opReference:
 			return to << L"TODO";
 		case opCondFlag:
@@ -164,23 +189,23 @@ namespace code {
 	 */
 
 	Operand byteConst(Byte v) {
-		return Operand(Word(v), Size::sByte);
+		return xConst(Size::sByte, Word(v));
 	}
 
 	Operand intConst(Int v) {
-		return Operand(Long(v), Size::sInt);
+		return xConst(Size::sInt, Long(v));
 	}
 
 	Operand natConst(Nat v) {
-		return Operand(Word(v), Size::sNat);
+		return xConst(Size::sNat, Word(v));
 	}
 
 	Operand longConst(Long v) {
-		return Operand(v, Size::sLong);
+		return xConst(Size::sLong, v);
 	}
 
 	Operand wordConst(Word v) {
-		return Operand(v, Size::sWord);
+		return xConst(Size::sWord, v);
 	}
 
 	Operand ptrConst(Size v) {
@@ -196,23 +221,43 @@ namespace code {
 	}
 
 	Operand byteRel(Register reg, Offset offset) {
-		return Operand(reg, offset, Size::sByte);
+		return xRel(Size::sByte, reg, offset);
 	}
 
 	Operand intRel(Register reg, Offset offset) {
-		return Operand(reg, offset, Size::sInt);
+		return xRel(Size::sInt, reg, offset);
 	}
 
 	Operand longRel(Register reg, Offset offset) {
-		return Operand(reg, offset, Size::sLong);
+		return xRel(Size::sLong, reg, offset);
 	}
 
 	Operand ptrRel(Register reg, Offset offset) {
-		return Operand(reg, offset, Size::sPtr);
+		return xRel(Size::sPtr, reg, offset);
 	}
 
 	Operand xRel(Size size, Register reg, Offset offset) {
 		return Operand(reg, offset, Size::sPtr);
+	}
+
+	Operand byteRel(Variable v, Offset offset) {
+		return xRel(Size::sByte, v, offset);
+	}
+
+	Operand intRel(Variable v, Offset offset) {
+		return xRel(Size::sInt, v, offset);
+	}
+
+	Operand longRel(Variable v, Offset offset) {
+		return xRel(Size::sLong, v, offset);
+	}
+
+	Operand ptrRel(Variable v, Offset offset) {
+		return xRel(Size::sPtr, v, offset);
+	}
+
+	Operand xRel(Size size, Variable v, Offset offset) {
+		return Operand(v, offset, size);
 	}
 
 }

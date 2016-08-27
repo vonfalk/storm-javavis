@@ -10,6 +10,9 @@ namespace code {
 	class Variable {
 		STORM_VALUE;
 	public:
+		// Create an invalid value.
+		STORM_CTOR Variable();
+
 		inline Bool STORM_FN operator ==(Variable o) const { return id == o.id; }
 		inline Bool STORM_FN operator !=(Variable o) const { return id != o.id; }
 
@@ -18,6 +21,7 @@ namespace code {
 
 	private:
 		friend class Listing;
+		friend class Operand;
 		friend wostream &operator <<(wostream &to, Variable v);
 		friend StrBuf &operator <<(StrBuf &to, Variable l);
 
