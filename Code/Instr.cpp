@@ -367,13 +367,13 @@ namespace code {
 		return instr(e, op::epilog);
 	}
 
-	// Instr *begin(EnginePtr e, Part block) {
-	// 	return instrLoose(op::beginBlock, Value(), destNone, block);
-	// }
+	Instr *begin(EnginePtr e, Part part) {
+		return instrLoose(e, op::beginBlock, Operand(), part);
+	}
 
-	// Instr *end(EnginePtr e, Part block) {
-	// 	return instrLoose(op::endBlock, Value(), destNone, Part(block));
-	// }
+	Instr *end(EnginePtr e, Block block) {
+		return instrLoose(e, op::endBlock, Operand(), Part(block));
+	}
 
 	Instr *threadLocal(EnginePtr e) {
 		return instr(e, op::threadLocal);

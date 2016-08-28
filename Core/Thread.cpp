@@ -52,4 +52,6 @@ namespace storm {
 		return Fn<void, void>((Wrap *)&e, &Wrap::attach);
 	}
 
+	STORM_DEFINE_THREAD(Compiler);
+
 }

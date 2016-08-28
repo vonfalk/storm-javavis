@@ -44,7 +44,7 @@ namespace code {
 
 	Size size(Register r) {
 		nat v = (nat)r;
-		switch ((v & 0x800) >> 8) {
+		switch ((v & 0xF00) >> 8) {
 		case 0:
 			return Size::sPtr;
 		case 1:
@@ -74,7 +74,7 @@ namespace code {
 		}
 
 		nat v = (nat)r;
-		return Register((v & ~0x800) | s << 8);
+		return Register((v & ~0xF00) | s << 8);
 	}
 
 }

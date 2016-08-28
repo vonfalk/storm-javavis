@@ -159,8 +159,8 @@ namespace code {
 	// Scope management. A scope is assumed to be open on all instructions between "begin(scope)" and "end(scope)".
 	// Do not, for example, have all begin/end scopes in the end of the listing and jump forth and back between them.
 	// That makes the exception handling fail to detect what to destroy. NOTE: Does not preserve registers!
-	// Instr *STORM_FN begin(EnginePtr e, Part block);
-	// Instr *STORM_FN end(EnginePtr e, Part block);
+	Instr *STORM_FN begin(EnginePtr e, Part part);
+	Instr *STORM_FN end(EnginePtr e, Block block);
 
 	// Segment override for the next instruction, not reliable for function calls or double memory accesses. Only
 	// availiable on relevant architectures, for example X86.

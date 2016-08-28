@@ -75,7 +75,9 @@ int _tmain(int argc, const wchar *argv[]) {
 			modified = max(modified, me.mTime());
 	}
 
-	bool update = oldFile(modified, config.cppOut) || oldFile(modified, config.asmOut);
+	bool update = oldFile(modified, config.cppOut);
+	// TODO: Enable when we output asm properly!
+	// update |= oldFile(modified, config.asmOut);
 
 	if (update) {
 		try {

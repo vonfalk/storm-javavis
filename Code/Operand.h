@@ -3,6 +3,7 @@
 #include "OpCode.h"
 #include "CondFlag.h"
 #include "Variable.h"
+#include "Block.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -49,7 +50,7 @@ namespace code {
 		opLabel,
 
 		// Block or part.
-		opBlock,
+		opPart,
 
 		// Reference to another object.
 		opReference,
@@ -75,6 +76,9 @@ namespace code {
 
 		// Variable.
 		STORM_CAST_CTOR Operand(Variable var);
+
+		// Block or part.
+		STORM_CAST_CTOR Operand(Part part);
 
 		/**
 		 * Operations.
@@ -110,9 +114,16 @@ namespace code {
 		Register STORM_FN reg() const; // "register" is a reserved word.
 		Offset STORM_FN offset() const;
 		CondFlag STORM_FN condFlag() const;
+		Part STORM_FN part() const;
 		Variable STORM_FN variable() const; // NOTE: The size of this variable is equal to the size
 											// we want to read, which is not always the size of the
 											// original variable!
+
+		/**
+		 * Debug.
+		 */
+
+		void dbg_dump() const;
 
 	private:
 		// Create constants.

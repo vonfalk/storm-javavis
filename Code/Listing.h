@@ -187,6 +187,36 @@ namespace code {
 		inline Variable STORM_FN createParam(ValType type, Operand free) { return createParam(type, free, freeDef); }
 		Variable STORM_FN createParam(ValType type, Operand free, FreeOpt when);
 
+		/**
+		 * Convenience functions.
+		 */
+
+		inline Variable STORM_FN createByteVar(Part in) {
+			return createVar(in, Size::sByte);
+		}
+		inline Variable STORM_FN createIntVar(Part in) {
+			return createVar(in, Size::sInt);
+		}
+		inline Variable STORM_FN createLongVar(Part in) {
+			return createVar(in, Size::sLong);
+		}
+		inline Variable STORM_FN createFloatVar(Part in) {
+			return createVar(in, Size::sFloat);
+		}
+
+		inline Variable STORM_FN createByteParam() {
+			return createParam(ValType(Size::sByte, false));
+		}
+		inline Variable STORM_FN createIntParam() {
+			return createParam(ValType(Size::sInt, false));
+		}
+		inline Variable STORM_FN createLongParam() {
+			return createParam(ValType(Size::sLong, false));
+		}
+		inline Variable STORM_FN createFloatParam() {
+			return createParam(ValType(Size::sFloat, true));
+		}
+
 
 		/**
 		 * Misc.

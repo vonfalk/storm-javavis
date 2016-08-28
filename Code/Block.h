@@ -51,6 +51,7 @@ namespace code {
 	private:
 		friend class Part;
 		friend class Listing;
+		friend class Operand;
 
 		friend wostream &operator <<(wostream &to, Part l);
 		friend StrBuf &operator <<(StrBuf &to, Part l);

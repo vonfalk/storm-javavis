@@ -2,6 +2,7 @@
 #include "Operand.h"
 #include "Exception.h"
 #include "Core/StrBuf.h"
+#include <iomanip>
 
 namespace code {
 
@@ -17,25 +18,27 @@ namespace code {
 		return Nat(d & 0xFFFFFFFF);
 	}
 
-	Operand::Operand() : opType(opNone) {}
+	Operand::Operand() : opType(opNone), opPtr(null), opNum(0) {}
 
-	Operand::Operand(Register r) : opType(opRegister), opNum(r), opSize(code::size(r)) {}
+	Operand::Operand(Register r) : opType(opRegister), opPtr(null), opNum(r), opSize(code::size(r)) {}
 
-	Operand::Operand(CondFlag c) : opType(opCondFlag), opNum(c), opSize(Size()) {}
+	Operand::Operand(CondFlag c) : opType(opCondFlag), opPtr(null), opNum(c), opSize() {}
 
-	Operand::Operand(Variable v) : opType(opVariable), opNum(v.id), opSize(v.size()) {}
+	Operand::Operand(Part p) : opType(opPart), opPtr(null), opNum(p.id), opSize() {}
 
-	Operand::Operand(Word c, Size size) : opType(opConstant), opNum(c), opSize(size) {}
+	Operand::Operand(Variable v) : opType(opVariable), opPtr(null), opNum(v.id), opSize(v.size()) {}
 
-	Operand::Operand(Size s, Size size) : opType(opDualConstant), opNum(dual(s.size32(), s.size64())), opSize(size) {}
+	Operand::Operand(Word c, Size size) : opType(opConstant), opPtr(null), opNum(c), opSize(size) {}
 
-	Operand::Operand(Offset o, Size size) : opType(opDualConstant), opNum(dual(o.v32(), o.v64())), opSize(size) {
+	Operand::Operand(Size s, Size size) : opType(opDualConstant), opPtr(null), opNum(dual(s.size32(), s.size64())), opSize(size) {}
+
+	Operand::Operand(Offset o, Size size) : opType(opDualConstant), opPtr(null), opNum(dual(o.v32(), o.v64())), opSize(size) {
 		TODO(L"Check negative offsets!");
 	}
 
-	Operand::Operand(Register r, Offset offset, Size size) : opType(opRelative), opNum(r), opOffset(offset), opSize(size) {}
+	Operand::Operand(Register r, Offset offset, Size size) : opType(opRelative), opPtr(null), opNum(r), opOffset(offset), opSize(size) {}
 
-	Operand::Operand(Variable v, Offset offset, Size size) : opType(opVariable), opNum(v.id), opOffset(offset), opSize(size) {}
+	Operand::Operand(Variable v, Offset offset, Size size) : opType(opVariable), opPtr(null), opNum(v.id), opOffset(offset), opSize(size) {}
 
 	Bool Operand::operator ==(const Operand &o) const {
 		if (opType != o.opType)
@@ -48,6 +51,7 @@ namespace code {
 		case opDualConstant:
 		case opRegister:
 		case opCondFlag:
+		case opPart:
 			return opNum == o.opNum;
 		case opVariable:
 		case opRelative:
@@ -82,6 +86,7 @@ namespace code {
 		switch (opType) {
 		case opNone:
 		case opCondFlag:
+		case opPart:
 			// TODO: Add more returning false here.
 			return false;
 		default:
@@ -136,6 +141,11 @@ namespace code {
 		return CondFlag(opNum);
 	}
 
+	Part Operand::part() const {
+		assert(type() == opPart, L"Not a part!");
+		return Part(Nat(opNum));
+	}
+
 	Variable Operand::variable() const {
 		assert(type() == opVariable, L"Not a variable!");
 		return Variable(Nat(opNum), opSize);
@@ -181,6 +191,13 @@ namespace code {
 
 	StrBuf &operator <<(StrBuf &to, Operand o) {
 		return to << ::toS(o).c_str();
+	}
+
+	void Operand::dbg_dump() const {
+		const nat *raw = (const nat *)this;
+		for (nat i = 0; i < sizeof(Operand)/4; i++) {
+			std::wcout << std::setw(2) << i << L": " << toHex(raw[i]) << endl;
+		}
 	}
 
 

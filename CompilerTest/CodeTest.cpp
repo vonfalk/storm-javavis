@@ -4,7 +4,7 @@
 
 using namespace code;
 
-BEGIN_TEST(CodeTest, Code) {
+BEGIN_TEST(CodeScopeTest, Code) {
 	Engine &e = *gEngine;
 
 	Listing *l = new (e) Listing();
@@ -20,12 +20,29 @@ BEGIN_TEST(CodeTest, Code) {
 	*l << mov(e, eax, ebx);
 	*l << mov(e, v2, intConst(10));
 
-	PVAR(l);
-
 	CHECK_EQ(l->prev(v1), v3);
 	CHECK_EQ(l->prev(v3), v2);
 	CHECK_EQ(l->prev(v2), v0);
 	CHECK_EQ(l->prev(v0), par);
 	CHECK_EQ(l->prev(par), Variable());
 
+} END_TEST
+
+BEGIN_TEST(CodeTest, Code) {
+	Engine &e = *gEngine;
+
+	Listing *l = new (e) Listing();
+
+	Part root = l->root();
+	Variable v = l->createIntVar(root);
+	Variable p = l->createIntParam();
+
+	*l << prolog(e);
+	*l << mov(e, v, p);
+	*l << add(e, v, intConst(1));
+	*l << mov(e, eax, v);
+	*l << epilog(e);
+	*l << ret(e, ValType(Size::sInt, false));
+
+	PVAR(l);
 } END_TEST
