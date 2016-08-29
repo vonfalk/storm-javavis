@@ -6,6 +6,11 @@ namespace code {
 
 	/**
 	 * Registers available for all backends.
+	 *
+	 * Format: 0xABC where:
+	 * A is the size (0 = pointer size)
+	 * B is the backend id (0 = general, 1 = x86, etc)
+	 * C is specific identifier to the backend
 	 */
 	enum Register {
 		// No register.

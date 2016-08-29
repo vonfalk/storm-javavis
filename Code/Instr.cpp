@@ -16,6 +16,13 @@ namespace code {
 		// Everything is constant here anyway. No need!
 	}
 
+	Size Instr::size() const {
+		if (iSrc.size() > iDest.size())
+			return iSrc.size();
+		else
+			return iDest.size();
+	}
+
 	op::Code Instr::op() const {
 		return iOp;
 	}

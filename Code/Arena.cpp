@@ -15,6 +15,15 @@ namespace code {
 		assert(false);
 	}
 
+	LabelOutput *Arena::labelOutput() const {
+		assert(false);
+		return null;
+	}
+
+	Output *Arena::codeOutput(Array<Nat> *offsets, Nat size) const {
+		assert(false);
+		return null;
+	}
 
 #if defined(X86) && defined(WINDOWS)
 	Arena *arena(EnginePtr e) {

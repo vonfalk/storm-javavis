@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Register.h"
+#include "X86/Arena.h"
 
 namespace code {
 
@@ -36,7 +37,8 @@ namespace code {
 		case rcx:
 			return L"rcx";
 		default:
-			TODO(L"Add support for backend-specific registers.");
+			if (const wchar *n = x86::nameX86(r))
+				return n;
 			assert(false);
 			return L"<unknown>";
 		}

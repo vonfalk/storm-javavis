@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Code/Listing.h"
+#include "Code/Binary.h"
 
 using namespace code;
 
@@ -30,6 +31,7 @@ BEGIN_TEST(CodeScopeTest, Code) {
 
 BEGIN_TEST(CodeTest, Code) {
 	Engine &e = *gEngine;
+	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
 
@@ -45,4 +47,7 @@ BEGIN_TEST(CodeTest, Code) {
 	*l << ret(e, ValType(Size::sInt, false));
 
 	PVAR(l);
+
+	Binary *b = new (e) Binary(arena, l);
+	// TODO: Run it!
 } END_TEST

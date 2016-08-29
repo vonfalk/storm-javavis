@@ -2,6 +2,7 @@
 #include "Listing.h"
 #include "Exception.h"
 #include "Core/StrBuf.h"
+#include "Core/CloneEnv.h"
 
 namespace code {
 
@@ -48,9 +49,7 @@ namespace code {
 
 	Listing::Entry::Entry(Instr *i) : instr(i), labels(null) {}
 
-	Listing::Entry::Entry(Engine &e, Label l) : instr(null) {
-		labels = new (e) Array<Label>(l);
-	}
+	Listing::Entry::Entry(Instr *i, Array<Label> *l) : instr(i), labels(l) {}
 
 	void Listing::Entry::deepCopy(CloneEnv *env) {
 		// Instr is immutable. No need to do anything with that!
@@ -96,6 +95,10 @@ namespace code {
 	Listing::IVar::IVar(Nat parent, Size size, Bool isParam, Bool isFloat, Operand freeFn, FreeOpt opt) :
 		parent(parent), size(size), isParam(isParam), isFloat(isFloat), freeFn(freeFn), freeOpt(opt) {}
 
+	void Listing::IVar::deepCopy(CloneEnv *env) {
+		// No need.
+	}
+
 	Listing::IBlock::IBlock(Engine &e) : parts(new (e) Array<Nat>()), parent(Block().id) {}
 
 	Listing::IBlock::IBlock(Engine &e, Nat parent) : parts(new (e) Array<Nat>()), parent(parent) {}
@@ -116,6 +119,7 @@ namespace code {
 
 	Listing::Listing() :
 		code(new (engine()) Array<Entry>()),
+		nextLabels(null),
 		nextLabel(1),
 		params(new (engine()) Array<Nat>()),
 		vars(new (engine()) Array<IVar>()),
@@ -133,6 +137,8 @@ namespace code {
 	void Listing::deepCopy(CloneEnv *env) {
 		code = new (this) Array<Entry>(code);
 		code->deepCopy(env);
+		nextLabels = new (this) Array<Label>(nextLabels);
+		nextLabels->deepCopy(env);
 		params = new (this) Array<Nat>(params);
 		params->deepCopy(env);
 		vars = new (this) Array<IVar>(vars);
@@ -143,25 +149,41 @@ namespace code {
 		parts->deepCopy(env);
 	}
 
+	Listing *Listing::createShell() const {
+		Listing *shell = new (this) Listing();
+
+		shell->nextLabel = nextLabel;
+		if (nextLabels)
+			shell->nextLabels = new (this) Array<Label>(nextLabels);
+		shell->params = new (this) Array<Nat>(params);
+		shell->vars = new (this) Array<IVar>(vars);
+		shell->blocks = new (this) Array<IBlock>(blocks);
+		shell->parts = new (this) Array<IPart>(parts);
+
+		// Note: we're doing this the hard way since deepCopy did not work properly at the time this was written.
+		CloneEnv *env = new (this) CloneEnv();
+		for (nat i = 0; i < shell->vars->count(); i++)
+			shell->vars->at(i).deepCopy(env);
+
+		for (nat i = 0; i < shell->blocks->count(); i++)
+			shell->blocks->at(i).deepCopy(env);
+
+		for (nat i = 0; i < shell->parts->count(); i++)
+			shell->parts->at(i).deepCopy(env);
+
+		return shell;
+	}
+
 	Listing &Listing::operator <<(Instr *i) {
-		if (code->empty()) {
-			*code << Entry(i);
-		} else if (code->last().instr) {
-			*code << Entry(i);
-		} else {
-			code->last().instr = i;
-		}
+		code->push(Entry(i, nextLabels));
+		nextLabels = null;
 		return *this;
 	}
 
 	Listing &Listing::operator <<(Label l) {
-		if (code->empty()) {
-			*code << Entry(engine(), l);
-		} else if (code->last().instr) {
-			*code << Entry(engine(), l);
-		} else {
-			code->last().add(engine(), l);
-		}
+		if (!nextLabels)
+			nextLabels = new (this) Array<Label>();
+		nextLabels->push(l);
 		return *this;
 	}
 

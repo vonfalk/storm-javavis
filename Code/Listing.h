@@ -54,6 +54,10 @@ namespace code {
 	 * blocks, as the memory is not ready before the block has been activated and the exception is
 	 * activated before the memory has been initialized.
 	 *
+	 * Note: any labels which have not had an instruction added after them are considered
+	 * unused. Ie. it is not possible to reference the end of the listing, as that feature is seldom
+	 * used. If you need labels to the end, consider adding a dummy dat(0) at the end.
+	 *
 	 * TODO: Keep track of our return type? This could make ret() simpler to use.
 	 */
 	class Listing : public Object {
@@ -74,13 +78,13 @@ namespace code {
 			STORM_CTOR Entry();
 			STORM_CTOR Entry(const Entry &o);
 			STORM_CTOR Entry(Instr *instr);
-			STORM_CTOR Entry(Engine &e, Label label);
+			STORM_CTOR Entry(Instr *instr, MAYBE(Array<Label> *) labels);
 
 			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);
 
 			// The instruction at this point.
-			MAYBE(Instr *) instr;
+			Instr *instr;
 
 			// Labels before this instruction (if any). Only created if any labels are added.
 			MAYBE(Array<Label> *) labels;
@@ -92,6 +96,18 @@ namespace code {
 		// Add instructions and labels.
 		Listing &operator <<(Instr *op);
 		Listing &operator <<(Label l);
+
+		// Access instructions.
+		inline Nat STORM_FN count() const { return code->count(); }
+		inline Bool STORM_FN empty() const { return count() == 0; }
+		inline Bool STORM_FN any() const { return count() > 0; }
+		inline Instr *STORM_FN operator [](Nat id) { return at(id); }
+		inline Instr *at(Nat id) { return code->at(id).instr; }
+		inline MAYBE(Array<Label> *) STORM_FN labels(Nat id) { return code->at(id).labels; }
+
+		// Create a shell, ie. a Listing containing only the scope information from this listing,
+		// thus making variables, blocks and part from this listing valid in the shell as well.
+		Listing *STORM_FN createShell() const;
 
 		/**
 		 * Labels.
@@ -250,6 +266,9 @@ namespace code {
 
 			// Create.
 			IVar(Nat parent, Size size, Bool isParam, Bool isFloat, Operand freeFn, FreeOpt opt);
+
+			// Deep copy.
+			void STORM_FN deepCopy(CloneEnv *env);
 		};
 
 		// Block information.
@@ -292,6 +311,9 @@ namespace code {
 
 		// Instructions and labels in here.
 		Array<Entry> *code;
+
+		// Labels added at the end (if any).
+		Array<Label> *nextLabels;
 
 		// Next free label id.
 		Nat nextLabel;

@@ -1,5 +1,6 @@
 #pragma once
 #include "../Arena.h"
+#include "../Register.h"
 
 namespace code {
 	namespace x86 {
@@ -29,6 +30,17 @@ namespace code {
 			virtual Output *STORM_FN codeOutput(Array<Nat> *offsets, Nat size) const;
 
 		};
+
+		/**
+		 * X86-specific registers.
+		 *
+		 * TODO: Expose to Storm somehow.
+		 */
+		extern const Register ptrD, ptrSi, ptrDi;
+		extern const Register edx, esi, edi;
+
+		// Convert to names.
+		const wchar *nameX86(Register r);
 
 	}
 }
