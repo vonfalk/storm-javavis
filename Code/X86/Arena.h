@@ -46,5 +46,21 @@ namespace code {
 		// Convert to names.
 		const wchar *nameX86(Register r);
 
+		// Find unused registers to work with. Returns noReg if none. Takes 64-bit registers into account.
+		Register STORM_FN unusedReg(RegSet *in);
+
+		// Add 64-bit registers if needed.
+		void STORM_FN add64(RegSet *to);
+
+		// Get the low or high 32-bit register. If 'r' is a 32-bit register, high32 returns noReg.
+		Register STORM_FN low32(Register r);
+		Register STORM_FN high32(Register r);
+
+		// All registers.
+		RegSet *STORM_FN allRegs(EnginePtr e);
+
+		// Registers not preserved over function calls.
+		RegSet *STORM_FN fnDirtyRegs(EnginePtr e);
+
 	}
 }

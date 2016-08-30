@@ -1,6 +1,7 @@
 #pragma once
 #include "../Transform.h"
 #include "../OpTable.h"
+#include "../UsedRegisters.h"
 
 namespace code {
 	namespace x86 {
@@ -22,30 +23,34 @@ namespace code {
 
 		private:
 			// Remember unused registers.
+			Array<RegSet *> *used;
+
+			// Find an unused register at 'line'.
+			Register unusedReg(Nat line);
 
 			// Signature for the table of transform functions.
-			typedef void (RemoveInvalid::*TransformFn)(Listing *dest, Listing *src, Nat id);
+			typedef void (RemoveInvalid::*TransformFn)(Listing *dest, Listing *src, Nat line);
 
 			// Transform table.
 			static const OpEntry<TransformFn> transformMap[];
 
 			// Transform functions.
-			void immRegTfm(Listing *dest, Listing *src, Nat id);
-			void leaTfm(Listing *dest, Listing *src, Nat id);
-			void mulTfm(Listing *dest, Listing *src, Nat id);
-			void idivTfm(Listing *dest, Listing *src, Nat id);
-			void udivTfm(Listing *dest, Listing *src, Nat id);
-			void imodTfm(Listing *dest, Listing *src, Nat id);
-			void umodTfm(Listing *dest, Listing *src, Nat id);
-			void setCondTfm(Listing *dest, Listing *src, Nat id);
-			void shlTfm(Listing *dest, Listing *src, Nat id);
-			void shrTfm(Listing *dest, Listing *src, Nat id);
-			void sarTfm(Listing *dest, Listing *src, Nat id);
-			void icastTfm(Listing *dest, Listing *src, Nat id);
-			void ucastTfm(Listing *dest, Listing *src, Nat id);
-			void callFloatTfm(Listing *dest, Listing *src, Nat id);
-			void retFloatTfm(Listing *dest, Listing *src, Nat id);
-			void fnCallFloatTfm(Listing *dest, Listing *src, Nat id);
+			void immRegTfm(Listing *dest, Listing *src, Nat line);
+			void leaTfm(Listing *dest, Listing *src, Nat line);
+			void mulTfm(Listing *dest, Listing *src, Nat line);
+			void idivTfm(Listing *dest, Listing *src, Nat line);
+			void udivTfm(Listing *dest, Listing *src, Nat line);
+			void imodTfm(Listing *dest, Listing *src, Nat line);
+			void umodTfm(Listing *dest, Listing *src, Nat line);
+			void setCondTfm(Listing *dest, Listing *src, Nat line);
+			void shlTfm(Listing *dest, Listing *src, Nat line);
+			void shrTfm(Listing *dest, Listing *src, Nat line);
+			void sarTfm(Listing *dest, Listing *src, Nat line);
+			void icastTfm(Listing *dest, Listing *src, Nat line);
+			void ucastTfm(Listing *dest, Listing *src, Nat line);
+			void callFloatTfm(Listing *dest, Listing *src, Nat line);
+			void retFloatTfm(Listing *dest, Listing *src, Nat line);
+			void fnCallFloatTfm(Listing *dest, Listing *src, Nat line);
 		};
 
 	}

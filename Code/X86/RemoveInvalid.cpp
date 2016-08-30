@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "RemoveInvalid.h"
 #include "Listing.h"
+#include "Arena.h"
 
 namespace code {
 	namespace x86 {
@@ -40,7 +41,7 @@ namespace code {
 		RemoveInvalid::RemoveInvalid() {}
 
 		void RemoveInvalid::before(Listing *dest, Listing *src) {
-			TODO(L"Prepare information about used registers here!");
+			used = usedRegisters(src).used;
 		}
 
 		void RemoveInvalid::during(Listing *dest, Listing *src, Nat line) {
@@ -53,6 +54,10 @@ namespace code {
 			} else {
 				*dest << i;
 			}
+		}
+
+		Register RemoveInvalid::unusedReg(Nat line) {
+			return code::x86::unusedReg(used->at(line));
 		}
 
 		// ImmReg combination already supported?
@@ -72,46 +77,82 @@ namespace code {
 			return false;
 		}
 
-		void RemoveInvalid::immRegTfm(Listing *dest, Listing *src, Nat id) {
-			Instr *instr = src->at(id);
+		void RemoveInvalid::immRegTfm(Listing *dest, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
 
 			if (supported(instr)) {
 				*dest << instr;
 				return;
 			}
 
-			TODO(L"Fix this!");
+			Size size = instr->src().size();
+			assert(size <= Size::sInt, "The 64-bit transform should have fixed this!");
+
+			Register reg = unusedReg(line);
+			Engine &e = engine();
+			if (reg == noReg) {
+				reg = asSize(ptrD, size);
+				*dest << code::push(e, ptrD);
+				*dest << code::mov(e, reg, instr->src());
+				*dest << instr->alterSrc(reg);
+				*dest << code::pop(e, ptrD);
+			} else {
+				reg = asSize(reg, size);
+				*dest << code::mov(e, reg, instr->src());
+				*dest << instr->alterSrc(reg);
+			}
 		}
 
-		void RemoveInvalid::leaTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::leaTfm(Listing *dest, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
 
-		void RemoveInvalid::mulTfm(Listing *dest, Listing *src, Nat id) {}
+			// We can encode writing directly to a register.
+			if (instr->dest().type() == opRegister) {
+				*dest << instr;
+				return;
+			}
 
-		void RemoveInvalid::idivTfm(Listing *dest, Listing *src, Nat id) {}
+			Register reg = unusedReg(line);
+			Engine &e = engine();
+			if (reg == noReg) {
+				*dest << code::push(e, ptrD);
+				*dest << code::lea(e, ptrD, instr->src());
+				*dest << code::mov(e, instr->dest(), ptrD);
+				*dest << code::pop(e, ptrD);
+			} else {
+				reg = asSize(reg, Size::sPtr);
+				*dest << code::lea(e, reg, instr->src());
+				*dest << code::mov(e, instr->dest(), reg);
+			}
+		}
 
-		void RemoveInvalid::udivTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::mulTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::imodTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::idivTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::umodTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::udivTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::setCondTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::imodTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::shlTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::umodTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::shrTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::setCondTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::sarTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::shlTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::icastTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::shrTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::ucastTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::sarTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::callFloatTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::icastTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::retFloatTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::ucastTfm(Listing *dest, Listing *src, Nat line) {}
 
-		void RemoveInvalid::fnCallFloatTfm(Listing *dest, Listing *src, Nat id) {}
+		void RemoveInvalid::callFloatTfm(Listing *dest, Listing *src, Nat line) {}
+
+		void RemoveInvalid::retFloatTfm(Listing *dest, Listing *src, Nat line) {}
+
+		void RemoveInvalid::fnCallFloatTfm(Listing *dest, Listing *src, Nat line) {}
 
 	}
 }

@@ -74,5 +74,71 @@ namespace code {
 			return null;
 		}
 
+		Register unusedReg(RegSet *in) {
+			Register candidates[] = { ptrD, ptrA, ptrB, ptrC, ptrSi, ptrDi };
+			Register protect64[] = { rax, noReg, noReg, noReg, rbx, rcx };
+			for (nat i = 0; i < ARRAY_COUNT(candidates); i++) {
+				if (!in->has(candidates[i])) {
+					// See if we need to protect 64-bit registers...
+					Register prot = protect64[i];
+					if (prot == noReg)
+						return candidates[i];
+
+					// Either too small or not in the set?
+					if (in->get(prot) != prot)
+						return candidates[i];
+				}
+			}
+
+			return noReg;
+		}
+
+		void add64(RegSet *to) {
+			for (RegSet::Iter i = to->begin(); i != to->end(); ++i) {
+				Register r = high32(*i);
+				if (r != noReg)
+					to->put(r);
+			}
+		}
+
+		Register low32(Register reg) {
+			if (size(reg) == Size::sLong)
+				return asSize(reg, Size::sInt);
+			else
+				return reg;
+		}
+
+		Register high32(Register reg) {
+			switch (reg) {
+			case rax:
+				return edx;
+			case rbx:
+				return esi;
+			case rcx:
+				return edi;
+			default:
+				return noReg;
+			}
+		}
+
+		RegSet *allRegs(EnginePtr e) {
+			RegSet *r = new (e.v) RegSet();
+			r->put(eax);
+			r->put(ebx);
+			r->put(ecx);
+			r->put(edx);
+			r->put(esi);
+			r->put(edi);
+			return r;
+		}
+
+		RegSet *fnDirtyRegs(EnginePtr e) {
+			RegSet *r = new (e.v) RegSet();
+			r->put(eax);
+			r->put(ecx);
+			r->put(edx);
+			return r;
+		}
+
 	}
 }

@@ -117,7 +117,7 @@ namespace code {
 	}
 
 	void RegSet::put(Register r) {
-		if (r == ptrStack || r == ptrFrame)
+		if (r == ptrStack || r == ptrFrame || r == noReg)
 			return;
 
 		nat bank = findBank(registerBackend(r));
