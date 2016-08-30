@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Register.h"
 #include "X86/Arena.h"
+#include "Core/StrBuf.h"
 
 namespace code {
 
@@ -102,28 +103,48 @@ namespace code {
 	}
 
 	Bool RegSet::has(Register r) const {
-		return read(toIndex(r)) > 0;
+		nat bank = findBank(registerBackend(r));
+		if (bank >= banks)
+			return false;
+
+		return readData(bank, registerSlot(r)) != 0;
 	}
 
 	void RegSet::put(Register r) {
-		write(toIndex(r), max(read(toIndex(r)), toSize(r)));
+		if (r == ptrStack || r == ptrFrame)
+			return;
+
+		nat bank = findBank(registerBackend(r));
+		if (bank >= banks)
+			bank = allocBank(registerBackend(r));
+
+		nat slot = registerSlot(r);
+		nat size = max(readData(bank, slot), registerSize(r));
+		writeData(bank, slot, size);
 	}
 
-	Register RegSet::get(Register r) {
-		Nat size = read(toIndex(r));
-		if (size == 0)
-			return regNone;
-		return toReg(toIndex(r), size);
+	Register RegSet::get(Register r) const {
+		nat bank = findBank(registerBackend(r));
+		if (bank >= banks)
+			return noReg;
+
+		return readRegister(bank, registerSlot(r));
 	}
 
 	void RegSet::remove(Register r) {
-		write(toIndex(r), 0);
+		nat bank = findBank(registerBackend(r));
+		if (bank >= banks)
+			return;
+
+		writeData(bank, registerSlot(r), 0);
+		if (emptyBank(bank) && bank > 0)
+			writeIndex(bank, 0);
 	}
 
 	RegSet::Iter::Iter() : owner(null), pos(0) {}
 
-	RegSet::Iter::Iter(RegSet *reg) : owner(reg), pos(0) {
-		if (owner->read(0) != 0)
+	RegSet::Iter::Iter(const RegSet *reg) : owner(reg), pos(0) {
+		if (empty(0))
 			++*this;
 	}
 
@@ -131,7 +152,7 @@ namespace code {
 		if (atEnd() || o.atEnd())
 			return atEnd() == o.atEnd();
 		else
-			return owner == o.owner && id == o.id;
+			return owner == o.owner && pos == o.pos;
 	}
 
 	Bool RegSet::Iter::operator !=(Iter o) const {
@@ -141,7 +162,7 @@ namespace code {
 	RegSet::Iter &RegSet::Iter::operator ++() {
 		while (!atEnd()) {
 			pos++;
-			if (owner->read(pos) != 0)
+			if (!empty(pos))
 				break;
 		}
 
@@ -154,78 +175,148 @@ namespace code {
 		return c;
 	}
 
-	Bool RegSet::atEnd() const {
-		return owner == null || id >= RegSet::maxReg;
+	bool RegSet::Iter::atEnd() const {
+		return owner == null || pos >= (dataSlots * banks);
+	}
+
+	bool RegSet::Iter::empty(Nat pos) const {
+		return owner->readData(pos / dataSlots, pos % dataSlots) == 0;
+	}
+
+	Register RegSet::Iter::read(Nat pos) const {
+		return owner->readRegister(pos / dataSlots, pos % dataSlots);
 	}
 
 	Register RegSet::Iter::operator *() const {
-		return RegSet::toReg(index);
+		return read(pos);
 	}
 
 	Register RegSet::Iter::v() const {
-		return RegSet::toReg(index);
+		return read(pos);
 	}
 
-	Iter RegSet::begin() const {
+	RegSet::Iter RegSet::begin() const {
 		return Iter(this);
 	}
 
-	Iter RegSet::end() const {
+	RegSet::Iter RegSet::end() const {
 		return Iter();
 	}
 
-	// void RegSet::toS(StrBuf *to) const;
+	void RegSet::toS(StrBuf *to) const {
+		bool first = true;
+		for (Iter i = begin(); i != end(); ++i) {
+			if (!first)
+				*to << L", ";
+			first = false;
 
-	Nat RegSet::read(Nat id) const {
-		Word *d = &data;
-		Word z = d[id / 32];
-		return (z >> (2*(id % 32))) & 0x03;
-	}
-
-	void RegSet::write(Nat id, Nat v) {
-		Word *d = &data;
-		Word &z = d[id / 32];
-		z &= ~(Word(1) << (2 * (id % 32)));
-		z |= Word(v & 0x03) << (2 * (id % 32));
-	}
-
-	Register RegSet::toReg(Nat index, Nat size) {
-		Nat v = index & 0xFF;
-		switch (size) {
-		case 1:
-			v |= 0x000;
-			break;
-		case 2:
-			v |= 0x400;
-			break;
-		case 3:
-			v |- 0x800;
-			break;
-		default:
-			WARNING(L"Invalid size!");
-			break;
+			*to << name(*i);
 		}
-		return Register(v);
 	}
 
-	Nat RegSet::toIndex(Register reg) {
-		Nat r = reg;
-		return reg & 0xFF;
+	Nat RegSet::readIndex(Nat bank) const {
+		if (bank == 0)
+			return 0;
+
+		nat shift = (bank - 1) * 4;
+		return (index >> shift) & 0xF;
 	}
 
-	Nat RegSet::toSize(Register reg) {
-		Nat r = reg;
-		switch (reg & 0x700) {
-		case 0x000:
+	void RegSet::writeIndex(Nat bank, Nat v) {
+		assert(bank > 0);
+		if (bank == 0)
+			return;
+
+		nat shift = (bank - 1) * 4;
+		index &= ~(0xF << shift);
+		index |= (v & 0xF) << shift;
+	}
+
+	Nat RegSet::readData(Nat bank, Nat slot) const {
+		const Nat *d = &data0;
+		Nat read = d[bank];
+
+		nat shift = slot * 2;
+		return (read >> shift) & 0x3;
+	}
+
+	void RegSet::writeData(Nat bank, Nat slot, Nat v) {
+		Nat *d = &data0;
+		Nat &write = d[bank];
+
+		nat shift = slot * 2;
+		write &= ~(0x3 << shift);
+		write |= (v & 0x3) << shift;
+	}
+
+	bool RegSet::emptyBank(Nat bank) const {
+		const Nat *d = &data0;
+		return d[bank] == 0;
+	}
+
+	Nat RegSet::findBank(Nat backend) const {
+		if (backend == 0)
+			return 0;
+
+		for (nat i = 1; i < banks; i++)
+			if (readIndex(i) == backend)
+				return i;
+
+		return banks;
+	}
+
+	Nat RegSet::allocBank(Nat backend) {
+		if (backend == 0)
+			return 0;
+
+		for (nat i = 1; i < banks; i++)
+			if (readIndex(i) == 0) {
+				writeIndex(i, backend);
+				return i;
+			}
+
+		assert(false, L"Out of space for registers!");
+		return 0;
+	}
+
+	Register RegSet::readRegister(Nat bank, Nat slot) const {
+		Nat backend = readIndex(bank);
+		Nat size = readData(bank, slot);
+
+		static nat lookup[] = { 0x0, 0x4, 0x0, 0x8 };
+		if (size == 0)
+			return noReg;
+
+		Nat data = (backend & 0xF) << 4;
+		data |= (lookup[size] & 0xF) << 8;
+		data |= (slot & 0xF);
+		return Register(data);
+	}
+
+	Nat RegSet::registerSlot(Register r) {
+		Nat z = r;
+		return z & 0xF;
+	}
+
+	Nat RegSet::registerBackend(Register r) {
+		Nat z = r;
+		return (z & 0xF0) >> 4;
+	}
+
+	Nat RegSet::registerSize(Register r) {
+		Nat z = r;
+		switch ((z & 0xF00) >> 8) {
+		case 0x0:
 			return 2;
-		case 0x100:
-		case 0x400:
+		case 0x1:
+		case 0x4:
 			return 1;
-		case 0x800:
+		case 0x8:
 			return 3;
 		default:
 			WARNING(L"Unknown size!");
 			return 2;
 		}
 	}
+
 }

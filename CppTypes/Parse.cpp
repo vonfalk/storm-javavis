@@ -237,7 +237,11 @@ static void parseEnum(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	if (tok.skipIf(L";"))
 		return;
 
-	tok.expect(L"{");
+	if (name.token == L"{") {
+		name.token = L"";
+	} else {
+		tok.expect(L"{");
+	}
 
 	// Add the type.
 	CppName fullName = inside + name.token;
@@ -260,7 +264,8 @@ static void parseEnum(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	tok.skipIf(L"}");
 	tok.expect(L";");
 
-	env.world.add(type);
+	if (!name.token.empty())
+		env.world.add(type);
 }
 
 // Parse the parent class of a type.

@@ -1,5 +1,7 @@
 #pragma once
 #include "Size.h"
+#include "Core/Object.h"
+#include "Core/Array.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -93,23 +95,29 @@ namespace code {
 			STORM_VALUE;
 		public:
 			Iter();
-			Iter(RegSet *reg);
+			Iter(const RegSet *reg);
 
 			Bool STORM_FN operator ==(Iter o) const;
 			Bool STORM_FN operator !=(Iter o) const;
 
 			Iter &STORM_FN operator ++();
-			Iter STORM_FN operator ++(int);
+			Iter STORM_FN operator ++(int z);
 
 			Register operator *() const;
 			Register STORM_FN v() const;
 
 		private:
-			RegSet *owner;
-			Nat id;
+			const RegSet *owner;
+
+			// Pos: lower 4 bits = slot, rest = bank.
+			Nat pos;
 
 			// At end?
 			bool atEnd() const;
+
+			// Empty at pos?
+			bool empty(Nat pos) const;
+			Register read(Nat pos) const;
 		};
 
 		Iter STORM_FN begin() const;
@@ -119,37 +127,73 @@ namespace code {
 		virtual void STORM_FN toS(StrBuf *to) const;
 
 	private:
+		/**
+		 * Data storage. We store 'banks'*16 entries here as follows:
+		 *
+		 * 'index' stores the backed id for the 'dataX' segments. 'data0' always has backend id = 0,
+		 * as those are commonly used. 'index' stores four bits for each 'dataX', zero means free.
+		 *
+		 * Each of 'dataX' stores two bits for each entry inside it. Each entry represents one
+		 * possible value of the last four bits of a Register. These two bits have the following
+		 * four values:
+		 *
+		 * 0: not in the set
+		 * 1: 32 bit value is in the set
+		 * 2: pointer is in the set
+		 * 3: 64 bit value is in the set
+		 *
+		 * We only need this few registers as it is uncommon to mix registers from different
+		 * backends. If some backends require larger storage in the future, this scheme is easily
+		 * expandable.
+		 */
+
+		// Constants:
 		enum {
-			maxReg = 256
+			// 2 banks is enough for now. Make sure to add 'data' entries up to the number of banks used.
+			// At least 2, maximum 9.
+			banks = 2,
+
+			// Slots per data entry. Should be 16.
+			dataSlots = 8 * sizeof(Nat) / 2,
 		};
 
-		// Store largest size of each register seen. We only care about 32 or 64 bits. Stores 2 bits
-		// per register. Therefore, we need 2x256 bits = 32 Words.
-		// TODO: Maybe this is a bit too large. We only need about 2x64 bits right now.
-		Word data;
-		Word data1;
-		Word data2;
-		Word data3;
-		Word data4;
-		Word data5;
-		Word data6;
-		Word data7;
-		Word data8;
-		Word data9;
-		Word data10;
-		Word data11;
-		Word data12;
-		Word data13;
-		Word data14;
-		Word data15;
+		// Index. Note that data0 is excluded from the index as that always represents the common
+		// registers above.
+		Nat index;
 
-		// Get/set bits. 0 = not in set, 1 = 32 bit seen, 2 = pointer seen, 3 = 64-bit seen.
-		Nat read(Nat id) const;
-		void write(Nat id, Nat v);
+		// Data. Make sure to have at least 'banks' of these.
+		Nat data0;
+		Nat data1;
 
-		// To/from index.
-		static Register toReg(Nat index, Nat size);
-		static Nat toIndex(Register reg);
-		static Nat toSize(Register reg);
+		/**
+		 * Low-level access to the data. An id points into one two-bit position inside data (with an
+		 * associated index location).
+		 */
+
+		// Read/write index.
+		Nat readIndex(Nat bank) const;
+		void writeIndex(Nat bank, Nat v);
+
+		// Read/write data.
+		Nat readData(Nat bank, Nat slot) const;
+		void writeData(Nat bank, Nat slot, Nat v);
+
+		// Bank manipulation.
+		bool emptyBank(Nat bank) const;
+		Nat findBank(Nat backendId) const;
+		Nat allocBank(Nat backendId);
+
+		// Read a register.
+		Register readRegister(Nat bank, Nat slot) const;
+
+		/**
+		 * Register manipulation helpers.
+		 */
+
+		// Get the slot id of a register.
+		static Nat registerSlot(Register r);
+		static Nat registerBackend(Register r);
+		static Nat registerSize(Register r);
+
 	};
 }
