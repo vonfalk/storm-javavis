@@ -83,6 +83,12 @@ namespace code {
 
 	RegSet::RegSet() {}
 
+	RegSet::RegSet(const RegSet *o) {
+		index = o->index;
+		for (nat i = 0; i < banks; i++)
+			(&data0)[i] = (&o->data0)[i];
+	}
+
 	RegSet::RegSet(Register r) {
 		put(r);
 	}
@@ -123,6 +129,11 @@ namespace code {
 		writeData(bank, slot, size);
 	}
 
+	void RegSet::put(const RegSet *src) {
+		for (Iter i = src->begin(); i != src->end(); ++i)
+			put(*i);
+	}
+
 	Register RegSet::get(Register r) const {
 		nat bank = findBank(registerBackend(r));
 		if (bank >= banks)
@@ -139,6 +150,13 @@ namespace code {
 		writeData(bank, registerSlot(r), 0);
 		if (emptyBank(bank) && bank > 0)
 			writeIndex(bank, 0);
+	}
+
+	void RegSet::clear() {
+		index = 0;
+		for (nat i = 0; i < banks; i++) {
+			(&data0)[i] = 0;
+		}
 	}
 
 	RegSet::Iter::Iter() : owner(null), pos(0) {}

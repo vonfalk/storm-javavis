@@ -101,8 +101,8 @@ namespace code {
 		inline Nat STORM_FN count() const { return code->count(); }
 		inline Bool STORM_FN empty() const { return count() == 0; }
 		inline Bool STORM_FN any() const { return count() > 0; }
-		inline Instr *STORM_FN operator [](Nat id) { return at(id); }
-		inline Instr *at(Nat id) { return code->at(id).instr; }
+		inline Instr *STORM_FN operator [](Nat id) const { return at(id); }
+		inline Instr *at(Nat id) const { return code->at(id).instr; }
 		inline MAYBE(Array<Label> *) STORM_FN labels(Nat id) { return code->at(id).labels; }
 
 		// Create a shell, ie. a Listing containing only the scope information from this listing,

@@ -36,8 +36,12 @@ namespace code {
 		 *
 		 * TODO: Expose to Storm somehow.
 		 */
-		extern const Register ptrD, ptrSi, ptrDi;
-		extern const Register edx, esi, edi;
+		extern const Register ptrD;
+		extern const Register ptrSi;
+		extern const Register ptrDi;
+		extern const Register edx;
+		extern const Register esi;
+		extern const Register edi;
 
 		// Convert to names.
 		const wchar *nameX86(Register r);

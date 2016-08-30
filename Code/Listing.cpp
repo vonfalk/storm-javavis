@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Listing.h"
 #include "Exception.h"
+#include "UsedRegisters.h"
+#include "Core/Str.h"
 #include "Core/StrBuf.h"
 #include "Core/CloneEnv.h"
 
@@ -488,6 +490,20 @@ namespace code {
 		return r;
 	}
 
+	static Str *toS(Engine &e, Array<Label> *l) {
+		if (!l)
+			return new (e) Str(L"");
+
+		StrBuf *to = new (e) StrBuf();
+		for (nat i = 0; i < l->count(); i++) {
+			if (i > 0)
+				*to << L", ";
+			*to << l->at(i);
+		}
+		*to << L": ";
+		return to->toS();
+	}
+
 	void Listing::toS(StrBuf *to) const {
 		if (params->any())
 			*to << L"Parameters:\n";
@@ -500,8 +516,16 @@ namespace code {
 
 		putBlock(*to, 0);
 
+		UsedRegisters r = usedRegisters(this);
+		*to << L"Dirty registers: " << r.all;
+
 		for (nat i = 0; i < code->count(); i++) {
-			*to << L"\n" << code->at(i);
+			Entry &e = code->at(i);
+
+			*to << L"\n";
+			*to << width(7) << code::toS(engine(), e.labels);
+			*to << width(20) << r.used->at(i)->toS();
+			*to << L" " << e.instr;
 		}
 	}
 

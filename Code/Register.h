@@ -63,6 +63,9 @@ namespace code {
 		// Create with no registers.
 		STORM_CTOR RegSet();
 
+		// Copy.
+		STORM_CTOR RegSet(const RegSet *src);
+
 		// Create with a single registers.
 		STORM_CTOR RegSet(Register r);
 
@@ -80,12 +83,16 @@ namespace code {
 
 		// Add registers.
 		void STORM_FN put(Register r);
+		void STORM_FN put(const RegSet *r);
 
 		// Get the largest register seen.
 		Register STORM_FN get(Register r) const;
 
 		// Remove register.
 		void STORM_FN remove(Register r);
+
+		// Clear.
+		void STORM_FN clear();
 
 		// Get all registers in here.
 		Array<Register> *STORM_FN all() const;
