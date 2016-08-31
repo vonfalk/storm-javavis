@@ -100,9 +100,9 @@ namespace code {
 	// fnParamRef is like the two-parameter version of fnParam, except that it dereferences the pointer at 'src' and
 	// uses that value instead of something contained inside a variable.
 	Instr *fnParam(EnginePtr e, Operand src);
-	// Instr *fnParam(EnginePtr e, Variable src, Operand copyFn);
+	Instr *fnParam(EnginePtr e, Variable src, Operand copyFn);
 	Instr *fnParamRef(EnginePtr e, Operand src, Operand copyFn);
-	// Instr *fnCall(EnginePtr e, Operand src, ValType ret);
+	Instr *fnCall(EnginePtr e, Operand src, ValType ret);
 
 	// Integer math (signed/unsigned)
 	Instr *STORM_FN add(EnginePtr e, Operand dest, Operand src);

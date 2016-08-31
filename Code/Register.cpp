@@ -63,6 +63,9 @@ namespace code {
 	}
 
 	Register asSize(Register r, Size size) {
+		if (r == noReg)
+			return noReg;
+
 		nat s = 0;
 		if (size == Size::sPtr) {
 			s = 0;
@@ -78,6 +81,12 @@ namespace code {
 
 		nat v = (nat)r;
 		return Register((v & ~0xF00) | s << 8);
+	}
+
+	Bool same(Register a, Register b) {
+		nat aa = a;
+		nat bb = b;
+		return (aa & 0xFF) == (bb & 0xFF);
 	}
 
 

@@ -42,6 +42,10 @@ namespace code {
 
 		void RemoveInvalid::before(Listing *dest, Listing *src) {
 			used = usedRegisters(src).used;
+
+			// Add 64-bit aliases everywhere.
+			for (nat i = 0; i < used->count(); i++)
+				add64(used->at(i));
 		}
 
 		void RemoveInvalid::during(Listing *dest, Listing *src, Nat line) {
@@ -126,33 +130,301 @@ namespace code {
 			}
 		}
 
-		void RemoveInvalid::mulTfm(Listing *dest, Listing *src, Nat line) {}
+		void RemoveInvalid::mulTfm(Listing *dest, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
 
-		void RemoveInvalid::idivTfm(Listing *dest, Listing *src, Nat line) {}
+			Size size = instr->size();
+			assert(size != Size::sByte && size <= Size::sInt, "Bytes not supported yet!");
 
-		void RemoveInvalid::udivTfm(Listing *dest, Listing *src, Nat line) {}
+			if (instr->dest().type() == opRegister) {
+				*dest << instr;
+				return;
+			}
 
-		void RemoveInvalid::imodTfm(Listing *dest, Listing *src, Nat line) {}
+			// Only supported mmode is mul <reg>, <r/m>. Move dest into a register.
+			Engine &e = engine();
+			Register reg = unusedReg(line);
+			if (reg == noReg) {
+				reg = asSize(ptrD, size);
+				*dest << code::push(e, ptrD);
+				*dest << code::mov(e, reg, instr->dest());
+				*dest << instr->alterDest(reg);
+				*dest << code::mov(e, instr->dest(), reg);
+				*dest << code::pop(e, ptrD);
+			} else {
+				reg = asSize(reg, size);
+				*dest << code::mov(e, reg, instr->dest());
+				*dest << instr->alterDest(reg);
+				*dest << code::mov(e, instr->dest(), reg);
+			}
+		}
 
-		void RemoveInvalid::umodTfm(Listing *dest, Listing *src, Nat line) {}
+		void RemoveInvalid::idivTfm(Listing *to, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
 
-		void RemoveInvalid::setCondTfm(Listing *dest, Listing *src, Nat line) {}
+			Engine &e = engine();
+			Operand dest = instr->dest();
+			bool srcConst = instr->src().type() == opConstant;
+			bool destEax = false;
 
-		void RemoveInvalid::shlTfm(Listing *dest, Listing *src, Nat line) {}
+			if (dest.type() == opRegister && same(dest.reg(), ptrA)) {
+				destEax = true;
 
-		void RemoveInvalid::shrTfm(Listing *dest, Listing *src, Nat line) {}
+				if (!srcConst) {
+					// Supported!
+					*to << instr;
+					return;
+				}
+			}
 
-		void RemoveInvalid::sarTfm(Listing *dest, Listing *src, Nat line) {}
+			// The 64-bit transform has been executed before, so we are sure that size is <= sInt
+			bool isByte = dest.size() == Size::sByte;
+			Operand newSrc = instr->src();
 
-		void RemoveInvalid::icastTfm(Listing *dest, Listing *src, Nat line) {}
+			RegSet *used = this->used->at(line);
 
-		void RemoveInvalid::ucastTfm(Listing *dest, Listing *src, Nat line) {}
+			// Clear eax and edx.
+			if (!destEax && used->has(eax))
+				*to << push(e, eax);
+			if (!isByte && used->has(edx))
+				*to << push(e, edx);
 
-		void RemoveInvalid::callFloatTfm(Listing *dest, Listing *src, Nat line) {}
+			// Move dest into eax first.
+			*to << mov(e, eax, dest);
 
-		void RemoveInvalid::retFloatTfm(Listing *dest, Listing *src, Nat line) {}
+			if (srcConst) {
+				if (used->has(ebx))
+					*to << push(e, ebx);
+				*to << mov(e, ebx, instr->src());
+				newSrc = ebx;
+			}
 
-		void RemoveInvalid::fnCallFloatTfm(Listing *dest, Listing *src, Nat line) {}
+			// Clear edx.
+			*to << xor(e, edx, edx);
+			*to << instr->alter(eax, newSrc);
+			*to << mov(e, dest, eax);
+
+			if (srcConst && used->has(ebx))
+				*to << pop(e, ebx);
+			if (!isByte && used->has(edx))
+				*to << pop(e, edx);
+			if (!destEax && used->has(eax))
+				*to << pop(e, eax);
+		}
+
+		void RemoveInvalid::udivTfm(Listing *dest, Listing *src, Nat line) {
+			idivTfm(dest, src, line);
+		}
+
+		void RemoveInvalid::imodTfm(Listing *to, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
+
+			Engine &e = engine();
+			Operand dest = instr->dest();
+			bool srcConst = instr->src().type() == opConstant;
+			bool eaxDest = dest.type() == opRegister && same(dest.reg(), ptrA);
+			bool isByte = dest.size() == Size::sByte;
+
+			Operand newSrc = instr->src();
+			RegSet *used = this->used->at(line);
+
+			// Clear eax and edx if needed.
+			if (!eaxDest && used->has(eax))
+				*to << push(e, eax);
+			if (!isByte && used->has(edx))
+				*to << push(e, edx);
+
+			// Move source into eax.
+			*to << mov(e, eax, dest);
+
+			if (srcConst) {
+				if (used->has(ebx))
+					*to << push(e, ebx);
+				*to << mov(e, ebx, instr->src());
+				newSrc = ebx;
+			}
+
+			// Clear edx.
+			*to << xor(e, edx, edx);
+			*to << instr->alter(eax, newSrc);
+			*to << mov(e, dest, edx);
+
+			if (srcConst && used->has(ebx))
+				*to << pop(e, ebx);
+			if (!isByte && used->has(edx))
+				*to << pop(e, edx);
+			if (!eaxDest && used->has(eax))
+				*to << pop(e, eax);
+		}
+
+		void RemoveInvalid::umodTfm(Listing *dest, Listing *src, Nat line) {
+			imodTfm(dest, src, line);
+		}
+
+		void RemoveInvalid::setCondTfm(Listing *dest, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
+
+			switch (instr->src().condFlag()) {
+			case ifAlways:
+				*dest << mov(engine(), instr->dest(), byteConst(1));
+				break;
+			case ifNever:
+				*dest << mov(engine(), instr->dest(), byteConst(0));
+				break;
+			default:
+				*dest << instr;
+				break;
+			}
+		}
+
+		void RemoveInvalid::shlTfm(Listing *dest, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
+			Engine &e = engine();
+
+			switch (instr->src().type()) {
+			case opRegister:
+				if (instr->src().reg() == cl) {
+					*dest << instr;
+					return;
+				}
+				break;
+			case opConstant:
+				// Supported!
+				*dest << instr;
+				return;
+			}
+
+			Size size = instr->dest().size();
+
+			// We need to store the value in cl. See if dest is also cl or ecx:
+			if (instr->dest().type() == opRegister && same(instr->dest().reg(), ecx)) {
+				// Yup. We need to swap things around a lot!
+				Register reg = asSize(unusedReg(line), size);
+
+				if (reg == noReg) {
+					// Ugh... Worst case!
+					*dest << push(e, ecx);
+					*dest << mov(e, cl, instr->src());
+					*dest << instr->alter(xRel(size, ptrStack, Offset(0)), cl);
+					*dest << pop(e, ecx);
+				} else {
+					*dest << mov(e, reg, instr->dest());
+					*dest << mov(e, cl, instr->src());
+					*dest << instr->alter(reg, cl);
+					*dest << mov(e, instr->dest(), reg);
+				}
+			} else {
+				// We have a bit more leeway at least!
+				Register reg = asSize(unusedReg(line), Size::sInt);
+
+				if (reg == noReg) {
+					*dest << push(e, ecx);
+					*dest << mov(e, cl, instr->src());
+					*dest << instr->alterSrc(cl);
+					*dest << pop(e, ecx);
+				} else {
+					*dest << mov(e, reg, ecx);
+					*dest << mov(e, cl, instr->src());
+					*dest << instr->alterSrc(cl);
+					*dest << mov(e, ecx, reg);
+				}
+			}
+		}
+
+		void RemoveInvalid::shrTfm(Listing *dest, Listing *src, Nat line) {
+			shlTfm(dest, src, line);
+		}
+
+		void RemoveInvalid::sarTfm(Listing *dest, Listing *src, Nat line) {
+			shlTfm(dest, src, line);
+		}
+
+		void RemoveInvalid::icastTfm(Listing *dest, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
+			Size sFrom = instr->src().size();
+			Size sTo = instr->dest().size();
+			Engine &e = engine();
+
+			if (instr->dest() == Operand(asSize(eax, sTo))) {
+				*dest << instr;
+				return;
+			}
+
+			bool toEax = instr->dest().type() != opRegister || !same(instr->dest().reg(), eax);
+
+			RegSet *used = this->used->at(line);
+			bool saveEax = used->has(eax);
+			bool saveEdx = used->has(edx);
+
+			if (toEax)
+				saveEax = false;
+			if (sFrom != Size::sLong && sTo != Size::sLong)
+				saveEdx = false;
+
+			if (saveEax)
+				*dest << push(e, eax);
+			if (saveEdx)
+				*dest << push(e, edx);
+
+			if ((sFrom == Size::sByte && sTo == Size::sLong) ||
+				(sFrom == Size::sLong && sTo == Size::sByte)) {
+				*dest << instr->alterDest(eax);
+				*dest << instr->alter(asSize(eax, sTo), eax);
+			} else {
+				*dest << instr->alterDest(asSize(eax, sTo));
+			}
+
+			if (!toEax) {
+				if (sTo == Size::sLong) {
+					*dest << mov(e, low32(instr->dest()), eax);
+					*dest << mov(e, high32(instr->dest()), edx);
+				} else {
+					*dest << mov(e, instr->dest(), asSize(eax, sTo));
+				}
+			}
+
+			if (saveEdx)
+				*dest << pop(e, edx);
+			if (saveEax)
+				*dest << pop(e, edx);
+		}
+
+		void RemoveInvalid::ucastTfm(Listing *dest, Listing *src, Nat line) {
+			icastTfm(dest, src, line);
+		}
+
+		void RemoveInvalid::callFloatTfm(Listing *dest, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
+			Size s = instr->src().size();
+			Engine &e = engine();
+
+			*dest << call(e, instr->src(), ValType(s, false));
+			*dest << sub(e, ptrStack, ptrConst(s));
+			*dest << fstp(e, xRel(s, ptrStack, Offset()));
+			*dest << pop(e, instr->dest());
+		}
+
+		void RemoveInvalid::retFloatTfm(Listing *dest, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
+			Size s = instr->src().size();
+			Engine &e = engine();
+
+			*dest << push(e, instr->src());
+			*dest << fld(e, xRel(s, ptrStack, Offset()));
+			*dest << add(e, ptrStack, ptrConst(s));
+			*dest << ret(e, ValType(s, false));
+		}
+
+		void RemoveInvalid::fnCallFloatTfm(Listing *dest, Listing *src, Nat line) {
+			Instr *instr = src->at(line);
+			Size s = instr->src().size();
+			Engine &e = engine();
+
+			*dest << fnCall(e, instr->src(), ValType(s, false));
+			*dest << sub(e, ptrStack, ptrConst(s));
+			*dest << fstp(e, xRel(s, ptrStack, Offset()));
+			*dest << pop(e, instr->dest());
+		}
 
 	}
 }

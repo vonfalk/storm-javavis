@@ -51,6 +51,9 @@ namespace code {
 	// Get the corresponding register with another size.
 	Register STORM_FN asSize(Register r, Size size);
 
+	// Are the two registers the same, disregarding size?
+	Bool STORM_FN same(Register a, Register b);
+
 	/**
 	 * Set of registers. Considers registers of different sizes to be the same, but keeps track of
 	 * the largest integer sized register used. Byte-sizes are promoted to 32-bit sizes.

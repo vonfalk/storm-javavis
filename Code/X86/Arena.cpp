@@ -121,6 +121,38 @@ namespace code {
 			}
 		}
 
+		Operand low32(Operand o) {
+			assert(o.size() == Size::sLong);
+			switch (o.type()) {
+			case opConstant:
+				return natConst(o.constant() & 0xFFFFFFFF);
+			case opRegister:
+				return Operand(low32(o.reg()));
+			case opRelative:
+				return intRel(o.reg(), o.offset());
+			case opVariable:
+				return intRel(o.variable(), o.offset());
+			}
+			assert(false);
+			return Operand();
+		}
+
+		Operand high32(Operand o) {
+			assert(o.size() == Size::sLong);
+			switch (o.type()) {
+			case opConstant:
+				return natConst(o.constant() >> 32);
+			case opRegister:
+				return Operand(high32(o.reg()));
+			case opRelative:
+				return intRel(o.reg(), o.offset() + Offset(4));
+			case opVariable:
+				return intRel(o.variable(), o.offset() + Offset(4));
+			}
+			assert(false);
+			return Operand();
+		}
+
 		RegSet *allRegs(EnginePtr e) {
 			RegSet *r = new (e.v) RegSet();
 			r->put(eax);
@@ -138,6 +170,53 @@ namespace code {
 			r->put(ecx);
 			r->put(edx);
 			return r;
+		}
+
+		Register preserve(Register r, RegSet *used, Listing *dest) {
+			Engine &e = dest->engine();
+			Register into = unusedReg(used);
+			if (into == noReg) {
+				*dest << push(e, r);
+			} else {
+				into = asSize(into, size(r));
+				*dest << mov(e, into, r);
+			}
+			return into;
+		}
+
+		void restore(Register r, Register saved, Listing *dest) {
+			Engine &e = dest->engine();
+
+			if (saved == noReg) {
+				*dest << pop(e, r);
+			} else {
+				*dest << mov(e, r, saved);
+			}
+		}
+
+		Preserve::Preserve(RegSet *regs, RegSet *used, Listing *dest) {
+			this->dest = dest;
+			srcReg = new (dest) Array<Nat>();
+			destReg = new (dest) Array<Nat>();
+			RegSet *usedBefore = used;
+			RegSet *usedAfter = new (used) RegSet(used);
+			add64(usedAfter);
+
+			for (RegSet::Iter i = regs->begin(); i != regs->end(); ++i) {
+				if (usedBefore->has(*i)) {
+					Register r = preserve(*i, usedAfter, dest);
+					srcReg->push(Nat(*i));
+					destReg->push(Nat(r));
+				}
+			}
+		}
+
+		void Preserve::restore() {
+			for (Nat i = srcReg->count(); i > 0; i--) {
+				Register src = Register(srcReg->at(i - 1));
+				Register dest = Register(destReg->at(i - 1));
+				code::x86::restore(src, dest, this->dest);
+			}
 		}
 
 	}

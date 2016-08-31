@@ -182,15 +182,15 @@ namespace code {
 		return instrSrc(e, op::fnParam, src);
 	}
 
-	// Instr *fnParam(EnginePtr e, const Variable &src, Operand copyFn) {
-	// 	if (copyFn.type() != opNone) {
-	// 		if (copyFn.type() == opConstant)
-	// 			throw InvalidValue(L"Should not call constant values, use references instead!");
-	// 		if (copyFn.size() != Size::sPtr)
-	// 			throw InvalidValue(L"Must call a pointer.");
-	// 	}
-	// 	return instrLoose(op::fnParam, copyFn, destRead, src);
-	// }
+	Instr *fnParam(EnginePtr e, Variable src, Operand copyFn) {
+		if (copyFn.type() != opNone) {
+			if (copyFn.type() == opConstant)
+				throw InvalidValue(L"Should not call constant values, use references instead!");
+			if (copyFn.size() != Size::sPtr)
+				throw InvalidValue(L"Must call a pointer.");
+		}
+		return instrLoose(e, op::fnParam, copyFn, src);
+	}
 
 	Instr *fnParamRef(EnginePtr e, Operand src, Operand copyFn) {
 		if (copyFn.type() != opNone) {

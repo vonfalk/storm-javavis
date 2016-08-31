@@ -1,6 +1,7 @@
 #pragma once
 #include "../Arena.h"
 #include "../Register.h"
+#include "../Operand.h"
 
 namespace code {
 	namespace x86 {
@@ -55,12 +56,39 @@ namespace code {
 		// Get the low or high 32-bit register. If 'r' is a 32-bit register, high32 returns noReg.
 		Register STORM_FN low32(Register r);
 		Register STORM_FN high32(Register r);
+		Operand STORM_FN low32(Operand o);
+		Operand STORM_FN high32(Operand o);
 
 		// All registers.
 		RegSet *STORM_FN allRegs(EnginePtr e);
 
 		// Registers not preserved over function calls.
 		RegSet *STORM_FN fnDirtyRegs(EnginePtr e);
+
+		/**
+		 * Preserve and restore registers.
+		 */
+
+		// Preserve a single register.
+		Register STORM_FN preserve(Register r, RegSet *used, Listing *dest);
+
+		// Restore a single register.
+		void STORM_FN restore(Register r, Register saved, Listing *dest);
+
+		/**
+		 * Preserve a set of registers.
+		 */
+		class Preserve {
+			STORM_VALUE;
+		public:
+			STORM_CTOR Preserve(RegSet *preserve, RegSet *used, Listing *dest);
+
+			void STORM_FN restore();
+		private:
+			Listing *dest;
+			Array<Nat> *srcReg;
+			Array<Nat> *destReg;
+		};
 
 	}
 }
