@@ -51,6 +51,11 @@ namespace code {
 			void callFloatTfm(Listing *dest, Listing *src, Nat line);
 			void retFloatTfm(Listing *dest, Listing *src, Nat line);
 			void fnCallFloatTfm(Listing *dest, Listing *src, Nat line);
+
+			// Function calls.
+			void fnParamTfm(Listing *dest, Listing *src, Nat line);
+			void fnParamRefTfm(Listing *dest, Listing *src, Nat line);
+			void fnCallTfm(Listing *dest, Listing *src, Nat line);
 		};
 
 	}

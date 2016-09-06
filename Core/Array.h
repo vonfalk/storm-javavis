@@ -28,6 +28,9 @@ namespace storm {
 		// Empty array.
 		ArrayBase(const Handle &type);
 
+		// Create an array with 'n' copies of 'data'.
+		ArrayBase(const Handle &type, Nat n, const void *data);
+
 		// Copy another array.
 		STORM_CTOR ArrayBase(ArrayBase *other);
 
@@ -156,6 +159,9 @@ namespace storm {
 
 		// Empty array.
 		Array() : ArrayBase(StormInfo<T>::handle(engine())) {}
+
+		// 'n' elements.
+		Array(Nat n, const T &item) : ArrayBase(StormInfo<T>::handle(engine()), n, &item) {}
 
 		// Copy array.
 		Array(Array<T> *o) : ArrayBase(o) {}

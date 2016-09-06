@@ -152,6 +152,9 @@ namespace code {
 		Bool STORM_FN operator >=(const Offset &o) const;
 		Bool STORM_FN operator <=(const Offset &o) const;
 
+		// Align this offset to the align presen in 'size'.
+		Offset STORM_FN alignAs(const Size &s) const;
+
 		// Find out the 32- and 64-bit sizes (for storage).
 		inline nat v32() const { return o32; }
 		inline nat v64() const { return o64; }

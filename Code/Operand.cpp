@@ -254,7 +254,7 @@ namespace code {
 	}
 
 	Operand xRel(Size size, Register reg, Offset offset) {
-		return Operand(reg, offset, Size::sPtr);
+		return Operand(reg, offset, size);
 	}
 
 	Operand byteRel(Variable v, Offset offset) {

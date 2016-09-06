@@ -9,6 +9,7 @@ namespace code {
 	static const Nat sizeMask = 0x0FFFFFFF;
 	static const Nat alignMask = 0xF0000000;
 	static const Nat alignShift = 28;
+	static const Nat defAlign = 1 << alignShift;
 
 	static inline Nat size(Nat in) {
 		return in & sizeMask;
@@ -19,7 +20,8 @@ namespace code {
 	}
 
 	static inline Nat align(Nat in) {
-		return (in & alignMask) >> alignShift;
+		// Always return at least 1
+		return max(Nat(1), (in & alignMask) >> alignShift);
 	}
 
 	static inline void align(Nat &in, Nat align, Nat maxAlign) {
@@ -63,7 +65,7 @@ namespace code {
 		to << toHex(size(v)) << L"(" << toHex(align(v)) << L")";
 	}
 
-	Size::Size() : s32(0), s64(0) {}
+	Size::Size() : s32(defAlign), s64(defAlign) {}
 
 	Size::Size(Nat s) : s32(0), s64(0) {
 		set(s32, s, 4);
@@ -289,7 +291,7 @@ namespace code {
 	}
 
 	wostream &operator <<(wostream &to, const Offset &s) {
-		if (s.o32 < 0)
+		if (s.o32 >= 0)
 			to << L"+";
 		else
 			to << L"-";
@@ -318,6 +320,14 @@ namespace code {
 
 	bool Offset::operator <=(const Offset &o) const {
 		return o32 <= o.o32;
+	}
+
+	Offset Offset::alignAs(const Size &s) const {
+		bool neg = o32 < 0;
+		Int n32 = roundUp(std::abs(o32), int(s.align32()));
+		Int n64 = roundUp(std::abs(o64), int(s.align64()));
+		return Offset(neg ? -n32 : n32,
+					neg ? -n64 : n64);
 	}
 
 	Offset Offset::abs() const {

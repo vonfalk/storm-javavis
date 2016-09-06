@@ -96,6 +96,7 @@ namespace code {
 		index = o->index;
 		for (nat i = 0; i < banks; i++)
 			(&data0)[i] = (&o->data0)[i];
+		numSet = o->numSet;
 	}
 
 	RegSet::RegSet(Register r) {
@@ -109,12 +110,6 @@ namespace code {
 
 	void RegSet::deepCopy(CloneEnv *env) {
 		// No need.
-	}
-
-	void RegSet::fill() {
-		put(ptrA);
-		put(ptrB);
-		put(ptrC);
 	}
 
 	Bool RegSet::has(Register r) const {
@@ -134,7 +129,10 @@ namespace code {
 			bank = allocBank(registerBackend(r));
 
 		nat slot = registerSlot(r);
-		nat size = max(readData(bank, slot), registerSize(r));
+		nat old = readData(bank, slot);
+		if (old == 0)
+			numSet++;
+		nat size = max(old, registerSize(r));
 		writeData(bank, slot, size);
 	}
 
@@ -156,7 +154,10 @@ namespace code {
 		if (bank >= banks)
 			return;
 
-		writeData(bank, registerSlot(r), 0);
+		nat slot = registerSlot(r);
+		if (readData(bank, slot) != 0 && numSet > 0)
+			numSet--;
+		writeData(bank, slot, 0);
 		if (emptyBank(bank) && bank > 0)
 			writeIndex(bank, 0);
 	}
@@ -167,6 +168,16 @@ namespace code {
 			(&data0)[i] = 0;
 		}
 	}
+
+	// Can not be implemented right now, as new (this) Array<Register>() does not work yet.
+	// Array<Register> *RegSet::all() const {
+	// 	Array<Register> *result = new (this) Array<Register>();
+
+	// 	for (Iter i = begin(); i != end(); ++i)
+	// 		result->push(i.v());
+
+	// 	return result;
+	// }
 
 	RegSet::Iter::Iter() : owner(null), pos(0) {}
 

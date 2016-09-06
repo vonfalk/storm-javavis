@@ -2,7 +2,9 @@
 #include "Arena.h"
 #include "OutputX86.h"
 #include "Listing.h"
+#include "Layout.h"
 #include "RemoveInvalid.h"
+#include "LayoutVars.h"
 
 namespace code {
 	namespace x86 {
@@ -30,8 +32,8 @@ namespace code {
 			// Expand variables and function calls as well as function prolog and epilog. We need to
 			// know all used registers for this to work, so it has to be run after the previous
 			// transforms.
+			l = code::transform(l, new (this) LayoutVars());
 
-			TODO(L"Implement me!");
 			return l;
 		}
 
@@ -217,6 +219,45 @@ namespace code {
 				Register dest = Register(destReg->at(i - 1));
 				code::x86::restore(src, dest, this->dest);
 			}
+		}
+
+		static Offset paramOffset(Listing *src, Variable var) {
+			if (var == Variable()) {
+				// Old ebp and return pointer.
+				return Offset::sPtr * 2;
+			}
+
+			Variable prev = src->prev(var);
+			Offset offset = paramOffset(src, prev) + prev.size();
+			return offset.alignAs(Size::sPtr);
+		}
+
+		Array<Offset> *layout(Listing *src, Nat savedRegs, Bool usingEH) {
+			Array<Offset> *result = code::layout(src);
+			Array<Variable> *all = src->allVars();
+
+			Offset varOffset;
+			// Old ebp.
+			varOffset += Size::sPtr;
+			// Exception handler frame.
+			if (usingEH)
+				varOffset += Size::sPtr * 4;
+			// Saved registers.
+			varOffset += Size::sPtr * savedRegs;
+
+			for (nat i = 0; i < all->count(); i++) {
+				Variable var = all->at(i);
+				Nat id = var.key();
+
+				if (src->isParam(var)) {
+					result->at(id) = paramOffset(src, var);
+				} else {
+					result->at(id) = -(result->at(id) + varOffset);
+				}
+			}
+
+			result->last() = -(result->last() + varOffset);
+			return result;
 		}
 
 	}

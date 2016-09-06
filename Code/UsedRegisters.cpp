@@ -59,9 +59,7 @@ namespace code {
 	}
 
 	UsedRegisters usedRegisters(const Listing *src) {
-		Array<RegSet *> *used = new (src) Array<RegSet *>();
-		for (nat i = 0; i < src->count(); i++)
-			used->push(null);
+		Array<RegSet *> *used = new (src) Array<RegSet *>(src->count(), null);
 
 		RegSet *all = new (src) RegSet();
 		RegSet *usedNow = new (src) RegSet();
@@ -78,5 +76,17 @@ namespace code {
 		return UsedRegisters(used, all);
 	}
 
+	RegSet *allUsedRegisters(const Listing *src) {
+		RegSet *all = new (src) RegSet();
+
+		for (Nat i = 0; i < src->count(); i++) {
+			Instr *instr = src->at(i);
+
+			if (instr->mode() & destWrite)
+				*all += instr->dest();
+		}
+
+		return all;
+	}
 
 }

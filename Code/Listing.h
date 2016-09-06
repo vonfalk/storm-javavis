@@ -188,6 +188,12 @@ namespace code {
 		// Get all parameters.
 		Array<Variable> *STORM_FN allParams() const;
 
+		// Get the destructor for a variable or a parameter.
+		Operand STORM_FN freeFn(Variable v) const;
+
+		// Get when to free a variable or a parameter.
+		FreeOpt STORM_FN freeOpt(Variable v) const;
+
 		// Do this block need an exception handler?
 		inline Bool STORM_FN exceptionHandler() const { return needEH; }
 

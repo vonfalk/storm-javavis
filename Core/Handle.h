@@ -83,6 +83,7 @@ namespace storm {
 	STORM_PKG(core);
 
 	// Specializations for built-in types. Generates StormInfo for them too, see Storm.h.
+	STORM_PRIMITIVE(Bool, createBool);
 	STORM_PRIMITIVE(Byte, createByte);
 	STORM_PRIMITIVE(Int, createInt);
 	STORM_PRIMITIVE(Nat, createNat);

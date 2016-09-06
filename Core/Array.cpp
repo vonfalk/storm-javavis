@@ -6,6 +6,15 @@ namespace storm {
 
 	ArrayBase::ArrayBase(const Handle &type) : handle(type), data(null) {}
 
+	ArrayBase::ArrayBase(const Handle &type, Nat n, const void *src) : handle(type), data(null) {
+		ensure(n);
+
+		for (nat i = 0; i < n; i++) {
+			handle.safeCopy(ptr(i), src);
+			data->filled = i + 1;
+		}
+	}
+
 	ArrayBase::ArrayBase(ArrayBase *other) : handle(other->handle) {
 		nat count = other->count();
 		if (handle.copyFn) {

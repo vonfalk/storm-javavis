@@ -21,7 +21,11 @@ namespace code {
 
 	class BlockEndError : public Exception {
 	public:
-		String what() const { return L"The scope is not the topmost active scope."; }
+		BlockEndError() : msg(L"The scope is not the topmost active scope.") {}
+		BlockEndError(const String &msg) : msg(msg) {}
+		String what() const { return msg; }
+	private:
+		String msg;
 	};
 
 	class FrameError : public Exception {

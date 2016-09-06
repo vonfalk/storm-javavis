@@ -24,4 +24,7 @@ namespace code {
 	// Computes the used registers which needs to be preserved before each instruction in a
 	// listing. Ignores ptrStack and ptrFrame.
 	UsedRegisters STORM_FN usedRegisters(const Listing *src);
+
+	// Computes all used registers, without bothering about per-line representations.
+	RegSet *STORM_FN allUsedRegisters(const Listing *src);
 }

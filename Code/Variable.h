@@ -19,6 +19,9 @@ namespace code {
 		// Get the size of our variable.
 		inline Size STORM_FN size() const { return sz; }
 
+		// Get our id. Mainly for use in backends.
+		inline Nat STORM_FN key() const { return id; }
+
 	private:
 		friend class Listing;
 		friend class Operand;

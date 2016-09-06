@@ -78,9 +78,6 @@ namespace code {
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *env);
 
-		// Fill with all registers except ptrStack and ptrFrame.
-		void STORM_FN fill();
-
 		// Contains a specific register?
 		Bool STORM_FN has(Register r) const;
 
@@ -90,6 +87,9 @@ namespace code {
 
 		// Get the largest register seen.
 		Register STORM_FN get(Register r) const;
+
+		// Get the number of registers in here.
+		inline Nat STORM_FN count() const { return numSet; }
 
 		// Remove register.
 		void STORM_FN remove(Register r);
@@ -174,6 +174,9 @@ namespace code {
 		// Data. Make sure to have at least 'banks' of these.
 		Nat data0;
 		Nat data1;
+
+		// # of registers in here.
+		Nat numSet;
 
 		/**
 		 * Low-level access to the data. An id points into one two-bit position inside data (with an

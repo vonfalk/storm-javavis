@@ -36,6 +36,10 @@ namespace code {
 			TRANSFORM(callFloat),
 			TRANSFORM(retFloat),
 			TRANSFORM(fnCallFloat),
+
+			TRANSFORM(fnParam),
+			TRANSFORM(fnParamRef),
+			TRANSFORM(fnCall),
 		};
 
 		RemoveInvalid::RemoveInvalid() {}
@@ -424,6 +428,18 @@ namespace code {
 			*dest << sub(e, ptrStack, ptrConst(s));
 			*dest << fstp(e, xRel(s, ptrStack, Offset()));
 			*dest << pop(e, instr->dest());
+		}
+
+		void RemoveInvalid::fnParamTfm(Listing *dest, Listing *src, Nat line) {
+			TODO(L"FIXME!");
+		}
+
+		void RemoveInvalid::fnParamRefTfm(Listing *dest, Listing *src, Nat line) {
+			TODO(L"FIXME!");
+		}
+
+		void RemoveInvalid::fnCallTfm(Listing *dest, Listing *src, Nat line) {
+			TODO(L"FIXME!");
 		}
 
 	}

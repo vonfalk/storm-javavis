@@ -8,6 +8,7 @@ namespace storm {
 	/**
 	 * Declare the primitive types in here.
 	 */
+	Type *createBool(Str *name, Size size, GcType *type);
 	Type *createByte(Str *name, Size size, GcType *type);
 	Type *createInt(Str *name, Size size, GcType *type);
 	Type *createNat(Str *name, Size size, GcType *type);

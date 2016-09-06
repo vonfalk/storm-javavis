@@ -4,6 +4,10 @@
 
 namespace storm {
 
+	Type *createBool(Str *name, Size size, GcType *type) {
+		return new (name) Type(name, typeValue, size, type);
+	}
+
 	Type *createByte(Str *name, Size size, GcType *type) {
 		return new (name) Type(name, typeValue, size, type);
 	}

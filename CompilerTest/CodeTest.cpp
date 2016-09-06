@@ -39,10 +39,14 @@ BEGIN_TEST(CodeTest, Code) {
 	Variable v = l->createIntVar(root);
 	Variable p = l->createIntParam();
 
+	CHECK_EQ(l->exceptionHandler(), false);
+
 	*l << prolog(e);
 	*l << mov(e, v, p);
 	*l << add(e, v, intConst(1));
-	*l << mov(e, eax, v);
+	// Use 'ebx' so that we have to preserve some registers during the function call...
+	*l << mov(e, ebx, v);
+	*l << mov(e, eax, ebx);
 	*l << epilog(e);
 	*l << ret(e, ValType(Size::sInt, false));
 

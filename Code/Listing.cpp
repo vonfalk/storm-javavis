@@ -161,6 +161,7 @@ namespace code {
 		shell->vars = new (this) Array<IVar>(vars);
 		shell->blocks = new (this) Array<IBlock>(blocks);
 		shell->parts = new (this) Array<IPart>(parts);
+		shell->needEH = needEH;
 
 		// Note: we're doing this the hard way since deepCopy did not work properly at the time this was written.
 		CloneEnv *env = new (this) CloneEnv();
@@ -401,10 +402,35 @@ namespace code {
 		return vars->at(v.id).isParam;
 	}
 
+	Operand Listing::freeFn(Variable v) const {
+		if (v.id >= vars->count())
+			return Operand();
+
+		return vars->at(v.id).freeFn;
+	}
+
+	FreeOpt Listing::freeOpt(Variable v) const {
+		if (v.id >= vars->count())
+			return freeOnNone;
+
+		return vars->at(v.id).freeOpt;
+	}
+
+	static bool checkFree(const Operand &free, FreeOpt when) {
+		if (when & freePtr)
+			if (free.size() > Size::sLong)
+				throw InvalidValue(L"Can not destroy values larger than 8 bytes by value.");
+
+		if (!free.empty())
+			if (when & freeOnException)
+				return true;
+		return false;
+	}
+
 	Variable Listing::createVar(Part in, Size size, Operand free, FreeOpt when) {
 		assert(in.id != invalid, L"No such part!");
 
-		if (when & freeOnException)
+		if (checkFree(free, when))
 			needEH = true;
 
 		Nat id = vars->count();
@@ -417,7 +443,7 @@ namespace code {
 	}
 
 	Variable Listing::createParam(ValType type, Operand free, FreeOpt when) {
-		if (when & freeOnException)
+		if (checkFree(free, when))
 			needEH = true;
 
 		Nat id = vars->count();
