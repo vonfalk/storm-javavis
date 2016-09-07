@@ -8,6 +8,7 @@
 #include "Core/GcArray.h"
 #include "Core/GcType.h"
 #include "Core/GcWatch.h"
+#include "Core/GcCode.h"
 
 namespace storm {
 
@@ -111,6 +112,29 @@ namespace storm {
 		static void switchType(void *mem, const GcType *to);
 
 		/**
+		 * Allocation of code storage. Code allocations are slightly more complex than regular data
+		 * allocations. First and foremost, this memory needs to be executable, but it also contains
+		 * references to other objects in rather weird formats (for example, relative
+		 * offsets). Aside from that, there is also the requirement that we may not have a header on
+		 * these objects, even though they are generally different size (so we can not use GcArray,
+		 * which stores its size at offset 0).
+		 *
+		 * To meet these requirements, a code allocation consist of two parts: one code part and one
+		 * metadata part. The code part is first, and at some later point (the gc keeps track of
+		 * this), the metadata block begins. Here, information about all references in the current
+		 * block are stored.
+		 */
+
+		// Allocate a code block with 'code' bytes of machine code storage and 'refs' entries of reference data.
+		void *allocCode(size_t code, size_t refs);
+
+		// Get the size of a code allocation.
+		static size_t codeSize(const void *alloc);
+
+		// Access the metadata of a code allocation. Note: all references must be scannable at *any* time.
+		static GcCode *codeRefs(void *alloc);
+
+		/**
 		 * Roots.
 		 */
 
@@ -165,6 +189,13 @@ namespace storm {
 		mps_pool_t weakPool;
 		mps_ap_t weakAllocPoint;
 		util::Lock weakAllocLock;
+
+		// Pool for runnable code. These have their own object format, which is why they are in
+		// their own pool.
+		mps_fmt_t codeFormat;
+		mps_pool_t codePool;
+		mps_ap_t codeAllocPoint;
+		util::Lock codeAllocLock;
 
 		// Description of all attached threads.
 		typedef map<uintptr_t, GcThread *> ThreadMap;

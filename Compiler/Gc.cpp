@@ -180,7 +180,8 @@ namespace storm {
 		return align(s);
 	}
 
-	// Skip objects. Figure out the size of an object, and return a pointer to after the end of it.
+	// Skip objects. Figure out the size of an object, and return a pointer to after the end of it
+	// (including the next object's header, it seems).
 	static mps_addr_t mpsSkip(mps_addr_t at) {
 		return (byte *)at + mpsSize((byte *)at - headerSize);
 	}
@@ -308,6 +309,109 @@ namespace storm {
 			setHeader(at, &headerPad);
 			MpsObj *o = (MpsObj *)at;
 			o->pad.size = size - headerSize;
+		}
+	}
+
+	/**
+	 * Code scanning. Note: if the size is marked with a 1 in the highest position ('codeMask'
+	 * below), the type of the allocation is special: the size should be treated as one of the
+	 * mpsXxx variants in the MpsTypes enum above.
+	 */
+
+	static const size_t codeMask = size_t(1) << (sizeof(size_t)*CHAR_BIT - 1);
+
+	static const size_t mpsCodePad0 = mpsPad0 | codeMask;
+	static const size_t mpsCodePad = mpsPad | codeMask;
+	static const size_t mpsCodeFwd1 = mpsFwd1 | codeMask;
+	static const size_t mpsCodeFwd = mpsFwd | codeMask;
+
+	/**
+	 * Describes the layout of code allocations for easy access.
+	 */
+	struct MpsCode {
+		// Header or size of code chunk. If equal to one of MpsCodeType, then members of the union
+		// are valid.
+		size_t header;
+
+		// Read only if header indicates they are valid!
+		union {
+			MpsPad0 pad0;
+			MpsPad pad;
+			MpsFwd1 fwd1;
+			MpsFwd fwd;
+		};
+	};
+
+	static size_t mpsSizeCode(mps_addr_t at) {
+		MpsCode *c = (MpsCode *)at;
+		switch (c->header) {
+		case mpsCodePad0:
+			return wordSize;
+		case mpsCodePad:
+			return wordSize + c->pad.size;
+		case mpsCodeFwd1:
+			return wordSize * 2;
+		case mpsCodeFwd:
+			return wordSize + c->fwd.size;
+		default:
+			// Regular code.
+			at = ((byte *)at) + c->header + wordSize;
+			// 'at' now points at 'refCount' in 'GcCode'.
+			// Compute total size:
+			return c->header + wordSize + sizeof(GcCode) + (*(size_t *)at)*sizeof(GcCodeRef) - sizeof(GcCodeRef);
+		}
+	}
+
+	static mps_addr_t mpsSkipCode(mps_addr_t at) {
+		return (byte *)at + mpsSizeCode((byte *)at - wordSize);
+	}
+
+	static mps_res_t mpsScanCode(mps_ss_t ss, mps_addr_t base, mps_addr_t limit) {
+		// Convert from client pointers to 'real' pointers:
+		base = (byte *)base - headerSize;
+		limit = (byte *)limit - headerSize;
+
+		MPS_SCAN_BEGIN(ss) {
+			for (mps_addr_t at = base; at < limit; at = (byte *)at + mpsSizeCode(at)) {
+				// TODO: Scan!
+			}
+		} MPS_SCAN_END(ss);
+
+		return MPS_RES_OK;
+	}
+
+	static void mpsMakeFwdCode(mps_addr_t at, mps_addr_t to) {
+		size_t size = mpsSizeCode(at);
+		MpsCode *c = (MpsCode *)at;
+		if (size <= 2 * wordSize) {
+			c->header = mpsCodeFwd1;
+			c->fwd1.to = to;
+		} else {
+			c->header = mpsCodeFwd;
+			c->fwd.to = to;
+			c->fwd.size = size;
+		}
+	}
+
+	static mps_addr_t mpsIsFwdCode(mps_addr_t at) {
+		MpsCode *h = (MpsCode *)at;
+		switch (h->header) {
+		case mpsCodeFwd1:
+			return h->fwd1.to;
+		case mpsCodeFwd:
+			return h->fwd.to;
+		default:
+			return null;
+		}
+	}
+
+	static void mpsPadCode(mps_addr_t at, size_t size) {
+		MpsCode *to = (MpsCode *)at;
+		if (size <= wordSize) {
+			to->header = mpsCodePad0;
+		} else {
+			to->header = mpsCodePad;
+			to->pad.size = size;
 		}
 	}
 
@@ -557,6 +661,28 @@ namespace storm {
 			check(mps_ap_create_k(&weakAllocPoint, weakPool, args), L"Failed to create weak allocation point.");
 		} MPS_ARGS_END(args);
 
+		// Code allocations.
+		MPS_ARGS_BEGIN(args) {
+			MPS_ARGS_ADD(args, MPS_KEY_FMT_ALIGN, wordSize);
+			MPS_ARGS_ADD(args, MPS_KEY_FMT_HEADER_SIZE, wordSize);
+			MPS_ARGS_ADD(args, MPS_KEY_FMT_SCAN, &mpsScanCode);
+			MPS_ARGS_ADD(args, MPS_KEY_FMT_SKIP, &mpsSkipCode);
+			MPS_ARGS_ADD(args, MPS_KEY_FMT_FWD, &mpsMakeFwdCode);
+			MPS_ARGS_ADD(args, MPS_KEY_FMT_ISFWD, &mpsIsFwdCode);
+			MPS_ARGS_ADD(args, MPS_KEY_FMT_PAD, &mpsPadCode);
+			check(mps_fmt_create_k(&codeFormat, arena, args), L"Failed to create code format.");
+		} MPS_ARGS_END(args);
+
+		MPS_ARGS_BEGIN(args) {
+			// TODO: Make code live in its own chain, as code allocations follow very different
+			// patterns compared to other data.
+			MPS_ARGS_ADD(args, MPS_KEY_CHAIN, chain);
+			MPS_ARGS_ADD(args, MPS_KEY_FORMAT, codeFormat);
+			check(mps_pool_create_k(&codePool, arena, mps_class_amc(), args), L"Failed to create a code GC pool.");
+		} MPS_ARGS_END(args);
+
+		check(mps_ap_create_k(&codeAllocPoint, codePool, mps_args_none), L"Failed to create code allocation point.");
+
 		// We want to receive finalization messages.
 		mps_message_type_enable(arena, mps_message_type_finalization());
 
@@ -589,14 +715,17 @@ namespace storm {
 		// Destroy the global allocation points.
 		mps_ap_destroy(typeAllocPoint);
 		mps_ap_destroy(weakAllocPoint);
+		mps_ap_destroy(codeAllocPoint);
 
 		// Destroy pools.
 		mps_pool_destroy(pool);
 		mps_pool_destroy(weakPool);
 		mps_pool_destroy(typePool);
+		mps_pool_destroy(codePool);
 		mps_pool_destroy(gcTypePool); // Has to be last, any formatted object may reference things in here.
 
 		// Destroy format and chains.
+		mps_fmt_destroy(codeFormat);
 		mps_fmt_destroy(format);
 		mps_chain_destroy(chain);
 		mps_arena_destroy(arena);
@@ -944,6 +1073,43 @@ namespace storm {
 		obj = (char *)obj - headerSize;
 		size_t size = mpsSize(obj);
 		mpsMakePad(obj, size);
+	}
+
+	void *Gc::allocCode(size_t code, size_t refs) {
+		code = align(code);
+		size_t size = code + sizeof(GcCode) + refs*sizeof(GcCodeRef) - sizeof(GcCodeRef) + wordSize;
+		mps_addr_t memory;
+
+		util::Lock::L z(codeAllocLock);
+
+		do {
+			check(mps_reserve(&memory, codeAllocPoint, size), L"Out of memory.");
+
+			// Make sure we can scan the newly allocated memory:
+			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
+			memset(memory, 0, size);
+			// 2: Set the size.
+			*(size_t *)memory = code;
+			// 3: Set # of refs.
+			void *refPtr = ((byte *)memory) + code;
+			*(size_t *)refPtr = refs;
+
+		} while (!mps_commit(codeAllocPoint, memory, size));
+
+		// Exclude our header, and return the allocated memory.
+		void *result = (byte *)memory + wordSize;
+
+		return result;
+	}
+
+	size_t Gc::codeSize(const void *alloc) {
+		const size_t *d = (const size_t *)alloc;
+		return d[-1];
+	}
+
+	GcCode *Gc::codeRefs(void *alloc) {
+		void *p = ((byte *)alloc) + align(codeSize(alloc));
+		return (GcCode *)p;
 	}
 
 	struct Gc::Root {
