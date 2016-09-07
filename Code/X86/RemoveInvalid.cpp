@@ -2,6 +2,7 @@
 #include "RemoveInvalid.h"
 #include "Listing.h"
 #include "Arena.h"
+#include "Utils/Bitwise.h"
 
 namespace code {
 	namespace x86 {
@@ -42,9 +43,13 @@ namespace code {
 			TRANSFORM(fnCall),
 		};
 
+		RemoveInvalid::Param::Param(Operand src, Operand copyFn) : src(src), copyFn(copyFn) {}
+
 		RemoveInvalid::RemoveInvalid() {}
 
 		void RemoveInvalid::before(Listing *dest, Listing *src) {
+			params = new (this) Array<Param>();
+
 			used = usedRegisters(src).used;
 
 			// Add 64-bit aliases everywhere.
@@ -419,27 +424,104 @@ namespace code {
 			*dest << ret(e, ValType(s, false));
 		}
 
-		void RemoveInvalid::fnCallFloatTfm(Listing *dest, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
-			Size s = instr->src().size();
-			Engine &e = engine();
-
-			*dest << fnCall(e, instr->src(), ValType(s, false));
-			*dest << sub(e, ptrStack, ptrConst(s));
-			*dest << fstp(e, xRel(s, ptrStack, Offset()));
-			*dest << pop(e, instr->dest());
-		}
-
 		void RemoveInvalid::fnParamTfm(Listing *dest, Listing *src, Nat line) {
-			TODO(L"FIXME!");
+			Instr *instr = src->at(line);
+			params->push(Param(instr->src(), instr->dest()));
 		}
 
 		void RemoveInvalid::fnParamRefTfm(Listing *dest, Listing *src, Nat line) {
-			TODO(L"FIXME!");
+			assert(false, L"Fixme when the interface has been fixed!");
+		}
+
+		static Operand offset(const Operand &src, Offset offset) {
+			switch (src.type()) {
+			case opVariable:
+				return xRel(Size::sInt, src.variable(), offset);
+			case opRegister:
+				return xRel(Size::sInt, src.reg(), offset);
+			default:
+				assert(false, L"Can not generate offsets into this type!");
+				return Operand();
+			}
+		}
+
+		static void pushMemcpy(Listing *dest, const Operand &src) {
+			Engine &e = dest->engine();
+
+			if (src.size() <= Size::sInt) {
+				*dest << push(e, src);
+				return;
+			}
+
+			Nat size = roundUp(src.size().size32(), Nat(4));
+			for (nat i = 0; i < size; i += 4) {
+				*dest << push(e, offset(src, Offset(size - i)));
+			}
 		}
 
 		void RemoveInvalid::fnCallTfm(Listing *dest, Listing *src, Nat line) {
-			TODO(L"FIXME!");
+			Engine &e = engine();
+
+			// Push all parameters we can right now.
+			for (Nat i = params->count(); i > 0; i--) {
+				Param &p = params->at(i - 1);
+
+				if (p.copyFn.empty()) {
+					// Memcpy using push...
+					pushMemcpy(dest, p.src);
+				} else {
+					// Reserve stack space.
+					Size s = p.src.size() + Size::sPtr.align();
+					*dest << sub(e, ptrStack, ptrConst(s));
+				}
+			}
+
+			// Now, we can clobber registers to our hearts content! At least until 'fnParamRef' is
+			// implemented. 'fnParam' with two parameters requires one of them to be a variable,
+			// while 'fnParamRef' is fine with keeping them anywhere.
+
+			// Cumulated offset from esp.
+			Offset paramOffset;
+
+			for (Nat i = 0; i < params->count(); i++) {
+				Param &p = params->at(i);
+
+				Size s = p.src.size() + Size::sPtr.align();
+
+				if (!p.copyFn.empty()) {
+					// Copy it!
+					*dest << lea(e, ptrA, p.src);
+					*dest << push(e, ptrA);
+					*dest << lea(e, ptrA, ptrRel(ptrStack, paramOffset));
+					*dest << push(e, ptrA);
+					*dest << call(e, p.copyFn, valVoid());
+					*dest << add(e, ptrStack, ptrConst(Size::sPtr * 2));
+				}
+
+				paramOffset += s;
+			}
+
+			// Call the real function!
+			Instr *instr = src->at(line);
+			Size rSize = instr->dest().size();
+			*dest << call(e, instr->src(), ValType(rSize, false));
+
+			// If this was a float, do some magic.
+			if (instr->op() == op::fnCallFloat) {
+				*dest << fstp(e, xRel(rSize, ptrStack, Offset()));
+				*dest << pop(e, instr->dest());
+			}
+
+			// Pop the stack.
+			if (paramOffset != Offset())
+				*dest << add(e, ptrStack, ptrConst(paramOffset));
+
+			// Clear parameters for next time.
+			params->clear();
+		}
+
+		void RemoveInvalid::fnCallFloatTfm(Listing *dest, Listing *src, Nat line) {
+			fnCallTfm(dest, src, line);
 		}
 
 	}

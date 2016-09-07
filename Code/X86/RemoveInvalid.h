@@ -28,6 +28,22 @@ namespace code {
 			// Find an unused register at 'line'.
 			Register unusedReg(Nat line);
 
+			// Struct describing parameters for a future fnCall instruction.
+			class Param {
+				STORM_VALUE;
+			public:
+				Param(Operand src, Operand copyFn);
+
+				// Source operand.
+				Operand src;
+
+				// Function used for copying values (if any).
+				Operand copyFn;
+			};
+
+			// Function params seen so far.
+			Array<Param> *params;
+
 			// Signature for the table of transform functions.
 			typedef void (RemoveInvalid::*TransformFn)(Listing *dest, Listing *src, Nat line);
 
@@ -50,12 +66,12 @@ namespace code {
 			void ucastTfm(Listing *dest, Listing *src, Nat line);
 			void callFloatTfm(Listing *dest, Listing *src, Nat line);
 			void retFloatTfm(Listing *dest, Listing *src, Nat line);
-			void fnCallFloatTfm(Listing *dest, Listing *src, Nat line);
 
 			// Function calls.
 			void fnParamTfm(Listing *dest, Listing *src, Nat line);
 			void fnParamRefTfm(Listing *dest, Listing *src, Nat line);
 			void fnCallTfm(Listing *dest, Listing *src, Nat line);
+			void fnCallFloatTfm(Listing *dest, Listing *src, Nat line);
 		};
 
 	}

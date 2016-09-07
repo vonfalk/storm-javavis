@@ -97,8 +97,9 @@ namespace code {
 	// calls myFn(10, 20).
 	// fnParam taking two parameters uses the function 'copy' to copy 'src' onto the stack. 'copy' is assumed
 	// to have the signature <ptr or void> copy(void *dest, void *src), like copy ctors in C++.
-	// fnParamRef is like the two-parameter version of fnParam, except that it dereferences the pointer at 'src' and
-	// uses that value instead of something contained inside a variable.
+	// fnParamRef is like the two-parameter version of fnParam, except 'src' is a pointer to a value rather
+	// than the value itself.
+	// Having an empty 'copyFn' to 'fnParam' will generate a 'memcpy'-like copy.
 	Instr *fnParam(EnginePtr e, Operand src);
 	Instr *fnParam(EnginePtr e, Variable src, Operand copyFn);
 	Instr *fnParamRef(EnginePtr e, Operand src, Operand copyFn);

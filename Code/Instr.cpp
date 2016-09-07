@@ -193,6 +193,8 @@ namespace code {
 	}
 
 	Instr *fnParamRef(EnginePtr e, Operand src, Operand copyFn) {
+		assert(false, L"Not enough information provided due to design flaw in 'fnParamRef'. "
+			L"We need to know the size of the pushed data as well!");
 		if (copyFn.type() != opNone) {
 			if (copyFn.type() == opConstant)
 				throw InvalidValue(L"Should not call constant values, use references instead!");
