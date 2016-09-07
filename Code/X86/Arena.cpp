@@ -3,6 +3,7 @@
 #include "OutputX86.h"
 #include "Listing.h"
 #include "Layout.h"
+#include "Remove64.h"
 #include "RemoveInvalid.h"
 #include "LayoutVars.h"
 
@@ -22,7 +23,7 @@ namespace code {
 		Listing *Arena::transform(Listing *l, Binary *owner) const {
 			if (has64(l)) {
 				// Replace any 64-bit operations with 32-bit corresponding operations.
-				TODO(L"We need to transform the 64-bit ops!");
+				l = code::transform(l, new (this) Remove64());
 			}
 
 			// Transform any unsupported op-codes into sequences of other op-codes. Eg. referencing

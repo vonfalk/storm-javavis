@@ -63,7 +63,7 @@ namespace code {
 			Instr *i = src->at(line);
 			TransformFn f = t[i->op()];
 			if (f) {
-				(this->*f)(dest, src, line);
+				(this->*f)(dest, i, line);
 			} else {
 				*dest << i;
 			}
@@ -90,8 +90,7 @@ namespace code {
 			return false;
 		}
 
-		void RemoveInvalid::immRegTfm(Listing *dest, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::immRegTfm(Listing *dest, Instr *instr, Nat line) {
 
 			if (supported(instr)) {
 				*dest << instr;
@@ -116,8 +115,7 @@ namespace code {
 			}
 		}
 
-		void RemoveInvalid::leaTfm(Listing *dest, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::leaTfm(Listing *dest, Instr *instr, Nat line) {
 
 			// We can encode writing directly to a register.
 			if (instr->dest().type() == opRegister) {
@@ -139,8 +137,7 @@ namespace code {
 			}
 		}
 
-		void RemoveInvalid::mulTfm(Listing *dest, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::mulTfm(Listing *dest, Instr *instr, Nat line) {
 
 			Size size = instr->size();
 			assert(size != Size::sByte && size <= Size::sInt, "Bytes not supported yet!");
@@ -168,8 +165,7 @@ namespace code {
 			}
 		}
 
-		void RemoveInvalid::idivTfm(Listing *to, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::idivTfm(Listing *to, Instr *instr, Nat line) {
 
 			Engine &e = engine();
 			Operand dest = instr->dest();
@@ -221,12 +217,11 @@ namespace code {
 				*to << pop(e, eax);
 		}
 
-		void RemoveInvalid::udivTfm(Listing *dest, Listing *src, Nat line) {
-			idivTfm(dest, src, line);
+		void RemoveInvalid::udivTfm(Listing *dest, Instr *instr, Nat line) {
+			idivTfm(dest, instr, line);
 		}
 
-		void RemoveInvalid::imodTfm(Listing *to, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::imodTfm(Listing *to, Instr *instr, Nat line) {
 
 			Engine &e = engine();
 			Operand dest = instr->dest();
@@ -266,12 +261,11 @@ namespace code {
 				*to << pop(e, eax);
 		}
 
-		void RemoveInvalid::umodTfm(Listing *dest, Listing *src, Nat line) {
-			imodTfm(dest, src, line);
+		void RemoveInvalid::umodTfm(Listing *dest, Instr *instr, Nat line) {
+			imodTfm(dest, instr, line);
 		}
 
-		void RemoveInvalid::setCondTfm(Listing *dest, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::setCondTfm(Listing *dest, Instr *instr, Nat line) {
 
 			switch (instr->src().condFlag()) {
 			case ifAlways:
@@ -286,8 +280,7 @@ namespace code {
 			}
 		}
 
-		void RemoveInvalid::shlTfm(Listing *dest, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::shlTfm(Listing *dest, Instr *instr, Nat line) {
 			Engine &e = engine();
 
 			switch (instr->src().type()) {
@@ -340,16 +333,15 @@ namespace code {
 			}
 		}
 
-		void RemoveInvalid::shrTfm(Listing *dest, Listing *src, Nat line) {
-			shlTfm(dest, src, line);
+		void RemoveInvalid::shrTfm(Listing *dest, Instr *instr, Nat line) {
+			shlTfm(dest, instr, line);
 		}
 
-		void RemoveInvalid::sarTfm(Listing *dest, Listing *src, Nat line) {
-			shlTfm(dest, src, line);
+		void RemoveInvalid::sarTfm(Listing *dest, Instr *instr, Nat line) {
+			shlTfm(dest, instr, line);
 		}
 
-		void RemoveInvalid::icastTfm(Listing *dest, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::icastTfm(Listing *dest, Instr *instr, Nat line) {
 			Size sFrom = instr->src().size();
 			Size sTo = instr->dest().size();
 			Engine &e = engine();
@@ -398,12 +390,11 @@ namespace code {
 				*dest << pop(e, edx);
 		}
 
-		void RemoveInvalid::ucastTfm(Listing *dest, Listing *src, Nat line) {
-			icastTfm(dest, src, line);
+		void RemoveInvalid::ucastTfm(Listing *dest, Instr *instr, Nat line) {
+			icastTfm(dest, instr, line);
 		}
 
-		void RemoveInvalid::callFloatTfm(Listing *dest, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::callFloatTfm(Listing *dest, Instr *instr, Nat line) {
 			Size s = instr->src().size();
 			Engine &e = engine();
 
@@ -413,8 +404,7 @@ namespace code {
 			*dest << pop(e, instr->dest());
 		}
 
-		void RemoveInvalid::retFloatTfm(Listing *dest, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::retFloatTfm(Listing *dest, Instr *instr, Nat line) {
 			Size s = instr->src().size();
 			Engine &e = engine();
 
@@ -424,12 +414,11 @@ namespace code {
 			*dest << ret(e, ValType(s, false));
 		}
 
-		void RemoveInvalid::fnParamTfm(Listing *dest, Listing *src, Nat line) {
-			Instr *instr = src->at(line);
+		void RemoveInvalid::fnParamTfm(Listing *dest, Instr *instr, Nat line) {
 			params->push(Param(instr->src(), instr->dest()));
 		}
 
-		void RemoveInvalid::fnParamRefTfm(Listing *dest, Listing *src, Nat line) {
+		void RemoveInvalid::fnParamRefTfm(Listing *dest, Instr *instr, Nat line) {
 			assert(false, L"Fixme when the interface has been fixed!");
 		}
 
@@ -459,7 +448,10 @@ namespace code {
 			}
 		}
 
-		void RemoveInvalid::fnCallTfm(Listing *dest, Listing *src, Nat line) {
+		void RemoveInvalid::fnCallTfm(Listing *dest, Instr *instr, Nat line) {
+			// Idea: Scan backwards to find fnCall op-codes rather than saving them in an
+			// array. This could catch stray fnParam op-codes if done right. We could also do it the
+			// other way around, letting fnParam search for a terminating fnCall and be done there.
 			Engine &e = engine();
 
 			// Push all parameters we can right now.
@@ -502,7 +494,6 @@ namespace code {
 			}
 
 			// Call the real function!
-			Instr *instr = src->at(line);
 			Size rSize = instr->dest().size();
 			*dest << call(e, instr->src(), ValType(rSize, false));
 
@@ -520,8 +511,8 @@ namespace code {
 			params->clear();
 		}
 
-		void RemoveInvalid::fnCallFloatTfm(Listing *dest, Listing *src, Nat line) {
-			fnCallTfm(dest, src, line);
+		void RemoveInvalid::fnCallFloatTfm(Listing *dest, Instr *instr, Nat line) {
+			fnCallTfm(dest, instr, line);
 		}
 
 	}

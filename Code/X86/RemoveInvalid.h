@@ -22,7 +22,7 @@ namespace code {
 			virtual void STORM_FN during(Listing *dest, Listing *src, Nat id);
 
 		private:
-			// Remember unused registers.
+			// Remember used registers.
 			Array<RegSet *> *used;
 
 			// Find an unused register at 'line'.
@@ -45,33 +45,33 @@ namespace code {
 			Array<Param> *params;
 
 			// Signature for the table of transform functions.
-			typedef void (RemoveInvalid::*TransformFn)(Listing *dest, Listing *src, Nat line);
+			typedef void (RemoveInvalid::*TransformFn)(Listing *dest, Instr *instr, Nat line);
 
 			// Transform table.
 			static const OpEntry<TransformFn> transformMap[];
 
 			// Transform functions.
-			void immRegTfm(Listing *dest, Listing *src, Nat line);
-			void leaTfm(Listing *dest, Listing *src, Nat line);
-			void mulTfm(Listing *dest, Listing *src, Nat line);
-			void idivTfm(Listing *dest, Listing *src, Nat line);
-			void udivTfm(Listing *dest, Listing *src, Nat line);
-			void imodTfm(Listing *dest, Listing *src, Nat line);
-			void umodTfm(Listing *dest, Listing *src, Nat line);
-			void setCondTfm(Listing *dest, Listing *src, Nat line);
-			void shlTfm(Listing *dest, Listing *src, Nat line);
-			void shrTfm(Listing *dest, Listing *src, Nat line);
-			void sarTfm(Listing *dest, Listing *src, Nat line);
-			void icastTfm(Listing *dest, Listing *src, Nat line);
-			void ucastTfm(Listing *dest, Listing *src, Nat line);
-			void callFloatTfm(Listing *dest, Listing *src, Nat line);
-			void retFloatTfm(Listing *dest, Listing *src, Nat line);
+			void immRegTfm(Listing *dest, Instr *instr, Nat line);
+			void leaTfm(Listing *dest, Instr *instr, Nat line);
+			void mulTfm(Listing *dest, Instr *instr, Nat line);
+			void idivTfm(Listing *dest, Instr *instr, Nat line);
+			void udivTfm(Listing *dest, Instr *instr, Nat line);
+			void imodTfm(Listing *dest, Instr *instr, Nat line);
+			void umodTfm(Listing *dest, Instr *instr, Nat line);
+			void setCondTfm(Listing *dest, Instr *instr, Nat line);
+			void shlTfm(Listing *dest, Instr *instr, Nat line);
+			void shrTfm(Listing *dest, Instr *instr, Nat line);
+			void sarTfm(Listing *dest, Instr *instr, Nat line);
+			void icastTfm(Listing *dest, Instr *instr, Nat line);
+			void ucastTfm(Listing *dest, Instr *instr, Nat line);
+			void callFloatTfm(Listing *dest, Instr *instr, Nat line);
+			void retFloatTfm(Listing *dest, Instr *instr, Nat line);
 
 			// Function calls.
-			void fnParamTfm(Listing *dest, Listing *src, Nat line);
-			void fnParamRefTfm(Listing *dest, Listing *src, Nat line);
-			void fnCallTfm(Listing *dest, Listing *src, Nat line);
-			void fnCallFloatTfm(Listing *dest, Listing *src, Nat line);
+			void fnParamTfm(Listing *dest, Instr *instr, Nat line);
+			void fnParamRefTfm(Listing *dest, Instr *instr, Nat line);
+			void fnCallTfm(Listing *dest, Instr *instr, Nat line);
+			void fnCallFloatTfm(Listing *dest, Instr *instr, Nat line);
 		};
 
 	}
