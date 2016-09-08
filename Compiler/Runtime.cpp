@@ -72,6 +72,18 @@ namespace storm {
 			return e.gc.createWatch();
 		}
 
+		void *allocCode(Engine &e, size_t code, size_t refs) {
+			return e.gc.allocCode(code, refs);
+		}
+
+		size_t codeSize(const void *code) {
+			return Gc::codeSize(code);
+		}
+
+		GcCode *codeRefs(void *code) {
+			return Gc::codeRefs(code);
+		}
+
 		os::ThreadGroup &threadGroup(Engine &e) {
 			return e.threadGroup;
 		}

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "WeakSet.h"
+#include "GcType.h"
 #include "GcWatch.h"
 #include "Hash.h"
 #include "StrBuf.h"

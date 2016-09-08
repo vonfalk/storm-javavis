@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Test/Test.h"
 #include "Compiler/Debug.h"
+#include "Utils/Bitwise.h"
 
 using namespace storm::debug;
 
@@ -97,6 +98,47 @@ BEGIN_TEST(GcTest3, Stress) {
 		}
 
 		CHECK_EQ(at, (ValClass *)null);
+	}
+
+} END_TEST
+
+BEGIN_TEST(CodeAllocTest, GcObjects) {
+	Engine &e = *gEngine;
+
+	nat count = 10;
+	nat allocSize = sizeof(void *) * count + 3;
+
+	void *code = runtime::allocCode(e, allocSize, count);
+
+	GcCode *c = runtime::codeRefs(code);
+
+	Array<PtrKey *> *o = new (e) Array<PtrKey *>();
+	PtrKey **objs = (PtrKey **)code;
+
+	for (nat i = 0; i < count; i++) {
+		c->refs[i].offset = sizeof(void *)*i;
+		c->refs[i].kind = GcCodeRef::rawPtr;
+
+		PtrKey *c = new (e) PtrKey();
+		objs[i] = c;
+		o->push(c);
+	}
+
+	bool moved = false;
+	while (!moved) {
+		for (nat i = 0; i < o->count(); i++) {
+			moved |= o->at(i)->moved();
+		}
+
+		createList(100);
+		e.gc.collect();
+	}
+
+	CHECK_EQ(runtime::codeSize(code), roundUp(size_t(allocSize), sizeof(size_t)));
+	CHECK_EQ(runtime::codeRefs(code)->refCount, 10);
+
+	for (nat i = 0; i < count; i++) {
+		CHECK_EQ(o->at(i), objs[i]);
 	}
 
 } END_TEST

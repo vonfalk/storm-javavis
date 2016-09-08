@@ -371,16 +371,44 @@ namespace storm {
 		base = (byte *)base - headerSize;
 		limit = (byte *)limit - headerSize;
 
+		mps_res_t result = MPS_RES_OK;
+
 		MPS_SCAN_BEGIN(ss) {
 			for (mps_addr_t at = base; at < limit; at = (byte *)at + mpsSizeCode(at)) {
-				// TODO: Scan!
+				MpsCode *h = (MpsCode *)at;
+
+				// Special kind of allocation?
+				if (h->header & codeMask)
+					continue;
+
+				byte *code = (byte *)at + wordSize;
+				GcCode *c = (GcCode *)(code + h->header);
+
+				for (nat i = 0; i < c->refCount; i++) {
+					GcCodeRef &ref = c->refs[i];
+					switch (ref.kind) {
+					case GcCodeRef::disabled:
+						break;
+					case GcCodeRef::rawPtr:
+						result = MPS_FIX12(ss, (mps_addr_t *)(code + ref.offset));
+						break;
+					default:
+						assert(false, L"Unknown reference type found in a code block.");
+						break;
+					}
+				}
+
+				// On error, return asap!
+				if (result != MPS_RES_OK)
+					return result;
 			}
 		} MPS_SCAN_END(ss);
 
-		return MPS_RES_OK;
+		return result;
 	}
 
 	static void mpsMakeFwdCode(mps_addr_t at, mps_addr_t to) {
+		PLN("Make fwd");
 		size_t size = mpsSizeCode(at);
 		MpsCode *c = (MpsCode *)at;
 		if (size <= 2 * wordSize) {
@@ -405,13 +433,13 @@ namespace storm {
 		}
 	}
 
-	static void mpsPadCode(mps_addr_t at, size_t size) {
+	static void mpsMakePadCode(mps_addr_t at, size_t size) {
 		MpsCode *to = (MpsCode *)at;
 		if (size <= wordSize) {
 			to->header = mpsCodePad0;
 		} else {
 			to->header = mpsCodePad;
-			to->pad.size = size;
+			to->pad.size = size - headerSize;
 		}
 	}
 
@@ -669,7 +697,7 @@ namespace storm {
 			MPS_ARGS_ADD(args, MPS_KEY_FMT_SKIP, &mpsSkipCode);
 			MPS_ARGS_ADD(args, MPS_KEY_FMT_FWD, &mpsMakeFwdCode);
 			MPS_ARGS_ADD(args, MPS_KEY_FMT_ISFWD, &mpsIsFwdCode);
-			MPS_ARGS_ADD(args, MPS_KEY_FMT_PAD, &mpsPadCode);
+			MPS_ARGS_ADD(args, MPS_KEY_FMT_PAD, &mpsMakePadCode);
 			check(mps_fmt_create_k(&codeFormat, arena, args), L"Failed to create code format.");
 		} MPS_ARGS_END(args);
 
@@ -1091,7 +1119,7 @@ namespace storm {
 			// 2: Set the size.
 			*(size_t *)memory = code;
 			// 3: Set # of refs.
-			void *refPtr = ((byte *)memory) + code;
+			void *refPtr = ((byte *)memory) + code + wordSize;
 			*(size_t *)refPtr = refs;
 
 		} while (!mps_commit(codeAllocPoint, memory, size));

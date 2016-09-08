@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Map.h"
 #include "StrBuf.h"
+#include "GcType.h"
 #include "GcWatch.h"
 #include "Utils/Bitwise.h"
 #include <iomanip>

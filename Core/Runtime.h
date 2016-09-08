@@ -1,9 +1,9 @@
 #pragma once
 #include "GcArray.h"
-#include "GcType.h"
 
 namespace storm {
 	struct GcType;
+	struct GcCode;
 	class GcWatch;
 	class RootObject;
 
@@ -57,6 +57,16 @@ namespace storm {
 		inline GcWeakArray<T> *allocWeakArray(Engine &e, size_t count) {
 			return (GcWeakArray<T> *)allocWeakArray(e, count);
 		}
+
+		// Allocate a code segment with at least 'code' bytes of memory for the code, and 'refs'
+		// entries for references.
+		void *allocCode(Engine &e, size_t code, size_t refs);
+
+		// Get the code size of a previous code allocation (references are not counted).
+		size_t codeSize(const void *code);
+
+		// Get the references for a block of code.
+		GcCode *codeRefs(void *code);
 
 		// Get the thread group to use for all threads.
 		os::ThreadGroup &threadGroup(Engine &e);
