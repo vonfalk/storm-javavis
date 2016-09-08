@@ -28,6 +28,8 @@ namespace code {
 
 	Operand::Operand(Variable v) : opType(opVariable), opPtr(null), opNum(v.id), opSize(v.size()) {}
 
+	Operand::Operand(Label l) : opType(opLabel), opPtr(null), opNum(l.id), opSize() {}
+
 	Operand::Operand(Word c, Size size) : opType(opConstant), opPtr(null), opNum(c), opSize(size) {}
 
 	Operand::Operand(Size s, Size size) : opType(opDualConstant), opPtr(null), opNum(dual(s.size32(), s.size64())), opSize(size) {}
@@ -52,6 +54,7 @@ namespace code {
 		case opRegister:
 		case opCondFlag:
 		case opPart:
+		case opLabel:
 			return opNum == o.opNum;
 		case opVariable:
 		case opRelative:
@@ -87,6 +90,7 @@ namespace code {
 		case opNone:
 		case opCondFlag:
 		case opPart:
+		case opLabel:
 			// TODO: Add more returning false here.
 			return false;
 		default:
@@ -151,6 +155,11 @@ namespace code {
 		return Variable(Nat(opNum), opSize);
 	}
 
+	Label Operand::label() const {
+		assert(type() == opLabel, L"Not a label!");
+		return Label(Nat(opNum));
+	}
+
 	wostream &operator <<(wostream &to, const Operand &o) {
 		if (o.type() != opRegister && o.type() != opCondFlag) {
 			Size s = o.size();
@@ -179,6 +188,8 @@ namespace code {
 			} else {
 				return to << L"[Var" << o.opNum << L"]";
 			}
+		case opLabel:
+			return to << L"Label" << o.opNum;
 		case opReference:
 			return to << L"TODO";
 		case opCondFlag:

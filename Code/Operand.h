@@ -4,6 +4,7 @@
 #include "CondFlag.h"
 #include "Variable.h"
 #include "Block.h"
+#include "Label.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -80,6 +81,9 @@ namespace code {
 		// Block or part.
 		STORM_CAST_CTOR Operand(Part part);
 
+		// Label.
+		STORM_CAST_CTOR Operand(Label label);
+
 		/**
 		 * Operations.
 		 */
@@ -115,6 +119,7 @@ namespace code {
 		Offset STORM_FN offset() const;
 		CondFlag STORM_FN condFlag() const;
 		Part STORM_FN part() const;
+		Label STORM_FN label() const;
 		Variable STORM_FN variable() const; // NOTE: The size of this variable is equal to the size
 											// we want to read, which is not always the size of the
 											// original variable!

@@ -49,6 +49,10 @@ namespace code {
 		assert(false);
 	}
 
+	void Output::putAddress(Label lbl) {
+		TODO(L"Implement!");
+	}
+
 	Nat Output::labelOffset(Nat id) {
 		assert(false);
 		return 0;

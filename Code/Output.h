@@ -29,6 +29,9 @@ namespace code {
 		void STORM_FN mark(Label lbl);
 		void STORM_FN putRelative(Label lbl); // Writes 4 bytes.
 
+		// Output absolute addresses (maybe not supported in the end).
+		void STORM_FN putAddress(Label lbl); // Writes 8 bytes.
+
 	protected:
 		// Mark a label here.
 		virtual void STORM_FN markLabel(Nat id);

@@ -15,6 +15,7 @@ namespace code {
 	private:
 		friend class Listing;
 		friend class Output;
+		friend class Operand;
 		friend wostream &operator <<(wostream &to, Label l);
 		friend StrBuf &operator <<(StrBuf &to, Label l);
 

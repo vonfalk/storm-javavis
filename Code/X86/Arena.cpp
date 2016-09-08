@@ -6,6 +6,7 @@
 #include "Remove64.h"
 #include "RemoveInvalid.h"
 #include "LayoutVars.h"
+#include "AsmOut.h"
 
 namespace code {
 	namespace x86 {
@@ -39,7 +40,7 @@ namespace code {
 		}
 
 		void Arena::output(Listing *src, Output *to) const {
-			TODO(L"Implement me!");
+			code::x86::output(src, to);
 		}
 
 		LabelOutput *Arena::labelOutput() const {
