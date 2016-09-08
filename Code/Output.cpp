@@ -105,4 +105,11 @@ namespace code {
 		return 0;
 	}
 
+
+	CodeOutput::CodeOutput() {}
+
+	void *CodeOutput::codePtr() const {
+		return null;
+	}
+
 }

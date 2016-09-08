@@ -35,6 +35,9 @@ namespace storm {
 	/**
 	 * Describes allocated code.
 	 *
+	 * NOTE: It is _not_ possible to store pointers to GcCode objects anywhere except for the stack,
+	 * as these are really pointers into an object.
+	 *
 	 * TODO: Expose to Storm? This is only needed when writing the lowest parts of code-generating
 	 * backends, which is only really neccessary when porting Storm to a new platform, so this has a
 	 * very low priority.

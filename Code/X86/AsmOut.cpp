@@ -20,13 +20,197 @@ namespace code {
 				0x0, 0xFF, // Not supported
 				0xC7, 0,
 				0x89,
-				0x88,
+				0x8B,
 			};
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
+		void addOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 0,
+				0x00,
+				0x02,
+			};
+			ImmRegInstr op = {
+				0x83, 0,
+				0x81, 0,
+				0x01,
+				0x03
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void adcOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 2,
+				0x10,
+				0x12
+			};
+			ImmRegInstr op = {
+				0x83, 2,
+				0x81, 2,
+				0x11,
+				0x13
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void orOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 1,
+				0x08,
+				0x0A
+			};
+			ImmRegInstr op = {
+				0x83, 1,
+				0x81, 1,
+				0x09,
+				0x0B
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void andOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 4,
+				0x20,
+				0x22
+			};
+			ImmRegInstr op = {
+				0x83, 4,
+				0x81, 4,
+				0x21,
+				0x23
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void subOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 5,
+				0x28,
+				0x2A
+			};
+			ImmRegInstr op = {
+				0x83, 5,
+				0x81, 5,
+				0x29,
+				0x2B
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void sbbOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 2,
+				0x18,
+				0x1A
+			};
+			ImmRegInstr op = {
+				0x83, 2,
+				0x81, 2,
+				0x19,
+				0x1B
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void xorOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 6,
+				0x30,
+				0x32
+			};
+			ImmRegInstr op = {
+				0x83, 6,
+				0x81, 6,
+				0x31,
+				0x33
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void cmpOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 7, // NOTE: it seems like this can also be encoded as 0x80 (preferred by some sources).
+				0x38,
+				0x3A
+			};
+			ImmRegInstr op = {
+				0x83, 7,
+				0x81, 7,
+				0x39,
+				0x3B
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void pushOut(Output *to, Instr *instr) {
+			const Operand &src = instr->src();
+			switch (src.type()) {
+			case opConstant:
+				if (singleByte(src.constant())) {
+					to->putByte(0x6A);
+					to->putByte(Byte(src.constant() & 0xFF));
+				} else {
+					to->putByte(0x68);
+					to->putInt(Int(src.constant()));
+				}
+			case opRegister:
+				to->putByte(0x50 + registerId(src.reg()));
+				break;
+			case opRelative:
+				to->putByte(0xFF);
+				modRm(to, 6, src);
+				break;
+			case opReference:
+				NOT_DONE;
+				// to->putByte(0x68);
+				// to->putAddress(src.reference());
+				break;
+			case opLabel:
+				NOT_DONE;
+				to->putByte(0x68);
+				to->putAddress(src.label());
+				break;
+			default:
+				assert(false, L"Push does not support this operand type.");
+				break;
+			}
+		}
+
+		void popOut(Output *to, Instr *instr) {
+			const Operand &dest = instr->dest();
+			switch (dest.type()) {
+			case opRegister:
+				to->putByte(0x58 + registerId(dest.reg()));
+				break;
+			case opRelative:
+				to->putByte(0x8F);
+				modRm(to, 0, dest);
+				break;
+			default:
+				assert(false, L"Pop does not support this operand type.");
+			}
+		}
+
+		void retOut(Output *to, Instr *instr) {
+			to->putByte(0xC3);
+		}
+
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
+			OUTPUT(add),
+			OUTPUT(adc),
+			OUTPUT(or),
+			OUTPUT(and),
+			OUTPUT(sub),
+			OUTPUT(sbb),
+			OUTPUT(xor),
+			OUTPUT(cmp),
+			OUTPUT(push),
+			OUTPUT(pop),
+			OUTPUT(ret),
 		};
 
 		void output(Listing *src, Output *to) {
@@ -38,7 +222,7 @@ namespace code {
 				if (fn) {
 					(*fn)(to, instr);
 				} else {
-					assert(false, L"Unsupported op-code!");
+					assert(false, L"Unsupported op-code: " + String(name(instr->op())));
 				}
 			}
 		}

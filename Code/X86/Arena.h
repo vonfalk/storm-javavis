@@ -28,7 +28,7 @@ namespace code {
 			 */
 
 			virtual LabelOutput *STORM_FN labelOutput() const;
-			virtual Output *STORM_FN codeOutput(Array<Nat> *offsets, Nat size) const;
+			virtual CodeOutput *STORM_FN codeOutput(Array<Nat> *offsets, Nat size) const;
 
 		};
 

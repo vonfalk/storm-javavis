@@ -6,6 +6,9 @@
 namespace code {
 	namespace x86 {
 
+		// Marker that is easy to search for. Removed when we're done.
+#define NOT_DONE assert(false, L"Not implemented yet!")
+
 		// Find the register id of a register.
 		nat registerId(Register r);
 

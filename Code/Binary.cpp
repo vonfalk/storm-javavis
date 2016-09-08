@@ -10,10 +10,14 @@ namespace code {
 		LabelOutput *labels = arena->labelOutput();
 		arena->output(tfm, labels);
 
-		Output *output = arena->codeOutput(labels->offsets, labels->tell());
+		CodeOutput *output = arena->codeOutput(labels->offsets, labels->tell());
 		arena->output(tfm, output);
 
-		// TODO: Find the allocated memory from 'output'.
+		code = output->codePtr();
+	}
+
+	void *Binary::rawPtr() const {
+		return code;
 	}
 
 }

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Arena.h"
-#include "OutputX86.h"
+#include "Output.h"
 #include "Listing.h"
 #include "Layout.h"
 #include "Remove64.h"
@@ -47,9 +47,8 @@ namespace code {
 			return new (this) LabelOutput(4);
 		}
 
-		Output *Arena::codeOutput(Array<Nat> *offsets, Nat size) const {
-			TODO(L"Implement me!");
-			return null;
+		CodeOutput *Arena::codeOutput(Array<Nat> *offsets, Nat size) const {
+			return new (this) CodeOut(offsets, size);
 		}
 
 		const Register ptrD = Register(0x010);

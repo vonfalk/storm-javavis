@@ -107,12 +107,14 @@ namespace code {
 		void immRegInstr(Output *to, const ImmRegInstr &op, const Operand &dest, const Operand &src) {
 			switch (src.type()) {
 			case opLabel:
-				to->putByte(op.opImm32);
-				modRm(to, op.modeImm32, dest);
-				to->putAddress(src.label());
+				TODO(L"Memory moves, so absolute label addresses are a bad idea without proper care.");
+				NOT_DONE;
+				// to->putByte(op.opImm32);
+				// modRm(to, op.modeImm32, dest);
+				// to->putAddress(src.label());
 				break;
 			case opReference:
-				assert(false, L"Not implemented yet!");
+				NOT_DONE;
 				// to->putByte(op.opImm32);
 				// modRm(to, op.modeImm32, dest);
 				// to->putAddress(src.reference());
@@ -172,8 +174,7 @@ namespace code {
 			} else if (size == Size::sByte) {
 				immRegInstr(to, op8, dest, src);
 			} else {
-				PLN("FAIL: " << size);
-				assert(false);
+				assert(false, L"Fail: " + ::toS(size));
 			}
 		}
 

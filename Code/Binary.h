@@ -16,6 +16,9 @@ namespace code {
 		// Translate a listing into machine code.
 		STORM_CTOR Binary(Arena *arena, Listing *src);
 
+		// Get the raw function pointer to the code.
+		void *rawPtr() const;
+
 	private:
 		// Arena we're associated with.
 		Arena *arena;

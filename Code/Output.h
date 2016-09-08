@@ -70,4 +70,15 @@ namespace code {
 		Nat size;
 	};
 
+	/**
+	 * Code output. Provides a pointer to code in the end.
+	 */
+	class CodeOutput : public Output {
+		STORM_CLASS;
+	public:
+		STORM_CTOR CodeOutput();
+
+		virtual void *codePtr() const;
+	};
+
 }

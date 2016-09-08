@@ -20,7 +20,7 @@ namespace code {
 		return null;
 	}
 
-	Output *Arena::codeOutput(Array<Nat> *offsets, Nat size) const {
+	CodeOutput *Arena::codeOutput(Array<Nat> *offsets, Nat size) const {
 		assert(false);
 		return null;
 	}

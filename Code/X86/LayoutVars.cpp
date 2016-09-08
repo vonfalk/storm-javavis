@@ -59,16 +59,26 @@ namespace code {
 			return xRel(src.size(), ptrFrame, layout->at(v.key()) + src.offset());
 		}
 
-		// Zero the memory of a variable.
-		static void zeroVar(Listing *dest, Offset start, Size size) {
+		// Zero the memory of a variable. 'initEax' should be true if we need to set eax to 0 before
+		// using it as our zero. 'initEax' will be set to false, so that it is easy to use zeroVar
+		// in a loop, causing only the first invocation to emit 'eax := 0'.
+		static void zeroVar(Listing *dest, Offset start, Size size, bool &initEax) {
 			Engine &e = dest->engine();
 
 			nat s32 = size.size32();
+			if (s32 == 0)
+				return;
+
+			if (initEax) {
+				*dest << xor(e, eax, eax);
+				initEax = false;
+			}
+
 			for (nat i = 0; i < s32; i += 4) {
 				if (s32 - i > 1) {
-					*dest << mov(e, intRel(ptrFrame, start + Offset(i)), intConst(0));
+					*dest << mov(e, intRel(ptrFrame, start + Offset(i)), eax);
 				} else {
-					*dest << mov(e, byteRel(ptrFrame, start + Offset(i)), byteConst(0));
+					*dest << mov(e, byteRel(ptrFrame, start + Offset(i)), al);
 				}
 			}
 		}
@@ -83,12 +93,14 @@ namespace code {
 
 			Block b = dest->first(part);
 			if (Part(b) == part) {
+				bool initEax = true;
+
 				Array<Variable> *vars = dest->allVars(b);
 				for (nat i = 0; i < vars->count(); i++) {
 					Variable v = vars->at(i);
 
 					if (!dest->isParam(v))
-						zeroVar(dest, layout->at(v.key()), v.size());
+						zeroVar(dest, layout->at(v.key()), v.size(), initEax);
 				}
 
 				if (usingEH)
@@ -216,6 +228,9 @@ namespace code {
 				*dest << mov(e, ptrC, ptrRel(ptrFrame, Offset::sPtr * 4));
 				*dest << threadLocal(e) << mov(e, ptrRel(noReg, Offset()), ptrC);
 			}
+
+			*dest << mov(e, ptrStack, ptrFrame);
+			*dest << pop(e, ptrFrame);
 		}
 
 		void LayoutVars::beginBlockTfm(Listing *dest, Listing *src, Nat line) {

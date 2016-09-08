@@ -408,7 +408,9 @@ namespace storm {
 	}
 
 	static void mpsMakeFwdCode(mps_addr_t at, mps_addr_t to) {
-		PLN("Make fwd");
+		// Convert to base pointers:
+		at = (byte *)at - wordSize;
+
 		size_t size = mpsSizeCode(at);
 		MpsCode *c = (MpsCode *)at;
 		if (size <= 2 * wordSize) {
@@ -417,7 +419,7 @@ namespace storm {
 		} else {
 			c->header = mpsCodeFwd;
 			c->fwd.to = to;
-			c->fwd.size = size;
+			c->fwd.size = size - wordSize;
 		}
 	}
 

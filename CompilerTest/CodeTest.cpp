@@ -53,5 +53,9 @@ BEGIN_TEST(CodeTest, Code) {
 	PVAR(l);
 
 	Binary *b = new (e) Binary(arena, l);
-	// TODO: Run it!
+
+	typedef Int (*Fn)(Int);
+	Fn fn = (Fn)b->rawPtr();
+	Int r = (*fn)(10);
+	CHECK_EQ(r, 11);
 } END_TEST
