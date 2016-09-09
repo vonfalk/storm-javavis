@@ -28,7 +28,7 @@ namespace code {
 
 	Operand::Operand(Variable v) : opType(opVariable), opPtr(null), opNum(v.id), opSize(v.size()) {}
 
-	Operand::Operand(Label l) : opType(opLabel), opPtr(null), opNum(l.id), opSize() {}
+	Operand::Operand(Label l) : opType(opLabel), opPtr(null), opNum(l.id), opSize(Size::sPtr) {}
 
 	Operand::Operand(Word c, Size size) : opType(opConstant), opPtr(null), opNum(c), opSize(size) {}
 
@@ -90,7 +90,6 @@ namespace code {
 		case opNone:
 		case opCondFlag:
 		case opPart:
-		case opLabel:
 			// TODO: Add more returning false here.
 			return false;
 		default:

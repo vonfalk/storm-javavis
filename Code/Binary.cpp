@@ -10,7 +10,7 @@ namespace code {
 		LabelOutput *labels = arena->labelOutput();
 		arena->output(tfm, labels);
 
-		CodeOutput *output = arena->codeOutput(labels->offsets, labels->tell());
+		CodeOutput *output = arena->codeOutput(labels);
 		arena->output(tfm, output);
 
 		code = output->codePtr();

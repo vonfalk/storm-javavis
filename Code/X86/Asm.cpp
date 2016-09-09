@@ -107,11 +107,9 @@ namespace code {
 		void immRegInstr(Output *to, const ImmRegInstr &op, const Operand &dest, const Operand &src) {
 			switch (src.type()) {
 			case opLabel:
-				TODO(L"Memory moves, so absolute label addresses are a bad idea without proper care.");
-				NOT_DONE;
-				// to->putByte(op.opImm32);
-				// modRm(to, op.modeImm32, dest);
-				// to->putAddress(src.label());
+				to->putByte(op.opImm32);
+				modRm(to, op.modeImm32, dest);
+				to->putAddress(src.label());
 				break;
 			case opReference:
 				NOT_DONE;

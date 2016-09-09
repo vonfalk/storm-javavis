@@ -4,10 +4,11 @@
 namespace code {
 	namespace x86 {
 
-		CodeOut::CodeOut(Array<Nat> *lbls, Nat size) {
-			TODO(L"Properly include references as well!");
-			code = (byte *)runtime::allocCode(engine(), size, 0);
+		CodeOut::CodeOut(Array<Nat> *lbls, Nat size, Nat refs) {
+			code = (byte *)runtime::allocCode(engine(), size, refs);
+			labels = lbls;
 			pos = 0;
+			ref = 0;
 		}
 
 		void CodeOut::putByte(Byte b) {
@@ -30,6 +31,26 @@ namespace code {
 			Nat *to = (Nat *)&code[pos];
 			*to = (Nat)w;
 			pos += 4;
+		}
+
+		void CodeOut::putGcPtr(Word w) {
+			GcCode *refs = runtime::codeRefs(code);
+			refs->refs[ref].offset = pos;
+			refs->refs[ref].param = 0;
+			refs->refs[ref].kind = GcCodeRef::rawPtr;
+			ref++;
+
+			putPtr(w);
+		}
+
+		void CodeOut::putGcRelPtr(Word w, Nat offset) {
+			GcCode *refs = runtime::codeRefs(code);
+			refs->refs[ref].offset = pos;
+			refs->refs[ref].param = offset;
+			refs->refs[ref].kind = GcCodeRef::offsetPtr;
+			ref++;
+
+			putPtr(w);
 		}
 
 		Nat CodeOut::tell() const {

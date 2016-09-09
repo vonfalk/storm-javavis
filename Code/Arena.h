@@ -39,7 +39,8 @@ namespace code {
 		virtual LabelOutput *STORM_FN labelOutput() const;
 
 		// Create a code-generating output. 'lblOffsets' and 'size' are obtained through 'labelOutput'.
-		virtual CodeOutput *STORM_FN codeOutput(Array<Nat> *lblOffsets, Nat size) const;
+		virtual CodeOutput *STORM_FN codeOutput(Array<Nat> *lblOffsets, Nat size, Nat refs) const;
+		CodeOutput *STORM_FN codeOutput(LabelOutput *src) const;
 
 	};
 

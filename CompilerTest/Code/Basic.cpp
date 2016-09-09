@@ -5,7 +5,7 @@
 
 using namespace code;
 
-BEGIN_TEST(CodeScopeTest, Code) {
+BEGIN_TEST(CodeScopeTest, CodeBasic) {
 	Engine &e = *gEngine;
 
 	Listing *l = new (e) Listing();
@@ -29,7 +29,7 @@ BEGIN_TEST(CodeScopeTest, Code) {
 
 } END_TEST
 
-BEGIN_TEST(CodeTest, Code) {
+BEGIN_TEST(CodeTest, CodeBasic) {
 	Engine &e = *gEngine;
 	Arena *arena = code::arena(e);
 
@@ -39,11 +39,14 @@ BEGIN_TEST(CodeTest, Code) {
 	Variable v = l->createIntVar(root);
 	Variable p = l->createIntParam();
 
+	Label l1 = l->label();
+
 	CHECK_EQ(l->exceptionHandler(), false);
 
 	*l << prolog(e);
 	*l << mov(e, v, p);
 	*l << add(e, v, intConst(1));
+	*l << l1 << mov(e, ptrA, l1);
 	// Use 'ebx' so that we have to preserve some registers during the function call...
 	*l << mov(e, ebx, v);
 	*l << mov(e, eax, ebx);

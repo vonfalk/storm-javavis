@@ -20,9 +20,13 @@ namespace code {
 		return null;
 	}
 
-	CodeOutput *Arena::codeOutput(Array<Nat> *offsets, Nat size) const {
+	CodeOutput *Arena::codeOutput(Array<Nat> *offsets, Nat size, Nat refs) const {
 		assert(false);
 		return null;
+	}
+
+	CodeOutput *Arena::codeOutput(LabelOutput *src) const {
+		return codeOutput(src->offsets, src->size, src->refs);
 	}
 
 #if defined(X86) && defined(WINDOWS)

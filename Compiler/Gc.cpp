@@ -383,24 +383,35 @@ namespace storm {
 
 				byte *code = (byte *)at + wordSize;
 				GcCode *c = (GcCode *)(code + h->header);
+				void *tmp;
 
 				for (nat i = 0; i < c->refCount; i++) {
 					GcCodeRef &ref = c->refs[i];
+					void *offset = code + ref.offset;
+
 					switch (ref.kind) {
 					case GcCodeRef::disabled:
 						break;
 					case GcCodeRef::rawPtr:
-						result = MPS_FIX12(ss, (mps_addr_t *)(code + ref.offset));
+						result = MPS_FIX12(ss, (mps_addr_t *)offset);
+						break;
+					case GcCodeRef::offsetPtr:
+						tmp = *(void **)offset;
+						if (tmp) {
+							tmp = (byte *)tmp - ref.param;
+							result = MPS_FIX12(ss, (mps_addr_t *)&tmp);
+							*(byte **)offset = (byte *)tmp + ref.param;
+						}
 						break;
 					default:
 						assert(false, L"Unknown reference type found in a code block.");
 						break;
 					}
-				}
 
-				// On error, return asap!
-				if (result != MPS_RES_OK)
-					return result;
+					// On error, return asap!
+					if (result != MPS_RES_OK)
+						return result;
+				}
 			}
 		} MPS_SCAN_END(ss);
 
@@ -424,6 +435,8 @@ namespace storm {
 	}
 
 	static mps_addr_t mpsIsFwdCode(mps_addr_t at) {
+		at = (byte *)at - wordSize;
+
 		MpsCode *h = (MpsCode *)at;
 		switch (h->header) {
 		case mpsCodeFwd1:

@@ -20,12 +20,19 @@ namespace storm {
 			// Raw pointer. Reads 4/8 bytes from 'offset' and treats those as a pointer.
 			rawPtr,
 
+			// Store pointer into another object (eg. this object). 'param' is the offset used, so
+			// 'ptr' - 'param' is seen by the Gc, and has to point to the start of an object.
+			offsetPtr,
+
 			// TODO: More to come! eg. relative and so on.
 		};
 
 		// Offset inside the code where this reference is located. Does not need to be aligned, that
 		// depends entirely on the underlying machine we're working with.
 		nat offset;
+
+		// Parameter to the kind. Its interpretation depends on 'kind'.
+		nat param;
 
 		// Reference type.
 		Kind kind;

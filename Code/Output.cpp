@@ -19,6 +19,14 @@ namespace code {
 		assert(false);
 	}
 
+	void Output::putGcPtr(Word w) {
+		assert(false);
+	}
+
+	void Output::putGcRelPtr(Word w, Nat offset) {
+		assert(false);
+	}
+
 	Nat Output::tell() const {
 		assert(false);
 		return 0;
@@ -37,6 +45,12 @@ namespace code {
 			assert(false, L"Unknown size passed to putSize!");
 	}
 
+	void Output::putAddress(Label lbl) {
+		Word start = (Word)codePtr();
+		Nat offset = labelOffset(lbl.id);
+		putGcRelPtr(start + offset, offset);
+	}
+
 	void Output::mark(Label lbl) {
 		markLabel(lbl.id);
 	}
@@ -49,8 +63,9 @@ namespace code {
 		assert(false);
 	}
 
-	void Output::putAddress(Label lbl) {
-		TODO(L"Implement!");
+	void *Output::codePtr() const {
+		assert(false);
+		return null;
 	}
 
 	Nat Output::labelOffset(Nat id) {
@@ -64,7 +79,7 @@ namespace code {
 	}
 
 
-	LabelOutput::LabelOutput(Nat ptrSize) : offsets(new (engine()) Array<Nat>()), ptrSize(ptrSize), size(0) {}
+	LabelOutput::LabelOutput(Nat ptrSize) : offsets(new (engine()) Array<Nat>()), ptrSize(ptrSize), size(0), refs(0) {}
 
 	void LabelOutput::putByte(Byte b) {
 		size += 1;
@@ -82,8 +97,22 @@ namespace code {
 		size += ptrSize;
 	}
 
+	void LabelOutput::putGcPtr(Word w) {
+		size += ptrSize;
+		refs++;
+	}
+
+	void LabelOutput::putGcRelPtr(Word w, Nat offset) {
+		size += ptrSize;
+		refs++;
+	}
+
 	Nat LabelOutput::tell() const {
 		return size;
+	}
+
+	void *LabelOutput::codePtr() const {
+		return null;
 	}
 
 	void LabelOutput::markLabel(Nat id) {

@@ -14,10 +14,12 @@ namespace code {
 	class Output : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
-		virtual void STORM_FN putByte(Byte b); // 1 byte
-		virtual void STORM_FN putInt(Nat w);   // 4 bytes
-		virtual void STORM_FN putLong(Word w); // 8 bytes
-		virtual void STORM_FN putPtr(Word w);  // 4 or 8 bytes
+		virtual void STORM_FN putByte(Byte b);  // 1 byte
+		virtual void STORM_FN putInt(Nat w);    // 4 bytes
+		virtual void STORM_FN putLong(Word w);  // 8 bytes
+		virtual void STORM_FN putPtr(Word w);   // 4 or 8 bytes
+		virtual void STORM_FN putGcPtr(Word w); // 4 or 8 bytes
+		virtual void STORM_FN putGcRelPtr(Word w, Nat offset);
 
 		// Get the current offset from start.
 		virtual Nat STORM_FN tell() const;
@@ -28,13 +30,14 @@ namespace code {
 		// Labels. Note: only relative label offsets are supported!
 		void STORM_FN mark(Label lbl);
 		void STORM_FN putRelative(Label lbl); // Writes 4 bytes.
-
-		// Output absolute addresses (maybe not supported in the end).
 		void STORM_FN putAddress(Label lbl); // Writes 8 bytes.
 
 	protected:
 		// Mark a label here.
 		virtual void STORM_FN markLabel(Nat id);
+
+		// Get a pointer to the start of the code.
+		virtual void *codePtr() const;
 
 		// Find the offset of a label.
 		virtual Nat STORM_FN labelOffset(Nat id);
@@ -54,20 +57,29 @@ namespace code {
 		// Store all label offsets here.
 		Array<Nat> *offsets;
 
+		// Total # of bytes needed. Also readable through 'tell'.
+		Nat size;
+
+		// # of references needed
+		Nat refs;
+
 		virtual void STORM_FN putByte(Byte b);
 		virtual void STORM_FN putInt(Nat w);
 		virtual void STORM_FN putLong(Word w);
 		virtual void STORM_FN putPtr(Word w);
+		virtual void STORM_FN putGcPtr(Word w);
+		virtual void STORM_FN putGcRelPtr(Word w, Nat offset);
+
 		virtual Nat STORM_FN tell() const;
 
 	protected:
 		virtual void STORM_FN markLabel(Nat id);
+		virtual void *codePtr() const;
 		virtual Nat STORM_FN labelOffset(Nat id);
 		virtual Nat STORM_FN toRelative(Nat offset);
 
 	private:
 		Nat ptrSize;
-		Nat size;
 	};
 
 	/**

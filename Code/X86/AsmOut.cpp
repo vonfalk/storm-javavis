@@ -169,7 +169,6 @@ namespace code {
 				// to->putAddress(src.reference());
 				break;
 			case opLabel:
-				NOT_DONE;
 				to->putByte(0x68);
 				to->putAddress(src.label());
 				break;

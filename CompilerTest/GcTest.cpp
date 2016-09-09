@@ -142,3 +142,42 @@ BEGIN_TEST(CodeAllocTest, GcObjects) {
 	}
 
 } END_TEST
+
+BEGIN_TEST(CodeRelPtr, GcObjects) {
+	Engine &e = *gEngine;
+
+	static GcType type = {
+		GcType::tArray,
+		null,
+		null,
+		sizeof(void *),
+		1, { 0 },
+	};
+
+	nat count = 20;
+	GcArray<void **> *codeArray = runtime::allocArray<void **>(e, &type, count);
+
+	for (nat i = 0; i < count; i++) {
+		void **code = (void **)runtime::allocCode(e, sizeof(void *) * 2, 1);
+		GcCode *meta = runtime::codeRefs(code);
+		meta->refs[0].offset = 0;
+		meta->refs[0].param = sizeof(void *);
+		meta->refs[0].kind = GcCodeRef::offsetPtr;
+		*code = code + 1;
+
+		codeArray->v[i] = code;
+	}
+
+	// Make stuff move!
+	createList(1000);
+	e.gc.collect();
+
+	// Verify stuff!
+	for (nat i = 0; i < count; i++) {
+		void **code = codeArray->v[i];
+
+		// We shall still point into the object.
+		CHECK_EQ(*code, code + 1);
+	}
+
+} END_TEST;

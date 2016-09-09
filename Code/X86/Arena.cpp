@@ -47,8 +47,8 @@ namespace code {
 			return new (this) LabelOutput(4);
 		}
 
-		CodeOutput *Arena::codeOutput(Array<Nat> *offsets, Nat size) const {
-			return new (this) CodeOut(offsets, size);
+		CodeOutput *Arena::codeOutput(Array<Nat> *offsets, Nat size, Nat refs) const {
+			return new (this) CodeOut(offsets, size, refs);
 		}
 
 		const Register ptrD = Register(0x010);
