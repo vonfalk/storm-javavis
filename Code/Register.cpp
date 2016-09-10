@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Register.h"
-#include "X86/Arena.h"
+#include "X86/Asm.h"
 #include "Core/StrBuf.h"
 
 namespace code {

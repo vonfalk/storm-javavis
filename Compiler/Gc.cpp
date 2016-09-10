@@ -383,7 +383,7 @@ namespace storm {
 
 				byte *code = (byte *)at + wordSize;
 				GcCode *c = (GcCode *)(code + h->header);
-				void *tmp;
+				size_t tmp;
 
 				for (nat i = 0; i < c->refCount; i++) {
 					GcCodeRef &ref = c->refs[i];
@@ -395,13 +395,17 @@ namespace storm {
 					case GcCodeRef::rawPtr:
 						result = MPS_FIX12(ss, (mps_addr_t *)offset);
 						break;
-					case GcCodeRef::offsetPtr:
-						tmp = *(void **)offset;
+					case GcCodeRef::relativePtr:
+						tmp = *(size_t *)offset;
 						if (tmp) {
-							tmp = (byte *)tmp - ref.param;
+							tmp += size_t(offset) + sizeof(size_t);
 							result = MPS_FIX12(ss, (mps_addr_t *)&tmp);
-							*(byte **)offset = (byte *)tmp + ref.param;
+							*(size_t *)offset = tmp - size_t(offset) - sizeof(size_t);
 						}
+						break;
+					case GcCodeRef::relative:
+					case GcCodeRef::inside:
+						// No need to show these to the gc.
 						break;
 					default:
 						assert(false, L"Unknown reference type found in a code block.");
@@ -419,11 +423,41 @@ namespace storm {
 	}
 
 	static void mpsMakeFwdCode(mps_addr_t at, mps_addr_t to) {
+		size_t delta = size_t(to) - size_t(at);
+
 		// Convert to base pointers:
 		at = (byte *)at - wordSize;
 
 		size_t size = mpsSizeCode(at);
 		MpsCode *c = (MpsCode *)at;
+
+		// See if we need to modify pointers in the new object.
+		if ((c->header & codeMask) == 0) {
+			GcCode *gc = (GcCode *)((byte *)at + wordSize + c->header);
+
+			for (nat i = 0; i < gc->refCount; i++) {
+				GcCodeRef &ref = gc->refs[i];
+				void *offset = (byte *)to + ref.offset;
+
+				switch (ref.kind) {
+				case GcCodeRef::disabled:
+				case GcCodeRef::rawPtr:
+				case GcCodeRef::relativePtr:
+					// No need to do anything here.
+					break;
+				case GcCodeRef::relative:
+					*(size_t *)offset -= delta;
+					break;
+				case GcCodeRef::inside:
+					*(size_t *)offset += delta;
+					break;
+				default:
+					assert(false, L"Unknown reference type found in a code block.");
+					break;
+				}
+			}
+		}
+
 		if (size <= 2 * wordSize) {
 			c->header = mpsCodeFwd1;
 			c->fwd1.to = to;

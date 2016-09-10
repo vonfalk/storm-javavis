@@ -16,7 +16,9 @@ namespace code {
 			virtual void STORM_FN putLong(Word w);
 			virtual void STORM_FN putPtr(Word w);
 			virtual void STORM_FN putGcPtr(Word w);
-			virtual void STORM_FN putGcRelPtr(Word w, Nat offset);
+			virtual void STORM_FN putGcRelative(Word w);
+			virtual void STORM_FN putRelativeStatic(Word w);
+			virtual void STORM_FN putPtrSelf(Word w);
 			virtual Nat STORM_FN tell() const;
 
 			virtual void *codePtr() const;

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "LayoutVars.h"
 #include "Arena.h"
+#include "Asm.h"
 #include "Exception.h"
 
 namespace code {
@@ -96,8 +97,9 @@ namespace code {
 				bool initEax = true;
 
 				Array<Variable> *vars = dest->allVars(b);
-				for (nat i = 0; i < vars->count(); i++) {
-					Variable v = vars->at(i);
+				// Go in reverse to make linear accesses in memory when we're using big variables.
+				for (nat i = vars->count(); i > 0; i--) {
+					Variable v = vars->at(i - 1);
 
 					if (!dest->isParam(v))
 						zeroVar(dest, layout->at(v.key()), v.size(), initEax);
@@ -165,7 +167,7 @@ namespace code {
 			*dest << mov(e, ptrFrame, ptrStack);
 
 			// Allocate stack space.
-			*dest << sub(e, ptrStack, ptrConst(abs(layout->last()) - Offset::sPtr));
+			*dest << sub(e, ptrStack, ptrConst(layout->last()));
 
 			// Keep track of offsets...
 			Offset offset = -Offset::sPtr;

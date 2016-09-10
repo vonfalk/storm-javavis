@@ -18,8 +18,23 @@ namespace code {
 		virtual void STORM_FN putInt(Nat w);    // 4 bytes
 		virtual void STORM_FN putLong(Word w);  // 8 bytes
 		virtual void STORM_FN putPtr(Word w);   // 4 or 8 bytes
-		virtual void STORM_FN putGcPtr(Word w); // 4 or 8 bytes
-		virtual void STORM_FN putGcRelPtr(Word w, Nat offset);
+
+		/**
+		 * Special cases for GC interaction.
+		 */
+
+		// Put a pointer to a gc:d object. 4 or 8 bytes.
+		virtual void STORM_FN putGcPtr(Word w);
+
+		// Put a relative pointer to a gc:d object. 4 or 8 bytes. (Note: this may be tricky on x86-64).
+		virtual void STORM_FN putGcRelative(Word w);
+
+		// Put a relative pointer to a static object (not managed by the Gc). 4 or 8 bytes.
+		virtual void STORM_FN putRelativeStatic(Word w);
+
+		// Put an absolute pointer somwhere inside ourself. 4 or 8 bytes.
+		virtual void STORM_FN putPtrSelf(Word w);
+
 
 		// Get the current offset from start.
 		virtual Nat STORM_FN tell() const;
@@ -68,7 +83,9 @@ namespace code {
 		virtual void STORM_FN putLong(Word w);
 		virtual void STORM_FN putPtr(Word w);
 		virtual void STORM_FN putGcPtr(Word w);
-		virtual void STORM_FN putGcRelPtr(Word w, Nat offset);
+		virtual void STORM_FN putGcRelative(Word w);
+		virtual void STORM_FN putRelativeStatic(Word w);
+		virtual void STORM_FN putPtrSelf(Word w);
 
 		virtual Nat STORM_FN tell() const;
 

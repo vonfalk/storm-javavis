@@ -25,7 +25,7 @@ namespace storm {
 				// Remember the element was created, if we get an exception during copying.
 				data->filled = i + 1;
 			}
-		} else {
+		} else if (count > 0) {
 			// Memcpy will do!
 			ensure(count);
 			memcpy(ptr(0), other->ptr(0), count * handle.size);

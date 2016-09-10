@@ -158,11 +158,10 @@ BEGIN_TEST(CodeRelPtr, GcObjects) {
 	GcArray<void **> *codeArray = runtime::allocArray<void **>(e, &type, count);
 
 	for (nat i = 0; i < count; i++) {
-		void **code = (void **)runtime::allocCode(e, sizeof(void *) * 2, 1);
+		void **code = (void **)runtime::allocCode(e, sizeof(void *) * 2, 2);
 		GcCode *meta = runtime::codeRefs(code);
 		meta->refs[0].offset = 0;
-		meta->refs[0].param = sizeof(void *);
-		meta->refs[0].kind = GcCodeRef::offsetPtr;
+		meta->refs[0].kind = GcCodeRef::inside;
 		*code = code + 1;
 
 		codeArray->v[i] = code;

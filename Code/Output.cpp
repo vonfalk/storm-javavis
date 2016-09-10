@@ -23,9 +23,18 @@ namespace code {
 		assert(false);
 	}
 
-	void Output::putGcRelPtr(Word w, Nat offset) {
+	void Output::putGcRelative(Word w) {
 		assert(false);
 	}
+
+	void Output::putRelativeStatic(Word w) {
+		assert(false);
+	}
+
+	void Output::putPtrSelf(Word w) {
+		assert(false);
+	}
+
 
 	Nat Output::tell() const {
 		assert(false);
@@ -48,7 +57,7 @@ namespace code {
 	void Output::putAddress(Label lbl) {
 		Word start = (Word)codePtr();
 		Nat offset = labelOffset(lbl.id);
-		putGcRelPtr(start + offset, offset);
+		putPtrSelf(start + offset);
 	}
 
 	void Output::mark(Label lbl) {
@@ -102,7 +111,17 @@ namespace code {
 		refs++;
 	}
 
-	void LabelOutput::putGcRelPtr(Word w, Nat offset) {
+	void LabelOutput::putGcRelative(Word w) {
+		size += ptrSize;
+		refs++;
+	}
+
+	void LabelOutput::putRelativeStatic(Word w) {
+		size += ptrSize;
+		refs++;
+	}
+
+	void LabelOutput::putPtrSelf(Word w) {
 		size += ptrSize;
 		refs++;
 	}

@@ -197,6 +197,61 @@ namespace code {
 			to->putByte(0xC3);
 		}
 
+		void setCondOut(Output *to, Instr *instr) {
+			CondFlag c = instr->src().condFlag();
+			to->putByte(0x0F);
+			to->putByte(0x90 + condOp(c));
+			modRm(to, 0, instr->dest());
+		}
+
+		static void jmpCall(byte opCode, Output *to, const Operand &src) {
+			switch (src.type()) {
+			case opConstant:
+				to->putByte(opCode);
+				to->putRelativeStatic(src.constant());
+				break;
+			case opLabel:
+				to->putByte(opCode);
+				to->putRelative(src.label());
+				break;
+			case opReference:
+				NOT_DONE;
+				// to->putByte(opCode);
+				// to->putRelative(...);
+				break;
+			default:
+				assert(false, L"JmpCall not implemented for " + ::toS(src));
+				break;
+			}
+		}
+
+		static void jmpCall(bool call, Output *to, const Operand &src) {
+			if (src.type() == opRegister) {
+				to->putByte(0xFF);
+				modRm(to, call ? 2 : 4, src);
+			} else {
+				byte opCode = call ? 0xE8 : 0xE9;
+				jmpCall(opCode, to, src);
+			}
+		}
+
+		void jmpOut(Output *to, Instr *instr) {
+			CondFlag c = instr->src().condFlag();
+			if (c == ifAlways) {
+				jmpCall(false, to, instr->dest());
+			} else if (c == ifNever) {
+				// Nothing.
+			} else {
+				byte op = 0x80 + condOp(c);
+				to->putByte(0x0F);
+				jmpCall(op, to, instr->dest());
+			}
+		}
+
+		void callOut(Output *to, Instr *instr) {
+			jmpCall(true, to, instr->src());
+		}
+
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
 			OUTPUT(add),
@@ -209,6 +264,9 @@ namespace code {
 			OUTPUT(cmp),
 			OUTPUT(push),
 			OUTPUT(pop),
+			OUTPUT(setCond),
+			OUTPUT(jmp),
+			OUTPUT(call),
 			OUTPUT(ret),
 		};
 

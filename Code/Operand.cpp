@@ -176,7 +176,10 @@ namespace code {
 		case opNone:
 			return to << L"<none>";
 		case opConstant:
-			return to << o.constant();
+			if (o.size() == Size::sPtr)
+				return to << L"0x" << toHex(o.constant());
+			else
+				return to << o.constant();
 		case opRegister:
 			return to << code::name(o.reg());
 		case opRelative:

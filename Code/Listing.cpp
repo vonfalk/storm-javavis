@@ -550,7 +550,7 @@ namespace code {
 
 			*to << L"\n";
 			*to << width(7) << code::toS(engine(), e.labels);
-			*to << width(15) << r.used->at(i)->toS();
+			*to << width(20) << r.used->at(i)->toS();
 			*to << L" | " << e.instr;
 		}
 	}

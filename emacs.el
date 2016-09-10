@@ -194,28 +194,69 @@
   (rename-buffer (filename buffer-file-name) t))
 
 (defun add-cpp-template ()
-  (insert "#include \"stdafx.h\"\n")
-  (insert "#include \"")
-  (if (is-test-project)
-      (insert "Test/Test.h")
-    (insert (replace-regexp-in-string
-	     ".cpp" ".h"
-	     (filename buffer-file-name))))
-  (insert "\"\n\n")
-  (if (shall-have-namespace)
-      (insert-namespace))
-  (if (is-test-project)
-      (insert-test-template)))
+  (unless (insert-file-template-p)
+    (insert "#include \"stdafx.h\"\n")
+    (insert "#include \"")
+    (if (is-test-project)
+	(insert "Test/Test.h")
+      (insert (replace-regexp-in-string
+	       ".cpp" ".h"
+	       (filename buffer-file-name))))
+    (insert "\"\n\n")
+    (if (shall-have-namespace)
+	(insert-namespace))
+    (if (is-test-project)
+	(insert-test-template))))
 
 (defun add-header-template ()
-  (insert "#pragma once\n\n")
-  (if (shall-have-namespace)
-      (insert-namespace)))
+  (unless (insert-file-template-p)
+    (insert "#pragma once\n\n")
+    (if (shall-have-namespace)
+	(insert-namespace))))
+
+(defun insert-file-template-p ()
+  "Inserts a template from the file 'ext'.template in the same directory as the file"
+  (let* ((dir (file-name-directory buffer-file-name))
+	 (ext (file-name-extension buffer-file-name))
+	 (tName (concat dir ext ".template")))
+    (if (file-exists-p (concat dir ext ".template"))
+	(progn
+	  (insert-file-template tName)
+	  t)
+      nil)))
+
+(defun insert-file-template (file)
+  (insert-file-contents file)
+
+  ;; Replace $header$...
+  (goto-char 0)
+  (perform-replace "$header$"
+		   (replace-regexp-in-string ".cpp" ".h" (filename buffer-file-name))
+		   nil
+		   nil
+		   nil)
+
+
+  ;; Replace $file$...
+  (goto-char 0)
+  (perform-replace "$file$"
+		   (replace-regexp-in-string ".cpp" "" (filename buffer-file-name))
+		   nil
+		   nil
+		   nil)
+
+  ;; Find $$ and put the cursor there.
+  (goto-char 0)
+  (if (re-search-forward "\\$\\$" nil t)
+      (progn
+	(replace-match "")
+	(indent-for-tab-command))))
 
 (defun insert-test-template ()
   (insert "BEGIN_TEST(")
   (insert (replace-regexp-in-string ".cpp" "" (filename buffer-file-name)))
-  (insert ") {\n\n")
+  (insert ") {\n")
+  (insert "Engine &e = *gEngine;\n\n")
   (let ((pos (point)))
     (insert "\n\n} END_TEST")
     (goto-char pos)

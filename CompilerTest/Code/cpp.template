@@ -1,0 +1,25 @@
+#include "stdafx.h"
+#include "Test/Test.h"
+#include "Code/Binary.h"
+#include "Code/Listing.h"
+
+using namespace code;
+
+BEGIN_TEST($file$Test, Code) {
+	Engine &e = *gEngine;
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+
+	*l << prolog(e);
+
+	$$
+
+	*l << epilog(e);
+	*l << ret(e, valVoid());
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef void (*Fn)();
+	Fn fn = (Fn)b->rawPtr();
+
+} END_TEST

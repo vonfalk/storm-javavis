@@ -2,15 +2,53 @@
 #include "../Register.h"
 #include "../Output.h"
 #include "../Operand.h"
+#include "Core/EnginePtr.h"
 
 namespace code {
 	namespace x86 {
+		STORM_PKG(core.asm.x86);
 
 		// Marker that is easy to search for. Removed when we're done.
 #define NOT_DONE assert(false, L"Not implemented yet!")
 
+		/**
+		 * X86-specific registers.
+		 *
+		 * TODO: Expose to Storm somehow.
+		 */
+		extern const Register ptrD;
+		extern const Register ptrSi;
+		extern const Register ptrDi;
+		extern const Register edx;
+		extern const Register esi;
+		extern const Register edi;
+
+		// Convert to names.
+		const wchar *nameX86(Register r);
+
+		// Find unused registers to work with. Returns noReg if none. Takes 64-bit registers into account.
+		Register STORM_FN unusedReg(RegSet *in);
+
+		// Add 64-bit registers if needed.
+		void STORM_FN add64(RegSet *to);
+
+		// Get the low or high 32-bit register. If 'r' is a 32-bit register, high32 returns noReg.
+		Register STORM_FN low32(Register r);
+		Register STORM_FN high32(Register r);
+		Operand STORM_FN low32(Operand o);
+		Operand STORM_FN high32(Operand o);
+
+		// All registers.
+		RegSet *STORM_FN allRegs(EnginePtr e);
+
+		// Registers not preserved over function calls.
+		RegSet *STORM_FN fnDirtyRegs(EnginePtr e);
+
 		// Find the register id of a register.
 		nat registerId(Register r);
+
+		// Get the 'op-code' for conditional operators.
+		byte condOp(CondFlag c);
 
 		// See if this value can be expressed in a single byte without loss. Assumes sign extension.
 		bool singleByte(Word value);
@@ -62,6 +100,31 @@ namespace code {
 		void immRegInstr(Output *to, const ImmRegInstr &op, const Operand &dest, const Operand &src);
 		void immRegInstr(Output *to, const ImmRegInstr8 &op, const Operand &dest, const Operand &src);
 		void immRegInstr(Output *to, const ImmRegInstr8 &op8, const ImmRegInstr &op, const Operand &dest, const Operand &src);
+
+		/**
+		 * Preserve and restore registers.
+		 */
+
+		// Preserve a single register.
+		Register STORM_FN preserve(Register r, RegSet *used, Listing *dest);
+
+		// Restore a single register.
+		void STORM_FN restore(Register r, Register saved, Listing *dest);
+
+		/**
+		 * Preserve a set of registers.
+		 */
+		class Preserve {
+			STORM_VALUE;
+		public:
+			STORM_CTOR Preserve(RegSet *preserve, RegSet *used, Listing *dest);
+
+			void STORM_FN restore();
+		private:
+			Listing *dest;
+			Array<Nat> *srcReg;
+			Array<Nat> *destReg;
+		};
 
 	}
 }

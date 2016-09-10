@@ -36,18 +36,38 @@ namespace code {
 		void CodeOut::putGcPtr(Word w) {
 			GcCode *refs = runtime::codeRefs(code);
 			refs->refs[ref].offset = pos;
-			refs->refs[ref].param = 0;
 			refs->refs[ref].kind = GcCodeRef::rawPtr;
 			ref++;
 
 			putPtr(w);
 		}
 
-		void CodeOut::putGcRelPtr(Word w, Nat offset) {
+		void CodeOut::putGcRelative(Word w) {
 			GcCode *refs = runtime::codeRefs(code);
 			refs->refs[ref].offset = pos;
-			refs->refs[ref].param = offset;
-			refs->refs[ref].kind = GcCodeRef::offsetPtr;
+			refs->refs[ref].kind = GcCodeRef::relativePtr;
+			ref++;
+
+			Nat *to = (Nat *)&code[pos];
+			*to = Nat(w) - Nat(to + 1);
+			pos += 4;
+		}
+
+		void CodeOut::putRelativeStatic(Word w) {
+			GcCode *refs = runtime::codeRefs(code);
+			refs->refs[ref].offset = pos;
+			refs->refs[ref].kind = GcCodeRef::relative;
+			ref++;
+
+			Nat *to = (Nat *)&code[pos];
+			*to = Nat(w) - Nat(to + 1);
+			pos += 4;
+		}
+
+		void CodeOut::putPtrSelf(Word w) {
+			GcCode *refs = runtime::codeRefs(code);
+			refs->refs[ref].offset = pos;
+			refs->refs[ref].kind = GcCodeRef::inside;
 			ref++;
 
 			putPtr(w);
@@ -72,9 +92,8 @@ namespace code {
 				return 0;
 		}
 
-		Nat CodeOut::toRelative(Nat id) {
-			TODO(L"Implement me!");
-			return 0;
+		Nat CodeOut::toRelative(Nat offset) {
+			return offset - (pos + 4);
 		}
 
 	}

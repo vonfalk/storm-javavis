@@ -13,17 +13,20 @@ Tests &Tests::instance() {
 void Tests::addTest(Test *t, bool single) {
 	instance().tests.insert(make_pair(t->name, t));
 	if (single)
-		instance().singleTest = t;
+		instance().singleTest = true;
 }
 
 void Tests::addSuite(Suite *s, bool single) {
 	instance().suites.insert(make_pair(s->order, s));
 	if (single)
-		instance().singleSuite = s;
+		instance().singleSuite = true;
 }
 
 void Tests::runSuite(Suite *s, TestResult &r) {
 	for (TestMap::const_iterator i = tests.begin(); i != tests.end(); i++) {
+		if (singleTest && !i->second->single)
+			continue;
+
 		if (i->second->suite == s) {
 			std::wcout << L"Running " << i->first << L"..." << std::endl;
 			r += i->second->run();
@@ -35,7 +38,9 @@ int Tests::countSuite(Suite *s) {
 	int r = 0;
 	for (TestMap::const_iterator i = tests.begin(); i != tests.end(); i++) {
 		if (i->second->suite == s) {
-			r++;
+			if (!singleTest || i->second->single) {
+				r++;
+			}
 		}
 	}
 	return r;
@@ -43,18 +48,23 @@ int Tests::countSuite(Suite *s) {
 
 void Tests::runTests(TestResult &r) {
 	if (singleTest) {
-		std::wcout << L"Running " << singleTest->name << L"(single)..." << std::endl;
-		r += singleTest->run();
-	} else if (singleSuite) {
-		runSuite(singleSuite, r);
+		for (TestMap::const_iterator i = tests.begin(); i != tests.end(); i++) {
+			if (i->second->single) {
+				std::wcout << L"Running " << i->first << L"..." << std::endl;
+				r += i->second->run();
+			}
+		}
 	} else {
 		for (SuiteMap::const_iterator i = suites.begin(); i != suites.end(); i++) {
+			if (singleSuite && !i->second->single)
+				continue;
+
 			std::wcout << L"--- " << i->second->name << L" ---" << std::endl;
 			runSuite(i->second, r);
 		}
 
 		// Run any rogue tests not in any suite...
-		if (countSuite(null)) {
+		if (!singleSuite && countSuite(null) > 0) {
 			std::wcout << L"--- <no suite> ---" << std::endl;
 			runSuite(null, r);
 		}

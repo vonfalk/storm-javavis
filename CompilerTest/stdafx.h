@@ -26,7 +26,7 @@ SUITE(Runtime, 4);
 // Basic tests of the code generation backend. Further thests rely on these to work.
 SUITE_(CodeBasic, 5);
 // Tests of the code generation backend.
-SUITE(Code, 6);
+SUITE_(Code, 6);
 
 // Stress tests (takes time).
 SUITEX(Stress, 100);
@@ -58,3 +58,8 @@ void verifyObjEq(TestResult &r, T *lhs, U *rhs, const String &expr) {
 
 
 #define CHECK_OBJ_EQ(expr, eq) CHECK_OBJ_EQ_TITLE(expr, eq, #expr)
+
+
+// Call a function and check all extra register so they are properly preserved.
+int callFn(const void *ptr, int v);
+int64 callFn(const void *ptr, int64 v);

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Remove64.h"
-#include "Arena.h"
+#include "Asm.h"
 
 namespace code {
 	namespace x86 {

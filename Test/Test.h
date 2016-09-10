@@ -74,8 +74,8 @@ private:
 	typedef map<String, Test *> TestMap;
 	TestMap tests;
 
-	Suite *singleSuite;
-	Test *singleTest;
+	bool singleSuite;
+	bool singleTest;
 
 	static Tests &instance();
 	static void addTest(Test *t, bool single);
@@ -94,9 +94,10 @@ class Suite : NoCopy {
 public:
 	const String name;
 	const int order;
+	const bool single;
 
 protected:
-	Suite(const String &name, int order, bool single, bool ignore) : name(name), order(order) {
+	Suite(const String &name, int order, bool single, bool ignore) : name(name), order(order), single(single) {
 		if (!ignore) {
 			Tests::instance().addSuite(this, single);
 		}
@@ -110,9 +111,10 @@ public:
 
 	const String name;
 	Suite *const suite;
+	const bool single;
 
 protected:
-	Test(const String &name, Suite *suite = null, bool single = false) : name(name), suite(suite) {
+	Test(const String &name, Suite *suite = null, bool single = false) : name(name), suite(suite), single(single) {
 		Tests::instance().addTest(this, single);
 	}
 };

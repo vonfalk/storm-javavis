@@ -2,9 +2,187 @@
 #include "Asm.h"
 #include "Operand.h"
 #include "Arena.h"
+#include "Listing.h"
 
 namespace code {
 	namespace x86 {
+
+		const Register ptrD = Register(0x010);
+		const Register ptrSi = Register(0x011);
+		const Register ptrDi = Register(0x012);
+		const Register edx = Register(0x410);
+		const Register esi = Register(0x411);
+		const Register edi = Register(0x412);
+
+		const wchar *nameX86(Register r) {
+			switch (r) {
+			case ptrD:
+				return L"ptrD";
+			case ptrSi:
+				return L"ptrSi";
+			case ptrDi:
+				return L"ptrDi";
+
+			case edx:
+				return L"edx";
+			case esi:
+				return L"esi";
+			case edi:
+				return L"edi";
+			}
+			return null;
+		}
+
+		Register unusedReg(RegSet *in) {
+			Register candidates[] = { ptrD, ptrA, ptrB, ptrC, ptrSi, ptrDi };
+			Register protect64[] = { rax, noReg, noReg, noReg, rbx, rcx };
+			for (nat i = 0; i < ARRAY_COUNT(candidates); i++) {
+				if (!in->has(candidates[i])) {
+					// See if we need to protect 64-bit registers...
+					Register prot = protect64[i];
+					if (prot == noReg)
+						return candidates[i];
+
+					// Either too small or not in the set?
+					if (in->get(prot) != prot)
+						return candidates[i];
+				}
+			}
+
+			return noReg;
+		}
+
+		void add64(RegSet *to) {
+			for (RegSet::Iter i = to->begin(); i != to->end(); ++i) {
+				Register r = high32(*i);
+				if (r != noReg)
+					to->put(r);
+			}
+		}
+
+		Register low32(Register reg) {
+			if (size(reg) == Size::sLong)
+				return asSize(reg, Size::sInt);
+			else
+				return reg;
+		}
+
+		Register high32(Register reg) {
+			switch (reg) {
+			case rax:
+				return edx;
+			case rbx:
+				return esi;
+			case rcx:
+				return edi;
+			default:
+				return noReg;
+			}
+		}
+
+		Operand low32(Operand o) {
+			assert(o.size() == Size::sLong);
+			switch (o.type()) {
+			case opConstant:
+				return natConst(o.constant() & 0xFFFFFFFF);
+			case opRegister:
+				return Operand(low32(o.reg()));
+			case opRelative:
+				return intRel(o.reg(), o.offset());
+			case opVariable:
+				return intRel(o.variable(), o.offset());
+			}
+			assert(false);
+			return Operand();
+		}
+
+		Operand high32(Operand o) {
+			assert(o.size() == Size::sLong);
+			switch (o.type()) {
+			case opConstant:
+				return natConst(o.constant() >> 32);
+			case opRegister:
+				return Operand(high32(o.reg()));
+			case opRelative:
+				return intRel(o.reg(), o.offset() + Offset(4));
+			case opVariable:
+				return intRel(o.variable(), o.offset() + Offset(4));
+			}
+			assert(false);
+			return Operand();
+		}
+
+		RegSet *allRegs(EnginePtr e) {
+			RegSet *r = new (e.v) RegSet();
+			r->put(eax);
+			r->put(ebx);
+			r->put(ecx);
+			r->put(edx);
+			r->put(esi);
+			r->put(edi);
+			return r;
+		}
+
+		RegSet *fnDirtyRegs(EnginePtr e) {
+			RegSet *r = new (e.v) RegSet();
+			r->put(eax);
+			r->put(ecx);
+			r->put(edx);
+			return r;
+		}
+
+		Register preserve(Register r, RegSet *used, Listing *dest) {
+			Engine &e = dest->engine();
+			Register into = unusedReg(used);
+			if (into == noReg) {
+				*dest << push(e, r);
+			} else {
+				into = asSize(into, size(r));
+				*dest << mov(e, into, r);
+			}
+			return into;
+		}
+
+		void restore(Register r, Register saved, Listing *dest) {
+			Engine &e = dest->engine();
+
+			if (saved == noReg) {
+				*dest << pop(e, r);
+			} else {
+				*dest << mov(e, r, saved);
+			}
+		}
+
+		Preserve::Preserve(RegSet *regs, RegSet *used, Listing *dest) {
+			this->dest = dest;
+			srcReg = new (dest) Array<Nat>();
+			destReg = new (dest) Array<Nat>();
+			RegSet *usedBefore = new (used) RegSet(used);
+			RegSet *usedAfter = new (used) RegSet(used);
+			// Do not attempt to use any of the registers we want to preserve to store stuff in.
+			usedAfter->put(regs);
+
+			add64(usedBefore);
+			add64(usedAfter);
+
+			for (RegSet::Iter i = regs->begin(); i != regs->end(); ++i) {
+				if (usedBefore->has(*i)) {
+					Register r = preserve(*i, usedAfter, dest);
+					srcReg->push(Nat(*i));
+					destReg->push(Nat(r));
+					if (r != noReg)
+						usedAfter->put(r);
+				}
+			}
+		}
+
+		void Preserve::restore() {
+			for (Nat i = srcReg->count(); i > 0; i--) {
+				Register src = Register(srcReg->at(i - 1));
+				Register dest = Register(destReg->at(i - 1));
+				code::x86::restore(src, dest, this->dest);
+			}
+		}
 
 		nat registerId(Register r) {
 			switch (r) {
@@ -35,6 +213,45 @@ namespace code {
 				assert(false);
 				return 0;
 			}
+		}
+
+		byte condOp(CondFlag c) {
+			switch (c) {
+			case ifAlways:
+				assert(false);
+				break;
+			case ifOverflow:
+				return 0x0;
+			case ifNoOverflow:
+				return 0x1;
+			case ifEqual:
+				return 0x4;
+			case ifNotEqual:
+				return 0x5;
+			case ifBelow:
+			case ifFBelow:
+				return 0x2;
+			case ifBelowEqual:
+			case ifFBelowEqual:
+				return 0x6;
+			case ifAboveEqual:
+			case ifFAboveEqual:
+				return 0x3;
+			case ifAbove:
+			case ifFAbove:
+				return 0x7;
+			case ifLess:
+				return 0xC;
+			case ifLessEqual:
+				return 0xE;
+			case ifGreaterEqual:
+				return 0xD;
+			case ifGreater:
+				return 0xF;
+			}
+
+			assert(false, L"Missing jmpCond " + String(name(c)));
+			return 0;
 		}
 
 		bool singleByte(Word value) {

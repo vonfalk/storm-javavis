@@ -53,8 +53,6 @@ BEGIN_TEST(CodeTest, CodeBasic) {
 	*l << epilog(e);
 	*l << ret(e, ValType(Size::sInt, false));
 
-	PVAR(l);
-
 	Binary *b = new (e) Binary(arena, l);
 
 	typedef Int (*Fn)(Int);
