@@ -15,15 +15,15 @@ BEGIN_TEST(BoolTest, Code) {
 	Listing *l = new (e) Listing();
 	Variable p = l->createIntParam();
 
-	*l << prolog(e);
+	*l << prolog();
 
 	// Make sure we clobber the high parts of the register.
-	*l << mov(e, eax, p);
-	*l << cmp(e, eax, eax);
-	*l << setCond(e, al, ifEqual);
+	*l << mov(eax, p);
+	*l << cmp(eax, eax);
+	*l << setCond(al, ifEqual);
 
-	*l << epilog(e);
-	*l << ret(e, ValType(Size::sByte, false));
+	*l << epilog();
+	*l << ret(ValType(Size::sByte, false));
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef bool (*Fn)(Int);

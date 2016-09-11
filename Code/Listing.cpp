@@ -549,7 +549,9 @@ namespace code {
 			Entry &e = code->at(i);
 
 			*to << L"\n";
-			*to << width(7) << code::toS(engine(), e.labels);
+			if (e.labels != null && e.labels->any()) {
+				*to << code::toS(engine(), e.labels) << L"\n";
+			}
 			*to << width(20) << r.used->at(i)->toS();
 			*to << L" | " << e.instr;
 		}

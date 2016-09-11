@@ -37,7 +37,7 @@ namespace code {
 
 			Instr *i = src->at(line);
 			TransformFn f = t[i->op()];
-			if (f) {
+			if (i->size() == Size::sLong && f != null) {
 				(this->*f)(dest, i, used->at(line));
 			} else {
 				*dest << i;
@@ -59,17 +59,17 @@ namespace code {
 			// Save registers
 			Preserve preserve(fnDirtyRegs(e), used, to);
 
-			*to << push(e, high32(src));
-			*to << push(e, low32(src));
-			*to << push(e, high32(dest));
-			*to << push(e, low32(dest));
-			*to << call(e, xConst(Size::sPtr, (Word)fn), ValType(Size::sLong, false));
-			*to << add(e, ptrStack, ptrConst(Size::sLong * 2));
+			*to << push(high32(src));
+			*to << push(low32(src));
+			*to << push(high32(dest));
+			*to << push(low32(dest));
+			*to << call(xConst(Size::sPtr, (Word)fn), ValType(Size::sLong, false));
+			*to << add(ptrStack, ptrConst(Size::sLong * 2));
 
 			// Save the result somewhere
 			if (dest != Operand(rax)) {
-				*to << mov(e, high32(dest), high32(rax));
-				*to << mov(e, low32(dest), low32(rax));
+				*to << mov(high32(dest), high32(rax));
+				*to << mov(low32(dest), low32(rax));
 			}
 
 			// Restore registers
@@ -77,66 +77,82 @@ namespace code {
 		}
 
 		void Remove64::movTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
-
-			*to << mov(e, low32(instr->dest()), low32(instr->src()));
-			*to << mov(e, high32(instr->dest()), high32(instr->src()));
+			*to << mov(low32(instr->dest()), low32(instr->src()));
+			*to << mov(high32(instr->dest()), high32(instr->src()));
 		}
 
 		void Remove64::addTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
-
-			*to << add(e, low32(instr->dest()), low32(instr->src()));
-			*to << adc(e, high32(instr->dest()), high32(instr->src()));
+			*to << add(low32(instr->dest()), low32(instr->src()));
+			*to << adc(high32(instr->dest()), high32(instr->src()));
 		}
 
 		void Remove64::adcTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
-
-			*to << adc(e, low32(instr->dest()), low32(instr->src()));
-			*to << adc(e, high32(instr->dest()), high32(instr->src()));
+			*to << adc(low32(instr->dest()), low32(instr->src()));
+			*to << adc(high32(instr->dest()), high32(instr->src()));
 		}
 
 		void Remove64::orTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
-
-			*to << or(e, low32(instr->dest()), low32(instr->src()));
-			*to << or(e, high32(instr->dest()), high32(instr->src()));
+			*to << or(low32(instr->dest()), low32(instr->src()));
+			*to << or(high32(instr->dest()), high32(instr->src()));
 		}
 
 		void Remove64::andTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
-
-			*to << and(e, low32(instr->dest()), low32(instr->src()));
-			*to << and(e, high32(instr->dest()), high32(instr->src()));
+			*to << and(low32(instr->dest()), low32(instr->src()));
+			*to << and(high32(instr->dest()), high32(instr->src()));
 		}
 
 		void Remove64::subTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
-
-			*to << sub(e, low32(instr->dest()), low32(instr->src()));
-			*to << sbb(e, high32(instr->dest()), high32(instr->src()));
+			*to << sub(low32(instr->dest()), low32(instr->src()));
+			*to << sbb(high32(instr->dest()), high32(instr->src()));
 		}
 
 		void Remove64::sbbTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
-
-			*to << sbb(e, low32(instr->dest()), low32(instr->src()));
-			*to << sbb(e, high32(instr->dest()), high32(instr->src()));
+			*to << sbb(low32(instr->dest()), low32(instr->src()));
+			*to << sbb(high32(instr->dest()), high32(instr->src()));
 		}
 
 		void Remove64::xorTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
-
-			*to << xor(e, low32(instr->dest()), low32(instr->src()));
-			*to << xor(e, high32(instr->dest()), high32(instr->src()));
+			*to << xor(low32(instr->dest()), low32(instr->src()));
+			*to << xor(high32(instr->dest()), high32(instr->src()));
 		}
 
 		void Remove64::cmpTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
+			Register dest = unusedReg(used);
 
-			*to << mov(e, low32(instr->dest()), low32(instr->src()));
-			*to << mov(e, high32(instr->dest()), high32(instr->src()));
+			bool preserved = false;
+			if (dest == noReg) {
+				*to << push(ebx);
+				dest = ebx;
+				preserved = true;
+			} else {
+				dest = asSize(dest, Size::sInt);
+			}
+
+			*to << mov(dest, low32(instr->dest()));
+			*to << sub(dest, low32(instr->src()));
+			*to << pushFlags();
+			*to << mov(dest, high32(instr->dest()));
+			*to << sbb(dest, high32(instr->src()));
+			*to << pushFlags();
+
+			// Reset ZF if it was not set the first time around.
+			*to << mov(dest, intRel(ptrStack, Offset::sInt));
+			*to << or(dest, intConst(~(1 << 6))); // Now all bits except for ZF are always 1
+			*to << and(intRel(ptrStack, Offset()), dest); // Masking out ZF.
+
+			*to << popFlags();
+			*to << pop(dest); // We can not use add here, as it modifies flags.
+
+			if (preserved) {
+				*to << pop(ebx);
+			}
+
+			// Wrong:
+			// Label end = to->label();
+			// *to << cmp(high32(instr->dest()), high32(instr->src()));
+			// *to << jmp(end, ifNotEqual);
+			// *to << cmp(low32(instr->dest()), low32(instr->src()));
+			// *to << end;
 		}
 
 		static Long CODECALL mul(Long a, Long b) {
@@ -180,17 +196,13 @@ namespace code {
 		}
 
 		void Remove64::pushTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
-
-			*to << push(e, high32(instr->src()));
-			*to << push(e, low32(instr->src()));
+			*to << push(high32(instr->src()));
+			*to << push(low32(instr->src()));
 		}
 
 		void Remove64::popTfm(Listing *to, Instr *instr, RegSet *used) {
-			Engine &e = engine();
-
-			*to << pop(e, low32(instr->dest()));
-			*to << pop(e, high32(instr->dest()));
+			*to << pop(low32(instr->dest()));
+			*to << pop(high32(instr->dest()));
 		}
 
 	}

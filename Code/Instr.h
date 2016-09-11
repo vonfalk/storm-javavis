@@ -79,6 +79,8 @@ namespace code {
 	Instr *STORM_FN mov(EnginePtr e, Operand to, Operand from);
 	Instr *STORM_FN push(EnginePtr e, Operand v);
 	Instr *STORM_FN pop(EnginePtr e, Operand to);
+	Instr *STORM_FN pushFlags(EnginePtr e);
+	Instr *STORM_FN popFlags(EnginePtr e);
 	Instr *STORM_FN jmp(EnginePtr e, Operand to);
 	Instr *STORM_FN jmp(EnginePtr e, Operand to, CondFlag cond);
 	Instr *STORM_FN call(EnginePtr e, Operand to, ValType ret);
@@ -100,10 +102,10 @@ namespace code {
 	// fnParamRef is like the two-parameter version of fnParam, except 'src' is a pointer to a value rather
 	// than the value itself.
 	// Having an empty 'copyFn' to 'fnParam' will generate a 'memcpy'-like copy.
-	Instr *fnParam(EnginePtr e, Operand src);
-	Instr *fnParam(EnginePtr e, Variable src, Operand copyFn);
-	Instr *fnParamRef(EnginePtr e, Operand src, Operand copyFn);
-	Instr *fnCall(EnginePtr e, Operand src, ValType ret);
+	Instr *STORM_FN fnParam(EnginePtr e, Operand src);
+	Instr *STORM_FN fnParam(EnginePtr e, Variable src, Operand copyFn);
+	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Operand copyFn);
+	Instr *STORM_FN fnCall(EnginePtr e, Operand src, ValType ret);
 
 	// Integer math (signed/unsigned)
 	Instr *STORM_FN add(EnginePtr e, Operand dest, Operand src);
@@ -166,5 +168,122 @@ namespace code {
 	// Segment override for the next instruction, not reliable for function calls or double memory accesses. Only
 	// availiable on relevant architectures, for example X86.
 	Instr *STORM_FN threadLocal(EnginePtr e);
+
+
+	/**
+	 * Make these functions more convenient to call in C++ during certain conditions:
+	 *
+	 * It inhibits the clarity and it is a bit annoying to have to do:
+	 * *foo << mov(e, eax, ebx);
+	 *
+	 * instead of:
+	 * *foo << mov(eax, ebx);
+	 *
+	 * The first engine parameter is not visible in Storm (as it will insert that for us
+	 * automatically), but in C++ we need another mechanism as C++ does not know which engine we
+	 * will use. So in the context of directly appending instructions to a Listing object, we can
+	 * save the parameters in some container temporarily and delay the call to the actual creating
+	 * function until the result is appended to a Listing. When this happens, we can get an Engine
+	 * from there and create the Instr object properly. This is done with the template magic
+	 * below. Sadly, we need to declare all machine operations once more at the end, but that is a
+	 * small price to pay.
+	 */
+
+	class Listing;
+
+	template <Instr *(*Fn)(EnginePtr)>
+	class InstrProxy0 {};
+
+	template <Instr *(*Fn)(EnginePtr)>
+	inline Listing &operator <<(Listing &l, const InstrProxy0<Fn> &p) {
+		return l << (*Fn)(l.engine());
+	}
+
+
+	template <class T, Instr *(*Fn)(EnginePtr, T)>
+	class InstrProxy1 {
+	public:
+		const T &t;
+		InstrProxy1(const T &t) : t(t) {}
+	};
+
+	template <class T, Instr *(*Fn)(EnginePtr, T)>
+	inline Listing &operator <<(Listing &l, const InstrProxy1<T, Fn> &p) {
+		return l << (*Fn)(l.engine(), p.t);
+	}
+
+
+	template <class T, class U, Instr *(*Fn)(EnginePtr, T, U)>
+	class InstrProxy2 {
+	public:
+		const T &t;
+		const U &u;
+		InstrProxy2(const T &t, const U &u) : t(t), u(u) {}
+	};
+
+	template <class T, class U, Instr *(*Fn)(EnginePtr, T, U)>
+	inline Listing &operator <<(Listing &l, const InstrProxy2<T, U, Fn> &p) {
+		return l << (*Fn)(l.engine(), p.t, p.u);
+	}
+
+
+#define PROXY0(op)												\
+	inline InstrProxy0<&op> op() { return InstrProxy0<&op>(); }
+#define PROXY1(op, T)													\
+	inline InstrProxy1<T, &op> op(const T &t) { return InstrProxy1<T, &op>(t); }
+#define PROXY2(op, T, U)												\
+	inline InstrProxy2<T, U, &op> op(const T &t, const U &u) { return InstrProxy2<T, U, &op>(t, u); }
+
+
+	// Repetition of all OP-codes.
+	PROXY2(mov, Operand, Operand);
+	PROXY1(push, Operand);
+	PROXY1(pop, Operand);
+	PROXY0(pushFlags);
+	PROXY0(popFlags);
+	PROXY1(jmp, Operand);
+	PROXY2(jmp, Operand, CondFlag);
+	PROXY2(call, Operand, ValType);
+	PROXY1(ret, ValType);
+	PROXY2(lea, Operand, Operand);
+	PROXY2(setCond, Operand, CondFlag);
+	PROXY1(fnParam, Operand);
+	PROXY2(fnParam, Variable, Operand);
+	PROXY2(fnParamRef, Operand, Operand);
+	PROXY2(fnCall, Operand, ValType);
+	PROXY2(add, Operand, Operand);
+	PROXY2(adc, Operand, Operand);
+	PROXY2(or, Operand, Operand);
+	PROXY2(and, Operand, Operand);
+	PROXY2(sub, Operand, Operand);
+	PROXY2(sbb, Operand, Operand);
+	PROXY2(xor, Operand, Operand);
+	PROXY2(cmp, Operand, Operand);
+	PROXY2(mul, Operand, Operand);
+	PROXY2(idiv, Operand, Operand);
+	PROXY2(imod, Operand, Operand);
+	PROXY2(udiv, Operand, Operand);
+	PROXY2(umod, Operand, Operand);
+	PROXY2(shl, Operand, Operand);
+	PROXY2(shr, Operand, Operand);
+	PROXY2(sar, Operand, Operand);
+	PROXY2(icast, Operand, Operand);
+	PROXY2(ucast, Operand, Operand);
+	PROXY1(fstp, Operand);
+	PROXY1(fistp, Operand);
+	PROXY1(fld, Operand);
+	PROXY1(fild, Operand);
+	PROXY0(faddp);
+	PROXY0(fsubp);
+	PROXY0(fmulp);
+	PROXY0(fdivp);
+	PROXY0(fcompp);
+	PROXY0(fwait);
+	PROXY1(dat, Operand);
+	PROXY0(prolog);
+	PROXY0(epilog);
+	PROXY1(begin, Part);
+	PROXY1(end, Block);
+	PROXY0(threadLocal);
 
 }

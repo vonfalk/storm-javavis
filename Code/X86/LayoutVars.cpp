@@ -71,15 +71,15 @@ namespace code {
 				return;
 
 			if (initEax) {
-				*dest << xor(e, eax, eax);
+				*dest << xor(eax, eax);
 				initEax = false;
 			}
 
 			for (nat i = 0; i < s32; i += 4) {
 				if (s32 - i > 1) {
-					*dest << mov(e, intRel(ptrFrame, start + Offset(i)), eax);
+					*dest << mov(intRel(ptrFrame, start + Offset(i)), eax);
 				} else {
-					*dest << mov(e, byteRel(ptrFrame, start + Offset(i)), al);
+					*dest << mov(byteRel(ptrFrame, start + Offset(i)), al);
 				}
 			}
 		}
@@ -127,24 +127,24 @@ namespace code {
 
 				if (!dtor.empty() && (when & freeOnBlockExit) == freeOnBlockExit) {
 					if (preserveEax && !pushedEax) {
-						*dest << push(e, ptrA);
+						*dest << push(ptrA);
 						pushedEax = true;
 					}
 
 					if (when & freePtr) {
-						*dest << lea(e, ptrA, resolve(v));
-						*dest << push(e, ptrA);
-						*dest << call(e, dtor, valVoid());
-						*dest << add(e, ptrStack, ptrConst(Offset::sPtr));
+						*dest << lea(ptrA, resolve(v));
+						*dest << push(ptrA);
+						*dest << call(dtor, valVoid());
+						*dest << add(ptrStack, ptrConst(Offset::sPtr));
 					} else if (v.size() <= Size::sInt) {
-						*dest << push(e, resolve(v));
-						*dest << call(e, dtor, valVoid());
-						*dest << add(e, ptrStack, ptrConst(v.size()));
+						*dest << push(resolve(v));
+						*dest << call(dtor, valVoid());
+						*dest << add(ptrStack, ptrConst(v.size()));
 					} else {
-						*dest << push(e, high32(resolve(v)));
-						*dest << push(e, low32(resolve(v)));
-						*dest << call(e, dtor, valVoid());
-						*dest << add(e, ptrStack, ptrConst(v.size()));
+						*dest << push(high32(resolve(v)));
+						*dest << push(low32(resolve(v)));
+						*dest << call(dtor, valVoid());
+						*dest << add(ptrStack, ptrConst(v.size()));
 					}
 
 					// TODO? Zero memory to avoid multiple destruction in rare cases?
@@ -152,22 +152,22 @@ namespace code {
 			}
 
 			if (pushedEax)
-				*dest << pop(e, ptrA);
+				*dest << pop(ptrA);
 
 			part = dest->prev(part);
 			if (usingEH)
-				*dest << mov(e, intRel(ptrFrame, partId), natConst(part.key()));
+				*dest << mov(intRel(ptrFrame, partId), natConst(part.key()));
 		}
 
 		void LayoutVars::prologTfm(Listing *dest, Listing *src, Nat line) {
 			Engine &e = engine();
 
 			// Set up stack frame.
-			*dest << push(e, ptrFrame);
-			*dest << mov(e, ptrFrame, ptrStack);
+			*dest << push(ptrFrame);
+			*dest << mov(ptrFrame, ptrStack);
 
 			// Allocate stack space.
-			*dest << sub(e, ptrStack, ptrConst(layout->last()));
+			*dest << sub(ptrStack, ptrConst(layout->last()));
 
 			// Keep track of offsets...
 			Offset offset = -Offset::sPtr;
@@ -175,26 +175,26 @@ namespace code {
 			// Extra data needed for exception handling.
 			if (usingEH) {
 				// Current part id.
-				*dest << mov(e, intRel(ptrFrame, offset), natConst(0));
+				*dest << mov(intRel(ptrFrame, offset), natConst(0));
 				partId = offset;
 				offset -= Offset::sInt;
 				// Owner. TODO!
-				*dest << mov(e, intRel(ptrFrame, offset), natConst(0));
+				*dest << mov(intRel(ptrFrame, offset), natConst(0));
 				offset -= Offset::sInt;
 				// Standard SEH frame.
-				*dest << mov(e, ptrRel(ptrFrame, offset), natConst(0)); // Function to call: TODO!
+				*dest << mov(ptrRel(ptrFrame, offset), natConst(0)); // Function to call: TODO!
 				offset -= Offset::sPtr;
-				*dest << threadLocal(e) << mov(e, ptrA, ptrRel(noReg, Offset()));
-				*dest << mov(e, ptrRel(ptrFrame, offset), ptrA); // Previous SEH frame
+				*dest << threadLocal() << mov(ptrA, ptrRel(noReg, Offset()));
+				*dest << mov(ptrRel(ptrFrame, offset), ptrA); // Previous SEH frame
 				offset -= Offset::sPtr;
-				*dest << threadLocal(e) << mov(e, ptrRel(noReg, Offset()), ptrStack); // Set ourselves the new frame.
+				*dest << threadLocal() << mov(ptrRel(noReg, Offset()), ptrStack); // Set ourselves the new frame.
 
 				assert(false, L"Incomplete implementation!");
 			}
 
 			// Save any registers we need to preserve.
 			for (RegSet::Iter i = preserved->begin(); i != preserved->end(); ++i) {
-				*dest << mov(e, ptrRel(ptrFrame, offset), asSize(*i, Size::sPtr));
+				*dest << mov(ptrRel(ptrFrame, offset), asSize(*i, Size::sPtr));
 				offset -= Offset::sPtr;
 			}
 
@@ -219,7 +219,7 @@ namespace code {
 				if (usingEH)
 					offset -= Offset::sPtr * 4;
 				for (RegSet::Iter i = preserved->begin(); i != preserved->end(); ++i) {
-					*dest << mov(e, asSize(*i, Size::sPtr), ptrRel(ptrFrame, offset));
+					*dest << mov(asSize(*i, Size::sPtr), ptrRel(ptrFrame, offset));
 					offset -= Offset::sPtr;
 				}
 			}
@@ -227,12 +227,12 @@ namespace code {
 			if (usingEH) {
 				// Remove the SEH. Note: ptrC is not preserved across function calls, so it is OK to use it here!
 				// We can not use ptrA nor ptrD as rax == eax:edx
-				*dest << mov(e, ptrC, ptrRel(ptrFrame, Offset::sPtr * 4));
-				*dest << threadLocal(e) << mov(e, ptrRel(noReg, Offset()), ptrC);
+				*dest << mov(ptrC, ptrRel(ptrFrame, Offset::sPtr * 4));
+				*dest << threadLocal() << mov(ptrRel(noReg, Offset()), ptrC);
 			}
 
-			*dest << mov(e, ptrStack, ptrFrame);
-			*dest << pop(e, ptrFrame);
+			*dest << mov(ptrStack, ptrFrame);
+			*dest << pop(ptrFrame);
 		}
 
 		void LayoutVars::beginBlockTfm(Listing *dest, Listing *src, Nat line) {

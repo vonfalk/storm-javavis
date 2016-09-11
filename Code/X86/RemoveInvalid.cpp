@@ -104,13 +104,13 @@ namespace code {
 			Engine &e = engine();
 			if (reg == noReg) {
 				reg = asSize(ptrD, size);
-				*dest << code::push(e, ptrD);
-				*dest << code::mov(e, reg, instr->src());
+				*dest << push(ptrD);
+				*dest << mov(reg, instr->src());
 				*dest << instr->alterSrc(reg);
-				*dest << code::pop(e, ptrD);
+				*dest << pop(ptrD);
 			} else {
 				reg = asSize(reg, size);
-				*dest << code::mov(e, reg, instr->src());
+				*dest << mov(reg, instr->src());
 				*dest << instr->alterSrc(reg);
 			}
 		}
@@ -126,14 +126,14 @@ namespace code {
 			Register reg = unusedReg(line);
 			Engine &e = engine();
 			if (reg == noReg) {
-				*dest << code::push(e, ptrD);
-				*dest << code::lea(e, ptrD, instr->src());
-				*dest << code::mov(e, instr->dest(), ptrD);
-				*dest << code::pop(e, ptrD);
+				*dest << push(ptrD);
+				*dest << lea(ptrD, instr->src());
+				*dest << mov(instr->dest(), ptrD);
+				*dest << pop(ptrD);
 			} else {
 				reg = asSize(reg, Size::sPtr);
-				*dest << code::lea(e, reg, instr->src());
-				*dest << code::mov(e, instr->dest(), reg);
+				*dest << lea(reg, instr->src());
+				*dest << mov(instr->dest(), reg);
 			}
 		}
 
@@ -152,16 +152,16 @@ namespace code {
 			Register reg = unusedReg(line);
 			if (reg == noReg) {
 				reg = asSize(ptrD, size);
-				*dest << code::push(e, ptrD);
-				*dest << code::mov(e, reg, instr->dest());
+				*dest << push(ptrD);
+				*dest << mov(reg, instr->dest());
 				*dest << instr->alterDest(reg);
-				*dest << code::mov(e, instr->dest(), reg);
-				*dest << code::pop(e, ptrD);
+				*dest << mov(instr->dest(), reg);
+				*dest << pop(ptrD);
 			} else {
 				reg = asSize(reg, size);
-				*dest << code::mov(e, reg, instr->dest());
+				*dest << mov(reg, instr->dest());
 				*dest << instr->alterDest(reg);
-				*dest << code::mov(e, instr->dest(), reg);
+				*dest << mov(instr->dest(), reg);
 			}
 		}
 
@@ -190,31 +190,31 @@ namespace code {
 
 			// Clear eax and edx.
 			if (!destEax && used->has(eax))
-				*to << push(e, eax);
+				*to << push(eax);
 			if (!isByte && used->has(edx))
-				*to << push(e, edx);
+				*to << push(edx);
 
 			// Move dest into eax first.
-			*to << mov(e, eax, dest);
+			*to << mov(eax, dest);
 
 			if (srcConst) {
 				if (used->has(ebx))
-					*to << push(e, ebx);
-				*to << mov(e, ebx, instr->src());
+					*to << push(ebx);
+				*to << mov(ebx, instr->src());
 				newSrc = ebx;
 			}
 
 			// Clear edx.
-			*to << xor(e, edx, edx);
+			*to << xor(edx, edx);
 			*to << instr->alter(eax, newSrc);
-			*to << mov(e, dest, eax);
+			*to << mov(dest, eax);
 
 			if (srcConst && used->has(ebx))
-				*to << pop(e, ebx);
+				*to << pop(ebx);
 			if (!isByte && used->has(edx))
-				*to << pop(e, edx);
+				*to << pop(edx);
 			if (!destEax && used->has(eax))
-				*to << pop(e, eax);
+				*to << pop(eax);
 		}
 
 		void RemoveInvalid::udivTfm(Listing *dest, Instr *instr, Nat line) {
@@ -234,31 +234,31 @@ namespace code {
 
 			// Clear eax and edx if needed.
 			if (!eaxDest && used->has(eax))
-				*to << push(e, eax);
+				*to << push(eax);
 			if (!isByte && used->has(edx))
-				*to << push(e, edx);
+				*to << push(edx);
 
 			// Move source into eax.
-			*to << mov(e, eax, dest);
+			*to << mov(eax, dest);
 
 			if (srcConst) {
 				if (used->has(ebx))
-					*to << push(e, ebx);
-				*to << mov(e, ebx, instr->src());
+					*to << push(ebx);
+				*to << mov(ebx, instr->src());
 				newSrc = ebx;
 			}
 
 			// Clear edx.
-			*to << xor(e, edx, edx);
+			*to << xor(edx, edx);
 			*to << instr->alter(eax, newSrc);
-			*to << mov(e, dest, edx);
+			*to << mov(dest, edx);
 
 			if (srcConst && used->has(ebx))
-				*to << pop(e, ebx);
+				*to << pop(ebx);
 			if (!isByte && used->has(edx))
-				*to << pop(e, edx);
+				*to << pop(edx);
 			if (!eaxDest && used->has(eax))
-				*to << pop(e, eax);
+				*to << pop(eax);
 		}
 
 		void RemoveInvalid::umodTfm(Listing *dest, Instr *instr, Nat line) {
@@ -305,30 +305,30 @@ namespace code {
 
 				if (reg == noReg) {
 					// Ugh... Worst case!
-					*dest << push(e, ecx);
-					*dest << mov(e, cl, instr->src());
+					*dest << push(ecx);
+					*dest << mov(cl, instr->src());
 					*dest << instr->alter(xRel(size, ptrStack, Offset(0)), cl);
-					*dest << pop(e, ecx);
+					*dest << pop(ecx);
 				} else {
-					*dest << mov(e, reg, instr->dest());
-					*dest << mov(e, cl, instr->src());
+					*dest << mov(reg, instr->dest());
+					*dest << mov(cl, instr->src());
 					*dest << instr->alter(reg, cl);
-					*dest << mov(e, instr->dest(), reg);
+					*dest << mov(instr->dest(), reg);
 				}
 			} else {
 				// We have a bit more leeway at least!
 				Register reg = asSize(unusedReg(line), Size::sInt);
 
 				if (reg == noReg) {
-					*dest << push(e, ecx);
-					*dest << mov(e, cl, instr->src());
+					*dest << push(ecx);
+					*dest << mov(cl, instr->src());
 					*dest << instr->alterSrc(cl);
-					*dest << pop(e, ecx);
+					*dest << pop(ecx);
 				} else {
-					*dest << mov(e, reg, ecx);
-					*dest << mov(e, cl, instr->src());
+					*dest << mov(reg, ecx);
+					*dest << mov(cl, instr->src());
 					*dest << instr->alterSrc(cl);
-					*dest << mov(e, ecx, reg);
+					*dest << mov(ecx, reg);
 				}
 			}
 		}
@@ -363,9 +363,9 @@ namespace code {
 				saveEdx = false;
 
 			if (saveEax)
-				*dest << push(e, eax);
+				*dest << push(eax);
 			if (saveEdx)
-				*dest << push(e, edx);
+				*dest << push(edx);
 
 			if ((sFrom == Size::sByte && sTo == Size::sLong) ||
 				(sFrom == Size::sLong && sTo == Size::sByte)) {
@@ -377,17 +377,17 @@ namespace code {
 
 			if (!toEax) {
 				if (sTo == Size::sLong) {
-					*dest << mov(e, low32(instr->dest()), eax);
-					*dest << mov(e, high32(instr->dest()), edx);
+					*dest << mov(low32(instr->dest()), eax);
+					*dest << mov(high32(instr->dest()), edx);
 				} else {
-					*dest << mov(e, instr->dest(), asSize(eax, sTo));
+					*dest << mov(instr->dest(), asSize(eax, sTo));
 				}
 			}
 
 			if (saveEdx)
-				*dest << pop(e, edx);
+				*dest << pop(edx);
 			if (saveEax)
-				*dest << pop(e, edx);
+				*dest << pop(edx);
 		}
 
 		void RemoveInvalid::ucastTfm(Listing *dest, Instr *instr, Nat line) {
@@ -398,20 +398,20 @@ namespace code {
 			Size s = instr->src().size();
 			Engine &e = engine();
 
-			*dest << call(e, instr->src(), ValType(s, false));
-			*dest << sub(e, ptrStack, ptrConst(s));
-			*dest << fstp(e, xRel(s, ptrStack, Offset()));
-			*dest << pop(e, instr->dest());
+			*dest << call(instr->src(), ValType(s, false));
+			*dest << sub(ptrStack, ptrConst(s));
+			*dest << fstp(xRel(s, ptrStack, Offset()));
+			*dest << pop(instr->dest());
 		}
 
 		void RemoveInvalid::retFloatTfm(Listing *dest, Instr *instr, Nat line) {
 			Size s = instr->src().size();
 			Engine &e = engine();
 
-			*dest << push(e, instr->src());
-			*dest << fld(e, xRel(s, ptrStack, Offset()));
-			*dest << add(e, ptrStack, ptrConst(s));
-			*dest << ret(e, ValType(s, false));
+			*dest << push(instr->src());
+			*dest << fld(xRel(s, ptrStack, Offset()));
+			*dest << add(ptrStack, ptrConst(s));
+			*dest << ret(ValType(s, false));
 		}
 
 		void RemoveInvalid::fnParamTfm(Listing *dest, Instr *instr, Nat line) {
@@ -438,13 +438,13 @@ namespace code {
 			Engine &e = dest->engine();
 
 			if (src.size() <= Size::sInt) {
-				*dest << push(e, src);
+				*dest << push(src);
 				return;
 			}
 
 			Nat size = roundUp(src.size().size32(), Nat(4));
 			for (nat i = 0; i < size; i += 4) {
-				*dest << push(e, offset(src, Offset(size - i)));
+				*dest << push(offset(src, Offset(size - i)));
 			}
 		}
 
@@ -464,7 +464,7 @@ namespace code {
 				} else {
 					// Reserve stack space.
 					Size s = p.src.size() + Size::sPtr.align();
-					*dest << sub(e, ptrStack, ptrConst(s));
+					*dest << sub(ptrStack, ptrConst(s));
 				}
 			}
 
@@ -482,12 +482,12 @@ namespace code {
 
 				if (!p.copyFn.empty()) {
 					// Copy it!
-					*dest << lea(e, ptrA, p.src);
-					*dest << push(e, ptrA);
-					*dest << lea(e, ptrA, ptrRel(ptrStack, paramOffset));
-					*dest << push(e, ptrA);
-					*dest << call(e, p.copyFn, valVoid());
-					*dest << add(e, ptrStack, ptrConst(Size::sPtr * 2));
+					*dest << lea(ptrA, p.src);
+					*dest << push(ptrA);
+					*dest << lea(ptrA, ptrRel(ptrStack, paramOffset));
+					*dest << push(ptrA);
+					*dest << call(p.copyFn, valVoid());
+					*dest << add(ptrStack, ptrConst(Size::sPtr * 2));
 				}
 
 				paramOffset += s;
@@ -495,17 +495,17 @@ namespace code {
 
 			// Call the real function!
 			Size rSize = instr->dest().size();
-			*dest << call(e, instr->src(), ValType(rSize, false));
+			*dest << call(instr->src(), ValType(rSize, false));
 
 			// If this was a float, do some magic.
 			if (instr->op() == op::fnCallFloat) {
-				*dest << fstp(e, xRel(rSize, ptrStack, Offset()));
-				*dest << pop(e, instr->dest());
+				*dest << fstp(xRel(rSize, ptrStack, Offset()));
+				*dest << pop(instr->dest());
 			}
 
 			// Pop the stack.
 			if (paramOffset != Offset())
-				*dest << add(e, ptrStack, ptrConst(paramOffset));
+				*dest << add(ptrStack, ptrConst(paramOffset));
 
 			// Clear parameters for next time.
 			params->clear();

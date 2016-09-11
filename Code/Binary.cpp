@@ -5,7 +5,7 @@ namespace code {
 
 	Binary::Binary(Arena *arena, Listing *listing) : arena(arena), code(null) {
 		Listing *tfm = arena->transform(listing, this);
-		PVAR(tfm);
+		// PVAR(tfm);
 
 		LabelOutput *labels = arena->labelOutput();
 		arena->output(tfm, labels);

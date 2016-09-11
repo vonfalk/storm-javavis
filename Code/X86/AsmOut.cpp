@@ -193,6 +193,14 @@ namespace code {
 			}
 		}
 
+		void pushFlagsOut(Output *to, Instr *instr) {
+			to->putByte(0x9C);
+		}
+
+		void popFlagsOut(Output *to, Instr *instr) {
+			to->putByte(0x9D);
+		}
+
 		void retOut(Output *to, Instr *instr) {
 			to->putByte(0xC3);
 		}
@@ -252,6 +260,45 @@ namespace code {
 			jmpCall(true, to, instr->src());
 		}
 
+		static void shiftOp(Output *to, const Operand &dest, const Operand &src, byte subOp) {
+			byte c;
+			bool is8 = dest.size() == Size::sByte;
+
+			switch (src.type()) {
+			case opConstant:
+				c = byte(src.constant());
+				if (c == 1) {
+					to->putByte(is8 ? 0xD0 : 0xD1);
+					modRm(to, subOp, dest);
+				} else {
+					to->putByte(is8 ? 0xC0 : 0xC1);
+					modRm(to, subOp, dest);
+					to->putByte(c);
+				}
+				break;
+			case opRegister:
+				assert(src.reg() == cl, L"Transform of shift-op failed.");
+				to->putByte(is8 ? 0xD2 : 0xD3);
+				modRm(to, subOp, dest);
+				break;
+			default:
+				assert(false, L"The transformation was not run.");
+				break;
+			}
+		}
+
+		void shlOut(Output *to, Instr *instr) {
+			shiftOp(to, instr->dest(), instr->src(), 4);
+		}
+
+		void shrOut(Output *to, Instr *instr) {
+			shiftOp(to, instr->dest(), instr->src(), 5);
+		}
+
+		void sarOut(Output *to, Instr *instr) {
+			shiftOp(to, instr->dest(), instr->src(), 7);
+		}
+
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
 			OUTPUT(add),
@@ -264,16 +311,26 @@ namespace code {
 			OUTPUT(cmp),
 			OUTPUT(push),
 			OUTPUT(pop),
+			OUTPUT(pushFlags),
+			OUTPUT(popFlags),
 			OUTPUT(setCond),
 			OUTPUT(jmp),
 			OUTPUT(call),
 			OUTPUT(ret),
+			OUTPUT(shl),
+			OUTPUT(shr),
+			OUTPUT(sar),
 		};
 
 		void output(Listing *src, Output *to) {
 			static OpTable<OutputFn> t(outputMap, ARRAY_COUNT(outputMap));
 
 			for (Nat i = 0; i < src->count(); i++) {
+				Array<Label> *labels = src->labels(i);
+				for (nat l = 0; labels != null && l < labels->count(); l++) {
+					to->mark(labels->at(l));
+				}
+
 				Instr *instr = src->at(i);
 				OutputFn fn = t[instr->op()];
 				if (fn) {

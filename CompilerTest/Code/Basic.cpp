@@ -18,8 +18,8 @@ BEGIN_TEST(CodeScopeTest, CodeBasic) {
 	Variable v3 = l->createVar(p, Size::sInt);
 	Variable par = l->createParam(valPtr());
 
-	*l << mov(e, eax, ebx);
-	*l << mov(e, v2, intConst(10));
+	*l << mov(eax, ebx);
+	*l << mov(v2, intConst(10));
 
 	CHECK_EQ(l->prev(v1), v3);
 	CHECK_EQ(l->prev(v3), v2);
@@ -43,15 +43,15 @@ BEGIN_TEST(CodeTest, CodeBasic) {
 
 	CHECK_EQ(l->exceptionHandler(), false);
 
-	*l << prolog(e);
-	*l << mov(e, v, p);
-	*l << add(e, v, intConst(1));
-	*l << l1 << mov(e, ptrA, l1);
+	*l << prolog();
+	*l << mov(v, p);
+	*l << add(v, intConst(1));
+	*l << l1 << mov(ptrA, l1);
 	// Use 'ebx' so that we have to preserve some registers during the function call...
-	*l << mov(e, ebx, v);
-	*l << mov(e, eax, ebx);
-	*l << epilog(e);
-	*l << ret(e, ValType(Size::sInt, false));
+	*l << mov(ebx, v);
+	*l << mov(eax, ebx);
+	*l << epilog();
+	*l << ret(ValType(Size::sInt, false));
 
 	Binary *b = new (e) Binary(arena, l);
 

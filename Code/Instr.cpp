@@ -149,6 +149,18 @@ namespace code {
 		return instrDest(e, op::pop, to);
 	}
 
+	Instr *pushFlags(EnginePtr e) {
+		return instr(e, op::pushFlags);
+	}
+
+	Instr *popFlags(EnginePtr e) {
+		return instr(e, op::popFlags);
+	}
+
+	Instr *jmp(EnginePtr e, Operand to) {
+		return jmp(e, to, ifAlways);
+	}
+
 	Instr *jmp(EnginePtr e, Operand to, CondFlag cond) {
 		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must jump to a pointer, trying to jump to " + toS(to));

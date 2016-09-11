@@ -135,10 +135,10 @@ namespace code {
 			Engine &e = dest->engine();
 			Register into = unusedReg(used);
 			if (into == noReg) {
-				*dest << push(e, r);
+				*dest << push(r);
 			} else {
 				into = asSize(into, size(r));
-				*dest << mov(e, into, r);
+				*dest << mov(into, r);
 			}
 			return into;
 		}
@@ -147,9 +147,9 @@ namespace code {
 			Engine &e = dest->engine();
 
 			if (saved == noReg) {
-				*dest << pop(e, r);
+				*dest << pop(r);
 			} else {
-				*dest << mov(e, r, saved);
+				*dest << mov(r, saved);
 			}
 		}
 

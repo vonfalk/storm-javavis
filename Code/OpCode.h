@@ -15,6 +15,8 @@ namespace code {
 			lea,
 			push,
 			pop,
+			pushFlags,
+			popFlags,
 			jmp,
 			call,
 			ret,

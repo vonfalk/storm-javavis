@@ -386,7 +386,9 @@ namespace code {
 			switch (src.type()) {
 			case Value::tConstant:
 				c = byte(src.constant());
-				if (c == 1) {
+				if (c == 0) {
+					// No need to shift 0 steps.
+				} else if (c == 1) {
 					to.putByte(is8 ? 0xD0 : 0xD1);
 					modRm(to, subOp, dest);
 				} else {

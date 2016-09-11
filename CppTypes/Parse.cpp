@@ -465,6 +465,12 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			env.world.threads.insert(t);
 			tok.expect(L")");
 			tok.expect(L";");
+		} else if (t.token.startsWith(L"PROXY")) {
+			tok.skip();
+			tok.expect(L"(");
+			while (!tok.skipIf(L")"))
+				tok.skip();
+			tok.expect(L";");
 		} else if (t.token == L"{") {
 			tok.skip();
 			parseBlock(tok);

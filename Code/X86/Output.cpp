@@ -86,10 +86,12 @@ namespace code {
 		}
 
 		Nat CodeOut::labelOffset(Nat id) {
-			if (id < labels->count())
+			if (id < labels->count()) {
 				return labels->at(id);
-			else
+			} else {
+				assert(false, L"Unknown label id: " + ::toS(id));
 				return 0;
+			}
 		}
 
 		Nat CodeOut::toRelative(Nat offset) {

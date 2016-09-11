@@ -19,6 +19,8 @@ namespace code {
 		OP_CODE(lea, destWrite),
 		OP_CODE(push, destNone),
 		OP_CODE(pop, destWrite),
+		OP_CODE(pushFlags, destNone),
+		OP_CODE(popFlags, destNone),
 		OP_CODE(jmp, destRead),
 		OP_CODE(call, destRead),
 		OP_CODE(ret, destNone),
