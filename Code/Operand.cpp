@@ -238,6 +238,11 @@ namespace code {
 		return xConst(Size::sWord, v);
 	}
 
+	Operand floatConst(Float v) {
+		Nat *q = reinterpret_cast<Nat *>(&v);
+		return xConst(Size::sFloat, *q);
+	}
+
 	Operand ptrConst(Size v) {
 		return Operand(v, Size::sPtr);
 	}

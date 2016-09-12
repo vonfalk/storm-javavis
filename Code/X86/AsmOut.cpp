@@ -430,6 +430,86 @@ namespace code {
 			modRm(to, 6, instr->src());
 		}
 
+		void fstpOut(Output *to, Instr *instr) {
+			to->putByte(0xD9);
+			modRm(to, 3, instr->dest());
+		}
+
+		void fistpOut(Output *to, Instr *instr) {
+			// Use space just above stack for this.
+			Operand modified = intRel(ptrStack, -Offset(4));
+			Operand old = intRel(ptrStack, -Offset(2));
+
+			// Set rounding mode to 'truncate'.
+
+			// FNSTCW [ESP - 2]
+			to->putByte(0xD9);
+			modRm(to, 7, old);
+
+			// FNSTCW [ESP - 4]
+			to->putByte(0xD9);
+			modRm(to, 7, modified);
+
+			// OR [esp - 4], #0xC00 - Set bits 10 and 11 to 1.
+			orOut(to, or(instr->engine(), modified, natConst(0xC00)));
+
+			// FLDCW [ESP - 4]
+			to->putByte(0xD9);
+			modRm(to, 5, modified);
+
+			// FISTP 'dest'
+			to->putByte(0xDB);
+			modRm(to, 3, instr->dest());
+
+			// FLDCW [ESP - 2] - restore old mode
+			to->putByte(0xD9);
+			modRm(to, 5, old);
+		}
+
+		void fldOut(Output *to, Instr *instr) {
+			to->putByte(0xD9);
+			modRm(to, 0, instr->src());
+		}
+
+		void fildOut(Output *to, Instr *instr) {
+			to->putByte(0xDB);
+			modRm(to, 0, instr->src());
+		}
+
+		void faddpOut(Output *to, Instr *instr) {
+			to->putByte(0xDE);
+			to->putByte(0xC1);
+		}
+
+		void fsubpOut(Output *to, Instr *instr) {
+			to->putByte(0xDE);
+			to->putByte(0xE9);
+		}
+
+		void fmulpOut(Output *to, Instr *instr) {
+			to->putByte(0xDE);
+			to->putByte(0xC9);
+		}
+
+		void fdivpOut(Output *to, Instr *instr) {
+			to->putByte(0xDE);
+			to->putByte(0xF9);
+		}
+
+		void fcomppOut(Output *to, Instr *instr) {
+			// fcomip ST1
+			to->putByte(0xDF);
+			to->putByte(0xF0 + 1);
+
+			// fstp ST0 (effectively only a pop)
+			to->putByte(0xDD);
+			to->putByte(0xD8 + 0);
+		}
+
+		void fwaitOut(Output *to, Instr *instr) {
+			to->putByte(0x9B);
+		}
+
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
 			OUTPUT(add),
@@ -456,6 +536,17 @@ namespace code {
 			OUTPUT(mul),
 			OUTPUT(idiv),
 			OUTPUT(udiv),
+
+			OUTPUT(fstp),
+			OUTPUT(fistp),
+			OUTPUT(fld),
+			OUTPUT(fild),
+			OUTPUT(faddp),
+			OUTPUT(fsubp),
+			OUTPUT(fmulp),
+			OUTPUT(fdivp),
+			OUTPUT(fcompp),
+			OUTPUT(fwait),
 		};
 
 		void output(Listing *src, Output *to) {

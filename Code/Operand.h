@@ -178,6 +178,7 @@ namespace code {
 	Operand STORM_FN natConst(Nat v);
 	Operand STORM_FN longConst(Long v);
 	Operand STORM_FN wordConst(Word v);
+	Operand STORM_FN floatConst(Float v);
 	Operand STORM_FN ptrConst(Size v);
 	Operand STORM_FN ptrConst(Offset v);
 	Operand STORM_FN xConst(Size s, Word v);
