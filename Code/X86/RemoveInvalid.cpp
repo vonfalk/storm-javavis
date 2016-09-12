@@ -50,7 +50,7 @@ namespace code {
 		void RemoveInvalid::before(Listing *dest, Listing *src) {
 			params = new (this) Array<Param>();
 
-			used = usedRegisters(src).used;
+			used = usedRegisters(dest->arena, src).used;
 
 			// Add 64-bit aliases everywhere.
 			for (nat i = 0; i < used->count(); i++)
@@ -351,7 +351,7 @@ namespace code {
 				return;
 			}
 
-			bool toEax = instr->dest().type() != opRegister || !same(instr->dest().reg(), eax);
+			bool toEax = instr->dest().type() == opRegister && same(instr->dest().reg(), eax);
 
 			RegSet *used = this->used->at(line);
 			bool saveEax = used->has(eax);

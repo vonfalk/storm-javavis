@@ -12,8 +12,8 @@ namespace code {
 
 	void Transform::after(Listing *dest, Listing *src) {}
 
-	Listing *transform(Listing *src, Transform *use) {
-		Listing *result = src->createShell();
+	Listing *transform(Listing *src, const Arena *arena, Transform *use) {
+		Listing *result = src->createShell(arena);
 
 		use->before(result, src);
 

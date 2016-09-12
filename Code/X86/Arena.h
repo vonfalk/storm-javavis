@@ -30,6 +30,12 @@ namespace code {
 			virtual LabelOutput *STORM_FN labelOutput() const;
 			virtual CodeOutput *STORM_FN codeOutput(Array<Nat> *offsets, Nat size, Nat refs) const;
 
+			/**
+			 * Registers.
+			 */
+
+			virtual void STORM_FN removeFnRegs(RegSet *from) const;
+
 		};
 
 

@@ -2,6 +2,7 @@
 #include "Listing.h"
 #include "Exception.h"
 #include "UsedRegisters.h"
+#include "Arena.h"
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
 #include "Core/CloneEnv.h"
@@ -120,6 +121,25 @@ namespace code {
 	 */
 
 	Listing::Listing() :
+		arena(null),
+		code(new (engine()) Array<Entry>()),
+		nextLabels(null),
+		nextLabel(1),
+		params(new (engine()) Array<Nat>()),
+		vars(new (engine()) Array<IVar>()),
+		blocks(new (engine()) Array<IBlock>()),
+		parts(new (engine()) Array<IPart>()),
+		needEH(false) {
+
+		// Create the root block.
+		IBlock root(engine());
+		root.parts->push(0);
+		blocks->push(root);
+		parts->push(IPart(engine(), 0, 0));
+	}
+
+	Listing::Listing(const Arena *arena) :
+		arena(arena),
 		code(new (engine()) Array<Entry>()),
 		nextLabels(null),
 		nextLabel(1),
@@ -151,8 +171,8 @@ namespace code {
 		parts->deepCopy(env);
 	}
 
-	Listing *Listing::createShell() const {
-		Listing *shell = new (this) Listing();
+	Listing *Listing::createShell(const Arena *arena) const {
+		Listing *shell = arena ? new (this) Listing(arena) : new (this) Listing();
 
 		shell->nextLabel = nextLabel;
 		if (nextLabels)
@@ -542,7 +562,7 @@ namespace code {
 
 		putBlock(*to, 0);
 
-		UsedRegisters r = usedRegisters(this);
+		UsedRegisters r = usedRegisters(arena, this);
 		*to << L"Dirty registers: " << r.all;
 
 		for (nat i = 0; i < code->count(); i++) {

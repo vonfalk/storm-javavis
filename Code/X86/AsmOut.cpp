@@ -299,6 +299,83 @@ namespace code {
 			shiftOp(to, instr->dest(), instr->src(), 7);
 		}
 
+		void icastOut(Output *to, Instr *instr) {
+			nat sFrom = instr->src().size().size32();
+			nat sTo = instr->dest().size().size32();
+			Engine &e = instr->engine();
+
+			assert(same(instr->dest().reg(), ptrA), L"Only rax, eax, or al supported as a target for icast.");
+			bool srcEax = instr->src().type() == opRegister && same(instr->src().reg(), ptrA);
+
+			if (sFrom == 1 && sTo == 4) {
+				// movsx
+				to->putByte(0x0F);
+				to->putByte(0xBE);
+				modRm(to, registerId(eax), instr->src());
+			} else if (sFrom == 4 && sTo == 8) {
+				// mov (if needed).
+				if (!srcEax)
+					movOut(to, mov(e, eax, instr->src()));
+				// cdq
+				to->putByte(0x99);
+			} else if (sFrom == 8 && sTo == 4) {
+				if (!srcEax)
+					movOut(to, mov(e, eax, low32(instr->src())));
+			} else if (sFrom ==4 && sTo == 1) {
+				if (!srcEax)
+					movOut(to, mov(e, eax, instr->src()));
+			} else if (sFrom == 8 && sTo == 8) {
+				if (!srcEax) {
+					movOut(to, mov(e, eax, low32(instr->src())));
+					movOut(to, mov(e, edx, high32(instr->src())));
+				}
+			} else if (sFrom == sTo) {
+				if (!srcEax)
+					movOut(to, mov(e, eax, instr->src()));
+			} else {
+				assert(false, L"Unsupported icast mode: " + ::toS(instr));
+			}
+		}
+
+		void ucastOut(Output *to, Instr *instr) {
+			nat sFrom = instr->src().size().size32();
+			nat sTo = instr->dest().size().size32();
+			Engine &e = instr->engine();
+
+			assert(same(instr->dest().reg(), ptrA), L"Only rax, eax, or al supported as a target for icast.");
+			bool srcEax = instr->src().type() == opRegister && same(instr->src().reg(), ptrA);
+
+			if (sFrom == 1 && sTo == 4) {
+				// movzx
+				to->putByte(0x0F);
+				to->putByte(0xB6);
+				modRm(to, registerId(eax), instr->src());
+			} else if (sFrom == 4 && sTo == 8) {
+				// mov (if needed).
+				if (!srcEax)
+					movOut(to, mov(e, eax, instr->src()));
+				// xor edx, edx
+				to->putByte(0x33);
+				to->putByte(0xD2);
+			} else if (sFrom == 8 && sTo == 4) {
+				if (!srcEax)
+					movOut(to, mov(e, eax, low32(instr->src())));
+			} else if (sFrom ==4 && sTo == 1) {
+				if (!srcEax)
+					movOut(to, mov(e, eax, instr->src()));
+			} else if (sFrom == 8 && sTo == 8) {
+				if (!srcEax) {
+					movOut(to, mov(e, eax, low32(instr->src())));
+					movOut(to, mov(e, edx, high32(instr->src())));
+				}
+			} else if (sFrom == sTo) {
+				if (!srcEax)
+					movOut(to, mov(e, eax, instr->src()));
+			} else {
+				assert(false, L"Unsupported icast mode: " + ::toS(instr));
+			}
+		}
+
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
 			OUTPUT(add),
@@ -320,6 +397,8 @@ namespace code {
 			OUTPUT(shl),
 			OUTPUT(shr),
 			OUTPUT(sar),
+			OUTPUT(icast),
+			OUTPUT(ucast),
 		};
 
 		void output(Listing *src, Output *to) {

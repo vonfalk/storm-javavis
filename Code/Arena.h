@@ -8,6 +8,7 @@ namespace code {
 
 	class Listing;
 	class Binary;
+	class RegSet;
 
 	/**
 	 * An arena represents a collection of compiled code and external references for some architecture.
@@ -41,6 +42,11 @@ namespace code {
 		// Create a code-generating output. 'lblOffsets' and 'size' are obtained through 'labelOutput'.
 		virtual CodeOutput *STORM_FN codeOutput(Array<Nat> *lblOffsets, Nat size, Nat refs) const;
 		CodeOutput *STORM_FN codeOutput(LabelOutput *src) const;
+
+		// Remove all registers not preserved during a function call on this platform. This
+		// implementation removes ptrA, ptrB and ptrC, but other Arena implementations may want to
+		// remove others as well.
+		virtual void STORM_FN removeFnRegs(RegSet *from) const;
 
 	};
 

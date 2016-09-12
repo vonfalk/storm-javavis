@@ -5,6 +5,7 @@ namespace code {
 	STORM_PKG(core.asm);
 
 	class Listing;
+	class Arena;
 
 	/**
 	 * Base class for custom transforms.
@@ -25,5 +26,5 @@ namespace code {
 	};
 
 	// Transform using a transformer.
-	Listing *STORM_FN transform(Listing *src, Transform *use);
+	Listing *STORM_FN transform(Listing *src, const Arena *arena, Transform *use);
 }

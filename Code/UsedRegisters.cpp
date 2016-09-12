@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "UsedRegisters.h"
+#include "Arena.h"
 
 namespace code {
 
@@ -25,7 +26,7 @@ namespace code {
 		addIndirect(to, instr->dest());
 	}
 
-	static void processInstr(Instr *instr, RegSet *all, RegSet *used) {
+	static void processInstr(const Arena *arena, Instr *instr, RegSet *all, RegSet *used) {
 		switch (instr->op()) {
 		case op::jmp:
 		case op::beginBlock:
@@ -38,10 +39,21 @@ namespace code {
 		case op::fnCallFloat:
 		case op::fnCall:
 		case op::call:
-			// No registers preserved.
-			used->clear();
+			// Not all registers preserved.
+			if (arena)
+				arena->removeFnRegs(used);
+			else
+				used->clear();
 			// Intentional fall-through.
 		default:
+			if (instr->op() == op::xor &&
+				instr->src() == instr->dest()) {
+
+				// We're just setting 'src' to 0.
+				used->clear();
+				break;
+			}
+
 			addIndirect(used, instr);
 			*used += instr->src();
 
@@ -58,7 +70,7 @@ namespace code {
 		}
 	}
 
-	UsedRegisters usedRegisters(const Listing *src) {
+	UsedRegisters usedRegisters(const Arena *arena, const Listing *src) {
 		Array<RegSet *> *used = new (src) Array<RegSet *>(src->count(), null);
 
 		RegSet *all = new (src) RegSet();
@@ -67,7 +79,7 @@ namespace code {
 		for (Nat i = src->count(); i > 0; i--) {
 			Instr *instr = src->at(i - 1);
 
-			processInstr(instr, all, usedNow);
+			processInstr(arena, instr, all, usedNow);
 
 			used->at(i - 1) = new (src) RegSet(*usedNow);
 		}

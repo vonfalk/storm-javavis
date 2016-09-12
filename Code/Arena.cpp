@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Arena.h"
+#include "Register.h"
 #include "X86/Arena.h"
 
 namespace code {
@@ -27,6 +28,12 @@ namespace code {
 
 	CodeOutput *Arena::codeOutput(LabelOutput *src) const {
 		return codeOutput(src->offsets, src->size, src->refs);
+	}
+
+	void Arena::removeFnRegs(RegSet *from) const {
+		from->remove(ptrA);
+		from->remove(ptrB);
+		from->remove(ptrC);
 	}
 
 #if defined(X86) && defined(WINDOWS)

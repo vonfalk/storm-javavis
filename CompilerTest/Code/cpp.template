@@ -11,12 +11,12 @@ BEGIN_TEST($file$Test, Code) {
 
 	Listing *l = new (e) Listing();
 
-	*l << prolog(e);
+	*l << prolog();
 
 	$$
 
-	*l << epilog(e);
-	*l << ret(e, valVoid());
+	*l << epilog();
+	*l << ret(valVoid());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef void (*Fn)();

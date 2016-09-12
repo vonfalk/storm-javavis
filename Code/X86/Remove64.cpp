@@ -29,7 +29,7 @@ namespace code {
 		Remove64::Remove64() {}
 
 		void Remove64::before(Listing *dest, Listing *src) {
-			used = code::usedRegisters(src).used;
+			used = code::usedRegisters(dest->arena, src).used;
 		}
 
 		void Remove64::during(Listing *dest, Listing *src, Nat line) {

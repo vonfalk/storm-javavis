@@ -10,6 +10,8 @@
 namespace code {
 	STORM_PKG(core.asm);
 
+	class Arena;
+
 	/**
 	 * Control when and how variables are freed.
 	 */
@@ -63,8 +65,10 @@ namespace code {
 	class Listing : public Object {
 		STORM_CLASS;
 	public:
-		// Create an empty listing.
+		// Create an empty listing. Optionally associating it with an arena. Doing that makes the
+		// listing show backend-specific things in a proper way.
 		STORM_CTOR Listing();
+		STORM_CTOR Listing(const Arena *arena);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -107,7 +111,7 @@ namespace code {
 
 		// Create a shell, ie. a Listing containing only the scope information from this listing,
 		// thus making variables, blocks and part from this listing valid in the shell as well.
-		Listing *STORM_FN createShell() const;
+		Listing *STORM_FN createShell(MAYBE(const Arena *) arena) const;
 
 		/**
 		 * Labels.
@@ -246,6 +250,9 @@ namespace code {
 
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
+
+		// Arena.
+		const Arena *const arena;
 
 	private:
 		// Variable information.
