@@ -376,6 +376,60 @@ namespace code {
 			}
 		}
 
+		void mulOut(Output *to, Instr *instr) {
+			assert(instr->dest().type() == opRegister);
+			const Operand &src = instr->src();
+			Register reg = instr->dest().reg();
+
+			switch (src.type()) {
+			case opConstant:
+				if (singleByte(src.constant())) {
+					to->putByte(0x6B);
+					modRm(to, registerId(reg), instr->dest());
+					to->putByte(src.constant() & 0xFF);
+				} else {
+					to->putByte(0x69);
+					modRm(to, registerId(reg), instr->dest());
+					to->putInt(Nat(src.constant()));
+				}
+				break;
+			case opLabel:
+			case opReference:
+				assert(false, L"Multiplying an absolute address does not make sense.");
+				break;
+			default:
+				// Register or in memory, handled by the modRm variant.
+				to->putByte(0x0F);
+				to->putByte(0xAF);
+				modRm(to, registerId(reg), src);
+				break;
+			}
+		}
+
+		void idivOut(Output *to, Instr *instr) {
+			assert(instr->dest().type() == opRegister);
+			assert(same(ptrA, instr->dest().reg()));
+			if (instr->size() == Size::sByte) {
+				to->putByte(0xF6); // DIV
+			} else {
+				to->putByte(0x99); // CDQ
+				to->putByte(0xF7); // DIV
+			}
+			modRm(to, 7, instr->src());
+		}
+
+		void udivOut(Output *to, Instr *instr) {
+			assert(instr->dest().type() == opRegister);
+			assert(same(ptrA, instr->dest().reg()));
+			if (instr->size() == Size::sByte) {
+				to->putByte(0xF6); // DIV
+			} else {
+				to->putByte(0x31); to->putByte(0xD2); // XOR EDX, EDX
+				to->putByte(0xF7); // DIV
+			}
+			modRm(to, 6, instr->src());
+		}
+
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
 			OUTPUT(add),
@@ -399,6 +453,9 @@ namespace code {
 			OUTPUT(sar),
 			OUTPUT(icast),
 			OUTPUT(ucast),
+			OUTPUT(mul),
+			OUTPUT(idiv),
+			OUTPUT(udiv),
 		};
 
 		void output(Listing *src, Output *to) {

@@ -204,8 +204,8 @@ namespace code {
 				newSrc = ebx;
 			}
 
-			// Clear edx.
-			*to << xor(edx, edx);
+			// Note: we do not need to clear edx here, AsmOut will do that for us, ie. we treat edx
+			// as an output-only register.
 			*to << instr->alter(eax, newSrc);
 			*to << mov(dest, eax);
 
@@ -222,8 +222,6 @@ namespace code {
 		}
 
 		void RemoveInvalid::imodTfm(Listing *to, Instr *instr, Nat line) {
-
-			Engine &e = engine();
 			Operand dest = instr->dest();
 			bool srcConst = instr->src().type() == opConstant;
 			bool eaxDest = dest.type() == opRegister && same(dest.reg(), ptrA);
@@ -248,9 +246,12 @@ namespace code {
 				newSrc = ebx;
 			}
 
-			// Clear edx.
-			*to << xor(edx, edx);
-			*to << instr->alter(eax, newSrc);
+			// Note: we do not need to clear edx here, AsmOut will do that for us, ie. we treat edx
+			// as an output-only register.
+			if (instr->op() == op::imod)
+				*to << idiv(eax, newSrc);
+			else
+				*to << udiv(eax, newSrc);
 			*to << mov(dest, edx);
 
 			if (srcConst && used->has(ebx))

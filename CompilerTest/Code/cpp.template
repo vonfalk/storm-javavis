@@ -16,10 +16,10 @@ BEGIN_TEST($file$Test, Code) {
 	$$
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(ValType(Size::sInt, false));
 
 	Binary *b = new (e) Binary(arena, l);
-	typedef void (*Fn)();
+	typedef Int (*Fn)();
 	Fn fn = (Fn)b->rawPtr();
 
 } END_TEST
