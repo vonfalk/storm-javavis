@@ -1,0 +1,48 @@
+#include "stdafx.h"
+#include "Test/Test.h"
+#include "Code/Binary.h"
+#include "Code/Listing.h"
+
+using namespace code;
+
+BEGIN_TEST(PreserveTest, Code) {
+	Engine &e = *gEngine;
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+
+	*l << prolog();
+
+	*l << mov(rax, wordConst(0x00));
+	*l << mov(rbx, wordConst(0x01));
+	*l << mov(rcx, wordConst(0x02));
+
+	*l << epilog();
+	*l << ret(ValType(Size::sInt, false));
+
+	Binary *b = new (e) Binary(arena, l);
+	CHECK_EQ(callFn(b->rawPtr(), 0), 0x00);
+} END_TEST
+
+BEGIN_TEST(Preserve64, Code) {
+	Engine &e = *gEngine;
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+	Variable v = l->createLongVar(l->root());
+	Variable w = l->createLongVar(l->root());
+
+	*l << prolog();
+
+	*l << mov(v, longConst(0x123456789A));
+	*l << mov(w, longConst(0xA987654321));
+	*l << add(rax, v);
+	*l << mov(v, w);
+
+	*l << epilog();
+	*l << ret(ValType(Size::sLong, false));
+
+	Binary *b = new (e) Binary(arena, l);
+	CHECK_EQ(callFn(b->rawPtr(), int64(0)), 0x123456789A);
+
+} END_TEST

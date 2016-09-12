@@ -15,6 +15,8 @@ extern Engine *gEngine;
  * start worrying about the low-level parts and then build ourselves up to the final thing.
  */
 
+// Basic threading, no GC yet.
+SUITE(OS, 0);
 // Basic gc operation, scanning simple objects without anything strange.
 SUITE(GcScan, 1);
 // Gc operation on Storm objects declared in C++.

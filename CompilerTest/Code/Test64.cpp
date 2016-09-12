@@ -98,29 +98,6 @@ BEGIN_TEST(Mul64, Code) {
 
 } END_TEST
 
-BEGIN_TEST(Preserve64, Code) {
-	Engine &e = *gEngine;
-	Arena *arena = code::arena(e);
-
-	Listing *l = new (e) Listing();
-	Variable v = l->createLongVar(l->root());
-	Variable w = l->createLongVar(l->root());
-
-	*l << prolog();
-
-	*l << mov(v, longConst(0x123456789A));
-	*l << mov(w, longConst(0xA987654321));
-	*l << add(rax, v);
-	*l << mov(v, w);
-
-	*l << epilog();
-	*l << ret(ValType(Size::sLong, false));
-
-	Binary *b = new (e) Binary(arena, l);
-	CHECK_EQ(callFn(b->rawPtr(), int64(0)), 0x123456789A);
-
-} END_TEST
-
 static CondFlag cf[] = {
 	ifAlways,
 	ifNever,
