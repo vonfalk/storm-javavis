@@ -8,7 +8,7 @@
 using debug::PtrKey;
 
 
-BEGIN_TEST(MapTest, Runtime) {
+BEGIN_TEST(MapTest, Core) {
 	Engine &e = *gEngine;
 
 	// Basic operation:
@@ -69,7 +69,7 @@ static bool moveObjects(Array<PtrKey *> *k) {
 	return false;
 }
 
-BEGIN_TEST(MapTestMove, Runtime) {
+BEGIN_TEST(MapTestMove, Core) {
 	// Do we handle moving objects properly?
 	Engine &e = *gEngine;
 

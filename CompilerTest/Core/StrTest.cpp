@@ -3,7 +3,7 @@
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
 
-BEGIN_TEST(StrTest, Runtime) {
+BEGIN_TEST(StrTest, Core) {
 	Engine &e = *gEngine;
 
 	Str *s = new (e) Str(L"Hello");
@@ -18,7 +18,7 @@ BEGIN_TEST(StrTest, Runtime) {
 
 } END_TEST
 
-BEGIN_TEST(StrBufTest, Runtime) {
+BEGIN_TEST(StrBufTest, Core) {
 	Engine &e = *gEngine;
 
 	StrBuf *buf = new (e) StrBuf();

@@ -24,7 +24,7 @@ static nat setCount(WeakSet<PtrKey> *in) {
 	return c;
 }
 
-BEGIN_TEST(WeakSetTest, Runtime) {
+BEGIN_TEST(WeakSetTest, Core) {
 	Engine &e = *gEngine;
 
 	WeakSet<PtrKey> *set = new (e) WeakSet<PtrKey>();
