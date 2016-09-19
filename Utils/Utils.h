@@ -141,19 +141,19 @@ inline float eq(float a, float b, float tolerance = defTolerance) {
 }
 
 // Atomic increase and decrease of variables
-nat atomicIncrement(volatile nat &v);
-nat atomicDecrement(volatile nat &v);
+size_t atomicIncrement(volatile size_t &v);
+size_t atomicDecrement(volatile size_t &v);
 
 // Compare and swap (atomic)
-nat atomicCAS(volatile nat &v, nat compare, nat exchange);
+size_t atomicCAS(volatile size_t &v, size_t compare, size_t exchange);
 
 // Atomic read/write.
-nat atomicRead(volatile nat &v);
-void atomicWrite(volatile nat &v, nat value);
+size_t atomicRead(volatile size_t &v);
+void atomicWrite(volatile size_t &v, size_t value);
 
 // Atomic read/write. These two does not need aligned data.
-nat unalignedAtomicRead(volatile nat &v);
-void unalignedAtomicWrite(volatile nat &v, nat value);
+size_t unalignedAtomicRead(volatile size_t &v);
+void unalignedAtomicWrite(volatile size_t &v, size_t value);
 
 /**
  * Convenient vector comparisions.

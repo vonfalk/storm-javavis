@@ -30,6 +30,10 @@ namespace code {
 
 	Operand::Operand(Label l) : opType(opLabel), opPtr(null), opNum(l.id), opSize(Size::sPtr) {}
 
+	Operand::Operand(Ref ref) : opType(opReference), opPtr(ref.to), opNum(0), opSize(Size::sPtr) {}
+
+	Operand::Operand(Reference *ref) : opType(opReference), opPtr(ref->to), opNum(0), opSize(Size::sPtr) {}
+
 	Operand::Operand(Word c, Size size) : opType(opConstant), opPtr(null), opNum(c), opSize(size) {}
 
 	Operand::Operand(Size s, Size size) : opType(opDualConstant), opPtr(null), opNum(dual(s.size32(), s.size64())), opSize(size) {}
@@ -60,6 +64,7 @@ namespace code {
 		case opRelative:
 			return opNum == o.opNum && opOffset == o.opOffset;
 		case opReference:
+			return opPtr == o.opPtr;
 		default:
 			assert(false, L"Unknown type!");
 			return false;
@@ -154,6 +159,12 @@ namespace code {
 		return Variable(Nat(opNum), opSize);
 	}
 
+	Ref Operand::ref() const {
+		assert(type() == opReference, L"Not a reference!");
+		RefSource *s = (RefSource *)opPtr;
+		return Ref(s);
+	}
+
 	Label Operand::label() const {
 		assert(type() == opLabel, L"Not a label!");
 		return Label(Nat(opNum));
@@ -193,7 +204,7 @@ namespace code {
 		case opLabel:
 			return to << L"Label" << o.opNum;
 		case opReference:
-			return to << L"TODO";
+			return to << L"@" << o.ref().title();
 		case opCondFlag:
 			return to << code::name(o.condFlag());
 		default:

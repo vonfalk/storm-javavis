@@ -23,7 +23,7 @@ BEGIN_TEST(MulTest, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2, 2), 4);
 	CHECK_EQ((*fn)(-2, 2), -4);
@@ -51,7 +51,7 @@ BEGIN_TEST(MulRegTest, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2, 2), 4);
 	CHECK_EQ((*fn)(-2, 2), -4);
@@ -79,7 +79,7 @@ BEGIN_TEST(MulReg2Test, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2, 2), 4);
 	CHECK_EQ((*fn)(-2, 2), -4);
@@ -108,7 +108,7 @@ BEGIN_TEST(MulReg3Test, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2, 2), 4);
 	CHECK_EQ((*fn)(-2, 2), -4);
@@ -134,7 +134,7 @@ BEGIN_TEST(MulConstTest, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), -4);
 	CHECK_EQ((*fn)(-2), 4);

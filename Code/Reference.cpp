@@ -9,8 +9,8 @@ namespace code {
 		to->refs->put(this);
 	}
 
-	Reference::Reference(Ref to, Content *inside) {
-		assert(false, L"FIXME");
+	Reference::Reference(Ref to, Content *inside) : owner(inside), to(to.to) {
+		this->to->refs->put(this);
 	}
 
 	void Reference::moved(const void *addr) {}
@@ -22,8 +22,6 @@ namespace code {
 	Ref::Ref(RefSource *to) : to(to) {}
 
 	Ref::Ref(Reference *ref) : to(ref->to) {}
-
-	Ref::Ref(const Ref &o) : to(o.to) {}
 
 	void Ref::deepCopy(CloneEnv *env) {}
 

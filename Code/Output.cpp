@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Output.h"
+#include "Core/Runtime.h"
+#include "Core/GcCode.h"
 
 namespace code {
 
@@ -54,12 +56,6 @@ namespace code {
 			assert(false, L"Unknown size passed to putSize!");
 	}
 
-	void Output::putAddress(Label lbl) {
-		Word start = (Word)codePtr();
-		Nat offset = labelOffset(lbl.id);
-		putPtrSelf(start + offset);
-	}
-
 	void Output::mark(Label lbl) {
 		markLabel(lbl.id);
 	}
@@ -68,9 +64,27 @@ namespace code {
 		putInt(toRelative(labelOffset(lbl.id)));
 	}
 
+	void Output::putAddress(Label lbl) {
+		Word start = (Word)codePtr();
+		Nat offset = labelOffset(lbl.id);
+		putPtrSelf(start + offset);
+	}
+
+	void Output::putRelative(Ref ref) {
+		putGcRelative(Word(ref.address()));
+		markGcRef(ref);
+	}
+
+	void Output::putAddress(Ref ref) {
+		putGcPtr(Word(ref.address()));
+		markGcRef(ref);
+	}
+
 	void Output::markLabel(Nat id) {
 		assert(false);
 	}
+
+	void Output::markGcRef(Ref ref) {}
 
 	void *Output::codePtr() const {
 		assert(false);
@@ -87,6 +101,9 @@ namespace code {
 		return 0;
 	}
 
+	/**
+	 * Label output.
+	 */
 
 	LabelOutput::LabelOutput(Nat ptrSize) : offsets(new (engine()) Array<Nat>()), ptrSize(ptrSize), size(0), refs(0) {}
 
@@ -153,11 +170,54 @@ namespace code {
 		return 0;
 	}
 
+	/**
+	 * Code output.
+	 */
 
 	CodeOutput::CodeOutput() {}
 
 	void *CodeOutput::codePtr() const {
 		return null;
+	}
+
+	/**
+	 * Updater.
+	 */
+
+	CodeUpdater::CodeUpdater(Ref src, Content *inside, void *code, Nat slot) :
+		Reference(src, inside), code(code), slot(slot) {
+
+		moved(address());
+	}
+
+	void CodeUpdater::moved(const void *newAddr) {
+		GcCode *refs = runtime::codeRefs(code);
+		GcCodeRef &ref = refs->refs[slot];
+
+		void *ptr = (byte *)code + ref.offset;
+		size_t *write = (size_t *)ptr;
+		size_t value = (size_t)newAddr;
+
+		switch (ref.kind) {
+		case GcCodeRef::rawPtr:
+			// No strange things happening, just the address.
+			break;
+		case GcCodeRef::relativePtr:
+			value -= size_t(write) + sizeof(size_t);
+			break;
+		default:
+			// There are more, but relativePTr and relative are not interesting here.
+			assert(false, L"Unsupported reference kind.");
+			break;
+		}
+
+		// Note: it is important that we're able to write the whole value to memory in one asm
+		// instruction as the Gc may interrupt us at any point to do a collection. The Gc should
+		// then never see a partly written value. As the Gc pauses threads, it is enough that
+		// writing the value is one instruction, it does not have to be entirely atomic in this
+		// regard. Furthermore, the instruction shall be visible as a whole to the instruction
+		// decoding units on the CPU, as we may otherwise jump to really strange locations.
+		unalignedAtomicWrite(*write, value);
 	}
 
 }

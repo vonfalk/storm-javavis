@@ -18,6 +18,7 @@ namespace code {
 	};
 
 	ValType STORM_FN valVoid();
+	ValType STORM_FN valInt();
 	ValType STORM_FN valPtr();
 
 }

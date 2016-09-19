@@ -2,10 +2,17 @@
 #include "Arena.h"
 #include "Register.h"
 #include "X86/Arena.h"
+#include "Core/Str.h"
 
 namespace code {
 
 	Arena::Arena() {}
+
+	Ref Arena::external(const wchar *name, const void *ptr) const {
+		RefSource *src = new (this) RefSource(new (this) Str(name));
+		src->setPtr(ptr);
+		return Ref(src);
+	}
 
 	Listing *Arena::transform(Listing *src, Binary *owner) const {
 		assert(false);
@@ -21,13 +28,13 @@ namespace code {
 		return null;
 	}
 
-	CodeOutput *Arena::codeOutput(Array<Nat> *offsets, Nat size, Nat refs) const {
+	CodeOutput *Arena::codeOutput(Binary *owner, Array<Nat> *offsets, Nat size, Nat refs) const {
 		assert(false);
 		return null;
 	}
 
-	CodeOutput *Arena::codeOutput(LabelOutput *src) const {
-		return codeOutput(src->offsets, src->size, src->refs);
+	CodeOutput *Arena::codeOutput(Binary *owner, LabelOutput *src) const {
+		return codeOutput(owner, src->offsets, src->size, src->refs);
 	}
 
 	void Arena::removeFnRegs(RegSet *from) const {

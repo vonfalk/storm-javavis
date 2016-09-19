@@ -30,7 +30,7 @@ BEGIN_TEST(FloatTest, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Float, Float);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 	CHECK_EQ((*fn)(12.3f, 2.2f), 270);
 
 } END_TEST
@@ -50,7 +50,7 @@ BEGIN_TEST(FloatConstTest, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Float (*Fn)();
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(), 10.2f);
 } END_TEST

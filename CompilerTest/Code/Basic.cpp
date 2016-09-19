@@ -56,7 +56,39 @@ BEGIN_TEST(CodeTest, CodeBasic) {
 	Binary *b = new (e) Binary(arena, l);
 
 	typedef Int (*Fn)(Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 	Int r = (*fn)(10);
 	CHECK_EQ(r, 11);
+} END_TEST
+
+
+// Do some heavy GC allocations to make the Gc do a collection.
+static void triggerCollect() {
+	for (nat j = 0; j < 10; j++) {
+		for (nat i = 0; i < 100; i++)
+			new (*gEngine) Str(L"Hello");
+
+		gEngine->gc.collect();
+	}
+}
+
+// Make sure the Gc are not moving code that is referred to on the stack, even if we may have
+// unaligned pointers into blocks.
+BEGIN_TEST(CodeGcTest, CodeBasic) {
+	Engine &e = *gEngine;
+
+	Listing *l = new (e) Listing();
+
+	*l << prolog();
+	*l << call(xConst(Size::sPtr, (Word)&triggerCollect), valVoid());
+	*l << mov(eax, intConst(1337));
+	*l << epilog();
+	*l << ret(ValType(Size::sInt, false));
+
+	Binary *b = new (e) Binary(code::arena(e), l);
+
+	typedef Int (*Fn)();
+	Fn fn = (Fn)b->address();
+	CHECK_EQ((*fn)(), 1337);
+
 } END_TEST

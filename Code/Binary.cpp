@@ -3,21 +3,17 @@
 
 namespace code {
 
-	Binary::Binary(Arena *arena, Listing *listing) : arena(arena), code(null) {
+	Binary::Binary(Arena *arena, Listing *listing) {
 		Listing *tfm = arena->transform(listing, this);
 		// PVAR(tfm);
 
 		LabelOutput *labels = arena->labelOutput();
 		arena->output(tfm, labels);
 
-		CodeOutput *output = arena->codeOutput(labels);
+		CodeOutput *output = arena->codeOutput(this, labels);
 		arena->output(tfm, output);
 
-		code = output->codePtr();
-	}
-
-	void *Binary::rawPtr() const {
-		return code;
+		set(output->codePtr(), output->tell());
 	}
 
 }

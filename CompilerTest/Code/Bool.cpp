@@ -27,7 +27,7 @@ BEGIN_TEST(BoolTest, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef bool (*Fn)(Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK((*fn)(0));
 	CHECK((*fn)(1));

@@ -9,6 +9,10 @@ namespace code {
 		return ValType(Size(), false);
 	}
 
+	ValType valInt() {
+		return ValType(Size::sInt, false);
+	}
+
 	ValType valPtr() {
 		return ValType(Size::sPtr, false);
 	}

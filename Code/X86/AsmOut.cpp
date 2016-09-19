@@ -156,6 +156,7 @@ namespace code {
 					to->putByte(0x68);
 					to->putInt(Int(src.constant()));
 				}
+				break;
 			case opRegister:
 				to->putByte(0x50 + registerId(src.reg()));
 				break;
@@ -164,9 +165,8 @@ namespace code {
 				modRm(to, 6, src);
 				break;
 			case opReference:
-				NOT_DONE;
-				// to->putByte(0x68);
-				// to->putAddress(src.reference());
+				to->putByte(0x68);
+				to->putAddress(src.ref());
 				break;
 			case opLabel:
 				to->putByte(0x68);
@@ -223,9 +223,8 @@ namespace code {
 				to->putRelative(src.label());
 				break;
 			case opReference:
-				NOT_DONE;
-				// to->putByte(opCode);
-				// to->putRelative(...);
+				to->putByte(opCode);
+				to->putRelative(src.ref());
 				break;
 			default:
 				assert(false, L"JmpCall not implemented for " + ::toS(src));

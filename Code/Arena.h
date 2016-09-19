@@ -21,6 +21,9 @@ namespace code {
 		// Create an arena.
 		Arena();
 
+		// Create external references.
+		Ref external(const wchar *name, const void *ptr) const;
+
 		/**
 		 * Transform and translate code into machine code.
 		 */
@@ -40,8 +43,8 @@ namespace code {
 		virtual LabelOutput *STORM_FN labelOutput() const;
 
 		// Create a code-generating output. 'lblOffsets' and 'size' are obtained through 'labelOutput'.
-		virtual CodeOutput *STORM_FN codeOutput(Array<Nat> *lblOffsets, Nat size, Nat refs) const;
-		CodeOutput *STORM_FN codeOutput(LabelOutput *src) const;
+		virtual CodeOutput *STORM_FN codeOutput(Binary *owner, Array<Nat> *offsets, Nat size, Nat refs) const;
+		CodeOutput *STORM_FN codeOutput(Binary *owner, LabelOutput *src) const;
 
 		// Remove all registers not preserved during a function call on this platform. This
 		// implementation removes ptrA, ptrB and ptrC, but other Arena implementations may want to

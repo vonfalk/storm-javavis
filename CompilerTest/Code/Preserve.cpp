@@ -21,7 +21,7 @@ BEGIN_TEST(PreserveTest, Code) {
 	*l << ret(ValType(Size::sInt, false));
 
 	Binary *b = new (e) Binary(arena, l);
-	CHECK_EQ(callFn(b->rawPtr(), 0), 0x00);
+	CHECK_EQ(callFn(b->address(), 0), 0x00);
 } END_TEST
 
 BEGIN_TEST(Preserve64, Code) {
@@ -43,6 +43,6 @@ BEGIN_TEST(Preserve64, Code) {
 	*l << ret(ValType(Size::sLong, false));
 
 	Binary *b = new (e) Binary(arena, l);
-	CHECK_EQ(callFn(b->rawPtr(), int64(0)), 0x123456789A);
+	CHECK_EQ(callFn(b->address(), int64(0)), 0x123456789A);
 
 } END_TEST

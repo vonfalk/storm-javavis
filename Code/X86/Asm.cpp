@@ -329,10 +329,9 @@ namespace code {
 				to->putAddress(src.label());
 				break;
 			case opReference:
-				NOT_DONE;
-				// to->putByte(op.opImm32);
-				// modRm(to, op.modeImm32, dest);
-				// to->putAddress(src.reference());
+				to->putByte(op.opImm32);
+				modRm(to, op.modeImm32, dest);
+				to->putAddress(src.ref());
 				break;
 			case opConstant:
 				if (op.modeImm8 != 0xFF && singleByte(src.constant())) {

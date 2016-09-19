@@ -3,13 +3,15 @@
 #include "Core/GcCode.h"
 
 namespace code {
+	class Binary;
+
 	namespace x86 {
 		STORM_PKG(core.asm.x86);
 
 		class CodeOut : public CodeOutput {
 			STORM_CLASS;
 		public:
-			STORM_CTOR CodeOut(Array<Nat> *lbls, Nat size, Nat refs);
+			STORM_CTOR CodeOut(Binary *owner, Array<Nat> *lbls, Nat size, Nat refs);
 
 			virtual void STORM_FN putByte(Byte b);
 			virtual void STORM_FN putInt(Nat w);
@@ -24,17 +26,24 @@ namespace code {
 			virtual void *codePtr() const;
 		protected:
 			virtual void STORM_FN markLabel(Nat id);
+			virtual void STORM_FN markGcRef(Ref ref);
 			virtual Nat STORM_FN labelOffset(Nat id);
 			virtual Nat STORM_FN toRelative(Nat id);
 
 		private:
+			// Our owner. Used to create proper references.
+			Binary *owner;
+
+			// Updaters in the code.
+			Array<Reference *> *codeRefs;
+
 			// Code we're writing to.
 			UNKNOWN(PTR_GC) byte *code;
 
 			// Position in the code.
 			Nat pos;
 
-			// Last used ref.
+			// First free ref.
 			Nat ref;
 
 			// Label offsets, computed from before.

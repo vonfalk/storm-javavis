@@ -24,7 +24,7 @@ BEGIN_TEST(Add64, Code) {
 	*l << ret(ValType(Size::sLong, false));
 
 	Binary *b = new (e) Binary(arena, l);
-	CHECK_EQ(callFn(b->rawPtr(), int64(0)), 0x11111111110);
+	CHECK_EQ(callFn(b->address(), int64(0)), 0x11111111110);
 
 } END_TEST
 
@@ -46,7 +46,7 @@ BEGIN_TEST(Param64, Code) {
 	*l << ret(ValType(Size::sLong, false));
 
 	Binary *b = new (e) Binary(arena, l);
-	CHECK_EQ(callFn(b->rawPtr(), int64(0x123456789A)), 0x123456789B);
+	CHECK_EQ(callFn(b->address(), int64(0x123456789A)), 0x123456789B);
 
 } END_TEST
 
@@ -69,7 +69,7 @@ BEGIN_TEST(Sub64, Code) {
 	*l << ret(ValType(Size::sLong, false));
 
 	Binary *b = new (e) Binary(arena, l);
-	CHECK_EQ(callFn(b->rawPtr(), int64(0)), 0x97530ECA87);
+	CHECK_EQ(callFn(b->address(), int64(0)), 0x97530ECA87);
 
 } END_TEST
 
@@ -94,7 +94,7 @@ BEGIN_TEST(Mul64, Code) {
 	*l << ret(ValType(Size::sLong, false));
 
 	Binary *b = new (e) Binary(arena, l);
-	CHECK_EQ(callFn(b->rawPtr(), int64(0)), 0x2DE2A36D2B77D9DB);
+	CHECK_EQ(callFn(b->address(), int64(0)), 0x2DE2A36D2B77D9DB);
 
 } END_TEST
 
@@ -200,7 +200,7 @@ BEGIN_TEST(Cmp64, Code) {
 	*l << ret(ValType(Size::sInt, false));
 
 	Binary *b = new (e) Binary(arena, l);
-	const void *p = b->rawPtr();
+	const void *p = b->address();
 
 	CHECK(check(0, 0, p));
 	CHECK(check(1, 0, p));

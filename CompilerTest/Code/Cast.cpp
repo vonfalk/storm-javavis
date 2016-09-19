@@ -23,7 +23,7 @@ BEGIN_TEST(CastIntLong, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Long (*Fn)(Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 	CHECK_EQ((*fn)(-2), -2);
@@ -48,7 +48,7 @@ BEGIN_TEST(CastCharInt, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(char);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 	CHECK_EQ((*fn)(-2), -2);
@@ -73,7 +73,7 @@ BEGIN_TEST(CastCharLong, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Long (*Fn)(char);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 	CHECK_EQ((*fn)(-2), -2);
@@ -98,7 +98,7 @@ BEGIN_TEST(CastLongInt, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Long);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 	CHECK_EQ((*fn)(-2), -2);
@@ -123,7 +123,7 @@ BEGIN_TEST(CastIntChar, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef char (*Fn)(Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 	CHECK_EQ((*fn)(-2), -2);
@@ -148,7 +148,7 @@ BEGIN_TEST(CastLongChar, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef char (*Fn)(Long);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 	CHECK_EQ((*fn)(-2), -2);
@@ -177,7 +177,7 @@ BEGIN_TEST(CastNatWord, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Word (*Fn)(Nat);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 	CHECK_EQ((*fn)(0xFF00FF00), 0xFF00FF00);
@@ -202,7 +202,7 @@ BEGIN_TEST(CastByteNat, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Nat (*Fn)(Byte);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 	CHECK_EQ((*fn)(0xFF), 0xFF);
@@ -227,7 +227,7 @@ BEGIN_TEST(CastByteWord, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Word (*Fn)(Byte);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 	CHECK_EQ((*fn)(0xFF), 0xFF);
@@ -252,7 +252,7 @@ BEGIN_TEST(CastWordNat, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Nat (*Fn)(Word);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 
@@ -276,7 +276,7 @@ BEGIN_TEST(CastNatByte, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Byte (*Fn)(Nat);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 
@@ -300,7 +300,7 @@ BEGIN_TEST(CastWordByte, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Byte (*Fn)(Word);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(2), 2);
 

@@ -1,14 +1,29 @@
 #include "stdafx.h"
 #include "Output.h"
+#include "Binary.h"
+#include "Utils/Bitwise.h"
 
 namespace code {
 	namespace x86 {
 
-		CodeOut::CodeOut(Array<Nat> *lbls, Nat size, Nat refs) {
-			code = (byte *)runtime::allocCode(engine(), size, refs);
+		CodeOut::CodeOut(Binary *owner, Array<Nat> *lbls, Nat size, Nat numRefs) {
+			// Properly align 'size'.
+			size = roundUp(size, sizeof(void *));
+
+			// Initialize our members.
+			this->owner = owner;
+			codeRefs = new (this) Array<Reference *>();
+			code = (byte *)runtime::allocCode(engine(), size + sizeof(void *), numRefs + 1);
 			labels = lbls;
 			pos = 0;
-			ref = 0;
+			ref = 1;
+
+			// Store 'codeRefs' at the end of our allocated space.
+			void *refsPos = code + size;
+			GcCode *refs = runtime::codeRefs(code);
+			refs->refs[0].offset = size;
+			refs->refs[0].kind = GcCodeRef::rawPtr;
+			*(void **)refsPos = codeRefs;
 		}
 
 		void CodeOut::putByte(Byte b) {
@@ -83,6 +98,13 @@ namespace code {
 
 		void CodeOut::markLabel(Nat id) {
 			// No need. This should already be done for us.
+		}
+
+		void CodeOut::markGcRef(Ref r) {
+			if (ref == 0)
+				return;
+
+			codeRefs->push(new (this) CodeUpdater(r, owner, code, ref - 1));
 		}
 
 		Nat CodeOut::labelOffset(Nat id) {

@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Utils/Utils.h"
+#include "Core/Storm.h"
+#include "Core/Str.h"
+#include "Core/StrBuf.h"
 #include "Compiler/Storm.h"
 #include "Compiler/Engine.h"
 

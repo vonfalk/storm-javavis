@@ -34,7 +34,7 @@ BEGIN_TEST(JmpTest, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(1), 2);
 	CHECK_EQ((*fn)(2), 4);
@@ -71,7 +71,7 @@ BEGIN_TEST(CallTest, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	called = false;
 	CHECK_EQ((*fn)(1), 6);

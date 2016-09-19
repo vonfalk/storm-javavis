@@ -5,6 +5,7 @@
 #include "Variable.h"
 #include "Block.h"
 #include "Label.h"
+#include "Reference.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -84,6 +85,10 @@ namespace code {
 		// Label.
 		STORM_CAST_CTOR Operand(Label label);
 
+		// Reference.
+		STORM_CAST_CTOR Operand(Ref ref);
+		STORM_CAST_CTOR Operand(Reference *ref);
+
 		/**
 		 * Operations.
 		 */
@@ -120,6 +125,7 @@ namespace code {
 		CondFlag STORM_FN condFlag() const;
 		Part STORM_FN part() const;
 		Label STORM_FN label() const;
+		Ref STORM_FN ref() const;
 		Variable STORM_FN variable() const; // NOTE: The size of this variable is equal to the size
 											// we want to read, which is not always the size of the
 											// original variable!
@@ -172,7 +178,8 @@ namespace code {
 	wostream &operator <<(wostream &to, const Operand &o);
 	StrBuf &STORM_FN operator <<(StrBuf &to, Operand o);
 
-	// Create constants.
+	// Create constants. Note: Do not try to create a pointer to a Gc:d object using xConst. That
+	// will fail miserably, as the pointer will not be updated whenever the Gc moves the object.
 	Operand STORM_FN byteConst(Byte v);
 	Operand STORM_FN intConst(Int v);
 	Operand STORM_FN natConst(Nat v);

@@ -8,9 +8,6 @@ namespace code {
 	namespace x86 {
 		STORM_PKG(core.asm.x86);
 
-		// Marker that is easy to search for. Removed when we're done.
-#define NOT_DONE assert(false, L"Not implemented yet!")
-
 		/**
 		 * X86-specific registers.
 		 *

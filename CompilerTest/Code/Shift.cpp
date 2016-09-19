@@ -36,7 +36,7 @@ BEGIN_TEST(ShiftTest, Code) {
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Int, Int);
-	Fn fn = (Fn)b->rawPtr();
+	Fn fn = (Fn)b->address();
 
 	CHECK_EQ((*fn)(1, 16), 0x10001);
 } END_TEST

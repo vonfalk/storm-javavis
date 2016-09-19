@@ -3,6 +3,7 @@
 #include "Core/Array.h"
 #include "Size.h"
 #include "Label.h"
+#include "Reference.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -42,14 +43,21 @@ namespace code {
 		// Write a word with a given size.
 		void STORM_FN putSize(Word w, Size size);
 
-		// Labels. Note: only relative label offsets are supported!
+		// Labels.
 		void STORM_FN mark(Label lbl);
 		void STORM_FN putRelative(Label lbl); // Writes 4 bytes.
-		void STORM_FN putAddress(Label lbl); // Writes 8 bytes.
+		void STORM_FN putAddress(Label lbl); // Writes 4 or 8 bytes.
+
+		// References.
+		void STORM_FN putRelative(Ref ref); // Writes 4 or 8 bytes.
+		void STORM_FN putAddress(Ref ref); // Writes 4 or 8 bytes.
 
 	protected:
 		// Mark a label here.
 		virtual void STORM_FN markLabel(Nat id);
+
+		// Mark the last added gc-pointer as a reference to something.
+		virtual void STORM_FN markGcRef(Ref ref);
 
 		// Get a pointer to the start of the code.
 		virtual void *codePtr() const;
@@ -108,6 +116,26 @@ namespace code {
 		STORM_CTOR CodeOutput();
 
 		virtual void *codePtr() const;
+	};
+
+	/**
+	 * Reference which will update a reference in a code segment. Make sure to keep these alive as
+	 * long as the code segement is alive somehow.
+	 */
+	class CodeUpdater : public Reference {
+		STORM_CLASS;
+	public:
+		CodeUpdater(Ref src, Content *inside, void *code, Nat slot);
+
+		// Notification of a new location.
+		virtual void moved(const void *newAddr);
+
+	private:
+		// The code segment to update.
+		UNKNOWN(PTR_GC) void *code;
+
+		// Which slot to update.
+		Nat slot;
 	};
 
 }

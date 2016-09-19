@@ -20,6 +20,7 @@ namespace code {
 	class Reference : public ObjectOn<Compiler> {
 		STORM_CLASS;
 		friend class Ref;
+		friend class Operand;
 	public:
 		// First parameter is what the reference should refer to, second is who is referring.
 		STORM_CTOR Reference(RefSource *to, Content *inside);
@@ -50,12 +51,12 @@ namespace code {
 	class Ref {
 		STORM_VALUE;
 		friend class Reference;
+		friend class Operand;
 		friend wostream &operator <<(wostream &to, const Ref &r);
 		friend StrBuf &operator <<(StrBuf &to, Ref r);
 	public:
 		STORM_CTOR Ref(RefSource *to);
 		STORM_CTOR Ref(Reference *ref);
-		STORM_CTOR Ref(const Ref &o);
 
 		void deepCopy(CloneEnv *env);
 
