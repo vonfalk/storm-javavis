@@ -39,7 +39,6 @@ namespace code {
 			TRANSFORM(fnCallFloat),
 
 			TRANSFORM(fnParam),
-			TRANSFORM(fnParamRef),
 			TRANSFORM(fnCall),
 		};
 
@@ -419,10 +418,6 @@ namespace code {
 			params->push(Param(instr->src(), instr->dest()));
 		}
 
-		void RemoveInvalid::fnParamRefTfm(Listing *dest, Instr *instr, Nat line) {
-			assert(false, L"Fixme when the interface has been fixed!");
-		}
-
 		static Operand offset(const Operand &src, Offset offset) {
 			switch (src.type()) {
 			case opVariable:
@@ -485,7 +480,7 @@ namespace code {
 					// Copy it!
 					*dest << lea(ptrA, p.src);
 					*dest << push(ptrA);
-					*dest << lea(ptrA, ptrRel(ptrStack, paramOffset));
+					*dest << lea(ptrA, ptrRel(ptrStack, paramOffset + Offset::sPtr));
 					*dest << push(ptrA);
 					*dest << call(p.copyFn, valVoid());
 					*dest << add(ptrStack, ptrConst(Size::sPtr * 2));

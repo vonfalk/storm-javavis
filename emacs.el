@@ -197,10 +197,12 @@
   (unless (insert-file-template-p)
     (insert "#include \"stdafx.h\"\n")
     (unless (is-test-project)
+      (insert "#include \"")
       (insert (replace-regexp-in-string
 	       ".cpp" ".h"
-	       (filename buffer-file-name))))
-    (insert "\"\n\n")
+	       (filename buffer-file-name)))
+      (insert "\""))
+    (insert "\n\n")
     (if (shall-have-namespace)
 	(insert-namespace))
     (if (is-test-project)
@@ -264,7 +266,7 @@
 
 (defun is-test-project ()
   (let ((proj (subproject buffer-file-name)))
-    (and (> (length proj) 4)
+    (and (>= (length proj) 4)
 	 (equal (substring proj -4) "Test"))))
 
 (defun shall-have-namespace ()

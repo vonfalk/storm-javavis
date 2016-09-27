@@ -2,6 +2,7 @@
 #include "Operand.h"
 #include "Exception.h"
 #include "Core/StrBuf.h"
+#include "Core/Str.h"
 #include <iomanip>
 
 namespace code {

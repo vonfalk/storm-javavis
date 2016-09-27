@@ -429,6 +429,24 @@ namespace code {
 			modRm(to, 6, instr->src());
 		}
 
+		void leaOut(Output *to, Instr *instr) {
+			Operand src = instr->src();
+			Operand dest = instr->dest();
+			assert(dest.type() == opRegister);
+			nat regId = registerId(dest.reg());
+
+			if (src.type() == opReference) {
+				// Special meaning, load the reference's index instead.
+				assert(false, L"Not implemented yet!");
+				// Something like:
+				// to->putByte(0xB8 + regId);
+				// to->putPtr(reference);
+			} else {
+				to->putByte(0x8D);
+				modRm(to, regId, src);
+			}
+		}
+
 		void fstpOut(Output *to, Instr *instr) {
 			to->putByte(0xD9);
 			modRm(to, 3, instr->dest());
@@ -535,6 +553,7 @@ namespace code {
 			OUTPUT(mul),
 			OUTPUT(idiv),
 			OUTPUT(udiv),
+			OUTPUT(lea),
 
 			OUTPUT(fstp),
 			OUTPUT(fistp),

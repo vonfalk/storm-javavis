@@ -26,7 +26,6 @@ namespace code {
 		OP_CODE(ret, destNone),
 		OP_CODE(setCond, destWrite),
 		OP_CODE(fnParam, destNone),
-		OP_CODE(fnParamRef, destNone),
 		OP_CODE(fnCall, destRead),
 		OP_CODE(add, destRead | destWrite),
 		OP_CODE(adc, destRead | destWrite),

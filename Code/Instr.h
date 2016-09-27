@@ -99,12 +99,9 @@ namespace code {
 	// calls myFn(10, 20).
 	// fnParam taking two parameters uses the function 'copy' to copy 'src' onto the stack. 'copy' is assumed
 	// to have the signature <ptr or void> copy(void *dest, void *src), like copy ctors in C++.
-	// fnParamRef is like the two-parameter version of fnParam, except 'src' is a pointer to a value rather
-	// than the value itself.
 	// Having an empty 'copyFn' to 'fnParam' will generate a 'memcpy'-like copy.
 	Instr *STORM_FN fnParam(EnginePtr e, Operand src);
 	Instr *STORM_FN fnParam(EnginePtr e, Variable src, Operand copyFn);
-	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Operand copyFn);
 	Instr *STORM_FN fnCall(EnginePtr e, Operand src, ValType ret);
 
 	// Integer math (signed/unsigned)
@@ -249,7 +246,6 @@ namespace code {
 	PROXY2(setCond, Operand, CondFlag);
 	PROXY1(fnParam, Operand);
 	PROXY2(fnParam, Variable, Operand);
-	PROXY2(fnParamRef, Operand, Operand);
 	PROXY2(fnCall, Operand, ValType);
 	PROXY2(add, Operand, Operand);
 	PROXY2(adc, Operand, Operand);

@@ -204,18 +204,6 @@ namespace code {
 		return instrLoose(e, op::fnParam, copyFn, src);
 	}
 
-	Instr *fnParamRef(EnginePtr e, Operand src, Operand copyFn) {
-		assert(false, L"Not enough information provided due to design flaw in 'fnParamRef'. "
-			L"We need to know the size of the pushed data as well!");
-		if (copyFn.type() != opNone) {
-			if (copyFn.type() == opConstant)
-				throw InvalidValue(L"Should not call constant values, use references instead!");
-			if (copyFn.size() != Size::sPtr)
-				throw InvalidValue(L"Must call a pointer.");
-		}
-		return instrLoose(e, op::fnParamRef, copyFn, src);
-	}
-
 	Instr *fnCall(EnginePtr e, Operand src, ValType ret) {
 		if (src.type() == opConstant)
 			throw InvalidValue(L"Should not call constant values, use references instead!");
