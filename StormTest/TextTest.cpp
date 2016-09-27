@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 #include "Shared/Io/Text.h"
 #include "Shared/Io/MemStream.h"
 #include "Shared/Io/Utf8Text.h"

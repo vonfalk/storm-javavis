@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "Test/Test.h"
 #include "Code/Size.h"
 
 BEGIN_TEST(SizeTest, GcScan) {

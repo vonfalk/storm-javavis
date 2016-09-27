@@ -15,7 +15,7 @@ using namespace storm;
 
 extern Engine *gEngine;
 
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 
 template <class T, class U>
 void verifyObjEq(TestResult &r, Auto<T> lhs, Auto<U> rhs, const String &expr) {

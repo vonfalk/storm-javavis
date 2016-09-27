@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 
 static cpuInt myFn() {
 	return 10;

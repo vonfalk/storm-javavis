@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Fn.h"
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 #include "Shared/Map.h"
 #include "Storm/Url.h"
 #include "Shared/Timing.h"

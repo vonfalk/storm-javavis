@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 
 // Returning boolean values may be tricky in some cases, as they only
 // occupy the least significant byte of a machine word. On some architectures

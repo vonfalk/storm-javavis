@@ -196,9 +196,7 @@
 (defun add-cpp-template ()
   (unless (insert-file-template-p)
     (insert "#include \"stdafx.h\"\n")
-    (insert "#include \"")
-    (if (is-test-project)
-	(insert "Test/Test.h")
+    (unless (is-test-project)
       (insert (replace-regexp-in-string
 	       ".cpp" ".h"
 	       (filename buffer-file-name))))

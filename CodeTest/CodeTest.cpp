@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Test/TestMgr.h"
+#include "Test/Lib/TestMgr.h"
 
 // Long-running test of the push op-code.
 void testPush(Arena &arena) {

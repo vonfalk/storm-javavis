@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 #include "OS/Thread.h"
 #include "OS/ThreadGroup.h"
 #include "OS/Future.h"

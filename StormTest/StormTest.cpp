@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Test/TestMgr.h"
+#include "Test/Lib/TestMgr.h"
 #include "Shared/Timing.h"
 
 Engine *gEngine = null;

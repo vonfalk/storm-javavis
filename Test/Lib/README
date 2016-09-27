@@ -1,0 +1,15 @@
+This is a very simple testing library.
+
+Usage:
+
+Include 'TestMgr.h' from one source file. The rest only includes 'Test.h', then write a main
+function that does any setup and then calls 'Tests::run()' and then prints the result. Eg:
+
+int main() {
+    TestResult r = Tests::run();
+    std::cout << "Result: " << r << std::endl;
+    return r.ok() ? 0 : 1;
+}
+
+
+Wrap test cases in: BEGIN_TEST(<name>, <group>) { ... } END_TEST

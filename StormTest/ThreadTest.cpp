@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 #include "Fn.h"
 #include "Storm/Thread.h"
 

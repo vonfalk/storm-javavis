@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 
 // Check so that hash maps can handle Auto<> correctly. Otherwise, things will break quickly.
 BEGIN_TEST(HashTest) {

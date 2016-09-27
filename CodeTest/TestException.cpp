@@ -1,5 +1,5 @@
-#include "stdafx.h"
-#include "Test/Test.h"
+i#include "stdafx.h"
+#include "Test/Lib/Test.h"
 #include "Code/Redirect.h"
 
 static int destroyed = 0;

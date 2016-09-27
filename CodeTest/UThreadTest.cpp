@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 #include "Utils/Semaphore.h"
 #include "OS/Thread.h"
 #include "OS/UThread.h"

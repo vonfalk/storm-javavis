@@ -21,7 +21,7 @@ using namespace code;
 using namespace os;
 
 // Test code!
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 
 // Call function, checking extra registers.
 int callFn(const void *fnPtr, int p);

@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "Test/Test.h"
 #include "Core/WeakSet.h"
 #include "Core/Str.h"
 #include "Compiler/Debug.h"

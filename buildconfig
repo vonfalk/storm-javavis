@@ -1,4 +1,4 @@
-CompilerTest
+Test
 #CppTypes -a ../Compiler/ --template ../Compiler/Gen/CppTypes.template.cpp --out ../Compiler/Gen/CppTypes.cpp --asm ../Compiler/Gen/CppTypes.asm
 
 #Basic UI test.

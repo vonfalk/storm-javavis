@@ -11,7 +11,7 @@ using namespace storm;
 
 extern Engine *gEngine;
 
-#include "Test/Test.h"
+#include "Test/Lib/Test.h"
 
 /**
  * Define test suites so we can place tests in a somewhat cronological order, so when porting we can
