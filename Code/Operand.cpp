@@ -37,11 +37,9 @@ namespace code {
 
 	Operand::Operand(Word c, Size size) : opType(opConstant), opPtr(null), opNum(c), opSize(size) {}
 
-	Operand::Operand(Size s, Size size) : opType(opDualConstant), opPtr(null), opNum(dual(s.size32(), s.size64())), opSize(size) {}
+	Operand::Operand(Size s, Size size) : opType(opDualConstant), opPtr(null), opOffset(s), opSize(size) {}
 
-	Operand::Operand(Offset o, Size size) : opType(opDualConstant), opPtr(null), opNum(dual(o.v32(), o.v64())), opSize(size) {
-		TODO(L"Check negative offsets!");
-	}
+	Operand::Operand(Offset o, Size size) : opType(opDualConstant), opPtr(null), opOffset(o), opSize(size) {}
 
 	Operand::Operand(Register r, Offset offset, Size size) : opType(opRelative), opPtr(null), opNum(r), opOffset(offset), opSize(size) {}
 
@@ -55,12 +53,13 @@ namespace code {
 		case opNone:
 			return true;
 		case opConstant:
-		case opDualConstant:
 		case opRegister:
 		case opCondFlag:
 		case opPart:
 		case opLabel:
 			return opNum == o.opNum;
+		case opDualConstant:
+			return opOffset == o.opOffset;
 		case opVariable:
 		case opRelative:
 			return opNum == o.opNum && opOffset == o.opOffset;
@@ -128,10 +127,8 @@ namespace code {
 		assert(type() == opConstant, L"Not a constant!");
 		if (opType == opConstant) {
 			return opNum;
-		} else if (sizeof(void *) == 4) {
-			return firstDual(opNum);
 		} else {
-			return secondDual(opNum);
+			return opOffset.current();
 		}
 	}
 
@@ -141,6 +138,9 @@ namespace code {
 	}
 
 	Offset Operand::offset() const {
+		if (type() == opDualConstant)
+			return Offset();
+
 		// Nothing bad happens if this is accessed wrongly.
 		return opOffset;
 	}

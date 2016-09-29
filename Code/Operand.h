@@ -36,7 +36,7 @@ namespace code {
 		// Constant.
 		opConstant,
 
-		// Dual-constant (one value for 32-bit and one for 64-bit). Appears as 'opConstant'.
+		// Dual-constant (one value for 32-bit and one for 64-bit). Appears as 'opConstant', but is stored in 'opOffset'.
 		opDualConstant,
 
 		// Register
