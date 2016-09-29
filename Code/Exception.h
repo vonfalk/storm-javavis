@@ -51,14 +51,14 @@ namespace code {
 		String what() const { return String(L"Use of undefined label ") + toS(id) + L"."; }
 	};
 
-	// class VariableUseError : public Exception {
-	// public:
-	// 	VariableUseError(Variable v, Part p) : var(v), part(p) {}
+	class VariableUseError : public Exception {
+	public:
+		VariableUseError(Variable v, Part p) : var(v), part(p) {}
 
-	// 	Variable var;
-	// 	Part part;
+		Variable var;
+		Part part;
 
-	// 	String what() const;
-	// };
+		String what() const { return String(L"Trying to use " + toS(var) + L" in " + toS(part) + L", where it is not accessible."); }
+	};
 }
 

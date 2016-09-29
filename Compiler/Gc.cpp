@@ -1004,8 +1004,6 @@ namespace storm {
 
 	void *Gc::allocArray(const GcType *type, size_t elements) {
 		assert(type->kind == GcType::tArray, L"Wrong type for calling allocArray().");
-		if (elements == 0)
-			return null;
 
 		size_t size = align(type->stride*elements + headerSize + arrayHeaderSize);
 		mps_ap_t &ap = currentAllocPoint();

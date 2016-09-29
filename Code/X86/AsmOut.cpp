@@ -168,6 +168,10 @@ namespace code {
 				to->putByte(0x68);
 				to->putAddress(src.ref());
 				break;
+			case opObjReference:
+				to->putByte(0x68);
+				to->putObject(src.object());
+				break;
 			case opLabel:
 				to->putByte(0x68);
 				to->putAddress(src.label());
@@ -225,6 +229,10 @@ namespace code {
 			case opReference:
 				to->putByte(opCode);
 				to->putRelative(src.ref());
+				break;
+			case opObjReference:
+				to->putByte(opCode);
+				to->putObject(src.object());
 				break;
 			default:
 				assert(false, L"JmpCall not implemented for " + ::toS(src));
@@ -394,6 +402,7 @@ namespace code {
 				break;
 			case opLabel:
 			case opReference:
+			case opObjReference:
 				assert(false, L"Multiplying an absolute address does not make sense.");
 				break;
 			default:
@@ -527,6 +536,31 @@ namespace code {
 			to->putByte(0x9B);
 		}
 
+		void threadLocalOut(Output *to, Instr *instr) {
+			to->putByte(0x64); // FS segment
+		}
+
+		void datOut(Output *to, Instr *instr) {
+			Operand src = instr->src();
+			switch (src.type()) {
+			case opLabel:
+				to->putAddress(src.label());
+				break;
+			case opReference:
+				to->putAddress(src.ref());
+				break;
+			case opObjReference:
+				to->putObject(src.object());
+				break;
+			case opConstant:
+				to->putSize(src.constant(), src.size());
+				break;
+			default:
+				assert(false, L"Unsupported type for dat.");
+				break;
+			}
+		}
+
 		const OpEntry<OutputFn> outputMap[] = {
 			OUTPUT(mov),
 			OUTPUT(add),
@@ -565,16 +599,16 @@ namespace code {
 			OUTPUT(fdivp),
 			OUTPUT(fcompp),
 			OUTPUT(fwait),
+
+			OUTPUT(threadLocal),
+			OUTPUT(dat),
 		};
 
 		void output(Listing *src, Output *to) {
 			static OpTable<OutputFn> t(outputMap, ARRAY_COUNT(outputMap));
 
 			for (Nat i = 0; i < src->count(); i++) {
-				Array<Label> *labels = src->labels(i);
-				for (nat l = 0; labels != null && l < labels->count(); l++) {
-					to->mark(labels->at(l));
-				}
+				to->mark(src->labels(i));
 
 				Instr *instr = src->at(i);
 				OutputFn fn = t[instr->op()];
@@ -584,6 +618,8 @@ namespace code {
 					assert(false, L"Unsupported op-code: " + String(name(instr->op())));
 				}
 			}
+
+			to->mark(src->labels(src->count()));
 		}
 
 	}

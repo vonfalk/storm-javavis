@@ -63,13 +63,16 @@ namespace code {
 	}
 
 	void Listing::Entry::add(Engine &e, Label l) {
+		if (l == Label())
+			return;
+
 		if (!labels)
 			labels = new (e) Array<Label>(l);
 		else
 			labels->push(l);
 	}
 
-	StrBuf &STORM_FN operator <<(StrBuf &to, Listing::Entry e) {
+	StrBuf &operator <<(StrBuf &to, Listing::Entry e) {
 		if (e.labels != null && e.labels->any()) {
 			StrBuf *tmp = new (&to) StrBuf();
 			*tmp << e.labels->at(0);
@@ -210,6 +213,13 @@ namespace code {
 		return *this;
 	}
 
+	MAYBE(Array<Label> *) Listing::labels(Nat id) {
+		if (id == count())
+			return nextLabels;
+		else
+			return code->at(id).labels;
+	}
+
 	Label Listing::meta() {
 		return Label(0);
 	}
@@ -218,7 +228,7 @@ namespace code {
 		return Label(nextLabel++);
 	}
 
-	Block Listing::root() {
+	Block Listing::root() const {
 		return Block(0);
 	}
 
@@ -385,10 +395,10 @@ namespace code {
 		return Part(vars->at(v.id).parent);
 	}
 
-	Bool Listing::accessible(Variable v, Block b) const {
+	Bool Listing::accessible(Variable v, Part p) const {
 		if (v.id >= vars->count())
 			return false;
-		if (b.id >= parts->count())
+		if (p.id >= parts->count())
 			return false;
 
 		// Parameters are always visible.
@@ -396,7 +406,7 @@ namespace code {
 			return true;
 
 		IVar &var = vars->at(v.id);
-		return isParent(b, Part(var.parent));
+		return isParent(first(Part(var.parent)), p);
 	}
 
 	Bool Listing::isParent(Block parent, Part q) const {
@@ -525,6 +535,11 @@ namespace code {
 		IPart &part = parts->at(p.id);
 		for (nat i = 0; i < part.vars->count(); i++)
 			r->push(createVar(part.vars->at(i)));
+
+		if (p == root()) {
+			for (nat i = 0; i < params->count(); i++)
+				r->push(createVar(params->at(i)));
+		}
 
 		return r;
 	}

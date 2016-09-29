@@ -60,6 +60,14 @@ namespace code {
 		markLabel(lbl.id);
 	}
 
+	void Output::mark(MAYBE(Array<Label> *) lbl) {
+		if (!lbl)
+			return;
+
+		for (nat i = 0; i < lbl->count(); i++)
+			mark(lbl->at(i));
+	}
+
 	void Output::putRelative(Label lbl) {
 		putInt(toRelative(labelOffset(lbl.id)));
 	}
@@ -78,6 +86,10 @@ namespace code {
 	void Output::putAddress(Ref ref) {
 		putGcPtr(Word(ref.address()));
 		markGcRef(ref);
+	}
+
+	void Output::putObject(RootObject *obj) {
+		putGcPtr(Word(obj));
 	}
 
 	void Output::markLabel(Nat id) {

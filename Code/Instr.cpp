@@ -358,12 +358,13 @@ namespace code {
 
 	Instr *dat(EnginePtr e, Operand v) {
 		switch (v.type()) {
-			case opConstant:
-			case opLabel:
-			case opReference:
-				break;
-			default:
-				throw InvalidValue(L"Cannot store other than references, constants and labels in dat");
+		case opConstant:
+		case opLabel:
+		case opReference:
+		case opObjReference:
+			break;
+		default:
+			throw InvalidValue(L"Cannot store other than references, constants and labels in dat");
 		}
 		return instrSrc(e, op::dat, v);
 	}

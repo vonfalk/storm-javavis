@@ -20,7 +20,7 @@ namespace code {
 		class LayoutVars : public Transform {
 			STORM_CLASS;
 		public:
-			STORM_CTOR LayoutVars();
+			STORM_CTOR LayoutVars(Binary *owner);
 
 			// Start transform.
 			virtual void STORM_FN before(Listing *dest, Listing *src);
@@ -32,6 +32,9 @@ namespace code {
 			virtual void STORM_FN after(Listing *dest, Listing *src);
 
 		private:
+			// Owner. We need to store it when using exceptions.
+			Binary *owner;
+
 			// Registers saved in the prolog.
 			RegSet *preserved;
 			nat preservedCount;
@@ -48,6 +51,9 @@ namespace code {
 			// Offset at which the part id is stored if we're using exceptions.
 			Offset partId;
 
+			// Label to where the Binary pointer is stored. Only valid if 'usingEH' is true.
+			Label binaryLbl;
+
 			// Signature for transform functions.
 			typedef void (LayoutVars::*TransformFn)(Listing *dest, Listing *src, Nat line);
 
@@ -61,7 +67,7 @@ namespace code {
 			void endBlockTfm(Listing *dest, Listing *src, Nat line);
 
 			// Lookup variables to their corresponding offsets.
-			Operand resolve(const Operand &op);
+			Operand resolve(Listing *src, const Operand &op);
 
 			// Initialize a block or a part.
 			void initPart(Listing *dest, Part p);

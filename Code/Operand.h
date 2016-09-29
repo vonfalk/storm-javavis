@@ -57,6 +57,9 @@ namespace code {
 		// Reference to another object.
 		opReference,
 
+		// Reference to an object.
+		opObjReference,
+
 		// Condition flag.
 		opCondFlag,
 	};
@@ -99,6 +102,7 @@ namespace code {
 
 		// Empty?
 		Bool STORM_FN empty() const;
+		Bool STORM_FN any() const;
 
 		// Type.
 		OpType STORM_FN type() const;
@@ -126,6 +130,7 @@ namespace code {
 		Part STORM_FN part() const;
 		Label STORM_FN label() const;
 		Ref STORM_FN ref() const;
+		RootObject *object() const;
 		Variable STORM_FN variable() const; // NOTE: The size of this variable is equal to the size
 											// we want to read, which is not always the size of the
 											// original variable!
@@ -141,6 +146,7 @@ namespace code {
 		Operand(Word c, Size size);
 		Operand(Size s, Size size);
 		Operand(Offset o, Size size);
+		Operand(RootObject *obj);
 
 		// Register + offset.
 		Operand(Register r, Offset offset, Size size);
@@ -169,6 +175,8 @@ namespace code {
 		friend Operand ptrConst(Size v);
 		friend Operand ptrConst(Offset v);
 		friend Operand xConst(Size s, Word w);
+		friend Operand objPtr(Object *ptr);
+		friend Operand objPtr(TObject *ptr);
 		friend Operand xRel(Size size, Register reg, Offset offset);
 		friend Operand xRel(Size size, Variable v, Offset offset);
 		friend wostream &operator <<(wostream &to, const Operand &o);
@@ -189,6 +197,10 @@ namespace code {
 	Operand STORM_FN ptrConst(Size v);
 	Operand STORM_FN ptrConst(Offset v);
 	Operand STORM_FN xConst(Size s, Word v);
+
+	// Store a pointer to a GC:d object as a constant.
+	Operand STORM_FN objPtr(Object *ptr);
+	Operand STORM_FN objPtr(TObject *ptr);
 
 	// Relative values (dereference pointers).
 	Operand STORM_FN byteRel(Register reg, Offset offset);

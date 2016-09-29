@@ -2,7 +2,10 @@
 #include "LayoutVars.h"
 #include "Arena.h"
 #include "Asm.h"
+#include "Binary.h"
 #include "Exception.h"
+#include "SafeSeh.h"
+#include "Seh.h"
 
 namespace code {
 	namespace x86 {
@@ -16,7 +19,7 @@ namespace code {
 			TRANSFORM(endBlock),
 		};
 
-		LayoutVars::LayoutVars() {}
+		LayoutVars::LayoutVars(Binary *owner) : owner(owner) {}
 
 		void LayoutVars::before(Listing *dest, Listing *src) {
 			usingEH = src->exceptionHandler();
@@ -34,6 +37,9 @@ namespace code {
 			}
 
 			layout = code::x86::layout(src, preserved->count(), usingEH);
+
+			if (usingEH)
+				binaryLbl = dest->label();
 		}
 
 		void LayoutVars::during(Listing *dest, Listing *src, Nat line) {
@@ -44,19 +50,41 @@ namespace code {
 			if (f) {
 				(this->*f)(dest, src, line);
 			} else {
-				*dest << i->alter(resolve(i->dest()), resolve(i->src()));
+				*dest << i->alter(resolve(src, i->dest()), resolve(src, i->src()));
 			}
 		}
 
 		void LayoutVars::after(Listing *dest, Listing *src) {
-			TODO(L"Add exception metadata!");
+			// NOTE: This table may not be aligned properly. On X86, this is not a problem, but it
+			// might be on other platforms!
+
+			if (usingEH) {
+				*dest << binaryLbl;
+				*dest << dat(objPtr(owner));
+			}
+
+			*dest << dest->meta();
+
+			Array<Variable> *vars = src->allVars();
+
+			for (nat i = 0; i < vars->count(); i++) {
+				Variable &v = vars->at(i);
+				Operand fn = src->freeFn(v);
+				if (fn.empty())
+					*dest << dat(ptrConst(Offset(0)));
+				else
+					*dest << dat(src->freeFn(v));
+				*dest << dat(ptrConst(layout->at(v.key())));
+			}
 		}
 
-		Operand LayoutVars::resolve(const Operand &src) {
+		Operand LayoutVars::resolve(Listing *listing, const Operand &src) {
 			if (src.type() != opVariable)
 				return src;
 
 			Variable v = src.variable();
+			if (!listing->accessible(v, part))
+				throw VariableUseError(v, part);
 			return xRel(src.size(), ptrFrame, layout->at(v.key()) + src.offset());
 		}
 
@@ -132,17 +160,17 @@ namespace code {
 					}
 
 					if (when & freePtr) {
-						*dest << lea(ptrA, resolve(v));
+						*dest << lea(ptrA, resolve(dest, v));
 						*dest << push(ptrA);
 						*dest << call(dtor, valVoid());
 						*dest << add(ptrStack, ptrConst(Offset::sPtr));
 					} else if (v.size() <= Size::sInt) {
-						*dest << push(resolve(v));
+						*dest << push(resolve(dest, v));
 						*dest << call(dtor, valVoid());
 						*dest << add(ptrStack, ptrConst(v.size()));
 					} else {
-						*dest << push(high32(resolve(v)));
-						*dest << push(low32(resolve(v)));
+						*dest << push(high32(resolve(dest, v)));
+						*dest << push(low32(resolve(dest, v)));
 						*dest << call(dtor, valVoid());
 						*dest << add(ptrStack, ptrConst(v.size()));
 					}
@@ -178,18 +206,24 @@ namespace code {
 				*dest << mov(intRel(ptrFrame, offset), natConst(0));
 				partId = offset;
 				offset -= Offset::sInt;
-				// Owner. TODO!
-				*dest << mov(intRel(ptrFrame, offset), natConst(0));
-				offset -= Offset::sInt;
-				// Standard SEH frame.
-				*dest << mov(ptrRel(ptrFrame, offset), natConst(0)); // Function to call: TODO!
-				offset -= Offset::sPtr;
-				*dest << threadLocal() << mov(ptrA, ptrRel(noReg, Offset()));
-				*dest << mov(ptrRel(ptrFrame, offset), ptrA); // Previous SEH frame
-				offset -= Offset::sPtr;
-				*dest << threadLocal() << mov(ptrRel(noReg, Offset()), ptrStack); // Set ourselves the new frame.
 
-				assert(false, L"Incomplete implementation!");
+				// Owner.
+				*dest << mov(ptrRel(ptrFrame, offset), binaryLbl);
+				offset -= Offset::sPtr;
+
+				// Standard SEH frame.
+				*dest << mov(ptrRel(ptrFrame, offset), xConst(Size::sPtr, Word(&::x86SafeSEH)));
+				offset -= Offset::sPtr;
+
+				// Previous SEH frame
+				*dest << threadLocal() << mov(ptrA, ptrRel(noReg, Offset()));
+				*dest << mov(ptrRel(ptrFrame, offset), ptrA);
+
+				// Set ourselves the new frame.
+				*dest << lea(ptrA, ptrRel(ptrFrame, offset));
+				*dest << threadLocal() << mov(ptrRel(noReg, Offset()), ptrA);
+
+				offset -= Offset::sPtr;
 			}
 
 			// Save any registers we need to preserve.
@@ -227,7 +261,7 @@ namespace code {
 			if (usingEH) {
 				// Remove the SEH. Note: ptrC is not preserved across function calls, so it is OK to use it here!
 				// We can not use ptrA nor ptrD as rax == eax:edx
-				*dest << mov(ptrC, ptrRel(ptrFrame, Offset::sPtr * 4));
+				*dest << mov(ptrC, ptrRel(ptrFrame, -Offset::sPtr * 4));
 				*dest << threadLocal() << mov(ptrRel(noReg, Offset()), ptrC);
 			}
 

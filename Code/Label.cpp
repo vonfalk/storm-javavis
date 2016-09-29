@@ -4,6 +4,8 @@
 
 namespace code {
 
+	Label::Label() : id(-1) {}
+
 	Label::Label(Nat id) : id(id) {}
 
 	wostream &operator <<(wostream &to, Label l) {

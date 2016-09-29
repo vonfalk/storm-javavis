@@ -9,6 +9,8 @@ namespace code {
 	class Label {
 		STORM_VALUE;
 	public:
+		STORM_CTOR Label();
+
 		inline Bool STORM_FN operator ==(Label o) const { return id == o.id; }
 		inline Bool STORM_FN operator !=(Label o) const { return id != o.id; }
 
@@ -16,6 +18,7 @@ namespace code {
 		friend class Listing;
 		friend class Output;
 		friend class Operand;
+		friend class Binary;
 		friend wostream &operator <<(wostream &to, Label l);
 		friend StrBuf &operator <<(StrBuf &to, Label l);
 

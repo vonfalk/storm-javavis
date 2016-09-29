@@ -41,6 +41,8 @@ namespace code {
 
 	Operand::Operand(Offset o, Size size) : opType(opDualConstant), opPtr(null), opOffset(o), opSize(size) {}
 
+	Operand::Operand(RootObject *obj) : opType(opObjReference), opPtr(obj), opOffset(), opSize(Size::sPtr) {}
+
 	Operand::Operand(Register r, Offset offset, Size size) : opType(opRelative), opPtr(null), opNum(r), opOffset(offset), opSize(size) {}
 
 	Operand::Operand(Variable v, Offset offset, Size size) : opType(opVariable), opPtr(null), opNum(v.id), opOffset(offset), opSize(size) {}
@@ -64,6 +66,7 @@ namespace code {
 		case opRelative:
 			return opNum == o.opNum && opOffset == o.opOffset;
 		case opReference:
+		case opObjReference:
 			return opPtr == o.opPtr;
 		default:
 			assert(false, L"Unknown type!");
@@ -77,6 +80,10 @@ namespace code {
 
 	Bool Operand::empty() const {
 		return opType == opNone;
+	}
+
+	Bool Operand::any() const {
+		return !empty();
 	}
 
 	OpType Operand::type() const {
@@ -166,6 +173,11 @@ namespace code {
 		return Ref(s);
 	}
 
+	RootObject *Operand::object() const {
+		assert(type() == opObjReference, L"Not an object reference!");
+		return (RootObject *)opPtr;
+	}
+
 	Label Operand::label() const {
 		assert(type() == opLabel, L"Not a label!");
 		return Label(Nat(opNum));
@@ -206,6 +218,9 @@ namespace code {
 			return to << L"Label" << o.opNum;
 		case opReference:
 			return to << L"@" << o.ref().title();
+		case opObjReference:
+			TODO(L"Make sure to call on the correct OS thread!");
+			return to << L"&" << o.object()->toS()->c_str();
 		case opCondFlag:
 			return to << code::name(o.condFlag());
 		default:
@@ -265,6 +280,14 @@ namespace code {
 
 	Operand xConst(Size s, Word v) {
 		return Operand(v, s);
+	}
+
+	Operand objPtr(Object *o) {
+		return Operand(o);
+	}
+
+	Operand objPtr(TObject *o) {
+		return Operand(o);
 	}
 
 	Operand byteRel(Register reg, Offset offset) {

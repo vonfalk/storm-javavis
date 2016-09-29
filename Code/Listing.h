@@ -107,7 +107,9 @@ namespace code {
 		inline Bool STORM_FN any() const { return count() > 0; }
 		inline Instr *STORM_FN operator [](Nat id) const { return at(id); }
 		inline Instr *at(Nat id) const { return code->at(id).instr; }
-		inline MAYBE(Array<Label> *) STORM_FN labels(Nat id) { return code->at(id).labels; }
+
+		// Give 'id = count()' to access any labels after the last instruction.
+		MAYBE(Array<Label> *) STORM_FN labels(Nat id);
 
 		// Create a shell, ie. a Listing containing only the scope information from this listing,
 		// thus making variables, blocks and part from this listing valid in the shell as well.
@@ -128,7 +130,7 @@ namespace code {
 		 */
 
 		// Get the root block.
-		Block STORM_FN root();
+		Block STORM_FN root() const;
 
 		// Create a block inside 'parent'. Note that it does not matter if 'parent' is the block or
 		// any part inside that block.
@@ -165,7 +167,7 @@ namespace code {
 
 		// See if the variable 'v' is accessible in the part 'p'. This is almost equivalent to
 		// checking if any parent blocks of 'p' contains the variable.
-		Bool STORM_FN accessible(Variable v, Block b) const;
+		Bool STORM_FN accessible(Variable v, Part p) const;
 
 		// See if the part 'q' is an indirect parent to 'parent'.
 		Bool STORM_FN isParent(Block parent, Part q) const;
@@ -179,7 +181,7 @@ namespace code {
 		// Get all parts.
 		Array<Part> *STORM_FN allParts() const;
 
-		// Get all variables.
+		// Get all variables. Always in order, so allVars()[i].key() == i
 		Array<Variable> *STORM_FN allVars() const;
 
 		// Get all variables in a block.

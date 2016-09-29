@@ -45,12 +45,14 @@ namespace code {
 
 		// Labels.
 		void STORM_FN mark(Label lbl);
+		void STORM_FN mark(MAYBE(Array<Label> *) lbl);
 		void STORM_FN putRelative(Label lbl); // Writes 4 bytes.
 		void STORM_FN putAddress(Label lbl); // Writes 4 or 8 bytes.
 
 		// References.
 		void STORM_FN putRelative(Ref ref); // Writes 4 or 8 bytes.
 		void STORM_FN putAddress(Ref ref); // Writes 4 or 8 bytes.
+		void putObject(RootObject *obj); // Writes 4 or 8 bytes.
 
 	protected:
 		// Mark a label here.

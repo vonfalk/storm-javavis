@@ -333,6 +333,11 @@ namespace code {
 				modRm(to, op.modeImm32, dest);
 				to->putAddress(src.ref());
 				break;
+			case opObjReference:
+				to->putByte(op.opImm32);
+				modRm(to, op.modeImm32, dest);
+				to->putObject(src.object());
+				break;
 			case opConstant:
 				if (op.modeImm8 != 0xFF && singleByte(src.constant())) {
 					to->putByte(op.opImm8);

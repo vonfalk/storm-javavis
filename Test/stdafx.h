@@ -68,3 +68,9 @@ void verifyObjEq(TestResult &r, T *lhs, U *rhs, const String &expr) {
 // Call a function and check all extra register so they are properly preserved.
 int callFn(const void *ptr, int v);
 int64 callFn(const void *ptr, int64 v);
+
+
+class Error : public Exception {
+public:
+	String what() const { return L"Test error"; }
+};

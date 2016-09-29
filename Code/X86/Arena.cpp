@@ -35,7 +35,7 @@ namespace code {
 			// Expand variables and function calls as well as function prolog and epilog. We need to
 			// know all used registers for this to work, so it has to be run after the previous
 			// transforms.
-			l = code::transform(l, this, new (this) LayoutVars());
+			l = code::transform(l, this, new (this) LayoutVars(owner));
 
 			return l;
 		}
