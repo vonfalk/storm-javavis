@@ -27,6 +27,8 @@ namespace code {
 	}
 
 	void RefSource::set(Content *to) {
+		// NOTE: do _not_ ignore updating if 'cont == to', as we rely on the always update behaviour
+		// to force updates in storm::DynamicCode.
 		cont = to;
 
 		Array<Reference *> *r = new (this) Array<Reference *>();

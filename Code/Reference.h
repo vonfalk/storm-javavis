@@ -77,4 +77,5 @@ namespace code {
 	wostream &operator <<(wostream &to, const Ref &r);
 	StrBuf &STORM_FN operator <<(StrBuf &to, Ref r) ON(Compiler);
 
+
 }

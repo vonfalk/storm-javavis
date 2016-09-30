@@ -161,6 +161,17 @@ namespace storm {
 		notifyThread(thread);
 	}
 
+	RunOn Type::runOn() {
+		if (isA(TObject::stormType(engine))) {
+			if (useThread)
+				return RunOn(useThread);
+			else
+				return RunOn(RunOn::runtime);
+		} else {
+			return RunOn();
+		}
+	}
+
 	void Type::notifyThread(NamedThread *thread) {
 		useThread = thread;
 

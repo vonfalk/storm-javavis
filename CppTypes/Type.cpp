@@ -38,7 +38,7 @@ void Class::add(const Function &f) {
 }
 
 void Class::resolveTypes(World &in) {
-	CppName ctx = name.parent();
+	CppName ctx = name;
 
 	if (!parent.empty())
 		parentType = in.types.find(parent, ctx, pos);

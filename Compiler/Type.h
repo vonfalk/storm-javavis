@@ -2,6 +2,7 @@
 #include "NameSet.h"
 #include "TypeChain.h"
 #include "Gc.h"
+#include "RunOn.h"
 #include "Core/TypeFlags.h"
 
 namespace storm {
@@ -49,6 +50,9 @@ namespace storm {
 
 		// Set the thread for this type. This will force the super-type to be TObject.
 		void STORM_FN setThread(NamedThread *t);
+
+		// Get where we want to run.
+		RunOn STORM_FN runOn();
 
 		// Is this a value type?
 		inline bool value() const { return (typeFlags & typeValue) == typeValue; }

@@ -4,6 +4,7 @@
 #include "BootStatus.h"
 #include "World.h"
 #include "Scope.h"
+#include "Code/Arena.h"
 
 // TODO: Do not depend on path!
 #include "Utils/Path.h"
@@ -103,6 +104,12 @@ namespace storm {
 		// Get the default scope lookup.
 		ScopeLookup *scopeLookup();
 
+		/**
+		 * The arena used for code generation for this platform.
+		 */
+
+		code::Arena *arena();
+
 	private:
 		// The compiler C++ world.
 		World world;
@@ -123,6 +130,9 @@ namespace storm {
 
 			// Root scope lookup.
 			ScopeLookup *rootLookup;
+
+			// Arena.
+			code::Arena *arena;
 		};
 
 		GcRoot o;

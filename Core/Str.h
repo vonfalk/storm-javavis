@@ -53,6 +53,7 @@ namespace storm {
 
 		// Concatenation.
 		Str *STORM_FN operator +(Str *o) const;
+		Str *operator +(const wchar *o) const;
 
 		// Multiplication.
 		Str *STORM_FN operator *(Nat times) const;
@@ -138,6 +139,7 @@ namespace storm {
 
 		// Concatenation constructor.
 		Str(const Str *a, const Str *b);
+		Str(const Str *a, const wchar *b);
 
 		// Repetition constructor.
 		Str(const Str *a, Nat times);

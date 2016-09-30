@@ -86,6 +86,10 @@ namespace storm {
 		return new (this) Str(this, o);
 	}
 
+	Str *Str::operator +(const wchar *o) const {
+		return new (this) Str(this, o);
+	}
+
 	Str::Str(const Str *a, const Str *b) {
 		size_t aSize = a->data->count - 1;
 		size_t bSize = b->data->count - 1;
@@ -95,6 +99,18 @@ namespace storm {
 			data->v[i] = a->data->v[i];
 		for (size_t i = 0; i < bSize; i++)
 			data->v[i + aSize] = b->data->v[i];
+		data->v[aSize + bSize] = 0;
+	}
+
+	Str::Str(const Str *a, const wchar *b) {
+		size_t aSize = a->data->count - 1;
+		size_t bSize = wcslen(b);
+
+		allocData(aSize + bSize + 1);
+		for (size_t i = 0; i < aSize; i++)
+			data->v[i] = a->data->v[i];
+		for (size_t i = 0; i < bSize; i++)
+			data->v[i + aSize] = b[i];
 		data->v[aSize + bSize] = 0;
 	}
 

@@ -192,6 +192,13 @@ namespace storm {
 		return Scope(package(), scopeLookup());
 	}
 
+	code::Arena *Engine::arena() {
+		if (!o.arena)
+			o.arena = code::arena(*this);
+
+		return o.arena;
+	}
+
 	Package *Engine::package() {
 		if (!o.root) {
 			assert(has(bootTypes), L"Can not create packages yet.");
