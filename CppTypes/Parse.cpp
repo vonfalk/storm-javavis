@@ -19,7 +19,9 @@ public:
 	}
 
 	void add(const Function &f) {
-		// PLN(L"Global exported function " << f << L" ignored.");
+		Function g = f;
+		g.name = prefix + f.name;
+		to.functions.push_back(g);
 	}
 };
 
@@ -126,7 +128,7 @@ static void parseBlock(Tokenizer &tok) {
 }
 
 // Parse a variable or function.
-static void parseMember(Tokenizer &tok, Namespace &addTo) {
+static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo) {
 	if (!tok.more() || tok.skipIf(L";"))
 		return;
 
@@ -184,7 +186,7 @@ static void parseMember(Tokenizer &tok, Namespace &addTo) {
 
 	if (tok.skipIf(L"(")) {
 		// Function.
-		Function f(CppName(name.token), name.pos, type);
+		Function f(CppName(name.token), env.pkg, name.pos, type);
 		f.isVirtual = isVirtual;
 
 		if (!tok.skipIf(L")")) {
@@ -372,7 +374,8 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 		} else if (t.token == L"inline") {
 			tok.skip();
 		} else {
-			parseMember(tok, *type);
+			ClassNamespace ns(env.world, *type);
+			parseMember(tok, env, ns);
 		}
 	}
 
@@ -402,7 +405,19 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			tok.skipIf(L"\"C\""); // for 'extern "C" {}'
 		} else if (t.token == L"static") {
 			tok.skip();
-		} else if (t.token == L"using" || t.token == L"typedef") {
+		} else if (t.token == L"using") {
+			tok.next();
+			if (tok.skipIf(L"namespace")) {
+				// Skip it.
+				while (!tok.skipIf(L";"))
+					tok.skip();
+			} else {
+				// Add an alias.
+				CppName a = parseName(tok);
+				env.world.aliases.insert(make_pair(name + a.last(), a));
+				tok.expect(L";");
+			}
+		} else if (t.token == L"typedef") {
 			while (!tok.skipIf(L";"))
 				tok.skip();
 		} else if (t.token == L"STORM_PKG") {
@@ -481,7 +496,7 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			// Stray semicolon, skip it.
 			tok.skip();
 		} else {
-			parseMember(tok, WorldNamespace(env.world, name));
+			parseMember(tok, env, WorldNamespace(env.world, name));
 		}
 	}
 }

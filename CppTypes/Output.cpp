@@ -39,7 +39,9 @@ static void genIncludes(wostream &to, World &w) {
 		files.insert(w.threads[i]->pos.fileId);
 	}
 
-	// TODO: include all files containing functions we're interested in as well!
+	for (nat i = 0; i < w.functions.size(); i++) {
+		files.insert(w.functions[i].pos.fileId);
+	}
 
 	for (set<nat>::iterator i = files.begin(); i != files.end(); ++i) {
 		if (*i != SrcPos::invalid)
@@ -144,6 +146,234 @@ static void genTypes(wostream &to, World &w) {
 	}
 }
 
+static TypeRef *findType(TypeRef *ref) {
+	if (PtrType *t = as<PtrType>(ref)) {
+		return findType(t->of.borrow());
+	} else if (RefType *r = as<RefType>(ref)) {
+		return findType(r->of.borrow());
+	} else if (MaybeType *m = as<MaybeType>(ref)) {
+		return findType(m->of.borrow());
+	} else {
+		return ref;
+	}
+}
+
+static vector<nat> templateParamsId(ResolvedTemplateType *t) {
+	vector<nat> out(t->params.size(), 0);
+
+	for (nat i = 0; i < t->params.size(); i++) {
+		if (ResolvedType *r = as<ResolvedType>(findType(t->params[i].borrow()))) {
+			out[i] = r->type->id;
+		} else {
+			throw Error(L"Unresolved type: " + ::toS(t->params[i]), t->pos);
+		}
+	}
+
+	return out;
+}
+
+static String templateParamsName(ResolvedTemplateType *t) {
+	std::wostringstream out;
+	vector<nat> in = templateParamsId(t);
+
+	out << L"template";
+	for (nat i = 0; i < in.size(); i++)
+		out << L"_" << in[i];
+
+	return out.str();
+}
+
+static void templateParams(ResolvedTemplateType *t, wostream &to, set<String> &created) {
+	if (t == null)
+		return;
+
+	String name = templateParamsName(t);
+	if (created.count(name) == 0) {
+		created.insert(name);
+
+		vector<nat> ids = templateParamsId(t);
+
+		to << L"size_t " << name << L"[] = { ";
+		join(to, ids, L", ");
+		to << L", -1 };\n";
+	}
+}
+
+static void genTypeRef(wostream &to, TypeRef *r) {
+	if (NamedType *nt = as<NamedType>(r)) {
+		if (nt->name == L"void") {
+			to << L"{ -1, null, false }";
+			return;
+		}
+	}
+
+	bool maybe = as<MaybeType>(r) != null;
+	r = findType(r);
+
+	if (ResolvedTemplateType *tt = as<ResolvedTemplateType>(r)) {
+		to << L"{ " << tt->type->id << L", " << templateParamsName(tt);
+	} else if (ResolvedType *rt = as<ResolvedType>(r)) {
+		to << L"{ " << rt->type->id << L", null";
+	} else {
+		throw Error(L"Type " + ::toS(*r) + L" not exported to Storm.", r->pos);
+	}
+	to << L", " << (maybe ? L"true" : L"false") << L" }, ";
+}
+
+static void genFnParams(wostream &to, World &w) {
+	set<String> created;
+
+	// 1: Generate any template-parameter-arrays needed.
+	for (nat i = 0; i < w.functions.size(); i++) {
+		Function &f = w.functions[i];
+
+		for (nat p = 0; p < f.params.size(); p++) {
+			TypeRef *r = findType(f.params[p].borrow());
+
+			templateParams(as<ResolvedTemplateType>(r), to, created);
+		}
+
+		// Check the return value as well.
+		templateParams(as<ResolvedTemplateType>(findType(f.result.borrow())), to, created);
+	}
+
+	// 2: Generate the parameter arrays.
+	// TODO: if this is slow, we can probably gain a lot of entries by reusing equal parameter lists.
+	for (nat i = 0; i < w.functions.size(); i++) {
+		Function &f = w.functions[i];
+
+		if (f.params.empty())
+			continue;
+
+		if (f.params.size() == 1 && as<EnginePtrType>(f.params[0].borrow()) != null)
+			continue;
+
+		String name = f.name.last();
+		if (name == L"operator ++" || name == L"operator --")
+			// These are only dummy parameters anyway. Ignore them.
+			continue;
+
+		to << L"CppFnRef params_" << i << L"[] = { ";
+
+		for (nat p = 0; p < f.params.size(); p++) {
+			TypeRef *r = f.params[p].borrow();
+
+			// If 'EnginePtr' is the first parameter, then we should ignore it for now. It will be added by Storm later.
+			if (p == 0 && as<EnginePtrType>(r))
+				continue;
+
+			genTypeRef(to, r);
+		}
+
+		to << L"{ -1, null } };\n";
+	}
+
+	// We only generate one for the empty parameter list.
+	to << L"CppFnRef params_empty[] = { { -1, null } };";
+}
+
+static bool stormName(wostream &to, Function &f) {
+	bool r = false;
+	String name = f.name.last();
+	if (name.size() > 9 && name.substr(0, 9) == L"operator ") {
+		String op = name.substr(9).trim();
+		if (op == L"++" || op == L"--") {
+			r = true;
+			if (f.params.empty())
+				op = op + L"*";
+			else
+				op = L"*" + op;
+		}
+		to << L"L\"" << op << L"\"";
+	} else {
+		to << L"L\"" << name << L"\"";
+	}
+
+	return r;
+}
+
+static void genPtr(wostream &to, Function &fn) {
+	String name = fn.name.last();
+	if (name == Function::ctor) {
+		to << L"address(&create" << fn.params.size() << L"<";
+		to << *findType(fn.params[0].borrow());
+		for (nat i = 1; i < fn.params.size(); i++)
+			to << L", " << fn.params[i];
+		to << L">)";
+	} else if (name == Function::dtor) {
+		to << L"address(&destroy<" << *findType(fn.params[0].borrow()) << L">)";
+	} else if (fn.isMember) {
+		to << L"address<" << fn.result << L" (CODECALL " << *findType(fn.params[0].borrow()) << L"::*)(";
+		for (nat i = 1; i < fn.params.size(); i++) {
+			if (i > 1)
+				to << L", ";
+			to << fn.params[i];
+		}
+		to << L")";
+		if (fn.isConst)
+			to << L" const";
+		to << L">(&" << fn.name << L")";
+	} else {
+		to << L"address<" << fn.result << L" (CODECALL *)(";
+		join(to, fn.params, L", ");
+		to << L")>(&" << fn.name << L")";
+	}
+}
+
+static void genFunctions(wostream &to, World &w) {
+	for (nat i = 0; i < w.functions.size(); i++) {
+		Function &f = w.functions[i];
+
+		bool engineFn = f.params.size() >= 1 && as<EnginePtrType>(f.params[0].borrow()) != null;
+
+
+		to << L"{ ";
+
+		// Name.
+		bool ignoreParams = stormName(to, f);
+		to << L", ";
+
+		// Pkg.
+		if (f.isMember)
+			to << L"null, ";
+		else
+			to << L"L\"" << f.pkg << L"\", ";
+
+		// Kind.
+		if (f.isMember)
+			to << L"CppFunction::fnMember, ";
+		else if (engineFn)
+			to << L"CppFunction::fnFreeEngine, ";
+		else
+			to << L"CppFunction::fnFree, ";
+
+		// Thread id.
+		if (f.isMember)
+			to << L"-1, ";
+		else if (f.threadType)
+			to << f.threadType->id << L", ";
+		else
+			to << L"-1, ";
+
+		// Pointer to the function.
+		genPtr(to, f);
+		to << L", ";
+
+		// Parameters.
+		if (ignoreParams || f.params.empty())
+			to << L"params_empty, ";
+		else if (engineFn && f.params.size() == 1)
+			to << L"params_empty, ";
+		else
+			to << L"params_" << i << L", ";
+
+		// Result.
+		genTypeRef(to, f.result.borrow());
+
+		to << L" },\n";
+	}
+}
+
 static void genTemplateGlobals(wostream &to, World &w) {
 	for (nat i = 0; i < w.templates.size(); i++) {
 		Template &t = *w.templates[i];
@@ -213,6 +443,8 @@ GenerateMap genMap() {
 		{ L"TYPE_GLOBALS", &genGlobals },
 		{ L"PTR_OFFSETS", &genPtrOffsets },
 		{ L"CPP_TYPES", &genTypes },
+		{ L"FN_PARAMETERS", &genFnParams },
+		{ L"CPP_FUNCTIONS", &genFunctions },
 		{ L"TEMPLATE_GLOBALS", &genTemplateGlobals },
 		{ L"CPP_TEMPLATES", &genTemplates },
 		{ L"THREAD_GLOBALS", &genThreadGlobals },

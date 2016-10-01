@@ -98,7 +98,7 @@ namespace code {
 		void STORM_FN clear();
 
 		// Get all registers in here.
-		Array<Register> *STORM_FN all() const;
+		// Array<Register> *STORM_FN all() const;
 
 		// Iterator.
 		class Iter {

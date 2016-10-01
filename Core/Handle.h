@@ -89,6 +89,7 @@ namespace storm {
 	STORM_PRIMITIVE(Nat, createNat);
 	STORM_PRIMITIVE(Long, createLong);
 	STORM_PRIMITIVE(Word, createWord);
+	STORM_PRIMITIVE(Float, createFloat);
 
 	/**
 	 * Helper for figuring out how to create objects.

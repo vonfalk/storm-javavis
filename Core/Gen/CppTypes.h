@@ -104,6 +104,59 @@ namespace storm {
 	};
 
 	/**
+	 * Reference to a type from C++.
+	 */
+	struct CppFnRef {
+		// Type or template index. If 'params' is null, this is a type index, otherwise it is a
+		// template index and 'params' indicates the parameters to that template.
+		size_t id;
+
+		// If we're a template, this array is populated. It ends with size_t(-1).
+		size_t *params;
+
+		// Is this a maybe-type?
+		bool maybe;
+	};
+
+	/**
+	 * List of C++ functions.
+	 */
+	struct CppFunction {
+		// Name of the function (null if last element).
+		const wchar *name;
+
+		// Package. This is 'null' if this is a member function.
+		const wchar *pkg;
+
+		// Kind of function.
+		enum FnKind {
+			// Free function. Nothing strange.
+			fnFree,
+
+			// Free function, but a EnginePtr is to be inserted as the first parameter.
+			fnFreeEngine,
+
+			// Member function. The first parameter indicates the type we're a member of. 'pkg' is null.
+			fnMember,
+		};
+
+		// Kind.
+		FnKind kind;
+
+		// Thread to run this function on. Only relevant if this function is not a member function.
+		size_t threadId;
+
+		// Pointer to the function.
+		const void *ptr;
+
+		// Parameters.
+		CppFnRef *params;
+
+		// Result.
+		CppFnRef result;
+	};
+
+	/**
 	 * List of C++ templates.
 	 */
 	struct CppTemplate {
@@ -140,6 +193,9 @@ namespace storm {
 	struct CppWorld {
 		// List of types.
 		CppType *types;
+
+		// List of functions.
+		CppFunction *functions;
 
 		// List of templates.
 		CppTemplate *templates;

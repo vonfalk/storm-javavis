@@ -186,11 +186,13 @@ public:
 	virtual void print(wostream &to) const;
 };
 
+
 /**
  * Resolved type.
  */
 class ResolvedType : public TypeRef {
 public:
+	explicit ResolvedType(Type *type);
 	ResolvedType(const TypeRef &templ, Type *type);
 
 	// Type.
@@ -273,6 +275,26 @@ public:
 
 	// Gc:d type?
 	virtual bool gcType() const { return true; }
+
+	// Resolve.
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+};
+
+/**
+ * EnginePtr type.
+ */
+class EnginePtrType : public TypeRef {
+public:
+	EnginePtrType(const SrcPos &pos) : TypeRef(pos) {}
+
+	// Get the size of this type.
+	virtual Size size() const;
+
+	// Is this a gc:d type?
+	virtual bool gcType() const { return false; }
 
 	// Resolve.
 	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;

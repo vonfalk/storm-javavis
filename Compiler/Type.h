@@ -27,7 +27,7 @@ namespace storm {
 		STORM_CTOR Type(Str *name, Array<Value> *params, TypeFlags flags);
 
 		// Create a type declared in C++.
-		STORM_CTOR Type(Str *name, TypeFlags flags, Size size, GcType *gcType);
+		Type(Str *name, TypeFlags flags, Size size, GcType *gcType);
 
 		// Destroy our resources.
 		~Type();
@@ -95,7 +95,7 @@ namespace storm {
 		NamedThread *useThread;
 
 		// Our size (including base classes). If zero, we need to re-compute it.
-		code::Size mySize;
+		Size mySize;
 
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);

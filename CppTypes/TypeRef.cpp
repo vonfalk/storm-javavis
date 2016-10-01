@@ -111,15 +111,18 @@ Size NamedType::size() const {
 }
 
 Auto<TypeRef> NamedType::resolve(World &in, const CppName &context) const {
-	map<String, Size>::const_iterator i = in.builtIn.find(name);
-	if (i != in.builtIn.end())
-		return new BuiltInType(pos, name, i->second);
-
 	Type *t = in.types.findUnsafe(name, context);
 	if (t)
 		return new ResolvedType(*this, t);
 	else if (name == L"GcWatch" || name == L"storm::GcWatch")
 		return new GcWatchType(pos);
+	else if (name == L"EnginePtr" || name == L"storm::EnginePtr")
+		return new EnginePtrType(pos);
+
+	// Last restort: built in type?
+	map<String, Size>::const_iterator i = in.builtIn.find(name);
+	if (i != in.builtIn.end())
+		return new BuiltInType(pos, name, i->second);
 	else
 		return new NamedType(*this);
 }
@@ -129,6 +132,8 @@ void NamedType::print(wostream &to) const {
 }
 
 ResolvedType::ResolvedType(const TypeRef &templ, Type *type) : TypeRef(templ), type(type) {}
+
+ResolvedType::ResolvedType(Type *type) : TypeRef(type->pos), type(type) {}
 
 Size ResolvedType::size() const {
 	return type->size();
@@ -188,6 +193,19 @@ Size GcWatchType::size() const {
 void GcWatchType::print(wostream &to) const {
 	to << L"storm::GcWatch";
 }
+
+Auto<TypeRef> EnginePtrType::resolve(World &in, const CppName &context) const {
+	return new EnginePtrType(*this);
+}
+
+Size EnginePtrType::size() const {
+	throw Error(L"EnginePtr should only be used as parameters to functions.", pos);
+}
+
+void EnginePtrType::print(wostream &to) const {
+	to << L"storm::EnginePtr";
+}
+
 
 const UnknownType::ID UnknownType::ids[] = {
 	{ L"PTR_NOGC", Size::sPtr, false },

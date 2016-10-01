@@ -51,8 +51,8 @@ namespace code {
 		Size STORM_FN operator +(const Size &o) const;
 
 		// Multiplication with positive. Equal to repeated addition.
-		Size &STORM_FN operator *=(nat o);
-		Size STORM_FN operator *(nat o) const;
+		Size &STORM_FN operator *=(Nat o);
+		Size STORM_FN operator *(Nat o) const;
 
 		// Equality check.
 		Bool STORM_FN operator ==(const Size &o) const;
@@ -136,8 +136,8 @@ namespace code {
 		Offset STORM_FN operator -(const Size &o) const;
 
 		// Multiplication.
-		Offset &STORM_FN operator *=(int o);
-		Offset STORM_FN operator *(int o) const;
+		Offset &STORM_FN operator *=(Int o);
+		Offset STORM_FN operator *(Int o) const;
 
 		// Negation. 'add' will still move further from zero.
 		Offset STORM_FN operator -() const;

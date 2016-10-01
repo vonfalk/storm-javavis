@@ -12,7 +12,8 @@
 template <class T>
 class NameMap {
 public:
-	NameMap(const vector<CppName> &usingExpr) : usingExpr(usingExpr) {}
+	NameMap(const vector<CppName> &usingExpr, const map<CppName, CppName> *aliases = null) :
+		usingExpr(usingExpr), aliases(aliases) {}
 
 	// Insert a new element at the end.
 	void insert(const Auto<T> &v) {
@@ -51,7 +52,20 @@ public:
 			return order[i->second].borrow();
 
 		while (!context.empty()) {
-			i = lookup.find(context + name);
+			CppName candidate = context + name;
+
+			if (aliases) {
+				map<CppName, CppName>::const_iterator j = aliases->find(candidate);
+				if (j != aliases->end()) {
+					i = lookup.find(j->second);
+					if (i == lookup.end())
+						throw Error(L"The target " + j->second + L" for alias " + j->first + L" was not found. "
+									L"Note that aliases must specify the full name of the type!", SrcPos());
+					return order[i->second].borrow();
+				}
+			}
+
+			i = lookup.find(candidate);
 			if (i != lookup.end())
 				return order[i->second].borrow();
 
@@ -80,6 +94,9 @@ public:
 private:
 	// All using-expressions.
 	const vector<CppName> &usingExpr;
+
+	// Type aliases.
+	const map<CppName, CppName> *aliases;
 
 	// Quick lookups.
 	map<CppName, nat> lookup;

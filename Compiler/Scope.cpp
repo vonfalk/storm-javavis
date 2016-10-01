@@ -173,7 +173,7 @@ namespace storm {
 		return to;
 	}
 
-	StrBuf &toS(StrBuf &to, Scope s) {
+	StrBuf &operator <<(StrBuf &to, Scope s) {
 		return to << ::toS(s).c_str();
 	}
 

@@ -16,6 +16,9 @@ public:
 	// Using namespace declarations.
 	vector<CppName> usingDecl;
 
+	// Type aliases.
+	map<CppName, CppName> aliases;
+
 	// All types.
 	NameMap<Type> types;
 
@@ -24,6 +27,9 @@ public:
 
 	// All threads.
 	NameMap<Thread> threads;
+
+	// All functions.
+	vector<Function> functions;
 
 	// Built-in types (into C++).
 	map<String, Size> builtIn;
@@ -39,6 +45,9 @@ public:
 private:
 	// Sort types so we get a deterministic order.
 	void orderTypes();
+
+	// Sort functions so we get a deterministic order.
+	void orderFunctions();
 
 	// Sort templates.
 	void orderTemplates();

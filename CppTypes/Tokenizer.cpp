@@ -137,6 +137,7 @@ void Tokenizer::processChar(nat &start, State &state) {
 			break;
 		case sString:
 		case sComment:
+		case sMlComment:
 		case sPreproc:
 			break;
 		default:

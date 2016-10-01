@@ -23,7 +23,7 @@ static BuiltIn builtIn[] = {
 	{ L"size_t", Size::sPtr },
 };
 
-World::World() : types(usingDecl), templates(usingDecl), threads(usingDecl) {
+World::World() : types(usingDecl, &aliases), templates(usingDecl), threads(usingDecl) {
 	for (nat i = 0; i < ARRAY_COUNT(::builtIn); i++) {
 		builtIn.insert(make_pair(::builtIn[i].name, ::builtIn[i].size));
 	}
@@ -64,6 +64,19 @@ void World::orderTypes() {
 	types.sort(NamePred(type));
 }
 
+void World::orderFunctions() {
+	struct pred {
+		bool operator ()(const Function &l, const Function &r) const {
+			if (l.name != r.name)
+				return l.name < r.name;
+			// Not entirely deterministic, but good enough for us.
+			return l.params.size() < r.params.size();
+		}
+	};
+
+	sort(functions.begin(), functions.end(), pred());
+}
+
 void World::orderTemplates() {
 	struct pred {
 		bool operator ()(const Auto<Template> &l, const Auto<Template> &r) const {
@@ -87,6 +100,11 @@ void World::orderThreads() {
 void World::resolveTypes() {
 	for (nat i = 0; i < types.size(); i++) {
 		types[i]->resolveTypes(*this);
+	}
+
+	for (nat i = 0; i < functions.size(); i++) {
+		Function &fn = functions[i];
+		fn.resolveTypes(*this, fn.name.parent());
 	}
 }
 

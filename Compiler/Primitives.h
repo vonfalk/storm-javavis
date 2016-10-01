@@ -14,6 +14,7 @@ namespace storm {
 	Type *createNat(Str *name, Size size, GcType *type);
 	Type *createLong(Str *name, Size size, GcType *type);
 	Type *createWord(Str *name, Size size, GcType *type);
+	Type *createFloat(Str *name, Size size, GcType *type);
 
 	/**
 	 * Simple class for the primitive types for now. We want separate subclasses for each of them in

@@ -1,14 +1,18 @@
 #include "stdafx.h"
 #include "Function.h"
+#include "World.h"
 
 const String Function::ctor = L"__init";
 const String Function::dtor = L"__destroy";
 
-Function::Function(const CppName &name, const SrcPos &pos, Auto<TypeRef> result) :
-	name(name), pos(pos), result(result), isVirtual(false), isConst(false) {}
+Function::Function(const CppName &name, const String &pkg, const SrcPos &pos, Auto<TypeRef> result) :
+	name(name), pkg(pkg), pos(pos), result(result), isMember(false), isVirtual(false), isConst(false), threadType(null) {}
 
 void Function::resolveTypes(World &w, CppName &ctx) {
 	result = result->resolve(w, ctx);
+
+	if (!thread.empty())
+		threadType = w.threads.find(thread, ctx, pos);
 
 	for (nat i = 0; i < params.size(); i++)
 		params[i] = params[i]->resolve(w, ctx);

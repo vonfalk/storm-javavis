@@ -51,7 +51,7 @@ wostream &operator <<(wostream &to, const Type &type);
 /**
  * Describes a class or struct from C++.
  */
-class Class : public Type, public Namespace {
+class Class : public Type {
 public:
 	// Create a type with name X, where X is the fully qualified name of the type (eg. Foo::Bar::Baz).
 	Class(const CppName &name, const String &pkg, const SrcPos &pos);
@@ -65,6 +65,9 @@ public:
 	// Hidden parent?
 	bool hiddenParent;
 
+	// Have we found a destructor?
+	bool dtorFound;
+
 	// Actual type of the parent class.
 	Type *parentType;
 
@@ -76,9 +79,6 @@ public:
 
 	// Member variables (non-static). All have their name relative to the enclosing type.
 	vector<Variable> variables;
-
-	// Member functions (exported, assumed non-static).
-	vector<Function> functions;
 
 	// Does this type have a declared destructor?
 	bool hasDtor() const;
@@ -104,6 +104,21 @@ public:
 	// Is this type heap-allocated?
 	virtual bool heapAlloc() const { return !valueType; }
 
+};
+
+/**
+ * Namespace for a class.
+ */
+class ClassNamespace : public Namespace {
+public:
+	ClassNamespace(World &world, Class &owner);
+
+	virtual void add(const Variable &v);
+	virtual void add(const Function &f);
+
+private:
+	World &world;
+	Class &owner;
 };
 
 /**

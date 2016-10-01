@@ -28,6 +28,10 @@ namespace storm {
 		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::unsignedNr);
 	}
 
+	Type *createFloat(Str *name, Size size, GcType *type) {
+		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::floatNr);
+	}
+
 
 	PrimitiveType::PrimitiveType(Str *name, Size size, GcType *type, BasicTypeInfo::Kind kind) :
 		Type(name, typeValue, size, type), kind(kind) {}

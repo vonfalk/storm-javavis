@@ -45,7 +45,12 @@
 	static inline void *operator new (size_t s, const storm::RootObject *o) { \
 		return storm::runtime::allocObject(s, stormType(o));			\
 	}																	\
-	static inline void operator delete (void *m, const storm::RootObject *o) {}
+	static inline void operator delete (void *m, const storm::RootObject *o) {} \
+	static inline void *operator new (size_t s, void *mem) {			\
+		return mem;														\
+	}																	\
+	static inline void operator delete (void *, void *) {}				\
+
 
 /**
  * Special case for storm::RootObject.

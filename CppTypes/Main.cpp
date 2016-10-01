@@ -70,7 +70,7 @@ int _tmain(int argc, const wchar *argv[]) {
 	Timestamp modified = lastModified(SrcPos::files);
 	modified = max(modified, config.src);
 	{
-		Path me(argv[0]);
+		Path me = Path::executableFile();
 		if (me.exists())
 			modified = max(modified, me.mTime());
 	}

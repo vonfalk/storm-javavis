@@ -32,7 +32,7 @@ namespace storm {
 		STORM_CTOR Str();
 
 		// Create from a string literal.
-		STORM_CTOR Str(const wchar *s);
+		Str(const wchar *s);
 
 		// Create from a substring of a c-string.
 		Str(const wchar *from, const wchar *to);

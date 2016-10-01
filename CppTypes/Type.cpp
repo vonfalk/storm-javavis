@@ -22,20 +22,8 @@ wostream &operator <<(wostream &to, const Type &type) {
  */
 
 Class::Class(const CppName &name, const String &pkg, const SrcPos &pos) :
-	Type(name, pkg, pos), valueType(false), parent(L""), hiddenParent(false), parentType(null), threadType(null) {}
-
-void Class::add(const Variable &v) {
-	for (nat i = 0; i < variables.size(); i++)
-		if (variables[i].name == v.name)
-			throw Error(L"Member variable " + toS(v.name) + L" already declared!", v.pos);
-
-	variables.push_back(v);
-}
-
-void Class::add(const Function &f) {
-	// Don't bother checking for duplicates... That is done by the C++ compiler and Storm during boot.
-	functions.push_back(f);
-}
+	Type(name, pkg, pos), valueType(false), parent(L""), hiddenParent(false),
+	dtorFound(false), parentType(null), threadType(null) {}
 
 void Class::resolveTypes(World &in) {
 	CppName ctx = name;
@@ -48,9 +36,6 @@ void Class::resolveTypes(World &in) {
 
 	for (nat i = 0; i < variables.size(); i++)
 		variables[i].resolveTypes(in, ctx);
-
-	for (nat i = 0; i < functions.size(); i++)
-		functions[i].resolveTypes(in, ctx);
 }
 
 Size Class::size() const {
@@ -108,10 +93,8 @@ bool Class::hasDtor() const {
 	if (name == L"storm::Object")
 		return false;
 
-	for (nat i = 0; i < functions.size(); i++) {
-		if (functions[i].name == Function::dtor)
-			return true;
-	}
+	if (dtorFound)
+		return true;
 
 	if (Class *c = as<Class>(parentType))
 		return c->hasDtor();
@@ -129,11 +112,35 @@ void Class::print(wostream &to) const {
 		Indent z(to);
 		for (nat i = 0; i < variables.size(); i++)
 			to << variables[i] << endl;
-
-		for (nat i = 0; i < functions.size(); i++)
-			to << functions[i] << endl;
 	}
 	to << L"}";
+}
+
+/**
+ * Class namespace.
+ */
+
+ClassNamespace::ClassNamespace(World &world, Class &owner) : world(world), owner(owner) {}
+
+void ClassNamespace::add(const Variable &v) {
+	// TODO: Remove? This is done by the C++ compiler and Storm anyway.
+	for (nat i = 0; i < owner.variables.size(); i++)
+		if (owner.variables[i].name == v.name)
+			throw Error(L"Member variable " + toS(v.name) + L" already declared!", v.pos);
+
+	owner.variables.push_back(v);
+}
+
+void ClassNamespace::add(const Function &f) {
+	if (f.name == Function::dtor)
+		owner.dtorFound = true;
+
+	Function g = f;
+	g.name = owner.name + f.name;
+	g.isMember = true;
+	// Add our this-pointer.
+	g.params.insert(g.params.begin(), new ResolvedType(&owner));
+	world.functions.push_back(g);
 }
 
 /**

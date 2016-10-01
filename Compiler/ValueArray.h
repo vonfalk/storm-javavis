@@ -28,7 +28,7 @@ namespace storm {
 		inline Nat STORM_FN count() const { return data ? data->filled : 0; }
 
 		// Clear.
-		inline void STORM_FN clear();
+		void STORM_FN clear();
 
 		// Any elements?
 		inline Bool STORM_FN any() const { return count() > 0; }
