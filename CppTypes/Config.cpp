@@ -4,11 +4,12 @@
 Config config;
 
 void usage(const wchar *name) {
-	PLN(L"Usage: " << name << L" [--template <in>] [--out <out>] [--asm <out-asm>] <dir>");
+	PLN(L"Usage: " << name << L" [--template <in>] [--out <out>] [--asm <out-asm>] <dir> [--using <use> ...]");
 	PLN(L"<dir>     - directories to scan for header files");
 	PLN(L"<in>      - input template");
 	PLN(L"<out>     - filled in template output");
 	PLN(L"<out-asm> - asm-file to output");
+	PLN(L"<use>     - using namespace globally");
 }
 
 bool parse(int argc, const wchar *argv[]) {
@@ -30,6 +31,8 @@ bool parse(int argc, const wchar *argv[]) {
 				config.cppOut = Path(argv[i+1]).makeAbsolute(cwd);
 			} else if (wcscmp(argv[i], L"--asm") == 0) {
 				config.asmOut = Path(argv[i+1]).makeAbsolute(cwd);
+			} else if (wcscmp(argv[i], L"--using") == 0) {
+				config.usingDecl.push_back(argv[i+1]);
 			} else {
 				PLN(L"Unknown option " << argv[i]);
 				return false;

@@ -16,12 +16,18 @@ namespace storm {
 	Type *createWord(Str *name, Size size, GcType *type);
 
 	/**
-	 * Dummy class (for now) causing this file to be included in CppTypes.cpp. We want to make
-	 * separate types for all primitive types later.
+	 * Simple class for the primitive types for now. We want separate subclasses for each of them in
+	 * the future.
 	 */
-	class Dummy : public Type {
+	class PrimitiveType : public Type {
 		STORM_CLASS;
 	public:
+		PrimitiveType(Str *name, Size size, GcType *type, BasicTypeInfo::Kind kind);
+
+		virtual BasicTypeInfo::Kind builtInType() const;
+
+	private:
+		Int kind;
 	};
 
 }

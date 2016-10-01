@@ -50,6 +50,7 @@ namespace code {
 		STORM_CLASS;
 		friend class Reference;
 	public:
+		RefSource(const wchar *title);
 		STORM_CTOR RefSource(Str *title);
 		STORM_CTOR RefSource(Str *title, Content *content);
 

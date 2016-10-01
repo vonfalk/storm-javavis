@@ -6,6 +6,8 @@
 #include "Core/Handle.h"
 #include "Core/Gen/CppTypes.h"
 #include "Core/StrBuf.h"
+#include "OS/UThread.h"
+#include "OS/Future.h"
 #include "Utils/Memory.h"
 
 namespace storm {
@@ -39,7 +41,7 @@ namespace storm {
 	}
 
 	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType) :
-		NameSet(name), engine(RootObject::engine()), gcType(gcType), tHandle(null), typeFlags(flags | typeCpp) {
+		NameSet(name), engine(RootObject::engine()), gcType(gcType), tHandle(null), typeFlags(flags | typeCpp), mySize(size) {
 
 		gcType->type = this;
 		init();
@@ -84,6 +86,40 @@ namespace storm {
 		}
 
 		chain->lateInit();
+	}
+
+	Size Type::superSize() {
+		if (super())
+			return super()->size();
+
+		if (value())
+			return Size();
+
+		assert(false, L"We are a class which does not inherit from TObject or Object!");
+		return Size();
+	}
+
+	Size Type::size() {
+		if (mySize == Size()) {
+			// Re-compute! We need to switch threads...
+			const os::Thread &t = TObject::thread->thread();
+			if (t == os::Thread::current()) {
+				// Already on the compiler thread.
+				forceLoad();
+				Size s = superSize();
+				TODO(L"Fixme!");
+				// mySize = layout->size(s);
+				mySize = s;
+			} else {
+				// We need to run on the Compiler thread. Note the 'Semaphore', this is to ensure
+				// that we do not break any semantics regarding the threading model.
+				os::Future<Size, Semaphore> f;
+				os::FnParams p; p.add(this);
+				os::UThread::spawn(address(&Type::size), true, p, f, &t);
+				return f.result();
+			}
+		}
+		return mySize;
 	}
 
 	// Our finalizer.
@@ -181,6 +217,10 @@ namespace storm {
 				children->at(i)->notifyThread(thread);
 			}
 		}
+	}
+
+	BasicTypeInfo::Kind Type::builtInType() const {
+		return BasicTypeInfo::user;
 	}
 
 	const Handle &Type::handle() {

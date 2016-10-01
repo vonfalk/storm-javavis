@@ -3,6 +3,7 @@
 #include "Code/Reference.h"
 #include "Code/Listing.h"
 #include "Code/Binary.h"
+#include "Value.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -113,6 +114,30 @@ namespace storm {
 
 	private:
 		DelegatedCode *owner;
+	};
+
+
+	/**
+	 * Subclass for statically allocated chunks of code. Automatically insert a 'EnginePtr' as the
+	 * first parameter to the function.
+	 */
+	class StaticEngineCode : public Code {
+		STORM_CLASS;
+	public:
+		StaticEngineCode(Value result, const void *code);
+
+	protected:
+		virtual void STORM_FN newRef();
+
+	private:
+		// Code to be executed.
+		code::Binary *code;
+
+		// Reference to the original code.
+		code::RefSource *original;
+
+		// Generate code which does the redirection.
+		code::Listing *redirectCode(Value result, code::Ref ref);
 	};
 
 }

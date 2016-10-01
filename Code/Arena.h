@@ -23,6 +23,7 @@ namespace code {
 
 		// Create external references.
 		Ref external(const wchar *name, const void *ptr) const;
+		RefSource *externalSource(const wchar *name, const void *ptr) const;
 
 		/**
 		 * Transform and translate code into machine code.

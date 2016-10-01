@@ -5,27 +5,35 @@
 namespace storm {
 
 	Type *createBool(Str *name, Size size, GcType *type) {
-		return new (name) Type(name, typeValue, size, type);
+		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::boolVal);
 	}
 
 	Type *createByte(Str *name, Size size, GcType *type) {
-		return new (name) Type(name, typeValue, size, type);
+		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::unsignedNr);
 	}
 
 	Type *createInt(Str *name, Size size, GcType *type) {
-		return new (name) Type(name, typeValue, size, type);
+		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::signedNr);
 	}
 
 	Type *createNat(Str *name, Size size, GcType *type) {
-		return new (name) Type(name, typeValue, size, type);
+		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::unsignedNr);
 	}
 
 	Type *createLong(Str *name, Size size, GcType *type) {
-		return new (name) Type(name, typeValue, size, type);
+		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::signedNr);
 	}
 
 	Type *createWord(Str *name, Size size, GcType *type) {
-		return new (name) Type(name, typeValue, size, type);
+		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::unsignedNr);
+	}
+
+
+	PrimitiveType::PrimitiveType(Str *name, Size size, GcType *type, BasicTypeInfo::Kind kind) :
+		Type(name, typeValue, size, type), kind(kind) {}
+
+	BasicTypeInfo::Kind PrimitiveType::builtInType() const {
+		return BasicTypeInfo::Kind(kind);
 	}
 
 }

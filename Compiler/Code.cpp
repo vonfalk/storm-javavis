@@ -82,4 +82,50 @@ namespace storm {
 		owner->moved(newAddr);
 	}
 
+
+	/**
+	 * Static engine code.
+	 */
+
+	StaticEngineCode::StaticEngineCode(Value result, const void *code) {
+		original = new (this) code::RefSource(L"ref-to");
+		original->setPtr(code);
+
+		code::Listing *l = redirectCode(result, original);
+		code = new (this) code::Binary(engine().arena(), l);
+	}
+
+	void StaticEngineCode::newRef() {
+		toUpdate->set(code);
+	}
+
+#ifdef X86
+
+	code::Listing *StaticEngineCode::redirectCode(Value result, code::Ref ref) {
+		using namespace code;
+
+		Listing *l = new (this) Listing();
+
+		if (result.returnInReg()) {
+			// The old pointer and the 0 constant will nicely fit into the 'returnData' member.
+			*l << push(ptrConst(Offset(0)));
+			*l << push(engine().ref(Engine::rEngine));
+		} else {
+			// The first parameter is, and has to be, a pointer to the returned object.
+			*l << mov(ptrA, ptrRel(ptrStack, Offset::sPtr)); // Read the return value ptr.
+			*l << push(engine().ref(Engine::rEngine));
+			*l << push(ptrA); // Store the return value ptr once more.
+		}
+
+		*l << call(ref, result.valType());
+		*l << add(ptrStack, ptrConst(Size::sPtr * 2));
+		*l << ret(result.valType());
+
+		return l;
+	}
+
+#else
+#error "Please implement 'redirectCode' for your platform!"
+#endif
+
 }

@@ -3,6 +3,7 @@
 #include "Reference.h"
 #include "Core/Array.h"
 #include "Core/StrBuf.h"
+#include "Core/Str.h"
 
 namespace code {
 
@@ -17,6 +18,11 @@ namespace code {
 		set(addr, 0);
 	}
 
+
+	RefSource::RefSource(const wchar *title) : cont(null) {
+		name = new (this) Str(title);
+		refs = new (this) WeakSet<Reference>();
+	}
 
 	RefSource::RefSource(Str *title) : name(title), cont(null) {
 		refs = new (this) WeakSet<Reference>();

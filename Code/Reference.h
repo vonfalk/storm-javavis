@@ -55,8 +55,8 @@ namespace code {
 		friend wostream &operator <<(wostream &to, const Ref &r);
 		friend StrBuf &operator <<(StrBuf &to, Ref r);
 	public:
-		STORM_CTOR Ref(RefSource *to);
-		STORM_CTOR Ref(Reference *ref);
+		STORM_CAST_CTOR Ref(RefSource *to);
+		STORM_CAST_CTOR Ref(Reference *ref);
 
 		void deepCopy(CloneEnv *env);
 

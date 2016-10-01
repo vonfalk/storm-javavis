@@ -85,6 +85,8 @@ int _tmain(int argc, const wchar *argv[]) {
 
 			// TODO: More!
 			world.usingDecl.push_back(CppName(L"storm"));
+			for (nat i = 0; i < config.usingDecl.size(); i++)
+				world.usingDecl.push_back(CppName(config.usingDecl[i]));
 
 			world.prepare();
 			generateFile(config.src, config.cppOut, genMap(), world);

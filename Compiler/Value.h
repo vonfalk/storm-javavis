@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/EnginePtr.h"
+#include "Code/ValType.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -35,6 +36,33 @@ namespace storm {
 		// Same type?
 		Bool STORM_FN operator ==(Value o) const;
 		Bool STORM_FN operator !=(Value o) const;
+
+		/**
+		 * Code generation information.
+		 */
+
+		// Return this type in a register?
+		Bool STORM_FN returnInReg() const;
+
+		// Get a ValType representing this type.
+		code::ValType STORM_FN valType() const;
+
+		// Is this a built-in type? (eg. Int, Float, etc.)
+		Bool STORM_FN isBuiltIn() const;
+
+		// Is this type a floating-point type?
+		Bool STORM_FN isFloat() const;
+
+		// Is this a value type, a class or an actor. These are mutually exclusive, ie. at most one is true.
+		Bool STORM_FN isValue() const;
+		Bool STORM_FN isClass() const;
+		Bool STORM_FN isActor() const;
+
+		// The size of this type.
+		Size STORM_FN size() const;
+
+		// Get type info for this type.
+		BasicTypeInfo typeInfo() const;
 	};
 
 	// Create a this pointer for a type.

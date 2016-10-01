@@ -9,9 +9,13 @@ namespace code {
 	Arena::Arena() {}
 
 	Ref Arena::external(const wchar *name, const void *ptr) const {
-		RefSource *src = new (this) RefSource(new (this) Str(name));
+		return Ref(externalSource(name, ptr));
+	}
+
+	RefSource *Arena::externalSource(const wchar *name, const void *ptr) const {
+		RefSource *src = new (this) RefSource(name);
 		src->setPtr(ptr);
-		return Ref(src);
+		return src;
 	}
 
 	Listing *Arena::transform(Listing *src, Binary *owner) const {

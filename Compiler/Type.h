@@ -54,14 +54,14 @@ namespace storm {
 		// Get where we want to run.
 		RunOn STORM_FN runOn();
 
-		// Is this a value type?
-		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
-
 		// Get a handle for this type.
 		const Handle &handle();
 
 		// Late initialization.
 		virtual void lateInit();
+
+		// Get this class's size. (NOTE: This function is safe to call from any thread).
+		Size STORM_FN size();
 
 		// Inheritance chain and membership lookup. TODO: Make private?
 		TypeChain *chain;
@@ -71,6 +71,12 @@ namespace storm {
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
+
+		// Flags for this type.
+		const TypeFlags typeFlags;
+
+		// What kind of type is this type?
+		virtual BasicTypeInfo::Kind builtInType() const;
 
 	private:
 		// Special constructor for creating the first type.
@@ -85,11 +91,11 @@ namespace storm {
 		// Handle (lazily created).
 		const Handle *tHandle;
 
-		// Flags for this type.
-		TypeFlags typeFlags;
-
 		// Thread we should be running on if we indirectly inherit from TObject.
 		NamedThread *useThread;
+
+		// Our size (including base classes). If zero, we need to re-compute it.
+		code::Size mySize;
 
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);
@@ -98,11 +104,17 @@ namespace storm {
 		// Common initialization.
 		void init();
 
+		// Is this a value type?
+		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
+
 		// Generate a handle for this type.
 		const Handle *buildHandle();
 
 		// Notify that the thread changed.
 		void notifyThread(NamedThread *t);
+
+		// Compute the size of our super-class.
+		Size superSize();
 	};
 
 

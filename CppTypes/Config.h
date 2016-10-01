@@ -13,6 +13,9 @@ struct Config {
 
 	// Output to.
 	Path cppOut, asmOut;
+
+	// Using declarations.
+	vector<String> usingDecl;
 };
 
 extern Config config;

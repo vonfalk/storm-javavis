@@ -199,6 +199,23 @@ namespace storm {
 		return o.arena;
 	}
 
+	code::Ref Engine::ref(RefType ref) {
+		code::RefSource **r = &o.refs[ref];
+		if (!*r)
+			*r = createRef(ref);
+
+		return code::Ref(*r);
+	}
+
+	code::RefSource *Engine::createRef(RefType ref) {
+		switch (ref) {
+		case rEngine:
+			return arena()->externalSource(L"engine", this);
+		default:
+			assert(false, L"Unknown reference: " + ::toS(ref));
+		}
+	}
+
 	Package *Engine::package() {
 		if (!o.root) {
 			assert(has(bootTypes), L"Can not create packages yet.");

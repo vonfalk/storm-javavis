@@ -5,6 +5,8 @@
 #include "World.h"
 #include "Scope.h"
 #include "Code/Arena.h"
+#include "Code/RefSource.h"
+#include "Code/Reference.h"
 
 // TODO: Do not depend on path!
 #include "Utils/Path.h"
@@ -105,10 +107,22 @@ namespace storm {
 		ScopeLookup *scopeLookup();
 
 		/**
-		 * The arena used for code generation for this platform.
+		 * Code generation.
 		 */
 
+		// The arena used for code generation for this platform.
 		code::Arena *arena();
+
+		// Well-known references:
+		enum RefType {
+			rEngine,
+
+			// Should be the last one.
+			refCount,
+		};
+
+		// Get a reference to a function in the runtime.
+		code::Ref ref(RefType ref);
 
 	private:
 		// The compiler C++ world.
@@ -133,12 +147,18 @@ namespace storm {
 
 			// Arena.
 			code::Arena *arena;
+
+			// References.
+			code::RefSource *refs[refCount];
 		};
 
 		GcRoot o;
 
 		// Root for GcRoot.
 		Gc::Root *objRoot;
+
+		// Create references.
+		code::RefSource *createRef(RefType ref);
 	};
 
 }
