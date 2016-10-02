@@ -50,6 +50,9 @@ namespace storm {
 		// Create with name and parameters.
 		STORM_CTOR SimplePart(Str *name, Array<Value> *params);
 
+		// Create with name and one parameter.
+		STORM_CTOR SimplePart(Str *name, Value param);
+
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 

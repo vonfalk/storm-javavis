@@ -28,10 +28,10 @@ namespace storm {
 		*buf << L"[";
 
 		if (count() > 0)
-			*buf << storm::toS(engine(), data->v[0]);
+			*buf << data->v[0];
 
 		for (nat i = 1; i < count(); i++)
-			*buf << L", " << storm::toS(engine(), data->v[0]);
+			*buf << L", " << data->v[0];
 
 		*buf << L"]";
 	}

@@ -48,4 +48,9 @@ namespace storm {
 	 */
 	struct CppMeta;
 
+	STORM_PKG(core);
+
+	// The maybe type. This will let the preprocessor recognize Maybe<T>, but C++ will disallow
+	// it. Use MAYBE(T) instead.
+	STORM_TEMPLATE(Maybe, createMaybe);
 }

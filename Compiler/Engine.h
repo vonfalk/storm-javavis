@@ -159,6 +159,9 @@ namespace storm {
 
 		// Create references.
 		code::RefSource *createRef(RefType ref);
+
+		// Cleanup code.
+		void destroy();
 	};
 
 }

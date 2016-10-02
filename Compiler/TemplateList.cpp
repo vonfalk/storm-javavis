@@ -146,6 +146,10 @@ namespace storm {
 			types->push(Value(t));
 		}
 
+		if (addedTo) {
+			TODO(L"See if someone else added this template instantiation in NameSet!");
+		}
+
 		Type *r = templ->generate(types);
 		assert(r, L"Invalid template usage for types " + ::toS(types));
 		if (addedTo) {

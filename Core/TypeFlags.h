@@ -17,6 +17,9 @@ namespace storm {
 		// Value type.
 		typeValue = 0x02,
 
+		// This type is final.
+		typeFinal = 0x10,
+
 		// More to come!
 
 		// This is a type that comes from C++.

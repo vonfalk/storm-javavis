@@ -98,7 +98,7 @@ namespace storm {
 			return false;
 		if (ref)
 			return false;
-		return type->builtInType() != BasicTypeInfo::floatNr;
+		return type->builtInType() == BasicTypeInfo::floatNr;
 	}
 
 	Bool Value::isValue() const {
@@ -126,19 +126,25 @@ namespace storm {
 	}
 
 	Str *toS(EnginePtr e, Value v) {
-		Str *name = v.type ? v.type->name : new (e.v) Str(L"void");
-		if (v.type != null && v.ref)
-			name = *name + new (e.v) Str(L"&");
-		return name;
+		StrBuf *b = new (e.v) StrBuf();
+		*b << v;
+		return b->toS();
 	}
 
 	StrBuf &operator <<(StrBuf &to, Value v) {
-		return to << toS(to.engine(), v);
+		if (v.type) {
+			to << v.type->identifier();
+			if (v.ref)
+				to << L"&";
+		} else {
+			to << L"void";
+		}
+		return to;
 	}
 
 	wostream &operator <<(wostream &to, const Value &v) {
 		if (v.type) {
-			to << v.type->name;
+			to << v.type->identifier()->c_str();
 			if (v.ref)
 				to << L"&";
 		} else {

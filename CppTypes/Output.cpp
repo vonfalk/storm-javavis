@@ -193,7 +193,7 @@ static void templateParams(ResolvedTemplateType *t, wostream &to, set<String> &c
 
 		vector<nat> ids = templateParamsId(t);
 
-		to << L"size_t " << name << L"[] = { ";
+		to << L"static const size_t " << name << L"[] = { ";
 		join(to, ids, L", ");
 		to << L", -1 };\n";
 	}
@@ -248,14 +248,17 @@ static void genFnParams(wostream &to, World &w) {
 		if (f.params.size() == 1 && as<EnginePtrType>(f.params[0].borrow()) != null)
 			continue;
 
+
+		nat params = f.params.size();
+
 		String name = f.name.last();
 		if (name == L"operator ++" || name == L"operator --")
-			// These are only dummy parameters anyway. Ignore them.
-			continue;
+			// Ignore the dummy int-parameter if it is present.
+			params = 1;
 
-		to << L"CppFnRef params_" << i << L"[] = { ";
+		to << L"static const CppTypeRef params_" << i << L"[] = { ";
 
-		for (nat p = 0; p < f.params.size(); p++) {
+		for (nat p = 0; p < params; p++) {
 			TypeRef *r = f.params[p].borrow();
 
 			// If 'EnginePtr' is the first parameter, then we should ignore it for now. It will be added by Storm later.
@@ -265,21 +268,19 @@ static void genFnParams(wostream &to, World &w) {
 			genTypeRef(to, r);
 		}
 
-		to << L"{ -1, null } };\n";
+		to << L"{ -1, null, false } };\n";
 	}
 
 	// We only generate one for the empty parameter list.
-	to << L"CppFnRef params_empty[] = { { -1, null } };";
+	to << L"static const CppTypeRef params_empty[] = { { -1, null } };";
 }
 
-static bool stormName(wostream &to, Function &f) {
-	bool r = false;
+static void stormName(wostream &to, Function &f) {
 	String name = f.name.last();
 	if (name.size() > 9 && name.substr(0, 9) == L"operator ") {
 		String op = name.substr(9).trim();
 		if (op == L"++" || op == L"--") {
-			r = true;
-			if (f.params.empty())
+			if (f.params.size() == 1)
 				op = op + L"*";
 			else
 				op = L"*" + op;
@@ -288,8 +289,6 @@ static bool stormName(wostream &to, Function &f) {
 	} else {
 		to << L"L\"" << name << L"\"";
 	}
-
-	return r;
 }
 
 static void genPtr(wostream &to, Function &fn) {
@@ -330,7 +329,7 @@ static void genFunctions(wostream &to, World &w) {
 		to << L"{ ";
 
 		// Name.
-		bool ignoreParams = stormName(to, f);
+		stormName(to, f);
 		to << L", ";
 
 		// Pkg.
@@ -360,7 +359,7 @@ static void genFunctions(wostream &to, World &w) {
 		to << L", ";
 
 		// Parameters.
-		if (ignoreParams || f.params.empty())
+		if (f.params.empty())
 			to << L"params_empty, ";
 		else if (engineFn && f.params.size() == 1)
 			to << L"params_empty, ";

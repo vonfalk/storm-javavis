@@ -28,6 +28,7 @@ namespace storm {
 
 		// Create a type declared in C++.
 		Type(Str *name, TypeFlags flags, Size size, GcType *gcType);
+		Type(Str *name, Array<Value> *params, TypeFlags flags, Size size, GcType *gcType);
 
 		// Destroy our resources.
 		~Type();

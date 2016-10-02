@@ -66,12 +66,17 @@ namespace storm {
 			// Done booting.
 			advance(bootDone);
 		} catch (...) {
-			this->~Engine();
+			destroy();
 			throw;
 		}
 	}
 
 	Engine::~Engine() {
+		// Do not place anything directly here, we need the cleanup when creation fails.
+		destroy();
+	}
+
+	void Engine::destroy() {
 		// We need to remove the root this array implies before the Gc is destroyed.
 		world.clear();
 

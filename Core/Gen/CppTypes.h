@@ -106,13 +106,16 @@ namespace storm {
 	/**
 	 * Reference to a type from C++.
 	 */
-	struct CppFnRef {
+	struct CppTypeRef {
+		// Invalid index.
+		static const size_t invalid = -1;
+
 		// Type or template index. If 'params' is null, this is a type index, otherwise it is a
 		// template index and 'params' indicates the parameters to that template.
 		size_t id;
 
 		// If we're a template, this array is populated. It ends with size_t(-1).
-		size_t *params;
+		const size_t *params;
 
 		// Is this a maybe-type?
 		bool maybe;
@@ -150,10 +153,10 @@ namespace storm {
 		const void *ptr;
 
 		// Parameters.
-		CppFnRef *params;
+		const CppTypeRef *params;
 
 		// Result.
-		CppFnRef result;
+		CppTypeRef result;
 	};
 
 	/**
@@ -192,16 +195,16 @@ namespace storm {
 	 */
 	struct CppWorld {
 		// List of types.
-		CppType *types;
+		const CppType *types;
 
 		// List of functions.
-		CppFunction *functions;
+		const CppFunction *functions;
 
 		// List of templates.
-		CppTemplate *templates;
+		const CppTemplate *templates;
 
 		// List of named threads.
-		CppThread *threads;
+		const CppThread *threads;
 	};
 
 	// Get the CppWorld for this module.

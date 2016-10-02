@@ -3,6 +3,9 @@
 #include "Type.h"
 #include "Engine.h"
 #include "Package.h"
+#include "Function.h"
+#include "Code.h"
+#include "MaybeTemplate.h"
 #include "Core/Str.h"
 
 namespace storm {
@@ -31,6 +34,13 @@ namespace storm {
 		return n;
 	}
 
+	nat CppLoader::functionCount() const {
+		nat n;
+		for (n = 0; world->functions[n].name; n++)
+			;
+		return n;
+	}
+
 	void CppLoader::loadTypes() {
 		nat c = typeCount();
 		into.types.resize(c);
@@ -38,7 +48,7 @@ namespace storm {
 		// Note: we do not set any names yet, as the Str type is not neccessarily available until
 		// after we've created the types here.
 		for (nat i = 0; i < c; i++) {
-			CppType &type = world->types[i];
+			const CppType &type = world->types[i];
 
 			// The array could be partially filled.
 			if (into.types[i] == null && type.kind != CppType::superCustom) {
@@ -48,7 +58,7 @@ namespace storm {
 
 		// Create all types with custom types.
 		for (nat i = 0; i < c; i++) {
-			CppType &type = world->types[i];
+			const CppType &type = world->types[i];
 
 			if (type.kind != CppType::superCustom)
 				continue;
@@ -61,7 +71,7 @@ namespace storm {
 
 		// Now we can fill in the names and superclasses properly!
 		for (nat i = 0; i < c; i++) {
-			CppType &type = world->types[i];
+			const CppType &type = world->types[i];
 
 			// Just to make sure...
 			if (!into.types[i])
@@ -77,7 +87,7 @@ namespace storm {
 		threads.resize(c);
 
 		for (nat i = 0; i < c; i++) {
-			CppThread &thread = world->threads[i];
+			const CppThread &thread = world->threads[i];
 
 			if (into.threads[i]) {
 				into.threads[i] = new (e) Thread(thread.decl->createFn);
@@ -98,7 +108,7 @@ namespace storm {
 			// as a super class when they have their super classes added, to avoid re-computation of
 			// lookup tables and similar.
 			for (nat i = 0; i < c; i++) {
-				CppType &type = world->types[i];
+				const CppType &type = world->types[i];
 				if (updated[i])
 					continue;
 
@@ -153,7 +163,7 @@ namespace storm {
 		into.templates.resize(c);
 
 		for (nat i = 0; i < c; i++) {
-			CppTemplate &t = world->templates[i];
+			const CppTemplate &t = world->templates[i];
 
 			if (!into.templates[i]) {
 				Str *n = new (e) Str(t.name);
@@ -170,16 +180,43 @@ namespace storm {
 		return r;
 	}
 
+	Value CppLoader::findValue(const CppTypeRef &ref) {
+		Value result;
+		if (ref.params) {
+			// Template!
+			const Nat maxElem = 20;
+			Nat elems[maxElem];
+			Nat count = 0;
+			for (count = 0; count < maxElem && ref.params[count] != CppTypeRef::invalid; count++) {
+				elems[count] = Nat(ref.params[count]);
+			}
+
+			result = Value(into.templates[ref.id]->find(elems, count));
+		} else if (ref.id != CppTypeRef::invalid) {
+			// Regular type.
+			result = Value(into.types[ref.id]);
+		} else {
+			// Void.
+			return Value();
+		}
+
+		if (ref.maybe) {
+			result = wrapMaybe(result);
+		}
+
+		return result;
+	}
+
 	void CppLoader::loadPackages() {
 		nat c = typeCount();
 		for (nat i = 0; i < c; i++) {
-			CppType &t = world->types[i];
+			const CppType &t = world->types[i];
 			findPkg(t.pkg)->add(into.types[i]);
 		}
 
 		c = templateCount();
 		for (nat i = 0; i < c; i++) {
-			CppTemplate &t = world->templates[i];
+			const CppTemplate &t = world->templates[i];
 
 			NameSet *to = findPkg(t.pkg);
 			into.templates[i]->addTo(to);
@@ -187,9 +224,68 @@ namespace storm {
 
 		c = threadCount();
 		for (nat i = 0; i < c; i++) {
-			CppThread &t = world->threads[i];
+			const CppThread &t = world->threads[i];
 			findPkg(t.pkg)->add(threads[i]);
 		}
+	}
+
+
+	void CppLoader::loadFunctions() {
+		nat c = functionCount();
+		for (nat i = 0; i < c; i++) {
+			loadFunction(world->functions[i]);
+		}
+	}
+
+	void CppLoader::loadFunction(const CppFunction &fn) {
+		switch (fn.kind) {
+		case CppFunction::fnFree:
+		case CppFunction::fnFreeEngine:
+			loadFreeFunction(fn);
+			break;
+		case CppFunction::fnMember:
+			loadMemberFunction(fn);
+			break;
+		default:
+			assert(false, L"Unknown function kind: " + ::toS(fn.kind));
+			break;
+		}
+	}
+
+	void CppLoader::loadFreeFunction(const CppFunction &fn) {
+		NameSet *into = findPkg(fn.pkg);
+
+		Value result = findValue(fn.result);
+
+		Function *f = new (e) Function(result, new (e) Str(fn.name), loadFnParams(fn.params));
+
+		if (fn.kind == CppFunction::fnFreeEngine)
+			f->setCode(new (e) StaticEngineCode(result, fn.ptr));
+		else
+			f->setCode(new (e) StaticCode(fn.ptr));
+
+		into->add(f);
+	}
+
+	void CppLoader::loadMemberFunction(const CppFunction &fn) {
+		Value result = findValue(fn.result);
+		Array<Value> *params = loadFnParams(fn.params);
+		assert(params->count() > 0, L"Missing this pointer for " + ::toS(fn.name) + L"!");
+
+		Function *f = new (e) Function(result, new (e) Str(fn.name), params);
+		f->setCode(new (e) StaticCode(fn.ptr));
+
+		params->at(0).type->add(f);
+	}
+
+	Array<Value> *CppLoader::loadFnParams(const CppTypeRef *params) {
+		Array<Value> *r = new (e) Array<Value>();
+
+		for (Value v = findValue(*params); v != Value(); v = findValue(*++params)) {
+			r->push(v);
+		}
+
+		return r;
 	}
 
 }

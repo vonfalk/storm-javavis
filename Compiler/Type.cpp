@@ -47,6 +47,13 @@ namespace storm {
 		init();
 	}
 
+	Type::Type(Str *name, Array<Value> *params, TypeFlags flags, Size size, GcType *gcType) :
+		NameSet(name, params), engine(RootObject::engine()), gcType(gcType), tHandle(null), typeFlags(flags | typeCpp), mySize(size) {
+
+		gcType->type = this;
+		init();
+	}
+
 	// We need to set gcType->type first, therefore we call setMyType!
 	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) :
 		NameSet(setMyType(null, this, gcType, e)), engine(e), gcType(gcType),

@@ -7,6 +7,8 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class NameSet;
+
 	/**
 	 * A set of named objects, all with the same name but with different parameters.
 	 */
@@ -33,7 +35,7 @@ namespace storm {
 		// TODO: More care should be taking when dealing with templates and overload resolution!
 		//  maybe matches should not be added here, as we can currently not distinguish template-generated
 		//  matches from regular ones, which could be bad.
-		virtual MAYBE(Named *) STORM_FN createTemplate(SimplePart *from);
+		virtual MAYBE(Named *) STORM_FN createTemplate(NameSet *owner, SimplePart *from);
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

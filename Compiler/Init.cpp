@@ -47,6 +47,9 @@ namespace storm {
 
 		// Insert everything into their packages.
 		loader.loadPackages();
+
+		// Load functions.
+		loader.loadFunctions();
 	}
 
 }

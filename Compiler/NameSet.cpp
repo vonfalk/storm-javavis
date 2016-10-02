@@ -48,7 +48,7 @@ namespace storm {
 		templates->push(item);
 	}
 
-	Named *NameOverloads::createTemplate(SimplePart *part) {
+	Named *NameOverloads::createTemplate(NameSet *owner, SimplePart *part) {
 		Named *found = null;
 		for (nat i = 0; i < templates->count(); i++) {
 			Named *n = templates->at(i)->generate(part);
@@ -59,8 +59,10 @@ namespace storm {
 			}
 		}
 
-		if (found)
+		if (found) {
 			add(found);
+			found->parentLookup = owner;
+		}
 		return found;
 	}
 
@@ -167,7 +169,7 @@ namespace storm {
 		if (result)
 			return result;
 
-		return found->createTemplate(part);
+		return found->createTemplate(this, part);
 	}
 
 	Bool NameSet::loadName(SimplePart *part) {

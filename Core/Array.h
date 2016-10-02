@@ -161,7 +161,7 @@ namespace storm {
 		Array() : ArrayBase(StormInfo<T>::handle(engine())) {}
 
 		// 'n' elements.
-		Array(Nat n, const T &item) : ArrayBase(StormInfo<T>::handle(engine()), n, &item) {}
+		Array(Nat n, const T &item = T()) : ArrayBase(StormInfo<T>::handle(engine()), n, &item) {}
 
 		// Copy array.
 		Array(Array<T> *o) : ArrayBase(o) {}

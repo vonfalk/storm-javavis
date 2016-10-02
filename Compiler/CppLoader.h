@@ -29,6 +29,10 @@ namespace storm {
 		// Insert everything into the packages where they belong.
 		void loadPackages();
 
+		// Create all functions in their appropriate places. Assumes types and threads are placed in
+		// their packages.
+		void loadFunctions();
+
 	private:
 		// Engine to load into.
 		Engine &e;
@@ -51,11 +55,29 @@ namespace storm {
 		// Get the number of named threads.
 		nat threadCount() const;
 
+		// Get the number of functions.
+		nat functionCount() const;
+
 		// Find a NameSet corresponding to a given name.
 		NameSet *findPkg(const wchar *name);
 
+		// Find a type as referred by a CppTypeRef.
+		Value findValue(const CppTypeRef &ref);
+
 		// Create a gc type for the given type.
 		GcType *createGcType(const CppType *type);
+
+		// Load a single function.
+		void loadFunction(const CppFunction &fn);
+
+		// Load a free function.
+		void loadFreeFunction(const CppFunction &fn);
+
+		// Load member function.
+		void loadMemberFunction(const CppFunction &fn);
+
+		// Load parameters for a function.
+		Array<Value> *loadFnParams(const CppTypeRef *params);
 	};
 
 }

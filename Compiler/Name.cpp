@@ -164,13 +164,17 @@ namespace storm {
 		SimpleName *r = new (e) SimpleName();
 
 		const wchar *last = str;
-		for (const wchar *at = str; *at; at++) {
+		const wchar *at;
+		for (at = str; *at; at++) {
 			if (*at == '.') {
 				if (last < at)
 					r->add(new (e) Str(last, at));
 				last = at + 1;
 			}
 		}
+
+		if (last < at)
+			r->add(new (e) Str(last, at));
 
 		return r;
 	}

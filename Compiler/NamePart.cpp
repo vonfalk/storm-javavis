@@ -36,6 +36,8 @@ namespace storm {
 
 	SimplePart::SimplePart(Str *name, Array<Value> *params) : NamePart(name), params(params) {}
 
+	SimplePart::SimplePart(Str *name, Value param) : NamePart(name), params(new (engine()) Array<Value>(1, param)) {}
+
 	void SimplePart::deepCopy(CloneEnv *env) {
 		NamePart::deepCopy(env);
 		cloned(params, env);
@@ -91,7 +93,7 @@ namespace storm {
 
 	void SimplePart::toS(StrBuf *to) const {
 		*to << name;
-		if (params->count() > 0) {
+		if (params != null && params->count() > 0) {
 			*to << L"(" << params->at(0);
 			for (nat i = 1; i < params->count(); i++)
 				*to << L", " << params->at(i);

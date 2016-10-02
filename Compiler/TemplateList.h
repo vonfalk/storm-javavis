@@ -23,6 +23,9 @@ namespace storm {
 		// Add everything in here to NameSet.
 		void addTo(NameSet *to);
 
+		// Get what to add into.
+		inline NameSet *addTo() const { return addedTo; }
+
 		// Find an instantiaton. Generates it if neccessary.
 		Type *find(Nat *elems, Nat count);
 
