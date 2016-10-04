@@ -159,6 +159,9 @@ namespace storm {
 		// Stress-test the gc by allocating a large number of objects.
 		bool test(nat times = 100);
 
+		// Check memory consistency. Note: Enable checking in the 'Gc.cpp' for this to work.
+		void checkMemory();
+
 	private:
 		// GcType for weak arrays.
 		static const GcType weakArrayType;

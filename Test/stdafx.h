@@ -16,7 +16,11 @@ extern Engine *gEngine;
 /**
  * Define test suites so we can place tests in a somewhat cronological order, so when porting we can
  * start worrying about the low-level parts and then build ourselves up to the final thing.
+ *
+ * TODO: Make the Engine boot lazily, as we do not actually need the engine until we're at the
+ * GcObjects suite.
  */
+
 
 // Basic threading, no GC yet.
 SUITE(OS, 0);
