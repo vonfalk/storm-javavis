@@ -79,4 +79,9 @@ namespace storm {
 		void initRefs();
 	};
 
+
+	// Conveniently create various kind of functions.
+	// Function *inlinedFunction(EnginePtr e, Value result, const wchar *name, Array<Value> *params, );
+	Function *nativeFunction(EnginePtr e, Value result, const wchar *name, Array<Value> *params, const void *fn);
+
 }

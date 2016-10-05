@@ -27,6 +27,18 @@ namespace storm {
 	class Handle;
 
 	/**
+	 * Struct used to wrap a pointer used in placement-new situations. We do not want to overload
+	 * operator new for void *, since that can cause issues when we're intending to use operator new (Object *)
+	 * for a subclass that is only forward-declared and the compiler calls operator new (void *) instead.
+	 */
+	class Place {
+	public:
+		explicit inline Place(void *ptr) : ptr(ptr) {}
+
+		void *ptr;
+	};
+
+	/**
 	 * Class used when declaring named threads from C++.
 	 */
 	struct DeclThread {

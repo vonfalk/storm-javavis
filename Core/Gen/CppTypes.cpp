@@ -41,37 +41,37 @@ namespace storm {
 	 */
 	template <class T>
 	void create1(void *mem) {
-		new (mem)T();
+		new (Place(mem))T();
 	}
 
 	template <class T, class P>
 	void create2(void *mem, P p) {
-		new (mem)T(p);
+		new (Place(mem))T(p);
 	}
 
 	template <class T, class P, class Q>
 	void create3(void *mem, P p, Q q) {
-		new (mem)T(p, q);
+		new (Place(mem))T(p, q);
 	}
 
 	template <class T, class P, class Q, class R>
 	void create4(void *mem, P p, Q q, R r) {
-		new (mem)T(p, q, r);
+		new (Place(mem))T(p, q, r);
 	}
 
 	template <class T, class P, class Q, class R, class S>
 	void create5(void *mem, P p, Q q, R r, S s) {
-		new (mem)T(p, q, r, s);
+		new (Place(mem))T(p, q, r, s);
 	}
 
 	template <class T, class P, class Q, class R, class S, class U>
 	void create6(void *mem, P p, Q q, R r, S s, U u) {
-		new (mem)T(p, q, r, s, u);
+		new (Place(mem))T(p, q, r, s, u);
 	}
 
 	template <class T, class P, class Q, class R, class S, class U, class V>
 	void create7(void *mem, P p, Q q, R r, S s, U u, V v) {
-		new (mem)T(p, q, r, s, u, v);
+		new (Place(mem))T(p, q, r, s, u, v);
 	}
 
 	// Wrap a destructor call.

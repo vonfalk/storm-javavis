@@ -26,7 +26,11 @@
  */
 #define STORM_COMMON													\
 	friend struct storm::CppMeta;										\
-	static inline const Handle &stormHandle(Engine &e) { return storm::runtime::typeHandle(stormType(e)); }
+	static inline const Handle &stormHandle(Engine &e) { return storm::runtime::typeHandle(stormType(e)); } \
+	static inline void *operator new (size_t s, storm::Place mem) {		\
+		return mem.ptr;													\
+	}																	\
+	static inline void operator delete (void *, storm::Place) {}
 
 #define STORM_TYPE_DECL									\
 	static const storm::Nat stormTypeId;				\
@@ -45,11 +49,7 @@
 	static inline void *operator new (size_t s, const storm::RootObject *o) { \
 		return storm::runtime::allocObject(s, stormType(o));			\
 	}																	\
-	static inline void operator delete (void *m, const storm::RootObject *o) {} \
-	static inline void *operator new (size_t s, void *mem) {			\
-		return mem;														\
-	}																	\
-	static inline void operator delete (void *, void *) {}				\
+	static inline void operator delete (void *m, const storm::RootObject *o) {}
 
 
 /**

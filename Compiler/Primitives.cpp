@@ -12,10 +12,6 @@ namespace storm {
 		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::unsignedNr);
 	}
 
-	Type *createInt(Str *name, Size size, GcType *type) {
-		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::signedNr);
-	}
-
 	Type *createNat(Str *name, Size size, GcType *type) {
 		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::unsignedNr);
 	}
