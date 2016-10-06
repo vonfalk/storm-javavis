@@ -1,5 +1,8 @@
 #pragma once
 #include "Object.h"
+#include "TObject.h"
+#include "CloneEnv.h"
+#include "Utils/Templates.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -16,6 +19,8 @@ namespace storm {
 	 * with function pointers.
 	 *
 	 * Function pointers to members of values are not yet supported.
+	 *
+	 * TODO: Implement equality check.
 	 */
 
 	/**
@@ -52,19 +57,15 @@ namespace storm {
 
 	/**
 	 * Base class for a function pointer.
-	 *
-	 * NOTE: Support for Ref and RefSources are implemented as a subclass in Compiler/
 	 */
 	class FnBase : public Object {
 		STORM_CLASS;
 	public:
-		// Create from C++. Assumes we're not creating a function pointer to a function marked
-		// ON(Thread), as C++ does not see those. Also assumes that if a 'this' pointer is passed,
-		// we're calling a member function.
-		FnBase(const void *fn, RootObject *thisPtr);
+		// Create from C++.
+		FnBase(const void *fn, RootObject *thisPtr, Bool member, Thread *thread);
 
 		// Create with a generic target and all information given.
-		FnBase(const Target &target, RootObject *thisPtr, Bool member, Thread *thread);
+		FnBase(const FnTarget &target, RootObject *thisPtr, Bool member, Thread *thread);
 
 		// Copy.
 		STORM_CTOR FnBase(FnBase *o);
@@ -74,6 +75,43 @@ namespace storm {
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
+
+		/**
+		 * Call this function:
+		 */
+
+		// Call our function (low-level, not typesafe).
+		// Takes care of delegating to another thread if needed and adds a this pointer if needed.
+		// The 'first' parameter is the first parameter as a TObject (if the first parameter is a TObject)
+		// and is used to decide if a thread call is to be made or not.
+		// Note: Does *not* copy parameters if needed, but handles the return value properly.
+		// Note: if 'params' are statically allocated, make sure it has room for at least one more element!
+		template <class R>
+		R callRaw(os::FnParams &params, const TObject *first, CloneEnv *env) const {
+			byte d[sizeof(R)];
+			callRaw(d, typeInfo<R>(), params, first, env);
+			R *result = (R *)d;
+			R copy = *result;
+			result->~R();
+
+			if (needsCopy(first)) {
+				if (!env)
+					env = new (this) CloneEnv();
+				cloned(copy, env);
+			}
+			return copy;
+		}
+
+		template <>
+		void callRaw(os::FnParams &params, const TObject *first, CloneEnv *env) const {
+			callRaw(null, typeInfo<void>(), params, first, env);
+		}
+
+		// Call function with a pointer to the return value.
+		void callRaw(void *output, const BasicTypeInfo &type, os::FnParams &params, const TObject *first, CloneEnv *env) const;
+
+		// Do we need to copy the parameters for this function given the first TObject?
+		bool needsCopy(const TObject *first) const;
 
 	public:
 		// Are we calling a member function?
@@ -92,10 +130,176 @@ namespace storm {
 
 		// Get target.
 		inline FnTarget *target() const { return (FnTarget *)&target0; }
+
+		// Compute which thread we want to run on.
+		Thread *runOn(const TObject *first) const;
 	};
 
 
 	// Declare the template to Storm.
-	// STORM_TEMPLATE(Fn, createFn);
+	STORM_TEMPLATE(Fn, createFn);
+
+
+	/**
+	 * Get 'x' as a TObject.
+	 * Note: regular overloads have higher priority than templates as long as no implicit conversion have to be made.
+	 */
+	template <class T>
+	inline const TObject *asTObject(const T &) { return null; }
+	inline const TObject *asTObject(const TObject &t) { return &t; }
+	inline const TObject *asTObject(const TObject *t) { return t; }
+
+	/**
+	 * Helper function to add a cloned object to a os::FnParams object.
+	 */
+	template <class T>
+	void addClone(os::FnParams &to, T obj, CloneEnv *env) {
+		typename RemoveConst<T>::Type c = obj;
+		cloned(c, env);
+		to.add(c);
+	}
+
+	/**
+	 * C++ implementation. Supports up to two parameters.
+	 *
+	 * Note: there is an additional restriction from C++. We can not call functions which takes references.
+	 */
+	template <class R, class P1 = void, class P2 = void>
+	class Fn : public FnBase {
+		STORM_SPECIAL;
+	public:
+		// Get the Storm type.
+		static Type *stormType(Engine &e) {
+			return runtime::cppTemplate(e, FnId, 3, StormInfo<R>::id(), StormInfo<P1>::id(), StormInfo<P2>::id());
+		}
+
+		// Create.
+		Fn(R (CODECALL *ptr)(P1, P2), Thread *thread = null) : FnBase(address(ptr), null, false, thread) {}
+
+		template <class Q>
+		Fn(R (CODECALL Q::*ptr)(P1, P2), const Q &obj) : FnBase(address(ptr), obj, true, null) {}
+
+		// Call the function.
+		R call(P1 p1, P2 p2) const {
+			const TObject *first = asTObject(p1);
+
+			if (needsCopy(first)) {
+				CloneEnv *env = new (this) CloneEnv();
+				os::FnStackParams<3> params;
+				addClone(params, p1, env);
+				addClone(params, p2, env);
+				return callRaw<R>(params, first, env);
+			} else {
+				os::FnStackParams<3> params;
+				params.add(p1);
+				params.add(p2);
+				return callRaw<R>(params, first, null);
+			}
+		}
+	};
+
+	/**
+	 * 1 parameter.
+	 */
+	template <class R, class P1>
+	class Fn<R, P1, void> : public FnBase {
+		STORM_SPECIAL;
+	public:
+		// Get the Storm type.
+		static Type *stormType(Engine &e) {
+			return runtime::cppTemplate(e, FnId, 2, StormInfo<R>::id(), StormInfo<P1>::id);
+		}
+
+		// Create.
+		Fn(R (CODECALL *ptr)(P1), Thread *thread = null) : FnBase(address(ptr), null, false, thread) {}
+
+		template <class Q>
+		Fn(R (CODECALL Q::*ptr)(P1), const Q &obj) : FnBase(address(ptr), obj, true, null) {}
+
+		// Call the function.
+		R call(P1 p1) const {
+			const TObject *first = asTObject(p1);
+
+			if (needsCopy(first)) {
+				CloneEnv *env = new (this) CloneEnv();
+				os::FnStackParams<2> params;
+				addClone(params, p1, env);
+				return callRaw<R>(params, first, env);
+			} else {
+				os::FnStackParams<2> params;
+				params.add(p1);
+				return callRaw<R>(params, first, null);
+			}
+		}
+	};
+
+	/**
+	 * 0 parameters.
+	 */
+	template <class R>
+	class Fn<R, void, void> : public FnBase {
+		STORM_SPECIAL;
+	public:
+		// Get the Storm type.
+		static Type *stormType(Engine &e) {
+			return runtime::cppTemplate(e, FnId, 1, StormInfo<R>::id());
+		}
+
+		// Create.
+		Fn(R (CODECALL *ptr)(), Thread *thread = null) : FnBase(address(ptr), null, false, thread) {}
+
+		template <class Q>
+		Fn(R (CODECALL Q::*ptr)(), const Q &obj) : FnBase(address(ptr), obj, true, null) {}
+
+		// Call the function.
+		R call() const {
+			const TObject *first = asTObject(p1);
+
+			if (needsCopy(first)) {
+				CloneEnv *env = new (this) CloneEnv();
+				os::FnStackParams<1> params;
+				return callRaw<R>(params, first, env);
+			} else {
+				os::FnStackParams<1> params;
+				return callRaw<R>(params, first, null);
+			}
+		}
+	};
+
+
+	/**
+	 * Create easily.
+	 */
+
+	template <class R>
+	Fn<R> *fnPtr(Engine &e, R (*fn)(), Thread *t = null) {
+		return new (e) Fn<R>(fn, t);
+	}
+
+	template <class R, class P1>
+	Fn<R, P1> *fnPtr(Engine &e, R (*fn)(P1), Thread *t = null) {
+		return new (e) Fn<R, P1>(fn, t);
+	}
+
+	template <class R, class P1, class P2>
+	Fn<R, P1, P2> *fnPtr(Engine &e, R (*fn)(P1, P2), Thread *t = null) {
+		return new (e) Fn<R, P1, P2>(fn, t);
+	}
+
+
+	template <class R, class Q>
+	Fn<R> *fnPtr(Engine &e, R (Q::*fn)(), const Q &obj) {
+		return new (e) Fn<R>(fn, obj);
+	}
+
+	template <class R, class Q, class P1>
+	Fn<R, P1> *fnPtr(Engine &e, R (Q::*fn)(P1), const Q &obj) {
+		return new (e) Fn<R>(fn, obj);
+	}
+
+	template <class R, class Q, class P1, class P2>
+	Fn<R, P1, P2> *fnPtr(Engine &e, R (Q::*fn)(P1, P2), const Q &obj) {
+		return new (e) Fn<R>(fn, obj);
+	}
 
 }

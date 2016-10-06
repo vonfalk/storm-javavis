@@ -5,7 +5,7 @@
 #include "Package.h"
 #include "Function.h"
 #include "Code.h"
-#include "MaybeTemplate.h"
+#include "Lib/MaybeTemplate.h"
 #include "Core/Str.h"
 
 namespace storm {

@@ -65,4 +65,14 @@ namespace storm {
 		data = newData;
 	}
 
+	Array<Value> *ValueArray::toArray() const {
+		Array<Value> *r = new (this) Array<Value>();
+		r->reserve(count());
+
+		for (nat i = 0; i < count(); i++)
+			r->push(data->v[i]);
+
+		return r;
+	}
+
 }

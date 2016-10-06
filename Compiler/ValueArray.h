@@ -39,6 +39,9 @@ namespace storm {
 		// Reserve things.
 		inline void STORM_FN reserve(Nat count) { ensure(count); }
 
+		// To array.
+		Array<Value> *STORM_FN toArray() const;
+
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 

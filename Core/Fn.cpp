@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Fn.h"
 #include "StrBuf.h"
+#include "CloneEnv.h"
 
 namespace storm {
 
@@ -20,14 +21,14 @@ namespace storm {
 	}
 
 
-	FnBase::FnBase(const void *fn, RootObject *thisPtr) {
-		thread = null;
+	FnBase::FnBase(const void *fn, RootObject *thisPtr, Bool member, Thread *thread) {
+		callMember = member;
 		this->thisPtr = thisPtr;
-		callMember = thisPtr != null;
+		this->thread = thread;
 		new (target()) RawFnTarget(fn);
 	}
 
-	FnBase::FnBase(const Target &target, RootObject *thisPtr, Bool member, Thread *thread) {
+	FnBase::FnBase(const FnTarget &target, RootObject *thisPtr, Bool member, Thread *thread) {
 		callMember = member;
 		this->thisPtr = thisPtr;
 		this->thread = thread;
@@ -45,9 +46,56 @@ namespace storm {
 		if (thisPtr) {
 			if (Object *o = as<Object>(thisPtr)) {
 				// Yes, we need to clone it!
-				cloned(env, o);
+				cloned(o, env);
 				thisPtr = o;
 			}
+		}
+	}
+
+	bool FnBase::needsCopy(const TObject *first) const {
+		Thread *t = runOn(first);
+		if (t)
+			return t->thread() != os::Thread::current();
+		else
+			return false;
+	}
+
+	Thread *FnBase::runOn(const TObject *first) const {
+		TObject *tObj;
+		if (callMember && (tObj = as<TObject>(thisPtr)))
+			return tObj->thread;
+		else if (callMember && !thread && first)
+			return first->thread;
+		else
+			return thread;
+	}
+
+	void FnBase::callRaw(void *out, const BasicTypeInfo &type, os::FnParams &params, const TObject *first, CloneEnv *env) const {
+		const void *toCall = target()->ptr();
+
+		Thread *thread = runOn(first);
+		bool spawn = needsCopy(first);
+
+		if (thisPtr) {
+			RootObject *p = thisPtr;
+			if (spawn) {
+				if (!env)
+					env = new (this) CloneEnv();
+				// In this case, 'p' has to be derived from Object.
+				p = clone((Object *)p, env);
+			}
+
+			params.addFirst(p);
+		}
+
+		// Dispatch to the correct thread.
+
+		if (spawn) {
+			os::FutureSema<os::Sema> future(out);
+			os::UThread::spawn(toCall, callMember, params, future, type, &thread->thread());
+			future.result();
+		} else {
+			os::call(toCall, callMember, params, out, type);
 		}
 	}
 

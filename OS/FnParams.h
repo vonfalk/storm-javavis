@@ -132,6 +132,19 @@ namespace os {
 		}
 	};
 
+
+	/**
+	 * FnParams with stack-allocated buffer of a specified size.
+	 */
+	template <size_t n>
+	class FnStackParams : public FnParams {
+	public:
+		FnStackParams() : FnParams(buffer) {}
+
+	private:
+		Param buffer[n];
+	};
+
 }
 
 #include "FnCall.h"

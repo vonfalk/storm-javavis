@@ -20,9 +20,11 @@ namespace storm {
 	 * so we do not loose the dynamic type, as we're currently only looking at the static type.
 	 */
 	template <class T>
-	T *clone(T *obj) {
+	T *clone(T *obj, CloneEnv *env) {
 		TODO(L"Look at the dynamic type as well!");
-		return new (obj) T(obj);
+		T *t = new (obj) T(*obj);
+		t->deepCopy(env);
+		return t;
 	}
 
 
@@ -31,13 +33,20 @@ namespace storm {
 	 */
 	template <class T>
 	void cloned(T *&obj, CloneEnv *env) {
-		obj = clone(obj);
-		obj->deepCopy(env);
+		obj = clone(obj, env);
 	}
 
 	template <class T>
 	void cloned(T &value, CloneEnv *env) {
 		value.deepCopy(env);
 	}
+
+	inline void cloned(Bool v, CloneEnv *e) {}
+	inline void cloned(Byte v, CloneEnv *e) {}
+	inline void cloned(Int v, CloneEnv *e) {}
+	inline void cloned(Nat v, CloneEnv *e) {}
+	inline void cloned(Long v, CloneEnv *e) {}
+	inline void cloned(Word v, CloneEnv *e) {}
+	inline void cloned(Float v, CloneEnv *e) {}
 
 }

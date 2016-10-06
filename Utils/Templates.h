@@ -119,3 +119,17 @@ struct BaseType<T *> : public BaseType<T> {};
 
 template <class T>
 struct BaseType<T &> : public BaseType<T> {};
+
+
+/**
+ * Remove const from a type. Eg. turns const Foo * to Foo *
+ */
+template <class T>
+struct RemoveConst {
+	typedef T Type;
+};
+
+template <class T>
+struct RemoveConst<const T *> {
+	typedef T *Type;
+};
