@@ -62,10 +62,10 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create from C++.
-		FnBase(const void *fn, RootObject *thisPtr, Bool member, Thread *thread);
+		FnBase(const void *fn, const RootObject *thisPtr, Bool member, Thread *thread);
 
 		// Create with a generic target and all information given.
-		FnBase(const FnTarget &target, RootObject *thisPtr, Bool member, Thread *thread);
+		FnBase(const FnTarget &target, const RootObject *thisPtr, Bool member, Thread *thread);
 
 		// Copy.
 		STORM_CTOR FnBase(FnBase *o);
@@ -118,7 +118,7 @@ namespace storm {
 		Bool callMember;
 
 		// This pointer.
-		UNKNOWN(PTR_GC) RootObject *thisPtr;
+		UNKNOWN(PTR_GC) const RootObject *thisPtr;
 
 		// Thread to call on.
 		Thread *thread;
@@ -149,15 +149,12 @@ namespace storm {
 	inline const TObject *asTObject(const TObject &t) { return &t; }
 	inline const TObject *asTObject(const TObject *t) { return t; }
 
-	/**
-	 * Helper function to add a cloned object to a os::FnParams object.
-	 */
-	template <class T>
-	void addClone(os::FnParams &to, T obj, CloneEnv *env) {
-		typename RemoveConst<T>::Type c = obj;
-		cloned(c, env);
-		to.add(c);
-	}
+	// Helper macro to add a cloned object to a os::FnParams object. We need to keep the cloned
+	// value alive until the function is actually called, so we can not use a function.
+#define FN_ADD_CLONE(T, to, obj, env)				\
+	typename RemoveConst<T>::Type tmp_ ## obj = obj; \
+	cloned(tmp_ ## obj, env);							\
+	to.add(tmp_ ## obj);
 
 	/**
 	 * C++ implementation. Supports up to two parameters.
@@ -177,7 +174,7 @@ namespace storm {
 		Fn(R (CODECALL *ptr)(P1, P2), Thread *thread = null) : FnBase(address(ptr), null, false, thread) {}
 
 		template <class Q>
-		Fn(R (CODECALL Q::*ptr)(P1, P2), const Q &obj) : FnBase(address(ptr), obj, true, null) {}
+		Fn(R (CODECALL Q::*ptr)(P1, P2), const Q *obj) : FnBase(address(ptr), obj, true, null) {}
 
 		// Call the function.
 		R call(P1 p1, P2 p2) const {
@@ -186,8 +183,8 @@ namespace storm {
 			if (needsCopy(first)) {
 				CloneEnv *env = new (this) CloneEnv();
 				os::FnStackParams<3> params;
-				addClone(params, p1, env);
-				addClone(params, p2, env);
+				FN_ADD_CLONE(P1, params, p1, env);
+				FN_ADD_CLONE(P2, params, p2, env);
 				return callRaw<R>(params, first, env);
 			} else {
 				os::FnStackParams<3> params;
@@ -207,14 +204,14 @@ namespace storm {
 	public:
 		// Get the Storm type.
 		static Type *stormType(Engine &e) {
-			return runtime::cppTemplate(e, FnId, 2, StormInfo<R>::id(), StormInfo<P1>::id);
+			return runtime::cppTemplate(e, FnId, 2, StormInfo<R>::id(), StormInfo<P1>::id());
 		}
 
 		// Create.
 		Fn(R (CODECALL *ptr)(P1), Thread *thread = null) : FnBase(address(ptr), null, false, thread) {}
 
 		template <class Q>
-		Fn(R (CODECALL Q::*ptr)(P1), const Q &obj) : FnBase(address(ptr), obj, true, null) {}
+		Fn(R (CODECALL Q::*ptr)(P1), const Q *obj) : FnBase(address(ptr), obj, true, null) {}
 
 		// Call the function.
 		R call(P1 p1) const {
@@ -223,7 +220,7 @@ namespace storm {
 			if (needsCopy(first)) {
 				CloneEnv *env = new (this) CloneEnv();
 				os::FnStackParams<2> params;
-				addClone(params, p1, env);
+				FN_ADD_CLONE(P1, params, p1, env);
 				return callRaw<R>(params, first, env);
 			} else {
 				os::FnStackParams<2> params;
@@ -249,19 +246,17 @@ namespace storm {
 		Fn(R (CODECALL *ptr)(), Thread *thread = null) : FnBase(address(ptr), null, false, thread) {}
 
 		template <class Q>
-		Fn(R (CODECALL Q::*ptr)(), const Q &obj) : FnBase(address(ptr), obj, true, null) {}
+		Fn(R (CODECALL Q::*ptr)(), const Q *obj) : FnBase(address(ptr), obj, true, null) {}
 
 		// Call the function.
 		R call() const {
-			const TObject *first = asTObject(p1);
-
-			if (needsCopy(first)) {
+			if (needsCopy(null)) {
 				CloneEnv *env = new (this) CloneEnv();
 				os::FnStackParams<1> params;
-				return callRaw<R>(params, first, env);
+				return callRaw<R>(params, null, env);
 			} else {
 				os::FnStackParams<1> params;
-				return callRaw<R>(params, first, null);
+				return callRaw<R>(params, null, null);
 			}
 		}
 	};
@@ -288,17 +283,17 @@ namespace storm {
 
 
 	template <class R, class Q>
-	Fn<R> *fnPtr(Engine &e, R (Q::*fn)(), const Q &obj) {
+	Fn<R> *fnPtr(Engine &e, R (CODECALL Q::*fn)(), const Q *obj) {
 		return new (e) Fn<R>(fn, obj);
 	}
 
 	template <class R, class Q, class P1>
-	Fn<R, P1> *fnPtr(Engine &e, R (Q::*fn)(P1), const Q &obj) {
+	Fn<R, P1> *fnPtr(Engine &e, R (CODECALL Q::*fn)(P1), const Q *obj) {
 		return new (e) Fn<R>(fn, obj);
 	}
 
 	template <class R, class Q, class P1, class P2>
-	Fn<R, P1, P2> *fnPtr(Engine &e, R (Q::*fn)(P1, P2), const Q &obj) {
+	Fn<R, P1, P2> *fnPtr(Engine &e, R (CODECALL Q::*fn)(P1, P2), const Q *obj) {
 		return new (e) Fn<R>(fn, obj);
 	}
 

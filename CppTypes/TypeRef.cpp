@@ -114,6 +114,8 @@ Auto<TypeRef> NamedType::resolve(World &in, const CppName &context) const {
 	Type *t = in.types.findUnsafe(name, context);
 	if (t)
 		return new ResolvedType(*this, t);
+	else if (name == L"void")
+		return new VoidType(pos);
 	else if (name == L"GcWatch" || name == L"storm::GcWatch")
 		return new GcWatchType(pos);
 	else if (name == L"EnginePtr" || name == L"storm::EnginePtr")
@@ -159,6 +161,16 @@ Auto<TypeRef> BuiltInType::resolve(World &in, const CppName &context) const {
 
 void BuiltInType::print(wostream &to) const {
 	to << name;
+}
+
+VoidType::VoidType(const SrcPos &pos) : TypeRef(pos) {}
+
+Auto<TypeRef> VoidType::resolve(World &in, const CppName &context) const {
+	return new VoidType(pos);
+}
+
+void VoidType::print(wostream &to) const {
+	to << L"void";
 }
 
 GcArrayType::GcArrayType(const SrcPos &pos, Auto<TypeRef> of, bool weak) : TypeRef(pos), of(of), weak(weak) {}

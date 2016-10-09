@@ -90,8 +90,9 @@ BEGIN_TEST(FnCallTest, OS) {
 	CHECK_EQ(sum, 3);
 
 	Dummy dummy = { LargeType(2, 3, 4, 5) };
+	Dummy *pDummy = &dummy;
 	FnParams q;
-	q.add(&dummy);
+	q.add(pDummy);
 	CHECK_EQ(call<LargeType>(address(&Dummy::large), true, q), LargeType(2, 3, 4, 5));
 
 	{
@@ -226,8 +227,9 @@ LargeType *ptrFn(LargeType *t) {
 
 BEGIN_TEST(FunctionRefPtrTest, OS) {
 	LargeType t(1, 2, 3, 4);
+	LargeType *ptrT = &t;
 	FnParams par;
-	par.add(&t);
+	par.add(ptrT);
 
 	LargeType *f = &callRef<LargeType>(&refFn, false, par);
 	CHECK_EQ(f, &t);

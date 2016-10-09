@@ -62,32 +62,25 @@ namespace os {
 		// Add a parameter to the front (low-level).
 		void addFirst(CopyFn copy, DestroyFn destroy, nat size, bool isFloat, const void *value);
 
-		// Add a parameter (high-level). Note that a reference is treated like the value itself
-		// since we can not have a reference to a reference in the parameter.
+		// Add a parameter (high-level).
+		// Note: a reference is treated as the value itself.
+		// Note: the values used here must persist until after the the call is completed. This is
+		// the reason why a const reference is not used; to force non-temporaries as parameters.
 		template <class T>
-		inline FnParams &add(const T &p) {
+		inline FnParams &add(T &p) {
 			TypeInfo i = typeInfo<T>();
-			if (!i.plain()) {
-				// Pointer or reference, copy it directly.
-				// we know that sizeof(T) == sizeof(void *)
-				add(null, null, sizeof(T), false, *(void **)&p);
-			} else {
-				add(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), i.kind == TypeInfo::floatNr, &p);
-			}
+			add(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), i.kind == TypeInfo::floatNr, &p);
 			return *this;
 		}
 
 		// Add a parameter to the front (high-level).
+		// Note: a reference is treated as the value itself.
+		// Note: the values used here must persist until after the the call is completed. This is
+		// the reason why a const reference is not used; to force non-temporaries as parameters.
 		template <class T>
-		inline FnParams &addFirst(const T &p) {
+		inline FnParams &addFirst(T &p) {
 			TypeInfo i = typeInfo<T>();
-			if (!i.plain()) {
-				// Pointer or reference, copy it directly.
-				// we know that sizeof(T) == sizeof(void *)
-				addFirst(null, null, sizeof(T), false, *(void **)&p);
-			} else {
-				addFirst(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), i.kind == TypeInfo::floatNr, &p);
-			}
+			addFirst(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), i.kind == TypeInfo::floatNr, &p);
 			return *this;
 		}
 
@@ -121,7 +114,7 @@ namespace os {
 		template <class T>
 		static void copy(void *to, const void *from) {
 			const T* f = (const T*)from;
-			new (to) T(*f);
+			new (storm::Place(to)) T(*f);
 		}
 
 		// Destructor invocation.

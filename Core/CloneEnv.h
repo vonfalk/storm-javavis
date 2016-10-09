@@ -1,5 +1,6 @@
 #pragma once
 #include "Object.h"
+#include "Utils/Templates.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -22,7 +23,8 @@ namespace storm {
 	template <class T>
 	T *clone(T *obj, CloneEnv *env) {
 		TODO(L"Look at the dynamic type as well!");
-		T *t = new (obj) T(*obj);
+		typedef typename RemoveConst<T>::Type U;
+		U *t = new (obj) U(*obj);
 		t->deepCopy(env);
 		return t;
 	}

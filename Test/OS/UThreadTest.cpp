@@ -61,7 +61,7 @@ struct DummyTracker {
 	}
 };
 
-BEGIN_TEST(UThreadResultTest) {
+BEGIN_TEST(UThreadResultTest, OS) {
 	// If these tests start to fail, consider increasing the stack space for
 	// calling functions defined in UThread.cpp (pushParams).
 
@@ -165,7 +165,8 @@ BEGIN_TEST(UThreadResultTest) {
 	Tracker::clear();
 	{
 		DummyTracker t(12);
-		FnParams params; params.add(&t);
+		DummyTracker *pT = &t;
+		FnParams params; params.add(pT);
 		Future<Tracker> r;
 		UThread::spawn(address(&DummyTracker::value), true, params, r);
 		CHECK_EQ(r.result().data, 12);
@@ -196,7 +197,7 @@ struct SemaTest {
 };
 
 
-BEGIN_TEST(UThreadSema) {
+BEGIN_TEST(UThreadSema, OS) {
 	SemaTest t;
 	UThread::spawn(memberVoidFn(&t, &SemaTest::run));
 
@@ -240,7 +241,7 @@ struct SemaInterop {
 	}
 };
 
-BEGIN_TEST(UThreadSemaInterop) {
+BEGIN_TEST(UThreadSemaInterop, OS) {
 	SemaInterop t;
 	ThreadGroup group;
 
@@ -296,7 +297,7 @@ static int spawnLaterFn(int a, int b) {
 	return a + b;
 }
 
-BEGIN_TEST(UThreadSpawnLater) {
+BEGIN_TEST(UThreadSpawnLater, OS) {
 	int v1 = 10;
 	int v2 = 20;
 

@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "Code.h"
 #include "Engine.h"
+#include "Function.h"
+#include "Exception.h"
+#include "Core/Str.h"
+#include "Code/Redirect.h"
 
 namespace storm {
 
@@ -127,5 +131,139 @@ namespace storm {
 #else
 #error "Please implement 'redirectCode' for your platform!"
 #endif
+
+
+	/**
+	 * Lazy code.
+	 */
+
+	LazyCode::LazyCode(Fn<CodeGen *> *generate) : code(null), generate(generate) {}
+
+	void LazyCode::compile() {
+		// We're always running on the Compiler thread, so it is safe to call 'updateCodeLocal'.
+		if (!loading)
+			updateCodeLocal(this);
+	}
+
+	void LazyCode::newRef() {
+		if (!code)
+			createRedirect();
+		toUpdate->set(code);
+	}
+
+	void LazyCode::createRedirect() {
+		loaded = false;
+
+		Array<code::RedirectParam> *params = new (this) Array<code::RedirectParam>();
+		for (nat i = 0; i < owner->params->count(); i++) {
+			Value v = owner->params->at(i);
+			if (v.isValue()) {
+				params->push(code::RedirectParam(v.valType(), v.destructor(), true));
+			} else {
+				params->push(code::RedirectParam(v.valType()));
+			}
+		}
+
+		setCode(code::redirect(params, engine().ref(Engine::rLazyCodeUpdate), code::objPtr(this)));
+	}
+
+	void LazyCode::setCode(code::Listing *to) {
+		code = new (this) code::Binary(engine().arena(), to);
+		if (toUpdate)
+			toUpdate->set(code);
+	}
+
+	const void *LazyCode::updateCode(LazyCode *me) {
+		// TODO? Always allocate a new UThread? This will make sure we don't run out of stack for the compiler.
+		Thread *cThread = Compiler::thread(me->engine());
+		if (cThread->thread() == os::Thread::current()) {
+			// If we're on the Compiler thread, we may call directly.
+			return updateCodeLocal(me);
+		} else {
+			// Note: we're blocking the calling thread entirely since we would otherwise possibly
+			// let other UThreads run where they are not expected to.
+			os::Future<const void *, Semaphore> result;
+			os::UThread::spawn(&LazyCode::updateCodeLocal, true, os::FnParams().add(me), result, &cThread->thread());
+			return result.result();
+		}
+	}
+
+	const void *LazyCode::updateCodeLocal(LazyCode *me) {
+		while (me->loading) {
+			// Wait for the other one loading this function.
+			// TODO: Try to detect when a function is recursively loaded!
+			os::UThread::leave();
+		}
+
+		if (!me->loaded) {
+			if (me->loading)
+				throw InternalError(L"Trying to update " + ::toS(me->owner->identifier()) + L" recursively.");
+
+			me->loading = true;
+
+			try {
+				CodeGen *l = me->generate->call();
+				// Append any data needed.
+				me->setCode(l->to);
+			} catch (...) {
+				me->loading = false;
+				throw;
+			}
+
+			me->loaded = true;
+			me->loading = false;
+		}
+
+		return me->code->address();
+	}
+
+
+	/**
+	 * Inlined code.
+	 */
+
+	InlineParams::InlineParams(CodeGen *state, Array<code::Operand> *params, CodeResult *result) :
+		state(state), params(params), result(result) {}
+
+	void InlineParams::deepCopy(CloneEnv *env) {
+		clone(state, env);
+		clone(params, env);
+		clone(result, env);
+	}
+
+
+	InlinedCode::InlinedCode(Fn<void, InlineParams> *generate) :
+		LazyCode(fnPtr(TObject::engine(), &InlinedCode::generatePtr, this)), generate(generate) {}
+
+	void InlinedCode::code(CodeGen *state, Array<code::Operand> *params, CodeResult *result) {
+		InlineParams p(state, params, result);
+		generate->call(p);
+	}
+
+	CodeGen *InlinedCode::generatePtr() {
+		using namespace code;
+
+		CodeGen *state = new (this) CodeGen(owner->runOn());
+		Listing *l = state->to;
+
+		Array<code::Operand> *params = new (this) Array<code::Operand>();
+		for (nat i = 0; i < owner->params->count(); i++) {
+			Value p = owner->params->at(i);
+			params->push(state->createParam(p));
+		}
+
+		state->result(owner->result, owner->isMember());
+
+		*l << prolog();
+
+		CodeResult *result = new (this) CodeResult(owner->result, l->root());
+		code(state, params, result);
+
+		VarInfo v = result->location(state);
+		v.created(state);
+		state->returnValue(v.v);
+
+		return state;
+	}
 
 }

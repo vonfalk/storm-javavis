@@ -23,7 +23,7 @@ struct ExThread {
 
 };
 
-BEGIN_TEST(ExceptionTest) {
+BEGIN_TEST(ExceptionTest, OS) {
 	ExThread z;
 	os::ThreadGroup g;
 

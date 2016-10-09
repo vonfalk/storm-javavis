@@ -143,6 +143,9 @@ namespace code {
 		// Delay the creation of a variable to a later part.
 		void STORM_FN delay(Variable v, Part to);
 
+		// Move a parameter to a specific location.
+		void STORM_FN moveParam(Variable param, Nat to);
+
 		// Get the variable stored just before 'v' in this stack frame. Within a single block, it
 		// just returns the variable added before 'v'. If 'v' is the first variable in that block,
 		// the last variable of the previous block is returned. This will give all variables visible

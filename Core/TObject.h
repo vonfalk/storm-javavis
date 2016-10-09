@@ -25,6 +25,10 @@ namespace storm {
 		// Convert to string.
 		virtual Str *STORM_FN toS() const;
 		virtual void STORM_FN toS(StrBuf *to) const;
+
+		// Dummy deepCopy function which does nothing and is not exposed to Storm. Makes it easier
+		// to write template code in C++.
+		inline void deepCopy(CloneEnv *env) {}
 	};
 
 

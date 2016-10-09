@@ -3,6 +3,7 @@
 #include "Init.h"
 #include "Type.h"
 #include "Package.h"
+#include "Code.h"
 #include "Core/Hash.h"
 #include "Core/Thread.h"
 #include "Core/Str.h"
@@ -216,6 +217,8 @@ namespace storm {
 		switch (ref) {
 		case rEngine:
 			return arena()->externalSource(L"engine", this);
+		case rLazyCodeUpdate:
+			return arena()->externalSource(L"lazyUpdater", &LazyCode::updateCode);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 		}

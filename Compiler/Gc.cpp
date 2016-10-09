@@ -1277,11 +1277,20 @@ namespace storm {
 		// Pools to check.
 		mps_pool_t pools[2];
 
+		// Pool where type info objects should reside.
+		mps_pool_t descPool;
+
+		// Arena in which all pools reside.
+		mps_arena_t arena;
+
 		// Pointer to the first object which failed the check (if any).
 		MpsObj *failed;
 
 		// First and last byte which failed the check.
 		size_t failedFirst, failedLast;
+
+		// Did the description check fail?
+		bool invalidDesc;
 	};
 
 	static void checkMem(MpsObj *obj, size_t size, CheckData *out) {
@@ -1322,6 +1331,14 @@ namespace storm {
 
 		MpsObj *obj = (MpsObj *)addr;
 
+		mps_pool_t headerPool;
+		if (mps_addr_pool(&headerPool, data->arena, (void *)obj->header)) {
+			if (headerPool != data->descPool) {
+				data->failed = obj;
+				data->invalidDesc = true;
+			}
+		}
+
 		switch (obj->header->type) {
 		case GcType::tFixed:
 		case GcType::tType:
@@ -1344,12 +1361,17 @@ namespace storm {
 	void Gc::checkMemory() {
 		CheckData data = {
 			{ pool, typePool },
+			gcTypePool,
+			arena,
 			null, 0, 0,
 		};
 		mps_arena_formatted_objects_walk(arena, &checkObject, &data, 0);
 
 		if (data.failed) {
 			PLN(L"--- HEAP CHECK FAILED ---");
+			if (data.invalidDesc) {
+				PLN(L"The object at " << (void *)data.failed << L" has an invalid description.");
+			}
 			PLN(L"The object at " << (void *)data.failed << L" wrote "
 				<< data.failedFirst << L" to " << data.failedLast << L" bytes after its end.");
 

@@ -4,6 +4,9 @@
 #include "World.h"
 #include "Config.h"
 
+// From Storm headers. Assumed to be 64-bits.
+typedef long long int Long;
+
 // Convert from a fully-qualified (type) name to a suitable variable name.
 static String toVarName(const CppName &c) {
 	String s = c;
@@ -158,11 +161,14 @@ static TypeRef *findType(TypeRef *ref) {
 	}
 }
 
-static vector<nat> templateParamsId(ResolvedTemplateType *t) {
-	vector<nat> out(t->params.size(), 0);
+static vector<Long> templateParamsId(ResolvedTemplateType *t) {
+	vector<Long> out(t->params.size(), 0);
 
 	for (nat i = 0; i < t->params.size(); i++) {
-		if (ResolvedType *r = as<ResolvedType>(findType(t->params[i].borrow()))) {
+		TypeRef *type = t->params[i].borrow();
+		if (as<VoidType>(type)) {
+			out[i] = -2;
+		} else if (ResolvedType *r = as<ResolvedType>(findType(type))) {
 			out[i] = r->type->id;
 		} else {
 			throw Error(L"Unresolved type: " + ::toS(t->params[i]), t->pos);
@@ -174,11 +180,14 @@ static vector<nat> templateParamsId(ResolvedTemplateType *t) {
 
 static String templateParamsName(ResolvedTemplateType *t) {
 	std::wostringstream out;
-	vector<nat> in = templateParamsId(t);
+	vector<Long> in = templateParamsId(t);
 
 	out << L"template";
 	for (nat i = 0; i < in.size(); i++)
-		out << L"_" << in[i];
+		if (in[i] < 0)
+			out << L"_null";
+		else
+			out << L"_" << in[i];
 
 	return out.str();
 }
@@ -191,7 +200,7 @@ static void templateParams(ResolvedTemplateType *t, wostream &to, set<String> &c
 	if (created.count(name) == 0) {
 		created.insert(name);
 
-		vector<nat> ids = templateParamsId(t);
+		vector<Long> ids = templateParamsId(t);
 
 		to << L"static const size_t " << name << L"[] = { ";
 		join(to, ids, L", ");
@@ -200,11 +209,9 @@ static void templateParams(ResolvedTemplateType *t, wostream &to, set<String> &c
 }
 
 static void genTypeRef(wostream &to, TypeRef *r) {
-	if (NamedType *nt = as<NamedType>(r)) {
-		if (nt->name == L"void") {
-			to << L"{ -1, null, false }";
-			return;
-		}
+	if (as<VoidType>(r)) {
+		to << L"{ -1, null, false }";
+		return;
 	}
 
 	bool maybe = as<MaybeType>(r) != null;

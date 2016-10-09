@@ -55,6 +55,9 @@ namespace storm {
 		// Erase an element.
 		void STORM_FN erase(Nat id);
 
+		// Insert an element, giving it the id 'id'. 'id' <= 'count()'.
+		void CODECALL insertRaw(Nat id, const void *item);
+
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -196,6 +199,11 @@ namespace storm {
 		// Insert an element.
 		void push(const T &item) {
 			pushRaw(&item);
+		}
+
+		// Insert at a specific location.
+		void insert(Nat pos, const T &item) {
+			insertRaw(pos, &item);
 		}
 
 		Array<T> &operator <<(const T &item) {

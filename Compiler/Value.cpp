@@ -125,6 +125,20 @@ namespace storm {
 		return type->isA(TObject::stormType(type->engine));
 	}
 
+	code::Operand Value::copyCtor() const {
+		if (isValue()) {
+			WARNING(L"Not returning a proper copy-constructor!");
+			return code::Operand();
+		} else {
+			return code::Operand();
+		}
+	}
+
+	code::Operand Value::destructor() const {
+		TODO(L"Implement me!");
+		return code::Operand();
+	}
+
 	Str *toS(EnginePtr e, Value v) {
 		StrBuf *b = new (e.v) StrBuf();
 		*b << v;

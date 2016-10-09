@@ -41,6 +41,7 @@ inline wostream &operator <<(wostream &to, const TypeRef &c) {
 	return to;
 }
 
+
 /**
  * Generic templated type. Only templates in the last position are supported at the moment.
  */
@@ -66,6 +67,7 @@ public:
 	// Print.
 	virtual void print(wostream &to) const;
 };
+
 
 /**
  * Resolved templated type.
@@ -93,6 +95,7 @@ public:
 	virtual void print(wostream &to) const;
 };
 
+
 /**
  * Pointer type.
  */
@@ -115,6 +118,7 @@ public:
 	// Print.
 	virtual void print(wostream &to) const;
 };
+
 
 /**
  * Ref type.
@@ -139,6 +143,7 @@ public:
 	virtual void print(wostream &to) const;
 };
 
+
 /**
  * Maybe type.
  */
@@ -161,6 +166,7 @@ public:
 	// Print.
 	virtual void print(wostream &to) const;
 };
+
 
 /**
  * Named type.
@@ -211,6 +217,7 @@ public:
 	virtual void print(wostream &to) const;
 };
 
+
 /**
  * Type built into C++.
  */
@@ -236,6 +243,28 @@ public:
 	// Print.
 	virtual void print(wostream &to) const;
 };
+
+
+/**
+ * Void type.
+ */
+class VoidType : public TypeRef {
+public:
+	VoidType(const SrcPos &pos);
+
+	// Get the size of this type.
+	virtual Size size() const { return Size(); }
+
+	// Gc:d type?
+	virtual bool gcType() const { return false; }
+
+	// Resolve.
+	virtual Auto<TypeRef> resolve(World &in, const CppName &context) const;
+
+	// Print.
+	virtual void print(wostream &to) const;
+};
+
 
 /**
  * GcArray type.
@@ -263,6 +292,7 @@ public:
 	virtual void print(wostream &to) const;
 };
 
+
 /**
  * GcWatch type.
  */
@@ -283,6 +313,7 @@ public:
 	virtual void print(wostream &to) const;
 };
 
+
 /**
  * EnginePtr type.
  */
@@ -302,6 +333,7 @@ public:
 	// Print.
 	virtual void print(wostream &to) const;
 };
+
 
 /**
  * Unknown type. These are to allow GC:d classes to contain types unknown to the preprocessor

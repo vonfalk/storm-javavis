@@ -188,7 +188,10 @@ namespace storm {
 			Nat elems[maxElem];
 			Nat count = 0;
 			for (count = 0; count < maxElem && ref.params[count] != CppTypeRef::invalid; count++) {
-				elems[count] = Nat(ref.params[count]);
+				if (ref.params[count] == CppTypeRef::tVoid)
+					elems[count] = -1;
+				else
+					elems[count] = Nat(ref.params[count]);
 			}
 
 			result = Value(into.templates[ref.id]->find(elems, count));

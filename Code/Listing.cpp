@@ -379,6 +379,22 @@ namespace code {
 		toI.vars->push(v.id);
 	}
 
+	void Listing::moveParam(Variable v, Nat to) {
+		if (isParam(v))
+			return;
+
+		Nat pos = 0;
+		for (nat i = 0; i < params->count(); i++) {
+			if (params->at(i) == v.id) {
+				pos = i;
+				break;
+			}
+		}
+
+		params->erase(pos);
+		params->insert(to, v.id);
+	}
+
 	Part Listing::parent(Part p) const {
 		if (p.id >= parts->count())
 			return Part(invalid);

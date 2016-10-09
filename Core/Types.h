@@ -66,3 +66,12 @@ namespace storm {
 	// it. Use MAYBE(T) instead.
 	STORM_TEMPLATE(Maybe, createMaybe);
 }
+
+
+// Use Place for new and delete for all objects.
+inline void *operator new(size_t s, storm::Place p) {
+	return p.ptr;
+}
+
+inline void operator delete(void *o, storm::Place p) {}
+

@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/EnginePtr.h"
 #include "Code/ValType.h"
+#include "Code/Operand.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -63,6 +64,19 @@ namespace storm {
 
 		// Get type info for this type.
 		BasicTypeInfo typeInfo() const;
+
+		/**
+		 * Access to common member functions.
+		 */
+
+		// Get an Operand pointing to the copy constructor for this type. Only returns something
+		// useful for value types, as other types can and shall be copied using an inline
+		// mov-instruction.
+		code::Operand STORM_FN copyCtor() const;
+
+		// Get an Operand pointing to the destructor for this type. May return Operand(), meaning no
+		// destructor is needed.
+		code::Operand STORM_FN destructor() const;
 	};
 
 	// Create a this pointer for a type.

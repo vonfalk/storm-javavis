@@ -133,3 +133,8 @@ template <class T>
 struct RemoveConst<const T *> {
 	typedef T *Type;
 };
+
+template <class T>
+struct RemoveConst<const T> {
+	typedef T Type;
+};

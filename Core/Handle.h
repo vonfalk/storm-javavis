@@ -80,6 +80,15 @@ namespace storm {
 		}
 	};
 
+	template <>
+	struct StormInfo<void> {
+		static Nat id() {
+			return -1;
+		}
+
+		// We can not get a handle for a void type now. This can be provided in a future version, TODO.
+	};
+
 	STORM_PKG(core);
 
 	// Specializations for built-in types. Generates StormInfo for them too, see Storm.h.

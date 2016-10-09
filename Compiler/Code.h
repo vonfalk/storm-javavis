@@ -1,9 +1,11 @@
 #pragma once
 #include "Core/Thread.h"
+#include "Core/Fn.h"
 #include "Code/Reference.h"
 #include "Code/Listing.h"
 #include "Code/Binary.h"
 #include "Value.h"
+#include "CodeGen.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -138,6 +140,85 @@ namespace storm {
 
 		// Generate code which does the redirection.
 		code::Listing *redirectCode(Value result, code::Ref ref);
+	};
+
+
+	/**
+	 * Lazily generated code.
+	 */
+	class LazyCode : public Code {
+		STORM_CLASS;
+	public:
+		// The 'generate' function will be called when code needs to be generated.
+		STORM_CTOR LazyCode(Fn<CodeGen *> *generate);
+
+		// Compile.
+		virtual void STORM_FN compile();
+
+		// Called to update code.
+		static const void *CODECALL updateCode(LazyCode *c);
+
+	protected:
+		// Update reference.
+		virtual void STORM_FN newRef();
+
+	private:
+		// Currently used code.
+		code::Binary *code;
+
+		// Generate code using this function.
+		Fn<CodeGen *> *generate;
+
+		// Code loaded?
+		bool loaded;
+
+		// Code loading?
+		bool loading;
+
+		// Called to update code from the Compiler thread.
+		static const void *CODECALL updateCodeLocal(LazyCode *c);
+
+		// Create a redirect chunk of code.
+		void createRedirect();
+
+		// Set the code in here.
+		void setCode(code::Listing *src);
+	};
+
+
+	/**
+	 * Parameters passed to functions generating inline code.
+	 */
+	class InlineParams {
+		STORM_VALUE;
+	public:
+		STORM_CTOR InlineParams(CodeGen *state, Array<code::Operand> *params, CodeResult *result);
+
+		CodeGen *state;
+		Array<code::Operand> *params;
+		CodeResult *result;
+
+		void STORM_FN deepCopy(CloneEnv *env);
+	};
+
+
+	/**
+	 * Subclass for inlined code. Lazily provides a non-inlined variant as well.
+	 */
+	class InlinedCode : public LazyCode {
+		STORM_CLASS;
+	public:
+		STORM_CTOR InlinedCode(Fn<void, InlineParams> *generate);
+
+		// Generate inlined code.
+		virtual void STORM_FN code(CodeGen *state, Array<code::Operand> *params, CodeResult *result);
+
+	private:
+		// Generate function.
+		Fn<void, InlineParams> *generate;
+
+		// Generate a non-inline version as well.
+		CodeGen *CODECALL generatePtr();
 	};
 
 }

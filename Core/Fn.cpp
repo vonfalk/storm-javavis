@@ -21,14 +21,14 @@ namespace storm {
 	}
 
 
-	FnBase::FnBase(const void *fn, RootObject *thisPtr, Bool member, Thread *thread) {
+	FnBase::FnBase(const void *fn, const RootObject *thisPtr, Bool member, Thread *thread) {
 		callMember = member;
 		this->thisPtr = thisPtr;
 		this->thread = thread;
 		new (target()) RawFnTarget(fn);
 	}
 
-	FnBase::FnBase(const FnTarget &target, RootObject *thisPtr, Bool member, Thread *thread) {
+	FnBase::FnBase(const FnTarget &target, const RootObject *thisPtr, Bool member, Thread *thread) {
 		callMember = member;
 		this->thisPtr = thisPtr;
 		this->thread = thread;
@@ -44,7 +44,7 @@ namespace storm {
 
 	void FnBase::deepCopy(CloneEnv *env) {
 		if (thisPtr) {
-			if (Object *o = as<Object>(thisPtr)) {
+			if (const Object *o = as<const Object>(thisPtr)) {
 				// Yes, we need to clone it!
 				cloned(o, env);
 				thisPtr = o;
@@ -61,8 +61,8 @@ namespace storm {
 	}
 
 	Thread *FnBase::runOn(const TObject *first) const {
-		TObject *tObj;
-		if (callMember && (tObj = as<TObject>(thisPtr)))
+		const TObject *tObj;
+		if (callMember && (tObj = as<const TObject>(thisPtr)))
 			return tObj->thread;
 		else if (callMember && !thread && first)
 			return first->thread;
@@ -77,7 +77,7 @@ namespace storm {
 		bool spawn = needsCopy(first);
 
 		if (thisPtr) {
-			RootObject *p = thisPtr;
+			const RootObject *p = thisPtr;
 			if (spawn) {
 				if (!env)
 					env = new (this) CloneEnv();

@@ -17,7 +17,7 @@ namespace storm {
 		// If we're done.
 		Type *done;
 
-		// Instantiations here.
+		// Instantiations here. The index 0 is used if for the parameter 'null'.
 		Node *next[1];
 	};
 
@@ -77,6 +77,11 @@ namespace storm {
 			return node->done;
 
 		Nat now = elems[at];
+		if (now == -1)
+			now = 0;
+		else
+			now++;
+
 		if (node->count <= now)
 			return null;
 
@@ -94,6 +99,10 @@ namespace storm {
 		}
 
 		Nat now = elems[at];
+		if (now == -1)
+			now = 0;
+		else
+			now++;
 
 		// Create a new node?
 		if (!node)
@@ -141,9 +150,13 @@ namespace storm {
 		types->reserve(count);
 
 		for (nat i = 0; i < count; i++) {
-			Type *t = e.cppType(elems[i]);
-			assert(t, L"Type with id " + ::toS(elems[i]) + L" not found.");
-			types->push(Value(t));
+			if (elems[i] == -1) {
+				types->push(Value());
+			} else {
+				Type *t = e.cppType(elems[i]);
+				assert(t, L"Type with id " + ::toS(elems[i]) + L" not found.");
+				types->push(Value(t));
+			}
 		}
 
 		if (addedTo) {

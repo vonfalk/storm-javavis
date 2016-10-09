@@ -74,14 +74,23 @@ namespace storm {
 		if (id >= count())
 			throw ArrayError(L"Index " + ::toS(id) + L" out of bounds (of " + ::toS(count()) + L").");
 
-		if (handle.copyFn) {
-			handle.safeDestroy(ptr(id));
-			for (nat i = id + 1; i < count(); i++)
-				handle.copyFn(ptr(i - 1), ptr(i));
-		} else {
-			memmove(ptr(id), ptr(id + 1), (count() - id - 1)*handle.size);
-		}
+		handle.safeDestroy(ptr(id));
+		memmove(ptr(id), ptr(id + 1), (count() - id - 1)*handle.size);
 		data->filled--;
+	}
+
+	void ArrayBase::insertRaw(Nat to, const void *item) {
+		if (to > count())
+			throw ArrayError(L"Index " + ::toS(to) + L" out of bounds for insertion (of " + ::toS(count()) + L").");
+
+		ensure(data->filled + 1);
+
+		// Move the last few elements away.
+		memmove(ptr(to), ptr(to + 1), (count() - to)*handle.size);
+		// Insert the new one.
+		handle.safeCopy(ptr(to), item);
+
+		data->filled++;
 	}
 
 	void ArrayBase::toS(StrBuf *to) const {
