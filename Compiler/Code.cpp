@@ -219,7 +219,7 @@ namespace storm {
 
 
 	/**
-	 * Inlined code.
+	 * Inline code.
 	 */
 
 	InlineParams::InlineParams(CodeGen *state, Array<code::Operand> *params, CodeResult *result) :
@@ -232,15 +232,15 @@ namespace storm {
 	}
 
 
-	InlinedCode::InlinedCode(Fn<void, InlineParams> *generate) :
-		LazyCode(fnPtr(TObject::engine(), &InlinedCode::generatePtr, this)), generate(generate) {}
+	InlineCode::InlineCode(Fn<void, InlineParams> *generate) :
+		LazyCode(fnPtr(TObject::engine(), &InlineCode::generatePtr, this)), generate(generate) {}
 
-	void InlinedCode::code(CodeGen *state, Array<code::Operand> *params, CodeResult *result) {
+	void InlineCode::code(CodeGen *state, Array<code::Operand> *params, CodeResult *result) {
 		InlineParams p(state, params, result);
 		generate->call(p);
 	}
 
-	CodeGen *InlinedCode::generatePtr() {
+	CodeGen *InlineCode::generatePtr() {
 		using namespace code;
 
 		CodeGen *state = new (this) CodeGen(owner->runOn());

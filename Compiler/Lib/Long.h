@@ -1,40 +1,41 @@
 #pragma once
-#include "../Type.h"
+#include "Type.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
 
 	/**
-	 * The Int type.
+	 * The Long type.
 	 */
-	class IntType : public Type {
+	class LongType : public Type {
 		STORM_CLASS;
 	public:
-		IntType(Str *name, GcType *type);
+		LongType(Str *name, GcType *type);
 
 		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::signedNr; }
 
 		virtual Bool STORM_FN loadAll();
 	};
 
-	// Create the Int type.
-	Type *createInt(Str *name, Size size, GcType *type);
+	// Create the Long type.
+	Type *createLong(Str *name, Size size, GcType *type);
 
 
 	/**
-	 * The Nat type.
+	 * The Word type.
 	 */
-	class NatType : public Type {
+	class WordType : public Type {
 		STORM_CLASS;
 	public:
-		NatType(Str *name, GcType *type);
+		WordType(Str *name, GcType *type);
 
 		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::signedNr; }
 
 		virtual Bool STORM_FN loadAll();
 	};
 
-	// Create the Nat type.
-	Type *createNat(Str *name, Size size, GcType *type);
+	// Create the Word type.
+	Type *createWord(Str *name, Size size, GcType *type);
+
 
 }

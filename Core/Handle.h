@@ -78,6 +78,11 @@ namespace storm {
 		static const Handle &handle(Engine &e) {
 			return BaseType<T>::Type::stormHandle(e);
 		}
+
+		// Get the type for T.
+		static Type *type(Engine &e) {
+			return BaseType<T>::Type::stormType(e);
+		}
 	};
 
 	template <>
@@ -87,6 +92,10 @@ namespace storm {
 		}
 
 		// We can not get a handle for a void type now. This can be provided in a future version, TODO.
+
+		static Type *type(Engine &e) {
+			return null;
+		}
 	};
 
 	STORM_PKG(core);

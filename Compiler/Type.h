@@ -79,6 +79,10 @@ namespace storm {
 		// What kind of type is this type?
 		virtual BasicTypeInfo::Kind builtInType() const;
 
+		// Names for constructors and destructors.
+		static const wchar *CTOR;
+		static const wchar *DTOR;
+
 	private:
 		// Special constructor for creating the first type.
 		Type(Engine &e, TypeFlags flags, Size size, GcType *gcType);

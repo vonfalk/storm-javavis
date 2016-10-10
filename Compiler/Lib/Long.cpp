@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Int.h"
+#include "Long.h"
 #include "Core/Array.h"
 #include "Core/Hash.h"
 #include "Core/Str.h"
@@ -9,13 +9,13 @@
 namespace storm {
 	using namespace code;
 
-	Type *createInt(Str *name, Size size, GcType *type) {
-		return new (name) IntType(name, type);
+	Type *createLong(Str *name, Size size, GcType *type) {
+		return new (name) LongType(name, type);
 	}
 
-	IntType::IntType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sInt, type) {}
+	LongType::LongType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sLong, type) {}
 
-	Bool IntType::loadAll() {
+	Bool LongType::loadAll() {
 		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
 		Array<Value> *rr = new (this) Array<Value>(2, Value(this, true));
 		Array<Value> *v = new (this) Array<Value>(1, Value(this, false));
@@ -37,42 +37,42 @@ namespace storm {
 		add(inlinedFunction(engine, b, L"<", vv, fnPtr(engine, &numCmp<ifLess>)));
 		add(inlinedFunction(engine, b, L">", vv, fnPtr(engine, &numCmp<ifGreater>)));
 
-		add(inlinedFunction(engine, b, L"*++", r, fnPtr(engine, &numPostfixInc<Int>)));
-		add(inlinedFunction(engine, b, L"++*", r, fnPtr(engine, &numPrefixInc<Int>)));
-		add(inlinedFunction(engine, b, L"*--", r, fnPtr(engine, &numPostfixDec<Int>)));
-		add(inlinedFunction(engine, b, L"--*", r, fnPtr(engine, &numPrefixDec<Int>)));
+		add(inlinedFunction(engine, b, L"*++", r, fnPtr(engine, &numPostfixInc<Long>)));
+		add(inlinedFunction(engine, b, L"++*", r, fnPtr(engine, &numPrefixInc<Long>)));
+		add(inlinedFunction(engine, b, L"*--", r, fnPtr(engine, &numPostfixDec<Long>)));
+		add(inlinedFunction(engine, b, L"--*", r, fnPtr(engine, &numPrefixDec<Long>)));
 
-		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Int>)));
-		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Int>)));
-		add(inlinedFunction(engine, Value(this), L"-=", rv, fnPtr(engine, &numDec<Int>)));
-		add(inlinedFunction(engine, Value(this), L"*=", rv, fnPtr(engine, &numScale<Int>)));
-		add(inlinedFunction(engine, Value(this), L"/=", rv, fnPtr(engine, &numIDivScale<Int>)));
-		add(inlinedFunction(engine, Value(this), L"%=", rv, fnPtr(engine, &numIModEq<Int>)));
+		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Long>)));
+		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Long>)));
+		add(inlinedFunction(engine, Value(this), L"-=", rv, fnPtr(engine, &numDec<Long>)));
+		add(inlinedFunction(engine, Value(this), L"*=", rv, fnPtr(engine, &numScale<Long>)));
+		add(inlinedFunction(engine, Value(this), L"/=", rv, fnPtr(engine, &numIDivScale<Long>)));
+		add(inlinedFunction(engine, Value(this), L"%=", rv, fnPtr(engine, &numIModEq<Long>)));
 
-		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Int>)));
-		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Int>)));
+		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Long>)));
+		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Long>)));
 
+		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), L"int", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), L"nat", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Byte>::type(engine)), L"byte", v, fnPtr(engine, &icast)));
-		add(inlinedFunction(engine, Value(StormInfo<Long>::type(engine)), L"long", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), L"word", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Float>::type(engine)), L"float", v, fnPtr(engine, &numToFloat)));
 
-		add(nativeFunction(engine, Value(this), L"hash", v, &intHash));
-		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Int>)));
-		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Int>)));
+		add(nativeFunction(engine, Value(this), L"hash", v, &longHash));
+		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Long>)));
+		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Long>)));
 
 		return Type::loadAll();
 	}
 
 
-	Type *createNat(Str *name, Size size, GcType *type) {
-		return new (name) NatType(name, type);
+	Type *createWord(Str *name, Size size, GcType *type) {
+		return new (name) WordType(name, type);
 	}
 
-	NatType::NatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sNat, type) {}
+	WordType::WordType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sWord, type) {}
 
-	Bool NatType::loadAll() {
+	Bool WordType::loadAll() {
 		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
 		Array<Value> *rr = new (this) Array<Value>(2, Value(this, true));
 		Array<Value> *v = new (this) Array<Value>(1, Value(this, false));
@@ -94,29 +94,29 @@ namespace storm {
 		add(inlinedFunction(engine, b, L"<", vv, fnPtr(engine, &numCmp<ifBelow>)));
 		add(inlinedFunction(engine, b, L">", vv, fnPtr(engine, &numCmp<ifAbove>)));
 
-		add(inlinedFunction(engine, b, L"*++", r, fnPtr(engine, &numPostfixInc<Nat>)));
-		add(inlinedFunction(engine, b, L"++*", r, fnPtr(engine, &numPrefixInc<Nat>)));
-		add(inlinedFunction(engine, b, L"*--", r, fnPtr(engine, &numPostfixDec<Nat>)));
-		add(inlinedFunction(engine, b, L"--*", r, fnPtr(engine, &numPrefixDec<Nat>)));
+		add(inlinedFunction(engine, b, L"*++", r, fnPtr(engine, &numPostfixInc<Word>)));
+		add(inlinedFunction(engine, b, L"++*", r, fnPtr(engine, &numPrefixInc<Word>)));
+		add(inlinedFunction(engine, b, L"*--", r, fnPtr(engine, &numPostfixDec<Word>)));
+		add(inlinedFunction(engine, b, L"--*", r, fnPtr(engine, &numPrefixDec<Word>)));
 
-		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Nat>)));
-		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Nat>)));
-		add(inlinedFunction(engine, Value(this), L"-=", rv, fnPtr(engine, &numDec<Nat>)));
-		add(inlinedFunction(engine, Value(this), L"*=", rv, fnPtr(engine, &numScale<Nat>)));
-		add(inlinedFunction(engine, Value(this), L"/=", rv, fnPtr(engine, &numUDivScale<Nat>)));
-		add(inlinedFunction(engine, Value(this), L"%=", rv, fnPtr(engine, &numUModEq<Nat>)));
+		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Word>)));
+		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Word>)));
+		add(inlinedFunction(engine, Value(this), L"-=", rv, fnPtr(engine, &numDec<Word>)));
+		add(inlinedFunction(engine, Value(this), L"*=", rv, fnPtr(engine, &numScale<Word>)));
+		add(inlinedFunction(engine, Value(this), L"/=", rv, fnPtr(engine, &numUDivScale<Word>)));
+		add(inlinedFunction(engine, Value(this), L"%=", rv, fnPtr(engine, &numUModEq<Word>)));
 
-		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Nat>)));
-		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Nat>)));
+		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Word>)));
+		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Word>)));
 
 		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), L"int", v, fnPtr(engine, &ucast)));
+		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), L"nat", v, fnPtr(engine, &ucast)));
 		add(inlinedFunction(engine, Value(StormInfo<Byte>::type(engine)), L"byte", v, fnPtr(engine, &ucast)));
 		add(inlinedFunction(engine, Value(StormInfo<Long>::type(engine)), L"long", v, fnPtr(engine, &ucast)));
-		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), L"word", v, fnPtr(engine, &ucast)));
 
-		add(nativeFunction(engine, Value(this), L"hash", v, &natHash));
-		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Nat>)));
-		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Nat>)));
+		add(nativeFunction(engine, Value(this), L"hash", v, &wordHash));
+		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Word>)));
+		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Word>)));
 
 		return Type::loadAll();
 	}

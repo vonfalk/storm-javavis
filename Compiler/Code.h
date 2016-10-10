@@ -205,10 +205,10 @@ namespace storm {
 	/**
 	 * Subclass for inlined code. Lazily provides a non-inlined variant as well.
 	 */
-	class InlinedCode : public LazyCode {
+	class InlineCode : public LazyCode {
 		STORM_CLASS;
 	public:
-		STORM_CTOR InlinedCode(Fn<void, InlineParams> *generate);
+		STORM_CTOR InlineCode(Fn<void, InlineParams> *generate);
 
 		// Generate inlined code.
 		virtual void STORM_FN code(CodeGen *state, Array<code::Operand> *params, CodeResult *result);

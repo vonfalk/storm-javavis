@@ -105,9 +105,15 @@ namespace storm {
 	 * Convenience functions.
 	 */
 
-	Function *nativeFunction(EnginePtr e, Value result, const wchar *name, Array<Value> *params, const void *fn) {
-		Function *r = new (e.v) Function(result, new (e.v) Str(name), params);
-		r->setCode(new (e.v) StaticCode(fn));
+	Function *inlinedFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, Fn<void, InlineParams> *fn) {
+		Function *r = new (e) Function(result, new (e) Str(name), params);
+		r->setCode(new (e) InlineCode(fn));
+		return r;
+	}
+
+	Function *nativeFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, const void *fn) {
+		Function *r = new (e) Function(result, new (e) Str(name), params);
+		r->setCode(new (e) StaticCode(fn));
 		return r;
 	}
 

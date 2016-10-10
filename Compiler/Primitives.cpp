@@ -8,22 +8,6 @@ namespace storm {
 		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::boolVal);
 	}
 
-	Type *createByte(Str *name, Size size, GcType *type) {
-		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::unsignedNr);
-	}
-
-	Type *createNat(Str *name, Size size, GcType *type) {
-		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::unsignedNr);
-	}
-
-	Type *createLong(Str *name, Size size, GcType *type) {
-		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::signedNr);
-	}
-
-	Type *createWord(Str *name, Size size, GcType *type) {
-		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::unsignedNr);
-	}
-
 	Type *createFloat(Str *name, Size size, GcType *type) {
 		return new (name) PrimitiveType(name, size, type, BasicTypeInfo::floatNr);
 	}

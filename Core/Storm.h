@@ -112,8 +112,11 @@
 		static Nat id() {												\
 			return name ## Id;											\
 		}																\
-		static const Handle &handle(storm::Engine &e) {					\
+		static const storm::Handle &handle(storm::Engine &e) {			\
 			return runtime::typeHandle(runtime::cppType(e, name ## Id)); \
+		}																\
+		static storm::Type *type(storm::Engine &e) {					\
+			return runtime::cppType(e, id());							\
 		}																\
 	}
 
