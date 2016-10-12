@@ -1,8 +1,9 @@
 #pragma once
 #include "Utils/Templates.h"
+#include "Object.h"
 
 namespace storm {
-	STORM_PKG(core.lang); // TODO: Other package?
+	STORM_PKG(core.lang); // TODO: Other package? If so, update Compiler/RefHandle as well.
 
 	/**
 	 * A type handle, ie. information about a type without actually knowing exactly which type it

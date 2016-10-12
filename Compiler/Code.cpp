@@ -59,31 +59,11 @@ namespace storm {
 	 */
 
 	DelegatedCode::DelegatedCode(code::Ref ref) {
-		content = new (this) code::Content();
-		this->ref = new (this) DelegatedRef(this, ref, content);
+		content = new (this) code::DelegatedContent(ref);
 	}
 
 	void DelegatedCode::newRef() {
 		toUpdate->set(content);
-	}
-
-	void DelegatedCode::moved(const void *to) {
-		content->set(to, 0);
-
-		// Notify others about the update. Simply doing 'set' on the content is not enough.
-		if (toUpdate)
-			toUpdate->set(content);
-	}
-
-
-	DelegatedRef::DelegatedRef(DelegatedCode *owner, code::Ref ref, code::Content *from) :
-		Reference(ref, from), owner(owner) {
-
-		moved(address());
-	}
-
-	void DelegatedRef::moved(const void *newAddr) {
-		owner->moved(newAddr);
 	}
 
 

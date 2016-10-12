@@ -2,6 +2,7 @@
 #include "Core/Thread.h"
 #include "Core/Fn.h"
 #include "Code/Reference.h"
+#include "Code/DelegatedRef.h"
 #include "Code/Listing.h"
 #include "Code/Binary.h"
 #include "Value.h"
@@ -97,25 +98,7 @@ namespace storm {
 
 	private:
 		// Our content.
-		code::Content *content;
-
-		// Our reference to the actual code.
-		code::Reference *ref;
-	};
-
-
-	/**
-	 * Reference for 'DelegatedCode'.
-	 */
-	class DelegatedRef : public code::Reference {
-		STORM_CLASS;
-	public:
-		STORM_CTOR DelegatedRef(DelegatedCode *code, code::Ref ref, code::Content *from);
-
-		virtual void moved(const void *newAddr);
-
-	private:
-		DelegatedCode *owner;
+		code::DelegatedContent *content;
 	};
 
 

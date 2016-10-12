@@ -7,7 +7,7 @@ namespace code {
 
 	/**
 	 * Content. Provides a pointer and a size which can be referred to by RefSources, and by
-	 * extension, References.
+	 * extension, References. Only one RefSource can refer to a Content object.
 	 */
 	class Content : public ObjectOn<Compiler> {
 		STORM_CLASS;
@@ -23,9 +23,14 @@ namespace code {
 		inline nat size() const { return lastSize; }
 
 	private:
+		friend class RefSource;
+
 		// Last address and size.
 		UNKNOWN(PTR_GC) const void *lastAddress;
 		nat lastSize;
+
+		// Owning RefSource.
+		RefSource *owner;
 	};
 
 	/**
@@ -73,6 +78,9 @@ namespace code {
 
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
+
+		// Force update.
+		void update();
 
 	private:
 		// Name.

@@ -121,6 +121,8 @@ namespace storm {
 				TODO(L"Fixme!");
 				// mySize = layout->size(s);
 				mySize = s;
+				if (value())
+					TODO(L"Update the handle as well.");
 			} else {
 				// We need to run on the Compiler thread. Note the 'Semaphore', this is to ensure
 				// that we do not break any semantics regarding the threading model.

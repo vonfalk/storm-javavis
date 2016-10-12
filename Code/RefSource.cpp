@@ -12,6 +12,9 @@ namespace code {
 	void Content::set(const void *addr, nat size) {
 		lastAddress = addr;
 		lastSize = size;
+
+		if (owner)
+			owner->update();
 	}
 
 	StaticContent::StaticContent(const void *addr) {
@@ -33,10 +36,20 @@ namespace code {
 	}
 
 	void RefSource::set(Content *to) {
-		// NOTE: do _not_ ignore updating if 'cont == to', as we rely on the always update behaviour
-		// to force updates in storm::DynamicCode.
-		cont = to;
+		if (cont != to) {
+			assert(to->owner == null, L"Multiple owners of a single Content object.");
 
+			if (cont)
+				cont->owner = null;
+			if (to)
+				to->owner = this;
+			cont = to;
+		}
+
+		update();
+	}
+
+	void RefSource::update() {
 		Array<Reference *> *r = new (this) Array<Reference *>();
 
 		WeakSet<Reference>::Iter i = refs->iter();

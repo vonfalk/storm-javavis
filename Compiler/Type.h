@@ -3,6 +3,7 @@
 #include "TypeChain.h"
 #include "Gc.h"
 #include "RunOn.h"
+#include "RefHandle.h"
 #include "Core/TypeFlags.h"
 
 namespace storm {

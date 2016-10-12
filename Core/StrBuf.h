@@ -13,6 +13,9 @@ namespace storm {
 	 * Format description for a StrBuf.
 	 *
 	 * Use the helper functions to create instances of this object.
+	 *
+	 * Interesting idea: Make it possible to mark a region inside a StrBuf (possiby consisting of
+	 * multiple put-operations) and apply a format to that region as a whole.
 	 */
 	class StrFmt {
 		STORM_VALUE;
