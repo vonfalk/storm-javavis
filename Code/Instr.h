@@ -102,6 +102,8 @@ namespace code {
 	// Having an empty 'copyFn' to 'fnParam' will generate a 'memcpy'-like copy.
 	Instr *STORM_FN fnParam(EnginePtr e, Operand src);
 	Instr *STORM_FN fnParam(EnginePtr e, Variable src, Operand copyFn);
+	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Size size);
+	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Size size, Operand copyFn);
 	Instr *STORM_FN fnCall(EnginePtr e, Operand src, ValType ret);
 
 	// Integer math (signed/unsigned)
@@ -224,12 +226,29 @@ namespace code {
 	}
 
 
+	template <class T, class U, class V, Instr *(*Fn)(EnginePtr, T, U, V)>
+	class InstrProxy3 {
+	public:
+		const T &t;
+		const U &u;
+		const V &v;
+		InstrProxy3(const T &t, const U &u, const V &v) : t(t), u(u), v(v) {}
+	};
+
+	template <class T, class U, class V, Instr *(*Fn)(EnginePtr, T, U, V)>
+	inline Listing &operator <<(Listing &l, const InstrProxy3<T, U, V, Fn> &p) {
+		return l << (*Fn)(l.engine(), p.t, p.u, p.v);
+	}
+
+
 #define PROXY0(op)												\
 	inline InstrProxy0<&op> op() { return InstrProxy0<&op>(); }
 #define PROXY1(op, T)													\
 	inline InstrProxy1<T, &op> op(const T &t) { return InstrProxy1<T, &op>(t); }
 #define PROXY2(op, T, U)												\
 	inline InstrProxy2<T, U, &op> op(const T &t, const U &u) { return InstrProxy2<T, U, &op>(t, u); }
+#define PROXY3(op, T, U, V)												\
+	inline InstrProxy3<T, U, V, &op> op(const T &t, const U &u, const V &v) { return InstrProxy3<T, U, V, &op>(t, u, v); }
 
 
 	// Repetition of all OP-codes.
@@ -246,6 +265,8 @@ namespace code {
 	PROXY2(setCond, Operand, CondFlag);
 	PROXY1(fnParam, Operand);
 	PROXY2(fnParam, Variable, Operand);
+	PROXY2(fnParamRef, Operand, Size);
+	PROXY3(fnParamRef, Operand, Size, Operand);
 	PROXY2(fnCall, Operand, ValType);
 	PROXY2(add, Operand, Operand);
 	PROXY2(adc, Operand, Operand);

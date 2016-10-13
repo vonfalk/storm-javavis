@@ -110,6 +110,13 @@ namespace code {
 		// Size.
 		Size STORM_FN size() const;
 
+		// Make this operand a reference to some value of a specific size. Only works if this
+		// operand is already pointer-sized.
+		Operand STORM_FN referTo(Size size) const;
+
+		// Get the size of the value we're referring to (if any), or Size() if we're not referring to anything.
+		Size STORM_FN refSize() const;
+
 		// Is this value readable and/or writable?
 		Bool STORM_FN readable() const;
 		Bool STORM_FN writable() const;
@@ -152,7 +159,7 @@ namespace code {
 		Operand(Register r, Offset offset, Size size);
 		Operand(Variable v, Offset offset, Size size);
 
-		// Our type.
+		// Our type. Note: may contain other flags as well!
 		OpType opType;
 
 		/**

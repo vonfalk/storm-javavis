@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "RefHandle.h"
+#include "Function.h"
+#include "Engine.h"
 #include "Utils/Memory.h"
+#include "Code/Listing.h"
 
 namespace storm {
 
@@ -30,4 +33,28 @@ namespace storm {
 		equalRef = new (this) code::MemberRef(this, OFFSET_OF(RefHandle, equalFn), ref, content);
 	}
 
+
+	code::Binary *toSThunk(Function *fn) {
+		assert(fn->params->count() == 2);
+		Value valParam = fn->params->at(1);
+
+		using namespace code;
+		Listing *l = new (fn) Listing();
+
+		Variable valRef = l->createParam(valPtr());
+		Variable strBuf = l->createParam(valPtr());
+
+		*l << prolog();
+		*l << fnParam(strBuf);
+		if (valParam.ref) {
+			*l << fnParam(valRef);
+		} else {
+			*l << fnParamRef(valRef, valParam.size(), valParam.copyCtor());
+		}
+		*l << fnCall(Ref(fn->ref()), valPtr());
+		*l << epilog();
+		*l << ret(valPtr());
+
+		return new (fn) code::Binary(fn->engine().arena(), l);
+	}
 }

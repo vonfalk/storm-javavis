@@ -5,6 +5,7 @@ namespace code {
 
 	Binary::Binary(Arena *arena, Listing *listing) {
 		Listing *tfm = arena->transform(listing, this);
+		// PVAR(tfm);
 
 		fillParts(tfm);
 

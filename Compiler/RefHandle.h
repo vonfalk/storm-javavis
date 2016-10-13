@@ -2,6 +2,7 @@
 #include "Core/Handle.h"
 #include "Code/Reference.h"
 #include "Code/MemberRef.h"
+#include "Code/Binary.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -55,5 +56,12 @@ namespace storm {
 		// Ref to equality fn.
 		code::MemberRef *equalRef;
 	};
+
+
+	class Function;
+
+	// Generate machine code to adapt a operator << function to be callable from a toS function
+	// pointer inside a handle.
+	code::Binary *STORM_FN toSThunk(Function *fn);
 
 }

@@ -39,10 +39,11 @@ namespace code {
 			TRANSFORM(fnCallFloat),
 
 			TRANSFORM(fnParam),
+			TRANSFORM(fnParamRef),
 			TRANSFORM(fnCall),
 		};
 
-		RemoveInvalid::Param::Param(Operand src, Operand copyFn) : src(src), copyFn(copyFn) {}
+		RemoveInvalid::Param::Param(Operand src, Operand copyFn, Bool ref) : src(src), copyFn(copyFn), ref(ref) {}
 
 		RemoveInvalid::RemoveInvalid() {}
 
@@ -415,7 +416,11 @@ namespace code {
 		}
 
 		void RemoveInvalid::fnParamTfm(Listing *dest, Instr *instr, Nat line) {
-			params->push(Param(instr->src(), instr->dest()));
+			params->push(Param(instr->src(), instr->dest(), false));
+		}
+
+		void RemoveInvalid::fnParamRefTfm(Listing *dest, Instr *instr, Nat line) {
+			params->push(Param(instr->src(), instr->dest(), true));
 		}
 
 		static Operand offset(const Operand &src, Offset offset) {
@@ -431,8 +436,6 @@ namespace code {
 		}
 
 		static void pushMemcpy(Listing *dest, const Operand &src) {
-			Engine &e = dest->engine();
-
 			if (src.size() <= Size::sInt) {
 				*dest << push(src);
 				return;
@@ -441,6 +444,16 @@ namespace code {
 			Nat size = roundUp(src.size().size32(), Nat(4));
 			for (nat i = 0; i < size; i += 4) {
 				*dest << push(offset(src, Offset(size - i)));
+			}
+		}
+
+		static void inlinedMemcpy(Listing *to, const Operand &src, Offset offset) {
+			Nat size = roundUp(src.refSize().size32(), Nat(4));
+			// All registers used here are destroyed during function calls.
+			*to << mov(ptrA, src);
+			for (nat i = 0; i < size; i += 4) {
+				*to << mov(edx, intRel(ptrA, Offset(i)));
+				*to << mov(intRel(ptrStack, Offset(i) + offset), edx);
 			}
 		}
 
@@ -454,12 +467,13 @@ namespace code {
 			for (Nat i = params->count(); i > 0; i--) {
 				Param &p = params->at(i - 1);
 
-				if (p.copyFn.empty()) {
+				if (p.copyFn.empty() && !p.ref) {
 					// Memcpy using push...
 					pushMemcpy(dest, p.src);
 				} else {
 					// Reserve stack space.
-					Size s = p.src.size() + Size::sPtr.align();
+					Size s = p.ref ? p.src.refSize() : p.src.size();
+					s += Size::sPtr.align();
 					*dest << sub(ptrStack, ptrConst(s));
 				}
 			}
@@ -478,12 +492,19 @@ namespace code {
 
 				if (!p.copyFn.empty()) {
 					// Copy it!
-					*dest << lea(ptrA, p.src);
-					*dest << push(ptrA);
+					if (p.ref) {
+						*dest << push(p.src);
+					} else {
+						*dest << lea(ptrA, p.src);
+						*dest << push(ptrA);
+					}
 					*dest << lea(ptrA, ptrRel(ptrStack, paramOffset + Offset::sPtr));
 					*dest << push(ptrA);
 					*dest << call(p.copyFn, valVoid());
 					*dest << add(ptrStack, ptrConst(Size::sPtr * 2));
+				} else if (p.ref) {
+					// Copy it using inlined memcpy.
+					inlinedMemcpy(dest, p.src, paramOffset);
 				}
 
 				paramOffset += s;

@@ -32,13 +32,16 @@ namespace code {
 			class Param {
 				STORM_VALUE;
 			public:
-				Param(Operand src, Operand copyFn);
+				Param(Operand src, Operand copyFn, Bool ref);
 
 				// Source operand.
 				Operand src;
 
 				// Function used for copying values (if any).
 				Operand copyFn;
+
+				// Reference parameter?
+				Bool ref;
 			};
 
 			// Function params seen so far.

@@ -7,6 +7,15 @@
 
 namespace code {
 
+	// Declared here, as we do not want Storm to know about this trick!
+	BITMASK_OPERATORS(OpType);
+
+	enum OpMasks {
+		opMask = 0x0FFFF,
+
+		opRef = 0x10000,
+	};
+
 	static Word dual(Nat a, Nat b) {
 		return Word(a) << Word(32) | Word(b);
 	}
@@ -51,7 +60,11 @@ namespace code {
 		if (opType != o.opType)
 			return false;
 
-		switch (opType) {
+		// This is always safe to do, as 'refSize' returns Size() if no relevant value exists.
+		if (refSize() != o.refSize())
+			return false;
+
+		switch (opType & opMask) {
 		case opNone:
 			return true;
 		case opConstant:
@@ -87,18 +100,39 @@ namespace code {
 	}
 
 	OpType Operand::type() const {
-		if (opType == opDualConstant)
+		OpType r = opType & OpType(opMask);
+
+		if (r == opDualConstant)
 			return opConstant;
 		else
-			return opType;
+			return r;
 	}
 
 	Size Operand::size() const {
-		return opSize;
+		if (opType & opRef)
+			return Size::sPtr;
+		else
+			return opSize;
+	}
+
+	Operand Operand::referTo(Size size) const {
+		if (this->size() != Size::sPtr)
+			throw InvalidValue(L"Can not refer to something using a non-pointer!");
+		Operand o(*this);
+		o.opType = opType | OpType(opRef);
+		o.opSize = size;
+		return o;
+	}
+
+	Size Operand::refSize() const {
+		if (opType & opRef)
+			return opSize;
+		else
+			return Size();
 	}
 
 	Bool Operand::readable() const {
-		switch (opType) {
+		switch (type()) {
 		case opNone:
 		case opCondFlag:
 		case opPart:
@@ -110,7 +144,7 @@ namespace code {
 	}
 
 	Bool Operand::writable() const {
-		switch (opType) {
+		switch (type()) {
 		case opRegister:
 		case opRelative:
 		case opVariable:
@@ -132,7 +166,7 @@ namespace code {
 
 	Word Operand::constant() const {
 		assert(type() == opConstant, L"Not a constant!");
-		if (opType == opConstant) {
+		if ((opType & opMask) == opConstant) {
 			return opNum;
 		} else {
 			return opOffset.current();
@@ -164,7 +198,7 @@ namespace code {
 
 	Variable Operand::variable() const {
 		assert(type() == opVariable, L"Not a variable!");
-		return Variable(Nat(opNum), opSize);
+		return Variable(Nat(opNum), size());
 	}
 
 	Ref Operand::ref() const {
