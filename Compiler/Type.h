@@ -12,6 +12,7 @@ namespace storm {
 	// Description of a type in C++. Found in CppTypes.h
 	struct CppType;
 	class NamedThread;
+	class Function;
 
 	/**
 	 * Description of a type.
@@ -56,6 +57,9 @@ namespace storm {
 		// Get where we want to run.
 		RunOn STORM_FN runOn();
 
+		// Keep track of what is added.
+		virtual void STORM_FN add(Named *item);
+
 		// Get a handle for this type.
 		const Handle &handle();
 
@@ -94,8 +98,11 @@ namespace storm {
 		// member is changed. Otherwise we confuse the GC.
 		GcType *gcType;
 
-		// Handle (lazily created).
+		// Handle (lazily created). If we're a value, this will be a RefHandle.
 		const Handle *tHandle;
+
+		// The content we're using for all references in the handle. TODO: Place it inside a RefSource.
+		code::Content *handleContent;
 
 		// Thread we should be running on if we indirectly inherit from TObject.
 		NamedThread *useThread;
@@ -115,6 +122,9 @@ namespace storm {
 
 		// Generate a handle for this type.
 		const Handle *buildHandle();
+
+		// Update the handle with the potentially relevant function 'fn'.
+		void updateHandle(Function *fn);
 
 		// Notify that the thread changed.
 		void notifyThread(NamedThread *t);

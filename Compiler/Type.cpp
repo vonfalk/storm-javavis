@@ -2,6 +2,7 @@
 #include "Type.h"
 #include "Engine.h"
 #include "NamedThread.h"
+#include "Function.h"
 #include "Core/Str.h"
 #include "Core/Handle.h"
 #include "Core/Gen/CppTypes.h"
@@ -221,6 +222,14 @@ namespace storm {
 		}
 	}
 
+	void Type::add(Named *item) {
+		NameSet::add(item);
+
+		if (value() && tHandle)
+			if (Function *f = as<Function>(item))
+				updateHandle(f);
+	}
+
 	void Type::notifyThread(NamedThread *thread) {
 		useThread = thread;
 
@@ -243,12 +252,50 @@ namespace storm {
 	}
 
 	static void defToS(const void *obj, StrBuf *to) {
-		*to << L"<unknown>";
+		*to << L"<operator << not found>";
 	}
 
 	const Handle *Type::buildHandle() {
 		if (value()) {
-			Handle *h = new (engine) Handle();
+			if (!handleContent)
+				handleContent = new (engine) code::Content();
+
+			RefHandle *h = new (engine) RefHandle(handleContent);
+			h->size = gcType->stride;
+			h->gcArrayType = gcType;
+			h->toSFn = &defToS; // TODO: find this.
+			tHandle = h;
+
+			Array<Value> *r = new (engine) Array<Value>(1, Value(this, true));
+			Array<Value> *rr = new (engine) Array<Value>(2, Value(this, true));
+
+			// Find constructor.
+			if (Function *f = as<Function>(find(new (engine) SimplePart(new (engine) Str(CTOR), rr))))
+				updateHandle(f);
+
+			// Find destructor.
+			if (Function *f = as<Function>(find(new (engine) SimplePart(new (engine) Str(DTOR), r))))
+				updateHandle(f);
+
+			// Find deepCopy.
+			Array<Value> *dc = new (engine) Array<Value>(2, Value(this, true));
+			dc->at(1) = Value(CloneEnv::stormType(engine));
+			if (Function *f = as<Function>(find(new (engine) SimplePart(new (engine) Str(L"deepCopy"), dc))))
+				updateHandle(f);
+
+			// Find toS function.
+			TODO(L"Find toS!");
+
+			// Find hash function.
+			if (Function *f = as<Function>(find(new (engine) SimplePart(new (engine) Str(L"hash"), r))))
+				updateHandle(f);
+
+			// Find equal function.
+			Array<Value> *rv = new (engine) Array<Value>(2, Value(this, true));
+			dc->at(1) = Value(this, false);
+			if (Function *f = as<Function>(find(new (engine) SimplePart(new (engine) Str(L"equal"), rv))))
+				updateHandle(f);
+
 
 			h->size = gcType->stride;
 			h->gcArrayType = gcType;
@@ -263,6 +310,35 @@ namespace storm {
 		} else {
 			// Standard pointer handle.
 			return &engine.objHandle();
+		}
+	}
+
+	void Type::updateHandle(Function *fn) {
+		assert(value());
+		RefHandle *h = (RefHandle *)tHandle;
+
+		if (fn->params->count() < 1)
+			return;
+		if (fn->params->at(0) != Value(this, true))
+			return;
+
+		const wchar *name = fn->name->c_str();
+		if (wcscmp(name, CTOR) == 0) {
+			if (params->count() == 2 && params->at(1) == Value(this, true))
+				h->setCopyCtor(fn->ref());
+		} else if (wcscmp(name, DTOR) == 0) {
+			if (params->count() == 1)
+				h->setDestroy(fn->ref());
+			TODO(L"FIXME");
+		} else if (wcscmp(name, L"deepCopy") == 0) {
+			if (params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
+				h->setDeepCopy(fn->ref());
+		} else if (wcscmp(name, L"hash") == 0) {
+			if (params->count() == 1)
+				h->setHash(fn->ref());
+		} else if (wcscmp(name, L"equal") == 0) {
+			if (params->count() == 1)
+				h->setEqual(fn->ref());
 		}
 	}
 

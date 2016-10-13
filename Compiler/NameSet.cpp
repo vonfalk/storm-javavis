@@ -161,6 +161,9 @@ namespace storm {
 	}
 
 	Named *NameSet::tryFind(SimplePart *part) {
+		if (!overloads)
+			overloads = new (this) Map<Str *, NameOverloads *>();
+
 		if (!overloads->has(part->name))
 			return false;
 
