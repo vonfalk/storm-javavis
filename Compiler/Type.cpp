@@ -230,6 +230,12 @@ namespace storm {
 				updateHandle(f);
 	}
 
+	void Type::notifyAdded(NameSet *, Named *what) {
+		if (Function *f = as<Function>(what)) {
+			updateHandleToS(false, f);
+		}
+	}
+
 	void Type::notifyThread(NamedThread *thread) {
 		useThread = thread;
 
@@ -245,17 +251,19 @@ namespace storm {
 		return BasicTypeInfo::user;
 	}
 
-	const Handle &Type::handle() {
-		if (!tHandle)
-			tHandle = buildHandle();
-		return *tHandle;
-	}
-
 	static void defToS(const void *obj, StrBuf *to) {
 		*to << L"<operator << not found>";
 	}
 
-	const Handle *Type::buildHandle() {
+	const Handle &Type::handle() {
+		if (!tHandle)
+			buildHandle();
+		if (handleToS != toSFound)
+			updateHandleToS(false, null);
+		return *tHandle;
+	}
+
+	void Type::buildHandle() {
 		if (value()) {
 			if (!handleContent)
 				handleContent = new (engine) code::Content();
@@ -263,53 +271,120 @@ namespace storm {
 			RefHandle *h = new (engine) RefHandle(handleContent);
 			h->size = gcType->stride;
 			h->gcArrayType = gcType;
-			h->toSFn = &defToS; // TODO: find this.
+			h->toSFn = &defToS;
+			handleToS = toSMissing;
 			tHandle = h;
 
 			Array<Value> *r = new (engine) Array<Value>(1, Value(this, true));
 			Array<Value> *rr = new (engine) Array<Value>(2, Value(this, true));
+			Array<Value> *rv = new (engine) Array<Value>(2, Value(this, true));
+			rv->at(1) = Value(this);
 
 			// Find constructor.
-			if (Function *f = as<Function>(find(new (engine) SimplePart(new (engine) Str(CTOR), rr))))
+			if (Function *f = as<Function>(find(CTOR, rr)))
 				updateHandle(f);
 
 			// Find destructor.
-			if (Function *f = as<Function>(find(new (engine) SimplePart(new (engine) Str(DTOR), r))))
+			if (Function *f = as<Function>(find(DTOR, r)))
 				updateHandle(f);
 
-			// Find deepCopy.
-			Array<Value> *dc = new (engine) Array<Value>(2, Value(this, true));
-			dc->at(1) = Value(CloneEnv::stormType(engine));
-			if (Function *f = as<Function>(find(new (engine) SimplePart(new (engine) Str(L"deepCopy"), dc))))
-				updateHandle(f);
+			{
+				// Find deepCopy.
+				Array<Value> *rc = new (engine) Array<Value>(2, Value(this, true));
+				rc->at(1) = Value(CloneEnv::stormType(engine));
+				if (Function *f = as<Function>(find(L"deepCopy", rc)))
+					updateHandle(f);
+			}
 
-			// Find toS function.
-			TODO(L"Find toS!");
+			updateHandleToS(true, null);
 
 			// Find hash function.
-			if (Function *f = as<Function>(find(new (engine) SimplePart(new (engine) Str(L"hash"), r))))
+			if (Function *f = as<Function>(find(L"hash", r)))
 				updateHandle(f);
 
 			// Find equal function.
-			Array<Value> *rv = new (engine) Array<Value>(2, Value(this, true));
-			dc->at(1) = Value(this, false);
-			if (Function *f = as<Function>(find(new (engine) SimplePart(new (engine) Str(L"equal"), rv))))
+			if (Function *f = as<Function>(find(L"equal", rv)))
 				updateHandle(f);
 
-
-			h->size = gcType->stride;
-			h->gcArrayType = gcType;
-			h->toSFn = &defToS;
-			TODO(L"Look up copy ctors and so on!");
-			// For now: we do not have anything that needs special care when being copied, so we're
-			// fine with the defaults.
-			return h;
 		} else if (useThread) {
 			// Standard tObject handle.
-			return &engine.tObjHandle();
+			tHandle = &engine.tObjHandle();
 		} else {
 			// Standard pointer handle.
-			return &engine.objHandle();
+			tHandle = &engine.objHandle();
+		}
+	}
+
+	void Type::updateHandleToS(bool first, Function *newFn) {
+		if (!value())
+			return;
+
+		if (newFn) {
+			if (wcscmp(newFn->name->c_str(), L"<<") != 0)
+				return;
+
+			if (newFn->params->count() != 2)
+				return;
+
+			Type *strBufT = StrBuf::stormType(engine);
+			if (newFn->params->at(0) != Value(strBufT))
+				return;
+
+			if (newFn->params->at(1).type != this)
+				return;
+
+			RefHandle *h = (RefHandle *)tHandle;
+			h->setToS(newFn);
+			handleToS = toSFound;
+
+			return;
+		}
+
+		if (!first && handleToS == toSFound)
+			return;
+
+		if (first || handleToS == toSNoParent) {
+			handleToS = toSMissing;
+
+			RefHandle *h = (RefHandle *)tHandle;
+
+			if (parentLookup) {
+				Array<Value> *bv = new (engine) Array<Value>(2, Value(this));
+				Type *strBufT = StrBuf::stormType(engine);
+				bv->at(0) = Value(strBufT);
+
+				Scope s = engine.scope().child(parentLookup);
+				if (Function *f = as<Function>(s.find(L"<<", bv))) {
+					h->setToS(f);
+					handleToS = toSFound;
+				}
+			} else {
+				handleToS = toSNoParent;
+			}
+
+			if (first && handleToS != toSFound) {
+				Array<Value> *bv = new (engine) Array<Value>(2, Value(this));
+				Type *strBufT = StrBuf::stormType(engine);
+				bv->at(0) = Value(strBufT);
+
+				if (Function *f = as<Function>(strBufT->find(L"<<", bv))) {
+					h->setToS(f);
+					handleToS = toSFound;
+				}
+			}
+
+			if (handleToS == toSMissing) {
+				// Find our parent...
+				NameSet *firstSet = null;
+				for (NameLookup *at = parent(); at != null && firstSet == null; at = at->parentLookup)
+					firstSet = as<NameSet>(at);
+
+				if (!firstSet)
+					return;
+
+				// Ask our parent to keep an eye out for us!
+				firstSet->watchAdd(this);
+			}
 		}
 	}
 
@@ -329,7 +404,6 @@ namespace storm {
 		} else if (wcscmp(name, DTOR) == 0) {
 			if (params->count() == 1)
 				h->setDestroy(fn->ref());
-			TODO(L"FIXME");
 		} else if (wcscmp(name, L"deepCopy") == 0) {
 			if (params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
 				h->setDeepCopy(fn->ref());

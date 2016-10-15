@@ -134,6 +134,10 @@ namespace storm {
 		return null;
 	}
 
+	Named *Scope::find(const wchar *name, Array<Value> *params) const {
+		return find(new (params) SimpleName(new (params) Str(name), params));
+	}
+
 	Value Scope::value(Name *name, SrcPos pos) const {
 		if (lookup) {
 			SimpleName *simple = name->simplify(*this);

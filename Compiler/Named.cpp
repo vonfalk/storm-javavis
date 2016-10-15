@@ -18,6 +18,9 @@ namespace storm {
 		return null;
 	}
 
+	Named *NameLookup::find(const wchar *name, Array<Value> *params) {
+		return find(new (this) SimplePart(new (this) Str(name), params));
+	}
 
 	Named::Named(Str *name) : name(name), flags(namedDefault) {
 		if (engine().has(bootTemplates)) {
@@ -70,6 +73,8 @@ namespace storm {
 
 		return path()->toS();
 	}
+
+	void Named::notifyAdded(NameSet *to, Named *added) {}
 
 	void Named::toS(StrBuf *buf) const {
 		*buf << identifier();

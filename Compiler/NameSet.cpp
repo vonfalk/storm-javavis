@@ -60,6 +60,7 @@ namespace storm {
 		}
 
 		if (found) {
+			// TODO: Go through the regular 'add' of the NameSet!
 			add(found);
 			found->parentLookup = owner;
 		}
@@ -101,9 +102,26 @@ namespace storm {
 		overloads = new (this) Map<Str *, NameOverloads *>();
 	}
 
+	void NameSet::watchAdd(Named *notifyTo) {
+		if (!notify)
+			notify = new (this) WeakSet<Named>();
+		notify->put(notifyTo);
+	}
+
+	void NameSet::notifyAdd(Named *what) {
+		if (!notify)
+			return;
+
+		WeakSet<Named>::Iter i = notify->iter();
+		while (Named *n = i.next()) {
+			n->notifyAdded(this, what);
+		}
+	}
+
 	void NameSet::add(Named *item) {
 		overloads->at(item->name)->add(item);
 		item->parentLookup = this;
+		notifyAdd(item);
 	}
 
 	void NameSet::add(Template *item) {

@@ -25,6 +25,13 @@ namespace storm {
 		toSRef = new (this) code::MemberRef(this, OFFSET_OF(RefHandle, toSFn), ref, content);
 	}
 
+	void RefHandle::setToS(Function *fn) {
+		// We do not need references for this to work. The code and all its metadata will be kept
+		// alive if we store a pointer to the code in the 'toSFn' variable.
+		code::Binary *code = toSThunk(fn);
+		toSFn = (ToSFn)code->address();
+	}
+
 	void RefHandle::setHash(code::Ref ref) {
 		hashRef = new (this) code::MemberRef(this, OFFSET_OF(RefHandle, hashFn), ref, content);
 	}

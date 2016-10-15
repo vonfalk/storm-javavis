@@ -8,6 +8,7 @@ namespace storm {
 	STORM_PKG(core.lang);
 
 	class Named;
+	class NameSet;
 	class SimpleName;
 	class SimplePart;
 
@@ -21,6 +22,7 @@ namespace storm {
 
 		// Find the specified NamePart in here. Returns null if not found.
 		virtual MAYBE(Named *) STORM_FN find(SimplePart *part);
+		MAYBE(Named *) find(const wchar *name, Array<Value> *params);
 
 		// Get the parent object to this lookup, or null if none.
 		virtual NameLookup *STORM_FN parent() const;
@@ -64,6 +66,9 @@ namespace storm {
 
 		// Better asserts for 'parent'.
 		virtual NameLookup *STORM_FN parent() const;
+
+		// Receive notifications from NameSet objects. (TODO: Move into separate class?)
+		virtual void STORM_FN notifyAdded(NameSet *to, Named *added);
 
 		// String representation.
 		virtual void STORM_FN toS(StrBuf *buf) const;

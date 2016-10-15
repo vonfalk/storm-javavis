@@ -7,6 +7,8 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class Function;
+
 	/**
 	 * A handle where all members are updated using references.
 	 */
@@ -27,6 +29,9 @@ namespace storm {
 
 		// Set to string function.
 		void STORM_FN setToS(code::Ref ref);
+
+		// Set to string function using a thunk.
+		void STORM_FN setToS(Function *fn);
 
 		// Set hash function.
 		void STORM_FN setHash(code::Ref ref);
@@ -57,8 +62,6 @@ namespace storm {
 		code::MemberRef *equalRef;
 	};
 
-
-	class Function;
 
 	// Generate machine code to adapt a operator << function to be callable from a toS function
 	// pointer inside a handle.

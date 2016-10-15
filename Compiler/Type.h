@@ -60,6 +60,9 @@ namespace storm {
 		// Keep track of what is added.
 		virtual void STORM_FN add(Named *item);
 
+		// Receive notification of new additions.
+		virtual void STORM_FN notifyAdded(NameSet *to, Named *what);
+
 		// Get a handle for this type.
 		const Handle &handle();
 
@@ -101,8 +104,17 @@ namespace storm {
 		// Handle (lazily created). If we're a value, this will be a RefHandle.
 		const Handle *tHandle;
 
-		// The content we're using for all references in the handle. TODO: Place it inside a RefSource.
+		// The content we're using for all references in the handle. TODO: Place it inside a RefSource?
 		code::Content *handleContent;
+
+		enum {
+			toSFound,
+			toSMissing,
+			toSNoParent,
+		};
+
+		// How is the update of the toS function going?
+		Nat handleToS;
 
 		// Thread we should be running on if we indirectly inherit from TObject.
 		NamedThread *useThread;
@@ -121,10 +133,13 @@ namespace storm {
 		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
 
 		// Generate a handle for this type.
-		const Handle *buildHandle();
+		void buildHandle();
 
 		// Update the handle with the potentially relevant function 'fn'.
 		void updateHandle(Function *fn);
+
+		// Update the toS function in the handle if neccessary.
+		void updateHandleToS(bool first, Function *newFn);
 
 		// Notify that the thread changed.
 		void notifyThread(NamedThread *t);

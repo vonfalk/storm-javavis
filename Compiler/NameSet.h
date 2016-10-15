@@ -92,6 +92,10 @@ namespace storm {
 
 		// Find something in here.
 		virtual MAYBE(Named *) STORM_FN find(SimplePart *part);
+		using Named::find;
+
+		// Watch this NameSet for new additions.
+		virtual void STORM_FN watchAdd(Named *notifyTo);
 
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;
@@ -136,6 +140,12 @@ namespace storm {
 
 		// Initialize.
 		void init();
+
+		// All Named object who want notifications from us. May be null.
+		WeakSet<Named> *notify;
+
+		// Notify something has been added.
+		void notifyAdd(Named *what);
 	};
 
 }

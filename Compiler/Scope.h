@@ -99,6 +99,7 @@ namespace storm {
 		// current object.
 		MAYBE(Named *) STORM_FN find(Name *name) const ON(Compiler);
 		MAYBE(Named *) STORM_FN find(SimpleName *name) const ON(Compiler);
+		MAYBE(Named *) find(const wchar *name, Array<Value> *params) const ON(Compiler);
 
 		// Look up a value. Throws on error. Allows proper handling of void and type aliases.
 		Value STORM_FN value(Name *name, SrcPos pos) const ON(Compiler);

@@ -11,4 +11,17 @@ BEGIN_TEST(HandleToS, Storm) {
 	iArr->push(4);
 	CHECK_EQ(::toS(iArr), L"[1, 2, 3, 4]");
 
+	iArr->clear();
+	iArr->push(10);
+	CHECK_EQ(::toS(iArr), L"[10]");
+
+	Array<Value> *vArr = new (e) Array<Value>();
+	vArr->push(Value(StrBuf::stormType(e)));
+	CHECK_EQ(::toS(vArr), L"[core.StrBuf]");
+
+	Array<Str *> *sArr = new (e) Array<Str *>();
+	sArr->push(new (e) Str(L"Hello"));
+	sArr->push(new (e) Str(L"World"));
+	CHECK_EQ(::toS(sArr), L"[Hello, World]");
+
 } END_TEST

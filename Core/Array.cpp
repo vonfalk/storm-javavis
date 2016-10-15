@@ -95,7 +95,7 @@ namespace storm {
 
 	void ArrayBase::toS(StrBuf *to) const {
 		*to << L"[";
-		if (count() > 1)
+		if (count() >= 1)
 			(*handle.toSFn)(ptr(0), to);
 
 		for (nat i = 1; i < count(); i++) {
