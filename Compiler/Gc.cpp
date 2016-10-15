@@ -469,10 +469,12 @@ namespace storm {
 				switch (ref.kind) {
 				case GcCodeRef::disabled:
 				case GcCodeRef::rawPtr:
-				case GcCodeRef::relativePtr:
 					// No need to do anything here.
 					break;
+				case GcCodeRef::relativePtr:
 				case GcCodeRef::relative:
+					// Pointers to something outside of us relative something else needs to be
+					// updated.
 					*(size_t *)offset -= delta;
 					break;
 				case GcCodeRef::inside:
@@ -1294,6 +1296,11 @@ namespace storm {
 	};
 
 	static void checkMem(MpsObj *obj, size_t size, CheckData *out) {
+		if (size > 10*1024*1024) {
+			WARNING(L"Large object found at " << (void *)obj << ", " << (void *)size << " bytes!");
+			DebugBreak();
+		}
+
 		size_t first = MPS_CHECK_BYTES, last = 0;
 
 		byte *start = (byte *)obj;

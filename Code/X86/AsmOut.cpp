@@ -230,10 +230,6 @@ namespace code {
 				to->putByte(opCode);
 				to->putRelative(src.ref());
 				break;
-			case opObjReference:
-				to->putByte(opCode);
-				to->putObject(src.object());
-				break;
 			default:
 				assert(false, L"JmpCall not implemented for " + ::toS(src));
 				break;

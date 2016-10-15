@@ -25,7 +25,7 @@ namespace storm {
 
 	void ArrayType::lateInit() {
 		if (!params)
-			params = new (engine) Array<Value>(Value(contents));
+			params = new (engine) Array<Value>();
 		if (params->count() < 1)
 			params->push(Value(contents));
 
