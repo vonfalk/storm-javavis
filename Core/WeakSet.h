@@ -77,8 +77,11 @@ namespace storm {
 		// Find the longest chain.
 		Nat STORM_FN countMaxChain() const;
 
+		// Get the current capacity.
+		inline Nat STORM_FN capacity() const { return info ? info->count : 0; }
+
 	private:
-		// Size estimate.
+		// Number of slots that are currently occupied. During the next rehash, this may decrease.
 		Nat size;
 
 		// Minimum capacity.
@@ -106,9 +109,6 @@ namespace storm {
 
 		// Watch out for moving objects.
 		GcWatch *watch;
-
-		// Our capacity.
-		inline nat capacity() const { return info ? info->count : 0; }
 
 		// Allocate data for a specific capacity. Assumes 'info', 'key' and 'value' are null.
 		void alloc(nat capacity);

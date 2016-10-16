@@ -209,7 +209,7 @@ namespace storm {
 			// Insert all elements once again.
 			for (nat i = 0; i < oldInfo->count; i++) {
 				TObject *k = oldData->v[i];
-				if (oldInfo->v[i].status == Info::free && k != null)
+				if (oldInfo->v[i].status == Info::free || k == null)
 					continue;
 
 				watch->add(k);
@@ -249,7 +249,8 @@ namespace storm {
 			// Insert all elements once again.
 			for (nat i = 0; i < oldInfo->count; i++) {
 				TObject *k = oldData->v[i];
-				if (oldInfo->v[i].status == Info::free && k != null)
+				// Skip free slots and splatted slots.
+				if (oldInfo->v[i].status == Info::free || k == null)
 					continue;
 
 				// We need to re-hash here, as some objects have moved.
@@ -296,7 +297,8 @@ namespace storm {
 			// Insert all elements once again.
 			for (nat i = 0; i < oldInfo->count; i++) {
 				TObject *k = data->v[i];
-				if (oldInfo->v[i].status == Info::free && k != null)
+				// Skip free slots and splatted slots.
+				if (oldInfo->v[i].status == Info::free || k == null)
 					continue;
 
 
