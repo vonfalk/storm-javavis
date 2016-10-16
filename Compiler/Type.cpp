@@ -74,6 +74,8 @@ namespace storm {
 
 		// The GC will ignore these during shutdown, when it is crucial not to destroy anything too
 		// early.
+		// NOTE: Destroying types here is generally a bad idea, as non-reachable objects may still
+		// reside on the heap at this point.
 		engine.gc.freeType(g);
 	}
 
@@ -261,6 +263,16 @@ namespace storm {
 		if (handleToS != toSFound)
 			updateHandleToS(false, null);
 		return *tHandle;
+	}
+
+	const GcType *Type::gcArrayType() {
+		if (value()) {
+			return gcType;
+		} else if (useThread) {
+			return engine.tObjHandle().gcArrayType;
+		} else {
+			return engine.objHandle().gcArrayType;
+		}
 	}
 
 	void Type::buildHandle() {

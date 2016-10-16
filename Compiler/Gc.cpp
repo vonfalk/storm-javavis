@@ -1297,7 +1297,7 @@ namespace storm {
 
 	static void checkMem(MpsObj *obj, size_t size, CheckData *out) {
 		if (size > 10*1024*1024) {
-			WARNING(L"Large object found at " << (void *)obj << ", " << (void *)size << " bytes!");
+			WARNING(L"Large object found at " << (void *)obj << L", " << (void *)size << L" bytes! (header=" << obj->header << L")");
 			DebugBreak();
 		}
 
@@ -1372,7 +1372,9 @@ namespace storm {
 			arena,
 			null, 0, 0,
 		};
+		mps_arena_park(arena);
 		mps_arena_formatted_objects_walk(arena, &checkObject, &data, 0);
+		mps_arena_release(arena);
 
 		if (data.failed) {
 			PLN(L"--- HEAP CHECK FAILED ---");

@@ -21,6 +21,8 @@ namespace storm {
 		// Create.
 		STORM_CTOR MapType(Str *name, Type *k, Type *v);
 
+		// Late initialization.
+		virtual void lateInit();
 	private:
 		// Content types.
 		Type *k;

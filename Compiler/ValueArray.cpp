@@ -5,9 +5,9 @@
 
 namespace storm {
 
-	ValueArray::ValueArray() : data(null), arrayType(Value::stormType(engine())->handle().gcArrayType) {}
+	ValueArray::ValueArray() : data(null), arrayType(Value::stormType(engine())->gcArrayType()) {}
 
-	ValueArray::ValueArray(ValueArray *o) : data(null), arrayType(Value::stormType(engine())->handle().gcArrayType) {
+	ValueArray::ValueArray(ValueArray *o) : data(null), arrayType(Value::stormType(engine())->gcArrayType()) {
 		ensure(o->count());
 		for (nat i = 0; i < o->count(); i++) {
 			data->v[i] = o->data->v[i];

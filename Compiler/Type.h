@@ -66,6 +66,10 @@ namespace storm {
 		// Get a handle for this type.
 		const Handle &handle();
 
+		// Get the raw GcType for arrays of this type. Usually, the handle is preferred, but
+		// sometimes in early boot that is not possible.
+		const GcType *gcArrayType();
+
 		// Late initialization.
 		virtual void lateInit();
 
