@@ -849,6 +849,7 @@ namespace storm {
 	void Gc::collect() {
 		mps_arena_collect(arena);
 		mps_arena_release(arena);
+		checkFinalizers();
 	}
 
 	bool Gc::collect(nat time) {
@@ -1406,6 +1407,11 @@ namespace storm {
 				break;
 			default:
 				PLN(L"The object is of unknown type.");
+				PLN(*((void **)data.failed + 0));
+				PLN(*((void **)data.failed + 1));
+				PLN(*((void **)data.failed + 2));
+				PLN(*((void **)data.failed + 3));
+				PLN(*((void **)data.failed + 4));
 				break;
 			}
 
