@@ -3,7 +3,7 @@
 #include "Core/StrBuf.h"
 
 BEGIN_TEST(StrTest, Core) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	Str *s = new (e) Str(L"Hello");
 	Str *t = new (e) Str(L" World");
@@ -18,7 +18,7 @@ BEGIN_TEST(StrTest, Core) {
 } END_TEST
 
 BEGIN_TEST(StrBufTest, Core) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	StrBuf *buf = new (e) StrBuf();
 	*buf << 10 << L"z" << -20;

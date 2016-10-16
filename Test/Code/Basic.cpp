@@ -5,7 +5,7 @@
 using namespace code;
 
 BEGIN_TEST(CodeScopeTest, CodeBasic) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	Listing *l = new (e) Listing();
 
@@ -29,7 +29,7 @@ BEGIN_TEST(CodeScopeTest, CodeBasic) {
 } END_TEST
 
 BEGIN_TEST(CodeTest, CodeBasic) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -65,16 +65,16 @@ BEGIN_TEST(CodeTest, CodeBasic) {
 static void triggerCollect() {
 	for (nat j = 0; j < 10; j++) {
 		for (nat i = 0; i < 100; i++)
-			new (*gEngine) Str(L"Hello");
+			new (gEngine()) Str(L"Hello");
 
-		gEngine->gc.collect();
+		gEngine().gc.collect();
 	}
 }
 
 // Make sure the Gc are not moving code that is referred to on the stack, even if we may have
 // unaligned pointers into blocks.
 BEGIN_TEST(CodeGcTest, CodeBasic) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	Listing *l = new (e) Listing();
 

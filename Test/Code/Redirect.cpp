@@ -24,13 +24,13 @@ static void destroyInt(Int v) {
 }
 
 BEGIN_TEST(RedirectTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Ref freeInt = arena->external(L"freeInt", &destroyInt);
 	Ref redirectFn = arena->external(L"redirectFn", &::redirectFn);
 
-	Array<RedirectParam> *p = new (*gEngine) Array<RedirectParam>();
+	Array<RedirectParam> *p = new (e) Array<RedirectParam>();
 	p->push(RedirectParam(valInt(), freeInt, false));
 	Listing *l = redirect(p, redirectFn, Operand());
 

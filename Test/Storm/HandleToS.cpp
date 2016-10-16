@@ -2,7 +2,7 @@
 
 
 BEGIN_TEST(HandleToS, Storm) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	Array<Int> *iArr = new (e) Array<Int>();
 	iArr->push(1);

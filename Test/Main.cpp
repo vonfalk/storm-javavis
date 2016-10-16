@@ -2,7 +2,36 @@
 #include "Test/Lib/TestMgr.h"
 #include "Core/Timing.h"
 
-Engine *gEngine = null;
+static Engine *engineObj = null;
+
+Engine &gEngine() {
+	if (!engineObj) {
+		PLN(L"==> Starting compiler...");
+		Moment start;
+		Path root = Path::executable() + Path(L"../root/");
+		engineObj = new Engine(root, Engine::reuseMain);
+		PLN(L"==> Compiler boot: " << (Moment() - start));
+	}
+	return *engineObj;
+}
+
+static Gc *usedGc = null;
+
+Gc &gc() {
+	if (engineObj) {
+		if (usedGc) {
+			delete usedGc;
+			usedGc = null;
+		}
+		return engineObj->gc;
+	}
+
+	if (!usedGc) {
+		usedGc = new Gc(32*1024, 1000);
+		usedGc->attachThread();
+	}
+	return *usedGc;
+}
 
 int _tmain(int argc, _TCHAR *argv[]) {
 	initDebug();
@@ -11,18 +40,12 @@ int _tmain(int argc, _TCHAR *argv[]) {
 	TestResult r;
 
 	try {
-		// Initialize our engine.
-		Path root = Path::executable() + Path(L"../root/");
-
-		Moment start;
-		Engine e(root, Engine::reuseMain);
-		gEngine = &e;
-
-		PLN(L"Compiler boot: " << (Moment() - start));
-
 		r = Tests::run();
 
-		gEngine = null;
+		delete engineObj;
+		engineObj = null;
+		delete usedGc;
+		usedGc = null;
 	} catch (const Exception &e) {
 		PLN(L"Creation error: " << e.what());
 	}

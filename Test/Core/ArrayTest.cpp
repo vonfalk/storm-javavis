@@ -3,7 +3,7 @@
 #include "Core/Str.h"
 
 BEGIN_TEST(ArrayTest, Core) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	Array<Str *> *t = new (e) Array<Str *>();
 	CHECK_EQ(toS(t), L"[]");

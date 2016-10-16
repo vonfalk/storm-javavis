@@ -6,7 +6,7 @@
 using debug::PtrKey;
 
 BEGIN_TEST(SetTest, Core) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	// Basic operation:
 	{
@@ -36,7 +36,7 @@ BEGIN_TEST(SetTest, Core) {
 static bool moveObjects(Array<PtrKey *> *k) {
 	// Try a few times...
 	for (nat i = 0; i < 10; i++) {
-		gEngine->gc.collect();
+		gEngine().gc.collect();
 
 		for (nat i = 0; i < k->count(); i++)
 			if (k->at(i)->moved())
@@ -48,7 +48,7 @@ static bool moveObjects(Array<PtrKey *> *k) {
 
 BEGIN_TEST(SetTestMove, Core) {
 	// Do we handle moving objects properly?
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	const nat count = 10;
 

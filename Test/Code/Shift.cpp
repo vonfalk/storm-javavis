@@ -5,7 +5,7 @@
 using namespace code;
 
 BEGIN_TEST(ShiftTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();

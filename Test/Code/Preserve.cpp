@@ -5,7 +5,7 @@
 using namespace code;
 
 BEGIN_TEST(PreserveTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -24,7 +24,7 @@ BEGIN_TEST(PreserveTest, Code) {
 } END_TEST
 
 BEGIN_TEST(Preserve64, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();

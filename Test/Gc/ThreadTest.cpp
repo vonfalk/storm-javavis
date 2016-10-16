@@ -7,9 +7,10 @@ using namespace storm::debug;
 static Link *createList(nat n) {
 	Link *start = null;
 	Link *prev = null;
+	Engine &e = gEngine();
 
 	for (nat i = 0; i < n; i++) {
-		Link *now = new (*gEngine) Link;
+		Link *now = new (e) Link;
 		now->value = i;
 
 		if (prev == null) {
@@ -21,7 +22,7 @@ static Link *createList(nat n) {
 	}
 
 	// Trigger a GC to shake things up a bit!
-	gEngine->gc.collect();
+	e.gc.collect();
 	return start;
 }
 
@@ -44,20 +45,20 @@ static Semaphore waitSema(0);
 static bool threadOk = false;
 
 static void threadFn() {
-	gEngine->gc.attachThread();
+	gEngine().gc.attachThread();
 
 	const nat count = 10000;
 
 	Link *start = createList(count);
 	threadOk = checkList(start, count);
 
-	gEngine->gc.detachThread(os::Thread::current());
+	gEngine().gc.detachThread(os::Thread::current());
 	waitSema.up();
 }
 
 BEGIN_TEST(GcThreadTest, GcThreads) {
 	// Test so that other threads are properly GC:d.
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	os::Thread::spawn(simpleVoidFn(&threadFn), e.threadGroup);
 	waitSema.down();
@@ -80,7 +81,7 @@ static void uthreadFn() {
 }
 
 BEGIN_TEST(GcUThreadTest, GcThreads) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	threadOk = false;
 

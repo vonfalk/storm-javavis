@@ -15,7 +15,7 @@ static Int fnB(Int v) {
 
 // Basic test of references:
 BEGIN_TEST(RefTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	RefSource *fn = new (e) RefSource(new (e) Str(L"fnA/B"));
@@ -55,7 +55,7 @@ static Int addFn(Int a, Int b) {
 
 // More advanced replacement test.
 BEGIN_TEST(ReplaceTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Ref tenFun = arena->external(L"tenFn", &tenFn);

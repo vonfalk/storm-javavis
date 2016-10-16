@@ -5,7 +5,7 @@
 using namespace code;
 
 BEGIN_TEST(MulTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -32,7 +32,7 @@ BEGIN_TEST(MulTest, Code) {
 } END_TEST
 
 BEGIN_TEST(MulRegTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -60,7 +60,7 @@ BEGIN_TEST(MulRegTest, Code) {
 } END_TEST
 
 BEGIN_TEST(MulReg2Test, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -88,7 +88,7 @@ BEGIN_TEST(MulReg2Test, Code) {
 } END_TEST
 
 BEGIN_TEST(MulReg3Test, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -117,7 +117,7 @@ BEGIN_TEST(MulReg3Test, Code) {
 } END_TEST
 
 BEGIN_TEST(MulConstTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();

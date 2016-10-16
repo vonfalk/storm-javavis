@@ -8,7 +8,7 @@ using namespace code;
 // occupy the least significant byte of a machine word. On some architectures
 // the higher bits needs to be cleared before return.
 BEGIN_TEST(BoolTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	Arena *arena = code::arena(e);
 	Listing *l = new (e) Listing();

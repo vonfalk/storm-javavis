@@ -140,6 +140,38 @@ void verifyNeq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	}
 }
 
+template <class T, class U>
+void verifyLt(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
+	if (!(lhs < rhs)) {
+		r.failed++;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << " < " << rhs << std::endl;
+	}
+}
+
+template <class T, class U>
+void verifyLte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
+	if (!(lhs <= rhs)) {
+		r.failed++;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << " <= " << rhs << std::endl;
+	}
+}
+
+template <class T, class U>
+void verifyGt(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
+	if (!(lhs > rhs)) {
+		r.failed++;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << " > " << rhs << std::endl;
+	}
+}
+
+template <class T, class U>
+void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
+	if (!(lhs >= rhs)) {
+		r.failed++;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << " >= " << rhs << std::endl;
+	}
+}
+
 #define OUTPUT_ERROR(expr, error)									  \
 	std::wcout << L"Crashed " << expr << L": " << error << std::endl; \
 	__result__.crashed++
@@ -195,35 +227,50 @@ void verifyNeq(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 		OUTPUT_ERROR(title, "unknown crash");				\
 	}
 
-#define CHECK_EQ_TITLE(expr, eq, title)					  \
-	try {												  \
-		__result__.total++;								  \
-		std::wostringstream __stream__;					  \
-		__stream__ << title;							  \
-		verifyEq(__result__, expr, eq, __stream__.str()); \
-	} catch (const Exception &e) {						  \
-		OUTPUT_ERROR(title, e);							  \
-	} catch (...) {										  \
-		OUTPUT_ERROR(title, "unknown crash");			  \
+#define CHECK_PRED_TITLE(pred, expr, eq, title)			\
+	try {												\
+		__result__.total++;								\
+		std::wostringstream __stream__;					\
+		__stream__ << title;							\
+		pred(__result__, expr, eq, __stream__.str());	\
+	} catch (const Exception &e) {						\
+		OUTPUT_ERROR(title, e);							\
+	} catch (...) {										\
+		OUTPUT_ERROR(title, "unknown crash");			\
 	}
 
-#define CHECK_NEQ_TITLE(expr, eq, title)					\
-	try {													\
-		__result__.total++;									\
-		std::wostringstream __stream__;						\
-		__stream__ << title;								\
-		verifyNeq(__result__, expr, eq, __stream__.str());	\
-	} catch (const Exception &e) {							\
-		OUTPUT_ERROR(title, e);								\
-	} catch (...) {											\
-		OUTPUT_ERROR(title, "unknown crash");				\
-	}
+#define CHECK_EQ_TITLE(expr, eq, title)			\
+	CHECK_PRED_TITLE(verifyEq, expr, eq, title)
+
+#define CHECK_NEQ_TITLE(expr, eq, title)		\
+	CHECK_PRED_TITLE(verifyNeq, expr, eq, title)
+
+#define CHECK_LT_TITLE(expr, eq, title)			\
+	CHECK_PRED_TITLE(verifyLt, expr, eq, title)
+
+#define CHECK_LTE_TITLE(expr, eq, title)		\
+	CHECK_PRED_TITLE(verifyLte, expr, eq, title)
+
+#define CHECK_GT_TITLE(expr, eq, title)			\
+	CHECK_PRED_TITLE(verifyGt, expr, eq, title)
+
+#define CHECK_GTE_TITLE(expr, eq, title)		\
+	CHECK_PRED_TITLE(verifyGte, expr, eq, title)
 
 #define CHECK(expr) CHECK_TITLE(expr, #expr)
 
 #define CHECK_EQ(expr, eq) CHECK_EQ_TITLE(expr, eq, #expr)
 
 #define CHECK_NEQ(expr, eq) CHECK_NEQ_TITLE(expr, eq, #expr)
+
+#define CHECK_LT(expr, eq) CHECK_LT_TITLE(expr, eq, #expr)
+
+#define CHECK_LTE(expr, eq) CHECK_LTE_TITLE(expr, eq, #expr)
+
+#define CHECK_GT(expr, eq) CHECK_GT_TITLE(expr, eq, #expr)
+
+#define CHECK_GTE(expr, eq) CHECK_GTE_TITLE(expr, eq, #expr)
+
 
 #define CHECK_ERROR(expr, type)											\
 	try {																\

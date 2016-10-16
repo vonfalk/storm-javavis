@@ -5,7 +5,7 @@
 using namespace code;
 
 BEGIN_TEST(JmpTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -51,7 +51,7 @@ static Int addFive(Int v) {
 // Main reason for this test is to see that we properly compute the offset for static things. If we
 // fail, things will fail miserably later on!
 BEGIN_TEST(CallTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();

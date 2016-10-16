@@ -24,7 +24,7 @@ static Int throwError(Int point) {
 }
 
 BEGIN_TEST(CodeExceptionTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Ref intCleanup = arena->external(L"intCleanup", &::intCleanup);
@@ -81,7 +81,7 @@ BEGIN_TEST(CodeExceptionTest, Code) {
 
 
 BEGIN_TEST(CodeCleanupTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Ref intCleanup = arena->external(L"intCleanup", &::intCleanup);
@@ -138,7 +138,7 @@ BEGIN_TEST(CodeCleanupTest, Code) {
 
 
 BEGIN_TEST(ExceptionRefTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Ref intCleanup = arena->external(L"intCleanup", &::intPtrCleanup);
@@ -180,7 +180,7 @@ BEGIN_TEST(ExceptionRefTest, Code) {
 #if defined(X86) && defined(WINDOWS)
 
 BEGIN_TEST(ExceptionSehTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Ref intCleanup = arena->external(L"intCleanup", &::intCleanup);
@@ -246,7 +246,7 @@ static void destroyLarge(Large *large) {
 }
 
 BEGIN_TEST(ExceptionLargeTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Ref intCleanup = arena->external(L"largeCleanup", &::destroyLarge);

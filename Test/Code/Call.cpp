@@ -17,7 +17,7 @@ Int CODECALL callIntFn(Int v) {
 }
 
 BEGIN_TEST(CallCopyTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Ref copy = arena->external(L"copyInt", &callCopyInt);
@@ -46,7 +46,7 @@ BEGIN_TEST(CallCopyTest, Code) {
 
 
 BEGIN_TEST(CallRefTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Ref copy = arena->external(L"copyInt", &callCopyInt);
@@ -75,7 +75,7 @@ BEGIN_TEST(CallRefTest, Code) {
 } END_TEST
 
 BEGIN_TEST(CallRefPlainTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Ref intFn = arena->external(L"intFn", &callIntFn);

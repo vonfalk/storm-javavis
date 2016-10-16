@@ -16,7 +16,7 @@ static Value toValue(Type *t) {
 static void voidFn(Int v) {}
 
 BEGIN_TEST(FnFree, Core) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	storm::Fn<Int, Int, Int> *fn = fnPtr(e, &addTwo);
 	CHECK_EQ(fn->call(2, 3), 7);

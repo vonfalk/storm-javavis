@@ -5,7 +5,7 @@
 using namespace code;
 
 BEGIN_TEST(FloatTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -35,7 +35,7 @@ BEGIN_TEST(FloatTest, Code) {
 } END_TEST
 
 BEGIN_TEST(FloatConstTest, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();

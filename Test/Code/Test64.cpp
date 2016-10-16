@@ -5,7 +5,7 @@
 using namespace code;
 
 BEGIN_TEST(Add64, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -28,7 +28,7 @@ BEGIN_TEST(Add64, Code) {
 } END_TEST
 
 BEGIN_TEST(Param64, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -50,7 +50,7 @@ BEGIN_TEST(Param64, Code) {
 } END_TEST
 
 BEGIN_TEST(Sub64, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -74,7 +74,7 @@ BEGIN_TEST(Sub64, Code) {
 
 
 BEGIN_TEST(Mul64, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -167,7 +167,7 @@ static bool checkLarge(int64 a, int64 b, const void *fn) {
 }
 
 BEGIN_TEST(Cmp64, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();

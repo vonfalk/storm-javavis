@@ -5,18 +5,19 @@
 using namespace storm::debug;
 
 BEGIN_TEST(GcTest1, GcScan) {
-	Engine &e = *gEngine;
+	Gc &g = gc();
 
-	CHECK(e.gc.test());
+	CHECK(g.test());
 } END_TEST
 
 // Create a list of links, containing elements 0 to n-1
 static Link *createList(nat n) {
 	Link *start = null;
 	Link *prev = null;
+	Engine &e = gEngine();
 
 	for (nat i = 0; i < n; i++) {
-		Link *now = new (*gEngine) Link;
+		Link *now = new (e) Link;
 		now->value = i;
 
 		if (prev == null) {
@@ -46,7 +47,7 @@ static bool checkList(Link *first, nat n) {
 }
 
 BEGIN_TEST(GcTest2, GcObjects) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	// Allocate this many nodes to make sure MPS will try to GC at least once!
 	const nat count = 100000;
@@ -60,7 +61,7 @@ BEGIN_TEST(GcTest2, GcObjects) {
  * Long-running stresstest of the GC logic. Too slow for regular use, but good when debugging.
  */
 BEGIN_TEST(GcTest3, Stress) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	// Allocate this many nodes.
 	const nat count = 1000;
@@ -70,7 +71,7 @@ BEGIN_TEST(GcTest3, Stress) {
 		ValClass *prev = null;
 
 		for (nat i = 0; i < count; i++) {
-			ValClass *now = new (*gEngine) ValClass;
+			ValClass *now = new (e) ValClass;
 			now->data.value = i;
 			now->data.list = createList(i + 1);
 
@@ -102,7 +103,7 @@ BEGIN_TEST(GcTest3, Stress) {
 } END_TEST
 
 BEGIN_TEST(CodeAllocTest, GcObjects) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	nat count = 10;
 	nat allocSize = sizeof(void *) * count + 3;
@@ -143,7 +144,7 @@ BEGIN_TEST(CodeAllocTest, GcObjects) {
 } END_TEST
 
 BEGIN_TEST(CodeRelPtr, GcObjects) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 
 	static GcType type = {
 		GcType::tArray,

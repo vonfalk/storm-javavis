@@ -5,7 +5,7 @@
 using namespace code;
 
 BEGIN_TEST(CastIntLong, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -30,7 +30,7 @@ BEGIN_TEST(CastIntLong, Code) {
 } END_TEST
 
 BEGIN_TEST(CastCharInt, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -55,7 +55,7 @@ BEGIN_TEST(CastCharInt, Code) {
 } END_TEST
 
 BEGIN_TEST(CastCharLong, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -80,7 +80,7 @@ BEGIN_TEST(CastCharLong, Code) {
 } END_TEST
 
 BEGIN_TEST(CastLongInt, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -105,7 +105,7 @@ BEGIN_TEST(CastLongInt, Code) {
 } END_TEST
 
 BEGIN_TEST(CastIntChar, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -130,7 +130,7 @@ BEGIN_TEST(CastIntChar, Code) {
 } END_TEST
 
 BEGIN_TEST(CastLongChar, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -159,7 +159,7 @@ BEGIN_TEST(CastLongChar, Code) {
  */
 
 BEGIN_TEST(CastNatWord, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -184,7 +184,7 @@ BEGIN_TEST(CastNatWord, Code) {
 } END_TEST
 
 BEGIN_TEST(CastByteNat, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -209,7 +209,7 @@ BEGIN_TEST(CastByteNat, Code) {
 } END_TEST
 
 BEGIN_TEST(CastByteWord, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -234,7 +234,7 @@ BEGIN_TEST(CastByteWord, Code) {
 } END_TEST
 
 BEGIN_TEST(CastWordNat, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -258,7 +258,7 @@ BEGIN_TEST(CastWordNat, Code) {
 } END_TEST
 
 BEGIN_TEST(CastNatByte, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
@@ -282,7 +282,7 @@ BEGIN_TEST(CastNatByte, Code) {
 } END_TEST
 
 BEGIN_TEST(CastWordByte, Code) {
-	Engine &e = *gEngine;
+	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
