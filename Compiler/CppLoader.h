@@ -64,8 +64,9 @@ namespace storm {
 		// Find a type as referred by a CppTypeRef.
 		Value findValue(const CppTypeRef &ref);
 
-		// Create a gc type for the given type.
-		GcType *createGcType(const CppType *type);
+		// Create a gc type for the given type. The 'id' variable is used to verify the generated
+		// type info in debug mode.
+		GcType *createGcType(const CppType *type, Nat id);
 
 		// Load a single function.
 		void loadFunction(const CppFunction &fn);

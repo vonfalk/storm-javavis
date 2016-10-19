@@ -12,6 +12,12 @@ vector<Offset> Type::ptrOffsets() const {
 	return r;
 }
 
+vector<ScannedVar> Type::scannedVars() const {
+	vector<ScannedVar> r;
+	scannedVars(r);
+	return r;
+}
+
 wostream &operator <<(wostream &to, const Type &type) {
 	type.print(to);
 	return to;
@@ -83,6 +89,33 @@ void Class::ptrOffsets(vector<Offset> &to) const {
 		s += size;
 	}
 }
+
+void Class::scannedVars(vector<ScannedVar> &append) const {
+	if (parentType)
+		parentType->scannedVars(append);
+
+	for (nat i = 0; i < variables.size(); i++) {
+		const Auto<TypeRef> &t = variables[i].type;
+
+		if (isGcPtr(t)) {
+			if (t.as<RefType>()) {
+				ScannedVar v = { name, L"" };
+				append.push_back(v);
+			} else {
+				ScannedVar v = { name, variables[i].name };
+				append.push_back(v);
+			}
+		} else if (Auto<ResolvedType> res = t.as<ResolvedType>()) {
+			// Inline this type into ourselves.
+			vector<ScannedVar> o = res->type->scannedVars();
+			for (nat j = 0; j < o.size(); j++) {
+				ScannedVar v = { name, String(variables[i].name) + L"." + o[j].varName };
+				append.push_back(v);
+			}
+		}
+	}
+}
+
 
 bool Class::hasDtor() const {
 	// Always give destructors for value types.
@@ -174,6 +207,8 @@ void Primitive::ptrOffsets(vector<Offset> &append) const {
 	// None.
 }
 
+void Primitive::scannedVars(vector<ScannedVar> &append) const {}
+
 /**
  * Enum.
  */
@@ -190,6 +225,8 @@ Size Enum::size() const {
 }
 
 void Enum::ptrOffsets(vector<Offset> &append) const {}
+
+void Enum::scannedVars(vector<ScannedVar> &append) const {}
 
 void Enum::print(wostream &to) const {
 	to << L"enum ";

@@ -4,7 +4,7 @@
 #include "Core/Str.h"  // For debugging heap corruptions.
 #include "Utils/Memory.h"
 
-#ifdef STORM_GC_MPS
+#if defined(STORM_GC_MPS)
 
 /**
  * MPS version.
@@ -257,6 +257,7 @@ namespace storm {
 					GcType **data = (GcType **)((byte *)pos + offset);
 					FIX_HEADER(h->obj);
 					if (*data) {
+						// NOTE: We can probably get away without scanning this one.
 						FIX_HEADER(**data);
 					}
 					FIX_GCTYPE(h, 1, pos);
@@ -380,13 +381,14 @@ namespace storm {
 			return wordSize * 2;
 		case mpsCodeFwd:
 			return wordSize + c->fwd.size;
-		default:
-			// Regular code.
-			at = ((byte *)at) + c->header + wordSize;
-			// 'at' now points at 'refCount' in 'GcCode'.
-			// Compute total size:
-			return c->header + wordSize + sizeof(GcCode) + (*(size_t *)at)*sizeof(GcCodeRef) - sizeof(GcCodeRef);
 		}
+
+		assert((c->header & codeMask) == 0, L"Unknown special object found.");
+
+		// Regular code.
+		size_t codeSize = c->header;
+		GcCode *g = (GcCode *)((byte *)c + wordSize + codeSize);
+		return wordSize + codeSize + sizeof(GcCode) + g->refCount*sizeof(GcCodeRef) - sizeof(GcCodeRef);
 	}
 
 	static mps_addr_t mpsSkipCode(mps_addr_t at) {
@@ -415,6 +417,10 @@ namespace storm {
 				for (nat i = 0; i < c->refCount; i++) {
 					GcCodeRef &ref = c->refs[i];
 					void *offset = code + ref.offset;
+					if (ref.offset + sizeof(void *) > h->header) {
+						WARNING(L"Too large offset " << ref.offset << L" found in code blob!");
+						continue;
+					}
 
 					switch (ref.kind) {
 					case GcCodeRef::disabled:
@@ -435,7 +441,13 @@ namespace storm {
 						// No need to show these to the gc.
 						break;
 					default:
-						assert(false, L"Unknown reference type found in a code block.");
+						// PLN(L"For code block " << (void *)h << L" size " << mpsSizeCode(at));
+						// PLN(L"Unknown reference type found in a code block: " << ref.kind <<
+						// 	L" (index " << i << L" of " << c->refCount << L")");
+						// for (int j = -4; j < 5; j++) {
+						// 	PLN("@" << std::setw(2) << j << L": " << *((void **)&ref + j));
+						// }
+						assert(false, L"Unknown reference type found in a code block: " + ::toS(ref.kind));
 						break;
 					}
 
@@ -460,11 +472,16 @@ namespace storm {
 
 		// See if we need to modify pointers in the new object.
 		if ((c->header & codeMask) == 0) {
-			GcCode *gc = (GcCode *)((byte *)at + wordSize + c->header);
+			size_t codeSize = c->header;
+			GcCode *gc = (GcCode *)((byte *)at + wordSize + codeSize);
 
 			for (nat i = 0; i < gc->refCount; i++) {
 				GcCodeRef &ref = gc->refs[i];
 				void *offset = (byte *)to + ref.offset;
+				if (ref.offset + sizeof(void *) > codeSize) {
+					WARNING(L"Too large offset " << ref.offset << L" found in code blob!");
+					continue;
+				}
 
 				switch (ref.kind) {
 				case GcCodeRef::disabled:
@@ -1123,7 +1140,7 @@ namespace storm {
 
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		size_t s = typeSize(entries);
-		GcType *t;
+		GcType *t;// = (GcType *)malloc(s);
 		check(mps_alloc((mps_addr_t *)&t, gcTypePool, s), L"Failed to allocate type info.");
 		memset(t, 0, s);
 		t->kind = kind;
@@ -1145,8 +1162,12 @@ namespace storm {
 		if (ignoreFreeType)
 			return;
 
+		// TODO: Remember which types to free and only free them when we're safe they are not used
+		// anywhere on the heap. It is fine to occasionally do a full heap-scan for this.
+
 		size_t s = sizeof(GcType) + t->count*sizeof(size_t) - sizeof(size_t);
 		mps_free(gcTypePool, t, s);
+		// free(t);
 	}
 
 	const GcType *Gc::typeOf(const void *mem) {
@@ -1211,7 +1232,7 @@ namespace storm {
 
 	void *Gc::allocCode(size_t code, size_t refs) {
 		code = align(code);
-		size_t size = code + sizeof(GcCode) + refs*sizeof(GcCodeRef) - sizeof(GcCodeRef) + wordSize;
+		size_t size = wordSize + code + sizeof(GcCode) + refs*sizeof(GcCodeRef) - sizeof(GcCodeRef);
 		mps_addr_t memory;
 
 		util::Lock::L z(codeAllocLock);
@@ -1472,6 +1493,174 @@ namespace storm {
 	GcWatch *Gc::createWatch() {
 		return new (alloc(&MpsGcWatch::type)) MpsGcWatch(*this);
 	}
+}
+
+#elif defined(STORM_GC_MALLOC)
+#include "Utils/MemoryManager.h"
+
+namespace storm {
+
+	// Word-align something.
+	static inline size_t align(size_t data) {
+		return (data + sizeof(size_t) - 1) & ~(sizeof(size_t) - 1);
+	}
+
+	static const size_t headerSizeWords = 4;
+
+	Gc::Gc(size_t initial, nat finalizationInterval) : finalizationInterval(finalizationInterval) {}
+
+	Gc::~Gc() {}
+
+	void Gc::collect() {}
+
+	bool Gc::collect(nat time) {
+		return false;
+	}
+
+	void Gc::attachThread() {}
+
+	void Gc::reattachThread(const os::Thread &thread) {}
+
+	void Gc::detachThread(const os::Thread &thread) {}
+
+	void *Gc::alloc(const GcType *type) {
+		size_t size = align(type->stride) + headerSizeWords*sizeof(size_t);
+		void *mem = malloc(size);
+		memset(mem, 0, size);
+		memset((size_t *)mem + 1, 0xFF, (headerSizeWords - 1)*sizeof(size_t));
+
+		*(const GcType **)mem = type;
+		void *start = (size_t *)mem + headerSizeWords;
+		assert(typeOf(start) == type);
+		return start;
+	}
+
+	void *Gc::allocArray(const GcType *type, size_t count) {
+		size_t size = align(type->stride)*count + 2*sizeof(size_t) + headerSizeWords*sizeof(size_t);
+		void *mem = malloc(size);
+		memset(mem, 0, size);
+		memset((size_t *)mem + 1, 0xFF, (headerSizeWords - 1)*sizeof(size_t));
+
+		*(const GcType **)mem = type;
+
+		void *start = (size_t *)mem + headerSizeWords;
+		*(size_t *)start = count;
+		return start;
+	}
+
+	void *Gc::allocWeakArray(size_t count) {
+		size_t size = sizeof(void*)*count + 2*sizeof(size_t) + headerSizeWords*sizeof(size_t);
+		void *mem = malloc(size);
+		memset(mem, 0, size);
+		memset((size_t *)mem + 1, 0xFF, (headerSizeWords - 1)*sizeof(size_t));
+
+		*(const GcType **)mem = &weakArrayType;
+
+		void *start = (size_t *)mem + headerSizeWords;
+		*(size_t *)start = (count << 1) | 1;
+		return start;
+	}
+
+	static size_t typeSize(size_t entries) {
+		return sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
+	}
+
+	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
+		size_t s = typeSize(entries);
+		GcType *t = (GcType *)malloc(s);
+		memset(t, 0, s);
+		t->kind = kind;
+		t->type = type;
+		t->stride = stride;
+		t->count = entries;
+		return t;
+	}
+
+	GcType *Gc::allocType(const GcType *src) {
+		size_t s = typeSize(src->count);
+		GcType *t = (GcType *)malloc(s);
+		memcpy(t, src, s);
+		return t;
+	}
+
+	void Gc::freeType(GcType *type) {
+		free(type);
+	}
+
+	const GcType *Gc::typeOf(const void *mem) {
+		const GcType **data = (const GcType **)mem;
+
+		for (nat i = 0; i < (headerSizeWords-1)*sizeof(size_t); i++) {
+			byte *addr = (byte *)data - i - 1;
+			if (*addr != 0xFF) {
+				PLN(L"Wrote before the object: " << mem << L" offset: -" << (i+1));
+				DebugBreak();
+			}
+		}
+
+
+		return *(data - headerSizeWords);
+	}
+
+	void Gc::switchType(void *mem, const GcType *to) {
+		const GcType **data = (const GcType **)mem;
+		*(data - headerSizeWords) = to;
+	}
+
+	void *Gc::allocCode(size_t code, size_t refs) {
+		static memory::Manager mgr;
+
+		code = align(code);
+		size_t size = code + sizeof(GcCode) + refs*sizeof(GcCodeRef) - sizeof(GcCodeRef) + headerSizeWords*sizeof(size_t);
+		void *mem = mgr.allocate(size);
+		memset(mem, 0, size);
+		memset((size_t *)mem + 1, 0xFF, (headerSizeWords - 1)*sizeof(size_t));
+
+		*(size_t *)mem = code;
+
+		void *start = (void **)mem + headerSizeWords;
+		void *refPtr = (byte *)start + code;
+		*(size_t *)refPtr = refs;
+
+		return start;
+	}
+
+	size_t Gc::codeSize(const void *alloc) {
+		const size_t *d = (const size_t *)alloc;
+		return *(d - headerSizeWords);
+	}
+
+	GcCode *Gc::codeRefs(void *alloc) {
+		void *p = ((byte *)alloc) + align(codeSize(alloc));
+		return (GcCode *)p;
+	}
+
+	Gc::Root *Gc::createRoot(void *data, size_t count) {
+		// No roots here!
+		return null;
+	}
+
+	void Gc::destroyRoot(Root *root) {}
+
+	class MallocWatch : public GcWatch {
+	public:
+		virtual void add(const void *addr) {}
+		virtual void remove(const void *addr) {}
+		virtual void clear() {}
+		virtual bool moved(const void *addr) { return false; }
+		virtual GcWatch *clone() const {
+			return new MallocWatch();
+		}
+	};
+
+	GcWatch *Gc::createWatch() {
+		return new MallocWatch();
+	}
+
+	void Gc::checkMemory() {
+		// Check stuff!
+	}
+
 }
 
 #else

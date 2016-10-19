@@ -90,6 +90,14 @@ static void genPtrOffsets(wostream &to, World &w) {
 	}
 }
 
+static bool isType(World &w, Type &t) {
+	for (Class *now = as<Class>(&t); now; now = as<Class>(now->parentType))
+		if (now == w.types[0].borrow())
+			return true;
+
+	return false;
+}
+
 static void genTypes(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
 		Type &t = *w.types[i];
@@ -119,14 +127,22 @@ static void genTypes(wostream &to, World &w) {
 			} else if (thread) {
 				to << L"CppType::superThread, " << thread->id << L" /* " << thread->name << L" */, ";
 			} else if (parent) {
-				to << L"CppType::superClass, " << parent->id << L" /* " << parent->name << L" */, ";
+				if (isType(w, *parent))
+					to << L"CppType::superClassType, ";
+				else
+					to << L"CppType::superClass, ";
+				to << parent->id << L" /* " << parent->name << L" */, ";
 			} else {
 				to << L"CppType::superNone, 0, ";
 			}
 		}
 
 		// Size.
-		to << format(t.size()) << L", ";
+		Size s = t.size();
+		if (s == Size()) {
+			throw Error(L"Zero-sized types are not yet properly supported!", t.pos);
+		}
+		to << format(s) << L", ";
 
 		// Pointer offsets.
 		to << toVarName(t.name) << L"_offset, ";
@@ -437,6 +453,40 @@ static void genThreads(wostream &to, World &w) {
 	}
 }
 
+static void genRefPtrOffsets(wostream &to, World &w) {
+	for (nat i = 0; i < w.types.size(); i++) {
+		Type &t = *w.types[i];
+		to << L"static const size_t " << toVarName(t.name) << L"_offset[] = { ";
+
+		vector<ScannedVar> o = t.scannedVars();
+		to << L"sizeof(" << t.name << L"), ";
+		for (nat i = 0; i < o.size(); i++) {
+			if (o[i].varName == L"") {
+				to << L"-2, ";
+			} else {
+				to << L"OFFSET_OF(" << o[i].typeName << L", " << o[i].varName << L"), ";
+			}
+		}
+
+		// For manually verifying no members are missing.
+		// PLN(t.pos << L": Check contents!");
+		// for (nat i = 0; i < o.size(); i++) {
+		// 	if (o[i].typeName == t.name)
+		// 		PLN(L"  " << o[i].varName);
+		// }
+		// Sleep(10);
+
+		to << L"-1 };\n";
+	}
+}
+
+static void genRefOffsets(wostream &to, World &w) {
+	for (nat i = 0; i < w.types.size(); i++) {
+		Type &t = *w.types[i];
+		to << toVarName(t.name) << L"_offset,\n";
+	}
+}
+
 GenerateMap genMap() {
 	struct E {
 		wchar *tag;
@@ -455,6 +505,8 @@ GenerateMap genMap() {
 		{ L"CPP_TEMPLATES", &genTemplates },
 		{ L"THREAD_GLOBALS", &genThreadGlobals },
 		{ L"CPP_THREADS", &genThreads },
+		{ L"REF_PTR_OFFSETS", &genRefPtrOffsets },
+		{ L"REF_OFFSETS", &genRefOffsets },
 	};
 
 	GenerateMap g;

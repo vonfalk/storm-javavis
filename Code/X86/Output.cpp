@@ -8,7 +8,7 @@ namespace code {
 
 		CodeOut::CodeOut(Binary *owner, Array<Nat> *lbls, Nat size, Nat numRefs) {
 			// Properly align 'size'.
-			size = roundUp(size, sizeof(void *));
+			this->size = size = roundUp(size, sizeof(void *));
 
 			// Initialize our members.
 			this->owner = owner;
@@ -27,22 +27,26 @@ namespace code {
 		}
 
 		void CodeOut::putByte(Byte b) {
+			assert(pos < size);
 			code[pos++] = b;
 		}
 
 		void CodeOut::putInt(Nat w) {
+			assert(pos + 3 < size);
 			Nat *to = (Nat *)&code[pos];
 			*to = w;
 			pos += 4;
 		}
 
 		void CodeOut::putLong(Word w) {
+			assert(pos + 7 < size);
 			Word *to = (Word *)&code[pos];
 			*to = w;
 			pos += 8;
 		}
 
 		void CodeOut::putPtr(Word w) {
+			assert(pos + 3 < size);
 			Nat *to = (Nat *)&code[pos];
 			*to = (Nat)w;
 			pos += 4;
@@ -50,6 +54,7 @@ namespace code {
 
 		void CodeOut::putGcPtr(Word w) {
 			GcCode *refs = runtime::codeRefs(code);
+			assert(ref < refs->refCount);
 			refs->refs[ref].offset = pos;
 			refs->refs[ref].kind = GcCodeRef::rawPtr;
 			ref++;
@@ -59,17 +64,21 @@ namespace code {
 
 		void CodeOut::putGcRelative(Word w) {
 			GcCode *refs = runtime::codeRefs(code);
+			assert(ref < refs->refCount);
 			refs->refs[ref].offset = pos;
 			refs->refs[ref].kind = GcCodeRef::relativePtr;
 			ref++;
 
+			assert(pos + 3 < size);
 			Nat *to = (Nat *)&code[pos];
 			*to = Nat(w) - Nat(to + 1);
 			pos += 4;
 		}
 
 		void CodeOut::putRelativeStatic(Word w) {
+			assert(pos + 3 < size);
 			GcCode *refs = runtime::codeRefs(code);
+			assert(ref < refs->refCount);
 			refs->refs[ref].offset = pos;
 			refs->refs[ref].kind = GcCodeRef::relative;
 			ref++;
@@ -81,6 +90,7 @@ namespace code {
 
 		void CodeOut::putPtrSelf(Word w) {
 			GcCode *refs = runtime::codeRefs(code);
+			assert(ref < refs->refCount);
 			refs->refs[ref].offset = pos;
 			refs->refs[ref].kind = GcCodeRef::inside;
 			ref++;

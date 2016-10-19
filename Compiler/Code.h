@@ -147,7 +147,7 @@ namespace storm {
 
 	private:
 		// Currently used code.
-		code::Binary *code;
+		code::Binary *binary;
 
 		// Generate code using this function.
 		Fn<CodeGen *> *generate;
@@ -191,14 +191,14 @@ namespace storm {
 	class InlineCode : public LazyCode {
 		STORM_CLASS;
 	public:
-		STORM_CTOR InlineCode(Fn<void, InlineParams> *generate);
+		STORM_CTOR InlineCode(Fn<void, InlineParams> *create);
 
 		// Generate inlined code.
 		virtual void STORM_FN code(CodeGen *state, Array<code::Operand> *params, CodeResult *result);
 
 	private:
 		// Generate function.
-		Fn<void, InlineParams> *generate;
+		Fn<void, InlineParams> *create;
 
 		// Generate a non-inline version as well.
 		CodeGen *CODECALL generatePtr();

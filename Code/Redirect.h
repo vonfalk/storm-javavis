@@ -28,8 +28,8 @@ namespace code {
 		STORM_CTOR RedirectParam(ValType val, Operand freeFn, Bool byPtr);
 
 		ValType val;
+		Bool byPtr; // Free by pointer?
 		Operand freeFn;
-		Bool byPtr;
 	};
 
 

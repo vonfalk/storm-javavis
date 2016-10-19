@@ -125,7 +125,7 @@ BEGIN_TEST(CodeAllocTest, GcObjects) {
 	}
 
 	bool moved = false;
-	while (!moved) {
+	for (nat i = 0; i < 20 && !moved; i++) {
 		for (nat i = 0; i < o->count(); i++) {
 			moved |= o->at(i)->moved();
 		}

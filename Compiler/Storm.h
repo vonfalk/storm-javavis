@@ -14,8 +14,12 @@
 // C-mode detection of debug mode.
 #include "Utils/Mode.h"
 
+// Use MPS.
 #define STORM_GC_MPS
+// Use Boehm GC.
 // #define STORM_GC_BOEHM
+// Use malloc for acquiring memory (never frees it, only for debugging).
+// #define STORM_GC_MALLOC
 
 #ifdef __cplusplus
 

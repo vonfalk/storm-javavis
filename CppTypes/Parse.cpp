@@ -508,12 +508,8 @@ static void parseFile(nat id, World &world) {
 	parseNamespace(tok, env, CppName());
 }
 
-World parseWorld() {
-	World world;
-
+void parseWorld(World &world) {
 	for (nat i = 0; i < SrcPos::files.size(); i++) {
 		parseFile(i, world);
 	}
-
-	return world;
 }

@@ -51,6 +51,7 @@ slow/
 
 Tools/
 build/
+log/
 
 ReadMe.txt
 *.aps

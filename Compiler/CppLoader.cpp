@@ -52,7 +52,16 @@ namespace storm {
 
 			// The array could be partially filled.
 			if (into.types[i] == null && type.kind != CppType::superCustom) {
-				into.types[i] = new (e) Type(null, type.flags, Size(type.size), createGcType(&type));
+				GcType *gcType = createGcType(&type, i);
+
+				// If this type inherits from 'Type', it needs special care in its Gc-description.
+				if (type.kind == CppType::superClassType) {
+					GcType *t = Type::makeType(e, gcType);
+					e.gc.freeType(gcType);
+					gcType = t;
+				}
+
+				into.types[i] = new (e) Type(null, type.flags, Size(type.size), gcType);
 			}
 		}
 
@@ -66,7 +75,7 @@ namespace storm {
 				continue;
 
 			CppType::CreateFn fn = (CppType::CreateFn)type.super;
-			into.types[i] = (*fn)(new (e) Str(type.name), Size(type.size), createGcType(&type));
+			into.types[i] = (*fn)(new (e) Str(type.name), Size(type.size), createGcType(&type, i));
 		}
 
 		// Now we can fill in the names and superclasses properly!
@@ -117,6 +126,7 @@ namespace storm {
 					// Nothing to do.
 					break;
 				case CppType::superClass:
+				case CppType::superClassType:
 					// Delay update?
 					if (!updated[type.super])
 						continue;
@@ -142,7 +152,7 @@ namespace storm {
 		} while (!all(updated));
 	}
 
-	GcType *CppLoader::createGcType(const CppType *type) {
+	GcType *CppLoader::createGcType(const CppType *type, Nat id) {
 		nat entries;
 		for (entries = 0; type->ptrOffsets[entries] != CppOffset::invalid; entries++)
 			;
@@ -154,6 +164,27 @@ namespace storm {
 		}
 
 		t->finalizer = type->destructor;
+
+#ifdef DEBUG
+		// TODO: Clean up this when we're loading external dlls!
+		const size_t *refData = cppRefOffsets()[id];
+		// sizeof() never returns zero, but we support zero-sized types properly.
+		if (t->stride > 0) {
+			assert(t->stride == refData[0], L"Type size mismatch for " + ::toS(type->name)
+				+ L": " + ::toS(t->stride) + L" vs " + ::toS(refData[0]));
+		}
+		refData = refData + 1;
+
+		for (nat i = 0; i < entries; i++) {
+			// Uncheckable?
+			if (refData[i] == size_t(-2))
+				continue;
+
+			assert(t->offset[i] == refData[i], L"Type size mismatch for " + ::toS(type->name) + L" at " +
+				::toS(i) + L": " + ::toS(t->offset[i]) + L" vs " + ::toS(refData[i]));
+		}
+		assert(refData[entries] == size_t(-1), L"There is more data for " + ::toS(type->name));
+#endif
 
 		return t;
 	}

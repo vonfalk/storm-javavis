@@ -74,6 +74,9 @@ namespace storm {
 			// 'super' is a class in this table.
 			superClass,
 
+			// 'super' is a class in this table, direct or indirect descendant of Type (id 0).
+			superClassType,
+
 			// 'super' is a thread id (we inherit from TObject).
 			superThread,
 
@@ -212,5 +215,10 @@ namespace storm {
 
 	// Get the CppWorld for this module.
 	const CppWorld *cppWorld();
+
+#ifdef DEBUG
+	// Get the reference pointer offsets for this platform (only for debugging).
+	const size_t *const* cppRefOffsets();
+#endif
 
 }

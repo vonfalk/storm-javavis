@@ -9,6 +9,11 @@
 
 class World;
 
+struct ScannedVar {
+	CppName typeName;
+	String varName;
+};
+
 /**
  * Describes a type in C++.
  */
@@ -44,6 +49,10 @@ public:
 	// Compute pointer offsets into this type.
 	vector<Offset> ptrOffsets() const;
 	virtual void ptrOffsets(vector<Offset> &append) const = 0;
+
+	// Get all members who need to be scanned (same set as in 'ptrOffsets').
+	vector<ScannedVar> scannedVars() const;
+	virtual void scannedVars(vector<ScannedVar> &append) const = 0;
 };
 
 wostream &operator <<(wostream &to, const Type &type);
@@ -97,6 +106,7 @@ public:
 
 	// Compute our pointer offsets.
 	virtual void ptrOffsets(vector<Offset> &append) const;
+	virtual void scannedVars(vector<ScannedVar> &append) const;
 
 	// Print ourselves.
 	virtual void print(wostream &to) const;
@@ -146,6 +156,7 @@ public:
 
 	// Compute pointer offsets into this type.
 	virtual void ptrOffsets(vector<Offset> &append) const;
+	virtual void scannedVars(vector<ScannedVar> &append) const;
 
 private:
 	// Size of this type.
@@ -174,6 +185,7 @@ public:
 
 	// Generate pointer offsets.
 	virtual void ptrOffsets(vector<Offset> &append) const;
+	virtual void scannedVars(vector<ScannedVar> &append) const;
 
 	// Print.
 	virtual void print(wostream &to) const;

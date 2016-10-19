@@ -71,9 +71,9 @@ namespace storm {
 	 * Static engine code.
 	 */
 
-	StaticEngineCode::StaticEngineCode(Value result, const void *code) {
+	StaticEngineCode::StaticEngineCode(Value result, const void *src) {
 		original = new (this) code::RefSource(L"ref-to");
-		original->setPtr(code);
+		original->setPtr(src);
 
 		code::Listing *l = redirectCode(result, original);
 		code = new (this) code::Binary(engine().arena(), l);
@@ -117,7 +117,7 @@ namespace storm {
 	 * Lazy code.
 	 */
 
-	LazyCode::LazyCode(Fn<CodeGen *> *generate) : code(null), generate(generate) {}
+	LazyCode::LazyCode(Fn<CodeGen *> *generate) : binary(null), generate(generate) {}
 
 	void LazyCode::compile() {
 		// We're always running on the Compiler thread, so it is safe to call 'updateCodeLocal'.
@@ -126,9 +126,9 @@ namespace storm {
 	}
 
 	void LazyCode::newRef() {
-		if (!code)
+		if (!binary)
 			createRedirect();
-		toUpdate->set(code);
+		toUpdate->set(binary);
 	}
 
 	void LazyCode::createRedirect() {
@@ -148,9 +148,9 @@ namespace storm {
 	}
 
 	void LazyCode::setCode(code::Listing *to) {
-		code = new (this) code::Binary(engine().arena(), to);
+		binary = new (this) code::Binary(engine().arena(), to);
 		if (toUpdate)
-			toUpdate->set(code);
+			toUpdate->set(binary);
 	}
 
 	const void *LazyCode::updateCode(LazyCode *me) {
@@ -194,7 +194,7 @@ namespace storm {
 			me->loading = false;
 		}
 
-		return me->code->address();
+		return me->binary->address();
 	}
 
 
@@ -212,12 +212,12 @@ namespace storm {
 	}
 
 
-	InlineCode::InlineCode(Fn<void, InlineParams> *generate) :
-		LazyCode(fnPtr(TObject::engine(), &InlineCode::generatePtr, this)), generate(generate) {}
+	InlineCode::InlineCode(Fn<void, InlineParams> *create) :
+		LazyCode(fnPtr(TObject::engine(), &InlineCode::generatePtr, this)), create(create) {}
 
 	void InlineCode::code(CodeGen *state, Array<code::Operand> *params, CodeResult *result) {
 		InlineParams p(state, params, result);
-		generate->call(p);
+		create->call(p);
 	}
 
 	CodeGen *InlineCode::generatePtr() {

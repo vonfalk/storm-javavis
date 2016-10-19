@@ -11,6 +11,10 @@ namespace code {
 	static const Nat alignShift = 28;
 	static const Nat defAlign = 1 << alignShift;
 
+	// Maximum useful alignment for 32- and 64-bit.
+	static const Nat maxAlign32 = 8; // suprisingly, this is not 4.
+	static const Nat maxAlign64 = 8;
+
 	static inline Nat size(Nat in) {
 		return in & sizeMask;
 	}
@@ -68,20 +72,20 @@ namespace code {
 	Size::Size() : s32(defAlign), s64(defAlign) {}
 
 	Size::Size(Nat s) : s32(0), s64(0) {
-		set(s32, s, 4);
-		set(s64, s, 8);
+		set(s32, s, maxAlign32);
+		set(s64, s, maxAlign64);
 	}
 
 	Size::Size(nat s32, nat s64) : s32(0), s64(0) {
-		set(this->s32, s32, 4);
-		set(this->s64, s64, 8);
+		set(this->s32, s32, maxAlign32);
+		set(this->s64, s64, maxAlign64);
 	}
 
 	Size::Size(nat size32, nat align32, nat size64, nat align64) : s32(0), s64(0) {
 		code::size(s32, size32);
-		code::align(s32, align32, 4);
+		code::align(s32, align32, maxAlign32);
 		code::size(s64, size64);
-		code::align(s64, align64, 8);
+		code::align(s64, align64, maxAlign64);
 	}
 
 	Size Size::sPtr = Size(4, 8);
@@ -111,8 +115,8 @@ namespace code {
 	}
 
 	Size &Size::operator +=(const Size &o) {
-		add(s32, o.s32, 4);
-		add(s64, o.s64, 8);
+		add(s32, o.s32, maxAlign32);
+		add(s64, o.s64, maxAlign64);
 		return *this;
 	}
 
@@ -123,8 +127,8 @@ namespace code {
 	}
 
 	Size &Size::operator *=(nat o) {
-		mul(s32, o, 4);
-		mul(s64, o, 8);
+		mul(s32, o, maxAlign32);
+		mul(s64, o, maxAlign64);
 		return *this;
 	}
 

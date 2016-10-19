@@ -9,7 +9,8 @@ namespace storm {
 	class SrcPos {
 		STORM_VALUE;
 	public:
-		// TODO!
+		// TODO: FIXME
+		Nat pos;
 
 		void deepCopy(CloneEnv *env);
 	};

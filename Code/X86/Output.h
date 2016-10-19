@@ -43,6 +43,9 @@ namespace code {
 			// Position in the code.
 			Nat pos;
 
+			// Size of the code.
+			Nat size;
+
 			// First free ref.
 			Nat ref;
 

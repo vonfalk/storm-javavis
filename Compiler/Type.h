@@ -38,6 +38,9 @@ namespace storm {
 		// Owning engine. Must be the first data member of this class!
 		Engine &engine;
 
+		// Make a GcType that describes an object inheriting from 'type'.
+		static GcType *makeType(Engine &e, const GcType *type);
+
 		// Create the type for Type (as this is special).
 		static Type *createType(Engine &e, const CppType *type);
 

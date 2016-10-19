@@ -2,30 +2,30 @@
 #include "Utils/Bitwise.h"
 
 /**
- * Size assuming a specific pointer size. Used to implement "Size". "Size" is
+ * Size assuming a specific max alignment. Used to implement "Size". "Size" is
  * preferred in other cases.
  */
-template <nat ptr>
+template <nat maxAlign>
 class ISize {
 public:
 	// Initialize to a specific size.
 	ISize(nat size = 0) {
 		assert((size & sizeMask) == size);
-		assert((ptr & alignMaskLow) == ptr);
+		assert((maxAlign & alignMaskLow) == maxAlign);
 
 		this->size = size;
-		// Generally, it is not useful to align to more than the machine word size.
-		this->align = max(nat(1), min(ptr, size));
+		// Align maximum of 'align' bytes.
+		this->align = max(nat(1), min(maxAlign, size));
 	}
 
 	// Initialize to previously obtained values.
 	ISize(nat size, nat align) : size(size), align(align) {
 		assert((size & sizeMask) == size);
-		assert((ptr & alignMaskLow) == ptr);
+		assert((maxAlign & alignMaskLow) == maxAlign);
 	}
 
 	// Add another aligned size.
-	ISize<ptr> &operator +=(const ISize &o) {
+	ISize<maxAlign> &operator +=(const ISize &o) {
 		// Update our alignment requirement.
 		align = max(align, o.align);
 
@@ -39,7 +39,7 @@ public:
 	}
 
 	// Multiply this by a positive constant.
-	ISize<ptr> &operator *=(nat o) {
+	ISize<maxAlign> &operator *=(nat o) {
 		if (o == 0) {
 			size = 0;
 		} else if (o == 1) {
@@ -69,7 +69,7 @@ public:
 };
 
 
-template <nat ptr>
-wostream &operator <<(wostream &to, const ISize<ptr> &o) {
+template <nat maxAlign>
+wostream &operator <<(wostream &to, const ISize<maxAlign> &o) {
 	return to << toHex(o.size, true) << L"(" << toHex(o.align, false) << L")";
 }

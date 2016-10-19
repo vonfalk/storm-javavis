@@ -72,8 +72,8 @@ private:
 	// Initialize to specific values.
 	Size(nat s32, nat s64);
 
-	// 32-bit ptr size.
-	ISize<4> s32;
+	// 32-bit ptr size. Suprisingly, alignments of 8 occur when working with long long ints.
+	ISize<8> s32;
 
 	// 64-bit ptr size.
 	ISize<8> s64;

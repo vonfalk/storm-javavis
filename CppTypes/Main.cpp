@@ -53,6 +53,8 @@ bool oldFile(const Timestamp &input, const Path &file) {
 }
 
 int _tmain(int argc, const wchar *argv[]) {
+	initDebug();
+
 	if (!parse(argc, argv)) {
 		usage(argv[0]);
 		return 1;
@@ -81,7 +83,8 @@ int _tmain(int argc, const wchar *argv[]) {
 
 	if (update) {
 		try {
-			World world = parseWorld();
+			World world;
+			parseWorld(world);
 
 			// TODO: More!
 			world.usingDecl.push_back(CppName(L"storm"));

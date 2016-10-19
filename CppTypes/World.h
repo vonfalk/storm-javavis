@@ -8,7 +8,7 @@
 /**
  * Describes all types and functions known.
  */
-class World {
+class World : NoCopy {
 public:
 	// Create.
 	World();

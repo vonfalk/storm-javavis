@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Utils/Memory.h"
 #include "Core/Gen/CppTypes.h"
 #include "Core/Runtime.h"
 
@@ -28,6 +29,7 @@ namespace storm {
 		static const CppFunction *cppFunctions();
 		static const CppTemplate *cppTemplates();
 		static const CppThread *cppThreads();
+		static const size_t *const* cppRefOffsets();
 	};
 
 	// Invalid size.
@@ -127,6 +129,22 @@ namespace storm {
 		return &w;
 	}
 
+#ifdef DEBUG
+
+	const size_t *const* CppMeta::cppRefOffsets() {
+		// REF_PTR_OFFSETS
+
+		static const size_t *const d[] = {
+			// REF_OFFSETS
+		};
+		return d;
+	}
+
+	const size_t *const* cppRefOffsets() {
+		return CppMeta::cppRefOffsets();
+	}
+
+#endif
 }
 
 #pragma optimize ("", off)

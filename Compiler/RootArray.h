@@ -22,6 +22,7 @@ namespace storm {
 			gc.destroyRoot(root);
 			root = null;
 			delete []data;
+			data = null;
 			size = 0;
 		}
 

@@ -143,6 +143,17 @@ namespace storm {
 		t->~Type();
 	}
 
+	GcType *Type::makeType(Engine &e, const GcType *src) {
+		GcType *r = e.gc.allocType(GcType::tType, src->type, src->stride, src->count + 1);
+
+		r->finalizer = src->finalizer;
+		r->offset[0] = OFFSET_OF(Type, gcType);
+		for (nat i = 0; i < src->count; i++)
+			r->offset[i+1] = src->offset[i];
+
+		return r;
+	}
+
 	Type *Type::createType(Engine &e, const CppType *type) {
 		assert(wcscmp(type->name, L"Type") == 0, L"storm::Type was not found!");
 		assert(Size(type->size).current() == sizeof(Type),
@@ -200,9 +211,19 @@ namespace storm {
 		// Set the type-chain properly.
 		chain->super(to);
 
-		// For now, this is sufficient.
-		if ((typeFlags & typeCpp) != typeCpp)
+		// Generate a GcType for this type.
+		if (typeFlags & typeCpp) {
+			// Type from C++. Nothing to do.
+		} else {
+			// We're not a type from C++. As we can not contain any members yet, it is enough to
+			// copy the parent's GcType.
+
+			if (!gcType)
+				TODO(L"Properly free the old type!");
+
+			// NOTE: It is important to preserve the 'tType' kind of the GcType if we inherit from Type.
 			gcType = engine.gc.allocType(to->gcType);
+		}
 	}
 
 	void Type::setThread(NamedThread *thread) {
