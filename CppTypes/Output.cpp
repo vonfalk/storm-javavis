@@ -459,10 +459,9 @@ static void genRefPtrOffsets(wostream &to, World &w) {
 		to << L"static const size_t " << toVarName(t.name) << L"_offset[] = { ";
 
 		vector<ScannedVar> o = t.scannedVars();
-		to << L"sizeof(" << t.name << L"), ";
 		for (nat i = 0; i < o.size(); i++) {
 			if (o[i].varName == L"") {
-				to << L"-2, ";
+				to << L"-1, ";
 			} else {
 				to << L"OFFSET_OF(" << o[i].typeName << L", " << o[i].varName << L"), ";
 			}
@@ -480,10 +479,11 @@ static void genRefPtrOffsets(wostream &to, World &w) {
 	}
 }
 
-static void genRefOffsets(wostream &to, World &w) {
+static void genRefTypes(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
 		Type &t = *w.types[i];
-		to << toVarName(t.name) << L"_offset,\n";
+		to << L"{ sizeof(" << t.name << L"), ";
+		to << toVarName(t.name) << L"_offset }, // #" << i << L"\n";
 	}
 }
 
@@ -506,7 +506,7 @@ GenerateMap genMap() {
 		{ L"THREAD_GLOBALS", &genThreadGlobals },
 		{ L"CPP_THREADS", &genThreads },
 		{ L"REF_PTR_OFFSETS", &genRefPtrOffsets },
-		{ L"REF_OFFSETS", &genRefOffsets },
+		{ L"REF_TYPES", &genRefTypes },
 	};
 
 	GenerateMap g;

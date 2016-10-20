@@ -52,7 +52,7 @@ namespace storm {
 
 			// The array could be partially filled.
 			if (into.types[i] == null && type.kind != CppType::superCustom) {
-				GcType *gcType = createGcType(&type, i);
+				GcType *gcType = createGcType(i);
 
 				// If this type inherits from 'Type', it needs special care in its Gc-description.
 				if (type.kind == CppType::superClassType) {
@@ -75,7 +75,7 @@ namespace storm {
 				continue;
 
 			CppType::CreateFn fn = (CppType::CreateFn)type.super;
-			into.types[i] = (*fn)(new (e) Str(type.name), Size(type.size), createGcType(&type, i));
+			into.types[i] = (*fn)(new (e) Str(type.name), Size(type.size), createGcType(i));
 		}
 
 		// Now we can fill in the names and superclasses properly!
@@ -152,38 +152,42 @@ namespace storm {
 		} while (!all(updated));
 	}
 
-	GcType *CppLoader::createGcType(const CppType *type, Nat id) {
+	GcType *CppLoader::createGcType(Nat id) {
+		const CppType &type = world->types[id];
+
 		nat entries;
-		for (entries = 0; type->ptrOffsets[entries] != CppOffset::invalid; entries++)
+		for (entries = 0; type.ptrOffsets[entries] != CppOffset::invalid; entries++)
 			;
 
-		GcType *t = e.gc.allocType(GcType::tFixed, null, Size(type->size).current(), entries);
+		GcType *t = e.gc.allocType(GcType::tFixed, null, Size(type.size).current(), entries);
 
 		for (nat i = 0; i < entries; i++) {
-			t->offset[i] = Offset(type->ptrOffsets[i]).current();
+			t->offset[i] = Offset(type.ptrOffsets[i]).current();
 		}
 
-		t->finalizer = type->destructor;
+		t->finalizer = type.destructor;
 
 #ifdef DEBUG
-		// TODO: Clean up this when we're loading external dlls!
-		const size_t *refData = cppRefOffsets()[id];
-		// sizeof() never returns zero, but we support zero-sized types properly.
-		if (t->stride > 0) {
-			assert(t->stride == refData[0], L"Type size mismatch for " + ::toS(type->name)
-				+ L": " + ::toS(t->stride) + L" vs " + ::toS(refData[0]));
-		}
-		refData = refData + 1;
+		if (!world->refTypes) {
+			// Don't crash if someone missed their data.
+			WARNING(L"Missing debug offset data when loading C++ functions!");
+		} else {
+			const CppRefType &ref = world->refTypes[id];
 
-		for (nat i = 0; i < entries; i++) {
-			// Uncheckable?
-			if (refData[i] == size_t(-2))
-				continue;
+			assert(t->stride == 0 || t->stride == ref.size, L"Type size mismatch for " + ::toS(type.name) +
+				L". Storm size: " + ::toS(t->stride) + L", C++ size: " + ::toS(ref.size) + L".");
 
-			assert(t->offset[i] == refData[i], L"Type size mismatch for " + ::toS(type->name) + L" at " +
-				::toS(i) + L": " + ::toS(t->offset[i]) + L" vs " + ::toS(refData[i]));
+			for (nat i = 0; i < entries; i++) {
+				// Uncheckable?
+				if (ref.offsets[i] == size_t(-1))
+					continue;
+
+				assert(t->offset[i] == ref.offsets[i], L"Type offset mismatch for " + ::toS(type.name) + L" member #" +
+					::toS(i) + L". Storm offset: " + ::toS(t->offset[i]) + L", C++ offset: " + ::toS(ref.offsets[i]));
+			}
+
+			assert(ref.offsets[entries] == size_t(-1), L"There is more data for " + ::toS(type.name));
 		}
-		assert(refData[entries] == size_t(-1), L"There is more data for " + ::toS(type->name));
 #endif
 
 		return t;

@@ -29,7 +29,7 @@ namespace storm {
 		static const CppFunction *cppFunctions();
 		static const CppTemplate *cppTemplates();
 		static const CppThread *cppThreads();
-		static const size_t *const* cppRefOffsets();
+		static const CppRefType *cppRefTypes();
 	};
 
 	// Invalid size.
@@ -119,32 +119,31 @@ namespace storm {
 		return threads;
 	}
 
+	const CppRefType *CppMeta::cppRefTypes() {
+#ifdef DEBUG
+		// REF_PTR_OFFSETS
+
+		static const CppRefType types[] = {
+			// REF_TYPES
+			{ -1, null },
+		};
+		return types;
+#else
+		return null;
+#endif
+	}
+
 	const CppWorld *cppWorld() {
 		static CppWorld w = {
 			CppMeta::cppTypes(),
 			CppMeta::cppFunctions(),
 			CppMeta::cppTemplates(),
 			CppMeta::cppThreads(),
+			CppMeta::cppRefTypes(),
 		};
 		return &w;
 	}
 
-#ifdef DEBUG
-
-	const size_t *const* CppMeta::cppRefOffsets() {
-		// REF_PTR_OFFSETS
-
-		static const size_t *const d[] = {
-			// REF_OFFSETS
-		};
-		return d;
-	}
-
-	const size_t *const* cppRefOffsets() {
-		return CppMeta::cppRefOffsets();
-	}
-
-#endif
 }
 
 #pragma optimize ("", off)
