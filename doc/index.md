@@ -27,7 +27,7 @@ but nothing is planned yet, the main focus is to complete the language. The down
 executable along with demo and test code and a sample implementation of Brainfuck. Source code of
 the compiler itself is not available at the moment, but it will probably be released in the future.
 
-[Download Storm](storm.zip)
+[Download Storm](storm.zip) Last modified ?FileDate:storm.zip?.
 
 To run the compiler, simply unpack the zip-file and run `StormMain.exe`, and the top loop for Basic
 Storm should start. The compiler does not need any external libraries. It is statically linked to
