@@ -9,6 +9,9 @@ namespace storm {
 	 *
 	 * NOTE: due to the startup process, this thread may *not* contain any pointers to other Storm
 	 * object, as they are not reported to the GC during startup.
+	 *
+	 * NOTE: These may be copied, so never assume that if a != b, then they represent different
+	 * threads.
 	 */
 	class Thread : public Object {
 		STORM_CLASS;

@@ -98,7 +98,7 @@ namespace storm {
 		for (nat i = 0; i < c; i++) {
 			const CppThread &thread = world->threads[i];
 
-			if (into.threads[i]) {
+			if (!into.threads[i]) {
 				into.threads[i] = new (e) Thread(thread.decl->createFn);
 			}
 

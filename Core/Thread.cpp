@@ -30,6 +30,8 @@ namespace storm {
 	}
 
 	const os::Thread &Thread::thread() {
+		// TODO: Make thread-safe!
+
 		if (osThread == os::Thread::invalid) {
 			if (create) {
 				// TODO? make sure the newly created thread has been properly registered with the gc!

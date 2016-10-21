@@ -304,7 +304,6 @@ namespace storm {
 		const os::Thread &t = TObject::thread->thread();
 		if (t != os::Thread::current()) {
 			// Wrong thread, switch!
-			// TODO: this sometimes happens even if we're running on the correct thread (eg. during startup). Check out!
 			os::Future<const GcType *, Semaphore> f;
 			os::FnStackParams<2> p; p.add(this);
 			os::UThread::spawn(address(&Type::gcType), true, p, f, &t);
