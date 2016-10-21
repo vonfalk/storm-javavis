@@ -3,6 +3,7 @@
 #include "SrcPos.h"
 #include "Scope.h"
 #include "Name.h"
+#include "Type.h"
 #include "Core/StrBuf.h"
 #include "Core/CloneEnv.h"
 #include "NameSet.h"
@@ -81,11 +82,15 @@ namespace storm {
 			return -1;
 
 		int distance = 0;
+
 		for (nat i = 0; i < c->count(); i++) {
-			if (c->at(i) != params->at(i)) {
-				TODO(L"Implement matching properly!");
-				distance = -1;
-			}
+			const Value &match = c->at(i);
+			const Value &ours = params->at(i);
+
+			if (!match.matches(ours, candidate->flags))
+				return -1;
+			if (ours.type)
+				distance += ours.type->distanceFrom(match.type);
 		}
 
 		return distance;

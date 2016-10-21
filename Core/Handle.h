@@ -21,7 +21,7 @@ namespace storm {
 		size_t size;
 
 		// GcType for arrays of the type.
-		GcType *gcArrayType;
+		const GcType *gcArrayType;
 
 		// Is this type hashed based off its pointer somehow?
 		bool locationHash;

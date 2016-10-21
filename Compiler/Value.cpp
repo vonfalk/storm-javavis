@@ -35,6 +35,30 @@ namespace storm {
 		return !(*this == o);
 	}
 
+	Bool Value::canStore(Type *o) const {
+		if (type == null)
+			return true; // void can 'store' all types.
+		if (o == null)
+			return false; // void can not be 'upcasted' to anything else.
+		return o->isA(type);
+	}
+
+	Bool Value::canStore(Value v) const {
+		// For objects: We can not create references from values.
+		// For values, we need to be able to. In the future, maybe const refs from values?
+		if (ref && !v.ref)
+			if (isClass() || v.isClass())
+				return false;
+		return canStore(v.type);
+	}
+
+	Bool Value::matches(Value v, NamedFlags flags) const {
+		if (flags & namedMatchNoInheritance)
+			return type == v.type;
+		else
+			return canStore(v);
+	}
+
 	Value thisPtr(Type *t) {
 		if ((t->typeFlags & typeValue) == typeValue)
 			return Value(t, false);

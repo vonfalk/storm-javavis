@@ -34,48 +34,46 @@ namespace storm {
 	}
 
 	Type::Type(Str *name, TypeFlags flags) :
-		NameSet(name), engine(RootObject::engine()), gcType(null), tHandle(null), typeFlags(flags & ~typeCpp) {
+		NameSet(name), engine(RootObject::engine()), myGcType(null), tHandle(null), typeFlags(flags & ~typeCpp) {
 
 		init();
 	}
 
 	Type::Type(Str *name, Array<Value> *params, TypeFlags flags) :
-		NameSet(name, params), engine(RootObject::engine()), gcType(null), tHandle(null), typeFlags(flags & ~typeCpp) {
+		NameSet(name, params), engine(RootObject::engine()), myGcType(null), tHandle(null), typeFlags(flags & ~typeCpp) {
 
 		init();
 	}
 
 	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType) :
-		NameSet(name), engine(RootObject::engine()), gcType(gcType), tHandle(null), typeFlags(flags | typeCpp), mySize(size) {
+		NameSet(name), engine(RootObject::engine()), myGcType(gcType), tHandle(null), typeFlags(flags | typeCpp), mySize(size) {
 
-		gcType->type = this;
+		myGcType->type = this;
 		init();
 	}
 
 	Type::Type(Str *name, Array<Value> *params, TypeFlags flags, Size size, GcType *gcType) :
-		NameSet(name, params), engine(RootObject::engine()), gcType(gcType), tHandle(null), typeFlags(flags | typeCpp), mySize(size) {
+		NameSet(name, params), engine(RootObject::engine()), myGcType(gcType), tHandle(null), typeFlags(flags | typeCpp), mySize(size) {
 
-		gcType->type = this;
+		myGcType->type = this;
 		init();
 	}
 
-	// We need to set gcType->type first, therefore we call setMyType!
+	// We need to set myGcType->type first, therefore we call setMyType!
 	Type::Type(Engine &e, TypeFlags flags, Size size, GcType *gcType) :
-		NameSet(setMyType(null, this, gcType, e)), engine(e), gcType(gcType),
+		NameSet(setMyType(null, this, gcType, e)), engine(e), myGcType(gcType),
 		tHandle(null), typeFlags(typeClass | typeCpp) {
 
 		init();
 	}
 
 	Type::~Type() {
-		GcType *g = gcType;
-		gcType = null;
+		GcType *g = myGcType;
+		myGcType = null;
 		// Barrier here?
 
 		// The GC will ignore these during shutdown, when it is crucial not to destroy anything too
 		// early.
-		// NOTE: Destroying types here is generally a bad idea, as non-reachable objects may still
-		// reside on the heap at this point.
 		engine.gc.freeType(g);
 	}
 
@@ -83,7 +81,7 @@ namespace storm {
 		assert((typeFlags & typeValue) == typeValue || (typeFlags & typeClass) == typeClass, L"Invalid type flags!");
 
 		if (value()) {
-			gcType->kind = GcType::tArray;
+			myGcType->kind = GcType::tArray;
 		}
 
 		if (engine.has(bootTemplates))
@@ -102,42 +100,6 @@ namespace storm {
 		chain->lateInit();
 	}
 
-	Size Type::superSize() {
-		if (super())
-			return super()->size();
-
-		if (value())
-			return Size();
-
-		assert(false, L"We are a class which does not inherit from TObject or Object!");
-		return Size();
-	}
-
-	Size Type::size() {
-		if (mySize == Size()) {
-			// Re-compute! We need to switch threads...
-			const os::Thread &t = TObject::thread->thread();
-			if (t == os::Thread::current()) {
-				// Already on the compiler thread.
-				forceLoad();
-				Size s = superSize();
-				TODO(L"Fixme!");
-				// mySize = layout->size(s);
-				mySize = s;
-				if (value())
-					TODO(L"Update the handle as well.");
-			} else {
-				// We need to run on the Compiler thread. Note the 'Semaphore', this is to ensure
-				// that we do not break any semantics regarding the threading model.
-				os::Future<Size, Semaphore> f;
-				os::FnParams p; p.add(this);
-				os::UThread::spawn(address(&Type::size), true, p, f, &t);
-				return f.result();
-			}
-		}
-		return mySize;
-	}
-
 	// Our finalizer.
 	static void destroyType(Type *t) {
 		t->~Type();
@@ -147,7 +109,7 @@ namespace storm {
 		GcType *r = e.gc.allocType(GcType::tType, src->type, src->stride, src->count + 1);
 
 		r->finalizer = src->finalizer;
-		r->offset[0] = OFFSET_OF(Type, gcType);
+		r->offset[0] = OFFSET_OF(Type, myGcType);
 		for (nat i = 0; i < src->count; i++)
 			r->offset[i+1] = src->offset[i];
 
@@ -166,8 +128,8 @@ namespace storm {
 
 		GcType *t = e.gc.allocType(GcType::tType, null, sizeof(Type), entries + 1);
 
-		// Insert 'gcType' as the first (special) pointer:
-		t->offset[0] = OFFSET_OF(Type, gcType);
+		// Insert 'myGcType' as the first (special) pointer:
+		t->offset[0] = OFFSET_OF(Type, myGcType);
 		for (nat i = 0; i < entries; i++)
 			t->offset[i+1] = Offset(type->ptrOffsets[i]).current();
 
@@ -179,7 +141,7 @@ namespace storm {
 	}
 
 	void Type::setType(Object *onto) const {
-		engine.gc.switchType(onto, gcType);
+		engine.gc.switchType(onto, myGcType);
 	}
 
 	void Type::setSuper(Type *to) {
@@ -211,19 +173,17 @@ namespace storm {
 		// Set the type-chain properly.
 		chain->super(to);
 
-		// Generate a GcType for this type.
+		// Invalidate the GcType for this type.
 		if (typeFlags & typeCpp) {
 			// Type from C++. Nothing to do.
-		} else {
-			// We're not a type from C++. As we can not contain any members yet, it is enough to
-			// copy the parent's GcType.
-
-			if (!gcType)
-				TODO(L"Properly free the old type!");
-
-			// NOTE: It is important to preserve the 'tType' kind of the GcType if we inherit from Type.
-			gcType = engine.gc.allocType(to->gcType);
+		} else if (myGcType != null) {
+			// We're not a type from C++.
+			GcType *old = myGcType;
+			myGcType = null;
+			engine.gc.freeType(old);
 		}
+
+		// TODO: Invalidate the handle as well.
 	}
 
 	void Type::setThread(NamedThread *thread) {
@@ -274,11 +234,60 @@ namespace storm {
 		return BasicTypeInfo::user;
 	}
 
+	Size Type::superSize() {
+		if (super())
+			return super()->size();
+
+		if (value())
+			return Size();
+
+		assert(false, L"We are a class which does not inherit from TObject or Object!");
+		return Size();
+	}
+
+	Size Type::size() {
+		if (mySize != Size())
+			return mySize;
+
+		// We need to compute our size. Switch threads if neccessary...
+		const os::Thread &t = TObject::thread->thread();
+		if (t != os::Thread::current()) {
+			// Switch threads...
+			os::Future<Size, Semaphore> f;
+			os::FnStackParams<2> p; p.add(this);
+			os::UThread::spawn(address(&Type::size), true, p, f, &t);
+			return f.result();
+		}
+
+		// Recompute!
+		forceLoad();
+		Size s = superSize();
+		TODO(L"Fixme!");
+		// mySize = layout->size(s);
+		mySize = s;
+
+		return mySize;
+	}
+
 	static void defToS(const void *obj, StrBuf *to) {
 		*to << L"<operator << not found>";
 	}
 
 	const Handle &Type::handle() {
+		// If we're completely done with the handle, return it immediatly.
+		if (tHandle && handleToS == toSFound)
+			return *tHandle;
+
+		// We need to create the handle. Switch threads.
+		const os::Thread &t = TObject::thread->thread();
+		if (t != os::Thread::current()) {
+			// Switch threads...
+			os::Future<const Handle *, Semaphore> f;
+			os::FnStackParams<2> p; p.add(this);
+			os::UThread::spawn(address(&Type::handle), true, p, f, &t);
+			return *f.result();
+		}
+
 		if (!tHandle)
 			buildHandle();
 		if (handleToS != toSFound)
@@ -286,9 +295,40 @@ namespace storm {
 		return *tHandle;
 	}
 
+	const GcType *Type::gcType() {
+		// Already created?
+		if (myGcType != null)
+			return myGcType;
+
+		// We need to create it. Switch threads if neccessary...
+		const os::Thread &t = TObject::thread->thread();
+		if (t != os::Thread::current()) {
+			// Wrong thread, switch!
+			// TODO: this sometimes happens even if we're running on the correct thread (eg. during startup). Check out!
+			os::Future<const GcType *, Semaphore> f;
+			os::FnStackParams<2> p; p.add(this);
+			os::UThread::spawn(address(&Type::gcType), true, p, f, &t);
+			return f.result();
+		}
+
+		// We're on the correct thread. Compute the type!
+		assert((typeFlags & typeCpp) != typeCpp, L"C++ types should be given a GcType on creation!");
+
+		// Now, we do not have any members in Storm, so this is enough:
+		assert(super(), L"Declaring values entirely in Storm is not yet implemented.");
+		myGcType = engine.gc.allocType(super()->gcType());
+
+		// We want to do something like this:
+		// forceLoad();
+		// layout->computeGcType()
+		// ...
+
+		return myGcType;
+	}
+
 	const GcType *Type::gcArrayType() {
 		if (value()) {
-			return gcType;
+			return gcType();
 		} else if (useThread) {
 			return engine.tObjHandle().gcArrayType;
 		} else {
@@ -302,8 +342,9 @@ namespace storm {
 				handleContent = new (engine) code::Content();
 
 			RefHandle *h = new (engine) RefHandle(handleContent);
-			h->size = gcType->stride;
-			h->gcArrayType = gcType;
+			const GcType *g = gcType();
+			h->size = g->stride;
+			h->gcArrayType = g;
 			h->toSFn = &defToS;
 			handleToS = toSMissing;
 			tHandle = h;

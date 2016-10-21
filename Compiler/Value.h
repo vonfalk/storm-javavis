@@ -2,6 +2,7 @@
 #include "Core/EnginePtr.h"
 #include "Code/ValType.h"
 #include "Code/Operand.h"
+#include "NamedFlags.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -37,6 +38,14 @@ namespace storm {
 		// Same type?
 		Bool STORM_FN operator ==(Value o) const;
 		Bool STORM_FN operator !=(Value o) const;
+
+		// Can this value store a type of 'x'?
+		Bool STORM_FN canStore(Type *x) const;
+		Bool STORM_FN canStore(Value v) const;
+
+		// Does this value match another value according to NamedFlags? Note that this relation is not reflexive.
+		// If no special flags are set, then it is equivalent to 'canStore'.
+		Bool STORM_FN matches(Value v, NamedFlags flags) const;
 
 		/**
 		 * Code generation information.

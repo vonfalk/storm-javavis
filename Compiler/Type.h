@@ -66,24 +66,37 @@ namespace storm {
 		// Receive notification of new additions.
 		virtual void STORM_FN notifyAdded(NameSet *to, Named *what);
 
+		/**
+		 * These functions are safe to call from any thread.
+		 */
+
 		// Get a handle for this type.
-		const Handle &handle();
+		const Handle &CODECALL handle();
+
+		// Get the GcType for instances of this object. Lazily creates the information if it is
+		// needed. For values, this is the same as gcArrayType.
+		const GcType *CODECALL gcType();
 
 		// Get the raw GcType for arrays of this type. Usually, the handle is preferred, but
 		// sometimes in early boot that is not possible.
-		const GcType *gcArrayType();
-
-		// Late initialization.
-		virtual void lateInit();
+		const GcType *CODECALL gcArrayType();
 
 		// Get this class's size. (NOTE: This function is safe to call from any thread).
 		Size STORM_FN size();
+
+		/**
+		 * The threadsafe part ends here.
+		 */
+
+		// Late initialization.
+		virtual void lateInit();
 
 		// Inheritance chain and membership lookup. TODO: Make private?
 		TypeChain *chain;
 
 		// Helpers for the chain.
 		inline Bool STORM_FN isA(const Type *o) const { return chain->isA(o); }
+		inline Int STORM_FN distanceFrom(const Type *from) const { return chain->distance(from); }
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
@@ -106,7 +119,7 @@ namespace storm {
 		// this will have 'kind' set to 'tArray'.
 		// Note: the type member of the GcType this is pointing to must never be changed after this
 		// member is changed. Otherwise we confuse the GC.
-		GcType *gcType;
+		GcType *myGcType;
 
 		// Handle (lazily created). If we're a value, this will be a RefHandle.
 		const Handle *tHandle;

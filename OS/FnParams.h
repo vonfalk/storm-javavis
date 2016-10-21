@@ -69,7 +69,7 @@ namespace os {
 		template <class T>
 		inline FnParams &add(T &p) {
 			TypeInfo i = typeInfo<T>();
-			add(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), i.kind == TypeInfo::floatNr, &p);
+			add(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), i.kind == TypeInfo::floatNr, (const void *)&p);
 			return *this;
 		}
 
@@ -80,7 +80,7 @@ namespace os {
 		template <class T>
 		inline FnParams &addFirst(T &p) {
 			TypeInfo i = typeInfo<T>();
-			addFirst(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), i.kind == TypeInfo::floatNr, &p);
+			addFirst(&FnParams::copy<T>, &FnParams::destroy<T>, sizeof(T), i.kind == TypeInfo::floatNr, (const void *)&p);
 			return *this;
 		}
 

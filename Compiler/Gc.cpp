@@ -848,6 +848,9 @@ namespace storm {
 		mps_ap_destroy(weakAllocPoint);
 		mps_ap_destroy(codeAllocPoint);
 
+		// Clear these now, otherwise the destructor will crash badly after we've removed the backing storage.
+		freeTypes.clear();
+
 		// Destroy pools.
 		mps_pool_destroy(pool);
 		mps_pool_destroy(weakPool);
@@ -1134,40 +1137,104 @@ namespace storm {
 		return (byte *)memory + headerSize;
 	}
 
-	static size_t typeSize(size_t entries) {
-		return sizeof(GcType) + entries*sizeof(size_t) - sizeof(size_t);
+	size_t Gc::typeSize(size_t entries) {
+		return sizeof(MpsType) + entries*sizeof(size_t) - sizeof(size_t);
 	}
 
 	GcType *Gc::allocType(GcType::Kind kind, Type *type, size_t stride, size_t entries) {
 		size_t s = typeSize(entries);
-		GcType *t;// = (GcType *)malloc(s);
+		MpsType *t;// = (GcType *)malloc(s);
 		check(mps_alloc((mps_addr_t *)&t, gcTypePool, s), L"Failed to allocate type info.");
 		memset(t, 0, s);
-		t->kind = kind;
-		t->type = type;
-		t->stride = stride;
-		t->count = entries;
-		return t;
+		new (t) MpsType();
+		t->type.kind = kind;
+		t->type.type = type;
+		t->type.stride = stride;
+		t->type.count = entries;
+		return &t->type;
 	}
 
 	GcType *Gc::allocType(const GcType *src) {
 		size_t s = typeSize(src->count);
-		GcType *t;
+		MpsType *t;
 		check(mps_alloc((mps_addr_t *)&t, gcTypePool, s), L"Failed to allocate type info.");
-		memcpy(t, src, s);
-		return t;
+		new (t) MpsType();
+
+		memcpy(&t->type, src, s);
+		return &t->type;
+	}
+
+	struct MarkData {
+		// Format to look for.
+		mps_fmt_t fmt;
+	};
+
+	void Gc::markType(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t) {
+		MarkData *data = (MarkData *)p;
+
+		// Does this address belong to the correct format?
+		if (fmt != data->fmt)
+			return;
+
+		// Mark the type.
+		GcType *t = (GcType *)Gc::typeOf(addr);
+		MpsType *base = BASE_PTR(MpsType, t, type);
+		base->reachable = true;
+
+		// If this is a GcType::tType-object, also mark that type!
+		if (t->kind == GcType::tType) {
+			size_t offset = t->offset[0];
+			GcType *t2 = *(GcType **)((byte *)addr + offset);
+			if (t2) {
+				MpsType *base2 = BASE_PTR(MpsType, t2, type);
+				base2->reachable = true;
+			}
+		}
 	}
 
 	void Gc::freeType(GcType *t) {
 		if (ignoreFreeType)
 			return;
+		if (!t)
+			return;
 
-		// TODO: Remember which types to free and only free them when we're safe they are not used
-		// anywhere on the heap. It is fine to occasionally do a full heap-scan for this.
+		// It is possible we can not yet reclaim 't'. Put it in the free set instead.
+		MpsType *base = BASE_PTR(MpsType, t, type);
+		freeTypes.insert(base);
 
-		size_t s = sizeof(GcType) + t->count*sizeof(size_t) - sizeof(size_t);
-		mps_free(gcTypePool, t, s);
-		// free(t);
+		// Shall we try to reclaim all freed types? This is expensive, so only do it rarely!
+		if (freeTypes.size() > 100) {
+			// Ensure no GC:s in flight.
+			mps_arena_park(arena);
+
+			// Mark all as unseen.
+			util::InlineSet<MpsType>::iterator end = freeTypes.end();
+			for (util::InlineSet<MpsType>::iterator i = freeTypes.begin(); i != end; ++i) {
+				i->reachable = false;
+			}
+
+			// Iterate through the heap and mark all reachable nodes.
+			MarkData d = { format };
+			mps_arena_formatted_objects_walk(arena, &markType, &d, 0);
+
+			// Release the GC once more.
+			mps_arena_release(arena);
+
+			// Remove all unseen nodes.
+			size_t removed = 0;
+			for (util::InlineSet<MpsType>::iterator i = freeTypes.begin(); i != end; ++i) {
+				if (!i->reachable) {
+					MpsType *e = *i;
+					freeTypes.erase(e);
+
+					size_t s = typeSize(e->type.count);
+					mps_free(gcTypePool, e, s);
+					removed++;
+				}
+			}
+
+			PLN(L"Freed " << removed << L" type objects!");
+		}
 	}
 
 	const GcType *Gc::typeOf(const void *mem) {

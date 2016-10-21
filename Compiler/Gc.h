@@ -1,6 +1,7 @@
 #pragma once
 #include "Utils/Exception.h"
 #include "Utils/Lock.h"
+#include "Utils/InlineSet.h"
 #include "OS/Thread.h"
 
 #include "gc/mps.h"
@@ -229,8 +230,27 @@ namespace storm {
 		// Are we running finalizers at the moment? Used for synchronization.
 		volatile nat runningFinalizers;
 
+		// Struct used for GcTypes inside MPS. As it is not always possible to delete all GcType objects
+		// immediatly, we store the freed ones in an InlineSet until we can actually reclaim them.
+		struct MpsType : public util::SetMember<MpsType> {
+			// Reachable?
+			bool reachable;
+
+			// The actual GcType. Must be last, as it contains a 'dynamic' array.
+			GcType type;
+		};
+
+		// All freed GcType-objects which have not yet been reclaimed.
+		util::InlineSet<MpsType> freeTypes;
+
 		// During destruction - ignore any freeType() calls?
 		bool ignoreFreeType;
+
+		// Size of an MPS-type.
+		static size_t typeSize(size_t offsets);
+
+		// Worker function for 'scanning' the MpsType objects.
+		static void markType(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t);
 #endif
 	};
 
