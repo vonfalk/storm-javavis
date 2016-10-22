@@ -315,7 +315,7 @@ namespace os {
 
 	UThreadState *UThreadState::current() {
 		UThreadState *s = currentUThreadState();
-		assert(s);
+		assert(s); // TDOD: create 's' if it is not created at this point. It can happen, it is however unlikely.
 		return s;
 	}
 
