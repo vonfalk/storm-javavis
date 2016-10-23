@@ -24,6 +24,11 @@ namespace storm {
 		// Lay out all variables in memory. Returns the total size of the creation.
 		Size STORM_FN doLayout(Size parentSize);
 
+		// Fill in a GcType for the current layout.
+		// If 'into' is null, we only compute how many entries we need.
+		// 'parent' may be null.
+		nat fillGcType(const GcType *parent, GcType *into);
+
 	private:
 		// All members in here, in the order they are laid out.
 		Array<MemberVar *> *vars;

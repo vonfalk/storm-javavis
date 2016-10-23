@@ -333,15 +333,35 @@ namespace storm {
 		// We're on the correct thread. Compute the type!
 		assert((typeFlags & typeCpp) != typeCpp, L"C++ types should be given a GcType on creation!");
 
-		// Now, we do not have any members in Storm, so this is enough:
-		assert(super(), L"Declaring values entirely in Storm is not yet implemented.");
-		myGcType = engine.gc.allocType(super()->gcType());
+		// Compute the GcType for us!
+		nat count = 0;
+		const GcType *superGc = null;
+		if (Type *s = super())
+			superGc = s->gcType();
 
-		// We want to do something like this:
-		// forceLoad();
-		// layout->computeGcType()
-		// ...
+		if (!layout) {
+			// We do not have any variables of our own.
+			if (superGc)
+				myGcType = engine.gc.allocType(superGc);
+			else if (value())
+				myGcType = engine.gc.allocType(GcType::tArray, this, size().current(), 0);
+			else
+				assert(false, L"We're a non-value not inheriting from Object or TObject!");
 
+			return myGcType;
+		}
+
+		// Merge our parent's and our offsets (if we have a parent).
+		nat entries = layout->fillGcType(superGc, null);
+
+		if (value())
+			myGcType = engine.gc.allocType(GcType::tArray, this, size().current(), entries);
+		else if (superGc)
+			myGcType = engine.gc.allocType(GcType::Kind(superGc->kind), this, size().current(), entries);
+		else
+			assert(false, L"Neither a value nor have a parent!");
+
+		layout->fillGcType(superGc, myGcType);
 		return myGcType;
 	}
 
