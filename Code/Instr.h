@@ -101,7 +101,7 @@ namespace code {
 	// to have the signature <ptr or void> copy(void *dest, void *src), like copy ctors in C++.
 	// Having an empty 'copyFn' to 'fnParam' will generate a 'memcpy'-like copy.
 	Instr *STORM_FN fnParam(EnginePtr e, Operand src);
-	Instr *STORM_FN fnParam(EnginePtr e, Variable src, Operand copyFn);
+	Instr *STORM_FN fnParam(EnginePtr e, Var src, Operand copyFn);
 	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Size size);
 	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Size size, Operand copyFn);
 	Instr *STORM_FN fnCall(EnginePtr e, Operand src, ValType ret);
@@ -264,7 +264,7 @@ namespace code {
 	PROXY2(lea, Operand, Operand);
 	PROXY2(setCond, Operand, CondFlag);
 	PROXY1(fnParam, Operand);
-	PROXY2(fnParam, Variable, Operand);
+	PROXY2(fnParam, Var, Operand);
 	PROXY2(fnParamRef, Operand, Size);
 	PROXY3(fnParamRef, Operand, Size, Operand);
 	PROXY2(fnCall, Operand, ValType);

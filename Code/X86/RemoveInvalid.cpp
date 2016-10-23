@@ -50,7 +50,7 @@ namespace code {
 		void RemoveInvalid::before(Listing *dest, Listing *src) {
 			params = new (this) Array<Param>();
 
-			used = usedRegisters(dest->arena, src).used;
+			used = usedRegs(dest->arena, src).used;
 
 			// Add 64-bit aliases everywhere.
 			for (nat i = 0; i < used->count(); i++)
@@ -69,7 +69,7 @@ namespace code {
 			}
 		}
 
-		Register RemoveInvalid::unusedReg(Nat line) {
+		Reg RemoveInvalid::unusedReg(Nat line) {
 			return code::x86::unusedReg(used->at(line));
 		}
 
@@ -100,7 +100,7 @@ namespace code {
 			Size size = instr->src().size();
 			assert(size <= Size::sInt, "The 64-bit transform should have fixed this!");
 
-			Register reg = unusedReg(line);
+			Reg reg = unusedReg(line);
 			Engine &e = engine();
 			if (reg == noReg) {
 				reg = asSize(ptrD, size);
@@ -123,7 +123,7 @@ namespace code {
 				return;
 			}
 
-			Register reg = unusedReg(line);
+			Reg reg = unusedReg(line);
 			Engine &e = engine();
 			if (reg == noReg) {
 				*dest << push(ptrD);
@@ -149,7 +149,7 @@ namespace code {
 
 			// Only supported mmode is mul <reg>, <r/m>. Move dest into a register.
 			Engine &e = engine();
-			Register reg = unusedReg(line);
+			Reg reg = unusedReg(line);
 			if (reg == noReg) {
 				reg = asSize(ptrD, size);
 				*dest << push(ptrD);
@@ -302,7 +302,7 @@ namespace code {
 			// We need to store the value in cl. See if dest is also cl or ecx:
 			if (instr->dest().type() == opRegister && same(instr->dest().reg(), ecx)) {
 				// Yup. We need to swap things around a lot!
-				Register reg = asSize(unusedReg(line), size);
+				Reg reg = asSize(unusedReg(line), size);
 
 				if (reg == noReg) {
 					// Ugh... Worst case!
@@ -318,7 +318,7 @@ namespace code {
 				}
 			} else {
 				// We have a bit more leeway at least!
-				Register reg = asSize(unusedReg(line), Size::sInt);
+				Reg reg = asSize(unusedReg(line), Size::sInt);
 
 				if (reg == noReg) {
 					*dest << push(ecx);
@@ -426,7 +426,7 @@ namespace code {
 		static Operand offset(const Operand &src, Offset offset) {
 			switch (src.type()) {
 			case opVariable:
-				return xRel(Size::sInt, src.variable(), offset);
+				return xRel(Size::sInt, src.var(), offset);
 			case opRegister:
 				return xRel(Size::sInt, src.reg(), offset);
 			default:

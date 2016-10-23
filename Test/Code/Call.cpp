@@ -24,7 +24,7 @@ BEGIN_TEST(CallCopyTest, Code) {
 	Ref intFn = arena->external(L"intFn", &callIntFn);
 
 	Listing *l = new (e) Listing();
-	Variable v = l->createIntVar(l->root());
+	Var v = l->createIntVar(l->root());
 
 	*l << prolog();
 
@@ -53,7 +53,7 @@ BEGIN_TEST(CallRefTest, Code) {
 	Ref intFn = arena->external(L"intFn", &callIntFn);
 
 	Listing *l = new (e) Listing();
-	Variable v = l->createIntVar(l->root());
+	Var v = l->createIntVar(l->root());
 
 	*l << prolog();
 
@@ -81,7 +81,7 @@ BEGIN_TEST(CallRefPlainTest, Code) {
 	Ref intFn = arena->external(L"intFn", &callIntFn);
 
 	Listing *l = new (e) Listing();
-	Variable v = l->createIntVar(l->root());
+	Var v = l->createIntVar(l->root());
 
 	*l << prolog();
 

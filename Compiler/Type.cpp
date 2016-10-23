@@ -183,6 +183,7 @@ namespace storm {
 			engine.gc.freeType(old);
 		}
 
+		// TODO: Invalidate the Layout as well.
 		// TODO: Invalidate the handle as well.
 	}
 
@@ -211,6 +212,13 @@ namespace storm {
 		if (value() && tHandle)
 			if (Function *f = as<Function>(item))
 				updateHandle(f);
+
+		if ((typeFlags & typeCpp) != typeCpp) {
+			// Tell the layout we found a new variable!
+			if (!layout)
+				layout = new (engine) Layout();
+			layout->add(item);
+		}
 	}
 
 	void Type::notifyAdded(NameSet *, Named *what) {
@@ -232,6 +240,18 @@ namespace storm {
 
 	BasicTypeInfo::Kind Type::builtInType() const {
 		return BasicTypeInfo::user;
+	}
+
+	void Type::doLayout() {
+		// Make sure we're fully loaded.
+		forceLoad();
+
+		// No layout -> nothing to do.
+		if (!layout)
+			return;
+
+		// We might as well compute our size while we're at it!
+		mySize = layout->doLayout(superSize());
 	}
 
 	Size Type::superSize() {
@@ -261,11 +281,11 @@ namespace storm {
 
 		// Recompute!
 		forceLoad();
-		Size s = superSize();
-		TODO(L"Fixme!");
-		// mySize = layout->size(s);
-		mySize = s;
-
+		mySize = superSize();
+		if (layout) {
+			// If we do not have a layout, we do not have any variables.
+			mySize = layout->doLayout(mySize);
+		}
 		return mySize;
 	}
 

@@ -22,13 +22,13 @@ namespace storm {
 		STORM_CTOR VarInfo();
 
 		// Create, assume we do not need anything special.
-		STORM_CTOR VarInfo(code::Variable v);
+		STORM_CTOR VarInfo(code::Var v);
 
 		// Create, set flags.
-		STORM_CTOR VarInfo(code::Variable v, Bool needsPart);
+		STORM_CTOR VarInfo(code::Var v, Bool needsPart);
 
 		// Variable.
-		code::Variable v;
+		code::Var v;
 
 		// Needs a specific part after constructed?
 		Bool needsPart;
@@ -68,7 +68,7 @@ namespace storm {
 		 */
 
 		// Add a parameter of 'type'.
-		code::Variable STORM_FN createParam(Value type);
+		code::Var STORM_FN createParam(Value type);
 
 		/**
 		 * Create variables (aware of Storm semantics).
@@ -92,7 +92,7 @@ namespace storm {
 		Value STORM_FN result() const;
 
 		// Return the value stored in 'value'. Generates an epilog and a ret instruction.
-		void STORM_FN returnValue(code::Variable value);
+		void STORM_FN returnValue(code::Var value);
 
 		/**
 		 * Data.
@@ -112,7 +112,7 @@ namespace storm {
 		Value res;
 
 		// Return parameter.
-		code::Variable resParam;
+		code::Var resParam;
 	};
 
 
@@ -135,7 +135,7 @@ namespace storm {
 		STORM_CTOR CodeResult(Value type, code::Block block);
 
 		// A result of type 't' should be stored in 'var'.
-		STORM_CTOR CodeResult(Value type, code::Variable var);
+		STORM_CTOR CodeResult(Value type, code::Var var);
 
 		// Get a location to store the variable in. Asserts if the result is not needed.
 		VarInfo STORM_FN location(CodeGen *s);
@@ -145,7 +145,7 @@ namespace storm {
 
 		// Suggest a location for the result. Returns true if the suggestion is acceptable,
 		// otherwise use whatever 'location' returns.
-		Bool STORM_FN suggest(CodeGen *s, code::Variable v);
+		Bool STORM_FN suggest(CodeGen *s, code::Var v);
 		Bool STORM_FN suggest(CodeGen *s, code::Operand v);
 
 		// What type is needed? (void = not needed).

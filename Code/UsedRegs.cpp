@@ -1,10 +1,10 @@
 #include "stdafx.h"
-#include "UsedRegisters.h"
+#include "UsedRegs.h"
 #include "Arena.h"
 
 namespace code {
 
-	UsedRegisters::UsedRegisters(Array<RegSet *> *used, RegSet *all) : used(used), all(all) {}
+	UsedRegs::UsedRegs(Array<RegSet *> *used, RegSet *all) : used(used), all(all) {}
 
 	static void operator +=(RegSet &to, const Operand &op) {
 		if (op.type() == opRegister)
@@ -70,7 +70,7 @@ namespace code {
 		}
 	}
 
-	UsedRegisters usedRegisters(const Arena *arena, const Listing *src) {
+	UsedRegs usedRegs(const Arena *arena, const Listing *src) {
 		Array<RegSet *> *used = new (src) Array<RegSet *>(src->count(), null);
 
 		RegSet *all = new (src) RegSet();
@@ -85,10 +85,10 @@ namespace code {
 		}
 
 
-		return UsedRegisters(used, all);
+		return UsedRegs(used, all);
 	}
 
-	RegSet *allUsedRegisters(const Listing *src) {
+	RegSet *allUsedRegs(const Listing *src) {
 		RegSet *all = new (src) RegSet();
 
 		for (Nat i = 0; i < src->count(); i++) {

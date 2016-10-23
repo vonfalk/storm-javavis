@@ -32,8 +32,8 @@ BEGIN_TEST(CodeExceptionTest, Code) {
 
 	Listing *l = new (e) Listing();
 	Block block = l->createBlock(l->root());
-	Variable v = l->createVar(l->root(), Size::sInt, intCleanup, freeOnException);
-	Variable w = l->createVar(block, Size::sInt, intCleanup, freeOnException);
+	Var v = l->createVar(l->root(), Size::sInt, intCleanup, freeOnException);
+	Var w = l->createVar(block, Size::sInt, intCleanup, freeOnException);
 
 	*l << prolog();
 
@@ -89,8 +89,8 @@ BEGIN_TEST(CodeCleanupTest, Code) {
 
 	Listing *l = new (e) Listing();
 	Block block = l->createBlock(l->root());
-	Variable v = l->createVar(l->root(), Size::sInt, intCleanup);
-	Variable w = l->createVar(block, Size::sInt, intCleanup);
+	Var v = l->createVar(l->root(), Size::sInt, intCleanup);
+	Var w = l->createVar(block, Size::sInt, intCleanup);
 
 	*l << prolog();
 
@@ -146,7 +146,7 @@ BEGIN_TEST(ExceptionRefTest, Code) {
 
 	Listing *l = new (e) Listing();
 	Block block = l->createBlock(l->root());
-	Variable v = l->createVar(l->root(), Size::sInt, intCleanup, freeOnBoth | freePtr);
+	Var v = l->createVar(l->root(), Size::sInt, intCleanup, freeOnBoth | freePtr);
 
 	*l << prolog();
 
@@ -188,7 +188,7 @@ BEGIN_TEST(ExceptionSehTest, Code) {
 
 	Listing *l = new (e) Listing();
 	Block block = l->createBlock(l->root());
-	Variable v = l->createVar(l->root(), Size::sInt, intCleanup);
+	Var v = l->createVar(l->root(), Size::sInt, intCleanup);
 
 	*l << prolog();
 
@@ -254,8 +254,8 @@ BEGIN_TEST(ExceptionLargeTest, Code) {
 
 	Listing *l = new (e) Listing();
 	Block block = l->createBlock(l->root());
-	Variable p = l->createParam(ValType(Size::sInt * 3, false), intCleanup, freeOnBoth | freePtr);
-	Variable v = l->createVar(l->root(), Size::sInt * 3, intCleanup, freeOnBoth | freePtr);
+	Var p = l->createParam(ValType(Size::sInt * 3, false), intCleanup, freeOnBoth | freePtr);
+	Var v = l->createVar(l->root(), Size::sInt * 3, intCleanup, freeOnBoth | freePtr);
 
 	*l << prolog();
 

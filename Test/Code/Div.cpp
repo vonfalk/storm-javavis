@@ -9,8 +9,8 @@ BEGIN_TEST(DivITest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
-	Variable p2 = l->createIntParam();
+	Var p1 = l->createIntParam();
+	Var p2 = l->createIntParam();
 
 	*l << prolog();
 
@@ -36,8 +36,8 @@ BEGIN_TEST(DivI2Test, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
-	Variable p2 = l->createIntParam();
+	Var p1 = l->createIntParam();
+	Var p2 = l->createIntParam();
 
 	*l << prolog();
 
@@ -64,8 +64,8 @@ BEGIN_TEST(DivUTest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
-	Variable p2 = l->createIntParam();
+	Var p1 = l->createIntParam();
+	Var p2 = l->createIntParam();
 
 	*l << prolog();
 
@@ -89,8 +89,8 @@ BEGIN_TEST(ModITest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
-	Variable p2 = l->createIntParam();
+	Var p1 = l->createIntParam();
+	Var p2 = l->createIntParam();
 
 	*l << prolog();
 
@@ -116,8 +116,8 @@ BEGIN_TEST(ModUTest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
-	Variable p2 = l->createIntParam();
+	Var p1 = l->createIntParam();
+	Var p2 = l->createIntParam();
 
 	*l << prolog();
 
@@ -141,7 +141,7 @@ BEGIN_TEST(DivIConstTest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
+	Var p1 = l->createIntParam();
 
 	*l << prolog();
 
@@ -165,7 +165,7 @@ BEGIN_TEST(ModIConstTest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
+	Var p1 = l->createIntParam();
 
 	*l << prolog();
 

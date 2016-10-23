@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Instr.h"
 #include "Exception.h"
-#include "Register.h"
+#include "Reg.h"
 #include "Core/StrBuf.h"
 
 namespace code {
@@ -108,8 +108,8 @@ namespace code {
 	 * Instructions.
 	 */
 
-	static Operand sizedReg(Register base, Size size) {
-		Register s = asSize(base, size);
+	static Operand sizedReg(Reg base, Size size) {
+		Reg s = asSize(base, size);
 		if (s == noReg) {
 			if (size == Size())
 				return Operand();
@@ -194,7 +194,7 @@ namespace code {
 		return instrSrc(e, op::fnParam, src);
 	}
 
-	Instr *fnParam(EnginePtr e, Variable src, Operand copyFn) {
+	Instr *fnParam(EnginePtr e, Var src, Operand copyFn) {
 		if (copyFn.type() != opNone) {
 			if (copyFn.type() == opConstant)
 				throw InvalidValue(L"Should not call constant values, use references instead!");

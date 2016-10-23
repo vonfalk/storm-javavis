@@ -1,7 +1,7 @@
 #pragma once
 #include "../Transform.h"
 #include "../OpTable.h"
-#include "../UsedRegisters.h"
+#include "../UsedRegs.h"
 
 namespace code {
 	namespace x86 {

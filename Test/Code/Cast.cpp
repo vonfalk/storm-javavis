@@ -9,8 +9,8 @@ BEGIN_TEST(CastIntLong, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createIntParam();
-	Variable r = l->createLongVar(l->root());
+	Var p = l->createIntParam();
+	Var r = l->createLongVar(l->root());
 
 	*l << prolog();
 
@@ -34,8 +34,8 @@ BEGIN_TEST(CastCharInt, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createByteParam();
-	Variable r = l->createIntVar(l->root());
+	Var p = l->createByteParam();
+	Var r = l->createIntVar(l->root());
 
 	*l << prolog();
 
@@ -59,8 +59,8 @@ BEGIN_TEST(CastCharLong, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createByteParam();
-	Variable r = l->createLongVar(l->root());
+	Var p = l->createByteParam();
+	Var r = l->createLongVar(l->root());
 
 	*l << prolog();
 
@@ -84,8 +84,8 @@ BEGIN_TEST(CastLongInt, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createLongParam();
-	Variable r = l->createIntVar(l->root());
+	Var p = l->createLongParam();
+	Var r = l->createIntVar(l->root());
 
 	*l << prolog();
 
@@ -109,8 +109,8 @@ BEGIN_TEST(CastIntChar, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createIntParam();
-	Variable r = l->createByteVar(l->root());
+	Var p = l->createIntParam();
+	Var r = l->createByteVar(l->root());
 
 	*l << prolog();
 
@@ -134,8 +134,8 @@ BEGIN_TEST(CastLongChar, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createLongParam();
-	Variable r = l->createByteVar(l->root());
+	Var p = l->createLongParam();
+	Var r = l->createByteVar(l->root());
 
 	*l << prolog();
 
@@ -163,8 +163,8 @@ BEGIN_TEST(CastNatWord, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createIntParam();
-	Variable r = l->createLongVar(l->root());
+	Var p = l->createIntParam();
+	Var r = l->createLongVar(l->root());
 
 	*l << prolog();
 
@@ -188,8 +188,8 @@ BEGIN_TEST(CastByteNat, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createByteParam();
-	Variable r = l->createIntVar(l->root());
+	Var p = l->createByteParam();
+	Var r = l->createIntVar(l->root());
 
 	*l << prolog();
 
@@ -213,8 +213,8 @@ BEGIN_TEST(CastByteWord, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createByteParam();
-	Variable r = l->createLongVar(l->root());
+	Var p = l->createByteParam();
+	Var r = l->createLongVar(l->root());
 
 	*l << prolog();
 
@@ -238,8 +238,8 @@ BEGIN_TEST(CastWordNat, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createLongParam();
-	Variable r = l->createIntVar(l->root());
+	Var p = l->createLongParam();
+	Var r = l->createIntVar(l->root());
 
 	*l << prolog();
 
@@ -262,8 +262,8 @@ BEGIN_TEST(CastNatByte, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createIntParam();
-	Variable r = l->createByteVar(l->root());
+	Var p = l->createIntParam();
+	Var r = l->createByteVar(l->root());
 
 	*l << prolog();
 
@@ -286,8 +286,8 @@ BEGIN_TEST(CastWordByte, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createLongParam();
-	Variable r = l->createByteVar(l->root());
+	Var p = l->createLongParam();
+	Var r = l->createByteVar(l->root());
 
 	*l << prolog();
 

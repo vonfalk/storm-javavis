@@ -3,13 +3,13 @@
 
 namespace code {
 
-	static Offset addVar(Listing *src, Array<Offset> *db, Array<Bool> *valid, Variable v) {
+	static Offset addVar(Listing *src, Array<Offset> *db, Array<Bool> *valid, Var v) {
 		// Parameter?
 		if (src->isParam(v))
 			return Offset();
 
 		// Invalid?
-		if (v == Variable())
+		if (v == Var())
 			return Offset();
 
 		// We've got something useful!
@@ -18,7 +18,7 @@ namespace code {
 		if (valid->at(id))
 			return db->at(id);
 
-		Variable prevVar = src->prev(v);
+		Var prevVar = src->prev(v);
 		Offset offset = addVar(src, db, valid, prevVar);
 
 		if (!src->isParam(prevVar))
@@ -34,7 +34,7 @@ namespace code {
 	}
 
 	Array<Offset> *layout(Listing *src) {
-		Array<Variable> *all = src->allVars();
+		Array<Var> *all = src->allVars();
 
 		Array<Offset> *result = new (src) Array<Offset>(all->count() + 1, Offset());
 		Array<Bool> *populated = new (src) Array<Bool>(all->count(), false);

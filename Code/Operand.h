@@ -1,8 +1,8 @@
 #pragma once
-#include "Register.h"
+#include "Reg.h"
 #include "OpCode.h"
 #include "CondFlag.h"
-#include "Variable.h"
+#include "Var.h"
 #include "Block.h"
 #include "Label.h"
 #include "Reference.h"
@@ -74,13 +74,13 @@ namespace code {
 		STORM_CTOR Operand();
 
 		// Register.
-		STORM_CAST_CTOR Operand(Register reg);
+		STORM_CAST_CTOR Operand(Reg reg);
 
 		// CondFlag.
 		STORM_CAST_CTOR Operand(CondFlag flag);
 
 		// Variable.
-		STORM_CAST_CTOR Operand(Variable var);
+		STORM_CAST_CTOR Operand(Var var);
 
 		// Block or part.
 		STORM_CAST_CTOR Operand(Part part);
@@ -131,16 +131,16 @@ namespace code {
 
 		// Constant (depends on the backend).
 		Word STORM_FN constant() const;
-		Register STORM_FN reg() const; // "register" is a reserved word.
+		Reg STORM_FN reg() const; // "register" is a reserved word.
 		Offset STORM_FN offset() const;
 		CondFlag STORM_FN condFlag() const;
 		Part STORM_FN part() const;
 		Label STORM_FN label() const;
 		Ref STORM_FN ref() const;
 		RootObject *object() const;
-		Variable STORM_FN variable() const; // NOTE: The size of this variable is equal to the size
-											// we want to read, which is not always the size of the
-											// original variable!
+		Var STORM_FN var() const; // NOTE: The size of this variable is equal to the size
+		                          // we want to read, which is not always the size of the
+								  // original variable!
 
 		/**
 		 * Debug.
@@ -156,8 +156,8 @@ namespace code {
 		Operand(RootObject *obj);
 
 		// Register + offset.
-		Operand(Register r, Offset offset, Size size);
-		Operand(Variable v, Offset offset, Size size);
+		Operand(Reg r, Offset offset, Size size);
+		Operand(Var v, Offset offset, Size size);
 
 		// Our type. Note: may contain other flags as well!
 		OpType opType;
@@ -184,8 +184,8 @@ namespace code {
 		friend Operand xConst(Size s, Word w);
 		friend Operand objPtr(Object *ptr);
 		friend Operand objPtr(TObject *ptr);
-		friend Operand xRel(Size size, Register reg, Offset offset);
-		friend Operand xRel(Size size, Variable v, Offset offset);
+		friend Operand xRel(Size size, Reg reg, Offset offset);
+		friend Operand xRel(Size size, Var v, Offset offset);
 		friend wostream &operator <<(wostream &to, const Operand &o);
 	};
 
@@ -210,16 +210,16 @@ namespace code {
 	Operand STORM_FN objPtr(TObject *ptr);
 
 	// Relative values (dereference pointers).
-	Operand STORM_FN byteRel(Register reg, Offset offset);
-	Operand STORM_FN intRel(Register reg, Offset offset);
-	Operand STORM_FN longRel(Register reg, Offset offset);
-	Operand STORM_FN ptrRel(Register reg, Offset offset);
-	Operand STORM_FN xRel(Size size, Register reg, Offset offset);
+	Operand STORM_FN byteRel(Reg reg, Offset offset);
+	Operand STORM_FN intRel(Reg reg, Offset offset);
+	Operand STORM_FN longRel(Reg reg, Offset offset);
+	Operand STORM_FN ptrRel(Reg reg, Offset offset);
+	Operand STORM_FN xRel(Size size, Reg reg, Offset offset);
 
 	// Access offsets inside variables.
-	Operand STORM_FN byteRel(Variable v, Offset offset);
-	Operand STORM_FN intRel(Variable v, Offset offset);
-	Operand STORM_FN longRel(Variable v, Offset offset);
-	Operand STORM_FN ptrRel(Variable v, Offset offset);
-	Operand STORM_FN xRel(Size size, Variable v, Offset offset);
+	Operand STORM_FN byteRel(Var v, Offset offset);
+	Operand STORM_FN intRel(Var v, Offset offset);
+	Operand STORM_FN longRel(Var v, Offset offset);
+	Operand STORM_FN ptrRel(Var v, Offset offset);
+	Operand STORM_FN xRel(Size size, Var v, Offset offset);
 }

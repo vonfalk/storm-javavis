@@ -11,11 +11,11 @@ BEGIN_TEST(CodeScopeTest, CodeBasic) {
 
 	Part p = l->createPart(l->root());
 	Block b = l->createBlock(l->root());
-	Variable v0 = l->createVar(l->root(), Size::sLong);
-	Variable v1 = l->createVar(b, Size::sInt);
-	Variable v2 = l->createVar(p, Size::sInt);
-	Variable v3 = l->createVar(p, Size::sInt);
-	Variable par = l->createParam(valPtr());
+	Var v0 = l->createVar(l->root(), Size::sLong);
+	Var v1 = l->createVar(b, Size::sInt);
+	Var v2 = l->createVar(p, Size::sInt);
+	Var v3 = l->createVar(p, Size::sInt);
+	Var par = l->createParam(valPtr());
 
 	*l << mov(eax, ebx);
 	*l << mov(v2, intConst(10));
@@ -24,7 +24,7 @@ BEGIN_TEST(CodeScopeTest, CodeBasic) {
 	CHECK_EQ(l->prev(v3), v2);
 	CHECK_EQ(l->prev(v2), v0);
 	CHECK_EQ(l->prev(v0), par);
-	CHECK_EQ(l->prev(par), Variable());
+	CHECK_EQ(l->prev(par), Var());
 
 } END_TEST
 
@@ -35,8 +35,8 @@ BEGIN_TEST(CodeTest, CodeBasic) {
 	Listing *l = new (e) Listing();
 
 	Part root = l->root();
-	Variable v = l->createIntVar(root);
-	Variable p = l->createIntParam();
+	Var v = l->createIntVar(root);
+	Var p = l->createIntParam();
 
 	Label l1 = l->label();
 

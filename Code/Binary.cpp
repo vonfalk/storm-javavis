@@ -39,7 +39,7 @@ namespace code {
 		GcType::tArray,
 		null,
 		null,
-		sizeof(Var),
+		sizeof(Variable),
 		0,
 		{},
 	};
@@ -51,14 +51,14 @@ namespace code {
 
 		for (nat i = 0; i < srcParts->count(); i++) {
 			code::Part part = srcParts->at(i);
-			Array<Variable> *vars = src->partVars(part);
+			Array<Var> *vars = src->partVars(part);
 
 			Part *p = (Part *)runtime::allocArray(engine(), &partType, vars->count());
 			parts->v[i] = p;
 			p->prev = src->prev(part).key();
 
 			for (nat j = 0; j < vars->count(); j++) {
-				Variable &v = vars->at(j);
+				const Var &v = vars->at(j);
 				p->vars[j].id = v.key();
 				p->vars[j].freeOpt = src->freeOpt(v);
 				p->vars[j].size = v.size();
@@ -77,7 +77,7 @@ namespace code {
 		}
 	}
 
-	void Binary::cleanup(StackFrame &frame, Var &v) {
+	void Binary::cleanup(StackFrame &frame, Variable &v) {
 		if ((v.freeOpt & freeOnException) != 0) {
 			byte *data = (byte *)address();
 			size_t *table = (size_t *)(data + metaOffset);
@@ -108,7 +108,7 @@ namespace code {
 				FLong p = (FLong)freeFn;
 				(*p)(*(Long *)ptr);
 			} else {
-				WARNING(L"Unsupported size for destruction. Use 'freePtr' instead!");
+				WARNING(L"Unsupported size for destruction (" + ::toS(v.size) + L". Use 'freePtr' instead!");
 			}
 		}
 	}

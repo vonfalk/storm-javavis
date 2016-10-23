@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Arena.h"
-#include "Register.h"
+#include "Reg.h"
 #include "X86/Arena.h"
 #include "Core/Str.h"
 

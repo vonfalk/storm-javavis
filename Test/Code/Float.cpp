@@ -9,9 +9,9 @@ BEGIN_TEST(FloatTest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createFloatParam();
-	Variable p2 = l->createFloatParam();
-	Variable v1 = l->createIntVar(l->root());
+	Var p1 = l->createFloatParam();
+	Var p2 = l->createFloatParam();
+	Var v1 = l->createIntVar(l->root());
 
 	*l << prolog();
 

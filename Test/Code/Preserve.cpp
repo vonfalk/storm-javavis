@@ -28,8 +28,8 @@ BEGIN_TEST(Preserve64, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable v = l->createLongVar(l->root());
-	Variable w = l->createLongVar(l->root());
+	Var v = l->createLongVar(l->root());
+	Var w = l->createLongVar(l->root());
 
 	*l << prolog();
 

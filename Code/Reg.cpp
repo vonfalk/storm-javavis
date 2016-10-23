@@ -1,11 +1,11 @@
 #include "stdafx.h"
-#include "Register.h"
+#include "Reg.h"
 #include "X86/Asm.h"
 #include "Core/StrBuf.h"
 
 namespace code {
 
-	const wchar *name(Register r) {
+	const wchar *name(Reg r) {
 		switch (r) {
 		case noReg:
 			return L"<none>";
@@ -45,7 +45,7 @@ namespace code {
 		}
 	}
 
-	Size size(Register r) {
+	Size size(Reg r) {
 		nat v = (nat)r;
 		switch ((v & 0xF00) >> 8) {
 		case 0:
@@ -62,7 +62,7 @@ namespace code {
 		}
 	}
 
-	Register asSize(Register r, Size size) {
+	Reg asSize(Reg r, Size size) {
 		if (r == noReg)
 			return noReg;
 
@@ -80,10 +80,10 @@ namespace code {
 		}
 
 		nat v = (nat)r;
-		return Register((v & ~0xF00) | s << 8);
+		return Reg((v & ~0xF00) | s << 8);
 	}
 
-	Bool same(Register a, Register b) {
+	Bool same(Reg a, Reg b) {
 		nat aa = a;
 		nat bb = b;
 		return (aa & 0xFF) == (bb & 0xFF);
@@ -99,11 +99,11 @@ namespace code {
 		numSet = o->numSet;
 	}
 
-	RegSet::RegSet(Register r) {
+	RegSet::RegSet(Reg r) {
 		put(r);
 	}
 
-	RegSet::RegSet(Array<Register> *regs) {
+	RegSet::RegSet(Array<Reg> *regs) {
 		for (nat i = 0; i < regs->count(); i++)
 			put(regs->at(i));
 	}
@@ -112,7 +112,7 @@ namespace code {
 		// No need.
 	}
 
-	Bool RegSet::has(Register r) const {
+	Bool RegSet::has(Reg r) const {
 		nat bank = findBank(registerBackend(r));
 		if (bank >= banks)
 			return false;
@@ -120,7 +120,7 @@ namespace code {
 		return readData(bank, registerSlot(r)) != 0;
 	}
 
-	void RegSet::put(Register r) {
+	void RegSet::put(Reg r) {
 		if (r == ptrStack || r == ptrFrame || r == noReg)
 			return;
 
@@ -141,7 +141,7 @@ namespace code {
 			put(*i);
 	}
 
-	Register RegSet::get(Register r) const {
+	Reg RegSet::get(Reg r) const {
 		nat bank = findBank(registerBackend(r));
 		if (bank >= banks)
 			return noReg;
@@ -149,7 +149,7 @@ namespace code {
 		return readRegister(bank, registerSlot(r));
 	}
 
-	void RegSet::remove(Register r) {
+	void RegSet::remove(Reg r) {
 		nat bank = findBank(registerBackend(r));
 		if (bank >= banks)
 			return;
@@ -169,9 +169,9 @@ namespace code {
 		}
 	}
 
-	// Can not be implemented right now, as new (this) Array<Register>() does not work yet.
-	// Array<Register> *RegSet::all() const {
-	// 	Array<Register> *result = new (this) Array<Register>();
+	// Can not be implemented right now, as new (this) Array<Reg>() does not work yet.
+	// Array<Reg> *RegSet::all() const {
+	// 	Array<Reg> *result = new (this) Array<Reg>();
 
 	// 	for (Iter i = begin(); i != end(); ++i)
 	// 		result->push(i.v());
@@ -221,15 +221,15 @@ namespace code {
 		return owner->readData(pos / dataSlots, pos % dataSlots) == 0;
 	}
 
-	Register RegSet::Iter::read(Nat pos) const {
+	Reg RegSet::Iter::read(Nat pos) const {
 		return owner->readRegister(pos / dataSlots, pos % dataSlots);
 	}
 
-	Register RegSet::Iter::operator *() const {
+	Reg RegSet::Iter::operator *() const {
 		return read(pos);
 	}
 
-	Register RegSet::Iter::v() const {
+	Reg RegSet::Iter::v() const {
 		return read(pos);
 	}
 
@@ -317,7 +317,7 @@ namespace code {
 		return 0;
 	}
 
-	Register RegSet::readRegister(Nat bank, Nat slot) const {
+	Reg RegSet::readRegister(Nat bank, Nat slot) const {
 		Nat backend = readIndex(bank);
 		Nat size = readData(bank, slot);
 
@@ -328,20 +328,20 @@ namespace code {
 		Nat data = (backend & 0xF) << 4;
 		data |= (lookup[size] & 0xF) << 8;
 		data |= (slot & 0xF);
-		return Register(data);
+		return Reg(data);
 	}
 
-	Nat RegSet::registerSlot(Register r) {
+	Nat RegSet::registerSlot(Reg r) {
 		Nat z = r;
 		return z & 0xF;
 	}
 
-	Nat RegSet::registerBackend(Register r) {
+	Nat RegSet::registerBackend(Reg r) {
 		Nat z = r;
 		return (z & 0xF0) >> 4;
 	}
 
-	Nat RegSet::registerSize(Register r) {
+	Nat RegSet::registerSize(Reg r) {
 		Nat z = r;
 		switch ((z & 0xF00) >> 8) {
 		case 0x0:

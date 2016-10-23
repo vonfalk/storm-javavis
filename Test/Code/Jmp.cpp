@@ -9,7 +9,7 @@ BEGIN_TEST(JmpTest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createIntParam();
+	Var p = l->createIntParam();
 
 	*l << prolog();
 
@@ -55,7 +55,7 @@ BEGIN_TEST(CallTest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createIntParam();
+	Var p = l->createIntParam();
 
 	*l << prolog();
 

@@ -29,7 +29,7 @@ namespace code {
 		Remove64::Remove64() {}
 
 		void Remove64::before(Listing *dest, Listing *src) {
-			used = code::usedRegisters(dest->arena, src).used;
+			used = code::usedRegs(dest->arena, src).used;
 		}
 
 		void Remove64::during(Listing *dest, Listing *src, Nat line) {
@@ -117,7 +117,7 @@ namespace code {
 		}
 
 		void Remove64::cmpTfm(Listing *to, Instr *instr, RegSet *used) {
-			Register dest = unusedReg(used);
+			Reg dest = unusedReg(used);
 
 			bool preserved = false;
 			if (dest == noReg) {

@@ -48,8 +48,8 @@ namespace storm {
 		using namespace code;
 		Listing *l = new (fn) Listing();
 
-		Variable valRef = l->createParam(valPtr());
-		Variable strBuf = l->createParam(valPtr());
+		code::Var valRef = l->createParam(valPtr());
+		code::Var strBuf = l->createParam(valPtr());
 
 		*l << prolog();
 		*l << fnParam(strBuf);

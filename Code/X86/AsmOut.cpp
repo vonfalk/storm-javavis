@@ -382,7 +382,7 @@ namespace code {
 		void mulOut(Output *to, Instr *instr) {
 			assert(instr->dest().type() == opRegister);
 			const Operand &src = instr->src();
-			Register reg = instr->dest().reg();
+			Reg reg = instr->dest().reg();
 
 			switch (src.type()) {
 			case opConstant:

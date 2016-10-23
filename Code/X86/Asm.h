@@ -1,5 +1,5 @@
 #pragma once
-#include "../Register.h"
+#include "../Reg.h"
 #include "../Output.h"
 #include "../Operand.h"
 #include "Core/EnginePtr.h"
@@ -13,25 +13,25 @@ namespace code {
 		 *
 		 * TODO: Expose to Storm somehow.
 		 */
-		extern const Register ptrD;
-		extern const Register ptrSi;
-		extern const Register ptrDi;
-		extern const Register edx;
-		extern const Register esi;
-		extern const Register edi;
+		extern const Reg ptrD;
+		extern const Reg ptrSi;
+		extern const Reg ptrDi;
+		extern const Reg edx;
+		extern const Reg esi;
+		extern const Reg edi;
 
 		// Convert to names.
-		const wchar *nameX86(Register r);
+		const wchar *nameX86(Reg r);
 
 		// Find unused registers to work with. Returns noReg if none. Takes 64-bit registers into account.
-		Register STORM_FN unusedReg(RegSet *in);
+		Reg STORM_FN unusedReg(RegSet *in);
 
 		// Add 64-bit registers if needed.
 		void STORM_FN add64(RegSet *to);
 
 		// Get the low or high 32-bit register. If 'r' is a 32-bit register, high32 returns noReg.
-		Register STORM_FN low32(Register r);
-		Register STORM_FN high32(Register r);
+		Reg STORM_FN low32(Reg r);
+		Reg STORM_FN high32(Reg r);
 		Operand STORM_FN low32(Operand o);
 		Operand STORM_FN high32(Operand o);
 
@@ -42,7 +42,7 @@ namespace code {
 		RegSet *STORM_FN fnDirtyRegs(EnginePtr e);
 
 		// Find the register id of a register.
-		nat registerId(Register r);
+		nat registerId(Reg r);
 
 		// Get the 'op-code' for conditional operators.
 		byte condOp(CondFlag c);
@@ -103,10 +103,10 @@ namespace code {
 		 */
 
 		// Preserve a single register.
-		Register STORM_FN preserve(Register r, RegSet *used, Listing *dest);
+		Reg STORM_FN preserve(Reg r, RegSet *used, Listing *dest);
 
 		// Restore a single register.
-		void STORM_FN restore(Register r, Register saved, Listing *dest);
+		void STORM_FN restore(Reg r, Reg saved, Listing *dest);
 
 		/**
 		 * Preserve a set of registers.

@@ -30,6 +30,50 @@ namespace storm {
 		static const CppTemplate *cppTemplates();
 		static const CppThread *cppThreads();
 		static const CppRefType *cppRefTypes();
+
+		/**
+		 * Constructor for built-in classes.
+		 */
+		template <class T>
+		static void create1(void *mem) {
+			new (Place(mem))T();
+		}
+
+		template <class T, class P>
+		static void create2(void *mem, P p) {
+			new (Place(mem))T(p);
+		}
+
+		template <class T, class P, class Q>
+		static void create3(void *mem, P p, Q q) {
+			new (Place(mem))T(p, q);
+		}
+
+		template <class T, class P, class Q, class R>
+		static void create4(void *mem, P p, Q q, R r) {
+			new (Place(mem))T(p, q, r);
+		}
+
+		template <class T, class P, class Q, class R, class S>
+		static void create5(void *mem, P p, Q q, R r, S s) {
+			new (Place(mem))T(p, q, r, s);
+		}
+
+		template <class T, class P, class Q, class R, class S, class U>
+		static void create6(void *mem, P p, Q q, R r, S s, U u) {
+			new (Place(mem))T(p, q, r, s, u);
+		}
+
+		template <class T, class P, class Q, class R, class S, class U, class V>
+		static void create7(void *mem, P p, Q q, R r, S s, U u, V v) {
+			new (Place(mem))T(p, q, r, s, u, v);
+		}
+
+		// Wrap a destructor call.
+		template <class T>
+		static void destroy(T *obj) {
+			obj->~T();
+		}
 	};
 
 	// Invalid size.
@@ -37,50 +81,6 @@ namespace storm {
 
 	// Invalid offset.
 	const CppOffset CppOffset::invalid = { -1, -1 };
-
-		/**
-	 * Constructor for built-in classes.
-	 */
-	template <class T>
-	void create1(void *mem) {
-		new (Place(mem))T();
-	}
-
-	template <class T, class P>
-	void create2(void *mem, P p) {
-		new (Place(mem))T(p);
-	}
-
-	template <class T, class P, class Q>
-	void create3(void *mem, P p, Q q) {
-		new (Place(mem))T(p, q);
-	}
-
-	template <class T, class P, class Q, class R>
-	void create4(void *mem, P p, Q q, R r) {
-		new (Place(mem))T(p, q, r);
-	}
-
-	template <class T, class P, class Q, class R, class S>
-	void create5(void *mem, P p, Q q, R r, S s) {
-		new (Place(mem))T(p, q, r, s);
-	}
-
-	template <class T, class P, class Q, class R, class S, class U>
-	void create6(void *mem, P p, Q q, R r, S s, U u) {
-		new (Place(mem))T(p, q, r, s, u);
-	}
-
-	template <class T, class P, class Q, class R, class S, class U, class V>
-	void create7(void *mem, P p, Q q, R r, S s, U u, V v) {
-		new (Place(mem))T(p, q, r, s, u, v);
-	}
-
-	// Wrap a destructor call.
-	template <class T>
-	void destroy(T *obj) {
-		obj->~T();
-	}
 
 	const CppType *CppMeta::cppTypes() {
 		// PTR_OFFSETS

@@ -1,6 +1,6 @@
 #pragma once
 #include "../Arena.h"
-#include "../Register.h"
+#include "../Reg.h"
 #include "../Operand.h"
 
 namespace code {

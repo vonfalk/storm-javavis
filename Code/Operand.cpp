@@ -30,13 +30,13 @@ namespace code {
 
 	Operand::Operand() : opType(opNone), opPtr(null), opNum(0) {}
 
-	Operand::Operand(Register r) : opType(opRegister), opPtr(null), opNum(r), opSize(code::size(r)) {}
+	Operand::Operand(Reg r) : opType(opRegister), opPtr(null), opNum(r), opSize(code::size(r)) {}
 
 	Operand::Operand(CondFlag c) : opType(opCondFlag), opPtr(null), opNum(c), opSize() {}
 
 	Operand::Operand(Part p) : opType(opPart), opPtr(null), opNum(p.id), opSize() {}
 
-	Operand::Operand(Variable v) : opType(opVariable), opPtr(null), opNum(v.id), opSize(v.size()) {}
+	Operand::Operand(Var v) : opType(opVariable), opPtr(null), opNum(v.id), opSize(v.size()) {}
 
 	Operand::Operand(Label l) : opType(opLabel), opPtr(null), opNum(l.id), opSize(Size::sPtr) {}
 
@@ -52,9 +52,9 @@ namespace code {
 
 	Operand::Operand(RootObject *obj) : opType(opObjReference), opPtr(obj), opOffset(), opSize(Size::sPtr) {}
 
-	Operand::Operand(Register r, Offset offset, Size size) : opType(opRelative), opPtr(null), opNum(r), opOffset(offset), opSize(size) {}
+	Operand::Operand(Reg r, Offset offset, Size size) : opType(opRelative), opPtr(null), opNum(r), opOffset(offset), opSize(size) {}
 
-	Operand::Operand(Variable v, Offset offset, Size size) : opType(opVariable), opPtr(null), opNum(v.id), opOffset(offset), opSize(size) {}
+	Operand::Operand(Var v, Offset offset, Size size) : opType(opVariable), opPtr(null), opNum(v.id), opOffset(offset), opSize(size) {}
 
 	Bool Operand::operator ==(const Operand &o) const {
 		if (opType != o.opType)
@@ -173,9 +173,9 @@ namespace code {
 		}
 	}
 
-	Register Operand::reg() const {
+	Reg Operand::reg() const {
 		assert(type() == opRegister || type() == opRelative, L"Not a register!");
-		return Register(opNum);
+		return Reg(opNum);
 	}
 
 	Offset Operand::offset() const {
@@ -196,9 +196,9 @@ namespace code {
 		return Part(Nat(opNum));
 	}
 
-	Variable Operand::variable() const {
+	Var Operand::var() const {
 		assert(type() == opVariable, L"Not a variable!");
-		return Variable(Nat(opNum), size());
+		return Var(Nat(opNum), size());
 	}
 
 	Ref Operand::ref() const {
@@ -324,43 +324,43 @@ namespace code {
 		return Operand(o);
 	}
 
-	Operand byteRel(Register reg, Offset offset) {
+	Operand byteRel(Reg reg, Offset offset) {
 		return xRel(Size::sByte, reg, offset);
 	}
 
-	Operand intRel(Register reg, Offset offset) {
+	Operand intRel(Reg reg, Offset offset) {
 		return xRel(Size::sInt, reg, offset);
 	}
 
-	Operand longRel(Register reg, Offset offset) {
+	Operand longRel(Reg reg, Offset offset) {
 		return xRel(Size::sLong, reg, offset);
 	}
 
-	Operand ptrRel(Register reg, Offset offset) {
+	Operand ptrRel(Reg reg, Offset offset) {
 		return xRel(Size::sPtr, reg, offset);
 	}
 
-	Operand xRel(Size size, Register reg, Offset offset) {
+	Operand xRel(Size size, Reg reg, Offset offset) {
 		return Operand(reg, offset, size);
 	}
 
-	Operand byteRel(Variable v, Offset offset) {
+	Operand byteRel(Var v, Offset offset) {
 		return xRel(Size::sByte, v, offset);
 	}
 
-	Operand intRel(Variable v, Offset offset) {
+	Operand intRel(Var v, Offset offset) {
 		return xRel(Size::sInt, v, offset);
 	}
 
-	Operand longRel(Variable v, Offset offset) {
+	Operand longRel(Var v, Offset offset) {
 		return xRel(Size::sLong, v, offset);
 	}
 
-	Operand ptrRel(Variable v, Offset offset) {
+	Operand ptrRel(Var v, Offset offset) {
 		return xRel(Size::sPtr, v, offset);
 	}
 
-	Operand xRel(Size size, Variable v, Offset offset) {
+	Operand xRel(Size size, Var v, Offset offset) {
 		return Operand(v, offset, size);
 	}
 

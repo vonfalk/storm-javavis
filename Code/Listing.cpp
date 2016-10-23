@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Listing.h"
 #include "Exception.h"
-#include "UsedRegisters.h"
+#include "UsedRegs.h"
 #include "Arena.h"
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
@@ -267,8 +267,8 @@ namespace code {
 		return in->count();
 	}
 
-	Variable Listing::createVar(Nat index) const {
-		return Variable(index, vars->at(index).size);
+	Var Listing::createVar(Nat index) const {
+		return Var(index, vars->at(index).size);
 	}
 
 	Part Listing::next(Part p) const {
@@ -282,9 +282,9 @@ namespace code {
 		return Part(block.parts->at(part.index + 1));
 	}
 
-	Variable Listing::prev(Variable v) const {
+	Var Listing::prev(Var v) const {
 		if (v.id >= vars->count())
-			return Variable();
+			return Var();
 
 		if (isParam(v)) {
 			// Find the previous parameter:
@@ -292,7 +292,7 @@ namespace code {
 			if (id > 0 && id < params->count())
 				return createVar(params->at(id - 1));
 			else
-				return Variable();
+				return Var();
 		} else {
 			// Must be a variable somewhere.
 			IVar &var = vars->at(v.id);
@@ -316,7 +316,7 @@ namespace code {
 					return createVar(params->last());
 
 				// Nope. No more candidates then!
-				return Variable();
+				return Var();
 			}
 		}
 	}
@@ -353,7 +353,7 @@ namespace code {
 		return Block(block.parts->first());
 	}
 
-	void Listing::delay(Variable v, Part to) {
+	void Listing::delay(Var v, Part to) {
 		if (v.id >= vars->count())
 			return;
 		if (to.id >= parts->count())
@@ -379,7 +379,7 @@ namespace code {
 		toI.vars->push(v.id);
 	}
 
-	void Listing::moveParam(Variable v, Nat to) {
+	void Listing::moveParam(Var v, Nat to) {
 		if (isParam(v))
 			return;
 
@@ -404,14 +404,14 @@ namespace code {
 		return Part(block.parent);
 	}
 
-	Part Listing::parent(Variable v) const {
+	Part Listing::parent(Var v) const {
 		if (v.id >= vars->count())
 			return Part(invalid);
 
 		return Part(vars->at(v.id).parent);
 	}
 
-	Bool Listing::accessible(Variable v, Part p) const {
+	Bool Listing::accessible(Var v, Part p) const {
 		if (v.id >= vars->count())
 			return false;
 		if (p.id >= parts->count())
@@ -441,21 +441,21 @@ namespace code {
 		return false;
 	}
 
-	Bool Listing::isParam(Variable v) const {
+	Bool Listing::isParam(Var v) const {
 		if (v.id >= vars->count())
 			return false;
 
 		return vars->at(v.id).isParam;
 	}
 
-	Operand Listing::freeFn(Variable v) const {
+	Operand Listing::freeFn(Var v) const {
 		if (v.id >= vars->count())
 			return Operand();
 
 		return vars->at(v.id).freeFn;
 	}
 
-	FreeOpt Listing::freeOpt(Variable v) const {
+	FreeOpt Listing::freeOpt(Var v) const {
 		if (v.id >= vars->count())
 			return freeOnNone;
 
@@ -473,7 +473,7 @@ namespace code {
 		return false;
 	}
 
-	Variable Listing::createVar(Part in, Size size, Operand free, FreeOpt when) {
+	Var Listing::createVar(Part in, Size size, Operand free, FreeOpt when) {
 		assert(in.id != invalid, L"No such part!");
 
 		if (checkFree(free, when))
@@ -485,10 +485,10 @@ namespace code {
 		IPart &part = parts->at(in.id);
 		part.vars->push(id);
 
-		return Variable(id, size);
+		return Var(id, size);
 	}
 
-	Variable Listing::createParam(ValType type, Operand free, FreeOpt when) {
+	Var Listing::createParam(ValType type, Operand free, FreeOpt when) {
 		if (checkFree(free, when))
 			needEH = true;
 
@@ -496,7 +496,7 @@ namespace code {
 		vars->push(IVar(invalid, type.size, true, type.isFloat, free, when));
 
 		params->push(id);
-		return Variable(id, type.size);
+		return Var(id, type.size);
 	}
 
 	Nat Listing::findBlock(Nat partId) const {
@@ -523,15 +523,15 @@ namespace code {
 		return r;
 	}
 
-	Array<Variable> *Listing::allVars() const {
-		Array<Variable> *r = new (this) Array<Variable>();
+	Array<Var> *Listing::allVars() const {
+		Array<Var> *r = new (this) Array<Var>();
 		for (nat i = 0; i < vars->count(); i++)
 			r->push(createVar(i));
 		return r;
 	}
 
-	Array<Variable> *Listing::allVars(Block b) const {
-		Array<Variable> *r = new (this) Array<Variable>();
+	Array<Var> *Listing::allVars(Block b) const {
+		Array<Var> *r = new (this) Array<Var>();
 		if (b.id >= parts->count())
 			return r;
 
@@ -543,8 +543,8 @@ namespace code {
 		return r;
 	}
 
-	Array<Variable> *Listing::partVars(Part p) const {
-		Array<Variable> *r = new (this) Array<Variable>();
+	Array<Var> *Listing::partVars(Part p) const {
+		Array<Var> *r = new (this) Array<Var>();
 		if (p.id >= parts->count())
 			return r;
 
@@ -560,8 +560,8 @@ namespace code {
 		return r;
 	}
 
-	Array<Variable> *Listing::allParams() const {
-		Array<Variable> *r = new (this) Array<Variable>();
+	Array<Var> *Listing::allParams() const {
+		Array<Var> *r = new (this) Array<Var>();
 		for (nat i = 0; i < params->count(); i++)
 			r->push(createVar(params->at(i)));
 		return r;
@@ -593,7 +593,7 @@ namespace code {
 
 		putBlock(*to, 0);
 
-		UsedRegisters r = usedRegisters(arena, this);
+		UsedRegs r = usedRegs(arena, this);
 		*to << L"Dirty registers: " << r.all;
 
 		for (nat i = 0; i < code->count(); i++) {

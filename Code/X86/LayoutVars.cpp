@@ -23,7 +23,7 @@ namespace code {
 
 		void LayoutVars::before(Listing *dest, Listing *src) {
 			usingEH = src->exceptionHandler();
-			RegSet *used = allUsedRegisters(src);
+			RegSet *used = allUsedRegs(src);
 			add64(used);
 
 			preserved = new (this) RegSet();
@@ -65,10 +65,10 @@ namespace code {
 
 			*dest << dest->meta();
 
-			Array<Variable> *vars = src->allVars();
+			Array<Var> *vars = src->allVars();
 
 			for (nat i = 0; i < vars->count(); i++) {
-				Variable &v = vars->at(i);
+				Var &v = vars->at(i);
 				Operand fn = src->freeFn(v);
 				if (fn.empty())
 					*dest << dat(ptrConst(Offset(0)));
@@ -82,7 +82,7 @@ namespace code {
 			if (src.type() != opVariable)
 				return src;
 
-			Variable v = src.variable();
+			Var v = src.var();
 			if (!listing->accessible(v, part))
 				throw VariableUseError(v, part);
 			return xRel(src.size(), ptrFrame, layout->at(v.key()) + src.offset());
@@ -124,10 +124,10 @@ namespace code {
 			if (Part(b) == part) {
 				bool initEax = true;
 
-				Array<Variable> *vars = dest->allVars(b);
+				Array<Var> *vars = dest->allVars(b);
 				// Go in reverse to make linear accesses in memory when we're using big variables.
 				for (nat i = vars->count(); i > 0; i--) {
-					Variable v = vars->at(i - 1);
+					Var v = vars->at(i - 1);
 
 					if (!dest->isParam(v))
 						zeroVar(dest, layout->at(v.key()), v.size(), initEax);
@@ -146,9 +146,9 @@ namespace code {
 
 			bool pushedEax = false;
 
-			Array<Variable> *vars = dest->partVars(destroy);
+			Array<Var> *vars = dest->partVars(destroy);
 			for (nat i = 0; i < vars->count(); i++) {
-				Variable v = vars->at(i);
+				Var v = vars->at(i);
 
 				Operand dtor = dest->freeFn(v);
 				FreeOpt when = dest->freeOpt(v);

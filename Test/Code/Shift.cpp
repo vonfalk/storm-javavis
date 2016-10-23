@@ -10,8 +10,8 @@ BEGIN_TEST(ShiftTest, Code) {
 
 	Listing *l = new (e) Listing();
 
-	Variable p1 = l->createIntParam();
-	Variable p2 = l->createIntParam();
+	Var p1 = l->createIntParam();
+	Var p2 = l->createIntParam();
 
 	*l << prolog();
 

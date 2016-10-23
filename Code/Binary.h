@@ -30,7 +30,7 @@ namespace code {
 
 	private:
 		// Information about a single variable.
-		struct Var {
+		struct Variable {
 			Nat id;
 			FreeOpt freeOpt;
 			Size size;
@@ -45,7 +45,7 @@ namespace code {
 			size_t prev;
 
 			// Variables in here.
-			Var vars[1];
+			Variable vars[1];
 		};
 
 		// Offset of the metadata label.
@@ -58,7 +58,7 @@ namespace code {
 		void fillParts(Listing *src);
 
 		// Clean a single variable.
-		void cleanup(StackFrame &frame, Var &v);
+		void cleanup(StackFrame &frame, Variable &v);
 
 		// Type declarations for the GC.
 		static const GcType partArrayType;

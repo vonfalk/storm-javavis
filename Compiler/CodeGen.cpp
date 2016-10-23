@@ -25,7 +25,7 @@ namespace storm {
 		clone(to, env);
 	}
 
-	code::Variable CodeGen::createParam(Value type) {
+	code::Var CodeGen::createParam(Value type) {
 		if (type.isValue()) {
 			return to->createParam(type.valType(), type.destructor(), code::freeOnBoth | code::freePtr);
 		} else {
@@ -65,7 +65,7 @@ namespace storm {
 		return res;
 	}
 
-	void CodeGen::returnValue(code::Variable value) {
+	void CodeGen::returnValue(code::Var value) {
 		using namespace code;
 
 		if (res == Value()) {
@@ -98,9 +98,9 @@ namespace storm {
 
 	VarInfo::VarInfo() : v(), needsPart(false) {}
 
-	VarInfo::VarInfo(code::Variable v) : v(v), needsPart(false) {}
+	VarInfo::VarInfo(code::Var v) : v(v), needsPart(false) {}
 
-	VarInfo::VarInfo(code::Variable v, Bool needsPart) : v(v), needsPart(needsPart) {}
+	VarInfo::VarInfo(code::Var v, Bool needsPart) : v(v), needsPart(needsPart) {}
 
 	void VarInfo::created(CodeGen *gen) {
 		using namespace code;
@@ -128,12 +128,12 @@ namespace storm {
 
 	CodeResult::CodeResult(Value type, code::Block block) : block(block), t(type) {}
 
-	CodeResult::CodeResult(Value type, code::Variable var) : variable(var), t(type) {}
+	CodeResult::CodeResult(Value type, code::Var var) : variable(var), t(type) {}
 
 	VarInfo CodeResult::location(CodeGen *s) {
 		assert(needed(), L"Trying to get the location of an unneeded result. Use 'safeLocation' instead.");
 
-		if (variable.v == code::Variable()) {
+		if (variable.v == code::Var()) {
 			if (block == code::Block()) {
 				variable = s->createVar(t);
 			} else {
@@ -152,7 +152,7 @@ namespace storm {
 	VarInfo CodeResult::safeLocation(CodeGen *s, Value type) {
 		if (needed())
 			return location(s);
-		else if (variable.v == code::Variable())
+		else if (variable.v == code::Var())
 			// Generate a temporary variable. Do not save it, it will mess up cases like 'if', where
 			// two different branches may end up in different blocks!
 			return s->createVar(t);
@@ -160,10 +160,10 @@ namespace storm {
 			return variable;
 	}
 
-	Bool CodeResult::suggest(CodeGen *s, code::Variable v) {
+	Bool CodeResult::suggest(CodeGen *s, code::Var v) {
 		code::Listing *l = s->to;
 
-		if (variable.v != code::Variable())
+		if (variable.v != code::Var())
 			return false;
 
 		// TODO: Cases that hit here could maybe be optimized somehow. This is common with the
@@ -178,7 +178,7 @@ namespace storm {
 
 	Bool CodeResult::suggest(CodeGen *s, code::Operand v) {
 		if (v.type() == code::opVariable)
-			return suggest(s, v.variable());
+			return suggest(s, v.var());
 		return false;
 	}
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "../Transform.h"
 #include "../OpTable.h"
-#include "../UsedRegisters.h"
+#include "../UsedRegs.h"
 
 namespace code {
 	namespace x86 {
@@ -26,7 +26,7 @@ namespace code {
 			Array<RegSet *> *used;
 
 			// Find an unused register at 'line'.
-			Register unusedReg(Nat line);
+			Reg unusedReg(Nat line);
 
 			// Struct describing parameters for a future fnCall instruction.
 			class Param {

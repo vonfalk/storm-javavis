@@ -9,8 +9,8 @@ BEGIN_TEST(Add64, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable v = l->createLongVar(l->root());
-	Variable w = l->createLongVar(l->root());
+	Var v = l->createLongVar(l->root());
+	Var w = l->createLongVar(l->root());
 
 	*l << prolog();
 
@@ -32,8 +32,8 @@ BEGIN_TEST(Param64, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable v = l->createLongParam();
-	Variable w = l->createLongVar(l->root());
+	Var v = l->createLongParam();
+	Var w = l->createLongVar(l->root());
 
 	*l << prolog();
 
@@ -54,8 +54,8 @@ BEGIN_TEST(Sub64, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable v = l->createLongVar(l->root());
-	Variable w = l->createLongVar(l->root());
+	Var v = l->createLongVar(l->root());
+	Var w = l->createLongVar(l->root());
 
 	*l << prolog();
 
@@ -78,8 +78,8 @@ BEGIN_TEST(Mul64, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable v = l->createLongVar(l->root());
-	Variable w = l->createLongVar(l->root());
+	Var v = l->createLongVar(l->root());
+	Var w = l->createLongVar(l->root());
 
 	*l << prolog();
 
@@ -171,9 +171,9 @@ BEGIN_TEST(Cmp64, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable v1 = l->createLongParam();
-	Variable v2 = l->createLongParam();
-	Variable r = l->createIntVar(l->root());
+	Var v1 = l->createLongParam();
+	Var v2 = l->createLongParam();
+	Var r = l->createIntVar(l->root());
 
 	*l << prolog();
 

@@ -4,6 +4,7 @@
 #include "Gc.h"
 #include "RunOn.h"
 #include "RefHandle.h"
+#include "Layout.h"
 #include "Core/TypeFlags.h"
 
 namespace storm {
@@ -91,6 +92,9 @@ namespace storm {
 		// Late initialization.
 		virtual void lateInit();
 
+		// Force layout of all member variables.
+		void STORM_FN doLayout();
+
 		// Inheritance chain and membership lookup. TODO: Make private?
 		TypeChain *chain;
 
@@ -142,6 +146,9 @@ namespace storm {
 		// Our size (including base classes). If zero, we need to re-compute it.
 		Size mySize;
 
+		// Compute the size of our super-class.
+		Size superSize();
+
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);
 		static void operator delete(void *mem, Engine &e, GcType *type);
@@ -164,8 +171,8 @@ namespace storm {
 		// Notify that the thread changed.
 		void notifyThread(NamedThread *t);
 
-		// Compute the size of our super-class.
-		Size superSize();
+		// The member variable layout for this type. Not used for types declared in C++.
+		Layout *layout;
 	};
 
 

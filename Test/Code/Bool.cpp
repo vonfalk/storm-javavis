@@ -12,7 +12,7 @@ BEGIN_TEST(BoolTest, Code) {
 
 	Arena *arena = code::arena(e);
 	Listing *l = new (e) Listing();
-	Variable p = l->createIntParam();
+	Var p = l->createIntParam();
 
 	*l << prolog();
 

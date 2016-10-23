@@ -58,20 +58,20 @@ namespace code {
 			// esi, edi (and actually ebx as well) are preserved.
 		}
 
-		static Offset paramOffset(Listing *src, Variable var) {
-			if (var == Variable()) {
+		static Offset paramOffset(Listing *src, Var var) {
+			if (var == Var()) {
 				// Old ebp and return pointer.
 				return Offset::sPtr * 2;
 			}
 
-			Variable prev = src->prev(var);
+			Var prev = src->prev(var);
 			Offset offset = paramOffset(src, prev) + prev.size();
 			return offset.alignAs(Size::sPtr);
 		}
 
 		Array<Offset> *layout(Listing *src, Nat savedRegs, Bool usingEH) {
 			Array<Offset> *result = code::layout(src);
-			Array<Variable> *all = src->allVars();
+			Array<Var> *all = src->allVars();
 
 			Offset varOffset;
 			// Exception handler frame.
@@ -81,7 +81,7 @@ namespace code {
 			varOffset += Size::sPtr * savedRegs;
 
 			for (nat i = 0; i < all->count(); i++) {
-				Variable var = all->at(i);
+				Var var = all->at(i);
 				Nat id = var.key();
 
 				if (src->isParam(var)) {

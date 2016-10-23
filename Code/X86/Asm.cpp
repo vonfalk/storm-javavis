@@ -7,14 +7,14 @@
 namespace code {
 	namespace x86 {
 
-		const Register ptrD = Register(0x010);
-		const Register ptrSi = Register(0x011);
-		const Register ptrDi = Register(0x012);
-		const Register edx = Register(0x410);
-		const Register esi = Register(0x411);
-		const Register edi = Register(0x412);
+		const Reg ptrD = Reg(0x010);
+		const Reg ptrSi = Reg(0x011);
+		const Reg ptrDi = Reg(0x012);
+		const Reg edx = Reg(0x410);
+		const Reg esi = Reg(0x411);
+		const Reg edi = Reg(0x412);
 
-		const wchar *nameX86(Register r) {
+		const wchar *nameX86(Reg r) {
 			switch (r) {
 			case ptrD:
 				return L"ptrD";
@@ -33,13 +33,13 @@ namespace code {
 			return null;
 		}
 
-		Register unusedReg(RegSet *in) {
-			Register candidates[] = { ptrD, ptrA, ptrB, ptrC, ptrSi, ptrDi };
-			Register protect64[] = { rax, noReg, noReg, noReg, rbx, rcx };
+		Reg unusedReg(RegSet *in) {
+			Reg candidates[] = { ptrD, ptrA, ptrB, ptrC, ptrSi, ptrDi };
+			Reg protect64[] = { rax, noReg, noReg, noReg, rbx, rcx };
 			for (nat i = 0; i < ARRAY_COUNT(candidates); i++) {
 				if (!in->has(candidates[i])) {
 					// See if we need to protect 64-bit registers...
-					Register prot = protect64[i];
+					Reg prot = protect64[i];
 					if (prot == noReg)
 						return candidates[i];
 
@@ -54,20 +54,20 @@ namespace code {
 
 		void add64(RegSet *to) {
 			for (RegSet::Iter i = to->begin(); i != to->end(); ++i) {
-				Register r = high32(*i);
+				Reg r = high32(*i);
 				if (r != noReg)
 					to->put(r);
 			}
 		}
 
-		Register low32(Register reg) {
+		Reg low32(Reg reg) {
 			if (size(reg) == Size::sLong)
 				return asSize(reg, Size::sInt);
 			else
 				return reg;
 		}
 
-		Register high32(Register reg) {
+		Reg high32(Reg reg) {
 			switch (reg) {
 			case rax:
 				return edx;
@@ -90,7 +90,7 @@ namespace code {
 			case opRelative:
 				return intRel(o.reg(), o.offset());
 			case opVariable:
-				return intRel(o.variable(), o.offset());
+				return intRel(o.var(), o.offset());
 			}
 			assert(false);
 			return Operand();
@@ -106,7 +106,7 @@ namespace code {
 			case opRelative:
 				return intRel(o.reg(), o.offset() + Offset(4));
 			case opVariable:
-				return intRel(o.variable(), o.offset() + Offset(4));
+				return intRel(o.var(), o.offset() + Offset(4));
 			}
 			assert(false);
 			return Operand();
@@ -131,9 +131,9 @@ namespace code {
 			return r;
 		}
 
-		Register preserve(Register r, RegSet *used, Listing *dest) {
+		Reg preserve(Reg r, RegSet *used, Listing *dest) {
 			Engine &e = dest->engine();
-			Register into = unusedReg(used);
+			Reg into = unusedReg(used);
 			if (into == noReg) {
 				*dest << push(r);
 			} else {
@@ -143,7 +143,7 @@ namespace code {
 			return into;
 		}
 
-		void restore(Register r, Register saved, Listing *dest) {
+		void restore(Reg r, Reg saved, Listing *dest) {
 			Engine &e = dest->engine();
 
 			if (saved == noReg) {
@@ -167,7 +167,7 @@ namespace code {
 
 			for (RegSet::Iter i = regs->begin(); i != regs->end(); ++i) {
 				if (usedBefore->has(*i)) {
-					Register r = preserve(*i, usedAfter, dest);
+					Reg r = preserve(*i, usedAfter, dest);
 					srcReg->push(Nat(*i));
 					destReg->push(Nat(r));
 					if (r != noReg)
@@ -178,13 +178,13 @@ namespace code {
 
 		void Preserve::restore() {
 			for (Nat i = srcReg->count(); i > 0; i--) {
-				Register src = Register(srcReg->at(i - 1));
-				Register dest = Register(destReg->at(i - 1));
+				Reg src = Reg(srcReg->at(i - 1));
+				Reg dest = Reg(destReg->at(i - 1));
 				code::x86::restore(src, dest, this->dest);
 			}
 		}
 
-		nat registerId(Register r) {
+		nat registerId(Reg r) {
 			switch (r) {
 			case al:
 			case ptrA:

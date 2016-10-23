@@ -45,11 +45,11 @@ namespace storm {
 
 
 	// Get a relative value for the size of T
-	inline code::Operand tRel(Int i, code::Register reg) { return code::intRel(reg, Offset()); }
-	inline code::Operand tRel(Nat i, code::Register reg) { return code::intRel(reg, Offset()); }
-	inline code::Operand tRel(Byte i, code::Register reg) { return code::byteRel(reg, Offset()); }
-	inline code::Operand tRel(Long i, code::Register reg) { return code::longRel(reg, Offset()); }
-	inline code::Operand tRel(Word i, code::Register reg) { return code::longRel(reg, Offset()); }
+	inline code::Operand tRel(Int i, code::Reg reg) { return code::intRel(reg, Offset()); }
+	inline code::Operand tRel(Nat i, code::Reg reg) { return code::intRel(reg, Offset()); }
+	inline code::Operand tRel(Byte i, code::Reg reg) { return code::byteRel(reg, Offset()); }
+	inline code::Operand tRel(Long i, code::Reg reg) { return code::longRel(reg, Offset()); }
+	inline code::Operand tRel(Word i, code::Reg reg) { return code::longRel(reg, Offset()); }
 
 	// Get the value one for various types.
 	inline code::Operand tConst(Int i) { return code::intConst(i); }

@@ -22,7 +22,7 @@ BEGIN_TEST(RefTest, Code) {
 	fn->setPtr(&fnA);
 
 	Listing *l = new (e) Listing();
-	Variable p = l->createIntParam();
+	Var p = l->createIntParam();
 
 	*l << prolog();
 

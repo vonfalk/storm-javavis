@@ -9,8 +9,8 @@ BEGIN_TEST(MulTest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
-	Variable p2 = l->createIntParam();
+	Var p1 = l->createIntParam();
+	Var p2 = l->createIntParam();
 
 	*l << prolog();
 
@@ -36,8 +36,8 @@ BEGIN_TEST(MulRegTest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
-	Variable p2 = l->createIntParam();
+	Var p1 = l->createIntParam();
+	Var p2 = l->createIntParam();
 
 	*l << prolog();
 
@@ -64,8 +64,8 @@ BEGIN_TEST(MulReg2Test, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
-	Variable p2 = l->createIntParam();
+	Var p1 = l->createIntParam();
+	Var p2 = l->createIntParam();
 
 	*l << prolog();
 
@@ -92,8 +92,8 @@ BEGIN_TEST(MulReg3Test, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
-	Variable p2 = l->createIntParam();
+	Var p1 = l->createIntParam();
+	Var p2 = l->createIntParam();
 
 	*l << prolog();
 
@@ -121,7 +121,7 @@ BEGIN_TEST(MulConstTest, Code) {
 	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
-	Variable p1 = l->createIntParam();
+	Var p1 = l->createIntParam();
 
 	*l << prolog();
 

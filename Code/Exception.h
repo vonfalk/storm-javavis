@@ -53,9 +53,9 @@ namespace code {
 
 	class VariableUseError : public Exception {
 	public:
-		VariableUseError(Variable v, Part p) : var(v), part(p) {}
+		VariableUseError(Var v, Part p) : var(v), part(p) {}
 
-		Variable var;
+		Var var;
 		Part part;
 
 		String what() const { return String(L"Trying to use " + toS(var) + L" in " + toS(part) + L", where it is not accessible."); }

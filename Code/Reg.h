@@ -14,7 +14,7 @@ namespace code {
 	 * B is the backend id (0 = general, 1 = x86, etc)
 	 * C is specific identifier to the backend
 	 */
-	enum Register {
+	enum Reg {
 		// No register.
 		noReg,
 
@@ -43,16 +43,16 @@ namespace code {
 	};
 
 	// Get the name of a register.
-	const wchar *name(Register r);
+	const wchar *name(Reg r);
 
 	// Size of registers.
-	Size STORM_FN size(Register r);
+	Size STORM_FN size(Reg r);
 
 	// Get the corresponding register with another size.
-	Register STORM_FN asSize(Register r, Size size);
+	Reg STORM_FN asSize(Reg r, Size size);
 
 	// Are the two registers the same, disregarding size?
-	Bool STORM_FN same(Register a, Register b);
+	Bool STORM_FN same(Reg a, Reg b);
 
 	/**
 	 * Set of registers. Considers registers of different sizes to be the same, but keeps track of
@@ -70,35 +70,35 @@ namespace code {
 		STORM_CTOR RegSet(const RegSet *src);
 
 		// Create with a single registers.
-		STORM_CTOR RegSet(Register r);
+		STORM_CTOR RegSet(Reg r);
 
 		// Array of registers -> set.
-		STORM_CTOR RegSet(Array<Register> *regs);
+		STORM_CTOR RegSet(Array<Reg> *regs);
 
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *env);
 
 		// Contains a specific register?
-		Bool STORM_FN has(Register r) const;
+		Bool STORM_FN has(Reg r) const;
 
 		// Add registers.
-		void STORM_FN put(Register r);
+		void STORM_FN put(Reg r);
 		void STORM_FN put(const RegSet *r);
 
 		// Get the largest register seen.
-		Register STORM_FN get(Register r) const;
+		Reg STORM_FN get(Reg r) const;
 
 		// Get the number of registers in here.
 		inline Nat STORM_FN count() const { return numSet; }
 
 		// Remove register.
-		void STORM_FN remove(Register r);
+		void STORM_FN remove(Reg r);
 
 		// Clear.
 		void STORM_FN clear();
 
 		// Get all registers in here.
-		// Array<Register> *STORM_FN all() const;
+		// Array<Reg> *STORM_FN all() const;
 
 		// Iterator.
 		class Iter {
@@ -113,8 +113,8 @@ namespace code {
 			Iter &STORM_FN operator ++();
 			Iter STORM_FN operator ++(int z);
 
-			Register operator *() const;
-			Register STORM_FN v() const;
+			Reg operator *() const;
+			Reg STORM_FN v() const;
 
 		private:
 			const RegSet *owner;
@@ -127,7 +127,7 @@ namespace code {
 
 			// Empty at pos?
 			bool empty(Nat pos) const;
-			Register read(Nat pos) const;
+			Reg read(Nat pos) const;
 		};
 
 		Iter STORM_FN begin() const;
@@ -144,7 +144,7 @@ namespace code {
 		 * as those are commonly used. 'index' stores four bits for each 'dataX', zero means free.
 		 *
 		 * Each of 'dataX' stores two bits for each entry inside it. Each entry represents one
-		 * possible value of the last four bits of a Register. These two bits have the following
+		 * possible value of the last four bits of a Reg. These two bits have the following
 		 * four values:
 		 *
 		 * 0: not in the set
@@ -197,16 +197,16 @@ namespace code {
 		Nat allocBank(Nat backendId);
 
 		// Read a register.
-		Register readRegister(Nat bank, Nat slot) const;
+		Reg readRegister(Nat bank, Nat slot) const;
 
 		/**
 		 * Register manipulation helpers.
 		 */
 
 		// Get the slot id of a register.
-		static Nat registerSlot(Register r);
-		static Nat registerBackend(Register r);
-		static Nat registerSize(Register r);
+		static Nat registerSlot(Reg r);
+		static Nat registerBackend(Reg r);
+		static Nat registerSize(Reg r);
 
 	};
 }
