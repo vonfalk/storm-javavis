@@ -199,7 +199,7 @@
     (unless (is-test-project)
       (insert "#include \"")
       (insert (replace-regexp-in-string
-	       ".cpp" ".h"
+	       "\\.cpp" ".h"
 	       (filename buffer-file-name)))
       (insert "\""))
     (insert "\n\n")
@@ -231,7 +231,7 @@
   ;; Replace $header$...
   (goto-char 0)
   (perform-replace "$header$"
-		   (replace-regexp-in-string ".cpp" ".h" (filename buffer-file-name))
+		   (replace-regexp-in-string "\\.cpp" ".h" (filename buffer-file-name))
 		   nil
 		   nil
 		   nil)
@@ -240,7 +240,7 @@
   ;; Replace $file$...
   (goto-char 0)
   (perform-replace "$file$"
-		   (replace-regexp-in-string ".cpp" "" (filename buffer-file-name))
+		   (replace-regexp-in-string "\\.cpp" "" (filename buffer-file-name))
 		   nil
 		   nil
 		   nil)
@@ -254,7 +254,7 @@
 
 (defun insert-test-template ()
   (insert "BEGIN_TEST(")
-  (insert (replace-regexp-in-string ".cpp" "" (filename buffer-file-name)))
+  (insert (replace-regexp-in-string "\\.cpp" "" (filename buffer-file-name)))
   (insert ") {\n")
   (indent-for-tab-command)
   (insert "Engine &e = *gEngine;\n\n")

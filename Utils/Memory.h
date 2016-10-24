@@ -19,3 +19,10 @@
 // BASE_PTR(Foo, <ptr>, b); to get the pointer to "Foo" again.
 // void *fooPtr = &foo;
 // OFFSET_IN(fooPtr, OFFSET_OF(Foo, b), int) = 1;
+
+
+// Can we read 'addr'?
+bool readable(const void *addr);
+
+// Dump the flags for 'addr'.
+void memFlags(const void *addr);
