@@ -17,6 +17,28 @@ namespace storm {
 	class VTableCpp : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
+		// Create with a VTable from C++. Create a copy so we can freely modify it.
+		VTableCpp(const void *vtable);
+		VTableCpp(const void *vtable, nat count);
+
+		// Get/set a slot.
+		const void *&slot(nat id);
+
+		// Get/set the extra data.
+		const void *&extra();
+
+		// Get our size.
+		nat count();
+
+		// Set this VTable for a class.
+		void insert(void *obj);
+
+	private:
+		// The VTable data. We're storing it as a regular GC array.
+		GcArray<const void *> *data;
+
+		// Initialize ourselves.
+		void init(const void *vtable, nat count);
 	};
 
 

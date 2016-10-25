@@ -4,7 +4,7 @@
 #ifdef WINDOWS
 
 // Is the address readable?
-bool readable(void *addr) {
+bool readable(const void *addr) {
 	if (addr == null)
 		return false;
 
@@ -29,7 +29,7 @@ bool readable(void *addr) {
 }
 
 // Print some information about 'addr' for debugging.
-void memFlags(void *addr) {
+void memFlags(const void *addr) {
 	MEMORY_BASIC_INFORMATION info;
 	nat r = VirtualQuery(addr, &info, sizeof(info));
 	assert(r == sizeof(info));

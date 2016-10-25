@@ -104,6 +104,10 @@ namespace storm {
 
 		// Destructor to use for this type (if any).
 		const void *destructor;
+
+		// C++ generated VTable for this type (if any).
+		typedef const void *(*VTableFn)();
+		VTableFn vtable;
 	};
 
 	/**

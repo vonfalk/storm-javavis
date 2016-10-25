@@ -16,6 +16,11 @@ static String toVarName(const CppName &c) {
 	return s;
 }
 
+// Name of the function for getting the C++ vtable for a type.
+static String stormVTableName(const CppName &typeName) {
+	return L"vtable_" + toVarName(typeName);
+}
+
 // Convert a Size or an Offset to a string representation.
 static String format(const Size &s) {
 	std::wostringstream to;
@@ -98,6 +103,24 @@ static bool isType(World &w, Type &t) {
 	return false;
 }
 
+static bool hasVTable(const Type &t) {
+	if (const Class *c = as<const Class>(&t)) {
+		return !c->valueType;
+	} else {
+		return false;
+	}
+}
+
+static void genVTableFns(wostream &to, World &w) {
+	for (nat i = 0; i < w.types.size(); i++) {
+		const Type &t = *w.types[i];
+		if (!hasVTable(t))
+			continue;
+
+		to << L"extern \"C\" const void *" << stormVTableName(t.name) << L"();\n";
+	}
+}
+
 static void genTypes(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
 		Type &t = *w.types[i];
@@ -157,6 +180,13 @@ static void genTypes(wostream &to, World &w) {
 		// Destructor (if any).
 		if (c != null && c->hasDtor()) {
 			to << L"address(&destroy<" << c->name << L">), ";
+		} else {
+			to << L"null, ";
+		}
+
+		// VTable (if any).
+		if (hasVTable(t)) {
+			to << L"&" << stormVTableName(c->name);
 		} else {
 			to << L"null, ";
 		}
@@ -499,6 +529,7 @@ GenerateMap genMap() {
 		{ L"TYPE_GLOBALS", &genGlobals },
 		{ L"PTR_OFFSETS", &genPtrOffsets },
 		{ L"CPP_TYPES", &genTypes },
+		{ L"VTABLE_DECLS", &genVTableFns },
 		{ L"FN_PARAMETERS", &genFnParams },
 		{ L"CPP_FUNCTIONS", &genFunctions },
 		{ L"TEMPLATE_GLOBALS", &genTemplateGlobals },
@@ -515,3 +546,67 @@ GenerateMap genMap() {
 
 	return g;
 }
+
+static String vsVTableName(const CppName &typeName) {
+	std::wostringstream r;
+
+	r << L"??_7";
+
+	nat last = typeName.size();
+	for (nat i = typeName.size(); i > 0; i--) {
+		if (typeName[i-1] != ':')
+			continue;
+
+		r << typeName.substr(i, last - i) << L"@";
+		last = --i - 1;
+	}
+
+	r << typeName.substr(0, last);
+	r << L"@@6B@";
+
+	return r.str();
+}
+
+static void genVsX86Decl(wostream &to, World &w) {
+	for (nat i = 0; i < w.types.size(); i++) {
+		const Type &t = *w.types[i];
+		if (!hasVTable(t))
+			continue;
+
+		to << vsVTableName(t.name) << L" proto syscall\n";
+		to << stormVTableName(t.name) << L" proto\n\n";
+	}
+}
+
+static void genVsX86Impl(wostream &to, World &w) {
+	for (nat i = 0; i < w.types.size(); i++) {
+		const Type &t = *w.types[i];
+		if (!hasVTable(t))
+			continue;
+
+		String sName = stormVTableName(t.name);
+		to << sName << L" proc\n";
+		to << L"\tmov eax, " << vsVTableName(t.name) << L"\n";
+		to << L"\tret\n";
+		to << sName << L" endp\n\n";
+	}
+}
+
+GenerateMap asmMap() {
+	struct E {
+		wchar *tag;
+		GenerateFn fn;
+	};
+
+	static E e[] = {
+		{ L"VS_X86_DECL", &genVsX86Decl },
+		{ L"VS_X86_IMPL", &genVsX86Impl },
+	};
+
+	GenerateMap g;
+	for (nat i = 0; i < ARRAY_COUNT(e); i++)
+		g.insert(make_pair(e[i].tag, e[i].fn));
+
+	return g;
+}
+

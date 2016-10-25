@@ -1,0 +1,12 @@
+.386
+.model flat, c
+
+.data
+
+; // VS_X86_DECL
+
+.code
+
+; // VS_X86_IMPL
+	
+end

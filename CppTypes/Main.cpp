@@ -70,7 +70,10 @@ int _tmain(int argc, const wchar *argv[]) {
 	}
 
 	Timestamp modified = lastModified(SrcPos::files);
-	modified = max(modified, config.src);
+	modified = max(modified, config.cppSrc);
+	if (config.genAsm)
+		modified = max(modified, config.asmSrc);
+
 	{
 		Path me = Path::executableFile();
 		if (me.exists())
@@ -78,8 +81,9 @@ int _tmain(int argc, const wchar *argv[]) {
 	}
 
 	bool update = oldFile(modified, config.cppOut);
-	// TODO: Enable when we output asm properly!
-	// update |= oldFile(modified, config.asmOut);
+	if (config.genAsm) {
+		update |= oldFile(modified, config.asmOut);
+	}
 
 	if (update) {
 		try {
@@ -92,7 +96,10 @@ int _tmain(int argc, const wchar *argv[]) {
 				world.usingDecl.push_back(CppName(config.usingDecl[i]));
 
 			world.prepare();
-			generateFile(config.src, config.cppOut, genMap(), world);
+			generateFile(config.cppSrc, config.cppOut, genMap(), world);
+
+			if (config.genAsm)
+				generateFile(config.asmSrc, config.asmOut, asmMap(), world);
 		} catch (const Exception &e) {
 			PLN(e);
 			// PLN(e.what());

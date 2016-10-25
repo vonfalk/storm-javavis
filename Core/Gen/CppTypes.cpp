@@ -17,6 +17,8 @@
 
 // THREAD_GLOBALS
 
+// VTABLE_DECLS
+
 // Turn off optimizations in this file. It takes quite a long time, and since it is only executed
 // once during compiler startup, it is not very useful to optimize these functions. Especially not
 // during testing!
@@ -97,7 +99,7 @@ namespace storm {
 
 		static const CppFunction functions[] = {
 			// CPP_FUNCTIONS
-			{ null, null, CppFunction::fnFree, 0, null, null },
+			{ null, null, CppFunction::fnFree, 0, null, null, null },
 		};
 
 		return functions;

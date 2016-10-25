@@ -45,6 +45,19 @@ static void generatePart(TextWriter *to, const String &indent, const String &end
 	}
 }
 
+static String findIndentation(const String &line) {
+	for (nat i = 0; i < line.size(); i++) {
+		switch (line[i]) {
+		case ' ':
+		case '\t':
+			break;
+		default:
+			return line.substr(0, i);
+		}
+	}
+	return L"";
+}
+
 void generateFile(const Path &src, const Path &dest, const GenerateMap &actions, World &world) {
 	FileStream *rStream = new FileStream(src, Stream::mRead);
 	if (!rStream->valid()) {
@@ -64,7 +77,7 @@ void generateFile(const Path &src, const Path &dest, const GenerateMap &actions,
 			nat pos = line.find(L"// ");
 			if (pos != String::npos) {
 				String part = line.substr(pos + 3);
-				String indent = line.substr(0, pos);
+				String indent = findIndentation(line);
 
 				GenerateMap::const_iterator i = actions.find(part);
 				if (i != actions.end()) {

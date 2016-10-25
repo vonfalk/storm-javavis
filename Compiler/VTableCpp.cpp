@@ -2,10 +2,51 @@
 #include "VTableCpp.h"
 #include "Utils/Platform.h"
 #include "Utils/Memory.h"
+#include "Core/GcType.h"
 
 namespace storm {
 
+	VTableCpp::VTableCpp(const void *vtable) {
+		init(vtable, vtable::count(vtable));
+	}
 
+	VTableCpp::VTableCpp(const void *vtable, nat count) {
+		init(vtable, vtable::count(vtable));
+	}
+
+	static const GcType gcType = {
+		GcType::tArray,
+		null,
+		null,
+		sizeof(const void *),
+		1,
+		{ 0 },
+	};
+
+	void VTableCpp::init(const void *vtable, nat count) {
+		data = runtime::allocArray<const void *>(engine(), &gcType, count + vtable::extraOffset);
+
+		const void *const* src = (const void *const*)vtable - vtable::extraOffset;
+		for (nat i = 0; i < count + vtable::extraOffset; i++) {
+			data->v[i] = src[i];
+		}
+	}
+
+	nat VTableCpp::count() {
+		return data->count - vtable::extraOffset;
+	}
+
+	const void *&VTableCpp::slot(nat id) {
+		return data->v[id + vtable::extraOffset];
+	}
+
+	const void *&VTableCpp::extra() {
+		return data->v[0];
+	}
+
+	void VTableCpp::insert(void *obj) {
+		vtable::set(&data->v[vtable::extraOffset], obj);
+	}
 
 	namespace vtable {
 
@@ -80,8 +121,12 @@ namespace storm {
 				// four byte version
 				const nat *ptr = (const nat *)(data + size + 1);
 				return *ptr / sizeof(void *);
+			} else if (data[size] == 0x20) {
+				// zero byte version, always jumps to offset 0
+				return 0;
 			} else {
 				PLN(L"Machine code mismatch: Expected 0x60 or 0xA0, got " << toHex(data[size]));
+				DebugBreak();
 				return invalid;
 			}
 		}

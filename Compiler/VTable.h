@@ -25,6 +25,8 @@ namespace storm {
 	class VTable : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
+		STORM_CTOR VTable();
+
 		// TODO
 	};
 

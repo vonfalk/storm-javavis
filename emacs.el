@@ -257,7 +257,7 @@
   (insert (replace-regexp-in-string "\\.cpp" "" (filename buffer-file-name)))
   (insert ") {\n")
   (indent-for-tab-command)
-  (insert "Engine &e = *gEngine;\n\n")
+  (insert "Engine &e = gEngine();\n\n")
   (let ((pos (point)))
     (insert "\n\n} END_TEST")
     (indent-for-tab-command)
