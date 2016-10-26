@@ -3,6 +3,7 @@
 #include "Utils/Platform.h"
 #include "Utils/Memory.h"
 #include "Core/GcType.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -14,20 +15,25 @@ namespace storm {
 		init(vtable, vtable::count(vtable));
 	}
 
-	static const GcType gcType = {
-		GcType::tArray,
-		null,
-		null,
-		sizeof(const void *),
-		1,
-		{ 0 },
-	};
-
 	void VTableCpp::init(const void *vtable, nat count) {
-		data = runtime::allocArray<const void *>(engine(), &gcType, count + vtable::extraOffset);
+		data = runtime::allocArray<const void *>(engine(), &pointerArrayType, count + vtable::extraOffset);
 
 		const void *const* src = (const void *const*)vtable - vtable::extraOffset;
-		for (nat i = 0; i < count + vtable::extraOffset; i++) {
+		for (nat i = 1; i < count + vtable::extraOffset; i++) {
+			data->v[i] = src[i];
+		}
+	}
+
+	void VTableCpp::replace(const void *vtable) {
+		replace(vtable, vtable::count(vtable));
+	}
+
+	void VTableCpp::replace(const void *vtable, nat count) {
+		if (count > data->count)
+			throw InternalError(L"We need to relocate a C++ VTable!");
+
+		const void *const* src = (const void *const*)vtable - vtable::extraOffset;
+		for (nat i = 1; i < count + vtable::extraOffset; i++) {
 			data->v[i] = src[i];
 		}
 	}

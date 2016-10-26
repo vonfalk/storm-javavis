@@ -1,5 +1,6 @@
 #pragma once
 #include "Code/Reference.h"
+#include "Core/GcArray.h"
 
 namespace code {
 	STORM_PKG(core.asm);
@@ -13,12 +14,15 @@ namespace code {
 		// Update a pointer inside 'obj'.
 		MemberRef(Object *obj, size_t offset, code::Ref ref, code::Content *from);
 
+		// Update an entry inside 'arr'.
+		MemberRef(GcArray<const void *> *arr, size_t entry, code::Ref ref, code::Content *from);
+
 		// Notification of changed address.
 		virtual void moved(const void *newAddr);
 
 	private:
 		// Object.
-		Object *update;
+		UNKNOWN(PTR_GC) void *update;
 
 		// Offset into 'update'.
 		size_t offset;

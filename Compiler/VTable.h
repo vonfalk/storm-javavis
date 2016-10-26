@@ -1,5 +1,7 @@
 #pragma once
 #include "Core/TObject.h"
+#include "VTableCpp.h"
+#include "VTableStorm.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -21,13 +23,31 @@ namespace storm {
 	 * altering one pointer. However, this indirection has a small penalty which we might want to
 	 * get rid of eventually.
 	 */
-
 	class VTable : public ObjectOn<Compiler> {
 		STORM_CLASS;
 	public:
+		// Create a VTable for a type. Use 'createXxx()' to supply the C++ vtable we shall be
+		// derived from.
 		STORM_CTOR VTable();
 
-		// TODO
+		// Create vtable for a class representing a pure C++ type. In this mode, it is not possible
+		// to replace functions in the VTable.
+		void createCpp(const void *cppVTable);
+
+		// Create a vtable for a class derived from 'parent'. If done more than once, the current
+		// VTable is cleared and then re-initialized.
+		void STORM_FN createStorm(VTable *parent);
+
+	private:
+		// The original C++ VTable we are based off. This can be several levels up the inheritance
+		// chain.
+		const void *original;
+
+		// The derived C++ VTable (if we created one).
+		VTableCpp *cpp;
+
+		// The derived Storm VTable (if we created one).
+		VTableStorm *storm;
 	};
 
 }

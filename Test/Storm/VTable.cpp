@@ -23,7 +23,7 @@ static int check(const VTableTest &v) {
 	return v.replace();
 }
 
-BEGIN_TEST(VTableCppTest) {
+BEGIN_TEST(VTableCppTest, Storm) {
 	Engine &e = gEngine();
 
 	VTableTest a(10);

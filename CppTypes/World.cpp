@@ -42,9 +42,12 @@ void World::orderTypes() {
 	struct NamePred {
 		Type *type;
 
-		NamePred(Type *t) : type(t) {}
+		NamePred(Type *type) : type(type) {}
 
 		bool operator ()(const Auto<Type> &l, const Auto<Type> &r) const {
+			if (l.borrow() == r.borrow())
+				return false;
+
 			// Always put 'type' first.
 			if (l.borrow() == type)
 				return true;

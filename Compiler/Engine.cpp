@@ -106,15 +106,6 @@ namespace storm {
 	 * Helpers for the pointer handle.
 	 */
 
-	static GcType ptrArray = {
-		GcType::tArray,
-		null,
-		null,
-		sizeof(void *),
-		1,
-		{ 0 },
-	};
-
 	static void objDeepCopy(void *obj, CloneEnv *env) {
 		Object *o = *(Object **)obj;
 		o->deepCopy(env);
@@ -141,7 +132,7 @@ namespace storm {
 			o.objHandle = new (*this) Handle();
 			o.objHandle->size = sizeof(void *);
 			o.objHandle->locationHash = false;
-			o.objHandle->gcArrayType = &ptrArray;
+			o.objHandle->gcArrayType = &pointerArrayType;
 			o.objHandle->copyFn = null; // No special function, use memcpy.
 			o.objHandle->deepCopyFn = &objDeepCopy;
 			o.objHandle->toSFn = &objToS;
@@ -172,7 +163,7 @@ namespace storm {
 			o.tObjHandle = new (*this) Handle();
 			o.tObjHandle->size = sizeof(void *);
 			o.tObjHandle->locationHash = true;
-			o.tObjHandle->gcArrayType = &ptrArray;
+			o.tObjHandle->gcArrayType = &pointerArrayType;
 			o.tObjHandle->copyFn = null; // No special function, use memcpy.
 			o.tObjHandle->deepCopyFn = null; // No need for deepCopy.
 			o.tObjHandle->toSFn = &tObjToS;

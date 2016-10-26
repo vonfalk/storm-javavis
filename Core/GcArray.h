@@ -1,4 +1,5 @@
 #pragma once
+#include "GcType.h"
 
 namespace storm {
 
@@ -40,4 +41,7 @@ namespace storm {
 		inline void splatted(size_t v) { splattedI = (v << 1) | 0x1; }
 	};
 
+
+	// GcType for arrays of pointers. This is very commonly done, so it is provided here.
+	extern const GcType pointerArrayType;
 }

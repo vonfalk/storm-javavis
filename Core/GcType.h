@@ -21,7 +21,11 @@ namespace storm {
 			// A type that has a fixed layout and size (ie. classes, structs).
 			tFixed,
 
-			// A variant of tFixed, where offset[0] points to a GcType to be scanned. Used by the
+			// Same as 'tFixed', but offset 0 (ie. the first few bytes in the object) are scanned as
+			// a VTable.
+			tFixedObj,
+
+			// A variant of tFixedObj, where offset[0] points to a GcType to be scanned. Used by the
 			// Type type to properly scan its GcType member.
 			tType,
 

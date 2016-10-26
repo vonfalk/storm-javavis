@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/TObject.h"
+#include "Code/Reference.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -33,9 +34,16 @@ namespace storm {
 		// Set this VTable for a class.
 		void insert(void *obj);
 
+		// Replace the contents in here with a new vtable.
+		void replace(const void *vtable);
+		void replace(const void *vtable, nat count);
+
 	private:
 		// The VTable data. We're storing it as a regular GC array.
 		GcArray<const void *> *data;
+
+		// References updating the VTable. The entire table is null if no updaters are added.
+		GcArray<code::Reference *> *refs;
 
 		// Initialize ourselves.
 		void init(const void *vtable, nat count);

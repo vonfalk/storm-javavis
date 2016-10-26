@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Gc.h"
+#include "VTableCpp.h" // We need to know how VTables are stored.
 #include "Type.h" // For debugging heap corruptions.
 #include "Core/Str.h"  // For debugging heap corruptions.
 #include "Utils/Memory.h"
@@ -215,12 +216,27 @@ namespace storm {
 
 	// Helper for interpreting and scanning a GcType block.
 #define FIX_HEADER(header)									\
-	{														\
+	do {													\
 		mps_addr_t *d = (mps_addr_t *)&((header).type);		\
 		mps_res_t r = MPS_FIX12(ss, d);						\
 		if (r != MPS_RES_OK)								\
 			return r;										\
-	}
+	} while (false)
+
+	// # of bytes before the vtable the allocation actually starts.
+	static const nat vtableOffset = OFFSET_OF(GcArray<const void *>, v[vtable::extraOffset]);
+
+	// Helper for interpreting and scanning a vtable.
+#define FIX_VTABLE(base)						\
+	do {										\
+		mps_addr_t d = *(mps_addr_t *)(base);	\
+		d = (byte *)d - vtableOffset;			\
+		mps_res_t r = MPS_FIX12(ss, &d);		\
+		if (r != MPS_RES_OK)					\
+			return r;							\
+		d = (byte *)d + vtableOffset;			\
+		*(mps_addr_t *)(base) = d;				\
+	} while (false)
 
 	// Helper for interpreting and scanning a block of data.
 #define FIX_GCTYPE(header, start, base)								\
@@ -248,11 +264,15 @@ namespace storm {
 				mps_addr_t pos = (byte *)at + headerSize;
 
 				switch (h->type) {
+				case GcType::tFixedObj:
+					FIX_VTABLE(pos);
+					// Fall thru.
 				case GcType::tFixed:
 					FIX_HEADER(h->obj);
 					FIX_GCTYPE(h, 0, pos);
 					break;
 				case GcType::tType: {
+					FIX_VTABLE(pos);
 					size_t offset = h->obj.offset[0];
 					GcType **data = (GcType **)((byte *)pos + offset);
 					FIX_HEADER(h->obj);
