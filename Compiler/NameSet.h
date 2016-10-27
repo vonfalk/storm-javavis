@@ -103,10 +103,9 @@ namespace storm {
 		// Late initialization.
 		virtual void lateInit();
 
+	protected:
 		/**
 		 * Lazy-loading callbacks.
-		 *
-		 * TODO: Move to protected whenever the preprocessor can handle that properly.
 		 */
 
 		// Load a single missing name (#1 above). Assumed to call add() on one or more candidates
@@ -120,7 +119,6 @@ namespace storm {
 		// a later time.
 		virtual Bool STORM_FN loadAll();
 
-	protected:
 		// Find a named here without bothering with lazy-loading.
 		Named *STORM_FN tryFind(SimplePart *part);
 

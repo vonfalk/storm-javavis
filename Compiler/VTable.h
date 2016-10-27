@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/TObject.h"
+#include "VTableSlot.h"
 #include "VTableCpp.h"
 #include "VTableStorm.h"
 

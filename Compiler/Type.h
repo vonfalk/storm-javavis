@@ -5,6 +5,7 @@
 #include "RunOn.h"
 #include "RefHandle.h"
 #include "Layout.h"
+#include "VTable.h"
 #include "Core/TypeFlags.h"
 
 namespace storm {
@@ -14,6 +15,7 @@ namespace storm {
 	struct CppType;
 	class NamedThread;
 	class Function;
+	class OverridePart;
 
 	/**
 	 * Description of a type.
@@ -53,7 +55,7 @@ namespace storm {
 		void STORM_FN setSuper(Type *to);
 
 		// Get the super-class for this type.
-		inline MAYBE(Type *) STORM_FN super() { return chain->super(); }
+		inline MAYBE(Type *) STORM_FN super() { return chain ? chain->super() : null; }
 
 		// Set the thread for this type. This will force the super-type to be TObject.
 		void STORM_FN setThread(NamedThread *t);
@@ -63,6 +65,10 @@ namespace storm {
 
 		// Keep track of what is added.
 		virtual void STORM_FN add(Named *item);
+
+		// Modify the 'find' behaviour slightly so it also considers superclasses.
+		virtual MAYBE(Named *) STORM_FN find(SimplePart *part);
+		using NameSet::find;
 
 		// Receive notification of new additions.
 		virtual void STORM_FN notifyAdded(NameSet *to, Named *what);
@@ -173,7 +179,42 @@ namespace storm {
 
 		// The member variable layout for this type. Not used for types declared in C++.
 		Layout *layout;
+
+		/**
+		 * Helpers for deciding which functions shall be virtual.
+		 */
+
+		// Called when a function has been added here. Decides if 'f' should be virtual or not and
+		// acts accordingly.
+		void functionAdded(Function *added);
+
+		// Called by a child class to notify that a new function 'added' has been added in some
+		// child class. If one is found in this class or any parent classes, that function is made
+		// into a VTable-call (if it is not already) and its slot is returned. If none is found,
+		// returns an invalid slot.
+		VTableSlot newChildFn(OverridePart *added);
+
+		// Make 'f' use the vtable when called.
+		void useVTable(Function *fn, VTableSlot slot);
+
 	};
 
+
+	/**
+	 * Lookup used for finding functions in superclasses which 'match' overrides.
+	 */
+	class OverridePart : public SimplePart {
+		STORM_CLASS;
+	public:
+		// Create, specifying the function used.
+		STORM_CTOR OverridePart(Function *match);
+
+		// Custom badness measure.
+		virtual Int STORM_FN matches(Named *candidate) const;
+
+	private:
+		// Remember the result as well.
+		Value result;
+	};
 
 }

@@ -119,12 +119,18 @@ namespace storm {
 	}
 
 	void NameSet::add(Named *item) {
+		if (!overloads)
+			overloads = new (this) Map<Str *, NameOverloads *>();
+
 		overloads->at(item->name)->add(item);
 		item->parentLookup = this;
 		notifyAdd(item);
 	}
 
 	void NameSet::add(Template *item) {
+		if (!overloads)
+			overloads = new (this) Map<Str *, NameOverloads *>();
+
 		overloads->at(item->name)->add(item);
 	}
 
@@ -180,10 +186,10 @@ namespace storm {
 
 	Named *NameSet::tryFind(SimplePart *part) {
 		if (!overloads)
-			overloads = new (this) Map<Str *, NameOverloads *>();
+			return null;
 
 		if (!overloads->has(part->name))
-			return false;
+			return null;
 
 		NameOverloads *found = overloads->get(part->name);
 		Named *result = part->choose(found);

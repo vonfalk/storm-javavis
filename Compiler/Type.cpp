@@ -185,6 +185,7 @@ namespace storm {
 
 		// TODO: Invalidate the Layout as well.
 		// TODO: Invalidate the handle as well.
+		// TODO: (potentially) remove vtable calls for all functions and add vtable calls again for our new parent.
 	}
 
 	void Type::setThread(NamedThread *thread) {
@@ -209,6 +210,13 @@ namespace storm {
 	void Type::add(Named *item) {
 		NameSet::add(item);
 
+		if (Function *f = as<Function>(item)) {
+			functionAdded(f);
+
+			if (value() && tHandle)
+				updateHandle(f);
+		}
+
 		if (value() && tHandle)
 			if (Function *f = as<Function>(item))
 				updateHandle(f);
@@ -219,6 +227,20 @@ namespace storm {
 				layout = new (engine) Layout();
 			layout->add(item);
 		}
+	}
+
+	Named *Type::find(SimplePart *part) {
+		if (Named *n = NameSet::find(part))
+			return n;
+
+		// Constructors are not inherited.
+		if (wcscmp(part->name->c_str(), CTOR) == 0)
+			return null;
+
+		if (Type *s = super())
+			return s->find(part);
+		else
+			return null;
 	}
 
 	void Type::notifyAdded(NameSet *, Named *what) {
@@ -527,6 +549,68 @@ namespace storm {
 			if (params->count() == 1)
 				h->setEqual(fn->ref());
 		}
+	}
+
+	/**
+	 * VTable logic.
+	 */
+
+	void Type::functionAdded(Function *fn) {
+		// Ask our parent to see if 'fn' should be virtual.
+		VTableSlot slot;
+		if (Type *s = super())
+			slot = s->newChildFn(new (engine) OverridePart(fn));
+
+		if (slot.valid())
+			useVTable(fn, slot);
+	}
+
+	VTableSlot Type::newChildFn(OverridePart *fn) {
+		Function *found = as<Function>(NameSet::find(fn));
+		if (!found) {
+			if (Type *s = super())
+				return s->newChildFn(fn);
+			else
+				return VTableSlot();
+		}
+
+		// See if 'found' already has a VTable slot, otherwise allocate one.
+		VTableSlot slot;
+
+		useVTable(found, slot);
+		return slot;
+	}
+
+	void Type::useVTable(Function *fn, VTableSlot slot) {
+		PLN(fn->identifier() << L" should be virtual using " << slot);
+	}
+
+	// NOTE: Slightly dangerous to re-use the parameters from the function...
+	OverridePart::OverridePart(Function *src) : SimplePart(src->name, src->params), result(src->result) {}
+
+	Int OverridePart::matches(Named *candidate) const {
+		Function *fn = as<Function>(candidate);
+		if (!fn)
+			return -1;
+
+		Array<Value> *c = fn->params;
+		if (c->count() != params->count())
+			return -1;
+
+		for (nat i = 0; i < c->count(); i++) {
+			const Value &match = c->at(i);
+			const Value &ours = params->at(i);
+
+			if (!match.canStore(ours))
+				return -1;
+		}
+
+		// TODO: This should probably be a hard error.
+		if (result.canStore(fn->result))
+			return -1;
+
+		// We always give a binary decision.
+		return 0;
 	}
 
 	void Type::toS(StrBuf *to) const {
