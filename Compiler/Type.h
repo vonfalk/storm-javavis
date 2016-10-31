@@ -180,22 +180,37 @@ namespace storm {
 		// The member variable layout for this type. Not used for types declared in C++.
 		Layout *layout;
 
+		// Find only in this class.
+		MAYBE(Named *) findHere(SimplePart *part);
+
 		/**
 		 * Helpers for deciding which functions shall be virtual.
 		 */
 
 		// Called when a function has been added here. Decides if 'f' should be virtual or not and
 		// acts accordingly.
-		void functionAdded(Function *added);
+		void vtableFnAdded(Function *added);
+
+		// Search towards the super class for an overriding function. Returns true if one was found.
+		Bool vtableFindSuper(Function *added);
+
+		// Search towards the subclasses for an overriding function.
+		void vtableFindSubclass(OverridePart *added);
 
 		// Called by a child class to notify that a new function 'added' has been added in some
 		// child class. If one is found in this class or any parent classes, that function is made
 		// into a VTable-call (if it is not already) and its slot is returned. If none is found,
 		// returns an invalid slot.
-		VTableSlot newChildFn(OverridePart *added);
+		VTableSlot vtableNewChildFn(OverridePart *added);
 
 		// Make 'f' use the vtable when called.
-		void useVTable(Function *fn, VTableSlot slot);
+		void vtableSet(Function *fn, VTableSlot slot);
+
+		// Make 'f' not use the vtable when called.
+		void vtableClear(Function *fn);
+
+		// Called when we have been attached to a new parent.
+		void vtableNewSuper();
 
 	};
 

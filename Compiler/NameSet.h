@@ -103,6 +103,40 @@ namespace storm {
 		// Late initialization.
 		virtual void lateInit();
 
+		// Iterator. TODO: How to do wrt threading?
+		class Iter {
+			STORM_VALUE;
+			friend class NameSet;
+		public:
+			// Create an iterator pointing to the end.
+			STORM_CTOR Iter();
+
+			// Compare.
+			Bool STORM_FN operator ==(const Iter &o) const;
+			Bool STORM_FN operator !=(const Iter &o) const;
+
+			// Get the value.
+			Named *STORM_FN v() const;
+
+			// Increment.
+			Iter &STORM_FN operator ++();
+			Iter STORM_FN operator ++(int d);
+
+		private:
+			// Create an iterator to the start.
+			Iter(Map<Str *, NameOverloads *> *c);
+
+			// Current position in the map.
+			typedef Map<Str *, NameOverloads *>::Iter MapIter;
+			UNKNOWN(MapBase::Iter) MapIter name;
+
+			// Current position in NameOverloads at 'pos'.
+			Nat pos;
+		};
+
+		Iter begin() const;
+		Iter end() const;
+
 	protected:
 		/**
 		 * Lazy-loading callbacks.

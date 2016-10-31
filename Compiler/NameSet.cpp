@@ -217,4 +217,53 @@ namespace storm {
 		}
 	}
 
+	NameSet::Iter::Iter() : name(), pos(0) {}
+
+	NameSet::Iter::Iter(Map<Str *, NameOverloads *> *c) : name(c->begin()), pos(0) {}
+
+	Bool NameSet::Iter::operator ==(const Iter &o) const {
+		// Either both at end or none.
+		if (name == MapIter())
+			return o.name == MapIter();
+
+		if (name != o.name)
+			return false;
+
+		return pos == o.pos;
+	}
+
+	Bool NameSet::Iter::operator !=(const Iter &o) const {
+		return !(*this == o);
+	}
+
+	Named *NameSet::Iter::v() const {
+		return name.v()->at(pos);
+	}
+
+	NameSet::Iter &NameSet::Iter::operator ++() {
+		while (name != MapIter() && pos >= name.v()->count()) {
+			++name;
+			pos = 0;
+		}
+
+		return *this;
+	}
+
+	NameSet::Iter NameSet::Iter::operator ++(int) {
+		Iter i(*this);
+		++*this;
+		return i;
+	}
+
+	NameSet::Iter NameSet::begin() const {
+		Iter r;
+		if (overloads)
+			r = Iter(overloads);
+		return r;
+	}
+
+	NameSet::Iter NameSet::end() const {
+		return Iter();
+	}
+
 }

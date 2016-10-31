@@ -62,9 +62,9 @@ static Auto<TypeRef> parseTypeRef(Tokenizer &tok) {
 		tok.expect(L")");
 	} else if (tok.skipIf(L"UNKNOWN")) {
 		tok.expect(L"(");
-		Token kind = tok.next();
+		CppName kind = parseName(tok);
 		tok.expect(L")");
-		type = new UnknownType(kind.token, parseTypeRef(tok));
+		type = new UnknownType(kind, parseTypeRef(tok));
 	} else {
 		SrcPos pos = tok.peek().pos;
 		CppName n = parseName(tok);
@@ -340,7 +340,12 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 			break;
 		} else if (t.token == L"class" || t.token == L"struct") {
 			tok.skip();
-			parseType(tok, env, fullName);
+			ParseEnv sub = env;
+			if (sub.pkg.empty())
+				sub.pkg = name.token;
+			else
+				sub.pkg += L"." + name.token;
+			parseType(tok, sub, fullName);
 		} else if (t.token == L"extern") {
 			tok.skip();
 		} else if (t.token == L"enum") {

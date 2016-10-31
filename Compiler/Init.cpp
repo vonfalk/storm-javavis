@@ -38,6 +38,7 @@ namespace storm {
 		Array<Value>::stormType(e);
 		Map<Str *, NameOverloads *>::stormType(e);
 		WeakSet<TypeChain>::stormType(e);
+		Array<Type *>::stormType(e);
 
 		// Now we can declare templates fully functional.
 		e.advance(bootTemplates);

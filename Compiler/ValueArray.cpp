@@ -44,6 +44,9 @@ namespace storm {
 	}
 
 	void ValueArray::ensure(Nat n) {
+		if (n == 0)
+			return;
+
 		Nat oldCap = data ? data->count : 0;
 		if (oldCap >= n)
 			return;

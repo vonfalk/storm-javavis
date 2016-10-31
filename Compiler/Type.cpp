@@ -185,7 +185,10 @@ namespace storm {
 
 		// TODO: Invalidate the Layout as well.
 		// TODO: Invalidate the handle as well.
-		// TODO: (potentially) remove vtable calls for all functions and add vtable calls again for our new parent.
+		// TODO: Notify our old parent of removal of vtable members.
+
+		// Register all functions here and in our children as vtable calls.
+		vtableNewSuper();
 	}
 
 	void Type::setThread(NamedThread *thread) {
@@ -211,7 +214,8 @@ namespace storm {
 		NameSet::add(item);
 
 		if (Function *f = as<Function>(item)) {
-			functionAdded(f);
+			if (wcscmp(f->name->c_str(), CTOR) != 0)
+				vtableFnAdded(f);
 
 			if (value() && tHandle)
 				updateHandle(f);
@@ -551,42 +555,100 @@ namespace storm {
 		}
 	}
 
+	Named *Type::findHere(SimplePart *part) {
+		return NameSet::find(part);
+	}
+
 	/**
 	 * VTable logic.
 	 */
 
-	void Type::functionAdded(Function *fn) {
+	void Type::vtableFnAdded(Function *fn) {
+		if (!vtableFindSuper(fn))
+			vtableFindSubclass(new (engine) OverridePart(fn));
+	}
+
+	Bool Type::vtableFindSuper(Function *fn) {
 		// Ask our parent to see if 'fn' should be virtual.
 		VTableSlot slot;
 		if (Type *s = super())
-			slot = s->newChildFn(new (engine) OverridePart(fn));
+			slot = s->vtableNewChildFn(new (engine) OverridePart(fn));
 
-		if (slot.valid())
-			useVTable(fn, slot);
+		if (slot.valid()) {
+			vtableSet(fn, slot);
+			return true;
+		}
+
+		return false;
 	}
 
-	VTableSlot Type::newChildFn(OverridePart *fn) {
-		Function *found = as<Function>(NameSet::find(fn));
+	// TODO: We can optimize this a whole lot by elliminating the need to actually find the parent
+	// function again.
+	void Type::vtableFindSubclass(OverridePart *fn) {
+		// If too early in the boot process, we can not proceed here.
+		if (!engine.has(bootTemplates))
+			return;
+
+		Array<Type *> *children = chain->children();
+		for (Nat i = 0; i < children->count(); i++) {
+			Type *child = children->at(i);
+
+			Function *found = as<Function>(child->findHere(fn));
+			if (found) {
+				// Find and apply the vtable layout.
+				// TODO: Do we need to force-disable the vtable?
+				child->vtableFindSuper(found);
+			}
+
+			child->vtableFindSubclass(fn);
+		}
+	}
+
+	VTableSlot Type::vtableNewChildFn(OverridePart *fn) {
+		Function *found = as<Function>(findHere(fn));
 		if (!found) {
 			if (Type *s = super())
-				return s->newChildFn(fn);
+				return s->vtableNewChildFn(fn);
 			else
 				return VTableSlot();
 		}
 
 		// See if 'found' already has a VTable slot, otherwise allocate one.
-		VTableSlot slot;
+		VTableSlot slot = cppSlot(1);
 
-		useVTable(found, slot);
+		vtableSet(found, slot);
 		return slot;
 	}
 
-	void Type::useVTable(Function *fn, VTableSlot slot) {
+	void Type::vtableSet(Function *fn, VTableSlot slot) {
 		PLN(fn->identifier() << L" should be virtual using " << slot);
 	}
 
+	void Type::vtableClear(Function *fn) {
+		PLN(fn->identifier() << L" should not be virtual.");
+	}
+
+	void Type::vtableNewSuper() {
+		// If too early in the boot process, we can not proceed here.
+		if (!engine.has(bootTemplates))
+			return;
+
+		// Clear the vtable usage for all functions in here and pretend they were added once more to
+		// properly register them with the super class.
+		for (NameSet::Iter i = begin(), e = end(); i != e; ++i) {
+			Function *f = as<Function>(i.v());
+			vtableClear(f);
+			vtableFindSuper(f);
+		}
+
+		Array<Type *> *children = chain->children();
+		for (Nat i = 0; i < children->count(); i++) {
+			children->at(i)->vtableNewSuper();
+		}
+	}
+
 	// NOTE: Slightly dangerous to re-use the parameters from the function...
-	OverridePart::OverridePart(Function *src) : SimplePart(src->name, src->params), result(src->result) {}
+	OverridePart::OverridePart(Function *src) :	SimplePart(src->name, src->params), result(src->result) {}
 
 	Int OverridePart::matches(Named *candidate) const {
 		Function *fn = as<Function>(candidate);
@@ -597,17 +659,36 @@ namespace storm {
 		if (c->count() != params->count())
 			return -1;
 
-		for (nat i = 0; i < c->count(); i++) {
-			const Value &match = c->at(i);
-			const Value &ours = params->at(i);
-
-			if (!match.canStore(ours))
-				return -1;
-		}
-
-		// TODO: This should probably be a hard error.
-		if (result.canStore(fn->result))
+		if (c->count() < 1)
 			return -1;
+
+		if (params->at(0).canStore(c->at(0))) {
+			// Candidate is in a subclass wrt us.
+			for (nat i = 1; i < c->count(); i++) {
+				// Candidate needs to accept wider inputs than us.
+				if (!c->at(i).canStore(params->at(i)))
+					return -1;
+			}
+
+			// Candidate may return a narrower range of types.
+			if (!fn->result.canStore(result))
+				return -1;
+
+		} else if (c->at(0).canStore(params->at(0))) {
+			// Candidate is in a superclass wrt us.
+			for (nat i = 1; i < c->count(); i++) {
+				// We need to accept wider inputs than candidate.
+				if (!params->at(i).canStore(c->at(i)))
+					return -1;
+			}
+
+			// We may return a narrower range than candidate.
+			if (!result.canStore(fn->result))
+				return -1;
+
+		} else {
+			return -1;
+		}
 
 		// We always give a binary decision.
 		return 0;

@@ -344,11 +344,13 @@ public:
  * PTR_GC - pointer to gc object.
  * INT - integer sized object.
  * LONG - long-sized object (ie. 64 bits according to Storm terminology).
+ *
+ * Also: if 'id' is the name of another type, it substitutes that.
  */
 class UnknownType : public TypeRef {
 public:
 	// Create. 'id' is the kind of external type.
-	UnknownType(const String &id, Auto<TypeRef> of);
+	UnknownType(const CppName &id, Auto<TypeRef> of);
 
 	// Type of what?
 	Auto<TypeRef> of;
@@ -378,6 +380,9 @@ private:
 
 	// Current id.
 	const ID *id;
+
+	// The alternative type we've resolved to.
+	Auto<TypeRef> alias;
 };
 
 

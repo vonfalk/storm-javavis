@@ -225,7 +225,7 @@ const UnknownType::ID UnknownType::ids[] = {
 	{ L"INT", Size::sInt, false },
 };
 
-UnknownType::UnknownType(const String &kind, Auto<TypeRef> of) : TypeRef(of->pos), of(of), id(null) {
+UnknownType::UnknownType(const CppName &kind, Auto<TypeRef> of) : TypeRef(of->pos), of(of), id(null) {
 	for (nat i = 0; i < ARRAY_COUNT(ids); i++) {
 		if (kind == ids[i].name) {
 			id = &ids[i];
@@ -234,21 +234,40 @@ UnknownType::UnknownType(const String &kind, Auto<TypeRef> of) : TypeRef(of->pos
 	}
 
 	if (!id)
-		throw Error(L"Invalid UNKNOWN() declaration. " + kind + L" is not known.", of->pos);
+		alias = new NamedType(of->pos, kind);
 }
 
 Size UnknownType::size() const {
-	return id->size;
+	if (id)
+		return id->size;
+	else
+		return alias->size();
 }
 
 bool UnknownType::gcType() const {
-	return id->gc;
+	if (id)
+		return id->gc;
+	else
+		return alias->gcType();
 }
 
 Auto<TypeRef> UnknownType::resolve(World &in, const CppName &ctx) const {
-	return new UnknownType(*this);
+	if (id) {
+		return new UnknownType(*this);
+	} else if (alias) {
+		Auto<TypeRef> r = alias->resolve(in, ctx);
+		UnknownType *u = new UnknownType(*this);
+		u->alias = r;
+		return u;
+	} else {
+		throw Error(L"Invalid UNKNOWN() declaration.", of->pos);
+	}
 }
 
 void UnknownType::print(wostream &to) const {
-	to << L"UNKNOWN(" << id->name << L") " << of;
+	if (id) {
+		to << L"UNKNOWN(" << id->name << L") " << of;
+	} else {
+		to << L"UNKNOWN(" << alias << L") " << of;
+	}
 }
