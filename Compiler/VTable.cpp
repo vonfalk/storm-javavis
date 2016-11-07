@@ -32,4 +32,23 @@ namespace storm {
 		storm = new (this) VTableStorm(cpp);
 	}
 
+	VTableSlot VTable::findSlot(Function *fn) {
+		Code *c = fn->getCode();
+		if (as<StaticCode>(c)) {
+			// Might be a function from C++.
+			nat r = cpp
+				? cpp->findSlot(fn->directRef()->address())
+				: vtable::find(original, fn->directRef()->address());
+
+			if (r != vtable::invalid)
+				return cppSlot(r);
+		}
+
+		if (!storm)
+			return VTableSlot();
+
+		TODO(L"FIXME");
+		return VTableSlot();
+	}
+
 }

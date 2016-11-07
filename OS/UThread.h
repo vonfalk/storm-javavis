@@ -93,7 +93,7 @@ namespace os {
 		 */
 
 		// Spawn using a Fn<void, void>.
-		static UThread spawn(const Fn<void, void> &fn, const Thread *on = null);
+		static UThread spawn(const util::Fn<void, void> &fn, const Thread *on = null);
 
 		// Spawn using a plain function pointer and parameters. The parameters stored in
 		// 'params' follows the same lifetime rules as FnParams::call() does. No special care

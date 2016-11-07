@@ -54,7 +54,7 @@ namespace os {
 		const util::InlineSet<UThreadStack> &stacks() const;
 
 		// Start a thread.
-		static Thread spawn(const Fn<void, void> &start, ThreadGroup &group);
+		static Thread spawn(const util::Fn<void, void> &start, ThreadGroup &group);
 
 		// Start a thread with a specific 'ThreadWait' behaviour. Will take ownership of 'wait'.
 		static Thread spawn(ThreadWait *wait, ThreadGroup &group);

@@ -33,7 +33,7 @@ namespace storm {
 		~Thread();
 
 		// Get the thread registration function.
-		static Fn<void, void> registerFn(Engine &e);
+		static util::Fn<void, void> registerFn(Engine &e);
 
 		// Deep copy as well.
 		virtual void STORM_FN deepCopy(CloneEnv *env);

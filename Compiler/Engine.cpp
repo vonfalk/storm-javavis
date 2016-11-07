@@ -196,6 +196,13 @@ namespace storm {
 		return o.arena;
 	}
 
+	VTableCalls *Engine::vtableCalls() {
+		if (!o.vtableCalls)
+			o.vtableCalls = new (*this) VTableCalls();
+
+		return o.vtableCalls;
+	}
+
 	code::Ref Engine::ref(RefType ref) {
 		code::RefSource **r = &o.refs[ref];
 		if (!*r)

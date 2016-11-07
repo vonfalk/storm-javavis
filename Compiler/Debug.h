@@ -76,5 +76,20 @@ namespace storm {
 			size_t oldPos;
 		};
 
+
+		/**
+		 * Class with a member we can easily extend.
+		 */
+		class Extend : public Object {
+			STORM_CLASS;
+		public:
+			Extend(Int v);
+
+			virtual Int STORM_FN value();
+
+		private:
+			Int v;
+		};
+
 	}
 }

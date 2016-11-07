@@ -29,7 +29,7 @@ namespace storm {
 		const void *&extra();
 
 		// Get our size.
-		nat count();
+		nat count() const;
 
 		// Set this VTable for a class.
 		void insert(void *obj);
@@ -37,6 +37,9 @@ namespace storm {
 		// Replace the contents in here with a new vtable.
 		void replace(const void *vtable);
 		void replace(const void *vtable, nat count);
+
+		// Find a function in here. Returns vtable::invalid if none is found.
+		nat findSlot(const void *fn) const;
 
 	private:
 		// The VTable data. We're storing it as a regular GC array.
@@ -47,6 +50,9 @@ namespace storm {
 
 		// Initialize ourselves.
 		void init(const void *vtable, nat count);
+
+		// Get a pointer to the start of the vtable.
+		const void **table() const;
 	};
 
 

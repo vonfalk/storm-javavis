@@ -58,6 +58,10 @@ namespace storm {
 			this->code->update(codeRef);
 	}
 
+	Code *Function::getCode() const {
+		return code;
+	}
+
 	void Function::setLookup(MAYBE(Code *) code) {
 		if (lookup)
 			lookup->detach();

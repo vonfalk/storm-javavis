@@ -4,6 +4,7 @@
 #include "BootStatus.h"
 #include "World.h"
 #include "Scope.h"
+#include "VTableCall.h"
 #include "Code/Arena.h"
 #include "Code/RefSource.h"
 #include "Code/Reference.h"
@@ -113,6 +114,9 @@ namespace storm {
 		// The arena used for code generation for this platform.
 		code::Arena *arena();
 
+		// VTable call stubs.
+		VTableCalls *vtableCalls();
+
 		// Well-known references:
 		enum RefType {
 			rEngine,
@@ -148,6 +152,9 @@ namespace storm {
 
 			// Arena.
 			code::Arena *arena;
+
+			// VTableCalls.
+			code::VTableCalls *vtableCalls;
 
 			// References.
 			code::RefSource *refs[refCount];

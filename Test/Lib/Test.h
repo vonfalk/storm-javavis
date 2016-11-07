@@ -176,15 +176,15 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	std::wcout << L"Crashed " << expr << L": " << error << std::endl; \
 	__result__.crashed++
 
-#define DEFINE_SUITE(name, order, single, disable)			\
-	class name : public Suite {								\
-	private:												\
-	name() : Suite(WIDEN(#name), order, single, disable) {}	\
-	public:													\
-	static Suite &instance() {								\
-		static name s;										\
-		return s;											\
-	}														\
+#define DEFINE_SUITE(name, order, single, disable)					\
+	class Suite_##name : public Suite {								\
+	private:														\
+	Suite_##name() : Suite(WIDEN(#name), order, single, disable) {}	\
+	public:															\
+	static Suite &instance() {										\
+		static Suite_##name s;										\
+		return s;													\
+	}																\
 	}
 
 #define EXPAND(x) x // Hack for msvc
@@ -193,7 +193,7 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 #define NUM_ARGS(...) EXPAND(PICK_NO_3(__VA_ARGS__, 1, 0))
 
 #define SUITE_OR_NULL_0(dummy)     null
-#define SUITE_OR_NULL_1(dummy, type) &type::instance()
+#define SUITE_OR_NULL_1(dummy, type) &Suite_##type::instance()
 
 #define SUITE_OR_NULL3(cond, ...) EXPAND(SUITE_OR_NULL_ ## cond (__VA_ARGS__))
 #define SUITE_OR_NULL2(cond, ...) SUITE_OR_NULL3(cond, __VA_ARGS__)

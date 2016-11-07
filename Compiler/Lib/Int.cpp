@@ -13,7 +13,7 @@ namespace storm {
 		return new (name) IntType(name, type);
 	}
 
-	IntType::IntType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sInt, type) {}
+	IntType::IntType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sInt, type, null) {}
 
 	Bool IntType::loadAll() {
 		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
@@ -70,7 +70,7 @@ namespace storm {
 		return new (name) NatType(name, type);
 	}
 
-	NatType::NatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sNat, type) {}
+	NatType::NatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sNat, type, null) {}
 
 	Bool NatType::loadAll() {
 		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));

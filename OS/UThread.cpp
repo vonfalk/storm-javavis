@@ -124,7 +124,7 @@ namespace os {
 		}
 	}
 
-	static void spawnFn(Fn<void, void> *fn) {
+	static void spawnFn(util::Fn<void, void> *fn) {
 		try {
 			(*fn)();
 		} catch (...) {
@@ -189,10 +189,10 @@ namespace os {
 	}
 #pragma runtime_checks("", restore)
 
-	UThread UThread::spawn(const Fn<void, void> &fn, const Thread *on) {
+	UThread UThread::spawn(const util::Fn<void, void> &fn, const Thread *on) {
 		UThreadData *t = UThreadData::create();
 
-		t->pushParams(null, new Fn<void, void>(fn));
+		t->pushParams(null, new util::Fn<void, void>(fn));
 		t->pushContext(&spawnFn);
 
 		return insert(t, on);

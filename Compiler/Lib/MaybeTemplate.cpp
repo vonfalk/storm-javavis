@@ -58,7 +58,9 @@ namespace storm {
 		Type(name,
 			new (name) Array<Value>(1, Value(param)),
 			typeValue | typeFinal,
-			Size::sPtr, allocType(name->engine())) {
+			Size::sPtr,
+			allocType(name->engine()),
+			null) {
 
 		TODO(L"Fix the implementation!");
 	}

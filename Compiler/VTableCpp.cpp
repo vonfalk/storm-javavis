@@ -24,6 +24,10 @@ namespace storm {
 		}
 	}
 
+	const void **VTableCpp::table() const {
+		return &data->v[vtable::extraOffset];
+	}
+
 	void VTableCpp::replace(const void *vtable) {
 		replace(vtable, vtable::count(vtable));
 	}
@@ -38,7 +42,7 @@ namespace storm {
 		}
 	}
 
-	nat VTableCpp::count() {
+	nat VTableCpp::count() const {
 		return data->count - vtable::extraOffset;
 	}
 
@@ -51,7 +55,11 @@ namespace storm {
 	}
 
 	void VTableCpp::insert(void *obj) {
-		vtable::set(&data->v[vtable::extraOffset], obj);
+		vtable::set(table(), obj);
+	}
+
+	nat VTableCpp::findSlot(const void *fn) const {
+		return vtable::find(table(), fn, count());
 	}
 
 	namespace vtable {

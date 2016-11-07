@@ -14,7 +14,7 @@ namespace storm {
 
 
 	PrimitiveType::PrimitiveType(Str *name, Size size, GcType *type, BasicTypeInfo::Kind kind) :
-		Type(name, typeValue, size, type), kind(kind) {}
+		Type(name, typeValue, size, type, null), kind(kind) {}
 
 	BasicTypeInfo::Kind PrimitiveType::builtInType() const {
 		return BasicTypeInfo::Kind(kind);

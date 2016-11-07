@@ -3,6 +3,7 @@
 #include "VTableSlot.h"
 #include "VTableCpp.h"
 #include "VTableStorm.h"
+#include "Function.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -38,6 +39,9 @@ namespace storm {
 		// Create a vtable for a class derived from 'parent'. If done more than once, the current
 		// VTable is cleared and then re-initialized.
 		void STORM_FN createStorm(VTable *parent);
+
+		// Find the current vtable slot for 'fn' (if any).
+		VTableSlot STORM_FN findSlot(Function *fn);
 
 	private:
 		// The original C++ VTable we are based off. This can be several levels up the inheritance

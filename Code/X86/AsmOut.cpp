@@ -237,12 +237,20 @@ namespace code {
 		}
 
 		static void jmpCall(bool call, Output *to, const Operand &src) {
-			if (src.type() == opRegister) {
+			switch (src.type()) {
+			case opConstant:
+			case opLabel:
+			case opReference:
+				jmpCall(byte(call ? 0xE8 : 0xE9), to, src);
+				break;
+			case opRegister:
+			case opRelative:
 				to->putByte(0xFF);
 				modRm(to, call ? 2 : 4, src);
-			} else {
-				byte opCode = call ? 0xE8 : 0xE9;
-				jmpCall(opCode, to, src);
+				break;
+			default:
+				assert(false, L"JmpCall not implemented for " + ::toS(src));
+				break;
 			}
 		}
 

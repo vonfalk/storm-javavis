@@ -34,29 +34,47 @@ namespace storm {
 	}
 
 	Type::Type(Str *name, TypeFlags flags) :
-		NameSet(name), engine(RootObject::engine()), myGcType(null), tHandle(null), typeFlags(flags & ~typeCpp) {
+		NameSet(name),
+		engine(RootObject::engine()),
+		myGcType(null),
+		tHandle(null),
+		typeFlags(flags & ~typeCpp) {
 
-		init();
+		init(null);
 	}
 
 	Type::Type(Str *name, Array<Value> *params, TypeFlags flags) :
-		NameSet(name, params), engine(RootObject::engine()), myGcType(null), tHandle(null), typeFlags(flags & ~typeCpp) {
+		NameSet(name, params),
+		engine(RootObject::engine()),
+		myGcType(null),
+		tHandle(null),
+		typeFlags(flags & ~typeCpp) {
 
-		init();
+		init(null);
 	}
 
-	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType) :
-		NameSet(name), engine(RootObject::engine()), myGcType(gcType), tHandle(null), typeFlags(flags | typeCpp), mySize(size) {
+	Type::Type(Str *name, TypeFlags flags, Size size, GcType *gcType, const void *vtable) :
+		NameSet(name),
+		engine(RootObject::engine()),
+		myGcType(gcType),
+		tHandle(null),
+		typeFlags(flags | typeCpp),
+		mySize(size) {
 
 		myGcType->type = this;
-		init();
+		init(vtable);
 	}
 
-	Type::Type(Str *name, Array<Value> *params, TypeFlags flags, Size size, GcType *gcType) :
-		NameSet(name, params), engine(RootObject::engine()), myGcType(gcType), tHandle(null), typeFlags(flags | typeCpp), mySize(size) {
+	Type::Type(Str *name, Array<Value> *params, TypeFlags flags, Size size, GcType *gcType, const void *vtable) :
+		NameSet(name, params),
+		engine(RootObject::engine()),
+		myGcType(gcType),
+		tHandle(null),
+		typeFlags(flags | typeCpp),
+		mySize(size) {
 
 		myGcType->type = this;
-		init();
+		init(vtable);
 	}
 
 	// We need to set myGcType->type first, therefore we call setMyType!
@@ -64,7 +82,7 @@ namespace storm {
 		NameSet(setMyType(null, this, gcType, e)), engine(e), myGcType(gcType),
 		tHandle(null), typeFlags(typeClass | typeCpp) {
 
-		init();
+		init(null);
 	}
 
 	Type::~Type() {
@@ -77,15 +95,32 @@ namespace storm {
 		engine.gc.freeType(g);
 	}
 
-	void Type::init() {
+	void Type::init(const void *vtable) {
 		assert((typeFlags & typeValue) == typeValue || (typeFlags & typeClass) == typeClass, L"Invalid type flags!");
 
 		if (value()) {
 			myGcType->kind = GcType::tArray;
 		}
 
+		if (engine.has(bootTypes))
+			vtableInit(vtable);
+
 		if (engine.has(bootTemplates))
 			lateInit();
+	}
+
+	void Type::vtableInit(const void *vtab) {
+		if (value())
+			return;
+
+		vtable = new (engine) VTable();
+		if (typeFlags & typeCpp) {
+			vtable->createCpp(vtab);
+		} else if (Type *t = super()) {
+			vtable->createStorm(t->vtable);
+		} else {
+			vtable->createStorm(Object::stormType(engine)->vtable);
+		}
 	}
 
 	void Type::lateInit() {
@@ -185,6 +220,7 @@ namespace storm {
 
 		// TODO: Invalidate the Layout as well.
 		// TODO: Invalidate the handle as well.
+		// TODO: Re-create the vtable.
 		// TODO: Notify our old parent of removal of vtable members.
 
 		// Register all functions here and in our children as vtable calls.
@@ -561,6 +597,10 @@ namespace storm {
 
 	/**
 	 * VTable logic.
+	 *
+	 * Note: there is a small optimization we can do here. If we know we are the leaf class for a
+	 * specific function, that function only needs to be registered in the vtable but does not need
+	 * to use vtable dispatch!
 	 */
 
 	void Type::vtableFnAdded(Function *fn) {
@@ -614,18 +654,24 @@ namespace storm {
 		}
 
 		// See if 'found' already has a VTable slot, otherwise allocate one.
-		VTableSlot slot = cppSlot(1);
+		VTableSlot slot = vtable->findSlot(found);
+		if (!slot.valid()) {
+			// Allocate a new slot...
+		}
 
 		vtableSet(found, slot);
 		return slot;
 	}
 
 	void Type::vtableSet(Function *fn, VTableSlot slot) {
-		PLN(fn->identifier() << L" should be virtual using " << slot);
+		// PLN(fn->identifier() << L" should be virtual using " << slot);
+		code::RefSource *src = engine.vtableCalls()->get(slot);
+		fn->setLookup(new (engine) DelegatedCode(code::Ref(src)));
 	}
 
 	void Type::vtableClear(Function *fn) {
-		PLN(fn->identifier() << L" should not be virtual.");
+		// PLN(fn->identifier() << L" should not be virtual.");
+		fn->setLoopup();
 	}
 
 	void Type::vtableNewSuper() {

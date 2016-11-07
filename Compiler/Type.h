@@ -32,8 +32,8 @@ namespace storm {
 		STORM_CTOR Type(Str *name, Array<Value> *params, TypeFlags flags);
 
 		// Create a type declared in C++.
-		Type(Str *name, TypeFlags flags, Size size, GcType *gcType);
-		Type(Str *name, Array<Value> *params, TypeFlags flags, Size size, GcType *gcType);
+		Type(Str *name, TypeFlags flags, Size size, GcType *gcType, const void *vtable);
+		Type(Str *name, Array<Value> *params, TypeFlags flags, Size size, GcType *gcType, const void *vtable);
 
 		// Destroy our resources.
 		~Type();
@@ -94,6 +94,10 @@ namespace storm {
 		/**
 		 * The threadsafe part ends here.
 		 */
+
+		// If the type was initialized during early boot, we need to initialize vtables through here
+		// at a suitable time, before any Storm-defined types are created.
+		void vtableInit(const void *vtable);
 
 		// Late initialization.
 		virtual void lateInit();
@@ -159,8 +163,8 @@ namespace storm {
 		static void *operator new(size_t size, Engine &e, GcType *type);
 		static void operator delete(void *mem, Engine &e, GcType *type);
 
-		// Common initialization.
-		void init();
+		// Common initialization. For C++ types, passes the vtable. May be null.
+		void init(const void *vtable);
 
 		// Is this a value type?
 		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
@@ -182,6 +186,9 @@ namespace storm {
 
 		// Find only in this class.
 		MAYBE(Named *) findHere(SimplePart *part);
+
+		// The VTable for this class. Value types do not have a vtable, so 'vtable' is null for a value type.
+		VTable *vtable;
 
 		/**
 		 * Helpers for deciding which functions shall be virtual.

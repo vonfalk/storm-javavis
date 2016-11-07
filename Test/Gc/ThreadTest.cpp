@@ -60,7 +60,7 @@ BEGIN_TEST(GcThreadTest, GcThreads) {
 	// Test so that other threads are properly GC:d.
 	Engine &e = gEngine();
 
-	os::Thread::spawn(simpleVoidFn(&threadFn), e.threadGroup);
+	os::Thread::spawn(util::simpleVoidFn(&threadFn), e.threadGroup);
 	waitSema.down();
 	CHECK(threadOk);
 
@@ -85,7 +85,7 @@ BEGIN_TEST(GcUThreadTest, GcThreads) {
 
 	threadOk = false;
 
-	os::UThread::spawn(simpleVoidFn(&uthreadFn));
+	os::UThread::spawn(util::simpleVoidFn(&uthreadFn));
 	Link *start = createList(count);
 	os::UThread::leave();
 	createList(count);

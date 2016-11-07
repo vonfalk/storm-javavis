@@ -13,7 +13,7 @@ namespace storm {
 		return new (name) ByteType(name, type);
 	}
 
-	ByteType::ByteType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sByte, type) {}
+	ByteType::ByteType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sByte, type, null) {}
 
 	Bool ByteType::loadAll() {
 		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));

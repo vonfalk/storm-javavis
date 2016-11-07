@@ -23,6 +23,7 @@ namespace storm {
 		// Find the specified NamePart in here. Returns null if not found.
 		virtual MAYBE(Named *) STORM_FN find(SimplePart *part);
 		MAYBE(Named *) find(const wchar *name, Array<Value> *params);
+		MAYBE(Named *) find(const wchar *name, Value param);
 
 		// Get the parent object to this lookup, or null if none.
 		virtual NameLookup *STORM_FN parent() const;

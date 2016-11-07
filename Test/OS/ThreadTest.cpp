@@ -25,7 +25,7 @@ BEGIN_TEST(ThreadTest, OS) {
 	var = 0;
 	local = 1;
 	{
-		os::Thread t = os::Thread::spawn(simpleVoidFn(otherThread), g);
+		os::Thread t = os::Thread::spawn(util::simpleVoidFn(otherThread), g);
 		CHECK_NEQ(t, os::Thread::current());
 	}
 	Sleep(30);
@@ -33,7 +33,7 @@ BEGIN_TEST(ThreadTest, OS) {
 	CHECK_EQ(var, 2);
 
 	{
-		os::Thread t = os::Thread::spawn(simpleVoidFn(otherThread), g);
+		os::Thread t = os::Thread::spawn(util::simpleVoidFn(otherThread), g);
 		CHECK_NEQ(t, os::Thread::current());
 	}
 	stopSema.down();
@@ -48,7 +48,7 @@ static void setVar() {
 }
 
 static void uthreadInterop() {
-	UThread::spawn(simpleVoidFn(&setVar));
+	UThread::spawn(util::simpleVoidFn(&setVar));
 	// Note: we're not running leave here!
 }
 
@@ -61,7 +61,7 @@ static void setVar2() {
 }
 
 static void uthreadInterop2() {
-	UThread::spawn(simpleVoidFn(&setVar2));
+	UThread::spawn(util::simpleVoidFn(&setVar2));
 	UThread::leave();
 }
 
@@ -77,26 +77,26 @@ BEGIN_TEST(UThreadInterop, OS) {
 	ThreadGroup g;
 
 	var = 0;
-	os::Thread::spawn(simpleVoidFn(uthreadInterop), g);
+	os::Thread::spawn(util::simpleVoidFn(uthreadInterop), g);
 	stopSema.down();
 	CHECK_EQ(var, 1);
 
 	var = 0;
-	os::Thread::spawn(simpleVoidFn(uthreadInterop2), g);
+	os::Thread::spawn(util::simpleVoidFn(uthreadInterop2), g);
 	stopSema.down();
 	CHECK_EQ(var, 2);
 
 	var = 0;
-	os::Thread t = os::Thread::spawn(Fn<void, void>(), g);
+	os::Thread t = os::Thread::spawn(util::Fn<void, void>(), g);
 	Sleep(20); // Make sure 't' enters the condition waiting.
-	UThread::spawn(simpleVoidFn(setVar), &t);
+	UThread::spawn(util::simpleVoidFn(setVar), &t);
 	stopSema.down();
 	CHECK_EQ(var, 1);
 
 	// Check so that futures work with regular semaphores as well.
 	{
 		TInterop i;
-		os::Thread::spawn(memberVoidFn(&i, &TInterop::run), g);
+		os::Thread::spawn(util::memberVoidFn(&i, &TInterop::run), g);
 		CHECK_EQ(i.result.result(), 42);
 		// Multiple times should also work.
 		CHECK_EQ(i.result.result(), 42);
@@ -135,7 +135,7 @@ BEGIN_TEST(ConditionTest, OS) {
 	Cond z;
 	ThreadGroup g;
 
-	os::Thread::spawn(memberVoidFn(&z, &Cond::run), g);
+	os::Thread::spawn(util::memberVoidFn(&z, &Cond::run), g);
 
 	z.start.up();
 	Sleep(10); // Let the other thread run into c.wait()
@@ -189,11 +189,11 @@ BEGIN_TEST(UThreadTest, OS) {
 	count1 = 0;
 	count2 = 0;
 
-	UThread::spawn(simpleVoidFn(&utFn1));
+	UThread::spawn(util::simpleVoidFn(&utFn1));
 	CHECK_EQ(count1, 0);
 	CHECK_EQ(count2, 0);
 	UThread::leave();
-	UThread::spawn(simpleVoidFn(&utFn2));
+	UThread::spawn(util::simpleVoidFn(&utFn2));
 	CHECK_EQ(count1, 1);
 	CHECK_EQ(count2, 0);
 	UThread::leave();
@@ -235,8 +235,8 @@ static void exRoot() {
 BEGIN_TEST(UThreadExTest, OS) {
 	exceptions = 0;
 
-	UThread::spawn(simpleVoidFn(&exRoot));
-	UThread::spawn(simpleVoidFn(&exRoot));
+	UThread::spawn(util::simpleVoidFn(&exRoot));
+	UThread::spawn(util::simpleVoidFn(&exRoot));
 
 	// dumpStack();
 

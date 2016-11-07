@@ -23,7 +23,7 @@ namespace os {
 		ThreadData *data;
 
 		// Function to execute.
-		const Fn<void, void> &startFn;
+		const util::Fn<void, void> &startFn;
 
 		// ThreadWait behavior. May be null.
 		ThreadWait *wait;
@@ -32,7 +32,7 @@ namespace os {
 		ThreadGroupData *group;
 
 		// Init.
-		ThreadStart(const Fn<void, void> &fn, ThreadWait *wait, ThreadGroupData *group) :
+		ThreadStart(const util::Fn<void, void> &fn, ThreadWait *wait, ThreadGroupData *group) :
 			sema(0), startFn(fn), wait(wait), group(group) {}
 
 		// Remove one reference from 'data', if present. The started thread
@@ -115,7 +115,7 @@ namespace os {
 		return data->uState.stacks;
 	}
 
-	Thread Thread::spawn(const Fn<void, void> &fn, ThreadGroup &group) {
+	Thread Thread::spawn(const util::Fn<void, void> &fn, ThreadGroup &group) {
 		ThreadStart start(fn, null, group.data);
 		startThread(start);
 		start.sema.down();
@@ -124,7 +124,7 @@ namespace os {
 	}
 
 	Thread Thread::spawn(ThreadWait *wait, ThreadGroup &group) {
-		Fn<void, void> f;
+		util::Fn<void, void> f;
 		ThreadStart start(f, wait, group.data);
 		startThread(start);
 		start.sema.down();
@@ -140,7 +140,7 @@ namespace os {
 
 		// Read data from 'start'.
 		ThreadGroupData *group = start.group;
-		Fn<void, void> fn = start.startFn;
+		util::Fn<void, void> fn = start.startFn;
 		ThreadWait *wait = start.wait;
 		d.wait = wait;
 

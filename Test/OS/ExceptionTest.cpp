@@ -27,7 +27,7 @@ BEGIN_TEST(ExceptionTest, OS) {
 	ExThread z;
 	os::ThreadGroup g;
 
-	os::Thread::spawn(memberVoidFn(&z, &ExThread::run), g);
+	os::Thread::spawn(util::memberVoidFn(&z, &ExThread::run), g);
 
 	try {
 		z.result.result();

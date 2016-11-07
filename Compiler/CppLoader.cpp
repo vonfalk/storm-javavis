@@ -41,6 +41,13 @@ namespace storm {
 		return n;
 	}
 
+	static const void *typeVTable(const CppType &t) {
+		if (t.vtable)
+			return (*t.vtable)();
+		else
+			return null;
+	}
+
 	void CppLoader::loadTypes() {
 		nat c = typeCount();
 		into.types.resize(c);
@@ -61,7 +68,7 @@ namespace storm {
 					gcType = t;
 				}
 
-				into.types[i] = new (e) Type(null, type.flags, Size(type.size), gcType);
+				into.types[i] = new (e) Type(null, type.flags, Size(type.size), gcType, typeVTable(type));
 			}
 		}
 
@@ -76,6 +83,13 @@ namespace storm {
 
 			CppType::CreateFn fn = (CppType::CreateFn)type.super;
 			into.types[i] = (*fn)(new (e) Str(type.name), Size(type.size), createGcType(i));
+		}
+
+		// If we're in early boot, we need to manually create vtables for all types.
+		if (!e.has(bootTypes)) {
+			for (nat i = 0; i < c; i++) {
+				into.types[i]->vtableInit(typeVTable(world->types[i]));
+			}
 		}
 
 		// Now we can fill in the names and superclasses properly!

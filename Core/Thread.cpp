@@ -43,15 +43,15 @@ namespace storm {
 		return osThread;
 	}
 
-	Fn<void, void> Thread::registerFn(Engine &e) {
-		// This is an ugly hack to get around the limitation that Fn<> only supports 'this' as parameters.
+	util::Fn<void, void> Thread::registerFn(Engine &e) {
+		// This is an ugly hack to get around the limitation that util::Fn<> only supports 'this' as parameters.
 		struct Wrap {
 			void attach() {
 				runtime::attachThread((Engine &)*this);
 			}
 		};
 
-		return Fn<void, void>((Wrap *)&e, &Wrap::attach);
+		return util::Fn<void, void>((Wrap *)&e, &Wrap::attach);
 	}
 
 	STORM_DEFINE_THREAD(Compiler);

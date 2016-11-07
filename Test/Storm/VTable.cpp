@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Compiler/VTableCpp.h"
+#include "Compiler/Debug.h"
+#include "Compiler/Package.h"
 
 class VTableTest {
 public:
@@ -49,5 +51,40 @@ BEGIN_TEST(VTableCppTest, Storm) {
 
 	CHECK_EQ(check(a), 20);
 	CHECK_EQ(check(b), 30);
+
+} END_TEST
+
+static int CODECALL extendReplaced(debug::Extend *me) {
+	// Note: we can not really perform a super-call here.
+	return 20;
+}
+
+BEGIN_TEST(VTableCppTest2, Storm) {
+	Engine &e = gEngine();
+
+	Type *extend = debug::Extend::stormType(e);
+	Package *pkg = as<Package>(extend->parent());
+	Function *value = as<Function>(extend->find(L"value", Value(extend)));
+	CHECK(value);
+	CHECK(pkg);
+	if (!value)
+		break;
+	if (!pkg)
+		break;
+
+	// Should not use vtable calls now.
+	CHECK_EQ(value->ref()->address(), value->directRef()->address());
+
+
+	// Add our own instantiation...
+	Type *our = new (e) Type(pkg->anonName(), typeClass);
+	pkg->add(our);
+	our->setSuper(extend);
+
+	Array<Value> *params = new (e) Array<Value>(1, Value(extend));
+	our->add(nativeFunction(e, Value(StormInfo<Int>::type(e)), L"value", params, &extendReplaced));
+
+	// Now, we should use vtable calls, even on the base class!
+	CHECK_NEQ(value->ref()->address(), value->directRef()->address());
 
 } END_TEST

@@ -199,7 +199,7 @@ struct SemaTest {
 
 BEGIN_TEST(UThreadSema, OS) {
 	SemaTest t;
-	UThread::spawn(memberVoidFn(&t, &SemaTest::run));
+	UThread::spawn(util::memberVoidFn(&t, &SemaTest::run));
 
 	CHECK_EQ(t.state, 0);
 	UThread::leave();
@@ -247,12 +247,12 @@ BEGIN_TEST(UThreadSemaInterop, OS) {
 
 	// Make the main thread wait for a UThread that is not in its running state.
 	{
-		os::Thread on = os::Thread::spawn(memberVoidFn(&t, &SemaInterop::run), group);
+		os::Thread on = os::Thread::spawn(util::memberVoidFn(&t, &SemaInterop::run), group);
 		Sleep(30);
 		CHECK_EQ(t.state, 1);
 
 		// Another thread, should block.
-		UThread::spawn(memberVoidFn(&t, &SemaInterop::run2), &on);
+		UThread::spawn(util::memberVoidFn(&t, &SemaInterop::run2), &on);
 		Sleep(30);
 		CHECK_EQ(t.state, 3);
 	}
@@ -268,7 +268,7 @@ BEGIN_TEST(UThreadSemaInterop, OS) {
 
 	// No threads to schedule when a sema should block. This should make
 	// the other thread spin in UThread::wait() for a while.
-	os::Thread::spawn(memberVoidFn(&t, &SemaInterop::run), group);
+	os::Thread::spawn(util::memberVoidFn(&t, &SemaInterop::run), group);
 	Sleep(30);
 	CHECK_EQ(t.state, 1);
 	t.sema.up();
@@ -277,12 +277,12 @@ BEGIN_TEST(UThreadSemaInterop, OS) {
 
 	// No threads to schedule when a sema would block while starting another UThread.
 	{
-		os::Thread on = os::Thread::spawn(memberVoidFn(&t, &SemaInterop::run), group);
+		os::Thread on = os::Thread::spawn(util::memberVoidFn(&t, &SemaInterop::run), group);
 		Sleep(30);
 		CHECK_EQ(t.state, 1);
 
 		// Launch another UThread!
-		UThread::spawn(memberVoidFn(&t, &SemaInterop::small), &on);
+		UThread::spawn(util::memberVoidFn(&t, &SemaInterop::small), &on);
 		Sleep(30);
 		CHECK_EQ(t.state, 5);
 

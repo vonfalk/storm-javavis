@@ -13,7 +13,7 @@ namespace storm {
 		return new (name) LongType(name, type);
 	}
 
-	LongType::LongType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sLong, type) {}
+	LongType::LongType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sLong, type, null) {}
 
 	Bool LongType::loadAll() {
 		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
@@ -70,7 +70,7 @@ namespace storm {
 		return new (name) WordType(name, type);
 	}
 
-	WordType::WordType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sWord, type) {}
+	WordType::WordType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sWord, type, null) {}
 
 	Bool WordType::loadAll() {
 		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
