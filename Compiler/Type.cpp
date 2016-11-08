@@ -671,7 +671,7 @@ namespace storm {
 
 	void Type::vtableClear(Function *fn) {
 		// PLN(fn->identifier() << L" should not be virtual.");
-		fn->setLoopup();
+		fn->setLookup(null);
 	}
 
 	void Type::vtableNewSuper() {
