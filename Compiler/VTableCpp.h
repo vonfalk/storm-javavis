@@ -5,6 +5,8 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class Function;
+
 	/**
 	 * This file manages a C++ VTable. This is done in a way which is compatible with the C++
 	 * compiler implementation, so that we can extend classes in C++ in Storm seamlessly.
@@ -40,6 +42,9 @@ namespace storm {
 
 		// Find a function in here. Returns vtable::invalid if none is found.
 		nat findSlot(const void *fn) const;
+
+		// Set a vtable entry.
+		void set(nat slot, Function *fn);
 
 	private:
 		// The VTable data. We're storing it as a regular GC array.

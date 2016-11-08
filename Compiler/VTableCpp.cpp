@@ -4,6 +4,7 @@
 #include "Utils/Memory.h"
 #include "Core/GcType.h"
 #include "Exception.h"
+#include "Function.h"
 
 namespace storm {
 
@@ -12,7 +13,7 @@ namespace storm {
 	}
 
 	VTableCpp::VTableCpp(const void *vtable, nat count) {
-		init(vtable, vtable::count(vtable));
+		init(vtable, count);
 	}
 
 	void VTableCpp::init(const void *vtable, nat count) {
@@ -33,12 +34,14 @@ namespace storm {
 	}
 
 	void VTableCpp::replace(const void *vtable, nat count) {
-		if (count > data->count)
-			throw InternalError(L"We need to relocate a C++ VTable!");
-
-		const void *const* src = (const void *const*)vtable - vtable::extraOffset;
-		for (nat i = 1; i < count + vtable::extraOffset; i++) {
-			data->v[i] = src[i];
+		if (count > this->count()) {
+			TODO(L"We need to move a C++ VTable. We need to ask the GC about this.");
+			init(vtable, count);
+		} else {
+			const void *const* src = (const void *const*)vtable - vtable::extraOffset;
+			for (nat i = 1; i < count + vtable::extraOffset; i++) {
+				data->v[i] = src[i];
+			}
 		}
 	}
 
@@ -60,6 +63,18 @@ namespace storm {
 
 	nat VTableCpp::findSlot(const void *fn) const {
 		return vtable::find(table(), fn, count());
+	}
+
+	void VTableCpp::set(nat id, Function *fn) {
+		assert(id < count());
+
+		// If we see that 'fn' is static, we do not need to add a reference.
+		if (StaticCode *c = as<StaticCode>(fn->getCode())) {
+			slot(id) = fn->directRef()->address();
+		} else {
+			// We need to add a reference!
+			assert(false, L"Implement me!");
+		}
 	}
 
 	namespace vtable {

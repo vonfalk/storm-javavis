@@ -43,6 +43,9 @@ namespace storm {
 		// Find the current vtable slot for 'fn' (if any).
 		VTableSlot STORM_FN findSlot(Function *fn);
 
+		// Set 'slot' to refer to a specific function.
+		void STORM_FN set(VTableSlot slot, Function *fn);
+
 	private:
 		// The original C++ VTable we are based off. This can be several levels up the inheritance
 		// chain.

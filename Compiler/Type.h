@@ -211,7 +211,10 @@ namespace storm {
 		VTableSlot vtableNewChildFn(OverridePart *added);
 
 		// Make 'f' use the vtable when called.
-		void vtableSet(Function *fn, VTableSlot slot);
+		void vtableUse(Function *fn, VTableSlot slot);
+
+		// Insert 'f' into the vtable at 'slot'.
+		void vtableInsert(Function *fn, VTableSlot slot);
 
 		// Make 'f' not use the vtable when called.
 		void vtableClear(Function *fn);

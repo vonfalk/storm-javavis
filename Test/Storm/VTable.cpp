@@ -54,9 +54,25 @@ BEGIN_TEST(VTableCppTest, Storm) {
 
 } END_TEST
 
-static int CODECALL extendReplaced(debug::Extend *me) {
+static int CODECALL extendReplace(debug::Extend *me) {
 	// Note: we can not really perform a super-call here.
 	return 20;
+}
+
+static int CODECALL extendReplace2(debug::Extend *me) {
+	// Note: we can not really perform a super-call here.
+	return 40;
+}
+
+static Type *addSubclass(Package *pkg, Type *base, const void *fn) {
+	Type *sub = new (pkg) Type(pkg->anonName(), typeClass);
+	pkg->add(sub);
+	sub->setSuper(base);
+
+	Array<Value> *params = new (pkg) Array<Value>(1, Value(sub));
+	sub->add(nativeFunction(pkg->engine(), Value(StormInfo<Int>::type(pkg->engine())), L"value", params, fn));
+
+	return sub;
 }
 
 BEGIN_TEST(VTableCppTest2, Storm) {
@@ -77,14 +93,32 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 
 
 	// Add our own instantiation...
-	Type *our = new (e) Type(pkg->anonName(), typeClass);
-	pkg->add(our);
-	our->setSuper(extend);
+	Type *sub1 = addSubclass(pkg, extend, &extendReplace);
+	Function *value1 = as<Function>(sub1->find(L"value", Value(sub1)));
 
-	Array<Value> *params = new (e) Array<Value>(1, Value(extend));
-	our->add(nativeFunction(e, Value(StormInfo<Int>::type(e)), L"value", params, &extendReplaced));
-
-	// Now, we should use vtable calls, even on the base class!
+	// Now, we should use vtable calls on the base class!
 	CHECK_NEQ(value->ref()->address(), value->directRef()->address());
+	CHECK_EQ(value1->ref()->address(), value1->directRef()->address());
+
+
+	// Add another subclass, subling to sub1.
+	Type *sub2 = addSubclass(pkg, extend, &extendReplace2);
+	Function *value2 = as<Function>(sub2->find(L"value", Value(sub2)));
+
+	// VTable call on base class and first level derived.
+	CHECK_NEQ(value->ref()->address(), value->directRef()->address());
+	CHECK_EQ(value1->ref()->address(), value1->directRef()->address());
+	CHECK_EQ(value2->ref()->address(), value2->directRef()->address());
+
+	// Add another subclass from sub1.
+	Type *sub3 = addSubclass(pkg, sub1, &extendReplace2);
+	Function *value3 = as<Function>(sub3->find(L"value", Value(sub3)));
+
+	// VTable call on base class and first level derived.
+	CHECK_NEQ(value->ref()->address(), value->directRef()->address());
+	CHECK_NEQ(value1->ref()->address(), value1->directRef()->address());
+	CHECK_EQ(value2->ref()->address(), value2->directRef()->address());
+	CHECK_EQ(value3->ref()->address(), value3->directRef()->address());
+
 
 } END_TEST

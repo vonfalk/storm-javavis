@@ -220,8 +220,12 @@ namespace storm {
 
 		// TODO: Invalidate the Layout as well.
 		// TODO: Invalidate the handle as well.
-		// TODO: Re-create the vtable.
 		// TODO: Notify our old parent of removal of vtable members.
+
+		// Re-initialize the vtable.
+		if ((typeFlags & typeCpp) != typeCpp && !value()) {
+			vtable->createStorm(to->vtable);
+		}
 
 		// Register all functions here and in our children as vtable calls.
 		vtableNewSuper();
@@ -615,7 +619,8 @@ namespace storm {
 			slot = s->vtableNewChildFn(new (engine) OverridePart(fn));
 
 		if (slot.valid()) {
-			vtableSet(fn, slot);
+			// NOTE: We do not need to set vtable use, as we're still the leaf function.
+			vtableInsert(fn, slot);
 			return true;
 		}
 
@@ -657,16 +662,23 @@ namespace storm {
 		VTableSlot slot = vtable->findSlot(found);
 		if (!slot.valid()) {
 			// Allocate a new slot...
+			// Insert this function into that slot
+			vtableInsert(found, slot);
 		}
 
-		vtableSet(found, slot);
+		// We need to use the vtable.
+		vtableUse(found, slot);
 		return slot;
 	}
 
-	void Type::vtableSet(Function *fn, VTableSlot slot) {
+	void Type::vtableUse(Function *fn, VTableSlot slot) {
 		// PLN(fn->identifier() << L" should be virtual using " << slot);
 		code::RefSource *src = engine.vtableCalls()->get(slot);
 		fn->setLookup(new (engine) DelegatedCode(code::Ref(src)));
+	}
+
+	void Type::vtableInsert(Function *fn, VTableSlot slot) {
+		vtable->set(slot, fn);
 	}
 
 	void Type::vtableClear(Function *fn) {

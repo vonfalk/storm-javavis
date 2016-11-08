@@ -51,4 +51,28 @@ namespace storm {
 		return VTableSlot();
 	}
 
+	void VTable::set(VTableSlot slot, Function *fn) {
+		if (!slot.valid()) {
+			WARNING(L"Ignoring invalid slot for " << fn);
+			return;
+		}
+
+		if (cpp == null || storm == null) {
+			// Can not alter a C++ vtable.
+			return;
+		}
+
+		switch (slot.type) {
+		case VTableSlot::tCpp:
+			cpp->set(slot.offset, fn);
+			break;
+		case VTableSlot::tStorm:
+			assert(false, L"Setting Storm VTables not supported yet!");
+			break;
+		default:
+			assert(false, L"Unknown slot type.");
+			break;
+		}
+	}
+
 }
