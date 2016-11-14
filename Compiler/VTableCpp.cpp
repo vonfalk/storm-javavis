@@ -3,8 +3,10 @@
 #include "Utils/Platform.h"
 #include "Utils/Memory.h"
 #include "Core/GcType.h"
+#include "Code/MemberRef.h"
 #include "Exception.h"
 #include "Function.h"
+#include "Engine.h"
 
 namespace storm {
 
@@ -17,6 +19,8 @@ namespace storm {
 	}
 
 	void VTableCpp::init(const void *vtable, nat count) {
+		tableUsed = false;
+		refs = null;
 		data = runtime::allocArray<const void *>(engine(), &pointerArrayType, count + vtable::extraOffset);
 
 		const void *const* src = (const void *const*)vtable - vtable::extraOffset;
@@ -33,10 +37,35 @@ namespace storm {
 		replace(vtable, vtable::count(vtable));
 	}
 
+	struct VTableSwitch {
+		const void **from;
+		const void **to;
+	};
+
+	static void vtableSwitch(RootObject *o, void *data) {
+		VTableSwitch *s = (VTableSwitch *)data;
+
+		if (vtable::from(o) == s->from)
+			vtable::set(s->to, o);
+	}
+
 	void VTableCpp::replace(const void *vtable, nat count) {
 		if (count > this->count()) {
-			TODO(L"We need to move a C++ VTable. We need to ask the GC about this.");
+			// We need to replace the vtables on all live objects using the vtable.
+			bool needWalk = tableUsed;
+			VTableSwitch data;
+			data.from = table();
+
+			// Create the new vtable.
 			init(vtable, count);
+
+			data.to = table();
+
+			// Don't walk the heap if we don't need to. That can be *very* expensive. In most cases
+			// this happens right after we've created an object but before we have set the vtable to
+			// an object, which means it is safe not to do the expensive heap walk.
+			if (needWalk)
+				engine().gc.walkObjects(&vtableSwitch, &data);
 		} else {
 			const void *const* src = (const void *const*)vtable - vtable::extraOffset;
 			for (nat i = 1; i < count + vtable::extraOffset; i++) {
@@ -58,6 +87,7 @@ namespace storm {
 	}
 
 	void VTableCpp::insert(void *obj) {
+		tableUsed = true;
 		vtable::set(table(), obj);
 	}
 
@@ -65,7 +95,7 @@ namespace storm {
 		return vtable::find(table(), fn, count());
 	}
 
-	void VTableCpp::set(nat id, Function *fn) {
+	void VTableCpp::set(nat id, Function *fn, code::Content *from) {
 		assert(id < count());
 
 		// If we see that 'fn' is static, we do not need to add a reference.
@@ -73,7 +103,11 @@ namespace storm {
 			slot(id) = fn->directRef()->address();
 		} else {
 			// We need to add a reference!
-			assert(false, L"Implement me!");
+			if (!refs)
+				refs = runtime::allocArray<code::Reference *>(engine(), &pointerArrayType, count());
+
+			nat slot = id + vtable::extraOffset;
+			refs->v[id] = new (this) code::MemberRef(data, slot, fn->directRef(), from);
 		}
 	}
 

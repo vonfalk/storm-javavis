@@ -7,6 +7,8 @@ namespace code {
 
 	/**
 	 * Update pointers inside the ref object (we can not store pointers into object when using MPS).
+	 *
+	 * Note: constructors will immediatly update the address.
 	 */
 	class MemberRef : public code::Reference {
 		STORM_CLASS;

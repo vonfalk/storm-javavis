@@ -136,6 +136,21 @@ namespace storm {
 		static GcCode *codeRefs(void *alloc);
 
 		/**
+		 * Iterate through all objects on the heap.
+		 *
+		 * Note: inside the callback it is only possible to access the object which is passed to the
+		 * function and any memory on the stack (this means, for example, it is not possible to use
+		 * as<> or call any virtual members in the object). Do not take locks nor attempt to perform
+		 * a thread switch inside the callback.
+		 */
+
+		// Callback function for a heap walk.
+		typedef void (*WalkCb)(RootObject *inspect, void *param);
+
+		// Walk the heap. This usually incurs a full Gc, so it is not a cheap operation.
+		void walkObjects(WalkCb fn, void *param);
+
+		/**
 		 * Roots.
 		 */
 

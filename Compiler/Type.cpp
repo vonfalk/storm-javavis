@@ -678,7 +678,7 @@ namespace storm {
 	}
 
 	void Type::vtableInsert(Function *fn, VTableSlot slot) {
-		vtable->set(slot, fn);
+		vtable->set(slot, fn, handleContent);
 	}
 
 	void Type::vtableClear(Function *fn) {

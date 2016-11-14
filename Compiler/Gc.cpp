@@ -1354,6 +1354,40 @@ namespace storm {
 		return (GcCode *)p;
 	}
 
+	struct WalkData {
+		mps_fmt_t fmt;
+		Gc::WalkCb fn;
+		void *data;
+	};
+
+	static void walkFn(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t s) {
+		WalkData *d = (WalkData *)p;
+		if (fmt != d->fmt)
+			return;
+
+		const GcType *type = Gc::typeOf(addr);
+		switch (type->kind) {
+		case GcType::tFixed:
+		case GcType::tType:
+			// Objects, let them through!
+			(*d->fn)((RootObject *)addr, d->data);
+			break;
+		}
+	}
+
+	void Gc::walkObjects(WalkCb fn, void *data) {
+		mps_arena_park(arena);
+
+		WalkData d = {
+			format,
+			fn,
+			data
+		};
+		mps_arena_formatted_objects_walk(arena, &walkFn, &d, 0);
+		mps_arena_release(arena);
+	}
+
+
 	struct Gc::Root {
 		mps_root_t root;
 	};

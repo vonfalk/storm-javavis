@@ -36,7 +36,7 @@ namespace storm {
 		// Set this VTable for a class.
 		void insert(void *obj);
 
-		// Replace the contents in here with a new vtable.
+		// Replace the contents in here with a new vtable. Clears all references.
 		void replace(const void *vtable);
 		void replace(const void *vtable, nat count);
 
@@ -44,7 +44,7 @@ namespace storm {
 		nat findSlot(const void *fn) const;
 
 		// Set a vtable entry.
-		void set(nat slot, Function *fn);
+		void set(nat slot, Function *fn, code::Content *from);
 
 	private:
 		// The VTable data. We're storing it as a regular GC array.
@@ -52,6 +52,9 @@ namespace storm {
 
 		// References updating the VTable. The entire table is null if no updaters are added.
 		GcArray<code::Reference *> *refs;
+
+		// Have we ever set our VTable to an object?
+		bool tableUsed;
 
 		// Initialize ourselves.
 		void init(const void *vtable, nat count);

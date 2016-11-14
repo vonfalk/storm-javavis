@@ -51,7 +51,7 @@ namespace storm {
 		return VTableSlot();
 	}
 
-	void VTable::set(VTableSlot slot, Function *fn) {
+	void VTable::set(VTableSlot slot, Function *fn, code::Content *from) {
 		if (!slot.valid()) {
 			WARNING(L"Ignoring invalid slot for " << fn);
 			return;
@@ -64,7 +64,7 @@ namespace storm {
 
 		switch (slot.type) {
 		case VTableSlot::tCpp:
-			cpp->set(slot.offset, fn);
+			cpp->set(slot.offset, fn, from);
 			break;
 		case VTableSlot::tStorm:
 			assert(false, L"Setting Storm VTables not supported yet!");
