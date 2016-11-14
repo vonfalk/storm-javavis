@@ -205,7 +205,7 @@ BEGIN_TEST(UThreadTest, OS) {
 	UThread::leave();
 	CHECK_EQ(count1, 4);
 	CHECK_EQ(count2, 4);
-	CHECK(!UThread::any())
+	CHECK(!UThread::any());
 	UThread::leave();
 	CHECK_EQ(count1, 4);
 	CHECK_EQ(count2, 4);

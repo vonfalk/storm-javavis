@@ -64,13 +64,13 @@ static int CODECALL extendReplace2(debug::Extend *me) {
 	return 40;
 }
 
-static Type *addSubclass(Package *pkg, Type *base, const void *fn) {
+static Type *addSubclass(Package *pkg, Type *base, const wchar *name, const void *fn) {
 	Type *sub = new (pkg) Type(pkg->anonName(), typeClass);
 	pkg->add(sub);
 	sub->setSuper(base);
 
 	Array<Value> *params = new (pkg) Array<Value>(1, Value(sub));
-	sub->add(nativeFunction(pkg->engine(), Value(StormInfo<Int>::type(pkg->engine())), L"value", params, fn));
+	sub->add(nativeFunction(pkg->engine(), Value(StormInfo<Int>::type(pkg->engine())), name, params, fn));
 
 	return sub;
 }
@@ -81,19 +81,15 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 	Type *extend = debug::Extend::stormType(e);
 	Package *pkg = as<Package>(extend->parent());
 	Function *value = as<Function>(extend->find(L"value", Value(extend)));
-	CHECK(value);
-	CHECK(pkg);
-	if (!value)
-		break;
-	if (!pkg)
-		break;
+	VERIFY(value);
+	VERIFY(pkg);
 
 	// Should not use vtable calls now.
 	CHECK_EQ(value->ref()->address(), value->directRef()->address());
 
 
 	// Add our own instantiation...
-	Type *sub1 = addSubclass(pkg, extend, &extendReplace);
+	Type *sub1 = addSubclass(pkg, extend, L"value", &extendReplace);
 	Function *value1 = as<Function>(sub1->find(L"value", Value(sub1)));
 
 	// Now, we should use vtable calls on the base class!
@@ -102,7 +98,7 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 
 
 	// Add another subclass, subling to sub1.
-	Type *sub2 = addSubclass(pkg, extend, &extendReplace2);
+	Type *sub2 = addSubclass(pkg, extend, L"value", &extendReplace2);
 	Function *value2 = as<Function>(sub2->find(L"value", Value(sub2)));
 
 	// VTable call on base class and first level derived.
@@ -111,7 +107,7 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 	CHECK_EQ(value2->ref()->address(), value2->directRef()->address());
 
 	// Add another subclass from sub1.
-	Type *sub3 = addSubclass(pkg, sub1, &extendReplace2);
+	Type *sub3 = addSubclass(pkg, sub1, L"value", &extendReplace2);
 	Function *value3 = as<Function>(sub3->find(L"value", Value(sub3)));
 
 	// VTable call on base class and first level derived.
@@ -120,5 +116,30 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 	CHECK_EQ(value2->ref()->address(), value2->directRef()->address());
 	CHECK_EQ(value3->ref()->address(), value3->directRef()->address());
 
+	TODO(L"Instantiate a class and make sure everything works as intended!");
+} END_TEST
 
+
+// Try create a few pure Storm functions which will need VTable entries and see that it works.
+BEGIN_TEST(VTableStormTest, Storm) {
+	Engine &e = gEngine();
+
+	Type *base = debug::Extend::stormType(e);
+	Package *pkg = as<Package>(base->parent());
+	VERIFY(base);
+	VERIFY(pkg);
+
+	// Note: *not* overriding 'value' in debug::Extend.
+	Type *sub1 = addSubclass(pkg, base, L"val", &extendReplace);
+	Function *val1 = as<Function>(sub1->find(L"val", Value(sub1)));
+
+	CHECK_EQ(val1->ref()->address(), val1->directRef()->address());
+
+	Type *sub2 = addSubclass(pkg, sub1, L"val", &extendReplace2);
+	Function *val2 = as<Function>(sub2->find(L"val", Value(sub2)));
+
+	CHECK_EQ(val2->ref()->address(), val2->directRef()->address());
+	CHECK_NEQ(val1->ref()->address(), val1->directRef()->address());
+
+	TODO(L"Instantiate a class and make sure everything works as intended!");
 } END_TEST

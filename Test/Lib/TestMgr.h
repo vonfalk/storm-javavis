@@ -29,7 +29,11 @@ void Tests::runSuite(Suite *s, TestResult &r) {
 
 		if (i->second->suite == s) {
 			std::wcout << L"Running " << i->first << L"..." << std::endl;
-			r += i->second->run();
+			try {
+				r += i->second->run();
+			} catch (const AbortError &) {
+				std::wcout << L"Aborted..." << std::endl;
+			}
 		}
 	}
 }

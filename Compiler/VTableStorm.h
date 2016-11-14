@@ -2,6 +2,7 @@
 #include "Core/TObject.h"
 #include "Core/GcArray.h"
 #include "Code/Reference.h"
+#include "Function.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -9,7 +10,8 @@ namespace storm {
 	class VTableCpp;
 
 	/**
-	 * Represents all VTable entries for Storm. The first entry is reserved for Storm's destructor.
+	 * Represents all VTable entries for Storm. The first entry is always reserved for Storm's
+	 * destructor.
 	 */
 	class VTableStorm : public ObjectOn<Compiler> {
 		STORM_CLASS;
@@ -32,6 +34,12 @@ namespace storm {
 		// Find an empty slot, optionally starting at a specific index. If no slot is free, returns size().
 		Nat STORM_FN freeSlot() const;
 		Nat STORM_FN freeSlot(Nat first) const;
+
+		// Find the slot used for a specific function. Returns vtable::invalid if none is found.
+		Nat STORM_FN findSlot(Function *fn) const;
+
+		// Set a slot.
+		void STORM_FN set(Nat slot, Function *fn, code::Content *from);
 
 		// Get a pointer to the table.
 		inline const void *ptr() const { return table; }

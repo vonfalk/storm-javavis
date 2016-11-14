@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "VTableStorm.h"
 #include "VTableCpp.h"
+#include "Code/MemberRef.h"
 
 namespace storm {
 	using code::Reference;
@@ -61,6 +62,22 @@ namespace storm {
 		}
 
 		return count();
+	}
+
+	Nat VTableStorm::findSlot(Function *fn) const {
+		const void *find = fn->directRef()->address();
+
+		for (nat i = 0; i < count(); i++) {
+			if (refs->v[i] != null && table->v[i] == find)
+				return i;
+		}
+
+		return vtable::invalid;
+	}
+
+	void VTableStorm::set(Nat slot, Function *fn, code::Content *from) {
+		assert(slot < refs->count);
+		refs->v[slot] = new (this) code::MemberRef(table, slot, fn->directRef(), from);
 	}
 
 }

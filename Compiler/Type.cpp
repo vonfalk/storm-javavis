@@ -662,6 +662,8 @@ namespace storm {
 		VTableSlot slot = vtable->findSlot(found);
 		if (!slot.valid()) {
 			// Allocate a new slot...
+			TODO(L"FIXME!");
+			return VTableSlot();
 			// Insert this function into that slot
 			vtableInsert(found, slot);
 		}

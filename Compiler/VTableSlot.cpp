@@ -1,12 +1,16 @@
 #include "stdafx.h"
 #include "VTableSlot.h"
+#include "VTableCpp.h"
 #include "Core/StrBuf.h"
 
 namespace storm {
 
 	VTableSlot::VTableSlot() : type(tNone), offset(0) {}
 
-	VTableSlot::VTableSlot(VType t, Nat offset) : type(t), offset(offset) {}
+	VTableSlot::VTableSlot(VType t, Nat offset) : type(t), offset(offset) {
+		if (offset == vtable::invalid)
+			type = tNone;
+	}
 
 	VTableSlot cppSlot(Nat offset) {
 		return VTableSlot(VTableSlot::tCpp, offset);

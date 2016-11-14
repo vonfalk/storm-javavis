@@ -5,6 +5,7 @@
 #include "Utils/Object.h"
 
 // The main header for the test framework. Gives the macros:
+// VERIFY(condition) - aborts if not true
 // CHECK(condition)
 // CHECK_TITLE(condition, title)
 // CHECK_EQ(expr, val)
@@ -119,6 +120,12 @@ protected:
 	}
 };
 
+// Error thrown when we shall abort.
+class AbortError : public Exception {
+public:
+	String what() const { return L"Aborted"; }
+};
+
 
 //////////////////////////////////////////////////////////////////////////
 // Helper functions
@@ -144,7 +151,7 @@ template <class T, class U>
 void verifyLt(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	if (!(lhs < rhs)) {
 		r.failed++;
-		std::wcout << L"Failed: " << expr << L" == " << lhs << " < " << rhs << std::endl;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << L" < " << rhs << std::endl;
 	}
 }
 
@@ -152,7 +159,7 @@ template <class T, class U>
 void verifyLte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	if (!(lhs <= rhs)) {
 		r.failed++;
-		std::wcout << L"Failed: " << expr << L" == " << lhs << " <= " << rhs << std::endl;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << L" <= " << rhs << std::endl;
 	}
 }
 
@@ -160,7 +167,7 @@ template <class T, class U>
 void verifyGt(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	if (!(lhs > rhs)) {
 		r.failed++;
-		std::wcout << L"Failed: " << expr << L" == " << lhs << " > " << rhs << std::endl;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << L" > " << rhs << std::endl;
 	}
 }
 
@@ -168,7 +175,7 @@ template <class T, class U>
 void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	if (!(lhs >= rhs)) {
 		r.failed++;
-		std::wcout << L"Failed: " << expr << L" == " << lhs << " >= " << rhs << std::endl;
+		std::wcout << L"Failed: " << expr << L" == " << lhs << L" >= " << rhs << std::endl;
 	}
 }
 
@@ -214,30 +221,34 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 // Macros
 //////////////////////////////////////////////////////////////////////////
 
-#define CHECK_TITLE(expr, title)							\
-	try {													\
-		__result__.total++;									\
-		if (!(expr)) {										\
-			__result__.failed++;							\
-			std::wcout << "Failed: " << title << std::endl; \
-		}													\
-	} catch (const Exception &e) {							\
-		OUTPUT_ERROR(title, e);								\
-	} catch (...) {											\
-		OUTPUT_ERROR(title, "unknown crash");				\
-	}
+#define CHECK_TITLE(expr, title)								\
+	do {														\
+		try {													\
+			__result__.total++;									\
+			if (!(expr)) {										\
+				__result__.failed++;							\
+				std::wcout << "Failed: " << title << std::endl; \
+			}													\
+		} catch (const Exception &e) {							\
+			OUTPUT_ERROR(title, e);								\
+		} catch (...) {											\
+			OUTPUT_ERROR(title, "unknown crash");				\
+		}														\
+	} while (false)
 
-#define CHECK_PRED_TITLE(pred, expr, eq, title)			\
-	try {												\
-		__result__.total++;								\
-		std::wostringstream __stream__;					\
-		__stream__ << title;							\
-		pred(__result__, expr, eq, __stream__.str());	\
-	} catch (const Exception &e) {						\
-		OUTPUT_ERROR(title, e);							\
-	} catch (...) {										\
-		OUTPUT_ERROR(title, "unknown crash");			\
-	}
+#define CHECK_PRED_TITLE(pred, expr, eq, title)				\
+	do {													\
+		try {												\
+			__result__.total++;								\
+			std::wostringstream __stream__;					\
+			__stream__ << title;							\
+			pred(__result__, expr, eq, __stream__.str());	\
+		} catch (const Exception &e) {						\
+			OUTPUT_ERROR(title, e);							\
+		} catch (...) {										\
+			OUTPUT_ERROR(title, "unknown crash");			\
+		}													\
+	} while (false)
 
 #define CHECK_EQ_TITLE(expr, eq, title)			\
 	CHECK_PRED_TITLE(verifyEq, expr, eq, title)
@@ -271,31 +282,44 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 
 #define CHECK_GTE(expr, eq) CHECK_GTE_TITLE(expr, eq, #expr)
 
-
 #define CHECK_ERROR(expr, type)											\
-	try {																\
-		__result__.total++;												\
-		expr;															\
-		__result__.failed++;											\
-		std::wcout << "Failed: " << #expr << ", did not fail as expected" << std::endl; \
-	} catch (const type &) {											\
-	} catch (const Exception &e) {										\
-		std::wcout << "Failed: " << #expr << ", did not throw " << #type << " as expected." << std::endl; \
-		std::wcout << e << std::endl;									\
-		__result__.failed++;											\
-	} catch (...) {														\
-		OUTPUT_ERROR(#expr, "unknown error");							\
-	}
+	do {																\
+		try {															\
+			__result__.total++;											\
+			expr;														\
+			__result__.failed++;										\
+			std::wcout << L"Failed: " << #expr << L", did not fail as expected" << std::endl; \
+		} catch (const type &) {										\
+		} catch (const Exception &e) {									\
+			std::wcout << L"Failed: " << #expr << L", did not throw " << #type << L" as expected." << std::endl; \
+			std::wcout << e << std::endl;								\
+			__result__.failed++;										\
+		} catch (...) {													\
+			OUTPUT_ERROR(#expr, "unknown error");						\
+		}																\
+	} while (false)
 
-#define CHECK_RUNS(expr)						\
-	try {										\
-		__result__.total++;						\
-		expr;									\
-	} catch (const Exception &e) {				\
-		OUTPUT_ERROR(#expr, e);					\
-	} catch (...) {								\
-		OUTPUT_ERROR(#expr, "unknown crash");	\
-	}
+#define CHECK_RUNS(expr)							\
+	do {											\
+		try {										\
+			__result__.total++;						\
+			expr;									\
+		} catch (const Exception &e) {				\
+			OUTPUT_ERROR(#expr, e);					\
+		} catch (...) {								\
+			OUTPUT_ERROR(#expr, "unknown crash");	\
+		}											\
+	} while (false)
+
+#define VERIFY(expr)												\
+	do {															\
+		__result__.total++;											\
+		if (!(expr)) {												\
+			__result__.crashed++;									\
+			std::wcout << L"Failed: " << #expr << L", aborting..."; \
+			throw AbortError();										\
+		}															\
+	} while (false)
 
 #define SUITE(name, order)						\
 	DEFINE_SUITE(name, order, false, false)

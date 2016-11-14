@@ -44,11 +44,10 @@ namespace storm {
 				return cppSlot(r);
 		}
 
-		if (!storm)
+		if (storm)
+			return stormSlot(storm->findSlot(fn));
+		else
 			return VTableSlot();
-
-		TODO(L"FIXME");
-		return VTableSlot();
 	}
 
 	void VTable::set(VTableSlot slot, Function *fn, code::Content *from) {
@@ -67,7 +66,7 @@ namespace storm {
 			cpp->set(slot.offset, fn, from);
 			break;
 		case VTableSlot::tStorm:
-			assert(false, L"Setting Storm VTables not supported yet!");
+			storm->set(slot.offset, fn, from);
 			break;
 		default:
 			assert(false, L"Unknown slot type.");
