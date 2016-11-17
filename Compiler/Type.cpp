@@ -123,6 +123,13 @@ namespace storm {
 		}
 	}
 
+	void Type::vtableGrow(Nat newCount) {
+		Array<Type *> *c = chain->children();
+		for (nat i = 0; i < c->count(); i++) {
+			c->at(i)->vtableParentGrown(newCount);
+		}
+	}
+
 	void Type::lateInit() {
 		NameSet::lateInit();
 
@@ -662,8 +669,8 @@ namespace storm {
 		VTableSlot slot = vtable->findSlot(found);
 		if (!slot.valid()) {
 			// Allocate a new slot...
-			TODO(L"FIXME!");
-			return VTableSlot();
+			slot = vtable->createStorm(this);
+
 			// Insert this function into that slot
 			vtableInsert(found, slot);
 		}
@@ -704,6 +711,29 @@ namespace storm {
 		Array<Type *> *children = chain->children();
 		for (Nat i = 0; i < children->count(); i++) {
 			children->at(i)->vtableNewSuper();
+		}
+	}
+
+	void Type::vtableParentGrown(Nat parentCount) {
+		// Tell the VTable.
+		vtable->parentGrown(parentCount);
+
+		// We need to look at all our functions and possibly alter their used VTable slot.
+		// Since this is a fairly common operation, we avoid traversing the inheritance graph.
+		for (NameSet::Iter i = begin(), e = end(); i != e; ++i) {
+			Function *f = as<Function>(i.v());
+			if (!f)
+				continue;
+
+			// If we observe that 'f' is using some kind of lookup and 'f' is in the vtable, it is
+			// using a vtable lookup so we can safely replace the lookup with a new offset.
+			if (f->ref()->address() != f->directRef()->address()) {
+				VTableSlot slot = vtable->findSlot(f);
+
+				// Only storm slots ever move.
+				if (slot.type == VTableSlot::tStorm)
+					vtableUse(f, slot);
+			}
 		}
 	}
 

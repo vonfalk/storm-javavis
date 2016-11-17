@@ -8,6 +8,8 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class Type;
+
 	/**
 	 * The VTable implementation in Storm is split into three files. This one (VTable.h) contains
 	 * the logical 'one and only' VTable implementation for a type. However, in Storm a VTable is
@@ -46,6 +48,14 @@ namespace storm {
 		// Set 'slot' to refer to a specific function.
 		void STORM_FN set(VTableSlot slot, Function *fn, code::Content *from);
 
+		// Create a slot for a Storm function. Returns the created index. 'owner' is the class which
+		// owns this vtable. It is needed as it is sometimes neccessary to resize the vtables of all
+		// child classes.
+		VTableSlot STORM_FN createStorm(Type *owner);
+
+		// Called when the owner type detected our parent grew. Not designed to be exposed to Storm.
+		void parentGrown(Nat parentCount);
+
 	private:
 		// The original C++ VTable we are based off. This can be several levels up the inheritance
 		// chain.
@@ -56,6 +66,13 @@ namespace storm {
 
 		// The derived Storm VTable (if we created one).
 		VTableStorm *storm;
+
+		// First slot we have access to in the Storm vtable. This equals the size of our parent's
+		// vtable.
+		Nat stormFirst;
+
+		// Decide how much to grow each time 'storm' needs to grow.
+		static const Nat stormGrow = 5;
 	};
 
 }

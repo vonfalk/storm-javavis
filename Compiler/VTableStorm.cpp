@@ -1,10 +1,9 @@
 #include "stdafx.h"
 #include "VTableStorm.h"
 #include "VTableCpp.h"
-#include "Code/MemberRef.h"
 
 namespace storm {
-	using code::Reference;
+	using code::MemberRef;
 
 	VTableStorm::VTableStorm(VTableCpp *update) : update(update) {}
 
@@ -13,7 +12,7 @@ namespace storm {
 		refs = null;
 	}
 
-	void VTableStorm::ensure(Nat count) {
+	void VTableStorm::resize(Nat count) {
 		if (table != null && count <= table->count) {
 			// Release possible GC retention.
 			for (nat i = min(table->filled, count); i < table->count; i++) {
@@ -31,10 +30,10 @@ namespace storm {
 		size = max(count, size + 10);
 
 		GcArray<const void *> *n = runtime::allocArray<const void *>(engine(), &pointerArrayType, size);
-		GcArray<Reference *> *m = runtime::allocArray<Reference *>(engine(), &pointerArrayType, size);
-		n->filled = table->filled;
-		m->filled = refs->filled;
-		for (nat i = 0; i < table->filled; i++) {
+		GcArray<MemberRef *> *m = runtime::allocArray<MemberRef *>(engine(), &pointerArrayType, size);
+		n->filled = table ? table->filled : 0;
+		m->filled = refs ? refs->filled : 0;
+		for (nat i = 0; i < n->filled; i++) {
 			n->v[i] = table->v[i];
 			m->v[i] = refs->v[i];
 		}
@@ -73,6 +72,23 @@ namespace storm {
 		}
 
 		return vtable::invalid;
+	}
+
+	void VTableStorm::insert(Nat pos, Nat ins) {
+		resize(count() + ins);
+
+		for (nat i = count(); i > pos; i--) {
+			nat from = i - 1;
+			nat to = from + ins;
+
+			table->v[to] = table->v[from];
+			refs->v[to] = refs->v[from];
+			if (refs->v[to])
+				refs->v[to]->move(table, to);
+
+			table->v[from] = null;
+			refs->v[from] = null;
+		}
 	}
 
 	void VTableStorm::set(Nat slot, Function *fn, code::Content *from) {

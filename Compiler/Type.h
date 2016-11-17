@@ -99,6 +99,9 @@ namespace storm {
 		// at a suitable time, before any Storm-defined types are created.
 		void vtableInit(const void *vtable);
 
+		// Called by VTable when our vtable needs to grow the allocated space for the parent class.
+		void vtableGrow(Nat newCount);
+
 		// Late initialization.
 		virtual void lateInit();
 
@@ -221,6 +224,9 @@ namespace storm {
 
 		// Called when we have been attached to a new parent.
 		void vtableNewSuper();
+
+		// Called when our parent's vtable grew.
+		void vtableParentGrown(Nat parentCount);
 
 	};
 

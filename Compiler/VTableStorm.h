@@ -2,6 +2,7 @@
 #include "Core/TObject.h"
 #include "Core/GcArray.h"
 #include "Code/Reference.h"
+#include "Code/MemberRef.h"
 #include "Function.h"
 
 namespace storm {
@@ -23,7 +24,7 @@ namespace storm {
 		void STORM_FN clear();
 
 		// Ensure we're at least a specific size.
-		void STORM_FN ensure(Nat count);
+		void STORM_FN resize(Nat count);
 
 		// Current # of elements.
 		Nat STORM_FN count() const;
@@ -38,6 +39,10 @@ namespace storm {
 		// Find the slot used for a specific function. Returns vtable::invalid if none is found.
 		Nat STORM_FN findSlot(Function *fn) const;
 
+		// Insert 'count' new blank slots at position 'pos'. This moves all elements with 'index >=
+		// pos' to position 'index + count'.
+		void STORM_FN insert(Nat pos, Nat count);
+
 		// Set a slot.
 		void STORM_FN set(Nat slot, Function *fn, code::Content *from);
 
@@ -49,7 +54,7 @@ namespace storm {
 		GcArray<const void *> *table;
 
 		// References updating the VTable.
-		GcArray<code::Reference *> *refs;
+		GcArray<code::MemberRef *> *refs;
 
 		// Update this VTable.
 		VTableCpp *update;

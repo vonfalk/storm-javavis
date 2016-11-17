@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "VTable.h"
+#include "Type.h"
 
 namespace storm {
 
@@ -8,6 +9,7 @@ namespace storm {
 	void VTable::createCpp(const void *cppVTable) {
 		assert(original == null, L"Can not re-use a VTable for a new C++ root object.");
 		original = cppVTable;
+		stormFirst = 1;
 	}
 
 	void VTable::createStorm(VTable *parent) {
@@ -30,6 +32,9 @@ namespace storm {
 
 		// Create a new Storm VTable.
 		storm = new (this) VTableStorm(cpp);
+		stormFirst = parent->storm
+			? parent->storm->count()
+			: 1; // always place stuff after the destructor slot.
 	}
 
 	VTableSlot VTable::findSlot(Function *fn) {
@@ -72,6 +77,30 @@ namespace storm {
 			assert(false, L"Unknown slot type.");
 			break;
 		}
+	}
+
+	VTableSlot VTable::createStorm(Type *type) {
+		if (storm == null) {
+			assert(false);
+			return VTableSlot();
+		}
+
+		nat slot = storm->freeSlot(stormFirst);
+		if (slot >= storm->count()) {
+			// We need to resize 'storm'...
+			storm->resize(storm->count() + stormGrow);
+
+			// Tell the VTables of all children to grow...
+			type->vtableGrow(storm->count());
+		}
+
+		return cppSlot(slot);
+	}
+
+	void VTable::parentGrown(Nat parentCount) {
+		if (storm)
+			storm->insert(stormFirst, parentCount - stormFirst);
+		stormFirst = parentCount;
 	}
 
 }

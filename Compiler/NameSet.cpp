@@ -241,6 +241,8 @@ namespace storm {
 	}
 
 	NameSet::Iter &NameSet::Iter::operator ++() {
+		pos++;
+
 		while (name != MapIter() && pos >= name.v()->count()) {
 			++name;
 			pos = 0;

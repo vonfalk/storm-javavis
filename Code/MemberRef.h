@@ -22,6 +22,10 @@ namespace code {
 		// Notification of changed address.
 		virtual void moved(const void *newAddr);
 
+		// Move the pointer we're to update.
+		void move(Object *obj, size_t offset);
+		void move(GcArray<const void *> *arr, size_t entry);
+
 	private:
 		// Object.
 		UNKNOWN(PTR_GC) void *update;
