@@ -54,7 +54,7 @@ namespace storm {
 		VTableSlot STORM_FN createStorm(Type *owner);
 
 		// Called when the owner type detected our parent grew. Not designed to be exposed to Storm.
-		void parentGrown(Nat parentCount);
+		void parentGrown(Nat pos, Nat count);
 
 	private:
 		// The original C++ VTable we are based off. This can be several levels up the inheritance

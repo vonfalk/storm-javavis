@@ -123,10 +123,10 @@ namespace storm {
 		}
 	}
 
-	void Type::vtableGrow(Nat newCount) {
+	void Type::vtableGrow(Nat pos, Nat count) {
 		Array<Type *> *c = chain->children();
 		for (nat i = 0; i < c->count(); i++) {
-			c->at(i)->vtableParentGrown(newCount);
+			c->at(i)->vtableParentGrown(pos, count);
 		}
 	}
 
@@ -714,9 +714,9 @@ namespace storm {
 		}
 	}
 
-	void Type::vtableParentGrown(Nat parentCount) {
+	void Type::vtableParentGrown(Nat pos, Nat count) {
 		// Tell the VTable.
-		vtable->parentGrown(parentCount);
+		vtable->parentGrown(pos, count);
 
 		// We need to look at all our functions and possibly alter their used VTable slot.
 		// Since this is a fairly common operation, we avoid traversing the inheritance graph.
@@ -735,6 +735,9 @@ namespace storm {
 					vtableUse(f, slot);
 			}
 		}
+
+		// Cascade to children.
+		vtableGrow(pos, count);
 	}
 
 	// NOTE: Slightly dangerous to re-use the parameters from the function...

@@ -87,20 +87,23 @@ namespace storm {
 
 		nat slot = storm->freeSlot(stormFirst);
 		if (slot >= storm->count()) {
+			nat oldCount = storm->count();
+
 			// We need to resize 'storm'...
-			storm->resize(storm->count() + stormGrow);
+			storm->resize(oldCount + stormGrow);
 
 			// Tell the VTables of all children to grow...
-			type->vtableGrow(storm->count());
+			type->vtableGrow(oldCount, stormGrow);
 		}
 
 		return cppSlot(slot);
 	}
 
-	void VTable::parentGrown(Nat parentCount) {
+	void VTable::parentGrown(Nat pos, Nat count) {
 		if (storm)
-			storm->insert(stormFirst, parentCount - stormFirst);
-		stormFirst = parentCount;
+			storm->insert(pos, count);
+		if (pos >= stormFirst)
+			stormFirst += count;
 	}
 
 }
