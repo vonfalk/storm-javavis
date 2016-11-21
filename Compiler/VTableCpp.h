@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/TObject.h"
 #include "Code/Reference.h"
+#include "Code/MemberRef.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -46,12 +47,15 @@ namespace storm {
 		// Set a vtable entry.
 		void set(nat slot, Function *fn, code::Content *from);
 
+		// Clear a vtable entry.
+		void clear(nat slot);
+
 	private:
 		// The VTable data. We're storing it as a regular GC array.
 		GcArray<const void *> *data;
 
 		// References updating the VTable. The entire table is null if no updaters are added.
-		GcArray<code::Reference *> *refs;
+		GcArray<code::MemberRef *> *refs;
 
 		// Have we ever set our VTable to an object?
 		bool tableUsed;

@@ -3,7 +3,6 @@
 #include "Utils/Platform.h"
 #include "Utils/Memory.h"
 #include "Core/GcType.h"
-#include "Code/MemberRef.h"
 #include "Exception.h"
 #include "Function.h"
 #include "Engine.h"
@@ -104,11 +103,23 @@ namespace storm {
 		} else {
 			// We need to add a reference!
 			if (!refs)
-				refs = runtime::allocArray<code::Reference *>(engine(), &pointerArrayType, count());
+				refs = runtime::allocArray<code::MemberRef *>(engine(), &pointerArrayType, count());
 
 			nat slot = id + vtable::extraOffset;
+			if (refs->v[id])
+				refs->v[id]->disable();
 			refs->v[id] = new (this) code::MemberRef(data, slot, fn->directRef(), from);
 		}
+	}
+
+	void VTableCpp::clear(nat id) {
+		assert(id < count());
+
+		if (refs) {
+			refs->v[id]->disable();
+			refs->v[id] = null;
+		}
+		slot(id) = null;
 	}
 
 	namespace vtable {

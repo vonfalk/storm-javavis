@@ -46,6 +46,9 @@ namespace storm {
 		// Set a slot.
 		void STORM_FN set(Nat slot, Function *fn, code::Content *from);
 
+		// Clear a slot.
+		void STORM_FN clear(Nat slot);
+
 		// Get a pointer to the table.
 		inline const void *ptr() const { return table; }
 

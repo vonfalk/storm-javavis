@@ -92,8 +92,18 @@ namespace storm {
 	}
 
 	void VTableStorm::set(Nat slot, Function *fn, code::Content *from) {
-		assert(slot < refs->count);
+		assert(slot < count());
+		if (refs->v[slot])
+			refs->v[slot]->disable();
 		refs->v[slot] = new (this) code::MemberRef(table, slot, fn->directRef(), from);
+	}
+
+	void VTableStorm::clear(Nat slot) {
+		assert(slot < count());
+		if (refs->v[slot])
+			refs->v[slot]->disable();
+		refs->v[slot] = null;
+		table->v[slot] = null;
 	}
 
 }

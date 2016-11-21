@@ -79,6 +79,26 @@ namespace storm {
 		}
 	}
 
+	void VTable::clear(VTableSlot slot) {
+		if (!slot.valid())
+			return;
+
+		if (cpp == null || storm == null)
+			return;
+
+		switch (slot.type) {
+		case VTableSlot::tCpp:
+			cpp->clear(slot.offset);
+			break;
+		case VTableSlot::tStorm:
+			storm->clear(slot.offset);
+			break;
+		default:
+			assert(false, L"Unknown slot type.");
+			break;
+		}
+	}
+
 	VTableSlot VTable::createStorm(Type *type) {
 		if (storm == null) {
 			assert(false);

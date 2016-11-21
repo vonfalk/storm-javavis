@@ -48,6 +48,9 @@ namespace storm {
 		// Set 'slot' to refer to a specific function.
 		void STORM_FN set(VTableSlot slot, Function *fn, code::Content *from);
 
+		// Clear 'slot'.
+		void STORM_FN clear(VTableSlot slot);
+
 		// Create a slot for a Storm function. Returns the created index. 'owner' is the class which
 		// owns this vtable. It is needed as it is sometimes neccessary to resize the vtables of all
 		// child classes.

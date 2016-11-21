@@ -1,6 +1,8 @@
-* Loose ends so far [3/4]
+* Loose ends so far [3/5]
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
+  - [ ] If an object contains two different functions referring to the same implementation,
+        the vtable system will get very confused and possibly make mistakes.
   - [X] It seems we fail to handle moving objects in Set and Map in rare cases. Examine why!
   - [X] Implement shrink() for Map<> as well.
   - [X] Handles and templates does not work with built-in types (like Int).

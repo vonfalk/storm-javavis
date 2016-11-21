@@ -20,8 +20,8 @@ namespace storm {
 		STORM_CTOR TypeChain(Type *owner);
 
 		// Set the super type to 'o'.
-		void STORM_FN super(TypeChain *o);
-		void STORM_FN super(Type *o);
+		void STORM_FN super(MAYBE(TypeChain *) o);
+		void STORM_FN super(MAYBE(Type *) o);
 
 		// Get the super type.
 		Type *STORM_FN super() const;

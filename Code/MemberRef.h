@@ -26,6 +26,9 @@ namespace code {
 		void move(Object *obj, size_t offset);
 		void move(GcArray<const void *> *arr, size_t entry);
 
+		// Disable the updating.
+		void disable();
+
 	private:
 		// Object.
 		UNKNOWN(PTR_GC) void *update;

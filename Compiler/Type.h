@@ -52,7 +52,7 @@ namespace storm {
 		void setType(Object *object) const;
 
 		// Set the super-class for this type.
-		void STORM_FN setSuper(Type *to);
+		void STORM_FN setSuper(MAYBE(Type *) to);
 
 		// Get the super-class for this type.
 		inline MAYBE(Type *) STORM_FN super() { return chain ? chain->super() : null; }
@@ -162,6 +162,9 @@ namespace storm {
 		// Compute the size of our super-class.
 		Size superSize();
 
+		// Get the default super type for us.
+		Type *defaultSuper() const;
+
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);
 		static void operator delete(void *mem, Engine &e, GcType *type);
@@ -201,11 +204,20 @@ namespace storm {
 		// acts accordingly.
 		void vtableFnAdded(Function *added);
 
-		// Search towards the super class for an overriding function. Returns true if one was found.
-		Bool vtableFindSuper(Function *added);
+		// Search towards the super class for a function overridden by 'fn'. Returns 'true' if an
+		// overridden function was found.
+		Bool vtableInsertSuper(Function *added);
 
-		// Search towards the subclasses for an overriding function.
-		void vtableFindSubclass(OverridePart *added);
+		// Search towards the subclasses for an overriding function and make sure to insert it into
+		// the vtable in 'slot'. Assuming 'parentFn' is the corresponding function in the closest
+		// parent.
+		void vtableInsertSubclasses(OverridePart *added);
+
+		// Search towards the super class for an overriden function. Returns the most specialized match found.
+		Function *vtableFindSuper(OverridePart *fn);
+
+		// Search towards the subclasses for an overriding function. Returns 'true' if one is found.
+		Bool vtableFindSubclass(OverridePart *fn);
 
 		// Called by a child class to notify that a new function 'added' has been added in some
 		// child class. If one is found in this class or any parent classes, that function is made
@@ -216,14 +228,20 @@ namespace storm {
 		// Make 'f' use the vtable when called.
 		void vtableUse(Function *fn, VTableSlot slot);
 
-		// Insert 'f' into the vtable at 'slot'.
-		void vtableInsert(Function *fn, VTableSlot slot);
-
 		// Make 'f' not use the vtable when called.
 		void vtableClear(Function *fn);
 
+		// Insert 'f' into the vtable at 'slot'.
+		void vtableInsert(Function *fn, VTableSlot slot);
+
+		// Clear slot 'n' of the vtable.
+		void vtableClear(VTableSlot slot);
+
 		// Called when we have been attached to a new parent.
 		void vtableNewSuper();
+
+		// Called when one of our children has been removed.
+		void vtableChildRemoved(Type *lost);
 
 		// Called when our parent's vtable grew.
 		void vtableParentGrown(Nat pos, Nat count);
@@ -239,6 +257,9 @@ namespace storm {
 	public:
 		// Create, specifying the function used.
 		STORM_CTOR OverridePart(Function *match);
+
+		// Create, specifying the function used and a new owning class.
+		STORM_CTOR OverridePart(Type *parent, Function *match);
 
 		// Custom badness measure.
 		virtual Int STORM_FN matches(Named *candidate) const;

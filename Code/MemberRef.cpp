@@ -17,8 +17,10 @@ namespace code {
 	}
 
 	void MemberRef::moved(const void *newAddr) {
-		void *obj = (byte *)update + offset;
-		*(const void **)obj = newAddr;
+		if (update) {
+			void *obj = (byte *)update + offset;
+			*(const void **)obj = newAddr;
+		}
 	}
 
 	void MemberRef::move(Object *obj, size_t offset) {
@@ -31,6 +33,11 @@ namespace code {
 		update = arr;
 		offset = OFFSET_OF(GcArray<const void *>, v[entry]);
 		moved(address());
+	}
+
+	void MemberRef::disable() {
+		update = null;
+		offset = 0;
 	}
 
 }

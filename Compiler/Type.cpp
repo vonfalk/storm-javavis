@@ -135,8 +135,9 @@ namespace storm {
 
 		if (!chain) {
 			chain = new (this) TypeChain(this);
-			if (!value())
-				setSuper(Object::stormType(engine));
+			Type *def = defaultSuper();
+			if (def)
+				setSuper(def);
 		}
 
 		chain->lateInit();
@@ -186,7 +187,20 @@ namespace storm {
 		engine.gc.switchType(onto, myGcType);
 	}
 
+	Type *Type::defaultSuper() const {
+		if (value())
+			return null;
+		else if (useThread)
+			return TObject::stormType(engine);
+		else
+			return Object::stormType(engine);
+	}
+
 	void Type::setSuper(Type *to) {
+		// If 'to' is null: figure out what to inherit from.
+		if (!to)
+			to = defaultSuper();
+
 		// So that Object does not inherit from TObject.
 		if (to == this)
 			return;
@@ -198,12 +212,12 @@ namespace storm {
 		if (to == chain->super())
 			return;
 
-		if (!to->chain)
+		if (to && !to->chain)
 			to->chain = new (this) TypeChain(to);
 
 		// Which thread to use?
 		Type *tObj = TObject::stormType(engine);
-		if (to->chain != null && tObj->chain != null) {
+		if (to != null && to->chain != null && tObj->chain != null) {
 			if (!to->chain->isA(tObj)) {
 				useThread = null;
 			} else if (to != tObj) {
@@ -213,6 +227,7 @@ namespace storm {
 		}
 
 		// Set the type-chain properly.
+		Type *prev = super();
 		chain->super(to);
 
 		// Invalidate the GcType for this type.
@@ -227,10 +242,12 @@ namespace storm {
 
 		// TODO: Invalidate the Layout as well.
 		// TODO: Invalidate the handle as well.
-		// TODO: Notify our old parent of removal of vtable members.
 
-		// Re-initialize the vtable.
+		// Notify our old parent of removal of vtable members.
+		prev->vtableChildRemoved(this);
+
 		if ((typeFlags & typeCpp) != typeCpp && !value()) {
+			// Re-initialize the vtable.
 			vtable->createStorm(to->vtable);
 		}
 
@@ -240,7 +257,11 @@ namespace storm {
 
 	void Type::setThread(NamedThread *thread) {
 		useThread = thread;
-		setSuper(TObject::stormType(engine));
+
+		Type *def = defaultSuper();
+		// Note: this function is used early enough so that 'chain' may not be initialized.
+		if (!chain || !isA(def))
+			setSuper(def);
 
 		// Propagate the current thread to any child types.
 		notifyThread(thread);
@@ -615,11 +636,11 @@ namespace storm {
 	 */
 
 	void Type::vtableFnAdded(Function *fn) {
-		if (!vtableFindSuper(fn))
-			vtableFindSubclass(new (engine) OverridePart(fn));
+		if (vtableInsertSuper(fn))
+			vtableInsertSubclasses(new (engine) OverridePart(fn));
 	}
 
-	Bool Type::vtableFindSuper(Function *fn) {
+	bool Type::vtableInsertSuper(Function *fn) {
 		// Ask our parent to see if 'fn' should be virtual.
 		VTableSlot slot;
 		if (Type *s = super())
@@ -636,7 +657,7 @@ namespace storm {
 
 	// TODO: We can optimize this a whole lot by elliminating the need to actually find the parent
 	// function again.
-	void Type::vtableFindSubclass(OverridePart *fn) {
+	void Type::vtableInsertSubclasses(OverridePart *fn) {
 		// If too early in the boot process, we can not proceed here.
 		if (!engine.has(bootTemplates))
 			return;
@@ -649,11 +670,38 @@ namespace storm {
 			if (found) {
 				// Find and apply the vtable layout.
 				// TODO: Do we need to force-disable the vtable?
-				child->vtableFindSuper(found);
+				child->vtableInsertSuper(found);
 			}
+
+			child->vtableInsertSubclasses(fn);
+		}
+	}
+
+	Function *Type::vtableFindSuper(OverridePart *fn) {
+		if (Function *f = as<Function>(findHere(fn)))
+			return f;
+
+		if (Type *s = super())
+			return s->vtableFindSuper(fn);
+
+		return null;
+	}
+
+	Bool Type::vtableFindSubclass(OverridePart *fn) {
+		if (!engine.has(bootTemplates))
+			return false;
+
+		Array<Type *> *children = chain->children();
+		for (Nat i = 0; i < children->count(); i++) {
+			Type *child = children->at(i);
+
+			if (as<Function>(child->findHere(fn)))
+				return true;
 
 			child->vtableFindSubclass(fn);
 		}
+
+		return false;
 	}
 
 	VTableSlot Type::vtableNewChildFn(OverridePart *fn) {
@@ -681,7 +729,6 @@ namespace storm {
 	}
 
 	void Type::vtableUse(Function *fn, VTableSlot slot) {
-		// PLN(fn->identifier() << L" should be virtual using " << slot);
 		code::RefSource *src = engine.vtableCalls()->get(slot);
 		fn->setLookup(new (engine) DelegatedCode(code::Ref(src)));
 	}
@@ -690,8 +737,11 @@ namespace storm {
 		vtable->set(slot, fn, handleContent);
 	}
 
+	void Type::vtableClear(VTableSlot slot) {
+		vtable->clear(slot);
+	}
+
 	void Type::vtableClear(Function *fn) {
-		// PLN(fn->identifier() << L" should not be virtual.");
 		fn->setLookup(null);
 	}
 
@@ -705,12 +755,49 @@ namespace storm {
 		for (NameSet::Iter i = begin(), e = end(); i != e; ++i) {
 			Function *f = as<Function>(i.v());
 			vtableClear(f);
-			vtableFindSuper(f);
+			vtableInsertSuper(f);
 		}
 
 		Array<Type *> *children = chain->children();
 		for (Nat i = 0; i < children->count(); i++) {
 			children->at(i)->vtableNewSuper();
+		}
+	}
+
+	void Type::vtableChildRemoved(Type *lost) {
+		// We need to see if we shall stop using VTable calls for all functions in 'lost'.
+		for (NameSet::Iter i = lost->begin(), e = lost->end(); i != e; ++i) {
+			Function *f = as<Function>(i.v());
+			if (!f)
+				continue;
+
+			OverridePart *fn = new (engine) OverridePart(this, f);
+
+			// Find the most specialized override and possibly disable that.
+			Function *parentFn = vtableFindSuper(fn);
+			if (!parentFn)
+				continue;
+
+			// If there are no functions overriding 'parent', we want to disable vtable calls for it.
+			Type *parentType = as<Type>(parentFn->parent());
+			if (!parentType)
+				continue; // safeguard
+
+			fn = new (engine) OverridePart(parentFn);
+			if (parentType->vtableFindSubclass(fn))
+				// Found a subclass, no need to do anything.
+				continue;
+
+			// No subclasses. Disable vtable for 'parent'.
+			parentType->vtableClear(parentFn);
+
+			// We can remove it from the vtable entirely if it also has no parent.
+			if (parentType->super() == null || parentType->super()->vtableFindSuper(fn) == null) {
+				VTableSlot s = parentType->vtable->findSlot(parentFn);
+				if (s.valid()) {
+					parentType->vtableClear(s);
+				}
+			}
 		}
 	}
 
@@ -742,6 +829,13 @@ namespace storm {
 
 	// NOTE: Slightly dangerous to re-use the parameters from the function...
 	OverridePart::OverridePart(Function *src) :	SimplePart(src->name, src->params), result(src->result) {}
+
+	OverridePart::OverridePart(Type *parent, Function *src) :
+		SimplePart(src->name, new (src) Array<Value>(src->params)),
+		result(src->result) {
+
+		params->at(0) = thisPtr(parent);
+	}
 
 	Int OverridePart::matches(Named *candidate) const {
 		Function *fn = as<Function>(candidate);
