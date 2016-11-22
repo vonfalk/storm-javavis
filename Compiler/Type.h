@@ -111,6 +111,10 @@ namespace storm {
 		// Inheritance chain and membership lookup. TODO: Make private?
 		TypeChain *chain;
 
+		// The VTable for this class. Value types do not have a vtable, so 'vtable' is null for a
+		// value type. TODO: Make private?
+		MAYBE(VTable *) vtable;
+
 		// Helpers for the chain.
 		inline Bool STORM_FN isA(const Type *o) const { return chain->isA(o); }
 		inline Int STORM_FN distanceFrom(const Type *from) const { return chain->distance(from); }
@@ -193,9 +197,6 @@ namespace storm {
 		// Find only in this class.
 		MAYBE(Named *) findHere(SimplePart *part);
 
-		// The VTable for this class. Value types do not have a vtable, so 'vtable' is null for a value type.
-		VTable *vtable;
-
 		/**
 		 * Helpers for deciding which functions shall be virtual.
 		 */
@@ -248,25 +249,5 @@ namespace storm {
 
 	};
 
-
-	/**
-	 * Lookup used for finding functions in superclasses which 'match' overrides.
-	 */
-	class OverridePart : public SimplePart {
-		STORM_CLASS;
-	public:
-		// Create, specifying the function used.
-		STORM_CTOR OverridePart(Function *match);
-
-		// Create, specifying the function used and a new owning class.
-		STORM_CTOR OverridePart(Type *parent, Function *match);
-
-		// Custom badness measure.
-		virtual Int STORM_FN matches(Named *candidate) const;
-
-	private:
-		// Remember the result as well.
-		Value result;
-	};
 
 }

@@ -94,32 +94,36 @@ namespace storm {
 		return vtable::find(table(), fn, count());
 	}
 
-	void VTableCpp::set(nat id, Function *fn, code::Content *from) {
+	void VTableCpp::set(nat id, Function *fn) {
 		assert(id < count());
 
-		// If we see that 'fn' is static, we do not need to add a reference.
-		if (StaticCode *c = as<StaticCode>(fn->getCode())) {
-			slot(id) = fn->directRef()->address();
-		} else {
-			// We need to add a reference!
-			if (!refs)
-				refs = runtime::allocArray<code::MemberRef *>(engine(), &pointerArrayType, count());
+		if (!refs)
+			refs = runtime::allocArray<Function *>(engine(), &pointerArrayType, count());
 
-			nat slot = id + vtable::extraOffset;
-			if (refs->v[id])
-				refs->v[id]->disable();
-			refs->v[id] = new (this) code::MemberRef(data, slot, fn->directRef(), from);
-		}
+		refs->v[id] = fn;
+		slot(id) = fn->directRef()->address();
+	}
+
+	Function *VTableCpp::get(nat id) const {
+		assert(id < count());
+		return refs->v[id];
 	}
 
 	void VTableCpp::clear(nat id) {
 		assert(id < count());
 
 		if (refs) {
-			refs->v[id]->disable();
 			refs->v[id] = null;
 		}
 		slot(id) = null;
+	}
+
+	const void *VTableCpp::address() const {
+		return table();
+	}
+
+	nat VTableCpp::size() const {
+		return count() * sizeof(const void *);
 	}
 
 	namespace vtable {

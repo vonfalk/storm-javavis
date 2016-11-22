@@ -113,7 +113,7 @@ namespace storm {
 		if (value())
 			return;
 
-		vtable = new (engine) VTable();
+		vtable = new (engine) VTable(this);
 		if (typeFlags & typeCpp) {
 			vtable->createCpp(vtab);
 		} else if (Type *t = super()) {
@@ -141,6 +141,9 @@ namespace storm {
 		}
 
 		chain->lateInit();
+
+		if (vtable)
+			vtable->lateInit();
 	}
 
 	// Our finalizer.
@@ -636,21 +639,23 @@ namespace storm {
 	 */
 
 	void Type::vtableFnAdded(Function *fn) {
-		if (vtableInsertSuper(fn))
-			vtableInsertSubclasses(new (engine) OverridePart(fn));
+		if (vtable)
+			vtable->insert(fn);
+		// if (vtableInsertSuper(fn))
+		// 	vtableInsertSubclasses(new (engine) OverridePart(fn));
 	}
 
 	bool Type::vtableInsertSuper(Function *fn) {
 		// Ask our parent to see if 'fn' should be virtual.
-		VTableSlot slot;
-		if (Type *s = super())
-			slot = s->vtableNewChildFn(new (engine) OverridePart(fn));
+		// VTableSlot slot;
+		// if (Type *s = super())
+		// 	slot = s->vtableNewChildFn(new (engine) OverridePart(fn));
 
-		if (slot.valid()) {
-			// NOTE: We do not need to set vtable use, as we're still the leaf function.
-			vtableInsert(fn, slot);
-			return true;
-		}
+		// if (slot.valid()) {
+		// 	// NOTE: We do not need to set vtable use, as we're still the leaf function.
+		// 	vtableInsert(fn, slot);
+		// 	return true;
+		// }
 
 		return false;
 	}
@@ -659,22 +664,22 @@ namespace storm {
 	// function again.
 	void Type::vtableInsertSubclasses(OverridePart *fn) {
 		// If too early in the boot process, we can not proceed here.
-		if (!engine.has(bootTemplates))
-			return;
+		// if (!engine.has(bootTemplates))
+		// 	return;
 
-		Array<Type *> *children = chain->children();
-		for (Nat i = 0; i < children->count(); i++) {
-			Type *child = children->at(i);
+		// Array<Type *> *children = chain->children();
+		// for (Nat i = 0; i < children->count(); i++) {
+		// 	Type *child = children->at(i);
 
-			Function *found = as<Function>(child->findHere(fn));
-			if (found) {
-				// Find and apply the vtable layout.
-				// TODO: Do we need to force-disable the vtable?
-				child->vtableInsertSuper(found);
-			}
+		// 	Function *found = as<Function>(child->findHere(fn));
+		// 	if (found) {
+		// 		// Find and apply the vtable layout.
+		// 		// TODO: Do we need to force-disable the vtable?
+		// 		child->vtableInsertSuper(found);
+		// 	}
 
-			child->vtableInsertSubclasses(fn);
-		}
+		// 	child->vtableInsertSubclasses(fn);
+		// }
 	}
 
 	Function *Type::vtableFindSuper(OverridePart *fn) {
@@ -705,44 +710,45 @@ namespace storm {
 	}
 
 	VTableSlot Type::vtableNewChildFn(OverridePart *fn) {
-		Function *found = as<Function>(findHere(fn));
-		if (!found) {
-			if (Type *s = super())
-				return s->vtableNewChildFn(fn);
-			else
-				return VTableSlot();
-		}
+		// Function *found = as<Function>(findHere(fn));
+		// if (!found) {
+		// 	if (Type *s = super())
+		// 		return s->vtableNewChildFn(fn);
+		// 	else
+		// 		return VTableSlot();
+		// }
 
-		// See if 'found' already has a VTable slot, otherwise allocate one.
-		VTableSlot slot = vtable->findSlot(found);
-		if (!slot.valid()) {
-			// Allocate a new slot...
-			slot = vtable->createStorm(this);
+		// // See if 'found' already has a VTable slot, otherwise allocate one.
+		// VTableSlot slot = vtable->findSlot(found);
+		// if (!slot.valid()) {
+		// 	// Allocate a new slot...
+		// 	slot = vtable->createStorm();
 
-			// Insert this function into that slot
-			vtableInsert(found, slot);
-		}
+		// 	// Insert this function into that slot
+		// 	vtableInsert(found, slot);
+		// }
 
-		// We need to use the vtable.
-		vtableUse(found, slot);
-		return slot;
+		// // We need to use the vtable.
+		// vtableUse(found, slot);
+		// return slot;
+		return VTableSlot();
 	}
 
 	void Type::vtableUse(Function *fn, VTableSlot slot) {
-		code::RefSource *src = engine.vtableCalls()->get(slot);
-		fn->setLookup(new (engine) DelegatedCode(code::Ref(src)));
+		// code::RefSource *src = engine.vtableCalls()->get(slot);
+		// fn->setLookup(new (engine) DelegatedCode(code::Ref(src)));
 	}
 
 	void Type::vtableInsert(Function *fn, VTableSlot slot) {
-		vtable->set(slot, fn, handleContent);
+		// vtable->set(slot, fn, handleContent);
 	}
 
 	void Type::vtableClear(VTableSlot slot) {
-		vtable->clear(slot);
+		// vtable->clear(slot);
 	}
 
 	void Type::vtableClear(Function *fn) {
-		fn->setLookup(null);
+		// fn->setLookup(null);
 	}
 
 	void Type::vtableNewSuper() {
@@ -752,134 +758,81 @@ namespace storm {
 
 		// Clear the vtable usage for all functions in here and pretend they were added once more to
 		// properly register them with the super class.
-		for (NameSet::Iter i = begin(), e = end(); i != e; ++i) {
-			Function *f = as<Function>(i.v());
-			vtableClear(f);
-			vtableInsertSuper(f);
-		}
+		// for (NameSet::Iter i = begin(), e = end(); i != e; ++i) {
+		// 	Function *f = as<Function>(i.v());
+		// 	vtableClear(f);
+		// 	vtableInsertSuper(f);
+		// }
 
-		Array<Type *> *children = chain->children();
-		for (Nat i = 0; i < children->count(); i++) {
-			children->at(i)->vtableNewSuper();
-		}
+		// Array<Type *> *children = chain->children();
+		// for (Nat i = 0; i < children->count(); i++) {
+		// 	children->at(i)->vtableNewSuper();
+		// }
 	}
 
 	void Type::vtableChildRemoved(Type *lost) {
 		// We need to see if we shall stop using VTable calls for all functions in 'lost'.
-		for (NameSet::Iter i = lost->begin(), e = lost->end(); i != e; ++i) {
-			Function *f = as<Function>(i.v());
-			if (!f)
-				continue;
+		// for (NameSet::Iter i = lost->begin(), e = lost->end(); i != e; ++i) {
+		// 	Function *f = as<Function>(i.v());
+		// 	if (!f)
+		// 		continue;
 
-			OverridePart *fn = new (engine) OverridePart(this, f);
+		// 	OverridePart *fn = new (engine) OverridePart(this, f);
 
-			// Find the most specialized override and possibly disable that.
-			Function *parentFn = vtableFindSuper(fn);
-			if (!parentFn)
-				continue;
+		// 	// Find the most specialized override and possibly disable that.
+		// 	Function *parentFn = vtableFindSuper(fn);
+		// 	if (!parentFn)
+		// 		continue;
 
-			// If there are no functions overriding 'parent', we want to disable vtable calls for it.
-			Type *parentType = as<Type>(parentFn->parent());
-			if (!parentType)
-				continue; // safeguard
+		// 	// If there are no functions overriding 'parent', we want to disable vtable calls for it.
+		// 	Type *parentType = as<Type>(parentFn->parent());
+		// 	if (!parentType)
+		// 		continue; // safeguard
 
-			fn = new (engine) OverridePart(parentFn);
-			if (parentType->vtableFindSubclass(fn))
-				// Found a subclass, no need to do anything.
-				continue;
+		// 	fn = new (engine) OverridePart(parentFn);
+		// 	if (parentType->vtableFindSubclass(fn))
+		// 		// Found a subclass, no need to do anything.
+		// 		continue;
 
-			// No subclasses. Disable vtable for 'parent'.
-			parentType->vtableClear(parentFn);
+		// 	// No subclasses. Disable vtable for 'parent'.
+		// 	parentType->vtableClear(parentFn);
 
-			// We can remove it from the vtable entirely if it also has no parent.
-			if (parentType->super() == null || parentType->super()->vtableFindSuper(fn) == null) {
-				VTableSlot s = parentType->vtable->findSlot(parentFn);
-				if (s.valid()) {
-					parentType->vtableClear(s);
-				}
-			}
-		}
+		// 	// We can remove it from the vtable entirely if it also has no parent.
+		// 	if (parentType->super() == null || parentType->super()->vtableFindSuper(fn) == null) {
+		// 		VTableSlot s = parentType->vtable->findSlot(parentFn);
+		// 		if (s.valid()) {
+		// 			parentType->vtableClear(s);
+		// 		}
+		// 	}
+		// }
 	}
 
 	void Type::vtableParentGrown(Nat pos, Nat count) {
 		// Tell the VTable.
-		vtable->parentGrown(pos, count);
+		// vtable->parentGrown(pos, count);
 
 		// We need to look at all our functions and possibly alter their used VTable slot.
 		// Since this is a fairly common operation, we avoid traversing the inheritance graph.
-		for (NameSet::Iter i = begin(), e = end(); i != e; ++i) {
-			Function *f = as<Function>(i.v());
-			if (!f)
-				continue;
+		// for (NameSet::Iter i = begin(), e = end(); i != e; ++i) {
+		// 	Function *f = as<Function>(i.v());
+		// 	if (!f)
+		// 		continue;
 
-			// If we observe that 'f' is using some kind of lookup and 'f' is in the vtable, it is
-			// using a vtable lookup so we can safely replace the lookup with a new offset.
-			if (f->ref()->address() != f->directRef()->address()) {
-				VTableSlot slot = vtable->findSlot(f);
+		// 	// If we observe that 'f' is using some kind of lookup and 'f' is in the vtable, it is
+		// 	// using a vtable lookup so we can safely replace the lookup with a new offset.
+		// 	if (f->ref()->address() != f->directRef()->address()) {
+		// 		VTableSlot slot = vtable->findSlot(f);
 
-				// Only storm slots ever move.
-				if (slot.type == VTableSlot::tStorm)
-					vtableUse(f, slot);
-			}
-		}
+		// 		// Only storm slots ever move.
+		// 		if (slot.type == VTableSlot::tStorm)
+		// 			vtableUse(f, slot);
+		// 	}
+		// }
 
-		// Cascade to children.
-		vtableGrow(pos, count);
+		// // Cascade to children.
+		// vtableGrow(pos, count);
 	}
 
-	// NOTE: Slightly dangerous to re-use the parameters from the function...
-	OverridePart::OverridePart(Function *src) :	SimplePart(src->name, src->params), result(src->result) {}
-
-	OverridePart::OverridePart(Type *parent, Function *src) :
-		SimplePart(src->name, new (src) Array<Value>(src->params)),
-		result(src->result) {
-
-		params->at(0) = thisPtr(parent);
-	}
-
-	Int OverridePart::matches(Named *candidate) const {
-		Function *fn = as<Function>(candidate);
-		if (!fn)
-			return -1;
-
-		Array<Value> *c = fn->params;
-		if (c->count() != params->count())
-			return -1;
-
-		if (c->count() < 1)
-			return -1;
-
-		if (params->at(0).canStore(c->at(0))) {
-			// Candidate is in a subclass wrt us.
-			for (nat i = 1; i < c->count(); i++) {
-				// Candidate needs to accept wider inputs than us.
-				if (!c->at(i).canStore(params->at(i)))
-					return -1;
-			}
-
-			// Candidate may return a narrower range of types.
-			if (!fn->result.canStore(result))
-				return -1;
-
-		} else if (c->at(0).canStore(params->at(0))) {
-			// Candidate is in a superclass wrt us.
-			for (nat i = 1; i < c->count(); i++) {
-				// We need to accept wider inputs than candidate.
-				if (!params->at(i).canStore(c->at(i)))
-					return -1;
-			}
-
-			// We may return a narrower range than candidate.
-			if (!result.canStore(fn->result))
-				return -1;
-
-		} else {
-			return -1;
-		}
-
-		// We always give a binary decision.
-		return 0;
-	}
 
 	void Type::toS(StrBuf *to) const {
 		if (value()) {

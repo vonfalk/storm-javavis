@@ -18,7 +18,7 @@ namespace storm {
 	 *
 	 * Note: This class assumes that all objects in C++ only use single inheritance.
 	 */
-	class VTableCpp : public ObjectOn<Compiler> {
+	class VTableCpp : public code::Content {
 		STORM_CLASS;
 	public:
 		// Create with a VTable from C++. Create a copy so we can freely modify it.
@@ -45,17 +45,23 @@ namespace storm {
 		nat findSlot(const void *fn) const;
 
 		// Set a vtable entry.
-		void set(nat slot, Function *fn, code::Content *from);
+		void set(nat slot, Function *fn);
+
+		// Get the function associated with a vtable entry.
+		Function *get(nat slot) const;
 
 		// Clear a vtable entry.
 		void clear(nat slot);
+
+		virtual const void *address() const;
+		virtual nat size() const;
 
 	private:
 		// The VTable data. We're storing it as a regular GC array.
 		GcArray<const void *> *data;
 
 		// References updating the VTable. The entire table is null if no updaters are added.
-		GcArray<code::MemberRef *> *refs;
+		GcArray<Function *> *refs;
 
 		// Have we ever set our VTable to an object?
 		bool tableUsed;

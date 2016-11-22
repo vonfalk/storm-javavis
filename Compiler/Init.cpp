@@ -6,6 +6,7 @@
 #include "Core/Map.h"
 #include "Core/Array.h"
 #include "Core/Str.h"
+#include "Code/Reference.h"
 #include "NameSet.h"
 
 namespace storm {
@@ -37,7 +38,9 @@ namespace storm {
 		// properly instantiated before we report that templates are fully functional.
 		Array<Value>::stormType(e);
 		Map<Str *, NameOverloads *>::stormType(e);
+		Map<Function *, VTableUpdater *>::stormType(e);
 		WeakSet<TypeChain>::stormType(e);
+		WeakSet<code::Reference>::stormType(e);
 		Array<Type *>::stormType(e);
 
 		// Now we can declare templates fully functional.

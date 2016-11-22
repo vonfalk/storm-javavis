@@ -2,13 +2,13 @@
 #include "Core/TObject.h"
 #include "Core/GcArray.h"
 #include "Code/Reference.h"
-#include "Code/MemberRef.h"
 #include "Function.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
 
 	class VTableCpp;
+	class Function;
 
 	/**
 	 * Represents all VTable entries for Storm. The first entry is always reserved for Storm's
@@ -44,7 +44,11 @@ namespace storm {
 		void STORM_FN insert(Nat pos, Nat count);
 
 		// Set a slot.
-		void STORM_FN set(Nat slot, Function *fn, code::Content *from);
+		void STORM_FN set(Nat slot, Function *fn);
+		void set(Nat slot, const void *addr);
+
+		// Get the function associated with a slot.
+		Function *STORM_FN get(Nat slot) const;
 
 		// Clear a slot.
 		void STORM_FN clear(Nat slot);
@@ -56,8 +60,8 @@ namespace storm {
 		// The VTable itself.
 		GcArray<const void *> *table;
 
-		// References updating the VTable.
-		GcArray<code::MemberRef *> *refs;
+		// Functions stored for each slot.
+		GcArray<Function *> *refs;
 
 		// Update this VTable.
 		VTableCpp *update;

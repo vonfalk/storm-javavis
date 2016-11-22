@@ -1,9 +1,12 @@
 #pragma once
 #include "Core/TObject.h"
+#include "Core/Map.h"
 #include "VTableSlot.h"
 #include "VTableCpp.h"
 #include "VTableStorm.h"
+#include "VTableUpdater.h"
 #include "Function.h"
+#include "NamePart.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -26,13 +29,20 @@ namespace storm {
 	 * the C++ VTable. This allows us to change the Storm VTable for all living objects by simply
 	 * altering one pointer. However, this indirection has a small penalty which we might want to
 	 * get rid of eventually.
+	 *
+	 * If a vtable is set in this vtable, it is automatically updated in all vtables of the child
+	 * class, as told by 'owner'. The vtable is also responsible for keeping vtable dispatch up to
+	 * date if vtable slots are moved. We assume we will be notified when a child has been removed,
+	 * and that we will be re-created whenever we gain a new parent.
 	 */
 	class VTable : public ObjectOn<Compiler> {
 		STORM_CLASS;
+		friend class VTableUpdater;
 	public:
 		// Create a VTable for a type. Use 'createXxx()' to supply the C++ vtable we shall be
-		// derived from.
-		STORM_CTOR VTable();
+		// derived from. Needs to know which type we're associated with as we need to traverse the
+		// inheritance hierarchy for certain operations.
+		STORM_CTOR VTable(Type *owner);
 
 		// Create vtable for a class representing a pure C++ type. In this mode, it is not possible
 		// to replace functions in the VTable.
@@ -42,24 +52,22 @@ namespace storm {
 		// VTable is cleared and then re-initialized.
 		void STORM_FN createStorm(VTable *parent);
 
-		// Find the current vtable slot for 'fn' (if any).
-		VTableSlot STORM_FN findSlot(Function *fn);
+		// Insert a function to be managed by this VTable. 'fn' will be allocated in a suitable slot
+		// and will be set to use a lookup if needed.
+		void STORM_FN insert(Function *fn);
 
-		// Set 'slot' to refer to a specific function.
-		void STORM_FN set(VTableSlot slot, Function *fn, code::Content *from);
+		// Notify that a child class has been removed. We assume it is not possible to reach 'type'
+		// by traversing the inheritance hierarchy.
+		void STORM_FN removeChild(Type *type);
 
-		// Clear 'slot'.
-		void STORM_FN clear(VTableSlot slot);
+		// Late initialization.
+		void lateInit();
 
-		// Create a slot for a Storm function. Returns the created index. 'owner' is the class which
-		// owns this vtable. It is needed as it is sometimes neccessary to resize the vtables of all
-		// child classes.
-		VTableSlot STORM_FN createStorm(Type *owner);
-
-		// Called when the owner type detected our parent grew. Not designed to be exposed to Storm.
-		void parentGrown(Nat pos, Nat count);
 
 	private:
+		// Owning type.
+		Type *owner;
+
 		// The original C++ VTable we are based off. This can be several levels up the inheritance
 		// chain.
 		const void *original;
@@ -74,8 +82,62 @@ namespace storm {
 		// vtable.
 		Nat stormFirst;
 
+		// Associate an updater with each function.
+		Map<Function *, VTableUpdater *> *updaters;
+
+		// RefSource referring to the VTable.
+		code::RefSource *source;
+
+		// Called when one of our parent classes detected that our parent type have grown.
+		void parentGrown(Nat pos, Nat count);
+
+		// Called when we need to update a slot.
+		void slotMoved(VTableSlot slot, const void *newAddr);
+
+		// Update slots in all children.
+		void parentSlotMoved(VTableSlot slot, const void *newAddr);
+
+		// Find the current vtable slot for 'fn' (if any) in this vtable or in any parent vtables.
+		VTableSlot STORM_FN findSlot(Function *fn);
+
+		// Set 'slot' to refer to a specific function.
+		void set(VTableSlot slot, Function *fn);
+		void set(VTableSlot slot, const void *fn);
+
+		// Get the function associated with 'slot'.
+		MAYBE(Function *) get(VTableSlot slot);
+
+		// Clear 'slot'.
+		void clear(VTableSlot slot);
+
+		// Create a slot for a Storm function. Returns the created index.
+		VTableSlot STORM_FN createStorm();
+
+
 		// Decide how much to grow each time 'storm' needs to grow.
 		static const Nat stormGrow = 5;
 	};
+
+
+	/**
+	 * Lookup used for finding functions in superclasses which 'match' overrides.
+	 */
+	class OverridePart : public SimplePart {
+		STORM_CLASS;
+	public:
+		// Create, specifying the function used.
+		STORM_CTOR OverridePart(Function *match);
+
+		// Create, specifying the function used and a new owning class.
+		STORM_CTOR OverridePart(Type *parent, Function *match);
+
+		// Custom badness measure.
+		virtual Int STORM_FN matches(Named *candidate) const;
+
+	private:
+		// Remember the result as well.
+		Value result;
+	};
+
 
 }

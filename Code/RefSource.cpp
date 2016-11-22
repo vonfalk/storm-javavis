@@ -9,6 +9,14 @@ namespace code {
 
 	Content::Content() {}
 
+	const void *Content::address() const {
+		return lastAddress;
+	}
+
+	nat Content::size() const {
+		return lastSize;
+	}
+
 	void Content::set(const void *addr, nat size) {
 		lastAddress = addr;
 		lastSize = size;
@@ -50,15 +58,10 @@ namespace code {
 	}
 
 	void RefSource::update() {
-		Array<Reference *> *r = new (this) Array<Reference *>();
-
+		const void *addr = address();
 		WeakSet<Reference>::Iter i = refs->iter();
 		while (Reference *ref = i.next())
-			r->push(ref);
-
-		const void *addr = address();
-		for (Nat i = 0; i < r->count(); i++)
-			r->at(i)->moved(addr);
+			ref->moved(addr);
 	}
 
 	void RefSource::setPtr(const void *to) {

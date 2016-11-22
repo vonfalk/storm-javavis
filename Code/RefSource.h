@@ -19,8 +19,8 @@ namespace code {
 		void set(const void *address, nat size);
 
 		// Get last address and size.
-		inline const void *address() const { return lastAddress; }
-		inline nat size() const { return lastSize; }
+		virtual const void *address() const;
+		virtual nat size() const;
 
 	private:
 		friend class RefSource;

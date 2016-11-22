@@ -3,7 +3,6 @@
 #include "VTableCpp.h"
 
 namespace storm {
-	using code::MemberRef;
 
 	VTableStorm::VTableStorm(VTableCpp *update) : update(update) {}
 
@@ -30,7 +29,7 @@ namespace storm {
 		size = max(count, size + 10);
 
 		GcArray<const void *> *n = runtime::allocArray<const void *>(engine(), &pointerArrayType, size);
-		GcArray<MemberRef *> *m = runtime::allocArray<MemberRef *>(engine(), &pointerArrayType, size);
+		GcArray<Function *> *m = runtime::allocArray<Function *>(engine(), &pointerArrayType, size);
 		n->filled = table ? table->filled : 0;
 		m->filled = refs ? refs->filled : 0;
 		for (nat i = 0; i < n->filled; i++) {
@@ -51,7 +50,7 @@ namespace storm {
 	}
 
 	Nat VTableStorm::freeSlot() const {
-		return freeSlot(0);
+		return freeSlot(1);
 	}
 
 	Nat VTableStorm::freeSlot(Nat first) const {
@@ -64,10 +63,8 @@ namespace storm {
 	}
 
 	Nat VTableStorm::findSlot(Function *fn) const {
-		const void *find = fn->directRef()->address();
-
 		for (nat i = 0; i < count(); i++) {
-			if (refs->v[i] != null && table->v[i] == find)
+			if (refs->v[i] == fn)
 				return i;
 		}
 
@@ -83,25 +80,29 @@ namespace storm {
 
 			table->v[to] = table->v[from];
 			refs->v[to] = refs->v[from];
-			if (refs->v[to])
-				refs->v[to]->move(table, to);
-
 			table->v[from] = null;
 			refs->v[from] = null;
 		}
 	}
 
-	void VTableStorm::set(Nat slot, Function *fn, code::Content *from) {
+	void VTableStorm::set(Nat slot, Function *fn) {
 		assert(slot < count());
-		if (refs->v[slot])
-			refs->v[slot]->disable();
-		refs->v[slot] = new (this) code::MemberRef(table, slot, fn->directRef(), from);
+		refs->v[slot] = fn;
+		table->v[slot] = fn->directRef()->address();
+	}
+
+	void VTableStorm::set(Nat slot, const void *addr) {
+		assert(slot < count());
+		table->v[slot] = addr;
+	}
+
+	Function *VTableStorm::get(Nat slot) const {
+		assert(slot < count());
+		return refs->v[slot];
 	}
 
 	void VTableStorm::clear(Nat slot) {
 		assert(slot < count());
-		if (refs->v[slot])
-			refs->v[slot]->disable();
 		refs->v[slot] = null;
 		table->v[slot] = null;
 	}
