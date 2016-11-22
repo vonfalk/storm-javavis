@@ -5,7 +5,7 @@
 namespace storm {
 
 	VTableUpdater::VTableUpdater(VTable *table, VTableSlot slot, code::Ref ref, code::Content *from)
-		: code::Reference(ref, from), table(table), slot(slot) {
+		: code::Reference(ref, from), table(table), mySlot(slot) {
 
 		moved(address());
 	}
@@ -13,15 +13,19 @@ namespace storm {
 	void VTableUpdater::moved(const void *newAddr) {
 		if (!table)
 			return;
-		if (!slot.valid())
+		if (!mySlot.valid())
 			return;
 
-		table->slotMoved(slot, newAddr);
+		table->slotMoved(mySlot, newAddr);
 	}
 
 	void VTableUpdater::disable() {
 		table = null;
-		slot = VTableSlot();
+		mySlot = VTableSlot();
+	}
+
+	VTableSlot VTableUpdater::slot() {
+		return mySlot;
 	}
 
 }

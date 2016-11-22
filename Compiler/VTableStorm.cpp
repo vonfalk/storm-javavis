@@ -38,6 +38,7 @@ namespace storm {
 		}
 
 		table = n;
+		refs = m;
 		update->extra() = table;
 	}
 
@@ -59,7 +60,7 @@ namespace storm {
 				return i;
 		}
 
-		return count();
+		return max(nat(1), count());
 	}
 
 	Nat VTableStorm::findSlot(Function *fn) const {

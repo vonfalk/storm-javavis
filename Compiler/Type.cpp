@@ -639,47 +639,56 @@ namespace storm {
 	 */
 
 	void Type::vtableFnAdded(Function *fn) {
-		if (vtable)
+		// Try to find a function which overrides this function, or a function which we override. If
+		// we found the function in either direction, we do not need to search in the other
+		// direction, as they already are in the vtable in that case.
+		OverridePart *part = new (engine) OverridePart(fn);
+		if (vtableInsertSuper(part))
 			vtable->insert(fn);
-		// if (vtableInsertSuper(fn))
-		// 	vtableInsertSubclasses(new (engine) OverridePart(fn));
+		else if (vtableInsertSubclasses(part))
+			vtable->insert(fn);
 	}
 
-	bool Type::vtableInsertSuper(Function *fn) {
-		// Ask our parent to see if 'fn' should be virtual.
-		// VTableSlot slot;
-		// if (Type *s = super())
-		// 	slot = s->vtableNewChildFn(new (engine) OverridePart(fn));
+	Bool Type::vtableInsertSuper(OverridePart *fn) {
+		// See if our parent contains an appropriate function.
+		Type *s = super();
+		if (!s)
+			return false;
 
-		// if (slot.valid()) {
-		// 	// NOTE: We do not need to set vtable use, as we're still the leaf function.
-		// 	vtableInsert(fn, slot);
-		// 	return true;
-		// }
-
-		return false;
+		Function *found = as<Function>(s->findHere(fn));
+		if (found) {
+			// Found it, no need to search further as all possible parent functions are already in
+			// the vtable already.
+			s->vtable->insert(found);
+			return true;
+		} else {
+			return s->vtableInsertSuper(fn);
+		}
 	}
 
-	// TODO: We can optimize this a whole lot by elliminating the need to actually find the parent
-	// function again.
-	void Type::vtableInsertSubclasses(OverridePart *fn) {
+	Bool Type::vtableInsertSubclasses(OverridePart *fn) {
 		// If too early in the boot process, we can not proceed here.
-		// if (!engine.has(bootTemplates))
-		// 	return;
+		if (!engine.has(bootTemplates))
+			return false;
 
-		// Array<Type *> *children = chain->children();
-		// for (Nat i = 0; i < children->count(); i++) {
-		// 	Type *child = children->at(i);
+		bool inserted = false;
 
-		// 	Function *found = as<Function>(child->findHere(fn));
-		// 	if (found) {
-		// 		// Find and apply the vtable layout.
-		// 		// TODO: Do we need to force-disable the vtable?
-		// 		child->vtableInsertSuper(found);
-		// 	}
+		Array<Type *> *children = chain->children();
+		for (Nat i = 0; i < children->count(); i++) {
+			Type *child = children->at(i);
 
-		// 	child->vtableInsertSubclasses(fn);
-		// }
+			Function *found = as<Function>(child->findHere(fn));
+			if (found) {
+				// Found something. Insert it in the vtable. We do not need to go further down this
+				// particular path as any overriding functions there are already found by now.
+				child->vtable->insert(found);
+				inserted = true;
+			} else {
+				inserted |= child->vtableInsertSubclasses(fn);
+			}
+		}
+
+		return inserted;
 	}
 
 	Function *Type::vtableFindSuper(OverridePart *fn) {

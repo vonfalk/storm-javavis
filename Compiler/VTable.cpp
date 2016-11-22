@@ -61,14 +61,22 @@ namespace storm {
 	}
 
 	void VTable::insert(Function *fn) {
-		return;
+		// Do we already know this function?
+		if (updaters->has(fn))
+			return;
 
-		VTableSlot slot = findSlot(fn);
+		VTableSlot slot = findSlot(fn, true);
 
+		if (!slot.valid()) {
+			// We need to allocate a slot for this function.
+			slot = allocSlot();
+		}
+
+		// Insert into the vtable.
 		set(slot, fn);
 		updaters->put(fn, new (this) VTableUpdater(this, slot, fn->directRef(), source->content()));
 
-		// TODO: We need to find functions in parent classes where we need to enable vtable lookup.
+		TODO(L"Find any child functions an potentially update their place in the VTable and see if we shall enable vtable lookup for 'fn'");
 	}
 
 	void VTable::removeChild(Type *child) {
@@ -105,22 +113,85 @@ namespace storm {
 	}
 
 
-	VTableSlot VTable::findSlot(Function *fn) {
+	VTableSlot VTable::findSlot(Function *fn, bool setLookup) {
 		Code *c = fn->getCode();
 		if (as<StaticCode>(c)) {
 			// Might be a function from C++.
-			nat r = cpp
-				? cpp->findSlot(fn->directRef()->address())
-				: vtable::find(original, fn->directRef()->address());
-
+			const void *addr = fn->directRef()->address();
+			nat r = cpp ? cpp->findSlot(fn) : vtable::find(original, addr);
 			if (r != vtable::invalid)
 				return cppSlot(r);
 		}
 
+		nat r = vtable::invalid;
 		if (storm)
-			return stormSlot(storm->findSlot(fn));
-		else
+			r = storm->findSlot(fn);
+
+		if (r != vtable::invalid)
+			return stormSlot(r);
+
+		// See if our parent has a match!
+		if (Type *s = owner->super()) {
+			return s->vtable->findSuperSlot(new (this) OverridePart(fn), setLookup);
+		} else {
 			return VTableSlot();
+		}
+	}
+
+	VTableSlot VTable::findSuperSlot(OverridePart *fn, bool setLookup) {
+		Function *found = as<Function>(owner->findHere(fn));
+		if (found) {
+			if (!updaters->has(found)) {
+				// It will probably be added soon anyway...
+				// This will make sure it is in 'updaters'.
+				insert(found);
+			}
+
+			VTableSlot slot = updaters->get(found)->slot();
+			if (setLookup)
+				useLookup(found, slot);
+			return slot;
+		} else if (Type *s = owner->super()) {
+			return s->vtable->findSuperSlot(fn, setLookup);
+		} else {
+			return VTableSlot();
+		}
+	}
+
+	VTableSlot VTable::allocSlot() {
+		if (!storm) {
+			assert(false, L"Can not allocate slots in a C++ vtable.");
+			return VTableSlot();
+		}
+
+		nat slot = storm->freeSlot(stormFirst);
+		if (slot >= storm->count()) {
+			nat oldCount = storm->count();
+
+			// We need to resize 'storm'...
+			storm->resize(oldCount + stormGrow);
+
+			// Grow all child vtables as well.
+			Array<Type *> *c = owner->chain->children();
+			for (nat i = 0; i < c->count(); i++)
+				c->at(i)->vtable->parentGrown(oldCount, stormGrow);
+		}
+
+		return stormSlot(slot);
+	}
+
+	void VTable::parentGrown(Nat pos, Nat count) {
+		if (storm)
+			storm->insert(pos, count);
+		if (pos >= stormFirst)
+			stormFirst += count;
+
+		TODO(L"Update all functions using VTable lookup in here!");
+	}
+
+	void VTable::useLookup(Function *fn, VTableSlot slot) {
+		code::RefSource *src = fn->engine().vtableCalls()->get(slot);
+		fn->setLookup(new (fn) DelegatedCode(code::Ref(src)));
 	}
 
 	void VTable::set(VTableSlot slot, Function *fn) {
@@ -189,90 +260,6 @@ namespace storm {
 			assert(false, L"Unknown slot type.");
 			break;
 		}
-	}
-
-	VTableSlot VTable::createStorm() {
-		if (storm == null) {
-			assert(false);
-			return VTableSlot();
-		}
-
-		nat slot = storm->freeSlot(stormFirst);
-		if (slot >= storm->count()) {
-			nat oldCount = storm->count();
-
-			// We need to resize 'storm'...
-			storm->resize(oldCount + stormGrow);
-
-			// Tell the VTables of all children to grow...
-			owner->vtableGrow(oldCount, stormGrow);
-		}
-
-		return cppSlot(slot);
-	}
-
-	void VTable::parentGrown(Nat pos, Nat count) {
-		if (storm)
-			storm->insert(pos, count);
-		if (pos >= stormFirst)
-			stormFirst += count;
-	}
-
-
-
-
-	// NOTE: Slightly dangerous to re-use the parameters from the function...
-	OverridePart::OverridePart(Function *src) :	SimplePart(src->name, src->params), result(src->result) {}
-
-	OverridePart::OverridePart(Type *parent, Function *src) :
-		SimplePart(src->name, new (src) Array<Value>(src->params)),
-		result(src->result) {
-
-		params->at(0) = thisPtr(parent);
-	}
-
-	Int OverridePart::matches(Named *candidate) const {
-		Function *fn = as<Function>(candidate);
-		if (!fn)
-			return -1;
-
-		Array<Value> *c = fn->params;
-		if (c->count() != params->count())
-			return -1;
-
-		if (c->count() < 1)
-			return -1;
-
-		if (params->at(0).canStore(c->at(0))) {
-			// Candidate is in a subclass wrt us.
-			for (nat i = 1; i < c->count(); i++) {
-				// Candidate needs to accept wider inputs than us.
-				if (!c->at(i).canStore(params->at(i)))
-					return -1;
-			}
-
-			// Candidate may return a narrower range of types.
-			if (!fn->result.canStore(result))
-				return -1;
-
-		} else if (c->at(0).canStore(params->at(0))) {
-			// Candidate is in a superclass wrt us.
-			for (nat i = 1; i < c->count(); i++) {
-				// We need to accept wider inputs than candidate.
-				if (!params->at(i).canStore(c->at(i)))
-					return -1;
-			}
-
-			// We may return a narrower range than candidate.
-			if (!result.canStore(fn->result))
-				return -1;
-
-		} else {
-			return -1;
-		}
-
-		// We always give a binary decision.
-		return 0;
 	}
 
 }

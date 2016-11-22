@@ -85,6 +85,13 @@ static Type *addSubclass(Package *pkg, Type *base, const wchar *name, const void
 	return sub;
 }
 
+static Function *addFn(Type *to, const wchar *name, const void *fn) {
+	Array<Value> *params = new (to) Array<Value>(1, Value(to));
+	Function *f = nativeFunction(to->engine, Value(StormInfo<Int>::type(to->engine)), name, params, fn);
+	to->add(f);
+	return f;
+}
+
 static bool usesVTable(Function *fn) {
 	return fn->directRef()->address() != fn->ref()->address();
 }
@@ -133,6 +140,27 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 	TODO(L"Instantiate a class and make sure everything works as intended!");
 } END_TEST
 
+BEGIN_TEST(VTableCppTest3, Storm) {
+	Engine &e = gEngine();
+
+	Type *base = debug::Extend::stormType(e);
+	Package *pkg = as<Package>(base->parent());
+	VERIFY(pkg);
+
+	Type *sub1 = addSubclass(pkg, base);
+	Type *sub2 = addSubclass(pkg, sub1);
+	Type *sub3 = addSubclass(pkg, sub2);
+
+	Function *f3 = addFn(sub3, L"val", &extendReplace);
+	Function *f2 = addFn(sub2, L"val", &extendReplace2);
+	Function *f1 = addFn(sub1, L"val", &extendReplace3);
+
+	CHECK(usesVTable(f1));
+	CHECK(usesVTable(f2));
+	CHECK(!usesVTable(f3));
+
+	TODO(L"Instantiate a class and make sure everything works as intended!");
+} END_TEST
 
 // Try create a few pure Storm functions which will need VTable entries and see that it works.
 BEGIN_TEST(VTableStormTest, Storm) {
@@ -157,12 +185,6 @@ BEGIN_TEST(VTableStormTest, Storm) {
 	TODO(L"Instantiate a class and make sure everything works as intended!");
 } END_TEST
 
-static Function *addFn(Type *to, const wchar *name, const void *fn) {
-	Array<Value> *params = new (to) Array<Value>(1, Value(to));
-	Function *f = nativeFunction(to->engine, Value(StormInfo<Int>::type(to->engine)), name, params, fn);
-	to->add(f);
-	return f;
-}
 
 // Create a class hierarchy, remove the middle class, split it into two and verify that everything
 // looks right.

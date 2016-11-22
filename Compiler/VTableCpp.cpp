@@ -106,7 +106,10 @@ namespace storm {
 
 	Function *VTableCpp::get(nat id) const {
 		assert(id < count());
-		return refs->v[id];
+		if (refs)
+			return refs->v[id];
+		else
+			return null;
 	}
 
 	void VTableCpp::clear(nat id) {

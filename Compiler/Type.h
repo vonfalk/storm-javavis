@@ -7,6 +7,7 @@
 #include "Layout.h"
 #include "VTable.h"
 #include "Core/TypeFlags.h"
+#include "OverridePart.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -15,7 +16,6 @@ namespace storm {
 	struct CppType;
 	class NamedThread;
 	class Function;
-	class OverridePart;
 
 	/**
 	 * Description of a type.
@@ -115,6 +115,9 @@ namespace storm {
 		// value type. TODO: Make private?
 		MAYBE(VTable *) vtable;
 
+		// Find only in this class.
+		MAYBE(Named *) STORM_FN findHere(SimplePart *part);
+
 		// Helpers for the chain.
 		inline Bool STORM_FN isA(const Type *o) const { return chain->isA(o); }
 		inline Int STORM_FN distanceFrom(const Type *from) const { return chain->distance(from); }
@@ -194,11 +197,11 @@ namespace storm {
 		// The member variable layout for this type. Not used for types declared in C++.
 		Layout *layout;
 
-		// Find only in this class.
-		MAYBE(Named *) findHere(SimplePart *part);
-
 		/**
 		 * Helpers for deciding which functions shall be virtual.
+		 *
+		 * This logic decides which functions shall be presented to the vtable but we let the vtable
+		 * decide which functions shall use lookup.
 		 */
 
 		// Called when a function has been added here. Decides if 'f' should be virtual or not and
@@ -207,12 +210,12 @@ namespace storm {
 
 		// Search towards the super class for a function overridden by 'fn'. Returns 'true' if an
 		// overridden function was found.
-		Bool vtableInsertSuper(Function *added);
+		Bool vtableInsertSuper(OverridePart *added);
 
 		// Search towards the subclasses for an overriding function and make sure to insert it into
 		// the vtable in 'slot'. Assuming 'parentFn' is the corresponding function in the closest
-		// parent.
-		void vtableInsertSubclasses(OverridePart *added);
+		// parent. Returns true if any function was inserted.
+		Bool vtableInsertSubclasses(OverridePart *added);
 
 		// Search towards the super class for an overriden function. Returns the most specialized match found.
 		Function *vtableFindSuper(OverridePart *fn);

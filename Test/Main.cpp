@@ -47,7 +47,7 @@ int _tmain(int argc, _TCHAR *argv[]) {
 		delete usedGc;
 		usedGc = null;
 	} catch (const Exception &e) {
-		PLN(L"Creation error: " << e.what());
+		PLN(L"Unknown error: " << e.what());
 	}
 
 	Moment end;

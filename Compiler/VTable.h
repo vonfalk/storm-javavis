@@ -6,7 +6,7 @@
 #include "VTableStorm.h"
 #include "VTableUpdater.h"
 #include "Function.h"
-#include "NamePart.h"
+#include "OverridePart.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -88,7 +88,7 @@ namespace storm {
 		// RefSource referring to the VTable.
 		code::RefSource *source;
 
-		// Called when one of our parent classes detected that our parent type have grown.
+		// Called when one of our parent classes have grown their vtable and we need to follow.
 		void parentGrown(Nat pos, Nat count);
 
 		// Called when we need to update a slot.
@@ -98,7 +98,11 @@ namespace storm {
 		void parentSlotMoved(VTableSlot slot, const void *newAddr);
 
 		// Find the current vtable slot for 'fn' (if any) in this vtable or in any parent vtables.
-		VTableSlot STORM_FN findSlot(Function *fn);
+		VTableSlot STORM_FN findSlot(Function *fn, Bool setLookup);
+
+		// Find a slot matching 'fn' assuming we're a super class to where 'fn' belongs. If
+		// 'setLookup' is true, then use vtable lookup for the most specific match found.
+		VTableSlot STORM_FN findSuperSlot(OverridePart *fn, Bool setLookup);
 
 		// Set 'slot' to refer to a specific function.
 		void set(VTableSlot slot, Function *fn);
@@ -111,32 +115,13 @@ namespace storm {
 		void clear(VTableSlot slot);
 
 		// Create a slot for a Storm function. Returns the created index.
-		VTableSlot STORM_FN createStorm();
+		VTableSlot allocSlot();
 
+		// Use lookup for 'fn'.
+		static void useLookup(Function *fn, VTableSlot slot);
 
 		// Decide how much to grow each time 'storm' needs to grow.
 		static const Nat stormGrow = 5;
-	};
-
-
-	/**
-	 * Lookup used for finding functions in superclasses which 'match' overrides.
-	 */
-	class OverridePart : public SimplePart {
-		STORM_CLASS;
-	public:
-		// Create, specifying the function used.
-		STORM_CTOR OverridePart(Function *match);
-
-		// Create, specifying the function used and a new owning class.
-		STORM_CTOR OverridePart(Type *parent, Function *match);
-
-		// Custom badness measure.
-		virtual Int STORM_FN matches(Named *candidate) const;
-
-	private:
-		// Remember the result as well.
-		Value result;
 	};
 
 

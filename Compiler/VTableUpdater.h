@@ -22,12 +22,15 @@ namespace storm {
 		// Disable updating.
 		void STORM_FN disable();
 
+		// Get the slot.
+		VTableSlot STORM_FN slot();
+
 	private:
 		// VTable we are to update.
 		VTable *table;
 
 		// Slot to update.
-		VTableSlot slot;
+		VTableSlot mySlot;
 	};
 
 }

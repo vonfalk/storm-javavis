@@ -85,6 +85,10 @@ TestResult Tests::run() {
 		std::wcout << L"--- Results ---" << endl;
 		std::wcout << r << std::endl;
 
+	} catch (const AssertionException &) {
+		// asserts print their stack trace immediatly since things may crash badly when throwing exceptions.
+		PLN(L"Assert while testing.");
+		PLN(L"ABORTED");
 	} catch (const Exception &e) {
 		PLN(L"Error while testing: " << e);
 		PLN(L"ABORTED");
