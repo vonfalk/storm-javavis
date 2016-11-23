@@ -26,6 +26,10 @@ namespace storm {
 		inline Bool STORM_FN valid() const {
 			return type != tNone;
 		}
+
+		// Compare.
+		Bool STORM_FN operator ==(VTableSlot o) const;
+		inline Bool STORM_FN operator !=(VTableSlot o) const { return !(*this == o); }
 	};
 
 	// Helpers:

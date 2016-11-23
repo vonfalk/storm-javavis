@@ -19,6 +19,7 @@ namespace storm {
 				refs->v[i] = null;
 			}
 			table->filled = count;
+			refs->filled = count;
 
 			// Note: we never shrink as of now.
 			return;
@@ -30,11 +31,13 @@ namespace storm {
 
 		GcArray<const void *> *n = runtime::allocArray<const void *>(engine(), &pointerArrayType, size);
 		GcArray<Function *> *m = runtime::allocArray<Function *>(engine(), &pointerArrayType, size);
-		n->filled = table ? table->filled : 0;
-		m->filled = refs ? refs->filled : 0;
-		for (nat i = 0; i < n->filled; i++) {
-			n->v[i] = table->v[i];
-			m->v[i] = refs->v[i];
+		n->filled = count;
+		m->filled = count;
+		if (table) {
+			for (nat i = 0; i < table->filled; i++) {
+				n->v[i] = table->v[i];
+				m->v[i] = refs->v[i];
+			}
 		}
 
 		table = n;
@@ -73,9 +76,10 @@ namespace storm {
 	}
 
 	void VTableStorm::insert(Nat pos, Nat ins) {
+		nat oldCount = count();
 		resize(count() + ins);
 
-		for (nat i = count(); i > pos; i--) {
+		for (nat i = oldCount; i > pos; i--) {
 			nat from = i - 1;
 			nat to = from + ins;
 
@@ -87,7 +91,7 @@ namespace storm {
 	}
 
 	void VTableStorm::set(Nat slot, Function *fn) {
-		assert(slot < count());
+		assert(slot < count(), L"Out of range: " + ::toS(slot));
 		refs->v[slot] = fn;
 		table->v[slot] = fn->directRef()->address();
 	}

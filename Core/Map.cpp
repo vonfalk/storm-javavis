@@ -139,14 +139,10 @@ namespace storm {
 		nat slot = findSlot(key, hash);
 
 		if (slot == Info::free) {
-			if (watch)
-				// In case the object moved, we need to re-compute the hash.
-				hash = newHash(key);
-			nat w = Info::free;
-			slot = insert(key, def, hash, w);
+			return (void *)def;
+		} else {
+			return valPtr(slot);
 		}
-
-		return valPtr(slot);
 	}
 
 	void *MapBase::atRaw(const void *key, CreateCtor fn) {

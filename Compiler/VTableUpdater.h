@@ -25,6 +25,9 @@ namespace storm {
 		// Get the slot.
 		VTableSlot STORM_FN slot();
 
+		// Set the slot.
+		void STORM_FN slot(VTableSlot slot);
+
 	private:
 		// VTable we are to update.
 		VTable *table;

@@ -12,6 +12,8 @@ namespace storm {
 	 * class is a subclass of another. Using Cohen's algorithm.
 	 *
 	 * TODO: Realize when a type died and remove it from any other TypeChain:s then!
+	 *
+	 * TODO: Make a custom iterator which can replace the array in 'children'.
 	 */
 	class TypeChain : public ObjectOn<Compiler> {
 		STORM_CLASS;

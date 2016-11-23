@@ -28,4 +28,9 @@ namespace storm {
 		return mySlot;
 	}
 
+	void VTableUpdater::slot(VTableSlot slot) {
+		mySlot = slot;
+		moved(address());
+	}
+
 }

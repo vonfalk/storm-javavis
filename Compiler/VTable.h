@@ -98,11 +98,17 @@ namespace storm {
 		void parentSlotMoved(VTableSlot slot, const void *newAddr);
 
 		// Find the current vtable slot for 'fn' (if any) in this vtable or in any parent vtables.
-		VTableSlot STORM_FN findSlot(Function *fn, Bool setLookup);
+		VTableSlot findSlot(Function *fn, Bool setLookup);
 
 		// Find a slot matching 'fn' assuming we're a super class to where 'fn' belongs. If
 		// 'setLookup' is true, then use vtable lookup for the most specific match found.
-		VTableSlot STORM_FN findSuperSlot(OverridePart *fn, Bool setLookup);
+		VTableSlot findSuperSlot(OverridePart *fn, Bool setLookup);
+
+		// Find (and update) any children overriding 'fn'. Returns true if any child is found.
+		Bool updateChildren(Function *fn, VTableSlot slot);
+
+		// Helper to the above function.
+		Bool updateChildren(OverridePart *fn, VTableSlot slot);
 
 		// Set 'slot' to refer to a specific function.
 		void set(VTableSlot slot, Function *fn);

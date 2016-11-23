@@ -12,6 +12,22 @@ namespace storm {
 			type = tNone;
 	}
 
+	Bool VTableSlot::operator ==(VTableSlot o) const {
+		if (type != o.type)
+			return false;
+
+		switch (type) {
+		case tNone:
+			return true;
+		case tStorm:
+		case tCpp:
+			return offset == o.offset;
+		default:
+			// Something is wrong...
+			return false;
+		}
+	}
+
 	VTableSlot cppSlot(Nat offset) {
 		return VTableSlot(VTableSlot::tCpp, offset);
 	}
@@ -19,6 +35,7 @@ namespace storm {
 	VTableSlot stormSlot(Nat offset) {
 		return VTableSlot(VTableSlot::tStorm, offset);
 	}
+
 
 	wostream &operator <<(wostream &to, const VTableSlot &pos) {
 		switch (pos.type) {

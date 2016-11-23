@@ -76,7 +76,9 @@ namespace storm {
 		set(slot, fn);
 		updaters->put(fn, new (this) VTableUpdater(this, slot, fn->directRef(), source->content()));
 
-		TODO(L"Find any child functions an potentially update their place in the VTable and see if we shall enable vtable lookup for 'fn'");
+		// See if there are any child functions which we potentially need to update.
+		if (updateChildren(fn, slot))
+			useLookup(fn, slot);
 	}
 
 	void VTable::removeChild(Type *child) {
@@ -141,21 +143,60 @@ namespace storm {
 	VTableSlot VTable::findSuperSlot(OverridePart *fn, bool setLookup) {
 		Function *found = as<Function>(owner->findHere(fn));
 		if (found) {
-			if (!updaters->has(found)) {
-				// It will probably be added soon anyway...
-				// This will make sure it is in 'updaters'.
-				insert(found);
+			// If it is not known to us yet, we can not do much about it.
+			if (updaters->has(found)) {
+				VTableSlot slot = updaters->get(found)->slot();
+				if (setLookup)
+					useLookup(found, slot);
+				return slot;
 			}
+		}
 
-			VTableSlot slot = updaters->get(found)->slot();
-			if (setLookup)
-				useLookup(found, slot);
-			return slot;
-		} else if (Type *s = owner->super()) {
+		// Try to find it in superclasses.
+		if (Type *s = owner->super()) {
 			return s->vtable->findSuperSlot(fn, setLookup);
 		} else {
 			return VTableSlot();
 		}
+	}
+
+	Bool VTable::updateChildren(Function *fn, VTableSlot slot) {
+		if (!owner->chain)
+			return false;
+
+		OverridePart *p = new (this) OverridePart(fn);
+
+		Array<Type *> *c = owner->chain->children();
+		bool found = false;
+		for (nat i = 0; i < c->count(); i++)
+			found |= c->at(i)->vtable->updateChildren(p, slot);
+
+		return found;
+	}
+
+	Bool VTable::updateChildren(OverridePart *fn, VTableSlot slot) {
+		bool found = false;
+
+		if (Function *f = as<Function>(owner->findHere(fn))) {
+			// If it is not known to us, we can not do anything useful with it.
+			if (VTableUpdater *u = updaters->get(f, null)) {
+				// If we do not need to change the slot, we do not need to recurse anymore. No other
+				// overriding functions need to be updated.
+				if (u->slot() == slot)
+					return true;
+
+				// Otherwise, we need to change slot for this function:
+				set(slot, f);
+				u->slot(slot);
+				clear(slot);
+			}
+		}
+
+		// Go on recursing!
+		Array<Type *> *c = owner->chain->children();
+		for (nat i = 0; i < c->count(); i++)
+			found |= c->at(i)->vtable->updateChildren(fn, slot);
+		return found;
 	}
 
 	VTableSlot VTable::allocSlot() {
@@ -186,7 +227,30 @@ namespace storm {
 		if (pos >= stormFirst)
 			stormFirst += count;
 
-		TODO(L"Update all functions using VTable lookup in here!");
+		Array<Type *> *c = owner->chain->children();
+		for (nat i = 0; i < c->count(); i++) {
+			c->at(i)->vtable->parentGrown(pos, count);
+		}
+
+		for (Map<Function *, VTableUpdater *>::Iter i = updaters->begin(), e = updaters->end(); i != e; ++i) {
+			Function *f = i.k();
+			// Using a lookup?
+			if (f->ref()->address() == f->directRef()->address())
+				continue;
+
+			VTableUpdater *u = i.v();
+			VTableSlot slot = u->slot();
+			// Relevant to update?
+			if (slot.type != VTableSlot::tStorm || slot.offset < pos)
+				continue;
+
+			// Update!
+			VTableSlot to = slot;
+			to.offset += count;
+			set(to, f);
+			u->slot(to);
+			clear(slot);
+		}
 	}
 
 	void VTable::useLookup(Function *fn, VTableSlot slot) {
