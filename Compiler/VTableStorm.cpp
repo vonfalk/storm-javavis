@@ -42,7 +42,7 @@ namespace storm {
 
 		table = n;
 		refs = m;
-		update->extra() = table;
+		update->extra(table);
 	}
 
 	Nat VTableStorm::count() const {

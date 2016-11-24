@@ -31,13 +31,13 @@ BEGIN_TEST(VTableCppTest, Storm) {
 	VTableTest a(10);
 	VTableTest b(20);
 
-	VTableCpp *tab = new (e) VTableCpp(vtable::from(&a));
+	VTableCpp *tab = VTableCpp::copy(e, vtable::from(&a));
 	CHECK_LT(tab->count(), nat(5));
 
 	nat slot = vtable::fnSlot(address(&VTableTest::replace));
 	CHECK_NEQ(slot, vtable::invalid);
 
-	tab->slot(slot) = &replaced;
+	tab->set(slot, &replaced);
 
 	CHECK_EQ(a.replace(), 10);
 	CHECK_EQ(b.replace(), 20);
@@ -188,7 +188,7 @@ BEGIN_TEST(VTableStormTest, Storm) {
 
 // Create a class hierarchy, remove the middle class, split it into two and verify that everything
 // looks right.
-BEGIN_TEST(VTableSplit, Storm) {
+BEGIN_TEST_(VTableSplit, Storm) {
 	Engine &e = gEngine();
 
 	Type *base = debug::Extend::stormType(e);

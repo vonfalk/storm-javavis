@@ -95,13 +95,6 @@ namespace storm {
 		 * The threadsafe part ends here.
 		 */
 
-		// If the type was initialized during early boot, we need to initialize vtables through here
-		// at a suitable time, before any Storm-defined types are created.
-		void vtableInit(const void *vtable);
-
-		// Called by VTable when our vtable needs to grow the allocated space for the parent class.
-		void vtableGrow(Nat pos, Nat count);
-
 		// Late initialization.
 		virtual void lateInit();
 
@@ -114,6 +107,10 @@ namespace storm {
 		// The VTable for this class. Value types do not have a vtable, so 'vtable' is null for a
 		// value type. TODO: Make private?
 		MAYBE(VTable *) vtable;
+
+		// If the type was initialized during early boot, we need to initialize vtables through here
+		// at a suitable time, before any Storm-defined types are created.
+		void vtableInit(const void *vtable);
 
 		// Find only in this class.
 		MAYBE(Named *) STORM_FN findHere(SimplePart *part);
@@ -217,38 +214,11 @@ namespace storm {
 		// parent. Returns true if any function was inserted.
 		Bool vtableInsertSubclasses(OverridePart *added);
 
-		// Search towards the super class for an overriden function. Returns the most specialized match found.
-		Function *vtableFindSuper(OverridePart *fn);
-
-		// Search towards the subclasses for an overriding function. Returns 'true' if one is found.
-		Bool vtableFindSubclass(OverridePart *fn);
-
-		// Called by a child class to notify that a new function 'added' has been added in some
-		// child class. If one is found in this class or any parent classes, that function is made
-		// into a VTable-call (if it is not already) and its slot is returned. If none is found,
-		// returns an invalid slot.
-		VTableSlot vtableNewChildFn(OverridePart *added);
-
-		// Make 'f' use the vtable when called.
-		void vtableUse(Function *fn, VTableSlot slot);
-
-		// Make 'f' not use the vtable when called.
-		void vtableClear(Function *fn);
-
-		// Insert 'f' into the vtable at 'slot'.
-		void vtableInsert(Function *fn, VTableSlot slot);
-
-		// Clear slot 'n' of the vtable.
-		void vtableClear(VTableSlot slot);
-
 		// Called when we have been attached to a new parent.
 		void vtableNewSuper();
 
-		// Called when one of our children has been removed.
-		void vtableChildRemoved(Type *lost);
-
-		// Called when our parent's vtable grew.
-		void vtableParentGrown(Nat pos, Nat count);
+		// Called when we lost our previous parent.
+		void vtableDetachedSuper(Type *oldSuper);
 
 	};
 

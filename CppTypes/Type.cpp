@@ -34,7 +34,7 @@ Class::Class(const CppName &name, const String &pkg, const SrcPos &pos) :
 void Class::resolveTypes(World &in) {
 	CppName ctx = name;
 
-	if (!parent.empty())
+	if (!parent.empty() && !hiddenParent)
 		parentType = in.types.find(parent, ctx, pos);
 
 	if (!thread.empty())

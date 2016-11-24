@@ -8,31 +8,28 @@ namespace storm {
 	VTable::VTable(Type *owner) : owner(owner) {}
 
 	void VTable::createCpp(const void *cppVTable) {
-		assert(original == null, L"Can not re-use a VTable for a new C++ root object.");
-		original = cppVTable;
+		assert(cpp == null, L"Can not re-use a VTable for a new C++ root object.");
 		stormFirst = 1;
+
+		cpp = VTableCpp::wrap(engine(), cppVTable);
 
 		if (engine().has(bootTemplates))
 			lateInit();
 	}
 
 	void VTable::createStorm(VTable *parent) {
-		original = parent->original;
-
-		if (parent->cpp) {
-			// Reuse the previously computed size if we're able to.
-			if (cpp) {
-				cpp->replace(original, parent->cpp->count());
-			} else {
-				cpp = new (this) VTableCpp(original, parent->cpp->count());
+		// Disable vtable lookup for all functions already in here.
+		if (updaters) {
+			for (UpdateMap::Iter i = updaters->begin(), e = updaters->end(); i != e; ++i) {
+				i.k()->setLookup(null);
 			}
-		} else {
-			if (cpp) {
-				cpp->replace(original);
-			} else {
-				cpp = new (this) VTableCpp(original);
-			}
+			updaters = new (this) UpdateMap();
 		}
+
+		if (cpp)
+			cpp->replace(parent->cpp);
+		else
+			cpp = VTableCpp::copy(engine(), parent);
 		if (source)
 			source->set(cpp);
 
@@ -48,15 +45,11 @@ namespace storm {
 
 	void VTable::lateInit() {
 		if (!updaters)
-			updaters = new (this) Map<Function *, VTableUpdater *>();
+			updaters = new (this) UpdateMap();
 
 		if (!source) {
 			source = new (this) code::RefSource(L"vtable");
-
-			if (cpp)
-				source->set(cpp);
-			else
-				source->setPtr(original);
+			source->set(cpp);
 		}
 	}
 
@@ -82,7 +75,61 @@ namespace storm {
 	}
 
 	void VTable::removeChild(Type *child) {
-		TODO(L"Implement me!");
+		// For all slots: find a match to that function in a pre-existing child class.
+
+		nat stormCount = storm ? storm->count() : 1;
+		GcBitset *cppFound = allocBitset(engine(), cpp->count());
+		GcBitset *stormFound = allocBitset(engine(), stormCount);
+
+		disableLookup(cppFound, stormFound);
+	}
+
+	void VTable::disableLookup(GcBitset *cppFound, GcBitset *stormFound) {
+		// We need to check this, since in early boot we may not yet have created the map.
+		if (updaters) {
+			for (UpdateMap::Iter i = updaters->begin(), e = updaters->end(); i != e; ++i) {
+				VTableUpdater *u = i.v();
+				VTableSlot slot = u->slot();
+				GcBitset *found = slot.type == VTableSlot::tStorm ? stormFound : cppFound;
+
+				if (slot.offset >= found->count())
+					continue;
+				// Already found an overriding function?
+				if (found->has(slot.offset))
+					continue;
+
+				// Try to find one ourselves...
+				if (!hasOverride(slot)) {
+					// Disable vtable lookup for this function as it was a leaf function.
+					Function *f = i.k();
+					if (f->ref()->address() != f->directRef()->address()) {
+						f->setLookup(null);
+					}
+				}
+
+				// Note we found this one at least!
+				found->set(slot.offset, true);
+			}
+		}
+
+		// Ask our parent to do the same.
+		if (Type *s = owner->super())
+			s->vtable->disableLookup(cppFound, stormFound);
+	}
+
+	Bool VTable::hasOverride(VTableSlot slot) {
+		Array<Type *> *c = owner->chain->children();
+		for (nat i = 0; i < c->count(); i++) {
+			VTable *child = c->at(i)->vtable;
+
+			if (child->get(slot) != null)
+				return true;
+
+			if (child->hasOverride(slot))
+				return true;
+		}
+
+		return false;
 	}
 
 	void VTable::slotMoved(VTableSlot slot, const void *addr) {
@@ -120,7 +167,7 @@ namespace storm {
 		if (as<StaticCode>(c)) {
 			// Might be a function from C++.
 			const void *addr = fn->directRef()->address();
-			nat r = cpp ? cpp->findSlot(fn) : vtable::find(original, addr);
+			nat r = cpp->findSlot(addr);
 			if (r != vtable::invalid)
 				return cppSlot(r);
 		}
@@ -232,7 +279,7 @@ namespace storm {
 			c->at(i)->vtable->parentGrown(pos, count);
 		}
 
-		for (Map<Function *, VTableUpdater *>::Iter i = updaters->begin(), e = updaters->end(); i != e; ++i) {
+		for (UpdateMap::Iter i = updaters->begin(), e = updaters->end(); i != e; ++i) {
 			Function *f = i.k();
 			// Using a lookup?
 			if (f->ref()->address() == f->directRef()->address())
@@ -259,17 +306,13 @@ namespace storm {
 	}
 
 	void VTable::set(VTableSlot slot, Function *fn) {
-		if (cpp == null || storm == null) {
-			// Can not alter a C++ vtable.
-			return;
-		}
-
 		switch (slot.type) {
 		case VTableSlot::tCpp:
 			cpp->set(slot.offset, fn);
 			break;
 		case VTableSlot::tStorm:
-			storm->set(slot.offset, fn);
+			if (storm)
+				storm->set(slot.offset, fn);
 			break;
 		default:
 			assert(false, L"Unknown slot type.");
@@ -278,15 +321,13 @@ namespace storm {
 	}
 
 	void VTable::set(VTableSlot slot, const void *addr) {
-		if (cpp == null || storm == null)
-			return;
-
 		switch (slot.type) {
 		case VTableSlot::tCpp:
-			cpp->slot(slot.offset) = addr;
+			cpp->set(slot.offset, addr);
 			break;
 		case VTableSlot::tStorm:
-			storm->set(slot.offset, addr);
+			if (storm)
+				storm->set(slot.offset, addr);
 			break;
 		default:
 			assert(false, L"Unknown slot type.");
@@ -295,14 +336,14 @@ namespace storm {
 	}
 
 	Function *VTable::get(VTableSlot slot) {
-		if (cpp == null || storm == null)
-			return null;
-
 		switch (slot.type) {
 		case VTableSlot::tCpp:
 			return cpp->get(slot.offset);
 		case VTableSlot::tStorm:
-			return storm->get(slot.offset);
+			if (storm)
+				return storm->get(slot.offset);
+			else
+				return null;
 		default:
 			assert(false, L"Unknown slot type.");
 			return null;
@@ -310,9 +351,6 @@ namespace storm {
 	}
 
 	void VTable::clear(VTableSlot slot) {
-		if (cpp == null || storm == null)
-			return;
-
 		switch (slot.type) {
 		case VTableSlot::tCpp:
 			cpp->clear(slot.offset);

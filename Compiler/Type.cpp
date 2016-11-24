@@ -123,13 +123,6 @@ namespace storm {
 		}
 	}
 
-	void Type::vtableGrow(Nat pos, Nat count) {
-		Array<Type *> *c = chain->children();
-		for (nat i = 0; i < c->count(); i++) {
-			c->at(i)->vtableParentGrown(pos, count);
-		}
-	}
-
 	void Type::lateInit() {
 		NameSet::lateInit();
 
@@ -247,7 +240,7 @@ namespace storm {
 		// TODO: Invalidate the handle as well.
 
 		// Notify our old parent of removal of vtable members.
-		prev->vtableChildRemoved(this);
+		vtableDetachedSuper(this);
 
 		if ((typeFlags & typeCpp) != typeCpp && !value()) {
 			// Re-initialize the vtable.
@@ -691,157 +684,22 @@ namespace storm {
 		return inserted;
 	}
 
-	Function *Type::vtableFindSuper(OverridePart *fn) {
-		if (Function *f = as<Function>(findHere(fn)))
-			return f;
-
-		if (Type *s = super())
-			return s->vtableFindSuper(fn);
-
-		return null;
-	}
-
-	Bool Type::vtableFindSubclass(OverridePart *fn) {
-		if (!engine.has(bootTemplates))
-			return false;
-
-		Array<Type *> *children = chain->children();
-		for (Nat i = 0; i < children->count(); i++) {
-			Type *child = children->at(i);
-
-			if (as<Function>(child->findHere(fn)))
-				return true;
-
-			child->vtableFindSubclass(fn);
-		}
-
-		return false;
-	}
-
-	VTableSlot Type::vtableNewChildFn(OverridePart *fn) {
-		// Function *found = as<Function>(findHere(fn));
-		// if (!found) {
-		// 	if (Type *s = super())
-		// 		return s->vtableNewChildFn(fn);
-		// 	else
-		// 		return VTableSlot();
-		// }
-
-		// // See if 'found' already has a VTable slot, otherwise allocate one.
-		// VTableSlot slot = vtable->findSlot(found);
-		// if (!slot.valid()) {
-		// 	// Allocate a new slot...
-		// 	slot = vtable->createStorm();
-
-		// 	// Insert this function into that slot
-		// 	vtableInsert(found, slot);
-		// }
-
-		// // We need to use the vtable.
-		// vtableUse(found, slot);
-		// return slot;
-		return VTableSlot();
-	}
-
-	void Type::vtableUse(Function *fn, VTableSlot slot) {
-		// code::RefSource *src = engine.vtableCalls()->get(slot);
-		// fn->setLookup(new (engine) DelegatedCode(code::Ref(src)));
-	}
-
-	void Type::vtableInsert(Function *fn, VTableSlot slot) {
-		// vtable->set(slot, fn, handleContent);
-	}
-
-	void Type::vtableClear(VTableSlot slot) {
-		// vtable->clear(slot);
-	}
-
-	void Type::vtableClear(Function *fn) {
-		// fn->setLookup(null);
-	}
-
 	void Type::vtableNewSuper() {
 		// If too early in the boot process, we can not proceed here.
 		if (!engine.has(bootTemplates))
 			return;
 
-		// Clear the vtable usage for all functions in here and pretend they were added once more to
-		// properly register them with the super class.
-		// for (NameSet::Iter i = begin(), e = end(); i != e; ++i) {
-		// 	Function *f = as<Function>(i.v());
-		// 	vtableClear(f);
-		// 	vtableInsertSuper(f);
-		// }
-
-		// Array<Type *> *children = chain->children();
-		// for (Nat i = 0; i < children->count(); i++) {
-		// 	children->at(i)->vtableNewSuper();
-		// }
 	}
 
-	void Type::vtableChildRemoved(Type *lost) {
-		// We need to see if we shall stop using VTable calls for all functions in 'lost'.
-		// for (NameSet::Iter i = lost->begin(), e = lost->end(); i != e; ++i) {
-		// 	Function *f = as<Function>(i.v());
-		// 	if (!f)
-		// 		continue;
+	void Type::vtableDetachedSuper(Type *old) {
+		if (!old)
+			return;
 
-		// 	OverridePart *fn = new (engine) OverridePart(this, f);
+		if (!engine.has(bootTemplates))
+			return;
 
-		// 	// Find the most specialized override and possibly disable that.
-		// 	Function *parentFn = vtableFindSuper(fn);
-		// 	if (!parentFn)
-		// 		continue;
-
-		// 	// If there are no functions overriding 'parent', we want to disable vtable calls for it.
-		// 	Type *parentType = as<Type>(parentFn->parent());
-		// 	if (!parentType)
-		// 		continue; // safeguard
-
-		// 	fn = new (engine) OverridePart(parentFn);
-		// 	if (parentType->vtableFindSubclass(fn))
-		// 		// Found a subclass, no need to do anything.
-		// 		continue;
-
-		// 	// No subclasses. Disable vtable for 'parent'.
-		// 	parentType->vtableClear(parentFn);
-
-		// 	// We can remove it from the vtable entirely if it also has no parent.
-		// 	if (parentType->super() == null || parentType->super()->vtableFindSuper(fn) == null) {
-		// 		VTableSlot s = parentType->vtable->findSlot(parentFn);
-		// 		if (s.valid()) {
-		// 			parentType->vtableClear(s);
-		// 		}
-		// 	}
-		// }
+		old->vtable->removeChild(this);
 	}
-
-	void Type::vtableParentGrown(Nat pos, Nat count) {
-		// Tell the VTable.
-		// vtable->parentGrown(pos, count);
-
-		// We need to look at all our functions and possibly alter their used VTable slot.
-		// Since this is a fairly common operation, we avoid traversing the inheritance graph.
-		// for (NameSet::Iter i = begin(), e = end(); i != e; ++i) {
-		// 	Function *f = as<Function>(i.v());
-		// 	if (!f)
-		// 		continue;
-
-		// 	// If we observe that 'f' is using some kind of lookup and 'f' is in the vtable, it is
-		// 	// using a vtable lookup so we can safely replace the lookup with a new offset.
-		// 	if (f->ref()->address() != f->directRef()->address()) {
-		// 		VTableSlot slot = vtable->findSlot(f);
-
-		// 		// Only storm slots ever move.
-		// 		if (slot.type == VTableSlot::tStorm)
-		// 			vtableUse(f, slot);
-		// 	}
-		// }
-
-		// // Cascade to children.
-		// vtableGrow(pos, count);
-	}
-
 
 	void Type::toS(StrBuf *to) const {
 		if (value()) {

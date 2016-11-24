@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/TObject.h"
 #include "Core/Map.h"
+#include "Core/GcBitset.h"
 #include "VTableSlot.h"
 #include "VTableCpp.h"
 #include "VTableStorm.h"
@@ -34,6 +35,9 @@ namespace storm {
 	 * class, as told by 'owner'. The vtable is also responsible for keeping vtable dispatch up to
 	 * date if vtable slots are moved. We assume we will be notified when a child has been removed,
 	 * and that we will be re-created whenever we gain a new parent.
+	 *
+	 * TODO: It might be possible to only store a bitmask in VTableCpp and VTableStorm which
+	 * indicates if we have a new function set at this level or not.
 	 */
 	class VTable : public ObjectOn<Compiler> {
 		STORM_CLASS;
@@ -68,11 +72,7 @@ namespace storm {
 		// Owning type.
 		Type *owner;
 
-		// The original C++ VTable we are based off. This can be several levels up the inheritance
-		// chain.
-		const void *original;
-
-		// The derived C++ VTable (if we created one).
+		// The derived C++ VTable (might be write-protected).
 		VTableCpp *cpp;
 
 		// The derived Storm VTable (if we created one).
@@ -83,6 +83,7 @@ namespace storm {
 		Nat stormFirst;
 
 		// Associate an updater with each function.
+		typedef Map<Function *, VTableUpdater *> UpdateMap;
 		Map<Function *, VTableUpdater *> *updaters;
 
 		// RefSource referring to the VTable.
@@ -109,6 +110,13 @@ namespace storm {
 
 		// Helper to the above function.
 		Bool updateChildren(OverridePart *fn, VTableSlot slot);
+
+		// See if some child is using slot 'slot' to override the function in that slot.
+		Bool hasOverride(VTableSlot slot);
+
+		// For all slots not already found in the two sets: try to find an overriding function for
+		// them. If none is found, disable vtable lookup on the function for that slot.
+		void disableLookup(GcBitset *cppFound, GcBitset *stormFound);
 
 		// Set 'slot' to refer to a specific function.
 		void set(VTableSlot slot, Function *fn);

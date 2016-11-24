@@ -48,7 +48,7 @@ namespace storm {
 		void set(Nat slot, const void *addr);
 
 		// Get the function associated with a slot.
-		Function *STORM_FN get(Nat slot) const;
+		MAYBE(Function *) STORM_FN get(Nat slot) const;
 
 		// Clear a slot.
 		void STORM_FN clear(Nat slot);

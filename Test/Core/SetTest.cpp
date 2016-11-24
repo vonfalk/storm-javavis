@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Core/Set.h"
 #include "Core/Str.h"
+#include "Core/GcBitset.h"
 #include "Compiler/Debug.h"
 
 using debug::PtrKey;
@@ -92,5 +93,21 @@ BEGIN_TEST(SetTestMove, Core) {
 			}
 		}
 	}
+
+} END_TEST
+
+BEGIN_TEST(GcBitsetTest, Core) {
+	Engine &e = gEngine();
+
+	GcBitset *s = allocBitset(e, 10);
+	CHECK_EQ(s->count(), 10);
+
+	for (nat i = 0; i < s->count(); i++)
+		CHECK(!s->has(i));
+
+	s->set(5, true);
+	CHECK(s->has(5));
+	CHECK(!s->has(4));
+	CHECK(!s->has(6));
 
 } END_TEST

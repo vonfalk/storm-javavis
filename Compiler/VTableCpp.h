@@ -21,15 +21,14 @@ namespace storm {
 	class VTableCpp : public code::Content {
 		STORM_CLASS;
 	public:
-		// Create with a VTable from C++. Create a copy so we can freely modify it.
-		VTableCpp(const void *vtable);
-		VTableCpp(const void *vtable, nat count);
+		// Create a VTable which is a write-protected wrapper around the raw C++ vtable.
+		static VTableCpp *wrap(Engine &e, const void *vtable);
+		static VTableCpp *wrap(Engine &e, const void *vtable, nat count);
 
-		// Get/set a slot.
-		const void *&slot(nat id);
-
-		// Get/set the extra data.
-		const void *&extra();
+		// Create a VTable which is a copy of the provided C++ vtable or another VTableCpp object.
+		static VTableCpp *copy(Engine &e, const void *vtable);
+		static VTableCpp *copy(Engine &e, const void *vtable, nat count);
+		static VTableCpp *copy(Engine &e, const VTableCpp *src);
 
 		// Get our size.
 		nat count() const;
@@ -40,15 +39,21 @@ namespace storm {
 		// Replace the contents in here with a new vtable. Clears all references.
 		void replace(const void *vtable);
 		void replace(const void *vtable, nat count);
+		void replace(const VTableCpp *src);
+
+		// Get/set the extra data. Not present if write-protected.
+		const void *extra() const;
+		void extra(const void *to);
 
 		// Find a function in here. Returns vtable::invalid if none is found.
 		nat findSlot(const void *fn) const;
 
-		// Set a vtable entry.
+		// Set a slot. When write protected, this is a no-op.
+		void set(nat slot, const void *to);
 		void set(nat slot, Function *fn);
 
 		// Get the function associated with a vtable entry.
-		Function *get(nat slot) const;
+		MAYBE(Function *) get(nat slot) const;
 
 		// Clear a vtable entry.
 		void clear(nat slot);
@@ -57,17 +62,27 @@ namespace storm {
 		virtual nat size() const;
 
 	private:
-		// The VTable data. We're storing it as a regular GC array.
+		// Create.
+		VTableCpp(const void *src, nat count, bool copy);
+
+		// The VTable data. We're storing it as a regular GC array. May be null if we're referring
+		// to a raw c++ vtable.
 		GcArray<const void *> *data;
 
 		// References updating the VTable. The entire table is null if no updaters are added.
 		GcArray<Function *> *refs;
 
+		// Raw write-protected C++ vtable.
+		const void **raw;
+
+		// Size of the vtable in here.
+		nat tabSize;
+
 		// Have we ever set our VTable to an object?
 		bool tableUsed;
 
 		// Initialize ourselves.
-		void init(const void *vtable, nat count);
+		void init(const void *vtable, nat count, bool copy);
 
 		// Get a pointer to the start of the vtable.
 		const void **table() const;

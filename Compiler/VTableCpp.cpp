@@ -9,31 +9,62 @@
 
 namespace storm {
 
-	VTableCpp::VTableCpp(const void *vtable) {
-		init(vtable, vtable::count(vtable));
+	VTableCpp *VTableCpp::wrap(Engine &e, const void *vtable) {
+		return new (e) VTableCpp(vtable, vtable::count(vtable), false);
 	}
 
-	VTableCpp::VTableCpp(const void *vtable, nat count) {
-		init(vtable, count);
+	VTableCpp *VTableCpp::wrap(Engine &e, const void *vtable, nat count) {
+		return new (e) VTableCpp(vtable, count, false);
 	}
 
-	void VTableCpp::init(const void *vtable, nat count) {
+	VTableCpp *VTableCpp::copy(Engine &e, const void *vtable) {
+		return new (e) VTableCpp(vtable, vtable::count(vtable), true);
+	}
+
+	VTableCpp *VTableCpp::copy(Engine &e, const void *vtable, nat count) {
+		return new (e) VTableCpp(vtable, count, true);
+	}
+
+	VTableCpp *VTableCpp::copy(Engine &e, const VTableCpp *src) {
+		return new (e) VTableCpp(src->table(), src->count(), true);
+	}
+
+	VTableCpp::VTableCpp(const void *vtable, nat count, bool copy) {
+		init(vtable, count, copy);
+	}
+
+	void VTableCpp::init(const void *vtable, nat count, bool copy) {
 		tableUsed = false;
 		refs = null;
-		data = runtime::allocArray<const void *>(engine(), &pointerArrayType, count + vtable::extraOffset);
+		data = null;
+		tabSize = count;
+		raw = null;
 
-		const void *const* src = (const void *const*)vtable - vtable::extraOffset;
-		for (nat i = 1; i < count + vtable::extraOffset; i++) {
-			data->v[i] = src[i];
+		if (copy) {
+			data = runtime::allocArray<const void *>(engine(), &pointerArrayType, count + vtable::extraOffset);
+
+			const void ** src = (const void **)vtable - vtable::extraOffset;
+			for (nat i = 1; i < count + vtable::extraOffset; i++) {
+				data->v[i] = src[i];
+			}
+		} else {
+			raw = (const void **)vtable;
 		}
 	}
 
 	const void **VTableCpp::table() const {
-		return &data->v[vtable::extraOffset];
+		if (data)
+			return &data->v[vtable::extraOffset];
+		else
+			return raw;
 	}
 
 	void VTableCpp::replace(const void *vtable) {
 		replace(vtable, vtable::count(vtable));
+	}
+
+	void VTableCpp::replace(const VTableCpp *src) {
+		replace(src->table(), src->count());
 	}
 
 	struct VTableSwitch {
@@ -49,14 +80,14 @@ namespace storm {
 	}
 
 	void VTableCpp::replace(const void *vtable, nat count) {
-		if (count > this->count()) {
+		if (!data || count > this->count()) {
 			// We need to replace the vtables on all live objects using the vtable.
 			bool needWalk = tableUsed;
 			VTableSwitch data;
 			data.from = table();
 
 			// Create the new vtable.
-			init(vtable, count);
+			init(vtable, count, true);
 
 			data.to = table();
 
@@ -66,6 +97,7 @@ namespace storm {
 			if (needWalk)
 				engine().gc.walkObjects(&vtableSwitch, &data);
 		} else {
+			// We can copy, we know we can modify 'data'.
 			const void *const* src = (const void *const*)vtable - vtable::extraOffset;
 			for (nat i = 1; i < count + vtable::extraOffset; i++) {
 				data->v[i] = src[i];
@@ -74,15 +106,7 @@ namespace storm {
 	}
 
 	nat VTableCpp::count() const {
-		return data->count - vtable::extraOffset;
-	}
-
-	const void *&VTableCpp::slot(nat id) {
-		return data->v[id + vtable::extraOffset];
-	}
-
-	const void *&VTableCpp::extra() {
-		return data->v[0];
+		return tabSize;
 	}
 
 	void VTableCpp::insert(void *obj) {
@@ -94,6 +118,23 @@ namespace storm {
 		return vtable::find(table(), fn, count());
 	}
 
+	const void *VTableCpp::extra() const {
+		if (data)
+			return data->v[0];
+		else
+			return null;
+	}
+
+	void VTableCpp::extra(const void *to) {
+		if (data)
+			data->v[0] = to;
+	}
+
+	void VTableCpp::set(nat id, const void *to) {
+		if (data)
+			data->v[id + vtable::extraOffset] = to;
+	}
+
 	void VTableCpp::set(nat id, Function *fn) {
 		assert(id < count());
 
@@ -101,7 +142,7 @@ namespace storm {
 			refs = runtime::allocArray<Function *>(engine(), &pointerArrayType, count());
 
 		refs->v[id] = fn;
-		slot(id) = fn->directRef()->address();
+		set(id, fn->directRef()->address());
 	}
 
 	Function *VTableCpp::get(nat id) const {
@@ -118,7 +159,8 @@ namespace storm {
 		if (refs) {
 			refs->v[id] = null;
 		}
-		slot(id) = null;
+		if (data)
+			data->v[id + vtable::extraOffset] = null;
 	}
 
 	const void *VTableCpp::address() const {
