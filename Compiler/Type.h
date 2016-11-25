@@ -169,6 +169,10 @@ namespace storm {
 		// Get the default super type for us.
 		Type *defaultSuper() const;
 
+		// Internal helper for setSuper. Does the work associated with switching super classes, but
+		// does not change 'super'.
+		void updateSuper();
+
 		// Special case for the first Type.
 		static void *operator new(size_t size, Engine &e, GcType *type);
 		static void operator delete(void *mem, Engine &e, GcType *type);

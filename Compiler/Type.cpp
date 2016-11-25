@@ -211,6 +211,21 @@ namespace storm {
 		if (to && !to->chain)
 			to->chain = new (this) TypeChain(to);
 
+		// Set the type-chain properly.
+		Type *prev = super();
+		chain->super(to);
+
+		// Notify our old parent of removal of vtable members. We only need to do this for the
+		// topmost class we're moving, as all other vtables will be deleted.
+		vtableDetachedSuper(prev);
+
+		// Propagate chainges to all children.
+		updateSuper();
+	}
+
+	void Type::updateSuper() {
+		Type *to = super();
+
 		// Which thread to use?
 		Type *tObj = TObject::stormType(engine);
 		if (to != null && to->chain != null && tObj->chain != null) {
@@ -220,11 +235,9 @@ namespace storm {
 				useThread = to->useThread;
 				assert(useThread, L"No thread on a threaded object!");
 			}
+			// Propagate to our children.
+			notifyThread(useThread);
 		}
-
-		// Set the type-chain properly.
-		Type *prev = super();
-		chain->super(to);
 
 		// Invalidate the GcType for this type.
 		if (typeFlags & typeCpp) {
@@ -239,9 +252,6 @@ namespace storm {
 		// TODO: Invalidate the Layout as well.
 		// TODO: Invalidate the handle as well.
 
-		// Notify our old parent of removal of vtable members.
-		vtableDetachedSuper(this);
-
 		if ((typeFlags & typeCpp) != typeCpp && !value()) {
 			// Re-initialize the vtable.
 			vtable->createStorm(to->vtable);
@@ -249,6 +259,13 @@ namespace storm {
 
 		// Register all functions here and in our children as vtable calls.
 		vtableNewSuper();
+
+		// Recurse into children.
+		if (!engine.has(bootTemplates))
+			return;
+		Array<Type *> *c = chain->children();
+		for (nat i = 0; i < c->count(); i++)
+			c->at(i)->updateSuper();
 	}
 
 	void Type::setThread(NamedThread *thread) {
@@ -689,6 +706,14 @@ namespace storm {
 		if (!engine.has(bootTemplates))
 			return;
 
+		// Insert all functions in here and in our super-classes.
+		for (Iter i = begin(), e = end(); i != e; ++i) {
+			Function *f = as<Function>(i.v());
+			if (!f)
+				continue;
+
+			vtableFnAdded(f);
+		}
 	}
 
 	void Type::vtableDetachedSuper(Type *old) {

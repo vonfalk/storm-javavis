@@ -188,7 +188,7 @@ BEGIN_TEST(VTableStormTest, Storm) {
 
 // Create a class hierarchy, remove the middle class, split it into two and verify that everything
 // looks right.
-BEGIN_TEST_(VTableSplit, Storm) {
+BEGIN_TEST(VTableSplit, Storm) {
 	Engine &e = gEngine();
 
 	Type *base = debug::Extend::stormType(e);

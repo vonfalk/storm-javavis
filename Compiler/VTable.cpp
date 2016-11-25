@@ -38,6 +38,7 @@ namespace storm {
 		stormFirst = parent->storm
 			? parent->storm->count()
 			: 1; // always place stuff after the destructor slot.
+		storm->resize(stormFirst);
 
 		if (engine().has(bootTemplates))
 			lateInit();
@@ -164,12 +165,14 @@ namespace storm {
 
 	VTableSlot VTable::findSlot(Function *fn, bool setLookup) {
 		Code *c = fn->getCode();
-		if (as<StaticCode>(c)) {
+		bool cppType = (owner->typeFlags & typeCpp) == typeCpp;
+		if (cppType && as<StaticCode>(c) != null) {
 			// Might be a function from C++.
 			const void *addr = fn->directRef()->address();
 			nat r = cpp->findSlot(addr);
-			if (r != vtable::invalid)
+			if (r != vtable::invalid) {
 				return cppSlot(r);
+			}
 		}
 
 		nat r = vtable::invalid;
