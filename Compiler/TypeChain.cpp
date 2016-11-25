@@ -119,14 +119,20 @@ namespace storm {
 			t->updateSuper(this);
 	}
 
-	Array<Type *> *TypeChain::children() const {
-		Array<Type *> *r = new (this) Array<Type *>();
+	TypeChain::Iter::Iter(const Iter &o) : src(o.src) {}
 
-		WeakSet<TypeChain>::Iter i = child->iter();
-		while (TypeChain *t = i.next())
-			r->push(t->owner);
+	TypeChain::Iter::Iter(WeakSet<TypeChain> *src) : src(src->iter()) {}
 
-		return r;
+	Type *TypeChain::Iter::next() {
+		TypeChain *c = src.next();
+		if (c)
+			return c->owner;
+		else
+			return null;
+	}
+
+	TypeChain::Iter TypeChain::children() const {
+		return Iter(child);
 	}
 
 }

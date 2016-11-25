@@ -263,9 +263,10 @@ namespace storm {
 		// Recurse into children.
 		if (!engine.has(bootTemplates))
 			return;
-		Array<Type *> *c = chain->children();
-		for (nat i = 0; i < c->count(); i++)
-			c->at(i)->updateSuper();
+
+		TypeChain::Iter i = chain->children();
+		while (Type *c = i.next())
+			c->updateSuper();
 	}
 
 	void Type::setThread(NamedThread *thread) {
@@ -338,9 +339,9 @@ namespace storm {
 		useThread = thread;
 
 		if (chain != null && engine.has(bootTemplates)) {
-			Array<Type *> *children = chain->children();
-			for (nat i = 0; i < children->count(); i++) {
-				children->at(i)->notifyThread(thread);
+			TypeChain::Iter i = chain->children();
+			while (Type *c = i.next()) {
+				c->notifyThread(thread);
 			}
 		}
 	}
@@ -683,10 +684,8 @@ namespace storm {
 
 		bool inserted = false;
 
-		Array<Type *> *children = chain->children();
-		for (Nat i = 0; i < children->count(); i++) {
-			Type *child = children->at(i);
-
+		TypeChain::Iter i = chain->children();
+		while (Type *child = i.next()) {
 			Function *found = as<Function>(child->findHere(fn));
 			if (found) {
 				// Found something. Insert it in the vtable. We do not need to go further down this

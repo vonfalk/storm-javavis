@@ -119,9 +119,9 @@ namespace storm {
 	}
 
 	Bool VTable::hasOverride(VTableSlot slot) {
-		Array<Type *> *c = owner->chain->children();
-		for (nat i = 0; i < c->count(); i++) {
-			VTable *child = c->at(i)->vtable;
+		TypeChain::Iter i = owner->chain->children();
+		while (Type *c = i.next()) {
+			VTable *child = c->vtable;
 
 			if (child->get(slot) != null)
 				return true;
@@ -140,9 +140,9 @@ namespace storm {
 		if (!owner->chain)
 			return;
 
-		Array<Type *> *c = owner->chain->children();
-		for (nat i = 0; i < c->count(); i++) {
-			if (VTable *t = c->at(i)->vtable)
+		TypeChain::Iter i = owner->chain->children();
+		while (Type *c = i.next()) {
+			if (VTable *t = c->vtable)
 				t->parentSlotMoved(slot, addr);
 		}
 	}
@@ -155,9 +155,9 @@ namespace storm {
 		if (!owner->chain)
 			return;
 
-		Array<Type *> *c = owner->chain->children();
-		for (nat i = 0; i < c->count(); i++) {
-			if (VTable *t = c->at(i)->vtable)
+		TypeChain::Iter i = owner->chain->children();
+		while (Type *c = i.next()) {
+			if (VTable *t = c->vtable)
 				t->parentSlotMoved(slot, addr);
 		}
 	}
@@ -216,10 +216,10 @@ namespace storm {
 
 		OverridePart *p = new (this) OverridePart(fn);
 
-		Array<Type *> *c = owner->chain->children();
 		bool found = false;
-		for (nat i = 0; i < c->count(); i++)
-			found |= c->at(i)->vtable->updateChildren(p, slot);
+		TypeChain::Iter i = owner->chain->children();
+		while (Type *c = i.next())
+			found |= c->vtable->updateChildren(p, slot);
 
 		return found;
 	}
@@ -243,9 +243,9 @@ namespace storm {
 		}
 
 		// Go on recursing!
-		Array<Type *> *c = owner->chain->children();
-		for (nat i = 0; i < c->count(); i++)
-			found |= c->at(i)->vtable->updateChildren(fn, slot);
+		TypeChain::Iter i = owner->chain->children();
+		while (Type *c = i.next())
+			found |= c->vtable->updateChildren(fn, slot);
 		return found;
 	}
 
@@ -263,9 +263,9 @@ namespace storm {
 			storm->resize(oldCount + stormGrow);
 
 			// Grow all child vtables as well.
-			Array<Type *> *c = owner->chain->children();
-			for (nat i = 0; i < c->count(); i++)
-				c->at(i)->vtable->parentGrown(oldCount, stormGrow);
+			TypeChain::Iter i = owner->chain->children();
+			while (Type *c = i.next())
+				c->vtable->parentGrown(oldCount, stormGrow);
 		}
 
 		return stormSlot(slot);
@@ -277,10 +277,9 @@ namespace storm {
 		if (pos >= stormFirst)
 			stormFirst += count;
 
-		Array<Type *> *c = owner->chain->children();
-		for (nat i = 0; i < c->count(); i++) {
-			c->at(i)->vtable->parentGrown(pos, count);
-		}
+		TypeChain::Iter i = owner->chain->children();
+		while (Type *c = i.next())
+			c->vtable->parentGrown(pos, count);
 
 		for (UpdateMap::Iter i = updaters->begin(), e = updaters->end(); i != e; ++i) {
 			Function *f = i.k();

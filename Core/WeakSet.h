@@ -170,6 +170,7 @@ namespace storm {
 		 * so that iterators do not break when that happens.
 		 */
 		class Iter {
+			STORM_VALUE;
 		public:
 			// Copy.
 			Iter(const Iter &o);

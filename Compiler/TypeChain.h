@@ -36,8 +36,28 @@ namespace storm {
 		Int STORM_FN distance(const TypeChain *o) const;
 		Int STORM_FN distance(const Type *o) const;
 
+		// Iterator for children.
+		class Iter {
+			STORM_VALUE;
+			friend class TypeChain;
+		public:
+			// Copy.
+			STORM_CAST_CTOR Iter(const Iter &o);
+
+			// Get the next element.
+			MAYBE(Type *) STORM_FN next();
+
+		private:
+			// Create.
+			Iter(WeakSet<TypeChain> *src);
+
+			// Original iterator. (typedef since the preprocessor fails otherwise).
+			typedef WeakSet<TypeChain>::Iter It;
+			UNKNOWN(WeakSetBase::Iter) It src;
+		};
+
 		// Get all currently known direct children. The result is _not_ ordered in any way.
-		Array<Type *> *children() const;
+		Iter STORM_FN children() const;
 
 		// Late initialization. Requires templates.
 		void lateInit();
