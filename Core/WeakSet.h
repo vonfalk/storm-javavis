@@ -172,6 +172,9 @@ namespace storm {
 		class Iter {
 			STORM_VALUE;
 		public:
+			// Create empty iterator.
+			Iter();
+
 			// Copy.
 			Iter(const Iter &o);
 
@@ -239,6 +242,8 @@ namespace storm {
 		 */
 		class Iter : public WeakSetBase::Iter {
 		public:
+			Iter() : WeakSetBase::Iter() {}
+
 			Iter(WeakSet<K> *owner) : WeakSetBase::Iter(owner) {}
 
 			MAYBE(K *) next() {

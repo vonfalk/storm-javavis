@@ -51,6 +51,9 @@ namespace storm {
 			// Create.
 			Iter(WeakSet<TypeChain> *src);
 
+			// Create null iterator.
+			Iter();
+
 			// Original iterator. (typedef since the preprocessor fails otherwise).
 			typedef WeakSet<TypeChain>::Iter It;
 			UNKNOWN(WeakSetBase::Iter) It src;

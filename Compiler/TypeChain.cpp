@@ -84,18 +84,9 @@ namespace storm {
 		return distance(o->chain);
 	}
 
-	static const GcType chainType = {
-		GcType::tArray,
-		null,
-		null,
-		sizeof(void *),
-		1,
-		{ 0 },
-	};
-
 	void TypeChain::updateSuper(const TypeChain *o) {
 		nat count = o->chain->count;
-		chain = runtime::allocArray<TypeChain *>(engine(), &chainType, count + 1);
+		chain = runtime::allocArray<TypeChain *>(engine(), &pointerArrayType, count + 1);
 		for (nat i = 0; i < count; i++)
 			chain->v[i] = o->chain->v[i];
 		chain->v[count] = this;
@@ -104,7 +95,7 @@ namespace storm {
 	}
 
 	void TypeChain::clearSuper() {
-		chain = runtime::allocArray<TypeChain *>(engine(), &chainType, 1);
+		chain = runtime::allocArray<TypeChain *>(engine(), &pointerArrayType, 1);
 		chain->v[0] = this;
 
 		notify();
@@ -119,6 +110,8 @@ namespace storm {
 			t->updateSuper(this);
 	}
 
+	TypeChain::Iter::Iter() : src() {}
+
 	TypeChain::Iter::Iter(const Iter &o) : src(o.src) {}
 
 	TypeChain::Iter::Iter(WeakSet<TypeChain> *src) : src(src->iter()) {}
@@ -132,7 +125,10 @@ namespace storm {
 	}
 
 	TypeChain::Iter TypeChain::children() const {
-		return Iter(child);
+		if (child)
+			return Iter(child);
+		else
+			return Iter();
 	}
 
 }

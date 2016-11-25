@@ -41,7 +41,6 @@ namespace storm {
 		Map<Function *, VTableUpdater *>::stormType(e);
 		WeakSet<TypeChain>::stormType(e);
 		WeakSet<code::Reference>::stormType(e);
-		Array<Type *>::stormType(e);
 
 		// Now we can declare templates fully functional.
 		e.advance(bootTemplates);

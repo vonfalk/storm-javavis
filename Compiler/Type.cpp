@@ -261,9 +261,6 @@ namespace storm {
 		vtableNewSuper();
 
 		// Recurse into children.
-		if (!engine.has(bootTemplates))
-			return;
-
 		TypeChain::Iter i = chain->children();
 		while (Type *c = i.next())
 			c->updateSuper();
@@ -338,7 +335,7 @@ namespace storm {
 	void Type::notifyThread(NamedThread *thread) {
 		useThread = thread;
 
-		if (chain != null && engine.has(bootTemplates)) {
+		if (chain != null) {
 			TypeChain::Iter i = chain->children();
 			while (Type *c = i.next()) {
 				c->notifyThread(thread);
@@ -678,10 +675,6 @@ namespace storm {
 	}
 
 	Bool Type::vtableInsertSubclasses(OverridePart *fn) {
-		// If too early in the boot process, we can not proceed here.
-		if (!engine.has(bootTemplates))
-			return false;
-
 		bool inserted = false;
 
 		TypeChain::Iter i = chain->children();
@@ -701,10 +694,6 @@ namespace storm {
 	}
 
 	void Type::vtableNewSuper() {
-		// If too early in the boot process, we can not proceed here.
-		if (!engine.has(bootTemplates))
-			return;
-
 		// Insert all functions in here and in our super-classes.
 		for (Iter i = begin(), e = end(); i != e; ++i) {
 			Function *f = as<Function>(i.v());
