@@ -109,7 +109,7 @@ namespace storm {
 		return tabSize;
 	}
 
-	void VTableCpp::insert(void *obj) {
+	void VTableCpp::insert(RootObject *obj) {
 		tableUsed = true;
 		vtable::set(table(), obj);
 	}
@@ -294,12 +294,12 @@ namespace storm {
 
 #if defined(VISUAL_STUDIO) || defined(GCC)
 
-		const void *from(const void *object) {
+		const void *from(const RootObject *object) {
 			const void *const*o = (const void *const*)object;
 			return o[0];
 		}
 
-		void set(const void *vtable, void *to) {
+		void set(const void *vtable, RootObject *to) {
 			const void **o = (const void **)to;
 			o[0] = vtable;
 		}

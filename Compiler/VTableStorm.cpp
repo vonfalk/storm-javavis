@@ -45,6 +45,11 @@ namespace storm {
 		update->extra(table);
 	}
 
+	void VTableStorm::copyData(VTableStorm *src) {
+		for (nat i = 0; i < min(src->count(), count()); i++)
+			table->v[i] = src->table->v[i];
+	}
+
 	Nat VTableStorm::count() const {
 		return table ? table->filled : 0;
 	}

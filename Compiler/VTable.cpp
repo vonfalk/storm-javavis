@@ -2,6 +2,7 @@
 #include "VTable.h"
 #include "Type.h"
 #include "Engine.h"
+#include <iomanip>
 
 namespace storm {
 
@@ -39,6 +40,8 @@ namespace storm {
 			? parent->storm->count()
 			: 1; // always place stuff after the destructor slot.
 		storm->resize(stormFirst);
+		if (parent->storm)
+			storm->copyData(parent->storm);
 
 		if (engine().has(bootTemplates))
 			lateInit();
@@ -51,6 +54,36 @@ namespace storm {
 		if (!source) {
 			source = new (this) code::RefSource(L"vtable");
 			source->set(cpp);
+		}
+	}
+
+	code::RefSource *VTable::ref() const {
+		return source;
+	}
+
+	void VTable::dbg_dump() const {
+		PLN(L"vtable @" << cpp->address() << L":");
+
+		PLN(L"C++:");
+		const void **ptr = (const void **)cpp->address();
+		for (nat i = 0; i < cpp->count(); i++) {
+			PNN(std::setw(4) << i << L": " << ptr[i]);
+			if (Function *f = cpp->get(i))
+				PLN(L" (" << f << L")");
+			else
+				PLN(L"");
+		}
+
+		if (storm) {
+			const void **ptr = (const void **)cpp->extra();
+			PLN(L"Storm: " << ptr);
+			for (nat i = 0; i < storm->count(); i++) {
+				PNN(std::setw(4) << i << L": " << ptr[i+2]);
+				if (Function *f = storm->get(i))
+					PLN(L" (" << f << L")");
+				else
+					PLN(L"");
+			}
 		}
 	}
 
@@ -152,6 +185,8 @@ namespace storm {
 		if (get(slot) != null)
 			return;
 
+		set(slot, addr);
+
 		if (!owner->chain)
 			return;
 
@@ -230,15 +265,18 @@ namespace storm {
 		if (Function *f = as<Function>(owner->findHere(fn))) {
 			// If it is not known to us, we can not do anything useful with it.
 			if (VTableUpdater *u = updaters->get(f, null)) {
+				VTableSlot from = u->slot();
 				// If we do not need to change the slot, we do not need to recurse anymore. No other
 				// overriding functions need to be updated.
-				if (u->slot() == slot)
+				if (from == slot)
 					return true;
+				found = true;
 
 				// Otherwise, we need to change slot for this function:
 				set(slot, f);
 				u->slot(slot);
-				clear(slot);
+				updateLookup(f, slot);
+				clear(from);
 			}
 		}
 
@@ -283,12 +321,10 @@ namespace storm {
 
 		for (UpdateMap::Iter i = updaters->begin(), e = updaters->end(); i != e; ++i) {
 			Function *f = i.k();
-			// Using a lookup?
-			if (f->ref()->address() == f->directRef()->address())
-				continue;
 
 			VTableUpdater *u = i.v();
 			VTableSlot slot = u->slot();
+
 			// Relevant to update?
 			if (slot.type != VTableSlot::tStorm || slot.offset < pos)
 				continue;
@@ -298,6 +334,7 @@ namespace storm {
 			to.offset += count;
 			set(to, f);
 			u->slot(to);
+			updateLookup(f, to);
 			clear(slot);
 		}
 	}
@@ -305,6 +342,11 @@ namespace storm {
 	void VTable::useLookup(Function *fn, VTableSlot slot) {
 		code::RefSource *src = fn->engine().vtableCalls()->get(slot);
 		fn->setLookup(new (fn) DelegatedCode(code::Ref(src)));
+	}
+
+	void VTable::updateLookup(Function *fn, VTableSlot slot) {
+		if (fn->ref()->address() != fn->directRef()->address())
+			useLookup(fn, slot);
 	}
 
 	void VTable::set(VTableSlot slot, Function *fn) {

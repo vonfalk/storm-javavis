@@ -3,7 +3,7 @@
 #include "Compiler/Debug.h"
 #include "Compiler/Package.h"
 
-class VTableTest {
+class VTableTest : public RootObject {
 public:
 	VTableTest(int v) : z(v) {}
 
@@ -96,6 +96,12 @@ static bool usesVTable(Function *fn) {
 	return fn->directRef()->address() != fn->ref()->address();
 }
 
+static Int callFn(Object *o, Function *fn) {
+	typedef Int (*Ptr)(Object *);
+	Ptr p = (Ptr)fn->ref()->address();
+	return (*p)(o);
+}
+
 BEGIN_TEST(VTableCppTest2, Storm) {
 	Engine &e = gEngine();
 
@@ -137,7 +143,19 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 	CHECK(!usesVTable(value2));
 	CHECK(!usesVTable(value3));
 
-	TODO(L"Instantiate a class and make sure everything works as intended!");
+	// Instantiate a class and see if it is actually working!
+	debug::Extend *o = new (e) debug::Extend(1);
+	CHECK_EQ(o->value(), 1);
+	CHECK_EQ(callFn(o, value), 1);
+	vtable::set(sub1->vtable->ref()->address(), o);
+	CHECK_EQ(o->value(), 20);
+	CHECK_EQ(callFn(o, value), 20);
+	CHECK_EQ(callFn(o, value1), 20);
+	vtable::set(sub2->vtable->ref()->address(), o);
+	CHECK_EQ(o->value(), 40);
+	CHECK_EQ(callFn(o, value), 40);
+	CHECK_EQ(callFn(o, value1), 40);
+	CHECK_EQ(callFn(o, value2), 40);
 } END_TEST
 
 BEGIN_TEST(VTableCppTest3, Storm) {
@@ -151,15 +169,57 @@ BEGIN_TEST(VTableCppTest3, Storm) {
 	Type *sub2 = addSubclass(pkg, sub1);
 	Type *sub3 = addSubclass(pkg, sub2);
 
-	Function *f3 = addFn(sub3, L"val", &extendReplace);
+	Function *f1 = addFn(sub1, L"val", &extendReplace);
 	Function *f2 = addFn(sub2, L"val", &extendReplace2);
-	Function *f1 = addFn(sub1, L"val", &extendReplace3);
+	Function *f3 = addFn(sub3, L"val", &extendReplace3);
 
 	CHECK(usesVTable(f1));
 	CHECK(usesVTable(f2));
 	CHECK(!usesVTable(f3));
 
-	TODO(L"Instantiate a class and make sure everything works as intended!");
+	// Instantiate a class and make sure everything works as intended!
+	debug::Extend *o = new (e) debug::Extend(1);
+	vtable::set(sub1->vtable->ref()->address(), o);
+	CHECK_EQ(callFn(o, f1), 20);
+	vtable::set(sub2->vtable->ref()->address(), o);
+	CHECK_EQ(callFn(o, f1), 40);
+	CHECK_EQ(callFn(o, f2), 40);
+	vtable::set(sub3->vtable->ref()->address(), o);
+	CHECK_EQ(callFn(o, f1), 60);
+	CHECK_EQ(callFn(o, f2), 60);
+	CHECK_EQ(callFn(o, f3), 60);
+} END_TEST
+
+BEGIN_TEST(VTableCppTest4, Storm) {
+	Engine &e = gEngine();
+
+	Type *base = debug::Extend::stormType(e);
+	Package *pkg = as<Package>(base->parent());
+	VERIFY(pkg);
+
+	Type *sub1 = addSubclass(pkg, base);
+	Type *sub2 = addSubclass(pkg, sub1);
+	Type *sub3 = addSubclass(pkg, sub2);
+
+	Function *f3 = addFn(sub3, L"val", &extendReplace3);
+	Function *f2 = addFn(sub2, L"val", &extendReplace2);
+	Function *f1 = addFn(sub1, L"val", &extendReplace);
+
+	CHECK(usesVTable(f1));
+	CHECK(usesVTable(f2));
+	CHECK(!usesVTable(f3));
+
+	// Instantiate a class and make sure everything works as intended!
+	debug::Extend *o = new (e) debug::Extend(1);
+	vtable::set(sub1->vtable->ref()->address(), o);
+	CHECK_EQ(callFn(o, f1), 20);
+	vtable::set(sub2->vtable->ref()->address(), o);
+	CHECK_EQ(callFn(o, f1), 40);
+	CHECK_EQ(callFn(o, f2), 40);
+	vtable::set(sub3->vtable->ref()->address(), o);
+	CHECK_EQ(callFn(o, f1), 60);
+	CHECK_EQ(callFn(o, f2), 60);
+	CHECK_EQ(callFn(o, f3), 60);
 } END_TEST
 
 // Try create a few pure Storm functions which will need VTable entries and see that it works.

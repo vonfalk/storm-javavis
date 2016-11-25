@@ -67,6 +67,11 @@ namespace storm {
 		// Late initialization.
 		void lateInit();
 
+		// Get a reference to this type.
+		code::RefSource *ref() const;
+
+		// Dump the vtable contents to stdout.
+		void dbg_dump() const;
 
 	private:
 		// Owning type.
@@ -133,6 +138,9 @@ namespace storm {
 
 		// Use lookup for 'fn'.
 		static void useLookup(Function *fn, VTableSlot slot);
+
+		// Update lookup for 'fn' to use 'slot'. Does nothing if no lookup is already used.
+		static void updateLookup(Function *fn, VTableSlot slot);
 
 		// Decide how much to grow each time 'storm' needs to grow.
 		static const Nat stormGrow = 5;

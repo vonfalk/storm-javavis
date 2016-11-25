@@ -26,6 +26,9 @@ namespace storm {
 		// Ensure we're at least a specific size.
 		void STORM_FN resize(Nat count);
 
+		// Copy data from another vtable.
+		void STORM_FN copyData(VTableStorm *src);
+
 		// Current # of elements.
 		Nat STORM_FN count() const;
 

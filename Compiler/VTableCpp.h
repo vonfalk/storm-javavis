@@ -17,6 +17,9 @@ namespace storm {
 	 * VTable when storing it in this class.
 	 *
 	 * Note: This class assumes that all objects in C++ only use single inheritance.
+	 *
+	 * TODO: To check if the vtable has been used by simply seeing if 'insert' was called is not
+	 * sufficient as we leak that information through being a 'Content'.
 	 */
 	class VTableCpp : public code::Content {
 		STORM_CLASS;
@@ -34,7 +37,7 @@ namespace storm {
 		nat count() const;
 
 		// Set this VTable for a class.
-		void insert(void *obj);
+		void insert(RootObject *obj);
 
 		// Replace the contents in here with a new vtable. Clears all references.
 		void replace(const void *vtable);
@@ -125,10 +128,10 @@ namespace storm {
 		nat count(const void *vtable);
 
 		// Get the current vtable from an object.
-		const void *from(const void *object);
+		const void *from(const RootObject *object);
 
 		// Set the current vtable for an object.
-		void set(const void *vtable, void *object);
+		void set(const void *vtable, RootObject *object);
 
 	}
 }
