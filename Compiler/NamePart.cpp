@@ -4,6 +4,7 @@
 #include "Scope.h"
 #include "Name.h"
 #include "Type.h"
+#include "Core/Str.h"
 #include "Core/StrBuf.h"
 #include "Core/CloneEnv.h"
 #include "NameSet.h"
@@ -104,6 +105,30 @@ namespace storm {
 				*to << L", " << params->at(i);
 			*to << L")";
 		}
+	}
+
+	Bool SimplePart::equals(Object *other) const {
+		if (type() != other->type())
+			return false;
+		SimplePart *o = (SimplePart *)other;
+		if (!name->equals(o->name))
+			return false;
+		if (params->count() != o->params->count())
+			return false;
+
+		for (nat i = 0; i < params->count(); i++)
+			if (params->at(i) != o->params->at(i))
+				return false;
+
+		return true;
+	}
+
+	Nat SimplePart::hash() const {
+		Nat r = 5381;
+		r = ((r << 5) + r) + name->hash();
+		// Note: we only care about the number of parameters so far.
+		r = ((r << 5) + r) + params->count();
+		return r;
 	}
 
 

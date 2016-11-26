@@ -151,6 +151,31 @@ namespace storm {
 		}
 	}
 
+	Bool SimpleName::equals(Object *other) const {
+		if (type() != other->type())
+			return false;
+
+		SimpleName *o = (SimpleName *)other;
+		if (count() != o->count())
+			return false;
+
+		for (nat i = 0; i < count(); i++) {
+			if (!at(i)->equals(o->at(i)))
+				return false;
+		}
+
+		return true;
+	}
+
+	Nat SimpleName::hash() const {
+		// inspired from djb2
+		Nat r = 5381;
+		for (nat i = 0; i < parts->count(); i++) {
+			r = ((r << 5) + r) + parts->at(i)->hash();
+		}
+		return r;
+	}
+
 
 	/**
 	 * Parsing.

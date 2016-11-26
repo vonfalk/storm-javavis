@@ -129,6 +129,12 @@ namespace storm {
 		// ToS.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
+		// Equals.
+		virtual Bool STORM_FN equals(Object *o) const;
+
+		// Hash.
+		virtual Nat STORM_FN hash() const;
+
 	private:
 		// Data.
 		Array<SimplePart *> *parts;
