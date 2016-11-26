@@ -177,7 +177,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 
 
 struct SemaTest {
-	Sema sema;
+	os::Sema sema;
 
 	nat state;
 
@@ -215,7 +215,7 @@ BEGIN_TEST(UThreadSema, OS) {
 } END_TEST
 
 struct SemaInterop {
-	Sema sema;
+	os::Sema sema;
 
 	nat state;
 

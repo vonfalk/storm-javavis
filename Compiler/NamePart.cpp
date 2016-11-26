@@ -89,7 +89,7 @@ namespace storm {
 
 			if (!match.matches(ours, candidate->flags))
 				return -1;
-			if (ours.type)
+			if (ours.type && match.type)
 				distance += ours.type->distanceFrom(match.type);
 		}
 

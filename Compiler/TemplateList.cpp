@@ -21,19 +21,9 @@ namespace storm {
 		Node *next[1];
 	};
 
-	/**
-	 * Gc description.
-	 */
-	static const GcType nodeType = {
-		GcType::tArray,
-		null,
-		null,
-		sizeof(void *), // Element size
-		1, // One pointer in each element...
-		{ 0 }, // ... at offset 0.
-	};
-
-	TemplateList::TemplateList(TemplateFn *t) : templ(t) {}
+	TemplateList::TemplateList(TemplateFn *t) : templ(t) {
+		lock = new (this) Lock();
+	}
 
 	void TemplateList::addTo(NameSet *to) {
 		addedTo = to;
@@ -58,7 +48,7 @@ namespace storm {
 	}
 
 	Type *TemplateList::find(Nat *elems, Nat count) {
-		TODO(L"Lock me!");
+		Lock::L z(lock);
 
 		Type *found = findAt(elems, count, root, 0);
 		if (!found) {
@@ -131,7 +121,7 @@ namespace storm {
 	}
 
 	TemplateList::Node *TemplateList::allocNode(Nat count) {
-		Node *n = (Node *)engine().gc.allocArray(&nodeType, count + 1);
+		Node *n = (Node *)engine().gc.allocArray(&pointerArrayType, count + 1);
 		n->count = count;
 		return n;
 	}
@@ -159,8 +149,11 @@ namespace storm {
 			}
 		}
 
-		if (addedTo) {
-			TODO(L"See if someone else added this template instantiation in NameSet!");
+		if (addedTo && e.has(bootTemplates)) {
+			// Was the type already added from somewhere else?
+			SimplePart *p = new (e) SimplePart(templ->name, types->toArray());
+			if (Type *t = as<Type>(addedTo->find(p)))
+				return t;
 		}
 
 		Type *r = templ->generate(types);

@@ -1,6 +1,7 @@
 #pragma once
 #include "Thread.h"
 #include "Core/Gen/CppTypes.h"
+#include "Core/Lock.h"
 #include "Template.h"
 
 namespace storm {
@@ -12,7 +13,7 @@ namespace storm {
 	/**
 	 * Represents all instantiations of a template class available to C++.
 	 *
-	 * Note: This object needs to be thread-safe in the find() function.
+	 * Note: This object needs to be thread-safe in the find() function as that is called from any thread of C++.
 	 */
 	class TemplateList : public ObjectOn<Compiler> {
 		STORM_CLASS;
@@ -36,6 +37,9 @@ namespace storm {
 	private:
 		// Template we're representing.
 		TemplateFn *templ;
+
+		// Lock used for 'find'.
+		Lock *lock;
 
 		// A node in the list.
 		struct Node;
