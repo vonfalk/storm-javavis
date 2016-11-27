@@ -47,6 +47,17 @@ namespace storm {
 	};
 
 	/**
+	 * Language definition error.
+	 */
+	class LangDefError : public Exception {
+	public:
+		inline LangDefError(const String &w) : w(w) {}
+		inline virtual String what() const { return w; }
+	private:
+		String w;
+	};
+
+	/**
 	 * Specific subclass when calling core:debug:throwError.
 	 */
 	class DebugError : public Exception {

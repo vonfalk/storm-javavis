@@ -1,0 +1,10 @@
+#pragma once
+
+namespace storm {
+	namespace syntax {
+		STORM_PKG(lang.bnf);
+
+		$$
+
+	}
+}

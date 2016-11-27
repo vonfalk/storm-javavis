@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Array.h"
 #include "Core/Fn.h"
+#include "Core/Io/Url.h"
 #include "NamedThread.h"
 #include "Package.h"
 

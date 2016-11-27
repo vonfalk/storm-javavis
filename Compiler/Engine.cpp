@@ -64,6 +64,9 @@ namespace storm {
 			// this early during compiler startup.
 			Thread::stormType(*this)->setType(world.threads[0]);
 
+			// Set proper paths for the now created packages.
+			o.root->setUrl(parsePath(*this, toS(root).c_str()));
+
 			// Done booting.
 			advance(bootDone);
 		} catch (...) {

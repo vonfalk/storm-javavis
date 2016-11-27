@@ -1,7 +1,10 @@
 #include "stdafx.h"
 #include "Package.h"
-#include "Engine.h"
 #include "Core/StrBuf.h"
+#include "Core/Str.h"
+#include "Engine.h"
+#include "Reader.h"
+#include "Exception.h"
 
 namespace storm {
 
@@ -16,6 +19,23 @@ namespace storm {
 
 	Url *Package::url() const {
 		return pkgPath;
+	}
+
+	void Package::setUrl(Url *url) {
+		assert(!engine().has(bootDone), L"Shall not be done after boot is complete!");
+		pkgPath = url;
+
+		for (Iter i = begin(), e = end(); i != e; ++i) {
+			if (Package *p = as<Package>(i.v())) {
+				if (p->params->count() > 0)
+					continue;
+				Url *sub = url->pushDir(p->name);
+				if (!sub->exists())
+					continue;
+
+				p->setUrl(sub);
+			}
+		}
 	}
 
 	Bool Package::loadName(SimplePart *part) {
@@ -42,6 +62,7 @@ namespace storm {
 			return true;
 
 		Array<Url *> *children = pkgPath->children();
+		Array<Url *> *files = new (this) Array<Url *>();
 
 		// Load any remaining packages:
 		for (nat i = 0; i < children->count(); i++) {
@@ -50,11 +71,13 @@ namespace storm {
 				Str *name = now->name();
 				if (!tryFind(new (this) SimplePart(name)))
 					add(loadPackage(name));
+			} else {
+				files->push(now);
 			}
 		}
 
 		// Load all code.
-		loadFiles(children);
+		loadFiles(files);
 
 		return true;
 	}
@@ -66,12 +89,12 @@ namespace storm {
 			*to << L"Root package";
 
 		if (pkgPath)
-			*to << L" in " << pkgPath;
+			*to << L"(in " << pkgPath << L")";
 		else
 			*to << L"(virtual)";
-		*to << L"\n";
 
-		{
+		if (false) {
+			*to << L"\n";
 			Indent z(to);
 			NameSet::toS(to);
 		}
@@ -91,7 +114,86 @@ namespace storm {
 	}
 
 	void Package::loadFiles(Array<Url *> *files) {
-		TODO(L"Load stuff here!");
+		// Remember previous contents if things go wrong...
+		Array<Named *> *prev = new (this) Array<Named *>();
+		for (Iter i = begin(), to = end(); i != to; ++i)
+			prev->push(i.v());
+
+		try {
+			Map<SimpleName *, PkgFiles *> *readers = readerName(files);
+			Array<PkgReader *> *load = createReaders(readers);
+
+			for (nat i = 0; i < load->count(); i++)
+				load->at(i)->readSyntaxRules();
+
+			for (nat i = 0; i < load->count(); i++)
+				load->at(i)->readSyntaxOptions();
+
+			for (nat i = 0; i < load->count(); i++)
+				load->at(i)->readTypes();
+
+			for (nat i = 0; i < load->count(); i++)
+				load->at(i)->resolveTypes();
+
+			for (nat i = 0; i < load->count(); i++)
+				load->at(i)->readFunctions();
+
+		} catch (...) {
+			TODO(L"Try to restore!");
+			throw;
+		}
+	}
+
+	Array<PkgReader *> *Package::createReaders(Map<SimpleName *, PkgFiles *> *readers) {
+		typedef Map<SimpleName *, PkgFiles *> ReaderMap;
+		Array<PkgReader *> *r = new (this) Array<PkgReader *>();
+		SimpleName *me = path();
+
+		SimpleName *delayName = null;
+		PkgFiles *delayFiles = null;
+
+		for (ReaderMap::Iter i = readers->begin(), end = readers->end(); i != end; ++i) {
+			SimpleName *name = i.k();
+
+			// Load ourselves last.
+			if (name->parent()->equals(me)) {
+				delayName = name;
+				delayFiles = i.v();
+				continue;
+			}
+
+			PkgReader *reader = createReader(i.k(), i.v()->files);
+			if (reader)
+				r->push(reader);
+		}
+
+		if (delayName && delayFiles) {
+			PkgReader *reader = createReader(delayName, delayFiles->files);
+			if (reader)
+				r->push(reader);
+		}
+
+		return r;
+	}
+
+	PkgReader *Package::createReader(SimpleName *name, Array<Url *> *files) {
+		Function *createFn = as<Function>(engine().scope().find(name));
+		if (!createFn) {
+			StrBuf *msg = new (this) StrBuf();
+			*msg << L"No reader for " << files << L" (should be " << name << L")";
+			WARNING(msg->toS()->c_str());
+			return null;
+		}
+
+		if (!thisPtr(PkgReader::stormType(engine())).canStore(createFn->result)) {
+			StrBuf *msg = new (this) StrBuf();
+			*msg << L"Invalid return type for " << createFn << L": expected " << PkgReader::stormType(engine());
+			throw LangDefError(msg->toS()->c_str());
+		}
+
+		typedef PkgReader *(*Fn)(Array<Url *> *, Package *);
+		Fn fn = (Fn)createFn->ref()->address();
+		return (*fn)(files, this);
 	}
 
 }

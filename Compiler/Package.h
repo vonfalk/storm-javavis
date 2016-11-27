@@ -5,6 +5,9 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class PkgReader;
+	class PkgFiles;
+
 	/**
 	 * Defines the contents of a package. A package is a NameSet associated with a path, which
 	 * allows it to load things from there.
@@ -25,6 +28,9 @@ namespace storm {
 		// Get our url.
 		virtual MAYBE(Url *) STORM_FN url() const;
 
+		// Set url. Only done by Engine during startup and is therefore not exposed to storm.
+		void setUrl(Url *to);
+
 		// Lazy-loading.
 		virtual Bool STORM_FN loadName(SimplePart *part);
 		virtual Bool STORM_FN loadAll();
@@ -42,6 +48,12 @@ namespace storm {
 
 		// Load all files given.
 		void loadFiles(Array<Url *> *files);
+
+		// Create a reader for each element in 'readers'.
+		Array<PkgReader *> *createReaders(Map<SimpleName *, PkgFiles *> *readers);
+
+		// Create a reader from 'SimpleName'.
+		PkgReader *createReader(SimpleName *name, Array<Url *> *files);
 
 		// Try to load a sub-package. Returns null on failure.
 		Package *loadPackage(Str *name);
