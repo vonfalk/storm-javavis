@@ -27,8 +27,8 @@ namespace storm {
 		r->add(new (e) Str(L"lang"));
 		r->add(file->ext());
 		Array<Value> *params = new (e) Array<Value>();
-		params->push(Value(Array<Url *>::stormType(e)));
-		params->push(Value(Package::stormType(e)));
+		params->push(thisPtr(Array<Url *>::stormType(e)));
+		params->push(thisPtr(Package::stormType(e)));
 		r->add(new (e) SimplePart(new (e) Str(L"reader"), params));
 		return r;
 	}

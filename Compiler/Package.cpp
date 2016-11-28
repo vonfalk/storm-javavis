@@ -86,7 +86,7 @@ namespace storm {
 		if (parent())
 			*to << L"Pkg " << identifier();
 		else
-			*to << L"Root package";
+			*to << L"Root package (" << name << L")";
 
 		if (pkgPath)
 			*to << L"(in " << pkgPath << L")";
@@ -180,7 +180,14 @@ namespace storm {
 		Function *createFn = as<Function>(engine().scope().find(name));
 		if (!createFn) {
 			StrBuf *msg = new (this) StrBuf();
-			*msg << L"No reader for " << files << L" (should be " << name << L")";
+			*msg << L"No reader for [";
+			Url *rootUrl = engine().package()->url();
+			for (nat i = 0; i < files->count(); i++) {
+				if (i > 0)
+					*msg << L", ";
+				*msg << files->at(i)->relative(rootUrl);
+			}
+			*msg << L"] (should be " << name << L")";
 			WARNING(msg->toS()->c_str());
 			return null;
 		}

@@ -61,9 +61,9 @@ namespace storm {
 
 	Value thisPtr(Type *t) {
 		if ((t->typeFlags & typeValue) == typeValue)
-			return Value(t, false);
-		else
 			return Value(t, true);
+		else
+			return Value(t, false);
 	}
 
 	Size Value::size() const {

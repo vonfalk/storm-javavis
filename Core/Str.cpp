@@ -19,6 +19,12 @@ namespace storm {
 		1,
 	};
 
+	static void check(GcArray<wchar> *data) {
+		for (nat i = 0; i < data->count - 1; i++)
+			if (data->v[i] == 0)
+				DebugBreak();
+	}
+
 	Str::Str() : data(&storm::empty) {}
 
 	Str::Str(const wchar *s) {
@@ -27,6 +33,7 @@ namespace storm {
 		for (nat i = 0; i < count; i++)
 			data->v[i] = s[i];
 		data->v[count] = 0;
+		validate();
 	}
 
 	Str::Str(const wchar *from, const wchar *to) {
@@ -35,6 +42,7 @@ namespace storm {
 		for (nat i = 0; i < count; i++)
 			data->v[i] = from[i];
 		data->v[count] = 0;
+		validate();
 	}
 
 	Str::Str(Char ch) {
@@ -49,6 +57,7 @@ namespace storm {
 			allocData(2);
 			data->v[0] = trail;
 		}
+		validate();
 	}
 
 	Str::Str(Char ch, Nat times) {
@@ -62,17 +71,31 @@ namespace storm {
 				data->v[i*2 + 1] = trail;
 			}
 		} else {
-			allocData(2*times + 1);
+			allocData(times + 1);
 			for (nat i = 0; i < times; i++) {
 				data->v[i] = trail;
 			}
 		}
+		validate();
 	}
 
-	Str::Str(GcArray<wchar> *data) : data(data) {}
+	Str::Str(GcArray<wchar> *data) : data(data) {
+		validate();
+	}
 
 	// The data is immutable, no need to copy it!
-	Str::Str(Str *o) : data(o->data) {}
+	Str::Str(Str *o) : data(o->data) {
+		validate();
+	}
+
+	void Str::validate() const {
+#ifdef DEBUG
+		for (nat i = 0; i < data->count - 1; i++)
+			if (data->v[i] == 0)
+				assert(false, L"String contains a premature null terminator!");
+		assert(data->v[data->count - 1] == 0, L"String is missing a null terminator!");
+#endif
+	}
 
 	Bool Str::empty() const {
 		return data->count == 1;
@@ -223,7 +246,7 @@ namespace storm {
 
 	wchar *Str::toPtr(const Iter &i) {
 		if (i.atEnd())
-			return data->v + data->count;
+			return data->v + data->count - 1;
 		else if (i.owner == this)
 			return data->v + i.pos;
 		else

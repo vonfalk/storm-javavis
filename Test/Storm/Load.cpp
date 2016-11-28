@@ -1,5 +1,6 @@
 #include "stdafx.h"
-
+#include "Core/Io/Url.h"
+#include "Compiler/Package.h"
 
 BEGIN_TEST(Load, Storm) {
 	Engine &e = gEngine();

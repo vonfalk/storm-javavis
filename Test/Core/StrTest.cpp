@@ -15,6 +15,9 @@ BEGIN_TEST(StrTest, Core) {
 	Str *w = new (e) Str(Char('Z'), 5);
 	CHECK_EQ(toS(w), L"ZZZZZ");
 
+	Str *p = toS(e, Char(nat(0x10030)));
+	w = new (e) Str(Char(nat(0x10030)), 2);
+	CHECK_EQ(toS(w), toS(*p * 2));
 } END_TEST
 
 BEGIN_TEST(StrBufTest, Core) {

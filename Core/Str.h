@@ -149,6 +149,9 @@ namespace storm {
 
 		// Convert an iterator to a pointer.
 		wchar *toPtr(const Iter &i);
+
+		// Validate this string.
+		void validate() const;
 	};
 
 }
