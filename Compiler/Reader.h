@@ -64,7 +64,7 @@ namespace storm {
 		virtual void STORM_FN readSyntaxRules();
 
 		// Get the syntax options.
-		virtual void STORM_FN readSyntaxOptions();
+		virtual void STORM_FN readSyntaxProductions();
 
 		// Get the types.
 		virtual void STORM_FN readTypes();
@@ -84,7 +84,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create a file reader.
-		STORM_CTOR FileReader(Url *file, Package *into);
+		STORM_CTOR FileReader(Url *file, Package *pkg);
 
 		// File.
 		Url *file;
@@ -96,7 +96,7 @@ namespace storm {
 		virtual void STORM_FN readSyntaxRules();
 
 		// Get the syntax options.
-		virtual void STORM_FN readSyntaxOptions();
+		virtual void STORM_FN readSyntaxProductions();
 
 		// Get the types.
 		virtual void STORM_FN readTypes();
@@ -117,13 +117,13 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR FilePkgReader(Array<Url *> *files, Package *pkg, Fn<FileReader *, Url *> *create);
+		STORM_CTOR FilePkgReader(Array<Url *> *files, Package *pkg, Fn<FileReader *, Url *, Package *> *create);
 
 		// Get the syntax rules.
 		virtual void STORM_FN readSyntaxRules();
 
 		// Get the syntax options.
-		virtual void STORM_FN readSyntaxOptions();
+		virtual void STORM_FN readSyntaxProductions();
 
 		// Get the types.
 		virtual void STORM_FN readTypes();
@@ -139,7 +139,7 @@ namespace storm {
 		Array<FileReader *> *readers;
 
 		// Create FileReaders.
-		Fn<FileReader *, Url *> *create;
+		Fn<FileReader *, Url *, Package *> *create;
 
 		// Populate 'readers' if it is not already done.
 		void loadReaders();

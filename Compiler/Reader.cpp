@@ -48,7 +48,7 @@ namespace storm {
 
 	void PkgReader::readSyntaxRules() {}
 
-	void PkgReader::readSyntaxOptions() {}
+	void PkgReader::readSyntaxProductions() {}
 
 	void PkgReader::readTypes() {}
 
@@ -61,7 +61,7 @@ namespace storm {
 
 	void FileReader::readSyntaxRules() {}
 
-	void FileReader::readSyntaxOptions() {}
+	void FileReader::readSyntaxProductions() {}
 
 	void FileReader::readTypes() {}
 
@@ -70,7 +70,7 @@ namespace storm {
 	void FileReader::readFunctions() {}
 
 
-	FilePkgReader::FilePkgReader(Array<Url *> *files, Package *pkg, Fn<FileReader *, Url *> *create)
+	FilePkgReader::FilePkgReader(Array<Url *> *files, Package *pkg, Fn<FileReader *, Url *, Package *> *create)
 		: PkgReader(files, pkg), create(create) {}
 
 	void FilePkgReader::loadReaders() {
@@ -80,7 +80,7 @@ namespace storm {
 		readers = new (this) Array<FileReader *>();
 		readers->reserve(files->count());
 		for (nat i = 0; i < files->count(); i++) {
-			FileReader *r = create->call(files->at(i));
+			FileReader *r = create->call(files->at(i), pkg);
 			if (!r)
 				throw InternalError(L"Can not use a null FileReader in a FilePkgReader!");
 			readers->push(r);
@@ -93,10 +93,10 @@ namespace storm {
 			readers->at(i)->readSyntaxRules();
 	}
 
-	void FilePkgReader::readSyntaxOptions() {
+	void FilePkgReader::readSyntaxProductions() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			readers->at(i)->readSyntaxOptions();
+			readers->at(i)->readSyntaxProductions();
 	}
 
 	void FilePkgReader::readTypes() {

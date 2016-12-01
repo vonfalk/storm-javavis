@@ -127,7 +127,7 @@ namespace storm {
 				load->at(i)->readSyntaxRules();
 
 			for (nat i = 0; i < load->count(); i++)
-				load->at(i)->readSyntaxOptions();
+				load->at(i)->readSyntaxProductions();
 
 			for (nat i = 0; i < load->count(); i++)
 				load->at(i)->readTypes();

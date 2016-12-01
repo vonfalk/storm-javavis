@@ -239,4 +239,20 @@ namespace storm {
 		}
 	};
 
+
+	/**
+	 * C++ helper for joining an array or similar into a string.
+	 */
+	template <class T>
+	void join(StrBuf *to, Array<T> *src, const wchar *space) {
+		if (src->count() == 0)
+			return;
+
+		*to << src->at(0);
+
+		for (Nat i = 1; i < src->count(); i++) {
+			*to << space << src->at(i);
+		}
+	}
+
 }
