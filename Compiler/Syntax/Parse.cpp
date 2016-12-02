@@ -4,12 +4,16 @@
 namespace storm {
 	namespace syntax {
 
-		FileContents *parseSyntax(Url *file) {
-			FileContents *r = new (file) FileContents();
-
-			TODO(L"Parse the syntax in " << file);
+		static FileContents *parseFile(Engine &e) {
+			FileContents *r = new (e) FileContents();
 
 			return r;
+		}
+
+		FileContents *parseSyntax(Url *file) {
+			TODO(L"Parse the syntax in " << file);
+
+			return parseFile(file->engine());
 		}
 
 	}
