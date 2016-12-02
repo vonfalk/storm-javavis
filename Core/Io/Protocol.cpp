@@ -3,6 +3,7 @@
 #include "Url.h"
 #include "Str.h"
 #include "StrBuf.h"
+#include "FileStream.h"
 
 #ifdef WINDOWS
 #include <Shlwapi.h>
@@ -110,8 +111,7 @@ namespace storm {
 	}
 
 	IStream *FileProtocol::read(Url *url) {
-		// return CREATE(IFileStream, this, format(url));
-		throw ProtocolNotSupported(L"read", ::toS(*this));
+		return new (url) IFileStream(format(url));
 	}
 
 	OStream *FileProtocol::write(Url *url) {

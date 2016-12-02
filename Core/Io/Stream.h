@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Object.h"
+#include "Buffer.h"
 
 namespace storm {
 	STORM_PKG(core.io);
@@ -31,13 +32,18 @@ namespace storm {
 		virtual Bool STORM_FN more();
 
 		// Read a buffer from the stream. Returns the number of bytes read.
-		// virtual Nat STORM_FN read(Buffer &to);
+		Buffer STORM_FN read(Nat maxBytes);
+		virtual Buffer STORM_FN read(Buffer to);
 
 		// Peek data.
-		// virtual Nat STORM_FN peek(Buffer &to);
+		Buffer STORM_FN peek(Nat maxBytes);
+		virtual Buffer STORM_FN peek(Buffer to);
 
 		// Get a random access IStream. May return the same stream!
 		virtual RIStream *STORM_FN randomAccess();
+
+		// Close this stream.
+		virtual void STORM_FN close();
 	};
 
 	/**
@@ -81,7 +87,10 @@ namespace storm {
 		STORM_CTOR OStream(OStream *o);
 
 		// Write some data.
-		// virtual void STORM_FN write(const Buffer &buf);
+		virtual void STORM_FN write(Buffer buf);
+
+		// Close.
+		virtual void STORM_FN close();
 	};
 
 }

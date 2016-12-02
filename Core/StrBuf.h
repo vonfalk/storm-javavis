@@ -77,6 +77,7 @@ namespace storm {
 		StrBuf *STORM_FN add(Long i);
 		StrBuf *STORM_FN add(Word i);
 		StrBuf *STORM_FN add(Float f);
+		StrBuf *STORM_FN add(Char c);
 
 		// Append stuff with the << operator.
 		StrBuf &operator <<(const void *ptr);
@@ -91,6 +92,7 @@ namespace storm {
 		StrBuf &STORM_FN operator <<(Long i) { return *add(i); }
 		StrBuf &STORM_FN operator <<(Word i) { return *add(i); }
 		StrBuf &STORM_FN operator <<(Float f) { return *add(f); }
+		StrBuf &STORM_FN operator <<(Char c) { return *add(c); }
 
 		// Formatting options.
 		StrBuf &STORM_FN operator <<(StrFmt fmt);

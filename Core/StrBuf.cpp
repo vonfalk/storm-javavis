@@ -291,6 +291,19 @@ namespace storm {
 		return add(buf);
 	}
 
+	StrBuf *StrBuf::add(Char c) {
+		wchar str[3] = {
+			c.leading(),
+			c.trailing(),
+			0
+		};
+
+		if (str[0])
+			return add(str);
+		else
+			return add(str + 1);
+	}
+
 	void StrBuf::clear() {
 		buf = null;
 		pos = 0;

@@ -15,19 +15,31 @@ namespace storm {
 		return false;
 	}
 
-	// Nat IStream::read(Buffer &to) {
-	// 	return 0;
-	// }
+	Buffer IStream::read(Nat c) {
+		return read(buffer(engine(), c));
+	}
 
-	// Nat IStream::peek(Buffer &to) {
-	// 	return 0;
-	// }
+	Buffer IStream::read(Buffer to) {
+		to.filled(0);
+		return to;
+	}
+
+	Buffer IStream::peek(Nat c) {
+		return peek(buffer(engine(), c));
+	}
+
+	Buffer IStream::peek(Buffer to) {
+		to.filled(0);
+		return to;
+	}
 
 	RIStream *IStream::randomAccess() {
 		assert(false, L"Use lazy memory stream!");
 		// return lazyIMemStream(this);
 		return null;
 	}
+
+	void IStream::close() {}
 
 	/**
 	 * RIStream.
@@ -55,7 +67,8 @@ namespace storm {
 
 	OStream::OStream(OStream *o) {}
 
-	// void OStream::write(const Buffer &buf) {}
+	void OStream::write(Buffer buf) {}
 
+	void OStream::close() {}
 
 }

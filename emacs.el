@@ -102,7 +102,7 @@
   (if (blank-line)
       (insert "// ")
     (progn
-      (my-open-line)
+      (storm-open-line)
       (insert "// "))))
 
 (defun storm-return () 
