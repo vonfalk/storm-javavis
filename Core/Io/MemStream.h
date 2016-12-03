@@ -1,39 +1,40 @@
 #pragma once
+#include "Buffer.h"
 #include "Stream.h"
 
 namespace storm {
 	STORM_PKG(core.io);
 
 	/**
-	 * File IO.
+	 * Simple memory stream.
 	 */
-	class IFileStream : public RIStream {
+	class IMemStream : public RIStream {
 		STORM_CLASS;
 	public:
-		// Create from a path.
-		IFileStream(Str *name);
+		// Create from a buffer.
+		STORM_CTOR IMemStream(Buffer b);
 
-		// Copy...
-		STORM_CTOR IFileStream(IFileStream *o);
+		// Copy.
+		STORM_CTOR IMemStream(IMemStream *o);
 
-		// Destroy.
-		virtual ~IFileStream();
+		// Deep copy.
+		virtual void STORM_FN deepCopy(CloneEnv *env);
 
 		// More?
 		virtual Bool STORM_FN more();
 
 		// Read.
 		using RIStream::read;
-		virtual Buffer STORM_FN read(Buffer b, Nat start);
+		virtual Buffer STORM_FN read(Buffer to, Nat start);
 
 		// Peek.
 		using RIStream::peek;
-		virtual Buffer STORM_FN peek(Buffer b, Nat start);
+		virtual Buffer STORM_FN peek(Buffer to, Nat start);
 
 		// Seek.
 		virtual void STORM_FN seek(Word to);
 
-		// Tell.
+		// Peek.
 		virtual Word STORM_FN tell();
 
 		// Length.
@@ -42,15 +43,12 @@ namespace storm {
 		// Random access.
 		virtual RIStream *STORM_FN randomAccess();
 
-		// Close.
-		virtual void STORM_FN close();
-
 	private:
-		// File name.
-		Str *name;
+		// Data.
+		Buffer data;
 
-		// System dependent handle.
-		void *handle;
+		// Position.
+		nat pos;
 	};
 
 }

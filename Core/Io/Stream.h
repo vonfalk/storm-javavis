@@ -33,11 +33,19 @@ namespace storm {
 
 		// Read a buffer from the stream. Returns the number of bytes read.
 		Buffer STORM_FN read(Nat maxBytes);
-		virtual Buffer STORM_FN read(Buffer to);
+		Buffer STORM_FN read(Buffer to);
+		virtual Buffer STORM_FN read(Buffer to, Nat start);
 
 		// Peek data.
 		Buffer STORM_FN peek(Nat maxBytes);
-		virtual Buffer STORM_FN peek(Buffer to);
+		Buffer STORM_FN peek(Buffer to);
+		virtual Buffer STORM_FN peek(Buffer to, Nat start);
+
+		// Reads data until the buffer is filled or at the end of stream. Compared to 'read', after
+		// calling 'readAll' you know that either your buffer is full or the end of the stream was
+		// reached.
+		Buffer STORM_FN readAll(Nat bytes);
+		Buffer STORM_FN readAll(Buffer to);
 
 		// Get a random access IStream. May return the same stream!
 		virtual RIStream *STORM_FN randomAccess();

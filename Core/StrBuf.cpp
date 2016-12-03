@@ -292,7 +292,7 @@ namespace storm {
 	}
 
 	StrBuf *StrBuf::add(Char c) {
-		wchar str[3] = {
+		const wchar str[3] = {
 			c.leading(),
 			c.trailing(),
 			0

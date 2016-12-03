@@ -73,7 +73,8 @@ namespace storm {
 		return this;
 	}
 
-	Buffer IFileStream::read(Buffer b) {
+	Buffer IFileStream::read(Buffer b, Nat start) {
+		start = min(start, b.count());
 		b.filled(0);
 
 		// TODO: Read data async and allow other UThreads to do things!
@@ -81,12 +82,12 @@ namespace storm {
 			return b;
 
 		DWORD out = 0;
-		ReadFile((HANDLE)handle, b.dataPtr(), DWORD(b.count()), &out, NULL);
-		b.filled(out);
+		ReadFile((HANDLE)handle, b.dataPtr() + start, DWORD(b.count() - start), &out, NULL);
+		b.filled(out + start);
 		return b;
 	}
 
-	Buffer IFileStream::peek(Buffer b) {
+	Buffer IFileStream::peek(Buffer b, Nat start) {
 		b.filled(0);
 
 		// TODO: Read data async and allow other UThreads to do things!
@@ -94,7 +95,7 @@ namespace storm {
 			return b;
 
 		Word pos = tell();
-		b = read(b);
+		b = read(b, start);
 		seek(pos);
 		return b;
 	}

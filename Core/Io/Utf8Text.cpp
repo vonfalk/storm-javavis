@@ -5,10 +5,15 @@ namespace storm {
 
 	Utf8Reader::Utf8Reader(IStream *src) : src(src), buf(), pos(0) {}
 
-	// First byte of UTF8?
-	static inline bool isFirst(byte c) {
-		return (c & 0x80) == 0x00  // single byte
-			|| (c & 0xC0) == 0xC0; // starting byte
+	Utf8Reader::Utf8Reader(IStream *src, Buffer start) : src(src), buf(), pos(0) {
+		buf = buffer(engine(), bufSize);
+		buf.filled(start.filled());
+		memcpy(buf.dataPtr(), start.dataPtr(), start.filled());
+	}
+
+	// See if the byte is a continuation byte.
+	static inline bool isCont(byte c) {
+		return (c & 0xC0) == 0x80;
 	}
 
 	// The data of the first UTF8-byte.
@@ -16,6 +21,10 @@ namespace storm {
 		if ((c & 0x80) == 0) {
 			remaining = 0;
 			data = nat(c);
+		} else if ((c & 0xC0) == 0x80) {
+			// Continuation from before: error!
+			remaining = 0;
+			data = nat('?');
 		} else if ((c & 0xE0) == 0xC0) {
 			remaining = 1;
 			data = nat(c & 0x1F);
@@ -39,21 +48,19 @@ namespace storm {
 
 	Char Utf8Reader::readChar() {
 		byte ch = readByte();
-		if (ch == 0)
-			return Char(nat(0));
-
-		if (!isFirst(ch))
-			return Char('?');
-
 		nat left, r;
 		firstData(ch, left, r);
 
 		for (nat i = 0; i < left; i++) {
 			ch = readByte();
-			if (isFirst(ch))
-				// Sadly, we miss to output a ? here.
-				return Char(nat(ch));
-			r = (r << 6) | (ch & 0x3F);
+
+			if (isCont(ch)) {
+				r = (r << 6) | (ch & 0x3F);
+			} else {
+				// Invalid codepoint, unget ch and return '?'
+				ungetByte();
+				return Char(nat('?'));
+			}
 		}
 
 		return Char(r);
@@ -61,17 +68,22 @@ namespace storm {
 
 	Byte Utf8Reader::readByte() {
 		if (buf.count() == 0) {
-			buf = src->read(1024);
+			buf = src->read(bufSize);
 			pos = 0;
 		}
-		if (buf.filled() >= pos) {
+		if (pos >= buf.filled()) {
 			buf = src->read(buf);
 			pos = 0;
 		}
-		if (buf.filled() < pos)
+		if (pos < buf.filled())
 			return buf[pos++];
 		else
 			return 0;
+	}
+
+	void Utf8Reader::ungetByte() {
+		if (pos > 0)
+			pos--;
 	}
 
 }

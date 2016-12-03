@@ -17,6 +17,7 @@ namespace storm {
 
 	Char TextReader::peek() {
 		if (first) {
+			first = false;
 			next = readChar();
 			// See if we need to consume the BOM.
 			if (next == Char(nat(0xFEFF)))
@@ -36,6 +37,8 @@ namespace storm {
 
 		while (true) {
 			Char c = read();
+			if (c == Char(nat(0)))
+				break;
 			if (c == Char('\r'))
 				continue;
 			if (c == Char('\n'))
@@ -64,16 +67,19 @@ namespace storm {
 	TextReader *STORM_FN readText(IStream *stream) {
 		nat16 bom = 0;
 
-		Buffer buf = stream->peek(sizeof(bom));
-		if (buf.full())
-			memcpy(&bom, buf.dataPtr(), sizeof(bom));
+		Buffer buf = stream->readAll(sizeof(bom));
+		if (buf.full()) {
+			// Read in network order.
+			bom = buf[0] << 8;
+			bom |= buf[1];
+		}
 
 		if (bom == 0xFEFF)
-			return new (stream) Utf16Reader(stream, false);
+			return new (stream) Utf16Reader(stream, false, buf);
 		else if (bom == 0xFFFE)
-			return new (stream) Utf16Reader(stream, true);
+			return new (stream) Utf16Reader(stream, true, buf);
 		else
-			return new (stream) Utf8Reader(stream);
+			return new (stream) Utf8Reader(stream, buf);
 	}
 
 	TextReader *STORM_FN readStr(Str *from) {
