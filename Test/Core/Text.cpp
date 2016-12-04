@@ -83,6 +83,25 @@ BEGIN_TEST(TextInput, Core) {
 		CHECK_EQ(::toS(r->readLine()), L"line");
 	}
 
+	// Robust with different line-endings?
+	{
+		static const char windows[] = "new\r\nline";
+		TextReader *r = READ(windows);
+		CHECK_EQ(::toS(r->readLine()), L"new");
+		CHECK_EQ(::toS(r->readLine()), L"line");
+
+		CHECK_EQ(::toS(READ(windows)->readAll()), L"new\nline");
+	}
+
+	{
+		static const char mac[] = "new\rline";
+		TextReader *r = READ(mac);
+		CHECK_EQ(::toS(r->readLine()), L"new");
+		CHECK_EQ(::toS(r->readLine()), L"line");
+
+		CHECK_EQ(::toS(READ(mac)->readAll()), L"new\nline");
+	}
+
 	// 'hard' cases.
 	CHECK_EQ(verify(READ(plainUtf8Data2), utf32Data2), L"");
 	CHECK_EQ(verify(READ(utf8Data2), utf32Data2), L"");

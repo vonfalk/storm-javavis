@@ -8,9 +8,14 @@ namespace storm {
 	STORM_PKG(core.io);
 
 	/**
-	 * Text IO. Supports UTF8 and UTF16, little and big endian. The package includes a method for
-	 * detecting which encoding is used. TODO: This should also be extensible.
+	 * Text IO. Supports UTF8 and UTF16, little and big endian. Use 'readText' to detect which
+	 * encoding is used and create the correct reader for that encoding.
 	 *
+	 * Line endings are always converted into a single \n (ie. Unix line endings). If the original
+	 * line endings are desired, use 'readAllRaw' on a TextReader. Supports \r\n (Windows), \n
+	 * (Unix) and \r (Macintosh).
+	 *
+	 * TODO: This should also be extensible.
 	 * TODO: Better handling of line endings.
 	 * TODO: Find a good way of duplicating an input format to an output format.
 	 */
@@ -37,6 +42,9 @@ namespace storm {
 
 		// Read the entire file.
 		Str *STORM_FN readAll();
+
+		// Read the entire file raw (still ignores any BOM).
+		Str *STORM_FN readAllRaw();
 
 		// More data in the file?
 		Bool STORM_FN more();

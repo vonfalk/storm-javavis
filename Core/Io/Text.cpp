@@ -37,12 +37,18 @@ namespace storm {
 
 		while (true) {
 			Char c = read();
-			if (c == Char(nat(0)))
+			if (c == Char(nat(0))) {
 				break;
-			if (c == Char('\r'))
-				continue;
-			if (c == Char('\n'))
+			}
+			if (c == Char('\r')) {
+				c = peek();
+				if (c == Char('\n'))
+					read();
 				break;
+			}
+			if (c == Char('\n')) {
+				break;
+			}
 			*to << c;
 		}
 
@@ -50,6 +56,23 @@ namespace storm {
 	}
 
 	Str *TextReader::readAll() {
+		StrBuf *to = new (this) StrBuf();
+
+		while (more()) {
+			Char c = read();
+			if (c == Char('\r')) {
+				c = read();
+				// Single \r?
+				if (c != Char('\n'))
+					*to << L"\n";
+			}
+			*to << c;
+		}
+
+		return to->toS();
+	}
+
+	Str *TextReader::readAllRaw() {
 		StrBuf *to = new (this) StrBuf();
 
 		while (more()) {
