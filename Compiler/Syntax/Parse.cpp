@@ -16,13 +16,13 @@ namespace storm {
 			do {
 				// Skip the previous dot.
 				if (!first)
-					tok.skip();
+					tok.expect(L".");
 				first = false;
 
 				Token id = tok.next();
 				if (tok.skipIf(L"<")) {
 					Array<Name *> *params = new (e) Array<Name *>();
-					while (tok.peek() == L">") {
+					while (tok.peek() != L">") {
 						tok.skipIf(L",");
 						params->push(parseName(e, tok));
 					}
@@ -161,6 +161,51 @@ namespace storm {
 			return result;
 		}
 
+		// Parse a production with a result.
+		static ProductionDecl *parseProductionResult(Engine &e, Tokenizer &tok, SrcName *rule) {
+			tok.expect(L"=>");
+
+			Name *name = parseName(e, tok);
+			Array<Str *> *params = parseActuals(e, tok);
+
+			ProductionDecl *result = parseProduction(e, tok, rule);
+			result->result = name;
+			result->resultParams = params;
+
+			return result;
+		}
+
+		// Parse a production with a priority.
+		static ProductionDecl *parseProductionPriority(Engine &e, Tokenizer &tok, SrcName *rule) {
+			tok.expect(L"[");
+			Int prio = 0;
+			try {
+				if (tok.skipIf(L"-")) {
+					prio = tok.next().toS()->toInt();
+				} else if (tok.skipIf(L"+")) {
+					prio = tok.next().toS()->toInt();
+				} else {
+					prio = tok.next().toS()->toInt();
+				}
+			} catch (const StrError &e) {
+				throw SyntaxError(tok.position(), e.what());
+			}
+			tok.expect(L"]");
+
+			ProductionDecl *result = null;
+			Token sep = tok.peek();
+			if (sep == L":") {
+				result = parseProduction(e, tok, rule);
+			} else if (sep == L"=>") {
+				result = parseProductionResult(e, tok, rule);
+			} else {
+				throw SyntaxError(sep.pos, L"Unexpected token: " + ::toS(sep));
+			}
+
+			result->priority = prio;
+			return result;
+		}
+
 		// Parse a rule declaration.
 		static RuleDecl *parseRule(Engine &e, Tokenizer &tok, SrcName *result) {
 			Token name = tok.next();
@@ -195,11 +240,10 @@ namespace storm {
 
 					if (sep == L":") {
 						r->productions->push(parseProduction(e, tok, name));
-						PVAR(r->productions);
 					} else if (sep == L"=>") {
-						assert(false, L"Not implemented yet!");
+						r->productions->push(parseProductionResult(e, tok, name));
 					} else if (sep == L"[") {
-						assert(false, L"Not implemented yet!");
+						r->productions->push(parseProductionPriority(e, tok, name));
 					} else {
 						r->rules->push(parseRule(e, tok, name));
 					}

@@ -174,7 +174,7 @@ namespace storm {
 	Int Str::toInt() const {
 		wchar_t *end;
 		Int r = wcstol(data->v, &end, 10);
-		if (end != data->v + data->count)
+		if (end != data->v + data->count - 1)
 			throw StrError(L"Not a number");
 		return r;
 	}
@@ -182,7 +182,7 @@ namespace storm {
 	Nat Str::toNat() const {
 		wchar_t *end;
 		Nat r = wcstoul(data->v, &end, 10);
-		if (end != data->v + data->count)
+		if (end != data->v + data->count - 1)
 			throw StrError(L"Not a number");
 		return r;
 	}
@@ -190,7 +190,7 @@ namespace storm {
 	Long Str::toLong() const {
 		wchar_t *end;
 		Long r = _wcstoi64(data->v, &end, 10);
-		if (end != data->v + data->count)
+		if (end != data->v + data->count - 1)
 			throw StrError(L"Not a number");
 		return r;
 	}
@@ -198,7 +198,7 @@ namespace storm {
 	Word Str::toWord() const {
 		wchar_t *end;
 		Word r = _wcstoui64(data->v, &end, 10);
-		if (end != data->v + data->count)
+		if (end != data->v + data->count - 1)
 			throw StrError(L"Not a number");
 		return r;
 	}
@@ -206,7 +206,7 @@ namespace storm {
 	Float Str::toFloat() const {
 		wchar_t *end;
 		Float r = (float)wcstod(data->v, &end);
-		if (end != data->v + data->count)
+		if (end != data->v + data->count - 1)
 			throw StrError(L"Not a floating-point number");
 		return r;
 	}

@@ -29,20 +29,22 @@
 	2
       1)))
 
+;; (defun goto-byte (byte)
+;;   (interactive "nGoto byte: ")
+;;   (setq pos 0)
+;;   (setq lines 0)
+;;   (setq last-line-nr (line-number-at-pos pos))
+;;   (setq line-weight (- (newline-on-disk) 1))
+;;   (while (<= (+ pos lines) byte)
+;;     (setq line-nr (line-number-at-pos pos))
+;;     (setq pos (+ pos 1))
+;;     (if (not (= last-line-nr line-nr))
+;; 	(setq lines (+ lines line-weight)))
+;;     (setq last-line-nr line-nr))
+;;   (goto-char pos))
 (defun goto-byte (byte)
-  (interactive "nGoto byte: ")
-  (setq pos 0)
-  (setq lines 0)
-  (setq last-line-nr (line-number-at-pos pos))
-  (setq line-weight (- (newline-on-disk) 1))
-  (while (<= (+ pos lines) byte)
-    (setq line-nr (line-number-at-pos pos))
-    (setq pos (+ pos 1))
-    (if (not (= last-line-nr line-nr))
-	(setq lines (+ lines line-weight)))
-    (setq last-line-nr line-nr))
-  (goto-char pos))
-
+  (interactive "nGoto char: ")
+  (goto-char byte))
 
 ;; Setup code-style. From the Linux Kernel Coding style.
 

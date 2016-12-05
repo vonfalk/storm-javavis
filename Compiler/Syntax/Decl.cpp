@@ -187,14 +187,18 @@ namespace storm {
 
 		void FileContents::toS(StrBuf *to) const {
 			for (nat i = 0; i < use->count(); i++)
-				*to << L"\nuse" << use->at(i);
+				*to << L"\nuse " << use->at(i);
 
 			if (delimiter)
 				*to << L"\ndelimiter = " << delimiter;
 
+			if (rules->any())
+				*to << L"\n";
 			for (nat i = 0; i < rules->count(); i++)
 				*to << L"\n" << rules->at(i);
 
+			if (productions->any())
+				*to << L"\n";
 			for (nat i = 0; i < productions->count(); i++)
 				*to << L"\n" << productions->at(i);
 		}
