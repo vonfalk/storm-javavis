@@ -53,7 +53,9 @@ namespace storm {
 	FileProtocol::FileProtocol(FileProtocol *o) {}
 
 	void FileProtocol::toS(StrBuf *to) const {
+#ifndef WINDOWS
 		*to << L"/";
+#endif
 	}
 
 #ifdef WINDOWS

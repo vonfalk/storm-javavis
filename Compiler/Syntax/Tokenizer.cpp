@@ -133,7 +133,7 @@ namespace storm {
 		}
 
 		SrcPos Tokenizer::position() const {
-			return SrcPos(file, pos);
+			return lookahead.pos;
 		}
 
 		Token Tokenizer::findNext() {

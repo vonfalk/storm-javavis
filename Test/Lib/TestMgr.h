@@ -90,7 +90,7 @@ TestResult Tests::run() {
 		PLN(L"Assert while testing.");
 		PLN(L"ABORTED");
 	} catch (const Exception &e) {
-		PLN(L"Error while testing: " << e);
+		PLN(L"Error while testing:\n" << e);
 		PLN(L"ABORTED");
 	}
 
