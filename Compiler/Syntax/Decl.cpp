@@ -58,7 +58,7 @@ namespace storm {
 		}
 
 		void RegexTokenDecl::toS(StrBuf *to) const {
-			*to << L"\"" << regex << L"\"";
+			*to << L"\"" << regex->escape(Char('"')) << L"\"";
 			TokenDecl::toS(to);
 		}
 

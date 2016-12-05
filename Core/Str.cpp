@@ -211,6 +211,140 @@ namespace storm {
 		return r;
 	}
 
+	static inline int hexDigit(wchar ch) {
+		if (ch >= '0' && ch <= '9')
+			return ch - '0';
+		if (ch >= 'a' && ch <= 'f')
+			return ch - 'a' + 10;
+		if (ch >= 'A' && ch <= 'F')
+			return ch - 'A' + 10;
+		return -1;
+	}
+
+	Nat Str::hexToNat() const {
+		return Nat(hexToWord());
+	}
+
+	Word Str::hexToWord() const {
+		Word r = 0;
+		for (nat i = 0; i < data->count - 1; i++) {
+			wchar ch = data->v[i];
+			int digit = hexDigit(ch);
+			if (digit < 0)
+				throw StrError(L"Not a hexadecimal number");
+			r = (r << 4) | Nat(digit);
+		}
+		return r;
+	}
+
+	static bool unescape(const wchar *&src, wchar *&out, Char extra) {
+		switch (src[1]) {
+		case 'n':
+			*out++ = '\n';
+			src++;
+			return true;
+		case 'r':
+			*out++ = '\r';
+			src++;
+			return true;
+		case 't':
+			*out++ = '\t';
+			src++;
+			return true;
+		case 'v':
+			*out++ = '\v';
+			src++;
+			return true;
+		case 'x': {
+			int a = hexDigit(src[2]);
+			if (a < 0)
+				return false;
+			int b = hexDigit(src[3]);
+			if (b < 0)
+				return false;
+			src += 3;
+			*out++ = wchar((a << 4) | b);
+			return true;
+		}
+		default:
+			if (extra.leading() != 0) {
+				if (src[1] == extra.leading() && src[2] == extra.trailing()) {
+					*out++ = extra.leading();
+					*out++ = extra.trailing();
+					src += 2;
+					return true;
+				}
+			} else if (src[1] == extra.trailing()) {
+				*out++ = extra.trailing();
+				src++;
+				return true;
+			}
+
+			return false;
+		}
+	}
+
+	Str *Str::unescape() const {
+		return unescape(Char());
+	}
+
+	Str *Str::unescape(Char extra) const {
+		// Note: we never need more space after unescaping a string.
+		GcArray<wchar> *buf = runtime::allocArray<wchar>(engine(), &bufType, data->count);
+		wchar *to = buf->v;
+
+		for (const wchar *from = data->v; *from; from++) {
+			wchar ch = *from;
+			if (ch == '\\') {
+				if (!storm::unescape(from, to, extra))
+					*to++ = '\\';
+			} else {
+				*to++ = ch;
+			}
+		}
+
+		return new (this) Str(buf->v);
+	}
+
+	static bool escape(Char ch, StrBuf *to, Char extra) {
+		if (ch == Char('\n')) {
+			*to << L"\\n";
+			return true;
+		} else if (ch == Char('\r')) {
+			*to << L"\\r";
+			return true;
+		} else if (ch == Char('\t')) {
+			*to << L"\\t";
+			return true;
+		} else if (ch == Char('\v')) {
+			*to << L"\\v";
+			return true;
+		} else if (ch == extra) {
+			*to << L"\\" << extra;
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	Str *Str::escape() const {
+		return escape(Char());
+	}
+
+	Str *Str::escape(Char extra) const {
+		// We do not know how much buffer we will need...
+		StrBuf *to = new (this) StrBuf();
+
+		for (Iter i = begin(), e = end(); i != e; ++i) {
+			Char ch = i.v();
+
+			if (!storm::escape(ch, to, extra))
+				*to << ch;
+		}
+
+		return to->toS();
+	}
+
 	void Str::deepCopy(CloneEnv *env) {
 		// We don't have any mutable data we need to clone.
 	}

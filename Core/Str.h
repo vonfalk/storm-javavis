@@ -71,6 +71,16 @@ namespace storm {
 		Word STORM_FN toWord() const;
 		Float STORM_FN toFloat() const;
 
+		// Interpret as hexadecimal numbers.
+		Nat STORM_FN hexToNat() const;
+		Word STORM_FN hexToWord() const;
+
+		// Escape/unescape characters. Any unknown escape sequences are kept as they are.
+		Str *unescape() const;
+		Str *unescape(Char extra) const;
+		Str *escape() const;
+		Str *escape(Char extra) const;
+
 		// Deep copy (nothing needs to be done really).
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 

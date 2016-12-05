@@ -18,6 +18,9 @@ namespace storm {
 		// Create a character from a codepoint number.
 		STORM_CTOR Char(Nat codepoint);
 
+		// Create the null character.
+		STORM_CTOR Char();
+
 		// Compare.
 		Bool STORM_FN operator ==(Char o) const;
 		Bool STORM_FN operator !=(Char o) const;

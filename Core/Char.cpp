@@ -9,6 +9,8 @@ namespace storm {
 
 	Char::Char(wchar ch) : value(ch) {}
 
+	Char::Char() : value(0) {}
+
 	Char::Char(Nat codepoint) : value(codepoint) {}
 
 	Bool Char::operator ==(Char o) const {

@@ -55,3 +55,17 @@ BEGIN_TEST(StrBufTest, Core) {
 	CHECK_EQ(toS(buf), L"   20  100   -3");
 
 } END_TEST
+
+
+BEGIN_TEST(StrConvTest, Core) {
+	Engine &e = gEngine();
+
+	CHECK_EQ((new (e) Str(L"AF"))->hexToNat(), 0xAF);
+	CHECK_EQ(::toS((new (e) Str(L"\\x70"))->unescape()), L"\x70");
+	CHECK_EQ(::toS((new (e) Str(L"\\n"))->unescape()), L"\n");
+	CHECK_EQ(::toS((new (e) Str(L"\n"))->escape()), L"\\n");
+
+	CHECK_EQ(::toS((new (e) Str(L"\\\""))->unescape(Char('"'))), L"\"");
+	CHECK_EQ(::toS((new (e) Str(L"\""))->escape(Char('"'))), L"\\\"");
+
+} END_TEST

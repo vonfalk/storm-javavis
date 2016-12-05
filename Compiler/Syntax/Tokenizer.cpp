@@ -35,46 +35,11 @@ namespace storm {
 		}
 
 		Str *Token::strLiteral() const {
-			StrBuf *to = new (str) StrBuf();
 			if (!isStrLiteral())
-				return to->toS();
+				return new (str) Str();
 
-			// TODO: Proper escape/unescape.
-			const wchar *s = start();
-			for (nat i = 1; i < len - 1; i++) {
-				if (s[i] == '\\') {
-					if (i + 1 >= len - 1) {
-						to->addRaw('\\');
-					} else {
-						i++;
-						switch (s[i]) {
-						case 'n':
-							to->addRaw('\n');
-							break;
-						case 'r':
-							to->addRaw('\r');
-							break;
-						case 't':
-							to->addRaw('\t');
-							break;
-						case 'v':
-							to->addRaw('\v');
-							break;
-						case '"':
-							to->addRaw('\"');
-							break;
-						default:
-							to->addRaw('\\');
-							to->addRaw(s[i]);
-							break;
-						}
-					}
-				} else {
-					to->addRaw(s[i]);
-				}
-			}
-
-			return to->toS();
+			Str *r = new (str) Str(start() + 1, start() + len - 1);
+			return r->unescape(Char('"'));
 		}
 
 		Str *Token::toS() const {
