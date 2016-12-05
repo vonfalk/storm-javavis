@@ -38,7 +38,7 @@ SUITE(CodeBasic, 5);
 // Tests of the code generation backend.
 SUITE(Code, 6);
 // More involved tests of Storm. Still no compilation from sources.
-SUITE(Storm, 7);
+SUITE_(Storm, 7);
 
 // Stress tests (takes time).
 SUITEX(Stress, 100);

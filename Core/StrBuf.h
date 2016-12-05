@@ -67,6 +67,7 @@ namespace storm {
 
 		// Append stuff (do we need these as well?)
 		StrBuf *add(const wchar *str);
+		StrBuf *addRaw(wchar ch);
 		StrBuf *STORM_FN add(const Str *str);
 		StrBuf *STORM_FN add(const Object *obj);
 		StrBuf *STORM_FN add(const TObject *obj);

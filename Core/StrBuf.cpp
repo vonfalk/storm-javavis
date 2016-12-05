@@ -161,6 +161,12 @@ namespace storm {
 		return this;
 	}
 
+	StrBuf *StrBuf::addRaw(wchar ch) {
+		ensure(pos + 1);
+		buf->v[pos++] = ch;
+		return this;
+	}
+
 	StrBuf *StrBuf::add(const Str *str) {
 		return add(str->c_str());
 	}

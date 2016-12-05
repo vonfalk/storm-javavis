@@ -16,7 +16,7 @@ namespace storm {
 			return str->c_str() + pos.pos;
 		}
 
-		bool Token::is(const wchar *t) const {
+		bool Token::operator ==(const wchar *t) const {
 			const wchar *s = start();
 			for (nat i = 0; i < len; i++) {
 				if (s[i] == 0)
@@ -25,6 +25,56 @@ namespace storm {
 					return false;
 			}
 			return true;
+		}
+
+		bool Token::isStrLiteral() const {
+			const wchar *s = start();
+			if (*s != '"')
+				return false;
+			return s[len-1] == '"';
+		}
+
+		Str *Token::strLiteral() const {
+			StrBuf *to = new (str) StrBuf();
+			if (!isStrLiteral())
+				return to->toS();
+
+			// TODO: Proper escape/unescape.
+			const wchar *s = start();
+			for (nat i = 1; i < len - 1; i++) {
+				if (s[i] == '\\') {
+					if (i + 1 >= len - 1) {
+						to->addRaw('\\');
+					} else {
+						i++;
+						switch (s[i]) {
+						case 'n':
+							to->addRaw('\n');
+							break;
+						case 'r':
+							to->addRaw('\r');
+							break;
+						case 't':
+							to->addRaw('\t');
+							break;
+						case 'v':
+							to->addRaw('\v');
+							break;
+						case '"':
+							to->addRaw('\"');
+							break;
+						default:
+							to->addRaw('\\');
+							to->addRaw(s[i]);
+							break;
+						}
+					}
+				} else {
+					to->addRaw(s[i]);
+				}
+			}
+
+			return to->toS();
 		}
 
 		Str *Token::toS() const {
@@ -95,7 +145,7 @@ namespace storm {
 			if (!more())
 				throw SyntaxError(position(), L"Unexpected end of file.");
 
-			if (lookahead.is(token)) {
+			if (lookahead == token) {
 				skip();
 				return true;
 			} else {
@@ -107,7 +157,7 @@ namespace storm {
 			if (!more())
 				throw SyntaxError(position(), L"Unexpected end of file.");
 
-			if (!lookahead.is(token))
+			if (lookahead != token)
 				throw SyntaxError(lookahead.pos, L"Expected " + ::toS(token) + L" but got " + ::toS(lookahead.toS()));
 
 			skip();

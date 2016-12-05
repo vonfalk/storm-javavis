@@ -24,7 +24,14 @@ namespace storm {
 			bool empty() const;
 
 			// Is this token equal to 'str'?
-			bool is(const wchar *str) const;
+			bool operator ==(const wchar *str) const;
+			bool operator !=(const wchar *str) const { return !(*this == str); }
+
+			// Is his a string literal.
+			bool isStrLiteral() const;
+
+			// Get the string literal without quotes.
+			Str *strLiteral() const;
 
 			// Return a Str representing this token.
 			Str *toS() const;
