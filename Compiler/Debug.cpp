@@ -22,6 +22,8 @@ namespace storm {
 			return size_t(this) != oldPos;
 		}
 
+		Extend::Extend() : v(1) {}
+
 		Extend::Extend(Int v) : v(v) {}
 
 		Int Extend::value() {

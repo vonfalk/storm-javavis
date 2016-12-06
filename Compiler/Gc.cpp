@@ -230,12 +230,14 @@ namespace storm {
 #define FIX_VTABLE(base)						\
 	do {										\
 		mps_addr_t d = *(mps_addr_t *)(base);	\
-		d = (byte *)d - vtableOffset;			\
-		mps_res_t r = MPS_FIX12(ss, &d);		\
-		if (r != MPS_RES_OK)					\
-			return r;							\
-		d = (byte *)d + vtableOffset;			\
-		*(mps_addr_t *)(base) = d;				\
+		if (d) {								\
+			d = (byte *)d - vtableOffset;		\
+			mps_res_t r = MPS_FIX12(ss, &d);	\
+			if (r != MPS_RES_OK)				\
+				return r;						\
+			d = (byte *)d + vtableOffset;		\
+			*(mps_addr_t *)(base) = d;			\
+		}										\
 	} while (false)
 
 	// Helper for interpreting and scanning a block of data.
@@ -1040,7 +1042,8 @@ namespace storm {
 		if (type->kind == GcType::tType)
 			return allocTypeObj(type);
 
-		assert(type->kind == GcType::tFixed, L"Wrong type for calling alloc().");
+		assert(type->kind == GcType::tFixed
+			|| type->kind == GcType::tFixedObj, L"Wrong type for calling alloc().");
 
 		size_t size = align(type->stride + headerSize) + MPS_CHECK_BYTES;
 		mps_ap_t &ap = currentAllocPoint();

@@ -77,11 +77,13 @@ namespace storm {
 		if (owner->typeFlags & typeClass) {
 			// Set the VTable.
 			*l << mov(ptrA, me);
+			PVAR(owner->vtable->ref()->address());
 			*l << mov(ptrRel(ptrA, Offset()), Ref(owner->vtable->ref()));
 		}
 
 		*l << mov(ptrA, me);
 		*l << epilog();
+		*l << ret(valPtr());
 
 		return t;
 	}
@@ -146,6 +148,7 @@ namespace storm {
 
 		*l << mov(ptrA, me);
 		*l << epilog();
+		*l << ret(valPtr());
 
 		return t;
 	}
@@ -204,6 +207,7 @@ namespace storm {
 
 		*l << mov(ptrA, me);
 		*l << epilog();
+		*l << ret(valPtr());
 
 		return t;
 	}
@@ -229,6 +233,10 @@ namespace storm {
 		Var env = l->createParam(valPtr());
 
 		TODO(L"Implement deep copy properly!");
+
+		*l << prolog();
+		*l << epilog();
+		*l << ret(valPtr());
 
 		return t;
 	}

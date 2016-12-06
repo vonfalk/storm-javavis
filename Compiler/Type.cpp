@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "NamedThread.h"
 #include "Function.h"
+#include "Exception.h"
 #include "Core/Str.h"
 #include "Core/Handle.h"
 #include "Core/Gen/CppTypes.h"
@@ -699,6 +700,8 @@ namespace storm {
 			Function *f = as<Function>(i.v());
 			if (!f)
 				continue;
+			if (wcscmp(CTOR, f->name->c_str()) == 0)
+				continue;
 
 			vtableFnAdded(f);
 		}
@@ -751,5 +754,16 @@ namespace storm {
 	}
 
 	void Type::operator delete(void *mem, Engine &e, GcType *type) {}
+
+	RootObject *alloc(Type *t) {
+		Function *ctor = t->defaultCtor();
+		if (!ctor)
+			throw InternalError(L"Can not create " + ::toS(t->identifier()) + L", no default constructor.");
+		void *data = runtime::allocObject(t->size().current(), t);
+		typedef void *(*Fn)(void *);
+		Fn fn = (Fn)ctor->ref()->address();
+		(*fn)(data);
+		return (RootObject *)data;
+	}
 
 }

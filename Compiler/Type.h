@@ -234,5 +234,7 @@ namespace storm {
 
 	};
 
+	// Allocate an instance of 'type' (slow).
+	RootObject *alloc(Type *type);
 
 }

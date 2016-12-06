@@ -83,7 +83,8 @@ namespace storm {
 		class Extend : public Object {
 			STORM_CLASS;
 		public:
-			Extend(Int v);
+			STORM_CTOR Extend();
+			STORM_CTOR Extend(Int v);
 
 			virtual Int STORM_FN value();
 

@@ -151,8 +151,13 @@ namespace storm {
 
 	code::Operand Value::copyCtor() const {
 		if (isValue()) {
-			WARNING(L"Not returning a proper copy-constructor!");
-			return code::Operand();
+			Function *ctor = type->copyCtor();
+			if (!ctor) {
+				WARNING(L"Not returning a proper copy-constructor!");
+				return code::Operand();
+			}
+
+			return code::Ref(ctor->ref());
 		} else {
 			return code::Operand();
 		}

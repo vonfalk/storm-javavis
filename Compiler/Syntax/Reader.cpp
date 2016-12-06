@@ -26,7 +26,6 @@ namespace storm {
 
 			for (Nat i = 0; i < c->rules->count(); i++) {
 				RuleDecl *decl = c->rules->at(i);
-				PVAR(decl);
 				pkg->add(new (this) Rule(decl, scope));
 			}
 		}

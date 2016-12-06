@@ -2,6 +2,7 @@
 #include "Compiler/VTableCpp.h"
 #include "Compiler/Debug.h"
 #include "Compiler/Package.h"
+#include "Compiler/TypeCtor.h"
 
 class VTableTest : public RootObject {
 public:
@@ -73,6 +74,7 @@ static Type *addSubclass(Package *pkg, Type *base) {
 	Type *sub = new (pkg) Type(pkg->anonName(), typeClass);
 	pkg->add(sub);
 	sub->setSuper(base);
+	sub->add(new (pkg) TypeDefaultCtor(sub));
 	return sub;
 }
 
@@ -156,6 +158,20 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 	CHECK_EQ(callFn(o, value), 40);
 	CHECK_EQ(callFn(o, value1), 40);
 	CHECK_EQ(callFn(o, value2), 40);
+
+	// Create actual objects!
+	debug::Extend *p = (debug::Extend *)alloc(extend);
+	CHECK_EQ(p->value(), 1);
+	CHECK_EQ(callFn(p, value), 1);
+	p = (debug::Extend *)alloc(sub1);
+	CHECK_EQ(p->value(), 20);
+	CHECK_EQ(callFn(p, value), 20);
+	CHECK_EQ(callFn(p, value1), 20);
+	p = (debug::Extend *)alloc(sub2);
+	CHECK_EQ(p->value(), 40);
+	CHECK_EQ(callFn(p, value), 40);
+	CHECK_EQ(callFn(p, value1), 40);
+	CHECK_EQ(callFn(p, value2), 40);
 } END_TEST
 
 BEGIN_TEST(VTableCppTest3, Storm) {
