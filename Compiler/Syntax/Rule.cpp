@@ -35,10 +35,9 @@ namespace storm {
 			add(lazyFunction(engine, tfmResult, L"transform", params, fnPtr(engine, &Rule::createTransform, this)));
 
 			// Add these last.
-			TODO(L"Implement these!");
-			// add(new (this) TypeDefaultCtor(this));
-			// add(new (this) TypeCopyCtor(this));
-			// add(new (this) TypeDeepCopy(this));
+			add(new (this) TypeDefaultCtor(this));
+			add(new (this) TypeCopyCtor(this));
+			add(new (this) TypeDeepCopy(this));
 
 			return Type::loadAll();
 		}

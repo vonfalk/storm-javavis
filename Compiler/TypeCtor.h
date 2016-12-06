@@ -15,6 +15,13 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR TypeDefaultCtor(Type *owner);
+
+	private:
+		// Owner.
+		Type *owner;
+
+		// Generate code.
+		CodeGen *CODECALL generate();
 	};
 
 
@@ -26,6 +33,13 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR TypeCopyCtor(Type *owner);
+
+	private:
+		// Owner.
+		Type *owner;
+
+		// Generate code.
+		CodeGen *CODECALL generate();
 	};
 
 
@@ -37,7 +51,15 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR TypeAssign(Type *owner);
+
+	private:
+		// Owner.
+		Type *owner;
+
+		// Generate code.
+		CodeGen *CODECALL generate();
 	};
+
 
 	/**
 	 * Default deepCopy function.
@@ -47,6 +69,13 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR TypeDeepCopy(Type *owner);
+
+	private:
+		// Owner.
+		Type *owner;
+
+		// Generate code.
+		CodeGen *CODECALL generate();
 	};
 
 }

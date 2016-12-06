@@ -65,8 +65,15 @@ namespace storm {
 			s += vSize;
 		}
 
-		PVAR(pos);
 		return pos;
+	}
+
+	Array<MemberVar *> *Layout::variables() {
+		Array<MemberVar *> *r = new (this) Array<MemberVar *>();
+		for (nat i = 0; i < vars->count(); i++) {
+			r->push(vars->at(i));
+		}
+		return r;
 	}
 
 }

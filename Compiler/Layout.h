@@ -29,6 +29,9 @@ namespace storm {
 		// 'parent' may be null.
 		nat fillGcType(const GcType *parent, GcType *into);
 
+		// Get a list of all member variables.
+		Array<MemberVar *> *variables();
+
 	private:
 		// All members in here, in the order they are laid out.
 		Array<MemberVar *> *vars;

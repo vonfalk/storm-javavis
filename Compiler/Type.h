@@ -101,6 +101,9 @@ namespace storm {
 		// Force layout of all member variables.
 		void STORM_FN doLayout();
 
+		// Get all variables in here.
+		inline Array<MemberVar *> *variables() const { return layout->variables(); }
+
 		// Inheritance chain and membership lookup. TODO: Make private?
 		TypeChain *chain;
 
@@ -131,6 +134,11 @@ namespace storm {
 		// Names for constructors and destructors.
 		static const wchar *CTOR;
 		static const wchar *DTOR;
+
+		// Find some nice-to-have functions. TODO: Make these throw on error?
+		MAYBE(Function *) STORM_FN defaultCtor();
+		MAYBE(Function *) STORM_FN copyCtor();
+		MAYBE(Function *) STORM_FN assignFn();
 
 	private:
 		// Special constructor for creating the first type.

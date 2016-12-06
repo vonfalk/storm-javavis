@@ -733,6 +733,18 @@ namespace storm {
 		}
 	}
 
+	Function *Type::defaultCtor() {
+		return as<Function>(find(CTOR, new (this) Array<Value>(1, thisPtr(this))));
+	}
+
+	Function *Type::copyCtor() {
+		return as<Function>(find(CTOR, new (this) Array<Value>(2, thisPtr(this))));
+	}
+
+	Function *Type::assignFn() {
+		return as<Function>(find(L"=", new (this) Array<Value>(2, thisPtr(this))));
+	}
+
 	void *Type::operator new(size_t size, Engine &e, GcType *type) {
 		assert(size <= type->stride, L"Invalid type description found!");
 		return e.gc.alloc(type);
