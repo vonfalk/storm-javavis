@@ -82,7 +82,7 @@ namespace storm {
 		inline SyntaxError(const SrcPos &where, const String &msg) : CodeError(where), msg(msg) {}
 
 		inline virtual String what() const {
-			return ::toS(where) + L": Syntax error: " + msg;
+			return L"@" + ::toS(where) + L": Syntax error: " + msg;
 		}
 
 	private:
@@ -102,7 +102,7 @@ namespace storm {
 			: CodeError(where), msg(L"Expected " + ::toS(expected) + L" but got " + ::toS(got)) {}
 
 		inline virtual String what() const {
-			return ::toS(where) + L": Type error: " + msg;
+			return L"@" + ::toS(where) + L": Type error: " + msg;
 		}
 
 	private:
@@ -116,7 +116,9 @@ namespace storm {
 	class TypedefError : public CodeError {
 	public:
 		inline TypedefError(const String &msg) : CodeError(SrcPos()), msg(msg) { TODO("Require a SrcPos!"); }
-		inline virtual String what() const { return ::toS(where) + L": Type definition error: " + msg; }
+		inline virtual String what() const {
+			return L"@" + ::toS(where) + L": Type definition error: " + msg;
+		}
 	private:
 		String msg;
 	};

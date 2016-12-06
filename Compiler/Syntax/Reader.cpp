@@ -1,5 +1,10 @@
 #include "stdafx.h"
 #include "Reader.h"
+#include "Engine.h"
+#include "Exception.h"
+#include "SStr.h"
+#include "Rule.h"
+#include "Core/Str.h"
 
 namespace storm {
 	namespace syntax {
@@ -18,6 +23,12 @@ namespace storm {
 
 		void FileReader::readSyntaxRules() {
 			ensureLoaded();
+
+			for (Nat i = 0; i < c->rules->count(); i++) {
+				RuleDecl *decl = c->rules->at(i);
+				PVAR(decl);
+				pkg->add(new (this) Rule(decl, scope));
+			}
 		}
 
 		void FileReader::readSyntaxProductions() {
@@ -29,6 +40,37 @@ namespace storm {
 				return;
 
 			c = parseSyntax(file);
+
+			Scope root = engine().scope();
+			SyntaxLookup *lookup = new (this) SyntaxLookup();
+			for (nat i = 0; i < c->use->count(); i++) {
+				SrcName *name = c->use->at(i);
+				Named *found = root.find(name);
+				if (!found)
+					throw SyntaxError(name->pos, L"The package " + ::toS(name) + L" does not exist!");
+				lookup->extra->push(found);
+			}
+
+			scope = Scope(pkg, lookup);
+		}
+
+
+
+		SyntaxLookup::SyntaxLookup() : ScopeExtra(new (engine()) Str(L"void")) {}
+
+		Named *SyntaxLookup::find(Scope in, SimpleName *name) {
+			if (name->count() == 1) {
+				SimplePart *last = name->last();
+				if (wcscmp(last->name->c_str(), L"SStr") == 0 && last->params->empty())
+					return SStr::stormType(engine());
+
+				if (last->params->any() && last->params->at(0) != Value()) {
+					if (Named *r = last->params->at(0).type->find(last))
+						return r;
+				}
+			}
+
+			return ScopeExtra::find(in, name);
 		}
 
 	}

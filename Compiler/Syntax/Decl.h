@@ -199,7 +199,7 @@ namespace storm {
 			STORM_CTOR FileContents();
 
 			// Used packages.
-			Array<Name *> *use;
+			Array<SrcName *> *use;
 
 			// Name of the delimiter rule (if any).
 			MAYBE(Name *) delimiter;

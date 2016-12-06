@@ -121,4 +121,11 @@ namespace storm {
 		return r;
 	}
 
+	Function *lazyFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, Fn<CodeGen *> *generate) {
+		Function *r = new (e) Function(result, new (e) Str(name), params);
+		r->setCode(new (e) LazyCode(generate));
+		return r;
+	}
+
+
 }

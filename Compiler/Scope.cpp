@@ -186,9 +186,13 @@ namespace storm {
 	 * ScopeExtra.
 	 */
 
-	ScopeExtra::ScopeExtra() {}
+	ScopeExtra::ScopeExtra() {
+		extra = new (this) Array<NameLookup *>();
+	}
 
-	ScopeExtra::ScopeExtra(Str *v) : ScopeLookup(v) {}
+	ScopeExtra::ScopeExtra(Str *v) : ScopeLookup(v) {
+		extra = new (this) Array<NameLookup *>();
+	}
 
 	Named *ScopeExtra::find(Scope in, SimpleName *name) {
 		if (Named *found = ScopeLookup::find(in, name))

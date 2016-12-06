@@ -3,6 +3,7 @@
 #include "Core/Io/Url.h"
 #include "Compiler/Package.h"
 #include "Compiler/Reader.h"
+#include "Compiler/Scope.h"
 #include "Decl.h"
 #include "Parse.h"
 
@@ -32,8 +33,25 @@ namespace storm {
 			// Loaded syntax definitions.
 			FileContents *c;
 
+			// Scope. Created by 'ensureLoaded'.
+			Scope scope;
+
 			// Ensure the contents is loaded.
 			void ensureLoaded();
+		};
+
+
+		/**
+		 * Custom lookup for the syntax language. Resolves the SStr class properly even if core.lang
+		 * is not included.
+		 */
+		class SyntaxLookup : public ScopeExtra {
+			STORM_CLASS;
+		public:
+			STORM_CTOR SyntaxLookup();
+
+			// Lookup.
+			virtual MAYBE(Named *) STORM_FN find(Scope in, SimpleName *name);
 		};
 
 	}

@@ -9,6 +9,7 @@
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
 #include "Core/Handle.h"
+#include "Syntax/Node.h"
 
 // Only included from here:
 #include "OS/SharedMaster.h"
@@ -220,6 +221,8 @@ namespace storm {
 			return arena()->externalSource(L"engine", this);
 		case rLazyCodeUpdate:
 			return arena()->externalSource(L"lazyUpdater", &LazyCode::updateCode);
+		case rRuleThrow:
+			return arena()->externalSource(L"ruleThrow", address(&syntax::Node::throwError));
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 		}

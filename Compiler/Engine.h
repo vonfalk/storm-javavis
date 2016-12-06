@@ -121,6 +121,7 @@ namespace storm {
 		enum RefType {
 			rEngine,
 			rLazyCodeUpdate,
+			rRuleThrow,
 
 			// Should be the last one.
 			refCount,

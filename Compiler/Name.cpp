@@ -86,11 +86,11 @@ namespace storm {
 
 	SrcName::SrcName() : Name() {}
 
-	SrcName::SrcName(SrcPos pos) : Name() {}
+	SrcName::SrcName(SrcPos pos) : Name(), pos(pos) {}
 
-	SrcName::SrcName(Name *o, SrcPos pos) : Name(o) {}
+	SrcName::SrcName(Name *o, SrcPos pos) : Name(o), pos(pos) {}
 
-	SrcName::SrcName(SimpleName *o, SrcPos pos) : Name(o) {}
+	SrcName::SrcName(SimpleName *o, SrcPos pos) : Name(o), pos(pos) {}
 
 	SrcName::SrcName(SrcName *o) : Name(o), pos(o->pos) {}
 

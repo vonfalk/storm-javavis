@@ -173,7 +173,7 @@ namespace storm {
 
 
 		FileContents::FileContents() {
-			use = new (this) Array<Name *>();
+			use = new (this) Array<SrcName *>();
 			rules = new (this) Array<RuleDecl *>();
 			productions = new (this) Array<ProductionDecl *>();
 		}
