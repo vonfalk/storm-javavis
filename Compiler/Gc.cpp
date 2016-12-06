@@ -178,6 +178,7 @@ namespace storm {
 
 		switch (h->type) {
 		case GcType::tFixed:
+		case GcType::tFixedObj:
 		case GcType::tType:
 			s = h->obj.stride + MPS_CHECK_BYTES;
 			break;
@@ -1374,6 +1375,7 @@ namespace storm {
 		const GcType *type = Gc::typeOf(addr);
 		switch (type->kind) {
 		case GcType::tFixed:
+		case GcType::tFixedObj:
 		case GcType::tType:
 			// Objects, let them through!
 			(*d->fn)((RootObject *)addr, d->data);
@@ -1497,6 +1499,7 @@ namespace storm {
 
 		switch (obj->header->type) {
 		case GcType::tFixed:
+		case GcType::tFixedObj:
 		case GcType::tType:
 		case GcType::tArray:
 		case GcType::tWeakArray:
@@ -1535,6 +1538,7 @@ namespace storm {
 
 			switch (data.failed->header->type) {
 			case GcType::tFixed:
+			case GcType::tFixedObj:
 			case GcType::tType:
 				if (Type *t = data.failed->header->obj.type) {
 					if (Str *name = t->name) {

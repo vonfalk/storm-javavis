@@ -15,7 +15,7 @@ namespace storm {
 	}
 
 	static const GcType firstDesc = {
-		GcType::tFixed,
+		GcType::tFixedObj,
 		null, // Type
 		address(&destroyThread), // Finalizer
 		sizeof(Thread), // stride/size

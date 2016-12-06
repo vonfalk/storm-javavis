@@ -173,7 +173,7 @@ namespace storm {
 		for (entries = 0; type.ptrOffsets[entries] != CppOffset::invalid; entries++)
 			;
 
-		GcType *t = e.gc.allocType(GcType::tFixed, null, Size(type.size).current(), entries);
+		GcType *t = e.gc.allocType(GcType::tFixedObj, null, Size(type.size).current(), entries);
 
 		for (nat i = 0; i < entries; i++) {
 			t->offset[i] = Offset(type.ptrOffsets[i]).current();
