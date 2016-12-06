@@ -223,6 +223,8 @@ namespace storm {
 			return arena()->externalSource(L"lazyUpdater", &LazyCode::updateCode);
 		case rRuleThrow:
 			return arena()->externalSource(L"ruleThrow", address(&syntax::Node::throwError));
+		case rVTableAllocOffset:
+			return arena()->externalSource(L"vtableAllocOffset", (const void *)VTableCpp::vtableAllocOffset());
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 		}

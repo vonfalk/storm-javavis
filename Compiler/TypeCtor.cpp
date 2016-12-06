@@ -39,7 +39,7 @@ namespace storm {
 
 			*l << fnParam(me);
 			*l << fnParam(thread->ref());
-			*l << fnCall(code::Ref(ctor->ref()), valPtr());
+			*l << fnCall(ctor->ref(), valPtr());
 		} else if (super) {
 			// Find and run the parent constructor.
 			Function *ctor = super->defaultCtor();
@@ -49,7 +49,7 @@ namespace storm {
 									+ ::toS(owner->identifier()));
 
 			*l << fnParam(me);
-			*l << fnCall(code::Ref(ctor->ref()), valPtr());
+			*l << fnCall(ctor->ref(), valPtr());
 		} else {
 			// No parent constructor to run.
 		}
@@ -66,7 +66,7 @@ namespace storm {
 				*l << mov(ptrA, me);
 				*l << add(ptrA, ptrConst(v->offset()));
 				*l << fnParam(ptrA);
-				*l << fnCall(code::Ref(ctor->ref()), valPtr());
+				*l << fnCall(ctor->ref(), valPtr());
 			} else if (v->type.isClass()) {
 				TODO(L"Implement me!");
 			} else {
@@ -76,9 +76,7 @@ namespace storm {
 
 		if (owner->typeFlags & typeClass) {
 			// Set the VTable.
-			*l << mov(ptrA, me);
-			PVAR(owner->vtable->ref()->address());
-			*l << mov(ptrRel(ptrA, Offset()), Ref(owner->vtable->ref()));
+			owner->vtable->insert(l, me);
 		}
 
 		*l << mov(ptrA, me);
@@ -113,7 +111,7 @@ namespace storm {
 
 			*l << fnParam(me);
 			*l << fnParam(src);
-			*l << fnCall(Ref(ctor->ref()), valPtr());
+			*l << fnCall(ctor->ref(), valPtr());
 		}
 
 		// Copy all variables.
@@ -133,7 +131,7 @@ namespace storm {
 				*l << add(ptrC, ptrConst(v->offset()));
 				*l << fnParam(ptrA);
 				*l << fnParam(ptrC);
-				*l << fnCall(Ref(ctor->ref()), valPtr());
+				*l << fnCall(ctor->ref(), valPtr());
 			} else {
 				// Pointer or built-in.
 				*l << mov(xRel(v->type.size(), ptrA, v->offset()), xRel(v->type.size(), ptrC, v->offset()));
@@ -142,8 +140,7 @@ namespace storm {
 
 		if (owner->typeFlags & typeClass) {
 			// Set the VTable.
-			*l << mov(ptrA, me);
-			*l << mov(ptrRel(ptrA, Offset()), Ref(owner->vtable->ref()));
+			owner->vtable->insert(l, me);
 		}
 
 		*l << mov(ptrA, me);
@@ -178,7 +175,7 @@ namespace storm {
 
 			*l << fnParam(me);
 			*l << fnParam(src);
-			*l << fnCall(Ref(ctor->ref()), valPtr());
+			*l << fnCall(ctor->ref(), valPtr());
 		}
 
 		// Copy all variables.
@@ -198,7 +195,7 @@ namespace storm {
 				*l << add(ptrC, ptrConst(v->offset()));
 				*l << fnParam(ptrA);
 				*l << fnParam(ptrC);
-				*l << fnCall(Ref(ctor->ref()), valPtr());
+				*l << fnCall(ctor->ref(), valPtr());
 			} else {
 				// Pointer or built-in.
 				*l << mov(xRel(v->type.size(), ptrA, v->offset()), xRel(v->type.size(), ptrC, v->offset()));

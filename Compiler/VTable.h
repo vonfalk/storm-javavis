@@ -2,6 +2,7 @@
 #include "Core/TObject.h"
 #include "Core/Map.h"
 #include "Core/GcBitset.h"
+#include "Code/Listing.h"
 #include "VTableSlot.h"
 #include "VTableCpp.h"
 #include "VTableStorm.h"
@@ -67,8 +68,11 @@ namespace storm {
 		// Late initialization.
 		void lateInit();
 
-		// Get a reference to this type.
-		code::RefSource *ref() const;
+		// Set the vtable of an object.
+		void insert(RootObject *obj);
+
+		// Generate code for setting the vtable.
+		void insert(code::Listing *to, code::Var obj);
 
 		// Dump the vtable contents to stdout.
 		void dbg_dump() const;

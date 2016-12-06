@@ -761,7 +761,7 @@ namespace storm {
 			throw InternalError(L"Can not create " + ::toS(t->identifier()) + L", no default constructor.");
 		void *data = runtime::allocObject(t->size().current(), t);
 		typedef void *(*Fn)(void *);
-		Fn fn = (Fn)ctor->ref()->address();
+		Fn fn = (Fn)ctor->ref().address();
 		(*fn)(data);
 		return (RootObject *)data;
 	}

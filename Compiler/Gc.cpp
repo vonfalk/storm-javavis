@@ -224,15 +224,17 @@ namespace storm {
 	} while (false)
 
 	// # of bytes before the vtable the allocation actually starts.
-	static const nat vtableOffset = OFFSET_OF(GcArray<const void *>, v[vtable::extraOffset]);
+	static const nat vtableOffset = VTableCpp::vtableAllocOffset();
 
 	// Helper for interpreting and scanning a vtable.
+	// Note: we can pass the interior pointer to MPS_FIX1
+	// Note: we assume vtable pointers are at offset 0
 #define FIX_VTABLE(base)						\
 	do {										\
 		mps_addr_t d = *(mps_addr_t *)(base);	\
-		if (d) {								\
+		if (d && MPS_FIX1(ss, d)) {				\
 			d = (byte *)d - vtableOffset;		\
-			mps_res_t r = MPS_FIX12(ss, &d);	\
+			mps_res_t r = MPS_FIX2(ss, &d);		\
 			if (r != MPS_RES_OK)				\
 				return r;						\
 			d = (byte *)d + vtableOffset;		\
@@ -737,11 +739,12 @@ namespace storm {
 	};
 
 	Gc::Gc(size_t arenaSize, nat finalizationInterval) : finalizationInterval(finalizationInterval) {
-		// We work under this assumption.
+		// We work under these assumptions.
 		assert(wordSize == sizeof(size_t), L"Invalid word-size");
 		assert(wordSize == sizeof(void *), L"Invalid word-size");
 		assert(wordSize == sizeof(MpsFwd1), L"Invalid size of MpsFwd1");
 		assert(wordSize == headerSize, L"Too large header");
+		assert(vtableOffset >= sizeof(void *), L"Invalid vtable offset (initialization failed?)");
 
 		MPS_ARGS_BEGIN(args) {
 			MPS_ARGS_ADD(args, MPS_KEY_ARENA_SIZE, arenaSize);

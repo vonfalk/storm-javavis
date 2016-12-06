@@ -122,6 +122,8 @@ namespace storm {
 			rEngine,
 			rLazyCodeUpdate,
 			rRuleThrow,
+			// # of bytes inside a vtable the object's vtable ptr is pointing.
+			rVTableAllocOffset,
 
 			// Should be the last one.
 			refCount,

@@ -21,8 +21,8 @@ static int CODECALL replaced(VTableTest *me) {
 
 static int check(const VTableTest &v) {
 	// NOTE: We may eventually have to disable optimizations for this function for tests to work. If
-	// the compiler inlines this function, it will see that it know the type of 'v', so it does not
-	// have to use the vtable at all.
+	// the compiler inlines this function, it will see that it knows the type of 'v', and that it
+	// does not have to use the vtable at all.
 	return v.replace();
 }
 
@@ -95,12 +95,12 @@ static Function *addFn(Type *to, const wchar *name, const void *fn) {
 }
 
 static bool usesVTable(Function *fn) {
-	return fn->directRef()->address() != fn->ref()->address();
+	return fn->directRef().address() != fn->ref().address();
 }
 
 static Int callFn(Object *o, Function *fn) {
 	typedef Int (*Ptr)(Object *);
-	Ptr p = (Ptr)fn->ref()->address();
+	Ptr p = (Ptr)fn->ref().address();
 	return (*p)(o);
 }
 
@@ -114,7 +114,7 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 	VERIFY(pkg);
 
 	// Should not use vtable calls now.
-	CHECK_EQ(value->ref()->address(), value->directRef()->address());
+	CHECK_EQ(value->ref().address(), value->directRef().address());
 
 
 	// Add our own instantiation...
@@ -149,11 +149,11 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 	debug::Extend *o = new (e) debug::Extend(1);
 	CHECK_EQ(o->value(), 1);
 	CHECK_EQ(callFn(o, value), 1);
-	vtable::set(sub1->vtable->ref()->address(), o);
+	sub1->vtable->insert(o);
 	CHECK_EQ(o->value(), 20);
 	CHECK_EQ(callFn(o, value), 20);
 	CHECK_EQ(callFn(o, value1), 20);
-	vtable::set(sub2->vtable->ref()->address(), o);
+	sub2->vtable->insert(o);
 	CHECK_EQ(o->value(), 40);
 	CHECK_EQ(callFn(o, value), 40);
 	CHECK_EQ(callFn(o, value1), 40);
@@ -195,12 +195,12 @@ BEGIN_TEST(VTableCppTest3, Storm) {
 
 	// Instantiate a class and make sure everything works as intended!
 	debug::Extend *o = new (e) debug::Extend(1);
-	vtable::set(sub1->vtable->ref()->address(), o);
+	sub1->vtable->insert(o);
 	CHECK_EQ(callFn(o, f1), 20);
-	vtable::set(sub2->vtable->ref()->address(), o);
+	sub2->vtable->insert(o);
 	CHECK_EQ(callFn(o, f1), 40);
 	CHECK_EQ(callFn(o, f2), 40);
-	vtable::set(sub3->vtable->ref()->address(), o);
+	sub3->vtable->insert(o);
 	CHECK_EQ(callFn(o, f1), 60);
 	CHECK_EQ(callFn(o, f2), 60);
 	CHECK_EQ(callFn(o, f3), 60);
@@ -227,12 +227,12 @@ BEGIN_TEST(VTableCppTest4, Storm) {
 
 	// Instantiate a class and make sure everything works as intended!
 	debug::Extend *o = new (e) debug::Extend(1);
-	vtable::set(sub1->vtable->ref()->address(), o);
+	sub1->vtable->insert(o);
 	CHECK_EQ(callFn(o, f1), 20);
-	vtable::set(sub2->vtable->ref()->address(), o);
+	sub2->vtable->insert(o);
 	CHECK_EQ(callFn(o, f1), 40);
 	CHECK_EQ(callFn(o, f2), 40);
-	vtable::set(sub3->vtable->ref()->address(), o);
+	sub3->vtable->insert(o);
 	CHECK_EQ(callFn(o, f1), 60);
 	CHECK_EQ(callFn(o, f2), 60);
 	CHECK_EQ(callFn(o, f3), 60);

@@ -37,6 +37,7 @@ namespace code {
 			void adcTfm(Listing *to, Instr *instr, RegSet *used);
 			void orTfm(Listing *to, Instr *instr, RegSet *used);
 			void andTfm(Listing *to, Instr *instr, RegSet *used);
+			void notTfm(Listing *to, Instr *instr, RegSet *used);
 			void subTfm(Listing *to, Instr *instr, RegSet *used);
 			void sbbTfm(Listing *to, Instr *instr, RegSet *used);
 			void xorTfm(Listing *to, Instr *instr, RegSet *used);

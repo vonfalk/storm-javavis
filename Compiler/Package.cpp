@@ -199,7 +199,7 @@ namespace storm {
 		}
 
 		typedef PkgReader *(*Fn)(Array<Url *> *, Package *);
-		Fn fn = (Fn)createFn->ref()->address();
+		Fn fn = (Fn)createFn->ref().address();
 		return (*fn)(files, this);
 	}
 

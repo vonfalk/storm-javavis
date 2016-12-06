@@ -34,7 +34,6 @@ namespace storm {
 	}
 
 	void VTableCpp::init(const void *vtable, nat count, bool copy) {
-		tableUsed = false;
 		refs = null;
 		data = null;
 		tabSize = count;
@@ -42,6 +41,7 @@ namespace storm {
 
 		if (copy) {
 			data = runtime::allocArray<const void *>(engine(), &pointerArrayType, count + vtable::extraOffset);
+			data->filled = 0;
 
 			const void ** src = (const void **)vtable - vtable::extraOffset;
 			for (nat i = 1; i < count + vtable::extraOffset; i++) {
@@ -82,7 +82,7 @@ namespace storm {
 	void VTableCpp::replace(const void *vtable, nat count) {
 		if (!data || count > this->count()) {
 			// We need to replace the vtables on all live objects using the vtable.
-			bool needWalk = tableUsed;
+			bool needWalk = used();
 			VTableSwitch data;
 			data.from = table();
 
@@ -107,11 +107,6 @@ namespace storm {
 
 	nat VTableCpp::count() const {
 		return tabSize;
-	}
-
-	void VTableCpp::insert(RootObject *obj) {
-		tableUsed = true;
-		vtable::set(table(), obj);
 	}
 
 	nat VTableCpp::findSlot(const void *fn) const {
@@ -142,7 +137,7 @@ namespace storm {
 			refs = runtime::allocArray<Function *>(engine(), &pointerArrayType, count());
 
 		refs->v[id] = fn;
-		set(id, fn->directRef()->address());
+		set(id, fn->directRef().address());
 	}
 
 	Function *VTableCpp::get(nat id) const {
@@ -164,11 +159,55 @@ namespace storm {
 	}
 
 	const void *VTableCpp::address() const {
-		return table();
+		if (data)
+			return data;
+		else
+			// Tag the pointer.
+			return (const byte *)raw + 1;
 	}
 
 	nat VTableCpp::size() const {
-		return count() * sizeof(const void *);
+		return count() * sizeof(const void *) + vtableAllocOffset();
+	}
+
+	bool VTableCpp::used() const {
+		if (data)
+			return data->filled != 0;
+		else
+			return true;
+	}
+
+	void VTableCpp::insert(RootObject *obj) {
+		if (data)
+			data->filled = 1;
+		vtable::set(table(), obj);
+	}
+
+	void VTableCpp::insert(code::Listing *to, code::Var obj, code::Ref table) {
+		using namespace code;
+		Label lbl = to->label();
+
+		// See if the pointer in 'table' is tagged with a 1 in the lower bit. If so, remove it and
+		// skip the mark-phase since we're dealing with a raw vtable.
+		*to << mov(ptrA, table);
+		*to << mov(ptrC, ptrConst(1));
+		*to << not(ptrC);
+		*to << and(ptrC, ptrA);
+		*to << cmp(ptrC, ptrA);
+		*to << jmp(lbl, ifNotEqual);
+
+		// Mark as used by setting 'filled' to 1.
+		*to << mov(ptrRel(ptrA, Offset::sPtr), ptrConst(1));
+		// The pointer is offset a bit.
+		*to << add(ptrA, to->engine().ref(Engine::rVTableAllocOffset));
+
+		*to << lbl;
+		*to << mov(ptrC, obj);
+		*to << mov(ptrRel(ptrC, Offset()), ptrA);
+	}
+
+	size_t VTableCpp::vtableAllocOffset() {
+		return OFFSET_OF(GcArray<const void *>, v[vtable::extraOffset]);
 	}
 
 	namespace vtable {

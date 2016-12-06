@@ -57,8 +57,12 @@ namespace storm {
 		}
 	}
 
-	code::RefSource *VTable::ref() const {
-		return source;
+	void VTable::insert(RootObject *obj) {
+		cpp->insert(obj);
+	}
+
+	void VTable::insert(code::Listing *to, code::Var obj) {
+		cpp->insert(to, obj, code::Ref(source));
 	}
 
 	void VTable::dbg_dump() const {
@@ -136,7 +140,7 @@ namespace storm {
 				if (!hasOverride(slot)) {
 					// Disable vtable lookup for this function as it was a leaf function.
 					Function *f = i.k();
-					if (f->ref()->address() != f->directRef()->address()) {
+					if (f->ref().address() != f->directRef().address()) {
 						f->setLookup(null);
 					}
 				}
@@ -203,7 +207,7 @@ namespace storm {
 		bool cppType = (owner->typeFlags & typeCpp) == typeCpp;
 		if (cppType && as<StaticCode>(c) != null) {
 			// Might be a function from C++.
-			const void *addr = fn->directRef()->address();
+			const void *addr = fn->directRef().address();
 			nat r = cpp->findSlot(addr);
 			if (r != vtable::invalid) {
 				return cppSlot(r);
@@ -345,7 +349,7 @@ namespace storm {
 	}
 
 	void VTable::updateLookup(Function *fn, VTableSlot slot) {
-		if (fn->ref()->address() != fn->directRef()->address())
+		if (fn->ref().address() != fn->directRef().address())
 			useLookup(fn, slot);
 	}
 

@@ -98,7 +98,7 @@ namespace storm {
 	void VTableStorm::set(Nat slot, Function *fn) {
 		assert(slot < count(), L"Out of range: " + ::toS(slot));
 		refs->v[slot] = fn;
-		table->v[slot] = fn->directRef()->address();
+		table->v[slot] = fn->directRef().address();
 	}
 
 	void VTableStorm::set(Nat slot, const void *addr) {

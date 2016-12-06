@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/TObject.h"
 #include "Code/Reference.h"
-#include "Code/MemberRef.h"
+#include "Code/Listing.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -17,9 +17,6 @@ namespace storm {
 	 * VTable when storing it in this class.
 	 *
 	 * Note: This class assumes that all objects in C++ only use single inheritance.
-	 *
-	 * TODO: To check if the vtable has been used by simply seeing if 'insert' was called is not
-	 * sufficient as we leak that information through being a 'Content'.
 	 */
 	class VTableCpp : public code::Content {
 		STORM_CLASS;
@@ -38,6 +35,12 @@ namespace storm {
 
 		// Set this VTable for a class.
 		void insert(RootObject *obj);
+
+		// Generate code to set VTable for a class. 'vtableRef' is a reference to the VTableCpp used.
+		static void insert(code::Listing *to, code::Var obj, code::Ref vtableRef);
+
+		// Get the offset between the vtable allocation and the actual start of the vtable.
+		static size_t vtableAllocOffset();
 
 		// Replace the contents in here with a new vtable. Clears all references.
 		void replace(const void *vtable);
@@ -69,7 +72,8 @@ namespace storm {
 		VTableCpp(const void *src, nat count, bool copy);
 
 		// The VTable data. We're storing it as a regular GC array. May be null if we're referring
-		// to a raw c++ vtable.
+		// to a raw c++ vtable. The 'filled' member of this array is used to indicate that the
+		// vtable has been assigned to an object at some time.
 		GcArray<const void *> *data;
 
 		// References updating the VTable. The entire table is null if no updaters are added.
@@ -81,14 +85,14 @@ namespace storm {
 		// Size of the vtable in here.
 		nat tabSize;
 
-		// Have we ever set our VTable to an object?
-		bool tableUsed;
-
 		// Initialize ourselves.
 		void init(const void *vtable, nat count, bool copy);
 
 		// Get a pointer to the start of the vtable.
 		const void **table() const;
+
+		// Is the table used?
+		inline bool used() const;
 	};
 
 

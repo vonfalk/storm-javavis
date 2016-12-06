@@ -228,14 +228,6 @@ namespace code {
 		return instrLoose(e, op, sizedReg(ptrA, ret.size), src);
 	}
 
-	Instr *add(EnginePtr e, Operand dest, Operand src) {
-		return instrDestSrc(e, op::add, dest, src);
-	}
-
-	Instr *adc(EnginePtr e, Operand dest, Operand src) {
-		return instrDestSrc(e, op::adc, dest, src);
-	}
-
 	Instr *or(EnginePtr e, Operand dest, Operand src) {
 		return instrDestSrc(e, op::or, dest, src);
 	}
@@ -244,16 +236,28 @@ namespace code {
 		return instrDestSrc(e, op::and, dest, src);
 	}
 
+	Instr *xor(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::xor, dest, src);
+	}
+
+	Instr *not(EnginePtr e, Operand dest) {
+		return instrDest(e, op::not, dest);
+	}
+
+	Instr *add(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::add, dest, src);
+	}
+
+	Instr *adc(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::adc, dest, src);
+	}
+
 	Instr *sub(EnginePtr e, Operand dest, Operand src) {
 		return instrDestSrc(e, op::sub, dest, src);
 	}
 
 	Instr *sbb(EnginePtr e, Operand dest, Operand src) {
 		return instrDestSrc(e, op::sbb, dest, src);
-	}
-
-	Instr *xor(EnginePtr e, Operand dest, Operand src) {
-		return instrDestSrc(e, op::xor, dest, src);
 	}
 
 	Instr *cmp(EnginePtr e, Operand dest, Operand src) {

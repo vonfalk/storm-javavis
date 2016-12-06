@@ -13,6 +13,7 @@ namespace code {
 			TRANSFORM(adc),
 			TRANSFORM(or),
 			TRANSFORM(and),
+			TRANSFORM(not),
 			TRANSFORM(sub),
 			TRANSFORM(sbb),
 			TRANSFORM(xor),
@@ -99,6 +100,11 @@ namespace code {
 		void Remove64::andTfm(Listing *to, Instr *instr, RegSet *used) {
 			*to << and(low32(instr->dest()), low32(instr->src()));
 			*to << and(high32(instr->dest()), high32(instr->src()));
+		}
+
+		void Remove64::notTfm(Listing *to, Instr *instr, RegSet *used) {
+			*to << not(low32(instr->dest()));
+			*to << not(high32(instr->src()));
 		}
 
 		void Remove64::subTfm(Listing *to, Instr *instr, RegSet *used) {

@@ -312,6 +312,10 @@ namespace code {
 		return Operand(v, Size::sPtr);
 	}
 
+	Operand ptrConst(Nat v) {
+		return xConst(Size::sPtr, v);
+	}
+
 	Operand xConst(Size s, Word v) {
 		return Operand(v, s);
 	}

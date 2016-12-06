@@ -25,11 +25,11 @@ namespace storm {
 		const void *pointer();
 
 		// Get a reference to the code for this function.
-		code::RefSource *STORM_FN ref();
+		code::Ref STORM_FN ref();
 
 		// Get a reference directly to the underlying function, bypassing any vtable lookups or
 		// similar. Mainly used for implementing super-calls.
-		code::RefSource *STORM_FN directRef();
+		code::Ref STORM_FN directRef();
 
 		// Is this a member function?
 		Bool STORM_FN isMember();

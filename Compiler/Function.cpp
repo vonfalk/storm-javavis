@@ -13,17 +13,17 @@ namespace storm {
 		runOnThread(null) {}
 
 	const void *Function::pointer() {
-		return ref()->address();
+		return ref().address();
 	}
 
-	code::RefSource *Function::ref() {
+	code::Ref Function::ref() {
 		initRefs();
-		return lookupRef;
+		return code::Ref(lookupRef);
 	}
 
-	code::RefSource *Function::directRef() {
+	code::Ref Function::directRef() {
 		initRefs();
-		return codeRef;
+		return code::Ref(codeRef);
 	}
 
 	Bool Function::isMember() {

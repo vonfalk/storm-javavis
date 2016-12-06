@@ -85,6 +85,19 @@ namespace code {
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
+		void notOut(Output *to, Instr *instr) {
+			const Operand &dest = instr->dest();
+			if (dest.size() == Size::sByte) {
+				to->putByte(0xF6);
+				modRm(to, 2, dest);
+			} else if (dest.size() == Size::sInt || dest.size() == Size::sPtr) {
+				to->putByte(0xF7);
+				modRm(to, 2, dest);
+			} else {
+				assert(false, L"Unsupported size for 'not'");
+			}
+		}
+
 		void subOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
 				0x82, 5,
@@ -571,6 +584,7 @@ namespace code {
 			OUTPUT(adc),
 			OUTPUT(or),
 			OUTPUT(and),
+			OUTPUT(not),
 			OUTPUT(sub),
 			OUTPUT(sbb),
 			OUTPUT(xor),

@@ -107,13 +107,14 @@ namespace code {
 	Instr *STORM_FN fnCall(EnginePtr e, Operand src, ValType ret);
 
 	// Integer math (signed/unsigned)
-	Instr *STORM_FN add(EnginePtr e, Operand dest, Operand src);
-	Instr *STORM_FN adc(EnginePtr e, Operand dest, Operand src);
 	Instr *STORM_FN or(EnginePtr e, Operand dest, Operand src);
 	Instr *STORM_FN and(EnginePtr e, Operand dest, Operand src);
+	Instr *STORM_FN xor(EnginePtr e, Operand dest, Operand src);
+	Instr *STORM_FN not(EnginePtr e, Operand dest);
+	Instr *STORM_FN add(EnginePtr e, Operand dest, Operand src);
+	Instr *STORM_FN adc(EnginePtr e, Operand dest, Operand src);
 	Instr *STORM_FN sub(EnginePtr e, Operand dest, Operand src);
 	Instr *STORM_FN sbb(EnginePtr e, Operand dest, Operand src);
-	Instr *STORM_FN xor(EnginePtr e, Operand dest, Operand src);
 	Instr *STORM_FN cmp(EnginePtr e, Operand dest, Operand src);
 	Instr *STORM_FN mul(EnginePtr e, Operand dest, Operand src);
 
@@ -268,13 +269,14 @@ namespace code {
 	PROXY2(fnParamRef, Operand, Size);
 	PROXY3(fnParamRef, Operand, Size, Operand);
 	PROXY2(fnCall, Operand, ValType);
-	PROXY2(add, Operand, Operand);
-	PROXY2(adc, Operand, Operand);
 	PROXY2(or, Operand, Operand);
 	PROXY2(and, Operand, Operand);
+	PROXY2(xor, Operand, Operand);
+	PROXY1(not, Operand);
+	PROXY2(add, Operand, Operand);
+	PROXY2(adc, Operand, Operand);
 	PROXY2(sub, Operand, Operand);
 	PROXY2(sbb, Operand, Operand);
-	PROXY2(xor, Operand, Operand);
 	PROXY2(cmp, Operand, Operand);
 	PROXY2(mul, Operand, Operand);
 	PROXY2(idiv, Operand, Operand);

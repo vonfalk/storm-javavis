@@ -203,6 +203,7 @@ namespace code {
 	Operand STORM_FN floatConst(Float v);
 	Operand STORM_FN ptrConst(Size v);
 	Operand STORM_FN ptrConst(Offset v);
+	Operand STORM_FN ptrConst(Nat v);
 	Operand STORM_FN xConst(Size s, Word v);
 
 	// Store a pointer to a GC:d object as a constant.
