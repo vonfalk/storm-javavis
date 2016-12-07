@@ -115,11 +115,14 @@ namespace storm {
 			Char operator *() const;
 			Char STORM_FN v() const;
 
+			// Peek at the raw offset.
+			inline Nat offset() const { return pos; }
+
 		private:
 			friend class Str;
 
 			// Create iterator to start.
-			Iter(const Str *str);
+			Iter(const Str *str, Nat pos);
 
 			// String we're referring to.
 			const Str *owner;
@@ -132,6 +135,9 @@ namespace storm {
 		// Begin and end.
 		Iter STORM_FN begin() const;
 		Iter STORM_FN end() const;
+
+		// Get an iterator to a specific position.
+		Iter posIter(Nat pos) const;
 
 		// Substring.
 		Str *substr(Iter to);

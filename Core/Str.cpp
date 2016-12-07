@@ -367,11 +367,15 @@ namespace storm {
 	}
 
 	Str::Iter Str::begin() const {
-		return Iter(this);
+		return Iter(this, 0);
 	}
 
 	Str::Iter Str::end() const {
 		return Iter();
+	}
+
+	Str::Iter Str::posIter(Nat pos) const {
+		return Iter(this, pos);
 	}
 
 	Str *Str::substr(Iter start) {
@@ -394,7 +398,7 @@ namespace storm {
 
 	Str::Iter::Iter() : owner(null), pos(0) {}
 
-	Str::Iter::Iter(const Str *owner) : owner(owner), pos(0) {}
+	Str::Iter::Iter(const Str *owner, Nat pos) : owner(owner), pos(pos) {}
 
 	void Str::Iter::deepCopy(CloneEnv *env) {}
 
