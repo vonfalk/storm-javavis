@@ -202,7 +202,7 @@ namespace storm {
 			Array<SrcName *> *use;
 
 			// Name of the delimiter rule (if any).
-			MAYBE(Name *) delimiter;
+			MAYBE(SrcName *) delimiter;
 
 			// Rule declarations.
 			Array<RuleDecl *> *rules;

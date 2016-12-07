@@ -16,7 +16,7 @@ static String tos(const wchar *regex) {
 }
 
 
-BEGIN_TEST(RegexTest) {
+BEGIN_TEST(RegexTest, Storm) {
 	/**
 	 * To string and back.
 	 */

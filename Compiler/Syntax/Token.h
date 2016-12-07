@@ -1,6 +1,7 @@
 #pragma once
 #include "Compiler/NamedThread.h"
 #include "Compiler/Variable.h"
+#include "Regex.h"
 
 namespace storm {
 	namespace syntax {
@@ -46,7 +47,7 @@ namespace storm {
 			STORM_CTOR RegexToken(Str *regex);
 
 			// Regex to match.
-			// TODO
+			Regex regex;
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to, Bool bindings) const;

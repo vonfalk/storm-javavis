@@ -4,6 +4,7 @@
 #include "Exception.h"
 #include "SStr.h"
 #include "Rule.h"
+#include "Production.h"
 #include "Core/Str.h"
 
 namespace storm {
@@ -32,6 +33,23 @@ namespace storm {
 
 		void FileReader::readSyntaxProductions() {
 			ensureLoaded();
+
+			Rule *delimiter;
+			if (c->delimiter) {
+				delimiter = as<Rule>(scope.find(c->delimiter));
+				if (!delimiter)
+					throw SyntaxError(c->delimiter->pos, L"The delimiter " + ::toS(c->delimiter)
+									+ L" does not exist.");
+			}
+
+			for (Nat i = 0; i < c->productions->count(); i++) {
+				ProductionDecl *decl = c->productions->at(i);
+				Str *name = decl->name;
+				if (!name)
+					name = pkg->anonName();
+
+				pkg->add(new (this) ProductionType(name, decl, delimiter, scope));
+			}
 		}
 
 		void FileReader::ensureLoaded() {

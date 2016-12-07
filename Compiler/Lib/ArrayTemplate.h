@@ -24,9 +24,16 @@ namespace storm {
 		// Late init.
 		virtual void lateInit();
 
+		// Parameter.
+		Value param() const;
+
 	private:
 		// Content type.
 		Type *contents;
 	};
+
+	Bool STORM_FN isArray(Value v);
+	Value STORM_FN unwrapArray(Value v);
+	Value STORM_FN wrapArray(Value v);
 
 }

@@ -55,7 +55,7 @@ namespace storm {
 		void STORM_FN setSuper(MAYBE(Type *) to);
 
 		// Get the super-class for this type.
-		inline MAYBE(Type *) STORM_FN super() { return chain ? chain->super() : null; }
+		inline MAYBE(Type *) STORM_FN super() const { return chain ? chain->super() : null; }
 
 		// Set the thread for this type. This will force the super-type to be TObject.
 		void STORM_FN setThread(NamedThread *t);

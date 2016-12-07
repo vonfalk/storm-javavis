@@ -2,6 +2,7 @@
 #include "MaybeTemplate.h"
 #include "Engine.h"
 #include "Package.h"
+#include "Exception.h"
 #include "Core/Str.h"
 
 namespace storm {
@@ -41,11 +42,11 @@ namespace storm {
 		Engine &e = v.type->engine;
 		TemplateList *l = e.cppTemplate(MaybeId);
 		NameSet *to = l->addTo();
-		assert(to);
-		Named *found = to->find(new (e) SimplePart(new (e) Str(L"Maybe"), v));
-		Type *t = as<Type>(found);
-		assert(t);
-		return Value(t);
+		assert(to, L"Too early to use 'wrapMaybe'.");
+		Type *found = as<Type>(to->find(new (e) SimplePart(new (e) Str(L"Maybe"), v)));
+		if (!found)
+			throw InternalError(L"Can not find the maybe type!");
+		return Value(found);
 	}
 
 	static GcType *allocType(Engine &e) {

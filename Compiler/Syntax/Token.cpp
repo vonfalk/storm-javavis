@@ -29,12 +29,10 @@ namespace storm {
 		}
 
 
-		RegexToken::RegexToken(Str *regex) {
-			TODO(L"Set the regex!");
-		}
+		RegexToken::RegexToken(Str *regex) : regex(regex) {}
 
 		void RegexToken::toS(StrBuf *to, Bool bindings) const {
-			*to << L"\"" << L"regex" << L"\"";
+			*to << L"\"" << regex << L"\"";
 			Token::toS(to, bindings);
 		}
 
