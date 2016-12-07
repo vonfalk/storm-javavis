@@ -27,10 +27,13 @@ namespace storm {
 			// Match the string 'str' starting from 'start'. Returns an iterator pointing past the
 			// last matched character. If the pattern does not match, an iterator to the beginning
 			// is returned.
-			Str::Iter STORM_FN match(Str *str) const;
-			Str::Iter STORM_FN match(Str *str, Str::Iter start) const;
+			// TODO: Implement a Storm interface. Ideally we would use MAYBE(Str::Iter) when that works.
+			// Str::Iter STORM_FN match(Str *str) const;
+			// Str::Iter STORM_FN match(Str *str, Str::Iter start) const;
 
-			// Corresponding to above, but with indices. Returns 0 if no match is found.
+			static const nat NO_MATCH;
+
+			// Corresponding to above, but with indices. Returns NO_MATCH if no match is found.
 			Nat matchRaw(Str *str) const;
 			Nat matchRaw(Str *str, Nat start) const;
 

@@ -20,6 +20,19 @@ namespace storm {
 	};
 
 	/**
+	 * Variant used to pre-allocate a GcArray of a certain size somewhere.
+	 */
+	template <class T, nat size>
+	struct GcPreArray {
+		const size_t count;
+		size_t filled;
+		T v[size];
+
+		GcPreArray() : count(size), filled(0) {}
+		operator GcArray<T> *() const { return (GcArray<T> *)this; }
+	};
+
+	/**
 	 * A GcArray of weak pointers.
 	 */
 	template <class T>

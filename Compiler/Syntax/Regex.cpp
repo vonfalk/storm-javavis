@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Regex.h"
 #include "Core/CloneEnv.h"
+#include "Core/PODArray.h"
 #include "Compiler/Exception.h"
 
 namespace storm {
@@ -15,6 +16,8 @@ namespace storm {
 		 * Regex.
 		 */
 
+		const nat Regex::NO_MATCH = -1;
+
 		Regex::Regex(Str *pattern) {
 			states = new (pattern) Array<State>();
 			parse(pattern);
@@ -23,6 +26,8 @@ namespace storm {
 		Regex::Regex(const Regex &o) : states(o.states) {}
 
 		void Regex::deepCopy(CloneEnv *env) {
+			// Note: there is no need to deeply copy things in here, as everything is read only from
+			// now on.
 			cloned(states, env);
 		}
 
@@ -33,20 +38,90 @@ namespace storm {
 				states->push(State::parse(str->engine(), s, pos));
 		}
 
-		Str::Iter Regex::match(Str *str) const {
-			return match(str, str->begin());
-		}
+		// Str::Iter Regex::match(Str *str) const {
+		// 	return match(str, str->begin());
+		// }
 
-		Str::Iter Regex::match(Str *str, Str::Iter start) const {
-			return str->posIter(matchRaw(str, start.offset()));
-		}
+		// Str::Iter Regex::match(Str *str, Str::Iter start) const {
+		// 	return str->posIter(matchRaw(str, start.offset()));
+		// }
 
 		Nat Regex::matchRaw(Str *str) const {
 			return matchRaw(str, 0);
 		}
 
-		Nat Regex::matchRaw(Str *str, Nat start) const {
-			return 0;
+		Nat Regex::matchRaw(Str *s, Nat start) const {
+			// Pre-allocate this many entries for 'current' and 'next'.
+			const nat prealloc = 40;
+			const wchar *str = s->c_str();
+			typedef PODArray<nat, prealloc> States;
+
+			nat best = NO_MATCH;
+
+			// Our two needed state arrays.
+			States a(s->engine());
+			States b(s->engine());
+
+			// Current and next states.
+			States *current = &a;
+			States *next = &b;
+
+			current->push(0);
+
+			// We can simply move through the source string character by character.
+			// Note: we exit when there are no more states to process. Otherwise the outer
+			// loop would process the entire string even if we are done matching.
+			// Note: we iterate one iteration too far in this loop, so we can properly find
+			// the accepting state in all cases.
+			for (nat pos = start, size = start; pos <= size && current->count() > 0; pos++) {
+				wchar ch = str[pos];
+				if (ch)
+					size = pos + 1;
+
+				// Simulate each state...
+				for (nat i = 0; i < current->count(); i++) {
+					nat stateId = (*current)[i];
+
+					// Done?
+					if (stateId == states->count()) {
+						best = pos;
+						continue;
+					}
+
+					const State &state = states->at(stateId);
+
+					// Skip ahead?
+					if (state.skippable)
+						current->push(stateId + 1);
+
+					// Match?
+					if (!state.match.contains(ch))
+						continue;
+
+					// Advance.
+					next->push(stateId + 1);
+
+					// Repeat?
+					if (state.repeatable)
+						next->push(stateId);
+				}
+
+#ifdef DEBUG
+				static nat warned = prealloc;
+				if (current->count() > warned) {
+					warned = current->count();
+					WARNING(L"Large state array found when matching " << *this);
+					WARNING(L"Consider increasing 'prealloc' above " << current->count());
+					WARNING(L"Current prealloc: " << prealloc);
+				}
+#endif
+
+				// Swap next and current.
+				std::swap(current, next);
+				next->clear();
+			}
+
+			return best;
 		}
 
 		wostream &operator <<(wostream &to, Regex r) {
@@ -99,14 +174,14 @@ namespace storm {
 			case '\\':
 				pos++;
 				if (str[pos])
-					return single(str[++pos]);
+					return single(str[pos++]);
 				else
 					return single('\\');
 			case '[':
 				pos++;
 				return parseGroup(e, str, pos);
 			case '.':
-				++pos;
+				pos++;
 				return all();
 			default:
 				return single(str[pos++]);
@@ -125,7 +200,8 @@ namespace storm {
 			while (str[pos] != 0 && str[pos] != ']') {
 				switch (str[pos]) {
 				case '\\':
-					if (str[++pos]) {
+					pos++;
+					if (str[pos]) {
 						lastCh = str[pos];
 						put(out, c, str[pos++]);
 					} else {
@@ -135,10 +211,10 @@ namespace storm {
 					break;
 				case '-':
 					if (str[++pos]) {
-						for (wchar i = lastCh; i <= str[pos]; i++) {
+						for (wchar i = lastCh + 1; i <= str[pos]; i++) {
 							put(out, c, i);
 						}
-						lastCh = str[pos];
+						lastCh = str[pos++];
 					}
 					break;
 				default:
@@ -184,6 +260,18 @@ namespace storm {
 				return 1;
 			else
 				return 0;
+		}
+
+		Bool Regex::Set::contains(wchar ch) const {
+			if (ch == wchar(first)) {
+				return !inverted;
+			} else if (chars) {
+				for (nat i = 0; i < chars->count; i++) {
+					if (ch == chars->v[i])
+						return !inverted;
+				}
+			}
+			return inverted;
 		}
 
 		static void escape(StrBuf *to, wchar ch) {
