@@ -49,12 +49,16 @@ Size Class::size() const {
 
 	if (parentType) {
 		s = parentType->size();
+		s += s.align(); // align to its natural alignment.
 	} else if (!valueType) {
 		s = Size::sPtr; // VTable.
 	}
 
-	for (nat i = 0; i < variables.size(); i++)
-		s += variables[i].type->size();
+	for (nat i = 0; i < variables.size(); i++) {
+		Size t = variables[i].type->size();
+		t += t.align(); // align to its natural alignment.
+		s += t;
+	}
 
 	return s;
 }
