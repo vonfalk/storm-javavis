@@ -117,7 +117,7 @@ namespace storm {
 	struct CreateFn {
 		// Create a value.
 		static void fn(void *to, Engine &e) {
-			new (to) T();
+			new (Place(to)) T();
 		}
 	};
 

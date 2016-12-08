@@ -26,6 +26,10 @@ namespace storm {
 		return find(new (this) SimplePart(new (this) Str(name), param));
 	}
 
+	Named *NameLookup::find(const wchar *name) {
+		return find(new (this) SimplePart(new (this) Str(name)));
+	}
+
 	Named::Named(Str *name) : name(name), flags(namedDefault) {
 		if (engine().has(bootTemplates)) {
 			params = new (this) Array<Value>();

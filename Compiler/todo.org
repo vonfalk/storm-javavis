@@ -1,8 +1,12 @@
-* Loose ends so far [3/5]
+* Loose ends so far [3/8]
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Check so that destructors are required if a value-type object within a class or actor
         contains a destructor.
+  - [ ] Improve the preprocessor by automatically adding copy constructors and assignment operators
+        where neccessary.
+  - [ ] Improve the preprocessor by generating toS() and deepCopy() if not present.
+  - [ ] Finish the clone() functionality.
   - [X] It seems we fail to handle moving objects in Set and Map in rare cases. Examine why!
   - [X] Implement shrink() for Map<> as well.
   - [X] Handles and templates does not work with built-in types (like Int).

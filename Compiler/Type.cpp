@@ -454,6 +454,7 @@ namespace storm {
 			else
 				assert(false, L"We're a non-value not inheriting from Object or TObject!");
 
+			myGcType->type = this;
 			return myGcType;
 		}
 
@@ -729,10 +730,17 @@ namespace storm {
 		else
 			*to << new (this) SimplePart(name);
 
+		if (chain != null && chain->super() != null) {
+			if (chain->super() == TObject::stormType(engine)) {
+			} else if (chain->super() == Object::stormType(engine)) {
+			} else {
+				*to << L" extends " << chain->super()->identifier();
+				return;
+			}
+		}
+
 		if (useThread) {
 			*to << L" on " << useThread->identifier();
-		} else if (chain != null && chain->super() != null) {
-			*to << L" extends " << chain->super()->identifier();
 		}
 	}
 
