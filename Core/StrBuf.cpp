@@ -35,6 +35,24 @@ namespace storm {
 		return StrFmt(0, c);
 	}
 
+	HexFmt::HexFmt(Word v, Nat d) : value(v), digits(d) {}
+
+	HexFmt STORM_FN hex(Byte v) {
+		return HexFmt(v, 2);
+	}
+
+	HexFmt STORM_FN hex(Nat v) {
+		return HexFmt(v, 8);
+	}
+
+	HexFmt STORM_FN hex(Word v) {
+		return HexFmt(v, 16);
+	}
+
+	HexFmt hex(const void *ptr) {
+		return HexFmt(Word(ptr), sizeof(ptr) / 4);
+	}
+
 	static const GcType bufType = {
 		GcType::tArray,
 		null,
@@ -308,6 +326,24 @@ namespace storm {
 			return add(str);
 		else
 			return add(str + 1);
+	}
+
+	StrBuf *StrBuf::add(HexFmt f) {
+		// Enough for a 128 bit integer.
+		const nat bufSize = 32;
+		wchar buf[bufSize + 1];
+
+		const wchar digits[] = L"0123456789ABCDEF";
+
+		wchar *to = buf + bufSize;
+		*to = 0;
+		for (nat i = 0; i < min(bufSize, f.digits); i++) {
+			nat part = f.value & 0x0F;
+			f.value = f.value >> 4;
+			*--to = digits[part];
+		}
+
+		return add(to);
 	}
 
 	void StrBuf::clear() {

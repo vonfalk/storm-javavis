@@ -54,6 +54,10 @@ BEGIN_TEST(StrBufTest, Core) {
 	*buf << width(5) << 20 << width(5) << Nat(100) << width(5) << -3;
 	CHECK_EQ(toS(buf), L"   20  100   -3");
 
+	buf->clear();
+	*buf << hex(Byte(10)) << L" " << hex(Nat(10)) << L" " << hex(Word(0x12345));
+	CHECK_EQ(toS(buf), L"0A 0000000A 0000000000012345");
+
 } END_TEST
 
 

@@ -44,6 +44,27 @@ namespace storm {
 	StrFmt STORM_FN fill(Char fill);
 
 	/**
+	 * Hex format for numbers. Use the helper functions below to create instances of this object.
+	 */
+	class HexFmt {
+		STORM_VALUE;
+	public:
+		HexFmt(Word value, Nat digits);
+
+		// Value.
+		Word value;
+
+		// # of digits.
+		Nat digits;
+	};
+
+	// Create hex formats.
+	HexFmt STORM_FN hex(Byte v);
+	HexFmt STORM_FN hex(Nat v);
+	HexFmt STORM_FN hex(Word v);
+	HexFmt hex(const void *ptr);
+
+	/**
 	 * Mutable string buffer for constructing strings quickly and easily. Approximates the ostream
 	 * of std to some extent wrt formatting options.
 	 */
@@ -79,6 +100,7 @@ namespace storm {
 		StrBuf *STORM_FN add(Word i);
 		StrBuf *STORM_FN add(Float f);
 		StrBuf *STORM_FN add(Char c);
+		StrBuf *STORM_FN add(HexFmt h);
 
 		// Append stuff with the << operator.
 		StrBuf &operator <<(const void *ptr);
@@ -94,6 +116,7 @@ namespace storm {
 		StrBuf &STORM_FN operator <<(Word i) { return *add(i); }
 		StrBuf &STORM_FN operator <<(Float f) { return *add(f); }
 		StrBuf &STORM_FN operator <<(Char c) { return *add(c); }
+		StrBuf &STORM_FN operator <<(HexFmt f) { return *add(f); }
 
 		// Formatting options.
 		StrBuf &STORM_FN operator <<(StrFmt fmt);
