@@ -45,6 +45,9 @@ namespace storm {
 			Bool STORM_FN repStart() const;
 			Bool STORM_FN repEnd() const;
 
+			// Get the position in the production.
+			inline Nat STORM_FN position() const { return pos; }
+
 			// Get the rule this option is a part of.
 			MAYBE(Rule *) rule() const;
 

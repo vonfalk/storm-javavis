@@ -50,7 +50,7 @@ namespace storm {
 	}
 
 	HexFmt hex(const void *ptr) {
-		return HexFmt(Word(ptr), sizeof(ptr) / 4);
+		return HexFmt(Word(ptr), sizeof(ptr) * 2);
 	}
 
 	static const GcType bufType = {

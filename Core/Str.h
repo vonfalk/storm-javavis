@@ -91,6 +91,9 @@ namespace storm {
 		// Get a c-string.
 		wchar *c_str() const;
 
+		// Peek at the length of the underlying representation.
+		Nat peekLength() const;
+
 		/**
 		 * Iterator (not implemented yet.)
 		 */
@@ -140,8 +143,8 @@ namespace storm {
 		Iter posIter(Nat pos) const;
 
 		// Substring.
-		Str *substr(Iter to);
-		Str *substr(Iter from, Iter to);
+		Str *STORM_FN substr(Iter to);
+		Str *STORM_FN substr(Iter from, Iter to);
 
 	private:
 		friend class Iter;

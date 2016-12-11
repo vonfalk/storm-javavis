@@ -11,6 +11,7 @@ BEGIN_TEST_(ParserTest) {
 	VERIFY(pkg);
 
 	Parser *p = Parser::create(pkg, L"Sentence");
+	CHECK(p->parse(new (e) Str(L"the cat runs"), new (e) Url()));
 	PVAR(p);
 
 } END_TEST

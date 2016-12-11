@@ -362,6 +362,10 @@ namespace storm {
 		return data->v;
 	}
 
+	Nat Str::peekLength() const {
+		return data->count - 1;
+	}
+
 	void Str::allocData(nat count) {
 		data = runtime::allocArray<wchar>(engine(), &bufType, count);
 	}

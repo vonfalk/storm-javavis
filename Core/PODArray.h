@@ -4,9 +4,42 @@
 namespace storm {
 	STORM_PKG(core);
 
+	namespace pod {
+		// Get the GcType for the type.
+		template <class T>
+		struct Gc {
+			static const GcType type;
+		};
+
+		template <class T>
+		struct Gc<T *> {
+			static const GcType type;
+		};
+
+
+		template <class T>
+		const GcType Gc<T>::type = {
+			GcType::tArray,
+			null,
+			null,
+			sizeof(T),
+			0, {}
+		};
+
+		template <class T>
+		const GcType Gc<T *>::type = {
+			GcType::tArray,
+			null,
+			null,
+			sizeof(T *),
+			1, { 0 }
+		};
+	}
+
 	/**
-	 * Array which can store POD types without pointers. This array starts pre-allocated with a
-	 * number of bytes so that no allocations have to be made.
+	 * Array that can store POD types without pointers or an array of pure pointers. This array
+	 * starts preallocated with a number of elements so that no allocations have to be made until
+	 * the preallocation is filled.
 	 */
 	template <class T, nat alloc>
 	class PODArray {
@@ -38,15 +71,22 @@ namespace storm {
 			data->filled = 0;
 		}
 
+		// Reverse the data.
+		void reverse() {
+			nat first = 0;
+			nat last = data->count;
+			while ((first != last) && (first != --last)) {
+				std::swap(data->v[first], data->v[last]);
+				++first;
+			}
+		}
+
 	private:
 		PODArray(const PODArray &o);
 		PODArray &operator =(const PODArray &o);
 
 		// Engine.
 		Engine &e;
-
-		// Type when allocating gc types.
-		static const GcType gcType;
 
 		// Pre-allocated array.
 		GcPreArray<T, alloc> pre;
@@ -57,20 +97,11 @@ namespace storm {
 		// Grow storage.
 		void grow() {
 			nat newCount = data->count * 2;
-			GcArray<T> *d = runtime::allocArray<T>(e, &gcType, newCount);
+			GcArray<T> *d = runtime::allocArray<T>(e, &pod::Gc<T>::type, newCount);
 			d->filled = data->filled;
 			memcpy(d->v, data->v, sizeof(T) * data->filled);
 			data = d;
 		}
-	};
-
-	template <class T, nat alloc>
-	const GcType PODArray<T, alloc>::gcType = {
-		GcType::tArray,
-		null,
-		null,
-		sizeof(T),
-		0, {}
 	};
 
 }

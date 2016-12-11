@@ -5,6 +5,7 @@
 #include "Node.h"
 #include "Rule.h"
 #include "Production.h"
+#include "State.h"
 #include "Compiler/Exception.h"
 
 namespace storm {
@@ -103,7 +104,7 @@ namespace storm {
 			// Parsed source string.
 			Str *src;
 
-			// Initial position in 'src'.
+			// Initial position in 'src'. '.offset' contains the first char parsed (this corresponds to states[0]).
 			SrcPos srcPos;
 
 			// Root production.
@@ -111,7 +112,7 @@ namespace storm {
 
 			// Steps. Each step corresponds to a character in the input string (including an
 			// implicit end of string character).
-			// GcArray<> *states;
+			Array<StateSet> *steps;
 
 			// Last state containing a finish step (initialized to something >= states.count).
 			nat lastFinish;
@@ -121,12 +122,13 @@ namespace storm {
 
 			// Predictor, completer and scanner as described in the paper. The StateSet should be
 			// the current step, ie. the set in which 'state' belongs.
-			void predictor();
-			void completer();
-			void scanner();
+			void predictor(nat step, State *state);
+			void completer(nat step, State *state);
+			void scanner(nat step, State *state);
 
 			// Does 'rule' match an empty string?
 			bool matchesEmpty(Rule *r);
+			bool matchesEmpty(RuleInfo &info);
 			bool matchesEmpty(Production *p);
 			bool matchesEmpty(Token *t);
 
