@@ -6,13 +6,13 @@ namespace storm {
 
 		State::State() : from(0) {}
 
-		State::State(ProductionIter pos, Nat from) : pos(pos), from(from) {}
+		State::State(ProductionIter pos, Nat step, Nat from) : pos(pos), step(step), from(from) {}
 
-		State::State(ProductionIter pos, Nat from, State *prev)
-			: pos(pos), from(from), prev(prev) {}
+		State::State(ProductionIter pos, Nat step, Nat from, State *prev)
+			: pos(pos), step(step), from(from), prev(prev) {}
 
-		State::State(ProductionIter pos, Nat from, State *prev, State *completed)
-			: pos(pos), from(from), prev(prev), completed(completed) {}
+		State::State(ProductionIter pos, Nat step, Nat from, State *prev, State *completed)
+			: pos(pos), step(step), from(from), prev(prev), completed(completed) {}
 
 		void State::toS(StrBuf *to) const {
 			*to << hex(this) << L":{" << pos << L", " << from << L", " << hex(prev) << L", " << hex(completed) << L"}";
@@ -44,19 +44,19 @@ namespace storm {
 			data->push(s);
 		}
 
-		void StateSet::push(ProductionIter pos, Nat from) {
-			push(pos, from, null, null);
+		void StateSet::push(ProductionIter pos, Nat step, Nat from) {
+			push(pos, step, from, null, null);
 		}
 
-		void StateSet::push(ProductionIter pos, Nat from, State *prev) {
-			push(pos, from, prev, null);
+		void StateSet::push(ProductionIter pos, Nat step, Nat from, State *prev) {
+			push(pos, step, from, prev, null);
 		}
 
-		void StateSet::push(ProductionIter pos, Nat from, State *prev, State *completed) {
+		void StateSet::push(ProductionIter pos, Nat step, Nat from, State *prev, State *completed) {
 			if (!pos.valid())
 				return;
 
-			push(new (data) State(pos, from, prev, completed));
+			push(new (data) State(pos, step, from, prev, completed));
 		}
 
 		StateSet::Order StateSet::execOrder(const State *a, const State *b) const {

@@ -18,12 +18,15 @@ namespace storm {
 		public:
 			// Create.
 			STORM_CTOR State();
-			STORM_CTOR State(ProductionIter pos, Nat from);
-			STORM_CTOR State(ProductionIter pos, Nat from, State *prev);
-			STORM_CTOR State(ProductionIter pos, Nat from, State *prev, State *completed);
+			STORM_CTOR State(ProductionIter pos, Nat step, Nat from);
+			STORM_CTOR State(ProductionIter pos, Nat step, Nat from, State *prev);
+			STORM_CTOR State(ProductionIter pos, Nat step, Nat from, State *prev, State *completed);
 
 			// Position in the production.
 			ProductionIter pos;
+
+			// The step where this state belongs.
+			Nat step;
 
 			// The step where this production was instantiated.
 			Nat from;
@@ -94,9 +97,9 @@ namespace storm {
 			void STORM_FN push(State *state);
 
 			// Insert a new state (we will allocate it for you if neccessary)
-			void STORM_FN push(ProductionIter pos, Nat from);
-			void STORM_FN push(ProductionIter pos, Nat from, State *prev);
-			void STORM_FN push(ProductionIter pos, Nat from, State *prev, State *completed);
+			void STORM_FN push(ProductionIter pos, Nat step, Nat from);
+			void STORM_FN push(ProductionIter pos, Nat step, Nat from, State *prev);
+			void STORM_FN push(ProductionIter pos, Nat step, Nat from, State *prev, State *completed);
 
 			// Current size of this set.
 			Nat STORM_FN count() const { return data->count(); }

@@ -289,10 +289,14 @@ namespace storm {
 		}
 
 		// Empty map.
-		Map() : MapBase(StormInfo<K>::handle(engine()), StormInfo<V>::handle(engine())) {}
+		Map() : MapBase(StormInfo<K>::handle(engine()), StormInfo<V>::handle(engine())) {
+			runtime::setVTable(this);
+		}
 
 		// Copy map.
-		Map(Map<K, V> *o) : MapBase(o) {}
+		Map(Map<K, V> *o) : MapBase(o) {
+			runtime::setVTable(this);
+		}
 
 		// Insert a value into the map, or update the existing one.
 		void put(const K &k, const V &v) {

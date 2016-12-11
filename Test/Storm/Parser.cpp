@@ -11,7 +11,16 @@ BEGIN_TEST_(ParserTest) {
 	VERIFY(pkg);
 
 	Parser *p = Parser::create(pkg, L"Sentence");
-	CHECK(p->parse(new (e) Str(L"the cat runs"), new (e) Url()));
-	PVAR(p);
+	Str *s = new (e) Str(L"the cat runs");
+	CHECK(p->parse(s, new (e) Url()));
+	CHECK(!p->hasError());
+	CHECK(p->hasTree());
+	CHECK(p->matchEnd() == s->end());
+	// PVAR(p->tree());
+
+	CHECK(p->parse(new (e) Str(L"the cat runs!"), new (e) Url()));
+	CHECK(p->hasError());
+	CHECK(p->hasTree());
+	CHECK_EQ(p->matchEnd().v(), Char('!'));
 
 } END_TEST

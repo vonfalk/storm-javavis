@@ -97,6 +97,43 @@ namespace storm {
 		data->filled++;
 	}
 
+	static void arraySwap(void *a, void *b, size_t size) {
+		// Note: we can always move an object (the GC does it all the time), which is why this works
+		// without issues. We just need to make sure we don't copy byte by byte, as the GC may pause
+		// the world partly through and see an invalid pointer.
+
+		nat copied = 0;
+		{
+			size_t *u = (size_t *)a;
+			size_t *v = (size_t *)b;
+
+			for (; copied + sizeof(size_t) <= size; copied += sizeof(size_t))
+				std::swap(*u++, *v++);
+		}
+
+		// Any remaining bytes?
+		{
+			byte *u = (byte *)a;
+			byte *v = (byte *)b;
+
+			for (; copied < size; copied++)
+				std::swap(u[copied], v[copied]);
+		}
+	}
+
+	void ArrayBase::reverse() {
+		if (empty())
+			return;
+
+		nat first = 0;
+		nat last = count();
+
+		while ((first != last) && (first != --last)) {
+			arraySwap(ptr(first), ptr(last), handle.size);
+			first++;
+		}
+	}
+
 	void ArrayBase::toS(StrBuf *to) const {
 		*to << L"[";
 		if (count() > 0)

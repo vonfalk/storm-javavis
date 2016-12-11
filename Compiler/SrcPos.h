@@ -25,6 +25,9 @@ namespace storm {
 		// Unknown position?
 		Bool STORM_FN unknown() const;
 
+		// Increase the position.
+		SrcPos STORM_FN operator +(Nat v) const;
+
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *env);
 	};

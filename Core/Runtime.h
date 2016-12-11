@@ -68,6 +68,9 @@ namespace storm {
 		// Get the references for a block of code.
 		GcCode *codeRefs(void *code);
 
+		// Re-set the vtable of an object to what it should be.
+		void setVTable(RootObject *object);
+
 		// Get the thread group to use for all threads.
 		os::ThreadGroup &threadGroup(Engine &e);
 

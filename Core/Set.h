@@ -270,10 +270,14 @@ namespace storm {
 		}
 
 		// Empty set.
-		Set() : SetBase(StormInfo<K>::handle(engine())) {}
+		Set() : SetBase(StormInfo<K>::handle(engine())) {
+			runtime::setVTable(this);
+		}
 
 		// Copy set.
-		Set(Set<K> *o) : SetBase(o) {}
+		Set(Set<K> *o) : SetBase(o) {
+			runtime::setVTable(this);
+		}
 
 		// Insert a value into the set, or update the existing one.
 		void put(const K &k) {

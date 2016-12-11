@@ -47,26 +47,26 @@ namespace storm {
 
 			// Found any errors? If Str::Iter is not end, this is always true. Note that even if we
 			// have an error, it could be possible to extract a tree!
-			// Bool STORM_FN hasError() const;
+			Bool STORM_FN hasError() const;
 
 			// Is it possible to extract a syntax tree? (equivalent to the return value of 'parse').
-			// Bool STORM_FN hasTree() const;
+			Bool STORM_FN hasTree() const;
 
 			// Return an iterator after the last matched character, or the start of the string if no
 			// match could be made.
-			// Str::Iter STORM_FN matchEnd();
+			Str::Iter STORM_FN matchEnd() const;
 
 			// Get the error (present if 'hasError' is true).
-			// SyntaxError error() const;
+			SyntaxError error() const;
 
 			// Throw error if it is present.
-			// void STORM_FN throwError() const;
+			void STORM_FN throwError() const;
 
 			// Get the error message.
-			// Str *STORM_FN errorMsg() const;
+			Str *STORM_FN errorMsg() const;
 
 			// Get the syntax tree. Only for C++, in Storm we know the exact subtype we will generate!
-			// Node *tree() const;
+			Node *tree() const;
 
 			// Output.
 			void STORM_FN toS(StrBuf *to) const;
@@ -135,7 +135,20 @@ namespace storm {
 			// Find the last step which is not empty.
 			nat lastStep() const;
 
-			// TODO: Tree extraction.
+			// Find the finishing state (the last one if there are more).
+			State *finish() const;
+
+			// Find all rules and productions in progress for a given state.
+			Map<Str *, StrBuf *> *inProgress(const StateSet &step) const;
+
+			// Create a tree for the production ending in 'state'.
+			Node *tree(State *end) const;
+
+			// Allocate a tree node.
+			Node *allocNode(State *from) const;
+
+			// Reverse all arrays in a node.
+			void reverseNode(Node *node) const;
 		};
 
 

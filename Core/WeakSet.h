@@ -217,10 +217,14 @@ namespace storm {
 		}
 
 		// Empty set.
-		WeakSet() : WeakSetBase() {}
+		WeakSet() : WeakSetBase() {
+			runtime::setVTable(this);
+		}
 
 		// Copy set.
-		WeakSet(WeakSet<K> *o) : WeakSetBase(o) {}
+		WeakSet(WeakSet<K> *o) : WeakSetBase(o) {
+			runtime::setVTable(this);
+		}
 
 		// Insert a value.
 		void put(K *k) {

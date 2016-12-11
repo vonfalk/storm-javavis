@@ -1,8 +1,11 @@
 #include "stdafx.h"
 #include "Parser.h"
 #include "Package.h"
+#include "SStr.h"
+#include "Utils/Memory.h"
 #include "Core/Runtime.h"
 #include "Lib/ParserTemplate.h"
+#include "Compiler/Lib/ArrayTemplate.h"
 
 namespace storm {
 	namespace syntax {
@@ -89,7 +92,7 @@ namespace storm {
 			rootProd->tokens->push(new (this) RuleToken(root()));
 
 			// Set up the initial state.
-			steps->at(0).push(rootProd->firstA(), 0);
+			steps->at(0).push(rootProd->firstA(), 0, 0);
 
 			// Process all steps.
 			for (nat i = 0; i < len; i++) {
@@ -128,10 +131,11 @@ namespace storm {
 			// Note: this creates new (empty) entries for any rules referred to but not yet included.
 			RuleInfo &info = rules->at(rule->rule);
 
+			StateSet &src = steps->at(step);
 			for (Nat i = 0; i < info.productions->count(); i++) {
 				Production *p = info.productions->at(i);
-				steps->at(step).push(p->firstA(), step);
-				steps->at(step).push(p->firstB(), step);
+				src.push(p->firstA(), step, step);
+				src.push(p->firstB(), step, step);
 			}
 
 			if (matchesEmpty(info)) {
@@ -145,7 +149,6 @@ namespace storm {
 				// found, it will be added and processed later, which is OK. This is basically what
 				// the completer does (only less general):
 
-				StateSet &src = steps->at(step);
 				// We do not need to examine further than the current state. Anything else will be
 				// examined in the main loop later.
 				for (nat i = 0; src[i] != state && i < src.count(); i++) {
@@ -157,8 +160,8 @@ namespace storm {
 					if (cRule != rule->rule)
 						continue;
 
-					src.push(state->pos.nextA(), state->from, state, now);
-					src.push(state->pos.nextB(), state->from, state, now);
+					src.push(state->pos.nextA(), step, state->from, state, now);
+					src.push(state->pos.nextB(), step, state->from, state, now);
 				}
 			}
 		}
@@ -177,8 +180,8 @@ namespace storm {
 				if (rule->rule != completed)
 					continue;
 
-				steps->at(step).push(s->pos.nextA(), s->from, state);
-				steps->at(step).push(s->pos.nextB(), s->from, state);
+				steps->at(step).push(s->pos.nextA(), step, s->from, s, state);
+				steps->at(step).push(s->pos.nextB(), step, s->from, s, state);
 			}
 		}
 
@@ -199,8 +202,8 @@ namespace storm {
 			if (matched > steps->count())
 				return;
 
-			steps->at(matched).push(state->pos.nextA(), state->from, state);
-			steps->at(matched).push(state->pos.nextB(), state->from, state);
+			steps->at(matched).push(state->pos.nextA(), matched, state->from, state);
+			steps->at(matched).push(state->pos.nextB(), matched, state->from, state);
 		}
 
 		bool ParserBase::matchesEmpty(Rule *rule) {
@@ -260,6 +263,190 @@ namespace storm {
 			} else {
 				assert(false, L"Unknown syntax token type.");
 				return false;
+			}
+		}
+
+		Bool ParserBase::hasError() const {
+			if (lastFinish < steps->count() - 1)
+				return true;
+
+			return finish() == null;
+		}
+
+		Bool ParserBase::hasTree() const {
+			return finish() != null;
+		}
+
+		Str::Iter ParserBase::matchEnd() const {
+			if (finish())
+				return src->posIter(srcPos.pos + lastFinish);
+			else
+				return src->begin();
+		}
+
+		Str *ParserBase::errorMsg() const {
+			nat pos = lastStep();
+			StrBuf *msg = new (this) StrBuf();
+
+			if (pos == steps->count() - 1) {
+				*msg << L"Unexpected end of stream.";
+			} else {
+				Char ch(src->c_str()[pos + srcPos.pos]);
+				Str *chStr = new (this) Str(ch);
+				*msg << L"Unexpected '" << chStr->escape() << L"'.";
+			}
+
+			*msg << L"\nIn progress:";
+			Indent z(msg);
+			const StateSet &step = steps->at(pos);
+			for (nat i = 0; i < step.count(); i++) {
+				*msg << L"\n" << step[i]->pos;
+			}
+
+			return msg->toS();
+		}
+
+		SyntaxError ParserBase::error() const {
+			nat pos = lastStep();
+			return SyntaxError(srcPos + pos, ::toS(errorMsg()));
+		}
+
+		void ParserBase::throwError() const {
+			throw error();
+		}
+
+		nat ParserBase::lastStep() const {
+			for (nat i = steps->count() - 1; i > 0; i--) {
+				if (steps->at(i).count() > 0)
+					return i;
+			}
+
+			// First step is never empty.
+			return 0;
+		}
+
+		State *ParserBase::finish() const {
+			if (lastFinish >= steps->count())
+				return null;
+
+			const StateSet &states = steps->at(lastFinish);
+			for (nat i = 0; i < states.count(); i++) {
+				State *s = states[i];
+				if (s->finishes(rootProd))
+					return s;
+			}
+
+			return null;
+		}
+
+		Node *ParserBase::tree() const {
+			State *from = finish();
+			if (!from)
+				throw error();
+
+			// 'from' finishes the dummy 'rootProd', which the user is not interested in. The user
+			// is interested in the production that finished 'rootProd', which is located in
+			// 'from->completed'.
+			assert(from->completed, L"The root state was not completed by anything!");
+			return tree(from->completed);
+		}
+
+		template <class T>
+		static void setValue(Node *node, MemberVar *target, T *elem) {
+			int offset = target->offset().current();
+			if (isArray(target->type)) {
+				// Arrays are initialized earlier.
+				OFFSET_IN(node, offset, Array<T *> *)->push(elem);
+			} else {
+				OFFSET_IN(node, offset, T *) = elem;
+			}
+		}
+
+		Node *ParserBase::tree(State *from) const {
+			Node *result = allocNode(from);
+			Production *prod = from->production();
+
+			// Remember capture start and capture end. Set 'repStart' to first token since we will
+			// not find it in the loop if the repeat starts at the first token in this production.
+			nat repStart = from->from;
+			nat repEnd = 0;
+
+			// Traverse the states backwards. The last token in the chain (the one created first) is
+			// skipped as that does not contain any information.
+			for (State *at = from; at->prev; at = at->prev) {
+				State *prev = at->prev;
+				Token *token = prev->pos.token();
+
+				if (at->pos.repStart())
+					repStart = at->step;
+				if (at->pos.repEnd())
+					repEnd = at->step;
+
+				// Don't bother if we do not need to store the result anywhere.
+				if (!token->target)
+					continue;
+
+				Object *match = null;
+				if (as<RegexToken>(token)) {
+					Str::Iter from = src->posIter(prev->step + srcPos.pos);
+					Str::Iter to = src->posIter(at->step + srcPos.pos);
+
+					setValue(result, token->target, new (this) SStr(src->substr(from, to), srcPos + prev->step));
+				} else if (as<RuleToken>(token)) {
+					assert(at->completed, L"Rule token not completed!");
+					setValue(result, token->target, tree(at->completed));
+				} else {
+					assert(false, L"Unknown token type used for match.");
+				}
+			}
+
+			// Remember the capture.
+			if (prod->repCapture && prod->repCapture->target && repStart <= repEnd) {
+				Str::Iter from = src->posIter(repStart);
+				Str::Iter to = src->posIter(repEnd);
+				setValue(result, prod->repCapture->target, new (this) SStr(src->substr(from, to), srcPos + repStart));
+			}
+
+			// Reverse all arrays in this node, as we're adding them backwards.
+			reverseNode(result);
+			return result;
+		}
+
+		Node *ParserBase::allocNode(State *from) const {
+			ProductionType *type = from->production()->type();
+
+			// A bit ugly, but this is enough for the object to be considered a proper object when
+			// it is populated.
+			void *mem = runtime::allocObject(type->size().current(), type);
+			Node *r = new (Place(mem)) Node(srcPos + from->from);
+			type->vtable->insert(r);
+
+			// Create any arrays needed.
+			for (nat i = 0; i < type->arrayMembers->count(); i++) {
+				MemberVar *v = type->arrayMembers->at(i);
+				int offset = v->offset().current();
+				// This will actually create the correct subtype as long as we're creating something
+				// inherited from Object (which we are).
+				Array<Object *> *arr = new (v->type.type) Array<Object *>();
+				OFFSET_IN(r, offset, Object *) = arr;
+			}
+
+			return r;
+		}
+
+		void ParserBase::reverseNode(Node *node) const {
+			ProductionType *t = as<ProductionType>(runtime::typeOf(node));
+			if (!t) {
+				WARNING(L"Invalid node type found!");
+				return;
+			}
+
+			for (nat i = 0; i < t->arrayMembers->count(); i++) {
+				MemberVar *v = t->arrayMembers->at(i);
+				int offset = v->offset().current();
+
+				Array<Object *> *array = OFFSET_IN(node, offset, Array<Object *> *);
+				array->reverse();
 			}
 		}
 

@@ -58,6 +58,9 @@ namespace storm {
 		// Insert an element, giving it the id 'id'. 'id' <= 'count()'.
 		void CODECALL insertRaw(Nat id, const void *item);
 
+		// Reverse the array.
+		void STORM_FN reverse();
+
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -161,16 +164,23 @@ namespace storm {
 		}
 
 		// Empty array.
-		Array() : ArrayBase(StormInfo<T>::handle(engine())) {}
+		Array() : ArrayBase(StormInfo<T>::handle(engine())) {
+			runtime::setVTable(this);
+		}
 
 		// 'n' elements.
-		Array(Nat n, const T &item = T()) : ArrayBase(StormInfo<T>::handle(engine()), n, &item) {}
+		Array(Nat n, const T &item = T()) : ArrayBase(StormInfo<T>::handle(engine()), n, &item) {
+			runtime::setVTable(this);
+		}
 
 		// Copy array.
-		Array(Array<T> *o) : ArrayBase(o) {}
+		Array(Array<T> *o) : ArrayBase(o) {
+			runtime::setVTable(this);
+		}
 
 		// Create an array with one element in it.
 		Array(const T &item) : ArrayBase(StormInfo<T>::handle(engine())) {
+			runtime::setVTable(this);
 			push(item);
 		}
 

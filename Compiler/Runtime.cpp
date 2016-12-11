@@ -84,6 +84,10 @@ namespace storm {
 			return Gc::codeRefs(code);
 		}
 
+		void setVTable(RootObject *object) {
+			typeOf(object)->vtable->insert(object);
+		}
+
 		os::ThreadGroup &threadGroup(Engine &e) {
 			return e.threadGroup;
 		}
