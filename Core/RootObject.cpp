@@ -18,7 +18,13 @@ namespace storm {
 	}
 
 	void RootObject::toS(StrBuf *buf) const {
-		*buf << L"<TODO: Type> @" << (void *)this;
+		Type *t = runtime::typeOf(this);
+		if (t) {
+			*buf << runtime::typeName(t);
+		} else {
+			*buf << L"<unknown type>";
+		}
+		*buf << L" @" << (void *)this;
 	}
 
 	wostream &operator <<(wostream &to, const RootObject *o) {

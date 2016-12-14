@@ -42,6 +42,10 @@ namespace storm {
 			return Gc::typeOf(o)->type;
 		}
 
+		Str *typeName(Type *t) {
+			return t->name;
+		}
+
 		const GcType *gcTypeOf(const void *alloc) {
 			return Gc::typeOf(alloc);
 		}

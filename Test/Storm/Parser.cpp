@@ -7,7 +7,7 @@ using syntax::Parser;
 BEGIN_TEST_(ParserTest) {
 	Engine &e = gEngine();
 
-	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, L"test.syntax")));
+	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, L"test.grammar")));
 	VERIFY(pkg);
 
 	Parser *p = Parser::create(pkg, L"Sentence");
@@ -16,7 +16,7 @@ BEGIN_TEST_(ParserTest) {
 	CHECK(!p->hasError());
 	CHECK(p->hasTree());
 	CHECK(p->matchEnd() == s->end());
-	// PVAR(p->tree());
+	PVAR(p->tree());
 
 	CHECK(p->parse(new (e) Str(L"the cat runs!"), new (e) Url()));
 	CHECK(p->hasError());

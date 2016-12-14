@@ -30,6 +30,9 @@ namespace storm {
 		// Get the type of an allocation.
 		Type *typeOf(const RootObject *o);
 
+		// Get the name of a type.
+		Str *typeName(Type *t);
+
 		// Get the GcType for an allocation.
 		const GcType *gcTypeOf(const void *alloc);
 

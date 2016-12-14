@@ -1,0 +1,26 @@
+// This is a simplified version of syntax/sentence.bnf which does not require basic storm to be working.
+
+delimiter = SDelim;
+
+void SDelim();
+SDelim : "[ \n\r\t]+";
+
+Str Verb();
+Verb => word : "run" word;
+Verb => word : "fly" word;
+Verb => word : "swim" word;
+Verb => word : "sleep" word;
+
+Str Noun();
+Noun => word : "dog" word;
+Noun => word : "bird" word;
+Noun => word : "cat" word;
+
+Str Plural();
+Plural => word : Noun word - "s";
+
+
+Str Sentence();
+Sentence[1] => noun : Plural noun, Verb verb = PluralAssert;
+Sentence[2] => noun : "the", Noun noun, Verb verb - "s" = SingularAssert;
+Sentence[3] => noun : "do", Plural noun, Verb verb - "\?" = Question;

@@ -34,7 +34,7 @@ namespace storm {
 		void FileReader::readSyntaxProductions() {
 			ensureLoaded();
 
-			Rule *delimiter;
+			Rule *delimiter = null;
 			if (c->delimiter) {
 				delimiter = as<Rule>(scope.find(c->delimiter));
 				if (!delimiter)

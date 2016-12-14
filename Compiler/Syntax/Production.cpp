@@ -3,7 +3,9 @@
 #include "Compiler/Lib/ArrayTemplate.h"
 #include "Compiler/Lib/MaybeTemplate.h"
 #include "Compiler/TypeCtor.h"
+#include "Utils/Memory.h"
 #include "Exception.h"
+#include "Node.h"
 #include "SStr.h"
 #include "Rule.h"
 
@@ -335,12 +337,67 @@ namespace storm {
 			Type::toS(to);
 		}
 
+		static void outputVar(Node *me, StrBuf *to, MemberVar *var) {
+			if (!var)
+				return;
+
+			*to << var->name << L" : ";
+			int offset = var->offset().current();
+			if (isArray(var->type)) {
+				Array<Object *> *v = OFFSET_IN(me, offset, Array<Object *> *);
+				if (v)
+					v->toS(to);
+				else
+					*to << L"null";
+			} else {
+				// It is a TObject or Object. Always on the same thread as us.
+				TObject *v = OFFSET_IN(me, offset, TObject *);
+				if (v)
+					v->toS(to);
+				else
+					*to << L"null";
+			}
+			*to << L"\n";
+		}
+
+		// This is implemented in C++ since it does not really need to be fast, and would be painful
+		// to implement in machine code.
+		void CODECALL productionToS(Node *me, StrBuf *to) {
+			// We know this is true, otherwise we would not be here...
+			ProductionType *type = (ProductionType *)runtime::typeOf(me);
+			Production *prod = type->production;
+
+			*to << L"{\n";
+			{
+				Indent z(to);
+
+				if (Rule *r = prod->rule())
+					*to << r->identifier() << L" -> ";
+				*to << type->identifier() << L"\n";
+
+				for (nat i = 0; i < prod->tokens->count(); i++) {
+					Token *t = prod->tokens->at(i);
+					outputVar(me, to, t->target);
+				}
+
+				if (prod->repCapture)
+					outputVar(me, to, prod->repCapture->target);
+			}
+			*to << L"}";
+		}
+
 		Bool ProductionType::loadAll() {
 			assert(decl, L"loadAll called twice!");
 
 			Engine &e = engine;
+			Value me = thisPtr(this);
+			Value strBuf = thisPtr(StrBuf::stormType(e));
 
 			// TODO: Add transform function.
+
+			Array<Value> *p = new (e) Array<Value>(2, me);
+			p->at(1) = strBuf;
+			add(nativeFunction(e, Value(), L"toS", p, &productionToS));
 
 			add(new (e) TypeCopyCtor(this));
 			add(new (e) TypeDeepCopy(this));
