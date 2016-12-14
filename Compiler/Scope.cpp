@@ -31,6 +31,10 @@ namespace storm {
 
 	ScopeLookup::ScopeLookup(Str *v) : voidName(v) {}
 
+	ScopeLookup::ScopeLookup(const wchar *s) {
+		voidName = new (this) Str(s);
+	}
+
 	Package *ScopeLookup::firstPkg(NameLookup *l) {
 		while (!as<Package>(l))
 			l = l->parent();

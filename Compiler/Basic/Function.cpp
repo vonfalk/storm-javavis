@@ -1,10 +1,10 @@
 #include "stdafx.h"
-#include "$header$"
+#include "Function.h"
 
 namespace storm {
 	namespace bs {
 
-		$$
+		FunctionDecl::FunctionDecl() {}
 
 	}
 }

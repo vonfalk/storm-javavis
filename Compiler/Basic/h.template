@@ -1,7 +1,7 @@
 #pragma once
 
 namespace storm {
-	namespace basic {
+	namespace bs {
 		STORM_PKG(lang.bs);
 
 		$$

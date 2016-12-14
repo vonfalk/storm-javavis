@@ -1,8 +1,11 @@
 #pragma once
 #include "Compiler/Reader.h"
+#include "Core/Str.h"
+#include "Lookup.h"
+#include "Content.h"
 
 namespace storm {
-	namespace basic {
+	namespace bs {
 		STORM_PKG(lang.bs);
 
 		// Entry point for the syntax language.
@@ -25,6 +28,25 @@ namespace storm {
 
 			// Get functions.
 			void STORM_FN readFunctions();
+
+			// The lookup.
+			BSLookup *scopeLookup;
+
+			// All included packages inside a scope.
+			Scope scope;
+
+		private:
+			// Content.
+			Content *content;
+
+			// Read content from the file.
+			void readContent();
+
+			// Read includes from the file.
+			Str::Iter readIncludes(Str *src);
+
+			// Read the rest of the content.
+			void readContent(Str *src, Str::Iter start);
 		};
 
 	}

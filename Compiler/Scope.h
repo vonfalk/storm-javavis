@@ -32,6 +32,7 @@ namespace storm {
 
 		// Create, give the name of 'void'.
 		STORM_CTOR ScopeLookup(Str *voidName);
+		ScopeLookup(const wchar *voidName);
 
 		// Find 'name' in 'in'.
 		virtual MAYBE(Named *) STORM_FN find(Scope in, SimpleName *name);
