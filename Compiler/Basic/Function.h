@@ -1,5 +1,9 @@
 #pragma once
 #include "Compiler/NamedThread.h"
+#include "Compiler/Function.h"
+#include "Compiler/Syntax/SStr.h"
+#include "Compiler/Syntax/Node.h"
+#include "Param.h"
 
 namespace storm {
 	namespace bs {
@@ -14,8 +18,31 @@ namespace storm {
 		class FunctionDecl : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
-			STORM_CTOR FunctionDecl();
+			STORM_CTOR FunctionDecl(Scope scope,
+									SrcName *result,
+									syntax::SStr *name,
+									Array<NameParam> *params,
+									syntax::Node *body);
+
+			STORM_CTOR FunctionDecl(Scope scope,
+									SrcName *result,
+									syntax::SStr *name,
+									Array<NameParam> *params,
+									SrcName *thread,
+									syntax::Node *body);
+
+			// Values.
+			Scope scope;
+			syntax::SStr *name;
+			SrcName *result;
+			Array<NameParam> *params;
+			MAYBE(SrcName *) thread;
+			syntax::Node *body;
+
+			// Create the corresponding function.
+			Function *STORM_FN createFn();
 		};
+
 
 	}
 }
