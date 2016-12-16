@@ -40,6 +40,13 @@ namespace storm {
 			return res;
 		}
 
+		Array<Value> *values(Array<ValParam> *params) {
+			Array<Value> *r = new (params) Array<Value>();
+			r->reserve(params->count());
+			for (nat i = 0; i < params->count(); i++)
+				r->push(params->at(i).type);
+			return r;
+		}
 
 	}
 }
