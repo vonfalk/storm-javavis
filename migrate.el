@@ -13,6 +13,7 @@
     (replace-all "Par<\\([A-Za-z<>*, :]+?\\)> " "\\1 *")
     (replace-all "MAYBE(Auto<\\([A-Za-z<>*, :]+?\\)>)" "MAYBE(\\1 *)")
     (replace-all "MAYBE(Par<\\([A-Za-z<>*, :]+?\\)>)" "MAYBE(\\1 *)")
+    (replace-all "MAYBE(\\([A-Za-z]+\\)) \\*" "MAYBE(\\1 *) ")
     (replace-all "ArrayP<\\([A-Za-z<>:]+?\\)> ?" "Array<\\1 *>")
     (replace-all " bs::\\([A-Z]\\)" " \\1")
     (replace-all "\\*bs::\\([A-Z]\\)" "*\\1")

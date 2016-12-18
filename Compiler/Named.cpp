@@ -18,16 +18,29 @@ namespace storm {
 		return null;
 	}
 
+	Named *NameLookup::find(Str *name, Array<Value> *params) {
+		return find(new (this) SimplePart(name, params));
+	}
+
+	Named *NameLookup::find(Str *name, Value param) {
+		return find(new (this) SimplePart(name, param));
+	}
+
+	Named *NameLookup::find(Str *name) {
+		return find(new (this) SimplePart(name));
+	}
+
+
 	Named *NameLookup::find(const wchar *name, Array<Value> *params) {
-		return find(new (this) SimplePart(new (this) Str(name), params));
+		return find(new (this) Str(name), params);
 	}
 
 	Named *NameLookup::find(const wchar *name, Value param) {
-		return find(new (this) SimplePart(new (this) Str(name), param));
+		return find(new (this) Str(name), param);
 	}
 
 	Named *NameLookup::find(const wchar *name) {
-		return find(new (this) SimplePart(new (this) Str(name)));
+		return find(new (this) Str(name));
 	}
 
 	Named::Named(Str *name) : name(name), flags(namedDefault) {

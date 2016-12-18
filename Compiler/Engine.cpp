@@ -267,6 +267,14 @@ namespace storm {
 		return runtime::allocObject(0, t);
 	}
 
+	static RootObject *stormAs(RootObject *in, Type *type) {
+		if (!in)
+			return null;
+		if (in->isA(type))
+			return in;
+		return null;
+	}
+
 	code::RefSource *Engine::createRef(RefType ref) {
 		switch (ref) {
 		case rEngine:
@@ -277,6 +285,8 @@ namespace storm {
 			return arena()->externalSource(L"ruleThrow", address(&syntax::Node::throwError));
 		case rAlloc:
 			return arena()->externalSource(L"alloc", &allocType);
+		case rAs:
+			return arena()->externalSource(L"as", &stormAs);
 		case rVTableAllocOffset:
 			return arena()->externalSource(L"vtableAllocOffset", (const void *)VTableCpp::vtableAllocOffset());
 		case rTObjectOffset:

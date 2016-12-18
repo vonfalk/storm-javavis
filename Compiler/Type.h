@@ -142,6 +142,7 @@ namespace storm {
 		MAYBE(Function *) STORM_FN defaultCtor();
 		MAYBE(Function *) STORM_FN copyCtor();
 		MAYBE(Function *) STORM_FN assignFn();
+		MAYBE(Function *) STORM_FN destructor();
 
 	private:
 		// Special constructor for creating the first type.

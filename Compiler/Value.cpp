@@ -180,7 +180,11 @@ namespace storm {
 	}
 
 	code::Operand Value::destructor() const {
-		TODO(L"Implement me!");
+		if (isValue()) {
+			if (Function *dtor = type->destructor())
+				return dtor->ref();
+		}
+
 		return code::Operand();
 	}
 

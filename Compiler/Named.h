@@ -22,6 +22,9 @@ namespace storm {
 
 		// Find the specified NamePart in here. Returns null if not found.
 		virtual MAYBE(Named *) STORM_FN find(SimplePart *part);
+		MAYBE(Named *) STORM_FN find(Str *name, Array<Value> *params);
+		MAYBE(Named *) STORM_FN find(Str *name, Value param);
+		MAYBE(Named *) STORM_FN find(Str *name);
 		MAYBE(Named *) find(const wchar *name, Array<Value> *params);
 		MAYBE(Named *) find(const wchar *name, Value param);
 		MAYBE(Named *) find(const wchar *name);

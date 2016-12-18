@@ -1,0 +1,435 @@
+#include "stdafx.h"
+#include "Ctor.h"
+#include "Type.h"
+#include "Cast.h"
+#include "Named.h"
+#include "Core/Fn.h"
+#include "Compiler/Engine.h"
+#include "Compiler/Exception.h"
+
+namespace storm {
+	namespace bs {
+
+		BSCtor::BSCtor(Array<ValParam> *params, Scope scope, syntax::Node *body, SrcPos pos)
+			: Function(Value(), new (params) Str(Type::CTOR), values(params)),
+			  scope(scope),
+			  body(body),
+			  params(params),
+			  pos(pos) {
+
+			// If we inherit from a class that does not know which thread to run on, we need a Thread as the
+			// first parameter (#1, it is after the this ptr).
+			RunOn runOn = params->at(0).type.type->runOn();
+			needsThread = runOn.state == RunOn::runtime;
+			if (needsThread) {
+				Value expected = thisPtr(Thread::stormType(engine()));
+
+				if (params->count() < 2)
+					throw SyntaxError(pos, L"This constructor needs to take a " + ::toS(expected)
+									+ L" as the first parameter since we are threaded.");
+
+				if (!expected.canStore(params->at(1).type))
+					throw SyntaxError(pos, L"This constructor needs to take a " + ::toS(expected) + L" as the first"
+									L" parameter, not " + ::toS(params->at(1)));
+			}
+
+			// Rename until it is initialized!
+			params->at(0).name = new (this) Str(L" this");
+
+			Fn<CodeGen *> *ptr = fnPtr(engine(), &BSCtor::generateCode, this);
+			setCode(new (this) LazyCode(ptr));
+		}
+
+		code::Var BSCtor::findThread(CodeGen *s, Array<code::Operand> *params) {
+			using namespace code;
+
+			RunOn on = runOn();
+			if (on.state != RunOn::runtime)
+				return Function::findThread(s, params);
+
+			// We know it is always the first parameter!
+			code::Var r = s->to->createVar(s->block, Size::sPtr);
+			*s->to << mov(r, params->at(1));
+			return r;
+		}
+
+		CtorBody *BSCtor::parse() {
+			if (!body)
+				return defaultParse();
+
+			TODO(L"Fix this!");
+			// return syntax::transformNode<CtorBody, BSCtor>(body, this);
+			return defaultParse();
+		}
+
+		CtorBody *BSCtor::defaultParse() {
+			CtorBody *r = new (this) CtorBody(this);
+			Actuals *actual = new (this) Actuals();
+			SuperCall *super = new (this) SuperCall(pos, r, actual);
+			super->pos = pos;
+			r->add(super);
+			return r;
+		}
+
+		CodeGen *BSCtor::generateCode() {
+			CtorBody *body = parse();
+
+			using namespace code;
+			CodeGen *state = new (this) CodeGen(runOn());
+			Listing *l = state->to;
+
+			*l << prolog();
+
+			// Parameters (first one is special).
+			{
+				code::Var thisVar = l->createParam(params->at(0).type.valType());
+				SimplePart *hiddenName = new (this) SimplePart(new (this) Str(L" this"));
+				SimplePart *normalName = new (this) SimplePart(new (this) Str(L"this"));
+				LocalVar *hidden = body->variable(hiddenName);
+				LocalVar *normal = body->variable(normalName);
+				hidden->var = VarInfo(thisVar);
+				normal->var = VarInfo(thisVar);
+			}
+
+			for (nat i = 1; i < params->count(); i++) {
+				Value t = params->at(i).type;
+				SimplePart *name = new (this) SimplePart(params->at(i).name);
+				LocalVar *var = body->variable(name);
+				assert(var);
+				var->createParam(state);
+			}
+
+			CodeResult *r = CREATE(CodeResult, this);
+			body->code(state, r);
+
+			*l << epilog();
+			*l << ret(valVoid());
+
+			// PLN(identifier() << L": " << l);
+			return state;
+		}
+
+		LocalVar *BSCtor::addParams(Block *to) {
+			LocalVar *thread;
+
+			for (nat i = 0; i < params->count(); i++) {
+				LocalVar *var = new (this) LocalVar(params->at(i).name, params->at(i).type, pos, true);
+				to->add(var);
+				if (i == 1 && needsThread)
+					thread = var;
+			}
+
+			return thread;
+		}
+
+		CtorBody::CtorBody(BSCtor *ctor) : ExprBlock(ctor->pos, ctor->scope) {
+			threadParam = ctor->addParams(this);
+		}
+
+		void CtorBody::add(Array<Expr *>*exprs) {
+			for (nat i = 0; i < exprs->count(); i++) {
+				add(exprs->at(i));
+			}
+		}
+
+		void CtorBody::blockCode(CodeGen *state, CodeResult *to, const code::Block &block) {
+			if (threadParam) {
+				thread = state->to->createVar(state->block, Size::sPtr);
+				*state->to << mov(thread, threadParam->var.v);
+			}
+
+			Block::blockCode(state, to, block);
+		}
+
+		Initializer::Initializer(syntax::SStr *name, Expr *expr) : name(name), expr(expr) {}
+
+		Initializer::Initializer(syntax::SStr *name, Actuals *params) : name(name), params(params) {}
+
+		SuperCall::SuperCall(SrcPos pos, CtorBody *block, Actuals *params, Array<Initializer *>*init)
+			: Expr(pos) {
+
+			this->init(block, params);
+			for (nat i = 0; i < init->count(); i++)
+				this->init(init->at(i));
+		}
+
+		SuperCall::SuperCall(SrcPos pos, CtorBody *block, Actuals *params) : Expr(pos) {
+			init(block, params);
+		}
+
+		void SuperCall::init(CtorBody *block, Actuals *params) {
+			rootBlock = block;
+
+			// Add the regular this parameter!
+			SimplePart *name = new (this) SimplePart(new (this) Str(L" this"));
+			thisVar = block->variable(name);
+			thisPtr = thisVar->result;
+			LocalVar *created = new (this) LocalVar(new (this) Str(L"this"), thisPtr, thisVar->pos, true);
+			block->add(created);
+
+			this->params = params;
+			LocalVarAccess *l = new (this) LocalVarAccess(pos, thisVar);
+			params->addFirst(l);
+
+			scope = block->scope;
+		}
+
+		ExprResult SuperCall::result() {
+			return ExprResult();
+		}
+
+		void SuperCall::init(Initializer *init) {
+			Str *name = init->name->v;
+			MemberVar *v = as<MemberVar>(thisPtr.type->find(name, new (this) Array<Value>(1, thisPtr)));
+			if (v == null || v->params->at(0).type != thisPtr.type)
+				throw SyntaxError(init->name->pos, L"The member variable " + ::toS(name) + L" was not found in "
+								+ ::toS(thisPtr));
+
+			if (initMap->has(name))
+				throw SyntaxError(init->name->pos, L"The member " + ::toS(name) + L" has already been initialized.");
+
+			initMap->put(name, init);
+		}
+
+		void SuperCall::callParent(CodeGen *s) {
+			Type *parent = thisPtr.type->super();
+			if (!parent)
+				return;
+
+			RunOn runOn = thisPtr.type->runOn();
+			bool hiddenThread = runOn.state == RunOn::runtime;
+			if (!hiddenThread && parent == TObject::stormType(engine())) {
+				callTObject(s, runOn.thread);
+				return;
+			}
+
+			// Find something to call.
+			BSNamePart *values = new (this) BSNamePart(Type::CTOR, pos, params);
+			values->alter(0, Value(parent));
+
+			if (hiddenThread)
+				values->insert(storm::thisPtr(Thread::stormType(engine())), 1);
+
+			Function *ctor = as<Function>(parent->find(values));
+			if (!ctor)
+				throw SyntaxError(pos, L"No constructor (" + ::toS(values) + L") found in " + ::toS(parent->identifier()));
+
+			Array<code::Operand> *actuals = new (this) Array<code::Operand>();
+			actuals->reserve(values->params->count());
+
+			if (hiddenThread) {
+				actuals->push(params->code(0, s, ctor->params->at(0)));
+				actuals->push(rootBlock->threadParam->var.v);
+				for (nat i = 2; i < values->params->count(); i++)
+					actuals->push(params->code(i - 1, s, ctor->params->at(i)));
+			} else {
+				for (nat i = 0; i < values->params->count(); i++)
+					actuals->push(params->code(i, s, ctor->params->at(i)));
+			}
+
+			CodeResult *t = CREATE(CodeResult, this);
+			ctor->localCall(s, actuals, t, false);
+		}
+
+		void SuperCall::callTObject(CodeGen *s, NamedThread *t) {
+			if (params->expressions->count() != 1)
+				throw SyntaxError(pos, L"Can not initialize a threaded object with parameters.");
+
+			// Find the constructor of TObject.
+			Type *parent = TObject::stormType(engine());
+			Array<Value> *values = new (this) Array<Value>(2, Value(parent));
+			values->at(1) = Value(Thread::stormType(engine()));
+			Function *ctor = as<Function>(parent->find(Type::CTOR, values));
+			if (!ctor)
+				throw InternalError(L"The constructor of TObject: __ctor(TObject, Thread) was not found!");
+
+			// Call the constructor.
+			Array<code::Operand> *actuals = new (this) Array<code::Operand>();
+			actuals->at(0) = params->code(0, s, ctor->params->at(0));
+			actuals->at(1) = t->ref();
+
+			CodeResult *res = new (this) CodeResult();
+			ctor->localCall(s, actuals, res, false);
+		}
+
+		void SuperCall::code(CodeGen *s, CodeResult *r) {
+			using namespace code;
+
+			// Super class should be called first.
+			callParent(s);
+
+			code::Var dest = thisVar->var.v;
+			Type *type = thisPtr.type;
+
+			// Block for member variable cleanups.
+			code::Block varBlock = s->to->createBlock(s->to->last(s->block));
+			*s->to << begin(varBlock);
+
+			// From here on, we should set up the destructor to clear 'this' by calling its destructor
+			// directly.
+			if (Type *super = type->super()) {
+				if (Function *fn = super->destructor()) {
+					code::Var thisCleanup = s->to->createVar(varBlock, Size::sPtr, fn->directRef(), freeOnException);
+					*s->to << mov(thisCleanup, dest);
+				}
+			}
+
+			// Initialize any member variables.
+			Array<MemberVar *> *vars = type->variables();
+			for (nat i = 0; i < vars->count(); i++) {
+				MemberVar *var = vars->at(i);
+				CodeGen *child = s->child(varBlock);
+				initVar(child, var);
+
+				Value type = var->type;
+				if (type.isValue()) {
+					// If we get an exception, this variable should be cleared from here on.
+					Part part = s->to->createPart(varBlock);
+					*s->to << begin(part);
+
+					code::Var v = s->to->createVar(part, Size::sPtr, type.destructor(), freeOnException);
+					*s->to << mov(v, dest);
+					*s->to << add(v, ptrConst(var->offset()));
+				}
+			}
+
+			// Remove all destructors here, since we can call the real destructor of 'this' now.
+			*s->to << end(varBlock);
+
+			// Set our VTable.
+			if (type->typeFlags & typeClass) {
+				type->vtable->insert(s->to, dest);
+			}
+
+			// From here on, we need to make sure that we're freeing our 'this' pointer properly.
+			if (Function *fn = type->destructor()) {
+				Part p = s->to->createPart(s->block);
+				*s->to << begin(p);
+				code::Var thisCleanup = s->to->createVar(p, Size::sPtr, fn->directRef(), freeOnException);
+				*s->to << mov(thisCleanup, dest);
+			}
+		}
+
+		void SuperCall::initVar(CodeGen *s, MemberVar *v) {
+			InitMap::Iter i = initMap->find(v->name);
+			if (i == initMap->end())
+				initVarDefault(s, v);
+			else
+				initVar(s, v, i.v());
+		}
+
+		void SuperCall::initVarDefault(CodeGen *s, MemberVar *v) {
+			using namespace code;
+
+			Value t = v->type;
+			code::Var dest = thisVar->var.v;
+
+			if (t.ref)
+				throw SyntaxError(pos, L"Can not initialize reference " + ::toS(v->name) + L", not implemented yet!");
+
+			if (t.isValue()) {
+				*s->to << mov(ptrA, dest);
+				*s->to << add(ptrA, ptrConst(v->offset()));
+				*s->to << fnParam(ptrA);
+				Function *c = t.type->defaultCtor();
+				assert(c, L"No default constructor!");
+				*s->to << fnCall(c->ref(), valVoid());
+			} else if (t.isBuiltIn()) {
+				// Default value is already there.
+			} else {
+				Function *ctor = t.type->defaultCtor();
+				if (!ctor)
+					throw SyntaxError(pos, L"Can not initialize " + ::toS(v->name) + L" by default-constructing it. In "
+									+ ::toS(thisPtr) + L", please initialize this member explicitly.");
+				Actuals *params = new (this) Actuals();
+				CtorCall *ctorCall = new (this) CtorCall(pos, ctor, params);
+				CodeResult *created = new (this) CodeResult(t, s->block);
+				ctorCall->code(s, created);
+
+				code::Var cVar = created->location(s).v;
+				*s->to << mov(ptrA, dest);
+				*s->to << mov(ptrRel(ptrA, v->offset()), cVar);
+			}
+		}
+
+		void SuperCall::initVar(CodeGen *s, MemberVar *v, Initializer *to) {
+			using namespace code;
+
+			Value t = v->type;
+
+			if (t.ref)
+				throw SyntaxError(pos, L"Can not initialize reference " + ::toS(v->name) + L", not implemented yet!");
+
+			assert(to->expr || to->params);
+
+			if (to->expr) {
+				Expr *init = castTo(to->expr, t);
+				if (t.isClass() && init) {
+					initVarAssign(s, v, init);
+				} else {
+					Actuals *p = new (this) Actuals();
+					p->add(to->expr);
+					initVarCtor(s, v, p);
+				}
+			} else {
+				initVarCtor(s, v, to->params);
+			}
+
+		}
+
+		void SuperCall::initVarCtor(CodeGen *s, MemberVar *v, Actuals *to) {
+			using namespace code;
+
+			Value t = v->type;
+			code::Var dest = thisVar->var.v;
+			Type *toCreate = t.type;
+
+			BSNamePart *values = new (this) BSNamePart(Type::CTOR, pos, to);
+			values->insert(storm::thisPtr(toCreate));
+
+			Function *ctor = as<Function>(toCreate->find(values));
+			if (!ctor)
+				throw SyntaxError(pos, L"No constructor for " + ::toS(t) + L"(" + ::toS(values) + L").");
+
+			if (t.isClass()) {
+				// Easy way, call the constructor as normal.
+				CtorCall *call = new (this) CtorCall(pos, ctor, to);
+				CodeResult *created = new (this) CodeResult(t, s->block);
+				call->code(s, created);
+				VarInfo loc = created->location(s);
+				*s->to << mov(ptrA, dest);
+				*s->to << mov(ptrRel(ptrA, v->offset()), loc.v);
+				loc.created(s);
+			} else {
+				// Now we're left with the values!
+
+				Array<code::Operand> *actuals = new (this) Array<code::Operand>();
+				actuals->reserve(values->params->count());
+				for (nat i = 1; i < values->params->count(); i++)
+					actuals->push(to->code(i - 1, s, ctor->params->at(i)));
+
+				*s->to << mov(ptrA, dest);
+				*s->to << add(ptrA, ptrConst(v->offset()));
+				actuals->at(0) = ptrA;
+
+				CodeResult *nothing = CREATE(CodeResult, this);
+				ctor->localCall(s, actuals, nothing, true);
+			}
+		}
+
+		void SuperCall::initVarAssign(CodeGen *s, MemberVar *v, Expr *to) {
+			using namespace code;
+
+			Value t = v->type;
+			code::Var dest = thisVar->var.v;
+			assert(t.isClass());
+
+			CodeResult *result = new (this) CodeResult(t, s->block);
+			to->code(s, result);
+			VarInfo loc = result->location(s);
+			*s->to << mov(ptrA, dest);
+			*s->to << mov(ptrRel(ptrA, v->offset()), loc.v);
+		}
+
+	}
+}

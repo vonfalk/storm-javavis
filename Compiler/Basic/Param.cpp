@@ -40,6 +40,15 @@ namespace storm {
 			return res;
 		}
 
+		Array<ValParam> *resolve(Array<NameParam> *params, Type *me, Scope scope) {
+			Array<ValParam> *res = new (params) Array<ValParam>();
+			res->reserve(params->count() + 1);
+			res->push(ValParam(thisPtr(me), new (params) Str(L"this")));
+			for (nat i = 0; i < params->count(); i++)
+				res->push(resolve(params->at(i), scope));
+			return res;
+		}
+
 		Array<Value> *values(Array<ValParam> *params) {
 			Array<Value> *r = new (params) Array<Value>();
 			r->reserve(params->count());

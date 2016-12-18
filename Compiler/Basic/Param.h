@@ -39,6 +39,7 @@ namespace storm {
 		// Get parameters as Values.
 		ValParam STORM_FN resolve(NameParam param, Scope scope);
 		Array<ValParam> *STORM_FN resolve(Array<NameParam> *params, Scope scope);
+		Array<ValParam> *STORM_FN resolve(Array<NameParam> *params, Type *me, Scope scope);
 		Array<Value> *STORM_FN values(Array<ValParam> *params);
 
 	}

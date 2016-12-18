@@ -17,4 +17,7 @@ namespace storm {
 		STORM_CTOR FnType(Str *name, ValueArray *params);
 	};
 
+	// Find the function type.
+	Type *fnType(Array<Value> *params);
+
 }
