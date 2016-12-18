@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "MapTemplate.h"
+#include "Map.h"
 #include "Core/Map.h"
 #include "Core/Str.h"
 #include "Engine.h"

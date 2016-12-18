@@ -5,7 +5,7 @@
 #include "Package.h"
 #include "Function.h"
 #include "Code.h"
-#include "Lib/MaybeTemplate.h"
+#include "Lib/Maybe.h"
 #include "Core/Str.h"
 
 namespace storm {
@@ -216,7 +216,7 @@ namespace storm {
 
 			if (!into.templates[i]) {
 				Str *n = new (e) Str(t.name);
-				TemplateFn *templ = new (e) TemplateFn(n, t.generate);
+				TemplateCppFn *templ = new (e) TemplateCppFn(n, t.generate);
 				into.templates[i] = new (e) TemplateList(templ);
 			}
 		}

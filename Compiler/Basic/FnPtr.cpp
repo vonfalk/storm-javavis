@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "FnPtr.h"
 #include "Compiler/Exception.h"
-#include "Compiler/Lib/FnTemplate.h"
+#include "Compiler/Lib/Fn.h"
 
 namespace storm {
 	namespace bs {

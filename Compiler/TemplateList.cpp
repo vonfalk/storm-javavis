@@ -21,7 +21,7 @@ namespace storm {
 		Node *next[1];
 	};
 
-	TemplateList::TemplateList(TemplateFn *t) : templ(t) {
+	TemplateList::TemplateList(TemplateCppFn *t) : templ(t) {
 		lock = new (this) Lock();
 	}
 

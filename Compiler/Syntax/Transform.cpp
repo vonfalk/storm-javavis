@@ -11,8 +11,8 @@
 #include "Compiler/Basic/For.h"
 #include "Compiler/Basic/Operator.h"
 
-#include "Compiler/Lib/ArrayTemplate.h"
-#include "Compiler/Lib/MaybeTemplate.h"
+#include "Compiler/Lib/Array.h"
+#include "Compiler/Lib/Maybe.h"
 
 namespace storm {
 	namespace syntax {

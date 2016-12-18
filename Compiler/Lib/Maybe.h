@@ -21,9 +21,19 @@ namespace storm {
 		// Type.
 		virtual BasicTypeInfo::Kind builtInType() const;
 
+	protected:
+		// Lazy-loading.
+		virtual Bool STORM_FN loadAll();
+
 	private:
 		// Contained type.
 		Type *contained;
+
+		// Create copy ctors.
+		Named *CODECALL createCopy(Str *name, SimplePart *part);
+
+		// Create assignment operators.
+		Named *CODECALL createAssign(Str *name, SimplePart *part);
 	};
 
 	Bool STORM_FN isMaybe(Value v);

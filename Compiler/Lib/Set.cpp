@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "SetTemplate.h"
+#include "Set.h"
 #include "Core/Str.h"
 #include "Core/Set.h"
 #include "Core/WeakSet.h"

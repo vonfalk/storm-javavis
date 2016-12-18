@@ -5,7 +5,7 @@
 #include "Lookup.h"
 #include "Actuals.h"
 #include "Block.h"
-#include "Compiler/Lib/FutureTemplate.h"
+#include "Compiler/Lib/Future.h"
 
 namespace storm {
 	namespace bs {

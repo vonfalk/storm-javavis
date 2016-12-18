@@ -64,6 +64,7 @@ namespace storm {
 		RunOn STORM_FN runOn();
 
 		// Keep track of what is added.
+		using NameSet::add;
 		virtual void STORM_FN add(Named *item);
 
 		// Modify the 'find' behaviour slightly so it also considers superclasses.

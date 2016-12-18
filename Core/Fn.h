@@ -289,12 +289,12 @@ namespace storm {
 
 	template <class R, class Q, class P1>
 	Fn<R, P1> *fnPtr(Engine &e, R (CODECALL Q::*fn)(P1), const Q *obj) {
-		return new (e) Fn<R>(fn, obj);
+		return new (e) Fn<R, P1>(fn, obj);
 	}
 
 	template <class R, class Q, class P1, class P2>
 	Fn<R, P1, P2> *fnPtr(Engine &e, R (CODECALL Q::*fn)(P1, P2), const Q *obj) {
-		return new (e) Fn<R>(fn, obj);
+		return new (e) Fn<R, P1, P2>(fn, obj);
 	}
 
 }

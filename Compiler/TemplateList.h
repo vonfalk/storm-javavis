@@ -19,7 +19,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		TemplateList(TemplateFn *t);
+		TemplateList(TemplateCppFn *t);
 
 		// Add everything in here to NameSet.
 		void addTo(NameSet *to);
@@ -36,7 +36,7 @@ namespace storm {
 
 	private:
 		// Template we're representing.
-		TemplateFn *templ;
+		TemplateCppFn *templ;
 
 		// Lock used for 'find'.
 		Lock *lock;

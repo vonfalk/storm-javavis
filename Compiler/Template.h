@@ -2,6 +2,7 @@
 #include "Name.h"
 #include "Named.h"
 #include "ValueArray.h"
+#include "Core/Fn.h"
 #include "Core/Gen/CppTypes.h"
 
 namespace storm {
@@ -33,13 +34,13 @@ namespace storm {
 	/**
 	 * Template generated from a function in C++.
 	 */
-	class TemplateFn : public Template {
+	class TemplateCppFn : public Template {
 		STORM_CLASS;
 	public:
 		typedef CppTemplate::GenerateFn GenerateFn;
 
 		// Ctor.
-		TemplateFn(Str *name, GenerateFn fn);
+		TemplateCppFn(Str *name, GenerateFn fn);
 
 		// Generate function.
 		UNKNOWN(PTR_GC) GenerateFn fn;
@@ -49,5 +50,21 @@ namespace storm {
 		virtual MAYBE(Type *) STORM_FN generate(ValueArray *part);
 	};
 
+
+	/**
+	 * Template generated from a function in Storm/C++.
+	 */
+	class TemplateFn : public Template {
+		STORM_CLASS;
+	public:
+		// Create.
+		TemplateFn(Str *name, Fn<MAYBE(Named *), Str *, SimplePart *> *fn);
+
+		// Function for generation.
+		Fn<MAYBE(Named *), Str *, SimplePart *> *fn;
+
+		// Generate stuff.
+		virtual MAYBE(Named *) STORM_FN generate(SimplePart *part);
+	};
 
 }

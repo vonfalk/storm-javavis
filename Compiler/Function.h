@@ -138,6 +138,7 @@ namespace storm {
 	// Conveniently create various kind of functions.
 	Function *inlinedFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, Fn<void, InlineParams> *fn);
 	Function *nativeFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, const void *fn);
+	Function *nativeEngineFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, const void *fn);
 	Function *lazyFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, Fn<CodeGen *> *generate);
 
 

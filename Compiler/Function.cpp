@@ -5,7 +5,7 @@
 #include "Exception.h"
 #include "Code.h"
 #include "Core/Str.h"
-#include "Lib/FutureTemplate.h"
+#include "Lib/Future.h"
 
 namespace storm {
 
@@ -498,6 +498,12 @@ namespace storm {
 	Function *nativeFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, const void *fn) {
 		Function *r = new (e) Function(result, new (e) Str(name), params);
 		r->setCode(new (e) StaticCode(fn));
+		return r;
+	}
+
+	Function *nativeEngineFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, const void *fn) {
+		Function *r = new (e) Function(result, new (e) Str(name), params);
+		r->setCode(new (e) StaticEngineCode(result, fn));
 		return r;
 	}
 

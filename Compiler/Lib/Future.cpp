@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "FutureTemplate.h"
+#include "Future.h"
 #include "TemplateList.h"
 #include "Engine.h"
 #include "Exception.h"

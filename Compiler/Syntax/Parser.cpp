@@ -4,8 +4,8 @@
 #include "SStr.h"
 #include "Utils/Memory.h"
 #include "Core/Runtime.h"
-#include "Lib/ParserTemplate.h"
-#include "Compiler/Lib/ArrayTemplate.h"
+#include "Lib/Parser.h"
+#include "Compiler/Lib/Array.h"
 
 namespace storm {
 	namespace syntax {

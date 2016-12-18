@@ -4,7 +4,7 @@
 #include "Named.h"
 #include "Compiler/Engine.h"
 #include "Compiler/Exception.h"
-#include "Compiler/Lib/MaybeTemplate.h"
+#include "Compiler/Lib/Maybe.h"
 
 namespace storm {
 	namespace bs {

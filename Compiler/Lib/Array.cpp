@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "ArrayTemplate.h"
+#include "Array.h"
 #include "Engine.h"
 #include "Exception.h"
 #include "Core/Str.h"
