@@ -38,6 +38,10 @@ namespace storm {
 			return t->handle();
 		}
 
+		const Handle &voidHandle(Engine &e) {
+			return e.voidHandle();
+		}
+
 		Type *typeOf(const RootObject *o) {
 			return Gc::typeOf(o)->type;
 		}

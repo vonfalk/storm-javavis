@@ -1,0 +1,117 @@
+#pragma once
+#include "Expr.h"
+#include "Var.h"
+#include "Compiler/SrcPos.h"
+#include "Compiler/Scope.h"
+#include "Core/Map.h"
+
+namespace storm {
+	namespace bs {
+		STORM_PKG(lang.bs);
+
+		class BlockLookup;
+
+		/**
+		 * A basic block. This block only acts as a new scope for variables. It
+		 * is abstract to let other types of expressions act as some kind of block
+		 * for variables.
+		 */
+		class Block : public Expr {
+			STORM_CLASS;
+		public:
+			STORM_CTOR Block(SrcPos pos, Scope scope);
+			STORM_CTOR Block(SrcPos pos, Block *parent);
+
+			// Lookup node.
+			BlockLookup *lookup;
+
+			// Scope.
+			Scope scope;
+
+			// Generate code. Override 'blockCode' to generate only block contents.
+			virtual void STORM_FN code(CodeGen *state, CodeResult *to);
+
+			// Override to initialize the block yourself.
+			virtual void blockCode(CodeGen *state, CodeResult *to, const code::Block &newBlock);
+
+			// Override to generate contents of the block.
+			virtual void STORM_FN blockCode(CodeGen *state, CodeResult *to);
+
+			// Find a variable. Same semantics as 'find'.
+			virtual MAYBE(LocalVar *) STORM_FN variable(SimplePart *name);
+
+			// Add a variable
+			virtual void STORM_FN add(LocalVar *v);
+
+			// Lift all variables present inside 'o' into this block. Can only be used one step at a
+			// time to not cause strange scoping issues.
+			virtual void STORM_FN liftVars(Block *from);
+
+		private:
+			// Variables in this block.
+			typedef Map<Str *, LocalVar *> VarMap;
+			Map<Str *, LocalVar *> *variables;
+
+			// Check if 'x' is a child to us.
+			bool isParentTo(Block *x);
+
+		};
+
+		/**
+		 * A block that contains statements.
+		 */
+		class ExprBlock : public Block {
+			STORM_CLASS;
+		public:
+			STORM_CTOR ExprBlock(SrcPos pos, Scope scope);
+			STORM_CTOR ExprBlock(SrcPos pos, Block *parent);
+
+			// Add an expression.
+			using Block::add;
+			void STORM_FN add(Expr *s);
+
+			// Result.
+			virtual ExprResult STORM_FN result();
+
+			// Optimization.
+			virtual void STORM_FN code(CodeGen *state, CodeResult *to);
+
+			// Code generation.
+			virtual void STORM_FN blockCode(CodeGen *state, CodeResult *to);
+
+			// Auto-casting should work across the boundaries of an expression.
+			virtual Int STORM_FN castPenalty(Value to);
+
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const;
+
+		private:
+			// Expressions here.
+			Array<Expr *>*exprs;
+
+			// Index of first expression declaring it will never return. 'invalid' if none.
+			nat firstNoReturn;
+
+			// Invalid index.
+			static const nat invalid = -1;
+		};
+
+
+		/**
+		 * Node in the name lookup tree for our blocks.
+		 */
+		class BlockLookup : public NameLookup {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR BlockLookup(Block *block, NameLookup *prev);
+
+			// Risk of cycles, no ref.
+			Block *block;
+
+			// Find a variable here.
+			virtual MAYBE(Named *) STORM_FN find(SimplePart *part);
+		};
+
+	}
+}

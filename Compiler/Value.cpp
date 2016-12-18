@@ -59,6 +59,17 @@ namespace storm {
 			return canStore(v);
 	}
 
+	Value common(Value a, Value b) {
+		if (a.type == null || b.type == null)
+			return Value();
+
+		for (Type *t = a.type; t; t = t->super()) {
+			if (b.type->isA(t))
+				return Value(t);
+		}
+		return Value();
+	}
+
 	Value thisPtr(Type *t) {
 		if ((t->typeFlags & typeValue) == typeValue)
 			return Value(t, true);
@@ -79,7 +90,12 @@ namespace storm {
 	}
 
 	code::ValType Value::valType() const {
-		return code::ValType(size(), isFloat());
+		if (returnInReg()) {
+			return code::ValType(size(), isFloat());
+		} else {
+			// value types are returned as pointers.
+			return code::ValType(Size::sPtr, false);
+		}
 	}
 
 	BasicTypeInfo Value::typeInfo() const {

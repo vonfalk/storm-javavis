@@ -151,8 +151,6 @@ namespace storm {
 
 	/**
 	 * Class used from C++.
-	 *
-	 * TODO: Set vtables for class in constructors.
 	 */
 	template <class T>
 	class Array : public ArrayBase {

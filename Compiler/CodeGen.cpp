@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CodeGen.h"
 #include "Exception.h"
+#include "Engine.h"
 #include "Core/CloneEnv.h"
 
 namespace storm {
@@ -19,6 +20,11 @@ namespace storm {
 
 	CodeGen *CodeGen::child(code::Block b) {
 		return new (this) CodeGen(this, b);
+	}
+
+	CodeGen *CodeGen::child() {
+		code::Block b = to->createBlock(to->last(block));
+		return child(b);
 	}
 
 	void CodeGen::deepCopy(CloneEnv *env) {
@@ -130,6 +136,8 @@ namespace storm {
 
 	CodeResult::CodeResult(Value type, code::Var var) : variable(var), t(type) {}
 
+	CodeResult::CodeResult(Value type, VarInfo var) : variable(var), t(type) {}
+
 	VarInfo CodeResult::location(CodeGen *s) {
 		assert(needed(), L"Trying to get the location of an unneeded result. Use 'safeLocation' instead.");
 
@@ -188,6 +196,188 @@ namespace storm {
 
 	Bool CodeResult::needed() const {
 		return t != Value();
+	}
+
+	code::Var createBasicTypeInfo(CodeGen *to, Value v) {
+		using namespace code;
+
+		BasicTypeInfo typeInfo = v.typeInfo();
+
+		Size s = Size::sNat * 2;
+		assert(s.current() == sizeof(typeInfo), L"Please check the declaration of BasicTypeInfo.");
+
+		Var r = to->to->createVar(to->block, s);
+		*to->to << lea(ptrA, r);
+		*to->to << mov(intRel(ptrA, Offset()), natConst(typeInfo.size));
+		*to->to << mov(intRel(ptrA, Offset::sNat), natConst(typeInfo.kind));
+
+		return r;
+	}
+
+	static code::Size fnParamsSize() {
+		Size s = Size::sPtr;
+		s += Size::sNat;
+		s += Size::sNat;
+		assert(s.current() == sizeof(os::FnParams), L"Please update the size here!");
+		return s;
+	}
+
+	static code::Size fnParamSize() {
+		Size s = Size::sPtr * 3;
+		s += Size::sNat;
+		assert(s.current() == sizeof(os::FnParams::Param), L"Please update the size here!");
+		return s;
+	}
+
+	code::Var createFnParams(CodeGen *s, code::Operand memory) {
+		using namespace code;
+
+		Engine &e = s->engine();
+		Var v = s->to->createVar(s->block,
+								fnParamsSize(),
+								e.ref(Engine::rFnParamsDtor),
+								freeOnBoth | freePtr);
+		// Call the ctor!
+		*s->to << lea(ptrC, v);
+		*s->to << fnParam(ptrC);
+		*s->to << fnParam(memory);
+		*s->to << fnCall(e.ref(Engine::rFnParamsCtor), valVoid());
+
+		return v;
+	}
+
+	code::Var createFnParams(CodeGen *s, Nat params) {
+		using namespace code;
+		// Allocate space for the parameters on the stack.
+		Size total = fnParamSize() * params;
+		Var v = s->to->createVar(s->block, total);
+		*s->to << lea(ptrA, v);
+
+		return createFnParams(s, code::Operand(ptrA));
+	}
+
+	void addFnParam(CodeGen *s, code::Var fnParams, Value type,	code::Operand v) {
+		using namespace code;
+		Engine &e = s->engine();
+
+		if (type.isClass() || type.ref) {
+			*s->to << lea(ptrC, fnParams);
+			*s->to << fnParam(ptrC);
+			*s->to << fnParam(ptrConst(Offset()));
+			*s->to << fnParam(ptrConst(Offset()));
+			*s->to << fnParam(ptrConst(type.size()));
+			*s->to << fnParam(byteConst(0));
+			*s->to << fnParam(v);
+			*s->to << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
+		} else if (type.isBuiltIn()) {
+			*s->to << lea(ptrC, fnParams);
+			*s->to << lea(ptrA, v);
+			*s->to << fnParam(ptrC);
+			*s->to << fnParam(ptrConst(Offset()));
+			*s->to << fnParam(ptrConst(Offset()));
+			*s->to << fnParam(ptrConst(type.size()));
+			*s->to << fnParam(byteConst(type.isFloat() ? 1 : 0));
+			*s->to << fnParam(ptrA);
+			*s->to << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
+		} else {
+			// Value.
+			code::Operand dtor = type.destructor();
+			if (dtor.empty())
+				dtor = ptrConst(Offset());
+			*s->to << lea(ptrC, fnParams);
+			*s->to << lea(ptrA, v);
+			*s->to << fnParam(ptrC);
+			*s->to << fnParam(type.copyCtor());
+			*s->to << fnParam(dtor);
+			*s->to << fnParam(ptrConst(type.size()));
+			*s->to << fnParam(byteConst(0));
+			*s->to << fnParam(ptrA);
+			*s->to << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
+		}
+	}
+
+	void addFnParamCopy(CodeGen *s, code::Var fnParams, Value type, code::Operand v) {
+		TODO(L"Implement me properly!");
+		addFnParam(s, fnParams, type, v);
+
+		// using namespace code;
+		// Engine &e = s->engine();
+
+		// if (type.isClass()) {
+		// 	Variable clone = s->frame.createPtrVar(s->block.v, e.fnRefs.release);
+		// 	s->to << fnParam(v.v);
+		// 	s->to << fnCall(stdCloneFn(type).v, retPtr());
+		// 	s->to << mov(clone, ptrA);
+
+		// 	// Regular parameter add.
+		// 	addFnParam(s, fnParams, type, code::Var(clone), thunk);
+		// } else if (type.ref || type.isBuiltIn()) {
+		// 	if (type.ref) {
+		// 		TODO(L"Should we really allow pretending to deep-clone references?");
+		// 	}
+
+		// 	// Reuse the plain one.
+		// 	addFnParam(s, fnParams, type, v, thunk);
+		// } else {
+		// 	// We can use stdClone as the copy ctor in this case.
+		// 	code::Operand dtor = type.destructor();
+		// 	if (dtor.empty())
+		// 		dtor = intPtrConst(0);
+		// 	s->to << lea(ptrC, fnParams.v);
+		// 	s->to << lea(ptrA, v.v);
+		// 	s->to << fnParam(ptrC);
+		// 	s->to << fnParam(stdCloneFn(type).v);
+		// 	s->to << fnParam(dtor);
+		// 	s->to << fnParam(natConst(type->count()));
+		// 	s->to << fnParam(byteConst(0));
+		// 	s->to << fnParam(ptrA);
+		// 	s->to << fnCall(e.fnRefs.fnParamsAdd, retVoid());
+		// }
+	}
+
+	static void allocNormalObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
+		using namespace code;
+
+		Type *type = ctor->params->at(0).type;
+		Engine &e = ctor->engine();
+
+		*s->to << fnParam(type->typeRef());
+		*s->to << fnCall(e.ref(Engine::rAlloc), valPtr());
+
+		CodeResult *r = new (s) CodeResult();
+		params = new (s) Array<code::Operand>(params);
+		params->insert(0, to);
+		ctor->autoCall(s, params, r);
+	}
+
+	static void allocRawObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
+		using namespace code;
+
+		Type *type = ctor->params->at(0).type;
+		Engine &e = ctor->engine();
+
+		*s->to << lea(ptrA, to);
+
+		CodeResult *r = new (s) CodeResult();
+		params = new (s) Array<code::Operand>(params);
+		params->insert(0, to);
+		ctor->autoCall(s, params, r);
+	}
+
+	void allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
+		Value t = ctor->params->at(0);
+		assert(t.isClass(), L"Must allocate a class type!");
+
+		if (t.type->typeFlags & typeRawPtr)
+			allocRawObject(s, ctor, params, to);
+		else
+			allocNormalObject(s, ctor, params, to);
+	}
+
+	code::Var allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params) {
+		code::Var r = s->to->createVar(s->block, Size::sPtr);
+		allocObject(s, ctor, params, r);
+		return r;
 	}
 
 }

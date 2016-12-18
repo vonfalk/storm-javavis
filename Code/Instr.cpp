@@ -114,7 +114,7 @@ namespace code {
 			if (size == Size())
 				return Operand();
 			else
-				throw InvalidValue(L"The return size must fit in a register (ie < 8 bytes).");
+				throw InvalidValue(L"The return size must fit in a register (ie. < 8 bytes).");
 		} else {
 			return Operand(s);
 		}

@@ -114,6 +114,7 @@ namespace storm {
 
 		// Get the last element.
 		SimplePart *STORM_FN last() const { return parts->last(); }
+		SimplePart *&last() { return parts->last(); }
 
 		// Number of elements.
 		Nat STORM_FN count() const { return parts->count(); }
@@ -125,6 +126,9 @@ namespace storm {
 		// Any/empty.
 		Bool STORM_FN any() const { return parts->any(); }
 		Bool STORM_FN empty() const { return parts->empty(); }
+
+		// Get all elements starting from 'n'.
+		SimpleName *STORM_FN from(Nat id) const;
 
 		// ToS.
 		virtual void STORM_FN toS(StrBuf *to) const;

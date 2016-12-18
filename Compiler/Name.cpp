@@ -141,6 +141,13 @@ namespace storm {
 		return n;
 	}
 
+	SimpleName *SimpleName::from(Nat id) const {
+		SimpleName *n = new (this) SimpleName();
+		for (nat i = id; i < parts->count(); i++)
+			n->add(parts->at(i));
+		return n;
+	}
+
 	void SimpleName::toS(StrBuf *to) const {
 		if (parts->empty()) {
 			*to << L"<root>";

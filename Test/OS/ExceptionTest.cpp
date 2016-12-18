@@ -11,7 +11,7 @@ struct ExThread {
 
 	os::FutureSema<Semaphore> result;
 
-	ExThread() : result(null) {}
+	ExThread() : result() {}
 
 	void run() {
 		try {

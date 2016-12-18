@@ -150,6 +150,9 @@ namespace os {
 	struct FutureParams : Params {
 		// The future to post the result to.
 		FutureBase *future;
+
+		// Where to store the result (not stored inside the future itself).
+		void *target;
 	};
 
 	// 'actuals' is the location on our stack of the parameters to use when calling the function in 'params'.
@@ -176,7 +179,7 @@ namespace os {
 
 		try {
 			// Call the function and place the result in the future.
-			call(params->fn, params->memberFn, actuals, params->future->target, params->resultType);
+			call(params->fn, params->memberFn, actuals, params->target, params->resultType);
 			// Notify success.
 			params->future->posted();
 		} catch (...) {
@@ -221,7 +224,7 @@ namespace os {
 	}
 
 	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params,
-						FutureBase &result, const BasicTypeInfo &resultType,
+						FutureBase &result, void *target, const BasicTypeInfo &resultType,
 						const Thread *on, UThreadData *t) {
 		if (t == null)
 			t = UThreadData::create();
@@ -231,6 +234,7 @@ namespace os {
 		p->fn = fn;
 		p->memberFn = memberFn;
 		p->future = &result;
+		p->target = target;
 		p->resultType = resultType;
 
 		// Copy parameters a bit over the top of the stack. Some temporary stack space between is

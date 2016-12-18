@@ -161,6 +161,17 @@ namespace storm {
 		return valPtr(slot);
 	}
 
+	MapBase::Iter MapBase::findRaw(const void *key) {
+		nat hash = (*keyT.hashFn)(key);
+		nat slot = findSlot(key, hash);
+
+		if (slot == Info::free) {
+			return endRaw();
+		} else {
+			return Iter(this, slot);
+		}
+	}
+
 	Bool MapBase::removeRaw(const void *key) {
 		// Will break 'primarySlot' otherwise.
 		if (capacity() == 0)
@@ -565,6 +576,10 @@ namespace storm {
 		// Find the first occupied position. This may place us at the end.
 		while (!atEnd() && info->v[pos].status == Info::free)
 			pos++;
+	}
+
+	MapBase::Iter::Iter(MapBase *owner, Nat pos) : info(owner->info), key(owner->key), val(owner->val), pos(pos) {
+		assert(info->v[pos].status != Info::free);
 	}
 
 	bool MapBase::Iter::operator ==(const Iter &o) const {

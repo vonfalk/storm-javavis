@@ -3,7 +3,7 @@
 
 namespace os {
 
-	FutureBase::FutureBase(void *target) : target(target), resultPosted(0), resultRead(0) {}
+	FutureBase::FutureBase() : resultPosted(0), resultRead(0) {}
 
 	FutureBase::~FutureBase() {
 		if (resultRead == 0) {

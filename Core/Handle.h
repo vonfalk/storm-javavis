@@ -92,7 +92,9 @@ namespace storm {
 			return -1;
 		}
 
-		// We can not get a handle for a void type now. This can be provided in a future version, TODO.
+		static const Handle &handle(Engine &e) {
+			return runtime::voidHandle(e);
+		}
 
 		static Type *type(Engine &e) {
 			return null;

@@ -6,6 +6,7 @@ namespace storm {
 	STORM_PKG(core.lang);
 
 	class CodeGen;
+	class Function;
 
 	/**
 	 * Information about a created variable. It contains:
@@ -59,6 +60,9 @@ namespace storm {
 
 		// Create a child code gen where another block is the topmost one.
 		CodeGen *STORM_FN child(code::Block block);
+
+		// Create a child code gen with a new child block.
+		CodeGen *STORM_FN child();
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -136,6 +140,7 @@ namespace storm {
 
 		// A result of type 't' should be stored in 'var'.
 		STORM_CTOR CodeResult(Value type, code::Var var);
+		STORM_CTOR CodeResult(Value type, VarInfo var);
 
 		// Get a location to store the variable in. Asserts if the result is not needed.
 		VarInfo STORM_FN location(CodeGen *s);
@@ -164,5 +169,26 @@ namespace storm {
 		// Type.
 		Value t;
 	};
+
+	// Generate code to fill in a BasicTypeInfo struct. Only touches eax register.
+	code::Var createBasicTypeInfo(CodeGen *to, Value v);
+
+	// Generate code that creates a FnParams object on the stack. Issueas a function call, and does not
+	// preserve any register values. 'memory' will be passed to the FnParams ctor as the memory to be used.
+	// Uses 'ptrC' before 'memory' is used.
+	code::Var STORM_FN createFnParams(CodeGen *s, code::Operand memory);
+
+	// Same as above, but takes the number of parameters needed to be passed.
+	code::Var STORM_FN createFnParams(CodeGen *s, Nat numParams);
+
+	// Add a parameter to a FnParams object.
+	void STORM_FN addFnParam(CodeGen *s, code::Var fnParams, Value type, code::Operand v);
+
+	// Add a copied parameter to a FnParams object. May add variables to the current scope.
+	void STORM_FN addFnParamCopy(CodeGen *s, code::Var fnParams, Value type, code::Operand v);
+
+	// Allocate an object on the heap. Store it in variable 'to'.
+	void STORM_FN allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to);
+	code::Var STORM_FN allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params);
 
 }

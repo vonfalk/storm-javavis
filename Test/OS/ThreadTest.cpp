@@ -66,7 +66,7 @@ static void uthreadInterop2() {
 }
 
 struct TInterop {
-	Future<int, Semaphore> result;
+	os::Future<int, Semaphore> result;
 
 	void run() {
 		result.post(42);

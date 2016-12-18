@@ -16,18 +16,17 @@ namespace os {
 #endif
 
 	/**
-	 * Future that stores the result in some memory provided at startup. This class
-	 * is designed to be possible to use with minimal type information and to be
-	 * easy to use from machine code or general non-templated C++ code. Therefore
-	 * it is not very type-safe at all. For a more type-safe and user-friendly version,
-	 * see the Future<> class below. The default implementation of FutureBase is this one
-	 * (specialized with <void>). This is abstract, as it requires the use of a specific
+	 * Future that stores the result in some unrelated memory. This class is designed to be possible
+	 * to use with minimal type information and to be easy to use from machine code or general
+	 * non-templated C++ code. Therefore it is not very type-safe at all. For a more type-safe and
+	 * user-friendly version, see the Future<> class below. The default implementation of FutureBase
+	 * is this one (specialized with <void>). This is abstract, as it requires the use of a specific
 	 * semaphore type.
 	 */
 	class FutureBase : NoCopy {
 	public:
 		// Create the future, indicating a location for the result.
-		FutureBase(void *target);
+		FutureBase();
 
 		// Detect unhandled exceptions and print them.
 		~FutureBase();
@@ -36,9 +35,6 @@ namespace os {
 		// normally, indicating the result is written to 'target',
 		// or throw an exception posted.
 		void result();
-
-		// The location for the target value.
-		void *const target;
 
 		// Tell the waiting thread we have posted a result.
 		void posted();
@@ -54,7 +50,7 @@ namespace os {
 		bool anyPosted();
 
 	protected:
-		// Manage the notification between threads (whichever implementation i used).
+		// Manage the notification between threads (whichever implementation is used).
 		virtual void notify() = 0;
 		virtual void wait() = 0;
 
@@ -120,7 +116,7 @@ namespace os {
 	class FutureSema : public FutureBase {
 	public:
 		// Create, just like above.
-		FutureSema(void *data) : FutureBase(data), sema(0) {}
+		FutureSema() : FutureBase(), sema(0) {}
 
 	protected:
 		// The semaphore to use.
@@ -148,7 +144,7 @@ namespace os {
 	class Future : NoCopy {
 	public:
 		// Create.
-		Future() : future(&value) {}
+		Future() {}
 
 		// Destroy.
 		~Future() {
@@ -165,8 +161,7 @@ namespace os {
 
 		// Post the result.
 		void post(const T &result) {
-			void *target = future.target;
-			new (target)T(result);
+			new (value) T(result);
 			future.posted();
 		}
 
@@ -178,6 +173,11 @@ namespace os {
 		// Get the underlying Future object.
 		FutureBase &impl() {
 			return future;
+		}
+
+		// Get our data.
+		void *data() {
+			return value;
 		}
 
 	private:
@@ -196,7 +196,7 @@ namespace os {
 	class Future<void, Sema> : NoCopy {
 	public:
 		// Create.
-		Future() : future(null) {}
+		Future() {}
 
 		// Destroy.
 		~Future() {}
@@ -219,6 +219,11 @@ namespace os {
 		// Get the underlying Future object.
 		FutureBase &impl() {
 			return future;
+		}
+
+		// Get our data.
+		void *data() {
+			return null;
 		}
 
 	private:

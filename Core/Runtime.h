@@ -27,6 +27,9 @@ namespace storm {
 		// Get a type handle for 'type'.
 		const Handle &typeHandle(Type *t);
 
+		// Get the handle for 'void'.
+		const Handle &voidHandle(Engine &e);
+
 		// Get the type of an allocation.
 		Type *typeOf(const RootObject *o);
 

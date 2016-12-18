@@ -68,18 +68,18 @@ BEGIN_TEST(UThreadResultTest, OS) {
 	{
 		bool e = false;
 		FnParams params; params.add(e);
-		Future<void> r;
+		os::Future<void> r;
 		UThread::spawn(returnVoid, false, params, r);
 		CHECK_RUNS(r.result());
 
 		e = true;
-		Future<void> r2;
+		os::Future<void> r2;
 		UThread::spawn(returnVoid, false, params, r2);
 		CHECK_ERROR(r2.result(), UserError);
 	}
 
 	{
-		Future<void> r;
+		os::Future<void> r;
 		int a = 10, b = 20;
 		FnParams p; p.add(a).add(b);
 		UThread::spawn(voidParams, false, p, r);
@@ -87,7 +87,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 	}
 
 	{
-		Future<void> r;
+		os::Future<void> r;
 		void *a = (void *)10;
 		int b = 20;
 		int c = 30;
@@ -99,7 +99,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 	{
 		int v = 10;
 		FnParams params; params.add(v);
-		Future<int> r;
+		os::Future<int> r;
 		UThread::spawn(returnInt, false, params, r);
 		CHECK_EQ(r.result(), 10);
 	}
@@ -107,7 +107,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 	{
 		int64 v = 1024LL << 30LL;
 		FnParams params; params.add(v);
-		Future<int64> r;
+		os::Future<int64> r;
 		UThread::spawn(returnInt64, false, params, r);
 		CHECK_EQ(r.result() >> 30LL, 1024);
 	}
@@ -115,7 +115,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 	{
 		float v = 13.37f;
 		FnParams params; params.add(v);
-		Future<float> r;
+		os::Future<float> r;
 		UThread::spawn(returnFloat, false, params, r);
 		CHECK_EQ(r.result(), 13.37f);
 	}
@@ -123,7 +123,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 	{
 		double v = 13.37;
 		FnParams params; params.add(v);
-		Future<double> r;
+		os::Future<double> r;
 		UThread::spawn(returnDouble, false, params, r);
 		CHECK_EQ(r.result(), 13.37);
 	}
@@ -132,13 +132,13 @@ BEGIN_TEST(UThreadResultTest, OS) {
 	{
 		int t = 22;
 		FnParams params; params.add(t);
-		Future<Tracker> r;
+		os::Future<Tracker> r;
 		UThread::spawn(returnTracker, false, params, r);
 		CHECK_EQ(r.result().data, 22);
 		CHECK_EQ(r.result().data, 22);
 
 		t = -2;
-		Future<Tracker> r2;
+		os::Future<Tracker> r2;
 		UThread::spawn(returnTracker, false, params, r2);
 		CHECK_ERROR(r2.result(), UserError);
 		CHECK_ERROR(r2.result(), UserError);
@@ -149,13 +149,13 @@ BEGIN_TEST(UThreadResultTest, OS) {
 	{
 		Tracker t(22);
 		FnParams params; params.add(t);
-		Future<int> r;
+		os::Future<int> r;
 		UThread::spawn(takeTracker, false, params, r);
 		CHECK_EQ(r.result(), 22);
 		CHECK_EQ(r.result(), 22);
 
 		t.data = -3;
-		Future<int> r2;
+		os::Future<int> r2;
 		UThread::spawn(takeTracker, false, params, r2);
 		CHECK_ERROR(r2.result(), UserError);
 		CHECK_ERROR(r2.result(), UserError);
@@ -167,7 +167,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 		DummyTracker t(12);
 		DummyTracker *pT = &t;
 		FnParams params; params.add(pT);
-		Future<Tracker> r;
+		os::Future<Tracker> r;
 		UThread::spawn(address(&DummyTracker::value), true, params, r);
 		CHECK_EQ(r.result().data, 12);
 	}
@@ -304,7 +304,7 @@ BEGIN_TEST(UThreadSpawnLater, OS) {
 	UThreadData *data = UThread::spawnLater();
 	FnParams p(UThread::spawnParamMem(data));
 	p.add(v1).add(v2);
-	Future<int> future;
-	UThread::spawn(&spawnLaterFn, false, p, future.impl(), typeInfo<int>(), null, data);
+	os::Future<int> future;
+	UThread::spawn(&spawnLaterFn, false, p, future.impl(), future.data(), typeInfo<int>(), null, data);
 	CHECK_EQ(future.result(), 30);
 } END_TEST

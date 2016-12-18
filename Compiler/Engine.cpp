@@ -4,12 +4,14 @@
 #include "Type.h"
 #include "Package.h"
 #include "Code.h"
+#include "Function.h"
 #include "Core/Hash.h"
 #include "Core/Thread.h"
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
 #include "Core/Handle.h"
 #include "Syntax/Node.h"
+#include "Utils/Memory.h"
 
 // Only included from here:
 #include "OS/SharedMaster.h"
@@ -207,12 +209,62 @@ namespace storm {
 		return o.vtableCalls;
 	}
 
+	static const GcType voidArrayType = {
+		GcType::tArray,
+		null,
+		null,
+		0,
+		0, {}
+	};
+
+	static void voidToS(const void *, StrBuf *to) {
+		*to << L"void";
+	}
+
+	static Nat voidHash(const void *) {
+		return 0;
+	}
+
+	static Bool voidEqual(const void *, const void *) {
+		return true;
+	}
+
+	const Handle &Engine::voidHandle() {
+		if (!o.voidHandle) {
+			o.voidHandle = new (*this) Handle();
+			o.voidHandle->size = 0;
+			o.voidHandle->gcArrayType = &voidArrayType;
+			o.voidHandle->toSFn = &voidToS;
+			o.voidHandle->hashFn = &voidHash;
+			o.voidHandle->equalFn = &voidEqual;
+		}
+
+		return *o.voidHandle;
+	}
+
 	code::Ref Engine::ref(RefType ref) {
 		code::RefSource **r = &o.refs[ref];
 		if (!*r)
 			*r = createRef(ref);
 
 		return code::Ref(*r);
+	}
+
+	static void fnParamsCtor(void *memory, void *ptr) {
+		new (memory) os::FnParams(ptr);
+	}
+
+	static void fnParamsDtor(os::FnParams *o) {
+		o->~FnParams();
+	}
+
+	static void fnParamsAdd(os::FnParams *obj, os::FnParams::CopyFn copy, os::FnParams::DestroyFn destroy,
+							size_t size, bool isFloat, const void *value) {
+		obj->add(copy, destroy, size, isFloat, value);
+	}
+
+	static void *allocType(Type *t) {
+		return runtime::allocObject(0, t);
 	}
 
 	code::RefSource *Engine::createRef(RefType ref) {
@@ -223,8 +275,29 @@ namespace storm {
 			return arena()->externalSource(L"lazyUpdater", &LazyCode::updateCode);
 		case rRuleThrow:
 			return arena()->externalSource(L"ruleThrow", address(&syntax::Node::throwError));
+		case rAlloc:
+			return arena()->externalSource(L"alloc", &allocType);
 		case rVTableAllocOffset:
 			return arena()->externalSource(L"vtableAllocOffset", (const void *)VTableCpp::vtableAllocOffset());
+		case rTObjectOffset:
+			return arena()->externalSource(L"threadOffset", (const void *)OFFSET_OF(TObject, thread));
+		case rSpawnResult:
+			return arena()->externalSource(L"spawnResult", &spawnThreadResult);
+		case rSpawnFuture:
+			assert(false, L"Implement me!");
+			// return arena()->externalSource(L"spawnFuture", &spawnThreadFuture);
+		case rSpawnLater:
+			return arena()->externalSource(L"spawnLater", address(&os::UThread::spawnLater));
+		case rSpawnParam:
+			return arena()->externalSource(L"spawnParam", address(&os::UThread::spawnParamMem));
+		case rAbortSpawn:
+			return arena()->externalSource(L"abortSpawn", address(&os::UThread::abortSpawn));
+		case rFnParamsCtor:
+			return arena()->externalSource(L"(x) FnParams(y)", address(&fnParamsCtor));
+		case rFnParamsDtor:
+			return arena()->externalSource(L"~FnParams()", address(&fnParamsDtor));
+		case rFnParamsAdd:
+			return arena()->externalSource(L"fnParams->add", address(&fnParamsAdd));
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 		}

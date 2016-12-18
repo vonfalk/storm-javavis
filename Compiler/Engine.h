@@ -117,13 +117,30 @@ namespace storm {
 		// VTable call stubs.
 		VTableCalls *vtableCalls();
 
+		// Get the one and only Handle object for void.
+		const Handle &voidHandle();
+
 		// Well-known references:
 		enum RefType {
 			rEngine,
 			rLazyCodeUpdate,
 			rRuleThrow,
+			// Allocate an object of the type given.
+			rAlloc,
 			// # of bytes inside a vtable the object's vtable ptr is pointing.
 			rVTableAllocOffset,
+			// # of bytes inside TObject the thread is stored
+			rTObjectOffset,
+			// Low-level helpers for spawning threads.
+			rSpawnResult,
+			rSpawnFuture,
+			rSpawnLater,
+			rSpawnParam,
+			rAbortSpawn,
+			// FnParams interaction.
+			rFnParamsCtor,
+			rFnParamsDtor,
+			rFnParamsAdd,
 
 			// Should be the last one.
 			refCount,
@@ -161,6 +178,9 @@ namespace storm {
 
 			// References.
 			code::RefSource *refs[refCount];
+
+			// Void handle.
+			Handle *voidHandle;
 		};
 
 		GcRoot o;

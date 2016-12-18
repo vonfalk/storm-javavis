@@ -88,6 +88,14 @@ namespace storm {
 		code::Operand STORM_FN destructor() const;
 	};
 
+	/**
+	 * Compute the common denominator of two values so that
+	 * it is possible to cast both 'a' and 'b' to the resulting
+	 * type. In case 'a' and 'b' are unrelated, Value() - void
+	 * is returned.
+	 */
+	Value STORM_FN common(Value a, Value b);
+
 	// Create a this pointer for a type.
 	Value STORM_FN thisPtr(Type *t);
 

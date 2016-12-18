@@ -232,6 +232,9 @@ namespace storm {
 			// Pointing to the first element.
 			Iter(MapBase *owner);
 
+			// Pointing to an element.
+			Iter(MapBase *owner, Nat pos);
+
 			// Compare.
 			bool CODECALL operator ==(const Iter &o) const;
 			bool CODECALL operator !=(const Iter &o) const;
@@ -266,6 +269,9 @@ namespace storm {
 		// Raw begin and end.
 		Iter CODECALL beginRaw();
 		Iter CODECALL endRaw();
+
+		// Find a value.
+		Iter CODECALL findRaw(const void *key);
 
 		// Friend.
 		friend Iter;
@@ -335,6 +341,7 @@ namespace storm {
 		public:
 			Iter() : MapBase::Iter() {}
 			Iter(Map<K, V> *owner) : MapBase::Iter(owner) {}
+			Iter(MapBase::Iter i) : MapBase::Iter(i) {}
 
 			std::pair<K, V&> operator *() const {
 				return std::make_pair(*(K *)rawKey(), *(V *)rawVal());
@@ -351,6 +358,11 @@ namespace storm {
 				return *(V *)rawVal();
 			}
 		};
+
+		// Find a value.
+		Iter find(const K &k) {
+			return findRaw(&k);
+		}
 
 		// Create the iterator.
 		Iter begin() {

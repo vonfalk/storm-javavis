@@ -29,6 +29,9 @@ BEGIN_TEST(MapTest, Core) {
 		CHECK_EQ(::toS(map->get(new (e) Str(L"E"))), L"13");
 		CHECK_EQ(::toS(map->get(new (e) Str(L"A"), new (e) Str(L"-"))), L"-");
 		CHECK_ERROR(::toS(map->get(new (e) Str(L"A"))), MapError);
+
+		CHECK_EQ(::toS(map->find(new (e) Str(L"B")).v()), L"11");
+		CHECK(map->find(new (e) Str(L"Z")) == map->end());
 	}
 
 	// Do primitives work as values?

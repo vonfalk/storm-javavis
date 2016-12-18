@@ -73,6 +73,9 @@ namespace storm {
 		// Receive notification of new additions.
 		virtual void STORM_FN notifyAdded(NameSet *to, Named *what);
 
+		// Reference to the type information.
+		virtual code::Ref STORM_FN typeRef();
+
 		/**
 		 * These functions are safe to call from any thread.
 		 */
@@ -191,6 +194,9 @@ namespace storm {
 		// Is this a value type?
 		inline bool value() const { return (typeFlags & typeValue) == typeValue; }
 
+		// Is this a raw pointer type?
+		inline bool rawPtr() const { return (typeFlags & typeRawPtr) == typeRawPtr; }
+
 		// Generate a handle for this type.
 		void buildHandle();
 
@@ -205,6 +211,9 @@ namespace storm {
 
 		// The member variable layout for this type. Not used for types declared in C++.
 		Layout *layout;
+
+		// Reference to us.
+		code::RefSource *selfRef;
 
 		/**
 		 * Helpers for deciding which functions shall be virtual.

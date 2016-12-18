@@ -98,6 +98,9 @@ namespace storm {
 
 	void Type::init(const void *vtable) {
 		assert((typeFlags & typeValue) == typeValue || (typeFlags & typeClass) == typeClass, L"Invalid type flags!");
+		if (rawPtr()) {
+			assert(typeFlags & typeClass, L"typeRawPtr has to be used with typeClass");
+		}
 
 		if (value()) {
 			myGcType->kind = GcType::tArray;
@@ -111,7 +114,7 @@ namespace storm {
 	}
 
 	void Type::vtableInit(const void *vtab) {
-		if (value())
+		if (value() || rawPtr())
 			return;
 
 		vtable = new (engine) VTable(this);
@@ -185,7 +188,7 @@ namespace storm {
 	}
 
 	Type *Type::defaultSuper() const {
-		if (value())
+		if (value() || rawPtr())
 			return null;
 		else if (useThread)
 			return TObject::stormType(engine);
@@ -253,7 +256,7 @@ namespace storm {
 		// TODO: Invalidate the Layout as well.
 		// TODO: Invalidate the handle as well.
 
-		if ((typeFlags & typeCpp) != typeCpp && !value()) {
+		if ((typeFlags & typeCpp) != typeCpp && !value() && !rawPtr()) {
 			// Re-initialize the vtable.
 			vtable->createStorm(to->vtable);
 		}
@@ -297,11 +300,11 @@ namespace storm {
 			if (wcscmp(f->name->c_str(), CTOR) != 0)
 				vtableFnAdded(f);
 
-			if (value() && tHandle)
+			if ((value() || rawPtr()) && tHandle)
 				updateHandle(f);
 		}
 
-		if (value() && tHandle)
+		if ((value() || rawPtr()) && tHandle)
 			if (Function *f = as<Function>(item))
 				updateHandle(f);
 
@@ -344,6 +347,16 @@ namespace storm {
 		}
 	}
 
+	code::Ref Type::typeRef() {
+		if (!selfRef) {
+			StrBuf *name = new (this) StrBuf();
+			*name << identifier() << L"<type>";
+			selfRef = new (engine) code::RefSource(name->toS());
+			selfRef->setPtr(this);
+		}
+		return code::Ref(selfRef);
+	}
+
 	BasicTypeInfo::Kind Type::builtInType() const {
 		return BasicTypeInfo::user;
 	}
@@ -364,7 +377,7 @@ namespace storm {
 		if (super())
 			return super()->size();
 
-		if (value())
+		if (value() || rawPtr())
 			return Size();
 
 		assert(false, L"We are a class which does not inherit from TObject or Object!");
@@ -451,6 +464,8 @@ namespace storm {
 				myGcType = engine.gc.allocType(superGc);
 			else if (value())
 				myGcType = engine.gc.allocType(GcType::tArray, this, size().current(), 0);
+			else if (rawPtr())
+				myGcType = engine.gc.allocType(&pointerArrayType);
 			else
 				assert(false, L"We're a non-value not inheriting from Object or TObject!");
 
@@ -483,7 +498,7 @@ namespace storm {
 	}
 
 	void Type::buildHandle() {
-		if (value()) {
+		if (value() || rawPtr()) {
 			if (!handleContent)
 				handleContent = new (engine) code::Content();
 
@@ -719,7 +734,9 @@ namespace storm {
 	}
 
 	void Type::toS(StrBuf *to) const {
-		if (value()) {
+		if (typeFlags & typeRawPtr) {
+			*to << L"class (raw ptr)";
+		} else if (value()) {
 			*to << L"value ";
 		} else {
 			*to << L"class ";

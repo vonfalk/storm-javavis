@@ -104,7 +104,7 @@ namespace os {
 		// Spawn a thread, returning the result in a future. Keep the Future object alive until
 		// it has gotten a result, otherwise we will probably crash! This is the low-level variant.
 		// It may also be used from the 'spawnLater' api by setting 'prealloc' to something other than null.
-		static UThread spawn(const void *fn, bool memberFn, const FnParams &params, FutureBase &result,
+		static UThread spawn(const void *fn, bool memberFn, const FnParams &params, FutureBase &result, void *target,
 							const BasicTypeInfo &resultType, const Thread *on = null, UThreadData *prealloc = null);
 
 		// Spawn using a plain function pointer and parameters. Places the result (including any exceptions)
@@ -112,7 +112,7 @@ namespace os {
 		template <class R, class Sema>
 		static UThread spawn(const void *fn, bool memberFn, const FnParams &params,
 							Future<R, Sema> &future, const Thread *on = null) {
-			return spawn(fn, memberFn, params, future.impl(), typeInfo<R>(), on);
+			return spawn(fn, memberFn, params, future.impl(), future.data(), typeInfo<R>(), on);
 		}
 
 		/**
