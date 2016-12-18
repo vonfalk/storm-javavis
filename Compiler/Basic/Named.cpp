@@ -62,10 +62,18 @@ namespace storm {
 		 */
 
 		FnCall::FnCall(SrcPos pos, Function *toExecute, Actuals *params, Bool lookup, Bool sameObject)
-			: Expr(pos), toExecute(toExecute), params(params), lookup(lookup), sameObject(sameObject), async(false) {}
+			: Expr(pos), toExecute(toExecute), params(params), lookup(lookup), sameObject(sameObject), async(false) {
+
+			if (params->expressions->count() != toExecute->params->count())
+				throw SyntaxError(pos, L"The parameter count does not match!");
+		}
 
 		FnCall::FnCall(SrcPos pos, Function *toExecute, Actuals *params)
-			: Expr(pos), toExecute(toExecute), params(params), lookup(true), sameObject(false), async(false) {}
+			: Expr(pos), toExecute(toExecute), params(params), lookup(true), sameObject(false), async(false) {
+
+			if (params->expressions->count() != toExecute->params->count())
+				throw SyntaxError(pos, L"The parameter count does not match!");
+		}
 
 		void FnCall::makeAsync() {
 			async = true;
@@ -111,7 +119,7 @@ namespace storm {
 
 		void FnCall::toS(StrBuf *to) const {
 			SimpleName *p = toExecute->path();
-			p->last()->params->clear();
+			p->last() = new (p) SimplePart(p->last()->name);
 			*to << p << params;
 			if (async)
 				*to << L"&";

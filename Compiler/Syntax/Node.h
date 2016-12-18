@@ -26,5 +26,36 @@ namespace storm {
 			void CODECALL throwError();
 		};
 
+
+		/**
+		 * Transform syntax nodes in C++. Assumes all in/out parameters are Objects or TObjects.
+		 */
+
+		// Find the appropriate 'transform' function in a specific type. If 'param' is void, no
+		// params are assumed except the this pointer.
+		const void *transformFunction(Type *type, const Value &result, const Value &param);
+
+		template <class R>
+		R *transformNode(Node *node) {
+			Engine &e = node->engine();
+			const void *fn = transformFunction(runtime::typeOf(node), Value(StormInfo<R>::type(e)), Value());
+			os::FnParams p;
+			p.add(node);
+			return os::call<R *>(fn, true, p);
+		}
+
+
+		template <class R, class P>
+		R *transformNode(Node *node, P *par) {
+			Engine &e = node->engine();
+			const void *fn = transformFunction(runtime::typeOf(node),
+											Value(StormInfo<R>::type(e)),
+											Value(StormInfo<P>::type(e)));
+			os::FnParams p;
+			p.add(node);
+			p.add(par);
+			return os::call<R *>(fn, true, p);
+		}
+
 	}
 }

@@ -16,7 +16,10 @@ BEGIN_TEST_(ParserTest) {
 	CHECK(!p->hasError());
 	CHECK(p->hasTree());
 	CHECK(p->matchEnd() == s->end());
-	PVAR(p->tree());
+
+	syntax::Node *tree = p->tree();
+	Str *r = syntax::transformNode<Str>(tree);
+	CHECK_EQ(::toS(r), L"cat");
 
 	CHECK(p->parse(new (e) Str(L"the cat runs!"), new (e) Url()));
 	CHECK(p->hasError());

@@ -2,6 +2,7 @@
 #include "Compiler/NamedThread.h"
 #include "Core/Array.h"
 #include "Core/Map.h"
+#include "OS/FnCall.h"
 #include "Node.h"
 #include "Rule.h"
 #include "Production.h"
@@ -179,5 +180,6 @@ namespace storm {
 		// Declare the template. This does not match the above declaration, so use ParserBase to
 		// store Parser instances in classes!
 		STORM_TEMPLATE(Parser, createParser);
+
 	}
 }

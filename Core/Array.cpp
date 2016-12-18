@@ -36,7 +36,7 @@ namespace storm {
 
 	void ArrayBase::deepCopy(CloneEnv *env) {
 		if (handle.deepCopyFn) {
-			for (nat i = 0; i < data->filled; i++)
+			for (nat i = 0; i < count(); i++)
 				(*handle.deepCopyFn)(ptr(i), env);
 		}
 	}
@@ -87,7 +87,7 @@ namespace storm {
 		if (to > count())
 			throw ArrayError(L"Index " + ::toS(to) + L" out of bounds for insertion (of " + ::toS(count()) + L").");
 
-		ensure(data->filled + 1);
+		ensure(count() + 1);
 
 		// Move the last few elements away.
 		memmove(ptr(to), ptr(to + 1), (count() - to)*handle.size);

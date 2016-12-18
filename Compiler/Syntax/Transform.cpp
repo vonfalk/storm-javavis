@@ -488,7 +488,7 @@ namespace storm {
 					// Not bound to anything.
 					continue;
 
-				if (token->target->name == name)
+				if (token->target->name->equals(name))
 					return i;
 			}
 

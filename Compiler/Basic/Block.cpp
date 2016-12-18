@@ -82,10 +82,10 @@ namespace storm {
 
 
 		ExprBlock::ExprBlock(SrcPos pos, Scope scope) :
-			Block(pos, scope), exprs(CREATE(Array<Expr *>, this)), firstNoReturn(invalid) {}
+			Block(pos, scope), exprs(new (this) Array<Expr *>()), firstNoReturn(invalid) {}
 
 		ExprBlock::ExprBlock(SrcPos pos, Block *parent) :
-			Block(pos, parent), exprs(CREATE(Array<Expr *>, this)), firstNoReturn(invalid) {}
+			Block(pos, parent), exprs(new (this) Array<Expr *>()), firstNoReturn(invalid) {}
 
 		void ExprBlock::add(Expr *expr) {
 			if (firstNoReturn == invalid)
@@ -115,7 +115,7 @@ namespace storm {
 				// Generate code for the entire block. Skip the last expression, as that is supposed to
 				// return something.
 				for (nat i = 0; i < exprs->count() - 1; i++) {
-					CodeResult *s = CREATE(CodeResult, this);
+					CodeResult *s = new (this) CodeResult();
 					exprs->at(i)->code(state, s);
 				}
 
@@ -125,7 +125,7 @@ namespace storm {
 			} else {
 				// Generate code until the first dead block.
 				for (nat i = 0; i <= firstNoReturn; i++) {
-					CodeResult *s = CREATE(CodeResult, this);
+					CodeResult *s = new (this) CodeResult();
 					exprs->at(i)->code(state, s);
 				}
 			}

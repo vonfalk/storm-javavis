@@ -250,6 +250,8 @@ namespace code {
 			}
 		case opLabel:
 			return to << L"Label" << o.opNum;
+		case opPart:
+			return to << L"Part" << o.opNum;
 		case opReference:
 			return to << L"@" << o.ref().title();
 		case opObjReference:

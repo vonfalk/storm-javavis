@@ -28,8 +28,10 @@ namespace storm {
 
 			// Transform function. This should be overloaded by all options.
 			Array<Value> *params = new (engine) Array<Value>();
+			params->push(me);
 			for (nat i = 0; i < tfmParams->count(); i++)
 				params->push(tfmParams->at(i).type);
+
 			add(lazyFunction(engine, tfmResult, L"transform", params, fnPtr(engine, &Rule::createTransform, this)));
 
 			// Add these last.
@@ -46,7 +48,6 @@ namespace storm {
 				return;
 
 			tfmParams = new (this) Array<bs::ValParam>();
-			tfmParams->push(bs::ValParam(thisPtr(this), new (this) Str(L"me")));
 			for (nat i = 0; i < decl->params->count(); i++) {
 				ParamDecl p = decl->params->at(i);
 				Value v = scope.value(p.type, decl->pos);

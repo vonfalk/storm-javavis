@@ -12,12 +12,16 @@ namespace code {
 	static const nat invalid = -1;
 
 	wostream &operator <<(wostream &to, FreeOpt o) {
-		if ((o & freeOnBoth) == freeOnBoth)
+		if ((o & freeOnBoth) == freeOnBoth) {
 			to << L"always";
-		else if (o & freeOnBlockExit)
+		} else if (o & freeOnBlockExit) {
 			to << L"on block exit";
-		else if (o & freeOnException)
+		} else if (o & freeOnException) {
 			to << L"on exception";
+		} else {
+			to << L"never";
+			return to;
+		}
 
 		if (o & freePtr)
 			to << L", by ptr";
@@ -28,12 +32,16 @@ namespace code {
 	}
 
 	StrBuf &operator <<(StrBuf &to, FreeOpt o) {
-		if ((o & freeOnBoth) == freeOnBoth)
+		if ((o & freeOnBoth) == freeOnBoth) {
 			to << L"always";
-		else if (o & freeOnBlockExit)
+		} else if (o & freeOnBlockExit) {
 			to << L"on block exit";
-		else if (o & freeOnException)
+		} else if (o & freeOnException) {
 			to << L"on exception";
+		} else {
+			to << L"never";
+			return to;
+		}
 
 		if (o & freePtr)
 			to << L", by ptr";
@@ -462,7 +470,7 @@ namespace code {
 		return vars->at(v.id).freeOpt;
 	}
 
-	static bool checkFree(const Operand &free, FreeOpt when) {
+	static bool checkFree(const Operand &free, FreeOpt &when) {
 		if (when & freePtr)
 			if (free.size() > Size::sLong)
 				throw InvalidValue(L"Can not destroy values larger than 8 bytes by value.");
@@ -470,6 +478,8 @@ namespace code {
 		if (!free.empty())
 			if (when & freeOnException)
 				return true;
+
+		when = freeOnNone;
 		return false;
 	}
 
@@ -587,8 +597,7 @@ namespace code {
 
 		for (nat i = 0; i < params->count(); i++) {
 			Nat id = params->at(i);
-			IVar &v = vars->at(id);
-			*to << id << L": " << v.size << L" " << v.freeOpt << L"\n";
+			putVar(*to, id);
 		}
 
 		putBlock(*to, 0);
@@ -639,7 +648,7 @@ namespace code {
 
 	void Listing::putVar(StrBuf &to, Nat var) const {
 		IVar &v = vars->at(var);
-		to << width(3) << var << L": " << v.size << L" " << v.freeOpt << L"\n";
+		to << width(3) << var << L": " << v.size << L" free " << v.freeOpt << L" using " << v.freeFn << L"\n";
 	}
 
 }

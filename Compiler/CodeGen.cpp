@@ -51,7 +51,7 @@ namespace storm {
 		if (needsPart)
 			opt = opt | code::freePtr;
 
-		return VarInfo(to->createVar(block, type.size(), dtor, opt), needsPart);
+		return VarInfo(to->createVar(in, type.size(), dtor, opt), needsPart);
 	}
 
 

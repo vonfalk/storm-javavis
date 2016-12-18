@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "Function.h"
+#include "Cast.h"
 #include "Core/Fn.h"
 #include "Compiler/Code.h"
-#include "Exception.h"
+#include "Compiler/Exception.h"
+#include "Compiler/Syntax/Parser.h"
 
 namespace storm {
 	namespace bs {
@@ -75,48 +77,46 @@ namespace storm {
 			FnBody *body = createBody();
 
 			// Expression possibly wrapped around the body (casting the value if needed).
-			// Expr *bodyExpr = expectCastTo(body, result);
+			Expr *bodyExpr = expectCastTo(body, result);
 
-			// // Generate code!
-			// using namespace code;
-			// CodeGen *state = new (this) CodeGen(runOn());
+			// Generate code!
+			using namespace code;
+			CodeGen *state = new (this) CodeGen(runOn());
 
-			// Listing &l = state->to;
+			Listing *l = state->to;
 
-			// l << prolog();
+			*l << prolog();
 
-			// // Parameters
-			// for (nat i = 0; i < params->count(); i++) {
-			// 	SimplePart *name = new (this) SimplePart(paramNames->at(i));
-			// 	LocalVar *var = body->variable(name);
-			// 	assert(var);
-			// 	var->createParam(state);
+			// Parameters
+			for (nat i = 0; i < params->count(); i++) {
+				SimplePart *name = new (this) SimplePart(params->at(i).name);
+				LocalVar *var = body->variable(name);
+				assert(var);
+				var->createParam(state);
+			}
+
+			// Return type.
+			state->result(result, isMember());
+
+			if (result == Value()) {
+				CodeResult *r = CREATE(CodeResult, this);
+				bodyExpr->code(state, r);
+				state->returnValue(code::Var());
+			} else {
+				// TODO? Do we need to check if 'r' is a reference first?
+				CodeResult *r = new (this) CodeResult(result, l->root());
+				bodyExpr->code(state, r);
+
+				VarInfo rval = r->location(state);
+				state->returnValue(rval.v);
+			}
+
+			// if (!identifier().startsWith(L"lang.bs")) {
+			// 	PLN(bodyExpr);
+			// 	PLN(identifier() << L": " << l);
 			// }
 
-			// // Return type.
-			// state->returnType(result, isMember());
-
-			// if (result == Value()) {
-			// 	CodeResult *r = CREATE(CodeResult, this);
-			// 	bodyExpr->code(state, r);
-			// 	state->returnValue(wrap::Variable());
-			// } else {
-			// 	// TODO? Do we need to check if 'r' is a reference first?
-			// 	CodeResult *r = new (this) CodeResult(result, l.frame.root());
-			// 	bodyExpr->code(state, r);
-
-			// 	VarInfo rval = r->location(state);
-			// 	state->returnValue(rval.var());
-			// }
-
-			// // if (!identifier().startsWith(L"lang.bs")) {
-			// // 	PLN(bodyExpr);
-			// // 	PLN(identifier() << L": " << l);
-			// // }
-
-			// return state;
-			assert(false, L"TODO: Implement me!");
-			return null;
+			return state;
 		}
 
 		void BSRawFn::reset() {
@@ -136,9 +136,7 @@ namespace storm {
 			BSRawFn(result, name, params, thread), scope(scope), body(body) {}
 
 		bs::FnBody *BSFunction::createBody() {
-			// return syntax::transformNode<FnBody, BSFunction>(body, this);
-			assert(false, L"Implement me!");
-			return null;
+			return syntax::transformNode<FnBody, BSFunction>(body, this);
 		}
 
 		BSTreeFn::BSTreeFn(Value result, SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread)

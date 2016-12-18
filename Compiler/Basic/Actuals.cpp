@@ -6,9 +6,12 @@
 namespace storm {
 	namespace bs {
 
-		Actuals::Actuals() {}
+		Actuals::Actuals() {
+			expressions = new (this) Array<Expr *>();
+		}
 
 		Actuals::Actuals(Expr *expr) {
+			expressions = new (this) Array<Expr *>();
 			add(expr);
 		}
 
