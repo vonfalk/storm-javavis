@@ -4,6 +4,7 @@
 #include "Compiler/Syntax/SStr.h"
 #include "Compiler/Syntax/Node.h"
 #include "Param.h"
+#include "Block.h"
 
 namespace storm {
 	namespace bs {
@@ -65,7 +66,7 @@ namespace storm {
 			void STORM_FN reset();
 
 			// Add function parameters to a block. Mainly for internal use.
-			//void STORM_FN addParams(Block *block);
+			void STORM_FN addParams(Block *block);
 
 		protected:
 			// Parameter names.
@@ -127,7 +128,7 @@ namespace storm {
 		 * Body of a function.
 		 * TODO: FIX INHERITANCE
 		 */
-		class FnBody : public ObjectOn<Compiler> /*public ExprBlock */ {
+		class FnBody : public ExprBlock {
 			STORM_CLASS;
 		public:
 			STORM_CTOR FnBody(BSRawFn *owner, Scope scope);

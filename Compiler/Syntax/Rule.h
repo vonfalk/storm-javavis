@@ -2,22 +2,11 @@
 #include "Decl.h"
 #include "Compiler/Type.h"
 #include "Compiler/Scope.h"
+#include "Compiler/Basic/Param.h"
 
 namespace storm {
 	namespace syntax {
 		STORM_PKG(lang.bnf);
-
-		/**
-		 * Description of a parameter.
-		 */
-		class Param {
-			STORM_VALUE;
-		public:
-			STORM_CTOR Param(Value type, Str *name);
-
-			Value type;
-			Str *name;
-		};
 
 		/**
 		 * A syntax rule.
@@ -39,7 +28,7 @@ namespace storm {
 			Scope scope;
 
 			// Get parameters and result.
-			Array<Param> *STORM_FN params();
+			Array<bs::ValParam> *STORM_FN params();
 			Value STORM_FN result();
 
 		protected:
@@ -51,7 +40,7 @@ namespace storm {
 			RuleDecl *decl;
 
 			// Parameters to the transform function.
-			Array<Param> *tfmParams;
+			Array<bs::ValParam> *tfmParams;
 
 			// Result from the transform function.
 			Value tfmResult;

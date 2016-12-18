@@ -124,18 +124,11 @@ namespace storm {
 			setCode(new (this) LazyCode(fnPtr(engine(), &BSRawFn::generateCode, this)));
 		}
 
-		// void BSRawFn::addParams(Block *to) {
-		// 	for (nat i = 0; i < params->count(); i++) {
-		// 		LocalVar *var = new (this) LocalVar(paramNames->at(i), params->at(i), pos, true);
-
-		// 		// TODO: We do not want this if-statement!
-		// 		if (parentLookup) {
-		// 			if (i == 0 && isMember())
-		// 				var->constant = true;
-		// 		}
-		// 		to->add(var);
-		// 	}
-		// }
+		void BSRawFn::addParams(Block *to) {
+			for (nat i = 0; i < params->count(); i++) {
+				to->add(new (this) LocalVar(params->at(i).name, params->at(i).type, pos, true));
+			}
+		}
 
 
 		BSFunction::BSFunction(Value result, SStr *name, Array<ValParam> *params, Scope scope,
@@ -167,14 +160,15 @@ namespace storm {
 
 
 
-		bs::FnBody::FnBody(BSRawFn *owner, Scope scope) {}
-		// : ExprBlock(owner->pos, scope), type(owner->result) {
-		// 	owner->addParams(this);
-		// }
+		bs::FnBody::FnBody(BSRawFn *owner, Scope scope)
+			: ExprBlock(owner->pos, scope), type(owner->result) {
+		 	owner->addParams(this);
+		}
 
-		bs::FnBody::FnBody(BSFunction *owner) {}
-		// : ExprBlock(owner->pos, owner->scope), type(owner->result) {
-		// 	owner->addParams(this);
-		// }
+		bs::FnBody::FnBody(BSFunction *owner)
+			: ExprBlock(owner->pos, owner->scope), type(owner->result) {
+			owner->addParams(this);
+		}
+
 	}
 }

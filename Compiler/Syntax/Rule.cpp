@@ -11,8 +11,6 @@
 namespace storm {
 	namespace syntax {
 
-		Param::Param(Value type, Str *name) : type(type), name(name) {}
-
 
 		Rule::Rule(RuleDecl *decl, Scope scope)
 			: Type(decl->name, typeClass),
@@ -47,14 +45,14 @@ namespace storm {
 			if (!decl)
 				return;
 
-			tfmParams = new (this) Array<Param>();
-			tfmParams->push(Param(thisPtr(this), new (this) Str(L"me")));
+			tfmParams = new (this) Array<bs::ValParam>();
+			tfmParams->push(bs::ValParam(thisPtr(this), new (this) Str(L"me")));
 			for (nat i = 0; i < decl->params->count(); i++) {
 				ParamDecl p = decl->params->at(i);
 				Value v = scope.value(p.type, decl->pos);
 				if (v == Value())
 					throw SyntaxError(decl->pos, L"Rules can not take void as a parameter.");
-				tfmParams->push(Param(v, p.name));
+				tfmParams->push(bs::ValParam(v, p.name));
 			}
 
 			tfmResult = scope.value(decl->result, decl->pos);
@@ -62,11 +60,13 @@ namespace storm {
 			decl = null;
 		}
 
-		Array<Param> *Rule::params() {
+		Array<bs::ValParam> *Rule::params() {
+			initTypes();
 			return tfmParams;
 		}
 
 		Value Rule::result() {
+			initTypes();
 			return tfmResult;
 		}
 

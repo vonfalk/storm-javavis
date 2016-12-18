@@ -64,6 +64,9 @@ namespace storm {
 		// Hash.
 		virtual Nat STORM_FN hash() const;
 
+		// Is this an integer?
+		Bool STORM_FN isInt() const;
+
 		// Interpret as numbers.
 		Int STORM_FN toInt() const;
 		Nat STORM_FN toNat() const;
@@ -90,6 +93,10 @@ namespace storm {
 
 		// Get a c-string.
 		wchar *c_str() const;
+
+		// Compare to c-string.
+		inline Bool operator ==(const wchar *s) const { return wcscmp(c_str(), s) == 0; }
+		inline Bool operator !=(const wchar *s) const { return wcscmp(c_str(), s) != 0; }
 
 		// Peek at the length of the underlying representation.
 		Nat peekLength() const;
