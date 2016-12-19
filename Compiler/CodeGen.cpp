@@ -163,7 +163,7 @@ namespace storm {
 		else if (variable.v == code::Var())
 			// Generate a temporary variable. Do not save it, it will mess up cases like 'if', where
 			// two different branches may end up in different blocks!
-			return s->createVar(t);
+			return s->createVar(type);
 		else
 			return variable;
 	}
@@ -343,6 +343,7 @@ namespace storm {
 
 		*s->to << fnParam(type->typeRef());
 		*s->to << fnCall(e.ref(Engine::rAlloc), valPtr());
+		*s->to << mov(to, ptrA);
 
 		CodeResult *r = new (s) CodeResult();
 		params = new (s) Array<code::Operand>(params);

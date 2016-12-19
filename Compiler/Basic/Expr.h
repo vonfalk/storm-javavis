@@ -76,7 +76,7 @@ namespace storm {
 			virtual Int STORM_FN castPenalty(Value to);
 
 			// To string.
-			virtual void output(wostream &out) const;
+			virtual void STORM_FN toS(StrBuf *to) const;
 
 		protected:
 			// Code for a string label.

@@ -64,4 +64,74 @@ namespace storm {
 		return Value(contents);
 	}
 
+	Bool ArrayType::loadAll() {
+		TODO(L"Add the iterator!");
+
+		if (param().isClass())
+			loadClassFns();
+		else
+			loadValueFns();
+
+		// Shared functions.
+		Engine &e = engine;
+		Value t = thisPtr(this);
+		Value ref = param().asRef();
+		Value natType = Value(StormInfo<Nat>::type(e));
+
+		add(nativeFunction(e, ref, L"[]", valList(e, 2, t, natType), address(&ArrayBase::getRaw)));
+		add(nativeFunction(e, ref, L"last", valList(e, 1, t), address(&ArrayBase::lastRaw)));
+		add(nativeFunction(e, ref, L"first", valList(e, 1, t), address(&ArrayBase::firstRaw)));
+
+		return Type::loadAll();
+	}
+
+	static void CODECALL createArrayRaw(void *mem) {
+		ArrayType *t = (ArrayType *)runtime::typeOf((RootObject *)mem);
+		ArrayBase *o = new (Place(mem)) ArrayBase(t->handle());
+		runtime::setVTable(o);
+	}
+
+	static void CODECALL copyArray(void *mem, ArrayBase *from) {
+		ArrayBase *o = new (Place(mem)) ArrayBase(from);
+		runtime::setVTable(o);
+	}
+
+	static ArrayBase *CODECALL pushClass(ArrayBase *to, const void *src) {
+		to->pushRaw(&src);
+		return to;
+	}
+
+	static void CODECALL insertClass(ArrayBase *to, Nat pos, const void *src) {
+		to->insertRaw(pos, src);
+	}
+
+	void ArrayType::loadClassFns() {
+		Engine &e = engine;
+		Value t = thisPtr(this);
+		Value natType = Value(StormInfo<Nat>::type(e));
+
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), &createArrayRaw));
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), &copyArray));
+		add(nativeFunction(e, t, L"<<", valList(e, 2, t, param()), address(&pushClass)));
+		add(nativeFunction(e, t, L"push", valList(e, 2, t, param()), address(&pushClass)));
+		add(nativeFunction(e, Value(), L"insert", valList(e, 3, t, natType, param()), address(&insertClass)));
+	}
+
+	static ArrayBase *CODECALL pushValue(ArrayBase *to, const void *src) {
+		to->pushRaw(src);
+		return to;
+	}
+
+	void ArrayType::loadValueFns() {
+		Engine &e = engine;
+		Value t = thisPtr(this);
+		Value ref = param().asRef(true);
+		Value natType = Value(StormInfo<Nat>::type(e));
+
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), &createArrayRaw));
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), &copyArray));
+		add(nativeFunction(e, t, L"<<", valList(e, 2, t, ref), address(&pushValue)));
+		add(nativeFunction(e, t, L"push", valList(e, 2, t, ref), address(&pushValue)));
+		add(nativeFunction(e, Value(), L"insert", valList(e, 3, t, natType, ref), address(&ArrayBase::insertRaw)));
+	}
 }

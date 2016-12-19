@@ -169,7 +169,16 @@ namespace storm {
 			// Create a parser parsing the type named 'name' in 'pkg'.
 			static Parser *create(Package *pkg, const wchar *name);
 
-			// TODO: Transform syntax nodes.
+			// Transform syntax nodes. See limitations for 'transformNode<>'.
+			template <class R>
+			R *transform() {
+				return transformNode<R>(tree());
+			}
+
+			template <class R, class P>
+			R *transform(P *par) {
+				return transformNode<R, P>(tree(), par);
+			}
 
 		private:
 			// Use 'create'.

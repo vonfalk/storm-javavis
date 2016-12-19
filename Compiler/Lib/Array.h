@@ -27,9 +27,17 @@ namespace storm {
 		// Parameter.
 		Value param() const;
 
+	protected:
+		// Lazy loading.
+		virtual Bool STORM_FN loadAll();
+
 	private:
 		// Content type.
 		Type *contents;
+
+		// Helpers.
+		void loadClassFns();
+		void loadValueFns();
 	};
 
 	Bool STORM_FN isArray(Value v);

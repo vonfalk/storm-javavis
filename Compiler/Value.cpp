@@ -216,4 +216,21 @@ namespace storm {
 		return to;
 	}
 
+#ifdef VISUAL_STUDIO
+	Array<Value> *valList(Engine &e, nat count, ...) {
+		Array<Value> *r = new (e) Array<Value>();
+		r->reserve(count);
+
+		va_list l;
+		va_start(l, count);
+
+		for (nat i = 0; i < count; i++) {
+			r->push(va_arg(l, Value));
+		}
+
+		va_end(l);
+		return r;
+	}
+#endif
+
 }

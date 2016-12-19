@@ -47,6 +47,9 @@ namespace storm {
 
 			// Read the rest of the content.
 			void readContent(Str *src, Str::Iter start);
+
+			// Find our syntax package.
+			Package *syntaxPkg();
 		};
 
 	}

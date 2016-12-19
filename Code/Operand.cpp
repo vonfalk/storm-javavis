@@ -218,7 +218,7 @@ namespace code {
 	}
 
 	wostream &operator <<(wostream &to, const Operand &o) {
-		if (o.type() != opRegister && o.type() != opCondFlag) {
+		if (o.type() != opRegister && o.type() != opCondFlag && o.type() != opNone && o.type() != opPart) {
 			Size s = o.size();
 			if (s == Size::sPtr)
 				to << L"p";
@@ -228,6 +228,8 @@ namespace code {
 				to << L"i";
 			else if (s == Size::sLong)
 				to << L"l";
+			else
+				to << L"(" << s << L")";
 		}
 
 		switch (o.type()) {

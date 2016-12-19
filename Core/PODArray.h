@@ -74,7 +74,7 @@ namespace storm {
 		// Reverse the data.
 		void reverse() {
 			nat first = 0;
-			nat last = data->count;
+			nat last = count();
 			while ((first != last) && (first != --last)) {
 				std::swap(data->v[first], data->v[last]);
 				++first;

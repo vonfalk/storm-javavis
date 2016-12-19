@@ -3,6 +3,7 @@
 #include "TemplateList.h"
 #include "Exception.h"
 #include "Engine.h"
+#include "Compiler/Syntax/Rule.h"
 #include "Compiler/Syntax/Parser.h"
 
 namespace storm {
@@ -33,7 +34,10 @@ namespace storm {
 		return found;
 	}
 
-	ParserType::ParserType(Str *name, Rule *rule) : Type(name, typeClass), root(rule) {
+	ParserType::ParserType(Str *name, Rule *rule)
+		: Type(name, new (this) Array<Value>(1, Value(rule)), typeClass),
+		  root(rule) {
+
 		setSuper(syntax::ParserBase::stormType(engine));
 	}
 

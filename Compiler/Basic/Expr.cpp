@@ -30,22 +30,22 @@ namespace storm {
 
 		Constant::Constant(SrcPos pos, Bool v) : Expr(pos), cType(tBool), boolValue(v) {}
 
-		void Constant::output(wostream &to) const {
+		void Constant::toS(StrBuf *to) const {
 			switch (cType) {
 			case tInt:
-				to << intValue << L"i";
+				*to << intValue << L"i";
 				break;
 			case tFloat:
-				to << floatValue << L"f";
+				*to << floatValue << L"f";
 				break;
 			case tStr:
-				to << L"\"" << strValue << L"\"";
+				*to << L"\"" << strValue << L"\"";
 				break;
 			case tBool:
-				to << (boolValue ? L"true" : L"false");
+				*to << (boolValue ? L"true" : L"false");
 				break;
 			default:
-				to << L"UNKNOWN";
+				*to << L"UNKNOWN";
 				break;
 			}
 		}

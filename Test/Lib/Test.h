@@ -180,7 +180,7 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 }
 
 #define OUTPUT_ERROR(expr, error)									  \
-	std::wcout << L"Crashed " << expr << L": " << error << std::endl; \
+	std::wcout << L"Crashed " << expr << L":\n" << error << std::endl; \
 	__result__.crashed++
 
 #define DEFINE_SUITE(name, order, single, disable)					\

@@ -171,7 +171,7 @@ namespace storm {
 
 #ifdef VISUAL_STUDIO
 	// This function uses a VS specific extension for variable arguments.
-	ValList valList(nat count, ...);
+	ValList valList(nat count, ...);p
 #else
 #error "Define valList for C++11 here"
 #endif

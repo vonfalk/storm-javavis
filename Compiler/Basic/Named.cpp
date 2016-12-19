@@ -26,7 +26,7 @@ namespace storm {
 						CodeResult *to, bool lookup, bool sameObject) {
 			using namespace code;
 
-			if (to->type().ref == call->result.ref) {
+			if (!to->needed() || to->type().ref == call->result.ref) {
 				callOnThread(call, s, values, to, lookup, sameObject);
 				return;
 			}

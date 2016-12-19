@@ -174,10 +174,10 @@ namespace storm {
 
 			*to->to << fnCall(ref, valVoid());
 		} else {
-			VarInfo rVar = res->safeLocation(to, this->result);
+			VarInfo rVar = res->safeLocation(to, result);
 			addParams(to, params, rVar.v);
 
-			if (this->result.returnInReg()) {
+			if (result.returnInReg()) {
 				*to->to << fnCall(ref, result.valType());
 				*to->to << mov(rVar.v, asSize(ptrA, result.size()));
 			} else {

@@ -105,6 +105,7 @@ namespace storm {
 			to.clear();
 			for (const State *now = from; now->prev; now = now->prev)
 				to.push(now);
+
 			to.reverse();
 		}
 

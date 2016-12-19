@@ -103,4 +103,12 @@ namespace storm {
 	wostream &operator <<(wostream &to, const Value &v);
 	StrBuf &STORM_FN operator <<(StrBuf &to, Value v);
 	Str *STORM_FN toS(EnginePtr e, Value v);
+
+	// Generate a list of values.
+#ifdef VISUAL_STUDIO
+	// Uses a visual studio specific extension...
+	Array<Value> *valList(Engine &e, Nat count, ...);
+#else
+#error "Define valList for C++11 here!"
+#endif
 }

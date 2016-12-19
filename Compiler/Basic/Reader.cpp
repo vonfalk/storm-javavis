@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Reader.h"
 #include "Core/Io/Text.h"
+#include "Compiler/Syntax/Parser.h"
 
 namespace storm {
 	namespace bs {
@@ -41,12 +42,27 @@ namespace storm {
 		}
 
 		Str::Iter FileReader::readIncludes(Str *src) {
-			TODO(L"FIXME!");
-			return src->begin();
+			syntax::Parser *p = syntax::Parser::create(syntaxPkg(), L"SIncludes");
+
+			PLN(L"Parsing " << file);
+			if (!p->parse(src, file))
+				p->throwError();
+
+			Array<SrcName *> *includes = p->transform<Array<SrcName *>>();
+			PVAR(includes);
+
+			return p->matchEnd();
 		}
 
 		void FileReader::readContent(Str *src, Str::Iter start) {
 			TODO(L"FIXME!");
+		}
+
+		Package *FileReader::syntaxPkg() {
+			Type *me = runtime::typeOf(this);
+			Package *p = as<Package>(me->parent());
+			assert(p);
+			return p;
 		}
 
 	}
