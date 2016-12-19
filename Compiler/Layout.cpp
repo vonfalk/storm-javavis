@@ -41,6 +41,12 @@ namespace storm {
 		Size s(parent->stride);
 		nat pos = parent->count;
 
+		// Copy entries from the parent.
+		if (to) {
+			for (nat i = 0; i < parent->count; i++)
+				to->offset[i] = parent->offset[i];
+		}
+
 		for (nat i = 0; i < vars->count(); i++) {
 			MemberVar *v = vars->at(i);
 			Value vType = v->type;
