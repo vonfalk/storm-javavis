@@ -12,4 +12,10 @@ BEGIN_TEST(ArrayTest, Core) {
 	t->push(new (e) Str(L"World"));
 	CHECK_EQ(toS(t), L"[Hello, World]");
 
+	Array<Value> *v = new (e) Array<Value>();
+	CHECK_EQ(toS(v), L"[]");
+
+	v->push(Value(Str::stormType(e)));
+	CHECK_EQ(toS(v), L"[core.Str]");
+
 } END_TEST

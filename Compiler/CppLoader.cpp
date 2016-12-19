@@ -5,6 +5,7 @@
 #include "Package.h"
 #include "Function.h"
 #include "Code.h"
+#include "VTableCpp.h"
 #include "Lib/Maybe.h"
 #include "Core/Str.h"
 
@@ -324,8 +325,14 @@ namespace storm {
 		Array<Value> *params = loadFnParams(fn.params);
 		assert(params->count() > 0, L"Missing this pointer for " + ::toS(fn.name) + L"!");
 
+		// Find the vtable...
+		const CppTypeRef &firstParam = fn.params[0];
+		assert(firstParam.params == null, L"Members for template types are not supported!");
+		CppType::VTableFn vFn = world->types[firstParam.id].vtable;
+
+		const void *ptr = deVirtualize(fn.params[0], fn.ptr);
 		Function *f = new (e) Function(result, new (e) Str(fn.name), params);
-		f->setCode(new (e) StaticCode(fn.ptr));
+		f->setCode(new (e) StaticCode(ptr));
 
 		params->at(0).type->add(f);
 	}
@@ -338,6 +345,25 @@ namespace storm {
 		}
 
 		return r;
+	}
+
+	const void *CppLoader::findVTable(const CppTypeRef &ref) {
+		assert(ref.params == null, L"Members of template types are not supported!");
+		CppType::VTableFn f = world->types[ref.id].vtable;
+		if (f)
+			return (*f)();
+		else
+			return null;
+	}
+
+	const void *CppLoader::deVirtualize(const CppTypeRef &ref, const void *fn) {
+		const void *tab = findVTable(ref);
+		if (!tab)
+			return fn;
+		const void *f = vtable::deVirtualize(tab, fn);
+		if (!f)
+			return fn;
+		return f;
 	}
 
 }

@@ -2,6 +2,7 @@
 #include "VTable.h"
 #include "Type.h"
 #include "Engine.h"
+#include "Core/Str.h"
 #include <iomanip>
 
 namespace storm {
@@ -70,6 +71,7 @@ namespace storm {
 
 		PLN(L"C++:");
 		const void **ptr = (const void **)cpp->address();
+		ptr += 4; // Skip metadata.
 		for (nat i = 0; i < cpp->count(); i++) {
 			PNN(std::setw(4) << i << L": " << ptr[i]);
 			if (Function *f = cpp->get(i))

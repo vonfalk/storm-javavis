@@ -39,6 +39,8 @@ SUITE(CodeBasic, 5);
 SUITE(Code, 6);
 // More involved tests of Storm. Still no compilation from sources.
 SUITE(Storm, 7);
+// Simple tests of Basic Storm
+SUITE(SimpleBS, 8);
 
 // Stress tests (takes time).
 SUITEX(Stress, 100);

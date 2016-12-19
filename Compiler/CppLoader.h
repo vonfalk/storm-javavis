@@ -64,6 +64,12 @@ namespace storm {
 		// Find a type as referred by a CppTypeRef.
 		Value findValue(const CppTypeRef &ref);
 
+		// Find the vtable for the type indicated.
+		const void *findVTable(const CppTypeRef &ref);
+
+		// De-virtualize a function wrt the functions first parameter.
+		const void *deVirtualize(const CppTypeRef &ref, const void *fn);
+
 		// Create a gc type for the CppType with id 'id'.
 		GcType *createGcType(Nat id);
 

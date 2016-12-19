@@ -4,7 +4,7 @@
 
 using syntax::Parser;
 
-BEGIN_TEST_(ParserTest) {
+BEGIN_TEST(ParserTest, Storm) {
 	Engine &e = gEngine();
 
 	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, L"test.grammar")));
