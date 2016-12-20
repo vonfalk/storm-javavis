@@ -117,8 +117,8 @@ namespace storm {
 			// 	PLN(identifier() << L": " << l);
 			// }
 
-			// PLN(bodyExpr);
-			// PLN(identifier() << L": " << l);
+			PLN(bodyExpr);
+			PLN(identifier() << L": " << l);
 			return state;
 		}
 
@@ -139,7 +139,7 @@ namespace storm {
 			BSRawFn(result, name, params, thread), scope(scope), body(body) {}
 
 		bs::FnBody *BSFunction::createBody() {
-			return syntax::transformNode<FnBody, BSFunction>(body, this);
+			return syntax::transformNode<FnBody, BSFunction *>(body, this);
 		}
 
 		BSTreeFn::BSTreeFn(Value result, SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread)

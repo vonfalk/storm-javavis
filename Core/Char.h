@@ -7,6 +7,8 @@ namespace storm {
 	/**
 	 * Class representing a single character as defined by the Str class. Currently one character is
 	 * equal to one unicode code point.
+	 *
+	 * TODO: Disallow Char(0)?
 	 */
 	class Char {
 		STORM_VALUE;

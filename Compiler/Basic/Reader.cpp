@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Reader.h"
 #include "Core/Io/Text.h"
+#include "Compiler/Engine.h"
+#include "Compiler/Exception.h"
 #include "Compiler/Syntax/Parser.h"
 
 namespace storm {
@@ -43,19 +45,33 @@ namespace storm {
 
 		Str::Iter FileReader::readIncludes(Str *src) {
 			syntax::Parser *p = syntax::Parser::create(syntaxPkg(), L"SIncludes");
+			// TODO: Add syntax from current scope as well?
 
-			PLN(L"Parsing " << file);
 			if (!p->parse(src, file))
 				p->throwError();
 
 			Array<SrcName *> *includes = p->transform<Array<SrcName *>>();
-			PVAR(includes);
+			for (nat i = 0; i < includes->count(); i++) {
+				SrcName *v = includes->at(i);
+				Package *p = as<Package>(engine().scope().find(v));
+				if (!p)
+					throw SyntaxError(v->pos, L"Unknown package " + ::toS(v));
+
+				addInclude(scope, p);
+			}
 
 			return p->matchEnd();
 		}
 
 		void FileReader::readContent(Str *src, Str::Iter start) {
-			TODO(L"FIXME!");
+			syntax::Parser *p = syntax::Parser::create(syntaxPkg(), L"SFile");
+			addSyntax(scope, p);
+
+			p->parse(src, file, start);
+			if (p->hasError())
+				p->throwError();
+
+			content = p->transform<Content, Scope>(scope);
 		}
 
 		Package *FileReader::syntaxPkg() {

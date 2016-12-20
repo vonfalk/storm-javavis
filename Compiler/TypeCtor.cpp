@@ -67,10 +67,10 @@ namespace storm {
 				*l << add(ptrA, ptrConst(v->offset()));
 				*l << fnParam(ptrA);
 				*l << fnCall(ctor->ref(), valPtr());
-			} else if (v->type.isClass()) {
+			} else if (v->type.isHeapObj()) {
 				TODO(L"Implement me!");
 			} else {
-				// Built-in types.
+				// Built-in types do not need initialization.
 			}
 		}
 

@@ -47,7 +47,7 @@ namespace storm {
 			Value l = lhs->result().type();
 			Value r = rhs->result().type();
 
-			if (l.isClass() && l.ref && castable(rhs, l.asRef(false))) {
+			if (l.isHeapObj() && l.ref && castable(rhs, l.asRef(false))) {
 				return new (block) ClassAssign(lhs, rhs);
 			} else {
 				return OpInfo::meaning(block, lhs, rhs);

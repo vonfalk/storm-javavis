@@ -15,10 +15,14 @@ namespace storm {
 			STORM_VALUE;
 		public:
 			STORM_CTOR NameParam(SrcName *type, Str *name);
+			STORM_CTOR NameParam(SrcName *type, syntax::SStr *name);
 
 			SrcName *type;
 			Str *name;
 		};
+
+		// Nameless parameter.
+		NameParam STORM_FN nameless(SrcName *type);
 
 		wostream &operator <<(wostream &to, NameParam p);
 		StrBuf &STORM_FN operator<<(StrBuf &to, NameParam p);
@@ -28,6 +32,7 @@ namespace storm {
 			STORM_VALUE;
 		public:
 			STORM_CTOR ValParam(Value type, Str *name);
+			STORM_CTOR ValParam(Value type, syntax::SStr *name);
 
 			Value type;
 			Str *name;

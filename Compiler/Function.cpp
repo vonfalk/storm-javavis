@@ -317,7 +317,7 @@ namespace storm {
 		if (id == 0 && wcscmp(name->c_str(), Type::CTOR) == 0) {
 			Var v = l->createParam(valPtr());
 			*l << fnParam(v);
-		} else if (t.isClass()) {
+		} else if (t.isHeapObj()) {
 			Var v = l->createParam(valPtr());
 			*l << fnParam(v);
 		} else if (t.isBuiltIn()) {
@@ -366,7 +366,7 @@ namespace storm {
 		for (nat i = firstParam; i < params->count(); i++)
 			threadThunkParam(i, l);
 
-		if (result.isClass()) {
+		if (result.isHeapObj()) {
 			Var t = l->createVar(l->root(), Size::sPtr);
 			*l << fnCall(ref(), valPtr());
 			*l << mov(t, ptrA);

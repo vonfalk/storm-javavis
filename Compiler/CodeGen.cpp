@@ -260,7 +260,7 @@ namespace storm {
 		using namespace code;
 		Engine &e = s->engine();
 
-		if (type.isClass() || type.ref) {
+		if (type.isHeapObj() || type.ref) {
 			*s->to << lea(ptrC, fnParams);
 			*s->to << fnParam(ptrC);
 			*s->to << fnParam(ptrConst(Offset()));
@@ -303,7 +303,7 @@ namespace storm {
 		// using namespace code;
 		// Engine &e = s->engine();
 
-		// if (type.isClass()) {
+		// if (type.isHeapObj()) {
 		// 	Variable clone = s->frame.createPtrVar(s->block.v, e.fnRefs.release);
 		// 	s->to << fnParam(v.v);
 		// 	s->to << fnCall(stdCloneFn(type).v, retPtr());
@@ -367,7 +367,7 @@ namespace storm {
 
 	void allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
 		Value t = ctor->params->at(0);
-		assert(t.isClass(), L"Must allocate a class type!");
+		assert(t.isHeapObj(), L"Must allocate a class type!");
 
 		if (t.type->typeFlags & typeRawPtr)
 			allocRawObject(s, ctor, params, to);

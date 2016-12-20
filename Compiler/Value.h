@@ -57,16 +57,18 @@ namespace storm {
 		// Get a ValType representing this type.
 		code::ValType STORM_FN valType() const;
 
-		// Is this a built-in type? (eg. Int, Float, etc.)
-		Bool STORM_FN isBuiltIn() const;
-
 		// Is this type a floating-point type?
 		Bool STORM_FN isFloat() const;
 
-		// Is this a value type, a class or an actor. These are mutually exclusive, ie. at most one is true.
+		// Is this a value type, a class, an actor or built in? These are mutually exclusive, ie. at most one is true.
 		Bool STORM_FN isValue() const;
 		Bool STORM_FN isClass() const;
 		Bool STORM_FN isActor() const;
+		// Is this a built-in type? (eg. Int, Float, etc.)
+		Bool STORM_FN isBuiltIn() const;
+
+		// Combination of 'isClass' and 'isActor'.
+		Bool STORM_FN isHeapObj() const;
 
 		// The size of this type.
 		Size STORM_FN size() const;

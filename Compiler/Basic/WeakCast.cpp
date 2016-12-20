@@ -50,7 +50,7 @@ namespace storm {
 			if (isMaybe(from))
 				from = unwrapMaybe(from);
 
-			if (!from.isClass())
+			if (!from.isHeapObj())
 				throw SyntaxError(expr->pos, L"The 'as' operator is only applicable to class or actor types.");
 			if (!to.type->isA(from.type))
 				throw SyntaxError(expr->pos, L"Condition is always false. " + ::toS(to) +

@@ -176,7 +176,7 @@ namespace storm {
 			}
 
 			template <class R, class P>
-			R *transform(P *par) {
+			R *transform(P par) {
 				return transformNode<R, P>(tree(), par);
 			}
 

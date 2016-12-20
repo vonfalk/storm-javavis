@@ -1,8 +1,5 @@
 // This is the syntax for the Basic Storm language.
 
-// TODO:
-// Replace SyntaxEnv with a simple Scope (as it is now supported).
-
 use core.lang;
 
 delimiter = SDelimiter;
@@ -71,12 +68,15 @@ Str SString();
 SString => s : "\"" - (SStrContent) s - "\"";
 
 // Parameter list (possibly empty).
-Params SFormals();
-SFormals => Params() : "";
-SFormals => Params() : SType -> add, SName -> add (, ",", SType -> add, SName -> add)*;
+Array<NameParam> SFormals();
+SFormals => Array<NameParam>() : "";
+SFormals => Array<NameParam>() : SFormal -> push (, ",", SFormal -> push)*;
+
+NameParam SFormal();
+SFormal => NameParam(type, name) : SType type, SName name;
 
 // Function.
-FunctionDecl SFunction(SyntaxEnv env);
+FunctionDecl SFunction(Scope env);
 SFunction => FunctionDecl(env, result, name, params, body) :
     SType result, SName name, "(", SFormals params, ")", "{", SFunctionBody@ body, "}";
 SFunction => FunctionDecl(env, result, name, params, thread, body) :
@@ -84,7 +84,7 @@ SFunction => FunctionDecl(env, result, name, params, thread, body) :
 
 
 // Class/value.
-Class SClass(SyntaxEnv env);
+Class SClass(Scope env);
 SClass => createClass(pos, env, name, body) : "class", SName name, "{", SClassBody@ body, "}";
 SClass => createValue(pos, env, name, body) : "value", SName name, "{", SClassBody@ body, "}";
 SClass => extendClass(pos, env, name, base, body) : "class", SName name, "extends", SType base, "{", SClassBody@ body, "}";
@@ -97,14 +97,14 @@ NamedThread SNamedThread();
 SNamedThread => NamedThread(name) : "thread", SName name, ";";
 
 // Possible root blocks in a file.
-TObject SFileItem(SyntaxEnv env);
+TObject SFileItem(Scope env);
 SFileItem => f : SFunction(env) f;
 SFileItem => c : SClass(env) c;
 SFileItem => t : SNamedThread t;
 
 // Root rule. Used to parse an entire file, except the use-statements).
-Contents SFile(SyntaxEnv env);
-SFile => Contents() : SDelimiter - (SFileItem(env) -> add, )*;
+Content SFile(Scope env);
+SFile => Content() : SDelimiter - (SFileItem(env) -> add, )*;
 
 // Root rule for parsing includes.
 Array<SrcName> SIncludes();
@@ -126,13 +126,13 @@ SReplExpr => Expr(pos) : "";
 ////////////////////////////////////////////////////////////////////
 
 // Actual parameters
-Actual SActuals(Block block);
-SActuals => Actual() : "";
-SActuals => Actual() : SExpr(block) -> add (, ",", SExpr(block) -> add)*;
+Actuals SActuals(Block block);
+SActuals => Actuals() : "";
+SActuals => Actuals() : SExpr(block) -> add (, ",", SExpr(block) -> add)*;
 
 // Actual parameters with/without parens.
-Actual SFnActuals(Block block);
-SFnActuals => Actual() : "";
+Actuals SFnActuals(Block block);
+SFnActuals => Actuals() : "";
 SFnActuals => v : "(", SActuals(block) v, ")";
 
 // Block.
@@ -348,10 +348,13 @@ Array<Expr> SCtorStmts(Block block);
 SCtorStmts => v : (SStmt(block) v, )*;
 
 // Constructor parameters. May include a nameless first parameter.
-Params SCtorParams();
-SCtorParams => Params() : "";
-SCtorParams => Params() : SType -> add, SName -> add (, ",", SType -> add, SName -> add)*;
-SCtorParams => Params() : SType -> add, ""@ -> add (, ",", SType -> add, SName -> add)*;
+Array<NameParam> SCtorParams();
+SCtorParams => Array<NameParam>() : "";
+SCtorParams => Array<NameParam>() : SFormal -> push (, ",", SFormal -> push)*;
+SCtorParams => Array<NameParam>() : SFirstFormal -> push (, ",", SFormal -> push)*;
+
+NameParam SFirstFormal();
+SFirstFormal => nameless(type) : SType type;
 
 // Possible contents of a class.
 TObject SClassItem(Class owner);

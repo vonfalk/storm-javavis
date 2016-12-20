@@ -19,12 +19,6 @@ namespace storm {
 		1,
 	};
 
-	static void check(GcArray<wchar> *data) {
-		for (nat i = 0; i < data->count - 1; i++)
-			if (data->v[i] == 0)
-				DebugBreak();
-	}
-
 	Str::Str() : data(&storm::empty) {}
 
 	Str::Str(const wchar *s) {
@@ -53,9 +47,11 @@ namespace storm {
 			allocData(3);
 			data->v[0] = lead;
 			data->v[1] = trail;
-		} else {
+		} else if (trail) {
 			allocData(2);
 			data->v[0] = trail;
+		} else {
+			allocData(1);
 		}
 		validate();
 	}
@@ -70,11 +66,13 @@ namespace storm {
 				data->v[i*2] = lead;
 				data->v[i*2 + 1] = trail;
 			}
-		} else {
+		} else if (trail) {
 			allocData(times + 1);
 			for (nat i = 0; i < times; i++) {
 				data->v[i] = trail;
 			}
+		} else {
+			allocData(1);
 		}
 		validate();
 	}
@@ -85,9 +83,11 @@ namespace storm {
 
 	void Str::validate() const {
 #ifdef DEBUG
-		for (nat i = 0; i < data->count - 1; i++)
-			if (data->v[i] == 0)
+		for (nat i = 0; i < data->count - 1; i++) {
+			if (data->v[i] == 0) {
 				assert(false, L"String contains a premature null terminator!");
+			}
+		}
 		assert(data->v[data->count - 1] == 0, L"String is missing a null terminator!");
 #endif
 	}

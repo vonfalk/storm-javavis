@@ -67,7 +67,7 @@ namespace storm {
 	Bool ArrayType::loadAll() {
 		TODO(L"Add the iterator!");
 
-		if (param().isClass())
+		if (param().isHeapObj())
 			loadClassFns();
 		else
 			loadValueFns();

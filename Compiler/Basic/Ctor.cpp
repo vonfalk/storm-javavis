@@ -364,7 +364,7 @@ namespace storm {
 
 			if (to->expr) {
 				Expr *init = castTo(to->expr, t);
-				if (t.isClass() && init) {
+				if (t.isHeapObj() && init) {
 					initVarAssign(s, v, init);
 				} else {
 					Actuals *p = new (this) Actuals();
@@ -391,7 +391,7 @@ namespace storm {
 			if (!ctor)
 				throw SyntaxError(pos, L"No constructor for " + ::toS(t) + L"(" + ::toS(values) + L").");
 
-			if (t.isClass()) {
+			if (t.isHeapObj()) {
 				// Easy way, call the constructor as normal.
 				CtorCall *call = new (this) CtorCall(pos, ctor, to);
 				CodeResult *created = new (this) CodeResult(t, s->block);
@@ -422,7 +422,7 @@ namespace storm {
 
 			Value t = v->type;
 			code::Var dest = thisVar->var.v;
-			assert(t.isClass());
+			assert(t.isHeapObj());
 
 			CodeResult *result = new (this) CodeResult(t, s->block);
 			to->code(s, result);

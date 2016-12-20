@@ -28,6 +28,36 @@ BEGIN_TEST(CodeScopeTest, CodeBasic) {
 
 } END_TEST
 
+BEGIN_TEST_(CodeScopeTest2, CodeBasic) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+
+	Block b0 = l->createBlock(l->root());
+	Var v0 = l->createVar(b0, Size::sLong);
+	Part p1 = l->createPart(b0);
+	Var v1 = l->createVar(p1, Size::sLong);
+	Part p2 = l->createPart(l->root());
+	Block b3 = l->createBlock(p2);
+	Var v2 = l->createVar(b3, Size::sInt);
+
+
+	*l << prolog();
+	*l << begin(b0);
+	*l << begin(p1);
+	*l << end(b0);
+	*l << begin(p2);
+	*l << begin(b3);
+	*l << end(b3);
+	*l << epilog();
+
+	PVAR(l);
+
+	CHECK_RUNS(new (e) Binary(arena, l));
+
+} END_TEST
+
 BEGIN_TEST(CodeTest, CodeBasic) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);

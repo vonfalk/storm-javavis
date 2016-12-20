@@ -6,6 +6,8 @@ namespace storm {
 
 		NameParam::NameParam(SrcName *type, Str *name) : type(type), name(name) {}
 
+		NameParam::NameParam(SrcName *type, syntax::SStr *name) : type(type), name(name->v) {}
+
 		wostream &operator <<(wostream &to, NameParam p) {
 			StrBuf *b = new (p.name) StrBuf();
 			*b << p;
@@ -16,7 +18,13 @@ namespace storm {
 			return to << p.type << L" " << p.name;
 		}
 
+		NameParam nameless(SrcName *type) {
+			return NameParam(type, new (type) Str(L""));
+		}
+
 		ValParam::ValParam(Value type, Str *name) : type(type), name(name) {}
+
+		ValParam::ValParam(Value type, syntax::SStr *name) : type(type), name(name->v) {}
 
 		wostream &operator <<(wostream &to, ValParam p) {
 			StrBuf *b = new (p.name) StrBuf();

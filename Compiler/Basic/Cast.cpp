@@ -24,7 +24,7 @@ namespace storm {
 				return false;
 
 			// Only values can be casted to a reference automatically.
-			if (to.isClass())
+			if (to.isHeapObj())
 				if (to.ref && !from.ref)
 					return false;
 
@@ -86,7 +86,7 @@ namespace storm {
 				return 100 * penalty; // Quite large penalty, so that we prefer functions without casting.
 
 			// If 'to' is a value, we can create a reference to it without problem.
-			if (!to.isClass() && to.ref) {
+			if (!to.isHeapObj() && to.ref) {
 				Int penalty = from->castPenalty(to.asRef(false));
 				if (penalty >= 0)
 					return 100 * penalty;
@@ -121,7 +121,7 @@ namespace storm {
 			if (from->castPenalty(to) >= 0)
 				return from;
 
-			if (!to.isClass() && to.ref)
+			if (!to.isHeapObj() && to.ref)
 				if (from->castPenalty(to.asRef(false)) >= 0)
 					return from;
 

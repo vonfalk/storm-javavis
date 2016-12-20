@@ -165,6 +165,14 @@ namespace storm {
 		return type->isA(TObject::stormType(type->engine));
 	}
 
+	Bool Value::isHeapObj() const {
+		if (!type)
+			return false;
+		if (isBuiltIn())
+			return false;
+		return (type->typeFlags & typeClass) == typeClass;
+	}
+
 	code::Operand Value::copyCtor() const {
 		if (isValue()) {
 			Function *ctor = type->copyCtor();

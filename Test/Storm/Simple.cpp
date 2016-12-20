@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Fn.h"
 
-BEGIN_TEST_(BasicSyntax, SimpleBS) {
+BEGIN_TEST(BasicSyntax, SimpleBS) {
 	Engine &e = gEngine();
 
 	CHECK_RUNS(runFn<Int>(L"test.bs-simple.voidFn"));

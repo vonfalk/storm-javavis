@@ -78,7 +78,7 @@ namespace storm {
 			// Remember what we parsed.
 			src = str;
 			srcPos = SrcPos(file, start.offset());
-			Nat len = str->peekLength() + 1;
+			Nat len = str->peekLength() + 1 - srcPos.pos;
 			lastFinish = len + 1;
 
 			// Set up storage.

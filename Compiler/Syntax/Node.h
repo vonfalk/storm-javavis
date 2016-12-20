@@ -27,7 +27,7 @@ namespace storm {
 
 
 		/**
-		 * Transform syntax nodes in C++. Assumes all in/out parameters are Objects or TObjects.
+		 * Transform syntax nodes in C++. Assumes the result is a pointer.
 		 */
 
 		// Find the appropriate 'transform' function in a specific type. If 'param' is void, no
@@ -45,7 +45,7 @@ namespace storm {
 
 
 		template <class R, class P>
-		R *transformNode(Node *node, P *par) {
+		R *transformNode(Node *node, P par) {
 			Engine &e = node->engine();
 			const void *fn = transformFunction(runtime::typeOf(node),
 											Value(StormInfo<R>::type(e)),
