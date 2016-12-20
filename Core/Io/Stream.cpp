@@ -9,8 +9,6 @@ namespace storm {
 
 	IStream::IStream() {}
 
-	IStream::IStream(IStream *o) {}
-
 	Bool IStream::more() {
 		return false;
 	}
@@ -66,7 +64,6 @@ namespace storm {
 	 */
 
 	RIStream::RIStream() {}
-	RIStream::RIStream(RIStream *o) {}
 
 	void RIStream::seek(Word to) {}
 
@@ -84,8 +81,6 @@ namespace storm {
 	 */
 
 	OStream::OStream() {}
-
-	OStream::OStream(OStream *o) {}
 
 	void OStream::write(Buffer buf) {}
 

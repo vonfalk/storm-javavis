@@ -9,7 +9,7 @@ namespace storm {
 		memcpy(data.dataPtr(), b.dataPtr(), b.filled());
 	}
 
-	IMemStream::IMemStream(IMemStream *o) : data(o->data) {}
+	IMemStream::IMemStream(const IMemStream &o) : data(o.data) {}
 
 	void IMemStream::deepCopy(CloneEnv *env) {
 		// We never change 'data', so we do not need to clone it here.

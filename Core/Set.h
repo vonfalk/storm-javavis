@@ -45,7 +45,7 @@ namespace storm {
 		SetBase(const Handle &key);
 
 		// Copy another set.
-		STORM_CTOR SetBase(SetBase *other);
+		SetBase(const SetBase &other);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);

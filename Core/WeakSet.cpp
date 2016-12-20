@@ -19,12 +19,12 @@ namespace storm {
 
 	WeakSetBase::WeakSetBase() : watch(runtime::createWatch(engine())) {}
 
-	WeakSetBase::WeakSetBase(WeakSetBase *other) {
-		size = other->size;
-		lastFree = other->lastFree;
-		info = copyArray(other->info);
-		data = copyArray(other->data);
-		watch = other->watch->clone();
+	WeakSetBase::WeakSetBase(const WeakSetBase &other) {
+		size = other.size;
+		lastFree = other.lastFree;
+		info = copyArray(other.info);
+		data = copyArray(other.data);
+		watch = other.watch->clone();
 	}
 
 	void WeakSetBase::deepCopy(CloneEnv *env) {

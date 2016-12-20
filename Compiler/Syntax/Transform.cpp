@@ -33,7 +33,7 @@ namespace storm {
 				actual->add(param);
 			}
 
-			SimplePart *part = new (me) SimplePart(new (me) Str(name), params);
+			SimplePart *part = new (me) SimplePart(name, params);
 			Named *found = type.type->find(part);
 			Function *toCall = as<Function>(found);
 			if (!toCall)
@@ -63,7 +63,7 @@ namespace storm {
 		}
 
 		static Array<ValParam> *tfmParams(Rule *rule, ProductionType *owner) {
-			Array<ValParam> *v = new (rule) Array<ValParam>(rule->params());
+			Array<ValParam> *v = new (rule) Array<ValParam>(*rule->params());
 			v->insert(0, ValParam(thisPtr(owner), new (rule) Str(L"this")));
 			return v;
 		}

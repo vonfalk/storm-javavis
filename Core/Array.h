@@ -32,7 +32,7 @@ namespace storm {
 		ArrayBase(const Handle &type, Nat n, const void *data);
 
 		// Copy another array.
-		STORM_CTOR ArrayBase(ArrayBase *other);
+		ArrayBase(const ArrayBase &other);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -172,7 +172,7 @@ namespace storm {
 		}
 
 		// Copy array.
-		Array(Array<T> *o) : ArrayBase(o) {
+		Array(const Array<T> &o) : ArrayBase(o) {
 			runtime::setVTable(this);
 		}
 

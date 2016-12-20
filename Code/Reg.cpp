@@ -92,11 +92,11 @@ namespace code {
 
 	RegSet::RegSet() {}
 
-	RegSet::RegSet(const RegSet *o) {
-		index = o->index;
+	RegSet::RegSet(const RegSet &o) {
+		index = o.index;
 		for (nat i = 0; i < banks; i++)
-			(&data0)[i] = (&o->data0)[i];
-		numSet = o->numSet;
+			(&data0)[i] = (&o.data0)[i];
+		numSet = o.numSet;
 	}
 
 	RegSet::RegSet(Reg r) {

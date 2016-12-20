@@ -22,7 +22,7 @@ namespace code {
 		STORM_CTOR Instr();
 
 		// Copy this instruction.
-		STORM_CTOR Instr(const Instr &o);
+		Instr(const Instr &o);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);

@@ -27,7 +27,7 @@ namespace storm {
 		Thread(DeclThread::CreateFn fn);
 
 		// Since we're not acting as an actor, we need to provide a copy ctor.
-		STORM_CTOR Thread(Thread *o);
+		Thread(Thread &o);
 
 		// Destroy this thread.
 		~Thread();

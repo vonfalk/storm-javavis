@@ -27,7 +27,7 @@ namespace storm {
 			add(name->at(i));
 	}
 
-	Name::Name(Name *o) : parts(new (engine()) Array<NamePart *>(o->parts)) {}
+	Name::Name(const Name &o) : parts(new (engine()) Array<NamePart *>(*o.parts)) {}
 
 	void Name::deepCopy(CloneEnv *env) {
 		Object::deepCopy(env);
@@ -88,11 +88,9 @@ namespace storm {
 
 	SrcName::SrcName(SrcPos pos) : Name(), pos(pos) {}
 
-	SrcName::SrcName(Name *o, SrcPos pos) : Name(o), pos(pos) {}
+	SrcName::SrcName(Name *o, SrcPos pos) : Name(*o), pos(pos) {}
 
 	SrcName::SrcName(SimpleName *o, SrcPos pos) : Name(o), pos(pos) {}
-
-	SrcName::SrcName(SrcName *o) : Name(o), pos(o->pos) {}
 
 	void SrcName::deepCopy(CloneEnv *env) {
 		Name::deepCopy(env);
@@ -115,7 +113,7 @@ namespace storm {
 		add(name, p);
 	}
 
-	SimpleName::SimpleName(SimpleName *o) : parts(new (engine()) Array<SimplePart *>(o->parts)) {}
+	SimpleName::SimpleName(const SimpleName &o) : parts(new (engine()) Array<SimplePart *>(*o.parts)) {}
 
 	void SimpleName::deepCopy(CloneEnv *env) {
 		Object::deepCopy(env);

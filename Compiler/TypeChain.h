@@ -42,7 +42,7 @@ namespace storm {
 			friend class TypeChain;
 		public:
 			// Copy.
-			STORM_CAST_CTOR Iter(const Iter &o);
+			Iter(const Iter &o);
 
 			// Get the next element.
 			MAYBE(Type *) STORM_FN next();

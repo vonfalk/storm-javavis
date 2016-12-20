@@ -157,8 +157,8 @@ namespace code {
 			this->dest = dest;
 			srcReg = new (dest) Array<Nat>();
 			destReg = new (dest) Array<Nat>();
-			RegSet *usedBefore = new (used) RegSet(used);
-			RegSet *usedAfter = new (used) RegSet(used);
+			RegSet *usedBefore = new (used) RegSet(*used);
+			RegSet *usedAfter = new (used) RegSet(*used);
 			// Do not attempt to use any of the registers we want to preserve to store stuff in.
 			usedAfter->put(regs);
 

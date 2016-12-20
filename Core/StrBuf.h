@@ -73,7 +73,7 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR StrBuf();
-		STORM_CTOR StrBuf(StrBuf *o);
+		StrBuf(const StrBuf &o);
 		STORM_CTOR StrBuf(Str *from);
 
 		// Deep copy.

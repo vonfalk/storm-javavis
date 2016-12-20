@@ -36,9 +36,6 @@ namespace storm {
 		// Ctor.
 		STORM_CTOR Protocol();
 
-		// Copy.
-		STORM_CTOR Protocol(Protocol *o);
-
 		// Compare two parts of a filename for equality.
 		// Implemented here as a simple bitwise comparision.
 		virtual Bool STORM_FN partEq(Str *a, Str *b);
@@ -75,9 +72,6 @@ namespace storm {
 	public:
 		// Ctor.
 		STORM_CTOR FileProtocol();
-
-		// Copy.
-		STORM_CTOR FileProtocol(FileProtocol *p);
 
 		// Compare parts.
 		virtual Bool STORM_FN partEq(Str *a, Str *b);

@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Array.h"
 #include "Value.h"
+#include "Syntax/SStr.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -21,9 +22,6 @@ namespace storm {
 	public:
 		// Create with a single name.
 		STORM_CTOR NamePart(Str *name);
-
-		// Copy.
-		STORM_CTOR NamePart(NamePart *o);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -46,6 +44,7 @@ namespace storm {
 	public:
 		// Create with just a name.
 		STORM_CTOR SimplePart(Str *name);
+		STORM_CTOR SimplePart(syntax::SStr *name);
 
 		// Create with name and parameters.
 		STORM_CTOR SimplePart(Str *name, Array<Value> *params);

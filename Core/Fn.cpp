@@ -35,11 +35,11 @@ namespace storm {
 		target.cloneTo(this->target(), targetSize);
 	}
 
-	FnBase::FnBase(FnBase *o) {
-		callMember = o->callMember;
-		thisPtr = o->thisPtr;
-		thread = o->thread;
-		o->target()->cloneTo(target(), targetSize);
+	FnBase::FnBase(const FnBase &o) {
+		callMember = o.callMember;
+		thisPtr = o.thisPtr;
+		thread = o.thread;
+		o.target()->cloneTo(target(), targetSize);
 	}
 
 	void FnBase::deepCopy(CloneEnv *env) {

@@ -77,19 +77,19 @@ namespace storm {
 		BSNamePart::BSNamePart(syntax::SStr *name, Actuals *params)
 			: SimplePart(name->v, params->values()), pos(name->pos) {
 
-			exprs = new (this) Array<Expr *>(params->expressions);
+			exprs = new (this) Array<Expr *>(*params->expressions);
 		}
 
 		BSNamePart::BSNamePart(Str *name, SrcPos pos, Actuals *params) :
 			SimplePart(name, params->values()), pos(pos) {
 
-			exprs = new (this) Array<Expr *>(params->expressions);
+			exprs = new (this) Array<Expr *>(*params->expressions);
 		}
 
 		BSNamePart::BSNamePart(const wchar *name, SrcPos pos, Actuals *params) :
 			SimplePart(new (this) Str(name), params->values()), pos(pos) {
 
-			exprs = new (this) Array<Expr *>(params->expressions);
+			exprs = new (this) Array<Expr *>(*params->expressions);
 		}
 
 		void BSNamePart::insert(Value first) {

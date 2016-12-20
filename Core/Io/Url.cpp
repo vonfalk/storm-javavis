@@ -61,12 +61,6 @@ namespace storm {
 		simplifyInplace(this->parts);
 	}
 
-	Url::Url(Url *o) {
-		protocol = o->protocol;
-		parts = o->parts;
-		flags = o->flags;
-	}
-
 	void Url::toS(StrBuf *to) const {
 		if (protocol)
 			*to << protocol;
@@ -112,12 +106,12 @@ namespace storm {
 	}
 
 	Array<Str *> *Url::getParts() const {
-		return new (this) Array<Str *>(parts);
+		return new (this) Array<Str *>(*parts);
 	}
 
 	Url *Url::copy() {
-		Url *c = new (this) Url(this);
-		c->parts = new (this) Array<Str *>(c->parts);
+		Url *c = new (this) Url(*this);
+		c->parts = new (this) Array<Str *>(*c->parts);
 		return c;
 	}
 

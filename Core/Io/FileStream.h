@@ -14,7 +14,7 @@ namespace storm {
 		IFileStream(Str *name);
 
 		// Copy...
-		STORM_CTOR IFileStream(IFileStream *o);
+		IFileStream(const IFileStream &o);
 
 		// Destroy.
 		virtual ~IFileStream();

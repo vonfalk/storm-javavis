@@ -102,7 +102,20 @@ void World::orderThreads() {
 
 void World::resolveTypes() {
 	for (nat i = 0; i < types.size(); i++) {
-		types[i]->resolveTypes(*this);
+		Type *t = types[i].borrow();
+		t->resolveTypes(*this);
+
+		// Add the default copy-constructor to the type unless it is an actor.
+		if (Class *c = as<Class>(t)) {
+			if (!c->isActor()) {
+				Auto<TypeRef> r = new NamedType(c->pos, L"void");
+				Function f(c->name + Function::ctor, c->pkg, aPublic, c->pos, r);
+				f.isMember = true;
+				f.params.push_back(new ResolvedType(t));
+				f.params.push_back(new RefType(new ResolvedType(t)));
+				functions.push_back(f);
+			}
+		}
 	}
 
 	for (nat i = 0; i < functions.size(); i++) {
@@ -117,5 +130,6 @@ void World::prepare() {
 	orderThreads();
 
 	resolveTypes();
+	orderFunctions();
 }
 

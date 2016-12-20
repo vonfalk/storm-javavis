@@ -67,7 +67,7 @@ namespace code {
 		STORM_CTOR RegSet();
 
 		// Copy.
-		STORM_CTOR RegSet(const RegSet *src);
+		RegSet(const RegSet &src);
 
 		// Create with a single registers.
 		STORM_CTOR RegSet(Reg r);

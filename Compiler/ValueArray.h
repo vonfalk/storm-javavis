@@ -19,7 +19,7 @@ namespace storm {
 		STORM_CTOR ValueArray();
 
 		// Copy another array.
-		STORM_CTOR ValueArray(ValueArray *o);
+		ValueArray(const ValueArray &o);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);

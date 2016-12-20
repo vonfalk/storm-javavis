@@ -22,15 +22,15 @@ namespace storm {
 			watch = runtime::createWatch(engine());
 	}
 
-	MapBase::MapBase(MapBase *o) : keyT(o->keyT), valT(o->valT), watch(null) {
-		size = o->size;
-		lastFree = o->lastFree;
-		info = copyArray(o->info);
-		key = copyArray(o->key, info, keyT);
-		val = copyArray(o->val, info, valT);
+	MapBase::MapBase(const MapBase &o) : keyT(o.keyT), valT(o.valT), watch(null) {
+		size = o.size;
+		lastFree = o.lastFree;
+		info = copyArray(o.info);
+		key = copyArray(o.key, info, keyT);
+		val = copyArray(o.val, info, valT);
 
-		if (o->watch)
-			watch = o->watch->clone();
+		if (o.watch)
+			watch = o.watch->clone();
 	}
 
 	void MapBase::deepCopy(CloneEnv *env) {

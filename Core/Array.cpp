@@ -16,20 +16,20 @@ namespace storm {
 		}
 	}
 
-	ArrayBase::ArrayBase(ArrayBase *other) : handle(other->handle) {
-		nat count = other->count();
+	ArrayBase::ArrayBase(const ArrayBase &other) : handle(other.handle) {
+		nat count = other.count();
 		if (handle.copyFn) {
 			ensure(count);
 
 			for (nat i = 0; i < count; i++) {
-				(*handle.copyFn)(ptr(i), other->ptr(i));
+				(*handle.copyFn)(ptr(i), other.ptr(i));
 				// Remember the element was created, if we get an exception during copying.
 				data->filled = i + 1;
 			}
 		} else if (count > 0) {
 			// Memcpy will do!
 			ensure(count);
-			memcpy(ptr(0), other->ptr(0), count * handle.size);
+			memcpy(ptr(0), other.ptr(0), count * handle.size);
 			data->filled = count;
 		}
 	}

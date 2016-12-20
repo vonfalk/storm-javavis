@@ -15,7 +15,7 @@ namespace storm {
 		STORM_CTOR IMemStream(Buffer b);
 
 		// Copy.
-		STORM_CTOR IMemStream(IMemStream *o);
+		IMemStream(const IMemStream &o);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);

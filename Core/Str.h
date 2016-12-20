@@ -40,9 +40,6 @@ namespace storm {
 		// Create a string from a buffer.
 		Str(GcArray<wchar> *data);
 
-		// Copy a string.
-		STORM_CTOR Str(Str *o);
-
 		// Create from a single char or series of chars.
 		STORM_CTOR Str(Char ch);
 		STORM_CTOR Str(Char ch, Nat count);

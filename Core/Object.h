@@ -23,9 +23,6 @@ namespace storm {
 		// Default constructor.
 		STORM_CTOR Object();
 
-		// Default copy-constructor.
-		STORM_CTOR Object(const Object &o);
-
 		/**
 		 * Members common to all objects.
 		 *

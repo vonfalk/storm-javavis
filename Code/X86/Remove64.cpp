@@ -51,7 +51,7 @@ namespace code {
 			Operand src = instr->src();
 			Operand dest = instr->dest();
 
-			used = new (used) RegSet(used);
+			used = new (used) RegSet(*used);
 
 			// If we're supposed to clobber a register, don't try to preserve it!
 			if (dest.type() == opRegister)

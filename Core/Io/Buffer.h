@@ -21,7 +21,7 @@ namespace storm {
 		STORM_CTOR Buffer();
 
 		// Copy a buffer.
-		STORM_CAST_CTOR Buffer(const Buffer &src);
+		Buffer(const Buffer &src);
 
 		// From C++: create a buffer with a pre-allocated array.
 		Buffer(GcArray<byte> *data);

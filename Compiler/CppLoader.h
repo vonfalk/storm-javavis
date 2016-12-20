@@ -33,6 +33,10 @@ namespace storm {
 		// their packages.
 		void loadFunctions();
 
+		// Create all exported variables in their appropriate places. Assumes types and threads are
+		// placed in their packages.
+		void loadVariables();
+
 	private:
 		// Engine to load into.
 		Engine &e;
@@ -57,6 +61,9 @@ namespace storm {
 
 		// Get the number of functions.
 		nat functionCount() const;
+
+		// Get the number of variables.
+		nat variableCount() const;
 
 		// Find a NameSet corresponding to a given name.
 		NameSet *findPkg(const wchar *name);
@@ -84,6 +91,9 @@ namespace storm {
 
 		// Load parameters for a function.
 		Array<Value> *loadFnParams(const CppTypeRef *params);
+
+		// Load a variable.
+		void loadVariable(const CppVariable &var);
 	};
 
 }

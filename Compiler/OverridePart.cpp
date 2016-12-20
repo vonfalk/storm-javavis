@@ -9,7 +9,7 @@ namespace storm {
 	OverridePart::OverridePart(Function *src) :	SimplePart(src->name, src->params), result(src->result) {}
 
 	OverridePart::OverridePart(Type *parent, Function *src) :
-		SimplePart(src->name, new (src) Array<Value>(src->params)),
+		SimplePart(src->name, new (src) Array<Value>(*src->params)),
 		result(src->result) {
 
 		params->at(0) = thisPtr(parent);

@@ -43,9 +43,6 @@ namespace storm {
 		// Ctor for STORM.
 		STORM_CTOR Url(Protocol *p, Array<Str *> *parts);
 
-		// Copy ctor.
-		STORM_CTOR Url(Url *o);
-
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *o);
 

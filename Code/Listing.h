@@ -70,6 +70,8 @@ namespace code {
 		STORM_CTOR Listing();
 		STORM_CTOR Listing(const Arena *arena);
 
+		Listing(const Listing &o);
+
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
@@ -80,7 +82,7 @@ namespace code {
 			STORM_VALUE;
 		public:
 			STORM_CTOR Entry();
-			STORM_CTOR Entry(const Entry &o);
+			Entry(const Entry &o);
 			STORM_CTOR Entry(Instr *instr);
 			STORM_CTOR Entry(Instr *instr, MAYBE(Array<Label> *) labels);
 

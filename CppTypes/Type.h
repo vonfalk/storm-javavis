@@ -86,6 +86,9 @@ public:
 	// The thread object we're associated with (only for the classes directly inheriting from ObjectOn<T>).
 	Thread *threadType;
 
+	// Is this an actor? Only usable after resolveTypes() have been called.
+	bool isActor() const;
+
 	// Member variables (non-static). All have their name relative to the enclosing type.
 	vector<Variable> variables;
 

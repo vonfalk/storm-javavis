@@ -9,8 +9,6 @@ namespace storm {
 
 		Node::Node() {}
 
-		Node::Node(Node *o) : pos(o->pos) {}
-
 		Node::Node(SrcPos pos) : pos(pos) {}
 
 		void Node::throwError() {

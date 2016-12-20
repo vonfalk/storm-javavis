@@ -83,11 +83,6 @@ namespace storm {
 		validate();
 	}
 
-	// The data is immutable, no need to copy it!
-	Str::Str(Str *o) : data(o->data) {
-		validate();
-	}
-
 	void Str::validate() const {
 #ifdef DEBUG
 		for (nat i = 0; i < data->count - 1; i++)

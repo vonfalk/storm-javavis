@@ -66,10 +66,10 @@ namespace storm {
 		clear();
 	}
 
-	StrBuf::StrBuf(StrBuf *o) {
+	StrBuf::StrBuf(const StrBuf &o) {
 		clear();
-		buf = copyBuf(o->buf);
-		pos = o->pos;
+		buf = copyBuf(o.buf);
+		pos = o.pos;
 	}
 
 	StrBuf::StrBuf(Str *src) {

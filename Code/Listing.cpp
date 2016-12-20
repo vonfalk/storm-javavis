@@ -67,7 +67,7 @@ namespace code {
 
 		if (labels)
 			// No need to call 'deepCopy' here, as labels are simple enough.
-			labels = new (labels) Array<Label>(labels);
+			labels = new (labels) Array<Label>(*labels);
 	}
 
 	void Listing::Entry::add(Engine &e, Label l) {
@@ -118,13 +118,13 @@ namespace code {
 	Listing::IBlock::IBlock(Engine &e, Nat parent) : parts(new (e) Array<Nat>()), parent(parent) {}
 
 	void Listing::IBlock::deepCopy(CloneEnv *env) {
-		parts = new (parts) Array<Nat>(parts);
+		parts = new (parts) Array<Nat>(*parts);
 	}
 
 	Listing::IPart::IPart(Engine &e, Nat block, Nat id) : vars(new (e) Array<Nat>()), block(block), index(id) {}
 
 	void Listing::IPart::deepCopy(CloneEnv *env) {
-		vars = new (vars) Array<Nat>(vars);
+		vars = new (vars) Array<Nat>(*vars);
 	}
 
 	/**
@@ -167,18 +167,34 @@ namespace code {
 		parts->push(IPart(engine(), 0, 0));
 	}
 
+	Listing::Listing(const Listing &o) :
+		arena(o.arena),
+		code(new (engine()) Array<Entry>(*o.code)),
+		nextLabels(null),
+		nextLabel(o.nextLabel),
+		params(new (engine()) Array<Nat>(*o.params)),
+		vars(new (engine()) Array<IVar>(*o.vars)),
+		blocks(new (engine()) Array<IBlock>(*o.blocks)),
+		parts(new (engine()) Array<IPart>(*o.parts)),
+		needEH(o.needEH) {
+
+		nextLabels = o.nextLabels
+			? new (engine()) Array<Label>(*o.nextLabels)
+			: null;
+	}
+
 	void Listing::deepCopy(CloneEnv *env) {
-		code = new (this) Array<Entry>(code);
+		code = new (this) Array<Entry>(*code);
 		code->deepCopy(env);
-		nextLabels = new (this) Array<Label>(nextLabels);
+		nextLabels = new (this) Array<Label>(*nextLabels);
 		nextLabels->deepCopy(env);
-		params = new (this) Array<Nat>(params);
+		params = new (this) Array<Nat>(*params);
 		params->deepCopy(env);
-		vars = new (this) Array<IVar>(vars);
+		vars = new (this) Array<IVar>(*vars);
 		vars->deepCopy(env);
-		blocks = new (this) Array<IBlock>(blocks);
+		blocks = new (this) Array<IBlock>(*blocks);
 		blocks->deepCopy(env);
-		parts = new (this) Array<IPart>(parts);
+		parts = new (this) Array<IPart>(*parts);
 		parts->deepCopy(env);
 	}
 
@@ -187,11 +203,11 @@ namespace code {
 
 		shell->nextLabel = nextLabel;
 		if (nextLabels)
-			shell->nextLabels = new (this) Array<Label>(nextLabels);
-		shell->params = new (this) Array<Nat>(params);
-		shell->vars = new (this) Array<IVar>(vars);
-		shell->blocks = new (this) Array<IBlock>(blocks);
-		shell->parts = new (this) Array<IPart>(parts);
+			shell->nextLabels = new (this) Array<Label>(*nextLabels);
+		shell->params = new (this) Array<Nat>(*params);
+		shell->vars = new (this) Array<IVar>(*vars);
+		shell->blocks = new (this) Array<IBlock>(*blocks);
+		shell->parts = new (this) Array<IPart>(*parts);
 		shell->needEH = needEH;
 
 		// Note: we're doing this the hard way since deepCopy did not work properly at the time this was written.

@@ -45,7 +45,7 @@ namespace storm {
 		MapBase(const Handle &key, const Handle &value);
 
 		// Copy another map.
-		STORM_CTOR MapBase(MapBase *other);
+		MapBase(const MapBase &other);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);

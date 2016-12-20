@@ -17,7 +17,6 @@ namespace storm {
 			SStr(const wchar *src, SrcPos pos);
 
 			STORM_CTOR SStr(Str *src);
-			STORM_CTOR SStr(SStr *src);
 			STORM_CTOR SStr(Str *src, SrcPos pos);
 
 			// Position of this string.

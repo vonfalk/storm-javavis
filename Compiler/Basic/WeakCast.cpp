@@ -16,11 +16,11 @@ namespace storm {
 
 		MAYBE(Str *) WeakCast::defaultOverwrite(Expr *expr) {
 			if (LocalVarAccess *var = as<LocalVarAccess>(expr))
-				return new (this) Str(var->var->name);
+				return new (this) Str(*var->var->name);
 
 			// TODO? Enforce 'this' is used as the parameter?
 			if (MemberVarAccess *var = as<MemberVarAccess>(expr))
-				return new (this) Str(var->var->name);
+				return new (this) Str(*var->var->name);
 
 			return null;
 		}

@@ -68,7 +68,7 @@ namespace storm {
 		FnBase(const FnTarget &target, const RootObject *thisPtr, Bool member, Thread *thread);
 
 		// Copy.
-		STORM_CTOR FnBase(FnBase *o);
+		FnBase(const FnBase &o);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);

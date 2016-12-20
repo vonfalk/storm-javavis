@@ -21,7 +21,7 @@ namespace storm {
 		FutureBase(const Handle &type);
 
 		// Copy ctor.
-		FutureBase(const FutureBase *o);
+		FutureBase(const FutureBase &o);
 
 		// Destroy.
 		~FutureBase();
@@ -151,7 +151,7 @@ namespace storm {
 		}
 
 		// Copy.
-		Future(const Future<void> *o) : FutureBase(o) {
+		Future(const Future<void> &o) : FutureBase(o) {
 			runtime::setVTable(this);
 		}
 

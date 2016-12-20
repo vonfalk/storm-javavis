@@ -17,7 +17,6 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR Node();
-			STORM_CTOR Node(Node *o);
 			STORM_CTOR Node(SrcPos pos);
 
 			SrcPos pos;

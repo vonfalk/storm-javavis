@@ -22,14 +22,14 @@ namespace storm {
 			watch = runtime::createWatch(engine());
 	}
 
-	SetBase::SetBase(SetBase *o) : keyT(o->keyT), watch(null) {
-		size = o->size;
-		lastFree = o->lastFree;
-		info = copyArray(o->info);
-		key = copyArray(o->key, info, keyT);
+	SetBase::SetBase(const SetBase &o) : keyT(o.keyT), watch(null) {
+		size = o.size;
+		lastFree = o.lastFree;
+		info = copyArray(o.info);
+		key = copyArray(o.key, info, keyT);
 
-		if (o->watch)
-			watch = o->watch->clone();
+		if (o.watch)
+			watch = o.watch->clone();
 	}
 
 	void SetBase::deepCopy(CloneEnv *env) {

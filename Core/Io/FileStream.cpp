@@ -28,9 +28,9 @@ namespace storm {
 		handle = (void *)openInput(name->c_str());
 	}
 
-	IFileStream::IFileStream(IFileStream *o) : name(o->name) {
+	IFileStream::IFileStream(const IFileStream &o) : name(o.name) {
 		handle = (void *)openInput(name->c_str());
-		copyFilePtr((HANDLE)o->handle, (HANDLE)handle);
+		copyFilePtr((HANDLE)o.handle, (HANDLE)handle);
 	}
 
 	IFileStream::~IFileStream() {

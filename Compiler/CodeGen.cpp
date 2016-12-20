@@ -346,7 +346,7 @@ namespace storm {
 		*s->to << mov(to, ptrA);
 
 		CodeResult *r = new (s) CodeResult();
-		params = new (s) Array<code::Operand>(params);
+		params = new (s) Array<code::Operand>(*params);
 		params->insert(0, to);
 		ctor->autoCall(s, params, r);
 	}
@@ -360,7 +360,7 @@ namespace storm {
 		*s->to << lea(ptrA, to);
 
 		CodeResult *r = new (s) CodeResult();
-		params = new (s) Array<code::Operand>(params);
+		params = new (s) Array<code::Operand>(*params);
 		params->insert(0, to);
 		ctor->autoCall(s, params, r);
 	}

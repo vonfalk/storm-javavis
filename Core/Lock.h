@@ -22,7 +22,7 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR Lock();
-		STORM_CTOR Lock(const Lock &o);
+		Lock(const Lock &o);
 
 		// Destroy.
 		~Lock();

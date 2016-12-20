@@ -92,7 +92,7 @@ namespace storm {
 	}
 
 	static void CODECALL copyArray(void *mem, ArrayBase *from) {
-		ArrayBase *o = new (Place(mem)) ArrayBase(from);
+		ArrayBase *o = new (Place(mem)) ArrayBase(*from);
 		runtime::setVTable(o);
 	}
 

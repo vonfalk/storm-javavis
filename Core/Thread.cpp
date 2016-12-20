@@ -9,7 +9,7 @@ namespace storm {
 
 	Thread::Thread(DeclThread::CreateFn fn) : osThread(os::Thread::invalid), create(fn) {}
 
-	Thread::Thread(Thread *o) : osThread(o->thread()), create(null) {
+	Thread::Thread(Thread &o) : osThread(o.thread()), create(null) {
 		// We're using thread() above to ensure that the thread has been properly
 		// initialized. Otherwise, we may get multiple initializations, which is bad.
 		runtime::reattachThread(engine(), osThread);

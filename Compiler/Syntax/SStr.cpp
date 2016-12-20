@@ -18,8 +18,6 @@ namespace storm {
 
 		SStr::SStr(Str *src, SrcPos pos) : pos(pos), v(src) {}
 
-		SStr::SStr(SStr *src) : pos(src->pos), v(src->v) {}
-
 		Str *SStr::transform() const {
 			return v;
 		}

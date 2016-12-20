@@ -29,7 +29,7 @@ namespace storm {
 		WeakSetBase();
 
 		// Copy another set.
-		STORM_CTOR WeakSetBase(WeakSetBase *other);
+		WeakSetBase(const WeakSetBase &other);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);

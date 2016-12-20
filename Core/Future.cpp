@@ -10,7 +10,7 @@ namespace storm {
 		result = (GcArray<byte> *)runtime::allocArray(engine(), type.gcArrayType, 1);
 	}
 
-	FutureBase::FutureBase(const FutureBase *o) : data(o->data), handle(o->handle), result(o->result) {
+	FutureBase::FutureBase(const FutureBase &o) : data(o.data), handle(o.handle), result(o.result) {
 		data->addRef();
 	}
 

@@ -44,6 +44,14 @@ void Class::resolveTypes(World &in) {
 		variables[i].resolveTypes(in, ctx);
 }
 
+bool Class::isActor() const {
+	if (threadType)
+		return true;
+	if (Class *p = as<Class>(parentType))
+		return p->isActor();
+	return false;
+}
+
 Size Class::size() const {
 	Size s;
 

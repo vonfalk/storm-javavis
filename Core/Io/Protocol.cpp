@@ -13,8 +13,6 @@ namespace storm {
 
 	Protocol::Protocol() {}
 
-	Protocol::Protocol(Protocol *o) {}
-
 	Bool Protocol::partEq(Str *a, Str *b) {
 		return a->equals(b);
 	}
@@ -49,8 +47,6 @@ namespace storm {
 	 */
 
 	FileProtocol::FileProtocol() {}
-
-	FileProtocol::FileProtocol(FileProtocol *o) {}
 
 	void FileProtocol::toS(StrBuf *to) const {
 #ifndef WINDOWS

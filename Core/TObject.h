@@ -16,9 +16,6 @@ namespace storm {
 		// Create an object that should live on 'thread'.
 		STORM_CTOR TObject(Thread *thread);
 
-		// Copy the object.
-		STORM_CTOR TObject(TObject *o);
-
 		// The thread we should be running on.
 		Thread *thread;
 

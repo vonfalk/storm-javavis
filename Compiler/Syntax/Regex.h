@@ -19,7 +19,7 @@ namespace storm {
 			STORM_CTOR Regex(Str *pattern);
 
 			// Copy.
-			STORM_CAST_CTOR Regex(const Regex &o);
+			Regex(const Regex &o);
 
 			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);

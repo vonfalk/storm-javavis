@@ -5,8 +5,6 @@ namespace storm {
 
 	Object::Object() {}
 
-	Object::Object(const Object &o) {}
-
 	void Object::deepCopy(CloneEnv *env) {}
 
 	Bool Object::equals(Object *o) const {

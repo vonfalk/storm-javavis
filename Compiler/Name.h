@@ -26,7 +26,7 @@ namespace storm {
 		STORM_CAST_CTOR Name(SimpleName *simple);
 
 		// Copy.
-		STORM_CTOR Name(Name *o);
+		Name(const Name &o);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -76,8 +76,6 @@ namespace storm {
 		STORM_CTOR SrcName(Name *o, SrcPos pos);
 		STORM_CTOR SrcName(SimpleName *o, SrcPos pos);
 
-		STORM_CTOR SrcName(SrcName *o);
-
 		SrcPos pos;
 
 		virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -99,7 +97,7 @@ namespace storm {
 		STORM_CTOR SimpleName(Str *name, Array<Value> *params);
 
 		// Copy.
-		STORM_CAST_CTOR SimpleName(SimpleName *simple);
+		SimpleName(const SimpleName &simple);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);

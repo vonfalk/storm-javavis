@@ -175,7 +175,7 @@ namespace code {
 
 	Instr *call(EnginePtr e, Operand to, ValType ret) {
 		if (to.size() != Size::sPtr)
-			throw InvalidValue(L"Must call a pointer.");
+			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(to));
 
 		op::Code op = ret.isFloat ? op::callFloat : op::call;
 		return instrLoose(e, op, sizedReg(ptrA, ret.size), to);
@@ -199,7 +199,7 @@ namespace code {
 			if (copyFn.type() == opConstant)
 				throw InvalidValue(L"Should not call constant values, use references instead!");
 			if (copyFn.size() != Size::sPtr)
-				throw InvalidValue(L"Must call a pointer.");
+				throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(copyFn));
 		}
 		return instrLoose(e, op::fnParam, copyFn, src);
 	}
@@ -213,7 +213,7 @@ namespace code {
 			if (copyFn.type() == opConstant)
 				throw InvalidValue(L"Should not call constant values, use references instead!");
 			if (copyFn.size() != Size::sPtr)
-				throw InvalidValue(L"Must call a pointer.");
+				throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(copyFn));
 		}
 		return instrLoose(e, op::fnParamRef, copyFn, src.referTo(size));
 	}
@@ -222,7 +222,7 @@ namespace code {
 		if (src.type() == opConstant)
 			throw InvalidValue(L"Should not call constant values, use references instead!");
 		if (src.size() != Size::sPtr)
-			throw InvalidValue(L"Must call a pointer.");
+			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(src));
 
 		op::Code op = ret.isFloat ? op::fnCallFloat : op::fnCall;
 		return instrLoose(e, op, sizedReg(ptrA, ret.size), src);

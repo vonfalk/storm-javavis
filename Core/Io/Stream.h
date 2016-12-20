@@ -25,9 +25,6 @@ namespace storm {
 		// Create.
 		STORM_CTOR IStream();
 
-		// Copy.
-		STORM_CTOR IStream(IStream *o);
-
 		// Are we at the end of the stream?
 		virtual Bool STORM_FN more();
 
@@ -62,7 +59,6 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR RIStream();
-		STORM_CTOR RIStream(RIStream *o);
 
 		// This implementation returns the same object.
 		virtual RIStream *STORM_FN randomAccess();
@@ -90,9 +86,6 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR OStream();
-
-		// Copy.
-		STORM_CTOR OStream(OStream *o);
 
 		// Write some data.
 		virtual void STORM_FN write(Buffer buf);

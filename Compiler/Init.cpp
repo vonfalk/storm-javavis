@@ -51,8 +51,9 @@ namespace storm {
 		// Insert everything into their packages.
 		loader.loadPackages();
 
-		// Load functions.
+		// Load functions and variables.
 		loader.loadFunctions();
+		loader.loadVariables();
 	}
 
 }

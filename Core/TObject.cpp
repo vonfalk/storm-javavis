@@ -5,8 +5,6 @@ namespace storm {
 
 	TObject::TObject(Thread *t) : thread(t) {}
 
-	TObject::TObject(TObject *o) : thread(o->thread) {}
-
 	Str *TObject::toS() const {
 		return RootObject::toS();
 	}

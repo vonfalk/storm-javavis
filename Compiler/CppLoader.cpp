@@ -42,6 +42,13 @@ namespace storm {
 		return n;
 	}
 
+	nat CppLoader::variableCount() const {
+		nat n;
+		for (n = 0; world->variables[n].name; n++)
+			;
+		return n;
+	}
+
 	static const void *typeVTable(const CppType &t) {
 		if (t.vtable)
 			return (*t.vtable)();
@@ -364,6 +371,25 @@ namespace storm {
 		if (!f)
 			return fn;
 		return f;
+	}
+
+	void CppLoader::loadVariables() {
+		nat c = variableCount();
+		for (nat i = 0; i < c; i++) {
+			loadVariable(world->variables[i]);
+		}
+	}
+
+	void CppLoader::loadVariable(const CppVariable &var) {
+		Type *memberOf = into.types[var.memberOf];
+		assert(memberOf, L"Type not properly loaded!");
+
+		Value type = findValue(var.type);
+		assert(type != Value(), L"Type of the variable is void!");
+
+		MemberVar *v = new (e) MemberVar(new (e) Str(var.name), type, memberOf);
+		v->setOffset(Offset(var.offset));
+		memberOf->add(v);
 	}
 
 }
