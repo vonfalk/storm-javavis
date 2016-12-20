@@ -90,7 +90,7 @@ namespace storm {
 		ensure(count() + 1);
 
 		// Move the last few elements away.
-		memmove(ptr(to), ptr(to + 1), (count() - to)*handle.size);
+		memmove(ptr(to + 1), ptr(to), (count() - to)*handle.size);
 		// Insert the new one.
 		handle.safeCopy(ptr(to), item);
 
