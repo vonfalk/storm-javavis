@@ -3,13 +3,14 @@
 #include "TypeRef.h"
 #include "CppName.h"
 #include "Thread.h"
+#include "Access.h"
 
 /**
  * A function declared in C++.
  */
 class Function {
 public:
-	Function(const CppName &name, const String &pkg, const SrcPos &pos, Auto<TypeRef> result);
+	Function(const CppName &name, const String &pkg, Access access, const SrcPos &pos, Auto<TypeRef> result);
 
 	// String constants for constructor and destructor names.
 	static const String ctor, dtor;
@@ -22,6 +23,9 @@ public:
 
 	// Declared at?
 	SrcPos pos;
+
+	// Access.
+	Access access;
 
 	// Parameters (any implicit this-pointer is not present here).
 	vector<Auto<TypeRef>> params;

@@ -170,6 +170,23 @@ namespace storm {
 	};
 
 	/**
+	 * List of C++ member variables.
+	 */
+	struct CppVariable {
+		// Name of the variable (null if last element).
+		const wchar *name;
+
+		// Type this variable is a member of.
+		nat memberOf;
+
+		// Type of this variable.
+		CppTypeRef type;
+
+		// Offset into the type.
+		CppOffset offset;
+	};
+
+	/**
 	 * List of C++ templates.
 	 */
 	struct CppTemplate {
@@ -225,6 +242,9 @@ namespace storm {
 
 		// List of functions.
 		const CppFunction *functions;
+
+		// List of member variables.
+		const CppVariable *variables;
 
 		// List of templates.
 		const CppTemplate *templates;

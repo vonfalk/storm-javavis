@@ -254,10 +254,10 @@ static void templateParams(ResolvedTemplateType *t, wostream &to, set<String> &c
 	}
 }
 
-static void genTypeRef(wostream &to, TypeRef *r) {
+static bool genTypeRef(wostream &to, TypeRef *r, bool safe = false) {
 	if (as<VoidType>(r)) {
 		to << L"{ -1, null, false }";
-		return;
+		return true;
 	}
 
 	bool maybe = as<MaybeType>(r) != null;
@@ -267,13 +267,24 @@ static void genTypeRef(wostream &to, TypeRef *r) {
 		to << L"{ " << tt->type->id << L", " << templateParamsName(tt);
 	} else if (ResolvedType *rt = as<ResolvedType>(r)) {
 		to << L"{ " << rt->type->id << L", null";
+	} else if (safe) {
+		return false;
 	} else {
 		throw Error(L"Type " + ::toS(*r) + L" not exported to Storm.", r->pos);
 	}
 	to << L", " << (maybe ? L"true" : L"false") << L" }, ";
+	return true;
 }
 
-static void genFnParams(wostream &to, World &w) {
+static String genTypeRef(TypeRef *r) {
+	std::wostringstream to;
+	if (genTypeRef(to, r, true))
+		return to.str();
+	else
+		return L"";
+}
+
+static void genTemplateArrays(wostream &to, World &w) {
 	set<String> created;
 
 	// 1: Generate any template-parameter-arrays needed.
@@ -290,7 +301,24 @@ static void genFnParams(wostream &to, World &w) {
 		templateParams(as<ResolvedTemplateType>(findType(f.result.borrow())), to, created);
 	}
 
-	// 2: Generate the parameter arrays.
+	// 2: Generate any template-parameter-arrays needed for variables.
+	for (nat i = 0; i < w.types.size(); i++) {
+		Class *c = as<Class>(w.types[i].borrow());
+		if (!c)
+			continue;
+
+		for (nat j = 0; j < c->variables.size(); j++) {
+			Variable &v = c->variables[j];
+			if (v.access != aPublic)
+				continue;
+
+			TypeRef *r = findType(v.type.borrow());
+			templateParams(as<ResolvedTemplateType>(r), to, created);
+		}
+	}
+}
+
+static void genFnParams(wostream &to, World &w) {
 	// TODO: if this is slow, we can probably gain a lot of entries by reusing equal parameter lists.
 	for (nat i = 0; i < w.functions.size(); i++) {
 		Function &f = w.functions[i];
@@ -426,6 +454,45 @@ static void genFunctions(wostream &to, World &w) {
 	}
 }
 
+static void genVariables(wostream &to, World &w) {
+	for (nat i = 0; i < w.types.size(); i++) {
+		Class *c = as<Class>(w.types[i].borrow());
+		if (!c)
+			continue;
+
+		Size data = c->baseOffset();
+
+		for (nat j = 0; j < c->variables.size(); j++) {
+			Variable &v = c->variables[j];
+			Offset offset = c->varOffset(j, data);
+
+			// Only export public variables...
+			if (v.access != aPublic)
+				continue;
+
+			String type = genTypeRef(v.type.borrow());
+			// ...which the Storm type system can handle.
+			if (type.empty())
+				continue;
+
+			to << L"{ ";
+			// Name.
+			to << L"L\"" << v.name << L"\", ";
+
+			// Owner id.
+			to << c->id << L" /* " << c->name << L" */, ";
+
+			// Type.
+			to << type;
+
+			// Offset.
+			to << format(offset);
+
+			to << L" },\n";
+		}
+	}
+}
+
 static void genTemplateGlobals(wostream &to, World &w) {
 	for (nat i = 0; i < w.templates.size(); i++) {
 		Template &t = *w.templates[i];
@@ -530,8 +597,10 @@ GenerateMap genMap() {
 		{ L"PTR_OFFSETS", &genPtrOffsets },
 		{ L"CPP_TYPES", &genTypes },
 		{ L"VTABLE_DECLS", &genVTableFns },
+		{ L"TEMPLATE_ARRAYS", &genTemplateArrays },
 		{ L"FN_PARAMETERS", &genFnParams },
 		{ L"CPP_FUNCTIONS", &genFunctions },
+		{ L"CPP_VARIABLES", &genVariables },
 		{ L"TEMPLATE_GLOBALS", &genTemplateGlobals },
 		{ L"CPP_TEMPLATES", &genTemplates },
 		{ L"THREAD_GLOBALS", &genThreadGlobals },

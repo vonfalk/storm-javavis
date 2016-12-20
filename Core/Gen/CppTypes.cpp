@@ -29,6 +29,7 @@ namespace storm {
 	struct CppMeta {
 		static const CppType *cppTypes();
 		static const CppFunction *cppFunctions();
+		static const CppVariable *cppVariables();
 		static const CppTemplate *cppTemplates();
 		static const CppThread *cppThreads();
 		static const CppRefType *cppRefTypes();
@@ -76,6 +77,7 @@ namespace storm {
 		static void destroy(T *obj) {
 			obj->~T();
 		}
+
 	};
 
 	// Invalid size.
@@ -94,6 +96,8 @@ namespace storm {
 		return types;
 	}
 
+	// TEMPLATE_ARRAYS
+
 	const CppFunction *CppMeta::cppFunctions() {
 		// FN_PARAMETERS
 
@@ -103,6 +107,15 @@ namespace storm {
 		};
 
 		return functions;
+	}
+
+	const CppVariable *CppMeta::cppVariables() {
+		static const CppVariable variables[] = {
+			// CPP_VARIABLES
+			{ null, 0, { CppTypeRef::invalid }, CppOffset::invalid },
+		};
+
+		return variables;
 	}
 
 	const CppTemplate *CppMeta::cppTemplates() {
@@ -139,6 +152,7 @@ namespace storm {
 		static CppWorld w = {
 			CppMeta::cppTypes(),
 			CppMeta::cppFunctions(),
+			CppMeta::cppVariables(),
 			CppMeta::cppTemplates(),
 			CppMeta::cppThreads(),
 			CppMeta::cppRefTypes(),

@@ -128,7 +128,7 @@ static void parseBlock(Tokenizer &tok) {
 }
 
 // Parse a variable or function.
-static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo) {
+static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access access) {
 	if (!tok.more() || tok.skipIf(L";"))
 		return;
 
@@ -186,7 +186,7 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo) {
 
 	if (tok.skipIf(L"(")) {
 		// Function.
-		Function f(CppName(name.token), env.pkg, name.pos, type);
+		Function f(CppName(name.token), env.pkg, access, name.pos, type);
 		f.isVirtual = isVirtual;
 
 		if (!tok.skipIf(L")")) {
@@ -225,7 +225,7 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo) {
 		throw Error(L"C-style arrays not supported in classes exposed to Storm.", name.pos);
 	} else if (tok.skipIf(L";")) {
 		// Variable.
-		addTo.add(Variable(CppName(name.token), type, name.pos));
+		addTo.add(Variable(CppName(name.token), type, access, name.pos));
 	} else {
 		// Unknown construct; ignore it.
 	}
@@ -327,6 +327,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 
 	tok.expect(L";");
 
+	Access access = aPrivate;
 	while (tok.more()) {
 		Token t = tok.peek();
 
@@ -357,12 +358,15 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 		} else if (t.token == L"public") {
 			tok.skip();
 			tok.expect(L":");
+			access = aPublic;
 		} else if (t.token == L"private") {
 			tok.skip();
 			tok.expect(L":");
+			access = aPrivate;
 		} else if (t.token == L"protected") {
 			tok.skip();
 			tok.expect(L":");
+			access = aProtected;
 		} else if (t.token == L"static") {
 			// Ignore static members. Maybe we should warn about this...
 			TODO(L"Warn about static members?");
@@ -378,7 +382,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 			tok.skip();
 		} else {
 			ClassNamespace ns(env.world, *type);
-			parseMember(tok, env, ns);
+			parseMember(tok, env, ns, access);
 		}
 	}
 
@@ -499,7 +503,8 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			// Stray semicolon, skip it.
 			tok.skip();
 		} else {
-			parseMember(tok, env, WorldNamespace(env.world, name));
+			// Everything is considered 'public' outside of a class.
+			parseMember(tok, env, WorldNamespace(env.world, name), aPublic);
 		}
 	}
 }

@@ -108,6 +108,12 @@ public:
 	virtual void ptrOffsets(vector<Offset> &append) const;
 	virtual void scannedVars(vector<ScannedVar> &append) const;
 
+	// External offset computation. First call 'baseOffset' to initialize the 'size' variable. Then
+	// call 'varOffset' for 'var' = 0, 1, .... 'varOffset' returns the offset of variable 'var' and
+	// updates the size variable.
+	Size baseOffset() const;
+	Offset varOffset(nat var, Size &offset) const;
+
 	// Print ourselves.
 	virtual void print(wostream &to) const;
 

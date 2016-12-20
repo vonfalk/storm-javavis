@@ -64,33 +64,25 @@ Size Class::size() const {
 }
 
 void Class::ptrOffsets(vector<Offset> &to) const {
-	Size s;
+	Size data = baseOffset();
 
 	if (parentType) {
 		parentType->ptrOffsets(to);
-		s = parentType->size();
-	} else if (!valueType) {
-		s = Size::sPtr; // VTable.
 	}
 
 	for (nat i = 0; i < variables.size(); i++) {
 		const Auto<TypeRef> &t = variables[i].type;
-		Size size = t->size();
-
-		// Make sure to properly align 's'.
-		s += size.align();
+		Offset offset = varOffset(i, data);
 
 		if (isGcPtr(t)) {
 			// TODO? Export all pointers, regardless if they are to a GC:d object or not?
-			to.push_back(Offset(s));
+			to.push_back(offset);
 		} else if (Auto<ResolvedType> res = t.as<ResolvedType>()) {
 			// Inline this type into ourselves.
 			vector<Offset> o = res->type->ptrOffsets();
 			for (nat i = 0; i < o.size(); i++)
-				to.push_back(o[i] + s);
+				to.push_back(o[i] + offset);
 		}
-
-		s += size;
 	}
 }
 
@@ -120,6 +112,28 @@ void Class::scannedVars(vector<ScannedVar> &append) const {
 	}
 }
 
+Size Class::baseOffset() const {
+	if (parentType) {
+		return parentType->size();
+	} else if (!valueType) {
+		return Size::sPtr; // vtable
+	} else {
+		return Size();
+	}
+}
+
+Offset Class::varOffset(nat i, Size &base) const {
+	const Auto<TypeRef> &t = variables[i].type;
+	Size varSize = t->size();
+
+	// Make sure to properly align the variable.
+	base += varSize.align();
+	Offset result(base);
+
+	// Increase the size for next time.
+	base += varSize;
+	return result;
+}
 
 bool Class::hasDtor() const {
 	// Always give destructors for value types.
