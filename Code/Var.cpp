@@ -9,10 +9,14 @@ namespace code {
 	Var::Var(Nat id, Size size) : id(id), sz(size) {}
 
 	wostream &operator <<(wostream &to, Var v) {
+		if (v == Var())
+			return to << L"invalid var";
 		return to << L"Var" << v.id << L":" << v.sz;
 	}
 
 	StrBuf &operator <<(StrBuf &to, Var v) {
+		if (v == Var())
+			return to << L"invalid var";
 		return to << L"Var" << v.id << L":" << v.sz;
 	}
 

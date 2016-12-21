@@ -157,6 +157,10 @@ namespace code {
 		// Get the previous part. If this is the first part in a block, returns the parent part of the block.
 		Part STORM_FN prev(Part p) const;
 
+		// Get the previous stored part. Same as 'prev' except when 'p' is the first part in a
+		// block, it returns the *last* part in the parent block.
+		Part STORM_FN prevStored(Part p) const;
+
 		// Get the first part in the chain. This is the block.
 		Block STORM_FN first(Part p) const;
 
@@ -295,7 +299,7 @@ namespace code {
 		class IBlock {
 			STORM_VALUE;
 		public:
-			// Parent block.
+			// Parent part.
 			Nat parent;
 
 			// All parts in this block.

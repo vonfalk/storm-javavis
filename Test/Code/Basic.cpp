@@ -28,7 +28,7 @@ BEGIN_TEST(CodeScopeTest, CodeBasic) {
 
 } END_TEST
 
-BEGIN_TEST_(CodeScopeTest2, CodeBasic) {
+BEGIN_TEST(CodeScopeTest2, CodeBasic) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -39,9 +39,26 @@ BEGIN_TEST_(CodeScopeTest2, CodeBasic) {
 	Part p1 = l->createPart(b0);
 	Var v1 = l->createVar(p1, Size::sLong);
 	Part p2 = l->createPart(l->root());
+	Var v2 = l->createVar(p2, Size::sInt);
 	Block b3 = l->createBlock(p2);
-	Var v2 = l->createVar(b3, Size::sInt);
+	Var v3 = l->createVar(b3, Size::sInt);
 
+	CHECK_EQ(l->prev(v0), v2);
+	CHECK_EQ(l->prev(v1), v0);
+	CHECK_EQ(l->prev(v2), Var());
+	CHECK_EQ(l->prev(v3), v2);
+	CHECK_EQ(l->prev(b0), l->root());
+	CHECK_EQ(l->prev(p1), b0);
+	CHECK_EQ(l->prev(p2), l->root());
+	CHECK_EQ(l->prev(b3), p2);
+
+	CHECK_EQ(l->parent(v0), b0);
+	CHECK_EQ(l->parent(v1), p1);
+	CHECK_EQ(l->parent(v2), p2);
+	CHECK_EQ(l->parent(b0), l->root());
+	CHECK_EQ(l->parent(p1), l->root());
+	CHECK_EQ(l->parent(p2), Part());
+	CHECK_EQ(l->parent(b3), p2);
 
 	*l << prolog();
 	*l << begin(b0);
@@ -51,8 +68,6 @@ BEGIN_TEST_(CodeScopeTest2, CodeBasic) {
 	*l << begin(b3);
 	*l << end(b3);
 	*l << epilog();
-
-	PVAR(l);
 
 	CHECK_RUNS(new (e) Binary(arena, l));
 

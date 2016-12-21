@@ -11,13 +11,13 @@ namespace code {
 	wostream &operator <<(wostream &to, Block l) {
 		if (l.id == Block().id)
 			return to << L"invalid part";
-		return to << L"Part:" << l.id;
+		return to << L"Part" << l.id;
 	}
 
 	StrBuf &operator <<(StrBuf &to, Block l) {
 		if (l.id == Block().id)
 			return to << L"invalid part";
-		return to << L"Part:" << l.id;
+		return to << L"Part" << l.id;
 	}
 
 	Part::Part() : id(-1) {}
@@ -29,13 +29,13 @@ namespace code {
 	wostream &operator <<(wostream &to, Part l) {
 		if (l.id == -1)
 			return to << L"invalid part";
-		return to << L"Part:" << l.id;
+		return to << L"Part" << l.id;
 	}
 
 	StrBuf &operator <<(StrBuf &to, Part l) {
 		if (l.id == -1)
 			return to << L"invalid part";
-		return to << L"Part:" << l.id;
+		return to << L"Part" << l.id;
 	}
 
 }

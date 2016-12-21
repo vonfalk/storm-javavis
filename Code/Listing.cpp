@@ -169,18 +169,15 @@ namespace code {
 
 	Listing::Listing(const Listing &o) :
 		arena(o.arena),
-		code(new (engine()) Array<Entry>(*o.code)),
-		nextLabels(null),
-		nextLabel(o.nextLabel),
-		params(new (engine()) Array<Nat>(*o.params)),
-		vars(new (engine()) Array<IVar>(*o.vars)),
-		blocks(new (engine()) Array<IBlock>(*o.blocks)),
-		parts(new (engine()) Array<IPart>(*o.parts)),
+		code(o.code),
+		nextLabels(o.nextLabels),
+		params(o.params),
+		vars(o.vars),
+		blocks(o.blocks),
+		parts(o.parts),
 		needEH(o.needEH) {
 
-		nextLabels = o.nextLabels
-			? new (engine()) Array<Label>(*o.nextLabels)
-			: null;
+		deepCopy(new (this) CloneEnv());
 	}
 
 	void Listing::deepCopy(CloneEnv *env) {
@@ -329,7 +326,7 @@ namespace code {
 				return createVar(part.vars->at(id - 1));
 			} else {
 				// We need to find a part with variables in it!
-				for (Part at = prev(Part(var.parent)); at != Part(); at = prev(at)) {
+				for (Part at = prevStored(Part(var.parent)); at != Part(); at = prevStored(at)) {
 					IPart &now = parts->at(at.id);
 					if (now.vars->any())
 						return createVar(now.vars->last());
@@ -346,6 +343,22 @@ namespace code {
 	}
 
 	Part Listing::prev(Part p) const {
+		if (p.id >= parts->count())
+			return Part(invalid);
+
+		IPart &part = parts->at(p.id);
+		IBlock &block = blocks->at(part.block);
+		if (part.index < 1) {
+			// Find the last one in our parent block (if any).
+			if (block.parent >= parts->count())
+				return Part(invalid);
+
+			return Part(block.parent);
+		}
+		return Part(block.parts->at(part.index - 1));
+	}
+
+	Part Listing::prevStored(Part p) const {
 		if (p.id >= parts->count())
 			return Part(invalid);
 
@@ -642,13 +655,6 @@ namespace code {
 		for (nat i = 0; i < b.parts->count(); i++) {
 			putPart(to, b.parts->at(i), i != 0);
 		}
-
-		// Put all child blocks as well.
-		for (nat i = 0; i < blocks->count(); i++) {
-			IBlock &block = blocks->at(i);
-			if (block.parent == blockId)
-				putBlock(to, block.parts->at(0));
-		}
 	}
 
 	void Listing::putPart(StrBuf &to, Nat part, Bool header) const {
@@ -659,6 +665,13 @@ namespace code {
 		IPart &p = parts->at(part);
 		for (nat i = 0; i < p.vars->count(); i++) {
 			putVar(to, p.vars->at(i));
+		}
+
+		// Output all blocks in here as well.
+		for (nat i = 0; i < blocks->count(); i++) {
+			IBlock &block = blocks->at(i);
+			if (block.parent == part)
+				putBlock(to, block.parts->at(0));
 		}
 	}
 
