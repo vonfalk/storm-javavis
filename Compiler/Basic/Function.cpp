@@ -117,10 +117,7 @@ namespace storm {
 			// 	PLN(identifier() << L": " << l);
 			// }
 
-			static int c = 0;
-			if (c == 12)
-				DebugBreak();
-			PLN(bodyExpr << c++);
+			PLN(bodyExpr);
 			PLN(identifier() << L": " << l);
 			return state;
 		}

@@ -27,7 +27,7 @@ namespace storm {
 		// Fill in a GcType for the current layout.
 		// If 'into' is null, we only compute how many entries we need.
 		// 'parent' may be null.
-		nat fillGcType(const GcType *parent, GcType *into);
+		nat fillGcType(Size parentSize, const GcType *parent, GcType *into);
 
 		// Get a list of all member variables.
 		Array<MemberVar *> *variables();

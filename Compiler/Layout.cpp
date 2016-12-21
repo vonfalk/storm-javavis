@@ -35,14 +35,23 @@ namespace storm {
 		return s;
 	}
 
-	nat Layout::fillGcType(const GcType *parent, GcType *to) {
-		// Note: since we're initializing the size with only the current size, we can not use these
-		// computations to actually save the layout while we're producing the GcType.
-		Size s(parent->stride);
-		nat pos = parent->count;
+	// Validate the generated GcType.
+	static bool validate(const GcType *type) {
+		for (nat i = 0; i < type->count; i++) {
+			if (type->offset[i] >= type->stride) {
+				PLN(L"@" << i << L": " << type->offset[i] << L" >= " << type->stride);
+				return false;
+			}
+		}
+		return true;
+	}
+
+	nat Layout::fillGcType(Size parentSize, const GcType *parent, GcType *to) {
+		Size s = parentSize;
+		nat pos = parent ? parent->count : 0;
 
 		// Copy entries from the parent.
-		if (to) {
+		if (to && parent) {
 			for (nat i = 0; i < parent->count; i++)
 				to->offset[i] = parent->offset[i];
 		}
@@ -53,7 +62,7 @@ namespace storm {
 			Size vSize = vType.size();
 			s += vSize.align();
 
-			if (vType.isClass() || vType.isActor() || vType.ref) {
+			if (vType.isPtr() || vType.ref) {
 				// We need to GC this one!
 				if (to)
 					to->offset[pos] = s.current();
@@ -62,6 +71,7 @@ namespace storm {
 				// Copy and offset all members of this value.
 				const GcType *src = vType.type->gcType();
 				for (nat j = 0; j < src->count; j++) {
+					PLN(L" offset " << s.current() + src->offset[j]);
 					if (to)
 						to->offset[pos] = s.current() + src->offset[j];
 					pos++;
@@ -69,6 +79,12 @@ namespace storm {
 			}
 
 			s += vSize;
+		}
+
+		if (to) {
+			assert(validate(to), L"Invalid GcType generated!");
+			assert(to->stride == s.current(), L"Size of the provided GcType does not match!");
+			assert(pos == to->count, L"Too small GcType provided!");
 		}
 
 		return pos;

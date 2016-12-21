@@ -455,8 +455,11 @@ namespace storm {
 		// Compute the GcType for us!
 		nat count = 0;
 		const GcType *superGc = null;
-		if (Type *s = super())
+		Size superSize;
+		if (Type *s = super()) {
 			superGc = s->gcType();
+			superSize = s->size();
+		}
 
 		if (!layout) {
 			// We do not have any variables of our own.
@@ -474,7 +477,7 @@ namespace storm {
 		}
 
 		// Merge our parent's and our offsets (if we have a parent).
-		nat entries = layout->fillGcType(superGc, null);
+		nat entries = layout->fillGcType(superSize, superGc, null);
 
 		if (value())
 			myGcType = engine.gc.allocType(GcType::tArray, this, size().current(), entries);
@@ -483,10 +486,7 @@ namespace storm {
 		else
 			assert(false, L"Neither a value nor have a parent!");
 
-		layout->fillGcType(superGc, myGcType);
-		PLN(L"Filled gc-type for " << this);
-		for (nat i = 0; i < myGcType->count; i++)
-			PLN(i << L": " << myGcType->offset[i]);
+		layout->fillGcType(superSize, superGc, myGcType);
 		return myGcType;
 	}
 

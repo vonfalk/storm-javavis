@@ -70,6 +70,9 @@ namespace storm {
 		// Combination of 'isClass' and 'isActor'.
 		Bool STORM_FN isHeapObj() const;
 
+		// Is this some kind of pointer?
+		Bool STORM_FN isPtr() const;
+
 		// The size of this type.
 		Size STORM_FN size() const;
 

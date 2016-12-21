@@ -1,6 +1,5 @@
 use core;
 use core:lang;
-use core:debug;
 
 // Generate the SrcName for the StrBuf type.
 SrcName strBufType() {

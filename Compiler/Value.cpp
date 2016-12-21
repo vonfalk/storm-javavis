@@ -173,6 +173,14 @@ namespace storm {
 		return (type->typeFlags & typeClass) == typeClass;
 	}
 
+	Bool Value::isPtr() const {
+		if (!type)
+			return false;
+		if ((type->typeFlags & typeClass) == typeClass)
+			return true;
+		return false;
+	}
+
 	code::Operand Value::copyCtor() const {
 		if (isValue()) {
 			Function *ctor = type->copyCtor();

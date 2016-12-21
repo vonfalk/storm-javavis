@@ -351,9 +351,29 @@ namespace storm {
 			return tree(from->completed);
 		}
 
+		// See so that 'offset' is exposed as a GC:d pointer.
+		static inline void checkOffset(Node *node, int offset) {
+#ifdef DEBUG
+			const GcType *gc = runtime::gcTypeOf(node);
+			for (nat i = 0; i < gc->count; i++)
+				if (offset == gc->offset[i])
+					return;
+
+			PLN(L"The offset " << offset << L" is not present for " << ::toS(gc->type));
+			PLN(L"Variables: " << ::toS(gc->type->variables()));
+			PLN(L"Offsets present for this type:");
+			PLN(L"Size: " << gc->stride);
+			for (nat i = 0; i < gc->count; i++)
+				PLN(i << L": " << gc->offset[i]);
+
+			assert(false);
+#endif
+		}
+
 		template <class T>
 		static void setValue(Node *node, MemberVar *target, T *elem) {
 			int offset = target->offset().current();
+			checkOffset(node, offset);
 			if (isArray(target->type)) {
 				// Arrays are initialized earlier.
 				OFFSET_IN(node, offset, Array<T *> *)->push(elem);
@@ -425,6 +445,7 @@ namespace storm {
 			for (nat i = 0; i < type->arrayMembers->count(); i++) {
 				MemberVar *v = type->arrayMembers->at(i);
 				int offset = v->offset().current();
+				checkOffset(r, offset);
 				// This will actually create the correct subtype as long as we're creating something
 				// inherited from Object (which we are).
 				Array<Object *> *arr = new (v->type.type) Array<Object *>();
