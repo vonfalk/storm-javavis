@@ -86,6 +86,7 @@ namespace storm {
 	public:
 		// Create with just a name.
 		STORM_CTOR RecPart(Str *name);
+		STORM_CTOR RecPart(syntax::SStr *name);
 
 		// Create with parameters as well.
 		STORM_CTOR RecPart(Str *name, Array<Name *> *params);
@@ -95,6 +96,9 @@ namespace storm {
 
 		// Parameters.
 		Array<Name *> *params;
+
+		// Add a parameter.
+		inline void STORM_FN push(Name *param) { params->push(param); }
 
 		// Resolve.
 		virtual MAYBE(SimplePart *) find(const Scope &scope);

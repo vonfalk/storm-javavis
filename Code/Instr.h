@@ -163,7 +163,7 @@ namespace code {
 	// Do not, for example, have all begin/end scopes in the end of the listing and jump forth and back between them.
 	// That makes the exception handling fail to detect what to destroy. NOTE: Does not preserve registers!
 	Instr *STORM_FN begin(EnginePtr e, Part part);
-	Instr *STORM_FN end(EnginePtr e, Block block);
+	Instr *STORM_FN end(EnginePtr e, Part part);
 
 	// Segment override for the next instruction, not reliable for function calls or double memory accesses. Only
 	// availiable on relevant architectures, for example X86.
@@ -302,7 +302,7 @@ namespace code {
 	PROXY0(prolog);
 	PROXY0(epilog);
 	PROXY1(begin, Part);
-	PROXY1(end, Block);
+	PROXY1(end, Part);
 	PROXY0(threadLocal);
 
 }

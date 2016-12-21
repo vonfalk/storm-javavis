@@ -399,8 +399,8 @@ namespace code {
 		return instrLoose(e, op::beginBlock, Operand(), part);
 	}
 
-	Instr *end(EnginePtr e, Block block) {
-		return instrLoose(e, op::endBlock, Operand(), Part(block));
+	Instr *end(EnginePtr e, Part part) {
+		return instrLoose(e, op::endBlock, Operand(), part);
 	}
 
 	Instr *threadLocal(EnginePtr e) {

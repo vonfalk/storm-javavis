@@ -26,7 +26,7 @@ SName => s : "[A-Za-z_][A-Za-z0-9_]*"@ s;
 NamePart STypePart();
 STypePart => SimplePart(name) : SName name;
 STypePart => SimplePart(name) : SName name, "<", ">";
-STypePart => RecNamePart(name) : SName name, "<", SType -> add, (",", SType -> add, )* ">";
+STypePart => RecPart(name) : SName name, "<", SType -> push, (",", SType -> push, )* ">";
 
 // Type.
 SrcName SType();

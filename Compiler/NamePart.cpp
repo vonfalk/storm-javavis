@@ -138,6 +138,8 @@ namespace storm {
 
 	RecPart::RecPart(Str *name) : NamePart(name), params(new (engine()) Array<Name *>()) {}
 
+	RecPart::RecPart(syntax::SStr *name) : NamePart(name->v), params(new (engine()) Array<Name *>()) {}
+
 	RecPart::RecPart(Str *name, Array<Name *> *params) : NamePart(name), params(params) {}
 
 	void RecPart::deepCopy(CloneEnv *env) {

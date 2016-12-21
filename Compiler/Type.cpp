@@ -484,6 +484,9 @@ namespace storm {
 			assert(false, L"Neither a value nor have a parent!");
 
 		layout->fillGcType(superGc, myGcType);
+		PLN(L"Filled gc-type for " << this);
+		for (nat i = 0; i < myGcType->count; i++)
+			PLN(i << L": " << myGcType->offset[i]);
 		return myGcType;
 	}
 

@@ -50,9 +50,9 @@ namespace storm {
 
 			// Make sure to end all parts that may have been created so far.
 			TODO(L"Investigate this part!");
-			// Part after = s->to->next(before);
-			// if (after != Part())
-			// 	*s->to << code::end(after);
+			Part after = s->to->next(before);
+			if (after != Part())
+				*s->to << code::end(after);
 
 			// We may not skip the 'end'.
 			*s->to << end;
