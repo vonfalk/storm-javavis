@@ -3,12 +3,13 @@
 
 namespace storm {
 
-	World::World(Gc &gc) : types(gc), templates(gc), threads(gc) {}
+	World::World(Gc &gc) : types(gc), templates(gc), threads(gc), namedThreads(gc) {}
 
 	void World::clear() {
 		types.clear();
 		templates.clear();
 		threads.clear();
+		namedThreads.clear();
 	}
 
 	void World::forNamed(NamedFn fn) {
@@ -16,6 +17,8 @@ namespace storm {
 			(*fn)(types[i]);
 		for (nat i = 0; i < templates.count(); i++)
 			templates[i]->forNamed(fn);
+		for (nat i = 0; i < namedThreads.count(); i++)
+			(*fn)(namedThreads[i]);
 	}
 
 }

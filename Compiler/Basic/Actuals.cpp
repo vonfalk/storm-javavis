@@ -113,14 +113,12 @@ namespace storm {
 			if (c->count() != params->count())
 				return -1;
 
-			// We can convert everything to references!
-			for (nat i = 0; i < c->count(); i++)
-				c->at(i).ref = false;
-
 			int distance = 0;
 
 			for (nat i = 0; i < c->count(); i++) {
-				const Value &formal = c->at(i);
+				// We can convert everything to references, so treat everything as if it was a plain
+				// value.
+				Value formal = c->at(i).asRef(false);
 				Expr *actual = exprs->at(i);
 
 				int penalty = castPenalty(actual, formal, candidate->flags);

@@ -12,7 +12,7 @@
 namespace storm {
 
 	CppLoader::CppLoader(Engine &e, const CppWorld *world, World &into) :
-		e(e), world(world), into(into), threads(e.gc) {}
+		e(e), world(world), into(into) {}
 
 	nat CppLoader::typeCount() const {
 		nat n;
@@ -115,7 +115,7 @@ namespace storm {
 	void CppLoader::loadThreads() {
 		nat c = threadCount();
 		into.threads.resize(c);
-		threads.resize(c);
+		into.namedThreads.resize(c);
 
 		for (nat i = 0; i < c; i++) {
 			const CppThread &thread = world->threads[i];
@@ -124,7 +124,7 @@ namespace storm {
 				into.threads[i] = new (e) Thread(thread.decl->createFn);
 			}
 
-			threads[i] = new (e) NamedThread(new (e) Str(thread.name), into.threads[i]);
+			into.namedThreads[i] = new (e) NamedThread(new (e) Str(thread.name), into.threads[i]);
 		}
 	}
 
@@ -159,7 +159,7 @@ namespace storm {
 					if (TObject::stormType(e) == null)
 						continue;
 
-					into.types[i]->setThread(threads[type.super]);
+					into.types[i]->setThread(into.namedThreads[type.super]);
 					break;
 				case CppType::superCustom:
 					// Already done.
@@ -291,7 +291,7 @@ namespace storm {
 		c = threadCount();
 		for (nat i = 0; i < c; i++) {
 			const CppThread &t = world->threads[i];
-			findPkg(t.pkg)->add(threads[i]);
+			findPkg(t.pkg)->add(into.namedThreads[i]);
 		}
 	}
 

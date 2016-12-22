@@ -23,6 +23,9 @@ namespace storm {
 		// All threads.
 		RootArray<Thread> threads;
 
+		// Instantiated 'NamedThread' objects.
+		RootArray<NamedThread> namedThreads;
+
 		// Clear all allocations.
 		void clear();
 

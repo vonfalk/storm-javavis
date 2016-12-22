@@ -47,9 +47,6 @@ namespace storm {
 		// Destination.
 		World &into;
 
-		// Load named threads here. We only keep these while we're working.
-		RootArray<NamedThread> threads;
-
 		// Get the number of types.
 		nat typeCount() const;
 

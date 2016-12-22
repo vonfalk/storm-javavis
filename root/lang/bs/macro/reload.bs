@@ -63,12 +63,12 @@ void reloadBsUrl(Package pkg, Url url) on Compiler {
 	reloadContents(pkg, scope, body.tree.transform(env));
 }
 
-void reloadContents(Package pkg, Scope scope, Contents c) on Compiler {
+void reloadContents(Package pkg, Scope scope, Content c) on Compiler {
 	reloadFunctions(pkg, scope, c);
 	reloadTypes(pkg, scope, c);
 }
 
-void reloadFunctions(Package pkg, Scope scope, Contents c) on Compiler {
+void reloadFunctions(Package pkg, Scope scope, Content c) on Compiler {
 	for (Nat i = 0; i < c.functions.count; i++) {
 		FunctionDecl decl = c.functions[i];
 		NamePart name = decl.namePart();
@@ -85,7 +85,7 @@ void reloadFunctions(Package pkg, Scope scope, Contents c) on Compiler {
 	}
 }
 
-void reloadTypes(Package pkg, Scope scope, Contents c) on Compiler {
+void reloadTypes(Package pkg, Scope scope, Content c) on Compiler {
 	for (Nat i = 0; i < c.types.count; i++) {
 		Type t = c.types[i];
 		if (t as Class) {
