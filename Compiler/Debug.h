@@ -4,7 +4,7 @@
 
 namespace storm {
 	namespace debug {
-		STORM_PKG(debug);
+		STORM_PKG(core.debug);
 
 		/**
 		 * Various types used for debugging.
@@ -91,6 +91,14 @@ namespace storm {
 		private:
 			Int v;
 		};
+
+
+
+		/**
+		 * Makeshift print facility until we get proper printing!
+		 */
+
+		void STORM_FN print(Str *s);
 
 	}
 }

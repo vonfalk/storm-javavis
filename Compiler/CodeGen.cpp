@@ -33,9 +33,9 @@ namespace storm {
 
 	code::Var CodeGen::createParam(Value type) {
 		if (type.isValue()) {
-			return to->createParam(type.valType(), type.destructor(), code::freeOnBoth | code::freePtr);
+			return to->createParam(type.valTypeParam(), type.destructor(), code::freeOnBoth | code::freePtr);
 		} else {
-			return to->createParam(type.valType());
+			return to->createParam(type.valTypeParam());
 		}
 	}
 
@@ -80,7 +80,7 @@ namespace storm {
 		} else if (res.returnInReg()) {
 			*to << mov(asSize(ptrA, res.size()), value);
 			*to << epilog();
-			*to << ret(res.valType());
+			*to << ret(res.valTypeRet());
 		} else {
 			*to << lea(ptrA, ptrRel(value, Offset()));
 			*to << fnParam(resParam);

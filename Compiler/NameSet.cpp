@@ -219,7 +219,9 @@ namespace storm {
 
 	NameSet::Iter::Iter() : name(), pos(0) {}
 
-	NameSet::Iter::Iter(Map<Str *, NameOverloads *> *c) : name(c->begin()), pos(0) {}
+	NameSet::Iter::Iter(Map<Str *, NameOverloads *> *c) : name(c->begin()), pos(0) {
+		advance();
+	}
 
 	Bool NameSet::Iter::operator ==(const Iter &o) const {
 		// Either both at end or none.
@@ -240,14 +242,16 @@ namespace storm {
 		return name.v()->at(pos);
 	}
 
-	NameSet::Iter &NameSet::Iter::operator ++() {
-		pos++;
-
+	void NameSet::Iter::advance() {
 		while (name != MapIter() && pos >= name.v()->count()) {
 			++name;
 			pos = 0;
 		}
+	}
 
+	NameSet::Iter &NameSet::Iter::operator ++() {
+		pos++;
+		advance();
 		return *this;
 	}
 

@@ -82,7 +82,7 @@ namespace storm {
 
 			// Parameters (first one is special).
 			{
-				code::Var thisVar = l->createParam(params->at(0).type.valType());
+				code::Var thisVar = l->createParam(params->at(0).type.valTypeParam());
 				SimplePart *hiddenName = new (this) SimplePart(new (this) Str(L" this"));
 				SimplePart *normalName = new (this) SimplePart(new (this) Str(L"this"));
 				LocalVar *hidden = body->variable(hiddenName);

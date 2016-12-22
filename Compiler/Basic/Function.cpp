@@ -47,9 +47,7 @@ namespace storm {
 				}
 			}
 
-			assert(false);
-			// return new (this) BSFunction(result, name, params, scope, thread, body);
-			return null;
+			return new (this) BSFunction(result, name, resolve(params, scope), scope, thread, body);
 		}
 
 

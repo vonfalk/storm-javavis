@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Debug.h"
+#include "Core/Str.h"
 
 namespace storm {
 	namespace debug {
@@ -28,6 +29,10 @@ namespace storm {
 
 		Int Extend::value() {
 			return v;
+		}
+
+		void print(Str *s) {
+			PLN(s);
 		}
 	}
 }

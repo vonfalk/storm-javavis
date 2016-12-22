@@ -79,9 +79,10 @@ namespace storm {
 
 		// Raw element access.
 		inline void *CODECALL getRaw(Nat id) const {
-			if (id > count())
-				throw ArrayError(L"Index " + ::toS(id) + L" out of bounds (of " + ::toS(count()) + L").");
-			return ptr(id);
+			// Try to keep the most likely branch first to use less i-cache!
+			if (id < count())
+				return ptr(id);
+			throw ArrayError(L"Index " + ::toS(id) + L" out of bounds (of " + ::toS(count()) + L").");
 		}
 
 		// Push an element.

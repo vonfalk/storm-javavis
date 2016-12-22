@@ -132,6 +132,9 @@ namespace storm {
 
 			// Current position in NameOverloads at 'pos'.
 			Nat pos;
+
+			// Advance 'name' until we find something!
+			void advance();
 		};
 
 		Iter begin() const;

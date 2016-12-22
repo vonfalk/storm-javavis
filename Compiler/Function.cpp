@@ -169,6 +169,13 @@ namespace storm {
 	void Function::localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *res, code::Ref ref) {
 		using namespace code;
 
+		if (::toS(identifier()) == L"lang.bs.NameParam.__init(lang.bs.NameParam, core.lang.SrcName, core.lang.SStr)") {
+			// Note: it seems the reference of params[0] has disappeared at this point! This causes
+			// the calling convention to be broken and everything to fail.
+			PLN(this->params);
+			DebugBreak();
+		}
+
 		if (result == Value()) {
 			addParams(to, params, code::Var());
 
@@ -178,7 +185,7 @@ namespace storm {
 			addParams(to, params, rVar.v);
 
 			if (result.returnInReg()) {
-				*to->to << fnCall(ref, result.valType());
+				*to->to << fnCall(ref, result.valTypeRet());
 				*to->to << mov(rVar.v, asSize(ptrA, result.size()));
 			} else {
 				// Ignore return value...
@@ -321,10 +328,10 @@ namespace storm {
 			Var v = l->createParam(valPtr());
 			*l << fnParam(v);
 		} else if (t.isBuiltIn()) {
-			Var v = l->createParam(t.valType());
+			Var v = l->createParam(t.valTypeParam());
 			*l << fnParam(v);
 		} else {
-			Var v = l->createParam(t.valType(), t.destructor(), freeOnBoth | freePtr);
+			Var v = l->createParam(t.valTypeParam(), t.destructor(), freeOnBoth | freePtr);
 			*l << fnParam(v, t.copyCtor());
 		}
 	}
@@ -402,12 +409,12 @@ namespace storm {
 			*l << end(sub->block);
 			*l << mov(ptrA, resultParam);
 		} else {
-			*l << fnCall(ref(), result.valType());
+			*l << fnCall(ref(), result.valTypeRet());
 		}
 
 		*l << epilog();
 		if (result.isBuiltIn())
-			*l << ret(result.valType());
+			*l << ret(result.valTypeRet());
 		else
 			*l << ret(valPtr());
 

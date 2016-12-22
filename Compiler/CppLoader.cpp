@@ -260,6 +260,12 @@ namespace storm {
 			return Value();
 		}
 
+		if (ref.ref) {
+			// Only applicable to value types.
+			if (result.isValue())
+				result = result.asRef(true);
+		}
+
 		if (ref.maybe) {
 			result = wrapMaybe(result);
 		}

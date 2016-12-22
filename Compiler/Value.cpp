@@ -89,11 +89,23 @@ namespace storm {
 		}
 	}
 
-	code::ValType Value::valType() const {
+	code::ValType Value::valTypeRet() const {
 		if (returnInReg()) {
 			return code::ValType(size(), isFloat());
 		} else {
 			// value types are returned as pointers.
+			return code::ValType(Size::sPtr, false);
+		}
+	}
+
+	code::ValType Value::valTypeParam() const {
+		if (isBuiltIn()) {
+			return code::ValType(size(), isFloat());
+		} else if (isValue()) {
+			// Values.
+			return code::ValType(size(), false);
+		} else {
+			// Classes and Actors.
 			return code::ValType(Size::sPtr, false);
 		}
 	}

@@ -198,7 +198,7 @@ void ClassNamespace::add(const Function &f) {
 	g.name = owner.name + f.name;
 	g.isMember = true;
 	// Add our this-pointer.
-	g.params.insert(g.params.begin(), new ResolvedType(&owner));
+	g.params.insert(g.params.begin(), new RefType(new ResolvedType(&owner)));
 	world.functions.push_back(g);
 }
 

@@ -32,6 +32,12 @@ namespace storm {
 
 		void FileReader::readFunctions() {
 			readContent();
+
+			for (nat i = 0; i < content->functions->count(); i++) {
+				pkg->add(content->functions->at(i)->createFn());
+			}
+
+			// TODO: Add templates!
 		}
 
 		void FileReader::readContent() {

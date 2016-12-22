@@ -195,16 +195,24 @@ static void genTypes(wostream &to, World &w) {
 	}
 }
 
-static TypeRef *findType(TypeRef *ref) {
-	if (PtrType *t = as<PtrType>(ref)) {
-		return findType(t->of.borrow());
-	} else if (RefType *r = as<RefType>(ref)) {
-		return findType(r->of.borrow());
-	} else if (MaybeType *m = as<MaybeType>(ref)) {
-		return findType(m->of.borrow());
+static TypeRef *findType(TypeRef *r, bool &ref, bool &maybe) {
+	if (PtrType *t = as<PtrType>(r)) {
+		ref = true;
+		return findType(t->of.borrow(), ref, maybe);
+	} else if (RefType *rt = as<RefType>(r)) {
+		ref = true;
+		return findType(rt->of.borrow(), ref, maybe);
+	} else if (MaybeType *m = as<MaybeType>(r)) {
+		maybe = true;
+		return findType(m->of.borrow(), ref, maybe);
 	} else {
-		return ref;
+		return r;
 	}
+}
+
+static TypeRef *findType(TypeRef *r) {
+	bool ref = false, maybe = false;
+	return findType(r, ref, maybe);
 }
 
 static vector<Long> templateParamsId(ResolvedTemplateType *t) {
@@ -256,12 +264,13 @@ static void templateParams(ResolvedTemplateType *t, wostream &to, set<String> &c
 
 static bool genTypeRef(wostream &to, TypeRef *r, bool safe = false) {
 	if (as<VoidType>(r)) {
-		to << L"{ -1, null, false }";
+		to << L"{ -1, null, false, false }";
 		return true;
 	}
 
-	bool maybe = as<MaybeType>(r) != null;
-	r = findType(r);
+	bool maybe = false;
+	bool ref = false;
+	r = findType(r, ref, maybe);
 
 	if (ResolvedTemplateType *tt = as<ResolvedTemplateType>(r)) {
 		to << L"{ " << tt->type->id << L", " << templateParamsName(tt);
@@ -272,6 +281,7 @@ static bool genTypeRef(wostream &to, TypeRef *r, bool safe = false) {
 	} else {
 		throw Error(L"Type " + ::toS(*r) + L" not exported to Storm.", r->pos);
 	}
+	to << L", " << (ref   ? L"true" : L"false");
 	to << L", " << (maybe ? L"true" : L"false") << L" }, ";
 	return true;
 }

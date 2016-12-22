@@ -54,8 +54,11 @@ namespace storm {
 		// Return this type in a register?
 		Bool STORM_FN returnInReg() const;
 
-		// Get a ValType representing this type.
-		code::ValType STORM_FN valType() const;
+		// Get a ValType representing this type when returning the type.
+		code::ValType STORM_FN valTypeRet() const;
+
+		// Get a ValType representing this type when used as a parameter.
+		code::ValType STORM_FN valTypeParam() const;
 
 		// Is this type a floating-point type?
 		Bool STORM_FN isFloat() const;

@@ -111,7 +111,7 @@ void World::resolveTypes() {
 				Auto<TypeRef> r = new NamedType(c->pos, L"void");
 				Function f(c->name + Function::ctor, c->pkg, aPublic, c->pos, r);
 				f.isMember = true;
-				f.params.push_back(new ResolvedType(t));
+				f.params.push_back(new RefType(new ResolvedType(t)));
 				f.params.push_back(new RefType(new ResolvedType(t)));
 				functions.push_back(f);
 			}

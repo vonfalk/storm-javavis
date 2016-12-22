@@ -49,7 +49,6 @@ namespace storm {
 			updateExpr->code(subState, updateResult);
 
 			// Make sure to end all parts that may have been created so far.
-			TODO(L"Investigate this part!");
 			Part after = s->to->next(before);
 			if (after != Part())
 				*s->to << code::end(after);

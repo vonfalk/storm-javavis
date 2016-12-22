@@ -89,7 +89,7 @@ namespace storm {
 
 			// Not needed, but for good measure.
 			*l << code::epilog();
-			*l << code::ret(tfmResult.valType());
+			*l << code::ret(tfmResult.valTypeRet());
 
 			return code;
 		}

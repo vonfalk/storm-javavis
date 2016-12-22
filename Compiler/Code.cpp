@@ -101,9 +101,9 @@ namespace storm {
 			*l << push(ptrA); // Store the return value ptr once more.
 		}
 
-		*l << call(ref, result.valType());
+		*l << call(ref, result.valTypeRet());
 		*l << add(ptrStack, ptrConst(Size::sPtr * 2));
-		*l << ret(result.valType());
+		*l << ret(result.valTypeRet());
 
 		return l;
 	}
@@ -138,9 +138,9 @@ namespace storm {
 		for (nat i = 0; i < owner->params->count(); i++) {
 			Value v = owner->params->at(i);
 			if (v.isValue()) {
-				params->push(code::RedirectParam(v.valType(), v.destructor(), true));
+				params->push(code::RedirectParam(v.valTypeParam(), v.destructor(), true));
 			} else {
-				params->push(code::RedirectParam(v.valType()));
+				params->push(code::RedirectParam(v.valTypeParam()));
 			}
 		}
 

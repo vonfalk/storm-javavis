@@ -127,6 +127,9 @@ namespace storm {
 		// If we're a template, this array is populated. It ends with 'invalid', but may also contain 'tVoid'.
 		const size_t *params;
 
+		// Is this a reference to the type?
+		bool ref;
+
 		// Is this a maybe-type?
 		bool maybe;
 	};
