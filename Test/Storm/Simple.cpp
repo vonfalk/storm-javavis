@@ -4,7 +4,7 @@
 BEGIN_TEST_(BasicSyntax, SimpleBS) {
 	Engine &e = gEngine();
 
-	CHECK_RUNS(runFn<Int>(L"test.bs-simple.voidFn"));
-	CHECK_RUNS(runFn<Int>(L"test.bs-simple.emptyVoidFn"));
+	CHECK_RUNS(runFn<void>(L"test.bs-simple.voidFn"));
+	CHECK_RUNS(runFn<void>(L"test.bs-simple.emptyVoidFn"));
 
 } END_TEST

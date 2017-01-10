@@ -5,7 +5,11 @@ use core:asm;
 use core:lang;
 use core:debug;
 
-class Repl extends LangRepl {
+BsRepl repl() {
+	BsRepl();
+}
+
+class BsRepl extends Repl {
 
 	// Shall we terminate?
 	Bool done;
@@ -15,7 +19,7 @@ class Repl extends LangRepl {
 
 	// Pre-processing.
 	ctor() {
-		Type repl = named{Repl};
+		Type repl = named{BsRepl};
 
 		init() {
 			done = false;

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Reader.h"
+#include "Class.h"
 #include "Core/Io/Text.h"
 #include "Compiler/Engine.h"
 #include "Compiler/Exception.h"
@@ -24,10 +25,24 @@ namespace storm {
 
 		void FileReader::readTypes() {
 			readContent();
+
+			for (nat i = 0; i < content->types->count(); i++) {
+				pkg->add(content->types->at(i));
+			}
+
+			for (nat i = 0; i < content->threads->count(); i++) {
+				pkg->add(content->threads->at(i));
+			}
 		}
 
 		void FileReader::resolveTypes() {
 			readContent();
+
+			for (nat i = 0; i < content->types->count(); i++) {
+				if (Class *c = as<Class>(content->types->at(i))) {
+					c->lookupTypes();
+				}
+			}
 		}
 
 		void FileReader::readFunctions() {
