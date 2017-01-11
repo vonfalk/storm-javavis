@@ -158,6 +158,10 @@ namespace storm {
 		data->filled = c + 1;
 	}
 
+	void ArrayBase::outOfBounds(Nat n) const {
+		throw ArrayError(L"Index " + ::toS(n) + L" out of bounds (of " + ::toS(count()) + L").");
+	}
+
 	ArrayBase::Iter::Iter() : owner(0), index(0) {}
 
 	ArrayBase::Iter::Iter(ArrayBase *owner, Nat index) : owner(owner), index(index) {}

@@ -79,10 +79,15 @@ namespace storm {
 
 		// Raw element access.
 		inline void *CODECALL getRaw(Nat id) const {
-			// Try to keep the most likely branch first to use less i-cache!
-			if (id < count())
+			// We're calling a function to throw the exception to make it more likely that the
+			// compiler inlines this function. Throwing an exception makes it far too large for
+			// inlining.
+			if (id < count()) {
 				return ptr(id);
-			throw ArrayError(L"Index " + ::toS(id) + L" out of bounds (of " + ::toS(count()) + L").");
+			} else {
+				outOfBounds(id);
+				return null;
+			}
 		}
 
 		// Push an element.
@@ -145,6 +150,9 @@ namespace storm {
 
 		// Ensure 'data' can hold at least 'n' objects.
 		void ensure(Nat n);
+
+		// Throw out of bounds exception.
+		void outOfBounds(Nat n) const;
 	};
 
 	// Declare the array's template in Storm.
