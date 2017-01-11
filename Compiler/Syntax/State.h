@@ -6,36 +6,64 @@ namespace storm {
 	namespace syntax {
 		STORM_PKG(lang.bnf);
 
+		class ParserBase;
+
+		/**
+		 * Pointer to a state in some StateSet. Represented by two integers: the step and the index
+		 * into that step. Null is represented by step and index being (Nat)-1.
+		 */
+		class StatePtr {
+			STORM_VALUE;
+		public:
+			// Create invalid state pointer.
+			STORM_CTOR StatePtr();
+
+			// Create to a specific state.
+			STORM_CTOR StatePtr(Nat step, Nat index);
+
+			// The step.
+			Nat step;
+
+			// Index inside that step.
+			Nat index;
+
+			// Compare.
+			inline Bool STORM_FN operator ==(const StatePtr &o) const {
+				return step == o.step && index == o.index;
+			}
+
+			inline Bool STORM_FN operator !=(const StatePtr &o) const {
+				return !(*this == o);
+			}
+		};
+
+		StrBuf &STORM_FN operator <<(StrBuf &to, StatePtr p);
+
 		/**
 		 * State used during parsing (in Parser.h/cpp). Contains a location into a production, a
 		 * step where the option was instantiated, a pointer to the previous step and optionally the
 		 * step that was completed.
-		 *
-		 * TODO: Allocate these on a separate GC-pool?
 		 */
-		class State : public Object {
-			STORM_CLASS;
+		class State {
+			STORM_VALUE;
 		public:
 			// Create.
 			STORM_CTOR State();
-			STORM_CTOR State(ProductionIter pos, Nat step, Nat from);
-			STORM_CTOR State(ProductionIter pos, Nat step, Nat from, State *prev);
-			STORM_CTOR State(ProductionIter pos, Nat step, Nat from, State *prev, State *completed);
+			STORM_CTOR State(ProductionIter pos, Nat from);
+			STORM_CTOR State(ProductionIter pos, Nat from, StatePtr prev);
+			STORM_CTOR State(ProductionIter pos, Nat from, StatePtr prev, StatePtr completed);
 
 			// Position in the production.
 			ProductionIter pos;
-
-			// The step where this state belongs.
-			Nat step;
 
 			// The step where this production was instantiated.
 			Nat from;
 
 			// Previous instance of this state.
-			State *prev;
+			StatePtr prev;
 
 			// State that completed this state. If set, this means that pos->token is a rule token.
-			State *completed;
+			StatePtr completed;
 
 			// Is this a valid state (ie. does it have a valid position?)
 			inline Bool valid() const {
@@ -77,43 +105,63 @@ namespace storm {
 			inline Bool STORM_FN operator !=(const State &o) const {
 				return !(*this == o);
 			}
-
-			// To string.
-			void STORM_FN toS(StrBuf *to) const;
 		};
+
+		// To string.
+		StrBuf &STORM_FN operator <<(StrBuf &to, State s);
 
 
 		/**
 		 * Ordered set of states. Supports proper ordering by priority.
 		 */
-		class StateSet {
-			STORM_VALUE;
+		class StateSet : public Object {
+			STORM_CLASS;
 		public:
 			// Create.
-			StateSet(Engine &e);
+			StateSet();
 
 			// Insert a state here if it does not exist. May alter the 'completed' member of an
 			// existing state to obey priority rules.
-			void STORM_FN push(State *state);
+			void STORM_FN push(ParserBase *parser, const State &state);
 
 			// Insert a new state (we will allocate it for you if neccessary)
-			void STORM_FN push(ProductionIter pos, Nat step, Nat from);
-			void STORM_FN push(ProductionIter pos, Nat step, Nat from, State *prev);
-			void STORM_FN push(ProductionIter pos, Nat step, Nat from, State *prev, State *completed);
+			void STORM_FN push(ParserBase *parser, ProductionIter pos, Nat from);
+			void STORM_FN push(ParserBase *parser, ProductionIter pos, Nat from, StatePtr prev);
+			void STORM_FN push(ParserBase *parser, ProductionIter pos, Nat from, StatePtr prev, StatePtr completed);
 
 			// Current size of this set.
-			Nat STORM_FN count() const { return data->count(); }
+			inline Nat STORM_FN count() const {
+				if (chunks == null)
+					return 0;
+				if (chunks->filled == 0)
+					return 0;
+				nat last = chunks->filled - 1;
+				return last*chunkSize + chunks->v[last]->filled;
+			}
 
 			// Get an element in this set.
-			State *STORM_FN operator [](nat i) const { return data->at(i); }
+			inline const State &STORM_FN operator [](Nat i) const {
+				GcArray<State> *chunk = chunks->v[i >> chunkBits];
+				return chunk->v[i & chunkMask];
+			}
 
 		private:
-			// State data.
-			Array<State *> *data;
+			// Chunk size. Must be a power of two.
+			enum {
+				chunkBits = 5,
+				chunkSize = (1 << chunkBits),
+				chunkMask = chunkSize - 1
+			};
+
+			// State data. Represented as a two-level array to avoid copying.
+			GcArray<GcArray<State> *> *chunks;
+
+			// The GcType for arrays of State objects.
+			const GcType *stateArrayType;
 
 			// Size of the array to use when computing production ordering. Should be large enough
 			// to cover the majority of productions, otherwise we loose performance.
-			typedef PODArray<const State *, 20> StateArray;
+			typedef PODArray<StatePtr, 20> StateArray;
 
 			// Ordering.
 			enum Order {
@@ -123,10 +171,14 @@ namespace storm {
 			};
 
 			// Compute the execution order of two states when parsed by a top-down parser.
-			Order execOrder(const State *a, const State *b) const;
+			Order execOrder(ParserBase *parser, const StatePtr &a, const StatePtr &b) const;
+			Order execOrder(ParserBase *parser, const State &a, const State &b) const;
 
-			// Find previous states for a state.
-			void prevStates(const State *end, StateArray &to) const;
+			// Find the 'completed' field for previous states. May contain entries representing null.
+			void prevCompleted(ParserBase *parser, const State &from, StateArray &to) const;
+
+			// Ensure we have at least 'n' chunks.
+			void ensure(Nat n);
 		};
 
 	}

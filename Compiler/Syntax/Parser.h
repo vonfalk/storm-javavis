@@ -113,7 +113,7 @@ namespace storm {
 
 			// Steps. Each step corresponds to a character in the input string (including an
 			// implicit end of string character).
-			Array<StateSet> *steps;
+			Array<StateSet *> *steps;
 
 			// Last state containing a finish step (initialized to something >= states.count).
 			nat lastFinish;
@@ -123,9 +123,9 @@ namespace storm {
 
 			// Predictor, completer and scanner as described in the paper. The StateSet should be
 			// the current step, ie. the set in which 'state' belongs.
-			void predictor(nat step, State *state);
-			void completer(nat step, State *state);
-			void scanner(nat step, State *state);
+			void predictor(StatePtr ptr, const State &state);
+			void completer(StatePtr ptr, const State &state);
+			void scanner(StatePtr ptr, const State &state);
 
 			// Does 'rule' match an empty string?
 			bool matchesEmpty(Rule *r);
@@ -137,19 +137,25 @@ namespace storm {
 			nat lastStep() const;
 
 			// Find the finishing state (the last one if there are more).
-			State *finish() const;
+			const State *finish() const;
 
 			// Find all rules and productions in progress for a given state.
 			Map<Str *, StrBuf *> *inProgress(const StateSet &step) const;
 
 			// Create a tree for the production ending in 'state'.
-			Node *tree(State *end) const;
+			Node *tree(StatePtr end) const;
 
 			// Allocate a tree node.
-			Node *allocNode(State *from) const;
+			Node *allocNode(const State &from) const;
 
 			// Reverse all arrays in a node.
 			void reverseNode(Node *node) const;
+
+			// Get a State from a StatePtr.
+			const State &state(const StatePtr &p) const;
+
+			// State set needs to access 'state()'
+			friend class StateSet;
 		};
 
 

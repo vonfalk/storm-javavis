@@ -34,12 +34,14 @@ namespace storm {
 		Nat ParserBase::stateCount() const {
 			Nat r = 0;
 			for (nat i = 0; i < steps->count(); i++)
-				r += steps->at(i).count();
+				r += steps->at(i)->count();
 			return r;
 		}
 
 		Nat ParserBase::byteCount() const {
-			return sizeof(ParserBase) + steps->count() * sizeof(void *) + stateCount() * sizeof(State);
+			return sizeof(ParserBase)
+				+ steps->count() * (sizeof(void *) + sizeof(StateSet))
+				+ stateCount() * sizeof(State);
 		}
 
 		Rule *ParserBase::root() const {
@@ -82,17 +84,18 @@ namespace storm {
 			lastFinish = len + 1;
 
 			// Set up storage.
-			steps = new (this) Array<StateSet>();
+			steps = new (this) Array<StateSet *>();
 			steps->reserve(len);
+			Engine &e = engine();
 			for (nat i = 0; i < len; i++)
-				steps->push(StateSet(engine()));
+				steps->push(new (e) StateSet());
 
 			// Create the initial production.
 			rootProd = new (this) Production();
 			rootProd->tokens->push(new (this) RuleToken(root()));
 
 			// Set up the initial state.
-			steps->at(0).push(rootProd->firstA(), 0, 0);
+			steps->at(0)->push(this, rootProd->firstA(), 0);
 
 			// Process all steps.
 			for (nat i = 0; i < len; i++) {
@@ -107,35 +110,36 @@ namespace storm {
 		bool ParserBase::process(nat step) {
 			bool seenFinish = false;
 
-			StateSet &src = steps->at(step);
+			StateSet &src = *steps->at(step);
 			for (nat i = 0; i < src.count(); i++) {
-				State *at = src[i];
+				StatePtr ptr(step, i);
+				const State &at = src[i];
 				//PVAR(at);
 
-				predictor(step, at);
-				completer(step, at);
-				scanner(step, at);
+				predictor(ptr, at);
+				completer(ptr, at);
+				scanner(ptr, at);
 
-				if (at->finishes(rootProd))
+				if (at.finishes(rootProd))
 					seenFinish = true;
 			}
 
 			return seenFinish;
 		}
 
-		void ParserBase::predictor(nat step, State *state) {
-			RuleToken *rule = state->getRule();
+		void ParserBase::predictor(StatePtr ptr, const State &state) {
+			RuleToken *rule = state.getRule();
 			if (!rule)
 				return;
 
 			// Note: this creates new (empty) entries for any rules referred to but not yet included.
 			RuleInfo &info = rules->at(rule->rule);
 
-			StateSet &src = steps->at(step);
+			StateSet &src = *steps->at(ptr.step);
 			for (Nat i = 0; i < info.productions->count(); i++) {
 				Production *p = info.productions->at(i);
-				src.push(p->firstA(), step, step);
-				src.push(p->firstB(), step, step);
+				src.push(this, p->firstA(), ptr.step);
+				src.push(this, p->firstB(), ptr.step);
 			}
 
 			if (matchesEmpty(info)) {
@@ -152,46 +156,47 @@ namespace storm {
 				// We do not need to examine further than the current state. Anything else will be
 				// examined in the main loop later.
 				for (nat i = 0; src[i] != state && i < src.count(); i++) {
-					State *now = src[i];
-					if (!now->pos.end())
+					const State &now = src[i];
+					if (!now.pos.end())
 						continue;
 
-					Rule *cRule = now->production()->rule();
+					Rule *cRule = now.production()->rule();
 					if (cRule != rule->rule)
 						continue;
 
-					src.push(state->pos.nextA(), step, state->from, state, now);
-					src.push(state->pos.nextB(), step, state->from, state, now);
+					src.push(this, state.pos.nextA(), state.from, ptr, StatePtr(ptr.step, i));
+					src.push(this, state.pos.nextB(), state.from, ptr, StatePtr(ptr.step, i));
 				}
 			}
 		}
 
-		void ParserBase::completer(nat step, State *state) {
-			if (!state->pos.end())
+		void ParserBase::completer(StatePtr ptr, const State &state) {
+			if (!state.pos.end())
 				return;
 
-			Rule *completed = state->pos.rule();
-			StateSet &from = steps->at(state->from);
+			Rule *completed = state.pos.rule();
+			StateSet &from = *steps->at(state.from);
 			for (nat i = 0; i < from.count(); i++) {
-				State *s = from[i];
-				RuleToken *rule = s->getRule();
+				const State &s = from[i];
+				RuleToken *rule = s.getRule();
 				if (!rule)
 					continue;
 				if (rule->rule != completed)
 					continue;
 
-				steps->at(step).push(s->pos.nextA(), step, s->from, s, state);
-				steps->at(step).push(s->pos.nextB(), step, s->from, s, state);
+				StatePtr prevPtr(state.from, i);
+				steps->at(ptr.step)->push(this, s.pos.nextA(), s.from, prevPtr, ptr);
+				steps->at(ptr.step)->push(this, s.pos.nextB(), s.from, prevPtr, ptr);
 			}
 		}
 
-		void ParserBase::scanner(nat step, State *state) {
-			RegexToken *regex = state->getRegex();
+		void ParserBase::scanner(StatePtr ptr, const State &state) {
+			RegexToken *regex = state.getRegex();
 			if (!regex)
 				return;
 
 			nat offset = srcPos.pos;
-			nat matched = regex->regex.matchRaw(src, step + offset);
+			nat matched = regex->regex.matchRaw(src, ptr.step + offset);
 			if (matched == Regex::NO_MATCH)
 				return;
 
@@ -202,8 +207,8 @@ namespace storm {
 			if (matched > steps->count())
 				return;
 
-			steps->at(matched).push(state->pos.nextA(), matched, state->from, state);
-			steps->at(matched).push(state->pos.nextB(), matched, state->from, state);
+			steps->at(matched)->push(this, state.pos.nextA(), state.from, ptr);
+			steps->at(matched)->push(this, state.pos.nextB(), state.from, ptr);
 		}
 
 		bool ParserBase::matchesEmpty(Rule *rule) {
@@ -298,9 +303,9 @@ namespace storm {
 
 			*msg << L"\nIn progress:";
 			Indent z(msg);
-			const StateSet &step = steps->at(pos);
+			const StateSet &step = *steps->at(pos);
 			for (nat i = 0; i < step.count(); i++) {
-				*msg << L"\n" << step[i]->pos;
+				*msg << L"\n" << step[i].pos;
 			}
 
 			return msg->toS();
@@ -317,7 +322,7 @@ namespace storm {
 
 		nat ParserBase::lastStep() const {
 			for (nat i = steps->count() - 1; i > 0; i--) {
-				if (steps->at(i).count() > 0)
+				if (steps->at(i)->count() > 0)
 					return i;
 			}
 
@@ -325,29 +330,33 @@ namespace storm {
 			return 0;
 		}
 
-		State *ParserBase::finish() const {
+		const State *ParserBase::finish() const {
 			if (lastFinish >= steps->count())
 				return null;
 
-			const StateSet &states = steps->at(lastFinish);
+			const StateSet &states = *steps->at(lastFinish);
 			for (nat i = 0; i < states.count(); i++) {
-				State *s = states[i];
-				if (s->finishes(rootProd))
-					return s;
+				const State &s = states[i];
+				if (s.finishes(rootProd))
+					return &s;
 			}
 
 			return null;
 		}
 
+		const State &ParserBase::state(const StatePtr &ptr) const {
+			return (*steps->at(ptr.step))[ptr.index];
+		}
+
 		Node *ParserBase::tree() const {
-			State *from = finish();
+			const State *from = finish();
 			if (!from)
 				throw error();
 
 			// 'from' finishes the dummy 'rootProd', which the user is not interested in. The user
 			// is interested in the production that finished 'rootProd', which is located in
 			// 'from->completed'.
-			assert(from->completed, L"The root state was not completed by anything!");
+			assert(from->completed != StatePtr(), L"The root state was not completed by anything!");
 			return tree(from->completed);
 		}
 
@@ -382,42 +391,46 @@ namespace storm {
 			}
 		}
 
-		Node *ParserBase::tree(State *from) const {
+		Node *ParserBase::tree(StatePtr fromPtr) const {
+			const State &from = state(fromPtr);
 			Node *result = allocNode(from);
-			Production *prod = from->production();
+			Production *prod = from.production();
 
 			// Remember capture start and capture end. Set 'repStart' to first token since we will
 			// not find it in the loop if the repeat starts at the first token in this production.
-			nat repStart = from->from;
+			nat repStart = from.from;
 			nat repEnd = 0;
 
 			// Traverse the states backwards. The last token in the chain (the one created first) is
 			// skipped as that does not contain any information.
-			for (State *at = from; at->prev; at = at->prev) {
-				State *prev = at->prev;
+			StatePtr atPtr = fromPtr;
+			const State *at = &from;
+			while (at->prev != StatePtr()) {
+				const State *prev = &state(at->prev);
 				Token *token = prev->pos.token();
 
 				if (at->pos.repStart())
-					repStart = at->step;
+					repStart = atPtr.step;
 				if (at->pos.repEnd())
-					repEnd = at->step;
+					repEnd = atPtr.step;
 
-				// Don't bother if we do not need to store the result anywhere.
-				if (!token->target)
-					continue;
+				if (token->target) {
+					Object *match = null;
+					if (as<RegexToken>(token)) {
+						Str::Iter from = src->posIter(at->prev.step + srcPos.pos);
+						Str::Iter to = src->posIter(atPtr.step + srcPos.pos);
 
-				Object *match = null;
-				if (as<RegexToken>(token)) {
-					Str::Iter from = src->posIter(prev->step + srcPos.pos);
-					Str::Iter to = src->posIter(at->step + srcPos.pos);
-
-					setValue(result, token->target, new (this) SStr(src->substr(from, to), srcPos + prev->step));
-				} else if (as<RuleToken>(token)) {
-					assert(at->completed, L"Rule token not completed!");
-					setValue(result, token->target, tree(at->completed));
-				} else {
-					assert(false, L"Unknown token type used for match.");
+						setValue(result, token->target, new (this) SStr(src->substr(from, to), srcPos + at->prev.step));
+					} else if (as<RuleToken>(token)) {
+						assert(at->completed != StatePtr(), L"Rule token not completed!");
+						setValue(result, token->target, tree(at->completed));
+					} else {
+						assert(false, L"Unknown token type used for match.");
+					}
 				}
+
+				atPtr = at->prev;
+				at = prev;
 			}
 
 			// Remember the capture.
@@ -432,13 +445,13 @@ namespace storm {
 			return result;
 		}
 
-		Node *ParserBase::allocNode(State *from) const {
-			ProductionType *type = from->production()->type();
+		Node *ParserBase::allocNode(const State &from) const {
+			ProductionType *type = from.production()->type();
 
 			// A bit ugly, but this is enough for the object to be considered a proper object when
 			// it is populated.
 			void *mem = runtime::allocObject(type->size().current(), type);
-			Node *r = new (Place(mem)) Node(srcPos + from->from);
+			Node *r = new (Place(mem)) Node(srcPos + from.from);
 			type->vtable->insert(r);
 
 			// Create any arrays needed.

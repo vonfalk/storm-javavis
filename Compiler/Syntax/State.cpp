@@ -1,91 +1,146 @@
 #include "stdafx.h"
 #include "State.h"
+#include "Parser.h"
 
 namespace storm {
 	namespace syntax {
 
+		StatePtr::StatePtr() : step(-1), index(-1) {}
+
+		StatePtr::StatePtr(Nat step, Nat index) : step(step), index(index) {}
+
+		StrBuf &operator <<(StrBuf &to, StatePtr p) {
+			return to << L"(" << p.step << L", " << p.index << L")";
+		}
+
 		State::State() : from(0) {}
 
-		State::State(ProductionIter pos, Nat step, Nat from) : pos(pos), step(step), from(from) {}
+		State::State(ProductionIter pos, Nat from) : pos(pos), from(from) {}
 
-		State::State(ProductionIter pos, Nat step, Nat from, State *prev)
-			: pos(pos), step(step), from(from), prev(prev) {}
+		State::State(ProductionIter pos, Nat from, StatePtr prev)
+			: pos(pos), from(from), prev(prev) {}
 
-		State::State(ProductionIter pos, Nat step, Nat from, State *prev, State *completed)
-			: pos(pos), step(step), from(from), prev(prev), completed(completed) {}
+		State::State(ProductionIter pos, Nat from, StatePtr prev, StatePtr completed)
+			: pos(pos), from(from), prev(prev), completed(completed) {}
 
-		void State::toS(StrBuf *to) const {
-			*to << hex(this) << L":{" << pos << L", " << from << L", " << hex(prev) << L", " << hex(completed) << L"}";
+		StrBuf &operator <<(StrBuf &to, State s) {
+			return to << L"{" << s.pos << L", " << s.from << L", " << s.prev << L", " << s.completed << L"}";
 		}
 
 
-		StateSet::StateSet(Engine &e) : data(new (e) Array<State *>()) {}
+		StateSet::StateSet() : chunks(null) {
+			stateArrayType = StormInfo<State>::handle(engine()).gcArrayType;
+		}
 
-		void StateSet::push(State *s) {
-			if (!s->valid())
+		void StateSet::push(ParserBase *parser, const State &s) {
+			if (!s.valid())
 				return;
 
 			// TODO: Optimize this somehow. A lot of time is spent here!
-			Nat c = data->count(); // tells the compiler we will not change the size.
-			for (nat i = 0; i < c; i++) {
-				State *c = data->at(i);
-				if (*c == *s) {
-					// Generated this state already, shall we update the existing one?
+			Nat chunkCount = chunks ? chunks->filled : 0;
+			for (nat c = 0; c < chunkCount; c++) {
+				GcArray<State> *chunk = chunks->v[c];
+				Nat cnt = chunk->filled;
+				for (nat i = 0; i < cnt; i++) {
+					State &old = chunk->v[i];
+					if (old == s) {
+						// Generated this state alreadly, shall we update it?
 
-					// Keep the largest in a lexiographic ordering.
-					if (execOrder(s, c) != before)
+						// Keep the largest in a lexiographic ordering.
+						if (execOrder(parser, old, s) != before)
+							return;
+
+						chunk->v[i] = s;
 						return;
-
-					data->at(i) = s;
-					return;
+					}
 				}
 			}
 
-			data->push(s);
+			// Push the new state somewhere.
+			GcArray<State> *last = null;
+			if (chunks == null) {
+				ensure(1);
+				last = chunks->v[0];
+			} else {
+				last = chunks->v[chunks->filled - 1];
+			}
+
+			if (last->filled >= chunkSize) {
+				ensure(chunks->filled + 1);
+				last = chunks->v[chunks->filled - 1];
+			}
+
+			last->v[last->filled++] = s;
 		}
 
-		void StateSet::push(ProductionIter pos, Nat step, Nat from) {
-			push(pos, step, from, null, null);
+		void StateSet::ensure(Nat n) {
+			// Need to resize the array?
+			if (chunks == null || chunks->count < n) {
+				Nat newCount = 1;
+				if (chunks)
+					newCount = 2 * chunks->count;
+				newCount = max(n, newCount);
+
+				GcArray<GcArray<State> *> *old = chunks;
+				chunks = runtime::allocArray<GcArray<State> *>(engine(), &pointerArrayType, newCount);
+				if (old) {
+					memcpy(chunks->v, old->v, sizeof(void *)*old->count);
+					chunks->filled = old->filled;
+				}
+			}
+
+			// Make sure all entries are filled.
+			while (chunks->filled < n) {
+				chunks->v[chunks->filled++] = runtime::allocArray<State>(engine(), stateArrayType, chunkSize);
+			}
 		}
 
-		void StateSet::push(ProductionIter pos, Nat step, Nat from, State *prev) {
-			push(pos, step, from, prev, null);
+		void StateSet::push(ParserBase *parser, ProductionIter pos, Nat from) {
+			push(parser, pos, from, StatePtr(), StatePtr());
 		}
 
-		void StateSet::push(ProductionIter pos, Nat step, Nat from, State *prev, State *completed) {
+		void StateSet::push(ParserBase *parser, ProductionIter pos, Nat from, StatePtr prev) {
+			push(parser, pos, from, prev, StatePtr());
+		}
+
+		void StateSet::push(ParserBase *parser, ProductionIter pos, Nat from, StatePtr prev, StatePtr completed) {
 			if (!pos.valid())
 				return;
 
-			push(new (data) State(pos, step, from, prev, completed));
+			push(parser, State(pos, from, prev, completed));
 		}
 
-		StateSet::Order StateSet::execOrder(const State *a, const State *b) const {
+		StateSet::Order StateSet::execOrder(ParserBase *parser, const StatePtr &aPtr, const StatePtr &bPtr) const {
 			// Invalid states have no ordering.
-			if (!a || !b)
+			if (aPtr == StatePtr() || bPtr == StatePtr())
 				return none;
 
 			// Same state, realize that quickly!
-			if (a == b)
+			if (aPtr == bPtr)
 				return none;
 
+			return execOrder(parser, parser->state(aPtr), parser->state(bPtr));
+		}
+
+		StateSet::Order StateSet::execOrder(ParserBase *parser, const State &a, const State &b) const {
 			// Check which has the highest priority.
-			if (a->priority() != b->priority())
-				return (a->priority() > b->priority()) ? before : after;
+			if (a.priority() != b.priority())
+				return (a.priority() > b.priority()) ? before : after;
 
 			// If they are different productions and noone has a higher priority than the other, the
 			// ordering is undefined.
-			if (a->production() != b->production())
+			if (a.production() != b.production())
 				return none;
 
 			// Order them lexiographically to see which has the highest priority!
-			StateArray aStates(data->engine());
-			prevStates(a, aStates);
-			StateArray bStates(data->engine());
-			prevStates(b, bStates);
+			StateArray aStates(engine());
+			prevCompleted(parser, a, aStates);
+			StateArray bStates(engine());
+			prevCompleted(parser, b, bStates);
 
 			nat to = min(aStates.count(), bStates.count());
 			for (nat i = 0; i < to; i++) {
-				Order order = execOrder(aStates[i]->completed, bStates[i]->completed);
+				Order order = execOrder(parser, aStates[i], bStates[i]);
 				if (order != none)
 					return order;
 			}
@@ -101,14 +156,15 @@ namespace storm {
 			return none;
 		}
 
-		void StateSet::prevStates(const State *from, StateArray &to) const {
+		void StateSet::prevCompleted(ParserBase *parser, const State &from, StateArray &to) const {
 			to.clear();
-			for (const State *now = from; now->prev; now = now->prev)
-				to.push(now);
+
+			for (const State *at = &from; at->prev != StatePtr(); at = &parser->state(at->prev)) {
+				to.push(at->completed);
+			}
 
 			to.reverse();
 		}
-
 
 	}
 }
