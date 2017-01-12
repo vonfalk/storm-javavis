@@ -47,7 +47,7 @@ namespace storm {
 						// Generated this state alreadly, shall we update it?
 
 						// Keep the largest in a lexiographic ordering.
-						if (execOrder(parser, old, s) != before)
+						if (execOrder(parser, s, old) != before)
 							return;
 
 						chunk->v[i] = s;
@@ -159,6 +159,7 @@ namespace storm {
 		void StateSet::prevCompleted(ParserBase *parser, const State &from, StateArray &to) const {
 			to.clear();
 
+			// Note: the first state is never completed, so we skip that.
 			for (const State *at = &from; at->prev != StatePtr(); at = &parser->state(at->prev)) {
 				to.push(at->completed);
 			}
