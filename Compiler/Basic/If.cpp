@@ -105,7 +105,7 @@ namespace storm {
 			if (created)
 				return created;
 
-			Str *name;
+			Str *name = null;
 			if (varName)
 				name = varName->v;
 			if (!name)

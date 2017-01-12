@@ -42,10 +42,12 @@ namespace storm {
 		typedef void (*DestroyFn)(void *obj);
 		UNKNOWN(PTR_GC) DestroyFn destroyFn;
 
-		// Helper for safe destroying.
+		// Helper for safe destroying. Zeroes out any used memory so that we do not retain any
+		// unneeded objects.
 		inline void safeDestroy(void *obj) const {
 			if (destroyFn)
 				(*destroyFn)(obj);
+			memset(obj, 0, size);
 		}
 
 		// Deep copy an instance of this type. May be null.
