@@ -87,7 +87,7 @@ namespace storm {
 
 	static void CODECALL createArrayRaw(void *mem) {
 		ArrayType *t = (ArrayType *)runtime::typeOf((RootObject *)mem);
-		ArrayBase *o = new (Place(mem)) ArrayBase(t->handle());
+		ArrayBase *o = new (Place(mem)) ArrayBase(t->param().type->handle());
 		runtime::setVTable(o);
 	}
 
