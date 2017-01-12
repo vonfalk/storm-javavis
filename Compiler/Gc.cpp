@@ -1766,6 +1766,10 @@ namespace storm {
 		return (GcCode *)p;
 	}
 
+	void Gc::walkObjects(WalkCb fn, void *param) {
+		// Nothing to do...
+	}
+
 	Gc::Root *Gc::createRoot(void *data, size_t count) {
 		// No roots here!
 		return null;
