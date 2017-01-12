@@ -30,7 +30,7 @@ namespace storm {
 
 			Label before = s->to->label();
 			CodeGen *subState = s->child(block);
-			CodeResult *condResult;
+			CodeResult *condResult = null;
 
 			// Begin code generation!
 			*s->to << before;

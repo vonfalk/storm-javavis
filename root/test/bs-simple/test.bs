@@ -1,7 +1,7 @@
 use core;
 use core:debug;
 
-// No fancy syntax, makes debugging of core issueas easier!
+// No fancy syntax, makes debugging of core issues easier!
 
 class Foo {
     Int a;

@@ -110,7 +110,7 @@ namespace storm {
 		}
 
 		LocalVar *BSCtor::addParams(Block *to) {
-			LocalVar *thread;
+			LocalVar *thread = 0;
 
 			for (nat i = 0; i < params->count(); i++) {
 				LocalVar *var = new (this) LocalVar(params->at(i).name, params->at(i).type, pos, true);
@@ -134,6 +134,7 @@ namespace storm {
 
 		void CtorBody::blockCode(CodeGen *state, CodeResult *to, const code::Block &block) {
 			if (threadParam) {
+				PVAR((void *)threadParam);
 				thread = state->to->createVar(state->block, Size::sPtr);
 				*state->to << mov(thread, threadParam->var.v);
 			}
@@ -159,6 +160,8 @@ namespace storm {
 
 		void SuperCall::init(CtorBody *block, Actuals *params) {
 			rootBlock = block;
+
+			initMap = new (this) InitMap();
 
 			// Add the regular this parameter!
 			SimplePart *name = new (this) SimplePart(new (this) Str(L" this"));

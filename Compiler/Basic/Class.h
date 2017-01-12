@@ -81,7 +81,7 @@ namespace storm {
 			// Contents.
 			Array<Named *> *items;
 
-			// Template contents. TODO: Add STORM_VAR.
+			// Template contents.
 			Array<Template *> *templates;
 		};
 

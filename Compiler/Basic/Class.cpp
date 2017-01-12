@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Class.h"
 #include "Compiler/Exception.h"
+#include "Compiler/TypeCtor.h"
 #include "Function.h"
 #include "Ctor.h"
 
@@ -78,53 +79,48 @@ namespace storm {
 			if (!allowLazyLoad)
 				return false;
 
-			TODO(L"Implement me!");
-			// ClassBody *body = syntax::transformNode<ClassBody, Class>(this->body, this);
+			ClassBody *body = syntax::transformNode<ClassBody, Class *>(this->body, this);
 
-			// // Found a CTOR?
-			// bool hasCtor = false;
-			// bool hasCopyCtor = false;
-			// bool hasDeepCopy = false;
+			// Found a CTOR?
+			bool hasCtor = false;
+			bool hasCopyCtor = false;
+			bool hasDeepCopy = false;
 
-			// for (nat i = 0; i < body->items->count(); i++) {
-			// 	Named *&z = body->items->at(i);
-			// 	if (z->name == Type::CTOR) {
-			// 		if (z->params->count() == 2 && z->params[0] == z->params[1])
-			// 			hasCopyCtor = true;
-			// 		hasCtor = true;
-			// 	} else if (z->name == L"deepCopy") {
-			// 		if (z->params->count() == 2 && z->params[1].type == CloneEnv::stormType(this))
-			// 			hasDeepCopy = true;
-			// 	}
-			// 	add(z);
-			// }
+			for (nat i = 0; i < body->items->count(); i++) {
+				Named *&z = body->items->at(i);
+				if (wcscmp(z->name->c_str(), Type::CTOR) == 0) {
+					if (z->params->count() == 2 && z->params->at(0) == z->params->at(1))
+						hasCopyCtor = true;
+					hasCtor = true;
+				} else if (wcscmp(z->name->c_str(), L"deepCopy") == 0) {
+					if (z->params->count() == 2 && z->params->at(1).type == CloneEnv::stormType(this))
+						hasDeepCopy = true;
+				}
+				add(z);
+			}
 
-			// add(steal(new (engine) TypeDefaultDtor(this)));
-			// if (!hasCtor)
-			// 	add(steal(classDefaultCtor(this)));
-			// if (!hasCopyCtor && runOn().state == RunOn::any)
-			// 	add(steal(new (engine) TypeCopyCtor(this)));
+			// add(new (engine) TypeDefaultDtor(this));
+			if (!hasCtor)
+				add(classDefaultCtor(this));
+			if (!hasCopyCtor && runOn().state == RunOn::any)
+				add(new (engine) TypeCopyCtor(this));
 
-			// if (!hasDeepCopy && runOn().state == RunOn::any)
-			// 	add(steal(new (engine) TypeDeepCopy(this)));
+			if (!hasDeepCopy && runOn().state == RunOn::any)
+				add(new (engine) TypeDeepCopy(this));
 
-			// // If noone has a toS function, create one (this is the case with values, this may change in the future).
-			// Named *toS = findCpp(L"toS", valList(1, Value::thisPtr(this)));
-			// if (!as<Function>(toS)) {
-			// 	add(steal(new (engine) TypeToS(this)));
-			// }
+			// TODO: Add a default toS for values somehow.
 
-			// // Temporary solution.
-			// if (typeFlags & typeValue) {
-			// 	add(steal(new (engine) TypeAssignFn(this)));
-			// }
+			// Temporary solution.
+			if (typeFlags & typeValue) {
+				add(new (engine) TypeAssign(this));
+			}
 
-			// for (Map<Str *, TemplateAdapter *>::Iter i = body->templates->begin(), end = body->templates->end(); i != end; ++i) {
-			// 	add(i.val());
-			// }
+			for (Nat i = 0; i < body->templates->count(); i++) {
+				add(body->templates->at(i));
+			}
 
-			// // We do not need the syntax tree anymore!
-			// this->body = null;
+			// We do not need the syntax tree anymore!
+			this->body = null;
 
 			// Super needs to be called!
 			return Type::loadAll();

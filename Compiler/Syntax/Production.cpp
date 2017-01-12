@@ -43,7 +43,7 @@ namespace storm {
 		}
 
 		void Production::addToken(TokenDecl *decl, MAYBE(Rule *) delim, SrcPos pos, Scope scope, Nat &counter) {
-			Token *token;
+			Token *token = null;
 			if (RegexTokenDecl *r = as<RegexTokenDecl>(decl)) {
 				token = new (this) RegexToken(r->regex);
 			} else if (RuleTokenDecl *u = as<RuleTokenDecl>(decl)) {

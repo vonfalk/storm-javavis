@@ -224,7 +224,7 @@ namespace storm {
 			syntax::SStr *varName = new (e) syntax::SStr(name, this->pos);
 
 			// Transform each part of this rule...
-			Var *v;
+			Var *v = null;
 			if (isMaybe(src->type)) {
 				v = new (this) Var(in, wrapMaybe(tfmFn->result), varName, new (this) Actuals());
 				in->add(v);
@@ -339,7 +339,7 @@ namespace storm {
 		Expr *TransformFn::executeToken(Block *in, Expr *me, Expr *src, Token *token, nat pos) {
 			assert(token->invoke);
 
-			Expr *toStore;
+			Expr *toStore = null;
 			if (token->raw) {
 				toStore = src;
 			} else {

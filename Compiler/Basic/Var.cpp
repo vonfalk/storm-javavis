@@ -86,7 +86,7 @@ namespace storm {
 			const Value &t = variable->result;
 
 			if (t.isValue()) {
-				Expr *ctor;
+				Expr *ctor = null;
 
 				if (initCtor)
 					ctor = initCtor;

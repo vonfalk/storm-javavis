@@ -433,7 +433,8 @@ namespace storm {
 			CodeResult *rhs = new (this) CodeResult(t, s->block);
 			value->code(s, rhs);
 
-			// Erase the previous value.
+			// Copy.
+			*s->to << code::mov(ptrA, targetAddr);
 			*s->to << code::mov(ptrRel(ptrA, Offset()), rhs->location(s).v);
 
 			// Do we need to return some value?
@@ -587,7 +588,7 @@ namespace storm {
 			}
 
 			// If we have a this-pointer, try to use it!
-			Named *candidate;
+			Named *candidate = null;
 			if (useThis)
 				if (Expr *e = findTargetThis(block, name, params, pos, candidate))
 					return e;

@@ -64,7 +64,7 @@ namespace storm {
 
 		// Parse a token.
 		static TokenDecl *parseToken(Engine &e, Tokenizer &tok) {
-			TokenDecl *result;
+			TokenDecl *result = null;
 
 			if (tok.skipIf(L"-")) {
 				return null;
