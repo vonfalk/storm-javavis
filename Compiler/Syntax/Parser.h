@@ -113,7 +113,8 @@ namespace storm {
 
 			// Steps. Each step corresponds to a character in the input string (including an
 			// implicit end of string character).
-			Array<StateSet *> *steps;
+			GcArray<StateSet *> *steps;
+			// Array<StateSet *> *steps;
 
 			// Last state containing a finish step (initialized to something >= states.count).
 			nat lastFinish;
