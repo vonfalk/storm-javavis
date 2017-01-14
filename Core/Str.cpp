@@ -82,7 +82,7 @@ namespace storm {
 	}
 
 	void Str::validate() const {
-#ifdef DEBUG
+#ifdef SLOW_DEBUG
 		for (nat i = 0; i < data->count - 1; i++) {
 			if (data->v[i] == 0) {
 				assert(false, L"String contains a premature null terminator!");

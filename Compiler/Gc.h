@@ -175,8 +175,16 @@ namespace storm {
 		// Stress-test the gc by allocating a large number of objects.
 		bool test(nat times = 100);
 
-		// Check memory consistency. Note: Enable checking in the 'Gc.cpp' for this to work.
+		// Check memory consistency. Note: Enable checking in 'Gc.cpp' for this to work.
 		void checkMemory();
+
+		// Check consistency of a single object. Note: Enable checking in 'Gc.cpp' for this to work.
+		void checkMemory(const void *object);
+		void checkMemory(const void *object, bool recursive);
+
+		// Do a gc and check memory collection (sometimes forces memory issues to appear better than
+		// just calling 'checkMemory').
+		void checkMemoryCollect();
 
 	private:
 		// GcType for weak arrays.
@@ -266,6 +274,9 @@ namespace storm {
 
 		// Worker function for 'scanning' the MpsType objects.
 		static void markType(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t);
+
+		// Internal helper for 'checkMemory()'.
+		friend void checkObject(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t);
 #endif
 	};
 

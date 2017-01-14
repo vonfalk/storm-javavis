@@ -33,14 +33,16 @@ namespace storm {
 
 		Nat ParserBase::stateCount() const {
 			Nat r = 0;
-			for (nat i = 0; i < steps->count(); i++)
-				r += steps->at(i)->count();
+			if (steps)
+				for (nat i = 0; i < steps->count; i++)
+					r += steps->v[i]->count();
 			return r;
 		}
 
 		Nat ParserBase::byteCount() const {
+			nat stepCount = steps ? steps->count : 0;
 			return sizeof(ParserBase)
-				+ steps->count() * (sizeof(void *) + sizeof(StateSet))
+				+ stepCount * (sizeof(void *) + sizeof(StateSet))
 				+ stateCount() * sizeof(State);
 		}
 
@@ -84,18 +86,17 @@ namespace storm {
 			lastFinish = len + 1;
 
 			// Set up storage.
-			steps = new (this) Array<StateSet *>();
-			steps->reserve(len);
 			Engine &e = engine();
+			steps = runtime::allocArray<StateSet *>(e, &pointerArrayType, len);
 			for (nat i = 0; i < len; i++)
-				steps->push(new (e) StateSet());
+				steps->v[i] = new (e) StateSet();
 
 			// Create the initial production.
 			rootProd = new (this) Production();
 			rootProd->tokens->push(new (this) RuleToken(root()));
 
 			// Set up the initial state.
-			steps->at(0)->push(this, rootProd->firstA(), 0);
+			steps->v[0]->push(this, rootProd->firstA(), 0);
 
 			// Process all steps.
 			for (nat i = 0; i < len; i++) {
@@ -110,7 +111,7 @@ namespace storm {
 		bool ParserBase::process(nat step) {
 			bool seenFinish = false;
 
-			StateSet &src = *steps->at(step);
+			StateSet &src = *steps->v[step];
 			for (nat i = 0; i < src.count(); i++) {
 				StatePtr ptr(step, i);
 				const State &at = src[i];
@@ -135,7 +136,7 @@ namespace storm {
 			// Note: this creates new (empty) entries for any rules referred to but not yet included.
 			RuleInfo &info = rules->at(rule->rule);
 
-			StateSet &src = *steps->at(ptr.step);
+			StateSet &src = *steps->v[ptr.step];
 			for (Nat i = 0; i < info.productions->count(); i++) {
 				Production *p = info.productions->at(i);
 				src.push(this, p->firstA(), ptr.step);
@@ -175,7 +176,7 @@ namespace storm {
 				return;
 
 			Rule *completed = state.pos.rule();
-			StateSet &from = *steps->at(state.from);
+			StateSet &from = *steps->v[state.from];
 			for (nat i = 0; i < from.count(); i++) {
 				const State &s = from[i];
 				RuleToken *rule = s.getRule();
@@ -185,8 +186,8 @@ namespace storm {
 					continue;
 
 				StatePtr prevPtr(state.from, i);
-				steps->at(ptr.step)->push(this, s.pos.nextA(), s.from, prevPtr, ptr);
-				steps->at(ptr.step)->push(this, s.pos.nextB(), s.from, prevPtr, ptr);
+				steps->v[ptr.step]->push(this, s.pos.nextA(), s.from, prevPtr, ptr);
+				steps->v[ptr.step]->push(this, s.pos.nextB(), s.from, prevPtr, ptr);
 			}
 		}
 
@@ -204,11 +205,11 @@ namespace storm {
 			if (matched < offset)
 				return;
 			matched -= offset;
-			if (matched > steps->count())
+			if (matched > steps->count)
 				return;
 
-			steps->at(matched)->push(this, state.pos.nextA(), state.from, ptr);
-			steps->at(matched)->push(this, state.pos.nextB(), state.from, ptr);
+			steps->v[matched]->push(this, state.pos.nextA(), state.from, ptr);
+			steps->v[matched]->push(this, state.pos.nextB(), state.from, ptr);
 		}
 
 		bool ParserBase::matchesEmpty(Rule *rule) {
@@ -272,7 +273,9 @@ namespace storm {
 		}
 
 		Bool ParserBase::hasError() const {
-			if (lastFinish < steps->count() - 1)
+			if (!steps)
+				return true;
+			if (lastFinish < steps->count - 1)
 				return true;
 
 			return finish() == null;
@@ -293,7 +296,9 @@ namespace storm {
 			nat pos = lastStep();
 			StrBuf *msg = new (this) StrBuf();
 
-			if (pos == steps->count() - 1) {
+			if (!steps) {
+				*msg << L"No parsing done.";
+			} else if (pos == steps->count - 1) {
 				*msg << L"Unexpected end of stream.";
 			} else {
 				Char ch(src->c_str()[pos + srcPos.pos]);
@@ -303,7 +308,7 @@ namespace storm {
 
 			*msg << L"\nIn progress:";
 			Indent z(msg);
-			const StateSet &step = *steps->at(pos);
+			const StateSet &step = *steps->v[pos];
 			for (nat i = 0; i < step.count(); i++) {
 				*msg << L"\n" << step[i].pos;
 			}
@@ -321,8 +326,8 @@ namespace storm {
 		}
 
 		nat ParserBase::lastStep() const {
-			for (nat i = steps->count() - 1; i > 0; i--) {
-				if (steps->at(i)->count() > 0)
+			for (nat i = steps->count - 1; i > 0; i--) {
+				if (steps->v[i]->count() > 0)
 					return i;
 			}
 
@@ -331,10 +336,10 @@ namespace storm {
 		}
 
 		const State *ParserBase::finish() const {
-			if (lastFinish >= steps->count())
+			if (lastFinish >= steps->count)
 				return null;
 
-			const StateSet &states = *steps->at(lastFinish);
+			const StateSet &states = *steps->v[lastFinish];
 			for (nat i = 0; i < states.count(); i++) {
 				const State &s = states[i];
 				if (s.finishes(rootProd))
@@ -345,7 +350,7 @@ namespace storm {
 		}
 
 		const State &ParserBase::state(const StatePtr &ptr) const {
-			return (*steps->at(ptr.step))[ptr.index];
+			return (*steps->v[ptr.step])[ptr.index];
 		}
 
 		Node *ParserBase::tree() const {
@@ -362,7 +367,7 @@ namespace storm {
 
 		// See so that 'offset' is exposed as a GC:d pointer.
 		static inline void checkOffset(Node *node, int offset) {
-#ifdef DEBUG
+#ifdef SLOW_DEBUG
 			const GcType *gc = runtime::gcTypeOf(node);
 			for (nat i = 0; i < gc->count; i++)
 				if (offset == gc->offset[i])
@@ -375,7 +380,7 @@ namespace storm {
 			for (nat i = 0; i < gc->count; i++)
 				PLN(i << L": " << gc->offset[i]);
 
-			assert(false);
+			dbg_assert(false, L"");
 #endif
 		}
 
@@ -435,8 +440,9 @@ namespace storm {
 
 			// Remember the capture.
 			if (prod->repCapture && prod->repCapture->target && repStart <= repEnd) {
-				Str::Iter from = src->posIter(repStart);
-				Str::Iter to = src->posIter(repEnd);
+				Str::Iter from = src->posIter(repStart + srcPos.pos);
+				Str::Iter to = src->posIter(repEnd + srcPos.pos);
+
 				setValue(result, prod->repCapture->target, new (this) SStr(src->substr(from, to), srcPos + repStart));
 			}
 

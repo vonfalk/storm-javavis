@@ -31,7 +31,7 @@ namespace storm {
 		if (cpp)
 			cpp->replace(parent->cpp);
 		else
-			cpp = VTableCpp::copy(engine(), parent);
+			cpp = VTableCpp::copy(engine(), parent->cpp);
 		if (source)
 			source->set(cpp);
 

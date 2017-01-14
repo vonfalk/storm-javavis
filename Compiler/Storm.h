@@ -14,6 +14,11 @@
 // C-mode detection of debug mode.
 #include "Utils/Mode.h"
 
+#ifdef DEBUG
+// Slow but better debugging?
+//#define SLOW_DEBUG
+#endif
+
 // Use MPS.
 #define STORM_GC_MPS
 // Use Boehm GC.

@@ -452,6 +452,9 @@ namespace storm {
 		// We're on the correct thread. Compute the type!
 		assert((typeFlags & typeCpp) != typeCpp, L"C++ types should be given a GcType on creation!");
 
+		// Make sure everything is loaded.
+		forceLoad();
+
 		// Compute the GcType for us!
 		nat count = 0;
 		const GcType *superGc = null;
