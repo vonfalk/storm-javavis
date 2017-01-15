@@ -18,6 +18,12 @@ BEGIN_TEST(StrTest, Core) {
 	Str *p = toS(e, Char(nat(0x10030)));
 	w = new (e) Str(Char(nat(0x10030)), 2);
 	CHECK_EQ(toS(w), toS(*p * 2));
+
+	Str *l = new (e) Str(L"Hello World");
+	CHECK(l->startsWith(L"Hello"));
+	CHECK(!l->startsWith(L"Hello!"));
+	CHECK(l->endsWith(L"World"));
+	CHECK(!l->endsWith(L"World!"));
 } END_TEST
 
 BEGIN_TEST(StrBufTest, Core) {

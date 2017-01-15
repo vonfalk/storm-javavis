@@ -81,6 +81,12 @@ namespace storm {
 		Str *escape() const;
 		Str *escape(Char extra) const;
 
+		// Starts/ends with?
+		Bool STORM_FN startsWith(const Str *s) const;
+		Bool STORM_FN endsWith(const Str *s) const;
+		Bool startsWith(const wchar *s) const;
+		Bool endsWith(const wchar *s) const;
+
 		// Deep copy (nothing needs to be done really).
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 

@@ -347,6 +347,37 @@ namespace storm {
 		return to->toS();
 	}
 
+	Bool Str::startsWith(const Str *s) const {
+		return startsWith(s->c_str());
+	}
+
+	Bool Str::endsWith(const Str *s) const {
+		return endsWith(s->c_str());
+	}
+
+	Bool Str::startsWith(const wchar *s) const {
+		for (nat i = 0; s[i] != 0; i++) {
+			if (data->v[i] != s[i])
+				return false;
+		}
+
+		return true;
+	}
+
+	Bool Str::endsWith(const wchar *s) const {
+		nat sLen = wcslen(s);
+		if (sLen > charCount())
+			return false;
+		nat offset = charCount() - sLen;
+
+		for (nat i = 0; i < sLen; i++) {
+			if (data->v[offset + i] != s[i])
+				return false;
+		}
+
+		return true;
+	}
+
 	void Str::deepCopy(CloneEnv *env) {
 		// We don't have any mutable data we need to clone.
 	}
