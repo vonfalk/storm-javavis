@@ -32,7 +32,6 @@ BEGIN_TEST_(BasicSyntax, SimpleBS) {
 
 	CHECK_ERROR(runFn<Int>(L"test.bs-simple.forError", 10), DebugError);
 	CHECK_RUNS(runFn<void>(L"test.bs-simple.forScope"));
-	TODO(L"Check here!");
-	// CHECK_RUNS(runFn<void>(L"test.bs-simple.forScopeVal"));
+	CHECK_RUNS(runFn<void>(L"test.bs-simple.forScopeVal"));
 
 } END_TEST

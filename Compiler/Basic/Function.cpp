@@ -110,7 +110,7 @@ namespace storm {
 				state->returnValue(rval.v);
 			}
 
-			// if (!identifier().startsWith(L"lang.bs")) {
+			// if (!identifier()->startsWith(L"lang.bs")) {
 			// 	PLN(bodyExpr);
 			// 	PLN(identifier() << L": " << l);
 			// }

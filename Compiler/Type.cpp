@@ -15,7 +15,7 @@
 namespace storm {
 
 	const wchar *Type::CTOR = L"__init";
-	const wchar *Type::DTOR = L"__dtor";
+	const wchar *Type::DTOR = L"__destroy";
 
 
 	// Set 'type->type' to 'me' while forwarding 'name'. This has to be done before invoking the
