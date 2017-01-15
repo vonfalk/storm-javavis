@@ -71,7 +71,6 @@ namespace storm {
 				// Copy and offset all members of this value.
 				const GcType *src = vType.type->gcType();
 				for (nat j = 0; j < src->count; j++) {
-					PLN(L" offset " << s.current() + src->offset[j]);
 					if (to)
 						to->offset[pos] = s.current() + src->offset[j];
 					pos++;

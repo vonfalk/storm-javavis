@@ -100,12 +100,14 @@ namespace storm {
 		 * TODO: How does this fit with deepCopy?
 		 */
 		class Iter {
+			STORM_VALUE;
 		public:
 			// Pointing to the end.
 			Iter();
 
 			// Pointing to a specific element in 'owner'.
-			Iter(ArrayBase *owner, Nat index = 0);
+			Iter(ArrayBase *owner);
+			Iter(ArrayBase *owner, Nat index);
 
 			// Compare.
 			bool operator ==(const Iter &o) const;
@@ -113,7 +115,7 @@ namespace storm {
 
 			// Increase.
 			Iter &operator ++();
-			Iter operator ++(int);
+			Iter operator ++(int z);
 
 			// Raw get function.
 			void *CODECALL getRaw() const;

@@ -14,6 +14,7 @@ namespace storm {
 
 		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::signedNr; }
 
+	protected:
 		virtual Bool STORM_FN loadAll();
 	};
 

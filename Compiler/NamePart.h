@@ -98,7 +98,7 @@ namespace storm {
 		Array<Name *> *params;
 
 		// Add a parameter.
-		inline void STORM_FN push(Name *param) { params->push(param); }
+		inline void STORM_FN add(Name *param) { params->push(param); }
 
 		// Resolve.
 		virtual MAYBE(SimplePart *) find(const Scope &scope);

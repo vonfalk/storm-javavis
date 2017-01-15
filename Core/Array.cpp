@@ -162,7 +162,17 @@ namespace storm {
 		throw ArrayError(L"Index " + ::toS(n) + L" out of bounds (of " + ::toS(count()) + L").");
 	}
 
+	ArrayBase::Iter ArrayBase::beginRaw() {
+		return Iter(this, 0);
+	}
+
+	ArrayBase::Iter ArrayBase::endRaw() {
+		return Iter(this, count());
+	}
+
 	ArrayBase::Iter::Iter() : owner(0), index(0) {}
+
+	ArrayBase::Iter::Iter(ArrayBase *owner) : owner(owner), index(0) {}
 
 	ArrayBase::Iter::Iter(ArrayBase *owner, Nat index) : owner(owner), index(index) {}
 

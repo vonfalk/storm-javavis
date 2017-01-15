@@ -37,10 +37,10 @@ namespace storm {
 		add(inlinedFunction(engine, b, L"<", vv, fnPtr(engine, &numCmp<ifLess>)));
 		add(inlinedFunction(engine, b, L">", vv, fnPtr(engine, &numCmp<ifGreater>)));
 
-		add(inlinedFunction(engine, b, L"*++", r, fnPtr(engine, &numPostfixInc<Int>)));
-		add(inlinedFunction(engine, b, L"++*", r, fnPtr(engine, &numPrefixInc<Int>)));
-		add(inlinedFunction(engine, b, L"*--", r, fnPtr(engine, &numPostfixDec<Int>)));
-		add(inlinedFunction(engine, b, L"--*", r, fnPtr(engine, &numPrefixDec<Int>)));
+		add(inlinedFunction(engine, Value(this), L"*++", r, fnPtr(engine, &numPostfixInc<Int>)));
+		add(inlinedFunction(engine, Value(this), L"++*", r, fnPtr(engine, &numPrefixInc<Int>)));
+		add(inlinedFunction(engine, Value(this), L"*--", r, fnPtr(engine, &numPostfixDec<Int>)));
+		add(inlinedFunction(engine, Value(this), L"--*", r, fnPtr(engine, &numPrefixDec<Int>)));
 
 		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Int>)));
 		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Int>)));
@@ -94,10 +94,10 @@ namespace storm {
 		add(inlinedFunction(engine, b, L"<", vv, fnPtr(engine, &numCmp<ifBelow>)));
 		add(inlinedFunction(engine, b, L">", vv, fnPtr(engine, &numCmp<ifAbove>)));
 
-		add(inlinedFunction(engine, b, L"*++", r, fnPtr(engine, &numPostfixInc<Nat>)));
-		add(inlinedFunction(engine, b, L"++*", r, fnPtr(engine, &numPrefixInc<Nat>)));
-		add(inlinedFunction(engine, b, L"*--", r, fnPtr(engine, &numPostfixDec<Nat>)));
-		add(inlinedFunction(engine, b, L"--*", r, fnPtr(engine, &numPrefixDec<Nat>)));
+		add(inlinedFunction(engine, Value(this), L"*++", r, fnPtr(engine, &numPostfixInc<Nat>)));
+		add(inlinedFunction(engine, Value(this), L"++*", r, fnPtr(engine, &numPrefixInc<Nat>)));
+		add(inlinedFunction(engine, Value(this), L"*--", r, fnPtr(engine, &numPostfixDec<Nat>)));
+		add(inlinedFunction(engine, Value(this), L"--*", r, fnPtr(engine, &numPrefixDec<Nat>)));
 
 		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Nat>)));
 		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Nat>)));

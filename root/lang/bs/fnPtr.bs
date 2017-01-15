@@ -1,7 +1,7 @@
 use core:lang;
 
 SrcName fnPtrType(SrcName result, Array<SrcName> params) {
-	RecNamePart fn("Fn");
+	RecPart fn("Fn");
 	fn.add(result);
 	for (Nat i = 0; i < params.count; i++)
 		fn.add(params[i]);
@@ -9,6 +9,7 @@ SrcName fnPtrType(SrcName result, Array<SrcName> params) {
 	SrcName name;
 	name.add("core");
 	name.add(fn);
+
 	name;
 }
 

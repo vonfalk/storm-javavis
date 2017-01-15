@@ -1,5 +1,6 @@
 #pragma once
 #include "Named.h"
+#include "Syntax/SStr.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -14,6 +15,7 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR NamedThread(Str *name);
+		STORM_CTOR NamedThread(syntax::SStr *name);
 
 		// Create, and assign to a specific thread.
 		STORM_CTOR NamedThread(Str *name, Thread *thread);

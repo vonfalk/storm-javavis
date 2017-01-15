@@ -1,5 +1,6 @@
 #pragma once
 #include "Compiler/NamedThread.h"
+#include "Compiler/Template.h"
 #include "Function.h"
 
 namespace storm {
@@ -24,7 +25,7 @@ namespace storm {
 			void STORM_FN add(NamedThread *thread);
 
 			// Add a template of some kind.
-			// void STORM_FN add(Template *templ);
+			void STORM_FN add(Template *templ);
 
 			// Add either of the above types.
 			void STORM_FN add(TObject *obj);

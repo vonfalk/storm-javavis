@@ -181,7 +181,7 @@ namespace storm {
 			Int prio = 0;
 			try {
 				if (tok.skipIf(L"-")) {
-					prio = tok.next().toS()->toInt();
+					prio = -tok.next().toS()->toInt();
 				} else if (tok.skipIf(L"+")) {
 					prio = tok.next().toS()->toInt();
 				} else {

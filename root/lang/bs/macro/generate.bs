@@ -22,12 +22,12 @@ class Generate extends Template {
 	Scope scope;
 
 	// Create.
-	ctor(SyntaxEnv env, SStr name, SStr param, SFunctionBody body) {
+	ctor(Scope env, SStr name, SStr param, SFunctionBody body) {
 		init(name.v) {
 			fnName = name;
 			paramName = param;
 			body = body;
-			scope = env.scope;
+			scope = env;
 		}
 	}
 

@@ -26,17 +26,18 @@ namespace storm {
 			threads->push(t);
 		}
 
-		// void Content::add(Template *t) {
-		// 	Str *k = new (this) Str(t->name);
-		// 	if (templates->has(k)) {
-		// 		TemplateAdapter *&found = templates->get(k);
-		// 		found->add(t);
-		// 	} else {
-		// 		TemplateAdapter *adapter = new (this) TemplateAdapter(k);
-		// 		adapter->add(t);
-		// 		templates->put(k, adapter);
-		// 	}
-		// }
+		void Content::add(Template *t) {
+			// Str *k = new (this) Str(t->name);
+			// if (templates->has(k)) {
+			// 	TemplateAdapter *&found = templates->get(k);
+			// 	found->add(t);
+			// } else {
+			// 	TemplateAdapter *adapter = new (this) TemplateAdapter(k);
+			// 	adapter->add(t);
+			// 	templates->put(k, adapter);
+			// }
+			TODO(L"Implement me!");
+		}
 
 		void Content::add(TObject *o) {
 			if (Type *t = as<Type>(o))
@@ -45,8 +46,8 @@ namespace storm {
 				add(fn);
 			else if (NamedThread *nt = as<NamedThread>(o))
 				add(nt);
-			// else if (Template *t = as<Template>(o))
-			// 	add(t);
+			else if (Template *t = as<Template>(o))
+				add(t);
 			else
 				throw InternalError(L"add for Content does not expect " + ::toS(runtime::typeOf(o)->identifier()));
 		}

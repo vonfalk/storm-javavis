@@ -153,7 +153,12 @@ namespace storm {
 
 		try {
 			for (nat i = 0; i < params->count(); i++) {
-				v->push(scope.value(params->at(i), SrcPos()));
+				Name *n = params->at(i);
+				if (SrcName *s = as<SrcName>(n)) {
+					v->push(scope.value(s, s->pos));
+				} else {
+					v->push(scope.value(n, SrcPos()));
+				}
 			}
 		} catch (const Exception &) {
 			// Return null as per specification.

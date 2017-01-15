@@ -17,7 +17,7 @@ SrcName namePart(SrcPos pos) {
 	SrcName name(pos);
 	name.add("core");
 	name.add("lang");
-	name.add("RecNamePart");
+	name.add("RecPart");
 	name;
 }
 
@@ -36,7 +36,7 @@ Expr createTypePart(SrcPos pos, Block block, NamePart part) {
 			Expr created = createType(pos, b, Name(part[i].getType.path));
 			b.add(namedExpr(b, SStr("add", pos), bAccess, Actual(created)));
 		}
-	} else if (part as RecNamePart) {
+	} else if (part as RecPart) {
 		for (Nat i = 0; i < part.count; i++) {
 			Expr created = createType(pos, b, part[i]);
 			b.add(namedExpr(b, SStr("add", pos), bAccess, Actual(created)));

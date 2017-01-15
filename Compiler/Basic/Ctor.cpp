@@ -57,9 +57,7 @@ namespace storm {
 			if (!body)
 				return defaultParse();
 
-			TODO(L"Fix this!");
-			// return syntax::transformNode<CtorBody, BSCtor>(body, this);
-			return defaultParse();
+			return syntax::transformNode<CtorBody, BSCtor *>(body, this);
 		}
 
 		CtorBody *BSCtor::defaultParse() {
@@ -146,7 +144,7 @@ namespace storm {
 
 		Initializer::Initializer(syntax::SStr *name, Actuals *params) : name(name), params(params) {}
 
-		SuperCall::SuperCall(SrcPos pos, CtorBody *block, Actuals *params, Array<Initializer *>*init)
+		SuperCall::SuperCall(SrcPos pos, CtorBody *block, Actuals *params, Array<Initializer *> *init)
 			: Expr(pos) {
 
 			this->init(block, params);
@@ -408,12 +406,13 @@ namespace storm {
 
 				Array<code::Operand> *actuals = new (this) Array<code::Operand>();
 				actuals->reserve(values->params->count());
+				// We will prepare 'ptrA' later.
+				actuals->push(ptrA);
 				for (nat i = 1; i < values->params->count(); i++)
 					actuals->push(to->code(i - 1, s, ctor->params->at(i)));
 
 				*s->to << mov(ptrA, dest);
 				*s->to << add(ptrA, ptrConst(v->offset()));
-				actuals->at(0) = ptrA;
 
 				CodeResult *nothing = CREATE(CodeResult, this);
 				ctor->localCall(s, actuals, nothing, true);

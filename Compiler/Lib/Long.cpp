@@ -37,10 +37,10 @@ namespace storm {
 		add(inlinedFunction(engine, b, L"<", vv, fnPtr(engine, &numCmp<ifLess>)));
 		add(inlinedFunction(engine, b, L">", vv, fnPtr(engine, &numCmp<ifGreater>)));
 
-		add(inlinedFunction(engine, b, L"*++", r, fnPtr(engine, &numPostfixInc<Long>)));
-		add(inlinedFunction(engine, b, L"++*", r, fnPtr(engine, &numPrefixInc<Long>)));
-		add(inlinedFunction(engine, b, L"*--", r, fnPtr(engine, &numPostfixDec<Long>)));
-		add(inlinedFunction(engine, b, L"--*", r, fnPtr(engine, &numPrefixDec<Long>)));
+		add(inlinedFunction(engine, Value(this), L"*++", r, fnPtr(engine, &numPostfixInc<Long>)));
+		add(inlinedFunction(engine, Value(this), L"++*", r, fnPtr(engine, &numPrefixInc<Long>)));
+		add(inlinedFunction(engine, Value(this), L"*--", r, fnPtr(engine, &numPostfixDec<Long>)));
+		add(inlinedFunction(engine, Value(this), L"--*", r, fnPtr(engine, &numPrefixDec<Long>)));
 
 		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Long>)));
 		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Long>)));
@@ -94,10 +94,10 @@ namespace storm {
 		add(inlinedFunction(engine, b, L"<", vv, fnPtr(engine, &numCmp<ifBelow>)));
 		add(inlinedFunction(engine, b, L">", vv, fnPtr(engine, &numCmp<ifAbove>)));
 
-		add(inlinedFunction(engine, b, L"*++", r, fnPtr(engine, &numPostfixInc<Word>)));
-		add(inlinedFunction(engine, b, L"++*", r, fnPtr(engine, &numPrefixInc<Word>)));
-		add(inlinedFunction(engine, b, L"*--", r, fnPtr(engine, &numPostfixDec<Word>)));
-		add(inlinedFunction(engine, b, L"--*", r, fnPtr(engine, &numPrefixDec<Word>)));
+		add(inlinedFunction(engine, Value(this), L"*++", r, fnPtr(engine, &numPostfixInc<Word>)));
+		add(inlinedFunction(engine, Value(this), L"++*", r, fnPtr(engine, &numPrefixInc<Word>)));
+		add(inlinedFunction(engine, Value(this), L"*--", r, fnPtr(engine, &numPostfixDec<Word>)));
+		add(inlinedFunction(engine, Value(this), L"--*", r, fnPtr(engine, &numPrefixDec<Word>)));
 
 		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Word>)));
 		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Word>)));

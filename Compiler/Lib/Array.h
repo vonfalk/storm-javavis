@@ -40,6 +40,24 @@ namespace storm {
 		void loadValueFns();
 	};
 
+	/**
+	 * The array iterator type.
+	 */
+	class ArrayIterType : public Type {
+		STORM_CLASS;
+	public:
+		// Ctor.
+		ArrayIterType(Type *param);
+
+	protected:
+		// Lazy loading.
+		virtual Bool STORM_FN loadAll();
+
+	private:
+		// Content type.
+		Type *contents;
+	};
+
 	Bool STORM_FN isArray(Value v);
 	Value STORM_FN unwrapArray(Value v);
 	Value STORM_FN wrapArray(Value v);

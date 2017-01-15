@@ -2,7 +2,7 @@ use core:lang;
 
 // Implement support for Int->Int instead of Map<Int, Int>
 SrcName mapType(SrcName k, SrcName v) on Compiler {
-	RecNamePart map("Map");
+	RecPart map("Map");
 	map.add(k);
 	map.add(v);
 

@@ -102,7 +102,7 @@ namespace storm {
 			assert(typeFlags & typeClass, L"typeRawPtr has to be used with typeClass");
 		}
 
-		if (value()) {
+		if (value() && myGcType != null) {
 			myGcType->kind = GcType::tArray;
 		}
 
@@ -237,7 +237,6 @@ namespace storm {
 				useThread = null;
 			} else if (to != tObj) {
 				useThread = to->useThread;
-				assert(useThread, L"No thread on a threaded object!");
 			}
 			// Propagate to our children.
 			notifyThread(useThread);

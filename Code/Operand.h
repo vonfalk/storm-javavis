@@ -214,6 +214,7 @@ namespace code {
 	Operand STORM_FN byteRel(Reg reg, Offset offset);
 	Operand STORM_FN intRel(Reg reg, Offset offset);
 	Operand STORM_FN longRel(Reg reg, Offset offset);
+	Operand STORM_FN floatRel(Reg reg, Offset offset);
 	Operand STORM_FN ptrRel(Reg reg, Offset offset);
 	Operand STORM_FN xRel(Size size, Reg reg, Offset offset);
 
@@ -221,6 +222,7 @@ namespace code {
 	Operand STORM_FN byteRel(Var v, Offset offset);
 	Operand STORM_FN intRel(Var v, Offset offset);
 	Operand STORM_FN longRel(Var v, Offset offset);
+	Operand STORM_FN floatRel(Var v, Offset offset);
 	Operand STORM_FN ptrRel(Var v, Offset offset);
 	Operand STORM_FN xRel(Size size, Var v, Offset offset);
 }

@@ -5,7 +5,7 @@ SrcName arrayType(SrcName t) on Compiler {
 	SrcName name(t.pos);
 	name.add("core");
 
-	RecNamePart part("Array");
+	RecPart part("Array");
 	part.add(t);
 
 	name.add(part);

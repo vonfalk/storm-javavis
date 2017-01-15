@@ -65,7 +65,7 @@ namespace storm {
 	}
 
 	Bool ArrayType::loadAll() {
-		TODO(L"Add the iterator!");
+		Type *iter = new (this) ArrayIterType(contents);
 
 		if (param().isHeapObj())
 			loadClassFns();
@@ -81,6 +81,8 @@ namespace storm {
 		add(nativeFunction(e, ref, L"[]", valList(e, 2, t, natType), address(&ArrayBase::getRaw)));
 		add(nativeFunction(e, ref, L"last", valList(e, 1, t), address(&ArrayBase::lastRaw)));
 		add(nativeFunction(e, ref, L"first", valList(e, 1, t), address(&ArrayBase::firstRaw)));
+		add(nativeFunction(e, Value(iter), L"begin", valList(e, 1, t), address(&ArrayBase::beginRaw)));
+		add(nativeFunction(e, Value(iter), L"end", valList(e, 1, t), address(&ArrayBase::endRaw)));
 
 		return Type::loadAll();
 	}
@@ -134,4 +136,58 @@ namespace storm {
 		add(nativeFunction(e, t, L"push", valList(e, 2, t, ref), address(&pushValue)));
 		add(nativeFunction(e, Value(), L"insert", valList(e, 3, t, natType, ref), address(&ArrayBase::insertRaw)));
 	}
+
+	/**
+	 * Iterator.
+	 */
+
+	static void copyIterator(void *to, const ArrayBase::Iter *from) {
+		new (Place(to)) ArrayBase::Iter(*from);
+	}
+
+	static bool iteratorEq(ArrayBase::Iter &a, ArrayBase::Iter &b) {
+		return a == b;
+	}
+
+	static bool iteratorNeq(ArrayBase::Iter &a, ArrayBase::Iter &b) {
+		return a != b;
+	}
+
+	static void *iteratorGet(const ArrayBase::Iter &v) {
+		return v.getRaw();
+	}
+
+	static Nat iteratorGetKey(const ArrayBase::Iter &v) {
+		return v.getIndex();
+	}
+
+	ArrayIterType::ArrayIterType(Type *param)
+		: Type(new (param) Str(L"Iter"), new (param) Array<Value>(), typeValue),
+		  contents(param) {
+
+		setSuper(ArrayBase::Iter::stormType(engine));
+	}
+
+	Bool ArrayIterType::loadAll() {
+		Engine &e = engine;
+		Value v(this, false);
+		Value r(this, true);
+		Value param(contents, true);
+
+		Array<Value> *ref = valList(e, 1, r);
+		Array<Value> *refref = valList(e, 2, r, r);
+
+		Value vBool = Value(StormInfo<Bool>::type(e));
+		Value vNat = Value(StormInfo<Nat>::type(e));
+		add(nativeFunction(e, Value(), Type::CTOR, refref, address(&copyIterator)));
+		add(nativeFunction(e, vBool, L"==", refref, address(&iteratorEq)));
+		add(nativeFunction(e, vBool, L"!=", refref, address(&iteratorNeq)));
+		add(nativeFunction(e, r, L"++*", ref, address(&ArrayBase::Iter::preIncRaw)));
+		add(nativeFunction(e, v, L"*++", ref, address(&ArrayBase::Iter::postIncRaw)));
+		add(nativeFunction(e, vNat, L"k", ref, address(&iteratorGetKey)));
+		add(nativeFunction(e, param, L"v", ref, address(&iteratorGet)));
+
+		return Type::loadAll();
+	}
+
 }

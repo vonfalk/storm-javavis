@@ -153,7 +153,8 @@ namespace storm {
 	void Function::localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, Bool useLookup) {
 		initRefs();
 		if (params->count() != this->params->count())
-			throw InternalError(L"Parameter count mismatch when calling " + ::toS(identifier()));
+			throw InternalError(L"Parameter count mismatch when calling " + ::toS(identifier())
+								+ L". Got " + ::toS(params->count()) + L" parameter.");
 
 		InlineCode *inlined = as<InlineCode>(code);
 		// If we're not going to use the lookup, we may choose to inline sooner.

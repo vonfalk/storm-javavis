@@ -13,7 +13,7 @@
  */
 
 // If enabled, add and verify data after each object allocated in the Gc-heap in order to find
-// memory-corruption bugs.
+// memory-corruption bugs. NOTE: This check mode seems to contain a bug (crashes the stress tests).
 #define MPS_CHECK_MEMORY 0
 
 // Use debug pools in MPS (behaves slightly differently from the standard and may not trigger errors).

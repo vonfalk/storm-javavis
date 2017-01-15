@@ -3,7 +3,7 @@
 #include "OS/FnCall.h"
 
 template <class Res>
-Res runFn(const wchar *name) {
+inline Res runFn(const wchar *name) {
 	Engine &e = gEngine();
 	SimpleName *sName = parseSimpleName(e, name);
 	Function *f = as<Function>(e.scope().find(sName));
@@ -14,7 +14,7 @@ Res runFn(const wchar *name) {
 }
 
 template <>
-void runFn(const wchar *name) {
+inline void runFn(const wchar *name) {
 	Engine &e = gEngine();
 	SimpleName *sName = parseSimpleName(e, name);
 	Function *f = as<Function>(e.scope().find(sName));
@@ -24,7 +24,7 @@ void runFn(const wchar *name) {
 }
 
 template <class Res, class T>
-Res runFn(const wchar *name, T t) {
+inline Res runFn(const wchar *name, T t) {
 	Engine &e = gEngine();
 	SimpleName *sName = parseSimpleName(e, name);
 	sName->last()->params->push(Value(StormInfo<T>::type(e)));

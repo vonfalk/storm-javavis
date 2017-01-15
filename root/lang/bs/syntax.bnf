@@ -26,7 +26,7 @@ SName => s : "[A-Za-z_][A-Za-z0-9_]*"@ s;
 NamePart STypePart();
 STypePart => SimplePart(name) : SName name;
 STypePart => SimplePart(name) : SName name, "<", ">";
-STypePart => RecPart(name) : SName name, "<", SType -> push, (",", SType -> push, )* ">";
+STypePart => RecPart(name) : SName name, "<", SType -> add, (",", SType -> add, )* ">";
 
 // Type.
 SrcName SType();
@@ -238,8 +238,7 @@ SAtom => accessExpr(block, lhs, par) : SAtom(block) lhs, "\[", SExpr(block) par,
 SAtom => arrayInit(block, t, list) : SType t, ":", "\[", SArrayInitList(block) list, "\]";
 SAtom => ArrayInit(pos, block, list) : "\[", SArrayInitList(block) list, "\]";
 SAtom[20] => FnPtr(block, name, params) : "&", SType name, SFnTypes params;
-SAtom[20] => strongFnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name, SFnTypes params;
-SAtom[20] => weakFnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "->", SName name, SFnTypes params;
+SAtom[20] => FnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name, SFnTypes params;
 SAtom => unit(block, value, unit) : SConst value, SUnit unit;
 
 // Temporary, to turn a value of type T into Maybe<T>, this should be done automatically in the future.

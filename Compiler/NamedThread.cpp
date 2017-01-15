@@ -9,6 +9,10 @@ namespace storm {
 		myThread = new (this) Thread();
 	}
 
+	NamedThread::NamedThread(syntax::SStr *name) : Named(name->v) {
+		myThread = new (this) Thread();
+	}
+
 	NamedThread::NamedThread(Str *name, Thread *thread) : Named(name), myThread(thread) {}
 
 	code::Ref NamedThread::ref() {

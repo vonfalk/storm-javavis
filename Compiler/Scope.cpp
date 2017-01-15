@@ -97,8 +97,9 @@ namespace storm {
 		}
 
 		Type *t = as<Type>(find(in, name));
-		if (!t)
+		if (!t) {
 			throw SyntaxError(pos, ::toS(name) + L" can not be resolved to a type.");
+		}
 
 		return Value(t);
 	}

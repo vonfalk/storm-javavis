@@ -3,7 +3,7 @@ use core:asm;
 
 // Implement support for Foo? instead of Maybe<Foo>
 SrcName maybeType(SrcName t) on Compiler {
-	RecNamePart maybe("Maybe");
+	RecPart maybe("Maybe");
 	maybe.add(t);
 
 	SrcName name;

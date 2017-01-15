@@ -344,6 +344,10 @@ namespace code {
 		return xRel(Size::sLong, reg, offset);
 	}
 
+	Operand floatRel(Reg reg, Offset offset) {
+		return xRel(Size::sFloat, reg, offset);
+	}
+
 	Operand ptrRel(Reg reg, Offset offset) {
 		return xRel(Size::sPtr, reg, offset);
 	}
@@ -362,6 +366,10 @@ namespace code {
 
 	Operand longRel(Var v, Offset offset) {
 		return xRel(Size::sLong, v, offset);
+	}
+
+	Operand floatRel(Var v, Offset offset) {
+		return xRel(Size::sFloat, v, offset);
 	}
 
 	Operand ptrRel(Var v, Offset offset) {
