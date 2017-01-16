@@ -58,16 +58,6 @@ Int testValReturn() {
 	v.get;
 }
 
-// What happens when a class contains a value?
-class Container {
-	DbgVal v;
-}
-
-Int testContainVal() {
-	Container c = Container();
-	c.v.get;
-}
-
 // Declare a value!
 value Pt2 {
 	Int x;

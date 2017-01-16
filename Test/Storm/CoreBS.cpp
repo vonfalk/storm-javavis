@@ -53,30 +53,27 @@ BEGIN_TEST(InheritanceTest, BS) {
  * Values.
  */
 
-BEGIN_TEST_(ValueTest, BS) {
+BEGIN_TEST(ValueTest, BS) {
 	using storm::debug::DbgVal;
 	// Values.
 	DbgVal::clear();
-	// CHECK_EQ(runFn<Int>(L"test.bs.testValue"), 10);
-	// CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn<Int>(L"test.bs.testDefInit"), 10);
-	// CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn<Int>(L"test.bs.testValAssign"), 20);
-	// CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn<Int>(L"test.bs.testValCopy"), 20);
-	// CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn<Int>(L"test.bs.testValCtor"), 7);
-	// CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn<Int>(L"test.bs.testValParam"), 16);
-	// CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn<Int>(L"test.bs.testValReturn"), 22);
-	// CHECK(DbgVal::clear());
+	CHECK_EQ(runFn<Int>(L"test.bs.testValue"), 10);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn<Int>(L"test.bs.testDefInit"), 10);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn<Int>(L"test.bs.testValAssign"), 20);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn<Int>(L"test.bs.testValCopy"), 20);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn<Int>(L"test.bs.testValCtor"), 7);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn<Int>(L"test.bs.testValParam"), 16);
+	CHECK(DbgVal::clear());
+	CHECK_EQ(runFn<Int>(L"test.bs.testValReturn"), 22);
+	CHECK(DbgVal::clear());
 	CHECK_EQ(runFn<DbgVal>(L"test.bs.createVal", 20), DbgVal(20));
 	CHECK(DbgVal::clear());
-	// CHECK_EQ((runFn<Int, DbgVal>(L"test.bs.asVal", DbgVal(11))), 13);
-	// CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn<Int>(L"test.bs.testContainVal"), 10);
-	// CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn<Int>(L"test.bs.testContainVal"), 10);
-	// CHECK(DbgVal::clear());
+	CHECK_EQ((runFn<Int, DbgVal>(L"test.bs.asVal", DbgVal(11))), 13);
+	CHECK(DbgVal::clear());
+	// TODO: See if we can test so that destructors are executed from within classes/actors.
 } END_TEST
