@@ -647,19 +647,22 @@ namespace code {
 	}
 
 	void Listing::putBlock(StrBuf &to, Nat block) const {
-		to << L"Block " << block << L":\n";
-		storm::Indent z(&to);
+		to << L"Block " << block << L" {\n";
+		{
+			storm::Indent z(&to);
 
-		Nat blockId = findBlock(block);
-		IBlock &b = blocks->at(blockId);
-		for (nat i = 0; i < b.parts->count(); i++) {
-			putPart(to, b.parts->at(i), i != 0);
+			Nat blockId = findBlock(block);
+			IBlock &b = blocks->at(blockId);
+			for (nat i = 0; i < b.parts->count(); i++) {
+				putPart(to, b.parts->at(i), i != 0);
+			}
 		}
+		to << L"}\n";
 	}
 
 	void Listing::putPart(StrBuf &to, Nat part, Bool header) const {
 		if (header) {
-			to << L"--- Part " << part << L" ---\n";
+			to << L"Part " << part << L":\n";
 		}
 
 		IPart &p = parts->at(part);
