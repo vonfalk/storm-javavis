@@ -88,6 +88,8 @@ namespace storm {
 			const Value &match = c->at(i);
 			const Value &ours = params->at(i);
 
+			if (match == Value() && ours != Value())
+				return -1;
 			if (!match.matches(ours, candidate->flags))
 				return -1;
 			if (ours.type && match.type)
