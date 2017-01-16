@@ -417,7 +417,7 @@ namespace code {
 	}
 
 	void Listing::moveParam(Var v, Nat to) {
-		if (isParam(v))
+		if (!isParam(v))
 			return;
 
 		Nat pos = 0;
