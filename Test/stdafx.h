@@ -41,6 +41,8 @@ SUITE(Code, 6);
 SUITE(Storm, 7);
 // Simple tests of Basic Storm
 SUITE(SimpleBS, 8);
+// More heavy tests of Basic Storm
+SUITE_(BS, 9);
 
 // Stress tests (takes time).
 SUITEX(Stress, 100);

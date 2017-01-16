@@ -2,7 +2,7 @@
 #include "Fn.h"
 #include "Compiler/Exception.h"
 
-BEGIN_TEST_(BasicSyntax, SimpleBS) {
+BEGIN_TEST(BasicSyntax, SimpleBS) {
 	Engine &e = gEngine();
 
 	CHECK_RUNS(runFn<void>(L"test.bs-simple.voidFn"));

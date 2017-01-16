@@ -399,3 +399,8 @@ inline bool isGcPtr(Auto<TypeRef> t) {
 		return false;
 	}
 }
+
+inline Auto<TypeRef> makeConst(Auto<TypeRef> v) {
+	v->constType = true;
+	return v;
+}

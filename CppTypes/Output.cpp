@@ -392,6 +392,8 @@ static void genPtr(wostream &to, Function &fn) {
 		to << L">)";
 	} else if (name == Function::dtor) {
 		to << L"address(&destroy<" << *findType(fn.params[0].borrow()) << L">)";
+	} else if (fn.wrapAssign) {
+		to << L"address(&assign<" << *findType(fn.params[0].borrow()) << L">)";
 	} else if (fn.isMember) {
 		to << L"address<" << fn.result << L" (CODECALL " << *findType(fn.params[0].borrow()) << L"::*)(";
 		for (nat i = 1; i < fn.params.size(); i++) {

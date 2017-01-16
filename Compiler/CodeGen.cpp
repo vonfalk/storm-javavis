@@ -45,11 +45,13 @@ namespace storm {
 
 	VarInfo CodeGen::createVar(Value type, code::Block in) {
 		code::FreeOpt opt = code::freeOnBoth;
-		code::Operand dtor = type.destructor();
-		bool needsPart = type.isValue();
+		code::Operand dtor;
+		bool needsPart = type.isValue() && !type.ref;
 
-		if (needsPart)
+		if (needsPart) {
+			dtor = type.destructor();
 			opt = opt | code::freePtr;
+		}
 
 		return VarInfo(to->createVar(in, type.size(), dtor, opt), needsPart);
 	}

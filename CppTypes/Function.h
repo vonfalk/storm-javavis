@@ -42,6 +42,9 @@ public:
 	// Leading 'virtual' modifier?
 	bool isVirtual;
 
+	// This is an assignment function that should be wrapped.
+	bool wrapAssign;
+
 	// Run on a specific thread?
 	CppName thread;
 

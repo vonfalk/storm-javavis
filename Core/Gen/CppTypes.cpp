@@ -72,6 +72,12 @@ namespace storm {
 			new (Place(mem))T(p, q, r, s, u, v);
 		}
 
+		// Wrap an assignment operator call.
+		template <class T>
+		static T &assign(T &to, const T &from) {
+			return to = from;
+		}
+
 		// Wrap a destructor call.
 		template <class T>
 		static void destroy(T *obj) {

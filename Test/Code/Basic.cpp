@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Code/Listing.h"
 #include "Code/Binary.h"
+#include "Code/Exception.h"
 
 using namespace code;
 
@@ -70,6 +71,33 @@ BEGIN_TEST(CodeScopeTest2, CodeBasic) {
 	*l << epilog();
 
 	CHECK_RUNS(new (e) Binary(arena, l));
+
+} END_TEST
+
+BEGIN_TEST(CodeScopeTest3, CodeBasic) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+
+	Block b1 = l->createBlock(l->root());
+	Part p2 = l->createPart(b1);
+
+	Var v0 = l->createVar(p2, Size::sLong);
+
+	CHECK_EQ(l->parent(v0), p2);
+	CHECK_EQ(l->parent(b1), l->root());
+	CHECK_EQ(l->parent(p2), l->root());
+
+	*l << prolog();
+	*l << begin(b1);
+	*l << lea(ptrA, v0);
+	*l << end(b1);
+	*l << begin(p2); // Should not be allowed!
+	*l << lea(ptrA, v0);
+	*l << epilog();
+
+	CHECK_ERROR(new (e) Binary(arena, l), code::BlockBeginError);
 
 } END_TEST
 
