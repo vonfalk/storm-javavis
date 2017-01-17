@@ -44,8 +44,10 @@ namespace storm {
 
 	void SetBase::clear() {
 		size = 0;
+		lastFree = 0;
 		info = null;
 		key = null;
+		watch = null;
 	}
 
 	void SetBase::shrink() {
@@ -247,8 +249,11 @@ namespace storm {
 		assert(isPowerOfTwo(cap));
 
 		size = 0;
+		lastFree = 0;
 		info = runtime::allocArray<Info>(engine(), &infoType, cap);
 		key = runtime::allocArray<byte>(engine(), keyT.gcArrayType, cap);
+		if (watch)
+			watch->clear();
 
 		for (nat i = 0; i < cap; i++)
 			info->v[i].status = Info::free;

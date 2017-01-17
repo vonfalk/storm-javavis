@@ -44,7 +44,7 @@ SUITE(SimpleBS, 8);
 // More heavy tests of Basic Storm
 SUITE_(BS, 9);
 
-// Stress tests (takes time).
+// Stress tests (takes about 30s, too slow to be included always).
 SUITEX(Stress, 100);
 
 
