@@ -149,6 +149,11 @@ namespace storm {
 		typedef void (*DtorFn)(void *);
 		inline DtorFn rawDestructor() { return rawDtor; }
 
+	protected:
+		// Use the 'gcType' of the super class. Use only if no additional fields are introduced into
+		// this class.
+		void useSuperGcType();
+
 	private:
 		// Special constructor for creating the first type.
 		Type(Engine &e, TypeFlags flags, Size size, GcType *gcType);
@@ -257,5 +262,4 @@ namespace storm {
 
 	// Allocate an instance of 'type' (slow).
 	RootObject *alloc(Type *type);
-
 }

@@ -102,6 +102,9 @@ namespace storm {
 			assert(typeFlags & typeClass, L"typeRawPtr has to be used with typeClass");
 		}
 
+		// Generally, we want this on types.
+		flags |= namedMatchNoInheritance;
+
 		if (myGcType) {
 			if (value())
 				myGcType->kind = GcType::tArray;
@@ -301,7 +304,7 @@ namespace storm {
 			if (wcscmp(f->name->c_str(), CTOR) != 0)
 				vtableFnAdded(f);
 
-			if (wcscmp(f->name->c_str(), DTOR) != 0)
+			if (wcscmp(f->name->c_str(), DTOR) == 0)
 				updateDtor(f);
 
 			if ((value() || rawPtr()) && tHandle)
@@ -482,6 +485,19 @@ namespace storm {
 
 		if (!value() && myGcType)
 			myGcType->finalizer = &stormDtor;
+	}
+
+	void Type::useSuperGcType() {
+		if (myGcType)
+			return;
+
+		Type *s = super();
+		assert(s, L"Can not use 'useSuperGcType' without a super class!");
+
+		// DebugBreak();
+		mySize = s->size();
+		myGcType = engine.gc.allocType(s->gcType());
+		myGcType->type = this;
 	}
 
 	const GcType *Type::gcType() {
