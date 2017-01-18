@@ -2,7 +2,7 @@ use core:lang;
 
 // Transform expressions of the type '10 s' to s(10).
 Expr unit(Block block, Expr value, SrcName unit) {
-	namedExpr(block, unit, Actual(value));
+	namedExpr(block, unit, Actuals(value));
 }
 
 // Create unit expressions.

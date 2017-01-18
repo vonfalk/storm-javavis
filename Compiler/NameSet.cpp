@@ -102,6 +102,13 @@ namespace storm {
 		overloads = new (this) Map<Str *, NameOverloads *>();
 	}
 
+	void NameSet::compile() {
+		forceLoad();
+
+		for (Iter i = begin(), e = end(); i != e; ++i)
+			i.v()->compile();
+	}
+
 	void NameSet::watchAdd(Named *notifyTo) {
 		if (!notify)
 			notify = new (this) WeakSet<Named>();

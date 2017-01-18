@@ -236,12 +236,18 @@ namespace storm {
 
 		*l << prolog();
 
-		CodeResult *result = new (this) CodeResult(owner->result, l->root());
-		code(state, params, result);
+		if (owner->result == Value()) {
+			CodeResult *result = new (this) CodeResult();
+			code(state, params, result);
+			state->returnValue(code::Var());
+		} else {
+			CodeResult *result = new (this) CodeResult(owner->result, l->root());
+			code(state, params, result);
 
-		VarInfo v = result->location(state);
-		v.created(state);
-		state->returnValue(v.v);
+			VarInfo v = result->location(state);
+			v.created(state);
+			state->returnValue(v.v);
+		}
 
 		return state;
 	}

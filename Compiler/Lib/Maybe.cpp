@@ -200,7 +200,7 @@ namespace storm {
 			return null;
 
 
-		Array<Value> *rv = new (this) Array<Value>(2, o);
+		Array<Value> *rv = new (this) Array<Value>(2, o.asRef(false));
 		rv->at(0) = Value(this).asRef(true);
 		Function *f = inlinedFunction(engine, Value(), CTOR, rv, fnPtr(engine, &copyMaybe));
 		f->flags |= namedAutoCast;

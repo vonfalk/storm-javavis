@@ -72,12 +72,4 @@ namespace storm {
 		}
 	}
 
-	void numToFloat(InlineParams p) {
-		if (!p.result->needed())
-			return;
-
-		*p.state->to << fild(p.params->at(0));
-		*p.state->to << fstp(p.result->location(p.state).v);
-	}
-
 }

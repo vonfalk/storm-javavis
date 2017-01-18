@@ -71,7 +71,7 @@ class ConcatExpr extends Expr {
 		} else if (appendToS(e)) {
 		} else {
 			StrBuf msg;
-			msg << "Can not convert" << e.result << " to string by toing 'x.toS'.";
+			msg << "Can not convert " << e.result << " to string by calling 'toS'.";
 			throwSyntaxError(pos, msg.toS);
 		}
 	}
@@ -81,7 +81,7 @@ class ConcatExpr extends Expr {
 		Value v = rootScope.value(strBufType);
 		if (t = v.type) {
 			Scope findIn = outer.scope.child(t);
-			var part = SimplePart("add", Value:[v, e.result.type]);
+			var part = SimplePart("<<", Value:[v, e.result.type]);
 			Named? member = findIn.find(Name(part));
 			if (member as Function) {
 				Actuals params;

@@ -9,6 +9,10 @@
 namespace storm {
 	using namespace code;
 
+	static float CODECALL longToFloat(Long l) {
+		return float(l);
+	}
+
 	Type *createLong(Str *name, Size size, GcType *type) {
 		return new (name) LongType(name, type);
 	}
@@ -56,7 +60,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), L"nat", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Byte>::type(engine)), L"byte", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), L"word", v, fnPtr(engine, &icast)));
-		add(inlinedFunction(engine, Value(StormInfo<Float>::type(engine)), L"float", v, fnPtr(engine, &numToFloat)));
+		add(nativeFunction(engine, Value(StormInfo<Float>::type(engine)), L"float", v, address(&longToFloat)));
 
 		add(nativeFunction(engine, Value(this), L"hash", v, &longHash));
 		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Long>)));

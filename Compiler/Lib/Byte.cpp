@@ -9,6 +9,10 @@
 namespace storm {
 	using namespace code;
 
+	static float CODECALL byteToFloat(Byte b) {
+		return float(b);
+	}
+
 	Type *createByte(Str *name, Size size, GcType *type) {
 		return new (name) ByteType(name, type);
 	}
@@ -58,7 +62,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(StormInfo<Byte>::type(engine)), L"byte", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Long>::type(engine)), L"long", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), L"word", v, fnPtr(engine, &icast)));
-		add(inlinedFunction(engine, Value(StormInfo<Float>::type(engine)), L"float", v, fnPtr(engine, &numToFloat)));
+		add(nativeFunction(engine, Value(StormInfo<Float>::type(engine)), L"float", v, address(&byteToFloat)));
 
 		add(nativeFunction(engine, Value(this), L"hash", v, &byteHash));
 		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Byte>)));

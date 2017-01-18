@@ -2,6 +2,8 @@
 #include "Fn.h"
 #include "Compiler/Debug.h"
 #include "Compiler/Exception.h"
+#include "Compiler/Package.h"
+#include "Core/Timing.h"
 
 using storm::debug::DbgVal;
 using storm::debug::Dbg;
@@ -126,6 +128,30 @@ BEGIN_TEST(AutocastTest, BS) {
 
 
 /**
+ * Maybe.
+ */
+
+BEGIN_TEST(MaybeTest, BS) {
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 0), 0);
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 1), 2);
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 2), 6);
+
+	CHECK_EQ(runFn<Int>(L"test.bs.assignMaybe"), 1);
+
+	CHECK_EQ(::toS(runFn<Str *>(L"test.bs.maybeToS", 0)), L"null");
+	CHECK_EQ(::toS(runFn<Str *>(L"test.bs.maybeToS", 1)), L"ok");
+
+	CHECK_EQ(runFn<Int>(L"test.bs.maybeInheritance"), 10);
+
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv", 0), 10);
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv", 1), 1);
+
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv2", 0), 10);
+	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv2", 1), 1);
+} END_TEST
+
+
+/**
  * Constructors.
  */
 
@@ -140,3 +166,52 @@ BEGIN_TEST(StormCtorTest, BS) {
 	CHECK_EQ(runFn<Int>(L"test.bs.testDefaultCtor"), 60);
 } END_TEST
 
+
+/**
+ * Scoping.
+ */
+
+BEGIN_TEST(ScopeTest, BS) {
+	CHECK_EQ(runFn<Int>(L"test.bs.testScopeCls"), 10);
+	CHECK_EQ(runFn<Int>(L"test.bs.testClassMember"), 20);
+	CHECK_EQ(runFn<Int>(L"test.bs.testClassNonmember"), 20);
+} END_TEST
+
+
+/**
+ * Units.
+ */
+
+BEGIN_TEST(UnitTest, BS) {
+	CHECK_EQ(runFn<Duration>(L"test.bs.testUnit"), ms(1) + s(1));
+} END_TEST
+
+
+/**
+ * Compile all code and see what happens.
+ */
+
+BEGIN_TEST(CompileTest, BS) {
+	Engine &e = gEngine();
+
+	TODO(L"Enable me!");
+	// Compile all code in core and lang. Not everything in test is supposed to compile cleanly.
+	// CHECK_RUNS(e.package(L"core")->compile());
+	// CHECK_RUNS(e.package(L"lang")->compile());
+} END_TEST
+
+/**
+ * Heavy tests.
+ */
+
+// Test the REPL of BS programmatically.
+BEGIN_TESTX(ReplTest, BS) {
+	runFn<void>(L"test.bs.replTest");
+} END_TEST
+
+
+BEGIN_TESTX(BFTest, BS) {
+	// Takes a long time to run. Mostly here for testing.
+	runFn<Int>(L"test.bf.separateBf");
+	runFn<Int>(L"test.bf.inlineBf");
+} END_TEST

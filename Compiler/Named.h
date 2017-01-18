@@ -64,7 +64,7 @@ namespace storm {
 		virtual void lateInit();
 
 		// Get a path to this Named.
-		SimpleName *path() const;
+		SimpleName *STORM_FN path() const;
 
 		// Get an unique human-readable identifier for this named object.
 		Str *STORM_FN identifier() const;
@@ -74,6 +74,9 @@ namespace storm {
 
 		// Receive notifications from NameSet objects. (TODO: Move into separate class?)
 		virtual void STORM_FN notifyAdded(NameSet *to, Named *added);
+
+		// Force compilation of this named (and any sub-objects contained in here).
+		virtual void STORM_FN compile();
 
 		// String representation.
 		virtual void STORM_FN toS(StrBuf *buf) const;

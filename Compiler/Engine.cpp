@@ -348,6 +348,11 @@ namespace storm {
 		return now;
 	}
 
+	Package *Engine::package(const wchar *name) {
+		SimpleName *n = parseSimpleName(*this, name);
+		return package(n, false);
+	}
+
 	NameSet *Engine::nameSet(SimpleName *name, bool create) {
 		NameSet *now = package();
 

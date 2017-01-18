@@ -166,50 +166,50 @@
 // 	CHECK_ERROR(runFn<Str *>(L"test.bs.strConcatError"), SyntaxError);
 // } END_TEST
 
-BEGIN_TEST(MaybeTest) {
-	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 0), 0);
-	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 1), 2);
-	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 2), 6);
+// BEGIN_TEST(MaybeTest) {
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 0), 0);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 1), 2);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 2), 6);
 
-	CHECK_EQ(runFn<Int>(L"test.bs.assignMaybe"), 1);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.assignMaybe"), 1);
 
-	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 0), CREATE(Str, *gEngine, L"null"));
-	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 1), CREATE(Str, *gEngine, L"ok"));
+// 	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 0), CREATE(Str, *gEngine, L"null"));
+// 	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.maybeToS", 1), CREATE(Str, *gEngine, L"ok"));
 
-	CHECK_EQ(runFn<Int>(L"test.bs.maybeInheritance"), 10);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.maybeInheritance"), 10);
 
-	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv", 0), 10);
-	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv", 1), 1);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv", 0), 10);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv", 1), 1);
 
-	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv2", 0), 10);
-	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv2", 1), 1);
-} END_TEST
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv2", 0), 10);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testMaybeInv2", 1), 1);
+// } END_TEST
 
-BEGIN_TEST(ScopeTest) {
-	CHECK_EQ(runFn<Int>(L"test.bs.testScopeCls"), 10);
-	CHECK_EQ(runFn<Int>(L"test.bs.testClassMember"), 20);
-	CHECK_EQ(runFn<Int>(L"test.bs.testClassNonmember"), 20);
-} END_TEST
+// BEGIN_TEST(ScopeTest) {
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testScopeCls"), 10);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testClassMember"), 20);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testClassNonmember"), 20);
+// } END_TEST
 
-BEGIN_TEST(CompileTest) {
-	// Compile all code in core and lang. Not everything in test is supposed to compile cleanly.
-	CHECK_RUNS(gEngine->package(L"core")->compile());
-	CHECK_RUNS(gEngine->package(L"lang")->compile());
-} END_TEST
+// BEGIN_TEST(CompileTest) {
+// 	// Compile all code in core and lang. Not everything in test is supposed to compile cleanly.
+// 	CHECK_RUNS(gEngine->package(L"core")->compile());
+// 	CHECK_RUNS(gEngine->package(L"lang")->compile());
+// } END_TEST
 
-BEGIN_TEST(UnitTest) {
-	CHECK_EQ(runFn<Duration>(L"test.bs.testUnit"), ms(1) + s(1));
-} END_TEST
+// BEGIN_TEST(UnitTest) {
+// 	CHECK_EQ(runFn<Duration>(L"test.bs.testUnit"), ms(1) + s(1));
+// } END_TEST
 
-// Test the REPL of BS programmatically.
-BEGIN_TESTX(ReplTest) {
-	runFn<void>(L"test.bs.replTest");
-} END_TEST
+// // Test the REPL of BS programmatically.
+// BEGIN_TESTX(ReplTest) {
+// 	runFn<void>(L"test.bs.replTest");
+// } END_TEST
 
 
-BEGIN_TESTX(BFTest) {
-	// Takes a long time to run. Mostly here for testing.
-	runFn<Int>(L"test.bf.separateBf");
-	runFn<Int>(L"test.bf.inlineBf");
+// BEGIN_TESTX(BFTest) {
+// 	// Takes a long time to run. Mostly here for testing.
+// 	runFn<Int>(L"test.bf.separateBf");
+// 	runFn<Int>(L"test.bf.inlineBf");
 
-} END_TEST
+// } END_TEST

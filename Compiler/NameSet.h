@@ -103,6 +103,9 @@ namespace storm {
 		// Late initialization.
 		virtual void lateInit();
 
+		// Force compilation.
+		virtual void STORM_FN compile();
+
 		// Iterator. TODO: How to do wrt threading?
 		class Iter {
 			STORM_VALUE;

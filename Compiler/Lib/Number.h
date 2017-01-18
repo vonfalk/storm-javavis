@@ -177,6 +177,4 @@ namespace storm {
 		*p.state->to << mov(tRel(T(), code::ptrA), tConst(T(0)));
 	}
 
-	void numToFloat(InlineParams p);
-
 }
