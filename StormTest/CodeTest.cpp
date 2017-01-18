@@ -62,17 +62,17 @@
 // 	CHECK_EQ(runFn<Int>(L"test.bs.testOverload", 0), 2);
 // } END_TEST
 
-BEGIN_TEST(AutocastTest) {
-	// Check auto-casting from int to nat.
-	CHECK_EQ(runFn<Int>(L"test.bs.castToNat"), 20);
-	CHECK_EQ(runFn<Int>(L"test.bs.castToMaybe"), 20);
-	CHECK_EQ(runFn<Int>(L"test.bs.downcastMaybe"), 20);
-	CHECK_RUNS(runFn<Int>(L"test.bs.ifCast"));
-	CHECK_EQ(runFn<Int>(L"test.bs.autoCast", 5), 10);
-	CHECK_EQ(runFn<Float>(L"test.bs.promoteCtor"), 2);
-	CHECK_EQ(runFn<Float>(L"test.bs.promoteInit"), 8);
-	CHECK_EQ(runFn<Nat>(L"test.bs.initNat"), 20);
-} END_TEST
+// BEGIN_TEST(AutocastTest) {
+// 	// Check auto-casting from int to nat.
+// 	CHECK_EQ(runFn<Int>(L"test.bs.castToNat"), 20);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.castToMaybe"), 20);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.downcastMaybe"), 20);
+// 	CHECK_RUNS(runFn<Int>(L"test.bs.ifCast"));
+// 	CHECK_EQ(runFn<Int>(L"test.bs.autoCast", 5), 10);
+// 	CHECK_EQ(runFn<Float>(L"test.bs.promoteCtor"), 2);
+// 	CHECK_EQ(runFn<Float>(L"test.bs.promoteInit"), 8);
+// 	CHECK_EQ(runFn<Nat>(L"test.bs.initNat"), 20);
+// } END_TEST
 
 // BEGIN_TEST(InheritanceTest) {
 // 	// Some inheritance testing.

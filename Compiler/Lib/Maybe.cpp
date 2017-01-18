@@ -159,7 +159,7 @@ namespace storm {
 			add(nativeFunction(e, Value(), L"deepCopy", clone, &maybeClone));
 		}
 
-		// Create copy ctors for derived versions of Maybe.
+		// Create copy ctors for derived versions of Maybe<T> and T.
 		add(new (e) TemplateFn(new (e) Str(CTOR), fnPtr(e, &MaybeType::createCopy, this)));
 
 		// Create assignment functions for derived versions of Maybe.
@@ -191,10 +191,11 @@ namespace storm {
 			return null;
 
 		Value o = part->params->at(1);
-		if (!isMaybe(o))
-			return null;
 
-		Value other = unwrapMaybe(o);
+		Value other = o;
+		if (isMaybe(o))
+			other = unwrapMaybe(o);
+
 		if (!param().canStore(other))
 			return null;
 

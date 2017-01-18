@@ -31,7 +31,7 @@ namespace storm {
 			return true;
 		}
 
-		// Find a cast ctor. (borrowed ptr).
+		// Find a cast ctor.
 		Function *castCtor(Value from, Value to) {
 			if (!to.type)
 				return null;
