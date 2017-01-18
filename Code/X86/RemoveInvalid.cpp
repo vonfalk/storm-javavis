@@ -443,7 +443,7 @@ namespace code {
 
 			Nat size = roundUp(src.size().size32(), Nat(4));
 			for (nat i = 0; i < size; i += 4) {
-				*dest << push(offset(src, Offset(size - i)));
+				*dest << push(offset(src, Offset(size - i - 4)));
 			}
 		}
 

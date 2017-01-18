@@ -49,6 +49,30 @@ BEGIN_TEST(Param64, Code) {
 
 } END_TEST
 
+static Long longValue = 0;
+static void CODECALL longFn(Long a) {
+	longValue = a;
+}
+
+BEGIN_TEST(Call64, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+
+	Var v = l->createLongParam();
+
+	*l << prolog();
+	*l << fnParam(v);
+	*l << fnCall(arena->external(L"longFn", &longFn), valVoid());
+	*l << epilog();
+	*l << ret(valVoid());
+
+	Binary *b = new (e) Binary(arena, l);
+	callFn(b->address(), Long(0x123456789A));
+	CHECK_EQ(longValue, 0x123456789A);
+} END_TEST
+
 BEGIN_TEST(Sub64, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
