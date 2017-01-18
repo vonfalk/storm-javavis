@@ -2,6 +2,7 @@
 #include "Class.h"
 #include "Compiler/Exception.h"
 #include "Compiler/TypeCtor.h"
+#include "Compiler/TypeDtor.h"
 #include "Function.h"
 #include "Ctor.h"
 
@@ -99,9 +100,12 @@ namespace storm {
 				add(z);
 			}
 
-			// add(new (engine) TypeDefaultDtor(this));
+			if (needsDestructor(this))
+				add(new (engine) TypeDefaultDtor(this));
+
 			if (!hasCtor)
 				add(classDefaultCtor(this));
+
 			if (!hasCopyCtor && runOn().state == RunOn::any)
 				add(new (engine) TypeCopyCtor(this));
 

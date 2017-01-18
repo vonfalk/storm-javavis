@@ -102,8 +102,10 @@ namespace storm {
 			assert(typeFlags & typeClass, L"typeRawPtr has to be used with typeClass");
 		}
 
-		if (value() && myGcType != null) {
-			myGcType->kind = GcType::tArray;
+		if (myGcType) {
+			if (value())
+				myGcType->kind = GcType::tArray;
+			rawDtor = (DtorFn)myGcType->finalizer;
 		}
 
 		if (engine.has(bootTypes))
@@ -299,6 +301,9 @@ namespace storm {
 			if (wcscmp(f->name->c_str(), CTOR) != 0)
 				vtableFnAdded(f);
 
+			if (wcscmp(f->name->c_str(), DTOR) != 0)
+				updateDtor(f);
+
 			if ((value() || rawPtr()) && tHandle)
 				updateHandle(f);
 		}
@@ -433,6 +438,52 @@ namespace storm {
 		return *tHandle;
 	}
 
+	static void CODECALL stormDtor(RootObject *object) {
+		Type *t = runtime::typeOf(object);
+		if (!t)
+			return;
+
+		Type::DtorFn f = t->rawDestructor();
+		if (!f)
+			return;
+
+		// If shutting down, do not care about threads anymore, as we might not have enough to see
+		// if the type is a TObject or not...
+		if (!t->engine.has(bootShutdown)) {
+			if (t->isA(TObject::stormType(t->engine))) {
+				// We might need to switch threads...
+				TObject *obj = (TObject *)object;
+				if (obj->thread) {
+					os::Thread t = obj->thread->thread();
+					if (t != os::Thread::current()) {
+						// Post a message to that thread (no need to wait).
+						os::FnStackParams<1> params;
+						params.add(object);
+						os::UThread::spawn(f, true, params, &t);
+						return;
+					}
+				}
+			}
+		}
+
+		// If we get here, we shall execute on the current thread.
+		(*f)(object);
+	}
+
+	void Type::updateDtor(Function *dtor) {
+		// Nothing interesting happens until here.
+		if (!engine.has(bootDone))
+			return;
+
+		if (dtor)
+			rawDtor = (DtorFn)dtor->directRef().address();
+		else
+			rawDtor = null;
+
+		if (!value() && myGcType)
+			myGcType->finalizer = &stormDtor;
+	}
+
 	const GcType *Type::gcType() {
 		// Already created?
 		if (myGcType != null)
@@ -474,21 +525,26 @@ namespace storm {
 			else
 				assert(false, L"We're a non-value not inheriting from Object or TObject!");
 
-			myGcType->type = this;
-			return myGcType;
+		} else {
+			// Merge our parent's and our offsets (if we have a parent).
+			nat entries = layout->fillGcType(superSize, superGc, null);
+
+			if (value())
+				myGcType = engine.gc.allocType(GcType::tArray, this, size().current(), entries);
+			else if (superGc)
+				myGcType = engine.gc.allocType(GcType::Kind(superGc->kind), this, size().current(), entries);
+			else
+				assert(false, L"Neither a value nor have a parent!");
+
+			layout->fillGcType(superSize, superGc, myGcType);
 		}
 
-		// Merge our parent's and our offsets (if we have a parent).
-		nat entries = layout->fillGcType(superSize, superGc, null);
+		myGcType->type = this;
 
-		if (value())
-			myGcType = engine.gc.allocType(GcType::tArray, this, size().current(), entries);
-		else if (superGc)
-			myGcType = engine.gc.allocType(GcType::Kind(superGc->kind), this, size().current(), entries);
-		else
-			assert(false, L"Neither a value nor have a parent!");
+		// Do we need a destructor?
+		if (Function *dtor = destructor())
+			updateDtor(dtor);
 
-		layout->fillGcType(superSize, superGc, myGcType);
 		return myGcType;
 	}
 

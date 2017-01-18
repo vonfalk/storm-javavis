@@ -18,8 +18,8 @@
 
 namespace storm {
 
-	// Default arena size. 32 MB should be enough for a while at least.
-	static const size_t defaultArena = 32 * 1024 * 1024;
+	// Default arena size. 256 MB should be enough for a while at least.
+	static const size_t defaultArena = 256 * 1024 * 1024;
 
 	// Default finalizer interval.
 	static const nat defaultFinalizer = 1000;
@@ -84,6 +84,8 @@ namespace storm {
 	}
 
 	void Engine::destroy() {
+		advance(bootShutdown);
+
 		// We need to remove the root this array implies before the Gc is destroyed.
 		world.clear();
 

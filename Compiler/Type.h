@@ -145,6 +145,10 @@ namespace storm {
 		MAYBE(Function *) STORM_FN assignFn();
 		MAYBE(Function *) STORM_FN destructor();
 
+		// Get the raw destructor to be used for this type. Mainly used by the GC for finalization.
+		typedef void (*DtorFn)(void *);
+		inline DtorFn rawDestructor() { return rawDtor; }
+
 	private:
 		// Special constructor for creating the first type.
 		Type(Engine &e, TypeFlags flags, Size size, GcType *gcType);
@@ -201,6 +205,12 @@ namespace storm {
 
 		// Generate a handle for this type.
 		void buildHandle();
+
+		// Called whenever a new destructor is added.
+		void updateDtor(Function *dtor);
+
+		// The current destructor to be used.
+		UNKNOWN(PTR_GC) DtorFn rawDtor;
 
 		// Update the handle with the potentially relevant function 'fn'.
 		void updateHandle(Function *fn);

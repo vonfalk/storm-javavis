@@ -78,6 +78,17 @@ BEGIN_TEST(ValueTest, BS) {
 	// TODO: See if we can test so that destructors are executed from within classes/actors.
 } END_TEST
 
+BEGIN_TEST(CustomValueTest, BS) {
+	CHECK_EQ(runFn<Int>(L"test.bs.testCustomValue"), -300);
+	CHECK_EQ(runFn<Int>(L"test.bs.testRefVal", 24), 24);
+	CHECK_EQ(runFn<Int>(L"test.bs.testCopyRefVal", 24), 24);
+	CHECK_EQ(runFn<Int>(L"test.bs.testAssignRefVal", 24), 24);
+	// CHECK_EQ(runFn<Int>(L"test.bs.testValVal", 22), 22);
+	// CHECK_EQ(runFn<Int>(L"test.bs.testCopyValVal", 22), 22);
+	// CHECK_EQ(runFn<Int>(L"test.bs.testAssignValVal", 22), 22);
+} END_TEST
+
+
 /**
  * Autocast.
  */

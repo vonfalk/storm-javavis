@@ -23,6 +23,9 @@ namespace storm {
 
 		// Everything is working.
 		bootDone,
+
+		// Finalizing in progress.
+		bootShutdown,
 	};
 
 }

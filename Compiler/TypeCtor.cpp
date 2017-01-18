@@ -39,7 +39,7 @@ namespace storm {
 
 			*l << fnParam(me);
 			*l << fnParam(thread->ref());
-			*l << fnCall(ctor->ref(), valPtr());
+			*l << fnCall(ctor->directRef(), valPtr());
 		} else if (super) {
 			// Find and run the parent constructor.
 			Function *ctor = super->defaultCtor();
@@ -49,7 +49,7 @@ namespace storm {
 									+ ::toS(owner->identifier()));
 
 			*l << fnParam(me);
-			*l << fnCall(ctor->ref(), valPtr());
+			*l << fnCall(ctor->directRef(), valPtr());
 		} else {
 			// No parent constructor to run.
 		}
@@ -68,7 +68,14 @@ namespace storm {
 				*l << fnParam(ptrA);
 				*l << fnCall(ctor->ref(), valPtr());
 			} else if (v->type.isHeapObj()) {
-				TODO(L"Implement me!");
+				Function *ctor = v->type.type->defaultCtor();
+				if (!ctor)
+					throw InternalError(L"Can not use TypeDefaultCtor if a member does not have a default "
+										L"constructor. See " + ::toS(owner->identifier()));
+
+				Var created = allocObject(t, ctor, new (this) Array<Operand>());
+				*l << mov(ptrA, me);
+				*l << mov(ptrRel(ptrA, v->offset()), created);
 			} else {
 				// Built-in types do not need initialization.
 			}
