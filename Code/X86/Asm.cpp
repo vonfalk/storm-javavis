@@ -10,9 +10,15 @@ namespace code {
 		const Reg ptrD = Reg(0x010);
 		const Reg ptrSi = Reg(0x011);
 		const Reg ptrDi = Reg(0x012);
+		const Reg dl = Reg(0x110);
+		const Reg sil = Reg(0x111);
+		const Reg dil = Reg(0x112);
 		const Reg edx = Reg(0x410);
 		const Reg esi = Reg(0x411);
 		const Reg edi = Reg(0x412);
+		const Reg rdx = Reg(0x810);
+		const Reg rsi = Reg(0x811);
+		const Reg rdi = Reg(0x812);
 
 		const wchar *nameX86(Reg r) {
 			switch (r) {
@@ -23,12 +29,26 @@ namespace code {
 			case ptrDi:
 				return L"ptrDi";
 
+			case dl:
+				return L"dl";
+			case sil:
+				return L"sil";
+			case dil:
+				return L"dil";
+
 			case edx:
 				return L"edx";
 			case esi:
 				return L"esi";
 			case edi:
 				return L"edi";
+
+			case rdx:
+				return L"rdx";
+			case rsi:
+				return L"rsi";
+			case rdi:
+				return L"rdi";
 			}
 			return null;
 		}
@@ -204,13 +224,13 @@ namespace code {
 			case ptrFrame:
 				return 5;
 			default:
-				if (r == ptrD || r == edx)
+				if (asSize(r, Size::sPtr) == ptrD)
 					return 2;
-				if (r == ptrSi || r == esi)
+				if (asSize(r, Size::sPtr) == ptrSi)
 					return 6;
-				if (r == ptrDi || r == edi)
+				if (asSize(r, Size::sPtr) == ptrDi)
 					return 7;
-				assert(false);
+				assert(false, L"Can not use " + ::toS(name(r)));
 				return 0;
 			}
 		}

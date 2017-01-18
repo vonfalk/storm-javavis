@@ -16,9 +16,15 @@ namespace code {
 		extern const Reg ptrD;
 		extern const Reg ptrSi;
 		extern const Reg ptrDi;
+		extern const Reg dl;
+		extern const Reg sil;
+		extern const Reg dil;
 		extern const Reg edx;
 		extern const Reg esi;
 		extern const Reg edi;
+		extern const Reg rdx;
+		extern const Reg rsi;
+		extern const Reg rdi;
 
 		// Convert to names.
 		const wchar *nameX86(Reg r);

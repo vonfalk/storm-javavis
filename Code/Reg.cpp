@@ -84,8 +84,8 @@ namespace code {
 	}
 
 	Bool same(Reg a, Reg b) {
-		nat aa = a;
-		nat bb = b;
+		nat aa = (nat)a;
+		nat bb = (nat)b;
 		return (aa & 0xFF) == (bb & 0xFF);
 	}
 
