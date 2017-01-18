@@ -157,6 +157,10 @@ namespace storm {
 		return value(name, name->pos);
 	}
 
+	Scope rootScope(EnginePtr e) {
+		return e.v.scope();
+	}
+
 	wostream &operator <<(wostream &to, const Scope &s) {
 		if (!s.lookup) {
 			to << L"<empty>";

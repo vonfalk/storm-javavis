@@ -221,7 +221,10 @@ namespace storm {
 		LocalVarAccess::LocalVarAccess(SrcPos pos, LocalVar *var) : Expr(pos), var(var) {}
 
 		ExprResult LocalVarAccess::result() {
-			return var->result.asRef();
+			if (var->constant)
+				return var->result;
+			else
+				return var->result.asRef();
 		}
 
 		void LocalVarAccess::code(CodeGen *s, CodeResult *to) {
@@ -478,8 +481,13 @@ namespace storm {
 			part->insert(thisPtr(t));
 
 			Function *ctor = as<Function>(t->find(part));
-			if (!ctor)
+			if (!ctor) {
+				PLN(L"Members: ");
+				for (NameSet::Iter i = t->begin(); i != t->end(); i++) {
+					PVAR(i.v());
+				}
 				throw SyntaxError(pos, L"No constructor " + ::toS(t->identifier()) + L"." + ::toS(part) + L")");
+			}
 
 			return new (t) CtorCall(pos, ctor, actual);
 		}

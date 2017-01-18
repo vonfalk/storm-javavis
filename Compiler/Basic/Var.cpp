@@ -124,6 +124,8 @@ namespace storm {
 		}
 
 		void Var::toS(StrBuf *to) const {
+			if (variable->constant)
+				*to << L"const ";
 			*to << variable->result << L" " << variable->name;
 			if (initExpr)
 				*to << L" = " << initExpr;
@@ -137,7 +139,7 @@ namespace storm {
 		 */
 
 		LocalVar::LocalVar(Str *name, Value val, SrcPos pos, Bool param)
-			: Named(name), result(val), pos(pos), var(), param(param) {}
+			: Named(name), result(val), pos(pos), var(), param(param), constant(false) {}
 
 		void LocalVar::create(CodeGen *state) {
 			if (param)

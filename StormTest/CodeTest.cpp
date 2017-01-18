@@ -135,36 +135,36 @@
 // 	CHECK_EQ(runFn<Int>(L"test.bs.testAssignValVal", 22), 22);
 // } END_TEST
 
-BEGIN_TEST(ValueMemberTest) {
-	CHECK_EQ(runFn<Int>(L"test.bs.testVirtualVal1"), 10);
-	CHECK_EQ(runFn<Int>(L"test.bs.testVirtualVal2"), 20);
-	CHECK_EQ(runFn<Int>(L"test.bs.testVirtualVal3"), 15);
-	// This test is really good in release builts. For VS2008, the compiler uses
-	// the return value (in eax) of v->asDbgVal(), and crashes if we fail to return
-	// a correct value. In debug builds, the compiler usually re-loads the value
-	// itself instead.
-	Auto<Dbg> v = runFn<Dbg *>(L"test.bs.testVirtualVal4");
-	CHECK_EQ(v->asDbgVal().v, 20);
+// BEGIN_TEST(ValueMemberTest) {
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testVirtualVal1"), 10);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testVirtualVal2"), 20);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testVirtualVal3"), 15);
+// 	// This test is really good in release builts. For VS2008, the compiler uses
+// 	// the return value (in eax) of v->asDbgVal(), and crashes if we fail to return
+// 	// a correct value. In debug builds, the compiler usually re-loads the value
+// 	// itself instead.
+// 	Auto<Dbg> v = runFn<Dbg *>(L"test.bs.testVirtualVal4");
+// 	CHECK_EQ(v->asDbgVal().v, 20);
 
-	// Does the thread thunks correctly account for the special handling of member functions?
-	CHECK_EQ(runFn<Int>(L"test.bs.testActorVal"), 10);
-} END_TEST
+// 	// Does the thread thunks correctly account for the special handling of member functions?
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testActorVal"), 10);
+// } END_TEST
 
-BEGIN_TEST(StormCtorTest) {
-	CHECK_EQ(runFn<Int>(L"test.bs.ctorTest"), 50);
-	CHECK_EQ(runFn<Int>(L"test.bs.ctorTest", 10), 30);
-	CHECK_EQ(runFn<Int>(L"test.bs.ctorTestDbg", 10), 30);
-	CHECK_RUNS(runFn<void>(L"test.bs.ignoreCtor"));
-	CHECK_EQ(runFn<Int>(L"test.bs.ctorDerTest", 2), 6);
-	CHECK_ERROR(runFn<Int>(L"test.bs.ctorErrorTest"), CodeError);
-	CHECK_ERROR(runFn<Int>(L"test.bs.memberAssignErrorTest"), CodeError);
-	CHECK_EQ(runFn<Int>(L"test.bs.testDefaultCtor"), 60);
-} END_TEST
+// BEGIN_TEST(StormCtorTest) {
+// 	CHECK_EQ(runFn<Int>(L"test.bs.ctorTest"), 50);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.ctorTest", 10), 30);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.ctorTestDbg", 10), 30);
+// 	CHECK_RUNS(runFn<void>(L"test.bs.ignoreCtor"));
+// 	CHECK_EQ(runFn<Int>(L"test.bs.ctorDerTest", 2), 6);
+// 	CHECK_ERROR(runFn<Int>(L"test.bs.ctorErrorTest"), CodeError);
+// 	CHECK_ERROR(runFn<Int>(L"test.bs.memberAssignErrorTest"), CodeError);
+// 	CHECK_EQ(runFn<Int>(L"test.bs.testDefaultCtor"), 60);
+// } END_TEST
 
-BEGIN_TEST(StrConcatTest) {
-	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.strConcatTest"), CREATE(Str, *gEngine, L"ab1cvoid"));
-	CHECK_ERROR(runFn<Str *>(L"test.bs.strConcatError"), SyntaxError);
-} END_TEST
+// BEGIN_TEST(StrConcatTest) {
+// 	CHECK_OBJ_EQ(runFn<Str *>(L"test.bs.strConcatTest"), CREATE(Str, *gEngine, L"ab1cvoid"));
+// 	CHECK_ERROR(runFn<Str *>(L"test.bs.strConcatError"), SyntaxError);
+// } END_TEST
 
 BEGIN_TEST(MaybeTest) {
 	CHECK_EQ(runFn<Int>(L"test.bs.testMaybe", 0), 0);

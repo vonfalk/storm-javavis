@@ -29,6 +29,9 @@ namespace storm {
 			// Is this a parameter?
 			Bool param;
 
+			// Constant variable? Currently only used for the 'this' pointer.
+			Bool constant;
+
 			// Create the variable.
 			void STORM_FN create(CodeGen *state);
 

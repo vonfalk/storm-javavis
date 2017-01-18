@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "Fn.h"
 #include "Compiler/Debug.h"
+#include "Compiler/Exception.h"
+
+using storm::debug::DbgVal;
+using storm::debug::Dbg;
 
 BEGIN_TEST(Priority, BS) {
 	CHECK_EQ(runFn<Int>(L"test.bs.prio1"), 203);
@@ -54,7 +58,6 @@ BEGIN_TEST(InheritanceTest, BS) {
  */
 
 BEGIN_TEST(ValueTest, BS) {
-	using storm::debug::DbgVal;
 	// Values.
 	DbgVal::clear();
 	CHECK_EQ(runFn<Int>(L"test.bs.testValue"), 10);
@@ -83,9 +86,25 @@ BEGIN_TEST(CustomValueTest, BS) {
 	CHECK_EQ(runFn<Int>(L"test.bs.testRefVal", 24), 24);
 	CHECK_EQ(runFn<Int>(L"test.bs.testCopyRefVal", 24), 24);
 	CHECK_EQ(runFn<Int>(L"test.bs.testAssignRefVal", 24), 24);
-	// CHECK_EQ(runFn<Int>(L"test.bs.testValVal", 22), 22);
-	// CHECK_EQ(runFn<Int>(L"test.bs.testCopyValVal", 22), 22);
-	// CHECK_EQ(runFn<Int>(L"test.bs.testAssignValVal", 22), 22);
+	CHECK_EQ(runFn<Int>(L"test.bs.testValVal", 22), 22);
+	CHECK_EQ(runFn<Int>(L"test.bs.testCopyValVal", 22), 22);
+	CHECK_EQ(runFn<Int>(L"test.bs.testAssignValVal", 22), 22);
+} END_TEST
+
+BEGIN_TEST(ValueMemberTest, BS) {
+	CHECK_EQ(runFn<Int>(L"test.bs.testVirtualVal1"), 10);
+	CHECK_EQ(runFn<Int>(L"test.bs.testVirtualVal2"), 20);
+	CHECK_EQ(runFn<Int>(L"test.bs.testVirtualVal3"), 15);
+	// This test is really good in release builts. For VS2008, the compiler uses
+	// the return value (in eax) of v->asDbgVal(), and crashes if we fail to return
+	// a correct value. In debug builds, the compiler usually re-loads the value
+	// itself instead.
+	Dbg *v = runFn<Dbg *>(L"test.bs.testVirtualVal4");
+	CHECK_EQ(v->asDbgVal().v, 20);
+
+	// Does the thread thunks correctly account for the special handling of member functions?
+	TODO(L"Enable this test!");
+	// CHECK_EQ(runFn<Int>(L"test.bs.testActorVal"), 10);
 } END_TEST
 
 
@@ -104,3 +123,20 @@ BEGIN_TEST(AutocastTest, BS) {
 	CHECK_EQ(runFn<Float>(L"test.bs.promoteInit"), 8);
 	CHECK_EQ(runFn<Nat>(L"test.bs.initNat"), 20);
 } END_TEST
+
+
+/**
+ * Constructors.
+ */
+
+BEGIN_TEST(StormCtorTest, BS) {
+	CHECK_EQ(runFn<Int>(L"test.bs.ctorTest"), 50);
+	CHECK_EQ(runFn<Int>(L"test.bs.ctorTest", 10), 30);
+	CHECK_EQ(runFn<Int>(L"test.bs.ctorTestDbg", 10), 30);
+	CHECK_RUNS(runFn<void>(L"test.bs.ignoreCtor"));
+	CHECK_EQ(runFn<Int>(L"test.bs.ctorDerTest", 2), 6);
+	CHECK_ERROR(runFn<Int>(L"test.bs.ctorErrorTest"), CodeError);
+	CHECK_ERROR(runFn<Int>(L"test.bs.memberAssignErrorTest"), CodeError);
+	CHECK_EQ(runFn<Int>(L"test.bs.testDefaultCtor"), 60);
+} END_TEST
+

@@ -127,7 +127,14 @@ namespace storm {
 
 		void BSRawFn::addParams(Block *to) {
 			for (nat i = 0; i < params->count(); i++) {
-				to->add(new (this) LocalVar(params->at(i).name, params->at(i).type, pos, true));
+				LocalVar *v = new (this) LocalVar(params->at(i).name, params->at(i).type, pos, true);
+
+				if (parentLookup) {
+					if (i == 0 && isMember())
+						v->constant = true;
+				}
+
+				to->add(v);
 			}
 		}
 

@@ -112,6 +112,8 @@ namespace storm {
 
 			for (nat i = 0; i < params->count(); i++) {
 				LocalVar *var = new (this) LocalVar(params->at(i).name, params->at(i).type, pos, true);
+				if (i == 0)
+					var->constant = true;
 				to->add(var);
 				if (i == 1 && needsThread)
 					thread = var;
@@ -166,6 +168,7 @@ namespace storm {
 			thisVar = block->variable(name);
 			thisPtr = thisVar->result;
 			LocalVar *created = new (this) LocalVar(new (this) Str(L"this"), thisPtr, thisVar->pos, true);
+			created->constant = true;
 			block->add(created);
 
 			this->params = params;

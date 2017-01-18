@@ -16,13 +16,13 @@ Expr arrayInit(Block block, SrcName type, Array<Expr> list) on Compiler {
 	ExprBlock b(type.pos, block);
 
 	SStr arrayName("tmp", type.pos);
-	Var array(b, arrayName, namedExpr(b, arrayType(type), Actual()));
+	Var array(b, arrayName, namedExpr(b, arrayType(type), Actuals()));
 	b.add(array);
 
-	Expr varAccess = namedExpr(b, arrayName, Actual());
+	Expr varAccess = namedExpr(b, arrayName, Actuals());
 	SStr push("push", type.pos);
 	for (Nat i = 0; i < list.count; i++) {
-		Actual params;
+		Actuals params;
 		params.add(list[i]);
 		b.add(namedExpr(b, push, varAccess, params));
 	}

@@ -55,13 +55,13 @@ class ConcatExpr extends Expr {
 		init(pos) {
 			outer = outer;
 			inner = inner;
-			strBufVar(outer, strBufType, SStr("b"), Actual());
+			strBufVar(outer, strBufType, SStr("b"), Actuals());
 		}
 
 		// Generate the outer parts.
 		outer.add(strBufVar);
 		outer.add(inner);
-		outer.add(namedExpr(outer, SStr("toS"), LocalVarAccess(pos, strBufVar.var), Actual()));
+		outer.add(namedExpr(outer, SStr("toS"), LocalVarAccess(pos, strBufVar.var), Actuals()));
 	}
 
 	// Append a node to the end of the concatenation.
@@ -70,23 +70,28 @@ class ConcatExpr extends Expr {
 		if (appendStrBuf(e)) {
 		} else if (appendToS(e)) {
 		} else {
-			throwSyntaxError(pos, "Can not convert " + e.result.toS + " to string by doing 'x.toS'.");
+			StrBuf msg;
+			msg << "Can not convert" << e.result << " to string by toing 'x.toS'.";
+			throwSyntaxError(pos, msg.toS);
 		}
 	}
 
 	// Append a node, trying to call add on the StrBuf directly.
 	Bool appendStrBuf(Expr e) {
 		Value v = rootScope.value(strBufType);
-		Type t = v.getType;
-		Scope findIn = outer.scope.child(t);
-		var part = namePart("add", Value:[v, e.result.type]);
-		Named? member = findIn.find(Name(part));
-		if (member as Function) {
-			Actual params;
-			params.add(LocalVarAccess(pos, strBufVar.var));
-			params.add(e);
-			inner.add(FnCall(pos, member, params));
-			true;
+		if (t = v.type) {
+			Scope findIn = outer.scope.child(t);
+			var part = SimplePart("add", Value:[v, e.result.type]);
+			Named? member = findIn.find(Name(part));
+			if (member as Function) {
+				Actuals params;
+				params.add(LocalVarAccess(pos, strBufVar.var));
+				params.add(e);
+				inner.add(FnCall(pos, member, params));
+				true;
+			} else {
+				false;
+			}
 		} else {
 			false;
 		}
@@ -95,12 +100,16 @@ class ConcatExpr extends Expr {
 	// Append a node, trying to call toS on the object first.
 	Bool appendToS(Expr e) {
 		Value r = e.result.type;
-		Scope findIn = outer.scope.child(r.getType);
-		var part = namePart("toS", Value:[r]);
-		Named? member = findIn.find(Name(part));
-		if (member as Function) {
-			FnCall call(pos, member, Actual(e));
-			appendStrBuf(call);
+		if (t = r.type) {
+			Scope findIn = outer.scope.child(t);
+			var part = SimplePart("toS", Value:[r]);
+			Named? member = findIn.find(Name(part));
+			if (member as Function) {
+				FnCall call(pos, member, Actuals(e));
+				appendStrBuf(call);
+			} else {
+				false;
+			}
 		} else {
 			false;
 		}
