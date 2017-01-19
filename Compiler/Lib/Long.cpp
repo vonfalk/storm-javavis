@@ -9,12 +9,17 @@
 namespace storm {
 	using namespace code;
 
+	Type *createLong(Str *name, Size size, GcType *type) {
+		return new (name) LongType(name, type);
+	}
+
 	static float CODECALL longToFloat(Long l) {
 		return float(l);
 	}
 
-	Type *createLong(Str *name, Size size, GcType *type) {
-		return new (name) LongType(name, type);
+	static void castLong(InlineParams p) {
+		*p.state->to << mov(ptrA, p.params->at(0));
+		*p.state->to << icast(longRel(ptrA, Offset()), p.params->at(1));
 	}
 
 	LongType::LongType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sLong, type, null) {}
@@ -56,6 +61,9 @@ namespace storm {
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Long>)));
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Long>)));
 
+		Array<Value> *ri = valList(engine, 2, Value(this, true), Value(StormInfo<Int>::type(engine)));
+		add(cast(inlinedFunction(engine, Value(), Type::CTOR, ri, fnPtr(engine, &castLong))));
+
 		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), L"int", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), L"nat", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Byte>::type(engine)), L"byte", v, fnPtr(engine, &icast)));
@@ -72,6 +80,11 @@ namespace storm {
 
 	Type *createWord(Str *name, Size size, GcType *type) {
 		return new (name) WordType(name, type);
+	}
+
+	static void castWord(InlineParams p) {
+		*p.state->to << mov(ptrA, p.params->at(0));
+		*p.state->to << ucast(longRel(ptrA, Offset()), p.params->at(1));
 	}
 
 	WordType::WordType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sWord, type, null) {}
@@ -112,6 +125,11 @@ namespace storm {
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Word>)));
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Word>)));
+
+		Array<Value> *rb = valList(engine, 2, Value(this, true), Value(StormInfo<Byte>::type(engine)));
+		add(cast(inlinedFunction(engine, Value(), Type::CTOR, rb, fnPtr(engine, &castWord))));
+		Array<Value> *ri = valList(engine, 2, Value(this, true), Value(StormInfo<Nat>::type(engine)));
+		add(cast(inlinedFunction(engine, Value(), Type::CTOR, ri, fnPtr(engine, &castWord))));
 
 		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), L"int", v, fnPtr(engine, &ucast)));
 		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), L"nat", v, fnPtr(engine, &ucast)));

@@ -343,8 +343,9 @@ namespace code {
 		}
 
 		void RemoveInvalid::icastTfm(Listing *dest, Instr *instr, Nat line) {
+			Operand to = instr->dest();
 			Size sFrom = instr->src().size();
-			Size sTo = instr->dest().size();
+			Size sTo = to.size();
 			Engine &e = engine();
 
 			if (instr->dest() == Operand(asSize(eax, sTo))) {
@@ -352,21 +353,27 @@ namespace code {
 				return;
 			}
 
-			bool toEax = instr->dest().type() == opRegister && same(instr->dest().reg(), eax);
+			bool toEax = to.type() == opRegister && same(to.reg(), eax);
+			bool toEaxRel = to.type() == opRelative && same(to.reg(), eax);
 
 			RegSet *used = this->used->at(line);
 			bool saveEax = used->has(eax);
 			bool saveEdx = used->has(edx);
+			bool saveEcx = used->has(ecx);
 
 			if (toEax)
 				saveEax = false;
 			if (sFrom != Size::sLong && sTo != Size::sLong)
 				saveEdx = false;
+			if (!toEaxRel)
+				saveEcx = false;
 
-			if (saveEax)
-				*dest << push(eax);
 			if (saveEdx)
 				*dest << push(edx);
+			if (saveEcx)
+				*dest << push(ecx);
+			if (saveEax)
+				*dest << push(eax);
 
 			if ((sFrom == Size::sByte && sTo == Size::sLong) ||
 				(sFrom == Size::sLong && sTo == Size::sByte)) {
@@ -377,17 +384,25 @@ namespace code {
 			}
 
 			if (!toEax) {
+				if (toEaxRel) {
+					// Read the old eax...
+					*dest << mov(ptrC, ptrRel(ptrStack, Offset()));
+					to = xRel(to.size(), ptrC, to.offset());
+				}
+
 				if (sTo == Size::sLong) {
-					*dest << mov(low32(instr->dest()), eax);
-					*dest << mov(high32(instr->dest()), edx);
+					*dest << mov(low32(to), eax);
+					*dest << mov(high32(to), edx);
 				} else {
-					*dest << mov(instr->dest(), asSize(eax, sTo));
+					*dest << mov(to, asSize(eax, sTo));
 				}
 			}
 
-			if (saveEdx)
-				*dest << pop(edx);
 			if (saveEax)
+				*dest << pop(eax);
+			if (saveEcx)
+				*dest << pop(ecx);
+			if (saveEdx)
 				*dest << pop(edx);
 		}
 

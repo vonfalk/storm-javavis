@@ -29,6 +29,34 @@ BEGIN_TEST(CastIntLong, Code) {
 
 } END_TEST
 
+BEGIN_TEST(CastIntLong2, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+	Var p = l->createIntParam();
+	Var r = l->createLongVar(l->root());
+
+	*l << prolog();
+
+	*l << lea(ptrA, r);
+	*l << icast(longRel(ptrA, Offset()), p);
+	*l << mov(rax, r);
+
+	*l << epilog();
+	*l << ret(valVoid());
+
+	PVAR(l);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Long (*Fn)(Int);
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(2), 2);
+	CHECK_EQ((*fn)(-2), -2);
+
+} END_TEST
+
 BEGIN_TEST(CastCharInt, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);

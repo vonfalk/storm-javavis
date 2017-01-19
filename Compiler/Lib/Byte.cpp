@@ -43,10 +43,10 @@ namespace storm {
 		add(inlinedFunction(engine, b, L"<", vv, fnPtr(engine, &numCmp<ifLess>)));
 		add(inlinedFunction(engine, b, L">", vv, fnPtr(engine, &numCmp<ifGreater>)));
 
-		add(inlinedFunction(engine, b, L"*++", r, fnPtr(engine, &numPostfixInc<Byte>)));
-		add(inlinedFunction(engine, b, L"++*", r, fnPtr(engine, &numPrefixInc<Byte>)));
-		add(inlinedFunction(engine, b, L"*--", r, fnPtr(engine, &numPostfixDec<Byte>)));
-		add(inlinedFunction(engine, b, L"--*", r, fnPtr(engine, &numPrefixDec<Byte>)));
+		add(inlinedFunction(engine, Value(this), L"*++", r, fnPtr(engine, &numPostfixInc<Byte>)));
+		add(inlinedFunction(engine, Value(this), L"++*", r, fnPtr(engine, &numPrefixInc<Byte>)));
+		add(inlinedFunction(engine, Value(this), L"*--", r, fnPtr(engine, &numPostfixDec<Byte>)));
+		add(inlinedFunction(engine, Value(this), L"--*", r, fnPtr(engine, &numPrefixDec<Byte>)));
 
 		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Byte>)));
 		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Byte>)));
@@ -58,10 +58,10 @@ namespace storm {
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Byte>)));
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Byte>)));
 
-		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), L"nat", v, fnPtr(engine, &icast)));
-		add(inlinedFunction(engine, Value(StormInfo<Byte>::type(engine)), L"byte", v, fnPtr(engine, &icast)));
-		add(inlinedFunction(engine, Value(StormInfo<Long>::type(engine)), L"long", v, fnPtr(engine, &icast)));
-		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), L"word", v, fnPtr(engine, &icast)));
+		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), L"int", v, fnPtr(engine, &ucast)));
+		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), L"nat", v, fnPtr(engine, &ucast)));
+		add(inlinedFunction(engine, Value(StormInfo<Long>::type(engine)), L"long", v, fnPtr(engine, &ucast)));
+		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), L"word", v, fnPtr(engine, &ucast)));
 		add(nativeFunction(engine, Value(StormInfo<Float>::type(engine)), L"float", v, address(&byteToFloat)));
 
 		add(nativeFunction(engine, Value(this), L"hash", v, &byteHash));

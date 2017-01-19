@@ -1,5 +1,6 @@
 #pragma once
 #include "Code.h"
+#include "Function.h"
 
 namespace storm {
 
@@ -175,6 +176,12 @@ namespace storm {
 	void numInit(InlineParams p) {
 		*p.state->to << mov(code::ptrA, p.params->at(0));
 		*p.state->to << mov(tRel(T(), code::ptrA), tConst(T(0)));
+	}
+
+	// Mark 'f' as an auto-cast function.
+	inline Function *cast(Function *f) {
+		f->flags |= namedAutoCast;
+		return f;
 	}
 
 }

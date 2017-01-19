@@ -9,16 +9,16 @@
 namespace storm {
 	using namespace code;
 
+	Type *createInt(Str *name, Size size, GcType *type) {
+		return new (name) IntType(name, type);
+	}
+
 	static void intToFloat(InlineParams p) {
 		if (!p.result->needed())
 			return;
 
 		*p.state->to << fild(p.params->at(0));
 		*p.state->to << fstp(p.result->location(p.state).v);
-	}
-
-	Type *createInt(Str *name, Size size, GcType *type) {
-		return new (name) IntType(name, type);
 	}
 
 	IntType::IntType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sInt, type, null) {}
@@ -78,6 +78,11 @@ namespace storm {
 		return new (name) NatType(name, type);
 	}
 
+	static void castNat(InlineParams p) {
+		*p.state->to << mov(ptrA, p.params->at(0));
+		*p.state->to << ucast(intRel(ptrA, Offset()), p.params->at(1));
+	}
+
 	NatType::NatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sNat, type, null) {}
 
 	Bool NatType::loadAll() {
@@ -116,6 +121,9 @@ namespace storm {
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Nat>)));
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Nat>)));
+
+		Array<Value> *rb = valList(engine, 2, Value(this, true), Value(StormInfo<Byte>::type(engine)));
+		add(cast(inlinedFunction(engine, Value(), Type::CTOR, rb, fnPtr(engine, &castNat))));
 
 		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), L"int", v, fnPtr(engine, &ucast)));
 		add(inlinedFunction(engine, Value(StormInfo<Byte>::type(engine)), L"byte", v, fnPtr(engine, &ucast)));

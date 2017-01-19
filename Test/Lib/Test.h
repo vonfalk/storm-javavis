@@ -126,6 +126,14 @@ public:
 	String what() const { return L"Aborted"; }
 };
 
+// Generic test error.
+class TestError : public Exception {
+public:
+	TestError(const String &msg) : msg(msg) {}
+	virtual String what() const { return msg; }
+private:
+	String msg;
+};
 
 //////////////////////////////////////////////////////////////////////////
 // Helper functions
