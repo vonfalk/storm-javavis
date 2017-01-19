@@ -33,11 +33,11 @@ class RangeFor extends ExprBlock {
 		LocalVarAccess getCont(pos, cont.var);
 		add(cont);
 
-		Var atDecl(this, SStr(" at", pos), namedExpr(this, SStr("begin", pos), getCont, Actual()));
+		Var atDecl(this, SStr(" at", pos), namedExpr(this, SStr("begin", pos), getCont, Actuals()));
 		LocalVarAccess getAt(pos, atDecl.var);
 		add(atDecl);
 
-		Var endDecl(this, SStr(" end", pos), namedExpr(this, SStr("end", pos), getCont, Actual()));
+		Var endDecl(this, SStr(" end", pos), namedExpr(this, SStr("end", pos), getCont, Actuals()));
 		LocalVarAccess getEnd(pos, endDecl.var);
 		add(endDecl);
 
@@ -45,15 +45,15 @@ class RangeFor extends ExprBlock {
 		add(loop);
 
 		ExprBlock body(pos, loop);
-		loop.test(namedExpr(loop, SStr("!=", pos), getAt, Actual(getEnd)));
-		loop.update(namedExpr(loop, SStr("++*", pos), getAt, Actual()));
+		loop.test(namedExpr(loop, SStr("!=", pos), getAt, Actuals(getEnd)));
+		loop.update(namedExpr(loop, SStr("++*", pos), getAt, Actuals()));
 		loop.body(body);
 
 		if (keyName) {
-			body.add(Var(body, SStr(keyName, pos), namedExpr(loop, SStr("k", pos), getAt, Actual())));
+			body.add(Var(body, SStr(keyName, pos), namedExpr(loop, SStr("k", pos), getAt, Actuals())));
 		}
 
-		body.add(Var(body, SStr(valName), namedExpr(loop, SStr("v", pos), getAt, Actual())));
+		body.add(Var(body, SStr(valName), namedExpr(loop, SStr("v", pos), getAt, Actuals())));
 		loopBlock = body;
 	}
 

@@ -42,6 +42,7 @@ inline Res runFn(const wchar *name, T t, U u) {
 	Engine &e = gEngine();
 	SimpleName *sName = parseSimpleName(e, name);
 	sName->last()->params->push(Value(StormInfo<T>::type(e)));
+	sName->last()->params->push(Value(StormInfo<U>::type(e)));
 	Function *f = as<Function>(e.scope().find(sName));
 	assert(f, L"Function " + ::toS(sName) + L" not found!");
 	Value r(StormInfo<Res>::type(e));

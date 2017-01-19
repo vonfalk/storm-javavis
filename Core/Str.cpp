@@ -489,4 +489,151 @@ namespace storm {
 		return owner ? pos + 1 == owner->data->count : true;
 	}
 
+
+	/**
+	 * Utility functions.
+	 */
+
+	// Indentation...
+	struct Indentation {
+		wchar ch;
+		nat count;
+
+		static const nat invalid = -1;
+	};
+
+	static Indentation indentOf(const wchar *str, nat start) {
+		Indentation r = { 0, 0 };
+
+		if (str[start] != ' ' && str[start] != '\t')
+			return r;
+
+		r.ch = str[start];
+		for (r.count = 0; str[start + r.count] == r.ch; r.count++)
+			;
+
+		return r;
+	}
+
+	static nat nextLine(const wchar *str, nat start) {
+		for (; str[start] != 0 && str[start] != '\n'; start++)
+			;
+
+		if (str[start] != 0)
+			start++;
+
+		if (str[start] != 0 && str[start] == '\r')
+			start++;
+
+		return start;
+	}
+
+	static bool emptyLine(const wchar *str, nat start) {
+		nat end = nextLine(str, start);
+		for (nat i = start; i < end; i++) {
+			switch (str[i]) {
+			case ' ':
+			case '\t':
+			case '\r':
+			case '\n':
+				break;
+			default:
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	static Indentation min(const Indentation &a, const Indentation &b) {
+		nat count = Indentation::invalid;
+
+		if (a.count == Indentation::invalid)
+			count = b.count;
+		else if (b.count == Indentation::invalid)
+			count = a.count;
+		else
+			count = ::min(a.count, b.count);
+
+		wchar ch = 0;
+		if (a.ch == 0)
+			ch = b.ch;
+		else if (b.ch == 0)
+			ch = a.ch;
+		else if (a.ch == b.ch)
+			ch = a.ch;
+
+		Indentation r = { ch, count };
+		return r;
+	}
+
+	Str *removeIndentation(Str *str) {
+		const wchar *src = str->c_str();
+
+		// Examine the indentation of all lines...
+		Indentation remove = { 0, Indentation::invalid };
+		for (nat at = 0; src[at] != 0; at = nextLine(src, at)) {
+			if (!emptyLine(src, at))
+				remove = min(remove, indentOf(src, at));
+		}
+
+		if (remove.count == Indentation::invalid)
+			return str;
+
+		// Now we have some kind of indentation.
+		StrBuf *to = new (str) StrBuf();
+
+		nat at = 0;
+		nat end = 0;
+		while (src[at] != 0) {
+			end = nextLine(src, at);
+
+			if (emptyLine(src, at)) {
+				for (nat i = at; i < end; i++)
+					if (src[i] == '\n' || src[i] == '\r')
+						to->addRaw(src[i]);
+			} else {
+				at += remove.count;
+				for (nat i = at; i < end; i++)
+					to->addRaw(src[i]);
+			}
+
+			at = end;
+		}
+
+		return to->toS();
+	}
+
+	Str *trimBlankLines(Str *str) {
+		const wchar *src = str->c_str();
+
+		nat start = 0;
+		nat end = 0;
+		nat at = 0;
+
+		for (nat at = 0; src[at] != 0; at = nextLine(src, at)) {
+			if (!emptyLine(src, at)) {
+				end = start = at;
+				break;
+			}
+		}
+
+		for (nat at = start; src[at] != 0; at = nextLine(src, at)) {
+			if (!emptyLine(src, at)) {
+				end = at;
+			}
+		}
+
+		end = nextLine(src, end);
+		while (end > 0) {
+			wchar ch = src[end-1];
+			if (ch == '\n' || ch == '\r')
+				end--;
+			else
+				break;
+		}
+
+		return str->substr(str->posIter(start), str->posIter(end - start));
+	}
+
 }

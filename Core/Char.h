@@ -44,6 +44,9 @@ namespace storm {
 		// # of codepoints in use.
 		nat size() const;
 
+		// Get the codepoint.
+		inline Nat STORM_FN codepoint() const { return value; }
+
 	private:
 		Nat value;
 	};

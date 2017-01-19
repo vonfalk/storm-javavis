@@ -134,5 +134,5 @@ class ConcatExpr extends Expr {
 
 // Fixup the strings from multiline str{} literals.
 Expr rawMultilineStrConstant(SrcPos pos, Str str) {
-	rawStrConstant(pos, str.removeIndent.trimBlankLines);
+	rawStrConstant(pos, str.removeIndentation.trimBlankLines);
 }

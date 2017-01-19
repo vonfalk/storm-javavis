@@ -183,4 +183,9 @@ namespace storm {
 		void validate() const;
 	};
 
+	// Remove the indentation from a string.
+	Str *STORM_FN removeIndentation(Str *str);
+
+	// Remove leading and trailing empty lines from a string.
+	Str *STORM_FN trimBlankLines(Str *src);
 }
