@@ -39,7 +39,7 @@ namespace storm {
 		// Which thread shall we run on?
 		virtual RunOn STORM_FN runOn() const;
 
-		// Set where to run. Ignored if we're a member of a class.
+		// Set where to run.
 		void STORM_FN runOn(NamedThread *thread);
 
 		// Output.

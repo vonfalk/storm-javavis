@@ -35,3 +35,12 @@ BEGIN_TEST(BasicSyntax, SimpleBS) {
 	CHECK_RUNS(runFn<void>(L"test.bs-simple.forScopeVal"));
 
 } END_TEST
+
+BEGIN_TEST(LoopTest, SimpleBS) {
+	CHECK_EQ(runFn<Int>(L"test.bs-simple.loop1"), 1024);
+	CHECK_EQ(runFn<Int>(L"test.bs-simple.loop2"), 1023);
+	CHECK_EQ(runFn<Int>(L"test.bs-simple.loop3"), 1024);
+	CHECK_EQ(runFn<Int>(L"test.bs-simple.loop4"), 27);
+	CHECK_EQ(runFn<Int>(L"test.bs-simple.loop5"), 27);
+} END_TEST
+

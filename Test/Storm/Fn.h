@@ -36,3 +36,18 @@ inline Res runFn(const wchar *name, T t) {
 	p.add(t);
 	return os::call<Res>(f->ref().address(), false, p);
 }
+
+template <class Res, class T, class U>
+inline Res runFn(const wchar *name, T t, U u) {
+	Engine &e = gEngine();
+	SimpleName *sName = parseSimpleName(e, name);
+	sName->last()->params->push(Value(StormInfo<T>::type(e)));
+	Function *f = as<Function>(e.scope().find(sName));
+	assert(f, L"Function " + ::toS(sName) + L" not found!");
+	Value r(StormInfo<Res>::type(e));
+	assert(r.canStore(f->result), L"Invalid return type of " + ::toS(sName) + L"!");
+	os::FnParams p;
+	p.add(t);
+	p.add(u);
+	return os::call<Res>(f->ref().address(), false, p);
+}

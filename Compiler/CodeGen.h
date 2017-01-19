@@ -42,8 +42,6 @@ namespace storm {
 	/**
 	 * Class that contains the state of the code generation in many languages. Has basic support for
 	 * return values as well.
-	 *
-	 * TODO: Make a toS!
 	 */
 	class CodeGen : public Object {
 		STORM_CLASS;
@@ -110,6 +108,9 @@ namespace storm {
 
 		// Current block.
 		code::Block block;
+
+		// toS.
+		virtual void STORM_FN toS(StrBuf *to) const;
 
 	private:
 		// Return type.
@@ -190,5 +191,8 @@ namespace storm {
 	// Allocate an object on the heap. Store it in variable 'to'.
 	void STORM_FN allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to);
 	code::Var STORM_FN allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params);
+
+	// Create an object on the heap using the default constructor.
+	code::Var STORM_FN allocObject(CodeGen *s, Type *type);
 
 }

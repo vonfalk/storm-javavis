@@ -40,7 +40,7 @@ SUITE(Code, 6);
 // More involved tests of Storm. Still no compilation from sources.
 SUITE(Storm, 7);
 // Simple tests of Basic Storm
-SUITE(SimpleBS, 8);
+SUITE_(SimpleBS, 8);
 // More heavy tests of Basic Storm
 SUITE_(BS, 9);
 

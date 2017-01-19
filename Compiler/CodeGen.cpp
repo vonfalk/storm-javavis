@@ -99,6 +99,12 @@ namespace storm {
 		}
 	}
 
+	void CodeGen::toS(StrBuf *to) const {
+		*to << L"Running on: " << runOn << L"\n";
+		*to << L"Current block: " << block << L"\n";
+		*to << this->to;
+	}
+
 
 	/**
 	 * VarInfo.
@@ -381,6 +387,13 @@ namespace storm {
 		code::Var r = s->to->createVar(s->block, Size::sPtr);
 		allocObject(s, ctor, params, r);
 		return r;
+	}
+
+	code::Var allocObject(CodeGen *s, Type *type) {
+		Function *ctor = type->defaultCtor();
+		if (!ctor)
+			throw InternalError(L"Can not allocate " + ::toS(type->identifier()) + L" using the default constructor.");
+		return allocObject(s, ctor, new (type->engine) Array<code::Operand>());
 	}
 
 }
