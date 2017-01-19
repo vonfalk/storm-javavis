@@ -27,19 +27,23 @@ Expr createTypePart(SrcPos pos, Block block, NamePart part) {
 	SrcName partT = namePart(pos);
 
 	Expr str = strConstant(pos, part.name);
-	Var base(b, partT, SStr("part", pos), Actual(str));
+	Var base(b, partT, SStr("part", pos), Actuals(str));
 	b.add(base);
 	LocalVarAccess bAccess(pos, base.var);
 
 	if (part as SimplePart) {
-		for (Nat i = 0; i < part.count; i++) {
-			Expr created = createType(pos, b, Name(part[i].getType.path));
-			b.add(namedExpr(b, SStr("add", pos), bAccess, Actual(created)));
+		for (Nat i = 0; i < part.params.count; i++) {
+			Expr created = if (type = part.params[i].type) {
+				createType(pos, b, Name(type.path));
+			} else {
+				createType(pos, b, Name("void"));
+			};
+			b.add(namedExpr(b, SStr("add", pos), bAccess, Actuals(created)));
 		}
 	} else if (part as RecPart) {
-		for (Nat i = 0; i < part.count; i++) {
-			Expr created = createType(pos, b, part[i]);
-			b.add(namedExpr(b, SStr("add", pos), bAccess, Actual(created)));
+		for (Nat i = 0; i < part.params.count; i++) {
+			Expr created = createType(pos, b, part.params[i]);
+			b.add(namedExpr(b, SStr("add", pos), bAccess, Actuals(created)));
 		}
 	}
 
@@ -53,13 +57,13 @@ Expr createType(SrcPos pos, Block block, Name type) {
 	SrcName nameT = srcName(pos);
 	SrcName partT = namePart(pos);
 
-	Var base(b, nameT, SStr("name", pos), Actual());
+	Var base(b, nameT, SStr("name", pos), Actuals());
 	b.add(base);
 
 	LocalVarAccess bAccess(pos, base.var);
 	for (Nat i = 0; i < type.count; i++) {
 		Expr created = createTypePart(pos, b, type[i]);
-		b.add(namedExpr(b, SStr("add", pos), bAccess, Actual(created)));
+		b.add(namedExpr(b, SStr("add", pos), bAccess, Actuals(created)));
 	}
 
 	b.add(bAccess);
@@ -115,17 +119,17 @@ class ReferNamed extends Expr {
 Expr exploreType(SrcPos pos, Block block, SrcName typeName) {
 	Expr type = createType(pos, block, typeName);
 
-	Expr rootScope = namedExpr(block, name{core:lang:rootScope}, Actual());
-	Actual params;
+	Expr rootScope = namedExpr(block, name{core:lang:rootScope}, Actuals());
+	Actuals params;
 	params.add(rootScope);
 	params.add(type);
 	Expr named = namedExpr(block, name{core:lang:find}, params);
-	namedExpr(block, name{core:debug:print}, Actual(named));
+	namedExpr(block, name{core:debug:print}, Actuals(named));
 }
 
 Expr reloadName(Block block, SrcName typeName) {
 	Expr type = createType(typeName.pos, block, typeName);
-	Expr callIt = namedExpr(block, name{lang:bs:macro:reload}, Actual(type));
+	Expr callIt = namedExpr(block, name{lang:bs:macro:reload}, Actuals(type));
 	callIt;
 }
 

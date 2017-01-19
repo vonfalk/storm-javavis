@@ -174,6 +174,11 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 					name.token += L" >>";
 				else
 					name.token += L" >";
+			} else if (tok.skipIf(L"[")) {
+				if (tok.skipIf(L"]"))
+					name.token += L" []";
+				else
+					name.token += L" [";
 			} else {
 				name.token += L" " + tok.next().token;
 			}

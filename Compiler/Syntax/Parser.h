@@ -30,6 +30,9 @@ namespace storm {
 			// Create. Create via Parser from C++ as the type has to be set properly for this to work.
 			ParserBase();
 
+			// Internal function called from Storm to create a parser.
+			friend void createParser(void *mem);
+
 		public:
 			// Add a package containing syntax definitions (not recursive).
 			void STORM_FN addSyntax(Package *pkg);
