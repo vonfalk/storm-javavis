@@ -30,13 +30,13 @@ namespace storm {
 
 		void Return::voidCode(CodeGen *state) {
 			using namespace code;
-			*state->to << epilog();
-			*state->to << ret(valVoid());
+			*state->l << epilog();
+			*state->l << ret(valVoid());
 		}
 
 		void Return::valueCode(CodeGen *state) {
 			using namespace code;
-			Listing *l = state->to;
+			Listing *l = state->l;
 
 			// TODO? Check the refness of the casted expr?
 			CodeResult *r = new (this) CodeResult(returnType, state->block);

@@ -122,7 +122,7 @@ namespace storm {
 
 			// We can store the string as an object inside the code.
 			VarInfo to = r->location(s);
-			*s->to << mov(to.v, objPtr(strValue));
+			*s->l << mov(to.v, objPtr(strValue));
 		}
 
 		void Constant::intCode(CodeGen *s, CodeResult *r) {
@@ -133,17 +133,17 @@ namespace storm {
 			Type *t = r->type().type;
 			Engine &e = engine();
 			if (t == StormInfo<Int>::type(e))
-				*s->to << mov(to.v, intConst(int(intValue)));
+				*s->l << mov(to.v, intConst(int(intValue)));
 			else if (t == StormInfo<Nat>::type(e))
-				*s->to << mov(to.v, natConst(nat(intValue)));
+				*s->l << mov(to.v, natConst(nat(intValue)));
 			else if (t == StormInfo<Byte>::type(e))
-				*s->to << mov(to.v, byteConst(byte(intValue)));
+				*s->l << mov(to.v, byteConst(byte(intValue)));
 			else if (t == StormInfo<Float>::type(e))
-				*s->to << mov(to.v, floatConst(float(intValue)));
+				*s->l << mov(to.v, floatConst(float(intValue)));
 			else if (t == StormInfo<Long>::type(e))
-				*s->to << mov(to.v, longConst(Long(intValue)));
+				*s->l << mov(to.v, longConst(Long(intValue)));
 			else if (t == StormInfo<Word>::type(e))
-				*s->to << mov(to.v, wordConst(Word(intValue)));
+				*s->l << mov(to.v, wordConst(Word(intValue)));
 			else
 				assert(false, L"Unknown type for an integer constant.");
 
@@ -159,7 +159,7 @@ namespace storm {
 			if (t != StormInfo<Float>::type(e))
 				assert(false, L"Unknown type for a float constant.");
 
-			*s->to << mov(to.v, floatConst(float(floatValue)));
+			*s->l << mov(to.v, floatConst(float(floatValue)));
 
 			to.created(s);
 		}
@@ -168,7 +168,7 @@ namespace storm {
 			using namespace code;
 
 			VarInfo to = r->location(s);
-			*s->to << mov(to.v, byteConst(boolValue ? 1 : 0));
+			*s->l << mov(to.v, byteConst(boolValue ? 1 : 0));
 			to.created(s);
 		}
 

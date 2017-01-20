@@ -30,6 +30,7 @@ namespace storm {
 		static const CppType *cppTypes();
 		static const CppFunction *cppFunctions();
 		static const CppVariable *cppVariables();
+		static const CppEnumValue *cppEnumValues();
 		static const CppTemplate *cppTemplates();
 		static const CppThread *cppThreads();
 		static const CppRefType *cppRefTypes();
@@ -124,6 +125,15 @@ namespace storm {
 		return variables;
 	}
 
+	const CppEnumValue *CppMeta::cppEnumValues() {
+		static const CppEnumValue values[] = {
+			// CPP_ENUM_VALUES
+			{ null, 0, 0 },
+		};
+
+		return values;
+	}
+
 	const CppTemplate *CppMeta::cppTemplates() {
 		static const CppTemplate templates[] = {
 			// CPP_TEMPLATES
@@ -159,6 +169,7 @@ namespace storm {
 			CppMeta::cppTypes(),
 			CppMeta::cppFunctions(),
 			CppMeta::cppVariables(),
+			CppMeta::cppEnumValues(),
 			CppMeta::cppTemplates(),
 			CppMeta::cppThreads(),
 			CppMeta::cppRefTypes(),

@@ -28,13 +28,13 @@ namespace storm {
 		void Loop::blockCode(CodeGen *s, CodeResult *r, const code::Block &block) {
 			using namespace code;
 
-			Label before = s->to->label();
+			Label before = s->l->label();
 			CodeGen *subState = s->child(block);
 			CodeResult *condResult = null;
 
 			// Begin code generation!
-			*s->to << before;
-			*s->to << begin(block);
+			*s->l << before;
+			*s->l << begin(block);
 
 			if (doExpr) {
 				CodeResult *doResult = CREATE(CodeResult, this);
@@ -48,26 +48,26 @@ namespace storm {
 			}
 
 			if (whileExpr) {
-				Label after = s->to->label();
+				Label after = s->l->label();
 
 				if (condExpr) {
 					code::Var c = condResult->location(s).v;
-					*s->to << cmp(c, byteConst(0));
-					*s->to << jmp(after, ifEqual);
+					*s->l << cmp(c, byteConst(0));
+					*s->l << jmp(after, ifEqual);
 				}
 
 				CodeResult *whileResult = CREATE(CodeResult, this);
 				whileExpr->code(subState, whileResult);
 
-				*s->to << after;
-				*s->to << end(block);
+				*s->l << after;
+				*s->l << end(block);
 			}
 
 			if (condExpr) {
 				code::Var c = condResult->location(s).v;
-				*s->to << cmp(c, byteConst(0));
+				*s->l << cmp(c, byteConst(0));
 			}
-			*s->to << jmp(before, ifNotEqual);
+			*s->l << jmp(before, ifNotEqual);
 		}
 
 		void Loop::toS(StrBuf *to) const {

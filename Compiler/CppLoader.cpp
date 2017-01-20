@@ -7,6 +7,7 @@
 #include "Code.h"
 #include "VTableCpp.h"
 #include "Lib/Maybe.h"
+#include "Lib/Enum.h"
 #include "Core/Str.h"
 
 namespace storm {
@@ -45,6 +46,13 @@ namespace storm {
 	nat CppLoader::variableCount() const {
 		nat n;
 		for (n = 0; world->variables[n].name; n++)
+			;
+		return n;
+	}
+
+	nat CppLoader::enumValueCount() const {
+		nat n;
+		for (n = 0; world->enumValues[n].name; n++)
 			;
 		return n;
 	}
@@ -390,6 +398,11 @@ namespace storm {
 		for (nat i = 0; i < c; i++) {
 			loadVariable(world->variables[i]);
 		}
+
+		c = enumValueCount();
+		for (nat i = 0; i < c; i++) {
+			loadEnumValue(world->enumValues[i]);
+		}
 	}
 
 	void CppLoader::loadVariable(const CppVariable &var) {
@@ -402,6 +415,13 @@ namespace storm {
 		MemberVar *v = new (e) MemberVar(new (e) Str(var.name), type, memberOf);
 		v->setOffset(Offset(var.offset));
 		memberOf->add(v);
+	}
+
+	void CppLoader::loadEnumValue(const CppEnumValue &val) {
+		Enum *memberOf = as<Enum>(into.types[val.memberOf]);
+		assert(memberOf, L"Type not properly loaded or not an enum!");
+
+		memberOf->add(new (e) EnumValue(memberOf, new (e) Str(val.name), val.value));
 	}
 
 }

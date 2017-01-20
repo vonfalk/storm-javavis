@@ -73,7 +73,7 @@ namespace storm {
 
 		CodeGen *Rule::createTransform() {
 			CodeGen *code = new (this) CodeGen(runOn());
-			code::Listing *l = code->to;
+			code::Listing *l = code->l;
 
 			// Add our parameters.
 			code::Var me = code->createVar(tfmParams->at(0).type).v;

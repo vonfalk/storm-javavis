@@ -82,7 +82,7 @@ namespace storm {
 			using namespace code;
 			CodeGen *state = new (this) CodeGen(runOn());
 
-			Listing *l = state->to;
+			Listing *l = state->l;
 
 			*l << prolog();
 

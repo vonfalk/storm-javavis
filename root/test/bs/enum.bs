@@ -1,0 +1,12 @@
+use core:debug;
+
+Str enum1() {
+	DbgEnum v = DbgEnum:foo;
+	v.toS;
+}
+
+Str enumBit1() {
+	DbgBit v = DbgBit:bitFoo;
+	v = v + DbgBit:bitBar;
+	v.toS;
+}

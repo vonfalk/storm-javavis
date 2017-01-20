@@ -113,11 +113,11 @@ namespace storm {
 				// Part of another expression.
 				if (to->type().ref) {
 					VarInfo v = to->location(s);
-					*s->to << lea(v.v, variable->var.v);
+					*s->l << lea(v.v, variable->var.v);
 					v.created(s);
 				} else if (!to->suggest(s, variable->var.v)) {
 					VarInfo v = to->location(s);
-					*s->to << mov(v.v, variable->var.v);
+					*s->l << mov(v.v, variable->var.v);
 					v.created(s);
 				}
 			}
@@ -146,7 +146,7 @@ namespace storm {
 				return;
 
 			if (var.v != code::Var()) {
-				assert(state->to->accessible(var.v, state->block));
+				assert(state->l->accessible(var.v, state->block));
 			} else {
 				var = state->createVar(result);
 			}

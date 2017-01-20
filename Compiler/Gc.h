@@ -93,8 +93,6 @@ namespace storm {
 		 * These objects are semi-managed by the GC. They are not collected automatically, but they
 		 * are destroyed together with the GC object. That means, small leaks of GcType objects are
 		 * not a problem as long as they don't grow over time.
-		 *
-		 * TODO: Make these automatically managed in a zero-rank pool?
 		 */
 
 		// Allocate a gc type.

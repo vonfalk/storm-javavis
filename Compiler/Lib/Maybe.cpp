@@ -77,19 +77,19 @@ namespace storm {
 
 	static void initMaybe(InlineParams p) {
 		using namespace code;
-		*p.state->to << mov(ptrA, p.params->at(0));
-		*p.state->to << mov(ptrRel(ptrA, Offset()), ptrConst(Offset()));
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << mov(ptrRel(ptrA, Offset()), ptrConst(Offset()));
 	}
 
 	static void copyMaybe(InlineParams p) {
 		using namespace code;
-		*p.state->to << mov(ptrA, p.params->at(0));
-		*p.state->to << mov(ptrRel(ptrA, Offset()), p.params->at(1));
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << mov(ptrRel(ptrA, Offset()), p.params->at(1));
 
 		// See if we should return something (neccessary since we can be used as a constructor).
 		if (p.result->needed()) {
 			if (!p.result->suggest(p.state, p.params->at(0))) {
-				*p.state->to << mov(p.result->location(p.state).v, p.params->at(0));
+				*p.state->l << mov(p.result->location(p.state).v, p.params->at(0));
 			}
 		}
 	}
@@ -99,8 +99,8 @@ namespace storm {
 		if (!p.result->needed())
 			return;
 
-		*p.state->to << cmp(p.params->at(0), ptrConst(Offset()));
-		*p.state->to << setCond(p.result->location(p.state).v, ifEqual);
+		*p.state->l << cmp(p.params->at(0), ptrConst(Offset()));
+		*p.state->l << setCond(p.result->location(p.state).v, ifEqual);
 	}
 
 	static void anyMaybe(InlineParams p) {
@@ -108,8 +108,8 @@ namespace storm {
 		if (!p.result->needed())
 			return;
 
-		*p.state->to << cmp(p.params->at(0), ptrConst(Offset()));
-		*p.state->to << setCond(p.result->location(p.state).v, ifNotEqual);
+		*p.state->l << cmp(p.params->at(0), ptrConst(Offset()));
+		*p.state->l << setCond(p.result->location(p.state).v, ifNotEqual);
 	}
 
 	static Str *maybeToS(EnginePtr e, RootObject *o) {

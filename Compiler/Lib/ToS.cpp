@@ -4,6 +4,7 @@
 #include "Scope.h"
 #include "Type.h"
 #include "Exception.h"
+#include "Engine.h"
 
 namespace storm {
 
@@ -36,6 +37,11 @@ namespace storm {
 			found = as<Function>(StrBuf::stormType(engine())->find(output));
 		}
 
+		// For enums, it might also be located in 'core'.
+		if (!found) {
+			found = as<Function>(engine().package(L"core")->find(output));
+		}
+
 		// If not found anywhere, do not create a toS!
 		if (!found)
 			return null;
@@ -60,7 +66,7 @@ namespace storm {
 		CodeGen *to = new (this) CodeGen(runOn());
 		Var param = to->createParam(type);
 
-		*to->to << prolog();
+		*to->l << prolog();
 
 		Type *strBufT = StrBuf::stormType(engine());
 		Var strBuf = allocObject(to, strBufT);
@@ -76,7 +82,7 @@ namespace storm {
 		if (!toS)
 			throw InternalError(L"Can not find 'toS' for the StrBuf type!");
 
-		CodeResult *str = new (this) CodeResult(result, to->to->root());
+		CodeResult *str = new (this) CodeResult(result, to->l->root());
 		p = new (this) Array<Operand>();
 		p->push(strBuf);
 		toS->localCall(to, p, str, false);

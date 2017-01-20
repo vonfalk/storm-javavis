@@ -30,7 +30,7 @@ namespace storm {
 		using namespace code;
 
 		CodeGen *t = new (this) CodeGen(runOn());
-		Listing *l = t->to;
+		Listing *l = t->l;
 
 		Var me = l->createParam(valPtr());
 

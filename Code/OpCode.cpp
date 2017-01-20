@@ -37,6 +37,7 @@ namespace code {
 		OP_CODE(sub, destRead | destWrite),
 		OP_CODE(sbb, destRead | destWrite),
 		OP_CODE(cmp, destRead),
+		OP_CODE(test, destRead),
 		OP_CODE(mul, destRead | destWrite),
 		OP_CODE(idiv, destRead | destWrite),
 		OP_CODE(udiv, destRead | destWrite),

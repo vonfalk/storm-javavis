@@ -18,8 +18,8 @@ namespace storm {
 	}
 
 	static void castLong(InlineParams p) {
-		*p.state->to << mov(ptrA, p.params->at(0));
-		*p.state->to << icast(longRel(ptrA, Offset()), p.params->at(1));
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << icast(longRel(ptrA, Offset()), p.params->at(1));
 	}
 
 	LongType::LongType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sLong, type, null) {}
@@ -83,8 +83,8 @@ namespace storm {
 	}
 
 	static void castWord(InlineParams p) {
-		*p.state->to << mov(ptrA, p.params->at(0));
-		*p.state->to << ucast(longRel(ptrA, Offset()), p.params->at(1));
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << ucast(longRel(ptrA, Offset()), p.params->at(1));
 	}
 
 	WordType::WordType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sWord, type, null) {}

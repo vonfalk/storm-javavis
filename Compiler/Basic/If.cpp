@@ -40,12 +40,12 @@ namespace storm {
 			CodeResult *condResult = new (this) CodeResult(condType, state->block);
 			condition->code(state, condResult);
 
-			Label lblElse = state->to->label();
-			Label lblDone = state->to->label();
+			Label lblElse = state->l->label();
+			Label lblDone = state->l->label();
 
 			VarInfo c = condResult->location(state);
-			*state->to << cmp(condResult->location(state).v, byteConst(0));
-			*state->to << jmp(lblElse, ifEqual);
+			*state->l << cmp(condResult->location(state).v, byteConst(0));
+			*state->l << jmp(lblElse, ifEqual);
 
 
 			Value rType = result().type();
@@ -53,15 +53,15 @@ namespace storm {
 			t->code(state, r);
 
 			if (falseCode) {
-				*state->to << jmp(lblDone);
-				*state->to << lblElse;
+				*state->l << jmp(lblDone);
+				*state->l << lblElse;
 
 				Expr *f = expectCastTo(falseCode, rType);
 				f->code(state, r);
 
-				*state->to << lblDone;
+				*state->l << lblDone;
 			} else {
-				*state->to << lblElse;
+				*state->l << lblElse;
 			}
 		}
 
@@ -129,28 +129,28 @@ namespace storm {
 			CodeResult *cond = new (this) CodeResult(Value(StormInfo<Bool>::type(engine())), state->block);
 			weakCast->code(state, cond, created);
 
-			Label elseLbl = state->to->label();
-			Label doneLbl = state->to->label();
+			Label elseLbl = state->l->label();
+			Label doneLbl = state->l->label();
 
-			*state->to << cmp(cond->location(state).v, byteConst(0));
-			*state->to << jmp(elseLbl, ifEqual);
+			*state->l << cmp(cond->location(state).v, byteConst(0));
+			*state->l << jmp(elseLbl, ifEqual);
 
 			Value rType = result().type();
 			Expr *t = expectCastTo(trueCode, rType);
 			t->code(state, r);
 
 			if (falseCode) {
-				*state->to << jmp(doneLbl);
+				*state->l << jmp(doneLbl);
 			}
 
-			*state->to << elseLbl;
+			*state->l << elseLbl;
 
 			if (falseCode) {
 				Expr *t = expectCastTo(falseCode, rType);
 				t->code(state, r);
 			}
 
-			*state->to << doneLbl;
+			*state->l << doneLbl;
 		}
 
 

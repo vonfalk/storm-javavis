@@ -7,35 +7,35 @@
 namespace storm {
 
 	CodeGen::CodeGen(RunOn thread) : runOn(thread) {
-		to = new (this) code::Listing();
-		block = to->root();
+		l = new (this) code::Listing();
+		block = l->root();
 	}
 
-	CodeGen::CodeGen(RunOn thread, code::Listing *to) : runOn(thread), to(to), block(to->root()) {}
+	CodeGen::CodeGen(RunOn thread, code::Listing *to) : runOn(thread), l(to), block(to->root()) {}
 
-	CodeGen::CodeGen(RunOn thread, code::Listing *to, code::Block block) : runOn(thread), to(to), block(block) {}
+	CodeGen::CodeGen(RunOn thread, code::Listing *to, code::Block block) : runOn(thread), l(to), block(block) {}
 
 	CodeGen::CodeGen(CodeGen *me, code::Block b) :
-		runOn(me->runOn), to(me->to), block(b), res(me->res), resParam(me->resParam) {}
+		runOn(me->runOn), l(me->l), block(b), res(me->res), resParam(me->resParam) {}
 
 	CodeGen *CodeGen::child(code::Block b) {
 		return new (this) CodeGen(this, b);
 	}
 
 	CodeGen *CodeGen::child() {
-		code::Block b = to->createBlock(to->last(block));
+		code::Block b = l->createBlock(l->last(block));
 		return child(b);
 	}
 
 	void CodeGen::deepCopy(CloneEnv *env) {
-		clone(to, env);
+		clone(l, env);
 	}
 
 	code::Var CodeGen::createParam(Value type) {
 		if (type.isValue()) {
-			return to->createParam(type.valTypeParam(), type.destructor(), code::freeOnBoth | code::freePtr);
+			return l->createParam(type.valTypeParam(), type.destructor(), code::freeOnBoth | code::freePtr);
 		} else {
-			return to->createParam(type.valTypeParam());
+			return l->createParam(type.valTypeParam());
 		}
 	}
 
@@ -53,7 +53,7 @@ namespace storm {
 			opt = opt | code::freePtr;
 		}
 
-		return VarInfo(to->createVar(in, type.size(), dtor, opt), needsPart);
+		return VarInfo(l->createVar(in, type.size(), dtor, opt), needsPart);
 	}
 
 
@@ -64,8 +64,8 @@ namespace storm {
 		res = type;
 		if (type.isValue()) {
 			// We need a return value parameter as either the first or the second parameter!
-			resParam = to->createParam(code::valPtr());
-			to->moveParam(resParam, isMember ? 1 : 0);
+			resParam = l->createParam(code::valPtr());
+			l->moveParam(resParam, isMember ? 1 : 0);
 		}
 	}
 
@@ -77,32 +77,32 @@ namespace storm {
 		using namespace code;
 
 		if (res == Value()) {
-			*to << epilog();
-			*to << ret(valVoid());
+			*l << epilog();
+			*l << ret(valVoid());
 		} else if (res.returnInReg()) {
-			*to << mov(asSize(ptrA, res.size()), value);
-			*to << epilog();
-			*to << ret(res.valTypeRet());
+			*l << mov(asSize(ptrA, res.size()), value);
+			*l << epilog();
+			*l << ret(res.valTypeRet());
 		} else {
-			*to << lea(ptrA, ptrRel(value, Offset()));
-			*to << fnParam(resParam);
-			*to << fnParam(ptrA);
-			*to << fnCall(res.copyCtor(), valPtr());
+			*l << lea(ptrA, ptrRel(value, Offset()));
+			*l << fnParam(resParam);
+			*l << fnParam(ptrA);
+			*l << fnCall(res.copyCtor(), valPtr());
 
 			// We need to provide the address of the return value as our result. The copy ctor does
 			// not neccessarily return an address to the created value. This is important in some
 			// optimized builds, where the compiler assumes ptrA contains the address of the
 			// returned value. This is usually not the case in unoptimized builds.
-			*to << mov(ptrA, resParam);
-			*to << epilog();
-			*to << ret(valPtr());
+			*l << mov(ptrA, resParam);
+			*l << epilog();
+			*l << ret(valPtr());
 		}
 	}
 
 	void CodeGen::toS(StrBuf *to) const {
 		*to << L"Running on: " << runOn << L"\n";
 		*to << L"Current block: " << block << L"\n";
-		*to << this->to;
+		*to << l;
 	}
 
 
@@ -122,7 +122,7 @@ namespace storm {
 		if (!needsPart)
 			return;
 
-		Listing *to = gen->to;
+		Listing *to = gen->l;
 		Part root = to->parent(v);
 		assert(to->first(root) == gen->block,
 			L"The variable " + ::toS(v) + L" was already created, or in the wrong block: "
@@ -157,7 +157,7 @@ namespace storm {
 			}
 		}
 
-		code::Listing *l = s->to;
+		code::Listing *l = s->l;
 		if (variable.needsPart && l->first(l->parent(variable.v)) != s->block)
 			// We need to delay the part transition until we have exited the current block!
 			return VarInfo(variable.v, false);
@@ -177,7 +177,7 @@ namespace storm {
 	}
 
 	Bool CodeResult::suggest(CodeGen *s, code::Var v) {
-		code::Listing *l = s->to;
+		code::Listing *l = s->l;
 
 		if (variable.v != code::Var())
 			return false;
@@ -214,10 +214,10 @@ namespace storm {
 		Size s = Size::sNat * 2;
 		assert(s.current() == sizeof(typeInfo), L"Please check the declaration of BasicTypeInfo.");
 
-		Var r = to->to->createVar(to->block, s);
-		*to->to << lea(ptrA, r);
-		*to->to << mov(intRel(ptrA, Offset()), natConst(typeInfo.size));
-		*to->to << mov(intRel(ptrA, Offset::sNat), natConst(typeInfo.kind));
+		Var r = to->l->createVar(to->block, s);
+		*to->l << lea(ptrA, r);
+		*to->l << mov(intRel(ptrA, Offset()), natConst(typeInfo.size));
+		*to->l << mov(intRel(ptrA, Offset::sNat), natConst(typeInfo.kind));
 
 		return r;
 	}
@@ -241,15 +241,15 @@ namespace storm {
 		using namespace code;
 
 		Engine &e = s->engine();
-		Var v = s->to->createVar(s->block,
+		Var v = s->l->createVar(s->block,
 								fnParamsSize(),
 								e.ref(Engine::rFnParamsDtor),
 								freeOnBoth | freePtr);
 		// Call the ctor!
-		*s->to << lea(ptrC, v);
-		*s->to << fnParam(ptrC);
-		*s->to << fnParam(memory);
-		*s->to << fnCall(e.ref(Engine::rFnParamsCtor), valVoid());
+		*s->l << lea(ptrC, v);
+		*s->l << fnParam(ptrC);
+		*s->l << fnParam(memory);
+		*s->l << fnCall(e.ref(Engine::rFnParamsCtor), valVoid());
 
 		return v;
 	}
@@ -258,8 +258,8 @@ namespace storm {
 		using namespace code;
 		// Allocate space for the parameters on the stack.
 		Size total = fnParamSize() * params;
-		Var v = s->to->createVar(s->block, total);
-		*s->to << lea(ptrA, v);
+		Var v = s->l->createVar(s->block, total);
+		*s->l << lea(ptrA, v);
 
 		return createFnParams(s, code::Operand(ptrA));
 	}
@@ -269,38 +269,38 @@ namespace storm {
 		Engine &e = s->engine();
 
 		if (type.isHeapObj() || type.ref) {
-			*s->to << lea(ptrC, fnParams);
-			*s->to << fnParam(ptrC);
-			*s->to << fnParam(ptrConst(Offset()));
-			*s->to << fnParam(ptrConst(Offset()));
-			*s->to << fnParam(ptrConst(type.size()));
-			*s->to << fnParam(byteConst(0));
-			*s->to << fnParam(v);
-			*s->to << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
+			*s->l << lea(ptrC, fnParams);
+			*s->l << fnParam(ptrC);
+			*s->l << fnParam(ptrConst(Offset()));
+			*s->l << fnParam(ptrConst(Offset()));
+			*s->l << fnParam(ptrConst(type.size()));
+			*s->l << fnParam(byteConst(0));
+			*s->l << fnParam(v);
+			*s->l << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
 		} else if (type.isBuiltIn()) {
-			*s->to << lea(ptrC, fnParams);
-			*s->to << lea(ptrA, v);
-			*s->to << fnParam(ptrC);
-			*s->to << fnParam(ptrConst(Offset()));
-			*s->to << fnParam(ptrConst(Offset()));
-			*s->to << fnParam(ptrConst(type.size()));
-			*s->to << fnParam(byteConst(type.isFloat() ? 1 : 0));
-			*s->to << fnParam(ptrA);
-			*s->to << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
+			*s->l << lea(ptrC, fnParams);
+			*s->l << lea(ptrA, v);
+			*s->l << fnParam(ptrC);
+			*s->l << fnParam(ptrConst(Offset()));
+			*s->l << fnParam(ptrConst(Offset()));
+			*s->l << fnParam(ptrConst(type.size()));
+			*s->l << fnParam(byteConst(type.isFloat() ? 1 : 0));
+			*s->l << fnParam(ptrA);
+			*s->l << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
 		} else {
 			// Value.
 			code::Operand dtor = type.destructor();
 			if (dtor.empty())
 				dtor = ptrConst(Offset());
-			*s->to << lea(ptrC, fnParams);
-			*s->to << lea(ptrA, v);
-			*s->to << fnParam(ptrC);
-			*s->to << fnParam(type.copyCtor());
-			*s->to << fnParam(dtor);
-			*s->to << fnParam(ptrConst(type.size()));
-			*s->to << fnParam(byteConst(0));
-			*s->to << fnParam(ptrA);
-			*s->to << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
+			*s->l << lea(ptrC, fnParams);
+			*s->l << lea(ptrA, v);
+			*s->l << fnParam(ptrC);
+			*s->l << fnParam(type.copyCtor());
+			*s->l << fnParam(dtor);
+			*s->l << fnParam(ptrConst(type.size()));
+			*s->l << fnParam(byteConst(0));
+			*s->l << fnParam(ptrA);
+			*s->l << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
 		}
 	}
 
@@ -313,9 +313,9 @@ namespace storm {
 
 		// if (type.isHeapObj()) {
 		// 	Variable clone = s->frame.createPtrVar(s->block.v, e.fnRefs.release);
-		// 	s->to << fnParam(v.v);
-		// 	s->to << fnCall(stdCloneFn(type).v, retPtr());
-		// 	s->to << mov(clone, ptrA);
+		// 	s->l << fnParam(v.v);
+		// 	s->l << fnCall(stdCloneFn(type).v, retPtr());
+		// 	s->l << mov(clone, ptrA);
 
 		// 	// Regular parameter add.
 		// 	addFnParam(s, fnParams, type, code::Var(clone), thunk);
@@ -331,15 +331,15 @@ namespace storm {
 		// 	code::Operand dtor = type.destructor();
 		// 	if (dtor.empty())
 		// 		dtor = intPtrConst(0);
-		// 	s->to << lea(ptrC, fnParams.v);
-		// 	s->to << lea(ptrA, v.v);
-		// 	s->to << fnParam(ptrC);
-		// 	s->to << fnParam(stdCloneFn(type).v);
-		// 	s->to << fnParam(dtor);
-		// 	s->to << fnParam(natConst(type->count()));
-		// 	s->to << fnParam(byteConst(0));
-		// 	s->to << fnParam(ptrA);
-		// 	s->to << fnCall(e.fnRefs.fnParamsAdd, retVoid());
+		// 	s->l << lea(ptrC, fnParams.v);
+		// 	s->l << lea(ptrA, v.v);
+		// 	s->l << fnParam(ptrC);
+		// 	s->l << fnParam(stdCloneFn(type).v);
+		// 	s->l << fnParam(dtor);
+		// 	s->l << fnParam(natConst(type->count()));
+		// 	s->l << fnParam(byteConst(0));
+		// 	s->l << fnParam(ptrA);
+		// 	s->l << fnCall(e.fnRefs.fnParamsAdd, retVoid());
 		// }
 	}
 
@@ -349,9 +349,9 @@ namespace storm {
 		Type *type = ctor->params->at(0).type;
 		Engine &e = ctor->engine();
 
-		*s->to << fnParam(type->typeRef());
-		*s->to << fnCall(e.ref(Engine::rAlloc), valPtr());
-		*s->to << mov(to, ptrA);
+		*s->l << fnParam(type->typeRef());
+		*s->l << fnCall(e.ref(Engine::rAlloc), valPtr());
+		*s->l << mov(to, ptrA);
 
 		CodeResult *r = new (s) CodeResult();
 		params = new (s) Array<code::Operand>(*params);
@@ -365,7 +365,7 @@ namespace storm {
 		Type *type = ctor->params->at(0).type;
 		Engine &e = ctor->engine();
 
-		*s->to << lea(ptrA, to);
+		*s->l << lea(ptrA, to);
 
 		CodeResult *r = new (s) CodeResult();
 		params = new (s) Array<code::Operand>(*params);
@@ -384,7 +384,7 @@ namespace storm {
 	}
 
 	code::Var allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params) {
-		code::Var r = s->to->createVar(s->block, Size::sPtr);
+		code::Var r = s->l->createVar(s->block, Size::sPtr);
 		allocObject(s, ctor, params, r);
 		return r;
 	}

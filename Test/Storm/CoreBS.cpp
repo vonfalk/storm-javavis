@@ -249,6 +249,14 @@ BEGIN_TEST(BSArrayTest, BS) {
 	}
 } END_TEST
 
+/**
+ * Enums.
+ */
+
+BEGIN_TEST(BSEnumTest, BS) {
+	CHECK_EQ(::toS(runFn<Str *>(L"test.bs.enum1")), L"foo");
+	CHECK_EQ(::toS(runFn<Str *>(L"test.bs.enumBit1")), L"bitFoo + bitBar");
+} END_TEST
 
 /**
  * Heavy tests.

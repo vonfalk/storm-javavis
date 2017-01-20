@@ -48,8 +48,8 @@ namespace storm {
 				return Function::findThread(s, params);
 
 			// We know it is always the first parameter!
-			code::Var r = s->to->createVar(s->block, Size::sPtr);
-			*s->to << mov(r, params->at(1));
+			code::Var r = s->l->createVar(s->block, Size::sPtr);
+			*s->l << mov(r, params->at(1));
 			return r;
 		}
 
@@ -74,7 +74,7 @@ namespace storm {
 
 			using namespace code;
 			CodeGen *state = new (this) CodeGen(runOn());
-			Listing *l = state->to;
+			Listing *l = state->l;
 
 			*l << prolog();
 
@@ -135,8 +135,8 @@ namespace storm {
 		void CtorBody::blockCode(CodeGen *state, CodeResult *to, const code::Block &block) {
 			if (threadParam) {
 				PVAR((void *)threadParam);
-				thread = state->to->createVar(state->block, Size::sPtr);
-				*state->to << mov(thread, threadParam->var.v);
+				thread = state->l->createVar(state->block, Size::sPtr);
+				*state->l << mov(thread, threadParam->var.v);
 			}
 
 			Block::blockCode(state, to, block);
@@ -249,8 +249,8 @@ namespace storm {
 
 			// Call the constructor.
 			Array<code::Operand> *actuals = new (this) Array<code::Operand>();
-			actuals->at(0) = params->code(0, s, ctor->params->at(0));
-			actuals->at(1) = t->ref();
+			actuals->push(params->code(0, s, ctor->params->at(0)));
+			actuals->push(t->ref());
 
 			CodeResult *res = new (this) CodeResult();
 			ctor->localCall(s, actuals, res, false);
@@ -266,15 +266,15 @@ namespace storm {
 			Type *type = thisPtr.type;
 
 			// Block for member variable cleanups.
-			code::Block varBlock = s->to->createBlock(s->to->last(s->block));
-			*s->to << begin(varBlock);
+			code::Block varBlock = s->l->createBlock(s->l->last(s->block));
+			*s->l << begin(varBlock);
 
 			// From here on, we should set up the destructor to clear 'this' by calling its destructor
 			// directly.
 			if (Type *super = type->super()) {
 				if (Function *fn = super->destructor()) {
-					code::Var thisCleanup = s->to->createVar(varBlock, Size::sPtr, fn->directRef(), freeOnException);
-					*s->to << mov(thisCleanup, dest);
+					code::Var thisCleanup = s->l->createVar(varBlock, Size::sPtr, fn->directRef(), freeOnException);
+					*s->l << mov(thisCleanup, dest);
 				}
 			}
 
@@ -288,29 +288,29 @@ namespace storm {
 				Value type = var->type;
 				if (type.isValue()) {
 					// If we get an exception, this variable should be cleared from here on.
-					Part part = s->to->createPart(varBlock);
-					*s->to << begin(part);
+					Part part = s->l->createPart(varBlock);
+					*s->l << begin(part);
 
-					code::Var v = s->to->createVar(part, Size::sPtr, type.destructor(), freeOnException);
-					*s->to << mov(v, dest);
-					*s->to << add(v, ptrConst(var->offset()));
+					code::Var v = s->l->createVar(part, Size::sPtr, type.destructor(), freeOnException);
+					*s->l << mov(v, dest);
+					*s->l << add(v, ptrConst(var->offset()));
 				}
 			}
 
 			// Remove all destructors here, since we can call the real destructor of 'this' now.
-			*s->to << end(varBlock);
+			*s->l << end(varBlock);
 
 			// Set our VTable.
 			if (type->typeFlags & typeClass) {
-				type->vtable->insert(s->to, dest);
+				type->vtable->insert(s->l, dest);
 			}
 
 			// From here on, we need to make sure that we're freeing our 'this' pointer properly.
 			if (Function *fn = type->destructor()) {
-				Part p = s->to->createPart(s->block);
-				*s->to << begin(p);
-				code::Var thisCleanup = s->to->createVar(p, Size::sPtr, fn->directRef(), freeOnException);
-				*s->to << mov(thisCleanup, dest);
+				Part p = s->l->createPart(s->block);
+				*s->l << begin(p);
+				code::Var thisCleanup = s->l->createVar(p, Size::sPtr, fn->directRef(), freeOnException);
+				*s->l << mov(thisCleanup, dest);
 			}
 		}
 
@@ -332,12 +332,12 @@ namespace storm {
 				throw SyntaxError(pos, L"Can not initialize reference " + ::toS(v->name) + L", not implemented yet!");
 
 			if (t.isValue()) {
-				*s->to << mov(ptrA, dest);
-				*s->to << add(ptrA, ptrConst(v->offset()));
-				*s->to << fnParam(ptrA);
+				*s->l << mov(ptrA, dest);
+				*s->l << add(ptrA, ptrConst(v->offset()));
+				*s->l << fnParam(ptrA);
 				Function *c = t.type->defaultCtor();
 				assert(c, L"No default constructor!");
-				*s->to << fnCall(c->ref(), valVoid());
+				*s->l << fnCall(c->ref(), valVoid());
 			} else if (t.isBuiltIn()) {
 				// Default value is already there.
 			} else {
@@ -351,8 +351,8 @@ namespace storm {
 				ctorCall->code(s, created);
 
 				code::Var cVar = created->location(s).v;
-				*s->to << mov(ptrA, dest);
-				*s->to << mov(ptrRel(ptrA, v->offset()), cVar);
+				*s->l << mov(ptrA, dest);
+				*s->l << mov(ptrRel(ptrA, v->offset()), cVar);
 			}
 		}
 
@@ -401,8 +401,8 @@ namespace storm {
 				CodeResult *created = new (this) CodeResult(t, s->block);
 				call->code(s, created);
 				VarInfo loc = created->location(s);
-				*s->to << mov(ptrA, dest);
-				*s->to << mov(ptrRel(ptrA, v->offset()), loc.v);
+				*s->l << mov(ptrA, dest);
+				*s->l << mov(ptrRel(ptrA, v->offset()), loc.v);
 				loc.created(s);
 			} else {
 				// Now we're left with the values!
@@ -414,8 +414,8 @@ namespace storm {
 				for (nat i = 1; i < values->params->count(); i++)
 					actuals->push(to->code(i - 1, s, ctor->params->at(i)));
 
-				*s->to << mov(ptrA, dest);
-				*s->to << add(ptrA, ptrConst(v->offset()));
+				*s->l << mov(ptrA, dest);
+				*s->l << add(ptrA, ptrConst(v->offset()));
 
 				CodeResult *nothing = CREATE(CodeResult, this);
 				ctor->localCall(s, actuals, nothing, true);
@@ -432,8 +432,8 @@ namespace storm {
 			CodeResult *result = new (this) CodeResult(t, s->block);
 			to->code(s, result);
 			VarInfo loc = result->location(s);
-			*s->to << mov(ptrA, dest);
-			*s->to << mov(ptrRel(ptrA, v->offset()), loc.v);
+			*s->l << mov(ptrA, dest);
+			*s->l << mov(ptrRel(ptrA, v->offset()), loc.v);
 		}
 
 	}

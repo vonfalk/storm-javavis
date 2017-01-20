@@ -42,6 +42,25 @@ namespace code {
 		rcx = ptrC | 0x800,
 	};
 
+	namespace impl {
+		// TODO: Remove these when we properly handle enums!
+		inline Reg STORM_FN noReg() { return code::noReg; }
+		inline Reg STORM_FN ptrStack() { return code::ptrStack; }
+		inline Reg STORM_FN ptrFrame() { return code::ptrFrame; }
+		inline Reg STORM_FN ptrA() { return code::ptrA; }
+		inline Reg STORM_FN ptrB() { return code::ptrB; }
+		inline Reg STORM_FN ptrC() { return code::ptrC; }
+		inline Reg STORM_FN al() { return code::al; }
+		inline Reg STORM_FN bl() { return code::bl; }
+		inline Reg STORM_FN cl() { return code::cl; }
+		inline Reg STORM_FN eax() { return code::eax; }
+		inline Reg STORM_FN ebx() { return code::ebx; }
+		inline Reg STORM_FN ecx() { return code::ecx; }
+		inline Reg STORM_FN rax() { return code::rax; }
+		inline Reg STORM_FN rbx() { return code::rbx; }
+		inline Reg STORM_FN rcx() { return code::rcx; }
+	}
+
 	// Get the name of a register.
 	const wchar *name(Reg r);
 

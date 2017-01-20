@@ -56,7 +56,7 @@ namespace storm {
 				expr->code(s, gr);
 
 				VarInfo tmpRef = s->createVar(param);
-				*s->to << lea(tmpRef.v, ptrRel(tmpV.v, Offset()));
+				*s->l << lea(tmpRef.v, ptrRel(tmpV.v, Offset()));
 				tmpRef.created(s);
 				return tmpRef.v;
 			} else {

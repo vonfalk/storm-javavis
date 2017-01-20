@@ -28,8 +28,8 @@ namespace storm {
 	void numCmp(InlineParams p) {
 		if (p.result->needed()) {
 			code::Operand result = p.result->location(p.state).v;
-			*p.state->to << code::cmp(p.params->at(0), p.params->at(1));
-			*p.state->to << code::setCond(result, f);
+			*p.state->l << code::cmp(p.params->at(0), p.params->at(1));
+			*p.state->l << code::setCond(result, f);
 		}
 	}
 
@@ -62,120 +62,120 @@ namespace storm {
 	// Increase/decrease
 	template <class T>
 	void numInc(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << add(tRel(T(), code::ptrA), p.params->at(1));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << add(tRel(T(), code::ptrA), p.params->at(1));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
 	}
 
 	template <class T>
 	void numDec(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << sub(tRel(T(), code::ptrA), p.params->at(1));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << sub(tRel(T(), code::ptrA), p.params->at(1));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
 	}
 
 	template <class T>
 	void numScale(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << mul(tRel(T(), code::ptrA), p.params->at(1));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << mul(tRel(T(), code::ptrA), p.params->at(1));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
 	}
 
 	template <class T>
 	void numIDivScale(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << idiv(tRel(T(), code::ptrA), p.params->at(1));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << idiv(tRel(T(), code::ptrA), p.params->at(1));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
 	}
 
 	template <class T>
 	void numUDivScale(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << udiv(tRel(T(), code::ptrA), p.params->at(1));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << udiv(tRel(T(), code::ptrA), p.params->at(1));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
 	}
 
 	template <class T>
 	void numIModEq(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << imod(tRel(T(), code::ptrA), p.params->at(1));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << imod(tRel(T(), code::ptrA), p.params->at(1));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
 	}
 
 	template <class T>
 	void numUModEq(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << umod(tRel(T(), code::ptrA), p.params->at(1));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << umod(tRel(T(), code::ptrA), p.params->at(1));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
 	}
 
 	template <class T>
 	void numPrefixInc(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << add(tRel(T(), code::ptrA), tConst(T(1)));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << add(tRel(T(), code::ptrA), tConst(T(1)));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
 	}
 
 	template <class T>
 	void numPostfixInc(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
-		*p.state->to << add(tRel(T(), code::ptrA), tConst(T(1)));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+		*p.state->l << add(tRel(T(), code::ptrA), tConst(T(1)));
 	}
 
 	template <class T>
 	void numPrefixDec(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << sub(tRel(T(), code::ptrA), tConst(T(1)));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << sub(tRel(T(), code::ptrA), tConst(T(1)));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
 	}
 
 	template <class T>
 	void numPostfixDec(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
 		if (p.result->needed())
-			*p.state->to << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
-		*p.state->to << sub(tRel(T(), code::ptrA), tConst(T(1)));
+			*p.state->l << mov(p.result->location(p.state).v, tRel(T(), code::ptrA));
+		*p.state->l << sub(tRel(T(), code::ptrA), tConst(T(1)));
 	}
 
 	template <class T>
 	void numAssign(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << mov(tRel(T(), code::ptrA), p.params->at(1));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << mov(tRel(T(), code::ptrA), p.params->at(1));
 		if (p.result->needed()) {
 			if (p.result->type().ref) {
 				// Try to suggest params[0], since we already have a ref to the value there.
 				if (!p.result->suggest(p.state, p.params->at(0)))
-					*p.state->to << mov(p.result->location(p.state).v, code::ptrA);
+					*p.state->l << mov(p.result->location(p.state).v, code::ptrA);
 			} else {
 				// Try to suggest params[1], since we already have the value there.
 				if (!p.result->suggest(p.state, p.params->at(1)))
-					*p.state->to << mov(p.result->location(p.state).v, code::ptrA);
+					*p.state->l << mov(p.result->location(p.state).v, code::ptrA);
 			}
 		}
 	}
 
 	template <class T>
 	void numCopyCtor(InlineParams p) {
-		*p.state->to << mov(code::ptrC, p.params->at(1));
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << mov(tRel(T(), code::ptrA), tRel(T(), code::ptrC));
+		*p.state->l << mov(code::ptrC, p.params->at(1));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << mov(tRel(T(), code::ptrA), tRel(T(), code::ptrC));
 	}
 
 	template <class T>
 	void numInit(InlineParams p) {
-		*p.state->to << mov(code::ptrA, p.params->at(0));
-		*p.state->to << mov(tRel(T(), code::ptrA), tConst(T(0)));
+		*p.state->l << mov(code::ptrA, p.params->at(0));
+		*p.state->l << mov(tRel(T(), code::ptrA), tConst(T(0)));
 	}
 
 	// Mark 'f' as an auto-cast function.

@@ -145,7 +145,12 @@ static void genTypes(wostream &to, World &w) {
 				thread = c->threadType;
 			}
 
-			if (p) {
+			if (Enum *e = as<Enum>(&t)) {
+				if (e->bitmask)
+					to << L"CppType::superCustom, size_t(&storm::createBitmaskEnum), ";
+				else
+					to << L"CppType::superCustom, size_t(&storm::createEnum), ";
+			} else if (p) {
 				to << L"CppType::superCustom, size_t(&" << p->generate << L"), ";
 			} else if (thread) {
 				to << L"CppType::superThread, " << thread->id << L" /* " << thread->name << L" */, ";
@@ -507,6 +512,31 @@ static void genVariables(wostream &to, World &w) {
 	}
 }
 
+static void genEnumValues(wostream &to, World &w) {
+	for (nat i = 0; i < w.types.size(); i++) {
+		Enum *e = as<Enum>(w.types[i].borrow());
+		if (!e)
+			continue;
+
+		for (nat j = 0; j < e->members.size(); j++) {
+			const String &member = e->members[j];
+
+			to << L"{ ";
+
+			// Name.
+			to << L"L\"" << member << L"\", ";
+
+			// Member of.
+			to << e->id << L" /* " << e->name << L" */, ";
+
+			// Value.
+			to << e->name.parent() << L"::" << member;
+
+			to << L" },\n";
+		}
+	}
+}
+
 static void genTemplateGlobals(wostream &to, World &w) {
 	for (nat i = 0; i < w.templates.size(); i++) {
 		Template &t = *w.templates[i];
@@ -615,6 +645,7 @@ GenerateMap genMap() {
 		{ L"FN_PARAMETERS", &genFnParams },
 		{ L"CPP_FUNCTIONS", &genFunctions },
 		{ L"CPP_VARIABLES", &genVariables },
+		{ L"CPP_ENUM_VALUES", &genEnumValues },
 		{ L"TEMPLATE_GLOBALS", &genTemplateGlobals },
 		{ L"CPP_TEMPLATES", &genTemplates },
 		{ L"THREAD_GLOBALS", &genThreadGlobals },

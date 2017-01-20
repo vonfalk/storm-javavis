@@ -2,6 +2,7 @@
 #include "Core/Object.h"
 #include "Core/EnginePtr.h"
 #include "Thread.h"
+#include "Utils/Bitmask.h"
 
 namespace storm {
 	namespace debug {
@@ -240,5 +241,19 @@ namespace storm {
 			Int dummy;
 		};
 
+
+		// Enum.
+		enum DbgEnum {
+			foo,
+			bar,
+		};
+
+		// Bitmask enum
+		enum DbgBit {
+			bitFoo = 0x01,
+			bitBar = 0x02,
+		};
+
+		BITMASK_OPERATORS(DbgBit);
 	}
 }

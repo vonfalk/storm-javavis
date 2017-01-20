@@ -33,7 +33,7 @@ namespace storm {
 			using namespace code;
 
 			// Always indicate cast failed.
-			*state->to << mov(boolResult->location(state).v, byteConst(0));
+			*state->l << mov(boolResult->location(state).v, byteConst(0));
 		}
 
 
@@ -75,23 +75,23 @@ namespace storm {
 
 			// Load into eax...
 			if (fromType.ref) {
-				*state->to << mov(ptrA, from->location(state).v);
-				*state->to << mov(ptrA, ptrRel(ptrA, Offset()));
+				*state->l << mov(ptrA, from->location(state).v);
+				*state->l << mov(ptrA, ptrRel(ptrA, Offset()));
 			} else {
-				*state->to << mov(ptrA, from->location(state).v);
+				*state->l << mov(ptrA, from->location(state).v);
 			}
 
 			// Store the object into 'var' regardless if the test succeeded. It does not matter.
 			if (var) {
-				*state->to << mov(var->var.v, ptrA);
+				*state->l << mov(var->var.v, ptrA);
 				var->var.created(state);
 			}
 
 			// Call the 'as' function.
-			*state->to << fnParam(ptrA);
-			*state->to << fnParam(to.type->typeRef());
-			*state->to << fnCall(engine().ref(Engine::rAs), ValType(Size::sByte, false));
-			*state->to << mov(boolResult->location(state).v, al);
+			*state->l << fnParam(ptrA);
+			*state->l << fnParam(to.type->typeRef());
+			*state->l << fnCall(engine().ref(Engine::rAs), ValType(Size::sByte, false));
+			*state->l << mov(boolResult->location(state).v, al);
 		}
 
 		void WeakDowncast::toS(StrBuf *to) const {
@@ -122,8 +122,8 @@ namespace storm {
 			expr->code(state, from);
 
 			// Check if it is null.
-			*state->to << cmp(var->var.v, ptrConst(Offset()));
-			*state->to << setCond(boolResult->location(state).v, ifNotEqual);
+			*state->l << cmp(var->var.v, ptrConst(Offset()));
+			*state->l << setCond(boolResult->location(state).v, ifNotEqual);
 		}
 
 		void WeakMaybeCast::toS(StrBuf *to) const {

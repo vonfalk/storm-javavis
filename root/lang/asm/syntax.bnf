@@ -3,6 +3,7 @@
 
 use lang.bs;
 use core.asm;
+use core.asm.CondFlag;
 
 delimiter = SDelimiter;
 

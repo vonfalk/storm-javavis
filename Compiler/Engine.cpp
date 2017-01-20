@@ -11,6 +11,7 @@
 #include "Core/Map.h"
 #include "Core/StrBuf.h"
 #include "Core/Handle.h"
+#include "Lib/Enum.h"
 #include "Syntax/Node.h"
 #include "Utils/Memory.h"
 
@@ -296,6 +297,8 @@ namespace storm {
 			return arena()->externalSource(L"threadOffset", (const void *)OFFSET_OF(TObject, thread));
 		case rMapAt:
 			return arena()->externalSource(L"MapBase::atRaw", address(&MapBase::atRaw));
+		case rEnumToS:
+			return arena()->externalSource(L"Enum::toString", address(&Enum::toString));
 		case rSpawnResult:
 			return arena()->externalSource(L"spawnResult", &spawnThreadResult);
 		case rSpawnFuture:

@@ -16,7 +16,7 @@ namespace storm {
 
 	CodeGen *TypeDefaultCtor::generate() {
 		CodeGen *t = new (this) CodeGen(runOn());
-		Listing *l = t->to;
+		Listing *l = t->l;
 
 		Var me = l->createParam(valPtr());
 
@@ -103,7 +103,7 @@ namespace storm {
 
 	CodeGen *TypeCopyCtor::generate() {
 		CodeGen *t = new (this) CodeGen(runOn());
-		Listing *l = t->to;
+		Listing *l = t->l;
 
 		Var me = l->createParam(valPtr());
 		Var src = l->createParam(valPtr());
@@ -167,7 +167,7 @@ namespace storm {
 
 	CodeGen *TypeAssign::generate() {
 		CodeGen *t = new (this) CodeGen(runOn());
-		Listing *l = t->to;
+		Listing *l = t->l;
 
 		Var me = l->createParam(valPtr());
 		Var src = l->createParam(valPtr());
@@ -231,7 +231,7 @@ namespace storm {
 
 	CodeGen *TypeDeepCopy::generate() {
 		CodeGen *t = new (this) CodeGen(runOn());
-		Listing *l = t->to;
+		Listing *l = t->l;
 
 		Var me = l->createParam(valPtr());
 		Var env = l->createParam(valPtr());

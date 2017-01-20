@@ -184,7 +184,7 @@ namespace storm {
 			try {
 				CodeGen *l = me->generate->call();
 				// Append any data needed.
-				me->setCode(l->to);
+				me->setCode(l->l);
 			} catch (...) {
 				me->loading = false;
 				throw;
@@ -224,7 +224,7 @@ namespace storm {
 		using namespace code;
 
 		CodeGen *state = new (this) CodeGen(owner->runOn());
-		Listing *l = state->to;
+		Listing *l = state->l;
 
 		Array<code::Operand> *params = new (this) Array<code::Operand>();
 		for (nat i = 0; i < owner->params->count(); i++) {

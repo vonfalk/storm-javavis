@@ -49,16 +49,16 @@ namespace storm {
 			CodeResult *cond = new (this) CodeResult(Value(StormInfo<Bool>::type(engine())), state->block);
 			cast->code(state, cond, overwrite);
 
-			Label skipLbl = state->to->label();
+			Label skipLbl = state->l->label();
 
-			*state->to << cmp(cond->location(state).v, byteConst(0));
-			*state->to << jmp(skipLbl, ifNotEqual);
+			*state->l << cmp(cond->location(state).v, byteConst(0));
+			*state->l << jmp(skipLbl, ifNotEqual);
 
 			CodeResult *failResult = CREATE(CodeResult, this);
 			failStmt->code(state, failResult);
 			// We have verified that 'failStmt' never returns, no worry about extra jumps!
 
-			*state->to << skipLbl;
+			*state->l << skipLbl;
 
 			successBlock->code(state, r);
 		}

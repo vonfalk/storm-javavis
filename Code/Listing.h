@@ -100,8 +100,8 @@ namespace code {
 		};
 
 		// Add instructions and labels.
-		Listing &operator <<(Instr *op);
-		Listing &operator <<(Label l);
+		Listing &STORM_FN operator <<(Instr *op);
+		Listing &STORM_FN operator <<(Label l);
 
 		// Access instructions.
 		inline Nat STORM_FN count() const { return code->count(); }

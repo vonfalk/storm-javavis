@@ -11,74 +11,74 @@ namespace storm {
 	}
 
 	static void floatCopyCtor(InlineParams p) {
-		*p.state->to << mov(ptrC, p.params->at(1));
-		*p.state->to << mov(ptrA, p.params->at(0));
-		*p.state->to << mov(floatRel(ptrA, Offset()), floatRel(ptrC, Offset()));
+		*p.state->l << mov(ptrC, p.params->at(1));
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << mov(floatRel(ptrA, Offset()), floatRel(ptrC, Offset()));
 	}
 
 	static void floatAdd(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->to << fld(p.params->at(0));
-			*p.state->to << fld(p.params->at(1));
-			*p.state->to << faddp();
-			*p.state->to << fstp(p.result->location(p.state).v);
-			*p.state->to << fwait();
+			*p.state->l << fld(p.params->at(0));
+			*p.state->l << fld(p.params->at(1));
+			*p.state->l << faddp();
+			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fwait();
 		}
 	}
 
 	static void floatSub(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->to << fld(p.params->at(0));
-			*p.state->to << fld(p.params->at(1));
-			*p.state->to << fsubp();
-			*p.state->to << fstp(p.result->location(p.state).v);
-			*p.state->to << fwait();
+			*p.state->l << fld(p.params->at(0));
+			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fsubp();
+			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fwait();
 		}
 	}
 
 	static void floatMul(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->to << fld(p.params->at(0));
-			*p.state->to << fld(p.params->at(1));
-			*p.state->to << fmulp();
-			*p.state->to << fstp(p.result->location(p.state).v);
-			*p.state->to << fwait();
+			*p.state->l << fld(p.params->at(0));
+			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fmulp();
+			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fwait();
 		}
 	}
 
 	static void floatDiv(InlineParams p) {
 		if (p.result->needed()) {
-			*p.state->to << fld(p.params->at(0));
-			*p.state->to << fld(p.params->at(1));
-			*p.state->to << fdivp();
-			*p.state->to << fstp(p.result->location(p.state).v);
-			*p.state->to << fwait();
+			*p.state->l << fld(p.params->at(0));
+			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fdivp();
+			*p.state->l << fstp(p.result->location(p.state).v);
+			*p.state->l << fwait();
 		}
 	}
 
 	static void floatAssign(InlineParams p) {
-		*p.state->to << mov(ptrA, p.params->at(0));
-		*p.state->to << mov(floatRel(ptrA, Offset()), p.params->at(1));
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << mov(floatRel(ptrA, Offset()), p.params->at(1));
 		if (p.result->needed())
 			if (!p.result->suggest(p.state, p.params->at(0)))
-				*p.state->to << mov(p.result->location(p.state).v, floatRel(ptrA, Offset()));
+				*p.state->l << mov(p.result->location(p.state).v, floatRel(ptrA, Offset()));
 	}
 
 	static void floatToInt(InlineParams p) {
 		if (!p.result->needed())
 			return;
-		*p.state->to << fld(p.params->at(0));
-		*p.state->to << fistp(p.result->location(p.state).v);
+		*p.state->l << fld(p.params->at(0));
+		*p.state->l << fistp(p.result->location(p.state).v);
 	}
 
 	template <CondFlag f>
 	static void floatCmp(InlineParams p) {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
-			*p.state->to << fld(p.params->at(1));
-			*p.state->to << fld(p.params->at(0));
-			*p.state->to << fcompp();
-			*p.state->to << setCond(result, f);
+			*p.state->l << fld(p.params->at(1));
+			*p.state->l << fld(p.params->at(0));
+			*p.state->l << fcompp();
+			*p.state->l << setCond(result, f);
 		}
 	}
 

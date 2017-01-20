@@ -33,6 +33,7 @@ namespace code {
 			sub,
 			sbb,
 			cmp,
+			test,
 			mul,
 			idiv,
 			udiv,

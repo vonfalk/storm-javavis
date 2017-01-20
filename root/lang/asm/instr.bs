@@ -1,4 +1,5 @@
 use core:asm;
+use core:lang;
 
 class AddInstr extends AsmAtom {
 	AsmOperand dest;
@@ -73,7 +74,7 @@ class JmpInstr extends AsmAtom {
 	CondFlag flag;
 
 	ctor(AsmOperand to) {
-		init() { to = to; flag = ifAlways; }
+		init() { to = to; flag = CondFlag:ifAlways; }
 	}
 
 	ctor(AsmOperand to, CondFlag c) {

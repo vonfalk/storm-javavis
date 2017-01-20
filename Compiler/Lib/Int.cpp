@@ -17,8 +17,8 @@ namespace storm {
 		if (!p.result->needed())
 			return;
 
-		*p.state->to << fild(p.params->at(0));
-		*p.state->to << fstp(p.result->location(p.state).v);
+		*p.state->l << fild(p.params->at(0));
+		*p.state->l << fstp(p.result->location(p.state).v);
 	}
 
 	IntType::IntType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sInt, type, null) {}
@@ -79,8 +79,8 @@ namespace storm {
 	}
 
 	static void castNat(InlineParams p) {
-		*p.state->to << mov(ptrA, p.params->at(0));
-		*p.state->to << ucast(intRel(ptrA, Offset()), p.params->at(1));
+		*p.state->l << mov(ptrA, p.params->at(0));
+		*p.state->l << ucast(intRel(ptrA, Offset()), p.params->at(1));
 	}
 
 	NatType::NatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sNat, type, null) {}

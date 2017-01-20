@@ -138,6 +138,8 @@ namespace storm {
 			rTObjectOffset,
 			// Access the 'atRaw' member of Map.
 			rMapAt,
+			// Acces the generic 'EnumType::toString'.
+			rEnumToS,
 			// Low-level helpers for spawning threads.
 			rSpawnResult,
 			rSpawnFuture,

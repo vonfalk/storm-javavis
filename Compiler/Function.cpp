@@ -118,19 +118,19 @@ namespace storm {
 		RunOn on = runOn();
 		assert(on.state != RunOn::any, L"Only use 'findThread' on functions which 'runOn()' something other than any.");
 
-		Var r = s->to->createVar(s->block, Size::sPtr);
+		Var r = s->l->createVar(s->block, Size::sPtr);
 
 		switch (on.state) {
 		case RunOn::runtime:
 			// Should be a this-ptr. Does not work well for constructors.
 			assert(wcscmp(name->c_str(), Type::CTOR) != 0,
 				L"Please overload 'findThread' for your constructor '" + ::toS(identifier()) + L"'!");
-			*s->to << mov(ptrA, params->at(0));
-			*s->to << add(ptrA, engine().ref(Engine::rTObjectOffset));
-			*s->to << mov(r, ptrRel(ptrA, Offset()));
+			*s->l << mov(ptrA, params->at(0));
+			*s->l << add(ptrA, engine().ref(Engine::rTObjectOffset));
+			*s->l << mov(r, ptrRel(ptrA, Offset()));
 			break;
 		case RunOn::named:
-			*s->to << mov(r, on.thread->ref());
+			*s->l << mov(r, on.thread->ref());
 			break;
 		default:
 			assert(false, L"Unknown state.");
@@ -180,17 +180,17 @@ namespace storm {
 		if (result == Value()) {
 			addParams(to, params, code::Var());
 
-			*to->to << fnCall(ref, valVoid());
+			*to->l << fnCall(ref, valVoid());
 		} else {
 			VarInfo rVar = res->safeLocation(to, result);
 			addParams(to, params, rVar.v);
 
 			if (result.returnInReg()) {
-				*to->to << fnCall(ref, result.valTypeRet());
-				*to->to << mov(rVar.v, asSize(ptrA, result.size()));
+				*to->l << fnCall(ref, result.valTypeRet());
+				*to->l << mov(rVar.v, asSize(ptrA, result.size()));
 			} else {
 				// Ignore return value...
-				*to->to << fnCall(ref, valVoid());
+				*to->l << fnCall(ref, valVoid());
 			}
 
 			rVar.created(to);
@@ -214,8 +214,8 @@ namespace storm {
 				start = 1;
 			}
 
-			*to->to << lea(ptrA, ptrRel(resultIn, Offset()));
-			*to->to << fnParam(ptrA);
+			*to->l << lea(ptrA, ptrRel(resultIn, Offset()));
+			*to->l << fnParam(ptrA);
 		}
 
 		for (nat i = start; i < params->count(); i++) {
@@ -228,13 +228,13 @@ namespace storm {
 		Value p = this->params->at(id);
 		if (!p.ref && p.isValue()) {
 			if (params->at(id).type() == code::opVariable) {
-				*to->to << fnParam(params->at(id).var(), p.copyCtor());
+				*to->l << fnParam(params->at(id).var(), p.copyCtor());
 			} else {
 				// Has to be a reference to the value...
-				*to->to << fnParamRef(params->at(id), p.type->size(), p.copyCtor());
+				*to->l << fnParamRef(params->at(id), p.type->size(), p.copyCtor());
 			}
 		} else {
-			*to->to << fnParam(params->at(id));
+			*to->l << fnParam(params->at(id));
 		}
 	}
 
@@ -246,8 +246,8 @@ namespace storm {
 		using namespace code;
 
 		Engine &e = engine();
-		Block b = to->to->createBlock(to->to->last(to->block));
-		*to->to << begin(b);
+		Block b = to->l->createBlock(to->l->last(to->block));
+		*to->l << begin(b);
 		CodeGen *sub = to->child(b);
 
 		PrepareResult r = prepareThreadCall(sub, params);
@@ -256,10 +256,10 @@ namespace storm {
 		VarInfo resultPos;
 		if (this->result == Value()) {
 			// null-pointer.
-			*to->to << mov(ptrB, ptrConst(Offset(0)));
+			*to->l << mov(ptrB, ptrConst(Offset(0)));
 		} else {
 			resultPos = res->safeLocation(to, this->result);
-			*to->to << lea(ptrB, resultPos.v);
+			*to->l << lea(ptrB, resultPos.v);
 		}
 
 		Ref fn = ref();
@@ -270,18 +270,18 @@ namespace storm {
 		Var returnType = createBasicTypeInfo(to, this->result);
 
 		// Spawn the thread!
-		*to->to << lea(ptrA, r.params);
-		*to->to << lea(ptrC, returnType);
-		*to->to << fnParam(fn);
-		*to->to << fnParam(toOp(isMember()));
-		*to->to << fnParam(ptrA);
-		*to->to << fnParam(ptrB);
-		*to->to << fnParam(ptrC);
-		*to->to << fnParam(thread);
-		*to->to << fnParam(r.data);
-		*to->to << fnCall(e.ref(Engine::rSpawnResult), valVoid());
+		*to->l << lea(ptrA, r.params);
+		*to->l << lea(ptrC, returnType);
+		*to->l << fnParam(fn);
+		*to->l << fnParam(toOp(isMember()));
+		*to->l << fnParam(ptrA);
+		*to->l << fnParam(ptrB);
+		*to->l << fnParam(ptrC);
+		*to->l << fnParam(thread);
+		*to->l << fnParam(r.data);
+		*to->l << fnCall(e.ref(Engine::rSpawnResult), valVoid());
 
-		*to->to << end(b);
+		*to->l << end(b);
 		resultPos.created(to);
 	}
 
@@ -291,13 +291,13 @@ namespace storm {
 		Engine &e = engine();
 
 		// Create a UThreadData object.
-		Var data = to->to->createVar(to->block, Size::sPtr, e.ref(Engine::rAbortSpawn), freeOnException);
-		*to->to << fnCall(e.ref(Engine::rSpawnLater), valPtr());
-		*to->to << mov(data, ptrA);
+		Var data = to->l->createVar(to->block, Size::sPtr, e.ref(Engine::rAbortSpawn), freeOnException);
+		*to->l << fnCall(e.ref(Engine::rSpawnLater), valPtr());
+		*to->l << mov(data, ptrA);
 
 		// Find out the pointer to the data and create FnParams object.
-		*to->to << fnParam(ptrA);
-		*to->to << fnCall(e.ref(Engine::rSpawnParam), valPtr());
+		*to->l << fnParam(ptrA);
+		*to->l << fnCall(e.ref(Engine::rSpawnParam), valPtr());
 		Var fnParams = createFnParams(to, code::Operand(ptrA));
 
 		// Add all parameters.
@@ -310,9 +310,9 @@ namespace storm {
 
 		// Set the thread data to null, so that we do not double-free it if
 		// the call returns with an exception.
-		Var dataNoFree = to->to->createVar(to->block, Size::sPtr);
-		*to->to << mov(dataNoFree, data);
-		*to->to << mov(data, ptrConst(Offset()));
+		Var dataNoFree = to->l->createVar(to->block, Size::sPtr);
+		*to->l << mov(dataNoFree, data);
+		*to->l << mov(data, ptrConst(Offset()));
 
 		PrepareResult r = { fnParams, dataNoFree };
 		return r;
@@ -354,7 +354,7 @@ namespace storm {
 
 
 		CodeGen *s = new (this) CodeGen(runOn());
-		Listing *l = s->to;
+		Listing *l = s->l;
 		*l << prolog();
 
 		nat firstParam = 0;
@@ -434,8 +434,8 @@ namespace storm {
 		using namespace code;
 
 		Engine &e = engine();
-		Block b = to->to->createBlock(to->to->last(to->block));
-		*to->to << begin(b);
+		Block b = to->l->createBlock(to->l->last(to->block));
+		*to->l << begin(b);
 
 		CodeGen *sub = to->child(b);
 		PrepareResult r = prepareThreadCall(sub, params);
@@ -455,18 +455,18 @@ namespace storm {
 		// Variable returnType = createBasicTypeInfo(to, this->result);
 
 		// // Now we're ready to spawn the thread!
-		// *to->to << lea(ptrA, r.params);
-		// *to->to << lea(ptrC, returnType);
-		// *to->to << fnParam(*fn);
-		// *to->to << fnParam(toVal(isMember()));
-		// *to->to << fnParam(ptrA);
-		// *to->to << fnParam(resultPos.var());
-		// *to->to << fnParam(ptrC);
-		// *to->to << fnParam(t);
-		// *to->to << fnParam(r.data);
-		// *to->to << fnCall(e.fnRefs.spawnFuture, retVoid());
+		// *to->l << lea(ptrA, r.params);
+		// *to->l << lea(ptrC, returnType);
+		// *to->l << fnParam(*fn);
+		// *to->l << fnParam(toVal(isMember()));
+		// *to->l << fnParam(ptrA);
+		// *to->l << fnParam(resultPos.var());
+		// *to->l << fnParam(ptrC);
+		// *to->l << fnParam(t);
+		// *to->l << fnParam(r.data);
+		// *to->l << fnCall(e.fnRefs.spawnFuture, retVoid());
 
-		*to->to << end(b);
+		*to->l << end(b);
 		TODO(L"Implement me!");
 		assert(false);
 	}

@@ -14,7 +14,7 @@ AsmOperand number(Str size, Str value) {
 	} else if (size.equals("w")) {
 		wordConst(value.toWord);
 	} else if (size.equals("p")) {
-		intPtrConst(value.toInt);
+		ptrConst(Offset(value.toInt));
 	} else {
 		// Fallback.
 		intConst(value.toInt);

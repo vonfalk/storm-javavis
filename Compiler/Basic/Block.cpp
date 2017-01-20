@@ -22,7 +22,7 @@ namespace storm {
 		void Block::code(CodeGen *state, CodeResult *to) {
 			using namespace code;
 
-			code::Block block = state->to->createBlock(state->to->last(state->block));
+			code::Block block = state->l->createBlock(state->l->last(state->block));
 			CodeGen *child = state->child(block);
 
 			for (VarMap::Iter i = variables->begin(), end = variables->end(); i != end; ++i) {
@@ -37,10 +37,10 @@ namespace storm {
 		}
 
 		void Block::blockCode(CodeGen *state, CodeResult *to, const code::Block &block) {
-			*state->to << begin(block);
+			*state->l << begin(block);
 			CodeGen *subState = state->child(block);
 			blockCode(subState, to);
-			*state->to << end(block);
+			*state->l << end(block);
 		}
 
 		void Block::blockCode(CodeGen *state, CodeResult *to) {

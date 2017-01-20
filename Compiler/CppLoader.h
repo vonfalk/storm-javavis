@@ -62,6 +62,9 @@ namespace storm {
 		// Get the number of variables.
 		nat variableCount() const;
 
+		// Get the number of enum values.
+		nat enumValueCount() const;
+
 		// Find a NameSet corresponding to a given name.
 		NameSet *findPkg(const wchar *name);
 
@@ -91,6 +94,9 @@ namespace storm {
 
 		// Load a variable.
 		void loadVariable(const CppVariable &var);
+
+		// Load an enum value.
+		void loadEnumValue(const CppEnumValue &val);
 	};
 
 }

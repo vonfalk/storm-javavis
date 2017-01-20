@@ -193,6 +193,20 @@ namespace storm {
 	};
 
 	/**
+	 * List of enum members and their values.
+	 */
+	struct CppEnumValue {
+		// Name (null if last element).
+		const wchar *name;
+
+		// Member of.
+		nat memberOf;
+
+		// Value.
+		nat value;
+	};
+
+	/**
 	 * List of C++ templates.
 	 */
 	struct CppTemplate {
@@ -251,6 +265,9 @@ namespace storm {
 
 		// List of member variables.
 		const CppVariable *variables;
+
+		// List of enum values.
+		const CppEnumValue *enumValues;
 
 		// List of templates.
 		const CppTemplate *templates;
