@@ -205,6 +205,7 @@ namespace storm {
 		 * so that iterators do not break when that happens.
 		 */
 		class Iter {
+			STORM_VALUE;
 		public:
 			// Pointing to the end.
 			Iter();
@@ -221,7 +222,7 @@ namespace storm {
 
 			// Advance.
 			Iter &operator ++();
-			Iter operator ++(int);
+			Iter operator ++(int z);
 
 			// Raw get functions.
 			void *rawVal() const;

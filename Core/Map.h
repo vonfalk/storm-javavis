@@ -90,7 +90,7 @@ namespace storm {
 		void *CODECALL getRaw(const void *key);
 
 		// Get a value. Create it if it does not exist.
-		void *CODECALL getRaw(const void *key, const void *def);
+		void *CODECALL getRawDef(const void *key, const void *def);
 
 		// Get a value. Create using the constructor if it does not exist.
 		typedef void (*CreateCtor)(void *to, Engine &e);
@@ -244,8 +244,8 @@ namespace storm {
 			Iter operator ++(int z);
 
 			// Raw get functions.
-			void *rawKey() const;
-			void *rawVal() const;
+			void *CODECALL rawKey() const;
+			void *CODECALL rawVal() const;
 
 			// Raw pre- and post increment.
 			Iter &CODECALL preIncRaw();
@@ -321,7 +321,7 @@ namespace storm {
 
 		// Get a value. Returns the default element if none found.
 		V &get(const K &k, const V &def) {
-			return *(V *)getRaw(&k, &def);
+			return *(V *)getRawDef(&k, &def);
 		}
 
 		// Get a value, create it if not alredy existing.

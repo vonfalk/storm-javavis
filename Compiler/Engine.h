@@ -136,6 +136,8 @@ namespace storm {
 			rVTableAllocOffset,
 			// # of bytes inside TObject the thread is stored
 			rTObjectOffset,
+			// Access the 'atRaw' member of Map.
+			rMapAt,
 			// Low-level helpers for spawning threads.
 			rSpawnResult,
 			rSpawnFuture,

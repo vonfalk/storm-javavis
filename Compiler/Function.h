@@ -140,6 +140,7 @@ namespace storm {
 	Function *nativeFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, const void *fn);
 	Function *nativeEngineFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, const void *fn);
 	Function *lazyFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, Fn<CodeGen *> *generate);
+	Function *dynamicFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, code::Listing *src);
 
 
 	// Helpers used by the generated code.

@@ -15,8 +15,7 @@ namespace storm {
 	 * The implementation is inspired from the hash map implementation found in Lua, see Map.h and
 	 * Set.h for details.
 	 *
-	 * Note: Under MPS, the references stored in here may be to objects that have still been
-	 * finalized.
+	 * Note: Under MPS, the references stored in here may be to objects that have been finalized.
 	 */
 
 	/**

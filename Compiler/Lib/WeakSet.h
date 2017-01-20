@@ -5,23 +5,17 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
-	class SetBase;
-
-	/**
-	 * Implements the template interface for the Set<> class in Storm.
-	 */
-
 	// Create types for unknown implementations.
-	Type *createSet(Str *name, ValueArray *params);
+	Type *createWeakSet(Str *name, ValueArray *params);
 
 	/**
-	 * Type for sets.
+	 * Type for weak sets.
 	 */
-	class SetType : public Type {
+	class WeakSetType : public Type {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR SetType(Str *name, Type *k);
+		STORM_CTOR WeakSetType(Str *name, Type *k);
 
 	protected:
 		// Load members.
@@ -33,17 +27,17 @@ namespace storm {
 
 		// Helpers for creating instances.
 		static void createClass(void *mem);
-		static void copyClass(void *mem, SetBase *copy);
+		static void copyClass(void *mem, WeakSetBase *copy);
 	};
 
 	/**
 	 * The set iterator type.
 	 */
-	class SetIterType : public Type {
+	class WeakSetIterType : public Type {
 		STORM_CLASS;
 	public:
 		// Ctor.
-		SetIterType(Type *k);
+		WeakSetIterType(Type *k);
 
 	protected:
 		// Lazy loading.

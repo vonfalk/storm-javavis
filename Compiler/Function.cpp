@@ -521,5 +521,10 @@ namespace storm {
 		return r;
 	}
 
+	Function *dynamicFunction(Engine &e, Value result, const wchar *name, Array<Value> *params, code::Listing *src) {
+		Function *r = new (e) Function(result, new (e) Str(name), params);
+		r->setCode(new (e) DynamicCode(src));
+		return r;
+	}
 
 }

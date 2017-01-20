@@ -8,6 +8,7 @@
 #include "Core/Hash.h"
 #include "Core/Thread.h"
 #include "Core/Str.h"
+#include "Core/Map.h"
 #include "Core/StrBuf.h"
 #include "Core/Handle.h"
 #include "Syntax/Node.h"
@@ -293,6 +294,8 @@ namespace storm {
 			return arena()->externalSource(L"vtableAllocOffset", (const void *)VTableCpp::vtableAllocOffset());
 		case rTObjectOffset:
 			return arena()->externalSource(L"threadOffset", (const void *)OFFSET_OF(TObject, thread));
+		case rMapAt:
+			return arena()->externalSource(L"MapBase::atRaw", address(&MapBase::atRaw));
 		case rSpawnResult:
 			return arena()->externalSource(L"spawnResult", &spawnThreadResult);
 		case rSpawnFuture:

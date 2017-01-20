@@ -136,7 +136,7 @@ namespace storm {
 		return valPtr(slot);
 	}
 
-	void *MapBase::getRaw(const void *key, const void *def) {
+	void *MapBase::getRawDef(const void *key, const void *def) {
 		nat hash = (*keyT.hashFn)(key);
 		nat slot = findSlot(key, hash);
 

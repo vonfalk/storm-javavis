@@ -47,8 +47,7 @@ BEGIN_TEST(SyntaxTest, BS) {
 	CHECK(runFn<Bool>(L"test.syntax.testRawCapture"));
 	CHECK_RUNS(runFn<void>(L"test.syntax.testParams"));
 	CHECK(runFn<Bool>(L"test.syntax.testEmpty"));
-	TODO(L"Implement this!");
-	// CHECK_EQ(runFn<Int>(L"test.syntax.testExpr"), 40);
+	CHECK_EQ(runFn<Int>(L"test.syntax.testExpr"), 40);
 } END_TEST
 
 using namespace storm::syntax;

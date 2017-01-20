@@ -55,8 +55,22 @@ namespace storm {
 	}
 
 	void WeakSetBase::toS(StrBuf *to) const {
-		*to << L"{<TODO: fix toS for WeakSet>}";
-		TODO(L"Fixme!");
+		*to << L"{";
+		bool first = true;
+
+		for (nat i = 0; i < capacity(); i++) {
+			if (info->v[i].status == Info::free)
+				continue;
+
+			if (!first) {
+				*to << L", ";
+				first = false;
+			}
+
+			*to << data->v[i];
+		}
+
+		*to << L"}";
 	}
 
 	void WeakSetBase::putRaw(TObject *key) {
