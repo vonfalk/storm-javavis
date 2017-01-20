@@ -133,7 +133,8 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		return;
 
 	Token name(L"", SrcPos());
-	bool exportFn = tok.skipIf(L"STORM_CTOR") || tok.skipIf(L"STORM_CAST_CTOR");
+	bool castFn = tok.skipIf(L"STORM_CAST_CTOR");
+	bool exportFn = castFn || tok.skipIf(L"STORM_CTOR");
 
 	bool isVirtual = tok.skipIf(L"virtual");
 	tok.skipIf(L"inline"); // The combination 'virtual inline' is insane, but we'll roll with it...
@@ -193,6 +194,7 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		// Function.
 		Function f(CppName(name.token), env.pkg, access, name.pos, type);
 		f.isVirtual = isVirtual;
+		f.castMember = castFn;
 
 		if (!tok.skipIf(L")")) {
 			f.params.push_back(parseTypeRef(tok));

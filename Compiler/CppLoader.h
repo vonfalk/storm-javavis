@@ -84,7 +84,7 @@ namespace storm {
 		void loadFreeFunction(const CppFunction &fn);
 
 		// Load member function.
-		void loadMemberFunction(const CppFunction &fn);
+		void loadMemberFunction(const CppFunction &fn, bool cast);
 
 		// Load parameters for a function.
 		Array<Value> *loadFnParams(const CppTypeRef *params);

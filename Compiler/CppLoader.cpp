@@ -310,7 +310,10 @@ namespace storm {
 			loadFreeFunction(fn);
 			break;
 		case CppFunction::fnMember:
-			loadMemberFunction(fn);
+			loadMemberFunction(fn, false);
+			break;
+		case CppFunction::fnCastMember:
+			loadMemberFunction(fn, true);
 			break;
 		default:
 			assert(false, L"Unknown function kind: " + ::toS(fn.kind));
@@ -333,7 +336,7 @@ namespace storm {
 		into->add(f);
 	}
 
-	void CppLoader::loadMemberFunction(const CppFunction &fn) {
+	void CppLoader::loadMemberFunction(const CppFunction &fn, bool cast) {
 		Value result = findValue(fn.result);
 		Array<Value> *params = loadFnParams(fn.params);
 		assert(params->count() > 0, L"Missing this pointer for " + ::toS(fn.name) + L"!");
@@ -346,6 +349,9 @@ namespace storm {
 		const void *ptr = deVirtualize(fn.params[0], fn.ptr);
 		Function *f = new (e) Function(result, new (e) Str(fn.name), params);
 		f->setCode(new (e) StaticCode(ptr));
+
+		if (cast)
+			f->flags |= namedAutoCast;
 
 		params->at(0).type->add(f);
 	}

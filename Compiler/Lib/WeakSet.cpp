@@ -47,6 +47,7 @@ namespace storm {
 
 		Array<Value> *thisKey = valList(e, 2, t, key);
 
+		add(iter.type);
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&WeakSetType::createClass)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&WeakSetType::copyClass)));
 		add(nativeFunction(e, Value(), L"put", thisKey, address(&WeakSetBase::putRaw)));

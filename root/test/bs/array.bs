@@ -18,23 +18,6 @@ Int testArray() {
 	sum;
 }
 
-Int testValArray() {
-	Array<DbgVal> a;
-
-	for (Int i = 0; i < 23; i++) {
-		a << DbgVal(i);
-	}
-
-	a[3] = DbgVal(0);
-
-	Int sum = 0;
-	for (Nat i = 0; i < a.count; i++) {
-		sum = sum + a[i].get;
-	}
-
-	sum;
-}
-
 Int testIntArray() {
 	Int[] a;
 
@@ -88,11 +71,11 @@ Int testCastArray() {
 	z.count.int;
 }
 
-Array<DbgVal> createValArray() {
-	Array<DbgVal> a;
+Array<Int> createValArray() {
+	Array<Int> a;
 
 	for (Int i = 0; i < 20; i++)
-		a << DbgVal(i);
+		a << Int(i);
 
 	a;
 }

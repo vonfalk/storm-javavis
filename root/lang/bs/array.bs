@@ -34,8 +34,7 @@ Expr arrayInit(Block block, SrcName type, Array<Expr> list) on Compiler {
 class ArrayInit extends Expr {
 	Array<Expr> values;
 
-	// TODO: Replace this one with a weak pointer directly to our parent.
-	ExprBlock block;
+	ExprBlock block; // TODO: Replace with direct ref to parent?
 
 	ctor(SrcPos pos, Block parent, Array<Expr> values) {
 		init(pos) {
@@ -58,7 +57,7 @@ class ArrayInit extends Expr {
 	}
 
 	Int castPenalty(Value to) {
-		if (to.isRef) {
+		if (to.ref) {
 			-1;
 		} else if (acceptable(unwrapArray(to))) {
 			1;
@@ -69,11 +68,12 @@ class ArrayInit extends Expr {
 
 	void code(CodeGen g, CodeResult r) {
 		Value v = unwrapArray(r.type);
-		if (v == Value())
+		if (type = v.type) {
+			Expr e = arrayInit(block, SrcName(type.path(), SrcPos()), values);
+			e.code(g, r);
+		} else {
 			throwSyntaxError(pos, "Can not figure out the type of the array. Please use the syntax T:[...] instead.");
-
-		Expr e = arrayInit(block, SrcName(v.getType.path()), values);
-		e.code(g, r);
+		}
 	}
 
 	// Is the type 't' acceptable for all values?

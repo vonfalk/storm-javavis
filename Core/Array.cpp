@@ -210,7 +210,7 @@ namespace storm {
 		return owner->getRaw(index);
 	}
 
-	ArrayBase::Iter ArrayBase::Iter::preIncRaw() {
+	ArrayBase::Iter &ArrayBase::Iter::preIncRaw() {
 		return operator ++();
 	}
 

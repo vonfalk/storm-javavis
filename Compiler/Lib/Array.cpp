@@ -94,6 +94,7 @@ namespace storm {
 
 	Bool ArrayType::loadAll() {
 		Type *iter = new (this) ArrayIterType(contents);
+		add(iter);
 
 		if (param().isHeapObj())
 			loadClassFns();

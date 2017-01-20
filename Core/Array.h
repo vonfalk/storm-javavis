@@ -124,7 +124,7 @@ namespace storm {
 			inline Nat getIndex() const { return index; }
 
 			// Raw pre- and post increment.
-			Iter CODECALL preIncRaw();
+			Iter &CODECALL preIncRaw();
 			Iter CODECALL postIncRaw();
 
 		private:

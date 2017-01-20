@@ -432,7 +432,9 @@ static void genFunctions(wostream &to, World &w) {
 			to << L"L\"" << f.pkg << L"\", ";
 
 		// Kind.
-		if (f.isMember)
+		if (f.isMember && f.castMember)
+			to << L"CppFunction::fnCastMember, ";
+		else if (f.isMember)
 			to << L"CppFunction::fnMember, ";
 		else if (engineFn)
 			to << L"CppFunction::fnFreeEngine, ";

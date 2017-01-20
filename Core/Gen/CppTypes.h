@@ -154,6 +154,9 @@ namespace storm {
 
 			// Member function. The first parameter indicates the type we're a member of. 'pkg' is null.
 			fnMember,
+
+			// Constructor usable for casting.
+			fnCastMember,
 		};
 
 		// Kind.

@@ -59,6 +59,7 @@ namespace storm {
 
 		Array<Value> *thisKey = valList(e, 2, t, keyRef);
 
+		add(iter.type);
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&MapType::createClass)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&MapType::copyClass)));
 		add(nativeFunction(e, Value(), L"put", valList(e, 3, t, keyRef, valRef), address(&MapBase::putRaw)));

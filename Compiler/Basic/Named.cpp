@@ -482,10 +482,6 @@ namespace storm {
 
 			Function *ctor = as<Function>(t->find(part));
 			if (!ctor) {
-				PLN(L"Members: ");
-				for (NameSet::Iter i = t->begin(); i != t->end(); i++) {
-					PVAR(i.v());
-				}
 				throw SyntaxError(pos, L"No constructor " + ::toS(t->identifier()) + L"." + ::toS(part) + L")");
 			}
 

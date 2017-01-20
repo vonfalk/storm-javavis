@@ -45,6 +45,9 @@ public:
 	// This is an assignment function that should be wrapped.
 	bool wrapAssign;
 
+	// Usable for casting?
+	bool castMember;
+
 	// Run on a specific thread?
 	CppName thread;
 

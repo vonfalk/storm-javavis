@@ -26,5 +26,23 @@ BEGIN_TEST(TokenizerTest, Storm) {
 		CHECK(tok.skipIf(L"f"));
 	}
 
+	{
+		const wchar *parse = L"(,)";
+		Tokenizer tok(null, new (e) Str(parse), 0);
+
+		CHECK(tok.skipIf(L"("));
+		CHECK(tok.skipIf(L","));
+		CHECK(tok.skipIf(L")"));
+	}
+
+	{
+		const wchar *parse = L"Hello \"string\\\"\"?*op";
+		Tokenizer tok(null, new (e) Str(parse), 0);
+
+		CHECK(tok.skipIf(L"Hello"));
+		CHECK(tok.skipIf(L"\"string\\\"\""));
+		CHECK(tok.skipIf(L"?*"));
+		CHECK(tok.skipIf(L"op"));
+	}
 
 } END_TEST
