@@ -6,6 +6,7 @@
 #include "Code.h"
 #include "Core/Str.h"
 #include "Lib/Future.h"
+#include "Lib/Clone.h"
 
 namespace storm {
 
@@ -374,16 +375,23 @@ namespace storm {
 		for (nat i = firstParam; i < params->count(); i++)
 			threadThunkParam(i, l);
 
-		if (result.isHeapObj()) {
+		if (result.isClass()) {
 			Var t = l->createVar(l->root(), Size::sPtr);
 			*l << fnCall(ref(), valPtr());
 			*l << mov(t, ptrA);
 			// Copy it...
-			TODO(L"Implement clone here!");
-			// *l << fnParam(ptrA);
-			// *l << fnCall(stdCloneFn(result), retPtr());
+			*l << fnParam(ptrA);
+			*l << fnCall(cloneFn(result.type)->ref(), valPtr());
 		} else if (result.isValue()) {
 			*l << fnCall(ref(), valPtr());
+
+			// Find 'deepCopy'.
+			Array<Value> *params = new (this) Array<Value>();
+			params->push(result.asRef(true));
+			params->push(Value(CloneEnv::stormType(engine())));
+			Function *deepCopy = as<Function>(result.type->find(L"deepCopy", params));
+			if (!deepCopy)
+				throw InternalError(L"The type " + ::toS(result) + L" does not have the required 'deepCopy' member.");
 
 			CodeGen *sub = s->child(l->createBlock(l->root()));
 			// Keep track of the result object.
@@ -392,24 +400,17 @@ namespace storm {
 			*l << mov(freeResult, resultParam);
 
 			// We need to create a CloneEnv object.
-			TODO(L"Implement clone here!");
-			// Type *envType = CloneEnv::stormType(engine());
-			// Var cloneEnv = l->createVar(l.frame.root(), Size::sPtr());
-			// allocObject(sub, envType->defaultCtor(), Actuals(), cloneEnv);
+			Var cloneEnv = allocObject(s, CloneEnv::stormType(engine()));
 
-			// // Find 'deepCopy'.
-			// Function *deepCopy = result.type->deepCopyFn();
-			// if (!deepCopy)
-			// 	throw InternalError(L"The type " + ::toS(result) + L" does not have the required 'deepCopy' member.");
-
-			// // Copy by calling 'deepCopy'.
-			// *l << fnParam(resultParam);
-			// *l << fnParam(cloneEnv);
-			// *l << fnCall(deepCopy->ref(), retPtr());
+			// Copy by calling 'deepCopy'.
+			*l << fnParam(resultParam);
+			*l << fnParam(cloneEnv);
+			*l << fnCall(deepCopy->ref(), valVoid());
 
 			*l << end(sub->block);
 			*l << mov(ptrA, resultParam);
 		} else {
+			// Built in or actor.
 			*l << fnCall(ref(), result.valTypeRet());
 		}
 

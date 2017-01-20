@@ -2,6 +2,9 @@
 #include "Clone.h"
 #include "CodeGen.h"
 #include "Type.h"
+#include "Package.h"
+#include "Engine.h"
+#include "Exception.h"
 
 namespace storm {
 	using namespace code;
@@ -103,6 +106,14 @@ namespace storm {
 		if (result)
 			result->flags |= namedMatchNoInheritance;
 		return result;
+	}
+
+	Function *cloneFn(Type *t) {
+		Package *p = t->engine.package(L"core");
+		Function *r = as<Function>(p->find(L"clone", Value(t)));
+		if (!r)
+			throw InternalError(L"Can not finde core.clone for " + ::toS(t->identifier()));
+		return r;
 	}
 
 }

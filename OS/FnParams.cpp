@@ -90,7 +90,7 @@ namespace os {
 			if (p.copy)
 				(*p.copy)(at, p.value);
 			else
-				*((const void **)at) = p.value;
+				memcpy(at, p.value, p.size);
 			at += roundUp(p.size, sizeof(void *));
 		}
 	}

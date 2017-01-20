@@ -134,7 +134,6 @@ namespace storm {
 
 		void CtorBody::blockCode(CodeGen *state, CodeResult *to, const code::Block &block) {
 			if (threadParam) {
-				PVAR((void *)threadParam);
 				thread = state->l->createVar(state->block, Size::sPtr);
 				*state->l << mov(thread, threadParam->var.v);
 			}

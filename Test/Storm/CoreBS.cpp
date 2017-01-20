@@ -264,7 +264,7 @@ BEGIN_TEST(BSEnumTest, BS) {
  * Clone.
  */
 
-BEGIN_TEST(CloneTest) {
+BEGIN_TEST(CloneTest, BS) {
 	CHECK(runFn<Bool>(L"test.bs.testClone"));
 	CHECK(runFn<Bool>(L"test.bs.testCloneDerived"));
 	CHECK(runFn<Bool>(L"test.bs.testCloneValue"));

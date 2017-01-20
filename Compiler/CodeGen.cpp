@@ -3,6 +3,7 @@
 #include "Exception.h"
 #include "Engine.h"
 #include "Core/CloneEnv.h"
+#include "Lib/Clone.h"
 
 namespace storm {
 
@@ -270,12 +271,13 @@ namespace storm {
 
 		if (type.isHeapObj() || type.ref) {
 			*s->l << lea(ptrC, fnParams);
+			*s->l << lea(ptrA, v);
 			*s->l << fnParam(ptrC);
 			*s->l << fnParam(ptrConst(Offset()));
 			*s->l << fnParam(ptrConst(Offset()));
 			*s->l << fnParam(ptrConst(type.size()));
 			*s->l << fnParam(byteConst(0));
-			*s->l << fnParam(v);
+			*s->l << fnParam(ptrA);
 			*s->l << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
 		} else if (type.isBuiltIn()) {
 			*s->l << lea(ptrC, fnParams);
@@ -305,42 +307,39 @@ namespace storm {
 	}
 
 	void addFnParamCopy(CodeGen *s, code::Var fnParams, Value type, code::Operand v) {
-		TODO(L"Implement me properly!");
-		addFnParam(s, fnParams, type, v);
+		using namespace code;
+		Engine &e = s->engine();
 
-		// using namespace code;
-		// Engine &e = s->engine();
+		if (type.isBuiltIn() || type.ref) {
+			if (type.ref) {
+				TODO(L"Should we really allow pretending to deep-copy references?");
+			}
 
-		// if (type.isHeapObj()) {
-		// 	Variable clone = s->frame.createPtrVar(s->block.v, e.fnRefs.release);
-		// 	s->l << fnParam(v.v);
-		// 	s->l << fnCall(stdCloneFn(type).v, retPtr());
-		// 	s->l << mov(clone, ptrA);
+			// Nothing special!
+			addFnParam(s, fnParams, type, v);
+		} else if (type.isActor()) {
+			// Nothing special here!
+			addFnParam(s, fnParams, type, v);
+		} else if (type.isHeapObj()) {
+			Var clone = s->createVar(type).v;
+			*s->l << fnParam(v);
+			*s->l << fnCall(cloneFn(type.type)->ref(), valPtr());
+			*s->l << mov(clone, ptrA);
 
-		// 	// Regular parameter add.
-		// 	addFnParam(s, fnParams, type, code::Var(clone), thunk);
-		// } else if (type.ref || type.isBuiltIn()) {
-		// 	if (type.ref) {
-		// 		TODO(L"Should we really allow pretending to deep-clone references?");
-		// 	}
+			// Regular parameter add.
+			addFnParam(s, fnParams, type, clone);
+		} else {
+			VarInfo clone = s->createVar(type);
+			*s->l << lea(ptrC, clone.v);
+			*s->l << lea(ptrA, v);
+			*s->l << fnParam(ptrC);
+			*s->l << fnParamRef(ptrA, type.size(), type.copyCtor());
+			*s->l << fnCall(cloneFn(type.type)->ref(), valVoid());
+			clone.created(s);
 
-		// 	// Reuse the plain one.
-		// 	addFnParam(s, fnParams, type, v, thunk);
-		// } else {
-		// 	// We can use stdClone as the copy ctor in this case.
-		// 	code::Operand dtor = type.destructor();
-		// 	if (dtor.empty())
-		// 		dtor = intPtrConst(0);
-		// 	s->l << lea(ptrC, fnParams.v);
-		// 	s->l << lea(ptrA, v.v);
-		// 	s->l << fnParam(ptrC);
-		// 	s->l << fnParam(stdCloneFn(type).v);
-		// 	s->l << fnParam(dtor);
-		// 	s->l << fnParam(natConst(type->count()));
-		// 	s->l << fnParam(byteConst(0));
-		// 	s->l << fnParam(ptrA);
-		// 	s->l << fnCall(e.fnRefs.fnParamsAdd, retVoid());
-		// }
+			// Regular parameter add.
+			addFnParam(s, fnParams, type, clone.v);
+		}
 	}
 
 	static void allocNormalObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
