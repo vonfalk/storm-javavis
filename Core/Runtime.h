@@ -6,6 +6,7 @@ namespace storm {
 	struct GcCode;
 	class GcWatch;
 	class RootObject;
+	class CloneEnv;
 
 	namespace runtime {
 
@@ -91,6 +92,10 @@ namespace storm {
 
 		// Reattach a thread (ie. make it possible to call detach once more without anything bad happening).
 		void reattachThread(Engine &e, const os::Thread &thread);
+
+		// Clone any heap-allocated object from C++.
+		RootObject *CODECALL cloneObject(RootObject *obj);
+		RootObject *CODECALL cloneObjectEnv(RootObject *obj, CloneEnv *env);
 
 	}
 }

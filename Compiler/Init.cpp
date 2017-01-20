@@ -7,8 +7,9 @@
 #include "Core/Array.h"
 #include "Core/Str.h"
 #include "Code/Reference.h"
-#include "Lib/ToS.h"
+#include "Lib/Clone.h"
 #include "Lib/Enum.h"
+#include "Lib/ToS.h"
 #include "NameSet.h"
 #include "Package.h"
 
@@ -60,6 +61,7 @@ namespace storm {
 
 		// Load the system-wide toS implementation.
 		Package *core = e.package(L"core");
+		core->add(new (e) CloneTemplate());
 		core->add(new (e) ToSTemplate());
 		core->add(new (e) EnumOutput());
 	}

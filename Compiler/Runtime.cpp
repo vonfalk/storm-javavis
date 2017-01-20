@@ -112,5 +112,48 @@ namespace storm {
 			e.gc.reattachThread(thread);
 		}
 
+		RootObject *cloneObject(RootObject *obj) {
+			if (obj == null)
+				return null;
+
+			// Nothing needs to be done for TObjects.
+			if (TObject *t = as<TObject>(obj))
+				return obj;
+
+			return cloneObjectEnv(obj, new (obj) CloneEnv());
+		}
+
+		RootObject *cloneObjectEnv(RootObject *obj, CloneEnv *env) {
+			if (obj == null)
+				return null;
+
+			// Nothing needs to be done for TObjects.
+			if (TObject *t = as<TObject>(obj))
+				return obj;
+
+			Object *src = (Object *)obj;
+
+			if (Object *prev = env->cloned(src))
+				return prev;
+
+			Type *t = typeOf(src);
+			const GcType *gcType = t->gcType();
+			void *mem = t->engine.gc.alloc(gcType);
+
+			Type::CopyCtorFn ctor = t->rawCopyConstructor();
+			if (ctor) {
+				(*ctor)(mem, src);
+			} else {
+				// No copy constructor... Well, then we do it the hard way!
+				memcpy(mem, src, gcType->stride);
+			}
+
+			Object *result = (Object *)mem;
+			result->deepCopy(env);
+
+			env->cloned(src, result);
+			return result;
+		}
+
 	}
 }

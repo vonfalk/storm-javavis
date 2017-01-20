@@ -2,6 +2,8 @@
 #include "TypeCtor.h"
 #include "Type.h"
 #include "Exception.h"
+#include "Package.h"
+#include "Engine.h"
 #include "Core/Str.h"
 
 namespace storm {
@@ -236,9 +238,55 @@ namespace storm {
 		Var me = l->createParam(valPtr());
 		Var env = l->createParam(valPtr());
 
-		TODO(L"Implement deep copy properly!");
-
 		*l << prolog();
+
+		// Call the super-class (if possible).
+		if (Type *super = owner->super()) {
+			if (Function *before = as<Function>(super->find(L"deepCopy", paramArray(super)))) {
+				*l << fnParam(me);
+				*l << fnParam(env);
+				*l << fnCall(before->directRef(), valVoid());
+			}
+		}
+
+		Package *core = engine().package(L"core");
+
+		Array<MemberVar *> *vars = owner->variables();
+		for (Nat i = 0; i < vars->count(); i++) {
+			MemberVar *var = vars->at(i);
+			Value type = var->type;
+
+
+			if (type.isValue()) {
+				// No need to copy, just call 'deepCopy'.
+				Function *toCall = as<Function>(type.type->find(L"deepCopy", paramArray(type.type)));
+				if (!toCall) {
+					WARNING(L"No deepCopy function in " << type.type);
+					continue;
+				}
+
+				*l << mov(ptrA, me);
+				*l << add(ptrA, ptrConst(var->offset()));
+				*l << fnParam(ptrA);
+				*l << fnParam(env);
+				*l << fnCall(toCall->ref(), valVoid());
+			} else if (type.isClass()) {
+				// Call the system-wide copy function for this type.
+				Function *toCall = as<Function>(core->find(L"clone", paramArray(type.type)));
+				if (!toCall)
+					throw InternalError(L"Can not find 'core.clone' for " + ::toS(type));
+
+				*l << mov(ptrA, me);
+				*l << fnParam(ptrRel(ptrA, var->offset()));
+				*l << fnParam(env);
+				*l << fnCall(toCall->ref(), valPtr());
+				*l << mov(ptrC, me);
+				*l << mov(ptrRel(ptrC, var->offset()), ptrA);
+			} else {
+				// Nothing needs to be done for actors or built-in types.
+			}
+		}
+
 		*l << epilog();
 		*l << ret(valPtr());
 

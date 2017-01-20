@@ -106,7 +106,7 @@ namespace storm {
 		void STORM_FN doLayout();
 
 		// Get all variables in here.
-		inline Array<MemberVar *> *variables() const { return layout->variables(); }
+		Array<MemberVar *> *variables() const;
 
 		// Inheritance chain and membership lookup. TODO: Make private?
 		TypeChain *chain;
@@ -148,6 +148,12 @@ namespace storm {
 		// Get the raw destructor to be used for this type. Mainly used by the GC for finalization.
 		typedef void (*DtorFn)(void *);
 		inline DtorFn rawDestructor() { return rawDtor; }
+
+		// Get the raw copy constructor for this type. This differs from the one found in the handle
+		// if this Type represents a GC:d object, as this function alwas operates on the actual
+		// object and not just the pointer (as the Handle does).
+		typedef void (*CopyCtorFn)(void *, const void *);
+		CopyCtorFn CODECALL rawCopyConstructor();
 
 	protected:
 		// Use the 'gcType' of the super class. Use only if no additional fields are introduced into
@@ -211,11 +217,17 @@ namespace storm {
 		// Generate a handle for this type.
 		void buildHandle();
 
+		// The current destructor to be used.
+		UNKNOWN(PTR_GC) DtorFn rawDtor;
+
 		// Called whenever a new destructor is added.
 		void updateDtor(Function *dtor);
 
-		// The current destructor to be used.
-		UNKNOWN(PTR_GC) DtorFn rawDtor;
+		// Cache of the copy constructor for this type (if any).
+		UNKNOWN(PTR_GC) CopyCtorFn rawCtor;
+
+		// Called whenever a new constructor is added.
+		void updateCtor(Function *ctor);
 
 		// Update the handle with the potentially relevant function 'fn'.
 		void updateHandle(Function *fn);

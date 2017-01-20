@@ -301,7 +301,9 @@ namespace storm {
 		NameSet::add(item);
 
 		if (Function *f = as<Function>(item)) {
-			if (wcscmp(f->name->c_str(), CTOR) != 0)
+			if (wcscmp(f->name->c_str(), CTOR) == 0)
+				updateCtor(f);
+			else
 				vtableFnAdded(f);
 
 			if (wcscmp(f->name->c_str(), DTOR) == 0)
@@ -378,6 +380,13 @@ namespace storm {
 
 		// We might as well compute our size while we're at it!
 		mySize = layout->doLayout(superSize());
+	}
+
+	Array<MemberVar *> *Type::variables() const {
+		if (layout)
+			return layout->variables();
+		else
+			return new (this) Array<MemberVar *>();
 	}
 
 	Size Type::superSize() {
@@ -485,6 +494,35 @@ namespace storm {
 
 		if (!value() && myGcType)
 			myGcType->finalizer = &stormDtor;
+	}
+
+	void Type::updateCtor(Function *ctor) {
+		// Clear the cache.
+		rawCtor = null;
+	}
+
+	Type::CopyCtorFn Type::rawCopyConstructor() {
+		CopyCtorFn r = rawCtor;
+		if (r)
+			return r;
+
+		// Call on proper thread...
+		const os::Thread &t = TObject::thread->thread();
+		if (t != os::Thread::current()) {
+			// Wrong thread, switch!
+			os::Future<void *, Semaphore> f;
+			os::FnStackParams<2> p; p.add(this);
+			os::UThread::spawn(address(&Type::rawCopyConstructor), true, p, f, &t);
+			return (CopyCtorFn)f.result();
+		}
+
+		// Find the copy constructor...
+		Function *ctor = copyCtor();
+		if (!ctor)
+			return null;
+
+		rawCtor = (CopyCtorFn)ctor->ref().address();
+		return rawCtor;
 	}
 
 	void Type::useSuperGcType() {
@@ -618,7 +656,7 @@ namespace storm {
 			if (Function *f = as<Function>(find(L"equal", rv)))
 				updateHandle(f);
 
-		} else if (useThread) {
+		} else if (runOn().state != RunOn::any) {
 			// Standard tObject handle.
 			tHandle = &engine.tObjHandle();
 		} else {

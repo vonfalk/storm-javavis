@@ -249,6 +249,7 @@ BEGIN_TEST(BSArrayTest, BS) {
 	}
 } END_TEST
 
+
 /**
  * Enums.
  */
@@ -257,6 +258,19 @@ BEGIN_TEST(BSEnumTest, BS) {
 	CHECK_EQ(::toS(runFn<Str *>(L"test.bs.enum1")), L"foo");
 	CHECK_EQ(::toS(runFn<Str *>(L"test.bs.enumBit1")), L"bitFoo + bitBar");
 } END_TEST
+
+
+/**
+ * Clone.
+ */
+
+BEGIN_TEST(CloneTest) {
+	CHECK(runFn<Bool>(L"test.bs.testClone"));
+	CHECK(runFn<Bool>(L"test.bs.testCloneDerived"));
+	CHECK(runFn<Bool>(L"test.bs.testCloneValue"));
+	CHECK_EQ(runFn<Int>(L"test.bs.testCloneArray"), 10);
+} END_TEST
+
 
 /**
  * Heavy tests.

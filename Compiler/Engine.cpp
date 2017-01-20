@@ -117,8 +117,8 @@ namespace storm {
 	 */
 
 	static void objDeepCopy(void *obj, CloneEnv *env) {
-		Object *o = *(Object **)obj;
-		o->deepCopy(env);
+		Object *&o = *(Object **)obj;
+		cloned(o, env);
 	}
 
 	static void objToS(const void *obj, StrBuf *to) {
