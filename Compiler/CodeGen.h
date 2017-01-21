@@ -88,6 +88,7 @@ namespace storm {
 		 */
 
 		// Set the return type. This needs to be done after all parameters have been added.
+		// Returns the parameter used for the return value if applicable.
 		void STORM_FN result(Value type, Bool isMember);
 
 		// Get the return type.

@@ -153,7 +153,9 @@ namespace storm {
 			rFnParamsCtor,
 			rFnParamsDtor,
 			rFnParamsAdd,
-
+			// Access to things inside FnBase.
+			rFnNeedsCopy,
+			rFnCall,
 			// Should be the last one.
 			refCount,
 		};

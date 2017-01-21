@@ -57,7 +57,6 @@ namespace storm {
 		return VarInfo(l->createVar(in, type.size(), dtor, opt), needsPart);
 	}
 
-
 	void CodeGen::result(Value type, Bool isMember) {
 		if (res != Value())
 			throw InternalError(L"Trying to re-set the return type of CodeGen.");

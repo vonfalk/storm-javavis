@@ -111,7 +111,7 @@ namespace storm {
 		void callRaw(void *output, const BasicTypeInfo &type, os::FnParams &params, const TObject *first, CloneEnv *env) const;
 
 		// Do we need to copy the parameters for this function given the first TObject?
-		bool needsCopy(const TObject *first) const;
+		bool CODECALL needsCopy(const TObject *first) const;
 
 	public:
 		// Are we calling a member function?

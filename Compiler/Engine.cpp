@@ -12,6 +12,7 @@
 #include "Core/StrBuf.h"
 #include "Core/Handle.h"
 #include "Lib/Enum.h"
+#include "Lib/Fn.h"
 #include "Syntax/Node.h"
 #include "Utils/Memory.h"
 
@@ -280,45 +281,51 @@ namespace storm {
 	}
 
 	code::RefSource *Engine::createRef(RefType ref) {
+#define FNREF(x) arena()->externalSource(L"C++:" ## STRING(x), address(&x))
+
 		switch (ref) {
 		case rEngine:
 			return arena()->externalSource(L"engine", this);
 		case rLazyCodeUpdate:
-			return arena()->externalSource(L"lazyUpdater", &LazyCode::updateCode);
+			return FNREF(LazyCode::updateCode);
 		case rRuleThrow:
-			return arena()->externalSource(L"ruleThrow", address(&syntax::Node::throwError));
+			return FNREF(syntax::Node::throwError);
 		case rAlloc:
-			return arena()->externalSource(L"alloc", &allocType);
+			return FNREF(allocType);
 		case rAs:
-			return arena()->externalSource(L"as", &stormAs);
+			return FNREF(stormAs);
 		case rVTableAllocOffset:
 			return arena()->externalSource(L"vtableAllocOffset", (const void *)VTableCpp::vtableAllocOffset());
 		case rTObjectOffset:
 			return arena()->externalSource(L"threadOffset", (const void *)OFFSET_OF(TObject, thread));
 		case rMapAt:
-			return arena()->externalSource(L"MapBase::atRaw", address(&MapBase::atRaw));
+			return FNREF(MapBase::atRaw);
 		case rEnumToS:
-			return arena()->externalSource(L"Enum::toString", address(&Enum::toString));
+			return FNREF(Enum::toString);
 		case rFuturePost:
-			return arena()->externalSource(L"FutureBase::postRaw", address(&FutureBase::postRaw));
+			return FNREF(FutureBase::postRaw);
 		case rFutureResult:
-			return arena()->externalSource(L"FutureBase::resultRaw", address(&FutureBase::resultRaw));
+			return FNREF(FutureBase::resultRaw);
 		case rSpawnResult:
-			return arena()->externalSource(L"spawnResult", &spawnThreadResult);
+			return FNREF(spawnThreadResult);
 		case rSpawnFuture:
-			return arena()->externalSource(L"spawnFuture", &spawnThreadFuture);
+			return FNREF(spawnThreadFuture);
 		case rSpawnLater:
-			return arena()->externalSource(L"spawnLater", address(&os::UThread::spawnLater));
+			return FNREF(os::UThread::spawnLater);
 		case rSpawnParam:
-			return arena()->externalSource(L"spawnParam", address(&os::UThread::spawnParamMem));
+			return FNREF(os::UThread::spawnParamMem);
 		case rAbortSpawn:
-			return arena()->externalSource(L"abortSpawn", address(&os::UThread::abortSpawn));
+			return FNREF(os::UThread::abortSpawn);
 		case rFnParamsCtor:
-			return arena()->externalSource(L"(x) FnParams(y)", address(&fnParamsCtor));
+			return FNREF(fnParamsCtor);
 		case rFnParamsDtor:
-			return arena()->externalSource(L"~FnParams()", address(&fnParamsDtor));
+			return FNREF(fnParamsDtor);
 		case rFnParamsAdd:
-			return arena()->externalSource(L"fnParams->add", address(&fnParamsAdd));
+			return FNREF(fnParamsAdd);
+		case rFnNeedsCopy:
+			return FNREF(FnBase::needsCopy);
+		case rFnCall:
+			return FNREF(fnCallRaw);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 		}
