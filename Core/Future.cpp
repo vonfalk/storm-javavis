@@ -15,7 +15,13 @@ namespace storm {
 	}
 
 	FutureBase::~FutureBase() {
-		data->release();
+		if (data->release()) {
+			// We are the last one, see if we should free our result as well.
+			// TODO: This can be solved nicer when we can attach destructors to arrays.
+			if (result->filled) {
+				handle.safeDestroy(result->v);
+			}
+		}
 	}
 
 	void FutureBase::deepCopy(CloneEnv *env) {
@@ -25,7 +31,7 @@ namespace storm {
 	void FutureBase::postRaw(const void *value) {
 		// Do not post multiple times.
 		if (atomicCAS(result->filled, 0, 1) == 0) {
-			(*handle.copyFn)(result->v, value);
+			handle.safeCopy(result->v, value);
 			if (handle.deepCopyFn) {
 				CloneEnv *e = new (this) CloneEnv();
 				(*handle.deepCopyFn)(result->v, e);
@@ -46,7 +52,7 @@ namespace storm {
 
 	void FutureBase::resultRaw(void *to) {
 		data->future.result();
-		(*handle.copyFn)(to, result->v);
+		handle.safeCopy(to, result->v);
 		if (handle.deepCopyFn) {
 			CloneEnv *e = new (this) CloneEnv();
 			(*handle.deepCopyFn)(to, e);
@@ -74,9 +80,13 @@ namespace storm {
 		atomicIncrement(refs);
 	}
 
-	void FutureBase::Data::release() {
-		if (atomicDecrement(refs) == 0)
+	bool FutureBase::Data::release() {
+		if (atomicDecrement(refs) == 0) {
 			delete this;
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	void FutureBase::Data::resultPosted(FutureSema *sema) {

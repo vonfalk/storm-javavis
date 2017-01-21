@@ -25,7 +25,7 @@ namespace code {
 
 	void MemberRef::move(Object *obj, size_t offset) {
 		update = obj;
-		offset = offset;
+		this->offset = offset;
 		moved(address());
 	}
 

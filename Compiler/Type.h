@@ -143,6 +143,7 @@ namespace storm {
 		MAYBE(Function *) STORM_FN defaultCtor();
 		MAYBE(Function *) STORM_FN copyCtor();
 		MAYBE(Function *) STORM_FN assignFn();
+		MAYBE(Function *) STORM_FN deepCopyFn();
 		MAYBE(Function *) STORM_FN destructor();
 
 		// Get the raw destructor to be used for this type. Mainly used by the GC for finalization.

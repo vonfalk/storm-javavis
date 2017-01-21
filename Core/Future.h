@@ -8,11 +8,12 @@ namespace storm {
 	STORM_PKG(core);
 
 	/**
-	 * Future-object exposed to the runtime and built into function calls.
-	 * By calling 'asyncThreadCall' on a function, you will get one of these
-	 * objects. It also simplifies the interface of the Future in code since
-	 * it supports copying of the future (references the same result) and also
-	 * correctly handles cases where the result is not waited for.
+	 * Future-object exposed to the runtime and built into function calls.  By calling
+	 * 'asyncThreadCall' on a function, you will get one of these objects. It also simplifies the
+	 * interface of the Future in code since it supports copying of the future (references the same
+	 * result) and also correctly handles cases where the result is not waited for.
+	 *
+	 * The future takes care of any copying of the objects.
 	 */
 	class FutureBase : public Object {
 		STORM_CLASS;
@@ -74,9 +75,9 @@ namespace storm {
 			// Do a release whenever the result has been posted?
 			nat releaseOnResult;
 
-			// Add/release ref.
+			// Add/release ref. If 'release' returns true, then the last instance was freed.
 			void addRef();
-			void release();
+			bool release();
 
 			// Called when a result has been posted.
 			static void resultPosted(FutureSema *from);
@@ -119,7 +120,8 @@ namespace storm {
 		}
 
 		// Post result.
-		void post(const T &t) {
+		void post(T t) {
+			cloned(t, new (this) CloneEnv());
 			postRaw(&t);
 		}
 

@@ -386,10 +386,7 @@ namespace storm {
 			*l << fnCall(ref(), valPtr());
 
 			// Find 'deepCopy'.
-			Array<Value> *params = new (this) Array<Value>();
-			params->push(result.asRef(true));
-			params->push(Value(CloneEnv::stormType(engine())));
-			Function *deepCopy = as<Function>(result.type->find(L"deepCopy", params));
+			Function *deepCopy = result.type->deepCopyFn();
 			if (!deepCopy)
 				throw InternalError(L"The type " + ::toS(result) + L" does not have the required 'deepCopy' member.");
 

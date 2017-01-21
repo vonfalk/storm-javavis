@@ -242,7 +242,7 @@ namespace storm {
 
 		// Call the super-class (if possible).
 		if (Type *super = owner->super()) {
-			if (Function *before = as<Function>(super->find(L"deepCopy", paramArray(super)))) {
+			if (Function *before = super->deepCopyFn()) {
 				*l << fnParam(me);
 				*l << fnParam(env);
 				*l << fnCall(before->directRef(), valVoid());
@@ -259,7 +259,7 @@ namespace storm {
 
 			if (type.isValue()) {
 				// No need to copy, just call 'deepCopy'.
-				Function *toCall = as<Function>(type.type->find(L"deepCopy", paramArray(type.type)));
+				Function *toCall = type.type->deepCopyFn();
 				if (!toCall) {
 					WARNING(L"No deepCopy function in " << type.type);
 					continue;

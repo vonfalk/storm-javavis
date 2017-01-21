@@ -140,6 +140,9 @@ namespace storm {
 			rMapAt,
 			// Acces the generic 'EnumType::toString'.
 			rEnumToS,
+			// Access to 'postRaw' and 'resultRaw' in Future.
+			rFuturePost,
+			rFutureResult,
 			// Low-level helpers for spawning threads.
 			rSpawnResult,
 			rSpawnFuture,

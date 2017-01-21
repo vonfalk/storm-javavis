@@ -299,6 +299,10 @@ namespace storm {
 			return arena()->externalSource(L"MapBase::atRaw", address(&MapBase::atRaw));
 		case rEnumToS:
 			return arena()->externalSource(L"Enum::toString", address(&Enum::toString));
+		case rFuturePost:
+			return arena()->externalSource(L"FutureBase::postRaw", address(&FutureBase::postRaw));
+		case rFutureResult:
+			return arena()->externalSource(L"FutureBase::resultRaw", address(&FutureBase::resultRaw));
 		case rSpawnResult:
 			return arena()->externalSource(L"spawnResult", &spawnThreadResult);
 		case rSpawnFuture:

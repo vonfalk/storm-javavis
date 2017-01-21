@@ -202,8 +202,8 @@ Int intFuture() {
 }
 
 void noResultFuture() {
-	Future<DbgVal> fut;
-	fut.post(DbgVal(20));
+	Future<CloneVal> fut;
+	fut.post(CloneVal());
 	// We're never getting the result back, make sure we do not crash too badly at least!
 }
 

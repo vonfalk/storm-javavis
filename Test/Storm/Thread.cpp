@@ -26,14 +26,11 @@ BEGIN_TEST(BSThread, BS) {
 	CHECK_EQ(runFn<Int>(L"test.bs.actorObj"), 31);
 	CHECK_EQ(runFn<Int>(L"test.bs.actorDerObj"), 22);
 
-	// // Future tests.
-	// CHECK_EQ(runFn<Int>(L"test.bs.basicFuture"), 8);
-	// CHECK_EQ(runFn<Int>(L"test.bs.valueFuture"), 8);
-	// CHECK_EQ(runFn<Int>(L"test.bs.intFuture"), 22);
-
-	// DbgVal::clear();
-	// CHECK_RUNS(runFn<Int>(L"test.bs.noResultFuture"));
-	// CHECK(DbgVal::clear());
+	// Future tests.
+	CHECK_EQ(runFn<Int>(L"test.bs.basicFuture"), 8);
+	CHECK_EQ(runFn<Int>(L"test.bs.valueFuture"), 8);
+	CHECK_EQ(runFn<Int>(L"test.bs.intFuture"), 22);
+	CHECK_RUNS(runFn<void>(L"test.bs.noResultFuture"));
 
 	// // Check 'spawn'.
 	// DbgVal::clear();

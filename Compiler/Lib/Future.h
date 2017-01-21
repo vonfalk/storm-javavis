@@ -2,6 +2,7 @@
 #include "ValueArray.h"
 #include "Type.h"
 #include "Core/EnginePtr.h"
+#include "Code/Listing.h"
 
 namespace storm {
 	STORM_PKG(core.lang);
@@ -21,9 +22,21 @@ namespace storm {
 		// Parameter.
 		Value param() const;
 
+	protected:
+		// Load.
+		virtual Bool STORM_FN loadAll();
+
 	private:
 		// Content type.
 		Type *contents;
+
+		// Load different varieties.
+		void loadVoid();
+		void loadClass();
+		void loadValue();
+
+		// Generate code for retrieving values.
+		code::Listing *resultValue();
 	};
 
 	Bool STORM_FN isFuture(Value v);

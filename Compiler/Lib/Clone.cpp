@@ -37,8 +37,7 @@ namespace storm {
 
 		*g->l << prolog();
 
-		Array<Value> *deepParams = valList(e, 2, thisPtr(type.type), cloneEnvT);
-		if (Function *copyFn = as<Function>(type.type->find(L"deepCopy", deepParams))) {
+		if (Function *copyFn = type.type->deepCopyFn()) {
 			Var cloneEnv = allocObject(g, cloneEnvT.type);
 			*g->l << lea(ptrA, in);
 			*g->l << fnParam(ptrA);
@@ -70,8 +69,7 @@ namespace storm {
 
 		*g->l << prolog();
 
-		Array<Value> *deepParams = valList(e, 2, thisPtr(type.type), cloneEnvT);
-		if (Function *copyFn = as<Function>(type.type->find(L"deepCopy", deepParams))) {
+		if (Function *copyFn = type.type->deepCopyFn()) {
 			*g->l << lea(ptrA, in);
 			*g->l << fnParam(ptrA);
 			*g->l << fnParam(cloneEnv);

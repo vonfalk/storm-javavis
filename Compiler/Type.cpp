@@ -313,10 +313,6 @@ namespace storm {
 				updateHandle(f);
 		}
 
-		if ((value() || rawPtr()) && tHandle)
-			if (Function *f = as<Function>(item))
-				updateHandle(f);
-
 		if ((typeFlags & typeCpp) != typeCpp) {
 			// Tell the layout we found a new variable!
 			if (!layout)
@@ -638,13 +634,9 @@ namespace storm {
 			if (Function *f = as<Function>(find(DTOR, r)))
 				updateHandle(f);
 
-			{
-				// Find deepCopy.
-				Array<Value> *rc = new (engine) Array<Value>(2, Value(this, true));
-				rc->at(1) = Value(CloneEnv::stormType(engine));
-				if (Function *f = as<Function>(find(L"deepCopy", rc)))
-					updateHandle(f);
-			}
+			// Find deepCopy.
+			if (Function *f = deepCopyFn())
+				updateHandle(f);
 
 			updateHandleToS(true, null);
 
@@ -741,20 +733,25 @@ namespace storm {
 	void Type::updateHandle(Function *fn) {
 		assert(value());
 		RefHandle *h = (RefHandle *)tHandle;
+		Array<Value> *params = fn->params;
 
-		if (fn->params->count() < 1)
+		if (params->count() < 1)
 			return;
-		if (fn->params->at(0) != Value(this, true))
+		if (params->at(0) != Value(this, true))
 			return;
 
+		// Do not add constructor, destructor or deepCopy to the handle if this is a built-in type,
+		// as that allows containers etc to use raw memcpy which is more efficient in many cases.
+		// Also: it prevents infinite loops during startup due to recursive dependencies.
+		bool userType = builtInType() == BasicTypeInfo::user;
 		const wchar *name = fn->name->c_str();
 		if (wcscmp(name, CTOR) == 0) {
-			if (params->count() == 2 && params->at(1) == Value(this, true))
+			if (params->count() == 2 && params->at(1) == Value(this, true) && userType)
 				h->setCopyCtor(fn->ref());
 		} else if (wcscmp(name, DTOR) == 0) {
-			if (params->count() == 1)
+			if (params->count() == 1 && userType)
 				h->setDestroy(fn->ref());
-		} else if (wcscmp(name, L"deepCopy") == 0) {
+		} else if (wcscmp(name, L"deepCopy") == 0 && userType) {
 			if (params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
 				h->setDeepCopy(fn->ref());
 		} else if (wcscmp(name, L"hash") == 0) {
@@ -886,6 +883,11 @@ namespace storm {
 
 	Function *Type::assignFn() {
 		return as<Function>(find(L"=", new (this) Array<Value>(2, thisPtr(this))));
+	}
+
+	Function *Type::deepCopyFn() {
+		Array<Value> *params = valList(engine, 2, thisPtr(this), Value(CloneEnv::stormType(engine)));
+		return as<Function>(find(L"deepCopy", params));
 	}
 
 	Function *Type::destructor() {
