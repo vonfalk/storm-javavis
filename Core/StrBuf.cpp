@@ -201,8 +201,18 @@ namespace storm {
 	StrBuf *StrBuf::add(const TObject *obj) {
 		// We're doing 'toS' to make the formatting predictable.
 		if (obj) {
-			TODO(L"Call on proper thread!");
-			return add(obj->toS());
+			Thread *thread = obj->thread;
+			if (thread && thread->thread() != os::Thread::current()) {
+				os::Thread t = thread->thread();
+				os::Future<void> f;
+				os::FnStackParams<2> p;
+				p.add(obj); p.add(this);
+				os::UThread::spawn(address<void (CODECALL TObject::*)(StrBuf *) const>(&TObject::toS), true, p, f, &t);
+				f.result();
+			} else {
+				add(obj->toS());
+			}
+			return this;
 		} else {
 			return add(L"null");
 		}
