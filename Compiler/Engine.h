@@ -156,6 +156,7 @@ namespace storm {
 			// Access to things inside FnBase.
 			rFnNeedsCopy,
 			rFnCall,
+			rFnCreate,
 			// Should be the last one.
 			refCount,
 		};

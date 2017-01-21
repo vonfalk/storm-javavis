@@ -462,11 +462,9 @@ namespace code {
 			nat regId = registerId(dest.reg());
 
 			if (src.type() == opReference) {
-				// Special meaning, load the reference's index instead.
-				assert(false, L"Not implemented yet!");
-				// Something like:
-				// to->putByte(0xB8 + regId);
-				// to->putPtr(reference);
+				// Special meaning, load the RefSource instead.
+				to->putByte(0xB8 + regId);
+				to->putObject(src.refSource());
 			} else {
 				to->putByte(0x8D);
 				modRm(to, regId, src);

@@ -28,6 +28,9 @@ namespace storm {
 	 * Ref and RefSource to everyone.
 	 *
 	 * These are too low-level to be exposed to Storm.
+	 *
+	 * Any subclasses may only contain one pointer-sized data member (which may not contain anything
+	 * other than a pointer).
 	 */
 	class FnTarget {
 	public:
@@ -126,7 +129,7 @@ namespace storm {
 		// Storage for target. Two words are enough for now.
 		enum { targetSize = 2 };
 		size_t target0;
-		size_t target1;
+		UNKNOWN(PTR_GC) size_t target1;
 
 		// Get target.
 		inline FnTarget *target() const { return (FnTarget *)&target0; }

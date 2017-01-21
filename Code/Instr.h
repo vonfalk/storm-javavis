@@ -86,8 +86,8 @@ namespace code {
 	Instr *STORM_FN call(EnginePtr e, Operand to, ValType ret);
 	Instr *STORM_FN ret(EnginePtr e, ValType ret); // Returns whatever is in eax register.
 
-	// This one has somewhat special semantics, when used with a reference as 'from', it loads a representative
-	// value that can be passed to 'Ref::fromLea' to re-create the reference.
+	// This one has somewhat special semantics, when used with a reference as 'from', it instead
+	// loads the RefSource referred to by the Ref.
 	Instr *STORM_FN lea(EnginePtr e, Operand to, Operand from);
 
 	// Set a byte to the result of an operation.

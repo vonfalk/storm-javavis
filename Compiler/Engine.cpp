@@ -326,6 +326,8 @@ namespace storm {
 			return FNREF(FnBase::needsCopy);
 		case rFnCall:
 			return FNREF(fnCallRaw);
+		case rFnCreate:
+			return FNREF(fnCreateRaw);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 		}

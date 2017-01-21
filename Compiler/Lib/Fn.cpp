@@ -179,4 +179,59 @@ namespace storm {
 		return b->callRaw(output, *type, *params, first, null);
 	}
 
+	class RefFnTarget : public FnTarget {
+	public:
+		RefFnTarget(code::Ref ref) : ref(ref) {}
+
+		// What we refer to.
+		code::Ref ref;
+
+		// Clone.
+		virtual void cloneTo(void *to, size_t size) const {
+			assert(size >= sizeof(*this));
+			new (to) RefFnTarget(ref);
+		}
+
+		// Get the pointer.
+		virtual const void *ptr() const {
+			return ref.address();
+		}
+
+
+		// Get label.
+		virtual void toS(StrBuf *to) const {
+			*to << ref.title();
+		}
+	};
+
+	FnBase *pointer(Function *target) {
+		return pointer(target, null);
+	}
+
+	FnBase *pointer(Function *target, RootObject *thisPtr) {
+		Array<Value> *p = clone(target->params);
+		p->insert(0, target->result);
+		Type *t = fnType(p);
+
+		Thread *thread = null;
+		RunOn runOn = target->runOn();
+		if (runOn.state == RunOn::named)
+			thread = runOn.thread->thread();
+
+		void *mem = runtime::allocObject(sizeof(FnBase), t);
+		FnBase *c = new (Place(mem)) FnBase(RefFnTarget(target->ref()),
+											thisPtr,
+											target->isMember(),
+											thread);
+		runtime::setVTable(c);
+		return c;
+	}
+
+	FnBase *fnCreateRaw(Type *type, code::RefSource *to, Thread *thread, RootObject *thisPtr, Bool memberFn) {
+		void *mem = runtime::allocObject(sizeof(FnBase), type);
+		FnBase *c = new (Place(mem)) FnBase(RefFnTarget(to), thisPtr, memberFn, thread);
+		runtime::setVTable(c);
+		return c;
+	}
+
 }

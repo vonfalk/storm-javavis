@@ -1,4 +1,4 @@
-* Loose ends so far [5/14]
+* Loose ends so far [5/15]
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Destructors do not need their own slot in the vtables anymore since we have another mechanism for that.
@@ -11,6 +11,7 @@
   - [ ] Make sure Array<>, Map<> and Set<> clear the memory when an element is removed.
   - [ ] Make a generic toS() for Storm which uses operator << (if present) for values.
   - [ ] Verify so that integers can not be casted to integers.
+  - [ ] Function pointers should maybe allow casting to less specific types of parameters.
   - [X] Enums should be treated like raw integers (currently they are Values).
   - [X] Destructors should be auto-generated in Basic Storm if they are needed.
   - [X] It seems we fail to handle moving objects in Set and Map in rare cases. Examine why!

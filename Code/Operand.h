@@ -137,6 +137,7 @@ namespace code {
 		Part STORM_FN part() const;
 		Label STORM_FN label() const;
 		Ref STORM_FN ref() const;
+		RefSource *refSource() const;
 		RootObject *object() const;
 		Var STORM_FN var() const; // NOTE: The size of this variable is equal to the size
 		                          // we want to read, which is not always the size of the

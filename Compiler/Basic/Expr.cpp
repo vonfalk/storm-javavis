@@ -39,7 +39,7 @@ namespace storm {
 				*to << floatValue << L"f";
 				break;
 			case tStr:
-				*to << L"\"" << strValue << L"\"";
+				*to << L"\"" << strValue->escape() << L"\"";
 				break;
 			case tBool:
 				*to << (boolValue ? L"true" : L"false");

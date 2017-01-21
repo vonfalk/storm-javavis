@@ -17,7 +17,7 @@ namespace storm {
 	}
 
 	void RawFnTarget::toS(StrBuf *to) const {
-		*to << L"C++ function @" << data;
+		*to << L"C++ function @" << hex(data);
 	}
 
 
@@ -32,14 +32,14 @@ namespace storm {
 		callMember = member;
 		this->thisPtr = thisPtr;
 		this->thread = thread;
-		target.cloneTo(this->target(), targetSize);
+		target.cloneTo(this->target(), targetSize * sizeof(size_t));
 	}
 
 	FnBase::FnBase(const FnBase &o) {
 		callMember = o.callMember;
 		thisPtr = o.thisPtr;
 		thread = o.thread;
-		o.target()->cloneTo(target(), targetSize);
+		o.target()->cloneTo(target(), targetSize * sizeof(size_t));
 	}
 
 	void FnBase::deepCopy(CloneEnv *env) {

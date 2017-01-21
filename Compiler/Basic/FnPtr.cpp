@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "FnPtr.h"
+#include "Compiler/Engine.h"
 #include "Compiler/Exception.h"
 #include "Compiler/Lib/Fn.h"
 
@@ -48,7 +49,7 @@ namespace storm {
 		ExprResult FnPtr::result() {
 			// TODO: Parameters should be taken from 'formal'. Consider when a pointer wants to restrict
 			// a parameter to a derived class.
-			Array<Value> *params = target->params;
+			Array<Value> *params = clone(target->params);
 			if (dotExpr) {
 				params->at(0) = target->result;
 			} else {
@@ -70,28 +71,33 @@ namespace storm {
 				dotExpr->code(to, result);
 			}
 
-			if (r->needed()) {
-				assert(false, L"TODO: Implement me!");
-				// Engine &e = engine();
-				// VarInfo z = r->location(to);
-				// RunOn runOn = target->runOn();
-				// bool memberFn = target->isMember();
+			if (!r->needed())
+				return;
 
-				// to->to << lea(ptrA, target->ref());
-				// to->to << fnParam(type.type->typeRef);
-				// to->to << fnParam(ptrA);
-				// if (runOn.state == RunOn::named) {
-				// 	to->to << fnParam(runOn.thread->ref());
-				// } else {
-				// 	to->to << fnParam(natPtrConst(0));
-				// }
-				// to->to << fnParam(thisPtr.v.v);
-				// to->to << fnParam(byteConst(strongThis ? 1 : 0));
-				// to->to << fnParam(byteConst(memberFn ? 1 : 0));
-				// to->to << fnCall(e.fnRefs.fnPtrCreate, retPtr());
-				// to->to << mov(z.v.v, ptrA);
-				// z.created(to);
+			VarInfo z = r->location(to);
+			if (!dotExpr) {
+				// Create the object once and store it.
+				FnBase *obj = pointer(target);
+
+				*to->l << mov(z.v, objPtr(obj));
+			} else {
+				// We need to create a new object each time since the 'dotExpr' might change.
+				RunOn runOn = target->runOn();
+				bool memberFn = target->isMember();
+
+				*to->l << lea(ptrA, target->ref());
+				*to->l << fnParam(type.type->typeRef());
+				*to->l << fnParam(ptrA);
+				if (runOn.state == RunOn::named)
+					*to->l << fnParam(runOn.thread->ref());
+				else
+					*to->l << fnParam(ptrConst(Offset()));
+				*to->l << fnParam(thisPtr.v);
+				*to->l << fnParam(byteConst(memberFn ? 1 : 0));
+				*to->l << fnCall(engine().ref(Engine::rFnCreate), valPtr());
+				*to->l << mov(z.v, ptrA);
 			}
+			z.created(to);
 		}
 
 		void FnPtr::toS(StrBuf *to) const {

@@ -207,6 +207,11 @@ namespace code {
 		return Ref(s);
 	}
 
+	RefSource *Operand::refSource() const {
+		assert(type() == opReference, L"Not a reference!");
+		return (RefSource *)opPtr;
+	}
+
 	RootObject *Operand::object() const {
 		assert(type() == opObjReference, L"Not an object reference!");
 		return (RootObject *)opPtr;
