@@ -27,8 +27,11 @@ namespace storm {
 			if (name->count() == 1) {
 				SimplePart *last = name->last();
 				if (last->params->any() && last->params->at(0) != Value()) {
-					if (Named *r = last->params->at(0).type->find(last))
+					Type *firstParam = last->params->at(0).type;
+					if (Named *r = firstParam->find(last))
 						return r;
+
+					// TODO: Also look in the parent scope of the last type?
 				}
 			}
 

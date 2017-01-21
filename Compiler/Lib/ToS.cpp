@@ -53,7 +53,7 @@ namespace storm {
 	ToSFunction::ToSFunction(Function *use)
 		: Function(Value(StormInfo<Str>::type(use->engine())),
 				new (use) Str(L"toS"),
-				new (use) Array<Value>(1, use->params->at(1))),
+				new (use) Array<Value>(1, use->params->at(1).asRef(false))),
 		  use (use) {
 
 		setCode(new (engine()) LazyCode(fnPtr(engine(), &ToSFunction::create, this)));

@@ -216,12 +216,6 @@ namespace storm {
 		return code::Operand();
 	}
 
-	Str *toS(EnginePtr e, Value v) {
-		StrBuf *b = new (e.v) StrBuf();
-		*b << v;
-		return b->toS();
-	}
-
 	StrBuf &operator <<(StrBuf &to, Value v) {
 		if (v.type) {
 			to << v.type->identifier();

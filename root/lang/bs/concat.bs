@@ -76,22 +76,38 @@ class ConcatExpr extends Expr {
 		}
 	}
 
-	// Append a node, trying to call add on the StrBuf directly.
+	// Append a node, trying to use a << operator directly.
 	Bool appendStrBuf(Expr e) {
+		// Try to find an << operator in our current scope.
+		Scope s = outer.scope;
+		if (appendStrBuf(e, s))
+			return true;
+
+		// Try findin it in the parent scope of 'e'.
+		if (in = e.result.type.type) {
+			if (appendStrBuf(e, s.child(in)))
+				return true;
+		}
+
+		// Try to find in StrBuf explicitly.
+		if (in = rootScope.find(strBufType)) {
+			if (appendStrBuf(e, s.child(in)))
+				return true;
+		}
+
+		false;
+	}
+
+	// Append a node, trying to call add on the StrBuf using a << operator found using 'scope'.
+	Bool appendStrBuf(Expr e, Scope scope) {
 		Value v = rootScope.value(strBufType);
-		if (t = v.type) {
-			Scope findIn = outer.scope.child(t);
-			var part = SimplePart("<<", Value:[v, e.result.type]);
-			Named? member = findIn.find(Name(part));
-			if (member as Function) {
-				Actuals params;
-				params.add(LocalVarAccess(pos, strBufVar.var));
-				params.add(e);
-				inner.add(FnCall(pos, member, params));
-				true;
-			} else {
-				false;
-			}
+		var part = SimplePart("<<", Value:[v, e.result.type]);
+		if (member = scope.find(Name(part)) as Function) {
+			Actuals params;
+			params.add(LocalVarAccess(pos, strBufVar.var));
+			params.add(e);
+			inner.add(FnCall(pos, member, params));
+			true;
 		} else {
 			false;
 		}

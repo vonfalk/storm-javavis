@@ -130,7 +130,7 @@ namespace storm {
 			rRuleThrow,
 			// Allocate an object of the type given.
 			rAlloc,
-			// execute as<T>
+			// Execute as<T>.
 			rAs,
 			// # of bytes inside a vtable the object's vtable ptr is pointing.
 			rVTableAllocOffset,

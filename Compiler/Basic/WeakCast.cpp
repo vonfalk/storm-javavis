@@ -90,7 +90,9 @@ namespace storm {
 			// Call the 'as' function.
 			*state->l << fnParam(ptrA);
 			*state->l << fnParam(to.type->typeRef());
-			*state->l << fnCall(engine().ref(Engine::rAs), ValType(Size::sByte, false));
+			*state->l << fnCall(engine().ref(Engine::rAs), valPtr());
+			*state->l << cmp(ptrA, ptrConst(Offset()));
+			*state->l << setCond(al, ifNotEqual);
 			*state->l << mov(boolResult->location(state).v, al);
 		}
 
