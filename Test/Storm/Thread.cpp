@@ -32,14 +32,9 @@ BEGIN_TEST(BSThread, BS) {
 	CHECK_EQ(runFn<Int>(L"test.bs.intFuture"), 22);
 	CHECK_RUNS(runFn<void>(L"test.bs.noResultFuture"));
 
-	// // Check 'spawn'.
-	// DbgVal::clear();
-	// CHECK_EQ(runFn<Int>(L"test.bs.asyncDbgVal"), 18);
-	// CHECK_EQ(runFn<Int>(L"test.bs.asyncDbgVal2"), 18);
-	// CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn<Int>(L"test.bs.unusedDbgVal"), 33);
-	// Sleep(100);
-	// CHECK(DbgVal::clear());
-	// CHECK_EQ(runFn<Int>(L"test.bs.asyncObject"), 15);
-	// CHECK_RUNS(runFn<Int>(L"test.bs.spawnVoid"));
+	// Check 'spawn'.
+	CHECK_EQ(runFn<Int>(L"test.bs.asyncPostObject"), 15);
+	CHECK_EQ(runFn<Int>(L"test.bs.asyncPostObject2"), 15);
+	CHECK_EQ(runFn<Int>(L"test.bs.asyncPostVal"), 35);
+	CHECK_RUNS(runFn<void>(L"test.bs.spawnVoid"));
 } END_TEST

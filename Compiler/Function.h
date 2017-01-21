@@ -146,7 +146,7 @@ namespace storm {
 	// Helpers used by the generated code.
 	void spawnThreadResult(const void *fn, bool member, const os::FnParams *params, void *result,
 						BasicTypeInfo *resultType, Thread *on, os::UThreadData *data);
-	// void spawnThreadFuture(const void *fn, bool member, const os::FnParams *params, FutureBase *result,
-	// 					BasicTypeInfo *resultType, Thread *on, os::UThreadData *data);
+	void spawnThreadFuture(const void *fn, bool member, const os::FnParams *params, FutureBase *result,
+						BasicTypeInfo *resultType, Thread *on, os::UThreadData *data);
 
 }

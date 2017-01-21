@@ -50,6 +50,10 @@ namespace storm {
 		runtime::setVTable(b);
 	}
 
+	static void CODECALL futureCreateVoid(void *mem) {
+		new (Place(mem)) Future<void>();
+	}
+
 	static void CODECALL futureCopy(void *mem, FutureBase *src) {
 		FutureBase *b = new (Place(mem)) FutureBase(*src);
 		runtime::setVTable(b);
@@ -85,13 +89,7 @@ namespace storm {
 	}
 
 	Bool FutureType::loadAll() {
-		Engine &e = engine;
-		Value t = thisPtr(this);
 		Value param = this->param();
-
-		// Members shared by all classes.
-		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&futureCreate)));
-		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&futureCopy)));
 
 		// Members differing between implementations.
 		if (param == Value()) {
@@ -110,6 +108,8 @@ namespace storm {
 		Value t = thisPtr(this);
 		Value cloneEnv = Value(CloneEnv::stormType(e));
 
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&futureCreateVoid)));
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&futureCopy)));
 		add(nativeFunction(e, Value(), L"post", valList(e, 1, t), address(&postVoid)));
 		add(nativeFunction(e, Value(), L"result", valList(e, 1, t), address(&resultVoid)));
 	}
@@ -119,6 +119,8 @@ namespace storm {
 		Value t = thisPtr(this);
 		Value cloneEnv = Value(CloneEnv::stormType(e));
 
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&futureCreate)));
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&futureCopy)));
 		add(nativeFunction(e, Value(), L"post", valList(e, 2, t, param()), address(&postClass)));
 		add(nativeFunction(e, param(), L"result", valList(e, 1, t), address(&resultClass)));
 	}
@@ -129,6 +131,8 @@ namespace storm {
 		Value cloneEnv = Value(CloneEnv::stormType(e));
 		Value ref = param().asRef();
 
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&futureCreate)));
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&futureCopy)));
 		add(nativeFunction(e, Value(), L"post", valList(e, 2, t, ref), address(&FutureBase::postRaw)));
 		// TODO: When 'param' is not a built in type, we can use FutureBase::resultRaw() directly,
 		// as their signatures match (at least on X86).

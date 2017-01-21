@@ -52,7 +52,7 @@ CloneDerived otherObjectFn(CloneDerived o) on Other {
 // Try with a value as well!
 value ThreadVal {
 	CloneDerived v;
-	DbgVal z;
+	Int z;
 
 	ctor() {
 		init() {
@@ -67,7 +67,7 @@ Int postVal() {
 	ThreadVal v;
 	ThreadVal r = otherValFn(v);
 	if (disjoint(v.v, r.v)) {
-		r.v.c + r.z.get;
+		r.v.c + r.z;
 	} else {
 		0;
 	}
@@ -75,7 +75,7 @@ Int postVal() {
 
 ThreadVal otherValFn(ThreadVal v) on Other {
 	v.v = otherObjectFn(v.v);
-	v.z.set(20);
+	v.z = 20;
 	v;
 }
 
@@ -208,35 +208,42 @@ void noResultFuture() {
 }
 
 // Test spawn-async.
-Int asyncDbgVal() {
-	DbgVal val(10);
-	var fut = spawn otherDbgValFn(val);
-	fut.result;
+Int asyncPostInt() {
+	var r = spawn otherIntFn(1);
+	r.result;
 }
 
-// Alternate syntax.
-Int asyncDbgVal2() {
-	DbgVal val(10);
-	var fut = spawn val.otherDbgValFn();
-	fut.result;
+Int asyncPostObject() {
+	CloneDerived d;
+	var f = spawn otherObjectFn(d);
+	CloneDerived z = f.result;
+	if (disjoint(d, z)) {
+		z.c;
+	} else {
+		0;
+	}
 }
 
-Int slowFn(DbgVal v) on Other {
-	dbgSleep(10);
-	33;
+Int asyncPostObject2() {
+	CloneDerived d;
+	// Alternate syntax
+	var f = spawn d.otherObjectFn();
+	CloneDerived z = f.result;
+	if (disjoint(d, z)) {
+		z.c;
+	} else {
+		0;
+	}
 }
 
-Int unusedDbgVal() {
-	DbgVal val(10);
-	// Run it once as normal so that we may compile the function first!
-	Int r = slowFn(val);
-	var fut = spawn slowFn(val);
-	// 'fut' not used.
-	var fut2 = spawn otherDbgValFn(val);
-	// 'fut2' not used.
-	ThreadVal tv;
-	var valFut = spawn otherValFn(tv);
-	r;
+Int asyncPostVal() {
+	ThreadVal v;
+	ThreadVal r = (spawn otherValFn(v)).result;
+	if (disjoint(v.v, r.v)) {
+		r.v.c + r.z;
+	} else {
+		0;
+	}
 }
 
 Int asyncObject() {

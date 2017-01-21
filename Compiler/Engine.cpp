@@ -306,8 +306,7 @@ namespace storm {
 		case rSpawnResult:
 			return arena()->externalSource(L"spawnResult", &spawnThreadResult);
 		case rSpawnFuture:
-			assert(false, L"Implement me!");
-			// return arena()->externalSource(L"spawnFuture", &spawnThreadFuture);
+			return arena()->externalSource(L"spawnFuture", &spawnThreadFuture);
 		case rSpawnLater:
 			return arena()->externalSource(L"spawnLater", address(&os::UThread::spawnLater));
 		case rSpawnParam:

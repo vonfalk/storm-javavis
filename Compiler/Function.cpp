@@ -36,9 +36,16 @@ namespace storm {
 	}
 
 	RunOn Function::runOn() const {
+		RunOn result;
 		if (Type *t = as<Type>(parent())) {
-			return t->runOn();
-		} else if (runOnThread) {
+			result = t->runOn();
+		}
+
+		if (result.state != RunOn::any)
+			return result;
+
+		// The function itself can override if the parent class says "run on any thread".
+		if (runOnThread) {
 			return RunOn(runOnThread);
 		} else {
 			return RunOn(RunOn::any);
@@ -438,35 +445,33 @@ namespace storm {
 		CodeGen *sub = to->child(b);
 		PrepareResult r = prepareThreadCall(sub, params);
 
-		// // Create the result object.
-		// Type *futureT = wrapFuture(e, this->result).type;
-		// VarInfo resultPos = result->safeLocation(sub, thisPtr(futureT));
-		// allocObject(sub, futureT->defaultCtor(), Actuals(), resultPos.var());
-		// resultPos.created(sub);
+		// Create the result object.
+		Type *futureT = wrapFuture(e, this->result).type;
+		VarInfo resultPos = result->safeLocation(sub, thisPtr(futureT));
+		allocObject(sub, futureT->defaultCtor(), new (this) Array<Operand>(), resultPos.v);
+		resultPos.created(sub);
 
-		// // Find out what to call...
-		// const RefSource *fn = threadThunk();
-		// if (!fn)
-		// 	fn = &ref();
+		// Find out what to call...
+		Ref fn = ref();
+		if (RefSource *t = threadThunk())
+			fn = Ref(t);
 
-		// // Return type...
-		// Variable returnType = createBasicTypeInfo(to, this->result);
+		// Return type...
+		Var returnType = createBasicTypeInfo(to, this->result);
 
-		// // Now we're ready to spawn the thread!
-		// *to->l << lea(ptrA, r.params);
-		// *to->l << lea(ptrC, returnType);
-		// *to->l << fnParam(*fn);
-		// *to->l << fnParam(toVal(isMember()));
-		// *to->l << fnParam(ptrA);
-		// *to->l << fnParam(resultPos.var());
-		// *to->l << fnParam(ptrC);
-		// *to->l << fnParam(t);
-		// *to->l << fnParam(r.data);
-		// *to->l << fnCall(e.fnRefs.spawnFuture, retVoid());
+		// Now we're ready to spawn the thread!
+		*to->l << lea(ptrA, r.params);
+		*to->l << lea(ptrC, returnType);
+		*to->l << fnParam(fn);
+		*to->l << fnParam(toOp(isMember()));
+		*to->l << fnParam(ptrA);
+		*to->l << fnParam(resultPos.v);
+		*to->l << fnParam(ptrC);
+		*to->l << fnParam(t);
+		*to->l << fnParam(r.data);
+		*to->l << fnCall(e.ref(Engine::rSpawnFuture), valVoid());
 
 		*to->l << end(b);
-		TODO(L"Implement me!");
-		assert(false);
 	}
 
 
