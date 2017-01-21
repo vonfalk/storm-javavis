@@ -151,6 +151,8 @@ namespace storm {
 	inline const TObject *asTObject(const T &) { return null; }
 	inline const TObject *asTObject(const TObject &t) { return &t; }
 	inline const TObject *asTObject(const TObject *t) { return t; }
+	inline const TObject *asTObject(TObject &t) { return &t; }
+	inline const TObject *asTObject(TObject *t) { return t; }
 
 	// Helper macro to add a cloned object to a os::FnParams object. We need to keep the cloned
 	// value alive until the function is actually called, so we can not use a function.

@@ -54,7 +54,7 @@ static Fn<DbgVal, DbgActor *> *actorFn(int id) {
 	return runFn<FnPtr *>(L"test.bs.createActorFn", id);
 }
 
-BEGIN_TEST(FnPtrTest) {
+BEGIN_TEST(FnPtrTest, BS) {
 	Engine &e = gEngine();
 
 	Fn<Int, Int> *fn = fnPtr(e, &addTwo);
@@ -109,7 +109,7 @@ BEGIN_TEST(FnPtrTest) {
 } END_TEST
 
 
-BEGIN_TEST(StormFnPtrTest) {
+BEGIN_TEST(StormFnPtrTest, BS) {
 	Engine &e = gEngine();
 
 	// Return a function pointer from Storm!
@@ -164,7 +164,7 @@ static Fn<Int, Dbg *> *dbgPtr(int id) {
 	return runFn<Fn<Int, Dbg *> *>(L"test.bs.trackParam", id);
 }
 
-BEGIN_TEST(FnPtrThreadTest) {
+BEGIN_TEST(FnPtrThreadTest, BS) {
 	Engine &e = gEngine();
 
 	CHECK_EQ(runPtr(dbgPtr(0), 1), 1);
