@@ -105,8 +105,7 @@ BEGIN_TEST(ValueMemberTest, BS) {
 	CHECK_EQ(v->asDbgVal().v, 20);
 
 	// Does the thread thunks correctly account for the special handling of member functions?
-	TODO(L"Enable this test!");
-	// CHECK_EQ(runFn<Int>(L"test.bs.testActorVal"), 10);
+	CHECK_EQ(runFn<Int>(L"test.bs.testActorVal"), 10);
 } END_TEST
 
 
@@ -269,6 +268,17 @@ BEGIN_TEST(CloneTest, BS) {
 	CHECK(runFn<Bool>(L"test.bs.testCloneDerived"));
 	CHECK(runFn<Bool>(L"test.bs.testCloneValue"));
 	CHECK_EQ(runFn<Int>(L"test.bs.testCloneArray"), 10);
+} END_TEST
+
+
+/**
+ * Generate.
+ */
+
+BEGIN_TEST(GenerateTest, BS) {
+	CHECK_EQ(runFn<Int>(L"test.bs.genAdd", 10, 20), 30);
+	CHECK_EQ(runFn<Float>(L"test.bs.genAdd", 10.2f, 20.3f), 30.5f);
+	CHECK_EQ(runFn<Int>(L"test.bs.testGenClass", 10), 12);
 } END_TEST
 
 

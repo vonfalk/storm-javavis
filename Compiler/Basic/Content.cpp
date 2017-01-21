@@ -11,7 +11,7 @@ namespace storm {
 			types = new (this) Array<Type *>();
 			functions = new (this) Array<FunctionDecl *>();
 			threads = new (this) Array<NamedThread *>();
-			// templates = new (this) Map<Str *, TemplateAdapter *>();
+			templates = new (this) Array<Template *>();
 		}
 
 		void Content::add(Type *t) {
@@ -27,16 +27,7 @@ namespace storm {
 		}
 
 		void Content::add(Template *t) {
-			// Str *k = new (this) Str(t->name);
-			// if (templates->has(k)) {
-			// 	TemplateAdapter *&found = templates->get(k);
-			// 	found->add(t);
-			// } else {
-			// 	TemplateAdapter *adapter = new (this) TemplateAdapter(k);
-			// 	adapter->add(t);
-			// 	templates->put(k, adapter);
-			// }
-			TODO(L"Implement me!");
+			templates->push(t);
 		}
 
 		void Content::add(TObject *o) {

@@ -12,21 +12,24 @@ genAdd: generate(params) {
 		return null;
 
 	Value t = params[0];
+	if (type = t.type) {
+		BSTreeFn fn(t, SStr("genAdd"), merge(params, ["a", "b"]), null);
 
-	BSTreeFn fn(t, SStr("genAdd"), params, ["a", "b"], null);
+		Scope scope = rootScope.child(type);
 
-	Scope scope = rootScope.child(t.getType());
+		FnBody body(fn, scope);
+		fn.body(body);
 
-	FnBody body(fn, scope);
-	fn.body(body);
+		Actuals actual;
+		actual.add(namedExpr(body, SStr("a"), Actuals()));
+		actual.add(namedExpr(body, SStr("b"), Actuals()));
 
-	Actual actual;
-	actual.add(namedExpr(body, SStr("a"), Actual()));
-	actual.add(namedExpr(body, SStr("b"), Actual()));
+		body.add(namedExpr(body, SStr("+"), actual));
 
-	body.add(namedExpr(body, SStr("+"), actual));
-
-	return fn;
+		return fn;
+	} else {
+		return null;
+	}
 }
 
 // Int genAdd(Int a, Int b) {
@@ -54,16 +57,16 @@ class GenClass {
 			return null;
 
 		Value t = params[1];
-		BSTreeFn fn(t, SStr("addVal"), [Value(me), t], ["this", "b"], null);
+		BSTreeFn fn(t, SStr("addVal"), [ValParam(Value(me), "this"), ValParam(t, "b")], null);
 
-		Scope scope(me, BSScope());
+		Scope scope(me, BSLookup());
 
 		FnBody body(fn, scope);
 		fn.body(body);
 
-		Actual actual;
-		actual.add(namedExpr(body, SStr("v"), Actual()));
-		actual.add(namedExpr(body, SStr("b"), Actual()));
+		Actuals actual;
+		actual.add(namedExpr(body, SStr("v"), Actuals()));
+		actual.add(namedExpr(body, SStr("b"), Actuals()));
 
 		body.add(namedExpr(body, SStr("+="), actual));
 

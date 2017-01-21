@@ -45,7 +45,7 @@ class Generate extends Template {
 	Named? generate(SimplePart part) {
 		BSFunction fn = createFn();
 
-		FnPtrBase ptr = fn.fnPtr();
+		FnBase ptr = fn.pointer();
 		if (ptr as Fn<Named?, Value[]>) {
 			return ptr.call(part.params);
 		}
@@ -63,9 +63,8 @@ class Generate extends Template {
 
 		Value result = resultType();
 
-		Params params;
-		params.add(arrayType(valueType()));
-		params.add(paramName);
+		Array<NameParam> params;
+		params << NameParam(arrayType(valueType()), paramName);
 
 		SStr name = fnName;
 		if (into) {
@@ -73,7 +72,7 @@ class Generate extends Template {
 		}
 
 		// TODO: ignore fnName, making the function anonymous.
-		BSFunction r(result, name, params, scope, named{Compiler}, body);
+		BSFunction r(result, name, resolve(params, scope), scope, named{Compiler}, body);
 
 		if (into) {
 			into.add(r);

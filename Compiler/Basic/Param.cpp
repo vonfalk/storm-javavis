@@ -65,5 +65,17 @@ namespace storm {
 			return r;
 		}
 
+		Array<ValParam> *merge(Array<Value> *val, Array<Str *> *names) {
+			if (val->count() != names->count()) {
+				WARNING(L"Non-equal size of values and parameters, ignoring some entries!");
+			}
+			Nat to = min(val->count(), names->count());
+			Array<ValParam> *r = new (val) Array<ValParam>();
+			for (nat i = 0; i < to; i++) {
+				r->push(ValParam(val->at(i), names->at(i)));
+			}
+			return r;
+		}
+
 	}
 }

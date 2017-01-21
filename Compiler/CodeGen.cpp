@@ -345,6 +345,8 @@ namespace storm {
 		using namespace code;
 
 		Type *type = ctor->params->at(0).type;
+		assert(Value(type).isHeapObj(), L"Must allocate a class type! (not " + ::toS(type) + L")");
+
 		Engine &e = ctor->engine();
 
 		*s->l << fnParam(type->typeRef());
@@ -367,13 +369,12 @@ namespace storm {
 
 		CodeResult *r = new (s) CodeResult();
 		params = new (s) Array<code::Operand>(*params);
-		params->insert(0, to);
+		params->insert(0, ptrA);
 		ctor->autoCall(s, params, r);
 	}
 
 	void allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
 		Value t = ctor->params->at(0);
-		assert(t.isHeapObj(), L"Must allocate a class type!");
 
 		if (t.type->typeFlags & typeRawPtr)
 			allocRawObject(s, ctor, params, to);

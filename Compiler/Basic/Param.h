@@ -47,5 +47,8 @@ namespace storm {
 		Array<ValParam> *STORM_FN resolve(Array<NameParam> *params, Type *me, Scope scope);
 		Array<Value> *STORM_FN values(Array<ValParam> *params);
 
+		// Merge two arrays of values and names into one array of ValParam.
+		Array<ValParam> *STORM_FN merge(Array<Value> *val, Array<Str *> *names);
+
 	}
 }

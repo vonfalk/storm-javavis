@@ -102,13 +102,11 @@ class ReferNamed extends Expr {
 			return;
 		}
 
-		// At the moment, we can be fairly sure that named objects never die, so we do not need to
-		// take any precautions. This may not hold in the future, though!
 		// This solution is also bad when we want to serialize the code and load it later.
 		// We should use a reference to the named item instead.
 		VarInfo v = result.location(state);
-		state.l << mov(v.v, ptrConst(referTo));
-		state.l << addRef(v.v);
+		state.l << mov(v.v, objPtr(referTo));
+		v.created(state);
 	}
 
 	Str toS() {

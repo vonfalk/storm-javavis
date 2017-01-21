@@ -58,14 +58,17 @@ class NullExpr extends Expr {
 
 	// Generate code.
 	void code(CodeGen g, CodeResult r) {
-		Type t = r.type.getType;
-		Function? ctor = t.emptyCtor;
-		if (ctor) {
-			VarInfo info = r.location(g);
-			allocObject(g, ctor, Array<Operand>(), info.v);
-			info.created(g);
+		if (t = r.type.type) {
+			Function? ctor = t.defaultCtor;
+			if (ctor) {
+				VarInfo info = r.location(g);
+				allocObject(g, ctor, Array<Operand>(), info.v);
+				info.created(g);
+			} else {
+				throwSyntaxError(pos, "Failed to locate the default constructor of " + r.type.toS);
+			}
 		} else {
-			throwSyntaxError(pos, "Failed to locate the default constructor of " + r.type.toS);
+			throwSyntaxError(pos, "Can not be used when 'void' types are expected!");
 		}
 	}
 

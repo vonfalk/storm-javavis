@@ -52,7 +52,9 @@ namespace storm {
 				pkg->add(content->functions->at(i)->createFn());
 			}
 
-			// TODO: Add templates!
+			for (nat i = 0; i < content->templates->count(); i++) {
+				pkg->add(content->templates->at(i));
+			}
 		}
 
 		void FileReader::readContent() {

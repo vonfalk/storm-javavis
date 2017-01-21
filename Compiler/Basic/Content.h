@@ -37,10 +37,10 @@ namespace storm {
 			Array<FunctionDecl *> *functions;
 
 			// All named threads.
-			Array<NamedThread *>*threads;
+			Array<NamedThread *> *threads;
 
 			// All templates.
-			// Map<Str *, TemplateAdapter *> *templates;
+			Array<Template *> *templates;
 		};
 
 	}
