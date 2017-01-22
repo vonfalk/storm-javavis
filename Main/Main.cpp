@@ -184,7 +184,7 @@ int stormMain(int argc, const wchar *argv[]) {
 #ifdef DEBUG
 	Path root = Path::dbgRoot() + L"root";
 #else
-	Path root = Path::executable();
+	Path root = Path::executable() + L"root";
 #endif
 	if (p.root) {
 		root = Path(String(p.root));

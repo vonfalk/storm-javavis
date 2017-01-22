@@ -15,7 +15,7 @@ then
     rm release/storm.zip
 fi
 
-7z a release/storm.zip ./release/StormMain.exe doc/ > /dev/null
+7z a release/storm.zip ./release/Storm.exe doc/ > /dev/null
 find root/ -name "*.bs" -or -name "*.bnf" -or -name "*.txt" -or -name "*.png" \
   | xargs --delimiter='\n' 7z a release/storm.zip > /dev/null
 
@@ -38,14 +38,14 @@ else
 fi
 
 7z x release/storm.zip -orelease/storm/ > /dev/null
-echo "exit" | release/storm/StormMain.exe > /dev/null
+echo "exit" | release/storm/Storm.exe > /dev/null
 if [[ $? -ne 0 ]]
 then
     echo "Failed to launch the repl. Something is bad! Test in release/storm"
     exit 1
 fi
 
-release/storm/StormMain.exe -c 'test:bf:inlineBf' > release/storm/output.txt
+release/storm/Storm.exe -c 'test:bf:inlineBf' > release/storm/output.txt
 if [[ $? -ne 0 ]]
 then
     echo "Failed to execute BS code. Test in release/storm"

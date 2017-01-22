@@ -1,21 +1,43 @@
 The structure of Storm is currently:
 
-Code	      Code generation
-CodeTest      Tests for code generation
-Compiler      The storm compiler itself.
-External      External Storm code, not to be committed in the main repository
+Code	      Code generation.
+Compiler      The Storm compiler itself.
+Core	      Core types in Storm. Included in DLL:s as well as the main compiler.
+Core/Gen      Template files for the CppTypes preprocessor.
+CppTyes	      Preprocessor for C++ code. Extracts the neccessary type information.
+doc	      Documentation.
+Experiments   C++ sources which are compiled into asm to examine C++ behaviour.
+External      External Storm code, not to be committed in the main repository.
+Main	      Entry-point for the standalone compiler. Produces Storm.exe.
+mps	      The MPS garbage collector. This is a Git submodule.
+Old	      Old sources. See below.
+OS	      OS-specific interface, provides threading, generic function calls and more.
+Test	      Test cases for all parts of Storm. Alter its behaviour in 'stdafx.h'
+Test/Code     Tests for code generation.
+Test/Core     Tests for the core Storm classes required for proper operation of the compiler.
+Test/Gc	      Tests for the Gc-integration.
+Test/Lib      Test library.
+Test/OS	      Tests of the OS library.
+Test/Storm    Tests for the compiler itself.
+TestData      Data required for some tests.
+Utils	      Generic C++ utilities. Majority of things here should be moved elsewhere.
+root	      Root for Storm code.
+
+The folder Old contains sources for an older version of the compiler where refcouting
+was used to keep track of memory. These sources are only kept around for easy reference
+when debugging at the moment and will be removed eventually. The tag 'old-refcount' points
+to the last commit before the rewrite started. Old contains this structure:
+
+Code	      Code generation.
+CodeTest      Tests for code generation.
 Graphics      Graphics library (eg. loading images)
 LibOgg	      Sources for libogg
-OS	      OS-specific interface, provides threading, generic function calls and more.
-Runtime	      Runtime library for Storm.
-Shared	      Old shared library. Being migrated into Runtime
+Shared	      Shared code.
 Sound	      Sound playback.
 Storm	      Old core. Being migrated into Compiler
 StormBuiltin  Preprocessor for the C++ code.
 StormGui      UI library.
 StormMain     Entry-point for the standalone compiler. Rename into Storm later?
 StormTest     Tests for the Storm compiler.
-Test	      Library for tests in C++.
-TestData      Data required for some tests.
-Utils	      Generic C++ utilities. Majority of things here should be moved elsewhere.
-root	      Root for Storm code.
+migrate.el    Script that uses regexes for migrating code from Old/ to the current release.
+
