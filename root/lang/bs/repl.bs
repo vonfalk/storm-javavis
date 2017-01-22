@@ -23,7 +23,7 @@ class BsRepl extends Repl {
 
 		init() {
 			done = false;
-			scope(repl, BSScope());
+			scope(repl, BSLookup());
 		}
 
 		scope.addInclude(named{core});
@@ -96,9 +96,9 @@ class BsRepl extends Repl {
 
 // Sandbox class for the Repl to execute in.
 class ReplSandbox on Compiler {
-	Repl owner;
+	BsRepl owner;
 
-	ctor(Repl owner) {
+	ctor(BsRepl owner) {
 		init() {
 			owner = owner;
 		}
@@ -138,8 +138,8 @@ class ReplCode on Compiler {
 	}
 
 	CodeGen load() {
-		CodeGen g(runOnAny);
-		VarInfo resultVar = g.variable(strType);
+		CodeGen g(RunOn());
+		VarInfo resultVar = g.createVar(strType);
 
 		g.l << prolog();
 
@@ -150,7 +150,7 @@ class ReplCode on Compiler {
 		Named? toSFn = root.scope.find(name);
 		if (toSFn as Function) {
 			// It exists, use the result.
-			FnCall toSCall(SrcPos(), toSFn, Actual(expr));
+			FnCall toSCall(SrcPos(), toSFn, Actuals(expr));
 			toSCall.code(g, CodeResult(strType, resultVar));
 		} else {
 			// Just evaluate and print a dummy output.
@@ -158,10 +158,9 @@ class ReplCode on Compiler {
 			createDefaultResult(g, result, resultVar);
 		}
 
-		g.l << addRef(Operand(resultVar.v));
 		g.l << mov(Operand(ptrA), Operand(resultVar.v));
 		g.l << epilog();
-		g.l << ret(RetVal(sizePtr, false));
+		g.l << ret(valPtr);
 
 		g;
 	}

@@ -134,9 +134,9 @@ Expr reloadName(Block block, SrcName typeName) {
 
 Expr printExpr(Str text, Expr expr) {
 	if (expr as Operator) {
-		print(text.removeIndent # " <=> " # expr.meaning);
+		print(text.removeIndentation # " <=> " # expr.meaning);
 	} else {
-	    print(text.removeIndent # " <=> " # expr);
+	    print(text.removeIndentation # " <=> " # expr);
 	}
 	expr;
 }

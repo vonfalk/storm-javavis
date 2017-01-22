@@ -21,6 +21,9 @@ namespace storm {
 		if (!type.isValue() && !type.isBuiltIn())
 			return null;
 
+		if (type.type == null)
+			return null;
+
 		// Find the relevant output operator.
 		Function *found = null;
 		SimplePart *output = new (this) SimplePart(new (this) Str(L"<<"));

@@ -8,9 +8,8 @@
 [project]
 
 [project,release]
-input+=StormMain
-input+=StormTest
-input+=CodeTest
+input+=Main
+input+=Test
 execute=no
 
 [build,!slow,!release]
