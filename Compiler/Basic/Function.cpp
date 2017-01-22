@@ -4,6 +4,7 @@
 #include "Core/Fn.h"
 #include "Compiler/Code.h"
 #include "Compiler/Exception.h"
+#include "Compiler/Engine.h"
 #include "Compiler/Syntax/Parser.h"
 
 namespace storm {
@@ -113,6 +114,8 @@ namespace storm {
 			// if (!identifier()->startsWith(L"lang.bs")) {
 			// 	PLN(bodyExpr);
 			// 	PLN(identifier() << L": " << l);
+			// 	// This can be used to see the transformed machine code as well:
+			// 	// PLN(engine().arena()->transform(l, null));
 			// }
 
 			// PLN(bodyExpr);

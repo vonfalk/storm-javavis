@@ -283,6 +283,32 @@ BEGIN_TEST(GenerateTest, BS) {
 
 
 /**
+ * Exception safety.
+ */
+
+BEGIN_TEST_FN(checkTimes, const wchar *name, nat times) {
+	DbgVal::clear();
+	CHECK_RUNS(runFn<void>(name, Int(0)));
+	CHECK(DbgVal::clear());
+	for (nat i = 0; i < times; i++) {
+		CHECK_ERROR(runFn<void>(name, Int(i + 1)), DebugError);
+		CHECK(DbgVal::clear());
+	}
+	CHECK_RUNS(runFn<void>(name, Int(times + 1)));
+	CHECK(DbgVal::clear());
+} END_TEST_FN
+
+// Tests that checks the exception safety at various times in the generated code. Especially
+// with regards to values.
+BEGIN_TEST(BSException, BS) {
+	CALL_TEST_FN(checkTimes, L"test.bs.basicException", 7);
+	CALL_TEST_FN(checkTimes, L"test.bs.fnException", 3);
+	CALL_TEST_FN(checkTimes, L"test.bs.threadException", 4);
+	CALL_TEST_FN(checkTimes, L"test.bs.ctorError", 8);
+} END_TEST
+
+
+/**
  * Heavy tests.
  */
 

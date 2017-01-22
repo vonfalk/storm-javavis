@@ -263,7 +263,11 @@ namespace code {
 			return to << L"@" << o.ref().title();
 		case opObjReference:
 			TODO(L"Make sure to call on the correct OS thread!");
-			return to << L"&" << o.object()->toS()->c_str();
+			if (o.object()) {
+				return to << L"&" << o.object()->toS()->c_str();
+			} else {
+				return to << L"&null";
+			}
 		case opCondFlag:
 			return to << code::name(o.condFlag());
 		default:

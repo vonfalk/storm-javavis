@@ -776,6 +776,10 @@ namespace storm {
 	 */
 
 	void Type::vtableFnAdded(Function *fn) {
+		// If we are a value, we do not have a vtable.
+		if (value() || rawPtr())
+			return;
+
 		// Try to find a function which overrides this function, or a function which we override. If
 		// we found the function in either direction, we do not need to search in the other
 		// direction, as they already are in the vtable in that case.

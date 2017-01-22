@@ -253,7 +253,7 @@ namespace storm {
 
 		static void dbg_dumpNolock() {
 			for (DbgVal::LiveSet::iterator i = DbgVal::live.begin(); i != DbgVal::live.end(); ++i) {
-				PLN(L"Live DbgVal at " << *i);
+				PLN(L"Live DbgVal at " << *i << L" (" << (*i)->v << L")");
 			}
 		}
 

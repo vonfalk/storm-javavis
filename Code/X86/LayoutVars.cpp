@@ -132,10 +132,10 @@ namespace code {
 					if (!dest->isParam(v))
 						zeroVar(dest, layout->at(v.key()), v.size(), initEax);
 				}
-
-				if (usingEH)
-					*dest << mov(engine(), intRel(ptrFrame, partId), natConst(part.key()));
 			}
+
+			if (usingEH)
+				*dest << mov(engine(), intRel(ptrFrame, partId), natConst(part.key()));
 		}
 
 		void LayoutVars::destroyPart(Listing *dest, Part destroy, bool preserveEax) {

@@ -53,14 +53,14 @@ DbgVal otherThreadError(DbgVal p, Int point) on Other {
 }
 
 // Throw an error during construction.
-class ErrorAt {
+value ErrorAt {
 	ctor(Int point, Int at) {
 		init() {}
 		errorOn(point, at);
 	}
 }
 
-class ErrorBase {
+value ErrorBase {
 	// Some members to initialize and keep track of. Try to initialize e1, v1, e2, but this order
 	// is not neccessarily the initialization order taken.
 	ErrorAt e1;
@@ -78,7 +78,7 @@ class ErrorBase {
 	}
 }
 
-class ErrorTest extends ErrorBase {
+value ErrorTest extends ErrorBase {
 	// Some members.
 	ErrorAt e4;
 	DbgVal v2;
