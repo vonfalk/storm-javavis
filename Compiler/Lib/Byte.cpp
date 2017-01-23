@@ -30,9 +30,9 @@ namespace storm {
 
 		add(inlinedFunction(engine, Value(this), L"+", vv, fnPtr(engine, &numAdd)));
 		add(inlinedFunction(engine, Value(this), L"-", vv, fnPtr(engine, &numSub)));
-		add(inlinedFunction(engine, Value(this), L"*", vv, fnPtr(engine, &numMul)));
 
 		// Not supported yet.
+		// add(inlinedFunction(engine, Value(this), L"*", vv, fnPtr(engine, &numMul)));
 		// add(inlinedFunction(engine, Value(this), L"/", vv, fnPtr(engine, &numIDiv)));
 		// add(inlinedFunction(engine, Value(this), L"%", vv, fnPtr(engine, &numIMod)));
 
@@ -51,9 +51,11 @@ namespace storm {
 		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Byte>)));
 		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Byte>)));
 		add(inlinedFunction(engine, Value(this), L"-=", rv, fnPtr(engine, &numDec<Byte>)));
-		add(inlinedFunction(engine, Value(this), L"*=", rv, fnPtr(engine, &numScale<Byte>)));
-		add(inlinedFunction(engine, Value(this), L"/=", rv, fnPtr(engine, &numIDivScale<Byte>)));
-		add(inlinedFunction(engine, Value(this), L"%=", rv, fnPtr(engine, &numIModEq<Byte>)));
+
+		// Not supported yet!
+		// add(inlinedFunction(engine, Value(this), L"*=", rv, fnPtr(engine, &numScale<Byte>)));
+		// add(inlinedFunction(engine, Value(this), L"/=", rv, fnPtr(engine, &numIDivScale<Byte>)));
+		// add(inlinedFunction(engine, Value(this), L"%=", rv, fnPtr(engine, &numIModEq<Byte>)));
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Byte>)));
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Byte>)));

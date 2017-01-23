@@ -141,7 +141,7 @@ Expr printExpr(Str text, Expr expr) {
 	expr;
 }
 
-void summary(NameSet s) {
+void summary(NameSet s) on Compiler {
 	Type[] types;
 	Function[] fns;
 

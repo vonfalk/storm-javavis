@@ -193,10 +193,9 @@ BEGIN_TEST(UnitTest, BS) {
 BEGIN_TEST(CompileTest, BS) {
 	Engine &e = gEngine();
 
-	TODO(L"Enable me!");
 	// Compile all code in core and lang. Not everything in test is supposed to compile cleanly.
-	// CHECK_RUNS(e.package(L"core")->compile());
-	// CHECK_RUNS(e.package(L"lang")->compile());
+	CHECK_RUNS(e.package(L"core")->compile());
+	CHECK_RUNS(e.package(L"lang")->compile());
 } END_TEST
 
 

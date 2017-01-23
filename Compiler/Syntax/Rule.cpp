@@ -36,8 +36,10 @@ namespace storm {
 
 			// Add these last.
 			add(new (this) TypeDefaultCtor(this));
-			add(new (this) TypeCopyCtor(this));
-			add(new (this) TypeDeepCopy(this));
+			if (!me.isActor()) {
+				add(new (this) TypeCopyCtor(this));
+				add(new (this) TypeDeepCopy(this));
+			}
 
 			return Type::loadAll();
 		}
@@ -76,12 +78,14 @@ namespace storm {
 			code::Listing *l = code->l;
 
 			// Add our parameters.
-			code::Var me = code->createVar(tfmParams->at(0).type).v;
-			for (nat i = 1; tfmParams->count(); i++)
-				code->createVar(tfmParams->at(i).type);
+			code::Var me = code->createParam(thisPtr(this));
+			for (nat i = 0; i < tfmParams->count(); i++)
+				code->createParam(tfmParams->at(i).type);
 
 			// Add return type.
 			code->result(tfmResult, true);
+
+			*l << code::prolog();
 
 			// Call the exception-throwing function.
 			*l << code::fnParam(me);

@@ -140,8 +140,8 @@ namespace storm {
 			void advance();
 		};
 
-		Iter begin() const;
-		Iter end() const;
+		Iter STORM_FN begin() const;
+		Iter STORM_FN end() const;
 
 	protected:
 		/**

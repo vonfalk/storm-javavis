@@ -400,8 +400,10 @@ namespace storm {
 			p->at(1) = strBuf;
 			add(nativeFunction(e, Value(), L"toS", p, &productionToS));
 
-			add(new (e) TypeCopyCtor(this));
-			add(new (e) TypeDeepCopy(this));
+			if (!me.isActor()) {
+				add(new (e) TypeCopyCtor(this));
+				add(new (e) TypeDeepCopy(this));
+			}
 
 			// Clear!
 			decl = null;
