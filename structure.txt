@@ -11,6 +11,7 @@ External      External Storm code, not to be committed in the main repository.
 Main	      Entry-point for the standalone compiler. Produces Storm.exe.
 mps	      The MPS garbage collector. This is a Git submodule.
 Old	      Old sources. See below.
+Plugin	      Plugins for various editors (currently only Emacs).
 OS	      OS-specific interface, provides threading, generic function calls and more.
 Test	      Test cases for all parts of Storm. Alter its behaviour in 'stdafx.h'
 Test/Code     Tests for code generation.

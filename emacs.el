@@ -317,3 +317,10 @@
 
 (ad-activate 'switch-to-buffer)
 
+;; Good stuff while using the plugin.
+(load "~/Projects/storm/Plugin/emacs.el")
+(setq storm-mode-root "~/Projects/storm/root")
+(setq storm-mode-compiler "~/Projects/storm/debug/Storm.exe")
+(setq storm-mode-compile-compiler nil)
+
+(global-set-key (kbd "C-M-u") 'storm-restart)

@@ -1,0 +1,16 @@
+Protocol:
+
+All messages start with a null byte. Everything else is interpreted as text and outputted verbatim to the output.
+
+Entries are encoded as follows:
+First byte  	    Meaning
+0x00  		    nil.
+0x01  		    cons. read two entries.
+0x02		    number. read 4 bytes in network order
+0x03		    string. read 4 bytes size and then n bytes in utf-8
+0x04		    symbol. new symbol, read 4 bytes for its id, then a string.
+0x05		    symbol. read 4 bytes, look up in the hash table.
+
+Note: symbols are stored in a hash table for the server and the client. The server starts at high
+id:s while the client starts allocating symbols at low id:s. Note that the server and the client
+might accidentally allocate different id:s for the same symbol. This is not a problem.

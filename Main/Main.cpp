@@ -1,12 +1,10 @@
 #include "stdafx.h"
 #include "Params.h"
+#include "Server.h"
 #include "Compiler/Exception.h"
 #include "Compiler/Engine.h"
 #include "Compiler/Repl.h"
 #include "Core/Timing.h"
-
-using namespace std;
-using namespace storm;
 
 // Read that is not locking up the compiler loop. Should be implemeted better when there
 // is "real" IO in storm!
@@ -192,20 +190,20 @@ int stormMain(int argc, const wchar *argv[]) {
 			root = Path::cwd() + root;
 	}
 
-	wcout << L"Welcome to the Storm compiler!" << endl;
-	wcout << L"Root directory: " << root << endl;
-
 	Engine e(root, Engine::reuseMain);
 	Moment end;
-
-	wcout << L"Compiler boot in " << (end - start) << endl;
 
 	try {
 		switch (p.mode) {
 		case Params::modeRepl:
+			wcout << L"Welcome to the Storm compiler!" << endl;
+			wcout << L"Root directory: " << root << endl;
+			wcout << L"Compiler boot in " << (end - start) << endl;
 			return runRepl(e, p.modeParam, p.modeParam2);
 		case Params::modeFunction:
 			return runFunction(e, p.modeParam);
+		case Params::modeServer:
+			return runServer(e);
 		default:
 			throw InternalError(L"Unknown mode.");
 		}

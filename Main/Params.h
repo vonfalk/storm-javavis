@@ -23,6 +23,7 @@ public:
 		modeHelp,
 		modeRepl,
 		modeFunction,
+		modeServer,
 		modeError,
 	};
 

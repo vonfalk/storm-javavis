@@ -78,6 +78,9 @@ static StatePtr start(const wchar *arg, Params &result) {
 		return &import;
 	} else if (wcscmp(arg, L"-r") == 0) {
 		return &root;
+	} else if (wcscmp(arg, L"--server") == 0) {
+		result.mode = Params::modeServer;
+		return StatePtr();
 	} else {
 		result.mode = Params::modeRepl;
 		result.modeParam = arg;
@@ -106,4 +109,7 @@ Params::Params(int argc, const wchar *argv[])
 			break;
 		}
 	}
+
+	if (state && mode != Params::modeError)
+		state(null, *this);
 }
