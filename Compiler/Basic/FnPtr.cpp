@@ -10,6 +10,9 @@ namespace storm {
 		// Note: We do not (yet?) support implicit this pointer.
 		static Function *findTarget(const Scope &scope, SrcName *name, Array<SrcName *> *formal, Expr *dot) {
 			SimpleName *resolved = name->simplify(scope);
+			if (!resolved)
+				throw SyntaxError(name->pos, L"The parameters of the name " + ::toS(name) +
+								L" can not be resolved to proper types.");
 
 			Array<Value> *params = new (name) Array<Value>();
 			if (dot)

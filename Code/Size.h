@@ -83,6 +83,15 @@ namespace code {
 		Nat s64;
 	};
 
+	// Get sizes from Storm.
+	inline Size STORM_FN sChar() { return Size::sChar; }
+	inline Size STORM_FN sByte() { return Size::sByte; }
+	inline Size STORM_FN sInt() { return Size::sInt; }
+	inline Size STORM_FN sNat() { return Size::sNat; }
+	inline Size STORM_FN sLong() { return Size::sLong; }
+	inline Size STORM_FN sWord() { return Size::sWord; }
+	inline Size STORM_FN sFloat() { return Size::sFloat; }
+
 	/**
 	 * Output.
 	 */

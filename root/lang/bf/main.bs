@@ -8,16 +8,13 @@ use core:asm;
 
 // Package reader for BF files.
 
-class Reader extends FilesReader {
-	ctor(PkgFiles files, Package into) {
-		init(files, into) {}
-	}
-
-	FileReader createFile(Url path) {
-		BfFile(path, pkg);
-	}
+PkgReader reader(Url[] files, Package pkg) {
+	FilePkgReader(files, pkg, &createFile(Url, Package));
 }
 
+FileReader createFile(Url file, Package into) {
+	BfFile(file, into);
+}
 
 class BfFile extends FileReader {
 	ctor(Url file, Package into) {
@@ -40,7 +37,7 @@ class BfFunction extends Function {
 			file = file;
 		}
 
-		setCode(LazyCode(&this->load()));
+		setCode(LazyCode(&this.load()));
 	}
 
 	ctor(Url file) {
@@ -60,9 +57,9 @@ class BfFunction extends Function {
 		BfExpr o = parser.tree.transform();
 		Value strType = named{Str};
 
-		CodeGen r(runOnAny());
+		CodeGen r(RunOn());
 		Listing l = r.l;
-		Variable input = l.createPtrParam(Operand(), FreeOn());
+	    var input = l.createParam(valPtr());
 
 		l << prolog();
 
@@ -75,11 +72,10 @@ class BfFunction extends Function {
 
 		o.code(r, result);
 
-		Variable resultVar = result.location(r).v;
-		l << addRef(Operand(resultVar));
+		var resultVar = result.location(r).v;
 		l << mov(Operand(ptrA), Operand(resultVar));
 		l << epilog();
-		l << ret(RetVal(sizePtr, false));
+		l << ret(valPtr());
 
 		r;
 	}
@@ -101,7 +97,7 @@ class BfExpr extends lang:bs:Expr {
 		init(pos) {
 			space = space.toNat;
 			tokens = data;
-			input = BareVarAccess(pos, Value(named{Str}), Variable());
+			input = BareVarAccess(pos, Value(named{Str}), core:asm:Var());
 		}
 	}
 
@@ -149,20 +145,20 @@ class BfState on Compiler {
 	CodeGen g;
 
 	// Pointer to a StrBuf.
-	Variable output;
+    core:asm:Var output;
 
 	// The data pointer is stored in ptrA, and has to be pushed/popped for each
 	// function call.
 
 	// Temporary variable (int sized).
-	Variable tmpData;
+	core:asm:Var tmpData;
 
 	// Data area. A large variable.
-	Variable data;
+	core:asm:Var data;
 
 	// Input expression and variable the TextReader is stored in.
 	Expr inputExpr;
-	Variable input;
+	core:asm:Var input;
 
 	// StrBuf type. Needed a couple of times...
 	Value strBuf;
@@ -182,19 +178,19 @@ class BfState on Compiler {
 			inputExpr = inputExpr;
 		}
 
-		output = g.variable(strBuf).v;
-		input = g.variable(textReader).v;
-		tmpData = g.l.createIntVar(Part(g.block), Operand(), FreeOn());
-		data = g.l.createVariable(Part(g.block), Size(size), Operand(), FreeOn());
+		output = g.createVar(strBuf).v;
+		input = g.createVar(textReader).v;
+		tmpData = g.l.createVar(g.block, sInt());
+		data = g.l.createVar(g.block, Size(size));
 	}
 
 	// Create output. (TODO: Make use of createObject in CodeGen.h!)
 	void createOutput(SrcPos pos) {
 		Block block(pos, rootScope);
-		Expr ctor = namedExpr(block, name{core:StrBuf}, Actual());
+		Expr ctor = namedExpr(block, name{core:StrBuf}, Actuals());
 		ctor.code(g, CodeResult(strBuf, VarInfo(output)));
 
-		Expr create = namedExpr(block, name{core:io:readStr}, Actual(inputExpr));
+		Expr create = namedExpr(block, name{core:io:readStr}, Actuals(inputExpr));
 		create.code(g, CodeResult(textReader, VarInfo(input)));
 
 		// Initialize our pointer as well.
@@ -203,9 +199,9 @@ class BfState on Compiler {
 
 	// Create the result.
 	void createResult(SrcPos pos, CodeResult to) {
-		Block block(pos, Scope(strBuf.getType));
+		Block block(pos, Scope(named{StrBuf}));
 		BareVarAccess outAccess(pos, strBuf, output);
-		Expr e = namedExpr(block, SStr("toS", pos), outAccess, Actual());
+		Expr e = namedExpr(block, SStr("toS", pos), outAccess, Actuals());
 		e.code(g, to);
 	}
 }
@@ -223,7 +219,7 @@ class BfToken on Compiler {
 class BfBack extends BfToken {
 	ctor(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
-		to.l << sub(Operand(ptrA), intPtrConst(1));
+		to.l << sub(Operand(ptrA), ptrConst(Offset(1)));
 	}
 	Str toS() { "<"; }
 }
@@ -231,7 +227,7 @@ class BfBack extends BfToken {
 class BfFwd extends BfToken {
 	ctor(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
-		to.l << add(Operand(ptrA), intPtrConst(1));
+		to.l << add(Operand(ptrA), ptrConst(Offset(1)));
 	}
 	Str toS() { ">"; }
 }
@@ -241,9 +237,9 @@ class BfInput extends BfToken {
 	void code(BfState state, CodeGen to) {
 		to.l << push(Operand(ptrA));
 
-		Block block(pos, Scope(state.textReader.getType));
+		Block block(pos, Scope(named{core:io:TextReader}));
 		BareVarAccess inAccess(pos, state.textReader, state.input);
-		Expr e = namedExpr(block, SStr("read", pos), inAccess, Actual());
+		Expr e = namedExpr(block, SStr("read", pos), inAccess, Actuals());
 		e.code(to, CodeResult(state.natType, VarInfo(state.tmpData)));
 
 		to.l << lea(Operand(ptrC), Operand(state.tmpData));
@@ -260,10 +256,11 @@ class BfOutput extends BfToken {
 		to.l << lea(Operand(ptrC), Operand(state.tmpData));
 		to.l << mov(byteRel(ptrC, Offset()), byteRel(ptrA, Offset()));
 
-		Block block(pos, Scope(state.strBuf.getType));
+		Block block(pos, Scope(named{StrBuf}));
 		BareVarAccess outAccess(pos, state.strBuf, state.output);
 		BareVarAccess tmpData(pos, state.natType, state.tmpData);
-		Expr e = namedExpr(block, SStr("addChar", pos), outAccess, Actual(tmpData));
+		Expr ch = CtorCall(SrcPos(), named{Char:__init<Char, Nat>}, Actuals(tmpData));
+		Expr e = namedExpr(block, SStr("add", pos), outAccess, Actuals(ch));
 		e.code(to, CodeResult());
 
 		to.l << pop(Operand(ptrA));
@@ -302,7 +299,7 @@ class BfLoop extends BfToken {
 
 		to.l << begin;
 		to.l << cmp(byteRel(ptrA, Offset()), byteConst(0.byte));
-		to.l << jmp(Operand(end), ifEqual);
+		to.l << jmp(Operand(end), CondFlag:ifEqual);
 
 		// Inner code...
 		for (Nat i = 0; i < tokens.count; i++) {

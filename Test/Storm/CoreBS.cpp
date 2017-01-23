@@ -320,6 +320,6 @@ BEGIN_TESTX(ReplTest, BS) {
 
 BEGIN_TESTX(BFTest, BS) {
 	// Takes a long time to run. Mostly here for testing.
-	runFn<Int>(L"test.bf.separateBf");
-	runFn<Int>(L"test.bf.inlineBf");
+	CHECK_RUNS(runFn<void>(L"test.bf.separateBf"));
+	CHECK_RUNS(runFn<void>(L"test.bf.inlineBf"));
 } END_TEST

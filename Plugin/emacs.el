@@ -323,8 +323,6 @@
     (storm-encode-buffer msg)
     (buffer-string)))
 
-(storm-encode '(1 "string" (2 3)))
-
 (defun storm-encode-buffer (msg)
   "Encode a s-expression. Output to the current buffer."
   (cond ((endp msg)
