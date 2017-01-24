@@ -111,22 +111,36 @@ namespace storm {
 		return len.QuadPart;
 	}
 
+	static os::Handle dupHandle(os::Handle src) {
+		if (!src)
+			return os::Handle();
+
+		HANDLE dest = INVALID_HANDLE_VALUE;
+		HANDLE proc = GetCurrentProcess();
+		if (!DuplicateHandle(proc, src.v(), proc, &dest, DUPLICATE_SAME_ACCESS, FALSE, 0)) {
+			PLN(L"Failed to duplicate handle :(");
+			return os::Handle();
+		}
+
+		return dest;
+	}
+
 	static os::Handle openStd(DWORD id, bool input) {
-		return GetStdHandle(id);
+		return dupHandle(GetStdHandle(id));
 	}
 
 	namespace proc {
 
 		IStream *in(EnginePtr e) {
-			return new (e.v) OSIStream(openStd(STD_INPUT_HANDLE, true));
+			return new (e.v) HandleIStream(openStd(STD_INPUT_HANDLE, true));
 		}
 
 		OStream *out(EnginePtr e) {
-			return new (e.v) OSOStream(openStd(STD_OUTPUT_HANDLE, false));
+			return new (e.v) HandleOStream(openStd(STD_OUTPUT_HANDLE, false));
 		}
 
 		OStream *error(EnginePtr e) {
-			return new (e.v) OSOStream(openStd(STD_ERROR_HANDLE, false));
+			return new (e.v) HandleOStream(openStd(STD_ERROR_HANDLE, false));
 		}
 
 	}
@@ -139,178 +153,70 @@ namespace storm {
 	 * Regular input stream.
 	 */
 
-	static const GcType bufType = {
-		GcType::tArray,
-		null,
-		null,
-		sizeof(byte),
-		0,
-		{}
-	};
-
-	// Copy a buffer.
-	static GcArray<byte> *copy(Engine &e, GcArray<byte> *src) {
-		if (!src)
-			return null;
-
-		GcArray<byte> *dest = runtime::allocArray<byte>(e, &bufType, src->count);
-		dest->filled = src->filled;
-		memcpy(dest->v, src->v, src->filled);
-		return dest;
-	}
-
-	OSIStream::OSIStream(os::Handle h)
+	HandleIStream::HandleIStream(os::Handle h)
 		: handle(h),
-		  attachedTo(os::Thread::invalid),
-		  lookahead(null),
-		  lookaheadStart(0),
-		  atEof(false) {}
+		  attachedTo(os::Thread::invalid) {}
 
-	OSIStream::OSIStream(const OSIStream &o) : handle(o.handle), attachedTo(o.attachedTo), atEof(false) {
-		// TODO: If 'lookaheadStart != 0' we do not need to copy all of 'lookahead'.
-		lookaheadStart = o.lookaheadStart;
-		lookahead = copy(engine(), lookahead);
-	}
+	HandleIStream::HandleIStream(const HandleIStream &o)
+		: PeekIStream(o),
+		  handle(dupHandle(o.handle)),
+		  attachedTo(os::Thread::invalid) {}
 
-	OSIStream::~OSIStream() {
+	HandleIStream::~HandleIStream() {
 		if (handle)
 			storm::close(handle);
 	}
 
-	void OSIStream::deepCopy(CloneEnv *e) {
-		// Nothing needs to be done here.
-	}
-
-	Bool OSIStream::more() {
+	Bool HandleIStream::more() {
 		if (!handle)
 			return false;
 
-		return !atEof;
+		return PeekIStream::more();
 	}
 
-	Buffer OSIStream::read(Buffer b, Nat start) {
-		start = min(start, b.count());
-		b.filled(0);
-
-		Nat read = b.count() - start;
-
-		// Is there anything left in the lookahead for us to consume?
-		Nat avail = lookaheadAvail();
-		if (avail > 0) {
-			Nat copy = min(read, avail);
-			memcpy(b.dataPtr() + start, lookahead->v + lookaheadStart, copy);
-			lookaheadStart += copy;
-			start += copy;
-			read -= copy;
-			b.filled(start);
-		}
-
-		// Done reading from the lookahead alone?
-		if (read == 0)
-			return b;
-
-		if (!handle)
-			return b;
-
-		Nat r = storm::read(handle, attachedTo, b.dataPtr() + start, read);
-		if (r == 0)
-			atEof = true;
-		b.filled(r + start);
-		return b;
-	}
-
-	Buffer OSIStream::peek(Buffer b, Nat start) {
-		start = min(start, b.count());
-		b.filled(0);
-		if (!handle)
-			return b;
-
-		Nat toPeek = b.count() - start;
-
-		Nat avail = doLookahead(toPeek);
-		if (!lookahead)
-			return b;
-
-		toPeek = min(toPeek, avail);
-		memcpy(b.dataPtr() + start, lookahead->v + lookaheadStart, toPeek);
-		b.filled(toPeek + start);
-
-		return b;
-	}
-
-	Nat OSIStream::lookaheadAvail() {
-		if (!lookahead)
-			return 0;
-
-		return lookahead->filled - lookaheadStart;
-	}
-
-	Nat OSIStream::doLookahead(Nat bytes) {
-		Nat avail = lookaheadAvail();
-		if (avail >= bytes)
-			return avail;
-
-		ensureLookahead(bytes);
-
-		// We need to read more data!
-		Nat read = bytes - avail;
-		Nat more = storm::read(handle, attachedTo, lookahead->v + lookahead->filled, read);
-		lookahead->filled += more;
-
-		return lookaheadAvail();
-	}
-
-	void OSIStream::ensureLookahead(Nat n) {
-		if (!lookahead) {
-			// Easy, just allocate a new buffer.
-			lookahead = runtime::allocArray<byte>(engine(), &bufType, n);
-			return;
-		}
-
-		if (lookahead->count - lookaheadStart >= n) {
-			// Enough space!
-			return;
-		}
-
-		// We need to re-allocate...
-		Nat preserve = lookahead->filled - lookaheadStart;
-		GcArray<byte> *t = runtime::allocArray<byte>(engine(), &bufType, n);
-		t->filled = preserve;
-		memcpy(t->v, lookahead->v + lookaheadStart, preserve);
-		lookahead = t;
-		lookaheadStart = 0;
-	}
-
-	void OSIStream::close() {
+	void HandleIStream::close() {
 		if (handle)
 			storm::close(handle);
+
+		PeekIStream::close();
+	}
+
+	Nat HandleIStream::doRead(byte *to, Nat count) {
+		if (handle)
+			return storm::read(handle, attachedTo, to, count);
+		else
+			return 0;
 	}
 
 	/**
 	 * Random access stream.
 	 */
 
-	OSRIStream::OSRIStream(os::Handle h) : handle(h), attachedTo(os::Thread::invalid) {}
+	HandleRIStream::HandleRIStream(os::Handle h)
+		: handle(h),
+		  attachedTo(os::Thread::invalid) {}
 
-	OSRIStream::OSRIStream(const OSRIStream &o) : handle(o.handle), attachedTo(o.attachedTo) {}
+	HandleRIStream::HandleRIStream(const HandleRIStream &o)
+		: handle(dupHandle(o.handle)),
+		  attachedTo(os::Thread::invalid) {}
 
-	OSRIStream::~OSRIStream() {
+	HandleRIStream::~HandleRIStream() {
 		if (handle)
 			storm::close(handle);
 	}
 
-	void OSRIStream::deepCopy(CloneEnv *e) {
+	void HandleRIStream::deepCopy(CloneEnv *e) {
 		// Nothing needs to be done.
 	}
 
-	Bool OSRIStream::more() {
+	Bool HandleRIStream::more() {
 		if (!handle)
 			return false;
 
 		return tell() < length();
 	}
 
-	Buffer OSRIStream::read(Buffer b, Nat start) {
+	Buffer HandleRIStream::read(Buffer b, Nat start) {
 		start = min(start, b.count());
 		b.filled(0);
 
@@ -322,7 +228,7 @@ namespace storm {
 		return b;
 	}
 
-	Buffer OSRIStream::peek(Buffer b, Nat start) {
+	Buffer HandleRIStream::peek(Buffer b, Nat start) {
 		b.filled(0);
 
 		if (!handle)
@@ -335,27 +241,27 @@ namespace storm {
 		return b;
 	}
 
-	void OSRIStream::close() {
+	void HandleRIStream::close() {
 		if (handle)
 			storm::close(handle);
 	}
 
-	RIStream *OSRIStream::randomAccess() {
+	RIStream *HandleRIStream::randomAccess() {
 		return this;
 	}
 
-	void OSRIStream::seek(Word to) {
+	void HandleRIStream::seek(Word to) {
 		storm::seek(handle, to);
 	}
 
-	Word OSRIStream::tell() {
+	Word HandleRIStream::tell() {
 		if (!handle)
 			return 0;
 
 		return storm::tell(handle);
 	}
 
-	Word OSRIStream::length() {
+	Word HandleRIStream::length() {
 		if (!handle)
 			return 0;
 
@@ -366,22 +272,26 @@ namespace storm {
 	 * Output stream.
 	 */
 
-	OSOStream::OSOStream(os::Handle h) : handle(h), attachedTo(os::Thread::invalid) {}
+	HandleOStream::HandleOStream(os::Handle h)
+		: handle(h),
+		  attachedTo(os::Thread::invalid) {}
 
-	OSOStream::OSOStream(const OSOStream &o) : handle(o.handle), attachedTo(o.attachedTo) {}
+	HandleOStream::HandleOStream(const HandleOStream &o)
+		: handle(dupHandle(o.handle)),
+		  attachedTo(os::Thread::invalid) {}
 
-	OSOStream::~OSOStream() {
+	HandleOStream::~HandleOStream() {
 		if (handle)
 			storm::close(handle);
 	}
 
-	void OSOStream::write(Buffer to, Nat start) {
+	void HandleOStream::write(Buffer to, Nat start) {
 		start = min(start, to.count());
 		if (handle)
 			storm::write(handle, attachedTo, to.dataPtr() + start, to.count() - start);
 	}
 
-	void OSOStream::close() {
+	void HandleOStream::close() {
 		if (handle)
 			storm::close(handle);
 	}

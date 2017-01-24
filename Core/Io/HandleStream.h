@@ -1,5 +1,6 @@
 #pragma once
 #include "Stream.h"
+#include "PeekStream.h"
 #include "OS/Handle.h"
 #include "Core/EnginePtr.h"
 
@@ -13,33 +14,22 @@ namespace storm {
 
 
 	/**
-	 * OS input stream.
+	 * Handle input stream.
 	 */
-	class OSIStream : public IStream {
+	class HandleIStream : public PeekIStream {
 		STORM_CLASS;
 	public:
 		// Create.
-		OSIStream(os::Handle handle);
+		HandleIStream(os::Handle handle);
 
 		// Copy.
-		OSIStream(const OSIStream &o);
+		HandleIStream(const HandleIStream &o);
 
 		// Destroy.
-		virtual ~OSIStream();
+		virtual ~HandleIStream();
 
-		// Deep copy.
-		void STORM_FN deepCopy(CloneEnv *e);
-
-		// Are we at the end of the stream?
+		// More data?
 		virtual Bool STORM_FN more();
-
-		// Read a buffer from the stream. Returns the number of bytes read.
-		using IStream::read;
-		virtual Buffer STORM_FN read(Buffer to, Nat start);
-
-		// Peek data.
-		using IStream::peek;
-		virtual Buffer STORM_FN peek(Buffer to, Nat start);
 
 		// Close this stream.
 		virtual void STORM_FN close();
@@ -48,44 +38,27 @@ namespace storm {
 		// Our handle.
 		UNKNOWN(PTR_NOGC) os::Handle handle;
 
-		// Is our handle been added to a thread?
+		// Is our handle added to a thread?
 		UNKNOWN(PTR_NOGC) os::Thread attachedTo;
 
-	private:
-		// Lookahead data (if any). Used when doing peek() operations.
-		GcArray<byte> *lookahead;
-
-		// How much of 'lookahead' have we consumed so far?
-		Nat lookaheadStart;
-
-		// Have wee seen the end of this stream?
-		Bool atEof;
-
-		// Try to fill the lookahead buffer with 'bytes' bytes. Returns the number of available
-		// bytes in the lookahead buffer.
-		Nat doLookahead(Nat bytes);
-
-		// Get the number of bytes available in the lookahead (which are filled).
-		Nat lookaheadAvail();
-
-		// Ensure there is at least 'n' bytes in the lookahead buffer (which may or may not be filled).
-		void ensureLookahead(Nat n);
+		// Do read operations.
+		virtual Nat doRead(byte *to, Nat count);
 	};
 
 	/**
-	 * Random access OS input stream.
+	 * Random access Handle input stream.
 	 */
-	class OSRIStream : public RIStream {
+	class HandleRIStream : public RIStream {
 		STORM_CLASS;
 	public:
 		// Create.
-		OSRIStream(os::Handle handle);
+		HandleRIStream(os::Handle handle);
 
 		// Copy.
-		OSRIStream(const OSRIStream &o);
+		HandleRIStream(const HandleRIStream &o);
 
 		// Destroy.
-		virtual ~OSRIStream();
+		virtual ~HandleRIStream();
 
 		// Deep copy.
 		void STORM_FN deepCopy(CloneEnv *e);
@@ -120,24 +93,24 @@ namespace storm {
 		// Our handle.
 		UNKNOWN(PTR_NOGC) os::Handle handle;
 
-		// Is our handle been added to a thread?
+		// Is our handle added to a thread?
 		UNKNOWN(PTR_NOGC) os::Thread attachedTo;
 	};
 
 	/**
-	 * OS output stream.
+	 * Handle output stream.
 	 */
-	class OSOStream : public OStream {
+	class HandleOStream : public OStream {
 		STORM_CLASS;
 	public:
 		// Create.
-		OSOStream(os::Handle h);
+		HandleOStream(os::Handle h);
 
 		// Copy.
-		OSOStream(const OSOStream &o);
+		HandleOStream(const HandleOStream &o);
 
 		// Destroy.
-		~OSOStream();
+		~HandleOStream();
 
 		// Write data.
 		using OStream::write;
@@ -150,7 +123,7 @@ namespace storm {
 		// Our handle.
 		UNKNOWN(PTR_NOGC) os::Handle handle;
 
-		// Is our handle been added to a thread?
+		// Is our handle added to a thread?
 		UNKNOWN(PTR_NOGC) os::Thread attachedTo;
 	};
 

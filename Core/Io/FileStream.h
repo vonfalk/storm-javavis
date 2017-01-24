@@ -8,7 +8,7 @@ namespace storm {
 	 * File IO.
 	 */
 
-	class IFileStream : public OSRIStream {
+	class IFileStream : public HandleRIStream {
 		STORM_CLASS;
 	public:
 		// Create from a path.
@@ -26,7 +26,7 @@ namespace storm {
 	};
 
 
-	class OFileStream : public OSOStream {
+	class OFileStream : public HandleOStream {
 		STORM_CLASS;
 	public:
 		// Create from a path.
