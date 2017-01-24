@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "HandleStream.h"
+#include "OS/IORequest.h"
 
 namespace storm {
 
@@ -9,62 +10,123 @@ namespace storm {
 
 #ifdef WINDOWS
 
-	static inline void close(OSHandle &h) {
+	static inline void close(os::Handle &h) {
 		CloseHandle(h.v());
-		h = OSHandle();
+		h = os::Handle();
 	}
 
-	static Nat read(OSHandle h, void *dest, Nat limit) {
-		// TODO: Make sure not to block!
-		DWORD out = 0;
-		ReadFile(h.v(), dest, DWORD(limit), &out, NULL);
-		return out;
+	static Nat read(os::Handle h, os::Thread &attached, void *dest, Nat limit) {
+		if (attached == os::Thread::invalid) {
+			attached = os::Thread::current();
+			attached.attach(h);
+		}
+
+		os::IORequest request;
+
+		LARGE_INTEGER pos;
+		pos.QuadPart = 0;
+		if (SetFilePointerEx(h.v(), pos, &pos, FILE_CURRENT)) {
+			// There seems to be a poblem when reading from the end of a file asynchronously.
+			LARGE_INTEGER len;
+			GetFileSizeEx(h.v(), &len);
+			if (pos.QuadPart >= len.QuadPart)
+				return 0;
+
+			request.Offset = pos.LowPart;
+			request.OffsetHigh = pos.HighPart;
+		} else {
+			// If we can not seek, it means that the offset should be zero.
+			pos.QuadPart = 0;
+		}
+
+		if (ReadFile(h.v(), dest, DWORD(limit), NULL, &request)) {
+			// Completed synchronusly.
+		} else if (GetLastError() == ERROR_IO_PENDING) {
+			// Completing async...
+			request.wake.down();
+
+			// Advance the file pointer.
+			pos.QuadPart = request.bytes;
+			SetFilePointerEx(h.v(), pos, NULL, FILE_CURRENT);
+		} else {
+			// Failed.
+			request.bytes = 0;
+		}
+
+		return request.bytes;
 	}
 
-	static Nat write(OSHandle h, const void *src, Nat limit) {
-		// TODO: Make sure not to block!
-		DWORD out = 0;
-		WriteFile(h.v(), src, DWORD(limit), &out, NULL);
-		return out;
+	static Nat write(os::Handle h, os::Thread &attached, const void *src, Nat limit) {
+		if (attached == os::Thread::invalid) {
+			attached = os::Thread::current();
+			attached.attach(h);
+		}
+
+		os::IORequest request;
+
+		LARGE_INTEGER pos;
+		pos.QuadPart = 0;
+		if (SetFilePointerEx(h.v(), pos, &pos, FILE_CURRENT)) {
+			// All is well.
+			request.Offset = pos.LowPart;
+			request.OffsetHigh = pos.HighPart;
+		} else {
+			// If we can not seek, it means that the offset should be zero.
+			pos.QuadPart = 0;
+		}
+
+		if (WriteFile(h.v(), src, DWORD(limit), NULL, &request)) {
+			// Completed synchronusly.
+		} else if (GetLastError() == ERROR_IO_PENDING) {
+			// Completing async...
+			request.wake.down();
+
+			// Advance the file pointer.
+			pos.QuadPart = request.bytes;
+			SetFilePointerEx(h.v(), pos, NULL, FILE_CURRENT);
+		} else {
+			// Failed.
+			request.bytes = 0;
+		}
+
+		return request.bytes;
 	}
 
-	static void seek(OSHandle h, Word to) {
+	static void seek(os::Handle h, Word to) {
 		LARGE_INTEGER pos;
 		pos.QuadPart = to;
 		SetFilePointerEx(h.v(), pos, NULL, FILE_BEGIN);
 	}
 
-	static Word tell(OSHandle h) {
+	static Word tell(os::Handle h) {
 		LARGE_INTEGER pos;
 		pos.QuadPart = 0;
 		SetFilePointerEx(h.v(), pos, &pos, FILE_CURRENT);
 		return pos.QuadPart;
 	}
 
-	static Word length(OSHandle h) {
+	static Word length(os::Handle h) {
 		LARGE_INTEGER len;
 		GetFileSizeEx(h.v(), &len);
 		return len.QuadPart;
 	}
 
-	static OSHandle openStd(DWORD id) {
-		HANDLE h = GetStdHandle(id);
-		// TODO: Re-open the std handle with the overlapped flag!
-		return h;
+	static os::Handle openStd(DWORD id, bool input) {
+		return GetStdHandle(id);
 	}
 
 	namespace proc {
 
 		IStream *in(EnginePtr e) {
-			return new (e.v) OSIStream(openStd(STD_INPUT_HANDLE));
+			return new (e.v) OSIStream(openStd(STD_INPUT_HANDLE, true));
 		}
 
 		OStream *out(EnginePtr e) {
-			return new (e.v) OSOStream(openStd(STD_OUTPUT_HANDLE));
+			return new (e.v) OSOStream(openStd(STD_OUTPUT_HANDLE, false));
 		}
 
 		OStream *error(EnginePtr e) {
-			return new (e.v) OSOStream(openStd(STD_ERROR_HANDLE));
+			return new (e.v) OSOStream(openStd(STD_ERROR_HANDLE, false));
 		}
 
 	}
@@ -97,9 +159,14 @@ namespace storm {
 		return dest;
 	}
 
-	OSIStream::OSIStream(OSHandle h) : handle(h), lookahead(null), lookaheadStart(0), atEof(false) {}
+	OSIStream::OSIStream(os::Handle h)
+		: handle(h),
+		  attachedTo(os::Thread::invalid),
+		  lookahead(null),
+		  lookaheadStart(0),
+		  atEof(false) {}
 
-	OSIStream::OSIStream(const OSIStream &o) : handle(o.handle), atEof(false) {
+	OSIStream::OSIStream(const OSIStream &o) : handle(o.handle), attachedTo(o.attachedTo), atEof(false) {
 		// TODO: If 'lookaheadStart != 0' we do not need to copy all of 'lookahead'.
 		lookaheadStart = o.lookaheadStart;
 		lookahead = copy(engine(), lookahead);
@@ -125,10 +192,29 @@ namespace storm {
 		start = min(start, b.count());
 		b.filled(0);
 
+		Nat read = b.count() - start;
+
+		// Is there anything left in the lookahead for us to consume?
+		Nat avail = lookaheadAvail();
+		if (avail > 0) {
+			Nat copy = min(read, avail);
+			memcpy(b.dataPtr() + start, lookahead->v + lookaheadStart, copy);
+			lookaheadStart += copy;
+			start += copy;
+			read -= copy;
+			b.filled(start);
+		}
+
+		// Done reading from the lookahead alone?
+		if (read == 0)
+			return b;
+
 		if (!handle)
 			return b;
 
-		Nat r = storm::read(handle, b.dataPtr() + start, b.count() - start);
+		Nat r = storm::read(handle, attachedTo, b.dataPtr() + start, read);
+		if (r == 0)
+			atEof = true;
 		b.filled(r + start);
 		return b;
 	}
@@ -168,7 +254,7 @@ namespace storm {
 
 		// We need to read more data!
 		Nat read = bytes - avail;
-		Nat more = storm::read(handle, lookahead->v + lookahead->filled, read);
+		Nat more = storm::read(handle, attachedTo, lookahead->v + lookahead->filled, read);
 		lookahead->filled += more;
 
 		return lookaheadAvail();
@@ -204,9 +290,9 @@ namespace storm {
 	 * Random access stream.
 	 */
 
-	OSRIStream::OSRIStream(OSHandle h) : handle(h) {}
+	OSRIStream::OSRIStream(os::Handle h) : handle(h), attachedTo(os::Thread::invalid) {}
 
-	OSRIStream::OSRIStream(const OSRIStream &o) : handle(o.handle) {}
+	OSRIStream::OSRIStream(const OSRIStream &o) : handle(o.handle), attachedTo(o.attachedTo) {}
 
 	OSRIStream::~OSRIStream() {
 		if (handle)
@@ -231,7 +317,7 @@ namespace storm {
 		if (!handle)
 			return b;
 
-		Nat r = storm::read(handle, b.dataPtr() + start, b.count() - start);
+		Nat r = storm::read(handle, attachedTo, b.dataPtr() + start, b.count() - start);
 		b.filled(r + start);
 		return b;
 	}
@@ -280,9 +366,9 @@ namespace storm {
 	 * Output stream.
 	 */
 
-	OSOStream::OSOStream(OSHandle h) : handle(h) {}
+	OSOStream::OSOStream(os::Handle h) : handle(h), attachedTo(os::Thread::invalid) {}
 
-	OSOStream::OSOStream(const OSOStream &o) : handle(o.handle) {}
+	OSOStream::OSOStream(const OSOStream &o) : handle(o.handle), attachedTo(o.attachedTo) {}
 
 	OSOStream::~OSOStream() {
 		if (handle)
@@ -292,7 +378,7 @@ namespace storm {
 	void OSOStream::write(Buffer to, Nat start) {
 		start = min(start, to.count());
 		if (handle)
-			storm::write(handle, to.dataPtr() + start, to.count() - start);
+			storm::write(handle, attachedTo, to.dataPtr() + start, to.count() - start);
 	}
 
 	void OSOStream::close() {

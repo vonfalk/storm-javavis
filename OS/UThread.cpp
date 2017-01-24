@@ -340,6 +340,9 @@ namespace os {
 			running = next;
 		}
 
+		// Any IO messages for this thread?
+		owner->checkIo();
+
 		// NOTE: This does not always return directly. Consider this when writing code after this statement.
 		prev->switchTo(running);
 

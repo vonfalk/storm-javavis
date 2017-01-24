@@ -1,7 +1,8 @@
 #pragma once
 #include "Utils/Function.h"
 #include "Utils/Semaphore.h"
-#include "Utils/Condition.h"
+#include "Condition.h"
+#include "IOHandle.h"
 #include "UThread.h"
 
 namespace os {
@@ -49,6 +50,9 @@ namespace os {
 
 		// Get an unique identifier for this thread.
 		inline uintptr_t id() const { return (uintptr_t)data; }
+
+		// Attach a os handle to this thread.
+		void attach(Handle h) const;
 
 		// Get a list of UThreads running on this thread. Note that access to this list is not thread safe.
 		const util::InlineSet<UThreadStack> &stacks() const;
@@ -118,6 +122,12 @@ namespace os {
 		// Wait for another UThread to be scheduled (using timeout!)
 		void waitForWork(nat msTimeout);
 
+		// Check if there is any IO completion we shall handle.
+		void checkIo() const;
+
+		// Attach a handle.
+		inline void attach(Handle h) { ioComplete.add(h, this); }
+
 		// Thread main function.
 		static void threadMain(ThreadStart &start);
 
@@ -128,6 +138,9 @@ namespace os {
 
 		// Current wait behavior.
 		ThreadWait *wait;
+
+		// Handle indicating the completion of any async IO operations.
+		IOHandle ioComplete;
 
 		// Report zero references.
 		void reportZero();
@@ -152,10 +165,11 @@ namespace os {
 		// return either when 'signal' has been called, but may return in other cases as well.
 		// The thread is kept alive until 'wait' returns false. At this point, 'wait' will not be
 		// called any more, and the ThreadWait will eventually be destroyed.
-		virtual bool wait() = 0;
+		// The passed handle shall also be examined and the wait shall be aborted if that becomes signaling.
+		virtual bool wait(IOHandle io) = 0;
 
 		// Called when wait() should be called, but when a timeout is also present.
-		virtual bool wait(nat msTimeout) = 0;
+		virtual bool wait(IOHandle io, nat msTimeout) = 0;
 
 		// Called to indicate that any thread held by 'wait' should be awoken. May be called from
 		// any thread. Calls to 'signal' after the last call to 'wait' may occur.

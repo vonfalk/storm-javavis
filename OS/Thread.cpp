@@ -96,6 +96,9 @@ namespace os {
 		return to << L"thread @" << o.data;
 	}
 
+	void Thread::attach(Handle h) const {
+		data->attach(h);
+	}
 
 	Thread Thread::current() {
 		ThreadData *t = currentThreadData();
@@ -176,7 +179,7 @@ namespace os {
 						wait->work();
 				} while (UThread::leave());
 
-			} while (d.wait && wait->wait());
+			} while (d.wait && wait->wait(d.ioComplete));
 
 			// Clean up the 'wait' structure.
 			d.wait = null; // No more notifications, but we can not delete it yet!
@@ -216,6 +219,8 @@ namespace os {
 		// Failsafe for the currThreadData.
 		currentThreadData(null);
 
+		if (d.ioComplete)
+			d.ioComplete.close();
 		threadTerminated();
 		Thread::cleanThread();
 	}
@@ -228,21 +233,36 @@ namespace os {
 	}
 
 	void ThreadData::waitForWork() {
+		checkIo();
+
 		if (wait) {
-			if (!wait->wait())
+			if (!wait->wait(ioComplete))
 				wait = null;
 		} else {
-			wakeCond.wait();
+			wakeCond.wait(ioComplete);
 		}
+
+		checkIo();
 	}
 
 	void ThreadData::waitForWork(nat msTimeout) {
+		checkIo();
+
 		if (wait) {
-			if (!wait->wait(msTimeout))
+			if (!wait->wait(ioComplete, msTimeout))
 				wait = null;
 		} else {
-			wakeCond.wait(msTimeout);
+			wakeCond.wait(ioComplete, msTimeout);
 		}
+
+		checkIo();
+	}
+
+	void ThreadData::checkIo() const {
+		if (!ioComplete)
+			return;
+
+		ioComplete.notifyAll(this);
 	}
 
 #ifdef WINDOWS

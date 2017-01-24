@@ -7,31 +7,31 @@ namespace storm {
 
 #ifdef WINDOWS
 
-	static OSHandle openFile(Str *name, bool input) {
+	static os::Handle openFile(Str *name, bool input) {
 		// TODO: Use overlapped flag.
 		return CreateFile(name->c_str(),
 						input ? GENERIC_READ : GENERIC_WRITE,
 						FILE_SHARE_READ | FILE_SHARE_WRITE,
 						NULL,
-						OPEN_EXISTING,
-						FILE_ATTRIBUTE_NORMAL,
+						input ? OPEN_EXISTING : CREATE_ALWAYS,
+						FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED,
 						NULL);
 	}
 
-	static void copyFilePtr(OSHandle to, OSHandle from) {
+	static void copyFilePtr(os::Handle to, os::Handle from) {
 		LARGE_INTEGER pos;
 		pos.QuadPart = 0;
 		SetFilePointerEx(from.v(), pos, &pos, FILE_CURRENT);
 		SetFilePointerEx(to.v(), pos, NULL, FILE_BEGIN);
 	}
 
-	static OSHandle copyFile(OSHandle h, Str *name, bool input) {
+	static os::Handle copyFile(os::Handle h, Str *name, bool input) {
 		if (h) {
-			OSHandle r = openFile(name, input);
+			os::Handle r = openFile(name, input);
 			copyFilePtr(r, h);
 			return r;
 		} else {
-			return OSHandle();
+			return os::Handle();
 		}
 	}
 

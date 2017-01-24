@@ -2,6 +2,7 @@
 #include "Main.h"
 #include "Engine.h"
 #include "Core/Io/Stream.h"
+#include "Core/Io/FileStream.h"
 
 namespace storm {
 
@@ -31,16 +32,24 @@ namespace storm {
 		};
 
 		OStream *to = proc::out(e);
+		// OStream *to = new (e) OFileStream(new (e) Str(L"C:\\Users\\Filip\\Test.txt"));
 
-		to->write(buffer(e, (byte *)"Welcome to the language server!\n", 33));
+		to->write(buffer(e, (byte *)"Welcome to the language server!\n", 32));
 
 		// PLN(L"Welcome to the language server!");
+
+		// for (nat i = 0; i < 20; i++) {
+		// 	Sleep(200);
+		// 	to->write(buffer(e, (byte *)"a", 1));
+		// }
 
 		for (nat i = 0; i < ARRAY_COUNT(utf8Data2); i++) {
 			Sleep(200);
 			// std::wcout << (char)utf8Data2[i] << std::flush;
 			to->write(buffer(e, utf8Data2 + i, 1));
 		}
+
+		to->write(buffer(e, (byte *)"Good bye!", 9));
 	}
 
 }

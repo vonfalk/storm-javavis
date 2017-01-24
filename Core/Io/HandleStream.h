@@ -1,5 +1,6 @@
 #pragma once
 #include "Stream.h"
+#include "OS/Handle.h"
 #include "Core/EnginePtr.h"
 
 namespace storm {
@@ -12,41 +13,13 @@ namespace storm {
 
 
 	/**
-	 * Opaque wrapper of a system dependent OS handle to avoid mistakingly casting the handle to an
-	 * erroneous type. This has to be pointer-sized.
-	 *
-	 * This implementation assumes that all OS handles are set to asynchronious mode.
-	 */
-#ifdef WINDOWS
-	class OSHandle {
-	public:
-		inline OSHandle() : z(INVALID_HANDLE_VALUE) {}
-		inline OSHandle(HANDLE v) : z(v) {}
-		inline HANDLE v() { return z; }
-		inline operator bool () { return z != INVALID_HANDLE_VALUE; }
-	private:
-		HANDLE z;
-	};
-#else
-	class OSHandle {
-	public:
-		inline OSHandle() : z(-1) {}
-		inline OSHandle(int v) : z(v) {}
-		inline int v() { return (int)this->z; }
-		inline operator bool () { return v() >= 0; }
-	private:
-		ptrdiff_t z;
-	};
-#endif
-
-	/**
 	 * OS input stream.
 	 */
 	class OSIStream : public IStream {
 		STORM_CLASS;
 	public:
 		// Create.
-		OSIStream(OSHandle handle);
+		OSIStream(os::Handle handle);
 
 		// Copy.
 		OSIStream(const OSIStream &o);
@@ -73,7 +46,10 @@ namespace storm {
 
 	protected:
 		// Our handle.
-		UNKNOWN(PTR_NOGC) OSHandle handle;
+		UNKNOWN(PTR_NOGC) os::Handle handle;
+
+		// Is our handle been added to a thread?
+		UNKNOWN(PTR_NOGC) os::Thread attachedTo;
 
 	private:
 		// Lookahead data (if any). Used when doing peek() operations.
@@ -103,7 +79,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		OSRIStream(OSHandle handle);
+		OSRIStream(os::Handle handle);
 
 		// Copy.
 		OSRIStream(const OSRIStream &o);
@@ -142,7 +118,10 @@ namespace storm {
 
 	protected:
 		// Our handle.
-		UNKNOWN(PTR_NOGC) OSHandle handle;
+		UNKNOWN(PTR_NOGC) os::Handle handle;
+
+		// Is our handle been added to a thread?
+		UNKNOWN(PTR_NOGC) os::Thread attachedTo;
 	};
 
 	/**
@@ -152,7 +131,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		OSOStream(OSHandle h);
+		OSOStream(os::Handle h);
 
 		// Copy.
 		OSOStream(const OSOStream &o);
@@ -169,7 +148,10 @@ namespace storm {
 
 	protected:
 		// Our handle.
-		UNKNOWN(PTR_NOGC) OSHandle handle;
+		UNKNOWN(PTR_NOGC) os::Handle handle;
+
+		// Is our handle been added to a thread?
+		UNKNOWN(PTR_NOGC) os::Thread attachedTo;
 	};
 
 }
