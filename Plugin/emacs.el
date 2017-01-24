@@ -140,6 +140,7 @@
   (with-current-buffer storm-process-output
     (buffer-disable-undo)
     (erase-buffer)
+    (setq buffer-read-only t)
     (set-buffer-multibyte t)
     (compilation-mode))
 
@@ -204,7 +205,8 @@
 (defun output-string (text face)
   (when storm-process-output
     (with-current-buffer storm-process-output
-      (let ((start (point)))
+      (let ((buffer-read-only nil)
+	    (start (point)))
 	(insert text)
 	(when face
 	  (storm-set-color start (point) face))))))

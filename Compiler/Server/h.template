@@ -1,0 +1,8 @@
+#pragma once
+
+namespace storm {
+	STORM_PKG(core.lang.server);
+
+	$$
+
+}

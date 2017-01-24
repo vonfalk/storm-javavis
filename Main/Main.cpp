@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Params.h"
-#include "Server.h"
+#include "Compiler/Server/Main.h"
 #include "Compiler/Exception.h"
 #include "Compiler/Engine.h"
 #include "Compiler/Repl.h"
@@ -203,7 +203,8 @@ int stormMain(int argc, const wchar *argv[]) {
 		case Params::modeFunction:
 			return runFunction(e, p.modeParam);
 		case Params::modeServer:
-			return runServer(e);
+			runLangServer(e);
+			return 0;
 		default:
 			throw InternalError(L"Unknown mode.");
 		}

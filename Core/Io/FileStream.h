@@ -1,5 +1,5 @@
 #pragma once
-#include "Stream.h"
+#include "HandleStream.h"
 
 namespace storm {
 	STORM_PKG(core.io);
@@ -7,50 +7,40 @@ namespace storm {
 	/**
 	 * File IO.
 	 */
-	class IFileStream : public RIStream {
+
+	class IFileStream : public OSRIStream {
 		STORM_CLASS;
 	public:
 		// Create from a path.
 		IFileStream(Str *name);
 
-		// Copy...
+		// Copy.
 		IFileStream(const IFileStream &o);
 
-		// Destroy.
-		virtual ~IFileStream();
-
-		// More?
-		virtual Bool STORM_FN more();
-
-		// Read.
-		using RIStream::read;
-		virtual Buffer STORM_FN read(Buffer b, Nat start);
-
-		// Peek.
-		using RIStream::peek;
-		virtual Buffer STORM_FN peek(Buffer b, Nat start);
-
-		// Seek.
-		virtual void STORM_FN seek(Word to);
-
-		// Tell.
-		virtual Word STORM_FN tell();
-
-		// Length.
-		virtual Word STORM_FN length();
-
-		// Random access.
-		virtual RIStream *STORM_FN randomAccess();
-
-		// Close.
-		virtual void STORM_FN close();
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
 
 	private:
 		// File name.
 		Str *name;
+	};
 
-		// System dependent handle.
-		void *handle;
+
+	class OFileStream : public OSOStream {
+		STORM_CLASS;
+	public:
+		// Create from a path.
+		OFileStream(Str *name);
+
+		// Copy.
+		OFileStream(const OFileStream &o);
+
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
+
+	private:
+		// File name.
+		Str *name;
 	};
 
 }

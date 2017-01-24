@@ -19,12 +19,6 @@ namespace storm {
 
 	Buffer::Buffer(const Buffer &o) : data(o.data) {}
 
-	Buffer buffer(EnginePtr e, Nat count) {
-		Buffer z(runtime::allocArray<byte>(e.v, &bufType, count));
-		z.filled(count);
-		return z;
-	}
-
 	void Buffer::deepCopy(CloneEnv *env) {
 		if (data) {
 			GcArray<byte> *n = runtime::allocArray<byte>(env->engine(), &bufType, data->count);
@@ -35,4 +29,16 @@ namespace storm {
 		}
 	}
 
+	Buffer buffer(EnginePtr e, Nat count) {
+		Buffer z(runtime::allocArray<byte>(e.v, &bufType, count));
+		z.filled(count);
+		return z;
+	}
+
+	Buffer buffer(EnginePtr e, const byte *data, Nat count) {
+		Buffer z(runtime::allocArray<byte>(e.v, &bufType, count));
+		memcpy(z.dataPtr(), data, count);
+		z.filled(count);
+		return z;
+	}
 }

@@ -54,5 +54,5 @@ namespace storm {
 
 	// Create a buffer.
 	Buffer STORM_FN buffer(EnginePtr e, Nat count);
-
+	Buffer buffer(EnginePtr e, const byte *data, Nat count);
 }
