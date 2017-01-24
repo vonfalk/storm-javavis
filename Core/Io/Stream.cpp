@@ -88,6 +88,8 @@ namespace storm {
 
 	void OStream::write(Buffer buf, Nat start) {}
 
+	void OStream::flush() {}
+
 	void OStream::close() {}
 
 }

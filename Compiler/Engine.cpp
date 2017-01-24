@@ -15,6 +15,7 @@
 #include "Lib/Fn.h"
 #include "Syntax/Node.h"
 #include "Utils/Memory.h"
+#include "StdIoThread.h"
 
 // Only included from here:
 #include "OS/SharedMaster.h"
@@ -43,7 +44,7 @@ namespace storm {
 	}
 
 	Engine::Engine(const Path &root, ThreadMode mode) :
-		gc(defaultArena, defaultFinalizer), world(gc), objRoot(null) {
+		gc(defaultArena, defaultFinalizer), world(gc), objRoot(null), ioThread(null) {
 
 		bootStatus = bootNone;
 
@@ -84,6 +85,8 @@ namespace storm {
 	Engine::~Engine() {
 		// Do not place anything directly here, we need the cleanup when creation fails.
 		destroy();
+
+		delete ioThread;
 	}
 
 	void Engine::destroy() {
@@ -331,6 +334,17 @@ namespace storm {
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
 		}
+	}
+
+	StdIo *Engine::stdIo() {
+		if (!ioThread) {
+			util::Lock::L z(ioLock);
+			if (!ioThread) {
+				ioThread = new StdIo();
+			}
+		}
+
+		return ioThread;
 	}
 
 	Package *Engine::package() {

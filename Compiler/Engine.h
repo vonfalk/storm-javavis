@@ -8,6 +8,7 @@
 #include "Code/Arena.h"
 #include "Code/RefSource.h"
 #include "Code/Reference.h"
+#include "Utils/Lock.h"
 
 // TODO: Do not depend on path!
 #include "Utils/Path.h"
@@ -18,6 +19,7 @@ namespace storm {
 	class Package;
 	class NameSet;
 	class ScopeLookup;
+	class StdIo;
 
 	/**
 	 * Defines the root object of the compiler. This object contains everything needed by the
@@ -164,6 +166,9 @@ namespace storm {
 		// Get a reference to a function in the runtime.
 		code::Ref ref(RefType ref);
 
+		// Get the StdIo object.
+		StdIo *stdIo();
+
 	private:
 		// The compiler C++ world.
 		World world;
@@ -202,6 +207,12 @@ namespace storm {
 
 		// Root for GcRoot.
 		Gc::Root *objRoot;
+
+		// Standard IO thread.
+		StdIo *ioThread;
+
+		// Lock for initializing the io thread.
+		util::Lock ioLock;
 
 		// Create references.
 		code::RefSource *createRef(RefType ref);

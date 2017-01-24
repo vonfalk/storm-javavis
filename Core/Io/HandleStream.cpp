@@ -129,22 +129,6 @@ namespace storm {
 		return dupHandle(GetStdHandle(id));
 	}
 
-	namespace proc {
-
-		IStream *in(EnginePtr e) {
-			return new (e.v) HandleIStream(openStd(STD_INPUT_HANDLE, true));
-		}
-
-		OStream *out(EnginePtr e) {
-			return new (e.v) HandleOStream(openStd(STD_OUTPUT_HANDLE, false));
-		}
-
-		OStream *error(EnginePtr e) {
-			return new (e.v) HandleOStream(openStd(STD_ERROR_HANDLE, false));
-		}
-
-	}
-
 #else
 #error "Please implement me for UNIX."
 #endif

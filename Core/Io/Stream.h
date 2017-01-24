@@ -91,20 +91,11 @@ namespace storm {
 		void STORM_FN write(Buffer buf);
 		virtual void STORM_FN write(Buffer buf, Nat start);
 
+		// Flush this stream.
+		virtual void STORM_FN flush();
+
 		// Close.
 		virtual void STORM_FN close();
 	};
 
-
-	namespace proc {
-		STORM_PKG(core.io.std);
-
-		/**
-		 * Get standard file handles.
-		 * (implemented in HandleStream.cpp)
-		 */
-		IStream *STORM_FN in(EnginePtr e);
-		OStream *STORM_FN out(EnginePtr e);
-		OStream *STORM_FN error(EnginePtr e);
-	}
 }

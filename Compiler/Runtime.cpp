@@ -4,6 +4,8 @@
 #include "Type.h"
 #include "Engine.h"
 #include "Core/Str.h"
+#include "Core/Io/StdStream.h"
+#include "StdIoThread.h"
 
 namespace storm {
 	namespace runtime {
@@ -110,6 +112,10 @@ namespace storm {
 
 		void reattachThread(Engine &e, const os::Thread &thread) {
 			e.gc.reattachThread(thread);
+		}
+
+		void postStdRequest(Engine &e, StdRequest *request) {
+			e.stdIo()->post(request);
 		}
 
 		RootObject *cloneObject(RootObject *obj) {

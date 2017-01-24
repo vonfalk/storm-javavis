@@ -7,6 +7,7 @@ namespace storm {
 	class GcWatch;
 	class RootObject;
 	class CloneEnv;
+	class StdRequest;
 
 	namespace runtime {
 
@@ -92,6 +93,9 @@ namespace storm {
 
 		// Reattach a thread (ie. make it possible to call detach once more without anything bad happening).
 		void reattachThread(Engine &e, const os::Thread &thread);
+
+		// Post an IO-request for standard in/out/error.
+		void postStdRequest(Engine &e, StdRequest *request);
 
 		// Clone any heap-allocated object from C++.
 		RootObject *CODECALL cloneObject(RootObject *obj);

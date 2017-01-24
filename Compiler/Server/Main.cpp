@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Main.h"
 #include "Engine.h"
-#include "Core/Io/Stream.h"
+#include "Core/Io/StdStream.h"
 #include "Core/Io/FileStream.h"
 
 namespace storm {
