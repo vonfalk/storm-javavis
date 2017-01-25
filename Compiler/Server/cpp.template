@@ -1,8 +1,8 @@
-#pragma once
+#include "stdafx.h"
+#include "$header$"
 
 namespace storm {
 	namespace server {
-		STORM_PKG(core.lang.server);
 
 		$$
 

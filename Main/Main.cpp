@@ -5,6 +5,7 @@
 #include "Compiler/Engine.h"
 #include "Compiler/Repl.h"
 #include "Core/Timing.h"
+#include "Core/Io/StdStream.h"
 
 // Read that is not locking up the compiler loop. Should be implemeted better when there
 // is "real" IO in storm!
@@ -203,7 +204,7 @@ int stormMain(int argc, const wchar *argv[]) {
 		case Params::modeFunction:
 			return runFunction(e, p.modeParam);
 		case Params::modeServer:
-			runLangServer(e);
+			server::run(e, proc::in(e), proc::out(e));
 			return 0;
 		default:
 			throw InternalError(L"Unknown mode.");
