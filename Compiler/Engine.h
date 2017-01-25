@@ -20,6 +20,8 @@ namespace storm {
 	class NameSet;
 	class ScopeLookup;
 	class StdIo;
+	class TextReader;
+	class TextWriter;
 
 	/**
 	 * Defines the root object of the compiler. This object contains everything needed by the
@@ -169,6 +171,11 @@ namespace storm {
 		// Get the StdIo object.
 		StdIo *stdIo();
 
+		// Get stdin, stdout and stderr.
+		TextReader *stdIn();
+		TextWriter *stdOut();
+		TextWriter *stdError();
+
 	private:
 		// The compiler C++ world.
 		World world;
@@ -201,6 +208,11 @@ namespace storm {
 
 			// Void handle.
 			Handle *voidHandle;
+
+			// Handles to readers for stdin, stdout and stderror.
+			TextReader *stdIn;
+			TextWriter *stdOut;
+			TextWriter *stdError;
 		};
 
 		GcRoot o;

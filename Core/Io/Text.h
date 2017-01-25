@@ -18,7 +18,24 @@ namespace storm {
 	 * TODO: This should also be extensible.
 	 * TODO: Better handling of line endings.
 	 * TODO: Find a good way of duplicating an input format to an output format.
+	 * TODO: Add TextInfo to a TextReader as well!
 	 */
+
+	/**
+	 * Information about encoded text.
+	 */
+	class TextInfo {
+		STORM_VALUE;
+	public:
+		// Default config.
+		STORM_CTOR TextInfo();
+
+		// Use windows-style linefeeds.
+		Bool useCrLf;
+
+		// Output a BOM.
+		Bool useBom;
+	};
 
 
 	/**
@@ -34,7 +51,7 @@ namespace storm {
 		// Read a single character from the stream. Returns 0 on failure.
 		Char STORM_FN read();
 
-		// Peek a single character.
+		// Peek a single character. Returns 0 on failure.
 		Char STORM_FN peek();
 
 		// Read an entire line from the file (does not care about line endings).
@@ -57,8 +74,17 @@ namespace storm {
 		// Cached code point. 0 if at end of stream.
 		Char next;
 
-		// First code point?
+		// Is 'next' valid?
+		Bool hasNext;
+
+		// First character?
 		Bool first;
+
+		// At end of file.
+		Bool eof;
+
+		// Helper for reading which removes any BOM.
+		Char doRead();
 	};
 
 
@@ -70,4 +96,47 @@ namespace storm {
 
 	// Read all text from a file.
 	Str *STORM_FN readAllText(Url *file);
+
+
+	/**
+	 * Base interface for writing text. Buffers entire lines. When implementing your own version,
+	 * override 'writeChar' and 'flush' to write a code point in UTF32.
+	 */
+	class TextWriter : public Object {
+		STORM_CLASS;
+	public:
+		// Create. Output regular unix line endings (TODO: Should this be OS-dependent?)
+		STORM_CTOR TextWriter();
+
+		// Create. Specify line endings.
+		STORM_CTOR TextWriter(TextInfo info);
+
+		// Automatic flush on newline? (on by default)
+		Bool autoFlush;
+
+		// Write a string.
+		void STORM_FN write(Char c);
+		void STORM_FN write(Str *s);
+
+		// Write a string, add any line ending.
+		void STORM_FN writeLine(Str *s);
+
+		// Write a new-line character.
+		void STORM_FN writeLine();
+
+		// Flush all buffered output to the underlying stream.
+		virtual void STORM_FN flush();
+
+	protected:
+		// Override in derived writers. Write one character.
+		virtual void STORM_FN writeChar(Char ch);
+
+	private:
+		// Text config.
+		TextInfo config;
+
+		// Write a bom if needed.
+		void writeBom();
+	};
+
 }

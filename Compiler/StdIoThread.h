@@ -42,6 +42,9 @@ namespace storm {
 		// All handles we need so we do not need to query the OS all the time.
 		HANDLE handles[3];
 
+		// Lock for doing input.
+		CRITICAL_SECTION inputLock;
+
 		friend DWORD WINAPI ioMain(void *param);
 #endif
 	};

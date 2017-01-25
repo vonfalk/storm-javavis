@@ -58,4 +58,60 @@ namespace storm {
 			return 0;
 	}
 
+	/**
+	 * Writer.
+	 */
+
+	Utf16Writer::Utf16Writer(OStream *to, Bool byteSwap) : TextWriter(), dest(to), byteSwap(byteSwap) {
+		init();
+	}
+
+	Utf16Writer::Utf16Writer(OStream *to, TextInfo info, Bool byteSwap) : TextWriter(info), dest(to), byteSwap(byteSwap) {
+		init();
+	}
+
+	void Utf16Writer::init() {
+		buf = buffer(engine(), bufSize);
+		buf.filled(0);
+	}
+
+	void Utf16Writer::flush() {
+		if (buf.filled() > 0)
+			dest->write(buf);
+		buf.filled(0);
+	}
+
+	void Utf16Writer::write(byte *to, wchar ch) {
+		if (byteSwap) {
+			to[0] = byte(ch & 0xFF);
+			to[1] = byte((ch >> 8) & 0xFF);
+		} else {
+			to[0] = byte((ch >> 8) & 0xFF);
+			to[1] = byte(ch & 0xFF);
+		}
+	}
+
+	void Utf16Writer::writeChar(Char ch) {
+		byte buf[4];
+
+		if (ch.leading()) {
+			write(buf, ch.leading());
+			write(buf + 2, ch.trailing());
+			writeBytes(buf, 4);
+		} else {
+			write(buf, ch.trailing());
+			writeBytes(buf, 2);
+		}
+	}
+
+	void Utf16Writer::writeBytes(const byte *data, Nat count) {
+		Nat filled = buf.filled();
+		if (filled + count >= buf.count())
+			flush();
+
+		memcpy(buf.dataPtr() + filled, data, count);
+		buf.filled(filled + count);
+	}
+
+
 }

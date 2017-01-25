@@ -2,9 +2,7 @@
 #include "Main.h"
 #include "Engine.h"
 #include "SExpr.h"
-
-#include "Core/Io/StdStream.h"
-#include "Core/Io/FileStream.h"
+#include "Core/Io/Utf8Text.h"
 
 namespace storm {
 	namespace server {
@@ -36,15 +34,16 @@ namespace storm {
 				0x00, // nil
 			};
 
-			SExpr *msg = list(e, 3,
-							new (e) Number(1),
-							new (e) String(L"string"),
-							list(e, 2,
-								new (e) Number(2),
-								new (e) Number(3)));
-			PVAR(msg);
-
-			OStream *to = proc::out(e);
+			// SExpr *msg = list(e, 3,
+			// 				new (e) Number(1),
+			// 				new (e) String(L"string"),
+			// 				list(e, 2,
+			// 					new (e) Number(2),
+			// 					new (e) Number(3)));
+			// PVAR(msg);
+			OStream *to = output;
+			TextWriter *out = new (e) Utf8Writer(to);
+			out->writeLine(new (e) Str(L"a\u00D6\u0D36\u3042\u79c1e"));
 			// OStream *to = new (e) OFileStream(new (e) Str(L"C:\\Users\\Filip\\Test.txt"));
 
 			to->write(buffer(e, (byte *)"Welcome to the language server!\n", 32));

@@ -8,6 +8,7 @@ namespace storm {
 		handles[stdIn] = GetStdHandle(STD_INPUT_HANDLE);
 		handles[stdOut] = GetStdHandle(STD_OUTPUT_HANDLE);
 		handles[stdError] = GetStdHandle(STD_ERROR_HANDLE);
+		InitializeCriticalSection(&inputLock);
 	}
 
 	StdIo::~StdIo() {
@@ -18,6 +19,7 @@ namespace storm {
 			// Wait for the thread to terminate.
 			WaitForSingleObject(thread, 500);
 		}
+		DeleteCriticalSection(&inputLock);
 	}
 
 	static void doRead(HANDLE handle, StdRequest *r) {
@@ -27,7 +29,8 @@ namespace storm {
 		r->wait.up();
 	}
 
-	static bool doReadNonblocking(HANDLE handle, StdRequest *r) {
+	static bool tryRead(HANDLE handle, StdRequest *r) {
+		// NOTE: This does not seem to work...
 		// Stdin handle becomes signaling when there is data to read.
 		if (WaitForSingleObject(handle, 0) == WAIT_OBJECT_0) {
 			// Safe to read!
@@ -58,11 +61,18 @@ namespace storm {
 		}
 
 		switch (r->stream) {
-		case stdIn:
+		case stdIn: {
 			// See if we can read now, other post to the thread.
-			if (!doReadNonblocking(handles[r->stream], r))
+			bool ok = false;
+			if (false && TryEnterCriticalSection(&inputLock)) {
+				ok = tryRead(handles[r->stream], r);
+				LeaveCriticalSection(&inputLock);
+			}
+
+			if (!ok)
 				postThread(r);
 			break;
+		}
 		case stdOut:
 		case stdError:
 			// Output to the streams directly.
@@ -99,7 +109,7 @@ namespace storm {
 	DWORD WINAPI ioMain(void *param) {
 		StdIo *me = (StdIo *)param;
 
-		TODO(L"Note: currently input is blocking output, which is bad. We should do something clever about that!");
+		// Note: currently input is blocking output, which is bad. We should do something clever about that!
 
 		while (true) {
 			StdRequest *now = null;
@@ -126,7 +136,9 @@ namespace storm {
 
 			if (now->stream == stdIn) {
 				// Special care is needed when reading...
+				EnterCriticalSection(&me->inputLock);
 				doRead(me->handles[stdIn], now);
+				LeaveCriticalSection(&me->inputLock);
 			} else {
 				doWrite(me->handles[stdOut], now);
 			}

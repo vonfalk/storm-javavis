@@ -205,11 +205,14 @@
 (defun output-string (text face)
   (when storm-process-output
     (with-current-buffer storm-process-output
-      (let ((buffer-read-only nil)
-	    (start (point)))
+      (let* ((buffer-read-only nil)
+	     (old-point (point))
+	     (start (point-max)))
+	(goto-char (point-max))
 	(insert text)
 	(when face
-	  (storm-set-color start (point) face))))))
+	  (storm-set-color start (point) face))
+	(goto-char old-point)))))
 
 (defun storm-on-status (process change)
   "Receives status notifications from the Storm process."

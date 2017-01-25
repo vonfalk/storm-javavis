@@ -86,4 +86,68 @@ namespace storm {
 			pos--;
 	}
 
+	/**
+	 * Write.
+	 */
+
+	Utf8Writer::Utf8Writer(OStream *to) : TextWriter(), dest(to) {
+		init();
+	}
+
+	Utf8Writer::Utf8Writer(OStream *to, TextInfo info) : TextWriter(info), dest(to) {
+		init();
+	}
+
+	void Utf8Writer::init() {
+		buf = buffer(engine(), bufSize);
+		buf.filled(0);
+	}
+
+	void Utf8Writer::flush() {
+		if (buf.filled() > 0)
+			dest->write(buf);
+		buf.filled(0);
+	}
+
+	void Utf8Writer::writeChar(Char ch) {
+		Nat cp = ch.codepoint();
+		const Nat maxBytes = 8;
+		byte out[maxBytes];
+
+
+		if (cp < 0x80) {
+			// Fast path: 1 byte codepoints.
+			out[0] = byte(cp);
+			writeBytes(out, 1);
+			return;
+		}
+
+		// Output multiple bytes...
+		byte *at = out + maxBytes;
+		Nat leadingBits = 6;
+		Nat bytes = 0;
+		do {
+			// Output the least significant 6 bits.
+			*--at = byte(0x80 | (cp & 0x3F));
+			cp = cp >> 6;
+			bytes++;
+			leadingBits--;
+		} while (cp >= (Nat(1) << leadingBits));
+
+		// Output the first byte indicating the length of the codepoint.
+		*--at = byte((0xFF << (leadingBits + 1)) | cp);
+		bytes++;
+
+		writeBytes(at, bytes);
+	}
+
+	void Utf8Writer::writeBytes(const byte *data, Nat count) {
+		Nat filled = buf.filled();
+		if (filled + count >= buf.count())
+			flush();
+
+		memcpy(buf.dataPtr() + filled, data, count);
+		buf.filled(filled + count);
+	}
+
 }

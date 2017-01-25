@@ -7,29 +7,40 @@
 
 namespace storm {
 
-	TextReader::TextReader() : next(nat(0)), first(true) {}
+	TextInfo::TextInfo() : useCrLf(false), useBom(false) {}
+
+	TextReader::TextReader() : next(nat(0)), hasNext(false), first(true), eof(false) {}
+
+	Char TextReader::doRead() {
+		Char c = readChar();
+		if (first && c == Char(Nat(0xFEFF)))
+			c = readChar();
+		if (c == Char(Nat(0)))
+			eof = true;
+		return c;
+	}
 
 	Char TextReader::read() {
-		Char r = peek();
-		next = readChar();
-		return r;
+		if (hasNext) {
+			hasNext = false;
+			return next;
+		} else {
+			return doRead();
+		}
 	}
 
 	Char TextReader::peek() {
-		if (first) {
-			first = false;
-			next = readChar();
-			// See if we need to consume the BOM.
-			if (next == Char(nat(0xFEFF)))
-				next = readChar();
+		if (!hasNext) {
+			next = doRead();
+			hasNext = true;
 		}
 		return next;
 	}
 
 	Bool TextReader::more() {
-		if (first)
-			peek();
-		return next != Char(nat(0));
+		if (hasNext)
+			return next != Char(Nat(0));
+		return !eof;
 	}
 
 	Str *TextReader::readLine() {
@@ -58,8 +69,10 @@ namespace storm {
 	Str *TextReader::readAll() {
 		StrBuf *to = new (this) StrBuf();
 
-		while (more()) {
+		while (true) {
 			Char c = read();
+			if (c == Char(Nat(0)))
+				break;
 			if (c == Char('\r')) {
 				c = read();
 				// Single \r?
@@ -76,7 +89,10 @@ namespace storm {
 		StrBuf *to = new (this) StrBuf();
 
 		while (more()) {
-			*to << read();
+			Char c = read();
+			if (c == Char(Nat(0)))
+				break;
+			*to << c;
 		}
 
 		return to->toS();
@@ -112,5 +128,57 @@ namespace storm {
 	Str *STORM_FN readAllText(Url *file) {
 		return readText(file->read())->readAll();
 	}
+
+
+	/**
+	 * Write text.
+	 */
+
+	TextWriter::TextWriter() : autoFlush(true), config() {}
+
+	TextWriter::TextWriter(TextInfo info) : autoFlush(true), config(info) {}
+
+	void TextWriter::write(Char c) {
+		writeBom();
+		writeChar(c);
+	}
+
+	void TextWriter::write(Str *s) {
+		writeBom();
+
+		Char newline('\n');
+		for (Str::Iter i = s->begin(), end = s->end(); i != end; ++i) {
+			if (i.v() == newline)
+				writeLine();
+			else
+				writeChar(i.v());
+		}
+	}
+
+	void TextWriter::writeLine() {
+		writeBom();
+
+		if (config.useCrLf)
+			writeChar(Char('\r'));
+		writeChar(Char('\n'));
+		if (autoFlush)
+			flush();
+	}
+
+	void TextWriter::writeLine(Str *s) {
+		write(s);
+		writeLine();
+	}
+
+	void TextWriter::writeBom() {
+		if (config.useBom) {
+			writeChar(Char(Nat(0xFEFF)));
+			config.useBom = false;
+		}
+	}
+
+	void TextWriter::writeChar(Char ch) {}
+
+	void TextWriter::flush() {}
 
 }

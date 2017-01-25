@@ -6,86 +6,45 @@
 #include "Compiler/Repl.h"
 #include "Core/Timing.h"
 #include "Core/Io/StdStream.h"
+#include "Core/Io/Text.h"
 
-// Read that is not locking up the compiler loop. Should be implemeted better when there
-// is "real" IO in storm!
-static os::ThreadGroup *ioGroup = null;
-static os::Thread *ioThread = null;
-
-void ioThreadMain() {
-	// We use 'uThreads' to synchronize this!
-}
-
-bool ioRead(String &to) {
-	getline(wcin, to);
-	if (!wcin)
-		return false;
-	else
-		return true;
-}
-
-void stopIo() {
-	// Allow all our UThreads to exit.
-	while (os::UThread::leave());
-
-	if (ioThread) {
-		del(ioThread);
-		// Let the io thread exit cleanly.
-		ioGroup->join();
-		del(ioGroup);
-	}
-}
-
-void startIo() {
-	if (ioThread)
-		return;
-	ioGroup = new os::ThreadGroup();
-	ioThread = new os::Thread(os::Thread::spawn(util::simpleVoidFn(&ioThreadMain), *ioGroup));
-}
-
-bool readLine(String &to) {
-	startIo();
-	os::Future<bool> fut;
-	os::FnParams p;
-	String *t = &to;
-	p.add(t);
-	os::UThread::spawn(&ioRead, false, p, fut, ioThread);
-	return fut.result();
-}
-
-
-void runRepl(const wchar *lang, Repl *repl) {
-	startIo();
+void runRepl(Engine &e, const wchar *lang, Repl *repl) {
+	TextReader *input = e.stdIn();
+	TextWriter *output = e.stdOut();
 
 	Str *line = null;
 	while (!repl->exit()) {
-		if (line)
-			wcout << L"? ";
-		else
-			wcout << lang << L"> ";
+		{
+			StrBuf *prompt = new (e) StrBuf();
+			if (line)
+				*prompt << L"? ";
+			else
+				*prompt << lang << L"> ";
 
-		String data;
-		if (!readLine(data))
-			break;
+			output->write(prompt->toS());
+			output->flush();
+		}
 
+		Str *data = input->readLine();
 		if (!line) {
-			line = new (repl) Str(data.c_str());
+			line = data;
 		} else {
 			StrBuf *to = new (repl) StrBuf();
-			*to << line << L"\n" << new (repl) Str(data.c_str());
+			*to << line << L"\n" << data;
 			line = to->toS();
 		}
 
 		try {
 			if (repl->eval(line))
 				line = null;
-		} catch (const Exception &e) {
-			wcout << e << endl;
+		} catch (const Exception &err) {
+			// TODO: Fix this whenever we have proper exceptions in Storm!
+			std::wostringstream t;
+			t << err << endl;
+			output->writeLine(new (e) Str(t.str().c_str()));
 			line = null;
 		}
 	}
-
-	stopIo();
 }
 
 int runRepl(Engine &e, const wchar *lang, const wchar *input) {
@@ -119,7 +78,7 @@ int runRepl(Engine &e, const wchar *lang, const wchar *input) {
 			return 1;
 		}
 	} else {
-		runRepl(lang, repl);
+		runRepl(e, lang, repl);
 	}
 
 	return 0;
@@ -214,6 +173,11 @@ int stormMain(int argc, const wchar *argv[]) {
 		wcerr << e << endl;
 		return 1;
 	}
+
+	// Allow 1 s for all UThreads on the Compiler thread to terminate.
+	Moment waitStart;
+	while (os::UThread::leave() && Moment() - waitStart > s(1))
+		;
 }
 
 #ifdef WINDOWS

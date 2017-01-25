@@ -31,9 +31,9 @@ namespace storm {
 	StdOStream::StdOStream(StdStream t) : target(t) {}
 
 	void StdOStream::write(Buffer to, Nat start) {
-		start = min(start, to.count());
+		start = min(start, to.filled());
 
-		StdRequest r(target, to.dataPtr() + start, to.count() - start);
+		StdRequest r(target, to.dataPtr() + start, to.filled() - start);
 		runtime::postStdRequest(engine(), &r);
 		r.wait.down();
 	}

@@ -11,6 +11,7 @@
 #include "Core/Map.h"
 #include "Core/StrBuf.h"
 #include "Core/Handle.h"
+#include "Core/Io/Utf8Text.h"
 #include "Lib/Enum.h"
 #include "Lib/Fn.h"
 #include "Syntax/Node.h"
@@ -345,6 +346,30 @@ namespace storm {
 		}
 
 		return ioThread;
+	}
+
+	TextReader *Engine::stdIn() {
+		if (!o.stdIn)
+			o.stdIn = new (*this) Utf8Reader(proc::in(*this));
+		return o.stdIn;
+	}
+
+	TextWriter *Engine::stdOut() {
+		if (!o.stdOut) {
+			TextInfo info;
+			info.useCrLf = true;
+			o.stdOut = new (*this) Utf8Writer(proc::out(*this), info);
+		}
+		return o.stdOut;
+	}
+
+	TextWriter *Engine::stdError() {
+		if (!o.stdError) {
+			TextInfo info;
+			info.useCrLf = true;
+			o.stdError = new (*this) Utf8Writer(proc::error(*this), info);
+		}
+		return o.stdError;
 	}
 
 	Package *Engine::package() {

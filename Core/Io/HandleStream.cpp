@@ -270,9 +270,9 @@ namespace storm {
 	}
 
 	void HandleOStream::write(Buffer to, Nat start) {
-		start = min(start, to.count());
+		start = min(start, to.filled());
 		if (handle)
-			storm::write(handle, attachedTo, to.dataPtr() + start, to.count() - start);
+			storm::write(handle, attachedTo, to.dataPtr() + start, to.filled() - start);
 	}
 
 	void HandleOStream::close() {
