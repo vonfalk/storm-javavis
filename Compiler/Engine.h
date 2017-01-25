@@ -176,6 +176,11 @@ namespace storm {
 		TextWriter *stdOut();
 		TextWriter *stdError();
 
+		// Set std streams.
+		void stdIn(TextReader *to);
+		void stdOut(TextWriter *to);
+		void stdError(TextWriter *to);
+
 	private:
 		// The compiler C++ world.
 		World world;

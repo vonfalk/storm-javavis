@@ -1,13 +1,44 @@
 #include "stdafx.h"
 #include "SExpr.h"
+#include "Connection.h"
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
+#include "Core/Hash.h"
 #include "Core/CloneEnv.h"
+#include "Core/Io/MemStream.h"
+#include "Core/Io/Utf8Text.h"
 
 namespace storm {
 	namespace server {
 
+		static void writeInt(OStream *to, Int v) {
+			GcPreArray<byte, 4> d;
+			d.v[0] = byte((Nat(v) >> 24) & 0xFF);
+			d.v[1] = byte((Nat(v) >> 16) & 0xFF);
+			d.v[2] = byte((Nat(v) >>  8) & 0xFF);
+			d.v[3] = byte((Nat(v) >>  0) & 0xFF);
+			to->write(Buffer(d));
+		}
+
+		static void writeInt(OStream *to, byte header, Int v) {
+			GcPreArray<byte, 5> d;
+			d.v[0] = header;
+			d.v[1] = byte((Nat(v) >> 24) & 0xFF);
+			d.v[2] = byte((Nat(v) >> 16) & 0xFF);
+			d.v[3] = byte((Nat(v) >>  8) & 0xFF);
+			d.v[4] = byte((Nat(v) >>  0) & 0xFF);
+			to->write(Buffer(d));
+		}
+
 		SExpr::SExpr() {}
+
+		void SExpr::serialize(OStream *to, Connection *c) {
+			// Serialize as 'null'.
+			GcPreArray<byte, 1> d;
+			d.v[0] = 0x00;
+			to->write(Buffer(d));
+		}
+
 
 		Cons::Cons() {}
 
@@ -34,6 +65,15 @@ namespace storm {
 			}
 
 			*to << L")";
+		}
+
+		void Cons::serialize(OStream *to, Connection *c) {
+			GcPreArray<byte, 1> d;
+			d.v[0] = 0x01;
+			to->write(Buffer(d));
+
+			c->serialize(to, first);
+			c->serialize(to, rest);
 		}
 
 		Cons *cons(EnginePtr e, MAYBE(SExpr *) first, MAYBE(SExpr *) rest) {
@@ -85,6 +125,10 @@ namespace storm {
 			*to << v;
 		}
 
+		void Number::serialize(OStream *to, Connection *c) {
+			writeInt(to, 0x02, v);
+		}
+
 		String::String(const wchar *str) {
 			v = new (this) Str(str);
 		}
@@ -99,5 +143,55 @@ namespace storm {
 			*to << L"\"" << v->escape() << L"\"";
 		}
 
+		void String::serialize(OStream *to, Connection *c) {
+			OMemStream *mem = new (this) OMemStream();
+			TextWriter *text = new (this) Utf8Writer(mem);
+			text->write(v);
+			text->flush();
+
+			Buffer strData = mem->buffer();
+			writeInt(to, 0x03, strData.filled());
+			to->write(strData);
+		}
+
+
+		Symbol::Symbol(Str *v, Nat id) : v(v), id(id) {}
+
+		void Symbol::deepCopy(CloneEnv *env) {
+			// No need, we're immutable!
+		}
+
+		void Symbol::toS(StrBuf *to) const {
+			*to << L"'" << v->escape(' ');
+		}
+
+		Bool Symbol::equals(Object *o) const {
+			if (Object::equals(o))
+				return id == ((Symbol *)o)->id;
+			return false;
+		}
+
+		Nat Symbol::hash() const {
+			return natHash(id);
+		}
+
+		void Symbol::serialize(OStream *to, Connection *c) {
+			if (c->sendSymbol(this)) {
+				// Fist time, send the entire symbol!
+				writeInt(to, 0x04, id);
+
+				OMemStream *mem = new (this) OMemStream();
+				TextWriter *text = new (this) Utf8Writer(mem);
+				text->write(v);
+				text->flush();
+
+				Buffer strData = mem->buffer();
+				writeInt(to, strData.filled());
+				to->write(strData);
+			} else {
+				// Just send our ID.
+				writeInt(to, 0x05, id);
+			}
+		}
 	}
 }

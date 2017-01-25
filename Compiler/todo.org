@@ -1,4 +1,5 @@
-* Loose ends so far [5/16]
+* Loose ends so far [5/17]
+  - [ ] Handles for values do not get a proper == operator.
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Destructors do not need their own slot in the vtables anymore since we have another mechanism for that.

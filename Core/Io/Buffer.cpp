@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Buffer.h"
 #include "Core/CloneEnv.h"
+#include "Core/StrBuf.h"
 
 namespace storm {
 
@@ -15,7 +16,9 @@ namespace storm {
 
 	Buffer::Buffer() : data(null) {}
 
-	Buffer::Buffer(GcArray<byte> *buf) : data(buf) {}
+	Buffer::Buffer(GcArray<byte> *buf) : data(buf) {
+		filled(buf->count);
+	}
 
 	Buffer::Buffer(const Buffer &o) : data(o.data) {}
 
@@ -41,4 +44,39 @@ namespace storm {
 		z.filled(count);
 		return z;
 	}
+
+	Buffer grow(EnginePtr e, Buffer src, Nat newCount) {
+		Buffer r(runtime::allocArray<byte>(e.v, &bufType, newCount));
+		memcpy(r.dataPtr(), src.dataPtr(), src.filled());
+		r.filled(src.filled());
+		return r;
+	}
+
+	StrBuf &operator <<(StrBuf &to, Buffer b) {
+		outputMark(to, b, b.count());
+		return to;
+	}
+
+	void outputMark(StrBuf &to, Buffer b, Nat mark) {
+		const Nat width = 16;
+		for (Nat i = 0; i < b.count(); i++) {
+			if (i % width == 0) {
+				if (i > 0)
+					to << L"\n";
+				to << hex(i) << L":";
+			}
+
+			if (i == b.filled() && i == mark)
+				to << L"|>";
+			else if (i == b.filled())
+				to << L"| ";
+			else if (i == mark)
+				to << L" >";
+			else
+				to << L"  ";
+
+			to << hex(b[i]);
+		}
+	}
+
 }

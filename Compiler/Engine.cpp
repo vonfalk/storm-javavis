@@ -372,6 +372,18 @@ namespace storm {
 		return o.stdError;
 	}
 
+	void Engine::stdIn(TextReader *to) {
+		o.stdIn = to;
+	}
+
+	void Engine::stdOut(TextWriter *to) {
+		o.stdOut = to;
+	}
+
+	void Engine::stdError(TextWriter *to) {
+		o.stdError = to;
+	}
+
 	Package *Engine::package() {
 		if (!o.root) {
 			assert(has(bootTypes), L"Can not create packages yet.");

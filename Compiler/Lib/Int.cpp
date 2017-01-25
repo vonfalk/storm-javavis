@@ -13,6 +13,10 @@ namespace storm {
 		return new (name) IntType(name, type);
 	}
 
+	static Nat CODECALL intRefHash(Int &v) {
+		return intHash(v);
+	}
+
 	static void intToFloat(InlineParams p) {
 		if (!p.result->needed())
 			return;
@@ -66,7 +70,8 @@ namespace storm {
 		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), L"word", v, fnPtr(engine, &icast)));
 		add(inlinedFunction(engine, Value(StormInfo<Float>::type(engine)), L"float", v, fnPtr(engine, &intToFloat)));
 
-		add(nativeFunction(engine, Value(this), L"hash", v, &intHash));
+		Value n(StormInfo<Nat>::type(engine));
+		add(nativeFunction(engine, n, L"hash", r, &intRefHash));
 		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Int>)));
 		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Int>)));
 
@@ -76,6 +81,10 @@ namespace storm {
 
 	Type *createNat(Str *name, Size size, GcType *type) {
 		return new (name) NatType(name, type);
+	}
+
+	static Nat CODECALL natRefHash(Int &v) {
+		return natHash(v);
 	}
 
 	static void castNat(InlineParams p) {
@@ -130,7 +139,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(StormInfo<Long>::type(engine)), L"long", v, fnPtr(engine, &ucast)));
 		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), L"word", v, fnPtr(engine, &ucast)));
 
-		add(nativeFunction(engine, Value(this), L"hash", v, &natHash));
+		add(nativeFunction(engine, Value(this), L"hash", r, &natRefHash));
 		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Nat>)));
 		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Nat>)));
 

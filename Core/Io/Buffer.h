@@ -55,4 +55,12 @@ namespace storm {
 	// Create a buffer.
 	Buffer STORM_FN buffer(EnginePtr e, Nat count);
 	Buffer buffer(EnginePtr e, const byte *data, Nat count);
+
+	// Grow a buffer.
+	Buffer STORM_FN grow(EnginePtr e, Buffer src, Nat newCount);
+
+	// Output.
+	void STORM_FN outputMark(StrBuf &to, Buffer b, Nat markAt);
+	StrBuf &STORM_FN operator <<(StrBuf &to, Buffer b);
+
 }

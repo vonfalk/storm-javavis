@@ -43,12 +43,44 @@ namespace storm {
 		// Random access.
 		virtual RIStream *STORM_FN randomAccess();
 
+		// Output.
+		void STORM_FN toS(StrBuf *to) const;
+
 	private:
 		// Data.
 		Buffer data;
 
 		// Position.
 		nat pos;
+	};
+
+	/**
+	 * Output stream.
+	 */
+	class OMemStream : public OStream {
+		STORM_CLASS;
+	public:
+		// Create.
+		STORM_CTOR OMemStream();
+
+		// Copy.
+		OMemStream(const OMemStream &o);
+
+		// Deep copy.
+		void STORM_FN deepCopy(CloneEnv *env);
+
+		// Write.
+		using OStream::write;
+		virtual void STORM_FN write(Buffer buf, Nat start);
+
+		// Get the buffer.
+		Buffer STORM_FN buffer();
+
+		// Output.
+		void STORM_FN toS(StrBuf *to) const;
+
+	private:
+		Buffer data;
 	};
 
 }

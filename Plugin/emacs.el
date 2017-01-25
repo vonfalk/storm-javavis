@@ -286,10 +286,10 @@
     (if (storm-state-more-p state 4)
 	(progn
 	  (setcar state (+ 4 start))
-	  (+ (aref src start)
-	     (* #x100 (aref src (+ start 1)))
-	     (* #x10000 (aref src (+ start 2)))
-	     (* #x1000000 (aref src (+ start 3)))))
+	  (logior (lsh (aref src start) 24)
+		  (lsh (aref src (+ start 1)) 16)
+		  (lsh (aref src (+ start 2)) 8)
+		  (aref src (+ start 3))))
       (storm-state-set-error state))))
 
 (defun storm-decode-string (src state)
@@ -350,13 +350,10 @@
   (storm-encode-buffer (cdr c)))
 
 (defun storm-encode-number (num)
-  (insert-char (mod num 256))
-  (setq num (/ num 256))
-  (insert-char (mod num 256))
-  (setq num (/ num 256))
-  (insert-char (mod num 256))
-  (setq num (/ num 256))
-  (insert-char (mod num 256)))
+  (insert-char (lsh num -24))
+  (insert-char (logand #xFF (lsh num -16)))
+  (insert-char (logand #xFF (lsh num -8)))
+  (insert-char (logand #xFF num)))
 
 (defun storm-encode-string (str)
   (let ((coded (encode-coding-string str 'utf-8)))

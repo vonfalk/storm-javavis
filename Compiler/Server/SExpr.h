@@ -2,10 +2,13 @@
 #include "Core/Object.h"
 #include "Core/EnginePtr.h"
 #include "Core/Array.h"
+#include "Core/Io/Stream.h"
 
 namespace storm {
 	namespace server {
 		STORM_PKG(core.lang.server);
+
+		class Connection;
 
 		/**
 		 * Messages sent to and from the client. This is based on S-Expressions from LISP.
@@ -14,8 +17,13 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			STORM_CTOR SExpr();
-		};
 
+		protected:
+			// Serialize to a stream.
+			virtual void STORM_FN serialize(OStream *to, Connection *sym);
+
+			friend class Connection;
+		};
 
 		/**
 		 * Cons-cell.
@@ -31,6 +39,9 @@ namespace storm {
 
 			virtual void STORM_FN deepCopy(CloneEnv *env);
 			virtual void STORM_FN toS(StrBuf *to) const;
+		protected:
+			// Serialize to a stream.
+			virtual void STORM_FN serialize(OStream *to, Connection *sym);
 		};
 
 		// Convenience functions.
@@ -50,6 +61,9 @@ namespace storm {
 
 			virtual void STORM_FN deepCopy(CloneEnv *env);
 			virtual void STORM_FN toS(StrBuf *to) const;
+		protected:
+			// Serialize to a stream.
+			virtual void STORM_FN serialize(OStream *to, Connection *sym);
 		};
 
 		/**
@@ -65,6 +79,39 @@ namespace storm {
 
 			virtual void STORM_FN deepCopy(CloneEnv *env);
 			virtual void STORM_FN toS(StrBuf *to) const;
+		protected:
+			// Serialize to a stream.
+			virtual void STORM_FN serialize(OStream *to, Connection *sym);
+		};
+
+		/**
+		 * Symbol.
+		 *
+		 * Very similar to a string in this representation, but the underlying Symbol objects are
+		 * shared. If we ever create a symbol type for Storm, we should use it here!
+		 */
+		class Symbol : public SExpr {
+			STORM_CLASS;
+		public:
+			virtual void STORM_FN deepCopy(CloneEnv *env);
+			virtual void STORM_FN toS(StrBuf *to) const;
+			virtual Bool STORM_FN equals(Object *o) const;
+			virtual Nat STORM_FN hash() const;
+
+		protected:
+			// Serialize to a stream.
+			virtual void STORM_FN serialize(OStream *to, Connection *sym);
+
+		private:
+			Symbol(Str *v, Nat id);
+
+			// String.
+			Str *v;
+
+			// The symbol ID this symbol is assigned.
+			Nat id;
+
+			friend class Connection;
 		};
 
 	}

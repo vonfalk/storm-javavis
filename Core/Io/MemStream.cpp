@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "MemStream.h"
 #include "Core/CloneEnv.h"
+#include "Core/StrBuf.h"
 
 namespace storm {
 
@@ -49,4 +50,43 @@ namespace storm {
 	RIStream *IMemStream::randomAccess() {
 		return this;
 	}
+
+	void IMemStream::toS(StrBuf *to) const {
+		outputMark(*to, data, pos);
+	}
+
+
+	OMemStream::OMemStream() {}
+
+	OMemStream::OMemStream(const OMemStream &o) : data(o.data) {
+		data.deepCopy(null);
+	}
+
+	void OMemStream::deepCopy(CloneEnv *env) {
+		// Nothing to do...
+	}
+
+	void OMemStream::write(Buffer src, Nat start) {
+		start = min(start, src.filled());
+		Nat copy = src.filled() - start;
+		Nat filled = data.filled();
+		if (filled + copy >= data.count()) {
+			// Grow the buffer...
+			Nat growTo = max(max(data.count() * 2, copy), Nat(1024));
+			data = grow(engine(), data, growTo);
+		}
+
+		// Copy data.
+		memcpy(data.dataPtr() + filled, src.dataPtr() + start, copy);
+		data.filled(filled + copy);
+	}
+
+	Buffer OMemStream::buffer() {
+		return data;
+	}
+
+	void OMemStream::toS(StrBuf *to) const {
+		*to << data;
+	}
+
 }
