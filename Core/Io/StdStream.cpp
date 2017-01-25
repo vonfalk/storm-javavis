@@ -40,7 +40,7 @@ namespace storm {
 
 	StdRequest::StdRequest(StdStream stream, byte *to, Nat count)
 		: stream(stream),
-		  dest(to),
+		  buffer(to),
 		  count(count),
 		  wait(0),
 		  next(null) {}

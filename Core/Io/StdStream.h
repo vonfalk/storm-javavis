@@ -61,8 +61,8 @@ namespace storm {
 		// Stream being interacted with.
 		StdStream stream;
 
-		// Destination (or source). 'count' is modified to reflect the number of bytes read.
-		byte *dest;
+		// Buffer. 'count' is modified to reflect the number of bytes read.
+		byte *buffer;
 		Nat count;
 
 		// Sema used to signal completion.

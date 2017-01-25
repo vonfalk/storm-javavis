@@ -32,9 +32,15 @@ namespace storm {
 		// Condition for synchronization.
 		os::Condition cond;
 
+		// Post a message to the thread.
+		void postThread(StdRequest *request);
+
 #ifdef WINDOWS
 		// Thread handle for the running thread.
 		HANDLE thread;
+
+		// All handles we need so we do not need to query the OS all the time.
+		HANDLE handles[3];
 
 		friend DWORD WINAPI ioMain(void *param);
 #endif

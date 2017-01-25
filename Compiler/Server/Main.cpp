@@ -49,7 +49,7 @@ namespace storm {
 			to->write(buffer(e, utf8Data2 + i, 1));
 		}
 
-		to->write(buffer(e, (byte *)"Good bye!", 9));
+		to->write(buffer(e, (byte *)"\nGood bye!", 10));
 	}
 
 }
