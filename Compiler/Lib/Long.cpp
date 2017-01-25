@@ -13,10 +13,6 @@ namespace storm {
 		return new (name) LongType(name, type);
 	}
 
-	static Nat CODECALL longRefHash(Long &v) {
-		return longHash(v);
-	}
-
 	static float CODECALL longToFloat(Long l) {
 		return float(l);
 	}
@@ -75,7 +71,7 @@ namespace storm {
 		add(nativeFunction(engine, Value(StormInfo<Float>::type(engine)), L"float", v, address(&longToFloat)));
 
 		Value n(StormInfo<Nat>::type(engine));
-		add(nativeFunction(engine, n, L"hash", r, &longRefHash));
+		add(nativeFunction(engine, n, L"hash", v, &longHash));
 		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Long>)));
 		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Long>)));
 
@@ -85,10 +81,6 @@ namespace storm {
 
 	Type *createWord(Str *name, Size size, GcType *type) {
 		return new (name) WordType(name, type);
-	}
-
-	static Nat CODECALL wordRefHash(Word &v) {
-		return longHash(v);
 	}
 
 	static void castWord(InlineParams p) {
@@ -146,7 +138,7 @@ namespace storm {
 		add(inlinedFunction(engine, Value(StormInfo<Long>::type(engine)), L"long", v, fnPtr(engine, &ucast)));
 
 		Value n(StormInfo<Nat>::type(engine));
-		add(nativeFunction(engine, n, L"hash", r, &wordRefHash));
+		add(nativeFunction(engine, n, L"hash", v, &wordHash));
 		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Word>)));
 		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Word>)));
 

@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "NamedThread.h"
 #include "Function.h"
+#include "Adapter.h"
 #include "Exception.h"
 #include "Core/Str.h"
 #include "Core/Handle.h"
@@ -623,8 +624,7 @@ namespace storm {
 
 			Array<Value> *r = new (engine) Array<Value>(1, Value(this, true));
 			Array<Value> *rr = new (engine) Array<Value>(2, Value(this, true));
-			Array<Value> *rv = new (engine) Array<Value>(2, Value(this, true));
-			rv->at(1) = Value(this);
+			Array<Value> *vv = new (engine) Array<Value>(2, Value(this));
 
 			// Find constructor.
 			if (Function *f = as<Function>(find(CTOR, rr)))
@@ -645,7 +645,7 @@ namespace storm {
 				updateHandle(f);
 
 			// Find equal function.
-			if (Function *f = as<Function>(find(L"equal", rv)))
+			if (Function *f = as<Function>(find(L"==", vv)))
 				updateHandle(f);
 
 		} else if (runOn().state != RunOn::any) {
@@ -737,8 +737,7 @@ namespace storm {
 
 		if (params->count() < 1)
 			return;
-		if (params->at(0) != Value(this, true))
-			return;
+		bool refThis = params->at(0).ref;
 
 		// Do not add constructor, destructor or deepCopy to the handle if this is a built-in type,
 		// as that allows containers etc to use raw memcpy which is more efficient in many cases.
@@ -746,20 +745,20 @@ namespace storm {
 		bool userType = builtInType() == BasicTypeInfo::user;
 		const wchar *name = fn->name->c_str();
 		if (wcscmp(name, CTOR) == 0) {
-			if (params->count() == 2 && params->at(1) == Value(this, true) && userType)
+			if (refThis && params->count() == 2 && params->at(1) == Value(this, true) && userType)
 				h->setCopyCtor(fn->ref());
 		} else if (wcscmp(name, DTOR) == 0) {
-			if (params->count() == 1 && userType)
+			if (refThis && params->count() == 1 && userType)
 				h->setDestroy(fn->ref());
 		} else if (wcscmp(name, L"deepCopy") == 0 && userType) {
-			if (params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
+			if (refThis && params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
 				h->setDeepCopy(fn->ref());
 		} else if (wcscmp(name, L"hash") == 0) {
 			if (params->count() == 1)
-				h->setHash(fn->ref());
-		} else if (wcscmp(name, L"equal") == 0) {
-			if (params->count() == 1)
-				h->setEqual(fn->ref());
+				h->hashFn = (Handle::HashFn)makeRefParams(fn);
+		} else if (wcscmp(name, L"==") == 0) {
+			if (params->count() == 2)
+				h->equalFn = (Handle::EqualFn)makeRefParams(fn);
 		}
 	}
 

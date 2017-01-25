@@ -12,4 +12,8 @@ namespace storm {
 	Nat CODECALL wordHash(Word v);
 	Nat CODECALL ptrHash(const void *v);
 
+
+	// Check so a handle can be used for a hash map.
+	class Handle;
+	void checkHashHandle(const Handle &h);
 }

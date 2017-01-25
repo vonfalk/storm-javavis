@@ -13,10 +13,6 @@ namespace storm {
 		return float(b);
 	}
 
-	static Nat CODECALL byteRefHash(Byte &b) {
-		return byteHash(b);
-	}
-
 	Type *createByte(Str *name, Size size, GcType *type) {
 		return new (name) ByteType(name, type);
 	}
@@ -71,7 +67,7 @@ namespace storm {
 		add(nativeFunction(engine, Value(StormInfo<Float>::type(engine)), L"float", v, address(&byteToFloat)));
 
 		Value n(StormInfo<Nat>::type(engine));
-		add(nativeFunction(engine, n, L"hash", r, &byteHash));
+		add(nativeFunction(engine, n, L"hash", v, &byteHash));
 		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Byte>)));
 		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Byte>)));
 

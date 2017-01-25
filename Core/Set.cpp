@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Set.h"
+#include "Hash.h"
 #include "StrBuf.h"
 #include "GcType.h"
 #include "GcWatch.h"
@@ -18,6 +19,7 @@ namespace storm {
 	};
 
 	SetBase::SetBase(const Handle &k) : keyT(k), watch(null) {
+		checkHashHandle(k);
 		if (k.locationHash)
 			watch = runtime::createWatch(engine());
 	}

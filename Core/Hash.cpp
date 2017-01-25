@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Hash.h"
+#include "Handle.h"
 
 namespace storm {
 
@@ -45,6 +46,10 @@ namespace storm {
 			return natHash(Nat(v));
 		else
 			return wordHash(Word(v));
+	}
+
+	void checkHashHandle(const Handle &h) {
+		assert(h.hashFn && h.equalFn, L"Incomplete handle for use in a hash container.");
 	}
 
 }

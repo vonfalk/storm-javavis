@@ -55,6 +55,27 @@ BEGIN_TEST(MapTest, Core) {
 		CHECK_ERROR(map->get(new (e) Str(L"A")), MapError);
 	}
 
+	// Do primitives work as keys?
+	{
+		Map<Int, Int> *map = new (e) Map<Int, Int>();
+
+		map->put(1, 10);
+		map->put(2, 11);
+		map->put(1, 12);
+		map->put(4, 13);
+
+		CHECK_EQ(map->count(), 3);
+		CHECK_EQ(map->get(1), 12);
+
+		map->remove(1);
+
+		CHECK_EQ(map->count(), 2);
+		CHECK_EQ(map->get(2), 11);
+		CHECK_EQ(map->get(4), 13);
+		CHECK_EQ(map->get(1, 99), 99);
+		CHECK_ERROR(map->get(1), MapError);
+	}
+
 	// TODO: More tests here!
 
 } END_TEST

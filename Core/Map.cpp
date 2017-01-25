@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Map.h"
+#include "Hash.h"
 #include "StrBuf.h"
 #include "GcType.h"
 #include "GcWatch.h"
@@ -18,6 +19,7 @@ namespace storm {
 	};
 
 	MapBase::MapBase(const Handle &k, const Handle &v) : keyT(k), valT(v), watch(null) {
+		checkHashHandle(k);
 		if (k.locationHash)
 			watch = runtime::createWatch(engine());
 	}
