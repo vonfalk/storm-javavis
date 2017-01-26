@@ -28,15 +28,17 @@ namespace storm {
 		// Are we at the end of the stream?
 		virtual Bool STORM_FN more();
 
-		// Read a buffer from the stream. Returns the number of bytes read.
+		// Attempts to fill the remainder of the buffer by reading data from the stream. Starts
+		// filling from the 'filled' parameter of the buffer. Returns the resulting buffer (which
+		// might point to the original data), with a modified 'filled' parameter. The resulting
+		// 'filled' parameter is never smaller than it was in the buffer passed to the stream.
 		Buffer STORM_FN read(Nat maxBytes);
-		Buffer STORM_FN read(Buffer to);
-		virtual Buffer STORM_FN read(Buffer to, Nat start);
+		virtual Buffer STORM_FN read(Buffer to);
 
-		// Peek data.
+		// Peek data. Semantics are the same as 'read', but bytes are not consumed. This means that
+		// the next 'read' or 'peek' operation will see the same bytes the 'peek' operation saw.
 		Buffer STORM_FN peek(Nat maxBytes);
-		Buffer STORM_FN peek(Buffer to);
-		virtual Buffer STORM_FN peek(Buffer to, Nat start);
+		virtual Buffer STORM_FN peek(Buffer to);
 
 		// Reads data until the buffer is filled or at the end of stream. Compared to 'read', after
 		// calling 'readAll' you know that either your buffer is full or the end of the stream was
@@ -87,7 +89,8 @@ namespace storm {
 		// Create.
 		STORM_CTOR OStream();
 
-		// Write some data.
+		// Write all data from the beginning of the buffer (or start, if specified) until the
+		// buffer's 'filled' marker.
 		void STORM_FN write(Buffer buf);
 		virtual void STORM_FN write(Buffer buf, Nat start);
 

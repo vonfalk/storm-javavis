@@ -6,7 +6,7 @@ namespace storm {
 	Utf8Reader::Utf8Reader(IStream *src) : src(src), buf(), pos(0) {}
 
 	Utf8Reader::Utf8Reader(IStream *src, Buffer start) : src(src), buf(), pos(0) {
-		buf = buffer(engine(), bufSize);
+		buf = buffer(engine(), max(Nat(bufSize), start.filled()));
 		buf.filled(start.filled());
 		memcpy(buf.dataPtr(), start.dataPtr(), start.filled());
 	}
@@ -72,7 +72,12 @@ namespace storm {
 			pos = 0;
 		}
 		if (pos >= buf.filled()) {
-			buf = src->read(buf);
+			if (buf.count() < bufSize) {
+				buf = src->read(bufSize);
+			} else {
+				buf.filled(0);
+				buf = src->read(buf);
+			}
 			pos = 0;
 		}
 		if (pos < buf.filled())

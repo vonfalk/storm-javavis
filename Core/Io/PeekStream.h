@@ -22,11 +22,11 @@ namespace storm {
 
 		// Read from the stream.
 		using IStream::read;
-		virtual Buffer STORM_FN read(Buffer to, Nat start);
+		virtual Buffer STORM_FN read(Buffer to);
 
 		// Peek data from the stream.
 		using IStream::peek;
-		virtual Buffer STORM_FN peek(Buffer to, Nat start);
+		virtual Buffer STORM_FN peek(Buffer to);
 
 		// Close.
 		virtual void STORM_FN close();

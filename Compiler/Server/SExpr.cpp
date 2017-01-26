@@ -17,7 +17,7 @@ namespace storm {
 			d.v[1] = byte((Nat(v) >> 16) & 0xFF);
 			d.v[2] = byte((Nat(v) >>  8) & 0xFF);
 			d.v[3] = byte((Nat(v) >>  0) & 0xFF);
-			to->write(Buffer(d));
+			to->write(fullBuffer(d));
 		}
 
 		static void writeInt(OStream *to, byte header, Int v) {
@@ -27,16 +27,16 @@ namespace storm {
 			d.v[2] = byte((Nat(v) >> 16) & 0xFF);
 			d.v[3] = byte((Nat(v) >>  8) & 0xFF);
 			d.v[4] = byte((Nat(v) >>  0) & 0xFF);
-			to->write(Buffer(d));
+			to->write(fullBuffer(d));
 		}
 
 		SExpr::SExpr() {}
 
-		void SExpr::serialize(OStream *to, Connection *c) {
-			// Serialize as 'null'.
+		void SExpr::write(OStream *to, Connection *c) {
+			// Write as 'null'.
 			GcPreArray<byte, 1> d;
-			d.v[0] = 0x00;
-			to->write(Buffer(d));
+			d.v[0] = nil;
+			to->write(fullBuffer(d));
 		}
 
 
@@ -67,13 +67,13 @@ namespace storm {
 			*to << L")";
 		}
 
-		void Cons::serialize(OStream *to, Connection *c) {
+		void Cons::write(OStream *to, Connection *c) {
 			GcPreArray<byte, 1> d;
-			d.v[0] = 0x01;
-			to->write(Buffer(d));
+			d.v[0] = cons;
+			to->write(fullBuffer(d));
 
-			c->serialize(to, first);
-			c->serialize(to, rest);
+			c->write(to, first);
+			c->write(to, rest);
 		}
 
 		Cons *cons(EnginePtr e, MAYBE(SExpr *) first, MAYBE(SExpr *) rest) {
@@ -125,8 +125,8 @@ namespace storm {
 			*to << v;
 		}
 
-		void Number::serialize(OStream *to, Connection *c) {
-			writeInt(to, 0x02, v);
+		void Number::write(OStream *to, Connection *c) {
+			writeInt(to, number, v);
 		}
 
 		String::String(const wchar *str) {
@@ -143,14 +143,14 @@ namespace storm {
 			*to << L"\"" << v->escape() << L"\"";
 		}
 
-		void String::serialize(OStream *to, Connection *c) {
+		void String::write(OStream *to, Connection *c) {
 			OMemStream *mem = new (this) OMemStream();
 			TextWriter *text = new (this) Utf8Writer(mem);
 			text->write(v);
 			text->flush();
 
 			Buffer strData = mem->buffer();
-			writeInt(to, 0x03, strData.filled());
+			writeInt(to, string, strData.filled());
 			to->write(strData);
 		}
 
@@ -175,10 +175,10 @@ namespace storm {
 			return natHash(id);
 		}
 
-		void Symbol::serialize(OStream *to, Connection *c) {
+		void Symbol::write(OStream *to, Connection *c) {
 			if (c->sendSymbol(this)) {
 				// Fist time, send the entire symbol!
-				writeInt(to, 0x04, id);
+				writeInt(to, newSymbol, id);
 
 				OMemStream *mem = new (this) OMemStream();
 				TextWriter *text = new (this) Utf8Writer(mem);
@@ -190,7 +190,7 @@ namespace storm {
 				to->write(strData);
 			} else {
 				// Just send our ID.
-				writeInt(to, 0x05, id);
+				writeInt(to, oldSymbol, id);
 			}
 		}
 	}

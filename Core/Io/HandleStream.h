@@ -68,11 +68,11 @@ namespace storm {
 
 		// Read a buffer from the stream. Returns the number of bytes read.
 		using IStream::read;
-		virtual Buffer STORM_FN read(Buffer to, Nat start);
+		virtual Buffer STORM_FN read(Buffer to);
 
 		// Peek data.
 		using IStream::peek;
-		virtual Buffer STORM_FN peek(Buffer to, Nat start);
+		virtual Buffer STORM_FN peek(Buffer to);
 
 		// Get a random access IStream. May return the same stream!
 		virtual RIStream *STORM_FN randomAccess();

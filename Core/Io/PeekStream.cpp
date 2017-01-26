@@ -30,10 +30,8 @@ namespace storm {
 		return !atEof;
 	}
 
-	Buffer PeekIStream::read(Buffer b, Nat start) {
-		start = min(start, b.count());
-		b.filled(0);
-
+	Buffer PeekIStream::read(Buffer b) {
+		Nat start = b.filled();
 		Nat read = b.count() - start;
 
 		// Is there anything left in the lookahead for us to consume?
@@ -58,10 +56,8 @@ namespace storm {
 		return b;
 	}
 
-	Buffer PeekIStream::peek(Buffer b, Nat start) {
-		start = min(start, b.count());
-		b.filled(0);
-
+	Buffer PeekIStream::peek(Buffer b) {
+		Nat start = b.filled();
 		Nat toPeek = b.count() - start;
 		Nat avail = doLookahead(toPeek);
 		if (!lookahead)

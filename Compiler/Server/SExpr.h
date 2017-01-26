@@ -18,9 +18,21 @@ namespace storm {
 		public:
 			STORM_CTOR SExpr();
 
+			/**
+			 * Tags in the stream for the different objects.
+			 */
+			enum Tag {
+				nil = 0x00,
+				cons = 0x01,
+				number = 0x02,
+				string = 0x03,
+				newSymbol = 0x04,
+				oldSymbol = 0x05,
+			};
+
 		protected:
-			// Serialize to a stream.
-			virtual void STORM_FN serialize(OStream *to, Connection *sym);
+			// Write to a stream.
+			virtual void STORM_FN write(OStream *to, Connection *sym);
 
 			friend class Connection;
 		};
@@ -40,8 +52,8 @@ namespace storm {
 			virtual void STORM_FN deepCopy(CloneEnv *env);
 			virtual void STORM_FN toS(StrBuf *to) const;
 		protected:
-			// Serialize to a stream.
-			virtual void STORM_FN serialize(OStream *to, Connection *sym);
+			// Write to a stream.
+			virtual void STORM_FN write(OStream *to, Connection *sym);
 		};
 
 		// Convenience functions.
@@ -62,8 +74,8 @@ namespace storm {
 			virtual void STORM_FN deepCopy(CloneEnv *env);
 			virtual void STORM_FN toS(StrBuf *to) const;
 		protected:
-			// Serialize to a stream.
-			virtual void STORM_FN serialize(OStream *to, Connection *sym);
+			// Write to a stream.
+			virtual void STORM_FN write(OStream *to, Connection *sym);
 		};
 
 		/**
@@ -80,8 +92,8 @@ namespace storm {
 			virtual void STORM_FN deepCopy(CloneEnv *env);
 			virtual void STORM_FN toS(StrBuf *to) const;
 		protected:
-			// Serialize to a stream.
-			virtual void STORM_FN serialize(OStream *to, Connection *sym);
+			// Write to a stream.
+			virtual void STORM_FN write(OStream *to, Connection *sym);
 		};
 
 		/**
@@ -99,8 +111,8 @@ namespace storm {
 			virtual Nat STORM_FN hash() const;
 
 		protected:
-			// Serialize to a stream.
-			virtual void STORM_FN serialize(OStream *to, Connection *sym);
+			// Write to a stream.
+			virtual void STORM_FN write(OStream *to, Connection *sym);
 
 		private:
 			Symbol(Str *v, Nat id);

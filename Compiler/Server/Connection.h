@@ -10,6 +10,33 @@ namespace storm {
 		STORM_PKG(core.lang.server);
 
 		/**
+		 * De-serialization result.
+		 */
+		class ReadResult {
+			STORM_VALUE;
+		public:
+			STORM_CTOR ReadResult();
+			STORM_CTOR ReadResult(Nat consumed, MAYBE(SExpr *) result);
+
+			// # of bytes consumed. 0 = failed.
+			Nat consumed;
+
+			// Resulting SExpr.
+			MAYBE(SExpr *) result;
+
+			// Failed?
+			inline Bool STORM_FN failed() const {
+				return consumed == 0;
+			}
+
+			// Increase number of bytes consumed.
+			inline ReadResult STORM_FN operator +(Nat bytes) const {
+				return ReadResult(consumed + bytes, result);
+			}
+		};
+
+
+		/**
 		 * Connection enpoint to a client.
 		 */
 		class Connection : public Object {
@@ -32,8 +59,18 @@ namespace storm {
 			// Send a message.
 			void STORM_FN send(SExpr *msg);
 
-			// Serialize a SExpr for sending. Handles null properly.
-			void STORM_FN serialize(OStream *to, MAYBE(SExpr *) msg);
+			// Wait for a message (the message may be 'null').
+			MAYBE(SExpr *) STORM_FN receive();
+
+			/**
+			 * Low-level read/write interface.
+			 */
+
+			// Write a SExpr to a stream. Handles null properly.
+			void STORM_FN write(OStream *to, MAYBE(SExpr *) msg);
+
+			// Read a SExpr from a stream.
+			ReadResult STORM_FN read(IStream *from);
 
 		private:
 			// Remember created symbols.
@@ -51,6 +88,13 @@ namespace storm {
 			// Input and output streams.
 			IStream *input;
 			OStream *output;
+
+			// Read a partial SExpression given we know its header.
+			ReadResult readCons(IStream *from);
+			ReadResult readNumber(IStream *from);
+			ReadResult readString(IStream *from);
+			ReadResult readNewSymbol(IStream *from);
+			ReadResult readOldSymbol(IStream *from);
 		};
 
 	}

@@ -16,9 +16,7 @@ namespace storm {
 
 	Buffer::Buffer() : data(null) {}
 
-	Buffer::Buffer(GcArray<byte> *buf) : data(buf) {
-		filled(buf->count);
-	}
+	Buffer::Buffer(GcArray<byte> *buf) : data(buf) {}
 
 	Buffer::Buffer(const Buffer &o) : data(o.data) {}
 
@@ -33,9 +31,19 @@ namespace storm {
 	}
 
 	Buffer buffer(EnginePtr e, Nat count) {
-		Buffer z(runtime::allocArray<byte>(e.v, &bufType, count));
-		z.filled(count);
-		return z;
+		return Buffer(runtime::allocArray<byte>(e.v, &bufType, count));
+	}
+
+	Buffer emptyBuffer(GcArray<byte> *data) {
+		Buffer r(data);
+		r.filled(0);
+		return r;
+	}
+
+	Buffer fullBuffer(GcArray<byte> *data) {
+		Buffer r(data);
+		r.filled(data->count);
+		return r;
 	}
 
 	Buffer buffer(EnginePtr e, const byte *data, Nat count) {
@@ -46,7 +54,7 @@ namespace storm {
 	}
 
 	Buffer grow(EnginePtr e, Buffer src, Nat newCount) {
-		Buffer r(runtime::allocArray<byte>(e.v, &bufType, newCount));
+		Buffer r = buffer(e, newCount);
 		memcpy(r.dataPtr(), src.dataPtr(), src.filled());
 		r.filled(src.filled());
 		return r;

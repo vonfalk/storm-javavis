@@ -89,7 +89,7 @@ namespace storm {
 		// Get a value. Throws if it does not exist.
 		void *CODECALL getRaw(const void *key);
 
-		// Get a value. Create it if it does not exist.
+		// Get a value. Returns 'def' if it does not exist.
 		void *CODECALL getRawDef(const void *key, const void *def);
 
 		// Get a value. Create using the constructor if it does not exist.

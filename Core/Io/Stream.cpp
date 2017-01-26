@@ -14,28 +14,18 @@ namespace storm {
 	}
 
 	Buffer IStream::read(Nat c) {
-		return read(buffer(engine(), c), 0);
+		return read(buffer(engine(), c));
 	}
 
 	Buffer IStream::read(Buffer to) {
-		return read(to, 0);
-	}
-
-	Buffer IStream::read(Buffer to, Nat start) {
-		to.filled(0);
 		return to;
 	}
 
 	Buffer IStream::peek(Nat c) {
-		return peek(buffer(engine(), c), 0);
+		return peek(buffer(engine(), c));
 	}
 
 	Buffer IStream::peek(Buffer to) {
-		return peek(to, 0);
-	}
-
-	Buffer IStream::peek(Buffer to, Nat start) {
-		to.filled(0);
 		return to;
 	}
 
@@ -46,7 +36,7 @@ namespace storm {
 	Buffer IStream::readAll(Buffer b) {
 		b.filled(0);
 		while (!b.full() && more()) {
-			b = read(b, b.filled());
+			b = read(b);
 		}
 		return b;
 	}

@@ -200,9 +200,8 @@ namespace storm {
 		return tell() < length();
 	}
 
-	Buffer HandleRIStream::read(Buffer b, Nat start) {
-		start = min(start, b.count());
-		b.filled(0);
+	Buffer HandleRIStream::read(Buffer b) {
+		Nat start = b.filled();
 
 		if (!handle)
 			return b;
@@ -212,14 +211,12 @@ namespace storm {
 		return b;
 	}
 
-	Buffer HandleRIStream::peek(Buffer b, Nat start) {
-		b.filled(0);
-
+	Buffer HandleRIStream::peek(Buffer b) {
 		if (!handle)
 			return b;
 
 		Word pos = tell();
-		b = read(b, start);
+		b = read(b);
 		seek(pos);
 
 		return b;
