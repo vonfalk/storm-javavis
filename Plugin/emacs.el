@@ -7,11 +7,16 @@
 ;; Use 'global-storm-mode' to start storm-mode globally, or 'storm-mode' to use storm-mode for a
 ;; single buffer.
 
+;; Configuration.
 (defvar storm-mode-root nil "Root of the Storm source tree.")
 (defvar storm-mode-compiler nil "Path to the Storm compiler.")
 (defvar storm-mode-stdlib nil "Root of the Storm standard library (currently not used).")
 (defvar storm-mode-compile-compiler nil "Try to compile the compiler before starting it.")
 
+
+;; State for all buffers using storm-mode.
+(defvar storm-mode-buffers (make-hash-table) "Map of all buffers and their associated id.")
+(defvar storm-mode-next-id 0   "Next usable buffer ID in storm-mode.")
 
 (defun global-storm-mode ()
   "Use storm-mode for all applicable buffers."
@@ -30,8 +35,11 @@
   (set (make-local-variable 'indent-line-function) 'storm-indent-line)
   (setq major-mode 'storm-mode)
   (setq mode-name "Storm")
-  (run-hooks 'storm-mode-hook)
-  )
+  (storm-register-buffer (current-buffer))
+  (add-hook 'kill-buffer-hook 'storm-buffer-killed)
+  (add-hook 'after-change-functions 'storm-buffer-changed)
+
+  (run-hooks 'storm-mode-hook))
 
 (provide 'storm-mode)
 
@@ -59,6 +67,43 @@
 (defface storm-server-killed
   '((t :foreground "red"))
   "Face used indicating the server died for some reason.")
+
+;; Buffer management.
+
+(defun storm-register-buffer (buffer)
+  "Register a new buffer with the running storm process."
+  (let ((buffer-id (gethash buffer storm-mode-buffers nil)))
+    (unless buffer-id
+      ;; Not in the list of buffers, add it!
+      (setq buffer-id storm-mode-next-id)
+      (puthash buffer storm-mode-next-id storm-mode-buffers)
+      (setq storm-mode-next-id (1+ buffer-id)))
+
+    ;; Tell Storm what is happening.
+    (with-current-buffer buffer
+      (storm-send (list 'open
+			buffer-id
+			(buffer-file-name)
+			(buffer-substring-no-properties (point-min) (point-max)))))))
+
+(defun storm-buffer-killed ()
+  "Called when a buffer is going to be killed."
+  (let* ((buffer (current-buffer))
+	 (buffer-id (gethash buffer storm-mode-buffers nil)))
+    (when buffer-id
+      (remhash buffer storm-mode-buffers)
+      (when (storm-running-p)
+	(storm-send (list 'close buffer-id))))))
+
+(defun storm-buffer-changed (change-begin change-end old-length)
+  "Called when the contents of a buffer has been changed."
+  (let* ((buffer-id (gethash (current-buffer) storm-mode-buffers nil)))
+    (when buffer-id
+      (storm-send (list 'change
+			buffer-id
+			change-begin
+			(+ change-begin old-length)
+			(buffer-substring-no-properties change-begin change-end))))))
 
 ;; Communication with the Storm process.
 
@@ -188,12 +233,16 @@
     (set-buffer-multibyte t)
     (compilation-mode))
 
-  ;;TODO: Re-create any open buffers inside the Storm process.
+  ;; Re-create any open buffers inside the Storm process.
+  (maphash
+   (lambda (buffer id)
+     (storm-register-buffer buffer))
+   storm-mode-buffers)
 
   ;; Send any queued messages.
   (storm-send-messages storm-process-message-queue)
-  (setq storm-process-message-queue nil)
-  )
+  (setq storm-process-message-queue nil))
+
 
 (defun storm-send-messages (queue)
   "Send all messages in the queue, in reverse order (as that is how they are added)."
@@ -427,13 +476,3 @@
 	(insert #x04)
 	(storm-encode-number id)
 	(storm-encode-string (symbol-name sym))))))
-
-;;; For debugging ;;;
-
-(defun tmp-send ()
-  (interactive)
-  (storm-send '(22 10 ("hej" storm) storm)))
-  (send-string storm-process (storm-encode '(22 10 ("hej" storm) storm))))
-
-(global-set-key (kbd "C-M-y") 'tmp-send)
-

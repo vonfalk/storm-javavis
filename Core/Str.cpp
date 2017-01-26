@@ -324,6 +324,9 @@ namespace storm {
 		} else if (ch == extra) {
 			*to << L"\\" << extra;
 			return true;
+		} else if (ch.codepoint() < 32) {
+			*to << L"\\x" << hex(Byte(ch.codepoint()));
+			return true;
 		} else {
 			return false;
 		}

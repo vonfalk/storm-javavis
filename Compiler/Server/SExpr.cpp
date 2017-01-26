@@ -140,7 +140,21 @@ namespace storm {
 		}
 
 		void String::toS(StrBuf *to) const {
-			*to << L"\"" << v->escape() << L"\"";
+			*to << L"\"";
+
+			Nat count = 0;
+			Str *escaped = v->escape();
+			for (Str::Iter i = escaped->begin(), end = escaped->end(); i != end; ++i) {
+				*to << i.v();
+
+				if (++count > 50) {
+					*to << L"...";
+					break;
+				}
+			}
+
+			*to << L"\"";
+			// *to << L"\"" << v->escape() << L"\"";
 		}
 
 		void String::write(OStream *to, Connection *c) {

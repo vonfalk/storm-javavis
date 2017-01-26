@@ -14,3 +14,16 @@ First byte  	    Meaning
 Note: symbols are stored in a hash table for the server and the client. The server starts at high
 id:s while the client starts allocating symbols at low id:s. Note that the server and the client
 might accidentally allocate different id:s for the same symbol. This is not a problem.
+
+
+Messages are sent as a list of at least one element, where the first element is a symbol describing
+the type of the message. Any remaining parameters depend on the message type that was sent.
+
+Messages sent from a client to the server:
+
+Message	                  Description
+(quit)	 	 	  Asks the Storm process to quit.
+(open id path content)	  Open a new file from 'path', hereby referred to as 'id' containing 'content'.
+(close id)    		  Close a previously opened file.
+(change id from to text)  The file 'id' has been changed. The text between 'from' and 'to' is replaced by 'text'.
+

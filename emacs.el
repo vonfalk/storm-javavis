@@ -323,4 +323,14 @@
 (setq storm-mode-compiler "~/Projects/storm/debug/Storm.exe")
 (setq storm-mode-compile-compiler t)
 
+
+;;; For debugging ;;;
+
 (global-set-key (kbd "C-M-u") 'storm-restart)
+
+(defun tmp-send ()
+  (interactive)
+  (storm-send '(22 10 ("hej" storm) storm)))
+
+(global-set-key (kbd "C-M-y") 'tmp-send)
+
