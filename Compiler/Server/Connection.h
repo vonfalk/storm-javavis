@@ -3,6 +3,7 @@
 #include "Core/Str.h"
 #include "Core/Map.h"
 #include "Core/Io/Stream.h"
+#include "Core/Io/MemStream.h"
 #include "Core/Io/Text.h"
 
 namespace storm {
@@ -59,7 +60,7 @@ namespace storm {
 			// Send a message.
 			void STORM_FN send(SExpr *msg);
 
-			// Wait for a message (the message may be 'null').
+			// Wait for a message. Any 'null' messages are ignored. If 'null' is returned, we received EOF.
 			MAYBE(SExpr *) STORM_FN receive();
 
 			/**
@@ -89,12 +90,21 @@ namespace storm {
 			IStream *input;
 			OStream *output;
 
+			// Data having been read from 'input' but not yet processed.
+			OMemStream *inputBuffer;
+
 			// Read a partial SExpression given we know its header.
 			ReadResult readCons(IStream *from);
 			ReadResult readNumber(IStream *from);
 			ReadResult readString(IStream *from);
 			ReadResult readNewSymbol(IStream *from);
 			ReadResult readOldSymbol(IStream *from);
+
+			// Try to read some data from 'inputBuffer'.
+			ReadResult readBuffer();
+
+			// Fill the input buffer with new data from 'input'. Return 'false' on error.
+			Bool fillBuffer();
 		};
 
 	}

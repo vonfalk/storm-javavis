@@ -72,6 +72,10 @@ namespace storm {
 	// Grow a buffer.
 	Buffer STORM_FN grow(EnginePtr e, Buffer src, Nat newCount);
 
+	// Get a 'substring' of a buffer.
+	Buffer STORM_FN cut(EnginePtr e, Buffer src, Nat from);
+	Buffer STORM_FN cut(EnginePtr e, Buffer src, Nat from, Nat count);
+
 	// Output.
 	void STORM_FN outputMark(StrBuf &to, Buffer b, Nat markAt);
 	StrBuf &STORM_FN operator <<(StrBuf &to, Buffer b);

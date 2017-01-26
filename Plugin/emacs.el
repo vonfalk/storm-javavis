@@ -33,6 +33,8 @@
   (run-hooks 'storm-mode-hook)
   )
 
+(provide 'storm-mode)
+
 (defun storm-indent-line ()
   "Indent the current line in storm-mode."
   (interactive)
@@ -374,7 +376,12 @@
 	(insert #x04)
 	(storm-encode-number id)
 	(storm-encode-string (symbol-name sym))))))
-	     
 
+;;; For debugging ;;;
 
-(provide 'storm-mode)
+(defun tmp-send ()
+  (interactive)
+  (send-string storm-process (concat (char-to-string #x00) (storm-encode '(22 10 ("hej" storm) storm)))))
+
+(global-set-key (kbd "C-M-y") 'tmp-send)
+

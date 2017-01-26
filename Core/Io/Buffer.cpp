@@ -60,6 +60,27 @@ namespace storm {
 		return r;
 	}
 
+	Buffer cut(EnginePtr e, Buffer src, Nat from) {
+		Nat count = 0;
+		if (src.count() > from)
+			count = src.count() - from;
+		return cut(e, src, from, count);
+	}
+
+	Buffer cut(EnginePtr e, Buffer src, Nat from, Nat count) {
+		Buffer r = buffer(e, count);
+
+		if (src.filled() > from) {
+			Nat copy = src.filled() - from;
+			memcpy(r.dataPtr(), src.dataPtr() + from, copy);
+			r.filled(copy);
+		} else {
+			r.filled(0);
+		}
+
+		return r;
+	}
+
 	StrBuf &operator <<(StrBuf &to, Buffer b) {
 		outputMark(to, b, b.count());
 		return to;

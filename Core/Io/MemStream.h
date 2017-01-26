@@ -13,6 +13,7 @@ namespace storm {
 	public:
 		// Create from a buffer.
 		STORM_CTOR IMemStream(Buffer b);
+		STORM_CTOR IMemStream(Buffer b, Nat start);
 
 		// Copy.
 		IMemStream(const IMemStream &o);
@@ -25,11 +26,11 @@ namespace storm {
 
 		// Read.
 		using RIStream::read;
-		virtual Buffer STORM_FN read(Buffer to, Nat start);
+		virtual Buffer STORM_FN read(Buffer to);
 
 		// Peek.
 		using RIStream::peek;
-		virtual Buffer STORM_FN peek(Buffer to, Nat start);
+		virtual Buffer STORM_FN peek(Buffer to);
 
 		// Seek.
 		virtual void STORM_FN seek(Word to);
@@ -62,6 +63,9 @@ namespace storm {
 	public:
 		// Create.
 		STORM_CTOR OMemStream();
+
+		// Create. Append to a buffer.
+		STORM_CTOR OMemStream(Buffer appendTo);
 
 		// Copy.
 		OMemStream(const OMemStream &o);

@@ -36,7 +36,9 @@ namespace storm {
 							c->symbol(L"storm"));
 			c->send(msg);
 
-			Sleep(1000);
+
+			msg = c->receive();
+			PLN(L"Got message: " << msg);
 
 
 			// Terminate...

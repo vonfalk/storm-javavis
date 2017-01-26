@@ -21,6 +21,7 @@ namespace storm {
 			symNames = new (this) NameMap();
 			symIds = new (this) IdMap();
 			lastSymId = 0x80000000; // Emacs only uses ~30 bits for integers.
+			inputBuffer = new (this) OMemStream();
 		}
 
 		Symbol *Connection::symbol(const wchar *name) {
@@ -68,12 +69,28 @@ namespace storm {
 
 			// Send the message.
 			textOut->writeLine(expr->toS());
-			textOut->writeLine(out->toS());
+			// textOut->writeLine(out->toS());
 			output->write(out->buffer());
 		}
 
-		MAYBE(SExpr *) Connection::receive() {
-			return null;
+		SExpr *Connection::receive() {
+			// Read messages from the buffer until we fail (all failures are due to not enough data).
+			SExpr *result = null;
+			while (result == null) {
+				ReadResult r = readBuffer();
+				if (r.failed()) {
+					// We need to read more data!
+					if (!fillBuffer())
+						return null;
+				} else {
+					// Remove data from the buffer.
+					Buffer trimmed = cut(engine(), inputBuffer->buffer(), r.consumed);
+					inputBuffer = new (this) OMemStream(trimmed);
+					result = r.result;
+				}
+			}
+
+			return result;
 		}
 
 		void Connection::write(OStream *to, MAYBE(SExpr *) expr) {
@@ -86,29 +103,76 @@ namespace storm {
 			}
 		}
 
-		ReadResult Connection::read(IStream *from) {
-			GcPreArray<byte, 1> type;
-			Buffer r = from->read(emptyBuffer(type));
-			if (r.filled() == 0)
+		static Nat bufLen(const Buffer &b) {
+			for (Nat i = 0; i < b.filled(); i++)
+				if (b[i] == 0x00)
+					return i;
+
+			return b.filled();
+		}
+
+		ReadResult Connection::readBuffer() {
+			Buffer b = inputBuffer->buffer();
+			if (b.empty())
 				return ReadResult();
 
-			switch (r[0]) {
+			// An SExpr or a raw string at the front?
+			if (b[0] == 0x00) {
+				// Message, try to parse it!
+				return read(new (this) IMemStream(b, 1));
+			} else {
+				// A plain string. Forward it to our stdin.
+				Nat len = bufLen(b);
+				// TODO: We do not maintain a stdin yet. For now: just throw the data away!
+				return ReadResult(len, null);
+			}
+		}
+
+		Bool Connection::fillBuffer() {
+			const Nat chunk = 1024;
+			Buffer r = input->read(chunk);
+			if (r.empty())
+				return false;
+
+			inputBuffer->write(r);
+			return true;
+		}
+
+		ReadResult Connection::read(IStream *from) {
+			GcPreArray<byte, 1> type;
+			Buffer kind = from->read(emptyBuffer(type));
+			if (kind.filled() == 0)
+				return ReadResult();
+
+			ReadResult r;
+			switch (kind[0]) {
 			case SExpr::nil:
-				return ReadResult(1, null);
+				r = ReadResult(1, null);
+				break;
 			case SExpr::cons:
-				return readCons(from) + 1;
+				r = readCons(from);
+				break;
 			case SExpr::number:
-				return readNumber(from) + 1;
+				r = readNumber(from);
+				break;
 			case SExpr::string:
-				return readString(from) + 1;
+				r = readString(from);
+				break;
 			case SExpr::newSymbol:
-				return readNewSymbol(from) + 1;
+				r = readNewSymbol(from);
+				break;
 			case SExpr::oldSymbol:
-				return readOldSymbol(from) + 1;
+				r = readOldSymbol(from);
+				break;
 			default:
 				// Return null for this sub-expression, so that parsing goes on...
+				textOut->writeLine(new (this) Str(L"WARNING: Invalid type found in message."));
 				return ReadResult(1, null);
 			}
+
+			if (!r.failed())
+				r = r + 1;
+			return r;
 		}
 
 		ReadResult Connection::readCons(IStream *from) {

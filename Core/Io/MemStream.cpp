@@ -8,6 +8,13 @@ namespace storm {
 	IMemStream::IMemStream(Buffer b) : data(buffer(engine(), b.filled())), pos(0) {
 		// Copy the filled data.
 		memcpy(data.dataPtr(), b.dataPtr(), b.filled());
+		data.filled(b.filled());
+	}
+
+	IMemStream::IMemStream(Buffer b, Nat start) : data(buffer(engine(), b.filled())), pos(start) {
+		// Copy the filled data.
+		memcpy(data.dataPtr(), b.dataPtr(), b.filled());
+		data.filled(b.filled());
 	}
 
 	IMemStream::IMemStream(const IMemStream &o) : data(o.data) {}
@@ -20,16 +27,16 @@ namespace storm {
 		return pos < data.count();
 	}
 
-	Buffer IMemStream::read(Buffer to, Nat start) {
-		start = min(start, to.count());
-		to = peek(to, start);
+	Buffer IMemStream::read(Buffer to) {
+		Nat start = to.filled();
+		to = peek(to);
 		pos += to.filled() - start;
 		return to;
 	}
 
-	Buffer IMemStream::peek(Buffer to, Nat start) {
-		start = min(start, to.count());
-		nat copy = min(data.count() - pos, to.count() - start);
+	Buffer IMemStream::peek(Buffer to) {
+		Nat start = to.filled();
+		Nat copy = min(to.count() - start, data.count() - pos);
 		memcpy(to.dataPtr() + start, data.dataPtr() + pos, copy);
 		to.filled(copy + start);
 		return to;
@@ -57,6 +64,8 @@ namespace storm {
 
 
 	OMemStream::OMemStream() {}
+
+	OMemStream::OMemStream(Buffer appendTo) : data(appendTo) {}
 
 	OMemStream::OMemStream(const OMemStream &o) : data(o.data) {
 		data.deepCopy(null);
