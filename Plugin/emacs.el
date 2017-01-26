@@ -68,6 +68,10 @@
 (defvar storm-process-sym-to-id nil "List of symbols shared with the Storm process.")
 (defvar storm-process-id-to-sym nil "List of symbols shared with the Storm process.")
 (defvar storm-process-next-id 0 "Next symbol id.")
+(defvar storm-process-stop-timer nil
+  "Timer used for timeout when killing the storm process along with the function to run afterwards.")
+(defvar storm-process-message-queue nil
+  "Messages queued for when the storm process was started.")
 
 (defun storm-start ()
   "Make sure that the background Storm process is up and running. Start it if neccessary."
@@ -78,18 +82,52 @@
 	(storm-start-compile)
       (storm-start-compiler))))
 
-(defun storm-stop ()
+(defun storm-stop (&optional when-done)
   "Stop the current Storm process (if any)."
   (interactive)
-  (when storm-process
-    (delete-process storm-process)
-    (setq storm-process 'nil)))
+  (if storm-process
+      (progn
+	;; Give Storm 2 seconds to terminate gracefully...
+	(setq storm-process-stop-timer
+	      (cons
+	       (run-at-time 2 nil 'storm-kill)
+	       when-done))
+	;; Send a quit message.
+	(storm-send '(quit)))
+    (when when-done
+      (funcall when-done))))
+
+(defun storm-kill ()
+  "Kill the storm process."
+  (output-string "\n\nKilling storm process...\n" 'storm-server-killed)
+  (storm-terminated))
+
+(defun storm-terminated ()
+  "Called when the storm process has been terminated (or should be forcefully terminated)."
+  (delete-process storm-process)
+  (setq storm-process-output nil)
+  (setq storm-process nil)
+  (when storm-process-stop-timer
+    (let ((to-call (cdr storm-process-stop-timer)))
+      (cancel-timer (car storm-process-stop-timer))
+      (setq storm-process-stop-timer nil)
+      (when to-call
+	(funcall to-call)))))
+
 
 (defun storm-restart ()
   "Restart the current Storm process."
   (interactive)
-  (storm-stop)
-  (storm-start))
+  (storm-stop 'storm-start))
+
+(defun storm-send (message)
+  "Send a message to the Storm process (launching it if it is not running)."
+  (if (storm-running-p)
+      (send-string storm-process (storm-encode message))
+    (progn
+      (setq storm-process-message-queue
+	    (cons message storm-process-message-queue))
+      (storm-start))))
 
 (defun storm-running-p ()
   "Get the current status of the Storm process."
@@ -107,9 +145,11 @@
 (defun storm-start-compile ()
   "Start the Storm compiler by first compiling it."
   (add-to-list 'compilation-finish-functions 'storm-compilation-finished)
-  (let ((default-directory (storm-parent-directory (file-name-directory storm-mode-compiler))))
-    (setq storm-running-compile
-	  (compile "mm Main -ne"))))
+  ;; Make sure not to run multiple compilations.
+  (unless storm-running-compile
+    (let ((default-directory (storm-parent-directory (file-name-directory storm-mode-compiler))))
+      (setq storm-running-compile
+	    (compile "mm Main -ne")))))
 
 (defun storm-compilation-finished (buffer exit-status)
   "Called whenever a compilation buffer has finished."
@@ -119,7 +159,9 @@
 	(progn
 	  (message "Compilation successful, starting Storm!")
 	  (storm-start-compiler))
-      (message "Compilation failed."))))
+      (progn
+	(message "Compilation failed.")
+	(setq storm-process-message-queue nil)))))
 
 (defun storm-start-compiler ()
   "Start the Storm compiler."
@@ -147,7 +189,17 @@
     (compilation-mode))
 
   ;;TODO: Re-create any open buffers inside the Storm process.
+
+  ;; Send any queued messages.
+  (storm-send-messages storm-process-message-queue)
+  (setq storm-process-message-queue nil)
   )
+
+(defun storm-send-messages (queue)
+  "Send all messages in the queue, in reverse order (as that is how they are added)."
+  (when queue
+    (storm-send-messages (cdr queue))
+    (storm-send (car queue))))
 
 (defun storm-on-message (process input)
   "Receives input from a Storm process and acts accordingly."
@@ -222,9 +274,7 @@
     (unless (process-live-p storm-process)
       (message "Storm process terminated.")
       (output-string "\n\nStorm process terminated.\n" 'storm-server-killed)
-      (delete-process storm-process)
-      (setq storm-process-output nil)
-      (setq storm-process nil))))
+      (storm-terminated))))
 
 ;; Decoding messages in a raw string.
 
@@ -327,6 +377,7 @@
   "Encode a s-expression."
   (with-temp-buffer
     (set-buffer-multibyte nil)
+    (insert-char #x00) ;; Start of message marker.
     (storm-encode-buffer msg)
     (buffer-string)))
 
@@ -381,7 +432,8 @@
 
 (defun tmp-send ()
   (interactive)
-  (send-string storm-process (concat (char-to-string #x00) (storm-encode '(22 10 ("hej" storm) storm)))))
+  (storm-send '(22 10 ("hej" storm) storm)))
+  (send-string storm-process (storm-encode '(22 10 ("hej" storm) storm))))
 
 (global-set-key (kbd "C-M-y") 'tmp-send)
 

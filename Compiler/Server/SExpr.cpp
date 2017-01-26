@@ -162,7 +162,7 @@ namespace storm {
 		}
 
 		void Symbol::toS(StrBuf *to) const {
-			*to << L"'" << v->escape(' ');
+			*to << v->escape(' ');
 		}
 
 		Bool Symbol::equals(Object *o) const {

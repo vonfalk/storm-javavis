@@ -1,9 +1,8 @@
 #include "stdafx.h"
 #include "Main.h"
 #include "Engine.h"
-#include "SExpr.h"
+#include "Server.h"
 #include "Connection.h"
-#include "Core/Io/MemStream.h"
 
 namespace storm {
 	namespace server {
@@ -20,26 +19,17 @@ namespace storm {
 			e.stdOut(c->textOut);
 			e.stdError(c->textOut);
 
-			// TODO: Do something useful with stdin as well?
+			// TODO: Do something useful with stdin as well!
 
-			// Start up!
-			TextWriter *out = c->textOut;
-			out->writeLine(new (e) Str(L"Welcome to the language server!"));
-
-			SExpr *msg = list(e, 5,
-							new (e) Number(1),
-							new (e) String(L"string"),
-							list(e, 2,
-								new (e) Number(2),
-								new (e) Number(3)),
-							c->symbol(L"storm"),
-							c->symbol(L"storm"));
-			c->send(msg);
-
-
-			msg = c->receive();
-			PLN(L"Got message: " << msg);
-
+			// Run the server!
+			try {
+				Server *s = new (e) Server(c);
+				s->run();
+			} catch (...) {
+				e.stdOut(oldOut);
+				e.stdError(oldError);
+				throw;
+			}
 
 			// Terminate...
 			e.stdOut(oldOut);
