@@ -68,7 +68,7 @@ namespace storm {
 			write(out, expr);
 
 			// Send the message.
-			textOut->writeLine(expr->toS());
+			// textOut->writeLine(expr->toS());
 			// textOut->writeLine(out->toS());
 			output->write(out->buffer());
 		}

@@ -327,10 +327,9 @@
 ;;; For debugging ;;;
 
 (global-set-key (kbd "C-M-u") 'storm-restart)
+(global-set-key (kbd "C-M-y") 'storm-stop)
 
 (defun tmp-send ()
   (interactive)
   (storm-send '(22 10 ("hej" storm) storm)))
-
-(global-set-key (kbd "C-M-y") 'tmp-send)
 

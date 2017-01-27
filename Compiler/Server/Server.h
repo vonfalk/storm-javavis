@@ -1,6 +1,7 @@
 #pragma once
 #include "Compiler/Thread.h"
 #include "Connection.h"
+#include "File.h"
 
 namespace storm {
 	namespace server {
@@ -25,11 +26,32 @@ namespace storm {
 			// Connection.
 			Connection *conn;
 
+			// Open files.
+			Map<Nat, File *> *files;
+
 			// Keep track of some symbols we need.
 			Symbol *quit;
+			Symbol *open;
+			Symbol *edit;
+			Symbol *close;
+			Symbol *color;
+
+			// Keep track of the color symbols used.
+			Array<Symbol *> *colorSyms;
+
+			// Find the symbol to be used for a specific color.
+			Symbol *colorSym(TextColor color);
 
 			// Process a message.
 			Bool process(SExpr *msg);
+
+			// Handle specific messages.
+			void onOpen(SExpr *msg);
+			void onEdit(SExpr *msg);
+			void onClose(SExpr *msg);
+
+			// Send updates for 'range' in 'file'.
+			void update(File *file, Range range, Nat editId);
 
 			// Convenience functions for printing things.
 			void print(Str *s);

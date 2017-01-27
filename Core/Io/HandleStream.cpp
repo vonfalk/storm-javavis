@@ -76,7 +76,7 @@ namespace storm {
 		}
 
 		if (WriteFile(h.v(), src, DWORD(limit), NULL, &request)) {
-			// Completed synchronusly.
+			// Completed synchronously.
 		} else if (GetLastError() == ERROR_IO_PENDING) {
 			// Completing async...
 			request.wake.down();
@@ -268,8 +268,14 @@ namespace storm {
 
 	void HandleOStream::write(Buffer to, Nat start) {
 		start = min(start, to.filled());
-		if (handle)
-			storm::write(handle, attachedTo, to.dataPtr() + start, to.filled() - start);
+		if (handle) {
+			while (start < to.filled()) {
+				Nat r = storm::write(handle, attachedTo, to.dataPtr() + start, to.filled() - start);
+				if (r == 0)
+					break;
+				start += r;
+			}
+		}
 	}
 
 	void HandleOStream::close() {

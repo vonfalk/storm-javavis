@@ -148,8 +148,10 @@ namespace storm {
 
 	void Utf8Writer::writeBytes(const byte *data, Nat count) {
 		Nat filled = buf.filled();
-		if (filled + count >= buf.count())
+		if (filled + count >= buf.count()) {
 			flush();
+			filled = buf.filled();
+		}
 
 		memcpy(buf.dataPtr() + filled, data, count);
 		buf.filled(filled + count);

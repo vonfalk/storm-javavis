@@ -321,7 +321,7 @@ namespace storm {
 		} else if (ch == Char('\v')) {
 			*to << L"\\v";
 			return true;
-		} else if (ch == extra) {
+		} else if (ch == extra && extra != Char()) {
 			*to << L"\\" << extra;
 			return true;
 		} else if (ch.codepoint() < 32) {

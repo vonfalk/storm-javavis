@@ -3,12 +3,17 @@
 #include "Core/EnginePtr.h"
 #include "Core/Array.h"
 #include "Core/Io/Stream.h"
+#include "Compiler/Exception.h"
 
 namespace storm {
 	namespace server {
 		STORM_PKG(core.lang.server);
 
 		class Connection;
+		class Cons;
+		class Number;
+		class String;
+		class Symbol;
 
 		/**
 		 * Messages sent to and from the client. This is based on S-Expressions from LISP.
@@ -29,6 +34,12 @@ namespace storm {
 				newSymbol = 0x04,
 				oldSymbol = 0x05,
 			};
+
+			// Expect this SExpr to be of some specific sub-type. Throws an exception if not.
+			Cons *asCons();
+			Number *asNum();
+			String *asStr();
+			Symbol *asSym();
 
 		protected:
 			// Write to a stream.
@@ -60,6 +71,12 @@ namespace storm {
 		Cons *STORM_FN cons(EnginePtr e, MAYBE(SExpr *) first, MAYBE(SExpr *) rest);
 		MAYBE(Cons *) STORM_FN list(Array<SExpr *> *data);
 		MAYBE(Cons *) list(Engine &e, Nat count, ...);
+
+		// Access elements.
+		SExpr *STORM_FN nth(Nat id, SExpr *l);
+
+		// Extract elements of a list one at a time.
+		SExpr *next(SExpr *&pos);
 
 		/**
 		 * Number.
@@ -124,6 +141,17 @@ namespace storm {
 			Nat id;
 
 			friend class Connection;
+		};
+
+		/**
+		 * Exception.
+		 */
+		class MsgError : public Exception {
+		public:
+			MsgError(const ::String &what, SExpr *expr) : msg(what + L" " + ::toS(expr)) {}
+			::String what() const { return msg; }
+		private:
+			::String msg;
 		};
 
 	}

@@ -32,6 +32,35 @@ namespace storm {
 
 		SExpr::SExpr() {}
 
+		Cons *SExpr::asCons() {
+			if (Cons *v = as<Cons>(this))
+				return v;
+			else
+				throw MsgError(L"Not a cons-cell:", this);
+		}
+
+		Number *SExpr::asNum() {
+			if (Number *v = as<Number>(this))
+				return v;
+			else
+				throw MsgError(L"Not a number:", this);
+		}
+
+		String *SExpr::asStr() {
+			if (String *v = as<String>(this))
+				return v;
+			else
+				throw MsgError(L"Not a string:", this);
+		}
+
+		Symbol *SExpr::asSym() {
+			if (Symbol *v = as<Symbol>(this))
+				return v;
+			else
+				throw MsgError(L"Not a symbol:", this);
+		}
+
+
 		void SExpr::write(OStream *to, Connection *c) {
 			// Write as 'null'.
 			GcPreArray<byte, 1> d;
@@ -113,6 +142,19 @@ namespace storm {
 
 			va_end(l);
 			return first;
+		}
+
+		SExpr *nth(Nat id, SExpr *from) {
+			Cons *at = from->asCons();
+			for (nat i = 0; i < id; i++)
+				at = at->asCons();
+			return at->first;
+		}
+
+		SExpr *next(SExpr *&pos) {
+			Cons *c = pos->asCons();
+			pos = c->rest;
+			return c->first;
 		}
 
 		Number::Number(Int v) : v(v) {}
