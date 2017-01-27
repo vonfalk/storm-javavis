@@ -66,10 +66,10 @@
 
 (defun storm-set-color (from to face)
   "Convenience for highlighting parts of the text."
-  ;; TODO: Make sure we do not mark the buffer as changed when doing this operation!
-  (if face
-      (put-text-property from to 'font-lock-face face)
-    (remove-text-properties from to 'font-lock-face)))
+  (with-silent-modifications
+    (if face
+	(put-text-property from to 'font-lock-face face)
+      (remove-text-properties from to 'font-lock-face))))
 
 (defvar storm-colors
   (let ((map (make-hash-table)))
@@ -181,7 +181,7 @@
 	      (while (consp at)
 		(storm-set-color
 		 start-pos
-		 (max highest (+ start-pos (first at)))
+		 (min highest (+ start-pos (first at)))
 		 (storm-find-color (second at)))
 		(setq start-pos (+ start-pos (first at)))
 		(setq at (nthcdr 2 at)))))))
