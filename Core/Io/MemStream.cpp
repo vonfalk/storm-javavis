@@ -11,12 +11,6 @@ namespace storm {
 		data.filled(b.filled());
 	}
 
-	IMemStream::IMemStream(Buffer b, Nat start) : data(buffer(engine(), b.filled())), pos(start) {
-		// Copy the filled data.
-		memcpy(data.dataPtr(), b.dataPtr(), b.filled());
-		data.filled(b.filled());
-	}
-
 	IMemStream::IMemStream(const IMemStream &o) : data(o.data) {}
 
 	void IMemStream::deepCopy(CloneEnv *env) {

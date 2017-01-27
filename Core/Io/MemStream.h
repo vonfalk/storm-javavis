@@ -13,7 +13,6 @@ namespace storm {
 	public:
 		// Create from a buffer.
 		STORM_CTOR IMemStream(Buffer b);
-		STORM_CTOR IMemStream(Buffer b, Nat start);
 
 		// Copy.
 		IMemStream(const IMemStream &o);

@@ -118,16 +118,23 @@ namespace storm {
 
 			// An SExpr or a raw string at the front?
 			if (b[0] == 0x00) {
-				// textOut->writeLine(new (this) Str(L"Trying to parse:"));
-				// textOut->writeLine((new (this) IMemStream(b, 1))->toS());
-
 				// Message, try to parse it!
-				ReadResult r = read(new (this) IMemStream(b, 1));
-				if (!r.failed())
-					r = r + 1;
+				IMemStream *stream = new (this) IMemStream(b);
+				stream->seek(1);
 
-				// textOut->writeLine(new (this) Str((L"Consumed " + ::toS(r.consumed)).c_str()));
-				return r;
+				Bool ok = true;
+				SExpr *result = read(stream, ok);
+
+				// textOut->writeLine(new (this) Str(L"Tried parsing:"));
+				// textOut->writeLine(stream->toS());
+
+				if (!ok) {
+					// textOut->writeLine(new (this) Str(L"Failed."));
+					return ReadResult();
+				} else {
+					// textOut->writeLine(new (this) Str((L"Consumed " + ::toS(stream->tell())).c_str()));
+					return ReadResult(Nat(stream->tell()), result);
+				}
 			} else {
 				// A plain string. Forward it to our stdin.
 				Nat len = bufLen(b);
@@ -146,106 +153,130 @@ namespace storm {
 			return true;
 		}
 
-		ReadResult Connection::read(IStream *from) {
-			GcPreArray<byte, 1> type;
-			Buffer kind = from->read(emptyBuffer(type));
-			if (kind.filled() == 0)
-				return ReadResult();
+		static Byte decodeByte(IStream *src, Bool &ok) {
+			GcPreArray<byte, 1> buf;
+			Buffer r = src->read(emptyBuffer(buf));
 
-			ReadResult r;
-			switch (kind[0]) {
-			case SExpr::nil:
-				r = ReadResult(1, null);
-				break;
-			case SExpr::cons:
-				r = readCons(from);
-				break;
-			case SExpr::number:
-				r = readNumber(from);
-				break;
-			case SExpr::string:
-				r = readString(from);
-				break;
-			case SExpr::newSymbol:
-				r = readNewSymbol(from);
-				break;
-			case SExpr::oldSymbol:
-				r = readOldSymbol(from);
-				break;
-			default:
-				// Return null for this sub-expression, so that parsing goes on...
-				textOut->writeLine(new (this) Str(L"WARNING: Invalid type found in message."));
-				return ReadResult(1, null);
+			if (!r.full()) {
+				ok = false;
+				return 0;
 			}
 
-			if (!r.failed())
-				r = r + 1;
-			return r;
+			return r[0];
 		}
 
-		ReadResult Connection::readCons(IStream *from) {
-			ReadResult first = read(from);
-			if (first.failed())
-				return first;
-			ReadResult rest = read(from);
-			if (rest.failed())
-				return rest;
-			return ReadResult(first.consumed + rest.consumed,
-							new (this) Cons(first.result, rest.result));
+		static Byte peekByte(IStream *src, Bool &ok) {
+			GcPreArray<byte, 1> buf;
+			Buffer r = src->peek(emptyBuffer(buf));
+
+			if (!r.full()) {
+				ok = false;
+				return 0;
+			}
+
+			return r[0];
 		}
 
-		static Nat decodeNat(Buffer r) {
+		static Nat decodeNat(IStream *src, Bool &ok) {
+			GcPreArray<byte, 4> buf;
+			Buffer r = src->read(emptyBuffer(buf));
+
+			if (!r.full()) {
+				ok = false;
+				return 0;
+			}
+
 			return (Nat(r[0]) << 24)
 				| (Nat(r[1]) << 16)
 				| (Nat(r[2]) << 8)
 				| (Nat(r[3]) << 0);
 		}
 
-		ReadResult Connection::readNumber(IStream *from) {
-			GcPreArray<byte, 4> buf;
-			Buffer r = from->read(emptyBuffer(buf));
-			if (r.filled() < 4)
-				return ReadResult();
 
-			Nat v = decodeNat(r);
-			return ReadResult(4, new (this) Number(Int(v)));
+		MAYBE(SExpr *) Connection::read(IStream *from, Bool &ok) {
+			if (!ok)
+				return null;
+
+			Byte kind = decodeByte(from, ok);
+			switch (kind) {
+			case SExpr::nil:
+				return null;
+			case SExpr::cons:
+				return readCons(from, ok);
+			case SExpr::number:
+				return readNumber(from, ok);
+			case SExpr::string:
+				return readString(from, ok);
+			case SExpr::newSymbol:
+				return readNewSymbol(from, ok);
+			case SExpr::oldSymbol:
+				return readOldSymbol(from, ok);
+			default:
+				// Return null for this sub-expression, so that parsing goes on...
+				textOut->writeLine(new (this) Str(L"WARNING: Invalid type found in message."));
+				return null;
+			}
 		}
 
-		ReadResult Connection::readString(IStream *from) {
-			GcPreArray<byte, 4> buf;
-			Buffer r = from->read(emptyBuffer(buf));
-			if (r.filled() < 4)
-				return ReadResult();
+		MAYBE(SExpr *) Connection::readCons(IStream *from, Bool &ok) {
+			Cons *first = new (this) Cons(read(from, ok), null);
+			Cons *curr = first;
+			while (ok && peekByte(from, ok) == SExpr::cons) {
+				// Consume the byte we peeked.
+				decodeByte(from, ok);
 
-			Nat len = decodeNat(r);
+				Cons *t = new (this) Cons(read(from, ok), null);
+				curr->rest = t;
+				curr = t;
+			}
+
+			if (!ok)
+				return null;
+
+			// Read the last cell as well.
+			curr->rest = read(from, ok);
+			return first;
+		}
+
+		MAYBE(SExpr *) Connection::readNumber(IStream *from, Bool &ok) {
+			Nat r = decodeNat(from, ok);
+			if (!ok)
+				return null;
+
+			return new (this) Number(Int(r));
+		}
+
+		MAYBE(SExpr *) Connection::readString(IStream *from, Bool &ok) {
+			Nat len = decodeNat(from, ok);
+			if (!ok)
+				return null;
+
 			Buffer str = from->read(len);
-			if (str.filled() < len)
-				return ReadResult();
+			if (str.filled() < len) {
+				ok = false;
+				return null;
+			}
 
 			IMemStream *src = new (this) IMemStream(str);
 			TextReader *text = new (this) Utf8Reader(src);
 			Str *data = text->readAllRaw();
 
-			return ReadResult(len + 4, new (this) String(data));
+			return new (this) String(data);
 		}
 
-		ReadResult Connection::readNewSymbol(IStream *from) {
-			GcPreArray<byte, 4> buf;
-			Buffer r = from->read(emptyBuffer(buf));
-			if (r.filled() < 4)
-				return ReadResult();
-			Nat symId = decodeNat(r);
+		MAYBE(SExpr *) Connection::readNewSymbol(IStream *from, Bool &ok) {
+			Nat symId = decodeNat(from, ok);
+			Nat len = decodeNat(from, ok);
+			if (!ok)
+				return null;
 
-			r = from->read(emptyBuffer(buf));
-			if (r.filled() < 4)
-				return ReadResult();
-			Nat len = decodeNat(r);
+			Buffer str = from->read(len);
+			if (str.filled() < len) {
+				ok = false;
+				return null;
+			}
 
-			Buffer data = from->read(len);
-			if (data.filled() < len)
-				return ReadResult();
-
-			IMemStream *src = new (this) IMemStream(data);
+			IMemStream *src = new (this) IMemStream(str);
 			TextReader *text = new (this) Utf8Reader(src);
 			Str *name = text->readAllRaw();
 
@@ -257,22 +288,20 @@ namespace storm {
 				sym = new (this) Symbol(name, symId);
 				symNames->put(name, sym);
 			}
-
 			symIds->put(symId, sym);
-			return ReadResult(len + 8, sym);
+
+			return sym;
 		}
 
-		ReadResult Connection::readOldSymbol(IStream *from) {
-			GcPreArray<byte, 4> buf;
-			Buffer r = from->read(emptyBuffer(buf));
-			if (r.filled() < 4)
-				return ReadResult();
-			Nat symId = decodeNat(r);
+		MAYBE(SExpr *) Connection::readOldSymbol(IStream *from, Bool &ok) {
+			Nat symId = decodeNat(from, ok);
+			if (!ok)
+				return null;
 
 			Symbol *sym = symIds->get(symId, null);
 			// Return 'sym' even if it is null, so that we can proceed reading input after the
 			// corrupt data.
-			return ReadResult(4, sym);
+			return sym;
 		}
 
 	}

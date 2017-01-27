@@ -70,9 +70,6 @@ namespace storm {
 			// Write a SExpr to a stream. Handles null properly.
 			void STORM_FN write(OStream *to, MAYBE(SExpr *) msg);
 
-			// Read a SExpr from a stream.
-			ReadResult STORM_FN read(IStream *from);
-
 		private:
 			// Remember created symbols.
 			typedef Map<Str *, Symbol *> NameMap;
@@ -93,12 +90,15 @@ namespace storm {
 			// Data having been read from 'input' but not yet processed.
 			OMemStream *inputBuffer;
 
+			// Read a SExpr from a stream.
+			MAYBE(SExpr *) read(IStream *from, Bool &ok);
+
 			// Read a partial SExpression given we know its header.
-			ReadResult readCons(IStream *from);
-			ReadResult readNumber(IStream *from);
-			ReadResult readString(IStream *from);
-			ReadResult readNewSymbol(IStream *from);
-			ReadResult readOldSymbol(IStream *from);
+			MAYBE(SExpr *) readCons(IStream *from, Bool &ok);
+			MAYBE(SExpr *) readNumber(IStream *from, Bool &ok);
+			MAYBE(SExpr *) readString(IStream *from, Bool &ok);
+			MAYBE(SExpr *) readNewSymbol(IStream *from, Bool &ok);
+			MAYBE(SExpr *) readOldSymbol(IStream *from, Bool &ok);
 
 			// Try to read some data from 'inputBuffer'.
 			ReadResult readBuffer();

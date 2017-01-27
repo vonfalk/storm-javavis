@@ -97,12 +97,20 @@ namespace storm {
 		}
 
 		void Cons::write(OStream *to, Connection *c) {
-			GcPreArray<byte, 1> d;
-			d.v[0] = cons;
-			to->write(fullBuffer(d));
+			// Avoid stack overflow by doing cons-cells iteratively in the case of lists.
+			Cons *at = this;
+			while (at) {
+				GcPreArray<byte, 1> d;
+				d.v[0] = cons;
+				to->write(fullBuffer(d));
 
-			c->write(to, first);
-			c->write(to, rest);
+				c->write(to, at->first);
+
+				Cons *next = as<Cons>(at->rest);
+				if (!next)
+					c->write(to, at->rest);
+				at = next;
+			}
 		}
 
 		Cons *cons(EnginePtr e, MAYBE(SExpr *) first, MAYBE(SExpr *) rest) {

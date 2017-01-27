@@ -21,6 +21,7 @@
 (defvar-local storm-buffer-edit-id 0 "The ID of the next edit operation for the current buffer.")
 (defvar-local storm-buffer-edits nil
   "List of the last few edits to this buffer. This is so we can handle 'late' coloring messages from Storm.")
+(defvar-local storm-buffer-no-changes nil "Inhibit change notifications for the current buffer.")
 
 (defun global-storm-mode ()
   "Use storm-mode for all applicable buffers."
@@ -65,6 +66,7 @@
 
 (defun storm-set-color (from to face)
   "Convenience for highlighting parts of the text."
+  ;; TODO: Make sure we do not mark the buffer as changed when doing this operation!
   (if face
       (put-text-property from to 'font-lock-face face)
     (remove-text-properties from to 'font-lock-face)))
@@ -127,8 +129,9 @@
 
 
 (defun storm-buffer-changed (edit-begin edit-end old-length)
-  "Called when the contents of a buffer has been changed."
-  (when storm-buffer-id
+  "Called when the contents of a buffer has been changed.
+  NOTE: This is called when we set text color of the buffer as well... Inhibit that!"
+  (when (and storm-buffer-id (not storm-buffer-no-changes))
     ;; Remember the edit.
     (setq storm-buffer-edit-id (1+ storm-buffer-edit-id))
     (setq storm-buffer-edits
@@ -172,13 +175,16 @@
 	     (buffer (gethash buffer-id storm-mode-buffers nil)))
 	(when buffer
 	  (with-current-buffer buffer
-	    (while (consp at)
-	      (storm-set-color
-	       start-pos
-	       (+ start-pos (first at))
-	       (storm-find-color (second at)))
-	      (setq start-pos (+ start-pos (first at)))
-	      (setq at (nthcdr 2 at))))))
+	    ;; Make sure we do not act on our own color notifications!
+	    (let ((storm-buffer-no-changes t)
+		  (highest (point-max)))
+	      (while (consp at)
+		(storm-set-color
+		 start-pos
+		 (max highest (+ start-pos (first at)))
+		 (storm-find-color (second at)))
+		(setq start-pos (+ start-pos (first at)))
+		(setq at (nthcdr 2 at)))))))
     "Too few parameters."))
 
 
@@ -601,11 +607,13 @@
 ;; Send some messages to Storm to test the implementation.
 ;; (let ((i 0))
 ;;   (while (< i 2)
-;;     (let ((msg (storm-encode '(test 1 2 3 4 5 6 7 "Hejsan"))))
-;;       (send-string storm-process (substring msg 0 20))
-;;       (sleep-for 0 300)
-;;       (send-string storm-process (substring msg 20)))
-;;     ;;(storm-send '(test 1 2 3 4 5 6 7 "Hejsan"))
+;;     (mapcar
+;;      (lambda (x)
+;;        (send-string storm-process (char-to-string x))
+;;        (sleep-for 0 10)
+;;        (redisplay))
+;;      (storm-encode '(test 1 2 3 4 5 6 7 "Hej")))
+;;     (send-string storm-process "garbage")
 ;;     (setq i (1+ i))))
 
 
