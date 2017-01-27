@@ -118,8 +118,16 @@ namespace storm {
 
 			// An SExpr or a raw string at the front?
 			if (b[0] == 0x00) {
+				// textOut->writeLine(new (this) Str(L"Trying to parse:"));
+				// textOut->writeLine((new (this) IMemStream(b, 1))->toS());
+
 				// Message, try to parse it!
-				return read(new (this) IMemStream(b, 1));
+				ReadResult r = read(new (this) IMemStream(b, 1));
+				if (!r.failed())
+					r = r + 1;
+
+				// textOut->writeLine(new (this) Str((L"Consumed " + ::toS(r.consumed)).c_str()));
+				return r;
 			} else {
 				// A plain string. Forward it to our stdin.
 				Nat len = bufLen(b);

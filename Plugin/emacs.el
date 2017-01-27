@@ -40,9 +40,9 @@
   (setq major-mode 'storm-mode)
   (setq mode-name "Storm")
   (storm-register-buffer (current-buffer))
-  ;; (add-hook 'kill-buffer-hook 'storm-buffer-killed)
-  ;; (add-hook 'change-major-mode-hook 'storm-buffer-killed)
-  ;; (add-hook 'after-change-functions 'storm-buffer-changed)
+  (add-hook 'kill-buffer-hook 'storm-buffer-killed)
+  (add-hook 'change-major-mode-hook 'storm-buffer-killed)
+  (add-hook 'after-change-functions 'storm-buffer-changed)
 
   (run-hooks 'storm-mode-hook))
 
@@ -117,10 +117,14 @@
 
 (defun storm-buffer-killed ()
   "Called when a buffer is going to be killed."
-  (remhash storm-buffer-id storm-mode-buffers)
-  (when (storm-running-p)
-    (storm-send (list 'close storm-buffer-id)))
-  (setq storm-buffer-id nil))
+  (when storm-buffer-id
+    (let ((buf-id storm-buffer-id))
+      ;; Remove the id early in case we accidentally enter a recursive call...
+      (setq storm-buffer-id nil)
+      (remhash buf-id storm-mode-buffers)
+      (when (storm-running-p)
+	(storm-send (list 'close buf-id))))))
+
 
 (defun storm-buffer-changed (edit-begin edit-end old-length)
   "Called when the contents of a buffer has been changed."
@@ -128,21 +132,21 @@
     ;; Remember the edit.
     (setq storm-buffer-edit-id (1+ storm-buffer-edit-id))
     (setq storm-buffer-edits
-	  (limit-length
-	   storm-mode-max-edits
-	   (cons (list edit-begin
-		       (+ edit-begin old-length)
-		       (- edit-end edit begin))
-		 storm-buffer-edits)))
+    	  (limit-length
+    	   storm-mode-max-edits
+    	   (cons (list edit-begin
+    		       (+ edit-begin old-length)
+    		       (- edit-end edit-begin))
+    		 storm-buffer-edits)))
 
 
     ;; Tell Storm.
     (storm-send (list 'edit
-		      storm-buffer-id
-		      storm-buffer-edit-id
-		      (1- edit-begin)
-		      (+ edit-begin old-length -1)
-		      (buffer-substring-no-properties edit-begin edit-end)))))
+    		      storm-buffer-id
+    		      storm-buffer-edit-id
+    		      (1- edit-begin)
+    		      (+ edit-begin old-length -1)
+    		      (buffer-substring-no-properties edit-begin edit-end)))))
 
 (defun limit-length (max-length list)
   "Limit the length of the list 'list'"
@@ -216,6 +220,7 @@
 	       (run-at-time 2 nil 'storm-kill)
 	       when-done))
 	;; Send a quit message.
+	(storm-output-string "\n\nTerminating...\n" 'storm-server-killed)
 	(storm-send '(quit)))
     (when when-done
       (funcall when-done))))
@@ -373,7 +378,7 @@
       (setq string (substring string null-char))
 
       ;; Try to parse the remaining string.
-      (let ((result (storm-decode string )))
+      (let ((result (storm-decode string)))
 	(if (endp result)
 	    (setq failed 't)
 	  (let ((consumed (car result))
@@ -392,7 +397,7 @@
   (let ((err (storm-handle-message-i msg)))
     (when (stringp err)
       (storm-output-string
-       (format "\nError when processing message: %s\n  message: %S\n" err 10) 'storm-msg-error))))
+       (format "\nError when processing message: %s\n  message: %S\n" err msg) 'storm-msg-error))))
 
 (defun storm-handle-message-i (msg)
   "Handle a message"
@@ -477,7 +482,7 @@
       'nil
     (let* ((first (cons (storm-decode-entry src state) nil))
 	   (current first))
-      (while (and (not (storm-state-error state))
+      (while (and (storm-state-more-p state 1)
 		  (= (aref src (car state)) #x01))
 	(setcar state (1+ (car state)))
 	(setcdr current (cons
@@ -560,7 +565,12 @@
 
 (defun storm-encode-cons (c)
   (storm-encode-buffer (car c))
-  (storm-encode-buffer (cdr c)))
+  (let ((at (cdr c)))
+    (while (consp at)
+      (insert-char #x01)
+      (storm-encode-buffer (car at))
+      (setq at (cdr at)))
+    (storm-encode-buffer at)))
 
 (defun storm-encode-number (num)
   (insert-char (lsh num -24))
@@ -588,12 +598,23 @@
 	(storm-encode-number id)
 	(storm-encode-string (symbol-name sym))))))
 
+;; Send some messages to Storm to test the implementation.
+;; (let ((i 0))
+;;   (while (< i 2)
+;;     (let ((msg (storm-encode '(test 1 2 3 4 5 6 7 "Hejsan"))))
+;;       (send-string storm-process (substring msg 0 20))
+;;       (sleep-for 0 300)
+;;       (send-string storm-process (substring msg 20)))
+;;     ;;(storm-send '(test 1 2 3 4 5 6 7 "Hejsan"))
+;;     (setq i (1+ i))))
+
 
 ;; For debugging
-;(setq storm-process-sym-to-id (make-hash-table))
-;(setq storm-process-id-to-sym (make-hash-table))
-;(let ((msg (concat (storm-encode '(color 0 0 1 2 string 2 nil 2 string 2 nil)) "abc")))
-;  (storm-decode-message-string msg))
+;; (setq storm-process-sym-to-id (make-hash-table))
+;; (setq storm-process-id-to-sym (make-hash-table))
+;; (let ((msg (concat (storm-encode '(color 0 0 1 2 string 2 nil 2 string 2 nil)) "abc")))
+;;  (storm-decode-message-string msg))
 
-;(defun storm-output-string (s z)
-;  (message "%s" s))
+;; (defun storm-output-string (s z)
+;;  (message "%s" s))
+;; (recursion-depth)
