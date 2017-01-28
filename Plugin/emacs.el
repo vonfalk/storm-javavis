@@ -17,6 +17,7 @@
 ;; State for all buffers using storm-mode.
 (defvar storm-mode-buffers (make-hash-table) "Map int->buffer for all buffers and their associated id.")
 (defvar storm-mode-next-id 0   "Next usable buffer ID in storm-mode.")
+(defvar storm-started-hook nil "Hook executed when the storm process has started.")
 (defvar-local storm-buffer-id nil "The ID of the current buffer in storm-mode.")
 (defvar-local storm-buffer-edit-id 0 "The ID of the next edit operation for the current buffer.")
 (defvar-local storm-buffer-edits nil
@@ -45,7 +46,7 @@
   (add-hook 'change-major-mode-hook 'storm-buffer-killed)
   (add-hook 'after-change-functions 'storm-buffer-changed)
 
-  (run-hooks 'storm-mode-hook))
+  (run-mode-hooks 'storm-mode-hook))
 
 (provide 'storm-mode)
 
@@ -335,7 +336,9 @@
 
   ;; Send any queued messages.
   (storm-send-messages storm-process-message-queue)
-  (setq storm-process-message-queue nil))
+  (setq storm-process-message-queue nil)
+
+  (run-hooks 'storm-started-hook))
 
 
 (defun storm-send-messages (queue)

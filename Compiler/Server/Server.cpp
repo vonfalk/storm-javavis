@@ -11,6 +11,7 @@ namespace storm {
 			open = c->symbol(L"open");
 			edit = c->symbol(L"edit");
 			close = c->symbol(L"close");
+			test = c->symbol(L"test");
 			color = c->symbol(L"color");
 		}
 
@@ -46,6 +47,8 @@ namespace storm {
 				onEdit(cell->rest);
 			} else if (close->equals(kind)) {
 				onClose(cell->rest);
+			} else if (test->equals(kind)) {
+				onTest(cell->rest);
 			}
 
 			return true;
@@ -85,6 +88,15 @@ namespace storm {
 			Nat id = next(expr)->asNum()->v;
 
 			files->remove(id);
+		}
+
+		void Server::onTest(SExpr *expr) {
+			if (!testState)
+				testState = new (this) Test(conn);
+
+			SExpr *reply = testState->onMessage(expr);
+			if (reply)
+				conn->send(new (this) Cons(test, reply));
 		}
 
 		Symbol *Server::colorSym(TextColor color) {

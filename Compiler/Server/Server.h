@@ -2,6 +2,7 @@
 #include "Compiler/Thread.h"
 #include "Connection.h"
 #include "File.h"
+#include "Test.h"
 
 namespace storm {
 	namespace server {
@@ -34,7 +35,11 @@ namespace storm {
 			Symbol *open;
 			Symbol *edit;
 			Symbol *close;
+			Symbol *test;
 			Symbol *color;
+
+			// Any test state required now?
+			Test *testState;
 
 			// Keep track of the color symbols used.
 			Array<Symbol *> *colorSyms;
@@ -49,6 +54,7 @@ namespace storm {
 			void onOpen(SExpr *msg);
 			void onEdit(SExpr *msg);
 			void onClose(SExpr *msg);
+			void onTest(SExpr *msg);
 
 			// Send updates for 'range' in 'file'.
 			void update(File *file, Range range, Nat editId);

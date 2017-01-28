@@ -78,6 +78,7 @@ namespace storm {
 			SExpr *result = null;
 			while (result == null) {
 				ReadResult r = readBuffer();
+				debug = false;
 				if (r.failed()) {
 					// We need to read more data!
 					if (!fillBuffer())
@@ -129,9 +130,14 @@ namespace storm {
 				// textOut->writeLine(stream->toS());
 
 				if (!ok) {
-					// textOut->writeLine(new (this) Str(L"Failed."));
+					textOut->writeLine(new (this) Str(L"Failed:"));
+					textOut->writeLine(stream->toS());
 					return ReadResult();
 				} else {
+					if (!as<Cons>(result)) {
+						textOut->writeLine(new (this) Str(L"This seems bad...."));
+						textOut->writeLine(stream->toS());
+					}
 					// textOut->writeLine(new (this) Str((L"Consumed " + ::toS(stream->tell())).c_str()));
 					return ReadResult(Nat(stream->tell()), result);
 				}
@@ -149,7 +155,12 @@ namespace storm {
 			if (r.empty())
 				return false;
 
+			textOut->writeLine(new (this) Str(L"Old data:"));
+			textOut->writeLine(inputBuffer->toS());
 			inputBuffer->write(r);
+			textOut->writeLine(new (this) Str(L"Reading data..."));
+			textOut->writeLine((new (this) IMemStream(r))->toS());
+			debug = true;
 			return true;
 		}
 

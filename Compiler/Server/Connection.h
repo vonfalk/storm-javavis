@@ -105,6 +105,8 @@ namespace storm {
 
 			// Fill the input buffer with new data from 'input'. Return 'false' on error.
 			Bool fillBuffer();
+
+			Bool debug;
 		};
 
 	}
