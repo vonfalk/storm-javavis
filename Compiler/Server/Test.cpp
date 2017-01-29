@@ -4,10 +4,11 @@
 namespace storm {
 	namespace server {
 
-		Test::Test(Connection *c) {
+		Test::Test(Connection *c) : conn(c) {
 			start = c->symbol(L"start");
 			stop = c->symbol(L"stop");
 			sum = c->symbol(L"sum");
+			send = c->symbol(L"send");
 		}
 
 		void Test::clear() {
@@ -24,6 +25,8 @@ namespace storm {
 				return onStop(cell->rest);
 			} else if (sum->equals(kind)) {
 				return onSum(cell->rest);
+			} else if (send->equals(send)) {
+				return onSend(cell->rest);
 			}
 
 			return null;
@@ -49,6 +52,22 @@ namespace storm {
 			}
 
 			return null;
+		}
+
+		SExpr *Test::onSend(SExpr *msg) {
+			Nat times = next(msg)->asNum()->v;
+			SExpr *send = next(msg);
+			SExpr *pad = next(msg);
+
+			for (nat i = 0; i < times; i++) {
+				conn->send(send);
+				if (String *s = as<String>(pad)) {
+					conn->textOut->write(s->v);
+					conn->textOut->flush();
+				}
+			}
+
+			return list(engine(), 1, stop);
 		}
 
 	}

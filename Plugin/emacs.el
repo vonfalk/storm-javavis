@@ -68,9 +68,8 @@
 (defun storm-set-color (from to face)
   "Convenience for highlighting parts of the text."
   (with-silent-modifications
-    (if face
-	(put-text-property from to 'font-lock-face face)
-      (remove-text-properties from to 'font-lock-face))))
+    (put-text-property from to 'font-lock-face face)))
+
 
 (defvar storm-colors
   (let ((map (make-hash-table)))

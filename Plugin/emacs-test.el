@@ -1,5 +1,5 @@
 ;; Tests for the emacs plugin (mainly the protocol).
-(load "emacs.el")
+;(load "emacs.el")
 
 ;; Run tests using C-c t
 (global-set-key (kbd "C-c t") 'storm-run-tests)
@@ -12,7 +12,12 @@
 
 ;; All tests to run.
 (defvar storm-tests
-  '(storm-short-messages)
+  '(
+    storm-short-messages
+    storm-short-spaced-messages
+    storm-echo-short-messages
+    storm-echo-short-spaced-messages
+    )
   "All tests to execute.")
 (defvar storm-test-msg nil "Store any test messages arrived.")
 
@@ -30,8 +35,9 @@
   (let ((at storm-tests)
 	(ok t))
     (while (consp at)
+      (setq storm-test-msg nil)
       (storm-output-string (format "Running %S...\n" (car at)) 'storm-test-msg)
-      (if (funcall (car at))
+      (if (catch 'storm-test-failed (funcall (car at)))
 	  (setq at (cdr at))
 	(progn
 	  (storm-output-string (format "\nFailed %S. Terminating.\n" (car at)) 'storm-test-fail)
@@ -50,10 +56,22 @@
       (setq result (accept-process-output storm-process 1)))
 
     (prog1
-	storm-test-msg
-      (setq storm-test-msg nil))))
+	(car (last storm-test-msg))
+      (setq storm-test-msg (butlast storm-test-msg)))))
 
+(defun storm-on-test (msg)
+  "Called when a test-message has arrived."
+  (if (consp msg)
+      (progn
+	(setq storm-test-msg
+	      (cons msg storm-test-msg))
+	t)
+    "Test messages should be lists."))
 
+(defun storm-check-equal (a b)
+  (unless (equal a b)
+    (storm-output-string (format "%S is not equal to %S\n" a b) 'storm-test-fail)
+    (throw 'storm-test-failed nil)))
 
 (defun storm-short-messages ()
   "Send lots of short messages to Storm."
@@ -64,15 +82,44 @@
       (storm-send msg))
 
     (storm-send '(test stop))
-    (equal (storm-wait-message)
-	   (list 'sum (* (+ 1 2 3) times)))))
+    (storm-check-equal (storm-wait-message)
+		       (list 'sum (* (+ 1 2 3) times)))
+    t))
 
+(defun storm-short-spaced-messages ()
+  "Send lots of short messages with some data in between."
+  (storm-send '(test start))
+  (let ((msg '(test sum 2 3 4))
+	(times 100))
+    (dotimes (i times)
+      (storm-send msg)
+      (process-send-string storm-process "<>"))
 
-(defun storm-on-test (msg)
-  "Called when a test-message has arrived."
-  (if (consp msg)
-      (progn
-	(setq storm-test-msg msg)
-	t)
-    "Test messages should be lists."))
+    (storm-send '(test stop))
+    (storm-check-equal (storm-wait-message)
+		       (list 'sum (* (+ 2 3 4) times)))
+    t))
 
+(defun storm-echo-short-messages ()
+  "Send lots of short messages to Emacs."
+  (storm-send '(test start))
+  (let ((times 100))
+    (storm-send (list 'test 'send times '(test msg) 'nil))
+    (dotimes (i times)
+      (storm-check-equal (storm-wait-message)
+			 '(msg))))
+
+  (storm-send '(test stop))
+  t)
+    
+(defun storm-echo-short-spaced-messages ()
+  "Send lots of short messages to Emacs."
+  (storm-send '(test start))
+  (let ((times 100))
+    (storm-send (list 'test 'send times '(test msg) "<>"))
+    (dotimes (i times)
+      (storm-check-equal (storm-wait-message)
+			 '(msg))))
+
+  (storm-send '(test stop))
+  t)

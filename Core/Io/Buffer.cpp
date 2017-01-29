@@ -86,9 +86,12 @@ namespace storm {
 		return to;
 	}
 
+	static void putMark(StrBuf &to, Nat i, Nat filled, Nat mark) {
+	}
+
 	void outputMark(StrBuf &to, Buffer b, Nat mark) {
 		const Nat width = 16;
-		for (Nat i = 0; i < b.count(); i++) {
+		for (Nat i = 0; i <= b.count(); i++) {
 			if (i % width == 0) {
 				if (i > 0)
 					to << L"\n";
@@ -104,7 +107,8 @@ namespace storm {
 			else
 				to << L"  ";
 
-			to << hex(b[i]);
+			if (i < b.count())
+				to << hex(b[i]);
 		}
 	}
 

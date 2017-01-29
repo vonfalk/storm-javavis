@@ -319,6 +319,7 @@
 
 ;; Good stuff while using the plugin.
 (load "~/Projects/storm/Plugin/emacs.el")
+(load "~/Projects/storm/Plugin/emacs-test.el")
 (setq storm-mode-root "~/Projects/storm/root")
 (setq storm-mode-compiler "~/Projects/storm/debug/Storm.exe")
 (setq storm-mode-compile-compiler t)

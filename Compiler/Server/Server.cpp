@@ -35,7 +35,7 @@ namespace storm {
 		}
 
 		Bool Server::process(SExpr *msg) {
-			print(L"Processing message: " + ::toS(msg));
+			// print(L"Processing message: " + ::toS(msg));
 			Cons *cell = msg->asCons();
 			Symbol *kind = cell->first->asSym();
 

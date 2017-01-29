@@ -6,11 +6,6 @@
 namespace storm {
 	namespace server {
 
-		ReadResult::ReadResult() : consumed(0), result(0) {}
-
-		ReadResult::ReadResult(Nat c, MAYBE(SExpr *) e) : consumed(c), result(e) {}
-
-
 		Connection::Connection(IStream *input, OStream *output)
 			: input(input), output(output) {
 
@@ -20,8 +15,8 @@ namespace storm {
 			textOut = new (this) Utf8Writer(output, info);
 			symNames = new (this) NameMap();
 			symIds = new (this) IdMap();
-			lastSymId = 0x80000000; // Emacs only uses ~30 bits for integers.
-			inputBuffer = new (this) OMemStream();
+			lastSymId = 0x40000000; // Emacs only uses ~30 bits for integers.
+			inputBuffer = new (this) BufStream();
 		}
 
 		Symbol *Connection::symbol(const wchar *name) {
@@ -77,17 +72,12 @@ namespace storm {
 			// Read messages from the buffer until we fail (all failures are due to not enough data).
 			SExpr *result = null;
 			while (result == null) {
-				ReadResult r = readBuffer();
-				debug = false;
-				if (r.failed()) {
-					// We need to read more data!
-					if (!fillBuffer())
+				if (!read(result)) {
+					// We need more data before we can try again.
+					if (!fillBuffer()) {
+						// Reached EOF...
 						return null;
-				} else {
-					// Remove data from the buffer.
-					Buffer trimmed = cut(engine(), inputBuffer->buffer(), r.consumed);
-					inputBuffer = new (this) OMemStream(trimmed);
-					result = r.result;
+					}
 				}
 			}
 
@@ -102,66 +92,6 @@ namespace storm {
 				d.v[0] = 0x00;
 				to->write(fullBuffer(d));
 			}
-		}
-
-		static Nat bufLen(const Buffer &b) {
-			for (Nat i = 0; i < b.filled(); i++)
-				if (b[i] == 0x00)
-					return i;
-
-			return b.filled();
-		}
-
-		ReadResult Connection::readBuffer() {
-			Buffer b = inputBuffer->buffer();
-			if (b.empty())
-				return ReadResult();
-
-			// An SExpr or a raw string at the front?
-			if (b[0] == 0x00) {
-				// Message, try to parse it!
-				IMemStream *stream = new (this) IMemStream(b);
-				stream->seek(1);
-
-				Bool ok = true;
-				SExpr *result = read(stream, ok);
-
-				// textOut->writeLine(new (this) Str(L"Tried parsing:"));
-				// textOut->writeLine(stream->toS());
-
-				if (!ok) {
-					textOut->writeLine(new (this) Str(L"Failed:"));
-					textOut->writeLine(stream->toS());
-					return ReadResult();
-				} else {
-					if (!as<Cons>(result)) {
-						textOut->writeLine(new (this) Str(L"This seems bad...."));
-						textOut->writeLine(stream->toS());
-					}
-					// textOut->writeLine(new (this) Str((L"Consumed " + ::toS(stream->tell())).c_str()));
-					return ReadResult(Nat(stream->tell()), result);
-				}
-			} else {
-				// A plain string. Forward it to our stdin.
-				Nat len = bufLen(b);
-				// TODO: We do not maintain a stdin yet. For now: just throw the data away!
-				return ReadResult(len, null);
-			}
-		}
-
-		Bool Connection::fillBuffer() {
-			const Nat chunk = 1024;
-			Buffer r = input->read(chunk);
-			if (r.empty())
-				return false;
-
-			textOut->writeLine(new (this) Str(L"Old data:"));
-			textOut->writeLine(inputBuffer->toS());
-			inputBuffer->write(r);
-			textOut->writeLine(new (this) Str(L"Reading data..."));
-			textOut->writeLine((new (this) IMemStream(r))->toS());
-			debug = true;
-			return true;
 		}
 
 		static Byte decodeByte(IStream *src, Bool &ok) {
@@ -203,8 +133,55 @@ namespace storm {
 				| (Nat(r[3]) << 0);
 		}
 
+		Bool Connection::read(SExpr *&result) {
+			BufStream *from = inputBuffer;
 
-		MAYBE(SExpr *) Connection::read(IStream *from, Bool &ok) {
+			Bool ok = true;
+			Byte first = peekByte(from, ok);
+
+			if (!ok) {
+				// Nothing to read...
+				return false;
+			}
+
+			if (first == 0x00) {
+				// textOut->writeLine(new (this) Str(L"Reading a message..."));
+
+				// This is an SExpr, try to parse it!
+				Word pos = from->tell();
+
+				// Skip the 0x00 byte.
+				from->seek(pos + 1);
+				SExpr *r = readSExpr(from, ok);
+				if (ok) {
+					result = r;
+				} else {
+					// Make sure we re-try next time!
+					from->seek(pos);
+				}
+			} else {
+				// Plain text. Extract as much as possible to stdin.
+				Nat len = from->findByte(0x00);
+				Buffer fwd = from->read(len);
+				// TODO: Forward 'fwd' to stdin!
+			}
+
+			return ok;
+		}
+
+		Bool Connection::fillBuffer() {
+			const Nat chunk = 1024;
+			Buffer r = input->read(chunk);
+			if (r.empty()) {
+				// EOF reached...
+				return false;
+			}
+
+			inputBuffer->append(r);
+			return true;
+		}
+
+		MAYBE(SExpr *) Connection::readSExpr(IStream *from, Bool &ok) {
 			if (!ok)
 				return null;
 
@@ -230,13 +207,13 @@ namespace storm {
 		}
 
 		MAYBE(SExpr *) Connection::readCons(IStream *from, Bool &ok) {
-			Cons *first = new (this) Cons(read(from, ok), null);
+			Cons *first = new (this) Cons(readSExpr(from, ok), null);
 			Cons *curr = first;
 			while (ok && peekByte(from, ok) == SExpr::cons) {
 				// Consume the byte we peeked.
 				decodeByte(from, ok);
 
-				Cons *t = new (this) Cons(read(from, ok), null);
+				Cons *t = new (this) Cons(readSExpr(from, ok), null);
 				curr->rest = t;
 				curr = t;
 			}
@@ -245,7 +222,7 @@ namespace storm {
 				return null;
 
 			// Read the last cell as well.
-			curr->rest = read(from, ok);
+			curr->rest = readSExpr(from, ok);
 			return first;
 		}
 

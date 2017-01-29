@@ -5,37 +5,11 @@
 #include "Core/Io/Stream.h"
 #include "Core/Io/MemStream.h"
 #include "Core/Io/Text.h"
+#include "BufStream.h"
 
 namespace storm {
 	namespace server {
 		STORM_PKG(core.lang.server);
-
-		/**
-		 * De-serialization result.
-		 */
-		class ReadResult {
-			STORM_VALUE;
-		public:
-			STORM_CTOR ReadResult();
-			STORM_CTOR ReadResult(Nat consumed, MAYBE(SExpr *) result);
-
-			// # of bytes consumed. 0 = failed.
-			Nat consumed;
-
-			// Resulting SExpr.
-			MAYBE(SExpr *) result;
-
-			// Failed?
-			inline Bool STORM_FN failed() const {
-				return consumed == 0;
-			}
-
-			// Increase number of bytes consumed.
-			inline ReadResult STORM_FN operator +(Nat bytes) const {
-				return ReadResult(consumed + bytes, result);
-			}
-		};
-
 
 		/**
 		 * Connection enpoint to a client.
@@ -88,10 +62,18 @@ namespace storm {
 			OStream *output;
 
 			// Data having been read from 'input' but not yet processed.
-			OMemStream *inputBuffer;
+			BufStream *inputBuffer;
+
+			// Read and process one message from the input stream. A 'null' message means that we
+			// either received 'nil or a string which was passed on to standard input. 'false' is
+			// returned if there is not enough data in the stream to process another message.
+			Bool read(SExpr *&result);
+
+			// Fill the input buffer with new data from 'input'. Return 'false' on error.
+			Bool fillBuffer();
 
 			// Read a SExpr from a stream.
-			MAYBE(SExpr *) read(IStream *from, Bool &ok);
+			MAYBE(SExpr *) readSExpr(IStream *from, Bool &ok);
 
 			// Read a partial SExpression given we know its header.
 			MAYBE(SExpr *) readCons(IStream *from, Bool &ok);
@@ -99,14 +81,6 @@ namespace storm {
 			MAYBE(SExpr *) readString(IStream *from, Bool &ok);
 			MAYBE(SExpr *) readNewSymbol(IStream *from, Bool &ok);
 			MAYBE(SExpr *) readOldSymbol(IStream *from, Bool &ok);
-
-			// Try to read some data from 'inputBuffer'.
-			ReadResult readBuffer();
-
-			// Fill the input buffer with new data from 'input'. Return 'false' on error.
-			Bool fillBuffer();
-
-			Bool debug;
 		};
 
 	}

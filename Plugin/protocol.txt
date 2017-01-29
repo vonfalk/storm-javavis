@@ -70,3 +70,4 @@ Message                    Description
 (test stop)		   Sends any pending messages.
 (test sum ...)		   Stores a sum of all entries following 'recv'. This makes (test stop)
                 	   send (test sum <sum>).
+(test send n msg between)  Send 'n' copies of 'msg', adding the string 'between' between each instance.

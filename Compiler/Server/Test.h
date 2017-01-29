@@ -23,16 +23,21 @@ namespace storm {
 			Symbol *start;
 			Symbol *stop;
 			Symbol *sum;
+			Symbol *send;
 
 			// Send this sum when 'stop' is called.
 			Nat sumResult;
+
+			// Connection.
+			Connection *conn;
 
 			// Clear all state.
 			void clear();
 
 			// Handle messages.
-			MAYBE(SExpr *) STORM_FN onSum(SExpr *msg);
 			MAYBE(SExpr *) STORM_FN onStop(SExpr *msg);
+			MAYBE(SExpr *) STORM_FN onSum(SExpr *msg);
+			MAYBE(SExpr *) STORM_FN onSend(SExpr *msg);
 		};
 
 	}
