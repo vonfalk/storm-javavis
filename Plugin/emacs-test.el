@@ -8,6 +8,7 @@
   (interactive)
   (puthash 'test 'storm-on-test storm-messages)
   (add-hook 'storm-started-hook 'storm-start-tests)
+  (setq storm-run-tests t)
   (storm-restart))
 
 ;; All tests to run.
@@ -20,7 +21,7 @@
     )
   "All tests to execute.")
 (defvar storm-test-msg nil "Store any test messages arrived.")
-
+(defvar storm-run-tests nil "Run tests when the compiler has started.")
 
 (defface storm-test-msg
   '((t :foreground "dark green"))
@@ -32,20 +33,22 @@
 
 (defun storm-start-tests ()
   "Called when a new instance has been started."
-  (let ((at storm-tests)
-	(ok t))
-    (while (consp at)
-      (setq storm-test-msg nil)
-      (storm-output-string (format "Running %S...\n" (car at)) 'storm-test-msg)
-      (if (catch 'storm-test-failed (funcall (car at)))
-	  (setq at (cdr at))
-	(progn
-	  (storm-output-string (format "\nFailed %S. Terminating.\n" (car at)) 'storm-test-fail)
-	  (setq ok nil)
-	  (setq at nil))))
+  (when storm-run-tests
+    (setq storm-run-tests nil)
+    (let ((at storm-tests)
+	  (ok t))
+      (while (consp at)
+	(setq storm-test-msg nil)
+	(storm-output-string (format "Running %S...\n" (car at)) 'storm-test-msg)
+	(if (catch 'storm-test-failed (funcall (car at)))
+	    (setq at (cdr at))
+	  (progn
+	    (storm-output-string (format "\nFailed %S. Terminating.\n" (car at)) 'storm-test-fail)
+	    (setq ok nil)
+	    (setq at nil))))
 
-    (when ok
-      (storm-output-string "\nAll tests passed!\n" 'storm-test-msg))))
+      (when ok
+	(storm-output-string "\nAll tests passed!\n" 'storm-test-msg)))))
 
 (defun storm-wait-message ()
   "Wait for the storm process to send us a message. Times out after about a second."
