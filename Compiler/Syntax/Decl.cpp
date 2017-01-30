@@ -33,7 +33,7 @@ namespace storm {
 		}
 
 
-		TokenDecl::TokenDecl() {}
+		TokenDecl::TokenDecl() : color(tNone) {}
 
 		void TokenDecl::deepCopy(CloneEnv *env) {
 			cloned(store, env);
@@ -47,6 +47,8 @@ namespace storm {
 				*to << L" " << store;
 			if (invoke)
 				*to << L" -> " << invoke;
+			if (color != tNone)
+				*to << L" #" << name(engine(), color);
 		}
 
 

@@ -1,0 +1,29 @@
+// Simple language definition for testing syntax highlighting.
+
+use core.lang;
+delimiter = SDelim;
+
+void SDelim();
+SDelim : "[ \n\r\t]*";
+
+// Identifier.
+void SIdent();
+SIdent : "[A-Za-z]+" #fnName;
+
+// Number.
+void SNum();
+SNum : "[0-9]+" #constant;
+
+// Simple expressions.
+void SExpr();
+SExpr : SExpr, "\+", SExpr;
+SExpr : SExpr, "-", SExpr;
+SExpr : SExpr, "\*", SExpr;
+SExpr : SExpr, "/", SExpr;
+SExpr : SExpr, "or" #keyword, SExpr;
+SExpr : SIdent;
+SExpr : SNum;
+
+// Entry point.
+void SRoot();
+SRoot : SDelim - (SExpr, ";", )*;

@@ -2,6 +2,7 @@
 #include "Core/StrBuf.h"
 #include "Compiler/Name.h"
 #include "RepType.h"
+#include "TokenColor.h"
 
 namespace storm {
 	namespace syntax {
@@ -42,6 +43,9 @@ namespace storm {
 
 			// Capture the raw syntax tree?
 			Bool raw;
+
+			// Color of this token.
+			TokenColor color;
 
 			// Deep copy.
 			virtual void STORM_FN deepCopy(CloneEnv *env);

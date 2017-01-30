@@ -72,6 +72,7 @@ namespace storm {
 				}
 			}
 
+			token->color = decl->color;
 			tokens->push(token);
 		}
 

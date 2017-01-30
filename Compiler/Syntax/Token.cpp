@@ -6,7 +6,7 @@
 namespace storm {
 	namespace syntax {
 
-		Token::Token() : target(null), invoke(null), raw(false) {}
+		Token::Token() : target(null), invoke(null), raw(false), color(tNone) {}
 
 		void Token::toS(StrBuf *to) const {
 			toS(to, true);
@@ -26,6 +26,9 @@ namespace storm {
 					*to << L" " << target->name;
 				}
 			}
+
+			if (color != tNone)
+				*to << L" #" << name(engine(), color);
 		}
 
 

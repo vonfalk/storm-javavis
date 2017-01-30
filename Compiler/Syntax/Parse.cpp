@@ -62,6 +62,14 @@ namespace storm {
 			return r;
 		}
 
+		// Parse a token color.
+		static TokenColor parseTokenColor(Tokenizer &tok) {
+			TokenColor c = tokenColor(tok.next().toS());
+			if (c == tNone)
+				throw SyntaxError(tok.position(), L"Expected a color name.");
+			return c;
+		}
+
 		// Parse a token.
 		static TokenDecl *parseToken(Engine &e, Tokenizer &tok) {
 			TokenDecl *result = null;
@@ -97,8 +105,15 @@ namespace storm {
 				if (isTokenSep(tok.peek()))
 					throw SyntaxError(tok.position(), L"Expected identifier.");
 				result->invoke = tok.next().toS();
+			} else if (tok.skipIf(L"#")) {
+				result->color = parseTokenColor(tok);
 			} else {
+				// Simple identifier.
 				result->store = tok.next().toS();
+
+				// Maybe a color name as well.
+				if (tok.skipIf(L"#"))
+					result->color = parseTokenColor(tok);
 			}
 
 			return result;

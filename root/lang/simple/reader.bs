@@ -1,0 +1,19 @@
+use lang;
+use core:io;
+use core:lang;
+
+PkgReader reader(Url[] files, Package pkg) {
+	FilePkgReader(files, pkg, &createFile(Url, Package));
+}
+
+FileReader createFile(Url file, Package pkg) {
+	SReader(file, pkg);
+}
+
+class SReader extends FileReader {
+	ctor(Url file, Package pkg) {
+		init(file, pkg);
+	}
+
+	// Nothing more to do yet.
+}

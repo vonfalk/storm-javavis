@@ -2,6 +2,7 @@
 #include "Compiler/NamedThread.h"
 #include "Compiler/Variable.h"
 #include "Regex.h"
+#include "TokenColor.h"
 
 namespace storm {
 	namespace syntax {
@@ -28,6 +29,9 @@ namespace storm {
 
 			// Capture the raw syntax tree?
 			Bool raw;
+
+			// Color of this token.
+			TokenColor color;
 
 			// More competent output function.
 			virtual void STORM_FN toS(StrBuf *to, Bool bindings) const;
