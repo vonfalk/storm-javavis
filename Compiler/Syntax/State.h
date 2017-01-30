@@ -38,6 +38,7 @@ namespace storm {
 		};
 
 		StrBuf &STORM_FN operator <<(StrBuf &to, StatePtr p);
+		wostream &operator <<(wostream &to, StatePtr p);
 
 		/**
 		 * State used during parsing (in Parser.h/cpp). Contains a location into a production, a

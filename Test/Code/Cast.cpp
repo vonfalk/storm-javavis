@@ -46,8 +46,6 @@ BEGIN_TEST(CastIntLong2, Code) {
 	*l << epilog();
 	*l << ret(valVoid());
 
-	PVAR(l);
-
 	Binary *b = new (e) Binary(arena, l);
 	typedef Long (*Fn)(Int);
 	Fn fn = (Fn)b->address();

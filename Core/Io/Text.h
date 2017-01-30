@@ -37,6 +37,8 @@ namespace storm {
 		Bool useBom;
 	};
 
+	// System default TextInfo.
+	TextInfo STORM_FN sysTextInfo();
 
 	/**
 	 * Base interface for reading text. Caches one character. When implementing your own version,

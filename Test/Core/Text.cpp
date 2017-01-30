@@ -38,8 +38,7 @@ static const byte plainUtf8Data2[] = {
 static const wchar strData2[] = L"a\u00D6\u0D36\u3042\u79C1\U0001F639e";
 
 TextReader *read(const void *src, nat count) {
-	Buffer b = buffer(gEngine(), count);
-	memcpy(b.dataPtr(), src, count);
+	Buffer b = buffer(gEngine(), (const byte *)src, count);
 	IMemStream *s = new (gEngine()) IMemStream(b);
 	return readText(s);
 }
@@ -51,11 +50,17 @@ static String debug(Char ch) {
 }
 
 static String verify(TextReader *src, const nat *ref) {
-	while (src->more()) {
+	while (true) {
+		Char s = src->read();
+		if (s == Char(Nat(0))) {
+			if (src->more())
+				return L"More says there is more data even if 'read' returned 0.";
+			break;
+		}
+
 		if (*ref == 0)
 			return L"Extra characters introduced!";
 
-		Char s = src->read();
 		if (s != Char(*ref))
 			return L"Character mismatch: " + debug(s) + L", expected " + debug(Char(*ref));
 		ref++;

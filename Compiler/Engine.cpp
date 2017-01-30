@@ -355,20 +355,14 @@ namespace storm {
 	}
 
 	TextWriter *Engine::stdOut() {
-		if (!o.stdOut) {
-			TextInfo info;
-			info.useCrLf = true;
-			o.stdOut = new (*this) Utf8Writer(proc::out(*this), info);
-		}
+		if (!o.stdOut)
+			o.stdOut = new (*this) Utf8Writer(proc::out(*this), sysTextInfo());
 		return o.stdOut;
 	}
 
 	TextWriter *Engine::stdError() {
-		if (!o.stdError) {
-			TextInfo info;
-			info.useCrLf = true;
-			o.stdError = new (*this) Utf8Writer(proc::error(*this), info);
-		}
+		if (!o.stdError)
+			o.stdError = new (*this) Utf8Writer(proc::error(*this), sysTextInfo());
 		return o.stdError;
 	}
 

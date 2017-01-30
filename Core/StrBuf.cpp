@@ -157,7 +157,7 @@ namespace storm {
 
 		for (nat at = 0; data[at]; at++) {
 			if (data[at] == '\n' && data[at + 1] != '\0')
-				len += iLen;
+				len += iTot;
 			len++;
 			if (!utf16::leading(data[at]))
 				points++;

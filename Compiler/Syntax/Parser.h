@@ -4,6 +4,7 @@
 #include "Core/Map.h"
 #include "OS/FnCall.h"
 #include "Node.h"
+#include "InfoNode.h"
 #include "Rule.h"
 #include "Production.h"
 #include "State.h"
@@ -71,6 +72,9 @@ namespace storm {
 
 			// Get the syntax tree. Only for C++, in Storm we know the exact subtype we will generate!
 			Node *tree() const;
+
+			// Get the generic syntax tree.
+			InfoNode *STORM_FN infoTree() const;
 
 			// Output.
 			void STORM_FN toS(StrBuf *to) const;
@@ -145,7 +149,7 @@ namespace storm {
 			// Find all rules and productions in progress for a given state.
 			Map<Str *, StrBuf *> *inProgress(const StateSet &step) const;
 
-			// Create a tree for the production ending in 'state'.
+			// Create a tree for the production ending in 'end'.
 			Node *tree(StatePtr end) const;
 
 			// Allocate a tree node.
@@ -153,6 +157,9 @@ namespace storm {
 
 			// Reverse all arrays in a node.
 			void reverseNode(Node *node) const;
+
+			// Create a tree for the production ending in 'end'.
+			InfoNode *infoTree(StatePtr end) const;
 
 			// Get a State from a StatePtr.
 			const State &state(const StatePtr &p) const;

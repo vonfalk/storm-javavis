@@ -81,7 +81,7 @@ BEGIN_TEST(EvalBS, BS) {
 } END_TEST
 
 
-BEGIN_TEST(FloatBS) {
+BEGIN_TEST(FloatBS, BS) {
 	CHECK_EQ(runFn<Float>(L"test.bs.floatCall"), 33.0f);
 
 	CHECK_EQ(runFn<Float>(L"test.bs.floatParams", 10.2f, 1.0f), 10.2f);

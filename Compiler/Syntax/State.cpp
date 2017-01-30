@@ -13,6 +13,10 @@ namespace storm {
 			return to << L"(" << p.step << L", " << p.index << L")";
 		}
 
+		wostream &operator <<(wostream &to, StatePtr p) {
+			return to << L"(" << p.step << L", " << p.index << L")";
+		}
+
 		State::State() : from(0) {}
 
 		State::State(ProductionIter pos, Nat from) : pos(pos), from(from) {}

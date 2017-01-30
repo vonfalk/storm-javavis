@@ -9,6 +9,14 @@ namespace storm {
 
 	TextInfo::TextInfo() : useCrLf(false), useBom(false) {}
 
+	TextInfo sysTextInfo() {
+		TextInfo info;
+#ifdef WINDOWS
+		info.useCrLf = true;
+#endif
+		return info;
+	}
+
 	TextReader::TextReader() : next(nat(0)), hasNext(false), first(true), eof(false) {}
 
 	Char TextReader::doRead() {

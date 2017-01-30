@@ -490,6 +490,57 @@ namespace storm {
 			}
 		}
 
+		InfoNode *ParserBase::infoTree() const {
+			// TODO: Make this robust in case of parser errors!
+			const State *from = finish();
+			if (!from)
+				throw error();
+
+			assert(from->completed != StatePtr(), L"The root state was not completed by anything!");
+			return infoTree(from->completed);
+		}
+
+		InfoNode *ParserBase::infoTree(StatePtr endPtr) const {
+			const State &end = state(endPtr);
+
+			// Compute the number of child nodes required for this internal node.
+			Nat children = 0;
+			StatePtr atPtr = endPtr;
+			const State *at = &end;
+			while (at->prev != StatePtr()) {
+				children++;
+
+				atPtr = at->prev;
+				at = &state(at->prev);
+			}
+
+			// Allocate the node and fill it!
+			InfoInternal *result = new (this) InfoInternal(end.pos.production(), children);
+			atPtr = endPtr;
+			at = &end;
+			while (at->prev != StatePtr()) {
+				const State *prev = &state(at->prev);
+				Token *token = prev->pos.token();
+
+				InfoNode *child = null;
+				if (at->completed != StatePtr()) {
+					child = infoTree(at->completed);
+				} else {
+					Str::Iter from = src->posIter(at->prev.step + srcPos.pos);
+					Str::Iter to = src->posIter(atPtr.step + srcPos.pos);
+					child = new (this) InfoLeaf(src->substr(from, to));
+				}
+
+				child->color = token->color;
+				result->at(--children) = child;
+
+				atPtr = at->prev;
+				at = prev;
+			}
+
+			return result;
+		}
+
 
 		/**
 		 * Rule info struct.

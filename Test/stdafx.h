@@ -40,9 +40,11 @@ SUITE(Code, 6);
 // More involved tests of Storm. Still no compilation from sources.
 SUITE(Storm, 7);
 // Simple tests of Basic Storm
-SUITE_(SimpleBS, 8);
+SUITE(SimpleBS, 8);
 // More heavy tests of Basic Storm
-SUITE_(BS, 9);
+SUITE(BS, 9);
+// Syntax server logic.
+SUITE_(Server, 10);
 
 // Stress tests (takes about 30s, too slow to be included always).
 SUITEX(Stress, 100);
