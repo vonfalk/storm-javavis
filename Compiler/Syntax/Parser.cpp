@@ -11,22 +11,32 @@ namespace storm {
 	namespace syntax {
 
 		ParserBase::ParserBase() {
-			rules = new (this) Map<Rule *, RuleInfo>();
-			lastFinish = -1;
-
 			assert(as<ParserType>(runtime::typeOf(this)),
 				L"ParserBase not properly constructed. Use Parser::create() in C++!");
 
+			init(root());
+		}
+
+		ParserBase::ParserBase(Rule *root) {
+			init(root);
+		}
+
+		void ParserBase::init(Rule *root) {
+			rules = new (this) Map<Rule *, RuleInfo>();
+			lastFinish = -1;
+
 			// Find the package where 'root' is located and add that!
-			if (Package *pkg = ScopeLookup::firstPkg(root())) {
+			if (Package *pkg = ScopeLookup::firstPkg(root)) {
 				addSyntax(pkg);
 			} else {
-				WARNING(L"The rule " << root() << L" is not located in any package. No default package added!");
+				WARNING(L"The rule " << root << L" is not located in any package. No default package added!");
 			}
 		}
 
 		void ParserBase::toS(StrBuf *to) const {
 			// TODO: use 'toBytes' when present!
+			PVAR((void *)root());
+			PVAR(root());
 			*to << L"Parser for " << root()->identifier() << L", currently using " << stateCount()
 				<< L" states = " << byteCount() << L" bytes.";
 		}
@@ -552,6 +562,20 @@ namespace storm {
 			if (!productions)
 				productions = new (p) Array<Production *>();
 			productions->push(p);
+		}
+
+		/**
+		 * Info parser.
+		 */
+
+		InfoParser::InfoParser(Rule *root) : ParserBase(root), rootRule(root) {}
+
+		void InfoParser::root(Rule *r) {
+			rootRule = r;
+		}
+
+		Rule *InfoParser::root() const {
+			return rootRule;
 		}
 
 

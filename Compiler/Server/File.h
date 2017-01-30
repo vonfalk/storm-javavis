@@ -3,6 +3,9 @@
 #include "Core/Io/Url.h"
 #include "Core/EnginePtr.h"
 #include "Compiler/Thread.h"
+#include "Compiler/Reader.h"
+#include "Compiler/Syntax/TokenColor.h"
+#include "Compiler/Syntax/InfoNode.h"
 
 namespace storm {
 	namespace server {
@@ -21,35 +24,17 @@ namespace storm {
 		};
 
 		/**
-		 * Text coloring options.
-		 */
-		enum TextColor {
-			tNone,
-			tComment,
-			tDelimiter,
-			tString,
-			tConstant,
-			tKeyword,
-			tFnName,
-			tVarName,
-			tTypeName,
-		};
-
-		// Get the name of a color.
-		Str *STORM_FN colorName(EnginePtr e, TextColor c);
-
-		/**
 		 * Represents a a region to be colored in a file.
 		 */
 		class ColoredRange {
 			STORM_VALUE;
 		public:
-			STORM_CTOR ColoredRange(Range r, TextColor c);
+			STORM_CTOR ColoredRange(Range r, syntax::TokenColor c);
 
 			Range range;
 
 			// TODO: Use strings or symbols here?
-			TextColor color;
+			syntax::TokenColor color;
 		};
 
 
@@ -79,8 +64,14 @@ namespace storm {
 			// Path to the underlying file (so we can properly locate packages etc., we never actually read the file).
 			Url *path;
 
-			// File contents (TODO: Better representation!)
-			Str *content;
+			// Parser used for this file.
+			syntax::InfoParser *parser;
+
+			// File content (parsed).
+			syntax::InfoNode *content;
+
+			// Re-parse a node in the syntax tree.
+			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root);
 		};
 
 	}

@@ -1,6 +1,8 @@
 use lang;
 use core:io;
 use core:lang;
+use lang:bs:macro;
+use lang:bnf;
 
 PkgReader reader(Url[] files, Package pkg) {
 	FilePkgReader(files, pkg, &createFile(Url, Package));
@@ -15,5 +17,7 @@ class SReader extends FileReader {
 		init(file, pkg);
 	}
 
-	// Nothing more to do yet.
+	Rule rootRule() {
+		named{SRoot};
+	}
 }

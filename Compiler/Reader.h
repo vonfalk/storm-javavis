@@ -4,9 +4,12 @@
 #include "Core/Io/Url.h"
 #include "NamedThread.h"
 #include "Package.h"
+#include "Syntax/Parser.h"
 
 namespace storm {
 	STORM_PKG(lang);
+
+	class FileReader;
 
 	/**
 	 * Wrapper of an array of URL:s, since we need to be able to express a map of those. This is not
@@ -32,6 +35,10 @@ namespace storm {
 	// Group files together by which reader they should use. Storm will have a custom implementation
 	// of this which does not use a 'PkgFiles' object.
 	Map<SimpleName *, PkgFiles *> *readerName(Array<Url *> *files);
+
+	// Create a reader for a given file type.
+	MAYBE(PkgReader *) STORM_FN createReader(Array<Url *> *files, Package *pkg);
+	MAYBE(PkgReader *) STORM_FN createReader(SimpleName *name, Array<Url *> *files, Package *pkg);
 
 	/**
 	 * Load a specific file type from a package. This is the abstract base class that does not do
@@ -74,6 +81,13 @@ namespace storm {
 
 		// Get all functions.
 		virtual void STORM_FN readFunctions();
+
+		/**
+		 * For language server integration.
+		 */
+
+		// Get a file reader for the given Url.
+		virtual MAYBE(FileReader *) STORM_FN readFile(Url *url);
 	};
 
 
@@ -106,6 +120,18 @@ namespace storm {
 
 		// Get all functions.
 		virtual void STORM_FN readFunctions();
+
+		/**
+		 * For language server integration.
+		 *
+		 * TODO: Allow multiple dependent passes of parsing.
+		 */
+
+		// Get the initial rule used for parsing this language.
+		virtual syntax::Rule *STORM_FN rootRule();
+
+		// Create a parser for this language.
+		virtual syntax::InfoParser *STORM_FN createParser();
 	};
 
 
@@ -133,6 +159,9 @@ namespace storm {
 
 		// Get all functions.
 		virtual void STORM_FN readFunctions();
+
+		// Get a file reader for the given Url.
+		virtual MAYBE(FileReader *) STORM_FN readFile(Url *url);
 
 	private:
 		// Store all files in use.

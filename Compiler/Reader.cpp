@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "Reader.h"
-#include "Exception.h"
 #include "Core/Str.h"
+#include "Exception.h"
+#include "Function.h"
+#include "Engine.h"
 
 namespace storm {
 
@@ -43,6 +45,41 @@ namespace storm {
 		return r;
 	}
 
+	MAYBE(PkgReader *) createReader(Array<Url *> *files, Package *pkg) {
+		if (files->empty())
+			return null;
+		Url *f = files->at(0);
+		return createReader(readerName(f), files, pkg);
+	}
+
+	MAYBE(PkgReader *) createReader(SimpleName *name, Array<Url *> *files, Package *pkg) {
+		Function *createFn = as<Function>(pkg->engine().scope().find(name));
+		if (!createFn) {
+			StrBuf *msg = new (name) StrBuf();
+			*msg << L"No reader for [";
+			Url *rootUrl = pkg->engine().package()->url();
+			for (nat i = 0; i < files->count(); i++) {
+				if (i > 0)
+					*msg << L", ";
+				*msg << files->at(i)->relative(rootUrl);
+			}
+			*msg << L"] (should be " << name << L")";
+			WARNING(msg->toS()->c_str());
+			return null;
+		}
+
+		Value pkgReader = thisPtr(PkgReader::stormType(pkg->engine()));
+		if (!pkgReader.canStore(createFn->result)) {
+			StrBuf *msg = new (name) StrBuf();
+			*msg << L"Invalid return type for " << createFn << L": expected " << pkgReader;
+			throw LangDefError(msg->toS()->c_str());
+		}
+
+		typedef PkgReader *(*Fn)(Array<Url *> *, Package *);
+		Fn fn = (Fn)createFn->ref().address();
+		return (*fn)(files, pkg);
+	}
+
 
 	PkgReader::PkgReader(Array<Url *> *files, Package *pkg) : pkg(pkg), files(files) {}
 
@@ -56,6 +93,10 @@ namespace storm {
 
 	void PkgReader::readFunctions() {}
 
+	FileReader *PkgReader::readFile(Url *url) {
+		return null;
+	}
+
 
 	FileReader::FileReader(Url *file, Package *pkg) : pkg(pkg), file(file) {}
 
@@ -68,6 +109,14 @@ namespace storm {
 	void FileReader::resolveTypes() {}
 
 	void FileReader::readFunctions() {}
+
+	syntax::Rule *FileReader::rootRule() {
+		throw LangDefError(L"This language does not support syntax highlighting.");
+	}
+
+	syntax::InfoParser *FileReader::createParser() {
+		return new (this) syntax::InfoParser(rootRule());
+	}
 
 
 	FilePkgReader::FilePkgReader(Array<Url *> *files, Package *pkg, Fn<FileReader *, Url *, Package *> *create)
@@ -115,6 +164,14 @@ namespace storm {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
 			readers->at(i)->readFunctions();
+	}
+
+	FileReader *FilePkgReader::readFile(Url *file) {
+		loadReaders();
+		for (nat i = 0; i < readers->count(); i++)
+			if (readers->at(i)->file->equals(file))
+				return readers->at(i);
+		return null;
 	}
 
 }

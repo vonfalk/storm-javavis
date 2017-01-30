@@ -416,8 +416,12 @@
 	  (format "The header %S is not supported." (car msg))))
     "Invalid message format. Expected a list."))
 
+(defvar storm-cr-lf "
+")
+(defvar storm-lf "
+")
 
-(defun storm-output-string (text face)
+(defun storm-output-string (text &optional face)
   (when storm-process-output
     (with-current-buffer storm-process-output
       (let* ((buffer-read-only nil)
@@ -425,6 +429,10 @@
 	     (start (point-max)))
 	(goto-char (point-max))
 	(insert text)
+	;; Replace CR-LF with LF
+	(goto-char start)
+	(while (search-forward storm-cr-lf nil t)
+	  (replace-match storm-lf nil t))
 	(when face
 	  (storm-set-color start (point) face))
 	(goto-char old-point)))))

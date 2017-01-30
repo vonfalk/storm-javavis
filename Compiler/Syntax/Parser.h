@@ -31,6 +31,12 @@ namespace storm {
 			// Create. Create via Parser from C++ as the type has to be set properly for this to work.
 			ParserBase();
 
+			// Create an InfoParser.
+			ParserBase(Rule *root);
+
+			// Common parts from the constructors.
+			void init(Rule *root);
+
 			// Internal function called from Storm to create a parser.
 			friend void createParser(void *mem);
 
@@ -40,7 +46,7 @@ namespace storm {
 			void STORM_FN addSyntax(Array<Package *> *pkg);
 
 			// Get the root rule.
-			Rule *STORM_FN root() const;
+			virtual Rule *STORM_FN root() const;
 
 			// Parse a string. Returns 'true' if we found some match.
 			Bool STORM_FN parse(Str *str, Url *file);
@@ -166,6 +172,28 @@ namespace storm {
 
 			// State set needs to access 'state()'
 			friend class StateSet;
+		};
+
+
+		/**
+		 * Generic parser supporting only generating trees of InfoNodes. However, it is possible to
+		 * change the root rule of this kind of parser.
+		 */
+		class InfoParser : public ParserBase {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR InfoParser(Rule *rootRule);
+
+			// Set a new root.
+			void STORM_FN root(Rule *rule);
+
+			// Get the root rule.
+			virtual Rule *STORM_FN root() const;
+
+		private:
+			// Root rule.
+			Rule *rootRule;
 		};
 
 

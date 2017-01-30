@@ -52,9 +52,6 @@ namespace storm {
 		// Create a reader for each element in 'readers'.
 		Array<PkgReader *> *createReaders(Map<SimpleName *, PkgFiles *> *readers);
 
-		// Create a reader from 'SimpleName'.
-		PkgReader *createReader(SimpleName *name, Array<Url *> *files);
-
 		// Try to load a sub-package. Returns null on failure.
 		Package *loadPackage(Str *name);
 	};

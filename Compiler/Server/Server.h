@@ -45,7 +45,7 @@ namespace storm {
 			Array<Symbol *> *colorSyms;
 
 			// Find the symbol to be used for a specific color.
-			Symbol *colorSym(TextColor color);
+			Symbol *colorSym(syntax::TokenColor color);
 
 			// Process a message.
 			Bool process(SExpr *msg);

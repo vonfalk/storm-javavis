@@ -162,45 +162,18 @@ namespace storm {
 				continue;
 			}
 
-			PkgReader *reader = createReader(i.k(), i.v()->files);
+			PkgReader *reader = createReader(i.k(), i.v()->files, this);
 			if (reader)
 				r->push(reader);
 		}
 
 		if (delayName && delayFiles) {
-			PkgReader *reader = createReader(delayName, delayFiles->files);
+			PkgReader *reader = createReader(delayName, delayFiles->files, this);
 			if (reader)
 				r->push(reader);
 		}
 
 		return r;
-	}
-
-	PkgReader *Package::createReader(SimpleName *name, Array<Url *> *files) {
-		Function *createFn = as<Function>(engine().scope().find(name));
-		if (!createFn) {
-			StrBuf *msg = new (this) StrBuf();
-			*msg << L"No reader for [";
-			Url *rootUrl = engine().package()->url();
-			for (nat i = 0; i < files->count(); i++) {
-				if (i > 0)
-					*msg << L", ";
-				*msg << files->at(i)->relative(rootUrl);
-			}
-			*msg << L"] (should be " << name << L")";
-			WARNING(msg->toS()->c_str());
-			return null;
-		}
-
-		if (!thisPtr(PkgReader::stormType(engine())).canStore(createFn->result)) {
-			StrBuf *msg = new (this) StrBuf();
-			*msg << L"Invalid return type for " << createFn << L": expected " << PkgReader::stormType(engine());
-			throw LangDefError(msg->toS()->c_str());
-		}
-
-		typedef PkgReader *(*Fn)(Array<Url *> *, Package *);
-		Fn fn = (Fn)createFn->ref().address();
-		return (*fn)(files, this);
 	}
 
 }

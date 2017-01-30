@@ -99,8 +99,44 @@ namespace storm {
 				conn->send(new (this) Cons(test, reply));
 		}
 
-		Symbol *Server::colorSym(TextColor color) {
-			if (color == tNone)
+		static Str *colorName(EnginePtr e, syntax::TokenColor c) {
+			using namespace storm::syntax;
+			const wchar *name = L"<unknown>";
+			switch (c) {
+			case tNone:
+				name = L"nil";
+				break;
+			case tComment:
+				name = L"comment";
+				break;
+			case tDelimiter:
+				name = L"delimiter";
+				break;
+			case tString:
+				name = L"string";
+				break;
+			case tConstant:
+				name = L"constant";
+				break;
+			case tKeyword:
+				name = L"keyword";
+				break;
+			case tFnName:
+				name = L"fn-name";
+				break;
+			case tVarName:
+				name = L"var-name";
+				break;
+			case tTypeName:
+				name = L"type-name";
+				break;
+			}
+
+			return new (e.v) Str(name);
+		}
+
+		Symbol *Server::colorSym(syntax::TokenColor color) {
+			if (color == syntax::tNone)
 				return null;
 
 			Nat id = Nat(color);
