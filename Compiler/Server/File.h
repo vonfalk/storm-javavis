@@ -23,9 +23,14 @@ namespace storm {
 			Nat from;
 			Nat to;
 
+			// Is this range empty?
+			inline Bool STORM_FN empty() const { return from == to; }
+
 			// Does this range intersect another range?
 			Bool STORM_FN intersects(Range other) const;
 		};
+
+		StrBuf &STORM_FN operator <<(StrBuf &to, Range r);
 
 		/**
 		 * Represents a a region to be colored in a file.
@@ -41,6 +46,7 @@ namespace storm {
 			syntax::TokenColor color;
 		};
 
+		StrBuf &STORM_FN operator <<(StrBuf &to, ColoredRange r);
 
 		/**
 		 * Represents an open file in the language server.
@@ -82,6 +88,16 @@ namespace storm {
 
 			// Traverse the syntax tree and extract colors in 'range'.
 			void colors(Array<ColoredRange> *out, const Range &range, Nat offset, syntax::InfoNode *node);
+
+			// Remove 'range' in the current node (if applicable). The structure of the syntax tree
+			// is kept intact. Returns the rootmost node that was altered.
+			void remove(const Range &range, Nat offset, syntax::InfoNode *node);
+			void removeLeaf(const Range &range, Nat offset, syntax::InfoLeaf *src);
+			void removeInternal(const Range &range, Nat offset, syntax::InfoInternal *node);
+
+			// Insert 'v' at 'point'. Does not alter the structure of the tree. Returns the rootmost
+			// node that was modified.
+			syntax::InfoNode *insert(Nat point, Str *v, Nat offset, syntax::InfoNode *node);
 		};
 
 	}

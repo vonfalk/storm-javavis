@@ -132,13 +132,12 @@ namespace storm {
 			// Format.
 			virtual void STORM_FN format(StrBuf *to) const;
 
+			// The matched string.
+			Str *v;
+
 		protected:
 			// Compute the lenght of this node.
 			virtual Nat STORM_FN computeLength();
-
-		private:
-			// The matched string.
-			Str *v;
 		};
 
 	}

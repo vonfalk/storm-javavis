@@ -84,6 +84,11 @@ namespace storm {
 				addSyntax(pkgs->at(i));
 		}
 
+		void ParserBase::clear() {
+			steps = null;
+			src = null;
+		}
+
 		Bool ParserBase::parse(Str *str, Url *file) {
 			return parse(str, file, str->begin());
 		}
@@ -501,6 +506,8 @@ namespace storm {
 		}
 
 		InfoNode *ParserBase::infoTree() const {
+			// TODO: Re-use one instance of the empty string!
+
 			// TODO: Make this robust in case of parser errors!
 			const State *from = finish();
 			if (!from)

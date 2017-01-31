@@ -153,8 +153,14 @@ namespace storm {
 		Iter posIter(Nat pos) const;
 
 		// Substring.
-		Str *STORM_FN substr(Iter to);
+		Str *STORM_FN substr(Iter from);
 		Str *STORM_FN substr(Iter from, Iter to);
+
+		// Remove characters from the middle of the string.
+		Str *STORM_FN remove(Iter from, Iter to);
+
+		// Insert an entire string at a given position.
+		Str *STORM_FN insert(Iter pos, Str *str);
 
 	private:
 		friend class Iter;
@@ -173,11 +179,17 @@ namespace storm {
 		// Repetition constructor.
 		Str(const Str *a, Nat times);
 
+		// Create from two substrings of a c-string.
+		Str(const wchar *fromA, const wchar *toA, const wchar *fromB, const wchar *toB);
+
+		// Create by inserting a string at a specific position.
+		Str(const Str *into, const Iter &pos, const Str *insert);
+
 		// Allocate 'data'.
 		void allocData(nat count);
 
 		// Convert an iterator to a pointer.
-		wchar *toPtr(const Iter &i);
+		const wchar *toPtr(const Iter &i) const;
 
 		// Validate this string.
 		void validate() const;

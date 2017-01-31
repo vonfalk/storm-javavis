@@ -39,6 +39,36 @@ namespace storm {
 		validate();
 	}
 
+	static inline void copy(wchar *&to, const wchar *begin, const wchar *end) {
+		for (const wchar *at = begin; at != end; at++)
+			*(to++) = *at;
+	}
+
+	Str::Str(const wchar *fromA, const wchar *toA, const wchar *fromB, const wchar *toB) {
+		nat count = (toA - fromA) + (toB - fromB);
+		allocData(count + 1);
+		wchar *to = data->v;
+		copy(to, fromA, toA);
+		copy(to, fromB, toB);
+		*to = 0;
+		validate();
+	}
+
+	Str::Str(const Str *src, const Iter &pos, const Str *insert) {
+		nat count = src->charCount() + insert->charCount();
+		allocData(count + 1);
+		wchar *to = data->v;
+
+		const wchar *first = src->data->v;
+		const wchar *cut = src->toPtr(pos);
+		const wchar *last = first + src->charCount();
+		copy(to, first, cut);
+		copy(to, insert->data->v, insert->data->v + insert->charCount());
+		copy(to, cut, last);
+		*to = 0;
+		validate();
+	}
+
 	Str::Str(Char ch) {
 		wchar lead = ch.leading();
 		wchar trail = ch.trailing();
@@ -422,7 +452,19 @@ namespace storm {
 		return substr(start, end());
 	}
 
-	wchar *Str::toPtr(const Iter &i) {
+	Str *Str::substr(Iter start, Iter end) {
+		return new (this) Str(toPtr(start), toPtr(end));
+	}
+
+	Str *Str::remove(Iter start, Iter end) {
+		return new (this) Str(data->v, toPtr(start), toPtr(end), data->v + charCount());
+	}
+
+	Str *Str::insert(Iter pos, Str *s) {
+		return new (this) Str(this, pos, s);
+	}
+
+	const wchar *Str::toPtr(const Iter &i) const {
 		if (i.atEnd())
 			return data->v + data->count - 1;
 		else if (i.owner == this)
@@ -430,10 +472,6 @@ namespace storm {
 		else
 			// Fallback if it is referring to the wrong object.
 			return data->v;
-	}
-
-	Str *Str::substr(Iter start, Iter end) {
-		return new (this) Str(toPtr(start), toPtr(end));
 	}
 
 	Str::Iter::Iter() : owner(null), pos(0) {}

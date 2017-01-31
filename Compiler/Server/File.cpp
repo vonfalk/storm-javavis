@@ -15,9 +15,16 @@ namespace storm {
 				&& from < other.to;
 		}
 
-		ColoredRange::ColoredRange(Range r, syntax::TokenColor c)
+		StrBuf &operator <<(StrBuf &to, Range r) {
+			return to << L"(" << r.from << L" - " << r.to << L")";
+		}
+
+		ColoredRange::ColoredRange(Range r, TokenColor c)
 			: range(r), color(c) {}
 
+		StrBuf &operator <<(StrBuf &to, ColoredRange r) {
+			return to << r.range << L"#" << name(to.engine(), r.color);
+		}
 
 		File::File(Nat id, Url *path, Str *src)
 			: id(id), path(path), content(null) {
@@ -45,7 +52,90 @@ namespace storm {
 		}
 
 		Range File::replace(Range range, Str *replace) {
+			if (!content)
+				return Range(0, 0);
+
+			// Anything to remove?
+			if (!range.empty())
+				remove(range, 0, content);
+
+			// Anything to add?
+			if (replace->begin() != replace->end())
+				insert(range.from, replace, 0, content);
+
 			return Range(0, 0);
+		}
+
+		void File::remove(const Range &range, Nat offset, InfoNode *node) {
+			Nat len = node->length();
+			if (len == 0)
+				return;
+
+			Range nodeRange(offset, offset + len);
+			if (!nodeRange.intersects(range))
+				return;
+
+			if (InfoLeaf *leaf = as<InfoLeaf>(node)) {
+				removeLeaf(range, offset, leaf);
+			} else if (InfoInternal *inode = as<InfoInternal>(node)) {
+				removeInternal(range, offset, inode);
+			} else {
+				assert(false, L"This should not happen!");
+			}
+		}
+
+		void File::removeLeaf(const Range &range, Nat offset, InfoLeaf *node) {
+			Str::Iter begin = node->v->begin();
+			for (Nat i = offset; i < range.from; i++)
+				++begin;
+
+			Str::Iter end = begin;
+			for (Nat i = max(offset, range.from); i < range.to; i++)
+				++end;
+
+			node->v = node->v->remove(begin, end);
+		}
+
+		void File::removeInternal(const Range &range, Nat offset, InfoInternal *node) {
+			for (Nat i = 0; i < node->count(); i++) {
+				InfoNode *at = node->at(i);
+				// Keep track of the old length, as that will likely change.
+				Nat len = at->length();
+				remove(range, offset, at);
+				offset += len;
+			}
+		}
+
+		InfoNode *File::insert(Nat point, Str *v, Nat offset, InfoNode *node) {
+			Nat len = node->length();
+			if (len == 0)
+				return null;
+
+			// Outside this node?
+			if (point < offset || point > offset + len)
+				return null;
+
+			if (InfoLeaf *leaf = as<InfoLeaf>(node)) {
+				Str::Iter p = leaf->v->begin();
+				for (Nat i = offset; i < point; i++)
+					++p;
+				leaf->v = leaf->v->insert(p, v);
+
+				return node;
+			} else if (InfoInternal *inode = as<InfoInternal>(node)) {
+				InfoNode *r = null;
+
+				for (Nat i = 0; i < inode->count() && r == null; i++) {
+					InfoNode *at = inode->at(i);
+					Nat len = at->length();
+					r = insert(point, v, offset, at);
+					offset += len;
+				}
+
+				return r;
+			} else {
+				assert(false, L"This should not happen!");
+			}
 		}
 
 		Array<ColoredRange> *File::colors(Range range) {
@@ -55,7 +145,7 @@ namespace storm {
 			return r;
 		}
 
-		void File::colors(Array<ColoredRange> *out, const Range &range, Nat offset, syntax::InfoNode *node) {
+		void File::colors(Array<ColoredRange> *out, const Range &range, Nat offset, InfoNode *node) {
 			// We can ignore zero-length nodes.
 			Nat len = node->length();
 			if (len == 0)
@@ -72,7 +162,7 @@ namespace storm {
 			}
 
 			// Else, continue traversing.
-			if (syntax::InfoInternal *n = as<syntax::InfoInternal>(node)) {
+			if (InfoInternal *n = as<InfoInternal>(node)) {
 				Nat nodeOffset = offset;
 				for (Nat i = 0; i < n->count(); i++) {
 					colors(out, range, nodeOffset, n->at(i));
@@ -91,7 +181,9 @@ namespace storm {
 			if (parser->matchEnd() != src->end())
 				return node;
 
-			return parser->infoTree();
+			InfoNode *r = parser->infoTree();
+			parser->clear();
+			return r;
 		}
 
 		void File::debugOutput(TextOutput *to, Bool tree) const {

@@ -52,6 +52,9 @@ namespace storm {
 			Bool STORM_FN parse(Str *str, Url *file);
 			Bool STORM_FN parse(Str *str, Url *file, Str::Iter start);
 
+			// Clear all parse-related information. Included packages are retained.
+			void STORM_FN clear();
+
 			/**
 			 * Operations on the last parse.
 			 */
@@ -84,6 +87,7 @@ namespace storm {
 
 			// Output.
 			void STORM_FN toS(StrBuf *to) const;
+
 
 			/**
 			 * Performance inspection:
