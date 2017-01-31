@@ -17,8 +17,8 @@ BEGIN_TEST(InfoParse, Server) {
 
 	InfoNode *tree = p->infoTree();
 	CHECK_EQ(tree->length(), 14);
-	CHECK_EQ(tree->leafAt(0)->color, tFnName);
-	CHECK_EQ(tree->leafAt(6)->color, tFnName);
+	CHECK_EQ(tree->leafAt(0)->color, tVarName);
+	CHECK_EQ(tree->leafAt(6)->color, tVarName);
 	CHECK_EQ(tree->leafAt(12)->color, tConstant);
 	CHECK_EQ(tree->leafAt(13)->color, tNone);
 

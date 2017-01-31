@@ -12,6 +12,7 @@ namespace storm {
 			edit = c->symbol(L"edit");
 			close = c->symbol(L"close");
 			test = c->symbol(L"test");
+			debug = c->symbol(L"debug");
 			color = c->symbol(L"color");
 		}
 
@@ -24,9 +25,11 @@ namespace storm {
 					if (!process(msg))
 						break;
 				} catch (const MsgError &e) {
+					print(TO_S(this, L"While processing " << msg << L":"));
 					print(::toS(e));
 				} catch (const Exception &e) {
 					// TODO: Better error ouput for errors containing SrcPos.
+					print(TO_S(this, L"While processing " << msg << L":"));
 					print(::toS(e));
 				}
 			}
@@ -35,7 +38,6 @@ namespace storm {
 		}
 
 		Bool Server::process(SExpr *msg) {
-			// print(L"Processing message: " + ::toS(msg));
 			Cons *cell = msg->asCons();
 			Symbol *kind = cell->first->asSym();
 
@@ -49,6 +51,10 @@ namespace storm {
 				onClose(cell->rest);
 			} else if (test->equals(kind)) {
 				onTest(cell->rest);
+			} else if (debug->equals(kind)) {
+				onDebug(cell->rest);
+			} else {
+				print(TO_S(this, L"Unknown message: " << msg));
 			}
 
 			return true;
@@ -97,6 +103,19 @@ namespace storm {
 			SExpr *reply = testState->onMessage(expr);
 			if (reply)
 				conn->send(new (this) Cons(test, reply));
+		}
+
+		void Server::onDebug(SExpr *expr) {
+			Nat fileId = next(expr)->asNum()->v;
+			Bool tree = next(expr) != null;
+
+			File *f = files->get(fileId, null);
+			if (!f) {
+				print(TO_S(this, L"No file with id " << fileId));
+				return;
+			}
+
+			f->debugOutput(conn->textOut, tree);
 		}
 
 		static Str *colorName(EnginePtr e, syntax::TokenColor c) {

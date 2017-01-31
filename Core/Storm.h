@@ -22,6 +22,15 @@
 #define STORM_HIDDEN(parent) parent
 
 /**
+ * Convert a thing to a Str using a string buffer. Assumes that StrBuf is properly included when
+ * used.
+ *
+ * Example:
+ * TO_S(engine(), foo << L", " << bar);
+ */
+#define TO_S(engine, concat) (*new (engine) storm::StrBuf() << concat).toS()
+
+/**
  * Common parts of STORM_CLASS and STORM_VALUE
  */
 #define STORM_COMMON													\

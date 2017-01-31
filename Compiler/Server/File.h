@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Str.h"
 #include "Core/Io/Url.h"
+#include "Core/Io/Text.h"
 #include "Core/EnginePtr.h"
 #include "Compiler/Thread.h"
 #include "Compiler/Reader.h"
@@ -62,6 +63,9 @@ namespace storm {
 
 			// Our id.
 			Nat id;
+
+			// Output our internal representation for debugging.
+			void STORM_FN debugOutput(TextWriter *to, Bool tree) const;
 
 		private:
 			// Path to the underlying file (so we can properly locate packages etc., we never actually read the file).

@@ -36,6 +36,7 @@ namespace storm {
 			Symbol *edit;
 			Symbol *close;
 			Symbol *test;
+			Symbol *debug;
 			Symbol *color;
 
 			// Any test state required now?
@@ -55,6 +56,7 @@ namespace storm {
 			void onEdit(SExpr *msg);
 			void onClose(SExpr *msg);
 			void onTest(SExpr *msg);
+			void onDebug(SExpr *msg);
 
 			// Send updates for 'range' in 'file'.
 			void update(File *file, Range range, Nat editId);

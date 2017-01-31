@@ -59,9 +59,25 @@
 
 (defvar storm-mode-map
   (let ((map (make-keymap)))
-    ;(define-key map "C-M-u" 'storm-update-buffer)
+    ;; Shortcuts for debugging the internal representation in Storm.
+    (define-key map "\C-cd" 'storm-debug-tree)
+    (define-key map "\C-cc" 'storm-debug-content)
     map)
   "Keymap for storm-mode")
+
+;; Commands.
+
+(defun storm-debug-tree ()
+  "Output debug information containing the syntax tree for the current buffer."
+  (interactive)
+  (when storm-buffer-id
+    (storm-send (list 'debug storm-buffer-id t))))
+
+(defun storm-debug-content ()
+  "Output debug information of the contents of the current buffer."
+  (interactive)
+  (when storm-buffer-id
+    (storm-send (list 'debug storm-buffer-id nil))))
 
 ;; Convenience for highlighting.
 
