@@ -209,7 +209,7 @@ namespace storm {
 
 		void String::write(OStream *to, Connection *c) {
 			OMemStream *mem = new (this) OMemStream();
-			TextWriter *text = new (this) Utf8Writer(mem);
+			TextOutput *text = new (this) Utf8Output(mem);
 			text->write(v);
 			text->flush();
 
@@ -245,7 +245,7 @@ namespace storm {
 				writeInt(to, newSymbol, id);
 
 				OMemStream *mem = new (this) OMemStream();
-				TextWriter *text = new (this) Utf8Writer(mem);
+				TextOutput *text = new (this) Utf8Output(mem);
 				text->write(v);
 				text->flush();
 

@@ -348,33 +348,33 @@ namespace storm {
 		return ioThread;
 	}
 
-	TextReader *Engine::stdIn() {
+	TextInput *Engine::stdIn() {
 		if (!o.stdIn)
-			o.stdIn = new (*this) Utf8Reader(proc::in(*this));
+			o.stdIn = new (*this) Utf8Input(proc::in(*this));
 		return o.stdIn;
 	}
 
-	TextWriter *Engine::stdOut() {
+	TextOutput *Engine::stdOut() {
 		if (!o.stdOut)
-			o.stdOut = new (*this) Utf8Writer(proc::out(*this), sysTextInfo());
+			o.stdOut = new (*this) Utf8Output(proc::out(*this), sysTextInfo());
 		return o.stdOut;
 	}
 
-	TextWriter *Engine::stdError() {
+	TextOutput *Engine::stdError() {
 		if (!o.stdError)
-			o.stdError = new (*this) Utf8Writer(proc::error(*this), sysTextInfo());
+			o.stdError = new (*this) Utf8Output(proc::error(*this), sysTextInfo());
 		return o.stdError;
 	}
 
-	void Engine::stdIn(TextReader *to) {
+	void Engine::stdIn(TextInput *to) {
 		o.stdIn = to;
 	}
 
-	void Engine::stdOut(TextWriter *to) {
+	void Engine::stdOut(TextOutput *to) {
 		o.stdOut = to;
 	}
 
-	void Engine::stdError(TextWriter *to) {
+	void Engine::stdError(TextOutput *to) {
 		o.stdError = to;
 	}
 

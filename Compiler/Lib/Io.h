@@ -15,9 +15,9 @@ namespace storm {
 		void STORM_FN print(Str *s) ON(Compiler);
 
 		// Get the stdout text stream.
-		TextReader *STORM_FN stdIn(EnginePtr e) ON(Compiler);
-		TextWriter *STORM_FN stdOut(EnginePtr e) ON(Compiler);
-		TextWriter *STORM_FN stdError(EnginePtr e) ON(Compiler);
+		TextInput *STORM_FN stdIn(EnginePtr e) ON(Compiler);
+		TextOutput *STORM_FN stdOut(EnginePtr e) ON(Compiler);
+		TextOutput *STORM_FN stdError(EnginePtr e) ON(Compiler);
 
 	}
 }

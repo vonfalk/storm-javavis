@@ -65,7 +65,7 @@ namespace storm {
 			Nat id;
 
 			// Output our internal representation for debugging.
-			void STORM_FN debugOutput(TextWriter *to, Bool tree) const;
+			void STORM_FN debugOutput(TextOutput *to, Bool tree) const;
 
 		private:
 			// Path to the underlying file (so we can properly locate packages etc., we never actually read the file).

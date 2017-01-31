@@ -94,7 +94,7 @@ namespace storm {
 			return parser->infoTree();
 		}
 
-		void File::debugOutput(TextWriter *to, Bool tree) const {
+		void File::debugOutput(TextOutput *to, Bool tree) const {
 			if (!content) {
 				to->writeLine(TO_S(this, L"No content for " << id));
 			} else if (tree) {

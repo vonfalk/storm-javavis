@@ -9,15 +9,15 @@ namespace storm {
 			stdOut(s->engine())->writeLine(s);
 		}
 
-		TextReader *stdIn(EnginePtr e) {
+		TextInput *stdIn(EnginePtr e) {
 			return e.v.stdIn();
 		}
 
-		TextWriter *stdOut(EnginePtr e) {
+		TextOutput *stdOut(EnginePtr e) {
 			return e.v.stdOut();
 		}
 
-		TextWriter *stdError(EnginePtr e) {
+		TextOutput *stdError(EnginePtr e) {
 			return e.v.stdError();
 		}
 

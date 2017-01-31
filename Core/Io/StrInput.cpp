@@ -1,11 +1,11 @@
 #include "stdafx.h"
-#include "StrReader.h"
+#include "StrInput.h"
 
 namespace storm {
 
-	StrReader::StrReader(Str *src) : pos(src->begin()), end(src->end()) {}
+	StrInput::StrInput(Str *src) : pos(src->begin()), end(src->end()) {}
 
-	Char StrReader::readChar() {
+	Char StrInput::readChar() {
 		if (pos == end) {
 			return Char(nat(0));
 		} else {

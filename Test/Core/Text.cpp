@@ -37,7 +37,7 @@ static const byte plainUtf8Data2[] = {
 };
 static const wchar strData2[] = L"a\u00D6\u0D36\u3042\u79C1\U0001F639e";
 
-TextReader *read(const void *src, nat count) {
+TextInput *read(const void *src, nat count) {
 	Buffer b = buffer(gEngine(), (const byte *)src, count);
 	IMemStream *s = new (gEngine()) IMemStream(b);
 	return readText(s);
@@ -49,7 +49,7 @@ static String debug(Char ch) {
 	return toHex(ch.leading()) + toHex(ch.trailing());
 }
 
-static String verify(TextReader *src, const nat *ref) {
+static String verify(TextInput *src, const nat *ref) {
 	while (true) {
 		Char s = src->read();
 		if (s == Char(Nat(0))) {
@@ -72,7 +72,7 @@ static String verify(TextReader *src, const nat *ref) {
 	return L"";
 }
 
-BEGIN_TEST(TextInput, Core) {
+BEGIN_TEST(TestTextInput, Core) {
 	Engine &e = gEngine();
 
 	// 'easy' cases:
@@ -83,7 +83,7 @@ BEGIN_TEST(TextInput, Core) {
 
 	// Check so we can read lines:
 	{
-		TextReader *r = READ(utf8Data);
+		TextInput *r = READ(utf8Data);
 		CHECK_EQ(::toS(r->readLine()), L"new");
 		CHECK_EQ(::toS(r->readLine()), L"line");
 	}
@@ -91,7 +91,7 @@ BEGIN_TEST(TextInput, Core) {
 	// Robust with different line-endings?
 	{
 		static const char windows[] = "new\r\nline";
-		TextReader *r = READ(windows);
+		TextInput *r = READ(windows);
 		CHECK_EQ(::toS(r->readLine()), L"new");
 		CHECK_EQ(::toS(r->readLine()), L"line");
 
@@ -100,7 +100,7 @@ BEGIN_TEST(TextInput, Core) {
 
 	{
 		static const char mac[] = "new\rline";
-		TextReader *r = READ(mac);
+		TextInput *r = READ(mac);
 		CHECK_EQ(::toS(r->readLine()), L"new");
 		CHECK_EQ(::toS(r->readLine()), L"line");
 

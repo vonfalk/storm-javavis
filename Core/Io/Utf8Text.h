@@ -7,14 +7,14 @@ namespace storm {
 	/**
 	 * Reading and decoding of UTF8.
 	 */
-	class Utf8Reader : public TextReader {
+	class Utf8Input : public TextInput {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR Utf8Reader(IStream *src);
+		STORM_CTOR Utf8Input(IStream *src);
 
 		// Create with initial buffer contents.
-		STORM_CTOR Utf8Reader(IStream *src, Buffer start);
+		STORM_CTOR Utf8Input(IStream *src, Buffer start);
 
 	protected:
 		virtual Char STORM_FN readChar();
@@ -45,12 +45,12 @@ namespace storm {
 	/**
 	 * Writing and encoding of UTF8.
 	 */
-	class Utf8Writer : public TextWriter {
+	class Utf8Output : public TextOutput {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR Utf8Writer(OStream *to);
-		STORM_CTOR Utf8Writer(OStream *to, TextInfo info);
+		STORM_CTOR Utf8Output(OStream *to);
+		STORM_CTOR Utf8Output(OStream *to, TextInfo info);
 
 		// Flush output.
 		virtual void STORM_FN flush();

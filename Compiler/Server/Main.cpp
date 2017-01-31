@@ -14,8 +14,8 @@ namespace storm {
 			Connection *c = new (e) Connection(input, output);
 
 			// Set up standard IO...
-			TextWriter *oldOut = e.stdOut();
-			TextWriter *oldError = e.stdError();
+			TextOutput *oldOut = e.stdOut();
+			TextOutput *oldError = e.stdError();
 			e.stdOut(c->textOut);
 			e.stdError(c->textOut);
 

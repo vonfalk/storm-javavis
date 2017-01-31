@@ -156,15 +156,15 @@ class BfState on Compiler {
 	// Data area. A large variable.
 	core:asm:Var data;
 
-	// Input expression and variable the TextReader is stored in.
+	// Input expression and variable the TextInput is stored in.
 	Expr inputExpr;
 	core:asm:Var input;
 
 	// StrBuf type. Needed a couple of times...
 	Value strBuf;
 
-	// TextReader type.
-	Value textReader;
+	// TextInput type.
+	Value textInput;
 
 	// Nat type.
 	Value natType;
@@ -173,13 +173,13 @@ class BfState on Compiler {
 		init() {
 			g = g;
 			strBuf = named{StrBuf};
-			textReader = named{core:io:TextReader};
+			textInput = named{core:io:TextInput};
 			natType = named{Nat};
 			inputExpr = inputExpr;
 		}
 
 		output = g.createVar(strBuf).v;
-		input = g.createVar(textReader).v;
+		input = g.createVar(textInput).v;
 		tmpData = g.l.createVar(g.block, sInt());
 		data = g.l.createVar(g.block, Size(size));
 	}
@@ -191,7 +191,7 @@ class BfState on Compiler {
 		ctor.code(g, CodeResult(strBuf, VarInfo(output)));
 
 		Expr create = namedExpr(block, name{core:io:readStr}, Actuals(inputExpr));
-		create.code(g, CodeResult(textReader, VarInfo(input)));
+		create.code(g, CodeResult(textInput, VarInfo(input)));
 
 		// Initialize our pointer as well.
 		g.l << lea(Operand(ptrA), ptrRel(data, Offset()));
@@ -237,8 +237,8 @@ class BfInput extends BfToken {
 	void code(BfState state, CodeGen to) {
 		to.l << push(Operand(ptrA));
 
-		Block block(pos, Scope(named{core:io:TextReader}));
-		BareVarAccess inAccess(pos, state.textReader, state.input);
+		Block block(pos, Scope(named{core:io:TextInput}));
+		BareVarAccess inAccess(pos, state.textInput, state.input);
 		Expr e = namedExpr(block, SStr("read", pos), inAccess, Actuals());
 		e.code(to, CodeResult(state.natType, VarInfo(state.tmpData)));
 

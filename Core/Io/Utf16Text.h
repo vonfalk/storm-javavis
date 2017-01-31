@@ -7,14 +7,14 @@ namespace storm {
 	/**
 	 * UTF16 reader class.
 	 */
-	class Utf16Reader : public TextReader {
+	class Utf16Input : public TextInput {
 		STORM_CLASS;
 	public:
 		// Create the reader.
-		STORM_CTOR Utf16Reader(IStream *src, Bool byteSwap);
+		STORM_CTOR Utf16Input(IStream *src, Bool byteSwap);
 
 		// Create with a buffer containing the initial few bytes of the stream.
-		STORM_CTOR Utf16Reader(IStream *src, Bool byteSwap, Buffer start);
+		STORM_CTOR Utf16Input(IStream *src, Bool byteSwap, Buffer start);
 
 	protected:
 		// Read a character.
@@ -48,12 +48,12 @@ namespace storm {
 	/**
 	 * UTF16 writer class.
 	 */
-	class Utf16Writer : public TextWriter {
+	class Utf16Output : public TextOutput {
 		STORM_CLASS;
 	public:
 		// Create the writer.
-		STORM_CTOR Utf16Writer(OStream *dest, Bool byteSwap);
-		STORM_CTOR Utf16Writer(OStream *dest, TextInfo info, Bool byteSwap);
+		STORM_CTOR Utf16Output(OStream *dest, Bool byteSwap);
+		STORM_CTOR Utf16Output(OStream *dest, TextInfo info, Bool byteSwap);
 
 		// Flush output.
 		virtual void STORM_FN flush();

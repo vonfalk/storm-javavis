@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "Text.h"
-#include "StrReader.h"
 #include "Utf8Text.h"
 #include "Utf16Text.h"
+#include "StrInput.h"
+#include "Core/Str.h"
 #include "Core/StrBuf.h"
 
 namespace storm {
@@ -17,9 +18,9 @@ namespace storm {
 		return info;
 	}
 
-	TextReader::TextReader() : next(nat(0)), hasNext(false), first(true), eof(false) {}
+	TextInput::TextInput() : next(nat(0)), hasNext(false), first(true), eof(false) {}
 
-	Char TextReader::doRead() {
+	Char TextInput::doRead() {
 		Char c = readChar();
 		if (first && c == Char(Nat(0xFEFF)))
 			c = readChar();
@@ -28,7 +29,7 @@ namespace storm {
 		return c;
 	}
 
-	Char TextReader::read() {
+	Char TextInput::read() {
 		if (hasNext) {
 			hasNext = false;
 			return next;
@@ -37,7 +38,7 @@ namespace storm {
 		}
 	}
 
-	Char TextReader::peek() {
+	Char TextInput::peek() {
 		if (!hasNext) {
 			next = doRead();
 			hasNext = true;
@@ -45,13 +46,13 @@ namespace storm {
 		return next;
 	}
 
-	Bool TextReader::more() {
+	Bool TextInput::more() {
 		if (hasNext)
 			return next != Char(Nat(0));
 		return !eof;
 	}
 
-	Str *TextReader::readLine() {
+	Str *TextInput::readLine() {
 		StrBuf *to = new (this) StrBuf();
 
 		while (true) {
@@ -74,7 +75,7 @@ namespace storm {
 		return to->toS();
 	}
 
-	Str *TextReader::readAll() {
+	Str *TextInput::readAll() {
 		StrBuf *to = new (this) StrBuf();
 
 		while (true) {
@@ -93,7 +94,7 @@ namespace storm {
 		return to->toS();
 	}
 
-	Str *TextReader::readAllRaw() {
+	Str *TextInput::readAllRaw() {
 		StrBuf *to = new (this) StrBuf();
 
 		while (more()) {
@@ -106,12 +107,12 @@ namespace storm {
 		return to->toS();
 	}
 
-	Char TextReader::readChar() {
+	Char TextInput::readChar() {
 		return Char(nat(0));
 	}
 
 
-	TextReader *STORM_FN readText(IStream *stream) {
+	TextInput *STORM_FN readText(IStream *stream) {
 		nat16 bom = 0;
 
 		Buffer buf = stream->readAll(sizeof(bom));
@@ -122,15 +123,15 @@ namespace storm {
 		}
 
 		if (bom == 0xFEFF)
-			return new (stream) Utf16Reader(stream, false, buf);
+			return new (stream) Utf16Input(stream, false, buf);
 		else if (bom == 0xFFFE)
-			return new (stream) Utf16Reader(stream, true, buf);
+			return new (stream) Utf16Input(stream, true, buf);
 		else
-			return new (stream) Utf8Reader(stream, buf);
+			return new (stream) Utf8Input(stream, buf);
 	}
 
-	TextReader *STORM_FN readStr(Str *from) {
-		return new (from) StrReader(from);
+	TextInput *STORM_FN readStr(Str *from) {
+		return new (from) StrInput(from);
 	}
 
 	Str *STORM_FN readAllText(Url *file) {
@@ -142,16 +143,16 @@ namespace storm {
 	 * Write text.
 	 */
 
-	TextWriter::TextWriter() : autoFlush(true), config() {}
+	TextOutput::TextOutput() : autoFlush(true), config() {}
 
-	TextWriter::TextWriter(TextInfo info) : autoFlush(true), config(info) {}
+	TextOutput::TextOutput(TextInfo info) : autoFlush(true), config(info) {}
 
-	void TextWriter::write(Char c) {
+	void TextOutput::write(Char c) {
 		writeBom();
 		writeChar(c);
 	}
 
-	void TextWriter::write(Str *s) {
+	void TextOutput::write(Str *s) {
 		writeBom();
 
 		Char newline('\n');
@@ -163,7 +164,7 @@ namespace storm {
 		}
 	}
 
-	void TextWriter::writeLine() {
+	void TextOutput::writeLine() {
 		writeBom();
 
 		if (config.useCrLf)
@@ -173,20 +174,20 @@ namespace storm {
 			flush();
 	}
 
-	void TextWriter::writeLine(Str *s) {
+	void TextOutput::writeLine(Str *s) {
 		write(s);
 		writeLine();
 	}
 
-	void TextWriter::writeBom() {
+	void TextOutput::writeBom() {
 		if (config.useBom) {
 			writeChar(Char(Nat(0xFEFF)));
 			config.useBom = false;
 		}
 	}
 
-	void TextWriter::writeChar(Char ch) {}
+	void TextOutput::writeChar(Char ch) {}
 
-	void TextWriter::flush() {}
+	void TextOutput::flush() {}
 
 }

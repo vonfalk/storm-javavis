@@ -44,11 +44,11 @@ namespace storm {
 	 * Base interface for reading text. Caches one character. When implementing your own version,
 	 * override 'readChar' to read a code point in UTF32.
 	 */
-	class TextReader : public Object {
+	class TextInput : public Object {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR TextReader();
+		STORM_CTOR TextInput();
 
 		// Read a single character from the stream. Returns 0 on failure.
 		Char STORM_FN read();
@@ -91,10 +91,10 @@ namespace storm {
 
 
 	// Create a reader. Identifies the encoding automatically.
-	TextReader *STORM_FN readText(IStream *stream);
+	TextInput *STORM_FN readText(IStream *stream);
 
 	// Read a string.
-	TextReader *STORM_FN readStr(Str *from);
+	TextInput *STORM_FN readStr(Str *from);
 
 	// Read all text from a file.
 	Str *STORM_FN readAllText(Url *file);
@@ -104,14 +104,14 @@ namespace storm {
 	 * Base interface for writing text. Buffers entire lines. When implementing your own version,
 	 * override 'writeChar' and 'flush' to write a code point in UTF32.
 	 */
-	class TextWriter : public Object {
+	class TextOutput : public Object {
 		STORM_CLASS;
 	public:
 		// Create. Output regular unix line endings (TODO: Should this be OS-dependent?)
-		STORM_CTOR TextWriter();
+		STORM_CTOR TextOutput();
 
 		// Create. Specify line endings.
-		STORM_CTOR TextWriter(TextInfo info);
+		STORM_CTOR TextOutput(TextInfo info);
 
 		// Automatic flush on newline? (on by default)
 		Bool autoFlush;

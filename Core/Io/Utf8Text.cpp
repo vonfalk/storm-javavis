@@ -3,9 +3,9 @@
 
 namespace storm {
 
-	Utf8Reader::Utf8Reader(IStream *src) : src(src), buf(), pos(0) {}
+	Utf8Input::Utf8Input(IStream *src) : src(src), buf(), pos(0) {}
 
-	Utf8Reader::Utf8Reader(IStream *src, Buffer start) : src(src), buf(), pos(0) {
+	Utf8Input::Utf8Input(IStream *src, Buffer start) : src(src), buf(), pos(0) {
 		buf = buffer(engine(), max(Nat(bufSize), start.filled()));
 		buf.filled(start.filled());
 		memcpy(buf.dataPtr(), start.dataPtr(), start.filled());
@@ -46,7 +46,7 @@ namespace storm {
 		}
 	}
 
-	Char Utf8Reader::readChar() {
+	Char Utf8Input::readChar() {
 		byte ch = readByte();
 		nat left, r;
 		firstData(ch, left, r);
@@ -66,7 +66,7 @@ namespace storm {
 		return Char(r);
 	}
 
-	Byte Utf8Reader::readByte() {
+	Byte Utf8Input::readByte() {
 		if (buf.count() == 0) {
 			buf = src->read(bufSize);
 			pos = 0;
@@ -86,7 +86,7 @@ namespace storm {
 			return 0;
 	}
 
-	void Utf8Reader::ungetByte() {
+	void Utf8Input::ungetByte() {
 		if (pos > 0)
 			pos--;
 	}
@@ -95,26 +95,26 @@ namespace storm {
 	 * Write.
 	 */
 
-	Utf8Writer::Utf8Writer(OStream *to) : TextWriter(), dest(to) {
+	Utf8Output::Utf8Output(OStream *to) : TextOutput(), dest(to) {
 		init();
 	}
 
-	Utf8Writer::Utf8Writer(OStream *to, TextInfo info) : TextWriter(info), dest(to) {
+	Utf8Output::Utf8Output(OStream *to, TextInfo info) : TextOutput(info), dest(to) {
 		init();
 	}
 
-	void Utf8Writer::init() {
+	void Utf8Output::init() {
 		buf = buffer(engine(), bufSize);
 		buf.filled(0);
 	}
 
-	void Utf8Writer::flush() {
+	void Utf8Output::flush() {
 		if (buf.filled() > 0)
 			dest->write(buf);
 		buf.filled(0);
 	}
 
-	void Utf8Writer::writeChar(Char ch) {
+	void Utf8Output::writeChar(Char ch) {
 		Nat cp = ch.codepoint();
 		const Nat maxBytes = 8;
 		byte out[maxBytes];
@@ -146,7 +146,7 @@ namespace storm {
 		writeBytes(at, bytes);
 	}
 
-	void Utf8Writer::writeBytes(const byte *data, Nat count) {
+	void Utf8Output::writeBytes(const byte *data, Nat count) {
 		Nat filled = buf.filled();
 		if (filled + count >= buf.count()) {
 			flush();

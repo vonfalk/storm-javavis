@@ -9,8 +9,8 @@
 #include "Core/Io/Text.h"
 
 void runRepl(Engine &e, const wchar *lang, Repl *repl) {
-	TextReader *input = e.stdIn();
-	TextWriter *output = e.stdOut();
+	TextInput *input = e.stdIn();
+	TextOutput *output = e.stdOut();
 
 	Str *line = null;
 	while (!repl->exit()) {

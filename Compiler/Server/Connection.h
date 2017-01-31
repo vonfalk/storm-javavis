@@ -29,7 +29,7 @@ namespace storm {
 			Bool STORM_FN sendSymbol(Symbol *sym);
 
 			// Output used for stdout.
-			TextWriter *textOut;
+			TextOutput *textOut;
 
 			// Send a message.
 			void STORM_FN send(SExpr *msg);

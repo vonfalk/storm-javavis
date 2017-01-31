@@ -5,11 +5,11 @@
 namespace storm {
 	STORM_PKG(core.io);
 
-	class StrReader : public TextReader {
+	class StrInput : public TextInput {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR StrReader(Str *src);
+		STORM_CTOR StrInput(Str *src);
 
 	protected:
 		virtual Char STORM_FN readChar();

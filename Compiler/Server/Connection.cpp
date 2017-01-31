@@ -12,7 +12,7 @@ namespace storm {
 			TextInfo info;
 			info.useCrLf = false;
 			info.useBom = false;
-			textOut = new (this) Utf8Writer(output, info);
+			textOut = new (this) Utf8Output(output, info);
 			symNames = new (this) NameMap();
 			symIds = new (this) IdMap();
 			lastSymId = 0x40000000; // Emacs only uses ~30 bits for integers.
@@ -246,7 +246,7 @@ namespace storm {
 			}
 
 			IMemStream *src = new (this) IMemStream(str);
-			TextReader *text = new (this) Utf8Reader(src);
+			TextInput *text = new (this) Utf8Input(src);
 			Str *data = text->readAllRaw();
 
 			return new (this) String(data);
@@ -265,7 +265,7 @@ namespace storm {
 			}
 
 			IMemStream *src = new (this) IMemStream(str);
-			TextReader *text = new (this) Utf8Reader(src);
+			TextInput *text = new (this) Utf8Input(src);
 			Str *name = text->readAllRaw();
 
 			// Insert the symbol if it does not already exist.
