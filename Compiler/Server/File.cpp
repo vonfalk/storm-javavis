@@ -85,7 +85,8 @@ namespace storm {
 		}
 
 		void File::removeLeaf(const Range &range, Nat offset, InfoLeaf *node) {
-			Str::Iter begin = node->v->begin();
+			Str *src = node->toS();
+			Str::Iter begin = src->begin();
 			for (Nat i = offset; i < range.from; i++)
 				++begin;
 
@@ -93,7 +94,7 @@ namespace storm {
 			for (Nat i = max(offset, range.from); i < range.to; i++)
 				++end;
 
-			node->v = node->v->remove(begin, end);
+			node->set(src->remove(begin, end));
 		}
 
 		void File::removeInternal(const Range &range, Nat offset, InfoInternal *node) {
@@ -115,11 +116,13 @@ namespace storm {
 			if (point < offset || point > offset + len)
 				return null;
 
+			// TODO? Try to insert inside a node where the regex matches.
 			if (InfoLeaf *leaf = as<InfoLeaf>(node)) {
-				Str::Iter p = leaf->v->begin();
+				Str *src = leaf->toS();
+				Str::Iter p = src->begin();
 				for (Nat i = offset; i < point; i++)
 					++p;
-				leaf->v = leaf->v->insert(p, v);
+				leaf->set(src->insert(p, v));
 
 				return node;
 			} else if (InfoInternal *inode = as<InfoInternal>(node)) {

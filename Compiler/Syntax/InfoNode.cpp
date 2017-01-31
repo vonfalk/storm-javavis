@@ -12,6 +12,7 @@ namespace storm {
 		static const Nat invalid = -1;
 
 		InfoNode::InfoNode() {
+			parentNode = null;
 			color = tNone;
 			invalidate();
 		}
@@ -32,6 +33,8 @@ namespace storm {
 
 		void InfoNode::invalidate() {
 			prevLength = invalid;
+			if (parentNode)
+				parentNode->invalidate();
 		}
 
 		Str *InfoNode::format() const {
@@ -75,6 +78,16 @@ namespace storm {
 			throw ArrayError(L"Index " + ::toS(v) + L" out of bounds (of " + ::toS(count()) + L").");
 		}
 
+		void InfoInternal::set(Nat id, InfoNode *node) {
+			if (id < count()) {
+				children->v[id] = node;
+				node->parent(this);
+				invalidate();
+			} else {
+				outOfBounds(id);
+			}
+		}
+
 		void InfoInternal::toS(StrBuf *to) const {
 			for (Nat i = 0; i < children->count; i++)
 				children->v[i]->toS(to);
@@ -115,6 +128,15 @@ namespace storm {
 			for (Str::Iter i = v->begin(), e = v->end(); i != e; ++i)
 				len++;
 			return len;
+		}
+
+		void InfoLeaf::set(Str *v) {
+			this->v = v;
+			invalidate();
+		}
+
+		Str *InfoLeaf::toS() const {
+			return v;
 		}
 
 		void InfoLeaf::toS(StrBuf *to) const {

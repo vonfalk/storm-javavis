@@ -549,7 +549,7 @@ namespace storm {
 				}
 
 				child->color = token->color;
-				result->at(--children) = child;
+				result->set(--children, child);
 
 				atPtr = at->prev;
 				at = prev;

@@ -47,14 +47,23 @@ namespace storm {
 			// Generate the formatted string.
 			virtual void STORM_FN format(StrBuf *to) const;
 
+			// Get our parent.
+			MAYBE(InfoInternal *) STORM_FN parent() const { return parentNode; }
+
+			// Set parent.
+			inline void parent(InfoInternal *n) { parentNode = n; }
+
 		protected:
 			// Compute the length of this node.
 			virtual Nat STORM_FN computeLength();
 
-			// Invalidate any pre-computed data.
+			// Invalidate any pre-computed data. Also invalidate any parent nodes.
 			void STORM_FN invalidate();
 
 		private:
+			// Parent node.
+			InfoInternal *parentNode;
+
 			// Cached length.
 			Nat prevLength;
 		};
@@ -79,8 +88,8 @@ namespace storm {
 			}
 
 			// Get child at offset.
-			inline InfoNode *&STORM_FN operator [](Nat id) { return at(id); }
-			InfoNode *&at(Nat id) {
+			inline InfoNode *STORM_FN operator [](Nat id) { return at(id); }
+			InfoNode *at(Nat id) {
 				if (id < count()) {
 					return children->v[id];
 				} else {
@@ -88,6 +97,9 @@ namespace storm {
 					return children->v[0];
 				}
 			}
+
+			// Set child at offset.
+			void set(Nat id, InfoNode *node);
 
 			// Find the first leaf node at position 'pos' relative to this node.
 			virtual MAYBE(InfoLeaf *) STORM_FN leafAt(Nat pos);
@@ -126,18 +138,25 @@ namespace storm {
 			// Find leaf nodes.
 			virtual MAYBE(InfoLeaf *) STORM_FN leafAt(Nat pos);
 
+			// Set value.
+			void set(Str *v);
+
+			// To string.
+			virtual Str *STORM_FN toS() const;
+
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
 			// Format.
 			virtual void STORM_FN format(StrBuf *to) const;
 
-			// The matched string.
-			Str *v;
-
 		protected:
 			// Compute the lenght of this node.
 			virtual Nat STORM_FN computeLength();
+
+		private:
+			// The matched string.
+			Str *v;
 		};
 
 	}
