@@ -21,6 +21,9 @@ namespace storm {
 
 			Nat from;
 			Nat to;
+
+			// Does this range intersect another range?
+			Bool STORM_FN intersects(Range other) const;
 		};
 
 		/**
@@ -72,6 +75,9 @@ namespace storm {
 
 			// Re-parse a node in the syntax tree.
 			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root);
+
+			// Traverse the syntax tree and extract colors in 'range'.
+			void colors(Array<ColoredRange> *out, const Range &range, Nat offset, syntax::InfoNode *node);
 		};
 
 	}

@@ -10,6 +10,11 @@ namespace storm {
 			this->to = max(from, to);
 		}
 
+		Bool Range::intersects(Range other) const {
+			return to > other.from
+				&& from < other.to;
+		}
+
 		ColoredRange::ColoredRange(Range r, syntax::TokenColor c)
 			: range(r), color(c) {}
 
@@ -29,7 +34,6 @@ namespace storm {
 				content = new (this) InfoLeaf(src);
 				parser = reader->createParser();
 				content = parse(content, parser->root());
-				PVAR(content->format());
 			}
 		}
 
@@ -41,14 +45,40 @@ namespace storm {
 		}
 
 		Range File::replace(Range range, Str *replace) {
-
 			return Range(0, 0);
 		}
 
 		Array<ColoredRange> *File::colors(Range range) {
 			Array<ColoredRange> *r = new (this) Array<ColoredRange>();
-			// DO STUFF!
+			if (content)
+				colors(r, range, 0, content);
 			return r;
+		}
+
+		void File::colors(Array<ColoredRange> *out, const Range &range, Nat offset, syntax::InfoNode *node) {
+			// We can ignore zero-length nodes.
+			Nat len = node->length();
+			if (len == 0)
+				return;
+
+			Range nodeRange(offset, offset + len);
+			if (!nodeRange.intersects(range))
+				return;
+
+			// Pick the root-most color.
+			if (node->color != syntax::tNone) {
+				out->push(ColoredRange(nodeRange, node->color));
+				return;
+			}
+
+			// Else, continue traversing.
+			if (syntax::InfoInternal *n = as<syntax::InfoInternal>(node)) {
+				Nat nodeOffset = offset;
+				for (Nat i = 0; i < n->count(); i++) {
+					colors(out, range, nodeOffset, n->at(i));
+					nodeOffset += n->at(i)->length();
+				}
+			}
 		}
 
 		InfoNode *File::parse(InfoNode *node, Rule *root) {

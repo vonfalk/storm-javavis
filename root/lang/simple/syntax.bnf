@@ -8,7 +8,7 @@ SDelim : "[ \n\r\t]*";
 
 // Identifier.
 void SIdent();
-SIdent : "[A-Za-z]+" #fnName;
+SIdent : "[A-Za-z]+" #varName;
 
 // Number.
 void SNum();
