@@ -26,6 +26,10 @@ namespace storm {
 			return to << r.range << L"#" << name(to.engine(), r.color);
 		}
 
+		NodePtr::NodePtr() : node(null), depth(0) {}
+
+		NodePtr::NodePtr(InfoNode *node, Nat depth) : node(node), depth(depth) {}
+
 		File::File(Nat id, Url *path, Str *src)
 			: id(id), path(path), content(null) {
 

@@ -49,6 +49,26 @@ namespace storm {
 		StrBuf &STORM_FN operator <<(StrBuf &to, ColoredRange r);
 
 		/**
+		 * Represents a node in the syntax tree together with its depth, so we can quickly decide
+		 * which is the most shallow node.
+		 */
+		class NodePtr {
+			STORM_VALUE;
+		public:
+			// Create a null pointer.
+			STORM_CTOR NodePtr();
+
+			// Create a pointer to a node and remember its depth.
+			STORM_CTOR NodePtr(syntax::InfoNode *node, Nat depth);
+
+			// Node.
+			syntax::InfoNode *node;
+
+			// Depth.
+			Nat depth;
+		};
+
+		/**
 		 * Represents an open file in the language server.
 		 *
 		 * TODO: We need a more efficient representation of the contents!
