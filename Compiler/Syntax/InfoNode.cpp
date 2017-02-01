@@ -117,7 +117,7 @@ namespace storm {
 		 * Leaf node.
 		 */
 
-		InfoLeaf::InfoLeaf(Str *match) : v(match) {}
+		InfoLeaf::InfoLeaf(RegexToken *regex, Str *match) : v(match), regex(regex) {}
 
 		InfoLeaf *InfoLeaf::leafAt(Nat pos) {
 			return this;
@@ -135,6 +135,17 @@ namespace storm {
 			invalidate();
 		}
 
+		Bool InfoLeaf::matchesRegex() const {
+			return matchesRegex(v);
+		}
+
+		Bool InfoLeaf::matchesRegex(Str *s) const {
+			if (!regex)
+				return false;
+
+			return regex->regex.matchAll(s);
+		}
+
 		Str *InfoLeaf::toS() const {
 			return v;
 		}
@@ -144,7 +155,9 @@ namespace storm {
 		}
 
 		void InfoLeaf::format(StrBuf *to) const {
-			*to << v;
+			*to << L"'" << v << L"'";
+			if (regex)
+				*to << L" (matches " << regex->regex << L")";
 			InfoNode::format(to);
 		}
 

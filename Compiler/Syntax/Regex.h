@@ -24,12 +24,23 @@ namespace storm {
 			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);
 
-			// Match the string 'str' starting from 'start'. Returns an iterator pointing past the
-			// last matched character. If the pattern does not match, an iterator to the beginning
-			// is returned.
-			// TODO: Implement a Storm interface. Ideally we would use MAYBE(Str::Iter) when that works.
-			// Str::Iter STORM_FN match(Str *str) const;
-			// Str::Iter STORM_FN match(Str *str, Str::Iter start) const;
+			// Match the string 'str' starting from 'start' (if present). Returns true if a match
+			// was possible at all. The matched part of the string can be retrieved using
+			// 'matchEnd'.
+			// TODO: Return MAYBE(Str::Iter) if that is ever supported!
+			Bool STORM_FN match(Str *str);
+			Bool STORM_FN match(Str *str, Str::Iter start);
+
+			// Match the entire string 'str' starting from 'start'.
+			Bool STORM_FN matchAll(Str *str);
+			Bool STORM_FN matchAll(Str *str, Str::Iter start);
+
+			// Get the result of the last match.
+			Str::Iter STORM_FN matchEnd() const;
+
+			/**
+			 * C++ api used by the parser.
+			 */
 
 			static const nat NO_MATCH;
 
@@ -100,6 +111,9 @@ namespace storm {
 
 			// All states.
 			Array<State> *states;
+
+			// Last match.
+			Str::Iter lastMatch;
 
 			// Parse a string.
 			void parse(Str *parse);

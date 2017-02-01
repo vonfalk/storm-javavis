@@ -49,26 +49,6 @@ namespace storm {
 		StrBuf &STORM_FN operator <<(StrBuf &to, ColoredRange r);
 
 		/**
-		 * Represents a node in the syntax tree together with its depth, so we can quickly decide
-		 * which is the most shallow node.
-		 */
-		class NodePtr {
-			STORM_VALUE;
-		public:
-			// Create a null pointer.
-			STORM_CTOR NodePtr();
-
-			// Create a pointer to a node and remember its depth.
-			STORM_CTOR NodePtr(syntax::InfoNode *node, Nat depth);
-
-			// Node.
-			syntax::InfoNode *node;
-
-			// Depth.
-			Nat depth;
-		};
-
-		/**
 		 * Represents an open file in the language server.
 		 *
 		 * TODO: We need a more efficient representation of the contents!
@@ -110,14 +90,26 @@ namespace storm {
 			void colors(Array<ColoredRange> *out, const Range &range, Nat offset, syntax::InfoNode *node);
 
 			// Remove 'range' in the current node (if applicable). The structure of the syntax tree
-			// is kept intact. Returns the rootmost node that was altered.
-			void remove(const Range &range, Nat offset, syntax::InfoNode *node);
-			void removeLeaf(const Range &range, Nat offset, syntax::InfoLeaf *src);
-			void removeInternal(const Range &range, Nat offset, syntax::InfoInternal *node);
+			// is kept intact. Returns 'false' if content was modified so that a regex in a leaf node
+			// no longer matches the contents of that node (or if a modified leaf node is missing a regex).
+			Bool remove(const Range &range);
 
-			// Insert 'v' at 'point'. Does not alter the structure of the tree. Returns the rootmost
-			// node that was modified.
-			syntax::InfoNode *insert(Nat point, Str *v, Nat offset, syntax::InfoNode *node);
+			// Helpers to 'remove'
+			Bool remove(const Range &range, Nat offset, syntax::InfoNode *node);
+			Bool removeLeaf(const Range &range, Nat offset, syntax::InfoLeaf *src);
+			Bool removeInternal(const Range &range, Nat offset, syntax::InfoInternal *node);
+
+			// State struct used in 'insert'.
+			struct InsertState;
+
+			// Insert 'v' at 'point'. Does not alter the structure of the tree. Returns 'false' if a
+			// node was modified so that its regex no longer matches its content.
+			Bool insert(Nat point, Str *v);
+
+			// Helpers to 'insert'.
+			void insert(InsertState &state, Nat offset, syntax::InfoNode *node);
+			void insertLeaf(InsertState &state, Nat offset, syntax::InfoLeaf *node);
+			void insertInternal(InsertState &state, Nat offset, syntax::InfoInternal *node);
 		};
 
 	}

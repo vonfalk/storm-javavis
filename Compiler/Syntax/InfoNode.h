@@ -2,6 +2,7 @@
 #include "Core/Str.h"
 #include "Compiler/Thread.h"
 #include "TokenColor.h"
+#include "Token.h"
 
 namespace storm {
 	namespace syntax {
@@ -80,7 +81,7 @@ namespace storm {
 			InfoInternal(Production *prod, Nat children);
 
 			// Get our production.
-			inline Production *STORM_FN production() const { return prod; }
+			inline MAYBE(Production *) STORM_FN production() const { return prod; }
 
 			// Number of children.
 			inline Nat STORM_FN count() const {
@@ -133,13 +134,21 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR InfoLeaf(Str *match);
+			STORM_CTOR InfoLeaf(MAYBE(RegexToken *) regex, Str *match);
 
 			// Find leaf nodes.
 			virtual MAYBE(InfoLeaf *) STORM_FN leafAt(Nat pos);
 
 			// Set value.
 			void set(Str *v);
+
+			// Get the matching regex.
+			inline MAYBE(RegexToken *) STORM_FN matches() const { return regex; }
+
+			// Does the content of this node match the regex in here? Returns 'false' if this node
+			// does not contain a regex.
+			Bool STORM_FN matchesRegex() const;
+			Bool STORM_FN matchesRegex(Str *v) const;
 
 			// To string.
 			virtual Str *STORM_FN toS() const;
@@ -155,6 +164,9 @@ namespace storm {
 			virtual Nat STORM_FN computeLength();
 
 		private:
+			// Which regex did this leaf match?
+			MAYBE(RegexToken *) regex;
+
 			// The matched string.
 			Str *v;
 		};

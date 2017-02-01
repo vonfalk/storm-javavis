@@ -545,7 +545,7 @@ namespace storm {
 				} else {
 					Str::Iter from = src->posIter(at->prev.step + srcPos.pos);
 					Str::Iter to = src->posIter(atPtr.step + srcPos.pos);
-					child = new (this) InfoLeaf(src->substr(from, to));
+					child = new (this) InfoLeaf(as<RegexToken>(token), src->substr(from, to));
 				}
 
 				child->color = token->color;

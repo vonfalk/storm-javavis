@@ -23,7 +23,7 @@ namespace storm {
 			parse(pattern);
 		}
 
-		Regex::Regex(const Regex &o) : states(o.states) {}
+		Regex::Regex(const Regex &o) : states(o.states), lastMatch(o.lastMatch) {}
 
 		void Regex::deepCopy(CloneEnv *env) {
 			// Note: there is no need to deeply copy things in here, as everything is read only from
@@ -38,13 +38,32 @@ namespace storm {
 				states->push(State::parse(str->engine(), s, pos));
 		}
 
-		// Str::Iter Regex::match(Str *str) const {
-		// 	return match(str, str->begin());
-		// }
+		Bool Regex::match(Str *str) {
+			return match(str, str->begin());
+		}
 
-		// Str::Iter Regex::match(Str *str, Str::Iter start) const {
-		// 	return str->posIter(matchRaw(str, start.offset()));
-		// }
+		Bool Regex::match(Str *str, Str::Iter start) {
+			Nat r = matchRaw(str, start.offset());
+			if (r == NO_MATCH)
+				return false;
+			lastMatch = str->posIter(r);
+			return true;
+		}
+
+		Bool Regex::matchAll(Str *str) {
+			return matchAll(str, str->begin());
+		}
+
+		Bool Regex::matchAll(Str *str, Str::Iter start) {
+			Nat r = matchRaw(str, start.offset());
+			if (r == NO_MATCH)
+				return false;
+			return str->posIter(r) == str->end();
+		}
+
+		Str::Iter Regex::matchEnd() const {
+			return lastMatch;
+		}
 
 		Nat Regex::matchRaw(Str *str) const {
 			return matchRaw(str, 0);

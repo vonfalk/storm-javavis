@@ -26,10 +26,6 @@ namespace storm {
 			return to << r.range << L"#" << name(to.engine(), r.color);
 		}
 
-		NodePtr::NodePtr() : node(null), depth(0) {}
-
-		NodePtr::NodePtr(InfoNode *node, Nat depth) : node(node), depth(depth) {}
-
 		File::File(Nat id, Url *path, Str *src)
 			: id(id), path(path), content(null) {
 
@@ -42,7 +38,7 @@ namespace storm {
 				reader = pkgReader->readFile(path);
 
 			if (reader) {
-				content = new (this) InfoLeaf(src);
+				content = new (this) InfoLeaf(null, src);
 				parser = reader->createParser();
 				content = parse(content, parser->root());
 			}
@@ -59,36 +55,49 @@ namespace storm {
 			if (!content)
 				return Range(0, 0);
 
+			// Do all regexes match?
+			Bool regexMatching = true;
+
 			// Anything to remove?
 			if (!range.empty())
-				remove(range, 0, content);
+				regexMatching &= remove(range);
 
 			// Anything to add?
 			if (replace->begin() != replace->end())
-				insert(range.from, replace, 0, content);
+				regexMatching &= insert(range.from, replace);
+
+			PVAR(regexMatching);
+			if (!regexMatching) {
+				// TODO: Parse some nodes again!
+			}
 
 			return Range(0, 0);
 		}
 
-		void File::remove(const Range &range, Nat offset, InfoNode *node) {
+		Bool File::remove(const Range &range) {
+			return remove(range, 0, content);
+		}
+
+		Bool File::remove(const Range &range, Nat offset, InfoNode *node) {
 			Nat len = node->length();
 			if (len == 0)
-				return;
+				return true;
 
 			Range nodeRange(offset, offset + len);
 			if (!nodeRange.intersects(range))
-				return;
+				return true;
 
 			if (InfoLeaf *leaf = as<InfoLeaf>(node)) {
-				removeLeaf(range, offset, leaf);
+				return removeLeaf(range, offset, leaf);
 			} else if (InfoInternal *inode = as<InfoInternal>(node)) {
-				removeInternal(range, offset, inode);
+				return removeInternal(range, offset, inode);
 			} else {
 				assert(false, L"This should not happen!");
+				return false; // Force a re-parse.
 			}
 		}
 
-		void File::removeLeaf(const Range &range, Nat offset, InfoLeaf *node) {
+		Bool File::removeLeaf(const Range &range, Nat offset, InfoLeaf *node) {
 			Str *src = node->toS();
 			Str::Iter begin = src->begin();
 			for (Nat i = offset; i < range.from; i++)
@@ -99,49 +108,100 @@ namespace storm {
 				++end;
 
 			node->set(src->remove(begin, end));
+
+			return node->matchesRegex();
 		}
 
-		void File::removeInternal(const Range &range, Nat offset, InfoInternal *node) {
+		Bool File::removeInternal(const Range &range, Nat offset, InfoInternal *node) {
+			Bool ok = true;
+
 			for (Nat i = 0; i < node->count(); i++) {
 				InfoNode *at = node->at(i);
 				// Keep track of the old length, as that will likely change.
 				Nat len = at->length();
-				remove(range, offset, at);
+				ok &= remove(range, offset, at);
 				offset += len;
+			}
+
+			return ok;
+		}
+
+		struct File::InsertState {
+			// Insert 'v' at 'point'.
+			Nat point;
+			Str *v;
+
+			// Anything inserted so far?
+			Bool done;
+
+			// First viable match. Maybe not chosen due to regex mismatch.
+			InfoLeaf *firstPossible;
+			Str *firstPossibleStr;
+		};
+
+		Bool File::insert(Nat point, Str *v) {
+			InsertState state = {
+				point,
+				v,
+				false,
+				null,
+			};
+			insert(state, 0, content);
+
+			// If 'done' is true, then we succeeded at inserting the string somewhere where the
+			// regex matched.
+			if (state.done)
+				return true;
+
+			// We should insert it at 'firstPossible'.
+			assert(state.firstPossible, L"No node for insertion was found!");
+			if (!state.firstPossible)
+				return false; // Force a re-parse.
+
+			// We can not avoid invalidating a regex...
+			state.firstPossible->set(state.firstPossibleStr);
+			return false;
+		}
+
+		void File::insert(InsertState &state, Nat offset, InfoNode *node) {
+			// Outside this node?
+			Nat len = node->length();
+			if (state.point < offset || state.point > offset + len)
+				return;
+
+			if (InfoLeaf *leaf = as<InfoLeaf>(node)) {
+				insertLeaf(state, offset, leaf);
+			} else if (InfoInternal *inode = as<InfoInternal>(node)) {
+				insertInternal(state, offset, inode);
+			} else {
+				assert(false, L"This should not happen!");
 			}
 		}
 
-		InfoNode *File::insert(Nat point, Str *v, Nat offset, InfoNode *node) {
-			Nat len = node->length();
-			if (len == 0)
-				return null;
+		void File::insertLeaf(InsertState &state, Nat offset, InfoLeaf *node) {
+			Str *src = node->toS();
+			Str::Iter p = src->begin();
+			for (Nat i = offset; i < state.point; i++)
+				++p;
 
-			// Outside this node?
-			if (point < offset || point > offset + len)
-				return null;
+			Str *modified = src->insert(p, state.v);
+			if (!state.firstPossible) {
+				state.firstPossible = node;
+				state.firstPossibleStr = modified;
+			}
 
-			// TODO? Try to insert inside a node where the regex matches.
-			if (InfoLeaf *leaf = as<InfoLeaf>(node)) {
-				Str *src = leaf->toS();
-				Str::Iter p = src->begin();
-				for (Nat i = offset; i < point; i++)
-					++p;
-				leaf->set(src->insert(p, v));
+			if (node->matchesRegex(modified)) {
+				node->set(modified);
+				state.done = true;
+			}
+		}
 
-				return node;
-			} else if (InfoInternal *inode = as<InfoInternal>(node)) {
-				InfoNode *r = null;
-
-				for (Nat i = 0; i < inode->count() && r == null; i++) {
-					InfoNode *at = inode->at(i);
-					Nat len = at->length();
-					r = insert(point, v, offset, at);
-					offset += len;
-				}
-
-				return r;
-			} else {
-				assert(false, L"This should not happen!");
+		void File::insertInternal(InsertState &state, Nat offset, InfoInternal *node) {
+			for (Nat i = 0; i < node->count() && !state.done; i++) {
+				InfoNode *at = node->at(i);
+				Nat len = at->length();
+				insert(state, offset, at);
+				offset += len;
 			}
 		}
 
