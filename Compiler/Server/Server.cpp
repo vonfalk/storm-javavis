@@ -13,6 +13,7 @@ namespace storm {
 			close = c->symbol(L"close");
 			test = c->symbol(L"test");
 			debug = c->symbol(L"debug");
+			recolor = c->symbol(L"recolor");
 			color = c->symbol(L"color");
 		}
 
@@ -53,6 +54,8 @@ namespace storm {
 				onTest(cell->rest);
 			} else if (debug->equals(kind)) {
 				onDebug(cell->rest);
+			} else if (recolor->equals(kind)) {
+				onReColor(cell->rest);
 			} else {
 				print(TO_S(this, L"Unknown message: " << msg));
 			}
@@ -118,6 +121,18 @@ namespace storm {
 			f->debugOutput(conn->textOut, tree);
 		}
 
+		void Server::onReColor(SExpr *expr) {
+			Nat fileId = next(expr)->asNum()->v;
+			Nat editId = next(expr)->asNum()->v;
+			File *f = files->get(fileId, null);
+			if (!f) {
+				print(TO_S(this, L"No file with id " << fileId));
+				return;
+			}
+
+			update(f, f->full(), editId);
+		}
+
 		static Str *colorName(EnginePtr e, syntax::TokenColor c) {
 			using namespace storm::syntax;
 			const wchar *name = L"<unknown>";
@@ -173,6 +188,10 @@ namespace storm {
 
 		void Server::update(File *file, Range range, Nat editId) {
 			Array<ColoredRange> *colors = file->colors(range);
+			if (colors->empty())
+				return;
+
+			Nat pos = colors->at(0).range.from;
 			Array<SExpr *> *result = new (this) Array<SExpr *>();
 			// A bit generous, but this array will not live long anyway.
 			result->reserve(colors->count() * 4 + 4);
@@ -180,9 +199,8 @@ namespace storm {
 			result->push(color);
 			result->push(new (this) Number(file->id));
 			result->push(new (this) Number(editId));
-			result->push(new (this) Number(range.from));
+			result->push(new (this) Number(pos));
 
-			Nat pos = range.from;
 			for (Nat i = 0; i < colors->count(); i++) {
 				ColoredRange r = colors->at(i);
 

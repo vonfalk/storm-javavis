@@ -5,6 +5,8 @@ namespace storm {
 	namespace server {
 		using namespace storm::syntax;
 
+		Range::Range() : from(0), to(0) {}
+
 		Range::Range(Nat from, Nat to) {
 			this->from = min(from, to);
 			this->to = max(from, to);
@@ -19,11 +21,27 @@ namespace storm {
 			return to << L"(" << r.from << L" - " << r.to << L")";
 		}
 
+		Range combine(Range a, Range b) {
+			if (a.empty())
+				return b;
+			if (b.empty())
+				return a;
+			return Range(min(a.from, b.from),
+						max(a.to, b.to));
+		}
+
 		ColoredRange::ColoredRange(Range r, TokenColor c)
 			: range(r), color(c) {}
 
 		StrBuf &operator <<(StrBuf &to, ColoredRange r) {
 			return to << r.range << L"#" << name(to.engine(), r.color);
+		}
+
+		static Nat strlen(Str *s) {
+			Nat len = 0;
+			for (Str::Iter i = s->begin(), e = s->end(); i != e; ++i)
+				len++;
+			return len;
 		}
 
 		File::File(Nat id, Url *path, Str *src)
@@ -40,7 +58,8 @@ namespace storm {
 			if (reader) {
 				content = new (this) InfoLeaf(null, src);
 				parser = reader->createParser();
-				content = parse(content, parser->root());
+				if (InfoNode *n = parse(content, parser->root()))
+					content = n;
 			}
 		}
 
@@ -66,12 +85,12 @@ namespace storm {
 			if (replace->begin() != replace->end())
 				regexMatching &= insert(range.from, replace);
 
-			PVAR(regexMatching);
+			Range result(range.from, range.from + strlen(replace));
 			if (!regexMatching) {
-				// TODO: Parse some nodes again!
+				result = combine(result, parse(range));
 			}
 
-			return Range(0, 0);
+			return result;
 		}
 
 		Bool File::remove(const Range &range) {
@@ -243,14 +262,79 @@ namespace storm {
 			// TODO: Do our best to do error recovery when parsing like this!
 			Str *src = node->toS();
 			if (!parser->parse(src, path))
-				return node;
+				return null;
 
 			if (parser->matchEnd() != src->end())
-				return node;
+				return null;
 
 			InfoNode *r = parser->infoTree();
 			parser->clear();
 			return r;
+		}
+
+		Range File::parse(const Range &range) {
+			// TODO: We need some heurustic on how much we should try to re-parse in case we need
+			// error recovery. We probably want to try a few parent nodes if error recovery has to
+			// kick in near the leaves.
+			// TODO: Limit the depth of what needs to be re-parsed in some situations.
+			Range result;
+			parse(result, range, 0, content);
+			return result;
+		}
+
+		Bool File::parse(Range &result, const Range &range, Nat offset, InfoNode *node) {
+			// We should probably parse at a higher level...
+			Nat len = node->length();
+			if (len == 0)
+				return false;
+
+			// Does this node completely cover 'range'?
+			Range nodeRange(offset, offset + len);
+			if (nodeRange.from > range.from || nodeRange.to < range.to)
+				return false;
+
+			// Do not attempt to re-parse leaf nodes. They only contain regexes, which have been
+			// checked already.
+			InfoInternal *inode = as<InfoInternal>(node);
+			if (!inode)
+				return false;
+
+
+			// Re-parse this node if none of our children have already managed to do so.
+			Bool ok = false;
+			for (Nat i = 0; i < inode->count() && !ok; i++) {
+				InfoNode *child = inode->at(i);
+				ok |= parse(result, range, offset, child);
+				offset += child->length();
+			}
+
+			if (!ok && inode->production()) {
+				// Re-parse this node!
+				InfoNode *n = parse(inode, inode->production()->rule());
+				if (n) {
+					replace(inode, n);
+					result = nodeRange;
+					ok = true;
+				}
+			}
+			return ok;
+		}
+
+		void File::replace(InfoNode *oldNode, InfoNode *newNode) {
+			InfoInternal *parent = oldNode->parent();
+			if (!parent) {
+				assert(oldNode == content, L"A non-root node without a parent found.");
+				content = newNode;
+			} else {
+				for (Nat i = 0; i < parent->count(); i++) {
+					if (parent->at(i) == oldNode) {
+						parent->set(i, newNode);
+						return;
+					}
+				}
+
+				assert(false, L"The child node was not present in our parent.");
+			}
 		}
 
 		void File::debugOutput(TextOutput *to, Bool tree) const {

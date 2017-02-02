@@ -18,6 +18,7 @@ namespace storm {
 		class Range {
 			STORM_VALUE;
 		public:
+			STORM_CTOR Range();
 			STORM_CTOR Range(Nat from, Nat to);
 
 			Nat from;
@@ -31,6 +32,9 @@ namespace storm {
 		};
 
 		StrBuf &STORM_FN operator <<(StrBuf &to, Range r);
+
+		// Compute the union of two ranges.
+		Range STORM_FN combine(Range a, Range b);
 
 		/**
 		 * Represents a a region to be colored in a file.
@@ -83,11 +87,17 @@ namespace storm {
 			// File content (parsed).
 			syntax::InfoNode *content;
 
-			// Re-parse a node in the syntax tree.
-			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root);
-
 			// Traverse the syntax tree and extract colors in 'range'.
 			void colors(Array<ColoredRange> *out, const Range &range, Nat offset, syntax::InfoNode *node);
+
+			// Re-parse a node in the syntax tree. Returns 'null' on complete failure.
+			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root);
+
+			// Re-parse a range in the syntax tree. Returns the range that was re-parsed.
+			Range parse(const Range &range);
+
+			// Helpers for 'parse'.
+			Bool parse(Range &result, const Range &range, Nat offset, syntax::InfoNode *node);
 
 			// Remove 'range' in the current node (if applicable). The structure of the syntax tree
 			// is kept intact. Returns 'false' if content was modified so that a regex in a leaf node
@@ -110,6 +120,9 @@ namespace storm {
 			void insert(InsertState &state, Nat offset, syntax::InfoNode *node);
 			void insertLeaf(InsertState &state, Nat offset, syntax::InfoLeaf *node);
 			void insertInternal(InsertState &state, Nat offset, syntax::InfoInternal *node);
+
+			// Replace node 'oldNode' with 'newNode' somewhere in the tree.
+			void replace(syntax::InfoNode *oldNode, syntax::InfoNode *newNode);
 		};
 
 	}

@@ -32,7 +32,8 @@ Message	                      Description
 (edit file id from to text)   The file 'file' has been changed. This is edit number 'id'. The text between
                               'from' and 'to' is replaced by 'text'.
 (test ...)		      Messages used for testing the protocol. See below.
-(debug id)		      Output the internal representation of file 'id'. Used when debugging.
+(debug id mode)		      Output the internal representation of file 'id'. Used when debugging.
+(recolor id)		      Re-color file 'id'.
 
 
 Messages sent from the server to a client:

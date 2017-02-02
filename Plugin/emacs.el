@@ -62,6 +62,7 @@
     ;; Shortcuts for debugging the internal representation in Storm.
     (define-key map "\C-cd" 'storm-debug-tree)
     (define-key map "\C-cc" 'storm-debug-content)
+    (define-key map "\C-cu" 'storm-debug-re-color)
     map)
   "Keymap for storm-mode")
 
@@ -78,6 +79,12 @@
   (interactive)
   (when storm-buffer-id
     (storm-send (list 'debug storm-buffer-id nil))))
+
+(defun storm-debug-re-color ()
+  "Output debug information of the contents of the current buffer."
+  (interactive)
+  (when storm-buffer-id
+    (storm-send (list 'recolor storm-buffer-id storm-buffer-edit-id))))
 
 ;; Convenience for highlighting.
 
