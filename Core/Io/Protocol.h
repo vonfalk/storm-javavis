@@ -40,6 +40,9 @@ namespace storm {
 		// Implemented here as a simple bitwise comparision.
 		virtual Bool STORM_FN partEq(Str *a, Str *b);
 
+		// Hash a part of a filename.
+		virtual Nat STORM_FN partHash(Str *a);
+
 		/**
 		 * These should be implemented as far as possible.
 		 */
@@ -75,6 +78,9 @@ namespace storm {
 
 		// Compare parts.
 		virtual Bool STORM_FN partEq(Str *a, Str *b);
+
+		// Hash parts.
+		virtual Nat STORM_FN partHash(Str *a);
 
 		// Children of this directory.
 		virtual Array<Url *> *STORM_FN children(Url *url);

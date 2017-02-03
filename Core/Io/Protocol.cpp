@@ -17,6 +17,10 @@ namespace storm {
 		return a->equals(b);
 	}
 
+	Nat Protocol::partHash(Str *part) {
+		return part->hash();
+	}
+
 	Array<Url *> *Protocol::children(Url *url) {
 		throw ProtocolNotSupported(L"children", ::toS(*this));
 	}
@@ -58,6 +62,16 @@ namespace storm {
 
 	Bool FileProtocol::partEq(Str *a, Str *b) {
 		return _wcsicmp(a->c_str(), b->c_str()) == 0;
+	}
+
+	Nat FileProtocol::partHash(Str *a) {
+		const wchar *str = a->c_str();
+
+		Nat r = 5381;
+		for (const wchar *at = str; *at; at++)
+			r = ((r << 5) + r) + towlower(*at);
+
+		return r;
 	}
 
 	Str *FileProtocol::format(Url *url) {
@@ -124,6 +138,10 @@ namespace storm {
 
 	Bool FileProtocol::partEq(Str *a, Str *b) {
 		return a->equals(b);
+	}
+
+	Nat FileProtocol::partHash(Str *a) {
+		return a->hash();
 	}
 
 #error "Please implement FileProtocol for your OS!"

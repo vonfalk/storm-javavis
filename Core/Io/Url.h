@@ -48,7 +48,10 @@ namespace storm {
 
 		// Equals. Note that this is always a bitwise equality, multiple paths may name
 		// the same file!
-		virtual Bool STORM_FN equals(Object *o);
+		virtual Bool STORM_FN equals(Object *o) const;
+
+		// Hash of this url.
+		virtual Nat STORM_FN hash() const;
 
 		// Append another path to this one. The other one has to be a relative path.
 		Url *STORM_FN push(Url *url);
@@ -86,6 +89,19 @@ namespace storm {
 		Url *relative(Url *to);
 
 		/**
+		 * Low-level operations.
+		 */
+
+		// Get the number of parts in this URL.
+		inline Nat STORM_FN count() const { return parts->count(); }
+		inline Bool STORM_FN empty() const { return parts->empty(); }
+		inline Bool STORM_FN any() const { return parts->any(); }
+
+		// Get a specific part.
+		inline Str *at(Nat i) const { return parts->at(i); }
+		inline Str *STORM_FN operator[](Nat i) { return parts->at(i); }
+
+		/**
 		 * Find out things about this URL. All operations are not always supported
 		 * by all protocols. Note that these are generally assumed to be run on non-relative urls.
 		 */
@@ -102,7 +118,7 @@ namespace storm {
 		// Does this Url exist?
 		virtual Bool STORM_FN exists();
 
-		// Format for other C-api:s. May not work for all kinds of URL:s.
+		// Format for other C-api:s. May not work for all kind of URL:s.
 		virtual Str *format();
 
 		// Output.

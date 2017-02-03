@@ -81,7 +81,7 @@ namespace storm {
 		cloned(parts, e);
 	}
 
-	Bool Url::equals(Object *o) {
+	Bool Url::equals(Object *o) const {
 		if (!Object::equals(o))
 			return false;
 
@@ -103,6 +103,20 @@ namespace storm {
 		}
 
 		return true;
+	}
+
+	Nat Url::hash() const {
+		Nat r = 5381;
+		if (protocol) {
+			for (nat i = 0; i < parts->count(); i++) {
+				r = ((r << 5) + r) + protocol->partHash(parts->at(i));
+			}
+		} else {
+			for (nat i = 0; i < parts->count(); i++) {
+				r = ((r << 5) + r) + parts->at(i)->hash();
+			}
+		}
+		return r;
 	}
 
 	Array<Str *> *Url::getParts() const {

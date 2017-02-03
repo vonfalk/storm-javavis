@@ -56,4 +56,7 @@ namespace storm {
 		Package *loadPackage(Str *name);
 	};
 
+	// Find a package from a path.
+	MAYBE(Package *) STORM_FN package(Url *path);
+
 }

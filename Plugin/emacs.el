@@ -172,7 +172,9 @@
     		      storm-buffer-edit-id
     		      (1- edit-begin)
     		      (+ edit-begin old-length -1)
-    		      (buffer-substring-no-properties edit-begin edit-end)))))
+    		      (buffer-substring-no-properties edit-begin edit-end)))
+    ;; Wait a short wile for a message.
+    (accept-process-output storm-process 0.02)))
 
 (defun limit-length (max-length list)
   "Limit the length of the list 'list'"

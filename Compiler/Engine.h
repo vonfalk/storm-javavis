@@ -104,6 +104,13 @@ namespace storm {
 		// Parse a string into a simple name and get the corresponding package.
 		Package *package(const wchar *name);
 
+		// Get the package corresponding to a certain path. Will try to load any packages not
+		// already loaded. Returns null if none is found.
+		MAYBE(Package *) package(Url *path);
+
+		// Access the global map of packages.
+		Map<Url *, Package *> *pkgMap();
+
 		/**
 		 * Scopes.
 		 */
@@ -198,6 +205,9 @@ namespace storm {
 
 			// Root package.
 			Package *root;
+
+			// Quick lookup from path to package.
+			Map<Url *, Package *> *pkgMap;
 
 			// Root scope lookup.
 			ScopeLookup *rootLookup;

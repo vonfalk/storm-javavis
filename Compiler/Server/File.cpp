@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "File.h"
+#include "Engine.h"
 
 namespace storm {
 	namespace server {
@@ -48,8 +49,12 @@ namespace storm {
 			: id(id), path(path), content(null) {
 
 			Engine &e = engine();
-			TODO(L"Find the real package for 'path'.");
-			Package *pkg = new (this) Package(new (this) Str(L"dummy package"));
+			Package *pkg = e.package(path->parent());
+			if (!pkg) {
+				WARNING(L"The file " << path << L" is not in a package known by Storm. Using a dummy package.");
+				pkg = new (this) Package(new (this) Str(L"dummy package"));
+			}
+
 			PkgReader *pkgReader = createReader(new (this) Array<Url *>(1, path), pkg);
 			FileReader *reader = null;
 			if (pkgReader)

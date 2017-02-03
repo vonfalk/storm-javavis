@@ -10,7 +10,9 @@ namespace storm {
 
 	Package::Package(Str *name) : NameSet(name) {}
 
-	Package::Package(Url *path) : NameSet(path->name()), pkgPath(path) {}
+	Package::Package(Url *path) : NameSet(path->name()), pkgPath(path) {
+		engine().pkgMap()->put(pkgPath, this);
+	}
 
 	NameLookup *Package::parent() const {
 		// We need to be able to return null.
@@ -23,7 +25,10 @@ namespace storm {
 
 	void Package::setUrl(Url *url) {
 		assert(!engine().has(bootDone), L"Shall not be done after boot is complete!");
+		if (pkgPath)
+			engine().pkgMap()->remove(pkgPath);
 		pkgPath = url;
+		engine().pkgMap()->put(pkgPath, this);
 
 		for (Iter i = begin(), e = end(); i != e; ++i) {
 			if (Package *p = as<Package>(i.v())) {
@@ -174,6 +179,10 @@ namespace storm {
 		}
 
 		return r;
+	}
+
+	MAYBE(Package *) package(Url *path) {
+		return path->engine().package(path);
 	}
 
 }

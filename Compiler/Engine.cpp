@@ -441,6 +441,32 @@ namespace storm {
 		return now;
 	}
 
+	static Package *findChild(Package *p, Url *path, Nat start) {
+		for (Nat i = start; p && i < path->count(); i++) {
+			// TODO: Make sure we handle case sensitivity correctly!
+			p = as<Package>(p->find(path->at(i)));
+		}
+		return p;
+	}
+
+	MAYBE(Package *) Engine::package(Url *path) {
+		Map<Url *, Package *> *lookup = pkgMap();
+
+		for (Url *at = path; !at->empty(); at = at->parent()) {
+			if (Package *p = lookup->get(at, null)) {
+				return findChild(p, path, at->count());
+			}
+		}
+
+		return null;
+	}
+
+	Map<Url *, Package *> *Engine::pkgMap() {
+		if (!o.pkgMap)
+			o.pkgMap = new (*this) Map<Url *, Package *>();
+		return o.pkgMap;
+	}
+
 
 	/**
 	 * Interface which only exists in the compiler. Dynamic libraries have their own implementations
