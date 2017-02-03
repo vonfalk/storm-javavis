@@ -117,41 +117,41 @@ namespace storm {
 	}
 
 	typedef void (CODECALL FileReader::*FileMember)();
-	static void traverse(FileReader *reader, FileMember member) {
+	static void traverse(FileReader *reader, FileMember member, ReaderQuery q) {
 		while (reader) {
 			(reader->*member)();
-			reader = reader->next();
+			reader = reader->next(q);
 		}
 	}
 
 	void FilePkgReader::readSyntaxRules() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			traverse(readers->at(i), &FileReader::readSyntaxRules);
+			traverse(readers->at(i), &FileReader::readSyntaxRules, qSyntax);
 	}
 
 	void FilePkgReader::readSyntaxProductions() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			traverse(readers->at(i), &FileReader::readSyntaxProductions);
+			traverse(readers->at(i), &FileReader::readSyntaxProductions, qSyntax);
 	}
 
 	void FilePkgReader::readTypes() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			traverse(readers->at(i), &FileReader::readTypes);
+			traverse(readers->at(i), &FileReader::readTypes, qTypes);
 	}
 
 	void FilePkgReader::resolveTypes() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			traverse(readers->at(i), &FileReader::resolveTypes);
+			traverse(readers->at(i), &FileReader::resolveTypes, qTypes);
 	}
 
 	void FilePkgReader::readFunctions() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			traverse(readers->at(i), &FileReader::readFunctions);
+			traverse(readers->at(i), &FileReader::readFunctions, qFunctions);
 	}
 
 	FileReader *FilePkgReader::readFile(Url *file) {

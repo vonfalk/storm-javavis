@@ -35,6 +35,24 @@ namespace storm {
 		FileInfo *STORM_FN next(Str::Iter pos);
 	};
 
+
+	/**
+	 * Specifies what kind of things we expect to read from the next reader in the chain. If no
+	 * reader in the chain supports the specified type, we may delay creating the next reader.
+	 */
+	enum ReaderQuery {
+		// We are reading syntax, ie. we intend to call 'readSyntaxRules' or 'readSyntaxProductions'.
+		qSyntax = 0x01,
+
+		// We are reading types, ie. we intend to call 'readTypes' or 'resolveTypes'.
+		qTypes = 0x02,
+
+		// We are reading functions, ie. we intend to call 'readFunctions'.
+		qFunctions = 0x04,
+	};
+
+	BITMASK_OPERATORS(ReaderQuery);
+
 	/**
 	 * A reader for a part of a single file. Use together with 'FilePkgReader'.
 	 *
@@ -48,11 +66,13 @@ namespace storm {
 		// Create a file reader.
 		STORM_CTOR FileReader(FileInfo *info);
 
+		// Reader content.
+
 		// File content.
 		FileInfo *info;
 
 		// Get the next part of this file.
-		MAYBE(FileReader *) STORM_FN next();
+		MAYBE(FileReader *) STORM_FN next(ReaderQuery q);
 
 		// Get the syntax rules.
 		virtual void STORM_FN readSyntaxRules();
@@ -80,8 +100,8 @@ namespace storm {
 		virtual syntax::InfoParser *STORM_FN createParser();
 
 	protected:
-		// Create any additional file readers. Only called once.
-		virtual MAYBE(FileReader *) STORM_FN createNext();
+		// Create any additional file readers. Only called until it succeeds once.
+		virtual MAYBE(FileReader *) STORM_FN createNext(ReaderQuery q);
 
 	private:
 		// The previously created next part.

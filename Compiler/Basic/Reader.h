@@ -26,7 +26,7 @@ namespace storm {
 
 		protected:
 			// Create the next part.
-			virtual MAYBE(FileReader *) STORM_FN createNext();
+			virtual MAYBE(FileReader *) STORM_FN createNext(ReaderQuery q);
 		};
 
 		/**

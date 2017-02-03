@@ -35,13 +35,13 @@ namespace storm {
 		return new (this) syntax::InfoParser(rootRule());
 	}
 
-	FileReader *FileReader::next() {
+	FileReader *FileReader::next(ReaderQuery q) {
 		if (!nextPart)
-			nextPart = createNext();
+			nextPart = createNext(q);
 		return nextPart;
 	}
 
-	FileReader *FileReader::createNext() {
+	FileReader *FileReader::createNext(ReaderQuery q) {
 		return null;
 	}
 

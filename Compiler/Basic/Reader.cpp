@@ -32,7 +32,11 @@ namespace storm {
 
 		UseReader::UseReader(FileInfo *info) : FileReader(info) {}
 
-		FileReader *UseReader::createNext() {
+		FileReader *UseReader::createNext(ReaderQuery q) {
+			// We do not provide syntax.
+			if (q & qSyntax)
+				return null;
+
 			syntax::Parser *p = syntax::Parser::create(syntaxPkg(this), L"SIncludes");
 
 			if (!p->parse(info->contents, info->url))

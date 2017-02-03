@@ -9,21 +9,22 @@ use core:asm;
 // Package reader for BF files.
 
 PkgReader reader(Url[] files, Package pkg) {
-	FilePkgReader(files, pkg, &createFile(Url, Package));
+	FilePkgReader(files, pkg, &createFile(FileInfo));
 }
 
-FileReader createFile(Url file, Package into) {
-	BfFile(file, into);
+FileReader createFile(FileInfo info) {
+	BfFile(info);
 }
 
 class BfFile extends FileReader {
-	ctor(Url file, Package into) {
-		init(file, into) {}
+	ctor(FileInfo info) {
+		init(info) {}
 	}
 
 	void readFunctions() {
-		BfFunction fn(file.title, file);
-		pkg.add(fn);
+		// TODO: We do not want to read the file twice.
+		BfFunction fn(info.url.title, info.url);
+		info.pkg.add(fn);
 	}
 
 }
