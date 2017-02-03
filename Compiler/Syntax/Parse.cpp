@@ -270,10 +270,9 @@ namespace storm {
 			return r;
 		}
 
-		FileContents *parseSyntax(Url *file) {
-			Str *data = readAllText(file);
-			Tokenizer tok(file, data, 0);
-			return parseFile(file->engine(), tok);
+		FileContents *parseSyntax(Str *data, Url *url, Str::Iter start) {
+			Tokenizer tok(url, data, start.offset());
+			return parseFile(data->engine(), tok);
 		}
 
 	}

@@ -3,6 +3,7 @@
 #include "Core/Io/Url.h"
 #include "Compiler/Package.h"
 #include "Compiler/Reader.h"
+#include "Compiler/FileReader.h"
 #include "Compiler/Scope.h"
 #include "Decl.h"
 #include "Parse.h"
@@ -21,7 +22,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR FileReader(Url *file, Package *into);
+			STORM_CTOR FileReader(FileInfo *info);
 
 			// Get the syntax rules.
 			virtual void STORM_FN readSyntaxRules();

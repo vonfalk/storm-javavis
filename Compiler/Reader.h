@@ -91,49 +91,8 @@ namespace storm {
 	};
 
 
-	/**
-	 * A reader for a single file. Use together with 'FilePkgReader'.
-	 */
-	class FileReader : public ObjectOn<Compiler> {
-		STORM_CLASS;
-	public:
-		// Create a file reader.
-		STORM_CTOR FileReader(Url *file, Package *pkg);
-
-		// File.
-		Url *file;
-
-		// Package we're loading into.
-		Package *pkg;
-
-		// Get the syntax rules.
-		virtual void STORM_FN readSyntaxRules();
-
-		// Get the syntax options.
-		virtual void STORM_FN readSyntaxProductions();
-
-		// Get the types.
-		virtual void STORM_FN readTypes();
-
-		// Resolve types.
-		virtual void STORM_FN resolveTypes();
-
-		// Get all functions.
-		virtual void STORM_FN readFunctions();
-
-		/**
-		 * For language server integration.
-		 *
-		 * TODO: Allow multiple dependent passes of parsing.
-		 */
-
-		// Get the initial rule used for parsing this language.
-		virtual syntax::Rule *STORM_FN rootRule();
-
-		// Create a parser for this language.
-		virtual syntax::InfoParser *STORM_FN createParser();
-	};
-
+	class FileInfo;
+	class FileReader;
 
 	/**
 	 * Specialization of PkgReader which uses a set of FileReaders. Provide a function which creates
@@ -143,7 +102,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		STORM_CTOR FilePkgReader(Array<Url *> *files, Package *pkg, Fn<FileReader *, Url *, Package *> *create);
+		STORM_CTOR FilePkgReader(Array<Url *> *files, Package *pkg, Fn<FileReader *, FileInfo *> *create);
 
 		// Get the syntax rules.
 		virtual void STORM_FN readSyntaxRules();
@@ -168,7 +127,7 @@ namespace storm {
 		Array<FileReader *> *readers;
 
 		// Create FileReaders.
-		Fn<FileReader *, Url *, Package *> *create;
+		Fn<FileReader *, FileInfo *> *create;
 
 		// Populate 'readers' if it is not already done.
 		void loadReaders();

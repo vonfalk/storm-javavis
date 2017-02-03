@@ -9,8 +9,8 @@
 namespace storm {
 	namespace bs {
 
-		static storm::FileReader *CODECALL createFile(Url *file, Package *pkg) {
-			return new (file) FileReader(file, pkg);
+		static storm::FileReader *CODECALL createFile(FileInfo *info) {
+			return new (info) UseReader(info);
 		}
 
 		PkgReader *reader(Array<Url *> *files, Package *pkg) {
@@ -18,13 +18,52 @@ namespace storm {
 			return new (e) FilePkgReader(files, pkg, fnPtr(e, &createFile));
 		}
 
-		FileReader::FileReader(Url *file, Package *into) : storm::FileReader(file, into) {
-			scopeLookup = new (this) BSLookup();
-			scope = Scope(into, scopeLookup);
+		// Find the syntax package for BS given a type in 'lang.bs'.
+		static Package *syntaxPkg(RootObject *o) {
+			Type *t = runtime::typeOf(o);
+			Package *p = as<Package>(t->parent());
+			assert(p);
+			return p;
 		}
 
-		void FileReader::readTypes() {
+		/**
+		 * UseReader.
+		 */
+
+		UseReader::UseReader(FileInfo *info) : FileReader(info) {}
+
+		FileReader *UseReader::createNext() {
+			syntax::Parser *p = syntax::Parser::create(syntaxPkg(this), L"SIncludes");
+
+			if (!p->parse(info->contents, info->url))
+				p->throwError();
+
+			Array<SrcName *> *includes = p->transform<Array<SrcName *>>();
+			return new (this) CodeReader(info->next(p->matchEnd()), includes);
+		}
+
+
+		/**
+		 * CodeReader.
+		 */
+
+		CodeReader::CodeReader(FileInfo *info, Array<SrcName *> *includes) : FileReader(info) {
+			BSLookup *lookup = new (this) BSLookup();
+			scope = Scope(info->pkg, lookup);
+
+			for (Nat i = 0; i < includes->count(); i++) {
+				SrcName *v = includes->at(i);
+				Package *p = as<Package>(engine().scope().find(v));
+				if (!p)
+					throw SyntaxError(v->pos, L"Unknown package " + ::toS(v));
+
+				addInclude(scope, p);
+			}
+		}
+
+		void CodeReader::readTypes() {
 			readContent();
+			Package *pkg = info->pkg;
 
 			for (nat i = 0; i < content->types->count(); i++) {
 				pkg->add(content->types->at(i));
@@ -35,8 +74,9 @@ namespace storm {
 			}
 		}
 
-		void FileReader::resolveTypes() {
+		void CodeReader::resolveTypes() {
 			readContent();
+			Package *pkg = info->pkg;
 
 			for (nat i = 0; i < content->types->count(); i++) {
 				if (Class *c = as<Class>(content->types->at(i))) {
@@ -45,8 +85,9 @@ namespace storm {
 			}
 		}
 
-		void FileReader::readFunctions() {
+		void CodeReader::readFunctions() {
 			readContent();
+			Package *pkg = info->pkg;
 
 			for (nat i = 0; i < content->functions->count(); i++) {
 				pkg->add(content->functions->at(i)->createFn());
@@ -57,51 +98,18 @@ namespace storm {
 			}
 		}
 
-		void FileReader::readContent() {
+		void CodeReader::readContent() {
 			if (content)
 				return;
 
-			Str *src = readAllText(file);
-			Str::Iter i = readIncludes(src);
-			readContent(src, i);
-		}
-
-		Str::Iter FileReader::readIncludes(Str *src) {
-			syntax::Parser *p = syntax::Parser::create(syntaxPkg(), L"SIncludes");
-			// TODO: Add syntax from current scope as well?
-
-			if (!p->parse(src, file))
-				p->throwError();
-
-			Array<SrcName *> *includes = p->transform<Array<SrcName *>>();
-			for (nat i = 0; i < includes->count(); i++) {
-				SrcName *v = includes->at(i);
-				Package *p = as<Package>(engine().scope().find(v));
-				if (!p)
-					throw SyntaxError(v->pos, L"Unknown package " + ::toS(v));
-
-				addInclude(scope, p);
-			}
-
-			return p->matchEnd();
-		}
-
-		void FileReader::readContent(Str *src, Str::Iter start) {
-			syntax::Parser *p = syntax::Parser::create(syntaxPkg(), L"SFile");
+			syntax::Parser *p = syntax::Parser::create(syntaxPkg(this), L"SFile");
 			addSyntax(scope, p);
 
-			p->parse(src, file, start);
+			p->parse(info->contents, info->url, info->start);
 			if (p->hasError())
 				p->throwError();
 
 			content = p->transform<Content, Scope>(scope);
-		}
-
-		Package *FileReader::syntaxPkg() {
-			Type *me = runtime::typeOf(this);
-			Package *p = as<Package>(me->parent());
-			assert(p);
-			return p;
 		}
 
 	}

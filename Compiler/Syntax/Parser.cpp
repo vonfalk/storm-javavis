@@ -152,10 +152,12 @@ namespace storm {
 			RuleInfo &info = rules->at(rule->rule);
 
 			StateSet &src = *steps->v[ptr.step];
-			for (Nat i = 0; i < info.productions->count(); i++) {
-				Production *p = info.productions->at(i);
-				src.push(this, p->firstA(), ptr.step);
-				src.push(this, p->firstB(), ptr.step);
+			if (info.productions) {
+				for (Nat i = 0; i < info.productions->count(); i++) {
+					Production *p = info.productions->at(i);
+					src.push(this, p->firstA(), ptr.step);
+					src.push(this, p->firstB(), ptr.step);
+				}
 			}
 
 			if (matchesEmpty(info)) {
@@ -240,10 +242,12 @@ namespace storm {
 			info.matchesNull = 1;
 
 			bool match = false;
-			for (Nat i = 0; i < info.productions->count(); i++) {
-				if (matchesEmpty(info.productions->at(i))) {
-					match = true;
-					break;
+			if (info.productions) {
+				for (Nat i = 0; i < info.productions->count(); i++) {
+					if (matchesEmpty(info.productions->at(i))) {
+						match = true;
+						break;
+					}
 				}
 			}
 

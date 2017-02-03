@@ -5,6 +5,7 @@
 #include "Core/EnginePtr.h"
 #include "Compiler/Thread.h"
 #include "Compiler/Reader.h"
+#include "Compiler/FileReader.h"
 #include "Compiler/Syntax/TokenColor.h"
 #include "Compiler/Syntax/InfoNode.h"
 

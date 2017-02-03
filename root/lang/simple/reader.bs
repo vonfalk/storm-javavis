@@ -5,16 +5,16 @@ use lang:bs:macro;
 use lang:bnf;
 
 PkgReader reader(Url[] files, Package pkg) {
-	FilePkgReader(files, pkg, &createFile(Url, Package));
+	FilePkgReader(files, pkg, &createFile(FileInfo));
 }
 
-FileReader createFile(Url file, Package pkg) {
-	SReader(file, pkg);
+FileReader createFile(FileInfo info) {
+	SReader(info);
 }
 
 class SReader extends FileReader {
-	ctor(Url file, Package pkg) {
-		init(file, pkg);
+	ctor(FileInfo info) {
+		init(info);
 	}
 
 	Rule rootRule() {

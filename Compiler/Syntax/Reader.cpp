@@ -10,8 +10,8 @@
 namespace storm {
 	namespace syntax {
 
-		static storm::FileReader *CODECALL createFile(Url *file, Package *pkg) {
-			return new (file) FileReader(file, pkg);
+		static storm::FileReader *CODECALL createFile(FileInfo *info) {
+			return new (info) FileReader(info);
 		}
 
 		PkgReader *reader(Array<Url *> *files, Package *pkg) {
@@ -20,10 +20,11 @@ namespace storm {
 		}
 
 
-		FileReader::FileReader(Url *file, Package *into) : storm::FileReader(file, into), c(null) {}
+		FileReader::FileReader(FileInfo *info) : storm::FileReader(info), c(null) {}
 
 		void FileReader::readSyntaxRules() {
 			ensureLoaded();
+			Package *pkg = info->pkg;
 
 			for (Nat i = 0; i < c->rules->count(); i++) {
 				RuleDecl *decl = c->rules->at(i);
@@ -33,6 +34,7 @@ namespace storm {
 
 		void FileReader::readSyntaxProductions() {
 			ensureLoaded();
+			Package *pkg = info->pkg;
 
 			Rule *delimiter = null;
 			if (c->delimiter) {
@@ -56,7 +58,7 @@ namespace storm {
 			if (c)
 				return;
 
-			c = parseSyntax(file);
+			c = parseSyntax(info->contents, info->url, info->start);
 
 			Scope root = engine().scope();
 			SyntaxLookup *lookup = new (this) SyntaxLookup();
@@ -68,7 +70,7 @@ namespace storm {
 				lookup->extra->push(found);
 			}
 
-			scope = Scope(pkg, lookup);
+			scope = Scope(info->pkg, lookup);
 		}
 
 

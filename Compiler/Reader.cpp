@@ -3,6 +3,7 @@
 #include "Core/Str.h"
 #include "Exception.h"
 #include "Function.h"
+#include "FileReader.h"
 #include "Engine.h"
 
 namespace storm {
@@ -98,28 +99,7 @@ namespace storm {
 	}
 
 
-	FileReader::FileReader(Url *file, Package *pkg) : pkg(pkg), file(file) {}
-
-	void FileReader::readSyntaxRules() {}
-
-	void FileReader::readSyntaxProductions() {}
-
-	void FileReader::readTypes() {}
-
-	void FileReader::resolveTypes() {}
-
-	void FileReader::readFunctions() {}
-
-	syntax::Rule *FileReader::rootRule() {
-		throw LangDefError(L"This language does not support syntax highlighting.");
-	}
-
-	syntax::InfoParser *FileReader::createParser() {
-		return new (this) syntax::InfoParser(rootRule());
-	}
-
-
-	FilePkgReader::FilePkgReader(Array<Url *> *files, Package *pkg, Fn<FileReader *, Url *, Package *> *create)
+	FilePkgReader::FilePkgReader(Array<Url *> *files, Package *pkg, Fn<FileReader *, FileInfo *> *create)
 		: PkgReader(files, pkg), create(create) {}
 
 	void FilePkgReader::loadReaders() {
@@ -129,47 +109,55 @@ namespace storm {
 		readers = new (this) Array<FileReader *>();
 		readers->reserve(files->count());
 		for (nat i = 0; i < files->count(); i++) {
-			FileReader *r = create->call(files->at(i), pkg);
+			FileReader *r = create->call(new (this) FileInfo(files->at(i), pkg));
 			if (!r)
 				throw InternalError(L"Can not use a null FileReader in a FilePkgReader!");
 			readers->push(r);
 		}
 	}
 
+	typedef void (CODECALL FileReader::*FileMember)();
+	static void traverse(FileReader *reader, FileMember member) {
+		while (reader) {
+			(reader->*member)();
+			reader = reader->next();
+		}
+	}
+
 	void FilePkgReader::readSyntaxRules() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			readers->at(i)->readSyntaxRules();
+			traverse(readers->at(i), &FileReader::readSyntaxRules);
 	}
 
 	void FilePkgReader::readSyntaxProductions() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			readers->at(i)->readSyntaxProductions();
+			traverse(readers->at(i), &FileReader::readSyntaxProductions);
 	}
 
 	void FilePkgReader::readTypes() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			readers->at(i)->readTypes();
+			traverse(readers->at(i), &FileReader::readTypes);
 	}
 
 	void FilePkgReader::resolveTypes() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			readers->at(i)->resolveTypes();
+			traverse(readers->at(i), &FileReader::resolveTypes);
 	}
 
 	void FilePkgReader::readFunctions() {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			readers->at(i)->readFunctions();
+			traverse(readers->at(i), &FileReader::readFunctions);
 	}
 
 	FileReader *FilePkgReader::readFile(Url *file) {
 		loadReaders();
 		for (nat i = 0; i < readers->count(); i++)
-			if (readers->at(i)->file->equals(file))
+			if (readers->at(i)->info->url->equals(file))
 				return readers->at(i);
 		return null;
 	}
