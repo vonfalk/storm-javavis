@@ -14,7 +14,7 @@ namespace storm {
 	StdIo::~StdIo() {
 		if (thread != NULL) {
 			StdRequest quit(stdIn, null, 0);
-			post(&quit);
+			postThread(&quit);
 
 			// Wait for the thread to terminate.
 			WaitForSingleObject(thread, 500);

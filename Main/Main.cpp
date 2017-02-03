@@ -152,6 +152,7 @@ int stormMain(int argc, const wchar *argv[]) {
 
 	Engine e(root, Engine::reuseMain);
 	Moment end;
+	int result = 1;
 
 	try {
 		switch (p.mode) {
@@ -159,12 +160,15 @@ int stormMain(int argc, const wchar *argv[]) {
 			wcout << L"Welcome to the Storm compiler!" << endl;
 			wcout << L"Root directory: " << root << endl;
 			wcout << L"Compiler boot in " << (end - start) << endl;
-			return runRepl(e, p.modeParam, p.modeParam2);
+			result = runRepl(e, p.modeParam, p.modeParam2);
+			break;
 		case Params::modeFunction:
-			return runFunction(e, p.modeParam);
+			result = runFunction(e, p.modeParam);
+			break;
 		case Params::modeServer:
 			server::run(e, proc::in(e), proc::out(e));
-			return 0;
+			result = 0;
+			break;
 		default:
 			throw InternalError(L"Unknown mode.");
 		}
@@ -178,6 +182,7 @@ int stormMain(int argc, const wchar *argv[]) {
 	Moment waitStart;
 	while (os::UThread::leave() && Moment() - waitStart > s(1))
 		;
+	return result;
 }
 
 #ifdef WINDOWS
