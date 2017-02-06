@@ -6,9 +6,12 @@ delimiter = SDelimiter;
 
 // Delimiter, may contain comments.
 void SDelimiter();
-SDelimiter : "[ \n\r\t]*";
-SDelimiter : "[ \n\r\t]*//[^\n\r]*[\n\r]+" - SDelimiter;
-SDelimiter : "[ \n\r\t]*/\*" - SInComment - SDelimiter;
+SDelimiter : "[ \n\r\t]*" - (SCommentStart #comment - SDelimiter)?;
+
+// Start of comments.
+void SCommentStart();
+SCommentStart : "//[^\n\r]*[\n\r]";
+SCommentStart : "/\*" - SInComment;
 
 // Inside a multi-line comment. Consumes the ending */
 void SInComment();
@@ -39,7 +42,7 @@ SType => arrayType(t) : SType t, "\[\]";
 SType[-10] => mapType(k, v) : SType k, "->", SType v;
 
 // Maybe type.
-SType[10] => maybeType(t) : SType t, "\?";
+SType[10] => maybeType(t) : SType t, "\?" #typeName;
 
 // Function pointers.
 SType => fnPtrType(result, params) : "fn" #keyword, SFnTypes params, "->", SType result;
@@ -77,7 +80,7 @@ SFormals => Array<NameParam>() : "";
 SFormals => Array<NameParam>() : SFormal -> push (, ",", SFormal -> push)*;
 
 NameParam SFormal();
-SFormal => NameParam(type, name) : SType type, SName name;
+SFormal => NameParam(type, name) : SType type, SName name #varName;
 
 // Function.
 FunctionDecl SFunction(Scope env);
@@ -94,7 +97,7 @@ SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #type
 SClass => extendClass(pos, env, name, base, body) : "class" #keyword , SName name #typeName, "extends" #keyword, SType base, "{", SClassBody@ body, "}";
 SClass => extendValue(pos, env, name, base, body) : "value" #keyword, SName name #typeName, "extends" #keyword, SType base, "{", SClassBody@ body, "}";
 SClass => threadClass(pos, env, name, thread, body) : "class" #keyword, SName name #typeName, "on" #keyword, SType thread, "{", SClassBody@ body, "}";
-SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "on" #keyword, "\?" #keyword, "{", SClassBody@ body, "}";
+SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "on" #keyword, "\?", "{", SClassBody@ body, "}";
 
 // Named thread declaration.
 NamedThread SNamedThread();
@@ -201,8 +204,8 @@ SArrayInitList => Array<Expr>() : SExpr(block) -> push, (",", SExpr(block) -> pu
 
 // Constants that can be used with units.
 Expr SConst();
-SConst => intConstant(pos, nr) : "-?[0-9]+" nr;
-SConst => floatConstant(pos, nr) : "-?[0-9]+\.[0-9]+" nr;
+SConst => intConstant(pos, nr) : "-?[0-9]+" nr #constant;
+SConst => floatConstant(pos, nr) : "-?[0-9]+\.[0-9]+" nr #constant;
 SConst => strConstant(pos, str) : SString str #string;
 SConst[20] => trueConstant(pos) : "true" #constant;
 SConst[20] => falseConstant(pos) : "false" #constant;
@@ -241,8 +244,8 @@ SAtom => e : SLoop(block) e;
 SAtom => accessExpr(block, lhs, par) : SAtom(block) lhs, "\[", SExpr(block) par, "\]";
 SAtom => arrayInit(block, t, list) : SType t, ":", "\[", SArrayInitList(block) list, "\]";
 SAtom => ArrayInit(pos, block, list) : "\[", SArrayInitList(block) list, "\]";
-SAtom[20] => FnPtr(block, name, params) : "&", SType name, SFnTypes params;
-SAtom[20] => FnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name, SFnTypes params;
+SAtom[20] => FnPtr(block, name, params) : "&", SFnName name, SFnTypes params;
+SAtom[20] => FnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name #varName, SFnTypes params;
 SAtom => unit(block, value, unit) : SConst value, SUnit unit; //TODO: Add highlighting info!
 
 // Temporary, to turn a value of type T into Maybe<T>, this should be done automatically in the future.
