@@ -216,6 +216,12 @@ namespace storm {
 				pos = r.range.to;
 			}
 
+			// Append a nil entry to the end?
+			if (pos < range.to) {
+				result->push(new (this) Number(range.to - pos));
+				result->push(null);
+			}
+
 			conn->send(list(result));
 		}
 

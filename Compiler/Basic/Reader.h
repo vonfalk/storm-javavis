@@ -22,8 +22,10 @@ namespace storm {
 			// Create.
 			STORM_CTOR UseReader(FileInfo *info);
 
-			// No types or anything in here.
+			// Create parser.
+			virtual syntax::InfoParser *STORM_FN createParser();
 
+			// No types or anything in here.
 		protected:
 			// Create the next part.
 			virtual MAYBE(FileReader *) STORM_FN createNext(ReaderQuery q);
@@ -38,6 +40,9 @@ namespace storm {
 		public:
 			// Create.
 			STORM_CTOR CodeReader(FileInfo *info, Array<SrcName *> *includes);
+
+			// Create parser.
+			virtual syntax::InfoParser *STORM_FN createParser();
 
 			// Get types.
 			void STORM_FN readTypes();

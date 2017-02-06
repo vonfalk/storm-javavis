@@ -15,6 +15,9 @@ BEGIN_TEST(ArrayTest, Core) {
 	t->insert(0, new (e) Str(L"Well"));
 	CHECK_EQ(toS(t), L"[Well, Hello, World]");
 
+	t->append(t);
+	CHECK_EQ(toS(t), L"[Well, Hello, World, Well, Hello, World]");
+
 	Array<Value> *v = new (e) Array<Value>();
 	CHECK_EQ(toS(v), L"[]");
 

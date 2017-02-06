@@ -41,6 +41,7 @@
   (set (make-local-variable 'indent-line-function) 'storm-indent-line)
   (setq major-mode 'storm-mode)
   (setq mode-name "Storm")
+  (setq tab-width 4)
   (storm-register-buffer (current-buffer))
   (add-hook 'kill-buffer-hook 'storm-buffer-killed)
   (add-hook 'change-major-mode-hook 'storm-buffer-killed)
@@ -103,7 +104,7 @@
     (puthash 'keyword 'font-lock-keyword-face map)
     (puthash 'fn-name 'font-lock-function-name-face map)
     (puthash 'var-name 'font-lock-variable-name-face map)
-    (puthash 'type-name 'font-lock-type-name-face map)
+    (puthash 'type-name 'font-lock-type-face map)
     map)
   "Lookup color names in emacs lisp")
 
@@ -455,7 +456,7 @@
 	(goto-char (point-max))
 	(insert text)
 	;; Replace CR-LF with LF
-	(goto-char start)
+	(goto-char (max (point-min) (1- start)))
 	(while (search-forward storm-cr-lf nil t)
 	  (replace-match storm-lf nil t))
 	(when face

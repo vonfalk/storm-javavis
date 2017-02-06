@@ -49,6 +49,9 @@ namespace storm {
 
 		// We are reading functions, ie. we intend to call 'readFunctions'.
 		qFunctions = 0x04,
+
+		// We are intending to query information for interactive parsing.
+		qParser = 0x08,
 	};
 
 	BITMASK_OPERATORS(ReaderQuery);
@@ -65,8 +68,6 @@ namespace storm {
 	public:
 		// Create a file reader.
 		STORM_CTOR FileReader(FileInfo *info);
-
-		// Reader content.
 
 		// File content.
 		FileInfo *info;

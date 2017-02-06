@@ -49,6 +49,8 @@ namespace storm {
 		if (oldCap >= n)
 			return;
 
+		Nat oldCount = count();
+
 		// We need to grow 'data'. How much?
 		Nat newCap = max(Nat(16), oldCap * 2);
 		if (newCap < n)
@@ -57,9 +59,9 @@ namespace storm {
 
 		// Move data.
 		if (data) {
-			memcpy(ptr(newData, 0), ptr(0), handle.size*oldCap);
+			memcpy(ptr(newData, 0), ptr(0), handle.size*oldCount);
 			data->filled = 0;
-			newData->filled = oldCap;
+			newData->filled = oldCount;
 		}
 
 		// Swap contents.
@@ -95,6 +97,28 @@ namespace storm {
 		handle.safeCopy(ptr(to), item);
 
 		data->filled++;
+	}
+
+	void ArrayBase::appendRaw(ArrayBase *from) {
+		Nat here = count();
+		Nat copy = from->count();
+		if (here + copy == 0)
+			return;
+
+		ensure(here + copy);
+
+		// Copy elements.
+		if (handle.copyFn) {
+			// Use the copy-ctor.
+			for (Nat i = 0; i < copy; i++) {
+				(*handle.copyFn)(ptr(here + i), ptr(from->data, i));
+			}
+		} else {
+			// Memcpy is enough.
+			memcpy(ptr(here), ptr(from->data, 0), handle.size * copy);
+		}
+
+		data->filled = here + copy;
 	}
 
 	static void arraySwap(void *a, void *b, size_t size) {

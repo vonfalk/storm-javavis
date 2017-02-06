@@ -58,6 +58,9 @@ namespace storm {
 		// Insert an element, giving it the id 'id'. 'id' <= 'count()'.
 		void CODECALL insertRaw(Nat id, const void *item);
 
+		// Append the entire contents of another array.
+		void CODECALL appendRaw(ArrayBase *from);
+
 		// Reverse the array.
 		void STORM_FN reverse();
 
@@ -223,6 +226,11 @@ namespace storm {
 		// Insert at a specific location.
 		void insert(Nat pos, const T &item) {
 			insertRaw(pos, &item);
+		}
+
+		// Append another array.
+		void append(Array<T> *from) {
+			appendRaw(from);
 		}
 
 		Array<T> &operator <<(const T &item) {

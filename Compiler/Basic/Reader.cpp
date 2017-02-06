@@ -32,6 +32,13 @@ namespace storm {
 
 		UseReader::UseReader(FileInfo *info) : FileReader(info) {}
 
+		syntax::InfoParser *UseReader::createParser() {
+			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(L"SIncludes"));
+			if (!r)
+				throw LangDefError(L"Can not find the 'SIncludes' rule.");
+			return new (this) syntax::InfoParser(r);
+		}
+
 		FileReader *UseReader::createNext(ReaderQuery q) {
 			// We do not provide syntax.
 			if (q & qSyntax)
@@ -63,6 +70,13 @@ namespace storm {
 
 				addInclude(scope, p);
 			}
+		}
+
+		syntax::InfoParser *CodeReader::createParser() {
+			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(L"SFile"));
+			if (!r)
+				throw LangDefError(L"Can not find the 'SFile' rule.");
+			return new (this) syntax::InfoParser(r);
 		}
 
 		void CodeReader::readTypes() {

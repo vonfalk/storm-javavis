@@ -30,7 +30,7 @@ STypePart => RecPart(name) : SName name, "<", SType -> add, (",", SType -> add, 
 
 // Type.
 SrcName SType();
-SType => SrcName(pos) : STypePart -> add, (":", STypePart -> add, )*;
+SType => SrcName(pos) : STypePart -> add #typeName, (":", STypePart -> add #typeName, )*;
 
 // Array type.
 SType => arrayType(t) : SType t, "\[\]";
@@ -42,12 +42,16 @@ SType[-10] => mapType(k, v) : SType k, "->", SType v;
 SType[10] => maybeType(t) : SType t, "\?";
 
 // Function pointers.
-SType => fnPtrType(result, params) : "fn", SFnTypes params, "->", SType result;
-SType => fnPtrType(params) : "fn", SFnTypes params, "->";
+SType => fnPtrType(result, params) : "fn" #keyword, SFnTypes params, "->", SType result;
+SType => fnPtrType(params) : "fn" #keyword, SFnTypes params, "->";
+
+// Function name. Very similar to 'SType'.
+SrcName SFnName();
+SFnName => SrcName(pos) : (STypePart -> add #typeName, ":", )* STypePart -> add #varName;
 
 // Package. Separate entry so to not allow package names like: a:b[] or a:b->c:d.
 SrcName SPackage();
-SPackage => SrcName(pos) : STypePart -> add (, ":", STypePart -> add)*;
+SPackage => SrcName(pos) : STypePart -> add #typeName (, ":", STypePart -> add #typeName)*;
 
 // List of types.
 Array<SrcName> STypes();
@@ -78,23 +82,23 @@ SFormal => NameParam(type, name) : SType type, SName name;
 // Function.
 FunctionDecl SFunction(Scope env);
 SFunction => FunctionDecl(env, result, name, params, body) :
-    SType result, SName name, "(", SFormals params, ")", "{", SFunctionBody@ body, "}";
+    SType result, SName name #fnName, "(", SFormals params, ")", "{", SFunctionBody@ body, "}";
 SFunction => FunctionDecl(env, result, name, params, thread, body) :
-    SType result, SName name, "(", SFormals params, ")", "on", SType thread, "{", SFunctionBody@ body, "}";
+    SType result, SName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, "{", SFunctionBody@ body, "}";
 
 
 // Class/value.
 Class SClass(Scope env);
-SClass => createClass(pos, env, name, body) : "class", SName name, "{", SClassBody@ body, "}";
-SClass => createValue(pos, env, name, body) : "value", SName name, "{", SClassBody@ body, "}";
-SClass => extendClass(pos, env, name, base, body) : "class", SName name, "extends", SType base, "{", SClassBody@ body, "}";
-SClass => extendValue(pos, env, name, base, body) : "value", SName name, "extends", SType base, "{", SClassBody@ body, "}";
-SClass => threadClass(pos, env, name, thread, body) : "class", SName name, "on", SType thread, "{", SClassBody@ body, "}";
-SClass => threadClass(pos, env, name, body) : "class", SName name, "on", "\?", "{", SClassBody@ body, "}";
+SClass => createClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "{", SClassBody@ body, "}";
+SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #typeName, "{", SClassBody@ body, "}";
+SClass => extendClass(pos, env, name, base, body) : "class" #keyword , SName name #typeName, "extends" #keyword, SType base, "{", SClassBody@ body, "}";
+SClass => extendValue(pos, env, name, base, body) : "value" #keyword, SName name #typeName, "extends" #keyword, SType base, "{", SClassBody@ body, "}";
+SClass => threadClass(pos, env, name, thread, body) : "class" #keyword, SName name #typeName, "on" #keyword, SType thread, "{", SClassBody@ body, "}";
+SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "on" #keyword, "\?" #keyword, "{", SClassBody@ body, "}";
 
 // Named thread declaration.
 NamedThread SNamedThread();
-SNamedThread => NamedThread(name) : "thread", SName name, ";";
+SNamedThread => NamedThread(name) : "thread" #keyword, SName name, ";";
 
 // Possible root blocks in a file.
 TObject SFileItem(Scope env);
@@ -108,7 +112,7 @@ SFile => Content() : SDelimiter - (SFileItem(env) -> add, )*;
 
 // Root rule for parsing includes.
 Array<SrcName> SIncludes();
-SIncludes => p : (, "use", SPackage p, ";")*;
+SIncludes => p : (, "use" #keyword, SPackage p, ";")*;
 
 // Special use-rule in the top loop.
 SrcName SReplUse();
@@ -153,11 +157,11 @@ SAllWeakCast => r : SWeakCast(block) r;
 // If.
 IfExpr SIf(Block block);
 SIf[0] => createIf(block, expr) :
-    "if", "(", SExpr(block) expr, ")", SIfTrue(me) -> trueExpr (, "else", SStmt(me) -> falseExpr)?;
+    "if" #keyword, "(", SExpr(block) expr, ")", SIfTrue(me) -> trueExpr (, "else" #keyword, SStmt(me) -> falseExpr)?;
 SIf[0] => IfWeak(block, cast) :
-    "if", "(", SWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr (, "else", SStmt(me) -> falseExpr)?;
+    "if" #keyword, "(", SWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr (, "else" #keyword, SStmt(me) -> falseExpr)?;
 SIf[5] => IfWeak(block, cast, name) :
-    "if", "(", SName name, "=", SAllWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr (, "else", SStmt(me) -> falseExpr)?;
+    "if" #keyword, "(", SName name, "=", SAllWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr (, "else" #keyword, SStmt(me) -> falseExpr)?;
 
 // Scoping for if and as expressions.
 IfTrue SIfTrue(Block parent); // Really only If and IfWeak.
@@ -165,30 +169,30 @@ SIfTrue => IfTrue(pos, parent) : SStmt(me) -> set;
 
 // Return.
 Return SReturn(Block block);
-SReturn => Return(pos, block) : "return";
-SReturn => Return(pos, block, expr) : "return", SExpr(block) expr;
+SReturn => Return(pos, block) : "return" #keyword;
+SReturn => Return(pos, block, expr) : "return" #keyword, SExpr(block) expr;
 
 // The loop.
 Expr SLoop(Block block);
-SLoop => Loop(pos, block) : "do[ \n\r\t]", SStmt(me) -> doBody (, "while", "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody)?;
-SLoop => Loop(pos, block) : "while", "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody;
+SLoop => Loop(pos, block) : "do[ \n\r\t]" #keyword, SStmt(me) -> doBody (, "while" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody)?;
+SLoop => Loop(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody;
 
 // The for loop. Divided into two to get correct scoping.
-SLoop => ExprBlock(pos, block) : "for", "(", SExpr(me) -> add, ";", SForInner(me) -> add;
+SLoop => ExprBlock(pos, block) : "for" #keyword, "(", SExpr(me) -> add, ";", SForInner(me) -> add;
 
 For SForInner(Block block);
 SForInner => For(pos, block) : SExpr(me) -> test, ";", SExpr(me) -> update, ")", SStmt(me) -> body;
 
 // Range-based for loop.
-SLoop => RangeFor(pos, block, var, in) : "for", "(", SName var, "in", SExpr(block) in, ")", SStmt(me) -> body;
-SLoop => RangeFor(pos, block, k, v, in) : "for", "(", SName k, ",", SName v, "in", SExpr(block) in, ")", SStmt(me) -> body;
+SLoop => RangeFor(pos, block, var, in) : "for" #keyword, "(", SName var, "in", SExpr(block) in, ")", SStmt(me) -> body;
+SLoop => RangeFor(pos, block, k, v, in) : "for" #keyword, "(", SName k, ",", SName v, "in", SExpr(block) in, ")", SStmt(me) -> body;
 
 // Unless block.
 Unless SUnless(Block block);
 SUnless[0] => Unless(block, cast) :
-    "unless", "(", SAllWeakCast(block) cast, ")", SStmt(me) -> fail (, SStmt(me) -> success)*;
+    "unless" #keyword, "(", SAllWeakCast(block) cast, ")", SStmt(me) -> fail (, SStmt(me) -> success)*;
 SUnless[5] => Unless(block, cast, name) :
-    "unless", "(", SName name, "=", SAllWeakCast(block) cast, ")", SStmt(me) -> fail (, SStmt(me) -> success)*;
+    "unless" #keyword, "(", SName name, "=", SAllWeakCast(block) cast, ")", SStmt(me) -> fail (, SStmt(me) -> success)*;
 
 // Initializer list for arrays.
 Array<Expr> SArrayInitList(Block block);
@@ -199,9 +203,9 @@ SArrayInitList => Array<Expr>() : SExpr(block) -> push, (",", SExpr(block) -> pu
 Expr SConst();
 SConst => intConstant(pos, nr) : "-?[0-9]+" nr;
 SConst => floatConstant(pos, nr) : "-?[0-9]+\.[0-9]+" nr;
-SConst => strConstant(pos, str) : SString str;
-SConst[20] => trueConstant(pos) : "true";
-SConst[20] => falseConstant(pos) : "false";
+SConst => strConstant(pos, str) : SString str #string;
+SConst[20] => trueConstant(pos) : "true" #constant;
+SConst[20] => falseConstant(pos) : "false" #constant;
 
 // Multiline string constants.
 SConst[10] => rawMultilineStrConstant(pos, str) : "str", "{[ \t]*[\n\r]+" - SSkipBlock str - "}";
@@ -226,10 +230,10 @@ SSkipContent : "'" - SStrContent - "'";
 // Atoms, for example constants and variables/function calls.
 Expr SAtom(Block block);
 SAtom => v : SConst v;
-SAtom => namedExpr(block, name, params) : SType name, SFnActuals(block) params;
-SAtom[10] => namedExpr(block, name, dotExpr, params) : SAtom(block) dotExpr, "\.", SName name, SFnActuals(block) params;
-SAtom[20] => spawnExpr(expr) : "spawn", SExpr(block) expr;
-SAtom[20] => NullExpr(pos) : "null";
+SAtom => namedExpr(block, name, params) : SFnName name, SFnActuals(block) params;
+SAtom[10] => namedExpr(block, name, dotExpr, params) : SAtom(block) dotExpr, "\.", SName name #varName, SFnActuals(block) params;
+SAtom[20] => spawnExpr(expr) : "spawn" #keyword, SExpr(block) expr;
+SAtom[20] => NullExpr(pos) : "null" #keyword;
 SAtom => ParenExpr(e) : "(", SExpr(block) e, ")";
 SAtom => e : SBlock(block) e;
 SAtom => e : SIf(block) e;
@@ -239,7 +243,7 @@ SAtom => arrayInit(block, t, list) : SType t, ":", "\[", SArrayInitList(block) l
 SAtom => ArrayInit(pos, block, list) : "\[", SArrayInitList(block) list, "\]";
 SAtom[20] => FnPtr(block, name, params) : "&", SType name, SFnTypes params;
 SAtom[20] => FnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name, SFnTypes params;
-SAtom => unit(block, value, unit) : SConst value, SUnit unit;
+SAtom => unit(block, value, unit) : SConst value, SUnit unit; //TODO: Add highlighting info!
 
 // Temporary, to turn a value of type T into Maybe<T>, this should be done automatically in the future.
 SAtom => asMaybe(block, expr) : "\?", SAtom(block) expr;
@@ -306,9 +310,9 @@ SExpr => prefixOperator(block, o, e) : SPrePost o, SAtom(block) e;
 SExpr => postfixOperator(block, o, e) : SAtom(block) e, SPrePost o;
 SExpr => mkOperator(block, lhs, op, rhs) : SAtom(block) lhs, SCombOp op, SExpr(block) rhs;
 // This must be larger than operators, as templates may be seen as the < operator otherwise.
-SExpr[10] => Var(block, t, name, actual) : SType t, SName name, SFnActuals(block) actual;
-SExpr[10] => Var(block, t, name, init) : SType t, SName name, "=", SExpr(block) init;
-SExpr[20] => Var(block, name, init) : "var", SName name, "=", SExpr(block) init;
+SExpr[10] => Var(block, t, name, actual) : SType t, SName name #varName, SFnActuals(block) actual;
+SExpr[10] => Var(block, t, name, init) : SType t, SName name #varName, "=", SExpr(block) init;
+SExpr[20] => Var(block, name, init) : "var" #keyword, SName name #varName, "=", SExpr(block) init;
 
 
 // Statement. A statement is either an expression with its attached ;, or a block without ;.
@@ -332,8 +336,8 @@ SFunctionBody => FnBody(fn) : (SStmt(me) -> add, )*;
 
 // Special statement for calling super constructor.
 SuperCall SSuperCall(CtorBody block);
-SSuperCall => SuperCall(pos, block, params) : "init", SFnActuals(block) params, ";";
-SSuperCall => SuperCall(pos, block, params, init) : "init", SFnActuals(block) params, "{", (SInitializer(block) init, ";", )* "}";
+SSuperCall => SuperCall(pos, block, params) : "init" #keyword, SFnActuals(block) params, ";";
+SSuperCall => SuperCall(pos, block, params, init) : "init" #keyword, SFnActuals(block) params, "{", (SInitializer(block) init, ";", )* "}";
 
 Initializer SInitializer(Block block);
 SInitializer => Initializer(name, value) : SName name, "=", SExpr(block) value;
@@ -360,11 +364,11 @@ TObject SClassItem(Class owner);
 SClassItem => ClassVar(owner, t, n) :
     SType t, SName n, ";";
 SClassItem => classFn(owner, pos, name, result, params, body) :
-    SType result, SName name, "(", SFormals params, ")", "{", SFunctionBody@ body, "}";
+    SType result, SName name #fnName, "(", SFormals params, ")", "{", SFunctionBody@ body, "}";
 SClassItem => classCtor(owner, pos, params, body) :
-    "ctor", "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
+    "ctor" #keyword, "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
 SClassItem => classCastCtor(owner, pos, params, body) :
-    "cast", "ctor", "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
+    "cast" #keyword, "ctor" #keyword, "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
 
 // Root rule for parsing classes and values.
 ClassBody SClassBody(Class owner);

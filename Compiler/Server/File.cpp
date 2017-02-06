@@ -6,38 +6,6 @@ namespace storm {
 	namespace server {
 		using namespace storm::syntax;
 
-		Range::Range() : from(0), to(0) {}
-
-		Range::Range(Nat from, Nat to) {
-			this->from = min(from, to);
-			this->to = max(from, to);
-		}
-
-		Bool Range::intersects(Range other) const {
-			return to > other.from
-				&& from < other.to;
-		}
-
-		StrBuf &operator <<(StrBuf &to, Range r) {
-			return to << L"(" << r.from << L" - " << r.to << L")";
-		}
-
-		Range combine(Range a, Range b) {
-			if (a.empty())
-				return b;
-			if (b.empty())
-				return a;
-			return Range(min(a.from, b.from),
-						max(a.to, b.to));
-		}
-
-		ColoredRange::ColoredRange(Range r, TokenColor c)
-			: range(r), color(c) {}
-
-		StrBuf &operator <<(StrBuf &to, ColoredRange r) {
-			return to << r.range << L"#" << name(to.engine(), r.color);
-		}
-
 		static Nat strlen(Str *s) {
 			Nat len = 0;
 			for (Str::Iter i = s->begin(), e = s->end(); i != e; ++i)
@@ -45,37 +13,27 @@ namespace storm {
 			return len;
 		}
 
-		File::File(Nat id, Url *path, Str *src)
-			: id(id), path(path), content(null) {
+		Part::Part(Nat offset, FileReader *part, MAYBE(FileReader *) next) {
+			start = offset;
+			path = part->info->url;
 
-			Engine &e = engine();
-			Package *pkg = e.package(path->parent());
-			if (!pkg) {
-				WARNING(L"The file " << path << L" is not in a package known by Storm. Using a dummy package.");
-				pkg = new (this) Package(new (this) Str(L"dummy package"));
-			}
+			Str *src = part->info->contents;
+			Str::Iter expectedFinish = src->end();
+			if (next)
+				expectedFinish = next->info->start;
+			src = src->substr(part->info->start, expectedFinish);
 
-			PkgReader *pkgReader = createReader(new (this) Array<Url *>(1, path), pkg);
-			FileReader *reader = null;
-			if (pkgReader)
-				reader = pkgReader->readFile(path);
-
-			if (reader) {
-				content = new (this) InfoLeaf(null, src);
-				parser = reader->createParser();
-				if (InfoNode *n = parse(content, parser->root()))
-					content = n;
-			}
+			content = new (this) InfoLeaf(null, src);
+			parser = part->createParser();
+			if (InfoNode *n = parse(content, parser->root()))
+				content = n;
 		}
 
-		Range File::full() {
-			if (!content)
-				return Range(0, 0);
-
-			return Range(0, content->length());
+		Range Part::full() const {
+			return Range(start, start + content->length());
 		}
 
-		Range File::replace(Range range, Str *replace) {
+		Range Part::replace(Range range, Str *replace) {
 			if (!content)
 				return Range(0, 0);
 
@@ -92,17 +50,17 @@ namespace storm {
 
 			Range result(range.from, range.from + strlen(replace));
 			if (!regexMatching) {
-				result = combine(result, parse(range));
+				result = merge(result, parse(range));
 			}
 
 			return result;
 		}
 
-		Bool File::remove(const Range &range) {
-			return remove(range, 0, content);
+		Bool Part::remove(const Range &range) {
+			return remove(range, start, content);
 		}
 
-		Bool File::remove(const Range &range, Nat offset, InfoNode *node) {
+		Bool Part::remove(const Range &range, Nat offset, InfoNode *node) {
 			Nat len = node->length();
 			if (len == 0)
 				return true;
@@ -121,7 +79,7 @@ namespace storm {
 			}
 		}
 
-		Bool File::removeLeaf(const Range &range, Nat offset, InfoLeaf *node) {
+		Bool Part::removeLeaf(const Range &range, Nat offset, InfoLeaf *node) {
 			Str *src = node->toS();
 			Str::Iter begin = src->begin();
 			for (Nat i = offset; i < range.from; i++)
@@ -136,7 +94,7 @@ namespace storm {
 			return node->matchesRegex();
 		}
 
-		Bool File::removeInternal(const Range &range, Nat offset, InfoInternal *node) {
+		Bool Part::removeInternal(const Range &range, Nat offset, InfoInternal *node) {
 			Bool ok = true;
 
 			for (Nat i = 0; i < node->count(); i++) {
@@ -150,7 +108,7 @@ namespace storm {
 			return ok;
 		}
 
-		struct File::InsertState {
+		struct Part::InsertState {
 			// Insert 'v' at 'point'.
 			Nat point;
 			Str *v;
@@ -163,14 +121,14 @@ namespace storm {
 			Str *firstPossibleStr;
 		};
 
-		Bool File::insert(Nat point, Str *v) {
+		Bool Part::insert(Nat point, Str *v) {
 			InsertState state = {
 				point,
 				v,
 				false,
 				null,
 			};
-			insert(state, 0, content);
+			insert(state, start, content);
 
 			// If 'done' is true, then we succeeded at inserting the string somewhere where the
 			// regex matched.
@@ -187,7 +145,7 @@ namespace storm {
 			return false;
 		}
 
-		void File::insert(InsertState &state, Nat offset, InfoNode *node) {
+		void Part::insert(InsertState &state, Nat offset, InfoNode *node) {
 			// Outside this node?
 			Nat len = node->length();
 			if (state.point < offset || state.point > offset + len)
@@ -202,7 +160,7 @@ namespace storm {
 			}
 		}
 
-		void File::insertLeaf(InsertState &state, Nat offset, InfoLeaf *node) {
+		void Part::insertLeaf(InsertState &state, Nat offset, InfoLeaf *node) {
 			Str *src = node->toS();
 			Str::Iter p = src->begin();
 			for (Nat i = offset; i < state.point; i++)
@@ -220,7 +178,7 @@ namespace storm {
 			}
 		}
 
-		void File::insertInternal(InsertState &state, Nat offset, InfoInternal *node) {
+		void Part::insertInternal(InsertState &state, Nat offset, InfoInternal *node) {
 			for (Nat i = 0; i < node->count() && !state.done; i++) {
 				InfoNode *at = node->at(i);
 				Nat len = at->length();
@@ -229,14 +187,14 @@ namespace storm {
 			}
 		}
 
-		Array<ColoredRange> *File::colors(Range range) {
+		Array<ColoredRange> *Part::colors(Range range) {
 			Array<ColoredRange> *r = new (this) Array<ColoredRange>();
 			if (content)
-				colors(r, range, 0, content);
+				colors(r, range, start, content);
 			return r;
 		}
 
-		void File::colors(Array<ColoredRange> *out, const Range &range, Nat offset, InfoNode *node) {
+		void Part::colors(Array<ColoredRange> *out, const Range &range, Nat offset, InfoNode *node) {
 			// We can ignore zero-length nodes.
 			Nat len = node->length();
 			if (len == 0)
@@ -262,7 +220,7 @@ namespace storm {
 			}
 		}
 
-		InfoNode *File::parse(InfoNode *node, Rule *root) {
+		InfoNode *Part::parse(InfoNode *node, Rule *root) {
 			parser->root(root);
 			// TODO: Do our best to do error recovery when parsing like this!
 			Str *src = node->toS();
@@ -277,17 +235,17 @@ namespace storm {
 			return r;
 		}
 
-		Range File::parse(const Range &range) {
+		Range Part::parse(const Range &range) {
 			// TODO: We need some heurustic on how much we should try to re-parse in case we need
 			// error recovery. We probably want to try a few parent nodes if error recovery has to
 			// kick in near the leaves.
 			// TODO: Limit the depth of what needs to be re-parsed in some situations.
 			Range result;
-			parse(result, range, 0, content);
+			parse(result, range, start, content);
 			return result;
 		}
 
-		Bool File::parse(Range &result, const Range &range, Nat offset, InfoNode *node) {
+		Bool Part::parse(Range &result, const Range &range, Nat offset, InfoNode *node) {
 			// We should probably parse at a higher level...
 			Nat len = node->length();
 			if (len == 0)
@@ -325,7 +283,7 @@ namespace storm {
 			return ok;
 		}
 
-		void File::replace(InfoNode *oldNode, InfoNode *newNode) {
+		void Part::replace(InfoNode *oldNode, InfoNode *newNode) {
 			InfoInternal *parent = oldNode->parent();
 			if (!parent) {
 				assert(oldNode == content, L"A non-root node without a parent found.");
@@ -342,15 +300,106 @@ namespace storm {
 			}
 		}
 
-		void File::debugOutput(TextOutput *to, Bool tree) const {
-			if (!content) {
-				to->writeLine(TO_S(this, L"No content for " << id));
-			} else if (tree) {
-				to->writeLine(TO_S(this, L"Tree of " << id << L":\n" << content->format()));
+		void Part::debugOutput(TextOutput *to, Bool tree) const {
+			if (tree) {
+				to->writeLine(content->format());
 			} else {
-				to->writeLine(TO_S(this, L"Contents of " << id << L":\n" << content));
+				to->writeLine(content->toS());
 			}
 		}
 
+
+		/**
+		 * File.
+		 */
+
+		File::File(Nat id, Url *path, Str *src)
+			: id(id), path(path) {
+
+			Engine &e = engine();
+			parts = new (e) Array<Part *>();
+			Package *pkg = e.package(path->parent());
+			if (!pkg) {
+				WARNING(L"The file " << path << L" is not in a package known by Storm. Using a dummy package.");
+				pkg = new (this) Package(new (this) Str(L"dummy package"));
+			}
+
+			PkgReader *pkgReader = createReader(new (this) Array<Url *>(1, path), pkg);
+			FileReader *reader = null;
+			if (pkgReader)
+				reader = pkgReader->readFile(path);
+
+			Nat offset = 0;
+			while (reader) {
+				FileReader *next = reader->next(qParser);
+				Part *part = new (e) Part(offset, reader, next);
+				offset = part->full().to;
+				reader = next;
+				parts->push(part);
+			}
+		}
+
+		Range File::full() const {
+			Range result;
+
+			if (parts->any()) {
+				result = parts->last()->full();
+				result.from = 0;
+			}
+
+			return result;
+		}
+
+		Range File::replace(Range range, Str *replace) {
+			Range result;
+
+			// TODO: Realize if and when we need to re-parse subsequent steps!
+			for (Nat i = 0; i < parts->count(); i++) {
+				Part *part = parts->at(i);
+				if (!range.intersects(part->full()))
+					continue;
+
+				result = merge(result, part->replace(range, replace));
+			}
+
+			// At the end of the last part?
+			if (parts->any()) {
+				Part *last = parts->last();
+				if (last->full().to == range.from)
+					result = merge(result, last->replace(range, replace));
+			}
+
+			return result;
+		}
+
+		Array<ColoredRange> *File::colors(Range r) {
+			Array<ColoredRange> *result = null;
+
+			for (Nat i = 0; i < parts->count(); i++) {
+				Part *part = parts->at(i);
+				if (!r.intersects(part->full()))
+					continue;
+
+				Array<ColoredRange> *n = part->colors(r);
+				if (result)
+					result->append(n);
+				else
+					result = n;
+			}
+
+			if (!result)
+				result = new (this) Array<ColoredRange>();
+
+			return result;
+		}
+
+		void File::debugOutput(TextOutput *to, Bool tree) const {
+			to->writeLine(TO_S(this, L"Content of " << id << L":"));
+
+			for (Nat i = 0; i < parts->count(); i++) {
+				parts->at(i)->debugOutput(to, tree);
+				to->writeLine(new (this) Str(L"--------"));
+			}
+		}
 	}
 }

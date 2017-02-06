@@ -105,6 +105,10 @@ namespace storm {
 				if (isTokenSep(tok.peek()))
 					throw SyntaxError(tok.position(), L"Expected identifier.");
 				result->invoke = tok.next().toS();
+
+				// Maybe a color name as well.
+				if (tok.skipIf(L"#"))
+					result->color = parseTokenColor(tok);
 			} else if (tok.skipIf(L"#")) {
 				result->color = parseTokenColor(tok);
 			} else {
