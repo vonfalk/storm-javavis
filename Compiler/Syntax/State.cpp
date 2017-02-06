@@ -31,6 +31,9 @@ namespace storm {
 			return to << L"{" << s.pos << L", " << s.from << L", " << s.prev << L", " << s.completed << L"}";
 		}
 
+		wostream &operator <<(wostream &to, State s) {
+			return to << L"{" << s.pos << L", " << s.from << L", " << s.prev << L", " << s.completed << L"}";
+		}
 
 		StateSet::StateSet() : chunks(null) {
 			stateArrayType = StormInfo<State>::handle(engine()).gcArrayType;

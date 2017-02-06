@@ -14,6 +14,10 @@ namespace storm {
 	namespace syntax {
 		STORM_PKG(core.lang);
 
+#ifdef DEBUG
+		extern bool parserDebug;
+#endif
+
 		/**
 		 * Base class for the templated parser in Storm. In Storm, Parser<T> is to be
 		 * instantiated. This is not possible from C++ as the syntax types are not present in

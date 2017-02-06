@@ -10,6 +10,16 @@
 namespace storm {
 	namespace syntax {
 
+#ifdef DEBUG
+		bool parserDebug = false;
+
+#define PARSER_PLN(x) if (parserDebug) { PLN(x); }
+#define PARSER_PVAR(x) if (parserDebug) { PVAR(x); }
+#else
+#define PARSER_PLN(x)
+#define PARSER_PVAR(x)
+#endif
+
 		ParserBase::ParserBase() {
 			assert(as<ParserType>(runtime::typeOf(this)),
 				L"ParserBase not properly constructed. Use Parser::create() in C++!");
@@ -35,8 +45,6 @@ namespace storm {
 
 		void ParserBase::toS(StrBuf *to) const {
 			// TODO: use 'toBytes' when present!
-			PVAR((void *)root());
-			PVAR(root());
 			*to << L"Parser for " << root()->identifier() << L", currently using " << stateCount()
 				<< L" states = " << byteCount() << L" bytes.";
 		}
@@ -115,7 +123,7 @@ namespace storm {
 
 			// Process all steps.
 			for (nat i = 0; i < len; i++) {
-				//PVAR(i);
+				PARSER_PVAR(i);
 				if (process(i))
 					lastFinish = i;
 			}
@@ -130,7 +138,7 @@ namespace storm {
 			for (nat i = 0; i < src.count(); i++) {
 				StatePtr ptr(step, i);
 				const State &at = src[i];
-				//PVAR(at);
+				PARSER_PVAR(at);
 
 				predictor(ptr, at);
 				completer(ptr, at);
@@ -176,6 +184,10 @@ namespace storm {
 				for (nat i = 0; src[i] != state && i < src.count(); i++) {
 					const State &now = src[i];
 					if (!now.pos.end())
+						continue;
+
+					// Only complete states that were actually instantiated here!
+					if (now.from != ptr.step)
 						continue;
 
 					Rule *cRule = now.production()->rule();

@@ -110,6 +110,7 @@ namespace storm {
 
 		// To string.
 		StrBuf &STORM_FN operator <<(StrBuf &to, State s);
+		wostream &operator <<(wostream &to, State s);
 
 
 		/**
