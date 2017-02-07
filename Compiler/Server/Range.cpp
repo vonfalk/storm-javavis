@@ -17,6 +17,8 @@ namespace storm {
 				&& from < other.to;
 		}
 
+		void Range::deepCopy(CloneEnv *env) {}
+
 		StrBuf &operator <<(StrBuf &to, Range r) {
 			return to << L"(" << r.from << L" - " << r.to << L")";
 		}

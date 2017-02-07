@@ -23,6 +23,9 @@ namespace storm {
 
 			// Does this range intersect another range?
 			Bool STORM_FN intersects(Range other) const;
+
+			// Deep copy.
+			void STORM_FN deepCopy(CloneEnv *env);
 		};
 
 		StrBuf &STORM_FN operator <<(StrBuf &to, Range r);

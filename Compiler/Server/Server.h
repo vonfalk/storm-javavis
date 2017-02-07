@@ -3,6 +3,7 @@
 #include "Connection.h"
 #include "File.h"
 #include "Test.h"
+#include "WorkQueue.h"
 
 namespace storm {
 	namespace server {
@@ -42,6 +43,9 @@ namespace storm {
 
 			// Any test state required now?
 			Test *testState;
+
+			// Work queue.
+			WorkQueue *work;
 
 			// Keep track of the color symbols used.
 			Array<Symbol *> *colorSyms;

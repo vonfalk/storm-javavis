@@ -16,14 +16,17 @@ namespace storm {
 			debug = c->symbol(L"debug");
 			recolor = c->symbol(L"recolor");
 			color = c->symbol(L"color");
+			work = new (this) WorkQueue();
 		}
 
 		void Server::run() {
+			work->start();
 			print(L"Language server started.");
 
 			SExpr *msg = null;
 			while (msg = conn->receive()) {
 				try {
+					work->poke();
 					if (!process(msg))
 						break;
 				} catch (const MsgError &e) {
@@ -37,6 +40,7 @@ namespace storm {
 			}
 
 			print(L"Terminating. Bye!");
+			work->stop();
 		}
 
 		Bool Server::process(SExpr *msg) {
