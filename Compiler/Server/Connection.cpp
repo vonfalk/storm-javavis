@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Connection.h"
+#include "Core/Timing.h"
+#include "Core/StrBuf.h"
 #include "Core/Io/Utf8Text.h"
 #include "Core/Io/MemStream.h"
 
@@ -55,17 +57,39 @@ namespace storm {
 			OMemStream *out = new (this) OMemStream();
 
 			// Leading zero byte.
-			GcPreArray<byte, 1> d;
+			GcPreArray<byte, 5> d;
 			d.v[0] = 0x00;
+			d.v[1] = 0x00;
+			d.v[2] = 0x00;
+			d.v[3] = 0x00;
+			d.v[4] = 0x00;
 			out->write(fullBuffer(d));
 
 			// Rest of the message.
 			write(out, expr);
 
+			// Update the length of the message.
+			Buffer b = out->buffer();
+			Nat v = b.filled() - 5;
+			b[1] = byte((v >> 24) & 0xFF);
+			b[2] = byte((v >> 16) & 0xFF);
+			b[3] = byte((v >>  8) & 0xFF);
+			b[4] = byte((v >>  0) & 0xFF);
+
 			// Send the message.
 			// textOut->writeLine(expr->toS());
 			// textOut->writeLine(out->toS());
-			output->write(out->buffer());
+			output->write(b);
+		}
+
+		void Connection::write(OStream *to, MAYBE(SExpr *) expr) {
+			if (expr) {
+				expr->write(to, this);
+			} else {
+				GcPreArray<byte, 1> d;
+				d.v[0] = 0x00;
+				to->write(fullBuffer(d));
+			}
 		}
 
 		SExpr *Connection::receive() {
@@ -82,16 +106,6 @@ namespace storm {
 			}
 
 			return result;
-		}
-
-		void Connection::write(OStream *to, MAYBE(SExpr *) expr) {
-			if (expr) {
-				expr->write(to, this);
-			} else {
-				GcPreArray<byte, 1> d;
-				d.v[0] = 0x00;
-				to->write(fullBuffer(d));
-			}
 		}
 
 		static Byte decodeByte(IStream *src, Bool &ok) {
@@ -152,7 +166,20 @@ namespace storm {
 
 				// Skip the 0x00 byte.
 				from->seek(pos + 1);
-				SExpr *r = readSExpr(from, ok);
+
+				// PVAR(from);
+
+				// See if we have enough data available.
+				Nat len = decodeNat(from, ok);
+				SExpr *r = null;
+				if (ok) {
+					if (from->tell() + len <= from->length()) {
+						r = readSExpr(from, ok);
+					} else {
+						ok = false;
+					}
+				}
+
 				if (ok) {
 					result = r;
 				} else {

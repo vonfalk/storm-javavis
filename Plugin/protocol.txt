@@ -3,6 +3,9 @@ Protocol
 
 All messages start with a null byte. Everything else is interpreted as text and outputted verbatim to the output.
 
+The first four bytes of each message (following the null byte) contain the total length of the
+message, encoded as a number.
+
 Entries are encoded as follows:
 First byte  	    Meaning
 0x00  		    nil.

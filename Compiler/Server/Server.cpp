@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Server.h"
+#include "Core/Timing.h"
 
 namespace storm {
 	namespace server {
@@ -194,7 +195,7 @@ namespace storm {
 			Nat pos = colors->at(0).range.from;
 			Array<SExpr *> *result = new (this) Array<SExpr *>();
 			// A bit generous, but this array will not live long anyway.
-			result->reserve(colors->count() * 4 + 4);
+			result->reserve(colors->count() * 4 + 8);
 
 			result->push(color);
 			result->push(new (this) Number(file->id));

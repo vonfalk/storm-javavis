@@ -107,6 +107,7 @@ namespace storm {
 			// Get syntax colorings in the specified range. These are ordered and
 			// non-overlapping. The resulting colorings all overlap the specified range, but are not
 			// clipped to be strictly inside the range.
+			// TODO: Generate the required SExpr directly instead of going through an array.
 			Array<ColoredRange> *colors(Range r);
 
 			// Our id.

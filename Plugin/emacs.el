@@ -24,6 +24,14 @@
   "List of the last few edits to this buffer. This is so we can handle 'late' coloring messages from Storm.")
 (defvar-local storm-buffer-no-changes nil "Inhibit change notifications for the current buffer.")
 
+;; Utility for simple benchmarking.
+(defmacro log-time (name &rest body)
+  "Measure the time taken to execute 'body', output as a message."
+  `(let* ((start-time (current-time))
+	  (body-result (progn ,@body)))
+     (message "%s %.02f ms" ,name (* 1000 (float-time (time-since start-time))))
+     body-result))
+
 (defun global-storm-mode ()
   "Use storm-mode for all applicable buffers."
   (interactive)
@@ -473,38 +481,46 @@
 
 ;; Decoding messages in a raw string.
 
-(defun storm-state (src)
+(defmacro storm-state (src)
   "Create a state for decoding messages. car is the current position, cdr is the length."
-  (cons 1 (length src)))
+  `(cons 1 (length ,src)))
 
-(defun storm-state-error (state)
+(defmacro storm-state-error (state)
   "Decide if the state is in an error condition. (ie. pos > length)"
-  (> (car state) (cdr state)))
+  `(> (car ,state) (cdr ,state)))
 
-(defun storm-state-set-error (state)
+(defmacro storm-state-set-error (state)
   "Make 'state' into an error state."
-  (setcar state (1+ (cdr state)))
-  'nil)
+  `(progn
+     (setcar ,state (1+ (cdr ,state)))
+     'nil))
 
-(defun storm-state-more-p (state more)
+(defmacro storm-state-more-p (state more)
   "Decide if there is at least 'more' additional characters."
-  (if (endp more)
-      nil
-    (<= (+ (car state) more) (cdr state))))
+  `(if (endp ,more)
+       nil
+     (<= (+ (car ,state) ,more) (cdr ,state))))
 
 (defun storm-decode (src)
   "Decode as much as possible of a message. Discards the first byte (assumes it is zero). Returns either
    (number result), which means that 'number' characters were consumed resulting in 'result',
    or nil, which means that nothing was consumed."
   (let* ((state (storm-state src))
-	 (result (storm-decode-entry src state)))
+	 (result (storm-decode-first-entry src state)))
     (if (storm-state-error state)
 	'nil
       (progn
 	(cons (car state) result)))))
 
+(defun storm-decode-first-entry (src state)
+  "Decode the first entry in 'src', starting by making sure the total number of bytes are available."
+  (let ((msg-len (storm-decode-number src state)))
+    (if (storm-state-more-p state msg-len)
+	(storm-decode-entry src state)
+      (storm-state-set-error state))))
+
 (defun storm-decode-entry (src state)
-  "Decode an entry in (car state) starting at (cdr state)."
+  "Decode an entry in src."
   (if (storm-state-more-p state 1)
       (let* ((pos (car state))
 	     (ch (aref src pos)))
@@ -584,8 +600,13 @@
   "Encode a s-expression."
   (with-temp-buffer
     (set-buffer-multibyte nil)
-    (insert-char #x00) ;; Start of message marker.
     (storm-encode-buffer msg)
+    (let ((msg-len (- (point-max) (point-min))))
+      (goto-char (point-min))
+      ;; Start of message marker.
+      (insert-char #x00)
+      ;; Message length.
+      (storm-encode-number msg-len))
     (buffer-string)))
 
 (defun storm-encode-buffer (msg)
