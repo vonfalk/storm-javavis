@@ -26,5 +26,5 @@ Int[] createIntArray() {
 }
 
 Value[] createValueArray() {
-	Value[];
+	Value:[];
 }
