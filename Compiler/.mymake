@@ -1,6 +1,8 @@
 []
 stormpp=CppTypes
 preBuild+=<execpath|stormpp> ./ ../Core/ ../Code/ --template ../Core/Gen/CppTypes.cpp --out Gen/CppTypes.cpp --asm ../Core/Gen/CppVTables.VS_X86 Gen/CppVTables.asm
+preBuildCreates+=Gen/CppTypes.cpp
+preBuildCreates+=Gen/CppVTables.asm
 
 #No PCH for c-files.
 [windows]
