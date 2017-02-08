@@ -7,6 +7,9 @@
 ;; Use 'global-storm-mode' to start storm-mode globally, or 'storm-mode' to use storm-mode for a
 ;; single buffer.
 
+;; Disable lockfiles as they confuse Storm...
+(setq create-lockfiles nil)
+
 ;; Configuration.
 (defvar storm-mode-root nil "Root of the Storm source tree.")
 (defvar storm-mode-compiler nil "Path to the Storm compiler.")

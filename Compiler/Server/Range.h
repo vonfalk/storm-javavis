@@ -24,6 +24,9 @@ namespace storm {
 			// Does this range intersect another range?
 			Bool STORM_FN intersects(Range other) const;
 
+			// Does this range contain another point?
+			Bool STORM_FN contains(Nat pt) const;
+
 			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);
 		};

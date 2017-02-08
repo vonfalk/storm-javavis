@@ -386,7 +386,11 @@ namespace storm {
 				Range full = part->full();
 				offset = full.to;
 
-				if (!range.intersects(full))
+				Bool here = false;
+				here |= range.intersects(full);
+				// Note: 'range' can be empty, which causes problems when it lies right between two parts.
+				here |= range.empty() && range.from == full.from;
+				if (!here)
 					continue;
 
 				result = merge(result, part->replace(range, replace));

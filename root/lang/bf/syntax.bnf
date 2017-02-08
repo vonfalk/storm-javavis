@@ -9,14 +9,14 @@ void BFDelimiter();
 BFDelimiter : "[ \n\r\t]*";
 
 Str SNumber();
-SNumber => v : "[0-9]+" v;
+SNumber => v : "[0-9]+" v #constant;
 
 BfExpr SFile();
 SFile => BfExpr(pos, space, code) : SNumber space - SComment - SRoot code;
 
 // Note: the {} chars are used to end blocks in other languages.
 void SComment();
-SComment : "[^<>,\.\+\-\[\]{}]*";
+SComment : "[^<>,\.\+\-\[\]{}]*" #comment;
 
 Array<BfToken> SRoot();
 SRoot => Array<BfToken>() : ( SToken -> push - SComment )*;
@@ -28,8 +28,8 @@ SToken => BfInput(pos) : ",";
 SToken => BfOutput(pos) : "\.";
 SToken => BfInc(pos) : "\+";
 SToken => BfDec(pos) : "\-";
-SToken => BfLoop(pos, c) : "\[", SRoot c, "\]";
+SToken => BfLoop(pos, c) : "\[" #keyword, SRoot c, "\]" #keyword;
 
 // Integration with BS.
 lang.bs.SAtom => BfExpr(pos, space, code, input) :
-    "bf", "(", lang.bs.SExpr(block) input, ",", SNumber space, ")", "{", SRoot code, "}";
+    "bf" #typeName, "(", lang.bs.SExpr(block) input, ",", SNumber space, ")", "{", SRoot code, "}";

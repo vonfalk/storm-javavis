@@ -17,6 +17,10 @@ namespace storm {
 				&& from < other.to;
 		}
 
+		Bool Range::contains(Nat pt) const {
+			return from >= pt && to < pt;
+		}
+
 		void Range::deepCopy(CloneEnv *env) {}
 
 		StrBuf &operator <<(StrBuf &to, Range r) {

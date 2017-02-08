@@ -135,7 +135,10 @@ namespace storm {
 	}
 
 	Str *STORM_FN readAllText(Url *file) {
-		return readText(file->read())->readAll();
+		IStream *src = file->read();
+		Str *result = readText(src)->readAll();
+		src->close();
+		return result;
 	}
 
 
