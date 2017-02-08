@@ -30,9 +30,9 @@ namespace storm {
 				content = n;
 		}
 
-		Bool Part::replace(FileReader *reader, MAYBE(FileReader *) next) {
+		Bool Part::replace(FileReader *reader, MAYBE(FileReader *) next, Bool force) {
 			InfoParser *p = reader->createParser();
-			if (parser->sameSyntax(p))
+			if (!force && parser->sameSyntax(p))
 				return false;
 
 			Str *src = reader->info->contents;
@@ -477,10 +477,10 @@ namespace storm {
 						Part *old = parts->at(id);
 						old->offset(offset);
 						newParts->push(old);
-					} else if (id < parts->count() && !force) {
+					} else if (id < parts->count()) {
 						Part *part = parts->at(id);
 						part->offset(offset);
-						if (part->replace(reader, next)) {
+						if (part->replace(reader, next, force)) {
 							result = merge(result, part->full());
 						}
 						newParts->push(part);

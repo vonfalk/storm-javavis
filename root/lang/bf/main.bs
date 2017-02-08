@@ -1,6 +1,7 @@
 use lang;
 use lang:bs;
 use lang:bs:macro;
+use lang:bnf;
 use core:lang;
 use core:io;
 use core:debug;
@@ -27,6 +28,9 @@ class BfFile extends FileReader {
 		info.pkg.add(fn);
 	}
 
+	Rule rootRule() {
+		named{SFile};
+	}
 }
 
 class BfFunction extends Function {

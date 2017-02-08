@@ -28,7 +28,7 @@ namespace storm {
 			// Replaces the content in this part with the content dictated by 'reader'. Attempts to
 			// re-parse the entire content, but keeps the old syntax tree in case parsing fails.
 			// Returns 'false' if no replacement was needed.
-			Bool STORM_FN replace(FileReader *part, MAYBE(FileReader *) next);
+			Bool STORM_FN replace(FileReader *part, MAYBE(FileReader *) next, Bool force);
 
 			// Get the offset of this part.
 			inline Nat STORM_FN offset() const { return start; }
