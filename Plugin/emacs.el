@@ -12,7 +12,7 @@
 (defvar storm-mode-compiler nil "Path to the Storm compiler.")
 (defvar storm-mode-stdlib nil "Root of the Storm standard library (currently not used).")
 (defvar storm-mode-compile-compiler nil "Try to compile the compiler before starting it.")
-(defvar storm-mode-max-edits 50 "Maximum number of entries saved in the edit history.")
+(defvar storm-mode-max-edits 20 "Maximum number of entries saved in the edit history.")
 
 ;; State for all buffers using storm-mode.
 (defvar storm-mode-buffers (make-hash-table) "Map int->buffer for all buffers and their associated id.")
@@ -21,7 +21,9 @@
 (defvar-local storm-buffer-id nil "The ID of the current buffer in storm-mode.")
 (defvar-local storm-buffer-edit-id 0 "The ID of the next edit operation for the current buffer.")
 (defvar-local storm-buffer-edits nil
-  "List of the last few edits to this buffer. This is so we can handle 'late' coloring messages from Storm.")
+  "List of the last few edits to this buffer. This is so we can handle 'late' coloring messages from Storm.
+   The entries of this list has the form (offset skip marker) where offset is the character offset where the edit started,
+   skip is the number of characters erased (if any) and marker is a marker placed at offset + skip.")
 (defvar-local storm-buffer-no-changes nil "Inhibit change notifications for the current buffer.")
 
 ;; Utility for simple benchmarking.
@@ -93,7 +95,7 @@
   "Output debug information of the contents of the current buffer."
   (interactive)
   (when storm-buffer-id
-    (storm-send (list 'recolor storm-buffer-id storm-buffer-edit-id))))
+    (storm-send (list 'recolor storm-buffer-id))))
 
 ;; Convenience for highlighting.
 
@@ -165,39 +167,73 @@
   NOTE: This is called when we set text color of the buffer as well... Inhibit that!"
   (when (and storm-buffer-id (not storm-buffer-no-changes))
     ;; Remember the edit.
-    (setq storm-buffer-edit-id (1+ storm-buffer-edit-id))
-    (setq storm-buffer-edits
-    	  (limit-length
-    	   storm-mode-max-edits
-    	   (cons (list edit-begin
-    		       (+ edit-begin old-length)
-    		       (- edit-end edit-begin))
-    		 storm-buffer-edits)))
-
+    (let ((marker (make-marker)))
+      (setq storm-buffer-edit-id (1+ storm-buffer-edit-id))
+      (setq storm-buffer-edits
+	    (storm-limit-edit-length
+	     storm-mode-max-edits
+	     (cons (list edit-begin
+			 old-length
+			 (set-marker marker edit-end))
+		   storm-buffer-edits))))
 
     ;; Tell Storm.
     (storm-send (list 'edit
-    		      storm-buffer-id
-    		      storm-buffer-edit-id
-    		      (1- edit-begin)
-    		      (+ edit-begin old-length -1)
-    		      (buffer-substring-no-properties edit-begin edit-end)))
+		      storm-buffer-id
+		      storm-buffer-edit-id
+		      (1- edit-begin)
+		      (+ edit-begin old-length -1)
+		      (buffer-substring-no-properties edit-begin edit-end)))
     ;; Wait a short wile for a message.
     (accept-process-output storm-process 0.02)))
 
-(defun limit-length (max-length list)
-  "Limit the length of the list 'list'"
+(defun storm-limit-edit-length (max-length list)
+  "Limit the length of the list 'list' containing edits."
   (let ((at list)
-	(pos 1))
+	(pos 1)
+	(free nil))
     (while (consp at)
       (when (= pos max-length)
+	(setq free (cdr at))
 	(setcdr at nil))
       (setq at (cdr at))
       (setq pos (1+ pos)))
+
+    ;; Remove any markers so that they do not slow things down...
+    (while (consp free)
+      (set-marker (third (car free)) nil)
+      (setq free (cdr free)))
     list))
 
 
 ;; Handle messages
+
+(defun first-n (list n)
+  "Extract the first 'n' elements of a list"
+  (if (and (> n 0) (consp list))
+      (cons (car list)
+	    (first-n (cdr list) (1- n)))
+    nil))
+
+(defun storm-active-edits (edit-id)
+  "Find the part of the edit history relevant to consider when coloring text."
+  (let ((entries (first-n storm-buffer-edits
+			  (- storm-buffer-edit-id edit-id))))
+    (when (consp entries)
+      (sort entries (lambda (a b) (< (car a) (car b)))))))
+
+(defmacro storm-check-edits (pos min-pos edits)
+  "Update 'pos' according to the history in 'edits'. Consumes entries from 'edits'."
+  `(while (and (consp ,edits)
+	       (<= (first (first ,edits)) ,pos))
+     (let* ((entry (first ,edits))
+	    (offset (first entry))
+	    (skip (second entry))
+	    (marker (third entry)))
+       (when (> skip 0)
+	 (setq ,min-pos (first entry)))
+       (setq ,pos (+ (marker-position marker) (- ,pos offset skip)))
+       (setq ,edits (rest ,edits)))))
 
 (defun storm-on-color (params)
   "Handle the color-message."
@@ -206,18 +242,27 @@
 	     (edit-id   (nth 1 params))
 	     (start-pos (1+ (nth 2 params)))
 	     (at        (nthcdr 3 params))
-	     (buffer (gethash buffer-id storm-mode-buffers nil)))
+	     (buffer    (gethash buffer-id storm-mode-buffers nil)))
 	(when buffer
 	  (with-current-buffer buffer
 	    ;; Make sure we do not act on our own color notifications!
 	    (let ((storm-buffer-no-changes t)
-		  (highest (point-max)))
+		  (edits   (storm-active-edits edit-id))
+		  (lowest  (point-min))
+		  (highest (point-max))
+		  (end-pos 0))
+
+	      (storm-check-edits start-pos lowest edits)
 	      (while (consp at)
+		(setq end-pos (+ start-pos (first at)))
+		(storm-check-edits end-pos lowest edits)
+
 		(storm-set-color
-		 start-pos
-		 (min highest (+ start-pos (first at)))
+		 (max lowest start-pos)
+		 (min highest end-pos)
 		 (storm-find-color (second at)))
-		(setq start-pos (+ start-pos (first at)))
+
+		(setq start-pos end-pos)
 		(setq at (nthcdr 2 at)))))))
     "Too few parameters."))
 

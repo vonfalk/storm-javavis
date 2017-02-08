@@ -77,7 +77,7 @@ namespace storm {
 			files->put(id, f);
 
 			// Give the initial data on the file.
-			update(f, f->full(), 0);
+			update(f, f->full());
 		}
 
 		void Server::onEdit(SExpr *expr) {
@@ -91,11 +91,11 @@ namespace storm {
 			if (!f)
 				return;
 
-			Range range(from, to);
-			range = f->replace(range, replace);
+			f->editId = editId;
+			Range range = f->replace(Range(from, to), replace);
 
 			// Update the range.
-			update(f, range, editId);
+			update(f, range);
 		}
 
 		void Server::onClose(SExpr *expr) {
@@ -128,14 +128,13 @@ namespace storm {
 
 		void Server::onReColor(SExpr *expr) {
 			Nat fileId = next(expr)->asNum()->v;
-			Nat editId = next(expr)->asNum()->v;
 			File *f = files->get(fileId, null);
 			if (!f) {
 				print(TO_S(this, L"No file with id " << fileId));
 				return;
 			}
 
-			update(f, f->full(), editId);
+			update(f, f->full());
 		}
 
 		static Str *colorName(EnginePtr e, syntax::TokenColor c) {
@@ -191,19 +190,21 @@ namespace storm {
 			return s;
 		}
 
-		void Server::update(File *file, Range range, Nat editId) {
-			Array<ColoredRange> *colors = file->colors(range);
-			if (colors->empty())
+		void Server::update(File *file, Range range) {
+			if (range.empty())
 				return;
 
-			Nat pos = colors->at(0).range.from;
+			Array<ColoredRange> *colors = file->colors(range);
+			Nat pos = range.from;
+			if (!colors->empty())
+				pos = ::min(pos, colors->at(0).range.from);
 			Array<SExpr *> *result = new (this) Array<SExpr *>();
 			// A bit generous, but this array will not live long anyway.
 			result->reserve(colors->count() * 4 + 8);
 
 			result->push(color);
 			result->push(new (this) Number(file->id));
-			result->push(new (this) Number(editId));
+			result->push(new (this) Number(file->editId));
 			result->push(new (this) Number(pos));
 
 			for (Nat i = 0; i < colors->count(); i++) {

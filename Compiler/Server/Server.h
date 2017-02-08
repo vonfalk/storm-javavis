@@ -65,7 +65,7 @@ namespace storm {
 			void onReColor(SExpr *msg);
 
 			// Send updates for 'range' in 'file'.
-			void update(File *file, Range range, Nat editId);
+			void update(File *file, Range range);
 
 			// Convenience functions for printing things.
 			void print(Str *s);
