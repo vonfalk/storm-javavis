@@ -24,6 +24,9 @@ namespace storm {
 			// Run the server loop. Blocks until the server is detached.
 			void STORM_FN run();
 
+			// Run delayed work.
+			void runWork(WorkItem *item);
+
 		private:
 			// Connection.
 			Connection *conn;

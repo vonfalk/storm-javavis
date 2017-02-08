@@ -46,12 +46,14 @@ namespace storm {
 		inline Long STORM_FN inS() { return Long(v / 1000000); }
 	};
 
-	// Create durations in various units.
-	Duration STORM_FN h(Long v);
-	Duration STORM_FN min(Long v);
-	Duration STORM_FN s(Long v);
-	Duration STORM_FN ms(Long v);
-	Duration STORM_FN us(Long v);
+	namespace time {
+		// Create durations in various units.
+		Duration STORM_FN h(Long v);
+		Duration STORM_FN min(Long v);
+		Duration STORM_FN s(Long v);
+		Duration STORM_FN ms(Long v);
+		Duration STORM_FN us(Long v);
+	}
 
 	// Sleep. Do not expect more than ms precision.
 	void STORM_FN sleep(Duration d);

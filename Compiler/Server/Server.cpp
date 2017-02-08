@@ -16,7 +16,7 @@ namespace storm {
 			debug = c->symbol(L"debug");
 			recolor = c->symbol(L"recolor");
 			color = c->symbol(L"color");
-			work = new (this) WorkQueue();
+			work = new (this) WorkQueue(this);
 		}
 
 		void Server::run() {
@@ -41,6 +41,17 @@ namespace storm {
 
 			print(L"Terminating. Bye!");
 			work->stop();
+		}
+
+		void Server::runWork(WorkItem *item) {
+			try {
+				File *f = item->file;
+				Range r = item->run();
+				update(f, r);
+			} catch (const Exception &e) {
+				print(TO_S(this, L"While doing background work:"));
+				print(::toS(e));
+			}
 		}
 
 		Bool Server::process(SExpr *msg) {
@@ -73,7 +84,7 @@ namespace storm {
 			Str *path = next(expr)->asStr()->v;
 			Str *content = next(expr)->asStr()->v;
 
-			File *f = new (this) File(id, parsePath(path), content);
+			File *f = new (this) File(id, parsePath(path), content, work);
 			files->put(id, f);
 
 			// Give the initial data on the file.
@@ -197,7 +208,7 @@ namespace storm {
 			Array<ColoredRange> *colors = file->colors(range);
 			Nat pos = range.from;
 			if (!colors->empty())
-				pos = ::min(pos, colors->at(0).range.from);
+				pos = min(pos, colors->at(0).range.from);
 			Array<SExpr *> *result = new (this) Array<SExpr *>();
 			// A bit generous, but this array will not live long anyway.
 			result->reserve(colors->count() * 4 + 8);

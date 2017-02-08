@@ -8,6 +8,7 @@
 #include "Compiler/FileReader.h"
 #include "Compiler/Syntax/InfoNode.h"
 #include "Range.h"
+#include "WorkQueue.h"
 
 namespace storm {
 	namespace server {
@@ -22,8 +23,14 @@ namespace storm {
 		public:
 			STORM_CTOR Part(Nat offset, FileReader *part, MAYBE(FileReader *) next);
 
+			// Replaces the content in this part with the content dictated by 'reader'. Attempts to
+			// re-parse the entire content, but keeps the old syntax tree in case parsing fails.
+			// Returns 'false' if no replacement was needed.
+			Bool STORM_FN replace(FileReader *part, MAYBE(FileReader *) next);
+
 			// Get the offset of this part.
 			inline Nat STORM_FN offset() const { return start; }
+			inline void STORM_FN offset(Nat offset) { start = offset; }
 
 			// Get the full range of this part.
 			Range STORM_FN full() const;
@@ -38,6 +45,9 @@ namespace storm {
 
 			// Output our internal representation for debugging.
 			void STORM_FN debugOutput(TextOutput *to, Bool tree) const;
+
+			// Output all our text.
+			void STORM_FN text(StrBuf *to) const;
 
 		private:
 			// Parser used for this part. Contains the proper packages etc.
@@ -96,7 +106,7 @@ namespace storm {
 		class File : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
-			STORM_CTOR File(Nat id, Url *path, Str *content);
+			STORM_CTOR File(Nat id, Url *path, Str *content, WorkQueue *q);
 
 			// Get the range representing the entire file.
 			Range STORM_FN full() const;
@@ -123,8 +133,35 @@ namespace storm {
 			// Path to the underlying file (so we can properly locate packages etc., we never actually read the file).
 			Url *path;
 
+			// Remember the package this file is located inside.
+			Package *package;
+
 			// All parts.
 			Array<Part *> *parts;
+
+			// Work queue.
+			WorkQueue *work;
+
+			// Update 'part', return the modified range. This generally causes all following parts
+			// to be updated eventually as well.
+			Range updatePart(Nat part);
+
+			friend class InvalidatePart;
+		};
+
+
+		/**
+		 * Work items posted when we need to invalidate one or more parts.
+		 */
+		class InvalidatePart : public WorkItem {
+			STORM_CLASS;
+		public:
+			STORM_CTOR InvalidatePart(File *file, Nat part);
+
+			Nat part;
+
+			virtual Range STORM_FN run();
+			virtual Bool STORM_FN equals(WorkItem *o);
 		};
 
 	}

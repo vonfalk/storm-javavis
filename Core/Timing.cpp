@@ -91,24 +91,28 @@ namespace storm {
 
 	Duration::Duration(Long v) : v(v) {}
 
-	Duration h(Long v) {
-		return Duration(Long(v) * Long(60) * Long(60) * Long(1000) * Long(1000));
-	}
+	namespace time {
 
-	Duration min(Long v) {
-		return Duration(Long(v) * Long(60) * Long(1000) * Long(1000));
-	}
+		Duration h(Long v) {
+			return Duration(Long(v) * Long(60) * Long(60) * Long(1000) * Long(1000));
+		}
 
-	Duration s(Long v) {
-		return Duration(Long(v) * Long(1000) * Long(1000));
-	}
+		Duration min(Long v) {
+			return Duration(Long(v) * Long(60) * Long(1000) * Long(1000));
+		}
 
-	Duration ms(Long v) {
-		return Duration(Long(v) * 1000);
-	}
+		Duration s(Long v) {
+			return Duration(Long(v) * Long(1000) * Long(1000));
+		}
 
-	Duration us(Long v) {
-		return Duration(v);
+		Duration ms(Long v) {
+			return Duration(Long(v) * 1000);
+		}
+
+		Duration us(Long v) {
+			return Duration(v);
+		}
+
 	}
 
 	void sleep(Duration d) {

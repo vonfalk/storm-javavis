@@ -150,7 +150,7 @@ SBlock => ExprBlock(pos, parent) : "{", (SStmt(me) -> add, )* "}";
 // to distinguish from the case where 'c' is a boolean by syntax alone. This part will probably contain
 // more parts in the future.
 WeakCast SWeakCast(Block block);
-SWeakCast => weakAsCast(block, expr, type) : SExpr(block) expr, "as", SType type;
+SWeakCast => weakAsCast(block, expr, type) : SExpr(block) expr, "as" #keyword, SType type;
 
 // All weak casts, including those that are only expressions.
 WeakCast SAllWeakCast(Block block);
@@ -164,7 +164,7 @@ SIf[0] => createIf(block, expr) :
 SIf[0] => IfWeak(block, cast) :
     "if" #keyword, "(", SWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr (, "else" #keyword, SStmt(me) -> falseExpr)?;
 SIf[5] => IfWeak(block, cast, name) :
-    "if" #keyword, "(", SName name, "=", SAllWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr (, "else" #keyword, SStmt(me) -> falseExpr)?;
+    "if" #keyword, "(", SName name #varName, "=", SAllWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr (, "else" #keyword, SStmt(me) -> falseExpr)?;
 
 // Scoping for if and as expressions.
 IfTrue SIfTrue(Block parent); // Really only If and IfWeak.

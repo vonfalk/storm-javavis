@@ -10,19 +10,28 @@ namespace storm {
 	namespace server {
 		STORM_PKG(core.lang.server);
 
+		class File;
+		class Server;
+
 		/**
-		 * Work items.
+		 * Work items. Subclass this class to provide custom messages.
+		 *
+		 * All work items which are considered equal are possibly reduced into one.
 		 */
-		class WorkItem {
-			STORM_VALUE;
+		class WorkItem : public ObjectOn<Compiler> {
+			STORM_CLASS;
 		public:
-			STORM_CTOR WorkItem(Fn<void, Range> *fn, Range range);
+			// Create. Give a file that should possible be updated on completion.
+			STORM_CTOR WorkItem(File *file);
 
-			// Function to call.
-			Fn<void, Range> *fn;
+			// File this item is regarding.
+			File *file;
 
-			// Desired range.
-			Range range;
+			// Execute this work. Gives a range to be updated.
+			virtual Range STORM_FN run();
+
+			// Compare for equality.
+			virtual Bool STORM_FN equals(WorkItem *o);
 		};
 
 		/**
@@ -32,7 +41,7 @@ namespace storm {
 			STORM_CLASS;
 		public:
 			// Create.
-			STORM_CTOR WorkQueue();
+			STORM_CTOR WorkQueue(Server *callbackTo);
 
 			// Start the UThread waiting for inactivity.
 			void STORM_FN start();
@@ -44,9 +53,12 @@ namespace storm {
 			void STORM_FN poke();
 
 			// Post a message.
-			void STORM_FN post(WorkItem item);
+			void STORM_FN post(WorkItem *item);
 
 		private:
+			// Dispatch callbacks to here.
+			Server *callbackTo;
+
 			// How much inactive time is to be passed before something works?
 			enum {
 				idleTime = 500
@@ -64,8 +76,8 @@ namespace storm {
 			// First possible moment we are allowed to do something.
 			Moment startWork;
 
-			// Work to do.
-			Array<WorkItem> *work;
+			// Work to do. Only contains unique instances of work-items.
+			Array<WorkItem *> *work;
 
 			// Main function in the worker thread.
 			void CODECALL workerMain();

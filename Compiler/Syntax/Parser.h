@@ -49,6 +49,9 @@ namespace storm {
 			void STORM_FN addSyntax(Package *pkg);
 			void STORM_FN addSyntax(Array<Package *> *pkg);
 
+			// Does this parser contain the same syntax as 'o'?
+			Bool STORM_FN sameSyntax(ParserBase *o);
+
 			// Get the root rule.
 			virtual Rule *STORM_FN root() const;
 

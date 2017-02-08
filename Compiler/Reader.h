@@ -86,8 +86,8 @@ namespace storm {
 		 * For language server integration.
 		 */
 
-		// Get a file reader for the given Url.
-		virtual MAYBE(FileReader *) STORM_FN readFile(Url *url);
+		// Get a file reader for the given Url and the contents of the file.
+		virtual MAYBE(FileReader *) STORM_FN readFile(Url *url, Str * src);
 	};
 
 
@@ -120,7 +120,7 @@ namespace storm {
 		virtual void STORM_FN readFunctions();
 
 		// Get a file reader for the given Url.
-		virtual MAYBE(FileReader *) STORM_FN readFile(Url *url);
+		virtual MAYBE(FileReader *) STORM_FN readFile(Url *url, Str *src);
 
 	private:
 		// Store all files in use.

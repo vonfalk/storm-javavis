@@ -180,7 +180,7 @@ int stormMain(int argc, const wchar *argv[]) {
 
 	// Allow 1 s for all UThreads on the Compiler thread to terminate.
 	Moment waitStart;
-	while (os::UThread::leave() && Moment() - waitStart > s(1))
+	while (os::UThread::leave() && Moment() - waitStart > time::s(1))
 		;
 	return result;
 }

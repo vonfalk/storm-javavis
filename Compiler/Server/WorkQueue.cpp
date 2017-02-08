@@ -1,15 +1,30 @@
 #include "stdafx.h"
 #include "WorkQueue.h"
+#include "Server.h"
 #include "OS/UThread.h"
 
 namespace storm {
 	namespace server {
 
-		WorkItem::WorkItem(Fn<void, Range> *fn, Range range) : fn(fn), range(range) {}
 
-		WorkQueue::WorkQueue() : running(false), quit(false) {
+		WorkItem::WorkItem(File *file) : file(file) {}
+
+		Range WorkItem::run() {
+			return Range();
+		}
+
+		Bool WorkItem::equals(WorkItem *o) {
+			return runtime::typeOf(this) == runtime::typeOf(o)
+				&& file == o->file;
+		}
+
+		/**
+		 * Work queue.
+		 */
+
+		WorkQueue::WorkQueue(Server *callbackTo) : callbackTo(callbackTo), running(false), quit(false) {
 			event = new (this) Event();
-			work = new (this) Array<WorkItem>();
+			work = new (this) Array<WorkItem *>();
 		}
 
 		void WorkQueue::start() {
@@ -34,11 +49,21 @@ namespace storm {
 		}
 
 		void WorkQueue::poke() {
-			startWork = Moment() + ms(idleTime);
+			startWork = Moment() + time::ms(idleTime);
 		}
 
-		void WorkQueue::post(WorkItem item) {
-			work->push(item);
+		void WorkQueue::post(WorkItem *item) {
+			// Linear search is good enough as we do not expect more than ~10 events in the queue at any given time.
+			bool found = false;
+			for (Nat i = 0; i < work->count(); i++) {
+				if (work->at(i)->equals(item)) {
+					found = true;
+					break;
+				}
+			}
+
+			if (!found)
+				work->push(item);
 			event->set();
 		}
 
@@ -56,13 +81,12 @@ namespace storm {
 				while (Moment() < startWork)
 					os::UThread::sleep(idleTime / 2);
 
-				Array<WorkItem> *work = this->work;
+				Array<WorkItem *> *work = this->work;
 				event->clear();
-				this->work = new (this) Array<WorkItem>();
+				this->work = new (this) Array<WorkItem *>();
 
 				for (Nat i = 0; i < work->count(); i++) {
-					const WorkItem &item = work->at(i);
-					item.fn->call(item.range);
+					callbackTo->runWork(work->at(i));
 				}
 			}
 

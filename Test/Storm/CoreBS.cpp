@@ -182,7 +182,7 @@ BEGIN_TEST(ScopeTest, BS) {
  */
 
 BEGIN_TEST(UnitTest, BS) {
-	CHECK_EQ(runFn<Duration>(L"test.bs.testUnit"), ms(1) + s(1));
+	CHECK_EQ(runFn<Duration>(L"test.bs.testUnit"), time::ms(1) + time::s(1));
 } END_TEST
 
 

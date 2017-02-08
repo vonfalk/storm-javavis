@@ -92,6 +92,45 @@ namespace storm {
 				addSyntax(pkgs->at(i));
 		}
 
+		static Bool find(Production *item, Array<Production *> *in) {
+			for (Nat i = 0; i < in->count(); i++)
+				if (in->at(i) == item)
+					return true;
+			return false;
+		}
+
+		static Bool compare(Array<Production *> *a, Array<Production *> *b) {
+			Nat aCount = a ? a->count() : 0;
+			Nat bCount = b ? b->count() : 0;
+			if (aCount != bCount)
+				return false;
+
+			for (Nat i = 0; i < aCount; i++) {
+				if (!find(a->at(i), b))
+					return false;
+			}
+
+			return true;
+		}
+
+		Bool ParserBase::sameSyntax(ParserBase *o) {
+			for (Map<Rule *, RuleInfo>::Iter i = rules->begin(), end = rules->end(); i != end; i++) {
+				RuleInfo ours = i.v();
+				RuleInfo their = o->rules->get(i.k(), RuleInfo());
+				if (!compare(ours.productions, their.productions))
+					return false;
+			}
+
+			for (Map<Rule *, RuleInfo>::Iter i = o->rules->begin(), end = o->rules->end(); i != end; i++) {
+				if (!rules->has(i.k())) {
+					if (i.v().productions && i.v().productions->any())
+						return false;
+				}
+			}
+
+			return true;
+		}
+
 		void ParserBase::clear() {
 			steps = null;
 			src = null;

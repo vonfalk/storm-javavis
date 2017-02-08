@@ -76,7 +76,9 @@ namespace storm {
 			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(L"SFile"));
 			if (!r)
 				throw LangDefError(L"Can not find the 'SFile' rule.");
-			return new (this) syntax::InfoParser(r);
+			syntax::InfoParser *p = new (this) syntax::InfoParser(r);
+			addSyntax(scope, p);
+			return p;
 		}
 
 		void CodeReader::readTypes() {

@@ -29,6 +29,25 @@ namespace storm {
 				content = n;
 		}
 
+		Bool Part::replace(FileReader *reader, MAYBE(FileReader *) next) {
+			InfoParser *p = reader->createParser();
+			if (parser->sameSyntax(p))
+				return false;
+
+			Str *src = reader->info->contents;
+			Str::Iter expectedFinish = src->end();
+			if (next)
+				expectedFinish = next->info->start;
+			src = src->substr(reader->info->start, expectedFinish);
+
+			InfoNode *c = new (this) InfoLeaf(null, src);
+			parser = p;
+			if (InfoNode *n = parse(c, parser->root()))
+				content = n;
+
+			return true;
+		}
+
 		Range Part::full() const {
 			return Range(start, start + content->length());
 		}
@@ -308,26 +327,30 @@ namespace storm {
 			}
 		}
 
+		void Part::text(StrBuf *to) const {
+			content->toS(to);
+		}
+
 
 		/**
 		 * File.
 		 */
 
-		File::File(Nat id, Url *path, Str *src)
-			: id(id), path(path) {
+		File::File(Nat id, Url *path, Str *src, WorkQueue *q)
+			: id(id), path(path), work(q) {
 
 			Engine &e = engine();
 			parts = new (e) Array<Part *>();
-			Package *pkg = e.package(path->parent());
-			if (!pkg) {
+			package = e.package(path->parent());
+			if (!package) {
 				WARNING(L"The file " << path << L" is not in a package known by Storm. Using a dummy package.");
-				pkg = new (this) Package(new (this) Str(L"dummy package"));
+				package = new (this) Package(new (this) Str(L"dummy package"));
 			}
 
-			PkgReader *pkgReader = createReader(new (this) Array<Url *>(1, path), pkg);
+			PkgReader *pkgReader = createReader(new (this) Array<Url *>(1, path), package);
 			FileReader *reader = null;
 			if (pkgReader)
-				reader = pkgReader->readFile(path);
+				reader = pkgReader->readFile(path, src);
 
 			Nat offset = 0;
 			while (reader) {
@@ -351,15 +374,23 @@ namespace storm {
 		}
 
 		Range File::replace(Range range, Str *replace) {
+			// Total invalidated range.
 			Range result;
 
-			// TODO: Realize if and when we need to re-parse subsequent steps!
+			// The first part which needs to be invalidated eventually.
+			Nat invalidateFrom = parts->count();
+			Nat offset = 0;
 			for (Nat i = 0; i < parts->count(); i++) {
 				Part *part = parts->at(i);
-				if (!range.intersects(part->full()))
+				part->offset(offset);
+				Range full = part->full();
+				offset = full.to;
+
+				if (!range.intersects(full))
 					continue;
 
 				result = merge(result, part->replace(range, replace));
+				invalidateFrom = min(invalidateFrom, i + 1);
 			}
 
 			// At the end of the last part?
@@ -367,6 +398,11 @@ namespace storm {
 				Part *last = parts->last();
 				if (last->full().to == range.from)
 					result = merge(result, last->replace(range, replace));
+			}
+
+			// Shall we delay re-parsing of some parts?
+			if (invalidateFrom < parts->count()) {
+				work->post(new (this) InvalidatePart(this, invalidateFrom));
 			}
 
 			return result;
@@ -401,5 +437,81 @@ namespace storm {
 				to->writeLine(new (this) Str(L"--------"));
 			}
 		}
+
+		// Extract the text from the current state of all parts.
+		static Str *content(Array<Part *> *parts) {
+			StrBuf *out = new (parts) StrBuf();
+			for (Nat i = 0; i < parts->count(); i++)
+				parts->at(i)->text(out);
+			return out->toS();
+		}
+
+		Range File::updatePart(Nat part) {
+			try {
+				Range result;
+				Str *src = content(parts);
+
+				PkgReader *pkgReader = createReader(new (this) Array<Url *>(1, path), package);
+				FileReader *reader = null;
+				if (pkgReader)
+					reader = pkgReader->readFile(path, src);
+
+				// Note: we're currently ignoring that any previous parts could have changed their
+				// range. This causes the parts generated to overlap a bit, which is actually not a
+				// problem.
+				Array<Part *> *newParts = new (this) Array<Part *>();
+				while (reader) {
+					FileReader *next = reader->next(qParser);
+					Nat id = newParts->count();
+
+					Nat offset = newParts->any() ? newParts->last()->full().to : 0;
+					if (id < part) {
+						Part *old = parts->at(id);
+						old->offset(offset);
+						newParts->push(old);
+					} else if (id < parts->count()) {
+						Part *part = parts->at(id);
+						part->offset(offset);
+						if (part->replace(reader, next)) {
+							result = merge(result, part->full());
+						}
+						newParts->push(part);
+					} else {
+						Part *part = new (this) Part(offset, reader, next);
+						newParts->push(part);
+						result = merge(result, part->full());
+					}
+
+					reader = next;
+				}
+
+				parts = newParts;
+
+				return result;
+			} catch (const Exception &) {
+				// TODO: More narrow catch?
+				return Range();
+			}
+		}
+
+
+		/**
+		 * Work items posted.
+		 */
+
+		InvalidatePart::InvalidatePart(File *file, Nat part) : WorkItem(file), part(part) {}
+
+		Range InvalidatePart::run() {
+			return file->updatePart(part);
+		}
+
+		Bool InvalidatePart::equals(WorkItem *other) {
+			if (!WorkItem::equals(other))
+				return false;
+
+			InvalidatePart *o = (InvalidatePart *)other;
+			return part == o->part;
+		}
+
 	}
 }
