@@ -13,7 +13,8 @@ namespace storm {
 			return len;
 		}
 
-		Part::Part(Nat offset, FileReader *part, MAYBE(FileReader *) next) {
+		Part::Part(File *owner, Nat offset, FileReader *part, MAYBE(FileReader *) next) {
+			this->owner = owner;
 			start = offset;
 			path = part->info->url;
 
@@ -260,7 +261,10 @@ namespace storm {
 			// kick in near the leaves.
 			// TODO: Limit the depth of what needs to be re-parsed in some situations.
 			Range result;
-			parse(result, range, start, content);
+			if (!parse(result, range, start, content)) {
+				// Maybe we contain some parts of the previous part? Try to re-parse!
+				owner->postInvalidate(this, -1, true);
+			}
 			return result;
 		}
 
@@ -355,7 +359,7 @@ namespace storm {
 			Nat offset = 0;
 			while (reader) {
 				FileReader *next = reader->next(qParser);
-				Part *part = new (e) Part(offset, reader, next);
+				Part *part = new (e) Part(this, offset, reader, next);
 				offset = part->full().to;
 				reader = next;
 				parts->push(part);
@@ -406,7 +410,7 @@ namespace storm {
 
 			// Shall we delay re-parsing of some parts?
 			if (invalidateFrom < parts->count()) {
-				work->post(new (this) InvalidatePart(this, invalidateFrom));
+				work->post(new (this) InvalidatePart(this, invalidateFrom, false));
 			}
 
 			return result;
@@ -450,7 +454,7 @@ namespace storm {
 			return out->toS();
 		}
 
-		Range File::updatePart(Nat part) {
+		Range File::updatePart(Nat part, Bool force) {
 			try {
 				Range result;
 				Str *src = content(parts);
@@ -473,7 +477,7 @@ namespace storm {
 						Part *old = parts->at(id);
 						old->offset(offset);
 						newParts->push(old);
-					} else if (id < parts->count()) {
+					} else if (id < parts->count() && !force) {
 						Part *part = parts->at(id);
 						part->offset(offset);
 						if (part->replace(reader, next)) {
@@ -481,7 +485,7 @@ namespace storm {
 						}
 						newParts->push(part);
 					} else {
-						Part *part = new (this) Part(offset, reader, next);
+						Part *part = new (this) Part(this, offset, reader, next);
 						newParts->push(part);
 						result = merge(result, part->full());
 					}
@@ -498,15 +502,31 @@ namespace storm {
 			}
 		}
 
+		void File::postInvalidate(Part *part, Int delta, Bool force) {
+			for (Nat i = 0; i < parts->count(); i++) {
+				if (part == parts->at(i)) {
+					Nat r = i;
+					if (delta >= 0)
+						r += delta;
+					else if (Nat(-delta) > r)
+						r = 0;
+					else
+						r += delta;
+
+					work->post(new (this) InvalidatePart(this, r, force));
+				}
+			}
+		}
+
 
 		/**
 		 * Work items posted.
 		 */
 
-		InvalidatePart::InvalidatePart(File *file, Nat part) : WorkItem(file), part(part) {}
+		InvalidatePart::InvalidatePart(File *file, Nat part, Bool force) : WorkItem(file), part(part), force(force) {}
 
 		Range InvalidatePart::run() {
-			return file->updatePart(part);
+			return file->updatePart(part, force);
 		}
 
 		Bool InvalidatePart::equals(WorkItem *other) {
@@ -514,7 +534,7 @@ namespace storm {
 				return false;
 
 			InvalidatePart *o = (InvalidatePart *)other;
-			return part == o->part;
+			return part == o->part && force == o->force;
 		}
 
 	}

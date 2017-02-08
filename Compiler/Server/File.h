@@ -14,6 +14,8 @@ namespace storm {
 	namespace server {
 		STORM_PKG(core.lang.server);
 
+		class File;
+
 		/**
 		 * Represents a part of an open file in the language server. Corresponds to one of the parts
 		 * in the chain of 'FileReader's.
@@ -21,7 +23,7 @@ namespace storm {
 		class Part : public ObjectOn<Compiler> {
 			STORM_CLASS;
 		public:
-			STORM_CTOR Part(Nat offset, FileReader *part, MAYBE(FileReader *) next);
+			STORM_CTOR Part(File *owner, Nat offset, FileReader *part, MAYBE(FileReader *) next);
 
 			// Replaces the content in this part with the content dictated by 'reader'. Attempts to
 			// re-parse the entire content, but keeps the old syntax tree in case parsing fails.
@@ -61,6 +63,9 @@ namespace storm {
 
 			// Offset of the first character in this part.
 			Nat start;
+
+			// Owning file.
+			File *owner;
 
 			// Traverse the syntax tree and extract colors in 'range'.
 			void colors(Array<ColoredRange> *out, const Range &range, Nat offset, syntax::InfoNode *node);
@@ -129,6 +134,9 @@ namespace storm {
 			// Output our internal representation for debugging.
 			void STORM_FN debugOutput(TextOutput *to, Bool tree) const;
 
+			// Post a message for invalidating a part (or before/after a part).
+			void postInvalidate(Part *part, Int offset, Bool force);
+
 		private:
 			// Path to the underlying file (so we can properly locate packages etc., we never actually read the file).
 			Url *path;
@@ -144,7 +152,7 @@ namespace storm {
 
 			// Update 'part', return the modified range. This generally causes all following parts
 			// to be updated eventually as well.
-			Range updatePart(Nat part);
+			Range updatePart(Nat part, Bool force);
 
 			friend class InvalidatePart;
 		};
@@ -156,9 +164,10 @@ namespace storm {
 		class InvalidatePart : public WorkItem {
 			STORM_CLASS;
 		public:
-			STORM_CTOR InvalidatePart(File *file, Nat part);
+			STORM_CTOR InvalidatePart(File *file, Nat part, Bool force);
 
 			Nat part;
+			Bool force;
 
 			virtual Range STORM_FN run();
 			virtual Bool STORM_FN equals(WorkItem *o);
