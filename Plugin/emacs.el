@@ -104,8 +104,9 @@
 
 (defun storm-set-color (from to face)
   "Convenience for highlighting parts of the text."
-  (with-silent-modifications
-    (put-text-property from to 'font-lock-face face)))
+  (when (< from to)
+    (with-silent-modifications
+      (put-text-property from to 'font-lock-face face))))
 
 
 (defvar storm-colors
@@ -225,7 +226,7 @@
     (when (consp entries)
       (sort entries (lambda (a b) (< (car a) (car b)))))))
 
-(defmacro storm-check-edits (pos min-pos edits)
+(defmacro storm-check-edits (pos min-pos max-pos edits)
   "Update 'pos' according to the history in 'edits'. Consumes entries from 'edits'."
   `(while (and (consp ,edits)
 	       (<= (first (first ,edits)) ,pos))
@@ -234,7 +235,7 @@
 	    (skip (second entry))
 	    (marker (third entry)))
        (when (> skip 0)
-	 (setq ,min-pos (first entry)))
+	 (setq ,min-pos (min (first entry) ,max-pos)))
        (setq ,pos (+ (marker-position marker) (- ,pos offset skip)))
        (setq ,edits (rest ,edits)))))
 
@@ -255,10 +256,10 @@
 		  (highest (point-max))
 		  (end-pos 0))
 
-	      (storm-check-edits start-pos lowest edits)
+	      (storm-check-edits start-pos lowest highest edits)
 	      (while (consp at)
 		(setq end-pos (+ start-pos (first at)))
-		(storm-check-edits end-pos lowest edits)
+		(storm-check-edits end-pos lowest highest edits)
 
 		(storm-set-color
 		 (max lowest start-pos)
