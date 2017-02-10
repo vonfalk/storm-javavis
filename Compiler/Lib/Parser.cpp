@@ -39,7 +39,7 @@ namespace storm {
 
 	namespace syntax {
 		static void CODECALL createParser(void *mem) {
-			ParserBase *p = new (Place(mem)) ParserBase();
+			ParserBase *p = new (Place(mem)) ParserBase(null);
 			runtime::setVTable(p);
 		}
 	}

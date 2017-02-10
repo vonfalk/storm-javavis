@@ -16,6 +16,9 @@ namespace storm {
 		extern bool parserDebug;
 #endif
 
+		// Default parser to use in the system.
+#define DEFAULT_PARSER earley::Parser
+
 		/**
 		 * Base class for the templated parser in Storm. In Storm, Parser<T> is to be
 		 * instantiated. This is not possible from C++ as the syntax types are not present in
@@ -31,13 +34,13 @@ namespace storm {
 			STORM_CLASS;
 		protected:
 			// Create. Create via Parser from C++ as the type has to be set properly for this to work.
-			ParserBase();
+			ParserBase(ParserBackend *backend);
 
 			// Create an InfoParser.
-			ParserBase(Rule *root);
+			ParserBase(Rule *root, ParserBackend *backend);
 
 			// Common parts from the constructors.
-			void init(Rule *root);
+			void init(Rule *root, ParserBackend *backend);
 
 			// Internal function called from Storm to create a parser.
 			friend void createParser(void *mem);
@@ -119,6 +122,7 @@ namespace storm {
 		public:
 			// Create.
 			STORM_CTOR InfoParser(Rule *rootRule);
+			STORM_CTOR InfoParser(Rule *rootRule, ParserBackend *backend);
 
 			// Set a new root.
 			void STORM_FN root(Rule *rule);
@@ -144,9 +148,11 @@ namespace storm {
 		public:
 			// Create a parser parsing a specific type.
 			static Parser *create(Rule *root);
+			static Parser *create(Rule *root, ParserBackend *backend);
 
 			// Create a parser parsing the type named 'name' in 'pkg'.
 			static Parser *create(Package *pkg, const wchar *name);
+			static Parser *create(Package *pkg, const wchar *name, ParserBackend *backend);
 
 			// Transform syntax nodes. See limitations for 'transformNode<>'.
 			template <class R>
@@ -161,7 +167,7 @@ namespace storm {
 
 		private:
 			// Use 'create'.
-			Parser();
+			Parser(ParserBackend *backend);
 		};
 
 

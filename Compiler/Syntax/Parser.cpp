@@ -17,20 +17,22 @@ namespace storm {
 		bool parserDebug = false;
 #endif
 
-		ParserBase::ParserBase() {
+		ParserBase::ParserBase(ParserBackend *backend) {
 			assert(as<ParserType>(runtime::typeOf(this)),
 				L"ParserBase not properly constructed. Use Parser::create() in C++!");
 
-			init(root());
+			init(root(), backend);
 		}
 
-		ParserBase::ParserBase(Rule *root) {
-			init(root);
+		ParserBase::ParserBase(Rule *root, ParserBackend *backend) {
+			init(root, backend);
 		}
 
-		void ParserBase::init(Rule *root) {
+		void ParserBase::init(Rule *root, ParserBackend *backend) {
 			// TODO: Make it possible to specify which parser to use on creation!
-			use = new (this) earley::Parser();
+			use = backend;
+			if (!use)
+				use = new (this) DEFAULT_PARSER();
 
 			// Find the package where 'root' is located and add that!
 			if (Package *pkg = ScopeLookup::firstPkg(root)) {
@@ -134,7 +136,9 @@ namespace storm {
 		 * Info parser.
 		 */
 
-		InfoParser::InfoParser(Rule *root) : ParserBase(root), rootRule(root) {}
+		InfoParser::InfoParser(Rule *root) : ParserBase(root, null), rootRule(root) {}
+
+		InfoParser::InfoParser(Rule *root, ParserBackend *backend) : ParserBase(root, backend), rootRule(root) {}
 
 		void InfoParser::root(Rule *r) {
 			rootRule = r;
@@ -149,20 +153,28 @@ namespace storm {
 		 * C++ interface.
 		 */
 
-		Parser::Parser() {}
+		Parser::Parser(ParserBackend *backend) : ParserBase(backend) {}
 
 		Parser *Parser::create(Rule *root) {
+			return create(root, null);
+		}
+
+		Parser *Parser::create(Rule *root, ParserBackend *backend) {
 			// Pick an appropriate type for it (!= the C++ type).
 			Type *t = parserType(root);
 			void *mem = runtime::allocObject(sizeof(Parser), t);
-			Parser *r = new (Place(mem)) Parser();
+			Parser *r = new (Place(mem)) Parser(backend);
 			t->vtable->insert(r);
 			return r;
 		}
 
 		Parser *Parser::create(Package *pkg, const wchar *name) {
+			return create(pkg, name, null);
+		}
+
+		Parser *Parser::create(Package *pkg, const wchar *name, ParserBackend *backend) {
 			if (Rule *r = as<Rule>(pkg->find(name))) {
-				return create(r);
+				return create(r, backend);
 			} else {
 				throw InternalError(L"Can not find the rule " + ::toS(name) + L" in " + ::toS(pkg->identifier()));
 			}
