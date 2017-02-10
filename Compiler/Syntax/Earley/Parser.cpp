@@ -66,7 +66,11 @@ namespace storm {
 				return true;
 			}
 
-			Bool Parser::sameSyntax(Parser *o) {
+			Bool Parser::sameSyntax(ParserBackend *other) {
+				if (runtime::typeOf(this) != runtime::typeOf(other))
+					return false;
+				Parser *o = (Parser *)other;
+
 				for (Map<Rule *, RuleInfo>::Iter i = rules->begin(), end = rules->end(); i != end; i++) {
 					RuleInfo ours = i.v();
 					RuleInfo their = o->rules->get(i.k(), RuleInfo());

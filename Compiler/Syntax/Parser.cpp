@@ -2,13 +2,8 @@
 #include "Parser.h"
 #include "Package.h"
 #include "Earley/Parser.h"
+#include "GLR/Parser.h"
 #include "Lib/Parser.h"
-
-// Remove these?
-// #include "SStr.h"
-// #include "Utils/Memory.h"
-// #include "Core/Runtime.h"
-// #include "Compiler/Lib/Array.h"
 
 namespace storm {
 	namespace syntax {

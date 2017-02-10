@@ -34,7 +34,7 @@ namespace storm {
 				void add(ProductionType *production);
 
 				// Does this parser contain the same syntax as 'o'?
-				Bool sameSyntax(Parser *o);
+				Bool sameSyntax(ParserBackend *o);
 
 				// Parse a string. Returns 'true' if we found some match.
 				Bool parse(Rule *root, Str *str, Url *file, Str::Iter start);
