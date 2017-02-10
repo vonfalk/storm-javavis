@@ -331,6 +331,10 @@ namespace storm {
 			}
 		}
 
+		Nat Part::dbg_size() const {
+			return content->dbg_size();
+		}
+
 		void Part::text(StrBuf *to) const {
 			content->toS(to);
 		}
@@ -440,10 +444,14 @@ namespace storm {
 		void File::debugOutput(TextOutput *to, Bool tree) const {
 			to->writeLine(TO_S(this, L"Content of " << id << L":"));
 
+			Nat size = 0;
 			for (Nat i = 0; i < parts->count(); i++) {
 				parts->at(i)->debugOutput(to, tree);
 				to->writeLine(new (this) Str(L"--------"));
+				size += parts->at(i)->dbg_size();
 			}
+
+			to->writeLine(TO_S(this, L"Syntax tree size: " << (size / 1024) << L" kB"));
 		}
 
 		// Extract the text from the current state of all parts.

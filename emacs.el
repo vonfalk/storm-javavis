@@ -334,3 +334,5 @@
   (interactive)
   (storm-send '(22 10 ("hej" storm) storm)))
 
+;; For debugging mymake when needed...
+;;(setq mymake-command "C:/Users/Filip/Projects/mymake/release/mymake.exe")

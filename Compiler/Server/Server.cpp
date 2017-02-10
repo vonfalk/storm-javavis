@@ -84,8 +84,12 @@ namespace storm {
 			Str *path = next(expr)->asStr()->v;
 			Str *content = next(expr)->asStr()->v;
 
+			Moment start;
+
 			File *f = new (this) File(id, parsePath(path), content, work);
 			files->put(id, f);
+
+			print(TO_S(this, L"Opened " << path << L" in " << (Moment() - start)));
 
 			// Give the initial data on the file.
 			update(f, f->full());

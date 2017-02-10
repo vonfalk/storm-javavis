@@ -1,14 +1,12 @@
 #pragma once
 #include "Compiler/NamedThread.h"
+#include "Compiler/Exception.h"
 #include "Core/Array.h"
-#include "Core/Map.h"
-#include "OS/FnCall.h"
 #include "Node.h"
 #include "InfoNode.h"
 #include "Rule.h"
 #include "Production.h"
-#include "State.h"
-#include "Compiler/Exception.h"
+#include "ParserBackend.h"
 
 namespace storm {
 	namespace syntax {
@@ -93,7 +91,7 @@ namespace storm {
 			InfoNode *STORM_FN infoTree() const;
 
 			// Output.
-			void STORM_FN toS(StrBuf *to) const;
+			virtual void STORM_FN toS(StrBuf *to) const;
 
 
 			/**
@@ -107,82 +105,8 @@ namespace storm {
 			Nat STORM_FN byteCount() const;
 
 		private:
-			// Information about a rule.
-			class RuleInfo {
-				STORM_VALUE;
-			public:
-				STORM_CTOR RuleInfo();
-
-				// All productions for this rule. May be null.
-				Array<Production *> *productions;
-
-				// Can this rule match the empty string? 0 = no, 1 = yes, >2 don't know yet.
-				Byte matchesNull;
-
-				// Add a production. Handles the case where 'productions' is null.
-				void push(Production *p);
-			};
-
-			// All rules we know of so far, and their options.
-			Map<Rule *, RuleInfo> *rules;
-
-			// Parsed source string.
-			Str *src;
-
-			// Initial position in 'src'. '.offset' contains the first char parsed (this corresponds to states[0]).
-			SrcPos srcPos;
-
-			// Root production.
-			Production *rootProd;
-
-			// Steps. Each step corresponds to a character in the input string (including an
-			// implicit end of string character).
-			GcArray<StateSet *> *steps;
-
-			// Last state containing a finish step (initialized to something >= states.count).
-			nat lastFinish;
-
-			// Process a single step. Returns true if we found an accepting state here.
-			bool process(nat step);
-
-			// Predictor, completer and scanner as described in the paper. The StateSet should be
-			// the current step, ie. the set in which 'state' belongs.
-			void predictor(StatePtr ptr, const State &state);
-			void completer(StatePtr ptr, const State &state);
-			void scanner(StatePtr ptr, const State &state);
-
-			// Does 'rule' match an empty string?
-			bool matchesEmpty(Rule *r);
-			bool matchesEmpty(RuleInfo &info);
-			bool matchesEmpty(Production *p);
-			bool matchesEmpty(Token *t);
-
-			// Find the last step which is not empty.
-			nat lastStep() const;
-
-			// Find the finishing state (the last one if there are more).
-			const State *finish() const;
-
-			// Find all rules and productions in progress for a given state.
-			Map<Str *, StrBuf *> *inProgress(const StateSet &step) const;
-
-			// Create a tree for the production ending in 'end'.
-			Node *tree(StatePtr end) const;
-
-			// Allocate a tree node.
-			Node *allocNode(const State &from) const;
-
-			// Reverse all arrays in a node.
-			void reverseNode(Node *node) const;
-
-			// Create a tree for the production ending in 'end'.
-			InfoNode *infoTree(StatePtr end) const;
-
-			// Get a State from a StatePtr.
-			const State &state(const StatePtr &p) const;
-
-			// State set needs to access 'state()'
-			friend class StateSet;
+			// Backend being used.
+			ParserBackend *use;
 		};
 
 

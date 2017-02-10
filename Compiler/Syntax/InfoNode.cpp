@@ -48,6 +48,10 @@ namespace storm {
 				*to << L" #" << name(engine(), color);
 		}
 
+		Nat InfoNode::dbg_size() {
+			return sizeof(InfoNode);
+		}
+
 		/**
 		 * Internal node.
 		 */
@@ -113,6 +117,18 @@ namespace storm {
 			InfoNode::format(to);
 		}
 
+		Nat InfoInternal::dbg_size() {
+			Nat total = sizeof(InfoInternal);
+			total += sizeof(GcArray<InfoNode *>) + (count()*sizeof(InfoNode *)) - sizeof(InfoNode *);
+
+			for (Nat i = 0; i < count(); i++) {
+				if (children->v[i])
+					total += children->v[i]->dbg_size();
+			}
+
+			return total;
+		}
+
 		/**
 		 * Leaf node.
 		 */
@@ -159,6 +175,11 @@ namespace storm {
 			if (regex)
 				*to << L" (matches " << regex->regex << L")";
 			InfoNode::format(to);
+		}
+
+		Nat InfoLeaf::dbg_size() {
+			// Approximation...
+			return sizeof(InfoLeaf) + sizeof(Str) + sizeof(wchar)*length();
 		}
 
 	}

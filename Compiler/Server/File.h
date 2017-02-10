@@ -48,6 +48,9 @@ namespace storm {
 			// Output our internal representation for debugging.
 			void STORM_FN debugOutput(TextOutput *to, Bool tree) const;
 
+			// Compute the total size of the syntax tree.
+			Nat STORM_FN dbg_size() const;
+
 			// Output all our text.
 			void STORM_FN text(StrBuf *to) const;
 

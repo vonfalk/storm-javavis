@@ -54,6 +54,9 @@ namespace storm {
 			// Set parent.
 			inline void parent(InfoInternal *n) { parentNode = n; }
 
+			// Get the size of this node.
+			virtual Nat STORM_FN dbg_size();
+
 		protected:
 			// Compute the length of this node.
 			virtual Nat STORM_FN computeLength();
@@ -111,6 +114,9 @@ namespace storm {
 			// Format.
 			virtual void STORM_FN format(StrBuf *to) const;
 
+			// Get the size of this node.
+			virtual Nat STORM_FN dbg_size();
+
 		protected:
 			// Compute the lenght of this node.
 			virtual Nat STORM_FN computeLength();
@@ -158,6 +164,9 @@ namespace storm {
 
 			// Format.
 			virtual void STORM_FN format(StrBuf *to) const;
+
+			// Get the size of this node.
+			virtual Nat STORM_FN dbg_size();
 
 		protected:
 			// Compute the lenght of this node.
