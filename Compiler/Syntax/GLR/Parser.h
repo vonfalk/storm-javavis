@@ -77,6 +77,9 @@ namespace storm {
 				// The parse table.
 				Table *table;
 
+				// Compute the start item-set for a rule.
+				ItemSet startSet(Rule *rule);
+
 				// Clear all data derived from the syntax.
 				void clearSyntax();
 			};

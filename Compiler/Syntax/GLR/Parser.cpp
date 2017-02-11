@@ -48,7 +48,32 @@ namespace storm {
 			}
 
 			Bool Parser::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
+				Nat startState = table->state(startSet(root));
+
+				// HACK: Generate all states eagerly.
+				try {
+					Nat i = 0;
+					while (true) {
+						table->state(i++);
+					}
+				} catch (const ArrayError &) {}
+
+				PVAR(table);
+
 				return false;
+			}
+
+			ItemSet Parser::startSet(Rule *root) {
+				ItemSet r;
+
+				RuleInfo info = syntax->rules->at(root);
+				for (Nat i = 0; i < info.count(); i++) {
+					Production *p = syntax->productions->at(info[i]);
+					r.push(syntax, p->firstA());
+					r.push(syntax, p->firstB());
+				}
+
+				return r.expand(syntax);
 			}
 
 			void Parser::clear() {}

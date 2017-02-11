@@ -31,6 +31,23 @@ namespace storm {
 			cloned(states, env);
 		}
 
+		Bool Regex::operator ==(Regex o) const {
+			Nat c = states->count();
+			if (c != o.states->count())
+				return false;
+
+			for (Nat i = 0; i < c; i++) {
+				if (states->at(i) != o.states->at(i))
+					return false;
+			}
+
+			return true;
+		}
+
+		Bool Regex::operator !=(Regex o) const {
+			return !(*this == o);
+		}
+
 		void Regex::parse(Str *str) {
 			nat pos = 0;
 			const wchar *s = str->c_str();
@@ -367,6 +384,28 @@ namespace storm {
 			*to << L"]";
 		}
 
+		Bool Regex::Set::operator ==(const Set &o) const {
+			Nat c = count();
+			if (c != o.count())
+				return false;
+
+			if (inverted != o.inverted)
+				return false;
+			if (first != o.first)
+				return false;
+
+			for (Nat i = 0; i < c - 1; i++) {
+				if (chars->v[i] != o.chars->v[i])
+					return false;
+			}
+
+			return true;
+		}
+
+		Bool Regex::Set::operator !=(const Set &o) const {
+			return !(*this == o);
+		}
+
 
 		/**
 		 * State.
@@ -405,6 +444,17 @@ namespace storm {
 			else if (repeatable)
 				*to << L"+";
 		}
+
+		Bool Regex::State::operator ==(const State &o) const {
+			return skippable == o.skippable
+				&& repeatable == o.repeatable
+				&& match == o.match;
+		}
+
+		Bool Regex::State::operator !=(const State &o) const {
+			return !(*this == o);
+		}
+
 
 	}
 }

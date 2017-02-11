@@ -136,9 +136,9 @@
 	new (engine) type(__VA_ARGS__)
 
 /**
- * Declare a pointer that may be null. Ignored by C++.
+ * Declare a pointer that may be null. Ignored by C++. Variadic since we want to support MAYBE(Map<Foo, Bar>) properly.
  */
-#define MAYBE(x) x
+#define MAYBE(...) __VA_ARGS__
 
 /**
  * Indicate which package to place things into (ignored by C++). (eg. STORM_PKG(foo.bar))

@@ -111,8 +111,11 @@ namespace storm {
 			Bool STORM_FN inRepeat(Nat pos) const;
 
 			// Create iterators.
-			ProductionIter firstA();
-			ProductionIter firstB();
+			ProductionIter STORM_FN firstA();
+			ProductionIter STORM_FN firstB();
+
+			// Create an iterator at a specific position.
+			ProductionIter posIter(Nat pos);
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;

@@ -48,6 +48,10 @@ namespace storm {
 			Nat matchRaw(Str *str) const;
 			Nat matchRaw(Str *str, Nat start) const;
 
+			// Same regex as another one?
+			Bool STORM_FN operator ==(Regex o) const;
+			Bool STORM_FN operator !=(Regex o) const;
+
 		private:
 			// Character set.
 			class Set {
@@ -85,6 +89,10 @@ namespace storm {
 
 				// Output.
 				void output(StrBuf *to) const;
+
+				// Compare.
+				Bool operator ==(const Set &o) const;
+				Bool operator !=(const Set &o) const;
 			};
 
 			// A state in the NFA.
@@ -107,6 +115,10 @@ namespace storm {
 
 				// Output.
 				void output(StrBuf *to) const;
+
+				// Compare.
+				Bool operator ==(const State &o) const;
+				Bool operator !=(const State &o) const;
 			};
 
 			// All states.

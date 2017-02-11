@@ -210,6 +210,10 @@ namespace storm {
 				return ProductionIter();
 		}
 
+		ProductionIter Production::posIter(Nat pos) {
+			return ProductionIter(this, pos);
+		}
+
 		ProductionIter ProductionIter::nextA() const {
 			return ProductionIter(p, pos + 1);
 		}
