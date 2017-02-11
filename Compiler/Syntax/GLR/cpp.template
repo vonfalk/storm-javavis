@@ -1,0 +1,12 @@
+#include "stdafx.h"
+#include "$header$"
+
+namespace storm {
+	namespace syntax {
+		namespace glr {
+
+			$$
+
+		}
+	}
+}

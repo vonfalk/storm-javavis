@@ -1,4 +1,5 @@
 #pragma once
+#include "Syntax.h"
 #include "Table.h"
 #include "Core/Array.h"
 #include "Core/Map.h"
