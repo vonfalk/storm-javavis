@@ -3,6 +3,7 @@
 #include "Compiler/Package.h"
 #include "Compiler/Syntax/Earley/Parser.h"
 #include "Compiler/Syntax/GLR/Parser.h"
+#include "Core/Timing.h"
 #include "Fn.h"
 
 using syntax::Parser;

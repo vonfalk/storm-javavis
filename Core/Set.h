@@ -282,7 +282,7 @@ namespace storm {
 
 		// Insert a value into the set, or update the existing one.
 		void put(const K &k) {
-			putRaw(&k);
+			return putRaw(&k);
 		}
 
 		// Contains a key?
