@@ -33,39 +33,25 @@ Core+=lib
 Code+=lib
 Compiler+=lib
 OS+=lib
-Shared+=lib
 Utils+=lib
-Storm+=lib
 
-#External libraries, does not have precompiled headers and such.
-LibOgg+=lib
-LibOgg+=extern_lib
-
-#Libraries that need the storm preprocessor to be run. The Storm lib needs a lot special, so
-#that is in the .mymake file there instead.
-Graphics+=stormpp
-Sound+=stormpp
-StormGui+=stormpp
+#Libraries that need the storm preprocessor to be run.
+Compiler+=stormpp
+Gui+=stormpp
 
 #Libraries linked into shared libraries loaded by Storm at runtime.
-Graphics+=sharedlib
-Sound+=sharedlib
-StormGui+=sharedlib
+Gui+=sharedlib
 
 
 [deps]
-Storm+=StormBuiltin
-Storm+=Graphics
-Storm+=Sound
-Storm+=StormGui
-
-Graphics+=StormBuiltin
-Sound+=StormBuiltin
-StormGui+=StormBuiltin
+Gui+=CppTypes
 
 Compiler+=CppTypes
 Core+=CppTypes
 Code+=CppTypes
+
+#To make sure everything is built.
+Compiler+=Gui
 
 [!extern_lib]
 #Global build parameters
@@ -109,7 +95,7 @@ noIncludes+=*/gc/*
 noIncludes+=gc/*
 
 [windows]
-#Tell the Win32 API we're working in UTF16.
+#Tell the Win32 API we're working with UTF16.
 define+=_UNICODE
 define+=UNICODE
 
@@ -119,10 +105,14 @@ noIncludes+=*.asm
 compile+=*.asm:ml /c /nologo /Fo<output> /safeseh /W3 /Zi <file>
 
 [stormpp]
-stormppUsingCl=--using 
-stormppUsing=storm
-stormpp=StormBuiltin
-preBuild+=<execpath|stormpp> ./ ../Shared/BuiltIn.cpp Lib/BuiltIn.cpp -a Lib/VTables.asm +./ ../Shared/ <stormppUsingCl*stormppUsing>
+stormpp=CppTypes
+stormppUses=--use 
+stormProvides=./
+stormUses=../Core/
+stormppUsing=--using 
+preBuild+=<execpath|stormpp> <stormProvides> <stormppUses*stormUses> --template ../Core/Gen/CppTypes.cpp --out Gen/CppTypes.cpp --asm ../Core/Gen/CppVTables.VS_X86 Gen/CppVTables.asm <stormppUsing*stormUsingNamespace> <stormppFlags>
+preBuildCreates+=Gen/CppTypes.cpp
+preBuildCreates+=Gen/CppVTables.asm
 
 [sharedlib]
 packagePath=../root/<package>/

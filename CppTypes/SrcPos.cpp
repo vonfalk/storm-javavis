@@ -7,6 +7,8 @@ SrcPos::SrcPos(nat fileId, nat line, nat col) : fileId(fileId), line(line), col(
 
 vector<Path> SrcPos::files;
 
+nat SrcPos::firstExport = 0;
+
 wostream &operator <<(wostream &to, const SrcPos &pos) {
 	if (pos.fileId == SrcPos::invalid)
 		to << L"<unknown location>";

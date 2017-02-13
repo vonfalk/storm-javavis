@@ -32,6 +32,9 @@ struct ParseEnv {
 	// Current package.
 	String pkg;
 
+	// Export types in here?
+	bool exportAll;
+
 	// The world in which we want to store everything.
 	World &world;
 };
@@ -226,7 +229,8 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 
 		// Save if 'exportFn' is there.
 		if (exportFn || f.name == Function::dtor) {
-			addTo.add(f);
+			if (env.exportAll)
+				addTo.add(f);
 		}
 	} else if (tok.skipIf(L"[")) {
 		throw Error(L"C-style arrays not supported in classes exposed to Storm.", name.pos);
@@ -273,6 +277,7 @@ static void parseEnum(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	tok.skipIf(L"}");
 	tok.expect(L";");
 
+	type->provided = env.exportAll;
 	if (!name.token.empty())
 		env.world.add(type);
 }
@@ -400,6 +405,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 		}
 	}
 
+	type->provided = env.exportAll;
 	env.world.add(type);
 
 	tok.expect(L";");
@@ -490,6 +496,7 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			tok.expect(L",");
 			CppName gen = parseName(tok);
 			Auto<Primitive> p = new Primitive(name + tName.token, env.pkg, gen, tName.pos);
+			p->provided = env.exportAll;
 			env.world.types.insert(p);
 			tok.expect(L")");
 			tok.expect(L";");
@@ -526,7 +533,7 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 // Parse an entire header file.
 static void parseFile(nat id, World &world) {
 	Tokenizer tok(id);
-	ParseEnv env = { L"", world };
+	ParseEnv env = { L"", id >= SrcPos::firstExport, world };
 	parseNamespace(tok, env, CppName());
 }
 

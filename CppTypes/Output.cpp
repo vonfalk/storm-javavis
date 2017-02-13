@@ -145,7 +145,9 @@ static void genTypes(wostream &to, World &w) {
 				thread = c->threadType;
 			}
 
-			if (Enum *e = as<Enum>(&t)) {
+			if (!t.provided) {
+				to << L"CppType::superExternal, 0, ";
+			} else if (Enum *e = as<Enum>(&t)) {
 				if (e->bitmask)
 					to << L"CppType::superCustom, size_t(&storm::createBitmaskEnum), ";
 				else
@@ -559,10 +561,13 @@ static void genTemplates(wostream &to, World &w) {
 			PLN(t.pos << L": warning: placing templates in the root package.");
 		to << L"L\"" << t.pkg << L"\", ";
 
-		// Generator function (TODO: only emit for the compiler).
-		to << L"&" << t.generator << L" ";
+		// Generator function.
+		if (config.compiler)
+			to << L"&" << t.generator;
+		else
+			to << L"null";
 
-		to << L"},\n";
+		to << L" },\n";
 	}
 }
 

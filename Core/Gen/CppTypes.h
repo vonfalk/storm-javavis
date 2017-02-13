@@ -82,13 +82,19 @@ namespace storm {
 
 			// 'super' is a pointer to a function CreateFn that generates the type to use.
 			superCustom,
+
+			// This type is external to this library. Storm should try to find it using regular type
+			// lookup with 'name' as an absolute package name.
+			superExternal,
 		};
 
 		// Parent kind.
 		SuperKind kind;
 
+#ifdef STORM_COMPILER
 		// The create function that 'super' is if 'kind == superCustom'.
 		typedef Type *(*CreateFn)(Str *name, Size size, GcType *type);
+#endif
 
 		// Super class' type id, see 'kind' for the exact meaning.
 		size_t super;

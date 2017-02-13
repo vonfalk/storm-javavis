@@ -48,6 +48,4 @@ namespace storm {
 
 }
 
-
-// Usually, you want the Compiler thread as well.
 #include "Thread.h"

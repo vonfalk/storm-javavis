@@ -24,6 +24,9 @@ public:
 	// All files.
 	static vector<Path> files;
 
+	// First file that should be exported and not just used.
+	static nat firstExport;
+
 	inline bool operator ==(const SrcPos &o) const { return fileId == o.fileId && line == o.line && col == o.col; }
 	inline bool operator !=(const SrcPos &o) const { return !(*this == o); }
 };

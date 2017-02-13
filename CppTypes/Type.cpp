@@ -4,7 +4,8 @@
 #include "Exception.h"
 #include "World.h"
 
-Type::Type(const CppName &name, const String &pkg, const SrcPos &pos) : id(0), name(name), pkg(pkg), pos(pos) {}
+Type::Type(const CppName &name, const String &pkg, const SrcPos &pos)
+	: id(0), name(name), pkg(pkg), pos(pos), provided(true) {}
 
 vector<Offset> Type::ptrOffsets() const {
 	vector<Offset> r;

@@ -10,6 +10,9 @@ struct Config {
 	// Directories to scan for header files.
 	vector<Path> dirs;
 
+	// Directories to scan for header files containing types used here, but not provided by this unit.
+	vector<Path> useDirs;
+
 	// Template src.
 	Path cppSrc, asmSrc;
 
@@ -18,6 +21,9 @@ struct Config {
 
 	// Do we have asm source?
 	bool genAsm;
+
+	// Is this the compiler?
+	bool compiler;
 
 	// Using declarations.
 	vector<String> usingDecl;

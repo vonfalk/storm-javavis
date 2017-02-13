@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "World.h"
 #include "Exception.h"
+#include "Config.h"
 
 struct BuiltIn {
 	wchar *name;
@@ -36,8 +37,8 @@ void World::add(Auto<Type> type) {
 // Sort the types.
 void World::orderTypes() {
 	Type *type = types.findUnsafe(CppName(L"storm::Type"), CppName());
-	if (!type)
-		throw Error(L"The type storm::Type was not found!", SrcPos());
+	if (!type && config.compiler)
+		throw Error(L"The type storm::Type was not found! Are you really compiling the compiler?", SrcPos());
 
 	struct NamePred {
 		Type *type;

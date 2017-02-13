@@ -52,6 +52,13 @@ bool oldFile(const Timestamp &input, const Path &file) {
 	return file.mTime() < input;
 }
 
+template <class T>
+vector<T> &operator +=(vector<T> &to, const vector<T> &from) {
+	to.reserve(to.size() + from.size());
+	to.insert(to.end(), from.begin(), from.end());
+	return to;
+}
+
 int _tmain(int argc, const wchar *argv[]) {
 	initDebug();
 
@@ -63,7 +70,9 @@ int _tmain(int argc, const wchar *argv[]) {
 	Timestamp start;
 
 	// Put the files in our global, so we can use SrcPos later on.
-	SrcPos::files = findHeaders(config.dirs);
+	SrcPos::files = findHeaders(config.useDirs);
+	SrcPos::firstExport = SrcPos::files.size();
+	SrcPos::files += findHeaders(config.dirs);
 	if (SrcPos::files.empty()) {
 		PLN("No header files found.");
 		return 1;

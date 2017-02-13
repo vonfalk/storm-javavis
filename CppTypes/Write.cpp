@@ -59,6 +59,12 @@ static String findIndentation(const String &line) {
 }
 
 void generateFile(const Path &src, const Path &dest, const GenerateMap &actions, World &world) {
+	{
+		Path folder = dest.parent();
+		if (!folder.exists())
+			folder.createDir();
+	}
+
 	FileStream *rStream = new FileStream(src, Stream::mRead);
 	if (!rStream->valid()) {
 		delete rStream;

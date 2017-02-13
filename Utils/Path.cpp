@@ -298,3 +298,14 @@ Timestamp Path::cTime() const {
 
 	return fromFileTime(d.ftCreationTime);
 }
+
+void Path::createDir() const {
+	if (exists())
+		return;
+
+	if (isEmpty())
+		return;
+
+	parent().createDir();
+	CreateDirectory(toS().c_str(), NULL);
+}

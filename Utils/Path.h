@@ -90,6 +90,9 @@ public:
 	// Created time.
 	Timestamp cTime() const;
 
+	// Create this path as directory if it does not already exist.
+	void createDir() const;
+
 private:
 
 	// Internal representation is a list of strings, one for each part of the pathname.
