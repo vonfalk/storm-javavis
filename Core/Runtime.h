@@ -22,9 +22,19 @@ namespace storm {
 		// Get the Storm type description for a C++ type given its ID (used by the generated type information code).
 		Type *cppType(Engine &e, Nat id);
 
+		// Variadic argument variant of 'cppTemplate'.
+		Type *cppTemplateVa(Engine &e, Nat id, Nat count, va_list params);
+
 		// Get the Storm type description for a C++ template, given its ID and template type ids (we
 		// do not support eg. Array<Array<X>> from C++.
-		Type *cppTemplate(Engine &e, Nat id, Nat count, ...);
+		inline Type *cppTemplate(Engine &e, Nat id, Nat count, ...) {
+			Type *r;
+			va_list l;
+			va_start(l, count);
+			r = cppTemplateVa(e, id, count, l);
+			va_end(l);
+			return r;
+		}
 
 		// Get a type handle for 'type'.
 		const Handle &typeHandle(Type *t);
@@ -35,11 +45,11 @@ namespace storm {
 		// Get the type of an allocation.
 		Type *typeOf(const RootObject *o);
 
-		// Get the name of a type.
-		Str *typeName(Type *t);
-
 		// Get the GcType for an allocation.
 		const GcType *gcTypeOf(const void *alloc);
+
+		// Get the name of a type.
+		Str *typeName(Type *t);
 
 		// Is type A an instance of type B?
 		bool isA(const RootObject *a, const Type *b);

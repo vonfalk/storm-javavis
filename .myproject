@@ -33,6 +33,7 @@ Core+=lib
 Code+=lib
 Compiler+=lib
 OS+=lib
+Shared+=lib
 Utils+=lib
 
 #Libraries that need the storm preprocessor to be run.
@@ -45,10 +46,7 @@ Gui+=sharedlib
 
 [deps]
 Gui+=CppTypes
-
 Compiler+=CppTypes
-Core+=CppTypes
-Code+=CppTypes
 
 #To make sure everything is built.
 Compiler+=Gui

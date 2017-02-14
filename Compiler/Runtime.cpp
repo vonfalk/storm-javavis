@@ -18,7 +18,7 @@ namespace storm {
 			return e.cppType(id);
 		}
 
-		Type *cppTemplate(Engine &e, Nat id, Nat count, ...) {
+		Type *cppTemplateVa(Engine &e, Nat id, Nat count, va_list l) {
 			const nat maxCount = 16;
 			assert(count < maxCount, L"Too many template parameters used: " + ::toS(count) + L" max " + ::toS(maxCount));
 
@@ -27,11 +27,8 @@ namespace storm {
 				return null;
 
 			Nat params[maxCount];
-			va_list l;
-			va_start(l, count);
 			for (nat i = 0; i < count; i++)
 				params[i] = va_arg(l, Nat);
-			va_end(l);
 
 			return tList->find(params, count);
 		}
