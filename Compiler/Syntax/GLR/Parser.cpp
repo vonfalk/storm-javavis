@@ -51,7 +51,7 @@ namespace storm {
 				PVAR(str);
 				source = str;
 				sourceUrl = file;
-				parseRoot = root;
+				parseRoot = syntax->lookup(root);
 
 				stacks = new (this) FutureStacks();
 				stacks->put(0, startState(root));
@@ -125,17 +125,17 @@ namespace storm {
 
 				for (Nat i = 0; i < reduce->count(); i++) {
 					Nat id = reduce->at(i);
-					// TODO: Handle pseudo-productions as well!
-					Production *p = syntax->productions->at(id);
-					Rule *r = p->rule();
+
+					Item item(syntax, id);
+					Nat rule = item.rule(syntax);
 
 					// Do reductions.
 					ReduceEnv env = {
 						pos,
 						stack,
-						r,
+						rule,
 					};
-					this->reduce(env, stack, through, p->tokens->count());
+					this->reduce(env, stack, through, item.length(syntax));
 				}
 			}
 
@@ -192,11 +192,9 @@ namespace storm {
 			ItemSet Parser::startSet(Rule *root) {
 				ItemSet r;
 
-				RuleInfo info = syntax->rules->at(root);
+				RuleInfo info = syntax->ruleInfo(syntax->lookup(root));
 				for (Nat i = 0; i < info.count(); i++) {
-					Production *p = syntax->productions->at(info[i]);
-					r.push(syntax, p->firstA());
-					r.push(syntax, p->firstB());
+					r.push(engine(), Item(syntax, info[i]));
 				}
 
 				return r.expand(syntax);

@@ -45,10 +45,9 @@ namespace storm {
 				MAYBE(Array<ShiftAction *> *) actions;
 
 				// The goto table. If 'null' it needs to be created. (Note: can not be named goto...)
-				MAYBE(Map<Rule *, Nat> *) rules;
+				MAYBE(Map<Nat, Nat> *) rules;
 
 				// Reduce these productions in this state (we're LR 0, so always do that).
-				// TODO: Sort these so that the highest priority production comes first.
 				MAYBE(Array<Nat> *) reduce;
 
 				// To string.
@@ -94,8 +93,8 @@ namespace storm {
 				void fill(State *state);
 
 				// Create the actions for a state.
-				ShiftAction *createShift(Nat start, ItemSet items, Array<Bool> *used, RegexToken *regex);
-				Nat createGoto(Nat start, ItemSet items, Array<Bool> *used, Rule *rule);
+				ShiftAction *createShift(Nat start, ItemSet items, Array<Bool> *used, Regex regex);
+				Nat createGoto(Nat start, ItemSet items, Array<Bool> *used, Nat rule);
 			};
 
 		}

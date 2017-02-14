@@ -11,6 +11,31 @@ namespace storm {
 			STORM_PKG(lang.bnf.glr);
 
 			/**
+			 * Representation of all syntax in a parser.
+			 *
+			 * To properly handle the extensions supported by the bnf language, we introduce
+			 * additional nonterminals to the grammar, and transform them as follows:
+			 * X -> a (b)? c   => X -> a X' c
+			 *                 => X'-> e
+			 *                 => X'-> b
+			 * X -> a (b)+ c   => X -> a b X' c
+			 *                 => X'-> e
+			 *                 => X'-> X' b
+			 * X -> a (b)* c   => X -> a X' c
+			 *                 => X'-> e
+			 *                 => X'-> X' b
+			 *
+			 * Because of this, we number all rules and all productions and apply the following
+			 * scheme for the added rules:
+			 * - Rules with the highest bit set describe the added production if neccessary. This is
+			 *   never stored in the list in the Syntax class. Note that the remaining part of the
+			 *   number is an index to a *production*, not a rule.
+			 * - Productions stored in items with the highest bit set describe the epsilon production
+			 *   of the added rule. If the two highest bits are set, that means the other added production.
+			 */
+
+
+			/**
 			 * Information about a rule.
 			 */
 			class RuleInfo {
@@ -47,21 +72,65 @@ namespace storm {
 				// Create.
 				STORM_CTOR Syntax();
 
-				// All known rules.
-				Map<Rule *, RuleInfo> *rules;
+				// Add syntax.
+				void STORM_FN add(Rule *rule);
+				void STORM_FN add(Production *p);
+
+				// Find the ID of a rule of a production.
+				Nat STORM_FN lookup(Rule *rule);
+				Nat STORM_FN lookup(Production *p);
+
+				// Get all productions for a rule.
+				RuleInfo ruleInfo(Nat rule);
+
+				// Find a production from its id.
+				Production *production(Nat id);
+
+				// Same syntax as another object?
+				Bool STORM_FN sameSyntax(Syntax *o);
+
+			private:
+				// All known rules and their ID:s.
+				Map<Rule *, Nat> *rLookup;
 
 				// All known productions and their ID:s.
-				Map<Production *, Nat> *lookup;
+				Map<Production *, Nat> *pLookup;
+
+				// All known rules.
+				Array<RuleInfo> *rules;
 
 				// All productions. A production's id can be found in 'lookup'.
 				Array<Production *> *productions;
 
-				// Add syntax.
-				void STORM_FN add(Rule *rule);
-				void STORM_FN add(Production *type);
+				// Various masks for rules.
+				enum {
+					ruleMask    = 0x80000000,
+					prodEpsilon = 0x80000000,
+					prodRepeat  = 0xC0000000,
+					prodMask    = 0xC0000000,
+				};
 
-				// Same syntax as another object?
-				Bool STORM_FN sameSyntax(Syntax *o);
+				// Is this a special rule id?
+				static inline Bool specialRule(Nat id) {
+					return (id & ruleMask) != 0;
+				}
+
+				// Get the production id this rule was derived from.
+				static Nat baseRule(Nat id) {
+					return id & ~Nat(ruleMask);
+				}
+
+				// Is this a special production id? Returns either prodEpsilon, prodMask or 0.
+				static inline Nat specialProd(Nat id) {
+					return id & prodMask;
+				}
+
+				// Get the production id.
+				static inline Nat baseProd(Nat id) {
+					return id & ~Nat(prodMask);
+				}
+
+				friend class Item;
 			};
 
 		}

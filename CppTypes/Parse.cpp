@@ -377,8 +377,15 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 		} else if (t.token == L"static") {
 			// Ignore static members. Maybe we should warn about this...
 			TODO(L"Warn about static members?");
-			while (!tok.skipIf(L";"))
+			while (true) {
+				if (tok.skipIf(L";"))
+					break;
+				if (tok.skipIf(L"{")) {
+					parseBlock(tok);
+					break;
+				}
 				tok.skip();
+			}
 		} else if (t.token == L"friend") {
 			while (!tok.skipIf(L";"))
 				tok.skip();

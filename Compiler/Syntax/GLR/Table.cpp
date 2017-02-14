@@ -91,7 +91,7 @@ namespace storm {
 
 			void Table::fill(State *state) {
 				state->actions = new (this) Array<ShiftAction *>();
-				state->rules = new (this) Map<Rule *, Nat>();
+				state->rules = new (this) Map<Nat, Nat>();
 				state->reduce = new (this) Array<Nat>();
 
 				// TODO: We might want to optimize this in the future. Currently we are using O(n^2)
@@ -105,76 +105,64 @@ namespace storm {
 						continue;
 					used->at(i) = true;
 
-					ProductionIter iter = items[i].iter(syntax);
-					Token *token = iter.token();
-					if (!token) {
-						assert(iter.end());
+					Item item = items[i];
+					if (item.end()) {
 						// Insert a reduce action.
-						state->reduce->push(syntax->lookup->get(iter.production()));
-					} else if (RuleToken *rule = as<RuleToken>(token)) {
+						state->reduce->push(item.id);
+					} else if (item.isRule(syntax)) {
 						// Add new states to the goto-table.
-						state->rules->put(rule->rule, createGoto(i, items, used, rule->rule));
-					} else if (RegexToken *regex = as<RegexToken>(token)) {
+						Nat rule = item.nextRule(syntax);
+						state->rules->put(rule, createGoto(i, items, used, rule));
+					} else {
 						// Add a shift action.
-						state->actions->push(createShift(i, items, used, regex));
+						state->actions->push(createShift(i, items, used, item.nextRegex(syntax)));
 					}
 				}
 			}
 
-			Nat Table::createGoto(Nat start, ItemSet items, Array<Bool> *used, Rule *rule) {
+			Nat Table::createGoto(Nat start, ItemSet items, Array<Bool> *used, Nat rule) {
 				ItemSet result;
-				{
-					ProductionIter i = items[start].iter(syntax);
-					result.push(syntax, i.nextA());
-					result.push(syntax, i.nextB());
-				}
+				result.push(engine(), items[start].next(syntax));
 
 				for (Nat i = start + 1; i < items.count(); i++) {
 					if (used->at(i))
 						continue;
 
-					ProductionIter iter = items[i].iter(syntax);
-					RuleToken *r = as<RuleToken>(iter.token());
-					if (!r)
+					Item item = items[i];
+					if (!item.isRule(syntax))
 						continue;
 
-					if (r->rule != rule)
+					if (item.nextRule(syntax) != rule)
 						continue;
 
 					used->at(i) = true;
-					result.push(syntax, iter.nextA());
-					result.push(syntax, iter.nextB());
+					result.push(engine(), item.next(syntax));
 				}
 
 				return state(result.expand(syntax));
 			}
 
-			ShiftAction *Table::createShift(Nat start, ItemSet items, Array<Bool> *used, RegexToken *regex) {
+			ShiftAction *Table::createShift(Nat start, ItemSet items, Array<Bool> *used, Regex regex) {
 				ItemSet result;
-				{
-					ProductionIter i = items[start].iter(syntax);
-					result.push(syntax, i.nextA());
-					result.push(syntax, i.nextB());
-				}
+				result.push(engine(), items[start].next(syntax));
 
 				for (Nat i = start + 1; i < items.count(); i++) {
 					if (used->at(i))
 						continue;
 
-					ProductionIter iter = items[i].iter(syntax);
-					RegexToken *r = as<RegexToken>(iter.token());
-					if (!r)
+					Item item = items[i];
+					if (item.isRule(syntax))
 						continue;
 
-					if (regex->regex != r->regex)
+					Regex r = item.nextRegex(syntax);
+					if (r != regex)
 						continue;
 
 					used->at(i) = true;
-					result.push(syntax, iter.nextA());
-					result.push(syntax, iter.nextB());
+					result.push(engine(), item.next(syntax));
 				}
 
-				return new (this) ShiftAction(regex->regex, state(result.expand(syntax)));
+				return new (this) ShiftAction(regex, state(result.expand(syntax)));
 			}
 
 			void Table::toS(StrBuf *to) const {

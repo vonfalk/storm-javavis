@@ -92,7 +92,7 @@ namespace storm {
 				FutureStacks *stacks;
 
 				// Root rule for this parse.
-				Rule *parseRoot;
+				Nat parseRoot;
 
 				// Source string being parsed.
 				Str *source;
@@ -135,7 +135,7 @@ namespace storm {
 				struct ReduceEnv {
 					Nat pos;
 					StackItem *oldTop;
-					Rule *rule;
+					Nat rule;
 				};
 
 				// Reduce a production of length 'len' from the current stack item. If 'through' is

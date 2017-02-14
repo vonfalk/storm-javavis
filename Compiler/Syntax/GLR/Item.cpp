@@ -10,23 +10,232 @@ namespace storm {
 			 * Item.
 			 */
 
-			Item::Item(Syntax *world, ProductionIter iter) {
-				id = world->lookup->get(iter.production());
-				pos = iter.position();
+			Item::Item(Syntax *world, Production *p) {
+				id = world->lookup(p);
+				pos = firstPos(p);
 			}
 
-			ProductionIter Item::iter(Syntax *syntax) const {
-				Production *p = syntax->productions->at(id);
-				return p->posIter(pos);
+			Item::Item(Syntax *world, Nat production) {
+				id = production;
+				switch (Syntax::specialProd(production)) {
+				case 0:
+					pos = firstPos(world->production(production));
+					break;
+				case Syntax::prodEpsilon:
+					pos = endPos;
+					break;
+				case Syntax::prodRepeat:
+					pos = firstRepPos(world->production(production));
+					break;
+				}
+			}
+
+			Item::Item(Nat id, Nat pos) : id(id), pos(pos) {}
+
+			Nat Item::endPos = -1;
+			Nat Item::specialPos = -2;
+
+			Nat Item::firstPos(Production *p) {
+				if (skippable(p->repType) && p->repStart == 0)
+					return specialPos;
+				else if (p->tokens->empty())
+					return endPos;
+				else
+					return 0;
+			}
+
+			Nat Item::nextPos(Production *p, Nat pos) {
+				if (pos == specialPos) {
+					return p->repEnd;
+				} else if (skippable(p->repType)) {
+					if (pos + 1 == p->repStart)
+						return specialPos;
+				} else if (p->repType != repNone) {
+					if (pos + 1 == p->repEnd)
+						return specialPos;
+				}
+
+				return pos + 1;
+			}
+
+			Nat Item::firstRepPos(Production *p) {
+				if (repeatable(p->repType))
+					return specialPos;
+				else if (p->repStart == p->repEnd)
+					return endPos;
+				else
+					return 0;
+			}
+
+			Nat Item::nextRepPos(Production *p, Nat pos) {
+				if (pos == specialPos)
+					return 0;
+
+				if (p->repStart + pos + 1 == p->repEnd)
+					return endPos;
+				else
+					return pos + 1;
+			}
+
+			Item Item::next(Syntax *syntax) const {
+				if (pos == endPos)
+					return Item(id, endPos);
+
+				switch (Syntax::specialProd(id)) {
+				case 0:
+					return Item(id, nextPos(syntax->production(id), pos));
+				case Syntax::prodEpsilon:
+					return Item(id, endPos);
+				case Syntax::prodRepeat:
+					return Item(id, nextRepPos(syntax->production(id), pos));
+				}
+
+				return Item(id, endPos);
+			}
+
+			Nat Item::rule(Syntax *syntax) const {
+				Production *p = syntax->production(Syntax::baseProd(id));
+
+				switch (Syntax::specialProd(id)) {
+				case 0:
+				default:
+					return syntax->lookup(p->rule());
+				case Syntax::prodEpsilon:
+				case Syntax::prodRepeat:
+					return syntax->lookup(p->rule()) | Syntax::ruleMask;
+				}
+			}
+
+			Nat Item::length(Syntax *syntax) const {
+				Production *p = syntax->production(Syntax::baseProd(id));
+				Nat rep = p->repEnd - p->repStart;
+
+				switch (Syntax::specialProd(id)) {
+				case 0:
+				default:
+					if (skippable(p->repType))
+						return p->tokens->count() - rep + 1;
+					else if (p->repType == repNone)
+						return p->tokens->count();
+					else
+						return p->tokens->count() + 1;
+				case Syntax::prodEpsilon:
+					return 0;
+				case Syntax::prodRepeat:
+					if (repeatable(p->repType))
+						return rep + 1;
+					else
+						return rep;
+				}
+			}
+
+			Bool Item::end() const {
+				return pos == endPos;
+			}
+
+			Bool Item::isRule(Syntax *syntax) const {
+				if (end())
+					return false;
+				if (pos == specialPos)
+					return true;
+
+				Production *p = syntax->production(id);
+
+				Nat pos = this->pos;
+				if (Syntax::specialProd(id) == Syntax::prodRepeat)
+					pos += p->repStart;
+
+				return as<RuleToken>(p->tokens->at(pos)) != null;
+			}
+
+			Nat Item::nextRule(Syntax *syntax) const {
+				assert(!end());
+				assert(isRule(syntax));
+
+				if (pos == specialPos)
+					return Syntax::baseProd(id) | Syntax::ruleMask;
+
+				Production *p = syntax->production(id);
+
+				Nat pos = this->pos;
+				if (Syntax::specialProd(id) == Syntax::prodRepeat)
+					pos += p->repStart;
+
+				RuleToken *r = as<RuleToken>(p->tokens->at(pos));
+				return syntax->lookup(r->rule);
+			}
+
+			Regex Item::nextRegex(Syntax *syntax) const {
+				assert(!end());
+				assert(!isRule(syntax));
+
+				Production *p = syntax->production(id);
+
+				Nat pos = this->pos;
+				if (Syntax::specialProd(id) == Syntax::prodRepeat)
+					pos += p->repStart;
+
+				return as<RegexToken>(p->tokens->at(pos))->regex;
 			}
 
 			Nat Item::hash() const {
-				return (id << 8) ^ pos;
+				return (pos << 8) ^ id;
+			}
+
+			void Item::outputToken(StrBuf *to, Production *p, Nat pos) const {
+				if (pos == specialPos) {
+					*to << p->rule()->identifier() << L"'";
+				} else {
+					*to << p->tokens->at(pos);
+				}
+			}
+
+			void Item::output(StrBuf *to, Production *p, Nat mark, FirstFn first, NextFn next) const {
+				bool prevDelim = false;
+				for (Nat i = (*first)(p); i != endPos; i = (*next)(p, i)) {
+					bool currentDelim = false;
+					if (i < p->tokens->count())
+						currentDelim = as<DelimToken>(p->tokens->at(i)) != null;
+
+					if (i > 0 && !currentDelim && !prevDelim)
+						*to << L" - ";
+
+					if (i == mark)
+						*to << L"<>";
+
+					if (currentDelim)
+						*to << L", ";
+					else
+						outputToken(to, p, i);
+
+					prevDelim = currentDelim;
+				}
 			}
 
 			Str *Item::toS(Syntax *syntax) const {
 				StrBuf *to = new (syntax) StrBuf();
-				*to << id << L": " << iter(syntax);
+				*to << id << L": ";
+
+				Production *p = syntax->production(id);
+				*to << p->rule()->identifier();
+				if (Syntax::specialProd(id))
+					*to << L"'";
+				else if (p->priority != 0)
+					*to << L"[" << p->priority << L"]";
+				*to << L" -> ";
+
+				switch (Syntax::specialProd(id)) {
+				case 0:
+					output(to, p, pos, &Item::firstPos, &Item::nextPos);
+					break;
+				case Syntax::prodRepeat:
+					output(to, p, pos, &Item::firstRepPos, &Item::nextRepPos);
+					break;
+				}
+
+				if (pos == endPos)
+					*to << L"<>";
+
 				return to->toS();
 			}
 
@@ -134,32 +343,17 @@ namespace storm {
 				return true;
 			}
 
-			Bool ItemSet::push(Syntax *syntax, ProductionIter iter) {
-				if (!iter.valid())
-					return false;
-
-				return push(syntax->engine(), Item(syntax, iter));
-			}
-
 			static void expand(Engine &e, ItemSet &to, const Item &i, Syntax *syntax) {
 				if (!to.push(e, i))
 					return;
 
-				ProductionIter iter = i.iter(syntax);
-				RuleToken *rule = as<RuleToken>(iter.token());
-				if (!rule)
+				if (!i.isRule(syntax))
 					return;
 
-				RuleInfo info = syntax->rules->get(rule->rule);
+				Nat rule = i.nextRule(syntax);
+				RuleInfo info = syntax->ruleInfo(rule);
 				for (Nat i = 0; i < info.count(); i++) {
-					Production *p = syntax->productions->at(info[i]);
-
-					ProductionIter a = p->firstA();
-					if (a.valid())
-						expand(e, to, Item(syntax, a), syntax);
-					ProductionIter b = p->firstB();
-					if (b.valid())
-						expand(e, to, Item(syntax, b), syntax);
+					expand(e, to, Item(syntax, info[i]), syntax);
 				}
 			}
 
@@ -180,7 +374,7 @@ namespace storm {
 				{
 					Indent z(to);
 					for (Nat i = 0; i < count(); i++) {
-						*to << at(i).iter(syntax) << L"\n";
+						*to << at(i) << L"\n";
 					}
 				}
 				*to << L"}";

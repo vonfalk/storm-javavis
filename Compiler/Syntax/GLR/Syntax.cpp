@@ -22,25 +22,60 @@ namespace storm {
 			 */
 
 			Syntax::Syntax() {
-				rules = new (this) Map<Rule *, RuleInfo>();
-				lookup = new (this) Map<Production *, Nat>();
+				rLookup = new (this) Map<Rule *, Nat>();
+				pLookup = new (this) Map<Production *, Nat>();
+				rules = new (this) Array<RuleInfo>();
 				productions = new (this) Array<Production *>();
 			}
 
 			void Syntax::add(Rule *rule) {
-				// This creates the rule data if it is not already there.
-				rules->at(rule);
+				if (rLookup->has(rule))
+					return;
+
+				// New rule!
+				Nat id = rules->count();
+				rules->push(RuleInfo());
+				rLookup->put(rule, id);
 			}
 
 			void Syntax::add(Production *p) {
-				if (lookup->has(p))
+				if (pLookup->has(p))
 					return;
 
 				// New production!
 				Nat id = productions->count();
 				productions->push(p);
-				lookup->put(p, id);
-				rules->at(p->rule()).push(engine(), id);
+				pLookup->put(p, id);
+
+				if (!rLookup->has(p->rule()))
+					add(p->rule());
+
+				Nat ruleId = lookup(p->rule());
+				rules->at(ruleId).push(engine(), id);
+			}
+
+			Nat Syntax::lookup(Rule *r) {
+				return rLookup->get(r);
+			}
+
+			Nat Syntax::lookup(Production *p) {
+				return pLookup->get(p);
+			}
+
+			RuleInfo Syntax::ruleInfo(Nat rule) {
+				if (specialRule(rule)) {
+					Nat prod = baseRule(rule);
+					RuleInfo info;
+					info.push(engine(), prod | prodEpsilon);
+					info.push(engine(), prod | prodRepeat);
+					return info;
+				} else {
+					return rules->at(rule);
+				}
+			}
+
+			Production *Syntax::production(Nat pid) {
+				return productions->at(baseProd(pid));
 			}
 
 			Bool Syntax::sameSyntax(Syntax *o) {
@@ -48,12 +83,13 @@ namespace storm {
 					return false;
 
 				for (Nat i = 0; i < productions->count(); i++) {
-					if (!o->lookup->has(productions->at(i)))
+					if (!o->pLookup->has(productions->at(i)))
 						return false;
 				}
 
 				return true;
 			}
+
 
 		}
 	}

@@ -15,23 +15,43 @@ namespace storm {
 			/**
 			 * Item in the LR tables. Has has functions and is therefore easy to look for.
 			 *
-			 * TODO: We could easily store this as one single 32-bit number, slightly skewed from
-			 * 50/50 thouhgh, we want to support slightly more than 64k productions.
+			 * See 'syntax.h' for notes on the identifiers used here!
 			 */
 			class Item {
 				STORM_VALUE;
 			public:
-				// Create.
-				STORM_CTOR Item(Syntax *world, ProductionIter iter);
+				// Create an item representing the first position of 'p'.
+				STORM_CTOR Item(Syntax *world, Production *p);
+
+				// Create from a production-id in 'world'.
+				STORM_CTOR Item(Syntax *world, Nat production);
 
 				// The production id.
 				Nat id;
 
-				// The position inside the production.
+				// The position inside the production. Note: position 0xFFFF
 				Nat pos;
 
-				// Create an iterator.
-				ProductionIter STORM_FN iter(Syntax *s) const;
+				// Get the rule.
+				Nat STORM_FN rule(Syntax *syntax) const;
+
+				// Get the number of tokens in this production.
+				Nat STORM_FN length(Syntax *syntax) const;
+
+				// Get the next item in the sequence.
+				Item STORM_FN next(Syntax *syntax) const;
+
+				// Is this item at the end of the production?
+				Bool STORM_FN end() const;
+
+				// Is this item's next position a token?
+				Bool STORM_FN isRule(Syntax *syntax) const;
+
+				// Get the next token. Only available if 'isRule' is true.
+				Nat STORM_FN nextRule(Syntax *syntax) const;
+
+				// Get the next regex. Only available if 'isRule' is false.
+				Regex STORM_FN nextRegex(Syntax *syntax) const;
 
 				// Hash function.
 				Nat STORM_FN hash() const;
@@ -55,6 +75,28 @@ namespace storm {
 
 				// To string.
 				Str *STORM_FN toS(Syntax *syntax) const;
+
+			private:
+				// Create with raw id and position.
+				Item(Nat id, Nat pos);
+
+				// The pos used when we are at the end.
+				static Nat endPos;
+
+				// The pos used when we are at the special token.
+				static Nat specialPos;
+
+				// Compute the first and next positions in a production.
+				static Nat firstPos(Production *p);
+				static Nat nextPos(Production *p, Nat pos);
+				static Nat firstRepPos(Production *p);
+				static Nat nextRepPos(Production *p, Nat pos);
+
+				// Output helpers.
+				typedef Nat (*FirstFn)(Production *);
+				typedef Nat (*NextFn)(Production *, Nat);
+				void output(StrBuf *to, Production *p, Nat mark, FirstFn first, NextFn next) const;
+				void outputToken(StrBuf *to, Production *p, Nat pos) const;
 			};
 
 			// Plain to string (no syntax lookup possible).
@@ -91,11 +133,8 @@ namespace storm {
 				// Hash.
 				Nat STORM_FN hash() const;
 
-				// Push an item.
+				// Push an item. Returns 'true' if inserted.
 				Bool push(Engine &e, Item item);
-
-				// Push an iterator if it is valid. Returns 'true' if inserted.
-				Bool STORM_FN push(Syntax *syntax, ProductionIter iter);
 
 				// Expand all nonterminal symbols in this item set.
 				ItemSet STORM_FN expand(Syntax *syntax) const;
