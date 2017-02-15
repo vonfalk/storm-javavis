@@ -41,13 +41,13 @@ namespace storm {
 					}
 
 					for (Nat i = 0; i < reduce->count(); i++) {
-						*to << L"reduce " << reduce->at(i) << L"\n";
+						*to << L"reduce " << Item(syntax, reduce->at(i)).toS(syntax) << L"\n";
 					}
 				} else {
 					*to << L"<to be computed>\n";
 				}
 
-				*to << L"Items:\n";
+				*to << L"Items: (hash = " << hex(items.hash()) << L")\n";
 				for (Nat i = 0; i < items.count(); i++) {
 					if (syntax)
 						*to << items[i].toS(syntax);
@@ -78,6 +78,7 @@ namespace storm {
 					return found.v();
 
 				Nat id = states->count();
+				lookup->put(s, id);
 				states->push(new (this) State(s));
 				return id;
 			}
@@ -129,7 +130,7 @@ namespace storm {
 						continue;
 
 					Item item = items[i];
-					if (!item.isRule(syntax))
+					if (item.end() || !item.isRule(syntax))
 						continue;
 
 					if (item.nextRule(syntax) != rule)
@@ -151,7 +152,7 @@ namespace storm {
 						continue;
 
 					Item item = items[i];
-					if (item.isRule(syntax))
+					if (item.end() || item.isRule(syntax))
 						continue;
 
 					Regex r = item.nextRegex(syntax);

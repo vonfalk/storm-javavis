@@ -127,8 +127,8 @@ namespace storm {
 				Bool STORM_FN has(Item i) const;
 
 				// Compare.
-				Bool STORM_FN operator ==(const ItemSet &o) const;
-				Bool STORM_FN operator !=(const ItemSet &o) const;
+				Bool STORM_FN operator ==(ItemSet o) const;
+				Bool STORM_FN operator !=(ItemSet o) const;
 
 				// Hash.
 				Nat STORM_FN hash() const;

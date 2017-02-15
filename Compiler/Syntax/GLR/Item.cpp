@@ -70,14 +70,14 @@ namespace storm {
 				else if (p->repStart == p->repEnd)
 					return endPos;
 				else
-					return 0;
+					return p->repStart;
 			}
 
 			Nat Item::nextRepPos(Production *p, Nat pos) {
 				if (pos == specialPos)
-					return 0;
+					return p->repStart;
 
-				if (p->repStart + pos + 1 >= p->repEnd)
+				if (pos + 1 >= p->repEnd)
 					return endPos;
 				else
 					return pos + 1;
@@ -100,15 +100,13 @@ namespace storm {
 			}
 
 			Nat Item::rule(Syntax *syntax) const {
-				Production *p = syntax->production(Syntax::baseProd(id));
-
 				switch (Syntax::specialProd(id)) {
 				case 0:
 				default:
-					return syntax->lookup(p->rule());
+					return syntax->lookup(syntax->production(Syntax::baseProd(id))->rule());
 				case Syntax::prodEpsilon:
 				case Syntax::prodRepeat:
-					return syntax->lookup(p->rule()) | Syntax::ruleMask;
+					return Syntax::baseProd(id) | Syntax::ruleMask;
 				}
 			}
 
@@ -146,11 +144,6 @@ namespace storm {
 					return true;
 
 				Production *p = syntax->production(id);
-
-				Nat pos = this->pos;
-				if (Syntax::specialProd(id) == Syntax::prodRepeat)
-					pos += p->repStart;
-
 				return as<RuleToken>(p->tokens->at(pos)) != null;
 			}
 
@@ -162,11 +155,6 @@ namespace storm {
 					return Syntax::baseProd(id) | Syntax::ruleMask;
 
 				Production *p = syntax->production(id);
-
-				Nat pos = this->pos;
-				if (Syntax::specialProd(id) == Syntax::prodRepeat)
-					pos += p->repStart;
-
 				RuleToken *r = as<RuleToken>(p->tokens->at(pos));
 				return syntax->lookup(r->rule);
 			}
@@ -176,11 +164,6 @@ namespace storm {
 				assert(!isRule(syntax));
 
 				Production *p = syntax->production(id);
-
-				Nat pos = this->pos;
-				if (Syntax::specialProd(id) == Syntax::prodRepeat)
-					pos += p->repStart;
-
 				return as<RegexToken>(p->tokens->at(pos))->regex;
 			}
 
@@ -275,7 +258,7 @@ namespace storm {
 				return at(id);
 			}
 
-			Bool ItemSet::operator ==(const ItemSet &o) const {
+			Bool ItemSet::operator ==(ItemSet o) const {
 				Nat c = count();
 				if (c != o.count())
 					return false;
@@ -287,7 +270,7 @@ namespace storm {
 				return true;
 			}
 
-			Bool ItemSet::operator !=(const ItemSet &o) const {
+			Bool ItemSet::operator !=(ItemSet o) const {
 				return !(*this == o);
 			}
 
