@@ -100,7 +100,8 @@ namespace storm {
 				// Url of the source string.
 				Url *sourceUrl;
 
-				// Last found stack which accepted the string.
+				// Last found stack which accepted the string. Starts with a dummy stack item for
+				// the topmost production.
 				StackItem *acceptingStack;
 
 				// Last accepting position.
@@ -135,6 +136,7 @@ namespace storm {
 				struct ReduceEnv {
 					Nat pos;
 					StackItem *oldTop;
+					Nat production;
 					Nat rule;
 				};
 
@@ -144,6 +146,16 @@ namespace storm {
 
 				// Limited reduction of a rule. Only paths passing through 'through' are considered.
 				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through);
+
+				/**
+				 * Tree computation.
+				 */
+
+				// Create the tree node starting with stack state 'top', ending at 'end'.
+				Node *tree(StackItem *top) const;
+
+				// Create a syntax node for the production 'p'.
+				Node *allocNode(Production *p) const;
 			};
 
 		}

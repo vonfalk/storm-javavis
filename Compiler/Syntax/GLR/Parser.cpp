@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Parser.h"
+#include "Compiler/Lib/Array.h"
+#include "Utils/Memory.h"
 
 namespace storm {
 	namespace syntax {
@@ -48,7 +50,6 @@ namespace storm {
 			}
 
 			Bool Parser::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
-				PVAR(str);
 				source = str;
 				sourceUrl = file;
 				parseRoot = syntax->lookup(root);
@@ -72,8 +73,6 @@ namespace storm {
 					stacks->pop();
 				}
 
-				PVAR(acceptingStack);
-				PVAR(table);
 				return acceptingStack != null;
 			}
 
@@ -133,6 +132,7 @@ namespace storm {
 					ReduceEnv env = {
 						pos,
 						stack,
+						id,
 						rule,
 					};
 					this->reduce(env, stack, through, item.length(syntax));
@@ -153,7 +153,9 @@ namespace storm {
 				} else if (through == null) {
 					if (stack->prev == null && env.rule == parseRoot) {
 						// TODO: Choose the best match if multiple ones exist.
-						acceptingStack = env.oldTop;
+						acceptingStack = new (this) StackItem(-1, stack);
+						acceptingStack->reduced = env.oldTop;
+						acceptingStack->reducedId = env.production;
 						acceptingPos = env.pos;
 					}
 
@@ -163,6 +165,7 @@ namespace storm {
 					if (to != state->rules->end()) {
 						StackItem *add = new (this) StackItem(to.v(), stack);
 						add->reduced = env.oldTop;
+						add->reducedId = env.production;
 
 						// Add the newly created state.
 						Set<StackItem *> *top = stacks->top();
@@ -235,7 +238,89 @@ namespace storm {
 			}
 
 			Node *Parser::tree() const {
-				return null;
+				if (acceptingStack == null)
+					return null;
+
+				return tree(acceptingStack);
+			}
+
+			template <class T>
+			static void setValue(Node *node, MemberVar *target, T *elem) {
+				int offset = target->offset().current();
+				if (isArray(target->type)) {
+					// Arrays are initialized earlier.
+					OFFSET_IN(node, offset, Array<T *> *)->push(elem);
+				} else {
+					OFFSET_IN(node, offset, T *) = elem;
+				}
+			}
+
+			static void reverseNode(Node *node) {
+				ProductionType *t = (ProductionType *)runtime::typeOf(node);
+
+				for (Nat i = 0; i < t->arrayMembers->count(); i++) {
+					MemberVar *v = t->arrayMembers->at(i);
+					int offset = v->offset().current();
+					Array<Object *> *array = OFFSET_IN(node, offset, Array<Object *> *);
+					array->reverse();
+				}
+			}
+
+			Node *Parser::tree(StackItem *top) const {
+				assert(top->reduced, L"Trying to create a tree from a non-reduced node!");
+				// TODO: Properly handle pseudo-productions!
+
+				Production *p = syntax->production(top->reducedId);
+				Node *result = allocNode(p);
+
+				Nat tokenId = p->tokens->count();
+				for (StackItem *at = top->reduced; at != top->prev; at = at->prev, tokenId--) {
+					StackItem *prev = at->prev;
+					if (tokenId == 0)
+						continue;
+
+					// TODO: Handle captures pseudo-productions!
+
+					Token *token = p->tokens->at(tokenId - 1);
+					if (token->target) {
+						Object *match = null;
+						if (as<RegexToken>(token)) {
+							setValue(result, token->target, new (this) SStr(new (this) Str(L"TEST"), SrcPos()));
+						} else if (as<RuleToken>(token)) {
+							setValue(result, token->target, tree(at));
+						} else {
+							assert(false, L"Unknown token type used for match.");
+						}
+					}
+				}
+
+				// TODO: Store the capture!
+
+				reverseNode(result);
+				return result;
+			}
+
+			Node *Parser::allocNode(Production *from) const {
+				ProductionType *type = from->type();
+
+				// A bit ugly, but this is enough for the object to be considered a proper object
+				// when it is populated.
+				void *mem = runtime::allocObject(type->size().current(), type);
+				Node *r = new (Place(mem)) Node(SrcPos()); // TODO: Make sure to set SrcPos right!
+				type->vtable->insert(r);
+
+				// Create any arrays needed.
+				for (nat i = 0; i < type->arrayMembers->count(); i++) {
+					MemberVar *v = type->arrayMembers->at(i);
+					int offset = v->offset().current();
+
+					// This will actually create the correct subtype as long as we're creating
+					// something inherited from Object or TObject (which we are).
+					Array<Object *> *arr = new (v->type.type) Array<Object *>();
+					OFFSET_IN(r, offset, Object *) = arr;
+				}
+
+				return r;
 			}
 
 			InfoNode *Parser::infoTree() const {

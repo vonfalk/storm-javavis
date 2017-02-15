@@ -32,8 +32,11 @@ namespace storm {
 				// level (we ignore 'state' and 'reduced' there) of more previous items.
 				MAYBE(StackItem *) morePrev;
 
-				// The stack used to reduce this item.
+				// The stack caused this item by reduction.
 				MAYBE(StackItem *) reduced;
+
+				// If 'reduced': the production that was reduced to produce the current item.
+				Nat reducedId;
 
 				// Insert a node in the 'morePrev' chain if it is not already there. Returns 'true' if it was inserted.
 				Bool STORM_FN insert(StackItem *item);
