@@ -159,7 +159,7 @@ namespace storm {
 
 					// Figure out which state to go to.
 					State *state = table->state(stack->state);
-					Map<Rule *, Nat>::Iter to = state->rules->find(env.rule);
+					Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
 					if (to != state->rules->end()) {
 						StackItem *add = new (this) StackItem(to.v(), stack);
 						add->reduced = env.oldTop;

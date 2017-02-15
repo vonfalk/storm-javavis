@@ -24,3 +24,8 @@ Str Sentence();
 Sentence[1] => noun : Plural noun, Verb verb = PluralAssert;
 Sentence[2] => noun : "the", Noun noun, Verb verb - "s" = SingularAssert;
 Sentence[3] => noun : "do", Plural noun, Verb verb - "\?" = Question;
+
+
+// Try out multiple sentences as well! This requires repetitions to work.
+void Sentences();
+Sentences : Sentence - ("\.", Sentence)* - "\.";

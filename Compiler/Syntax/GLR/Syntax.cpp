@@ -24,7 +24,8 @@ namespace storm {
 			Syntax::Syntax() {
 				rLookup = new (this) Map<Rule *, Nat>();
 				pLookup = new (this) Map<Production *, Nat>();
-				rules = new (this) Array<RuleInfo>();
+				rules = new (this) Array<Rule *>();
+				ruleProds = new (this) Array<RuleInfo>();
 				productions = new (this) Array<Production *>();
 			}
 
@@ -34,7 +35,8 @@ namespace storm {
 
 				// New rule!
 				Nat id = rules->count();
-				rules->push(RuleInfo());
+				rules->push(rule);
+				ruleProds->push(RuleInfo());
 				rLookup->put(rule, id);
 			}
 
@@ -51,7 +53,7 @@ namespace storm {
 					add(p->rule());
 
 				Nat ruleId = lookup(p->rule());
-				rules->at(ruleId).push(engine(), id);
+				ruleProds->at(ruleId).push(engine(), id);
 			}
 
 			Nat Syntax::lookup(Rule *r) {
@@ -70,7 +72,17 @@ namespace storm {
 					info.push(engine(), prod | prodRepeat);
 					return info;
 				} else {
-					return rules->at(rule);
+					return ruleProds->at(rule);
+				}
+			}
+
+			Str *Syntax::ruleName(Nat id) {
+				if (specialRule(id)) {
+					Production *p = productions->at(baseRule(id));
+					return *p->rule()->identifier() + new (this) Str(L"'");
+				} else {
+					Rule *rule = rules->at(id);
+					return rule->identifier();
 				}
 			}
 

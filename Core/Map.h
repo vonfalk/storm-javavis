@@ -341,7 +341,7 @@ namespace storm {
 		public:
 			Iter() : MapBase::Iter() {}
 			Iter(Map<K, V> *owner) : MapBase::Iter(owner) {}
-			Iter(MapBase::Iter i) : MapBase::Iter(i) {}
+			explicit Iter(MapBase::Iter i) : MapBase::Iter(i) {}
 
 			std::pair<K, V&> operator *() const {
 				return std::make_pair(*(K *)rawKey(), *(V *)rawVal());
@@ -361,7 +361,7 @@ namespace storm {
 
 		// Find a value.
 		Iter find(const K &k) {
-			return findRaw(&k);
+			return Iter(findRaw(&k));
 		}
 
 		// Create the iterator.

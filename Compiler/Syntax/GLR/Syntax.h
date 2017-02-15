@@ -83,6 +83,9 @@ namespace storm {
 				// Get all productions for a rule.
 				RuleInfo ruleInfo(Nat rule);
 
+				// Get the name of a rule.
+				Str *ruleName(Nat rule);
+
 				// Find a production from its id.
 				Production *production(Nat id);
 
@@ -97,7 +100,10 @@ namespace storm {
 				Map<Production *, Nat> *pLookup;
 
 				// All known rules.
-				Array<RuleInfo> *rules;
+				Array<Rule *> *rules;
+
+				// Productions for all rules.
+				Array<RuleInfo> *ruleProds;
 
 				// All productions. A production's id can be found in 'lookup'.
 				Array<Production *> *productions;

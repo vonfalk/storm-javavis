@@ -36,8 +36,8 @@ namespace storm {
 						*to << L"\n";
 					}
 
-					for (Map<Rule *, Nat>::Iter i = rules->begin(), end = rules->end(); i != end; ++i) {
-						*to << L"goto " << i.k()->identifier() << L" -> " << i.v() << L"\n";
+					for (Map<Nat, Nat>::Iter i = rules->begin(), end = rules->end(); i != end; ++i) {
+						*to << L"goto " << syntax->ruleName(i.k()) << L" -> " << i.v() << L"\n";
 					}
 
 					for (Nat i = 0; i < reduce->count(); i++) {

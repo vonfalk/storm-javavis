@@ -46,7 +46,10 @@ namespace storm {
 
 			Nat Item::nextPos(Production *p, Nat pos) {
 				if (pos == specialPos) {
-					return p->repEnd;
+					if (p->repEnd >= p->tokens->count())
+						return endPos;
+					else
+						return p->repEnd;
 				} else if (skippable(p->repType)) {
 					if (pos + 1 == p->repStart)
 						return specialPos;
@@ -55,7 +58,10 @@ namespace storm {
 						return specialPos;
 				}
 
-				return pos + 1;
+				if (pos + 1 >= p->tokens->count())
+					return endPos;
+				else
+					return pos + 1;
 			}
 
 			Nat Item::firstRepPos(Production *p) {
@@ -71,7 +77,7 @@ namespace storm {
 				if (pos == specialPos)
 					return 0;
 
-				if (p->repStart + pos + 1 == p->repEnd)
+				if (p->repStart + pos + 1 >= p->repEnd)
 					return endPos;
 				else
 					return pos + 1;
@@ -186,18 +192,19 @@ namespace storm {
 				if (pos == specialPos) {
 					*to << p->rule()->identifier() << L"'";
 				} else {
-					*to << p->tokens->at(pos);
+					p->tokens->at(pos)->toS(to, false);
 				}
 			}
 
 			void Item::output(StrBuf *to, Production *p, Nat mark, FirstFn first, NextFn next) const {
 				bool prevDelim = false;
-				for (Nat i = (*first)(p); i != endPos; i = (*next)(p, i)) {
+				Nat firstId = (*first)(p);
+				for (Nat i = firstId; i != endPos; i = (*next)(p, i)) {
 					bool currentDelim = false;
 					if (i < p->tokens->count())
 						currentDelim = as<DelimToken>(p->tokens->at(i)) != null;
 
-					if (i > 0 && !currentDelim && !prevDelim)
+					if (i != firstId && !currentDelim && !prevDelim)
 						*to << L" - ";
 
 					if (i == mark)
@@ -214,7 +221,19 @@ namespace storm {
 
 			Str *Item::toS(Syntax *syntax) const {
 				StrBuf *to = new (syntax) StrBuf();
-				*to << id << L": ";
+
+				switch (Syntax::specialProd(id)) {
+				case 0:
+					*to << id;
+					break;
+				case Syntax::prodRepeat:
+					*to << Syntax::baseProd(id) << L"'";
+					break;
+				case Syntax::prodEpsilon:
+					*to << Syntax::baseProd(id) << L"''";
+					break;
+				}
+				*to << L": ";
 
 				Production *p = syntax->production(id);
 				*to << p->rule()->identifier();
