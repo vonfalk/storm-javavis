@@ -7,9 +7,12 @@ namespace storm {
 	namespace syntax {
 		namespace glr {
 
-			StackItem::StackItem(Nat state) : state(state), prev(null) {}
+			StackItem::StackItem(Nat state, Nat pos) : state(state), pos(pos), prev(null) {}
 
-			StackItem::StackItem(Nat state, StackItem *prev) : state(state), prev(prev) {}
+			StackItem::StackItem(Nat state, Nat pos, StackItem *prev) : state(state), pos(pos), prev(prev) {}
+
+			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, StackItem *reduced, Nat reducedId)
+				: state(state), pos(pos), prev(prev), reduced(reduced), reducedId(reducedId) {}
 
 			Bool StackItem::insert(StackItem *insert) {
 				StackItem **at = &morePrev;

@@ -8,62 +8,78 @@
 
 using syntax::Parser;
 
+storm::syntax::ParserBackend *createParser(Nat id) {
+	switch (id) {
+	case 0:
+		return new (gEngine()) storm::syntax::glr::Parser();
+	case 1:
+		return new (gEngine()) storm::syntax::earley::Parser();
+	default:
+		assert(false);
+		return null;
+	}
+}
+
 BEGIN_TEST_(ParserTest, Storm) {
 	Engine &e = gEngine();
 
 	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, L"test.grammar")));
 	VERIFY(pkg);
 
-	{
-		// GLR parser.
-		Parser *p = Parser::create(pkg, L"Sentence", new (e) storm::syntax::glr::Parser());
-		Str *s = new (e) Str(L"the cat runs");
-		CHECK(p->parse(s, new (e) Url()));
-		CHECK(!p->hasError());
-		CHECK(p->hasTree());
-		CHECK(p->matchEnd() == s->end());
+	for (Nat id = 0; id < 2; id++) {
+		{
+			// Plain sentences.
+			Parser *p = Parser::create(pkg, L"Sentence", createParser(id));
+			Str *s = new (e) Str(L"the cat runs");
+			CHECK(p->parse(s, new (e) Url()));
+			CHECK(!p->hasError());
+			CHECK(p->hasTree());
+			CHECK(p->matchEnd() == s->end());
 
-		syntax::Node *tree = p->tree();
-		Str *r = syntax::transformNode<Str>(tree);
-		CHECK_EQ(::toS(r), L"cat");
+			syntax::Node *tree = p->tree();
+			Str *r = syntax::transformNode<Str>(tree);
+			CHECK_EQ(::toS(r), L"cat");
 
-		CHECK(p->parse(new (e) Str(L"the cat runs!"), new (e) Url()));
-		CHECK(p->hasError());
-		CHECK(p->hasTree());
-		CHECK_EQ(p->matchEnd().v(), Char('!'));
-	}
+			CHECK(p->parse(new (e) Str(L"the cat runs!"), new (e) Url()));
+			CHECK(p->hasError());
+			CHECK(p->hasTree());
+			CHECK_EQ(p->matchEnd().v(), Char('!'));
+		}
 
-	if (false) {
-		// GLR parser with repetitions.
-		Parser *p = Parser::create(pkg, L"Sentences", new (e) storm::syntax::glr::Parser());
-		Str *s = new (e) Str(L"the cat runs. the bird sleeps.");
-		CHECK(p->parse(s, new (e) Url()));
-		CHECK(!p->hasError());
-		CHECK(p->hasTree());
-		CHECK(p->matchEnd() == s->end());
+		{
+			// Repetitions.
+			Parser *p = Parser::create(pkg, L"Sentences", createParser(id));
+			Str *s = new (e) Str(L"the cat runs. the bird sleeps.");
+			CHECK(p->parse(s, new (e) Url()));
+			CHECK(!p->hasError());
+			CHECK(p->hasTree());
+			CHECK(p->matchEnd() == s->end());
 
-		// syntax::Node *tree = p->tree();
-		// Str *r = syntax::transformNode<Str>(tree);
-		// CHECK_EQ(::toS(r), L"[cat, bird]");
-	}
+			syntax::Node *tree = p->tree();
+			Array<Str *> *r = syntax::transformNode<Array<Str *>>(tree);
+			CHECK_EQ(::toS(r), L"[cat, bird]");
+		}
 
-	{
-		// Earley parser.
-		Parser *p = Parser::create(pkg, L"Sentence", new (e) storm::syntax::earley::Parser());
-		Str *s = new (e) Str(L"the cat runs");
-		CHECK(p->parse(s, new (e) Url()));
-		CHECK(!p->hasError());
-		CHECK(p->hasTree());
-		CHECK(p->matchEnd() == s->end());
+		{
+			// Captures.
+			Parser *p = Parser::create(pkg, L"WholeSentence", createParser(id));
+			Str *s = new (e) Str(L"the cat runs.");
+			CHECK(p->parse(s, new (e) Url()));
+			CHECK(!p->hasError());
+			CHECK(p->hasTree());
+			CHECK(p->matchEnd() == s->end());
 
-		syntax::Node *tree = p->tree();
-		Str *r = syntax::transformNode<Str>(tree);
-		CHECK_EQ(::toS(r), L"cat");
+			syntax::Node *tree = p->tree();
+			Str *r = syntax::transformNode<Str>(tree);
+			CHECK_EQ(::toS(r), L"the cat runs");
 
-		CHECK(p->parse(new (e) Str(L"the cat runs!"), new (e) Url()));
-		CHECK(p->hasError());
-		CHECK(p->hasTree());
-		CHECK_EQ(p->matchEnd().v(), Char('!'));
+			CHECK(p->parse(new (e) Str(L".the cat runs."), new(e) Url()));
+			CHECK(!p->hasError());
+			CHECK(p->hasTree());
+			tree = p->tree();
+			r = syntax::transformNode<Str>(tree);
+			CHECK_EQ(::toS(r), L"the cat runs");
+		}
 	}
 
 } END_TEST

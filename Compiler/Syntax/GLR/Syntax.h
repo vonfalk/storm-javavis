@@ -108,6 +108,7 @@ namespace storm {
 				// All productions. A production's id can be found in 'lookup'.
 				Array<Production *> *productions;
 
+			public:
 				// Various masks for rules.
 				enum {
 					ruleMask    = 0x80000000,
@@ -135,8 +136,6 @@ namespace storm {
 				static inline Nat baseProd(Nat id) {
 					return id & ~Nat(prodMask);
 				}
-
-				friend class Item;
 			};
 
 		}

@@ -29,3 +29,8 @@ Sentence[3] => noun : "do", Plural noun, Verb verb - "\?" = Question;
 // Try out multiple sentences as well! This requires repetitions to work.
 Array<Str> Sentences();
 Sentences => Array<Str>() : Sentence -> push - ("\.", Sentence -> push)* - "\.";
+
+// Make sure captures are working properly.
+Str WholeSentence();
+WholeSentence => capture : (Sentence) capture - "\.";
+WholeSentence => capture : "\." - (Sentence) capture - "\.";

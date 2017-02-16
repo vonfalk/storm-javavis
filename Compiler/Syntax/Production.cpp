@@ -373,7 +373,7 @@ namespace storm {
 			ProductionType *type = (ProductionType *)runtime::typeOf(me);
 			Production *prod = type->production;
 
-			*to << L"{\n";
+			*to << L"{ " << me->pos << L"\n";
 			{
 				Indent z(to);
 

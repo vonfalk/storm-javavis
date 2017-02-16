@@ -125,7 +125,10 @@ inline std::wostream &operator <<(std::wostream &to, const std::pair<A, B> &pair
 template <class T>
 String toS(T *v) {
 	std::wostringstream to;
-	to << *v;
+	if (v)
+		to << *v;
+	else
+		to << L"<null>";
 	return to.str();
 }
 template <class T>

@@ -55,14 +55,15 @@ namespace storm {
 				parseRoot = syntax->lookup(root);
 
 				stacks = new (this) FutureStacks();
-				stacks->put(0, startState(root));
 				acceptingStack = null;
 
 				BoolSet *processed = new (this) BoolSet();
+				Nat startPos = start.offset();
+				Nat length = str->peekLength();
 
 				// Go through states until we reach the end of file.
-				Nat length = str->peekLength();
-				for (Nat i = start.offset(); i <= length; i++) {
+				stacks->put(0, startState(startPos, root));
+				for (Nat i = startPos; i <= length; i++) {
 					Set<StackItem *> *top = stacks->top();
 
 					// Process all states in 'top' until none remain.
@@ -113,7 +114,7 @@ namespace storm {
 
 					// Add the resulting match to the 'to-do' list.
 					Nat offset = matched - pos;
-					stacks->put(offset, new (this) StackItem(action->state, stack));
+					stacks->put(offset, new (this) StackItem(action->state, matched, stack));
 				}
 			}
 
@@ -153,19 +154,14 @@ namespace storm {
 				} else if (through == null) {
 					if (stack->prev == null && env.rule == parseRoot) {
 						// TODO: Choose the best match if multiple ones exist.
-						acceptingStack = new (this) StackItem(-1, stack);
-						acceptingStack->reduced = env.oldTop;
-						acceptingStack->reducedId = env.production;
-						acceptingPos = env.pos;
+						acceptingStack = new (this) StackItem(-1, env.pos, stack, env.oldTop, env.production);
 					}
 
 					// Figure out which state to go to.
 					State *state = table->state(stack->state);
 					Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
 					if (to != state->rules->end()) {
-						StackItem *add = new (this) StackItem(to.v(), stack);
-						add->reduced = env.oldTop;
-						add->reducedId = env.production;
+						StackItem *add = new (this) StackItem(to.v(), env.pos, stack, env.oldTop, env.production);
 
 						// Add the newly created state.
 						Set<StackItem *> *top = stacks->top();
@@ -203,8 +199,8 @@ namespace storm {
 				return r.expand(syntax);
 			}
 
-			StackItem *Parser::startState(Rule *root) {
-				return new (this) StackItem(table->state(startSet(root)));
+			StackItem *Parser::startState(Nat pos, Rule *root) {
+				return new (this) StackItem(table->state(startSet(root)), pos);
 			}
 
 			void Parser::clear() {
@@ -223,8 +219,8 @@ namespace storm {
 			}
 
 			Str::Iter Parser::matchEnd() const {
-				if (source && hasTree())
-					return source->posIter(acceptingPos);
+				if (source && acceptingStack)
+					return source->posIter(acceptingStack->pos);
 				else
 					return Str::Iter();
 			}
@@ -266,47 +262,100 @@ namespace storm {
 				}
 			}
 
+			void Parser::setToken(Node *result, StackItem *at, StackItem *prev, Token *token) const {
+				if (token->target) {
+					Object *match = null;
+					if (as<RegexToken>(token)) {
+						Str::Iter from = source->posIter(prev->pos);
+						Str::Iter to = source->posIter(at->pos);
+						SrcPos pos(sourceUrl, prev->pos);
+						setValue(result, token->target, new (this) SStr(source->substr(from, to), pos));
+					} else if (as<RuleToken>(token)) {
+						setValue(result, token->target, tree(at));
+					} else {
+						assert(false, L"Unknown token type used for match.");
+					}
+				}
+			}
+
 			Node *Parser::tree(StackItem *top) const {
 				assert(top->reduced, L"Trying to create a tree from a non-reduced node!");
-				// TODO: Properly handle pseudo-productions!
 
+				Item item = last(top->reducedId);
 				Production *p = syntax->production(top->reducedId);
-				Node *result = allocNode(p);
+				Node *result = allocNode(p, top->prev->pos);
 
-				Nat tokenId = p->tokens->count();
-				for (StackItem *at = top->reduced; at != top->prev; at = at->prev, tokenId--) {
+				// Set to the start position as we miss 'repStart' when it is at offset 0.
+				Nat repStart = top->prev->pos;
+				Nat repEnd = 0;
+
+				for (StackItem *at = top->reduced; at != top->prev; at = at->prev) {
 					StackItem *prev = at->prev;
-					if (tokenId == 0)
+					if (!item.prev(p))
 						continue;
+					assert(item.pos != Item::endPos);
 
-					// TODO: Handle captures pseudo-productions!
+					// Remember the capture!
+					if (item.pos == p->repStart)
+						repStart = at->pos;
+					if (item.pos == p->repEnd || item.pos == Item::specialPos)
+						repEnd = at->pos;
 
-					Token *token = p->tokens->at(tokenId - 1);
-					if (token->target) {
-						Object *match = null;
-						if (as<RegexToken>(token)) {
-							setValue(result, token->target, new (this) SStr(new (this) Str(L"TEST"), SrcPos()));
-						} else if (as<RuleToken>(token)) {
-							setValue(result, token->target, tree(at));
-						} else {
-							assert(false, L"Unknown token type used for match.");
-						}
+					if (item.pos == Item::specialPos) {
+						subtree(result, at);
+					} else {
+						setToken(result, at, prev, p->tokens->at(item.pos));
 					}
 				}
 
-				// TODO: Store the capture!
+				// Store the capture!
+				if (p->repCapture && p->repCapture->target && repStart <= repEnd) {
+					Str::Iter from = source->posIter(repStart);
+					Str::Iter to = source->posIter(repEnd);
+					SrcPos pos(sourceUrl, repStart);
+					setValue(result, p->repCapture->target, new (this) SStr(source->substr(from, to), pos));
+				}
 
 				reverseNode(result);
 				return result;
 			}
 
-			Node *Parser::allocNode(Production *from) const {
+			void Parser::subtree(Node *result, StackItem *top) const {
+				assert(top->reduced, L"Trying to create a subtree from a non-reduced node!");
+
+				Item item = last(top->reducedId);
+				Production *p = syntax->production(top->reducedId);
+
+				for (StackItem *at = top->reduced; at != top->prev; at = at->prev) {
+					StackItem *prev = at->prev;
+					if (!item.prev(p))
+						continue;
+
+					if (item.pos == Item::specialPos) {
+						// This is always the first one (if present). To reduce stack space
+						// requirements, restart wit the new production directly!
+						if (Syntax::specialProd(at->reducedId) == Syntax::prodRepeat) {
+							assert(at->reducedId == top->reducedId);
+							top = at;
+							item = last(top->reducedId);
+							at = top->reduced;
+						} else {
+							// Should be the epsilon production.
+							assert(Syntax::specialProd(at->reducedId) == Syntax::prodEpsilon);
+						}
+					} else {
+						setToken(result, at, prev, p->tokens->at(item.pos));
+					}
+				}
+			}
+
+			Node *Parser::allocNode(Production *from, Nat pos) const {
 				ProductionType *type = from->type();
 
 				// A bit ugly, but this is enough for the object to be considered a proper object
 				// when it is populated.
 				void *mem = runtime::allocObject(type->size().current(), type);
-				Node *r = new (Place(mem)) Node(SrcPos()); // TODO: Make sure to set SrcPos right!
+				Node *r = new (Place(mem)) Node(SrcPos(sourceUrl, pos));
 				type->vtable->insert(r);
 
 				// Create any arrays needed.

@@ -19,11 +19,15 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create.
-				STORM_CTOR StackItem(Nat state);
-				STORM_CTOR StackItem(Nat state, StackItem *prev);
+				STORM_CTOR StackItem(Nat state, Nat pos);
+				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev);
+				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, StackItem *reduced, Nat reducedId);
 
 				// State at this point in the stack.
 				Nat state;
+
+				// Position in the input.
+				Nat pos;
 
 				// Previous item in the stack.
 				MAYBE(StackItem *) prev;

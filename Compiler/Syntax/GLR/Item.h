@@ -29,8 +29,14 @@ namespace storm {
 				// The production id.
 				Nat id;
 
-				// The position inside the production. Note: position 0xFFFF
+				// The position inside the production. Note: there are two special cases, 'endPos' and 'specialPos'.
 				Nat pos;
+
+				// The pos used when we are at the end.
+				static Nat endPos;
+
+				// The pos used when we are at the special token.
+				static Nat specialPos;
 
 				// Get the rule.
 				Nat STORM_FN rule(Syntax *syntax) const;
@@ -40,6 +46,10 @@ namespace storm {
 
 				// Get the next item in the sequence.
 				Item STORM_FN next(Syntax *syntax) const;
+
+				// Move this item to the previous item in the set. Returns false if no previous item exists.
+				Bool STORM_FN prev(Syntax *syntax);
+				Bool STORM_FN prev(Production *p);
 
 				// Is this item at the end of the production?
 				Bool STORM_FN end() const;
@@ -80,24 +90,25 @@ namespace storm {
 				// Create with raw id and position.
 				Item(Nat id, Nat pos);
 
-				// The pos used when we are at the end.
-				static Nat endPos;
-
-				// The pos used when we are at the special token.
-				static Nat specialPos;
-
 				// Compute the first and next positions in a production.
 				static Nat firstPos(Production *p);
 				static Nat nextPos(Production *p, Nat pos);
+				static Bool prevPos(Production *p, Nat &pos);
 				static Nat firstRepPos(Production *p);
 				static Nat nextRepPos(Production *p, Nat pos);
+				static Bool prevRepPos(Production *p, Nat &pos);
 
 				// Output helpers.
 				typedef Nat (*FirstFn)(Production *);
 				typedef Nat (*NextFn)(Production *, Nat);
 				void output(StrBuf *to, Production *p, Nat mark, FirstFn first, NextFn next) const;
 				void outputToken(StrBuf *to, Production *p, Nat pos) const;
+
+				friend Item last(Nat production);
 			};
+
+			// Get an item representing the last item in 'production'.
+			Item STORM_FN last(Nat production);
 
 			// Plain to string (no syntax lookup possible).
 			StrBuf &STORM_FN operator <<(StrBuf &to, Item item);

@@ -32,6 +32,10 @@ namespace storm {
 
 			Item::Item(Nat id, Nat pos) : id(id), pos(pos) {}
 
+			Item last(Nat production) {
+				return Item(production, Item::endPos);
+			}
+
 			Nat Item::endPos = -1;
 			Nat Item::specialPos = -2;
 
@@ -64,6 +68,35 @@ namespace storm {
 					return pos + 1;
 			}
 
+			Bool Item::prevPos(Production *p, Nat &pos) {
+				if (pos == endPos) {
+					pos = p->tokens->count();
+					if (pos == 0) {
+						pos = endPos;
+						return false;
+					}
+					if (pos == p->repEnd)
+						pos = specialPos;
+					else
+						pos--;
+					return true;
+				} else if (pos == specialPos) {
+					pos = skippable(p->repType) ? p->repStart : p->repEnd;
+					if (pos == 0) {
+						pos = specialPos;
+						return false;
+					}
+					pos--;
+					return true;
+				} else {
+					if (pos == 0)
+						return false;
+					if (pos-- == p->repEnd)
+						pos = specialPos;
+					return true;
+				}
+			}
+
 			Nat Item::firstRepPos(Production *p) {
 				if (repeatable(p->repType))
 					return specialPos;
@@ -83,6 +116,29 @@ namespace storm {
 					return pos + 1;
 			}
 
+			Bool Item::prevRepPos(Production *p, Nat &pos) {
+				if (pos == endPos) {
+					pos = p->repEnd;
+					if (pos == p->repStart)
+						pos = specialPos;
+					else
+						pos--;
+					return true;
+				} else if (pos == specialPos) {
+					// This is always the first token if we ever get here.
+					return false;
+				} else {
+					if (pos == p->repStart)
+						if (repeatable(p->repType))
+							pos = specialPos;
+						else
+							return false;
+					else
+						pos--;
+					return true;
+				}
+			}
+
 			Item Item::next(Syntax *syntax) const {
 				if (pos == endPos)
 					return Item(id, endPos);
@@ -97,6 +153,23 @@ namespace storm {
 				}
 
 				return Item(id, endPos);
+			}
+
+			Bool Item::prev(Syntax *syntax) {
+				return prev(syntax->production(id));
+			}
+
+			Bool Item::prev(Production *p) {
+				switch (Syntax::specialProd(id)) {
+				case 0:
+					return prevPos(p, pos);
+				case Syntax::prodEpsilon:
+					return false;
+				case Syntax::prodRepeat:
+					return prevRepPos(p, pos);
+				}
+
+				return false;
 			}
 
 			Nat Item::rule(Syntax *syntax) const {
