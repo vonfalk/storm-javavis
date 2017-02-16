@@ -5,14 +5,8 @@
 
 namespace storm {
 
-	static Thread *compilerGetThread(Engine &e, const DeclThread *decl) {
-		return decl->thread(e);
-	}
-
-	const EngineFwd &engineFwd() {
-		static const EngineFwd fwd = {
-			&runtime::cppType,
-			&runtime::cppTemplateVa,
+	const EngineFwdShared &engineFwd() {
+		static const EngineFwdShared fwd = {
 			&runtime::typeHandle,
 			&runtime::voidHandle,
 			&runtime::typeOf,
@@ -37,7 +31,6 @@ namespace storm {
 			&runtime::cloneObjectEnv,
 
 			// Others.
-			&compilerGetThread,
 			&os::currentThreadData,
 			&os::currentThreadData,
 			&os::currentUThreadState,

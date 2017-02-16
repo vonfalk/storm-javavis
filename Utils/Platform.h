@@ -81,6 +81,7 @@
 #ifdef VISUAL_STUDIO
 #define THREAD __declspec(thread)
 #define NAKED __declspec(naked)
+#define SHARED_EXPORT __declspec(dllexport)
 #endif
 
 #if defined(X86) || defined(X64)
@@ -93,6 +94,13 @@
 #error "someone forgot to declare THREAD for your architecture"
 #endif
 
+#ifndef NAKED
+#error "someone forgot to declare NAKED for your architecture"
+#endif
+
+#ifndef SHARED_EXPORT
+#error "someone forgot to declare SHARED_EXPORT for your architecture"
+#endif
 
 #ifdef WINDOWS
 #define CODECALL __cdecl

@@ -204,6 +204,19 @@
 	}															\
 	storm::DeclThread name::decl = { name::identifier, fnPtr };
 
+/**
+ * The name of entry points for this build. The debug and release builds look slightly different
+ * memory-wise here and there, so the entry points of the shared libraries have different name to
+ * avoid confusion and strange crashes.
+ */
+#ifdef DEBUG
+#define SHARED_LIB_ENTRY storm_start_debug
+#else
+#define SHARED_LIB_ENTRY storm_start
+#endif
+
+#define SHARED_LIB_ENTRY_STR STRING(SHARED_LIB_ENTRY)
+
 
 #include "Utils/Utils.h"
 #include "Utils/Platform.h"

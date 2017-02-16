@@ -32,6 +32,11 @@ namespace storm {
 	 * one that is central to the compiler.
 	 */
 	class Engine : NoCopy {
+	private:
+		// The ID of this engine. Used in shared libraries. This must be the first member of the
+		// Engine class.
+		Nat id;
+
 	public:
 		// Threading mode for the engine.
 		enum ThreadMode {

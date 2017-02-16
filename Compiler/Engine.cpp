@@ -44,8 +44,10 @@ namespace storm {
 		}
 	}
 
+	static Nat engineId = 0;
+
 	Engine::Engine(const Path &root, ThreadMode mode) :
-		gc(defaultArena, defaultFinalizer), world(gc), objRoot(null), ioThread(null) {
+		id(atomicIncrement(engineId)), gc(defaultArena, defaultFinalizer), world(gc), objRoot(null), ioThread(null) {
 
 		bootStatus = bootNone;
 

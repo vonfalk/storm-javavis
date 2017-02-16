@@ -2,6 +2,9 @@
 #include "Platform.h"
 
 #ifdef WINDOWS
+#ifdef X64
+#error "Revise the atomics for 64-bit Windows!"
+#endif
 
 // Check alignment of value.
 static inline bool aligned(volatile void *v) {
@@ -14,18 +17,24 @@ static inline bool aligned(volatile void *v) {
 
 size_t atomicIncrement(volatile size_t &v) {
 	check_aligned(v);
-	return (nat)InterlockedIncrement((volatile LONG *)&v);
+	return (size_t)InterlockedIncrement((volatile LONG *)&v);
 }
 
 size_t atomicDecrement(volatile size_t &v) {
 	check_aligned(v);
-	return (nat)InterlockedDecrement((volatile LONG *)&v);
+	return (size_t)InterlockedDecrement((volatile LONG *)&v);
 }
 
 size_t atomicCAS(volatile size_t &v, size_t compare, size_t exchange) {
 	check_aligned(v);
-	return (nat)InterlockedCompareExchange((volatile LONG *)&v, (LONG)exchange, (LONG)compare);
+	return (size_t)InterlockedCompareExchangePointer((void *volatile*)&v, (void *)exchange, (void *)compare);
 }
+
+void *atomicCAS(void *volatile &v, void *compare, void *exchange) {
+	check_aligned(v);
+	return InterlockedCompareExchangePointer(&v, exchange, compare);
+}
+
 
 size_t atomicRead(volatile size_t &v) {
 	check_aligned(v);

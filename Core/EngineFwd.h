@@ -10,13 +10,16 @@ namespace storm {
 	class StdRequest;
 
 	/**
-	 * Forward calls to the engine through dll-boundaries using function pointers in this
-	 * struct. This covers all functions present in storm::runtime.
+	 * Functions forwarded to the Engine that instantiated a shared library. This is split into two
+	 * parts, one part with functions that have the same implementation for all shared libraries,
+	 * and one part that differs between different instances.
 	 */
-	struct EngineFwd {
+
+	/**
+	 * Shared part.
+	 */
+	struct EngineFwdShared {
 		// Everything present in storm::runtime:
-		Type *(*cppType)(Engine &e, Nat id);
-		Type *(*cppTemplateVa)(Engine &e, Nat id, Nat count, va_list params);
 		const Handle &(*typeHandle)(Type *t);
 		const Handle &(*voidHandle)(Engine &e);
 		Type *(*typeOf)(const RootObject *o);
@@ -41,7 +44,6 @@ namespace storm {
 		RootObject *(*cloneObjectEnv)(RootObject *obj, CloneEnv *env);
 
 		// Additional functions required.
-		Thread *(*getThread)(Engine &e, const DeclThread *decl);
 		os::ThreadData *(*getCurrentThreadData)();
 		void (*setCurrentThreadData)(os::ThreadData *data);
 		os::UThreadState *(*getCurrentUThreadState)();
@@ -53,13 +55,21 @@ namespace storm {
 		Float dummy;
 	};
 
-	// Create an EngineFwd for this module with all pointer properly filled.
-	const EngineFwd &engineFwd();
+	/**
+	 * Unique part.
+	 *
+	 * This is so that each shared library can have its own "namespace" of unique type identifiers.
+	 */
+	struct EngineFwdUnique {
+		Type *(*cppType)(Engine &e, Nat id);
+		Type *(*cppTemplateVa)(Engine &e, Nat id, Nat count, va_list params);
+		Thread *(*getThread)(Engine &e, const DeclThread *decl);
 
-#ifndef STORM_COMPILER
+		// Completely different type to catch errors when using initializer lists.
+		Float dummy;
+	};
 
-	// Set the EngineFwd to use for this instance.
-	void useFwd(const EngineFwd &use);
+	// Create the shared part.
+	const EngineFwdShared &engineFwd();
 
-#endif
 }

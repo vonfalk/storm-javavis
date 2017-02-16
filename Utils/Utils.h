@@ -146,6 +146,11 @@ size_t atomicDecrement(volatile size_t &v);
 
 // Compare and swap (atomic)
 size_t atomicCAS(volatile size_t &v, size_t compare, size_t exchange);
+void *atomicCAS(void *volatile &v, void *compare, void *exchange);
+template <class T>
+T *atomicCAS(T *volatile &v, T *compare, T *exchange) {
+	return (T *)atomicCAS((void *volatile&)v, compare, exchange);
+}
 
 // Atomic read/write.
 size_t atomicRead(volatile size_t &v);

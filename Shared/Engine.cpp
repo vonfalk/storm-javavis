@@ -1,17 +1,72 @@
 #include "stdafx.h"
 #include "Engine.h"
+#include "OS/Sync.h"
 
 namespace storm {
+
+	// Shared function pointers.
+	static EngineFwdShared fwd = { 0 };
+
+	// Unique function pointers. One for each observed engine-id.
+	static EngineFwdUnique *unique = null;
+	static Nat uniqueCount = 0;
+	static Nat uniqueFilled = 0;
+	static os::Lock uniqueLock;
+
+	// Empty (ie. all bytes = 0)?
+	bool memempty(const void *src, size_t count) {
+		const byte *s = (const byte *)src;
+		bool zero = true;
+		for (size_t i = 0; i < count; i++)
+			zero &= s[i] == 0;
+		return zero;
+	}
+
+	void Engine::attach(const EngineFwdShared &shared, const EngineFwdUnique &unique) {
+		if (memempty(&fwd, sizeof(EngineFwdShared))) {
+			fwd = shared;
+		} else {
+			assert(memcmp(&fwd, &shared, sizeof(EngineFwdShared)) == 0,
+				L"Using two different implementations of Engines with the same instance of a shared library!");
+		}
+
+		{
+			os::Lock::L z(uniqueLock);
+			if (storm::uniqueCount < id) {
+				EngineFwdUnique *n = new EngineFwdUnique[id];
+				memcpy(n, storm::unique, uniqueCount*sizeof(EngineFwdUnique));
+
+				EngineFwdUnique *old = storm::unique;
+				atomicCAS(storm::unique, old, n);
+				delete []old;
+				storm::uniqueCount = id;
+			}
+
+			storm::uniqueFilled++;
+		}
+
+		storm::unique[id] = unique;
+	}
+
+	void Engine::detach() {
+		os::Lock::L z(uniqueLock);
+
+		if (--uniqueFilled == 0) {
+			// Last one. Delete the unique array as no one needs it anymore.
+			delete []unique;
+			uniqueCount = 0;
+		}
+	}
+
+
 	namespace runtime {
 
-		static EngineFwd fwd;
-
 		Type *cppType(Engine &e, Nat id) {
-			return (*fwd.cppType)(e, id);
+			return (*unique[e.identifier()].cppType)(e, id);
 		}
 
 		Type *cppTemplateVa(Engine &e, Nat id, Nat count, va_list l) {
-			return (*fwd.cppTemplateVa)(e, id, count, l);
+			return (*unique[e.identifier()].cppTemplateVa)(e, id, count, l);
 		}
 
 		const Handle &typeHandle(Type *t) {
@@ -105,11 +160,7 @@ namespace storm {
 	}
 
 	Thread *DeclThread::thread(Engine &e) const {
-		return (*runtime::fwd.getThread)(e, this);
-	}
-
-	void useFwd(const EngineFwd &fwd) {
-		runtime::fwd = fwd;
+		return (*unique[e.identifier()].getThread)(e, this);
 	}
 
 }
@@ -118,27 +169,27 @@ namespace storm {
 namespace os {
 
 	ThreadData *currentThreadData() {
-		return (*storm::runtime::fwd.getCurrentThreadData)();
+		return (*storm::fwd.getCurrentThreadData)();
 	}
 
 	void currentThreadData(ThreadData *data) {
-		(*storm::runtime::fwd.setCurrentThreadData)(data);
+		(*storm::fwd.setCurrentThreadData)(data);
 	}
 
 	UThreadState *currentUThreadState() {
-		return (*storm::runtime::fwd.getCurrentUThreadState)();
+		return (*storm::fwd.getCurrentUThreadState)();
 	}
 
 	void currentUThreadState(UThreadState *state) {
-		(*storm::runtime::fwd.setCurrentUThreadState)(state);
+		(*storm::fwd.setCurrentUThreadState)(state);
 	}
 
 	void threadCreated() {
-		(*storm::runtime::fwd.threadCreated)();
+		(*storm::fwd.threadCreated)();
 	}
 
 	void threadTerminated() {
-		(*storm::runtime::fwd.threadTerminated)();
+		(*storm::fwd.threadTerminated)();
 	}
 
 }
