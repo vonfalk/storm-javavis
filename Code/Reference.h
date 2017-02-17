@@ -58,7 +58,7 @@ namespace code {
 		STORM_CAST_CTOR Ref(RefSource *to);
 		STORM_CAST_CTOR Ref(Reference *ref);
 
-		void deepCopy(CloneEnv *env);
+		void STORM_FN deepCopy(CloneEnv *env);
 
 		inline Bool STORM_FN operator ==(const Ref &o) const { return to == o.to; }
 		inline Bool STORM_FN operator !=(const Ref &o) const { return to != o.to; }
