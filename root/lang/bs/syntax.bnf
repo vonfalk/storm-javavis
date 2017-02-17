@@ -343,8 +343,8 @@ SSuperCall => SuperCall(pos, block, params) : "init" #keyword, SFnActuals(block)
 SSuperCall => SuperCall(pos, block, params, init) : "init" #keyword, SFnActuals(block) params, "{", (SInitializer(block) init, ";", )* "}";
 
 Initializer SInitializer(Block block);
-SInitializer => Initializer(name, value) : SName name, "=", SExpr(block) value;
-SInitializer => Initializer(name, params) : SName name, SFnActuals(block) params;
+SInitializer => Initializer(name, value) : SName name #varName, "=", SExpr(block) value;
+SInitializer => Initializer(name, params) : SName name #varName, SFnActuals(block) params;
 
 // Root rule for parsing constructor bodies.
 CtorBody SCtorBody(BSCtor fn);
@@ -365,7 +365,7 @@ SFirstFormal => nameless(type) : SType type;
 // Possible contents of a class.
 TObject SClassItem(Class owner);
 SClassItem => ClassVar(owner, t, n) :
-    SType t, SName n, ";";
+    SType t, SName n #varName, ";";
 SClassItem => classFn(owner, pos, name, result, params, body) :
     SType result, SName name #fnName, "(", SFormals params, ")", "{", SFunctionBody@ body, "}";
 SClassItem => classCtor(owner, pos, params, body) :
