@@ -5,11 +5,13 @@
 #include "World.h"
 
 namespace storm {
+	STORM_PKG(core.lang);
 
 	/**
 	 * Load objects that are defined in C++ somewhere.
 	 */
-	class CppLoader : NoCopy {
+	class CppLoader {
+		STORM_VALUE;
 	public:
 		// Create, note which set of functions to be loaded.
 		CppLoader(Engine &e, const CppWorld *world, World &into);
@@ -39,13 +41,13 @@ namespace storm {
 
 	private:
 		// Engine to load into.
-		Engine &e;
+		UNKNOWN(PTR_NOGC) Engine *e;
 
 		// Source.
-		const CppWorld *world;
+		UNKNOWN(PTR_NOGC) const CppWorld *world;
 
 		// Destination.
-		World &into;
+		UNKNOWN(PTR_NOGC) World *into;
 
 		// Get the number of types.
 		nat typeCount() const;

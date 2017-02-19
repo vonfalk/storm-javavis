@@ -22,7 +22,7 @@ namespace storm {
 		return zero;
 	}
 
-	void Engine::attach(const EngineFwdShared &shared, const EngineFwdUnique &unique) {
+	void *Engine::attach(const EngineFwdShared &shared, const EngineFwdUnique &unique) {
 		if (memempty(&fwd, sizeof(EngineFwdShared))) {
 			fwd = shared;
 		} else {
@@ -34,6 +34,7 @@ namespace storm {
 			os::Lock::L z(uniqueLock);
 			if (storm::uniqueCount < id) {
 				EngineFwdUnique *n = new EngineFwdUnique[id];
+				memset(n, 0, id*sizeof(EngineFwdUnique));
 				memcpy(n, storm::unique, uniqueCount*sizeof(EngineFwdUnique));
 
 				EngineFwdUnique *old = storm::unique;
@@ -45,7 +46,10 @@ namespace storm {
 			storm::uniqueFilled++;
 		}
 
+		void *old = storm::unique[id].identifier;
 		storm::unique[id] = unique;
+
+		return old;
 	}
 
 	void Engine::detach() {
@@ -62,11 +66,13 @@ namespace storm {
 	namespace runtime {
 
 		Type *cppType(Engine &e, Nat id) {
-			return (*unique[e.identifier()].cppType)(e, id);
+			const EngineFwdUnique &u = unique[e.identifier()];
+			return (*u.cppType)(e, u.identifier, id);
 		}
 
 		Type *cppTemplateVa(Engine &e, Nat id, Nat count, va_list l) {
-			return (*unique[e.identifier()].cppTemplateVa)(e, id, count, l);
+			const EngineFwdUnique &u = unique[e.identifier()];
+			return (*u.cppTemplateVa)(e, u.identifier, id, count, l);
 		}
 
 		const Handle &typeHandle(Type *t) {
@@ -160,7 +166,8 @@ namespace storm {
 	}
 
 	Thread *DeclThread::thread(Engine &e) const {
-		return (*unique[e.identifier()].getThread)(e, this);
+		const EngineFwdUnique &u = unique[e.identifier()];
+		return (*u.getThread)(e, u.identifier, this);
 	}
 
 }

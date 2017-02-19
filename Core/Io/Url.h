@@ -119,7 +119,7 @@ namespace storm {
 		virtual Bool STORM_FN exists();
 
 		// Format for other C-api:s. May not work for all kind of URL:s.
-		virtual Str *format();
+		virtual Str *STORM_FN format();
 
 		// Output.
 		virtual void STORM_FN toS(StrBuf *to) const;

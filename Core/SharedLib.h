@@ -31,9 +31,16 @@ namespace storm {
 		// All types in the library.
 		const CppWorld *world;
 
+		// The 'identifier' parameter from 'unique' in any previous instance.
+		void *previousIdentifier;
+
+		typedef void (*CallbackFn)(SharedLibInfo *);
+
+		// Function called to notify shutdown for this structure.
+		CallbackFn shutdownFn;
+
 		// Function called to destroy this structure.
-		typedef void (*DestroyFn)(SharedLibInfo *);
-		DestroyFn destroyFn;
+		CallbackFn destroyFn;
 	};
 
 }

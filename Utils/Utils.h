@@ -14,6 +14,9 @@
 #define _STRING(X) L ## #X
 #define STRING(X) _STRING(X)
 
+#define _SHORT_STRING(X) #X
+#define SHORT_STRING(X) _SHORT_STRING(X)
+
 #include "Mode.h"
 
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof(*(x)))

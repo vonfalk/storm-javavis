@@ -14,8 +14,8 @@ namespace storm {
 		// in Compiler/Engine.h.
 		Nat id;
 	public:
-		// Attach this engine to the current shared library.
-		void attach(const EngineFwdShared &shared, const EngineFwdUnique &unique);
+		// Attach this engine to the current shared library. Returns the identifier from any previous instance.
+		void *attach(const EngineFwdShared &shared, const EngineFwdUnique &unique);
 
 		// Attach one engine from the current shared library.
 		void detach();

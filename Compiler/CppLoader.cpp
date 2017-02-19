@@ -13,7 +13,7 @@
 namespace storm {
 
 	CppLoader::CppLoader(Engine &e, const CppWorld *world, World &into) :
-		e(e), world(world), into(into) {}
+		e(&e), world(world), into(&into) {}
 
 	nat CppLoader::typeCount() const {
 		nat n;
@@ -66,7 +66,7 @@ namespace storm {
 
 	void CppLoader::loadTypes() {
 		nat c = typeCount();
-		into.types.resize(c);
+		into->types.resize(c);
 
 		// Note: we do not set any names yet, as the Str type is not neccessarily available until
 		// after we've created the types here.
@@ -74,17 +74,17 @@ namespace storm {
 			const CppType &type = world->types[i];
 
 			// The array could be partially filled.
-			if (into.types[i] == null && type.kind != CppType::superCustom) {
+			if (into->types[i] == null && type.kind != CppType::superCustom) {
 				GcType *gcType = createGcType(i);
 
 				// If this type inherits from 'Type', it needs special care in its Gc-description.
 				if (type.kind == CppType::superClassType) {
-					GcType *t = Type::makeType(e, gcType);
-					e.gc.freeType(gcType);
+					GcType *t = Type::makeType(*e, gcType);
+					e->gc.freeType(gcType);
 					gcType = t;
 				}
 
-				into.types[i] = new (e) Type(null, type.flags, Size(type.size), gcType, typeVTable(type));
+				into->types[i] = new (*e) Type(null, type.flags, Size(type.size), gcType, typeVTable(type));
 			}
 		}
 
@@ -94,17 +94,17 @@ namespace storm {
 
 			if (type.kind != CppType::superCustom)
 				continue;
-			if (into.types[i])
+			if (into->types[i])
 				continue;
 
 			CppType::CreateFn fn = (CppType::CreateFn)type.super;
-			into.types[i] = (*fn)(new (e) Str(type.name), Size(type.size), createGcType(i));
+			into->types[i] = (*fn)(new (*e) Str(type.name), Size(type.size), createGcType(i));
 		}
 
 		// If we're in early boot, we need to manually create vtables for all types.
-		if (!e.has(bootTypes)) {
+		if (!e->has(bootTypes)) {
 			for (nat i = 0; i < c; i++) {
-				into.types[i]->vtableInit(typeVTable(world->types[i]));
+				into->types[i]->vtableInit(typeVTable(world->types[i]));
 			}
 		}
 
@@ -113,26 +113,26 @@ namespace storm {
 			const CppType &type = world->types[i];
 
 			// Just to make sure...
-			if (!into.types[i])
+			if (!into->types[i])
 				break;
 
-			into.types[i]->name = new (e) Str(type.name);
+			into->types[i]->name = new (*e) Str(type.name);
 		}
 	}
 
 	void CppLoader::loadThreads() {
 		nat c = threadCount();
-		into.threads.resize(c);
-		into.namedThreads.resize(c);
+		into->threads.resize(c);
+		into->namedThreads.resize(c);
 
 		for (nat i = 0; i < c; i++) {
 			const CppThread &thread = world->threads[i];
 
-			if (!into.threads[i]) {
-				into.threads[i] = new (e) Thread(thread.decl->createFn);
+			if (!into->threads[i]) {
+				into->threads[i] = new (*e) Thread(thread.decl->createFn);
 			}
 
-			into.namedThreads[i] = new (e) NamedThread(new (e) Str(thread.name), into.threads[i]);
+			into->namedThreads[i] = new (*e) NamedThread(new (*e) Str(thread.name), into->threads[i]);
 		}
 	}
 
@@ -161,13 +161,13 @@ namespace storm {
 					if (!updated[type.super])
 						continue;
 
-					into.types[i]->setSuper(into.types[type.super]);
+					into->types[i]->setSuper(into->types[type.super]);
 					break;
 				case CppType::superThread:
-					if (TObject::stormType(e) == null)
+					if (TObject::stormType(*e) == null)
 						continue;
 
-					into.types[i]->setThread(into.namedThreads[type.super]);
+					into->types[i]->setThread(into->namedThreads[type.super]);
 					break;
 				case CppType::superCustom:
 					// Already done.
@@ -189,7 +189,7 @@ namespace storm {
 		for (entries = 0; type.ptrOffsets[entries] != CppOffset::invalid; entries++)
 			;
 
-		GcType *t = e.gc.allocType(GcType::tFixedObj, null, Size(type.size).current(), entries);
+		GcType *t = e->gc.allocType(GcType::tFixedObj, null, Size(type.size).current(), entries);
 
 		for (nat i = 0; i < entries; i++) {
 			t->offset[i] = Offset(type.ptrOffsets[i]).current();
@@ -225,22 +225,22 @@ namespace storm {
 
 	void CppLoader::loadTemplates() {
 		nat c = templateCount();
-		into.templates.resize(c);
+		into->templates.resize(c);
 
 		for (nat i = 0; i < c; i++) {
 			const CppTemplate &t = world->templates[i];
 
-			if (!into.templates[i]) {
-				Str *n = new (e) Str(t.name);
-				TemplateCppFn *templ = new (e) TemplateCppFn(n, t.generate);
-				into.templates[i] = new (e) TemplateList(templ);
+			if (!into->templates[i]) {
+				Str *n = new (*e) Str(t.name);
+				TemplateCppFn *templ = new (*e) TemplateCppFn(n, t.generate);
+				into->templates[i] = new (*e) TemplateList(templ);
 			}
 		}
 	}
 
 	NameSet *CppLoader::findPkg(const wchar *name) {
-		SimpleName *pkgName = parseSimpleName(e, name);
-		NameSet *r = e.nameSet(pkgName);
+		SimpleName *pkgName = parseSimpleName(*e, name);
+		NameSet *r = e->nameSet(pkgName);
 		assert(r, L"Failed to find the package " + String(name));
 		return r;
 	}
@@ -259,10 +259,10 @@ namespace storm {
 					elems[count] = Nat(ref.params[count]);
 			}
 
-			result = Value(into.templates[ref.id]->find(elems, count));
+			result = Value(into->templates[ref.id]->find(elems, count));
 		} else if (ref.id != CppTypeRef::invalid) {
 			// Regular type.
-			result = Value(into.types[ref.id]);
+			result = Value(into->types[ref.id]);
 		} else {
 			// Void.
 			return Value();
@@ -285,21 +285,23 @@ namespace storm {
 		nat c = typeCount();
 		for (nat i = 0; i < c; i++) {
 			const CppType &t = world->types[i];
-			findPkg(t.pkg)->add(into.types[i]);
+			if (t.kind != CppType::superExternal)
+				findPkg(t.pkg)->add(into->types[i]);
 		}
 
 		c = templateCount();
 		for (nat i = 0; i < c; i++) {
 			const CppTemplate &t = world->templates[i];
-
-			NameSet *to = findPkg(t.pkg);
-			into.templates[i]->addTo(to);
+			if (t.generate) {
+				NameSet *to = findPkg(t.pkg);
+				into->templates[i]->addTo(to);
+			}
 		}
 
 		c = threadCount();
 		for (nat i = 0; i < c; i++) {
 			const CppThread &t = world->threads[i];
-			findPkg(t.pkg)->add(into.namedThreads[i]);
+			findPkg(t.pkg)->add(into->namedThreads[i]);
 		}
 	}
 
@@ -334,12 +336,12 @@ namespace storm {
 
 		Value result = findValue(fn.result);
 
-		Function *f = new (e) Function(result, new (e) Str(fn.name), loadFnParams(fn.params));
+		Function *f = new (*e) Function(result, new (*e) Str(fn.name), loadFnParams(fn.params));
 
 		if (fn.kind == CppFunction::fnFreeEngine)
-			f->setCode(new (e) StaticEngineCode(result, fn.ptr));
+			f->setCode(new (*e) StaticEngineCode(result, fn.ptr));
 		else
-			f->setCode(new (e) StaticCode(fn.ptr));
+			f->setCode(new (*e) StaticCode(fn.ptr));
 
 		into->add(f);
 	}
@@ -355,8 +357,8 @@ namespace storm {
 		CppType::VTableFn vFn = world->types[firstParam.id].vtable;
 
 		const void *ptr = deVirtualize(fn.params[0], fn.ptr);
-		Function *f = new (e) Function(result, new (e) Str(fn.name), params);
-		f->setCode(new (e) StaticCode(ptr));
+		Function *f = new (*e) Function(result, new (*e) Str(fn.name), params);
+		f->setCode(new (*e) StaticCode(ptr));
 
 		if (cast)
 			f->flags |= namedAutoCast;
@@ -365,7 +367,7 @@ namespace storm {
 	}
 
 	Array<Value> *CppLoader::loadFnParams(const CppTypeRef *params) {
-		Array<Value> *r = new (e) Array<Value>();
+		Array<Value> *r = new (*e) Array<Value>();
 
 		for (Value v = findValue(*params); v != Value(); v = findValue(*++params)) {
 			r->push(v);
@@ -406,22 +408,22 @@ namespace storm {
 	}
 
 	void CppLoader::loadVariable(const CppVariable &var) {
-		Type *memberOf = into.types[var.memberOf];
+		Type *memberOf = into->types[var.memberOf];
 		assert(memberOf, L"Type not properly loaded!");
 
 		Value type = findValue(var.type);
 		assert(type != Value(), L"Type of the variable is void!");
 
-		MemberVar *v = new (e) MemberVar(new (e) Str(var.name), type, memberOf);
+		MemberVar *v = new (*e) MemberVar(new (*e) Str(var.name), type, memberOf);
 		v->setOffset(Offset(var.offset));
 		memberOf->add(v);
 	}
 
 	void CppLoader::loadEnumValue(const CppEnumValue &val) {
-		Enum *memberOf = as<Enum>(into.types[val.memberOf]);
+		Enum *memberOf = as<Enum>(into->types[val.memberOf]);
 		assert(memberOf, L"Type not properly loaded or not an enum!");
 
-		memberOf->add(new (e) EnumValue(memberOf, new (e) Str(val.name), val.value));
+		memberOf->add(new (*e) EnumValue(memberOf, new (*e) Str(val.name), val.value));
 	}
 
 }

@@ -4,24 +4,22 @@
 #include "Core/SharedLib.h"
 #include "Core/Gen/CppTypes.h"
 
-using namespace storm;
+namespace storm {
 
-/**
- * Free a SharedLibInfo struct.
- */
-static void freeInfo(SharedLibInfo *info) {
-	delete info;
-}
+	// Free a SharedLibInfo struct.
+	static void freeInfo(SharedLibInfo *info) {
+		delete info;
+	}
 
-/**
- * Entry-point for the shared library.
- */
-extern "C"
-SHARED_EXPORT SharedLibInfo *SHARED_LIB_ENTRY(const SharedLibStart *params) {
-	params->engine.attach(params->shared, params->unique);
+	SharedLibInfo *sharedLibEntry(const SharedLibStart *params) {
+		void *prev = params->engine.attach(params->shared, params->unique);
 
-	SharedLibInfo *result = new SharedLibInfo;
-	result->world = storm::cppWorld();
-	result->destroyFn = &freeInfo;
-	return result;
+		SharedLibInfo *result = new SharedLibInfo;
+		result->world = storm::cppWorld();
+		result->previousIdentifier = prev;
+		result->shutdownFn = null;
+		result->destroyFn = &freeInfo;
+		return result;
+	}
+
 }

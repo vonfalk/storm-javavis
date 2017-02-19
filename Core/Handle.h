@@ -17,6 +17,8 @@ namespace storm {
 	class Handle : public Object {
 		STORM_CLASS;
 	public:
+		STORM_CTOR Handle();
+
 		// Size of the type.
 		size_t size;
 

@@ -5,6 +5,7 @@
 #include "World.h"
 #include "Scope.h"
 #include "VTableCall.h"
+#include "SharedLibs.h"
 #include "Code/Arena.h"
 #include "Code/RefSource.h"
 #include "Code/Reference.h"
@@ -193,6 +194,9 @@ namespace storm {
 		void stdOut(TextOutput *to);
 		void stdError(TextOutput *to);
 
+		// Load a shared library.
+		SharedLib *loadShared(Url *file);
+
 	private:
 		// The compiler C++ world.
 		World world;
@@ -239,6 +243,9 @@ namespace storm {
 
 		// Root for GcRoot.
 		Gc::Root *objRoot;
+
+		// Loaded libraries.
+		SharedLibs libs;
 
 		// Standard IO thread.
 		StdIo *ioThread;

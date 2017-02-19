@@ -108,7 +108,7 @@ void World::resolveTypes() {
 
 		if (Class *c = as<Class>(t)) {
 			// Add the default copy-constructor to the type unless it is an actor.
-			if (!c->isActor()) {
+			if (!c->isActor() && c->provided) {
 				Auto<TypeRef> r = new NamedType(c->pos, L"void");
 				Function f(c->name + Function::ctor, c->pkg, aPublic, c->pos, r);
 				f.isMember = true;
@@ -118,7 +118,7 @@ void World::resolveTypes() {
 			}
 
 			// Add the default assignment operator to the type if it is a value.
-			if (c->valueType) {
+			if (c->valueType && c->provided) {
 				Auto<TypeRef> r = new RefType(new ResolvedType(t));
 				Function f(c->name + String(L"operator ="), c->pkg, aPublic, c->pos, r);
 				f.isMember = true;

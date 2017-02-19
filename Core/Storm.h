@@ -215,8 +215,6 @@
 #define SHARED_LIB_ENTRY storm_start
 #endif
 
-#define SHARED_LIB_ENTRY_STR STRING(SHARED_LIB_ENTRY)
-
 
 #include "Utils/Utils.h"
 #include "Utils/Platform.h"

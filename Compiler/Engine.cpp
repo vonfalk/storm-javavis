@@ -88,17 +88,19 @@ namespace storm {
 	Engine::~Engine() {
 		// Do not place anything directly here, we need the cleanup when creation fails.
 		destroy();
-
-		delete ioThread;
 	}
 
 	void Engine::destroy() {
 		advance(bootShutdown);
+		libs.shutdown();
 
 		// We need to remove the root this array implies before the Gc is destroyed.
 		world.clear();
 
 		gc.destroyRoot(objRoot);
+		libs.unload();
+
+		delete ioThread;
 	}
 
 	Type *Engine::cppType(Nat id) const {
@@ -467,6 +469,10 @@ namespace storm {
 		if (!o.pkgMap)
 			o.pkgMap = new (*this) Map<Url *, Package *>();
 		return o.pkgMap;
+	}
+
+	SharedLib *Engine::loadShared(Url *file) {
+		return libs.load(file);
 	}
 
 

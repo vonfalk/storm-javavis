@@ -61,9 +61,12 @@ namespace storm {
 	 * This is so that each shared library can have its own "namespace" of unique type identifiers.
 	 */
 	struct EngineFwdUnique {
-		Type *(*cppType)(Engine &e, Nat id);
-		Type *(*cppTemplateVa)(Engine &e, Nat id, Nat count, va_list params);
-		Thread *(*getThread)(Engine &e, const DeclThread *decl);
+		Type *(*cppType)(Engine &e, void *identifier, Nat id);
+		Type *(*cppTemplateVa)(Engine &e, void *identifier, Nat id, Nat count, va_list params);
+		Thread *(*getThread)(Engine &e, void *identifier, const DeclThread *decl);
+
+		// Identifier. Passed to all functions in here.
+		void *identifier;
 
 		// Completely different type to catch errors when using initializer lists.
 		Float dummy;

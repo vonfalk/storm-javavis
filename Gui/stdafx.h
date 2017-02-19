@@ -1,4 +1,4 @@
 #pragma once
 #include "Shared/Storm.h"
 
-using namespace std;
+using namespace storm;
