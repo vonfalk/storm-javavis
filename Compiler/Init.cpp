@@ -21,7 +21,7 @@ namespace storm {
 
 	void initTypes(Engine &e, World &into) {
 		const CppWorld *world = cppWorld();
-		CppLoader loader(e, world, into);
+		CppLoader loader(e, world, into, null);
 
 		into.types.resize(1);
 

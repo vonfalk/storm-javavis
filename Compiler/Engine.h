@@ -106,6 +106,7 @@ namespace storm {
 
 		// Find a NameSet relative to the root. If 'create', creates packages along the way.
 		NameSet *nameSet(SimpleName *name, bool create = false);
+		NameSet *nameSet(SimpleName *name, NameSet *root, bool create = false);
 
 		// Parse a string into a simple name and get the corresponding package.
 		Package *package(const wchar *name);

@@ -145,7 +145,7 @@ namespace storm {
 	const CppThread *CppMeta::cppThreads() {
 		static const CppThread threads[] = {
 			// CPP_THREADS
-			{ null, null, null },
+			{ null, null, null, false },
 		};
 		return threads;
 	}

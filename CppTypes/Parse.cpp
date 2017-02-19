@@ -277,7 +277,7 @@ static void parseEnum(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 	tok.skipIf(L"}");
 	tok.expect(L";");
 
-	type->provided = env.exportAll;
+	type->external = !env.exportAll;
 	if (!name.token.empty())
 		env.world.add(type);
 }
@@ -405,7 +405,7 @@ static void parseType(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 		}
 	}
 
-	type->provided = env.exportAll;
+	type->external = !env.exportAll;
 	env.world.add(type);
 
 	tok.expect(L";");
@@ -496,7 +496,7 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			tok.expect(L",");
 			CppName gen = parseName(tok);
 			Auto<Primitive> p = new Primitive(name + tName.token, env.pkg, gen, tName.pos);
-			p->provided = env.exportAll;
+			p->external = !env.exportAll;
 			env.world.types.insert(p);
 			tok.expect(L")");
 			tok.expect(L";");
@@ -504,7 +504,7 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			tok.skip();
 			tok.expect(L"(");
 			Token tName = tok.next();
-			Auto<Thread> t = new Thread(name + tName.token, env.pkg, tName.pos);
+			Auto<Thread> t = new Thread(name + tName.token, env.pkg, tName.pos, !env.exportAll);
 			env.world.threads.insert(t);
 			tok.expect(L")");
 			tok.expect(L";");

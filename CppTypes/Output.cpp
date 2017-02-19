@@ -145,7 +145,7 @@ static void genTypes(wostream &to, World &w) {
 				thread = c->threadType;
 			}
 
-			if (!t.provided) {
+			if (t.external) {
 				to << L"CppType::superExternal, 0, ";
 			} else if (Enum *e = as<Enum>(&t)) {
 				if (e->bitmask)
@@ -269,7 +269,7 @@ static void templateParams(ResolvedTemplateType *t, wostream &to, set<String> &c
 	}
 }
 
-static bool genTypeRef(wostream &to, TypeRef *r, bool safe = false) {
+static bool genTypeRef(wostream &to, TypeRef *r, bool safe = false, bool skipExternal = false) {
 	if (as<VoidType>(r)) {
 		to << L"{ -1, null, false, false }";
 		return true;
@@ -282,6 +282,8 @@ static bool genTypeRef(wostream &to, TypeRef *r, bool safe = false) {
 	if (ResolvedTemplateType *tt = as<ResolvedTemplateType>(r)) {
 		to << L"{ " << tt->type->id << L", " << templateParamsName(tt);
 	} else if (ResolvedType *rt = as<ResolvedType>(r)) {
+		if (skipExternal && rt->type->external)
+			return false;
 		to << L"{ " << rt->type->id << L", null";
 	} else if (safe) {
 		return false;
@@ -293,9 +295,9 @@ static bool genTypeRef(wostream &to, TypeRef *r, bool safe = false) {
 	return true;
 }
 
-static String genTypeRef(TypeRef *r) {
+static String genTypeRef(TypeRef *r, bool skipExternal = false) {
 	std::wostringstream to;
-	if (genTypeRef(to, r, true))
+	if (genTypeRef(to, r, true, skipExternal))
 		return to.str();
 	else
 		return L"";
@@ -491,8 +493,8 @@ static void genVariables(wostream &to, World &w) {
 			if (v.access != aPublic)
 				continue;
 
-			String type = genTypeRef(v.type.borrow());
-			// ...which the Storm type system can handle.
+			String type = genTypeRef(v.type.borrow(), true);
+			// ...which the Storm type system can handle. Ignores any external types.
 			if (type.empty())
 				continue;
 
@@ -518,6 +520,8 @@ static void genEnumValues(wostream &to, World &w) {
 	for (nat i = 0; i < w.types.size(); i++) {
 		Enum *e = as<Enum>(w.types[i].borrow());
 		if (!e)
+			continue;
+		if (e->external)
 			continue;
 
 		for (nat j = 0; j < e->members.size(); j++) {
@@ -593,7 +597,10 @@ static void genThreads(wostream &to, World &w) {
 		to << L"L\"" << t.pkg << L"\", ";
 
 		// Declaration.
-		to << L"&" << t.name << L"::decl";
+		to << L"&" << t.name << L"::decl, ";
+
+		// External?
+		to << (t.external ? L"true" : L"false");
 
 		to << L" },\n";
 	}

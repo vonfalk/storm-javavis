@@ -421,8 +421,10 @@ namespace storm {
 	}
 
 	NameSet *Engine::nameSet(SimpleName *name, bool create) {
-		NameSet *now = package();
+		return nameSet(name, package(), create);
+	}
 
+	NameSet *Engine::nameSet(SimpleName *name, NameSet *now, bool create) {
 		for (nat i = 0; i < name->count(); i++) {
 			SimplePart *p = name->at(i);
 
@@ -431,7 +433,7 @@ namespace storm {
 				return null;
 
 			Named *next = now->find(p);
-			if (!next) {
+			if (!next && create) {
 				Package *pkg = new (*this) Package(p->name);
 				now->add(pkg);
 				now = pkg;

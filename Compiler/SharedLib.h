@@ -9,6 +9,7 @@ namespace storm {
 	STORM_PKG(core.lang);
 
 	class Thread;
+	class Package;
 
 
 	/**
@@ -29,7 +30,7 @@ namespace storm {
 		SharedLib *prevInstance();
 
 		// Create a CppLoader for this shared library.
-		CppLoader createLoader(Engine &e);
+		CppLoader createLoader(Engine &e, Package *into);
 
 	private:
 		// Entry point type.

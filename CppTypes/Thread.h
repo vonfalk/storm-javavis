@@ -8,7 +8,7 @@
  */
 class Thread : public Refcount {
 public:
-	Thread(const CppName &name, const String &pkg, const SrcPos &pos);
+	Thread(const CppName &name, const String &pkg, const SrcPos &pos, bool external);
 
 	// Name.
 	CppName name;
@@ -21,4 +21,7 @@ public:
 
 	// Id.
 	nat id;
+
+	// External?
+	bool external;
 };

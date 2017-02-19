@@ -7,6 +7,8 @@
 namespace storm {
 	STORM_PKG(core.lang);
 
+	class Package;
+
 	/**
 	 * Load objects that are defined in C++ somewhere.
 	 */
@@ -14,7 +16,7 @@ namespace storm {
 		STORM_VALUE;
 	public:
 		// Create, note which set of functions to be loaded.
-		CppLoader(Engine &e, const CppWorld *world, World &into);
+		CppLoader(Engine &e, const CppWorld *world, World &into, Package *root);
 
 		// Load all types into a RootArray. This makes it possible to create instances of these types from C++.
 		void loadTypes();
@@ -49,6 +51,10 @@ namespace storm {
 		// Destination.
 		UNKNOWN(PTR_NOGC) World *into;
 
+		// Assume all non-external package paths are relative to this package. Null means the system
+		// root should be used.
+		Package *rootPackage;
+
 		// Get the number of types.
 		nat typeCount() const;
 
@@ -82,6 +88,12 @@ namespace storm {
 		// Create a gc type for the CppType with id 'id'.
 		GcType *createGcType(Nat id);
 
+		// Create a new type based on the type description.
+		Type *createType(Nat id, const CppType &type);
+
+		// Find an external type based on the name given in the description.
+		Type *findType(const CppType &type);
+
 		// Load a single function.
 		void loadFunction(const CppFunction &fn);
 
@@ -99,6 +111,11 @@ namespace storm {
 
 		// Load an enum value.
 		void loadEnumValue(const CppEnumValue &val);
+
+		// See if various types are external.
+		inline bool external(const CppType &t) const { return t.kind == CppType::superExternal; }
+		inline bool external(const CppTemplate &t) const { return t.generate == null; }
+		inline bool external(const CppThread &t) const { return t.external; }
 	};
 
 }

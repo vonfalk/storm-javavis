@@ -34,8 +34,8 @@ public:
 	// Position of this type.
 	SrcPos pos;
 
-	// Provide this type in the generated files.
-	bool provided;
+	// Is this type external to this unit?
+	bool external;
 
 	// Print.
 	virtual void print(wostream &to) const = 0;

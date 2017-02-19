@@ -45,8 +45,8 @@ namespace storm {
 		return (SharedLib *)info->previousIdentifier;
 	}
 
-	CppLoader SharedLib::createLoader(Engine &e) {
-		return CppLoader(e, info->world, world);
+	CppLoader SharedLib::createLoader(Engine &e, Package *into) {
+		return CppLoader(e, info->world, world, into);
 	}
 
 	SharedLib *SharedLib::load(Url *file) {
@@ -78,7 +78,7 @@ namespace storm {
 
 	Type *SharedLib::cppTemplate(Engine &e, void *lib, Nat id, Nat count, va_list params) {
 		SharedLib *me = (SharedLib *)lib;
-		assert(false, L"Implement me!");
+		assert(false, L"Implement me! Note: the TemplateList objects need to operate on our world's list of types!");
 		return null;
 	}
 

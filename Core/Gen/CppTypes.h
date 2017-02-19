@@ -222,7 +222,7 @@ namespace storm {
 		// Package the template is located inside (eg. a.b.c).
 		const wchar *pkg;
 
-		// Generate templates using this function.
+		// Generate templates using this function. If null, this template is located externally.
 		typedef Type *(*GenerateFn)(Str *name, ValueArray *);
 		GenerateFn generate;
 	};
@@ -239,6 +239,9 @@ namespace storm {
 
 		// Thread declaration.
 		DeclThread *decl;
+
+		// Located externally?
+		bool external;
 
 		// ...
 	};

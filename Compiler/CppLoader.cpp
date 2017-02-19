@@ -6,14 +6,15 @@
 #include "Function.h"
 #include "Code.h"
 #include "VTableCpp.h"
+#include "Exception.h"
 #include "Lib/Maybe.h"
 #include "Lib/Enum.h"
 #include "Core/Str.h"
 
 namespace storm {
 
-	CppLoader::CppLoader(Engine &e, const CppWorld *world, World &into) :
-		e(&e), world(world), into(&into) {}
+	CppLoader::CppLoader(Engine &e, const CppWorld *world, World &into, Package *root) :
+		e(&e), world(world), into(&into), rootPackage(root) {}
 
 	nat CppLoader::typeCount() const {
 		nat n;
@@ -64,6 +65,28 @@ namespace storm {
 			return null;
 	}
 
+	Type *CppLoader::createType(Nat id, const CppType &type) {
+		GcType *gcType = createGcType(id);
+
+		// If this type inherits from 'Type', it needs special care in its Gc-description.
+		if (type.kind == CppType::superClassType) {
+			GcType *t = Type::makeType(*e, gcType);
+			e->gc.freeType(gcType);
+			gcType = t;
+		}
+
+		return new (*e) Type(null, type.flags, Size(type.size), gcType, typeVTable(type));
+	}
+
+	Type *CppLoader::findType(const CppType &type) {
+		SimpleName *name = parseSimpleName(*e, type.pkg);
+		name->add(new (*e) Str(type.name));
+		Type *t = as<Type>(e->scope().find(name));
+		if (!t)
+			throw BuiltInError(L"Failed to locate " + ::toS(name));
+		return t;
+	}
+
 	void CppLoader::loadTypes() {
 		nat c = typeCount();
 		into->types.resize(c);
@@ -75,16 +98,10 @@ namespace storm {
 
 			// The array could be partially filled.
 			if (into->types[i] == null && type.kind != CppType::superCustom) {
-				GcType *gcType = createGcType(i);
-
-				// If this type inherits from 'Type', it needs special care in its Gc-description.
-				if (type.kind == CppType::superClassType) {
-					GcType *t = Type::makeType(*e, gcType);
-					e->gc.freeType(gcType);
-					gcType = t;
-				}
-
-				into->types[i] = new (*e) Type(null, type.flags, Size(type.size), gcType, typeVTable(type));
+				if (external(type))
+					into->types[i] = findType(type);
+				else
+					into->types[i] = createType(i, type);
 			}
 		}
 
@@ -112,9 +129,13 @@ namespace storm {
 		for (nat i = 0; i < c; i++) {
 			const CppType &type = world->types[i];
 
+			// Don't mess with external types.
+			if (external(type))
+				continue;
+
 			// Just to make sure...
 			if (!into->types[i])
-				break;
+				continue;
 
 			into->types[i]->name = new (*e) Str(type.name);
 		}
@@ -128,11 +149,22 @@ namespace storm {
 		for (nat i = 0; i < c; i++) {
 			const CppThread &thread = world->threads[i];
 
-			if (!into->threads[i]) {
-				into->threads[i] = new (*e) Thread(thread.decl->createFn);
-			}
+			if (external(thread)) {
+				SimpleName *name = parseSimpleName(*e, thread.pkg);
+				name->add(new (*e) Str(thread.name));
+				NamedThread *found = as<NamedThread>(e->scope().find(name));
+				if (!found)
+					throw BuiltInError(L"Failed to locate " + ::toS(name));
 
-			into->namedThreads[i] = new (*e) NamedThread(new (*e) Str(thread.name), into->threads[i]);
+				into->namedThreads[i] = found;
+				into->threads[i] = found->thread();
+			} else {
+				if (!into->threads[i]) {
+					into->threads[i] = new (*e) Thread(thread.decl->createFn);
+				}
+
+				into->namedThreads[i] = new (*e) NamedThread(new (*e) Str(thread.name), into->threads[i]);
+			}
 		}
 	}
 
@@ -171,6 +203,9 @@ namespace storm {
 					break;
 				case CppType::superCustom:
 					// Already done.
+					break;
+				case CppType::superExternal:
+					// Nothing to do!
 					break;
 				default:
 					assert(false, L"Unknown kind on type " + ::toS(type.name) + L": " + ::toS(type.kind) + L".");
@@ -239,9 +274,12 @@ namespace storm {
 	}
 
 	NameSet *CppLoader::findPkg(const wchar *name) {
+		if (!rootPackage)
+			rootPackage = e->package();
+
 		SimpleName *pkgName = parseSimpleName(*e, name);
-		NameSet *r = e->nameSet(pkgName);
-		assert(r, L"Failed to find the package " + String(name));
+		NameSet *r = e->nameSet(pkgName, rootPackage, true);
+		assert(r, L"Failed to find the package or type " + String(name));
 		return r;
 	}
 
@@ -285,14 +323,14 @@ namespace storm {
 		nat c = typeCount();
 		for (nat i = 0; i < c; i++) {
 			const CppType &t = world->types[i];
-			if (t.kind != CppType::superExternal)
+			if (!external(t))
 				findPkg(t.pkg)->add(into->types[i]);
 		}
 
 		c = templateCount();
 		for (nat i = 0; i < c; i++) {
 			const CppTemplate &t = world->templates[i];
-			if (t.generate) {
+			if (!external(t)) {
 				NameSet *to = findPkg(t.pkg);
 				into->templates[i]->addTo(to);
 			}
@@ -301,7 +339,8 @@ namespace storm {
 		c = threadCount();
 		for (nat i = 0; i < c; i++) {
 			const CppThread &t = world->threads[i];
-			findPkg(t.pkg)->add(into->namedThreads[i]);
+			if (!external(t))
+				findPkg(t.pkg)->add(into->namedThreads[i]);
 		}
 	}
 
