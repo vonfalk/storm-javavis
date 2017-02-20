@@ -19,6 +19,7 @@ Indent::~Indent() {
 
 int Indent::sync() {
 	overflow(traits_type::eof());
+	to->pubsync();
 	return 0;
 }
 
