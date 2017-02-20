@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Syntax.h"
+#include "Stack.h"
 
 namespace storm {
 	namespace syntax {
@@ -56,15 +57,15 @@ namespace storm {
 				ruleProds->at(ruleId).push(engine(), id);
 			}
 
-			Nat Syntax::lookup(Rule *r) {
+			Nat Syntax::lookup(Rule *r) const {
 				return rLookup->get(r);
 			}
 
-			Nat Syntax::lookup(Production *p) {
+			Nat Syntax::lookup(Production *p) const {
 				return pLookup->get(p);
 			}
 
-			RuleInfo Syntax::ruleInfo(Nat rule) {
+			RuleInfo Syntax::ruleInfo(Nat rule) const {
 				if (specialRule(rule)) {
 					Nat prod = baseRule(rule);
 					RuleInfo info;
@@ -76,7 +77,7 @@ namespace storm {
 				}
 			}
 
-			Str *Syntax::ruleName(Nat id) {
+			Str *Syntax::ruleName(Nat id) const {
 				if (specialRule(id)) {
 					Production *p = productions->at(baseRule(id));
 					return *p->rule()->identifier() + new (this) Str(L"'");
@@ -86,11 +87,11 @@ namespace storm {
 				}
 			}
 
-			Production *Syntax::production(Nat pid) {
+			Production *Syntax::production(Nat pid) const {
 				return productions->at(baseProd(pid));
 			}
 
-			Bool Syntax::sameSyntax(Syntax *o) {
+			Bool Syntax::sameSyntax(Syntax *o) const {
 				if (productions->count() != o->productions->count())
 					return false;
 
@@ -102,6 +103,31 @@ namespace storm {
 				return true;
 			}
 
+
+			Syntax::Order Syntax::execOrder(StackItem *a, StackItem *b) const {
+				if (a == b)
+					return same;
+				if (!a->reduced || !b->reduced)
+					return same;
+				if (!a->prev || !b->prev)
+					return same;
+
+				// The state which started first has priority.
+				if (a->prev->pos != b->prev->pos)
+					return a->prev->pos < b->prev->pos ? before : after;
+
+				// Check the priority of the productions.
+				Production *aProd = production(a->reducedId);
+				Production *bProd = production(b->reducedId);
+				if (aProd->priority != bProd->priority)
+					return aProd->priority > bProd->priority ? before : after;
+
+				// TODO: recurse through the completed productions and order them lexiographically.
+
+				// TODO: find the longest production.
+
+				return same;
+			}
 
 		}
 	}

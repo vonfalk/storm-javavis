@@ -7,6 +7,8 @@ namespace storm {
 	namespace syntax {
 		namespace glr {
 
+			StackItem::StackItem() : state(0), pos(0), prev(null) {}
+
 			StackItem::StackItem(Nat state, Nat pos) : state(state), pos(pos), prev(null) {}
 
 			StackItem::StackItem(Nat state, Nat pos, StackItem *prev) : state(state), pos(pos), prev(prev) {}
@@ -14,7 +16,17 @@ namespace storm {
 			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, StackItem *reduced, Nat reducedId)
 				: state(state), pos(pos), prev(prev), reduced(reduced), reducedId(reducedId) {}
 
-			Bool StackItem::insert(StackItem *insert) {
+			Bool StackItem::insert(Syntax *syntax, StackItem *insert) {
+				if (reduced && insert->reduced && insert->reduced != this) {
+					if (syntax->execOrder(insert, this) == Syntax::before) {
+						reduced = insert->reduced;
+						reducedId = insert->reducedId;
+					}
+				} else {
+					reduced = insert->reduced;
+					reducedId = insert->reducedId;
+				}
+
 				StackItem **at = &morePrev;
 				for (; *at; at = &(*at)->morePrev) {
 					if (*at == insert)
@@ -84,7 +96,7 @@ namespace storm {
 				first = wrap(first + 1);
 			}
 
-			void FutureStacks::put(Nat pos, StackItem *insert) {
+			void FutureStacks::put(Nat pos, Syntax *syntax, StackItem *insert) {
 				if (pos >= count())
 					grow(pos + 1);
 
@@ -99,7 +111,7 @@ namespace storm {
 					// Insertion was performed. Nothing more to do.
 				} else {
 					// Append the current node as an alternative.
-					old->insert(insert);
+					old->insert(syntax, insert);
 				}
 			}
 

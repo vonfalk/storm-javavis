@@ -104,6 +104,12 @@ namespace storm {
 				// the topmost production.
 				StackItem *acceptingStack;
 
+				// The last non-empty state set.
+				Set<StackItem *> *lastSet;
+
+				// The position if 'lastSet'.
+				Nat lastPos;
+
 				/**
 				 * Member functions.
 				 */
@@ -122,12 +128,18 @@ namespace storm {
 				 * Environments" by Jan Renkers.
 				 */
 
+				// Describes a link to visit.
+				struct Link {
+					StackItem *from;
+					StackItem *to;
+				};
+
 				// Act on all states until we're done.
 				void actor(Nat pos, Set<StackItem *> *states, BoolSet *used);
 
 				// Perform actions required for a state.
 				void actorShift(Nat pos, State *state, StackItem *stack);
-				void actorReduce(Nat pos, State *state, StackItem *stack, StackItem *through);
+				void actorReduce(Nat pos, State *state, StackItem *stack, Link *through);
 
 				// Static state to the 'reduce' function.
 				struct ReduceEnv {
@@ -135,14 +147,17 @@ namespace storm {
 					StackItem *oldTop;
 					Nat production;
 					Nat rule;
+
+					// All nodes traversed to get here. Updated during the recursion.
+					GcArray<StackItem *> *path;
 				};
 
 				// Reduce a production of length 'len' from the current stack item. If 'through' is
-				// set, only nodes where 'through' is passed are considered.
-				void reduce(const ReduceEnv &env, StackItem *stack, StackItem *through, Nat len);
+				// set, only nodes where the edge 'link' is passed are considered.
+				void reduce(const ReduceEnv &env, StackItem *stack, Link *through, Nat len);
 
-				// Limited reduction of a rule. Only paths passing through 'through' are considered.
-				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through);
+				// Limited reduction of a rule. Only paths passing through the edge 'link' are considered.
+				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, Link *through);
 
 				/**
 				 * Tree computation.
@@ -159,6 +174,10 @@ namespace storm {
 
 				// Create a syntax node for the production 'p'.
 				Node *allocNode(Production *p, Nat pos) const;
+
+				// Produce error messages from the state set 'states'.
+				void errorMsg(StrBuf *out, Nat pos, Set<StackItem *> *states) const;
+				void errorMsg(Set<Str *> *errors, Nat state) const;
 			};
 
 		}

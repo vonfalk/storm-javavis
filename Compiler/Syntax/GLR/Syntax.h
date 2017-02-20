@@ -10,6 +10,8 @@ namespace storm {
 		namespace glr {
 			STORM_PKG(lang.bnf.glr);
 
+			class StackItem;
+
 			/**
 			 * Representation of all syntax in a parser.
 			 *
@@ -77,20 +79,20 @@ namespace storm {
 				void STORM_FN add(Production *p);
 
 				// Find the ID of a rule of a production.
-				Nat STORM_FN lookup(Rule *rule);
-				Nat STORM_FN lookup(Production *p);
+				Nat STORM_FN lookup(Rule *rule) const;
+				Nat STORM_FN lookup(Production *p) const;
 
 				// Get all productions for a rule.
-				RuleInfo ruleInfo(Nat rule);
+				RuleInfo ruleInfo(Nat rule) const;
 
 				// Get the name of a rule.
-				Str *ruleName(Nat rule);
+				Str *ruleName(Nat rule) const;
 
 				// Find a production from its id.
-				Production *production(Nat id);
+				Production *production(Nat id) const;
 
 				// Same syntax as another object?
-				Bool STORM_FN sameSyntax(Syntax *o);
+				Bool STORM_FN sameSyntax(Syntax *o) const;
 
 			private:
 				// All known rules and their ID:s.
@@ -136,6 +138,20 @@ namespace storm {
 				static inline Nat baseProd(Nat id) {
 					return id & ~Nat(prodMask);
 				}
+
+				/**
+				 * Ordering.
+				 */
+
+				enum Order {
+					before,
+					same,
+					after,
+				};
+
+				// Compute which stack item representing a reduction has a higher priority according
+				// to the grammar.
+				Order execOrder(StackItem *a, StackItem *b) const;
 			};
 
 		}

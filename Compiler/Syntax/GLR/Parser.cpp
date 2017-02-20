@@ -56,13 +56,15 @@ namespace storm {
 
 				stacks = new (this) FutureStacks();
 				acceptingStack = null;
+				lastSet = null;
+				lastPos = 0;
 
 				BoolSet *processed = new (this) BoolSet();
 				Nat startPos = start.offset();
 				Nat length = str->peekLength();
 
 				// Go through states until we reach the end of file.
-				stacks->put(0, startState(startPos, root));
+				stacks->put(0, syntax, startState(startPos, root));
 				for (Nat i = startPos; i <= length; i++) {
 					Set<StackItem *> *top = stacks->top();
 
@@ -79,6 +81,11 @@ namespace storm {
 
 			void Parser::actor(Nat pos, Set<StackItem *> *states, BoolSet *processed) {
 				processed->clear();
+
+				if (states->any()) {
+					lastSet = states;
+					lastPos = pos;
+				}
 
 				Bool done;
 				do {
@@ -114,11 +121,11 @@ namespace storm {
 
 					// Add the resulting match to the 'to-do' list.
 					Nat offset = matched - pos;
-					stacks->put(offset, new (this) StackItem(action->state, matched, stack));
+					stacks->put(offset, syntax, new (this) StackItem(action->state, matched, stack));
 				}
 			}
 
-			void Parser::actorReduce(Nat pos, State *state, StackItem *stack, StackItem *through) {
+			void Parser::actorReduce(Nat pos, State *state, StackItem *stack, Link *through) {
 				Array<Nat> *reduce = state->reduce;
 				if (!reduce)
 					return;
@@ -128,6 +135,8 @@ namespace storm {
 
 					Item item(syntax, id);
 					Nat rule = item.rule(syntax);
+					Nat length = item.length(syntax);
+					GcArray<StackItem *> *path = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, length + 1);
 
 					// Do reductions.
 					ReduceEnv env = {
@@ -135,33 +144,62 @@ namespace storm {
 						stack,
 						id,
 						rule,
+						path,
 					};
-					this->reduce(env, stack, through, item.length(syntax));
+					this->reduce(env, stack, through, length);
 				}
 			}
 
-			void Parser::reduce(const ReduceEnv &env, StackItem *stack, StackItem *through, Nat len) {
+			void Parser::reduce(const ReduceEnv &env, StackItem *stack, Link *through, Nat len) {
+				env.path->v[len] = stack;
+
 				if (len > 0) {
-					if (stack == through)
-						through = null;
+					len--;
+
+					if (through && stack == through->from) {
+						// We only need to traverse 'to'.
+						reduce(env, through->to, null, len);
+						return;
+					}
 
 					// Keep on traversing...
-					len--;
 					for (StackItem *i = stack; i; i = i->morePrev) {
 						if (i->prev)
 							reduce(env, i->prev, through, len);
 					}
 				} else if (through == null) {
-					if (stack->prev == null && env.rule == parseRoot) {
-						// TODO: Choose the best match if multiple ones exist.
-						acceptingStack = new (this) StackItem(-1, env.pos, stack, env.oldTop, env.production);
+					State *state = table->state(stack->state);
+					Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
+
+					bool accept = stack->prev == null && env.rule == parseRoot;
+					bool reduce = to != state->rules->end();
+
+					if (!accept && !reduce)
+						return;
+
+					// Create a sequence of StackItems where the 'prev' pointer is always followed
+					// if that is not already the case.
+					StackItem *top = env.path->v[0];
+					for (Nat i = 1; i < env.path->count; i++) {
+						StackItem *at = env.path->v[i];
+						if (at->prev == top)
+							top = at;
+						else
+							top = new (this) StackItem(at->state, at->pos, top, at->reduced, at->reducedId);
+					}
+
+					if (accept) {
+						StackItem *add = new (this) StackItem(-1, env.pos, stack, top, env.production);
+
+						if (acceptingStack && acceptingStack->pos == env.pos)
+							acceptingStack->insert(syntax, add);
+						else
+							acceptingStack = add;
 					}
 
 					// Figure out which state to go to.
-					State *state = table->state(stack->state);
-					Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
-					if (to != state->rules->end()) {
-						StackItem *add = new (this) StackItem(to.v(), env.pos, stack, env.oldTop, env.production);
+					if (reduce) {
+						StackItem *add = new (this) StackItem(to.v(), env.pos, stack, top, env.production);
 
 						// Add the newly created state.
 						Set<StackItem *> *top = stacks->top();
@@ -170,16 +208,17 @@ namespace storm {
 							// 'add' was successfully inserted. Nothing more to do!
 						} else {
 							// We need to merge it with the old one.
-							if (old->insert(add)) {
+							if (old->insert(syntax, add)) {
 								// Note: we should really make sure we visit both 'stack' and 'add'...
-								limitedReduce(env, top, stack);
+								Link link = { add, stack };
+								limitedReduce(env, top, &link);
 							}
 						}
 					}
 				}
 			}
 
-			void Parser::limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through) {
+			void Parser::limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, Link *through) {
 				for (Set<StackItem *>::Iter i = top->begin(), e = top->end(); i != e; ++i) {
 					StackItem *item = i.v();
 					State *state = table->state(item->state);
@@ -210,10 +249,6 @@ namespace storm {
 				parseRoot = null;
 			}
 
-			Bool Parser::hasError() const {
-				return false;
-			}
-
 			Bool Parser::hasTree() const {
 				return acceptingStack != null;
 			}
@@ -225,12 +260,59 @@ namespace storm {
 					return Str::Iter();
 			}
 
+			Bool Parser::hasError() const {
+				if (!acceptingStack)
+					return true;
+				return acceptingStack->pos < source->peekLength();
+			}
+
 			Str *Parser::errorMsg() const {
-				return null;
+				StrBuf *out = new (this) StrBuf();
+				if (lastPos == source->peekLength())
+					*out << L"Unexpected end of file.";
+				else if (lastSet)
+					errorMsg(out, lastPos, lastSet);
+				else
+					*out << L"No syntax provided.";
+
+				return out->toS();
+			}
+
+			void Parser::errorMsg(StrBuf *out, Nat pos, Set<StackItem *> *states) const {
+				Set<Str *> *errors = new (this) Set<Str *>();
+
+				for (Set<StackItem *>::Iter i = states->begin(); i != states->end(); ++i) {
+					errorMsg(errors, i.v()->state);
+				}
+
+				*out << L"Unexpected '" << source->posIter(pos).v() << L"'.";
+
+				if (errors->any()) {
+					*out << L"Expected:";
+					for (Set<Str *>::Iter i = errors->begin(); i != errors->end(); ++i) {
+						*out << L"\n  " << i.v();
+					}
+				}
+			}
+
+			void Parser::errorMsg(Set<Str *> *errors, Nat state) const {
+				ItemSet items = table->state(state)->items;
+
+				for (Nat i = 0; i < items.count(); i++) {
+					Item item = items.at(i);
+					if (item.end())
+						continue;
+
+					if (item.isRule(syntax)) {
+						errors->put(syntax->ruleName(item.nextRule(syntax)));
+					} else {
+						errors->put(TO_S(this, L"\"" << item.nextRegex(syntax) << L"\""));
+					}
+				}
 			}
 
 			SrcPos Parser::errorPos() const {
-				return SrcPos();
+				return SrcPos(sourceUrl, lastPos);
 			}
 
 			Node *Parser::tree() const {
@@ -283,6 +365,7 @@ namespace storm {
 
 				Item item = last(top->reducedId);
 				Production *p = syntax->production(top->reducedId);
+				PVAR(p);
 				Node *result = allocNode(p, top->prev->pos);
 
 				// Set to the start position as we miss 'repStart' when it is at offset 0.

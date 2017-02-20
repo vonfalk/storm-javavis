@@ -3,6 +3,7 @@
 #include "Core/GcArray.h"
 #include "Core/Set.h"
 #include "Compiler/Thread.h"
+#include "Syntax.h"
 
 namespace storm {
 	namespace syntax {
@@ -19,6 +20,7 @@ namespace storm {
 				STORM_CLASS;
 			public:
 				// Create.
+				STORM_CTOR StackItem();
 				STORM_CTOR StackItem(Nat state, Nat pos);
 				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev);
 				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, StackItem *reduced, Nat reducedId);
@@ -43,7 +45,7 @@ namespace storm {
 				Nat reducedId;
 
 				// Insert a node in the 'morePrev' chain if it is not already there. Returns 'true' if it was inserted.
-				Bool STORM_FN insert(StackItem *item);
+				Bool STORM_FN insert(Syntax *syntax, StackItem *item);
 
 				// Equality check and hashing.
 				virtual Bool STORM_FN equals(Object *o) const;
@@ -71,7 +73,7 @@ namespace storm {
 				void STORM_FN pop();
 
 				// Insert an item at location 'pos'. The top is at location 0.
-				void STORM_FN put(Nat pos, StackItem *item);
+				void STORM_FN put(Nat pos, Syntax *syntax, StackItem *item);
 
 			private:
 				// Storage. Used as a circular queue. Size is always a power of two.
