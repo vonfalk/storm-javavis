@@ -17,14 +17,22 @@ namespace storm {
 				: state(state), pos(pos), prev(prev), reduced(reduced), reducedId(reducedId) {}
 
 			Bool StackItem::insert(Syntax *syntax, StackItem *insert) {
-				if (reduced && insert->reduced && insert->reduced != this) {
-					if (syntax->execOrder(insert, this) == Syntax::before) {
+				bool update = false;
+				if (reduced && insert->reduced) {
+					update = syntax->execOrder(insert, this) == Syntax::before;
+				} else if (insert->reduced) {
+					update = true;
+				}
+
+				if (update) {
+					if (insert->reduced == this) {
+						// We do not want any cycles, create a new node.
+						reduced = new (this) StackItem(*insert->reduced);
+						reducedId = insert->reducedId;
+					} else {
 						reduced = insert->reduced;
 						reducedId = insert->reducedId;
 					}
-				} else {
-					reduced = insert->reduced;
-					reducedId = insert->reducedId;
 				}
 
 				StackItem **at = &morePrev;

@@ -361,21 +361,21 @@ namespace storm {
 			}
 
 			Node *Parser::tree(StackItem *top) const {
+				static Nat ctr = 0;
 				assert(top->reduced, L"Trying to create a tree from a non-reduced node!");
 
 				Item item = last(top->reducedId);
 				Production *p = syntax->production(top->reducedId);
-				PVAR(p);
+				// PVAR(p);
+				::Indent z(util::debugStream());
 				Node *result = allocNode(p, top->prev->pos);
 
 				// Set to the start position as we miss 'repStart' when it is at offset 0.
 				Nat repStart = top->prev->pos;
 				Nat repEnd = 0;
 
-				for (StackItem *at = top->reduced; at != top->prev; at = at->prev) {
+				for (StackItem *at = top->reduced; item.prev(p); at = at->prev) {
 					StackItem *prev = at->prev;
-					if (!item.prev(p))
-						continue;
 					assert(item.pos != Item::endPos);
 
 					// Remember the capture!
@@ -409,10 +409,9 @@ namespace storm {
 				Item item = last(top->reducedId);
 				Production *p = syntax->production(top->reducedId);
 
-				for (StackItem *at = top->reduced; at != top->prev; at = at->prev) {
+				for (StackItem *at = top->reduced; item.prev(p); at = at->prev) {
 					StackItem *prev = at->prev;
-					if (!item.prev(p))
-						continue;
+					assert(item.pos != Item::endPos);
 
 					if (item.pos == Item::specialPos) {
 						// This is always the first one (if present). To reduce stack space

@@ -125,15 +125,14 @@ static String parseStr(const wchar *root, const wchar *parse, Nat backend) {
 
 BEGIN_TEST_(ParseOrderTest, BS) {
 	for (Nat i = 0; i < numBackends; i++) {
-		CHECK_RUNS(parse(L"Skip", L" a {} b {} c ", i));
+		// CHECK_RUNS(parse(L"Skip", L" a {} b {} c ", i));
 
-		CHECK_EQ(parseStr(L"Prio", L"a b", i), L"ab");
-		CHECK_EQ(parseStr(L"Prio", L"var b", i), L"b");
-		CHECK_EQ(parseStr(L"Prio", L"async b", i), L"asyncb");
+		// CHECK_EQ(parseStr(L"Prio", L"a b", i), L"ab");
+		// CHECK_EQ(parseStr(L"Prio", L"var b", i), L"b");
+		// CHECK_EQ(parseStr(L"Prio", L"async b", i), L"asyncb");
 
-		CHECK_EQ(parseStr(L"Rec", L"a,b,c", i), L"(a)((b)(c))");
-		continue;
-		CHECK_EQ(parseStr(L"Rec", L"a.b.c", i), L"((a)(b))(c)");
+		// CHECK_EQ(parseStr(L"Rec", L"a,b,c", i), L"(a)((b)(c))");
+		// CHECK_EQ(parseStr(L"Rec", L"a.b.c", i), L"((a)(b))(c)");
 		CHECK_EQ(parseStr(L"Rec", L"a.b.c.d", i), L"(((a)(b))(c))(d)");
 		CHECK_EQ(parseStr(L"Rec", L"a,b,c,d", i), L"(a)((b)((c)(d)))");
 		CHECK_EQ(parseStr(L"Rec", L"a.b.c.d.e", i), L"((((a)(b))(c))(d))(e)");
