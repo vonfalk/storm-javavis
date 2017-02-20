@@ -19,14 +19,27 @@ namespace storm {
 			Bool StackItem::insert(Syntax *syntax, StackItem *insert) {
 				StackItem **at = &morePrev;
 				for (; *at; at = &(*at)->morePrev) {
-					if (*at == insert) {
-						// TODO: Merge trees!
+					if (*at == insert)
+						return false;
+
+					if ((*at)->prev == insert->prev) {
+						// These are considered to be the same link. See which syntax tree to grab!
+						updateTree(insert->tree, syntax);
 						return false;
 					}
 				}
 
 				*at = insert;
 				return true;
+			}
+
+			void StackItem::updateTree(TreeNode *newTree, Syntax *syntax) {
+				if (!newTree) {
+				} else if (!tree) {
+					tree = newTree;
+				} else if (newTree->priority(tree, syntax) == TreeNode::higher) {
+					tree = newTree;
+				}
 			}
 
 			Bool StackItem::equals(Object *o) const {

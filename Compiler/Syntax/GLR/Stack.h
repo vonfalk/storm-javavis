@@ -54,6 +54,10 @@ namespace storm {
 
 				// Output.
 				virtual void STORM_FN toS(StrBuf *to) const;
+
+			private:
+				// Update 'tree' in this object if the provided tree has a higher priority than this.
+				void updateTree(TreeNode *newTree, Syntax *syntax);
 			};
 
 

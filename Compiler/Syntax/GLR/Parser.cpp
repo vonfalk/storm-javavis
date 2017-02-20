@@ -190,10 +190,12 @@ namespace storm {
 					if (accept) {
 						StackItem *add = new (this) StackItem(-1, env.pos, stack, node);
 
-						if (acceptingStack && acceptingStack->pos == env.pos)
-							acceptingStack->insert(syntax, add);
-						else
+						if (acceptingStack && acceptingStack->pos == env.pos) {
+							if (node->priority(acceptingStack->tree, syntax) == TreeNode::higher)
+								acceptingStack = add;
+						} else {
 							acceptingStack = add;
+						}
 					}
 
 					// Figure out which state to go to.

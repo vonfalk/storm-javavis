@@ -125,8 +125,6 @@ static String parseStr(const wchar *root, const wchar *parse, Nat backend) {
 
 BEGIN_TEST_(ParseOrderTest, BS) {
 	for (Nat i = 0; i < numBackends; i++) {
-		CHECK_RUNS(parse(L"Skip", L" a {} b {} c ", i));
-
 		CHECK_EQ(parseStr(L"Prio", L"a b", i), L"ab");
 		CHECK_EQ(parseStr(L"Prio", L"var b", i), L"b");
 		CHECK_EQ(parseStr(L"Prio", L"async b", i), L"asyncb");
@@ -143,6 +141,8 @@ BEGIN_TEST_(ParseOrderTest, BS) {
 
 		// Check if ()* is greedy if this fails...
 		CHECK_EQ(parseStr(L"Unless", L"a unless a b c", i), L"(a)(a(b)(c))");
+
+		CHECK_RUNS(parse(L"Skip", L" a {} b {} c ", i));
 	}
 } END_TEST
 

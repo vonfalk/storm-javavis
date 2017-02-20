@@ -41,7 +41,7 @@ namespace storm {
 				};
 
 				// Find out if this node has higher priority than another node.
-				Priority STORM_FN priority(TreeNode *other, Syntax *syntax) const;
+				Priority STORM_FN priority(TreeNode *other, Syntax *syntax);
 
 				// Output.
 				virtual void STORM_FN toS(StrBuf *to) const;

@@ -29,7 +29,26 @@ namespace storm {
 				}
 			}
 
-			TreeNode::Priority TreeNode::priority(TreeNode *other, Syntax *syntax) const {
+			TreeNode::Priority TreeNode::priority(TreeNode *b, Syntax *syntax) {
+				TreeNode *a = this;
+				if (!a->children || !b->children)
+					return equal;
+				if (a->pos != b->pos)
+					return a->pos < b->pos ? higher : lower;
+
+				Production *aProd = syntax->production(a->production());
+				Production *bProd = syntax->production(b->production());
+				if (aProd->priority != bProd->priority)
+					return aProd->priority > bProd->priority ? higher : lower;
+
+				if (aProd != bProd)
+					// If two productions have the same priority, the behavior is undefined.
+					return equal;
+
+				// Traverse and do a lexiographic compare between the two trees.
+
+				// The longest one wins. This makes * and + greedy.
+
 				return equal;
 			}
 
