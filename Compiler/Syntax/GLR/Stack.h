@@ -4,6 +4,7 @@
 #include "Core/Set.h"
 #include "Compiler/Thread.h"
 #include "Syntax.h"
+#include "Tree.h"
 
 namespace storm {
 	namespace syntax {
@@ -12,6 +13,10 @@ namespace storm {
 
 			/**
 			 * Stack items in the GLR parser.
+			 *
+			 * These closely resemble what the paper describes as 'links'. One node consists of one
+			 * instance of this class. All instances also describe a 'link', and multiple instances
+			 * can be chained together to represent all links.
 			 *
 			 * TODO: It could be useful to merge these into larger chunks and use one-dimensional
 			 * ID:s for pointers to them.
@@ -22,27 +27,23 @@ namespace storm {
 				// Create.
 				STORM_CTOR StackItem();
 				STORM_CTOR StackItem(Nat state, Nat pos);
-				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev);
-				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, StackItem *reduced, Nat reducedId);
+				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, TreeNode *tree);
 
 				// State at this point in the stack.
 				Nat state;
 
-				// Position in the input.
+				// Position in the input. TODO: Remove?
 				Nat pos;
 
 				// Previous item in the stack.
 				MAYBE(StackItem *) prev;
 
+				// Part of the syntax tree for this node.
+				MAYBE(TreeNode *) tree;
+
 				// More previous states? Forms a linked list of multiple StackItem nodes at the same
 				// level (we ignore 'state' and 'reduced' there) of more previous items.
 				MAYBE(StackItem *) morePrev;
-
-				// The stack caused this item by reduction.
-				MAYBE(StackItem *) reduced;
-
-				// If 'reduced': the production that was reduced to produce the current item.
-				Nat reducedId;
 
 				// Insert a node in the 'morePrev' chain if it is not already there. Returns 'true' if it was inserted.
 				Bool STORM_FN insert(Syntax *syntax, StackItem *item);

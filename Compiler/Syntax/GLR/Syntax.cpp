@@ -103,32 +103,6 @@ namespace storm {
 				return true;
 			}
 
-
-			Syntax::Order Syntax::execOrder(StackItem *a, StackItem *b) const {
-				if (a == b)
-					return same;
-				if (!a->reduced || !b->reduced)
-					return same;
-				if (!a->prev || !b->prev)
-					return same;
-
-				// The state which started first has priority.
-				if (a->prev->pos != b->prev->pos)
-					return a->prev->pos < b->prev->pos ? before : after;
-
-				// Check the priority of the productions.
-				Production *aProd = production(a->reducedId);
-				Production *bProd = production(b->reducedId);
-				if (aProd->priority != bProd->priority)
-					return aProd->priority > bProd->priority ? before : after;
-
-				// TODO: recurse through the completed productions and order them lexiographically.
-
-				// TODO: find the longest production.
-
-				return same;
-			}
-
 		}
 	}
 }

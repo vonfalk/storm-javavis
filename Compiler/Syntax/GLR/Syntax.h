@@ -139,19 +139,6 @@ namespace storm {
 					return id & ~Nat(prodMask);
 				}
 
-				/**
-				 * Ordering.
-				 */
-
-				enum Order {
-					before,
-					same,
-					after,
-				};
-
-				// Compute which stack item representing a reduction has a higher priority according
-				// to the grammar.
-				Order execOrder(StackItem *a, StackItem *b) const;
 			};
 
 		}

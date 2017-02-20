@@ -7,38 +7,22 @@ namespace storm {
 	namespace syntax {
 		namespace glr {
 
-			StackItem::StackItem() : state(0), pos(0), prev(null) {}
+			StackItem::StackItem()
+				: state(0), pos(0), prev(null), tree(null) {}
 
-			StackItem::StackItem(Nat state, Nat pos) : state(state), pos(pos), prev(null) {}
+			StackItem::StackItem(Nat state, Nat pos)
+				: state(state), pos(pos), prev(null), tree(null) {}
 
-			StackItem::StackItem(Nat state, Nat pos, StackItem *prev) : state(state), pos(pos), prev(prev) {}
-
-			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, StackItem *reduced, Nat reducedId)
-				: state(state), pos(pos), prev(prev), reduced(reduced), reducedId(reducedId) {}
+			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, TreeNode *tree)
+				: state(state), pos(pos), prev(prev), tree(tree) {}
 
 			Bool StackItem::insert(Syntax *syntax, StackItem *insert) {
-				bool update = false;
-				if (reduced && insert->reduced) {
-					update = syntax->execOrder(insert, this) == Syntax::before;
-				} else if (insert->reduced) {
-					update = true;
-				}
-
-				if (update) {
-					if (insert->reduced == this) {
-						// We do not want any cycles, create a new node.
-						reduced = new (this) StackItem(*insert->reduced);
-						reducedId = insert->reducedId;
-					} else {
-						reduced = insert->reduced;
-						reducedId = insert->reducedId;
-					}
-				}
-
 				StackItem **at = &morePrev;
 				for (; *at; at = &(*at)->morePrev) {
-					if (*at == insert)
+					if (*at == insert) {
+						// TODO: Merge trees!
 						return false;
+					}
 				}
 
 				*at = insert;
@@ -68,11 +52,8 @@ namespace storm {
 					space = true;
 					*to << i->state;
 
-					if (i->reduced) {
-						Indent z(to);
-						*to << L"\n(";
-						print(i->reduced, i->prev, to);
-						*to << L")\n";
+					if (i->tree) {
+						*to << L" " << i->tree << L"\n";
 						space = false;
 					}
 				}
