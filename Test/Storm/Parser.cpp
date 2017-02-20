@@ -52,7 +52,7 @@ BEGIN_TEST(ParserTest, Storm) {
 		{
 			// Repetitions.
 			Parser *p = Parser::create(pkg, L"Sentences", createBackend(id));
-			Str *s = new (e) Str(L"the cat runs. the bird sleeps.");
+			Str *s = new (e) Str(L"the cat runs. the bird sleeps. the dog swims.");
 			CHECK(p->parse(s, new (e) Url()));
 			CHECK(!p->hasError());
 			CHECK(p->hasTree());
@@ -60,7 +60,7 @@ BEGIN_TEST(ParserTest, Storm) {
 
 			syntax::Node *tree = p->tree();
 			Array<Str *> *r = syntax::transformNode<Array<Str *>>(tree);
-			CHECK_EQ(::toS(r), L"[cat, bird]");
+			CHECK_EQ(::toS(r), L"[cat, bird, dog]");
 		}
 
 		{

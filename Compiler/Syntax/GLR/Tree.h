@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Object.h"
 #include "Core/GcArray.h"
+#include "Syntax.h"
 
 namespace storm {
 	namespace syntax {
@@ -23,7 +24,7 @@ namespace storm {
 				// Create a node for a nonterminal symbol.
 				STORM_CTOR TreeNode(Nat pos, Nat production, Nat children);
 
-				// The offset of this tree node in the syntax tree.
+				// The position at which this node started in the syntax tree.
 				Nat pos;
 
 				// Children (if allocated). The 'filled' member of the array indicates which
@@ -32,6 +33,15 @@ namespace storm {
 
 				// Get the reduced id if children is set.
 				inline Nat production() const { return children->filled; }
+
+				enum Priority {
+					higher,
+					equal,
+					lower,
+				};
+
+				// Find out if this node has higher priority than another node.
+				Priority STORM_FN priority(TreeNode *other, Syntax *syntax) const;
 
 				// Output.
 				virtual void STORM_FN toS(StrBuf *to) const;

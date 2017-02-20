@@ -29,6 +29,10 @@ namespace storm {
 				}
 			}
 
+			TreeNode::Priority TreeNode::priority(TreeNode *other, Syntax *syntax) const {
+				return equal;
+			}
+
 		}
 	}
 }

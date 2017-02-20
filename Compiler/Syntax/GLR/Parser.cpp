@@ -52,7 +52,6 @@ namespace storm {
 			Bool Parser::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
 				source = str;
 				sourceUrl = file;
-				parseStart = start.offset();
 				parseRoot = syntax->lookup(root);
 
 				stacks = new (this) FutureStacks();
@@ -61,11 +60,12 @@ namespace storm {
 				lastPos = 0;
 
 				BoolSet *processed = new (this) BoolSet();
+				Nat startPos = start.offset();
 				Nat length = str->peekLength();
 
 				// Go through states until we reach the end of file.
-				stacks->put(0, syntax, startState(parseStart, root));
-				for (Nat i = parseStart; i <= length; i++) {
+				stacks->put(0, syntax, startState(startPos, root));
+				for (Nat i = startPos; i <= length; i++) {
 					Set<StackItem *> *top = stacks->top();
 
 					// Process all states in 'top' until none remain.
@@ -121,7 +121,7 @@ namespace storm {
 
 					// Add the resulting match to the 'to-do' list.
 					Nat offset = matched - pos;
-					TreeNode *tree = new (this) TreeNode(matched);
+					TreeNode *tree = new (this) TreeNode(pos);
 					StackItem *item = new (this) StackItem(action->state, matched, stack, tree);
 					stacks->put(offset, syntax, item);
 				}
@@ -184,6 +184,8 @@ namespace storm {
 					TreeNode *node = new (this) TreeNode(env.pos, env.production, env.path->count);
 					for (Nat i = 0; i < env.path->count; i++)
 						node->children->v[i] = env.path->v[i]->tree;
+					if (node->children->count > 0)
+						node->pos = node->children->v[0]->pos;
 
 					if (accept) {
 						StackItem *add = new (this) StackItem(-1, env.pos, stack, node);
@@ -244,7 +246,6 @@ namespace storm {
 				source = null;
 				sourceUrl = null;
 				parseRoot = null;
-				parseStart = 0;
 			}
 
 			Bool Parser::hasTree() const {
@@ -319,7 +320,18 @@ namespace storm {
 				if (acceptingStack->tree == null)
 					return null;
 
-				return tree(acceptingStack->tree, parseStart);
+				return tree(acceptingStack->tree, acceptingStack->pos);
+			}
+
+			static void reverseNode(Node *node) {
+				ProductionType *t = (ProductionType *)runtime::typeOf(node);
+
+				for (Nat i = 0; i < t->arrayMembers->count(); i++) {
+					MemberVar *v = t->arrayMembers->at(i);
+					int offset = v->offset().current();
+					Array<Object *> *array = OFFSET_IN(node, offset, Array<Object *> *);
+					array->reverse();
+				}
 			}
 
 			template <class T>
@@ -333,42 +345,53 @@ namespace storm {
 				}
 			}
 
-			void Parser::setToken(Node *result, TreeNode *node, Nat startPos, Token *token) const {
+			void Parser::setToken(Node *result, TreeNode *node, Nat endPos, Token *token) const {
 				if (token->target) {
 					Object *match = null;
 					if (as<RegexToken>(token)) {
-						Str::Iter from = source->posIter(startPos);
-						Str::Iter to = source->posIter(node->pos);
-						SrcPos pos(sourceUrl, startPos);
+						Str::Iter from = source->posIter(node->pos);
+						Str::Iter to = source->posIter(endPos);
+						SrcPos pos(sourceUrl, node->pos);
 						setValue(result, token->target, new (this) SStr(source->substr(from, to), pos));
 					} else if (as<RuleToken>(token)) {
-						setValue(result, token->target, tree(node, startPos));
+						setValue(result, token->target, tree(node, endPos));
 					} else {
 						assert(false, L"Unknown token type used for match.");
 					}
 				}
 			}
 
-			Node *Parser::tree(TreeNode *node, Nat startPos) const {
+			static Nat firstPos(TreeNode *node, Nat endPos) {
+				if (node->children->count > 0)
+					return node->children->v[0]->pos;
+				else
+					return endPos;
+			}
+
+			Node *Parser::tree(TreeNode *node, Nat endPos) const {
 				assert(node->children, L"Trying to create a tree from a non-reduced node!");
 
 				Production *p = syntax->production(node->production());
-				Node *result = allocNode(p, startPos);
+				Node *result = allocNode(p, firstPos(node, endPos));
 
-				Item item(syntax, node->production());
-				Nat pos = startPos;
+				Item item = last(node->production());
+				Nat pos = endPos;
 
-				Nat repStart = 0;
-				Nat repEnd = 0;
+				Nat repStart = firstPos(node, endPos);
+				Nat repEnd = endPos;
 
-				for (Nat i = 0; i < node->children->count; i++) {
-					TreeNode *child = node->children->v[i];
+				for (Nat i = node->children->count; i > 0; i--) {
+					TreeNode *child = node->children->v[i-1];
+					if (!item.prev(syntax))
+						// Something is fishy...
+						break;
 
 					// Remember the capture!
-					if (item.pos == p->repStart)
+					if (item.pos == p->repStart) {
 						repStart = pos;
+					}
 					if (item.pos == p->repEnd)
-						repEnd = pos;
+						repEnd = child->pos;
 
 					// Store any tokens in here.
 					if (item.pos == Item::specialPos) {
@@ -377,12 +400,8 @@ namespace storm {
 						setToken(result, child, pos, p->tokens->at(item.pos));
 					}
 
-					item = item.next(syntax);
 					pos = child->pos;
 				}
-
-				if (p->repEnd == node->children->count)
-					repEnd = pos;
 
 				if (p->repCapture) {
 					Str::Iter from = source->posIter(repStart);
@@ -391,30 +410,43 @@ namespace storm {
 					setValue(result, p->repCapture->target, new (this) SStr(source->substr(from, to), pos));
 				}
 
+				reverseNode(result);
 				return result;
 			}
 
-			void Parser::subtree(Node *result, TreeNode *node, Nat startPos) const {
+			void Parser::subtree(Node *result, TreeNode *node, Nat endPos) const {
 				assert(node->children, L"Trying to create a subtree from a non-reduced node!");
 
 				Production *p = syntax->production(node->production());
 
-				Item item(syntax, node->production());
-				Nat pos = startPos;
+				Item item = last(node->production());
+				Nat pos = endPos;
 
-				for (Nat i = 0; i < node->children->count; i++) {
-					TreeNode *child = node->children->v[i];
+				for (Nat i = node->children->count; i > 0; i--) {
+					TreeNode *child = node->children->v[i-1];
+					if (!item.prev(syntax))
+						// Something is fishy...
+						break;
 
 					// Store any tokens in here.
 					if (item.pos == Item::specialPos) {
-						// Note: this is always the first node, we should make sure to not always recurse here!
-						subtree(result, child, pos);
+						// This is always the first token in special productions, thus we can elliminate some recursion!
+						assert(child->children, L"Special production not properly reduced!");
+						Nat reduced = child->production();
+						if (Syntax::specialProd(reduced) == Syntax::prodRepeat) {
+							assert(reduced == item.id, L"Special production has wrong recursion.");
+							item = last(reduced);
+							node = child;
+							i = child->children->count + 1;
+						} else {
+							assert(Syntax::specialProd(reduced) == Syntax::prodEpsilon, L"Expected an epsilon production!");
+						}
 					} else {
 						setToken(result, child, pos, p->tokens->at(item.pos));
-					}
 
-					item = item.next(syntax);
-					pos = child->pos;
+						// This shall not be done when we're elliminating recursion!
+						pos = child->pos;
+					}
 				}
 			}
 
