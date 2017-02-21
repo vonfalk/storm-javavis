@@ -29,6 +29,31 @@ namespace storm {
 				}
 			}
 
+			Bool TreeNode::equals(Object *other) const {
+				if (runtime::typeOf(this) != runtime::typeOf(other))
+					return false;
+
+				TreeNode *o = (TreeNode *)other;
+				bool hasChildren = children != null;
+				bool oChildren = o->children != null;
+
+				if (hasChildren != oChildren)
+					return false;
+
+				if (hasChildren)
+					return pos == o->pos;
+				else
+					return pos == o->pos
+						&& production() == o->production();
+			}
+
+			Nat TreeNode::hash() const {
+				if (children)
+					return pos ^ production();
+				else
+					return pos;
+			}
+
 			TreeNode::Priority TreeNode::priority(TreeNode *b, Syntax *syntax) {
 				TreeNode *a = this;
 				if (!a->children || !b->children)
@@ -47,15 +72,18 @@ namespace storm {
 
 				// Traverse and do a lexiographic compare between the two trees.
 				TreeArray aChildren(engine());
-				allChildren(aChildren, a->production());
+				a->allChildren(aChildren, Syntax::baseProd(a->production()));
 				TreeArray bChildren(engine());
-				allChildren(bChildren, b->production());
+				b->allChildren(bChildren, Syntax::baseProd(b->production()));
 
 				Nat to = min(aChildren.count(), bChildren.count());
 				Priority result = equal;
 				for (Nat i = 0; i < to && result == equal; i++) {
 					result = aChildren[i]->priority(bChildren[i], syntax);
 				}
+
+				if (result != equal)
+					return result;
 
 				// The longest one wins. This makes * and + greedy.
 				if (aChildren.count() != bChildren.count())
@@ -65,18 +93,28 @@ namespace storm {
 				return equal;
 			}
 
-			bool TreeNode::allChildren(TreeArray &out, Nat productionId) {
+			void TreeNode::allChildren(TreeArray &out, Nat productionId) {
 				if (!children)
-					return false;
-				if (Syntax::baseProd(production()) != Syntax::baseProd(productionId))
-					return false;
+					return;
 
 				// TODO? Make this iterative in some cases, can be done like in Parser::subtree.
 				for (Nat i = 0; i < children->count; i++) {
-					if (!children->v[i]->allChildren(out, productionId))
-						out.push(children->v[i]);
-				}
+					TreeNode *child = children->v[i];
 
+					if (!child->addMe(out, productionId))
+						out.push(child);
+				}
+			}
+
+			bool TreeNode::addMe(TreeArray &out, Nat productionId) {
+				if (!children)
+					return false;
+				if (Syntax::baseProd(production()) != productionId)
+					return false;
+				if (Syntax::specialProd(production()) == 0)
+					return false;
+
+				allChildren(out, productionId);
 				return true;
 			}
 

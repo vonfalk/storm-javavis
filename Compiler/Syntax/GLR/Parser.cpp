@@ -87,6 +87,9 @@ namespace storm {
 					lastPos = pos;
 				}
 
+				// TODO: Reuse between calls to 'actor'.
+				Set<TreeNode *> *trees = new (this) Set<TreeNode *>();
+
 				Bool done;
 				do {
 					done = true;
@@ -101,7 +104,7 @@ namespace storm {
 
 						// Actor actions.
 						actorShift(pos, s, now);
-						actorReduce(pos, s, now, null);
+						actorReduce(pos, s, trees, now, null);
 					}
 				} while (!done);
 			}
@@ -127,7 +130,7 @@ namespace storm {
 				}
 			}
 
-			void Parser::actorReduce(Nat pos, State *state, StackItem *stack, Link *through) {
+			void Parser::actorReduce(Nat pos, State *state, Set<TreeNode *> *trees, StackItem *stack, Link *through) {
 				Array<Nat> *reduce = state->reduce;
 				if (!reduce)
 					return;
@@ -146,6 +149,7 @@ namespace storm {
 						stack,
 						id,
 						rule,
+						trees,
 						path,
 					};
 					this->reduce(env, stack, through, length);
@@ -187,6 +191,23 @@ namespace storm {
 					if (node->children->count > 0)
 						node->pos = node->children->v[0]->pos;
 
+					{
+						// Merge trees if possible.
+						TreeNode *other = env.trees->at(node);
+						if (other != node) {
+							// PVAR(node);
+							// PVAR(other);
+							// PVAR(node->priority(other, syntax));
+						}
+
+						if (other != node && node->priority(other, syntax) == TreeNode::higher)
+							other->children = node->children;
+						node = other;
+					}
+
+					if (env.pos == 7)
+						PVAR(node);
+
 					if (accept) {
 						StackItem *add = new (this) StackItem(-1, env.pos, stack, node);
 
@@ -195,13 +216,6 @@ namespace storm {
 						} else {
 							acceptingStack = add;
 						}
-
-						// if (acceptingStack && acceptingStack->pos == env.pos) {
-						// 	if (node->priority(acceptingStack->tree, syntax) == TreeNode::higher)
-						// 		acceptingStack = add;
-						// } else {
-						// 	acceptingStack = add;
-						// }
 					}
 
 					// Figure out which state to go to.
@@ -217,7 +231,10 @@ namespace storm {
 							// We need to merge it with the old one.
 							if (old->insert(syntax, add)) {
 								// Note: we should really make sure we visit both 'stack' and 'add'...
-								Link link = { add, stack };
+								Link link = { old, stack };
+								if (env.pos == 7) {
+									PVAR(env.oldTop);
+								}
 								limitedReduce(env, top, &link);
 							}
 						}
@@ -230,7 +247,7 @@ namespace storm {
 					StackItem *item = i.v();
 					State *state = table->state(item->state);
 
-					actorReduce(env.pos, state, item, through);
+					actorReduce(env.pos, state, env.trees, item, through);
 				}
 			}
 

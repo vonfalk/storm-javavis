@@ -47,12 +47,17 @@ namespace storm {
 				// Output.
 				virtual void STORM_FN toS(StrBuf *to) const;
 
+				// Hash function and equality.
+				virtual Bool STORM_FN equals(Object *o) const;
+				virtual Nat STORM_FN hash() const;
+
 			private:
 				typedef PODArray<TreeNode *, 40> TreeArray;
 
 				// Traverse the node and find all subtrees. Respects the pseudoproductions. Returns
 				// true if the node was traversed.
-				bool allChildren(TreeArray &out, Nat productionId);
+				void allChildren(TreeArray &out, Nat productionId);
+				bool addMe(TreeArray &out, Nat productionId);
 			};
 
 		}

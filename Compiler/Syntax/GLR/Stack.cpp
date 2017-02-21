@@ -69,6 +69,9 @@ namespace storm {
 					space = true;
 					*to << i->state;
 
+					if (i->morePrev)
+						*to << L"->";
+
 					if (i->tree) {
 						*to << L" " << i->tree << L"\n";
 						space = false;
