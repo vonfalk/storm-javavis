@@ -143,13 +143,20 @@ namespace storm {
 				if (pos == endPos)
 					return Item(id, endPos);
 
+				return next(syntax->production(id));
+			}
+
+			Item Item::next(Production *p) const {
+				if (pos == endPos)
+					return Item(id, endPos);
+
 				switch (Syntax::specialProd(id)) {
 				case 0:
-					return Item(id, nextPos(syntax->production(id), pos));
+					return Item(id, nextPos(p, pos));
 				case Syntax::prodEpsilon:
 					return Item(id, endPos);
 				case Syntax::prodRepeat:
-					return Item(id, nextRepPos(syntax->production(id), pos));
+					return Item(id, nextRepPos(p, pos));
 				}
 
 				return Item(id, endPos);

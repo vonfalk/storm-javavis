@@ -135,7 +135,6 @@ BEGIN_TEST_(ParseOrderTest, BS) {
 		CHECK_EQ(parseStr(L"Rec", L"a,b,c,d", i), L"(a)((b)((c)(d)))");
 		CHECK_EQ(parseStr(L"Rec", L"a.b.c.d.e", i), L"((((a)(b))(c))(d))(e)");
 		CHECK_EQ(parseStr(L"Rec", L"a,b,c,d,e", i), L"(a)((b)((c)((d)(e))))");
-
 		CHECK_EQ(parseStr(L"Rec3", L"a.b.c.d.e.f.g", i), L"(((a)(b)(c))(d)(e))(f)(g)");
 		CHECK_EQ(parseStr(L"Rec3", L"a,b,c,d,e,f,g", i), L"(a)(b)((c)(d)((e)(f)(g)))");
 

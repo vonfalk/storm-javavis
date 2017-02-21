@@ -191,11 +191,17 @@ namespace storm {
 						StackItem *add = new (this) StackItem(-1, env.pos, stack, node);
 
 						if (acceptingStack && acceptingStack->pos == env.pos) {
-							if (node->priority(acceptingStack->tree, syntax) == TreeNode::higher)
-								acceptingStack = add;
+							acceptingStack->insert(syntax, add);
 						} else {
 							acceptingStack = add;
 						}
+
+						// if (acceptingStack && acceptingStack->pos == env.pos) {
+						// 	if (node->priority(acceptingStack->tree, syntax) == TreeNode::higher)
+						// 		acceptingStack = add;
+						// } else {
+						// 	acceptingStack = add;
+						// }
 					}
 
 					// Figure out which state to go to.
@@ -321,6 +327,10 @@ namespace storm {
 					return null;
 				if (acceptingStack->tree == null)
 					return null;
+
+				for (StackItem *at = acceptingStack; at; at = at->morePrev) {
+					PLN((void *)at << L": " << (void *)at->prev << L" - " << at->prev->state);
+				}
 
 				return tree(acceptingStack->tree, acceptingStack->pos);
 			}

@@ -17,19 +17,23 @@ namespace storm {
 				: state(state), pos(pos), prev(prev), tree(tree) {}
 
 			Bool StackItem::insert(Syntax *syntax, StackItem *insert) {
-				StackItem **at = &morePrev;
-				for (; *at; at = &(*at)->morePrev) {
-					if (*at == insert)
-						return false;
+				if (insert == this)
+					return false;
 
-					if ((*at)->prev == insert->prev) {
-						// These are considered to be the same link. See which syntax tree to grab!
-						updateTree(insert->tree, syntax);
+				StackItem *last = this;
+				for (StackItem *at = this; at; at = at->morePrev) {
+					last = at;
+
+					if (at == insert)
+						return false;
+					if (at->prev == insert->prev) {
+						// These are considered to be the same link. See which syntax tree to use!
+						at->updateTree(insert->tree, syntax);
 						return false;
 					}
 				}
 
-				*at = insert;
+				last->morePrev = insert;
 				return true;
 			}
 

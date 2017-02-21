@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Object.h"
 #include "Core/GcArray.h"
+#include "Core/PODArray.h"
 #include "Syntax.h"
 
 namespace storm {
@@ -45,6 +46,13 @@ namespace storm {
 
 				// Output.
 				virtual void STORM_FN toS(StrBuf *to) const;
+
+			private:
+				typedef PODArray<TreeNode *, 40> TreeArray;
+
+				// Traverse the node and find all subtrees. Respects the pseudoproductions. Returns
+				// true if the node was traversed.
+				bool allChildren(TreeArray &out, Nat productionId);
 			};
 
 		}

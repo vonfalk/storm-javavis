@@ -46,6 +46,7 @@ namespace storm {
 
 				// Get the next item in the sequence.
 				Item STORM_FN next(Syntax *syntax) const;
+				Item STORM_FN next(Production *p) const;
 
 				// Move this item to the previous item in the set. Returns false if no previous item exists.
 				Bool STORM_FN prev(Syntax *syntax);
