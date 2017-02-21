@@ -59,7 +59,8 @@ namespace storm {
 				lastSet = null;
 				lastPos = 0;
 
-				BoolSet *processed = new (this) BoolSet();
+				BoolSet *shiftsProcessed = new (this) BoolSet();
+				BoolSet *reducesProcessed = new (this) BoolSet();
 				Nat startPos = start.offset();
 				Nat length = str->peekLength();
 
@@ -70,7 +71,7 @@ namespace storm {
 
 					// Process all states in 'top' until none remain.
 					if (top)
-						actor(i, top, processed);
+						actor(i, top, shiftsProcessed, reducesProcessed);
 
 					// Advance one step.
 					stacks->pop();
@@ -79,8 +80,8 @@ namespace storm {
 				return acceptingStack != null;
 			}
 
-			void Parser::actor(Nat pos, Set<StackItem *> *states, BoolSet *processed) {
-				processed->clear();
+			void Parser::actor(Nat pos, Set<StackItem *> *states, BoolSet *shifts, BoolSet *reduces) {
+				// PVAR(pos);
 
 				if (states->any()) {
 					lastSet = states;
@@ -90,22 +91,48 @@ namespace storm {
 				// TODO: Reuse between calls to 'actor'.
 				Set<TreeNode *> *trees = new (this) Set<TreeNode *>();
 
+				// To properly support epsilon productions, we first perform all reduces and then
+				// all shifts.
+
+				shifts->clear();
+				reduces->clear();
+
+				typedef Set<StackItem *>::Iter Iter;
 				Bool done;
 				do {
 					done = true;
 
-					for (Set<StackItem *>::Iter i = states->begin(), e = states->end(); i != e; ++i) {
-						StackItem *now = i.v();
-						if (processed->get(now->state))
-							continue;
-						processed->set(now->state, true);
-						done = false;
-						State *s = table->state(now->state);
+					// Reduces.
+					Bool stepDone;
+					do {
+						stepDone = true;
+						for (Iter i = states->begin(), e = states->end(); i != e; ++i) {
+							StackItem *now = i.v();
+							if (reduces->get(now->state))
+								continue;
+							reduces->set(now->state, true);
+							done = false;
+							stepDone = false;
 
-						// Actor actions.
-						actorShift(pos, s, now);
-						actorReduce(pos, s, trees, now, null);
-					}
+							State *s = table->state(now->state);
+							actorReduce(pos, s, trees, now, null);
+						}
+					} while (!stepDone);
+
+					do {
+						stepDone = true;
+						for (Iter i = states->begin(), e = states->end(); i != e; ++i) {
+							StackItem *now = i.v();
+							if (shifts->get(now->state))
+								continue;
+							shifts->set(now->state, true);
+							done = false;
+							stepDone = false;
+
+							State *s = table->state(now->state);
+							actorShift(pos, s, now);
+						}
+					} while (!stepDone);
 				} while (!done);
 			}
 
@@ -130,7 +157,7 @@ namespace storm {
 				}
 			}
 
-			void Parser::actorReduce(Nat pos, State *state, Set<TreeNode *> *trees, StackItem *stack, Link *through) {
+			void Parser::actorReduce(Nat pos, State *state, Set<TreeNode *> *trees, StackItem *stack, StackItem *through) {
 				Array<Nat> *reduce = state->reduce;
 				if (!reduce)
 					return;
@@ -142,6 +169,8 @@ namespace storm {
 					Nat rule = item.rule(syntax);
 					Nat length = item.length(syntax);
 					GcArray<StackItem *> *path = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, length);
+
+					// PLN(L"Reducing " << item.toS(syntax) << L":");
 
 					// Do reductions.
 					ReduceEnv env = {
@@ -156,22 +185,18 @@ namespace storm {
 				}
 			}
 
-			void Parser::reduce(const ReduceEnv &env, StackItem *stack, Link *through, Nat len) {
+			void Parser::reduce(const ReduceEnv &env, StackItem *stack, StackItem *through, Nat len) {
+				// PLN(L"Reduce " << (void *)stack << L" " << stack->state << L" " << (void *)through << L" len " << len);
+				// ::Indent z(util::debugStream());
+
 				if (len > 0) {
 					len--;
-
-					if (through && stack == through->from) {
-						// We only need to traverse 'to'.
-						env.path->v[len] = stack;
-						reduce(env, through->to, null, len);
-						return;
-					}
 
 					// Keep on traversing...
 					for (StackItem *i = stack; i; i = i->morePrev) {
 						if (i->prev) {
 							env.path->v[len] = i;
-							reduce(env, i->prev, through, len);
+							reduce(env, i->prev, i == through ? null : through, len);
 						}
 					}
 				} else if (through == null) {
@@ -185,28 +210,24 @@ namespace storm {
 						return;
 
 					// Create the syntax tree node for this reduction.
+
 					TreeNode *node = new (this) TreeNode(env.pos, env.production, env.path->count);
 					for (Nat i = 0; i < env.path->count; i++)
 						node->children->v[i] = env.path->v[i]->tree;
 					if (node->children->count > 0)
 						node->pos = node->children->v[0]->pos;
 
+					// PVAR(accept);
+					// PVAR(reduce);
+					// PVAR(node);
+
 					{
 						// Merge trees if possible.
 						TreeNode *other = env.trees->at(node);
-						if (other != node) {
-							// PVAR(node);
-							// PVAR(other);
-							// PVAR(node->priority(other, syntax));
-						}
-
 						if (other != node && node->priority(other, syntax) == TreeNode::higher)
 							other->children = node->children;
 						node = other;
 					}
-
-					if (env.pos == 7)
-						PVAR(node);
 
 					if (accept) {
 						StackItem *add = new (this) StackItem(-1, env.pos, stack, node);
@@ -221,6 +242,7 @@ namespace storm {
 					// Figure out which state to go to.
 					if (reduce) {
 						StackItem *add = new (this) StackItem(to.v(), env.pos, stack, node);
+						// PLN(L"Added " << to.v() << L" with prev " << stack->state);
 
 						// Add the newly created state.
 						Set<StackItem *> *top = stacks->top();
@@ -230,19 +252,16 @@ namespace storm {
 						} else {
 							// We need to merge it with the old one.
 							if (old->insert(syntax, add)) {
-								// Note: we should really make sure we visit both 'stack' and 'add'...
-								Link link = { old, stack };
-								if (env.pos == 7) {
-									PVAR(env.oldTop);
-								}
-								limitedReduce(env, top, &link);
+								// Note: 'add' is the actual link.
+								limitedReduce(env, top, add);
 							}
 						}
 					}
 				}
 			}
 
-			void Parser::limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, Link *through) {
+			void Parser::limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through) {
+				// PLN(L"--LIMITED--");
 				for (Set<StackItem *>::Iter i = top->begin(), e = top->end(); i != e; ++i) {
 					StackItem *item = i.v();
 					State *state = table->state(item->state);
@@ -344,10 +363,6 @@ namespace storm {
 					return null;
 				if (acceptingStack->tree == null)
 					return null;
-
-				for (StackItem *at = acceptingStack; at; at = at->morePrev) {
-					PLN((void *)at << L": " << (void *)at->prev << L" - " << at->prev->state);
-				}
 
 				return tree(acceptingStack->tree, acceptingStack->pos);
 			}

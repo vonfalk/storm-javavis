@@ -14,7 +14,7 @@ namespace storm {
 			}
 
 			void TreeNode::toS(StrBuf *to) const {
-				*to << L"@" << pos;
+				*to << hex(this) << L"@" << pos;
 
 				if (children) {
 					*to << L" reduced by " << children->filled << L" {\n";

@@ -128,18 +128,12 @@ namespace storm {
 				 * Environments" by Jan Renkers.
 				 */
 
-				// Describes a link to visit.
-				struct Link {
-					StackItem *from;
-					StackItem *to;
-				};
-
 				// Act on all states until we're done.
-				void actor(Nat pos, Set<StackItem *> *states, BoolSet *used);
+				void actor(Nat pos, Set<StackItem *> *states, BoolSet *usedShift, BoolSet *usedReduce);
 
 				// Perform actions required for a state.
 				void actorShift(Nat pos, State *state, StackItem *stack);
-				void actorReduce(Nat pos, State *state, Set<TreeNode *> *trees, StackItem *stack, Link *through);
+				void actorReduce(Nat pos, State *state, Set<TreeNode *> *trees, StackItem *stack, StackItem *through);
 
 				// Static state to the 'reduce' function.
 				struct ReduceEnv {
@@ -155,10 +149,10 @@ namespace storm {
 
 				// Reduce a production of length 'len' from the current stack item. If 'through' is
 				// set, only nodes where the edge 'link' is passed are considered.
-				void reduce(const ReduceEnv &env, StackItem *stack, Link *through, Nat len);
+				void reduce(const ReduceEnv &env, StackItem *stack, StackItem *through, Nat len);
 
 				// Limited reduction of a rule. Only paths passing through the edge 'link' are considered.
-				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, Link *through);
+				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through);
 
 				/**
 				 * Tree computation.

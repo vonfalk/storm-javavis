@@ -23,7 +23,7 @@ static ParserBackend *createBackend(Nat id) {
 	}
 }
 
-BEGIN_TEST(ParserTest, Storm) {
+BEGIN_TEST_(ParserTest, Storm) {
 	Engine &e = gEngine();
 
 	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, L"test.grammar")));
@@ -92,7 +92,7 @@ static void parse(const wchar *root, const wchar *parse, Nat backend) {
 	Package *pkg = gEngine().package(L"test.syntax");
 	Parser *p = Parser::create(pkg, root, createBackend(backend));
 
-	PVAR(parse);
+	// PVAR(parse);
 	Url *empty = new (p) Url();
 	Str *s = new (p) Str(parse);
 
@@ -105,7 +105,7 @@ static String parseStr(const wchar *package, const wchar *root, const wchar *par
 	Package *pkg = gEngine().package(package);
 	Parser *p = Parser::create(pkg, root, createBackend(backend));
 
-	PVAR(parse);
+	// PVAR(parse);
 	Url *empty = new (p) Url();
 	Str *s = new (p) Str(parse);
 
@@ -125,14 +125,13 @@ static String parseStr(const wchar *root, const wchar *parse, Nat backend) {
 
 BEGIN_TEST_(ParseOrderTest, BS) {
 	for (Nat i = 0; i < numBackends; i++) {
-		// CHECK_EQ(parseStr(L"Prio", L"a b", i), L"ab");
-		// CHECK_EQ(parseStr(L"Prio", L"var b", i), L"b");
-		// CHECK_EQ(parseStr(L"Prio", L"async b", i), L"asyncb");
+		CHECK_EQ(parseStr(L"Prio", L"a b", i), L"ab");
+		CHECK_EQ(parseStr(L"Prio", L"var b", i), L"b");
+		CHECK_EQ(parseStr(L"Prio", L"async b", i), L"asyncb");
 
-		// CHECK_EQ(parseStr(L"Rec", L"a,b,c", i), L"(a)((b)(c))");
-		// CHECK_EQ(parseStr(L"Rec", L"a.b.c", i), L"((a)(b))(c)");
+		CHECK_EQ(parseStr(L"Rec", L"a.b.c", i), L"((a)(b))(c)");
+		CHECK_EQ(parseStr(L"Rec", L"a,b,c", i), L"(a)((b)(c))");
 		CHECK_EQ(parseStr(L"Rec", L"a.b.c.d", i), L"(((a)(b))(c))(d)");
-		continue;
 		CHECK_EQ(parseStr(L"Rec", L"a,b,c,d", i), L"(a)((b)((c)(d)))");
 		CHECK_EQ(parseStr(L"Rec", L"a.b.c.d.e", i), L"((((a)(b))(c))(d))(e)");
 		CHECK_EQ(parseStr(L"Rec", L"a,b,c,d,e", i), L"(a)((b)((c)((d)(e))))");
