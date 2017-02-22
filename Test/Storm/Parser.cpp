@@ -126,7 +126,7 @@ BEGIN_TEST_(ParseTricky, BS) {
 	// Tricky cases.
 	for (Nat id = 0; id < numBackends; id++) {
 		CHECK_RUNS(parse(L"MultiWS", L"ab", id));
-		// CHECK_RUNS(parse(L"Skip", L" a {} b {} c ", id));
+		CHECK_RUNS(parse(L"Skip", L" a {} b {} c ", id));
 	}
 } END_TEST
 

@@ -12,6 +12,9 @@ namespace storm {
 		namespace glr {
 			STORM_PKG(lang.bnf.glr);
 
+			// Use node sharing? This could cause cyclic syntax trees which is bad.
+			//#define GLR_SHARE_NODES
+
 			/**
 			 * The GLR parser backend. This parser lazily generates LR-states and uses a GLR parser
 			 * to interpret those states.
@@ -129,7 +132,7 @@ namespace storm {
 				 */
 
 				// Act on all states until we're done.
-				void actor(Nat pos, Set<StackItem *> *states, BoolSet *usedShift, BoolSet *usedReduce);
+				void actor(Nat pos, Set<StackItem *> *states, BoolSet *used);
 
 				// Perform actions required for a state.
 				void actorShift(Nat pos, State *state, StackItem *stack);
