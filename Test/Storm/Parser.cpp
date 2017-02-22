@@ -23,6 +23,41 @@ static ParserBackend *createBackend(Nat id) {
 	}
 }
 
+static void parse(const wchar *root, const wchar *parse, Nat backend) {
+	Package *pkg = gEngine().package(L"test.syntax");
+	Parser *p = Parser::create(pkg, root, createBackend(backend));
+
+	// PVAR(parse);
+	Url *empty = new (p) Url();
+	Str *s = new (p) Str(parse);
+
+	p->parse(s, empty);
+	if (p->hasError())
+		p->throwError();
+}
+
+static String parseStr(const wchar *package, const wchar *root, const wchar *parse, Nat backend) {
+	Package *pkg = gEngine().package(package);
+	Parser *p = Parser::create(pkg, root, createBackend(backend));
+
+	// PVAR(parse);
+	Url *empty = new (p) Url();
+	Str *s = new (p) Str(parse);
+
+	p->parse(s, empty);
+
+	if (p->hasError())
+		p->throwError();
+
+	Object *r = p->transform<Object>();
+	// PLN(parse << L" => " << r);
+	return ::toS(r);
+}
+
+static String parseStr(const wchar *root, const wchar *parse, Nat backend) {
+	return parseStr(L"test.syntax", root, parse, backend);
+}
+
 BEGIN_TEST_(ParserTest, Storm) {
 	Engine &e = gEngine();
 
@@ -87,41 +122,14 @@ BEGIN_TEST_(ParserTest, Storm) {
 
 } END_TEST
 
+BEGIN_TEST_(ParseTricky, BS) {
+	// Tricky cases.
+	for (Nat id = 0; id < numBackends; id++) {
+		CHECK_RUNS(parse(L"MultiWS", L"ab", id));
+		// CHECK_RUNS(parse(L"Skip", L" a {} b {} c ", id));
+	}
+} END_TEST
 
-static void parse(const wchar *root, const wchar *parse, Nat backend) {
-	Package *pkg = gEngine().package(L"test.syntax");
-	Parser *p = Parser::create(pkg, root, createBackend(backend));
-
-	// PVAR(parse);
-	Url *empty = new (p) Url();
-	Str *s = new (p) Str(parse);
-
-	p->parse(s, empty);
-	if (p->hasError())
-		p->throwError();
-}
-
-static String parseStr(const wchar *package, const wchar *root, const wchar *parse, Nat backend) {
-	Package *pkg = gEngine().package(package);
-	Parser *p = Parser::create(pkg, root, createBackend(backend));
-
-	// PVAR(parse);
-	Url *empty = new (p) Url();
-	Str *s = new (p) Str(parse);
-
-	p->parse(s, empty);
-
-	if (p->hasError())
-		p->throwError();
-
-	Object *r = p->transform<Object>();
-	// PLN(parse << L" => " << r);
-	return ::toS(r);
-}
-
-static String parseStr(const wchar *root, const wchar *parse, Nat backend) {
-	return parseStr(L"test.syntax", root, parse, backend);
-}
 
 BEGIN_TEST_(ParseOrderTest, BS) {
 	for (Nat i = 0; i < numBackends; i++) {
@@ -140,8 +148,6 @@ BEGIN_TEST_(ParseOrderTest, BS) {
 
 		// Check if ()* is greedy if this fails...
 		CHECK_EQ(parseStr(L"Unless", L"a unless a b c", i), L"(a)(a(b)(c))");
-
-		CHECK_RUNS(parse(L"Skip", L" a {} b {} c ", i));
 	}
 } END_TEST
 

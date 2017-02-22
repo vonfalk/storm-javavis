@@ -10,24 +10,23 @@ namespace storm {
 			STORM_PKG(lang.bnf.glr);
 
 			/**
-			 * One shift entry in the action table.
+			 * One shift or reduce entry in the action table.
 			 */
-			class ShiftAction : public ObjectOn<Compiler> {
-				STORM_CLASS;
+			class Action {
+				STORM_VALUE;
 			public:
 				// Create.
-				STORM_CTOR ShiftAction(Regex regex, Nat state);
+				STORM_CTOR Action(Regex regex, Nat state);
 
 				// Regular expression to match.
 				Regex regex;
 
-				// Go to this state.
+				// Go to this state, or reduce this production.
 				Nat state;
-
-				// To string.
-				virtual void STORM_FN toS(StrBuf *to) const;
 			};
 
+			// To string.
+			StrBuf &STORM_FN operator <<(StrBuf &to, Action action);
 
 			/**
 			 * One row in the LR table.
@@ -42,13 +41,18 @@ namespace storm {
 				ItemSet items;
 
 				// All shift actions in here. If the array is 'null', the actions need to be created.
-				MAYBE(Array<ShiftAction *> *) actions;
+				MAYBE(Array<Action> *) actions;
 
 				// The goto table. If 'null' it needs to be created. (Note: can not be named goto...)
 				MAYBE(Map<Nat, Nat> *) rules;
 
 				// Reduce these productions in this state (we're LR 0, so always do that).
 				MAYBE(Array<Nat> *) reduce;
+
+				// Reduce these productions when the lookahead matches zero characters (regexes are
+				// greedy, so some regexes do not match zero characters at all positions even though
+				// they can do that).
+				MAYBE(Array<Action> *) reduceOnEmpty;
 
 				// To string.
 				virtual void STORM_FN toS(StrBuf *to) const;
@@ -93,7 +97,7 @@ namespace storm {
 				void fill(State *state);
 
 				// Create the actions for a state.
-				ShiftAction *createShift(Nat start, ItemSet items, Array<Bool> *used, Regex regex);
+				Action createShift(Nat start, ItemSet items, Array<Bool> *used, Regex regex);
 				Nat createGoto(Nat start, ItemSet items, Array<Bool> *used, Nat rule);
 			};
 

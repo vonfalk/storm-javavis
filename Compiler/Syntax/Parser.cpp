@@ -27,7 +27,7 @@ namespace storm {
 			// TODO: Make it possible to specify which parser to use on creation!
 			use = backend;
 			if (!use)
-				use = new (this) DEFAULT_PARSER();
+				use = new (this) DEFAULT_PARSER::Parser();
 
 			// Find the package where 'root' is located and add that!
 			if (Package *pkg = ScopeLookup::firstPkg(root)) {

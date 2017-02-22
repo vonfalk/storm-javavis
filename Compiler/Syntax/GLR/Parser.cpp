@@ -77,6 +77,7 @@ namespace storm {
 					stacks->pop();
 				}
 
+				PVAR(table);
 				return acceptingStack != null;
 			}
 
@@ -139,55 +140,72 @@ namespace storm {
 			void Parser::actorShift(Nat pos, State *state, StackItem *stack) {
 				// NOTE: We need to properly handle shift actions matching the empty string.
 
-				Array<ShiftAction *> *actions = state->actions;
+				Array<Action> *actions = state->actions;
 				if (!actions)
 					return;
 
 				for (Nat i = 0; i < actions->count(); i++) {
-					ShiftAction *action = actions->at(i);
-					Nat matched = action->regex.matchRaw(source, pos);
+					const Action &action = actions->at(i);
+					Nat matched = action.regex.matchRaw(source, pos);
 					if (matched == Regex::NO_MATCH)
 						continue;
 
-					// Add the resulting match to the 'to-do' list.
+					// Add the resulting match to the 'to-do' list if it matched more than zero characters.
+					if (matched <= pos)
+						continue;
+
 					Nat offset = matched - pos;
 					TreeNode *tree = new (this) TreeNode(pos);
-					StackItem *item = new (this) StackItem(action->state, matched, stack, tree);
+					StackItem *item = new (this) StackItem(action.state, matched, stack, tree);
 					stacks->put(offset, syntax, item);
+					PLN(L"Added " << item->state << L" with prev " << stack->state);
 				}
 			}
 
 			void Parser::actorReduce(Nat pos, State *state, Set<TreeNode *> *trees, StackItem *stack, StackItem *through) {
 				Array<Nat> *reduce = state->reduce;
-				if (!reduce)
-					return;
+				if (reduce) {
+					for (Nat i = 0; i < reduce->count(); i++) {
+						Nat id = reduce->at(i);
+						doReduce(id, pos, trees, stack, through);
+					}
+				}
 
-				for (Nat i = 0; i < reduce->count(); i++) {
-					Nat id = reduce->at(i);
+				Array<Action> *reduceEmpty = state->reduceOnEmpty;
+				if (reduceEmpty) {
+					for (Nat i = 0; i < reduceEmpty->count(); i++) {
+						const Action &a = reduceEmpty->at(i);
+						if (a.regex.matchRaw(source, pos) != pos)
+							continue;
 
-					Item item(syntax, id);
-					Nat rule = item.rule(syntax);
-					Nat length = item.length(syntax);
-					GcArray<StackItem *> *path = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, length);
-
-					// PLN(L"Reducing " << item.toS(syntax) << L":");
-
-					// Do reductions.
-					ReduceEnv env = {
-						pos,
-						stack,
-						id,
-						rule,
-						trees,
-						path,
-					};
-					this->reduce(env, stack, through, length);
+						doReduce(a.state, pos, trees, stack, through);
+					}
 				}
 			}
 
+			void Parser::doReduce(Nat production, Nat pos, Set<TreeNode *> *trees, StackItem *stack, StackItem *through) {
+				Item item(syntax, production);
+				Nat rule = item.rule(syntax);
+				Nat length = item.length(syntax);
+				GcArray<StackItem *> *path = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, length);
+
+				PLN(L"Reducing " << item.toS(syntax) << L":");
+
+				// Do reductions.
+				ReduceEnv env = {
+					pos,
+					stack,
+					production,
+					rule,
+					trees,
+					path,
+				};
+				reduce(env, stack, through, length);
+			}
+
 			void Parser::reduce(const ReduceEnv &env, StackItem *stack, StackItem *through, Nat len) {
-				// PLN(L"Reduce " << (void *)stack << L" " << stack->state << L" " << (void *)through << L" len " << len);
-				// ::Indent z(util::debugStream());
+				PLN(L"Reduce " << (void *)stack << L" " << stack->state << L" " << (void *)through << L" len " << len);
+				::Indent z(util::debugStream());
 
 				if (len > 0) {
 					len--;
@@ -217,9 +235,9 @@ namespace storm {
 					if (node->children->count > 0)
 						node->pos = node->children->v[0]->pos;
 
-					// PVAR(accept);
-					// PVAR(reduce);
-					// PVAR(node);
+					PVAR(accept);
+					PVAR(reduce);
+					PVAR(node);
 
 					{
 						// Merge trees if possible.
@@ -242,7 +260,7 @@ namespace storm {
 					// Figure out which state to go to.
 					if (reduce) {
 						StackItem *add = new (this) StackItem(to.v(), env.pos, stack, node);
-						// PLN(L"Added " << to.v() << L" with prev " << stack->state);
+						PLN(L"Added " << to.v() << L" with prev " << stack->state);
 
 						// Add the newly created state.
 						Set<StackItem *> *top = stacks->top();
@@ -331,7 +349,7 @@ namespace storm {
 				*out << L"Unexpected '" << source->posIter(pos).v() << L"'.";
 
 				if (errors->any()) {
-					*out << L"Expected:";
+					*out << L" Expected:";
 					for (Set<Str *>::Iter i = errors->begin(); i != errors->end(); ++i) {
 						*out << L"\n  " << i.v();
 					}

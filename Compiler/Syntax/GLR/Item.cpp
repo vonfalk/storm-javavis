@@ -22,6 +22,7 @@ namespace storm {
 					pos = firstPos(world->production(production));
 					break;
 				case Syntax::prodEpsilon:
+				case Syntax::prodESkip:
 					pos = endPos;
 					break;
 				case Syntax::prodRepeat:
@@ -154,6 +155,7 @@ namespace storm {
 				case 0:
 					return Item(id, nextPos(p, pos));
 				case Syntax::prodEpsilon:
+				case Syntax::prodESkip:
 					return Item(id, endPos);
 				case Syntax::prodRepeat:
 					return Item(id, nextRepPos(p, pos));
@@ -171,6 +173,7 @@ namespace storm {
 				case 0:
 					return prevPos(p, pos);
 				case Syntax::prodEpsilon:
+				case Syntax::prodESkip:
 					return false;
 				case Syntax::prodRepeat:
 					return prevRepPos(p, pos);
@@ -186,7 +189,9 @@ namespace storm {
 					return syntax->lookup(syntax->production(Syntax::baseProd(id))->rule());
 				case Syntax::prodEpsilon:
 				case Syntax::prodRepeat:
-					return Syntax::baseProd(id) | Syntax::ruleMask;
+					return Syntax::baseProd(id) | Syntax::ruleRepeat;
+				case Syntax::prodESkip:
+					return Syntax::baseProd(id) | Syntax::ruleESkip;
 				}
 			}
 
@@ -204,6 +209,7 @@ namespace storm {
 					else
 						return p->tokens->count() + 1;
 				case Syntax::prodEpsilon:
+				case Syntax::prodESkip:
 					return 0;
 				case Syntax::prodRepeat:
 					if (repeatable(p->repType))
@@ -232,7 +238,7 @@ namespace storm {
 				assert(isRule(syntax));
 
 				if (pos == specialPos)
-					return Syntax::baseProd(id) | Syntax::ruleMask;
+					return Syntax::baseProd(id) | Syntax::ruleRepeat;
 
 				Production *p = syntax->production(id);
 				RuleToken *r = as<RuleToken>(p->tokens->at(pos));
@@ -294,6 +300,9 @@ namespace storm {
 					break;
 				case Syntax::prodEpsilon:
 					*to << Syntax::baseProd(id) << L"''";
+					break;
+				case Syntax::prodESkip:
+					*to << L"red" << Syntax::baseProd(id);
 					break;
 				}
 				*to << L": ";

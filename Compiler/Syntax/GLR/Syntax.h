@@ -113,15 +113,18 @@ namespace storm {
 			public:
 				// Various masks for rules.
 				enum {
-					ruleMask    = 0x80000000,
+					ruleMask    = 0xC0000000,
+					ruleRepeat  = 0x80000000,
+					ruleESkip   = 0x40000000,
 					prodEpsilon = 0x80000000,
+					prodESkip   = 0x40000000,
 					prodRepeat  = 0xC0000000,
 					prodMask    = 0xC0000000,
 				};
 
-				// Is this a special rule id?
-				static inline Bool specialRule(Nat id) {
-					return (id & ruleMask) != 0;
+				// Is this a special rule id? Returns ruleRepeat or ruleESkip.
+				static inline Nat specialRule(Nat id) {
+					return id & ruleMask;
 				}
 
 				// Get the production id this rule was derived from.
@@ -129,7 +132,7 @@ namespace storm {
 					return id & ~Nat(ruleMask);
 				}
 
-				// Is this a special production id? Returns either prodEpsilon, prodMask or 0.
+				// Is this a special production id? Returns either prodEpsilon, prodESkip, prodMask or 0.
 				static inline Nat specialProd(Nat id) {
 					return id & prodMask;
 				}

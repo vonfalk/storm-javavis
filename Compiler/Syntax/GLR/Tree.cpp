@@ -56,8 +56,15 @@ namespace storm {
 
 			TreeNode::Priority TreeNode::priority(TreeNode *b, Syntax *syntax) {
 				TreeNode *a = this;
+				if (a == b)
+					return equal;
 				if (!a->children || !b->children)
 					return equal;
+				// These productions are introduced in order to fix epsilon regexes. Do not compare!
+				if (Syntax::specialProd(a->production()) == Syntax::prodESkip
+					|| Syntax::specialProd(a->production()) == Syntax::prodESkip)
+					return equal;
+
 				if (a->pos != b->pos)
 					return a->pos < b->pos ? higher : lower;
 

@@ -134,6 +134,7 @@ namespace storm {
 				// Perform actions required for a state.
 				void actorShift(Nat pos, State *state, StackItem *stack);
 				void actorReduce(Nat pos, State *state, Set<TreeNode *> *trees, StackItem *stack, StackItem *through);
+				void doReduce(Nat production, Nat pos, Set<TreeNode *> *trees, StackItem *stack, StackItem *through);
 
 				// Static state to the 'reduce' function.
 				struct ReduceEnv {

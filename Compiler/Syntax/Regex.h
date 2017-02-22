@@ -24,6 +24,9 @@ namespace storm {
 			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);
 
+			// Does this regex match the empty string?
+			Bool STORM_FN matchesEmpty() const;
+
 			// Match the string 'str' starting from 'start' (if present). Returns true if a match
 			// was possible at all. The matched part of the string can be retrieved using
 			// 'matchEnd'.

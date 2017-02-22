@@ -7,13 +7,13 @@ namespace storm {
 		namespace glr {
 
 			/**
-			 * Shift action.
+			 * Action.
 			 */
 
-			ShiftAction::ShiftAction(Regex regex, Nat state) : regex(regex), state(state) {}
+			Action::Action(Regex regex, Nat state) : regex(regex), state(state) {}
 
-			void ShiftAction::toS(StrBuf *to) const {
-				*to << L"\"" << regex << L"\" -> " << state;
+			StrBuf &operator <<(StrBuf &to, Action action) {
+				return to << L"\"" << action.regex << L"\" -> " << action.state;
 			}
 
 			/**
@@ -30,19 +30,20 @@ namespace storm {
 				if (actions && rules) {
 					*to << L"Actions:\n";
 					Indent z(to);
-					for (Nat i = 0; i < actions->count(); i++) {
-						*to << L"shift ";
-						actions->at(i)->toS(to);
-						*to << L"\n";
-					}
+					for (Nat i = 0; i < actions->count(); i++)
+						*to << L"shift " << actions->at(i) << L"\n";
 
-					for (Map<Nat, Nat>::Iter i = rules->begin(), end = rules->end(); i != end; ++i) {
+					for (Map<Nat, Nat>::Iter i = rules->begin(), end = rules->end(); i != end; ++i)
 						*to << L"goto " << syntax->ruleName(i.k()) << L" -> " << i.v() << L"\n";
+
+					for (Nat i = 0; i < reduce->count(); i++)
+						*to << L"reduce " << Item(syntax, reduce->at(i)).toS(syntax) << L"\n";
+
+					for (Nat i = 0; i < reduceOnEmpty->count(); i++) {
+						Action a = reduceOnEmpty->at(i);
+						*to << L"reduce " << Item(syntax, a.state).toS(syntax) << L" when \"" << a.regex << L"\" is empty\n";
 					}
 
-					for (Nat i = 0; i < reduce->count(); i++) {
-						*to << L"reduce " << Item(syntax, reduce->at(i)).toS(syntax) << L"\n";
-					}
 				} else {
 					*to << L"<to be computed>\n";
 				}
@@ -91,9 +92,10 @@ namespace storm {
 			}
 
 			void Table::fill(State *state) {
-				state->actions = new (this) Array<ShiftAction *>();
+				state->actions = new (this) Array<Action>();
 				state->rules = new (this) Map<Nat, Nat>();
 				state->reduce = new (this) Array<Nat>();
+				state->reduceOnEmpty = new (this) Array<Action>();
 
 				// TODO: We might want to optimize this in the future. Currently we are using O(n^2)
 				// time, but this can be done in O(n) time using a hash map, but that is probably
@@ -116,7 +118,17 @@ namespace storm {
 						state->rules->put(rule, createGoto(i, items, used, rule));
 					} else {
 						// Add a shift action.
-						state->actions->push(createShift(i, items, used, item.nextRegex(syntax)));
+						Action shift = createShift(i, items, used, item.nextRegex(syntax));
+						state->actions->push(shift);
+
+						if (shift.regex.matchesEmpty()) {
+							// We need to pretend a production can be reduced here!
+							Nat rule = Syntax::prodESkip | shift.state;
+							state->rules->put(rule, shift.state);
+
+							// We need to add the reduction as well.
+							state->reduceOnEmpty->push(Action(shift.regex, rule));
+						}
 					}
 				}
 			}
@@ -143,7 +155,7 @@ namespace storm {
 				return state(result.expand(syntax));
 			}
 
-			ShiftAction *Table::createShift(Nat start, ItemSet items, Array<Bool> *used, Regex regex) {
+			Action Table::createShift(Nat start, ItemSet items, Array<Bool> *used, Regex regex) {
 				ItemSet result;
 				result.push(engine(), items[start].next(syntax));
 
@@ -163,7 +175,7 @@ namespace storm {
 					result.push(engine(), item.next(syntax));
 				}
 
-				return new (this) ShiftAction(regex, state(result.expand(syntax)));
+				return Action(regex, state(result.expand(syntax)));
 			}
 
 			void Table::toS(StrBuf *to) const {

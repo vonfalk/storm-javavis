@@ -66,24 +66,35 @@ namespace storm {
 			}
 
 			RuleInfo Syntax::ruleInfo(Nat rule) const {
-				if (specialRule(rule)) {
+				switch (specialRule(rule)) {
+				case ruleRepeat: {
 					Nat prod = baseRule(rule);
 					RuleInfo info;
 					info.push(engine(), prod | prodEpsilon);
 					info.push(engine(), prod | prodRepeat);
 					return info;
-				} else {
+				}
+				case ruleESkip: {
+					Nat prod = baseRule(rule);
+					RuleInfo info;
+					info.push(engine(), prod | prodESkip);
+					return info;
+				}
+				default:
 					return ruleProds->at(rule);
 				}
 			}
 
 			Str *Syntax::ruleName(Nat id) const {
-				if (specialRule(id)) {
+				switch (specialRule(id)) {
+				case ruleRepeat: {
 					Production *p = productions->at(baseRule(id));
 					return *p->rule()->identifier() + new (this) Str(L"'");
-				} else {
-					Rule *rule = rules->at(id);
-					return rule->identifier();
+				}
+				case ruleESkip:
+					return TO_S(this, L"red" << baseRule(id));
+				default:
+					return rules->at(id)->identifier();
 				}
 			}
 

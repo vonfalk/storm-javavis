@@ -31,6 +31,13 @@ namespace storm {
 			cloned(states, env);
 		}
 
+		Bool Regex::matchesEmpty() const {
+			for (Nat i = 0; i < states->count(); i++)
+				if (!states->at(i).skippable)
+					return false;
+			return true;
+		}
+
 		Bool Regex::operator ==(Regex o) const {
 			Nat c = states->count();
 			if (c != o.states->count())
