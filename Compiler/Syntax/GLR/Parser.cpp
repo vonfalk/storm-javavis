@@ -88,8 +88,8 @@ namespace storm {
 					lastPos = pos;
 				}
 
-				// TODO: Reuse between calls to 'actor'.
 #ifdef GLR_SHARE_NODES
+				// TODO: Reuse between calls to 'actor'?
 				Set<TreeNode *> *trees = new (this) Set<TreeNode *>();
 #else
 				Set<TreeNode *> *trees = null;
@@ -207,11 +207,17 @@ namespace storm {
 
 					// Create the syntax tree node for this reduction.
 
-					TreeNode *node = new (this) TreeNode(env.pos, env.production, env.path->count);
-					for (Nat i = 0; i < env.path->count; i++)
-						node->children->v[i] = env.path->v[i]->tree;
-					if (node->children->count > 0)
-						node->pos = node->children->v[0]->pos;
+					TreeNode *node;
+					if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
+						// These are really just shifts.
+						node = new (this) TreeNode(env.pos);
+					} else {
+						node = new (this) TreeNode(env.pos, env.production, env.path->count);
+						for (Nat i = 0; i < env.path->count; i++)
+							node->children->v[i] = env.path->v[i]->tree;
+						if (node->children->count > 0)
+							node->pos = node->children->v[0]->pos;
+					}
 
 					// PVAR(accept);
 					// PVAR(reduce);
@@ -221,8 +227,9 @@ namespace storm {
 					{
 						// Merge trees if possible.
 						TreeNode *other = env.trees->at(node);
-						if (other != node && node->priority(other, syntax) == TreeNode::higher)
-							other->children = node->children;
+						if (other != node && !node->contains(other))
+							if (node->priority(other, syntax) == TreeNode::higher)
+								other->children = node->children;
 						node = other;
 					}
 #endif

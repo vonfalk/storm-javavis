@@ -48,6 +48,9 @@ namespace storm {
 				}
 			}
 
+			// if (wcscmp(name->v->c_str(), L"asyncPostObject") == 0)
+			// 	PVAR(body);
+
 			return new (this) BSFunction(result, name, resolve(params, scope), scope, thread, body);
 		}
 

@@ -58,7 +58,7 @@ static String parseStr(const wchar *root, const wchar *parse, Nat backend) {
 	return parseStr(L"test.syntax", root, parse, backend);
 }
 
-BEGIN_TEST_(ParserTest, Storm) {
+BEGIN_TEST(ParserTest, Storm) {
 	Engine &e = gEngine();
 
 	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, L"test.grammar")));
@@ -122,7 +122,7 @@ BEGIN_TEST_(ParserTest, Storm) {
 
 } END_TEST
 
-BEGIN_TEST_(ParseTricky, BS) {
+BEGIN_TEST(ParseTricky, BS) {
 	// Tricky cases.
 	for (Nat id = 0; id < numBackends; id++) {
 		CHECK_RUNS(parse(L"MultiWS", L"ab", id));
@@ -131,7 +131,7 @@ BEGIN_TEST_(ParseTricky, BS) {
 } END_TEST
 
 
-BEGIN_TEST_(ParseOrderTest, BS) {
+BEGIN_TEST(ParseOrderTest, BS) {
 	for (Nat i = 0; i < numBackends; i++) {
 		CHECK_EQ(parseStr(L"Prio", L"a b", i), L"ab");
 		CHECK_EQ(parseStr(L"Prio", L"var b", i), L"b");

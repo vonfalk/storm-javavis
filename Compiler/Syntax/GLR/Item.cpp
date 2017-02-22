@@ -143,6 +143,8 @@ namespace storm {
 			Item Item::next(Syntax *syntax) const {
 				if (pos == endPos)
 					return Item(id, endPos);
+				if (Syntax::specialProd(id) == Syntax::prodESkip)
+					return Item(id, endPos);
 
 				return next(syntax->production(id));
 			}
@@ -165,6 +167,9 @@ namespace storm {
 			}
 
 			Bool Item::prev(Syntax *syntax) {
+				if (Syntax::specialProd(id) == Syntax::prodESkip)
+					return false;
+
 				return prev(syntax->production(id));
 			}
 
@@ -196,26 +201,24 @@ namespace storm {
 			}
 
 			Nat Item::length(Syntax *syntax) const {
-				Production *p = syntax->production(Syntax::baseProd(id));
-				Nat rep = p->repEnd - p->repStart;
+				Nat special = Syntax::specialProd(id);
+				if (special == Syntax::prodESkip || special == Syntax::prodEpsilon)
+					return 0;
 
-				switch (Syntax::specialProd(id)) {
-				case 0:
-				default:
+				Production *p = syntax->production(id);
+				Nat rep = p->repEnd - p->repStart;
+				if (special == Syntax::prodRepeat) {
+					if (repeatable(p->repType))
+						return rep + 1;
+					else
+						return rep;
+				} else {
 					if (skippable(p->repType))
 						return p->tokens->count() - rep + 1;
 					else if (p->repType == repNone)
 						return p->tokens->count();
 					else
 						return p->tokens->count() + 1;
-				case Syntax::prodEpsilon:
-				case Syntax::prodESkip:
-					return 0;
-				case Syntax::prodRepeat:
-					if (repeatable(p->repType))
-						return rep + 1;
-					else
-						return rep;
 				}
 			}
 

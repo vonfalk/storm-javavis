@@ -41,10 +41,10 @@ namespace storm {
 					return false;
 
 				if (hasChildren)
-					return pos == o->pos;
-				else
 					return pos == o->pos
 						&& production() == o->production();
+				else
+					return pos == o->pos;
 			}
 
 			Nat TreeNode::hash() const {
@@ -123,6 +123,23 @@ namespace storm {
 
 				allChildren(out, productionId);
 				return true;
+			}
+
+			Bool TreeNode::contains(TreeNode *other) const {
+				if (other == this)
+					return true;
+
+				if (children) {
+					for (Nat i = 0; i < children->count; i++) {
+						TreeNode *child = children->v[i];
+						if (child->pos > pos)
+							return false;
+						if (child->contains(other))
+							return true;
+					}
+				}
+
+				return false;
 			}
 
 		}

@@ -44,7 +44,7 @@ SUITE(SimpleBS, 8);
 // More heavy tests of Basic Storm
 SUITE(BS, 9);
 // Syntax server logic.
-SUITE(Server, 10);
+SUITEX(Server, 10);
 
 // Stress tests (takes about 30s, too slow to be included always).
 SUITEX(Stress, 100);

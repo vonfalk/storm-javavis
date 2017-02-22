@@ -13,7 +13,7 @@ namespace storm {
 			STORM_PKG(lang.bnf.glr);
 
 			// Use node sharing? This could cause cyclic syntax trees which is bad.
-			//#define GLR_SHARE_NODES
+#define GLR_SHARE_NODES
 
 			/**
 			 * The GLR parser backend. This parser lazily generates LR-states and uses a GLR parser

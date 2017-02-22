@@ -44,6 +44,9 @@ namespace storm {
 				// Find out if this node has higher priority than another node.
 				Priority STORM_FN priority(TreeNode *other, Syntax *syntax);
 
+				// Does this tree contain another node?
+				Bool STORM_FN contains(TreeNode *other) const;
+
 				// Output.
 				virtual void STORM_FN toS(StrBuf *to) const;
 
