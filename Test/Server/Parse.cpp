@@ -4,7 +4,7 @@
 
 using namespace storm::syntax;
 
-BEGIN_TEST(InfoParse, Server) {
+BEGIN_TEST_(InfoParse, Server) {
 	Engine &e = gEngine();
 
 	Package *pkg = e.package(L"lang.simple");

@@ -17,6 +17,7 @@ namespace storm {
 			Parser::Parser() {
 				syntax = new (this) Syntax();
 				table = new (this) Table(syntax);
+				emptyStr = new (this) Str(L"");
 			}
 
 			void Parser::add(Rule *rule) {
@@ -497,7 +498,8 @@ namespace storm {
 				Item item = last(node->production());
 				Nat pos = endPos;
 
-				for (Nat i = node->children->count; i > 0; i--) {
+				Nat i = node->children->count;
+				while (i > 0) {
 					TreeNode *child = node->children->v[i-1];
 					if (!item.prev(syntax))
 						// Something is fishy...
@@ -512,15 +514,17 @@ namespace storm {
 							assert(reduced == item.id, L"Special production has wrong recursion.");
 							item = last(reduced);
 							node = child;
-							i = child->children->count + 1;
+							i = child->children->count;
 						} else {
 							assert(Syntax::specialProd(reduced) == Syntax::prodEpsilon, L"Expected an epsilon production!");
+							i--;
 						}
 					} else {
 						setToken(result, child, pos, p->tokens->at(item.pos));
 
 						// This shall not be done when we're elliminating recursion!
 						pos = child->pos;
+						i--;
 					}
 				}
 			}
@@ -549,7 +553,119 @@ namespace storm {
 			}
 
 			InfoNode *Parser::infoTree() const {
-				return null;
+				if (acceptingStack == null)
+					return null;
+				if (acceptingStack->tree == null)
+					return null;
+
+				return infoTree(acceptingStack->tree, acceptingStack->pos);
+			}
+
+			InfoNode *Parser::infoTree(TreeNode *node, Nat endPos) const {
+				assert(node->children, L"Trying to create a tree from a non-reduced node!");
+
+				Production *p = syntax->production(node->production());
+				Item item = last(node->production());
+				Nat pos = endPos;
+				Nat length = totalLength(node);
+				PVAR(length);
+				Nat nodePos = length;
+				InfoInternal *result = new (this) InfoInternal(p, length);
+
+				for (Nat i = node->children->count; i > 0; i--) {
+					TreeNode *child = node->children->v[i-1];
+					if (!item.prev(p))
+						break;
+
+					if (item.pos == Item::specialPos) {
+						infoSubtree(result, nodePos, child, pos);
+					} else {
+						infoToken(result, nodePos, child, pos, p->tokens->at(item.pos));
+					}
+
+					pos = child->pos;
+				}
+
+				if (nodePos != 0) {
+					PVAR(nodePos);
+					PVAR(p);
+				}
+
+				return result;
+			}
+
+			void Parser::infoSubtree(InfoInternal *result, Nat &resultPos, TreeNode *node, Nat endPos) const {
+				Production *p = syntax->production(node->production());
+				Item item = last(node->production());
+				Nat pos = endPos;
+
+				Nat i = node->children->count;
+				while (i > 0) {
+					TreeNode *child = node->children->v[i-1];
+					if (!item.prev(syntax))
+						break;
+
+					if (item.pos == Item::specialPos) {
+						Nat reduced = child->production();
+						if (Syntax::specialProd(reduced) == Syntax::prodRepeat) {
+							item = last(reduced);
+							node = child;
+							i = child->children->count;
+						} else {
+							i--;
+						}
+					} else {
+						infoToken(result, resultPos, child, pos, p->tokens->at(item.pos));
+					}
+				}
+			}
+
+			void Parser::infoToken(InfoInternal *result, Nat &resultPos, TreeNode *node, Nat endPos, Token *token) const {
+				assert(resultPos > 0, L"Too few children allocated in InfoNode!");
+
+				InfoNode *created = null;
+				if (node->children) {
+					if (Syntax::specialProd(node->production()) == Syntax::prodESkip) {
+						// This is always an empty string! Even though it is a production, it should
+						// look like a plain string.
+						created = new (this) InfoLeaf(as<RegexToken>(token), emptyStr);
+					} else {
+						created = infoTree(node, endPos);
+					}
+				} else {
+					Str::Iter from = source->posIter(node->pos);
+					Str::Iter to = source->posIter(endPos);
+					created = new (this) InfoLeaf(as<RegexToken>(token), source->substr(from, to));
+				}
+
+				result->color = token->color;
+				result->set(--resultPos, created);
+			}
+
+			Nat Parser::totalLength(TreeNode *node) const {
+				Item item = last(node->production());
+				Nat length = item.length(syntax);
+
+				for (Nat i = node->children->count; i > 0; i--) {
+					TreeNode *child = node->children->v[i-1];
+					if (!item.prev(syntax))
+						break;
+
+					if (item.pos == Item::specialPos) {
+						// Ignore this non-terminal.
+						length--;
+
+						// Traverse until we reach an epsilon production!
+						for (TreeNode *at = child;
+							 at->children && Syntax::specialProd(at->production()) == Syntax::prodRepeat;
+							 at = at->children->v[0]) {
+
+							length += last(at->production()).length(syntax) - 1;
+						}
+					}
+				}
+
+				return length;
 			}
 
 			Nat Parser::stateCount() const {
