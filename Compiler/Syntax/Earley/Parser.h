@@ -90,7 +90,7 @@ namespace storm {
 					// All productions for this rule. May be null.
 					Array<Production *> *productions;
 
-					// Can this rule match the empty string? 0 = no, 1 = yes, >2 don't know yet.
+					// Can this rule match the empty string? 0 = no, 1 = yes, >=2 don't know yet.
 					Byte matchesNull;
 
 					// Add a production. Handles the case where 'productions' is null.
