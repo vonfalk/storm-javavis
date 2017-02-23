@@ -36,11 +36,13 @@ Gc &gc() {
 int _tmain(int argc, _TCHAR *argv[]) {
 	initDebug();
 
-	Moment start;
+	Moment start, end;
 	TestResult r;
 
 	try {
+		start = Moment();
 		r = Tests::run();
+		end = Moment();
 
 		delete engineObj;
 		engineObj = null;
@@ -50,7 +52,6 @@ int _tmain(int argc, _TCHAR *argv[]) {
 		PLN(L"Unknown error: " << e.what());
 	}
 
-	Moment end;
 	PLN(L"Total time: " << (end - start));
 
 	return r.ok() ? 0 : 1;

@@ -137,6 +137,11 @@ BEGIN_TEST(ParseOrderTest, BS) {
 		CHECK_EQ(parseStr(L"Prio", L"var b", i), L"b");
 		CHECK_EQ(parseStr(L"Prio", L"async b", i), L"asyncb");
 
+		CHECK_EQ(parseStr(L"SpawnExpr", L"var x = spawn foo", i), L"x(spawnfoo)");
+		CHECK_EQ(parseStr(L"SpawnExpr", L"vvv x = spawn foo", i), L"vvv x(spawnfoo)");
+		CHECK_EQ(parseStr(L"SpawnExpr", L"var x = foo", i), L"x(foo)");
+		CHECK_EQ(parseStr(L"SpawnExpr", L"vvv x = foo", i), L"vvv x(foo)");
+
 		CHECK_EQ(parseStr(L"Rec", L"a.b.c", i), L"((a)(b))(c)");
 		CHECK_EQ(parseStr(L"Rec", L"a,b,c", i), L"(a)((b)(c))");
 		CHECK_EQ(parseStr(L"Rec", L"a.b.c.d", i), L"(((a)(b))(c))(d)");

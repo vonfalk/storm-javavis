@@ -3,6 +3,13 @@
 #include "Compiler/Lib/Array.h"
 #include "Utils/Memory.h"
 
+// Debug the GLR parser? Causes performance penalties since we use a ::Indent object.
+//#define GLR_DEBUG
+
+// Use node sharing? This could cause cyclic syntax trees, which is bad.  Currently, we're replacing
+// contents of nodes, which destroys the hash function in the set used by the node sharing.
+//#define GLR_SHARE_NODES
+
 namespace storm {
 	namespace syntax {
 		namespace glr {
@@ -76,12 +83,16 @@ namespace storm {
 					stacks->pop();
 				}
 
-				// PVAR(table);
+#ifdef GLR_DEBUG
+				PVAR(table);
+#endif
 				return acceptingStack != null;
 			}
 
 			void Parser::actor(Nat pos, Set<StackItem *> *states, BoolSet *used) {
-				// PVAR(pos);
+#ifdef GLR_DEBUG
+				PVAR(pos);
+#endif
 
 				if (states->any()) {
 					lastSet = states;
@@ -136,7 +147,9 @@ namespace storm {
 					TreeNode *tree = new (this) TreeNode(pos);
 					StackItem *item = new (this) StackItem(action.state, matched, stack, tree);
 					stacks->put(offset, syntax, item);
-					// PLN(L"Added " << item->state << L" with prev " << stack->state);
+#ifdef GLR_DEBUG
+					PLN(L"Added " << item->state << L" with prev " << stack->state);
+#endif
 				}
 			}
 
@@ -167,7 +180,9 @@ namespace storm {
 				Nat length = item.length(syntax);
 				GcArray<StackItem *> *path = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, length);
 
-				// PLN(L"Reducing " << item.toS(syntax) << L":");
+#ifdef GLR_DEBUG
+				PLN(L"Reducing " << item.toS(syntax) << L":");
+#endif
 
 				// Do reductions.
 				ReduceEnv env = {
@@ -182,8 +197,10 @@ namespace storm {
 			}
 
 			void Parser::reduce(const ReduceEnv &env, StackItem *stack, StackItem *through, Nat len) {
-				// PLN(L"Reduce " << (void *)stack << L" " << stack->state << L" " << (void *)through << L" len " << len);
-				// ::Indent z(util::debugStream());
+#ifdef GLR_DEBUG
+				PLN(L"Reduce " << (void *)stack << L" " << stack->state << L" " << (void *)through << L" len " << len);
+				::Indent z(util::debugStream());
+#endif
 
 				if (len > 0) {
 					len--;
@@ -219,9 +236,11 @@ namespace storm {
 							node->pos = node->children->v[0]->pos;
 					}
 
-					// PVAR(accept);
-					// PVAR(reduce);
-					// PVAR(node);
+#ifdef GLR_DEBUG
+					PVAR(accept);
+					PVAR(reduce);
+					PVAR(node);
+#endif
 
 #ifdef GLR_SHARE_NODES
 					{
@@ -247,7 +266,9 @@ namespace storm {
 					// Figure out which state to go to.
 					if (reduce) {
 						StackItem *add = new (this) StackItem(to.v(), env.pos, stack, node);
-						// PLN(L"Added " << to.v() << L" with prev " << stack->state);
+#ifdef GLR_DEBUG
+						PLN(L"Added " << to.v() << L" with prev " << stack->state << L"(" << (void *)stack << L")");
+#endif
 
 						// Add the newly created state.
 						Set<StackItem *> *top = stacks->top();
@@ -257,6 +278,9 @@ namespace storm {
 						} else {
 							// We need to merge it with the old one.
 							if (old->insert(syntax, add)) {
+#ifdef GLR_DEBUG
+								PLN(L"Inserted into " << old->state << L"(" << (void *)old << L")");
+#endif
 								// Note: 'add' is the actual link.
 								limitedReduce(env, top, add);
 							}
@@ -266,7 +290,9 @@ namespace storm {
 			}
 
 			void Parser::limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through) {
-				// PLN(L"--LIMITED--");
+#ifdef GLR_DEBUG
+				PLN(L"--LIMITED--");
+#endif
 				for (Set<StackItem *>::Iter i = top->begin(), e = top->end(); i != e; ++i) {
 					StackItem *item = i.v();
 					State *state = table->state(item->state);

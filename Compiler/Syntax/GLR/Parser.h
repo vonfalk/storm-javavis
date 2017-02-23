@@ -12,12 +12,11 @@ namespace storm {
 		namespace glr {
 			STORM_PKG(lang.bnf.glr);
 
-			// Use node sharing? This could cause cyclic syntax trees which is bad.
-#define GLR_SHARE_NODES
-
 			/**
 			 * The GLR parser backend. This parser lazily generates LR-states and uses a GLR parser
 			 * to interpret those states.
+			 *
+			 * TODO: Optimize the storage of stack tops by allocating them in bulk.
 			 */
 			class Parser : public ParserBackend {
 				STORM_CLASS;

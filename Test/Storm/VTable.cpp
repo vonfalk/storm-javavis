@@ -33,7 +33,8 @@ BEGIN_TEST(VTableCppTest, Storm) {
 	VTableTest b(20);
 
 	VTableCpp *tab = VTableCpp::copy(e, vtable::from(&a));
-	CHECK_LT(tab->count(), nat(5));
+	CHECK_LT(tab->count(), nat(10));
+	CHECK_GT(tab->count(), nat(2));
 
 	nat slot = vtable::fnSlot(address(&VTableTest::replace));
 	CHECK_NEQ(slot, vtable::invalid);

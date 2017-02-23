@@ -36,3 +36,14 @@ Rec3[0] => Buffer() : Name -> add;
 Rec3[+1] => Buffer() : Rec3 -> add, "\.", Rec3 -> add, "\.", Rec3 -> add;
 Rec3[-1] => Buffer() : Rec3 -> add, ",", Rec3 -> add, ",", Rec3 -> add;
 
+
+// Try parsing statements similar to "spawn" in Basic Storm.
+Buffer SpawnExpr();
+SpawnExpr[10] => Buffer() : "var", Name -> add, "=", SpawnExpr -> add;
+SpawnExpr[00] => Buffer() : Name -> addSpace, Name -> add, "=", SpawnExpr -> add;
+SpawnExpr[00] => Buffer() : Name -> addSpace, Name -> add;
+SpawnExpr[10] => e : SpawnAtom e;
+
+Buffer SpawnAtom();
+SpawnAtom[10] => Buffer() : "spawn" -> add, Name -> add;
+SpawnAtom[00] => Buffer() : Name -> add;

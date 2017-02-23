@@ -16,6 +16,11 @@ class Buffer {
 		content.add(v.v);
 	}
 
+	void addSpace(Str v) {
+		content.add(v);
+		content.add(" ");
+	}
+
 	void add(Buffer b) {
 		content.add("(");
 		content.add(b.toS);

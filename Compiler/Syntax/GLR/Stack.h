@@ -45,7 +45,7 @@ namespace storm {
 				// level (we ignore 'state' and 'reduced' there) of more previous items.
 				MAYBE(StackItem *) morePrev;
 
-				// Insert a node in the 'morePrev' chain if it is not already there. Returns 'true' if it was inserted.
+				// Insert a node in the 'morePrev' chain if it is not already there. Returns 'true' if inserted.
 				Bool STORM_FN insert(Syntax *syntax, StackItem *item);
 
 				// Equality check and hashing.

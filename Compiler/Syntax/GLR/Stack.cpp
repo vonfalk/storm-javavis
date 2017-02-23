@@ -40,9 +40,15 @@ namespace storm {
 			void StackItem::updateTree(TreeNode *newTree, Syntax *syntax) {
 				if (!newTree) {
 				} else if (!tree) {
+					// Note: this should really update any previous tree nodes, but as there is no
+					// previous, we can not do that. Only the start node will ever be empty, so this
+					// is not a problem.
 					tree = newTree;
 				} else if (newTree->priority(tree, syntax) == TreeNode::higher) {
-					tree = newTree;
+					// Note: we can not simply set the tree pointer of this state, as we need to
+					// update any previously created syntax trees.
+					tree->pos = newTree->pos;
+					tree->children = newTree->children;
 				}
 			}
 
