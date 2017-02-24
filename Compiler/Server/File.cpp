@@ -259,6 +259,11 @@ namespace storm {
 			// TODO: We need some heurustic on how much we should try to re-parse in case we need
 			// error recovery. We probably want to try a few parent nodes if error recovery has to
 			// kick in near the leaves.
+			// TODO: We also need to consider that ambiguities could be resolved differently
+			// depending on the current match. Eg. changing the string 'tru' to 'true' actually
+			// alters the matched production, even if the old tree works as well. This can be
+			// solved by parsing until the results of the parse are consistent with the previously
+			// matched tree, ie. the same production matched before and now.
 			// TODO: Limit the depth of what needs to be re-parsed in some situations.
 			Range result;
 			if (!parse(result, range, start, content)) {
