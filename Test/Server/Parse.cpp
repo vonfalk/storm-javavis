@@ -4,11 +4,12 @@
 
 using namespace storm::syntax;
 
-BEGIN_TEST_(InfoParse, Server) {
+BEGIN_TEST(InfoParse, Server) {
 	Engine &e = gEngine();
 
 	Package *pkg = e.package(L"lang.simple");
 	pkg->forceLoad();
+
 	Parser *p = Parser::create(pkg, L"SRoot");
 
 	Str *src = new (e) Str(L"foo + bar / 2;");

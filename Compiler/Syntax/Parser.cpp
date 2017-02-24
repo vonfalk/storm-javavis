@@ -12,6 +12,22 @@ namespace storm {
 		bool parserDebug = false;
 #endif
 
+		Nat backendCount() {
+			return 2;
+		}
+
+#define PARSER_BACKEND(id, name) case id: return new (e.v) name::Parser();
+
+		ParserBackend *createBackend(EnginePtr e, Nat id) {
+			switch (id) {
+				PARSER_BACKEND(0, glr);
+				PARSER_BACKEND(1, earley);
+			default:
+				throw InternalError(L"No parser backend with id " + ::toS(id) + L" is known.");
+			}
+		}
+
+
 		ParserBase::ParserBase(ParserBackend *backend) {
 			assert(as<ParserType>(runtime::typeOf(this)),
 				L"ParserBase not properly constructed. Use Parser::create() in C++!");

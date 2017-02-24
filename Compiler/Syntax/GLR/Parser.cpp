@@ -568,7 +568,6 @@ namespace storm {
 				Item item = last(node->production());
 				Nat pos = endPos;
 				Nat length = totalLength(node);
-				PVAR(length);
 				Nat nodePos = length;
 				InfoInternal *result = new (this) InfoInternal(p, length);
 
@@ -586,11 +585,7 @@ namespace storm {
 					pos = child->pos;
 				}
 
-				if (nodePos != 0) {
-					PVAR(nodePos);
-					PVAR(p);
-				}
-
+				assert(nodePos == 0, L"Node length computation was inaccurate!");
 				return result;
 			}
 
@@ -616,6 +611,9 @@ namespace storm {
 						}
 					} else {
 						infoToken(result, resultPos, child, pos, p->tokens->at(item.pos));
+
+						pos = child->pos;
+						i--;
 					}
 				}
 			}
@@ -633,12 +631,16 @@ namespace storm {
 						created = infoTree(node, endPos);
 					}
 				} else {
-					Str::Iter from = source->posIter(node->pos);
-					Str::Iter to = source->posIter(endPos);
-					created = new (this) InfoLeaf(as<RegexToken>(token), source->substr(from, to));
+					Str *str = emptyStr;
+					if (node->pos < endPos) {
+						Str::Iter from = source->posIter(node->pos);
+						Str::Iter to = source->posIter(endPos);
+						str = source->substr(from, to);
+					}
+					created = new (this) InfoLeaf(as<RegexToken>(token), str);
 				}
 
-				result->color = token->color;
+				created->color = token->color;
 				result->set(--resultPos, created);
 			}
 
@@ -660,7 +662,10 @@ namespace storm {
 							 at->children && Syntax::specialProd(at->production()) == Syntax::prodRepeat;
 							 at = at->children->v[0]) {
 
-							length += last(at->production()).length(syntax) - 1;
+							Item i(syntax, at->production());
+							length += i.length(syntax);
+							if (i.pos == Item::specialPos)
+								length -= 1;
 						}
 					}
 				}

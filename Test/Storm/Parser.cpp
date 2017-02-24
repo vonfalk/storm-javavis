@@ -9,23 +9,9 @@
 using syntax::Parser;
 using namespace storm::syntax;
 
-static Nat numBackends = 2;
-
-static ParserBackend *createBackend(Nat id) {
-	switch (id) {
-	case 0:
-		return new (gEngine()) glr::Parser();
-	case 1:
-		return new (gEngine()) earley::Parser();
-	default:
-		assert(false);
-		return null;
-	}
-}
-
 static void parse(const wchar *root, const wchar *parse, Nat backend) {
 	Package *pkg = gEngine().package(L"test.syntax");
-	Parser *p = Parser::create(pkg, root, createBackend(backend));
+	Parser *p = Parser::create(pkg, root, createBackend(gEngine(), backend));
 
 	// PVAR(parse);
 	Url *empty = new (p) Url();
@@ -38,7 +24,7 @@ static void parse(const wchar *root, const wchar *parse, Nat backend) {
 
 static String parseStr(const wchar *package, const wchar *root, const wchar *parse, Nat backend) {
 	Package *pkg = gEngine().package(package);
-	Parser *p = Parser::create(pkg, root, createBackend(backend));
+	Parser *p = Parser::create(pkg, root, createBackend(gEngine(), backend));
 
 	// PVAR(parse);
 	Url *empty = new (p) Url();
@@ -64,10 +50,10 @@ BEGIN_TEST(ParserTest, Storm) {
 	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, L"test.grammar")));
 	VERIFY(pkg);
 
-	for (Nat id = 0; id < numBackends; id++) {
+	for (Nat id = 0; id < backendCount(); id++) {
 		{
 			// Plain sentences.
-			Parser *p = Parser::create(pkg, L"Sentence", createBackend(id));
+			Parser *p = Parser::create(pkg, L"Sentence", createBackend(gEngine(), id));
 			Str *s = new (e) Str(L"the cat runs");
 			CHECK(p->parse(s, new (e) Url()));
 			CHECK(!p->hasError());
@@ -86,7 +72,7 @@ BEGIN_TEST(ParserTest, Storm) {
 
 		{
 			// Repetitions.
-			Parser *p = Parser::create(pkg, L"Sentences", createBackend(id));
+			Parser *p = Parser::create(pkg, L"Sentences", createBackend(gEngine(), id));
 			Str *s = new (e) Str(L"the cat runs. the bird sleeps. the dog swims.");
 			CHECK(p->parse(s, new (e) Url()));
 			CHECK(!p->hasError());
@@ -100,7 +86,7 @@ BEGIN_TEST(ParserTest, Storm) {
 
 		{
 			// Captures.
-			Parser *p = Parser::create(pkg, L"WholeSentence", createBackend(id));
+			Parser *p = Parser::create(pkg, L"WholeSentence", createBackend(gEngine(), id));
 			Str *s = new (e) Str(L"the cat runs.");
 			CHECK(p->parse(s, new (e) Url()));
 			CHECK(!p->hasError());
@@ -124,7 +110,7 @@ BEGIN_TEST(ParserTest, Storm) {
 
 BEGIN_TEST(ParseTricky, BS) {
 	// Tricky cases.
-	for (Nat id = 0; id < numBackends; id++) {
+	for (Nat id = 0; id < backendCount(); id++) {
 		CHECK_RUNS(parse(L"MultiWS", L"ab", id));
 		CHECK_RUNS(parse(L"Skip", L" a {} b {} c ", id));
 	}
@@ -132,7 +118,7 @@ BEGIN_TEST(ParseTricky, BS) {
 
 
 BEGIN_TEST(ParseOrderTest, BS) {
-	for (Nat i = 0; i < numBackends; i++) {
+	for (Nat i = 0; i < backendCount(); i++) {
 		CHECK_EQ(parseStr(L"Prio", L"a b", i), L"ab");
 		CHECK_EQ(parseStr(L"Prio", L"var b", i), L"b");
 		CHECK_EQ(parseStr(L"Prio", L"async b", i), L"asyncb");

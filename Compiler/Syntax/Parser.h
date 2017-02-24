@@ -43,7 +43,7 @@ namespace storm {
 			void init(Rule *root, ParserBackend *backend);
 
 			// Internal function called from Storm to create a parser.
-			friend void createParser(void *mem);
+			friend void createParser(void *mem, ParserBackend *backend);
 
 		public:
 			// Add a package containing syntax definitions (not recursive).
@@ -169,6 +169,13 @@ namespace storm {
 			// Use 'create'.
 			Parser(ParserBackend *backend);
 		};
+
+
+		/**
+		 * Create parser backends.
+		 */
+		Nat STORM_FN backendCount();
+		ParserBackend *STORM_FN createBackend(EnginePtr e, Nat id);
 
 
 		// Declare the template. This does not match the above declaration, so use ParserBase to
