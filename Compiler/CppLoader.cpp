@@ -266,11 +266,34 @@ namespace storm {
 			const CppTemplate &t = world->templates[i];
 
 			if (!into->templates[i]) {
-				Str *n = new (*e) Str(t.name);
-				TemplateCppFn *templ = new (*e) TemplateCppFn(n, t.generate);
-				into->templates[i] = new (*e) TemplateList(templ);
+				into->templates[i] = loadTemplate(t);
 			}
 		}
+	}
+
+	static Type *nullTemplate(Str *name, ValueArray *params) {
+		return null;
+	}
+
+	TemplateList *CppLoader::loadTemplate(const CppTemplate &t) {
+		Str *n = new (*e) Str(t.name);
+		TemplateCppFn *templ = null;
+		if (t.generate)
+			templ = new (*e) TemplateCppFn(n, t.generate);
+		else
+			templ = new (*e) TemplateCppFn(n, &nullTemplate);
+
+		TemplateList *result = new (*e) TemplateList(into, templ);
+
+		if (!t.generate) {
+			// Attach the template to the correct package right now, otherwise it can not be used.
+			NameSet *pkg = findAbsPkg(t.pkg);
+			if (!pkg)
+				throw InternalError(L"Could not find the package " + ::toS(t.pkg) + L"!");
+			result->addTo(pkg);
+		}
+
+		return result;
 	}
 
 	NameSet *CppLoader::findPkg(const wchar *name) {
@@ -283,6 +306,13 @@ namespace storm {
 		return r;
 	}
 
+	NameSet *CppLoader::findAbsPkg(const wchar *name) {
+		SimpleName *pkgName = parseSimpleName(*e, name);
+		NameSet *r = e->nameSet(pkgName, e->package(), false);
+		assert(r, L"Failed to find the package or type " + String(name));
+		return r;
+	}
+
 	Value CppLoader::findValue(const CppTypeRef &ref) {
 		Value result;
 		if (ref.params) {
@@ -291,6 +321,7 @@ namespace storm {
 			Nat elems[maxElem];
 			Nat count = 0;
 			for (count = 0; count < maxElem && ref.params[count] != CppTypeRef::invalid; count++) {
+				assert(count < maxElem, L"Too many template parameters used in C++!");
 				if (ref.params[count] == CppTypeRef::tVoid)
 					elems[count] = -1;
 				else

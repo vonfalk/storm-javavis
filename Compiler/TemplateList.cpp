@@ -21,14 +21,16 @@ namespace storm {
 		Node *next[1];
 	};
 
-	TemplateList::TemplateList(TemplateCppFn *t) : templ(t) {
+	TemplateList::TemplateList(World *world, TemplateCppFn *t) : templ(t), world(world), addedTo(null) {
 		lock = new (this) Lock();
 	}
 
 	void TemplateList::addTo(NameSet *to) {
-		addedTo = to;
-		to->add(templ);
-		addTo(root, to);
+		if (!addedTo) {
+			addedTo = to;
+			to->add(templ);
+			addTo(root, to);
+		}
 	}
 
 	void TemplateList::addTo(Node *at, NameSet *to) {
@@ -143,7 +145,7 @@ namespace storm {
 			if (elems[i] == -1) {
 				types->push(Value());
 			} else {
-				Type *t = e.cppType(elems[i]);
+				Type *t = world->types[elems[i]];
 				assert(t, L"Type with id " + ::toS(elems[i]) + L" not found.");
 				types->push(Value(t));
 			}

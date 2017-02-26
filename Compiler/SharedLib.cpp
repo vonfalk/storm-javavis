@@ -72,18 +72,30 @@ namespace storm {
 
 	Type *SharedLib::cppType(Engine &e, void *lib, Nat id) {
 		SharedLib *me = (SharedLib *)lib;
-		assert(false, L"Implement me!");
-		return null;
+
+		return me->world.types[id];
 	}
 
-	Type *SharedLib::cppTemplate(Engine &e, void *lib, Nat id, Nat count, va_list params) {
+	Type *SharedLib::cppTemplate(Engine &e, void *lib, Nat id, Nat count, va_list l) {
 		SharedLib *me = (SharedLib *)lib;
-		assert(false, L"Implement me! Note: the TemplateList objects need to operate on our world's list of types!");
-		return null;
+
+		const nat maxCount = 16;
+		assert(count < maxCount, L"Too many template parameters used: " + ::toS(count) + L" max " + ::toS(maxCount));
+
+		TemplateList *tList = me->world.templates[id];
+		if (!tList)
+			return null;
+
+		Nat params[maxCount];
+		for (nat i = 0; i < count; i++)
+			params[i] = va_arg(l, Nat);
+
+		return tList->find(params, count);
 	}
 
 	Thread *SharedLib::getThread(Engine &e, void *lib, const DeclThread *decl) {
 		SharedLib *me = (SharedLib *)lib;
+
 		assert(false, L"Implement me!");
 		return null;
 	}

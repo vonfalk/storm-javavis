@@ -76,6 +76,9 @@ namespace storm {
 		// Find a NameSet corresponding to a given name.
 		NameSet *findPkg(const wchar *name);
 
+		// Find a NameSet corresponding to a given name, always relative to the root. Does not try to create packages.
+		NameSet *findAbsPkg(const wchar *name);
+
 		// Find a type as referred by a CppTypeRef.
 		Value findValue(const CppTypeRef &ref);
 
@@ -111,6 +114,9 @@ namespace storm {
 
 		// Load an enum value.
 		void loadEnumValue(const CppEnumValue &val);
+
+		// Load a template.
+		TemplateList *loadTemplate(const CppTemplate &t);
 
 		// See if various types are external.
 		inline bool external(const CppType &t) const { return t.kind == CppType::superExternal; }

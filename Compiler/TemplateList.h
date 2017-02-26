@@ -9,6 +9,7 @@ namespace storm {
 
 	class Named;
 	class NameSet;
+	class World;
 
 	/**
 	 * Represents all instantiations of a template class available to C++.
@@ -19,7 +20,7 @@ namespace storm {
 		STORM_CLASS;
 	public:
 		// Create.
-		TemplateList(TemplateCppFn *t);
+		TemplateList(World *world, TemplateCppFn *t);
 
 		// Add everything in here to NameSet.
 		void addTo(NameSet *to);
@@ -37,6 +38,9 @@ namespace storm {
 	private:
 		// Template we're representing.
 		TemplateCppFn *templ;
+
+		// World in which to lookup type indices.
+		UNKNOWN(PTR_NOGC) World *world;
 
 		// Lock used for 'find'.
 		Lock *lock;
