@@ -39,10 +39,13 @@ namespace storm {
 			Symbol *open;
 			Symbol *edit;
 			Symbol *close;
+			Symbol *indent;
 			Symbol *test;
 			Symbol *debug;
 			Symbol *recolor;
 			Symbol *color;
+			Symbol *level;
+			Symbol *as;
 
 			// Any test state required now?
 			Test *testState;
@@ -63,6 +66,7 @@ namespace storm {
 			void onOpen(SExpr *msg);
 			void onEdit(SExpr *msg);
 			void onClose(SExpr *msg);
+			void onIndent(SExpr *msg);
 			void onTest(SExpr *msg);
 			void onDebug(SExpr *msg);
 			void onReColor(SExpr *msg);

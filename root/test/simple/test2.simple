@@ -1,0 +1,6 @@
+foo;
+{
+	bar or 22;
+	foo;
+}
+bar;

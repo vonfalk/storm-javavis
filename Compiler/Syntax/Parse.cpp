@@ -44,7 +44,9 @@ namespace storm {
 				|| t == L";"
 				|| t == L"="
 				|| t == L"("
-				|| t == L")";
+				|| t == L")"
+				|| t == L"["
+				|| t == L"]";
 		}
 
 		// Parse a parameter list (actual parameters).
@@ -166,6 +168,23 @@ namespace storm {
 						throw SyntaxError(rep.pos, L"Expected ?, *, +, ->, @ or identifier.");
 					} else {
 						result->repCapture = parseCapture(e, tok, rep);
+					}
+				} else if (tok.skipIf(L"[")) {
+					// Start of an indented block.
+					result->indentStart = result->tokens->count();
+				} else if (tok.skipIf(L"]")) {
+					// End of an indented block. See what kind of indentation to use.
+					result->indentEnd = result->tokens->count();
+
+					Token kind = tok.next();
+					if (kind == L"+") {
+						result->indentType = indentIncrease;
+					} else if (kind == L"-") {
+						result->indentType = indentDecrease;
+					} else if (kind == L"@") {
+						result->indentType = indentAlign;
+					} else {
+						throw SyntaxError(kind.pos, L"Unexpected indentation kind: " + ::toS(kind));
 					}
 				} else {
 					TokenDecl *token = parseToken(e, tok);

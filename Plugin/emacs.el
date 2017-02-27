@@ -67,7 +67,35 @@
 (defun storm-indent-line ()
   "Indent the current line in storm-mode."
   (interactive)
-  )
+  (when storm-buffer-id
+    (let ((pos (point))
+	  (goto-pos (- (point-max) (point)))
+	  (beg (progn (beginning-of-line) (point)))
+	  indent)
+      (skip-chars-forward " \t")
+      (if (< pos (point))
+	  (setq goto-pos (- (point-max) (point))))
+      (setq indent (storm-line-indentation))
+      (when (not (eq indent 'noindent))
+	(delete-region beg (point))
+	(indent-to indent))
+
+      (goto-char (- (point-max) goto-pos))
+      indent)))
+
+(defun storm-line-indentation ()
+  "Compute the indentation of the current line by querying the language server."
+  (let ((response (storm-query (list 'indent storm-buffer-id (1- (point))))))
+    (when (>= (length response) 3)
+      (let ((file-id (first  response))
+	    (kind    (second response))
+	    (value   (third  response)))
+	(cond ((not (eq storm-buffer-id file-id))
+	       'noindent)
+	      ((eq kind 'level)
+	       (* value tab-width))
+	      ((eq kind 'at)
+	       'noindent))))))
 
 (defvar storm-mode-hook nil "Hook run when storm-mode is initialized.")
 
@@ -86,7 +114,9 @@
   "Output debug information containing the syntax tree for the current buffer."
   (interactive)
   (when storm-buffer-id
-    (storm-send (list 'debug storm-buffer-id t))))
+    (let ((response (storm-query (list 'debug storm-buffer-id (pos)))))
+      (when response
+	(message "Got response %S" response)))))
 
 (defun storm-debug-content ()
   "Output debug information of the contents of the current buffer."
@@ -283,6 +313,7 @@
   "Timer used for timeout when killing the storm process along with the function to run afterwards.")
 (defvar storm-process-message-queue nil
   "Messages queued for when the storm process was started.")
+(defvar storm-process-query nil "If symbol: waiting for a message with the given header. If list: result from a query.")
 (defvar storm-messages
   (let ((map (make-hash-table)))
     (puthash 'color 'storm-on-color map)
@@ -349,6 +380,24 @@
       (setq storm-process-message-queue
 	    (cons message storm-process-message-queue))
       (storm-start))))
+
+(defun storm-query (message)
+  "Send a message to the Storm process and await a result for a maximum of 1 second. The 
+   response is expected to start with the same symbol as the sent message."
+
+  (setq storm-process-query (first message))
+  (storm-send message)
+
+  ;; Wait until we receive some data.
+  (let ((timeout 1)
+	(start-time (current-time)))
+    (while (and (not (listp storm-process-query))
+		(< (float-time (time-since start-time)) timeout))
+      (accept-process-output storm-process timeout)))
+
+  (prog1
+      storm-process-query
+    (setq storm-process-query nil)))
 
 (defun storm-running-p ()
   "Get the current status of the Storm process."
@@ -493,10 +542,15 @@
 (defun storm-handle-message-i (msg)
   "Handle a message"
   (if (consp msg)
-      (let ((found (gethash (car msg) storm-messages)))
-	(if found
-	    (funcall found (cdr msg))
-	  (format "The header %S is not supported." (car msg))))
+      (let* ((header (first msg))
+	     (found (gethash header storm-messages)))
+	(if (eq header storm-process-query)
+	    (progn
+	      (setq storm-process-query (rest msg))
+	      t)
+	  (if found
+	      (funcall found (rest msg))
+	    (format "The header %S is not supported." header))))
     "Invalid message format. Expected a list."))
 
 (defvar storm-cr-lf "

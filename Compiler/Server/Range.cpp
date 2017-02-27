@@ -18,7 +18,7 @@ namespace storm {
 		}
 
 		Bool Range::contains(Nat pt) const {
-			return from >= pt && to < pt;
+			return from <= pt && to > pt;
 		}
 
 		void Range::deepCopy(CloneEnv *env) {}

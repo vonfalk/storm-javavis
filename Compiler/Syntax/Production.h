@@ -104,6 +104,11 @@ namespace storm {
 			Nat repEnd;
 			RepType repType;
 
+			// Indentation logic.
+			Nat indentStart;
+			Nat indentEnd;
+			IndentType indentType;
+
 			// Capture a raw string between repStart and repEnd?
 			MAYBE(Token *) repCapture;
 

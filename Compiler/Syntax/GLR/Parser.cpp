@@ -571,6 +571,9 @@ namespace storm {
 				Nat nodePos = length;
 				InfoInternal *result = new (this) InfoInternal(p, length);
 
+				if (p->indentType != indentNone)
+					result->indent = new (this) InfoIndent(0, nodePos, p->indentType);
+
 				for (Nat i = node->children->count; i > 0; i--) {
 					TreeNode *child = node->children->v[i-1];
 					if (!item.prev(p))
@@ -580,6 +583,13 @@ namespace storm {
 						infoSubtree(result, nodePos, child, pos);
 					} else {
 						infoToken(result, nodePos, child, pos, p->tokens->at(item.pos));
+					}
+
+					if (result->indent) {
+						if (item.pos == p->indentStart)
+							result->indent->start = nodePos;
+						else if (item.pos == p->indentEnd)
+							result->indent->end = nodePos;
 					}
 
 					pos = child->pos;

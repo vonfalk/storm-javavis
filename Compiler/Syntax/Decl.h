@@ -2,6 +2,7 @@
 #include "Core/StrBuf.h"
 #include "Compiler/Name.h"
 #include "RepType.h"
+#include "IndentType.h"
 #include "TokenColor.h"
 
 namespace storm {
@@ -149,6 +150,11 @@ namespace storm {
 			Nat repStart;
 			Nat repEnd;
 			RepType repType;
+
+			// Indentation.
+			Nat indentStart;
+			Nat indentEnd;
+			IndentType indentType;
 
 			// Capture the repeat? Only supported if 'repType' is 'repNone'.
 			MAYBE(TokenDecl *) repCapture;

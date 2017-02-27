@@ -207,6 +207,13 @@ namespace storm {
 			}
 		}
 
+		TextIndent Part::indent(Nat pos) {
+			if (pos < start || !content)
+				return TextIndent();
+
+			return content->indentAt(pos - start);
+		}
+
 		Array<ColoredRange> *Part::colors(Range range) {
 			Array<ColoredRange> *r = new (this) Array<ColoredRange>();
 			if (content)
@@ -444,6 +451,18 @@ namespace storm {
 				result = new (this) Array<ColoredRange>();
 
 			return result;
+		}
+
+		syntax::TextIndent File::indent(Nat pos) {
+			for (Nat i = 0; i < parts->count(); i++) {
+				Part *part = parts->at(i);
+				if (!part->full().contains(pos))
+					continue;
+
+				return part->indent(pos);
+			}
+
+			return TextIndent();
 		}
 
 		void File::debugOutput(TextOutput *to, Bool tree) const {

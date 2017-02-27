@@ -16,14 +16,19 @@ SNum : "[0-9]+" #constant;
 
 // Simple expressions.
 void SExpr();
-SExpr : SExpr, "\+", SExpr;
-SExpr : SExpr, "-", SExpr;
-SExpr : SExpr, "\*", SExpr;
-SExpr : SExpr, "/", SExpr;
-SExpr : SExpr, "or" #keyword, SExpr;
+SExpr : SExpr, "\+" [, SExpr ]@;
+SExpr : SExpr, "-" [, SExpr ]@;
+SExpr : SExpr, "\*" [, SExpr ]@;
+SExpr : SExpr, "/" [, SExpr ]@;
+SExpr : SExpr, "or" #keyword [, SExpr ]@;
 SExpr : SIdent;
 SExpr : SNum;
 
+// Statements.
+void SStmt();
+SStmt : "{" [, (SStmt, )* ]+ "}";
+SStmt : SExpr, ";";
+
 // Entry point.
 void SRoot();
-SRoot : SDelim - (SExpr, ";", )*;
+SRoot : SDelim - (SStmt, )*;

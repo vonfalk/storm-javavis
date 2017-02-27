@@ -24,6 +24,9 @@ namespace storm {
 			repStart = decl->repStart;
 			repEnd = decl->repEnd;
 			repType = decl->repType;
+			indentStart = decl->indentStart;
+			indentEnd = decl->indentEnd;
+			indentType = decl->indentType;
 
 			Nat counter = 0;
 			if (decl->repCapture) {
@@ -146,6 +149,7 @@ namespace storm {
 			*to << L" : ";
 
 			bool usingRep = repStart < repEnd && repType != repNone;
+			bool usingIndent = indentStart < indentEnd && indentType != indentNone;
 			bool prevDelim = false;
 			for (nat i = 0; i < tokens->count(); i++) {
 				Token *token = tokens->at(i);
@@ -154,8 +158,14 @@ namespace storm {
 				if (usingRep && repEnd == i)
 					outputRepEnd(to, bindings);
 
+				if (usingIndent && indentEnd == i)
+					*to << L" ]" << indentType;
+
 				if (i > 0 && !currentDelim && !prevDelim)
 					*to << L" - ";
+
+				if (usingIndent && indentStart == i)
+					*to << L"[";
 
 				if (usingRep && repStart == i)
 					*to << L"(";
@@ -173,6 +183,9 @@ namespace storm {
 
 			if (usingRep && repEnd == tokens->count())
 				outputRepEnd(to, bindings);
+
+			if (usingIndent && indentEnd == tokens->count())
+				*to << L" ]" << indentType;
 
 			if (mark == tokens->count())
 				*to << L"<>";

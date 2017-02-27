@@ -11,11 +11,14 @@ namespace storm {
 			quit = c->symbol(L"quit");
 			open = c->symbol(L"open");
 			edit = c->symbol(L"edit");
+			indent = c->symbol(L"indent");
 			close = c->symbol(L"close");
 			test = c->symbol(L"test");
 			debug = c->symbol(L"debug");
 			recolor = c->symbol(L"recolor");
 			color = c->symbol(L"color");
+			level = c->symbol(L"level");
+			as = c->symbol(L"as");
 			work = new (this) WorkQueue(this);
 		}
 
@@ -66,6 +69,8 @@ namespace storm {
 				onEdit(cell->rest);
 			} else if (close->equals(kind)) {
 				onClose(cell->rest);
+			} else if (indent->equals(kind)) {
+				onIndent(cell->rest);
 			} else if (test->equals(kind)) {
 				onTest(cell->rest);
 			} else if (debug->equals(kind)) {
@@ -117,6 +122,28 @@ namespace storm {
 			Nat id = next(expr)->asNum()->v;
 
 			files->remove(id);
+		}
+
+		void Server::onIndent(SExpr *expr) {
+			Nat file = next(expr)->asNum()->v;
+			Nat pos = next(expr)->asNum()->v;
+
+			File *f = files->get(file, null);
+			if (!f)
+				return;
+
+			syntax::TextIndent r = f->indent(pos);
+			Engine &e = engine();
+			SExpr *result = null;
+			if (r.isAlign()) {
+				result = list(e, 2, as, new (e) Number(r.alignAs()));
+			} else {
+				result = list(e, 2, level, new (e) Number(r.level()));
+			}
+
+			result = cons(e, new (e) Number(file), result);
+			result = cons(e, indent, result);
+			conn->send(result);
 		}
 
 		void Server::onTest(SExpr *expr) {

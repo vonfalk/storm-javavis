@@ -45,6 +45,9 @@ namespace storm {
 			// clipped to be strictly inside the range.
 			Array<ColoredRange> *colors(Range r);
 
+			// Get the indentation of the character at offset 'n'.
+			syntax::TextIndent indent(Nat pos);
+
 			// Output our internal representation for debugging.
 			void STORM_FN debugOutput(TextOutput *to, Bool tree) const;
 
@@ -127,6 +130,9 @@ namespace storm {
 			// clipped to be strictly inside the range.
 			// TODO: Generate the required SExpr directly instead of going through an array.
 			Array<ColoredRange> *colors(Range r);
+
+			// Get the indentation of the character at offset 'n'.
+			syntax::TextIndent indent(Nat pos);
 
 			// Our id.
 			Nat id;

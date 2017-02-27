@@ -34,6 +34,7 @@ Message	                      Description
 (close id)    		      Close a previously opened file.
 (edit file id from to text)   The file 'file' has been changed. This is edit number 'id'. The text between
                               'from' and 'to' is replaced by 'text'.
+(indent file pos)	      Query the indentation of 'file' at position 'pos'.
 (test ...)		      Messages used for testing the protocol. See below.
 (debug id mode)		      Output the internal representation of file 'id'. Used when debugging.
 (recolor id)		      Re-color file 'id'.
@@ -43,6 +44,9 @@ Messages sent from the server to a client:
 (color file id start colors)  Color 'file' using information from edit #'id'. Start at character 'start'
                               and color the next '(nth 0 colors)' using '(nth 1 colors)' and so on. Note:
 			      'colors' is inlined in the list.
+(indent file value)	      Returns the indentation for a previous 'indent' query. 'value' is either
+                              'level n, indication indentation depth 'n', or 'as n, which indicates
+			      that the line should be indented in the same level as the line at position 'n'.
 (test ...)		      Messages used for testing the protocol. See below.
 
 

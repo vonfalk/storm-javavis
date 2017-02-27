@@ -94,6 +94,8 @@ namespace storm {
 
 		ProductionDecl::ProductionDecl(SrcPos pos, Name *memberOf) : pos(pos), rule(memberOf) {
 			tokens = new (this) Array<TokenDecl *>();
+			repType = repNone;
+			indentType = indentNone;
 		}
 
 		void ProductionDecl::deepCopy(CloneEnv *env) {
@@ -124,6 +126,8 @@ namespace storm {
 			usingRep |= repType != repNone;
 			usingRep |= repCapture != null;
 
+			bool usingIndent = indentType != indentNone;
+
 			*to << L" : ";
 			bool prevDelim = false;
 			for (Nat i = 0; i < tokens->count(); i++) {
@@ -133,8 +137,14 @@ namespace storm {
 				if (usingRep && repEnd == i)
 					outputRepEnd(to);
 
+				if (usingIndent && indentEnd == i)
+					*to << L" ]" << indentType;
+
 				if (i > 0 && !currentDelim && !prevDelim)
 					*to << L" - ";
+
+				if (usingIndent && indentStart == i)
+					*to << L"[";
 
 				if (usingRep && repStart == i)
 					*to << L"(";
@@ -146,6 +156,9 @@ namespace storm {
 
 			if (usingRep && repEnd == tokens->count())
 				outputRepEnd(to);
+
+			if (usingIndent && indentEnd == tokens->count())
+				*to << L" ]" << indentType;
 
 			if (name)
 				*to << L" = " << name;

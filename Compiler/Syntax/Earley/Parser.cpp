@@ -533,12 +533,23 @@ namespace storm {
 				}
 
 				// Allocate the node and fill it!
-				InfoInternal *result = new (this) InfoInternal(end.pos.production(), children);
+				Production *p = end.pos.production();
+				InfoInternal *result = new (this) InfoInternal(p, children);
+				if (p->indentType != indentNone)
+					result->indent = new (this) InfoIndent(0, children, p->indentType);
+
 				atPtr = endPtr;
 				at = &end;
 				while (at->prev != StatePtr()) {
 					const State *prev = &state(at->prev);
 					Token *token = prev->pos.token();
+
+					if (result->indent) {
+						if (at->pos.position() == p->indentStart)
+							result->indent->start = children;
+						else if (at->pos.position() == p->indentEnd)
+							result->indent->end = children;
+					}
 
 					InfoNode *child = null;
 					if (at->completed != StatePtr()) {

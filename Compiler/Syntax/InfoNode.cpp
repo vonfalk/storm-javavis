@@ -27,6 +27,10 @@ namespace storm {
 			return null;
 		}
 
+		TextIndent InfoNode::indentAt(Nat pos) {
+			return TextIndent();
+		}
+
 		Nat InfoNode::computeLength() {
 			return 0;
 		}
@@ -71,6 +75,31 @@ namespace storm {
 			return null;
 		}
 
+		TextIndent InfoInternal::indentAt(Nat pos) {
+			Nat offset = 0;
+			Nat indentStartOffset = 0;
+
+			for (Nat i = 0; i < count(); i++) {
+				InfoNode *child = at(i);
+				Nat len = child->length();
+
+				if (indent && i == indent->start)
+					indentStartOffset = offset;
+
+				if (pos >= offset && pos < offset + len && len > 0) {
+					TextIndent r = child->indentAt(pos - offset);
+					if (indent && indent->contains(i))
+						r.applyParent(indent, indentStartOffset);
+					r.offset(offset);
+					return r;
+				}
+
+				offset += len;
+			}
+
+			return TextIndent();
+		}
+
 		Nat InfoInternal::computeLength() {
 			Nat len = 0;
 			for (Nat i = 0; i < count(); i++)
@@ -107,6 +136,9 @@ namespace storm {
 						*to << L" of " << owner->name;
 				}
 
+				if (indent)
+					*to << L"\nindent: " << indent;
+
 				for (Nat i = 0; i < children->count; i++) {
 					InfoNode *node = children->v[i];
 					*to << L"\n" << node->length() << L" -> ";
@@ -120,6 +152,9 @@ namespace storm {
 		Nat InfoInternal::dbg_size() {
 			Nat total = sizeof(InfoInternal);
 			total += sizeof(GcArray<InfoNode *>) + (count()*sizeof(InfoNode *)) - sizeof(InfoNode *);
+
+			if (indent)
+				total += sizeof(InfoIndent);
 
 			for (Nat i = 0; i < count(); i++) {
 				if (children->v[i])
@@ -171,7 +206,7 @@ namespace storm {
 		}
 
 		void InfoLeaf::format(StrBuf *to) const {
-			*to << L"'" << v << L"'";
+			*to << L"'" << v->escape('\'') << L"'";
 			if (regex)
 				*to << L" (matches " << regex->regex << L")";
 			InfoNode::format(to);

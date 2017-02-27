@@ -3,6 +3,7 @@
 #include "Compiler/Thread.h"
 #include "TokenColor.h"
 #include "Token.h"
+#include "InfoIndent.h"
 
 namespace storm {
 	namespace syntax {
@@ -26,6 +27,8 @@ namespace storm {
 		 * indentation. It is also possible to incrementally update this representation when changes
 		 * have been made to the source string since the nodes do not contain any absolute offsets
 		 * into the original string.
+		 *
+		 * TODO: Skip ObjectOn<Compiler> to save some memory.
 		 */
 		class InfoNode : public ObjectOn<Compiler> {
 			STORM_CLASS;
@@ -41,6 +44,11 @@ namespace storm {
 
 			// Find the first leaf node with a non-zero length at position 'pos' relative to this node.
 			virtual MAYBE(InfoLeaf *) STORM_FN leafAt(Nat pos);
+
+			// Find the indentation of characters at offset 'pos'. This returns either an absolute
+			// number of indentation levels, or another position which indicates that the
+			// indentation should be the same as the indentation on that line.
+			virtual TextIndent STORM_FN indentAt(Nat pos);
 
 			// Format this info node into a human-readable representation.
 			Str *STORM_FN format() const;
@@ -83,6 +91,9 @@ namespace storm {
 			// initialize all elements in the array before letting Storm access this node!
 			InfoInternal(Production *prod, Nat children);
 
+			// Information about indentation.
+			MAYBE(InfoIndent *) indent;
+
 			// Get our production.
 			inline MAYBE(Production *) STORM_FN production() const { return prod; }
 
@@ -107,6 +118,9 @@ namespace storm {
 
 			// Find the first leaf node at position 'pos' relative to this node.
 			virtual MAYBE(InfoLeaf *) STORM_FN leafAt(Nat pos);
+
+			// Find the indentation for 'pos'.
+			virtual TextIndent STORM_FN indentAt(Nat pos);
 
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;

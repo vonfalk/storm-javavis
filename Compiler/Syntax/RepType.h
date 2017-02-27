@@ -6,8 +6,7 @@ namespace storm {
 		STORM_PKG(lang.bnf);
 
 		/**
-		 * Kind of repeat for an option. This should be a simple enum whenever Storm properly
-		 * supports that.
+		 * Kind of repeat for an production.
 		 */
 		enum RepType {
 			repNone,
