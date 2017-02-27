@@ -77,8 +77,9 @@
 	  (setq goto-pos (- (point-max) (point))))
       (setq indent (storm-line-indentation))
       (when (not (eq indent 'noindent))
-	(delete-region beg (point))
-	(indent-to indent))
+	(combine-after-change-calls
+	  (delete-region beg (point))
+	  (indent-to indent)))
 
       (goto-char (- (point-max) goto-pos))
       indent)))
