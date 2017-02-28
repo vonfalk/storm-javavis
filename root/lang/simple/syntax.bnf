@@ -16,13 +16,16 @@ SNum : "[0-9]+" #constant;
 
 // Simple expressions.
 void SExpr();
-SExpr : SExpr, "\+" [, SExpr ]@;
-SExpr : SExpr, "-" [, SExpr ]@;
-SExpr : SExpr, "\*" [, SExpr ]@;
-SExpr : SExpr, "/" [, SExpr ]@;
-SExpr : SExpr, "or" #keyword [, SExpr ]@;
-SExpr : SIdent;
-SExpr : SNum;
+SExpr : SAtom, "\+" [, SExpr ]@;
+SExpr : SAtom, "-" [, SExpr ]@;
+SExpr : SAtom, "\*" [, SExpr ]@;
+SExpr : SAtom, "/" [, SExpr ]@;
+SExpr : SAtom, "or" #keyword [, SExpr ]@;
+SExpr : SAtom;
+
+void SAtom();
+SAtom : SIdent;
+SAtom : SNum;
 
 // Statements.
 void SStmt();

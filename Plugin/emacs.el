@@ -76,7 +76,7 @@
       (if (< pos (point))
 	  (setq goto-pos (- (point-max) (point))))
       (setq indent (storm-line-indentation))
-      (when (not (eq indent 'noindent))
+      (when (integerp indent)
 	(combine-after-change-calls
 	  (delete-region beg (point))
 	  (indent-to indent)))
@@ -95,8 +95,11 @@
 	       'noindent)
 	      ((eq kind 'level)
 	       (* value tab-width))
-	      ((eq kind 'at)
-	       'noindent))))))
+	      ((eq kind 'as)
+	       (save-excursion
+		 (goto-char (1+ value))
+		 (current-column)))
+	      (t 'noindent))))))
 
 (defvar storm-mode-hook nil "Hook run when storm-mode is initialized.")
 
@@ -115,9 +118,7 @@
   "Output debug information containing the syntax tree for the current buffer."
   (interactive)
   (when storm-buffer-id
-    (let ((response (storm-query (list 'debug storm-buffer-id (pos)))))
-      (when response
-	(message "Got response %S" response)))))
+    (storm-send (list 'debug storm-buffer-id t))))
 
 (defun storm-debug-content ()
   "Output debug information of the contents of the current buffer."

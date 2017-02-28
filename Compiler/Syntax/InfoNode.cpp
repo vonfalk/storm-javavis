@@ -83,14 +83,15 @@ namespace storm {
 				InfoNode *child = at(i);
 				Nat len = child->length();
 
-				if (indent && i == indent->start)
+				if (indent && i + 1 == indent->start)
 					indentStartOffset = offset;
 
 				if (pos >= offset && pos < offset + len && len > 0) {
 					TextIndent r = child->indentAt(pos - offset);
+					r.offset(offset);
+
 					if (indent && indent->contains(i))
 						r.applyParent(indent, indentStartOffset);
-					r.offset(offset);
 					return r;
 				}
 
