@@ -10,6 +10,11 @@
 ;; Disable lockfiles as they confuse Storm...
 (setq create-lockfiles nil)
 
+;; Decrease the delay on w32 as the default introduces a noticeable delay for tab completion otherwise.
+;; Note: Use emacs 25 or later, otherwise sending messages is very slow on windows.
+(setq w32-pipe-read-delay 10)
+(setq w32-pipe-buffer-size (* 128 1024))
+
 ;; Configuration.
 (defvar storm-mode-root nil "Root of the Storm source tree.")
 (defvar storm-mode-compiler nil "Path to the Storm compiler.")
@@ -374,10 +379,10 @@
   "Send a message to the Storm process (launching it if it is not running)."
   (if (storm-running-p)
       ;; Keep message ordering if we try to send messages during startup.
-      (if (and (endp force) (consp storm-process-message-queue))
+      (if (and (eq force 'nil) (consp storm-process-message-queue))
 	  (setq storm-process-message-queue
 		(cons message storm-process-message-queue))
-	(send-string storm-process (storm-encode message)))
+	(process-send-string storm-process (storm-encode message)))
     (progn
       (setq storm-process-message-queue
 	    (cons message storm-process-message-queue))
@@ -403,9 +408,9 @@
 
 (defun storm-running-p ()
   "Get the current status of the Storm process."
-  (if (endp storm-process)
-      nil
-    (process-live-p storm-process)))
+  (if storm-process
+      (process-live-p storm-process)
+    nil))
 
 (defun storm-parent-directory (dir)
   (unless (equal "/" dir)
@@ -521,7 +526,7 @@
 
       ;; Try to parse the remaining string.
       (let ((result (storm-decode string)))
-	(if (endp result)
+	(if (not result)
 	    (setq failed 't)
 	  (let ((consumed (car result))
 		(message (cdr result)))
@@ -602,7 +607,7 @@
 
 (defmacro storm-state-more-p (state more)
   "Decide if there is at least 'more' additional characters."
-  `(if (endp ,more)
+  `(if (eq 'nil ,more)
        nil
      (<= (+ (car ,state) ,more) (cdr ,state))))
 
@@ -716,7 +721,7 @@
 
 (defun storm-encode-buffer (msg)
   "Encode a s-expression. Output to the current buffer."
-  (cond ((endp msg)
+  (cond ((eq msg 'nil)
 	 (insert-char #x00))
 	((consp msg)
 	 (insert-char #x01)
@@ -788,3 +793,8 @@
 ;; (defun storm-output-string (s z)
 ;;  (message "%s" s))
 ;; (recursion-depth)
+
+;; Timing messages with large strings.
+;; (with-current-buffer "eval.bs"
+;;   (let ((str (log-time "Extracted text" (buffer-string))))
+;;     (log-time "Send message " (storm-send (list 'dummy str)))))
