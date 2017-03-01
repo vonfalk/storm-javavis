@@ -46,8 +46,13 @@ namespace storm {
 				// The goto table. If 'null' it needs to be created. (Note: can not be named goto...)
 				MAYBE(Map<Nat, Nat> *) rules;
 
-				// Reduce these productions in this state (we're LR 0, so always do that).
-				MAYBE(Array<Nat> *) reduce;
+				// If we're LR(0), reduce these states. This is required in more powerful formalsism
+				// as well since we want to be able to reduce the start production even if the
+				// lookahead is wrong.
+				MAYBE(Set<Nat> *) reduce;
+
+				// Reduce these productions when their lookahead matches.
+				MAYBE(Array<Action> *) reduceLookahead;
 
 				// Reduce these productions when the lookahead matches zero characters (regexes are
 				// greedy, so some regexes do not match zero characters at all positions even though

@@ -51,7 +51,7 @@ BEGIN_TEST_(ParserTest, Storm) {
 	VERIFY(pkg);
 
 	for (Nat id = 0; id < backendCount(); id++) {
-		{
+		if (false) {
 			// Plain sentences.
 			Parser *p = Parser::create(pkg, L"Sentence", createBackend(gEngine(), id));
 			Str *s = new (e) Str(L"the cat runs");
@@ -70,8 +70,6 @@ BEGIN_TEST_(ParserTest, Storm) {
 			CHECK_EQ(p->matchEnd().v(), Char('!'));
 		}
 
-		break;
-
 		{
 			// Repetitions.
 			Parser *p = Parser::create(pkg, L"Sentences", createBackend(gEngine(), id));
@@ -86,7 +84,7 @@ BEGIN_TEST_(ParserTest, Storm) {
 			CHECK_EQ(::toS(r), L"[cat, bird, dog]");
 		}
 
-		{
+		if (false) {
 			// Captures.
 			Parser *p = Parser::create(pkg, L"WholeSentence", createBackend(gEngine(), id));
 			Str *s = new (e) Str(L"the cat runs.");

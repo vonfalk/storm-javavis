@@ -69,7 +69,6 @@ namespace storm {
 				typedef Set<Nat>::Iter Iter;
 
 				if (followRules) {
-					PLN(L"Follow rules: " << followRules);
 					for (Iter i = followRules->begin(), end = followRules->end(); i != end; ++i) {
 						RuleInfo *info = syntax->ruleInfo(i.v());
 						followSet->put(info->follows(syntax));
@@ -77,7 +76,6 @@ namespace storm {
 				}
 
 				if (firstRules) {
-					PLN(L"FirstRules: " << firstRules);
 					for (Iter i = firstRules->begin(), end = firstRules->end(); i != end; ++i) {
 						RuleInfo *info = syntax->ruleInfo(i.v());
 						followSet->put(info->first(syntax));

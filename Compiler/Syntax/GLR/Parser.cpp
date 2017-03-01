@@ -4,11 +4,14 @@
 #include "Utils/Memory.h"
 
 // Debug the GLR parser? Causes performance penalties since we use a ::Indent object.
-//#define GLR_DEBUG
+#define GLR_DEBUG
 
 // Use node sharing? This could cause cyclic syntax trees, which is bad.  Currently, we're replacing
 // contents of nodes, which destroys the hash function in the set used by the node sharing.
 //#define GLR_SHARE_NODES
+
+// Use SLR(1) instead of LR(0) parse tables.
+#define GLR_USE_SLR
 
 namespace storm {
 	namespace syntax {
@@ -156,13 +159,45 @@ namespace storm {
 			}
 
 			void Parser::actorReduce(Nat pos, State *state, Set<TreeNode *> *trees, StackItem *stack, StackItem *through) {
-				Array<Nat> *reduce = state->reduce;
+#ifdef GLR_USE_SLR
+				static nat z = 0;
+
+				Set<Nat> *reduce = new (this) Set<Nat>();
+				Array<Action> *r = state->reduceLookahead;
+				if (r) {
+					for (Nat i = 0; i < r->count(); i++) {
+						const Action &a = r->at(i);
+						if (a.regex.matchRaw(source, pos) == Regex::NO_MATCH) {
+							PLN(L"Will not reduce " << TO_S(this, a) << L" at " << pos << L", " << z);
+							if (z++ < 28)
+								continue;
+						}
+
+						reduce->put(a.state);
+					}
+				}
+
+				// See if we can reduce any of the rules we started from.
+				if (state->reduce) {
+					RuleInfo *info = syntax->ruleInfo(parseRoot);
+					for (Nat i = 0; i < info->count(); i++) {
+						Nat p = info->at(i);
+						if (state->reduce->has(p))
+							reduce->put(p);
+					}
+				}
+
+				for (Set<Nat>::Iter i = reduce->begin(), e = reduce->end(); i != e; ++i)
+					doReduce(i.v(), pos, trees, stack, through);
+#else
+				Set<Nat> *reduce = state->reduce;
 				if (reduce) {
-					for (Nat i = 0; i < reduce->count(); i++) {
-						Nat id = reduce->at(i);
+					for (Set<Nat>::Iter i = reduce->begin(), e = reduce->end(); i != e; ++i) {
+						Nat id = i.v();
 						doReduce(id, pos, trees, stack, through);
 					}
 				}
+#endif
 
 				Array<Action> *reduceEmpty = state->reduceOnEmpty;
 				if (reduceEmpty) {
