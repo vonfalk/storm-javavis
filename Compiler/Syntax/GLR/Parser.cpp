@@ -4,11 +4,7 @@
 #include "Utils/Memory.h"
 
 // Debug the GLR parser? Causes performance penalties since we use a ::Indent object.
-#define GLR_DEBUG
-
-// Use node sharing? This could cause cyclic syntax trees, which is bad.  Currently, we're replacing
-// contents of nodes, which destroys the hash function in the set used by the node sharing.
-//#define GLR_SHARE_NODES
+//#define GLR_DEBUG
 
 // Use SLR(1) instead of LR(0) parse tables.
 #define GLR_USE_SLR
@@ -65,6 +61,14 @@ namespace storm {
 				sourceUrl = file;
 				parseRoot = syntax->lookup(root);
 
+#ifdef GLR_USE_SLR
+				alwaysReduce = new (this) Set<Nat>();
+				RuleInfo *info = syntax->ruleInfo(parseRoot);
+				for (Nat i = 0; i < info->count(); i++) {
+					findAlwaysReduce(info->at(i));
+				}
+#endif
+
 				stacks = new (this) FutureStacks();
 				acceptingStack = null;
 				lastSet = null;
@@ -104,13 +108,6 @@ namespace storm {
 					lastPos = pos;
 				}
 
-#ifdef GLR_SHARE_NODES
-				// TODO: Reuse between calls to 'actor'?
-				Set<TreeNode *> *trees = new (this) Set<TreeNode *>();
-#else
-				Set<TreeNode *> *trees = null;
-#endif
-
 				used->clear();
 
 				typedef Set<StackItem *>::Iter Iter;
@@ -125,93 +122,93 @@ namespace storm {
 						done = false;
 
 						State *s = table->state(now->state);
-						actorReduce(pos, s, trees, now, null);
-						actorShift(pos, s, now);
+
+						ActorEnv env = {
+							pos,
+							s,
+							now,
+							used,
+						};
+
+						actorReduce(env, null);
+						actorShift(env);
 					}
 				} while (!done);
 			}
 
-			void Parser::actorShift(Nat pos, State *state, StackItem *stack) {
-				// NOTE: We need to properly handle shift actions matching the empty string.
-
-				Array<Action> *actions = state->actions;
+			void Parser::actorShift(const ActorEnv &env) {
+				Array<Action> *actions = env.state->actions;
 				if (!actions)
 					return;
 
 				for (Nat i = 0; i < actions->count(); i++) {
 					const Action &action = actions->at(i);
-					Nat matched = action.regex.matchRaw(source, pos);
+					Nat matched = action.regex.matchRaw(source, env.pos);
 					if (matched == Regex::NO_MATCH)
 						continue;
 
 					// Add the resulting match to the 'to-do' list if it matched more than zero characters.
-					if (matched <= pos)
+					if (matched <= env.pos)
 						continue;
 
-					Nat offset = matched - pos;
-					TreeNode *tree = new (this) TreeNode(pos);
-					StackItem *item = new (this) StackItem(action.state, matched, stack, tree);
+					Nat offset = matched - env.pos;
+					TreeNode *tree = new (this) TreeNode(env.pos);
+					StackItem *item = new (this) StackItem(action.state, matched, env.stack, tree);
 					stacks->put(offset, syntax, item);
 #ifdef GLR_DEBUG
-					PLN(L"Added " << item->state << L" with prev " << stack->state);
+					PLN(L"Added " << item->state << L" with prev " << env.stack->state);
 #endif
 				}
 			}
 
-			void Parser::actorReduce(Nat pos, State *state, Set<TreeNode *> *trees, StackItem *stack, StackItem *through) {
+			void Parser::actorReduce(const ActorEnv &env, StackItem *through) {
+				Set<Nat> *reduce = null;
 #ifdef GLR_USE_SLR
-				static nat z = 0;
-
-				Set<Nat> *reduce = new (this) Set<Nat>();
-				Array<Action> *r = state->reduceLookahead;
+				// TODO: Re-use this set between runs!
+				reduce = new (this) Set<Nat>();
+				Array<Action> *r = env.state->reduceLookahead;
 				if (r) {
 					for (Nat i = 0; i < r->count(); i++) {
 						const Action &a = r->at(i);
-						if (a.regex.matchRaw(source, pos) == Regex::NO_MATCH) {
-							PLN(L"Will not reduce " << TO_S(this, a) << L" at " << pos << L", " << z);
-							if (z++ < 28)
-								continue;
-						}
+						if (a.regex.matchRaw(source, env.pos) == Regex::NO_MATCH)
+							continue;
 
 						reduce->put(a.state);
 					}
 				}
 
 				// See if we can reduce any of the rules we started from.
-				if (state->reduce) {
-					RuleInfo *info = syntax->ruleInfo(parseRoot);
-					for (Nat i = 0; i < info->count(); i++) {
-						Nat p = info->at(i);
-						if (state->reduce->has(p))
-							reduce->put(p);
-					}
+				if (env.state->reduce) {
+					for (Set<Nat>::Iter i = alwaysReduce->begin(), e = alwaysReduce->end(); i != e; ++i)
+						if (env.state->reduce->has(i.v()))
+							reduce->put(i.v());
 				}
-
-				for (Set<Nat>::Iter i = reduce->begin(), e = reduce->end(); i != e; ++i)
-					doReduce(i.v(), pos, trees, stack, through);
 #else
-				Set<Nat> *reduce = state->reduce;
-				if (reduce) {
-					for (Set<Nat>::Iter i = reduce->begin(), e = reduce->end(); i != e; ++i) {
-						Nat id = i.v();
-						doReduce(id, pos, trees, stack, through);
-					}
-				}
+				reduce = env.state->reduce;
 #endif
 
-				Array<Action> *reduceEmpty = state->reduceOnEmpty;
+				if (reduce)
+					actorReduce(env, reduce, through);
+			}
+
+			void Parser::actorReduce(const ActorEnv &env, Set<Nat> *toReduce, StackItem *through) {
+				for (Set<Nat>::Iter i = toReduce->begin(), e = toReduce->end(); i != e; ++i)
+					doReduce(env, i.v(), through);
+
+				// TODO: Put these inside 'toReduce' as well!
+				Array<Action> *reduceEmpty = env.state->reduceOnEmpty;
 				if (reduceEmpty) {
 					for (Nat i = 0; i < reduceEmpty->count(); i++) {
 						const Action &a = reduceEmpty->at(i);
-						if (a.regex.matchRaw(source, pos) != pos)
+						if (a.regex.matchRaw(source, env.pos) != env.pos)
 							continue;
 
-						doReduce(a.state, pos, trees, stack, through);
+						doReduce(env, a.state, through);
 					}
 				}
 			}
 
-			void Parser::doReduce(Nat production, Nat pos, Set<TreeNode *> *trees, StackItem *stack, StackItem *through) {
+			void Parser::doReduce(const ActorEnv &env, Nat production, StackItem *through) {
 				Item item(syntax, production);
 				Nat rule = item.rule(syntax);
 				Nat length = item.length(syntax);
@@ -222,15 +219,13 @@ namespace storm {
 #endif
 
 				// Do reductions.
-				ReduceEnv env = {
-					pos,
-					stack,
+				ReduceEnv re = {
+					env,
 					production,
 					rule,
-					trees,
 					path,
 				};
-				reduce(env, stack, through, length);
+				reduce(re, env.stack, through, length);
 			}
 
 			void Parser::reduce(const ReduceEnv &env, StackItem *stack, StackItem *through, Nat len) {
@@ -264,9 +259,9 @@ namespace storm {
 					TreeNode *node;
 					if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
 						// These are really just shifts.
-						node = new (this) TreeNode(env.pos);
+						node = new (this) TreeNode(env.old.pos);
 					} else {
-						node = new (this) TreeNode(env.pos, env.production, env.path->count);
+						node = new (this) TreeNode(env.old.pos, env.production, env.path->count);
 						for (Nat i = 0; i < env.path->count; i++)
 							node->children->v[i] = env.path->v[i]->tree;
 						if (node->children->count > 0)
@@ -279,21 +274,10 @@ namespace storm {
 					PVAR(node);
 #endif
 
-#ifdef GLR_SHARE_NODES
-					{
-						// Merge trees if possible.
-						TreeNode *other = env.trees->at(node);
-						if (other != node && !node->contains(other))
-							if (node->priority(other, syntax) == TreeNode::higher)
-								other->children = node->children;
-						node = other;
-					}
-#endif
-
 					if (accept) {
-						StackItem *add = new (this) StackItem(-1, env.pos, stack, node);
+						StackItem *add = new (this) StackItem(-1, env.old.pos, stack, node);
 
-						if (acceptingStack && acceptingStack->pos == env.pos) {
+						if (acceptingStack && acceptingStack->pos == env.old.pos) {
 							acceptingStack->insert(syntax, add);
 						} else {
 							acceptingStack = add;
@@ -302,7 +286,7 @@ namespace storm {
 
 					// Figure out which state to go to.
 					if (reduce) {
-						StackItem *add = new (this) StackItem(to.v(), env.pos, stack, node);
+						StackItem *add = new (this) StackItem(to.v(), env.old.pos, stack, node);
 #ifdef GLR_DEBUG
 						PLN(L"Added " << to.v() << L" with prev " << stack->state << L"(" << (void *)stack << L")");
 #endif
@@ -332,9 +316,17 @@ namespace storm {
 #endif
 				for (Set<StackItem *>::Iter i = top->begin(), e = top->end(); i != e; ++i) {
 					StackItem *item = i.v();
+
+					// Will this state be visited soon anyway?
+					if (env.old.visited->get(item->state) == false)
+						continue;
+
 					State *state = table->state(item->state);
 
-					actorReduce(env.pos, state, env.trees, item, through);
+					ActorEnv aEnv = env.old;
+					aEnv.state = state;
+					aEnv.stack = item;
+					actorReduce(aEnv, through);
 				}
 			}
 
@@ -353,11 +345,29 @@ namespace storm {
 				return new (this) StackItem(table->state(startSet(root)), pos);
 			}
 
+			void Parser::findAlwaysReduce(Nat production) {
+				if (alwaysReduce->has(production))
+					return;
+				alwaysReduce->put(production);
+
+				Item e = last(production);
+				if (!e.prev(syntax))
+					return;
+
+				if (!e.isRule(syntax))
+					return;
+
+				RuleInfo *info = syntax->ruleInfo(e.nextRule(syntax));
+				for (Nat i = 0; i < info->count(); i++)
+					findAlwaysReduce(info->at(i));
+			}
+
 			void Parser::clear() {
 				stacks = null;
 				source = null;
 				sourceUrl = null;
-				parseRoot = null;
+				parseRoot = 0;
+				alwaysReduce = null;
 			}
 
 			Bool Parser::hasTree() const {

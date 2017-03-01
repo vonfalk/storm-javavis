@@ -118,6 +118,8 @@ namespace storm {
 
 			current->push(0);
 
+			nat stateCount = states->count();
+
 			// We can simply move through the source string character by character.
 			// Note: we exit when there are no more states to process. Otherwise the outer
 			// loop would process the entire string even if we are done matching.
@@ -133,7 +135,7 @@ namespace storm {
 					nat stateId = (*current)[i];
 
 					// Done?
-					if (stateId == states->count()) {
+					if (stateId == stateCount) {
 						best = pos;
 						continue;
 					}

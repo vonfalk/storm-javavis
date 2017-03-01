@@ -44,14 +44,14 @@ static String parseStr(const wchar *root, const wchar *parse, Nat backend) {
 	return parseStr(L"test.syntax", root, parse, backend);
 }
 
-BEGIN_TEST_(ParserTest, Storm) {
+BEGIN_TEST(ParserTest, Storm) {
 	Engine &e = gEngine();
 
 	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, L"test.grammar")));
 	VERIFY(pkg);
 
 	for (Nat id = 0; id < backendCount(); id++) {
-		if (false) {
+		{
 			// Plain sentences.
 			Parser *p = Parser::create(pkg, L"Sentence", createBackend(gEngine(), id));
 			Str *s = new (e) Str(L"the cat runs");
@@ -84,7 +84,7 @@ BEGIN_TEST_(ParserTest, Storm) {
 			CHECK_EQ(::toS(r), L"[cat, bird, dog]");
 		}
 
-		if (false) {
+		{
 			// Captures.
 			Parser *p = Parser::create(pkg, L"WholeSentence", createBackend(gEngine(), id));
 			Str *s = new (e) Str(L"the cat runs.");

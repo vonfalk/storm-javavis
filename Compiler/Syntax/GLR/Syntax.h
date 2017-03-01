@@ -147,6 +147,7 @@ namespace storm {
 
 				// Add the follow-set of a production.
 				void addFollows(Production *p);
+				void addFollows(const Item &start, Production *p);
 
 				// Add the thing 'Item' refers to to the rule info 'into'.
 				void addFollows(RuleInfo *into, const Item &pos);

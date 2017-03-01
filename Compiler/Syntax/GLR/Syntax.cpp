@@ -25,6 +25,8 @@ namespace storm {
 				if (!followRules)
 					followRules = new (this) Set<Nat>();
 				followRules->put(rule);
+				if (rule == 0xC000000E)
+					DebugBreak();
 			}
 
 			void RuleInfo::followsFirst(Nat rule) {
@@ -134,7 +136,14 @@ namespace storm {
 			}
 
 			void Syntax::addFollows(Production *p) {
-				for (Item at(this, p); !at.end(); at = at.next(p)) {
+				addFollows(Item(this, p), p);
+			}
+
+			void Syntax::addFollows(const Item &start, Production *p) {
+				for (Item at = start; !at.end(); at = at.next(p)) {
+					if (at.pos == Item::specialPos && specialProd(at.id) == 0)
+						addFollows(Item(this, baseProd(at.id) | prodRepeat), p);
+
 					if (!at.isRule(this))
 						continue;
 
@@ -150,7 +159,7 @@ namespace storm {
 			void Syntax::addFollows(RuleInfo *into, const Item &next) {
 				if (next.end()) {
 					// The follow set of 'rule' is the follow set of this production.
-					into->follows(next.id);
+					into->follows(next.rule(this));
 				} else if (next.isRule(this)) {
 					// The follow set of 'rule' is the first set of 'next.nextRule'
 					into->followsFirst(next.nextRule(this));

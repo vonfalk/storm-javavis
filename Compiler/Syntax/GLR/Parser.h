@@ -99,6 +99,9 @@ namespace storm {
 				// Root rule for this parse.
 				Nat parseRoot;
 
+				// Productions which shall always be reduced as they might lead to the completion of the root production.
+				Set<Nat> *alwaysReduce;
+
 				// Source string being parsed.
 				Str *source;
 
@@ -125,6 +128,10 @@ namespace storm {
 				// Find the start state for for a rule.
 				StackItem *startState(Nat pos, Rule *rule);
 
+				// Add 'production' and all other productions which may complete this production to
+				// 'alwaysReduce'.
+				void findAlwaysReduce(Nat production);
+
 				// Clear all data derived from the syntax.
 				void clearSyntax();
 
@@ -136,18 +143,35 @@ namespace storm {
 				// Act on all states until we're done.
 				void actor(Nat pos, Set<StackItem *> *states, BoolSet *used);
 
+				// Data passed to the reduction actor.
+				struct ActorEnv {
+					// Position in the input.
+					Nat pos;
+
+					// Current state.
+					State *state;
+
+					// Top of stack before reductions started.
+					StackItem *stack;
+
+					// All reductions which have been processed so far.
+					BoolSet *visited;
+				};
+
 				// Perform actions required for a state.
-				void actorShift(Nat pos, State *state, StackItem *stack);
-				void actorReduce(Nat pos, State *state, Set<TreeNode *> *trees, StackItem *stack, StackItem *through);
-				void doReduce(Nat production, Nat pos, Set<TreeNode *> *trees, StackItem *stack, StackItem *through);
+				void actorShift(const ActorEnv &env);
+				void actorReduce(const ActorEnv &env, StackItem *through);
+				void actorReduce(const ActorEnv &env, Set<Nat> *toReduce, StackItem *through);
+				void doReduce(const ActorEnv &env, Nat production, StackItem *through);
 
 				// Static state to the 'reduce' function.
 				struct ReduceEnv {
-					Nat pos;
-					StackItem *oldTop;
+					// Env for recursive calls to reduce.
+					const ActorEnv &old;
+
+					// Production and rule being reduced.
 					Nat production;
 					Nat rule;
-					Set<TreeNode *> *trees;
 
 					// All nodes traversed to get here. Updated during the recursion.
 					GcArray<StackItem *> *path;

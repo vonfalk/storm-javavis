@@ -108,6 +108,10 @@ namespace storm {
 	}
 
 	void SetBase::putSetRaw(SetBase *from) {
+		// Do not update ourselves if someone tries to add the set to itself. This will break the iteration.
+		if (this == from)
+			return;
+
 		for (Iter i = from->beginRaw(), e = from->endRaw(); i != e; ++i)
 			putRaw(i.rawVal());
 	}
