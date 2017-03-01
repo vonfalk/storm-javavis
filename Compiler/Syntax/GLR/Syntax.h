@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Array.h"
 #include "Core/Map.h"
+#include "Core/Set.h"
 #include "Core/EnginePtr.h"
 #include "Compiler/Syntax/Rule.h"
 #include "Compiler/Syntax/Production.h"
@@ -11,6 +12,8 @@ namespace storm {
 			STORM_PKG(lang.bnf.glr);
 
 			class StackItem;
+			class Syntax;
+			class Item;
 
 			/**
 			 * Representation of all syntax in a parser.
@@ -40,8 +43,8 @@ namespace storm {
 			/**
 			 * Information about a rule.
 			 */
-			class RuleInfo {
-				STORM_VALUE;
+			class RuleInfo : public Object {
+				STORM_CLASS;
 			public:
 				// Create.
 				STORM_CTOR RuleInfo();
@@ -51,22 +54,51 @@ namespace storm {
 
 				// Access elements.
 				inline Nat STORM_FN operator[](Nat id) const { return productions ? productions->at(id) : 0; }
+				inline Nat at(Nat id) const { return productions ? productions->at(id) : 0; }
 
 				// Add a production.
-				void push(Engine &e, Nat id);
+				void STORM_FN push(Nat id);
+
+				// Add 'regex' to the follow-set of this rule.
+				void STORM_FN follows(Regex regex);
+
+				// Add the follow set of 'rule' to ours.
+				void STORM_FN follows(Nat rule);
+
+				// Add the first set of 'rule' to the follow set of us.
+				void STORM_FN followsFirst(Nat rule);
+
+				// Get the first set of this rule.
+				Set<Regex> *STORM_FN first(Syntax *syntax);
+
+				// Get the follow set of this rule.
+				Set<Regex> *STORM_FN follows(Syntax *syntax);
 
 			private:
 				// All productions for this rule. May be null.
 				Array<Nat> *productions;
+
+				// The follow-set of this rule. May be null.
+				Set<Regex> *followSet;
+
+				// The follow-set of the rules shall be merged with the follow set in here.
+				Set<Nat> *followRules;
+
+				// The first-set of these rules shall be merged with the follow set in here.
+				Set<Nat> *firstRules;
+
+				// Computing first and follow sets.
+				Bool compFirst;
+				Bool compFollows;
 			};
 
-			// Add a production.
-			void STORM_FN push(EnginePtr e, RuleInfo &to, Nat id);
 
 			/**
 			 * All syntax in a parser.
 			 *
 			 * Assigns an identifier to each production to make things easier down the line.
+			 *
+			 * Also, computes the follow set for each non-terminal encountered.
 			 */
 			class Syntax : public ObjectOn<Compiler> {
 				STORM_CLASS;
@@ -75,15 +107,15 @@ namespace storm {
 				STORM_CTOR Syntax();
 
 				// Add syntax.
-				void STORM_FN add(Rule *rule);
-				void STORM_FN add(Production *p);
+				Nat STORM_FN add(Rule *rule);
+				Nat STORM_FN add(Production *p);
 
 				// Find the ID of a rule of a production.
-				Nat STORM_FN lookup(Rule *rule) const;
-				Nat STORM_FN lookup(Production *p) const;
+				Nat STORM_FN lookup(Rule *rule);
+				Nat STORM_FN lookup(Production *p);
 
 				// Get all productions for a rule.
-				RuleInfo ruleInfo(Nat rule) const;
+				RuleInfo *ruleInfo(Nat rule);
 
 				// Get the name of a rule.
 				Str *ruleName(Nat rule) const;
@@ -105,10 +137,19 @@ namespace storm {
 				Array<Rule *> *rules;
 
 				// Productions for all rules.
-				Array<RuleInfo> *ruleProds;
+				Array<RuleInfo *> *ruleProds;
+
+				// Productions for repetition rules. Entries in here are created lazily.
+				Array<RuleInfo *> *repRuleProds;
 
 				// All productions. A production's id can be found in 'lookup'.
 				Array<Production *> *productions;
+
+				// Add the follow-set of a production.
+				void addFollows(Production *p);
+
+				// Add the thing 'Item' refers to to the rule info 'into'.
+				void addFollows(RuleInfo *into, const Item &pos);
 
 			public:
 				// Various masks for rules.

@@ -55,6 +55,9 @@ namespace storm {
 			Bool STORM_FN operator ==(Regex o) const;
 			Bool STORM_FN operator !=(Regex o) const;
 
+			// Hash this regex.
+			Nat STORM_FN hash() const;
+
 		private:
 			// Character set.
 			class Set {
@@ -96,6 +99,9 @@ namespace storm {
 				// Compare.
 				Bool operator ==(const Set &o) const;
 				Bool operator !=(const Set &o) const;
+
+				// Hash.
+				Nat hash() const;
 			};
 
 			// A state in the NFA.
@@ -122,6 +128,9 @@ namespace storm {
 				// Compare.
 				Bool operator ==(const State &o) const;
 				Bool operator !=(const State &o) const;
+
+				// Hash.
+				Nat hash() const;
 			};
 
 			// All states.

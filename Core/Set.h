@@ -82,6 +82,9 @@ namespace storm {
 		// Put a value.
 		void CODECALL putRaw(const void *key);
 
+		// Put values from a set.
+		void CODECALL putSetRaw(SetBase *src);
+
 		// Contains value?
 		Bool CODECALL hasRaw(const void *key);
 
@@ -231,6 +234,7 @@ namespace storm {
 			Iter &CODECALL preIncRaw();
 			Iter CODECALL postIncRaw();
 
+			inline Nat p() { return pos; }
 		private:
 			// The two gc arrays from the set.
 			// TODO: as the key and value arrays will eventually need to contain information about
@@ -283,6 +287,11 @@ namespace storm {
 		// Insert a value into the set, or update the existing one.
 		void put(const K &k) {
 			return putRaw(&k);
+		}
+
+		// Insert values from another set into this one.
+		void put(Set<K> *from) {
+			return putSetRaw(from);
 		}
 
 		// Contains a key?

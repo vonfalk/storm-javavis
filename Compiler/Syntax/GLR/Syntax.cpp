@@ -1,22 +1,93 @@
 #include "stdafx.h"
 #include "Syntax.h"
 #include "Stack.h"
+#include "Item.h"
 
 namespace storm {
 	namespace syntax {
 		namespace glr {
 
-			RuleInfo::RuleInfo() : productions(null) {}
+			RuleInfo::RuleInfo() : productions(null), followSet(null), followRules(null), firstRules(null) {}
 
-			void RuleInfo::push(Engine &e, Nat id) {
+			void RuleInfo::push(Nat id) {
 				if (!productions)
-					productions = new (e) Array<Nat>();
+					productions = new (this) Array<Nat>();
 				productions->push(id);
 			}
 
-			void push(EnginePtr e, RuleInfo &to, Nat id) {
-				to.push(e.v, id);
+			void RuleInfo::follows(Regex regex) {
+				if (!followSet)
+					followSet = new (this) Set<Regex>();
+				followSet->put(regex);
 			}
+
+			void RuleInfo::follows(Nat rule) {
+				if (!followRules)
+					followRules = new (this) Set<Nat>();
+				followRules->put(rule);
+			}
+
+			void RuleInfo::followsFirst(Nat rule) {
+				if (!firstRules)
+					firstRules = new (this) Set<Nat>();
+				firstRules->put(rule);
+			}
+
+			Set<Regex> *RuleInfo::first(Syntax *syntax) {
+				Set<Regex> *r = new (syntax) Set<Regex>();
+				if (!productions || compFirst)
+					return r;
+
+				compFirst = true;
+
+				for (Nat i = 0; i < productions->count(); i++) {
+					Item z(syntax, productions->at(i));
+
+					if (z.end()) {
+						r->put(follows(syntax));
+					} else if (z.isRule(syntax)) {
+						RuleInfo *info = syntax->ruleInfo(z.nextRule(syntax));
+						if (!info->compFirst)
+							r->put(info->first(syntax));
+					} else {
+						r->put(z.nextRegex(syntax));
+					}
+				}
+
+				compFirst = false;
+
+				return r;
+			}
+
+			Set<Regex> *RuleInfo::follows(Syntax *syntax) {
+				if (!followSet)
+					followSet = new (this) Set<Regex>();
+				if (compFollows)
+					return followSet;
+				compFollows = true;
+
+				typedef Set<Nat>::Iter Iter;
+
+				if (followRules) {
+					PLN(L"Follow rules: " << followRules);
+					for (Iter i = followRules->begin(), end = followRules->end(); i != end; ++i) {
+						RuleInfo *info = syntax->ruleInfo(i.v());
+						followSet->put(info->follows(syntax));
+					}
+				}
+
+				if (firstRules) {
+					PLN(L"FirstRules: " << firstRules);
+					for (Iter i = firstRules->begin(), end = firstRules->end(); i != end; ++i) {
+						RuleInfo *info = syntax->ruleInfo(i.v());
+						followSet->put(info->first(syntax));
+					}
+				}
+
+				compFollows = false;
+				return followSet;
+			}
+
 
 			/**
 			 * Syntax.
@@ -26,58 +97,112 @@ namespace storm {
 				rLookup = new (this) Map<Rule *, Nat>();
 				pLookup = new (this) Map<Production *, Nat>();
 				rules = new (this) Array<Rule *>();
-				ruleProds = new (this) Array<RuleInfo>();
+				ruleProds = new (this) Array<RuleInfo *>();
+				repRuleProds = new (this) Array<RuleInfo *>();
 				productions = new (this) Array<Production *>();
 			}
 
-			void Syntax::add(Rule *rule) {
-				if (rLookup->has(rule))
-					return;
+			Nat Syntax::add(Rule *rule) {
+				Nat id = rLookup->get(rule, rules->count());
+				if (id < rules->count())
+					return id;
 
 				// New rule!
-				Nat id = rules->count();
 				rules->push(rule);
-				ruleProds->push(RuleInfo());
+				ruleProds->push(new (this) RuleInfo());
 				rLookup->put(rule, id);
+				return id;
 			}
 
-			void Syntax::add(Production *p) {
-				if (pLookup->has(p))
-					return;
+			Nat Syntax::add(Production *p) {
+				Nat id = pLookup->get(p, productions->count());
+				if (id < productions->count())
+					return id;
 
 				// New production!
-				Nat id = productions->count();
 				productions->push(p);
+				repRuleProds->push(null);
 				pLookup->put(p, id);
 
 				if (!rLookup->has(p->rule()))
 					add(p->rule());
 
 				Nat ruleId = lookup(p->rule());
-				ruleProds->at(ruleId).push(engine(), id);
+				ruleProds->at(ruleId)->push(id);
+
+				addFollows(p);
+
+				return id;
 			}
 
-			Nat Syntax::lookup(Rule *r) const {
-				return rLookup->get(r);
+			void Syntax::addFollows(Production *p) {
+				for (Item at(this, p); !at.end(); at = at.next(p)) {
+					if (!at.isRule(this))
+						continue;
+
+					Nat rule = at.nextRule(this);
+					if (specialRule(rule))
+						// We compute these on the fly when we need them...
+						continue;
+
+					addFollows(ruleInfo(rule), at.next(p));
+				}
 			}
 
-			Nat Syntax::lookup(Production *p) const {
-				return pLookup->get(p);
+			void Syntax::addFollows(RuleInfo *into, const Item &next) {
+				if (next.end()) {
+					// The follow set of 'rule' is the follow set of this production.
+					into->follows(next.id);
+				} else if (next.isRule(this)) {
+					// The follow set of 'rule' is the first set of 'next.nextRule'
+					into->followsFirst(next.nextRule(this));
+				} else {
+					// The follow set shall also include this regex.
+					into->follows(next.nextRegex(this));
+				}
 			}
 
-			RuleInfo Syntax::ruleInfo(Nat rule) const {
+			Nat Syntax::lookup(Rule *r) {
+				Nat id = rLookup->get(r, rules->count());
+				if (id >= rules->count()) {
+					// We need to add it...
+					id = add(r);
+				}
+				return id;
+			}
+
+			Nat Syntax::lookup(Production *p) {
+				Nat id = pLookup->get(p, productions->count());
+				if (id >= productions->count()) {
+					id = add(p);
+				}
+				return id;
+			}
+
+			RuleInfo *Syntax::ruleInfo(Nat rule) {
 				switch (specialRule(rule)) {
 				case ruleRepeat: {
 					Nat prod = baseRule(rule);
-					RuleInfo info;
-					info.push(engine(), prod | prodEpsilon);
-					info.push(engine(), prod | prodRepeat);
+					RuleInfo *info = repRuleProds->at(prod);
+					if (!info) {
+						info = new (this) RuleInfo();
+						repRuleProds->at(prod) = info;
+
+						info->push(prod | prodEpsilon);
+						info->push(prod | prodRepeat);
+
+						// We only need to consider the repeat production for the follow set.
+						addFollows(info, Item(this, prod | prodRepeat).next(this));
+						addFollows(info, special(prod).next(this));
+					}
+
 					return info;
 				}
 				case ruleESkip: {
 					Nat prod = baseRule(rule);
-					RuleInfo info;
-					info.push(engine(), prod | prodESkip);
+					RuleInfo *info = new (this) RuleInfo();
+					info->push(prod | prodESkip);
+					// Note: these rules do not need a follow set, as they are treated specially.
 					return info;
 				}
 				default:

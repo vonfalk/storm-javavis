@@ -37,6 +37,10 @@ namespace storm {
 				return Item(production, Item::endPos);
 			}
 
+			Item special(Nat production) {
+				return Item(production, Item::specialPos);
+			}
+
 			Nat Item::endPos = -1;
 			Nat Item::specialPos = -2;
 
@@ -445,9 +449,9 @@ namespace storm {
 					return;
 
 				Nat rule = i.nextRule(syntax);
-				RuleInfo info = syntax->ruleInfo(rule);
-				for (Nat i = 0; i < info.count(); i++) {
-					expand(e, to, Item(syntax, info[i]), syntax);
+				RuleInfo *info = syntax->ruleInfo(rule);
+				for (Nat i = 0; i < info->count(); i++) {
+					expand(e, to, Item(syntax, info->at(i)), syntax);
 				}
 			}
 

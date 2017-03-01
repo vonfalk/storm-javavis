@@ -707,11 +707,14 @@ namespace storm {
 			if (first && handleToS != toSFound) {
 				Array<Value> *bv = new (engine) Array<Value>(2, Value(this));
 				Type *strBufT = StrBuf::stormType(engine);
-				bv->at(0) = Value(strBufT);
+				bv->at(0) = thisPtr(strBufT);
 
 				if (Function *f = as<Function>(strBufT->find(L"<<", bv))) {
 					h->setToS(f);
 					handleToS = toSFound;
+				} else {
+					// Probably too early for this... Wait for notifications from StrBuf.
+					strBufT->watchAdd(this);
 				}
 			}
 

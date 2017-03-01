@@ -106,10 +106,14 @@ namespace storm {
 				void outputToken(StrBuf *to, Production *p, Nat pos) const;
 
 				friend Item last(Nat production);
+				friend Item special(Nat production);
 			};
 
 			// Get an item representing the last item in 'production'.
 			Item STORM_FN last(Nat production);
+
+			// Get an item representing the special position in 'production'. Assumes there is one such production.
+			Item STORM_FN special(Nat production);
 
 			// Plain to string (no syntax lookup possible).
 			StrBuf &STORM_FN operator <<(StrBuf &to, Item item);

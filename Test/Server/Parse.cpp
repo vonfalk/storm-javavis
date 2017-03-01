@@ -42,7 +42,7 @@ BEGIN_TEST(IndentParse, Server) {
 
 	CHECK_EQ(tree->indentAt(5), indentLevel(0));
 	CHECK_EQ(tree->indentAt(6), indentLevel(1));
-	CHECK_EQ(tree->indentAt(9), indentAs(11));
+	CHECK_EQ(tree->indentAt(9), indentAs(8));
 	CHECK_EQ(tree->indentAt(12), indentLevel(1));
 	CHECK_EQ(tree->indentAt(13), indentLevel(2));
 	CHECK_EQ(tree->indentAt(16), indentLevel(1));

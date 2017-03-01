@@ -70,10 +70,9 @@ namespace storm {
 			if (info->v[i].status == Info::free)
 				continue;
 
-			if (!first) {
+			if (!first)
 				*to << L", ";
-				first = false;
-			}
+			first = false;
 
 			(*keyT.toSFn)(keyPtr(i), to);
 		}
@@ -106,6 +105,11 @@ namespace storm {
 			keyT.safeDestroy(keyPtr(old));
 			keyT.safeCopy(keyPtr(old), key);
 		}
+	}
+
+	void SetBase::putSetRaw(SetBase *from) {
+		for (Iter i = from->beginRaw(), e = from->endRaw(); i != e; ++i)
+			putRaw(i.rawVal());
 	}
 
 	Bool SetBase::hasRaw(const void *key) {
@@ -532,7 +536,7 @@ namespace storm {
 		if (atEnd() && o.atEnd())
 			return true;
 		else
-			return key == o.key && pos == o.pos;
+			return info == o.info && pos == o.pos;
 	}
 
 	bool SetBase::Iter::operator !=(const Iter &o) const {
@@ -570,8 +574,8 @@ namespace storm {
 	}
 
 	bool SetBase::Iter::atEnd() const {
-		if (key)
-			return pos == key->count;
+		if (info)
+			return pos == info->count;
 		else
 			return true;
 	}

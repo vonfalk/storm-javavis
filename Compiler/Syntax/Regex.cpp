@@ -55,6 +55,13 @@ namespace storm {
 			return !(*this == o);
 		}
 
+		Nat Regex::hash() const {
+			Nat r = 5381;
+			for (Nat i = 0; i < states->count(); i++)
+				r = ((r << 5) + r) + states->at(i).hash();
+			return r;
+		}
+
 		void Regex::parse(Str *str) {
 			nat pos = 0;
 			const wchar *s = str->c_str();
@@ -413,6 +420,16 @@ namespace storm {
 			return !(*this == o);
 		}
 
+		Nat Regex::Set::hash() const {
+			Nat r = 5381;
+			r = ((r << 5) + r) + first;
+			if (chars) {
+				for (Nat i = 0; i < chars->count; i++)
+					r = ((r << 5) + r) + chars->v[i];
+			}
+			return r;
+		}
+
 
 		/**
 		 * State.
@@ -462,6 +479,11 @@ namespace storm {
 			return !(*this == o);
 		}
 
+		Nat Regex::State::hash() const {
+			Nat z = skippable;
+			z |= Nat(repeatable) << 1;
+			return match.hash() ^ z;
+		}
 
 	}
 }

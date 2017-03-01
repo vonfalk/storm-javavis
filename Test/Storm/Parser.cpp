@@ -44,7 +44,7 @@ static String parseStr(const wchar *root, const wchar *parse, Nat backend) {
 	return parseStr(L"test.syntax", root, parse, backend);
 }
 
-BEGIN_TEST(ParserTest, Storm) {
+BEGIN_TEST_(ParserTest, Storm) {
 	Engine &e = gEngine();
 
 	Package *pkg = as<Package>(e.scope().find(parseSimpleName(e, L"test.grammar")));
@@ -69,6 +69,8 @@ BEGIN_TEST(ParserTest, Storm) {
 			CHECK(p->hasTree());
 			CHECK_EQ(p->matchEnd().v(), Char('!'));
 		}
+
+		break;
 
 		{
 			// Repetitions.

@@ -87,6 +87,7 @@ namespace storm {
 #ifdef GLR_DEBUG
 				PVAR(table);
 #endif
+
 				return acceptingStack != null;
 			}
 
@@ -305,9 +306,9 @@ namespace storm {
 			ItemSet Parser::startSet(Rule *root) {
 				ItemSet r;
 
-				RuleInfo info = syntax->ruleInfo(syntax->lookup(root));
-				for (Nat i = 0; i < info.count(); i++) {
-					r.push(engine(), Item(syntax, info[i]));
+				RuleInfo *info = syntax->ruleInfo(syntax->lookup(root));
+				for (Nat i = 0; i < info->count(); i++) {
+					r.push(engine(), Item(syntax, info->at(i)));
 				}
 
 				return r.expand(syntax);
