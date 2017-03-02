@@ -122,7 +122,7 @@ namespace storm {
 							i.v().id,
 						};
 
-						actorReduce(env, null);
+						actorReduce(env, StackItem::EMPTY);
 						actorShift(env);
 					}
 				} while (!done);
@@ -148,7 +148,7 @@ namespace storm {
 					StackItem item(action.action, matched, env.stack, tree);
 					stacks->put(offset, syntax, item);
 #ifdef GLR_DEBUG
-					PLN(L"Added " << item->state << L" with prev " << env.stack->state);
+					PLN(L"Added " << item.state << L" with prev " << store->at(env.stack).state);
 #endif
 				}
 			}
@@ -193,7 +193,7 @@ namespace storm {
 
 			void Parser::reduce(const ReduceEnv &env, Nat stack, const Path *path, Nat through, Nat len) {
 #ifdef GLR_DEBUG
-				PLN(L"Reduce " << (void *)stack << L" " << stack->state << L" " << (void *)through << L" len " << len);
+				PLN(L"Reduce " << stack << L" " << store->at(stack).state << L" " << through << L" len " << len);
 				::Indent z(util::debugStream());
 #endif
 
@@ -213,7 +213,7 @@ namespace storm {
 							reduce(env, s.prev, &next, i == through ? StackItem::EMPTY : through, len);
 						}
 					}
-				} else if (through == null) {
+				} else if (through == StackItem::EMPTY) {
 					StackItem &item = store->at(stack);
 					State *state = table->state(item.state);
 					Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
@@ -261,7 +261,7 @@ namespace storm {
 					if (reduce) {
 						StackItem add(to.v(), currentPos, stack, node);
 #ifdef GLR_DEBUG
-						PLN(L"Added " << to.v() << L" with prev " << stack->state << L"(" << (void *)stack << L")");
+						PLN(L"Added " << to.v() << L" with prev " << store->at(stack).state << L"(" << stack << L")");
 #endif
 
 						// Add the newly created state.
@@ -275,7 +275,7 @@ namespace storm {
 							Nat added = store->insert(syntax, add, old.id);
 							if (added != StackItem::EMPTY) {
 #ifdef GLR_DEBUG
-								PLN(L"Inserted into " << old->state << L"(" << (void *)old << L")");
+								PLN(L"Inserted into " << old.state << L"(" << old.id << L")");
 #endif
 								// Note: 'add' is the actual link.
 								limitedReduce(env, top, added);

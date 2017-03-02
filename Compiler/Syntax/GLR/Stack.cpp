@@ -64,7 +64,7 @@ namespace storm {
 
 			Nat StackStore::insert(Syntax *syntax, const StackItem &item, Nat into) {
 				Nat last = into;
-				for (Nat now = into; now != StackItem::EMPTY; now = at(now).prev) {
+				for (Nat now = into; now != StackItem::EMPTY; now = at(now).morePrev) {
 					last = now;
 
 					StackItem &z = at(now);
