@@ -20,15 +20,15 @@ namespace storm {
 
 		Regex::Regex(Str *pattern) {
 			states = new (pattern) Array<State>();
+			simpleMatch = null;
 			parse(pattern);
 		}
 
-		Regex::Regex(const Regex &o) : states(o.states), lastMatch(o.lastMatch) {}
+		Regex::Regex(const Regex &o) : states(o.states), simpleMatch(o.simpleMatch), lastMatch(o.lastMatch) {}
 
 		void Regex::deepCopy(CloneEnv *env) {
 			// Note: there is no need to deeply copy things in here, as everything is read only from
 			// now on.
-			cloned(states, env);
 		}
 
 		Bool Regex::matchesEmpty() const {
@@ -62,11 +62,27 @@ namespace storm {
 			return r;
 		}
 
+		Bool Regex::simple() const {
+			return simpleMatch != null;
+		}
+
 		void Regex::parse(Str *str) {
 			nat pos = 0;
 			const wchar *s = str->c_str();
 			while (s[pos])
 				states->push(State::parse(str->engine(), s, pos));
+
+			Bool simple = true;
+			for (Nat i = 0; i < states->count(); i++)
+				simple &= states->at(i).simple();
+
+			if (simple) {
+				StrBuf *match = new (str) StrBuf();
+				for (Nat i = 0; i < states->count(); i++) {
+					*match << Char(Nat(states->at(i).match.first));
+				}
+				simpleMatch = match->toS();
+			}
 		}
 
 		Bool Regex::match(Str *str) {
@@ -101,6 +117,19 @@ namespace storm {
 		}
 
 		Nat Regex::matchRaw(Str *s, Nat start) const {
+			if (simpleMatch) {
+				Nat len = simpleMatch->peekLength();
+				if (wcsncmp(s->c_str() + start, simpleMatch->c_str(), len) == 0) {
+					return start + len;
+				} else {
+					return NO_MATCH;
+				}
+			}
+
+			return matchFull(s, start);
+		}
+
+		Nat Regex::matchFull(Str *s, Nat start) const {
 			// Pre-allocate this many entries for 'current' and 'next'.
 			const nat prealloc = 40;
 			const wchar *str = s->c_str();
@@ -459,6 +488,12 @@ namespace storm {
 				break;
 			}
 			return s;
+		}
+
+		Bool Regex::State::simple() const {
+			return !skippable
+				&& !repeatable
+				&& match.count() == 1;
 		}
 
 		void Regex::State::output(StrBuf *to) const {

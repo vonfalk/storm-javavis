@@ -16,13 +16,16 @@ namespace storm {
 				STORM_VALUE;
 			public:
 				// Create.
-				STORM_CTOR Action(Regex regex, Nat state);
+				STORM_CTOR Action(Nat regex, Nat state);
 
 				// Regular expression to match.
-				Regex regex;
+				Nat regex;
 
 				// Go to this state, or reduce this production.
 				Nat state;
+
+				// To string.
+				Str *STORM_FN toS(Syntax *syntax) const;
 			};
 
 			// To string.

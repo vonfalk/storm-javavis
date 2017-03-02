@@ -7,7 +7,7 @@
 //#define GLR_DEBUG
 
 // Use SLR(1) instead of LR(0) parse tables.
-#define GLR_USE_SLR
+//#define GLR_USE_SLR
 
 namespace storm {
 	namespace syntax {
@@ -73,10 +73,13 @@ namespace storm {
 				acceptingStack = null;
 				lastSet = null;
 				lastPos = 0;
+				visited = new (this) BoolSet();
+				matchedRegex = new (this) Array<Nat>();
 
-				BoolSet *processed = new (this) BoolSet();
 				Nat startPos = start.offset();
 				Nat length = str->peekLength();
+
+				hits = misses = 0;
 
 				// Go through states until we reach the end of file.
 				stacks->put(0, syntax, startState(startPos, root));
@@ -85,7 +88,7 @@ namespace storm {
 
 					// Process all states in 'top' until none remain.
 					if (top)
-						actor(i, top, processed);
+						actor(i, top);
 
 					// Advance one step.
 					stacks->pop();
@@ -95,10 +98,17 @@ namespace storm {
 				PVAR(table);
 #endif
 
+				visited = null;
+				matchedRegex = null;
+
+				PVAR(hits);
+				PVAR(misses);
+				PVAR(simple);
+
 				return acceptingStack != null;
 			}
 
-			void Parser::actor(Nat pos, Set<StackItem *> *states, BoolSet *used) {
+			void Parser::actor(Nat pos, Set<StackItem *> *states) {
 #ifdef GLR_DEBUG
 				PVAR(pos);
 #endif
@@ -108,7 +118,15 @@ namespace storm {
 					lastPos = pos;
 				}
 
-				used->clear();
+				visited->clear();
+				currentPos = pos;
+
+				if (!matchedRegex->empty()) {
+					Nat c = matchedRegex->count();
+					Nat *first = &matchedRegex->at(0);
+					for (Nat i = 0; i < c; i++)
+						first[i] = NOT_TRIED;
+				}
 
 				typedef Set<StackItem *>::Iter Iter;
 				Bool done;
@@ -116,18 +134,16 @@ namespace storm {
 					done = true;
 					for (Iter i = states->begin(), e = states->end(); i != e; ++i) {
 						StackItem *now = i.v();
-						if (used->get(now->state))
+						if (visited->get(now->state))
 							continue;
-						used->set(now->state, true);
+						visited->set(now->state, true);
 						done = false;
 
 						State *s = table->state(now->state);
 
 						ActorEnv env = {
-							pos,
 							s,
 							now,
-							used,
 						};
 
 						actorReduce(env, null);
@@ -143,16 +159,16 @@ namespace storm {
 
 				for (Nat i = 0; i < actions->count(); i++) {
 					const Action &action = actions->at(i);
-					Nat matched = action.regex.matchRaw(source, env.pos);
+					Nat matched = matchRegex(action.regex);
 					if (matched == Regex::NO_MATCH)
 						continue;
 
 					// Add the resulting match to the 'to-do' list if it matched more than zero characters.
-					if (matched <= env.pos)
+					if (matched <= currentPos)
 						continue;
 
-					Nat offset = matched - env.pos;
-					TreeNode *tree = new (this) TreeNode(env.pos);
+					Nat offset = matched - currentPos;
+					TreeNode *tree = new (this) TreeNode(currentPos);
 					StackItem *item = new (this) StackItem(action.state, matched, env.stack, tree);
 					stacks->put(offset, syntax, item);
 #ifdef GLR_DEBUG
@@ -170,7 +186,7 @@ namespace storm {
 				if (r) {
 					for (Nat i = 0; i < r->count(); i++) {
 						const Action &a = r->at(i);
-						if (a.regex.matchRaw(source, env.pos) == Regex::NO_MATCH)
+						if (matchRegex(a.regex) == Regex::NO_MATCH)
 							continue;
 
 						reduce->put(a.state);
@@ -200,7 +216,7 @@ namespace storm {
 				if (reduceEmpty) {
 					for (Nat i = 0; i < reduceEmpty->count(); i++) {
 						const Action &a = reduceEmpty->at(i);
-						if (a.regex.matchRaw(source, env.pos) != env.pos)
+						if (matchRegex(a.regex) != currentPos)
 							continue;
 
 						doReduce(env, a.state, through);
@@ -259,9 +275,9 @@ namespace storm {
 					TreeNode *node;
 					if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
 						// These are really just shifts.
-						node = new (this) TreeNode(env.old.pos);
+						node = new (this) TreeNode(currentPos);
 					} else {
-						node = new (this) TreeNode(env.old.pos, env.production, env.path->count);
+						node = new (this) TreeNode(currentPos, env.production, env.path->count);
 						for (Nat i = 0; i < env.path->count; i++)
 							node->children->v[i] = env.path->v[i]->tree;
 						if (node->children->count > 0)
@@ -275,9 +291,9 @@ namespace storm {
 #endif
 
 					if (accept) {
-						StackItem *add = new (this) StackItem(-1, env.old.pos, stack, node);
+						StackItem *add = new (this) StackItem(-1, currentPos, stack, node);
 
-						if (acceptingStack && acceptingStack->pos == env.old.pos) {
+						if (acceptingStack && acceptingStack->pos == currentPos) {
 							acceptingStack->insert(syntax, add);
 						} else {
 							acceptingStack = add;
@@ -286,7 +302,7 @@ namespace storm {
 
 					// Figure out which state to go to.
 					if (reduce) {
-						StackItem *add = new (this) StackItem(to.v(), env.old.pos, stack, node);
+						StackItem *add = new (this) StackItem(to.v(), currentPos, stack, node);
 #ifdef GLR_DEBUG
 						PLN(L"Added " << to.v() << L" with prev " << stack->state << L"(" << (void *)stack << L")");
 #endif
@@ -318,7 +334,7 @@ namespace storm {
 					StackItem *item = i.v();
 
 					// Will this state be visited soon anyway?
-					if (env.old.visited->get(item->state) == false)
+					if (visited->get(item->state) == false)
 						continue;
 
 					State *state = table->state(item->state);
@@ -328,6 +344,23 @@ namespace storm {
 					aEnv.stack = item;
 					actorReduce(aEnv, through);
 				}
+			}
+
+			const Nat Parser::NOT_TRIED = Regex::NO_MATCH - 1;
+
+			Nat Parser::matchRegex(Nat regex) {
+				if (matchedRegex->count() <= regex) {
+					matchedRegex->reserve(regex);
+					while (matchedRegex->count() <= regex)
+						matchedRegex->push(NOT_TRIED);
+				}
+
+				Nat &result = matchedRegex->at(regex);
+				if (result == NOT_TRIED) {
+					Regex r = syntax->regex(regex);
+					result = r.matchRaw(source, currentPos);
+				}
+				return result;
 			}
 
 			ItemSet Parser::startSet(Rule *root) {

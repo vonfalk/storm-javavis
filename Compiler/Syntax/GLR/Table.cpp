@@ -10,7 +10,13 @@ namespace storm {
 			 * Action.
 			 */
 
-			Action::Action(Regex regex, Nat state) : regex(regex), state(state) {}
+			Action::Action(Nat regex, Nat state) : regex(regex), state(state) {}
+
+			Str *Action::toS(Syntax *syntax) const {
+				StrBuf *to = new (syntax) StrBuf();
+				*to << L"\"" << syntax->regex(regex) << L"\" -> " << state;
+				return to->toS();
+			}
 
 			StrBuf &operator <<(StrBuf &to, Action action) {
 				return to << L"\"" << action.regex << L"\" -> " << action.state;
@@ -31,7 +37,7 @@ namespace storm {
 					*to << L"Actions:\n";
 					Indent z(to);
 					for (Nat i = 0; i < actions->count(); i++)
-						*to << L"shift " << actions->at(i) << L"\n";
+						*to << L"shift " << actions->at(i).toS(syntax) << L"\n";
 
 					for (Map<Nat, Nat>::Iter i = rules->begin(), end = rules->end(); i != end; ++i)
 						*to << L"goto " << syntax->ruleName(i.k()) << L" -> " << i.v() << L"\n";
@@ -41,12 +47,14 @@ namespace storm {
 
 					for (Nat i = 0; i < reduceLookahead->count(); i++) {
 						Action a = reduceLookahead->at(i);
-						*to << L"reduce " << Item(syntax, a.state).toS(syntax) << L" on \"" << a.regex << L"\"\n";
+						*to << L"reduce " << Item(syntax, a.state).toS(syntax) << L" on \""
+							<< syntax->regex(a.regex) << L"\"\n";
 					}
 
 					for (Nat i = 0; i < reduceOnEmpty->count(); i++) {
 						Action a = reduceOnEmpty->at(i);
-						*to << L"reduce " << Item(syntax, a.state).toS(syntax) << L" when \"" << a.regex << L"\" is empty\n";
+						*to << L"reduce " << Item(syntax, a.state).toS(syntax) << L" when \""
+							<< syntax->regex(a.regex) << L"\" is empty\n";
 					}
 
 				} else {
@@ -121,7 +129,7 @@ namespace storm {
 
 						Set<Regex> *follows = syntax->ruleInfo(item.rule(syntax))->follows(syntax);
 						for (Set<Regex>::Iter i = follows->begin(), e = follows->end(); i != e; ++i) {
-							state->reduceLookahead->push(Action(i.v(), item.id));
+							state->reduceLookahead->push(Action(syntax->lookup(i.v()), item.id));
 						}
 					} else if (item.isRule(syntax)) {
 						// Add new states to the goto-table.
@@ -132,7 +140,7 @@ namespace storm {
 						Action shift = createShift(i, items, used, item.nextRegex(syntax));
 						state->actions->push(shift);
 
-						if (shift.regex.matchesEmpty()) {
+						if (syntax->regex(shift.regex).matchesEmpty()) {
 							// We need to pretend a production can be reduced here!
 							Nat rule = Syntax::prodESkip | shift.state;
 							state->rules->put(rule, shift.state);
@@ -186,7 +194,7 @@ namespace storm {
 					result.push(engine(), item.next(syntax));
 				}
 
-				return Action(regex, state(result.expand(syntax)));
+				return Action(syntax->lookup(regex), state(result.expand(syntax)));
 			}
 
 			void Table::toS(StrBuf *to) const {

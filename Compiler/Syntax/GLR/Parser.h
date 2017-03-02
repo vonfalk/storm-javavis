@@ -112,11 +112,31 @@ namespace storm {
 				// the topmost production.
 				StackItem *acceptingStack;
 
-				// The last non-empty state set.
+				// The last non-empty state set. Used for error reporting.
 				Set<StackItem *> *lastSet;
 
-				// The position if 'lastSet'.
+				// The position of 'lastSet'.
 				Nat lastPos;
+
+				/**
+				 * Data used during parsing.
+				 */
+
+				// Current position in the input.
+				Nat currentPos;
+
+				// All states which have been processed in this position so far.
+				BoolSet *visited;
+
+				// Remember which regexes have matched so far in this location. Stores NO_RESULT if
+				// we do not know yet.
+				Array<Nat> *matchedRegex;
+
+				Nat hits;
+				Nat misses;
+				Nat simple;
+
+				static const Nat NOT_TRIED;
 
 				/**
 				 * Member functions.
@@ -141,21 +161,15 @@ namespace storm {
 				 */
 
 				// Act on all states until we're done.
-				void actor(Nat pos, Set<StackItem *> *states, BoolSet *used);
+				void actor(Nat pos, Set<StackItem *> *states);
 
 				// Data passed to the reduction actor.
 				struct ActorEnv {
-					// Position in the input.
-					Nat pos;
-
 					// Current state.
 					State *state;
 
 					// Top of stack before reductions started.
 					StackItem *stack;
-
-					// All reductions which have been processed so far.
-					BoolSet *visited;
 				};
 
 				// Perform actions required for a state.
@@ -167,7 +181,7 @@ namespace storm {
 				// Static state to the 'reduce' function.
 				struct ReduceEnv {
 					// Env for recursive calls to reduce.
-					const ActorEnv &old;
+					ActorEnv old;
 
 					// Production and rule being reduced.
 					Nat production;
@@ -187,6 +201,9 @@ namespace storm {
 				// Produce error messages from the state set 'states'.
 				void errorMsg(StrBuf *out, Nat pos, Set<StackItem *> *states) const;
 				void errorMsg(Set<Str *> *errors, Nat state) const;
+
+				// Regex matching with caching of matched results for each offset in the file.
+				Nat matchRegex(Nat regex);
 
 				/**
 				 * Tree computation.

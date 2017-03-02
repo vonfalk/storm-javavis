@@ -1,9 +1,12 @@
 #include "stdafx.h"
-#include "Compiler/Syntax/Parser.h"
 #include "Compiler/Package.h"
+#include "Compiler/Reader.h"
+#include "Compiler/FileReader.h"
+#include "Compiler/Syntax/Parser.h"
 #include "Compiler/Syntax/Earley/Parser.h"
 #include "Compiler/Syntax/GLR/Parser.h"
 #include "Core/Timing.h"
+#include "Core/Io/Text.h"
 #include "Fn.h"
 
 using syntax::Parser;
@@ -165,4 +168,40 @@ BEGIN_TEST(SyntaxTest, BS) {
 // Previous odd crashes in the syntax.
 BEGIN_TEST(SyntaxCrashes, BS) {
 	CHECK_EQ(::toS(runFn<Name *>(L"test.syntax.complexName")), L"a.b(c, d(e), f)");
+} END_TEST
+
+
+/**
+ * Test performance of the parsers by parsing a large bs-file.
+ */
+BEGIN_TEST_(ParserPerformance, BS) {
+	Engine &e = gEngine();
+
+	Package *root = e.package();
+	Package *pkg = e.package(L"test.large");
+	VERIFY(pkg);
+
+	Url *file = pkg->url()->push(new (e) Str(L"eval.bs"));
+	Moment start;
+	Str *src = readAllText(file);
+	Moment end;
+	PLN(L"Loaded " << file << L" in " << (end - start));
+
+	PkgReader *reader = createReader(new (e) Array<Url *>(1, file), root);
+	VERIFY(reader);
+
+	FileReader *part = reader->readFile(file, src);
+	VERIFY(part);
+	start = Moment();
+	part = part->next(qParser);
+	end = Moment();
+	VERIFY(part);
+	PLN(L"Includes parsed in " << (end - start));
+
+	InfoParser *parser = part->createParser();
+	start = Moment();
+	CHECK(parser->parse(src, file));
+	end = Moment();
+
+	PLN(L"Parsed " << file << L" in " << (end - start));
 } END_TEST

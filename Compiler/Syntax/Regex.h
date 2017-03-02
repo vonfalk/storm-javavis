@@ -58,6 +58,9 @@ namespace storm {
 			// Hash this regex.
 			Nat STORM_FN hash() const;
 
+			// Is this a simple regex?
+			Bool STORM_FN simple() const;
+
 		private:
 			// Character set.
 			class Set {
@@ -122,6 +125,9 @@ namespace storm {
 				// Parse the next state from a regex.
 				static State parse(Engine &e, const wchar *str, nat &pos);
 
+				// Is this state simple? Ie. matches only a single character.
+				Bool simple() const;
+
 				// Output.
 				void output(StrBuf *to) const;
 
@@ -136,11 +142,17 @@ namespace storm {
 			// All states.
 			Array<State> *states;
 
+			// If we can match using strcmp, do that instead.
+			Str *simpleMatch;
+
 			// Last match.
 			Str::Iter lastMatch;
 
 			// Parse a string.
 			void parse(Str *parse);
+
+			// Perform the full-fledged matching.
+			Nat matchFull(Str *src, Nat start) const;
 
 			// Output friends.
 			friend StrBuf &operator <<(StrBuf &to, Regex r);

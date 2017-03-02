@@ -110,9 +110,10 @@ namespace storm {
 				Nat STORM_FN add(Rule *rule);
 				Nat STORM_FN add(Production *p);
 
-				// Find the ID of a rule of a production.
+				// Find the ID of a rule, a production or a regex.
 				Nat STORM_FN lookup(Rule *rule);
 				Nat STORM_FN lookup(Production *p);
+				Nat STORM_FN lookup(Regex regex);
 
 				// Get all productions for a rule.
 				RuleInfo *ruleInfo(Nat rule);
@@ -126,12 +127,18 @@ namespace storm {
 				// Same syntax as another object?
 				Bool STORM_FN sameSyntax(Syntax *o) const;
 
+				// Get the regex for a specific index.
+				inline Regex STORM_FN regex(Nat id) const { return regexes->at(id); }
+
 			private:
 				// All known rules and their ID:s.
 				Map<Rule *, Nat> *rLookup;
 
 				// All known productions and their ID:s.
 				Map<Production *, Nat> *pLookup;
+
+				// All known regexes and their ID:s.
+				Map<Regex, Nat> *xLookup;
 
 				// All known rules.
 				Array<Rule *> *rules;
@@ -144,6 +151,9 @@ namespace storm {
 
 				// All productions. A production's id can be found in 'lookup'.
 				Array<Production *> *productions;
+
+				// All regexes.
+				Array<Regex> *regexes;
 
 				// Add the follow-set of a production.
 				void addFollows(Production *p);
