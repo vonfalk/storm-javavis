@@ -10,16 +10,10 @@ namespace storm {
 			 * Action.
 			 */
 
-			Action::Action(Nat regex, Nat state) : regex(regex), state(state) {}
-
-			Str *Action::toS(Syntax *syntax) const {
-				StrBuf *to = new (syntax) StrBuf();
-				*to << L"\"" << syntax->regex(regex) << L"\" -> " << state;
-				return to->toS();
-			}
+			Action::Action(Regex regex, Nat action) : regex(regex), action(action) {}
 
 			StrBuf &operator <<(StrBuf &to, Action action) {
-				return to << L"\"" << action.regex << L"\" -> " << action.state;
+				return to << L"\"" << action.regex << L"\" -> " << action.action;
 			}
 
 			/**
@@ -37,7 +31,7 @@ namespace storm {
 					*to << L"Actions:\n";
 					Indent z(to);
 					for (Nat i = 0; i < actions->count(); i++)
-						*to << L"shift " << actions->at(i).toS(syntax) << L"\n";
+						*to << L"shift " << actions->at(i) << L"\n";
 
 					for (Map<Nat, Nat>::Iter i = rules->begin(), end = rules->end(); i != end; ++i)
 						*to << L"goto " << syntax->ruleName(i.k()) << L" -> " << i.v() << L"\n";
@@ -47,8 +41,8 @@ namespace storm {
 
 					for (Nat i = 0; i < reduceOnEmpty->count(); i++) {
 						Action a = reduceOnEmpty->at(i);
-						*to << L"reduce " << Item(syntax, a.state).toS(syntax) << L" when \""
-							<< syntax->regex(a.regex) << L"\" is empty\n";
+						*to << L"reduce " << Item(syntax, a.action).toS(syntax)
+							<< L" when \"" << a.regex << L"\" is empty\n";
 					}
 
 				} else {
@@ -128,10 +122,10 @@ namespace storm {
 						Action shift = createShift(i, items, used, item.nextRegex(syntax));
 						state->actions->push(shift);
 
-						if (syntax->regex(shift.regex).matchesEmpty()) {
+						if (shift.regex.matchesEmpty()) {
 							// We need to pretend a production can be reduced here!
-							Nat rule = Syntax::prodESkip | shift.state;
-							state->rules->put(rule, shift.state);
+							Nat rule = Syntax::prodESkip | shift.action;
+							state->rules->put(rule, shift.action);
 
 							// We need to add the reduction as well.
 							state->reduceOnEmpty->push(Action(shift.regex, rule));
@@ -182,7 +176,7 @@ namespace storm {
 					result.push(engine(), item.next(syntax));
 				}
 
-				return Action(syntax->lookup(regex), state(result.expand(syntax)));
+				return Action(regex, state(result.expand(syntax)));
 			}
 
 			void Table::toS(StrBuf *to) const {

@@ -98,12 +98,10 @@ namespace storm {
 			Syntax::Syntax() {
 				rLookup = new (this) Map<Rule *, Nat>();
 				pLookup = new (this) Map<Production *, Nat>();
-				xLookup = new (this) Map<Regex, Nat>();
 				rules = new (this) Array<Rule *>();
 				ruleProds = new (this) Array<RuleInfo *>();
 				repRuleProds = new (this) Array<RuleInfo *>();
 				productions = new (this) Array<Production *>();
-				regexes = new (this) Array<Regex>();
 			}
 
 			Nat Syntax::add(Rule *rule) {
@@ -186,14 +184,6 @@ namespace storm {
 				Nat id = pLookup->get(p, productions->count());
 				if (id >= productions->count()) {
 					id = add(p);
-				}
-				return id;
-			}
-
-			Nat Syntax::lookup(Regex regex) {
-				Nat id = xLookup->get(regex, regexes->count());
-				if (id >= regexes->count()) {
-					regexes->push(regex);
 				}
 				return id;
 			}

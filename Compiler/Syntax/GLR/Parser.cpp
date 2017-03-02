@@ -63,7 +63,6 @@ namespace storm {
 				lastSet = null;
 				lastPos = 0;
 				visited = new (this) BoolSet();
-				matchedRegex = new (this) Array<Nat>();
 
 				Nat startPos = start.offset();
 				Nat length = str->peekLength();
@@ -86,7 +85,6 @@ namespace storm {
 #endif
 
 				visited = null;
-				matchedRegex = null;
 
 				return acceptingStack != null;
 			}
@@ -103,13 +101,6 @@ namespace storm {
 
 				visited->clear();
 				currentPos = pos;
-
-				if (!matchedRegex->empty()) {
-					Nat c = matchedRegex->count();
-					Nat *first = &matchedRegex->at(0);
-					for (Nat i = 0; i < c; i++)
-						first[i] = NOT_TRIED;
-				}
 
 				typedef Set<StackItem *>::Iter Iter;
 				Bool done;
@@ -142,7 +133,7 @@ namespace storm {
 
 				for (Nat i = 0; i < actions->count(); i++) {
 					const Action &action = actions->at(i);
-					Nat matched = matchRegex(action.regex);
+					Nat matched = action.regex.matchRaw(source, currentPos);
 					if (matched == Regex::NO_MATCH)
 						continue;
 
@@ -152,7 +143,7 @@ namespace storm {
 
 					Nat offset = matched - currentPos;
 					TreeNode *tree = new (this) TreeNode(currentPos);
-					StackItem *item = new (this) StackItem(action.state, matched, env.stack, tree);
+					StackItem *item = new (this) StackItem(action.action, matched, env.stack, tree);
 					stacks->put(offset, syntax, item);
 #ifdef GLR_DEBUG
 					PLN(L"Added " << item->state << L" with prev " << env.stack->state);
@@ -170,10 +161,10 @@ namespace storm {
 				if (reduceEmpty) {
 					for (Nat i = 0; i < reduceEmpty->count(); i++) {
 						const Action &a = reduceEmpty->at(i);
-						if (matchRegex(a.regex) != currentPos)
+						if (a.regex.matchRaw(source, currentPos) != currentPos)
 							continue;
 
-						doReduce(env, a.state, through);
+						doReduce(env, a.action, through);
 					}
 				}
 			}
@@ -298,23 +289,6 @@ namespace storm {
 					aEnv.stack = item;
 					actorReduce(aEnv, through);
 				}
-			}
-
-			const Nat Parser::NOT_TRIED = Regex::NO_MATCH - 1;
-
-			Nat Parser::matchRegex(Nat regex) {
-				if (matchedRegex->count() <= regex) {
-					matchedRegex->reserve(regex);
-					while (matchedRegex->count() <= regex)
-						matchedRegex->push(NOT_TRIED);
-				}
-
-				Nat &result = matchedRegex->at(regex);
-				if (result == NOT_TRIED) {
-					Regex r = syntax->regex(regex);
-					result = r.matchRaw(source, currentPos);
-				}
-				return result;
 			}
 
 			ItemSet Parser::startSet(Rule *root) {

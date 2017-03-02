@@ -125,12 +125,6 @@ namespace storm {
 				// All states which have been processed in this position so far.
 				BoolSet *visited;
 
-				// Remember which regexes have matched so far in this location. Stores NO_RESULT if
-				// we do not know yet.
-				Array<Nat> *matchedRegex;
-
-				static const Nat NOT_TRIED;
-
 				/**
 				 * Member functions.
 				 */
@@ -193,9 +187,6 @@ namespace storm {
 				// Produce error messages from the state set 'states'.
 				void errorMsg(StrBuf *out, Nat pos, Set<StackItem *> *states) const;
 				void errorMsg(Set<Str *> *errors, Nat state) const;
-
-				// Regex matching with caching of matched results for each offset in the file.
-				Nat matchRegex(Nat regex);
 
 				/**
 				 * Tree computation.
