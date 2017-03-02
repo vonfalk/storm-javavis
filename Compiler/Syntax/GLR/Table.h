@@ -54,9 +54,6 @@ namespace storm {
 				// lookahead is wrong.
 				MAYBE(Set<Nat> *) reduce;
 
-				// Reduce these productions when their lookahead matches.
-				MAYBE(Array<Action> *) reduceLookahead;
-
 				// Reduce these productions when the lookahead matches zero characters (regexes are
 				// greedy, so some regexes do not match zero characters at all positions even though
 				// they can do that).

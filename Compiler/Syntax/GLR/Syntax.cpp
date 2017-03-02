@@ -75,6 +75,7 @@ namespace storm {
 						RuleInfo *info = syntax->ruleInfo(i.v());
 						followSet->put(info->follows(syntax));
 					}
+					followRules = null;
 				}
 
 				if (firstRules) {
@@ -82,6 +83,7 @@ namespace storm {
 						RuleInfo *info = syntax->ruleInfo(i.v());
 						followSet->put(info->first(syntax));
 					}
+					firstRules = null;
 				}
 
 				compFollows = false;

@@ -6,9 +6,6 @@
 // Debug the GLR parser? Causes performance penalties since we use a ::Indent object.
 //#define GLR_DEBUG
 
-// Use SLR(1) instead of LR(0) parse tables.
-//#define GLR_USE_SLR
-
 namespace storm {
 	namespace syntax {
 		namespace glr {
@@ -61,14 +58,6 @@ namespace storm {
 				sourceUrl = file;
 				parseRoot = syntax->lookup(root);
 
-#ifdef GLR_USE_SLR
-				alwaysReduce = new (this) Set<Nat>();
-				RuleInfo *info = syntax->ruleInfo(parseRoot);
-				for (Nat i = 0; i < info->count(); i++) {
-					findAlwaysReduce(info->at(i));
-				}
-#endif
-
 				stacks = new (this) FutureStacks();
 				acceptingStack = null;
 				lastSet = null;
@@ -78,8 +67,6 @@ namespace storm {
 
 				Nat startPos = start.offset();
 				Nat length = str->peekLength();
-
-				hits = misses = 0;
 
 				// Go through states until we reach the end of file.
 				stacks->put(0, syntax, startState(startPos, root));
@@ -100,10 +87,6 @@ namespace storm {
 
 				visited = null;
 				matchedRegex = null;
-
-				PVAR(hits);
-				PVAR(misses);
-				PVAR(simple);
 
 				return acceptingStack != null;
 			}
@@ -178,40 +161,11 @@ namespace storm {
 			}
 
 			void Parser::actorReduce(const ActorEnv &env, StackItem *through) {
-				Set<Nat> *reduce = null;
-#ifdef GLR_USE_SLR
-				// TODO: Re-use this set between runs!
-				reduce = new (this) Set<Nat>();
-				Array<Action> *r = env.state->reduceLookahead;
-				if (r) {
-					for (Nat i = 0; i < r->count(); i++) {
-						const Action &a = r->at(i);
-						if (matchRegex(a.regex) == Regex::NO_MATCH)
-							continue;
-
-						reduce->put(a.state);
-					}
-				}
-
-				// See if we can reduce any of the rules we started from.
-				if (env.state->reduce) {
-					for (Set<Nat>::Iter i = alwaysReduce->begin(), e = alwaysReduce->end(); i != e; ++i)
-						if (env.state->reduce->has(i.v()))
-							reduce->put(i.v());
-				}
-#else
-				reduce = env.state->reduce;
-#endif
-
-				if (reduce)
-					actorReduce(env, reduce, through);
-			}
-
-			void Parser::actorReduce(const ActorEnv &env, Set<Nat> *toReduce, StackItem *through) {
+				Set<Nat> *toReduce = env.state->reduce;
 				for (Set<Nat>::Iter i = toReduce->begin(), e = toReduce->end(); i != e; ++i)
 					doReduce(env, i.v(), through);
 
-				// TODO: Put these inside 'toReduce' as well!
+				// TODO: Put these inside 'toReduce' as well?
 				Array<Action> *reduceEmpty = env.state->reduceOnEmpty;
 				if (reduceEmpty) {
 					for (Nat i = 0; i < reduceEmpty->count(); i++) {
@@ -378,29 +332,11 @@ namespace storm {
 				return new (this) StackItem(table->state(startSet(root)), pos);
 			}
 
-			void Parser::findAlwaysReduce(Nat production) {
-				if (alwaysReduce->has(production))
-					return;
-				alwaysReduce->put(production);
-
-				Item e = last(production);
-				if (!e.prev(syntax))
-					return;
-
-				if (!e.isRule(syntax))
-					return;
-
-				RuleInfo *info = syntax->ruleInfo(e.nextRule(syntax));
-				for (Nat i = 0; i < info->count(); i++)
-					findAlwaysReduce(info->at(i));
-			}
-
 			void Parser::clear() {
 				stacks = null;
 				source = null;
 				sourceUrl = null;
 				parseRoot = 0;
-				alwaysReduce = null;
 			}
 
 			Bool Parser::hasTree() const {

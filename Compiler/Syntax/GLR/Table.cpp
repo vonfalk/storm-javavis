@@ -45,12 +45,6 @@ namespace storm {
 					for (Set<Nat>::Iter i = reduce->begin(), e = reduce->end(); i != e; ++i)
 						*to << L"reduce " << Item(syntax, i.v()).toS(syntax) << L"\n";
 
-					for (Nat i = 0; i < reduceLookahead->count(); i++) {
-						Action a = reduceLookahead->at(i);
-						*to << L"reduce " << Item(syntax, a.state).toS(syntax) << L" on \""
-							<< syntax->regex(a.regex) << L"\"\n";
-					}
-
 					for (Nat i = 0; i < reduceOnEmpty->count(); i++) {
 						Action a = reduceOnEmpty->at(i);
 						*to << L"reduce " << Item(syntax, a.state).toS(syntax) << L" when \""
@@ -108,7 +102,6 @@ namespace storm {
 				state->actions = new (this) Array<Action>();
 				state->rules = new (this) Map<Nat, Nat>();
 				state->reduce = new (this) Set<Nat>();
-				state->reduceLookahead = new (this) Array<Action>();
 				state->reduceOnEmpty = new (this) Array<Action>();
 
 				// TODO: We might want to optimize this in the future. Currently we are using O(n^2)
@@ -126,11 +119,6 @@ namespace storm {
 					if (item.end()) {
 						// Insert a reduce action.
 						state->reduce->put(item.id);
-
-						Set<Regex> *follows = syntax->ruleInfo(item.rule(syntax))->follows(syntax);
-						for (Set<Regex>::Iter i = follows->begin(), e = follows->end(); i != e; ++i) {
-							state->reduceLookahead->push(Action(syntax->lookup(i.v()), item.id));
-						}
 					} else if (item.isRule(syntax)) {
 						// Add new states to the goto-table.
 						Nat rule = item.nextRule(syntax);

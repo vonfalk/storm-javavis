@@ -99,9 +99,6 @@ namespace storm {
 				// Root rule for this parse.
 				Nat parseRoot;
 
-				// Productions which shall always be reduced as they might lead to the completion of the root production.
-				Set<Nat> *alwaysReduce;
-
 				// Source string being parsed.
 				Str *source;
 
@@ -131,10 +128,6 @@ namespace storm {
 				// Remember which regexes have matched so far in this location. Stores NO_RESULT if
 				// we do not know yet.
 				Array<Nat> *matchedRegex;
-
-				Nat hits;
-				Nat misses;
-				Nat simple;
 
 				static const Nat NOT_TRIED;
 
@@ -175,7 +168,6 @@ namespace storm {
 				// Perform actions required for a state.
 				void actorShift(const ActorEnv &env);
 				void actorReduce(const ActorEnv &env, StackItem *through);
-				void actorReduce(const ActorEnv &env, Set<Nat> *toReduce, StackItem *through);
 				void doReduce(const ActorEnv &env, Nat production, StackItem *through);
 
 				// Static state to the 'reduce' function.
