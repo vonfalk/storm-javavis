@@ -152,9 +152,10 @@ namespace storm {
 			}
 
 			void Parser::actorReduce(const ActorEnv &env, StackItem *through) {
-				Set<Nat> *toReduce = env.state->reduce;
-				for (Set<Nat>::Iter i = toReduce->begin(), e = toReduce->end(); i != e; ++i)
-					doReduce(env, i.v(), through);
+				Array<Nat> *toReduce = env.state->reduce;
+				Nat count = toReduce->count();
+				for (Nat i = 0; i < count; i++)
+					doReduce(env, toReduce->at(i), through);
 
 				// TODO: Put these inside 'toReduce' as well?
 				Array<Action> *reduceEmpty = env.state->reduceOnEmpty;

@@ -36,8 +36,8 @@ namespace storm {
 					for (Map<Nat, Nat>::Iter i = rules->begin(), end = rules->end(); i != end; ++i)
 						*to << L"goto " << syntax->ruleName(i.k()) << L" -> " << i.v() << L"\n";
 
-					for (Set<Nat>::Iter i = reduce->begin(), e = reduce->end(); i != e; ++i)
-						*to << L"reduce " << Item(syntax, i.v()).toS(syntax) << L"\n";
+					for (Nat i = 0; i < reduce->count(); i++)
+						*to << L"reduce " << Item(syntax, reduce->at(i)).toS(syntax) << L"\n";
 
 					for (Nat i = 0; i < reduceOnEmpty->count(); i++) {
 						Action a = reduceOnEmpty->at(i);
@@ -95,8 +95,11 @@ namespace storm {
 			void Table::fill(State *state) {
 				state->actions = new (this) Array<Action>();
 				state->rules = new (this) Map<Nat, Nat>();
-				state->reduce = new (this) Set<Nat>();
+				state->reduce = new (this) Array<Nat>();
 				state->reduceOnEmpty = new (this) Array<Action>();
+
+				// De-duplicate reduction items.
+				Set<Nat> *reduce = new (this) Set<Nat>();
 
 				// TODO: We might want to optimize this in the future. Currently we are using O(n^2)
 				// time, but this can be done in O(n) time using a hash map, but that is probably
@@ -112,7 +115,10 @@ namespace storm {
 					Item item = items[i];
 					if (item.end()) {
 						// Insert a reduce action.
-						state->reduce->put(item.id);
+						if (!reduce->has(item.id)) {
+							reduce->put(item.id);
+							state->reduce->push(item.id);
+						}
 					} else if (item.isRule(syntax)) {
 						// Add new states to the goto-table.
 						Nat rule = item.nextRule(syntax);

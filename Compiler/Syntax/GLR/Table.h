@@ -49,7 +49,7 @@ namespace storm {
 				// If we're LR(0), reduce these states. This is required in more powerful formalsism
 				// as well since we want to be able to reduce the start production even if the
 				// lookahead is wrong.
-				MAYBE(Set<Nat> *) reduce;
+				MAYBE(Array<Nat> *) reduce;
 
 				// Reduce these productions when the lookahead matches zero characters (regexes are
 				// greedy, so some regexes do not match zero characters at all positions even though
