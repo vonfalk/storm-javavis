@@ -27,7 +27,7 @@ namespace storm {
 				// Create.
 				STORM_CTOR StackItem();
 				STORM_CTOR StackItem(Nat state, Nat pos);
-				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, TreeNode *tree);
+				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, Nat tree);
 
 				// State at this point in the stack.
 				Nat state;
@@ -35,18 +35,18 @@ namespace storm {
 				// Position in the input. TODO: Remove?
 				Nat pos;
 
+				// Part of the syntax tree for this node.
+				Nat tree;
+
 				// Previous item in the stack.
 				MAYBE(StackItem *) prev;
-
-				// Part of the syntax tree for this node.
-				MAYBE(TreeNode *) tree;
 
 				// More previous states? Forms a linked list of multiple StackItem nodes at the same
 				// level (we ignore 'state' and 'reduced' there) of more previous items.
 				MAYBE(StackItem *) morePrev;
 
 				// Insert a node in the 'morePrev' chain if it is not already there. Returns 'true' if inserted.
-				Bool STORM_FN insert(Syntax *syntax, StackItem *item);
+				Bool STORM_FN insert(TreeStore *store, StackItem *item);
 
 				// Equality check and hashing.
 				virtual Bool STORM_FN equals(Object *o) const;
@@ -57,7 +57,7 @@ namespace storm {
 
 			private:
 				// Update 'tree' in this object if the provided tree has a higher priority than this.
-				void updateTree(TreeNode *newTree, Syntax *syntax);
+				void updateTree(TreeStore *store, Nat newTree);
 			};
 
 
@@ -78,7 +78,7 @@ namespace storm {
 				void STORM_FN pop();
 
 				// Insert an item at location 'pos'. The top is at location 0.
-				void STORM_FN put(Nat pos, Syntax *syntax, StackItem *item);
+				void STORM_FN put(Nat pos, TreeStore *store, StackItem *item);
 
 			private:
 				// Storage. Used as a circular queue. Size is always a power of two.

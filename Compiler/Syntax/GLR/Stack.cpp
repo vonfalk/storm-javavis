@@ -8,15 +8,15 @@ namespace storm {
 		namespace glr {
 
 			StackItem::StackItem()
-				: state(0), pos(0), prev(null), tree(null) {}
+				: state(0), pos(0), prev(null), tree(0) {}
 
 			StackItem::StackItem(Nat state, Nat pos)
-				: state(state), pos(pos), prev(null), tree(null) {}
+				: state(state), pos(pos), prev(null), tree(0) {}
 
-			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, TreeNode *tree)
+			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, Nat tree)
 				: state(state), pos(pos), prev(prev), tree(tree) {}
 
-			Bool StackItem::insert(Syntax *syntax, StackItem *insert) {
+			Bool StackItem::insert(TreeStore *store, StackItem *insert) {
 				if (insert == this)
 					return false;
 
@@ -28,7 +28,7 @@ namespace storm {
 						return false;
 					if (at->prev == insert->prev) {
 						// These are considered to be the same link. See which syntax tree to use!
-						at->updateTree(insert->tree, syntax);
+						at->updateTree(store, insert->tree);
 						return false;
 					}
 				}
@@ -37,18 +37,17 @@ namespace storm {
 				return true;
 			}
 
-			void StackItem::updateTree(TreeNode *newTree, Syntax *syntax) {
+			void StackItem::updateTree(TreeStore *store, Nat newTree) {
 				if (!newTree) {
 				} else if (!tree) {
 					// Note: this should really update any previous tree nodes, but as there is no
 					// previous, we can not do that. Only the start node will ever be empty, so this
 					// is not a problem.
 					tree = newTree;
-				} else if (newTree->priority(tree, syntax) == TreeNode::higher) {
+				} else if (store->priority(newTree, tree) == TreeStore::higher) {
 					// Note: we can not simply set the tree pointer of this state, as we need to
 					// update any previously created syntax trees.
-					tree->pos = newTree->pos;
-					tree->children = newTree->children;
+					store->at(tree) = store->at(newTree);
 				}
 			}
 
@@ -111,7 +110,7 @@ namespace storm {
 				first = wrap(first + 1);
 			}
 
-			void FutureStacks::put(Nat pos, Syntax *syntax, StackItem *insert) {
+			void FutureStacks::put(Nat pos, TreeStore *store, StackItem *insert) {
 				if (pos >= count())
 					grow(pos + 1);
 
@@ -126,7 +125,7 @@ namespace storm {
 					// Insertion was performed. Nothing more to do.
 				} else {
 					// Append the current node as an alternative.
-					old->insert(syntax, insert);
+					old->insert(store, insert);
 				}
 			}
 

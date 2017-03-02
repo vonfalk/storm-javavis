@@ -12,4 +12,12 @@ namespace storm {
 		{ 0 },
 	};
 
+	const GcType natArrayType = {
+		GcType::tArray,
+		null,
+		null,
+		sizeof(Nat),
+		0,
+		{},
+	};
 }

@@ -58,6 +58,7 @@ namespace storm {
 				sourceUrl = file;
 				parseRoot = syntax->lookup(root);
 
+				store = new (this) TreeStore(syntax);
 				stacks = new (this) FutureStacks();
 				acceptingStack = null;
 				lastSet = null;
@@ -68,7 +69,7 @@ namespace storm {
 				Nat length = str->peekLength();
 
 				// Go through states until we reach the end of file.
-				stacks->put(0, syntax, startState(startPos, root));
+				stacks->put(0, store, startState(startPos, root));
 				for (Nat i = startPos; i <= length; i++) {
 					Set<StackItem *> *top = stacks->top();
 
@@ -142,9 +143,9 @@ namespace storm {
 						continue;
 
 					Nat offset = matched - currentPos;
-					TreeNode *tree = new (this) TreeNode(currentPos);
+					Nat tree = store->push(TreeNode(currentPos));
 					StackItem *item = new (this) StackItem(action.action, matched, env.stack, tree);
-					stacks->put(offset, syntax, item);
+					stacks->put(offset, store, item);
 #ifdef GLR_DEBUG
 					PLN(L"Added " << item->state << L" with prev " << env.stack->state);
 #endif
@@ -206,7 +207,7 @@ namespace storm {
 					// Keep on traversing...
 					for (StackItem *i = stack; i; i = i->morePrev) {
 						if (i->prev) {
-							next.node = i->tree;
+							next.treeNode = i->tree;
 							reduce(env, i->prev, &next, i == through ? null : through, len);
 						}
 					}
@@ -222,19 +223,20 @@ namespace storm {
 
 					// Create the syntax tree node for this reduction.
 
-					TreeNode *node;
+					Nat node = 0;
 					if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
 						// These are really just shifts.
-						node = new (this) TreeNode(currentPos);
+						node = store->push(TreeNode(currentPos));
 					} else {
-						node = new (this) TreeNode(currentPos, env.production, env.length);
+						TreeNode fill(engine(), currentPos, env.production, env.length);
 						const Path *top = path;
 						for (Nat i = 0; i < env.length; i++) {
-							node->children->v[i] = top->node;
+							fill.children->v[i] = top->treeNode;
 							top = top->prev;
 						}
 						if (env.length > 0)
-							node->pos = node->children->v[0]->pos;
+							fill.pos = store->at(fill.children->v[0]).pos;
+						node = store->push(fill);
 					}
 
 #ifdef GLR_DEBUG
@@ -247,7 +249,7 @@ namespace storm {
 						StackItem *add = new (this) StackItem(-1, currentPos, stack, node);
 
 						if (acceptingStack && acceptingStack->pos == currentPos) {
-							acceptingStack->insert(syntax, add);
+							acceptingStack->insert(store, add);
 						} else {
 							acceptingStack = add;
 						}
@@ -267,7 +269,7 @@ namespace storm {
 							// 'add' was successfully inserted. Nothing more to do!
 						} else {
 							// We need to merge it with the old one.
-							if (old->insert(syntax, add)) {
+							if (old->insert(store, add)) {
 #ifdef GLR_DEBUG
 								PLN(L"Inserted into " << old->state << L"(" << (void *)old << L")");
 #endif
@@ -315,6 +317,7 @@ namespace storm {
 			}
 
 			void Parser::clear() {
+				store = null;
 				stacks = null;
 				source = null;
 				sourceUrl = null;
@@ -393,7 +396,7 @@ namespace storm {
 				if (acceptingStack->tree == null)
 					return null;
 
-				return tree(acceptingStack->tree, acceptingStack->pos);
+				return tree(store->at(acceptingStack->tree), acceptingStack->pos);
 			}
 
 			static void reverseNode(Node *node) {
@@ -418,13 +421,13 @@ namespace storm {
 				}
 			}
 
-			void Parser::setToken(Node *result, TreeNode *node, Nat endPos, Token *token) const {
+			void Parser::setToken(Node *result, TreeNode &node, Nat endPos, Token *token) const {
 				if (token->target) {
 					Object *match = null;
 					if (as<RegexToken>(token)) {
-						Str::Iter from = source->posIter(node->pos);
+						Str::Iter from = source->posIter(node.pos);
 						Str::Iter to = source->posIter(endPos);
-						SrcPos pos(sourceUrl, node->pos);
+						SrcPos pos(sourceUrl, node.pos);
 						setValue(result, token->target, new (this) SStr(source->substr(from, to), pos));
 					} else if (as<RuleToken>(token)) {
 						setValue(result, token->target, tree(node, endPos));
@@ -434,37 +437,31 @@ namespace storm {
 				}
 			}
 
-			static Nat firstPos(TreeNode *node, Nat endPos) {
-				if (node->children->count > 0)
-					return node->children->v[0]->pos;
-				else
-					return endPos;
-			}
+			Node *Parser::tree(TreeNode &node, Nat endPos) const {
+				assert(node.children, L"Trying to create a tree from a non-reduced node!");
 
-			Node *Parser::tree(TreeNode *node, Nat endPos) const {
-				assert(node->children, L"Trying to create a tree from a non-reduced node!");
+				Production *p = syntax->production(node.production());
+				Node *result = allocNode(p, node.pos);
 
-				Production *p = syntax->production(node->production());
-				Node *result = allocNode(p, firstPos(node, endPos));
-
-				Item item = last(node->production());
+				Item item = last(node.production());
 				Nat pos = endPos;
 
-				Nat repStart = firstPos(node, endPos);
+				Nat repStart = node.pos;
 				Nat repEnd = endPos;
 
-				for (Nat i = node->children->count; i > 0; i--) {
-					TreeNode *child = node->children->v[i-1];
+				for (Nat i = node.children->count; i > 0; i--) {
+					Nat childId = node.children->v[i-1];
 					if (!item.prev(syntax))
 						// Something is fishy...
 						break;
 
+					TreeNode &child = store->at(childId);
+
 					// Remember the capture!
-					if (item.pos == p->repStart) {
+					if (item.pos == p->repStart)
 						repStart = pos;
-					}
 					if (item.pos == p->repEnd)
-						repEnd = child->pos;
+						repEnd = child.pos;
 
 					// Store any tokens in here.
 					if (item.pos == Item::specialPos) {
@@ -473,7 +470,7 @@ namespace storm {
 						setToken(result, child, pos, p->tokens->at(item.pos));
 					}
 
-					pos = child->pos;
+					pos = child.pos;
 				}
 
 				if (p->repCapture) {
@@ -487,9 +484,10 @@ namespace storm {
 				return result;
 			}
 
-			void Parser::subtree(Node *result, TreeNode *node, Nat endPos) const {
-				assert(node->children, L"Trying to create a subtree from a non-reduced node!");
+			void Parser::subtree(Node *result, TreeNode &startNode, Nat endPos) const {
+				assert(startNode.children, L"Trying to create a subtree from a non-reduced node!");
 
+				TreeNode *node = &startNode;
 				Production *p = syntax->production(node->production());
 
 				Item item = last(node->production());
@@ -497,21 +495,23 @@ namespace storm {
 
 				Nat i = node->children->count;
 				while (i > 0) {
-					TreeNode *child = node->children->v[i-1];
+					Nat childId = node->children->v[i-1];
 					if (!item.prev(syntax))
 						// Something is fishy...
 						break;
 
+					TreeNode &child = store->at(childId);
+
 					// Store any tokens in here.
 					if (item.pos == Item::specialPos) {
 						// This is always the first token in special productions, thus we can elliminate some recursion!
-						assert(child->children, L"Special production not properly reduced!");
-						Nat reduced = child->production();
+						assert(child.children, L"Special production not properly reduced!");
+						Nat reduced = child.production();
 						if (Syntax::specialProd(reduced) == Syntax::prodRepeat) {
 							assert(reduced == item.id, L"Special production has wrong recursion.");
 							item = last(reduced);
-							node = child;
-							i = child->children->count;
+							node = &child;
+							i = child.children->count;
 						} else {
 							assert(Syntax::specialProd(reduced) == Syntax::prodEpsilon, L"Expected an epsilon production!");
 							i--;
@@ -520,7 +520,7 @@ namespace storm {
 						setToken(result, child, pos, p->tokens->at(item.pos));
 
 						// This shall not be done when we're elliminating recursion!
-						pos = child->pos;
+						pos = child.pos;
 						i--;
 					}
 				}
@@ -555,14 +555,14 @@ namespace storm {
 				if (acceptingStack->tree == null)
 					return null;
 
-				return infoTree(acceptingStack->tree, acceptingStack->pos);
+				return infoTree(store->at(acceptingStack->tree), acceptingStack->pos);
 			}
 
-			InfoNode *Parser::infoTree(TreeNode *node, Nat endPos) const {
-				assert(node->children, L"Trying to create a tree from a non-reduced node!");
+			InfoNode *Parser::infoTree(TreeNode &node, Nat endPos) const {
+				assert(node.children, L"Trying to create a tree from a non-reduced node!");
 
-				Production *p = syntax->production(node->production());
-				Item item = last(node->production());
+				Production *p = syntax->production(node.production());
+				Item item = last(node.production());
 				Nat pos = endPos;
 				Nat length = totalLength(node);
 				Nat nodePos = length;
@@ -571,10 +571,12 @@ namespace storm {
 				if (p->indentType != indentNone)
 					result->indent = new (this) InfoIndent(0, nodePos, p->indentType);
 
-				for (Nat i = node->children->count; i > 0; i--) {
-					TreeNode *child = node->children->v[i-1];
+				for (Nat i = node.children->count; i > 0; i--) {
+					Nat childId = node.children->v[i-1];
 					if (!item.prev(p))
 						break;
+
+					TreeNode &child = store->at(childId);
 
 					if (item.pos == Item::specialPos) {
 						infoSubtree(result, nodePos, child, pos);
@@ -589,48 +591,50 @@ namespace storm {
 							result->indent->end = nodePos;
 					}
 
-					pos = child->pos;
+					pos = child.pos;
 				}
 
 				assert(nodePos == 0, L"Node length computation was inaccurate!");
 				return result;
 			}
 
-			void Parser::infoSubtree(InfoInternal *result, Nat &resultPos, TreeNode *node, Nat endPos) const {
+			void Parser::infoSubtree(InfoInternal *result, Nat &resultPos, TreeNode &startNode, Nat endPos) const {
+				TreeNode *node = &startNode;
 				Production *p = syntax->production(node->production());
 				Item item = last(node->production());
 				Nat pos = endPos;
 
 				Nat i = node->children->count;
 				while (i > 0) {
-					TreeNode *child = node->children->v[i-1];
+					Nat childId = node->children->v[i-1];
 					if (!item.prev(syntax))
 						break;
 
+					TreeNode &child = store->at(childId);
 					if (item.pos == Item::specialPos) {
-						Nat reduced = child->production();
+						Nat reduced = child.production();
 						if (Syntax::specialProd(reduced) == Syntax::prodRepeat) {
 							item = last(reduced);
-							node = child;
-							i = child->children->count;
+							node = &child;
+							i = child.children->count;
 						} else {
 							i--;
 						}
 					} else {
 						infoToken(result, resultPos, child, pos, p->tokens->at(item.pos));
 
-						pos = child->pos;
+						pos = child.pos;
 						i--;
 					}
 				}
 			}
 
-			void Parser::infoToken(InfoInternal *result, Nat &resultPos, TreeNode *node, Nat endPos, Token *token) const {
+			void Parser::infoToken(InfoInternal *result, Nat &resultPos, TreeNode &node, Nat endPos, Token *token) const {
 				assert(resultPos > 0, L"Too few children allocated in InfoNode!");
 
 				InfoNode *created = null;
-				if (node->children) {
-					if (Syntax::specialProd(node->production()) == Syntax::prodESkip) {
+				if (node.children) {
+					if (Syntax::specialProd(node.production()) == Syntax::prodESkip) {
 						// This is always an empty string! Even though it is a production, it should
 						// look like a plain string.
 						created = new (this) InfoLeaf(as<RegexToken>(token), emptyStr);
@@ -639,8 +643,8 @@ namespace storm {
 					}
 				} else {
 					Str *str = emptyStr;
-					if (node->pos < endPos) {
-						Str::Iter from = source->posIter(node->pos);
+					if (node.pos < endPos) {
+						Str::Iter from = source->posIter(node.pos);
 						Str::Iter to = source->posIter(endPos);
 						str = source->substr(from, to);
 					}
@@ -651,23 +655,24 @@ namespace storm {
 				result->set(--resultPos, created);
 			}
 
-			Nat Parser::totalLength(TreeNode *node) const {
-				Item item = last(node->production());
+			Nat Parser::totalLength(TreeNode &node) const {
+				Item item = last(node.production());
 				Nat length = item.length(syntax);
 
-				for (Nat i = node->children->count; i > 0; i--) {
-					TreeNode *child = node->children->v[i-1];
+				for (Nat i = node.children->count; i > 0; i--) {
+					Nat childId = node.children->v[i-1];
 					if (!item.prev(syntax))
 						break;
 
+					TreeNode &child = store->at(childId);
 					if (item.pos == Item::specialPos) {
 						// Ignore this non-terminal.
 						length--;
 
 						// Traverse until we reach an epsilon production!
-						for (TreeNode *at = child;
+						for (TreeNode *at = &child;
 							 at->children && Syntax::specialProd(at->production()) == Syntax::prodRepeat;
-							 at = at->children->v[0]) {
+							 at = &store->at(at->children->v[0])) {
 
 							Item i(syntax, at->production());
 							length += i.length(syntax);
