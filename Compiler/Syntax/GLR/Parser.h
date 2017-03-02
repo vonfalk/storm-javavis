@@ -93,6 +93,9 @@ namespace storm {
 				 * Data cleared between parses.
 				 */
 
+				// Storage of states.
+				StackStore *store;
+
 				// Stacks for future steps.
 				FutureStacks *stacks;
 
@@ -107,10 +110,11 @@ namespace storm {
 
 				// Last found stack which accepted the string. Starts with a dummy stack item for
 				// the topmost production.
-				StackItem *acceptingStack;
+				TreeNode *acceptedTree;
+				Nat acceptedPos;
 
 				// The last non-empty state set. Used for error reporting.
-				Set<StackItem *> *lastSet;
+				Set<StackPtr> *lastSet;
 
 				// The position of 'lastSet'.
 				Nat lastPos;
@@ -133,7 +137,7 @@ namespace storm {
 				ItemSet startSet(Rule *rule);
 
 				// Find the start state for for a rule.
-				StackItem *startState(Nat pos, Rule *rule);
+				StackItem startState(Nat pos, Rule *rule);
 
 				// Add 'production' and all other productions which may complete this production to
 				// 'alwaysReduce'.
@@ -148,7 +152,7 @@ namespace storm {
 				 */
 
 				// Act on all states until we're done.
-				void actor(Nat pos, Set<StackItem *> *states);
+				void actor(Nat pos, Set<StackPtr> *states);
 
 				// Data passed to the reduction actor.
 				struct ActorEnv {
@@ -156,13 +160,13 @@ namespace storm {
 					State *state;
 
 					// Top of stack before reductions started.
-					StackItem *stack;
+					Nat stack;
 				};
 
 				// Perform actions required for a state.
 				void actorShift(const ActorEnv &env);
-				void actorReduce(const ActorEnv &env, StackItem *through);
-				void doReduce(const ActorEnv &env, Nat production, StackItem *through);
+				void actorReduce(const ActorEnv &env, Nat through);
+				void doReduce(const ActorEnv &env, Nat production, Nat through);
 
 				// Static state to the 'reduce' function.
 				struct ReduceEnv {
@@ -185,13 +189,13 @@ namespace storm {
 
 				// Reduce a production of length 'len' from the current stack item. If 'through' is
 				// set, only nodes where the edge 'link' is passed are considered.
-				void reduce(const ReduceEnv &env, StackItem *stack, const Path *path, StackItem *through, Nat len);
+				void reduce(const ReduceEnv &env, Nat stack, const Path *path, Nat through, Nat len);
 
 				// Limited reduction of a rule. Only paths passing through the edge 'link' are considered.
-				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through);
+				void limitedReduce(const ReduceEnv &env, Set<StackPtr> *top, Nat through);
 
 				// Produce error messages from the state set 'states'.
-				void errorMsg(StrBuf *out, Nat pos, Set<StackItem *> *states) const;
+				void errorMsg(StrBuf *out, Nat pos, Set<StackPtr> *states) const;
 				void errorMsg(Set<Str *> *errors, Nat state) const;
 
 				/**

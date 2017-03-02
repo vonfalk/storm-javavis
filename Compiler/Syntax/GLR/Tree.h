@@ -41,6 +41,9 @@ namespace storm {
 					lower,
 				};
 
+				// Count the number of nodes in this tree.
+				Nat STORM_FN countNodes() const;
+
 				// Find out if this node has higher priority than another node.
 				Priority STORM_FN priority(TreeNode *other, Syntax *syntax);
 

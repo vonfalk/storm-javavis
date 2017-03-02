@@ -54,6 +54,16 @@ namespace storm {
 					return pos;
 			}
 
+			Nat TreeNode::countNodes() const {
+				Nat r = 1;
+				if (children) {
+					for (Nat i = 0; i < children->count; i++)
+						if (children->v[i])
+							r += children->v[i]->countNodes();
+				}
+				return r;
+			}
+
 			TreeNode::Priority TreeNode::priority(TreeNode *b, Syntax *syntax) {
 				TreeNode *a = this;
 				if (a == b)
