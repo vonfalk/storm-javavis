@@ -173,7 +173,6 @@ namespace storm {
 				Item item(syntax, production);
 				Nat rule = item.rule(syntax);
 				Nat length = item.length(syntax);
-				GcArray<StackItem *> *path = runtime::allocArray<StackItem *>(engine(), &pointerArrayType, length);
 
 #ifdef GLR_DEBUG
 				PLN(L"Reducing " << item.toS(syntax) << L":");
@@ -184,12 +183,12 @@ namespace storm {
 					env,
 					production,
 					rule,
-					path,
+					length,
 				};
-				reduce(re, env.stack, through, length);
+				reduce(re, env.stack, null, through, length);
 			}
 
-			void Parser::reduce(const ReduceEnv &env, StackItem *stack, StackItem *through, Nat len) {
+			void Parser::reduce(const ReduceEnv &env, StackItem *stack, const Path *path, StackItem *through, Nat len) {
 #ifdef GLR_DEBUG
 				PLN(L"Reduce " << (void *)stack << L" " << stack->state << L" " << (void *)through << L" len " << len);
 				::Indent z(util::debugStream());
@@ -198,11 +197,16 @@ namespace storm {
 				if (len > 0) {
 					len--;
 
+					Path next = {
+						path,
+						null,
+					};
+
 					// Keep on traversing...
 					for (StackItem *i = stack; i; i = i->morePrev) {
 						if (i->prev) {
-							env.path->v[len] = i;
-							reduce(env, i->prev, i == through ? null : through, len);
+							next.node = i->tree;
+							reduce(env, i->prev, &next, i == through ? null : through, len);
 						}
 					}
 				} else if (through == null) {
@@ -222,10 +226,13 @@ namespace storm {
 						// These are really just shifts.
 						node = new (this) TreeNode(currentPos);
 					} else {
-						node = new (this) TreeNode(currentPos, env.production, env.path->count);
-						for (Nat i = 0; i < env.path->count; i++)
-							node->children->v[i] = env.path->v[i]->tree;
-						if (node->children->count > 0)
+						node = new (this) TreeNode(currentPos, env.production, env.length);
+						const Path *top = path;
+						for (Nat i = 0; i < env.length; i++) {
+							node->children->v[i] = top->node;
+							top = top->prev;
+						}
+						if (env.length > 0)
 							node->pos = node->children->v[0]->pos;
 					}
 

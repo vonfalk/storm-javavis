@@ -173,13 +173,19 @@ namespace storm {
 					Nat production;
 					Nat rule;
 
-					// All nodes traversed to get here. Updated during the recursion.
-					GcArray<StackItem *> *path;
+					// Number of items of the currently reduced production.
+					Nat length;
+				};
+
+				// Linked list of entries, keeping track of the path currently being reduced.
+				struct Path {
+					const Path *prev;
+					TreeNode *node;
 				};
 
 				// Reduce a production of length 'len' from the current stack item. If 'through' is
 				// set, only nodes where the edge 'link' is passed are considered.
-				void reduce(const ReduceEnv &env, StackItem *stack, StackItem *through, Nat len);
+				void reduce(const ReduceEnv &env, StackItem *stack, const Path *path, StackItem *through, Nat len);
 
 				// Limited reduction of a rule. Only paths passing through the edge 'link' are considered.
 				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through);
