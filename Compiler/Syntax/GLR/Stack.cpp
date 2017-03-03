@@ -47,7 +47,9 @@ namespace storm {
 				} else if (store->priority(newTree, tree) == TreeStore::higher) {
 					// Note: we can not simply set the tree pointer of this state, as we need to
 					// update any previously created syntax trees.
-					store->at(tree) = store->at(newTree);
+					// Note: due to how 'priority' works, we can be sure that both this tree node
+					// and the other one have children.
+					store->at(tree).replace(store->at(newTree));
 				}
 			}
 

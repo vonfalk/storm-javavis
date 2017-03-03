@@ -6,13 +6,13 @@ namespace storm {
 	namespace syntax {
 		namespace glr {
 
-			TreeNode::TreeNode(Nat pos) : pos(pos), children(null) {}
+			const Nat countMask = 0x80000000;
 
-			TreeNode::TreeNode(Engine &e, Nat pos, Nat production, Nat count) : pos(pos) {
-				children = runtime::allocArray<Nat>(e, &natArrayType, count);
-				children->filled = production;
+			void TreeNode::replace(const TreeNode &other) {
+				pos(other.pos());
+				// Re-point our array.
+				write(src, ptr + 1, other.children().ptr);
 			}
-
 
 			/**
 			 * Storage of trees.
@@ -20,20 +20,36 @@ namespace storm {
 
 			TreeStore::TreeStore(Syntax *syntax) : count(1), syntax(syntax) {
 				chunks = runtime::allocArray<Chunk *>(engine(), &pointerArrayType, 16);
-				arrayType = StormInfo<TreeNode>::handle(engine()).gcArrayType;
 			}
 
-			Nat TreeStore::push(const TreeNode &item) {
-				Nat id = chunkId(count);
-				if (id >= chunks->count)
+			TreeNode TreeStore::push(Nat pos) {
+				Nat start = alloc(2);
+				write(start, pos);
+				write(start + 1, 0);
+				return TreeNode(this, start);
+			}
+
+			TreeNode TreeStore::push(Nat pos, Nat production, Nat children) {
+				Nat start = alloc(3 + children);
+				write(start, pos);
+				write(start + 1, countMask | children);
+				write(start + 2, production);
+				return TreeNode(this, start);
+			}
+
+			Nat TreeStore::alloc(Nat n) {
+				Nat first = chunkId(count);
+				Nat last = chunkId(count + n - 1);
+				while (last >= chunks->count)
 					grow();
 
-				Chunk *&chunk = chunks->v[id];
-				if (!chunk)
-					chunk = runtime::allocArray<TreeNode>(engine(), arrayType, chunkSize);
+				for (Nat i = first; i <= last; i++)
+					if (!chunks->v[i])
+						chunks->v[i] = runtime::allocArray<Nat>(engine(), &natArrayType, chunkSize);
 
-				chunk->v[chunkOffset(count)] = item;
-				return count++;
+				Nat r = count;
+				count += n;
+				return r;
 			}
 
 			void TreeStore::grow() {
@@ -48,7 +64,7 @@ namespace storm {
 
 				TreeNode &a = at(aId);
 				TreeNode &b = at(bId);
-				if (!a.children || !b.children)
+				if (!a.children() || !b.children())
 					return equal;
 
 				// These productions are introduced in order to fix epsilon regexes. Do not compare!
@@ -56,8 +72,8 @@ namespace storm {
 					Syntax::specialProd(b.production()) == Syntax::prodESkip)
 					return equal;
 
-				if (a.pos != b.pos)
-					return a.pos < b.pos ? higher : lower;
+				if (a.pos() != b.pos())
+					return a.pos() < b.pos() ? higher : lower;
 
 				Production *aProd = syntax->production(a.production());
 				Production *bProd = syntax->production(b.production());
@@ -68,9 +84,9 @@ namespace storm {
 					return equal;
 
 				// Traverse and do a lexiographic compare between the two trees.
-				TreeArray aChildren(engine());
+				ChildArray aChildren(engine());
 				allChildren(aChildren, Syntax::baseProd(a.production()), a);
-				TreeArray bChildren(engine());
+				ChildArray bChildren(engine());
 				allChildren(bChildren, Syntax::baseProd(b.production()), a);
 
 				Nat to = min(aChildren.count(), bChildren.count());
@@ -89,22 +105,23 @@ namespace storm {
 				return equal;
 			}
 
-			void TreeStore::allChildren(TreeArray &out, Nat productionId, TreeNode &me) {
-				if (!me.children)
+			void TreeStore::allChildren(ChildArray &out, Nat productionId, TreeNode &me) {
+				if (!me.children())
 					return;
 
 				// TODO? Make this iterative in some cases, can be done like in Parser::subtree.
-				for (Nat i = 0; i < me.children->count; i++) {
-					Nat child = me.children->v[i];
+				TreeArray children = me.children();
+				for (Nat i = 0; i < children.count(); i++) {
+					Nat child = children[i];
 
 					if (!addNode(out, productionId, child))
 						out.push(child);
 				}
 			}
 
-			bool TreeStore::addNode(TreeArray &out, Nat productionId, Nat node) {
+			bool TreeStore::addNode(ChildArray &out, Nat productionId, Nat node) {
 				TreeNode &me = at(node);
-				if (!me.children)
+				if (!me.children())
 					return false;
 				if (Syntax::baseProd(me.production()) != productionId)
 					return false;
