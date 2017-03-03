@@ -189,6 +189,7 @@ namespace storm {
 				// Reduce a production of length 'len' from the current stack item. If 'through' is
 				// set, only nodes where the edge 'link' is passed are considered.
 				void reduce(const ReduceEnv &env, StackItem *stack, const Path *path, StackItem *through, Nat len);
+				void finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path, Nat len);
 
 				// Limited reduction of a rule. Only paths passing through the edge 'link' are considered.
 				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through);

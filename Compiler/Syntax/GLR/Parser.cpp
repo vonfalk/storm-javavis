@@ -212,72 +212,76 @@ namespace storm {
 						}
 					}
 				} else if (through == null) {
-					State *state = table->state(stack->state);
-					Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
+					finishReduce(env, stack, path, len);
+				}
+			}
 
-					bool accept = stack->prev == null && env.rule == parseRoot;
-					bool reduce = to != state->rules->end();
+			void Parser::finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path, Nat len) {
+				State *state = table->state(stack->state);
+				Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
 
-					if (!accept && !reduce)
-						return;
+				bool accept = stack->prev == null && env.rule == parseRoot;
+				bool reduce = to != state->rules->end();
 
-					// Create the syntax tree node for this reduction.
+				if (!accept && !reduce)
+					return;
 
-					Nat node = 0;
-					if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
-						// These are really just shifts.
-						node = store->push(currentPos).id();
+				// Create the syntax tree node for this reduction.
+
+				Nat node = 0;
+				if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
+					// These are really just shifts.
+					node = store->push(currentPos).id();
+				} else {
+					TreeNode fill = store->push(currentPos, env.production, env.length);
+					TreeArray children = fill.children();
+					const Path *top = path;
+					for (Nat i = 0; i < env.length; i++) {
+						children.set(i, top->treeNode);
+						top = top->prev;
+					}
+					if (env.length > 0)
+						fill.pos(store->at(children[0]).pos());
+
+					node = fill.id();
+				}
+
+#ifdef GLR_DEBUG
+				PVAR(accept);
+				PVAR(reduce);
+				PVAR(node);
+#endif
+
+				if (accept) {
+					StackItem *add = new (this) StackItem(-1, currentPos, stack, node);
+
+					if (acceptingStack && acceptingStack->pos == currentPos) {
+						acceptingStack->insert(store, add);
 					} else {
-						TreeNode fill = store->push(currentPos, env.production, env.length);
-						TreeArray children = fill.children();
-						const Path *top = path;
-						for (Nat i = 0; i < env.length; i++) {
-							children.set(i, top->treeNode);
-							top = top->prev;
-						}
-						if (env.length > 0)
-							fill.pos(store->at(children[0]).pos());
-
-						node = fill.id();
+						acceptingStack = add;
 					}
+				}
 
+				// Figure out which state to go to.
+				if (reduce) {
+					StackItem *add = new (this) StackItem(to.v(), currentPos, stack, node);
 #ifdef GLR_DEBUG
-					PVAR(accept);
-					PVAR(reduce);
-					PVAR(node);
+					PLN(L"Added " << to.v() << L" with prev " << stack->state << L"(" << (void *)stack << L")");
 #endif
 
-					if (accept) {
-						StackItem *add = new (this) StackItem(-1, currentPos, stack, node);
-
-						if (acceptingStack && acceptingStack->pos == currentPos) {
-							acceptingStack->insert(store, add);
-						} else {
-							acceptingStack = add;
-						}
-					}
-
-					// Figure out which state to go to.
-					if (reduce) {
-						StackItem *add = new (this) StackItem(to.v(), currentPos, stack, node);
+					// Add the newly created state.
+					Set<StackItem *> *top = stacks->top();
+					StackItem *old = top->at(add);
+					if (old == add) {
+						// 'add' was successfully inserted. Nothing more to do!
+					} else {
+						// We need to merge it with the old one.
+						if (old->insert(store, add)) {
 #ifdef GLR_DEBUG
-						PLN(L"Added " << to.v() << L" with prev " << stack->state << L"(" << (void *)stack << L")");
+							PLN(L"Inserted into " << old->state << L"(" << (void *)old << L")");
 #endif
-
-						// Add the newly created state.
-						Set<StackItem *> *top = stacks->top();
-						StackItem *old = top->at(add);
-						if (old == add) {
-							// 'add' was successfully inserted. Nothing more to do!
-						} else {
-							// We need to merge it with the old one.
-							if (old->insert(store, add)) {
-#ifdef GLR_DEBUG
-								PLN(L"Inserted into " << old->state << L"(" << (void *)old << L")");
-#endif
-								// Note: 'add' is the actual link.
-								limitedReduce(env, top, add);
-							}
+							// Note: 'add' is the actual link.
+							limitedReduce(env, top, add);
 						}
 					}
 				}
