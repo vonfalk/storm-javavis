@@ -810,9 +810,9 @@ namespace storm {
 	 * TODO: Tweak these!
 	 */
 	static mps_gen_param_s generationParams[] = {
-		{ 1024*1024, 0.85 }, // Nursery generation, 1MB
-		{ 2048*1024, 0.45 }, // Intermediate generation, 2MB
-		{ 4096*1024, 0.10 }, // Long-lived generation (for types, code and other things), 4MB
+		{ 2*1024*1024, 0.85 }, // Nursery generation, 2MB
+		{ 4*1024*1024, 0.45 }, // Intermediate generation, 4MB
+		{ 8*1024*1024, 0.10 }, // Long-lived generation (for types, code and other things), 8MB
 	};
 
 	Gc::Gc(size_t arenaSize, nat finalizationInterval) : finalizationInterval(finalizationInterval) {
