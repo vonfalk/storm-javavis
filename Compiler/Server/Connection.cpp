@@ -197,7 +197,7 @@ namespace storm {
 		}
 
 		Bool Connection::fillBuffer() {
-			const Nat chunk = 1024;
+			const Nat chunk = 6*1024;
 			Buffer r = input->read(chunk);
 			if (r.empty()) {
 				// EOF reached...
