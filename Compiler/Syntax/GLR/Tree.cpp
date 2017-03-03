@@ -23,15 +23,14 @@ namespace storm {
 			}
 
 			TreeNode TreeStore::push(Nat pos) {
-				Nat start = alloc(2);
+				Nat start = alloc(1);
 				write(start, pos);
-				write(start + 1, 0);
 				return TreeNode(this, start);
 			}
 
 			TreeNode TreeStore::push(Nat pos, Nat production, Nat children) {
 				Nat start = alloc(3 + children);
-				write(start, pos);
+				write(start, countMask | pos);
 				write(start + 1, countMask | children);
 				write(start + 2, production);
 				return TreeNode(this, start);
@@ -87,7 +86,7 @@ namespace storm {
 				ChildArray aChildren(engine());
 				allChildren(aChildren, Syntax::baseProd(a.production()), a);
 				ChildArray bChildren(engine());
-				allChildren(bChildren, Syntax::baseProd(b.production()), a);
+				allChildren(bChildren, Syntax::baseProd(b.production()), b);
 
 				Nat to = min(aChildren.count(), bChildren.count());
 				Priority result = equal;

@@ -27,7 +27,7 @@ namespace storm {
 
 				// Get number of elements.
 				inline Nat STORM_FN count() const {
-					return read(src, ptr) & ~countMask;
+					return cnt;
 				}
 
 				// Get element #n.
@@ -50,6 +50,7 @@ namespace storm {
 				inline TreeArray(TreeStore *in, Nat pos) {
 					src = in;
 					ptr = pos;
+					cnt = read(src, ptr) & ~countMask;
 				}
 
 				// Access to data. Might be null.
@@ -57,6 +58,9 @@ namespace storm {
 
 				// Starting point of this node.
 				Nat ptr;
+
+				// Cached element count.
+				Nat cnt;
 			};
 
 
@@ -73,20 +77,23 @@ namespace storm {
 
 				// Get the starting position of this node.
 				inline Nat STORM_FN pos() const {
-					return read(src, ptr);
+					return read(src, ptr) & ~countMask;
 				}
 
 				// Set the starting position of this node.
 				inline void STORM_FN pos(Nat v) const {
+					v &= ~countMask;
+					v |= read(src, ptr) & countMask;
 					return write(src, ptr, v);
 				}
 
 				// Get the child array.
 				inline TreeArray STORM_FN children() const {
-					Nat pos = read(src, ptr + 1);
-					if (pos == 0) {
+					if ((read(src, ptr) & countMask) == 0)
 						return TreeArray(src, 0);
-					} else if (pos & countMask) {
+
+					Nat pos = read(src, ptr + 1);
+					if (pos & countMask) {
 						return TreeArray(src, ptr + 1);
 					} else {
 						return TreeArray(src, pos);
@@ -124,7 +131,8 @@ namespace storm {
 			 *
 			 * This is just an array of Nat elements. The classes TreeNode and TreeArray just read
 			 * from here. Nodes are stored as follows (one entry per item):
-			 * - position this node started in the input string
+			 * - position this node started in the input string. If msb of the position is set, this node
+			 *   contains children.
 			 * - number of children / 'pointer' to the data array. If msb is set, then this is a count and the
 			 *   child array is allocated right here. Otherwise, this is a pointer (possibly to null, which
 			 *   equals no children) to the child array, starting with a number of children.
