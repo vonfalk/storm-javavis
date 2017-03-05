@@ -31,6 +31,7 @@ SAtom : SNum;
 void SStmt();
 SStmt : "{" [, (SStmt, )* ]+ "}";
 SStmt : "\[" [, (SStmt, )* ]- "\]";
+SStmt : "if()" [, SStmt]?;
 SStmt : SExpr, ";";
 
 // Entry point.

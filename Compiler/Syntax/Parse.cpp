@@ -181,6 +181,8 @@ namespace storm {
 						result->indentType = indentIncrease;
 					} else if (kind == L"-") {
 						result->indentType = indentDecrease;
+					} else if (kind == L"?") {
+						result->indentType = indentWeakIncrease;
 					} else if (kind == L"@") {
 						result->indentType = indentAlign;
 					} else {

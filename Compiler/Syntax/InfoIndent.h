@@ -1,10 +1,34 @@
 #pragma once
 #include "Core/Object.h"
-#include "IndentType.h"
 
 namespace storm {
 	namespace syntax {
 		STORM_PKG(lang.bnf);
+
+		/**
+		 * Kind of indentation for a production.
+		 */
+		enum IndentType {
+			indentNone,
+
+			// Increase indentation one level.
+			indentIncrease,
+
+			// Decrease indentation one level.
+			indentDecrease,
+
+			// Increase indentation one level as long as no other considered nodes affected
+			// indentation (except for align directives).
+			indentWeakIncrease,
+
+			// Align with the start of the indented range. Only the leafmost alignment is
+			// considered when indentation information is generated.
+			indentAlign,
+		};
+
+		// Output.
+		StrBuf &STORM_FN operator <<(StrBuf &to, IndentType i);
+
 
 		/**
 		 * Information about indentation in an InfoNode. This is only needed in the minority of
@@ -52,23 +76,34 @@ namespace storm {
 			Nat STORM_FN alignAs() const;
 			void STORM_FN alignAs(Nat offset);
 
+			// Have we seen some indentation directive?
+			Bool STORM_FN seenIndent() const;
+
 			// Apply indentation of a parent node, assuming it is applicable to us.
-			void STORM_FN applyParent(InfoIndent *info, Nat offset);
+			// Provided is the offset of the start of the repetition for the parent node,
+			// and the current token id.
+			void STORM_FN applyParent(InfoIndent *info, Nat current, Nat repOffset);
 
 			// Increase any offsets in this structure by 'n'.
 			void STORM_FN offset(Nat n);
 
 			// Compare.
-			inline Bool STORM_FN operator ==(TextIndent o) const { return value == o.value; }
-			inline Bool STORM_FN operator !=(TextIndent o) const { return value != o.value; }
+			inline Bool STORM_FN operator ==(TextIndent o) const { return (value & ~indentMask) == (o.value & ~indentMask); }
+			inline Bool STORM_FN operator !=(TextIndent o) const { return !(*this == o); }
 
 		private:
-			// Store the result. Topmost bit is set if we contain an offset into the file. If
-			// 'level' is set, represents a 2:s complement of the indentation level.
+			// Store the result as follows:
+			// topmost bit indicates that we have seen a indentIncrease or indentDecrease.
+			// second topmost is set if we contain an offset into the file.
+			// the rest of the bits either contains a 2:s complement of the indentation level
+			// or an unsigned number representing the offset.
 			Nat value;
 
 			// Masks.
-			static const Nat relativeMask = 0x80000000;
+			static const Nat indentMask   = 0x80000000;
+			static const Nat relativeMask = 0x40000000;
+			static const Nat signMask     = 0x20000000;
+			static const Nat dataMask     = 0x1FFFFFFF;
 		};
 
 		// Output.

@@ -43,4 +43,19 @@ BEGIN_TEST(IndentParse, Server) {
 		CHECK_EQ(tree->indentAt(12), indentLevel(1));
 	}
 
+	// Check so that weak indentation works.
+	{
+		Str *src = new (e) Str(L"if(){\na;}\nif()b;");
+		p->parse(src, new (e) Url());
+		VERIFY(p->hasTree() && p->matchEnd() == src->end());
+
+		InfoNode *tree = p->infoTree();
+		CHECK_EQ(tree->indentAt(4), indentLevel(0));
+		CHECK_EQ(tree->indentAt(5), indentLevel(1));
+		CHECK_EQ(tree->indentAt(6), indentLevel(1));
+		CHECK_EQ(tree->indentAt(8), indentLevel(0));
+		CHECK_EQ(tree->indentAt(13), indentLevel(0));
+		CHECK_EQ(tree->indentAt(14), indentLevel(1));
+	}
+
 } END_TEST

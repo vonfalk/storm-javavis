@@ -2,7 +2,7 @@
 #include "Core/StrBuf.h"
 #include "Compiler/Name.h"
 #include "RepType.h"
-#include "IndentType.h"
+#include "InfoIndent.h"
 #include "TokenColor.h"
 
 namespace storm {

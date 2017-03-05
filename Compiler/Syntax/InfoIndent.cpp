@@ -5,6 +5,36 @@
 namespace storm {
 	namespace syntax {
 
+		/**
+		 * IndentType.
+		 */
+
+		StrBuf &STORM_FN operator <<(StrBuf &to, IndentType i) {
+			switch (i) {
+			case indentNone:
+				to << L"none";
+				break;
+			case indentIncrease:
+				to << L"+";
+				break;
+			case indentDecrease:
+				to << L"-";
+				break;
+			case indentWeakIncrease:
+				to << L"?";
+				break;
+			case indentAlign:
+				to << L"@";
+				break;
+			}
+			return to;
+		}
+
+
+		/**
+		 * InfoIndent.
+		 */
+
 		InfoIndent::InfoIndent(Nat start, Nat end, IndentType type) : start(start), end(end), type(type) {}
 
 		Bool InfoIndent::contains(Nat i) const {
@@ -16,6 +46,10 @@ namespace storm {
 		}
 
 
+		/**
+		 * TextIndent.
+		 */
+
 		TextIndent::TextIndent() : value(0) {}
 
 		Bool TextIndent::isAlign() const {
@@ -25,44 +59,55 @@ namespace storm {
 		Int TextIndent::level() const {
 			if (!isAlign()) {
 				// Sign-extend to the last bit.
-				if (value & (relativeMask >> 1))
-					return value | relativeMask;
+				Nat r = value & dataMask;
+				if (value & signMask)
+					return r | relativeMask | indentMask;
 				else
-					return value;
+					return r;
 			} else {
 				return 0;
 			}
 		}
 
 		void TextIndent::level(Int v) {
-			value = Nat(v) & ~relativeMask;
+			value = (Nat(v) & dataMask) | indentMask;
 		}
 
 		Nat TextIndent::alignAs() const {
 			if (isAlign())
-				return value & ~relativeMask;
+				return value & dataMask;
 			else
 				return 0;
 		}
 
 		void TextIndent::alignAs(Nat offset) {
-			value = offset | relativeMask;
+			value = offset | relativeMask | (value & indentMask);
 		}
 
-		void TextIndent::applyParent(InfoIndent *info, Nat offset) {
+		Bool TextIndent::seenIndent() const {
+			return (value & indentMask) != 0;
+		}
+
+		void TextIndent::applyParent(InfoIndent *info, Nat current, Nat offset) {
+			Bool inside = info->contains(current);
+
 			switch (info->type) {
 			case indentIncrease:
 				if (!isAlign())
-					level(level() + 1);
+					level(level() + inside);
 				break;
 			case indentDecrease:
 				if (!isAlign())
-					level(level() - 1);
+					level(level() - inside);
+				break;
+			case indentWeakIncrease:
+				if (!isAlign() && !seenIndent() && inside)
+					level(1);
 				break;
 			case indentAlign:
 				if (isAlign()) {
 					// We only care about the leafmost one.
-				} else {
+				} else if (inside) {
 					alignAs(offset);
 				}
 				break;

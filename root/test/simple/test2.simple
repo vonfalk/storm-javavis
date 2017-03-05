@@ -6,5 +6,15 @@ foo;
 	[
 dedent;
 	]
+	if()
+	{
+		foo or
+			bar;
+		bar;
+	}
+	if()
+		foo or
+			bar;
+	bar;
 }
 bar;

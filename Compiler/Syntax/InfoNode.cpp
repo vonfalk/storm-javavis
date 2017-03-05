@@ -90,8 +90,8 @@ namespace storm {
 					TextIndent r = child->indentAt(pos - offset);
 					r.offset(offset);
 
-					if (indent && indent->contains(i))
-						r.applyParent(indent, indentStartOffset);
+					if (indent)
+						r.applyParent(indent, i, indentStartOffset);
 					return r;
 				}
 
