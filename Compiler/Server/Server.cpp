@@ -138,7 +138,7 @@ namespace storm {
 			if (r.isAlign()) {
 				result = list(e, 2, as, new (e) Number(r.alignAs()));
 			} else {
-				result = list(e, 2, level, new (e) Number(r.level()));
+				result = list(e, 2, level, new (e) Number(max(0, r.level())));
 			}
 
 			result = cons(e, new (e) Number(file), result);

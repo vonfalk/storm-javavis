@@ -22,15 +22,20 @@ namespace storm {
 			return (value & relativeMask) != 0;
 		}
 
-		Nat TextIndent::level() const {
-			if (!isAlign())
-				return value;
-			else
+		Int TextIndent::level() const {
+			if (!isAlign()) {
+				// Sign-extend to the last bit.
+				if (value & (relativeMask >> 1))
+					return value | relativeMask;
+				else
+					return value;
+			} else {
 				return 0;
+			}
 		}
 
-		void TextIndent::level(Nat v) {
-			value = v;
+		void TextIndent::level(Int v) {
+			value = Nat(v) & ~relativeMask;
 		}
 
 		Nat TextIndent::alignAs() const {
@@ -51,7 +56,7 @@ namespace storm {
 					level(level() + 1);
 				break;
 			case indentDecrease:
-				if (!isAlign() && level() > 0)
+				if (!isAlign())
 					level(level() - 1);
 				break;
 			case indentAlign:
@@ -85,7 +90,7 @@ namespace storm {
 			return to;
 		}
 
-		TextIndent indentLevel(Nat level) {
+		TextIndent indentLevel(Int level) {
 			TextIndent i;
 			i.level(level);
 			return i;

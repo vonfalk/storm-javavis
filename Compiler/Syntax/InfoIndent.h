@@ -45,8 +45,8 @@ namespace storm {
 			Bool STORM_FN isAlign() const;
 
 			// Access the indentation level. Returns zero if we're containing a character offset.
-			Nat STORM_FN level() const;
-			void STORM_FN level(Nat level);
+			Int STORM_FN level() const;
+			void STORM_FN level(Int level);
 
 			// Access the current offset. Returns zero if we're not containing a character offset.
 			Nat STORM_FN alignAs() const;
@@ -63,7 +63,8 @@ namespace storm {
 			inline Bool STORM_FN operator !=(TextIndent o) const { return value != o.value; }
 
 		private:
-			// Store the result. Topmost bit is set if we contain an offset into the file.
+			// Store the result. Topmost bit is set if we contain an offset into the file. If
+			// 'level' is set, represents a 2:s complement of the indentation level.
 			Nat value;
 
 			// Masks.
@@ -75,7 +76,7 @@ namespace storm {
 		wostream &operator <<(wostream &to, TextIndent i);
 
 		// Create initialized TextIndent instances.
-		TextIndent STORM_FN indentLevel(Nat level);
+		TextIndent STORM_FN indentLevel(Int level);
 		TextIndent STORM_FN indentAs(Nat offset);
 
 	}

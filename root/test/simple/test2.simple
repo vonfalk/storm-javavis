@@ -3,5 +3,8 @@ foo;
 	bar or 22
 		or 23;
 	foo;
+	[
+dedent;
+	]
 }
 bar;
