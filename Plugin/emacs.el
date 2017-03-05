@@ -82,9 +82,10 @@
 	  (setq goto-pos (- (point-max) (point))))
       (setq indent (storm-line-indentation))
       (when (integerp indent)
-	(combine-after-change-calls
-	  (delete-region beg (point))
-	  (indent-to indent)))
+	;; Note: we can not use combine-after-change-calls here as it
+	;; destroys the callbacks for buffer changes we get from Emacs.
+	(delete-region beg (point))
+	(indent-to indent))
 
       (goto-char (- (point-max) goto-pos))
       indent)))
@@ -114,6 +115,7 @@
     (define-key map "\C-cd" 'storm-debug-tree)
     (define-key map "\C-cc" 'storm-debug-content)
     (define-key map "\C-cu" 'storm-debug-re-color)
+    (define-key map "\C-cr" 'storm-debug-re-open)
     map)
   "Keymap for storm-mode")
 
@@ -132,10 +134,18 @@
     (storm-send (list 'debug storm-buffer-id nil))))
 
 (defun storm-debug-re-color ()
-  "Output debug information of the contents of the current buffer."
+  "Ask Storm to re-color the current buffer."
   (interactive)
   (when storm-buffer-id
     (storm-send (list 'recolor storm-buffer-id))))
+
+(defun storm-debug-re-open ()
+  "Quickly re-open the current buffer in case it has gotten out of sync with the Storm 
+   process for some reason. This should not be neccessary, but is provided as it is convenient
+   during debugging."
+  (interactive)
+  (when storm-buffer-id
+    (storm-register-buffer (current-buffer))))
 
 ;; Convenience for highlighting.
 
