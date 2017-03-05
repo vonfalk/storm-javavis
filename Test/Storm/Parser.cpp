@@ -66,11 +66,13 @@ BEGIN_TEST(ParserTest, Storm) {
 			syntax::Node *tree = p->tree();
 			Str *r = syntax::transformNode<Str>(tree);
 			CHECK_EQ(::toS(r), L"cat");
+			CHECK_RUNS(p->infoTree());
 
 			CHECK(p->parse(new (e) Str(L"the cat runs!"), new (e) Url()));
 			CHECK(p->hasError());
 			CHECK(p->hasTree());
 			CHECK_EQ(p->matchEnd().v(), Char('!'));
+			CHECK_RUNS(p->infoTree());
 		}
 
 		{
@@ -85,6 +87,7 @@ BEGIN_TEST(ParserTest, Storm) {
 			syntax::Node *tree = p->tree();
 			Array<Str *> *r = syntax::transformNode<Array<Str *>>(tree);
 			CHECK_EQ(::toS(r), L"[cat, bird, dog]");
+			CHECK_RUNS(p->infoTree());
 		}
 
 		{
@@ -99,6 +102,7 @@ BEGIN_TEST(ParserTest, Storm) {
 			syntax::Node *tree = p->tree();
 			Str *r = syntax::transformNode<Str>(tree);
 			CHECK_EQ(::toS(r), L"the cat runs");
+			CHECK_RUNS(p->infoTree());
 
 			CHECK(p->parse(new (e) Str(L".the cat runs."), new(e) Url()));
 			CHECK(!p->hasError());
@@ -106,6 +110,7 @@ BEGIN_TEST(ParserTest, Storm) {
 			tree = p->tree();
 			r = syntax::transformNode<Str>(tree);
 			CHECK_EQ(::toS(r), L"the cat runs");
+			CHECK_RUNS(p->infoTree());
 		}
 	}
 

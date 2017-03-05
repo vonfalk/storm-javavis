@@ -96,7 +96,7 @@ namespace storm {
 				} else {
 					if (pos == 0)
 						return false;
-					if (pos-- == p->repEnd)
+					if (pos-- == p->repEnd && p->repType != repNone)
 						pos = specialPos;
 					return true;
 				}

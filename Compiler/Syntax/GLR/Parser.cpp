@@ -466,7 +466,7 @@ namespace storm {
 
 					// Remember the capture!
 					if (item.pos == p->repStart)
-						repStart = pos;
+						repStart = child.pos();
 					if (item.pos == p->repEnd)
 						repEnd = child.pos();
 
