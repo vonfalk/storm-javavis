@@ -34,17 +34,6 @@ namespace storm {
 	}
 
 
-	template <class T>
-	inline T CODECALL numMin(T a, T b) {
-		return min(a, b);
-	}
-
-	template <class T>
-	inline T CODECALL numMax(T a, T b) {
-		return max(a, b);
-	}
-
-
 	// Get a relative value for the size of T
 	inline code::Operand tRel(Int i, code::Reg reg) { return code::intRel(reg, Offset()); }
 	inline code::Operand tRel(Nat i, code::Reg reg) { return code::intRel(reg, Offset()); }
@@ -58,6 +47,13 @@ namespace storm {
 	inline code::Operand tConst(Byte i) { return code::byteConst(i); }
 	inline code::Operand tConst(Word i) { return code::wordConst(i); }
 	inline code::Operand tConst(Long i) { return code::longConst(i); }
+
+	// Get the less-than comparision for various types.
+	inline code::CondFlag tLess(Int i) { return code::ifLess; }
+	inline code::CondFlag tLess(Nat i) { return code::ifBelow; }
+	inline code::CondFlag tLess(Byte i) { return code::ifBelow; }
+	inline code::CondFlag tLess(Word i) { return code::ifBelow; }
+	inline code::CondFlag tLess(Long i) { return code::ifLess; }
 
 	// Increase/decrease
 	template <class T>
@@ -176,6 +172,71 @@ namespace storm {
 	void numInit(InlineParams p) {
 		*p.state->l << mov(code::ptrA, p.params->at(0));
 		*p.state->l << mov(tRel(T(), code::ptrA), tConst(T(0)));
+	}
+
+	template <class T>
+	void numMin(InlineParams p) {
+		if (!p.result->needed())
+			return;
+
+		Label lbl = p.state->l->label();
+		Label end = p.state->l->label();
+		Operand tmp1 = asSize(ptrA, p.params->at(0).size());
+		Operand tmp2 = asSize(ptrC, p.params->at(1).size());
+		Operand result = p.result->location(p.state).v;
+		*p.state->l << mov(tmp1, p.params->at(0));
+		*p.state->l << mov(tmp2, p.params->at(1));
+		*p.state->l << cmp(tmp1, tmp2);
+		*p.state->l << jmp(lbl, tLess(T()));
+		*p.state->l << mov(result, tmp2);
+		*p.state->l << jmp(end);
+		*p.state->l << lbl;
+		*p.state->l << mov(result, tmp1);
+		*p.state->l << end;
+	}
+
+	template <class T>
+	void numMax(InlineParams p) {
+		if (!p.result->needed())
+			return;
+
+		Label lbl = p.state->l->label();
+		Label end = p.state->l->label();
+		Operand tmp1 = asSize(ptrA, p.params->at(0).size());
+		Operand tmp2 = asSize(ptrC, p.params->at(1).size());
+		Operand result = p.result->location(p.state).v;
+		*p.state->l << mov(tmp1, p.params->at(0));
+		*p.state->l << mov(tmp2, p.params->at(1));
+		*p.state->l << cmp(tmp1, tmp2);
+		*p.state->l << jmp(lbl, tLess(T()));
+		*p.state->l << mov(result, tmp1);
+		*p.state->l << jmp(end);
+		*p.state->l << lbl;
+		*p.state->l << mov(result, tmp2);
+		*p.state->l << end;
+	}
+
+	template <class T>
+	void numDelta(InlineParams p) {
+		if (!p.result->needed())
+			return;
+
+		Label lbl = p.state->l->label();
+		Label end = p.state->l->label();
+		Operand tmp1 = asSize(ptrA, p.params->at(0).size());
+		Operand tmp2 = asSize(ptrC, p.params->at(1).size());
+		Operand result = p.result->location(p.state).v;
+		*p.state->l << mov(tmp1, p.params->at(0));
+		*p.state->l << mov(tmp2, p.params->at(1));
+		*p.state->l << cmp(tmp1, tmp2);
+		*p.state->l << jmp(lbl, tLess(T()));
+		*p.state->l << sub(tmp1, tmp2);
+		*p.state->l << mov(result, tmp1);
+		*p.state->l << jmp(end);
+		*p.state->l << lbl;
+		*p.state->l << sub(tmp2, tmp1);
+		*p.state->l << mov(result, tmp2);
+		*p.state->l << end;
 	}
 
 	// Mark 'f' as an auto-cast function.

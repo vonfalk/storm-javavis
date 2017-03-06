@@ -68,8 +68,9 @@ namespace storm {
 
 		Value n(StormInfo<Nat>::type(engine));
 		add(nativeFunction(engine, n, L"hash", v, &byteHash));
-		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Byte>)));
-		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Byte>)));
+		add(inlinedFunction(engine, Value(this), L"min", vv, fnPtr(engine, &numMin<Byte>)));
+		add(inlinedFunction(engine, Value(this), L"max", vv, fnPtr(engine, &numMax<Byte>)));
+		add(inlinedFunction(engine, Value(this), L"delta", vv, fnPtr(engine, &numDelta<Byte>)));
 
 		return Type::loadAll();
 	}

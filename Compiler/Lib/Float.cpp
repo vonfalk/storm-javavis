@@ -82,6 +82,14 @@ namespace storm {
 		}
 	}
 
+	static Float floatMin(Float a, Float b) {
+		return min(a, b);
+	}
+
+	static Float floatMax(Float a, Float b) {
+		return max(a, b);
+	}
+
 	FloatType::FloatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sFloat, type, null) {}
 
 	Bool FloatType::loadAll() {
@@ -111,8 +119,8 @@ namespace storm {
 		Value vInt = Value(StormInfo<Int>::type(engine));
 		add(inlinedFunction(engine, vInt, L"int", v, fnPtr(engine, &floatToInt)));
 
-		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<float>)));
-		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<float>)));
+		add(nativeFunction(engine, Value(this), L"min", vv, address(&floatMin)));
+		add(nativeFunction(engine, Value(this), L"max", vv, address(&floatMax)));
 
 		return Type::loadAll();
 	}

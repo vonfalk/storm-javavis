@@ -72,8 +72,9 @@ namespace storm {
 
 		Value n(StormInfo<Nat>::type(engine));
 		add(nativeFunction(engine, n, L"hash", v, &longHash));
-		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Long>)));
-		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Long>)));
+		add(inlinedFunction(engine, Value(this), L"min", vv, fnPtr(engine, &numMin<Long>)));
+		add(inlinedFunction(engine, Value(this), L"max", vv, fnPtr(engine, &numMax<Long>)));
+		add(inlinedFunction(engine, Value(this), L"delta", vv, fnPtr(engine, &numDelta<Long>)));
 
 		return Type::loadAll();
 	}
@@ -139,8 +140,9 @@ namespace storm {
 
 		Value n(StormInfo<Nat>::type(engine));
 		add(nativeFunction(engine, n, L"hash", v, &wordHash));
-		add(nativeFunction(engine, Value(this), L"min", vv, address(&numMin<Word>)));
-		add(nativeFunction(engine, Value(this), L"max", vv, address(&numMax<Word>)));
+		add(inlinedFunction(engine, Value(this), L"min", vv, fnPtr(engine, &numMin<Word>)));
+		add(inlinedFunction(engine, Value(this), L"max", vv, fnPtr(engine, &numMax<Word>)));
+		add(inlinedFunction(engine, Value(this), L"delta", vv, fnPtr(engine, &numDelta<Word>)));
 
 		return Type::loadAll();
 	}

@@ -29,6 +29,18 @@ Bool iEqF() { 20 == 22; }
 Bool iEqT() { 20 == 20; }
 Bool iNeqF() { 20 != 20; }
 Bool iNeqT() { 20 != 22; }
+Int iDelta10() { 20.delta(30); }
+Int iDelta11() { 20.delta(9); }
+Int iDelta50() { 20.delta(-30); }
+Int iDelta29() { (-20).delta(9); }
+Int iMin10() { 10.min(20); }
+Int iMin11() { 21.min(11); }
+Int iMinN10() { (-10).min(20); }
+Int iMinN9() { 10.min(-9); }
+Int iMax20() { 10.max(20); }
+Int iMax11() { 11.max(9); }
+Int iMax23() { 23.max(-20); }
+Int iMax22() { (-10).max(22); }
 
 // Nat
 Nat nConst21() { 21; }
@@ -56,6 +68,12 @@ Bool nEqF() { 20.nat == 22.nat; }
 Bool nEqT() { 20.nat == 20.nat; }
 Bool nNeqF() { 20.nat != 20.nat; }
 Bool nNeqT() { 20.nat != 22.nat; }
+Nat nDelta10() { 20.nat.delta(30.nat); }
+Nat nDelta11() { 20.nat.delta(9.nat); }
+Nat nMin10() { 10.nat.min(20.nat); }
+Nat nMin11() { 21.nat.min(11.nat); }
+Nat nMax20() { 10.nat.max(20.nat); }
+Nat nMax11() { 11.nat.max(9.nat); }
 
 // Byte
 Byte bConst22() { 22; }
@@ -83,6 +101,12 @@ Bool bEqF() { 20.byte == 22.byte; }
 Bool bEqT() { 20.byte == 20.byte; }
 Bool bNeqF() { 20.byte != 20.byte; }
 Bool bNeqT() { 20.byte != 22.byte; }
+Byte bDelta10() { 20.byte.delta(30.byte); }
+Byte bDelta11() { 20.byte.delta(9.byte); }
+Byte bMin10() { 10.byte.min(20.byte); }
+Byte bMin11() { 21.byte.min(11.byte); }
+Byte bMax20() { 10.byte.max(20.byte); }
+Byte bMax11() { 11.byte.max(9.byte); }
 
 // Long
 Long lConst31() { 31; }
@@ -110,6 +134,18 @@ Bool lEqF() { 20.long == 22.long; }
 Bool lEqT() { 20.long == 20.long; }
 Bool lNeqF() { 20.long != 20.long; }
 Bool lNeqT() { 20.long != 22.long; }
+Long lDelta10() { 20.long.delta(30.long); }
+Long lDelta11() { 20.long.delta(9.long); }
+Long lDelta50() { 20.long.delta(-30.long); }
+Long lDelta29() { (-20).long.delta(9.long); }
+Long lMin10() { 10.long.min(20.long); }
+Long lMin11() { 21.long.min(11.long); }
+Long lMinN10() { (-10).long.min(20.long); }
+Long lMinN9() { 10.long.min(-9.long); }
+Long lMax20() { 10.long.max(20.long); }
+Long lMax11() { 11.long.max(9.long); }
+Long lMax23() { 23.long.max(-20.long); }
+Long lMax22() { (-10).long.max(22.long); }
 
 // Word
 Word wConst131() { 131; }
@@ -137,6 +173,12 @@ Bool wEqF() { 20.word == 22.word; }
 Bool wEqT() { 20.word == 20.word; }
 Bool wNeqF() { 20.word != 20.word; }
 Bool wNeqT() { 20.word != 22.word; }
+Word wDelta10() { 20.word.delta(30.word); }
+Word wDelta11() { 20.word.delta(9.word); }
+Word wMin10() { 10.word.min(20.word); }
+Word wMin11() { 21.word.min(11.word); }
+Word wMax20() { 10.word.max(20.word); }
+Word wMax11() { 11.word.max(9.word); }
 
 // Float
 Float fConst120() { 120; }
