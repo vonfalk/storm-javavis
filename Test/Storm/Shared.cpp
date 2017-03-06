@@ -17,4 +17,8 @@ BEGIN_TEST_(Shared) {
 	v->push(3);
 	CHECK_EQ(runFn<Int>(L"ui.test", v), 6);
 
+	// Check so that we have the same idea about which threads are which.
+	CHECK_EQ(runFn<Thread *>(L"ui.testThread", 0), Compiler::thread(e));
+	CHECK_NEQ(runFn<Thread *>(L"ui.testThread", 1), Compiler::thread(e));
+
 } END_TEST

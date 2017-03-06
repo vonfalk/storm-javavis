@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Test.h"
 #include "Core/Str.h"
+#include "Core/Thread.h"
 
 namespace gui {
 
@@ -23,5 +24,14 @@ namespace gui {
 		for (Nat i = 0; i < v->count(); i++)
 			r += v->at(i);
 		return r;
+	}
+
+	Thread *testThread(EnginePtr e, Int v) {
+		switch (v) {
+		case 0:
+			return Compiler::thread(e.v);
+		default:
+			return Ui::thread(e.v);
+		}
 	}
 }

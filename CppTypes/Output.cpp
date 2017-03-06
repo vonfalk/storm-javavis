@@ -132,7 +132,7 @@ static void genTypes(wostream &to, World &w) {
 		to << L"L\"" << t.name.last() << L"\", ";
 
 		// Package.
-		if (t.pkg.empty())
+		if (t.pkg.empty() && config.compiler)
 			PLN(t.pos << L": warning: placing types in the root package.");
 		to << L"L\"" << t.pkg << L"\", ";
 
@@ -435,10 +435,13 @@ static void genFunctions(wostream &to, World &w) {
 		to << L", ";
 
 		// Pkg.
-		if (f.isMember)
+		if (f.isMember) {
 			to << L"null, ";
-		else
+		} else {
+			if (f.pkg.empty() && config.compiler)
+				PLN(f.pos << L": warning: placing functions in the root package.");
 			to << L"L\"" << f.pkg << L"\", ";
+		}
 
 		// Kind.
 		if (f.isMember && f.castMember)
@@ -561,7 +564,7 @@ static void genTemplates(wostream &to, World &w) {
 		to << L"L\"" << t.name.last() << L"\", ";
 
 		// Package.
-		if (t.pkg.empty())
+		if (t.pkg.empty() && config.compiler)
 			PLN(t.pos << L": warning: placing templates in the root package.");
 		to << L"L\"" << t.pkg << L"\", ";
 
@@ -592,7 +595,7 @@ static void genThreads(wostream &to, World &w) {
 		to << L"L\"" << t.name.last() << L"\", ";
 
 		// Package.
-		if (t.pkg.empty())
+		if (t.pkg.empty() && config.compiler)
 			PLN(t.pos << L": warning: placing threads in the root package.");
 		to << L"L\"" << t.pkg << L"\", ";
 

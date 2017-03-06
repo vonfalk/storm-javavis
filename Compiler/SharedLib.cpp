@@ -72,7 +72,6 @@ namespace storm {
 
 	Type *SharedLib::cppType(Engine &e, void *lib, Nat id) {
 		SharedLib *me = (SharedLib *)lib;
-
 		return me->world.types[id];
 	}
 
@@ -95,9 +94,7 @@ namespace storm {
 
 	Thread *SharedLib::getThread(Engine &e, void *lib, const DeclThread *decl) {
 		SharedLib *me = (SharedLib *)lib;
-
-		assert(false, L"Implement me!");
-		return null;
+		return me->world.threads[decl->identifier];
 	}
 
 }
