@@ -44,7 +44,8 @@ namespace storm {
 		}
 	}
 
-	static Nat engineId = 0;
+	// Starts at -1 so that the first Engine will gain id=0.
+	static Nat engineId = -1;
 
 	Engine::Engine(const Path &root, ThreadMode mode) :
 		id(atomicIncrement(engineId)), gc(defaultArena, defaultFinalizer), world(gc), objRoot(null), ioThread(null) {

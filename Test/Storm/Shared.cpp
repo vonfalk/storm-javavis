@@ -7,6 +7,9 @@ BEGIN_TEST_(Shared) {
 	// Try to load an external library.
 	CHECK_EQ(runFn<Int>(L"ui.test", 10), 11);
 
+	// Does the types get resolved properly?
+	CHECK_EQ(runFn<Int>(L"ui.test", new (e) Str(L"A")), 1);
+
 	// Does template classes work properly?
 	Array<Int> *v = new (e) Array<Int>();
 	v->push(1);

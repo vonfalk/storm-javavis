@@ -32,24 +32,29 @@ namespace storm {
 
 		{
 			os::Lock::L z(uniqueLock);
-			if (storm::uniqueCount < id) {
-				EngineFwdUnique *n = new EngineFwdUnique[id];
-				memset(n, 0, id*sizeof(EngineFwdUnique));
-				memcpy(n, storm::unique, uniqueCount*sizeof(EngineFwdUnique));
+			Nat count = id + 1;
+			if (storm::uniqueCount < count) {
+				EngineFwdUnique *n = new EngineFwdUnique[count];
+				memset(n, 0, count*sizeof(EngineFwdUnique));
+				if (storm::uniqueCount > 0)
+					memcpy(n, storm::unique, uniqueCount*sizeof(EngineFwdUnique));
 
 				EngineFwdUnique *old = storm::unique;
 				atomicCAS(storm::unique, old, n);
 				delete []old;
-				storm::uniqueCount = id;
+				storm::uniqueCount = count;
 			}
 
 			storm::uniqueFilled++;
 		}
 
-		void *old = storm::unique[id].identifier;
-		storm::unique[id] = unique;
-
-		return old;
+		EngineFwdUnique &result = storm::unique[id];
+		if (!result.identifier) {
+			result = unique;
+			return null;
+		} else {
+			return result.identifier;
+		}
 	}
 
 	void Engine::detach() {

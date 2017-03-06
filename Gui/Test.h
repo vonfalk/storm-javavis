@@ -4,6 +4,7 @@
 namespace gui {
 
 	Int STORM_FN test(Int v);
+	Int STORM_FN test(Str *v);
 	Int STORM_FN test(Array<Int> *v);
 
 }
