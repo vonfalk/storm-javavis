@@ -27,6 +27,9 @@ namespace storm {
 			// Does this range contain another point?
 			Bool STORM_FN contains(Nat pt) const;
 
+			// Size of this range.
+			inline Nat STORM_FN count() const { return to - from; }
+
 			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);
 		};

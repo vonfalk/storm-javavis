@@ -29,7 +29,7 @@ namespace storm {
 			if (wcscmp(p->c_str(), L".") == 0) {
 				// Ignore it.
 			} else if (wcscmp(p->c_str(), L"..") == 0 && result->any() && wcscmp(result->last()->c_str(), L"..") != 0) {
-				result->erase(result->count() - 1);
+				result->remove(result->count() - 1);
 			} else {
 				result->push(p);
 			}

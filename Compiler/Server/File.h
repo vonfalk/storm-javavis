@@ -140,6 +140,9 @@ namespace storm {
 			// ID of the last edit operation.
 			Nat editId;
 
+			// Position of last edit operation (only a hint).
+			Nat editPos;
+
 			// Output our internal representation for debugging.
 			void STORM_FN debugOutput(TextOutput *to, Bool tree) const;
 
@@ -178,8 +181,8 @@ namespace storm {
 			Nat part;
 			Bool force;
 
-			virtual Range STORM_FN run();
-			virtual Bool STORM_FN equals(WorkItem *o);
+			virtual Range STORM_FN run(WorkQueue *q);
+			virtual Bool STORM_FN merge(WorkItem *o);
 		};
 
 	}

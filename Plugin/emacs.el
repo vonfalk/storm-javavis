@@ -33,6 +33,7 @@
    The entries of this list has the form (offset skip marker) where offset is the character offset where the edit started,
    skip is the number of characters erased (if any) and marker is a marker placed at offset + skip.")
 (defvar-local storm-buffer-no-changes nil "Inhibit change notifications for the current buffer.")
+(defvar-local storm-buffer-last-point 0 "Remembers where Storm thinks the point is located in this buffer.")
 
 ;; Utility for simple benchmarking.
 (defmacro log-time (name &rest body)
@@ -64,6 +65,7 @@
   (add-hook 'kill-buffer-hook 'storm-buffer-killed)
   (add-hook 'change-major-mode-hook 'storm-buffer-killed)
   (add-hook 'after-change-functions 'storm-buffer-changed)
+  (add-hook 'post-command-hook 'storm-buffer-action)
 
   (run-mode-hooks 'storm-mode-hook))
 
@@ -93,6 +95,7 @@
 (defun storm-line-indentation ()
   "Compute the indentation of the current line by querying the language server."
   (let ((response (storm-query (list 'indent storm-buffer-id (1- (point))))))
+    (setq storm-buffer-last-point (point))
     (when (>= (length response) 3)
       (let ((file-id (first  response))
 	    (kind    (second response))
@@ -116,6 +119,7 @@
     (define-key map "\C-cc" 'storm-debug-content)
     (define-key map "\C-cu" 'storm-debug-re-color)
     (define-key map "\C-cr" 'storm-debug-re-open)
+    (define-key map "\C-cx" 'storm-debug-un-color)
     map)
   "Keymap for storm-mode")
 
@@ -138,6 +142,12 @@
   (interactive)
   (when storm-buffer-id
     (storm-send (list 'recolor storm-buffer-id))))
+
+(defun storm-debug-un-color ()
+  "Remove all syntax coloring from the current buffer."
+  (interactive)
+  (when storm-buffer-id
+    (storm-set-color (point-min) (point-max) nil)))
 
 (defun storm-debug-re-open ()
   "Quickly re-open the current buffer in case it has gotten out of sync with the Storm 
@@ -195,6 +205,7 @@
     ;; Clear the edit history.
     (setq storm-buffer-edit-id 0)
     (setq storm-buffer-edits nil)
+    (setq storm-buffer-last-point 0)
 
     ;; Tell Storm what is happening.
     (storm-send (list 'open
@@ -229,14 +240,21 @@
 		   storm-buffer-edits))))
 
     ;; Tell Storm.
+    (setq storm-buffer-last-point edit-begin)
     (storm-send (list 'edit
 		      storm-buffer-id
 		      storm-buffer-edit-id
 		      (1- edit-begin)
 		      (+ edit-begin old-length -1)
-		      (buffer-substring-no-properties edit-begin edit-end)))
-    ;; Wait a short wile for a message.
-    (accept-process-output storm-process 0.02)))
+		      (buffer-substring-no-properties edit-begin edit-end)))))
+
+(defun storm-buffer-action ()
+  "Called after each user interaction. We use this to tell Storm approximatly where the cursor is."
+  (when storm-buffer-id
+    (let ((np (point)))
+      (when (< 500 (abs (- np storm-buffer-last-point)))
+	(setq storm-buffer-last-point np)
+	(storm-send (list 'point storm-buffer-id (1- np)))))))
 
 (defun storm-limit-edit-length (max-length list)
   "Limit the length of the list 'list' containing edits."

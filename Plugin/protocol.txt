@@ -34,6 +34,7 @@ Message	                      Description
 (close id)    		      Close a previously opened file.
 (edit file id from to text)   The file 'file' has been changed. This is edit number 'id'. The text between
                               'from' and 'to' is replaced by 'text'.
+(point file pos)              Tell Storm that the point is now at 'pos'.
 (indent file pos)	      Query the indentation of 'file' at position 'pos'.
 (test ...)		      Messages used for testing the protocol. See below.
 (debug id mode)		      Output the internal representation of file 'id'. Used when debugging.

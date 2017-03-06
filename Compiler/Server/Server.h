@@ -38,6 +38,7 @@ namespace storm {
 			Symbol *quit;
 			Symbol *open;
 			Symbol *edit;
+			Symbol *point;
 			Symbol *close;
 			Symbol *indent;
 			Symbol *test;
@@ -65,6 +66,7 @@ namespace storm {
 			// Handle specific messages.
 			void onOpen(SExpr *msg);
 			void onEdit(SExpr *msg);
+			void onPoint(SExpr *msg);
 			void onClose(SExpr *msg);
 			void onIndent(SExpr *msg);
 			void onTest(SExpr *msg);
@@ -74,10 +76,47 @@ namespace storm {
 			// Send updates for 'range' in 'file'.
 			void update(File *file, Range range);
 
+			// Size of the chunks to send to the client.
+			static const Nat chunkChars = 8000;
+
+			// Send updates for 'range' in 'file', sending one reasonabley-sized chunk now and
+			// scheduling the rest for later.
+			void updateLater(File *file, Range range);
+
 			// Convenience functions for printing things.
 			void print(Str *s);
 			void print(const wchar *s);
 			void print(const CString &s);
+		};
+
+
+		/**
+		 * Schedule file updates.
+		 *
+		 * Stores a number of ranges to be updated so that multiple updaters do not interfere and
+		 * cause too much data to be sent on each idle period.
+		 */
+		class UpdateFileRange : public WorkItem {
+			STORM_CLASS;
+		public:
+			STORM_CTOR UpdateFileRange(File *file);
+			STORM_CTOR UpdateFileRange(File *file, Range range);
+
+			// Add a range.
+			void STORM_FN add(Range range);
+
+			// Merge with another item.
+			Bool STORM_FN merge(WorkItem *o);
+
+			// Execute this item.
+			virtual Range STORM_FN run(WorkQueue *q);
+
+		private:
+			// Update these parts. Sorted by their starting offsets.
+			Array<Range> *parts;
+
+			// Find and remove the part closest to the cursor.
+			Range findNearest();
 		};
 
 	}

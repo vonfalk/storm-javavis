@@ -9,11 +9,11 @@ namespace storm {
 
 		WorkItem::WorkItem(File *file) : file(file) {}
 
-		Range WorkItem::run() {
+		Range WorkItem::run(WorkQueue *q) {
 			return Range();
 		}
 
-		Bool WorkItem::equals(WorkItem *o) {
+		Bool WorkItem::merge(WorkItem *o) {
 			return runtime::typeOf(this) == runtime::typeOf(o)
 				&& file == o->file;
 		}
@@ -56,7 +56,7 @@ namespace storm {
 			// Linear search is good enough as we do not expect more than ~10 events in the queue at any given time.
 			bool found = false;
 			for (Nat i = 0; i < work->count(); i++) {
-				if (work->at(i)->equals(item)) {
+				if (work->at(i)->merge(item)) {
 					found = true;
 					break;
 				}
@@ -88,6 +88,8 @@ namespace storm {
 				for (Nat i = 0; i < work->count(); i++) {
 					callbackTo->runWork(work->at(i));
 				}
+
+				poke();
 			}
 
 			running = false;

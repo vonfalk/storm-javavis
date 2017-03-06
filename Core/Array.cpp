@@ -76,7 +76,7 @@ namespace storm {
 		data = null;
 	}
 
-	void ArrayBase::erase(Nat id) {
+	void ArrayBase::remove(Nat id) {
 		if (id >= count())
 			throw ArrayError(L"Index " + ::toS(id) + L" out of bounds (of " + ::toS(count()) + L").");
 

@@ -11,6 +11,7 @@ namespace storm {
 			quit = c->symbol(L"quit");
 			open = c->symbol(L"open");
 			edit = c->symbol(L"edit");
+			point = c->symbol(L"point");
 			indent = c->symbol(L"indent");
 			close = c->symbol(L"close");
 			test = c->symbol(L"test");
@@ -29,7 +30,6 @@ namespace storm {
 			SExpr *msg = null;
 			while (msg = conn->receive()) {
 				try {
-					work->poke();
 					if (!process(msg))
 						break;
 				} catch (const MsgError &e) {
@@ -49,8 +49,11 @@ namespace storm {
 		void Server::runWork(WorkItem *item) {
 			try {
 				File *f = item->file;
-				Range r = item->run();
-				update(f, r);
+				if (files->get(f->id, null) != f)
+					// This is some remaining work from a closed file...
+					return;
+				Range r = item->run(work);
+				updateLater(f, r);
 			} catch (const Exception &e) {
 				print(TO_S(this, L"While doing background work:"));
 				print(::toS(e));
@@ -64,18 +67,27 @@ namespace storm {
 			if (quit->equals(kind)) {
 				return false;
 			} else if (open->equals(kind)) {
+				work->poke();
 				onOpen(cell->rest);
 			} else if (edit->equals(kind)) {
+				work->poke();
 				onEdit(cell->rest);
+			} else if (point->equals(kind)) {
+				onPoint(cell->rest);
 			} else if (close->equals(kind)) {
+				work->poke();
 				onClose(cell->rest);
 			} else if (indent->equals(kind)) {
+				work->poke();
 				onIndent(cell->rest);
 			} else if (test->equals(kind)) {
+				work->poke();
 				onTest(cell->rest);
 			} else if (debug->equals(kind)) {
+				work->poke();
 				onDebug(cell->rest);
 			} else if (recolor->equals(kind)) {
+				work->poke();
 				onReColor(cell->rest);
 			} else {
 				print(TO_S(this, L"Unknown message: " << msg));
@@ -97,7 +109,7 @@ namespace storm {
 			print(TO_S(this, L"Opened " << path << L" in " << (Moment() - start)));
 
 			// Give the initial data on the file.
-			update(f, f->full());
+			updateLater(f, f->full());
 		}
 
 		void Server::onEdit(SExpr *expr) {
@@ -112,10 +124,22 @@ namespace storm {
 				return;
 
 			f->editId = editId;
+			f->editPos = from;
 			Range range = f->replace(Range(from, to), replace);
 
 			// Update the range.
-			update(f, range);
+			updateLater(f, range);
+		}
+
+		void Server::onPoint(SExpr *expr) {
+			Nat fileId = next(expr)->asNum()->v;
+			Nat pos = next(expr)->asNum()->v;
+
+			File *f = files->get(fileId, null);
+			if (!f)
+				return;
+
+			f->editPos = pos;
 		}
 
 		void Server::onClose(SExpr *expr) {
@@ -176,7 +200,7 @@ namespace storm {
 				return;
 			}
 
-			update(f, f->full());
+			updateLater(f, f->full());
 		}
 
 		static Str *colorName(EnginePtr e, syntax::TokenColor c) {
@@ -273,6 +297,48 @@ namespace storm {
 			conn->send(list(result));
 		}
 
+		void Server::updateLater(File *file, Range range) {
+			// Do we actually need to split this chunk at all?
+			if (range.count() <= chunkChars) {
+				update(file, range);
+				return;
+			}
+
+			// Figure out the first piece to send. We want to pick a piece as close to the last
+			// known cursor as possible.
+			Nat point = file->editPos;
+			Nat halfChunk = chunkChars / 2;
+			Range send = range;
+			Range todo1, todo2;
+			if (point <= range.from + halfChunk) {
+				// Send the beginning of 'range'.
+				send.to = send.from + chunkChars;
+				todo1 = Range(send.to, range.to);
+			} else if (point + halfChunk >= range.to) {
+				// Send the end of 'range'.
+				send.from = send.to - chunkChars;
+				todo1 = Range(range.from, send.from);
+			} else {
+				// Send the range centered around 'point'.
+				send.from = point - halfChunk;
+				send.to = point + halfChunk;
+				todo1 = Range(range.from, send.from);
+				todo2 = Range(send.to, range.to);
+			}
+
+			// Send the current chunk and schedule the remaining.
+			update(file, send);
+
+			// Schedule.
+			if (todo1.empty() && todo2.empty())
+				return;
+
+			UpdateFileRange *u = new (this) UpdateFileRange(file);
+			u->add(todo1);
+			u->add(todo2);
+			work->post(u);
+		}
+
 		void Server::print(Str *s) {
 			conn->textOut->writeLine(s);
 		}
@@ -283,6 +349,108 @@ namespace storm {
 
 		void Server::print(const CString &s) {
 			print(new (this) Str(s.c_str()));
+		}
+
+
+		/**
+		 * Scheduled updates.
+		 */
+
+		UpdateFileRange::UpdateFileRange(File *file) : WorkItem(file) {
+			parts = new (this) Array<Range>();
+		}
+
+		UpdateFileRange::UpdateFileRange(File *file, Range range) : WorkItem(file) {
+			parts = new (this) Array<Range>();
+			if (!range.empty())
+				parts->push(range);
+		}
+
+		void UpdateFileRange::add(Range range) {
+			if (range.empty())
+				return;
+
+			if (parts->empty()) {
+				parts->push(range);
+				return;
+			}
+
+			Nat insertAfter = 0;
+
+			for (Nat i = 0; i < parts->count(); i++) {
+				insertAfter = i;
+				Range at = parts->at(i);
+
+				if (at.intersects(range)) {
+					// Remove the one in the array and try to insert the new, expanded range.
+					range = storm::server::merge(at, range);
+					parts->remove(i--);
+				} else if (range.to < at.from) {
+					// No need for further examination, we found the right place!
+					break;
+				} else {
+					// Keep looking for the correct place.
+				}
+			}
+
+			parts->insert(insertAfter + 1, range);
+		}
+
+		Bool UpdateFileRange::merge(WorkItem *other) {
+			if (!WorkItem::merge(other))
+				return false;
+
+			UpdateFileRange *o = (UpdateFileRange *)other;
+
+			for (Nat i = 0; i < o->parts->count(); i++)
+				add(o->parts->at(i));
+
+			return true;
+		}
+
+		static Nat delta(Nat a, Nat b) {
+			if (a > b)
+				return a - b;
+			else
+				return b - a;
+		}
+
+		static Nat delta(Range range, Nat pos) {
+			if (range.contains(pos))
+				return 0;
+			return min(delta(range.from, pos), delta(range.to, pos));
+		}
+
+		Range UpdateFileRange::run(WorkQueue *q) {
+			if (parts->empty())
+				return Range();
+
+			Range r = findNearest();
+
+			// Post the modified version of ourselves.
+			if (parts->any())
+				q->post(this);
+
+			return r;
+		}
+
+		Range UpdateFileRange::findNearest() {
+			Nat point = file->editPos;
+			Nat bestId = 0;
+			Nat bestDelta = delta(parts->at(0), point);
+
+			for (Nat i = 0; i < parts->count(); i++) {
+				Nat d = delta(parts->at(i), point);
+				if (d < bestDelta) {
+					bestDelta = d;
+					bestId = i;
+				}
+			}
+
+			// Now, we have chosen our target.
+			Range r = parts->at(bestId);
+			parts->remove(bestId);
+			return r;
 		}
 
 	}

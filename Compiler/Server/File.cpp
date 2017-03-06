@@ -147,6 +147,7 @@ namespace storm {
 				v,
 				false,
 				null,
+				null,
 			};
 			insert(state, start, content);
 
@@ -155,10 +156,14 @@ namespace storm {
 			if (state.done)
 				return true;
 
-			// We should insert it at 'firstPossible'.
-			assert(state.firstPossible, L"No node for insertion was found!");
-			if (!state.firstPossible)
-				return false; // Force a re-parse.
+			// We should insert it at 'firstPossible'. If it is null, we have a syntax tree without
+			// leaves, which can happen when the grammar contains epsilon-productions.
+			if (!state.firstPossible) {
+				// If so: replace the entire tree since we know it is empty anyway.
+				content = new (this) InfoLeaf(null, v);
+				// Force a re-parse.
+				return false;
+			}
 
 			// We can not avoid invalidating a regex...
 			state.firstPossible->set(state.firstPossibleStr);
@@ -557,12 +562,12 @@ namespace storm {
 
 		InvalidatePart::InvalidatePart(File *file, Nat part, Bool force) : WorkItem(file), part(part), force(force) {}
 
-		Range InvalidatePart::run() {
+		Range InvalidatePart::run(WorkQueue *q) {
 			return file->updatePart(part, force);
 		}
 
-		Bool InvalidatePart::equals(WorkItem *other) {
-			if (!WorkItem::equals(other))
+		Bool InvalidatePart::merge(WorkItem *other) {
+			if (!WorkItem::merge(other))
 				return false;
 
 			InvalidatePart *o = (InvalidatePart *)other;

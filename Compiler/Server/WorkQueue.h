@@ -12,6 +12,7 @@ namespace storm {
 
 		class File;
 		class Server;
+		class WorkQueue;
 
 		/**
 		 * Work items. Subclass this class to provide custom messages.
@@ -28,10 +29,10 @@ namespace storm {
 			File *file;
 
 			// Execute this work. Gives a range to be updated.
-			virtual Range STORM_FN run();
+			virtual Range STORM_FN run(WorkQueue *q);
 
-			// Compare for equality.
-			virtual Bool STORM_FN equals(WorkItem *o);
+			// Merge another work item with this one. Return true if the merge was possible.
+			virtual Bool STORM_FN merge(WorkItem *o);
 		};
 
 		/**

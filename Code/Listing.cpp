@@ -410,7 +410,7 @@ namespace code {
 
 		Nat index = findId(fromI.vars, v.id);
 		assert(index < fromI.vars->count());
-		fromI.vars->erase(index);
+		fromI.vars->remove(index);
 
 		varI.parent = to.id;
 		toI.vars->push(v.id);
@@ -428,7 +428,7 @@ namespace code {
 			}
 		}
 
-		params->erase(pos);
+		params->remove(pos);
 		params->insert(to, v.id);
 	}
 

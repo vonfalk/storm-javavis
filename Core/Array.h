@@ -52,8 +52,8 @@ namespace storm {
 		// Empty?
 		inline Bool STORM_FN empty() const { return count() == 0; }
 
-		// Erase an element.
-		void STORM_FN erase(Nat id);
+		// Remove an element.
+		void STORM_FN remove(Nat id);
 
 		// Insert an element, giving it the id 'id'. 'id' <= 'count()'.
 		void CODECALL insertRaw(Nat id, const void *item);
