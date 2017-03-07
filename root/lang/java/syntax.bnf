@@ -1,0 +1,229 @@
+// Implementation of the grammar for Java, complete with highlighting annotations.
+// Source: https://docs.oracle.com/javase/specs/jls/se7/html/jls-2.html#jls-2.3
+
+delimiter = SDelimiter;
+
+void SDelimiter();
+SDelimiter : "[ \n\r\t]*" - (SCommentStart #comment - SDelimiter)?;
+
+void SCommentStart();
+SCommentStart : "//[^\n\r]*[\n\r]";
+SCommentStart : "/\*" - SInComment;
+
+void SInComment();
+SInComment : "\*+/"; // End of the comment.
+SInComment : "/\*+" - SInComment - SInComment; // Start of a nested comment.
+SInComment : "[^\*/]*" - SInComment; // Everything except * and / are fine.
+SInComment : "\*+[^\*/]" - SInComment;
+SInComment : "/+" - SInComment;
+
+
+// Identifiers.
+void SIdent();
+SIdent : "[A-Za-z][A-Za-z0-9_]*";
+
+// Qualified identifier.
+void SQIdent();
+SQIdent : SIdent #typeName (, "\.", SIdent #typeName)*;
+
+void SQIdentList();
+SQIdentList : SQIdent (, ",", SQIdent)*;
+
+
+// Start of the grammar.
+void SRoot();
+SRoot : SDelimiter - SPkgName, SImportDecl, STypeDecl - SDelimiter;
+
+void SPkgName();
+SPkgName : (SAnnotation, )* "package" #keyword, SQIdent #typeName, ";";
+
+void SImportDecl();
+SImportDecl[-1] :;
+SImportDecl : "import" #keyword, ("static" #keyword,)? SQIdent, SImportEnd, ";", SImportDecl;
+
+void SImportEnd();
+SImportEnd : ("\.\*")?;
+
+void STypeDecl();
+STypeDecl : SModifiers, SClassDecl;
+STypeDecl : SModifiers, SEnumDecl;
+STypeDecl : SModifiers, SInterfaceDecl;
+STypeDecl : SModifiers, SAnnotationDecl;
+
+void SClassDecl();
+SClassDecl : "class" #keyword, SIdent #typeName, STypeParams, SExtends, SImplements, "{" [, (SClassBody,)* ]+ "}";
+
+void SEnumDecl();
+SEnumDecl : "enum", SIdent, SImplements, "{" [, (SEnumBody,)* ]+ "}";
+
+void SInterfaceDecl();
+SInterfaceDecl : "interface", SIdent, STypeParams, SExtendsList, "{" [, (SInterfaceBody,)* ]+ "}";
+
+void SAnnotationDecl();
+SAnnotationDecl : "@", "interface", SIdent, "{" [, (SAnnotationBody,)* ]+ "}";
+
+void SExtends();
+SExtends : "extends", SType;
+SExtends :;
+
+void SExtendsList();
+SExtendsList : "extends", STypeList;
+SExtendsList :;
+
+void SImplements();
+SImplements : "implements", STypeList;
+SImplements :;
+
+
+// Types.
+void SType();
+SType : "byte" #typeName;
+SType : "short" #typeName;
+SType : "char" #typeName;
+SType : "int" #typeName;
+SType : "long" #typeName;
+SType : "float" #typeName;
+SType : "double" #typeName;
+SType : "boolean" #typeName;
+SType : SRefType;
+
+void STypeVoid();
+STypeVoid : "void" #keyword;
+STypeVoid : SType;
+
+void SRefType();
+SRefType : SIdent #typeName, STypeArgs (, "\.", SIdent #typeName, STypeArgs)*;
+
+void STypeList();
+STypeList : SRefType (, ",", SRefType)*;
+
+void STypeArgs();
+STypeArgs :;
+STypeArgs : "<", STypeArg (, ",", STypeArg)*, ">";
+
+void STypeArg();
+STypeArg : SRefType;
+STypeArg : "?";
+STypeArg : "?", "extends", SRefType;
+STypeArg : "?", "super", SRefType;
+
+// Type parameters.
+void STypeParams();
+STypeParams :;
+STypeParams : "<", STypeParam (, ",", STypeParam)*, ">";
+
+void STypeParam();
+STypeParam : SIdent, ("extends", SBound)?;
+
+void SBound();
+SBound : SRefType (, "&", SRefType)*;
+
+// Modifiers.
+void SModifiers();
+SModifiers : (SModifier, )*;
+
+void SModifier();
+SModifier : SAnnotation;
+SModifier : "public";
+SModifier : "protected";
+SModifier : "private";
+SModifier : "static";
+SModifier : "abstract";
+SModifier : "final";
+SModifier : "native";
+SModifier : "synchronized";
+SModifier : "transient";
+SModifier : "volatile";
+SModifier : "strictfp";
+
+// Annotations.
+void SAnnotation();
+SAnnotation : "@" SQIdent (, SAnnotationParams)?;
+
+void SAnnotationParams();
+SAnnotationParams : "(", ")";
+SAnnotationParams : "(", SAnnotationElement, ")";
+
+void SAnnotationElement();
+SAnnotationElement : SElementValue;
+SAnnotationElement : SElementValuePair (, ",", SElementValuePair)*;
+
+void SElementValuePair();
+SElementValuePair : SIdent, "=", SElementValue;
+
+void SElementValue();
+SElementValue : SAnnotation;
+SElementValue : SExpr1;
+SElementValue : "{", SElementArray, (",",)? "}";
+
+void SElementArray();
+SElementArray : SElementValue (, ",", SElementValue)*;
+
+// Expressions and blocks.
+void SExpr();
+
+void SExpr1();
+
+void SStmt();
+SStmt : ";";
+SStmt : SBlock;
+SStmt : SIdent, ":", SStmt;
+SStmt : SExpr, ";";
+
+
+void SBlock();
+SBlock : "{" [, (SStmt,)* ]+ "}";
+
+// Class body.
+void SClassBody();
+SClassBody : ";";
+SClassBody : SModifiers, SMemberDecl;
+SClassBody : ("static" #keyword,)? SBlock;
+
+void SMemberDecl();
+SMemberDecl : STypeDecl;
+SMemberDecl : SType, SIdent #varName, SVarSuffix, (",", SIdent #varName, SVarSuffix,)* ";";
+SMemberDecl : STypeVoid, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
+SMemberDecl : SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
+SMemberDecl : STypeParams, STypeVoid, SIdent #fnName, SFormals, ("throws" #keyword, SQIdentList,)? SMethodEnd;
+SMemberDecl : STypeParams, SIdent #typeName, SFormals, ("throws" #keyword, SQIdentList,)? SBlock;
+
+void SMethodEnd();
+SMethodEnd : ";";
+SMethodEnd : SBlock;
+
+void SFormals();
+SFormals : "(", (SFormalList)?, ")";
+
+void SFormalList();
+SFormalList : SVarModifier, SType, SIdent #varName, (",", SFormalList)?;
+SFormalList : SVarModifier, SType, SIdent #varName, "\[\]", (",", SFormalList)?;
+SFormalList : SVarModifier, "\.\.\.", SIdent #varName;
+
+void SFormal();
+SFormal : "final", SType;
+
+void SVarModifier();
+SVarModifier : ;
+SVarModifier : "final" #keyword;
+SVarModifier : SAnnotation;
+
+void SVarSuffix();
+SVarSuffix : ("=", SVarInit)?;
+SVarSuffix : "\[\]" (, "=", SVarInit)?;
+
+void SVarInit();
+SVarInit : SExpr;
+SVarInit : "{", "}";
+SVarInit : "{", ",", "}";
+SVarInit : "{", SVarInit, (",", SVarInit, )* "}";
+SVarInit : "{", SVarInit, (",", SVarInit, )* ",", "}";
+
+// Enum body.
+void SEnumBody();
+
+// Interface body.
+void SInterfaceBody();
+
+// Annotation body.
+void SAnnotationBody();
