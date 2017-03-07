@@ -34,7 +34,7 @@ namespace storm {
 
 	private:
 		// Entry point type.
-		typedef SharedLibInfo *(*EntryFn)(const SharedLibStart *);
+		typedef void (*EntryFn)(const SharedLibStart *, SharedLibInfo *);
 
 		// Create and initialize a library.
 		SharedLib(Url *file, LoadedLib lib, EntryFn entry);
@@ -43,7 +43,10 @@ namespace storm {
 		LoadedLib lib;
 
 		// Information about the library.
-		SharedLibInfo *info;
+		SharedLibInfo info;
+
+		// Root for the 'libData' pointer in info.
+		Gc::Root *infoRoot;
 
 		// The world loaded by this shared library.
 		World world;
@@ -52,6 +55,7 @@ namespace storm {
 		static Type *cppType(Engine &e, void *lib, Nat id);
 		static Type *cppTemplate(Engine &e, void *lib, Nat id, Nat count, va_list params);
 		static Thread *getThread(Engine &e, void *lib, const DeclThread *decl);
+		static void *getData(Engine &e, void *lib);
 	};
 
 }

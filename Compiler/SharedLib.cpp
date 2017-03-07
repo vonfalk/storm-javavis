@@ -6,11 +6,12 @@
 
 namespace storm {
 
-	SharedLib::SharedLib(Url *file, LoadedLib lib, EntryFn entry) : lib(lib), info(null), world(file->engine().gc) {
+	SharedLib::SharedLib(Url *file, LoadedLib lib, EntryFn entry) : lib(lib), world(file->engine().gc) {
 		EngineFwdUnique unique = {
 			&SharedLib::cppType,
 			&SharedLib::cppTemplate,
 			&SharedLib::getThread,
+			&SharedLib::getData,
 			this,
 			1.0f,
 		};
@@ -20,33 +21,30 @@ namespace storm {
 			unique,
 		};
 
-		info = (*entry)(&start);
-		if (!info)
-			throw InternalError(L"Failed to initialize the shared library: " + ::toS(file));
+		zeroMem(info);
+		infoRoot = file->engine().gc.createRoot(&info.libData, 1);
+		(*entry)(&start, &info);
 	}
 
 	SharedLib::~SharedLib() {
-		if (info && info->destroyFn)
-			(*info->destroyFn)(info);
-
 		if (lib != invalidLib)
 			unloadLibrary(lib);
+
+		if (infoRoot)
+			Gc::destroyRoot(infoRoot);
 	}
 
 	void SharedLib::shutdown() {
-		if (info->shutdownFn)
-			(*info->shutdownFn)(info);
+		if (info.shutdownFn)
+			(*info.shutdownFn)(&info);
 	}
 
 	SharedLib *SharedLib::prevInstance() {
-		if (!info)
-			return null;
-
-		return (SharedLib *)info->previousIdentifier;
+		return (SharedLib *)info.previousIdentifier;
 	}
 
 	CppLoader SharedLib::createLoader(Engine &e, Package *into) {
-		return CppLoader(e, info->world, world, into);
+		return CppLoader(e, info.world, world, into);
 	}
 
 	SharedLib *SharedLib::load(Url *file) {
@@ -95,6 +93,11 @@ namespace storm {
 	Thread *SharedLib::getThread(Engine &e, void *lib, const DeclThread *decl) {
 		SharedLib *me = (SharedLib *)lib;
 		return me->world.threads[decl->identifier];
+	}
+
+	void *SharedLib::getData(Engine &e, void *lib) {
+		SharedLib *me = (SharedLib *)lib;
+		return me->info.libData;
 	}
 
 }

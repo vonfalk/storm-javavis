@@ -24,8 +24,8 @@ namespace storm {
 	};
 
 	/**
-	 * Information returned about a shared lib. This is allocated by the shared library, and freed
-	 * using the function pointer returned inside.
+	 * Information returned about a shared lib. This is always stack allocated as it may contain
+	 * GC:d pointers.
 	 */
 	struct SharedLibInfo {
 		// All types in the library.
@@ -34,13 +34,13 @@ namespace storm {
 		// The 'identifier' parameter from 'unique' in any previous instance.
 		void *previousIdentifier;
 
+		// Any data the library wishes to access.
+		void *libData;
+
 		typedef void (*CallbackFn)(SharedLibInfo *);
 
 		// Function called to notify shutdown for this structure.
 		CallbackFn shutdownFn;
-
-		// Function called to destroy this structure.
-		CallbackFn destroyFn;
 	};
 
 }

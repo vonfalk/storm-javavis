@@ -67,6 +67,11 @@ namespace storm {
 		}
 	}
 
+	void *Engine::data() {
+		const EngineFwdUnique &u = unique[identifier()];
+		return (*u.getLibData)(*this, u.identifier);
+	}
+
 
 	namespace runtime {
 

@@ -158,7 +158,7 @@ namespace storm {
 		Root *createRoot(void *data, size_t count);
 
 		// Destroy a root.
-		void destroyRoot(Root *root);
+		static void destroyRoot(Root *root);
 
 		/**
 		 * Watch object.

@@ -64,6 +64,7 @@ namespace storm {
 		Type *(*cppType)(Engine &e, void *identifier, Nat id);
 		Type *(*cppTemplateVa)(Engine &e, void *identifier, Nat id, Nat count, va_list params);
 		Thread *(*getThread)(Engine &e, void *identifier, const DeclThread *decl);
+		void *(*getLibData)(Engine &e, void *identifier);
 
 		// Identifier. Passed to all functions in here.
 		void *identifier;

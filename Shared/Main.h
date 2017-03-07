@@ -11,8 +11,8 @@
 #include "Core/Gen/CppTypes.h"
 
 #define SHARED_LIB_ENTRY_POINT(data)									\
-	extern "C" SHARED_EXPORT storm::SharedLibInfo *SHARED_LIB_ENTRY(const storm::SharedLibStart *params) { \
-		return storm::sharedLibEntry(params);							\
+	extern "C" SHARED_EXPORT void SHARED_LIB_ENTRY(const storm::SharedLibStart *params, storm::SharedLibInfo *info) { \
+		*info = storm::sharedLibEntry(params);							\
 	}
 
 
@@ -20,9 +20,7 @@ namespace storm {
 
 	/**
 	 * Entry-point for the shared library.
-	 *
-	 * TODO: Make a templated version that handles per-instance data.
 	 */
-	SharedLibInfo *sharedLibEntry(const SharedLibStart *params);
+	SharedLibInfo sharedLibEntry(const SharedLibStart *params);
 
 }

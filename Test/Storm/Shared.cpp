@@ -21,4 +21,7 @@ BEGIN_TEST_(Shared) {
 	CHECK_EQ(runFn<Thread *>(L"ui.testThread", 0), Compiler::thread(e));
 	CHECK_NEQ(runFn<Thread *>(L"ui.testThread", 1), Compiler::thread(e));
 
+	// Try to create an App instance and see if we crash.
+	CHECK_RUNS(runFn<TObject *>(L"ui.app"));
+
 } END_TEST

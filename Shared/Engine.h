@@ -20,6 +20,9 @@ namespace storm {
 		// Attach one engine from the current shared library.
 		void detach();
 
+		// Get the data for our library.
+		void *data();
+
 		// Get the id.
 		inline Nat identifier() const { return id; }
 	};
