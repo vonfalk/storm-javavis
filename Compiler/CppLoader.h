@@ -122,6 +122,13 @@ namespace storm {
 		inline bool external(const CppType &t) const { return t.kind == CppType::superExternal; }
 		inline bool external(const CppTemplate &t) const { return t.generate == null; }
 		inline bool external(const CppThread &t) const { return t.external; }
+
+		// See if a type shall be delayed.
+		inline bool delayed(const CppType &t) const {
+			return t.kind == CppType::superCustom
+				|| t.kind == CppType::superEnum
+				|| t.kind == CppType::superBitmaskEnum;
+		}
 	};
 
 }

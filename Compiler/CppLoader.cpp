@@ -97,7 +97,7 @@ namespace storm {
 			const CppType &type = world->types[i];
 
 			// The array could be partially filled.
-			if (into->types[i] == null && type.kind != CppType::superCustom) {
+			if (into->types[i] == null && !delay(type)) {
 				if (external(type))
 					into->types[i] = findType(type);
 				else
@@ -109,12 +109,16 @@ namespace storm {
 		for (nat i = 0; i < c; i++) {
 			const CppType &type = world->types[i];
 
-			if (type.kind != CppType::superCustom)
+			if (!delay(type))
 				continue;
 			if (into->types[i])
 				continue;
 
 			CppType::CreateFn fn = (CppType::CreateFn)type.super;
+			if (type.kind == CppType::superEnum)
+				fn = &createEnum;
+			else if (type.kind == CppType::superBitmaskEnum)
+				fn = &createBitmaskEnum;
 			into->types[i] = (*fn)(new (*e) Str(type.name), Size(type.size), createGcType(i));
 		}
 
@@ -202,6 +206,8 @@ namespace storm {
 					into->types[i]->setThread(into->namedThreads[type.super]);
 					break;
 				case CppType::superCustom:
+				case CppType::superEnum:
+				case CppType::superBitmaskEnum:
 					// Already done.
 					break;
 				case CppType::superExternal:

@@ -35,7 +35,7 @@
  */
 #define STORM_COMMON													\
 	friend struct storm::CppMeta;										\
-	static inline const Handle &stormHandle(Engine &e) { return storm::runtime::typeHandle(stormType(e)); } \
+	static inline const storm::Handle &stormHandle(Engine &e) { return storm::runtime::typeHandle(stormType(e)); } \
 	static inline void *operator new (size_t s, storm::Place mem) {		\
 		return mem.ptr;													\
 	}																	\
@@ -153,6 +153,11 @@
  * be filled in by the runtime to contain a Engine reference.
  */
 #define STORM_FN __cdecl
+
+/**
+ * Mark a function as a setter function. These functions will be callable as 'foo = x' => 'foo(x)'.
+ */
+#define STORM_SETTER STORM_FN
 
 /**
  * Mark a constructor exported to Storm.

@@ -30,7 +30,7 @@ void destroyLibData(void *data) {
 	GcArray<void *> *d = (GcArray<void *> *)data;
 	App *app = (App *)d->v[0];
 	if (app)
-		app->destroy();
+		app->terminate();
 
 	TODO(L"Clean up the renderer as well!");
 }

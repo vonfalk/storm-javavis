@@ -149,9 +149,9 @@ static void genTypes(wostream &to, World &w) {
 				to << L"CppType::superExternal, 0, ";
 			} else if (Enum *e = as<Enum>(&t)) {
 				if (e->bitmask)
-					to << L"CppType::superCustom, size_t(&storm::createBitmaskEnum), ";
+					to << L"CppType::superBitmaskEnum, null, ";
 				else
-					to << L"CppType::superCustom, size_t(&storm::createEnum), ";
+					to << L"CppType::superEnum, null, ";
 			} else if (p) {
 				to << L"CppType::superCustom, size_t(&" << p->generate << L"), ";
 			} else if (thread) {

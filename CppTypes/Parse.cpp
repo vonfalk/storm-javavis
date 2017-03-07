@@ -158,6 +158,7 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 
 	// Is this function supposed to be exported to Storm?
 	exportFn |= tok.skipIf(L"STORM_FN");
+	exportFn |= tok.skipIf(L"STORM_SETTER");
 
 	// Other markers...
 	tok.skipIf(L"CODECALL");

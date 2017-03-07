@@ -83,6 +83,12 @@ namespace storm {
 			// 'super' is a pointer to a function CreateFn that generates the type to use.
 			superCustom,
 
+			// This is an enum.
+			superEnum,
+
+			// This is a bitmask enum.
+			superBitmaskEnum,
+
 			// This type is external to this library. Storm should try to find it using regular type
 			// lookup with 'name' as an absolute package name.
 			superExternal,
