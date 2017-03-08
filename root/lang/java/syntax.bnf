@@ -27,7 +27,7 @@ void SQIdent();
 SQIdent : SIdent #typeName (, "\.", SIdent #typeName)*;
 
 void SQIdentList();
-SQIdentList : SQIdent (, ",", SQIdent)*;
+SQIdentList : SQIdent - (, ",", SQIdent)*;
 
 
 // Start of the grammar.
@@ -51,55 +51,63 @@ STypeDecl : SModifiers, SInterfaceDecl;
 STypeDecl : SModifiers, SAnnotationDecl;
 
 void SClassDecl();
-SClassDecl : "class" #keyword, SIdent #typeName, STypeParams, SExtends, SImplements, "{" [, (SClassBody,)* ]+ "}";
+SClassDecl : "class" #keyword, SIdent #typeName, STypeParams, SExtends, SImplements, SClassBody;
 
 void SEnumDecl();
-SEnumDecl : "enum", SIdent, SImplements, "{" [, (SEnumBody,)* ]+ "}";
+SEnumDecl : "enum" #keyword, SIdent #typeName, SImplements, SEnumBody;
 
 void SInterfaceDecl();
-SInterfaceDecl : "interface", SIdent, STypeParams, SExtendsList, "{" [, (SInterfaceBody,)* ]+ "}";
+SInterfaceDecl : "interface" #keyword, SIdent #typeName, STypeParams, SExtendsList, SInterfaceBody;
 
 void SAnnotationDecl();
-SAnnotationDecl : "@", "interface", SIdent, "{" [, (SAnnotationBody,)* ]+ "}";
+SAnnotationDecl : "@" #keyword, "interface" #keyword, SIdent #typeName, SAnnotationBody;
 
 void SExtends();
-SExtends : "extends", SType;
+SExtends : "extends" #keyword, SType;
 SExtends :;
 
 void SExtendsList();
-SExtendsList : "extends", STypeList;
+SExtendsList : "extends" #keyword, STypeList;
 SExtendsList :;
 
 void SImplements();
-SImplements : "implements", STypeList;
+SImplements : "implements" #keyword, STypeList;
 SImplements :;
 
 
 // Types.
 void SType();
-SType : "byte" #typeName;
-SType : "short" #typeName;
-SType : "char" #typeName;
-SType : "int" #typeName;
-SType : "long" #typeName;
-SType : "float" #typeName;
-SType : "double" #typeName;
-SType : "boolean" #typeName;
-SType : SRefType;
+SType : SBasicType - (, "\[\]")*;
+SType : SRefType - (, "\[\]")*;
+
+void SBasicType();
+SBasicType : "byte" #typeName;
+SBasicType : "short" #typeName;
+SBasicType : "char" #typeName;
+SBasicType : "int" #typeName;
+SBasicType : "long" #typeName;
+SBasicType : "float" #typeName;
+SBasicType : "double" #typeName;
+SBasicType : "boolean" #typeName;
 
 void STypeVoid();
 STypeVoid : "void" #keyword;
 STypeVoid : SType;
 
 void SRefType();
-SRefType : SIdent #typeName, STypeArgs (, "\.", SIdent #typeName, STypeArgs)*;
+SRefType : SIdent #typeName, STypeArgs - (, "\.", SIdent #typeName, STypeArgs)*;
 
 void STypeList();
-STypeList : SRefType (, ",", SRefType)*;
+STypeList : SRefType - (, ",", SRefType)*;
+
+void STypeActuals();
+STypeActuals : ;
+STypeActuals : "<", ">";
+STypeActuals : "<", STypeList, ">";
 
 void STypeArgs();
 STypeArgs :;
-STypeArgs : "<", STypeArg (, ",", STypeArg)*, ">";
+STypeArgs : "<", STypeArg - (, ",", STypeArg)*, ">";
 
 void STypeArg();
 STypeArg : SRefType;
@@ -110,13 +118,13 @@ STypeArg : "?", "super", SRefType;
 // Type parameters.
 void STypeParams();
 STypeParams :;
-STypeParams : "<", STypeParam (, ",", STypeParam)*, ">";
+STypeParams : "<", STypeParam - (, ",", STypeParam)*, ">";
 
 void STypeParam();
 STypeParam : SIdent, ("extends", SBound)?;
 
 void SBound();
-SBound : SRefType (, "&", SRefType)*;
+SBound : SRefType - (, "&", SRefType)*;
 
 // Modifiers.
 void SModifiers();
@@ -138,7 +146,7 @@ SModifier : "strictfp";
 
 // Annotations.
 void SAnnotation();
-SAnnotation : "@" SQIdent (, SAnnotationParams)?;
+SAnnotation : "@" #keyword, SQIdent #keyword - (, SAnnotationParams)?;
 
 void SAnnotationParams();
 SAnnotationParams : "(", ")";
@@ -146,7 +154,7 @@ SAnnotationParams : "(", SAnnotationElement, ")";
 
 void SAnnotationElement();
 SAnnotationElement : SElementValue;
-SAnnotationElement : SElementValuePair (, ",", SElementValuePair)*;
+SAnnotationElement : SElementValuePair - (, ",", SElementValuePair)*;
 
 void SElementValuePair();
 SElementValuePair : SIdent, "=", SElementValue;
@@ -157,28 +165,214 @@ SElementValue : SExpr1;
 SElementValue : "{", SElementArray, (",",)? "}";
 
 void SElementArray();
-SElementArray : SElementValue (, ",", SElementValue)*;
+SElementArray : SElementValue - (, ",", SElementValue)*;
 
 // Expressions and blocks.
 void SExpr();
+SExpr : SExpr1 - (, SAssignOp, SExpr1)?;
+
+void SAssignOp();
+SAssignOp : "=";
+SAssignOp : "\+=";
+SAssignOp : "-=";
+SAssignOp : "*=";
+SAssignOp : "/=";
+SAssignOp : "&=";
+SAssignOp : "|=";
+SAssignOp : "%=";
+SAssignOp : "<<=";
+SAssignOp : ">>=";
+SAssignOp : ">>>=";
 
 void SExpr1();
+// Note: The original documentation allows an assignment between ? and :, which seems strange.
+SExpr1 : SExpr2 - (, "?", SExpr1, ":", SExpr1)?;
+
+void SExpr2();
+SExpr2 : SExpr3;
+SExpr2 : SExpr3 - (, SInfixOp, SExpr3)+;
+SExpr2 : SExpr3, "instanceof" #keyword, SType;
+
+void SInfixOp();
+SInfixOp : "||";
+SInfixOp : "&&";
+SInfixOp : "|";
+SInfixOp : "^";
+SInfixOp : "&";
+SInfixOp : "==";
+SInfixOp : "!=";
+SInfixOp : ">";
+SInfixOp : "<";
+SInfixOp : "<=";
+SInfixOp : ">=";
+SInfixOp : "<<";
+SInfixOp : ">>";
+SInfixOp : ">>>";
+SInfixOp : "\+";
+SInfixOp : "-";
+SInfixOp : "\*";
+SInfixOp : "/";
+SInfixOp : "%";
+
+void SExpr3();
+SExpr3 : SPrefixOp, SExpr3;
+SExpr3 : SPrimary, SExpr3Tail;
+// This also seems wrong in the documentation, the documentation allows (1)3 as an expression...
+SExpr3 : "(", SType, ")", SExpr3;
+
+void SExpr3Tail();
+SExpr3Tail : ("\.", SSelector,)* SExpr3Tail2;
+
+void SExpr3Tail2();
+SExpr3Tail2 : (SPostfixOp,)*;
+
+void SPrefixOp();
+SPrefixOp : "\+\+";
+SPrefixOp : "--";
+SPrefixOp : "!";
+SPrefixOp : "~";
+SPrefixOp : "\+";
+SPrefixOp : "-";
+
+void SPostfixOp();
+SPostfixOp : "\+\+";
+SPostfixOp : "--";
+
+void SPrimary();
+SPrimary : "(", SExpr, ")";
+SPrimary : "[0-9]+" #constant;
+SPrimary : SFloat #constant - ("f" #constant)?;
+SPrimary : "true" #constant;
+SPrimary : "false" #constant;
+SPrimary : "null" #constant;
+SPrimary : "\"" #string - SStrContent #string - "\"" #string;
+SPrimary : "'" #string - SStrContent #string - "'" #string;
+SPrimary : "this" #keyword (, SArgs)?;
+SPrimary : "super" #keyword (, SArgs)?;
+SPrimary : "super" #keyword, "\.", SIdent #fnName - (, SArgs)?;
+SPrimary[-1] : SIdent #varName, SIdentSuffix;
+SPrimary : SBasicType #typeName, ("\[\]",)* "\.", "class" #keyword;
+SPrimary : "void" #typeName, "\.", "class" #keyword;
+SPrimary : "new" #keyword, SCreator;
+SPrimary : "<", STypeList, ">", "this" #keyword, SArgs;
+SPrimary : "<", STypeList, ">", "super" #keyword, SSelector;
+SPrimary : "<", STypeList, ">", SIdent #fnName, SArgs;
+
+void SCreator();
+SCreator : "<", STypeList, ">", SCreatedName, SCreatorRest;
+SCreator : SCreatedName, SCreatorRest;
+SCreator : SCreatedName, SArrayRest;
+
+void SCreatedName();
+SCreatedName : SIdent #typeName, STypeActuals - (, "\.", SIdent #typeName, STypeActuals)*;
+
+void SCreatorRest();
+SCreatorRest : SArgs - (, SClassBody)?;
+
+void SArrayRest();
+// TODO: Figure out how this should be implemented...
+
+void SFloat();
+SFloat : SFloatBase - (SFloatExp)?;
+SFloat : "[0-9]+" - SFloatExp;
+
+void SFloatBase();
+SFloatBase : "[0-9]+\.[0-9]*";
+SFloatBase : "\.[0-9]+";
+
+void SFloatExp();
+SFloatExp : "e[+\-]?[0-9]+";
+
+void SStrContent();
+SStrContent : "[^\"\\]*";
+SStrContent : SStrContent - "\\." - SStrContent;
+
+void SIdentSuffix();
+SIdentSuffix : ;
+SIdentSuffix[-1] : "\.", SIdent, SIdentSuffix;
+SIdentSuffix : ("\[\]", )* "\.", "class" #keyword;
+// SIdentSuffix : SExpr; // Strange to have an expression in this context...
+SIdentSuffix : SArgs;
+SIdentSuffix : "\.", "this" #keyword;
+SIdentSuffix : "\.", "super" #keyword, SArgs;
+SIdentSuffix : "\.", "new" #keyword, STypeActuals, SIdent #typeName, STypeActuals, SArgs - (,SClassBody)?;
+SIdentSuffix : "\.", STypeActuals, "super" #keyword, SSelector;
+SIdentSuffix : "\.", STypeActuals, SIdent #fnName, SArgs;
+
+void SArgs();
+SArgs : "(", ")";
+SArgs : "(", SExpr, (",", SExpr, )*, ")";
+
+void SSelector();
+SSelector : SIdent #fnName - (, SArgs)?;
+SSelector : "this" #keyword;
+SSelector : "super" #keyword (, SArgs)?;
+SSelector[10] : "super" #keyword, "\.", SSelector;
+SSelector : "new" #keyword, STypeActuals, SIdent #typeName, STypeActuals, SArgs - (,SClassBody)?;
+SSelector : "<", STypeList, ">", SGenericSuffix;
+// Why can a selector be an expression? That would allow: foo x + 8;
+
+void SGenericSuffix();
+SGenericSuffix : "super" #keyword, SSelector;
+SGenericSuffix : SIdent #fnName, SArgs;
 
 void SStmt();
 SStmt : ";";
 SStmt : SBlock;
 SStmt : SIdent, ":", SStmt;
 SStmt : SExpr, ";";
+SStmt[10] : "assert" #keyword, SExpr, (":", SExpr,)? ";";
+SStmt[10] : "if" #keyword, "(", SExpr, ")" [, SStmt]? (, "else" #keyword [, SStmt]?)?;
+SStmt[10] : "while" #keyword, "(", SExpr, ")" [, SStmt]?;
+SStmt[10] : "do" #keyword [, SStmt, ]? "while" #keyword, "(", SExpr, ")", ";";
+SStmt[10] : "for" #keyword, "(", SForControl, ")" [, SStmt]?;
+SStmt[10] : "break" #keyword (, SIdent)?;
+SStmt[10] : "continue" #keyword (, SIdent)?;
+SStmt[10] : "return" #keyword, SExpr;
+SStmt[10] : "throw" #keyword, SExpr;
+SStmt[10] : "synchronized", "(", SExpr, ")", SBlock;
+SStmt[10] : "try" #keyword, SBlock, STryTail;
+SStmt[10] : "try" #keyword, "(", SResourceSpec, (";",)? ")", SBlock, STryTail;
 
+void STryTail();
+STryTail : (SCatchClause, )* "finally" #keyword, SBlock;
+STryTail : (SCatchClause, )+;
+
+void SCatchClause();
+SCatchClause : "catch" #keyword, "(", SVarModifier, SQIdent, ("|", SQIdent,)* SIdent #varName, ")", SBlock;
+
+void SResourceSpec();
+SResourceSpec : SVarModifier, SRefType, SIdent #varName, ("\[\]",)* "=", SExpr;
+SResourceSpec : SResourceSpec, ";", SResourceSpec;
+
+void SForControl();
+SForControl : SForStmt, ";", SForStmt, ";", SForStmt;
+SForControl : SVarModifier, SType, SIdent #varName, ("\[\]",)* SForControlRest;
+
+void SForControlRest();
+SForControlRest : ":", SExpr;
+SForControlRest : "=", SVarInit, (",", SIdent #varName, SVarSuffix,)* ";", SForStmt, ";", SForStmt;
+
+void SForStmt();
+SForStmt : ;
+SForStmt : SExpr, (",", SExpr)*;
+
+void SBlockStmt();
+SBlockStmt[10] : SStmt;
+SBlockStmt : STypeDecl;
+SBlockStmt : SVarModifier, SType, SIdent #varName, SVarSuffix, (",", SIdent #varName, SVarSuffix,)* ";";
 
 void SBlock();
-SBlock : "{" [, (SStmt,)* ]+ "}";
+SBlock : "{" [, (SBlockStmt,)* ]+ "}";
 
 // Class body.
 void SClassBody();
-SClassBody : ";";
-SClassBody : SModifiers, SMemberDecl;
-SClassBody : ("static" #keyword,)? SBlock;
+SClassBody : "{" [, (SClassEntry,)*]+ "}";
+
+void SClassEntry();
+SClassEntry : ";";
+SClassEntry : SModifiers, SMemberDecl;
+SClassEntry : ("static" #keyword,)? SBlock;
 
 void SMemberDecl();
 SMemberDecl : STypeDecl;
@@ -200,17 +394,14 @@ SFormalList : SVarModifier, SType, SIdent #varName, (",", SFormalList)?;
 SFormalList : SVarModifier, SType, SIdent #varName, "\[\]", (",", SFormalList)?;
 SFormalList : SVarModifier, "\.\.\.", SIdent #varName;
 
-void SFormal();
-SFormal : "final", SType;
-
 void SVarModifier();
 SVarModifier : ;
-SVarModifier : "final" #keyword;
-SVarModifier : SAnnotation;
+SVarModifier : "final" #keyword, SVarModifier;
+SVarModifier : SAnnotation, SVarModifier;
 
 void SVarSuffix();
-SVarSuffix : ("=", SVarInit)?;
-SVarSuffix : "\[\]" (, "=", SVarInit)?;
+SVarSuffix : ("\[\]",)*;
+SVarSuffix : ("\[\]",)* "=", SVarInit;
 
 void SVarInit();
 SVarInit : SExpr;
@@ -221,9 +412,42 @@ SVarInit : "{", SVarInit, (",", SVarInit, )* ",", "}";
 
 // Enum body.
 void SEnumBody();
+SEnumBody : "{" [, SEnumConsts, SEnumDecls, ]+ "}";
+
+void SEnumConsts();
+SEnumConsts : ;
+SEnumConsts : SEnumConst - (, ",")?;
+SEnumConsts : SEnumConst, ",", SEnumConsts;
+
+void SEnumConst();
+SEnumConst : (SAnnotation,)* SIdent #varName, SEnumConstTail;
+
+void SEnumConstTail();
+SEnumConstTail : (SArgs,)? SClassBody;
+SEnumConstTail : SArgs;
+SEnumConstTail : ;
+
+void SEnumDecls();
+SEnumDecls : ;
+SEnumDecls : ";" (, SClassEntry)*;
 
 // Interface body.
 void SInterfaceBody();
+SInterfaceBody : "{" [, (SInterfaceEntry,)* ]+ "}";
+
+void SInterfaceEntry();
+SInterfaceEntry : ";";
+SInterfaceEntry : SModifiers, SMemberDecl;
 
 // Annotation body.
 void SAnnotationBody();
+SAnnotationBody : "{" [, (SModifiers, SAnnotationEntry,)* ]+ "}";
+
+void SAnnotationEntry();
+SAnnotationEntry : SClassDecl;
+SAnnotationEntry : SEnumDecl;
+SAnnotationEntry : SInterfaceDecl;
+SAnnotationEntry : SAnnotationDecl;
+SAnnotationEntry : SType, SIdent #varName, "(", ")", "\[\]", ("default" #keyword, SElementValue,)? ";";
+SAnnotationEntry : SType, SIdent #varName, "(", ")", ("default" #keyword, SElementValue,)? ";";
+SAnnotationEntry : SType, SIdent #varName, SVarSuffix, (",", SIdent #varName, SVarSuffix,)* ";";

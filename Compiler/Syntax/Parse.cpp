@@ -54,6 +54,10 @@ namespace storm {
 			if (!tok.skipIf(L"("))
 				return null;
 
+			if (tok.skipIf(L","))
+				throw SyntaxError(tok.position(), L"Actual parameters to a token may not start with a comma."
+					L" If you meant to start a capture, use - to disambiguate.");
+
 			Array<Str *> *r = new (e) Array<Str *>();
 			while (tok.peek() != L")") {
 				tok.skipIf(L",");
