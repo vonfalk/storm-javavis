@@ -97,7 +97,7 @@ namespace storm {
 			const CppType &type = world->types[i];
 
 			// The array could be partially filled.
-			if (into->types[i] == null && !delay(type)) {
+			if (into->types[i] == null && !delayed(type)) {
 				if (external(type))
 					into->types[i] = findType(type);
 				else
@@ -109,7 +109,7 @@ namespace storm {
 		for (nat i = 0; i < c; i++) {
 			const CppType &type = world->types[i];
 
-			if (!delay(type))
+			if (!delayed(type))
 				continue;
 			if (into->types[i])
 				continue;

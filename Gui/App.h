@@ -3,6 +3,7 @@
 #include "Core/TObject.h"
 #include "Core/Map.h"
 #include "Core/Set.h"
+#include "Core/Event.h"
 #include "Handle.h"
 #include "Message.h"
 
@@ -26,6 +27,9 @@ namespace gui {
 		// Abort creation on failure.
 		void createAborted(Window *w);
 
+		// Add a new window.
+		void addWindow(Window *w);
+
 		// Remove a window.
 		void removeWindow(Window *w);
 
@@ -34,10 +38,13 @@ namespace gui {
 
 		// Wait for an event, making sure that we're not blocking the message loop. Also returns
 		// when 'window' is no longer alive.
-		void waitForEvent(Window *owner, os::Event &event);
+		void waitForEvent(Window *owner, Event *event);
 
 		// Default font.
 		// Font *defaultFont;
+
+		// Get the window class for frame windows.
+		ATOM windowClass();
 
 		// Get our instance.
 		HINSTANCE instance();
@@ -82,6 +89,7 @@ namespace gui {
 		void initCommonControls();
 
 		// Our window class (an ATOM).
+
 		Handle hWindowClass;
 
 		// Our instance (an HINSTANCE).

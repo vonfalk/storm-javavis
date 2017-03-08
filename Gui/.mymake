@@ -2,3 +2,5 @@
 package=ui
 input=*
 stormUsingNamespace=storm
+
+#flags+=/d1reportSingleClassLayoutFrame

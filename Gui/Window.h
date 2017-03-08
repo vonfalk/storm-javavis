@@ -1,6 +1,8 @@
 #pragma once
 #include "Message.h"
+#include "Handle.h"
 #include "Core/Timing.h"
+#include "Core/TObject.h"
 #include "Utils/Bitmask.h"
 
 namespace gui {
@@ -56,10 +58,10 @@ namespace gui {
 		bool created() const { return handle() != invalid; }
 
 		// Parent/owner. Null for frames.
-		// MAYBE(Container *) STORM_FN parent();
+		MAYBE(Container *) STORM_FN parent();
 
 		// Root frame. Returns ourself for frames, returns null before attached.
-		// MAYBE(Frame *) STORM_FN rootFrame();
+		MAYBE(Frame *) STORM_FN rootFrame();
 
 		// Attach to a parent container and creation. To be called from 'container'.
 		void attachParent(Container *parent);
@@ -97,8 +99,8 @@ namespace gui {
 		void STORM_SETTER text(Str *str);
 
 		// Window position. Always relative to the client area (even in Frames).
-		// Rect STORM_FN pos();
-		// virtual void STORM_SETTER pos(Rect r);
+		Rect STORM_FN pos();
+		virtual void STORM_SETTER pos(Rect r);
 
 		// Font.
 		// Font *STORM_FN font();
@@ -114,7 +116,7 @@ namespace gui {
 		virtual void STORM_FN repaint();
 
 		// Called when the window is resized.
-		// virtual void STORM_FN resized(Size size);
+		virtual void STORM_FN resized(Size size);
 
 		// Key events. Return 'true' if the message was handled and should not propagate further.
 		virtual Bool STORM_FN onKey(Bool pressed, Nat keycode);
@@ -162,7 +164,7 @@ namespace gui {
 		Str *myText;
 
 		// Position.
-		// Rect myPos;
+		Rect myPos;
 
 		// // Font.
 		// Font *myFont;
@@ -178,7 +180,7 @@ namespace gui {
 		void detachPainter();
 
 		// Tell our painter we've been resized.
-		//void notifyPainter(Size s);
+		void notifyPainter(Size s);
 
 		// Handle on paint events.
 		MsgResult onPaint();

@@ -1,5 +1,7 @@
 #pragma once
 #include "Core/Storm.h"
+#include "Core/Str.h"
+#include "Core/StrBuf.h"
 
 
 namespace storm {
