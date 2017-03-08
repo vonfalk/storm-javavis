@@ -169,6 +169,9 @@ namespace storm {
 				// Find out if a node has a higher priority compared to another.
 				Priority STORM_FN priority(Nat a, Nat b);
 
+				// See if the node 'haystack' contains node 'needle'.
+				Bool STORM_FN contains(Nat haystack, Nat needle);
+
 				/**
 				 * Interface that TreeNode and TreeArray are supposed to use.
 				 */

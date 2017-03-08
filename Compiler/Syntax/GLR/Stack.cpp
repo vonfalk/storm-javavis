@@ -49,7 +49,9 @@ namespace storm {
 					// update any previously created syntax trees.
 					// Note: due to how 'priority' works, we can be sure that both this tree node
 					// and the other one have children.
-					store->at(tree).replace(store->at(newTree));
+					if (!store->contains(newTree, tree))
+						// Avoid creating cycles.
+						store->at(tree).replace(store->at(newTree));
 				}
 			}
 

@@ -104,6 +104,32 @@ namespace storm {
 				return equal;
 			}
 
+			Bool TreeStore::contains(Nat haystack, Nat needle) {
+				if (haystack == needle)
+					return true;
+
+				TreeNode in = at(haystack);
+				TreeArray children = in.children();
+				if (!children)
+					return false;
+
+				TreeNode n = at(needle);
+				Nat start = in.pos();
+				for (Nat i = 0; i < children.count(); i++) {
+					TreeNode ch = at(children[i]);
+					if (ch.pos() > n.pos())
+						return false;
+
+					if (start <= n.pos())
+						if (contains(children[i], needle))
+							return true;
+
+					start = ch.pos();
+				}
+
+				return false;
+			}
+
 			void TreeStore::allChildren(ChildArray &out, Nat productionId, TreeNode &me) {
 				if (!me.children())
 					return;
