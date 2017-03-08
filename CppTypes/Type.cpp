@@ -122,7 +122,9 @@ void Class::scannedVars(vector<ScannedVar> &append) const {
 
 Size Class::baseOffset() const {
 	if (parentType) {
-		return parentType->size();
+		Size s = parentType->size();
+		s += s.align();
+		return s;
 	} else if (!valueType) {
 		return Size::sPtr; // vtable
 	} else {
