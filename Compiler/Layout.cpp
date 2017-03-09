@@ -62,17 +62,18 @@ namespace storm {
 			Size vSize = vType.size();
 			s += vSize.align();
 
+			Offset offset(s);
 			if (vType.isPtr() || vType.ref) {
 				// We need to GC this one!
 				if (to)
-					to->offset[pos] = s.current();
+					to->offset[pos] = offset.current();
 				pos++;
 			} else if (vType.isValue()) {
 				// Copy and offset all members of this value.
 				const GcType *src = vType.type->gcType();
 				for (nat j = 0; j < src->count; j++) {
 					if (to)
-						to->offset[pos] = s.current() + src->offset[j];
+						to->offset[pos] = offset.current() + src->offset[j];
 					pos++;
 				}
 			}
