@@ -25,5 +25,5 @@ class SimpleWin extends Frame {
 
 void simple() {
 	SimpleWin win;
-	sleep(2 s);
+	win.waitForClose;
 }

@@ -1,0 +1,39 @@
+use ui;
+use core:geometry;
+use core:io;
+
+class Dialog extends Frame {
+	ctor() {
+		init("Dialog");
+		size(Size(200, 100));
+		create();
+	}
+}
+
+class MainWin extends Frame {
+	Button button;
+
+	ctor() {
+		init("Main window") {
+			button("Show dialog");
+		}
+
+		size(Size(200, 200));
+		button.pos(Rect(10, 10, 190, 190));
+		button.onClick = &this.showDialog(Button);
+		add(button);
+		create();
+	}
+
+	void showDialog(Button b) {
+		button.text("Showing dialog...");
+		Dialog d;
+		d.waitForClose;
+		button.text("Show dialog");
+	}
+}
+
+void dialog() {
+	MainWin win;
+	win.waitForClose;
+}

@@ -67,7 +67,7 @@ namespace gui {
 		void processMessage(MSG &msg);
 
 		// Check if either the event is set or the window is removed.
-		bool resumeEvent(Window *w, os::Event &e);
+		bool resumeEvent(Window *w, Event *e);
 
 		// Keep track of all windows.
 		typedef Map<Handle, Window *> WindowMap;
@@ -133,6 +133,9 @@ namespace gui {
 		// for something (eg. redraws).
 		void disableMsg();
 		void enableMsg();
+
+		// Are we done with our duty?
+		bool isDone() const { return done; }
 
 		// The UThread that runs the message pump.
 		os::UThread uThread;

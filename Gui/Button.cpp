@@ -14,7 +14,6 @@ namespace gui {
 	}
 
 	bool Button::create(HWND parent, nat id) {
-		PLN(L"Creating Button!");
 		return Window::createEx(WC_BUTTON, buttonFlags, 0, parent, id);
 	}
 

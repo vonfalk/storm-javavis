@@ -61,9 +61,38 @@ namespace gui {
 		liveWindows->remove(w);
 	}
 
+	bool App::resumeEvent(Window *window, Event *event) {
+		return liveWindows->has(window) == false
+			|| event->isSet();
+	}
+
 	void App::waitForEvent(Window *owner, Event *event) {
-		TODO(L"Implement me!");
-		// Is this needed if we use Storm's events?
+		// Make sure not to block the message pumping UThread.
+		if (os::UThread::current() != appWait->uThread) {
+			event->wait();
+			return;
+		}
+
+		// Keep the message pump running until the event is properly signaled!
+		while (!resumeEvent(owner, event)) {
+			do {
+				appWait->enableMsg();
+				appWait->work();
+				appWait->disableMsg();
+				if (resumeEvent(owner, event))
+					break;
+			} while (os::UThread::leave());
+
+			if (resumeEvent(owner, event))
+				break;
+
+			appWait->enableMsg();
+			os::Thread::current().threadData()->waitForWork();
+			appWait->disableMsg();
+			if (appWait->isDone())
+				// Exiting message loop, return.
+				return;
+		}
 	}
 
 	bool App::processMessages() {
@@ -205,9 +234,9 @@ namespace gui {
 		runtime::attachThread(e);
 
 		threadId = GetCurrentThreadId();
+		uThread = os::UThread::current();
 		signalSent = 0;
 		currentEngine = &e;
-		uThread = os::UThread::current();
 
 		// Make sure we get a message queue.
 		if (!IsGUIThread(TRUE)) {
