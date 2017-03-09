@@ -2,8 +2,12 @@
 #include "App.h"
 #include "LibData.h"
 #include "Window.h"
+#include "Frame.h"
 
 namespace gui {
+
+	// Current engine, used to retrieve the App for the current thread.
+	static THREAD Engine *currentEngine = null;
 
 	App::App() : appWait(null), creating(null) {
 		windows = new (this) Map<Handle, Window *>();
@@ -20,8 +24,9 @@ namespace gui {
 		for (WindowSet::Iter i = liveWindows->begin(), e = liveWindows->end(); i != e; ++i)
 			i.v()->handle(Window::invalid);
 
-		TODO(L"Terminate everything!");
-		// appWait->terminate();
+		os::Sema wait(0);
+		appWait->terminate(wait);
+		wait.down();
 	}
 
 	ATOM App::windowClass() {
@@ -61,9 +66,74 @@ namespace gui {
 		// Is this needed if we use Storm's events?
 	}
 
+	bool App::processMessages() {
+		MSG msg;
+		for (nat i = 0; i < maxProcessMessages; i++) {
+			if (!PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+				break;
+
+			if (msg.message == WM_QUIT)
+				return false;
+
+			// Just ignore these, there should not be too many of them anyway...
+			if (msg.message == WM_THREAD_SIGNAL)
+				continue;
+
+			processMessage(msg);
+		}
+
+		return true;
+	}
+
+	void App::processMessage(MSG &msg) {
+		if (Window *w = windows->get(Handle(msg.hwnd), null)) {
+			// Intercepted?
+			MsgResult r = w->beforeMessage(msg);
+			if (r.any) {
+				if (InSendMessage())
+					ReplyMessage(r.result);
+				return;
+			}
+
+			// Dialog message?
+			Frame *root = w->rootFrame();
+			if (root && IsDialogMessage(root->handle(), &msg))
+				return;
+		}
+
+		// Translate and dispatch to window proc.
+		TranslateMessage(&msg);
+		currentEngine = &engine(); // Just to make sure!
+		DispatchMessage(&msg);
+	}
+
 	MsgResult App::handleMessage(HWND hwnd, const Message &msg) {
-		TODO(L"Implement me!");
-		return noResult();
+		if (!currentEngine) {
+			WARNING(L"No current engine. Ignoring " << msg << L".");
+			return noResult();
+		}
+
+		App *app = gui::app(*currentEngine);
+		Window *w = app->windows->get(Handle(hwnd), app->creating);
+		if (!w) {
+			WARNING(L"Unknown window: " << hwnd << L", ignoring " << msg << L".");
+			return noResult();
+		}
+
+		// From here on, this thread may yeild, causing the main UThread to want to dispatch more
+		// messages. Prevent this to avoid confusing the Win32 api by pre-empting calls on the stack
+		// there.
+		MsgResult r = noResult();
+		app->appWait->disableMsg();
+
+		try {
+			r = w->onMessage(msg);
+		} catch (const Exception &e) {
+			PLN(L"Unhandled exception in window thread: " << e);
+		}
+
+		app->appWait->enableMsg();
+		return r;
 	}
 
 	LRESULT WINAPI App::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -118,6 +188,109 @@ namespace gui {
 		if (!v)
 			v = new (e.v) App();
 		return v;
+	}
+
+	/**
+	 * Custom wait logic.
+	 */
+
+	AppWait::AppWait(Engine &e) : uThread(os::UThread::invalid), msgDisabled(0), e(e), notifyExit(null) {
+		App *app = gui::app(e);
+		app->appWait = this;
+		done = false;
+	}
+
+	void AppWait::init() {
+		// Register this thread with the Gc.
+		runtime::attachThread(e);
+
+		threadId = GetCurrentThreadId();
+		signalSent = 0;
+		currentEngine = &e;
+		uThread = os::UThread::current();
+
+		// Make sure we get a message queue.
+		if (!IsGUIThread(TRUE)) {
+			assert(false, L"Could not convert to a GUI thread.");
+		}
+	}
+
+	bool AppWait::wait(os::IOHandle io) {
+		// Since we know the semantics of wait(IOHandle, nat), we can exploit that...
+		return wait(io, INFINITE);
+	}
+
+	bool AppWait::wait(os::IOHandle io, nat msTimeout) {
+		if (done) {
+			// No more need for message processing!
+			return false;
+		}
+
+		if (msgDisabled) {
+			if (msTimeout != INFINITE)
+				fallback.wait(msTimeout);
+			else
+				fallback.wait();
+		} else {
+			HANDLE h = io.v();
+			MsgWaitForMultipleObjects(1, &h, FALSE, msTimeout, QS_ALLPOSTMESSAGE);
+			atomicWrite(signalSent, 0);
+		}
+
+		return !done;
+	}
+
+	void AppWait::signal() {
+		// Only the first thread posts the message if needed.
+		if (atomicCAS(signalSent, 0, 1) == 0)
+			PostThreadMessage(threadId, WM_THREAD_SIGNAL, 0, 0);
+
+		fallback.signal();
+	}
+
+	void AppWait::work() {
+		try {
+			// Do not handle messages if they are disabled.
+			if (msgDisabled == 0) {
+				App *app = gui::app(e);
+				if (!app->processMessages()) {
+					uThread = os::UThread::invalid;
+					if (notifyExit)
+						notifyExit->up();
+					done = true;
+				}
+
+				// The function 'processMessages' consumes the WM_THREAD_SIGNAL message so if
+				// someone wants to wake us up, they need to send a new message from here on. It is
+				// safe to reset this flag here since we are going to let other threads run after
+				// this point in the code anyway.
+				atomicWrite(signalSent, 0);
+			}
+		} catch (const Exception &e) {
+			PLN(L"Unhandled exception in window thread: " << e);
+		}
+	}
+
+	void AppWait::terminate(os::Sema &notify) {
+		notifyExit = &notify;
+		if (done)
+			notify.up();
+
+		PostThreadMessage(threadId, WM_QUIT, 0, 0);
+	}
+
+	void AppWait::disableMsg() {
+		msgDisabled++;
+	}
+
+	void AppWait::enableMsg() {
+		assert(msgDisabled > 0, L"You messed up with enable/disable.");
+		if (msgDisabled > 0)
+			msgDisabled--;
+	}
+
+	os::Thread spawnUiThread(Engine &e) {
+		return os::Thread::spawn(new AppWait(e), runtime::threadGroup(e));
 	}
 
 }

@@ -115,7 +115,49 @@ namespace gui {
 	public:
 		AppWait(Engine &e);
 
-		// TODO!
+		virtual void init();
+		virtual bool wait(os::IOHandle io);
+		virtual bool wait(os::IOHandle io, nat msTimeout);
+		virtual void signal();
+		virtual void work();
+
+		// Ask us to terminate. Notify the semaphore when ready.
+		void terminate(os::Sema &notify);
+
+		// Notify that we are currently inside a message handler and should not consider new window
+		// messages for the time being. (recursive, calling 'disable' twice and 'enable' once leaves
+		// it disables).  This is done since the Win32 api gets very confused if we pre-empt a
+		// thread with Win32 api calls on the stack. This happens when another UThread called some
+		// Win32-function that invokes a callback to the Window proc, which in turn needs to wait
+		// for something (eg. redraws).
+		void disableMsg();
+		void enableMsg();
+
+		// The UThread that runs the message pump.
+		os::UThread uThread;
+
+	private:
+		// Our thread id (win32 thread id).
+		DWORD threadId;
+
+		// # of WM_THREAD_SIGNAL messages sent. Not actually increased above 1
+		nat signalSent;
+
+		// Message checking disabled?
+		nat msgDisabled;
+
+		// Condition for use when messages are disabled.
+		os::Condition fallback;
+
+		// Engine, used to retrieve the App object.
+		Engine &e;
+
+		// Should we exit?
+		bool done;
+
+		// Notify this semaphore on exit.
+		os::Sema *notifyExit;
 	};
 
+	os::Thread spawnUiThread(Engine &e);
 }

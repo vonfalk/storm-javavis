@@ -19,7 +19,8 @@ String toS(HRESULT r) {
 }
 
 namespace gui {
-	STORM_DEFINE_THREAD(Ui);
+	os::Thread spawnUiThread(Engine &e);
+	STORM_DEFINE_THREAD_WAIT(Ui, &spawnUiThread);
 	STORM_DEFINE_THREAD(Render);
 
 	Rect convert(const RECT &r) {
