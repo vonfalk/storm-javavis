@@ -3,22 +3,32 @@ use core:geometry;
 use core:io;
 
 class SimpleWin extends Frame {
+	Label lbl;
+	Edit edit;
 	Button bn;
 
 	ctor() {
 		init("Simple Window") {
+			lbl("Input text:");
+			edit("text");
 			bn("OK");
 		}
 
 		size(Size(200, 200));
-		bn.pos(Rect(Point(10, 10), Size(100, 100)));
+		lbl.pos(Rect(10, 10, 190, 30));
+		edit.pos(Rect(10, 30, 190, 50));
+		bn.pos(Rect(10, 100, 190, 190));
+
 		bn.onClick = &this.onOk(Button);
+		add(lbl);
+		add(edit);
 		add(bn);
 		create();
 	}
 
 	void onOk(Button b) {
-		print("Clicked!");
+		print("You entered: " # edit.text);
+		edit.text("");
 	}
 }
 
