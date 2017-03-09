@@ -11,6 +11,7 @@ namespace gui {
 
 	class Window;
 	class Frame;
+	class Font;
 
 	/**
 	 * Application object. One instance of this object is created to manage all live windows for one
@@ -41,7 +42,7 @@ namespace gui {
 		void waitForEvent(Window *owner, Event *event);
 
 		// Default font.
-		// Font *defaultFont;
+		Font *defaultFont;
 
 		// Get the window class for frame windows.
 		ATOM windowClass();

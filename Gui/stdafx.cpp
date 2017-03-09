@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "Shared/Main.h"
 
+#pragma comment (lib, "Gdi32.lib")
 #pragma comment (lib, "Comctl32.lib")
 #pragma comment (lib, "d3d10_1.lib")
 #pragma comment (lib, "d2d1.lib")
 #pragma comment (lib, "dwrite.lib")
-
 
 SHARED_LIB_ENTRY_POINT(x);
 

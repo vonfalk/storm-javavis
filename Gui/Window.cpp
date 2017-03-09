@@ -11,7 +11,7 @@ namespace gui {
 
 	Window::Window() : myHandle(invalid), myParent(null), myRoot(null), myVisible(true), myPos(0, 0, 10, 10) {
 		myText = new (this) Str(L"");
-		// myFont = steal(app(engine()))->defaultFont;
+		myFont = app(engine())->defaultFont;
 	}
 
 	Window::~Window() {
@@ -197,15 +197,15 @@ namespace gui {
 			SetFocus(handle());
 	}
 
-	// Font *Window::font() {
-	// 	return new (this) Font(myFont);
-	// }
+	Font *Window::font() {
+		return new (this) Font(*myFont);
+	}
 
-	// void Window::font(Font *font) {
-	// 	myFont = new (this) Font(font);
-	// 	if (created())
-	// 		SendMessage(handle(), WM_SETFONT, (WPARAM)font->handle(), TRUE);
-	// }
+	void Window::font(Font *font) {
+		myFont = new (this) Font(*font);
+		if (created())
+			SendMessage(handle(), WM_SETFONT, (WPARAM)font->handle(), TRUE);
+	}
 
 	void Window::update() {
 		if (created())
@@ -290,8 +290,7 @@ namespace gui {
 			if (timerInterval.inMs() != 0) {
 				setTimer(timerInterval);
 			}
-			TODO(L"Set font!");
-			//SendMessage(handle(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
+			SendMessage(handle(), WM_SETFONT, (WPARAM)myFont->handle(), TRUE);
 			return true;
 		}
 	}

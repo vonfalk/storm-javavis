@@ -16,7 +16,7 @@ namespace gui {
 		initCommonControls();
 		hWindowClass = registerWindowClass();
 
-		TODO(L"Create default font!");
+		defaultFont = gui::defaultFont(engine());
 	}
 
 	void App::terminate() {
@@ -233,7 +233,7 @@ namespace gui {
 				fallback.wait();
 		} else {
 			HANDLE h = io.v();
-			MsgWaitForMultipleObjects(1, &h, FALSE, msTimeout, QS_ALLPOSTMESSAGE);
+			MsgWaitForMultipleObjects(0, &h, FALSE, msTimeout, QS_ALLPOSTMESSAGE | QS_ALLINPUT);
 			atomicWrite(signalSent, 0);
 		}
 

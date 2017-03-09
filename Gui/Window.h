@@ -1,6 +1,7 @@
 #pragma once
 #include "Message.h"
 #include "Handle.h"
+#include "Font.h"
 #include "Core/Timing.h"
 #include "Core/TObject.h"
 #include "Utils/Bitmask.h"
@@ -103,8 +104,8 @@ namespace gui {
 		virtual void STORM_SETTER pos(Rect r);
 
 		// Font.
-		// Font *STORM_FN font();
-		// void STORM_SETTER font(Font *font);
+		Font *STORM_FN font();
+		void STORM_SETTER font(Font *font);
 
 		// Set focus.
 		virtual void STORM_FN focus();
@@ -166,8 +167,8 @@ namespace gui {
 		// Position.
 		Rect myPos;
 
-		// // Font.
-		// Font *myFont;
+		// Font.
+		Font *myFont;
 
 		// // Painter.
 		// Painter *myPainter;

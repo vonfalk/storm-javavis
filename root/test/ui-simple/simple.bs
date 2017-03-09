@@ -3,11 +3,22 @@ use core:geometry;
 use core:io;
 
 class SimpleWin extends Frame {
+	Button bn;
+
 	ctor() {
-		init("Simple Window");
+		init("Simple Window") {
+			bn("OK");
+		}
 
 		size(Size(200, 200));
+		bn.pos(Rect(Point(10, 10), Size(100, 100)));
+		bn.onClick = &this.onOk(Button);
+		add(bn);
 		create();
+	}
+
+	void onOk(Button b) {
+		print("Clicked!");
 	}
 }
 
