@@ -1410,9 +1410,12 @@ namespace storm {
 
 		// Should always hold, but better safe than sorry!
 		if (t->finalizer) {
-			typedef void (*Fn)(void *);
-			Fn fn = (Fn)t->finalizer;
-			(*fn)(obj);
+			// An object might not yet be initialized...
+			if ((t->kind != GcType::tFixedObj) || (vtable::from((RootObject *)obj) != null)) {
+				typedef void (*Fn)(void *);
+				Fn fn = (Fn)t->finalizer;
+				(*fn)(obj);
+			}
 		}
 
 		// Replace the object with padding, as it is not neccessary to scan it anymore.
