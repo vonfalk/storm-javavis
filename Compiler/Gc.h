@@ -49,6 +49,9 @@ namespace storm {
 		// Destroy.
 		~Gc();
 
+		// Destroy the Gc before the destructor is executed.
+		void destroy();
+
 		/**
 		 * Manual garbage collection hints.
 		 */

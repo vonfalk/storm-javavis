@@ -934,6 +934,11 @@ namespace storm {
 	}
 
 	Gc::~Gc() {
+		if (arena)
+			destroy();
+	}
+
+	void Gc::destroy() {
 		// Destroy all remaining threads (if any).
 		{
 			util::Lock::L z(threadLock);
@@ -975,6 +980,7 @@ namespace storm {
 		mps_fmt_destroy(format);
 		mps_chain_destroy(chain);
 		mps_arena_destroy(arena);
+		arena = null;
 	}
 
 	void Gc::collect() {

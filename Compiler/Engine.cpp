@@ -98,10 +98,12 @@ namespace storm {
 		// We need to remove the root this array implies before the Gc is destroyed.
 		world.clear();
 
-		gc.destroyRoot(objRoot);
-		libs.unload();
-
+		Gc::destroyRoot(objRoot);
 		delete ioThread;
+		volatile Engine *volatile me = this;
+
+		gc.destroy();
+		libs.unload();
 	}
 
 	Type *Engine::cppType(Nat id) const {

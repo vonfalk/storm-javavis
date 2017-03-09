@@ -16,6 +16,10 @@ namespace gui {
 	}
 
 	void App::terminate() {
+		// Reap all live windows.
+		for (WindowSet::Iter i = liveWindows->begin(), e = liveWindows->end(); i != e; ++i)
+			i.v()->handle(Window::invalid);
+
 		TODO(L"Terminate everything!");
 		// appWait->terminate();
 	}

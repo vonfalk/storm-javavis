@@ -30,13 +30,18 @@ namespace storm {
 		if (lib != invalidLib)
 			unloadLibrary(lib);
 
-		if (infoRoot)
-			Gc::destroyRoot(infoRoot);
+		Gc::destroyRoot(infoRoot);
+		infoRoot = null;
 	}
 
 	void SharedLib::shutdown() {
 		if (info.shutdownFn)
 			(*info.shutdownFn)(&info);
+
+		Gc::destroyRoot(infoRoot);
+		infoRoot = null;
+
+		world.clear();
 	}
 
 	SharedLib *SharedLib::prevInstance() {

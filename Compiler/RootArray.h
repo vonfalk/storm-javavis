@@ -19,7 +19,7 @@ namespace storm {
 
 		// Clear.
 		void clear() {
-			gc.destroyRoot(root);
+			Gc::destroyRoot(root);
 			root = null;
 			delete []data;
 			data = null;

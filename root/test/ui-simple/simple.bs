@@ -1,0 +1,18 @@
+use ui;
+use core:geometry;
+use core:io;
+
+class SimpleWin extends Frame {
+	ctor() {
+		init("Simple Window");
+
+		size(Size(200, 200));
+		create();
+	}
+}
+
+
+void simple() {
+	SimpleWin win;
+	sleep(2 s);
+}

@@ -114,10 +114,10 @@ class MainWin extends Frame {
 
 		add(lbl);
 
-		input.onReturn = &this->enterPressed(Edit);
+		input.onReturn = &this.enterPressed(Edit);
 		add(input);
 
-		btn.onClick = &this->btnClicked(Button);
+		btn.onClick = &this.btnClicked(Button);
 		add(btn);
 
 		create();
