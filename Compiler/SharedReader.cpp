@@ -45,7 +45,8 @@ namespace storm {
 			toLoad = new (this) Array<CppLoader>();
 			for (Nat i = 0; i < files->count(); i++) {
 				SharedLib *lib = engine().loadShared(files->at(i));
-				toLoad->push(lib->createLoader(engine(), pkg));
+				if (lib)
+					toLoad->push(lib->createLoader(engine(), pkg));
 			}
 		}
 
