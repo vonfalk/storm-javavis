@@ -24,7 +24,9 @@ namespace storm {
 		}
 
 		Transform::Transform(Float src[4][4]) {
-			memcpy(&v00, src, sizeof(v00)*4*4);
+			for (nat i = 0; i < 4; i++)
+				for (nat j = 0; j < 4; j++)
+					v(i, j) = src[i][j];
 		}
 
 		void Transform::toS(StrBuf *w) const {

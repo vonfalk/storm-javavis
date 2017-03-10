@@ -44,8 +44,8 @@ namespace storm {
 			typedef Float FArray[4][4];
 			Transform(FArray data);
 
-			inline Float &v(Nat x, Nat y) {
-				return (&v00)[x + 4*y];
+			inline Float &v(Nat row, Nat col) {
+				return (&v00)[row + 4*col];
 			}
 
 			// Data (y, x) (row, col). In memory, this is row-by-row.
