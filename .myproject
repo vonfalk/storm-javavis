@@ -39,9 +39,11 @@ Utils+=lib
 #Libraries that need the storm preprocessor to be run.
 Compiler+=stormpp
 Gui+=stormpp
+Graphics+=stormpp
 
 #Libraries linked into shared libraries loaded by Storm at runtime.
 Gui+=sharedlib
+Graphics+=sharedlib
 
 
 [deps]
@@ -50,6 +52,7 @@ Compiler+=CppTypes
 
 #To make sure everything is built.
 Compiler+=Gui
+Compiler+=Graphics
 
 [!extern_lib]
 #Global build parameters

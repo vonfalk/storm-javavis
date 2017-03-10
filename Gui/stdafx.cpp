@@ -7,7 +7,7 @@
 #pragma comment (lib, "d2d1.lib")
 #pragma comment (lib, "dwrite.lib")
 
-SHARED_LIB_ENTRY_POINT(x);
+SHARED_LIB_ENTRY_POINT();
 
 #undef null
 #include <comdef.h>
