@@ -20,8 +20,9 @@ String toS(HRESULT r) {
 
 namespace gui {
 	os::Thread spawnUiThread(Engine &e);
+	os::Thread spawnRenderThread(Engine &e);
 	STORM_DEFINE_THREAD_WAIT(Ui, &spawnUiThread);
-	STORM_DEFINE_THREAD(Render);
+	STORM_DEFINE_THREAD_WAIT(Render, &spawnRenderThread);
 
 	Rect convert(const RECT &r) {
 		return Rect(Float(r.left), Float(r.top), Float(r.right), Float(r.bottom));

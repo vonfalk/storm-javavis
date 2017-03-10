@@ -8,8 +8,6 @@
 #include "Core/Geometry/Transform.h"
 #include "Core/Geometry/Vector.h"
 
-using namespace storm;
-
 #include <Commctrl.h>
 
 // D3D for rendering using D2D..
@@ -28,13 +26,11 @@ String toS(HRESULT r);
 #undef interface
 
 namespace gui {
+	using namespace storm;
+	using namespace storm::geometry;
+
 	STORM_THREAD(Ui);
 	STORM_THREAD(Render);
-
-	using storm::geometry::Point;
-	using storm::geometry::Rect;
-	using storm::geometry::Size;
-	using storm::geometry::Transform;
 
 	// Various flags for child windows.
 	const DWORD childFlags = WS_CHILD | WS_VISIBLE;
@@ -67,6 +63,16 @@ namespace gui {
 	bool pressed(nat keycode);
 }
 
-
 // Custom messages.
 #define WM_THREAD_SIGNAL (WM_APP + 1)
+
+// Release COM objects.
+template <class T>
+void release(T *&v) {
+	if (v)
+		v->Release();
+	v = null;
+}
+
+#include "ComPtr.h"
+

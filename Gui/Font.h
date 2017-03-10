@@ -59,7 +59,7 @@ namespace gui {
 		HFONT handle();
 
 		// Get TextFormat for D2D. This class retains ownership over the returned object.
-		//IDWriteTextFormat *textFormat();
+		IDWriteTextFormat *textFormat();
 
 		virtual void STORM_FN toS(StrBuf *to) const;
 

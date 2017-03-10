@@ -20,4 +20,13 @@ namespace storm {
 		0,
 		{},
 	};
+
+	const GcType byteArrayType = {
+		GcType::tArray,
+		null,
+		null,
+		sizeof(Byte),
+		0,
+		{},
+	};
 }

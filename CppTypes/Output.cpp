@@ -485,6 +485,8 @@ static void genVariables(wostream &to, World &w) {
 		Class *c = as<Class>(w.types[i].borrow());
 		if (!c)
 			continue;
+		if (c->external)
+			continue;
 
 		Size data = c->baseOffset();
 
@@ -496,7 +498,7 @@ static void genVariables(wostream &to, World &w) {
 			if (v.access != aPublic)
 				continue;
 
-			String type = genTypeRef(v.type.borrow(), true);
+			String type = genTypeRef(v.type.borrow(), false);
 			// ...which the Storm type system can handle. Ignores any external types.
 			if (type.empty())
 				continue;

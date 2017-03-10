@@ -42,7 +42,7 @@ namespace storm {
 	};
 
 	wostream &operator <<(wostream &to, const Color &s);
-	StrBuf &operator <<(StrBuf &to, Color s);
+	StrBuf &STORM_FN operator <<(StrBuf &to, Color s);
 
 	// Some default colors.
 	Color STORM_FN transparent(); // Based on black.

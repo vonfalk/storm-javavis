@@ -2,5 +2,6 @@
 package=ui
 input=*
 stormUsingNamespace=storm
+stormUsingNamespace+=storm::geometry
 
-#flags+=/d1reportSingleClassLayoutFrame
+#flags+=/d1reportSingleClassLayoutPainter

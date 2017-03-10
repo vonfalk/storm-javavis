@@ -304,7 +304,7 @@ namespace storm {
 		if (Function *f = as<Function>(item)) {
 			if (wcscmp(f->name->c_str(), CTOR) == 0)
 				updateCtor(f);
-			else
+			else if (wcscmp(f->name->c_str(), DTOR) != 0)
 				vtableFnAdded(f);
 
 			if (wcscmp(f->name->c_str(), DTOR) == 0)

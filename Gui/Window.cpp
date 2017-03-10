@@ -3,6 +3,7 @@
 #include "Container.h"
 #include "Frame.h"
 #include "App.h"
+#include "Painter.h"
 
 namespace gui {
 
@@ -295,61 +296,60 @@ namespace gui {
 		}
 	}
 
-	// void Window::painter(Painter *p) {
-	// 	Engine &e = engine();
-	// 	detachPainter();
+	void Window::painter(Painter *p) {
+		Engine &e = engine();
+		detachPainter();
 
-	// 	myPainter = p;
+		myPainter = p;
 
-	// 	if (created())
-	// 		attachPainter();
-	// }
+		if (created())
+			attachPainter();
+	}
 
 	void Window::attachPainter() {
-		// if (myPainter) {
-		// 	Engine &e = engine();
-		// 	os::Future<void> result;
-		// 	os::FnParams params;
-		// 	params.add(myPainter).add(this);
-		// 	os::UThread::spawn(address(&Painter::attach), true, params, result, &Render::thread(e)->thread());
-		// 	result.result();
-		// }
+		if (myPainter) {
+			Engine &e = engine();
+			os::Future<void> result;
+			os::FnParams params;
+			params.add(myPainter).add(this);
+			os::UThread::spawn(address(&Painter::attach), true, params, result, &Render::thread(e)->thread());
+			result.result();
+		}
 	}
 
 	void Window::detachPainter() {
-		// if (myPainter) {
-		// 	Engine &e = engine();
-		// 	os::Future<void> result;
-		// 	os::FnParams params;
-		// 	params.add(myPainter);
-		// 	os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
-		// 	result.result();
-		// }
+		if (myPainter) {
+			Engine &e = engine();
+			os::Future<void> result;
+			os::FnParams params;
+			params.add(myPainter);
+			os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
+			result.result();
+		}
 	}
 
 	void Window::notifyPainter(Size s) {
-		// if (myPainter) {
-		// 	Engine &e = engine();
-		// 	os::FnParams params; params.add(myPainter).add(s);
-		// 	os::UThread::spawn(address(&Painter::resize), true, params, &Render::thread(e)->thread());
-		// }
+		if (myPainter) {
+			Engine &e = engine();
+			os::FnParams params; params.add(myPainter).add(s);
+			os::UThread::spawn(address(&Painter::resize), true, params, &Render::thread(e)->thread());
+		}
 	}
 
 	MsgResult Window::onPaint() {
-		// if (myPainter) {
-		// 	Engine &e = engine();
-		// 	os::Future<void> result;
-		// 	os::FnParams params; params.add(myPainter);
-		// 	os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
+		if (myPainter) {
+			Engine &e = engine();
+			os::Future<void> result;
+			os::FnParams params; params.add(myPainter);
+			os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
 
-		// 	result.result();
-		// 	ValidateRect(handle(), NULL);
+			result.result();
+			ValidateRect(handle(), NULL);
 
-		// 	return msgResult(0);
-		// } else {
-		// 	return noResult();
-		// }
-		return noResult();
+			return msgResult(0);
+		} else {
+			return noResult();
+		}
 	}
 
 	void Window::onTimer() {}

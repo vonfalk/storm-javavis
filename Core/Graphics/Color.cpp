@@ -47,7 +47,7 @@ namespace storm {
 		return to << L"(" << s.r << L", " << s.g << L", " << s.b << L", " << s.a << L")";
 	}
 
-	StrBuf &operator <<(StrBuf &to, const Color &s) {
+	StrBuf &operator <<(StrBuf &to, Color s) {
 		return to << L"(" << s.r << L", " << s.g << L", " << s.b << L", " << s.a << L")";
 	}
 

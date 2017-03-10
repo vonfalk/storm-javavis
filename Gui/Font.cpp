@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Font.h"
+#include "RenderMgr.h"
 
 namespace gui {
 
@@ -13,7 +14,7 @@ namespace gui {
 		// Create.
 		FontData() : refs(1) {
 			hFont = (HFONT)INVALID_HANDLE_VALUE;
-			// textFmt = null;
+			textFmt = null;
 		}
 
 		// Destroy.
@@ -52,14 +53,14 @@ namespace gui {
 			if (hFont != INVALID_HANDLE_VALUE)
 				DeleteObject(hFont);
 			hFont = (HFONT)INVALID_HANDLE_VALUE;
-			//::release(textFmt);
+			::release(textFmt);
 		}
 
 		// WIN32 font.
 		HFONT hFont;
 
 		// TextFormat.
-		// IDWriteTextFormat *textFmt;
+		IDWriteTextFormat *textFmt;
 
 		// Lock for modifying any members.
 		os::Lock lock;
@@ -170,26 +171,26 @@ namespace gui {
 		return shared->hFont;
 	}
 
-	// IDWriteTextFormat *Font::textFormat() {
-	// 	os::Lock::L z(shared->lock);
-	// 	if (!shared->textFmt) {
-	// 		RenderMgr *mgr = renderMgr(engine());
-	// 		DWRITE_FONT_STYLE style = fItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
-	// 		DWRITE_FONT_STRETCH stretch = DWRITE_FONT_STRETCH_NORMAL;
-	// 		HRESULT r = mgr->dWrite()->CreateTextFormat(fName.c_str(),
-	// 													NULL,
-	// 													(DWRITE_FONT_WEIGHT)fWeight,
-	// 													style,
-	// 													stretch,
-	// 													pxHeight(),
-	// 													L"en-us",
-	// 													&shared->textFmt);
-	// 		if (FAILED(r)) {
-	// 			WARNING(L"Failed to create font: " << ::toS(r));
-	// 		}
-	// 	}
-	// 	return shared->textFmt;
-	// }
+	IDWriteTextFormat *Font::textFormat() {
+		os::Lock::L z(shared->lock);
+		if (!shared->textFmt) {
+			RenderMgr *mgr = renderMgr(engine());
+			DWRITE_FONT_STYLE style = fItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL;
+			DWRITE_FONT_STRETCH stretch = DWRITE_FONT_STRETCH_NORMAL;
+			HRESULT r = mgr->dWrite()->CreateTextFormat(fName->c_str(),
+														NULL,
+														(DWRITE_FONT_WEIGHT)fWeight,
+														style,
+														stretch,
+														pxHeight(),
+														L"en-us",
+														&shared->textFmt);
+			if (FAILED(r)) {
+				WARNING(L"Failed to create font: " << ::toS(r));
+			}
+		}
+		return shared->textFmt;
+	}
 
 	Font *defaultFont(EnginePtr e) {
 		NONCLIENTMETRICS ncm;

@@ -55,6 +55,9 @@ namespace storm {
 		// Remove an element.
 		void STORM_FN remove(Nat id);
 
+		// Remove the last element.
+		void STORM_FN pop();
+
 		// Insert an element, giving it the id 'id'. 'id' <= 'count()'.
 		void CODECALL insertRaw(Nat id, const void *item);
 

@@ -158,7 +158,7 @@ namespace gui {
 		try {
 			r = w->onMessage(msg);
 		} catch (const Exception &e) {
-			PLN(L"Unhandled exception in window thread: " << e);
+			PLN(L"Unhandled exception in window thread:\n" << e);
 		}
 
 		app->appWait->enableMsg();
@@ -296,7 +296,7 @@ namespace gui {
 				atomicWrite(signalSent, 0);
 			}
 		} catch (const Exception &e) {
-			PLN(L"Unhandled exception in window thread: " << e);
+			PLN(L"Unhandled exception in window thread:\n" << e);
 		}
 	}
 

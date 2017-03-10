@@ -124,7 +124,7 @@ namespace gui {
 		virtual Bool STORM_FN onChar(Nat charCode);
 
 		// Set window contents (custom drawing).
-		// void STORM_SETTER painter(Painter *to);
+		void STORM_SETTER painter(Painter *to);
 
 		// Window timer.
 		virtual void STORM_FN onTimer();
@@ -170,8 +170,8 @@ namespace gui {
 		// Font.
 		Font *myFont;
 
-		// // Painter.
-		// Painter *myPainter;
+		// Painter.
+		Painter *myPainter;
 
 		// Timer timeout (nonzero = set).
 		Duration timerInterval;

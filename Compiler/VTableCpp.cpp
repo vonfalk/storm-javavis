@@ -141,11 +141,12 @@ namespace storm {
 	}
 
 	Function *VTableCpp::get(nat id) const {
-		assert(id < count());
 		if (refs)
-			return refs->v[id];
-		else
-			return null;
+			if (id < count())
+				return refs->v[id];
+
+		// Note: we're currently a bit robust here, pretending to allow out-of bounds reads...
+		return null;
 	}
 
 	void VTableCpp::clear(nat id) {

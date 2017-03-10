@@ -10,13 +10,13 @@ class MainPainter extends Painter {
 	SolidBrush yellow;
 	LinearGradient brush3;
 	Moment started;
-	Bitmap bitmap;
+	//Bitmap bitmap;
 	Text text;
 	Path star;
 
 	ctor() {
-		Url f = rootUrl / "res" / "ui_alpha.png";
-		Image img = graphics:loadImage(f);
+		//Url f = rootUrl / "res" / "ui_alpha.png";
+		//Image img = graphics:loadImage(f);
 
 		Font font = defaultFont;
 		font.height(font.height * 3);
@@ -26,7 +26,7 @@ class MainPainter extends Painter {
 			brush2 = blue;
 			brush3([GradientStop(0, red), GradientStop(1, green)], 135 deg);
 			yellow = yellow;
-			bitmap = img;
+			//bitmap = img;
 			text("Hello World!", font);
 		}
 
@@ -69,7 +69,7 @@ class MainPainter extends Painter {
 
 		g.push();
 		g.transform(rotate(45 deg));
-		g.draw(bitmap);
+		//g.draw(bitmap);
 		g.pop();
 
 		g.push();

@@ -58,4 +58,5 @@ namespace storm {
 	// GcType for arrays of pointers. This is very commonly done, so it is provided here.
 	extern const GcType pointerArrayType;
 	extern const GcType natArrayType;
+	extern const GcType byteArrayType;
 }

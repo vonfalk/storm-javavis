@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "LibData.h"
 #include "App.h"
+#include "RenderMgr.h"
 
 namespace gui {
 
@@ -21,6 +22,7 @@ namespace gui {
 }
 
 void *createLibData(storm::Engine &e) {
+	using namespace gui;
 	return runtime::allocArray<void *>(e, &pointerArrayType, gui::entries);
 }
 
@@ -32,5 +34,7 @@ void destroyLibData(void *data) {
 	if (app)
 		app->terminate();
 
-	TODO(L"Clean up the renderer as well!");
+	RenderMgr *render = (RenderMgr *)d->v[1];
+	if (render)
+		render->terminate();
 }

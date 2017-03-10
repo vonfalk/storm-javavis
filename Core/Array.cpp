@@ -85,6 +85,15 @@ namespace storm {
 		data->filled--;
 	}
 
+	void ArrayBase::pop() {
+		if (empty())
+			throw ArrayError(L"Can not pop an empty array.");
+
+		Nat id = count() - 1;
+		handle.safeDestroy(ptr(id));
+		data->filled--;
+	}
+
 	void ArrayBase::insertRaw(Nat to, const void *item) {
 		if (to > count())
 			throw ArrayError(L"Index " + ::toS(to) + L" out of bounds for insertion (of " + ::toS(count()) + L").");
