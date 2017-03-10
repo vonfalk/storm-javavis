@@ -76,9 +76,9 @@ class PresentWindow extends Frame {
 				typedNumber += id - 48;
 			} else if (id == 116) { // F5 - reload. Remove when the emacs integration can support this!
 				print("Reloading " # toReload.path);
-				reloadPkg(toReload);
+				//reloadPkg(toReload);
 				print("Compiling...");
-				compile(toReload);
+				// compile(toReload);
 				print("Done!");
 				repaint;
 			} else {
@@ -195,8 +195,8 @@ class PresentPainter extends Painter {
 		slide = s;
 		if (slide) {
 			intro = slide.intro;
-			slide.repaintFn = &this->repaint;
-			slide.advanceFn = &this->next;
+			slide.repaintFn = &this.repaint;
+			slide.advanceFn = &this.next;
 
 			// Start the intro first, otherwise we may repaint the intro before it has been properly
 			// started due to animations in 'show'.

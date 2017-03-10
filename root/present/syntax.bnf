@@ -17,9 +17,9 @@ SIntro => IntroExpr(type, params) : SName type, SSlideParams(b) params, "->";
 SIntro => IntroExpr() : "";
 
 // Parameters to a slide.
-Actual SSlideParams(lang.bs.Block b);
-SSlideParams => Actual() : "";
-SSlideParams => Actual() : SExpr(b) -> add (, ",", SExpr(b) -> add)*;
+Actuals SSlideParams(lang.bs.Block b);
+SSlideParams => Actuals() : "";
+SSlideParams => Actuals() : SExpr(b) -> add (, ",", SExpr(b) -> add)*;
 
 // Items inside a slide.
 ItemInfo SItem(Block block);

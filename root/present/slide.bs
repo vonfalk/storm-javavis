@@ -393,7 +393,7 @@ class Slide on Render {
 
 	// Start external animation.
 	void startAnimate() {
-		animate(&this->dummyAnimate(Duration));
+		animate(&this.dummyAnimate(Duration));
 	}
 
 	// Stop any animations.
@@ -619,7 +619,7 @@ class TerminalSlide extends Slide {
 
 	// Clear.
 	void clear() {
-		lines = Str[];
+		lines = Str:[];
 		if (autoRepaint)
 			repaint();
 	}

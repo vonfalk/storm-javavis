@@ -17,7 +17,7 @@ class PExpr extends Expr {
 		ExprBlock b(pos, o);
 
 		SStr varName("presentation", pos);
-		Var var(o, name{present:Presentation}, varName, Actual(strConstant(pos, title)));
+		Var var(o, name{present:Presentation}, varName, Actuals(strConstant(pos, title)));
 		o.add(var);
 
 		init(pos) {
@@ -31,7 +31,7 @@ class PExpr extends Expr {
 	}
 
 	void add(Expr e) {
-		into.add(namedExpr(into, SStr("add", pos), LocalVarAccess(pos, pVar), Actual(e)));
+		into.add(namedExpr(into, SStr("add", pos), LocalVarAccess(pos, pVar), Actuals(e)));
 	}
 
 	ExprResult result() {
@@ -55,7 +55,7 @@ class SlideExpr extends Expr {
 	ExprBlock into;
 	LocalVar sVar;
 
-	ctor(PExpr p, SStr type, Actual params, IntroExpr intro) {
+	ctor(PExpr p, SStr type, Actuals params, IntroExpr intro) {
 		ExprBlock o(type.pos, p.into);
 		ExprBlock b(type.pos, o);
 
@@ -79,7 +79,7 @@ class SlideExpr extends Expr {
 
 	void add(ItemInfo i) {
 		Str name = if (i.direct) { "add"; } else { "addDelayed"; };
-		Actual actual(i.item);
+		Actuals actual(i.item);
 		Expr? time = i.time;
 		if (time)
 			actual.add(time);
@@ -102,13 +102,13 @@ class SlideExpr extends Expr {
 class IntroExpr {
 	// Name of the transition (if any).
 	Str? name;
-	Actual params;
+	Actuals params;
 
 	ctor() {
 		init() {}
 	}
 
-	ctor(SStr name, Actual params) {
+	ctor(SStr name, Actuals params) {
 		init() {
 			name = name.v # "Intro";
 			params = params;
@@ -118,7 +118,7 @@ class IntroExpr {
 	void add(ExprBlock b, Expr to) {
 		if (name) {
 			Expr param = namedExpr(b, SStr(name), params);
-			b.add(namedExpr(b, SStr("setIntro"), to, Actual(param)));
+			b.add(namedExpr(b, SStr("setIntro"), to, Actuals(param)));
 		}
 	}
 }
@@ -145,17 +145,17 @@ class ItemInfo {
 	}
 }
 
-ItemInfo itemExpr(Block block, SStr name, Actual params) {
+ItemInfo itemExpr(Block block, SStr name, Actuals params) {
 	name.v = name.v + "Item";
 	ItemInfo(namedExpr(block, name, params), true);
 }
 
-ItemInfo itemClickExpr(Block block, SStr name, Actual params) {
+ItemInfo itemClickExpr(Block block, SStr name, Actuals params) {
 	name.v = name.v + "Item";
 	ItemInfo(namedExpr(block, name, params), false);
 }
 
-ItemInfo itemTimeExpr(Block block, Expr time, SStr name, Actual params) {
+ItemInfo itemTimeExpr(Block block, Expr time, SStr name, Actuals params) {
 	name.v = name.v + "Item";
 	ItemInfo(namedExpr(block, name, params), time);
 }

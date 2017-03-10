@@ -27,7 +27,7 @@ namespace storm {
 			memcpy(&v00, src, sizeof(v00)*4*4);
 		}
 
-		void Transform::toS(StrBuf &w) const {
+		void Transform::toS(StrBuf *w) const {
 			// TODO: Use the StrBuf directly when Float output is implemented better!
 			std::wostringstream to;
 			to << std::fixed << std::setprecision(2);
@@ -42,7 +42,7 @@ namespace storm {
 				to << L")";
 			}
 
-			w << to.str().c_str();
+			*w << to.str().c_str();
 		}
 
 		Transform *Transform::operator *(Transform *o) {

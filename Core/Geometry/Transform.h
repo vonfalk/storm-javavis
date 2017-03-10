@@ -38,7 +38,7 @@ namespace storm {
 			inline Float at(Nat row, Nat col) const { return (&v00)[row + 4*col]; }
 
 			// To string.
-			virtual void STORM_FN toS(StrBuf &to) const;
+			virtual void STORM_FN toS(StrBuf *to) const;
 
 		private:
 			typedef Float FArray[4][4];
