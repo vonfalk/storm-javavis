@@ -33,11 +33,11 @@ namespace gui {
 	GradientStop::GradientStop(Float position, Color color) : pos(position), color(color) {}
 
 	wostream &operator <<(wostream &to, const GradientStop &s) {
-		return to << s.color << "@" << s.pos;
+		return to << s.color << L"@" << s.pos;
 	}
 
 	StrBuf &operator <<(StrBuf &to, GradientStop s) {
-		return to << s.color << "@" << s.pos;
+		return to << s.color << L"@" << s.pos;
 	}
 
 
@@ -50,6 +50,7 @@ namespace gui {
 	}
 
 	void Gradient::destroy() {
+		Brush::destroy();
 		::release(dxObject);
 	}
 

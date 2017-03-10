@@ -4,4 +4,4 @@ input=*
 stormUsingNamespace=storm
 stormUsingNamespace+=storm::geometry
 
-#flags+=/d1reportSingleClassLayoutPainter
+#flags+=/d1reportSingleClassLayoutGradientStop
