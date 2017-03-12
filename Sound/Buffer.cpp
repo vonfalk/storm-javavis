@@ -1,19 +1,27 @@
 #include "stdafx.h"
 #include "Buffer.h"
 #include "Core/CloneEnv.h"
-#include "Core/StrBuf.h"
 
-namespace storm {
+namespace sound {
+
+	static const GcType bufType = {
+		GcType::tArray,
+		null,
+		null,
+		sizeof(Float),
+		0,
+		{}
+	};
 
 	Buffer::Buffer() : data(null) {}
 
-	Buffer::Buffer(GcArray<Byte> *buf) : data(buf) {}
+	Buffer::Buffer(GcArray<Float> *buf) : data(buf) {}
 
 	Buffer::Buffer(const Buffer &o) : data(o.data) {}
 
 	void Buffer::deepCopy(CloneEnv *env) {
 		if (data) {
-			GcArray<Byte> *n = runtime::allocArray<Byte>(env->engine(), &byteArrayType, data->count);
+			GcArray<Float> *n = runtime::allocArray<Float>(env->engine(), &bufType, data->count);
 			n->filled = data->filled;
 			for (nat i = 0; i < data->count; i++)
 				n->v[i] = data->v[i];
@@ -22,31 +30,31 @@ namespace storm {
 	}
 
 	Buffer buffer(EnginePtr e, Nat count) {
-		return Buffer(runtime::allocArray<Byte>(e.v, &byteArrayType, count));
+		return Buffer(runtime::allocArray<Float>(e.v, &bufType, count));
 	}
 
-	Buffer emptyBuffer(GcArray<Byte> *data) {
+	Buffer emptyBuffer(GcArray<Float> *data) {
 		Buffer r(data);
 		r.filled(0);
 		return r;
 	}
 
-	Buffer fullBuffer(GcArray<Byte> *data) {
+	Buffer fullBuffer(GcArray<Float> *data) {
 		Buffer r(data);
 		r.filled(data->count);
 		return r;
 	}
 
-	Buffer buffer(EnginePtr e, const Byte *data, Nat count) {
-		Buffer z(runtime::allocArray<Byte>(e.v, &byteArrayType, count));
-		memcpy(z.dataPtr(), data, count);
+	Buffer buffer(EnginePtr e, const Float *data, Nat count) {
+		Buffer z(runtime::allocArray<Float>(e.v, &bufType, count));
+		memcpy(z.dataPtr(), data, count*sizeof(Float));
 		z.filled(count);
 		return z;
 	}
 
 	Buffer grow(EnginePtr e, Buffer src, Nat newCount) {
-		Buffer r = buffer(e, newCount);
-		memcpy(r.dataPtr(), src.dataPtr(), src.filled());
+		Buffer r = sound::buffer(e, newCount);
+		memcpy(r.dataPtr(), src.dataPtr(), src.filled()*sizeof(Float));
 		r.filled(src.filled());
 		return r;
 	}
@@ -59,11 +67,11 @@ namespace storm {
 	}
 
 	Buffer cut(EnginePtr e, Buffer src, Nat from, Nat count) {
-		Buffer r = buffer(e, count);
+		Buffer r = sound::buffer(e, count);
 
 		if (src.filled() > from) {
 			Nat copy = src.filled() - from;
-			memcpy(r.dataPtr(), src.dataPtr() + from, copy);
+			memcpy(r.dataPtr(), src.dataPtr() + from, copy*sizeof(Float));
 			r.filled(copy);
 		} else {
 			r.filled(0);
@@ -95,9 +103,11 @@ namespace storm {
 			else
 				to << L"  ";
 
+			// TODO: Better formatting!
 			if (i < b.count())
-				to << hex(b[i]);
+				to << b[i];
 		}
 	}
+
 
 }

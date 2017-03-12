@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Storm/Fn.h"
 
-BEGIN_TEST_(Window, Gui) {
+BEGIN_TEST(Window, Gui) {
 
 	PLN(L"Showing a simple window. Click the button and it should output things\n"
 		L"to the screen. Close it to proceed to more tests.");

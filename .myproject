@@ -35,24 +35,30 @@ Compiler+=lib
 OS+=lib
 Shared+=lib
 Utils+=lib
+SoundLib+=lib
+SoundLib+=extern_lib
 
 #Libraries that need the storm preprocessor to be run.
 Compiler+=stormpp
 Gui+=stormpp
 Graphics+=stormpp
+Sound+=stormpp
 
 #Libraries linked into shared libraries loaded by Storm at runtime.
 Gui+=sharedlib
 Graphics+=sharedlib
+Sound+=sharedlib
 
 
 [deps]
 Gui+=CppTypes
 Compiler+=CppTypes
+Sound+=CppTypes
 
 #To make sure everything is built.
 Compiler+=Gui
 Compiler+=Graphics
+Compiler+=Sound
 
 [!extern_lib]
 #Global build parameters

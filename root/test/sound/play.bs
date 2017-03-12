@@ -1,0 +1,21 @@
+use sound;
+use core:io;
+use lang:bs:macro;
+
+Url fileUrl() {
+	if (url = (named{res}).url) {
+		return url;
+	} else {
+		return Url();
+	}
+}
+
+void play() {
+	Url url = fileUrl() / ".." / ".." / "External" / "final" / "res" / "ending-original.ogg";
+	Sound src = url.read.sound;
+	print(src.toS);
+
+	Player track(src);
+	track.play();
+	track.wait();
+}

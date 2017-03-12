@@ -113,6 +113,10 @@ namespace storm {
 			return (*fwd.allocEngine)(o);
 		}
 
+		void *allocRaw(Engine &e, const GcType *type) {
+			return (*fwd.allocRaw)(e, type);
+		}
+
 		void *allocObject(size_t size, Type *type) {
 			return (*fwd.allocObject)(size, type);
 		}

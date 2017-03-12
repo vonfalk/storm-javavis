@@ -1,6 +1,7 @@
 #pragma once
 #include "Object.h"
 #include "TObject.h"
+#include "Handle.h"
 
 namespace storm {
 	STORM_PKG(core);

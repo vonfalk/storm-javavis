@@ -35,7 +35,9 @@
  */
 #define STORM_COMMON													\
 	friend struct storm::CppMeta;										\
-	static inline const storm::Handle &stormHandle(Engine &e) { return storm::runtime::typeHandle(stormType(e)); } \
+	static inline const storm::Handle &stormHandle(storm::Engine &e) {	\
+		return storm::runtime::typeHandle(stormType(e));				\
+	}																	\
 	static inline void *operator new (size_t s, storm::Place mem) {		\
 		return mem.ptr;													\
 	}																	\
@@ -78,7 +80,7 @@
 	public:																\
 	STORM_OBJ_COMMON													\
 	static storm::Type *stormType(const storm::RootObject *o) { return stormType(o->engine()); } \
-	using RootObject::toS;													\
+	using storm::RootObject::toS;										\
 	private:
 
 /**
@@ -90,7 +92,7 @@
 	public:										\
 	STORM_TYPE_DECL								\
 	STORM_OBJ_COMMON							\
-	using RootObject::toS;						\
+	using storm::RootObject::toS;				\
 	private:
 
 // Mark a value.
@@ -187,7 +189,7 @@
 	struct name {										\
 		static storm::Thread *thread(storm::Engine &e); \
 		static storm::DeclThread decl;					\
-		static const Nat identifier;					\
+		static const storm::Nat identifier;				\
 	};
 
 /**

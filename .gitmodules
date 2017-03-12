@@ -1,3 +1,12 @@
 [submodule "mps"]
 	path = mps
 	url = ../mps.git
+[submodule "SoundLib/vorbis"]
+	path = SoundLib/vorbis
+	url = ../sound/vorbis.git
+[submodule "SoundLib/ogg"]
+	path = SoundLib/ogg
+	url = ../sound/ogg.git
+[submodule "SoundLib/flac"]
+	path = SoundLib/flac
+	url = ../sound/flac.git

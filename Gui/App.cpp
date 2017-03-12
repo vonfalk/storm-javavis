@@ -24,9 +24,11 @@ namespace gui {
 		for (WindowSet::Iter i = liveWindows->begin(), e = liveWindows->end(); i != e; ++i)
 			i.v()->handle(Window::invalid);
 
-		os::Sema wait(0);
-		appWait->terminate(wait);
-		wait.down();
+		if (appWait) {
+			os::Sema wait(0);
+			appWait->terminate(wait);
+			wait.down();
+		}
 	}
 
 	ATOM App::windowClass() {

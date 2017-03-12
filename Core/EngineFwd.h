@@ -27,6 +27,7 @@ namespace storm {
 		Str *(*typeName)(Type *t);
 		Bool (*isA)(const RootObject *a, const Type *b);
 		Engine &(*allocEngine)(const RootObject *o);
+		void *(*allocRaw)(Engine &e, const GcType *type);
 		void *(*allocObject)(size_t size, Type *type);
 		void *(*allocArray)(Engine &e, const GcType *type, size_t count);
 		void *(*allocWeakArray)(Engine &e, size_t count);

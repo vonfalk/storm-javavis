@@ -1,0 +1,10 @@
+[]
+package=sound
+input=*
+stormUsingNamespace=storm
+
+include+=../SoundLib/ogg/include/
+include+=../SoundLib/vorbis/include/
+include+=../SoundLib/flac/include/
+
+#flags+=/d1reportSingleClassLayoutGradientStop

@@ -1,0 +1,36 @@
+[]
+input=*
+ext+=c
+
+ignore+=*/microbench/*
+ignore+=*/examples/*
+ignore+=*/test*
+ignore+=*/vq/*
+ignore+=*/libFLAC++/*
+ignore+=*/plugin_*
+ignore+=*/share/*
+ignore+=*/metaflac/*
+ignore+=*/src/flac/*
+
+#Contains a debug allocator which requires pthreads...
+ignore+=*/misc.c
+
+#Seems to be a test program of some kind...
+ignore+=*/main.c
+ignore+=*/tone.c
+ignore+=*/psytune.c
+ignore+=*/barkmel.c
+
+
+include+=ogg/include/
+include+=vorbis/include/
+include+=flac/include/
+include+=flac/src/libFLAC/include/
+
+#FLAC requires exporting no_export to be defined...
+define+=FLAC__NO_DLL
+define+=PACKAGE_VERSION=\"\"
+define+=FLAC__HAS_OGG
+
+#No warnings, libogg is a mess in that regard...
+warnings=

@@ -57,6 +57,9 @@ namespace storm {
 		// Get the engine object for an allocation.
 		Engine &allocEngine(const RootObject *o);
 
+		// Allocate some raw data for some data.
+		void *allocRaw(Engine &e, const GcType *type);
+
 		// Allocate an object of the given type (size used for sanity checking).
 		void *allocObject(size_t size, Type *type);
 
