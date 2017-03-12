@@ -14,6 +14,10 @@ namespace gui {
 		::release(g);
 	}
 
+	void Path::destroy() {
+		::release(g);
+	}
+
 	ID2D1PathGeometry *Path::geometry() {
 		if (!g)
 			create();
@@ -89,6 +93,7 @@ namespace gui {
 		::release(g);
 
 		RenderMgr *mgr = renderMgr(engine());
+		mgr->attach(this);
 		HRESULT r;
 		ID2D1GeometrySink *sink = null;
 

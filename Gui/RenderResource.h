@@ -1,13 +1,13 @@
 #pragma once
-#include "Core/TObject.h"
+#include "Resource.h"
 
 namespace gui {
 	class Painter;
 
 	/**
-	 * Resource used in DX somewhere.
+	 * Resource used in DX somewhere, associated with a specific painter.
 	 */
-	class RenderResource : public ObjectOn<Render> {
+	class RenderResource : public Resource {
 		STORM_CLASS;
 	public:
 		// Create.

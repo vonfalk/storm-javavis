@@ -1,6 +1,6 @@
 #pragma once
-#include "Core/TObject.h"
 #include "Core/Array.h"
+#include "Resource.h"
 
 namespace gui {
 
@@ -10,7 +10,7 @@ namespace gui {
 	 * Paths can be either open or closed when they are drawn as an outline. When filling, it is
 	 * assumed that all paths are closed with a line from the last point to the first point.
 	 */
-	class Path : public ObjectOn<Render> {
+	class Path : public Resource {
 		STORM_CLASS;
 	public:
 		// Create.
@@ -18,6 +18,9 @@ namespace gui {
 
 		// Destroy.
 		~Path();
+
+		// Destroy.
+		virtual void destroy();
 
 		// Clear this path.
 		void STORM_FN clear();

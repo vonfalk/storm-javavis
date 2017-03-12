@@ -12,9 +12,9 @@ namespace code {
 		if (v == Var())
 			return Offset();
 
-		// We've got something useful!
 		Nat id = v.key();
 
+		// We've got something useful!
 		if (valid->at(id))
 			return db->at(id);
 

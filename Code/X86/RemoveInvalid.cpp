@@ -411,7 +411,7 @@ namespace code {
 		}
 
 		void RemoveInvalid::callFloatTfm(Listing *dest, Instr *instr, Nat line) {
-			Size s = instr->src().size();
+			Size s = instr->dest().size();
 			Engine &e = engine();
 
 			*dest << call(instr->src(), ValType(s, false));
@@ -531,6 +531,7 @@ namespace code {
 
 			// If this was a float, do some magic.
 			if (instr->op() == op::fnCallFloat) {
+				*dest << sub(ptrStack, ptrConst(instr->dest().size()));
 				*dest << fstp(xRel(rSize, ptrStack, Offset()));
 				*dest << pop(instr->dest());
 			}

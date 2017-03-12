@@ -65,9 +65,8 @@ namespace gui {
 	public:
 		STORM_CTOR GradientStop(Float position, Color color);
 
-		// NOTE: Something strange happens when 'pos' is first. Investigate!
-		Color color;
 		Float pos;
+		Color color;
 	};
 
 	wostream &operator <<(wostream &to, const GradientStop &s);

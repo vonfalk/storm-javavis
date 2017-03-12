@@ -3,6 +3,7 @@
 #include "Exception.h"
 #include "Painter.h"
 #include "LibData.h"
+#include "Resource.h"
 #include "Core/Array.h"
 
 namespace gui {
@@ -54,6 +55,7 @@ namespace gui {
 
 	RenderMgr::RenderMgr() : exiting(false) {
 		painters = new (this) Set<Painter *>();
+		resources = new (this) WeakSet<Resource>();
 		waitEvent = new (this) Event();
 		exitSema = new (this) Sema(0);
 		factory = null;
@@ -100,6 +102,10 @@ namespace gui {
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 		desc.Windowed = TRUE;
+	}
+
+	void RenderMgr::attach(Resource *resource) {
+		resources->put(resource);
 	}
 
 	RenderMgr::RenderInfo RenderMgr::attach(Painter *painter, HWND window) {
@@ -177,6 +183,10 @@ namespace gui {
 			i.v()->destroy();
 			i.v()->destroyResources();
 		}
+
+		WeakSet<Resource>::Iter r = resources->iter();
+		while (Resource *n = r.next())
+			n->destroy();
 
 		::release(giDevice);
 		::release(device);

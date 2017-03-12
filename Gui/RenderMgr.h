@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Set.h"
+#include "Core/WeakSet.h"
 #include "Core/TObject.h"
 #include "Core/EnginePtr.h"
 #include "Core/Event.h"
@@ -7,6 +8,7 @@
 
 namespace gui {
 	class Painter;
+	class Resource;
 
 	/**
 	 * Singleton class in charge of managing window repaints.
@@ -37,6 +39,9 @@ namespace gui {
 
 		// Shutdown the rendering thread.
 		void terminate();
+
+		// Attach a resource to this rendermgr.
+		void attach(Resource *resource);
 
 		// Attach a Painter.
 		RenderInfo attach(Painter *painter, HWND window);
@@ -74,8 +79,11 @@ namespace gui {
 		ID3D10Device1 *device;
 		IDXGIDevice *giDevice;
 
-		// Live painters.
+		// Live painters. TODO? Weak set?
 		Set<Painter *> *painters;
+
+		// Live resources that needs cleaning before termination.
+		WeakSet<Resource> *resources;
 
 		// Create a render target.
 		ID2D1RenderTarget *createTarget(IDXGISwapChain *swapChain);
