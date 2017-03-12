@@ -10,12 +10,18 @@ Url fileUrl() {
 	}
 }
 
-void play() {
-	Url url = fileUrl() / ".." / ".." / "External" / "final" / "res" / "ending-original.ogg";
-	Sound src = url.read.sound;
-	print(src.toS);
-
+void play(Url file) {
+	Sound src = file.read.sound;
+	print("Playing " # src);
 	Player track(src);
-	track.play();
-	track.wait();
+	track.play;
+	track.waitUntil(4 s);
+	track.stop;
+}
+
+void play() {
+	play(fileUrl / "News Theme.ogg");
+	// play(fileUrl / "News Theme.flac");
+	// play(fileUrl / "News Theme.mp3");
+	// play(fileUrl / "News Theme.wav");
 }

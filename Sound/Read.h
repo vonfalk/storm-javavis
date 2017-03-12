@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Io/Stream.h"
+#include "Core/Io/Url.h"
 #include "Sound.h"
 
 namespace sound {
@@ -13,5 +14,10 @@ namespace sound {
 
 	// Open sound from a streaming source. The resulting stream will not be seekable.
 	Sound *STORM_FN soundStream(IStream *src) ON(Audio);
+
+
+	// Convenience functions.
+	Sound *STORM_FN readSound(Url *file) ON(Audio);
+	Sound *STORM_FN readSoundStream(Url *file) ON(Audio);
 
 }
