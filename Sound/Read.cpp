@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Read.h"
 #include "OggSound.h"
+#include "WavSound.h"
 #include "Exception.h"
 
 namespace sound {
@@ -32,6 +33,8 @@ namespace sound {
 
 		if (checkHeader(src, "OggS", false)) {
 			result = openOgg(src->randomAccess());
+		} else if (checkHeader(src, "RIFF", false)) {
+			result = openWav(src->randomAccess());
 		} else {
 			throw SoundOpenError(L"Unknown file format.");
 		}
@@ -47,6 +50,8 @@ namespace sound {
 
 		if (checkHeader(src, "OggS", false)) {
 			result = openOggStream(src);
+		} else if (checkHeader(src, "RIFF", false)) {
+			result = openWavStream(src);
 		} else {
 			throw SoundOpenError(L"Unknown file format.");
 		}
@@ -55,6 +60,14 @@ namespace sound {
 			throw SoundOpenError(L"Failed to open file.");
 
 		return result;
+	}
+
+	Sound *readSound(Url *file) {
+		return sound(file->read());
+	}
+
+	Sound *readSoundStream(Url *file) {
+		return soundStream(file->read());
 	}
 
 }

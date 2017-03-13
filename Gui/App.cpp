@@ -264,7 +264,8 @@ namespace gui {
 				fallback.wait();
 		} else {
 			HANDLE h = io.v();
-			MsgWaitForMultipleObjects(0, &h, FALSE, msTimeout, QS_ALLPOSTMESSAGE | QS_ALLINPUT);
+			Nat count = h != NULL ? 1 : 0;
+			MsgWaitForMultipleObjects(count, &h, FALSE, msTimeout, QS_ALLPOSTMESSAGE | QS_ALLINPUT);
 			atomicWrite(signalSent, 0);
 		}
 

@@ -23,6 +23,9 @@ namespace storm {
 
 		// The time value, measured in us from some point in time.
 		Long v;
+
+		// Deep copy.
+		inline void STORM_FN deepCopy(CloneEnv *v) {}
 	};
 
 	/**
@@ -44,6 +47,9 @@ namespace storm {
 		inline Long STORM_FN inUs() { return Long(v); }
 		inline Long STORM_FN inMs() { return Long(v / 1000); }
 		inline Long STORM_FN inS() { return Long(v / 1000000); }
+
+		// Deep copy.
+		inline void STORM_FN deepCopy(CloneEnv *v) {}
 	};
 
 	namespace time {

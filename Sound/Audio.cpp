@@ -102,18 +102,7 @@ namespace sound {
 	}
 
 	bool AudioWait::wait(os::IOHandle io) {
-		if (exit) {
-			doExit();
-			return false;
-		}
-
-		events[0] = io.v();
-		WaitForMultipleObjectsEx(events.size(), &events[0], FALSE, INFINITE, FALSE);
-		ResetEvent(events[1]);
-
-		if (exit)
-			doExit();
-		return !exit;
+		return wait(io, INFINITE);
 	}
 
 	bool AudioWait::wait(os::IOHandle io, nat ms) {
@@ -123,7 +112,8 @@ namespace sound {
 		}
 
 		events[0] = io.v();
-		WaitForMultipleObjectsEx(events.size(), &events[0], FALSE, ms, FALSE);
+		Nat first = events[0] == NULL ? 1 : 0;
+		DWORD z = WaitForMultipleObjectsEx(events.size() - first, &events[first], FALSE, ms, FALSE);
 		ResetEvent(events[1]);
 
 		if (exit) {
@@ -133,7 +123,7 @@ namespace sound {
 	}
 
 	void AudioWait::signal() {
-		SetEvent(events[0]);
+		SetEvent(events[1]);
 	}
 
 	void AudioWait::work() {

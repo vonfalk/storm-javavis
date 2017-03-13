@@ -166,7 +166,7 @@ namespace sound {
 			if (at >= t)
 				break;
 
-			Duration r = at - t;
+			Duration r = t - at;
 			if (r > time::ms(400)) {
 				// Long interval, yield to other threads.
 				os::UThread::sleep(nat(r.inMs() - 100));
