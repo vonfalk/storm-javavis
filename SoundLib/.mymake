@@ -21,6 +21,7 @@ ignore+=*/tone.c
 ignore+=*/psytune.c
 ignore+=*/barkmel.c
 
+noIncludes+=*/modes/*.h
 
 include+=ogg/include/
 include+=vorbis/include/
