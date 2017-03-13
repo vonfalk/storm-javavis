@@ -54,6 +54,17 @@ namespace storm {
 			return new (this) BSFunction(result, name, resolve(params, scope), scope, thread, body);
 		}
 
+		void bs::FunctionDecl::update(BSFunction *fn) {
+			Value result = scope.value(this->result);
+
+			assert(fn->result == result);
+			fn->update(resolve(params, scope), body, name->pos);
+		}
+
+		NamePart *bs::FunctionDecl::namePart() const {
+			return new (this) SimplePart(name->v, values(resolve(params, scope)));
+		}
+
 
 		BSRawFn::BSRawFn(Value result, SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread)
 			: Function(result, name->v, values(params)), pos(name->pos), params(params) {
@@ -151,6 +162,39 @@ namespace storm {
 
 		bs::FnBody *BSFunction::createBody() {
 			return syntax::transformNode<FnBody, BSFunction *>(body, this);
+		}
+
+		Bool BSFunction::update(Array<ValParam> *params, syntax::Node *node, SrcPos pos) {
+			if (this->params->count() != params->count())
+				return false;
+			for (Nat i = 0; i < params->count(); i++)
+				if (this->params->at(i).type != params->at(i).type)
+					return false;
+
+			this->params = params;
+			this->body = node;
+			this->pos = pos;
+			reset();
+			return true;
+		}
+
+		Bool BSFunction::update(Array<ValParam> *params, syntax::Node *node) {
+			return update(params, node, this->pos);
+		}
+
+		Bool BSFunction::update(Array<Str *> *params, syntax::Node *body) {
+			if (this->params->count() != params->count())
+				return false;
+			for (Nat i = 0; i < params->count(); i++)
+				this->params->at(i).name = params->at(i);
+
+			this->body = body;
+			reset();
+			return true;
+		}
+
+		Bool BSFunction::update(BSFunction *from) {
+			return update(from->params, from->body);
 		}
 
 		BSTreeFn::BSTreeFn(Value result, SStr *name, Array<ValParam> *params, MAYBE(NamedThread *) thread)

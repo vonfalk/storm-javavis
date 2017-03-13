@@ -8,7 +8,7 @@ void myPrint(Nat v) {
 void slowFn(Int times) on Demo {
 	for (Int i = 0; i < times; i++) {
 		myPrint((i + 1).nat);
-		sleep(5 s);
+		sleep(1 s);
 	}
 	print("Done!");
 }

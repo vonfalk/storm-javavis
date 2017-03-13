@@ -76,9 +76,9 @@ class PresentWindow extends Frame {
 				typedNumber += id - 48;
 			} else if (id == 116) { // F5 - reload. Remove when the emacs integration can support this!
 				print("Reloading " # toReload.path);
-				//reloadPkg(toReload);
+				reloadPkg(toReload);
 				print("Compiling...");
-				// compile(toReload);
+				compile(toReload);
 				print("Done!");
 				repaint;
 			} else {

@@ -179,7 +179,7 @@ namespace os {
 						wait->work();
 				} while (UThread::leave());
 
-			} while (d.wait && wait->wait(d.ioComplete));
+			} while (d.wait && d.waitForWork());
 
 			// Clean up the 'wait' structure.
 			d.wait = null; // No more notifications, but we can not delete it yet!
@@ -206,7 +206,7 @@ namespace os {
 
 			// Wait for the condition to fire. This is done whenever the
 			// refcount reaches zero, or when a new UThread has been added.
-			d.wakeCond.wait();
+			d.waitForWork();
 		}
 
 		// Now, no one has any knowledge of our existence, we can safely delete the 'wait' now.
@@ -232,7 +232,8 @@ namespace os {
 			wait->signal();
 	}
 
-	void ThreadData::waitForWork() {
+	bool ThreadData::waitForWork() {
+		bool result = false;
 		checkIo();
 
 		nat sleepFor = 0;
@@ -241,6 +242,8 @@ namespace os {
 				if (wait) {
 					if (!wait->wait(ioComplete, sleepFor))
 						wait = null;
+					else
+						result = true;
 				} else {
 					wakeCond.wait(ioComplete, sleepFor);
 				}
@@ -250,12 +253,15 @@ namespace os {
 			if (wait) {
 				if (!wait->wait(ioComplete))
 					wait = null;
+				else
+					result = true;
 			} else {
 				wakeCond.wait(ioComplete);
 			}
 		}
 
 		checkIo();
+		return result;
 	}
 
 	void ThreadData::checkIo() const {

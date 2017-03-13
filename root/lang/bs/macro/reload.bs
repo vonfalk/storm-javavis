@@ -5,7 +5,6 @@ use lang:bs;
 
 // Very hacky proof-of-concept code reloads.
 
-/*
 void reload(SrcName name) on Compiler {
 	Named? pkg = rootScope.find(name);
 	if (pkg as Package) {
@@ -93,7 +92,7 @@ void reloadTypes(Package pkg, Scope scope, Content c) on Compiler {
 			Named? found = scope.find(Name(t.name));
 			if (found as Class) {
 				// We need lookups to work... Hack...
-				t.setParent(pkg);
+				t.parentLookup = pkg;
 				reloadClass(found, t);
 			} else if (found.empty) {
 				print("New type: " # t.name);
@@ -110,13 +109,13 @@ void reloadTypes(Package pkg, Scope scope, Content c) on Compiler {
 
 void reloadClass(Class found, Type candidate) on Compiler {
 	Scope scope(found);
-	Named[] members = candidate.contents;
+	Named[] members = candidate.content;
 	for (Nat i = 0; i < members.count; i++) {
 		Named member = members[i];
 		if (member as BSFunction) {
 			// Replace the this ptr.
 			Value[] params = member.params;
-			params[0] = Value(found, params[0].isRef);
+			params[0] = Value(found, params[0].ref);
 
 			SimplePart name(member.name, params);
 			Named? replace = scope.find(Name(name));
@@ -144,4 +143,4 @@ void addIncludes(Scope scope, Array<SrcName> from) on Compiler {
 		}
 	}
 }
-*/
+

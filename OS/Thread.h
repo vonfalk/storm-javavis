@@ -116,8 +116,8 @@ namespace os {
 		// Report that an UThread has been awoken and wants to be scheduled.
 		void reportWake();
 
-		// Wait for another UThread to be scheduled.
-		void waitForWork();
+		// Wait for another UThread to be scheduled. Returns 'true' as long as the 'wait' structure is used.
+		bool waitForWork();
 
 		// Check if there is any IO completion we shall handle.
 		void checkIo() const;

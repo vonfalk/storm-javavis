@@ -179,7 +179,7 @@ BEGIN_TEST(SyntaxCrashes, BS) {
 /**
  * Test performance of the parsers by parsing a large bs-file.
  */
-BEGIN_TEST(ParserPerformance, BS) {
+BEGIN_TESTX(ParserPerformance, BS) {
 	Engine &e = gEngine();
 
 	Package *root = e.package();

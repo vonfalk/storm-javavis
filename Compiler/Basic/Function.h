@@ -11,6 +11,7 @@ namespace storm {
 		STORM_PKG(lang.bs);
 
 		class FnBody;
+		class BSFunction;
 
 		/**
 		 * Function declaration. This holds the needed information to create each function later
@@ -44,6 +45,12 @@ namespace storm {
 
 			// Create the corresponding function.
 			Function *STORM_FN createFn();
+
+			// Temporary solution for updating a function.
+			void STORM_FN update(BSFunction *fn);
+
+			// Get our name as a NamePart.
+			NamePart *STORM_FN namePart() const;
 		};
 
 
@@ -96,6 +103,12 @@ namespace storm {
 
 			// Create the body from our string.
 			virtual FnBody *STORM_FN createBody();
+
+			// Temporary solution for updating a function.
+			Bool STORM_FN update(Array<ValParam> *params, syntax::Node *body, SrcPos pos);
+			Bool STORM_FN update(Array<ValParam> *params, syntax::Node *body);
+			Bool STORM_FN update(Array<Str *> *params, syntax::Node *body);
+			Bool STORM_FN update(BSFunction *from);
 
 		private:
 			// Code.
