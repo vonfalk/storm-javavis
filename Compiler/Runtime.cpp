@@ -65,6 +65,10 @@ namespace storm {
 			return e.gc.alloc(type);
 		}
 
+		void *allocStaticRaw(Engine &e, const GcType *type) {
+			return e.gc.allocStatic(type);
+		}
+
 		void *allocObject(size_t size, Type *type) {
 			const GcType *t = type->gcType();
 			assert(size <= t->stride, L"Invalid type description found! " + ::toS(size) + L" vs " + ::toS(t->stride));

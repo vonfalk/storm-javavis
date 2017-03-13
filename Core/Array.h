@@ -67,6 +67,9 @@ namespace storm {
 		// Reverse the array.
 		void STORM_FN reverse();
 
+		// Get a random element. Throws if array is empty.
+		void *CODECALL randomRaw();
+
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -234,6 +237,11 @@ namespace storm {
 		// Append another array.
 		void append(Array<T> *from) {
 			appendRaw(from);
+		}
+
+		// Random element.
+		const T &random() const {
+			return *(const T *)randomRaw();
 		}
 
 		Array<T> &operator <<(const T &item) {

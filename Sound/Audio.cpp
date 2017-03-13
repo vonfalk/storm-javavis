@@ -85,9 +85,10 @@ namespace sound {
 	}
 
 	AudioWait::~AudioWait() {
-		for (nat i = 1; i < events.size(); i++) {
-			CloseHandle(events[i]);
-		}
+		// for (nat i = 1; i < events.size(); i++) {
+		// 	CloseHandle(events[i]);
+		// }
+		CloseHandle(events[1]);
 	}
 
 	void AudioWait::init() {

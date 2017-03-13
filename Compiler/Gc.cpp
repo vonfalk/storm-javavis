@@ -1170,7 +1170,13 @@ namespace storm {
 
 	void *Gc::allocTypeObj(const GcType *type) {
 		assert(type->kind == GcType::tType, L"Wrong type for calling allocTypeObj().");
+		return allocStatic(type);
+	}
 
+	void *Gc::allocStatic(const GcType *type) {
+		assert(type->kind == GcType::tFixed
+			|| type->kind == GcType::tFixedObj
+			|| type->kind == GcType::tType, L"Wrong type for calling allocStatic().");
 		// Since we're sharing one allocation point, take the lock for it.
 		util::Lock::L z(typeAllocLock);
 

@@ -2,6 +2,7 @@
 #include "Array.h"
 #include "StrBuf.h"
 #include "GcType.h"
+#include "Random.h"
 
 namespace storm {
 
@@ -165,6 +166,14 @@ namespace storm {
 			arraySwap(ptr(first), ptr(last), handle.size);
 			first++;
 		}
+	}
+
+	void *ArrayBase::randomRaw() {
+		if (empty())
+			throw ArrayError(L"Can not acquire an element from an empty array.");
+
+		Nat id = rand(Nat(0), count());
+		return getRaw(id);
 	}
 
 	void ArrayBase::toS(StrBuf *to) const {

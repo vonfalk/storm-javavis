@@ -84,6 +84,9 @@ namespace storm {
 		// Allocate an object of a specific type. Assumes type->type == tFixed.
 		void *alloc(const GcType *type);
 
+		// Allocate an object of a specific type in a non-moving pool.
+		void *allocStatic(const GcType *type);
+
 		// Allocate an array of objects. Assumes type->type == tArray.
 		void *allocArray(const GcType *type, size_t count);
 
@@ -208,7 +211,8 @@ namespace storm {
 		mps_pool_t gcTypePool;
 
 		// Separate non-moving pool for storing Type-objects. Note: we only have one allocation
-		// point for the types since they are rarely allocated.
+		// point for the types since they are rarely allocated. This pool is also used when
+		// interfacing with external libraries which require their objects to not move around.
 		mps_pool_t typePool;
 		mps_ap_t typeAllocPoint;
 		util::Lock typeAllocLock;

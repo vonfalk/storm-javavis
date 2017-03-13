@@ -419,6 +419,9 @@ namespace storm {
 		else
 			f->setCode(new (*e) StaticCode(fn.ptr));
 
+		if (fn.threadId < this->into->namedThreads.count())
+			f->runOn(this->into->namedThreads[fn.threadId]);
+
 		into->add(f);
 	}
 
@@ -438,6 +441,9 @@ namespace storm {
 
 		if (cast)
 			f->flags |= namedAutoCast;
+
+		if (fn.threadId < into->namedThreads.count())
+			f->runOn(into->namedThreads[fn.threadId]);
 
 		params->at(0).type->add(f);
 	}

@@ -117,6 +117,10 @@ namespace storm {
 			return (*fwd.allocRaw)(e, type);
 		}
 
+		void *allocStaticRaw(Engine &e, const GcType *type) {
+			return (*fwd.allocStaticRaw)(e, type);
+		}
+
 		void *allocObject(size_t size, Type *type) {
 			return (*fwd.allocObject)(size, type);
 		}

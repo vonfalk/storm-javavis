@@ -15,6 +15,7 @@ namespace storm {
 			&runtime::isA,
 			&runtime::allocEngine,
 			&runtime::allocRaw,
+			&runtime::allocStaticRaw,
 			&runtime::allocObject,
 			&runtime::allocArray,
 			&runtime::allocWeakArray,

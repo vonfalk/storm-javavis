@@ -16,7 +16,7 @@ namespace sound {
 	};
 
 	static OggVorbis_File *allocFile(Engine &e) {
-		return (OggVorbis_File *)runtime::allocRaw(e, &vorbisType);
+		return (OggVorbis_File *)runtime::allocStaticRaw(e, &vorbisType);
 	}
 
 	OggSound::OggSound(IStream *src, Bool seekable) : src(src), file(null), seekable(seekable), atEnd(false) {

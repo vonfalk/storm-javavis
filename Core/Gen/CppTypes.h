@@ -174,7 +174,7 @@ namespace storm {
 		// Kind.
 		FnKind kind;
 
-		// Thread to run this function on. Only relevant if this function is not a member function.
+		// Thread to run this function on.
 		size_t threadId;
 
 		// Pointer to the function.

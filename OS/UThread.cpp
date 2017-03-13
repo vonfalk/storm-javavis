@@ -473,6 +473,7 @@ namespace os {
 			d->release();
 
 		wakeThreads(timestamp());
+		owner->checkIo();
 	}
 
 	/**

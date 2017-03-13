@@ -118,7 +118,7 @@ namespace storm {
 		HANDLE dest = INVALID_HANDLE_VALUE;
 		HANDLE proc = GetCurrentProcess();
 		if (!DuplicateHandle(proc, src.v(), proc, &dest, DUPLICATE_SAME_ACCESS, FALSE, 0)) {
-			PLN(L"Failed to duplicate handle :(");
+			PLN(L"Failed to duplicate handle: " << GetLastError());
 			return os::Handle();
 		}
 
