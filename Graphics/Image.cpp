@@ -131,14 +131,15 @@ namespace graphics {
 			err = L"Failed to initialize Windows Imaging Components";
 
 			IWICStream *wicStream = null;
-			StreamWrapper fromStream(from);
+			storm::RIStream *src = from->randomAccess();
+			StreamWrapper *fromStream = StreamWrapper::create(&src);
 			if (SUCCEEDED(r)) {
 				r = wicFactory->CreateStream(&wicStream);
 				err = L"Failed to create a WIC stream";
 			}
 
 			if (SUCCEEDED(r)) {
-				r = wicStream->InitializeFromIStream(&fromStream);
+				r = wicStream->InitializeFromIStream(fromStream);
 				err = L"Failed to initialize the WIC stream";
 			}
 
@@ -160,7 +161,7 @@ namespace graphics {
 				err = L"The object was not a BitmapSource object";
 			}
 
-			Image *result;
+			Image *result = null;
 			// Convert the data and add it to the texture
 			if (SUCCEEDED(r)) {
 				result = createTexture(from->engine(), wicFactory, bitmapSource, err);
@@ -170,6 +171,7 @@ namespace graphics {
 			release(frame);
 			release(decoder);
 			release(wicStream);
+			release(fromStream);
 			release(wicFactory);
 
 			return result;

@@ -14,6 +14,10 @@ namespace storm {
 		engine().pkgMap()->put(pkgPath, this);
 	}
 
+	Package::Package(Str *name, Url *path) : NameSet(name), pkgPath(path) {
+		engine().pkgMap()->put(pkgPath, this);
+	}
+
 	NameLookup *Package::parent() const {
 		// We need to be able to return null.
 		return parentLookup;

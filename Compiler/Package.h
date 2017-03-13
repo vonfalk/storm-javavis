@@ -22,6 +22,9 @@ namespace storm {
 		// Create a package located in 'path'.
 		STORM_CTOR Package(Url *path);
 
+		// Create a package located in 'path' with the given name.
+		STORM_CTOR Package(Str *name, Url *path);
+
 		// Get parent.
 		virtual NameLookup *STORM_FN parent() const;
 

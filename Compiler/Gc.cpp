@@ -1145,7 +1145,7 @@ namespace storm {
 		mps_ap_t &ap = currentAllocPoint();
 		mps_addr_t memory;
 		do {
-			check(mps_reserve(&memory, ap, alignedSize), L"Out of memory.");
+			check(mps_reserve(&memory, ap, alignedSize), L"Out of memory (alloc).");
 
 			// Make sure we can scan the newly allocated memory:
 			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
@@ -1178,7 +1178,7 @@ namespace storm {
 		size_t alignedSize = align(size + MPS_CHECK_BYTES);
 		mps_addr_t memory;
 		do {
-			check(mps_reserve(&memory, typeAllocPoint, alignedSize), L"Out of memory.");
+			check(mps_reserve(&memory, typeAllocPoint, alignedSize), L"Out of memory (alloc type).");
 
 			// Make sure we can scan the newly allocated memory:
 			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
@@ -1209,7 +1209,7 @@ namespace storm {
 		mps_ap_t &ap = currentAllocPoint();
 		mps_addr_t memory;
 		do {
-			check(mps_reserve(&memory, ap, alignedSize), L"Out of memory.");
+			check(mps_reserve(&memory, ap, alignedSize), L"Out of memory (alloc array).");
 
 			// Make sure we can scan the newly allocated memory:
 			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.

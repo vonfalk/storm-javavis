@@ -379,4 +379,11 @@ namespace storm {
 		return v->parent();
 	}
 
+	Url *cwdUrl(EnginePtr e) {
+		wchar_t tmp[MAX_PATH + 1];
+		tmp[0] = 0;
+		GetCurrentDirectory(MAX_PATH + 1, tmp);
+		return parsePath(e.v, tmp);
+	}
+
 }

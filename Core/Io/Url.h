@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Object.h"
 #include "Core/Array.h"
+#include "Core/EnginePtr.h"
 #include "Utils/Exception.h"
 #include "Utils/Bitmask.h"
 
@@ -147,6 +148,7 @@ namespace storm {
 	Url *executableFileUrl(Engine &e);
 	Url *executableUrl(Engine &e);
 	Url *dbgRootUrl(Engine &e);
+	Url *STORM_FN cwdUrl(EnginePtr e);
 
 	// Some exceptions.
 	class InvalidName : public Exception {

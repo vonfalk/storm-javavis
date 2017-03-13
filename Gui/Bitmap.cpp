@@ -20,7 +20,7 @@ namespace gui {
 		// Non-premultiplied alpha is not supported. We need to convert our source bitmap...
 		byte *src = this->src->buffer();
 		nat stride = this->src->stride();
-		byte *img = runtime::allocArray<Byte>(engine(), &byteArrayType, stride *h)->v;
+		byte *img = runtime::allocArray<Byte>(engine(), &byteArrayType, stride * h)->v;
 		for (nat y = 0; y < h; y++) {
 			nat base = stride * y;
 			for (nat x = 0; x < w; x++) {

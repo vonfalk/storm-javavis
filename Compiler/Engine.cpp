@@ -35,6 +35,7 @@ namespace storm {
 		case Engine::newMain:
 			return os::Thread::spawn(Thread::registerFn(e), e.threadGroup);
 		case Engine::reuseMain:
+			os::Thread::initThread(); // TODO: Call cleanThread as well..
 			Thread::registerFn(e)();
 			return os::Thread::current();
 		default:

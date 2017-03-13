@@ -3,6 +3,7 @@
 #include "Compiler/Server/Main.h"
 #include "Compiler/Exception.h"
 #include "Compiler/Engine.h"
+#include "Compiler/Package.h"
 #include "Compiler/Repl.h"
 #include "Core/Timing.h"
 #include "Core/Io/StdStream.h"
@@ -121,6 +122,22 @@ void help(const wchar *cmd) {
 	wcout << cmd << L" -r <path>        - use <path> as the root path." << endl;
 }
 
+void importPkgs(Engine &into, const Params &p) {
+	for (Nat i = 0; i < p.import.size(); i++) {
+		const Import &import = p.import[i];
+		SimpleName *n = parseSimpleName(into, import.into);
+		if (n->empty())
+			continue;
+
+		NameSet *ns = into.nameSet(n->parent(), true);
+		Url *path = parsePath(into, import.path);
+		if (!path->absolute())
+			path = cwdUrl(into)->push(path);
+		Package *pkg = new (into) Package(n->last()->name, path);
+		ns->add(pkg);
+	}
+}
+
 int stormMain(int argc, const wchar *argv[]) {
 	Params p(argc, argv);
 
@@ -152,6 +169,9 @@ int stormMain(int argc, const wchar *argv[]) {
 
 	Engine e(root, Engine::reuseMain);
 	Moment end;
+
+	importPkgs(e, p);
+
 	int result = 1;
 
 	try {
