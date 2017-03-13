@@ -392,27 +392,26 @@ namespace storm {
 		} else if (result.isValue()) {
 			*l << fnCall(ref(), valPtr());
 
-			// Find 'deepCopy'.
+			// Find 'deepCopy' and use it if possible. Otherwise, assume it is not required.
 			Function *deepCopy = result.type->deepCopyFn();
-			if (!deepCopy)
-				throw InternalError(L"The type " + ::toS(result) + L" does not have the required 'deepCopy' member.");
+			if (deepCopy) {
+				CodeGen *sub = s->child(l->createBlock(l->root()));
+				// Keep track of the result object.
+				Var freeResult = l->createVar(sub->block, Size::sPtr, result.destructor(), freeOnException);
+				*l << begin(sub->block);
+				*l << mov(freeResult, resultParam);
 
-			CodeGen *sub = s->child(l->createBlock(l->root()));
-			// Keep track of the result object.
-			Var freeResult = l->createVar(sub->block, Size::sPtr, result.destructor(), freeOnException);
-			*l << begin(sub->block);
-			*l << mov(freeResult, resultParam);
+				// We need to create a CloneEnv object.
+				Var cloneEnv = allocObject(s, CloneEnv::stormType(engine()));
 
-			// We need to create a CloneEnv object.
-			Var cloneEnv = allocObject(s, CloneEnv::stormType(engine()));
+				// Copy by calling 'deepCopy'.
+				*l << fnParam(resultParam);
+				*l << fnParam(cloneEnv);
+				*l << fnCall(deepCopy->ref(), valVoid());
 
-			// Copy by calling 'deepCopy'.
-			*l << fnParam(resultParam);
-			*l << fnParam(cloneEnv);
-			*l << fnCall(deepCopy->ref(), valVoid());
-
-			*l << end(sub->block);
-			*l << mov(ptrA, resultParam);
+				*l << end(sub->block);
+				*l << mov(ptrA, resultParam);
+			}
 		} else {
 			// Built in or actor.
 			*l << fnCall(ref(), result.valTypeRet());
