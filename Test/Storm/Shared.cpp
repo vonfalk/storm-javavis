@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Fn.h"
 
-BEGIN_TEST_(Shared) {
+BEGIN_TEST(Shared) {
 	Engine &e = gEngine();
 
 	// Try to load an external library.

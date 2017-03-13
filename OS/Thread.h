@@ -119,9 +119,6 @@ namespace os {
 		// Wait for another UThread to be scheduled.
 		void waitForWork();
 
-		// Wait for another UThread to be scheduled (using timeout!)
-		void waitForWork(nat msTimeout);
-
 		// Check if there is any IO completion we shall handle.
 		void checkIo() const;
 

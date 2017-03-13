@@ -32,11 +32,11 @@ SUITE(GcObjects, 2);
 // GC along with threads.
 SUITE(GcThreads, 3);
 // Basic operation of the runtime. No code generation yet.
-SUITE(Core, 4);
+SUITE_(Core, 4);
 // Basic tests of the code generation backend. Further thests rely on these to work.
-SUITE(CodeBasic, 5);
+SUITE_(CodeBasic, 5);
 // Tests of the code generation backend.
-SUITE(Code, 6);
+SUITE_(Code, 6);
 // More involved tests of Storm. Still no compilation from sources.
 SUITE_(Storm, 7);
 // Simple tests of Basic Storm

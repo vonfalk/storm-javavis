@@ -1,6 +1,7 @@
 #pragma once
 #include "FnParams.h"
 #include "InlineList.h"
+#include "SortedInlineList.h"
 #include "Utils/InlineSet.h"
 #include "Utils/Function.h"
 #include "Utils/Lock.h"
@@ -294,10 +295,35 @@ namespace os {
 		// it may be deleted before 'insert' returns.
 		void insert(UThreadData *data);
 
+		// Return the time (in ms) until the next UThread shall wake. Returns false if no thread to wake.
+		bool nextWake(nat &time);
+
+		// Wake threads if neccessary.
+		void wakeThreads();
+
 		// Get the currently running thread.
 		inline UThreadData *runningThread() { return running; }
 
 	private:
+		// Data for sleeping threads.
+		struct SleepData {
+			inline SleepData(int64 until) : next(null), until(until) {}
+
+			// Next entry in the list.
+			SleepData *next;
+
+			// Wait until this timestamp.
+			int64 until;
+
+			// Signal wait done.
+			virtual void signal() = 0;
+
+			// Compare.
+			inline bool operator <(const SleepData &o) const {
+				return until < o.until;
+			}
+		};
+
 		// Currently running thread here.
 		UThreadData *running;
 
@@ -311,6 +337,10 @@ namespace os {
 		// Keep track of exited threads. Remove these at earliest opportunity!
 		InlineList<UThreadData> exited;
 
+		// Threads which are currently waiting. Not protected by locks as it is only accessed from
+		// the OS thread owning this state.
+		SortedInlineList<SleepData> sleeping;
+
 		// Number of threads alive. Always updated using atomics, no locks. Threads
 		// that are waiting and not stored in the 'ready' queue are also counted.
 		nat aliveCount;
@@ -318,6 +348,8 @@ namespace os {
 		// Elliminate any exited threads.
 		void reap();
 
+		// Wake threads up until 'timestamp'.
+		void wakeThreads(int64 time);
 	};
 
 

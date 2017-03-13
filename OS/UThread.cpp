@@ -3,8 +3,10 @@
 #include "Thread.h"
 #include "FnCall.h"
 #include "Shared.h"
+#include "Sync.h"
 #include "Utils/Bitwise.h"
 #include "Utils/Lock.h"
+#include <limits>
 
 namespace os {
 
@@ -319,7 +321,11 @@ namespace os {
 
 	UThreadState *UThreadState::current() {
 		UThreadState *s = currentUThreadState();
-		assert(s); // TDOD: create 's' if it is not created at this point. It can happen, it is however unlikely.
+		if (!s) {
+			Thread::current();
+			s = currentUThreadState();
+			assert(s);
+		}
 		return s;
 	}
 
@@ -351,17 +357,40 @@ namespace os {
 	}
 
 	void UThreadState::sleep(nat ms) {
-		int64 doneAt = timestamp() + msInTimestamp(ms);
-		bool done = false;
+		struct D : public SleepData {
+			D(int64 until) : SleepData(until), sema(0) {}
+			os::Sema sema;
+			virtual void signal() {
+				sema.up();
+			}
+		};
 
-		while (!done) {
-			do {
-				done = doneAt < timestamp();
-			} while (leave() && !done);
+		D done(timestamp() + msInTimestamp(ms));
+		sleeping.push(&done);
+		done.sema.down();
+	}
 
-			if (!done) {
-				owner->waitForWork(remainingMs(doneAt));
-				done = doneAt < timestamp();
+	bool UThreadState::nextWake(nat &time) {
+		SleepData *first = sleeping.peek();
+		if (!first)
+			return false;
+
+		time = remainingMs(first->until);
+		return true;
+	}
+
+	void UThreadState::wakeThreads() {
+		wakeThreads(timestamp());
+	}
+
+	void UThreadState::wakeThreads(int64 time) {
+		while (sleeping.any()) {
+			SleepData *first = sleeping.peek();
+			if (time >= first->until) {
+				first->signal();
+				sleeping.pop();
+			} else {
+				break;
 			}
 		}
 	}
@@ -442,6 +471,8 @@ namespace os {
 	void UThreadState::reap() {
 		while (UThreadData *d = exited.pop())
 			d->release();
+
+		wakeThreads(timestamp());
 	}
 
 	/**

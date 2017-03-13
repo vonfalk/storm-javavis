@@ -235,24 +235,24 @@ namespace os {
 	void ThreadData::waitForWork() {
 		checkIo();
 
-		if (wait) {
-			if (!wait->wait(ioComplete))
-				wait = null;
+		nat sleepFor = 0;
+		if (uState.nextWake(sleepFor)) {
+			if (sleepFor > 0) {
+				if (wait) {
+					if (!wait->wait(ioComplete, sleepFor))
+						wait = null;
+				} else {
+					wakeCond.wait(ioComplete, sleepFor);
+				}
+			}
+			uState.wakeThreads();
 		} else {
-			wakeCond.wait(ioComplete);
-		}
-
-		checkIo();
-	}
-
-	void ThreadData::waitForWork(nat msTimeout) {
-		checkIo();
-
-		if (wait) {
-			if (!wait->wait(ioComplete, msTimeout))
-				wait = null;
-		} else {
-			wakeCond.wait(ioComplete, msTimeout);
+			if (wait) {
+				if (!wait->wait(ioComplete))
+					wait = null;
+			} else {
+				wakeCond.wait(ioComplete);
+			}
 		}
 
 		checkIo();

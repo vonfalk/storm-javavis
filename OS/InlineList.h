@@ -3,13 +3,11 @@
 namespace os {
 
 	/**
-	 * A singly linked list that is placed inline in the
-	 * data structure. Supports basic push and pop operations,
-	 * not much more.
+	 * A singly linked list that is placed inline in the data structure. Supports basic push and pop
+	 * operations, not much more.
 	 *
-	 * T must have a T *next member that is initialized to null.
-	 * Therefore, each element can not reside in more than one
-	 * list at once. This is asserted in debug builds.
+	 * T must have a T *next member that is initialized to null.  Therefore, each element can not
+	 * reside in more than one list at once. This is asserted in debug builds.
 	 */
 	template <class T>
 	class InlineList : NoCopy {
@@ -29,7 +27,7 @@ namespace os {
 
 		// Push an element to the end of the list.
 		void push(T *e) {
-			assert(e->next == null, L"Can not an element into more than one list.");
+			assert(e->next == null, L"Can not push an element into more than one list.");
 			if (tail)
 				tail->next = e;
 			else
