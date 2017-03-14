@@ -92,6 +92,8 @@ namespace sound {
 	}
 
 	Player::~Player() {
+		// Do not close 'src' as it might have already been destroyed.
+		src = null;
 		close();
 	}
 
@@ -145,9 +147,9 @@ namespace sound {
 			buffer->Stop();
 			finishEvent->set();
 
-			// Reset position.
-			src->seek(0);
-			fill();
+			// Reset position if possible.
+			if (src->seek(0))
+				fill();
 		}
 	}
 
@@ -182,7 +184,9 @@ namespace sound {
 		buffer->GetCurrentPosition(&pos, NULL);
 
 		nat part = pos / partSize;
-		nat64 sample = partInfo->v[part].sample + (pos % partSize) / sampleSize;
+		nat64 sample = partInfo->v[part].sample;
+		if (!partInfo->v[part].afterEnd)
+			sample += (pos % partSize) / sampleSize;
 
 		sample *= 1000000;
 		sample /= freq;

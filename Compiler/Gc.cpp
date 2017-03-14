@@ -1430,10 +1430,14 @@ namespace storm {
 			}
 		}
 
+		// NOTE: It is not a good idea to replace finalized objects with padding as we might have
+		// finalization cycles, which means that one object depends on another object. If we were to
+		// convert the objects into padding, then the vtables would be destroyed.
+
 		// Replace the object with padding, as it is not neccessary to scan it anymore.
-		obj = (char *)obj - headerSize;
-		size_t size = mpsSize(obj);
-		mpsMakePad(obj, size);
+		// obj = (char *)obj - headerSize;
+		// size_t size = mpsSize(obj);
+		// mpsMakePad(obj, size);
 	}
 
 	void *Gc::allocCode(size_t code, size_t refs) {

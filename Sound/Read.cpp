@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Read.h"
 #include "OggSound.h"
+#include "FlacSound.h"
 #include "WavSound.h"
 #include "Exception.h"
 
@@ -33,6 +34,8 @@ namespace sound {
 
 		if (checkHeader(src, "OggS", false)) {
 			result = openOgg(src->randomAccess());
+		} else if (checkHeader(src, "fLaC", false)) {
+			result = openFlac(src->randomAccess());
 		} else if (checkHeader(src, "RIFF", false)) {
 			result = openWav(src->randomAccess());
 		} else {
@@ -50,6 +53,8 @@ namespace sound {
 
 		if (checkHeader(src, "OggS", false)) {
 			result = openOggStream(src);
+		} else if (checkHeader(src, "fLaC", false)) {
+			result = openFlac(src->randomAccess());
 		} else if (checkHeader(src, "RIFF", false)) {
 			result = openWavStream(src);
 		} else {

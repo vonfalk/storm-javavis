@@ -15,6 +15,9 @@ namespace sound {
 #include <ks.h> // GUID_NULL is defined here and not included with 'initguid'...
 #include <dsound.h>
 
+// For flac...
+#define FLAC__NO_DLL
+
 #undef interface
 
 // Release COM objects.

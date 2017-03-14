@@ -17,6 +17,7 @@ ignore+=*/misc.c
 
 #Seems to be a test program of some kind...
 ignore+=*/main.c
+ignore+=*/main.cpp
 ignore+=*/tone.c
 ignore+=*/psytune.c
 ignore+=*/barkmel.c

@@ -32,9 +32,6 @@ namespace sound {
 	}
 
 	void AudioMgr::addPlayer(Player *player) {
-		if (players->has(player))
-			return;
-
 		players->put(player);
 		if (wait)
 			wait->addPlayer(player->waitEvent().v());
@@ -136,6 +133,9 @@ namespace sound {
 	}
 
 	void AudioWait::addPlayer(HANDLE event) {
+		for (nat i = 2; i < events.size(); i++)
+			if (events[i] == event)
+				return;
 		events.push_back(event);
 	}
 
