@@ -13,11 +13,13 @@ namespace gui {
 	Edit::Edit() {
 		myMultiline = false;
 		onReturn = null;
+		myCue = new (this) Str(L"");
 	}
 
 	Edit::Edit(Str *cue) {
 		myMultiline = false;
 		myCue = cue;
+		myCue = new (this) Str(L"");
 	}
 
 	bool Edit::create(HWND parent, nat id) {
