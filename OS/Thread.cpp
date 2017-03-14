@@ -147,10 +147,6 @@ namespace os {
 		ThreadWait *wait = start.wait;
 		d.wait = wait;
 
-		// Initialize our group.
-		group->addRef();
-		group->threadStarted();
-
 		// One reference is consumed when 'threadWait' is terminated.
 		d.addRef();
 		// One is used to prevent signaling the semaphore before we have finished doing our main job.
@@ -158,6 +154,10 @@ namespace os {
 
 		// Remember our identity.
 		currentThreadData(&d);
+
+		// Initialize our group.
+		group->addRef();
+		group->threadStarted();
 
 		// Initialize any 'wait' struct before anyone is able to call 'signal' on it.
 		if (wait)

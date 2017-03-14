@@ -33,10 +33,10 @@ namespace storm {
 	static os::Thread mainThread(Engine::ThreadMode mode, Engine &e) {
 		switch (mode) {
 		case Engine::newMain:
-			return os::Thread::spawn(Thread::registerFn(e), e.threadGroup);
+			return os::Thread::spawn(util::Fn<void>(), e.threadGroup);
 		case Engine::reuseMain:
 			os::Thread::initThread(); // TODO: Call cleanThread as well..
-			Thread::registerFn(e)();
+			e.attachThread();
 			return os::Thread::current();
 		default:
 			assert(false, L"Unknown thread mode.");
@@ -45,11 +45,24 @@ namespace storm {
 		}
 	}
 
+	void Engine::attachThread() {
+		gc.attachThread();
+	}
+
+	void Engine::detachThread() {
+		gc.detachThread(os::Thread::current());
+	}
+
 	// Starts at -1 so that the first Engine will gain id=0.
 	static Nat engineId = -1;
 
 	Engine::Engine(const Path &root, ThreadMode mode) :
-		id(atomicIncrement(engineId)), gc(defaultArena, defaultFinalizer), world(gc), objRoot(null), ioThread(null) {
+		id(atomicIncrement(engineId)),
+		gc(defaultArena, defaultFinalizer),
+		threadGroup(util::memberVoidFn(this, &Engine::attachThread), util::memberVoidFn(this, &Engine::detachThread)),
+		world(gc),
+		objRoot(null),
+		ioThread(null) {
 
 		bootStatus = bootNone;
 
@@ -105,6 +118,7 @@ namespace storm {
 
 		gc.destroy();
 		libs.unload();
+		threadGroup.join();
 	}
 
 	Type *Engine::cppType(Nat id) const {

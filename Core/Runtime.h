@@ -101,15 +101,6 @@ namespace storm {
 		// Create a GcWatch object.
 		GcWatch *createWatch(Engine &e);
 
-		// Attach the current thread with the given engine.
-		void attachThread(Engine &e);
-
-		// Detach 'thread' from the engine.
-		void detachThread(Engine &e, const os::Thread &thread);
-
-		// Reattach a thread (ie. make it possible to call detach once more without anything bad happening).
-		void reattachThread(Engine &e, const os::Thread &thread);
-
 		// Post an IO-request for standard in/out/error.
 		void postStdRequest(Engine &e, StdRequest *request);
 

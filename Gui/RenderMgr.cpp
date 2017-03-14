@@ -258,7 +258,6 @@ namespace gui {
 		struct Wrap {
 			void attach() {
 				Engine &e = (Engine &)*this;
-				runtime::attachThread(e);
 				RenderMgr *m = gui::renderMgr(e);
 				m->main();
 			}

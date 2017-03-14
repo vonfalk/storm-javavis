@@ -26,16 +26,10 @@ namespace storm {
 		// Lazily create the underlying thread when needed.
 		Thread(DeclThread::CreateFn fn);
 
-		// Since we're not acting as an actor, we need to provide a copy ctor.
-		Thread(const Thread &o);
-
-		// Destroy this thread.
+		// Destroy.
 		~Thread();
 
-		// Get the thread registration function.
-		static util::Fn<void, void> registerFn(Engine &e);
-
-		// Deep copy as well.
+		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 
 		// Get the thread handle.

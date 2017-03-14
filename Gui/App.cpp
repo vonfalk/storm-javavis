@@ -232,9 +232,6 @@ namespace gui {
 	}
 
 	void AppWait::init() {
-		// Register this thread with the Gc.
-		runtime::attachThread(e);
-
 		threadId = GetCurrentThreadId();
 		uThread = os::UThread::current();
 		signalSent = 0;

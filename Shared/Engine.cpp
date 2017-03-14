@@ -157,18 +157,6 @@ namespace storm {
 			return (*fwd.createWatch)(e);
 		}
 
-		void attachThread(Engine &e) {
-			return (*fwd.attachThread)(e);
-		}
-
-		void detachThread(Engine &e, const os::Thread &thread) {
-			return (*fwd.detachThread)(e, thread);
-		}
-
-		void reattachThread(Engine &e, const os::Thread &thread) {
-			return (*fwd.reattachThread)(e, thread);
-		}
-
 		void postStdRequest(Engine &e, StdRequest *request) {
 			(*fwd.postStdRequest)(e, request);
 		}

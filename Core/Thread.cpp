@@ -9,20 +9,9 @@ namespace storm {
 
 	Thread::Thread(DeclThread::CreateFn fn) : osThread(os::Thread::invalid), create(fn) {}
 
-	Thread::Thread(const Thread &o) : osThread(const_cast<Thread &>(o).thread()), create(null) {
-		// We're using thread() above to ensure that the thread has been properly
-		// initialized. Otherwise, we may get multiple initializations, which is bad.
-		runtime::reattachThread(engine(), osThread);
-	}
-
 	Thread::~Thread() {
-		if (osThread != os::Thread::invalid) {
-			TODO(L"Make sure we do not detach a thread until it has stopped running (which may happen after the destructor is called)");
-			// Sometimes the GcType is not properly set for thread objects, try not to crash in that case.
-			if (type()) {
-				runtime::detachThread(engine(), osThread);
-			}
-		}
+		// We need to call the destructor of 'thread', so we need to declare a destructor to tell
+		// Storm that the destructor needs to be called.
 	}
 
 	void Thread::deepCopy(CloneEnv *env) {
@@ -37,21 +26,10 @@ namespace storm {
 				// TODO? make sure the newly created thread has been properly registered with the gc!
 				osThread = (*create)(engine());
 			} else {
-				osThread = os::Thread::spawn(Thread::registerFn(engine()), runtime::threadGroup(engine()));
+				osThread = os::Thread::spawn(util::Fn<void>(), runtime::threadGroup(engine()));
 			}
 		}
 		return osThread;
-	}
-
-	util::Fn<void, void> Thread::registerFn(Engine &e) {
-		// This is an ugly hack to get around the limitation that util::Fn<> only supports 'this' as parameters.
-		struct Wrap {
-			void attach() {
-				runtime::attachThread((Engine &)*this);
-			}
-		};
-
-		return util::Fn<void, void>((Wrap *)&e, &Wrap::attach);
 	}
 
 	STORM_DEFINE_THREAD(Compiler);

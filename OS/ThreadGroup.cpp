@@ -5,6 +5,8 @@ namespace os {
 
 	ThreadGroup::ThreadGroup() : data(new ThreadGroupData()) {}
 
+	ThreadGroup::ThreadGroup(Callback start, Callback end) : data(new ThreadGroupData(start, end)) {}
+
 	ThreadGroup::ThreadGroup(const ThreadGroup &o) : data(o.data) {
 		data->addRef();
 	}
@@ -27,13 +29,18 @@ namespace os {
 
 	ThreadGroupData::ThreadGroupData() : references(1), attached(0), sema(0) {}
 
+	ThreadGroupData::ThreadGroupData(ThreadGroup::Callback start, ThreadGroup::Callback stop)
+		: references(1), attached(0), sema(0), start(start), stop(stop) {}
+
 	ThreadGroupData::~ThreadGroupData() {}
 
 	void ThreadGroupData::threadStarted() {
 		atomicIncrement(attached);
+		start();
 	}
 
 	void ThreadGroupData::threadTerminated() {
+		stop();
 		sema.up();
 	}
 

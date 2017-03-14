@@ -89,9 +89,6 @@ namespace sound {
 	}
 
 	void AudioWait::init() {
-		// Register this thread with the Gc.
-		runtime::attachThread(e);
-
 		events.push_back(NULL);
 		events.push_back(CreateEvent(NULL, TRUE, FALSE, NULL));
 

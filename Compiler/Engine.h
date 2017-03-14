@@ -198,6 +198,10 @@ namespace storm {
 		// Load a shared library.
 		SharedLib *loadShared(Url *file);
 
+		// Functions called on thread attach/detach.
+		void attachThread();
+		void detachThread();
+
 	private:
 		// The compiler C++ world.
 		World world;

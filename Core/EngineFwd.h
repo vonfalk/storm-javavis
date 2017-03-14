@@ -38,9 +38,6 @@ namespace storm {
 		void (*setVTable)(RootObject *object);
 		os::ThreadGroup &(*threadGroup)(Engine &e);
 		GcWatch *(*createWatch)(Engine &e);
-		void (*attachThread)(Engine &e);
-		void (*detachThread)(Engine &e, const os::Thread &thread);
-		void (*reattachThread)(Engine &e, const os::Thread &thread);
 		void (*postStdRequest)(Engine &e, StdRequest *request);
 		RootObject *(*cloneObject)(RootObject *obj);
 		RootObject *(*cloneObjectEnv)(RootObject *obj, CloneEnv *env);

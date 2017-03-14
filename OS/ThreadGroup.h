@@ -1,6 +1,7 @@
 #pragma once
 #include "Thread.h"
 #include "Sync.h"
+#include "Utils/Function.h"
 
 namespace os {
 
@@ -17,6 +18,10 @@ namespace os {
 	public:
 		// Create.
 		ThreadGroup();
+
+		// Callbacks called on thread start or thread termination.
+		typedef util::Fn<void> Callback;
+		ThreadGroup(Callback start, Callback stop);
 
 		// Copy.
 		ThreadGroup(const ThreadGroup &o);
@@ -43,6 +48,7 @@ namespace os {
 	public:
 		// Create, initialize to one reference.
 		ThreadGroupData();
+		ThreadGroupData(ThreadGroup::Callback start, ThreadGroup::Callback stop);
 		~ThreadGroupData();
 
 		// Add reference.
@@ -74,6 +80,10 @@ namespace os {
 
 		// Semaphore for waiting.
 		Sema sema;
+
+		// Callbacks for thread creation/termination.
+		ThreadGroup::Callback start;
+		ThreadGroup::Callback stop;
 	};
 
 }
