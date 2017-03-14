@@ -49,6 +49,21 @@ namespace storm {
 			return true;
 		}
 
+		void Part::adjustOffset(Nat offset, Str *src) {
+			if (offset > start) {
+				// Remove some data. TODO: Consider what happens when we want to contain less than
+				// zero characters.
+				remove(Range(start, offset));
+			} else if (offset < start) {
+				// Insert some data.
+				Str::Iter s = src->posIter(offset);
+				Str::Iter e = src->posIter(start);
+				insert(start, src->substr(s, e));
+			}
+
+			this->offset(offset);
+		}
+
 		Range Part::full() const {
 			return Range(start, start + content->length());
 		}
@@ -216,7 +231,9 @@ namespace storm {
 			if (pos < start || !content)
 				return TextIndent();
 
-			return content->indentAt(pos - start);
+			TextIndent r = content->indentAt(pos - start);
+			r.offset(start);
+			return r;
 		}
 
 		Array<ColoredRange> *Part::colors(Range range) {
@@ -501,9 +518,6 @@ namespace storm {
 				if (pkgReader)
 					reader = pkgReader->readFile(path, src);
 
-				// Note: we're currently ignoring that any previous parts could have changed their
-				// range. This causes the parts generated to overlap a bit, which is actually not a
-				// problem.
 				Array<Part *> *newParts = new (this) Array<Part *>();
 				while (reader) {
 					FileReader *next = reader->next(qParser);
@@ -512,11 +526,11 @@ namespace storm {
 					Nat offset = newParts->any() ? newParts->last()->full().to : 0;
 					if (id < part) {
 						Part *old = parts->at(id);
-						old->offset(offset);
+						old->adjustOffset(offset, src);
 						newParts->push(old);
 					} else if (id < parts->count()) {
 						Part *part = parts->at(id);
-						part->offset(offset);
+						part->adjustOffset(offset, src);
 						if (part->replace(reader, next, force)) {
 							result = merge(result, part->full());
 						}

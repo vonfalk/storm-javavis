@@ -77,21 +77,24 @@ namespace storm {
 
 		TextIndent InfoInternal::indentAt(Nat pos) {
 			Nat offset = 0;
-			Nat indentStartOffset = 0;
+			Nat indentStartOffsetBeg = 0;
+			Nat indentStartOffsetEnd = 0;
 
 			for (Nat i = 0; i < count(); i++) {
 				InfoNode *child = at(i);
 				Nat len = child->length();
 
 				if (indent && i + 1 == indent->start)
-					indentStartOffset = offset;
+					indentStartOffsetBeg = offset;
+				if (indent && i == indent->start)
+					indentStartOffsetEnd = offset;
 
 				if (pos >= offset && pos < offset + len && len > 0) {
 					TextIndent r = child->indentAt(pos - offset);
 					r.offset(offset);
 
 					if (indent)
-						r.applyParent(indent, i, indentStartOffset);
+						r.applyParent(indent, i, indentStartOffsetBeg, indentStartOffsetEnd);
 					return r;
 				}
 

@@ -34,6 +34,9 @@ namespace storm {
 			inline Nat STORM_FN offset() const { return start; }
 			inline void STORM_FN offset(Nat offset) { start = offset; }
 
+			// Adjust the offset of this part, modifying the content to match.
+			void STORM_FN adjustOffset(Nat offset, Str *src);
+
 			// Get the full range of this part.
 			Range STORM_FN full() const;
 

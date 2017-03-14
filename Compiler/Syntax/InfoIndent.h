@@ -21,9 +21,13 @@ namespace storm {
 			// indentation (except for align directives).
 			indentWeakIncrease,
 
-			// Align with the start of the indented range. Only the leafmost alignment is
-			// considered when indentation information is generated.
-			indentAlign,
+			// Align with the start of the token before the indented range. Only the leafmost
+			// alignment is considered when indentation information is generated.
+			indentAlignBegin,
+
+			// Align with the end of the token before the indented range. Only the leafmost
+			// alignment is considered when indentation information is generated.
+			indentAlignEnd,
 		};
 
 		// Output.
@@ -82,7 +86,7 @@ namespace storm {
 			// Apply indentation of a parent node, assuming it is applicable to us.
 			// Provided is the offset of the start of the repetition for the parent node,
 			// and the current token id.
-			void STORM_FN applyParent(InfoIndent *info, Nat current, Nat repOffset);
+			void STORM_FN applyParent(InfoIndent *info, Nat current, Nat repOffsetBegin, Nat repOffsetEnd);
 
 			// Increase any offsets in this structure by 'n'.
 			void STORM_FN offset(Nat n);

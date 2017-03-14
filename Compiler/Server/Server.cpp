@@ -370,30 +370,27 @@ namespace storm {
 			if (range.empty())
 				return;
 
-			if (parts->empty()) {
-				parts->push(range);
-				return;
-			}
-
 			Nat insertAfter = 0;
-
-			for (Nat i = 0; i < parts->count(); i++) {
-				insertAfter = i;
-				Range at = parts->at(i);
+			while (insertAfter < parts->count()) {
+				Range at = parts->at(insertAfter);
 
 				if (at.intersects(range)) {
 					// Remove the one in the array and try to insert the new, expanded range.
 					range = storm::server::merge(at, range);
-					parts->remove(i--);
+					parts->remove(insertAfter);
 				} else if (range.to < at.from) {
 					// No need for further examination, we found the right place!
 					break;
 				} else {
 					// Keep looking for the correct place.
+					insertAfter++;
 				}
 			}
 
-			parts->insert(insertAfter + 1, range);
+			if (insertAfter >= parts->count())
+				parts->push(range);
+			else
+				parts->insert(insertAfter + 1, range);
 		}
 
 		Bool UpdateFileRange::merge(WorkItem *other) {

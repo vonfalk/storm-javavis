@@ -86,6 +86,12 @@ class SlideExpr extends Expr {
 		into.add(namedExpr(into, SStr(name, pos), LocalVarAccess(pos, sVar), actual));
 	}
 
+	void add(ItemInfo[] i) {
+		for (elem in i) {
+			add(elem);
+		}
+	}
+
 	ExprResult result() {
 		outer.result();
 	}

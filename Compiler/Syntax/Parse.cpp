@@ -188,7 +188,9 @@ namespace storm {
 					} else if (kind == L"?") {
 						result->indentType = indentWeakIncrease;
 					} else if (kind == L"@") {
-						result->indentType = indentAlign;
+						result->indentType = indentAlignBegin;
+					} else if (kind == L"$") {
+						result->indentType = indentAlignEnd;
 					} else {
 						throw SyntaxError(kind.pos, L"Unexpected indentation kind: " + ::toS(kind));
 					}

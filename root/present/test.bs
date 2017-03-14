@@ -8,16 +8,16 @@ void test() {
 		Title "Test presentation" {
 			Text "Filip Strömbäck";
 		};
-		Content "Test list" {
+		Fade 1 s -> Content "Test list" {
 			List [
-				"First point",
-				"Second point",
-				"Third point"
-				];
+				  "First point",
+				  "Second point",
+				  "Third point"
+			];
 			List [
-				"Second column!",
-				"Works!"
-				];
+				  "Second column!",
+				  "Works!"
+			];
 		};
 		Bsod;
 	};

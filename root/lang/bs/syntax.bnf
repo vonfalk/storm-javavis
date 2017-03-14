@@ -72,7 +72,7 @@ SStrContent : "[^\"\\]*"; // All except end of string and backslash.
 SStrContent : SStrContent - "\\." - SStrContent; // Gobble escape sequences (we could translate them here...)
 
 Str SString();
-SString => s : "\"" - (SStrContent) s - "\"";
+SString => s : "\"" #string - (SStrContent #string) s - "\"" #string;
 
 // Parameter list (possibly empty).
 Array<NameParam> SFormals();
@@ -85,19 +85,19 @@ SFormal => NameParam(type, name) : SType type, SName name #varName;
 // Function.
 FunctionDecl SFunction(Scope env);
 SFunction => FunctionDecl(env, result, name, params, body) :
-    SType result, SName name #fnName, "(", SFormals params, ")", "{", SFunctionBody@ body, "}";
+    SType result, SName name #fnName, "(", SFormals params, ")", "{" [, SFunctionBody@ body, ]+ "}";
 SFunction => FunctionDecl(env, result, name, params, thread, body) :
-    SType result, SName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, "{", SFunctionBody@ body, "}";
+    SType result, SName name #fnName, "(", SFormals params, ")", "on" #keyword, SType thread, "{" [, SFunctionBody@ body, ]+ "}";
 
 
 // Class/value.
 Class SClass(Scope env);
-SClass => createClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "{", SClassBody@ body, "}";
-SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #typeName, "{", SClassBody@ body, "}";
-SClass => extendClass(pos, env, name, base, body) : "class" #keyword , SName name #typeName, "extends" #keyword, SType base, "{", SClassBody@ body, "}";
-SClass => extendValue(pos, env, name, base, body) : "value" #keyword, SName name #typeName, "extends" #keyword, SType base, "{", SClassBody@ body, "}";
-SClass => threadClass(pos, env, name, thread, body) : "class" #keyword, SName name #typeName, "on" #keyword, SType thread, "{", SClassBody@ body, "}";
-SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "on" #keyword, "\?", "{", SClassBody@ body, "}";
+SClass => createClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "{" [, SClassBody@ body, ]+ "}";
+SClass => createValue(pos, env, name, body) : "value" #keyword, SName name #typeName, "{" [, SClassBody@ body, ]+ "}";
+SClass => extendClass(pos, env, name, base, body) : "class" #keyword , SName name #typeName, "extends" #keyword, SType base, "{" [, SClassBody@ body, ]+ "}";
+SClass => extendValue(pos, env, name, base, body) : "value" #keyword, SName name #typeName, "extends" #keyword, SType base, "{" [, SClassBody@ body, ]+ "}";
+SClass => threadClass(pos, env, name, thread, body) : "class" #keyword, SName name #typeName, "on" #keyword, SType thread, "{" [, SClassBody@ body, ]+ "}";
+SClass => threadClass(pos, env, name, body) : "class" #keyword, SName name #typeName, "on" #keyword, "\?", "{" [, SClassBody@ body, ]+ "}";
 
 // Named thread declaration.
 NamedThread SNamedThread();
@@ -144,7 +144,7 @@ SFnActuals => v : "(", SActuals(block) v, ")";
 
 // Block.
 Block SBlock(Block parent);
-SBlock => ExprBlock(pos, parent) : "{", (SStmt(me) -> add, )* "}";
+SBlock => ExprBlock(pos, parent) : "{" [, (SStmt(me) -> add, )* ]+ "}";
 
 // Weak casts, ie. casts that can fail. Note that if (x) is excluded from here, as it is difficult
 // to distinguish from the case where 'c' is a boolean by syntax alone. This part will probably contain
@@ -168,7 +168,7 @@ SIf[5] => IfWeak(block, cast, name) :
 
 // Scoping for if and as expressions.
 IfTrue SIfTrue(Block parent); // Really only If and IfWeak.
-SIfTrue => IfTrue(pos, parent) : SStmt(me) -> set;
+SIfTrue => IfTrue(pos, parent) : [SStmt(me) -> set]?;
 
 // Return.
 Return SReturn(Block block);
@@ -178,13 +178,13 @@ SReturn => Return(pos, block, expr) : "return" #keyword, SExpr(block) expr;
 // The loop.
 Expr SLoop(Block block);
 SLoop => Loop(pos, block) : "do[ \n\r\t]" #keyword, SStmt(me) -> doBody (, "while" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody)?;
-SLoop => Loop(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody;
+SLoop => Loop(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, ")" [, SStmt(me) -> whileBody]?;
 
 // The for loop. Divided into two to get correct scoping.
 SLoop => ExprBlock(pos, block) : "for" #keyword, "(", SExpr(me) -> add, ";", SForInner(me) -> add;
 
 For SForInner(Block block);
-SForInner => For(pos, block) : SExpr(me) -> test, ";", SExpr(me) -> update, ")", SStmt(me) -> body;
+SForInner => For(pos, block) : SExpr(me) -> test, ";", SExpr(me) -> update, ")" [, SStmt(me) -> body]?;
 
 // Range-based for loop.
 SLoop => RangeFor(pos, block, var, in) : "for" #keyword, "(", SName var, "in" #keyword, SExpr(block) in, ")", SStmt(me) -> body;
@@ -193,9 +193,9 @@ SLoop => RangeFor(pos, block, k, v, in) : "for" #keyword, "(", SName k, ",", SNa
 // Unless block.
 Unless SUnless(Block block);
 SUnless[0] => Unless(block, cast) :
-    "unless" #keyword, "(", SAllWeakCast(block) cast, ")", SStmt(me) -> fail (, SStmt(me) -> success)*;
+    "unless" #keyword, "(", SAllWeakCast(block) cast, ")" [, SStmt(me) -> fail ]? (, SStmt(me) -> success)*;
 SUnless[5] => Unless(block, cast, name) :
-    "unless" #keyword, "(", SName name, "=", SAllWeakCast(block) cast, ")", SStmt(me) -> fail (, SStmt(me) -> success)*;
+    "unless" #keyword, "(", SName name, "=", SAllWeakCast(block) cast, ")" [, SStmt(me) -> fail ]? (, SStmt(me) -> success)*;
 
 // Initializer list for arrays.
 Array<Expr> SArrayInitList(Block block);
@@ -242,11 +242,11 @@ SAtom => e : SBlock(block) e;
 SAtom => e : SIf(block) e;
 SAtom => e : SLoop(block) e;
 SAtom => accessExpr(block, lhs, par) : SAtom(block) lhs, "\[", SExpr(block) par, "\]";
-SAtom => arrayInit(block, t, list) : SType t, ":", "\[", SArrayInitList(block) list, "\]";
-SAtom => ArrayInit(pos, block, list) : "\[", SArrayInitList(block) list, "\]";
+SAtom => arrayInit(block, t, list) : SType t, ":", "\[" [, SArrayInitList(block) list, ]$ "\]";
+SAtom => ArrayInit(pos, block, list) : "\[" [, SArrayInitList(block) list, ]$ "\]";
 SAtom[20] => FnPtr(block, name, params) : "&", SFnName name, SFnTypes params;
 SAtom[20] => FnPtr(block, dotExpr, name, params) : "&", SAtom(block) dotExpr, "\.", SName name #varName, SFnTypes params;
-SAtom => unit(block, value, unit) : SConst value, SUnit unit; //TODO: Add highlighting info!
+SAtom => unit(block, value, unit) : SConst value, SUnit unit #typeName;
 
 // Temporary, to turn a value of type T into Maybe<T>, this should be done automatically in the future.
 SAtom => asMaybe(block, expr) : "\?", SAtom(block) expr;

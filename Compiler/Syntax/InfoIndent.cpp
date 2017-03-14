@@ -23,8 +23,11 @@ namespace storm {
 			case indentWeakIncrease:
 				to << L"?";
 				break;
-			case indentAlign:
+			case indentAlignBegin:
 				to << L"@";
+				break;
+			case indentAlignEnd:
+				to << L"$";
 				break;
 			}
 			return to;
@@ -88,7 +91,7 @@ namespace storm {
 			return (value & indentMask) != 0;
 		}
 
-		void TextIndent::applyParent(InfoIndent *info, Nat current, Nat offset) {
+		void TextIndent::applyParent(InfoIndent *info, Nat current, Nat offsetBegin, Nat offsetEnd) {
 			Bool inside = info->contains(current);
 
 			switch (info->type) {
@@ -104,11 +107,18 @@ namespace storm {
 				if (!isAlign() && !seenIndent() && inside)
 					level(1);
 				break;
-			case indentAlign:
+			case indentAlignBegin:
 				if (isAlign()) {
 					// We only care about the leafmost one.
 				} else if (inside) {
-					alignAs(offset);
+					alignAs(offsetBegin);
+				}
+				break;
+			case indentAlignEnd:
+				if (isAlign()) {
+					// We only care about the leafmost one.
+				} else if (inside) {
+					alignAs(offsetEnd);
 				}
 				break;
 			}
