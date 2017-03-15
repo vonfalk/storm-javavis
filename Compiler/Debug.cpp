@@ -10,6 +10,41 @@
 namespace storm {
 	namespace debug {
 
+		Link *createList(EnginePtr ep, Nat n) {
+			Link *start = null;
+			Link *prev = null;
+			Engine &e = ep.v;
+
+			for (nat i = 0; i < n; i++) {
+				Link *now = new (e) Link;
+				now->value = i;
+
+				if (prev == null) {
+					start = now;
+				} else {
+					prev->next = now;
+				}
+				prev = now;
+			}
+
+			return start;
+		}
+
+		Bool checkList(Link *first, Nat n) {
+			Link *at = first;
+			for (nat i = 0; i < n; i++) {
+				if (!at)
+					return false;
+				if (at->value != i)
+					return false;
+
+				at = at->next;
+			}
+
+			return at == null;
+		}
+
+
 		DtorClass::DtorClass(int v) : value(v) {}
 
 		DtorClass::~DtorClass() {

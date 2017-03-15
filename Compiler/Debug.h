@@ -23,6 +23,10 @@ namespace storm {
 			Link *next;
 		};
 
+		// Create and check linked lists containing the elements 0..length-1
+		MAYBE(Link *) STORM_FN createList(EnginePtr e, Nat length);
+		Bool STORM_FN checkList(MAYBE(Link *) start, Nat length);
+
 
 		/**
 		 * Value-type containing pointers.

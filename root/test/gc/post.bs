@@ -1,0 +1,60 @@
+use core:debug;
+
+class GcVerify on ? {
+	Bool ok;
+	Nat checked;
+	ctor(Thread) {
+		init() {
+			ok = true;
+			checked = 0;
+		}
+	}
+
+	Bool check(Link? l, Nat count) {
+		checked++;
+		if (!checkList(l, count))
+			ok = false;
+		ok;
+	}
+
+	Nat times() {
+		checked;
+	}
+}
+
+class GcPost on ? {
+	Nat times;
+	GcVerify verify;
+
+	ctor(Thread, GcVerify v, Nat times) {
+		init() {
+			verify = v;
+			times = times;
+		}
+	}
+
+	void run() {
+		for (Nat i = 0; i < times; i++) {
+			Link? l = createList(10000);
+			spawn verify.check(l, 10000);
+		}
+	}
+}
+
+Bool testGcPost() {
+	Thread verifyThread;
+	GcVerify verify(verifyThread);
+
+	Nat threads = 3;
+	Nat times = 50000;
+	for (Nat i = 0; i < threads; i++) {
+		GcPost p(Thread(), verify, times);
+		spawn p.run();
+	}
+
+	while (verify.times < times*threads) {
+		sleep(10 ms);
+	}
+
+	verify.ok;
+}

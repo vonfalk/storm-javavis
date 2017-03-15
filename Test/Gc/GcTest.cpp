@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Compiler/Debug.h"
 #include "Utils/Bitwise.h"
+#include "Storm/Fn.h"
 
 using namespace storm::debug;
 
@@ -10,49 +11,13 @@ BEGIN_TEST(GcTest1, GcScan) {
 	CHECK(g.test());
 } END_TEST
 
-// Create a list of links, containing elements 0 to n-1
-static Link *createList(nat n) {
-	Link *start = null;
-	Link *prev = null;
-	Engine &e = gEngine();
-
-	for (nat i = 0; i < n; i++) {
-		Link *now = new (e) Link;
-		now->value = i;
-
-		if (prev == null) {
-			start = now;
-		} else {
-			prev->next = now;
-		}
-		prev = now;
-	}
-
-	return start;
-}
-
-// Check a list.
-static bool checkList(Link *first, nat n) {
-	Link *at = first;
-	for (nat i = 0; i < n; i++) {
-		if (!at)
-			return false;
-		if (at->value != i)
-			return false;
-
-		at = at->next;
-	}
-
-	return at == null;
-}
-
 BEGIN_TEST(GcTest2, GcObjects) {
 	Engine &e = gEngine();
 
 	// Allocate this many nodes to make sure MPS will try to GC at least once!
 	const nat count = 100000;
 
-	Link *start = createList(count);
+	Link *start = createList(e, count);
 	CHECK(checkList(start, count));
 
 } END_TEST
@@ -73,7 +38,7 @@ BEGIN_TEST(GcTest3, Stress) {
 		for (nat i = 0; i < count; i++) {
 			ValClass *now = new (e) ValClass;
 			now->data.value = i;
-			now->data.list = createList(i + 1);
+			now->data.list = createList(e, i + 1);
 
 			if (prev) {
 				prev->next = now;
@@ -102,81 +67,86 @@ BEGIN_TEST(GcTest3, Stress) {
 
 } END_TEST
 
-BEGIN_TEST(CodeAllocTest, GcObjects) {
-	Engine &e = gEngine();
+/**
+ * Essentially the above test but using multiple threads.
+ */
 
-	nat count = 10;
-	nat allocSize = sizeof(void *) * count + 3;
+class GcThreadCtx {
+public:
+	bool ok;
 
-	void *code = runtime::allocCode(e, allocSize, count);
+	GcThreadCtx() : ok(false) {}
 
-	GcCode *c = runtime::codeRefs(code);
+	void run() {
+		Engine &e = gEngine();
 
-	Array<PtrKey *> *o = new (e) Array<PtrKey *>();
-	PtrKey **objs = (PtrKey **)code;
+		// Allocate this many nodes.
+		const Nat count = 10000;
 
-	for (nat i = 0; i < count; i++) {
-		c->refs[i].offset = sizeof(void *)*i;
-		c->refs[i].kind = GcCodeRef::rawPtr;
+		// This many times.
+		const Nat times = 4000;
 
-		PtrKey *c = new (e) PtrKey();
-		objs[i] = c;
-		o->push(c);
-	}
-
-	bool moved = false;
-	for (nat i = 0; i < 20 && !moved; i++) {
-		for (nat i = 0; i < o->count(); i++) {
-			moved |= o->at(i)->moved();
+		ok = true;
+		for (Nat time = 0; time < times; time++) {
+			Link *list = createList(e, count);
+			if (!checkList(list, count))
+				ok = false;
+			os::UThread::leave();
 		}
-
-		createList(100);
-		e.gc.collect();
 	}
 
-	CHECK_EQ(runtime::codeSize(code), roundUp(size_t(allocSize), sizeof(size_t)));
-	CHECK_EQ(runtime::codeRefs(code)->refCount, 10);
+};
 
-	for (nat i = 0; i < count; i++) {
-		CHECK_EQ(o->at(i), objs[i]);
-	}
+BEGIN_TEST(GcThreadTest1, Stress) {
+	Engine &e = gEngine();
+	os::ThreadGroup group(util::memberVoidFn(&e, &Engine::attachThread),
+						util::memberVoidFn(&e, &Engine::detachThread));
 
+	GcThreadCtx a;
+	GcThreadCtx b;
+	GcThreadCtx c;
+
+	os::Thread::spawn(util::memberVoidFn(&a, &GcThreadCtx::run), group);
+	os::Thread::spawn(util::memberVoidFn(&b, &GcThreadCtx::run), group);
+	c.run();
+
+	group.join();
+	CHECK(a.ok);
+	CHECK(b.ok);
+	CHECK(c.ok);
 } END_TEST
 
-BEGIN_TEST(CodeRelPtr, GcObjects) {
+BEGIN_TEST(GcThreadTest2, Stress) {
 	Engine &e = gEngine();
+	os::ThreadGroup group(util::memberVoidFn(&e, &Engine::attachThread),
+						util::memberVoidFn(&e, &Engine::detachThread));
 
-	static GcType type = {
-		GcType::tArray,
-		null,
-		null,
-		sizeof(void *),
-		1, { 0 },
-	};
+	GcThreadCtx a1;
+	GcThreadCtx a2;
+	GcThreadCtx b1;
+	GcThreadCtx b2;
+	GcThreadCtx c1;
+	GcThreadCtx c2;
 
-	nat count = 20;
-	GcArray<void **> *codeArray = runtime::allocArray<void **>(e, &type, count);
-
-	for (nat i = 0; i < count; i++) {
-		void **code = (void **)runtime::allocCode(e, sizeof(void *) * 2, 2);
-		GcCode *meta = runtime::codeRefs(code);
-		meta->refs[0].offset = 0;
-		meta->refs[0].kind = GcCodeRef::inside;
-		*code = code + 1;
-
-		codeArray->v[i] = code;
+	{
+		os::Thread t = os::Thread::spawn(util::memberVoidFn(&a1, &GcThreadCtx::run), group);
+		os::UThread::spawn(util::memberVoidFn(&a2, &GcThreadCtx::run), &t);
+		t = os::Thread::spawn(util::memberVoidFn(&b1, &GcThreadCtx::run), group);
+		os::UThread::spawn(util::memberVoidFn(&b2, &GcThreadCtx::run), &t);
+		os::UThread::spawn(util::memberVoidFn(&c2, &GcThreadCtx::run));
+		c1.run();
 	}
 
-	// Make stuff move!
-	createList(1000);
-	e.gc.collect();
+	group.join();
+	CHECK(a1.ok);
+	CHECK(a2.ok);
+	CHECK(b1.ok);
+	CHECK(b2.ok);
+	CHECK(c1.ok);
+	CHECK(c2.ok);
+} END_TEST
 
-	// Verify stuff!
-	for (nat i = 0; i < count; i++) {
-		void **code = codeArray->v[i];
+BEGIN_TEST(GcThreadThest3, Stress) {
+	CHECK(runFn<Bool>(L"test.gc.testGcPost"));
+} END_TEST
 
-		// We shall still point into the object.
-		CHECK_EQ(*code, code + 1);
-	}
-
-} END_TEST;

@@ -118,6 +118,10 @@ namespace os {
 		return data->uState.stacks;
 	}
 
+	Thread Thread::spawn(ThreadGroup &group) {
+		return spawn(util::Fn<void>(), group);
+	}
+
 	Thread Thread::spawn(const util::Fn<void, void> &fn, ThreadGroup &group) {
 		ThreadStart start(fn, null, group.data);
 		startThread(start);

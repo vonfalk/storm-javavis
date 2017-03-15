@@ -119,7 +119,6 @@ namespace storm {
 		// Result from the prepare call.
 		struct PrepareResult {
 			code::Var params;
-			code::Var data;
 		};
 
 		// Generate the code that is shared between 'threadCall' and 'asyncThreadCall'. This is
@@ -145,8 +144,8 @@ namespace storm {
 
 	// Helpers used by the generated code.
 	void spawnThreadResult(const void *fn, bool member, const os::FnParams *params, void *result,
-						BasicTypeInfo *resultType, Thread *on, os::UThreadData *data);
+						BasicTypeInfo *resultType, Thread *on);
 	void spawnThreadFuture(const void *fn, bool member, const os::FnParams *params, FutureBase *result,
-						BasicTypeInfo *resultType, Thread *on, os::UThreadData *data);
+						BasicTypeInfo *resultType, Thread *on);
 
 }

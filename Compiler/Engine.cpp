@@ -336,12 +336,6 @@ namespace storm {
 			return FNREF(spawnThreadResult);
 		case rSpawnFuture:
 			return FNREF(spawnThreadFuture);
-		case rSpawnLater:
-			return FNREF(os::UThread::spawnLater);
-		case rSpawnParam:
-			return FNREF(os::UThread::spawnParamMem);
-		case rAbortSpawn:
-			return FNREF(os::UThread::abortSpawn);
 		case rFnParamsCtor:
 			return FNREF(fnParamsCtor);
 		case rFnParamsDtor:

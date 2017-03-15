@@ -164,9 +164,6 @@ namespace storm {
 			// Low-level helpers for spawning threads.
 			rSpawnResult,
 			rSpawnFuture,
-			rSpawnLater,
-			rSpawnParam,
-			rAbortSpawn,
 			// FnParams interaction.
 			rFnParamsCtor,
 			rFnParamsDtor,

@@ -292,19 +292,3 @@ BEGIN_TEST(UThreadSemaInterop, OS) {
 	CHECK_EQ(t.state, 2);
 
 } END_TEST
-
-static int spawnLaterFn(int a, int b) {
-	return a + b;
-}
-
-BEGIN_TEST(UThreadSpawnLater, OS) {
-	int v1 = 10;
-	int v2 = 20;
-
-	UThreadData *data = UThread::spawnLater();
-	FnParams p(UThread::spawnParamMem(data));
-	p.add(v1).add(v2);
-	os::Future<int> future;
-	UThread::spawn(&spawnLaterFn, false, p, future.impl(), future.data(), typeInfo<int>(), null, data);
-	CHECK_EQ(future.result(), 30);
-} END_TEST

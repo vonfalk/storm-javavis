@@ -26,21 +26,6 @@ static Link *createList(nat n) {
 	return start;
 }
 
-// Check a list.
-static bool checkList(Link *first, nat n) {
-	Link *at = first;
-	for (nat i = 0; i < n; i++) {
-		if (!at)
-			return false;
-		if (at->value != i)
-			return false;
-
-		at = at->next;
-	}
-
-	return at == null;
-}
-
 static Semaphore waitSema(0);
 static bool threadOk = false;
 

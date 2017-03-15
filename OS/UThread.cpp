@@ -50,21 +50,19 @@ namespace os {
 	 * UThread.
 	 */
 
-	// Insert on a specific thread. Makes sure to keep 'data' alive until the function has returned at least.
-	UThread UThread::insert(UThreadData *data, const Thread *on) {
-		ThreadData *d = null;
-		if (on) {
-			assert(*on != Thread::invalid);
-			d = on->threadData();
-		} else {
-			d = Thread::current().threadData();
-		}
+	static ThreadData *threadData(const Thread *thread) {
+		if (thread && *thread != Thread::invalid)
+			return thread->threadData();
+		return Thread::current().threadData();
+	}
 
+	// Insert on a specific thread. Makes sure to keep 'data' alive until the function has returned at least.
+	UThread UThread::insert(UThreadData *data, ThreadData *on) {
 		// We need to take our reference here, from the moment we call 'insert', 'data' may be deleted otherwise!
 		UThread result(data);
 
-		d->uState.insert(data);
-		d->reportWake();
+		on->uState.insert(data);
+		on->reportWake();
 
 		return result;
 	}
@@ -195,17 +193,18 @@ namespace os {
 #pragma runtime_checks("", restore)
 
 	UThread UThread::spawn(const util::Fn<void, void> &fn, const Thread *on) {
-		UThreadData *t = UThreadData::create();
+		ThreadData *thread = os::threadData(on);
+		UThreadData *t = UThreadData::create(&thread->uState);
 
 		t->pushParams(null, new util::Fn<void, void>(fn));
 		t->pushContext(&spawnFn);
 
-		return insert(t, on);
+		return insert(t, thread);
 	}
 
-	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params, const Thread *on, UThreadData *t) {
-		if (t == null)
-			t = UThreadData::create();
+	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params, const Thread *on) {
+		ThreadData *thread = os::threadData(on);
+		UThreadData *t = UThreadData::create(&thread->uState);
 
 		// Copy parameters to the stack of the new thread.
 		Params *p = (Params *)t->alloc(sizeof(Params));
@@ -222,14 +221,14 @@ namespace os {
 		t->pushContext(&spawnParams);
 
 		// Done!
-		return insert(t, on);
+		return insert(t, thread);
 	}
 
 	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params,
 						FutureBase &result, void *target, const BasicTypeInfo &resultType,
-						const Thread *on, UThreadData *t) {
-		if (t == null)
-			t = UThreadData::create();
+						const Thread *on) {
+		ThreadData *thread = os::threadData(on);
+		UThreadData *t = UThreadData::create(&thread->uState);
 
 		// Copy parameters to the stack of the new thread.
 		FutureParams *p = (FutureParams *)t->alloc(sizeof(FutureParams));
@@ -248,16 +247,7 @@ namespace os {
 		t->pushContext(&spawnFuture);
 
 		// Done!
-		return insert(t, on);
-	}
-
-	UThreadData *UThread::spawnLater() {
-		return UThreadData::create();
-	}
-
-	void UThread::abortSpawn(UThreadData *data) {
-		if (data)
-			delete data;
+		return insert(t, thread);
 	}
 
 
@@ -267,15 +257,20 @@ namespace os {
 
 	UThreadStack::UThreadStack() : desc(null) {}
 
-	UThreadData::UThreadData() : references(0), next(null), owner(null), stackBase(null), stackSize(null) {}
+	UThreadData::UThreadData(UThreadState *state) :
+		references(0), next(null), owner(null), stackBase(null), stackSize(null) {
 
-	UThreadData *UThreadData::createFirst() {
-		// For the thread where the stack was allocated by the OS, we do not need to care.
-		return new UThreadData();
+		// Notify the GC that we exist and may contain interesting data.
+		state->newStack(this);
 	}
 
-	UThreadData *UThreadData::create() {
-		UThreadData *t = new UThreadData();
+	UThreadData *UThreadData::createFirst(UThreadState *thread) {
+		// For the thread where the stack was allocated by the OS, we do not need to care.
+		return new UThreadData(thread);
+	}
+
+	UThreadData *UThreadData::create(UThreadState *thread) {
+		UThreadData *t = new UThreadData(thread);
 		t->stackSize = os::stackSize;
 		t->stackBase = allocStack(t->stackSize);
 		t->stack.desc = initialStack(t->stackBase, t->stackSize);
@@ -299,11 +294,10 @@ namespace os {
 	UThreadState::UThreadState(ThreadData *owner) : owner(owner) {
 		currentUThreadState(this);
 
-		running = UThreadData::createFirst();
+		running = UThreadData::createFirst(this);
 		running->owner = this;
 		running->addRef();
 
-		stacks.insert(&running->stack);
 		aliveCount = 1;
 	}
 
@@ -317,6 +311,11 @@ namespace os {
 
 		assert(aliveCount == 0, L"An OS thread tried to terminate before all its UThreads terminated.");
 		assert(stacks.empty(), L"Consistency issue. aliveCount says zero, but we still have stacks we can scan!");
+	}
+
+	void UThreadState::newStack(UThreadData *v) {
+		util::Lock::L z(lock);
+		stacks.insert(&v->stack);
 	}
 
 	UThreadState *UThreadState::current() {
@@ -432,7 +431,6 @@ namespace os {
 		atomicIncrement(aliveCount);
 
 		util::Lock::L z(lock);
-		stacks.insert(&data->stack);
 		ready.push(data);
 		data->addRef();
 	}
@@ -512,11 +510,6 @@ namespace os {
 			sz = sysInfo.dwPageSize;
 		}
 		return sz;
-	}
-
-	void *UThread::spawnParamMem(UThreadData *data) {
-		// The stack grows from the bottom, so we can reuse the top for parameters.
-		return data->stackBase;
 	}
 
 	static void *allocStack(nat size) {

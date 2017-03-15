@@ -175,13 +175,9 @@ namespace storm {
 	// Generate code to fill in a BasicTypeInfo struct. Only touches eax register.
 	code::Var createBasicTypeInfo(CodeGen *to, Value v);
 
-	// Generate code that creates a FnParams object on the stack. Issueas a function call, and does not
-	// preserve any register values. 'memory' will be passed to the FnParams ctor as the memory to be used.
-	// Uses 'ptrC' before 'memory' is used.
-	code::Var STORM_FN createFnParams(CodeGen *s, code::Operand memory);
-
-	// Same as above, but takes the number of parameters needed to be passed.
-	code::Var STORM_FN createFnParams(CodeGen *s, Nat numParams);
+	// Generate code that creates a FnParams object on the stack with room for 'paramCount'
+	// parameters. Issues a function call and does therefore not preserve any register values.
+	code::Var STORM_FN createFnParams(CodeGen *s, Nat paramCount);
 
 	// Add a parameter to a FnParams object.
 	void STORM_FN addFnParam(CodeGen *s, code::Var fnParams, Value type, code::Operand v);

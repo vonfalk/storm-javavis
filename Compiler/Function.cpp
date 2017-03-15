@@ -286,7 +286,6 @@ namespace storm {
 		*to->l << fnParam(ptrB);
 		*to->l << fnParam(ptrC);
 		*to->l << fnParam(thread);
-		*to->l << fnParam(r.data);
 		*to->l << fnCall(e.ref(Engine::rSpawnResult), valVoid());
 
 		*to->l << end(b);
@@ -298,15 +297,8 @@ namespace storm {
 
 		Engine &e = engine();
 
-		// Create a UThreadData object.
-		Var data = to->l->createVar(to->block, Size::sPtr, e.ref(Engine::rAbortSpawn), freeOnException);
-		*to->l << fnCall(e.ref(Engine::rSpawnLater), valPtr());
-		*to->l << mov(data, ptrA);
-
-		// Find out the pointer to the data and create FnParams object.
-		*to->l << fnParam(ptrA);
-		*to->l << fnCall(e.ref(Engine::rSpawnParam), valPtr());
-		Var fnParams = createFnParams(to, code::Operand(ptrA));
+		// Create FnParams object.
+		Var fnParams = createFnParams(to, params->count());
 
 		// Add all parameters.
 		for (nat i = 0; i < params->count(); i++) {
@@ -316,13 +308,7 @@ namespace storm {
 				addFnParamCopy(to, fnParams, this->params->at(i), params->at(i));
 		}
 
-		// Set the thread data to null, so that we do not double-free it if
-		// the call returns with an exception.
-		Var dataNoFree = to->l->createVar(to->block, Size::sPtr);
-		*to->l << mov(dataNoFree, data);
-		*to->l << mov(data, ptrConst(Offset()));
-
-		PrepareResult r = { fnParams, dataNoFree };
+		PrepareResult r = { fnParams };
 		return r;
 	}
 
@@ -467,7 +453,6 @@ namespace storm {
 		*to->l << fnParam(resultPos.v);
 		*to->l << fnParam(ptrC);
 		*to->l << fnParam(t);
-		*to->l << fnParam(r.data);
 		*to->l << fnCall(e.ref(Engine::rSpawnFuture), valVoid());
 
 		*to->l << end(b);
@@ -479,18 +464,18 @@ namespace storm {
 	 */
 
 	void spawnThreadResult(const void *fn, bool member, const os::FnParams *params, void *result,
-						BasicTypeInfo *resultType, Thread *on, os::UThreadData *data) {
+						BasicTypeInfo *resultType, Thread *on) {
 		os::FutureSema<os::Sema> future;
 		const os::Thread *thread = on ? &on->thread() : null;
-		os::UThread::spawn(fn, member, *params, future, result, *resultType, thread, data);
+		os::UThread::spawn(fn, member, *params, future, result, *resultType, thread);
 		future.result();
 	}
 
 	void spawnThreadFuture(const void *fn, bool member, const os::FnParams *params, FutureBase *result,
-						BasicTypeInfo *resultType, Thread *on, os::UThreadData *data) {
+						BasicTypeInfo *resultType, Thread *on) {
 		os::FutureBase *future = result->rawFuture();
 		const os::Thread *thread = on ? &on->thread() : null;
-		os::UThread::spawn(fn, member, *params, *future, result->rawResult(), *resultType, thread, data);
+		os::UThread::spawn(fn, member, *params, *future, result->rawResult(), *resultType, thread);
 	}
 
 

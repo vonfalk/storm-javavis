@@ -237,31 +237,24 @@ namespace storm {
 		return s;
 	}
 
-	code::Var createFnParams(CodeGen *s, code::Operand memory) {
+	code::Var createFnParams(CodeGen *s, Nat paramCount) {
 		using namespace code;
 
 		Engine &e = s->engine();
+		Var mem = s->l->createVar(s->block,
+								fnParamSize() * (paramCount + 1));
 		Var v = s->l->createVar(s->block,
 								fnParamsSize(),
 								e.ref(Engine::rFnParamsDtor),
 								freeOnBoth | freePtr);
 		// Call the ctor!
+		*s->l << lea(ptrA, mem);
 		*s->l << lea(ptrC, v);
 		*s->l << fnParam(ptrC);
-		*s->l << fnParam(memory);
+		*s->l << fnParam(ptrA);
 		*s->l << fnCall(e.ref(Engine::rFnParamsCtor), valVoid());
 
 		return v;
-	}
-
-	code::Var createFnParams(CodeGen *s, Nat params) {
-		using namespace code;
-		// Allocate space for the parameters on the stack.
-		Size total = fnParamSize() * params;
-		Var v = s->l->createVar(s->block, total);
-		*s->l << lea(ptrA, v);
-
-		return createFnParams(s, code::Operand(ptrA));
 	}
 
 	void addFnParam(CodeGen *s, code::Var fnParams, Value type,	code::Operand v) {

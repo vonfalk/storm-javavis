@@ -99,14 +99,13 @@ namespace os {
 		// Spawn using a plain function pointer and parameters. The parameters stored in
 		// 'params' follows the same lifetime rules as FnParams::call() does. No special care
 		// needs to be taken. Note: fn may not return a value!
-		static UThread spawn(const void *fn, bool memberFn, const FnParams &params,
-							const Thread *on = null, UThreadData *prealloc = null);
+		static UThread spawn(const void *fn, bool memberFn, const FnParams &params, const Thread *on = null);
 
 		// Spawn a thread, returning the result in a future. Keep the Future object alive until
 		// it has gotten a result, otherwise we will probably crash! This is the low-level variant.
 		// It may also be used from the 'spawnLater' api by setting 'prealloc' to something other than null.
 		static UThread spawn(const void *fn, bool memberFn, const FnParams &params, FutureBase &result, void *target,
-							const BasicTypeInfo &resultType, const Thread *on = null, UThreadData *prealloc = null);
+							const BasicTypeInfo &resultType, const Thread *on = null);
 
 		// Spawn using a plain function pointer and parameters. Places the result (including any exceptions)
 		// in the future object.
@@ -115,28 +114,6 @@ namespace os {
 							Future<R, Sema> &future, const Thread *on = null) {
 			return spawn(fn, memberFn, params, future.impl(), future.data(), typeInfo<R>(), on);
 		}
-
-		/**
-		 * Spawn a new UThread in two step. This can be used to pass parameters easily from
-		 * machine code, without allocating any memory at all except for the stack and internal
-		 * data needed by the UThread itself (which may be removed in the future).
-		 * This is a four step process:
-		 * 1: call spawnLater to allocate the thread itself.
-		 * 2: call spawnParamMem(v) to get a pointer to the memory usable for parameters.
-		 * 3: add parameters using FnParams
-		 * 4: call either UThread::spawn() or abortSpawn()
-		 */
-
-		// Spawn a thread later. Returns a thread that is allocated but not yet scheduled. Make
-		// sure to either start it using 'spawn' or 'abortSpawn' to avoid leaking resources.
-		static UThreadData *CODECALL spawnLater();
-
-		// Get memory usable for parameters.
-		static void *CODECALL spawnParamMem(UThreadData *data);
-
-		// Abort the spawn.
-		static void CODECALL abortSpawn(UThreadData *data);
-
 
 		// Get the thread data. Mainly for internal use.
 		inline UThreadData *threadData() { return data; }
@@ -152,7 +129,7 @@ namespace os {
 		UThreadData *data;
 
 		// Insert an UThread.
-		static UThread insert(UThreadData *data, const Thread *on);
+		static UThread insert(UThreadData *data, ThreadData *on);
 	};
 
 
@@ -184,7 +161,7 @@ namespace os {
 	 */
 	class UThreadData : NoCopy {
 		// Create.
-		UThreadData();
+		UThreadData(UThreadState *thread);
 
 	public:
 		// Number of references.
@@ -207,10 +184,10 @@ namespace os {
 		}
 
 		// Create for the first thread (where the stack is allocated by OS).
-		static UThreadData *createFirst();
+		static UThreadData *createFirst(UThreadState *thread);
 
 		// Create any other threads.
-		static UThreadData *create();
+		static UThreadData *create(UThreadState *thread);
 
 		// Destroy.
 		~UThreadData();
@@ -303,6 +280,9 @@ namespace os {
 
 		// Get the currently running thread.
 		inline UThreadData *runningThread() { return running; }
+
+		// Notify there is a new stack.
+		void newStack(UThreadData *data);
 
 	private:
 		// Data for sleeping threads.
