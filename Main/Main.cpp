@@ -107,9 +107,19 @@ int runFunction(Engine &e, const wchar *function) {
 	}
 
 	// We can just ignore the return value...
-	typedef void (*Fn)();
-	Fn p = (Fn)fn->ref().address();
-	(*p)();
+	RunOn run = fn->runOn();
+	const void *addr = fn->ref().address();
+	if (run.state == RunOn::named) {
+		os::FnStackParams<1> params;
+		os::Future<void> result;
+		os::Thread on = run.thread->thread()->thread();
+		os::UThread::spawn(addr, false, params, result, &on);
+		result.result();
+	} else {
+		typedef void (*Fn)();
+		Fn p = (Fn)addr;
+		(*p)();
+	}
 	return 0;
 }
 

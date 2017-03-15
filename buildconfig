@@ -6,6 +6,8 @@ Test
 
 #Main -a -r ../root/ -f test.d.testFactorial
 #Main -a -r ../root/ -f test.asm.testInlineLabel
+#Main -a -r ../root/ -f test.sound.play
+#Main -a -r ../root/ -f sound.testMe
 
 #Presentation
 #Main -a -r ../root/ -i final ../External/final -f final.configura

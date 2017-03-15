@@ -39,7 +39,10 @@ namespace sound {
 		WeakSet<Player> *players;
 
 		// Notify events for all players here.
-		void notifyEvents(vector<HANDLE> &all);
+		void notifyEvents();
+
+		// Get a list of all events that provide us with wake notifications.
+		void allEvents(vector<HANDLE> &events);
 	};
 
 	// Get the global AudioMgr instance.
@@ -58,10 +61,6 @@ namespace sound {
 		virtual bool wait(os::IOHandle io, nat ms);
 		virtual void signal();
 		virtual void work();
-
-		// Add/remove player notifications. Only call from this thread.
-		void addPlayer(HANDLE event);
-		void removePlayer(HANDLE event);
 
 		// Terminate this thread.
 		void terminate();

@@ -33,23 +33,17 @@ namespace sound {
 
 	void AudioMgr::addPlayer(Player *player) {
 		players->put(player);
-		if (wait)
-			wait->addPlayer(player->waitEvent().v());
 	}
 
 	void AudioMgr::removePlayer(Player *player) {
 		players->remove(player);
-		if (wait)
-			wait->removePlayer(player->waitEvent().v());
 	}
 
 	static bool signaled(HANDLE event) {
 		return WaitForSingleObjectEx(event, 0, FALSE) != WAIT_TIMEOUT;
 	}
 
-	void AudioMgr::notifyEvents(vector<HANDLE> &all) {
-		all.resize(2);
-
+	void AudioMgr::notifyEvents() {
 		WeakSet<Player>::Iter i = players->iter();
 		while (Player *p = i.next()) {
 			if (p->waitEvent() == Handle())
@@ -60,8 +54,16 @@ namespace sound {
 				ResetEvent(event);
 				p->onNotify();
 			}
+		}
+	}
 
-			all.push_back(event);
+	void AudioMgr::allEvents(vector<HANDLE> &all) {
+		all.resize(2);
+		WeakSet<Player>::Iter i = players->iter();
+		while (Player *p = i.next()) {
+			Handle event = p->waitEvent();
+			if (event != Handle())
+				all.push_back(event.v());
 		}
 	}
 
@@ -82,18 +84,12 @@ namespace sound {
 	}
 
 	AudioWait::~AudioWait() {
-		// for (nat i = 1; i < events.size(); i++) {
-		// 	CloseHandle(events[i]);
-		// }
 		CloseHandle(events[1]);
 	}
 
 	void AudioWait::init() {
 		events.push_back(NULL);
 		events.push_back(CreateEvent(NULL, TRUE, FALSE, NULL));
-
-		AudioMgr *m = audioMgr(e);
-		m->notifyEvents(events);
 	}
 
 	bool AudioWait::wait(os::IOHandle io) {
@@ -107,8 +103,15 @@ namespace sound {
 		}
 
 		events[0] = io.v();
-		Nat first = events[0] == NULL ? 1 : 0;
-		DWORD z = WaitForMultipleObjectsEx(events.size() - first, &events[first], FALSE, ms, FALSE);
+		Nat first = !io ? 1 : 0;
+		Nat count = 2;
+		if (!working) {
+			AudioMgr *m = audioMgr(e);
+			m->allEvents(events);
+			count = events.size();
+		}
+
+		DWORD z = WaitForMultipleObjectsEx(count - first, &events[first], FALSE, ms, FALSE);
 		ResetEvent(events[1]);
 
 		if (exit) {
@@ -124,28 +127,14 @@ namespace sound {
 	void AudioWait::work() {
 		AudioMgr *m = audioMgr(e);
 		working = true;
-		m->notifyEvents(events);
+		m->notifyEvents();
 		working = false;
 		doExit();
 	}
 
-	void AudioWait::addPlayer(HANDLE event) {
-		for (nat i = 2; i < events.size(); i++)
-			if (events[i] == event)
-				return;
-		events.push_back(event);
-	}
-
-	void AudioWait::removePlayer(HANDLE event) {
-		for (Nat i = 2; i < events.size(); i++) {
-			if (events[i] == event) {
-				events.erase(events.begin() + i);
-				return;
-			}
-		}
-	}
-
 	void AudioWait::doExit() {
+		if (exit)
+			PLN(L"Exiting...");
 		if (exit && !working && notifyExit) {
 			notifyExit->up();
 			notifyExit = null;

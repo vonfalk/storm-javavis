@@ -1764,6 +1764,8 @@ namespace storm {
 
 	Gc::~Gc() {}
 
+	void Gc::destroy() {}
+
 	void Gc::collect() {}
 
 	bool Gc::collect(nat time) {
@@ -1786,6 +1788,10 @@ namespace storm {
 		void *start = (size_t *)mem + headerSizeWords;
 		assert(typeOf(start) == type);
 		return start;
+	}
+
+	void *Gc::allocStatic(const GcType *type) {
+		return alloc(type);
 	}
 
 	void *Gc::allocArray(const GcType *type, size_t count) {
