@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "Package.h"
 #include "Function.h"
+#include "License.h"
 #include "Code.h"
 #include "VTableCpp.h"
 #include "Exception.h"
@@ -17,44 +18,51 @@ namespace storm {
 		e(&e), world(world), into(&into), rootPackage(root) {}
 
 	nat CppLoader::typeCount() const {
-		nat n;
-		for (n = 0; world->types[n].name; n++)
-			;
+		nat n = 0;
+		while (world->types[n].name)
+			n++;
 		return n;
 	}
 
 	nat CppLoader::templateCount() const {
-		nat n;
-		for (n = 0; world->templates[n].name; n++)
-			;
+		nat n = 0;
+		while (world->templates[n].name)
+			n++;
 		return n;
 	}
 
 	nat CppLoader::threadCount() const {
-		nat n;
-		for (n = 0; world->threads[n].name; n++)
-			;
+		nat n = 0;
+		while (world->threads[n].name)
+			n++;
 		return n;
 	}
 
 	nat CppLoader::functionCount() const {
-		nat n;
-		for (n = 0; world->functions[n].name; n++)
-			;
+		nat n = 0;
+		while (world->functions[n].name)
+			n++;
 		return n;
 	}
 
 	nat CppLoader::variableCount() const {
-		nat n;
-		for (n = 0; world->variables[n].name; n++)
-			;
+		nat n = 0;
+		while (world->variables[n].name)
+			n++;
 		return n;
 	}
 
 	nat CppLoader::enumValueCount() const {
-		nat n;
-		for (n = 0; world->enumValues[n].name; n++)
-			;
+		nat n = 0;
+		while (world->enumValues[n].name)
+			n++;
+		return n;
+	}
+
+	nat CppLoader::licenseCount() const {
+		nat n = 0;
+		while (world->licenses[n].name)
+			n++;
 		return n;
 	}
 
@@ -506,6 +514,15 @@ namespace storm {
 		assert(memberOf, L"Type not properly loaded or not an enum!");
 
 		memberOf->add(new (*e) EnumValue(memberOf, new (*e) Str(val.name), val.value));
+	}
+
+	void CppLoader::loadLicenses() {
+		nat count = licenseCount();
+		for (nat i = 0; i < count; i++) {
+			const CppLicense &l = world->licenses[i];
+			NameSet *into = findPkg(l.pkg);
+			into->add(new (*e) License(new (*e) Str(l.name), new (*e) Str(l.title), new (*e) Str(l.body)));
+		}
 	}
 
 }

@@ -144,6 +144,7 @@ void FileStream::seek(nat64 to) {
 	flush();
 	bufferPos = 0;
 	bufferStart = to;
+	bufferFill = 0;
 }
 
 void FileStream::rawSeek(nat64 to) {

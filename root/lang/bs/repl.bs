@@ -29,6 +29,8 @@ class BsRepl extends Repl {
 		scope.addInclude(named{core});
 		scope.addInclude(named{lang:bs});
 		scope.addInclude(named{lang:bs:macro});
+
+		print("Type 'licenses' to show licenses for all currently used modules.");
 	}
 
 	Bool eval(Str line) {
@@ -94,6 +96,17 @@ class BsRepl extends Repl {
 
 }
 
+void outputLicense(core:info:License l, Bool full) on Compiler {
+	print(l.identifier # ": " # l.title);
+	if (full) {
+		Str line = "-" * 80;
+		print(line);
+		print(l.body);
+		print(line);
+		print("");
+	}
+}
+
 // Sandbox class for the Repl to execute in.
 class ReplSandbox on Compiler {
 	BsRepl owner;
@@ -101,6 +114,25 @@ class ReplSandbox on Compiler {
 	ctor(BsRepl owner) {
 		init() {
 			owner = owner;
+		}
+	}
+
+	// Show all licenses in the system.
+	void licenses() {
+		print("For full license information, type 'fullLicenses'.");
+		print("Licenses of modules currently in use by the system:");
+		print("");
+		for (l in core:info:licenses) {
+			outputLicense(l, false);
+		}
+	}
+
+	// Show the long version of the licenses.
+	void fullLicenses() {
+		print("Licenses of modules currently in use by the system:");
+		print("");
+		for (l in core:info:licenses) {
+			outputLicense(l, true);
 		}
 	}
 

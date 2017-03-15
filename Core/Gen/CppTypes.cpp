@@ -33,6 +33,7 @@ namespace storm {
 		static const CppEnumValue *cppEnumValues();
 		static const CppTemplate *cppTemplates();
 		static const CppThread *cppThreads();
+		static const CppLicense *cppLicenses();
 		static const CppRefType *cppRefTypes();
 
 		/**
@@ -150,6 +151,14 @@ namespace storm {
 		return threads;
 	}
 
+	const CppLicense *CppMeta::cppLicenses() {
+		static const CppLicense licenses[] = {
+			// LICENSES
+			{ null, null, null, null },
+		};
+		return licenses;
+	}
+
 	const CppRefType *CppMeta::cppRefTypes() {
 #ifdef DEBUG
 		// REF_PTR_OFFSETS
@@ -172,6 +181,7 @@ namespace storm {
 			CppMeta::cppEnumValues(),
 			CppMeta::cppTemplates(),
 			CppMeta::cppThreads(),
+			CppMeta::cppLicenses(),
 			CppMeta::cppRefTypes(),
 		};
 		return &w;

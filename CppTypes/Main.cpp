@@ -121,7 +121,7 @@ int _tmain(int argc, const wchar *argv[]) {
 	if (update) {
 		try {
 			World world;
-			parseWorld(world);
+			parseWorld(world, licenses);
 
 			// TODO: More!
 			world.usingDecl.push_back(CppName(L"storm"));

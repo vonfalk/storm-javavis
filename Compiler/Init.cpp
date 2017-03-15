@@ -58,6 +58,7 @@ namespace storm {
 		// Load functions and variables.
 		loader.loadFunctions();
 		loader.loadVariables();
+		loader.loadLicenses();
 
 		// Load the system-wide toS implementation.
 		Package *core = e.package(L"core");

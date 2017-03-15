@@ -631,7 +631,6 @@ static void genRefPtrOffsets(wostream &to, World &w) {
 		// 	if (o[i].typeName == t.name)
 		// 		PLN(L"  " << o[i].varName);
 		// }
-		// Sleep(10);
 
 		to << L"-1 };\n";
 	}
@@ -642,6 +641,86 @@ static void genRefTypes(wostream &to, World &w) {
 		Type &t = *w.types[i];
 		to << L"{ sizeof(" << t.name << L"), ";
 		to << toVarName(t.name) << L"_offset }, // #" << i << L"\n";
+	}
+}
+
+static bool escape(wchar ch) {
+	switch (ch) {
+	case '"':
+	case '\\':
+	case '\n':
+	case '\r':
+	case '\t':
+		return true;
+	default:
+		return ch > 0x7F;
+	}
+}
+
+static void putHex(wostream &to, nat number, nat digits) {
+	wchar lookup[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
+	for (nat i = digits; i > 0; i--) {
+		nat digit = number >> ((i - 1)*4);
+		to << lookup[digit & 0x0F];
+	}
+}
+
+static void escapeChar(wostream &to, const String &src, nat &pos) {
+	wchar ch = src[pos];
+	if (ch >= 0xD800 && ch <= 0xDFFF && pos + 1 <= src.size()) {
+		// Decode surrogate pair...
+		nat r = nat(ch & 0x3FF) << nat(10);
+		r |= nat(src[++pos] & 0x3FF);
+		r += 0x10000;
+		to << L"\\U";
+		putHex(to, r, 8);
+	} else if (ch >= 0x7F) {
+		to << L"\\u";
+		putHex(to, ch, 4);
+	} else {
+		to << L"\\x";
+		putHex(to, ch, 2);
+	}
+	// End the string and start a new one to avoid errors in escape sequence expansion...
+	to << '"' << 'L' << '"';
+}
+
+static void outputStr(wostream &to, const String &str) {
+	nat start = 0;
+	while (start < str.size() && str[start] == '\n')
+		start++;
+
+	nat end = str.size();
+	while (end > start && str[end-1] == '\n')
+		end--;
+
+	to << 'L' << '"';
+	for (nat i = start; i < end; i++) {
+		wchar ch = str[i];
+		if (ch == '\r') {
+			continue;
+		} else if (ch == '\n') {
+			to << L"\\n\"\nL\"";
+		} else if (escape(ch)) {
+			escapeChar(to, str, i);
+		} else {
+			to << ch;
+		}
+	}
+	to << '"';
+}
+
+static void genLicenses(wostream &to, World &w) {
+	for (nat i = 0; i < w.licenses.size(); i++) {
+		const License &l = w.licenses[i];
+
+		to << L"{ L\"" << l.id << L"\", ";
+		to << L"L\"" << l.pkg << L"\", ";
+		outputStr(to, l.title);
+		to << L",\n";
+		outputStr(to, l.body);
+		to << L" },\n";
 	}
 }
 
@@ -669,6 +748,7 @@ GenerateMap genMap() {
 		{ L"CPP_THREADS", &genThreads },
 		{ L"REF_PTR_OFFSETS", &genRefPtrOffsets },
 		{ L"REF_TYPES", &genRefTypes },
+		{ L"LICENSES", &genLicenses },
 	};
 
 	GenerateMap g;

@@ -2,4 +2,4 @@
 #include "World.h"
 
 // Parse all files in SrcPos::types and return what we found.
-void parseWorld(World &out);
+void parseWorld(World &out, const vector<Path> &licenses);

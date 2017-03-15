@@ -2,6 +2,8 @@
 #include "Parse.h"
 #include "Tokenizer.h"
 #include "Exception.h"
+#include "Utils/TextReader.h"
+#include "Utils/FileStream.h"
 
 /**
  * Namespace to add stuff to the global World.
@@ -539,8 +541,24 @@ static void parseFile(nat id, World &world) {
 	parseNamespace(tok, env, CppName());
 }
 
-void parseWorld(World &world) {
+// Parse a license file.
+static void parseLicense(const Path &path, World &world) {
+	TextReader *src = TextReader::create(new FileStream(path, Stream::mRead));
+
+	String pkg = src->getLine();
+	String title = src->getLine();
+	String body = src->getAll();
+
+	delete src;
+
+	world.licenses.push_back(License(path.titleNoExt(), pkg, title, body));
+}
+
+void parseWorld(World &world, const vector<Path> &licenses) {
 	for (nat i = 0; i < SrcPos::files.size(); i++) {
 		parseFile(i, world);
+	}
+	for (nat i = 0; i < licenses.size(); i++) {
+		parseLicense(licenses[i], world);
 	}
 }

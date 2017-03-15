@@ -41,6 +41,9 @@ namespace storm {
 		// placed in their packages.
 		void loadVariables();
 
+		// Create all licenses in their appropriate places.
+		void loadLicenses();
+
 	private:
 		// Engine to load into.
 		UNKNOWN(PTR_NOGC) Engine *e;
@@ -72,6 +75,9 @@ namespace storm {
 
 		// Get the number of enum values.
 		nat enumValueCount() const;
+
+		// Get the number of licenses.
+		nat licenseCount() const;
 
 		// Find a NameSet corresponding to a given name.
 		NameSet *findPkg(const wchar *name);
