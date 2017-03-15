@@ -101,6 +101,18 @@ void World::orderThreads() {
 	threads.sort(pred());
 }
 
+void World::orderLicenses() {
+	struct pred {
+		bool operator ()(const License &l, const License &r) const {
+			if (l.id == r.id)
+				return l.id < r.id;
+			return l.pkg < r.pkg;
+		}
+	};
+
+	sort(licenses.begin(), licenses.end(), pred());
+}
+
 void World::resolveTypes() {
 	for (nat i = 0; i < types.size(); i++) {
 		Type *t = types[i].borrow();
@@ -141,6 +153,7 @@ void World::prepare() {
 	orderTypes();
 	orderTemplates();
 	orderThreads();
+	orderLicenses();
 
 	resolveTypes();
 	orderFunctions();

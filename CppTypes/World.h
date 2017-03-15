@@ -2,6 +2,7 @@
 #include "SrcPos.h"
 #include "Type.h"
 #include "Thread.h"
+#include "License.h"
 #include "Auto.h"
 #include "NameMap.h"
 
@@ -34,6 +35,9 @@ public:
 	// Built-in types (into C++).
 	map<String, Size> builtIn;
 
+	// Licenses.
+	vector<License> licenses;
+
 	// ...
 
 	// Add a type (and do the proper checking).
@@ -54,6 +58,9 @@ private:
 
 	// Sort threads so we get a deterministic order.
 	void orderThreads();
+
+	// Order licenses.
+	void orderLicenses();
 
 	// Resolve all types in this world.
 	void resolveTypes();

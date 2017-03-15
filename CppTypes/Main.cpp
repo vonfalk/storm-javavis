@@ -25,6 +25,25 @@ vector<Path> findHeaders(const vector<Path> &in) {
 	return result;
 }
 
+void findLicenses(const Path &in, vector<Path> &out) {
+	vector<Path> c = in.children();
+	for (nat i = 0; i < c.size(); i++) {
+		if (c[i].isDir()) {
+			findLicenses(c[i], out);
+		} else if (c[i].hasExt(L"license")) {
+			out.push_back(c[i]);
+		}
+	}
+}
+
+// Find license files.
+vector<Path> findLicenses(const vector<Path> &in) {
+	vector<Path> result;
+	for (nat i = 0; i < in.size(); i++)
+		findLicenses(in[i], result);
+	return result;
+}
+
 // Find the latest last-modified time for any files.
 Timestamp lastModified(const vector<Path> &files) {
 	Timestamp last = files[0].mTime();
@@ -78,7 +97,12 @@ int _tmain(int argc, const wchar *argv[]) {
 		return 1;
 	}
 
+	// Find all license files.
+	vector<Path> licenses = findLicenses(config.dirs);
+
 	Timestamp modified = lastModified(SrcPos::files);
+	if (!licenses.empty())
+		modified = max(modified, lastModified(licenses));
 	modified = max(modified, config.cppSrc);
 	if (config.genAsm)
 		modified = max(modified, config.asmSrc);
