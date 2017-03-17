@@ -73,6 +73,9 @@ namespace storm {
 		if (Named *parent = closestNamed()) {
 			SimpleName *p = parent->path();
 			p->add(new (this) SimplePart(name, params));
+			if (wcscmp(name->c_str(), L"@ 100") == 0) {
+				PLN(L"HEJ");
+			}
 			return p;
 		} else {
 			return new (this) SimpleName();

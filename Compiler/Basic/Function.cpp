@@ -134,6 +134,7 @@ namespace storm {
 
 			// PLN(bodyExpr);
 			// PLN(identifier() << L": " << l);
+			PLN(L"Compiling: " << identifier());
 			return state;
 		}
 

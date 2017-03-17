@@ -1,4 +1,4 @@
-Test
+#Test
 #CppTypes -a ../Compiler/ --template ../Compiler/Gen/CppTypes.template.cpp --out ../Compiler/Gen/CppTypes.cpp --asm ../Compiler/Gen/CppTypes.asm
 
 #Basic UI test.
@@ -11,7 +11,7 @@ Test
 
 #Presentation
 #Main -a -r ../root/ -i final ../External/final -f final.configura
-#Main -a -r ../root/ -i final ../External/final -f final.extendedMain
+Main -a -r ../root/ -i final ../External/final -f final.extendedMain
 #Main -a -r ../root/ -i final ../External/final -f final.main
 #Main -a -r ../root/ -i green ../External/green -f green.main
 

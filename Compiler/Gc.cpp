@@ -14,7 +14,7 @@
 
 // If enabled, add and verify data after each object allocated in the Gc-heap in order to find
 // memory-corruption bugs.
-#define MPS_CHECK_MEMORY 0
+#define MPS_CHECK_MEMORY 1
 
 // Use debug pools in MPS (behaves slightly differently from the standard and may not trigger errors).
 #define MPS_DEBUG_POOL 0
@@ -306,9 +306,20 @@ namespace storm {
 	for (nat _i = (start); _i < (header)->obj.count; _i++) {		\
 		size_t offset = (header)->obj.offset[_i];					\
 		mps_addr_t *data = (mps_addr_t *)((byte *)(base) + offset);	\
+		bool print = *data == interesting;							\
+		if (print) PLN(L"From: " << *data << L" at " << data);		\
 		mps_res_t r = MPS_FIX12(ss, data);							\
+		if (print) PLN(L"To: " << *data << L" offset " << offset);	\
+		if (print) DebugBreak();									\
 		if (r != MPS_RES_OK)										\
 			return r;												\
+	}
+
+	void *interesting = (void *)0x2;
+
+	void gcCheck(void *obj, const wchar *kind) {
+		PLN(obj << L" is interesting.");
+		interesting = obj;
 	}
 
 	// Scan objects. If a MPS_FIX returns something other than MPS_RES_OK, return that code as
@@ -383,6 +394,13 @@ namespace storm {
 
 	// Create a forwarding object at 'at' referring to 'to'. These must be recognized by mpsSize, mpsSkip and mpsScan.
 	static void mpsMakeFwd(mps_addr_t at, mps_addr_t to) {
+		// PLN(L"Moved " << at << L" to " << to);
+		// for (nat i = 0; i < interestingCount; i++)
+		// 	if (interesting[i] == at) {
+		// 		PLN(L"Moved " << i << L" from " << at << L" to " << to);
+		// 		interesting[i] = to;
+		// 	}
+
 		// Convert to base pointers:
 		at = (byte *)at - headerSize;
 		size_t size = mpsSize(at) - headerSize;
@@ -740,6 +758,7 @@ namespace storm {
 						continue;
 
 					bytesScanned += (char *)desc->high - (char *)desc->low;
+					PLN(L"Scanning uthread " << from << L" to " << to);
 					for (void **at = (void **)desc->low; at < (void **)desc->high; at++) {
 						mps_res_t r = MPS_FIX12(ss, at);
 						if (r != MPS_RES_OK)
@@ -759,6 +778,7 @@ namespace storm {
 #endif
 				} else {
 					bytesScanned += (char *)to - (char *)from;
+					PLN(L"Scanning main " << from << L" to " << to);
 					for (void **at = from; at < to; at++) {
 						mps_res_t r = MPS_FIX12(ss, at);
 						if (r != MPS_RES_OK)
@@ -770,6 +790,7 @@ namespace storm {
 			// Finally, write the new size back to MPS.
 			mps_increase_scanned(ss, bytesScanned);
 		} else {
+			PLN(L"Scanning normally " << from << L" to " << to);
 			MPS_SCAN_BEGIN(ss) {
 				for (void **at = from; at < to; at++) {
 					mps_res_t r = MPS_FIX12(ss, at);
@@ -1237,6 +1258,11 @@ namespace storm {
 		if (type->finalizer)
 			mps_finalize(arena, &result);
 
+		static nat id = 0;
+		if (type->stride == 4 && elements == 512) {
+			PLN(L"Allocated " << ++id << L" at " << result << L" with " << elements);
+			DebugBreak();
+		}
 		return result;
 	}
 

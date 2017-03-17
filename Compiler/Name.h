@@ -137,6 +137,7 @@ namespace storm {
 		// Hash.
 		virtual Nat STORM_FN hash() const;
 
+		inline void *debug() const { return parts; }
 	private:
 		// Data.
 		Array<SimplePart *> *parts;

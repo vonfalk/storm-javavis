@@ -4,6 +4,7 @@
 #include "Scope.h"
 #include "Name.h"
 #include "Type.h"
+#include "Engine.h"
 #include "Core/Str.h"
 #include "Core/StrBuf.h"
 #include "Core/CloneEnv.h"
@@ -13,7 +14,16 @@
 
 namespace storm {
 
-	NamePart::NamePart(Str *name) : name(name) {}
+	extern void gcCheck(void *, const wchar *);
+
+	NamePart::NamePart(Str *name) : name(name) {
+		if (wcscmp(name->c_str(), L"@ 100") == 0) {
+			// DebugBreak();
+			gcCheck(name, L"Str");
+			int top;
+			PLN(L"Allocated " << (void *)this << L" with stack top " << &top << L" and str " << (void *)name);
+		}
+	}
 
 	void NamePart::deepCopy(CloneEnv *env) {
 		// Nothing mutable in here.
