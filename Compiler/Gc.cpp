@@ -35,11 +35,13 @@
 #define MPS_VERIFY_OBJECT(object) checkBarriers(object)
 #define MPS_VERIFY_SIZE(object) checkSize(object)
 #define MPS_INIT_OBJECT(object, size) initObject(object, size)
+#define MPS_INIT_FWD_OBJECT(object, size, id) initFwdObject(object, size, id);
 #else
 #define MPS_CHECK_BYTES 0
 #define MPS_VERIFY_OBJECT(object)
 #define MPS_VERIFY_SIZE(object)
 #define MPS_INIT_OBJECT(object, size)
+#define MPS_INIT_FWD_OBJECT(object, size, id)
 #endif
 
 namespace storm {
@@ -205,6 +207,7 @@ namespace storm {
 
 	// Initialize object.
 	static void initObject(MpsObj *o, size_t size);
+	static void initFwdObject(MpsObj *o, size_t size, size_t id);
 
 #endif
 
@@ -310,7 +313,6 @@ namespace storm {
 		if (print) PLN(L"From: " << *data << L" at " << data);		\
 		mps_res_t r = MPS_FIX12(ss, data);							\
 		if (print) PLN(L"To: " << *data << L" offset " << offset);	\
-		if (print) DebugBreak();									\
 		if (r != MPS_RES_OK)										\
 			return r;												\
 	}
@@ -417,7 +419,7 @@ namespace storm {
 			o->fwd.size = size;
 		}
 
-		MPS_INIT_OBJECT(o, size + headerSize);
+		MPS_INIT_FWD_OBJECT(o, size + headerSize, o->allocId);
 		MPS_VERIFY_SIZE(o);
 		MPS_VERIFY_OBJECT(o);
 	}
@@ -445,6 +447,7 @@ namespace storm {
 #ifdef SLOW_DEBUG
 		dbg_assert(size >= headerSize, L"Too small header!");
 #endif
+		dbg_assert(size >= headerSize, L"Too small header!");
 
 		if (size <= headerSize) {
 			setHeader(at, &headerPad0);
@@ -723,6 +726,8 @@ namespace storm {
 		thread->tib = tmp;
 	}
 
+	bool scanned = false;
+
 	// Note: We're checking all word-aligned positions as we need to make sure we're scanning
 	// the return addresses into functions (which are also in this pool). MPS currently scans
 	// EIP as well, which is good as the currently executing function might otherwise be moved.
@@ -779,7 +784,10 @@ namespace storm {
 				} else {
 					bytesScanned += (char *)to - (char *)from;
 					PLN(L"Scanning main " << from << L" to " << to);
+					//DebugBreak();
+					scanned = true;
 					for (void **at = from; at < to; at++) {
+						//PLN(at << L" - " << *at);
 						mps_res_t r = MPS_FIX12(ss, at);
 						if (r != MPS_RES_OK)
 							return r;
@@ -1261,7 +1269,6 @@ namespace storm {
 		static nat id = 0;
 		if (type->stride == 4 && elements == 512) {
 			PLN(L"Allocated " << ++id << L" at " << result << L" with " << elements);
-			DebugBreak();
 		}
 		return result;
 	}
@@ -1619,13 +1626,19 @@ namespace storm {
 			checkFooter(obj);
 	}
 
-	static void initObject(MpsObj *obj, size_t size) {
+	static void initFwdObject(MpsObj *obj, size_t size, size_t id) {
 		obj->size = size - headerSize;
-		obj->allocId = allocId++;
+		obj->allocId = id;
 		memset(obj->barrier, MPS_HEADER_DATA, MPS_CHECK_BYTES);
 		if (hasFooter(obj)) {
 			memset((byte *)obj + size, MPS_FOOTER_DATA, MPS_CHECK_BYTES);
 		}
+	}
+
+	static void initObject(MpsObj *obj, size_t size) {
+		initFwdObject(obj, size, allocId++);
+		// if (obj->allocId == 0x000458fb)
+		// 	DebugBreak();
 	}
 
 	void Gc::checkMemory(const void *object, bool recursive) {

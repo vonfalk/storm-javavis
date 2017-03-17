@@ -69,12 +69,22 @@ namespace storm {
 		return null;
 	}
 
+	extern bool scanned;
+	bool doAccess = false;
+
 	SimpleName *Named::path() const {
 		if (Named *parent = closestNamed()) {
 			SimpleName *p = parent->path();
-			p->add(new (this) SimplePart(name, params));
-			if (wcscmp(name->c_str(), L"@ 100") == 0) {
-				PLN(L"HEJ");
+			SimplePart *tmp = new (this) SimplePart(name, params);
+			p->add(tmp);
+			// p->add(new (this) SimplePart(name, params));
+			if (wcscmp(name->c_str(), L"@ 100") == 0 || scanned) {
+				scanned = false;
+				PLN(L"HEJ: " << (void *)p << L" at " << &p);
+				if (doAccess) {
+					PLN(L"Ptr inside simple part: " << (void *)tmp->name);
+					engine().gc.checkMemory();
+				}
 			}
 			return p;
 		} else {
