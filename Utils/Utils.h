@@ -155,9 +155,20 @@ T *atomicCAS(T *volatile &v, T *compare, T *exchange) {
 	return (T *)atomicCAS((void *volatile&)v, compare, exchange);
 }
 
-// Atomic read/write.
+// Atomic read/write. Also prevents the compiler from reordering memory accesses around the call.
 size_t atomicRead(volatile size_t &v);
+void *atomicRead(void *volatile &v);
 void atomicWrite(volatile size_t &v, size_t value);
+void atomicWrite(void *volatile &v, void * value);
+
+template <class T>
+void atomicWrite(T *volatile &v, T *value) {
+	atomicWrite((void *volatile&)v, value);
+}
+template <class T>
+T *atomicRead(T *volatile &v) {
+	return (T *)atomicRead((void *volatile&)v);
+}
 
 // Atomic read/write. These two does not need aligned data.
 size_t unalignedAtomicRead(volatile size_t &v);

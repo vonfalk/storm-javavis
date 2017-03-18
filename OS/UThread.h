@@ -2,7 +2,7 @@
 #include "FnParams.h"
 #include "InlineList.h"
 #include "SortedInlineList.h"
-#include "Utils/InlineSet.h"
+#include "InlineSet.h"
 #include "Utils/Function.h"
 #include "Utils/Lock.h"
 #include "Future.h"
@@ -137,7 +137,7 @@ namespace os {
 	 * Stack description for an UThread. This is exposed so that we can garbage collect them
 	 * properly.
 	 */
-	class UThreadStack : public util::SetMember<UThreadStack> {
+	class UThreadStack : public SetMember<UThreadStack> {
 	public:
 		UThreadStack();
 
@@ -242,7 +242,7 @@ namespace os {
 		// List of stacks for all UThreads running on this hardware thread. This includes any
 		// threads not on the ready-queue, and allows garbage collecting the UThreads.
 		// Protected by the same lock as the Ready-queue.
-		util::InlineSet<UThreadStack> stacks;
+		InlineSet<UThreadStack> stacks;
 
 		// Get the state for the current thread.
 		static UThreadState *current();

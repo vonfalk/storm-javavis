@@ -42,7 +42,19 @@ size_t atomicRead(volatile size_t &v) {
 	return v;
 }
 
+void *atomicRead(void *volatile &v) {
+	check_aligned(v);
+	// Volatile reads are atomic on X86/X64 as long as they are aligned.
+	return v;
+}
+
 void atomicWrite(volatile size_t &v, size_t value) {
+	check_aligned(v);
+	// Volatile writes are atomic on X86/X64 as long as they are aligned.
+	v = value;
+}
+
+void atomicWrite(void *volatile &v, void *value) {
 	check_aligned(v);
 	// Volatile writes are atomic on X86/X64 as long as they are aligned.
 	v = value;

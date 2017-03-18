@@ -55,7 +55,7 @@ namespace os {
 		void attach(Handle h) const;
 
 		// Get a list of UThreads running on this thread. Note that access to this list is not thread safe.
-		const util::InlineSet<UThreadStack> &stacks() const;
+		const InlineSet<UThreadStack> &stacks() const;
 
 		// Start a thread.
 		static Thread spawn(ThreadGroup &group);

@@ -662,7 +662,7 @@ namespace storm {
 		mps_root_t root;
 
 		// All threads running on this thread.
-		const util::InlineSet<os::UThreadStack> *stacks;
+		const os::InlineSet<os::UThreadStack> *stacks;
 
 #if defined(WINDOWS)
 		struct TIB {
@@ -736,7 +736,7 @@ namespace storm {
 
 			// Scan all UThreads.
 			MPS_SCAN_BEGIN(ss) {
-				util::InlineSet<os::UThreadStack>::iterator i = thread->stacks->begin();
+				os::InlineSet<os::UThreadStack>::iterator i = thread->stacks->begin();
 				for (nat id = 0; i != thread->stacks->end(); ++i, id++) {
 					os::UThreadStack::Desc *desc = i->desc;
 					if (!desc)
@@ -1347,8 +1347,8 @@ namespace storm {
 			mps_arena_park(arena);
 
 			// Mark all as unseen.
-			util::InlineSet<MpsType>::iterator end = freeTypes.end();
-			for (util::InlineSet<MpsType>::iterator i = freeTypes.begin(); i != end; ++i) {
+			os::InlineSet<MpsType>::iterator end = freeTypes.end();
+			for (os::InlineSet<MpsType>::iterator i = freeTypes.begin(); i != end; ++i) {
 				i->reachable = false;
 			}
 
@@ -1361,7 +1361,7 @@ namespace storm {
 
 			// Remove all unseen nodes.
 			size_t removed = 0;
-			for (util::InlineSet<MpsType>::iterator i = freeTypes.begin(); i != end; ++i) {
+			for (os::InlineSet<MpsType>::iterator i = freeTypes.begin(); i != end; ++i) {
 				if (!i->reachable) {
 					MpsType *e = *i;
 					freeTypes.erase(e);

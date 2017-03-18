@@ -146,7 +146,7 @@ BEGIN_TEST(GcThreadTest2, Stress) {
 	CHECK(c2.ok);
 } END_TEST
 
-BEGIN_TEST(GcThreadThest3, Stress) {
+BEGIN_TEST(GcThreadTest3, Stress) {
 	CHECK(runFn<Bool>(L"test.gc.testGcPost"));
 } END_TEST
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "Utils/Exception.h"
 #include "Utils/Lock.h"
-#include "Utils/InlineSet.h"
+#include "OS/InlineSet.h"
 #include "OS/Thread.h"
 
 #include "gc/mps.h"
@@ -260,7 +260,7 @@ namespace storm {
 
 		// Struct used for GcTypes inside MPS. As it is not always possible to delete all GcType objects
 		// immediatly, we store the freed ones in an InlineSet until we can actually reclaim them.
-		struct MpsType : public util::SetMember<MpsType> {
+		struct MpsType : public os::SetMember<MpsType> {
 			// Reachable?
 			bool reachable;
 
@@ -269,7 +269,7 @@ namespace storm {
 		};
 
 		// All freed GcType-objects which have not yet been reclaimed.
-		util::InlineSet<MpsType> freeTypes;
+		os::InlineSet<MpsType> freeTypes;
 
 		// During destruction - ignore any freeType() calls?
 		bool ignoreFreeType;
