@@ -62,4 +62,4 @@ fi
 rm -r release/storm
 
 echo "All seems well, copying the zip to fprg.se..."
-scp release/storm.zip "filip-www@fprg.se:~/www/storm/storm.zip"
+cat release/storm.zip | ssh filip-www@fprg.se /home/filip-www/upload-storm.sh

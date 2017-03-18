@@ -14,12 +14,12 @@ explained below.
 
 * **Classes**
 
-  Classes works like in Java. They are always heap-allocated, and since pointers are passed to
-  functions, they look like references. Storm generally looks at classes more like values than Java,
-  for example: the `==` operator will compare the objects and not just see if the two objects are
-  the same object (this is not implemented yet!). However, it is up to each language to decide on
-  the exact semantics of equality checks. All classes either directly or indirectly inherits from 
-  the `Object` class
+  Classes work like in Java. They are always heap-allocated and storage is reclaimed using garbage
+  collection, and since pointers are passed to functions, they look like references. Storm generally
+  looks at classes more like values than Java, for example: the `==` operator will compare the
+  objects and not just see if the two objects are the same object (this is not implemented
+  yet!). However, it is up to each language to decide on the exact semantics of equality checks. All
+  classes either directly or indirectly inherits from the `Object` class
 
 * **Actors**
 
@@ -110,16 +110,6 @@ Values and classes need the following members:
 The following members are recommended for all types:
 * `Str toS()` - convert the value to string. The base class `Object` and `TObject` provides a 
   default implementation for objects and actors. Values works without `toS`.
-
-
-Memory management
-------------------
-
-The lifetime of objects allocated on the heap are managed using reference counting. That means that
-every class and actor has a counter that counts the number of active pointers to the
-object. Whenever that counter reaches zero, the object is freed and its destructor is executed. This
-provides predictable destructions of objects, but the current implementation does not handle
-cycles. This is solved by using weak pointers to break the cycles (not implemented yet).
 
 
 Packages
