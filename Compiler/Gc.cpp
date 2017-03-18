@@ -35,11 +35,13 @@
 #define MPS_VERIFY_OBJECT(object) checkBarriers(object)
 #define MPS_VERIFY_SIZE(object) checkSize(object)
 #define MPS_INIT_OBJECT(object, size) initObject(object, size)
+#define MPS_INIT_FWD_OBJECT(object, size, id) initFwdObject(object, size, id)
 #else
 #define MPS_CHECK_BYTES 0
 #define MPS_VERIFY_OBJECT(object)
 #define MPS_VERIFY_SIZE(object)
 #define MPS_INIT_OBJECT(object, size)
+#define MPS_INIT_FWD_OBJECT(object, size, id)
 #endif
 
 namespace storm {
@@ -205,6 +207,7 @@ namespace storm {
 
 	// Initialize object.
 	static void initObject(MpsObj *o, size_t size);
+	static void initFwdObject(MpsObj *o, size_t size, size_t allocId);
 
 #endif
 
@@ -399,7 +402,7 @@ namespace storm {
 			o->fwd.size = size;
 		}
 
-		MPS_INIT_OBJECT(o, size + headerSize);
+		MPS_INIT_FWD_OBJECT(o, size + headerSize, o->allocId);
 		MPS_VERIFY_SIZE(o);
 		MPS_VERIFY_OBJECT(o);
 	}
@@ -1594,8 +1597,13 @@ namespace storm {
 	}
 
 	static void initObject(MpsObj *obj, size_t size) {
+		initFwdObject(obj, size, allocId++);
+		// if (obj->allicId == 1) DebugBreak();
+	}
+
+	static void initFwdObject(MpsObj *obj, size_t size, size_t allocId) {
 		obj->size = size - headerSize;
-		obj->allocId = allocId++;
+		obj->allocId = allocId;
 		memset(obj->barrier, MPS_HEADER_DATA, MPS_CHECK_BYTES);
 		if (hasFooter(obj)) {
 			memset((byte *)obj + size, MPS_FOOTER_DATA, MPS_CHECK_BYTES);
