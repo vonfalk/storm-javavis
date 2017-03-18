@@ -53,7 +53,7 @@ void verify(const RootArray<void> &data) {
 	}
 }
 
-BEGIN_TESTX(CodeFmtTest, GcScan) {
+BEGIN_TEST(CodeFmtTest, GcScan) {
 	Gc &gc = ::gc();
 
 	RootArray<void> data(gc);

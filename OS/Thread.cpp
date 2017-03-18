@@ -251,6 +251,9 @@ namespace os {
 				} else {
 					wakeCond.wait(ioComplete, sleepFor);
 				}
+			} else if (wait) {
+				// Just assume 'wait' shall remain, since we did not ask it about its desires.
+				result = true;
 			}
 			uState.wakeThreads();
 		} else {
