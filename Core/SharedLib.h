@@ -15,6 +15,12 @@ namespace storm {
 		// TODO: Include some kind of versioning scheme here, so that the libraries can detect when
 		// incompatible versions are used!
 
+		// Basic version difference check: sizes of important structs.
+		size_t sizeLibStart;
+		size_t sizeLibInfo;
+		size_t sizeFwdShared;
+		size_t sizeFwdUnique;
+
 		// Owning engine.
 		Engine &engine;
 

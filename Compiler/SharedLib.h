@@ -34,7 +34,7 @@ namespace storm {
 
 	private:
 		// Entry point type.
-		typedef void (*EntryFn)(const SharedLibStart *, SharedLibInfo *);
+		typedef bool (*EntryFn)(const SharedLibStart *, SharedLibInfo *);
 
 		// Create and initialize a library.
 		SharedLib(Url *file, LoadedLib lib, EntryFn entry);
@@ -50,6 +50,9 @@ namespace storm {
 
 		// The world loaded by this shared library.
 		World world;
+
+		// Was the library loaded without issues?
+		bool ok;
 
 		// Implementation of the unique functions.
 		static Type *cppType(Engine &e, void *lib, Nat id);

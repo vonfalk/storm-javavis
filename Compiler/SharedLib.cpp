@@ -16,6 +16,10 @@ namespace storm {
 			1.0f,
 		};
 		SharedLibStart start = {
+			sizeof(SharedLibStart),
+			sizeof(SharedLibInfo),
+			sizeof(EngineFwdShared),
+			sizeof(EngineFwdUnique),
 			file->engine(),
 			engineFwd(),
 			unique,
@@ -23,7 +27,7 @@ namespace storm {
 
 		zeroMem(info);
 		infoRoot = file->engine().gc.createRoot(&info.libData, 1);
-		(*entry)(&start, &info);
+		ok = (*entry)(&start, &info);
 	}
 
 	SharedLib::~SharedLib() {
@@ -69,7 +73,13 @@ namespace storm {
 			return null;
 		}
 
-		return new SharedLib(file, lib, entry);
+		SharedLib *result = new SharedLib(file, lib, entry);
+		if (!result->ok) {
+			PLN(L"Failed loading " << file);
+			delete result;
+			return null;
+		}
+		return result;
 	}
 
 
