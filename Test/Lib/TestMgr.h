@@ -50,8 +50,8 @@ int Tests::countSuite(Suite *s) {
 	return r;
 }
 
-void Tests::runTests(TestResult &r) {
-	if (singleTest) {
+void Tests::runTests(TestResult &r, bool runAll) {
+	if (singleTest && !runAll) {
 		for (TestMap::const_iterator i = tests.begin(); i != tests.end(); i++) {
 			if (i->second->single) {
 				std::wcout << L"Running " << i->first << L"..." << std::endl;
@@ -60,7 +60,7 @@ void Tests::runTests(TestResult &r) {
 		}
 	} else {
 		for (SuiteMap::const_iterator i = suites.begin(); i != suites.end(); i++) {
-			if (singleSuite && !i->second->single)
+			if (!runAll && singleSuite && !i->second->single)
 				continue;
 
 			std::wcout << L"--- " << i->second->name << L" ---" << std::endl;
@@ -75,12 +75,18 @@ void Tests::runTests(TestResult &r) {
 	}
 }
 
-TestResult Tests::run() {
+TestResult Tests::run(int argc, const wchar_t *const *argv) {
 	Tests &t = instance();
 	TestResult r;
+	bool allTests = false;
+
+	for (int i = 1; i < argc; i++) {
+		if (wcscmp(argv[i], L"--all") == 0)
+			allTests = true;
+	}
 
 	try {
-		t.runTests(r);
+		t.runTests(r, allTests);
 
 		std::wcout << L"--- Results ---" << endl;
 		std::wcout << r << std::endl;

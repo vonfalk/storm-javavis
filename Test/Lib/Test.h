@@ -66,7 +66,7 @@ public:
 	inline Tests() : singleSuite(null), singleTest(null) {}
 
 	// Run all tests, returns the statistics.
-	static TestResult run();
+	static TestResult run(int argc, const wchar_t *const *argv);
 
 private:
 	typedef map<int, Suite *> SuiteMap;
@@ -85,7 +85,7 @@ private:
 	friend class Test;
 	friend class Suite;
 
-	void runTests(TestResult &result);
+	void runTests(TestResult &result, bool runAll);
 	void runSuite(Suite *s, TestResult &result);
 	int countSuite(Suite *s);
 };

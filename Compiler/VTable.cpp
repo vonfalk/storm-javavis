@@ -209,7 +209,7 @@ namespace storm {
 		bool cppType = (owner->typeFlags & typeCpp) == typeCpp;
 		if (cppType && as<StaticCode>(c) != null) {
 			// Might be a function from C++.
-			const void *addr = fn->directRef().address();
+			const void *addr = fn->originalPtr();
 			nat r = cpp->findSlot(addr);
 			if (r != vtable::invalid) {
 				return cppSlot(r);

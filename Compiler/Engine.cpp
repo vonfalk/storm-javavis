@@ -350,6 +350,7 @@ namespace storm {
 			return FNREF(fnCreateRaw);
 		default:
 			assert(false, L"Unknown reference: " + ::toS(ref));
+			return null;
 		}
 	}
 

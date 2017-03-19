@@ -61,6 +61,10 @@ namespace storm {
 		// Forcefully compile this function.
 		void STORM_FN compile();
 
+		// Get the original C++ function pointer. If none exists, returns
+		// 'directRef->address()'. Intended to be used to find vtable slots for this function.
+		virtual const void *originalPtr();
+
 		/**
 		 * Generate calls to this function.
 		 */
@@ -131,6 +135,24 @@ namespace storm {
 		// Add parameters for the function call.
 		void addParams(CodeGen *to, Array<code::Operand> *params, code::Var resultIn);
 		void addParam(CodeGen *to, Array<code::Operand> *params, nat id);
+	};
+
+	/**
+	 * Function in C++. Also contains the original pointer to the function (ie. before
+	 * de-virtualization) so that we can find the vtable slot easier and with higher certainty.
+	 */
+	class CppMemberFunction : public Function {
+		STORM_CLASS;
+	public:
+		// Create.
+		CppMemberFunction(Value result, Str *name, Array<Value> *params, const void *original);
+
+		// Get the original pointer.
+		virtual const void *originalPtr();
+
+	private:
+		// Original function pointer.
+		const void *original;
 	};
 
 

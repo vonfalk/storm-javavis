@@ -20,6 +20,7 @@ namespace storm {
 			return getStorm(slot.offset);
 		default:
 			assert(false, L"Unknown slot type.");
+			return null;
 		}
 	}
 

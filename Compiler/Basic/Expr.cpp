@@ -156,8 +156,7 @@ namespace storm {
 			VarInfo to = r->location(s);
 			Type *t = r->type().type;
 			Engine &e = engine();
-			if (t != StormInfo<Float>::type(e))
-				assert(false, L"Unknown type for a float constant.");
+			assert(t == StormInfo<Float>::type(e), L"Unknown type for a float constant.");
 
 			*s->l << mov(to.v, floatConst(float(floatValue)));
 

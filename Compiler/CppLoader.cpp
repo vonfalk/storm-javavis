@@ -444,7 +444,7 @@ namespace storm {
 		CppType::VTableFn vFn = world->types[firstParam.id].vtable;
 
 		const void *ptr = deVirtualize(fn.params[0], fn.ptr);
-		Function *f = new (*e) Function(result, new (*e) Str(fn.name), params);
+		Function *f = new (*e) CppMemberFunction(result, new (*e) Str(fn.name), params, fn.ptr);
 		f->setCode(new (*e) StaticCode(ptr));
 
 		if (cast)

@@ -41,7 +41,7 @@ int _tmain(int argc, _TCHAR *argv[]) {
 
 	try {
 		start = Moment();
-		r = Tests::run();
+		r = Tests::run(argc, argv);
 		end = Moment();
 
 		delete engineObj;

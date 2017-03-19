@@ -375,8 +375,11 @@ namespace storm {
 					if (result != invalid) {
 						WARNING(L"Multiple entries with the same address in the VTable!");
 						WARNING(L"Please use a non de-virtualized pointer instead!");
+					} else {
+						// Prefer the first match if multiple matches exist. Sometimes vtables are
+						// close together so the second match is probably another vtable anyway.
+						result = i;
 					}
-					result = i;
 				}
 			}
 

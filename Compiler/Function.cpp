@@ -97,6 +97,10 @@ namespace storm {
 			lookup->compile();
 	}
 
+	const void *Function::originalPtr() {
+		return directRef().address();
+	}
+
 	void Function::initRefs() {
 		if (!codeRef) {
 			assert(parent(), L"Too early!");
@@ -478,6 +482,16 @@ namespace storm {
 		os::UThread::spawn(fn, member, *params, *future, result->rawResult(), *resultType, thread);
 	}
 
+	/**
+	 * CppFunction.
+	 */
+
+	CppMemberFunction::CppMemberFunction(Value result, Str *name, Array<Value> *params, const void *original) :
+		Function(result, name, params), original(original) {}
+
+	const void *CppMemberFunction::originalPtr() {
+		return original;
+	}
 
 
 	/**

@@ -35,8 +35,8 @@ BEGIN_TEST(Preserve64, Code) {
 
 	*l << mov(v, longConst(0x123456789A));
 	*l << mov(w, longConst(0xA987654321));
-	*l << add(rax, v);
-	*l << mov(v, w);
+	*l << mov(rax, v);
+	*l << add(v, w);
 
 	*l << epilog();
 	*l << ret(ValType(Size::sLong, false));

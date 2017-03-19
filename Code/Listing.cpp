@@ -680,7 +680,7 @@ namespace code {
 
 	void Listing::putVar(StrBuf &to, Nat var) const {
 		IVar &v = vars->at(var);
-		to << width(3) << var << L": " << v.size << L" free " << v.freeOpt << L" using " << v.freeFn << L"\n";
+		to << width(3) << var << L": size " << v.size << L" free " << v.freeOpt << L" using " << v.freeFn << L"\n";
 	}
 
 }

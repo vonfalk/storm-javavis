@@ -4,8 +4,7 @@ echo "Building release..."
 mm release -ne || { echo "Compilation failed!"; exit 1; }
 
 echo "Done! Running the test suite..."
-release/CodeTest.exe || { echo "Tests failed!"; exit 1; }
-release/StormTest.exe || { echo "Tests failed!"; exit 1; }
+release/Test.exe --all || { echo "Tests failed!"; exit 1; }
 
 echo "Seems good"
 
