@@ -1,0 +1,41 @@
+use ui;
+use core:geometry;
+use core:io;
+
+class MultilineWin extends Frame {
+	Label lbl;
+	Edit edit;
+	Button bn;
+
+	ctor() {
+		init("Simple Window") {
+			lbl("Input\ntext:");
+			edit();
+			bn("OK");
+		}
+
+		size(Size(200, 200));
+		lbl.pos(Rect(10, 10, 190, 50));
+		edit.pos(Rect(10, 50, 190, 100));
+		edit.multiline(true);
+		edit.text("New\nLine");
+		bn.pos(Rect(10, 110, 190, 190));
+
+		bn.onClick = &this.onOk(Button);
+		add(lbl);
+		add(edit);
+		add(bn);
+		create();
+	}
+
+	void onOk(Button b) {
+		print("You entered: " # edit.text);
+		edit.text("");
+	}
+}
+
+
+void multiline() {
+	MultilineWin win;
+	win.waitForClose;
+}

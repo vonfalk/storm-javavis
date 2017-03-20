@@ -100,7 +100,7 @@ namespace gui {
 		if (s.end == 0)
 			return;
 
-		Str *t = text();
+		const Str *t = text();
 		s.end = min(s.end, t->peekLength());
 		nat removeStart = s.end - 1;
 		while (removeStart > 0) {

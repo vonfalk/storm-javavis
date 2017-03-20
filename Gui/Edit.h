@@ -6,6 +6,8 @@ namespace gui {
 
 	/**
 	 * Selection for the edit control.
+	 *
+	 * TODO: Iterators?
 	 */
 	class Selection {
 		STORM_VALUE;

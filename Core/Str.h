@@ -97,6 +97,10 @@ namespace storm {
 		// Get a c-string.
 		wchar *c_str() const;
 
+		// Convert to/from cr-lf line endings. Returns the same string if possible.
+		const Str *STORM_FN toCrLf() const;
+		const Str *STORM_FN fromCrLf() const;
+
 		// Compare to c-string.
 		inline Bool operator ==(const wchar *s) const { return wcscmp(c_str(), s) == 0; }
 		inline Bool operator !=(const wchar *s) const { return wcscmp(c_str(), s) != 0; }
@@ -153,14 +157,14 @@ namespace storm {
 		Iter posIter(Nat pos) const;
 
 		// Substring.
-		Str *STORM_FN substr(Iter from);
-		Str *STORM_FN substr(Iter from, Iter to);
+		Str *STORM_FN substr(Iter from) const;
+		Str *STORM_FN substr(Iter from, Iter to) const;
 
 		// Remove characters from the middle of the string.
-		Str *STORM_FN remove(Iter from, Iter to);
+		Str *STORM_FN remove(Iter from, Iter to) const;
 
 		// Insert an entire string at a given position.
-		Str *STORM_FN insert(Iter pos, Str *str);
+		Str *STORM_FN insert(Iter pos, Str *str) const;
 
 	private:
 		friend class Iter;

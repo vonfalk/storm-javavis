@@ -96,7 +96,7 @@ namespace gui {
 		void STORM_SETTER visible(Bool show);
 
 		// Window text.
-		Str *STORM_FN text();
+		const Str *STORM_FN text();
 		void STORM_SETTER text(Str *str);
 
 		// Window position. Always relative to the client area (even in Frames).
@@ -162,7 +162,7 @@ namespace gui {
 		Bool myVisible;
 
 		// Text.
-		Str *myText;
+		const Str *myText;
 
 		// Position.
 		Rect myPos;

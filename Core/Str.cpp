@@ -6,15 +6,6 @@
 
 namespace storm {
 
-	static const GcType bufType = {
-		GcType::tArray,
-		null,
-		null,
-		sizeof(wchar), // element size
-		0,
-		{},
-	};
-
 	static GcArray<wchar> empty = {
 		1,
 	};
@@ -322,7 +313,7 @@ namespace storm {
 
 	Str *Str::unescape(Char extra) const {
 		// Note: we never need more space after unescaping a string.
-		GcArray<wchar> *buf = runtime::allocArray<wchar>(engine(), &bufType, data->count);
+		GcArray<wchar> *buf = runtime::allocArray<wchar>(engine(), &wcharArrayType, data->count);
 		wchar *to = buf->v;
 
 		for (const wchar *from = data->v; *from; from++) {
@@ -411,6 +402,67 @@ namespace storm {
 		return true;
 	}
 
+	static Nat toCrLfHelp(GcArray<wchar> *src, GcArray<wchar> *dest) {
+		Nat pos = 0;
+		for (Nat i = 0; i + 1 < src->count; i++) {
+			if (src->v[i] == '\n') {
+				if (i > 0 && src->v[i-1] != '\r') {
+					if (dest)
+						dest->v[pos] = '\r';
+					pos++;
+				}
+			}
+			if (dest)
+				dest->v[pos] = src->v[i];
+			pos++;
+		}
+		return pos;
+	}
+
+	const Str *Str::toCrLf() const {
+		Nat len = toCrLfHelp(data, null);
+		if (len == charCount())
+			return this;
+
+		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, len + 1);
+		toCrLfHelp(data, to);
+		return new (this) Str(to);
+	}
+
+	static Nat fromCrLfHelp(GcArray<wchar> *src, GcArray<wchar> *dest) {
+		Nat pos = 0;
+		for (Nat i = 0; i + 1 < src->count; i++) {
+			if (src->v[i] == '\r') {
+				// Note: we do not need to check for out of bounds here, as we know strings are
+				// always null terminated, and as such this element always exists (but might contain
+				// null).
+				if (src->v[i+1] == '\n') {
+					// Ignore this one.
+				} else {
+					// Replace with \n
+					if (dest)
+						dest->v[pos] = '\n';
+					pos++;
+				}
+			} else {
+				if (dest)
+					dest->v[pos] = src->v[i];
+				pos++;
+			}
+		}
+		return pos;
+	}
+
+	const Str *Str::fromCrLf() const {
+		Nat len = fromCrLfHelp(data, null);
+		if (len == charCount())
+			return this;
+
+		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, len + 1);
+		fromCrLfHelp(data, to);
+		return new (this) Str(to);
+	}
+
 	void Str::deepCopy(CloneEnv *env) {
 		// We don't have any mutable data we need to clone.
 	}
@@ -433,7 +485,7 @@ namespace storm {
 	}
 
 	void Str::allocData(nat count) {
-		data = runtime::allocArray<wchar>(engine(), &bufType, count);
+		data = runtime::allocArray<wchar>(engine(), &wcharArrayType, count);
 	}
 
 	Str::Iter Str::begin() const {
@@ -448,19 +500,19 @@ namespace storm {
 		return Iter(this, pos);
 	}
 
-	Str *Str::substr(Iter start) {
+	Str *Str::substr(Iter start) const {
 		return substr(start, end());
 	}
 
-	Str *Str::substr(Iter start, Iter end) {
+	Str *Str::substr(Iter start, Iter end) const {
 		return new (this) Str(toPtr(start), toPtr(end));
 	}
 
-	Str *Str::remove(Iter start, Iter end) {
+	Str *Str::remove(Iter start, Iter end) const {
 		return new (this) Str(data->v, toPtr(start), toPtr(end), data->v + charCount());
 	}
 
-	Str *Str::insert(Iter pos, Str *s) {
+	Str *Str::insert(Iter pos, Str *s) const {
 		return new (this) Str(this, pos, s);
 	}
 

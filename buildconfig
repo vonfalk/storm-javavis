@@ -3,6 +3,7 @@ Test
 
 #Basic UI test.
 #Main -a -r ../root/ -f test.ui.main
+#Main -a -r ../root/ -f test.ui.multiline
 
 #Main -a -r ../root/ -f test.d.testFactorial
 #Main -a -r ../root/ -f test.asm.testInlineLabel

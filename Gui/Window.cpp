@@ -149,13 +149,12 @@ namespace gui {
 			ShowWindow(handle(), show ? TRUE : FALSE);
 	}
 
-	Str *Window::text() {
+	const Str *Window::text() {
 		if (created()) {
-			int len = GetWindowTextLength(handle());
-			wchar *buffer = new wchar[len + 1];
-			GetWindowText(handle(), buffer, len + 1);
-			myText = new (this) Str(buffer);
-			delete []buffer;
+			Nat len = GetWindowTextLength(handle());
+			GcArray<wchar_t> *src = runtime::allocArray<wchar>(engine(), &wcharArrayType, len + 1);
+			GetWindowText(handle(), src->v, len + 1);
+			myText = (new (this) Str(src))->fromCrLf();
 		}
 		return myText;
 	}
@@ -163,7 +162,7 @@ namespace gui {
 	void Window::text(Str *s) {
 		myText = s;
 		if (created())
-			SetWindowText(handle(), s->c_str());
+			SetWindowText(handle(), s->toCrLf()->c_str());
 	}
 
 	Rect Window::pos() {
@@ -276,7 +275,7 @@ namespace gui {
 			resized(myPos.size());
 
 		HINSTANCE instance = app->instance();
-		LPCTSTR windowName = myText->c_str();
+		LPCTSTR windowName = myText->toCrLf()->c_str();
 
 		app->preCreate(this);
 		HWND z = CreateWindowEx(exStyle, className, windowName, style,

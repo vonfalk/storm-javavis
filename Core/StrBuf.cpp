@@ -53,15 +53,6 @@ namespace storm {
 		return HexFmt(Word(ptr), sizeof(ptr) * 2);
 	}
 
-	static const GcType bufType = {
-		GcType::tArray,
-		null,
-		null,
-		sizeof(wchar), // element size
-		0,
-		{},
-	};
-
 	StrBuf::StrBuf() : buf(null) {
 		clear();
 	}
@@ -85,7 +76,7 @@ namespace storm {
 	Str *StrBuf::toS() const {
 		// We can not copy any extra data, so we can not use copyBuf()
 
-		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &bufType, pos + 1);
+		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, pos + 1);
 		for (nat i = 0; i < pos; i++)
 			to->v[i] = buf->v[i];
 
@@ -420,7 +411,7 @@ namespace storm {
 		nat newCap = max(capacity, curr * 2);
 		newCap = max(newCap, nat(16));
 
-		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &bufType, newCap + 1);
+		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, newCap + 1);
 		for (nat i = 0; i < pos; i++)
 			to->v[i] = buf->v[i];
 
@@ -428,7 +419,7 @@ namespace storm {
 	}
 
 	GcArray<wchar> *StrBuf::copyBuf(GcArray<wchar> *buf) const {
-		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &bufType, buf->count);
+		GcArray<wchar> *to = runtime::allocArray<wchar>(engine(), &wcharArrayType, buf->count);
 		for (nat i = 0; i < buf->count; i++)
 			to->v[i] = buf->v[i];
 		return to;
