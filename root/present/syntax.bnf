@@ -22,7 +22,7 @@ SIntro => IntroExpr() : "";
 // Parameters to a slide.
 Actuals SSlideParams(lang.bs.Block b);
 SSlideParams => Actuals() : "";
-SSlideParams => Actuals() : SExpr(b) -> add (, ",", SExpr(b) -> add)*;
+SSlideParams => Actuals() : SExpr(b) -> add - (, ",", SExpr(b) -> add)*;
 
 // Items inside a slide.
 ItemInfo SItem(Block block);

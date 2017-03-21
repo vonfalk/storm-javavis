@@ -27,17 +27,17 @@ void SFileItem();
 SFileItem : "use" #keyword, SName #typeName;
 SFileItem : "delimiter" #keyword, "=", SName #typeName;
 SFileItem : SName #typeName, SIdent #fnName, SFormals;
-SFileItem : SProd [, ("=>", SExpr,)? ":", SRepIndentTokens, SProdName]+;
+SFileItem : SProd [, ("=>", SExpr,)? ":", SRepIndentTokens - SProdName]+;
 
 void SFormals();
 SFormals : "(", ")";
 SFormals : "(", SName #typeName, SIdent #varName, (",", SName #typeName, SIdent #varName,)* ")";
 
 void SProd();
-SProd : SName - (, "\[", "\-?[0-9]+" #constant, "\]")?;
+SProd : SName - (, "\[", "[+\-]?[0-9]+" #constant, "\]")?;
 
 void SProdName();
-SProdName : "=", SIdent #typeName;
+SProdName : SDelim - "=", SIdent #typeName;
 SProdName : ;
 
 void SRepIndentTokens();
@@ -78,10 +78,6 @@ void SSep();
 SSep : "-";
 SSep : ",";
 
-void SActuals();
-SActuals : "(", ")";
-SActuals : "(", SIdent #varName, (",", SIdent #varName,)* ")";
-
 void SRep();
 SRep : "\*";
 SRep : "\+";
@@ -95,13 +91,12 @@ SIndent : "\+";
 SIndent : "\-";
 
 void SCapture();
-SCapture : "@", SCaptureEnd;
 SCapture : SCaptureEnd;
 SCapture : ;
 
 void SCaptureEnd();
-SCaptureEnd : "->", SIdent #fnName;
-SCaptureEnd : SIdent #varName;
+SCaptureEnd : ("@" #keyword)?, "->", SIdent #fnName;
+SCaptureEnd : ("@" #keyword)?, SIdent #varName;
 
 void SParenEnd();
 SParenEnd : SDelim - SCaptureEnd;
@@ -118,9 +113,17 @@ SStrContent : SStrContent - "\\." - SStrContent; // Gobble escape sequences (we 
 Str SString();
 SString => s : "\"" #string - (SStrContent #string) s - "\"" #string;
 
+void SActuals();
+SActuals : "(", ")";
+SActuals : "(", SAtom, (",", SAtom,)* ")";
+
+void SAtom();
+SAtom : SIdent #varName;
+SAtom : "[+\-]?[0-9]+" #constant;
+SAtom : "true" #constant;
+SAtom : "false" #constant;
+
 void SExpr();
 SExpr : SName #varName;
 SExpr : SName, SActuals;
-SExpr[10] : "true" #keyword;
-SExpr[10] : "false" #keyword;
-// Constants?
+SExpr : SAtom;

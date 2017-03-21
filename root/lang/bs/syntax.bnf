@@ -54,12 +54,12 @@ SFnName => SrcName(pos) : (STypePart -> add #typeName, ":", )* STypePart -> add 
 
 // Package. Separate entry so to not allow package names like: a:b[] or a:b->c:d.
 SrcName SPackage();
-SPackage => SrcName(pos) : STypePart -> add #typeName (, ":", STypePart -> add #typeName)*;
+SPackage => SrcName(pos) : STypePart -> add #typeName - (, ":", STypePart -> add #typeName)*;
 
 // List of types.
 Array<SrcName> STypes();
 STypes => Array<SrcName>() : "";
-STypes => Array<SrcName>() : SType -> push (, ",", SType -> push)*;
+STypes => Array<SrcName>() : SType -> push - (, ",", SType -> push)*;
 
 Array<SrcName> SFnTypes();
 SFnTypes => Array<SrcName>() : "";
@@ -77,7 +77,7 @@ SString => s : "\"" #string - (SStrContent #string) s - "\"" #string;
 // Parameter list (possibly empty).
 Array<NameParam> SFormals();
 SFormals => Array<NameParam>() : "";
-SFormals => Array<NameParam>() : SFormal -> push (, ",", SFormal -> push)*;
+SFormals => Array<NameParam>() : SFormal -> push - (, ",", SFormal -> push)*;
 
 NameParam SFormal();
 SFormal => NameParam(type, name) : SType type, SName name #varName;
@@ -135,7 +135,7 @@ SReplExpr => Expr(pos) : "";
 // Actual parameters
 Actuals SActuals(Block block);
 SActuals => Actuals() : "";
-SActuals => Actuals() : SExpr(block) -> add (, ",", SExpr(block) -> add)*;
+SActuals => Actuals() : SExpr(block) -> add - (, ",", SExpr(block) -> add)*;
 
 // Actual parameters with/without parens.
 Actuals SFnActuals(Block block);
@@ -160,11 +160,11 @@ SAllWeakCast => r : SWeakCast(block) r;
 // If.
 IfExpr SIf(Block block);
 SIf[0] => createIf(block, expr) :
-    "if" #keyword, "(", SExpr(block) expr, ")", SIfTrue(me) -> trueExpr (, "else" #keyword, SStmt(me) -> falseExpr)?;
+    "if" #keyword, "(", SExpr(block) expr, ")", SIfTrue(me) -> trueExpr - (, "else" #keyword, SStmt(me) -> falseExpr)?;
 SIf[0] => IfWeak(block, cast) :
-    "if" #keyword, "(", SWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr (, "else" #keyword, SStmt(me) -> falseExpr)?;
+    "if" #keyword, "(", SWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr - (, "else" #keyword, SStmt(me) -> falseExpr)?;
 SIf[5] => IfWeak(block, cast, name) :
-    "if" #keyword, "(", SName name #varName, "=", SAllWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr (, "else" #keyword, SStmt(me) -> falseExpr)?;
+    "if" #keyword, "(", SName name #varName, "=", SAllWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr - (, "else" #keyword, SStmt(me) -> falseExpr)?;
 
 // Scoping for if and as expressions.
 IfTrue SIfTrue(Block parent); // Really only If and IfWeak.
@@ -177,7 +177,7 @@ SReturn => Return(pos, block, expr) : "return" #keyword, SExpr(block) expr;
 
 // The loop.
 Expr SLoop(Block block);
-SLoop => Loop(pos, block) : "do[ \n\r\t]" #keyword, SStmt(me) -> doBody (, "while" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody)?;
+SLoop => Loop(pos, block) : "do[ \n\r\t]" #keyword, SStmt(me) -> doBody - (, "while" #keyword, "(", SExpr(me) -> cond, ")", SStmt(me) -> whileBody)?;
 SLoop => Loop(pos, block) : "while" #keyword, "(", SExpr(me) -> cond, ")" [, SStmt(me) -> whileBody]?;
 
 // The for loop. Divided into two to get correct scoping.
@@ -356,8 +356,8 @@ SCtorStmts => v : (SStmt(block) v, )*;
 // Constructor parameters. May include a nameless first parameter.
 Array<NameParam> SCtorParams();
 SCtorParams => Array<NameParam>() : "";
-SCtorParams => Array<NameParam>() : SFormal -> push (, ",", SFormal -> push)*;
-SCtorParams => Array<NameParam>() : SFirstFormal -> push (, ",", SFormal -> push)*;
+SCtorParams => Array<NameParam>() : SFormal -> push - (, ",", SFormal -> push)*;
+SCtorParams => Array<NameParam>() : SFirstFormal -> push - (, ",", SFormal -> push)*;
 
 NameParam SFirstFormal();
 SFirstFormal => nameless(type) : SType type;

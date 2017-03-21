@@ -1,7 +1,6 @@
 // New-style syntax!
 
 // Use these namespaces when looking up names (both rule names and type/function names).
-// Example: (not needed here)
 use core.lang;
 
 // TODO? Import additional packages automatically? Eg:
@@ -50,18 +49,18 @@ Paragraph => stmt : (Sentence stmt - SEDelim)*;
 
 // Test for -> syntax.
 Array<Statement> ParCall();
-ParCall => Array<Statement>() : Sentence -> push (, Sentence -> push)*;
+ParCall => Array<Statement>() : Sentence -> push - (, Sentence -> push)*;
 
 // Test -> when using Maybe<T>.
 Array<Statement> MaybeCall();
-MaybeCall => Array<Statement>() : Sentence -> push (, Sentence -> push)?;
+MaybeCall => Array<Statement>() : Sentence -> push - (, Sentence -> push)?;
 
 // Capture parts of the raw syntax tree.
 Array<Sentence> RawSentence();
 RawSentence => data : (Sentence@ data - SEDelim)*;
 
 Array<Sentence> RawCall();
-RawCall => Array<Sentence>() : Sentence@ -> push (, Sentence@ -> push)*;
+RawCall => Array<Sentence>() : Sentence@ -> push - (, Sentence@ -> push)*;
 
 // Capture part of a match as a string.
 Str Capture();

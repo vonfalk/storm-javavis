@@ -24,7 +24,7 @@ SIdent : "[A-Za-z][A-Za-z0-9_]*";
 
 // Qualified identifier.
 void SQIdent();
-SQIdent : SIdent #typeName (, "\.", SIdent #typeName)*;
+SQIdent : SIdent #typeName - (, "\.", SIdent #typeName)*;
 
 void SQIdentList();
 SQIdentList : SQIdent - (, ",", SQIdent)*;
@@ -247,8 +247,8 @@ SPrimary : "false" #constant;
 SPrimary : "null" #constant;
 SPrimary : "\"" #string - SStrContent #string - "\"" #string;
 SPrimary : "'" #string - SStrContent #string - "'" #string;
-SPrimary : "this" #keyword (, SArgs)?;
-SPrimary : "super" #keyword (, SArgs)?;
+SPrimary : "this" #keyword - (, SArgs)?;
+SPrimary : "super" #keyword - (, SArgs)?;
 SPrimary : "super" #keyword, "\.", SIdent #fnName - (, SArgs)?;
 SPrimary[-1] : SIdent #varName, SIdentSuffix;
 SPrimary : SBasicType #typeName, ("\[\]",)* "\.", "class" #keyword;
@@ -306,7 +306,7 @@ SArgs : "(", SExpr, (",", SExpr, )*, ")";
 void SSelector();
 SSelector : SIdent #fnName - (, SArgs)?;
 SSelector : "this" #keyword;
-SSelector : "super" #keyword (, SArgs)?;
+SSelector : "super" #keyword - (, SArgs)?;
 SSelector[10] : "super" #keyword, "\.", SSelector;
 SSelector : "new" #keyword, STypeActuals, SIdent #typeName, STypeActuals, SArgs - (,SClassBody)?;
 SSelector : "<", STypeList, ">", SGenericSuffix;
@@ -322,17 +322,20 @@ SStmt : SBlock;
 SStmt : SIdent, ":", SStmt;
 SStmt : SExpr, ";";
 SStmt[10] : "assert" #keyword, SExpr, (":", SExpr,)? ";";
-SStmt[10] : "if" #keyword, "(", SExpr, ")" [, SStmt]? (, "else" #keyword [, SStmt]?)?;
+SStmt[10] : "if" #keyword, "(", SExpr, ")" [, SStmt]? - (, SStmtElse)?;
 SStmt[10] : "while" #keyword, "(", SExpr, ")" [, SStmt]?;
 SStmt[10] : "do" #keyword [, SStmt, ]? "while" #keyword, "(", SExpr, ")", ";";
 SStmt[10] : "for" #keyword, "(", SForControl, ")" [, SStmt]?;
-SStmt[10] : "break" #keyword (, SIdent)?;
-SStmt[10] : "continue" #keyword (, SIdent)?;
+SStmt[10] : "break" #keyword - (, SIdent)?;
+SStmt[10] : "continue" #keyword - (, SIdent)?;
 SStmt[10] : "return" #keyword, SExpr;
 SStmt[10] : "throw" #keyword, SExpr;
 SStmt[10] : "synchronized", "(", SExpr, ")", SBlock;
 SStmt[10] : "try" #keyword, SBlock, STryTail;
 SStmt[10] : "try" #keyword, "(", SResourceSpec, (";",)? ")", SBlock, STryTail;
+
+void SStmtElse();
+SStmtElse : "else" #keyword [, SStmt]?;
 
 void STryTail();
 STryTail : (SCatchClause, )* "finally" #keyword, SBlock;
@@ -429,7 +432,7 @@ SEnumConstTail : ;
 
 void SEnumDecls();
 SEnumDecls : ;
-SEnumDecls : ";" (, SClassEntry)*;
+SEnumDecls : ";" - (, SClassEntry)*;
 
 // Interface body.
 void SInterfaceBody();
