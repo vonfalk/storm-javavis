@@ -4,11 +4,12 @@ delimiter = SDelim;
 
 void SDelim();
 SDelim : "[ \n\r\t]*";
-SDelim : SDelim - "//[^\n\r]*[\n\r]+" #comment;
+SDelim : SDelim - "//[^\n\r]*[\n\r]+" #comment - SDelim;
 
 // Identifier.
 Str SIdent();
 SIdent => v : "[A-Za-z_][A-Za-z0-9_]*" v;
+SIdent => v : "[\+\-\*/%<>]+" v; // Special identifiers as well!
 
 // Type names.
 NamePart SNamePart();
@@ -17,7 +18,7 @@ SNamePart => SimplePart(name) : SIdent name, "<", ">";
 SNamePart => RecPart(name) : SIdent name, "<", SName -> add, (",", SName -> add, )* ">";
 
 SrcName SName();
-SName => SrcName(pos) : SNamePart -> add #typeName (, "\.", SNamePart -> add #typeName)*;
+SName => SrcName(pos) : SNamePart -> add #typeName - (, "\.", SNamePart -> add #typeName)*;
 
 void SRoot();
 SRoot : SDelim - (SFileItem, ";", )*;
@@ -26,7 +27,7 @@ void SFileItem();
 SFileItem : "use" #keyword, SName #typeName;
 SFileItem : "delimiter" #keyword, "=", SName #typeName;
 SFileItem : SName #typeName, SIdent #fnName, SFormals;
-SFileItem : SProd, ("=>", SExpr,)? ":", STokens, SProdName;
+SFileItem : SProd [, ("=>", SExpr,)? ":", SRepIndentTokens, SProdName]+;
 
 void SFormals();
 SFormals : "(", ")";
@@ -39,19 +40,43 @@ void SProdName();
 SProdName : "=", SIdent #typeName;
 SProdName : ;
 
-void STokens();
-STokens : (SRepToken,)*;
+void SRepIndentTokens();
+SRepIndentTokens : ;
+SRepIndentTokens : SToken;
+SRepIndentTokens : SSep, SRepIndentTokens;
+SRepIndentTokens : SToken, SSep, SRepIndentTokens;
+SRepIndentTokens : "(", SIndentTokens, ")" - SParenEnd, SIndentTokens;
+SRepIndentTokens : (SToken,)? "\[", SRepTokens, "\]" - SIndent, SRepTokens;
 
-void SRepToken();
-SRepToken : "(", (SToken,)* ")" - SRep, SCapture;
-SRepToken : SToken;
+void SIndentTokens();
+SIndentTokens : ;
+SIndentTokens : SToken;
+SIndentTokens : SSep, SIndentTokens;
+SIndentTokens : SToken, SSep, SIndentTokens;
+SIndentTokens : (SToken,)? "\[", STokens, "\]" - SIndent, SRepTokens;
+
+void SRepTokens();
+SRepTokens : ;
+SRepTokens : SToken;
+SRepTokens : SSep, SRepTokens;
+SRepTokens : SToken, SSep, SRepTokens;
+SRepTokens : "(", STokens, ")" - SParenEnd, STokens;
+
+void STokens();
+STokens : ;
+STokens : SToken;
+STokens : SSep, STokens;
+STokens : SToken, SSep, STokens;
 
 void SToken();
 SToken : SString, SCapture, SHilight;
 SToken : SName, SCapture, SHilight;
 SToken : SName, SActuals, SCapture, SHilight;
-SToken : "-";
-SToken : ",";
+SToken : SSep;
+
+void SSep();
+SSep : "-";
+SSep : ",";
 
 void SActuals();
 SActuals : "(", ")";
@@ -62,12 +87,29 @@ SRep : "\*";
 SRep : "\+";
 SRep : "\?";
 
+void SIndent();
+SIndent : "@";
+SIndent : "$";
+SIndent : "\?";
+SIndent : "\+";
+SIndent : "\-";
+
 void SCapture();
-SCapture : ("@",)? "->", SIdent;
-SCapture : ("@",)? SIdent;
+SCapture : "@", SCaptureEnd;
+SCapture : SCaptureEnd;
+SCapture : ;
+
+void SCaptureEnd();
+SCaptureEnd : "->", SIdent #fnName;
+SCaptureEnd : SIdent #varName;
+
+void SParenEnd();
+SParenEnd : SDelim - SCaptureEnd;
+SParenEnd : SRep;
 
 void SHilight();
 SHilight : "#" #keyword - SIdent #keyword;
+SHilight : ;
 
 void SStrContent();
 SStrContent : "[^\"\\]*"; // All except end of string and backslash.
@@ -77,6 +119,7 @@ Str SString();
 SString => s : "\"" #string - (SStrContent #string) s - "\"" #string;
 
 void SExpr();
+SExpr : SName #varName;
 SExpr : SName, SActuals;
 SExpr[10] : "true" #keyword;
 SExpr[10] : "false" #keyword;
