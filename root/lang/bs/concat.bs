@@ -11,7 +11,7 @@ SrcName strBufType() {
 
 // Implementation of the string concatenation operator (#).
 class ConcatOperator extends OpInfo {
-	ctor(SStr op, Int prio) {
+	init(SStr op, Int prio) {
 		init(op, prio, false) {}
 	}
 
@@ -49,7 +49,7 @@ class ConcatExpr extends Expr {
 	Var strBufVar;
 
 	// Create the root node.
-	ctor(SrcPos pos, Block parent) {
+	init(SrcPos pos, Block parent) {
 		ExprBlock outer(pos, parent);
 		ExprBlock inner(pos, outer);
 		init(pos) {

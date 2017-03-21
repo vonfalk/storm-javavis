@@ -87,7 +87,7 @@ class ReferNamed extends Expr {
 	// Object we're referring to.
 	Named referTo;
 
-	ctor(SrcPos pos, Named to) {
+	init(SrcPos pos, Named to) {
 		init(pos) {
 			referTo = to;
 		}
@@ -166,7 +166,7 @@ void summary(NameSet s) on Compiler {
 }
 
 class PrintAsm extends Expr {
-	ctor(SrcPos pos) {
+	init(SrcPos pos) {
 		init(pos);
 	}
 

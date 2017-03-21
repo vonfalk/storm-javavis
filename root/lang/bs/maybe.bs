@@ -38,7 +38,7 @@ Expr asMaybe(Block block, Expr expr) on Compiler {
  * to something usable.
  */
 class NullExpr extends Expr {
-	ctor(SrcPos pos) {
+	init(SrcPos pos) {
 		init(pos);
 	}
 

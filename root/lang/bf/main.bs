@@ -18,7 +18,7 @@ FileReader createFile(FileInfo info) {
 }
 
 class BfFile extends FileReader {
-	ctor(FileInfo info) {
+	init(FileInfo info) {
 		init(info) {}
 	}
 
@@ -36,7 +36,7 @@ class BfFile extends FileReader {
 class BfFunction extends Function {
 	Url file;
 
-	ctor(Str name, Url file) {
+	init(Str name, Url file) {
 		Value strVal = named{Str};
 		init(strVal, name, [strVal]) {
 			file = file;
@@ -45,7 +45,7 @@ class BfFunction extends Function {
 		setCode(LazyCode(&this.load()));
 	}
 
-	ctor(Url file) {
+	init(Url file) {
 		Value strVal = rootScope.value(name{core:Str});
 		init(strVal, file.title, [strVal]) {
 			file = file;
@@ -92,13 +92,13 @@ class BfExpr extends lang:bs:Expr {
 	BfToken[] tokens;
 	Expr input;
 
-	ctor(SrcPos pos) {
+	init(SrcPos pos) {
 		init(pos) {
 			input(pos);
 		}
 	}
 
-	ctor(SrcPos pos, Str space, BfToken[] data) {
+	init(SrcPos pos, Str space, BfToken[] data) {
 		init(pos) {
 			space = space.toNat;
 			tokens = data;
@@ -106,7 +106,7 @@ class BfExpr extends lang:bs:Expr {
 		}
 	}
 
-	ctor(SrcPos pos, Str space, BfToken[] data, lang:bs:Expr input) {
+	init(SrcPos pos, Str space, BfToken[] data, lang:bs:Expr input) {
 		init(pos) {
 			space = space.toNat;
 			tokens = data;
@@ -174,7 +174,7 @@ class BfState on Compiler {
 	// Nat type.
 	Value natType;
 
-	ctor(CodeGen g, Nat size, Expr inputExpr) {
+	init(CodeGen g, Nat size, Expr inputExpr) {
 		init() {
 			g = g;
 			strBuf = named{StrBuf};
@@ -214,7 +214,7 @@ class BfState on Compiler {
 class BfToken on Compiler {
 	SrcPos pos;
 
-	ctor(SrcPos pos) {
+	init(SrcPos pos) {
 		init { pos = pos; }
 	}
 
@@ -222,7 +222,7 @@ class BfToken on Compiler {
 }
 
 class BfBack extends BfToken {
-	ctor(SrcPos pos) { init(pos); }
+	init(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << sub(Operand(ptrA), ptrConst(Offset(1)));
 	}
@@ -230,7 +230,7 @@ class BfBack extends BfToken {
 }
 
 class BfFwd extends BfToken {
-	ctor(SrcPos pos) { init(pos); }
+	init(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << add(Operand(ptrA), ptrConst(Offset(1)));
 	}
@@ -238,7 +238,7 @@ class BfFwd extends BfToken {
 }
 
 class BfInput extends BfToken {
-	ctor(SrcPos pos) { init(pos); }
+	init(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << push(Operand(ptrA));
 
@@ -255,7 +255,7 @@ class BfInput extends BfToken {
 }
 
 class BfOutput extends BfToken {
-	ctor(SrcPos pos) { init(pos); }
+	init(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << push(Operand(ptrA));
 		to.l << lea(Operand(ptrC), Operand(state.tmpData));
@@ -274,7 +274,7 @@ class BfOutput extends BfToken {
 }
 
 class BfInc extends BfToken {
-	ctor(SrcPos pos) { init(pos); }
+	init(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << add(byteRel(ptrA, Offset()), byteConst(1.byte));
 	}
@@ -282,7 +282,7 @@ class BfInc extends BfToken {
 }
 
 class BfDec extends BfToken {
-	ctor(SrcPos pos) { init(pos); }
+	init(SrcPos pos) { init(pos); }
 	void code(BfState state, CodeGen to) {
 		to.l << sub(byteRel(ptrA, Offset()), byteConst(1.byte));
 	}
@@ -292,7 +292,7 @@ class BfDec extends BfToken {
 class BfLoop extends BfToken {
 	BfToken[] tokens;
 
-	ctor(SrcPos pos, BfToken[] tokens) {
+	init(SrcPos pos, BfToken[] tokens) {
 		init(pos) {
 			tokens = tokens;
 		}

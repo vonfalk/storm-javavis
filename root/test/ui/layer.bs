@@ -13,7 +13,7 @@ class LayerPainter extends Painter {
 	SolidBrush greenA;
 	SolidBrush blueA;
 
-	ctor() {
+	init() {
 		init() {
 			redA = red.withAlpha(0.5);
 			greenA = green.withAlpha(0.5);
@@ -52,7 +52,7 @@ class LayerPainter extends Painter {
 }
 
 class LayerWin extends Frame {
-	ctor() {
+	init() {
 		init("Layers!") {}
 		size(Size(400, 400));
 		painter(LayerPainter());

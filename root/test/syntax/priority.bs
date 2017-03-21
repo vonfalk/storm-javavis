@@ -4,7 +4,7 @@ use core:lang;
 class Buffer {
 	StrBuf content;
 
-	ctor() {
+	init() {
 		init() {}
 	}
 

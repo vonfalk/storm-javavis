@@ -11,7 +11,7 @@ class PExpr extends Expr {
 	ExprBlock into;
 	LocalVar pVar;
 
-	ctor(SrcPos pos, Block p, Str title) {
+	init(SrcPos pos, Block p, Str title) {
 
 		ExprBlock o(pos, p);
 		ExprBlock b(pos, o);
@@ -55,7 +55,7 @@ class SlideExpr extends Expr {
 	ExprBlock into;
 	LocalVar sVar;
 
-	ctor(PExpr p, SStr type, Actuals params, IntroExpr intro) {
+	init(PExpr p, SStr type, Actuals params, IntroExpr intro) {
 		ExprBlock o(type.pos, p.into);
 		ExprBlock b(type.pos, o);
 
@@ -110,11 +110,11 @@ class IntroExpr {
 	Str? name;
 	Actuals params;
 
-	ctor() {
+	init() {
 		init() {}
 	}
 
-	ctor(SStr name, Actuals params) {
+	init(SStr name, Actuals params) {
 		init() {
 			name = name.v # "Intro";
 			params = params;
@@ -135,14 +135,14 @@ class ItemInfo {
 	Bool direct;
 	Expr? time;
 
-	ctor(Expr item, Bool direct) {
+	init(Expr item, Bool direct) {
 		init() {
 			item = item;
 			direct = direct;
 		}
 	}
 
-	ctor(Expr item, Expr time) {
+	init(Expr item, Expr time) {
 		init() {
 			item = item;
 			direct = false;

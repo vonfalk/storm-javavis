@@ -6,13 +6,13 @@ use ui;
 class BsodSlide extends TerminalSlide {
 	Bool autoAdvance;
 
-	ctor() {
+	init() {
 		init(blue, white) {
 			autoAdvance = false;
 		}
 	}
 
-	ctor(Bool advance) {
+	init(Bool advance) {
 		init(blue, white) {
 			autoAdvance = advance;
 		}

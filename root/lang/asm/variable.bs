@@ -6,7 +6,7 @@ use lang:bs;
 class VarRef extends AsmOperand {
 	LocalVar? var;
 
-	ctor(SrcPos pos, lang:bs:Block block, Str name) {
+	init(SrcPos pos, lang:bs:Block block, Str name) {
 		init();
 
 		Named? v = block.scope.find(SimpleName(name));

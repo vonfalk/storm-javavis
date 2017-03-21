@@ -54,7 +54,7 @@ DbgVal otherThreadError(DbgVal p, Int point) on Other {
 
 // Throw an error during construction.
 value ErrorAt {
-	ctor(Int point, Int at) {
+	init(Int point, Int at) {
 		init() {}
 		errorOn(point, at);
 	}
@@ -67,7 +67,7 @@ value ErrorBase {
 	DbgVal v1;
 	ErrorAt e2;
 
-	ctor(Int point) {
+	init(Int point) {
 		errorOn(point, 2);
 		init() {
 			e1(point, 3);
@@ -84,7 +84,7 @@ value ErrorTest extends ErrorBase {
 	DbgVal v2;
 	ErrorAt e5;
 
-	ctor(Int point) {
+	init(Int point) {
 		errorOn(point, 1); // Error before initialization of super class.
 		init(point) {
 			e4(point, 6);

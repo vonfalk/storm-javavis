@@ -18,7 +18,7 @@ class BsRepl extends Repl {
 	Scope scope;
 
 	// Pre-processing.
-	ctor() {
+	init() {
 		Type repl = named{BsRepl};
 
 		init() {
@@ -111,7 +111,7 @@ void outputLicense(core:info:License l, Bool full) on Compiler {
 class ReplSandbox on Compiler {
 	BsRepl owner;
 
-	ctor(BsRepl owner) {
+	init(BsRepl owner) {
 		init() {
 			owner = owner;
 		}
@@ -149,7 +149,7 @@ class ReplSandbox on Compiler {
 }
 
 class ReplBlock extends Block {
-	ctor(Scope scope) {
+	init(Scope scope) {
 		init(SrcPos(), scope) {}
 	}
 }
@@ -160,7 +160,7 @@ class ReplCode on Compiler {
 	Expr expr;
 	Value strType;
 
-	ctor(ReplBlock root, LocalVar thisPtr, Expr expr) {
+	init(ReplBlock root, LocalVar thisPtr, Expr expr) {
 		init() {
 			root = root;
 			thisPtr = thisPtr;

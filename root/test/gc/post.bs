@@ -3,7 +3,7 @@ use core:debug;
 class GcVerify on ? {
 	Bool ok;
 	Nat checked;
-	ctor(Thread) {
+	init(Thread) {
 		init() {
 			ok = true;
 			checked = 0;
@@ -26,7 +26,7 @@ class GcPost on ? {
 	Nat times;
 	GcVerify verify;
 
-	ctor(Thread, GcVerify v, Nat times) {
+	init(Thread, GcVerify v, Nat times) {
 		init() {
 			verify = v;
 			times = times;

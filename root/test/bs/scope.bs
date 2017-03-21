@@ -1,7 +1,7 @@
 class ScopeCls {
 	Int v;
 
-	ctor() {
+	init() {
 		init() { v = 20; }
 	}
 

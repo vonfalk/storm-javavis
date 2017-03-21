@@ -23,7 +23,7 @@ class MainPainter extends Painter {
 	Text text;
 	Path star;
 
-	ctor() {
+	init() {
 		Url f = resUrl / "ui_alpha.png";
 		Image img = graphics:loadImage(f);
 
@@ -99,7 +99,7 @@ class MainPainter extends Painter {
 }
 
 class PaintWin extends Frame {
-	ctor() {
+	init() {
 		init("Graphics!") {}
 		size(Size(400, 400));
 		painter(MainPainter());
@@ -113,7 +113,7 @@ class MainWin extends Frame {
 	Edit input;
 	Button btn;
 
-	ctor() {
+	init() {
 		init("Test window") {
 			lbl("Name:");
 			input("Your name");

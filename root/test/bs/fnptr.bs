@@ -91,11 +91,11 @@ fn(DbgActor)->DbgVal createActorFn(Int type) {
 
 // Counts how many copies have been made.
 class CloneTrack extends Dbg {
-	ctor(Int v) {
+	init(Int v) {
 		init(v) {}
 	}
 
-	ctor(CloneTrack t) {
+	init(CloneTrack t) {
 		init(t) {}
 		set(get + 10000);
 	}
@@ -174,7 +174,7 @@ Int trackOnCompiler(Dbg v) on Compiler {
 }
 
 class InActor on ? {
-	ctor(Thread) {
+	init(Thread) {
 		init() {}
 	}
 

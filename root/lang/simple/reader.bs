@@ -13,7 +13,7 @@ FileReader createFile(FileInfo info) {
 }
 
 class SReader extends FileReader {
-	ctor(FileInfo info) {
+	init(FileInfo info) {
 		init(info);
 	}
 

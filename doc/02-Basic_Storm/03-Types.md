@@ -44,7 +44,11 @@ Constructors
 Types may have constructors. If no destructor is declared, Basic Storm generates a constructor for
 you. Constructors are declared by the special syntax:
 
-`ctor(<parameters>) { <body> }`
+`init(<parameters>) { <body> }`
+
+or, if the constructor represents a type cast that can be performed implicitly:
+
+`cast(<parameters>) { <body> }`
 
 The constructor is special, because it needs to contain the special `init` statement at top-level in
 its body. This `init` statement is in charge of calling constructors of the super class (if any) and

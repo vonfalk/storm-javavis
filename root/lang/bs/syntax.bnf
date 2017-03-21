@@ -233,7 +233,7 @@ SSkipContent : "'" - SStrContent - "'";
 // Atoms, for example constants and variables/function calls.
 Expr SAtom(Block block);
 SAtom => v : SConst v;
-SAtom => namedExpr(block, name, params) : SFnName name, SFnActuals(block) params;
+SAtom => namedExpr(block, name, params) : SType name #varName, SFnActuals(block) params;
 SAtom[10] => namedExpr(block, name, dotExpr, params) : SAtom(block) dotExpr, "\.", SName name #varName, SFnActuals(block) params;
 SAtom[20] => spawnExpr(expr) : "spawn" #keyword, SExpr(block) expr;
 SAtom[20] => NullExpr(pos) : "null" #keyword;
@@ -369,9 +369,9 @@ SClassItem => ClassVar(owner, t, n) :
 SClassItem => classFn(owner, pos, name, result, params, body) :
     SType result, SName name #fnName, "(", SFormals params, ")", "{", SFunctionBody@ body, "}";
 SClassItem => classCtor(owner, pos, params, body) :
-    "ctor" #keyword, "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
+    "init" #keyword, "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
 SClassItem => classCastCtor(owner, pos, params, body) :
-    "cast" #keyword, "ctor" #keyword, "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
+    "cast" #keyword, "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
 
 // Root rule for parsing classes and values.
 ClassBody SClassBody(Class owner);

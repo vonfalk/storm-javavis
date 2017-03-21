@@ -7,7 +7,7 @@ class SimpleWin extends Frame {
 	Edit edit;
 	Button bn;
 
-	ctor() {
+	init() {
 		init("Simple Window") {
 			lbl("Input text:");
 			edit("text");

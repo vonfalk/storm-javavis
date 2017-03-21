@@ -54,7 +54,7 @@ class SlideStyle on Render {
 	// Page number font.
 	Font pageFont;
 
-	ctor(Presentation p) {
+	init(Presentation p) {
 		init() {
 			bg = p.bg;
 			text = p.text;
@@ -137,7 +137,7 @@ class FadeIntro extends SlideIntro {
 	Duration duration;
 	Moment started;
 
-	ctor(Duration d) {
+	init(Duration d) {
 		init() {
 			duration = d;
 		}
@@ -174,21 +174,21 @@ class ZoomIntro extends SlideIntro {
 	Duration time;
 	Point center;
 
-	ctor(Duration time) {
+	init(Duration time) {
 		init() {
 			time = time;
 			center(0, 0);
 		}
 	}
 
-	ctor(Duration time, Float xCenter) {
+	init(Duration time, Float xCenter) {
 		init() {
 			time = time;
 			center(xCenter, 0);
 		}
 	}
 
-	ctor(Duration time, Point center) {
+	init(Duration time, Point center) {
 		init() {
 			time = time;
 			center = center;
@@ -227,7 +227,7 @@ value SlideAni {
 	Duration delay;
 	Bool click;
 
-	ctor(SlideItem i, Bool click, Duration delay) {
+	init(SlideItem i, Bool click, Duration delay) {
 		init() {
 			i = i;
 			click = click;
@@ -415,13 +415,13 @@ class Slide on Render {
 class TitleSlide extends Slide {
 	Text title;
 
-	ctor(Str title) {
+	init(Str title) {
 		init() {
 			title(title, titleFont);
 		}
 	}
 
-	ctor(Str title, Font font) {
+	init(Str title, Font font) {
 		init() {
 			title(title, font);
 		}
@@ -457,7 +457,7 @@ class TitleSlide extends Slide {
 class ContentSlide extends Slide {
 	Text title;
 
-	ctor(Str title) {
+	init(Str title) {
 		init() {
 			title(title, titleFont);
 		}
@@ -501,14 +501,14 @@ class VContentSlide extends Slide {
 	Text title;
 	Float space;
 
-	ctor(Str title) {
+	init(Str title) {
 		init() {
 			title(title, titleFont);
 			space = margin.h / 2;
 		}
 	}
 
-	ctor(Str title, Float space) {
+	init(Str title, Float space) {
 		init() {
 			title(title, titleFont);
 			space = space;
@@ -557,7 +557,7 @@ class TerminalSlide extends Slide {
 
 	Bool autoRepaint;
 
-	ctor(Color bg, Color fg) {
+	init(Color bg, Color fg) {
 		Font f = monospaceFont;
 		Text t("A", f);
 
@@ -574,7 +574,7 @@ class TerminalSlide extends Slide {
 		}
 	}
 
-	ctor(Color bg, Color fg, Font f) {
+	init(Color bg, Color fg, Font f) {
 		Text t("A", f);
 
 		init() {
@@ -647,7 +647,7 @@ class TerminalSlide extends Slide {
 class SlideItem on Render {
 	Bool visible;
 
-	ctor() {
+	init() {
 		init() {
 			visible = false;
 		}
@@ -679,26 +679,26 @@ class TextItem extends SlideItem {
 	Text t;
 	Brush? color;
 
-	ctor(Str text) {
+	init(Str text) {
 		init() {
 			t(text, subTitleFont);
 		}
 	}
 
-	ctor(Str text, Color color) {
+	init(Str text, Color color) {
 		init() {
 			t(text, subTitleFont);
 			color = SolidBrush(color);
 		}
 	}
 
-	ctor(Str text, Font font) {
+	init(Str text, Font font) {
 		init() {
 			t(text, font);
 		}
 	}
 
-	ctor(Str text, Font font, Color color) {
+	init(Str text, Font font, Color color) {
 		init() {
 			t(text, font);
 			color = SolidBrush(color);
@@ -727,22 +727,22 @@ class ListItem extends SlideItem {
 	Float ballSize;
 	Float ballInner;
 
-	ctor(Str[] text) {
+	init(Str[] text) {
 		init() {}
 		initText(text, subTitleFont);
 	}
 
-	ctor(Str[] text, Color color) {
+	init(Str[] text, Color color) {
 		init() { color = SolidBrush(color); }
 		initText(text, subTitleFont);
 	}
 
-	ctor(Str[] text, Font font) {
+	init(Str[] text, Font font) {
 		init() {}
 		initText(text, font);
 	}
 
-	ctor(Str[] text, Font font, Color color) {
+	init(Str[] text, Font font, Color color) {
 		init() { color = SolidBrush(color); }
 		initText(text, font);
 	}
@@ -793,14 +793,14 @@ class ImageItem extends SlideItem {
 	Bitmap image;
 	Float scale;
 
-	ctor(Url image) {
+	init(Url image) {
 		init() {
 			image = image.loadImage;
 			scale = 1.0;
 		}
 	}
 
-	ctor(Url image, Float scale) {
+	init(Url image, Float scale) {
 		init() {
 			image = image.loadImage;
 			scale = scale;

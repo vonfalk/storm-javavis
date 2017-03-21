@@ -7,7 +7,7 @@ class Output on ? {
 	Str text;
 	Int times;
 
-	ctor(Thread, Str text, Int times) {
+	init(Thread, Str text, Int times) {
 		init() {
 			text = text;
 			times = times;

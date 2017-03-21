@@ -6,7 +6,7 @@ use core:debug;
 value CloneVal {
 	Dbg z;
 
-	ctor() {
+	init() {
 		init() {
 			z = 8;
 		}
@@ -19,7 +19,7 @@ class CloneBase {
 	Dbg b;
 	CloneVal v;
 
-	ctor() {
+	init() {
 		init() {
 			a = 2;
 			b = 3;
@@ -32,13 +32,13 @@ class CloneBase {
 class CloneDerived extends CloneBase {
 	Int c;
 
-	ctor() {
+	init() {
 		init() {
 			c = 4;
 		}
 	}
 
-	ctor(CloneDerived o) {
+	init(CloneDerived o) {
 		init(o) {
 			c = o.c + 1;
 		}

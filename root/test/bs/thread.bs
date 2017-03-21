@@ -54,7 +54,7 @@ value ThreadVal {
 	CloneDerived v;
 	Int z;
 
-	ctor() {
+	init() {
 		init() {
 			z = 10;
 			v();
@@ -95,7 +95,7 @@ class ThreadObj on Other {
 class DynActor on ? {
 	Int v;
 
-	ctor(Thread) {
+	init(Thread) {
 		init();
 	}
 
@@ -109,7 +109,7 @@ class DynActor on ? {
 }
 
 class DerDynActor extends DynActor {
-	ctor(Thread, Int initial) {
+	init(Thread, Int initial) {
 		init();
 		set(initial);
 	}

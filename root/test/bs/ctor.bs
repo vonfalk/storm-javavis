@@ -5,21 +5,21 @@ class CtorClass {
 	Int a;
 	Dbg b;
 
-	ctor() {
+	init() {
 		init() {
 			a = 20;
 			b = 30;
 		}
 	}
 
-	ctor(Dbg d) {
+	init(Dbg d) {
 		init() {
 			a = 20;
 			b = d;
 		}
 	}
 
-	ctor(Int a) {
+	init(Int a) {
 		init() {
 			a = a;
 			b = a * 2;
@@ -57,7 +57,7 @@ class CtorBase {
 
 	Int base;
 
-	ctor(Int v) {
+	init(Int v) {
 		init() { base = v; }
 	}
 
@@ -71,12 +71,12 @@ class CtorDerived extends CtorBase {
 
 	Int der;
 
-	ctor(Int a, Int b) {
+	init(Int a, Int b) {
 		init(a) { der = b; }
 		// comments here should work!
 	}
 
-	ctor(Int a) {
+	init(Int a) {
 		init(1) { der = 1; }
 		// This is broken, it should not compile.
 		this = CtorDerived(a, a);

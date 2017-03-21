@@ -4,15 +4,15 @@ class Cons {
 	Int value;
 	Cons? next;
 
-	ctor(Int value) {
+	init(Int value) {
 		init() { value = value; }
 	}
 
-	ctor(Int value, Cons next) {
+	init(Int value, Cons next) {
 		init() { value = value; next = next; }
 	}
 
-	ctor(Int value, Cons? next) {
+	init(Int value, Cons? next) {
 		init() { value = value; next = next; }
 	}
 

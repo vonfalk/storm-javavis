@@ -2,7 +2,7 @@ use core:debug;
 use core:lang;
 
 class ToSDbg extends Dbg {
-	ctor(Int v) {
+	init(Int v) {
 		init(v) {}
 	}
 

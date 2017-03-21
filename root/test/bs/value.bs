@@ -143,7 +143,7 @@ Int testAssignValVal(Int z) {
 // In C++, the this pointer comes before the return value pointer, make sure we do the right thing!
 class DbgDerived extends Dbg {
 
-	ctor(Int v) {
+	init(Int v) {
 		init(v) {}
 	}
 

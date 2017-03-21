@@ -97,11 +97,11 @@ Int testAsExpr2(Int v) {
 class DerivedDbg extends Dbg {
 	Int b;
 
-	ctor() {
+	init() {
 		init() {}
 	}
 
-	ctor(Int a) {
+	init(Int a) {
 		init() { b = a; }
 	}
 

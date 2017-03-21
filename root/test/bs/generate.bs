@@ -41,7 +41,7 @@ genAdd: generate(params) {
 class GenClass {
 	Int v;
 
-	ctor(Int v) {
+	init(Int v) {
 		init() {
 			v = v;
 		}

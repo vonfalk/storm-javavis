@@ -36,7 +36,7 @@ class ArrayInit extends Expr {
 
 	ExprBlock block; // TODO: Replace with direct ref to parent?
 
-	ctor(SrcPos pos, Block parent, Array<Expr> values) {
+	init(SrcPos pos, Block parent, Array<Expr> values) {
 		init(pos) {
 			values = values;
 			block = ExprBlock(pos, parent);

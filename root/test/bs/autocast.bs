@@ -49,11 +49,11 @@ void ifCast() {
 value AutoCast {
 	Int v;
 
-	cast ctor(Int v) {
+	cast(Int v) {
 		init() { v = v; }
 	}
 
-	cast ctor(Dbg d) {
+	cast(Dbg d) {
 		init() { v = d.get; }
 	}
 }
@@ -68,11 +68,11 @@ Int autoCast(Int v) {
 
 value ACPromote {
 	Float v;
-	ctor(Float v) {
+	init(Float v) {
 		init() { v = v; }
 	}
 
-	ctor() {
+	init() {
 		init() { v = 8; }
 	}
 
@@ -90,7 +90,7 @@ Float promoteInit() {
 
 value ACCast {
 	Nat v;
-	ctor() {
+	init() {
 		init() { v = 20; }
 	}
 }

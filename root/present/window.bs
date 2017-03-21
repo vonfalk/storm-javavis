@@ -18,7 +18,7 @@ class PresentWindow extends Frame {
 	// Number typed currently.
 	Nat typedNumber;
 
-	ctor(Presentation show) {
+	init(Presentation show) {
 		init(show.title) {
 			paint(show);
 			typedNumber = 0;
@@ -124,7 +124,7 @@ class PresentPainter extends Painter {
 	// Brush used outside the slide's limit.
 	SolidBrush outsideColor;
 
-	ctor(Presentation p) {
+	init(Presentation p) {
 		init() {
 			p = p;
 			slideNr = 0;

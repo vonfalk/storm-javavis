@@ -3,7 +3,7 @@ use core:geometry;
 use core:io;
 
 class Dialog extends Frame {
-	ctor() {
+	init() {
 		init("Dialog");
 		size(Size(200, 100));
 		create();
@@ -13,7 +13,7 @@ class Dialog extends Frame {
 class DlgMainWin extends Frame {
 	Button button;
 
-	ctor() {
+	init() {
 		init("Main window") {
 			button("Show dialog");
 		}

@@ -11,7 +11,7 @@ class RangeFor extends ExprBlock {
 	Str? keyName;
 	Str valName;
 
-	ctor(SrcPos pos, Block parent, SStr name, Expr container) {
+	init(SrcPos pos, Block parent, SStr name, Expr container) {
 		init(pos, parent) {
 			valName = name.v;
 		}
@@ -19,7 +19,7 @@ class RangeFor extends ExprBlock {
 		createCode(container);
 	}
 
-	ctor(SrcPos pos, Block parent, SStr key, SStr value, Expr container) {
+	init(SrcPos pos, Block parent, SStr key, SStr value, Expr container) {
 		init(pos, parent) {
 			keyName = key.v;
 			valName = value.v;

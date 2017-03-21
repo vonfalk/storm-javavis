@@ -13,7 +13,7 @@ FileReader createFile(FileInfo info) {
 }
 
 class JavaReader extends FileReader {
-	ctor(FileInfo info) {
+	init(FileInfo info) {
 		init(info);
 	}
 

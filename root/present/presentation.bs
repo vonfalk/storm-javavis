@@ -32,7 +32,7 @@ class Presentation on Render {
 	Bool showPage;
 
 	// Create.
-	ctor(Str title) {
+	init(Str title) {
 		init() {
 			title = title;
 			bg = white;

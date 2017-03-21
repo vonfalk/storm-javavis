@@ -5,7 +5,7 @@ class AddInstr extends AsmAtom {
 	AsmOperand dest;
 	AsmOperand src;
 
-	ctor(AsmOperand dest, AsmOperand src) {
+	init(AsmOperand dest, AsmOperand src) {
 		init() { dest = dest; src = src; }
 	}
 
@@ -22,7 +22,7 @@ class SubInstr extends AsmAtom {
 	AsmOperand dest;
 	AsmOperand src;
 
-	ctor(AsmOperand dest, AsmOperand src) {
+	init(AsmOperand dest, AsmOperand src) {
 		init() { dest = dest; src = src; }
 	}
 
@@ -39,7 +39,7 @@ class MovInstr extends AsmAtom {
 	AsmOperand dest;
 	AsmOperand src;
 
-	ctor(AsmOperand dest, AsmOperand src) {
+	init(AsmOperand dest, AsmOperand src) {
 		init() { dest = dest; src = src; }
 	}
 
@@ -56,7 +56,7 @@ class CmpInstr extends AsmAtom {
 	AsmOperand a;
 	AsmOperand b;
 
-	ctor(AsmOperand a, AsmOperand b) {
+	init(AsmOperand a, AsmOperand b) {
 		init() { a = a; b = b; }
 	}
 
@@ -73,11 +73,11 @@ class JmpInstr extends AsmAtom {
 	AsmOperand to;
 	CondFlag flag;
 
-	ctor(AsmOperand to) {
+	init(AsmOperand to) {
 		init() { to = to; flag = CondFlag:ifAlways; }
 	}
 
-	ctor(AsmOperand to, CondFlag c) {
+	init(AsmOperand to, CondFlag c) {
 		init() { to = to; flag = c; }
 	}
 

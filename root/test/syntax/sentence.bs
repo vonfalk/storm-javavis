@@ -7,7 +7,7 @@ class Statement {
 	Str noun;
 	Str verb;
 
-	ctor(Str noun, Str verb) {
+	init(Str noun, Str verb) {
 		init() {
 			noun = noun;
 			verb = verb;

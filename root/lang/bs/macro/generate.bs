@@ -22,7 +22,7 @@ class Generate extends Template {
 	Scope scope;
 
 	// Create.
-	ctor(Scope env, SStr name, SStr param, SFunctionBody body) {
+	init(Scope env, SStr name, SStr param, SFunctionBody body) {
 		init(name.v) {
 			fnName = name;
 			paramName = param;
@@ -32,7 +32,7 @@ class Generate extends Template {
 	}
 
 	// Create.
-	ctor(Class env, SStr name, SStr param, SFunctionBody body) {
+	init(Class env, SStr name, SStr param, SFunctionBody body) {
 		init(name.v) {
 			fnName = name;
 			paramName = param;
