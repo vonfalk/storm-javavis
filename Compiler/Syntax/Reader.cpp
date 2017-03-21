@@ -54,6 +54,21 @@ namespace storm {
 			}
 		}
 
+		// Find the syntax package for BNF given a type in 'lang.bnf'.
+		static Package *syntaxPkg(RootObject *o) {
+			Type *t = runtime::typeOf(o);
+			Package *p = as<Package>(t->parent());
+			assert(p);
+			return p;
+		}
+
+		syntax::InfoParser *FileReader::createParser() {
+			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(L"SRoot"));
+			if (!r)
+				throw LangDefError(L"Can not find the 'SRoot' rule.");
+			return new (this) syntax::InfoParser(r);
+		}
+
 		void FileReader::ensureLoaded() {
 			if (c)
 				return;

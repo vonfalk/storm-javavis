@@ -30,6 +30,9 @@ namespace storm {
 			// Get the syntax productions.
 			virtual void STORM_FN readSyntaxProductions();
 
+			// Syntax highligting.
+			virtual syntax::InfoParser *STORM_FN createParser();
+
 		private:
 			// Loaded syntax definitions.
 			FileContents *c;
