@@ -65,7 +65,7 @@ static StatePtr import(const wchar *arg, Params &result) {
 static StatePtr start(const wchar *arg, Params &result) {
 	if (arg == null) {
 		return StatePtr();
-	} else if (wcscmp(arg, L"-?") == 0) {
+	} else if (wcscmp(arg, L"-?") == 0 || wcscmp(arg, L"--help") == 0) {
 		result.mode = Params::modeHelp;
 		return StatePtr();
 	} else if (wcscmp(arg, L"-f") == 0) {

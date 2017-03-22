@@ -27,9 +27,10 @@
   - [X] Implement shrink() for Map<> as well.
   - [X] Handles and templates does not work with built-in types (like Int).
 
-* Improvements [0/10]
+* Improvements [0/11]
   - [ ] Make it possible to mark entire rules with syntax colors. That would be equivalent to marking
         all usages of that token with the corresponding color.
+  - [ ] Rename 'TObject' to 'Actor' to make it easier to understand.
   - [ ] Fix destructors in Storm...
   - [ ] The syntax SExpr (, SExpr)? is treated as a parameter list. Switch to {} for capture so that
         this does not happen.

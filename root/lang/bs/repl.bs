@@ -29,7 +29,9 @@ class BsRepl extends Repl {
 		scope.addInclude(named{core});
 		scope.addInclude(named{lang:bs});
 		scope.addInclude(named{lang:bs:macro});
+	}
 
+	void greet() {
 		print("Type 'licenses' to show licenses for all currently used modules.");
 	}
 

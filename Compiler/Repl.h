@@ -14,6 +14,9 @@ namespace storm {
 		// Create.
 		STORM_CTOR Repl();
 
+		// Output any banners this REPL desires. Not called if not executed interactively.
+		virtual void STORM_FN greet();
+
 		// Evaluate a line. Return 'false' if more input is needed.
 		virtual Bool STORM_FN eval(Str *line);
 

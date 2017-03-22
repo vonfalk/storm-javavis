@@ -79,6 +79,7 @@ int runRepl(Engine &e, const wchar *lang, const wchar *input) {
 			return 1;
 		}
 	} else {
+		repl->greet();
 		runRepl(e, lang, repl);
 	}
 
@@ -129,6 +130,7 @@ void help(const wchar *cmd) {
 	wcout << cmd << L" <language>       - launch the REPL for <language>." << endl;
 	wcout << cmd << L" -f <function>    - run <function> then exit." << endl;
 	wcout << cmd << L" -i <name> <path> - import package at <path> as <name>." << endl;
+	wcout << cmd << L" -c <expr>        - evaluate <expr> in the default REPL." << endl;
 	wcout << cmd << L" -r <path>        - use <path> as the root path." << endl;
 }
 
@@ -187,9 +189,11 @@ int stormMain(int argc, const wchar *argv[]) {
 	try {
 		switch (p.mode) {
 		case Params::modeRepl:
-			wcout << L"Welcome to the Storm compiler!" << endl;
-			wcout << L"Root directory: " << root << endl;
-			wcout << L"Compiler boot in " << (end - start) << endl;
+			if (p.modeParam2 == null) {
+				wcout << L"Welcome to the Storm compiler!" << endl;
+				wcout << L"Root directory: " << root << endl;
+				wcout << L"Compiler boot in " << (end - start) << endl;
+			}
 			result = runRepl(e, p.modeParam, p.modeParam2);
 			break;
 		case Params::modeFunction:

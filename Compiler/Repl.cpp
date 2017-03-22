@@ -5,6 +5,8 @@ namespace storm {
 
 	Repl::Repl() {}
 
+	void Repl::greet() {}
+
 	Bool Repl::eval(Str *line) {
 		return false;
 	}

@@ -28,11 +28,11 @@ in names). Therefore, Storm has something that is called a Scope.
 A `Scope` is an entry point into the type hierarchy along with a policy of how we want to traverse
 the type system. This policy might be: traverse from the entry point, if that fails, assume the name
 is an absolute name and traverse from the root of the type system. This can also be extended to look
-at any includes as well, or to do any number of interesting things. By this mechanism, possible for
-one language to "leak" its name resolution semantics into other languages. This may be good, or
-confusing. Consider, for example, embedding languages into each other. In this case it makes sense
-in some cases that the embedded language follows the name resolution of the top-level language. In
-other cases it does not.
+at any includes as well, or to do any number of interesting things. Using this mechanism, it is
+possible for one language to "leak" its name resolution semantics into other languages. This may be
+good or confusing, depending on how it is done. Consider, for example, embedding languages into each
+other. In this case it makes sense in some cases that the embedded language follows the name
+resolution of the top-level language. In other cases it does not.
 
 As mentioned earlier, the parameters present at each part of a name are used to implement function
 overloading and templates. This functionality is implemented by the class `NameSet`, which is
