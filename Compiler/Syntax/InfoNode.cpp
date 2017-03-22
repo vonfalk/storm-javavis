@@ -65,6 +65,14 @@ namespace storm {
 			this->children = runtime::allocArray<InfoNode *>(engine(), &pointerArrayType, children);
 		}
 
+		InfoInternal::InfoInternal(InfoInternal *src, Nat children) {
+			this->prod = src->prod;
+			this->children = runtime::allocArray<InfoNode *>(engine(), &pointerArrayType, children);
+			Nat copy = min(children, src->count());
+			for (Nat i = 0; i < copy; i++)
+				this->children->v[i] = src->children->v[i];
+		}
+
 		InfoLeaf *InfoInternal::leafAt(Nat pos) {
 			for (nat i = 0; i < count(); i++) {
 				Nat len = at(i)->length();

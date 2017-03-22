@@ -45,6 +45,10 @@ namespace storm {
 				Nat STORM_FN length(Syntax *syntax) const;
 				Nat STORM_FN length(Production *p) const;
 
+				// Get the position of the current token in the production, including any inserted tokens.
+				Nat STORM_FN tokenPos(Syntax *syntax) const;
+				Nat STORM_FN tokenPos(Production *p) const;
+
 				// Get the next item in the sequence.
 				Item STORM_FN next(Syntax *syntax) const;
 				Item STORM_FN next(Production *p) const;

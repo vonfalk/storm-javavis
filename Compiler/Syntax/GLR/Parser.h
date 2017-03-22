@@ -105,6 +105,9 @@ namespace storm {
 				// Root rule for this parse.
 				Nat parseRoot;
 
+				// Start position of the last parse.
+				Nat startPos;
+
 				// Source string being parsed.
 				Str *source;
 
@@ -185,6 +188,9 @@ namespace storm {
 					// Production and rule being reduced.
 					Nat production;
 					Nat rule;
+
+					// Number of items of the currently reduced production.
+					Nat length;
 				};
 
 				// Linked list of entries, keeping track of the path currently being reduced.
@@ -192,9 +198,6 @@ namespace storm {
 					const Path *prev;
 					Nat treeNode;
 				};
-
-				// Compute the length of a path.
-				static Nat length(const Path *path);
 
 				// Reduce a production of length 'len' from the current stack item. If 'through' is
 				// set, only nodes where the edge 'link' is passed are considered.

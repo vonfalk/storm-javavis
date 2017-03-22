@@ -91,6 +91,9 @@ namespace storm {
 			// initialize all elements in the array before letting Storm access this node!
 			InfoInternal(Production *prod, Nat children);
 
+			// Create a copy of another node with a different number of elements.
+			InfoInternal(InfoInternal *src, Nat children);
+
 			// Information about indentation.
 			MAYBE(InfoIndent *) indent;
 

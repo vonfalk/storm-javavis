@@ -233,6 +233,45 @@ namespace storm {
 				}
 			}
 
+			Nat Item::tokenPos(Syntax *syntax) const {
+				if (pos == endPos)
+					return length(syntax);
+
+				switch (Syntax::specialProd(id)) {
+				case 0:
+				case Syntax::prodRepeat:
+					return tokenPos(syntax->production(id));
+				case Syntax::prodEpsilon:
+				case Syntax::prodESkip:
+				default:
+					return 0;
+				}
+			}
+
+			Nat Item::tokenPos(Production *p) const {
+				if (pos == endPos)
+					return length(p);
+
+				switch (Syntax::specialProd(id)) {
+				case 0:
+					if (pos == specialPos)
+						return p->repStart;
+					else if (p->repType != repNone && pos >= p->repEnd)
+						return p->repStart + 1 + pos - p->repEnd;
+					else
+						return pos;
+				case Syntax::prodRepeat:
+					if (pos == specialPos)
+						return 0;
+					else
+						return pos + 1 - p->repStart;
+				case Syntax::prodEpsilon:
+				case Syntax::prodESkip:
+				default:
+					return 0;
+				}
+			}
+
 			Bool Item::end() const {
 				return pos == endPos;
 			}

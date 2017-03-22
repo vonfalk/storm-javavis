@@ -4,7 +4,7 @@
 #include "Utils/Memory.h"
 
 // Debug the GLR parser? Causes performance penalties since we use a ::Indent object.
-#define GLR_DEBUG
+//#define GLR_DEBUG
 
 namespace storm {
 	namespace syntax {
@@ -65,7 +65,7 @@ namespace storm {
 				lastPos = 0;
 				visited = new (this) BoolSet();
 
-				Nat startPos = start.offset();
+				startPos = start.offset();
 				Nat length = str->peekLength();
 
 				// Go through states until we reach the end of file.
@@ -203,7 +203,21 @@ namespace storm {
 					if (item.end())
 						continue;
 
-					doReduce(env, item.id, through);
+					// Do reduce!
+					Nat rule = item.rule(syntax);
+					Nat length = item.tokenPos(syntax);
+
+#ifdef GLR_DEBUG
+					PLN(L"Reducing " << item.toS(syntax) << L" early:");
+#endif
+
+					ReduceEnv re = {
+						env,
+						item.id,
+						rule,
+						length,
+					};
+					reduce(re, env.stack, null, through, length);
 				}
 			}
 
@@ -221,6 +235,7 @@ namespace storm {
 					env,
 					production,
 					rule,
+					length,
 				};
 				reduce(re, env.stack, null, through, length);
 			}
@@ -246,17 +261,9 @@ namespace storm {
 							reduce(env, i->prev, &next, i == through ? null : through, len);
 						}
 					}
-				}
-
-				if (through == null && (len == 0 || env.old.reduceAll))
+				} else if (through == null) {
 					finishReduce(env, stack, path);
-			}
-
-			Nat Parser::length(const Path *path) {
-				Nat r = 0;
-				for (const Path *at = path; at; at = at->prev)
-					r++;
-				return r;
+				}
 			}
 
 			void Parser::finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path) {
@@ -276,15 +283,14 @@ namespace storm {
 					// These are really just shifts.
 					node = store->push(currentPos).id();
 				} else {
-					Nat len = length(path);
-					TreeNode fill = store->push(currentPos, env.production, len);
+					TreeNode fill = store->push(currentPos, env.production, env.length);
 					TreeArray children = fill.children();
 					const Path *top = path;
-					for (Nat i = 0; i < len; i++) {
+					for (Nat i = 0; i < env.length; i++) {
 						children.set(i, top->treeNode);
 						top = top->prev;
 					}
-					if (len > 0)
+					if (env.length > 0)
 						fill.pos(store->at(children[0]).pos());
 
 					node = fill.id();
@@ -299,9 +305,6 @@ namespace storm {
 				if (accept) {
 					StackItem *add = new (this) StackItem(-1, currentPos, stack, node);
 
-					PVAR(currentPos);
-					if (acceptingStack)
-						PVAR(acceptingStack->pos);
 					if (acceptingStack && acceptingStack->pos == currentPos) {
 						acceptingStack->insert(store, add);
 					} else {
@@ -630,7 +633,7 @@ namespace storm {
 				TreeArray children = node.children();
 
 				// This production may be incomplete...
-				for (Nat i = item.length(p); i > children.count(); i--)
+				while (item.tokenPos(p) > children.count())
 					item.prev(p);
 
 				for (Nat i = children.count(); i > 0; i--) {
@@ -669,7 +672,7 @@ namespace storm {
 				TreeArray children = node->children();
 
 				// This production may be incomplete...
-				for (Nat i = item.length(p); i > children.count(); i--)
+				while (item.tokenPos(p) > children.count())
 					item.prev(p);
 
 				Nat i = children.count();
@@ -686,6 +689,10 @@ namespace storm {
 							node = &child;
 							children = child.children();
 							i = children.count();
+
+							// This production may be incomplete...
+							while (item.tokenPos(p) > children.count())
+								item.prev(p);
 						} else {
 							i--;
 						}
@@ -795,15 +802,29 @@ namespace storm {
 				this->lastSet = lastSet;
 				this->lastPos = lastPos;
 
-				// TODO: Fixup the length of the resulting tree.
-				if (result) {
-					StrBuf *t = new (this) StrBuf();
-					result->format(t);
-					PVAR(t);
-					return result;
+				// See if we need to add some more content...
+				Nat totalLength = source->peekLength() - startPos;
+				if (result && result->length() < totalLength) {
+					if (InfoInternal *node = as<InfoInternal>(result)) {
+						Str::Iter from = source->posIter(startPos + result->length());
+						InfoLeaf *add = new (this) InfoLeaf(null, source->substr(from, source->end()));
+
+						InfoInternal *r = new (this) InfoInternal(node, node->count() + 1);
+						r->set(node->count(), add);
+						result = r;
+					} else {
+						// Concatenate everything into one large leaf node!
+						result = null;
+					}
 				}
 
-				throw InternalError(L"Not implemented yet!");
+				// It is possible that we fail. If so: create a new node containing the entire desired range.
+				if (!result) {
+					Str::Iter from = source->posIter(startPos);
+					result = new (this) InfoLeaf(null, source->substr(from, source->end()));
+				}
+
+				return result;
 			}
 
 			void Parser::completePrefix() {
@@ -814,7 +835,9 @@ namespace storm {
 				visited->clear();
 				Set<StackItem *> *top = stacks->top();
 
-				PLN(L"--- Starting error recovery ---" << currentPos);
+#ifdef GLR_DEBUG
+				PLN(L"--- Starting error recovery at " << currentPos << "---");
+#endif
 
 				Bool done;
 				do {

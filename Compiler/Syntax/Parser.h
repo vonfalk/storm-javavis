@@ -17,7 +17,7 @@ namespace storm {
 #endif
 
 		// Default parser to use in the system, earley or glr.
-#define DEFAULT_PARSER earley
+#define DEFAULT_PARSER glr
 
 		/**
 		 * Base class for the templated parser in Storm. In Storm, Parser<T> is to be
