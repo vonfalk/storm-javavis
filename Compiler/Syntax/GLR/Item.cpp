@@ -209,7 +209,14 @@ namespace storm {
 				if (special == Syntax::prodESkip || special == Syntax::prodEpsilon)
 					return 0;
 
-				Production *p = syntax->production(id);
+				return length(syntax->production(id));
+			}
+
+			Nat Item::length(Production *p) const {
+				Nat special = Syntax::specialProd(id);
+				if (special == Syntax::prodESkip || special == Syntax::prodEpsilon)
+					return 0;
+
 				Nat rep = p->repEnd - p->repStart;
 				if (special == Syntax::prodRepeat) {
 					if (repeatable(p->repType))
@@ -309,8 +316,8 @@ namespace storm {
 					*to << Syntax::baseProd(id) << L"''";
 					break;
 				case Syntax::prodESkip:
-					*to << L"red" << Syntax::baseProd(id);
-					break;
+					*to << L"red" << Syntax::baseProd(id) << L" ->";
+					return to->toS();
 				}
 				*to << L": ";
 

@@ -65,6 +65,9 @@ namespace storm {
 				// Get the generic syntax tree.
 				virtual InfoNode *infoTree() const;
 
+				// Get a full generic syntax tree.
+				virtual InfoNode *fullInfoTree();
+
 				/**
 				 * Performance inspection:
 				 */
@@ -160,12 +163,19 @@ namespace storm {
 
 					// Top of stack before reductions started.
 					StackItem *stack;
+
+					// Reduce all states, even states that have not reached completion. Used when
+					// performing error correction.
+					bool reduceAll;
 				};
 
 				// Perform actions required for a state.
 				void actorShift(const ActorEnv &env);
 				void actorReduce(const ActorEnv &env, StackItem *through);
 				void doReduce(const ActorEnv &env, Nat production, StackItem *through);
+
+				// Perform reductions on all states, even if a reduction action is not present.'
+				void actorReduceAll(const ActorEnv &env, StackItem *through);
 
 				// Static state to the 'reduce' function.
 				struct ReduceEnv {
@@ -175,9 +185,6 @@ namespace storm {
 					// Production and rule being reduced.
 					Nat production;
 					Nat rule;
-
-					// Number of items of the currently reduced production.
-					Nat length;
 				};
 
 				// Linked list of entries, keeping track of the path currently being reduced.
@@ -186,10 +193,13 @@ namespace storm {
 					Nat treeNode;
 				};
 
+				// Compute the length of a path.
+				static Nat length(const Path *path);
+
 				// Reduce a production of length 'len' from the current stack item. If 'through' is
 				// set, only nodes where the edge 'link' is passed are considered.
 				void reduce(const ReduceEnv &env, StackItem *stack, const Path *path, StackItem *through, Nat len);
-				void finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path, Nat len);
+				void finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path);
 
 				// Limited reduction of a rule. Only paths passing through the edge 'link' are considered.
 				void limitedReduce(const ReduceEnv &env, Set<StackItem *> *top, StackItem *through);
@@ -229,6 +239,13 @@ namespace storm {
 
 				// Compute the number of nodes for 'node' considering pseudo productions for repetitions.
 				Nat totalLength(TreeNode &node) const;
+
+				/**
+				 * Full info tree computation.
+				 */
+
+				// Construct completion nodes for the last, uncompleted states.
+				void completePrefix();
 			};
 
 		}

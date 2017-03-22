@@ -18,7 +18,7 @@ namespace storm {
 			 * Storage of trees.
 			 */
 
-			TreeStore::TreeStore(Syntax *syntax) : count(1), syntax(syntax) {
+			TreeStore::TreeStore(Syntax *syntax) : size(1), syntax(syntax) {
 				chunks = runtime::allocArray<Chunk *>(engine(), &pointerArrayType, 16);
 			}
 
@@ -37,8 +37,8 @@ namespace storm {
 			}
 
 			Nat TreeStore::alloc(Nat n) {
-				Nat first = chunkId(count);
-				Nat last = chunkId(count + n - 1);
+				Nat first = chunkId(size);
+				Nat last = chunkId(size + n - 1);
 				while (last >= chunks->count)
 					grow();
 
@@ -46,8 +46,8 @@ namespace storm {
 					if (!chunks->v[i])
 						chunks->v[i] = runtime::allocArray<Nat>(engine(), &natArrayType, chunkSize);
 
-				Nat r = count;
-				count += n;
+				Nat r = size;
+				size += n;
 				return r;
 			}
 

@@ -17,7 +17,7 @@ namespace storm {
 #endif
 
 		// Default parser to use in the system, earley or glr.
-#define DEFAULT_PARSER glr
+#define DEFAULT_PARSER earley
 
 		/**
 		 * Base class for the templated parser in Storm. In Storm, Parser<T> is to be
@@ -92,6 +92,11 @@ namespace storm {
 
 			// Get the generic syntax tree.
 			InfoNode *STORM_FN infoTree() const;
+
+			// Try to generate a syntax tree for as much of the string as possible. The returned
+			// syntax tree will always cover the entire string, but may not be complete according to
+			// the grammar. TODO: Allow passing an iterator specifying the end of the desired match.
+			InfoNode *STORM_FN fullInfoTree() const;
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;

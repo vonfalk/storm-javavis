@@ -172,6 +172,10 @@ namespace storm {
 				// See if the node 'haystack' contains node 'needle'.
 				Bool STORM_FN contains(Nat haystack, Nat needle);
 
+				// Size information.
+				inline Nat STORM_FN count() const { return size; }
+				inline Nat STORM_FN byteCount() const { return size*sizeof(Nat); }
+
 				/**
 				 * Interface that TreeNode and TreeArray are supposed to use.
 				 */
@@ -202,7 +206,7 @@ namespace storm {
 				GcArray<Chunk *> *chunks;
 
 				// Current number of elements.
-				Nat count;
+				Nat size;
 
 				// Remember the syntax.
 				Syntax *syntax;

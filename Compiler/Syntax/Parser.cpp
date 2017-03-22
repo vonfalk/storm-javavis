@@ -142,6 +142,12 @@ namespace storm {
 			throw error();
 		}
 
+		InfoNode *ParserBase::fullInfoTree() const {
+			InfoNode *r = use->fullInfoTree();
+			assert(r);
+			return r;
+		}
+
 
 		/**
 		 * Info parser.

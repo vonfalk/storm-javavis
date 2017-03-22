@@ -133,6 +133,14 @@ namespace storm {
 				}
 			}
 
+			void FutureStacks::set(Nat pos, Set<StackItem *> *v) {
+				if (pos >= count())
+					grow(pos + 1);
+
+				Nat i = wrap(first + pos);
+				data->v[i] = v;
+			}
+
 			void FutureStacks::grow(Nat cap) {
 				cap = max(Nat(32), nextPowerOfTwo(cap));
 

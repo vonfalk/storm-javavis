@@ -518,6 +518,14 @@ namespace storm {
 				return infoTree(from->completed);
 			}
 
+			InfoNode *Parser::fullInfoTree() {
+				if (matchEnd() == src->end())
+					return infoTree();
+
+				Str::Iter from = src->posIter(srcPos.pos);
+				return new (this) InfoLeaf(null, src->substr(from, src->end()));
+			}
+
 			InfoNode *Parser::infoTree(StatePtr endPtr) const {
 				const State &end = state(endPtr);
 

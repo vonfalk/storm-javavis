@@ -4,7 +4,7 @@
 #include "Utils/Memory.h"
 
 // Debug the GLR parser? Causes performance penalties since we use a ::Indent object.
-//#define GLR_DEBUG
+#define GLR_DEBUG
 
 namespace storm {
 	namespace syntax {
@@ -86,6 +86,7 @@ namespace storm {
 #endif
 
 				visited = null;
+				stacks = null;
 
 				return acceptingStack != null;
 			}
@@ -119,6 +120,7 @@ namespace storm {
 						ActorEnv env = {
 							s,
 							now,
+							false,
 						};
 
 						actorReduce(env, null);
@@ -153,6 +155,11 @@ namespace storm {
 			}
 
 			void Parser::actorReduce(const ActorEnv &env, StackItem *through) {
+				if (env.reduceAll) {
+					actorReduceAll(env, through);
+					return;
+				}
+
 				Array<Nat> *toReduce = env.state->reduce;
 				Nat count = toReduce->count();
 				for (Nat i = 0; i < count; i++)
@@ -171,6 +178,35 @@ namespace storm {
 				}
 			}
 
+			void Parser::actorReduceAll(const ActorEnv &env, StackItem *through) {
+				// See if we can reduce this one normally.
+				Array<Nat> *toReduce = env.state->reduce;
+				Nat count = toReduce->count();
+				for (nat i = 0; i < count; i++)
+					doReduce(env, toReduce->at(i), through);
+
+				// Always reduce these if we're able to.
+				Array<Action> *reduceEmpty = env.state->reduceOnEmpty;
+				if (reduceEmpty) {
+					for (Nat i = 0; i < reduceEmpty->count(); i++) {
+						const Action &a = reduceEmpty->at(i);
+						doReduce(env, a.action, through);
+					}
+				}
+
+				// See if we can reduce other items in this item set.
+				ItemSet items = env.state->items;
+				for (Nat i = 0; i < items.count(); i++) {
+					Item item = items[i];
+
+					// Already reduced in the ordinary manner?
+					if (item.end())
+						continue;
+
+					doReduce(env, item.id, through);
+				}
+			}
+
 			void Parser::doReduce(const ActorEnv &env, Nat production, StackItem *through) {
 				Item item(syntax, production);
 				Nat rule = item.rule(syntax);
@@ -185,7 +221,6 @@ namespace storm {
 					env,
 					production,
 					rule,
-					length,
 				};
 				reduce(re, env.stack, null, through, length);
 			}
@@ -211,12 +246,20 @@ namespace storm {
 							reduce(env, i->prev, &next, i == through ? null : through, len);
 						}
 					}
-				} else if (through == null) {
-					finishReduce(env, stack, path, len);
 				}
+
+				if (through == null && (len == 0 || env.old.reduceAll))
+					finishReduce(env, stack, path);
 			}
 
-			void Parser::finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path, Nat len) {
+			Nat Parser::length(const Path *path) {
+				Nat r = 0;
+				for (const Path *at = path; at; at = at->prev)
+					r++;
+				return r;
+			}
+
+			void Parser::finishReduce(const ReduceEnv &env, StackItem *stack, const Path *path) {
 				State *state = table->state(stack->state);
 				Map<Nat, Nat>::Iter to = state->rules->find(env.rule);
 
@@ -233,14 +276,15 @@ namespace storm {
 					// These are really just shifts.
 					node = store->push(currentPos).id();
 				} else {
-					TreeNode fill = store->push(currentPos, env.production, env.length);
+					Nat len = length(path);
+					TreeNode fill = store->push(currentPos, env.production, len);
 					TreeArray children = fill.children();
 					const Path *top = path;
-					for (Nat i = 0; i < env.length; i++) {
+					for (Nat i = 0; i < len; i++) {
 						children.set(i, top->treeNode);
 						top = top->prev;
 					}
-					if (env.length > 0)
+					if (len > 0)
 						fill.pos(store->at(children[0]).pos());
 
 					node = fill.id();
@@ -255,6 +299,9 @@ namespace storm {
 				if (accept) {
 					StackItem *add = new (this) StackItem(-1, currentPos, stack, node);
 
+					PVAR(currentPos);
+					if (acceptingStack)
+						PVAR(acceptingStack->pos);
 					if (acceptingStack && acceptingStack->pos == currentPos) {
 						acceptingStack->insert(store, add);
 					} else {
@@ -581,6 +628,11 @@ namespace storm {
 					result->indent = new (this) InfoIndent(0, nodePos, p->indentType);
 
 				TreeArray children = node.children();
+
+				// This production may be incomplete...
+				for (Nat i = item.length(p); i > children.count(); i--)
+					item.prev(p);
+
 				for (Nat i = children.count(); i > 0; i--) {
 					Nat childId = children[i-1];
 					if (!item.prev(p))
@@ -615,6 +667,11 @@ namespace storm {
 				Nat pos = endPos;
 
 				TreeArray children = node->children();
+
+				// This production may be incomplete...
+				for (Nat i = item.length(p); i > children.count(); i--)
+					item.prev(p);
+
 				Nat i = children.count();
 				while (i > 0) {
 					Nat childId = children[i-1];
@@ -672,6 +729,13 @@ namespace storm {
 				Nat length = item.length(syntax);
 
 				TreeArray children = node.children();
+
+				// This production may be incomplete.
+				while (length > children.count()) {
+					item.prev(syntax);
+					length--;
+				}
+
 				for (Nat i = children.count(); i > 0; i--) {
 					Nat childId = children[i-1];
 					if (!item.prev(syntax))
@@ -688,7 +752,7 @@ namespace storm {
 							 at = &store->at(at->children()[0])) {
 
 							Item i(syntax, at->production());
-							length += i.length(syntax);
+							length += at->children().count();
 							if (i.pos == Item::specialPos)
 								length -= 1;
 						}
@@ -698,12 +762,89 @@ namespace storm {
 				return length;
 			}
 
+			InfoNode *Parser::fullInfoTree() {
+				if (matchEnd() == source->end())
+					return infoTree();
+
+				// TODO: Cache the results of this computation in case fullInfoTree is called more
+				// than once?
+
+				// Save state.
+				StackItem *acceptingStack = this->acceptingStack;
+				Set<StackItem *> *lastSet = this->lastSet;
+				Nat lastPos = this->lastPos;
+				visited = new (this) BoolSet();
+				stacks = new (this) FutureStacks();
+				this->acceptingStack = null;
+				this->lastSet = null;
+				this->lastPos = 0;
+
+				// Try to complete as many states as possible in order to arrive at a viable prefix.
+				stacks->set(0, lastSet);
+				this->currentPos = lastPos;
+				completePrefix();
+
+				InfoNode *result = null;
+				if (this->acceptingStack)
+					result = infoTree(store->at(this->acceptingStack->tree), this->acceptingStack->pos);
+
+				// Restore state.
+				visited = null;
+				stacks = null;
+				this->acceptingStack = acceptingStack;
+				this->lastSet = lastSet;
+				this->lastPos = lastPos;
+
+				// TODO: Fixup the length of the resulting tree.
+				if (result) {
+					StrBuf *t = new (this) StrBuf();
+					result->format(t);
+					PVAR(t);
+					return result;
+				}
+
+				throw InternalError(L"Not implemented yet!");
+			}
+
+			void Parser::completePrefix() {
+				// This is a variant of the 'actor' function above, except that we only attempt to
+				// perform reductions.
+				typedef Set<StackItem *>::Iter Iter;
+
+				visited->clear();
+				Set<StackItem *> *top = stacks->top();
+
+				PLN(L"--- Starting error recovery ---" << currentPos);
+
+				Bool done;
+				do {
+					done = true;
+					for (Iter i = top->begin(), e = top->end(); i != e; ++i) {
+						StackItem *now = i.v();
+						if (visited->get(now->state))
+							continue;
+						visited->set(now->state, true);
+						done = false;
+
+						State *s = table->state(now->state);
+
+						ActorEnv env = {
+							s,
+							now,
+							true,
+						};
+
+						actorReduce(env, null);
+					}
+				} while (!done);
+			}
+
 			Nat Parser::stateCount() const {
-				return 0;
+				return store->count();
 			}
 
 			Nat Parser::byteCount() const {
-				return 0;
+				return store->byteCount();
 			}
 
 			void Parser::clearSyntax() {

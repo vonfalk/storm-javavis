@@ -43,6 +43,7 @@ namespace storm {
 
 				// Get the number of tokens in this production.
 				Nat STORM_FN length(Syntax *syntax) const;
+				Nat STORM_FN length(Production *p) const;
 
 				// Get the next item in the sequence.
 				Item STORM_FN next(Syntax *syntax) const;

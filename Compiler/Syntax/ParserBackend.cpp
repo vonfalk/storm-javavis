@@ -49,6 +49,10 @@ namespace storm {
 			throw InternalError(L"No tree.");
 		}
 
+		InfoNode *ParserBackend::fullInfoTree() {
+			throw InternalError(L"No tree.");
+		}
+
 		Nat ParserBackend::stateCount() const {
 			return 0;
 		}

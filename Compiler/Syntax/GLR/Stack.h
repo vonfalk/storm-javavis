@@ -80,6 +80,9 @@ namespace storm {
 				// Insert an item at location 'pos'. The top is at location 0.
 				void STORM_FN put(Nat pos, TreeStore *store, StackItem *item);
 
+				// Set the top item to some value.
+				void STORM_FN set(Nat pos, Set<StackItem *> *v);
+
 			private:
 				// Storage. Used as a circular queue. Size is always a power of two.
 				GcArray<Set<StackItem *> *> *data;

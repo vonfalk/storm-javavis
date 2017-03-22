@@ -30,17 +30,17 @@ namespace storm {
 
 			protected:
 				// Add a package containing syntax definitions (not recursive).
-				void add(Rule *rule);
-				void add(ProductionType *production);
+				virtual void add(Rule *rule);
+				virtual void add(ProductionType *production);
 
 				// Does this parser contain the same syntax as 'o'?
-				Bool sameSyntax(ParserBackend *o);
+				virtual Bool sameSyntax(ParserBackend *o);
 
 				// Parse a string. Returns 'true' if we found some match.
-				Bool parse(Rule *root, Str *str, Url *file, Str::Iter start);
+				virtual Bool parse(Rule *root, Str *str, Url *file, Str::Iter start);
 
 				// Clear all parse-related information. Included packages are retained.
-				void clear();
+				virtual void clear();
 
 				/**
 				 * Operations on the last parse.
@@ -48,26 +48,29 @@ namespace storm {
 
 				// Found any errors? If Str::Iter is not end, this is always true. Note that even if we
 				// have an error, it could be possible to extract a tree!
-				Bool hasError() const;
+				virtual Bool hasError() const;
 
 				// Is it possible to extract a syntax tree? (equivalent to the return value of 'parse').
-				Bool hasTree() const;
+				virtual Bool hasTree() const;
 
 				// Return an iterator after the last matched character, or the start of the string if no
 				// match could be made.
-				Str::Iter matchEnd() const;
+				virtual Str::Iter matchEnd() const;
 
 				// Get the error message.
-				Str *errorMsg() const;
+				virtual Str *errorMsg() const;
 
 				// Get the error position.
-				SrcPos errorPos() const;
+				virtual SrcPos errorPos() const;
 
 				// Get the syntax tree.
-				Node *tree() const;
+				virtual Node *tree() const;
 
 				// Get the generic syntax tree.
-				InfoNode *infoTree() const;
+				virtual InfoNode *infoTree() const;
+
+				// Get a full generic syntax tree.
+				virtual InfoNode *fullInfoTree();
 
 
 				/**
@@ -75,10 +78,10 @@ namespace storm {
 				 */
 
 				// Get the number of states used.
-				Nat stateCount() const;
+				virtual Nat stateCount() const;
 
 				// Get the number of bytes used.
-				Nat byteCount() const;
+				virtual Nat byteCount() const;
 
 			private:
 				// Information about a rule.
