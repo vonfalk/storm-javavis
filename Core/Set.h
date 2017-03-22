@@ -280,7 +280,7 @@ namespace storm {
 		}
 
 		// Copy set.
-		Set(Set<K> *o) : SetBase(o) {
+		Set(const Set<K> &o) : SetBase(o) {
 			runtime::setVTable(this);
 		}
 

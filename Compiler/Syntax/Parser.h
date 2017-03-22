@@ -96,7 +96,7 @@ namespace storm {
 			// Try to generate a syntax tree for as much of the string as possible. The returned
 			// syntax tree will always cover the entire string, but may not be complete according to
 			// the grammar. TODO: Allow passing an iterator specifying the end of the desired match.
-			InfoNode *STORM_FN fullInfoTree() const;
+			ParseResult STORM_FN fullInfoTree() const;
 
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;

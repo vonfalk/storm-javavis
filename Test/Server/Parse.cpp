@@ -36,10 +36,10 @@ BEGIN_TEST(InfoPrefix, Server) {
 	Bool ok = p->parse(src, new (e) Url());
 	VERIFY(!p->hasTree() || p->matchEnd() != src->end());
 
-	InfoNode *tree = p->fullInfoTree();
-	CHECK_EQ(tree->length(), 5);
-	CHECK_EQ(tree->leafAt(0)->color, tVarName);
-	CHECK_EQ(tree->leafAt(4)->color, tNone);
+	ParseResult r = p->fullInfoTree();
+	CHECK_EQ(r.tree->length(), 5);
+	CHECK_EQ(r.tree->leafAt(0)->color, tVarName);
+	CHECK_EQ(r.tree->leafAt(4)->color, tNone);
 } END_TEST
 
 BEGIN_TEST(InfoPrefix2, Server) {
@@ -52,8 +52,8 @@ BEGIN_TEST(InfoPrefix2, Server) {
 	Bool ok = p->parse(src, new (e) Url());
 	VERIFY(!p->hasTree() || p->matchEnd() != src->end());
 
-	InfoNode *tree = p->fullInfoTree();
-	CHECK_EQ(tree->length(), 6);
-	CHECK_EQ(tree->leafAt(0)->color, tVarName);
-	CHECK_EQ(tree->leafAt(4)->color, tNone);
+	ParseResult r = p->fullInfoTree();
+	CHECK_EQ(r.tree->length(), 6);
+	CHECK_EQ(r.tree->leafAt(0)->color, tVarName);
+	CHECK_EQ(r.tree->leafAt(4)->color, tNone);
 } END_TEST

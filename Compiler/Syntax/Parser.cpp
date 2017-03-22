@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Parser.h"
 #include "Package.h"
+#include "Core/StrBuf.h"
 #include "Earley/Parser.h"
 #include "GLR/Parser.h"
 #include "Lib/Parser.h"
@@ -142,10 +143,8 @@ namespace storm {
 			throw error();
 		}
 
-		InfoNode *ParserBase::fullInfoTree() const {
-			InfoNode *r = use->fullInfoTree();
-			assert(r);
-			return r;
+		ParseResult ParserBase::fullInfoTree() const {
+			return use->fullInfoTree();
 		}
 
 

@@ -769,9 +769,9 @@ namespace storm {
 				return length;
 			}
 
-			InfoNode *Parser::fullInfoTree() {
+			ParseResult Parser::fullInfoTree() {
 				if (matchEnd() == source->end())
-					return infoTree();
+					return ParseResult(infoTree(), 0, 0);
 
 				// TODO: Cache the results of this computation in case fullInfoTree is called more
 				// than once?
@@ -787,13 +787,15 @@ namespace storm {
 				this->lastPos = 0;
 
 				// Try to complete as many states as possible in order to arrive at a viable prefix.
-				stacks->set(0, lastSet);
+				stacks->set(0, new (this) Set<StackItem *>(*lastSet));
 				this->currentPos = lastPos;
 				completePrefix();
 
 				InfoNode *result = null;
 				if (this->acceptingStack)
 					result = infoTree(store->at(this->acceptingStack->tree), this->acceptingStack->pos);
+
+				Nat corrections = stacks->top()->count() - lastSet->count();
 
 				// Restore state.
 				visited = null;
@@ -803,8 +805,10 @@ namespace storm {
 				this->lastPos = lastPos;
 
 				// See if we need to add some more content...
+				Nat skipped = 0;
 				Nat totalLength = source->peekLength() - startPos;
 				if (result && result->length() < totalLength) {
+					skipped = totalLength - result->length();
 					if (InfoInternal *node = as<InfoInternal>(result)) {
 						Str::Iter from = source->posIter(startPos + result->length());
 						InfoLeaf *add = new (this) InfoLeaf(null, source->substr(from, source->end()));
@@ -822,9 +826,11 @@ namespace storm {
 				if (!result) {
 					Str::Iter from = source->posIter(startPos);
 					result = new (this) InfoLeaf(null, source->substr(from, source->end()));
+					if (skipped == 0)
+						skipped = result->length();
 				}
 
-				return result;
+				return ParseResult(result, skipped, corrections);
 			}
 
 			void Parser::completePrefix() {

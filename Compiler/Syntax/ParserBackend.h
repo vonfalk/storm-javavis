@@ -20,6 +20,31 @@ namespace storm {
 #endif
 
 		/**
+		 * Result from a parse where error recovery was performed.
+		 *
+		 * Contains an Info tree along with information indicating how much recovery the parser
+		 * needed to do.
+		 */
+		class ParseResult {
+			STORM_VALUE;
+		public:
+			STORM_CTOR ParseResult(InfoNode *tree, Nat skipped, Nat corrections);
+
+			// The produced tree.
+			InfoNode *tree;
+
+			// Number of characters that was not properly matched.
+			Nat skippedChars;
+
+			// Correction work performed by the parser. Higher means more corrections.
+			Nat corrections;
+		};
+
+		// Output.
+		StrBuf &STORM_FN operator <<(StrBuf &to, ParseResult r);
+
+
+		/**
 		 * Represents one of the available parser backends.
 		 *
 		 * Most of the API is protected and only accessible to the Parser class to ensure
@@ -73,7 +98,7 @@ namespace storm {
 			virtual InfoNode *infoTree() const;
 
 			// Get a generic syntax tree for all of the string.
-			virtual InfoNode *fullInfoTree();
+			virtual ParseResult fullInfoTree();
 
 			/**
 			 * Performance inspection:
