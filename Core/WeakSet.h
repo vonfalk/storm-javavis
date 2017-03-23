@@ -40,8 +40,8 @@ namespace storm {
 
 		// Any and empty. Note: this is just an indication. If empty() returns true, then there is
 		// definitely nothing in the set, but otherwise we can not be sure.
-		inline Bool STORM_FN empty() const { return size == 0; }
 		inline Bool STORM_FN any() const { return size > 0; }
+		inline Bool STORM_FN empty() const { return size == 0; }
 
 		// Clear.
 		void STORM_FN clear();
@@ -81,7 +81,7 @@ namespace storm {
 		inline Nat STORM_FN capacity() const { return info ? info->count : 0; }
 
 	private:
-		// Number of slots that are currently occupied. During the next rehash, this may decrease.
+		// Number of slots that are currently occupied. This may decrease during the next rehash.
 		Nat size;
 
 		// Minimum capacity.

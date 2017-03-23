@@ -64,7 +64,7 @@ namespace storm {
 		inline Bool STORM_FN any() const { return size > 0; }
 
 		// Empty?
-		inline Bool STORM_FN empty() const { return size != 0; }
+		inline Bool STORM_FN empty() const { return size == 0; }
 
 		// Clear.
 		void STORM_FN clear();
