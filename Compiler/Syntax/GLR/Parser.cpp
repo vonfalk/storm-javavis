@@ -68,24 +68,23 @@ namespace storm {
 
 				Nat length = source->peekLength();
 				Nat pos = lastPos;
+				Nat skipped = 0;
 				Set<StackItem *> *advance = null;
 				while (acceptingStack == null || acceptingStack->pos < length) {
 					// Advance all productions one step by performing all possible shifts. Note:
 					// using this method we will only account for missing tokens. If additional
-					// tokens are inserted, we will not account for them.
-					if (advance) {
-						// Advance only these productions.
-						advance = shiftAll(advance);
-					} else {
-						// Advance all productions.
-						advance = shiftAll(lastPos);
-					}
+					// tokens are inserted, we will fail to parse.
+					if (!advance)
+						advance = new (this) Set<StackItem *>(*lastSet);
+
+					stacks->set(0, lastSet);
+					advance = shiftAll(advance);
 
 					// Nothing advanced? Abort!
 					if (advance->empty())
 						break;
 
-					stacks->put(0, store, lastPos);
+					skipped++;
 					doParse(pos);
 
 					if (pos != lastPos) {
@@ -98,7 +97,12 @@ namespace storm {
 				}
 
 				finishParse();
-				return ParseResult();
+
+				if (hasTree()) {
+					return ParseResult(source->peekLength() - acceptingStack->pos, skipped);
+				} else {
+					return ParseResult();
+				}
 			}
 
 			void Parser::initParse(Rule *root, Str *str, Url *file, Str::Iter start) {
@@ -176,6 +180,30 @@ namespace storm {
 						actorShift(env);
 					}
 				} while (!done);
+			}
+
+			Set<StackItem *> *Parser::shiftAll(Set<StackItem *> *s) {
+				Set<StackItem *> *result = new (this) Set<StackItem *>();
+				for (Set<StackItem *>::Iter i = s->begin(), e = s->end(); i != e; ++i) {
+					StackItem *now = i.v();
+					shiftAll(now, result);
+				}
+				return result;
+			}
+
+			void Parser::shiftAll(StackItem *now, Set<StackItem *> *result) {
+				State *s = table->state(now->state);
+				Array<Action> *actions = s->actions;
+				if (!actions)
+					return;
+
+				for (Nat i = 0; i < actions->count(); i++) {
+					const Action &action = actions->at(i);
+					Nat tree = store->push(currentPos).id();
+					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
+					if (stacks->put(0, store, item))
+						result->put(item);
+				}
 			}
 
 			void Parser::actorShift(const ActorEnv &env) {

@@ -77,8 +77,9 @@ namespace storm {
 				// Pop the topmost set, shifting all other indices one step.
 				void STORM_FN pop();
 
-				// Insert an item at location 'pos'. The top is at location 0.
-				void STORM_FN put(Nat pos, TreeStore *store, StackItem *item);
+				// Insert an item at location 'pos'. The top is at location 0. Returns false if
+				// rejected due to a duplicate node.
+				Bool STORM_FN put(Nat pos, TreeStore *store, StackItem *item);
 
 				// Set the top item to some value.
 				void STORM_FN set(Nat pos, Set<StackItem *> *v);

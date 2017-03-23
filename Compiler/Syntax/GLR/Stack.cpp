@@ -114,7 +114,7 @@ namespace storm {
 				first = wrap(first + 1);
 			}
 
-			void FutureStacks::put(Nat pos, TreeStore *store, StackItem *insert) {
+			Bool FutureStacks::put(Nat pos, TreeStore *store, StackItem *insert) {
 				if (pos >= count())
 					grow(pos + 1);
 
@@ -127,9 +127,10 @@ namespace storm {
 				StackItem *old = to->at(insert);
 				if (old == insert) {
 					// Insertion was performed. Nothing more to do.
+					return true;
 				} else {
 					// Append the current node as an alternative.
-					old->insert(store, insert);
+					return old->insert(store, insert);
 				}
 			}
 

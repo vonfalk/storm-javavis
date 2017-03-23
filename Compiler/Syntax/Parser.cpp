@@ -164,14 +164,6 @@ namespace storm {
 			}
 		}
 
-		ParseResult InfoParser::parseApprox(Str *str, Url *file) {
-			return parseApprox(str, file, str->begin());
-		}
-
-		ParseResult InfoParser::parseApprox(Str *str, Url *file, Str::Iter start) {
-			return ParserBase::parseApprox(str, file, start);
-		}
-
 		void InfoParser::root(Rule *r) {
 			rootRule = r;
 		}
@@ -180,6 +172,48 @@ namespace storm {
 			return rootRule;
 		}
 
+		Bool InfoParser::parse(Str *str, Url *file, Str::Iter start) {
+			lastStr = str;
+			lastOffset = start.offset();
+			return ParserBase::parse(str, file, start);
+		}
+
+		ParseResult InfoParser::parseApprox(Str *str, Url *file) {
+			return parseApprox(str, file, str->begin());
+		}
+
+		ParseResult InfoParser::parseApprox(Str *str, Url *file, Str::Iter start) {
+			lastStr = str;
+			lastOffset = start.offset();
+			return ParserBase::parseApprox(str, file, start);
+		}
+
+		void InfoParser::clear() {
+			lastStr = null;
+			lastOffset = 0;
+		}
+
+		InfoNode *InfoParser::fullInfoTree() {
+			InfoNode *tree = infoTree();
+			Nat end = tree->length() + lastOffset;
+
+			assert(end <= lastStr->peekLength(),
+				L"Parser is weird, returning a tree spanning too many characters.");
+			if (end >= lastStr->peekLength())
+				return tree;
+
+			if (InfoInternal *i = as<InfoInternal>(tree)) {
+				// Replace node with a new root node containing an additional leaf with the remaining data.
+				InfoInternal *r = new (this) InfoInternal(i, i->count() + 1);
+				Str::Iter from = lastStr->posIter(end);
+				r->set(i->count(), new (this) InfoLeaf(null, lastStr->substr(from, lastStr->end())));
+				return r;
+			} else {
+				// Replace everything with a large regex.
+				Str::Iter from = lastStr->posIter(lastOffset);
+				return new (this) InfoLeaf(null, lastStr->substr(from, lastStr->end()));
+			}
+		}
 
 		/**
 		 * C++ interface.

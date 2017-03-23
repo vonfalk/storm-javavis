@@ -58,10 +58,10 @@ namespace storm {
 
 			// Parse a string. Returns 'true' if we found some match.
 			Bool STORM_FN parse(Str *str, Url *file);
-			Bool STORM_FN parse(Str *str, Url *file, Str::Iter start);
+			virtual Bool STORM_FN parse(Str *str, Url *file, Str::Iter start);
 
 			// Clear all parse-related information. Included packages are retained.
-			void STORM_FN clear();
+			virtual void STORM_FN clear();
 
 			/**
 			 * Operations on the last parse.
@@ -134,22 +134,37 @@ namespace storm {
 			static InfoParser *create(Package *pkg, const wchar *name);
 			static InfoParser *create(Package *pkg, const wchar *name, ParserBackend *backend);
 
-			// Parse a syntax tree using error recovery. Do not use 'tree' after calling this, as
-			// 'tree' assumes a complete syntax tree. This is not possible to do from Storm, as
-			// 'tree' is not exposed to the Storm type system.
-			// TODO: Support giving an explicit end as well.
-			ParseResult parseApprox(Str *str, Url *file);
-			ParseResult parseApprox(Str *str, Url *file, Str::Iter start);
-
 			// Set a new root.
 			void STORM_FN root(Rule *rule);
 
 			// Get the root rule.
 			virtual Rule *STORM_FN root() const;
 
+			// Parse a string regularly. We need to keep track of what is being parsed.
+			using ParserBase::parse;
+			virtual Bool STORM_FN parse(Str *str, Url *file, Str::Iter start);
+
+			// Parse a syntax tree using error recovery. Do not use 'tree' after calling this, as
+			// 'tree' assumes a complete syntax tree. This is not possible to do from Storm, as
+			// 'tree' is not exposed to the Storm type system.
+			// TODO: Support giving an explicit end as well.
+			ParseResult STORM_FN parseApprox(Str *str, Url *file);
+			ParseResult STORM_FN parseApprox(Str *str, Url *file, Str::Iter start);
+
+			// Clear.
+			virtual void STORM_FN clear();
+
+			// Get an info tree that is always filled to the end of the tree, regardless of the
+			// actual length of the match.
+			InfoNode *STORM_FN fullInfoTree();
+
 		private:
 			// Root rule.
 			Rule *rootRule;
+
+			// Remember the last parsed string and start position.
+			Str *lastStr;
+			Nat lastOffset;
 		};
 
 
