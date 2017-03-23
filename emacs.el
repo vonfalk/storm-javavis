@@ -302,20 +302,20 @@
 
 (setq compilation-scroll-output 'first-error)
 
-(defun check-buffer ()
-  "If the buffer has been modified, ask the user to revert it, just like find-file does."
-  (interactive)
-  (if (and (not (verify-visited-file-modtime))
-	   (not (buffer-modified-p))
-	   (yes-or-no-p
-	    (format "File %s changed on disk. Reload from disk? " (file-name-nondirectory (buffer-file-name)))))
-      (revert-buffer t t)))
+;; (defun check-buffer ()
+;;   "If the buffer has been modified, ask the user to revert it, just like find-file does."
+;;   (interactive)
+;;   (if (and (not (verify-visited-file-modtime))
+;; 	   (not (buffer-modified-p))
+;; 	   (yes-or-no-p
+;; 	    (format "File %s changed on disk. Reload from disk? " (file-name-nondirectory (buffer-file-name)))))
+;;       (revert-buffer t t)))
 
-(defadvice switch-to-buffer
-  (after check-buffer-modified)
-  (check-buffer))
+;; (defadvice switch-to-buffer
+;;   (after check-buffer-modified)
+;;   (check-buffer))
 
-(ad-activate 'switch-to-buffer)
+;;(ad-activate 'switch-to-buffer)
 
 ;; Good stuff while using the plugin.
 (load "~/Projects/storm/Plugin/emacs.el")
