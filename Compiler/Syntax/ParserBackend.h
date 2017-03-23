@@ -20,18 +20,20 @@ namespace storm {
 #endif
 
 		/**
-		 * Result from a parse where error recovery was performed.
-		 *
-		 * Contains an Info tree along with information indicating how much recovery the parser
-		 * needed to do.
+		 * Result from a parse where error recovery was performed. Indicates how good or bad the
+		 * match is considered.
 		 */
 		class ParseResult {
 			STORM_VALUE;
 		public:
-			STORM_CTOR ParseResult(InfoNode *tree, Nat skipped, Nat corrections);
+			// Failed parse.
+			STORM_CTOR ParseResult();
 
-			// The produced tree.
-			InfoNode *tree;
+			// Successful parse.
+			STORM_CTOR ParseResult(Nat skipped, Nat corrections);
+
+			// Did the parse succeed at all?
+			Bool success;
 
 			// Number of characters that was not properly matched.
 			Nat skippedChars;
@@ -67,6 +69,10 @@ namespace storm {
 			// Parse a string. Returns 'true' if we found some match.
 			virtual Bool parse(Rule *root, Str *str, Url *file, Str::Iter start);
 
+			// Parse a string, doing error recovery. Only call 'infoTree' after parsing in this
+			// manner, as the resulting syntax tree is not neccessarily complete.
+			virtual ParseResult parseApprox(Rule *root, Str *str, Url *file, Str::Iter start);
+
 			// Clear all parse-related information. Included packages are retained.
 			virtual void clear();
 
@@ -96,9 +102,6 @@ namespace storm {
 
 			// Get the generic syntax tree.
 			virtual InfoNode *infoTree() const;
-
-			// Get a generic syntax tree for all of the string.
-			virtual ParseResult fullInfoTree();
 
 			/**
 			 * Performance inspection:

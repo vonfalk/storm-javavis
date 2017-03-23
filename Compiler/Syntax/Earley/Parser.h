@@ -69,9 +69,6 @@ namespace storm {
 				// Get the generic syntax tree.
 				virtual InfoNode *infoTree() const;
 
-				// Get a full generic syntax tree.
-				virtual ParseResult fullInfoTree();
-
 
 				/**
 				 * Performance inspection:

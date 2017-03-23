@@ -54,7 +54,56 @@ namespace storm {
 			}
 
 			Bool Parser::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
+				initParse(root, str, file, start);
+				doParse(startPos);
+				finishParse();
+				return acceptingStack != null;
+			}
+
+			ParseResult Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
+				initParse(root, str, file, start);
+
+				// Start as usual.
+				doParse(startPos);
+
+				Nat length = source->peekLength();
+				Nat pos = lastPos;
+				Set<StackItem *> *advance = null;
+				while (acceptingStack == null || acceptingStack->pos < length) {
+					// Advance all productions one step by performing all possible shifts. Note:
+					// using this method we will only account for missing tokens. If additional
+					// tokens are inserted, we will not account for them.
+					if (advance) {
+						// Advance only these productions.
+						advance = shiftAll(advance);
+					} else {
+						// Advance all productions.
+						advance = shiftAll(lastPos);
+					}
+
+					// Nothing advanced? Abort!
+					if (advance->empty())
+						break;
+
+					stacks->put(0, store, lastPos);
+					doParse(pos);
+
+					if (pos != lastPos) {
+						// We advanced a bit!
+						advance = null;
+						pos = lastPos;
+					} else {
+						// No advance, keep using the old.
+					}
+				}
+
+				finishParse();
+				return ParseResult();
+			}
+
+			void Parser::initParse(Rule *root, Str *str, Url *file, Str::Iter start) {
 				source = str;
+				startPos = start.offset();
 				sourceUrl = file;
 				parseRoot = syntax->lookup(root);
 
@@ -65,30 +114,30 @@ namespace storm {
 				lastPos = 0;
 				visited = new (this) BoolSet();
 
-				startPos = start.offset();
-				Nat length = str->peekLength();
-
-				// Go through states until we reach the end of file.
 				stacks->put(0, store, startState(startPos, root));
-				for (Nat i = startPos; i <= length; i++) {
+			}
+
+			void Parser::doParse(Nat from) {
+				Nat length = source->peekLength();
+				for (Nat i = from; i <= length; i++) {
 					Set<StackItem *> *top = stacks->top();
 
-					// Process all states in 'top' until none remain.
+					// Process all states in 'top'.
 					if (top)
 						actor(i, top);
 
 					// Advance one step.
 					stacks->pop();
 				}
+			}
 
+			void Parser::finishParse() {
 #ifdef GLR_DEBUG
 				PVAR(table);
 #endif
 
 				visited = null;
 				stacks = null;
-
-				return acceptingStack != null;
 			}
 
 			void Parser::actor(Nat pos, Set<StackItem *> *states) {
@@ -767,70 +816,6 @@ namespace storm {
 				}
 
 				return length;
-			}
-
-			ParseResult Parser::fullInfoTree() {
-				if (matchEnd() == source->end())
-					return ParseResult(infoTree(), 0, 0);
-
-				// TODO: Cache the results of this computation in case fullInfoTree is called more
-				// than once?
-
-				// Save state.
-				StackItem *acceptingStack = this->acceptingStack;
-				Set<StackItem *> *lastSet = this->lastSet;
-				Nat lastPos = this->lastPos;
-				visited = new (this) BoolSet();
-				stacks = new (this) FutureStacks();
-				this->acceptingStack = null;
-				this->lastSet = null;
-				this->lastPos = 0;
-
-				// Try to complete as many states as possible in order to arrive at a viable prefix.
-				stacks->set(0, new (this) Set<StackItem *>(*lastSet));
-				this->currentPos = lastPos;
-				completePrefix();
-
-				InfoNode *result = null;
-				if (this->acceptingStack)
-					result = infoTree(store->at(this->acceptingStack->tree), this->acceptingStack->pos);
-
-				Nat corrections = stacks->top()->count() - lastSet->count();
-
-				// Restore state.
-				visited = null;
-				stacks = null;
-				this->acceptingStack = acceptingStack;
-				this->lastSet = lastSet;
-				this->lastPos = lastPos;
-
-				// See if we need to add some more content...
-				Nat skipped = 0;
-				Nat totalLength = source->peekLength() - startPos;
-				if (result && result->length() < totalLength) {
-					skipped = totalLength - result->length();
-					if (InfoInternal *node = as<InfoInternal>(result)) {
-						Str::Iter from = source->posIter(startPos + result->length());
-						InfoLeaf *add = new (this) InfoLeaf(null, source->substr(from, source->end()));
-
-						InfoInternal *r = new (this) InfoInternal(node, node->count() + 1);
-						r->set(node->count(), add);
-						result = r;
-					} else {
-						// Concatenate everything into one large leaf node!
-						result = null;
-					}
-				}
-
-				// It is possible that we fail. If so: create a new node containing the entire desired range.
-				if (!result) {
-					Str::Iter from = source->posIter(startPos);
-					result = new (this) InfoLeaf(null, source->substr(from, source->end()));
-					if (skipped == 0)
-						skipped = result->length();
-				}
-
-				return ParseResult(result, skipped, corrections);
 			}
 
 			void Parser::completePrefix() {

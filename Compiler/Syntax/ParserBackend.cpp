@@ -5,11 +5,16 @@
 namespace storm {
 	namespace syntax {
 
-		ParseResult::ParseResult(InfoNode *tree, Nat skipped, Nat corrections) :
-			tree(tree), skippedChars(skipped), corrections(corrections) {}
+		ParseResult::ParseResult() : success(false), skippedChars(0), corrections(0) {}
+
+		ParseResult::ParseResult(Nat skipped, Nat corrections) :
+			success(true), skippedChars(skipped), corrections(corrections) {}
 
 		StrBuf &operator <<(StrBuf &to, ParseResult r) {
-			return to << r.skippedChars << L" chars skipped, " << r.corrections << L" corrections";
+			if (r.success)
+				return to << r.skippedChars << L" chars skipped, " << r.corrections << L" corrections";
+			else
+				return to << L"Failed";
 		}
 
 
@@ -25,6 +30,10 @@ namespace storm {
 
 		Bool ParserBackend::parse(Rule *root, Str *str, Url *file, Str::Iter start) {
 			return false;
+		}
+
+		ParseResult ParserBackend::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
+			return ParseResult();
 		}
 
 		void ParserBackend::clear() {}
@@ -54,10 +63,6 @@ namespace storm {
 		}
 
 		InfoNode *ParserBackend::infoTree() const {
-			throw InternalError(L"No tree.");
-		}
-
-		ParseResult ParserBackend::fullInfoTree() {
 			throw InternalError(L"No tree.");
 		}
 

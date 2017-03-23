@@ -319,14 +319,14 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 		}											\
 	} while (false)
 
-#define VERIFY(expr)												\
-	do {															\
-		__result__.total++;											\
-		if (!(expr)) {												\
-			__result__.crashed++;									\
-			std::wcout << L"Failed: " << #expr << L", aborting..."; \
-			throw AbortError();										\
-		}															\
+#define VERIFY(expr)													\
+	do {																\
+		__result__.total++;												\
+		if (!(expr)) {													\
+			__result__.crashed++;										\
+			std::wcout << L"Failed: " << #expr << L", aborting...\n";	\
+			throw AbortError();											\
+		}																\
 	} while (false)
 
 #define SUITE(name, order)						\

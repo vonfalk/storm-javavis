@@ -143,10 +143,6 @@ namespace storm {
 			throw error();
 		}
 
-		ParseResult ParserBase::fullInfoTree() const {
-			return use->fullInfoTree();
-		}
-
 
 		/**
 		 * Info parser.
@@ -155,6 +151,26 @@ namespace storm {
 		InfoParser::InfoParser(Rule *root) : ParserBase(root, null), rootRule(root) {}
 
 		InfoParser::InfoParser(Rule *root, ParserBackend *backend) : ParserBase(root, backend), rootRule(root) {}
+
+		InfoParser *InfoParser::create(Package *pkg, const wchar *name) {
+			return create(pkg, name, null);
+		}
+
+		InfoParser *InfoParser::create(Package *pkg, const wchar *name, ParserBackend *backend) {
+			if (Rule *r = as<Rule>(pkg->find(name))) {
+				return new (pkg) InfoParser(r, backend);
+			} else {
+				throw InternalError(L"Can not find the rule " + ::toS(name) + L" in " + ::toS(pkg->identifier()));
+			}
+		}
+
+		ParseResult InfoParser::parseApprox(Str *str, Url *file) {
+			return parseApprox(str, file, str->begin());
+		}
+
+		ParseResult InfoParser::parseApprox(Str *str, Url *file, Str::Iter start) {
+			return ParserBase::parseApprox(str, file, start);
+		}
 
 		void InfoParser::root(Rule *r) {
 			rootRule = r;

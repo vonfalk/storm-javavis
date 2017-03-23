@@ -35,6 +35,9 @@ namespace storm {
 				// Parse a string. Returns 'true' if we found some match.
 				virtual Bool parse(Rule *root, Str *str, Url *file, Str::Iter start);
 
+				// Parse a string, performing error recovery.
+				virtual ParseResult parseApprox(Rule *root, Str *str, Url *file, Str::Iter start);
+
 				// Clear all parse-related information. Included packages are retained.
 				virtual void clear();
 
@@ -64,9 +67,6 @@ namespace storm {
 
 				// Get the generic syntax tree.
 				virtual InfoNode *infoTree() const;
-
-				// Get a full generic syntax tree.
-				virtual ParseResult fullInfoTree();
 
 				/**
 				 * Performance inspection:
@@ -150,6 +150,19 @@ namespace storm {
 
 				// Clear all data derived from the syntax.
 				void clearSyntax();
+
+				/**
+				 * Set-up and tear down of parsing.
+				 */
+
+				// Initialize parsing of 'str'.
+				void initParse(Rule *root, Str *str, Url *file, Str::Iter start);
+
+				// Remove any temporary state used during parsing.
+				void finishParse();
+
+				// Parse from position 'i' to completion. Assumes 'stacks->top()' contains valid information.
+				void doParse(Nat from);
 
 				/**
 				 * Parsing functions. Based on the paper "Parser Generation for Interactive

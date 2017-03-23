@@ -26,34 +26,34 @@ BEGIN_TEST(InfoParse, Server) {
 } END_TEST
 
 
-BEGIN_TEST(InfoPrefix, Server) {
+BEGIN_TEST_(InfoError, Server) {
 	Engine &e = gEngine();
 
 	Package *pkg = e.package(L"lang.simple");
-	Parser *p = Parser::create(pkg, L"SExpr", new (e) glr::Parser());
+	InfoParser *p = InfoParser::create(pkg, L"SExpr", new (e) glr::Parser());
 
 	Str *src = new (e) Str(L"foo +");
-	Bool ok = p->parse(src, new (e) Url());
-	VERIFY(!p->hasTree() || p->matchEnd() != src->end());
+	ParseResult r = p->parseApprox(src, new (e) Url());
+	VERIFY(r.success);
 
-	ParseResult r = p->fullInfoTree();
-	CHECK_EQ(r.tree->length(), 5);
-	CHECK_EQ(r.tree->leafAt(0)->color, tVarName);
-	CHECK_EQ(r.tree->leafAt(4)->color, tNone);
+	InfoNode *tree = p->infoTree();
+	CHECK_EQ(tree->length(), 5);
+	CHECK_EQ(tree->leafAt(0)->color, tVarName);
+	CHECK_EQ(tree->leafAt(4)->color, tNone);
 } END_TEST
 
-BEGIN_TEST(InfoPrefix2, Server) {
+BEGIN_TESTX(InfoPrefix2, Server) {
 	Engine &e = gEngine();
 
 	Package *pkg = e.package(L"lang.simple");
-	Parser *p = Parser::create(pkg, L"SExpr", new (e) glr::Parser());
+	InfoParser *p = InfoParser::create(pkg, L"SExpr", new (e) glr::Parser());
 
 	Str *src = new (e) Str(L"foo +;");
 	Bool ok = p->parse(src, new (e) Url());
 	VERIFY(!p->hasTree() || p->matchEnd() != src->end());
 
-	ParseResult r = p->fullInfoTree();
-	CHECK_EQ(r.tree->length(), 6);
-	CHECK_EQ(r.tree->leafAt(0)->color, tVarName);
-	CHECK_EQ(r.tree->leafAt(4)->color, tNone);
+	InfoNode *tree = p->infoTree();
+	CHECK_EQ(tree->length(), 6);
+	CHECK_EQ(tree->leafAt(0)->color, tVarName);
+	CHECK_EQ(tree->leafAt(4)->color, tNone);
 } END_TEST

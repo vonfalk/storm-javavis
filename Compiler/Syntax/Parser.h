@@ -93,11 +93,6 @@ namespace storm {
 			// Get the generic syntax tree.
 			InfoNode *STORM_FN infoTree() const;
 
-			// Try to generate a syntax tree for as much of the string as possible. The returned
-			// syntax tree will always cover the entire string, but may not be complete according to
-			// the grammar. TODO: Allow passing an iterator specifying the end of the desired match.
-			ParseResult STORM_FN fullInfoTree() const;
-
 			// Output.
 			virtual void STORM_FN toS(StrBuf *to) const;
 
@@ -111,6 +106,12 @@ namespace storm {
 
 			// Get the number of bytes used.
 			Nat STORM_FN byteCount() const;
+
+		protected:
+			// Call 'parseApprox'. Only available from 'InfoParser'.
+			inline ParseResult parseApprox(Str *str, Url *file, Str::Iter start) {
+				return use->parseApprox(root(), str, file, start);
+			}
 
 		private:
 			// Backend being used.
@@ -128,6 +129,17 @@ namespace storm {
 			// Create.
 			STORM_CTOR InfoParser(Rule *rootRule);
 			STORM_CTOR InfoParser(Rule *rootRule, ParserBackend *backend);
+
+			// Create with a package and a name.
+			static InfoParser *create(Package *pkg, const wchar *name);
+			static InfoParser *create(Package *pkg, const wchar *name, ParserBackend *backend);
+
+			// Parse a syntax tree using error recovery. Do not use 'tree' after calling this, as
+			// 'tree' assumes a complete syntax tree. This is not possible to do from Storm, as
+			// 'tree' is not exposed to the Storm type system.
+			// TODO: Support giving an explicit end as well.
+			ParseResult parseApprox(Str *str, Url *file);
+			ParseResult parseApprox(Str *str, Url *file, Str::Iter start);
 
 			// Set a new root.
 			void STORM_FN root(Rule *rule);
