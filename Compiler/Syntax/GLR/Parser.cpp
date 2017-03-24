@@ -212,8 +212,12 @@ namespace storm {
 					const Action &action = actions->at(i);
 					Nat tree = store->push(currentPos).id();
 					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
-					if (stacks->put(0, store, item))
+					Set<StackItem *> *top = stacks->top();
+					if (!top->has(item)) {
+						// Note: we're not using 'put', as this could cause infinite cycles.
+						top->put(item);
 						result->put(item);
+					}
 				}
 			}
 
@@ -720,7 +724,7 @@ namespace storm {
 				InfoInternal *result = new (this) InfoInternal(p, length);
 
 				if (p->indentType != indentNone)
-					result->indent = new (this) InfoIndent(0, nodePos, p->indentType);
+					result->indent = new (this) InfoIndent(nodePos, nodePos, p->indentType);
 
 				TreeArray children = node.children();
 
@@ -739,13 +743,13 @@ namespace storm {
 						infoSubtree(result, nodePos, child, pos);
 					} else {
 						infoToken(result, nodePos, child, pos, p->tokens->at(item.pos));
-					}
 
-					if (result->indent) {
-						if (item.pos == p->indentStart)
-							result->indent->start = nodePos;
-						else if (item.pos == p->indentEnd)
-							result->indent->end = nodePos;
+						if (result->indent) {
+							if (item.pos == p->indentStart)
+								result->indent->start = nodePos;
+							else if (item.pos == p->indentEnd)
+								result->indent->end = nodePos;
+						}
 					}
 
 					pos = child.pos();
@@ -790,6 +794,13 @@ namespace storm {
 						}
 					} else {
 						infoToken(result, resultPos, child, pos, p->tokens->at(item.pos));
+
+						if (result->indent) {
+							if (item.pos == p->indentStart)
+								result->indent->start = resultPos;
+							else if (item.pos == p->indentEnd)
+								result->indent->end = resultPos;
+						}
 
 						pos = child.pos();
 						i--;

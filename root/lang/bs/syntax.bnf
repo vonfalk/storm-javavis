@@ -160,15 +160,15 @@ SAllWeakCast => r : SWeakCast(block) r;
 // If.
 IfExpr SIf(Block block);
 SIf[0] => createIf(block, expr) :
-    "if" #keyword, "(", SExpr(block) expr, ")", SIfTrue(me) -> trueExpr - (, "else" #keyword, SStmt(me) -> falseExpr)?;
+    "if" #keyword, "(", SExpr(block) expr, ")" - SIfTrue(me) -> trueExpr - (, "else" #keyword - [, SStmt(me) -> falseExpr]?)?;
 SIf[0] => IfWeak(block, cast) :
-    "if" #keyword, "(", SWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr - (, "else" #keyword, SStmt(me) -> falseExpr)?;
+    "if" #keyword, "(", SWeakCast(block) cast, ")" - SIfTrue(me) -> trueExpr - (, "else" #keyword - [, SStmt(me) -> falseExpr]?)?;
 SIf[5] => IfWeak(block, cast, name) :
-    "if" #keyword, "(", SName name #varName, "=", SAllWeakCast(block) cast, ")", SIfTrue(me) -> trueExpr - (, "else" #keyword, SStmt(me) -> falseExpr)?;
+    "if" #keyword, "(", SName name #varName, "=", SAllWeakCast(block) cast, ")" - SIfTrue(me) -> trueExpr - (, "else" #keyword - [, SStmt(me) -> falseExpr]?)?;
 
 // Scoping for if and as expressions.
 IfTrue SIfTrue(Block parent); // Really only If and IfWeak.
-SIfTrue => IfTrue(pos, parent) : [SStmt(me) -> set]?;
+SIfTrue => IfTrue(pos, parent) : [SDelimiter - SStmt(me) -> set]?;
 
 // Return.
 Return SReturn(Block block);

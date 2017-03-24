@@ -104,8 +104,9 @@ namespace storm {
 					level(level() - inside);
 				break;
 			case indentWeakIncrease:
-				if (!isAlign() && !seenIndent() && inside)
+				if (!isAlign() && !seenIndent() && inside) {
 					level(1);
+				}
 				break;
 			case indentAlignBegin:
 				if (isAlign()) {

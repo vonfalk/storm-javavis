@@ -72,7 +72,6 @@ BEGIN_TEST(InfoError, Server) {
 		// Can we skip unknown characters?
 		Str *src = new (e) Str(L"foo ? bar");
 		ParseResult r = p->parseApprox(src, new (e) Url());
-		PVAR(TO_S(e, r));
 		VERIFY(r.success);
 
 		InfoNode *tree = p->infoTree();
