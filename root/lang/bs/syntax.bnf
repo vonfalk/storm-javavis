@@ -211,11 +211,11 @@ SConst[20] => trueConstant(pos) : "true" #constant;
 SConst[20] => falseConstant(pos) : "false" #constant;
 
 // Multiline string constants.
-SConst[10] => rawMultilineStrConstant(pos, str) : "str", "{[ \t]*[\n\r]+" - SSkipBlock str - "}";
+SConst[10] => rawMultilineStrConstant(pos, str) : "str" #keyword, "{[ \t]*[\n\r]+" - SSkipBlock str - "}";
 
 // Skip a block, assuming matching {} and well-behaved strings.
 Str SSkipBlock();
-SSkipBlock => cont : ( SSkipContent ) cont;
+SSkipBlock => cont : ( SSkipContent #string ) cont;
 
 void SSkipContent();
 SSkipContent : "[ \n\r\t]*" - SSkipContent - "[ \n\r\t]*" - SSkipContent - "[ \n\r\t]*";

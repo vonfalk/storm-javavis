@@ -80,7 +80,7 @@ namespace storm {
 						pos = endPos;
 						return false;
 					}
-					if (pos == p->repEnd)
+					if (pos == p->repEnd && p->repType != repNone)
 						pos = specialPos;
 					else
 						pos--;
