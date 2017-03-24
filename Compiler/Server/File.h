@@ -81,13 +81,20 @@ namespace storm {
 
 			// Re-parse a node in the syntax tree. Returns 'null' on complete failure.
 			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root);
+			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root, syntax::ParseResult *result);
 
 			// Re-parse a range in the syntax tree. Returns the range that was re-parsed and needs
 			// to be transmitted to the client again.
 			Range parse(const Range &range);
 
-			// Helpers for 'parse'.
-			Bool parse(Range &result, const Range &range, Nat offset, syntax::InfoNode *node);
+			// Traverse the parse tree from 'node' while attempting to update 'range', reparsing nodes as needed.
+			// Returns the best parse result so far.
+			syntax::ParseResult parse(Range &result, const Range &range, Nat offset, syntax::InfoNode *node);
+
+			// Compare ParseResult:s and see which is better/worse.
+			static bool better(syntax::ParseResult better, syntax::ParseResult than);
+			static bool bad(syntax::ParseResult which, syntax::InfoNode *node);
+			static syntax::ParseResult combine(syntax::ParseResult a, syntax::ParseResult b);
 
 			// Remove 'range' in the current node (if applicable). The structure of the syntax tree
 			// is kept intact. Returns 'false' if content was modified so that a regex in a leaf node

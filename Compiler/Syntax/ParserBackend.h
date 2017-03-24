@@ -40,6 +40,12 @@ namespace storm {
 
 			// Correction work performed by the parser. Higher means more corrections.
 			Nat corrections;
+
+			// Did this parse need any error correction?
+			inline Bool STORM_FN corrected() const {
+				return skippedChars > 0
+					|| corrections > 0;
+			}
 		};
 
 		// Output.

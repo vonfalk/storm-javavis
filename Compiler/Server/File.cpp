@@ -43,8 +43,10 @@ namespace storm {
 
 			InfoNode *c = new (this) InfoLeaf(null, src);
 			parser = p;
-			if (InfoNode *n = parse(c, parser->root()))
-				content = n;
+			ParseResult pResult;
+			if (InfoNode *n = parse(c, parser->root(), &pResult))
+				if (!bad(pResult, n))
+					content = n;
 
 			return true;
 		}
@@ -270,12 +272,18 @@ namespace storm {
 		}
 
 		InfoNode *Part::parse(InfoNode *node, Rule *root) {
+			return parse(node, root, null);
+		}
+
+		InfoNode *Part::parse(InfoNode *node, Rule *root, ParseResult *out) {
 			parser->root(root);
 			Str *src = node->toS();
 			ParseResult quality = parser->parseApprox(src, path);
-			PLN(TO_S(this, src->peekLength() << L" - " << root->identifier() << L" - " << quality));
-			if (src->peekLength() < 20)
-				PLN(src);
+			if (out)
+				*out = quality;
+			//PLN(TO_S(this, src->peekLength() << L" - " << root->identifier() << L" - " << quality));
+			// if (src->peekLength() < 20)
+			// 	PLN(src->escape());
 
 			InfoNode *r = null;
 			if (parser->hasTree() && parser->matchEnd() == src->end()) {
@@ -292,60 +300,98 @@ namespace storm {
 		}
 
 		Range Part::parse(const Range &range) {
-			PLN(L"----- Parsing ----------");
+			// PLN(L"----- Parsing ----------");
+			// TODO: We should keep track of ranges where the error correction kicked in and keep
+			// that in mind when re-parsing stuff. We could also post a job for re-parsing those
+			// chunks in the background.
+
 			// TODO: We need some heurustic on how much we should try to re-parse in case we need
 			// error recovery. We probably want to try a few parent nodes if error recovery has to
-			// kick in near the leaves.
+			// kick in near the leaves. Also: if we start trying to re-parse a large part of the file,
+			// we should probably be happy with our current attempt and delay further re-parsing until
+			// later (when the user stops typing).
+
 			// TODO: We also need to consider that ambiguities could be resolved differently
 			// depending on the current match. Eg. changing the string 'tru' to 'true' actually
 			// alters the matched production, even if the old tree works as well. This can be
 			// solved by parsing until the results of the parse are consistent with the previously
 			// matched tree, ie. the same production matched before and now.
+
 			// TODO: Limit the depth of what needs to be re-parsed in some situations.
-			Range result;
-			if (!parse(result, range, start, content)) {
+			Range update;
+			ParseResult r = parse(update, range, start, content);
+			if (!r.success) {
+				// TODO: Trigger if 'bad enough', for some measure of 'bad enough'.
 				// Maybe we contain some parts of the previous part? Try to re-parse!
 				owner->postInvalidate(this, -1, true);
 			}
-			return result;
+			return update;
 		}
 
-		Bool Part::parse(Range &result, const Range &range, Nat offset, InfoNode *node) {
+		ParseResult Part::parse(Range &result, const Range &range, Nat offset, InfoNode *node) {
 			// We should probably parse at a higher level...
 			Nat len = node->length();
 			if (len == 0)
-				return false;
+				return ParseResult();
 
 			// Does this node completely cover 'range'?
 			Range nodeRange(offset, offset + len);
 			if (nodeRange.from > range.from || nodeRange.to < range.to)
-				return false;
+				return ParseResult();
 
 			// Do not attempt to re-parse leaf nodes. They only contain regexes, which have been
 			// checked already.
 			InfoInternal *inode = as<InfoInternal>(node);
 			if (!inode)
-				return false;
+				return ParseResult(0, 0);
 
 
 			// Re-parse this node if none of our children have already managed to do so.
-			Bool ok = false;
-			for (Nat i = 0; i < inode->count() && !ok; i++) {
+			ParseResult ok(0, 0);
+			for (Nat i = 0; i < inode->count() && ok.success; i++) {
 				InfoNode *child = inode->at(i);
-				ok |= parse(result, range, offset, child);
+				ParseResult cResult = parse(result, range, offset, child);
+				ok = combine(ok, cResult);
 				offset += child->length();
 			}
 
-			if (!ok && inode->production()) {
+			if (bad(ok, node) && inode->production()) {
 				// Re-parse this node!
-				InfoNode *n = parse(inode, inode->production()->rule());
-				if (n) {
+				ParseResult here;
+				InfoNode *n = parse(inode, inode->production()->rule(), &here);
+				// TODO: See which one is worse...
+				if (n && !bad(here, node)) {
 					replace(inode, n);
 					result = nodeRange;
-					ok = true;
+					ok = here;
 				}
 			}
 			return ok;
+		}
+
+		bool Part::better(ParseResult a, ParseResult b) {
+			return false;
+		}
+
+		bool Part::bad(ParseResult w, InfoNode *node) {
+			if (!w.success)
+				return true;
+
+			Nat len = node->length();
+			if (w.skippedChars >= len * 0.4)
+				return true;
+			if (w.corrections >= max(5.0, len*0.05))
+				return true;
+
+			return false;
+		}
+
+		ParseResult Part::combine(ParseResult a, ParseResult b) {
+			if (!a.success || !b.success)
+				return ParseResult();
+
+			return ParseResult(a.skippedChars + b.skippedChars,
+							a.corrections + b.corrections);
 		}
 
 		void Part::replace(InfoNode *oldNode, InfoNode *newNode) {
