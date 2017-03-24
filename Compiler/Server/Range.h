@@ -27,14 +27,26 @@ namespace storm {
 			// Does this range contain another point?
 			Bool STORM_FN contains(Nat pt) const;
 
+			// Distance from this range to a point.
+			Nat STORM_FN distance(Nat pt) const;
+
 			// Size of this range.
 			inline Nat STORM_FN count() const { return to - from; }
 
 			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);
+
+			// Equality.
+			inline Bool STORM_FN operator ==(const Range &o) const {
+				return to == o.to && from == o.from;
+			}
+			inline Bool STORM_FN operator !=(const Range &o) const {
+				return !(*this == o);
+			}
 		};
 
 		StrBuf &STORM_FN operator <<(StrBuf &to, Range r);
+		wostream &operator <<(wostream &to, Range r);
 
 		// Compute the union of two ranges.
 		Range STORM_FN merge(Range a, Range b);

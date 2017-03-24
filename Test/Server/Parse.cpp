@@ -68,4 +68,18 @@ BEGIN_TEST(InfoError, Server) {
 		CHECK_EQ(tree->leafAt(4)->color, tNone);
 	}
 
+	{
+		// Can we skip unknown characters?
+		Str *src = new (e) Str(L"foo ? bar");
+		ParseResult r = p->parseApprox(src, new (e) Url());
+		PVAR(TO_S(e, r));
+		VERIFY(r.success);
+
+		InfoNode *tree = p->infoTree();
+		VERIFY(tree->length() == 9);
+		CHECK_EQ(tree->leafAt(0)->color, tVarName);
+		CHECK_EQ(tree->leafAt(6)->color, tVarName);
+		CHECK_EQ(tree->leafAt(8)->color, tVarName);
+	}
+
 } END_TEST

@@ -82,7 +82,8 @@ namespace storm {
 			// Re-parse a node in the syntax tree. Returns 'null' on complete failure.
 			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root);
 
-			// Re-parse a range in the syntax tree. Returns the range that was re-parsed.
+			// Re-parse a range in the syntax tree. Returns the range that was re-parsed and needs
+			// to be transmitted to the client again.
 			Range parse(const Range &range);
 
 			// Helpers for 'parse'.

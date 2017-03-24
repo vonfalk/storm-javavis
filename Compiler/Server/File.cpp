@@ -271,20 +271,28 @@ namespace storm {
 
 		InfoNode *Part::parse(InfoNode *node, Rule *root) {
 			parser->root(root);
-			// TODO: Do our best to do error recovery when parsing like this!
 			Str *src = node->toS();
-			if (!parser->parse(src, path))
-				return null;
+			ParseResult quality = parser->parseApprox(src, path);
+			PLN(TO_S(this, src->peekLength() << L" - " << root->identifier() << L" - " << quality));
+			if (src->peekLength() < 20)
+				PLN(src);
 
-			if (parser->matchEnd() != src->end())
-				return null;
+			InfoNode *r = null;
+			if (parser->hasTree() && parser->matchEnd() == src->end()) {
+				// We managed to match something using error recovery!
+				// TODO: Return info indicating the quality of the match.
+				r = parser->infoTree();
+			} else if (node->parent() == null) {
+				// The root node failed. Output as much as possible at least...
+				r = parser->fullInfoTree();
+			}
 
-			InfoNode *r = parser->infoTree();
 			parser->clear();
 			return r;
 		}
 
 		Range Part::parse(const Range &range) {
+			PLN(L"----- Parsing ----------");
 			// TODO: We need some heurustic on how much we should try to re-parse in case we need
 			// error recovery. We probably want to try a few parent nodes if error recovery has to
 			// kick in near the leaves.

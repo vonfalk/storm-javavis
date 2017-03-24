@@ -4,6 +4,7 @@
 #include "File.h"
 #include "Test.h"
 #include "WorkQueue.h"
+#include "RangeSet.h"
 
 namespace storm {
 	namespace server {
@@ -112,11 +113,8 @@ namespace storm {
 			virtual Range STORM_FN run(WorkQueue *q);
 
 		private:
-			// Update these parts. Sorted by their starting offsets.
-			Array<Range> *parts;
-
-			// Find and remove the part closest to the cursor.
-			Range findNearest();
+			// Set to update.
+			RangeSet *update;
 		};
 
 	}

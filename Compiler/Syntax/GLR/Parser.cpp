@@ -68,7 +68,8 @@ namespace storm {
 
 				Nat length = source->peekLength();
 				Nat pos = lastPos;
-				Nat skipped = 0;
+				Nat skippedTokens = 0;
+				Nat skippedChars = 0;
 				Set<StackItem *> *advance = null;
 				while (acceptingStack == null || acceptingStack->pos < length) {
 					// Advance all productions one step by performing all possible shifts. Note:
@@ -80,11 +81,20 @@ namespace storm {
 					stacks->set(0, lastSet);
 					advance = shiftAll(advance);
 
-					// Nothing advanced? Abort!
-					if (advance->empty())
-						break;
+					// Nothing advanced? Try to skip some characters...
+					if (advance->empty()) {
+						// Give up if we need to skip too much.
+						if (skippedChars >= 20)
+							break;
+						if (pos >= length)
+							break;
 
-					skipped++;
+						skippedChars++;
+						pos++;
+						lastPos++;
+					}
+
+					skippedTokens++;
 					doParse(pos);
 
 					if (pos != lastPos) {
@@ -99,7 +109,8 @@ namespace storm {
 				finishParse();
 
 				if (hasTree()) {
-					return ParseResult(source->peekLength() - acceptingStack->pos, skipped);
+					skippedChars += source->peekLength() - acceptingStack->pos;
+					return ParseResult(skippedChars, skippedTokens);
 				} else {
 					return ParseResult();
 				}
@@ -222,7 +233,11 @@ namespace storm {
 						continue;
 
 					Nat offset = matched - currentPos;
-					Nat tree = store->push(currentPos).id();
+					// Note: here, 'env.stack->pos' is used instead of 'currentPos'. Usually, they
+					// are the same, but when error recovery kicks in 'env.stack->pos' may be
+					// smaller, which means that some characters in the input were skipped. These
+					// should be included somewhere so that the InfoTrees will have the correct length.
+					Nat tree = store->push(env.stack->pos).id();
 					StackItem *item = new (this) StackItem(action.action, matched, env.stack, tree);
 					stacks->put(offset, store, item);
 #ifdef GLR_DEBUG

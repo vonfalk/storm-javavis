@@ -21,9 +21,26 @@ namespace storm {
 			return from <= pt && to > pt;
 		}
 
+		static Nat delta(Nat a, Nat b) {
+			if (a > b)
+				return a - b;
+			else
+				return b - a;
+		}
+
+		Nat Range::distance(Nat pt) const {
+			if (contains(pt))
+				return 0;
+			return min(delta(from, pt), delta(to, pt));
+		}
+
 		void Range::deepCopy(CloneEnv *env) {}
 
 		StrBuf &operator <<(StrBuf &to, Range r) {
+			return to << L"(" << r.from << L" - " << r.to << L")";
+		}
+
+		wostream &operator <<(wostream &to, Range r) {
 			return to << L"(" << r.from << L" - " << r.to << L")";
 		}
 

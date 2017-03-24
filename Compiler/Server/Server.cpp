@@ -357,40 +357,15 @@ namespace storm {
 		 */
 
 		UpdateFileRange::UpdateFileRange(File *file) : WorkItem(file) {
-			parts = new (this) Array<Range>();
+			update = new (this) RangeSet();
 		}
 
 		UpdateFileRange::UpdateFileRange(File *file, Range range) : WorkItem(file) {
-			parts = new (this) Array<Range>();
-			if (!range.empty())
-				parts->push(range);
+			update = new (this) RangeSet(range);
 		}
 
 		void UpdateFileRange::add(Range range) {
-			if (range.empty())
-				return;
-
-			Nat insertAfter = 0;
-			while (insertAfter < parts->count()) {
-				Range at = parts->at(insertAfter);
-
-				if (at.intersects(range)) {
-					// Remove the one in the array and try to insert the new, expanded range.
-					range = storm::server::merge(at, range);
-					parts->remove(insertAfter);
-				} else if (range.to < at.from) {
-					// No need for further examination, we found the right place!
-					break;
-				} else {
-					// Keep looking for the correct place.
-					insertAfter++;
-				}
-			}
-
-			if (insertAfter >= parts->count())
-				parts->push(range);
-			else
-				parts->insert(insertAfter + 1, range);
+			update->insert(range);
 		}
 
 		Bool UpdateFileRange::merge(WorkItem *other) {
@@ -398,55 +373,21 @@ namespace storm {
 				return false;
 
 			UpdateFileRange *o = (UpdateFileRange *)other;
-
-			for (Nat i = 0; i < o->parts->count(); i++)
-				add(o->parts->at(i));
-
+			update->insert(o->update);
 			return true;
 		}
 
-		static Nat delta(Nat a, Nat b) {
-			if (a > b)
-				return a - b;
-			else
-				return b - a;
-		}
-
-		static Nat delta(Range range, Nat pos) {
-			if (range.contains(pos))
-				return 0;
-			return min(delta(range.from, pos), delta(range.to, pos));
-		}
-
 		Range UpdateFileRange::run(WorkQueue *q) {
-			if (parts->empty())
+			if (update->empty())
 				return Range();
 
-			Range r = findNearest();
+			Range r = update->nearest(file->editPos);
+			update->remove(r);
 
 			// Post the modified version of ourselves.
-			if (parts->any())
+			if (update->any())
 				q->post(this);
 
-			return r;
-		}
-
-		Range UpdateFileRange::findNearest() {
-			Nat point = file->editPos;
-			Nat bestId = 0;
-			Nat bestDelta = delta(parts->at(0), point);
-
-			for (Nat i = 0; i < parts->count(); i++) {
-				Nat d = delta(parts->at(i), point);
-				if (d < bestDelta) {
-					bestDelta = d;
-					bestId = i;
-				}
-			}
-
-			// Now, we have chosen our target.
-			Range r = parts->at(bestId);
-			parts->remove(bestId);
 			return r;
 		}
 
