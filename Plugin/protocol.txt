@@ -29,6 +29,7 @@ Messages sent from a client to the server:
 
 Message	                      Description
 (quit)	 	 	      Asks the Storm process to quit.
+(supports type)		      See if the file type 'type' is supported.
 (open id path content)	      Open a new file from 'path', hereby referred to as 'id' containing 'content'.
                               This is considered edit #0.
 (close id)    		      Close a previously opened file.
@@ -42,6 +43,7 @@ Message	                      Description
 
 
 Messages sent from the server to a client:
+(supported type result)	      Reports that 'type' is or is not supported, depending on 'result'
 (color file id start colors)  Color 'file' using information from edit #'id'. Start at character 'start'
                               and color the next '(nth 0 colors)' using '(nth 1 colors)' and so on. Note:
 			      'colors' is inlined in the list.

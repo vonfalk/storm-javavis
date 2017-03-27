@@ -25,10 +25,14 @@ namespace storm {
 	}
 
 	SimpleName *readerName(Url *file) {
-		Engine &e = file->engine();
+		return readerName(file->ext());
+	}
+
+	SimpleName *readerName(Str *ext) {
+		Engine &e = ext->engine();
 		SimpleName *r = new (e) SimpleName();
 		r->add(new (e) Str(L"lang"));
-		r->add(file->ext());
+		r->add(ext);
 		Array<Value> *params = new (e) Array<Value>();
 		params->push(thisPtr(Array<Url *>::stormType(e)));
 		params->push(thisPtr(Package::stormType(e)));

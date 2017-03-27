@@ -31,6 +31,7 @@ namespace storm {
 
 	// Get the name of the 'reader' function for use when reading 'file'.
 	SimpleName *STORM_FN readerName(Url *file);
+	SimpleName *STORM_FN readerName(Str *ext);
 
 	// Group files together by which reader they should use. Storm will have a custom implementation
 	// of this which does not use a 'PkgFiles' object.

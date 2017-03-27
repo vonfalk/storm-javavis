@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Server.h"
+#include "Engine.h"
 #include "Core/Timing.h"
 
 namespace storm {
@@ -9,6 +10,7 @@ namespace storm {
 			files = new (this) Map<Nat, File *>();
 			colorSyms = new (this) Array<Symbol *>();
 			quit = c->symbol(L"quit");
+			supported = c->symbol(L"supported");
 			open = c->symbol(L"open");
 			edit = c->symbol(L"edit");
 			point = c->symbol(L"point");
@@ -20,6 +22,7 @@ namespace storm {
 			color = c->symbol(L"color");
 			level = c->symbol(L"level");
 			as = c->symbol(L"as");
+			t = c->symbol(L"t");
 			work = new (this) WorkQueue(this);
 		}
 
@@ -66,6 +69,9 @@ namespace storm {
 
 			if (quit->equals(kind)) {
 				return false;
+			} else if (supported->equals(kind)) {
+				work->poke();
+				onSupported(cell->rest);
 			} else if (open->equals(kind)) {
 				work->poke();
 				onOpen(cell->rest);
@@ -94,6 +100,15 @@ namespace storm {
 			}
 
 			return true;
+		}
+
+		void Server::onSupported(SExpr *expr) {
+			String *ext = next(expr)->asStr();
+
+			SimpleName *n = readerName(ext->v);
+			bool ok = engine().scope().find(n) != null;
+
+			conn->send(list(engine(), 3, supported, ext, ok ? t : null));
 		}
 
 		void Server::onOpen(SExpr *expr) {

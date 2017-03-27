@@ -37,6 +37,7 @@ namespace storm {
 
 			// Keep track of some symbols we need.
 			Symbol *quit;
+			Symbol *supported;
 			Symbol *open;
 			Symbol *edit;
 			Symbol *point;
@@ -48,6 +49,7 @@ namespace storm {
 			Symbol *color;
 			Symbol *level;
 			Symbol *as;
+			Symbol *t;
 
 			// Any test state required now?
 			Test *testState;
@@ -65,6 +67,7 @@ namespace storm {
 			Bool process(SExpr *msg);
 
 			// Handle specific messages.
+			void onSupported(SExpr *msg);
 			void onOpen(SExpr *msg);
 			void onEdit(SExpr *msg);
 			void onPoint(SExpr *msg);

@@ -23,7 +23,9 @@
 (defvar storm-mode-max-edits 20 "Maximum number of entries saved in the edit history.")
 
 ;; State for all buffers using storm-mode.
+(defvar global-storm-mode nil "Is 'global-storm-mode' enabled? Use the function 'global-storm-mode' to enable/disable.")
 (defvar storm-mode-buffers (make-hash-table) "Map int->buffer for all buffers and their associated id.")
+(defvar storm-mode-types (make-hash-table :test 'equal) "Map str->t/nil of supported file types.")
 (defvar storm-mode-next-id 0   "Next usable buffer ID in storm-mode.")
 (defvar storm-started-hook nil "Hook executed when the storm process has started.")
 (defvar-local storm-buffer-id nil "The ID of the current buffer in storm-mode.")
@@ -78,13 +80,45 @@
 	  (nth 1 pos))))
 
 ;; Storm-mode for buffers.
-(defun global-storm-mode ()
+(defun global-storm-mode (enable)
   "Use storm-mode for all applicable buffers."
   (interactive)
-  (storm-start)
-  ;; TODO: Look at all open buffers and use storm-mode for them.
-  ;; TODO: Create a hook so that we get notified about all newly opened files.
-  )
+  (setq global-storm-mode enable)
+  (when enable
+    ;; Get notified about newly opened buffers. This is a no-op if the advice has already been added.
+    (advice-add 'set-auto-mode :around #'storm-set-auto-mode)
+    ;; Get notified when Storm is started so we may enable Storm-mode on all buffers.
+    (add-hook 'storm-started-hook #'global-storm-started)
+    ;; Start the process, if that is not done already.
+    (if (storm-running-p)
+	(storm-start)
+      (global-storm-started))))
+
+;; Hook into the 'set-auto-mode' function, so that we may get notified about newly opened files.
+(defun storm-set-auto-mode (original &rest args)
+  "Storm hook for 'set-auto-mode'."
+  (unless (auto-storm-mode)
+    (apply original args)))
+
+(defun auto-storm-mode ()
+  "Enable Storm mode for the current buffer if applicable."
+  (when buffer-file-name
+    (let ((ext (file-name-extension buffer-file-name)))
+      (if (storm-supports ext)
+	  (progn
+	    (storm-mode)
+	    't)
+	'nil))))
+
+(defun global-storm-started ()
+  "Called when Storm has been started. If 'global-storm-mode' is
+  enabled, checks all open buffers to see which shall use Storm-mode."
+  (when global-storm-mode
+    (let ((buffers (buffer-list)))
+      (while buffers
+	(with-current-buffer (car buffers)
+	  (auto-storm-mode))
+	(setq buffers (cdr buffers))))))
 
 (defun storm-mode ()
   "Use storm-mode for the current buffer."
@@ -130,20 +164,21 @@
 (defun storm-line-indentation ()
   "Compute the indentation of the current line by querying the language server."
   (let ((response (storm-query (list 'indent storm-buffer-id (1- (point))))))
-    (setq storm-buffer-last-point (point))
-    (when (>= (length response) 3)
-      (let ((file-id (first  response))
-	    (kind    (second response))
-	    (value   (third  response)))
-	(cond ((not (eq storm-buffer-id file-id))
-	       'noindent)
-	      ((eq kind 'level)
-	       (* value tab-width))
-	      ((eq kind 'as)
-	       (save-excursion
-		 (goto-char (1+ value))
-		 (current-column)))
-	      (t 'noindent))))))
+    (when (listp response)
+      (setq storm-buffer-last-point (point))
+      (when (>= (length response) 3)
+	(let ((file-id (first  response))
+	      (kind    (second response))
+	      (value   (third  response)))
+	  (cond ((not (eq storm-buffer-id file-id))
+		 'noindent)
+		((eq kind 'level)
+		 (* value tab-width))
+		((eq kind 'as)
+		 (save-excursion
+		   (goto-char (1+ value))
+		   (current-column)))
+		(t 'noindent)))))))
 
 (defvar storm-mode-hook nil "Hook run when storm-mode is initialized.")
 
@@ -370,6 +405,19 @@
 		(setq at (nthcdr 2 at)))))))
     "Too few parameters."))
 
+(defun storm-supports (ext)
+  "Is the file type 'ext' supported by Storm? Returns false if no Storm process is running."
+  (when (storm-running-p)
+    (let ((old (gethash ext storm-mode-types 'unknown)))
+      (message "%S" old)
+      (if (eq old 'unknown)
+	  (let ((r (storm-query (list 'supported ext))))
+	    (message "Response: %S" r)
+	    (when (listp r)
+	      (puthash ext (second r) storm-mode-types)
+	      (second r)))
+	old))))
+
 
 ;; Communication with the Storm process.
 
@@ -522,6 +570,7 @@
   (setq storm-process-sym-to-id (make-hash-table))
   (setq storm-process-id-to-sym (make-hash-table))
   (setq storm-process-next-id 0)
+  (setq storm-mode-types (make-hash-table :test 'equal))
   (with-current-buffer storm-process-output
     (buffer-disable-undo)
     (setq buffer-read-only nil)
