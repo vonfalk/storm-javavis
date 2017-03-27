@@ -1,4 +1,4 @@
-* Loose ends so far [8/20]
+* Loose ends so far [9/20]
   - [ ] Destructors in maps and arrays are not working properly yet. Idea: add (yet another) member 
         to array headers, and let the user provide a custom destructor in there if neccessary.
   - [ ] Destructors do not need their own slot in the vtables anymore since we have another mechanism for that.
@@ -12,8 +12,8 @@
   - [ ] Make a generic toS() for Storm which uses operator << (if present) for values.
   - [ ] Verify so that integers can not be casted to integers.
   - [ ] Function pointers should maybe allow casting to less specific types of parameters.
-  - [ ] if (x = foo.bar) does not produce an error is 'foo.bar' is not Maybe<T>.
-  - [ ] The grammar rule X : Y ("w", Y)* "w"; does not parse properly. It should either work as expected 
+  - [ ] if (x = foo.bar) does not produce an error if 'foo.bar' is not Maybe<T>.
+  - [X] The grammar rule X : Y ("w", Y)* "w"; does not parse properly. It should either work as expected 
         or report an error!
   - [X] Thread sleep needs to be improved! We should put threads in a sleep queue so that the thread
         can be properly put to sleep even if there is another uthread active on the current thread.

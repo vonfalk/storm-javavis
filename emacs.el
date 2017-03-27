@@ -10,41 +10,11 @@
     ("\\.c\\'" (".h"))
     ))
 
+(add-hook 'compilation-mode-hook
+	  (lambda ()
+	    (setq tab-width 4)))
+
 (setq project-root "~/Projects/storm/")
-
-;; Mark errors in compilation-mode. TODO: Manage to convert offsets to line+col as well!
-(require 'compile)
-(pushnew '(storm-pp "^ *\\([0-9]+>\\)?\\([^(\n\t]+\\)(\\([0-9]+\\),\\([0-9]+\\)):" 2 3 4 nil)
-	 compilation-error-regexp-alist-alist)
-(add-to-list 'compilation-error-regexp-alist 'storm-pp)
-(pushnew '(storm "^ *\\([0-9]+>\\)?@\\([^(\n\t]+\\)(\\([0-9]+\\)): [A-Za-z ]+ error:" 2 storm-compute-line 3 nil)
-	 compilation-error-regexp-alist-alist)
-(add-to-list 'compilation-error-regexp-alist 'storm)
-
-(defun find-char-coords (buffer pos)
-  (with-current-buffer buffer
-    (let ((old-pos (point)))
-      (goto-char pos)
-      (let* ((line (line-number-at-pos))
-	     (col (- pos (line-beginning-position))))
-	(goto-char old-pos)
-	(list line col)))))
-
-(defun storm-compute-line (data col)
-  (let* ((file (nth 0 data))
-	 (dir (nth 1 data))
-	 (args (nth 2 data))
-	 (char (1+ (string-to-int col)))
-	 (full-file (expand-file-name file dir))
-	 (buffer (find-buffer-visiting full-file))
-	 (pos (if buffer
-		  (find-char-coords buffer char)
-		(find-char-coords (find-file-noselect full-file) char))))
-
-    (list nil ; Should be a marker, but is ignored by compile.el
-	  (list file dir)
-	  (nth 0 pos)
-	  (nth 1 pos))))
 
 
 ;; Setup code-style. From the Linux Kernel Coding style.
