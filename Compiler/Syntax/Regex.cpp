@@ -95,6 +95,13 @@ namespace storm {
 			return lastMatch;
 		}
 
+		Bool Regex::simple() const {
+			Bool s = true;
+			for (Nat i = 0; i < states->count(); i++)
+				s &= states->at(i).simple();
+			return s;
+		}
+
 		Nat Regex::matchRaw(Str *str) const {
 			return matchRaw(str, 0);
 		}
@@ -468,6 +475,10 @@ namespace storm {
 				*to << L"?";
 			else if (repeatable)
 				*to << L"+";
+		}
+
+		Bool Regex::State::simple() const {
+			return !skippable && !repeatable && match.count() == 1;
 		}
 
 		Bool Regex::State::operator ==(const State &o) const {

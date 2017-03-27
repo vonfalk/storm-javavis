@@ -41,6 +41,9 @@ namespace storm {
 			// Get the result of the last match.
 			Str::Iter STORM_FN matchEnd() const;
 
+			// Is this a 'simple' regex? Ie. a regex that is basically a string literal?
+			Bool STORM_FN simple() const;
+
 			/**
 			 * C++ api used by the parser.
 			 */
@@ -124,6 +127,9 @@ namespace storm {
 
 				// Output.
 				void output(StrBuf *to) const;
+
+				// Simple?
+				Bool simple() const;
 
 				// Compare.
 				Bool operator ==(const State &o) const;
