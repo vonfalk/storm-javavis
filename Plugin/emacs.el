@@ -524,6 +524,7 @@
   (setq storm-process-next-id 0)
   (with-current-buffer storm-process-output
     (buffer-disable-undo)
+    (setq buffer-read-only nil)
     (erase-buffer)
     (setq buffer-read-only t)
     (set-buffer-multibyte t)
