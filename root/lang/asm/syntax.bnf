@@ -30,19 +30,19 @@ SAsmWritable[-10] => v : SAsmVariableRef(block) v;
 // Separate rule for each, so that they can be chosen individually as well.
 
 // Registers: al, bl, cl, eax, ebx, ecx, rax, rcx, rdx as in x86-64. ptrA, ptrB, ptrC, ptrStack, ptrFrame as pointer-sized ones.
-AsmOperand SAsmReg();
-SAsmReg => rAl() : "al" #keyword;
-SAsmReg => rBl() : "bl" #keyword;
-SAsmReg => rCl() : "cl" #keyword;
-SAsmReg => rEax() : "eax" #keyword;
-SAsmReg => rEbx() : "ebx" #keyword;
-SAsmReg => rEcx() : "ecx" #keyword;
-SAsmReg => rRax() : "rax" #keyword;
-SAsmReg => rRbx() : "rbx" #keyword;
-SAsmReg => rRcx() : "rcx" #keyword;
-SAsmReg => rPtrA() : "ptrA" #keyword;
-SAsmReg => rPtrB() : "ptrB" #keyword;
-SAsmReg => rPtrC() : "ptrC" #keyword;
+AsmOperand SAsmReg() #keyword;
+SAsmReg => rAl() : "al";
+SAsmReg => rBl() : "bl";
+SAsmReg => rCl() : "cl";
+SAsmReg => rEax() : "eax";
+SAsmReg => rEbx() : "ebx";
+SAsmReg => rEcx() : "ecx";
+SAsmReg => rRax() : "rax";
+SAsmReg => rRbx() : "rbx";
+SAsmReg => rRcx() : "rcx";
+SAsmReg => rPtrA() : "ptrA";
+SAsmReg => rPtrB() : "ptrB";
+SAsmReg => rPtrC() : "ptrC";
 
 // Literals.
 AsmOperand SAsmLiteral();

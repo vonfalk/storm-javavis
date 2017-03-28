@@ -15,7 +15,7 @@ namespace storm {
 
 
 		RuleDecl::RuleDecl(SrcPos pos, Str *name, Name *result)
-			: pos(pos), name(name), result(result) {
+			: pos(pos), name(name), result(result), color(tNone) {
 			params = new (this) Array<ParamDecl>();
 		}
 
@@ -29,7 +29,11 @@ namespace storm {
 		void RuleDecl::toS(StrBuf *to) const {
 			*to << result << L" " << name << L"(";
 			join(to, params, L", ");
-			*to << L");";
+			*to << L")";
+
+			if (color != tNone)
+				*to << L" #" << storm::syntax::name(engine(), color);
+			*to << L";";
 		}
 
 

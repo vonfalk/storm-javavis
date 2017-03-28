@@ -268,6 +268,9 @@ namespace storm {
 
 			tok.expect(L")");
 
+			if (tok.skipIf(L"#"))
+				r->color = parseTokenColor(tok);
+
 			return r;
 		}
 

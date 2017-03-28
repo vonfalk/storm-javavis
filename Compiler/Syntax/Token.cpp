@@ -40,7 +40,9 @@ namespace storm {
 		}
 
 
-		RuleToken::RuleToken(Rule *rule) : rule(rule) {}
+		RuleToken::RuleToken(Rule *rule) : rule(rule) {
+			color = rule->color;
+		}
 
 		void RuleToken::toS(StrBuf *to, Bool bindings) const {
 			*to << rule->identifier();

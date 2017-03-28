@@ -16,7 +16,8 @@ namespace storm {
 			: Type(decl->name, typeClass),
 			  pos(decl->pos),
 			  scope(scope),
-			  decl(decl) {
+			  decl(decl),
+			  color(decl->color) {
 
 			setSuper(Node::stormType(engine));
 		}

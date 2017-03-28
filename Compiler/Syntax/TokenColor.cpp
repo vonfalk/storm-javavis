@@ -11,7 +11,7 @@ namespace storm {
 		};
 
 		static const TCEntry tcTable[] = {
-			{ tNone, L"<none>" },
+			{ tNone, L"none" },
 			{ tComment, L"comment" },
 			{ tDelimiter, L"delimiter" },
 			{ tString, L"string" },

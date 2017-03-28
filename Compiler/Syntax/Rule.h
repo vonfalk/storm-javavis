@@ -31,6 +31,9 @@ namespace storm {
 			Array<bs::ValParam> *STORM_FN params();
 			Value STORM_FN result();
 
+			// Default color of the token when used in a rule.
+			TokenColor color;
+
 		protected:
 			// Lazy-loading.
 			virtual Bool STORM_FN loadAll();

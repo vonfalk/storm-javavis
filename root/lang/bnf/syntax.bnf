@@ -26,7 +26,7 @@ SRoot : SDelim - (SFileItem, ";", )*;
 void SFileItem();
 SFileItem : "use" #keyword, SName #typeName;
 SFileItem : "delimiter" #keyword, "=", SName #typeName;
-SFileItem : SName #typeName, SIdent #fnName, SFormals;
+SFileItem : SName #typeName, SIdent #fnName, SFormals - (, SHilight)?;
 SFileItem : SProd [, ("=>", SExpr,)? ":", SRepIndentTokens - SProdName]+;
 
 void SFormals();

@@ -75,7 +75,11 @@ namespace storm {
 				}
 			}
 
-			token->color = decl->color;
+			// There might be a default color on this token, do not overwrite that if we do not have
+			// anything better to say.
+			if (decl->color != tNone)
+				token->color = decl->color;
+
 			tokens->push(token);
 		}
 

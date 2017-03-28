@@ -192,6 +192,9 @@ namespace storm {
 			// Parameters.
 			Array<ParamDecl> *params;
 
+			// Default color when this rule is used as a token.
+			TokenColor color;
+
 			// Deep copy.
 			virtual void STORM_FN deepCopy(CloneEnv *env);
 
