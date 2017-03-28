@@ -14,6 +14,41 @@ namespace storm {
 		 */
 
 		/**
+		 * An item in a syntax file.
+		 */
+		class FileItem : public Object {
+			STORM_CLASS;
+		public:
+			STORM_CTOR FileItem();
+		};
+
+		/**
+		 * Use declaration.
+		 */
+		class UseDecl : public FileItem {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR UseDecl(SrcName *pkg);
+
+			// Package to use.
+			SrcName *pkg;
+		};
+
+		/**
+		 * Delimiter declaration.
+		 */
+		class DelimDecl : public FileItem {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR DelimDecl(SrcName *token);
+
+			// Delimiter to use.
+			SrcName *token;
+		};
+
+		/**
 		 * Parameter declaration.
 		 */
 		class ParamDecl {
@@ -119,7 +154,7 @@ namespace storm {
 		/**
 		 * Representation of a declared production.
 		 */
-		class ProductionDecl : public Object {
+		class ProductionDecl : public FileItem {
 			STORM_CLASS;
 		public:
 			// Create.
@@ -134,17 +169,30 @@ namespace storm {
 			// Priority.
 			Int priority;
 
+			// Push priority.
+			void STORM_FN pushPrio(Int priority);
+
 			// Tokens.
 			Array<TokenDecl *> *tokens;
 
 			// Any specific name of this rule?
 			MAYBE(Str *) name;
 
+			// Set the name.
+			void STORM_FN pushName(Str *name);
+
 			// Result (if given).
 			MAYBE(Name *) result;
 
+			// Set the result.
+			void STORM_FN pushResult(Name *result);
+			void STORM_FN pushResult(Str *result);
+
 			// Parameters to the result. null = no parens present.
 			MAYBE(Array<Str *> *) resultParams;
+
+			// Set result parameters.
+			void STORM_FN pushParams(Array<Str *> *params);
 
 			// Repetition.
 			Nat repStart;
@@ -174,7 +222,7 @@ namespace storm {
 		/**
 		 * Rule declaration.
 		 */
-		class RuleDecl : public Object {
+		class RuleDecl : public FileItem {
 			STORM_CLASS;
 		public:
 			// Create.
@@ -194,6 +242,12 @@ namespace storm {
 
 			// Default color when this rule is used as a token.
 			TokenColor color;
+
+			// Set parameters.
+			void push(Array<ParamDecl> *params);
+
+			// Set color.
+			void push(TokenColor color);
 
 			// Deep copy.
 			virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -222,6 +276,9 @@ namespace storm {
 
 			// Productions.
 			Array<ProductionDecl *> *productions;
+
+			// Add an item to the correct array.
+			void STORM_FN push(FileItem *item);
 
 			// Deep copy.
 			virtual void STORM_FN deepCopy(CloneEnv *env);

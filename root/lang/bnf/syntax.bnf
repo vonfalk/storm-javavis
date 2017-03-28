@@ -9,7 +9,6 @@ SDelim : SDelim - "//[^\n\r]*[\n\r]+" #comment - SDelim;
 // Identifier.
 Str SIdent();
 SIdent => v : "[A-Za-z_][A-Za-z0-9_]*" v;
-SIdent => v : "[\+\-\*/%<>]+" v; // Special identifiers as well!
 
 // Type names.
 NamePart SNamePart();
@@ -20,25 +19,29 @@ SNamePart => RecPart(name) : SIdent name, "<", SName -> add, (",", SName -> add,
 SrcName SName();
 SName => SrcName(pos) : SNamePart -> add #typeName - (, "\.", SNamePart -> add #typeName)*;
 
-void SRoot();
-SRoot : SDelim - (SFileItem, ";", )*;
+FileContents SRoot();
+SRoot : SDelim - (SFileItem -> push, ";", )*;
 
-void SFileItem();
-SFileItem : "use" #keyword, SName #typeName;
-SFileItem : "delimiter" #keyword, "=", SName #typeName;
-SFileItem : SName #typeName, SIdent #fnName, SFormals - (, SHilight)?;
-SFileItem : SProd [, ("=>", SExpr,)? ":", SRepIndentTokens - SProdName]+;
+FileItem SFileItem();
+SFileItem => UseDecl(pkg) : "use" #keyword, SName pkg #typeName;
+SFileItem => DelimDecl(token) : "delimiter" #keyword, "=", SName token #typeName;
+SFileItem => RuleDecl(pos, name, result) : SName result #typeName, SIdent name #fnName, SFormals -> push - (, SHilight -> push)?;
+SFileItem => ProductionDecl(pos, member) : SName member, SPriority -> pushPrio [, ("=>", SExpr(me),)? ":", SRepIndentTokens - SProdName(me)]+;
 
-void SFormals();
-SFormals : "(", ")";
-SFormals : "(", SName #typeName, SIdent #varName, (",", SName #typeName, SIdent #varName,)* ")";
+Array<ParamDecl> SFormals();
+SFormals => Array<ParamDecl>() : "(", ")";
+SFormals => Array<ParamDecl>() : "(", SFormal -> push, (",", SFormal -> push,)* ")";
 
-void SProd();
-SProd : SName - (, "\[", "[+\-]?[0-9]+" #constant, "\]")?;
+ParamDecl SFormal();
+SFormal => ParamDecl(type, name) : SName type #typeName, SIdent name #varName;
 
-void SProdName();
-SProdName : SDelim - "=", SIdent #typeName;
-SProdName : ;
+void SPriority();
+SPriority : ;
+SPriority : "\[", "[+\-]?[0-9]+" #constant, "\]";
+
+ProductionDecl SProdName(ProductionDecl decl);
+SProdName => decl : SDelim - "=", SIdent -> pushName #typeName;
+SProdName => decl : ;
 
 void SRepIndentTokens();
 SRepIndentTokens : ;
@@ -113,17 +116,24 @@ SStrContent : SStrContent - "\\." - SStrContent; // Gobble escape sequences (we 
 Str SString();
 SString => s : "\"" #string - (SStrContent #string) s - "\"" #string;
 
-void SActuals();
-SActuals : "(", ")";
-SActuals : "(", SAtom, (",", SAtom,)* ")";
+Array<Str> SActuals();
+SActuals => Array<Str>() : "(", ")";
+SActuals => Array<Str>() : "(", SAtom -> push, (",", SAtom -> push,)* ")";
 
-void SAtom();
-SAtom : SIdent #varName;
-SAtom : "[+\-]?[0-9]+" #constant;
-SAtom : "true" #constant;
-SAtom : "false" #constant;
+Str SAtom();
+SAtom[-1] => s : SIdent s #varName;
+SAtom => s : "[+\-]?[0-9]+" s #constant;
+SAtom => s : "true" s #constant;
+SAtom => s : "false" s #constant;
+SAtom => s : "me" s #keyword;
+SAtom => s : "pos" s #keyword;
 
-void SExpr();
-SExpr : SName #varName;
-SExpr : SName, SActuals;
-SExpr : SAtom;
+Name SExprName();
+SExprName => name : SName name;
+// Allow using special names as well. This is so that we allow calling operators etc.
+SExprName => Name(v) : "[+\-*/%<>=]+" v #fnName;
+
+ProductionDecl SExpr(ProductionDecl decl);
+SExpr => decl : SExprName -> pushResult #varName;
+SExpr => decl : SExprName -> pushResult, SActuals -> pushParams;
+SExpr => decl : SAtom -> pushResult;

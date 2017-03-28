@@ -6,6 +6,12 @@
 namespace storm {
 	namespace syntax {
 
+		FileItem::FileItem() {}
+
+		UseDecl::UseDecl(SrcName *pkg) : pkg(pkg) {}
+
+		DelimDecl::DelimDecl(SrcName *token) : token(token) {}
+
 		ParamDecl::ParamDecl(Name *type, Str *name) : type(type), name(name) {}
 
 		StrBuf &operator <<(StrBuf &to, ParamDecl decl) {
@@ -34,6 +40,14 @@ namespace storm {
 			if (color != tNone)
 				*to << L" #" << storm::syntax::name(engine(), color);
 			*to << L";";
+		}
+
+		void RuleDecl::push(Array<ParamDecl> *params) {
+			this->params = params;
+		}
+
+		void RuleDecl::push(TokenColor color) {
+			this->color = color;
 		}
 
 
@@ -190,11 +204,44 @@ namespace storm {
 			}
 		}
 
+		void ProductionDecl::pushPrio(Int prio) {
+			priority = prio;
+		}
+
+		void ProductionDecl::pushName(Str *name) {
+			this->name = name;
+		}
+
+		void ProductionDecl::pushResult(Name *result) {
+			this->result = result;
+		}
+
+		void ProductionDecl::pushResult(Str *result) {
+			this->result = new (this) Name(result);
+		}
+
+		void ProductionDecl::pushParams(Array<Str *> *p) {
+			resultParams = p;
+		}
+
 
 		FileContents::FileContents() {
 			use = new (this) Array<SrcName *>();
 			rules = new (this) Array<RuleDecl *>();
 			productions = new (this) Array<ProductionDecl *>();
+		}
+
+		void FileContents::push(FileItem *item) {
+			if (RuleDecl *r = as<RuleDecl>(item))
+				rules->push(r);
+			else if (ProductionDecl *p = as<ProductionDecl>(item))
+				productions->push(p);
+			else if (UseDecl *u = as<UseDecl>(item))
+				use->push(u->pkg);
+			else if (DelimDecl *d = as<DelimDecl>(item))
+				delimiter = d->token;
+			else
+				WARNING(L"Unknown FileItem!");
 		}
 
 		void FileContents::deepCopy(CloneEnv *env) {
