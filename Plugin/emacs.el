@@ -407,7 +407,7 @@
 
 (defun storm-supports (ext)
   "Is the file type 'ext' supported by Storm? Returns false if no Storm process is running."
-  (when (storm-running-p)
+  (when (and (storm-running-p) (stringp ext))
     (let ((old (gethash ext storm-mode-types 'unknown)))
       (message "%S" old)
       (if (eq old 'unknown)
