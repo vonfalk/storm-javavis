@@ -33,10 +33,7 @@ namespace storm {
 				MemberVar *r = createTarget(Value(SStr::stormType(engine())), decl->repCapture, counter);
 				if (r) {
 					owner->add(r);
-					repCapture = new (this) Token();
-					repCapture->target = r;
-					repCapture->invoke = decl->repCapture->invoke;
-					repCapture->raw = decl->repCapture->raw;
+					repCapture = new (this) Token(decl->repCapture, r);
 				}
 			}
 
@@ -65,14 +62,10 @@ namespace storm {
 				throw InternalError(L"Unknown subtype of TokenDecl found: " + ::toS(decl));
 			}
 
-			if (decl->store != null || decl->invoke != null) {
-				MemberVar *r = createTarget(decl, token, tokens->count(), counter);
-				if (r) {
-					owner->add(r);
-					token->target = r;
-					token->invoke = decl->invoke;
-					token->raw = decl->raw;
-				}
+			MemberVar *r = createTarget(decl, token, tokens->count(), counter);
+			if (r) {
+				owner->add(r);
+				token->update(decl, r);
 			}
 
 			// There might be a default color on this token, do not overwrite that if we do not have
@@ -112,6 +105,14 @@ namespace storm {
 				*name << decl->invoke << (counter++);
 				return new (this) MemberVar(name->toS(), type, owner);
 			} else {
+				if (RuleTokenDecl *rule = as<RuleTokenDecl>(decl)) {
+					if (rule->params && !rule->params->empty()) {
+						// Also evaluate rule tokens which are given parameters (they may have desirable side effects).
+						StrBuf *name = new (this) StrBuf();
+						*name << L"<anon" << (counter++) << L">";
+						return new (this) MemberVar(name->toS(), type, owner);
+					}
+				}
 				return null;
 			}
 		}

@@ -22,6 +22,7 @@ namespace storm {
 	public:
 		// Create with a single name.
 		STORM_CTOR NamePart(Str *name);
+		NamePart(const wchar *name);
 
 		// Deep copy.
 		virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -45,6 +46,7 @@ namespace storm {
 		// Create with just a name.
 		STORM_CTOR SimplePart(Str *name);
 		STORM_CTOR SimplePart(syntax::SStr *name);
+		SimplePart(const wchar *name);
 
 		// Create with name and parameters.
 		STORM_CTOR SimplePart(Str *name, Array<Value> *params);

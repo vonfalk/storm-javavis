@@ -15,6 +15,8 @@ namespace storm {
 
 	NamePart::NamePart(Str *name) : name(name) {}
 
+	NamePart::NamePart(const wchar *name) : name(new (engine()) Str(name)) {}
+
 	void NamePart::deepCopy(CloneEnv *env) {
 		// Nothing mutable in here.
 	}
@@ -35,6 +37,8 @@ namespace storm {
 	SimplePart::SimplePart(Str *name) : NamePart(name), params(new (engine()) Array<Value>()) {}
 
 	SimplePart::SimplePart(syntax::SStr *name) : NamePart(name->v), params(new (engine()) Array<Value>()) {}
+
+	SimplePart::SimplePart(const wchar *name) : NamePart(name), params(new (engine()) Array<Value>()) {}
 
 	SimplePart::SimplePart(Str *name, Array<Value> *params) : NamePart(name), params(params) {}
 

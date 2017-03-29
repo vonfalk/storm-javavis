@@ -83,6 +83,16 @@ namespace storm {
 			// Color of this token.
 			TokenColor color;
 
+			// Mark this token as 'raw'.
+			void STORM_FN pushRaw(Str *dummy);
+
+			// Mark this token as 'store as X' or 'invoke X'.
+			void STORM_FN pushStore(Str *store);
+			void STORM_FN pushInvoke(Str *invoke);
+
+			// Add a color to this token.
+			void STORM_FN pushColor(SStr *color);
+
 			// Deep copy.
 			virtual void STORM_FN deepCopy(CloneEnv *env);
 
@@ -90,6 +100,9 @@ namespace storm {
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};
 
+
+		// Unescape string literals.
+		Str *STORM_FN unescapeStr(Str *s);
 
 		/**
 		 * Regex token declaration.
@@ -119,6 +132,7 @@ namespace storm {
 		public:
 			// Create.
 			STORM_CTOR RuleTokenDecl(SrcPos pos, Name *rule);
+			STORM_CTOR RuleTokenDecl(SrcPos pos, Name *rule, Array<Str *> *params);
 
 			// Where?
 			SrcPos pos;
@@ -150,6 +164,19 @@ namespace storm {
 			virtual void STORM_FN toS(StrBuf *to) const;
 		};
 
+		/**
+		 * Dummy token representing a - separator.
+		 */
+		class SepTokenDecl : public TokenDecl {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR SepTokenDecl();
+
+			// Output.
+			virtual void STORM_FN toS(StrBuf *to) const;
+		};
+
 
 		/**
 		 * Representation of a declared production.
@@ -175,6 +202,9 @@ namespace storm {
 			// Tokens.
 			Array<TokenDecl *> *tokens;
 
+			// Push a token. Ignores SepTokenDecl.
+			void STORM_FN push(TokenDecl *token);
+
 			// Any specific name of this rule?
 			MAYBE(Str *) name;
 
@@ -199,13 +229,22 @@ namespace storm {
 			Nat repEnd;
 			RepType repType;
 
+			// Capture the repeat? Only supported if 'repType' is 'repNone'.
+			MAYBE(TokenDecl *) repCapture;
+
+			// Push repetition start and end.
+			void STORM_FN pushRepStart(Str *dummy);
+			void STORM_FN pushRepEnd(RepType type);
+			void STORM_FN pushRepEnd(TokenDecl *capture);
+
 			// Indentation.
 			Nat indentStart;
 			Nat indentEnd;
 			IndentType indentType;
 
-			// Capture the repeat? Only supported if 'repType' is 'repNone'.
-			MAYBE(TokenDecl *) repCapture;
+			// Push indentation start and end.
+			void STORM_FN pushIndentStart(Str *dummy);
+			void STORM_FN pushIndentEnd(IndentType type);
 
 			// Deep copy.
 			virtual void STORM_FN deepCopy(CloneEnv *env);
@@ -244,10 +283,10 @@ namespace storm {
 			TokenColor color;
 
 			// Set parameters.
-			void push(Array<ParamDecl> *params);
+			void STORM_FN push(Array<ParamDecl> *params);
 
 			// Set color.
-			void push(TokenColor color);
+			void STORM_FN pushColor(SStr *color);
 
 			// Deep copy.
 			virtual void STORM_FN deepCopy(CloneEnv *env);

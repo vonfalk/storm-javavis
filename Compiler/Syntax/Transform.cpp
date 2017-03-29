@@ -78,7 +78,7 @@ namespace storm {
 			source = owner->production;
 
 			tokenParams = new (this) Array<Params>(decl->tokens->count());
-			for (nat i = 0; i < decl->tokens->count(); i++) {
+			for (Nat i = 0; i < decl->tokens->count(); i++) {
 				TokenDecl *token = decl->tokens->at(i);
 				if (RuleTokenDecl *ruleToken = as<RuleTokenDecl>(token)) {
 					tokenParams->at(i).v = ruleToken->params;
@@ -96,15 +96,15 @@ namespace storm {
 
 			Expr *me = createMe(root);
 
-			if (me) {
-				// Execute members of 'me'.
-				executeMe(root, me);
+			// Execute members of 'me', or other things that might have side effects.
+			executeMe(root, me);
 
-				// Return 'me' if it was declared.
+			// Return 'me' if it was declared, unless we return void.
+			if (me && Function::result != Value())
 				root->add(me);
-			}
 
-			// PVAR(root);
+			// if (wcsncmp(identifier()->c_str(), L"lang.bnf.", 9) == 0)
+			// 	PLN(source << L": " << root);
 			return root;
 		}
 
@@ -113,6 +113,18 @@ namespace storm {
 		 */
 
 		Expr *TransformFn::createMe(ExprBlock *in) {
+			// See if there is a parameter named 'me'. If so: use that!
+			for (Nat i = 0; i < params->count(); i++) {
+				if (wcscmp(params->at(i).name->c_str(), L"me") == 0) {
+					if (result)
+						throw SyntaxError(pos, L"Can not use 'me' as a parameter name and specify a result.");
+					LocalVar *r = in->variable(new (this) SimplePart(L"me"));
+					if (!r)
+						throw InternalError(L"Can not find the parameter named 'me'.");
+					return new (this) LocalVarAccess(pos, r);
+				}
+			}
+
 			if (!result)
 				return null;
 
@@ -127,7 +139,7 @@ namespace storm {
 
 			Actuals *actual = CREATE(Actuals, this);
 
-			for (nat i = 0; i < resultParams->count(); i++)
+			for (Nat i = 0; i < resultParams->count(); i++)
 				actual->add(findVar(in, resultParams->at(i)));
 
 			Expr *init = namedExpr(in, pos, result, actual);
@@ -153,8 +165,7 @@ namespace storm {
 		}
 
 		Expr *TransformFn::findVar(ExprBlock *in, Str *name) {
-			SimplePart *part = new (this) SimplePart(name);
-			if (LocalVar *r = in->variable(part))
+			if (LocalVar *r = in->variable(new (this) SimplePart(name)))
 				return new (this) LocalVarAccess(pos, r);
 
 			if (*name == L"me")
@@ -174,7 +185,7 @@ namespace storm {
 			lookingFor->put(name);
 
 			try {
-				nat pos = findToken(name);
+				Nat pos = findToken(name);
 				if (pos >= tokenCount())
 					throw SyntaxError(this->pos, L"The variable " + ::toS(name) + L" is not declared!");
 
@@ -189,10 +200,16 @@ namespace storm {
 
 		}
 
-		LocalVar *TransformFn::createVar(ExprBlock *in, Str *name, nat pos) {
+		Bool TransformFn::hasVar(ExprBlock *in, Str *name) {
+			return in->variable(new (this) SimplePart(name)) != null;
+		}
+
+		LocalVar *TransformFn::createVar(ExprBlock *in, Str *name, Nat pos) {
 			Token *token = getToken(pos);
 
-			if (token->raw) {
+			if (!token->bound) {
+				throw SyntaxError(this->pos, L"The variable " + ::toS(name) + L" is not bound!");
+			} else if (token->raw) {
 				return createPlainVar(in, name, token);
 			} else {
 				return createTfmVar(in, name, token, pos);
@@ -211,7 +228,7 @@ namespace storm {
 			return v->var();
 		}
 
-		LocalVar *TransformFn::createTfmVar(ExprBlock *in, Str *name, Token *token, nat pos) {
+		LocalVar *TransformFn::createTfmVar(ExprBlock *in, Str *name, Token *token, Nat pos) {
 			Engine &e = engine();
 
 			Type *srcType = tokenType(token);
@@ -296,49 +313,71 @@ namespace storm {
 		 */
 
 		void TransformFn::executeMe(ExprBlock *in, Expr *me) {
-			nat tokens = tokenCount();
-			nat firstBreak = min(source->repStart, tokens);
-			nat secondBreak = min(source->repEnd, tokens);
+			Nat tokens = tokenCount();
+			Nat firstBreak = min(source->repStart, tokens);
+			Nat secondBreak = min(source->repEnd, tokens);
 
 			// Resolve variables needed for execute steps.
-			for (nat i = 0; i < tokens; i++)
+			for (Nat i = 0; i < tokens; i++)
 				executeLoad(in, getToken(i), i);
 
 			// Tokens before the capture starts.
-			for (nat i = 0; i < firstBreak; i++)
+			for (Nat i = 0; i < firstBreak; i++)
 				executeToken(in, me, getToken(i), i);
 
 			// Tokens in the capture.
 			if (source->repType == repZeroOne) {
 				// Only Maybe<T>. If statement is sufficient!
-				for (nat i = firstBreak; i < secondBreak; i++)
+				for (Nat i = firstBreak; i < secondBreak; i++)
 					executeTokenIf(in, me, getToken(i), i);
 			} else if (source->repType == repOnePlus || source->repType == repZeroPlus) {
 				// Only Array<T>. Embed inside for-loop.
 				executeTokenLoop(firstBreak, secondBreak, in, me);
 			} else {
 				// Nothing special!
-				for (nat i = firstBreak; i < secondBreak; i++)
+				for (Nat i = firstBreak; i < secondBreak; i++)
 					executeToken(in, me, getToken(i), i);
 			}
 
 			// Tokens after the capture.
-			for (nat i = secondBreak; i < tokens; i++)
+			for (Nat i = secondBreak; i < tokens; i++)
 				executeToken(in, me, getToken(i), i);
 		}
 
-		void TransformFn::executeToken(ExprBlock *in, Expr *me, Token *token, nat pos) {
+		Bool TransformFn::shallExecute(ExprBlock *in, Token *token, Nat pos) {
+			// If a token is not even stored in the syntax tree, there is not much we can do...
+			if (!token->target)
+				return false;
+
+			// Always execute tokens that invoke things.
+			if (token->invoke)
+				return true;
+
+			// If it is a raw token, there are no side effects to speak about...
+			if (token->raw)
+				return false;
+
+			// If the token was bound to a variable, only execute it if we have not already done so.
+			if (token->bound)
+				if (hasVar(in, token->target->name))
+					return false;
+
+			// If we got this far, the previous step decided that this token was interesting to
+			// evaluate even if it is of no immediate use in this function. Respect that decision
+			// and evaluate the token!
+			return true;
+		}
+
+		void TransformFn::executeToken(ExprBlock *in, Expr *me, Token *token, Nat pos) {
 			// Not a token that invokes things.
-			if (!token->invoke)
+			if (!shallExecute(in, token, pos))
 				return;
 
 			Expr *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), token->target);
 			in->add(executeToken(in, me, srcAccess, token, pos));
 		}
 
-		Expr *TransformFn::executeToken(Block *in, Expr *me, Expr *src, Token *token, nat pos) {
-			assert(token->invoke);
-
+		Expr *TransformFn::executeToken(Block *in, Expr *me, Expr *src, Token *token, Nat pos) {
 			Expr *toStore = null;
 			if (token->raw) {
 				toStore = src;
@@ -352,11 +391,19 @@ namespace storm {
 				toStore = new (this) FnCall(this->pos, tfmFn, actuals);
 			}
 
-		    return callMember(this->pos, token->invoke, me, toStore);
+			if (token->invoke) {
+				// Call the member function indicated in 'invoke'.
+				if (!me)
+					throw SyntaxError(this->pos, L"Can not invoke functions on 'me' when 'me' is undefined.");
+				return callMember(this->pos, token->invoke, me, toStore);
+			} else {
+				// We just called 'transform' for the side effects.
+				return toStore;
+			}
 		}
 
-		void TransformFn::executeTokenIf(ExprBlock *in, Expr *me, Token *token, nat pos) {
-			if (!token->invoke)
+		void TransformFn::executeTokenIf(ExprBlock *in, Expr *me, Token *token, Nat pos) {
+			if (!shallExecute(in, token, pos))
 				return;
 
 			Expr *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), token->target);
@@ -372,14 +419,14 @@ namespace storm {
 			in->add(check);
 		}
 
-		void TransformFn::executeTokenLoop(nat from, nat to, ExprBlock *in, Expr *me) {
+		void TransformFn::executeTokenLoop(Nat from, Nat to, ExprBlock *in, Expr *me) {
 			Engine &e = engine();
 
 			// Find the minimal length to iterate...
 			Expr *minExpr = null;
-			for (nat i = from; i < to; i++) {
+			for (Nat i = from; i < to; i++) {
 				Token *t = getToken(i);
-				if (!t->invoke)
+				if (!shallExecute(in, t, i))
 					// Not interesting...
 					continue;
 
@@ -419,9 +466,9 @@ namespace storm {
 
 			ExprBlock *inLoop = new (this) ExprBlock(this->pos, loop);
 
-			for (nat i = from; i < to; i++) {
+			for (Nat i = from; i < to; i++) {
 				Token *t = getToken(i);
-				if (!t->invoke)
+				if (!shallExecute(in, t, i))
 					continue;
 
 				MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), t->target);
@@ -434,9 +481,9 @@ namespace storm {
 			in->add(forBlock);
 		}
 
-		void TransformFn::executeLoad(bs::ExprBlock *in, Token *token, nat pos) {
+		void TransformFn::executeLoad(bs::ExprBlock *in, Token *token, Nat pos) {
 			// Just requesting the parameters object is enough.
-			Actuals *r = createActuals(in, pos);
+			createActuals(in, pos);
 		}
 
 
@@ -474,10 +521,10 @@ namespace storm {
 			return new (this) MemberVarAccess(pos, thisVar(in), posVar);
 		}
 
-		nat TransformFn::findToken(Str *name) {
-			nat count = tokenCount();
+		Nat TransformFn::findToken(Str *name) {
+			Nat count = tokenCount();
 
-			for (nat i = 0; i < count; i++) {
+			for (Nat i = 0; i < count; i++) {
 				Token *token = getToken(i);
 
 				if (token->invoke)
@@ -496,7 +543,7 @@ namespace storm {
 			return count;
 		}
 
-		Token *TransformFn::getToken(nat pos) {
+		Token *TransformFn::getToken(Nat pos) {
 			Array<Token *>*tokens = source->tokens;
 			if (pos == tokens->count())
 				return source->repCapture;
@@ -504,31 +551,31 @@ namespace storm {
 				return tokens->at(pos);
 		}
 
-		nat TransformFn::tokenCount() {
-			nat r = source->tokens->count();
+		Nat TransformFn::tokenCount() {
+			Nat r = source->tokens->count();
 			if (source->repCapture)
 				r++;
 			return r;
 		}
 
-		Actuals *TransformFn::readActuals(Block *in, nat n) {
+		Actuals *TransformFn::readActuals(Block *in, Nat n) {
 			Array<Str *> *params = tokenParams->at(n).v;
 			Actuals *actuals = new (this) Actuals();
 
 			if (params) {
-				for (nat i = 0; i < params->count(); i++)
+				for (Nat i = 0; i < params->count(); i++)
 					actuals->add(readVar(in, params->at(i)));
 			}
 
 			return actuals;
 		}
 
-		Actuals *TransformFn::createActuals(ExprBlock *in, nat n) {
+		Actuals *TransformFn::createActuals(ExprBlock *in, Nat n) {
 			Array<Str *> *params = tokenParams->at(n).v;
 			Actuals *actuals = new (this) Actuals();
 
 			if (params) {
-				for (nat i = 0; i < params->count(); i++)
+				for (Nat i = 0; i < params->count(); i++)
 					actuals->add(findVar(in, params->at(i)));
 			}
 
@@ -544,7 +591,7 @@ namespace storm {
 			Function *tfmFn = as<Function>(foundTfm);
 			if (!tfmFn) {
 				StrBuf *to = new (this) StrBuf();
-				*to << L"Can not transform a " << type->identifier() << L" with parameters: ";
+				*to << L"Can not transform a " << type->identifier() << L" with parameters: (";
 				join(to, actuals->values(), L", ");
 				*to << L").";
 				throw SyntaxError(pos, to->toS()->c_str());

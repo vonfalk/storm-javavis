@@ -76,14 +76,17 @@ namespace storm {
 			// Find (and create if neccessary) a variable.
 			bs::Expr *findVar(bs::ExprBlock *in, Str *name);
 
+			// See if a variable has been created.
+			Bool hasVar(bs::ExprBlock *in, Str *name);
+
 			// Create a variable.
-			bs::LocalVar *createVar(bs::ExprBlock *in, Str *name, nat pos);
+			bs::LocalVar *createVar(bs::ExprBlock *in, Str *name, Nat pos);
 
 			// Create a variable by copying what is in the syntax tree (the case with RegexTokens).
 			bs::LocalVar *createPlainVar(bs::ExprBlock *in, Str *name, Token *token);
 
 			// Create a variable from by transforming the original syntax tree.
-			bs::LocalVar *createTfmVar(bs::ExprBlock *in, Str *name, Token *token, nat pos);
+			bs::LocalVar *createTfmVar(bs::ExprBlock *in, Str *name, Token *token, Nat pos);
 
 
 			/**
@@ -94,19 +97,19 @@ namespace storm {
 			void executeMe(bs::ExprBlock *in, bs::Expr *me);
 
 			// Generate member function call for token #pos.
-			void executeToken(bs::ExprBlock *in, bs::Expr *me, Token *token, nat pos);
+			void executeToken(bs::ExprBlock *in, bs::Expr *me, Token *token, Nat pos);
 
 			// Generate a member function call for token #pos, where 'src' is already loaded from 'this'.
-			bs::Expr *executeToken(bs::Block *in, bs::Expr *me, bs::Expr *src, Token *token, nat pos);
+			bs::Expr *executeToken(bs::Block *in, bs::Expr *me, bs::Expr *src, Token *token, Nat pos);
 
 			// Execute tokens inside an if-statement.
-			void executeTokenIf(bs::ExprBlock *in, bs::Expr *me, Token *token, nat pos);
+			void executeTokenIf(bs::ExprBlock *in, bs::Expr *me, Token *token, Nat pos);
 
 			// Generate a loop executing tokens as many times as needed.
-			void executeTokenLoop(nat from, nat to, bs::ExprBlock *in, bs::Expr *me);
+			void executeTokenLoop(Nat from, Nat to, bs::ExprBlock *in, bs::Expr *me);
 
 			// Load any variables required by Token.
-			void executeLoad(bs::ExprBlock *in, Token *token, nat pos);
+			void executeLoad(bs::ExprBlock *in, Token *token, Nat pos);
 
 
 			/**
@@ -123,22 +126,23 @@ namespace storm {
 			Type *tokenType(Token *token);
 
 			// Find the token storing to 'name'. Returns #tokens if none exists.
-			nat findToken(Str *name);
+			Nat findToken(Str *name);
 
 			// Get a token (adds the capture token at the end if it exists). borrowed ptr.
-			Token *getToken(nat pos);
-			nat tokenCount();
+			Token *getToken(Nat pos);
+			Nat tokenCount();
 
 			// Generate parameters required for invoking token #n, only precomputed variables are used.
-			bs::Actuals *readActuals(bs::Block *in, nat pos);
+			bs::Actuals *readActuals(bs::Block *in, Nat pos);
 
 			// Generate parameters required for invoking token #n (this parameter not added).
-			bs::Actuals *createActuals(bs::ExprBlock *in, nat pos);
+			bs::Actuals *createActuals(bs::ExprBlock *in, Nat pos);
 
 			// Find the transform function for a given set of parameters (this parameter added automatically).
 			Function *findTransformFn(Type *type, bs::Actuals *params);
 
-
+			// Shall this token be executed?
+			Bool shallExecute(bs::ExprBlock *in, Token *token, Nat pos);
 		};
 
 		// Create a function that transforms an option.

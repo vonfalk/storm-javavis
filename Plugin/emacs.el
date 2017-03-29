@@ -233,7 +233,9 @@
   "Convenience for highlighting parts of the text."
   (when (< from to)
     (with-silent-modifications
-      (put-text-property from to 'font-lock-face face))))
+      ;; Maybe not the correct way of doing this, but makes sure old properties from copy+paste
+      ;; operations are properly overwritten.
+      (set-text-properties from to (list 'font-lock-face face)))))
 
 
 (defvar storm-colors

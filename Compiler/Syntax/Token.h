@@ -9,6 +9,7 @@ namespace storm {
 		STORM_PKG(lang.bnf);
 
 		class Rule;
+		class TokenDecl;
 
 		/**
 		 * Description of a token in the syntax. A token is either a regex matching some text or a
@@ -21,6 +22,9 @@ namespace storm {
 			// Create.
 			Token();
 
+			// Create.
+			STORM_CTOR Token(TokenDecl *decl, MAYBE(MemberVar *) target);
+
 			// If this token is captured, where do we store it?
 			MAYBE(MemberVar *) target;
 
@@ -30,8 +34,14 @@ namespace storm {
 			// Capture the raw syntax tree?
 			Bool raw;
 
+			// Was this token bound to a variable?
+			Bool bound;
+
 			// Color of this token.
 			TokenColor color;
+
+			// Update the data in here from a TokenDecl.
+			void STORM_FN update(TokenDecl *decl, MAYBE(MemberVar *) target);
 
 			// More competent output function.
 			virtual void STORM_FN toS(StrBuf *to, Bool bindings) const;

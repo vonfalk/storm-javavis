@@ -1,12 +1,24 @@
 #include "stdafx.h"
 #include "Token.h"
 #include "Rule.h"
+#include "Decl.h"
 #include "Core/StrBuf.h"
 
 namespace storm {
 	namespace syntax {
 
-		Token::Token() : target(null), invoke(null), raw(false), color(tNone) {}
+		Token::Token() : target(null), invoke(null), raw(false), bound(false), color(tNone) {}
+
+		Token::Token(TokenDecl *decl, MAYBE(MemberVar *) target) {
+			update(decl, target);
+		}
+
+		void Token::update(TokenDecl *decl, MAYBE(MemberVar *) target) {
+			this->target = target;
+			this->invoke = decl->invoke;
+			this->raw = decl->raw;
+			this->bound = decl->store != null;
+		}
 
 		void Token::toS(StrBuf *to) const {
 			toS(to, true);

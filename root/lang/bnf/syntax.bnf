@@ -20,101 +20,109 @@ SrcName SName();
 SName => SrcName(pos) : SNamePart -> add #typeName - (, "\.", SNamePart -> add #typeName)*;
 
 FileContents SRoot();
-SRoot : SDelim - (SFileItem -> push, ";", )*;
+SRoot => FileContents() : SDelim - (SFileItem -> push, ";", )*;
 
 FileItem SFileItem();
 SFileItem => UseDecl(pkg) : "use" #keyword, SName pkg #typeName;
 SFileItem => DelimDecl(token) : "delimiter" #keyword, "=", SName token #typeName;
-SFileItem => RuleDecl(pos, name, result) : SName result #typeName, SIdent name #fnName, SFormals -> push - (, SHilight -> push)?;
-SFileItem => ProductionDecl(pos, member) : SName member, SPriority -> pushPrio [, ("=>", SExpr(me),)? ":", SRepIndentTokens - SProdName(me)]+;
+SFileItem => RuleDecl(pos, name, result) : SName result #typeName, SIdent name #fnName, SFormals -> push - (, SColorName -> pushColor)?;
+SFileItem => ProductionDecl(pos, member) : SName member, SPriority -> pushPrio [, ("=>", SExpr(me),)? ":", SRepIndentTokens(me) - SProdName(me)]+;
 
 Array<ParamDecl> SFormals();
 SFormals => Array<ParamDecl>() : "(", ")";
 SFormals => Array<ParamDecl>() : "(", SFormal -> push, (",", SFormal -> push,)* ")";
 
 ParamDecl SFormal();
-SFormal => ParamDecl(type, name) : SName type #typeName, SIdent name #varName;
+SFormal[0] => ParamDecl(type, name) : SName type #typeName, SIdent name #varName;
+SFormal[1] => ParamDecl(type, name) : SName type #typeName, "me" name #keyword;
 
-void SPriority();
-SPriority : ;
-SPriority : "\[", "[+\-]?[0-9]+" #constant, "\]";
+Int SPriority();
+SPriority => 0 : ;
+SPriority => toInt(prio) : "\[", "[+\-]?[0-9]+" prio #constant, "\]";
 
-ProductionDecl SProdName(ProductionDecl decl);
-SProdName => decl : SDelim - "=", SIdent -> pushName #typeName;
-SProdName => decl : ;
+void SProdName(ProductionDecl me);
+SProdName : SDelim - "=", SIdent -> pushName #typeName;
+SProdName : ;
 
-void SRepIndentTokens();
+void SRepIndentTokens(ProductionDecl me);
 SRepIndentTokens : ;
-SRepIndentTokens : SToken;
-SRepIndentTokens : SSep, SRepIndentTokens;
-SRepIndentTokens : SToken, SSep, SRepIndentTokens;
-SRepIndentTokens : "(", SIndentTokens, ")" - SParenEnd, SIndentTokens;
-SRepIndentTokens : (SToken,)? "\[", SRepTokens, "\]" - SIndent, SRepTokens;
+SRepIndentTokens : SToken -> push;
+SRepIndentTokens : SSep -> push, SRepIndentTokens(me);
+SRepIndentTokens : SToken -> push, SSep -> push, SRepIndentTokens(me);
+SRepIndentTokens : "(" -> pushRepStart, SIndentTokens(me), ")" - SParenEnd(me), SIndentTokens(me);
+SRepIndentTokens : (SToken -> push,)? "\[" -> pushIndentStart, SRepTokens(me), "\]" - SIndent -> pushIndentEnd, SRepTokens(me);
 
-void SIndentTokens();
+void SIndentTokens(ProductionDecl me);
 SIndentTokens : ;
-SIndentTokens : SToken;
-SIndentTokens : SSep, SIndentTokens;
-SIndentTokens : SToken, SSep, SIndentTokens;
-SIndentTokens : (SToken,)? "\[", STokens, "\]" - SIndent, SRepTokens;
+SIndentTokens : SToken -> push;
+SIndentTokens : SSep -> push, SIndentTokens(me);
+SIndentTokens : SToken -> push, SSep -> push, SIndentTokens(me);
+SIndentTokens : (SToken -> push,)? "\[" -> pushIndentStart, STokens(me), "\]" - SIndent -> pushIndentEnd, SRepTokens(me);
 
-void SRepTokens();
+void SRepTokens(ProductionDecl me);
 SRepTokens : ;
-SRepTokens : SToken;
-SRepTokens : SSep, SRepTokens;
-SRepTokens : SToken, SSep, SRepTokens;
-SRepTokens : "(", STokens, ")" - SParenEnd, STokens;
+SRepTokens : SToken -> push;
+SRepTokens : SSep -> push, SRepTokens(me);
+SRepTokens : SToken -> push, SSep -> push, SRepTokens(me);
+SRepTokens : "(" -> pushRepStart, STokens(me), ")" - SParenEnd(me), STokens(me);
 
-void STokens();
+void STokens(ProductionDecl me);
 STokens : ;
-STokens : SToken;
-STokens : SSep, STokens;
-STokens : SToken, SSep, STokens;
+STokens : SToken -> push;
+STokens : SSep -> push, STokens(me);
+STokens : SToken -> push, SSep -> push, STokens(me);
 
-void SToken();
-SToken : SString, SCapture, SHilight;
-SToken : SName, SCapture, SHilight;
-SToken : SName, SActuals, SCapture, SHilight;
-SToken : SSep;
+TokenDecl SToken();
+SToken => RegexTokenDecl(regex) : SString regex, SCapture(me), SHilight(me);
+SToken => RuleTokenDecl(pos, rule) : SName rule, SCapture(me), SHilight(me);
+SToken => RuleTokenDecl(pos, rule, params) : SName rule, SActuals params, SCapture(me), SHilight(me);
+SToken => sep : SSep sep;
 
-void SSep();
-SSep : "-";
-SSep : ",";
+TokenDecl SSep();
+SSep => SepTokenDecl() : "-";
+SSep => DelimTokenDecl() : ",";
 
-void SRep();
-SRep : "\*";
-SRep : "\+";
-SRep : "\?";
+RepType SRep();
+SRep => RepType.repZeroPlus() : "\*";
+SRep => RepType.repOnePlus() : "\+";
+SRep => RepType.repZeroOne() : "\?";
 
-void SIndent();
-SIndent : "@";
-SIndent : "$";
-SIndent : "\?";
-SIndent : "\+";
-SIndent : "\-";
+IndentType SIndent();
+SIndent => IndentType.indentAlignBegin() : "@";
+SIndent => IndentType.indentAlignEnd() : "$";
+SIndent => IndentType.indentWeakIncrease() : "\?";
+SIndent => IndentType.indentIncrease() : "\+";
+SIndent => IndentType.indentDecrease() : "\-";
 
-void SCapture();
-SCapture : SCaptureEnd;
+void SCapture(TokenDecl decl);
+SCapture : SCaptureEnd(decl);
 SCapture : ;
 
-void SCaptureEnd();
-SCaptureEnd : ("@" #keyword)?, "->", SIdent #fnName;
-SCaptureEnd : ("@" #keyword)?, SIdent #varName;
+void SCaptureEnd(TokenDecl me);
+SCaptureEnd : ("@" -> pushRaw #keyword)?, "->", SIdent -> pushInvoke #fnName;
+SCaptureEnd : ("@" -> pushRaw #keyword)?, SIdent -> pushStore #varName;
 
-void SParenEnd();
-SParenEnd : SDelim - SCaptureEnd;
-SParenEnd : SRep;
+// 'dummy' production needed to create a temporary object.
+TokenDecl SParenCapture();
+SParenCapture => TokenDecl() : SCaptureEnd(me);
 
-void SHilight();
-SHilight : "#" #keyword - SIdent #keyword;
+void SParenEnd(ProductionDecl me);
+SParenEnd : SDelim - SParenCapture -> pushRepEnd;
+SParenEnd : SRep -> pushRepEnd;
+
+void SHilight(TokenDecl me);
+SHilight : SColorName -> pushColor;
 SHilight : ;
+
+SStr SColorName();
+SColorName => SStr(name, pos) : "#" #keyword - SIdent name #keyword;
 
 void SStrContent();
 SStrContent : "[^\"\\]*"; // All except end of string and backslash.
 SStrContent : SStrContent - "\\." - SStrContent; // Gobble escape sequences (we could translate them here...)
 
 Str SString();
-SString => s : "\"" #string - (SStrContent #string) s - "\"" #string;
+SString => unescapeStr(s) : "\"" #string - (SStrContent #string) s - "\"" #string;
 
 Array<Str> SActuals();
 SActuals => Array<Str>() : "(", ")";

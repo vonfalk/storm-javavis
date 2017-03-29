@@ -2,6 +2,7 @@
 #include "Decl.h"
 #include "Core/Str.h"
 #include "Core/CloneEnv.h"
+#include "Exception.h"
 
 namespace storm {
 	namespace syntax {
@@ -46,8 +47,11 @@ namespace storm {
 			this->params = params;
 		}
 
-		void RuleDecl::push(TokenColor color) {
-			this->color = color;
+		void RuleDecl::pushColor(SStr *color) {
+			TokenColor c = tokenColor(color->v);
+			if (c == tNone)
+				throw SyntaxError(color->pos, L"Expected a color name.");
+			this->color = c;
 		}
 
 
@@ -69,6 +73,28 @@ namespace storm {
 				*to << L" #" << name(engine(), color);
 		}
 
+		void TokenDecl::pushRaw(Str *dummy) {
+			raw = true;
+		}
+
+		void TokenDecl::pushStore(Str *store) {
+			this->store = store;
+		}
+
+		void TokenDecl::pushInvoke(Str *invoke) {
+			this->invoke = invoke;
+		}
+
+		void TokenDecl::pushColor(SStr *color) {
+			TokenColor c = tokenColor(color->v);
+			if (c == tNone)
+				throw SyntaxError(color->pos, L"Expected a color name.");
+			this->color = c;
+		}
+
+		Str *unescapeStr(Str *s) {
+			return s->unescape(Char('"'));
+		}
 
 		RegexTokenDecl::RegexTokenDecl(Str *regex) : regex(regex) {}
 
@@ -84,6 +110,9 @@ namespace storm {
 
 
 		RuleTokenDecl::RuleTokenDecl(SrcPos pos, Name *rule) : pos(pos), rule(rule) {}
+
+		RuleTokenDecl::RuleTokenDecl(SrcPos pos, Name *rule, Array<Str *> *params) :
+			pos(pos), rule(rule), params(params) {}
 
 		void RuleTokenDecl::deepCopy(CloneEnv *env) {
 			TokenDecl::deepCopy(env);
@@ -107,6 +136,12 @@ namespace storm {
 
 		void DelimTokenDecl::toS(StrBuf *to) const {
 			*to << L", ";
+		}
+
+		SepTokenDecl::SepTokenDecl() {}
+
+		void SepTokenDecl::toS(StrBuf *to) const {
+			*to << L" - ";
 		}
 
 
@@ -212,6 +247,13 @@ namespace storm {
 			this->name = name;
 		}
 
+		void ProductionDecl::push(TokenDecl *decl) {
+			if (as<SepTokenDecl>(decl))
+				;
+			else
+				tokens->push(decl);
+		}
+
 		void ProductionDecl::pushResult(Name *result) {
 			this->result = result;
 		}
@@ -222,6 +264,30 @@ namespace storm {
 
 		void ProductionDecl::pushParams(Array<Str *> *p) {
 			resultParams = p;
+		}
+
+		void ProductionDecl::pushRepStart(Str *dummy) {
+			repStart = tokens->count();
+		}
+
+		void ProductionDecl::pushRepEnd(RepType type) {
+			repEnd = tokens->count();
+			repType = type;
+		}
+
+		void ProductionDecl::pushRepEnd(TokenDecl *capture) {
+			repEnd = tokens->count();
+			repType = repNone;
+			repCapture = capture;
+		}
+
+		void ProductionDecl::pushIndentStart(Str *dummy) {
+			indentStart = tokens->count();
+		}
+
+		void ProductionDecl::pushIndentEnd(IndentType type) {
+			indentEnd = tokens->count();
+			indentType = type;
 		}
 
 

@@ -512,7 +512,8 @@ namespace storm {
 					errorMsg(errors, i.v()->state);
 				}
 
-				*out << L"Unexpected '" << source->posIter(pos).v() << L"'.";
+				Str *ch = new (this) Str(source->posIter(pos).v());
+				*out << L"Unexpected '" << ch->escape() << L"'.";
 
 				if (errors->any()) {
 					*out << L" Expected:";

@@ -73,7 +73,18 @@ namespace storm {
 			if (c)
 				return;
 
-			c = parseSyntax(info->contents, info->url, info->start);
+			Package *grammar = syntaxPkg(this);
+			if (grammar == info->pkg) {
+				// We're currently parsing lang.bnf. Use the parser written in C...
+				c = parseSyntax(info->contents, info->url, info->start);
+			} else {
+				// Use the 'real' parser!
+				Parser *p = Parser::create(grammar, L"SRoot");
+				p->parse(info->contents, info->url, info->start);
+				if (p->hasError())
+					p->throwError();
+				c = p->transform<FileContents>();
+			}
 
 			Scope root = engine().scope();
 			SyntaxLookup *lookup = new (this) SyntaxLookup();
