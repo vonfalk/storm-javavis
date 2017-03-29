@@ -1,5 +1,5 @@
 // Implementation of the grammar for Java, complete with highlighting annotations.
-// Source: https://docs.oracle.com/javase/specs/jls/se7/html/jls-2.html#jls-2.3
+// Source: https://docs.oracle.com/javase/specs/jls/se7/html/jls-18.html
 
 delimiter = SDelimiter;
 
@@ -7,8 +7,8 @@ void SDelimiter();
 SDelimiter : "[ \n\r\t]*" - (SCommentStart #comment - SDelimiter)?;
 
 void SCommentStart();
-SCommentStart : "//[^\n\r]*[\n\r]";
-SCommentStart : "/\*" - SInComment;
+SCommentStart : "//[^\n\r]*[\n\r]+";
+SCommentStart : "/" - "\*" - [SInComment]@;
 
 void SInComment();
 SInComment : "\*+/"; // End of the comment.
@@ -127,7 +127,7 @@ void SBound();
 SBound : SRefType - (, "&", SRefType)*;
 
 // Modifiers.
-void SModifiers();
+void SModifiers() #keyword;
 SModifiers : (SModifier, )*;
 
 void SModifier();
@@ -240,7 +240,7 @@ SPostfixOp : "--";
 
 void SPrimary();
 SPrimary : "(", SExpr, ")";
-SPrimary : "[0-9]+" #constant;
+SPrimary : "[0-9]+[Ll]?" #constant;
 SPrimary : SFloat #constant - ("f" #constant)?;
 SPrimary : "true" #constant;
 SPrimary : "false" #constant;
@@ -271,6 +271,12 @@ SCreatorRest : SArgs - (, SClassBody)?;
 
 void SArrayRest();
 // TODO: Figure out how this should be implemented...
+SArrayRest : "\[", SExpr, "\]" - (, "\[", SExpr, "\]")*;
+SArrayRest : ("\[\]",)+ SArrayInit;
+
+void SArrayTokens();
+SArrayTokens : ;
+SArrayTokens : "\[\]" - (, "\[\]")*;
 
 void SFloat();
 SFloat : SFloatBase - (SFloatExp)?;
@@ -291,7 +297,7 @@ void SIdentSuffix();
 SIdentSuffix : ;
 SIdentSuffix[-1] : "\.", SIdent, SIdentSuffix;
 SIdentSuffix : ("\[\]", )* "\.", "class" #keyword;
-// SIdentSuffix : SExpr; // Strange to have an expression in this context...
+SIdentSuffix : "\[", SExpr, "\]"; // Strange to have an expression in this context...
 SIdentSuffix : SArgs;
 SIdentSuffix : "\.", "this" #keyword;
 SIdentSuffix : "\.", "super" #keyword, SArgs;
@@ -310,7 +316,7 @@ SSelector : "super" #keyword - (, SArgs)?;
 SSelector[10] : "super" #keyword, "\.", SSelector;
 SSelector : "new" #keyword, STypeActuals, SIdent #typeName, STypeActuals, SArgs - (,SClassBody)?;
 SSelector : "<", STypeList, ">", SGenericSuffix;
-// Why can a selector be an expression? That would allow: foo x + 8;
+SSelector : "\[", SExpr, "\]";
 
 void SGenericSuffix();
 SGenericSuffix : "super" #keyword, SSelector;
@@ -333,6 +339,12 @@ SStmt[10] : "throw" #keyword, SExpr;
 SStmt[10] : "synchronized", "(", SExpr, ")", SBlock;
 SStmt[10] : "try" #keyword, SBlock, STryTail;
 SStmt[10] : "try" #keyword, "(", SResourceSpec, (";",)? ")", SBlock, STryTail;
+SStmt[10] : "switch" #keyword, "(", SExpr, ")", "{", (SSwitchStmt,)* "}";
+
+void SSwitchStmt();
+SSwitchStmt : SStmt, ";";
+SSwitchStmt : "case" #keyword, SExpr, ":";
+SSwitchStmt : "default" #keyword, ":";
 
 void SStmtElse();
 SStmtElse : "else" #keyword [, SStmt]?;
@@ -408,10 +420,13 @@ SVarSuffix : ("\[\]",)* "=", SVarInit;
 
 void SVarInit();
 SVarInit : SExpr;
-SVarInit : "{", "}";
-SVarInit : "{", ",", "}";
-SVarInit : "{", SVarInit, (",", SVarInit, )* "}";
-SVarInit : "{", SVarInit, (",", SVarInit, )* ",", "}";
+SVarInit : SArrayInit;
+
+void SArrayInit();
+SArrayInit : "{", "}";
+SArrayInit : "{", ",", "}";
+SArrayInit : "{", SVarInit, (",", SVarInit, )* "}";
+SArrayInit : "{", SVarInit, (",", SVarInit, )* ",", "}";
 
 // Enum body.
 void SEnumBody();

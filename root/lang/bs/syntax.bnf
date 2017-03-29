@@ -11,7 +11,7 @@ SDelimiter : "[ \n\r\t]*" - (SCommentStart #comment - SDelimiter)?;
 // Start of comments.
 void SCommentStart();
 SCommentStart : "//[^\n\r]*[\n\r]";
-SCommentStart : "/\*" - SInComment;
+SCommentStart : "/" - "\*" - [SInComment]@;
 
 // Inside a multi-line comment. Consumes the ending */
 void SInComment();
