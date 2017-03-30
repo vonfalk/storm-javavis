@@ -164,10 +164,10 @@ namespace storm {
 				// Parse from position 'i' to completion. Assumes 'stacks->top()' contains valid information.
 				void doParse(Nat from);
 
-				// Perform all shifts in 's' and append them to the current stack top. Returns a set
-				// of states that were advanced and not already in the stack top.
-				Set<StackItem *> *shiftAll(Set<StackItem *> *s);
-				void shiftAll(StackItem *now, Set<StackItem *> *result);
+				// Perform all possible shifts in the current stack top. Returns 'true' if one or
+				// more shifts were performed.
+				bool shiftAll();
+				bool shiftAll(StackItem *now);
 
 				/**
 				 * Parsing functions. Based on the paper "Parser Generation for Interactive

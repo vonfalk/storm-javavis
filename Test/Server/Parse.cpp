@@ -82,3 +82,17 @@ BEGIN_TEST(InfoError, Server) {
 	}
 
 } END_TEST
+
+BEGIN_TEST(JavaError, Server) {
+	Engine &e = gEngine();
+
+	Package *pkg = e.package(L"lang.java");
+	InfoParser *p = InfoParser::create(pkg, L"SStmt");
+
+	{
+		// Previously, this failed...
+		Str *src = new (e) Str(L"1 +");
+		ParseResult r = p->parseApprox(src, new (e) Url());
+		VERIFY(r.success);
+	}
+} END_TEST

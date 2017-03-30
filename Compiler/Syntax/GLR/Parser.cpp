@@ -70,19 +70,13 @@ namespace storm {
 				Nat pos = lastPos;
 				Nat skippedTokens = 0;
 				Nat skippedChars = 0;
-				Set<StackItem *> *advance = null;
 				while (acceptingStack == null || acceptingStack->pos < length) {
-					// Advance all productions one step by performing all possible shifts. Note:
-					// using this method we will only account for missing tokens. If additional
-					// tokens are inserted, we will fail to parse.
-					if (!advance)
-						advance = new (this) Set<StackItem *>(*lastSet);
-
+					// Advance all productions one step by performing all possible shifts.
 					stacks->set(0, lastSet);
-					advance = shiftAll(advance);
+					bool shifts = shiftAll();
 
 					// Nothing advanced? Try to skip some characters...
-					if (advance->empty()) {
+					if (!shifts) {
 						// Give up if we need to skip too much.
 						if (skippedChars >= 20)
 							break;
@@ -97,13 +91,7 @@ namespace storm {
 					skippedTokens++;
 					doParse(pos);
 
-					if (pos != lastPos) {
-						// We advanced a bit!
-						advance = null;
-						pos = lastPos;
-					} else {
-						// No advance, keep using the old.
-					}
+					pos = lastPos;
 				}
 
 				finishParse();
@@ -193,32 +181,35 @@ namespace storm {
 				} while (!done);
 			}
 
-			Set<StackItem *> *Parser::shiftAll(Set<StackItem *> *s) {
-				Set<StackItem *> *result = new (this) Set<StackItem *>();
-				for (Set<StackItem *>::Iter i = s->begin(), e = s->end(); i != e; ++i) {
-					StackItem *now = i.v();
-					shiftAll(now, result);
-				}
-				return result;
+			bool Parser::shiftAll() {
+				bool any = false;
+				// Make a copy so that we do not accidentally advance a state twice.
+				Set<StackItem *> *src = new (this) Set<StackItem *>(*stacks->top());
+				for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i)
+					any |= shiftAll(i.v());
+				return any;
 			}
 
-			void Parser::shiftAll(StackItem *now, Set<StackItem *> *result) {
+			bool Parser::shiftAll(StackItem *now) {
 				State *s = table->state(now->state);
 				Array<Action> *actions = s->actions;
 				if (!actions)
-					return;
+					return false;
 
+				bool any = false;
+				Set<StackItem *> *top = stacks->top();
 				for (Nat i = 0; i < actions->count(); i++) {
 					const Action &action = actions->at(i);
 					Nat tree = store->push(currentPos).id();
 					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
-					Set<StackItem *> *top = stacks->top();
 					if (!top->has(item)) {
 						// Note: we're not using 'put', as this could cause infinite cycles.
 						top->put(item);
-						result->put(item);
+						any = true;
 					}
 				}
+
+				return any;
 			}
 
 			void Parser::actorShift(const ActorEnv &env) {

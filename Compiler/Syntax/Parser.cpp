@@ -138,7 +138,7 @@ namespace storm {
 		}
 
 		InfoNode *ParserBase::infoTree() const {
-			if (InfoNode *r = use->infoTree())
+			if (InfoNode *r = unsafeInfoTree())
 				return r;
 			throw error();
 		}
@@ -194,8 +194,10 @@ namespace storm {
 		}
 
 		InfoNode *InfoParser::fullInfoTree() {
-			InfoNode *tree = infoTree();
-			Nat end = tree->length() + lastOffset;
+			InfoNode *tree = unsafeInfoTree();
+			Nat end = lastOffset;
+			if (tree)
+				end = tree->length() + lastOffset;
 
 			assert(end <= lastStr->peekLength(),
 				L"Parser is weird, returning a tree spanning too many characters.");

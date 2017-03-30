@@ -113,6 +113,11 @@ namespace storm {
 				return use->parseApprox(root(), str, file, start);
 			}
 
+			// Get the raw info tree. Never throws an exception.
+			inline MAYBE(InfoNode *) unsafeInfoTree() const {
+				return use->infoTree();
+			}
+
 		private:
 			// Backend being used.
 			ParserBackend *use;
