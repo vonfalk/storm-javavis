@@ -711,7 +711,7 @@
 	(while (search-forward storm-cr-lf nil t)
 	  (replace-match storm-lf nil t))
 	(when face
-	  (storm-set-color start (point) face))
+	  (storm-set-color start (point-max) face))
 	(goto-char old-point)))))
 
 (defun storm-on-status (process change)
