@@ -1,0 +1,5 @@
+
+Duration testUnit() {
+	Moment s; // Should not be confused with a unit!
+	1 ms + 1 s;
+}

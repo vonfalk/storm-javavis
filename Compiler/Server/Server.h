@@ -43,6 +43,7 @@ namespace storm {
 			Symbol *point;
 			Symbol *close;
 			Symbol *indent;
+			Symbol *chunkSz;
 			Symbol *test;
 			Symbol *debug;
 			Symbol *recolor;
@@ -73,6 +74,7 @@ namespace storm {
 			void onPoint(SExpr *msg);
 			void onClose(SExpr *msg);
 			void onIndent(SExpr *msg);
+			void onChunkSz(SExpr *msg);
 			void onTest(SExpr *msg);
 			void onDebug(SExpr *msg);
 			void onReColor(SExpr *msg);
@@ -81,7 +83,8 @@ namespace storm {
 			void update(File *file, Range range);
 
 			// Size of the chunks to send to the client.
-			static const Nat chunkChars = 8000;
+			static const Nat defaultChunkChars = 8000;
+			Nat chunkChars;
 
 			// Send updates for 'range' in 'file', sending one reasonabley-sized chunk now and
 			// scheduling the rest for later.

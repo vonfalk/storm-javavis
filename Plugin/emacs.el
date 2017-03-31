@@ -411,10 +411,8 @@
   "Is the file type 'ext' supported by Storm? Returns false if no Storm process is running."
   (when (and (storm-running-p) (stringp ext))
     (let ((old (gethash ext storm-mode-types 'unknown)))
-      (message "%S" old)
       (if (eq old 'unknown)
 	  (let ((r (storm-query (list 'supported ext))))
-	    (message "Response: %S" r)
 	    (when (listp r)
 	      (puthash ext (second r) storm-mode-types)
 	      (second r)))
@@ -434,6 +432,7 @@
 (defvar storm-process-message-queue nil
   "Messages queued for when the storm process was started.")
 (defvar storm-process-query nil "If symbol: waiting for a message with the given header. If list: result from a query.")
+(defvar storm-process-wait nil "If symbol: waiting for a message with the given header.")
 (defvar storm-messages
   (let ((map (make-hash-table)))
     (puthash 'color 'storm-on-color map)
@@ -518,6 +517,23 @@
   (prog1
       storm-process-query
     (setq storm-process-query nil)))
+
+(defun storm-wait-for (type &optional timeout)
+  "Wait for a message of 'type' to arrive. 'timeout' is measured in seconds."
+  (unless timeout
+    (setq timeout 1.0))
+
+  (setq storm-process-wait type)
+
+  ;; Wait until we receive some data.
+  (let ((start-time (current-time)))
+    (while (and storm-process-wait
+		(< (float-time (time-since start-time)) timeout))
+      (accept-process-output storm-process timeout)))
+
+  (prog1
+      (eq type nil)
+    (setq storm-process-wait nil)))
 
 (defun storm-running-p ()
   "Get the current status of the Storm process."
@@ -666,6 +682,8 @@
   (if (consp msg)
       (let* ((header (first msg))
 	     (found (gethash header storm-messages)))
+	(when (eq header storm-process-wait)
+	  (setq storm-process-wait nil))
 	(if (eq header storm-process-query)
 	    (progn
 	      (setq storm-process-query (rest msg))

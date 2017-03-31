@@ -16,6 +16,7 @@ namespace storm {
 			point = c->symbol(L"point");
 			indent = c->symbol(L"indent");
 			close = c->symbol(L"close");
+			chunkSz = c->symbol(L"chunk-size");
 			test = c->symbol(L"test");
 			debug = c->symbol(L"debug");
 			recolor = c->symbol(L"recolor");
@@ -24,6 +25,7 @@ namespace storm {
 			as = c->symbol(L"as");
 			t = c->symbol(L"t");
 			work = new (this) WorkQueue(this);
+			chunkChars = defaultChunkChars;
 		}
 
 		void Server::run() {
@@ -86,6 +88,9 @@ namespace storm {
 			} else if (indent->equals(kind)) {
 				work->poke();
 				onIndent(cell->rest);
+			} else if (chunkSz->equals(kind)) {
+				work->poke();
+				onChunkSz(cell->rest);
 			} else if (test->equals(kind)) {
 				work->poke();
 				onTest(cell->rest);
@@ -185,6 +190,17 @@ namespace storm {
 			conn->send(result);
 		}
 
+		void Server::onChunkSz(SExpr *expr) {
+			if (expr == null) {
+				SExpr *r = null;
+				r = cons(engine(), new (this) Number(chunkChars), r);
+				r = cons(engine(), chunkSz, r);
+				conn->send(r);
+			} else {
+				chunkChars = next(expr)->asNum()->v;
+			}
+		}
+
 		void Server::onTest(SExpr *expr) {
 			if (!testState)
 				testState = new (this) Test(conn);
@@ -272,7 +288,8 @@ namespace storm {
 		}
 
 		void Server::update(File *file, Range range) {
-			if (range.empty())
+			if (range.empty() && chunkChars != 0)
+				// Special mode if chunkChars == 0, always send color messages to indicate we're done.
 				return;
 
 			Array<ColoredRange> *colors = file->colors(range);
@@ -313,8 +330,8 @@ namespace storm {
 		}
 
 		void Server::updateLater(File *file, Range range) {
-			// Do we actually need to split this chunk at all?
-			if (range.count() <= chunkChars) {
+			// Do we actually need to split this chunk at all? (chunkChars == 0 <=> never split).
+			if (chunkChars == 0 || range.count() <= chunkChars) {
 				update(file, range);
 				return;
 			}
