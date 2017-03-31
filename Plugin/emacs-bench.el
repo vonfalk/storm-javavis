@@ -34,6 +34,8 @@
   "Run the test specified in the file."
   (cond ((= (string-to-char file) ?.)
 	 nil)
+	((= (string-to-char file) ?#)
+	 nil)
 	((eq (first attrs) 't)
 	 (storm-run-dir (concat path file)))
 	(t (storm-run-file path file))))
@@ -46,7 +48,7 @@
 
     (if dispatch-to
 	(progn
-	  (storm-output-string (format "Running file: %s%s...\n" path file) 'storm-test-msg)
+	  (storm-output-string (format "Running file: %s%s...\n" path file) 'storm-bench-msg)
 	  (funcall dispatch-to (concat path file)))
       (storm-output-string (format "Ignoring unsupported file: %s%s\n" path file)))))
 
@@ -73,6 +75,14 @@
 	(storm-mode)
 	(storm-wait-for 'color 5.0)
 	buf))))
+
+(defface storm-bench-msg
+  '((t :foreground "dark green"))
+  "Face used indicating test status.")
+
+(defface storm-bench-fail
+  '((t :foreground "red"))
+  "Face used indicating test failures.")
 
 (defface storm-hilight-diff-face
   '((t :background "red"))
@@ -116,6 +126,6 @@
 	  (storm-wait-for 'color 0.4)
 	  (redisplay))
 
-	(storm-compare-buffer ref)))))
-
-;;(storm-run-benchmarks)
+	(let ((result (storm-compare-buffer ref)))
+	  (when (> result 0)
+	    (storm-output-string (format "%S errors in %s\n" result file) 'storm-bench-fail)))))))
