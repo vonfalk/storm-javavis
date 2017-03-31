@@ -87,9 +87,21 @@ namespace storm {
 			// to be transmitted to the client again.
 			Range parse(const Range &range);
 
+			// State used in the recursive parse function.
+			struct ParseEnv {
+				// Range to re-parse.
+				const Range update;
+
+				// Range which has been modified and needs to be re-sent to the client.
+				Range modified;
+
+				// Range containing matches where error-correction kicked in.
+				Range corrected;
+			};
+
 			// Traverse the parse tree from 'node' while attempting to update 'range', reparsing nodes as needed.
 			// Returns the best parse result so far.
-			syntax::ParseResult parse(Range &result, const Range &range, Nat offset, syntax::InfoNode *node);
+			syntax::ParseResult parse(ParseEnv &env, Nat offset, syntax::InfoNode *node);
 
 			// Compare ParseResult:s and see which is better/worse.
 			static bool better(syntax::ParseResult better, syntax::ParseResult than);

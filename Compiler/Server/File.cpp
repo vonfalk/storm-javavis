@@ -318,17 +318,34 @@ namespace storm {
 			// matched tree, ie. the same production matched before and now.
 
 			// TODO: Limit the depth of what needs to be re-parsed in some situations.
-			Range update;
-			ParseResult r = parse(update, range, start, content);
+			ParseEnv env = {
+				range,
+				Range(),
+				Range(),
+			};
+			ParseResult r = parse(env, start, content);
+
+			// Maybe we contain some parts of the previous part?
+			bool reParse = false;
 			if (!r.success) {
-				// TODO: Trigger if 'bad enough', for some measure of 'bad enough'.
-				// Maybe we contain some parts of the previous part? Try to re-parse!
+				reParse = true;
+			} else if (env.corrected.empty()) {
+				// Nope!
+			} else if (env.corrected.from <= start + 5) {
+				reParse = true;
+			} else if (env.corrected.to >= full().to - 5) {
+				reParse = true;
+			}
+
+			if (reParse) {
+				// Try to re-parse!
 				owner->postInvalidate(this, -1, true);
 			}
-			return update;
+
+			return env.modified;
 		}
 
-		ParseResult Part::parse(Range &result, const Range &range, Nat offset, InfoNode *node) {
+		ParseResult Part::parse(ParseEnv &env, Nat offset, InfoNode *node) {
 			// We should probably parse at a higher level...
 			Nat len = node->length();
 			if (len == 0)
@@ -336,7 +353,7 @@ namespace storm {
 
 			// Does this node completely cover 'range'?
 			Range nodeRange(offset, offset + len);
-			if (nodeRange.from > range.from || nodeRange.to < range.to)
+			if (nodeRange.from > env.update.from || nodeRange.to < env.update.to)
 				return ParseResult();
 
 			// Do not attempt to re-parse leaf nodes. They only contain regexes, which have been
@@ -350,7 +367,7 @@ namespace storm {
 			ParseResult ok(0, 0);
 			for (Nat i = 0; i < inode->count() && ok.success; i++) {
 				InfoNode *child = inode->at(i);
-				ParseResult cResult = parse(result, range, offset, child);
+				ParseResult cResult = parse(env, offset, child);
 				ok = combine(ok, cResult);
 				offset += child->length();
 			}
@@ -362,8 +379,11 @@ namespace storm {
 				// TODO: See which one is worse...
 				if (n && !bad(here, node)) {
 					replace(inode, n);
-					result = nodeRange;
+					env.modified = nodeRange;
 					ok = here;
+				}
+				if (here.corrected()) {
+					env.corrected = nodeRange;
 				}
 			}
 			return ok;
