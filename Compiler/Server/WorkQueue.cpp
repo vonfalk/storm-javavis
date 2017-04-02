@@ -25,6 +25,7 @@ namespace storm {
 		WorkQueue::WorkQueue(Server *callbackTo) : callbackTo(callbackTo), running(false), quit(false) {
 			event = new (this) Event();
 			work = new (this) Array<WorkItem *>();
+			idleTime = defaultIdleTime;
 		}
 
 		void WorkQueue::start() {
@@ -79,7 +80,7 @@ namespace storm {
 				}
 
 				while (Moment() < startWork)
-					os::UThread::sleep(idleTime / 2);
+					os::UThread::sleep(idleTime * 3 / 4);
 
 				Array<WorkItem *> *work = this->work;
 				event->clear();

@@ -4,7 +4,7 @@ import foo.bar;
 import foo.bar.*;
 
 class Simple {
-	int foo[] = {}, bar = {};
+	int[] foo = {}, bar = {};
 
 	int bar(int z, ... foo) {}
 

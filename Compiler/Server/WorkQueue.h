@@ -56,14 +56,17 @@ namespace storm {
 			// Post a message.
 			void STORM_FN post(WorkItem *item);
 
+			// Default idle time.
+			enum {
+				defaultIdleTime = 500
+			};
+
+			// How much time should pass before doing work?
+			Nat idleTime;
+
 		private:
 			// Dispatch callbacks to here.
 			Server *callbackTo;
-
-			// How much inactive time is to be passed before something works?
-			enum {
-				idleTime = 500
-			};
 
 			// Is the worker thread running?
 			Bool running;

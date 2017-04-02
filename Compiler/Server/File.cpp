@@ -73,6 +73,7 @@ namespace storm {
 		Range Part::replace(Range range, Str *replace) {
 			if (!content)
 				return Range(0, 0);
+			// PLN(TO_S(this, L"Replace " << range << L" with " << replace));
 
 			// Do all regexes match?
 			Bool regexMatching = true;
@@ -281,7 +282,7 @@ namespace storm {
 			ParseResult quality = parser->parseApprox(src, path);
 			if (out)
 				*out = quality;
-			//PLN(TO_S(this, src->peekLength() << L" - " << root->identifier() << L" - " << quality));
+			// PLN(TO_S(this, src->peekLength() << L" - " << root->identifier() << L" - " << quality));
 			// if (src->peekLength() < 20)
 			// 	PLN(src->escape());
 
@@ -324,6 +325,7 @@ namespace storm {
 				Range(),
 			};
 			ParseResult r = parse(env, start, content);
+			// PVAR(TO_S(this, r));
 
 			// Maybe we contain some parts of the previous part?
 			bool reParse = false;
@@ -360,8 +362,7 @@ namespace storm {
 			// checked already.
 			InfoInternal *inode = as<InfoInternal>(node);
 			if (!inode)
-				return ParseResult(0, 0);
-
+				return ParseResult();
 
 			// Re-parse this node if none of our children have already managed to do so.
 			ParseResult ok(0, 0);
