@@ -7,11 +7,20 @@ namespace storm {
 		namespace glr {
 
 			const Nat countMask = 0x80000000;
+			const Nat errorMask = 0x40000000;
+			const Nat posMask   = 0x3FFFFFFF;
 
 			void TreeNode::replace(const TreeNode &other) {
 				pos(other.pos());
-				// Re-point our array.
-				write(src, ptr + 1, other.children().ptr);
+
+				if (read(src, ptr) & errorMask) {
+					// We can store errors!
+					write(src, ptr + 1, other.errors());
+					write(src, ptr + 2, other.children().ptr);
+				} else {
+					// Re-point our array.
+					write(src, ptr + 1, other.children().ptr);
+				}
 			}
 
 			/**
@@ -28,11 +37,33 @@ namespace storm {
 				return TreeNode(this, start);
 			}
 
+			TreeNode TreeStore::push(Nat pos, Nat errors) {
+				if (errors == 0)
+					return push(pos);
+
+				Nat start = alloc(2);
+				write(start, errorMask | pos);
+				write(start + 1, errors);
+				return TreeNode(this, start);
+			}
+
 			TreeNode TreeStore::push(Nat pos, Nat production, Nat children) {
 				Nat start = alloc(3 + children);
 				write(start, countMask | pos);
 				write(start + 1, countMask | children);
 				write(start + 2, production);
+				return TreeNode(this, start);
+			}
+
+			TreeNode TreeStore::push(Nat pos, Nat production, Nat errors, Nat children) {
+				if (errors == 0)
+					return push(pos, production, children);
+
+				Nat start = alloc(4 + children);
+				write(start, countMask | errorMask | pos);
+				write(start + 1, errors);
+				write(start + 2, countMask | children);
+				write(start + 3, production);
 				return TreeNode(this, start);
 			}
 
@@ -63,6 +94,12 @@ namespace storm {
 
 				TreeNode &a = at(aId);
 				TreeNode &b = at(bId);
+
+				// Prioritize the one with fewer errors.
+				if (a.errors() != b.errors())
+					return a.errors() < b.errors() ? higher : lower;
+
+				// No children -> nothing more to compare.
 				if (!a.children() || !b.children())
 					return equal;
 

@@ -11,6 +11,8 @@ namespace storm {
 
 			class TreeStore;
 			extern const Nat countMask;
+			extern const Nat errorMask;
+			extern const Nat posMask;
 
 			inline Nat read(TreeStore *src, Nat pos);
 			inline void write(TreeStore *src, Nat pos, Nat val);
@@ -77,31 +79,43 @@ namespace storm {
 
 				// Get the starting position of this node.
 				inline Nat STORM_FN pos() const {
-					return read(src, ptr) & ~countMask;
+					return read(src, ptr) & posMask;
 				}
 
 				// Set the starting position of this node.
 				inline void STORM_FN pos(Nat v) const {
-					v &= ~countMask;
-					v |= read(src, ptr) & countMask;
+					v &= posMask;
+					v |= read(src, ptr) & ~posMask;
 					return write(src, ptr, v);
 				}
 
 				// Get the child array.
 				inline TreeArray STORM_FN children() const {
-					if ((read(src, ptr) & countMask) == 0)
+					Nat first = read(src, ptr);
+					if ((first & countMask) == 0)
 						return TreeArray(src, 0);
 
-					Nat pos = read(src, ptr + 1);
+					Nat offset = 1;
+					offset += (first & errorMask) != 0;
+
+					Nat pos = read(src, ptr + offset);
 					if (pos & countMask) {
-						return TreeArray(src, ptr + 1);
+						return TreeArray(src, ptr + offset);
 					} else {
 						return TreeArray(src, pos);
 					}
 				}
 
+				// Get the number of errors encountered to reach this node.
+				inline Nat STORM_FN errors() const {
+					if ((read(src, ptr) & errorMask) == 0)
+						return 0;
+					else
+						return read(src, ptr + 1);
+				}
+
 				// Replace the contents of this node with another. This is only doable if both this
-				// and the other tree node have children.
+				// and the other tree node have children. Unable to set 'errors' in some cases.
 				void STORM_FN replace(const TreeNode &other);
 
 				// Get the production.
@@ -132,7 +146,7 @@ namespace storm {
 			 * This is just an array of Nat elements. The classes TreeNode and TreeArray just read
 			 * from here. Nodes are stored as follows (one entry per item):
 			 * - position this node started in the input string. If msb of the position is set, this node
-			 *   contains children.
+			 *   contains children. If the next msb is set, this node also contains an error count.
 			 * - number of children / 'pointer' to the data array. If msb is set, then this is a count and the
 			 *   child array is allocated right here. Otherwise, this is a pointer (possibly to null, which
 			 *   equals no children) to the child array, starting with a number of children.
@@ -156,8 +170,14 @@ namespace storm {
 				// Add a new terminal node and return its ID.
 				TreeNode push(Nat pos);
 
+				// Add a new terminal node with a specific number of encountered errors.
+				TreeNode push(Nat pos, Nat errors);
+
 				// Add a new nonterminal with a specific number of children.
 				TreeNode push(Nat pos, Nat production, Nat children);
+
+				// Add a new nonterminal with a specific number of encountered errors and a specific number of children.
+				TreeNode push(Nat pos, Nat production, Nat errors, Nat children);
 
 				// Priority for tree comparisions.
 				enum Priority {

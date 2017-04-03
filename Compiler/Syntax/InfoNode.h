@@ -42,6 +42,10 @@ namespace storm {
 			// Length of this match (in codepoints).
 			Nat STORM_FN length();
 
+			// Error occured during parsing of this node?
+			Bool STORM_FN error() const;
+			void STORM_FN error(Bool v);
+
 			// Find the first leaf node with a non-zero length at position 'pos' relative to this node.
 			virtual MAYBE(InfoLeaf *) STORM_FN leafAt(Nat pos);
 
@@ -76,8 +80,14 @@ namespace storm {
 			// Parent node.
 			InfoInternal *parentNode;
 
-			// Cached length.
-			Nat prevLength;
+			// Data stored here. Stores:
+			// msb: set if an error was corrected within this node (ignoring child nodes).
+			// rest: cached length of this node. If set to all ones: the length needs to be re-computed.
+			Nat data;
+
+			// Masks for 'data'.
+			static const Nat errorMask;
+			static const Nat lengthMask;
 		};
 
 

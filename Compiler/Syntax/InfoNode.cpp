@@ -9,7 +9,8 @@
 namespace storm {
 	namespace syntax {
 
-		static const Nat invalid = -1;
+		const Nat InfoNode::errorMask  = 0x80000000;
+		const Nat InfoNode::lengthMask = 0x7FFFFFFF;
 
 		InfoNode::InfoNode() {
 			parentNode = null;
@@ -18,9 +19,23 @@ namespace storm {
 		}
 
 		Nat InfoNode::length() {
-			if (prevLength == invalid)
-				prevLength = computeLength();
-			return prevLength;
+			if ((data & lengthMask) == lengthMask) {
+				data &= ~lengthMask;
+				data |= computeLength() & lengthMask;
+			}
+
+			return data & lengthMask;
+		}
+
+		Bool InfoNode::error() const {
+			return (data & errorMask) != 0;
+		}
+
+		void InfoNode::error(Bool v) {
+			if (v)
+				data |= errorMask;
+			else
+				data &= ~errorMask;
 		}
 
 		InfoLeaf *InfoNode::leafAt(Nat pos) {
@@ -36,7 +51,7 @@ namespace storm {
 		}
 
 		void InfoNode::invalidate() {
-			prevLength = invalid;
+			data |= lengthMask;
 			if (parentNode)
 				parentNode->invalidate();
 		}
@@ -48,6 +63,8 @@ namespace storm {
 		}
 
 		void InfoNode::format(StrBuf *to) const {
+			if (error())
+				*to << L" (contains errors)";
 			if (color != tNone)
 				*to << L" #" << name(engine(), color);
 		}
@@ -220,7 +237,7 @@ namespace storm {
 		void InfoLeaf::format(StrBuf *to) const {
 			*to << L"'" << v->escape('\'') << L"'";
 			if (regex)
-				*to << L" (matches " << regex->regex << L")";
+				*to << L" (matches \"" << regex->regex << L"\")";
 			InfoNode::format(to);
 		}
 

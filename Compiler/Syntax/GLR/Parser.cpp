@@ -70,6 +70,7 @@ namespace storm {
 				Nat pos = lastPos;
 				Nat skippedTokens = 0;
 				Nat skippedChars = 0;
+				Set<StackItem *> *prevSkipped = null;
 				while (acceptingStack == null || acceptingStack->pos < length) {
 					// Advance all productions one step by performing all possible shifts.
 					stacks->set(0, lastSet);
@@ -78,14 +79,16 @@ namespace storm {
 					// Nothing advanced? Try to skip some characters...
 					if (!shifts) {
 						// Give up if we need to skip too much.
-						if (skippedChars >= 20)
-							break;
 						if (pos >= length)
 							break;
+
+						// TODO: Indicate errors in these reductions somehow....
 
 						skippedChars++;
 						pos++;
 						lastPos++;
+					} else {
+						prevSkipped = null;
 					}
 
 					skippedTokens++;
@@ -200,7 +203,7 @@ namespace storm {
 				Set<StackItem *> *top = stacks->top();
 				for (Nat i = 0; i < actions->count(); i++) {
 					const Action &action = actions->at(i);
-					Nat tree = store->push(currentPos).id();
+					Nat tree = store->push(currentPos, 1).id();
 					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
 					if (!top->has(item)) {
 						// Note: we're not using 'put', as this could cause infinite cycles.
@@ -338,7 +341,7 @@ namespace storm {
 
 					Path next = {
 						path,
-						null,
+						0,
 					};
 
 					// Keep on traversing...
@@ -366,11 +369,15 @@ namespace storm {
 				// Create the syntax tree node for this reduction.
 
 				Nat node = 0;
+				Nat errors = 0;
+				for (const Path *p = path; p; p = p->prev)
+					errors += store->at(p->treeNode).errors();
+
 				if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
 					// These are really just shifts.
-					node = store->push(currentPos).id();
+					node = store->push(currentPos, errors).id();
 				} else {
-					TreeNode fill = store->push(currentPos, env.production, env.length);
+					TreeNode fill = store->push(currentPos, env.production, errors, env.length);
 					TreeArray children = fill.children();
 					const Path *top = path;
 					for (Nat i = 0; i < env.length; i++) {
@@ -714,6 +721,7 @@ namespace storm {
 				Nat length = totalLength(node);
 				Nat nodePos = length;
 				InfoInternal *result = new (this) InfoInternal(p, length);
+				Nat errors = 0;
 
 				if (p->indentType != indentNone)
 					result->indent = new (this) InfoIndent(nodePos, nodePos, p->indentType);
@@ -732,9 +740,9 @@ namespace storm {
 					TreeNode &child = store->at(childId);
 
 					if (item.pos == Item::specialPos) {
-						infoSubtree(result, nodePos, child, pos);
+						errors += infoSubtree(result, nodePos, child, pos);
 					} else {
-						infoToken(result, nodePos, child, pos, p->tokens->at(item.pos));
+						errors += infoToken(result, nodePos, child, pos, p->tokens->at(item.pos));
 
 						if (result->indent) {
 							if (item.pos == p->indentStart)
@@ -748,14 +756,19 @@ namespace storm {
 				}
 
 				assert(nodePos == 0, L"Node length computation was inaccurate!");
+
+				if (errors != node.errors())
+					result->error(true);
+
 				return result;
 			}
 
-			void Parser::infoSubtree(InfoInternal *result, Nat &resultPos, TreeNode &startNode, Nat endPos) const {
+			Nat Parser::infoSubtree(InfoInternal *result, Nat &resultPos, TreeNode &startNode, Nat endPos) const {
 				TreeNode *node = &startNode;
 				Production *p = syntax->production(node->production());
 				Item item = last(node->production());
 				Nat pos = endPos;
+				Nat errors = 0;
 
 				TreeArray children = node->children();
 
@@ -785,7 +798,7 @@ namespace storm {
 							i--;
 						}
 					} else {
-						infoToken(result, resultPos, child, pos, p->tokens->at(item.pos));
+						errors += infoToken(result, resultPos, child, pos, p->tokens->at(item.pos));
 
 						if (result->indent) {
 							if (item.pos == p->indentStart)
@@ -798,19 +811,25 @@ namespace storm {
 						i--;
 					}
 				}
+
+				return errors;
 			}
 
-			void Parser::infoToken(InfoInternal *result, Nat &resultPos, TreeNode &node, Nat endPos, Token *token) const {
+			Nat Parser::infoToken(InfoInternal *result, Nat &resultPos, TreeNode &node, Nat endPos, Token *token) const {
 				assert(resultPos > 0, L"Too few children allocated in InfoNode!");
 
+				Nat errors = 0;
 				InfoNode *created = null;
 				if (node.children()) {
 					if (Syntax::specialProd(node.production()) == Syntax::prodESkip) {
 						// This is always an empty string! Even though it is a production, it should
 						// look like a plain string.
 						created = new (this) InfoLeaf(as<RegexToken>(token), emptyStr);
+						// Move errors up to the parent.
+						errors = 0;
 					} else {
 						created = infoTree(node, endPos);
+						errors = node.errors();
 					}
 				} else {
 					Str *str = emptyStr;
@@ -820,10 +839,13 @@ namespace storm {
 						str = source->substr(from, to);
 					}
 					created = new (this) InfoLeaf(as<RegexToken>(token), str);
+					// Move errors up to the parent.
+					errors = 0;
 				}
 
 				created->color = token->color;
 				result->set(--resultPos, created);
+				return errors;
 			}
 
 			Nat Parser::totalLength(TreeNode &node) const {

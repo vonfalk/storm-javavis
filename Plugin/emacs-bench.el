@@ -96,7 +96,6 @@
       (let* ((buf-pos (+ (point-min) pos))
 	     (cur (get-text-property buf-pos 'font-lock-face))
 	     (ref (get-text-property pos 'font-lock-face ref-str)))
-	(message "%S <=> %S" cur ref)
 	(unless (equal cur ref)
 	  (with-silent-modifications
 	    (put-text-property buf-pos (1+ buf-pos) 'font-lock-face 'storm-hilight-diff-face))
