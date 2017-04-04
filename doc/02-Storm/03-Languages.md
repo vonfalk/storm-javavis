@@ -1,12 +1,14 @@
 Languages
 ===========
 
-Languages in Storm are synonymous with file extensions. When Storm tries to load the contents of a
-package, it examines the different file extensions present and creates a subclass of the
-`core.lang.PkgReader` for each of the files. These readers are expected to be located at
-`lang.<ext>.Reader`, where `<ext>` is the file extension. When all `Readers` are created, Storm asks
-each of them to load various parts of the language. This is to allow the different languages to find
-types declared in the same package but inside a different language.
+Languages in Storm are identified by the file extensions of the files containing the language. When
+Storm tries to load the contents of a package, it examines the different file extensions present and
+creates an instance of the `core.lang.PkgReader` class for each of the files. This is done by
+calling the function `lang.<ext>.reader(core.Array<core.io.Url>, core.lang.Package)`, which is
+expected to create a reader which can be used to read the files provided into the package
+provided. When all `Readers` are created, Storm asks each of them to load various parts of the
+language. This is to allow the different languages to find types declared in the same package but
+inside a different language.
 
 Because of this, it is quite easy to create a new language. Simply create a new package named
 `lang.a`, and Storm will load `.a`-files using your newly created `Reader`.

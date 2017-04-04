@@ -4,16 +4,13 @@ use core:io;
 
 // Evaluate things using the syntax!
 Int eval(Str v) {
-	Parser<Expr> p;
-	p.parse(v, Url());
-	if (p.hasError)
-		p.throwError;
-	var tree = p.tree;
-	tree.transform;
+	tree(v).transform();
 }
 
 Expr tree(Str v) {
 	Parser<Expr> p;
 	p.parse(v, Url());
+	if (p.hasError)
+		p.throwError;
 	p.tree;
 }
