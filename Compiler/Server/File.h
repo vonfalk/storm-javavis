@@ -101,7 +101,7 @@ namespace storm {
 
 			// Traverse the parse tree from 'node' while attempting to update 'range', reparsing nodes as needed.
 			// Returns the best parse result so far.
-			syntax::ParseResult parse(ParseEnv &env, Nat offset, syntax::InfoNode *node);
+			syntax::ParseResult parse(ParseEnv &env, Nat offset, syntax::InfoNode *node, bool seenError);
 
 			// Compare ParseResult:s and see which is better/worse.
 			static bool better(syntax::ParseResult better, syntax::ParseResult than);
@@ -114,9 +114,9 @@ namespace storm {
 			Bool remove(const Range &range);
 
 			// Helpers to 'remove'
-			Bool remove(const Range &range, Nat offset, syntax::InfoNode *node);
-			Bool removeLeaf(const Range &range, Nat offset, syntax::InfoLeaf *src);
-			Bool removeInternal(const Range &range, Nat offset, syntax::InfoInternal *node);
+			Bool remove(const Range &range, Nat offset, syntax::InfoNode *node, Bool seenError);
+			Bool removeLeaf(const Range &range, Nat offset, syntax::InfoLeaf *src, Bool seenError);
+			Bool removeInternal(const Range &range, Nat offset, syntax::InfoInternal *node, Bool seenError);
 
 			// State struct used in 'insert'.
 			struct InsertState;
@@ -126,9 +126,9 @@ namespace storm {
 			Bool insert(Nat point, Str *v);
 
 			// Helpers to 'insert'.
-			void insert(InsertState &state, Nat offset, syntax::InfoNode *node);
-			void insertLeaf(InsertState &state, Nat offset, syntax::InfoLeaf *node);
-			void insertInternal(InsertState &state, Nat offset, syntax::InfoInternal *node);
+			void insert(InsertState &state, Nat offset, syntax::InfoNode *node, Bool seenError);
+			void insertLeaf(InsertState &state, Nat offset, syntax::InfoLeaf *node, Bool seenError);
+			void insertInternal(InsertState &state, Nat offset, syntax::InfoInternal *node, Bool seenError);
 
 			// Replace node 'oldNode' with 'newNode' somewhere in the tree.
 			void replace(syntax::InfoNode *oldNode, syntax::InfoNode *newNode);

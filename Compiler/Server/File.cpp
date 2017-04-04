@@ -44,9 +44,14 @@ namespace storm {
 			InfoNode *c = new (this) InfoLeaf(null, src);
 			parser = p;
 			ParseResult pResult;
-			if (InfoNode *n = parse(c, parser->root(), &pResult))
-				if (!bad(pResult, n))
+			if (InfoNode *n = parse(c, parser->root(), &pResult)) {
+				if (!bad(pResult, n)) {
 					content = n;
+				} else if (n->length() != content->length()) {
+					// Length changed, we have no choice but keeping the bad version...
+					content = n;
+				}
+			}
 
 			return true;
 		}
@@ -95,10 +100,10 @@ namespace storm {
 		}
 
 		Bool Part::remove(const Range &range) {
-			return remove(range, start, content);
+			return remove(range, start, content, false);
 		}
 
-		Bool Part::remove(const Range &range, Nat offset, InfoNode *node) {
+		Bool Part::remove(const Range &range, Nat offset, InfoNode *node, Bool seenError) {
 			Nat len = node->length();
 			if (len == 0)
 				return true;
@@ -107,17 +112,20 @@ namespace storm {
 			if (!nodeRange.intersects(range))
 				return true;
 
+			if (node->error())
+				seenError = true;
+
 			if (InfoLeaf *leaf = as<InfoLeaf>(node)) {
-				return removeLeaf(range, offset, leaf);
+				return removeLeaf(range, offset, leaf, seenError);
 			} else if (InfoInternal *inode = as<InfoInternal>(node)) {
-				return removeInternal(range, offset, inode);
+				return removeInternal(range, offset, inode, seenError);
 			} else {
 				assert(false, L"This should not happen!");
 				return false; // Force a re-parse.
 			}
 		}
 
-		Bool Part::removeLeaf(const Range &range, Nat offset, InfoLeaf *node) {
+		Bool Part::removeLeaf(const Range &range, Nat offset, InfoLeaf *node, Bool seenError) {
 			Str *src = node->toS();
 			Str::Iter begin = src->begin();
 			for (Nat i = offset; i < range.from; i++)
@@ -129,17 +137,17 @@ namespace storm {
 
 			node->set(src->remove(begin, end));
 
-			return node->matchesRegex();
+			return !seenError && node->matchesRegex();
 		}
 
-		Bool Part::removeInternal(const Range &range, Nat offset, InfoInternal *node) {
+		Bool Part::removeInternal(const Range &range, Nat offset, InfoInternal *node, Bool seenError) {
 			Bool ok = true;
 
 			for (Nat i = 0; i < node->count(); i++) {
 				InfoNode *at = node->at(i);
 				// Keep track of the old length, as that will likely change.
 				Nat len = at->length();
-				ok &= remove(range, offset, at);
+				ok &= remove(range, offset, at, seenError);
 				offset += len;
 			}
 
@@ -153,6 +161,8 @@ namespace storm {
 
 			// Anything inserted so far?
 			Bool done;
+			// Was there an error node at the path to the insertion point?
+			Bool error;
 
 			// First viable match. Maybe not chosen due to regex mismatch.
 			InfoLeaf *firstPossible;
@@ -167,12 +177,12 @@ namespace storm {
 				null,
 				null,
 			};
-			insert(state, start, content);
+			insert(state, start, content, false);
 
 			// If 'done' is true, then we succeeded at inserting the string somewhere where the
 			// regex matched.
 			if (state.done)
-				return true;
+				return !state.error;
 
 			// We should insert it at 'firstPossible'. If it is null, we have a syntax tree without
 			// leaves, which can happen when the grammar contains epsilon-productions.
@@ -188,22 +198,25 @@ namespace storm {
 			return false;
 		}
 
-		void Part::insert(InsertState &state, Nat offset, InfoNode *node) {
+		void Part::insert(InsertState &state, Nat offset, InfoNode *node, Bool seenError) {
 			// Outside this node?
 			Nat len = node->length();
 			if (state.point < offset || state.point > offset + len)
 				return;
 
+			if (node->error())
+				seenError = true;
+
 			if (InfoLeaf *leaf = as<InfoLeaf>(node)) {
-				insertLeaf(state, offset, leaf);
+				insertLeaf(state, offset, leaf, seenError);
 			} else if (InfoInternal *inode = as<InfoInternal>(node)) {
-				insertInternal(state, offset, inode);
+				insertInternal(state, offset, inode, seenError);
 			} else {
 				assert(false, L"This should not happen!");
 			}
 		}
 
-		void Part::insertLeaf(InsertState &state, Nat offset, InfoLeaf *node) {
+		void Part::insertLeaf(InsertState &state, Nat offset, InfoLeaf *node, Bool seenError) {
 			Str *src = node->toS();
 			Str::Iter p = src->begin();
 			for (Nat i = offset; i < state.point; i++)
@@ -218,14 +231,15 @@ namespace storm {
 			if (node->matchesRegex(modified)) {
 				node->set(modified);
 				state.done = true;
+				state.error = seenError;
 			}
 		}
 
-		void Part::insertInternal(InsertState &state, Nat offset, InfoInternal *node) {
+		void Part::insertInternal(InsertState &state, Nat offset, InfoInternal *node, Bool seenError) {
 			for (Nat i = 0; i < node->count() && !state.done; i++) {
 				InfoNode *at = node->at(i);
 				Nat len = at->length();
-				insert(state, offset, at);
+				insert(state, offset, at, seenError);
 				offset += len;
 			}
 		}
@@ -324,7 +338,7 @@ namespace storm {
 				Range(),
 				Range(),
 			};
-			ParseResult r = parse(env, start, content);
+			ParseResult r = parse(env, start, content, false);
 			// PVAR(TO_S(this, r));
 
 			// Maybe we contain some parts of the previous part?
@@ -347,7 +361,7 @@ namespace storm {
 			return env.modified;
 		}
 
-		ParseResult Part::parse(ParseEnv &env, Nat offset, InfoNode *node) {
+		ParseResult Part::parse(ParseEnv &env, Nat offset, InfoNode *node, bool seenError) {
 			// We should probably parse at a higher level...
 			Nat len = node->length();
 			if (len == 0)
@@ -364,19 +378,28 @@ namespace storm {
 			if (!inode)
 				return ParseResult();
 
+			// If this node is an error production: take note so we can act accordingly in the recursion.
+			if (inode->error())
+				seenError = true;
+
 			// Re-parse this node if none of our children have already managed to do so.
 			ParseResult ok(0, 0);
 			for (Nat i = 0; i < inode->count() && ok.success; i++) {
 				InfoNode *child = inode->at(i);
-				ParseResult cResult = parse(env, offset, child);
+				ParseResult cResult = parse(env, offset, child, seenError);
 				ok = combine(ok, cResult);
 				offset += child->length();
 			}
 
 			if (bad(ok, node) && inode->production()) {
+				// Ignore parsing this node if we have seen an error node and this node was not a part of that error.
+				if (seenError && !inode->error())
+					return ok;
+
 				// Re-parse this node!
 				ParseResult here;
 				InfoNode *n = parse(inode, inode->production()->rule(), &here);
+
 				// TODO: See which one is worse...
 				if (n && !bad(here, node)) {
 					replace(inode, n);
@@ -387,6 +410,7 @@ namespace storm {
 					env.corrected = nodeRange;
 				}
 			}
+
 			return ok;
 		}
 
@@ -399,9 +423,10 @@ namespace storm {
 				return true;
 
 			Nat len = node->length();
-			if (w.skippedChars >= len * 0.4)
+			// NOTE: Consider the case when 'len' == 0.
+			if (w.skippedChars > len * 0.4)
 				return true;
-			if (w.corrections >= max(5.0, len*0.05))
+			if (w.corrections > max(5.0, len*0.05))
 				return true;
 
 			return false;
@@ -507,11 +532,12 @@ namespace storm {
 				here |= range.intersects(full);
 				// Note: 'range' can be empty, which causes problems when it lies right between two parts.
 				here |= range.empty() && range.from == full.from;
-				if (!here)
-					continue;
 
-				result = merge(result, part->replace(range, replace));
-				invalidateFrom = min(invalidateFrom, i + 1);
+				if (here) {
+					result = merge(result, part->replace(range, replace));
+					invalidateFrom = min(invalidateFrom, i + 1);
+					offset = part->full().to;
+				}
 			}
 
 			// At the end of the last part?
@@ -567,6 +593,7 @@ namespace storm {
 
 			Nat size = 0;
 			for (Nat i = 0; i < parts->count(); i++) {
+				to->writeLine(TO_S(this, L"Range: " << parts->at(i)->full()));
 				parts->at(i)->debugOutput(to, tree);
 				to->writeLine(new (this) Str(L"--------"));
 				size += parts->at(i)->dbg_size();

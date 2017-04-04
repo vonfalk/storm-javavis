@@ -116,14 +116,16 @@
     (with-current-buffer buffer
       (let ((ref (buffer-substring (point-min) (point-max))))
 	(erase-buffer)
-	(storm-wait-for 'color 0.4)
+	(storm-wait-for 'color 1.0)
 	;; Re-open the current buffer, so we start with a clean slate!
 	(storm-debug-re-open)
 
 	(while (<= (point-max) (length ref))
 	  (insert (substring-no-properties ref (1- (point-max)) (point-max)))
-	  (storm-wait-for 'color 0.4)
+	  (storm-wait-for 'color 1.0)
 	  (redisplay))
+
+	(set-buffer-modified-p nil)
 
 	(let ((result (storm-compare-buffer ref)))
 	  (when (> result 0)
