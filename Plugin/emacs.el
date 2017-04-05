@@ -82,7 +82,10 @@
 ;; Storm-mode for buffers.
 (defun global-storm-mode (enable)
   "Use storm-mode for all applicable buffers."
-  (interactive)
+  (interactive '(toggle))
+  (when (eq enable 'toggle)
+    (setq enable (not global-storm-mode))
+    (message "Storm mode is %s" (if enable "on" "off")))
   (setq global-storm-mode enable)
   (when enable
     ;; Get notified about newly opened buffers. This is a no-op if the advice has already been added.
@@ -90,7 +93,7 @@
     ;; Get notified when Storm is started so we may enable Storm-mode on all buffers.
     (add-hook 'storm-started-hook #'global-storm-started)
     ;; Start the process, if that is not done already.
-    (if (storm-running-p)
+    (if (not (storm-running-p))
 	(storm-start)
       (global-storm-started))))
 
@@ -103,12 +106,11 @@
 (defun auto-storm-mode ()
   "Enable Storm mode for the current buffer if applicable."
   (when buffer-file-name
-    (let ((ext (file-name-extension buffer-file-name)))
-      (if (storm-supports ext)
-	  (progn
-	    (storm-mode)
-	    't)
-	'nil))))
+    (unless storm-buffer-id
+      (let ((ext (file-name-extension buffer-file-name)))
+	(when (storm-supports ext)
+	  (storm-mode)
+	  't)))))
 
 (defun global-storm-started ()
   "Called when Storm has been started. If 'global-storm-mode' is
@@ -123,6 +125,7 @@
 (defun storm-mode ()
   "Use storm-mode for the current buffer."
   (interactive)
+
   (kill-all-local-variables)
   ;; For now, we use the default syntax table.
   (use-local-map storm-mode-map)
