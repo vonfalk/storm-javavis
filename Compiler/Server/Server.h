@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Lock.h"
 #include "Compiler/Thread.h"
 #include "Connection.h"
 #include "File.h"
@@ -57,6 +58,11 @@ namespace storm {
 
 			// Work queue.
 			WorkQueue *work;
+
+			// Lock taken whenever we call into a file. This is needed since thread switches can
+			// occur when we call into code possibly implemented in Storm. Otherwise, background
+			// tasks could interfere with message processing.
+			Lock *lock;
 
 			// Keep track of the color symbols used.
 			Array<Symbol *> *colorSyms;

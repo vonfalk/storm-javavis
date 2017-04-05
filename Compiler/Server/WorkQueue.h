@@ -44,6 +44,14 @@ namespace storm {
 			// Create.
 			STORM_CTOR WorkQueue(Server *callbackTo);
 
+			// Default idle time.
+			enum {
+				defaultIdleTime = 500
+			};
+
+			// How much time should pass before doing work?
+			Nat idleTime;
+
 			// Start the UThread waiting for inactivity.
 			void STORM_FN start();
 
@@ -55,14 +63,6 @@ namespace storm {
 
 			// Post a message.
 			void STORM_FN post(WorkItem *item);
-
-			// Default idle time.
-			enum {
-				defaultIdleTime = 500
-			};
-
-			// How much time should pass before doing work?
-			Nat idleTime;
 
 		private:
 			// Dispatch callbacks to here.

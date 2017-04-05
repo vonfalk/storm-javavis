@@ -481,6 +481,11 @@
       (when to-call
 	(funcall to-call)))))
 
+(defun storm-save-restart ()
+  "Restart the storm process after saving buffers."
+  (interactive)
+  (save-some-buffers)
+  (storm-restart))
 
 (defun storm-restart ()
   "Restart the current Storm process."
@@ -553,10 +558,9 @@
   (add-to-list 'compilation-finish-functions 'storm-compilation-finished)
   ;; Make sure not to run multiple compilations.
   (unless storm-running-compile
-    (let ((default-directory (storm-parent-directory (file-name-directory storm-mode-compiler)))
-	  (compilation-ask-about-save nil))
+    (let ((default-directory (storm-parent-directory (file-name-directory storm-mode-compiler))))
       (setq storm-running-compile
-	    (compile "mm Main -ne")))))
+	    (compilation-start "mm Main -ne")))))
 
 (defun storm-compilation-finished (buffer exit-status)
   "Called whenever a compilation buffer has finished."

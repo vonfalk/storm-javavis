@@ -297,7 +297,7 @@
 
 ;;; For debugging ;;;
 
-(global-set-key (kbd "C-M-u") 'storm-restart)
+(global-set-key (kbd "C-M-u") 'storm-save-restart)
 (global-set-key (kbd "C-M-y") 'storm-stop)
 (global-set-key (kbd "C-c s") 'tmp-send)
 (defun tmp-send ()

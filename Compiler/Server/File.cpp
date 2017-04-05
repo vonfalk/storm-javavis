@@ -78,18 +78,22 @@ namespace storm {
 		Range Part::replace(Range range, Str *replace) {
 			if (!content)
 				return Range(0, 0);
-			// PLN(TO_S(this, L"Replace " << range << L" with " << replace));
+			// PLN(TO_S(this, L"Replace " << range << L" with " << replace << L", len " << content->length()));
 
 			// Do all regexes match?
 			Bool regexMatching = true;
 
 			// Anything to remove?
-			if (!range.empty())
+			if (!range.empty()) {
 				regexMatching &= remove(range);
+				range = Range(range.from, range.from);
+			}
 
 			// Anything to add?
-			if (replace->begin() != replace->end())
+			if (replace->begin() != replace->end()) {
 				regexMatching &= insert(range.from, replace);
+				range = Range(range.from, range.from + replace->peekLength());
+			}
 
 			Range result(range.from, range.from + strlen(replace));
 			if (!regexMatching) {
@@ -342,20 +346,17 @@ namespace storm {
 			// PVAR(TO_S(this, r));
 
 			// Maybe we contain some parts of the previous part?
-			bool reParse = false;
 			if (!r.success) {
-				reParse = true;
+				// Invalidate the previous part.
+				owner->postInvalidate(this, -1, true);
 			} else if (env.corrected.empty()) {
 				// Nope!
-			} else if (env.corrected.from <= start + 5) {
-				reParse = true;
-			} else if (env.corrected.to >= full().to - 5) {
-				reParse = true;
-			}
-
-			if (reParse) {
-				// Try to re-parse!
-				owner->postInvalidate(this, -1, true);
+			} else if (!env.corrected.empty() && env.corrected.from <= start + 10) {
+				// Invalidate the border towards the previous part.
+				owner->postInvalidate(this, File::prevBorder, true);
+			} else if (!env.corrected.empty() && env.corrected.to >= full().to - 10) {
+				// Invalidate the border towards the next part.
+				owner->postInvalidate(this, File::nextBorder, true);
 			}
 
 			return env.modified;
@@ -405,9 +406,9 @@ namespace storm {
 					replace(inode, n);
 					env.modified = nodeRange;
 					ok = here;
-				}
-				if (here.corrected()) {
-					env.corrected = nodeRange;
+
+					if (here.corrected())
+						env.corrected = nodeRange;
 				}
 			}
 
@@ -518,6 +519,7 @@ namespace storm {
 		Range File::replace(Range range, Str *replace) {
 			// Total invalidated range.
 			Range result;
+			// PLN(TO_S(this, L"Replace " << range << L" with " << replace->escape()));
 
 			// The first part which needs to be invalidated eventually.
 			Nat invalidateFrom = parts->count();
@@ -667,6 +669,25 @@ namespace storm {
 						r += delta;
 
 					work->post(new (this) InvalidatePart(this, r, force));
+				}
+			}
+		}
+
+		void File::postInvalidate(Part *part, Border border, Bool force) {
+			for (Nat i = 0; i < parts->count(); i++) {
+				if (part == parts->at(i)) {
+					switch (border) {
+					case prevBorder:
+						if (i > 0)
+							work->post(new (this) InvalidatePart(this, i - 1, force));
+						break;
+					case nextBorder:
+						// If 'part' is the last part, there is no point in invalidating anything.
+						if (i + 1 < parts->count())
+							work->post(new (this) InvalidatePart(this, i, force));
+						break;
+					}
+					break;
 				}
 			}
 		}

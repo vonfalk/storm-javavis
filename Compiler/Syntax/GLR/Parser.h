@@ -108,6 +108,9 @@ namespace storm {
 				// Start position of the last parse.
 				Nat startPos;
 
+				// Skipped characters. Used to indicate number of errors when performing shifts.
+				Nat skipped;
+
 				// Source string being parsed.
 				Str *source;
 

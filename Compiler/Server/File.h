@@ -172,6 +172,15 @@ namespace storm {
 			// Post a message for invalidating a part (or before/after a part).
 			void postInvalidate(Part *part, Int offset, Bool force);
 
+			// Border.
+			enum Border {
+				prevBorder,
+				nextBorder,
+			};
+
+			// Post a message for invalidating the border between 'part' and the next/previous part.
+			void postInvalidate(Part *part, Border border, Bool force);
+
 		private:
 			// Path to the underlying file (so we can properly locate packages etc., we never actually read the file).
 			Url *path;

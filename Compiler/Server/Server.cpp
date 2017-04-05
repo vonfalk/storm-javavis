@@ -7,6 +7,7 @@ namespace storm {
 	namespace server {
 
 		Server::Server(Connection *c) : conn(c) {
+			lock = new (this) Lock();
 			files = new (this) Map<Nat, File *>();
 			colorSyms = new (this) Array<Symbol *>();
 			quit = c->symbol(L"quit");
@@ -57,6 +58,8 @@ namespace storm {
 				if (files->get(f->id, null) != f)
 					// This is some remaining work from a closed file...
 					return;
+
+				Lock::L z(lock);
 				Range r = item->run(work);
 				updateLater(f, r);
 			} catch (const Exception &e) {
@@ -66,6 +69,8 @@ namespace storm {
 		}
 
 		Bool Server::process(SExpr *msg) {
+			Lock::L z(lock);
+
 			Cons *cell = msg->asCons();
 			Symbol *kind = cell->first->asSym();
 

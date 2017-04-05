@@ -82,8 +82,7 @@ namespace storm {
 						if (pos >= length)
 							break;
 
-						// TODO: Indicate errors in these reductions somehow....
-
+						skipped = 1;
 						skippedChars++;
 						pos++;
 						lastPos++;
@@ -112,6 +111,7 @@ namespace storm {
 				startPos = start.offset();
 				sourceUrl = file;
 				parseRoot = syntax->lookup(root);
+				skipped = 0;
 
 				store = new (this) TreeStore(syntax);
 				stacks = new (this) FutureStacks();
@@ -134,6 +134,7 @@ namespace storm {
 
 					// Advance one step.
 					stacks->pop();
+					skipped = 0;
 				}
 			}
 
@@ -235,7 +236,7 @@ namespace storm {
 					// are the same, but when error recovery kicks in 'env.stack->pos' may be
 					// smaller, which means that some characters in the input were skipped. These
 					// should be included somewhere so that the InfoTrees will have the correct length.
-					Nat tree = store->push(env.stack->pos).id();
+					Nat tree = store->push(env.stack->pos, skipped).id();
 					StackItem *item = new (this) StackItem(action.action, matched, env.stack, tree);
 					stacks->put(offset, store, item);
 #ifdef GLR_DEBUG
