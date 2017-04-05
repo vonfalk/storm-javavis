@@ -1,6 +1,5 @@
 ;; Benchmark tests for the language server.
 
-
 ;; Run tests using C-c b
 (global-set-key (kbd "C-c b") 'storm-run-benchmarks)
 
@@ -47,7 +46,7 @@
       (setq dispatch-to (storm-find-type file)))
 
     (if dispatch-to
-	(progn
+	(catch 'bench-fail
 	  (storm-output-string (format "Running file: %s%s...\n" path file) 'storm-bench-msg)
 	  (funcall dispatch-to (concat path file)))
       (storm-output-string (format "Ignoring unsupported file: %s%s\n" path file)))))
@@ -66,15 +65,19 @@
 	))
     result))
 
-(defun storm-open-buffer (file)
+(defun storm-open-buffer (file &optional skip-mode)
   "Open a buffer, wait until it is fully colored and ready for use."
   (save-excursion
     (let ((buf (find-file-noselect file)))
       (display-buffer buf t)
       (with-current-buffer buf
-	(storm-mode)
-	(storm-wait-for 'color 5.0)
-	buf))))
+	(when (buffer-modified-p)
+	  (text-mode)
+	  (revert-buffer t t))
+	(unless skip-mode
+	  (storm-mode)
+	  (storm-wait-for 'color 5.0)))
+      buf)))
 
 (defface storm-bench-msg
   '((t :foreground "dark green"))
@@ -88,25 +91,35 @@
   '((t :background "red"))
   "Face used to indicate erroneous syntax highlighting.")
 
-(defun storm-compare-buffer (ref-str)
-  (let ((pos 0)
-	(to (- (point-max) (point-min)))
-	(errors 0))
-    (while (< pos to)
-      (let* ((buf-pos (+ (point-min) pos))
-	     (cur (get-text-property buf-pos 'font-lock-face))
-	     (ref (get-text-property pos 'font-lock-face ref-str)))
-	(unless (equal cur ref)
-	  (with-silent-modifications
-	    (put-text-property buf-pos (1+ buf-pos) 'font-lock-face 'storm-hilight-diff-face))
-	  (setq errors (1+ errors))))
-      (setq pos (1+ pos)))
-    errors))
+(defun storm-compare-buffer (file ref-str &optional ignore-from ignore-to)
+  (unless (numberp ignore-from)
+    (setq ignore-from 0))
+  (unless (numberp ignore-to)
+    (setq ignore-to 0))
 
+  (let ((str-pos 0)
+	(buf-pos (point-min))
+	(errors 0))
+    (while (< buf-pos (point-max))
+      (when (or (<  buf-pos ignore-from)
+		(>= buf-pos ignore-to))
+	(let ((cur (get-text-property str-pos 'font-lock-face ref-str))
+	      (ref (get-text-property buf-pos 'font-lock-face)))
+	  (unless (equal cur ref)
+	    ;;(with-silent-modifications
+	      ;;(put-text-property buf-pos (1+ buf-pos) 'font-lock-face 'storm-hilight-diff-face))
+	    (setq errors (1+ errors))))
+	(setq str-pos (1+ str-pos)))
+      (setq buf-pos (1+ buf-pos)))
+
+    (when (> errors 0)
+      (storm-output-string (format "%S errors in %s\n" errors file) 'storm-bench-fail))
+    errors))
 
 (defvar storm-bench-types
   '(
     ("fill" . storm-run-fill)
+    ("insert" . storm-run-insert)
     )
   "Kinds of tests that are currently supported.")
 
@@ -126,7 +139,54 @@
 	  (redisplay))
 
 	(set-buffer-modified-p nil)
+	(storm-compare-buffer file ref)))))
 
-	(let ((result (storm-compare-buffer ref)))
-	  (when (> result 0)
-	    (storm-output-string (format "%S errors in %s\n" result file) 'storm-bench-fail)))))))
+(defun storm-run-insert (file)
+  "Run files with .insert.X."
+  (let ((buffer (storm-open-buffer file t)))
+    (with-current-buffer buffer
+      (let* ((header (storm-insert-header))
+	     (insert-str (first header))
+	     (insert-text (rest header))
+	     (ref-str "")
+	     (gap-start 0))
+	(unless (search-forward insert-str nil t)
+	  (storm-output-string (format "The marker %S was not found in the file." insert-str))
+	  (throw 'bench-fail))
+
+	(delete-char (- (length insert-str)))
+	(storm-mode)
+	;; We get two messages here for some reason...
+	(storm-wait-for 'color 0.5)
+	(storm-wait-for 'color 5.0)
+
+	(setq ref-str (buffer-substring (point-min) (point-max)))
+	(setq gap-start (point))
+
+	(while insert-text
+	  (insert (car insert-text))
+	  (storm-wait-for 'color 1.0)
+	  (setq insert-text (cdr insert-text))
+	  (when insert-text
+	    (insert "\n")
+	    (indent-according-to-mode))
+	  (redisplay))
+
+	(storm-compare-buffer file ref-str gap-start (point))))))
+
+(defun storm-insert-header ()
+  "Extract the header lines for an 'insert'-type file."
+  (goto-char (point-min))
+  (let* ((current-line (next-buffer-line))
+	 (look-for (concat (first (split-string current-line " ")) " "))
+	 (result '()))
+    (while (string-prefix-p look-for current-line)
+      (setq result (append result (list (substring current-line (length look-for)))))
+      (setq current-line (next-buffer-line)))
+    result))
+
+(defun next-buffer-line ()
+  "Get the next line from a buffer."
+  (prog1
+      (buffer-substring-no-properties (line-beginning-position) (line-end-position))
+    (goto-char (line-beginning-position 2))))
