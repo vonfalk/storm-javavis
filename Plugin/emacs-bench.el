@@ -126,6 +126,16 @@
       (storm-output-string (format "%S errors in %s\n" errors file) 'storm-bench-fail))
     errors))
 
+(defun storm-insert-slowly (text)
+  "Insert the string 'text' at point, one character at a time."
+  (let ((pos 0))
+    (while (< pos (length text))
+      (insert (substring-no-properties text pos (1+ pos)))
+      (storm-wait-for 'color 1.0)
+      (redisplay)
+      (setq pos (1+ pos)))))
+
+
 (defvar storm-bench-types
   '(
     ("fill" . storm-run-fill)
@@ -143,10 +153,7 @@
 	;; Re-open the current buffer, so we start with a clean slate!
 	(storm-debug-re-open)
 
-	(while (<= (point-max) (length ref))
-	  (insert (substring-no-properties ref (1- (point-max)) (point-max)))
-	  (storm-wait-for 'color 1.0)
-	  (redisplay))
+	(storm-insert-slowly ref)
 
 	(set-buffer-modified-p nil)
 	(storm-compare-buffer file ref)))))
@@ -173,7 +180,7 @@
 	(setq gap-start (point))
 
 	(while insert-text
-	  (insert (car insert-text))
+	  (storm-insert-slowly (car insert-text))
 	  (storm-wait-for 'color 1.0)
 	  (setq insert-text (cdr insert-text))
 	  (when insert-text
