@@ -6,6 +6,8 @@
 #full debugging like this.
 
 [project]
+#Only build targets containing .mymake-files.
+explicitTargets=yes
 
 [project,release]
 input+=Main
@@ -96,10 +98,6 @@ execDir=../slow/
 []
 #Ignore includes from the generated BuiltIn.cpp files.
 noIncludes+=*/BuiltIn.cpp
-
-#Ignore includes for gc includes for all projects.
-noIncludes+=*/gc/*
-noIncludes+=gc/*
 
 [windows]
 #Tell the Win32 API we're working with UTF16.

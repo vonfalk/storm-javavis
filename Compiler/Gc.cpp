@@ -487,7 +487,7 @@ namespace storm {
 			return wordSize + c->fwd.size;
 		}
 
-		assert((c->header & codeMask) == 0, L"Unknown special object found.");
+		dbg_assert((c->header & codeMask) == 0, L"Unknown special object found.");
 
 		// Regular code.
 		size_t codeSize = c->header;
@@ -551,7 +551,7 @@ namespace storm {
 						// for (int j = -4; j < 5; j++) {
 						// 	PLN("@" << std::setw(2) << j << L": " << *((void **)&ref + j));
 						// }
-						assert(false, L"Unknown reference type found in a code block: " + ::toS(ref.kind));
+						dbg_assert(false, L"Unknown reference type found in a code block: " + ::toS(ref.kind));
 						break;
 					}
 
@@ -602,7 +602,7 @@ namespace storm {
 					*(size_t *)offset += delta;
 					break;
 				default:
-					assert(false, L"Unknown reference type found in a code block.");
+					dbg_assert(false, L"Unknown reference type found in a code block.");
 					break;
 				}
 			}
@@ -1025,8 +1025,7 @@ namespace storm {
 		if (i != threads.end()) {
 			i->second->attachCount++;
 		} else {
-			WARNING(L"Trying to re-attach a new thread!");
-			assert(false);
+			assert(false, L"Trying to re-attach a new thread!");
 		}
 	}
 
@@ -1371,8 +1370,6 @@ namespace storm {
 					removed++;
 				}
 			}
-
-			PLN(L"Freed " << removed << L" type objects!");
 		}
 	}
 
@@ -1445,6 +1442,10 @@ namespace storm {
 
 	void *Gc::allocCode(size_t code, size_t refs) {
 		code = wordAlign(code);
+		if (code & codeMask)
+			// Too large if we start polluting the 'codeMask' flag.
+			return null;
+
 		size_t size = wordSize + code + sizeof(GcCode) + refs*sizeof(GcCodeRef) - sizeof(GcCodeRef);
 		mps_addr_t memory;
 
