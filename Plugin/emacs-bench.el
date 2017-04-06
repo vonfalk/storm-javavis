@@ -65,18 +65,28 @@
 	))
     result))
 
+(defun kill-current-mode ()
+  "Disable the current mode and go back to text-mode."
+  (kill-all-local-variables)
+  (text-mode))
+
 (defun storm-open-buffer (file &optional skip-mode)
   "Open a buffer, wait until it is fully colored and ready for use."
   (save-excursion
     (let ((buf (find-file-noselect file)))
       (display-buffer buf t)
       (with-current-buffer buf
-	(when (buffer-modified-p)
-	  (text-mode)
-	  (revert-buffer t t))
-	(unless skip-mode
-	  (storm-mode)
-	  (storm-wait-for 'color 5.0)))
+	(if skip-mode
+	    (progn
+	      (kill-current-mode)
+	      (when (buffer-modified-p)
+		(revert-buffer t t)))
+	  (progn
+	    (when (buffer-modified-p)
+	      (kill-current-mode)
+	      (revert-buffer t t))
+	    (storm-mode)
+	    (storm-wait-for 'color 5.0))))
       buf)))
 
 (defface storm-bench-msg
@@ -156,9 +166,8 @@
 
 	(delete-char (- (length insert-str)))
 	(storm-mode)
-	;; We get two messages here for some reason...
-	(storm-wait-for 'color 0.5)
 	(storm-wait-for 'color 5.0)
+	(redisplay)
 
 	(setq ref-str (buffer-substring (point-min) (point-max)))
 	(setq gap-start (point))
@@ -172,7 +181,9 @@
 	    (indent-according-to-mode))
 	  (redisplay))
 
-	(storm-compare-buffer file ref-str gap-start (point))))))
+	(when (= 0 (storm-compare-buffer file ref-str gap-start (point)))
+	  ;; Revert the buffer if it contained no errors. Convenient when working with Git.
+	  (revert-buffer t t))))))
 
 (defun storm-insert-header ()
   "Extract the header lines for an 'insert'-type file."

@@ -81,7 +81,8 @@
 
 ;; Storm-mode for buffers.
 (defun global-storm-mode (enable)
-  "Use storm-mode for all applicable buffers."
+  "Use storm-mode for all applicable buffers. Pass 't or 'nil to set explicitly. Call with 'toggle or 
+   call interactively to toggle."
   (interactive '(toggle))
   (when (eq enable 'toggle)
     (setq enable (not global-storm-mode))
@@ -105,7 +106,7 @@
 
 (defun auto-storm-mode ()
   "Enable Storm mode for the current buffer if applicable."
-  (when buffer-file-name
+  (when (and buffer-file-name global-storm-mode)
     (unless storm-buffer-id
       (let ((ext (file-name-extension buffer-file-name)))
 	(when (storm-supports ext)
