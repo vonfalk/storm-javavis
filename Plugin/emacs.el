@@ -194,8 +194,10 @@
     (define-key map "\C-cu" 'storm-debug-re-color)
     (define-key map "\C-cr" 'storm-debug-re-open)
     (define-key map "\C-cx" 'storm-debug-un-color)
+    (define-key map "\C-ce" 'storm-debug-find-error)
     map)
   "Keymap for storm-mode")
+
 
 ;; Commands.
 
@@ -230,6 +232,12 @@
   (interactive)
   (when storm-buffer-id
     (storm-register-buffer (current-buffer))))
+
+(defun storm-debug-find-error ()
+  "Find and output the first syntax error in the current buffer."
+  (interactive)
+  (when storm-buffer-id
+    (storm-send (list 'error storm-buffer-id))))
 
 ;; Convenience for highlighting.
 
@@ -281,13 +289,14 @@
     ;; Clear the edit history.
     (setq storm-buffer-edit-id 0)
     (setq storm-buffer-edits nil)
-    (setq storm-buffer-last-point 0)
+    (setq storm-buffer-last-point (point))
 
     ;; Tell Storm what is happening.
     (storm-send (list 'open
 		      storm-buffer-id
 		      (buffer-file-name)
-		      (buffer-substring-no-properties (point-min) (point-max))))))
+		      (buffer-substring-no-properties (point-min) (point-max))
+		      (point)))))
 
 (defun storm-buffer-killed ()
   "Called when a buffer is going to be killed."

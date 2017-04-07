@@ -30,13 +30,15 @@ Messages sent from a client to the server:
 Message	                      Description
 (quit)	 	 	      Asks the Storm process to quit.
 (supports type)		      See if the file type 'type' is supported.
-(open id path content)	      Open a new file from 'path', hereby referred to as 'id' containing 'content'.
-                              This is considered edit #0.
+(open id path content <pos>)  Open a new file from 'path', hereby referred to as 'id' containing 'content'.
+                              This is considered edit #0. If <pos> is included, it indicates the current position
+			      of the cursor, the same as indicated by 'point' below.
 (close id)    		      Close a previously opened file.
 (edit file id from to text)   The file 'file' has been changed. This is edit number 'id'. The text between
                               'from' and 'to' is replaced by 'text'.
 (point file pos)              Tell Storm that the point is now at 'pos'.
 (indent file pos)	      Query the indentation of 'file' at position 'pos'.
+(error file) 		      Find and report any parse errors in 'file' (in textual form).
 (test ...)		      Messages used for testing the protocol. See below.
 (debug id mode)		      Output the internal representation of file 'id'. Used when debugging.
 (recolor id)		      Re-color file 'id'.

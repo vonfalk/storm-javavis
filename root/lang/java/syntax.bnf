@@ -20,7 +20,7 @@ SInComment : "/+" - SInComment;
 
 // Identifiers.
 void SIdent();
-SIdent : "[A-Za-z][A-Za-z0-9_]*";
+SIdent : "[A-Za-z_][A-Za-z0-9_]*";
 
 // Qualified identifier.
 void SQIdent();
@@ -78,7 +78,7 @@ SImplements :;
 // Types.
 void SType();
 SType : SBasicType - (, "\[\]")*;
-SType : SRefType - (, "\[\]")*;
+SType : SRefType;
 
 void SBasicType();
 SBasicType : "byte" #typeName;
@@ -95,7 +95,9 @@ STypeVoid : "void" #keyword;
 STypeVoid : SType;
 
 void SRefType();
-SRefType : SIdent #typeName, STypeArgs - (, "\.", SIdent #typeName, STypeArgs)*;
+// Note: The official documentation does not allow SArrayTokens here. We do, since the official
+// Java compiler seems to allow new Foo<Bar[]>();
+SRefType : SIdent #typeName, STypeArgs - (, "\.", SIdent #typeName, STypeArgs)*, SArrayTokens;
 
 void STypeList();
 STypeList : SRefType - (, ",", SRefType)*;
@@ -189,9 +191,13 @@ void SExpr1();
 SExpr1 : SExpr2 - (, "?", SExpr1, ":", SExpr1)?;
 
 void SExpr2();
-SExpr2 : SExpr3;
-SExpr2 : SExpr3 - (, SInfixOp, SExpr3)+;
-SExpr2 : SExpr3, "instanceof" #keyword, SType;
+SExpr2 : SExpr3 - (, SExpr2Rest)*;
+
+void SExpr2Rest();
+// Note: The Java grammar actually disallows 'x instanceof Foo && y'. We allow it here, since
+// it seems to be allowed by the Java compiler.
+SExpr2Rest : "instanceof" #keyword, SType;
+SExpr2Rest : SInfixOp, SExpr3;
 
 void SInfixOp();
 SInfixOp : "||";
@@ -241,16 +247,17 @@ SPostfixOp : "--";
 void SPrimary();
 SPrimary : "(", SExpr, ")";
 SPrimary : "[0-9]+[Ll]?" #constant;
+SPrimary : "0[Xx][0-9A-Fa-f]+[Ll]?" #constant;
 SPrimary : SFloat #constant - ("f" #constant)?;
 SPrimary : "true" #constant;
 SPrimary : "false" #constant;
 SPrimary : "null" #constant;
 SPrimary : "\"" #string - SStrContent #string - "\"" #string;
-SPrimary : "'" #string - SStrContent #string - "'" #string;
+SPrimary : "'" #string - SCharContent #string - "'" #string;
 SPrimary : "this" #keyword - (, SArgs)?;
 SPrimary : "super" #keyword - (, SArgs)?;
 SPrimary : "super" #keyword, "\.", SIdent #fnName - (, SArgs)?;
-SPrimary[-1] : SIdent #varName, SIdentSuffix;
+SPrimary[-1] : SIdent #varName - (, SIdentSuffix)*;
 SPrimary : SBasicType #typeName, ("\[\]",)* "\.", "class" #keyword;
 SPrimary : "void" #typeName, "\.", "class" #keyword;
 SPrimary : "new" #keyword, SCreator;
@@ -271,7 +278,7 @@ SCreatorRest : SArgs - (, SClassBody)?;
 
 void SArrayRest();
 // TODO: Figure out how this should be implemented...
-SArrayRest : "\[", SExpr, "\]" - (, "\[", SExpr, "\]")*;
+SArrayRest : "\[", SExpr, "\]" - (, "\[", SExpr, "\]")*, SArrayTokens;
 SArrayRest : ("\[\]",)+ SArrayInit;
 
 void SArrayTokens();
@@ -293,9 +300,13 @@ void SStrContent();
 SStrContent : "[^\"\\]*";
 SStrContent : SStrContent - "\\." - SStrContent;
 
+void SCharContent();
+SCharContent : "[^\\']";
+SCharContent : "\\.";
+
 void SIdentSuffix();
 SIdentSuffix : ;
-SIdentSuffix[-1] : "\.", SIdent, SIdentSuffix;
+SIdentSuffix[-1] : "\.", SIdent #varName;
 SIdentSuffix : ("\[\]", )* "\.", "class" #keyword;
 SIdentSuffix : "\[", SExpr, "\]"; // Strange to have an expression in this context...
 SIdentSuffix : SArgs;

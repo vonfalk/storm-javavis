@@ -612,6 +612,31 @@ namespace storm {
 			return out->toS();
 		}
 
+		void File::findError() {
+			Str *src = content(parts);
+			PkgReader *pkgReader = createReader(new (this) Array<Url *>(1, path), package);
+			if (!pkgReader)
+				return;
+			FileReader *reader = pkgReader->readFile(path, src);
+
+			while (reader) {
+				FileReader *next = reader->next(qParser);
+
+				Str::Iter end = src->end();
+				if (next)
+					end = next->info->start;
+
+				InfoParser *parser = reader->createParser();
+				parser->parse(src, path, reader->info->start);
+				if (!parser->hasTree())
+					throw parser->error();
+				if (parser->matchEnd() != end)
+					throw parser->error();
+
+				reader = next;
+			}
+		}
+
 		Range File::updatePart(Nat part, Bool force) {
 			try {
 				Range result;

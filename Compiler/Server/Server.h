@@ -43,6 +43,7 @@ namespace storm {
 			Symbol *edit;
 			Symbol *point;
 			Symbol *close;
+			Symbol *error;
 			Symbol *indent;
 			Symbol *chunkSz;
 			Symbol *test;
@@ -79,6 +80,7 @@ namespace storm {
 			void onEdit(SExpr *msg);
 			void onPoint(SExpr *msg);
 			void onClose(SExpr *msg);
+			void onError(SExpr *msg);
 			void onIndent(SExpr *msg);
 			void onChunkSz(SExpr *msg);
 			void onTest(SExpr *msg);

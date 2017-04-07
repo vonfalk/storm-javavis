@@ -152,10 +152,13 @@ namespace storm {
 			// non-overlapping. The resulting colorings all overlap the specified range, but are not
 			// clipped to be strictly inside the range.
 			// TODO: Generate the required SExpr directly instead of going through an array.
-			Array<ColoredRange> *colors(Range r);
+			Array<ColoredRange> *STORM_FN colors(Range r);
 
 			// Get the indentation of the character at offset 'n'.
-			syntax::TextIndent indent(Nat pos);
+			syntax::TextIndent STORM_FN indent(Nat pos);
+
+			// Find the first parse error in the file and throw the error.
+			void STORM_FN findError();
 
 			// Our id.
 			Nat id;

@@ -17,6 +17,7 @@ namespace storm {
 			point = c->symbol(L"point");
 			indent = c->symbol(L"indent");
 			close = c->symbol(L"close");
+			error = c->symbol(L"error");
 			chunkSz = c->symbol(L"chunk-size");
 			test = c->symbol(L"test");
 			debug = c->symbol(L"debug");
@@ -90,6 +91,9 @@ namespace storm {
 			} else if (close->equals(kind)) {
 				work->poke();
 				onClose(cell->rest);
+			} else if (error->equals(kind)) {
+				work->poke();
+				onError(cell->rest);
 			} else if (indent->equals(kind)) {
 				work->poke();
 				onIndent(cell->rest);
@@ -125,10 +129,15 @@ namespace storm {
 			Nat id = next(expr)->asNum()->v;
 			Str *path = next(expr)->asStr()->v;
 			Str *content = next(expr)->asStr()->v;
+			Nat point = 0;
+			if (Cons *last = ::as<Cons>(expr))
+				if (last->first)
+					point = last->first->asNum()->v;
 
 			Moment start;
 
 			File *f = new (this) File(id, parsePath(path), content, work);
+			f->editPos = point;
 			files->put(id, f);
 
 			print(TO_S(this, L"Opened " << path << L" in " << (Moment() - start)));
@@ -171,6 +180,21 @@ namespace storm {
 			Nat id = next(expr)->asNum()->v;
 
 			files->remove(id);
+		}
+
+		void Server::onError(SExpr *expr) {
+			Nat id = next(expr)->asNum()->v;
+
+			File *f = files->get(id, null);
+			if (!f)
+				return;
+
+			try {
+				f->findError();
+				print(L"No errors.\n");
+			} catch (const SyntaxError &error) {
+				print(::toS(error));
+			}
 		}
 
 		void Server::onIndent(SExpr *expr) {
