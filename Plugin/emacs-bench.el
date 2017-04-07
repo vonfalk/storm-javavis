@@ -7,14 +7,16 @@
 (defvar benchmark-root-dir "test/server-tests/simple/" "Benchmarks root directory, relative to 'storm-mode-root'.")
 
 ;; Run benchmarks.
-(defun storm-run-benchmarks ()
+(defun storm-run-benchmarks (&optional dir)
   "Run benchmarks. Make sure Storm is running before starting the benchmarks."
   (interactive)
+  (unless dir
+    (setq dir benchmark-root-dir))
   (let ((old-storm-mode global-storm-mode)
 	(old-chunk-size (storm-query '(chunk-size))))
     (setq global-storm-mode nil)
     (storm-send '(chunk-size 0))
-    (storm-run-dir (concat (file-name-as-directory storm-mode-root) benchmark-root-dir))
+    (storm-run-dir (concat (file-name-as-directory storm-mode-root) dir))
     (setq global-storm-mode old-storm-mode)
     (storm-send (cons 'chunk-size old-chunk-size))))
 
@@ -86,8 +88,13 @@
 	      (kill-current-mode)
 	      (revert-buffer t t))
 	    (storm-mode)
-	    (storm-wait-for 'color 5.0))))
+	    (storm-update-colors))))
       buf)))
+
+(defun storm-update-colors ()
+  "Update colors in the current buffer, wait for the result from Storm."
+  (storm-send (list 'color storm-buffer-id))
+  (storm-wait-for 'color 5.0))
 
 (defface storm-bench-msg
   '((t :foreground "dark green"))
@@ -116,8 +123,8 @@
 	(let ((cur (get-text-property str-pos 'font-lock-face ref-str))
 	      (ref (get-text-property buf-pos 'font-lock-face)))
 	  (unless (equal cur ref)
-	    ;;(with-silent-modifications
-	      ;;(put-text-property buf-pos (1+ buf-pos) 'font-lock-face 'storm-hilight-diff-face))
+	    (with-silent-modifications
+	      (put-text-property buf-pos (1+ buf-pos) 'font-lock-face 'storm-hilight-diff-face))
 	    (setq errors (1+ errors))))
 	(setq str-pos (1+ str-pos)))
       (setq buf-pos (1+ buf-pos)))
@@ -131,7 +138,7 @@
   (let ((pos 0))
     (while (< pos (length text))
       (insert (substring-no-properties text pos (1+ pos)))
-      (storm-wait-for 'color 1.0)
+      (storm-query '(test echo))
       (redisplay)
       (setq pos (1+ pos)))))
 
@@ -152,10 +159,13 @@
 	(storm-wait-for 'color 1.0)
 	;; Re-open the current buffer, so we start with a clean slate!
 	(storm-debug-re-open)
+	(storm-update-colors)
 
 	(storm-insert-slowly ref)
+	(storm-update-colors)
 
 	(set-buffer-modified-p nil)
+	(redisplay)
 	(storm-compare-buffer file ref)))))
 
 (defun storm-run-insert (file)
@@ -173,7 +183,7 @@
 
 	(delete-char (- (length insert-str)))
 	(storm-mode)
-	(storm-wait-for 'color 5.0)
+	(storm-update-colors)
 	(redisplay)
 
 	(setq ref-str (buffer-substring (point-min) (point-max)))
@@ -181,11 +191,11 @@
 
 	(while insert-text
 	  (storm-insert-slowly (car insert-text))
-	  (storm-wait-for 'color 1.0)
 	  (setq insert-text (cdr insert-text))
 	  (when insert-text
 	    (insert "\n")
 	    (indent-according-to-mode))
+	  (storm-update-colors)
 	  (redisplay))
 
 	(when (= 0 (storm-compare-buffer file ref-str gap-start (point)))

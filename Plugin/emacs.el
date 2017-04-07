@@ -217,7 +217,7 @@
   "Ask Storm to re-color the current buffer."
   (interactive)
   (when storm-buffer-id
-    (storm-send (list 'recolor storm-buffer-id))))
+    (storm-send (list 'color storm-buffer-id))))
 
 (defun storm-debug-un-color ()
   "Remove all syntax coloring from the current buffer."

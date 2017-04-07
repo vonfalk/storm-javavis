@@ -21,7 +21,6 @@ namespace storm {
 			chunkSz = c->symbol(L"chunk-size");
 			test = c->symbol(L"test");
 			debug = c->symbol(L"debug");
-			recolor = c->symbol(L"recolor");
 			color = c->symbol(L"color");
 			level = c->symbol(L"level");
 			as = c->symbol(L"as");
@@ -106,9 +105,9 @@ namespace storm {
 			} else if (debug->equals(kind)) {
 				work->poke();
 				onDebug(cell->rest);
-			} else if (recolor->equals(kind)) {
+			} else if (color->equals(kind)) {
 				work->poke();
-				onReColor(cell->rest);
+				onColor(cell->rest);
 			} else {
 				print(TO_S(this, L"Unknown message: " << msg));
 			}
@@ -256,7 +255,7 @@ namespace storm {
 			f->debugOutput(conn->textOut, tree);
 		}
 
-		void Server::onReColor(SExpr *expr) {
+		void Server::onColor(SExpr *expr) {
 			Nat fileId = next(expr)->asNum()->v;
 			File *f = files->get(fileId, null);
 			if (!f) {
@@ -264,7 +263,11 @@ namespace storm {
 				return;
 			}
 
-			updateLater(f, f->full());
+			if (chunkChars == 0) {
+				update(f, f->full());
+			} else {
+				updateLater(f, f->full());
+			}
 		}
 
 		static Str *colorName(EnginePtr e, syntax::TokenColor c) {
@@ -322,7 +325,7 @@ namespace storm {
 
 		void Server::update(File *file, Range range) {
 			if (range.empty() && chunkChars != 0)
-				// Special mode if chunkChars == 0, always send color messages to indicate we're done.
+				// In case 'chunkChars == 0', we always want to send a message.
 				return;
 
 			Array<ColoredRange> *colors = file->colors(range);
@@ -363,8 +366,12 @@ namespace storm {
 		}
 
 		void Server::updateLater(File *file, Range range) {
-			// Do we actually need to split this chunk at all? (chunkChars == 0 <=> never split).
-			if (chunkChars == 0 || range.count() <= chunkChars) {
+			// Shall we send anything at all? 'chunkChars == 0' means that updates have to be queried by the client.
+			if (chunkChars == 0)
+				return;
+
+			// Do we actually need to split this chunk at all?
+			if (range.count() <= chunkChars) {
 				update(file, range);
 				return;
 			}

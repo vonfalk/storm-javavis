@@ -40,8 +40,10 @@ Message	                      Description
 (indent file pos)	      Query the indentation of 'file' at position 'pos'.
 (error file) 		      Find and report any parse errors in 'file' (in textual form).
 (test ...)		      Messages used for testing the protocol. See below.
+(chunk-size n)		      Set the size of chunks (in characters) sent to the client at once. 0 disables
+	    		      sending coloring information unless eplicitly queried by the 'color' message.
 (debug id mode)		      Output the internal representation of file 'id'. Used when debugging.
-(recolor id)		      Re-color file 'id'.
+(color id)    	      	      Send coloring information for 'file' once more.
 
 
 Messages sent from the server to a client:

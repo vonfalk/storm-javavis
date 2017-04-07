@@ -9,6 +9,7 @@ namespace storm {
 			stop = c->symbol(L"stop");
 			sum = c->symbol(L"sum");
 			send = c->symbol(L"send");
+			echo = c->symbol(L"echo");
 		}
 
 		void Test::clear() {
@@ -25,8 +26,10 @@ namespace storm {
 				return onStop(cell->rest);
 			} else if (sum->equals(kind)) {
 				return onSum(cell->rest);
-			} else if (send->equals(send)) {
+			} else if (send->equals(kind)) {
 				return onSend(cell->rest);
+			} else if (echo->equals(kind)) {
+				return onEcho(cell->rest);
 			}
 
 			return null;
@@ -68,6 +71,10 @@ namespace storm {
 			}
 
 			return list(engine(), 1, stop);
+		}
+
+		SExpr *Test::onEcho(SExpr *msg) {
+			return cons(engine(), echo, null);
 		}
 
 	}

@@ -24,6 +24,7 @@ namespace storm {
 			Symbol *stop;
 			Symbol *sum;
 			Symbol *send;
+			Symbol *echo;
 
 			// Send this sum when 'stop' is called.
 			Nat sumResult;
@@ -38,6 +39,7 @@ namespace storm {
 			MAYBE(SExpr *) STORM_FN onStop(SExpr *msg);
 			MAYBE(SExpr *) STORM_FN onSum(SExpr *msg);
 			MAYBE(SExpr *) STORM_FN onSend(SExpr *msg);
+			MAYBE(SExpr *) STORM_FN onEcho(SExpr *msg);
 		};
 
 	}

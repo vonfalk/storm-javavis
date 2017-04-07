@@ -260,7 +260,7 @@ SPrimary : "super" #keyword, "\.", SIdent #fnName - (, SArgs)?;
 SPrimary[-1] : SIdent #varName - (, SIdentSuffix)*;
 SPrimary : SBasicType #typeName, ("\[\]",)* "\.", "class" #keyword;
 SPrimary : "void" #typeName, "\.", "class" #keyword;
-SPrimary : "new" #keyword, SCreator;
+SPrimary : "new[ \t]" #keyword, SCreator;
 SPrimary : "<", STypeList, ">", "this" #keyword, SArgs;
 SPrimary : "<", STypeList, ">", "super" #keyword, SSelector;
 SPrimary : "<", STypeList, ">", SIdent #fnName, SArgs;

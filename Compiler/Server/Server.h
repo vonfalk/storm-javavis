@@ -85,7 +85,7 @@ namespace storm {
 			void onChunkSz(SExpr *msg);
 			void onTest(SExpr *msg);
 			void onDebug(SExpr *msg);
-			void onReColor(SExpr *msg);
+			void onColor(SExpr *msg);
 
 			// Send updates for 'range' in 'file'.
 			void update(File *file, Range range);
