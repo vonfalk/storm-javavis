@@ -92,6 +92,10 @@ namespace storm {
 		// Get the references for a block of code.
 		GcCode *codeRefs(void *code);
 
+		// Update all pointers in a code allocation. This copies all pointer values from the
+		// 'codeRef' section into the data section.
+		void codeUpdatePtrs(void *code);
+
 		// Re-set the vtable of an object to what it should be.
 		void setVTable(RootObject *object);
 

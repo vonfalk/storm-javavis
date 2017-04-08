@@ -23,7 +23,7 @@ namespace code {
 			GcCode *refs = runtime::codeRefs(code);
 			refs->refs[0].offset = size;
 			refs->refs[0].kind = GcCodeRef::rawPtr;
-			*(void **)refsPos = codeRefs;
+			refs->refs[0].pointer = codeRefs;
 		}
 
 		void CodeOut::putByte(Byte b) {
@@ -57,6 +57,7 @@ namespace code {
 			assert(ref < refs->refCount);
 			refs->refs[ref].offset = pos;
 			refs->refs[ref].kind = GcCodeRef::rawPtr;
+			refs->refs[ref].pointer = (void *)w;
 			ref++;
 
 			putPtr(w);
@@ -67,12 +68,10 @@ namespace code {
 			assert(ref < refs->refCount);
 			refs->refs[ref].offset = pos;
 			refs->refs[ref].kind = GcCodeRef::relativePtr;
+			refs->refs[ref].pointer = (void *)w;
 			ref++;
 
-			assert(pos + 3 < size);
-			Nat *to = (Nat *)&code[pos];
-			*to = Nat(w) - Nat(to + 1);
-			pos += 4;
+			putPtr(0); // Will be updated later...
 		}
 
 		void CodeOut::putRelativeStatic(Word w) {
@@ -81,11 +80,10 @@ namespace code {
 			assert(ref < refs->refCount);
 			refs->refs[ref].offset = pos;
 			refs->refs[ref].kind = GcCodeRef::relative;
+			refs->refs[ref].pointer = (void *)w;
 			ref++;
 
-			Nat *to = (Nat *)&code[pos];
-			*to = Nat(w) - Nat(to + 1);
-			pos += 4;
+			putPtr(0); // Will be updated later.
 		}
 
 		void CodeOut::putPtrSelf(Word w) {
@@ -93,6 +91,7 @@ namespace code {
 			assert(ref < refs->refCount);
 			refs->refs[ref].offset = pos;
 			refs->refs[ref].kind = GcCodeRef::inside;
+			refs->refs[ref].pointer = (void *)(w - Word(codePtr()));
 			ref++;
 
 			putPtr(w);

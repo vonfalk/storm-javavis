@@ -148,11 +148,12 @@ static void triggerCollect() {
 // unaligned pointers into blocks.
 BEGIN_TEST(CodeGcTest, CodeBasic) {
 	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
 
 	Listing *l = new (e) Listing();
 
 	*l << prolog();
-	*l << call(xConst(Size::sPtr, (Word)&triggerCollect), valVoid());
+	*l << call(arena->external(L"triggerCollect", &triggerCollect), valVoid());
 	*l << mov(eax, intConst(1337));
 	*l << epilog();
 	*l << ret(ValType(Size::sInt, false));

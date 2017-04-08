@@ -23,6 +23,7 @@ namespace code {
 		CodeOutput *output = arena->codeOutput(this, labels);
 		arena->output(tfm, output);
 
+		runtime::codeUpdatePtrs(output->codePtr());
 		set(output->codePtr(), output->tell());
 	}
 

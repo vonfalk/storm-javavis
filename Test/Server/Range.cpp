@@ -3,7 +3,7 @@
 
 using namespace storm::server;
 
-BEGIN_TEST(RangeTest) {
+BEGIN_TEST(RangeTest, Server) {
 	Engine &e = gEngine();
 
 	RangeSet *s = new (e) RangeSet();

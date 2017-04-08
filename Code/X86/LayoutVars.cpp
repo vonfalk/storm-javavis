@@ -219,7 +219,7 @@ namespace code {
 				*dest << threadLocal() << mov(ptrA, ptrRel(noReg, Offset()));
 				*dest << mov(ptrRel(ptrFrame, offset), ptrA);
 
-				// Set ourselves the new frame.
+				// Set ourselves as the current frame.
 				*dest << lea(ptrA, ptrRel(ptrFrame, offset));
 				*dest << threadLocal() << mov(ptrRel(noReg, Offset()), ptrA);
 

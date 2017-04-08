@@ -21,10 +21,11 @@ BEGIN_TEST(CodeAllocTest, GcObjects) {
 		c->refs[i].offset = sizeof(void *)*i;
 		c->refs[i].kind = GcCodeRef::rawPtr;
 
-		PtrKey *c = new (e) PtrKey();
-		objs[i] = c;
-		o->push(c);
+		PtrKey *k = new (e) PtrKey();
+		c->refs[i].pointer = k;
+		o->push(k);
 	}
+	runtime::codeUpdatePtrs(code);
 
 	bool moved = false;
 	for (nat i = 0; i < 20 && !moved; i++) {
@@ -64,7 +65,9 @@ BEGIN_TEST(CodeRelPtr, GcObjects) {
 		GcCode *meta = runtime::codeRefs(code);
 		meta->refs[0].offset = 0;
 		meta->refs[0].kind = GcCodeRef::inside;
-		*code = code + 1;
+		meta->refs[0].pointer = (void *)sizeof(void *); // point to code[1]
+		// *code = code + 1;
+		runtime::codeUpdatePtrs(code);
 
 		codeArray->v[i] = code;
 	}

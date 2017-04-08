@@ -5,11 +5,14 @@ namespace storm {
 	/**
 	 * Describes a reference inside the generated code.
 	 *
-	 * Note: in general, reading null (in whatever size is specified) is treated as null even if
-	 * using a relative addressing scheme. This is so it is possible to fill in 'null' first, then
-	 * mark the reference as alive, to finally fill in the correct value of the
-	 * reference. Otherwise, you may end up with stale references as the Gc may move memory at any
-	 * time.
+	 * The actual pointers for the references are stored inside the 'GcCodeRef' itself. These are
+	 * the pointers that are actually scanned by the garbage collector, but the garbage collector
+	 * will make sure to keep the described reference updated as well. Call
+	 * 'runtime::codeUpdatePtrs' when all references have been filled in to update the references
+	 * which 'offset' denotes.
+	 *
+	 * In the case of 'inside' references, the value stored in the 'pointer' member is a value to be
+	 * interpreted as the offset within the current object, rather than an actual pointer.
 	 */
 	struct GcCodeRef {
 		// Kind of reference. Ie. how do we read or write this reference to/from memory?
@@ -32,7 +35,7 @@ namespace storm {
 			// the object moves, but is never scanned as it does not point to the start.
 			inside,
 
-			// TODO: More to come! eg. relative and so on.
+			// ...
 		};
 
 		// Offset inside the code where this reference is located. Does not need to be aligned, that
@@ -41,6 +44,10 @@ namespace storm {
 
 		// Reference type.
 		Kind kind;
+
+		// The pointer to be scanned. In the case where 'kind == inside', stores an offset into this
+		// object instead.
+		void *pointer;
 	};
 
 

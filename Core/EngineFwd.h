@@ -35,6 +35,7 @@ namespace storm {
 		void *(*allocCode)(Engine &e, size_t code, size_t refs);
 		size_t (*codeSize)(const void *code);
 		GcCode *(*codeRefs)(void *code);
+		void (*codeUpdatePtrs)(void *code);
 		void (*setVTable)(RootObject *object);
 		os::ThreadGroup &(*threadGroup)(Engine &e);
 		GcWatch *(*createWatch)(Engine &e);

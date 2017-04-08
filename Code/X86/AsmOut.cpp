@@ -232,6 +232,8 @@ namespace code {
 		static void jmpCall(byte opCode, Output *to, const Operand &src) {
 			switch (src.type()) {
 			case opConstant:
+				// Used in the 64-bit transformation, which is actually safe.
+				// WARNING(L"Jumping to a constant is not good!");
 				to->putByte(opCode);
 				to->putRelativeStatic(src.constant());
 				break;

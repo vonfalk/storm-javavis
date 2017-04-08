@@ -60,10 +60,7 @@ BEGIN_TEST(CallTest, Code) {
 	*l << prolog();
 
 	*l << push(p);
-	// Note: this is not how one should call functions. It works until someone tries to save the
-	// listing and restore it somewhere else. So during tests and final backend transformations it
-	// is OK, otherwise not. Use a reference instead!
-	*l << call(xConst(Size::sPtr, Word(&addFive)), ValType(Size::sInt, false));
+	*l << call(arena->external(L"addFive", &addFive), ValType(Size::sInt, false));
 
 	*l << epilog();
 	*l << ret(ValType(Size::sInt, false));

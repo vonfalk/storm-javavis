@@ -224,7 +224,7 @@ namespace storm {
 
 		// Pool for runnable code. These have their own object format, which is why they are in
 		// their own pool.
-		mps_fmt_t codeFormat;
+		// mps_fmt_t codeFormat;
 		mps_pool_t codePool;
 		mps_ap_t codeAllocPoint;
 		util::Lock codeAllocLock;
