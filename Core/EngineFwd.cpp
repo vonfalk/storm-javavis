@@ -22,6 +22,7 @@ namespace storm {
 			&runtime::allocCode,
 			&runtime::codeSize,
 			&runtime::codeRefs,
+			&runtime::codeUpdatePtrs,
 			&runtime::setVTable,
 			&runtime::threadGroup,
 			&runtime::createWatch,

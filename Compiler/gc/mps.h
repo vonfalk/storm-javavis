@@ -15,6 +15,7 @@ extern "C" {
 #define CONFIG_VAR_COOL
 #else
 	// Run MPS in the hot configuration.
+#define CONFIG_VAR_COOL
 #endif
 
 #include "mps/code/mps.h" // MPS core

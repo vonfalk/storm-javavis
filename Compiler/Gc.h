@@ -186,6 +186,9 @@ namespace storm {
 		void checkMemory(const void *object);
 		void checkMemory(const void *object, bool recursive);
 
+		// Check consistency of a single code allocation. Note: Enable checking in 'Gc.cpp' for this to work.
+		void checkCode(const void *code);
+
 		// Do a gc and check memory collection (sometimes forces memory issues to appear better than
 		// just calling 'checkMemory').
 		void checkMemoryCollect();

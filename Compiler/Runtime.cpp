@@ -5,6 +5,7 @@
 #include "Engine.h"
 #include "Core/Str.h"
 #include "Core/Io/StdStream.h"
+#include "Code/Refs.h"
 #include "StdIoThread.h"
 
 namespace storm {
@@ -97,6 +98,10 @@ namespace storm {
 
 		GcCode *codeRefs(void *code) {
 			return Gc::codeRefs(code);
+		}
+
+		void codeUpdatePtrs(void *code) {
+			code::updatePtrs(code, Gc::codeRefs(code));
 		}
 
 		void setVTable(RootObject *object) {

@@ -232,6 +232,7 @@ namespace code {
 		static void jmpCall(byte opCode, Output *to, const Operand &src) {
 			switch (src.type()) {
 			case opConstant:
+				WARNING(L"Jumping to a constant is not good!");
 				to->putByte(opCode);
 				to->putRelativeStatic(src.constant());
 				break;

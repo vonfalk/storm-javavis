@@ -145,6 +145,10 @@ namespace storm {
 			return (*fwd.codeRefs)(code);
 		}
 
+		void codeUpdatePtrs(void *code) {
+			(*fwd.codeUpdatePtrs)(code);
+		}
+
 		void setVTable(RootObject *object) {
 			(*fwd.setVTable)(object);
 		}
