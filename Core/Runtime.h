@@ -63,6 +63,10 @@ namespace storm {
 		// Allocate some non-moving raw memory for some data.
 		void *allocStaticRaw(Engine &e, const GcType *type);
 
+		// Allocate a buffer which is safe to use from any thread in the system (even threads not
+		// registered with Storm).
+		GcArray<Byte> *allocBuffer(Engine &e, size_t count);
+
 		// Allocate an object of the given type (size used for sanity checking).
 		void *allocObject(size_t size, Type *type);
 

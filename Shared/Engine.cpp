@@ -121,6 +121,10 @@ namespace storm {
 			return (*fwd.allocStaticRaw)(e, type);
 		}
 
+		GcArray<Byte> *allocBuffer(Engine &e, size_t count) {
+			return (*fwd.allocBuffer)(e, count);
+		}
+
 		void *allocObject(size_t size, Type *type) {
 			return (*fwd.allocObject)(size, type);
 		}

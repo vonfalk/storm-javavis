@@ -823,6 +823,22 @@ namespace storm {
 
 		check(mps_ap_create_k(&codeAllocPoint, codePool, mps_args_none), L"Failed to create code allocation point.");
 
+#ifdef MPS_USE_IO_POOL
+		// Buffer allocations.
+		MPS_ARGS_BEGIN(args) {
+			MPS_ARGS_ADD(args, MPS_KEY_CHAIN, chain);
+			MPS_ARGS_ADD(args, MPS_KEY_GEN, 2);
+			MPS_ARGS_ADD(args, MPS_KEY_FORMAT, format);
+#if MPS_USE_IO_POOL == 1
+			check(mps_pool_create_k(&ioPool, arena, mps_class_lo(), args), L"Failed to create GC pool for buffers.");
+#elif MPS_USE_IO_POOL == 2
+			check(mps_pool_create_k(&ioPool, arena, mps_class_amcz(), args), L"Failed to create GC pool for buffers.");
+#endif
+		} MPS_ARGS_END(args);
+
+		check(mps_ap_create_k(&ioAllocPoint, ioPool, mps_args_none), L"Failed to create buffer allocation point.");
+#endif
+
 		// We want to receive finalization messages.
 		mps_message_type_enable(arena, mps_message_type_finalization());
 
@@ -861,6 +877,9 @@ namespace storm {
 		mps_ap_destroy(typeAllocPoint);
 		mps_ap_destroy(weakAllocPoint);
 		mps_ap_destroy(codeAllocPoint);
+#ifdef MPS_USE_IO_POOL
+		mps_ap_destroy(ioAllocPoint);
+#endif
 
 		// Clear these now, otherwise the destructor will crash badly after we've removed the backing storage.
 		freeTypes.clear();
@@ -870,11 +889,13 @@ namespace storm {
 		mps_pool_destroy(weakPool);
 		mps_pool_destroy(typePool);
 		mps_pool_destroy(codePool);
+#ifdef MPS_USE_IO_POOL
+		mps_pool_destroy(ioPool);
+#endif
 		// The type pool has to be destroyed last, as any formatted object (not code) might reference things in here.
 		mps_pool_destroy(gcTypePool);
 
 		// Destroy format and chains.
-		// mps_fmt_destroy(codeFormat);
 		mps_fmt_destroy(format);
 		mps_chain_destroy(chain);
 		mps_arena_destroy(arena);
@@ -1103,6 +1124,39 @@ namespace storm {
 		return result;
 	}
 
+	GcArray<Byte> *Gc::allocBuffer(size_t count) {
+#ifdef MPS_USE_IO_POOL
+		const GcType *type = &byteArrayType;
+		size_t size = mpsSizeArray(type, count);
+
+		util::Lock::L z(ioAllocLock);
+
+		mps_addr_t memory;
+		do {
+			check(mps_reserve(&memory, ioAllocPoint, size), L"Out of memory (alloc buffer).");
+
+			// Make sure we can scan the newly allocated memory:
+			// 1: Clear all to zero, so that we do not have any rouge pointers confusing MPS.
+			memset(memory, 0, size);
+			// 2: Set the header.
+			setHeader(memory, type);
+			// 3: Set size.
+			((MpsObj *)memory)->count = count;
+			// 4: Initialize any consistency-checking data.
+			MPS_INIT_OBJECT((MpsObj *)memory, size);
+
+		} while (!mps_commit(ioAllocPoint, memory, size));
+
+		MPS_VERIFY_SIZE((MpsObj *)memory);
+
+		// Exclude our header, return memory.
+		void *result = (byte *)memory + headerSize;
+		return (GcArray<Byte> *)result;
+#else
+		return (GcArray<Byte> *)allocArray(&byteArrayType, count);
+#endif
+	}
+
 	void *Gc::allocArray(const GcType *type, size_t elements) {
 		assert(type->kind == GcType::tArray, L"Wrong type for calling allocArray().");
 
@@ -1208,6 +1262,9 @@ namespace storm {
 
 		// Mark the type.
 		GcType *t = (GcType *)Gc::typeOf(addr);
+		if (!t)
+			return;
+
 		MpsType *base = BASE_PTR(MpsType, t, type);
 		base->reachable = true;
 
@@ -1583,6 +1640,10 @@ namespace storm {
 
 		if (p == me->pool || p == me->typePool || p == me->codePool || p == me->weakPool)
 			me->checkMemory(addr);
+#ifdef MPS_USE_IO_POOL
+		if (p == me->ioPool)
+			me->checkMemory(addr);
+#endif
 	}
 
 	void Gc::checkMemory() {
@@ -1714,6 +1775,10 @@ namespace storm {
 
 	void *Gc::allocStatic(const GcType *type) {
 		return alloc(type);
+	}
+
+	GcArray<Byte> *Gc::allocBuffer(size_t count) {
+		return allocArray(&byteArrayType, count);
 	}
 
 	void *Gc::allocArray(const GcType *type, size_t count) {

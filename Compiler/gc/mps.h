@@ -23,6 +23,7 @@ extern "C" {
 #include "mps/code/mpscams.h" // AMS pool
 #include "mps/code/mpscawl.h" // AWL pool
 #include "mps/code/mpscmvff.h" // MVFF pool
+#include "mps/code/mpsclo.h" // LO pool
 
 	// Decrease/increase the # of byte scanned for this scanned set (hack).
 	void mps_decrease_scanned(mps_ss_t ss, size_t decrease);

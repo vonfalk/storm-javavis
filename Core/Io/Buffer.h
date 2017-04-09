@@ -11,6 +11,10 @@ namespace storm {
 	 *
 	 * If multiple copies of a buffer is created, they all refer to the same backing storage,
 	 * slightly breaking the memory model of Storm.
+	 *
+	 * When using the MPS: buffers are allocated in a pool that neither moves nor protects its
+	 * contents. This pool have slightly worse performance compared to the default pools in Storm,
+	 * but it is required when doing async IO, as we might otherwise confuse the GC.
 	 */
 	class Buffer {
 		STORM_VALUE;

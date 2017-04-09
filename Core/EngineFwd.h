@@ -29,6 +29,7 @@ namespace storm {
 		Engine &(*allocEngine)(const RootObject *o);
 		void *(*allocRaw)(Engine &e, const GcType *type);
 		void *(*allocStaticRaw)(Engine &e, const GcType *type);
+		GcArray<Byte> *(*allocBuffer)(Engine &e, size_t size);
 		void *(*allocObject)(size_t size, Type *type);
 		void *(*allocArray)(Engine &e, const GcType *type, size_t count);
 		void *(*allocWeakArray)(Engine &e, size_t count);

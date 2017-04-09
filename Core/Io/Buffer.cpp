@@ -13,7 +13,7 @@ namespace storm {
 
 	void Buffer::deepCopy(CloneEnv *env) {
 		if (data) {
-			GcArray<Byte> *n = runtime::allocArray<Byte>(env->engine(), &byteArrayType, data->count);
+			GcArray<Byte> *n = runtime::allocBuffer(env->engine(), data->count);
 			n->filled = data->filled;
 			for (nat i = 0; i < data->count; i++)
 				n->v[i] = data->v[i];
@@ -22,7 +22,7 @@ namespace storm {
 	}
 
 	Buffer buffer(EnginePtr e, Nat count) {
-		return Buffer(runtime::allocArray<Byte>(e.v, &byteArrayType, count));
+		return Buffer(runtime::allocBuffer(e.v, count));
 	}
 
 	Buffer emptyBuffer(GcArray<Byte> *data) {
@@ -38,7 +38,7 @@ namespace storm {
 	}
 
 	Buffer buffer(EnginePtr e, const Byte *data, Nat count) {
-		Buffer z(runtime::allocArray<Byte>(e.v, &byteArrayType, count));
+		Buffer z(runtime::allocBuffer(e.v, count));
 		memcpy(z.dataPtr(), data, count);
 		z.filled(count);
 		return z;

@@ -27,6 +27,15 @@ namespace storm {
 	 * stored as 32-bit numbers instead of 64-bit numbers to save space.
 	 */
 
+	// For MPS: use a special non-moving pool for IO buffers. The MPS manual states that the LO pool
+	// is suitable for this task as it neither protects nor moves its objects. The AMCZ could also be
+	// a decent fit, as it does not protect the objects in the pool and does not move the objects
+	// when there is an ambiguous reference to the objects.
+	// NOTE: The documentation does not tell wether segmens in LO pools can be 'nailed' by ambiguous
+	// pointers to other parts than the start of the object. This is neccessary and provided by AMCZ.
+	// Possible values: <undefined>, LO = 1, AMCZ = 2
+#define MPS_USE_IO_POOL 2
+
 
 	/**
 	 * Internal description of thread-local data for the garbage collector.
@@ -86,6 +95,10 @@ namespace storm {
 
 		// Allocate an object of a specific type in a non-moving pool.
 		void *allocStatic(const GcType *type);
+
+		// Allocate a buffer which is not moving nor protected. The memory allocated from here is
+		// also safe to access from threads unknown to the garbage collector.
+		GcArray<byte> *allocBuffer(size_t count);
 
 		// Allocate an array of objects. Assumes type->type == tArray.
 		void *allocArray(const GcType *type, size_t count);
@@ -221,6 +234,14 @@ namespace storm {
 		mps_pool_t weakPool;
 		mps_ap_t weakAllocPoint;
 		util::Lock weakAllocLock;
+
+#ifdef MPS_USE_IO_POOL
+		// Non-moving, non-protected pool for interaction with foreign code (eg. IO operations in
+		// the operating system).
+		mps_pool_t ioPool;
+		mps_ap_t ioAllocPoint;
+		util::Lock ioAllocLock;
+#endif
 
 		// Pool for runnable code.
 		mps_pool_t codePool;

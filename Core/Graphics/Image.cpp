@@ -23,6 +23,8 @@ namespace storm {
 
 	Image::Image(Image *o) : data(null), w(o->w), h(o->h) {
 		nat s = w * h * 4;
+		// Note: Maybe we should use 'allocBuffer' here instead, as image data is sometimes passed
+		// to external libraries...
 		data = runtime::allocArray<Byte>(engine(), &byteArrayType, s);
 		memcpy(data->v, o->data->v, s);
 	}
