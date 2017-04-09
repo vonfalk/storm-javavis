@@ -1184,7 +1184,7 @@ namespace storm {
 			// 3: Initialize any consistency-checking data.
 			MPS_INIT_OBJECT((MpsObj *)memory, size);
 
-		} while (!mps_commit(ap, memory, size));
+		} while (!mps_commit(ap, memory, alignedSize));
 
 		MPS_VERIFY_SIZE((MpsObj *)memory);
 
@@ -1223,7 +1223,7 @@ namespace storm {
 			// 3: Initialize any consistency-checking data.
 			MPS_INIT_OBJECT((MpsObj *)memory, size);
 
-		} while (!mps_commit(typeAllocPoint, memory, size));
+		} while (!mps_commit(typeAllocPoint, memory, alignedSize));
 
 		MPS_VERIFY_SIZE((MpsObj *)memory);
 
@@ -1256,7 +1256,7 @@ namespace storm {
 			// 4: Initialize any consistency-checking data.
 			MPS_INIT_OBJECT((MpsObj *)memory, size);
 
-		} while (!mps_commit(ap, memory, size));
+		} while (!mps_commit(ap, memory, alignedSize));
 
 		MPS_VERIFY_SIZE((MpsObj *)memory);
 
@@ -1298,7 +1298,7 @@ namespace storm {
 			// 4: Initialize any consistency-checking data.
 			MPS_INIT_OBJECT((MpsObj *)memory, size);
 
-		} while (!mps_commit(ap, memory, size));
+		} while (!mps_commit(ap, memory, alignedSize));
 
 		MPS_VERIFY_SIZE((MpsObj *)memory);
 
