@@ -222,9 +222,7 @@ namespace storm {
 		mps_ap_t weakAllocPoint;
 		util::Lock weakAllocLock;
 
-		// Pool for runnable code. These have their own object format, which is why they are in
-		// their own pool.
-		// mps_fmt_t codeFormat;
+		// Pool for runnable code.
 		mps_pool_t codePool;
 		mps_ap_t codeAllocPoint;
 		util::Lock codeAllocLock;

@@ -813,21 +813,6 @@ namespace storm {
 		} MPS_ARGS_END(args);
 
 		// Code allocations.
-// 		MPS_ARGS_BEGIN(args) {
-// #if MPS_CHECK_MEMORY
-// 			MPS_ARGS_ADD(args, MPS_KEY_FMT_ALIGN, nextPowerOfTwo(codeHeaderSize));
-// #else
-// 			MPS_ARGS_ADD(args, MPS_KEY_FMT_ALIGN, wordSize); // Default alignment.
-// #endif
-// 			MPS_ARGS_ADD(args, MPS_KEY_FMT_HEADER_SIZE, codeHeaderSize);
-// 			MPS_ARGS_ADD(args, MPS_KEY_FMT_SCAN, &mpsScanCode);
-// 			MPS_ARGS_ADD(args, MPS_KEY_FMT_SKIP, &mpsSkipCode);
-// 			MPS_ARGS_ADD(args, MPS_KEY_FMT_FWD, &mpsMakeFwdCode);
-// 			MPS_ARGS_ADD(args, MPS_KEY_FMT_ISFWD, &mpsIsFwdCode);
-// 			MPS_ARGS_ADD(args, MPS_KEY_FMT_PAD, &mpsMakePadCode);
-// 			check(mps_fmt_create_k(&codeFormat, arena, args), L"Failed to create code format.");
-// 		} MPS_ARGS_END(args);
-
 		MPS_ARGS_BEGIN(args) {
 			// TODO: Make code live in its own chain, as code allocations follow very different
 			// patterns compared to other data.

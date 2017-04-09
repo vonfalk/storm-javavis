@@ -2,9 +2,21 @@
 
 ;; Run tests using C-c b
 (global-set-key (kbd "C-c b") 'storm-run-benchmarks)
+(global-set-key (kbd "C-c c b") 'storm-run-benchmark-file)
 
 ;; Test root directory.
 (defvar benchmark-root-dir "test/server-tests/simple/" "Benchmarks root directory, relative to 'storm-mode-root'.")
+
+(defmacro storm-test-env (&rest body)
+  `(let ((old-storm-mode global-storm-mode)
+	 (old-chunk-size (storm-query '(chunk-size))))
+     (setq global-storm-mode nil)
+     (storm-send '(chunk-size 0))
+
+     (prog1
+	 ,@body
+       (setq global-storm-mode old-storm-mode)
+       (storm-send (list 'chunk-size old-chunk-size)))))
 
 ;; Run benchmarks.
 (defun storm-run-benchmarks (&optional dir)
@@ -12,13 +24,14 @@
   (interactive)
   (unless dir
     (setq dir benchmark-root-dir))
-  (let ((old-storm-mode global-storm-mode)
-	(old-chunk-size (storm-query '(chunk-size))))
-    (setq global-storm-mode nil)
-    (storm-send '(chunk-size 0))
-    (storm-run-dir (concat (file-name-as-directory storm-mode-root) dir))
-    (setq global-storm-mode old-storm-mode)
-    (storm-send (cons 'chunk-size old-chunk-size))))
+  (storm-test-env
+    (storm-run-dir (concat (file-name-as-directory storm-mode-root) dir))))
+
+(defun storm-run-benchmark-file ()
+  (interactive)
+  (when buffer-file-name
+    (storm-test-env
+     (storm-run-file (file-name-directory buffer-file-name) (file-name-nondirectory buffer-file-name)))))
 
 (defun storm-run-dir (dir)
   "Run benchmarks in a directory."
