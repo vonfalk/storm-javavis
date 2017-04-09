@@ -67,10 +67,14 @@ BEGIN_TEST(CodeFmtTest, GcScan) {
 			data[pos] = allocCode(gc, e.size, e.refs, pos);
 			pos++;
 
-			gc.collect();
 			verify(data);
 		}
 
+		// Try to force a garbage collection.
+		// gc.test(1);
+		// NOTE: Calling 'gc.collect' with a small heap seems to make the GC consume
+		// a lot of time during shutdown for some reason. Possibly, a lot of small areas
+		// are allocated, which causes the problems.
 		gc.collect();
 	}
 

@@ -186,9 +186,6 @@ namespace storm {
 		void checkMemory(const void *object);
 		void checkMemory(const void *object, bool recursive);
 
-		// Check consistency of a single code allocation. Note: Enable checking in 'Gc.cpp' for this to work.
-		void checkCode(const void *code);
-
 		// Do a gc and check memory collection (sometimes forces memory issues to appear better than
 		// just calling 'checkMemory').
 		void checkMemoryCollect();
@@ -227,7 +224,7 @@ namespace storm {
 
 		// Pool for runnable code. These have their own object format, which is why they are in
 		// their own pool.
-		mps_fmt_t codeFormat;
+		// mps_fmt_t codeFormat;
 		mps_pool_t codePool;
 		mps_ap_t codeAllocPoint;
 		util::Lock codeAllocLock;
