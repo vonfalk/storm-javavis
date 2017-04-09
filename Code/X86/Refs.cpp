@@ -31,19 +31,23 @@ namespace code {
 			void *writeVoid = ((byte *)code) + ref.offset;
 			size_t *write = (size_t *)writeVoid;
 
+			// Note: These writes need to be visible as an atomic operation to the instruction
+			// decoding unit of the CPU. Further atomicity is not required, as the GC arranges for
+			// that anyway. Offsets may not be aligned as regular pointers on the system.
+
 			switch (ref.kind) {
 			case GcCodeRef::disabled:
 				// Nothing to do...
 				break;
 			case GcCodeRef::rawPtr:
-				*write = ptr;
+				atomicWrite(*write, ptr);
 				break;
 			case GcCodeRef::relativePtr:
 			case GcCodeRef::relative:
-				*write = ptr - (size_t(write) + sizeof(size_t));
+				atomicWrite(*write, ptr - (size_t(write) + sizeof(size_t)));
 				break;
 			case GcCodeRef::inside:
-				*write = ptr + size_t(code);
+				atomicWrite(*write, ptr + size_t(code));
 				break;
 			default:
 				dbg_assert(false, L"Unknown pointer type.");

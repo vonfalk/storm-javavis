@@ -26,6 +26,9 @@
 // Data to check against.
 #define MPS_HEADER_DATA 0xBB
 #define MPS_FOOTER_DATA 0xAA
+#define MPS_CODE_HEADER_DATA 0xDD
+#define MPS_CODE_MIDDLE_DATA 0xCC
+#define MPS_CODE_FOOTER_DATA 0xEE
 
 // Check the heap after this many allocations.
 #define MPS_CHECK_INTERVAL 10000
@@ -332,6 +335,7 @@ namespace storm {
 	// Scan objects. If a MPS_FIX returns something other than MPS_RES_OK, return that code as
 	// quickly as possible.
 	static mps_res_t mpsScan(mps_ss_t ss, mps_addr_t base, mps_addr_t limit) {
+		PLN(L"Scanning.");
 		// Convert from client pointers to 'real' pointers:
 		base = (byte *)base - headerSize;
 		limit = (byte *)limit - headerSize;
@@ -1695,16 +1699,16 @@ namespace storm {
 	}
 
 	static void checkHeader(const MpsCode *obj) {
-		checkBarrier(obj, (byte *)obj->barrier, MPS_CHECK_BYTES, MPS_HEADER_DATA, L"first");
+		checkBarrier(obj, (byte *)obj->barrier, MPS_CHECK_BYTES, MPS_CODE_HEADER_DATA, L"header");
 	}
 
 	static void checkFooter(const MpsCode *obj) {
 		size_t size = obj->size;
 		GcCode *c = mpsRefsCode((MpsCode *)obj);
 		// Barrier between actual code and references.
-		checkBarrier(obj, (byte *)c - MPS_CHECK_BYTES, MPS_CHECK_BYTES, MPS_FOOTER_DATA, L"middle");
+		checkBarrier(obj, (byte *)c - MPS_CHECK_BYTES, MPS_CHECK_BYTES, MPS_CODE_MIDDLE_DATA, L"middle");
 		// Final barrier.
-		checkBarrier(obj, (byte *)obj + size - MPS_CHECK_BYTES, MPS_CHECK_BYTES, MPS_FOOTER_DATA, L"end");
+		checkBarrier(obj, (byte *)obj + size - MPS_CHECK_BYTES, MPS_CHECK_BYTES, MPS_CODE_FOOTER_DATA, L"footer");
 	}
 
 	static void checkCode(MpsCode *obj) {
@@ -1732,13 +1736,13 @@ namespace storm {
 	static void initCode(MpsCode *obj, size_t size, size_t refs) {
 		obj->size = size;
 		obj->numRefs = refs;
-		memset(obj->barrier, MPS_HEADER_DATA, MPS_CHECK_BYTES);
+		memset(obj->barrier, MPS_CODE_HEADER_DATA, MPS_CHECK_BYTES);
 
 		if (obj->header & codeMask) {
 		} else {
 			GcCode *c = mpsRefsCode(obj);
-			memset((byte *)c - MPS_CHECK_BYTES, MPS_FOOTER_DATA, MPS_CHECK_BYTES);
-			memset((byte *)obj + size - MPS_CHECK_BYTES, MPS_FOOTER_DATA, MPS_CHECK_BYTES);
+			memset((byte *)c - MPS_CHECK_BYTES, MPS_CODE_MIDDLE_DATA, MPS_CHECK_BYTES);
+			memset((byte *)obj + size - MPS_CHECK_BYTES, MPS_CODE_FOOTER_DATA, MPS_CHECK_BYTES);
 		}
 
 		dbg_assert(size == mpsSizeCode(obj), L"Size invalid after creation: " + ::toS(size)
