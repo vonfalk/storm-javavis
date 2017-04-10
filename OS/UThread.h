@@ -70,11 +70,11 @@ namespace os {
 		inline bool operator ==(const UThread &o) const { return data == o.data; }
 		inline bool operator !=(const UThread &o) const { return data != o.data; }
 
-		// Yeild to another UThread. Returns sometime in the future. Returns 'true' if other
+		// Yield to another UThread. Returns sometime in the future. Returns 'true' if other
 		// threads were run between the call and the return.
 		static bool leave();
 
-		// Yeild for a specific amount of time.
+		// Yield for a specific amount of time.
 		static void sleep(nat ms);
 
 		// Any more UThreads to run here?

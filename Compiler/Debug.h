@@ -133,8 +133,8 @@ namespace storm {
 		// OS thread of this thread. This has to be improved later on!
 		void STORM_FN dbgSleep(Int ms);
 
-		// Yeild from the currenlty running UThread. How should this be implemented later?
-		void STORM_FN dbgYeild();
+		// Yield from the currenlty running UThread. How should this be implemented later?
+		void STORM_FN dbgYield();
 
 		// Value implemented in C++ for testing. Tracks live instances!
 		class DbgVal {

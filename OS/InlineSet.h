@@ -47,7 +47,7 @@ namespace os {
 		// Add an element to the set. It is assumed that the element has not previously been added
 		// to another set. This function is thread safe wrt iterations through the set, ie. an
 		// iteration through the set between any two machine instructions in this function will
-		// succeed, yeilding all elements in the set, possibly except for the newly inserted
+		// succeed, yielding all elements in the set, possibly except for the newly inserted
 		// element.
 		void insert(T *item) {
 			++count;
@@ -67,7 +67,7 @@ namespace os {
 
 		// Remove an element from the set. This function is thread safe wrt iterations through the
 		// set, ie. an iteration through the set between any two machine instructions in this
-		// function will succeed, yeilding all elements in the set, possibly except for the element
+		// function will succeed, yielding all elements in the set, possibly except for the element
 		// to be removed.
 		void erase(T *item) {
 			dbg_assert(count > 0, L"Trying to erase elements in an empty set.");

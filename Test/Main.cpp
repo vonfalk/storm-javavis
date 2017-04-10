@@ -27,7 +27,8 @@ Gc &gc() {
 	}
 
 	if (!usedGc) {
-		usedGc = new Gc(32*1024, 1000);
+		// Don't take up too much VM since we have to share VM with the Engine later on.
+		usedGc = new Gc(2*1024*1024, 1000);
 		usedGc->attachThread();
 	}
 	return *usedGc;

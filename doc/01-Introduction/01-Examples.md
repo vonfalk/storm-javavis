@@ -80,10 +80,10 @@ execution in `Spawn` to progress until `a.result + b.result` is being evaluated 
 `Future<Int>` objects here). This time, we can see that the `A` and `B` outputs are
 interleaved. However, the execution is still entirely deterministic. As both calls to `threadDemo`
 are being executed on the same OS thread, no thread switching is performed until one of the calls
-explicitly yeilds. `dbgSleep` is a version of `sleep` that blocks the entire OS thread while `sleep`
-does not block the thread if there is other work to do. `dbgYeild` performs an explicit yeild. This
+explicitly yields. `dbgSleep` is a version of `sleep` that blocks the entire OS thread while `sleep`
+does not block the thread if there is other work to do. `dbgYield` performs an explicit yield. This
 is not generally neccessary, as any primitive in Storm that could block the current thread ensures
-to perform a yeild before attempting to block the thread.
+to perform a yield before attempting to block the thread.
 
 See [Threads](md://Storm/Threads) for details on the semantics of the threading system in Storm.
 

@@ -46,7 +46,7 @@ In the compiler, each thread you declare is backed by an OS level thread. Each o
 then be processing messages from other threads. These messages are sent whenever another thread
 calls a function that is declared to execute on another thread.  Each of the OS threads are in turn
 running cooperatively scheduled user mode threads.  Each incoming message will be launched on its
-own thread, and may selectively yeild whenever it has to block for some reason (for example when
+own thread, and may selectively yield whenever it has to block for some reason (for example when
 waiting for a result from another thread).  This way makes recursive calls between threads (eg A ->
 B -> A) easier to handle, but it does not introduce a lot of possible race-conditions, at least not
 worse than regular function calls does.

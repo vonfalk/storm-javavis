@@ -242,7 +242,7 @@ namespace storm {
 			Sleep(ms);
 		}
 
-		void dbgYeild() {
+		void dbgYield() {
 			os::UThread::leave();
 		}
 

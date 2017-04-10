@@ -6,7 +6,7 @@ Int threadDemo(Str data, Int times) on Demo {
 	for (Int i = 0; i < times; i++) {
 		print(data * (i + 1).nat);
 		dbgSleep(100);
-		dbgYeild;
+		dbgYield;
 		// sleep(500 ms);
 	}
 	times * 2;
