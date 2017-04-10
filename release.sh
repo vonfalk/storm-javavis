@@ -15,7 +15,7 @@ then
 fi
 
 7z a release/storm.zip ./release/Storm.exe doc/ > /dev/null
-find root/ -not -name "*.dll" | xargs --delimiter='\n' 7z a release/storm.zip > /dev/null
+find root/ -type f -not -name "*.dll" | grep -v "server-tests/" | xargs --delimiter='\n' 7z a release/storm.zip > /dev/null
 
 # Add dlls, we need to rename them first...
 IFS=$'\n'
@@ -30,7 +30,7 @@ done
 echo "Checking so that the release works..."
 if [[ -e release/storm ]]
 then
-    rm -r release/storm/*
+    rm -r release/storm/* 2> /dev/null
 else
     mkdir release/storm
 fi
