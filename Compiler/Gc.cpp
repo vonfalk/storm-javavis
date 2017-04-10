@@ -733,6 +733,8 @@ namespace storm {
 		assert(headerSize == OFFSET_OF(MpsObj, count), L"Invalid header size.");
 		assert(vtableOffset >= sizeof(void *), L"Invalid vtable offset (initialization failed?)");
 
+		mps_lib_assert_fail_install(&mps_assert_fail);
+
 		MPS_ARGS_BEGIN(args) {
 			MPS_ARGS_ADD(args, MPS_KEY_ARENA_SIZE, arenaSize);
 			check(mps_arena_create_k(&arena, mps_arena_class_vm(), args), L"Failed to create GC arena.");

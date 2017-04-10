@@ -18,6 +18,7 @@ extern "C" {
 #endif
 
 #include "mps/code/mps.h" // MPS core
+#include "mps/code/mpslib.h" // MPS plinth
 #include "mps/code/mpsavm.h" // VM arena
 #include "mps/code/mpscamc.h" // AMC pool
 #include "mps/code/mpscams.h" // AMS pool
@@ -28,6 +29,9 @@ extern "C" {
 	// Decrease/increase the # of byte scanned for this scanned set (hack).
 	void mps_decrease_scanned(mps_ss_t ss, size_t decrease);
 	void mps_increase_scanned(mps_ss_t ss, size_t increase);
+
+	// Custom assertion failure handler. Calls 'DebugBreak' to aid when debugging.
+	void mps_assert_fail(const char *file, unsigned line, const char *condition);
 
 #ifdef __cplusplus
 }
