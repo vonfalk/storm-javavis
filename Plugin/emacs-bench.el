@@ -16,7 +16,7 @@
      (prog1
 	 ,@body
        (setq global-storm-mode old-storm-mode)
-       (storm-send (list 'chunk-size old-chunk-size)))))
+       (storm-send (cons 'chunk-size old-chunk-size)))))
 
 ;; Run benchmarks.
 (defun storm-run-benchmarks (&optional dir)
@@ -31,30 +31,33 @@
   (interactive)
   (when buffer-file-name
     (storm-test-env
-     (storm-run-file (file-name-directory buffer-file-name) (file-name-nondirectory buffer-file-name)))))
+     (storm-run-file (file-name-directory buffer-file-name) (file-name-nondirectory buffer-file-name) (cons 0 nil)))))
 
-(defun storm-run-dir (dir)
+(defun storm-run-dir (dir &optional counter)
   "Run benchmarks in a directory."
+  (unless counter
+    (setq counter (cons 0 nil)))
   (setq dir (file-name-as-directory dir))
   (let ((files (directory-files-and-attributes dir)))
     (while (consp files)
       (storm-run-file-or-dir
        dir
        (car (car files))
-       (cdr (car files)))
+       (cdr (car files))
+       counter)
       (setq files (cdr files)))))
 
-(defun storm-run-file-or-dir (path file attrs)
+(defun storm-run-file-or-dir (path file attrs counter)
   "Run the test specified in the file."
   (cond ((= (string-to-char file) ?.)
 	 nil)
 	((= (string-to-char file) ?#)
 	 nil)
 	((eq (first attrs) 't)
-	 (storm-run-dir (concat path file)))
-	(t (storm-run-file path file))))
+	 (storm-run-dir (concat path file) counter))
+	(t (storm-run-file path file counter))))
 
-(defun storm-run-file (path file)
+(defun storm-run-file (path file counter)
   "Run the specified file (if supported)."
   (let ((dispatch-to nil))
     (when (storm-supports (file-name-extension file))
@@ -62,7 +65,8 @@
 
     (if dispatch-to
 	(catch 'bench-fail
-	  (storm-output-string (format "Running file: %s%s...\n" path file) 'storm-bench-msg)
+	  (setcar counter (1+ (car counter)))
+	  (storm-output-string (format "Running file %d: %s...\n" (car counter) file) 'storm-bench-msg)
 	  (funcall dispatch-to (concat path file)))
       (storm-output-string (format "Ignoring unsupported file: %s%s\n" path file)))))
 
@@ -85,24 +89,28 @@
   (kill-all-local-variables)
   (text-mode))
 
-(defun storm-open-buffer (file &optional skip-mode)
+(defun storm-open-buffer (file use-storm-mode)
   "Open a buffer, wait until it is fully colored and ready for use."
   (save-excursion
-    (let ((buf (find-file-noselect file)))
+    (let ((buf (find-buffer-visiting file))
+	  (opened nil))
+      (unless buf
+	(setq buf (find-file-noselect file))
+	(setq opened t))
       (display-buffer buf t)
       (with-current-buffer buf
-	(if skip-mode
+	(if use-storm-mode
 	    (progn
-	      (kill-current-mode)
 	      (when (buffer-modified-p)
-		(revert-buffer t t)))
+		(kill-current-mode)
+		(revert-buffer t t))
+	      (storm-mode)
+	      (storm-update-colors))
 	  (progn
+	    (kill-current-mode)
 	    (when (buffer-modified-p)
-	      (kill-current-mode)
-	      (revert-buffer t t))
-	    (storm-mode)
-	    (storm-update-colors))))
-      buf)))
+	      (revert-buffer t t)))))
+      (cons buf opened))))
 
 (defun storm-update-colors ()
   "Update colors in the current buffer, wait for the result from Storm."
@@ -163,57 +171,70 @@
     )
   "Kinds of tests that are currently supported.")
 
+(defmacro storm-use-buffer (file auto-storm-mode &rest body)
+  "Opens 'file' and make it visible, then evaluates all forms in 'body'.
+   If the last form returns a nonzero value, the buffer is left in its
+   current state, otherwise it is reverted (and maybe closed)."
+  `(let* ((buffer-data (storm-open-buffer ,file ,auto-storm-mode))
+	  (result (with-current-buffer (car buffer-data)
+		    (auto-save-mode -1) ;; No auto-save-mode
+		    ,@body)))
+     (when (= 0 result)
+       (with-current-buffer (car buffer-data)
+	   (revert-buffer t t)
+	   (when (cdr buffer-data)
+	     (kill-buffer (car buffer-data)))))
+     result))
+
 (defun storm-run-fill (file)
   "Run files with .fill.X."
-  (let ((buffer (storm-open-buffer file)))
-    (with-current-buffer buffer
-      (let ((ref (buffer-substring (point-min) (point-max))))
-	(erase-buffer)
-	(storm-wait-for 'color 1.0)
-	;; Re-open the current buffer, so we start with a clean slate!
-	(storm-debug-re-open)
-	(storm-update-colors)
+  (storm-use-buffer
+   file t
+   (let ((ref (buffer-substring (point-min) (point-max))))
+     (erase-buffer)
+     (storm-wait-for 'color 1.0)
+     ;; Re-open the current buffer, so we start with a clean slate!
+     (storm-debug-re-open)
+     (storm-update-colors)
 
-	(storm-insert-slowly ref)
-	(storm-update-colors)
+     (storm-insert-slowly ref)
+     (storm-update-colors)
 
-	(set-buffer-modified-p nil)
-	(redisplay)
-	(storm-compare-buffer file ref)))))
+     (set-buffer-modified-p nil)
+     (redisplay)
+     (storm-compare-buffer file ref))))
 
 (defun storm-run-insert (file)
   "Run files with .insert.X."
-  (let ((buffer (storm-open-buffer file t)))
-    (with-current-buffer buffer
-      (let* ((header (storm-insert-header))
-	     (insert-str (first header))
-	     (insert-text (rest header))
-	     (ref-str "")
-	     (gap-start 0))
-	(unless (search-forward insert-str nil t)
-	  (storm-output-string (format "The marker %S was not found in the file." insert-str))
-	  (throw 'bench-fail))
+  (storm-use-buffer
+   file nil
+   (let* ((header (storm-insert-header))
+	  (insert-str (first header))
+	  (insert-text (rest header))
+	  (ref-str "")
+	  (gap-start 0))
+     (unless (search-forward insert-str nil t)
+       (storm-output-string (format "The marker %S was not found in the file." insert-str))
+       (throw 'bench-fail))
 
-	(delete-char (- (length insert-str)))
-	(storm-mode)
-	(storm-update-colors)
-	(redisplay)
+     (delete-char (- (length insert-str)))
+     (storm-mode)
+     (storm-update-colors)
+     (redisplay)
 
-	(setq ref-str (buffer-substring (point-min) (point-max)))
-	(setq gap-start (point))
+     (setq ref-str (buffer-substring (point-min) (point-max)))
+     (setq gap-start (point))
 
-	(while insert-text
-	  (storm-insert-slowly (car insert-text))
-	  (setq insert-text (cdr insert-text))
-	  (when insert-text
-	    (insert "\n")
-	    (indent-according-to-mode))
-	  (storm-update-colors)
-	  (redisplay))
+     (while insert-text
+       (storm-insert-slowly (car insert-text))
+       (setq insert-text (cdr insert-text))
+       (when insert-text
+	 (insert "\n")
+	 (indent-according-to-mode))
+       (storm-update-colors)
+       (redisplay))
 
-	(when (= 0 (storm-compare-buffer file ref-str gap-start (point)))
-	  ;; Revert the buffer if it contained no errors. Convenient when working with Git.
-	  (revert-buffer t t))))))
+     (storm-compare-buffer file ref-str gap-start (point)))))
 
 (defun storm-insert-header ()
   "Extract the header lines for an 'insert'-type file."

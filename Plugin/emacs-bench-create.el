@@ -78,15 +78,29 @@
     (setq min-pos (point-min)))
   (goto-char (+ min-pos (random (- (point-max) min-pos)))))
 
+(defun bench-count-matches (regex &optional min)
+  (goto-char (if min min (point-min)))
+  (let ((count 0))
+    (while (search-forward-regexp regex nil t)
+      (setq count (1+ count)))
+    count))
+
+(defun bench-goto-match (regex id &optional min)
+  (goto-char (if min min (point-min)))
+  (let ((count 0))
+    (while (<= count id)
+      (search-forward-regexp regex nil t)
+      (setq count (1+ count)))))
+
 (defun bench-create-whole-insert ()
   "Create a test which inserts a whole statement somewhere in the current buffer."
   (goto-char (point-min))
   (search-forward-regexp "^package.*; *$" nil t)
 
-  (let ((min-pos (1+ (point))))
-    (while (progn
-	     (bench-random-pos min-pos)
-	     (not (search-forward-regexp "^.*; *$" nil t)))))
+  (let* ((min-pos (1+ (point)))
+	 (regex "^.*; *$")
+	 (match-count (bench-count-matches regex min-pos)))
+    (bench-goto-match regex (random match-count) min-pos))
 
   (let ((end (point))
 	(header nil))
@@ -94,13 +108,13 @@
     (skip-chars-forward " \t")
     (setq header (buffer-substring (point) end))
     (delete-region (point) end)
-    (insert "$")
+    (insert "$$")
     (goto-char (point-min))
-    (insert "// $\n// " header "\n")))
+    (insert "// $$\n// " header "\n")))
 
-;;(bench-create "~/Projects/storm/root/test/server-tests/ant/ref/"
-;;	      "~/Projects/storm/root/test/server-tests/ant/insert/"
-;;	      'insert-whole
-;;	      200)
+;; (bench-create "~/Projects/storm/root/test/server-tests/ant/ref/"
+;; 	      "~/Projects/storm/root/test/server-tests/ant/insert/"
+;; 	      'insert-whole
+;; 	      200)
 
-;;(storm-run-benchmarks "test/server-tests/ant/insert/")
+;; (storm-run-benchmarks "test/server-tests/ant/insert/")

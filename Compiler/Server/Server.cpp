@@ -135,11 +135,12 @@ namespace storm {
 
 			Moment start;
 
-			File *f = new (this) File(id, parsePath(path), content, work);
+			Url *url = parsePath(path);
+			File *f = new (this) File(id, url, content, work);
 			f->editPos = point;
 			files->put(id, f);
 
-			print(TO_S(this, L"Opened " << path << L" in " << (Moment() - start)));
+			print(TO_S(this, L"Opened " << url->name() << L" in " << (Moment() - start)));
 
 			// Give the initial data on the file.
 			updateLater(f, f->full());
