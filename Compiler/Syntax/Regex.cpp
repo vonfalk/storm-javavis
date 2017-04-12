@@ -416,8 +416,8 @@ namespace storm {
 			if (first != o.first)
 				return false;
 
-			for (Nat i = 0; i < c - 1; i++) {
-				if (chars->v[i] != o.chars->v[i])
+			for (Nat i = 1; i < c; i++) {
+				if (chars->v[i-1] != o.chars->v[i-1])
 					return false;
 			}
 
