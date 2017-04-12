@@ -16,6 +16,7 @@
 (defvar bench-types
   '(
     (insert-whole "insert" bench-create-whole-insert)
+    (insert-partial "insert" bench-create-partial-insert)
     )
   "Known types of tests to create. Each entry has the form: type file-ext function
    where 'type' is the key used in lookups, 'file-ext' is the file extension to be
@@ -112,9 +113,51 @@
     (goto-char (point-min))
     (insert "// $$\n// " header "\n")))
 
+(defun bench-create-partial-insert ()
+  "Create a test which insert a partial statement somewhere in the current buffer."
+  (goto-char (point-min))
+  (search-forward-regexp "^package.*; *$" nil t)
+
+  (let* ((min-pos (1+ (point)))
+	 (regex "\\(^.*; *$\\)\\|\\(^ *\\(if\\|for\\).*{$\\)")
+	 (match-count (bench-count-matches regex min-pos))
+	 (end nil)
+	 (point nil))
+    (bench-goto-match regex (random match-count) min-pos)
+
+    (setq end (point))
+    (beginning-of-line)
+    (skip-chars-forward " \t")
+    (setq header (buffer-substring (point) end))
+    (when (equal "{" (substring header -1))
+	;; Remove the next line instead...
+	(search-forward-regexp "^.*; *$" nil t)
+	(setq end (point))
+	(beginning-of-line)
+	(skip-chars-forward " \t"))
+    (delete-region (point) end)
+    (insert "$$")
+    (goto-char (point-min))
+
+    (let ((chars 4))
+      (setq header (substring header 0 (+ (random (- (length header) chars)) chars))))
+    (insert "// $$\n// " header "\n")))
+
+
+;; Create insert-whole tests:
 ;; (bench-create "~/Projects/storm/root/test/server-tests/ant/ref/"
 ;; 	      "~/Projects/storm/root/test/server-tests/ant/insert/"
 ;; 	      'insert-whole
 ;; 	      200)
 
 ;; (storm-run-benchmarks "test/server-tests/ant/insert/")
+
+
+;; Create insert-partial tests:
+;; (bench-create "~/Projects/storm/root/test/server-tests/ant/ref/"
+;; 	      "~/Projects/storm/root/test/server-tests/ant/partial/"
+;; 	      'insert-partial
+;; 	      200)
+
+;; (storm-run-benchmarks "test/server-tests/ant/partial/")
+
