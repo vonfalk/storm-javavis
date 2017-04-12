@@ -118,7 +118,7 @@ SStr SColorName();
 SColorName => SStr(name, pos) : "#" #keyword - SIdent name #keyword;
 
 void SStrContent();
-SStrContent : "[^\"\\]*"; // All except end of string and backslash.
+SStrContent : "[^\"\\\n]*"; // All except end of string and backslash.
 SStrContent : SStrContent - "\\." - SStrContent; // Gobble escape sequences (we could translate them here...)
 
 Str SString();

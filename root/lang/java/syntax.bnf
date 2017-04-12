@@ -10,6 +10,8 @@ void SCommentStart();
 SCommentStart : "//[^\n\r]*[\n\r]+";
 SCommentStart : "/" - "\*" - [SInComment]@;
 
+// TODO: Do not match newline chars in regexes. Handle those on the parser level instead as it
+// Allows for better error recovery!
 void SInComment();
 SInComment : "\*+/"; // End of the comment.
 SInComment : "/\*+" - SInComment - SInComment; // Start of a nested comment.
@@ -297,7 +299,7 @@ void SFloatExp();
 SFloatExp : "e[+\-]?[0-9]+";
 
 void SStrContent();
-SStrContent : "[^\"\\]*";
+SStrContent : "[^\"\\\n]*";
 SStrContent : SStrContent - "\\." - SStrContent;
 
 void SCharContent();

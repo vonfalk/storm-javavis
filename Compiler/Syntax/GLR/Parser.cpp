@@ -60,6 +60,28 @@ namespace storm {
 				return acceptingStack != null;
 			}
 
+			/**
+			 * Interesting cases to watch out for and their solutions:
+			 *
+			 * Terminals matching long strings could be a problem. For example, if a string
+			 * production is implemented as StrLiteral : "\"" - "[^\"\\]*" - "\"";, the middle
+			 * regexp matches most of the rest of the file if the ending quote is missing. This is
+			 * easily fixed in the grammar by not allowing the regex to match \n. If multiline
+			 * string literals are desired, this can be handled on the parser level for better error
+			 * recovery. The same holds true for multiline comment blocks. This could be solved in
+			 * the parser by explicitly trying to do error recovery whenever a regex matches enough
+			 * around a newline, but this is probably not a good idea as it will either incur a
+			 * fairly large performance penalty on correct input or fail to kick in with near misses.
+			 *
+			 * Secondly, when performing shifts during error recovery, it is possible for the error
+			 * recovery to simply decide to put the difficult parts of the input inside a comment
+			 * (and because of the reason above, consuming too much of the input) and proceed
+			 * happily. This is probably best solved by disallowing the parser to perform shifts
+			 * which correspond to skipping the first terminal symbol in a production. Instead,
+			 * these cases should be handled by completing entire productions prematurely and
+			 * possibly skipping the offending characters using the error recovery rather than in a
+			 * regex.
+			 */
 			ParseResult Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
 				initParse(root, str, file, start);
 
@@ -213,7 +235,7 @@ namespace storm {
 						Item item = items[i];
 						if (!item.end() && !item.isRule(syntax)) {
 							if (item.nextRegex(syntax) == action.regex) {
-								PLN(L"Shall not advance " << item.toS(syntax));
+								// PLN(L"Shall not advance " << item.toS(syntax));
 							}
 						}
 					}

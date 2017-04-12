@@ -83,7 +83,7 @@ BEGIN_TEST(InfoError, Server) {
 
 } END_TEST
 
-BEGIN_TEST(JavaError, Server) {
+BEGIN_TEST_(JavaError, Server) {
 	Engine &e = gEngine();
 
 	Package *pkg = e.package(L"lang.java");
@@ -93,6 +93,16 @@ BEGIN_TEST(JavaError, Server) {
 		// Previously, this failed...
 		Str *src = new (e) Str(L"1 +");
 		ParseResult r = p->parseApprox(src, new (e) Url());
-		VERIFY(r.success);
+		CHECK(r.success);
+	}
+
+	{
+		// And this...
+		Str *src = new (e) Str(L"try { foo(bar, } catch (Type v) {}");
+		ParseResult r = p->parseApprox(src, new (e) Url());
+		CHECK(r.success);
+
+		if (!r.success)
+			p->throwError();
 	}
 } END_TEST
