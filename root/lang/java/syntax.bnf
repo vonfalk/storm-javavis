@@ -323,7 +323,7 @@ SArgs : "(", SExpr, (",", SExpr, )*, ")";
 void SSelector();
 SSelector : SIdent #fnName - (, SArgs)?;
 SSelector : "this" #keyword;
-SSelector : "super" #keyword - (, SArgs)?;
+SSelector[10] : "super" #keyword - (, SArgs)?;
 SSelector[10] : "super" #keyword, "\.", SSelector;
 SSelector : "new" #keyword, STypeActuals, SIdent #typeName, STypeActuals, SArgs - (,SClassBody)?;
 SSelector : "<", STypeList, ">", SGenericSuffix;

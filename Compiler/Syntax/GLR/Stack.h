@@ -27,7 +27,9 @@ namespace storm {
 				// Create.
 				STORM_CTOR StackItem();
 				STORM_CTOR StackItem(Nat state, Nat pos);
+				STORM_CTOR StackItem(Nat state, Nat pos, Nat errors);
 				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, Nat tree);
+				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, Nat tree, Nat errors);
 
 				// State at this point in the stack.
 				Nat state;
@@ -37,6 +39,10 @@ namespace storm {
 
 				// Part of the syntax tree for this node.
 				Nat tree;
+
+				// How many error corrections have this stack item lived through, ie. which value
+				// shall be used for the 'error' field in the next tree node?
+				Nat errors;
 
 				// Previous item in the stack.
 				MAYBE(StackItem *) prev;

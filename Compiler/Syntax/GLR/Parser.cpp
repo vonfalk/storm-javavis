@@ -70,9 +70,10 @@ namespace storm {
 				Nat pos = lastPos;
 				Nat skippedTokens = 0;
 				Nat skippedChars = 0;
-				Set<StackItem *> *prevSkipped = null;
 				while (acceptingStack == null || acceptingStack->pos < length) {
 					// Advance all productions one step by performing all possible shifts.
+					// Idea: either shift items multiple time before trying to parse once more, or
+					// complete all productions directly in combination with skipping unknown characters.
 					stacks->set(0, lastSet);
 					bool shifts = shiftAll();
 
@@ -82,12 +83,14 @@ namespace storm {
 						if (pos >= length)
 							break;
 
-						skipped = 1;
+						// Remember that we skipped characters.
+						for (Set<StackItem *>::Iter i = lastSet->begin(), e = lastSet->end(); i != e; ++i)
+							i.v()->errors++;
+
+						// Update status.
 						skippedChars++;
 						pos++;
 						lastPos++;
-					} else {
-						prevSkipped = null;
 					}
 
 					skippedTokens++;
@@ -111,7 +114,6 @@ namespace storm {
 				startPos = start.offset();
 				sourceUrl = file;
 				parseRoot = syntax->lookup(root);
-				skipped = 0;
 
 				store = new (this) TreeStore(syntax);
 				stacks = new (this) FutureStacks();
@@ -134,7 +136,6 @@ namespace storm {
 
 					// Advance one step.
 					stacks->pop();
-					skipped = 0;
 				}
 			}
 
@@ -201,13 +202,26 @@ namespace storm {
 					return false;
 
 				bool any = false;
+				const ItemSet &items = s->items;
 				Set<StackItem *> *top = stacks->top();
 				for (Nat i = 0; i < actions->count(); i++) {
 					const Action &action = actions->at(i);
-					Nat tree = store->push(currentPos, 1).id();
+
+					// See if we're reducing the first terminal of this production. If so, don't shift it!
+					// Note: this requires that we can skip nonterminals as well!
+					for (Nat j = 0; j < items.count(); j++) {
+						Item item = items[i];
+						if (!item.end() && !item.isRule(syntax)) {
+							if (item.nextRegex(syntax) == action.regex) {
+								PLN(L"Shall not advance " << item.toS(syntax));
+							}
+						}
+					}
+
+					Nat tree = store->push(currentPos, now->errors + 1).id();
 					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
 					if (!top->has(item)) {
-						// Note: we're not using 'put', as this could cause infinite cycles.
+						// Note: we're not using 'item->put()', as this could cause infinite cycles.
 						top->put(item);
 						any = true;
 					}
@@ -236,7 +250,7 @@ namespace storm {
 					// are the same, but when error recovery kicks in 'env.stack->pos' may be
 					// smaller, which means that some characters in the input were skipped. These
 					// should be included somewhere so that the InfoTrees will have the correct length.
-					Nat tree = store->push(env.stack->pos, skipped).id();
+					Nat tree = store->push(env.stack->pos, env.stack->errors).id();
 					StackItem *item = new (this) StackItem(action.action, matched, env.stack, tree);
 					stacks->put(offset, store, item);
 #ifdef GLR_DEBUG
@@ -370,7 +384,7 @@ namespace storm {
 				// Create the syntax tree node for this reduction.
 
 				Nat node = 0;
-				Nat errors = 0;
+				Nat errors = stack->errors;
 				for (const Path *p = path; p; p = p->prev)
 					errors += store->at(p->treeNode).errors();
 

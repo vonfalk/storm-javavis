@@ -8,24 +8,31 @@ namespace storm {
 		namespace glr {
 
 			StackItem::StackItem()
-				: state(0), pos(0), prev(null), tree(0) {}
+				: state(0), pos(0), prev(null), tree(0), errors(0) {}
 
 			StackItem::StackItem(Nat state, Nat pos)
-				: state(state), pos(pos), prev(null), tree(0) {}
+				: state(state), pos(pos), prev(null), tree(0), errors(0) {}
+
+			StackItem::StackItem(Nat state, Nat pos, Nat errors)
+				: state(state), pos(pos), prev(null), tree(0), errors(errors) {}
 
 			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, Nat tree)
-				: state(state), pos(pos), prev(prev), tree(tree) {}
+				: state(state), pos(pos), prev(prev), tree(tree), errors(0) {}
+
+			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, Nat tree, Nat errors)
+				: state(state), pos(pos), prev(prev), tree(tree), errors(errors) {}
 
 			Bool StackItem::insert(TreeStore *store, StackItem *insert) {
-				if (insert == this)
-					return false;
+				// First: see if this node is already here.
+				for (StackItem *at = this; at; at = at->morePrev)
+					if (at == insert)
+						return false;
 
+				// Find a node to merge.
 				StackItem *last = this;
 				for (StackItem *at = this; at; at = at->morePrev) {
 					last = at;
 
-					if (at == insert)
-						return false;
 					if (at->prev == insert->prev) {
 						// These are considered to be the same link. See which syntax tree to use!
 						at->updateTree(store, insert->tree);
