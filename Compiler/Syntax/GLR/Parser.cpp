@@ -231,21 +231,22 @@ namespace storm {
 
 					// See if we're reducing the first terminal of this production. If so, don't shift it!
 					// Note: this requires that we can skip nonterminals as well!
-					for (Nat j = 0; j < items.count(); j++) {
-						Item item = items[i];
-						if (!item.end() && !item.isRule(syntax)) {
-							if (item.nextRegex(syntax) == action.regex) {
-								// PLN(L"Shall not advance " << item.toS(syntax));
-							}
-						}
-					}
+					// for (Nat j = 0; j < items.count(); j++) {
+					// 	Item item = items[i];
+					// 	if (!item.end() && !item.isRule(syntax)) {
+					// 		if (item.nextRegex(syntax) == action.regex) {
+					// 			// PLN(L"Shall not advance " << item.toS(syntax));
+					// 		}
+					// 	}
+					// }
 
 					Nat tree = store->push(currentPos, now->errors + 1).id();
 					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
-					if (!top->has(item)) {
-						// Note: we're not using 'item->put()', as this could cause infinite cycles.
-						top->put(item);
+					StackItem *topItem = top->at(item);
+					if (topItem == item) {
 						any = true;
+					} else {
+						topItem->insert(store, item);
 					}
 				}
 

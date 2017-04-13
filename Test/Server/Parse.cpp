@@ -83,7 +83,7 @@ BEGIN_TEST(InfoError, Server) {
 
 } END_TEST
 
-BEGIN_TEST_(JavaError, Server) {
+BEGIN_TEST(JavaError, Server) {
 	Engine &e = gEngine();
 
 	Package *pkg = e.package(L"lang.java");
