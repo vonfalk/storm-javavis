@@ -1,4 +1,5 @@
 #pragma once
+#include "InfoErrors.h"
 #include "Compiler/Package.h"
 #include "Compiler/Exception.h"
 #include "Compiler/Syntax/Rule.h"
@@ -18,38 +19,6 @@ namespace storm {
 #define PARSER_PLN(x)
 #define PARSER_PVAR(x)
 #endif
-
-		/**
-		 * Result from a parse where error recovery was performed. Indicates how good or bad the
-		 * match is considered.
-		 */
-		class ParseResult {
-			STORM_VALUE;
-		public:
-			// Failed parse.
-			STORM_CTOR ParseResult();
-
-			// Successful parse.
-			STORM_CTOR ParseResult(Nat skipped, Nat corrections);
-
-			// Did the parse succeed at all?
-			Bool success;
-
-			// Number of characters that was not properly matched.
-			Nat skippedChars;
-
-			// Correction work performed by the parser. Higher means more corrections.
-			Nat corrections;
-
-			// Did this parse need any error correction?
-			inline Bool STORM_FN corrected() const {
-				return skippedChars > 0
-					|| corrections > 0;
-			}
-		};
-
-		// Output.
-		StrBuf &STORM_FN operator <<(StrBuf &to, ParseResult r);
 
 
 		/**
@@ -77,7 +46,7 @@ namespace storm {
 
 			// Parse a string, doing error recovery. Only call 'infoTree' after parsing in this
 			// manner, as the resulting syntax tree is not neccessarily complete.
-			virtual ParseResult parseApprox(Rule *root, Str *str, Url *file, Str::Iter start);
+			virtual Bool parseApprox(Rule *root, Str *str, Url *file, Str::Iter start);
 
 			// Clear all parse-related information. Included packages are retained.
 			virtual void clear();

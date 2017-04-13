@@ -82,7 +82,7 @@ namespace storm {
 			 * possibly skipping the offending characters using the error recovery rather than in a
 			 * regex.
 			 */
-			ParseResult Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
+			Bool Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
 				initParse(root, str, file, start);
 
 				// Start as usual.
@@ -90,14 +90,12 @@ namespace storm {
 
 				Nat length = source->peekLength();
 				Nat pos = lastPos;
-				Nat skippedTokens = 0;
-				Nat skippedChars = 0;
-				while (acceptingStack == null || acceptingStack->pos < length) {
+				while (pos <= length && (acceptingStack == null || acceptingStack->pos < length)) {
 					// Advance productions to accommodate for missing characters.
 					stacks->set(0, lastSet);
 					advanceAll();
-					skippedTokens++;
 					pos = lastPos;
+					Set<StackItem *> *toInsert = new (this) Set<StackItem *>(*lastSet);
 
 					doParse(pos);
 
@@ -105,24 +103,14 @@ namespace storm {
 					while (pos == lastPos && pos <= length) {
 						pos++;
 						lastPos++;
-						skippedChars++;
 
 						stacks->set(0, lastSet);
-						doParse(pos);
+						doParse(pos, toInsert, 20);
 					}
-
-					if (pos >= length)
-						break;
 				}
 
 				finishParse();
-
-				if (hasTree()) {
-					skippedChars += source->peekLength() - acceptingStack->pos;
-					return ParseResult(skippedChars, skippedTokens);
-				} else {
-					return ParseResult();
-				}
+				return hasTree();
 			}
 
 			void Parser::initParse(Rule *root, Str *str, Url *file, Str::Iter start) {
@@ -145,6 +133,32 @@ namespace storm {
 				Nat length = source->peekLength();
 				for (Nat i = from; i <= length; i++) {
 					Set<StackItem *> *top = stacks->top();
+
+					// Process all states in 'top'.
+					if (top)
+						actor(i, top);
+
+					// Advance one step.
+					stacks->pop();
+				}
+			}
+
+			void Parser::doParse(Nat from, Set<StackItem *> *insert, Nat times) {
+				Nat length = source->peekLength();
+				for (Nat i = from; i <= length; i++) {
+					Set<StackItem *> *top = stacks->top();
+
+					// Insert items. TODO: Fix this
+					if (times > 0 && false) {
+						if (!top)
+							top = new (this) Set<StackItem *>();
+
+						times--;
+						for (Set<StackItem *>::Iter i = insert->begin(), e = insert->end(); i != e; ++i) {
+							// Inserts 'i.v()' if it does not already exist.
+							top->at(i.v());
+						}
+					}
 
 					// Process all states in 'top'.
 					if (top)
@@ -206,8 +220,13 @@ namespace storm {
 				// See if we're reducing the first terminal of this production. If so, don't shift it!
 				for (Nat i = 0; i < items.count(); i++) {
 					Item item = items[i];
-					if (!item.end() && !item.isRule(syntax) && item.nextRegex(syntax) == regex)
-						return item.regexBefore(syntax);
+					if (!item.end() && !item.isRule(syntax) && item.nextRegex(syntax) == regex) {
+						// This will work well unless many productions start with nonterminals that
+						// matches epsilon. Another alternative would be to use
+						// 'item.regexBefore(syntax)', but that is too restrictive in cases like
+						// 'SExpr,"foo",SExpr', where SExpr never matches epsilon.
+						return item.prev(syntax);
+					}
 				}
 
 				// Should not happen...
@@ -224,6 +243,7 @@ namespace storm {
 				for (Nat i = 0; i < actions->count(); i++) {
 					const Action &action = actions->at(i);
 
+					// This actually makes error recovery perform worse in many cases.
 					// if (!shouldShift(s->items, action.regex))
 					// 	continue;
 

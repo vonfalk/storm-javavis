@@ -32,10 +32,10 @@ BEGIN_TEST(InfoError, Server) {
 	Package *pkg = e.package(L"lang.simple");
 	InfoParser *p = InfoParser::create(pkg, L"SExpr", new (e) glr::Parser());
 
-	if (false) {
+	{
 		Str *src = new (e) Str(L"foo +");
-		ParseResult r = p->parseApprox(src, new (e) Url());
-		VERIFY(r.success);
+		Bool success = p->parseApprox(src, new (e) Url());
+		VERIFY(success);
 
 		InfoNode *tree = p->infoTree();
 		VERIFY(tree->length() == 5);
@@ -45,8 +45,8 @@ BEGIN_TEST(InfoError, Server) {
 
 	{
 		Str *src = new (e) Str(L"foo bar");
-		ParseResult r = p->parseApprox(src, new (e) Url());
-		VERIFY(r.success);
+		Bool success = p->parseApprox(src, new (e) Url());
+		VERIFY(success);
 
 		InfoNode *tree = p->infoTree();
 		VERIFY(tree->length() == 7);
@@ -55,13 +55,11 @@ BEGIN_TEST(InfoError, Server) {
 		CHECK_EQ(tree->leafAt(4)->color, tVarName);
 	}
 
-	break;
-
 	{
 		// How are strings with unknown tokens handled?
 		Str *src = new (e) Str(L"foo +;");
-		ParseResult r = p->parseApprox(src, new (e) Url());
-		VERIFY(r.success);
+		Bool success = p->parseApprox(src, new (e) Url());
+		VERIFY(success);
 
 		// This checks to see if trees are properly padded to their full length.
 		InfoNode *tree = p->fullInfoTree();
@@ -73,8 +71,8 @@ BEGIN_TEST(InfoError, Server) {
 	{
 		// Can we skip unknown characters?
 		Str *src = new (e) Str(L"foo ? bar");
-		ParseResult r = p->parseApprox(src, new (e) Url());
-		VERIFY(r.success);
+		Bool success = p->parseApprox(src, new (e) Url());
+		VERIFY(success);
 
 		InfoNode *tree = p->infoTree();
 		VERIFY(tree->length() == 9);
@@ -94,17 +92,17 @@ BEGIN_TEST(JavaError, Server) {
 	{
 		// Previously, this failed...
 		Str *src = new (e) Str(L"1 +");
-		ParseResult r = p->parseApprox(src, new (e) Url());
-		CHECK(r.success);
+		Bool success = p->parseApprox(src, new (e) Url());
+		CHECK(success);
 	}
 
 	{
 		// And this...
 		Str *src = new (e) Str(L"try { foo(bar, } catch (Type v) {}");
-		ParseResult r = p->parseApprox(src, new (e) Url());
-		CHECK(r.success);
+		Bool success = p->parseApprox(src, new (e) Url());
+		CHECK(success);
 
-		if (!r.success)
+		if (!success)
 			p->throwError();
 	}
 } END_TEST

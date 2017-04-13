@@ -36,7 +36,7 @@ namespace storm {
 				virtual Bool parse(Rule *root, Str *str, Url *file, Str::Iter start);
 
 				// Parse a string, performing error recovery.
-				virtual ParseResult parseApprox(Rule *root, Str *str, Url *file, Str::Iter start);
+				virtual Bool parseApprox(Rule *root, Str *str, Url *file, Str::Iter start);
 
 				// Clear all parse-related information. Included packages are retained.
 				virtual void clear();
@@ -163,6 +163,7 @@ namespace storm {
 
 				// Parse from position 'i' to completion. Assumes 'stacks->top()' contains valid information.
 				void doParse(Nat from);
+				void doParse(Nat from, Set<StackItem *> *insert, Nat times);
 
 				// Perform all possible shifts in the current stack top. Returns 'true' if one or
 				// more shifts were performed.

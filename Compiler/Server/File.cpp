@@ -43,7 +43,7 @@ namespace storm {
 
 			InfoNode *c = new (this) InfoLeaf(null, src);
 			parser = p;
-			ParseResult pResult;
+			InfoErrors pResult;
 			if (InfoNode *n = parse(c, parser->root(), &pResult)) {
 				if (!bad(pResult, n)) {
 					content = n;
@@ -294,12 +294,20 @@ namespace storm {
 			return parse(node, root, null);
 		}
 
-		InfoNode *Part::parse(InfoNode *node, Rule *root, ParseResult *out) {
+		InfoNode *Part::parse(InfoNode *node, Rule *root, InfoErrors *out) {
 			parser->root(root);
 			Str *src = node->toS();
-			ParseResult quality = parser->parseApprox(src, path);
-			if (out)
-				*out = quality;
+			if (parser->parseApprox(src, path)) {
+				if (out) {
+					TODO(L"Fetch the real error information.");
+					*out = infoSuccess();
+				}
+			} else {
+				if (out) {
+					*out = infoFailed();
+				}
+			}
+
 			// PLN(TO_S(this, src->peekLength() << L" - " << root->identifier() << L" - " << quality));
 			// if (src->peekLength() < 20)
 			// 	PLN(src->escape());
@@ -342,11 +350,11 @@ namespace storm {
 				Range(),
 				Range(),
 			};
-			ParseResult r = parse(env, start, content, false);
+			InfoErrors r = parse(env, start, content, false);
 			// PVAR(TO_S(this, r));
 
 			// Maybe we contain some parts of the previous part?
-			if (!r.success) {
+			if (!r.success()) {
 				// Invalidate the previous part.
 				owner->postInvalidate(this, -1, true);
 			} else if (env.corrected.empty()) {
@@ -362,32 +370,32 @@ namespace storm {
 			return env.modified;
 		}
 
-		ParseResult Part::parse(ParseEnv &env, Nat offset, InfoNode *node, bool seenError) {
+		InfoErrors Part::parse(ParseEnv &env, Nat offset, InfoNode *node, bool seenError) {
 			// We should probably parse at a higher level...
 			Nat len = node->length();
 			if (len == 0)
-				return ParseResult();
+				return infoFailed();
 
 			// Does this node completely cover 'range'?
 			Range nodeRange(offset, offset + len);
 			if (nodeRange.from > env.update.from || nodeRange.to < env.update.to)
-				return ParseResult();
+				return infoFailed();
 
 			// Do not attempt to re-parse leaf nodes. They only contain regexes, which have been
 			// checked already.
 			InfoInternal *inode = as<InfoInternal>(node);
 			if (!inode)
-				return ParseResult();
+				return infoFailed();
 
 			// If this node is an error production: take note so we can act accordingly in the recursion.
 			if (inode->error())
 				seenError = true;
 
 			// Re-parse this node if none of our children have already managed to do so.
-			ParseResult ok(0, 0);
-			for (Nat i = 0; i < inode->count() && ok.success; i++) {
+			InfoErrors ok = infoSuccess();
+			for (Nat i = 0; i < inode->count() && ok.success(); i++) {
 				InfoNode *child = inode->at(i);
-				ParseResult cResult = parse(env, offset, child, seenError);
+				InfoErrors cResult = parse(env, offset, child, seenError);
 				ok = combine(ok, cResult);
 				offset += child->length();
 			}
@@ -398,7 +406,7 @@ namespace storm {
 					return ok;
 
 				// Re-parse this node!
-				ParseResult here;
+				InfoErrors here;
 				InfoNode *n = parse(inode, inode->production()->rule(), &here);
 
 				// TODO: See which one is worse...
@@ -407,7 +415,7 @@ namespace storm {
 					env.modified = nodeRange;
 					ok = here;
 
-					if (here.corrected())
+					if (here.error())
 						env.corrected = nodeRange;
 				}
 			}
@@ -415,30 +423,30 @@ namespace storm {
 			return ok;
 		}
 
-		bool Part::better(ParseResult a, ParseResult b) {
+		bool Part::better(InfoErrors a, InfoErrors b) {
+			TODO(L"Implement me!");
 			return false;
 		}
 
-		bool Part::bad(ParseResult w, InfoNode *node) {
-			if (!w.success)
+		bool Part::bad(InfoErrors w, InfoNode *node) {
+			if (!w.success())
 				return true;
 
 			Nat len = node->length();
 			// NOTE: Consider the case when 'len' == 0.
-			if (w.skippedChars > len * 0.4)
+			if (w.skipped() > len * 0.4)
 				return true;
-			if (w.corrections > max(5.0, len*0.05))
+			if (w.shifts() > max(5.0, len*0.05))
 				return true;
 
 			return false;
 		}
 
-		ParseResult Part::combine(ParseResult a, ParseResult b) {
-			if (!a.success || !b.success)
-				return ParseResult();
+		InfoErrors Part::combine(InfoErrors a, InfoErrors b) {
+			if (!a.success() || !b.success())
+				return InfoErrors();
 
-			return ParseResult(a.skippedChars + b.skippedChars,
-							a.corrections + b.corrections);
+			return a + b;
 		}
 
 		void Part::replace(InfoNode *oldNode, InfoNode *newNode) {

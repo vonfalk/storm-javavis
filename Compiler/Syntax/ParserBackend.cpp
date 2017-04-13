@@ -5,19 +5,6 @@
 namespace storm {
 	namespace syntax {
 
-		ParseResult::ParseResult() : success(false), skippedChars(0), corrections(0) {}
-
-		ParseResult::ParseResult(Nat skipped, Nat corrections) :
-			success(true), skippedChars(skipped), corrections(corrections) {}
-
-		StrBuf &operator <<(StrBuf &to, ParseResult r) {
-			if (r.success)
-				return to << r.skippedChars << L" chars skipped, " << r.corrections << L" corrections";
-			else
-				return to << L"Failed";
-		}
-
-
 		ParserBackend::ParserBackend() {}
 
 		void ParserBackend::add(Rule *r) {}
@@ -32,8 +19,8 @@ namespace storm {
 			return false;
 		}
 
-		ParseResult ParserBackend::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
-			return ParseResult();
+		Bool ParserBackend::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
+			return false;
 		}
 
 		void ParserBackend::clear() {}

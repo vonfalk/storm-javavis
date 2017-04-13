@@ -81,7 +81,7 @@ namespace storm {
 
 			// Re-parse a node in the syntax tree. Returns 'null' on complete failure.
 			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root);
-			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root, syntax::ParseResult *result);
+			syntax::InfoNode *parse(syntax::InfoNode *node, syntax::Rule *root, syntax::InfoErrors *result);
 
 			// Re-parse a range in the syntax tree. Returns the range that was re-parsed and needs
 			// to be transmitted to the client again.
@@ -101,12 +101,12 @@ namespace storm {
 
 			// Traverse the parse tree from 'node' while attempting to update 'range', reparsing nodes as needed.
 			// Returns the best parse result so far.
-			syntax::ParseResult parse(ParseEnv &env, Nat offset, syntax::InfoNode *node, bool seenError);
+			syntax::InfoErrors parse(ParseEnv &env, Nat offset, syntax::InfoNode *node, bool seenError);
 
-			// Compare ParseResult:s and see which is better/worse.
-			static bool better(syntax::ParseResult better, syntax::ParseResult than);
-			static bool bad(syntax::ParseResult which, syntax::InfoNode *node);
-			static syntax::ParseResult combine(syntax::ParseResult a, syntax::ParseResult b);
+			// Compare InfoErrors:s and see which is better/worse.
+			static bool better(syntax::InfoErrors better, syntax::InfoErrors than);
+			static bool bad(syntax::InfoErrors which, syntax::InfoNode *node);
+			static syntax::InfoErrors combine(syntax::InfoErrors a, syntax::InfoErrors b);
 
 			// Remove 'range' in the current node (if applicable). The structure of the syntax tree
 			// is kept intact. Returns 'false' if content was modified so that a regex in a leaf node
