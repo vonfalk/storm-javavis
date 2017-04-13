@@ -166,8 +166,13 @@ namespace storm {
 
 				// Perform all possible shifts in the current stack top. Returns 'true' if one or
 				// more shifts were performed.
-				bool shiftAll();
-				bool shiftAll(StackItem *now);
+				void shiftAll(StackItem *now);
+
+				// Should we shift this item set in error recovery mode?
+				bool shouldShift(const ItemSet &items, const Regex &regex);
+
+				// Advance all states on the current stack top.
+				void advanceAll();
 
 				/**
 				 * Parsing functions. Based on the paper "Parser Generation for Interactive

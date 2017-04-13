@@ -69,6 +69,9 @@ namespace storm {
 				// Get the next regex. Only available if 'isRule' is false.
 				Regex STORM_FN nextRegex(Syntax *syntax) const;
 
+				// Is there any regex before the current position?
+				Bool STORM_FN regexBefore(Syntax *syntax) const;
+
 				// Hash function.
 				Nat STORM_FN hash() const;
 

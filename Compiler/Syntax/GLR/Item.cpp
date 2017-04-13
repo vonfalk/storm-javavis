@@ -306,6 +306,18 @@ namespace storm {
 				return as<RegexToken>(p->tokens->at(pos))->regex;
 			}
 
+			Bool Item::regexBefore(Syntax *syntax) const {
+				Item i = *this;
+				while (i.prev(syntax)) {
+					if (!i.isRule(syntax)) {
+						// This can not be the end, so it has to be a regex!
+						return true;
+					}
+				}
+
+				return false;
+			}
+
 			Nat Item::hash() const {
 				return (pos << 8) ^ id;
 			}

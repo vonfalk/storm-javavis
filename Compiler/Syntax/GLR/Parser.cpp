@@ -93,32 +93,26 @@ namespace storm {
 				Nat skippedTokens = 0;
 				Nat skippedChars = 0;
 				while (acceptingStack == null || acceptingStack->pos < length) {
-					// Advance all productions one step by performing all possible shifts.
-					// Idea: either shift items multiple time before trying to parse once more, or
-					// complete all productions directly in combination with skipping unknown characters.
+					// Advance productions to accommodate for missing characters.
 					stacks->set(0, lastSet);
-					bool shifts = shiftAll();
-
-					// Nothing advanced? Try to skip some characters...
-					if (!shifts) {
-						// Give up if we need to skip too much.
-						if (pos >= length)
-							break;
-
-						// Remember that we skipped characters.
-						for (Set<StackItem *>::Iter i = lastSet->begin(), e = lastSet->end(); i != e; ++i)
-							i.v()->errors++;
-
-						// Update status.
-						skippedChars++;
-						pos++;
-						lastPos++;
-					}
-
+					advanceAll();
 					skippedTokens++;
+					pos = lastPos;
+
 					doParse(pos);
 
-					pos = lastPos;
+					// Try to skip characters until we get somewhere...
+					while (pos == lastPos && pos <= length) {
+						pos++;
+						lastPos++;
+						skippedChars++;
+
+						stacks->set(0, lastSet);
+						doParse(pos);
+					}
+
+					if (pos >= length)
+						break;
 				}
 
 				finishParse();
@@ -208,49 +202,66 @@ namespace storm {
 				} while (!done);
 			}
 
-			bool Parser::shiftAll() {
-				bool any = false;
-				// Make a copy so that we do not accidentally advance a state twice.
-				Set<StackItem *> *src = new (this) Set<StackItem *>(*stacks->top());
-				for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i)
-					any |= shiftAll(i.v());
-				return any;
+			bool Parser::shouldShift(const ItemSet &items, const Regex &regex) {
+				// See if we're reducing the first terminal of this production. If so, don't shift it!
+				for (Nat i = 0; i < items.count(); i++) {
+					Item item = items[i];
+					if (!item.end() && !item.isRule(syntax) && item.nextRegex(syntax) == regex)
+						return item.regexBefore(syntax);
+				}
+
+				// Should not happen...
+				return false;
 			}
 
-			bool Parser::shiftAll(StackItem *now) {
+			void Parser::shiftAll(StackItem *now) {
 				State *s = table->state(now->state);
 				Array<Action> *actions = s->actions;
 				if (!actions)
-					return false;
+					return;
 
-				bool any = false;
-				const ItemSet &items = s->items;
 				Set<StackItem *> *top = stacks->top();
 				for (Nat i = 0; i < actions->count(); i++) {
 					const Action &action = actions->at(i);
 
-					// See if we're reducing the first terminal of this production. If so, don't shift it!
-					// Note: this requires that we can skip nonterminals as well!
-					// for (Nat j = 0; j < items.count(); j++) {
-					// 	Item item = items[i];
-					// 	if (!item.end() && !item.isRule(syntax)) {
-					// 		if (item.nextRegex(syntax) == action.regex) {
-					// 			// PLN(L"Shall not advance " << item.toS(syntax));
-					// 		}
-					// 	}
-					// }
+					// if (!shouldShift(s->items, action.regex))
+					// 	continue;
 
 					Nat tree = store->push(currentPos, now->errors + 1).id();
 					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
 					StackItem *topItem = top->at(item);
 					if (topItem == item) {
-						any = true;
+						// Inserted!
 					} else {
 						topItem->insert(store, item);
 					}
 				}
+			}
 
-				return any;
+			void Parser::advanceAll() {
+				BoolSet *used = new (this) BoolSet();
+				Set<StackItem *> *src = stacks->top();
+				bool any;
+
+				do {
+					any = false;
+					for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
+						StackItem *now = i.v();
+						if (used->get(now->state))
+							continue;
+						used->set(now->state, true);
+						any = true;
+
+						// Shift and reduce this state.
+						ActorEnv env = {
+							table->state(now->state),
+							now,
+							true,
+						};
+						actorReduceAll(env, null);
+						shiftAll(now);
+					}
+				} while (any);
 			}
 
 			void Parser::actorShift(const ActorEnv &env) {
@@ -413,9 +424,9 @@ namespace storm {
 
 				if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
 					// These are really just shifts.
-					node = store->push(currentPos, errors).id();
+					node = store->push(stack->pos, errors).id();
 				} else {
-					TreeNode fill = store->push(currentPos, env.production, errors, env.length);
+					TreeNode fill = store->push(stack->pos, env.production, errors, env.length);
 					TreeArray children = fill.children();
 					const Path *top = path;
 					for (Nat i = 0; i < env.length; i++) {
