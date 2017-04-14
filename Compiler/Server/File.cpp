@@ -297,16 +297,9 @@ namespace storm {
 		InfoNode *Part::parse(InfoNode *node, Rule *root, InfoErrors *out) {
 			parser->root(root);
 			Str *src = node->toS();
-			if (parser->parseApprox(src, path)) {
-				if (out) {
-					TODO(L"Fetch the real error information.");
-					*out = infoSuccess();
-				}
-			} else {
-				if (out) {
-					*out = infoFailed();
-				}
-			}
+			InfoErrors e = parser->parseApprox(src, path);
+			if (out)
+				*out = e;
 
 			// PLN(TO_S(this, src->peekLength() << L" - " << root->identifier() << L" - " << quality));
 			// if (src->peekLength() < 20)
@@ -374,18 +367,18 @@ namespace storm {
 			// We should probably parse at a higher level...
 			Nat len = node->length();
 			if (len == 0)
-				return infoFailed();
+				return infoFailure();
 
 			// Does this node completely cover 'range'?
 			Range nodeRange(offset, offset + len);
 			if (nodeRange.from > env.update.from || nodeRange.to < env.update.to)
-				return infoFailed();
+				return infoFailure();
 
 			// Do not attempt to re-parse leaf nodes. They only contain regexes, which have been
 			// checked already.
 			InfoInternal *inode = as<InfoInternal>(node);
 			if (!inode)
-				return infoFailed();
+				return infoFailure();
 
 			// If this node is an error production: take note so we can act accordingly in the recursion.
 			if (inode->error())

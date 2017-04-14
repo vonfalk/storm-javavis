@@ -46,7 +46,7 @@ namespace storm {
 
 			// Parse a string, doing error recovery. Only call 'infoTree' after parsing in this
 			// manner, as the resulting syntax tree is not neccessarily complete.
-			virtual Bool parseApprox(Rule *root, Str *str, Url *file, Str::Iter start);
+			virtual InfoErrors parseApprox(Rule *root, Str *str, Url *file, Str::Iter start);
 
 			// Clear all parse-related information. Included packages are retained.
 			virtual void clear();

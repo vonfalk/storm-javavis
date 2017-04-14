@@ -109,7 +109,7 @@ namespace storm {
 
 		protected:
 			// Call 'parseApprox'. Only available from 'InfoParser'.
-			inline Bool parseApprox(Str *str, Url *file, Str::Iter start) {
+			inline InfoErrors parseApprox(Str *str, Url *file, Str::Iter start) {
 				return use->parseApprox(root(), str, file, start);
 			}
 
@@ -153,8 +153,8 @@ namespace storm {
 			// 'tree' assumes a complete syntax tree. This is not possible to do from Storm, as
 			// 'tree' is not exposed to the Storm type system.
 			// TODO: Support giving an explicit end as well.
-			Bool STORM_FN parseApprox(Str *str, Url *file);
-			Bool STORM_FN parseApprox(Str *str, Url *file, Str::Iter start);
+			InfoErrors STORM_FN parseApprox(Str *str, Url *file);
+			InfoErrors STORM_FN parseApprox(Str *str, Url *file, Str::Iter start);
 
 			// Clear.
 			virtual void STORM_FN clear();

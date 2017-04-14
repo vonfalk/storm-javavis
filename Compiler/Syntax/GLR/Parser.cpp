@@ -82,7 +82,7 @@ namespace storm {
 			 * possibly skipping the offending characters using the error recovery rather than in a
 			 * regex.
 			 */
-			Bool Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
+			InfoErrors Parser::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
 				initParse(root, str, file, start);
 
 				// Start as usual.
@@ -94,8 +94,9 @@ namespace storm {
 					// Advance productions to accommodate for missing characters.
 					stacks->set(0, lastSet);
 					advanceAll();
-					pos = lastPos;
 					Set<StackItem *> *toInsert = new (this) Set<StackItem *>(*lastSet);
+					Nat insertStart = lastPos;
+					pos = lastPos;
 
 					doParse(pos);
 
@@ -104,13 +105,20 @@ namespace storm {
 						pos++;
 						lastPos++;
 
-						stacks->set(0, lastSet);
-						doParse(pos, toInsert, 20);
+						// Note: we do not need to populate stacks[0] here, as this version of
+						// doParse does that as long as it needs to inject things into the stacks.
+						// Note: for some reason, 1 seems to be the best here...
+						doParse(pos, toInsert, insertStart, 1);
 					}
 				}
 
 				finishParse();
-				return hasTree();
+				if (hasTree()) {
+					TreeNode node = store->at(acceptingStack->tree);
+					return node.errors();
+				} else {
+					return infoFailure();
+				}
 			}
 
 			void Parser::initParse(Rule *root, Str *str, Url *file, Str::Iter start) {
@@ -143,15 +151,17 @@ namespace storm {
 				}
 			}
 
-			void Parser::doParse(Nat from, Set<StackItem *> *insert, Nat times) {
+			void Parser::doParse(Nat from, Set<StackItem *> *insert, Nat insertPos, Nat times) {
 				Nat length = source->peekLength();
-				for (Nat i = from; i <= length; i++) {
+				for (Nat pos = from; pos <= length; pos++) {
 					Set<StackItem *> *top = stacks->top();
 
-					// Insert items. TODO: Fix this
-					if (times > 0 && false) {
-						if (!top)
+					// Insert items.
+					if (times > 0) {
+						if (!top) {
 							top = new (this) Set<StackItem *>();
+							stacks->set(0, top);
+						}
 
 						times--;
 						for (Set<StackItem *>::Iter i = insert->begin(), e = insert->end(); i != e; ++i) {
@@ -162,7 +172,7 @@ namespace storm {
 
 					// Process all states in 'top'.
 					if (top)
-						actor(i, top);
+						actor(pos, top);
 
 					// Advance one step.
 					stacks->pop();
@@ -247,7 +257,14 @@ namespace storm {
 					// if (!shouldShift(s->items, action.regex))
 					// 	continue;
 
-					Nat tree = store->push(currentPos, now->errors + 1).id();
+					InfoErrors errors = now->errors;
+					errors += infoSkipped(currentPos - now->pos);
+					// Note: this if-statement could be skipped (the body could always be
+					// executed). This results in empty regexes being matched as parse errors even
+					// when they are possibly not.
+					if (!action.regex.matchesEmpty())
+						errors += infoShifts(1);
+					Nat tree = store->push(now->pos, errors).id();
 					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
 					StackItem *topItem = top->at(item);
 					if (topItem == item) {
@@ -259,6 +276,9 @@ namespace storm {
 			}
 
 			void Parser::advanceAll() {
+				// TODO: We do not need to be this aggressive. We should just do a few iterations in
+				// this loop and then retry. If that fails, then we can generate a few more states.
+				currentPos = lastPos;
 				BoolSet *used = new (this) BoolSet();
 				Set<StackItem *> *src = stacks->top();
 				bool any;
@@ -300,11 +320,13 @@ namespace storm {
 						continue;
 
 					Nat offset = matched - currentPos;
+					InfoErrors errors = env.stack->errors;
+					errors += infoSkipped(currentPos - env.stack->pos);
 					// Note: here, 'env.stack->pos' is used instead of 'currentPos'. Usually, they
 					// are the same, but when error recovery kicks in 'env.stack->pos' may be
 					// smaller, which means that some characters in the input were skipped. These
 					// should be included somewhere so that the InfoTrees will have the correct length.
-					Nat tree = store->push(env.stack->pos, env.stack->errors).id();
+					Nat tree = store->push(env.stack->pos, errors).id();
 					StackItem *item = new (this) StackItem(action.action, matched, env.stack, tree);
 					stacks->put(offset, store, item);
 #ifdef GLR_DEBUG
@@ -344,14 +366,15 @@ namespace storm {
 				for (nat i = 0; i < count; i++)
 					doReduce(env, toReduce->at(i), through);
 
-				// Always reduce these if we're able to.
-				Array<Action> *reduceEmpty = env.state->reduceOnEmpty;
-				if (reduceEmpty) {
-					for (Nat i = 0; i < reduceEmpty->count(); i++) {
-						const Action &a = reduceEmpty->at(i);
-						doReduce(env, a.action, through);
-					}
-				}
+				// Do not reduce 'reduceOnEmpty' as we will skip over them using the 'shiftAll' function instead.
+				// // Always reduce these if we're able to.
+				// Array<Action> *reduceEmpty = env.state->reduceOnEmpty;
+				// if (reduceEmpty) {
+				// 	for (Nat i = 0; i < reduceEmpty->count(); i++) {
+				// 		const Action &a = reduceEmpty->at(i);
+				// 		doReduce(env, a.action, through);
+				// 	}
+				// }
 
 				// See if we can reduce other items in this item set.
 				ItemSet items = env.state->items;
@@ -438,9 +461,12 @@ namespace storm {
 				// Create the syntax tree node for this reduction.
 
 				Nat node = 0;
-				Nat errors = stack->errors;
+				InfoErrors errors = stack->errors;
+				errors += infoSkipped(currentPos - env.old.stack->pos);
 				for (const Path *p = path; p; p = p->prev)
 					errors += store->at(p->treeNode).errors();
+				if (env.old.reduceAll)
+					errors += infoShifts(1);
 
 				if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
 					// These are really just shifts.
@@ -544,7 +570,7 @@ namespace storm {
 			}
 
 			Bool Parser::hasTree() const {
-				return acceptingStack != null;
+				return acceptingStack != null && acceptingStack->tree != null;
 			}
 
 			Str::Iter Parser::matchEnd() const {
@@ -773,9 +799,7 @@ namespace storm {
 			}
 
 			InfoNode *Parser::infoTree() const {
-				if (acceptingStack == null)
-					return null;
-				if (acceptingStack->tree == null)
+				if (!hasTree())
 					return null;
 
 				return infoTree(store->at(acceptingStack->tree), acceptingStack->pos);
@@ -790,7 +814,7 @@ namespace storm {
 				Nat length = totalLength(node);
 				Nat nodePos = length;
 				InfoInternal *result = new (this) InfoInternal(p, length);
-				Nat errors = 0;
+				InfoErrors errors = infoSuccess();
 
 				if (p->indentType != indentNone)
 					result->indent = new (this) InfoIndent(nodePos, nodePos, p->indentType);
@@ -826,18 +850,20 @@ namespace storm {
 
 				assert(nodePos == 0, L"Node length computation was inaccurate!");
 
-				if (errors != node.errors())
+				if (errors != node.errors()) {
 					result->error(true);
+					// PLN(TO_S(this, errors << L" - " << node.errors() << L" in " << result->format()));
+				}
 
 				return result;
 			}
 
-			Nat Parser::infoSubtree(InfoInternal *result, Nat &resultPos, TreeNode &startNode, Nat endPos) const {
+			InfoErrors Parser::infoSubtree(InfoInternal *result, Nat &resultPos, TreeNode &startNode, Nat endPos) const {
 				TreeNode *node = &startNode;
 				Production *p = syntax->production(node->production());
 				Item item = last(node->production());
 				Nat pos = endPos;
-				Nat errors = 0;
+				InfoErrors errors = infoSuccess();
 
 				TreeArray children = node->children();
 
@@ -884,10 +910,10 @@ namespace storm {
 				return errors;
 			}
 
-			Nat Parser::infoToken(InfoInternal *result, Nat &resultPos, TreeNode &node, Nat endPos, Token *token) const {
+			InfoErrors Parser::infoToken(InfoInternal *result, Nat &resultPos, TreeNode &node, Nat endPos, Token *token) const {
 				assert(resultPos > 0, L"Too few children allocated in InfoNode!");
 
-				Nat errors = 0;
+				InfoErrors errors = infoSuccess();
 				InfoNode *created = null;
 				if (node.children()) {
 					if (Syntax::specialProd(node.production()) == Syntax::prodESkip) {
@@ -895,7 +921,7 @@ namespace storm {
 						// look like a plain string.
 						created = new (this) InfoLeaf(as<RegexToken>(token), emptyStr);
 						// Move errors up to the parent.
-						errors = 0;
+						errors = infoSuccess();
 					} else {
 						created = infoTree(node, endPos);
 						errors = node.errors();
@@ -909,7 +935,7 @@ namespace storm {
 					}
 					created = new (this) InfoLeaf(as<RegexToken>(token), str);
 					// Move errors up to the parent.
-					errors = 0;
+					errors = infoSuccess();
 				}
 
 				created->color = token->color;

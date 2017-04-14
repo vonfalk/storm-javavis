@@ -34,8 +34,8 @@ BEGIN_TEST(InfoError, Server) {
 
 	{
 		Str *src = new (e) Str(L"foo +");
-		Bool success = p->parseApprox(src, new (e) Url());
-		VERIFY(success);
+		InfoErrors s = p->parseApprox(src, new (e) Url());
+		VERIFY(s.success());
 
 		InfoNode *tree = p->infoTree();
 		VERIFY(tree->length() == 5);
@@ -45,8 +45,8 @@ BEGIN_TEST(InfoError, Server) {
 
 	{
 		Str *src = new (e) Str(L"foo bar");
-		Bool success = p->parseApprox(src, new (e) Url());
-		VERIFY(success);
+		InfoErrors s = p->parseApprox(src, new (e) Url());
+		VERIFY(s.success());
 
 		InfoNode *tree = p->infoTree();
 		VERIFY(tree->length() == 7);
@@ -58,8 +58,8 @@ BEGIN_TEST(InfoError, Server) {
 	{
 		// How are strings with unknown tokens handled?
 		Str *src = new (e) Str(L"foo +;");
-		Bool success = p->parseApprox(src, new (e) Url());
-		VERIFY(success);
+		InfoErrors s = p->parseApprox(src, new (e) Url());
+		VERIFY(s.success());
 
 		// This checks to see if trees are properly padded to their full length.
 		InfoNode *tree = p->fullInfoTree();
@@ -71,8 +71,8 @@ BEGIN_TEST(InfoError, Server) {
 	{
 		// Can we skip unknown characters?
 		Str *src = new (e) Str(L"foo ? bar");
-		Bool success = p->parseApprox(src, new (e) Url());
-		VERIFY(success);
+		InfoErrors s = p->parseApprox(src, new (e) Url());
+		VERIFY(s.success());
 
 		InfoNode *tree = p->infoTree();
 		VERIFY(tree->length() == 9);
@@ -92,17 +92,17 @@ BEGIN_TEST(JavaError, Server) {
 	{
 		// Previously, this failed...
 		Str *src = new (e) Str(L"1 +");
-		Bool success = p->parseApprox(src, new (e) Url());
-		CHECK(success);
+		InfoErrors s = p->parseApprox(src, new (e) Url());
+		CHECK(s.success());
 	}
 
 	{
 		// And this...
 		Str *src = new (e) Str(L"try { foo(bar, } catch (Type v) {}");
-		Bool success = p->parseApprox(src, new (e) Url());
-		CHECK(success);
+		InfoErrors s = p->parseApprox(src, new (e) Url());
+		CHECK(s.success());
 
-		if (!success)
+		if (!s.success())
 			p->throwError();
 	}
 } END_TEST

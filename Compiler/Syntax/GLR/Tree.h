@@ -3,6 +3,7 @@
 #include "Core/GcArray.h"
 #include "Core/PODArray.h"
 #include "Syntax.h"
+#include "Compiler/Syntax/InfoErrors.h"
 
 namespace storm {
 	namespace syntax {
@@ -107,11 +108,11 @@ namespace storm {
 				}
 
 				// Get the number of errors encountered to reach this node.
-				inline Nat STORM_FN errors() const {
+				inline InfoErrors STORM_FN errors() const {
 					if ((read(src, ptr) & errorMask) == 0)
-						return 0;
+						return infoSuccess();
 					else
-						return read(src, ptr + 1);
+						return InfoErrors::fromData(read(src, ptr + 1));
 				}
 
 				// Replace the contents of this node with another. This is only doable if both this
@@ -171,13 +172,13 @@ namespace storm {
 				TreeNode push(Nat pos);
 
 				// Add a new terminal node with a specific number of encountered errors.
-				TreeNode push(Nat pos, Nat errors);
+				TreeNode push(Nat pos, InfoErrors errors);
 
 				// Add a new nonterminal with a specific number of children.
 				TreeNode push(Nat pos, Nat production, Nat children);
 
 				// Add a new nonterminal with a specific number of encountered errors and a specific number of children.
-				TreeNode push(Nat pos, Nat production, Nat errors, Nat children);
+				TreeNode push(Nat pos, Nat production, InfoErrors errors, Nat children);
 
 				// Priority for tree comparisions.
 				enum Priority {

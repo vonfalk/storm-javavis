@@ -8,18 +8,18 @@ namespace storm {
 		namespace glr {
 
 			StackItem::StackItem()
-				: state(0), pos(0), prev(null), tree(0), errors(0) {}
+				: state(0), pos(0), prev(null), tree(0), errors(infoSuccess()) {}
 
 			StackItem::StackItem(Nat state, Nat pos)
-				: state(state), pos(pos), prev(null), tree(0), errors(0) {}
+				: state(state), pos(pos), prev(null), tree(0), errors(infoSuccess()) {}
 
-			StackItem::StackItem(Nat state, Nat pos, Nat errors)
+			StackItem::StackItem(Nat state, Nat pos, InfoErrors errors)
 				: state(state), pos(pos), prev(null), tree(0), errors(errors) {}
 
 			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, Nat tree)
-				: state(state), pos(pos), prev(prev), tree(tree), errors(0) {}
+				: state(state), pos(pos), prev(prev), tree(tree), errors(infoSuccess()) {}
 
-			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, Nat tree, Nat errors)
+			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, Nat tree, InfoErrors errors)
 				: state(state), pos(pos), prev(prev), tree(tree), errors(errors) {}
 
 			Bool StackItem::insert(TreeStore *store, StackItem *insert) {
@@ -51,14 +51,20 @@ namespace storm {
 					// previous, we can not do that. Only the start node will ever be empty, so this
 					// is not a problem.
 					tree = newTree;
+				} else if (store->at(tree).pos() != store->at(newTree).pos()) {
+					// Don't alter the position of the tree. This can happen during error
+					// recovery and is not desirable since it will duplicate parts of the input
+					// string in the syntax tree.
 				} else if (store->priority(newTree, tree) == TreeStore::higher) {
 					// Note: we can not simply set the tree pointer of this state, as we need to
 					// update any previously created syntax trees.
 					// Note: due to how 'priority' works, we can be sure that both this tree node
 					// and the other one have children.
-					if (!store->contains(newTree, tree))
-						// Avoid creating cycles.
+					if (!store->contains(newTree, tree)) {
+						// Avoid creating cycles (could probably be skipped now that 'insert'
+						// properly checks for duplicates).
 						store->at(tree).replace(store->at(newTree));
+					}
 				}
 			}
 

@@ -5,6 +5,8 @@ namespace storm {
 	namespace syntax {
 		STORM_PKG(lang.bnf);
 
+		class InfoNode;
+
 		/**
 		 * Description of the error corrections performed to arrive at an info tree.
 		 */
@@ -28,9 +30,14 @@ namespace storm {
 
 			// Add two errors together.
 			InfoErrors STORM_FN operator +(InfoErrors e) const;
+			InfoErrors &STORM_FN operator +=(InfoErrors e);
 
 			// Compare <, compares the sum of the two errors.
 			Bool STORM_FN operator <(InfoErrors e) const;
+
+			// Equal an not equal comparisions based on the < operator.
+			Bool STORM_FN operator ==(InfoErrors e) const;
+			Bool STORM_FN operator !=(InfoErrors e) const;
 
 			// Get/set integer representation.
 			static Nat getData(InfoErrors e);
@@ -47,14 +54,14 @@ namespace storm {
 			Nat data;
 
 			// Friends.
-			friend InfoErrors infoFailed();
+			friend InfoErrors infoFailure();
 			friend InfoErrors infoSuccess();
 			friend InfoErrors infoShifts(Nat shifts);
 			friend InfoErrors infoSkipped(Nat skipped);
 		};
 
 		// Create. Indicate failure.
-		InfoErrors STORM_FN infoFailed();
+		InfoErrors STORM_FN infoFailure();
 
 		// Create. Indicate success.
 		InfoErrors STORM_FN infoSuccess();
@@ -66,7 +73,7 @@ namespace storm {
 		InfoErrors STORM_FN infoSkipped(Nat skipped);
 
 		// Output.
-		StrBuf *STORM_FN operator <<(StrBuf *to, InfoErrors e);
+		StrBuf &STORM_FN operator <<(StrBuf &to, InfoErrors e);
 
 	}
 }

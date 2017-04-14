@@ -11,11 +11,19 @@ namespace storm {
 			const Nat posMask   = 0x3FFFFFFF;
 
 			void TreeNode::replace(const TreeNode &other) {
+				// We only operate on nodes containing children.
+				// This can be an issue when nullable terminals are matched as a production.
+				Nat attrs = read(src, ptr);
+				if ((attrs & countMask) == 0)
+					return;
+				if ((read(src, other.ptr) & countMask) == 0)
+					return;
+
 				pos(other.pos());
 
-				if (read(src, ptr) & errorMask) {
+				if (attrs & errorMask) {
 					// We can store errors!
-					write(src, ptr + 1, other.errors());
+					write(src, ptr + 1, InfoErrors::getData(other.errors()));
 					write(src, ptr + 2, other.children().ptr);
 				} else {
 					// Re-point our array.
@@ -37,13 +45,13 @@ namespace storm {
 				return TreeNode(this, start);
 			}
 
-			TreeNode TreeStore::push(Nat pos, Nat errors) {
-				if (errors == 0)
+			TreeNode TreeStore::push(Nat pos, InfoErrors errors) {
+				if (InfoErrors::getData(errors) == 0)
 					return push(pos);
 
 				Nat start = alloc(2);
 				write(start, errorMask | pos);
-				write(start + 1, errors);
+				write(start + 1, InfoErrors::getData(errors));
 				return TreeNode(this, start);
 			}
 
@@ -55,13 +63,13 @@ namespace storm {
 				return TreeNode(this, start);
 			}
 
-			TreeNode TreeStore::push(Nat pos, Nat production, Nat errors, Nat children) {
-				if (errors == 0)
+			TreeNode TreeStore::push(Nat pos, Nat production, InfoErrors errors, Nat children) {
+				if (InfoErrors::getData(errors) == 0)
 					return push(pos, production, children);
 
 				Nat start = alloc(4 + children);
 				write(start, countMask | errorMask | pos);
-				write(start + 1, errors);
+				write(start + 1, InfoErrors::getData(errors));
 				write(start + 2, countMask | children);
 				write(start + 3, production);
 				return TreeNode(this, start);

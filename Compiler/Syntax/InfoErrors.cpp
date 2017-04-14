@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "InfoErrors.h"
+#include "InfoNode.h"
 
 namespace storm {
 	namespace syntax {
@@ -31,19 +32,39 @@ namespace storm {
 		}
 
 		InfoErrors InfoErrors::operator +(InfoErrors e) const {
-			Nat a = shifts() + e.shifts();
-			Nat b = skipped() + e.skipped();
+			Nat f = (data & failedMask) | (e.data & failedMask);
+			Nat a = min(shifts() + e.shifts(), shiftsMask >> shiftsShift);
+			Nat b = min(skipped() + e.skipped(), skippedMask);
 
-			return InfoErrors(max(a << shiftsShift, shiftsMask)
-							| max(b, skippedMask));
+			return InfoErrors(f | (a << shiftsShift) | b);
+		}
+
+		InfoErrors &InfoErrors::operator +=(InfoErrors e) {
+			// We're just an int, so this is fairly reasonable.
+			*this = *this + e;
+			return *this;
+		}
+
+		static inline Nat value(InfoErrors e) {
+			if (!e.success())
+				return failedMask;
+			else
+				return e.shifts() + e.skipped();
 		}
 
 		Bool InfoErrors::operator <(InfoErrors e) const {
-			return (shifts() + skipped())
-				< (e.shifts() + e.skipped());
+			return value(*this) < value(e);
 		}
 
-		InfoErrors infoFailed() {
+		Bool InfoErrors::operator ==(InfoErrors e) const {
+			return value(*this) == value(e);
+		}
+
+		Bool InfoErrors::operator !=(InfoErrors e) const {
+			return value(*this) != value(e);
+		}
+
+		InfoErrors infoFailure() {
 			return InfoErrors(failedMask);
 		}
 
@@ -52,10 +73,12 @@ namespace storm {
 		}
 
 		InfoErrors infoShifts(Nat shifts) {
+			shifts = min(shifts, shiftsMask >> shiftsShift);
 			return InfoErrors((shifts << shiftsShift) & shiftsMask);
 		}
 
 		InfoErrors infoSkipped(Nat skipped) {
+			skipped = min(skipped, skippedMask);
 			return InfoErrors(skipped & skippedMask);
 		}
 
@@ -67,14 +90,16 @@ namespace storm {
 			return InfoErrors(v);
 		}
 
-		StrBuf *operator <<(StrBuf *to, InfoErrors e) {
+		StrBuf &operator <<(StrBuf &to, InfoErrors e) {
 			if (e.success()) {
-				if (!e.error())
-					*to << L"success";
-				else
-					*to << e.skipped() << L" chars skipped, " << e.shifts() << L" corrections";
+				if (!e.error()) {
+					to << L"success";
+				} else {
+					to << e.skipped() << (e.skipped() == 1 ? L" char" : L" chars") << L" skipped, ";
+					to << e.shifts() << (e.shifts() == 1 ? L" correction" : L" corrections");
+				}
 			} else {
-				*to << L"failed";
+				to << L"failure";
 			}
 
 			return to;

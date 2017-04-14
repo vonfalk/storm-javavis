@@ -3,6 +3,7 @@
 #include "Core/GcArray.h"
 #include "Core/Set.h"
 #include "Compiler/Thread.h"
+#include "Compiler/Syntax/InfoErrors.h"
 #include "Syntax.h"
 #include "Tree.h"
 
@@ -27,9 +28,9 @@ namespace storm {
 				// Create.
 				STORM_CTOR StackItem();
 				STORM_CTOR StackItem(Nat state, Nat pos);
-				STORM_CTOR StackItem(Nat state, Nat pos, Nat errors);
+				STORM_CTOR StackItem(Nat state, Nat pos, InfoErrors errors);
 				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, Nat tree);
-				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, Nat tree, Nat errors);
+				STORM_CTOR StackItem(Nat state, Nat pos, StackItem *prev, Nat tree, InfoErrors errors);
 
 				// State at this point in the stack.
 				Nat state;
@@ -42,7 +43,7 @@ namespace storm {
 
 				// How many error corrections have this stack item lived through, ie. which value
 				// shall be used for the 'error' field in the next tree node?
-				Nat errors;
+				InfoErrors errors;
 
 				// Previous item in the stack.
 				MAYBE(StackItem *) prev;

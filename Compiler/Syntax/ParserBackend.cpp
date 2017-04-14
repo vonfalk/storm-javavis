@@ -19,8 +19,8 @@ namespace storm {
 			return false;
 		}
 
-		Bool ParserBackend::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
-			return false;
+		InfoErrors ParserBackend::parseApprox(Rule *root, Str *str, Url *file, Str::Iter start) {
+			return infoFailure();
 		}
 
 		void ParserBackend::clear() {}

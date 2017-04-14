@@ -139,6 +139,7 @@ namespace storm {
 			virtual void STORM_FN toS(StrBuf *to) const;
 
 			// Format.
+			using InfoNode::format;
 			virtual void STORM_FN format(StrBuf *to) const;
 
 			// Get the size of this node.
@@ -190,6 +191,7 @@ namespace storm {
 			virtual void STORM_FN toS(StrBuf *to) const;
 
 			// Format.
+			using InfoNode::format;
 			virtual void STORM_FN format(StrBuf *to) const;
 
 			// Get the size of this node.
