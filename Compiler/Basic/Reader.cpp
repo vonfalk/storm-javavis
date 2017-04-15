@@ -15,7 +15,7 @@ namespace storm {
 
 		PkgReader *reader(Array<Url *> *files, Package *pkg) {
 			Engine &e = pkg->engine();
-			return new (e) FilePkgReader(files, pkg, fnPtr(e, &createFile));
+			return new (e) FilePkgReader(files, pkg, fnPtr(e, &createFile, Compiler::thread(e)));
 		}
 
 		// Find the syntax package for BS given a type in 'lang.bs'.

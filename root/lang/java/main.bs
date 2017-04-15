@@ -4,11 +4,11 @@ use core:lang;
 use lang:bs:macro;
 use lang:bnf;
 
-PkgReader reader(Url[] files, Package pkg) {
+PkgReader reader(Url[] files, Package pkg) on Compiler {
 	FilePkgReader(files, pkg, &createFile(FileInfo));
 }
 
-FileReader createFile(FileInfo info) {
+FileReader createFile(FileInfo info) on Compiler {
 	JavaReader(info);
 }
 

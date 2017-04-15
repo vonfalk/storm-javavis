@@ -10,7 +10,7 @@ namespace storm {
 		STORM_PKG(lang.bs);
 
 		// Entry point for the syntax language.
-		PkgReader *STORM_FN reader(Array<Url *> *files, Package *pkg);
+		PkgReader *STORM_FN reader(Array<Url *> *files, Package *pkg) ON(Compiler);
 
 		/**
 		 * First stage reader for Basic Storm. At this stage we read the use statements to figure

@@ -9,11 +9,11 @@ use core:asm;
 
 // Package reader for BF files.
 
-PkgReader reader(Url[] files, Package pkg) {
+PkgReader reader(Url[] files, Package pkg) on Compiler {
 	FilePkgReader(files, pkg, &createFile(FileInfo));
 }
 
-FileReader createFile(FileInfo info) {
+FileReader createFile(FileInfo info) on Compiler {
 	BfFile(info);
 }
 

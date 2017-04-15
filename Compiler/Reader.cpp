@@ -80,6 +80,7 @@ namespace storm {
 			throw LangDefError(msg->toS()->c_str());
 		}
 
+		// TODO: Make sure to use the proper thread when calling 'createFn'!
 		typedef PkgReader *(*Fn)(Array<Url *> *, Package *);
 		Fn fn = (Fn)createFn->ref().address();
 		return (*fn)(files, pkg);
