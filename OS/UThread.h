@@ -332,6 +332,17 @@ namespace os {
 		void wakeThreads(int64 time);
 	};
 
+	/**
+	 * Errors in the threading.
+	 */
+	class ThreadError : public Exception {
+	public:
+		ThreadError(const String &msg) : msg(msg) {}
+		virtual String what() const { return msg; }
+	private:
+		String msg;
+	};
+
 
 }
 

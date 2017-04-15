@@ -23,7 +23,7 @@ namespace os {
 	class InlineSet {
 	public:
 		// Create.
-		InlineSet() : first(null), last(null), count(0) {}
+		InlineSet() : first(null), last(null), size(0) {}
 
 		// Destroy.
 		~InlineSet() {
@@ -41,7 +41,7 @@ namespace os {
 				current = next;
 			}
 			first = last = null;
-			count = 0;
+			size = 0;
 		}
 
 		// Add an element to the set. It is assumed that the element has not previously been added
@@ -50,7 +50,7 @@ namespace os {
 		// succeed, yielding all elements in the set, possibly except for the newly inserted
 		// element.
 		void insert(T *item) {
-			++count;
+			++size;
 
 			dbg_assert(item->prev == null, L"The node being inserted is already in a set.");
 			dbg_assert(item->next == null, L"The node being inserted is already in a set.");
@@ -70,8 +70,8 @@ namespace os {
 		// function will succeed, yielding all elements in the set, possibly except for the element
 		// to be removed.
 		void erase(T *item) {
-			dbg_assert(count > 0, L"Trying to erase elements in an empty set.");
-			--count;
+			dbg_assert(size > 0, L"Trying to erase elements in an empty set.");
+			--size;
 
 			if (item == first)
 				atomicWrite(first, item->next);
@@ -95,18 +95,18 @@ namespace os {
 		}
 
 		// Is the set empty?
-		inline bool empty() {
+		inline bool empty() const {
 			return first == null && last == null;
 		}
 
 		// Any elements in the set?
-		inline bool any() {
+		inline bool any() const {
 			return !empty();
 		}
 
 		// How many elements?
-		inline nat size() {
-			return count;
+		inline nat count() const {
+			return size;
 		}
 
 		// Iterators...
@@ -170,7 +170,7 @@ namespace os {
 		// Data.
 		T *first;
 		T *last;
-		nat count;
+		nat size;
 
 		// ensure integrity of this set, used for debugging
 		void validate() const;

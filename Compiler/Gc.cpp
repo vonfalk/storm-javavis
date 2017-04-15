@@ -1292,7 +1292,7 @@ namespace storm {
 		freeTypes.insert(base);
 
 		// Shall we try to reclaim all freed types? This is expensive, so only do it rarely!
-		if (freeTypes.size() > 100) {
+		if (freeTypes.count() > 100) {
 			// Ensure no GC:s in flight.
 			mps_arena_park(arena);
 

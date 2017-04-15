@@ -270,9 +270,12 @@ namespace os {
 	}
 
 	UThreadData *UThreadData::create(UThreadState *thread) {
+		// 'allocStack' may throw an exception, so make sure it succeeds before proceeding any further.
+		void *stack = allocStack(os::stackSize);
+
 		UThreadData *t = new UThreadData(thread);
 		t->stackSize = os::stackSize;
-		t->stackBase = allocStack(t->stackSize);
+		t->stackBase = stack;
 		t->stack.desc = initialStack(t->stackBase, t->stackSize);
 		return t;
 	}
@@ -515,9 +518,14 @@ namespace os {
 	static void *allocStack(nat size) {
 		nat pageSz = pageSize();
 		size = roundUp(size, pageSz);
-		size += pageSz; // we need a guard page.
+		size += pageSz; // We want a guard page.
 
 		byte *mem = (byte *)VirtualAlloc(null, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+		if (mem == null) {
+			// TODO: What to do in this case?
+			PLN(L"Out of memory when spawning a thread.");
+			throw ThreadError(L"Out of memory when spawning a thread.");
+		}
 
 		DWORD oldProt;
 		VirtualProtect(mem, 1, PAGE_READONLY | PAGE_GUARD, &oldProt);

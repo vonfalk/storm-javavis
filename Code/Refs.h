@@ -9,6 +9,7 @@ namespace code {
 
 	// Read/write pointers from a code allocation.
 	void *readPtr(void *code, Nat id);
+	void writePtr(void *code, Nat id);
 	void writePtr(void *code, Nat id, void *ptr);
 
 }

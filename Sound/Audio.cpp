@@ -133,8 +133,6 @@ namespace sound {
 	}
 
 	void AudioWait::doExit() {
-		if (exit)
-			PLN(L"Exiting...");
 		if (exit && !working && notifyExit) {
 			notifyExit->up();
 			notifyExit = null;

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Output.h"
+#include "Refs.h"
 #include "Core/Runtime.h"
 #include "Core/GcCode.h"
 
@@ -206,30 +207,8 @@ namespace code {
 		GcCode *refs = runtime::codeRefs(code);
 		GcCodeRef &ref = refs->refs[slot];
 
-		void *ptr = (byte *)code + ref.offset;
-		size_t *write = (size_t *)ptr;
-		size_t value = (size_t)newAddr;
-
-		switch (ref.kind) {
-		case GcCodeRef::rawPtr:
-			// No strange things happening, just the address.
-			break;
-		case GcCodeRef::relativePtr:
-			value -= size_t(write) + sizeof(size_t);
-			break;
-		default:
-			// There are more, but relativePTr and relative are not interesting here.
-			assert(false, L"Unsupported reference kind.");
-			break;
-		}
-
-		// Note: it is important that we're able to write the whole value to memory in one asm
-		// instruction as the Gc may interrupt us at any point to do a collection. The Gc should
-		// then never see a partly written value. As the Gc pauses threads, it is enough that
-		// writing the value is one instruction, it does not have to be entirely atomic in this
-		// regard. Furthermore, the instruction shall be visible as a whole to the instruction
-		// decoding units on the CPU, as we may otherwise jump to really strange locations.
-		unalignedAtomicWrite(*write, value);
+		atomicWrite(ref.pointer, (void *)newAddr);
+		writePtr(code, slot);
 	}
 
 }

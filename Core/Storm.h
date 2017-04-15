@@ -217,7 +217,11 @@
  * avoid confusion and strange crashes.
  */
 #ifdef DEBUG
+#ifndef FAST_DEBUG
+#define SHARED_LIB_ENTRY storm_start_slow
+#else
 #define SHARED_LIB_ENTRY storm_start_debug
+#endif
 #else
 #define SHARED_LIB_ENTRY storm_start
 #endif

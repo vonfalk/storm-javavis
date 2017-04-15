@@ -20,6 +20,11 @@ namespace code {
 		return (void *)ARCH::readPtr(code, runtime::codeRefs(code), id);
 	}
 
+	void writePtr(void *code, Nat id) {
+		GcCode *refs = runtime::codeRefs(code);
+		ARCH::writePtr(code, refs, id, size_t(refs->refs[id].pointer));
+	}
+
 	void writePtr(void *code, Nat id, void *ptr) {
 		ARCH::writePtr(code, runtime::codeRefs(code), id, size_t(ptr));
 	}
