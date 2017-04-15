@@ -180,6 +180,9 @@ namespace storm {
 				// Add a new nonterminal with a specific number of encountered errors and a specific number of children.
 				TreeNode push(Nat pos, Nat production, InfoErrors errors, Nat children);
 
+				// Free a node deemed unneeded.
+				void free(Nat node);
+
 				// Priority for tree comparisions.
 				enum Priority {
 					higher,
@@ -228,6 +231,9 @@ namespace storm {
 
 				// Current number of elements.
 				Nat size;
+
+				// Last allocated node ptr.
+				Nat lastAlloc;
 
 				// Remember the syntax.
 				Syntax *syntax;

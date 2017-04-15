@@ -460,6 +460,7 @@ namespace storm {
 
 				// Create the syntax tree node for this reduction.
 
+				Bool usedNode = false;
 				Nat node = 0;
 				InfoErrors errors = stack->errors;
 				errors += infoSkipped(currentPos - env.old.stack->pos);
@@ -495,9 +496,10 @@ namespace storm {
 					StackItem *add = new (this) StackItem(-1, currentPos, stack, node);
 
 					if (acceptingStack && acceptingStack->pos == currentPos) {
-						acceptingStack->insert(store, add);
+						acceptingStack->insert(store, add, usedNode);
 					} else {
 						acceptingStack = add;
+						usedNode = true;
 					}
 				}
 
@@ -513,9 +515,11 @@ namespace storm {
 					StackItem *old = top->at(add);
 					if (old == add) {
 						// 'add' was successfully inserted. Nothing more to do!
+						usedNode = true;
 					} else {
 						// We need to merge it with the old one.
-						if (old->insert(store, add)) {
+						if (old->insert(store, add, usedNode)) {
+							usedNode = true;
 #ifdef GLR_DEBUG
 							PLN(L"Inserted into " << old->state << L"(" << (void *)old << L")");
 #endif
@@ -523,6 +527,10 @@ namespace storm {
 							limitedReduce(env, top, add);
 						}
 					}
+				}
+
+				if (!usedNode) {
+					store->free(node);
 				}
 			}
 

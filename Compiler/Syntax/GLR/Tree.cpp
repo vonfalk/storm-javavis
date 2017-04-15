@@ -85,9 +85,15 @@ namespace storm {
 					if (!chunks->v[i])
 						chunks->v[i] = runtime::allocArray<Nat>(engine(), &natArrayType, chunkSize);
 
-				Nat r = size;
+				lastAlloc = size;
 				size += n;
-				return r;
+				return lastAlloc;
+			}
+
+			void TreeStore::free(Nat alloc) {
+				if (lastAlloc == alloc) {
+					size = lastAlloc;
+				}
 			}
 
 			void TreeStore::grow() {

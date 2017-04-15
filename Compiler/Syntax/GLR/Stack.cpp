@@ -23,6 +23,11 @@ namespace storm {
 				: state(state), pos(pos), prev(prev), tree(tree), errors(errors) {}
 
 			Bool StackItem::insert(TreeStore *store, StackItem *insert) {
+				Bool z;
+				return this->insert(store, insert, z);
+			}
+
+			Bool StackItem::insert(TreeStore *store, StackItem *insert, Bool &usedTree) {
 				// First: see if this node is already here.
 				for (StackItem *at = this; at; at = at->morePrev)
 					if (at == insert)
@@ -35,16 +40,18 @@ namespace storm {
 
 					if (at->prev == insert->prev) {
 						// These are considered to be the same link. See which syntax tree to use!
-						at->updateTree(store, insert->tree);
+						usedTree |= at->updateTree(store, insert->tree);
 						return false;
 					}
 				}
 
 				last->morePrev = insert;
+				usedTree = true;
 				return true;
 			}
 
-			void StackItem::updateTree(TreeStore *store, Nat newTree) {
+			Bool StackItem::updateTree(TreeStore *store, Nat newTree) {
+				Bool used = false;
 				if (!newTree) {
 				} else if (!tree) {
 					// Note: this should really update any previous tree nodes, but as there is no
@@ -64,8 +71,10 @@ namespace storm {
 						// Avoid creating cycles (could probably be skipped now that 'insert'
 						// properly checks for duplicates).
 						store->at(tree).replace(store->at(newTree));
+						used = true;
 					}
 				}
+				return used;
 			}
 
 			Bool StackItem::equals(Object *o) const {

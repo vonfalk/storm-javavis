@@ -54,6 +54,7 @@ namespace storm {
 
 				// Insert a node in the 'morePrev' chain if it is not already there. Returns 'true' if inserted.
 				Bool STORM_FN insert(TreeStore *store, StackItem *item);
+				Bool insert(TreeStore *store, StackItem *item, Bool &usedTree);
 
 				// Equality check and hashing.
 				virtual Bool STORM_FN equals(Object *o) const;
@@ -64,7 +65,7 @@ namespace storm {
 
 			private:
 				// Update 'tree' in this object if the provided tree has a higher priority than this.
-				void updateTree(TreeStore *store, Nat newTree);
+				Bool updateTree(TreeStore *store, Nat newTree);
 			};
 
 
