@@ -47,10 +47,10 @@ SUITE(BS, 9);
 SUITE_(Server, 10);
 
 // UI library. Sadly not too many automated tests.
-SUITEX(Gui, 20);
+SUITED(Gui, 20);
 
 // Stress tests (takes a couple of minutes, too slow to be included always).
-SUITEX(Stress, 100);
+SUITED(Stress, 100);
 
 
 /**

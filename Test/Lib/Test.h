@@ -86,7 +86,7 @@ private:
 	friend class Suite;
 
 	void runTests(TestResult &result, bool runAll);
-	void runSuite(Suite *s, TestResult &result);
+	void runSuite(Suite *s, TestResult &result, bool runAll);
 	int countSuite(Suite *s);
 };
 
@@ -96,12 +96,13 @@ public:
 	const String name;
 	const int order;
 	const bool single;
+	const bool ignore;
 
 protected:
-	Suite(const String &name, int order, bool single, bool ignore) : name(name), order(order), single(single) {
-		if (!ignore) {
+	Suite(const String &name, int order, bool single, bool ignore, bool onDemand)
+		: name(name), order(order), single(single), ignore(ignore) {
+		if (!onDemand)
 			Tests::instance().addSuite(this, single);
-		}
 	}
 };
 
@@ -191,15 +192,15 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	std::wcout << L"Crashed " << expr << L":\n" << error << std::endl; \
 	__result__.crashed++
 
-#define DEFINE_SUITE(name, order, single, disable)					\
-	class Suite_##name : public Suite {								\
-	private:														\
-	Suite_##name() : Suite(WIDEN(#name), order, single, disable) {}	\
-	public:															\
-	static Suite &instance() {										\
-		static Suite_##name s;										\
-		return s;													\
-	}																\
+#define DEFINE_SUITE(name, order, single, disable, demand)				\
+	class Suite_##name : public Suite {									\
+	private:															\
+	Suite_##name() : Suite(WIDEN(#name), order, single, disable, demand) {}	\
+	public:																\
+	static Suite &instance() {											\
+		static Suite_##name s;											\
+		return s;														\
+	}																	\
 	}
 
 #define EXPAND(x) x // Hack for msvc
@@ -330,13 +331,16 @@ void verifyGte(TestResult &r, const T &lhs, const U &rhs, const String &expr) {
 	} while (false)
 
 #define SUITE(name, order)						\
-	DEFINE_SUITE(name, order, false, false)
+	DEFINE_SUITE(name, order, false, false, false)
 
 #define SUITE_(name, order)						\
-	DEFINE_SUITE(name, order, true, false)
+	DEFINE_SUITE(name, order, true, false, false)
 
 #define SUITEX(name, order)						\
-	DEFINE_SUITE(name, order, false, true)
+	DEFINE_SUITE(name, order, false, true, false)
+
+#define SUITED(name, order)						\
+	DEFINE_SUITE(name, order, false, true, true)
 
 #define BEGIN_TEST_HELP(name, suite, single)	\
 	DEFINE_TEST(name, suite, single);			\

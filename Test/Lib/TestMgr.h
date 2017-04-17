@@ -22,9 +22,12 @@ void Tests::addSuite(Suite *s, bool single) {
 		instance().singleSuite = true;
 }
 
-void Tests::runSuite(Suite *s, TestResult &r) {
+void Tests::runSuite(Suite *s, TestResult &r, bool runAll) {
+	if (!runAll && s->ignore)
+		return;
+
 	for (TestMap::const_iterator i = tests.begin(); i != tests.end(); i++) {
-		if (singleTest && !i->second->single)
+		if (!runAll && singleTest && !i->second->single)
 			continue;
 
 		if (i->second->suite == s) {
@@ -64,13 +67,13 @@ void Tests::runTests(TestResult &r, bool runAll) {
 				continue;
 
 			std::wcout << L"--- " << i->second->name << L" ---" << std::endl;
-			runSuite(i->second, r);
+			runSuite(i->second, r, runAll);
 		}
 
 		// Run any rogue tests not in any suite...
 		if (!singleSuite && countSuite(null) > 0) {
 			std::wcout << L"--- <no suite> ---" << std::endl;
-			runSuite(null, r);
+			runSuite(null, r, runAll);
 		}
 	}
 }
