@@ -496,7 +496,7 @@ namespace storm {
 					StackItem *add = new (this) StackItem(-1, currentPos, stack, node);
 
 					if (acceptingStack && acceptingStack->pos == currentPos) {
-						acceptingStack->insert(store, add, usedNode);
+						usedNode |= acceptingStack->insert(store, add, usedNode);
 					} else {
 						acceptingStack = add;
 						usedNode = true;
