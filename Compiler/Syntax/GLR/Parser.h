@@ -165,6 +165,10 @@ namespace storm {
 				void doParse(Nat from);
 				void doParse(Nat from, Set<StackItem *> *insert, Nat insertPos, Nat times);
 
+				/**
+				 * Error recovery specials.
+				 */
+
 				// Perform all possible shifts in the current stack top. Returns 'true' if one or
 				// more shifts were performed.
 				void shiftAll(StackItem *now);
@@ -174,6 +178,10 @@ namespace storm {
 
 				// Advance all states on the current stack top.
 				void advanceAll();
+
+				// Perform all shifts possible at the current stack top. Returns 'true' if any
+				// future states were generated.
+				bool actorShift();
 
 				/**
 				 * Parsing functions. Based on the paper "Parser Generation for Interactive
@@ -192,12 +200,13 @@ namespace storm {
 					StackItem *stack;
 
 					// Reduce all states, even states that have not reached completion. Used when
-					// performing error correction.
+					// performing error correction. Contains information on which states have
+					// already been reduced.
 					bool reduceAll;
 				};
 
 				// Perform actions required for a state.
-				void actorShift(const ActorEnv &env);
+				bool actorShift(const ActorEnv &env);
 				void actorReduce(const ActorEnv &env, StackItem *through);
 				void doReduce(const ActorEnv &env, Nat production, StackItem *through);
 

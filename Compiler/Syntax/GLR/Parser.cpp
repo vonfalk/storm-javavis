@@ -89,26 +89,32 @@ namespace storm {
 				doParse(startPos);
 
 				Nat length = source->peekLength();
-				Nat pos = lastPos;
-				while (pos <= length && (acceptingStack == null || acceptingStack->pos < length)) {
+				while (lastPos <= length && (acceptingStack == null || acceptingStack->pos < length)) {
 					// Advance productions to accommodate for missing characters.
 					stacks->set(0, lastSet);
+					currentPos = lastPos;
+
+					// Perform all possible shifts and reduces (regardless if they are possible or not).
 					advanceAll();
-					Set<StackItem *> *toInsert = new (this) Set<StackItem *>(*lastSet);
-					Nat insertStart = lastPos;
-					pos = lastPos;
 
-					doParse(pos);
-
-					// Try to skip characters until we get somewhere...
-					while (pos == lastPos && pos <= length) {
-						pos++;
+					// Try to find a place in the input string where we can perform at least one
+					// shift. We do not want to call 'doParse' here as that will try to re-do the
+					// reduce operations we have already done in 'advanceAll()', which takes
+					// time. 'actorShift()' only looks at the possible shifts, which is enough as we
+					// have already done all possible reduces already.
+					while (!actorShift() && currentPos < length) {
+						// Advance to the next step in the input while keeping the current stack top.
+						currentPos++;
 						lastPos++;
+					}
 
-						// Note: we do not need to populate stacks[0] here, as this version of
-						// doParse does that as long as it needs to inject things into the stacks.
-						// Note: for some reason, 1 seems to be the best here...
-						doParse(pos, toInsert, insertStart, 1);
+					// Advance from the current state and keep on parsing, as we now know that we
+					// have something to do in the future.
+					if (currentPos < length) {
+						currentPos++;
+						lastPos++;
+						stacks->pop();
+						doParse(currentPos);
 					}
 				}
 
@@ -188,44 +194,6 @@ namespace storm {
 				stacks = null;
 			}
 
-			void Parser::actor(Nat pos, Set<StackItem *> *states) {
-#ifdef GLR_DEBUG
-				PVAR(pos);
-#endif
-
-				if (states->any()) {
-					lastSet = states;
-					lastPos = pos;
-				}
-
-				visited->clear();
-				currentPos = pos;
-
-				typedef Set<StackItem *>::Iter Iter;
-				Bool done;
-				do {
-					done = true;
-					for (Iter i = states->begin(), e = states->end(); i != e; ++i) {
-						StackItem *now = i.v();
-						if (visited->get(now->state))
-							continue;
-						visited->set(now->state, true);
-						done = false;
-
-						State *s = table->state(now->state);
-
-						ActorEnv env = {
-							s,
-							now,
-							false,
-						};
-
-						actorReduce(env, null);
-						actorShift(env);
-					}
-				} while (!done);
-			}
-
 			bool Parser::shouldShift(const ItemSet &items, const Regex &regex) {
 				// See if we're reducing the first terminal of this production. If so, don't shift it!
 				for (Nat i = 0; i < items.count(); i++) {
@@ -276,20 +244,18 @@ namespace storm {
 			}
 
 			void Parser::advanceAll() {
-				// TODO: We do not need to be this aggressive. We should just do a few iterations in
-				// this loop and then retry. If that fails, then we can generate a few more states.
-				currentPos = lastPos;
-				BoolSet *used = new (this) BoolSet();
+				// NOTE: we need to use 'visited' as that one is also used in 'limitedReduce' for optimizations.
+				visited->clear();
 				Set<StackItem *> *src = stacks->top();
-				bool any;
 
+				bool any;
 				do {
 					any = false;
 					for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
 						StackItem *now = i.v();
-						if (used->get(now->state))
+						if (visited->get(now->state))
 							continue;
-						used->set(now->state, true);
+						visited->set(now->state, true);
 						any = true;
 
 						// Shift and reduce this state.
@@ -299,16 +265,77 @@ namespace storm {
 							true,
 						};
 						actorReduceAll(env, null);
-						shiftAll(now);
+
+						// TODO: Perform all shifts after all reductions, so that 'limitedReduce' do
+						// not have to do so much work for nearly identical entries.
+						// shiftAll(now);
 					}
 				} while (any);
 			}
 
-			void Parser::actorShift(const ActorEnv &env) {
+			bool Parser::actorShift() {
+				bool any = false;
+				Set<StackItem *> *src = stacks->top();
+
+				for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
+					StackItem *now = i.v();
+
+					ActorEnv env = {
+						table->state(now->state),
+						now,
+						false,
+					};
+
+					any |= actorShift(env);
+				}
+
+				return any;
+			}
+
+			void Parser::actor(Nat pos, Set<StackItem *> *states) {
+#ifdef GLR_DEBUG
+				PVAR(pos);
+#endif
+
+				if (states->any()) {
+					lastSet = states;
+					lastPos = pos;
+				}
+
+				visited->clear();
+				currentPos = pos;
+
+				typedef Set<StackItem *>::Iter Iter;
+				Bool done;
+				do {
+					done = true;
+					for (Iter i = states->begin(), e = states->end(); i != e; ++i) {
+						StackItem *now = i.v();
+						if (visited->get(now->state))
+							continue;
+						visited->set(now->state, true);
+						done = false;
+
+						State *s = table->state(now->state);
+
+						ActorEnv env = {
+							s,
+							now,
+							false,
+						};
+
+						actorReduce(env, null);
+						actorShift(env);
+					}
+				} while (!done);
+			}
+
+			bool Parser::actorShift(const ActorEnv &env) {
 				Array<Action> *actions = env.state->actions;
 				if (!actions)
-					return;
+					return false;
 
+				bool any = false;
 				for (Nat i = 0; i < actions->count(); i++) {
 					const Action &action = actions->at(i);
 					Nat matched = action.regex.matchRaw(source, currentPos);
@@ -329,10 +356,13 @@ namespace storm {
 					Nat tree = store->push(env.stack->pos, errors).id();
 					StackItem *item = new (this) StackItem(action.action, matched, env.stack, tree);
 					stacks->put(offset, store, item);
+					any = true;
 #ifdef GLR_DEBUG
 					PLN(L"Added " << item->state << L" with prev " << env.stack->state);
 #endif
 				}
+
+				return any;
 			}
 
 			void Parser::actorReduce(const ActorEnv &env, StackItem *through) {
@@ -363,7 +393,7 @@ namespace storm {
 				// See if we can reduce this one normally.
 				Array<Nat> *toReduce = env.state->reduce;
 				Nat count = toReduce->count();
-				for (nat i = 0; i < count; i++)
+				for (Nat i = 0; i < count; i++)
 					doReduce(env, toReduce->at(i), through);
 
 				// Do not reduce 'reduceOnEmpty' as we will skip over them using the 'shiftAll' function instead.

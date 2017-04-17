@@ -109,7 +109,6 @@ namespace storm {
 				inline Nat wrap(Nat n) const { return data ? (n & (data->count - 1)) : 0; }
 			};
 
-
 		}
 	}
 }
