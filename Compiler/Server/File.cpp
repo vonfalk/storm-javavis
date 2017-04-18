@@ -301,7 +301,7 @@ namespace storm {
 			if (out)
 				*out = e;
 
-			// PLN(TO_S(this, src->peekLength() << L" - " << root->identifier() << L" - " << quality));
+			// PLN(TO_S(this, src->peekLength() << L" - " << root->identifier() << L" - " << e));
 			// if (src->peekLength() < 20)
 			// 	PLN(src->escape());
 
@@ -437,7 +437,7 @@ namespace storm {
 
 		InfoErrors Part::combine(InfoErrors a, InfoErrors b) {
 			if (!a.success() || !b.success())
-				return InfoErrors();
+				return infoFailure();
 
 			return a + b;
 		}
