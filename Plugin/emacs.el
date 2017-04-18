@@ -593,7 +593,7 @@
 	(start-process
 	 "*storm-interactive*"
 	 nil
-	 storm-mode-compiler "--server"))
+	 storm-mode-compiler "-r" (expand-file-name storm-mode-root) "--server"))
   (set-process-coding-system storm-process 'binary 'binary)
   (set-process-filter storm-process 'storm-on-message)
   (set-process-sentinel storm-process 'storm-on-status)

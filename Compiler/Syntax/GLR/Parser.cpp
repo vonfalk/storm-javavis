@@ -194,56 +194,15 @@ namespace storm {
 				stacks = null;
 			}
 
-			bool Parser::shouldShift(const ItemSet &items, const Regex &regex) {
-				// See if we're reducing the first terminal of this production. If so, don't shift it!
-				for (Nat i = 0; i < items.count(); i++) {
-					Item item = items[i];
-					if (!item.end() && !item.isRule(syntax) && item.nextRegex(syntax) == regex) {
-						// This will work well unless many productions start with nonterminals that
-						// matches epsilon. Another alternative would be to use
-						// 'item.regexBefore(syntax)', but that is too restrictive in cases like
-						// 'SExpr,"foo",SExpr', where SExpr never matches epsilon.
-						return item.prev(syntax);
-					}
-				}
-
-				// Should not happen...
-				return false;
-			}
-
-			void Parser::shiftAll(StackItem *now) {
-				State *s = table->state(now->state);
-				Array<Action> *actions = s->actions;
-				if (!actions)
-					return;
-
-				Set<StackItem *> *top = stacks->top();
-				for (Nat i = 0; i < actions->count(); i++) {
-					const Action &action = actions->at(i);
-
-					// This actually makes error recovery perform worse in many cases.
-					// if (!shouldShift(s->items, action.regex))
-					// 	continue;
-
-					InfoErrors errors = now->errors;
-					errors += infoSkipped(currentPos - now->pos);
-					// Note: this if-statement could be skipped (the body could always be
-					// executed). This results in empty regexes being matched as parse errors even
-					// when they are possibly not.
-					if (!action.regex.matchesEmpty())
-						errors += infoShifts(1);
-					Nat tree = store->push(now->pos, errors).id();
-					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
-					StackItem *topItem = top->at(item);
-					if (topItem == item) {
-						// Inserted!
-					} else {
-						topItem->insert(store, item);
-					}
-				}
-			}
-
 			void Parser::advanceAll() {
+				// First: perform all reductions.
+				reduceAll();
+				// Then: perform all shifts. This ensures that we do not reduce the same production
+				// at the same location in the syntax tree multiple times.
+				shiftAll();
+			}
+
+			void Parser::reduceAll() {
 				// NOTE: we need to use 'visited' as that one is also used in 'limitedReduce' for optimizations.
 				visited->clear();
 				Set<StackItem *> *src = stacks->top();
@@ -265,12 +224,100 @@ namespace storm {
 							true,
 						};
 						actorReduceAll(env, null);
-
-						// TODO: Perform all shifts after all reductions, so that 'limitedReduce' do
-						// not have to do so much work for nearly identical entries.
-						// shiftAll(now);
 					}
 				} while (any);
+			}
+
+			void Parser::shiftAll() {
+				visited->clear();
+				Set<StackItem *> *src = stacks->top();
+
+				bool match = false;
+				bool any = false;
+				do {
+					any = false;
+					for (Set<StackItem *>::Iter i = src->begin(), e = src->end(); i != e; ++i) {
+						StackItem *now = i.v();
+						if (visited->get(now->state))
+							continue;
+						visited->set(now->state, true);
+						any = true;
+
+						match |= shiftAll(now);
+					}
+					// Stop as soon as we found a regex matching!
+				} while (any && !match);
+			}
+
+			bool Parser::shiftAll(StackItem *now) {
+				bool found = false;
+				State *s = table->state(now->state);
+				if (s->actions)
+					found |= shiftAll(now, s->actions);
+				if (s->rules)
+					shiftAll(now, s->rules);
+
+				return found;
+			}
+
+			bool Parser::shiftAll(StackItem *now, Array<Action> *actions) {
+				bool found = false;
+
+				// Check regular shifts.
+				for (Nat i = 0; i < actions->count(); i++) {
+					const Action &action = actions->at(i);
+
+					// Stop at states that can actually be advanced in the current scenario. Regexes
+					// matching epsilon are also let through.
+					Nat match = action.regex.matchRaw(source, currentPos);
+					if (match != Regex::NO_MATCH && match != currentPos) {
+						found = true;
+						continue;
+					}
+
+					InfoErrors errors = now->errors;
+					errors += infoSkipped(currentPos - now->pos);
+					// Note: this if-statement could be skipped (the body could always be
+					// executed). This results in empty regexes being matched as parse errors even
+					// when they are possibly not.
+					if (!action.regex.matchesEmpty())
+						errors += infoShifts(1);
+					Nat tree = store->push(now->pos, errors).id();
+					StackItem *item = new (this) StackItem(action.action, currentPos, now, tree);
+					StackItem *topItem = stacks->top()->at(item);
+					if (topItem == item) {
+						// Inserted!
+					} else {
+						topItem->insert(store, item);
+					}
+				}
+
+				return found;
+			}
+
+			void Parser::shiftAll(StackItem *now, Map<Nat, Nat> *actions) {
+				// See if we can 'shift' through a nonterminal at this position.
+				typedef Map<Nat, Nat>::Iter Iter;
+				for (Iter i = actions->begin(), e = actions->end(); i != e; ++i) {
+					Nat prod = i.k();
+					Nat to = i.v();
+
+					// Skip null terminals, they are already skipped.
+					if (Syntax::specialProd(prod) == Syntax::prodESkip)
+						continue;
+
+					InfoErrors errors = now->errors;
+					errors += infoSkipped(currentPos - now->pos);
+					errors += infoShifts(Item(syntax, prod).length(syntax));
+					Nat tree = store->push(now->pos, prod, errors, 0).id();
+					StackItem *item = new (this) StackItem(to, currentPos, now, tree);
+					StackItem *topItem = stacks->top()->at(item);
+					if (topItem == item) {
+						// Inserted!
+					} else {
+						topItem->insert(store, item);
+					}
+				}
 			}
 
 			bool Parser::actorShift() {
@@ -428,6 +475,7 @@ namespace storm {
 						item.id,
 						rule,
 						length,
+						item.length(syntax) - length,
 					};
 					reduce(re, env.stack, null, through, length);
 				}
@@ -448,6 +496,7 @@ namespace storm {
 					production,
 					rule,
 					length,
+					0,
 				};
 				reduce(re, env.stack, null, through, length);
 			}
@@ -496,8 +545,7 @@ namespace storm {
 				errors += infoSkipped(currentPos - env.old.stack->pos);
 				for (const Path *p = path; p; p = p->prev)
 					errors += store->at(p->treeNode).errors();
-				if (env.old.reduceAll)
-					errors += infoShifts(1);
+				errors += infoShifts(env.errors);
 
 				if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
 					// These are really just shifts.

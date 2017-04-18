@@ -169,19 +169,20 @@ namespace storm {
 				 * Error recovery specials.
 				 */
 
-				// Perform all possible shifts in the current stack top. Returns 'true' if one or
-				// more shifts were performed.
-				void shiftAll(StackItem *now);
-
-				// Should we shift this item set in error recovery mode?
-				bool shouldShift(const ItemSet &items, const Regex &regex);
-
 				// Advance all states on the current stack top.
 				void advanceAll();
+				void shiftAll();
+				void reduceAll();
 
 				// Perform all shifts possible at the current stack top. Returns 'true' if any
 				// future states were generated.
 				bool actorShift();
+
+				// Perform all possible shifts in the current stack top. Returns 'true' if one or
+				// more shifts were performed. Returns 'true' if a matching shift was found.
+				bool shiftAll(StackItem *now);
+				bool shiftAll(StackItem *now, Array<Action> *actions);
+				void shiftAll(StackItem *now, Map<Nat, Nat> *actions);
 
 				/**
 				 * Parsing functions. Based on the paper "Parser Generation for Interactive
@@ -216,7 +217,7 @@ namespace storm {
 				// Static state to the 'reduce' function.
 				struct ReduceEnv {
 					// Env for recursive calls to reduce.
-					ActorEnv old;
+					const ActorEnv &old;
 
 					// Production and rule being reduced.
 					Nat production;
@@ -224,6 +225,9 @@ namespace storm {
 
 					// Number of items of the currently reduced production.
 					Nat length;
+
+					// Shift-errors to be added to the current production.
+					Nat errors;
 				};
 
 				// Linked list of entries, keeping track of the path currently being reduced.
