@@ -275,8 +275,7 @@ namespace storm {
 						continue;
 					}
 
-					InfoErrors errors = now->errors;
-					errors += infoSkipped(currentPos - now->pos);
+					InfoErrors errors = infoSkipped(currentPos - now->pos);
 					// Note: this if-statement could be skipped (the body could always be
 					// executed). This results in empty regexes being matched as parse errors even
 					// when they are possibly not.
@@ -306,8 +305,7 @@ namespace storm {
 					if (Syntax::specialProd(prod) == Syntax::prodESkip)
 						continue;
 
-					InfoErrors errors = now->errors;
-					errors += infoSkipped(currentPos - now->pos);
+					InfoErrors errors = infoSkipped(currentPos - now->pos);
 					errors += infoShifts(Item(syntax, prod).length(syntax));
 					Nat tree = store->push(now->pos, prod, errors, 0).id();
 					StackItem *item = new (this) StackItem(to, currentPos, now, tree);
@@ -394,8 +392,7 @@ namespace storm {
 						continue;
 
 					Nat offset = matched - currentPos;
-					InfoErrors errors = env.stack->errors;
-					errors += infoSkipped(currentPos - env.stack->pos);
+					InfoErrors errors = infoSkipped(currentPos - env.stack->pos);
 					// Note: here, 'env.stack->pos' is used instead of 'currentPos'. Usually, they
 					// are the same, but when error recovery kicks in 'env.stack->pos' may be
 					// smaller, which means that some characters in the input were skipped. These
@@ -541,8 +538,7 @@ namespace storm {
 
 				Bool usedNode = false;
 				Nat node = 0;
-				InfoErrors errors = stack->errors;
-				errors += infoSkipped(currentPos - env.old.stack->pos);
+				InfoErrors errors = infoSkipped(currentPos - env.old.stack->pos);
 				for (const Path *p = path; p; p = p->prev)
 					errors += store->at(p->treeNode).errors();
 				errors += infoShifts(env.errors);

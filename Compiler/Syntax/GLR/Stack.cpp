@@ -8,19 +8,13 @@ namespace storm {
 		namespace glr {
 
 			StackItem::StackItem()
-				: state(0), pos(0), prev(null), tree(0), errors(infoSuccess()) {}
+				: state(0), pos(0), prev(null), tree(0) {}
 
 			StackItem::StackItem(Nat state, Nat pos)
-				: state(state), pos(pos), prev(null), tree(0), errors(infoSuccess()) {}
-
-			StackItem::StackItem(Nat state, Nat pos, InfoErrors errors)
-				: state(state), pos(pos), prev(null), tree(0), errors(errors) {}
+				: state(state), pos(pos), prev(null), tree(0) {}
 
 			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, Nat tree)
-				: state(state), pos(pos), prev(prev), tree(tree), errors(infoSuccess()) {}
-
-			StackItem::StackItem(Nat state, Nat pos, StackItem *prev, Nat tree, InfoErrors errors)
-				: state(state), pos(pos), prev(prev), tree(tree), errors(errors) {}
+				: state(state), pos(pos), prev(prev), tree(tree) {}
 
 			Bool StackItem::insert(TreeStore *store, StackItem *insert) {
 				Bool z;
