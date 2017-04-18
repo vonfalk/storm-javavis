@@ -15,7 +15,8 @@ SCommentStart : "/" - "\*" - [SInComment]@;
 void SInComment();
 SInComment : "\*+/"; // End of the comment.
 SInComment : "/\*+" - SInComment - SInComment; // Start of a nested comment.
-SInComment : "[^\*/]*" - SInComment; // Everything except * and / are fine.
+SInComment : "[^\*/\n]*" - SInComment; // Everything except * and / are fine.
+SInComment : "\n" - SInComment; // Break up lines so that error recovery can kick in.
 SInComment : "\*+[^\*/]" - SInComment;
 SInComment : "/+" - SInComment;
 

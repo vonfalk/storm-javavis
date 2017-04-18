@@ -3,6 +3,7 @@
 ;; Run tests using C-c b
 (global-set-key (kbd "C-c b") 'storm-run-benchmarks)
 (global-set-key (kbd "C-c c b") 'storm-run-benchmark-file)
+(global-set-key (kbd "C-c C-c b") 'storm-run-benchmark-file)
 
 ;; Test root directory.
 (defvar benchmark-root-dir "test/server-tests/simple/" "Benchmarks root directory, relative to 'storm-mode-root'.")
