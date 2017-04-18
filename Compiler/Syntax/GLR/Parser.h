@@ -163,7 +163,10 @@ namespace storm {
 
 				// Parse from position 'i' to completion. Assumes 'stacks->top()' contains valid information.
 				void doParse(Nat from);
-				void doParse(Nat from, Set<StackItem *> *insert, Nat insertPos, Nat times);
+
+				// Parse as 'doParse' does. Keep track of the last states before the last line
+				// ending as well as the error information in 'doParse'. Used for better error recovery.
+				void doParse(Nat from, Set<StackItem *> *&states, Nat &pos);
 
 				/**
 				 * Error recovery specials.

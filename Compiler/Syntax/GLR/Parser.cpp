@@ -6,6 +6,9 @@
 // Debug the GLR parser? Causes performance penalties since we use a ::Indent object.
 //#define GLR_DEBUG
 
+// Backtrack to the last line-ending before doing error recovery?
+#define GLR_BACKTRACK
+
 namespace storm {
 	namespace syntax {
 		namespace glr {
@@ -86,7 +89,9 @@ namespace storm {
 				initParse(root, str, file, start);
 
 				// Start as usual.
-				doParse(startPos);
+				Set<StackItem *> *lastSet = null;
+				Nat lastPos = 0;
+				doParse(startPos, lastSet, lastPos);
 
 				Nat length = source->peekLength();
 				while (lastPos <= length && (acceptingStack == null || acceptingStack->pos < length)) {
@@ -114,7 +119,7 @@ namespace storm {
 						currentPos++;
 						lastPos++;
 						stacks->pop();
-						doParse(currentPos);
+						doParse(currentPos, lastSet, lastPos);
 					}
 				}
 
@@ -157,33 +162,46 @@ namespace storm {
 				}
 			}
 
-			void Parser::doParse(Nat from, Set<StackItem *> *insert, Nat insertPos, Nat times) {
+#ifdef GLR_BACKTRACK
+			void Parser::doParse(Nat from, Set<StackItem *> *&states, Nat &pos) {
+				states = null;
+
+				bool newLine = false;
 				Nat length = source->peekLength();
-				for (Nat pos = from; pos <= length; pos++) {
+				for (Nat i = from; i <= length; i++) {
 					Set<StackItem *> *top = stacks->top();
 
-					// Insert items.
-					if (times > 0) {
-						if (!top) {
-							top = new (this) Set<StackItem *>();
-							stacks->set(0, top);
-						}
-
-						times--;
-						for (Set<StackItem *>::Iter i = insert->begin(), e = insert->end(); i != e; ++i) {
-							// Inserts 'i.v()' if it does not already exist.
-							top->at(i.v());
-						}
-					}
-
 					// Process all states in 'top'.
-					if (top)
-						actor(pos, top);
+					if (top) {
+						if (newLine) {
+							states = lastSet;
+							pos = lastPos;
+						}
+						newLine = false;
+						actor(i, top);
+					}
 
 					// Advance one step.
 					stacks->pop();
+
+					if (source->c_str()[i] == '\n')
+						newLine = true;
+				}
+
+				if (!states) {
+					states = lastSet;
+					pos = lastPos;
 				}
 			}
+#else
+			// Non-backtracking version.
+			void Parser::doParse(Nat from, Set<StackItem *> *&states, Nat &pos) {
+				doParse(from);
+
+				states = lastSet;
+				pos = lastPos;
+			}
+#endif
 
 			void Parser::finishParse() {
 #ifdef GLR_DEBUG

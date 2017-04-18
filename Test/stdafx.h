@@ -44,7 +44,7 @@ SUITE(SimpleBS, 8);
 // More heavy tests of Basic Storm
 SUITE(BS, 9);
 // Syntax server logic.
-SUITE_(Server, 10);
+SUITE(Server, 10);
 
 // UI library. Sadly not too many automated tests.
 SUITED(Gui, 20);

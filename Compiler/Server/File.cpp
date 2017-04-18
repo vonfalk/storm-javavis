@@ -408,7 +408,7 @@ namespace storm {
 					env.modified = nodeRange;
 					ok = here;
 
-					if (here.error())
+					if (here.any())
 						env.corrected = nodeRange;
 				}
 			}

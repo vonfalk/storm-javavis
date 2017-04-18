@@ -20,7 +20,7 @@ namespace storm {
 			Bool STORM_FN success() const;
 
 			// Any errors in here? (succes() == false yields error() == true)
-			Bool STORM_FN error() const;
+			Bool STORM_FN any() const;
 
 			// Get # of shifts during error corrections.
 			Nat STORM_FN shifts() const;

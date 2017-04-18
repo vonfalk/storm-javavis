@@ -18,7 +18,7 @@ namespace storm {
 			return (data & failedMask) == 0;
 		}
 
-		Bool InfoErrors::error() const {
+		Bool InfoErrors::any() const {
 			// Checks: success() == false || shifts() > 0 || skipped() > 0
 			return data != 0;
 		}
@@ -92,7 +92,7 @@ namespace storm {
 
 		StrBuf &operator <<(StrBuf &to, InfoErrors e) {
 			if (e.success()) {
-				if (!e.error()) {
+				if (!e.any()) {
 					to << L"success";
 				} else {
 					to << e.skipped() << (e.skipped() == 1 ? L" char" : L" chars") << L" skipped, ";
