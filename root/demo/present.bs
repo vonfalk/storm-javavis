@@ -7,6 +7,6 @@ void present() {
 		Title "Test presentation";
 	};*/
 
-	PresentWindow win(p);
-	win.waitForClose;
+	// PresentWindow win(p);
+	// win.waitForClose;
 }

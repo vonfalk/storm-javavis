@@ -165,17 +165,26 @@ namespace storm {
 #ifdef GLR_BACKTRACK
 			void Parser::doParse(Nat from, Set<StackItem *> *&states, Nat &pos) {
 				states = null;
+				Nat badness = 0;
 
-				bool newLine = false;
+				Nat newLine = from;
 				Nat length = source->peekLength();
 				for (Nat i = from; i <= length; i++) {
 					Set<StackItem *> *top = stacks->top();
 
 					// Process all states in 'top'.
-					if (top) {
-						if (newLine) {
-							states = lastSet;
-							pos = lastPos;
+					if (top && top->any()) {
+						if (lastPos <= newLine) {
+							// See if this line ending is better than the previous one. Give stack
+							// tops close to the beginning of a line a disadvantage.
+							Nat bad = newLine - lastPos;
+							if (bad < badness || !states) {
+								states = lastSet;
+								pos = lastPos;
+							} else {
+								// Incur a penalty for being far away!
+								badness += 2;
+							}
 						}
 						newLine = false;
 						actor(i, top);
@@ -184,8 +193,9 @@ namespace storm {
 					// Advance one step.
 					stacks->pop();
 
-					if (source->c_str()[i] == '\n')
-						newLine = true;
+					if (source->c_str()[i] == '\n') {
+						newLine = i;
+					}
 				}
 
 				if (!states) {
@@ -349,6 +359,14 @@ namespace storm {
 						false,
 					};
 
+
+					// Array<Action> *actions = env.state->actions;
+					// if (actions) {
+					// 	for (Nat i = 0; i < actions->count(); i++) {
+					// 		PVAR(actions->at(i).regex);
+					// 	}
+					// }
+
 					any |= actorShift(env);
 				}
 
@@ -411,6 +429,7 @@ namespace storm {
 
 					Nat offset = matched - currentPos;
 					InfoErrors errors = infoSkipped(currentPos - env.stack->pos);
+
 					// Note: here, 'env.stack->pos' is used instead of 'currentPos'. Usually, they
 					// are the same, but when error recovery kicks in 'env.stack->pos' may be
 					// smaller, which means that some characters in the input were skipped. These

@@ -99,14 +99,24 @@ namespace storm {
 				Range corrected;
 			};
 
+			// Result from a parse function.
+			struct ParseResult {
+				// Information about errors.
+				syntax::InfoErrors errors;
+
+				// How many levels since we saw an error production. < 0 => no errors.
+				Int sinceError;
+			};
+
 			// Traverse the parse tree from 'node' while attempting to update 'range', reparsing nodes as needed.
 			// Returns the best parse result so far.
-			syntax::InfoErrors parse(ParseEnv &env, Nat offset, syntax::InfoNode *node, bool seenError);
+			ParseResult parse(ParseEnv &env, Nat offset, syntax::InfoNode *node, bool seenError);
 
 			// Compare InfoErrors:s and see which is better/worse.
-			static bool better(syntax::InfoErrors better, syntax::InfoErrors than);
+			static bool bad(ParseResult which, syntax::InfoNode *node);
 			static bool bad(syntax::InfoErrors which, syntax::InfoNode *node);
 			static syntax::InfoErrors combine(syntax::InfoErrors a, syntax::InfoErrors b);
+			static ParseResult combine(ParseResult a, ParseResult b);
 
 			// Remove 'range' in the current node (if applicable). The structure of the syntax tree
 			// is kept intact. Returns 'false' if content was modified so that a regex in a leaf node

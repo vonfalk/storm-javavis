@@ -301,8 +301,8 @@ namespace storm {
 			if (out)
 				*out = e;
 
-			// PLN(TO_S(this, src->peekLength() << L" - " << root->identifier() << L" - " << e));
-			// if (src->peekLength() < 20)
+			// PLN(TO_S(this, L"Parsed " << src->peekLength() << L" - " << root->identifier() << L" - " << e));
+			// if (src->peekLength() < 50)
 			// 	PLN(src->escape());
 
 			InfoNode *r = null;
@@ -320,7 +320,8 @@ namespace storm {
 		}
 
 		Range Part::parse(const Range &range) {
-			// PLN(L"----- Parsing ----------");
+			// PLN(TO_S(this, L"----- PARSING " << range << L" -----"));
+
 			// TODO: We should keep track of ranges where the error correction kicked in and keep
 			// that in mind when re-parsing stuff. We could also post a job for re-parsing those
 			// chunks in the background.
@@ -343,11 +344,11 @@ namespace storm {
 				Range(),
 				Range(),
 			};
-			InfoErrors r = parse(env, start, content, false);
-			// PVAR(TO_S(this, r));
+			ParseResult r = parse(env, start, content, false);
+			// PVAR(TO_S(this, r.errors));
 
 			// Maybe we contain some parts of the previous part?
-			if (!r.success()) {
+			if (!r.errors.success()) {
 				// Invalidate the previous part.
 				owner->postInvalidate(this, -1, true);
 			} else if (env.corrected.empty()) {
@@ -363,40 +364,55 @@ namespace storm {
 			return env.modified;
 		}
 
-		InfoErrors Part::parse(ParseEnv &env, Nat offset, InfoNode *node, bool seenError) {
+		Part::ParseResult Part::parse(ParseEnv &env, Nat offset, InfoNode *node, bool seenError) {
+			// ::Indent z(util::debugStream());
+			ParseResult result = {
+				infoSuccess(),
+				-1,
+			};
+
 			// We should probably parse at a higher level...
 			Nat len = node->length();
 			if (len == 0)
-				return infoFailure();
+				return result;
 
 			// Does this node completely cover 'range'?
 			Range nodeRange(offset, offset + len);
+			// PLN(L"Examining " << offset << L"-" << offset+len);
 			if (nodeRange.from > env.update.from || nodeRange.to < env.update.to)
-				return infoFailure();
+				return result;
 
 			// Do not attempt to re-parse leaf nodes. They only contain regexes, which have been
 			// checked already.
 			InfoInternal *inode = as<InfoInternal>(node);
-			if (!inode)
-				return infoFailure();
-
-			// If this node is an error production: take note so we can act accordingly in the recursion.
-			if (inode->error())
-				seenError = true;
-
-			// Re-parse this node if none of our children have already managed to do so.
-			InfoErrors ok = infoSuccess();
-			for (Nat i = 0; i < inode->count() && ok.success(); i++) {
-				InfoNode *child = inode->at(i);
-				InfoErrors cResult = parse(env, offset, child, seenError);
-				ok = combine(ok, cResult);
-				offset += child->length();
+			if (!inode) {
+				result.errors = infoFailure();
+				return result;
 			}
 
-			if (bad(ok, node) && inode->production()) {
+			// If this node contained errors, then we try to re-parse its parent right away.
+			if (inode->error()) {
+				seenError = true;
+				result.errors = infoFailure();
+				result.sinceError = 0;
+			} else {
+				// Re-parse this node if none of our children have already managed to do so.
+				for (Nat i = 0; i < inode->count() && result.errors.success(); i++) {
+					// PVAR(i);
+					InfoNode *child = inode->at(i);
+					ParseResult cResult = parse(env, offset, child, seenError);
+					result = combine(result, cResult);
+					offset += child->length();
+				}
+				if (result.sinceError >= 0)
+					result.sinceError++;
+			}
+
+			// PLN(TO_S(this, L"Result: " << result.errors << L", " << result.sinceError));
+			if (bad(result, node) && inode->production()) {
 				// Ignore parsing this node if we have seen an error node and this node was not a part of that error.
 				if (seenError && !inode->error())
-					return ok;
+					return result;
 
 				// Re-parse this node!
 				InfoErrors here;
@@ -406,19 +422,25 @@ namespace storm {
 				if (n && !bad(here, node)) {
 					replace(inode, n);
 					env.modified = nodeRange;
-					ok = here;
+					result.errors = here;
 
 					if (here.any())
 						env.corrected = nodeRange;
+				} else {
+					// Pretend we saw an error production if the result we produced was bad enough...
+					result.sinceError = 1;
 				}
 			}
 
-			return ok;
+			return result;
 		}
 
-		bool Part::better(InfoErrors a, InfoErrors b) {
-			TODO(L"Implement me!");
-			return false;
+		bool Part::bad(ParseResult w, InfoNode *node) {
+			// Skip a few levels after a previous error node.
+			if (w.sinceError >= 0 && w.sinceError < 3)
+				return true;
+
+			return bad(w.errors, node);
 		}
 
 		bool Part::bad(InfoErrors w, InfoNode *node) {
@@ -440,6 +462,22 @@ namespace storm {
 				return infoFailure();
 
 			return a + b;
+		}
+
+		Part::ParseResult Part::combine(ParseResult a, ParseResult b) {
+			ParseResult r = {
+				combine(a.errors, b.errors),
+				0,
+			};
+
+			if (a.sinceError < 0)
+				r.sinceError = b.sinceError;
+			else if (b.sinceError < 0)
+				r.sinceError = a.sinceError;
+			else
+				r.sinceError = min(a.sinceError, b.sinceError);
+
+			return r;
 		}
 
 		void Part::replace(InfoNode *oldNode, InfoNode *newNode) {
