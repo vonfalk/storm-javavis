@@ -369,6 +369,7 @@ namespace storm {
 			ParseResult result = {
 				infoSuccess(),
 				-1,
+				0,
 			};
 
 			// We should probably parse at a higher level...
@@ -391,10 +392,16 @@ namespace storm {
 			}
 
 			// If this node contained errors, then we try to re-parse its parent right away.
+			bool parseHere = false;
 			if (inode->error()) {
 				seenError = true;
 				result.errors = infoFailure();
 				result.sinceError = 0;
+				parseHere = false;
+			} else if (inode->length() < 50) {
+				// Parse this node right away; it is small enough.
+				result.errors = infoFailure();
+				parseHere = true;
 			} else {
 				// Re-parse this node if none of our children have already managed to do so.
 				for (Nat i = 0; i < inode->count() && result.errors.success(); i++) {
@@ -406,10 +413,19 @@ namespace storm {
 				}
 				if (result.sinceError >= 0)
 					result.sinceError++;
+				result.depth++;
+
+				// Parse if the result from our children is bad enough.
+				parseHere = bad(result, node);
+				// Or if we are a few levels from the smallest point we could try to parse.
+				parseHere |= result.depth == 1;
 			}
 
-			// PLN(TO_S(this, L"Result: " << result.errors << L", " << result.sinceError));
-			if (bad(result, node) && inode->production()) {
+			// Always parse if we have no parent.
+			parseHere |= !inode->parent();
+
+			// Don't parse if the current node do not have a production.
+			if (parseHere && inode->production()) {
 				// Ignore parsing this node if we have seen an error node and this node was not a part of that error.
 				if (seenError && !inode->error())
 					return result;
@@ -451,7 +467,7 @@ namespace storm {
 			// NOTE: Consider the case when 'len' == 0.
 			if (w.skipped() > len * 0.4)
 				return true;
-			if (w.shifts() > max(5.0, len*0.05))
+			if (w.shifts() > max(10.0, len*0.05))
 				return true;
 
 			return false;
@@ -468,6 +484,7 @@ namespace storm {
 			ParseResult r = {
 				combine(a.errors, b.errors),
 				0,
+				max(a.depth, b.depth),
 			};
 
 			if (a.sinceError < 0)

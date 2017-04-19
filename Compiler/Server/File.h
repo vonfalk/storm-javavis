@@ -106,6 +106,9 @@ namespace storm {
 
 				// How many levels since we saw an error production. < 0 => no errors.
 				Int sinceError;
+
+				// How many levels have we been able to parse anything?
+				Nat depth;
 			};
 
 			// Traverse the parse tree from 'node' while attempting to update 'range', reparsing nodes as needed.
