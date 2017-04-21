@@ -364,6 +364,32 @@ namespace storm {
 			return env.modified;
 		}
 
+		InfoInternal *Part::findParseNode(const Range &update, Nat offset, InfoNode *node) {
+			Nat len = node->length();
+			if (len == 0)
+				return null;
+
+			// Does this node completely cover 'range'?
+			Range nodeRange(offset, offset + len);
+			if (nodeRange.from > update.from || nodeRange.to < update.to)
+				return null;
+
+			// Do not attempt to re-parse leaf nodes as they only contain regexes which have already
+			// been checked.
+			InfoInternal *inode = as<InfoInternal>(node);
+			if (!inode)
+				return null;
+
+			// Look at the children of this node.
+			InfoInternal *result
+			for (Nat i = 0; i < inode->count(); i++) {
+				InfoNode *child = inode->at(i);
+				InfoInternal *r = findParseNode(update, offset, child);
+				offset += child->length();
+
+			}
+		}
+
 		Part::ParseResult Part::parse(ParseEnv &env, Nat offset, InfoNode *node, bool seenError) {
 			// ::Indent z(util::debugStream());
 			ParseResult result = {

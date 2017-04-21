@@ -115,6 +115,9 @@ namespace storm {
 			// Returns the best parse result so far.
 			ParseResult parse(ParseEnv &env, Nat offset, syntax::InfoNode *node, bool seenError);
 
+			// Traverse the parse tree and find the leafmost node we might want to re-parse.
+			syntax::InfoInternal *findParseNode(const Range &update, Nat offset, syntax::InfoNode *node);
+
 			// Compare InfoErrors:s and see which is better/worse.
 			static bool bad(ParseResult which, syntax::InfoNode *node);
 			static bool bad(syntax::InfoErrors which, syntax::InfoNode *node);
