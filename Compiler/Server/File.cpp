@@ -339,7 +339,12 @@ namespace storm {
 			}
 
 			// Traverse the node upwards and pick one to re-parse.
-			Range altered = parsePath(path);
+			Range altered = parsePath(path, range);
+
+			if (altered.empty()) {
+				// Re-parse from the start.
+				owner->postInvalidate(this, -1, true);
+			}
 
 			return altered;
 
@@ -393,17 +398,27 @@ namespace storm {
 			return result;
 		}
 
-		Range Part::parsePath(Array<Node> *path) {
+		static void widen(Range &range, Nat val) {
+			if (range.from > val)
+				range.from -= val;
+			else
+				range.from = 0;
+			range.to += val;
+		}
+
+		Range Part::parsePath(Array<Node> *path, Range target) {
 			assert(path->any(), L"The path should contain at least one node!");
 			Range start = path->at(0).range;
-			Nat target = start.count() + reparseExtra;
+			Nat targetLen = start.count() + reparseExtra;
+			widen(target, reparseEdge);
 
-			// TODO: It could be useful to explicitly find a node with some margin around the newly
-			// inserted character. This should usually be the case with a large enough value of
-			// 'reparseExtra', but looking at margins could allow us to parse smaller chunks of the
-			// input in many cases.
+			// We have two constraints: first, the node we are parsing should be long enough (as
+			// denoted by targetLen), and secondly we should include some additional text on both
+			// sides of the edit (or any errors we find along the way). This helps us from getting
+			// stuck in locally optimal solutions on subsequent re-parses.
 
 			Nat chosen = 0;
+			Bool found = false;
 			for (Nat i = 1; i < path->count(); i++) {
 				const Node &now = path->at(i);
 				Nat count = now.range.count();
@@ -413,12 +428,25 @@ namespace storm {
 					break;
 
 				// We reached our target. Now we're happy!
-				if (count >= target) {
+				if (count >= targetLen
+					&& now.range.from <= target.from
+					&& now.range.to >= target.to
+					&& !found) {
+
 					chosen = i;
-					break;
+					found = true;
 				}
 
-				chosen = i;
+				// Re-parse more if we find error nodes somewhere.
+				if (now.node->error()) {
+					found = false;
+					target = now.range;
+					targetLen = target.count() + reparseExtra;
+					widen(target, reparseEdge);
+				}
+
+				if (!found)
+					chosen = i;
 			}
 
 			// Ignore nodes without production as far as possible.
@@ -430,6 +458,15 @@ namespace storm {
 			if (!n.node->production())
 				return Range();
 
+			// Any errors in the parent nodes?
+			for (Nat i = chosen + 1; i < path->count(); i++) {
+				if (path->at(i).node->error()) {
+					owner->postInvalidate(this, 0, true);
+					// No need to look further.
+					break;
+				}
+			}
+
 			// Re-parse 'n'!
 			InfoErrors errors;
 			InfoNode *result = parse(n.node, n.node->production()->rule(), &errors);
@@ -440,7 +477,7 @@ namespace storm {
 
 			// We got a result. Use it!
 			replace(n.node, result);
-			// PLN(TO_S(this, L"Replace " << n.range << L": " << errors));
+			// PLN(TO_S(this, L"Replace " << n.node->production()->rule()->name << L" at " << n.range << L": " << errors));
 
 			// If the result was bad (ie. required lots of error recovery), use it in the meantime,
 			// but attempt to generate a better syntax tree later on by scheduling a full re-parse.

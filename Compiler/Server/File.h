@@ -80,10 +80,13 @@ namespace storm {
 			 */
 			enum {
 				// How many extra characters are we aiming at re-parsing?
-				reparseExtra = 100,
+				reparseExtra = 200,
+
+				// How many characters extra at each side of an edit are we aiming for?
+				reparseEdge = 20,
 
 				// What is the maximum number of characters to re-parse at once?
-				reparseMax = 5000,
+				reparseMax = 10000,
 
 				// Invalidate this part's boundaries if corrections were made this far from the edges.
 				invalidateLength = 10,
@@ -121,7 +124,7 @@ namespace storm {
 			Array<Node> *findParsePath(const Range &update, Nat offset, syntax::InfoNode *node);
 
 			// Traverse the path and re-parse a node that looks promising. Returns the invalidated range.
-			Range parsePath(Array<Node> *path);
+			Range parsePath(Array<Node> *path, Range changed);
 
 			// Compare InfoErrors:s and see which is better/worse.
 			static bool bad(syntax::InfoErrors which, syntax::InfoNode *node);
