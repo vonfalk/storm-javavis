@@ -6,6 +6,13 @@ namespace storm {
 	namespace server {
 		using namespace storm::syntax;
 
+		Node::Node(InfoInternal *node, Range range) : node(node), range(range) {}
+
+		StrBuf &operator <<(StrBuf &to, Node node) {
+			to << node.range << L", length " << node.node->length();
+			return to;
+		}
+
 		static Nat strlen(Str *s) {
 			Nat len = 0;
 			for (Str::Iter i = s->begin(), e = s->end(); i != e; ++i)
@@ -321,50 +328,26 @@ namespace storm {
 
 		Range Part::parse(const Range &range) {
 			// PLN(TO_S(this, L"----- PARSING " << range << L" -----"));
+			Array<Node> *path = findParsePath(range, start, content);
+
+			if (!path || path->empty()) {
+				// No relevant node was found. Invalidate the border towards the previous part and
+				// let a more aggressive re-parse do the work.
+				owner->postInvalidate(this, File::prevBorder, true);
+				return Range();
+			}
+
+			// Traverse the node upwards and pick one to re-parse.
+			Range altered = parsePath(path);
+
+			return altered;
 
 			// TODO: We should keep track of ranges where the error correction kicked in and keep
 			// that in mind when re-parsing stuff. We could also post a job for re-parsing those
 			// chunks in the background.
-
-			// TODO: We need some heurustic on how much we should try to re-parse in case we need
-			// error recovery. We probably want to try a few parent nodes if error recovery has to
-			// kick in near the leaves. Also: if we start trying to re-parse a large part of the file,
-			// we should probably be happy with our current attempt and delay further re-parsing until
-			// later (when the user stops typing).
-
-			// TODO: We also need to consider that ambiguities could be resolved differently
-			// depending on the current match. Eg. changing the string 'tru' to 'true' actually
-			// alters the matched production, even if the old tree works as well. This can be
-			// solved by parsing until the results of the parse are consistent with the previously
-			// matched tree, ie. the same production matched before and now.
-
-			// TODO: Limit the depth of what needs to be re-parsed in some situations.
-			ParseEnv env = {
-				range,
-				Range(),
-				Range(),
-			};
-			ParseResult r = parse(env, start, content, false);
-			// PVAR(TO_S(this, r.errors));
-
-			// Maybe we contain some parts of the previous part?
-			if (!r.errors.success()) {
-				// Invalidate the previous part.
-				owner->postInvalidate(this, -1, true);
-			} else if (env.corrected.empty()) {
-				// Nope!
-			} else if (!env.corrected.empty() && env.corrected.from <= start + 10) {
-				// Invalidate the border towards the previous part.
-				owner->postInvalidate(this, File::prevBorder, true);
-			} else if (!env.corrected.empty() && env.corrected.to >= full().to - 10) {
-				// Invalidate the border towards the next part.
-				owner->postInvalidate(this, File::nextBorder, true);
-			}
-
-			return env.modified;
 		}
 
-		InfoInternal *Part::findParseNode(const Range &update, Nat offset, InfoNode *node) {
+		Array<Node> *Part::findParsePath(const Range &update, Nat offset, InfoNode *node) {
 			Nat len = node->length();
 			if (len == 0)
 				return null;
@@ -381,108 +364,100 @@ namespace storm {
 				return null;
 
 			// Look at the children of this node.
-			InfoInternal *result
+			Array<Node> *result = null;
 			for (Nat i = 0; i < inode->count(); i++) {
 				InfoNode *child = inode->at(i);
-				InfoInternal *r = findParseNode(update, offset, child);
+				Array<Node> *r = findParsePath(update, offset, child);
 				offset += child->length();
 
-			}
-		}
-
-		Part::ParseResult Part::parse(ParseEnv &env, Nat offset, InfoNode *node, bool seenError) {
-			// ::Indent z(util::debugStream());
-			ParseResult result = {
-				infoSuccess(),
-				-1,
-				0,
-			};
-
-			// We should probably parse at a higher level...
-			Nat len = node->length();
-			if (len == 0)
-				return result;
-
-			// Does this node completely cover 'range'?
-			Range nodeRange(offset, offset + len);
-			// PLN(L"Examining " << offset << L"-" << offset+len);
-			if (nodeRange.from > env.update.from || nodeRange.to < env.update.to)
-				return result;
-
-			// Do not attempt to re-parse leaf nodes. They only contain regexes, which have been
-			// checked already.
-			InfoInternal *inode = as<InfoInternal>(node);
-			if (!inode) {
-				result.errors = infoFailure();
-				return result;
-			}
-
-			// If this node contained errors, then we try to re-parse its parent right away.
-			bool parseHere = false;
-			if (inode->error()) {
-				seenError = true;
-				result.errors = infoFailure();
-				result.sinceError = 0;
-				parseHere = false;
-			} else if (inode->length() < 50) {
-				// Parse this node right away; it is small enough.
-				result.errors = infoFailure();
-				parseHere = true;
-			} else {
-				// Re-parse this node if none of our children have already managed to do so.
-				for (Nat i = 0; i < inode->count() && result.errors.success(); i++) {
-					// PVAR(i);
-					InfoNode *child = inode->at(i);
-					ParseResult cResult = parse(env, offset, child, seenError);
-					result = combine(result, cResult);
-					offset += child->length();
-				}
-				if (result.sinceError >= 0)
-					result.sinceError++;
-				result.depth++;
-
-				// Parse if the result from our children is bad enough.
-				parseHere = bad(result, node);
-				// Or if we are a few levels from the smallest point we could try to parse.
-				parseHere |= result.depth == 1;
-			}
-
-			// Always parse if we have no parent.
-			parseHere |= !inode->parent();
-
-			// Don't parse if the current node do not have a production.
-			if (parseHere && inode->production()) {
-				// Ignore parsing this node if we have seen an error node and this node was not a part of that error.
-				if (seenError && !inode->error())
-					return result;
-
-				// Re-parse this node!
-				InfoErrors here;
-				InfoNode *n = parse(inode, inode->production()->rule(), &here);
-
-				// TODO: See which one is worse...
-				if (n && !bad(here, node)) {
-					replace(inode, n);
-					env.modified = nodeRange;
-					result.errors = here;
-
-					if (here.any())
-						env.corrected = nodeRange;
-				} else {
-					// Pretend we saw an error production if the result we produced was bad enough...
-					result.sinceError = 1;
+				if (r) {
+					if (!result) {
+						// First viable child. Use that!
+						result = r;
+					} else {
+						// More than one possible. Start from here instead.
+						result = null;
+						break;
+					}
 				}
 			}
+
+			// No relevant child?
+			if (!result)
+				result = new (this) Array<Node>();
+
+			// Add ourself.
+			result->push(Node(inode, nodeRange));
 
 			return result;
 		}
 
-		bool Part::bad(ParseResult w, InfoNode *node) {
-			// Skip a few levels after a previous error node.
-			if (w.sinceError >= 0 && w.sinceError < 3)
-				return true;
+		Range Part::parsePath(Array<Node> *path) {
+			assert(path->any(), L"The path should contain at least one node!");
+			Range start = path->at(0).range;
+			Nat target = start.count() + reparseExtra;
 
-			return bad(w.errors, node);
+			// TODO: It could be useful to explicitly find a node with some margin around the newly
+			// inserted character. This should usually be the case with a large enough value of
+			// 'reparseExtra', but looking at margins could allow us to parse smaller chunks of the
+			// input in many cases.
+
+			Nat chosen = 0;
+			for (Nat i = 1; i < path->count(); i++) {
+				const Node &now = path->at(i);
+				Nat count = now.range.count();
+
+				// We reached our target. Now we're happy!
+				if (count > target)
+					break;
+
+				// Ignore too large nodes so that we do not degrade performance too much.
+				if (count > reparseMax)
+					break;
+
+				chosen = i;
+			}
+
+			// Ignore nodes without production as far as possible.
+			while (chosen < path->count() && !path->at(chosen).node->production())
+				chosen++;
+
+			// No production here?
+			Node n = path->at(chosen);
+			if (!n.node->production())
+				return Range();
+
+			// Re-parse 'n'!
+			InfoErrors errors;
+			InfoNode *result = parse(n.node, n.node->production()->rule(), &errors);
+
+			// No result. Report failure!
+			if (!result)
+				return Range();
+
+			// We got a result. Use it!
+			replace(n.node, result);
+			// PVAR(TO_S(this, errors));
+
+			// If the result was bad (ie. required lots of error recovery), use it in the meantime,
+			// but attempt to generate a better syntax tree later on by scheduling a full re-parse.
+			if (bad(errors, n.node)) {
+				// Invalidate us and the previous part. This correction was very bad, so we should
+				// probably re-parse a lot.
+				owner->postInvalidate(this, -1, true);
+			} else {
+				// TODO: Be a bit more conservative?
+				if (n.range.from <= full().from + invalidateLength) {
+					// Invalidate the border towards the previous part.
+					owner->postInvalidate(this, File::prevBorder, true);
+				} else if (n.range.to >= full().to - invalidateLength) {
+					// Invalidate the border towards the next part.
+					owner->postInvalidate(this, File::nextBorder, true);
+				}
+			}
+
+			// Report success.
+			return n.range;
 		}
 
 		bool Part::bad(InfoErrors w, InfoNode *node) {
@@ -504,23 +479,6 @@ namespace storm {
 				return infoFailure();
 
 			return a + b;
-		}
-
-		Part::ParseResult Part::combine(ParseResult a, ParseResult b) {
-			ParseResult r = {
-				combine(a.errors, b.errors),
-				0,
-				max(a.depth, b.depth),
-			};
-
-			if (a.sinceError < 0)
-				r.sinceError = b.sinceError;
-			else if (b.sinceError < 0)
-				r.sinceError = a.sinceError;
-			else
-				r.sinceError = min(a.sinceError, b.sinceError);
-
-			return r;
 		}
 
 		void Part::replace(InfoNode *oldNode, InfoNode *newNode) {

@@ -17,6 +17,21 @@ namespace storm {
 		class File;
 
 		/**
+		 * Store information about a single info-node while doing re-parsing.
+		 */
+		class Node {
+			STORM_VALUE;
+		public:
+			STORM_CTOR Node(syntax::InfoInternal *node, Range range);
+
+			syntax::InfoInternal *node;
+			Range range;
+		};
+
+		// Output.
+		StrBuf &STORM_FN operator <<(StrBuf &to, Node node);
+
+		/**
 		 * Represents a part of an open file in the language server. Corresponds to one of the parts
 		 * in the chain of 'FileReader's.
 		 */
@@ -60,6 +75,20 @@ namespace storm {
 			// Output all our text.
 			void STORM_FN text(StrBuf *to) const;
 
+			/**
+			 * Knobs to tweak for re-parsing performance and correctness.
+			 */
+			enum {
+				// How many extra characters are we aiming at re-parsing?
+				reparseExtra = 100,
+
+				// What is the maximum number of characters to re-parse at once?
+				reparseMax = 5000,
+
+				// Invalidate this part's boundaries if corrections were made this far from the edges.
+				invalidateLength = 10,
+			};
+
 		private:
 			// Parser used for this part. Contains the proper packages etc.
 			syntax::InfoParser *parser;
@@ -87,42 +116,16 @@ namespace storm {
 			// to be transmitted to the client again.
 			Range parse(const Range &range);
 
-			// State used in the recursive parse function.
-			struct ParseEnv {
-				// Range to re-parse.
-				const Range update;
+			// Traverse the parse tree and find a path to the leafmost node we might want to
+			// re-parse. Returns an empty range on complete failure for some reason.
+			Array<Node> *findParsePath(const Range &update, Nat offset, syntax::InfoNode *node);
 
-				// Range which has been modified and needs to be re-sent to the client.
-				Range modified;
-
-				// Range containing matches where error-correction kicked in.
-				Range corrected;
-			};
-
-			// Result from a parse function.
-			struct ParseResult {
-				// Information about errors.
-				syntax::InfoErrors errors;
-
-				// How many levels since we saw an error production. < 0 => no errors.
-				Int sinceError;
-
-				// How many levels have we been able to parse anything?
-				Nat depth;
-			};
-
-			// Traverse the parse tree from 'node' while attempting to update 'range', reparsing nodes as needed.
-			// Returns the best parse result so far.
-			ParseResult parse(ParseEnv &env, Nat offset, syntax::InfoNode *node, bool seenError);
-
-			// Traverse the parse tree and find the leafmost node we might want to re-parse.
-			syntax::InfoInternal *findParseNode(const Range &update, Nat offset, syntax::InfoNode *node);
+			// Traverse the path and re-parse a node that looks promising. Returns the invalidated range.
+			Range parsePath(Array<Node> *path);
 
 			// Compare InfoErrors:s and see which is better/worse.
-			static bool bad(ParseResult which, syntax::InfoNode *node);
 			static bool bad(syntax::InfoErrors which, syntax::InfoNode *node);
 			static syntax::InfoErrors combine(syntax::InfoErrors a, syntax::InfoErrors b);
-			static ParseResult combine(ParseResult a, ParseResult b);
 
 			// Remove 'range' in the current node (if applicable). The structure of the syntax tree
 			// is kept intact. Returns 'false' if content was modified so that a regex in a leaf node
