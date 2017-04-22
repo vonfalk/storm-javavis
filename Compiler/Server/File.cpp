@@ -52,12 +52,13 @@ namespace storm {
 			parser = p;
 			InfoErrors pResult;
 			if (InfoNode *n = parse(c, parser->root(), &pResult)) {
-				if (!bad(pResult, n)) {
-					content = n;
-				} else if (n->length() != content->length()) {
-					// Length changed, we have no choice but keeping the bad version...
-					content = n;
-				}
+				content = n;
+				// if (!bad(pResult, n)) {
+				// 	content = n;
+				// } else if (n->length() != content->length()) {
+				// 	// Length changed, we have no choice but keeping the bad version...
+				// 	content = n;
+				// }
 			}
 
 			return true;
@@ -407,13 +408,15 @@ namespace storm {
 				const Node &now = path->at(i);
 				Nat count = now.range.count();
 
-				// We reached our target. Now we're happy!
-				if (count > target)
-					break;
-
 				// Ignore too large nodes so that we do not degrade performance too much.
 				if (count > reparseMax)
 					break;
+
+				// We reached our target. Now we're happy!
+				if (count >= target) {
+					chosen = i;
+					break;
+				}
 
 				chosen = i;
 			}
@@ -437,7 +440,7 @@ namespace storm {
 
 			// We got a result. Use it!
 			replace(n.node, result);
-			// PVAR(TO_S(this, errors));
+			// PLN(TO_S(this, L"Replace " << n.range << L": " << errors));
 
 			// If the result was bad (ie. required lots of error recovery), use it in the meantime,
 			// but attempt to generate a better syntax tree later on by scheduling a full re-parse.
@@ -523,6 +526,7 @@ namespace storm {
 			: id(id), path(path), work(q) {
 
 			Engine &e = engine();
+			emptyStr = new (e) Str();
 			parts = new (e) Array<Part *>();
 			package = e.package(path->parent());
 			if (!package) {
@@ -576,9 +580,21 @@ namespace storm {
 				here |= range.empty() && range.from == full.from;
 
 				if (here) {
-					result = merge(result, part->replace(range, replace));
+					// Make sure to 'clip' the range so that it fits inside 'full'.
+					Range here(max(full.from, range.from),
+							min(full.to, range.to));
+
+					// PLN(TO_S(this, L"Updating " << i << L" " << here));
+					result = merge(result, part->replace(here, replace));
 					invalidateFrom = min(invalidateFrom, i + 1);
+
+					// Alter 'offset' and 'range' to reflect the fact that the length of this part has probably changed.
 					offset = part->full().to;
+					if (range.to >= full.to)
+						range.to = offset + range.to - full.to;
+
+					// If something was inserted here, make sure not to insert it in future parts.
+					replace = emptyStr;
 				}
 			}
 

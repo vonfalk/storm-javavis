@@ -216,6 +216,9 @@ namespace storm {
 			// Work queue.
 			WorkQueue *work;
 
+			// Empty string.
+			Str *emptyStr;
+
 			// Update 'part', return the modified range. This generally causes all following parts
 			// to be updated eventually as well.
 			Range updatePart(Nat part, Bool force);

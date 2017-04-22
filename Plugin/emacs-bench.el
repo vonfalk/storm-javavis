@@ -215,8 +215,9 @@
 	  (ref-str "")
 	  (gap-start 0))
      (unless (search-forward insert-str nil t)
-       (storm-output-string (format "The marker %S was not found in the file." insert-str))
-       (throw 'bench-fail))
+       (let ((msg (format "The marker %S was not found in the file.\n" insert-str)))
+	 (storm-output-string msg 'storm-bench-fail)
+	 (throw 'bench-fail msg)))
 
      (delete-char (- (length insert-str)))
      (storm-mode)
