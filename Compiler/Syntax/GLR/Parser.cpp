@@ -303,7 +303,7 @@ namespace storm {
 						continue;
 					}
 
-					InfoErrors errors = infoSkipped(currentPos - now->pos);
+					InfoErrors errors = infoSuccess();
 					// Note: this if-statement could be skipped (the body could always be
 					// executed). This results in empty regexes being matched as parse errors even
 					// when they are possibly not.
@@ -333,7 +333,7 @@ namespace storm {
 					if (Syntax::specialProd(prod) == Syntax::prodESkip)
 						continue;
 
-					InfoErrors errors = infoSkipped(currentPos - now->pos);
+					InfoErrors errors = infoSuccess();
 					errors += infoShifts(Item(syntax, prod).length(syntax));
 					Nat tree = store->push(now->pos, prod, errors, 0).id();
 					StackItem *item = new (this) StackItem(to, currentPos, now, tree);
@@ -428,7 +428,7 @@ namespace storm {
 						continue;
 
 					Nat offset = matched - currentPos;
-					InfoErrors errors = infoSkipped(currentPos - env.stack->pos);
+					InfoErrors errors = infoSuccess();
 
 					// Note: here, 'env.stack->pos' is used instead of 'currentPos'. Usually, they
 					// are the same, but when error recovery kicks in 'env.stack->pos' may be
@@ -574,11 +574,21 @@ namespace storm {
 				// Create the syntax tree node for this reduction.
 
 				Bool usedNode = false;
+				Bool nontermErrors = false;
 				Nat node = 0;
-				InfoErrors errors = infoSkipped(currentPos - env.old.stack->pos);
-				for (const Path *p = path; p; p = p->prev)
-					errors += store->at(p->treeNode).errors();
+				InfoErrors errors = infoSuccess();
+				for (const Path *p = path; p; p = p->prev) {
+					TreeNode now = store->at(p->treeNode);
+					InfoErrors err = now.errors();
+					errors += err;
+					nontermErrors = now.leaf() & err.any();
+				}
 				errors += infoShifts(env.errors);
+				if (env.errors || nontermErrors) {
+					// Penalize characters in here appropriatly. Make sure to not count 'skipped'
+					// multiple times while recursing.
+					errors.chars(currentPos - stack->pos);
+				}
 
 				if (Syntax::specialProd(env.production) == Syntax::prodESkip) {
 					// These are really just shifts.

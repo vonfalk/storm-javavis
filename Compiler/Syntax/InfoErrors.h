@@ -25,8 +25,11 @@ namespace storm {
 			// Get # of shifts during error corrections.
 			Nat STORM_FN shifts() const;
 
-			// Get # of skipped characters during error corrections.
-			Nat STORM_FN skipped() const;
+			// Get # of characters inside erroneous productions.
+			Nat STORM_FN chars() const;
+
+			// Set # of chars.
+			void STORM_FN chars(Nat chars);
 
 			// Add two errors together.
 			InfoErrors STORM_FN operator +(InfoErrors e) const;
@@ -57,7 +60,7 @@ namespace storm {
 			friend InfoErrors infoFailure();
 			friend InfoErrors infoSuccess();
 			friend InfoErrors infoShifts(Nat shifts);
-			friend InfoErrors infoSkipped(Nat skipped);
+			friend InfoErrors infoChars(Nat chars);
 		};
 
 		// Create. Indicate failure.
@@ -69,8 +72,8 @@ namespace storm {
 		// Create. Indicate # of productions skipped.
 		InfoErrors STORM_FN infoShifts(Nat shifts);
 
-		// Create. Indicate # of chars skipped.
-		InfoErrors STORM_FN infoSkipped(Nat skipped);
+		// Create. Indicate # of chars inside erronesous production.
+		InfoErrors STORM_FN infoChars(Nat chars);
 
 		// Output.
 		StrBuf &STORM_FN operator <<(StrBuf &to, InfoErrors e);

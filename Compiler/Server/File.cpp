@@ -491,9 +491,9 @@ namespace storm {
 
 			Nat len = node->length();
 			// NOTE: Consider the case when 'len' == 0.
-			if (w.skipped() > len * 0.4)
+			if (w.chars() > len * 0.6)
 				return true;
-			if (w.shifts() > max(10.0, len*0.05))
+			if (w.shifts() > max(15.0, len*0.1))
 				return true;
 
 			return false;

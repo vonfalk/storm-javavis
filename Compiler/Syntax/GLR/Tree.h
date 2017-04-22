@@ -90,6 +90,12 @@ namespace storm {
 					return write(src, ptr, v);
 				}
 
+				// Is this a leaf node (ie. no children?).
+				inline Bool STORM_FN leaf() const {
+					Nat first = read(src, ptr);
+					return (first & countMask) == 0;
+				}
+
 				// Get the child array.
 				inline TreeArray STORM_FN children() const {
 					Nat first = read(src, ptr);

@@ -7,7 +7,7 @@ namespace storm {
 
 		static const Nat failedMask  = 0x80000000;
 		static const Nat shiftsMask  = 0x7FFF0000;
-		static const Nat skippedMask = 0x0000FFFF;
+		static const Nat charsMask   = 0x0000FFFF;
 		static const Nat shiftsShift = 16;
 
 		InfoErrors::InfoErrors() : data(0) {}
@@ -19,7 +19,7 @@ namespace storm {
 		}
 
 		Bool InfoErrors::any() const {
-			// Checks: success() == false || shifts() > 0 || skipped() > 0
+			// Checks: success() == false || shifts() > 0 || chars() > 0
 			return data != 0;
 		}
 
@@ -27,14 +27,19 @@ namespace storm {
 			return (data & shiftsMask) >> shiftsShift;
 		}
 
-		Nat InfoErrors::skipped() const {
-			return data & skippedMask;
+		Nat InfoErrors::chars() const {
+			return data & charsMask;
+		}
+
+		void InfoErrors::chars(Nat chars) {
+			data &= ~charsMask;
+			data |= min(chars, charsMask);
 		}
 
 		InfoErrors InfoErrors::operator +(InfoErrors e) const {
 			Nat f = (data & failedMask) | (e.data & failedMask);
 			Nat a = min(shifts() + e.shifts(), shiftsMask >> shiftsShift);
-			Nat b = min(skipped() + e.skipped(), skippedMask);
+			Nat b = min(chars() + e.chars(), charsMask);
 
 			return InfoErrors(f | (a << shiftsShift) | b);
 		}
@@ -49,7 +54,7 @@ namespace storm {
 			if (!e.success())
 				return failedMask;
 			else
-				return e.shifts() + e.skipped();
+				return e.shifts() + e.chars();
 		}
 
 		Bool InfoErrors::operator <(InfoErrors e) const {
@@ -77,9 +82,9 @@ namespace storm {
 			return InfoErrors((shifts << shiftsShift) & shiftsMask);
 		}
 
-		InfoErrors infoSkipped(Nat skipped) {
-			skipped = min(skipped, skippedMask);
-			return InfoErrors(skipped & skippedMask);
+		InfoErrors infoChars(Nat chars) {
+			chars = min(chars, charsMask);
+			return InfoErrors(chars & charsMask);
 		}
 
 		Nat InfoErrors::getData(InfoErrors e) {
@@ -95,7 +100,7 @@ namespace storm {
 				if (!e.any()) {
 					to << L"success";
 				} else {
-					to << e.skipped() << (e.skipped() == 1 ? L" char" : L" chars") << L" skipped, ";
+					to << e.chars() << (e.chars() == 1 ? L" char" : L" chars") << L", ";
 					to << e.shifts() << (e.shifts() == 1 ? L" correction" : L" corrections");
 				}
 			} else {
