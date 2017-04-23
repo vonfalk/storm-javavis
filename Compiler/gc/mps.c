@@ -22,12 +22,19 @@ void mps_increase_scanned(mps_ss_t mps_ss, size_t increase) {
 	ss->scannedSize += increase;
 }
 
-// Custom abort which helps when debugging.
-void mps_custom_abort() {
+// Custom assertion failure handler. Calls 'DebugBreak' to aid when debugging.
+void mps_assert_fail(const char *file, unsigned line, const char *condition) {
+        fflush(stdout);
+        fprintf(stderr,
+                        "The MPS detected a problem!\n"
+                        "%s:%u: MPS ASSERTION FAILED: %s\n",
+                        file, line, condition);
+        fflush(stderr);
+        mps_telemetry_flush();
 #ifdef DEBUG
-	DebugBreak();
+        DebugBreak();
 #endif
-	abort();
+        abort();
 }
 
 #endif

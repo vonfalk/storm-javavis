@@ -327,6 +327,10 @@ namespace storm {
 	// Scan objects. If a MPS_FIX returns something other than MPS_RES_OK, return that code as
 	// quickly as possible.
 	static mps_res_t mpsScan(mps_ss_t ss, mps_addr_t base, mps_addr_t limit) {
+		bool inside = ((char *)base <= (char *)interesting)
+			&& ((char *)interesting <= (char *)limit);
+		if (inside)
+			PLN(L"Scanned " << base << L" - " << limit << L", " << ((char *)limit - (char *)base));
 		// Convert from client pointers to 'real' pointers:
 		base = (byte *)base - headerSize;
 		limit = (byte *)limit - headerSize;
@@ -340,6 +344,8 @@ namespace storm {
 
 				// Exclude header.
 				mps_addr_t pos = (byte *)at + headerSize;
+				if (inside)
+					PLN(L"Scanning " << pos);
 
 				switch (h->type) {
 				case GcType::tFixedObj:
@@ -776,6 +782,7 @@ namespace storm {
 
 				// Scan the main stack if we need to.
 				if (ignoreMainStack) {
+					PLN(L"Ignoring main stack.");
 #ifdef DEBUG
 					// To see if this ever happens, and if it is handled correctly. This is *really*
 					// rare, as we have to hit a window of ~6 machine instructions when pausing another thread.
@@ -852,6 +859,8 @@ namespace storm {
 		assert(headerSize == OFFSET_OF(MpsObj, count), L"Invalid header size.");
 		assert(codeHeaderSize == wordSize, L"Invalid code header size.");
 		assert(vtableOffset >= sizeof(void *), L"Invalid vtable offset (initialization failed?)");
+
+		mps_lib_assert_fail_install(&mps_assert_fail);
 
 		MPS_ARGS_BEGIN(args) {
 			MPS_ARGS_ADD(args, MPS_KEY_ARENA_SIZE, arenaSize);
