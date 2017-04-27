@@ -196,11 +196,17 @@
     (define-key map "\C-cr" 'storm-debug-re-open)
     (define-key map "\C-cx" 'storm-debug-un-color)
     (define-key map "\C-ce" 'storm-debug-find-error)
+    (define-key map "}"     'storm-insert-indent)
     map)
   "Keymap for storm-mode")
 
 
 ;; Commands.
+
+(defun storm-insert-indent (arg)
+  (interactive "*P")
+  (self-insert-command (prefix-numeric-value arg))
+  (storm-indent-line))
 
 (defun storm-debug-tree ()
   "Output debug information containing the syntax tree for the current buffer."
