@@ -31,7 +31,7 @@
 #define MPS_FOOTER_DATA 0xAA
 
 // Check the heap after this many allocations.
-#define MPS_CHECK_INTERVAL 1000
+#define MPS_CHECK_INTERVAL 100000
 
 
 #if MPS_CHECK_MEMORY
@@ -1611,6 +1611,7 @@ namespace storm {
 		switch (header->type) {
 		case GcType::tFixed:
 		case GcType::tFixedObj:
+		case GcType::tType:
 			if (recursive) {
 				// Check pointers as well.
 				for (nat i = 0; i < header->obj.count; i++) {
@@ -1620,7 +1621,6 @@ namespace storm {
 				}
 			}
 			break;
-		case GcType::tType:
 		case GcType::tArray:
 		case GcType::tWeakArray:
 			break;

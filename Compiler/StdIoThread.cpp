@@ -64,7 +64,7 @@ namespace storm {
 		case stdIn: {
 			// See if we can read now, other post to the thread.
 			bool ok = false;
-			if (false && TryEnterCriticalSection(&inputLock)) {
+			if (TryEnterCriticalSection(&inputLock)) {
 				ok = tryRead(handles[r->stream], r);
 				LeaveCriticalSection(&inputLock);
 			}
