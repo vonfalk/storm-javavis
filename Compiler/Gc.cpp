@@ -399,9 +399,18 @@ namespace storm {
 				if (IS_CODE(o)) {
 					// Scan code.
 					GcCode *c = mpsRefsCode(o);
+
+					// Scan our self-pointer to ensure that this object will be scanned after it has
+					// been moved.
+					mps_res_t r = MPS_FIX12(ss, &c->reserved);
+					if (r != MPS_RES_OK)
+						return r;
+#ifdef SLOW_DEBUG
+					dbg_assert(c->reserved == at, L"Invalid self-pointer!");
+#endif
+
 					for (size_t i = 0; i < c->refCount; i++) {
 						GcCodeRef &ref = c->refs[i];
-						mps_res_t r;
 #ifdef SLOW_DEBUG
 						dbg_assert(ref.offset < CODE_SIZE(o), L"Code offset is out of bounds!");
 #endif
@@ -483,15 +492,6 @@ namespace storm {
 	static void mpsMakeFwd(mps_addr_t at, mps_addr_t to) {
 		MpsObj *o = fromClient(at);
 		MPS_VERIFY_OBJECT(o);
-
-		if (IS_CODE(o)) {
-			// Since the object has moved, update the relative pointers inside of it.
-			MpsObj *t = fromClient(to);
-			// PLN(L"Forwarding code! " << IS_CODE(t) << L", " << CODE_SIZE(t) << L" - " << CODE_SIZE(o));
-			// PVAR(mpsSize(o));
-			MPS_VERIFY_OBJECT(t);
-			code::updatePtrs(to, mpsRefsCode(t));
-		}
 
 		// Create the forwarding object.
 		size_t size = mpsSize(o);
@@ -1411,8 +1411,10 @@ namespace storm {
 			// 2: Set the size.
 			MpsObj *obj = (MpsObj *)memory;
 			obj->size = code | 0x1;
-			// 3: Set # of refs.
-			void *refPtr = mpsRefsCode(obj);
+			// 3: Set self pointer and # of refs.
+			GcCode *codeRefs = mpsRefsCode(obj);
+			codeRefs->reserved = (byte *)memory + headerSize;
+			void *refPtr = codeRefs;
 			*(size_t *)refPtr = refs;
 			// 4: Init checking data.
 			MPS_INIT_OBJECT(obj, size);
@@ -1531,11 +1533,15 @@ namespace storm {
 	// Assumes there is a footer.
 	static void checkFooter(const MpsObj *obj) {
 		size_t size = obj->totalSize;
-		checkBarrier(obj, (const byte *)obj + size - MPS_CHECK_BYTES, MPS_CHECK_BYTES, MPS_FOOTER_DATA, L"middle");
+		checkBarrier(obj, (const byte *)obj + size - MPS_CHECK_BYTES, MPS_CHECK_BYTES, MPS_FOOTER_DATA, L"footer");
 
 		if (IS_CODE(obj)) {
 			const GcCode *c = mpsRefsCode(obj);
-			checkBarrier(obj, (const byte *)c - MPS_CHECK_BYTES, MPS_CHECK_BYTES, MPS_MIDDLE_DATA, L"footer");
+			checkBarrier(obj, (const byte *)c - MPS_CHECK_BYTES, MPS_CHECK_BYTES, MPS_MIDDLE_DATA, L"middle");
+
+			// NOTE: We can not actually check this here, as objects are checked before any FIX
+			// operations have been done.
+			// dbg_assert(c->reserved != toClient(obj), L"Invalid self-pointer in code segment.");
 		}
 	}
 

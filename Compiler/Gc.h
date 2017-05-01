@@ -4,7 +4,7 @@
 #include "OS/InlineSet.h"
 #include "OS/Thread.h"
 
-#include "gc/mps.h"
+#include "Gc/mps.h"
 
 #include "Core/GcArray.h"
 #include "Core/GcType.h"

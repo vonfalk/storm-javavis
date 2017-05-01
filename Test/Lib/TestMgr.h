@@ -63,7 +63,7 @@ void Tests::runTests(TestResult &r, bool runAll) {
 		}
 	} else {
 		for (SuiteMap::const_iterator i = suites.begin(); i != suites.end(); i++) {
-			if (!runAll && singleSuite && !i->second->single)
+			if (!runAll && ((singleSuite && !i->second->single) || i->second->ignore))
 				continue;
 
 			std::wcout << L"--- " << i->second->name << L" ---" << std::endl;

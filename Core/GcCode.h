@@ -65,6 +65,9 @@ namespace storm {
 		// Number of entries. Only changed on allocation.
 		const size_t refCount;
 
+		// Reserved for internal use by the GC. Do not alter.
+		void *reserved;
+
 		// References in here.
 		GcCodeRef refs[1];
 	};
