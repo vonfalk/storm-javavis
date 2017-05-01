@@ -70,7 +70,10 @@ namespace storm {
 	}
 
 	extern bool scanned;
+	extern bool found;
+	extern bool crash;
 	bool doAccess = false;
+	nat count = 0;
 
 	SimpleName *Named::path() const {
 		if (Named *parent = closestNamed()) {
@@ -80,6 +83,7 @@ namespace storm {
 			// p->add(new (this) SimplePart(name, params));
 			if (wcscmp(name->c_str(), L"@ 100") == 0 || scanned) {
 				scanned = false;
+				count++;
 				PLN(L"HEJ: " << (void *)p << L" at " << &p);
 				if (doAccess) {
 					PLN(L"Ptr inside simple part: " << (void *)tmp->name);
@@ -105,7 +109,15 @@ namespace storm {
 			return out->toS();
 		}
 
-		return path()->toS();
+		SimpleName *p = path();
+		if (count == 6) {
+			crash = found;
+			if (found)
+				PLN(L"--- Should crash now! ---");
+			else
+				PLN(L"--- Unfortunately, no crash this time ---");
+		}
+		return p->toS();
 	}
 
 	void Named::notifyAdded(NameSet *to, Named *added) {}

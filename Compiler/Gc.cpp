@@ -276,6 +276,16 @@ namespace storm {
 		return (byte *)at + mpsSize((byte *)at - headerSize);
 	}
 
+	bool found = false;
+	bool crash = false;
+	void *interesting = (void *)0x2;
+
+	void gcCheck(void *obj, const wchar *kind) {
+		PLN(obj << L" is interesting.");
+		interesting = obj;
+		found = false;
+	}
+
 	// Helper for interpreting and scanning a GcType block.
 #define FIX_HEADER(header)									\
 	do {													\
@@ -310,18 +320,12 @@ namespace storm {
 		size_t offset = (header)->obj.offset[_i];					\
 		mps_addr_t *data = (mps_addr_t *)((byte *)(base) + offset);	\
 		bool print = *data == interesting;							\
+		found |= print;												\
 		if (print) PLN(L"From: " << *data << L" at " << data);		\
 		mps_res_t r = MPS_FIX12(ss, data);							\
-		if (print) PLN(L"To: " << *data << L" offset " << offset);	\
+		if (print) PLN(L"To: " << *data << L" offset " << offset << L", " << (header)->type); \
 		if (r != MPS_RES_OK)										\
 			return r;												\
-	}
-
-	void *interesting = (void *)0x2;
-
-	void gcCheck(void *obj, const wchar *kind) {
-		PLN(obj << L" is interesting.");
-		interesting = obj;
 	}
 
 	// Scan objects. If a MPS_FIX returns something other than MPS_RES_OK, return that code as
@@ -432,6 +436,8 @@ namespace storm {
 
 	// See if object at 'at' is a forwarder, and if so, where it points to.
 	static mps_addr_t mpsIsFwd(mps_addr_t at) {
+		bool print = at == interesting && crash;
+
 		// Convert to base pointers:
 		at = (byte *)at - headerSize;
 		MpsObj *o = (MpsObj *)at;
@@ -440,10 +446,16 @@ namespace storm {
 
 		switch (o->header->type) {
 		case mpsFwd1:
+			if (print)
+				PLN(L"Interesting object forwarded to " << o->fwd.to);
 			return o->fwd1.to;
 		case mpsFwd:
+			if (print)
+				PLN(L"Interesting object forwarded to " << o->fwd.to);
 			return o->fwd.to;
 		default:
+			if (print)
+				PLN(L"Interesting object not forwarded " << o->fwd.to);
 			return null;
 		}
 	}
@@ -795,9 +807,12 @@ namespace storm {
 					scanned = true;
 					for (void **at = from; at < to; at++) {
 						//PLN(at << L" - " << *at);
+						void *old = *at;
 						mps_res_t r = MPS_FIX12(ss, at);
 						if (r != MPS_RES_OK)
 							return r;
+						if (old != *at)
+							PLN(L"ALTERED!");
 					}
 				}
 			} MPS_SCAN_END(ss);

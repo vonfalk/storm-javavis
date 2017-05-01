@@ -88,6 +88,9 @@ namespace storm {
 			nat from = i - 1;
 			nat to = from + ins;
 
+			assert(from < count());
+			assert(to < count());
+
 			table->v[to] = table->v[from];
 			refs->v[to] = refs->v[from];
 			table->v[from] = null;

@@ -15,6 +15,7 @@
 namespace storm {
 
 	extern void gcCheck(void *, const wchar *);
+	extern bool crash;
 
 	NamePart::NamePart(Str *name) : name(name) {
 		if (wcscmp(name->c_str(), L"@ 100") == 0) {
@@ -34,6 +35,8 @@ namespace storm {
 	}
 
 	void NamePart::toS(StrBuf *to) const {
+		if (crash)
+			to->engine().gc.checkMemory(this, true);
 		*to << name;
 	}
 
@@ -110,6 +113,8 @@ namespace storm {
 	}
 
 	void SimplePart::toS(StrBuf *to) const {
+		if (crash)
+			to->engine().gc.checkMemory(this, true);
 		*to << name;
 		if (params != null && params->count() > 0) {
 			*to << L"(" << params->at(0);
@@ -181,6 +186,8 @@ namespace storm {
 	}
 
 	void RecPart::toS(StrBuf *to) const {
+		if (crash)
+			to->engine().gc.checkMemory(this, true);
 		*to << name;
 		if (params->count() > 0) {
 			*to << L"(" << params->at(0);

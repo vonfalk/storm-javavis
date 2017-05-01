@@ -106,6 +106,8 @@ namespace storm {
 	}
 
 	nat VTableCpp::count() const {
+		if (data)
+			assert(tabSize + vtable::extraOffset <= data->count);
 		return tabSize;
 	}
 
@@ -126,6 +128,7 @@ namespace storm {
 	}
 
 	void VTableCpp::set(nat id, const void *to) {
+		assert(id < count());
 		if (data)
 			data->v[id + vtable::extraOffset] = to;
 	}
