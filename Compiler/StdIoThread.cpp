@@ -30,7 +30,7 @@ namespace storm {
 	}
 
 	static bool tryRead(HANDLE handle, StdRequest *r) {
-		// NOTE: This does not seem to work...
+		// NOTE: This does not seem to work... At least not when inside of Emacs...
 		// Stdin handle becomes signaling when there is data to read.
 		if (WaitForSingleObject(handle, 0) == WAIT_OBJECT_0) {
 			// Safe to read!
@@ -64,7 +64,8 @@ namespace storm {
 		case stdIn: {
 			// See if we can read now, other post to the thread.
 			bool ok = false;
-			if (TryEnterCriticalSection(&inputLock)) {
+			// Note: 'tryRead' is sadly not reliable...
+			if (false && TryEnterCriticalSection(&inputLock)) {
 				ok = tryRead(handles[r->stream], r);
 				LeaveCriticalSection(&inputLock);
 			}
