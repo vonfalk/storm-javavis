@@ -14,7 +14,8 @@ namespace storm {
 	};
 
 	GcBitset *allocBitset(Engine &e, nat count) {
-		GcBitset *r = (GcBitset *)runtime::allocArray<byte>(e, &bitsetType, count * CHAR_BIT);
+		nat bytes = (count + CHAR_BIT - 1) / CHAR_BIT;
+		GcBitset *r = (GcBitset *)runtime::allocArray<byte>(e, &bitsetType, bytes);
 		r->filled = count;
 		return r;
 	}
