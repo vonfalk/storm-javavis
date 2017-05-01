@@ -1580,7 +1580,7 @@ namespace storm {
 			memset((byte *)mpsRefsCode(obj) - MPS_CHECK_BYTES, MPS_MIDDLE_DATA, MPS_CHECK_BYTES);
 	}
 
-	void Gc::checkMemory(const void *object, bool recursive) {
+	void Gc::checkPoolMemory(const void *object, bool recursive) {
 		object = (const byte *)object - headerSize;
 		const MpsObj *obj = (const MpsObj *)object;
 		const MpsHeader *header = obj->header;
@@ -1641,10 +1641,23 @@ namespace storm {
 		Gc *me = (Gc *)p;
 
 		if (p == me->pool || p == me->typePool || p == me->codePool || p == me->weakPool)
-			me->checkMemory(addr);
+			me->checkPoolMemory(addr, true);
 #ifdef MPS_USE_IO_POOL
 		if (p == me->ioPool)
-			me->checkMemory(addr);
+			me->checkPoolMemory(addr, true);
+#endif
+	}
+
+	void Gc::checkMemory(const void *object, bool recursive) {
+		mps_addr_t obj = (mps_addr_t)object;
+		mps_pool_t p;
+		mps_addr_pool(&p, arena, obj);
+
+		if (p == pool || p == typePool || p == codePool || p == weakPool)
+			checkPoolMemory(obj, recursive);
+#ifdef MPS_USE_IO_POOL
+		if (p == ioPool)
+			checkPoolMemory(obj, recursive);
 #endif
 	}
 
@@ -1666,6 +1679,10 @@ namespace storm {
 	}
 
 #else
+	void Gc::checkPoolMemory(const void *object, bool recursive) {
+		// Nothing to do.
+	}
+
 	void Gc::checkMemory(const void *, bool) {
 		// Nothing to do.
 	}

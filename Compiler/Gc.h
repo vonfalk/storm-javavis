@@ -301,6 +301,9 @@ namespace storm {
 
 		// Internal helper for 'checkMemory()'.
 		friend void checkObject(mps_addr_t addr, mps_fmt_t fmt, mps_pool_t pool, void *p, size_t);
+
+		// Check memory, assuming the object is in a GC pool.
+		void checkPoolMemory(const void *object, bool recursive);
 #endif
 	};
 

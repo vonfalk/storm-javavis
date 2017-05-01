@@ -116,5 +116,9 @@ namespace storm {
 		RootObject *CODECALL cloneObject(RootObject *obj);
 		RootObject *CODECALL cloneObjectEnv(RootObject *obj, CloneEnv *env);
 
+		// Check consistency of an object. Only available when GC debugging is active. Not available
+		// in shared libraries.
+		void checkObject(Engine &e, const void *obj);
+
 	}
 }

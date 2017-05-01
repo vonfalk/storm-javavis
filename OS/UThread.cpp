@@ -515,6 +515,10 @@ namespace os {
 		return sz;
 	}
 
+#ifdef DEBUG
+	static nat stacks = 0;
+#endif
+
 	static void *allocStack(nat size) {
 		nat pageSz = pageSize();
 		size = roundUp(size, pageSz);
@@ -523,9 +527,15 @@ namespace os {
 		byte *mem = (byte *)VirtualAlloc(null, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 		if (mem == null) {
 			// TODO: What to do in this case?
-			PLN(L"Out of memory when spawning a thread.");
+#ifdef DEBUG
+			PLN(L"Out of memory when spawning a thread. Threads alive: " << stacks);
+#endif
 			throw ThreadError(L"Out of memory when spawning a thread.");
 		}
+
+#ifdef DEBUG
+		atomicIncrement(stacks);
+#endif
 
 		DWORD oldProt;
 		VirtualProtect(mem, 1, PAGE_READONLY | PAGE_GUARD, &oldProt);
@@ -538,6 +548,10 @@ namespace os {
 		byte *mem = (byte *)base;
 		mem -= pageSize();
 		VirtualFree(mem, 0, MEM_RELEASE);
+
+#ifdef DEBUG
+		atomicDecrement(stacks);
+#endif
 	}
 
 	static StackDesc *initialStack(void *base, nat size) {

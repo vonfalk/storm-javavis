@@ -175,5 +175,9 @@ namespace storm {
 			return result;
 		}
 
+		void checkObject(Engine &e, const void *obj) {
+			e.gc.checkMemory(obj, false);
+		}
+
 	}
 }
