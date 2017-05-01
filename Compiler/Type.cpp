@@ -427,7 +427,8 @@ namespace storm {
 
 	const Handle &Type::handle() {
 		// If we're completely done with the handle, return it immediatly.
-		if (tHandle && handleToS == toSFound)
+		// If it is 'toSMissing', there is nothing we can do but wait until we get notified by the parent.
+		if (tHandle && (handleToS == toSFound || handleToS == toSMissing))
 			return *tHandle;
 
 		// We need to create the handle. Switch threads.
@@ -443,6 +444,7 @@ namespace storm {
 		if (!tHandle)
 			buildHandle();
 		if (handleToS != toSFound)
+			// NOTE: This does not really help when 'handleToS == toSMissing'...
 			updateHandleToS(false, null);
 		return *tHandle;
 	}
