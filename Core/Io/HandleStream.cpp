@@ -39,8 +39,10 @@ namespace storm {
 			pos.QuadPart = 0;
 		}
 
-		if (ReadFile(h.v(), dest, DWORD(limit), NULL, &request)) {
+		DWORD read;
+		if (ReadFile(h.v(), dest, DWORD(limit), &read, &request)) {
 			// Completed synchronusly.
+			request.bytes = read;
 		} else if (GetLastError() == ERROR_IO_PENDING) {
 			// Completing async...
 			request.wake.down();
@@ -75,8 +77,10 @@ namespace storm {
 			pos.QuadPart = 0;
 		}
 
-		if (WriteFile(h.v(), src, DWORD(limit), NULL, &request)) {
+		DWORD written;
+		if (WriteFile(h.v(), src, DWORD(limit), &written, &request)) {
 			// Completed synchronously.
+			request.bytes = written;
 		} else if (GetLastError() == ERROR_IO_PENDING) {
 			// Completing async...
 			request.wake.down();
