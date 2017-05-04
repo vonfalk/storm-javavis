@@ -103,7 +103,7 @@ namespace sound {
 		}
 
 		events[0] = io.v();
-		Nat first = !io ? 1 : 0;
+		Nat first = events[0] ? 0 : 1;
 		Nat count = 2;
 		if (!working) {
 			AudioMgr *m = audioMgr(e);

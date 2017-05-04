@@ -223,8 +223,7 @@ namespace os {
 		// Failsafe for the currThreadData.
 		currentThreadData(null);
 
-		if (d.ioComplete)
-			d.ioComplete.close();
+		d.ioComplete.close();
 		threadTerminated();
 		Thread::cleanThread();
 	}
@@ -272,9 +271,6 @@ namespace os {
 	}
 
 	void ThreadData::checkIo() const {
-		if (!ioComplete)
-			return;
-
 		ioComplete.notifyAll(this);
 	}
 

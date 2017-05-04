@@ -3,6 +3,8 @@
 
 namespace os {
 
+	class Thread;
+
 	/**
 	 * IO request. These are posted to an IOHandle when the requests are completed.
 	 */
@@ -10,7 +12,9 @@ namespace os {
 
 	class IORequest : public OVERLAPPED {
 	public:
-		IORequest();
+		// Note the thread that the request is associated with.
+		IORequest(Thread &thread);
+		~IORequest();
 
 		// Sema used for notifying when the request is complete.
 		Sema wake;
@@ -20,6 +24,10 @@ namespace os {
 
 		// Called on completion.
 		void complete(nat bytes);
+
+	private:
+		// Owning thread.
+		Thread &thread;
 	};
 
 #else

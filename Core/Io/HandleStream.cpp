@@ -21,7 +21,7 @@ namespace storm {
 			attached.attach(h);
 		}
 
-		os::IORequest request;
+		os::IORequest request(attached);
 
 		LARGE_INTEGER pos;
 		pos.QuadPart = 0;
@@ -64,7 +64,7 @@ namespace storm {
 			attached.attach(h);
 		}
 
-		os::IORequest request;
+		os::IORequest request(attached);
 
 		LARGE_INTEGER pos;
 		pos.QuadPart = 0;

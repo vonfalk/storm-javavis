@@ -130,6 +130,8 @@ namespace os {
 		static void threadMain(ThreadStart &start);
 
 	private:
+		friend class IORequest;
+
 		// Condition variable for waking up the thread when there is more work to do
 		// or when it is time to exit.
 		Condition wakeCond;
