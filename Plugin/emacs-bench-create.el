@@ -17,6 +17,12 @@
   '(
     (insert-whole "insert" bench-create-whole-insert)
     (insert-partial "insert" bench-create-partial-insert)
+
+    ;; For the final evaluation:
+    (edit-incomplete "edit" bench-create-incomplete)
+    (edit-random "edit" bench-create-random)
+    (edit-scope "edit" bench-create-scope)
+    (edit-string "edit" bench-create-string)
     )
   "Known types of tests to create. Each entry has the form: type file-ext function
    where 'type' is the key used in lookups, 'file-ext' is the file extension to be
@@ -143,6 +149,22 @@
       (setq header (substring header 0 (+ (random (- (length header) chars)) chars))))
     (insert "// $$\n// " header "\n")))
 
+
+(defun bench-create-incomplete ()
+  "Create incomplete constructs, similarly to 'bench-create-partial-insert', but using the 'edit' mode instead."
+  )
+
+(defun bench-create-random ()
+  "Insert or remove random tokens or symbols in the source."
+  )
+
+(defun bench-create-scope ()
+  "Introduce scoping errors by adding { or } symbols."
+  )
+
+(defun bench-create-string ()
+  "Introduce non-closed string literals or comment blocks."
+  )
 
 ;; Create insert-whole tests:
 ;; (bench-create "~/Projects/storm/root/test/server-tests/ant/ref/"

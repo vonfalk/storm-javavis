@@ -169,6 +169,7 @@
   '(
     ("fill" . storm-run-fill)
     ("insert" . storm-run-insert)
+    ("edit" . storm-run-edit)
     )
   "Kinds of tests that are currently supported.")
 
@@ -254,3 +255,44 @@
   (prog1
       (buffer-substring-no-properties (line-beginning-position) (line-end-position))
     (goto-char (line-beginning-position 2))))
+
+
+(defun storm-run-edit (file)
+  "Run files with .edit.X."
+  (storm-use-buffer
+   file t
+   (let* ((ref  (buffer-substring (point-min) (point-max)))
+	  (cmd  (storm-edit-cmd))
+	  (from (1+ (second cmd)))
+	  (to   (1+ (third cmd)))
+	  (str  (fourth cmd)))
+
+     ;; 'execute' the command
+     (unless (eq (first cmd) 'edit)
+       (error "Invalid command, only 'edit is supported."))
+
+     (let ((inhibit-modification-hooks t))
+       ;; We call hooks ourselves to make sure we only notify once!
+       (goto-char from)
+       (unless (= to from)
+	 (delete-char (- to from)))
+       (unless (= 0 (length str))
+	 (insert str))
+
+       ;; Call hooks!
+       (call-changed-hooks from (point) (- to from)))
+
+     ;; TODO: Need better 'storm-compare-buffer'!
+     1)))
+
+
+(defun storm-edit-cmd ()
+  (goto-char (point-min))
+  (search-forward " " (line-end-position))
+  (first (read-from-string (buffer-substring-no-properties (point) (line-end-position)))))
+
+(defun call-changed-hooks (edit-begin edit-end old-length)
+  (dolist (hook after-change-functions)
+    (unless (eq hook t)
+      (funcall hook edit-begin edit-end old-length))))
+
