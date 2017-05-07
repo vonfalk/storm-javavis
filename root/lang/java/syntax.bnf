@@ -21,7 +21,7 @@ SInComment : "/+" - SInComment;
 
 // Identifiers.
 void SIdent();
-SIdent : "[A-Za-z_][A-Za-z0-9_]*";
+SIdent : "[A-Za-z_$][A-Za-z0-9_$]*";
 
 // Qualified identifier.
 void SQIdent();
@@ -130,22 +130,22 @@ void SBound();
 SBound : SRefType - (, "&", SRefType)*;
 
 // Modifiers.
-void SModifiers() #keyword;
+void SModifiers();
 SModifiers : (SModifier, )*;
 
 void SModifier();
 SModifier : SAnnotation;
-SModifier : "public";
-SModifier : "protected";
-SModifier : "private";
-SModifier : "static";
-SModifier : "abstract";
-SModifier : "final";
-SModifier : "native";
-SModifier : "synchronized";
-SModifier : "transient";
-SModifier : "volatile";
-SModifier : "strictfp";
+SModifier : "public" #keyword;
+SModifier : "protected" #keyword;
+SModifier : "private" #keyword;
+SModifier : "static" #keyword;
+SModifier : "abstract" #keyword;
+SModifier : "final" #keyword;
+SModifier : "native" #keyword;
+SModifier : "synchronized" #keyword;
+SModifier : "transient" #keyword;
+SModifier : "volatile" #keyword;
+SModifier : "strictfp" #keyword;
 
 // Annotations.
 void SAnnotation();
@@ -160,7 +160,7 @@ SAnnotationElement : SElementValue;
 SAnnotationElement : SElementValuePair - (, ",", SElementValuePair)*;
 
 void SElementValuePair();
-SElementValuePair : SIdent, "=", SElementValue;
+SElementValuePair : SIdent #varName, "=", SElementValue;
 
 void SElementValue();
 SElementValue : SAnnotation;
@@ -249,7 +249,7 @@ void SPrimary();
 SPrimary : "(", SExpr, ")";
 SPrimary : "[0-9]+[Ll]?" #constant;
 SPrimary : "0[Xx][0-9A-Fa-f]+[Ll]?" #constant;
-SPrimary : SFloat #constant - ("f" #constant)?;
+SPrimary : SFloat #constant - ("[fFdD]" #constant)?;
 SPrimary : "true" #constant;
 SPrimary : "false" #constant;
 SPrimary : "null" #constant;
@@ -339,15 +339,15 @@ SStmt : ";";
 SStmt : SBlock;
 SStmt : SIdent, ":", SStmt;
 SStmt : SExpr, ";";
-SStmt[10] : "assert" #keyword, SExpr, (":", SExpr,)? ";";
+SStmt[10] : "assert[ \t]" #keyword, SExpr, (":", SExpr,)? ";";
 SStmt[10] : "if" #keyword, "(", SExpr, ")" [, SStmt]? - (, SStmtElse)?;
 SStmt[10] : "while" #keyword, "(", SExpr, ")" [, SStmt]?;
-SStmt[10] : "do" #keyword [, SStmt, ]? "while" #keyword, "(", SExpr, ")", ";";
+SStmt[10] : "do[ \t]" #keyword [, SStmt, ]? "while" #keyword, "(", SExpr, ")", ";";
 SStmt[10] : "for" #keyword, "(", SForControl, ")" [, SStmt]?;
-SStmt[10] : "break" #keyword - (, SIdent)?;
-SStmt[10] : "continue" #keyword - (, SIdent)?;
-SStmt[10] : "return" #keyword, SExpr;
-SStmt[10] : "throw" #keyword, SExpr;
+SStmt[10] : "break[ \t]" #keyword - (, SIdent)?;
+SStmt[10] : "continue[ \t]" #keyword - (, SIdent)?;
+SStmt[10] : "return[ \t]" #keyword, SExpr;
+SStmt[10] : "throw[ \t]" #keyword, SExpr;
 SStmt[10] : "synchronized", "(", SExpr, ")", SBlock;
 SStmt[10] : "try" #keyword, SBlock, STryTail;
 SStmt[10] : "try" #keyword, "(", SResourceSpec, (";",)? ")", SBlock, STryTail;
@@ -419,7 +419,7 @@ SFormals : "(", (SFormalList)?, ")";
 void SFormalList();
 SFormalList : SVarModifier, SType, SIdent #varName, (",", SFormalList)?;
 SFormalList : SVarModifier, SType, SIdent #varName, "\[\]", (",", SFormalList)?;
-SFormalList : SVarModifier, "\.\.\.", SIdent #varName;
+SFormalList : SVarModifier, SType, "\.\.\.", SIdent #varName;
 
 void SVarModifier();
 SVarModifier : ;
