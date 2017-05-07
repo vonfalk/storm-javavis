@@ -10,11 +10,13 @@ namespace storm {
 	namespace syntax {
 
 		const Nat InfoNode::errorMask  = 0x80000000;
-		const Nat InfoNode::lengthMask = 0x7FFFFFFF;
+		const Nat InfoNode::delimMask  = 0x40000000;
+		const Nat InfoNode::lengthMask = 0x3FFFFFFF;
 
 		InfoNode::InfoNode() {
 			parentNode = null;
 			color = tNone;
+			data = 0;
 			invalidate();
 		}
 
@@ -36,6 +38,17 @@ namespace storm {
 				data |= errorMask;
 			else
 				data &= ~errorMask;
+		}
+
+		Bool InfoNode::delimiter() const {
+			return (data & delimMask) != 0;
+		}
+
+		void InfoNode::delimiter(Bool v) {
+			if (v)
+				data |= delimMask;
+			else
+				data &= ~delimMask;
 		}
 
 		InfoLeaf *InfoNode::leafAt(Nat pos) {
@@ -63,6 +76,8 @@ namespace storm {
 		}
 
 		void InfoNode::format(StrBuf *to) const {
+			if (delimiter())
+				*to << L" (delimiter)";
 			if (error())
 				*to << L" (contains errors)";
 			if (color != tNone)

@@ -80,10 +80,10 @@ namespace storm {
 			 */
 			enum {
 				// How many extra characters are we aiming at re-parsing?
-				reparseExtra = 200,
+				reparseExtra = 100,
 
 				// How many characters extra at each side of an edit are we aiming for?
-				reparseEdge = 20,
+				reparseEdge = 40,
 
 				// What is the maximum number of characters to re-parse at once?
 				reparseMax = 10000,

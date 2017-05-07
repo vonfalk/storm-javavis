@@ -554,6 +554,8 @@ namespace storm {
 					InfoNode *child = null;
 					if (at->completed != StatePtr()) {
 						child = infoTree(at->completed);
+						if (as<DelimToken>(token))
+							child->delimiter(true);
 					} else {
 						Str::Iter from = src->posIter(at->prev.step + srcPos.pos);
 						Str::Iter to = src->posIter(atPtr.step + srcPos.pos);

@@ -46,6 +46,10 @@ namespace storm {
 			Bool STORM_FN error() const;
 			void STORM_FN error(Bool v);
 
+			// Does this node represent a node captured using a delimiter in the grammar?
+			Bool STORM_FN delimiter() const;
+			void STORM_FN delimiter(Bool v);
+
 			// Find the first leaf node with a non-zero length at position 'pos' relative to this node.
 			virtual MAYBE(InfoLeaf *) STORM_FN leafAt(Nat pos);
 
@@ -87,6 +91,7 @@ namespace storm {
 
 			// Masks for 'data'.
 			static const Nat errorMask;
+			static const Nat delimMask;
 			static const Nat lengthMask;
 		};
 

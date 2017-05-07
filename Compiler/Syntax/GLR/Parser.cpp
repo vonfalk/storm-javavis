@@ -1054,6 +1054,8 @@ namespace storm {
 					} else {
 						created = infoTree(node, endPos);
 						errors = node.errors();
+						if (as<DelimToken>(token))
+							created->delimiter(true);
 					}
 				} else {
 					Str *str = emptyStr;

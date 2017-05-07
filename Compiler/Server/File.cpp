@@ -438,7 +438,7 @@ namespace storm {
 				}
 
 				// Re-parse more if we find error nodes somewhere.
-				if (now.node->error()) {
+				if (now.node->error() || now.node->delimiter()) {
 					found = false;
 					target = now.range;
 					targetLen = target.count() + reparseExtra;
