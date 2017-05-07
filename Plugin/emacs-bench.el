@@ -130,6 +130,31 @@
   '((t :background "red"))
   "Face used to indicate erroneous syntax highlighting.")
 
+(defun storm-compare-buffer-part (file ref-str buf-start str-start length)
+  (let ((str-pos str-start)
+	(buf-pos buf-start)
+	(count 0)
+	(errors 0))
+    (while (< count length)
+      (let ((cur (get-text-property buf-pos 'font-lock-face))
+	    (ref (get-text-property str-pos 'font-lock-face ref-str)))
+	(unless (equal cur ref)
+	  (with-silent-modifications
+	    (put-text-property buf-pos (1+ buf-pos) 'font-lock-face 'storm-hilight-diff-face))
+	  (unless (is-whitespace (aref ref-str str-pos))
+	    (setq errors (1+ errors)))))
+      (setq str-pos (1+ str-pos))
+      (setq buf-pos (1+ buf-pos))
+      (setq count   (1+ count)))
+    errors))
+
+(defun is-whitespace (char)
+  (let ((ws " \n\r\t"))
+    (or (= (aref ws 0) char)
+	(= (aref ws 1) char)
+	(= (aref ws 2) char)
+	(= (aref ws 3) char))))
+
 (defun storm-compare-buffer (file ref-str &optional ignore-from ignore-to)
   (unless (numberp ignore-from)
     (setq ignore-from 0))
@@ -277,14 +302,19 @@
        (unless (= to from)
 	 (delete-char (- to from)))
        (unless (= 0 (length str))
-	 (insert str))
+	 (insert str)))
 
-       ;; Call hooks!
-       (call-changed-hooks from (point) (- to from)))
+     ;; Call hooks!
+     (call-changed-hooks from (point) (- to from))
+     (storm-update-colors)
+     (redisplay)
 
-     ;; TODO: Need better 'storm-compare-buffer'!
-     1)))
-
+     (let ((errors (+ (storm-compare-buffer-part file ref (point-min) 0 (1- from))
+		      (storm-compare-buffer-part file ref (+ from (length str)) (1- to) (- (length ref) to)))))
+       (when (> errors 0)
+	 (storm-output-string (format "%S errors in %s\n" errors file) 'storm-bench-fail))
+       (redisplay)
+       errors))))
 
 (defun storm-edit-cmd ()
   (goto-char (point-min))
@@ -296,3 +326,8 @@
     (unless (eq hook t)
       (funcall hook edit-begin edit-end old-length))))
 
+
+;; (storm-run-benchmarks "test/server-tests/apache/incomplete/")
+;; (storm-run-benchmarks "test/server-tests/apache/random/")
+;; (storm-run-benchmarks "test/server-tests/apache/scope/")
+;; (storm-run-benchmarks "test/server-tests/apache/string/")

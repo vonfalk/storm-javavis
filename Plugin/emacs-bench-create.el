@@ -149,22 +149,142 @@
       (setq header (substring header 0 (+ (random (- (length header) chars)) chars))))
     (insert "// $$\n// " header "\n")))
 
+(defun insert-edit-cmd (from to text)
+  (setq text (substring-no-properties text))
+  (let* ((print-escape-newlines t)
+	 (format-str "// (edit %5d %5d %S)\n")
+	 (header (format format-str from to text)))
+
+    ;; Adjust offsets for the inserted header.
+    (setq from (+ from -1 (length header)))
+    (setq to   (+ to   -1 (length header)))
+
+    ;; Generate the header once more and insert it!
+    (goto-char (point-min))
+    (insert (format format-str from to text))))
 
 (defun bench-create-incomplete ()
   "Create incomplete constructs, similarly to 'bench-create-partial-insert', but using the 'edit' mode instead."
-  )
+  (goto-char (point-min))
+  (search-forward-regexp "^package.*; *$" nil t)
+
+  (let* ((min-pos (1+ (point)))
+	 (regex "\\(^.*; *$\\)\\|\\(^ *\\(if\\|for\\).*{$\\)")
+	 (match-count (bench-count-matches regex min-pos))
+	 begin end text add-newline)
+    (bench-goto-match regex (random match-count) min-pos)
+
+    (setq end (point))
+    (beginning-of-line)
+    (skip-chars-forward " \t")
+    (setq begin (point))
+    (setq text (buffer-substring begin end))
+
+    (if (equal "{" (substring text -1))
+	(progn
+	  ;; Don't remove anything, insert a duplicate of this statement instead.
+	  (beginning-of-line)
+	  (setq begin (point))
+	  (setq text (buffer-substring begin end))
+	  (setq add-newline t)
+	  (setq end begin))
+      (progn
+	(delete-region begin end)))
+
+    ;; Randomly shrink the string:
+    (let ((chars 1))
+      (setq text (substring text 0 (+ (random (- (length text) chars)) chars))))
+    (when add-newline
+      (setq text (concat text "\n")))
+
+    ;; Insert the header
+    (insert-edit-cmd begin begin text)
+  ))
 
 (defun bench-create-random ()
   "Insert or remove random tokens or symbols in the source."
-  )
+  (goto-char (point-min))
+  (search-forward-regexp "^package.*; *$" nil t)
+
+  (let ((min-pos (1+ (point)))
+	found begin end text)
+
+    (while (not found)
+      ;; Pick a random location
+      (goto-char (+ min-pos (random (- (point-max) min-pos))))
+      (skip-chars-forward " \n\r\t")
+
+      (unless (or (inside-comment-p)
+		  (inside-string-p)
+		  (string-prefix-p "/*" (buffer-substring (point) (+ 2 (point)))))
+	;; Remove the token nearby...
+	(setq found (extract-word))))
+
+    (setq begin (first found))
+    (setq end (second found))
+    ;; (setq text (buffer-substring begin end))
+    (insert-edit-cmd begin end "")
+    ))
+
+(defun extract-word ()
+  (let ((start (point))
+	(curr (char-syntax (string-to-char (buffer-substring (point) (1+ (point))))))
+	beg end)
+
+    (setq beg start)
+    (while (and (> beg (point-min))
+		(= curr (char-syntax (string-to-char (buffer-substring (1- beg) beg)))))
+      (setq beg (1- beg)))
+
+    (setq end start)
+    (while (and (< end (point-max))
+		(= curr (char-syntax (string-to-char (buffer-substring end (1+ end))))))
+      (setq end (1+ end)))
+
+    (message "%S %S" curr (buffer-substring-no-properties beg end))
+    (list beg end)))
+
+(defun inside-string-p ()
+  "Determines if the cursor is inside a string."
+  (nth 3 (syntax-ppss)))
+
+(defun inside-comment-p ()
+  "Determines if the cursor is inside a comment."
+  (nth 4 (syntax-ppss)))
 
 (defun bench-create-scope ()
   "Introduce scoping errors by adding { or } symbols."
+  (goto-char (point-min))
+  (search-forward-regexp "^package.*; *$" nil t)
+
+  (let* ((min-pos (1+ (point)))
+	 (regex "[{};] *$")
+	 (match-count (bench-count-matches regex min-pos)))
+    (bench-goto-match regex (random match-count) min-pos))
+
+  (end-of-line)
+  (insert-edit-cmd (point) (point) (if (= 0 (random 2)) "{" "}"))
   )
 
 (defun bench-create-string ()
   "Introduce non-closed string literals or comment blocks."
-  )
+  (interactive)
+
+  (goto-char (point-min))
+  (search-forward-regexp "^package.*; *$" nil t)
+
+  (let ((min-pos (1+ (point)))
+	found)
+    (while (not found)
+      ;; Pick a random location
+      (goto-char (+ min-pos (random (- (point-max) min-pos))))
+      (skip-chars-forward " \n\r\t")
+
+      (unless (inside-comment-p)
+	;; Insert a string or a comment here...
+	(insert-edit-cmd (point) (point) (if (= 0 (random 2)) " \"str " " /* "))
+	(setq found t))
+      )))
 
 ;; Create insert-whole tests:
 ;; (bench-create "~/Projects/storm/root/test/server-tests/ant/ref/"
@@ -183,3 +303,16 @@
 
 ;; (storm-run-benchmarks "test/server-tests/ant/partial/")
 
+
+;; Create tests for the final benchmark...
+(when nil
+  (dolist (elem '((edit-incomplete "incomplete/" 200)
+		  (edit-random "random/" 200)
+		  (edit-scope "scope/" 100)
+		  (edit-string "string/" 100)))
+		  ))
+    (bench-create "~/Projects/exjobb/data/all/"
+		  (concat "~/Projects/exjobb/data/" (second elem))
+		  (first elem)
+		  (third elem)))
+  )
