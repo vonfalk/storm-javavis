@@ -114,9 +114,9 @@ STypeArgs : "<", STypeArg - (, ",", STypeArg)*, ">";
 
 void STypeArg();
 STypeArg : SRefType;
-STypeArg : "?";
-STypeArg : "?", "extends", SRefType;
-STypeArg : "?", "super", SRefType;
+STypeArg : "\?";
+STypeArg : "\?", "extends", SRefType;
+STypeArg : "\?", "super", SRefType;
 
 // Type parameters.
 void STypeParams();
@@ -272,7 +272,7 @@ SCreator : SCreatedName, SCreatorRest;
 SCreator : SCreatedName, SArrayRest;
 
 void SCreatedName();
-SCreatedName : SIdent #typeName, STypeActuals - (, "\.", SIdent #typeName, STypeActuals)*;
+SCreatedName : SIdent #typeName, STypeArgs - (, "\.", SIdent #typeName, STypeActuals)*;
 
 void SCreatorRest();
 SCreatorRest : SArgs - (, SClassBody)?;
@@ -344,8 +344,8 @@ SStmt[10] : "if" #keyword, "(", SExpr, ")" [, SStmt]? - (, SStmtElse)?;
 SStmt[10] : "while" #keyword, "(", SExpr, ")" [, SStmt]?;
 SStmt[10] : "do[ \t]" #keyword [, SStmt, ]? "while" #keyword, "(", SExpr, ")", ";";
 SStmt[10] : "for" #keyword, "(", SForControl, ")" [, SStmt]?;
-SStmt[10] : "break[ \t]" #keyword - (, SIdent)?;
-SStmt[10] : "continue[ \t]" #keyword - (, SIdent)?;
+SStmt[10] : "break" #keyword - (, SIdent)?;
+SStmt[10] : "continue" #keyword - (, SIdent)?;
 SStmt[10] : "return[ \t]" #keyword, SExpr;
 SStmt[10] : "throw[ \t]" #keyword, SExpr;
 SStmt[10] : "synchronized", "(", SExpr, ")", SBlock;
@@ -354,8 +354,8 @@ SStmt[10] : "try" #keyword, "(", SResourceSpec, (";",)? ")", SBlock, STryTail;
 SStmt[10] : "switch" #keyword, "(", SExpr, ")", "{", (SSwitchStmt,)* "}";
 
 void SSwitchStmt();
-SSwitchStmt : SStmt, ";";
-SSwitchStmt : "case" #keyword, SExpr, ":";
+SSwitchStmt : SStmt;
+SSwitchStmt : "case[ \t]" #keyword, SExpr, ":";
 SSwitchStmt : "default" #keyword, ":";
 
 void SStmtElse();

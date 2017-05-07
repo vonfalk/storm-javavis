@@ -7,12 +7,19 @@
 
 ;; Test root directory.
 (defvar benchmark-root-dir "test/server-tests/simple/" "Benchmarks root directory, relative to 'storm-mode-root'.")
+(defvar bench-batch-run nil "Run in batch mode, producing either 'error or 'time data.")
+(defvar bench-incr-buffer "bench-incr.result" "Name of the buffer holding incremental results.")
+(defvar bench-raw-buffer "bench-raw.result" "Name of the buffer holding raw results.")
 
 (defmacro storm-test-env (&rest body)
   `(let ((old-storm-mode global-storm-mode)
 	 (old-chunk-size (storm-query '(chunk-size))))
      (setq global-storm-mode nil)
      (storm-send '(chunk-size 0))
+
+     (when bench-batch-run
+       (get-buffer-create bench-raw-buffer)
+       (get-buffer-create bench-incr-buffer))
 
      (prog1
 	 ,@body
@@ -130,7 +137,7 @@
   '((t :background "red"))
   "Face used to indicate erroneous syntax highlighting.")
 
-(defun storm-compare-buffer-part (file ref-str buf-start str-start length)
+(defun storm-compare-buffer-part (ref-str buf-start str-start length)
   (let ((str-pos str-start)
 	(buf-pos buf-start)
 	(count 0)
@@ -290,7 +297,8 @@
 	  (cmd  (storm-edit-cmd))
 	  (from (1+ (second cmd)))
 	  (to   (1+ (third cmd)))
-	  (str  (fourth cmd)))
+	  (str  (fourth cmd))
+	  (errors 0))
 
      ;; 'execute' the command
      (unless (eq (first cmd) 'edit)
@@ -309,12 +317,33 @@
      (storm-update-colors)
      (redisplay)
 
-     (let ((errors (+ (storm-compare-buffer-part file ref (point-min) 0 (1- from))
-		      (storm-compare-buffer-part file ref (+ from (length str)) (1- to) (- (length ref) to)))))
-       (when (> errors 0)
-	 (storm-output-string (format "%S errors in %s\n" errors file) 'storm-bench-fail))
+
+     (when (eq bench-batch-run 'error)
+       (setq errors (storm-compare-edit ref from to str))
+       (with-current-buffer bench-incr-buffer
+	 (insert (format "%5d\t%s\n" errors file)))
+
+       (storm-debug-re-open)
+       (storm-update-colors)
        (redisplay)
-       errors))))
+       (setq errors (storm-compare-edit ref from to str))
+       (with-current-buffer bench-raw-buffer
+	 (insert (format "%5d\t%s\n" errors file)))
+       (redisplay)
+       )
+
+     (if (eq bench-batch-run 'nil)
+	 (let ((errors (storm-compare-edit ref from to str)))
+	   (redisplay)
+	   (when (> errors 0)
+	     (storm-output-string (format "%S errors in %s\n" errors file) 'storm-bench-fail))
+	   errors)
+       ;; Always close buffers in batch mode.
+       0))))
+
+(defun storm-compare-edit (ref from to str)
+  (+ (storm-compare-buffer-part ref (point-min) 0 (1- from))
+     (storm-compare-buffer-part ref (+ from (length str)) (1- to) (- (length ref) to))))
 
 (defun storm-edit-cmd ()
   (goto-char (point-min))
@@ -327,7 +356,9 @@
       (funcall hook edit-begin edit-end old-length))))
 
 
-;; (storm-run-benchmarks "test/server-tests/apache/incomplete/")
-;; (storm-run-benchmarks "test/server-tests/apache/random/")
-;; (storm-run-benchmarks "test/server-tests/apache/scope/")
-;; (storm-run-benchmarks "test/server-tests/apache/string/")
+;; (let ((bench-batch-run 'error))
+;;   (storm-run-benchmarks "test/server-tests/apache/incomplete/")
+;;   (storm-run-benchmarks "test/server-tests/apache/random/")
+;;   (storm-run-benchmarks "test/server-tests/apache/scope/")
+;;   (storm-run-benchmarks "test/server-tests/apache/string/")
+;;   )
