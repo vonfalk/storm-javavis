@@ -136,10 +136,10 @@
   (setq mode-name "Storm")
   (setq tab-width 4)
   (storm-register-buffer (current-buffer))
-  (add-hook 'kill-buffer-hook 'storm-buffer-killed)
-  (add-hook 'change-major-mode-hook 'storm-buffer-killed)
-  (add-hook 'after-change-functions 'storm-buffer-changed)
-  (add-hook 'post-command-hook 'storm-buffer-action)
+  (add-hook 'kill-buffer-hook #'storm-buffer-killed)
+  (add-hook 'change-major-mode-hook #'storm-buffer-killed)
+  (add-hook 'after-change-functions #'storm-buffer-changed)
+  (add-hook 'post-command-hook #'storm-buffer-action)
 
   (run-mode-hooks 'storm-mode-hook))
 

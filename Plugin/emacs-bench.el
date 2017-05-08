@@ -8,23 +8,27 @@
 ;; Test root directory.
 (defvar benchmark-root-dir "test/server-tests/simple/" "Benchmarks root directory, relative to 'storm-mode-root'.")
 (defvar bench-batch-run nil "Run in batch mode, producing either 'error or 'time data.")
+(defvar bench-use-emacs nil "Use Emacs built-in Java mode.")
 (defvar bench-incr-buffer "bench-incr.result" "Name of the buffer holding incremental results.")
 (defvar bench-raw-buffer "bench-raw.result" "Name of the buffer holding raw results.")
 
 (defmacro storm-test-env (&rest body)
-  `(let ((old-storm-mode global-storm-mode)
-	 (old-chunk-size (storm-query '(chunk-size))))
-     (setq global-storm-mode nil)
-     (storm-send '(chunk-size 0))
-
+  `(progn
      (when bench-batch-run
        (get-buffer-create bench-raw-buffer)
        (get-buffer-create bench-incr-buffer))
 
-     (prog1
+     (if bench-use-emacs
 	 ,@body
-       (setq global-storm-mode old-storm-mode)
-       (storm-send (cons 'chunk-size old-chunk-size)))))
+       (let ((old-storm-mode global-storm-mode)
+	     (old-chunk-size (storm-query '(chunk-size))))
+	 (setq global-storm-mode nil)
+	 (storm-send '(chunk-size 0))
+
+	 (prog1
+	     ,@body
+	   (setq global-storm-mode old-storm-mode)
+	   (storm-send (cons 'chunk-size old-chunk-size)))))))
 
 ;; Run benchmarks.
 (defun storm-run-benchmarks (&optional dir)
@@ -97,6 +101,22 @@
   (kill-all-local-variables)
   (text-mode))
 
+(defun set-current-mode ()
+  "Enable the mode to be used for the current buffer."
+  (if bench-use-emacs
+      (progn
+	(java-mode)
+	(whitespace-mode -1))
+    (storm-mode)))
+
+(defun reset-current-mode ()
+  "Re-open the current file."
+  (if bench-use-emacs
+      (progn
+	(kill-current-mode)
+	(set-current-mode))
+    (storm-debug-re-open)))
+
 (defun storm-open-buffer (file use-storm-mode)
   "Open a buffer, wait until it is fully colored and ready for use."
   (save-excursion
@@ -112,7 +132,7 @@
 	      (when (buffer-modified-p)
 		(kill-current-mode)
 		(revert-buffer t t))
-	      (storm-mode)
+	      (set-current-mode)
 	      (storm-update-colors))
 	  (progn
 	    (kill-current-mode)
@@ -122,8 +142,13 @@
 
 (defun storm-update-colors ()
   "Update colors in the current buffer, wait for the result from Storm."
-  (storm-send (list 'color storm-buffer-id))
-  (storm-wait-for 'color 5.0))
+  (if bench-use-emacs
+      (progn
+	(funcall font-lock-fontify-buffer-function)
+	(funcall font-lock-ensure-function (point-min) (point-max)))
+    (progn
+      (storm-send (list 'color storm-buffer-id))
+      (storm-wait-for 'color 5.0))))
 
 (defface storm-bench-msg
   '((t :foreground "dark green"))
@@ -141,13 +166,14 @@
   (let ((str-pos str-start)
 	(buf-pos buf-start)
 	(count 0)
-	(errors 0))
+	(errors 0)
+	(prop (if bench-use-emacs 'face 'font-lock-face)))
     (while (< count length)
-      (let ((cur (get-text-property buf-pos 'font-lock-face))
-	    (ref (get-text-property str-pos 'font-lock-face ref-str)))
+      (let ((cur (get-text-property buf-pos prop))
+	    (ref (get-text-property str-pos prop ref-str)))
 	(unless (equal cur ref)
 	  (with-silent-modifications
-	    (put-text-property buf-pos (1+ buf-pos) 'font-lock-face 'storm-hilight-diff-face))
+	    (put-text-property buf-pos (1+ buf-pos) prop 'storm-hilight-diff-face))
 	  (unless (is-whitespace (aref ref-str str-pos))
 	    (setq errors (1+ errors)))))
       (setq str-pos (1+ str-pos))
@@ -170,15 +196,16 @@
 
   (let ((str-pos 0)
 	(buf-pos (point-min))
-	(errors 0))
+	(errors 0)
+	(prop (if bench-use-emacs 'face 'font-lock-face)))
     (while (< buf-pos (point-max))
       (when (or (<  buf-pos ignore-from)
 		(>= buf-pos ignore-to))
-	(let ((cur (get-text-property str-pos 'font-lock-face ref-str))
-	      (ref (get-text-property buf-pos 'font-lock-face)))
+	(let ((cur (get-text-property str-pos prop ref-str))
+	      (ref (get-text-property buf-pos prop)))
 	  (unless (equal cur ref)
 	    (with-silent-modifications
-	      (put-text-property buf-pos (1+ buf-pos) 'font-lock-face 'storm-hilight-diff-face))
+	      (put-text-property buf-pos (1+ buf-pos) prop 'storm-hilight-diff-face))
 	    (setq errors (1+ errors))))
 	(setq str-pos (1+ str-pos)))
       (setq buf-pos (1+ buf-pos)))
@@ -253,7 +280,7 @@
 	 (throw 'bench-fail msg)))
 
      (delete-char (- (length insert-str)))
-     (storm-mode)
+     (set-current-mode)
      (storm-update-colors)
      (redisplay)
 
@@ -323,7 +350,7 @@
        (with-current-buffer bench-incr-buffer
 	 (insert (format "%5d\t%s\n" errors file)))
 
-       (storm-debug-re-open)
+       (reset-current-mode)
        (storm-update-colors)
        (redisplay)
        (setq errors (storm-compare-edit ref from to str))
@@ -356,7 +383,10 @@
       (funcall hook edit-begin edit-end old-length))))
 
 
-;; (let ((bench-batch-run 'error))
+;; (let (
+;;       (bench-batch-run 'error)
+;;       (bench-use-emacs 't)
+;;       )
 ;;   (storm-run-benchmarks "test/server-tests/apache/incomplete/")
 ;;   (storm-run-benchmarks "test/server-tests/apache/random/")
 ;;   (storm-run-benchmarks "test/server-tests/apache/scope/")
