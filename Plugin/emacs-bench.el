@@ -10,20 +10,27 @@
 (defvar bench-batch-run nil "Run in batch mode, producing either 'error or 'time data.")
 (defvar bench-use-emacs nil "Use Emacs built-in Java mode.")
 (defvar bench-incr-buffer "bench-incr.result" "Name of the buffer holding incremental results.")
+(defvar bench-open-buffer "bench-open.result" "Name of the buffer holding edit results.")
+(defvar bench-indent-buffer "bench-tab.result" "Name of the buffer holding indentation results.")
 (defvar bench-raw-buffer "bench-raw.result" "Name of the buffer holding raw results.")
 
 (defmacro storm-test-env (&rest body)
   `(progn
      (when bench-batch-run
        (get-buffer-create bench-raw-buffer)
-       (get-buffer-create bench-incr-buffer))
+       (get-buffer-create bench-incr-buffer)
+       (when (eq bench-batch-run 'time)
+	 (get-buffer-create bench-open-buffer)
+	 (get-buffer-create bench-indent-buffer)))
 
      (if bench-use-emacs
 	 ,@body
        (let ((old-storm-mode global-storm-mode)
 	     (old-chunk-size (storm-query '(chunk-size))))
 	 (setq global-storm-mode nil)
-	 (storm-send '(chunk-size 0))
+	 (if (eq bench-batch-run 'time)
+	     (storm-send (list 'chunk-size 8000 50))
+	   (storm-send '(chunk-size 0)))
 
 	 (prog1
 	     ,@body
@@ -72,7 +79,7 @@
 (defun storm-run-file (path file counter)
   "Run the specified file (if supported)."
   (let ((dispatch-to nil))
-    (when (storm-supports (file-name-extension file))
+    (when (or bench-use-emacs (storm-supports (file-name-extension file)))
       (setq dispatch-to (storm-find-type file)))
 
     (if dispatch-to
@@ -105,6 +112,7 @@
   "Enable the mode to be used for the current buffer."
   (if bench-use-emacs
       (progn
+	(remove-text-properties (point-min) (point-max) '(face fontified))
 	(java-mode)
 	(whitespace-mode -1))
     (storm-mode)))
@@ -149,6 +157,13 @@
     (progn
       (storm-send (list 'color storm-buffer-id))
       (storm-wait-for 'color 5.0))))
+
+(defun storm-wait-all-colors ()
+  "Wait until all color messages are received. Assumes the timeout for automatic sending messages is fairly short."
+  (unless bench-use-emacs
+    (while (storm-wait-for 'color 0.5)
+      (storm-output-string "Waiting for color message...\n")
+      (redisplay))))
 
 (defface storm-bench-msg
   '((t :foreground "dark green"))
@@ -231,6 +246,15 @@
     ("edit" . storm-run-edit)
     )
   "Kinds of tests that are currently supported.")
+
+(defmacro bench-log-time (file buffer &rest body)
+  `(let ((start-time (current-time)))
+     (prog1
+	 (progn ,@body)
+       (when (eq bench-batch-run 'time)
+	 (with-current-buffer ,buffer
+	   (goto-char (point-max))
+	   (insert (format "%7.3f\t%s\n" (* 1000 (float-time (time-since start-time))) ,file)))))))
 
 (defmacro storm-use-buffer (file auto-storm-mode &rest body)
   "Opens 'file' and make it visible, then evaluates all forms in 'body'.
@@ -319,7 +343,14 @@
 (defun storm-run-edit (file)
   "Run files with .edit.X."
   (storm-use-buffer
-   file t
+   file nil
+
+   (bench-log-time file bench-open-buffer
+		   (set-current-mode)
+		   (storm-update-colors))
+   (storm-wait-all-colors)
+   (redisplay)
+
    (let* ((ref  (buffer-substring (point-min) (point-max)))
 	  (cmd  (storm-edit-cmd))
 	  (from (1+ (second cmd)))
@@ -340,9 +371,22 @@
 	 (insert str)))
 
      ;; Call hooks!
-     (call-changed-hooks from (point) (- to from))
-     (storm-update-colors)
+     (bench-log-time file bench-incr-buffer
+		     (call-changed-hooks from (point) (- to from))
+		     (storm-update-colors))
+     (storm-wait-all-colors)
      (redisplay)
+
+     ;; Check times.
+     (when (eq bench-batch-run 'time)
+       (bench-log-time file bench-indent-buffer
+		       (funcall indent-line-function))
+
+       (bench-log-time file bench-raw-buffer
+		       (reset-current-mode)
+		       (storm-update-colors))
+       (storm-wait-all-colors)
+       (redisplay))
 
 
      (when (eq bench-batch-run 'error)
@@ -384,8 +428,8 @@
 
 
 ;; (let (
-;;       (bench-batch-run 'error)
-;;       (bench-use-emacs 't)
+;;       (bench-batch-run 'time)
+;;       (bench-use-emacs 'nil)
 ;;       )
 ;;   (storm-run-benchmarks "test/server-tests/apache/incomplete/")
 ;;   (storm-run-benchmarks "test/server-tests/apache/random/")

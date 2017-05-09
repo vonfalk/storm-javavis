@@ -227,7 +227,10 @@ namespace storm {
 				conn->send(r);
 			} else {
 				chunkChars = next(expr)->asNum()->v;
-				if (chunkChars == 0)
+
+				if (expr)
+					work->idleTime = next(expr)->asNum()->v;
+				else if (chunkChars == 0)
 					work->idleTime = 0;
 				else
 					work->idleTime = WorkQueue::defaultIdleTime;
