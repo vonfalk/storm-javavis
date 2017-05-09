@@ -557,7 +557,7 @@
       (accept-process-output storm-process timeout)))
 
   (prog1
-      (eq type nil)
+      (eq storm-process-wait nil)
     (setq storm-process-wait nil)))
 
 (defun storm-running-p ()
