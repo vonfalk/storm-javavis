@@ -345,6 +345,9 @@
   (storm-use-buffer
    file nil
 
+   ;; Sometimes stray messages interfere...
+   (storm-wait-all-colors)
+
    (bench-log-time file bench-open-buffer
 		   (set-current-mode)
 		   (storm-update-colors))
@@ -381,6 +384,7 @@
      (when (eq bench-batch-run 'time)
        (bench-log-time file bench-indent-buffer
 		       (funcall indent-line-function))
+       (storm-wait-all-colors)
 
        (bench-log-time file bench-raw-buffer
 		       (reset-current-mode)

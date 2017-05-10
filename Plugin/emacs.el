@@ -12,7 +12,7 @@
 
 ;; Decrease the delay on w32 as the default introduces a noticeable delay for tab completion otherwise.
 ;; Note: Use emacs 25 or later, otherwise sending messages is very slow on windows.
-(setq w32-pipe-read-delay 10)
+(setq w32-pipe-read-delay 0)
 (setq w32-pipe-buffer-size (* 128 1024))
 
 ;; Configuration.
