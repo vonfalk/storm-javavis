@@ -199,65 +199,16 @@ included inside the parenthesis. This is very useful when matching complex ident
 parts of the input for parsing later on, possibly with a different syntax. The `->` and `@` syntax
 is also supported with captures.
 
+Syntax Highlighting and Indentation
+====================================
+
+The syntax language allows specifying annotations that are used by the language server to provide
+syntax highlighting and automatic indentation of the code to users of a language. These are
+discussed in more detail in [Syntax Highlighting](md://BNF_Syntax/Syntax_Highlighting) and
+[Indentation](md://BNF_Syntax/Indentation).
 
 Examples
 =========
 
-The following syntax can be used to evaluate simple numeric expressions:
-
-```
-// Use delimiter.
-delimiter = Whitespace;
-
-void Whitespace();
-Whitespace : "[ \n\r\t]*";
-
-// Atoms. This is a second level of expressions, to ensure that our infix
-// operators are parsed correctly. It is possible to accomplish this using
-// priorities on options as well, but this is easier to understand.
-Int Atom();
-Atom => toInt(a) : "[0-9]+" a;
-Atom => -(a)     : Atom a;
-Atom => v        : "(", Expression v, ")";
-
-// Rule for correctly prioritizing products and quotas.
-Int Prod();
-Prod => *(a, b)  : Prod a, "\*", Atom b;
-Prod => /(a, b)  : Prod a, "/",  Atom b;
-Prod => v        : Atom v;
-
-// The root rule for expressions:
-Int Expr();
-Expr => +(a, b)  : Expr a, "\+", Prod b;
-Expr => -(a, b)  : Expr a, "\-", Prod b;
-Expr => v        : Prod v;
-```
-
-
-To use our syntax, we can do this:
-
-```
-use core:debug;    // for print() - will be improved later.
-use core:io;       // for Url
-use core:lang;     // for Parser
-
-void eval(Str v) {
-    // Create a parser.
-    SyntaxSet syntax = syntaxSet();
-    Parser<Expr> p;
-
-    // Parse, starting from the Expression rule.
-    p.parse(v, Url());
-
-    // Report any errors.
-    if (p.hasError)
-        p.throwError;
-
-    // It succeeded, construct the tree and transform the result.
-    Expr tree = p.tree();
-    Int result = tree.transform();
-
-    // Print the result.
-    print(v # " = " # result);
-}
-```
+The example *Eval* on the [Examples](md://Introduction/Examples) page shows how to use the syntax
+language together with Basic Storm to create a simple expression evaluator.
