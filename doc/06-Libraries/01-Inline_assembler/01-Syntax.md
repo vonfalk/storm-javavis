@@ -23,7 +23,7 @@ referred to by their names.
 Literals
 ---------
 
-Literals are numeric constants with a prefix telling their type. Siz prefixes are supported: `b`
+Literals are numeric constants with a prefix telling their type. Size prefixes are supported: `b`
 for `Byte`, `i` for `Int`, `n` for `Nat`, `l` for `Long` , `w` for `Word` or `p` for
 pointer-size.
 

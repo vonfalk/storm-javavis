@@ -35,7 +35,7 @@ Currently, Storm only works on Windows, 32-bit. It will be ported to other platf
 but nothing is planned yet, as the main focus is to complete the language first. The download
 contains an executable along with code required for Basic Storm to work properly. Furthermore
 libraries for sound playback, image loading and basic GUI creation is included. The source code for
-the project is available upon request to [storm@fprg.se](mailto:storm@fprg.se).
+the project is available upon request to [info@storm-lang.org](info@storm-lang.org).
 
 [Download Storm](storm.zip) (last modified ?FileDate:storm.zip?)
 
@@ -48,4 +48,4 @@ with Wine version 1.7.40 on Arch Linux).
 Contact
 --------
 
-If you have any questions or requests regarding Storm, please contact me at [storm@fprg.se](storm@fprg.se).
+If you have any questions or requests regarding Storm, please contact me at [info@storm-lang.org](info@storm-lang.org).
