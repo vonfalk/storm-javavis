@@ -23,9 +23,14 @@ for j in `find root/ -name "Release*.dll"`
 do
     name=`echo $j | sed 's/Release//g'`
     cp $j $name
-    7z a Release/storm.zip $name > /dev/null
+    7z a release/storm.zip $name > /dev/null
     rm $name
 done
+
+# Add the emacs plugin.
+cp Plugin/emacs.el storm-mode.el
+7z a release/storm.zip storm-mode.el > /dev/null
+rm storm-mode.el
 
 echo "Checking so that the release works..."
 if [[ -e release/storm ]]
