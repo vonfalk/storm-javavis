@@ -29,7 +29,7 @@ Messages sent from a client to the server:
 
 Message	                      Description
 (quit)	 	 	      Asks the Storm process to quit.
-(supports type)		      See if the file type 'type' is supported.
+(supported type)	      See if the file type 'type' is supported.
 (open id path content <pos>)  Open a new file from 'path', hereby referred to as 'id' containing 'content'.
                               This is considered edit #0. If <pos> is included, it indicates the current position
 			      of the cursor, the same as indicated by 'point' below.
