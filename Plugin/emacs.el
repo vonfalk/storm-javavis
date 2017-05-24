@@ -18,6 +18,7 @@
 ;; Configuration.
 (defvar storm-mode-root nil "Root of the Storm source tree.")
 (defvar storm-mode-compiler nil "Path to the Storm compiler.")
+(defvar storm-mode-include nil "Additional paths to include. List of cons-cells: (path . pkg).")
 (defvar storm-mode-stdlib nil "Root of the Storm standard library (currently not used).")
 (defvar storm-mode-compile-compiler nil "Try to compile the compiler before starting it.")
 (defvar storm-mode-max-edits 20 "Maximum number of entries saved in the edit history.")
@@ -594,13 +595,30 @@
 	(message "Compilation failed.")
 	(setq storm-process-message-queue nil)))))
 
+(defun storm-include-params ()
+  (storm-include-params-i storm-mode-include))
+
+(defun storm-include-params-i (list)
+  (if (endp list)
+      'nil
+    (let* ((first (first list))
+	   (path  (car first))
+	   (pkg   (cdr first)))
+      (append
+       (list "-i" pkg (expand-file-name path))
+       (storm-include-params-i (rest list))))))
+
 (defun storm-start-compiler ()
   "Start the Storm compiler."
   (setq storm-process
-	(start-process
-	 "*storm-interactive*"
-	 nil
-	 storm-mode-compiler "-r" (expand-file-name storm-mode-root) "--server"))
+	(apply #'start-process
+	       "*storm-interactive*"
+	       nil
+	       (append
+		(list storm-mode-compiler
+		      "-r" (expand-file-name storm-mode-root))
+		(storm-include-params)
+		(list "--server"))))
   (set-process-coding-system storm-process 'binary 'binary)
   (set-process-filter storm-process 'storm-on-message)
   (set-process-sentinel storm-process 'storm-on-status)
