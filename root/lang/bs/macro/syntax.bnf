@@ -4,28 +4,28 @@ use lang.bs;
 delimiter = SDelimiter;
 
 // Use type{a:b:c} to build a type name quickly and easily.
-SExpr => createType(pos, block, type) : "name", "{", SType type, "}";
+SExpr => createType(pos, block, type) : "name" #keyword, "{", SType type, "}";
 
 // Use named{a:b:c} to refer to objects. Evaluates compile-time to the type of the actual object
 // in the compiler.
-SExpr => referNamed(pos, block, name) : "named", "{", SType name, "}";
+SExpr => referNamed(pos, block, name) : "named" #keyword, "{", SType name, "}";
 
 // Output a type.
-SExpr => exploreType(pos, block, type) : "explore", "{", SType type, "}";
+SExpr => exploreType(pos, block, type) : "explore" #keyword, "{", SType type, "}";
 
 // Reload a package (TODO: Nicer syntax!)
-SExpr => reloadName(block, type) : "reload", "{", SType type, "}";
+SExpr => reloadName(block, type) : "reload" #keyword, "{", SType type, "}";
 
 // Debug things by printing expressions at compile-time.
-SExpr => printExpr(t, stmt) : "dump", "{", (SStmt(block) stmt) t, "}";
-SExpr => printExpr(t, expr) : "dump", "{", (SExpr(block) expr) t, "}";
+SExpr => printExpr(t, stmt) : "dump" #keyword, "{", (SStmt(block) stmt) t, "}";
+SExpr => printExpr(t, expr) : "dump" #keyword, "{", (SExpr(block) expr) t, "}";
 
 // Debug asm by printing asm at compile-time.
-SExpr[100] => PrintAsm(pos) : "dumpAsm";
+SExpr[100] => PrintAsm(pos) : "dumpAsm" #keyword;
 
 
 // Generate things in classes and at top-level.
 SFileItem => Generate(env, name, param, body) :
-    SName name, ":", "generate", "(", SName param, ")", "{", SFunctionBody@ body, "}";
+    SName name, ":", "generate" #keyword, "(", SName param, ")", "{", SFunctionBody@ body, "}";
 SClassItem => Generate(owner, name, param, body) :
-    SName name, ":", "generate", "(", SName param, ")", "{", SFunctionBody@ body, "}";
+    SName name, ":", "generate" #keyword, "(", SName param, ")", "{", SFunctionBody@ body, "}";

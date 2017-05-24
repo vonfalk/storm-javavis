@@ -292,7 +292,10 @@
 (load "~/Projects/storm/Plugin/emacs-test.el")
 (setq storm-mode-root "~/Projects/storm/root")
 (setq storm-mode-compiler "~/Projects/storm/debug/Storm.exe")
-(setq storm-mode-include '(("~/Projects/storm/External/final" . "final")))
+(setq storm-mode-include '(
+			   ("~/Projects/storm/External/final" . "final")
+			   ("~/Projects/storm/External/thesis" . "thesis")
+			   ))
 (setq storm-mode-compile-compiler t)
 
 
