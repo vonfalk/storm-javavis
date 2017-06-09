@@ -18,7 +18,7 @@ signed or unsigned.
 mov dest, src
 --------------------
 
-Copy one value from `src` to `dest`, ie. `dest = src`.
+Copy one value from `src` to `dest`, i.e. `dest = src`.
 
 cmp a, b
 -------------

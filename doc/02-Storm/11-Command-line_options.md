@@ -2,9 +2,9 @@ Command line options
 =====================
 
 By default, launching Storm `StormMain` from the command line launches the REPL for Basic
-Storm. This behaviour can be changed by using different command-line flags.
+Storm. This behavior can be changed by using different command-line flags.
 
-To start a repl of another language, simply pass the name of that language on the command line, and
+To start a REPL of another language, simply pass the name of that language on the command line, and
 it will start. For example: `StormMain bs` starts the Basic Storm REPL.
 
 To pass a string to the REPL of a language, use the flag `-c`. For example: `StormMain bs -c 1+2` sends

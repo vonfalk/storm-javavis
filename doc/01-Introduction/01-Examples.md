@@ -57,7 +57,7 @@ Reload
 This file shows that it is possible to reload code in an already running program in Storm (to
 certain degrees, at least). From the REPL, call `demo:reloadMain`, and you shall see that you are
 returned to the prompt, but the numbers 1 to 10 are displayed in sequence in the background. While
-this is happending, change the `myPrint` function by commenting the first `print` statement and
+this is happening, change the `myPrint` function by commenting the first `print` statement and
 replace it with the second one and type `reload{demo}` into the REPL. Now, you shall see stars being
 displayed instead of numbers, even when you reload the code in the middle of the running code!
 
@@ -82,7 +82,7 @@ interleaved. However, the execution is still entirely deterministic. As both cal
 are being executed on the same OS thread, no thread switching is performed until one of the calls
 explicitly yields. `dbgSleep` is a version of `sleep` that blocks the entire OS thread while `sleep`
 does not block the thread if there is other work to do. `dbgYield` performs an explicit yield. This
-is not generally neccessary, as any primitive in Storm that could block the current thread ensures
+is not generally necessary, as any primitive in Storm that could block the current thread ensures
 to perform a yield before attempting to block the thread.
 
 See [Threads](md://Storm/Threads) for details on the semantics of the threading system in Storm.
@@ -98,8 +98,8 @@ scenes, so calling the `run` function appears as a regular function call. As suc
 deterministic and should match the output of `seq` in the previous example.
 
 The function `actorSpawn` is similar to `spawn` in the previous example. However, this example is
-not deterministic as the actors are asociated with different threads that are scheduled
+not deterministic as the actors are associated with different threads that are scheduled
 independently by the operating system. Try running this function multiple times and see if you can
-see defferent interleavings!
+see different interleavings!
 
 See [Threads](md://Storm/Threads) for details on the semantics of the threading system in Storm.

@@ -60,5 +60,5 @@ calls also have a special form.
 It is worth to notice that some of the limitations in X86 assembly does not exist in the
 bytecode. For example, it is not possible to have both a source and a destination operand in memory
 in raw X86 assembly, but the code generation solves this by emitting extra instructions as
-neccessary. The code generation always takes care of preserving any registers when doing these kind
+necessary. The code generation always takes care of preserving any registers when doing these kind
 of things, which means that it is entirely transparent.

@@ -15,7 +15,7 @@ supported:
 * `delimiter`: used for delimiters.
 * `string`: used for string literals.
 * `constant`: used for other constants and literals, for example numbers.
-* `keyword`: used for keywords in the lanugage.
+* `keyword`: used for keywords in the language.
 * `fnName`: used for names of functions.
 * `varName`: used for names variables.
 * `typeName`: used for names of types.

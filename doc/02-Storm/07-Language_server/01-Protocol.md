@@ -8,9 +8,9 @@ in the protocol starts with the null-byte. Everything else is considered UTF-8-e
 to be shown to the user.
 
 The protocol used in the language server is based on s-expressions in LISP. Therefore, it can
-represent four basic datatypes: integers, strings, symbols and cons-cells. A cons-cell is an object
+represent four basic data types: integers, strings, symbols and cons-cells. A cons-cell is an object
 containing two members, usually referred to as `car` and `cdr` or `first` and `rest`. These members
-may refer to any instance of the datatypes in the protocol, including other cons-cells. They can
+may refer to any instance of the data types in the protocol, including other cons-cells. They can
 therefore be used to form more complex data structures, such as singly linked lists. A singly linked
 list is implemented by creating one cons-cell for each element in the list. The list content is
 stored in the `car` or `first` member of each cons cell. `cdr` or `rest` is used to point to the
@@ -43,7 +43,7 @@ type of the stored element, followed by the actual data. The supported types are
 * `0x02`: a number. The following four bytes contain the actual value of a 32-bit number stored
   in big-endian format, just like the size.
 * `0x03`: a string. The first four bytes contain the length of the string (in bytes) as a 32-bit
-  number in big-endian format. Following the size is the bytes consituting the string. These are
+  number in big-endian format. Following the size is the bytes constituting the string. These are
   encoded in UTF-8.
 * `0x04`: a symbol. This encoding is used for a symbol that has not previously been sent. The first
   4 bytes is an integer containing an id to use for this symbol in future communication. Following
@@ -92,7 +92,7 @@ the user's cursor. The index of the last edit operation is passed along in `colo
 the client can determine which version of the file the language server is referring to. The edit
 number is initially set to zero, and is changed every time the client sends an `edit` message. The
 cursor location is maintained so that the language server is able to prioritize sending syntax
-coloring information for text visible to the user (ie. close to the cursor).
+coloring information for text visible to the user (i.e. close to the cursor).
 
 The following messages can be sent from the text editor to the language server:
 
@@ -105,7 +105,7 @@ The following messages can be sent from the text editor to the language server:
   optional. If present, it is the current position of the cursor within this file.
 * `(close id)`: Closes the file with identifier *id* (a number).
 * `(edit id edit from to text)`: An edit has been made to the file with identifier *id* (a
-  number). The text between *from* and *to* (numbers, zero based character indices) has been
+  number). The text between *from* and *to* (numbers, zero based character indexes) has been
   replaced with *text* (a string). *edit* is the edit number of this edit. Initially opening a file
   is considered to be edit number zero.
 * `(point id pos)`: The user has moved their cursor in the file with identifier *id* to *pos* (a
@@ -122,8 +122,8 @@ The following messages can be sent from the language server to the text editor:
   queried file extension *type* is supported. *result* is either `t` or `nil`, indicating
   *supported* and *not supported* respectively.
 * `(color id edit start colors...)`: Color a part of the file with identifier *id* as denoted by
-  colors. The character indices in this message refers the text as it was after edit number *edit*.
-  If additional edit operations have been performed since, indices may need to be adjusted by the
+  colors. The character indexes in this message refers the text as it was after edit number *edit*.
+  If additional edit operations have been performed since, indexes may need to be adjusted by the
   editor. In the Emacs plugin, this is done by remembering the last 20 or so edit
   operations. *start* (a number) is the zero based index of the first character to highlight. The
   remaining elements in the message (labeled *colors...*) describe the colors. The first element in

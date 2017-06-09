@@ -33,23 +33,13 @@ Functions have their marker like this:
 void STORM_FN foo();
 ```
 
-Note that no functions or variables are exposed unless marked. Functions exposed to the compiler needs
-to follow the calling convention in the compiler with respect to reference counting. The parameters
-are borrowed pointers, and the return value is the response of the caller. To aid the programmer in
-reference counting, there are two classes that automatize the reference counting: `Par` and `Auto`.
-`Par` is to be used for function parameters, it represents a borrowed reference. `Auto` on the other
-hand owns one reference, and keeps the object alive. Assigning between `Par` and `Auto` is automatic
-and does the right thing. Initializing from a pointer is more dangerous, `Par` borrows the reference
-while `Auto` assumes it is to take ownership of the previously free reference (ie it will call `release`
-but not `addRef`). Note that `Par` nor `Auto` is used as the return value. This is since C++ returns
-user defined types differently than for example pointer types. (may be fixed later).
-
-In many aspects, the storm runtime handles objects and values like C++, so they can interact quite
-well as long as all types involved are properly exposed to the compiler's type system.
+Note that no functions or variables are exposed unless marked. In many aspects, the storm runtime
+handles objects and values like C++, so they can interact quite well as long as all types involved
+are properly exposed to the compiler's type system.
 
 Calling conventions
 --------------------
-The calling convention used in the compiler varies by platform, but it is generally `cdecl`, ie.
+The calling convention used in the compiler varies by platform, but it is generally `cdecl`, i.e.
 the standard calling convention used in C. This is also used for member functions (the standard
 here is usually `thiscall`) to unify the calling conventions used. However, they still differ
 when dealing with return values that are not stored in registers. In the case of a non-member

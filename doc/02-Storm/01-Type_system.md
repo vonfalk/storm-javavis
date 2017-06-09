@@ -42,7 +42,7 @@ actors are only accessed through messages, which are thread safe anyway.
 
 Based on this information, we can see the type system from two different perspectives: when we are
 working from within a single thread, we can get value semantics by using values, and reference
-semantics using classes (or actors). When we observe the behaviour when types are sent through a
+semantics using classes (or actors). When we observe the behavior when types are sent through a
 message, things are slightly different. In this case, both values and classes seem like they have
 by-value semantics (any changes from the other thread are not visible) while actors still have
 by-reference semantics. This is also the reason why classes in Storm behave more like values than in

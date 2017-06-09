@@ -8,8 +8,8 @@ therefore be moved into external libraries in the future.
 
 The core compiler consists of a type system, to allow different languages to communicate, a parser,
 to allow a standard way of defining languages, an assembler, to generate machine code, and a
-standard library. Aside from this, the compiler includes two languages: [Basic Storm][1] and a [BNF
-Syntax][2] language. If the compiler would not include any languages at all, it would be difficult
+standard library. Aside from this, the compiler includes two languages: [Basic Storm][1] and a [BNF Syntax][2]
+language. If the compiler would not include any languages at all, it would be difficult
 to do anything useful with the compiler.
 
 This section will discuss core concepts of the Storm compiler itself. If you are interested in
@@ -47,7 +47,7 @@ then be processing messages from other threads. These messages are sent whenever
 calls a function that is declared to execute on another thread.  Each of the OS threads are in turn
 running cooperatively scheduled user mode threads.  Each incoming message will be launched on its
 own thread, and may selectively yield whenever it has to block for some reason (for example when
-waiting for a result from another thread).  This way makes recursive calls between threads (eg A ->
+waiting for a result from another thread).  This way makes recursive calls between threads (e.g. A ->
 B -> A) easier to handle, but it does not introduce a lot of possible race-conditions, at least not
 worse than regular function calls does.
 

@@ -109,7 +109,7 @@ followed by a name, which means that the parser should execute `me.<name>(<match
 function call in the rule has been executed.
 
 By default the result of each rule is transformed before it is bound to a variable or sent to a
-member function. If this is not desired (eg. you want to capture parts of the syntax tree for later
+member function. If this is not desired (e.g. you want to capture parts of the syntax tree for later
 transformation), append an `@` sign after the name or the regex like: `Foo@ -> bar`. This just
 passes the raw syntax tree on to the function `bar` instead of transforming it first. Note that
 because of this, it is useless to specify parameters along with `@`. When a `@` is appended to a

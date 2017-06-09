@@ -31,7 +31,7 @@ distinct kind of types, the syntax has been extended a bit.
 In these cases, contents is a list of member functions and member variables. Member functions are
 declared just like regular functions, except that they may not include a thread directive, instead
 they inherit the thread directive from the enclosing type. Member variables are declared just like
-local variables in a function (ie. `<type> <name>`). Initializing variables at the declaration site
+local variables in a function (i.e. `<type> <name>`). Initializing variables at the declaration site
 is not supported yet. There are also no visibility declarations yet, everything is public at the
 moment.
 

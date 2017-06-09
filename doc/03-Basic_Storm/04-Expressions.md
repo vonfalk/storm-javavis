@@ -11,7 +11,7 @@ Literals
 
 Basic Storm supports the following literals:
 * __Strings:__ enclosed in double quotes (`"abc"`). A string evaluates to a `core:Str` 
-  object. Since `Str` objects are immutable, it is undefined wether each evaluation will return
+  object. Since `Str` objects are immutable, it is undefined whether each evaluation will return
   the same or a different `Str` object. (at the moment, they differ).
 * __Integers:__ a simple number. Negative numbers are not supported (the unary `-` operator is 
   not implemented yet). Use `0 - 1` instead. Integer literals evaluate to a `core:Int` by default, 
@@ -48,7 +48,7 @@ does not allow for that.
 This is mainly done for flexibility and extensibility. With this scheme it is possible to add
 members to classes from other places by adding something that looks like a member function without
 having to modify the class itself. A good example of this from C++ is operator overloading and
-io-streams. The `<<` operator can be overloaded from anywhere to provide new functionality to the
+IO-streams. The `<<` operator can be overloaded from anywhere to provide new functionality to the
 output stream. Storm takes this idea and uses it for all functions.
 
 The indifference between `foo` and `foo()` is useful when implementing something that should look
@@ -89,7 +89,7 @@ overload is not found, the value is converted to a string using the `toS` functi
 
 To implement operators like `+=`, Basic Storm takes a slightly different approach compared to
 C++. This kind of operators (hereby called _combined operators_), are implemented by a syntax rule
-that is applied before the regular `Operator` rule. This rule is named `COperator`, and only has two
+that is applied before the regular `Operator` rule. This rule is named `SOperator`, and only has two
 options, one which passes the `Operator` rule through it, and one that matches an `Operator` with an
 `=` on the end. When the second option is matched, an instance of the `CombinedOperator` class is
 created for the combined operator. This will first attempt to call the member function, just like
@@ -185,7 +185,7 @@ Automatic type casting
 ----------------------
 
 Basic Storm has support for automatic type casting, in a way that is similar to C++. However, in
-Basic Storm, less conversions are implicit. Automatic conversions only upcast types (ie. to a more
+Basic Storm, less conversions are implicit. Automatic conversions only upcast types (i.e. to a more
 general type), or if a constructor is declared as `cast ctor(T from)`. For the built in types, very
 few constructors are declared like this, so Basic Storm does not generally do anything unexpected.
 
@@ -225,7 +225,7 @@ if (x = <weak cast>) {
 ```
 
 If the variable name is omitted, the variable that was mentioned inside the weak cast is made to the
-type of the cast in the if-branch. For example: to cast the variable 'o' to a more specific type,
+type of the cast in the if-branch. For example: to cast the variable `o` to a more specific type,
 one can write like this:
 
 ```

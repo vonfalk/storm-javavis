@@ -1,7 +1,7 @@
 Syntax
 =======
 
-The syntax used in the inline assembler is inspired by the intel assembly language. This means that
+The syntax used in the inline assembler is inspired by the Intel assembly language. This means that
 each statement has the form: `<op> <dest>, <src>;`. Some statements only take one operand.
 
 Each of the two operands can be one of:
@@ -32,10 +32,7 @@ Variables
 
 To refer to variables in Basic Storm, simply refer to them by name. A variable will return its
 representation in Basic Storm. A variable holding an `Int` can be accessed as an `Int` in assembler
-and modified. Variables of object-types are pointers, and should be handled with special care, as
-the reference counting needs to be taken care of. Use the `addRef` and `release` op-codes for that,
-but special care needs to be taken to follow the same conventions as the host language for the
-refcounting.
+and modified. Variables of object-types are pointers.
 
 Labels
 --------

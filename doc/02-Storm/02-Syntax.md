@@ -25,7 +25,7 @@ parts of the system, and to make the semantics of constructing a syntax tree cle
 
 Storm syntax also diverges slightly from BNF by allowing the use of repetitions. Each option may
 contain zero or one repetition. Currently, the repetitions present in regular expressions are
-supported, ie. zero or one, zero or more and one or more times.
+supported, i.e. zero or one, zero or more and one or more times.
 
 Semantics
 ----------

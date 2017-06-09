@@ -15,12 +15,12 @@ Iterators do not inherit from a base class, they only have to support the follow
 
 * `++i`: advance the iterator one step. (`i++` is also good to support).
 * `i == j`: check iterators for equality. Iterators pointing to the last element of a container always compare equal, regardless of which container the iterator was pointing into originally.
-* `i != j`: unequality check.
+* `i != j`: inequality check.
 * `v`: get the value currently pointed to. Throws an exception if the iterator is invalid.
 * `k`: if the container associates a key to each value, this member is used to get the key. This member may be left out.
 
 As can be seen, iterators to containers like `Map` work differently in Storm compared to C++. In
-Storm, the iterator allows you to access the key and the value separatly, rather than returning a
+Storm, the iterator allows you to access the key and the value separately, rather than returning a
 pair with both the key and the value. The reason for this is that Storm has no natural *dereference*
 operation, and therefore `k` and `v` are easier to read and write. This also allows containers to
 provide optional keys for their values. For example, `Array` provides the index of the current

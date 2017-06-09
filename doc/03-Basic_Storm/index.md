@@ -24,7 +24,7 @@ To make it easier to manipulate syntax, Basic Storm provides a set of convenient
 for this task, present in `lang.bs.macro`. To use these, you need to include the `lang.bs.macro`
 package in the relevant files. This package also contains the handy `explore{}` syntax, which
 outputs information about the name that is enclosed in the brackets. This can be used to
-interactively explore types and packages from the top loop. Note, that `explor`ing a package
+interactively explore types and packages from the top loop. Note, that `explore`ing a package
 currently does _not_ load it. To make sure that the package or type is loaded, simply try to access
 something inside it first by just trying to call something. It probably will not compile, but it
 still causes things to get loaded. This is a slight oversight in the compiler, and will be addressed

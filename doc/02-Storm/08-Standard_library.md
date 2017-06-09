@@ -7,7 +7,7 @@ most important types and functions from there, the rest can be explored from wit
 The most important types present in the standard library are the primitive types. In Storm,
 primitive types are implemented to look as much as possible like user-defined types. However, they
 follow different rules in calling conventions than a user-defined type of the same size. On X86,
-using the cdecl calling convention in C++, user-defined objects are always returned on the stack,
+using the `cdecl` calling convention in C++, user-defined objects are always returned on the stack,
 while primitive types (pointers, integers, and so on) are always returned in the `eax`
 register. Primitive types in Storm will of course follow these conventions to be compatible with C++
 and to not lose execution speed.

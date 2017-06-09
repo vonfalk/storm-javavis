@@ -37,7 +37,7 @@ genAdd: generate(params) {
 }
 ```
 
-This generator generates a function named 'genAdd' that adds two parameters of the same type. The
+This generator generates a function named `genAdd` that adds two parameters of the same type. The
 declaration (`genAdd: generate(params)`) indicates that we're declaring a generator named `genAdd`
 that receives the parameters in the local variable `params`. This declaration is more or less
 equivalent to the function declaration `Named? <some name>(Value[] params)`. The generator is then

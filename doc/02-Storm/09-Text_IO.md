@@ -33,7 +33,7 @@ possible to copy the format from a `TextReader` to get the same output format.
 Another central part of the IO library is the `Url` class. An `Url` represents a file or resource
 somewhere. In Storm, an `Url` is a protocol, followed by a list of strings that makes up the path
 itself. The `Url` class keeps track if it is referring to a directory or a file, and indicates this
-by outputing directory names with a trailing `/`. The protocol is a class that tells the `Url` how
+by outputting directory names with a trailing `/`. The protocol is a class that tells the `Url` how
 to access files for paths relative to that protocol. Currently, Storm only implements the `file://`
 protocol. If an `Url` does not have a protocol, it is assumed to represent a relative path. Relative
 paths can not be accessed directly, but must first be appended to some base `Url`. To create a `Url`
