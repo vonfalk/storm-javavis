@@ -500,11 +500,21 @@ class ContentSlide extends Slide {
 class VContentSlide extends Slide {
 	Text title;
 	Float space;
+	Bool center;
 
 	init(Str title) {
 		init() {
 			title(title, titleFont);
 			space = margin.h / 2;
+			center = true;
+		}
+	}
+
+	init(Str title, Bool center) {
+		init() {
+			title(title, titleFont);
+			space = margin.h / 2;
+			center = center;
 		}
 	}
 
@@ -512,6 +522,15 @@ class VContentSlide extends Slide {
 		init() {
 			title(title, titleFont);
 			space = space;
+			center = true;
+		}
+	}
+
+	init(Str title, Float space, Bool center) {
+		init() {
+			title(title, titleFont);
+			space = space;
+			center = center;
 		}
 	}
 
@@ -530,8 +549,15 @@ class VContentSlide extends Slide {
 			pos.x = margin.w;
 			for (Nat i = 0; i < items.count; i++) {
 				Size size = items[i].size;
+				if (size.w > s.w)
+					size.w = s.w;
 
-				Rect r(Point((s.w - size.w) / 2.0, pos.y), size);
+				Point tl = if (center) {
+					Point((s.w - size.w) / 2.0, pos.y);
+				} else {
+					pos;
+				};
+				Rect r(tl, size);
 				cont |= items[i].draw(style, r, g);
 
 				pos.y += size.h + space;
