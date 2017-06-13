@@ -88,7 +88,7 @@
   (interactive '(toggle))
   (when (eq enable 'toggle)
     (setq enable (not global-storm-mode))
-    (message "Storm mode is %s" (if enable "on" "off")))
+    (message "Global Storm mode is %s" (if enable "on" "off")))
   (setq global-storm-mode enable)
   (when enable
     ;; Get notified about newly opened buffers. This is a no-op if the advice has already been added.
