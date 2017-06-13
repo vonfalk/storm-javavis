@@ -367,11 +367,11 @@ TObject SClassItem(Class owner);
 SClassItem => ClassVar(owner, t, n) :
     SType t, SName n #varName, ";";
 SClassItem => classFn(owner, pos, name, result, params, body) :
-    SType result, SName name #fnName, "(", SFormals params, ")", "{", SFunctionBody@ body, "}";
+    SType result, SName name #fnName, "(", SFormals params, ")", "{"[, SFunctionBody@ body,]+ "}";
 SClassItem => classCtor(owner, pos, params, body) :
-    "init" #keyword, "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
+    "init" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
 SClassItem => classCastCtor(owner, pos, params, body) :
-    "cast" #keyword, "(", SCtorParams params, ")", "{", SCtorBody@ body, "}";
+    "cast" #keyword, "(", SCtorParams params, ")", "{"[, SCtorBody@ body,]+ "}";
 
 // Root rule for parsing classes and values.
 ClassBody SClassBody(Class owner);
