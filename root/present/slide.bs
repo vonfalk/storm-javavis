@@ -544,13 +544,16 @@ class VContentSlide extends Slide {
 		pos.y = margin.h;
 		g.draw(title, style.text, pos);
 		pos.y += title.size.h + margin.h;
+		Float width = s.w - 2*margin.w;
 
 		if (items.count > 0) {
 			pos.x = margin.w;
 			for (Nat i = 0; i < items.count; i++) {
 				Size size = items[i].size;
-				if (size.w > s.w)
-					size.w = s.w;
+				if (size.w > width)
+				size.w = width;
+				if (!center)
+					size.w = width;
 
 				Point tl = if (center) {
 					Point((s.w - size.w) / 2.0, pos.y);
