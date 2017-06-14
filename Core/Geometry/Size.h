@@ -16,7 +16,7 @@ namespace storm {
 			STORM_VALUE;
 		public:
 			STORM_CTOR Size();
-			STORM_CAST_CTOR Size(Float wh);
+			STORM_CTOR Size(Float wh); // Do not make 'cast_ctor', since it interferes with * operator.
 			STORM_CTOR Size(Float w, Float h);
 			STORM_CAST_CTOR Size(Point pt);
 

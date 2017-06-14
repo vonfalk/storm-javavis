@@ -56,8 +56,12 @@ namespace storm {
 				// Assignment is the same as initialization here...
 				nat size = actuals->expressions->count();
 				if (size == 1) {
-					initExpr = actuals->expressions->at(0);
-					return;
+					Expr *e = actuals->expressions->at(0);
+					// Check types!
+					if (e->result() == variable->result) {
+						initExpr = e;
+						return;
+					}
 				} else if (size == 0) {
 					// No constructor, initialized to zero!
 					return;

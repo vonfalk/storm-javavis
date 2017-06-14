@@ -125,6 +125,14 @@ BEGIN_TEST(AutocastTest, BS) {
 	CHECK_EQ(runFn<Nat>(L"test.bs.initNat"), 20);
 } END_TEST
 
+/**
+ * Type system.
+ */
+
+BEGIN_TEST(TypesTest, BS) {
+	CHECK_ERROR(runFn<void>(L"test.bs.invalidDecl"), SyntaxError);
+} END_TEST
+
 
 /**
  * Maybe.

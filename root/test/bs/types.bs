@@ -1,0 +1,6 @@
+use core:geometry;
+
+void invalidDecl() {
+	// Shall not compile...
+	Float x = Size(1, 2);
+}

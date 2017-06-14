@@ -544,7 +544,7 @@ class VContentSlide extends Slide {
 		pos.y = margin.h;
 		g.draw(title, style.text, pos);
 		pos.y += title.size.h + margin.h;
-		Float width = s.w - 2*margin.w;
+		var width = s.w - 2.0*margin.w;
 
 		if (items.count > 0) {
 			pos.x = margin.w;
