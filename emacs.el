@@ -298,6 +298,14 @@
 			   ))
 (setq storm-mode-compile-compiler t)
 
+(add-to-list 'command-switch-alist '("storm-demo" . to-storm-demo))
+(defun to-storm-demo (&rest params)
+  (interactive)
+  (setq mymake-compile-frame nil)
+  (setq storm-mode-compile-compiler nil)
+  (set-face-attribute 'default nil :height 200)
+  (global-storm-mode t))
+
 
 ;;; For debugging ;;;
 
