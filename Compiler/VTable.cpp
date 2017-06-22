@@ -295,7 +295,7 @@ namespace storm {
 
 	VTableSlot VTable::allocSlot() {
 		if (!storm) {
-			assert(false, L"Can not allocate slots in a C++ vtable.");
+			assert(false, L"Can not allocate slots in a C++ vtable. Are you trying to override a non-virtual function?");
 			return VTableSlot();
 		}
 

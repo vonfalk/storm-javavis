@@ -12,3 +12,6 @@ SAtom => z : "#(", SExpr(block) z, ")#";
 SOperator => lang.bs.rOperator(op, 900) : "#" - "\*"@ op;
 SOperator => lang.bs.rOperator(op, 800) : "#" - "\+"@ op;
 SOperator => lang.bs.rOperator(op, 800) : "#" - "\-"@ op;
+
+
+SExpr => patternExpr(block, expr) : "p!" - SExpr(block) expr - "!p";

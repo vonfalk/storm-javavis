@@ -10,9 +10,10 @@ Test
 #Main -a -r ../root/ -f test.sound.play
 #Main -a -r ../root/ -f sound.testMe
 
+
 #Presentation
 #Main -a -r ../root/ -i final ../External/final -f final.configura
 #Main -a -r ../root/ -i final ../External/final -f final.extendedMain
 #Main -a -r ../root/ -i final ../External/final -f final.main
 #Main -a -r ../root/ -i green ../External/green -f green.main
-
+#Main -a -r ../root/ -i thesis ../External/thesis -f thesis.main

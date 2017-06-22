@@ -15,6 +15,35 @@ namespace storm {
 			throw SyntaxError(pos, L"Trying to transform a node not representing a match.");
 		}
 
+		Array<Node *> *Node::children() {
+			return new (this) Array<Node *>();
+		}
+
+		Array<Node *> *Node::allChildren() {
+			Array<Node *> *result = new (this) Array<Node *>();
+			allChildren(result, null);
+			return result;
+		}
+
+		Array<Node *> *Node::allChildren(Type *type) {
+			Array<Node *> *result = new (this) Array<Node *>();
+			allChildren(result, type);
+			return result;
+		}
+
+		void Node::allChildren(Array<Node *> *result, MAYBE(Type *) type) {
+			Array<Node *> *here = children();
+			for (Nat i = 0; i < here->count(); i++) {
+				Node *at = here->at(i);
+
+				if (!type || runtime::typeOf(at)->isA(type))
+					result->push(at);
+
+				at->allChildren(result, type);
+			}
+		}
+
+
 		const void *transformFunction(Type *type, const Value &result, const Value &param) {
 			Array<Value> *par = new (type) Array<Value>();
 			par->push(thisPtr(type));

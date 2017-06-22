@@ -1,0 +1,176 @@
+use lang:bs;
+use core:lang;
+use core:asm; // Note: also contains a Block class!
+
+/**
+ * An expression representing creating a template syntax tree.
+ */
+class TemplateExpr extends ExprBlock {
+	init(Block block, Expr env, SExpr create) {
+		init(create.pos, block);
+		var nodes = create.allChildren(named{PatternInsert});
+
+		// PatternBlock exprs(<env>, nodes.count);
+		Actuals params;
+		params.add(env);
+		params.add(Constant(pos, nodes.count.long));
+
+		Var exprVars(this, Value(named{PatternBlock}), SStr("block"), params);
+		add(exprVars);
+		LocalVarAccess exprs(pos, exprVars.var);
+
+		for (node in nodes) {
+			if (node as PatternInsert) {
+				addExpr(block, exprs, node);
+			} else {
+				throwSyntaxError(pos, "Internal error!");
+			}
+		}
+
+		ReferSExpr src(create);
+		add(namedExpr(this, SStr("transform"), exprs, Actuals(src)));
+
+		add(exprs);
+	}
+
+	void addExpr(Block parent, LocalVarAccess exprs, PatternInsert node) {
+		if (var = node.pattern as PatternVar) {
+			addExpr(exprs, namedExpr(parent, var.name.transform, Actuals()));
+		} else if (expr = node.pattern as PatternExpr) {
+			addExpr(exprs, expr.expr.transform(parent));
+		} else {
+			throwSyntaxError(pos, "Unexpected subtype of SPatternExpr found. Can not continue.");
+		}
+	}
+
+	void addExpr(LocalVarAccess exprs, Expr insert) {
+		add(namedExpr(this, SStr("push"), exprs, Actuals(insert)));
+	}
+
+	void code(CodeGen state, CodeResult r) {
+		super:code(state, r);
+	}
+}
+
+
+/**
+ * Block containing expressions to be inserted into a pattern.
+ *
+ * Attempts to appear invisible to the user. Variables added here are actually added to the parent scope.
+ */
+class PatternBlock extends Block {
+	// Expressions to be inserted later.
+	Array<Expr> exprs;
+
+	// Next expression to be extracted.
+	Nat exprPos;
+
+	// Parent block.
+	Block parent;
+
+	// Contained expr.
+	Expr data;
+
+	init(Block parent, Nat count) {
+		init(parent.pos, parent) {
+			parent = parent;
+			// Create a dummy object for now.
+			data(parent.pos);
+		}
+
+		exprs.reserve(count);
+	}
+
+	// Add an expression.
+	void push(Expr expr) {
+		exprs.push(expr);
+	}
+
+	// Get the next expression (during transformation).
+	Expr nextExpr() {
+		exprs[exprPos++];
+	}
+
+	// Transform an SExpr and contain the new value.
+	void transform(SExpr src) {
+		exprPos = 0;
+		data = src.transform(this);
+	}
+
+	// Do not add variables here. Add them to the parent scope instead!
+	void add(LocalVar v) {
+		parent.add(v);
+	}
+
+	// Result of this block.
+	ExprResult result() {
+		data.result();
+	}
+
+	// Generate code for this block.
+	void blockCode(CodeGen state, CodeResult to) {
+		data.code(state, to);
+	}
+
+	// To string.
+	void toS(StrBuf to) {
+		to << data;
+	}
+}
+
+
+// Insert a previously generated Expr here.
+Expr insertExpr(SrcPos pos, Block block) {
+	if (r = findPattern(block)) {
+		r.nextExpr();
+	} else {
+		throwSyntaxError(pos, "Can not use ${} syntax outside of pattern blocks.");
+		// When we have exceptions, we can ignore this.
+		Expr(pos);
+	}
+}
+
+// Find a parent 'PatternBlock'.
+Maybe<PatternBlock> findPattern(Block src) on Compiler {
+	Block now = src;
+	while (true) {
+		if (now as PatternBlock)
+			return now;
+
+		if (l = now.lookup.parent as BlockLookup) {
+			now = l.block;
+		} else {
+			return null;
+		}
+	}
+
+	null;
+}
+
+/**
+ * Refer to a SExpr object.
+ */
+class ReferSExpr extends Expr {
+	// The expression referred to.
+	SExpr expr;
+
+	init(SExpr expr) {
+		init(expr.pos) { expr = expr; }
+	}
+
+	ExprResult result() {
+		ExprResult(Value(named{lang:bs:SExpr}));
+	}
+
+	void code(CodeGen state, CodeResult result) {
+		if (result.needed) {
+			VarInfo v = result.location(state);
+			state.l << mov(v.v, objPtr(expr));
+			v.created(state);
+		}
+	}
+
+	Str toS() {
+		"<captured syntax tree>";
+	}
+}

@@ -288,6 +288,13 @@ BEGIN_TEST(GenerateTest, BS) {
 	CHECK_EQ(runFn<Int>(L"test.bs.testGenClass", 10), 12);
 } END_TEST
 
+/**
+ * Patterns.
+ */
+BEGIN_TEST(PatternTest, BS) {
+	CHECK_EQ(runFn<Int>(L"test.bs.testPattern"), 170);
+	CHECK_EQ(runFn<Int>(L"test.bs.testPatternNames"), 2010);
+} END_TEST
 
 /**
  * Exception safety.

@@ -9,6 +9,7 @@
 #include "SStr.h"
 #include "Rule.h"
 #include "Transform.h"
+#include "Children.h"
 
 namespace storm {
 	namespace syntax {
@@ -418,6 +419,7 @@ namespace storm {
 			Value strBuf = thisPtr(StrBuf::stormType(e));
 
 			add(createTransformFn(decl, this, scope));
+			add(createChildrenFn(decl, this, scope));
 
 			Array<Value> *p = new (e) Array<Value>(2, me);
 			p->at(1) = strBuf;

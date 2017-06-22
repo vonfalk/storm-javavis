@@ -19,10 +19,28 @@ namespace storm {
 			STORM_CTOR Node();
 			STORM_CTOR Node(SrcPos pos);
 
+			// Start position for this node.
 			SrcPos pos;
 
 			// Throw an exception. Used when calling 'transform' from a pure Rule object.
 			void CODECALL throwError();
+
+			/**
+			 * Introspection:
+			 */
+
+			// Get all children from this node as an array.
+			virtual Array<Node *> *STORM_FN children();
+
+			// Get all children as a plain array.
+			Array<Node *> *STORM_FN allChildren();
+
+			// Get all children of a specific type as a plain array.
+			Array<Node *> *STORM_FN allChildren(Type *type);
+
+		private:
+			// Internal helper for 'allChildren'.
+			void allChildren(Array<Node *> *to, MAYBE(Type *) type);
 		};
 
 

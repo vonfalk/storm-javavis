@@ -1,0 +1,264 @@
+#include "stdafx.h"
+#include "Exception.h"
+#include "Children.h"
+#include "Node.h"
+#include "Rule.h"
+#include "Production.h"
+
+#include "Compiler/Basic/Named.h"
+#include "Compiler/Basic/WeakCast.h"
+#include "Compiler/Basic/If.h"
+#include "Compiler/Basic/For.h"
+
+#include "Compiler/Lib/Array.h"
+#include "Compiler/Lib/Maybe.h"
+
+namespace storm {
+	namespace syntax {
+		using namespace bs;
+
+		// Call a specific member in Basic Storm.
+		static Expr *callMember(Str *name, Expr *me, Expr *param = null) {
+			Value type = me->result().type();
+			if (type == Value())
+				throw InternalError(L"Can not call members of 'void'.");
+
+			Actuals *actual = new (me) Actuals();
+			Array<Value> *params = new (me) Array<Value>();
+			params->push(thisPtr(type.type));
+			actual->add(me);
+			if (param) {
+				params->push(param->result().type());
+				actual->add(param);
+			}
+
+			SimplePart *part = new (me) SimplePart(name, params);
+			Named *found = type.type->find(part);
+			Function *toCall = as<Function>(found);
+			if (!toCall)
+				throw InternalError(::toS(part) + L" was not found!");
+
+			return new (me) FnCall(me->pos, toCall, actual);
+		}
+
+		static Expr *callMember(const SrcPos &pos, Str *name, Expr *me, Expr *param = null) {
+			try {
+				return callMember(name, me, param);
+			} catch (const InternalError &e) {
+				throw SyntaxError(pos, e.what());
+			}
+		}
+
+		static Expr *callMember(const wchar *name, Expr *me, Expr *param = null) {
+			return callMember(new (me) Str(name), me, param);
+		}
+
+		static Expr *callMember(const SrcPos &pos, const wchar *name, Expr *me, Expr *param = null) {
+			return callMember(pos, new (me) Str(name), me, param);
+		}
+
+		static bool interesting(Token *t) {
+			if (!t->target)
+				return false;
+
+			Value type = t->target->type;
+			if (!type.type)
+				return false;
+
+			type = unwrapArray(type);
+			type = unwrapMaybe(type);
+
+			return type.type->isA(Node::stormType(t->engine()));
+		}
+
+		static Value childResult(Engine &e) {
+			return Value(Array<Node *>::stormType(e));
+		}
+
+		static syntax::SStr *childName(ProductionDecl *decl) {
+			return new (decl) syntax::SStr(L"children", decl->pos);
+		}
+
+		static Array<ValParam> *childParams(ProductionType *owner) {
+			Array<ValParam> *p = new (owner) Array<ValParam>();
+			p->push(ValParam(thisPtr(owner), new (owner) Str(L"this")));
+			return p;
+		}
+
+		ChildrenFn::ChildrenFn(ProductionDecl *decl, ProductionType *owner, Rule *rule, Scope scope)
+			: BSRawFn(childResult(engine()), childName(decl), childParams(owner), null), scope(scope) {
+
+			source = owner->production;
+		}
+
+		FnBody *ChildrenFn::createBody() {
+			FnBody *root = new (this) FnBody(this, scope);
+
+			// Create the variable holding the resulting array.
+			LocalVarAccess *result = null;
+			{
+				Function *f = Array<Node *>::stormType(engine())->defaultCtor();
+				Expr *r = new (this) CtorCall(pos, f, new (this) Actuals());
+				Var *v = new (this) Var(root, new (this) syntax::SStr(L"result"), r);
+				root->add(v);
+				result = new (this) LocalVarAccess(pos, v->var());
+			}
+
+			// Go through the rule and generate code!
+			addTokens(root, result);
+
+			// Return 'result'.
+			root->add(result);
+			return root;
+		}
+
+		void ChildrenFn::addTokens(ExprBlock *block, Expr *result) {
+			Nat tokens = tokenCount();
+			Nat firstBreak = min(source->repStart, tokens);
+			Nat secondBreak = min(source->repEnd, tokens);
+
+			// Tokens before the capture.
+			for (Nat i = 0; i < firstBreak; i++)
+				addToken(block, result, getToken(i));
+
+			// Tokens in the capture.
+			switch (source->repType) {
+			case repZeroOne:
+				// Only Maybe<T>. If statement is sufficient!
+				for (Nat i = firstBreak; i < secondBreak; i++)
+					addTokenIf(block, result, getToken(i));
+				break;
+			case repOnePlus:
+			case repZeroPlus:
+				// Only Array<T>. Embed inside for-loop.
+				addTokenLoop(block, result, firstBreak, secondBreak);
+				break;
+			default:
+				// Nothing special!
+				for (Nat i = firstBreak; i < secondBreak; i++)
+					addToken(block, result, getToken(i));
+				break;
+			}
+
+			// Tokens after the capture.
+			for (Nat i = secondBreak; i < tokens; i++)
+				addToken(block, result, getToken(i));
+		}
+
+		void ChildrenFn::addToken(ExprBlock *block, Expr *result, Token *token) {
+			// Not stored?
+			if (!interesting(token))
+				return;
+
+			Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), token->target);
+			block->add(push(block, result, src));
+		}
+
+		void ChildrenFn::addTokenIf(ExprBlock *block, Expr *result, Token *token) {
+			if (!interesting(token))
+				return;
+
+			Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), token->target);
+			WeakCast *cast = new (this) WeakMaybeCast(src);
+			IfWeak *check = new (this) IfWeak(block, cast);
+			IfTrue *trueBlock = new (this) IfTrue(pos, check);
+
+			LocalVar *overwrite = check->overwrite();
+			assert(overwrite, L"Weak cast did not overwrite variable as expected.");
+			trueBlock->set(push(trueBlock, result, new (this) LocalVarAccess(pos, overwrite)));
+			check->trueExpr(trueBlock);
+			block->add(check);
+		}
+
+		void ChildrenFn::addTokenLoop(bs::ExprBlock *block, bs::Expr *result, Nat from, Nat to) {
+			Engine &e = engine();
+
+			// Find the minimal length to iterate...
+			Expr *minExpr = null;
+			for (Nat i = from; i < to; i++) {
+				Token *t = getToken(i);
+				if (!interesting(t))
+					// Not interesting...
+					continue;
+
+				Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), t->target);
+				Expr *read = callMember(L"count", src);
+
+				if (minExpr)
+					minExpr = callMember(L"min", minExpr, read);
+				else
+					minExpr = read;
+			}
+
+			if (!minExpr)
+				// Nothing interesting. Abort!
+				return;
+
+			ExprBlock *forBlock = new (this) ExprBlock(pos, block);
+			Var *end = new (this) Var(forBlock,
+									Value(StormInfo<Nat>::type(e)),
+									new (e) syntax::SStr(L"_end"),
+									minExpr);
+			forBlock->add(end);
+			Expr *readEnd = new (this) LocalVarAccess(pos, end->var());
+
+			// Iterate...
+			Var *i = new (this) Var(forBlock,
+									Value(StormInfo<Nat>::type(e)),
+									new (e) syntax::SStr(L"_i"),
+									new (this) Constant(pos, 0));
+			Expr *readI = new (this) LocalVarAccess(pos, i->var());
+			forBlock->add(i);
+
+			For *loop = new (this) For(pos, forBlock);
+			loop->test(callMember(L"<", readI, readEnd));
+			loop->update(callMember(L"++*", readI));
+
+			ExprBlock *inLoop = new (this) ExprBlock(pos, loop);
+			for (Nat i = from; i < to; i++) {
+				Token *t = getToken(i);
+				if (!interesting(t))
+					continue;
+
+				Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), t->target);
+				Expr *read = callMember(L"[]", src, readI);
+				inLoop->add(push(inLoop, result, read));
+			}
+
+			loop->body(inLoop);
+			forBlock->add(loop);
+			block->add(forBlock);
+		}
+
+		Expr *ChildrenFn::push(Block *block, Expr *result, Expr *tokenSrc) {
+			return callMember(pos, L"push", result, tokenSrc);
+		}
+
+		bs::Expr *ChildrenFn::thisExpr(bs::ExprBlock *block) {
+			LocalVar *var = block->variable(new (this) SimplePart(new (this) Str(L"this")));
+			assert(var, L"'this' was not found!");
+			return new (this) LocalVarAccess(pos, var);
+		}
+
+		Nat ChildrenFn::tokenCount() {
+			Nat r = source->tokens->count();
+			if (source->repCapture)
+				r++;
+			return r;
+		}
+
+		Token *ChildrenFn::getToken(Nat pos) {
+			Array<Token *> *tokens = source->tokens;
+			if (pos == tokens->count())
+				return source->repCapture;
+			else
+				return tokens->at(pos);
+		}
+
+
+		Function *createChildrenFn(ProductionDecl *decl, ProductionType *owner, Scope scope) {
+			return new (decl) ChildrenFn(decl, owner, owner->rule(), scope);
+		}
+
+	}
+}

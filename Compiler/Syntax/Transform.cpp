@@ -326,17 +326,22 @@ namespace storm {
 				executeToken(in, me, getToken(i), i);
 
 			// Tokens in the capture.
-			if (source->repType == repZeroOne) {
+			switch (source->repType) {
+			case repZeroOne:
 				// Only Maybe<T>. If statement is sufficient!
 				for (Nat i = firstBreak; i < secondBreak; i++)
 					executeTokenIf(in, me, getToken(i), i);
-			} else if (source->repType == repOnePlus || source->repType == repZeroPlus) {
+				break;
+			case repOnePlus:
+			case repZeroPlus:
 				// Only Array<T>. Embed inside for-loop.
 				executeTokenLoop(firstBreak, secondBreak, in, me);
-			} else {
+				break;
+			default:
 				// Nothing special!
 				for (Nat i = firstBreak; i < secondBreak; i++)
 					executeToken(in, me, getToken(i), i);
+				break;
 			}
 
 			// Tokens after the capture.
@@ -544,7 +549,7 @@ namespace storm {
 		}
 
 		Token *TransformFn::getToken(Nat pos) {
-			Array<Token *>*tokens = source->tokens;
+			Array<Token *> *tokens = source->tokens;
 			if (pos == tokens->count())
 				return source->repCapture;
 			else

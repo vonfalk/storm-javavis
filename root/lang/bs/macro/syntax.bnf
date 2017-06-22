@@ -26,6 +26,19 @@ SExpr[100] => PrintAsm(pos) : "dumpAsm" #keyword;
 
 // Generate things in classes and at top-level.
 SFileItem => Generate(env, name, param, body) :
-    SName name, ":", "generate" #keyword, "(", SName param, ")", "{", SFunctionBody@ body, "}";
+    SName name #fnName, ":", "generate" #keyword, "(", SName param #varName, ")", "{", SFunctionBody@ body, "}";
 SClassItem => Generate(owner, name, param, body) :
-    SName name, ":", "generate" #keyword, "(", SName param, ")", "{", SFunctionBody@ body, "}";
+    SName name #fnName, ":", "generate" #keyword, "(", SName param #varName, ")", "{", SFunctionBody@ body, "}";
+
+// Pattern-based block- and expr generation.
+SExpr => TemplateExpr(block, env, expr) : SPattern(block) env, SExpr @expr;
+
+Expr SPattern(Block block);
+SPattern => env : "pattern" #keyword, "(", SExpr(block) env, ")";
+
+// Inserting variables into templates.
+SAtom => insertExpr(pos, block) : "$" #keyword - SPatternExpr @pattern = PatternInsert;
+
+void SPatternExpr();
+SPatternExpr : SName name #keyword = PatternVar;
+SPatternExpr : "{" #keyword, SExpr @expr, "}" #keyword = PatternExpr;

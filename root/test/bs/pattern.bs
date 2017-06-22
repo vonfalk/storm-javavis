@@ -1,0 +1,28 @@
+use core:lang;
+use lang:bs;
+use lang:bs:macro;
+
+Expr patternExpr(Block block, Expr param) {
+	// Note if-else is to ensure that ()? are handled correctly!
+	var e = pattern(block) {
+		Int z = 1;
+		if (10 > 20) {
+			z;
+		} else {
+			10 + $param * ${Constant(SrcPos(), 20)};
+		}
+	};
+
+	e;
+}
+
+Int testPattern() {
+	p!8!p;
+}
+
+Int testPatternNames() {
+	// Make sure the correct 'z' is used. There is a 'z' inside the pattern as well.
+	Int z = 100;
+	p!z!p;
+}
+

@@ -59,7 +59,7 @@ namespace storm {
 			// Initialize to an expression (auto type).
 			STORM_CTOR Var(Block *block, syntax::SStr *name, Expr *init);
 
-			// Declared variable.
+			// Declared variable. TODO: Rename to 'var', and remove the accessor below.
 			LocalVar *variable;
 
 			// Get the declared variable.
