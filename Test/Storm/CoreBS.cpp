@@ -294,6 +294,9 @@ BEGIN_TEST(GenerateTest, BS) {
 BEGIN_TEST(PatternTest, BS) {
 	CHECK_EQ(runFn<Int>(L"test.bs.testPattern"), 170);
 	CHECK_EQ(runFn<Int>(L"test.bs.testPatternNames"), 2010);
+
+	CHECK_EQ(runFn<Int>(L"test.bs.testPatternSplice1"), 23);
+	CHECK_EQ(runFn<Int>(L"test.bs.testPatternSplice2"), 6);
 } END_TEST
 
 /**

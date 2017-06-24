@@ -26,3 +26,26 @@ Int testPatternNames() {
 	p!z!p;
 }
 
+Expr patternSpliceExpr(Block block, Expr[] params) {
+	var e = pattern(block) {
+		spliceTest(1, @params);
+	};
+
+	e;
+}
+
+Int spliceTest(Int a, Int b) {
+	a + b + 20;
+}
+
+Int spliceTest(Int a, Int b, Int c) {
+	a + b + c;
+}
+
+Int testPatternSplice1() {
+	s!2!s;
+}
+
+Int testPatternSplice2() {
+	s!2,3!s;
+}

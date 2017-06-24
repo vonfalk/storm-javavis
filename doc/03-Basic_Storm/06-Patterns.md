@@ -41,6 +41,26 @@ Which produces the expression:
 }
 ```
 
+It is also possible to insert a variable number of parameters into a parameter list using `@name` or
+`@expression`. In this case, the expression or identifier should evaluate to an array of `Expr`
+objects, which are inserted in the parameter list at the specified position. For example:
+
+```
+Expr[] e = Expr:[Constant(SrcPos(), 1), Constant(SrcPos(), 2)];
+Expr f = pattern(block) {
+	foo(@e, 8);
+};
+print(f.toS());
+```
+
+Which produces the expression:
+
+```
+{
+	foo(1, 2, 8);
+}
+```
+
 It is not necessary to create a block. It is also possible to create a pattern containing a single
 statement:
 

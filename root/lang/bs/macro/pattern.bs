@@ -8,35 +8,47 @@ use core:asm; // Note: also contains a Block class!
 class TemplateExpr extends ExprBlock {
 	init(Block block, Expr env, SExpr create) {
 		init(create.pos, block);
-		var nodes = create.allChildren(named{PatternInsert});
+		var atoms = create.allChildren(named{PatternAtom});
+		var actuals = create.allChildren(named{PatternActual});
 
-		// PatternBlock exprs(<env>, nodes.count);
+		// PatternBlock exprs(<env>, atoms.count, actuals.count);
 		Actuals params;
 		params.add(env);
-		params.add(Constant(pos, nodes.count.long));
+		params.add(Constant(pos, atoms.count.long));
+		params.add(Constant(pos, actuals.count.long));
 
 		Var exprVars(this, Value(named{PatternBlock}), SStr("block"), params);
 		add(exprVars);
 		LocalVarAccess exprs(pos, exprVars.var);
 
-		for (node in nodes) {
-			if (node as PatternInsert) {
-				addExpr(block, exprs, node);
+		for (node in atoms) {
+			if (node as PatternAtom) {
+				addExpr(block, exprs, node.pattern);
 			} else {
 				throwSyntaxError(pos, "Internal error!");
 			}
 		}
 
+		for (node in actuals) {
+			if (node as PatternActual) {
+				addExpr(block, exprs, node.pattern);
+			} else {
+				throwSyntaxError(pos, "Internal error!");
+			}
+		}
+
+		// Call transform on the stored syntax tree.
 		ReferSExpr src(create);
 		add(namedExpr(this, SStr("transform"), exprs, Actuals(src)));
 
+		// Return 'exprs'.
 		add(exprs);
 	}
 
-	void addExpr(Block parent, LocalVarAccess exprs, PatternInsert node) {
-		if (var = node.pattern as PatternVar) {
+	void addExpr(Block parent, LocalVarAccess exprs, SPatternExpr node) {
+		if (var = node as PatternVar) {
 			addExpr(exprs, namedExpr(parent, var.name.transform, Actuals()));
-		} else if (expr = node.pattern as PatternExpr) {
+		} else if (expr = node as PatternExpr) {
 			addExpr(exprs, expr.expr.transform(parent));
 		} else {
 			throwSyntaxError(pos, "Unexpected subtype of SPatternExpr found. Can not continue.");
@@ -65,20 +77,27 @@ class PatternBlock extends Block {
 	// Next expression to be extracted.
 	Nat exprPos;
 
+	// Actuals to be inserted later.
+	Array<Array<Expr>> actuals;
+
+	// Next actuals to be extracted.
+	Nat actualsPos;
+
 	// Parent block.
 	Block parent;
 
 	// Contained expr.
 	Expr data;
 
-	init(Block parent, Nat count) {
+	init(Block parent, Nat atomCount, Nat actualsCount) {
 		init(parent.pos, parent) {
 			parent = parent;
 			// Create a dummy object for now.
 			data(parent.pos);
 		}
 
-		exprs.reserve(count);
+		exprs.reserve(atomCount);
+		actuals.reserve(actualsCount);
 	}
 
 	// Add an expression.
@@ -91,9 +110,20 @@ class PatternBlock extends Block {
 		exprs[exprPos++];
 	}
 
+	// Add a set of actual parameters.
+	void push(Array<Expr> expr) {
+		actuals.push(expr);
+	}
+
+	// Get the next set of actuals (during transformation).
+	Array<Expr> nextActuals() {
+		actuals[actualsPos++];
+	}
+
 	// Transform an SExpr and contain the new value.
 	void transform(SExpr src) {
 		exprPos = 0;
+		actualsPos = 0;
 		data = src.transform(this);
 	}
 
@@ -127,6 +157,19 @@ Expr insertExpr(SrcPos pos, Block block) {
 		throwSyntaxError(pos, "Can not use ${} syntax outside of pattern blocks.");
 		// When we have exceptions, we can ignore this.
 		Expr(pos);
+	}
+}
+
+// Insert a previously generated Array<Expr> here.
+void insertActuals(SrcPos pos, Actuals actuals, Block block) {
+	if (r = findPattern(block)) {
+		for (x in r.nextActuals()) {
+			actuals.add(x);
+		}
+	} else {
+		throwSyntaxError(pos, "Can not use @{} syntax outside of pattern blocks.");
+		// When we have exceptions, we can ignore this.
+		Array<Expr>();
 	}
 }
 

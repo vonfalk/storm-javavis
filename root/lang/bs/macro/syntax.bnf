@@ -36,8 +36,12 @@ SExpr => TemplateExpr(block, env, expr) : SPattern(block) env, SExpr @expr;
 Expr SPattern(Block block);
 SPattern => env : "pattern" #keyword, "(", SExpr(block) env, ")";
 
-// Inserting variables into templates.
-SAtom => insertExpr(pos, block) : "$" #keyword - SPatternExpr @pattern = PatternInsert;
+// Inserting expressions into templates.
+SAtom => insertExpr(pos, block) : "$" #keyword - SPatternExpr @pattern = PatternAtom;
+
+// Insert zero or more expressions into a parameter list.
+// SActual => insertActuals(pos, to, block) : "@" #keyword - SPatternExpr @pattern = PatternActual;
+SActual => insertActuals(pos, to, block) : "@" #keyword - SPatternExpr @pattern = PatternActual;
 
 void SPatternExpr();
 SPatternExpr : SName name #keyword = PatternVar;

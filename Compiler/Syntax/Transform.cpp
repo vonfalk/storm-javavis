@@ -144,11 +144,18 @@ namespace storm {
 
 			Expr *init = namedExpr(in, pos, result, actual);
 
+			if (init->result() == Value()) {
+				// If 'init' returns a void value, do not create a variable.
+				in->add(init);
+				return null;
+			}
+
 			syntax::SStr *name = CREATE(syntax::SStr, this, L"me", pos);
 			Var *var = new (this) Var(in, name, init);
 			in->add(var);
 
 			return new (this) LocalVarAccess(pos, var->var());
+
 		}
 
 		Expr *TransformFn::readVar(Block *in, Str *name) {

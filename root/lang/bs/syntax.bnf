@@ -132,14 +132,18 @@ SReplExpr => Expr(pos) : "";
 // Code!
 ////////////////////////////////////////////////////////////////////
 
+// A single actual parameter (not inlined due to extensibility).
+void SActual(Actuals to, Block block);
+SActual => to : SExpr(block) -> add;
+
 // Actual parameters
 Actuals SActuals(Block block);
-SActuals => Actuals() : "";
-SActuals => Actuals() : SExpr(block) -> add - (, ",", SExpr(block) -> add)*;
+SActuals => Actuals() : ;
+SActuals => Actuals() : SActual(me, block) - (, ",", SActual(me, block))*;
 
 // Actual parameters with/without parens.
 Actuals SFnActuals(Block block);
-SFnActuals => Actuals() : "";
+SFnActuals => Actuals() : ;
 SFnActuals => v : "(", SActuals(block) v, ")";
 
 // Block.

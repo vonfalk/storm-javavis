@@ -15,3 +15,7 @@ SOperator => lang.bs.rOperator(op, 800) : "#" - "\-"@ op;
 
 
 SExpr => patternExpr(block, expr) : "p!" - SExpr(block) expr - "!p";
+SExpr => patternSpliceExpr(block, expr) : "s!" - SExprList(block) expr - "!s";
+
+Array<Expr> SExprList(Block block);
+SExprList => Array<Expr>() : SExpr(block) -> push - (, ",", SExpr(block) -> push)*;
