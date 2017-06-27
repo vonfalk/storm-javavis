@@ -41,9 +41,10 @@ Which produces the expression:
 }
 ```
 
-It is also possible to insert a variable number of parameters into a parameter list using `@name` or
-`@expression`. In this case, the expression or identifier should evaluate to an array of `Expr`
-objects, which are inserted in the parameter list at the specified position. For example:
+It is also possible to insert a variable number of expressions into a parameter list, an array
+initializer or a block using `@name` or `@expression`. In this case, the expression or identifier
+should evaluate to an array of `Expr` objects, which are inserted in sequence at the specified
+location. For example:
 
 ```
 Expr[] e = Expr:[Constant(SrcPos(), 1), Constant(SrcPos(), 2)];

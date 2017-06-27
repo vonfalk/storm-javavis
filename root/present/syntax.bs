@@ -31,7 +31,10 @@ class PExpr extends Expr {
 	}
 
 	void add(Expr e) {
-		into.add(namedExpr(into, SStr("add", pos), LocalVarAccess(pos, pVar), Actuals(e)));
+		var z = pattern(into) {
+			${LocalVarAccess(pos, pVar)}.add($e);
+		};
+		into.add(z);
 	}
 
 	ExprResult result() {
@@ -78,12 +81,22 @@ class SlideExpr extends Expr {
 	}
 
 	void add(ItemInfo i) {
-		Str name = if (i.direct) { "add"; } else { "addDelayed"; };
-		Actuals actual(i.item);
-		Expr? time = i.time;
-		if (time)
-			actual.add(time);
-		into.add(namedExpr(into, SStr(name, pos), LocalVarAccess(pos, sVar), actual));
+		Expr[] actuals;
+		actuals << i.item;
+		if (time = i.time)
+			actuals << time;
+
+		LocalVarAccess slide(pos, sVar);
+		var e = if (i.direct) {
+			pattern(into) {
+				$slide.add(@actuals);
+			};
+		} else {
+			pattern(into) {
+				$slide.addDelayed(@actuals);
+			};
+		};
+		into.add(e);
 	}
 
 	void add(ItemInfo[] i) {
@@ -105,7 +118,7 @@ class SlideExpr extends Expr {
 	}
 }
 
-class IntroExpr {
+class IntroExpr on Compiler {
 	// Name of the transition (if any).
 	Str? name;
 	Actuals params;
@@ -116,7 +129,7 @@ class IntroExpr {
 
 	init(SStr name, Actuals params) {
 		init() {
-			name = name.v # "Intro";
+			name = name.v + "Intro";
 			params = params;
 		}
 	}
@@ -129,7 +142,7 @@ class IntroExpr {
 	}
 }
 
-class ItemInfo {
+class ItemInfo on Compiler {
 	Expr item;
 
 	Bool direct;
