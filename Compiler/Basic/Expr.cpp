@@ -179,6 +179,10 @@ namespace storm {
 			return CREATE(Constant, v->engine(), pos, v->toFloat());
 		}
 
+		Constant *strConstant(syntax::SStr *v) {
+			return strConstant(v->pos, v->v);
+		}
+
 		Constant *strConstant(SrcPos pos, Str *v) {
 			return CREATE(Constant, v->engine(), pos, v->unescape());
 		}

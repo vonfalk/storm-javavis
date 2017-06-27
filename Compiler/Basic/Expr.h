@@ -3,6 +3,7 @@
 #include "Compiler/SrcPos.h"
 #include "Compiler/NamedThread.h"
 #include "Compiler/CodeGen.h"
+#include "Compiler/Syntax/SStr.h"
 #include "Core/EnginePtr.h"
 
 namespace storm {
@@ -93,6 +94,7 @@ namespace storm {
 		};
 
 		Constant *STORM_FN intConstant(SrcPos pos, Str *str);
+		Constant *STORM_FN strConstant(syntax::SStr *str);
 		Constant *STORM_FN strConstant(SrcPos pos, Str *str);
 		Constant *STORM_FN rawStrConstant(SrcPos pos, Str *str);
 		Constant *STORM_FN floatConstant(SrcPos pos, Str *str);

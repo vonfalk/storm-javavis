@@ -9,13 +9,13 @@ class TemplateExpr extends ExprBlock {
 	init(Block block, Expr env, SExpr create) {
 		init(create.pos, block);
 		var atoms = create.allChildren(named{PatternAtom});
-		var actuals = create.allChildren(named{PatternActual});
+		var arrays = findArrays(create);
 
 		// PatternBlock exprs(<env>, atoms.count, actuals.count);
 		Actuals params;
 		params.add(env);
 		params.add(Constant(pos, atoms.count.long));
-		params.add(Constant(pos, actuals.count.long));
+		params.add(Constant(pos, arrays.count.long));
 
 		Var exprVars(this, Value(named{PatternBlock}), SStr("block"), params);
 		add(exprVars);
@@ -23,18 +23,14 @@ class TemplateExpr extends ExprBlock {
 
 		for (node in atoms) {
 			if (node as PatternAtom) {
-				addExpr(block, exprs, node.pattern);
+				addExpr(block, exprs, node.pattern, "push");
 			} else {
 				throwSyntaxError(pos, "Internal error!");
 			}
 		}
 
-		for (node in actuals) {
-			if (node as PatternActual) {
-				addExpr(block, exprs, node.pattern);
-			} else {
-				throwSyntaxError(pos, "Internal error!");
-			}
+		for (node in arrays) {
+			addExpr(block, exprs, node, "pushArray");
 		}
 
 		// Call transform on the stored syntax tree.
@@ -45,18 +41,38 @@ class TemplateExpr extends ExprBlock {
 		add(exprs);
 	}
 
-	void addExpr(Block parent, LocalVarAccess exprs, SPatternExpr node) {
+	Array<SPatternExpr> findArrays(SExpr create) {
+		SPatternExpr[] result;
+		for (x in create.allChildren(named{PatternActual})) {
+			if (x as PatternActual) {
+				result << x.pattern;
+			}
+		}
+		for (x in create.allChildren(named{PatternArray})) {
+			if (x as PatternArray) {
+				result << x.pattern;
+			}
+		}
+		for (x in create.allChildren(named{PatternBlockItem})) {
+			if (x as PatternBlockItem) {
+				result << x.pattern;
+			}
+		}
+		result;
+	}
+
+	void addExpr(Block parent, LocalVarAccess exprs, SPatternExpr node, Str member) {
 		if (var = node as PatternVar) {
-			addExpr(exprs, namedExpr(parent, var.name.transform, Actuals()));
+			addExpr(member, exprs, namedExpr(parent, var.name.transform, Actuals()));
 		} else if (expr = node as PatternExpr) {
-			addExpr(exprs, expr.expr.transform(parent));
+			addExpr(member, exprs, expr.expr.transform(parent));
 		} else {
 			throwSyntaxError(pos, "Unexpected subtype of SPatternExpr found. Can not continue.");
 		}
 	}
 
-	void addExpr(LocalVarAccess exprs, Expr insert) {
-		add(namedExpr(this, SStr("push"), exprs, Actuals(insert)));
+	void addExpr(Str member, LocalVarAccess exprs, Expr insert) {
+		add(namedExpr(this, SStr(member), exprs, Actuals(insert)));
 	}
 
 	void code(CodeGen state, CodeResult r) {
@@ -111,7 +127,7 @@ class PatternBlock extends Block {
 	}
 
 	// Add a set of actual parameters.
-	void push(Array<Expr> expr) {
+	void pushArray(Array<Expr> expr) {
 		actuals.push(expr);
 	}
 
@@ -168,8 +184,27 @@ void insertActuals(SrcPos pos, Actuals actuals, Block block) {
 		}
 	} else {
 		throwSyntaxError(pos, "Can not use @{} syntax outside of pattern blocks.");
-		// When we have exceptions, we can ignore this.
-		Array<Expr>();
+	}
+}
+
+// Insert a previously generated Array<Expr> here.
+void insertExprs(SrcPos pos, Array<Expr> into, Block block) {
+	if (r = findPattern(block)) {
+		for (x in r.nextActuals()) {
+			into.push(x);
+		}
+	} else {
+		throwSyntaxError(pos, "Can not use @{} syntax outside of pattern blocks.");
+	}
+}
+
+void insertExprs(SrcPos pos, ExprBlock block) {
+	if (r = findPattern(block)) {
+		for (x in r.nextActuals()) {
+			block.add(x);
+		}
+	} else {
+		throwSyntaxError(pos, "Can not use @{} syntax outside of pattern blocks.");
 	}
 }
 

@@ -148,7 +148,11 @@ SFnActuals => v : "(", SActuals(block) v, ")";
 
 // Block.
 Block SBlock(Block parent);
-SBlock => ExprBlock(pos, parent) : "{" [, (SStmt(me) -> add, )* ]+ "}";
+SBlock => ExprBlock(pos, parent) : "{" [, (SBlockItem(me), )* ]+ "}";
+
+// Single item inside a block.
+void SBlockItem(ExprBlock parent);
+SBlockItem => parent : SStmt(parent) -> add;
 
 // Weak casts, ie. casts that can fail. Note that if (x) is excluded from here, as it is difficult
 // to distinguish from the case where 'c' is a boolean by syntax alone. This part will probably contain
@@ -204,7 +208,11 @@ SUnless[5] => Unless(block, cast, name) :
 // Initializer list for arrays.
 Array<Expr> SArrayInitList(Block block);
 SArrayInitList => Array<Expr>() : ",?";
-SArrayInitList => Array<Expr>() : SExpr(block) -> push, (",", SExpr(block) -> push,)* ",?";
+SArrayInitList => Array<Expr>() : SArrayInitItem(me, block), (",", SArrayInitItem(me, block),)* ",?";
+
+// Single item initialization for arrays.
+void SArrayInitItem(Array<Expr> to, Block block);
+SArrayInitItem => to : SExpr(block) -> push;
 
 // Constants that can be used with units.
 Expr SConst();
