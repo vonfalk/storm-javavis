@@ -75,7 +75,7 @@ public:
 	// Treat the string as a command line.
 	String unescape(bool keepUnknown = false) const;
 	String escape() const;
-	static String escape(wchar ch);
+	static String escape(wchar_t ch);
 	String firstParam() const;
 	String restParams() const;
 
@@ -109,7 +109,7 @@ String toS(nat i);
 String toS(int64 i);
 String toS(nat64 i);
 String toS(double i);
-String toS(const wchar *w);
+String toS(const wchar_t *w);
 const String &toS(const String &s);
 
 template <class A, class B>

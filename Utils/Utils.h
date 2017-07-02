@@ -17,18 +17,19 @@
 #define _SHORT_STRING(X) #X
 #define SHORT_STRING(X) _SHORT_STRING(X)
 
+#define UNUSED(x) (void)(x)
+
 #include "Platform.h"
 #include "Mode.h"
 
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof(*(x)))
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef WINDOWS
 #include <tchar.h>
 #include "targetver.h"
-#elif defined(POSIX)
-#include <pthread.h>
 #endif
 
 #define _USE_MATH_DEFINES

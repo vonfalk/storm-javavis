@@ -3,12 +3,15 @@
 
 #include <sstream>
 #include <iomanip>
+#include <limits.h>
+
+#ifdef WINDOWS
 
 String::String(const char *chars) {
 	nat size = strlen(chars);
 	// Allocate memory for the worst case.
 	nat bufferSize = size * 2 + 1;
-	wchar_t *outBuffer = new wchar_t[bufferSize];
+	wchar *outBuffer = new wchar[bufferSize];
 	outBuffer[0] = 0;
 
 	int count = MultiByteToWideChar(CP_UTF8, 0, chars, size, outBuffer, bufferSize - 1);
@@ -21,7 +24,7 @@ String::String(const char *chars) {
 }
 
 std::string String::toChar() const {
-	// Worst case is 4 chars per wchar_t in UTF-8
+	// Worst case is 4 chars per wchar in UTF-8
 	nat bufferSize = size() * 4 + 1;
 	char *outBuffer = new char[bufferSize];
 	outBuffer[0] = 0;
@@ -36,6 +39,26 @@ std::string String::toChar() const {
 	return result;
 }
 
+#endif
+
+#ifdef POSIX
+
+#include <codecvt>
+
+static std::wstring convert(const char *chars) {
+	std::wstring_convert<std::codecvt_utf8<char32_t>, wchar_t> convert;
+	return convert.from_bytes(chars);
+}
+
+String::String(const char *chars) : std::wstring(convert(chars)) {}
+
+std::string String::toChar() const {
+	std::wstring_convert<std::codecvt_utf8<char32_t>, wchar_t> convert;
+	return convert.to_bytes(*this);
+}
+
+#endif
+
 String String::left(nat size) const {
 	return String(*this, 0, size);
 }
@@ -46,8 +69,13 @@ String String::right(nat size) const {
 	return String(*this, start);
 }
 
+#ifdef WINDOWS
+#define _wcsicmp wcscasecmp
+#define _wcsnicmp wcsncasecmp
+#endif
+
 int String::compareNoCase(const String &str) const {
-	return _wcsicmp(c_str(), str.c_str());
+	return wcscasecmp(c_str(), str.c_str());
 }
 
 bool String::startsWith(const String &str) const {
@@ -62,18 +90,19 @@ bool String::endsWith(const String &str) const {
 }
 
 bool String::startsWithNC(const String &str) const {
-	return _wcsnicmp(c_str(), str.c_str(), str.size()) == 0;
+	return wcsncasecmp(c_str(), str.c_str(), str.size()) == 0;
 }
 
 bool String::endsWithNC(const String &str) const {
 	if (size() < str.size()) return false;
 	nat delta = size() - str.size();
 	const wchar_t *ourStart = c_str() + delta;
-	return _wcsicmp(ourStart, str.c_str()) == 0;
+	return wcscasecmp(ourStart, str.c_str()) == 0;
 }
 
+#ifdef WINDOWS
 String String::toUpper() const {
-	wchar_t *buffer = new wchar_t[size() + 1];
+	wchar *buffer = new wchar[size() + 1];
 	wcscpy_s(buffer, size() + 1, c_str());
 	_wcsupr_s(buffer, size() + 1);
 	String result(buffer);
@@ -82,13 +111,30 @@ String String::toUpper() const {
 }
 
 String String::toLower() const {
-	wchar_t *buffer = new wchar_t[size() + 1];
+	wchar *buffer = new wchar[size() + 1];
 	wcscpy_s(buffer, size() + 1, c_str());
 	_wcslwr_s(buffer, size() + 1);
 	String result(buffer);
 	delete []buffer;
 	return result;
 }
+#else
+String String::toUpper() const {
+	String result(*this);
+	for (nat i = 0; i < result.size(); i++) {
+		result[i] = towupper(result[i]);
+	}
+	return result;
+}
+
+String String::toLower() const {
+	String result(*this);
+	for (nat i = 0; i < result.size(); i++) {
+		result[i] = towlower(result[i]);
+	}
+	return result;
+}
+#endif
 
 String String::trim() const {
 	if (size() == 0) return L"";
@@ -131,7 +177,7 @@ vector<String> split(const String &str, const String &delimiter) {
 
 String toHex(const void *x, bool prefix) {
 	if (sizeof(void *) == sizeof(nat)) {
-		return toHex(nat(x), prefix);
+		return toHex(nat(size_t(x)), prefix);
 	} else if (sizeof(void *) == sizeof(nat64)) {
 		return toHex(nat64(x), prefix);
 	}
@@ -186,7 +232,7 @@ String toS(nat i) { return genericToS(i); }
 String toS(int64 i) { return genericToS(i); }
 String toS(nat64 i) { return genericToS(i); }
 String toS(double i) { return genericToS(i); }
-String toS(const wchar *s) { return String(s); }
+String toS(const wchar_t *s) { return String(s); }
 const String &toS(const String &s) { return s; }
 
 double String::toDouble() const {
@@ -232,7 +278,7 @@ bool String::isInt() const {
 		i = 1;
 
 	for (; i < size(); i++) {
-		wchar c = (*this)[i];
+		wchar_t c = (*this)[i];
 		if (c < '0' || c > '9')
 			return false;
 	}
@@ -241,7 +287,7 @@ bool String::isInt() const {
 
 bool String::isNat() const {
 	for (nat i = 0; i < size(); i++) {
-		wchar c = (*this)[i];
+		wchar_t c = (*this)[i];
 		if (c < '0' || c > '9')
 			return false;
 	}
@@ -295,7 +341,7 @@ String String::escape() const {
 	return to.str();
 }
 
-String String::escape(wchar c) {
+String String::escape(wchar_t c) {
 	switch (c) {
 	case '\n':
 		return L"\\n";

@@ -3,7 +3,7 @@
 
 namespace code {
 
-	const wchar_t *name(CondFlag c) {
+	const wchar *name(CondFlag c) {
 		switch (c) {
 		case ifAlways:
 			return L"always";

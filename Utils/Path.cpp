@@ -326,7 +326,6 @@ void Path::createDir() const {
 /**
  * POSIX specific:
  */
-#include <unistd.h>
 
 Path Path::executableFile() {
 	static Path e;
@@ -348,17 +347,17 @@ Path Path::cwd() {
 
 bool Path::exists() const {
 	struct stat s;
-	return stat(toS(*this).c_str(), &s) == 0;
+	return stat(toS().toChar().c_str(), &s) == 0;
 }
 
 void Path::deleteFile() const {
-	unlink(toS(*this).c_str());
+	unlink(toS().toChar().c_str());
 }
 
 vector<Path> Path::children() const {
 	vector<Path> result;
 
-	DIR *h = opendir(toS(*this).c_str());
+	DIR *h = opendir(toS().toChar().c_str());
 	if (h == null)
 		return result;
 
@@ -366,9 +365,9 @@ vector<Path> Path::children() const {
 	struct stat s;
 	while((d = readdir(h)) != null) {
 		if (strcmp(d->d_name, "..") != 0 && strcmp(d->d_name, ".") != 0) {
-			result.push_back(*this + d->d_name);
+			result.push_back(*this + String(d->d_name));
 
-			if (stat(toS(result.back()).c_str(), &s) == 0) {
+			if (stat(result.back().toS().toChar().c_str(), &s) == 0) {
 				if (S_ISDIR(s.st_mode))
 					result.back().makeDir();
 			} else {
@@ -386,7 +385,7 @@ Timestamp fromFileTime(time_t ft);
 
 Timestamp Path::mTime() const {
 	struct stat s;
-	if (stat(toS(*this).c_str(), &s))
+	if (stat(toS().toChar().c_str(), &s))
 		return Timestamp();
 
 	return fromFileTime(s.st_mtime);
@@ -394,7 +393,7 @@ Timestamp Path::mTime() const {
 
 Timestamp Path::cTime() const {
 	struct stat s;
-	if (stat(toS(*this).c_str(), &s))
+	if (stat(toS().toChar().c_str(), &s))
 		return Timestamp();
 
 	return fromFileTime(s.st_ctime);
@@ -408,7 +407,7 @@ void Path::createDir() const {
 		return;
 
 	parent().createDir();
-	mkdir(toS(*this).c_str(), 0777);
+	mkdir(toS().toChar().c_str(), 0777);
 }
 
 #endif

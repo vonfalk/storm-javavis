@@ -113,7 +113,8 @@ compile+=*.asm:ml /c /nologo /Fo<output> /safeseh /W3 /Zi <file>
 
 [unix]
 flags+=-Wno-unknown-pragmas
-flags+=-Wreorder
+flags+=-Wno-reorder
+flags+=-Wno-terminate
 
 [stormpp]
 stormpp=CppTypes

@@ -27,5 +27,13 @@
 
 
 #ifdef POSIX
+#include <pthread.h>
 #include <semaphore.h>
+
+#include <unistd.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #endif

@@ -1,19 +1,27 @@
 #include "stdafx.h"
 #include "Platform.h"
 
+// Check alignment of value.
+#if defined(X86)
+static inline bool aligned(volatile void *v) {
+	size_t i = (size_t)v;
+	return (i & 0x3) == 0;
+}
+#elif defined(X64)
+static inline bool aligned(volatile void *v) {
+	size_t i = (size_t)v;
+	return (i & 0x7) == 0;
+}
+#endif
+
+#define check_aligned(v) \
+	assert(aligned(&v), toHex((void *)&v) + L" is not properly aligned");
+
+
 #ifdef WINDOWS
 #ifdef X64
 #error "Revise the atomics for 64-bit Windows!"
 #endif
-
-// Check alignment of value.
-static inline bool aligned(volatile void *v) {
-	UINT_PTR i = (UINT_PTR)v;
-	return (i & 0x3) == 0;
-}
-
-#define check_aligned(v) \
-	assert(aligned(&v), toHex((void *)&v) + L" is not properly aligned");
 
 size_t atomicIncrement(volatile size_t &v) {
 	check_aligned(v);
@@ -64,11 +72,12 @@ void atomicWrite(void *volatile &v, void *value) {
 
 size_t unalignedAtomicRead(volatile size_t &v) {
 	volatile size_t *addr = &v;
-	nat result;
+	size_t result;
 	__asm {
 		mov eax, 0;
 		mov ecx, addr;
 		lock add eax, [ecx];
+		mov result, eax;
 	}
 	return result;
 }
@@ -82,8 +91,114 @@ void unalignedAtomicWrite(volatile size_t &v, size_t value) {
 	}
 }
 
+#else
+#error "Implement unaligned atomics for X86-64 as well!"
+#endif
+
+#elif defined(GCC)
+
+size_t atomicIncrement(volatile size_t &v) {
+	check_aligned(v);
+	return __sync_add_and_fetch(&v, 1);
+}
+
+size_t atomicDecrement(volatile size_t &v) {
+	check_aligned(v);
+	return __sync_sub_and_fetch(&v, 1);
+}
+
+size_t atomicCAS(volatile size_t &v, size_t compare, size_t exchange) {
+	check_aligned(v);
+	return __sync_val_compare_and_swap(&v, compare, exchange);
+}
+
+void *atomicCAS(void *volatile &v, void *compare, void *exchange) {
+	check_aligned(v);
+	return __sync_val_compare_and_swap(&v, compare, exchange);
+}
+
+#if defined(X86) || defined(X64)
+
+size_t atomicRead(volatile size_t &v) {
+	check_aligned(v);
+	// Volatile reads are atomic on X86/X64 as long as they are aligned.
+	return v;
+}
+
+void *atomicRead(void *volatile &v) {
+	check_aligned(v);
+	// Volatile reads are atomic on X86/X64 as long as they are aligned.
+	return v;
+}
+
+void atomicWrite(volatile size_t &v, size_t value) {
+	check_aligned(v);
+	// Volatile writes are atomic on X86/X64 as long as they are aligned.
+	v = value;
+}
+
+void atomicWrite(void *volatile &v, void *value) {
+	check_aligned(v);
+	// Volatile writes are atomic on X86/X64 as long as they are aligned.
+	v = value;
+}
+
+#endif
+
+#if defined(X86)
+
+size_t unalignedAtomicRead(volatile size_t &v) {
+	size_t result;
+	asm (
+		"movl $0, %%eax\n\t"
+		"movl %[addr], %%ecx\n\t"
+		"lock addl %%eax, (%%ecx)\n\t"
+		"movl %[result], %%eax\n\t"
+		: [result] "=r"(result)
+		: [addr] "r"(&v)
+		: "eax", "ecx", "memory");
+	return result;
+}
+
+void unalignedAtomicWrite(volatile size_t &v, size_t value) {
+	asm (
+		"movl %[value], %%eax\n\t"
+		"movl %[addr], %%ecx\n\t"
+		"lock xchgl %%eax, (%%ecx)\n\t"
+		:
+		: [addr] "r"(&v), [value] "r"(value)
+		: "eax", "ecx", "memory");
+}
+
+#elif defined(X64)
+
+size_t unalignedAtomicRead(volatile size_t &v) {
+	size_t result;
+	asm (
+		"movq $0, %%rax\n\t"
+		"movq %[addr], %%rcx\n\t"
+		"lock addq %%rax, (%%rcx)\n\t"
+		"movq %[result], %%rax\n\t"
+		: [result] "=r"(result)
+		: [addr] "r"(&v)
+		: "rax", "rcx", "memory");
+	return result;
+}
+
+void unalignedAtomicWrite(volatile size_t &v, size_t value) {
+	asm (
+		"movq %[value], %%rax\n\t"
+		"movq %[addr], %%rcx\n\t"
+		"lock xchgq %%rax, (%%rcx)\n\t"
+		:
+		: [addr] "r"(&v), [value] "r"(value)
+		: "rax", "rcx", "memory");
+}
+
+#else
+#error "Unaligned operations not supported for this architecture yet."
 #endif
 
 #else
-#error "atomicIncrement and atomicDecrement are only supported on Windows for now"
+#error "atomicIncrement and atomicDecrement are only supported on Windows and Unix for now"
 #endif

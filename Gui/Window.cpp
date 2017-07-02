@@ -152,7 +152,7 @@ namespace gui {
 	const Str *Window::text() {
 		if (created()) {
 			Nat len = GetWindowTextLength(handle());
-			GcArray<wchar_t> *src = runtime::allocArray<wchar>(engine(), &wcharArrayType, len + 1);
+			GcArray<wchar> *src = runtime::allocArray<wchar>(engine(), &wcharArrayType, len + 1);
 			GetWindowText(handle(), src->v, len + 1);
 			myText = (new (this) Str(src))->fromCrLf();
 		}

@@ -32,9 +32,14 @@ private:
 	static const nat bufferSize = 10 * 1024;
 
 	Path name;
-	HANDLE file;
 	Mode mode;
 	nat64 fileSize;
+
+#if defined(WINDOWS)
+	HANDLE file;
+#elif defined(POSIX)
+	int file;
+#endif
 
 	// The buffer is always flushed when seeking. When reading data,
 	// the buffer is pre-loaded until bufferFill. When writing, the buffer may

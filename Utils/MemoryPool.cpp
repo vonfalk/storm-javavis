@@ -28,6 +28,7 @@ namespace util {
 	}
 
 	void MemoryPool::free(void *memory) {
+		UNUSED(memory);
 		assert(allocCount > 0);
 		if (--allocCount == 0) {
 			firstFree = 0;
