@@ -15,6 +15,12 @@ public:
 	// Timeout. Returns true if the semaphore was lowered normally, false if the timeout passed.
 	bool down(nat msTimeout);
 private:
+#if defined(WINDOWS)
 	HANDLE semaphore;
+#elif defined(POSIX)
+	sem_t semaphore;
+#else
+#error "No semaphores for this platform yet!"
+#endif
 };
 

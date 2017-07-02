@@ -53,6 +53,18 @@
 #elif defined(_WIN32)
 #define X86
 #define WINDOWS
+#elif defined(__linux__)
+#define LINUX
+#define POSIX
+
+#if defined(__amd64__)
+#define X64
+#elif defined(__i386__)
+#define X86
+#else
+#error "Unknown (and probably unsupported) architecture for Linux."
+#endif
+
 #else
 #error "Unknown platform, please add it here!"
 #endif
@@ -84,6 +96,12 @@
 #define SHARED_EXPORT __declspec(dllexport)
 #endif
 
+#ifdef GCC
+#define THREAD __thread
+#define NAKED error // not supported?
+#define SHARED_EXPORT error // TODO!
+#endif
+
 #if defined(X86) || defined(X64)
 #define LITTLE_ENDIAN
 #else
@@ -102,8 +120,12 @@
 #error "someone forgot to declare SHARED_EXPORT for your architecture"
 #endif
 
-#ifdef WINDOWS
+#ifdef VISUAL_STUDIO
 #define CODECALL __cdecl
+#endif
+
+#if defined(GCC) && (defined(X86) || defined(X64))
+#define CODECALL __attribute__((cdecl))
 #endif
 
 // Make sure it is defined.

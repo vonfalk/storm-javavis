@@ -2,22 +2,9 @@
 #include "Path.h"
 #include "Exception.h"
 
-#include <Shlwapi.h>
-#pragma comment(lib, "shlwapi.lib")
-
-//////////////////////////////////////////////////////////////////////////
-// The Path class
-//////////////////////////////////////////////////////////////////////////
-
-Path Path::executableFile() {
-	static Path e;
-	if (e.parts.size() == 0) {
-		wchar_t tmp[MAX_PATH + 1];
-		GetModuleFileName(NULL, tmp, MAX_PATH + 1);
-		e = Path(tmp);
-	}
-	return e;
-}
+/**
+ * The path class. Shared parts:
+ */
 
 Path Path::executable() {
 	static Path e;
@@ -35,12 +22,6 @@ Path Path::dbgRoot() {
 	WARNING(L"Using dbgRoot in release!");
 #endif
 	return executable().parent();
-}
-
-Path Path::cwd() {
-	wchar_t tmp[MAX_PATH + 1];
-	_wgetcwd(tmp, MAX_PATH + 1);
-	return Path(tmp);
 }
 
 Path::Path(const String &path) : isDirectory(false) {
@@ -142,7 +123,7 @@ Path Path::operator +(const Path &other) const {
 }
 
 Path &Path::operator +=(const Path &other) {
-	assert(!other.isAbsolute());
+	assert(!other.isAbsolute(), L"Expected a relative path for 'other'");
 	isDirectory = other.isDirectory;
 	parts.insert(parts.end(), other.parts.begin(), other.parts.end());
 	simplify();
@@ -243,6 +224,33 @@ Path Path::makeAbsolute(const Path &to) const {
 		return to + *this;
 }
 
+
+#ifdef WINDOWS
+
+/**
+ * Windows specific:
+ */
+
+
+#include <Shlwapi.h>
+#pragma comment(lib, "shlwapi.lib")
+
+Path Path::executableFile() {
+	static Path e;
+	if (e.parts.size() == 0) {
+		wchar_t tmp[MAX_PATH + 1];
+		GetModuleFileName(NULL, tmp, MAX_PATH + 1);
+		e = Path(tmp);
+	}
+	return e;
+}
+
+Path Path::cwd() {
+	wchar_t tmp[MAX_PATH + 1];
+	_wgetcwd(tmp, MAX_PATH + 1);
+	return Path(tmp);
+}
+
 bool Path::exists() const {
 	return PathFileExists(toS().c_str()) == TRUE;
 }
@@ -309,3 +317,98 @@ void Path::createDir() const {
 	parent().createDir();
 	CreateDirectory(toS().c_str(), NULL);
 }
+
+#endif
+
+
+#ifdef POSIX
+
+/**
+ * POSIX specific:
+ */
+#include <unistd.h>
+
+Path Path::executableFile() {
+	static Path e;
+	if (e.parts.size() == 0) {
+		assert(false, L"Don't know how to get the path of the executable file on POSIX yet!");
+	}
+	return e;
+}
+
+Path Path::cwd() {
+	char tmp[512] = { 0 };
+	if (!getcwd(tmp, 512))
+		WARNING(L"Failed to get cwd!");
+
+	Path r = Path(String(tmp));
+	r.makeDir();
+	return r;
+}
+
+bool Path::exists() const {
+	struct stat s;
+	return stat(toS(*this).c_str(), &s) == 0;
+}
+
+void Path::deleteFile() const {
+	unlink(toS(*this).c_str());
+}
+
+vector<Path> Path::children() const {
+	vector<Path> result;
+
+	DIR *h = opendir(toS(*this).c_str());
+	if (h == null)
+		return result;
+
+	dirent *d;
+	struct stat s;
+	while((d = readdir(h)) != null) {
+		if (strcmp(d->d_name, "..") != 0 && strcmp(d->d_name, ".") != 0) {
+			result.push_back(*this + d->d_name);
+
+			if (stat(toS(result.back()).c_str(), &s) == 0) {
+				if (S_ISDIR(s.st_mode))
+					result.back().makeDir();
+			} else {
+				result.pop_back();
+			}
+		}
+	}
+
+	closedir(h);
+
+	return result;
+}
+
+Timestamp fromFileTime(time_t ft);
+
+Timestamp Path::mTime() const {
+	struct stat s;
+	if (stat(toS(*this).c_str(), &s))
+		return Timestamp();
+
+	return fromFileTime(s.st_mtime);
+}
+
+Timestamp Path::cTime() const {
+	struct stat s;
+	if (stat(toS(*this).c_str(), &s))
+		return Timestamp();
+
+	return fromFileTime(s.st_ctime);
+}
+
+void Path::createDir() const {
+	if (exists())
+		return;
+
+	if (isEmpty())
+		return;
+
+	parent().createDir();
+	mkdir(toS(*this).c_str(), 0777);
+}
+
+#endif

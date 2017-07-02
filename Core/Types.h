@@ -1,7 +1,7 @@
 #pragma once
 #include "OS/Types.h"
 #include "OS/Thread.h"
-#include "OS/Threadgroup.h"
+#include "OS/ThreadGroup.h"
 
 namespace storm {
 

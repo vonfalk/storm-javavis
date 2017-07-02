@@ -53,20 +53,27 @@ namespace storm {
 /**
  * Custom casting.
  */
-template <class To>
-To *customAs(storm::RootObject *from) {
-	if (from == null)
+template <class Src>
+struct RootCast {
+	Src *from;
+	RootCast(Src *from) : from(from) {}
+
+	template <class To>
+	To *cast() const {
+		if (from == null)
+			return null;
+		if (from->isA(To::stormType(from->engine())))
+			return static_Cast<To *>(from);
 		return null;
-	if (from->isA(To::stormType(from->engine())))
-		return static_cast<To *>(from);
-	return null;
+	}
+};
+
+RootCast<storm::RootObject> customCast(storm::RootObject *from) {
+	TODO(L"Check so that these are properly used!");
+	return RootCast<storm::RootObject>(from);
 }
 
-template <class To>
-const To *customAs(const storm::RootObject *from) {
-	if (from == null)
-		return null;
-	if (from->isA(To::stormType(from->engine())))
-		return static_cast<To *>(from);
-	return null;
+RootCast<const storm::RootObject> customCast(const storm::RootObject *from) {
+	TODO(L"Check so that these are properly used!");
+	return RootCast<const storm::RootObject>(from);
 }

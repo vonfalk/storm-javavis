@@ -160,8 +160,8 @@ String toS(const set<T> &data) {
 // Join a vector or any other sequence type.
 template <class T>
 void join(std::wostream &to, const T &data, const String &between) {
-	T::const_iterator i = data.begin();
-	T::const_iterator end = data.end();
+	typename T::const_iterator i = data.begin();
+	typename T::const_iterator end = data.end();
 	if (i == end)
 		return;
 
@@ -173,8 +173,8 @@ void join(std::wostream &to, const T &data, const String &between) {
 
 template <class T, class ToS>
 void join(std::wostream &to, const T &data, const String &between, ToS toS) {
-	T::const_iterator i = data.begin();
-	T::const_iterator end = data.end();
+	typename T::const_iterator i = data.begin();
+	typename T::const_iterator end = data.end();
 	if (i == end)
 		return;
 

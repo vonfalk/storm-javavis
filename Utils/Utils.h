@@ -17,13 +17,19 @@
 #define _SHORT_STRING(X) #X
 #define SHORT_STRING(X) _SHORT_STRING(X)
 
+#include "Platform.h"
 #include "Mode.h"
 
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof(*(x)))
 
 #include <stdio.h>
+
+#ifdef WINDOWS
 #include <tchar.h>
 #include "targetver.h"
+#elif defined(POSIX)
+#include <pthread.h>
+#endif
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -40,6 +46,7 @@ using std::max;
 using std::swap;
 using std::make_pair;
 
+#ifdef VISUAL_STUDIO
 typedef unsigned int nat;
 typedef unsigned short nat16;
 typedef short int16;
@@ -48,6 +55,17 @@ typedef unsigned __int64 nat64;
 typedef __int64 int64;
 typedef unsigned char byte;
 typedef wchar_t wchar;
+#else
+#include <cstdint>
+typedef uint32_t nat;
+typedef uint16_t nat16;
+typedef int16_t int16;
+typedef uint64_t uint64;
+typedef uint64_t nat64;
+typedef int64_t int64;
+typedef unsigned char byte;
+typedef char16_t wchar;
+#endif
 
 #include "Containers.h"
 
@@ -102,7 +120,7 @@ inline void del(T *&ptr) {
 // Clear the contents of a vector or list containing pointers.
 template <class T>
 inline void clear(T &vec) {
-	for (T::iterator i = vec.begin(), end = vec.end(); i != end; ++i)
+	for (typename T::iterator i = vec.begin(), end = vec.end(); i != end; ++i)
 		delete *i;
 	vec.clear();
 }
@@ -110,7 +128,7 @@ inline void clear(T &vec) {
 // Clear the contents of a map<?, ?*>.
 template <class T>
 inline void clearMap(T &map) {
-	for (T::iterator i = map.begin(), end = map.end(); i != end; ++i)
+	for (typename T::iterator i = map.begin(), end = map.end(); i != end; ++i)
 		delete i->second;
 	map.clear();
 }
@@ -210,26 +228,30 @@ inline bool all(const vector<bool> &v) {
 	return true;
 }
 
-template <class From, class To, bool custom>
-struct my_cast {
-	inline To *cast(From *f) { return dynamic_cast<To *>(f); }
+template <class From>
+struct default_cast {
+	From x;
+	default_cast(From *x) : x(x) {}
+
+	template <class To>
+	To *cast() const {
+		return dynamic_cast<To *>(x);
+	}
 };
 
-template <class From, class To>
-struct my_cast<From, To, true> {
-	inline To *cast(From *f) { return customAs<To>(f); }
-};
+template <class From>
+default_cast<From> customCast(From v) {
+	return default_cast<From>(v);
+}
+
 
 #include "Detect.h"
-CREATE_DETECTOR(isA);
 
 template <class T>
 struct as {
 	template <class U>
 	as(U *v) {
-		my_cast<U, T, detect_isA<U>::value> c;
-		this->v = c.cast(v);
-		// this->v = dynamic_cast<T*>(v);
+		this->v = customCast(v).template cast<T>();
 	}
 
 	operator T*() const {

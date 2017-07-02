@@ -24,3 +24,8 @@
 #endif
 
 #endif
+
+
+#ifdef POSIX
+#include <semaphore.h>
+#endif

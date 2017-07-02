@@ -26,7 +26,11 @@ using std::endl;
 #define TODO(str) do { static nat _times = 0; if (++_times <= 5) PLN("TODO("__FUNCTION__"):" << str); } while (false)
 
 // Good way of indicating something possibly interesting during debugging.
+#if defined(VISUAL_STUDIO)
 #define WARNING(str) PLN("WARNING "__FUNCTION__": " << str);
+#elif defined(GCC)
+#define WARNING(str) PLN("WARNING " << __PRETTY_FUNCTION__ << ": " << str);
+#endif
 
 #include "Timer.h"
 #define TIME(str) util::Timer __timer__(str);

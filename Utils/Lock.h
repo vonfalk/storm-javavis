@@ -28,6 +28,10 @@ namespace util {
 
 	private:
 		// Underlying implementation.
+#if defined(WINDOWS)
 		CRITICAL_SECTION cs;
+#elif defined(POSIX)
+		pthread_mutex_t cs;
+#endif
 	};
 }
