@@ -33,7 +33,10 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+int main(int argc, const char *argv[]);
 
 #endif

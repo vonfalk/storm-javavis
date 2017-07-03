@@ -147,7 +147,7 @@ namespace code {
 	}
 
 	wostream &operator <<(wostream &to, const Size &s) {
-		if (code::size(s.s32) == code::size(s.s64) && code::size(s.s32) == code::size(s.s32)) {
+		if (code::size(s.s32) == code::size(s.s64) && code::align(s.s32) == code::align(s.s64)) {
 			output(to, s.s32);
 		} else {
 			output(to, s.s32);

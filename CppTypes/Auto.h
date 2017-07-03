@@ -93,7 +93,7 @@ Auto<T> capture(T *ptr) {
 class Refcount : NoCopy {
 public:
 	Refcount() : refs(1) {}
-	Refcount(const Refcount &) : refs(1) {}
+	Refcount(const Refcount &) : NoCopy(), refs(1) {}
 
 	void addRef() {
 		refs++;

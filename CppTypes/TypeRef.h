@@ -370,7 +370,7 @@ public:
 private:
 	// Description of an id.
 	struct ID {
-		const wchar *name;
+		const wchar_t *name;
 		const Size &size; // needs to be a reference for some reason.
 		bool gc;
 	};

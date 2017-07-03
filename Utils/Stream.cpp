@@ -6,11 +6,15 @@ Stream::Stream() : hasError(false) {}
 Stream::~Stream() {}
 
 nat Stream::read(nat size, void *to) {
+	UNUSED(size);
+	UNUSED(to);
 	assert(false);
 	return 0;
 }
 
 void Stream::write(nat size, const void *from) {
+	UNUSED(size);
+	UNUSED(from);
 	assert(false);
 }
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ConUtils.h"
 #include "Indent.h"
 #include <iostream>
 
@@ -23,7 +22,7 @@ using std::endl;
 
 // Good way of making TODO: comments (only displays 5 times).
 // #define TODO(str) PLN("TODO("__FUNCTION__"):" << str)
-#define TODO(str) do { static nat _times = 0; if (++_times <= 5) PLN("TODO("__FUNCTION__"):" << str); } while (false)
+#define TODO(str) do { static nat _times = 0; if (++_times <= 5) PLN("TODO(" << __FUNCTION__ << "):" << str); } while (false)
 
 // Good way of indicating something possibly interesting during debugging.
 #if defined(VISUAL_STUDIO)

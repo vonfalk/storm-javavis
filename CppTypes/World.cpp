@@ -4,7 +4,7 @@
 #include "Config.h"
 
 struct BuiltIn {
-	wchar *name;
+	const wchar_t *name;
 	const Size &size;
 };
 

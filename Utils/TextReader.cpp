@@ -77,6 +77,7 @@ wchar_t textfile::Utf8Reader::readChar() {
 }
 
 wchar_t textfile::Utf8Reader::encodeUtf16(nat decoded) {
+#ifdef WINDOWS
 	//If the value can be stored as a single code unit, do it!
 	if (decoded < 0xFFFF) return wchar_t(decoded);
 
@@ -91,16 +92,19 @@ wchar_t textfile::Utf8Reader::encodeUtf16(nat decoded) {
 	nextValid = true;
 
 	return firstByte;
+#else
+	// On POSIX, we assume that a wchar_t is UTF-32, which makes life easy:
+	return decoded;
+#endif
 }
 
 void textfile::Utf8Reader::seek(nat position) {
-	__super::seek(position);
+	TextReader::seek(position);
 	nextValid = false;
 }
 
 nat textfile::Utf8Reader::decodeUtf8() {
 	byte firstCh = read();
-	nat decoded = 0;
 
 	if ((firstCh & 0x80) == 0) {
 		return firstCh;
@@ -154,12 +158,34 @@ textfile::Utf16Reader::Utf16Reader(Stream *stream, bool reverseEndian) : TextRea
 textfile::Utf16Reader::~Utf16Reader() {}
 
 wchar_t textfile::Utf16Reader::get() {
-	wchar_t ch = 0;
-	stream->read(sizeof(wchar_t), &ch);
+	wchar ch = 0;
+	stream->read(sizeof(wchar), &ch);
 
 	if (reverseEndian) {
 		ch = ((ch & 0x00FF) << 8) | ((ch & 0xFF00) >> 8);
 	}
+
+#ifdef POSIX
+	// wchar_t is a UTF-32 character, so we might need to read another character!
+	if (ch >= 0xD800 && ch <= 0xDBFF) {
+		// Surrogate pair!
+		wchar next = 0;
+		stream->read(sizeof(wchar), &ch);
+
+		if (reverseEndian) {
+			next = ((next & 0x00FF) << 8) | ((next & 0xFF00) >> 8);
+		}
+
+		if (next < 0xDC00 || next > 0xDFFF)
+			return L'?';
+
+		wchar_t full = (ch & 0x03FF) << 10;
+		full |= (next & 0x03FF);
+		full += 0x010000;
+		return full;
+	}
+#endif
+
 	return ch;
 }
 

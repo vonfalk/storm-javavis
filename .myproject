@@ -115,6 +115,9 @@ compile+=*.asm:ml /c /nologo /Fo<output> /safeseh /W3 /Zi <file>
 flags+=-Wno-unknown-pragmas
 flags+=-Wno-reorder
 flags+=-Wno-terminate
+flags+=-Wno-unused-parameter
+
+compile+=*.c:gcc -std=c99 <defines> <warnings> <usePch*if|pch> <file> -c <includes> -o <output>
 
 [stormpp]
 stormpp=CppTypes

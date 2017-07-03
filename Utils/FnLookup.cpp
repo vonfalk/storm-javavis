@@ -3,7 +3,7 @@
 #include "Path.h"
 #include "DbgHelper.h"
 
-#ifdef WINDOWS
+#if defined(WINDOWS)
 
 // Easy creation of a SYMBOL_INFO
 struct SymInfo : SYMBOL_INFO {
@@ -257,6 +257,13 @@ String CppLookup::format(const StackFrame &frame) const {
 		r << L"Unknown function @" << toHex(frame.code);
 
 	return r.str();
+}
+
+#elif defined(POSIX)
+
+String CppLookup::format(const StackFrame &frame) const {
+	UNUSED(frame);
+	return L"<unknown function>";
 }
 
 #else

@@ -71,7 +71,7 @@ bool Size::operator !=(const Size &o) const {
 }
 
 wostream &operator <<(wostream &to, const Size &s) {
-	if (s.s32.size == s.s64.size && s.s32.align == s.s32.align)
+	if (s.s32.size == s.s64.size && s.s32.align == s.s64.align)
 		to << s.s32;
 	else
 		to << s.s32 << "/" << s.s64;

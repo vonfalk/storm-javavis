@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Compiler/Syntax/Parser.h"
-#include "Compiler/Syntax/Glr/Parser.h"
+#include "Compiler/Syntax/GLR/Parser.h"
 #include "Compiler/Package.h"
 
 using namespace storm::syntax;

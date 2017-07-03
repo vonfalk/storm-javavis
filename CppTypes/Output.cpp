@@ -34,8 +34,6 @@ static String format(const Offset &o) {
 	return to.str();
 }
 
-static String offset(const Offset &o) {}
-
 static void genIncludes(wostream &to, World &w) {
 	// Include all relevant files.
 	set<nat> files;
@@ -726,7 +724,7 @@ static void genLicenses(wostream &to, World &w) {
 
 GenerateMap genMap() {
 	struct E {
-		wchar *tag;
+		const wchar_t *tag;
 		GenerateFn fn;
 	};
 
@@ -805,7 +803,7 @@ static void genVsX86Impl(wostream &to, World &w) {
 
 GenerateMap asmMap() {
 	struct E {
-		wchar *tag;
+		const wchar_t *tag;
 		GenerateFn fn;
 	};
 

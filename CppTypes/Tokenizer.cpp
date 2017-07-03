@@ -19,24 +19,24 @@ String Token::strVal() const {
 	return token.substr(1, token.size() - 2);
 }
 
-static const wchar *operators = L"+?*&=.:!";
-static const wchar *specials = L"[](){},-;<>~";
+static const wchar_t *operators = L"+?*&=.:!";
+static const wchar_t *specials = L"[](){},-;<>~";
 
-static bool isOperator(wchar c) {
-	for (const wchar *p = operators; *p; p++)
+static bool isOperator(wchar_t c) {
+	for (const wchar_t *p = operators; *p; p++)
 		if (c == *p)
 			return true;
 	return false;
 }
 
-static bool isSpecial(wchar c) {
-	for (const wchar *p = specials; *p; p++)
+static bool isSpecial(wchar_t c) {
+	for (const wchar_t *p = specials; *p; p++)
 		if (c == *p)
 			return true;
 	return false;
 }
 
-static bool isWhitespace(wchar c) {
+static bool isWhitespace(wchar_t c) {
 	switch (c) {
 	case ' ':
 	case '\n':
@@ -123,9 +123,7 @@ void Tokenizer::processChar(nat &start, State &state) {
 		return;
 	}
 
-	wchar ch = src[pos];
-	nat oldPos = pos;
-
+	wchar_t ch = src[pos];
 
 	if (ch == '/' && pos+1 < src.size() && (src[pos+1] == '/' || src[pos+1] == '*')) {
 		switch (state) {

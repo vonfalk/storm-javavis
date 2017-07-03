@@ -9,5 +9,5 @@ public:
 
 template <class T>
 class ptr_less : std::binary_function<T, T, bool> {
-	bool operator() (const T *x, const T *y) { return *x < *y }
+	bool operator() (const T *x, const T *y) { return *x < *y; }
 };

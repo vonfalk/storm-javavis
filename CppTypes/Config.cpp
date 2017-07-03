@@ -5,7 +5,7 @@ Config config;
 
 Config::Config() : genAsm(false), compiler(false) {}
 
-void usage(const wchar *name) {
+void usage(const wchar_t *name) {
 	PLN(L"Usage: " << name << L" [--template <in>] [--out <out>]");
 	PLN(L"       [--asm <in-asm> <out-asm>] <dir> [--use <use-dir>]");
 	PLN(L"       [--compiler] [--using <use> ...]");
@@ -19,7 +19,7 @@ void usage(const wchar *name) {
 	PLN(L"compiler  - this is for the compiler itself");
 }
 
-bool parse(int argc, const wchar *argv[]) {
+bool parse(int argc, const wchar_t *argv[]) {
 	if (argc < 2)
 		return false;
 

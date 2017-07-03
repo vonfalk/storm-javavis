@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Debug.h"
 
+#ifdef WINDOWS
+
 #include "LogStream.h"
 
 #include <iomanip>
@@ -129,3 +131,17 @@ void initDebug() {
 	static CrtInit initer;
 #endif
 }
+
+#endif
+
+#ifdef POSIX
+
+namespace util {
+	std::wostream &debugStream() {
+		return std::wcout;
+	}
+}
+
+void initDebug() {}
+
+#endif

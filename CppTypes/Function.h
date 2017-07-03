@@ -55,7 +55,7 @@ public:
 	Thread *threadType;
 
 	// Resolve types.
-	void resolveTypes(World &w, CppName &ctx);
+	void resolveTypes(World &w, const CppName &ctx);
 };
 
 wostream &operator <<(wostream &to, const Function &fn);

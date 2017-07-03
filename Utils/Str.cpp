@@ -46,14 +46,14 @@ std::string String::toChar() const {
 #include <codecvt>
 
 static std::wstring convert(const char *chars) {
-	std::wstring_convert<std::codecvt_utf8<char32_t>, wchar_t> convert;
+	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> convert;
 	return convert.from_bytes(chars);
 }
 
 String::String(const char *chars) : std::wstring(convert(chars)) {}
 
 std::string String::toChar() const {
-	std::wstring_convert<std::codecvt_utf8<char32_t>, wchar_t> convert;
+	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> convert;
 	return convert.to_bytes(*this);
 }
 
@@ -252,12 +252,20 @@ nat String::toNat() const {
 
 int64 String::toInt64() const {
 	wchar_t *end;
+#ifdef WINDOWS
 	return _wcstoi64(c_str(), &end, 10);
+#else
+	return wcstoll(c_str(), &end, 10);
+#endif
 }
 
 nat64 String::toNat64() const {
 	wchar_t *end;
+#ifdef WINDOWS
 	return _wcstoui64(c_str(), &end, 10);
+#else
+	return wcstoull(c_str(), &end, 10);
+#endif
 }
 
 nat String::toIntHex() const {
@@ -301,7 +309,7 @@ String String::unescape(bool keepUnknown) const {
 
 	for (nat i = 0; i < str.size(); i++) {
 		wchar_t ch = str[i];
-		if (str[i] == '\\') {
+		if (ch == '\\') {
 			switch (str[++i]) {
 				case 'n':
 					ret << L'\n';
@@ -327,7 +335,7 @@ String String::unescape(bool keepUnknown) const {
 					break;
 			}
 		} else {
-			ret << str[i];
+			ret << ch;
 		}
 	}
 
@@ -386,7 +394,7 @@ static nat firstParameterEnd(const String &str) {
 }
 
 String String::firstParam() const {
-	int end = firstParameterEnd(*this);
+	nat end = firstParameterEnd(*this);
 
 	String toReturn = left(end).trim();
 
@@ -397,9 +405,10 @@ String String::firstParam() const {
 }
 
 String String::restParams() const {
-	int end = firstParameterEnd(*this);
+	nat end = firstParameterEnd(*this);
 
-	if (end == size()) return L"";
+	if (end == size())
+		return L"";
 
 	String toReturn = mid(end).trim();
 	return toReturn;

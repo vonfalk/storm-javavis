@@ -31,5 +31,5 @@ struct Config {
 
 extern Config config;
 
-void usage(const wchar *name);
-bool parse(int argc, const wchar *argv[]);
+void usage(const wchar_t *name);
+bool parse(int argc, const wchar_t *argv[]);

@@ -529,7 +529,8 @@ static void parseNamespace(Tokenizer &tok, ParseEnv &env, const CppName &name) {
 			tok.skip();
 		} else {
 			// Everything is considered 'public' outside of a class.
-			parseMember(tok, env, WorldNamespace(env.world, name), aPublic);
+			WorldNamespace tmp(env.world, name);
+			parseMember(tok, env, tmp, aPublic);
 		}
 	}
 }

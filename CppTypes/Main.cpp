@@ -78,7 +78,7 @@ vector<T> &operator +=(vector<T> &to, const vector<T> &from) {
 	return to;
 }
 
-int _tmain(int argc, const wchar *argv[]) {
+int _tmain(int argc, const wchar_t *argv[]) {
 	initDebug();
 
 	if (!parse(argc, argv)) {

@@ -9,7 +9,7 @@ Function::Function(const CppName &name, const String &pkg, Access access, const 
 	name(name), pkg(pkg), access(access), pos(pos), result(result),
 	isMember(false), isVirtual(false), isConst(false), wrapAssign(false), castMember(false), threadType(null) {}
 
-void Function::resolveTypes(World &w, CppName &ctx) {
+void Function::resolveTypes(World &w, const CppName &ctx) {
 	result = result->resolve(w, ctx);
 
 	if (!thread.empty())

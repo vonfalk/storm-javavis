@@ -193,6 +193,14 @@ T *atomicRead(T *volatile &v) {
 size_t unalignedAtomicRead(volatile size_t &v);
 void unalignedAtomicWrite(volatile size_t &v, size_t value);
 
+#ifdef X64
+nat atomicIncrement(volatile nat &v);
+nat atomicDecrement(volatile nat &v);
+nat atomicCAS(volatile nat &v, nat compare, nat exchange);
+nat atomicRead(volatile nat &v);
+void atomicWrite(volatile nat &v, nat value);
+#endif
+
 /**
  * Convenient vector comparisions.
  */
@@ -231,7 +239,7 @@ inline bool all(const vector<bool> &v) {
 
 template <class From>
 struct default_cast {
-	From x;
+	From *x;
 	default_cast(From *x) : x(x) {}
 
 	template <class To>
@@ -241,7 +249,7 @@ struct default_cast {
 };
 
 template <class From>
-default_cast<From> customCast(From v) {
+default_cast<From> customCast(From *v) {
 	return default_cast<From>(v);
 }
 

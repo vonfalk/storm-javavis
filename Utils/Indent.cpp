@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Indent.h"
 
-static const wchar indentStr[] = L"  ";
+static const wchar_t indentStr[] = L"  ";
 
 Indent::Indent(std::wostream &stream) :
 	owner(stream),
@@ -24,13 +24,13 @@ int Indent::sync() {
 }
 
 Indent::int_type Indent::overflow(int_type ch) {
-	wchar *begin = pbase();
-	wchar *end = pptr();
+	wchar_t *begin = pbase();
+	wchar_t *end = pptr();
 
 	if (ch != traits_type::eof())
 		*end++ = wchar(ch);
 
-	for (wchar *at = begin; at != end; at++) {
+	for (wchar_t *at = begin; at != end; at++) {
 		if (*at == '\n') {
 			startOfLine = true;
 		} else if (startOfLine) {

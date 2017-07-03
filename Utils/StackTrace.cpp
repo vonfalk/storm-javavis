@@ -234,6 +234,14 @@ StackTrace stackTrace(nat skip) {
 
 #endif
 
+#ifdef POSIX
+
+StackTrace stackTrace(nat skip) {
+	return StackTrace();
+}
+
+#endif
+
 void dumpStack() {
 	StackTrace s = stackTrace();
 	PLN(format(s));

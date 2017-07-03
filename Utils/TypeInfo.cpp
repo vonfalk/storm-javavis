@@ -28,7 +28,7 @@ TypeInfo::operator BasicTypeInfo() {
 		}
 	}
 
-	BasicTypeInfo r = { size, k };
+	BasicTypeInfo r = { nat(size), k };
 	return r;
 }
 

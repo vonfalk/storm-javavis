@@ -29,6 +29,7 @@ bool Semaphore::down(nat msTimeout) {
 #ifdef POSIX
 
 Semaphore::Semaphore(long count, long maxCount) {
+	UNUSED(maxCount);
 	sem_init(&semaphore, 0, count);
 }
 
@@ -46,6 +47,7 @@ void Semaphore::down() {
 
 bool Semaphore::down(nat msTimeout) {
 	assert(false, L"Can not do sema_down with a timeout at the moment!");
+	UNUSED(msTimeout);
 	return false;
 }
 

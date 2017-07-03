@@ -66,4 +66,26 @@ namespace os {
 
 #endif
 
+#ifdef POSIX
+
+	IOHandle::IOHandle() {}
+
+	void IOHandle::add(Handle h, const ThreadData *id) {
+		UNUSED(h);
+		UNUSED(id);
+	}
+
+	void IOHandle::notifyAll(const ThreadData *id) const {
+		UNUSED(id);
+	}
+
+	void IOHandle::close() {}
+
+	void IOHandle::attach() {}
+
+	void IOHandle::detach() {}
+
+
+#endif
+
 }

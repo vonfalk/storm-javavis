@@ -29,7 +29,7 @@ TextWriter *TextWriter::create(Stream *stream, textfile::Format fmt) {
 	case textfile::utf16rev:
 		return new textfile::Utf16Writer(stream, true);
 	default:
-		assert(FALSE);
+		assert(false);
 		return null;
 	}
 }

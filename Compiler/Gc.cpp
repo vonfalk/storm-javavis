@@ -1757,7 +1757,6 @@ namespace storm {
 }
 
 #elif defined(STORM_GC_MALLOC)
-#include "Utils/MemoryManager.h"
 
 namespace storm {
 
