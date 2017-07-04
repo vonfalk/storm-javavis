@@ -43,6 +43,8 @@ namespace textfile {
 		virtual void put(wchar_t ch);
 	private:
 		bool reverseEndian;
+
+		void putUtf16(wchar ch);
 	};
 }
 

@@ -45,6 +45,7 @@ namespace textfile {
 	}
 
 	void Utf8Writer::put(wchar_t ch) {
+#ifdef WINDOWS
 		if (isSurrogate(largeCp)) {
 			int utf32 = decodeUtf16(largeCp, ch);
 			encodeUtf8(utf32);
@@ -54,12 +55,16 @@ namespace textfile {
 		} else {
 			encodeUtf8(ch);
 		}
+#else
+		// Assume wchar_t == utf32
+		encodeUtf8(ch);
+#endif
 	}
 
 	int Utf8Writer::decodeUtf16(wchar_t high, wchar_t low) {
 		int result = (high & 0x3FF) << 10;
 		result |= low & 0x3FF;
-		return result;
+		return result + 0x010000;
 	}
 
 	void Utf8Writer::encodeUtf8(int utf32) {
@@ -112,6 +117,23 @@ namespace textfile {
 	}
 
 	void Utf16Writer::put(wchar_t ch) {
+#ifdef WINDOWS
+		putUtf16(ch);
+#else
+		if (ch > 0xFFFF) {
+			// Encode a surrogate pair.
+			ch -= 0x010000;
+			wchar high = 0xD800 | wchar((ch >> 10) & 0x3FF);
+			wchar low = 0xDC00 | wchar(ch & 0x3FF);
+			putUtf16(high);
+			putUtf16(low);
+		} else {
+			putUtf16(wchar(ch));
+		}
+#endif
+	}
+
+	void Utf16Writer::putUtf16(wchar ch) {
 		if (reverseEndian) {
 			ch = ((ch & 0xFF00) >> 8) | ((ch & 0x00FF) << 8);
 		}
