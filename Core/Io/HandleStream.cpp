@@ -8,7 +8,7 @@ namespace storm {
 	 * System-specific helpers. These all behave as if the handle was blocking.
 	 */
 
-#ifdef WINDOWS
+#if defined(WINDOWS)
 
 	static inline void close(os::Handle &h) {
 		CloseHandle(h.v());
@@ -134,7 +134,7 @@ namespace storm {
 	}
 
 #else
-#error "Please implement me for UNIX."
+#error "Please implement file IO for your OS."
 #endif
 
 	/**

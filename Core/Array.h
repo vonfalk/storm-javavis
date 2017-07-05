@@ -2,6 +2,7 @@
 #include "Object.h"
 #include "Handle.h"
 #include "GcArray.h"
+#include "StrBuf.h"
 #include "Utils/Exception.h"
 
 namespace storm {
@@ -68,7 +69,7 @@ namespace storm {
 		void STORM_FN reverse();
 
 		// Get a random element. Throws if array is empty.
-		void *CODECALL randomRaw();
+		void *CODECALL randomRaw() const;
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;

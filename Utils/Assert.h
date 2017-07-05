@@ -10,7 +10,7 @@
 #define dbg_assert(X, msg) if (!(X)) { PLN((msg)); DebugBreak(); }
 #else
 #define assert(X, ...) if (!(X)) throw AssertionException(WIDEN(__FILE__), __LINE__, WIDEN(#X), ##__VA_ARGS__)
-#define dbg_assert(X, msg) if (!(X)) { PLN((msg)); terminate(); }
+#define dbg_assert(X, msg) if (!(X)) { PLN((msg)); std::terminate(); }
 #endif
 #else
 #define assert(X, ...)

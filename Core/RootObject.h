@@ -63,7 +63,7 @@ struct RootCast {
 		if (from == null)
 			return null;
 		if (from->isA(To::stormType(from->engine())))
-			return static_Cast<To *>(from);
+			return static_cast<To *>(from);
 		return null;
 	}
 };

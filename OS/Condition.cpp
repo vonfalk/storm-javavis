@@ -54,8 +54,83 @@ namespace os {
 		}
 	}
 
-#else
-#error "Implemend Condition!"
+#endif
+
+#ifdef POSIX
+
+	Condition::Condition() {
+		pthread_condattr_t attr;
+		pthread_condattr_init(&attr);
+		pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+		pthread_cond_init(&cond, &attr);
+		pthread_condattr_destroy(&attr);
+
+		pthread_mutex_init(&mutex, null);
+	}
+
+	Condition::~Condition() {
+		pthread_cond_destroy(&cond);
+	}
+
+	void Condition::signal() {
+		// '_signal' should be enough, but better safe than sorry.
+		pthread_cond_broadcast(&cond);
+	}
+
+	void Condition::wait() {
+		pthread_mutex_lock(&mutex);
+		pthread_cond_wait(&cond, &mutex);
+		pthread_mutex_unlock(&mutex);
+	}
+
+	void Condition::wait(IOHandle io) {
+		UNUSED(io);
+		TODO(L"Properly handle waiting for IO!");
+		pthread_mutex_lock(&mutex);
+		pthread_cond_wait(&cond, &mutex);
+		pthread_mutex_unlock(&mutex);
+	}
+
+	static long ns(long ms) {
+		return ms * 1000000;
+	}
+
+	static struct timespec timeMs(nat ms) {
+		struct timespec time = {0, 0};
+		clock_gettime(CLOCK_MONOTONIC, &time);
+
+		nat s = ms / 1000;
+		ms = ms % 1000;
+
+		time.tv_sec += s;
+		time.tv_nsec += ns(ms);
+		while (time.tv_nsec >= ns(1000)) {
+			time.tv_nsec -= ns(1000);
+			time.tv_sec += 1;
+		}
+
+		return time;
+	}
+
+	bool Condition::wait(nat msTimeout) {
+		struct timespec time = timeMs(msTimeout);;
+
+		pthread_mutex_lock(&mutex);
+		int r = pthread_cond_timedwait(&cond, &mutex, &time);
+		pthread_mutex_unlock(&mutex);
+
+		if (r == 0)
+			return true;
+		else
+			return errno != ETIMEDOUT;
+	}
+
+	bool Condition::wait(IOHandle io, nat msTimeout) {
+		UNUSED(io);
+		TODO(L"Propery handle waiting for IO!");
+		return wait(msTimeout);
+	}
+
 #endif
 
 }

@@ -3,9 +3,9 @@
 #include "UThread.h"
 #include "ThreadGroup.h"
 #include "Shared.h"
-#include <process.h>
 
 #ifdef WINDOWS
+#include <process.h>
 // For COM - CoInitializeEx
 #include <Objbase.h>
 #endif

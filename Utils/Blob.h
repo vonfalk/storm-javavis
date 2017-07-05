@@ -10,7 +10,7 @@ public:
 	byte data[MaxSize];
 	nat currSize;
 
-	Blob::Blob() {
+	Blob() {
 		zeroMem(data);
 		currSize = 0;
 	}

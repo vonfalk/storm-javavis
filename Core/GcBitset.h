@@ -1,5 +1,6 @@
 #pragma once
 #include "GcArray.h"
+#include <climits>
 
 namespace storm {
 

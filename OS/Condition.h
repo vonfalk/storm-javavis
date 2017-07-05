@@ -36,12 +36,18 @@ namespace os {
 		bool wait(IOHandle abort, nat msTimeout);
 
 	private:
+#if defined(WINDOWS)
 		// Is the semaphore signaled?
 		nat signaled;
 
-#ifdef WINDOWS
 		// Waitable semaphore.
 		HANDLE sema;
+#elif defined(POSIX)
+		// Condition object.
+		pthread_cond_t cond;
+
+		// We need a mutex as well.
+		pthread_mutex_t mutex;
 #else
 #error "Please implement the condition for your platform!"
 #endif

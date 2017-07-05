@@ -144,7 +144,7 @@ namespace os {
 		UThreadData *t = UThreadData::create(&thread->uState);
 
 		t->pushParams(null, new util::Fn<void, void>(fn));
-		t->pushContext(&spawnFn);
+		t->pushContext(address(&spawnFn));
 
 		return insert(t, thread);
 	}
@@ -162,7 +162,7 @@ namespace os {
 
 	static void spawnCall(SpawnParams *params) {
 		try {
-			(*params->thunk)(&doEndDetour, params->memberFn, params->params, params->first, null);
+			(*params->thunk)(address(&doEndDetour), params->memberFn, params->params, params->first, null);
 		} catch (...) {
 			onUncaughtException();
 		}
@@ -177,7 +177,7 @@ namespace os {
 		FutureBase *future = params->future;
 
 		try {
-			(*params->thunk)(&doEndDetour, params->memberFn, params->params, params->first, params->target);
+			(*params->thunk)(address(&doEndDetour), params->memberFn, params->params, params->first, params->target);
 			future->posted();
 		} catch (...) {
 			future->error();
@@ -195,7 +195,7 @@ namespace os {
 
 		// Set up the thread for calling 'spawnCall'.
 		t->pushParams(null, params);
-		t->pushContext(spawn);
+		t->pushContext((const void *)spawn);
 
 		// Call the newly created UThread on this thread, and make sure to return directly here later.
 		UThreadState *current = UThreadState::current();

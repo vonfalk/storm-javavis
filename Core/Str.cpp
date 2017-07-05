@@ -6,6 +6,66 @@
 
 namespace storm {
 
+#ifdef POSIX
+	static size_t wcslen(const wchar *ch) {
+		size_t r = 0;
+		while (*ch) {
+			ch++; r++;
+		}
+		return r;
+	}
+
+	static int wcscmp(const wchar *a, const wchar *b) {
+		do {
+			if (*a != *b) {
+				if (*a < *b)
+					return -1;
+				else
+					return 1;
+			}
+		} while (*a && *b);
+		// They are equal!
+		return 0;
+	}
+
+#define WRAP_STRFN(result, name)								\
+	static result name(const wchar *v, wchar **e, int base) {	\
+		const nat maxlen = 50;									\
+		wchar_t data[maxlen + 1] = { 0 };						\
+		for (nat i = 0; i < maxlen && v[i]; i++)				\
+			data[i] = v[i];										\
+																\
+		wchar_t *err = null;									\
+		long r = ::name(data, &err, base);						\
+		if (e)													\
+			*e = (wchar *)(v + (err - data));					\
+		return r;												\
+	}															\
+
+	WRAP_STRFN(long, wcstol)
+	WRAP_STRFN(unsigned long, wcstoul)
+	WRAP_STRFN(long long, wcstoll)
+	WRAP_STRFN(unsigned long long, wcstoull)
+
+	static double wcstod(const wchar *v, wchar **e) {
+		const nat maxlen = 50;
+		wchar_t data[maxlen + 1] = { 0 };
+		for (nat i = 0; i < maxlen && v[i]; i++)
+			data[i] = v[i];
+
+		wchar_t *err = null;
+		long r = ::wcstod(data, &err);
+		if (e)
+			*e = (wchar *)(v + (err - data));
+		return r;
+	}
+
+
+#elif defined(WINDOWS)
+#define wcstoll _wcstoi64
+#define wcstoull _wcstoui64
+#endif
+
 	static GcArray<wchar> empty = {
 		1,
 	};
@@ -20,6 +80,18 @@ namespace storm {
 		data->v[count] = 0;
 		validate();
 	}
+
+#ifdef POSIX
+	Str::Str(const wchar_t *s) {
+		nat count = ::wcslen(s);
+		allocData(count + 1);
+		// Crude conversion. This should be enough for the literals used in Storm.
+		for (nat i = 0; i < count; i++)
+			data->v[i] = wchar(s[i]);
+		data->v[count] = 0;
+		validate();
+	}
+#endif
 
 	Str::Str(const wchar *from, const wchar *to) {
 		nat count = to - from;
@@ -212,7 +284,7 @@ namespace storm {
 
 	Long Str::toLong() const {
 		wchar *end;
-		Long r = _wcstoi64(data->v, &end, 10);
+		Long r = wcstoll(data->v, &end, 10);
 		if (end != data->v + data->count - 1)
 			throw StrError(L"Not a number");
 		return r;
@@ -220,7 +292,7 @@ namespace storm {
 
 	Word Str::toWord() const {
 		wchar *end;
-		Word r = _wcstoui64(data->v, &end, 10);
+		Word r = wcstoull(data->v, &end, 10);
 		if (end != data->v + data->count - 1)
 			throw StrError(L"Not a number");
 		return r;
@@ -463,6 +535,14 @@ namespace storm {
 		return new (this) Str(to);
 	}
 
+	Bool Str::operator ==(const wchar *s) const {
+		return wcscmp(c_str(), s) == 0;
+	}
+
+	Bool Str::operator !=(const wchar *s) const {
+		return wcscmp(c_str(), s) != 0;
+	}
+
 	void Str::deepCopy(CloneEnv *env) {
 		// We don't have any mutable data we need to clone.
 	}
@@ -702,7 +782,6 @@ namespace storm {
 
 		nat start = 0;
 		nat end = 0;
-		nat at = 0;
 
 		for (nat at = 0; src[at] != 0; at = nextLine(src, at)) {
 			if (!emptyLine(src, at)) {

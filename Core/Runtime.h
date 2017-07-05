@@ -1,5 +1,6 @@
 #pragma once
 #include "GcArray.h"
+#include <cstdarg>
 
 namespace storm {
 	struct GcType;

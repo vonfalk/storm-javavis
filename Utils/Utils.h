@@ -107,8 +107,8 @@ inline float radToDeg(float angle) {
 
 // Hack to allow casting member-function-pointers into void *.
 template <class T>
-inline void *address(T fn) {
-	return (void *&)fn;
+inline const void *address(T fn) {
+	return (const void *&)fn;
 }
 
 //Delete an object, and clear the pointer to it.

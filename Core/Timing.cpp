@@ -6,7 +6,7 @@
 
 namespace storm {
 
-#ifdef WINDOWS
+#if defined(WINDOWS)
 
 	static bool initialized = false;
 	static Long resolution;
@@ -35,6 +35,19 @@ namespace storm {
 		return seconds * s + (remaining * s) / resolution;
 	}
 
+#elif defined(POSIX)
+
+	static Long now() {
+		struct timespec time = {0, 0};
+		clock_gettime(CLOCK_MONOTONIC, &time);
+
+		Long r = time.tv_sec;
+		r *= 1000 * 1000;
+		r += time.tv_nsec / 1000;
+
+		return r;
+	}
+
 #else
 #error "Please implement some time-keeping for your platform."
 #endif
@@ -44,7 +57,7 @@ namespace storm {
 	Moment::Moment(Long v) : v(v) {}
 
 	struct Unit {
-		const wchar *name;
+		const wchar_t *name;
 		Long factor;
 	};
 
@@ -65,7 +78,7 @@ namespace storm {
 		Long t = abs(d.v);
 
 		Long div = units[0].factor;
-		const wchar *unit = units[0].name;
+		const wchar_t *unit = units[0].name;
 
 		for (nat i = 1; i < ARRAY_COUNT(units); i++) {
 			if ((t / div) < units[i].factor)
@@ -152,7 +165,7 @@ namespace storm {
 		return k;
 	}
 
-	void CheckTime::save(const wchar *id, const Duration &d) {
+	void CheckTime::save(const wchar_t *id, const Duration &d) {
 		keeper().save(id, d);
 	}
 

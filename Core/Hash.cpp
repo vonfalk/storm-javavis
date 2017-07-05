@@ -43,9 +43,9 @@ namespace storm {
 
 	Nat ptrHash(const void *v) {
 		if (sizeof(v) == sizeof(Nat))
-			return natHash(Nat(v));
+			return natHash(Nat(size_t(v)));
 		else
-			return wordHash(Word(v));
+			return wordHash(Word(size_t(v)));
 	}
 
 	void checkHashHandle(const Handle &h) {

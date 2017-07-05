@@ -34,6 +34,11 @@ namespace storm {
 		// Create from a string literal.
 		Str(const wchar *s);
 
+#ifdef POSIX
+		// If wchar_t is a different size, allow creation from literals with wchar_t as well.
+		Str(const wchar_t *s);
+#endif
+
 		// Create from a substring of a c-string.
 		Str(const wchar *from, const wchar *to);
 
@@ -102,8 +107,8 @@ namespace storm {
 		const Str *STORM_FN fromCrLf() const;
 
 		// Compare to c-string.
-		inline Bool operator ==(const wchar *s) const { return wcscmp(c_str(), s) == 0; }
-		inline Bool operator !=(const wchar *s) const { return wcscmp(c_str(), s) != 0; }
+		Bool operator ==(const wchar *s) const;
+		Bool operator !=(const wchar *s) const;
 
 		// Peek at the length of the underlying representation.
 		Nat peekLength() const;

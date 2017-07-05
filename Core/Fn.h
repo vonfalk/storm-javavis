@@ -140,6 +140,11 @@ namespace storm {
 		Thread *runOn(const TObject *first) const;
 	};
 
+	// Specialization for when returning void.
+	template<>
+	void FnBase::callRaw(os::FnParams &params, const TObject *first, CloneEnv *env) const {
+		callRaw(null, typeInfo<void>(), params, first, env);
+	}
 
 	// Declare the template to Storm.
 	STORM_TEMPLATE(Fn, createFn);

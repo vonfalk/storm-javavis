@@ -109,17 +109,17 @@ namespace storm {
 	 */
 	class CheckTime : NoCopy {
 	public:
-		CheckTime(const wchar *id) : id(id), started() {}
+		CheckTime(const wchar_t *id) : id(id), started() {}
 
 		~CheckTime() {
 			save(id, Moment() - started);
 		}
 
 	private:
-		const wchar *id;
+		const wchar_t *id;
 		Moment started;
 
-		static void save(const wchar *id, const Duration &d);
+		static void save(const wchar_t *id, const Duration &d);
 	};
 
 #define CHECK_TIME(id) CheckTime _x(id);

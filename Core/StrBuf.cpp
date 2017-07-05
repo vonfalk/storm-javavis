@@ -137,6 +137,19 @@ namespace storm {
 	}
 
 	StrBuf *StrBuf::add(const wchar *data) {
+		addStr(data);
+		return this;
+	}
+
+#ifdef POSIX
+	StrBuf *StrBuf::add(const wchar_t *data) {
+		addStr(data);
+		return this;
+	}
+#endif
+
+	template <class T>
+	void StrBuf::addStr(const T *data) {
 		nat len = 0;
 		nat points = 0;
 		nat iLen = indentStr->charCount();
@@ -166,8 +179,6 @@ namespace storm {
 			insertIndent();
 			buf->v[pos++] = data[at];
 		}
-
-		return this;
 	}
 
 	StrBuf *StrBuf::addRaw(wchar ch) {

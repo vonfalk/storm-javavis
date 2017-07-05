@@ -168,7 +168,7 @@ namespace storm {
 		}
 	}
 
-	void *ArrayBase::randomRaw() {
+	void *ArrayBase::randomRaw() const {
 		if (empty())
 			throw ArrayError(L"Can not acquire an element from an empty array.");
 

@@ -120,12 +120,17 @@
 #error "someone forgot to declare SHARED_EXPORT for your architecture"
 #endif
 
-#ifdef VISUAL_STUDIO
+#if defined(VISUAL_STUDIO) && defined(X86)
 #define CODECALL __cdecl
 #endif
 
-#if defined(GCC) && (defined(X86) || defined(X64))
+#if defined(GCC) && defined(X86)
 #define CODECALL __attribute__((cdecl))
+#endif
+
+#if defined(X64)
+// X86-64 does not need to specify a calling convention. There is a single standard convention!
+#define CODECALL
 #endif
 
 // Make sure it is defined.

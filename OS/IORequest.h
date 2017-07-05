@@ -8,7 +8,7 @@ namespace os {
 	/**
 	 * IO request. These are posted to an IOHandle when the requests are completed.
 	 */
-#ifdef WINDOWS
+#if defined(WINDOWS)
 
 	class IORequest : public OVERLAPPED {
 	public:
@@ -24,6 +24,21 @@ namespace os {
 
 		// Called on completion.
 		void complete(nat bytes);
+
+	private:
+		// Owning thread.
+		Thread &thread;
+	};
+
+#elif defined(POSIX)
+
+	class IORequest {
+	public:
+		// Note the thread that the request is associated with.
+		IORequest(Thread &thread);
+		~IORequest();
+
+		// TODO!
 
 	private:
 		// Owning thread.

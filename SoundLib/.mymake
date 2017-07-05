@@ -41,6 +41,8 @@ warnings=
 [unix]
 define+=HAVE_STDINT_H
 define+=HAVE_LROUND
+define+=__STDC_WANT_LIB_EXT2__=1
+define+=_LARGEFILE_SOURCE
 
 #Windows-specific stuff...
 ignore+=*/windows_*

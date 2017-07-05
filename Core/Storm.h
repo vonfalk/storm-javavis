@@ -60,7 +60,8 @@
 	static inline void *operator new (size_t s, const storm::RootObject *o) { \
 		return storm::runtime::allocObject(s, stormType(o));			\
 	}																	\
-	static inline void operator delete (void *m, const storm::RootObject *o) {}
+	static inline void operator delete (void *m, const storm::RootObject *o) {} \
+	static inline void operator delete (void *m, size_t x) {}
 
 
 /**
@@ -154,7 +155,7 @@
  * If the function takes a EnginePtr as the first parameter (as a non-member), that parameter will
  * be filled in by the runtime to contain a Engine reference.
  */
-#define STORM_FN __cdecl
+#define STORM_FN CODECALL
 
 /**
  * Mark a function as a setter function. These functions will be callable as 'foo = x' => 'foo(x)'.

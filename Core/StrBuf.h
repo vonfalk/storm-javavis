@@ -118,6 +118,11 @@ namespace storm {
 		StrBuf &STORM_FN operator <<(Char c) { return *add(c); }
 		StrBuf &STORM_FN operator <<(HexFmt f) { return *add(f); }
 
+#ifdef POSIX
+		StrBuf &operator <<(const wchar_t *str) { return *add(str); }
+		StrBuf *STORM_FN add(const wchar_t *str);
+#endif
+
 		// Formatting options.
 		StrBuf &STORM_FN operator <<(StrFmt fmt);
 
@@ -165,6 +170,10 @@ namespace storm {
 
 		// Copy a buffer.
 		GcArray<wchar> *copyBuf(GcArray<wchar> *buf) const;
+
+		// Add a raw string in some format.
+		template <class T>
+		void addStr(const T *str);
 	};
 
 

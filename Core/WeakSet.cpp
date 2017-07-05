@@ -162,7 +162,7 @@ namespace storm {
 		Nat c = 0;
 		for (nat i = 0; i < capacity(); i++) {
 			if (info->v[i].status != Info::free && i == primarySlot(info->v[i].hash)) {
-				for (nat at = i; info->v[i].status != Info::end; i++)
+				for (nat at = i; info->v[at].status != Info::end; at++)
 					c++;
 			}
 		}
@@ -174,7 +174,7 @@ namespace storm {
 		for (nat i = 0; i < capacity(); i++) {
 			if (info->v[i].status != Info::free && i == primarySlot(info->v[i].hash)) {
 				Nat len = 1;
-				for (nat at = i; info->v[i].status != Info::end; i++)
+				for (nat at = i; info->v[at].status != Info::end; at++)
 					len++;
 				c = max(c, len);
 			}
@@ -329,7 +329,7 @@ namespace storm {
 				// We need to re-hash here, as some objects have moved.
 				watch->add(k);
 				nat hash = ptrHash(k);
-				nat into = insert(k, hash, w);
+				insert(k, hash, w);
 			}
 
 			// The Gc will destroy the old arrays and all elements in there later on.

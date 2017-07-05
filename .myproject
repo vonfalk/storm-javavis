@@ -57,6 +57,7 @@ Gui+=CppTypes
 Compiler+=CppTypes
 Sound+=CppTypes
 
+[deps,windows]
 #To make sure everything is built.
 Compiler+=Gui
 Compiler+=Graphics
@@ -116,6 +117,7 @@ flags+=-Wno-unknown-pragmas
 flags+=-Wno-reorder
 flags+=-Wno-terminate
 flags+=-Wno-unused-parameter
+flags+=-Wno-missing-field-initializers
 
 compile+=*.c:gcc -std=c99 <defines> <warnings> <usePch*if|pch> <file> -c <includes> -o <output>
 
