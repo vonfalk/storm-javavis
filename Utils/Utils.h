@@ -70,9 +70,11 @@ typedef char16_t wchar;
 
 #include "Containers.h"
 
+#ifdef WINDOWS
 inline int64 abs(int64 v) {
 	return v < 0 ? -v : v;
 }
+#endif
 
 template <class T>
 inline void limitMax(T &toLimit, const T &b) {
@@ -108,7 +110,11 @@ inline float radToDeg(float angle) {
 // Hack to allow casting member-function-pointers into void *.
 template <class T>
 inline const void *address(T fn) {
+#ifdef VISUAL_STUDIO
 	return (const void *&)fn;
+#else
+	return reinterpret_cast<const void *>(fn);
+#endif
 }
 
 //Delete an object, and clear the pointer to it.

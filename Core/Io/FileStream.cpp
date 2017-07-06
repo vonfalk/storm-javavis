@@ -5,7 +5,7 @@
 
 namespace storm {
 
-#ifdef WINDOWS
+#if defined(WINDOWS)
 
 	static os::Handle openFile(Str *name, bool input) {
 		// TODO: Allow duplicating this handle so that we can clone duplicate it later?
@@ -36,6 +36,25 @@ namespace storm {
 		}
 	}
 
+#elif defined(POSIX)
+
+	static os::Handle openFile(Str *name, bool input) {
+		int flags = input ? 0 : O_CREAT;
+		int mode = input ? O_RDONLY : O_WRONLY;
+		return ::open(name->utf8_str(), flags, mode);
+	}
+
+	static os::Handle copyFile(os::Handle h, Str *name, bool input) {
+		UNUSED(name);
+		UNUSED(input);
+
+		return dup(h.v());
+	}
+
+#else
+#error "Please implement file IO for your platform!"
+#endif
+
 	IFileStream::IFileStream(Str *name) : HandleRIStream(openFile(name, true)), name(name) {}
 
 	IFileStream::IFileStream(const IFileStream &o) : HandleRIStream(copyFile(o.handle, o.name, true)), name(o.name) {}
@@ -52,10 +71,5 @@ namespace storm {
 	void OFileStream::toS(StrBuf *to) const {
 		*to << L"File output to " << name;
 	}
-
-
-#else
-#error "Please implement file IO for your platform!"
-#endif
 
 }

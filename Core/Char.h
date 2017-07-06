@@ -16,6 +16,11 @@ namespace storm {
 		// Nice to have from C++.
 		Char(char ch);
 		Char(wchar ch);
+		Char(nat16 ch);
+
+#ifdef POSIX
+		Char(wchar_t ch);
+#endif
 
 		// Create a character from a codepoint number.
 		STORM_CTOR Char(Nat codepoint);

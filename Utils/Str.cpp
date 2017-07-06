@@ -52,6 +52,36 @@ static std::wstring convert(const char *chars) {
 
 String::String(const char *chars) : std::wstring(convert(chars)) {}
 
+static std::wstring convert(const wchar *chars) {
+	std::wostringstream z;
+
+	wchar prev = 0;
+	for (const wchar *at = chars; *at; at++) {
+		wchar ch = *at;
+		if ((ch & 0xFC00) == 0xD800) {
+			// Leading pair.
+			prev = ch;
+		} else if ((ch & 0xFC00) == 0xDC00) {
+			// Trailing pair.
+			if (prev != 0) {
+				nat r = nat(prev & 0x3FF) << nat(10);
+				r |= nat(ch & 0x3FF);
+				r += 0x10000;
+				z << wchar_t(r);
+				prev = 0;
+			}
+		} else {
+			// Plain!
+			z << wchar_t(ch);
+			prev = 0;
+		}
+	}
+
+	return z.str();
+}
+
+String::String(const wchar *chars) : std::wstring(convert(chars)) {}
+
 std::string String::toChar() const {
 	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> convert;
 	return convert.to_bytes(*this);

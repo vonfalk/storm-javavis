@@ -10,6 +10,21 @@ namespace os {
 		this->thunk = thunk;
 	}
 
+#ifdef USE_MOVE
+	FnCallRaw::FnCallRaw(FnCallRaw &&o) : paramsData(o.paramsData), thunk(o.thunk) {
+		o.paramsData = 0;
+	}
+
+	FnCallRaw &FnCallRaw::operator =(FnCallRaw &&o) {
+		if (freeParams())
+			delete []params();
+		this->paramsData = o.paramsData;
+		this->thunk = o.thunk;
+		o.paramsData = 0;
+		return *this;
+	}
+#endif
+
 	FnCallRaw::~FnCallRaw() {
 		if (freeParams())
 			delete []params();

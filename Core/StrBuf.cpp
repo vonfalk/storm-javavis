@@ -2,6 +2,7 @@
 #include "StrBuf.h"
 #include "Str.h"
 #include "Utf.h"
+#include "Convert.h"
 #include "GcType.h"
 #include "GcArray.h"
 
@@ -137,19 +138,6 @@ namespace storm {
 	}
 
 	StrBuf *StrBuf::add(const wchar *data) {
-		addStr(data);
-		return this;
-	}
-
-#ifdef POSIX
-	StrBuf *StrBuf::add(const wchar_t *data) {
-		addStr(data);
-		return this;
-	}
-#endif
-
-	template <class T>
-	void StrBuf::addStr(const T *data) {
 		nat len = 0;
 		nat points = 0;
 		nat iLen = indentStr->charCount();
@@ -179,7 +167,15 @@ namespace storm {
 			insertIndent();
 			buf->v[pos++] = data[at];
 		}
+
+		return this;
 	}
+
+#ifdef POSIX
+	StrBuf *StrBuf::add(const wchar_t *data) {
+		return add(toWChar(engine(), data)->v);
+	}
+#endif
 
 	StrBuf *StrBuf::addRaw(wchar ch) {
 		ensure(pos + 1);
@@ -320,11 +316,21 @@ namespace storm {
 	}
 
 	StrBuf *StrBuf::add(Float f) {
-		const nat size = 100;
+#ifdef WINDOWS
+		const nat size = 50;
 		wchar buf[size];
 		_snwprintf_s(buf, size, size, L"%f", f);
 		// TODO: Improve!
 		return add(buf);
+#else
+		const nat size = 50;
+		char buf[size];
+		snprintf(buf, size, "%f", f);
+		wchar wbuf[size] = {0};
+		for (nat i = 0; buf[i]; i++)
+			wbuf[i] = buf[i];
+		return add(wbuf);
+#endif
 	}
 
 	StrBuf *StrBuf::add(Char c) {
@@ -345,7 +351,7 @@ namespace storm {
 		const nat bufSize = 32;
 		wchar buf[bufSize + 1];
 
-		const wchar digits[] = L"0123456789ABCDEF";
+		const char digits[] = "0123456789ABCDEF";
 
 		wchar *to = buf + bufSize;
 		*to = 0;

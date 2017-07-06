@@ -55,7 +55,7 @@ namespace os {
 
 
 		template <class Result, class Par>
-		void call(const void *fn, void **params, void *result);
+		void call(const void *fn, bool member, void **params, void *first, void *result);
 
 	}
 
@@ -97,6 +97,11 @@ namespace os {
 
 		// Function to invoke in order to copy parameters and perform the actual call.
 		CallThunk thunk;
+
+#ifdef USE_MOVE
+		FnCallRaw(FnCallRaw &&o);
+		FnCallRaw &operator =(FnCallRaw &&o);
+#endif
 
 	private:
 		// Copy and assignment are not supported.
@@ -165,4 +170,8 @@ namespace os {
 
 }
 
+#if defined(VISUAL_STUDIO) && defined(X86)
 #include "FnCallX86.h"
+#else
+#include "FnCallImpl.h"
+#endif

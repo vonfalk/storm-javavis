@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Utf8Text.h"
+#include "Utf.h"
 
 namespace storm {
 
@@ -11,55 +12,20 @@ namespace storm {
 		memcpy(buf.dataPtr(), start.dataPtr(), start.filled());
 	}
 
-	// See if the byte is a continuation byte.
-	static inline bool isCont(byte c) {
-		return (c & 0xC0) == 0x80;
-	}
-
-	// The data of the first UTF8-byte.
-	static inline void firstData(byte c, nat &remaining, nat &data) {
-		if ((c & 0x80) == 0) {
-			remaining = 0;
-			data = nat(c);
-		} else if ((c & 0xC0) == 0x80) {
-			// Continuation from before: error!
-			remaining = 0;
-			data = nat('?');
-		} else if ((c & 0xE0) == 0xC0) {
-			remaining = 1;
-			data = nat(c & 0x1F);
-		} else if ((c & 0xF0) == 0xE0) {
-			remaining = 2;
-			data = nat(c & 0x0F);
-		} else if ((c & 0xF8) == 0xF0) {
-			remaining = 3;
-			data = nat(c & 0x07);
-		} else if ((c & 0xFC) == 0xF8) {
-			remaining = 4;
-			data = nat(c & 0x03);
-		} else if ((c & 0xFE) == 0xFC) {
-			remaining = 5;
-			data = nat(c & 0x01);
-		} else {
-			remaining = 0;
-			data = nat('?');
-		}
-	}
-
 	Char Utf8Input::readChar() {
 		byte ch = readByte();
-		nat left, r;
-		firstData(ch, left, r);
+		nat left;
+		nat r = utf8::firstData(ch, left);
 
 		for (nat i = 0; i < left; i++) {
 			ch = readByte();
 
-			if (isCont(ch)) {
-				r = (r << 6) | (ch & 0x3F);
+			if (utf8::isCont(ch)) {
+				r = utf8::addCont(r, ch);
 			} else {
 				// Invalid codepoint, unget ch and return '?'
 				ungetByte();
-				return Char(nat('?'));
+				return Char(replacementChar);
 			}
 		}
 
@@ -116,33 +82,10 @@ namespace storm {
 
 	void Utf8Output::writeChar(Char ch) {
 		Nat cp = ch.codepoint();
-		const Nat maxBytes = 8;
-		byte out[maxBytes];
+		byte out[utf8::maxBytes];
+		nat bytes = 0;
 
-
-		if (cp < 0x80) {
-			// Fast path: 1 byte codepoints.
-			out[0] = byte(cp);
-			writeBytes(out, 1);
-			return;
-		}
-
-		// Output multiple bytes...
-		byte *at = out + maxBytes;
-		Nat leadingBits = 6;
-		Nat bytes = 0;
-		do {
-			// Output the least significant 6 bits.
-			*--at = byte(0x80 | (cp & 0x3F));
-			cp = cp >> 6;
-			bytes++;
-			leadingBits--;
-		} while (cp >= (Nat(1) << leadingBits));
-
-		// Output the first byte indicating the length of the codepoint.
-		*--at = byte((0xFF << (leadingBits + 1)) | cp);
-		bytes++;
-
+		byte *at = utf8::encode(cp, out, &bytes);
 		writeBytes(at, bytes);
 	}
 

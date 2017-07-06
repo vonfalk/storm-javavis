@@ -13,6 +13,10 @@ public:
 	inline String(const wchar_t *str) : std::wstring(str) {}
 	inline String(nat count, wchar_t ch) : std::wstring(size_t(count), ch) {}
 
+#ifdef POSIX
+	String(const wchar *str);
+#endif
+
 	// Concat ctor
 	inline String(const wchar_t *strA, const wchar_t *strB) : std::wstring(strA) {
 		*this += strB;

@@ -170,10 +170,6 @@ namespace storm {
 
 		// Copy a buffer.
 		GcArray<wchar> *copyBuf(GcArray<wchar> *buf) const;
-
-		// Add a raw string in some format.
-		template <class T>
-		void addStr(const T *str);
 	};
 
 

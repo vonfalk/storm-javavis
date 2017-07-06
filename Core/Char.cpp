@@ -9,6 +9,12 @@ namespace storm {
 
 	Char::Char(wchar ch) : value(ch) {}
 
+	Char::Char(nat16 ch) : value(ch) {}
+
+#ifdef POSIX
+	Char::Char(wchar_t ch) : value(ch) {}
+#endif
+
 	Char::Char() : value(0) {}
 
 	Char::Char(Nat codepoint) : value(codepoint) {}

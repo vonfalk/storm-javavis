@@ -107,6 +107,7 @@ namespace storm {
 			return copy;
 		}
 
+		// Specialization for returning void.
 		template <int C>
 		void callRaw(const os::FnCall<void, C> &params, const TObject *first, CloneEnv *env) const {
 			callRaw(null, params, first, env);
@@ -139,12 +140,6 @@ namespace storm {
 		// Compute which thread we want to run on.
 		Thread *runOn(const TObject *first) const;
 	};
-
-	// Specialization for when returning void.
-	template<>
-	void FnBase::callRaw(os::FnParams &params, const TObject *first, CloneEnv *env) const {
-		callRaw(null, typeInfo<void>(), params, first, env);
-	}
 
 	// Declare the template to Storm.
 	STORM_TEMPLATE(Fn, createFn);

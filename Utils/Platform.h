@@ -34,6 +34,12 @@
  */
 
 /**
+ * Compiler features:
+ * USE_MOVE - is move semantics supported?
+ * USE_VA_TEMPLATE - is variable templates supported?
+ */
+
+/**
  * Standardized function/variable specifications:
  * THREAD - thread local variable
  * NAKED - naked function call, ie no prolog/epilog. Maybe not supported for all compilers.
@@ -94,12 +100,21 @@
 #define THREAD __declspec(thread)
 #define NAKED __declspec(naked)
 #define SHARED_EXPORT __declspec(dllexport)
+
+#if VISUAL_STUDIO >= 2010
+#define USE_MOVE // Not sure about this one...
+#define USE_VA_TEMPLATE
+#endif
 #endif
 
 #ifdef GCC
 #define THREAD __thread
 #define NAKED error // not supported?
 #define SHARED_EXPORT error // TODO!
+
+// We require support for these features.
+#define USE_MOVE
+#define USE_VA_TEMPLATE
 #endif
 
 #if defined(X86) || defined(X64)

@@ -1,12 +1,10 @@
 #pragma once
 #include "Utils/Platform.h"
 
-#ifdef X86
-
 namespace os {
 
 	/**
-	 * Implementation of the FnCall logic for X86.
+	 * Implementation of the FnCall logic for X86. Included from 'FnCall.h'.
 	 */
 
 	namespace impl {
@@ -439,5 +437,3 @@ namespace os {
 
 	}
 }
-
-#endif

@@ -50,7 +50,7 @@ namespace storm {
 		}
 
 		Vector abs(Vector a) {
-			return Vector(::abs(a.x), ::abs(a.y), ::abs(a.z));
+			return Vector(::fabs(a.x), ::fabs(a.y), ::fabs(a.z));
 		}
 
 	}

@@ -133,6 +133,58 @@ namespace storm {
 		return dupHandle(GetStdHandle(id));
 	}
 
+#elif defined(POSIX)
+
+	static inline void close(os::Handle &h) {
+		::close(h.v());
+		h = os::Handle();
+	}
+
+	static Nat read(os::Handle h, os::Thread &attached, void *dest, Nat limit) {
+		TODO(L"Implement proper async file IO");
+
+		ssize_t r = ::read(h.v(), dest, size_t(limit));
+		if (r < 0)
+			return 0;
+		else
+			return Nat(r);
+	}
+
+	static Nat write(os::Handle h, os::Thread &attached, const void *src, Nat limit) {
+		TODO(L"Implement proper async file IO, handle partial writes?");
+
+		ssize_t r = ::write(h.v(), src, size_t(limit));
+		if (r < 0)
+			return 0;
+		else
+			return Nat(r);
+	}
+
+	static void seek(os::Handle h, Word to) {
+		lseek64(h.v(), to, SEEK_SET);
+	}
+
+	static Word tell(os::Handle h) {
+		off64_t r = lseek64(h.v(), 0, SEEK_CUR);
+		if (r < 0)
+			return 0;
+		return Word(r);
+	}
+
+	static Word length(os::Handle h) {
+		off64_t old = lseek64(h.v(), 0, SEEK_CUR);
+		if (old < 0)
+			return 0;
+
+		off64_t size = lseek64(h.v(), 0, SEEK_END);
+		lseek64(h.v(), old, SEEK_SET);
+		return Word(size);
+	}
+
+	static os::Handle dupHandle(os::Handle src) {
+		return os::Handle(dup(src.v()));
+	}
+
 #else
 #error "Please implement file IO for your OS."
 #endif

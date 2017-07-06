@@ -336,8 +336,8 @@ Path Path::executableFile() {
 }
 
 Path Path::cwd() {
-	char tmp[512] = { 0 };
-	if (!getcwd(tmp, 512))
+	char tmp[PATH_MAX + 1] = { 0 };
+	if (!getcwd(tmp, PATH_MAX))
 		WARNING(L"Failed to get cwd!");
 
 	Path r = Path(String(tmp));

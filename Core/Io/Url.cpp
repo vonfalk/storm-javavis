@@ -4,8 +4,17 @@
 #include "StrBuf.h"
 #include "CloneEnv.h"
 #include "Protocol.h"
+#include "Core/Convert.h"
 
 namespace storm {
+
+	static inline bool isDot(const wchar *str) {
+		return str[0] == '.' && str[1] == '\0';
+	}
+
+	static inline bool isParent(const wchar *str) {
+		return str[0] == '.' && str[1] == '.' && str[2] == '\0';
+	}
 
 	static inline bool separator(wchar c) {
 		return (c == '/') || (c == '\\');
@@ -13,7 +22,7 @@ namespace storm {
 
 	// Make sure 'str' do not contain any forbidden characters.
 	static void validate(Str *str) {
-		for (wchar *s = str->c_str(); *s; s++) {
+		for (const wchar *s = str->c_str(); *s; s++) {
 			// Now, we only disallow separators in parts.
 			if (separator(*s))
 				throw InvalidName(str->c_str());
@@ -26,9 +35,9 @@ namespace storm {
 
 		for (nat i = 0; i < parts->count(); i++) {
 			Str *p = parts->at(i);
-			if (wcscmp(p->c_str(), L".") == 0) {
+			if (isDot(p->c_str())) {
 				// Ignore it.
-			} else if (wcscmp(p->c_str(), L"..") == 0 && result->any() && wcscmp(result->last()->c_str(), L"..") != 0) {
+			} else if (isParent(p->c_str()) && result->any() && !isParent(result->last()->c_str())) {
 				result->remove(result->count() - 1);
 			} else {
 				result->push(p);
@@ -41,8 +50,7 @@ namespace storm {
 	static void simplifyInplace(Array<Str *> *&parts) {
 		for (nat i = 0; i < parts->count(); i++) {
 			Str *p = parts->at(i);
-			if (wcscmp(p->c_str(), L".") == 0
-				|| wcscmp(p->c_str(), L"..") == 0) {
+			if (isDot(p->c_str()) || isParent(p->c_str())) {
 				parts = simplify(parts);
 				return;
 			}
@@ -356,14 +364,33 @@ namespace storm {
 		return new (e) Url(protocol, parts, flags);
 	}
 
-#ifdef WINDOWS
+#if defined(WINDOWS)
+	Url *cwdUrl(EnginePtr e) {
+		wchar_t tmp[MAX_PATH + 1];
+		tmp[0] = 0;
+		GetCurrentDirectory(MAX_PATH + 1, tmp);
+		return parsePath(e.v, tmp);
+	}
+
 	Url *executableFileUrl(Engine &e) {
 		wchar_t tmp[MAX_PATH + 1];
 		GetModuleFileName(NULL, tmp, MAX_PATH + 1);
 		return parsePath(e, tmp);
 	}
+#elif defined(POSIX)
+	Url *cwdUrl(EnginePtr e) {
+		char path[PATH_MAX + 1] = { 0 };
+		getcwd(path, PATH_MAX);
+		return parsePath(e.v, toWChar(e.v, path)->v);
+	}
+
+	Url *executableFileUrl(Engine &e) {
+		char path[PATH_MAX + 1] = { 0 };
+		readlink("/proc/self/exe", path, PATH_MAX);
+		return parsePath(e, toWChar(e, path)->v);
+	}
 #else
-#error "Please implement executableFileUrl for your OS!"
+#error "Please implement executableFileUrl and cwdUrl for your OS!"
 #endif
 
 	Url *executableUrl(Engine &e) {
@@ -377,13 +404,6 @@ namespace storm {
 #endif
 		Url *v = executableUrl(e);
 		return v->parent();
-	}
-
-	Url *cwdUrl(EnginePtr e) {
-		wchar_t tmp[MAX_PATH + 1];
-		tmp[0] = 0;
-		GetCurrentDirectory(MAX_PATH + 1, tmp);
-		return parsePath(e.v, tmp);
 	}
 
 }

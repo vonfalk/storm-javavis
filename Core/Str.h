@@ -100,7 +100,10 @@ namespace storm {
 		virtual void STORM_FN toS(StrBuf *buf) const;
 
 		// Get a c-string.
-		wchar *c_str() const;
+		const wchar *c_str() const;
+
+		// Get an UTF-8 encoded c-string allocated on the GC heap.
+		const char *utf8_str() const;
 
 		// Convert to/from cr-lf line endings. Returns the same string if possible.
 		const Str *STORM_FN toCrLf() const;

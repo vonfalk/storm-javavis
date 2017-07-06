@@ -3,6 +3,7 @@
 #include "StrBuf.h"
 #include "GcType.h"
 #include "Utf.h"
+#include "Convert.h"
 
 namespace storm {
 
@@ -36,7 +37,7 @@ namespace storm {
 			data[i] = v[i];										\
 																\
 		wchar_t *err = null;									\
-		long r = ::name(data, &err, base);						\
+		result r = ::name(data, &err, base);					\
 		if (e)													\
 			*e = (wchar *)(v + (err - data));					\
 		return r;												\
@@ -83,12 +84,7 @@ namespace storm {
 
 #ifdef POSIX
 	Str::Str(const wchar_t *s) {
-		nat count = ::wcslen(s);
-		allocData(count + 1);
-		// Crude conversion. This should be enough for the literals used in Storm.
-		for (nat i = 0; i < count; i++)
-			data->v[i] = wchar(s[i]);
-		data->v[count] = 0;
+		data = toWChar(engine(), s);
 		validate();
 	}
 #endif
@@ -556,8 +552,12 @@ namespace storm {
 		buf->add(this);
 	}
 
-	wchar *Str::c_str() const {
+	const wchar *Str::c_str() const {
 		return data->v;
+	}
+
+	const char *Str::utf8_str() const {
+		return toChar(engine(), data->v)->v;
 	}
 
 	Nat Str::peekLength() const {

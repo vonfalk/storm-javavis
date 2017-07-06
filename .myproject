@@ -118,6 +118,7 @@ flags+=-Wno-reorder
 flags+=-Wno-terminate
 flags+=-Wno-unused-parameter
 flags+=-Wno-missing-field-initializers
+flags+=-Wno-pmf-conversions
 
 compile+=*.c:gcc -std=c99 <defines> <warnings> <usePch*if|pch> <file> -c <includes> -o <output>
 

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Protocol.h"
 #include "Url.h"
+#include "Core/Convert.h"
 #include "Str.h"
 #include "StrBuf.h"
 #include "FileStream.h"
@@ -127,14 +128,14 @@ namespace storm {
 	}
 
 	OStream *FileProtocol::write(Url *url) {
-		throw ProtocolNotSupported(L"write", ::toS(*this));
+		return new (url) OFileStream(format(url));
 	}
 
 	Bool FileProtocol::exists(Url *url) {
 		return PathFileExists(format(url)->c_str()) == TRUE;
 	}
 
-#else
+#elif defined(POSIX)
 
 	Bool FileProtocol::partEq(Str *a, Str *b) {
 		return a->equals(b);
@@ -144,6 +145,61 @@ namespace storm {
 		return a->hash();
 	}
 
+	Str *FileProtocol::format(Url *url) {
+		StrBuf *to = new (this) StrBuf();
+
+		Array<Str *> *parts = url->getParts();
+		if (parts->count() == 0)
+			return to->toS();
+
+		for (Nat i = 0; i < parts->count(); i++) {
+			*to << L"/" << parts->at(i);
+		}
+
+		// if (url->dir)
+		// 	*to << L"/";
+
+		return to->toS();
+	}
+
+	Array<Url *> *FileProtocol::children(Url *url) {
+		Array<Url *> *result = new (url) Array<Url *>();
+
+		DIR *h = opendir(format(url)->utf8_str());
+
+		dirent *d;
+		while ((d = readdir(h)) != null) {
+			if (strcmp(d->d_name, "..") == 0 || strcmp(d->d_name, ".") == 0)
+				continue;
+
+			Str *name = new (this) Str(toWChar(engine(), d->d_name)->v);
+			if (d->d_type == DT_DIR) {
+				result->push(url->pushDir(name));
+				// TODO: Handle 'DT_UNKNOWN' properly...
+			} else {
+				result->push(url->push(name));
+			}
+		}
+
+		closedir(h);
+
+		return result;
+	}
+
+	IStream *FileProtocol::read(Url *url) {
+		return new (url) IFileStream(format(url));
+	}
+
+	OStream *FileProtocol::write(Url *url) {
+		return new (url) OFileStream(format(url));
+	}
+
+	Bool FileProtocol::exists(Url *url) {
+		struct stat s;
+		return stat(format(url)->utf8_str(), &s) == 0;
+	}
+
+#else
 #error "Please implement FileProtocol for your OS!"
 #endif
 

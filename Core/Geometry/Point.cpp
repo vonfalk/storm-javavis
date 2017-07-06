@@ -89,7 +89,7 @@ namespace storm {
 		}
 
 		Point abs(Point a) {
-			return Point(::abs(a.x), ::abs(a.y));
+			return Point(::fabs(a.x), ::fabs(a.y));
 		}
 
 		Point angle(Angle a) {
