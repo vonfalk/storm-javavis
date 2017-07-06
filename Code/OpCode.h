@@ -24,10 +24,10 @@ namespace code {
 			fnParam,
 			fnParamRef,
 			fnCall,
-			or,
-			and,
-			xor,
-			not,
+			STORM_NAME(bor, or),
+			STORM_NAME(band, and),
+			STORM_NAME(bxor, xor),
+			STORM_NAME(bnot, not),
 			add,
 			adc,
 			sub,
@@ -90,6 +90,6 @@ namespace code {
 
 	BITMASK_OPERATORS(DestMode);
 
-	const wchar *name(op::Code op);
+	const wchar_t *name(op::Code op);
 	DestMode destMode(op::Code op);
 }

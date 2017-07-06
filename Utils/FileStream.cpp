@@ -160,14 +160,11 @@ void FileStream::rawSeek(nat64 to) {
 #ifdef POSIX
 
 void FileStream::openFile(const String &name, Mode m) {
-	int mode = 0;
-	if (m & mRead) mode = O_RDONLY;
-	if (m & mWrite) mode = O_WRONLY;
-
 	int flags = O_CLOEXEC;
-	if (m & mWrite) flags |= O_CREAT;
+	if (m & mRead) flags |= O_RDONLY;
+	if (m & mWrite) flags |= O_WRONLY | O_CREAT;
 
-	file = open(name.toChar().c_str(), flags, mode);
+	file = open(name.toChar().c_str(), flags, 0666);
 	if (file >= 0) {
 		fileSize = lseek(file, 0, SEEK_END);
 		lseek(file, 0, SEEK_SET);
@@ -237,7 +234,7 @@ void FileStream::close() {
 }
 
 bool FileStream::valid() const {
-	return file < 0;
+	return file >= 0;
 }
 
 nat64 FileStream::rawPos() const {

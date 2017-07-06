@@ -120,7 +120,7 @@ namespace storm {
 
 #ifdef POSIX
 		StrBuf &operator <<(const wchar_t *str) { return *add(str); }
-		StrBuf *STORM_FN add(const wchar_t *str);
+		StrBuf *add(const wchar_t *str);
 #endif
 
 		// Formatting options.

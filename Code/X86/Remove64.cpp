@@ -11,12 +11,12 @@ namespace code {
 			TRANSFORM(mov),
 			TRANSFORM(add),
 			TRANSFORM(adc),
-			TRANSFORM(or),
-			TRANSFORM(and),
-			TRANSFORM(not),
+			TRANSFORM(bor),
+			TRANSFORM(band),
+			TRANSFORM(bnot),
 			TRANSFORM(sub),
 			TRANSFORM(sbb),
-			TRANSFORM(xor),
+			TRANSFORM(bxor),
 			TRANSFORM(cmp),
 			TRANSFORM(mul),
 			TRANSFORM(idiv),
@@ -92,19 +92,19 @@ namespace code {
 			*to << adc(high32(instr->dest()), high32(instr->src()));
 		}
 
-		void Remove64::orTfm(Listing *to, Instr *instr, RegSet *used) {
-			*to << or(low32(instr->dest()), low32(instr->src()));
-			*to << or(high32(instr->dest()), high32(instr->src()));
+		void Remove64::borTfm(Listing *to, Instr *instr, RegSet *used) {
+			*to << bor(low32(instr->dest()), low32(instr->src()));
+			*to << bor(high32(instr->dest()), high32(instr->src()));
 		}
 
-		void Remove64::andTfm(Listing *to, Instr *instr, RegSet *used) {
-			*to << and(low32(instr->dest()), low32(instr->src()));
-			*to << and(high32(instr->dest()), high32(instr->src()));
+		void Remove64::bandTfm(Listing *to, Instr *instr, RegSet *used) {
+			*to << band(low32(instr->dest()), low32(instr->src()));
+			*to << band(high32(instr->dest()), high32(instr->src()));
 		}
 
-		void Remove64::notTfm(Listing *to, Instr *instr, RegSet *used) {
-			*to << not(low32(instr->dest()));
-			*to << not(high32(instr->src()));
+		void Remove64::bnotTfm(Listing *to, Instr *instr, RegSet *used) {
+			*to << bnot(low32(instr->dest()));
+			*to << bnot(high32(instr->src()));
 		}
 
 		void Remove64::subTfm(Listing *to, Instr *instr, RegSet *used) {
@@ -117,9 +117,9 @@ namespace code {
 			*to << sbb(high32(instr->dest()), high32(instr->src()));
 		}
 
-		void Remove64::xorTfm(Listing *to, Instr *instr, RegSet *used) {
-			*to << xor(low32(instr->dest()), low32(instr->src()));
-			*to << xor(high32(instr->dest()), high32(instr->src()));
+		void Remove64::bxorTfm(Listing *to, Instr *instr, RegSet *used) {
+			*to << bxor(low32(instr->dest()), low32(instr->src()));
+			*to << bxor(high32(instr->dest()), high32(instr->src()));
 		}
 
 		void Remove64::cmpTfm(Listing *to, Instr *instr, RegSet *used) {
@@ -143,8 +143,8 @@ namespace code {
 
 			// Reset ZF if it was not set the first time around.
 			*to << mov(dest, intRel(ptrStack, Offset::sInt));
-			*to << or(dest, intConst(~(1 << 6))); // Now all bits except for ZF are always 1
-			*to << and(intRel(ptrStack, Offset()), dest); // Masking out ZF.
+			*to << bor(dest, intConst(~(1 << 6))); // Now all bits except for ZF are always 1
+			*to << band(intRel(ptrStack, Offset()), dest); // Masking out ZF.
 
 			*to << popFlags();
 			*to << pop(dest); // We can not use add here, as it modifies flags.
@@ -166,7 +166,7 @@ namespace code {
 		}
 
 		void Remove64::mulTfm(Listing *to, Instr *instr, RegSet *used) {
-			callFn(to, instr, used, &mul);
+			callFn(to, instr, used, address(&mul));
 		}
 
 		static Long CODECALL idiv(Long a, Long b) {
@@ -174,7 +174,7 @@ namespace code {
 		}
 
 		void Remove64::idivTfm(Listing *to, Instr *instr, RegSet *used) {
-			callFn(to, instr, used, &idiv);
+			callFn(to, instr, used, address(&idiv));
 		}
 
 		static Word CODECALL udiv(Word a, Word b) {
@@ -182,7 +182,7 @@ namespace code {
 		}
 
 		void Remove64::udivTfm(Listing *to, Instr *instr, RegSet *used) {
-			callFn(to, instr, used, &udiv);
+			callFn(to, instr, used, address(&udiv));
 		}
 
 		static Long CODECALL imod(Long a, Long b) {
@@ -190,7 +190,7 @@ namespace code {
 		}
 
 		void Remove64::imodTfm(Listing *to, Instr *instr, RegSet *used) {
-			callFn(to, instr, used, &imod);
+			callFn(to, instr, used, address(&imod));
 		}
 
 		static Word CODECALL umod(Word a, Word b) {
@@ -198,7 +198,7 @@ namespace code {
 		}
 
 		void Remove64::umodTfm(Listing *to, Instr *instr, RegSet *used) {
-			callFn(to, instr, used, &umod);
+			callFn(to, instr, used, address(&umod));
 		}
 
 		void Remove64::pushTfm(Listing *to, Instr *instr, RegSet *used) {

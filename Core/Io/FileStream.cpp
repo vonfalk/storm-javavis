@@ -39,9 +39,12 @@ namespace storm {
 #elif defined(POSIX)
 
 	static os::Handle openFile(Str *name, bool input) {
-		int flags = input ? 0 : O_CREAT;
-		int mode = input ? O_RDONLY : O_WRONLY;
-		return ::open(name->utf8_str(), flags, mode);
+		int flags = O_CLOEXEC;
+		if (input)
+			flags |= O_CREAT | O_RDONLY;
+		else
+			flags |= O_WRONLY;
+		return ::open(name->utf8_str(), flags, 0666);
 	}
 
 	static os::Handle copyFile(os::Handle h, Str *name, bool input) {

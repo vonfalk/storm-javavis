@@ -228,20 +228,20 @@ namespace code {
 		return instrLoose(e, op, sizedReg(ptrA, ret.size), src);
 	}
 
-	Instr *or(EnginePtr e, Operand dest, Operand src) {
-		return instrDestSrc(e, op::or, dest, src);
+	Instr *bor(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::bor, dest, src);
 	}
 
-	Instr *and(EnginePtr e, Operand dest, Operand src) {
-		return instrDestSrc(e, op::and, dest, src);
+	Instr *band(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::band, dest, src);
 	}
 
-	Instr *xor(EnginePtr e, Operand dest, Operand src) {
-		return instrDestSrc(e, op::xor, dest, src);
+	Instr *bxor(EnginePtr e, Operand dest, Operand src) {
+		return instrDestSrc(e, op::bxor, dest, src);
 	}
 
-	Instr *not(EnginePtr e, Operand dest) {
-		return instrDest(e, op::not, dest);
+	Instr *bnot(EnginePtr e, Operand dest) {
+		return instrDest(e, op::bnot, dest);
 	}
 
 	Instr *add(EnginePtr e, Operand dest, Operand src) {

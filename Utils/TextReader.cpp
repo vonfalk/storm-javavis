@@ -11,9 +11,9 @@ TextReader::~TextReader() {
 }
 
 TextReader *TextReader::create(Stream *stream) {
-	wchar_t bom;
+	wchar bom;
 	stream->seek(0);
-	stream->read(sizeof(wchar_t), &bom);
+	stream->read(sizeof(wchar), &bom);
 
 	if (bom == 0xFEFF) {
 		return new textfile::Utf16Reader(stream, false);
@@ -64,8 +64,8 @@ textfile::Utf8Reader::~Utf8Reader() {}
 
 wchar_t textfile::Utf8Reader::get() {
 	if (nextValid) {
-		return nextCh;
 		nextValid = false;
+		return nextCh;
 	} else {
 		return readChar();
 	}

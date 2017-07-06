@@ -374,7 +374,7 @@ static void genFnParams(wostream &to, World &w) {
 }
 
 static void stormName(wostream &to, Function &f) {
-	String name = f.name.last();
+	String name = f.stormName;
 	if (name.size() > 9 && name.substr(0, 9) == L"operator ") {
 		String op = name.substr(9).trim();
 		if (op == L"++" || op == L"--") {
@@ -503,7 +503,7 @@ static void genVariables(wostream &to, World &w) {
 
 			to << L"{ ";
 			// Name.
-			to << L"L\"" << v.name << L"\", ";
+			to << L"L\"" << v.stormName << L"\", ";
 
 			// Owner id.
 			to << c->id << L" /* " << c->name << L" */, ";
@@ -528,18 +528,19 @@ static void genEnumValues(wostream &to, World &w) {
 			continue;
 
 		for (nat j = 0; j < e->members.size(); j++) {
-			const String &member = e->members[j];
+			const String &cppMember = e->members[j];
+			const String &stormMember = e->stormMembers[j];
 
 			to << L"{ ";
 
 			// Name.
-			to << L"L\"" << member << L"\", ";
+			to << L"L\"" << stormMember << L"\", ";
 
 			// Member of.
 			to << e->id << L" /* " << e->name << L" */, ";
 
 			// Value.
-			to << e->name.parent() << L"::" << member;
+			to << e->name.parent() << L"::" << cppMember;
 
 			to << L" },\n";
 		}

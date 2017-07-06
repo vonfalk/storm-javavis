@@ -4,6 +4,8 @@
 #include "../UsedRegs.h"
 
 namespace code {
+	class Binary;
+
 	namespace x86 {
 		STORM_PKG(core.asm.x86);
 

@@ -35,12 +35,12 @@ namespace code {
 			void movTfm(Listing *to, Instr *instr, RegSet *used);
 			void addTfm(Listing *to, Instr *instr, RegSet *used);
 			void adcTfm(Listing *to, Instr *instr, RegSet *used);
-			void orTfm(Listing *to, Instr *instr, RegSet *used);
-			void andTfm(Listing *to, Instr *instr, RegSet *used);
-			void notTfm(Listing *to, Instr *instr, RegSet *used);
+			void borTfm(Listing *to, Instr *instr, RegSet *used);
+			void bandTfm(Listing *to, Instr *instr, RegSet *used);
+			void bnotTfm(Listing *to, Instr *instr, RegSet *used);
 			void subTfm(Listing *to, Instr *instr, RegSet *used);
 			void sbbTfm(Listing *to, Instr *instr, RegSet *used);
-			void xorTfm(Listing *to, Instr *instr, RegSet *used);
+			void bxorTfm(Listing *to, Instr *instr, RegSet *used);
 			void cmpTfm(Listing *to, Instr *instr, RegSet *used);
 			void mulTfm(Listing *to, Instr *instr, RegSet *used);
 			void idivTfm(Listing *to, Instr *instr, RegSet *used);

@@ -6,7 +6,7 @@ const String Function::ctor = L"__init";
 const String Function::dtor = L"__destroy";
 
 Function::Function(const CppName &name, const String &pkg, Access access, const SrcPos &pos, Auto<TypeRef> result) :
-	name(name), pkg(pkg), access(access), pos(pos), result(result),
+	name(name), pkg(pkg), stormName(name.last()), access(access), pos(pos), result(result),
 	isMember(false), isVirtual(false), isConst(false), wrapAssign(false), castMember(false), threadType(null) {}
 
 void Function::resolveTypes(World &w, const CppName &ctx) {

@@ -372,3 +372,5 @@ namespace code {
 	StrBuf &STORM_FN operator <<(StrBuf &to, Listing::Entry e);
 
 }
+
+#include "InstrFwd.h"

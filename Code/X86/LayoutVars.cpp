@@ -92,14 +92,12 @@ namespace code {
 		// using it as our zero. 'initEax' will be set to false, so that it is easy to use zeroVar
 		// in a loop, causing only the first invocation to emit 'eax := 0'.
 		static void zeroVar(Listing *dest, Offset start, Size size, bool &initEax) {
-			Engine &e = dest->engine();
-
 			nat s32 = size.size32();
 			if (s32 == 0)
 				return;
 
 			if (initEax) {
-				*dest << xor(eax, eax);
+				*dest << bxor(eax, eax);
 				initEax = false;
 			}
 
@@ -139,8 +137,6 @@ namespace code {
 		}
 
 		void LayoutVars::destroyPart(Listing *dest, Part destroy, bool preserveEax) {
-			Engine &e = engine();
-
 			if (destroy != part)
 				throw BlockEndError();
 
@@ -188,8 +184,6 @@ namespace code {
 		}
 
 		void LayoutVars::prologTfm(Listing *dest, Listing *src, Nat line) {
-			Engine &e = engine();
-
 			// Set up stack frame.
 			*dest << push(ptrFrame);
 			*dest << mov(ptrFrame, ptrStack);
@@ -237,8 +231,6 @@ namespace code {
 		}
 
 		void LayoutVars::epilogTfm(Listing *dest, Listing *src, Nat line) {
-			Engine &e = engine();
-
 			// Destroy blocks. Note: we shall not modify 'part' as this may be an early return from
 			// the function.
 			Part oldPart = part;

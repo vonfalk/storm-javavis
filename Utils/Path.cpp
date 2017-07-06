@@ -39,7 +39,10 @@ void Path::parseStr(const String &str) {
 	nat startAt = 0;
 	for (nat i = 0; i < str.size(); i++) {
 		if (str[i] == '\\' || str[i] == '/') {
-			if (i > startAt) {
+			if (i == 0) {
+				// Looks like an absolute path!
+				parts.push_back(L"");
+			} else if (i > startAt) {
 				parts.push_back(str.substr(startAt, i - startAt));
 			}
 			startAt = i + 1;
@@ -69,28 +72,6 @@ void Path::simplify() {
 			++i;
 		}
 	}
-}
-
-String Path::toS() const {
-	// On Windows, we do not need to know if the path is absolute or relative.
-	String result = join(parts, L"\\");
-	if (parts.size() == 0)
-		result = L".";
-	if (isDirectory)
-		result += L"\\";
-	return result;
-}
-
-std::wostream &operator <<(std::wostream &to, const Path &path) {
-	for (nat i = 0; i < path.parts.size(); i++) {
-		if (i > 0) to << L"\\";
-		to << path.parts[i];
-	}
-	if (path.parts.size() == 0)
-		to << L".";
-	if (path.isDir())
-		to << L"\\";
-	return to;
 }
 
 bool Path::operator ==(const Path &o) const {
@@ -175,13 +156,6 @@ String Path::ext() const {
 
 bool Path::isDir() const {
 	return isDirectory;
-}
-
-bool Path::isAbsolute() const {
-	if (parts.size() == 0) return false;
-	const String &first = parts.front();
-	if (first.size() < 2) return false;
-	return first[1] == L':';
 }
 
 bool Path::isEmpty() const {
@@ -318,6 +292,35 @@ void Path::createDir() const {
 	CreateDirectory(toS().c_str(), NULL);
 }
 
+String Path::toS() const {
+	// On Windows, we do not need to know if the path is absolute or relative.
+	String result = join(parts, L"\\");
+	if (parts.size() == 0)
+		result = L".";
+	if (isDirectory)
+		result += L"\\";
+	return result;
+}
+
+std::wostream &operator <<(std::wostream &to, const Path &path) {
+	for (nat i = 0; i < path.parts.size(); i++) {
+		if (i > 0) to << L"\\";
+		to << path.parts[i];
+	}
+	if (path.parts.size() == 0)
+		to << L".";
+	if (path.isDir())
+		to << L"\\";
+	return to;
+}
+
+bool Path::isAbsolute() const {
+	if (parts.size() == 0) return false;
+	const String &first = parts.front();
+	if (first.size() < 2) return false;
+	return first[1] == L':';
+}
+
 #endif
 
 
@@ -330,7 +333,9 @@ void Path::createDir() const {
 Path Path::executableFile() {
 	static Path e;
 	if (e.parts.size() == 0) {
-		assert(false, L"Don't know how to get the path of the executable file on POSIX yet!");
+		char tmp[PATH_MAX + 1] = { 0 };
+		readlink("/proc/self/exe", tmp, PATH_MAX);
+		e = Path(String(tmp));
 	}
 	return e;
 }
@@ -408,6 +413,29 @@ void Path::createDir() const {
 
 	parent().createDir();
 	mkdir(toS().toChar().c_str(), 0777);
+}
+
+String Path::toS() const {
+	std::wostringstream out;
+	out << *this;
+	return out.str();
+}
+
+std::wostream &operator <<(std::wostream &to, const Path &path) {
+	join(to, path.parts, L"/");
+
+	if (path.parts.size() == 0)
+		to << L".";
+	if (path.isDir())
+		to << '/';
+
+	return to;
+}
+
+bool Path::isAbsolute() const {
+	if (parts.size() == 0) return false;
+	const String &first = parts.front();
+	return first.empty();
 }
 
 #endif

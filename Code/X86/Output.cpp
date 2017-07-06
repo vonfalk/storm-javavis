@@ -8,7 +8,7 @@ namespace code {
 
 		CodeOut::CodeOut(Binary *owner, Array<Nat> *lbls, Nat size, Nat numRefs) {
 			// Properly align 'size'.
-			this->size = size = roundUp(size, sizeof(void *));
+			this->size = size = roundUp(size, Nat(sizeof(void *)));
 
 			// Initialize our members.
 			this->owner = owner;
@@ -19,7 +19,6 @@ namespace code {
 			ref = 1;
 
 			// Store 'codeRefs' at the end of our allocated space.
-			void *refsPos = code + size;
 			GcCode *refs = runtime::codeRefs(code);
 			refs->refs[0].offset = size;
 			refs->refs[0].kind = GcCodeRef::rawPtr;

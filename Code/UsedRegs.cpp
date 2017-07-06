@@ -46,7 +46,7 @@ namespace code {
 				used->clear();
 			// Intentional fall-through.
 		default:
-			if (instr->op() == op::xor &&
+			if (instr->op() == op::bxor &&
 				instr->src() == instr->dest()) {
 
 				// We're just setting 'src' to 0.

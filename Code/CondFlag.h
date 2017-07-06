@@ -35,7 +35,7 @@ namespace code {
 	};
 
 	// Get the string name.
-	const wchar *name(CondFlag cond);
+	const wchar_t *name(CondFlag cond);
 
 	// Inverse the flag.
 	CondFlag STORM_FN inverse(CondFlag cond);

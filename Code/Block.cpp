@@ -27,13 +27,13 @@ namespace code {
 	Part::Part(Block b) : id(b.id) {}
 
 	wostream &operator <<(wostream &to, Part l) {
-		if (l.id == -1)
+		if (l.id == Nat(-1))
 			return to << L"invalid part";
 		return to << L"Part" << l.id;
 	}
 
 	StrBuf &operator <<(StrBuf &to, Part l) {
-		if (l.id == -1)
+		if (l.id == Nat(-1))
 			return to << L"invalid part";
 		return to << L"Part" << l.id;
 	}

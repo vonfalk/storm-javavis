@@ -10,7 +10,7 @@ namespace storm {
 	static util::Lock randomLock;
 
 	// Maximum random number + 1
-	static const Nat randMax = RAND_MAX + 1;
+	static const Word randMax = Word(RAND_MAX) + 1;
 
 	// Get a random number (like rand).
 	static Nat random() {

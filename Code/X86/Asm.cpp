@@ -20,7 +20,7 @@ namespace code {
 		const Reg rsi = Reg(0x811);
 		const Reg rdi = Reg(0x812);
 
-		const wchar *nameX86(Reg r) {
+		const wchar_t *nameX86(Reg r) {
 			switch (r) {
 			case ptrD:
 				return L"ptrD";
@@ -49,8 +49,9 @@ namespace code {
 				return L"rsi";
 			case rdi:
 				return L"rdi";
+			default:
+				return null;
 			}
-			return null;
 		}
 
 		Reg unusedReg(RegSet *in) {
@@ -152,7 +153,6 @@ namespace code {
 		}
 
 		Reg preserve(Reg r, RegSet *used, Listing *dest) {
-			Engine &e = dest->engine();
 			Reg into = unusedReg(used);
 			if (into == noReg) {
 				*dest << push(r);
@@ -164,8 +164,6 @@ namespace code {
 		}
 
 		void restore(Reg r, Reg saved, Listing *dest) {
-			Engine &e = dest->engine();
-
 			if (saved == noReg) {
 				*dest << pop(r);
 			} else {
@@ -286,7 +284,7 @@ namespace code {
 				scaledReg = 4; // no scaling
 			assert(scaledReg != 4 || scale == 1);
 			assert(scale <= 4);
-			static const byte scaleMap[9] = { -1, 0, 1, -1, 2, -1, -1, -1, 3 };
+			static const byte scaleMap[9] = { 0xFF, 0, 1, 0xFF, 2, 0xFF, 0xFF, 0xFF, 3 };
 			scale = scaleMap[scale];
 			assert(scale < 4 && baseReg < 8 && scaledReg < 8);
 			return (scale << 6) | (scaledReg << 3) | baseReg;

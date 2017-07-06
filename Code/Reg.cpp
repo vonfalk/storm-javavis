@@ -5,7 +5,7 @@
 
 namespace code {
 
-	const wchar *name(Reg r) {
+	const wchar_t *name(Reg r) {
 		switch (r) {
 		case noReg:
 			return L"<none>";
@@ -38,7 +38,7 @@ namespace code {
 		case rcx:
 			return L"rcx";
 		default:
-			if (const wchar *n = x86::nameX86(r))
+			if (const wchar_t *n = x86::nameX86(r))
 				return n;
 			assert(false);
 			return L"<unknown>";

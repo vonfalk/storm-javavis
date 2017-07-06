@@ -21,6 +21,9 @@ public:
 	// Package.
 	String pkg;
 
+	// Name in Storm.
+	String stormName;
+
 	// Declared at?
 	SrcPos pos;
 

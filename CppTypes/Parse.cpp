@@ -167,6 +167,7 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 	tok.skipIf(L"CODECALL");
 
 	name.pos = type->pos;
+	String stormName;
 	if (tok.peek().token != L"(") {
 		// Then, we should have the member's name.
 		name = tok.next();
@@ -190,6 +191,12 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 			} else {
 				name.token += L" " + tok.next().token;
 			}
+		} else if (name.token == L"STORM_NAME") {
+			tok.expect(L"(");
+			name = tok.next();
+			tok.expect(L",");
+			stormName = tok.next().token;
+			tok.expect(L")");
 		}
 	} else if (name.token != Function::dtor) {
 		// Constructor
@@ -200,6 +207,8 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 	if (tok.skipIf(L"(")) {
 		// Function.
 		Function f(CppName(name.token), env.pkg, access, name.pos, type);
+		if (!stormName.empty())
+			f.stormName = stormName;
 		f.isVirtual = isVirtual;
 		f.castMember = castFn;
 
@@ -240,7 +249,10 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		throw Error(L"C-style arrays not supported in classes exposed to Storm.", name.pos);
 	} else if (tok.skipIf(L";")) {
 		// Variable.
-		addTo.add(Variable(CppName(name.token), type, access, name.pos));
+		Variable v(CppName(name.token), type, access, name.pos);
+		if (!stormName.empty())
+			v.stormName = stormName;
+		addTo.add(v);
 	} else {
 		// Unknown construct; ignore it.
 	}
@@ -269,7 +281,17 @@ static void parseEnum(Tokenizer &tok, ParseEnv &env, const CppName &inside) {
 		if (member.token == L"}")
 			break;
 
+		Token stormName = member;
+		if (member.token == L"STORM_NAME") {
+			tok.expect(L"(");
+			member = tok.next();
+			tok.expect(L",");
+			stormName = tok.next();
+			tok.expect(L")");
+		}
+
 		type->members.push_back(member.token);
+		type->stormMembers.push_back(stormName.token);
 
 		if (tok.skipIf(L"=")) {
 			// Some expression for initialization. Skip it.

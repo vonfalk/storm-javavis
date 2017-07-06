@@ -15,37 +15,6 @@ namespace code {
 	 */
 
 	/**
-	 * Robust reference.
-	 */
-	class Reference : public ObjectOn<Compiler> {
-		STORM_CLASS;
-		friend class Ref;
-		friend class Operand;
-	public:
-		// First parameter is what the reference should refer to, second is who is referring.
-		STORM_CTOR Reference(RefSource *to, Content *inside);
-		STORM_CTOR Reference(Ref to, Content *inside);
-
-		// Get the content we're associated with, ie. who's referring to something.
-		inline Content *referrer() const { return owner; }
-
-		// Notification of changed address.
-		virtual void moved(const void *newAddr);
-
-		// Get current address.
-		inline const void *address() const { return to->address(); }
-
-		// ToS.
-		virtual void STORM_FN toS(StrBuf *to) const;
-	private:
-		// Owner = referrer
-		Content *owner;
-
-		// Who are we referring to?
-		RefSource *to;
-	};
-
-	/**
 	 * Weak reference.
 	 */
 	class Ref {
@@ -77,5 +46,35 @@ namespace code {
 	wostream &operator <<(wostream &to, const Ref &r);
 	StrBuf &STORM_FN operator <<(StrBuf &to, Ref r) ON(Compiler);
 
+	/**
+	 * Robust reference.
+	 */
+	class Reference : public ObjectOn<Compiler> {
+		STORM_CLASS;
+		friend class Ref;
+		friend class Operand;
+	public:
+		// First parameter is what the reference should refer to, second is who is referring.
+		STORM_CTOR Reference(RefSource *to, Content *inside);
+		STORM_CTOR Reference(Ref to, Content *inside);
+
+		// Get the content we're associated with, ie. who's referring to something.
+		inline Content *referrer() const { return owner; }
+
+		// Notification of changed address.
+		virtual void moved(const void *newAddr);
+
+		// Get current address.
+		inline const void *address() const { return to->address(); }
+
+		// ToS.
+		virtual void STORM_FN toS(StrBuf *to) const;
+	private:
+		// Owner = referrer
+		Content *owner;
+
+		// Who are we referring to?
+		RefSource *to;
+	};
 
 }

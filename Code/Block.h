@@ -52,7 +52,6 @@ namespace code {
 		inline Nat STORM_FN key() const { return id; }
 
 	private:
-		friend class Part;
 		friend class Listing;
 		friend class Operand;
 

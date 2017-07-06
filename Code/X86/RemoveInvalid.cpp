@@ -14,11 +14,11 @@ namespace code {
 			IMM_REG(mov),
 			IMM_REG(add),
 			IMM_REG(adc),
-			IMM_REG(or),
-			IMM_REG(and),
+			IMM_REG(bor),
+			IMM_REG(band),
 			IMM_REG(sub),
 			IMM_REG(sbb),
-			IMM_REG(xor),
+			IMM_REG(bxor),
 			IMM_REG(cmp),
 
 			TRANSFORM(lea),
@@ -101,7 +101,6 @@ namespace code {
 			assert(size <= Size::sInt, "The 64-bit transform should have fixed this!");
 
 			Reg reg = unusedReg(line);
-			Engine &e = engine();
 			if (reg == noReg) {
 				reg = asSize(ptrD, size);
 				*dest << push(ptrD);
@@ -124,7 +123,6 @@ namespace code {
 			}
 
 			Reg reg = unusedReg(line);
-			Engine &e = engine();
 			if (reg == noReg) {
 				*dest << push(ptrD);
 				*dest << lea(ptrD, instr->src());
@@ -148,7 +146,6 @@ namespace code {
 			}
 
 			// Only supported mmode is mul <reg>, <r/m>. Move dest into a register.
-			Engine &e = engine();
 			Reg reg = unusedReg(line);
 			if (reg == noReg) {
 				reg = asSize(ptrD, size);
@@ -166,8 +163,6 @@ namespace code {
 		}
 
 		void RemoveInvalid::idivTfm(Listing *to, Instr *instr, Nat line) {
-
-			Engine &e = engine();
 			Operand dest = instr->dest();
 			bool srcConst = instr->src().type() == opConstant;
 			bool destEax = false;
@@ -282,8 +277,6 @@ namespace code {
 		}
 
 		void RemoveInvalid::shlTfm(Listing *dest, Instr *instr, Nat line) {
-			Engine &e = engine();
-
 			switch (instr->src().type()) {
 			case opRegister:
 				if (instr->src().reg() == cl) {
@@ -346,7 +339,6 @@ namespace code {
 			Operand to = instr->dest();
 			Size sFrom = instr->src().size();
 			Size sTo = to.size();
-			Engine &e = engine();
 
 			if (instr->dest() == Operand(asSize(eax, sTo))) {
 				*dest << instr;
@@ -412,7 +404,6 @@ namespace code {
 
 		void RemoveInvalid::callFloatTfm(Listing *dest, Instr *instr, Nat line) {
 			Size s = instr->dest().size();
-			Engine &e = engine();
 
 			*dest << call(instr->src(), ValType(s, false));
 			*dest << sub(ptrStack, ptrConst(s));
@@ -422,7 +413,6 @@ namespace code {
 
 		void RemoveInvalid::retFloatTfm(Listing *dest, Instr *instr, Nat line) {
 			Size s = instr->src().size();
-			Engine &e = engine();
 
 			*dest << push(instr->src());
 			*dest << fld(xRel(s, ptrStack, Offset()));
@@ -476,7 +466,6 @@ namespace code {
 			// Idea: Scan backwards to find fnCall op-codes rather than saving them in an
 			// array. This could catch stray fnParam op-codes if done right. We could also do it the
 			// other way around, letting fnParam search for a terminating fnCall and be done there.
-			Engine &e = engine();
 
 			// Push all parameters we can right now.
 			for (Nat i = params->count(); i > 0; i--) {

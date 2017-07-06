@@ -186,6 +186,9 @@ public:
 	// Members in the enum (not their values, we can easily generate code that fetches those for us).
 	vector<String> members;
 
+	// Names of the enum members in Storm.
+	vector<String> stormMembers;
+
 	// Is this enum used as a bitmask?
 	bool bitmask;
 

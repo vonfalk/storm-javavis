@@ -213,6 +213,13 @@
 	storm::DeclThread name::decl = { name::identifier, fnPtr };
 
 /**
+ * Declare an alternate name for something in Storm. This can be used when one wants to use a
+ * keyword in C++ as an identifier for something in Storm. Declaring it as STORM_NAME(a, b) uses 'a'
+ * as an identifier in C++ and 'b' as an identifier in Storm.
+ */
+#define STORM_NAME(x, y) x
+
+/**
  * The name of entry points for this build. The debug and release builds look slightly different
  * memory-wise here and there, so the entry points of the shared libraries have different name to
  * avoid confusion and strange crashes.

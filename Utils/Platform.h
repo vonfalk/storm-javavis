@@ -110,7 +110,7 @@
 #ifdef GCC
 #define THREAD __thread
 #define NAKED error // not supported?
-#define SHARED_EXPORT error // TODO!
+#define SHARED_EXPORT // TODO!
 
 // We require support for these features.
 #define USE_MOVE

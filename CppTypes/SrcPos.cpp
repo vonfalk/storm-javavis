@@ -10,9 +10,14 @@ vector<Path> SrcPos::files;
 nat SrcPos::firstExport = 0;
 
 wostream &operator <<(wostream &to, const SrcPos &pos) {
-	if (pos.fileId == SrcPos::invalid)
+	if (pos.fileId == SrcPos::invalid) {
 		to << L"<unknown location>";
-	else
+	} else {
+#ifdef VISUAL_STUDIO
 		to << SrcPos::files[pos.fileId] << L"(" << (pos.line+1) << L"," << (pos.col+1) << L")";
+#else
+		to << SrcPos::files[pos.fileId] << L":" << (pos.line+1) << L":" << (pos.col+1);
+#endif
+	}
 	return to;
 }

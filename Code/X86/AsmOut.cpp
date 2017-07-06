@@ -55,7 +55,7 @@ namespace code {
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
-		void orOut(Output *to, Instr *instr) {
+		void borOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
 				0x82, 1,
 				0x08,
@@ -70,7 +70,7 @@ namespace code {
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
-		void andOut(Output *to, Instr *instr) {
+		void bandOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
 				0x82, 4,
 				0x20,
@@ -85,7 +85,7 @@ namespace code {
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
-		void notOut(Output *to, Instr *instr) {
+		void bnotOut(Output *to, Instr *instr) {
 			const Operand &dest = instr->dest();
 			if (dest.size() == Size::sByte) {
 				to->putByte(0xF6);
@@ -128,7 +128,7 @@ namespace code {
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
-		void xorOut(Output *to, Instr *instr) {
+		void bxorOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
 				0x82, 6,
 				0x30,
@@ -494,7 +494,7 @@ namespace code {
 			modRm(to, 7, modified);
 
 			// OR [esp - 4], #0xC00 - Set bits 10 and 11 to 1.
-			orOut(to, or(instr->engine(), modified, natConst(0xC00)));
+			borOut(to, bor(instr->engine(), modified, natConst(0xC00)));
 
 			// FLDCW [ESP - 4]
 			to->putByte(0xD9);
@@ -582,12 +582,12 @@ namespace code {
 			OUTPUT(mov),
 			OUTPUT(add),
 			OUTPUT(adc),
-			OUTPUT(or),
-			OUTPUT(and),
-			OUTPUT(not),
+			OUTPUT(bor),
+			OUTPUT(band),
+			OUTPUT(bnot),
 			OUTPUT(sub),
 			OUTPUT(sbb),
-			OUTPUT(xor),
+			OUTPUT(bxor),
 			OUTPUT(cmp),
 			OUTPUT(push),
 			OUTPUT(pop),

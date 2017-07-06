@@ -5,6 +5,9 @@
 namespace code {
 	STORM_PKG(core.asm);
 
+	class RefSource;
+	class Reference;
+
 	/**
 	 * Content. Provides a pointer and a size which can be referred to by RefSources, and by
 	 * extension, References. Only one RefSource can refer to a Content object.

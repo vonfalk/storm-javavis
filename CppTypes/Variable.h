@@ -16,6 +16,9 @@ public:
 	// Name.
 	CppName name;
 
+	// Name in Storm.
+	String stormName;
+
 	// Type.
 	Auto<TypeRef> type;
 

@@ -3,7 +3,7 @@
 
 namespace code {
 
-	const wchar *name(CondFlag c) {
+	const wchar_t *name(CondFlag c) {
 		switch (c) {
 		case ifAlways:
 			return L"always";
@@ -85,7 +85,7 @@ namespace code {
 		case ifFAboveEqual:
 			return ifFBelow;
 		case ifFAbove:
-			ifFBelowEqual;
+			return ifFBelowEqual;
 		}
 
 		TODO(L"Implement!");
