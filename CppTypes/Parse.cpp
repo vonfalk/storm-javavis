@@ -191,6 +191,9 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 			} else {
 				name.token += L" " + tok.next().token;
 			}
+			// Is this a ?= operator?
+			if (tok.skipIf(L"="))
+				name.token += L"=";
 		} else if (name.token == L"STORM_NAME") {
 			tok.expect(L"(");
 			name = tok.next();
@@ -247,6 +250,15 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 		}
 	} else if (tok.skipIf(L"[")) {
 		throw Error(L"C-style arrays not supported in classes exposed to Storm.", name.pos);
+	} else if (tok.skipIf(L"=")) {
+		// Initialized variable. Skip the initialization part.
+		while (!tok.skipIf(L";"))
+			tok.skip();
+
+		Variable v(CppName(name.token), type, access, name.pos);
+		if (!stormName.empty())
+			v.stormName = stormName;
+		addTo.add(v);
 	} else if (tok.skipIf(L";")) {
 		// Variable.
 		Variable v(CppName(name.token), type, access, name.pos);
