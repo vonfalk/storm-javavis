@@ -17,18 +17,14 @@ namespace util {
 		typedef typename std::basic_streambuf<Elem>::int_type int_type;
 		typedef typename std::basic_streambuf<Elem>::traits_type traits_type;
 
-		Elem *pbase() const;
-		Elem *pptr() const;
-		Elem *epptr() const;
-
 		virtual int sync() {
-			overflow(traits_type::eof());
+			this->overflow(traits_type::eof());
 			return 0;
 		}
 
 		virtual int_type overflow(int_type ch) {
-			Elem *begin = pbase();
-			Elem *end = pptr();
+			Elem *begin = this->pbase();
+			Elem *end = this->pptr();
 
 			if (ch != traits_type::eof()) {
 				end[0] = Elem(ch);

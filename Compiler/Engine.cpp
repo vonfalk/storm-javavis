@@ -92,11 +92,10 @@ namespace storm {
 
 			// Set proper paths for the now created packages.
 #ifdef WINDOWS
-			wchar *rootUrl = toS(root).c_str();
+			o.root->setUrl(parsePath(*this, toS(root).c_str()));
 #else
-			wchar *rootUrl = toWChar(*this, toS(root).c_str())->v;
+			o.root->setUrl(parsePath(*this, toWChar(*this, toS(root).c_str())->v));
 #endif
-			o.root->setUrl(parsePath(*this, rootUrl));
 
 			// Done booting.
 			advance(bootDone);

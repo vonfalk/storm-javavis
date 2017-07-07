@@ -22,7 +22,7 @@ BEGIN_TEST(ShiftTest, Code) {
 
 	*l << mov(ecx, eax);
 	*l << shr(ecx, byteRel(p2, Offset()));
-	*l << or(eax, ecx);
+	*l << bor(eax, ecx);
 
 	*l << shl(eax, byteConst(1));
 	*l << shr(eax, byteConst(1));

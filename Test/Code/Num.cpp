@@ -13,7 +13,7 @@ BEGIN_TEST(NotTest, Code) {
 
 	*l << prolog();
 
-	*l << not(p);
+	*l << bnot(p);
 	*l << mov(eax, p);
 
 	*l << epilog();

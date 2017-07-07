@@ -156,6 +156,9 @@ inline void clearMap(T &map) {
 //this occurs in almost every class using the member function pointer.
 #pragma warning ( disable : 4355 )
 
+// Ignore unknown pragmas.
+#pragma warning ( disable : 4068 )
+
 
 //Clear an object. Equivalent to ZeroMemory(&t, sizeof(T));
 template <class T>

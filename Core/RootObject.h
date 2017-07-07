@@ -68,12 +68,12 @@ struct RootCast {
 	}
 };
 
-RootCast<storm::RootObject> customCast(storm::RootObject *from) {
+inline RootCast<storm::RootObject> customCast(storm::RootObject *from) {
 	TODO(L"Check so that these are properly used!");
 	return RootCast<storm::RootObject>(from);
 }
 
-RootCast<const storm::RootObject> customCast(const storm::RootObject *from) {
+inline RootCast<const storm::RootObject> customCast(const storm::RootObject *from) {
 	TODO(L"Check so that these are properly used!");
 	return RootCast<const storm::RootObject>(from);
 }

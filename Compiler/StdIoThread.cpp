@@ -123,7 +123,7 @@ namespace storm {
 	}
 
 	void StdIo::platformDestroy() {
-		DeleteCriticalSection();
+		DeleteCriticalSection(&inputLock);
 	}
 
 	void StdIo::startThread() {
@@ -139,7 +139,7 @@ namespace storm {
 	}
 
 	void StdIo::lockInput() {
-		EnterCriticalSection(&me->inputLock);
+		EnterCriticalSection(&inputLock);
 	}
 
 	bool StdIo::tryLockInput() {
@@ -147,7 +147,7 @@ namespace storm {
 	}
 
 	void StdIo::unlockInput() {
-		LeaveCriticalSection(&me->inputLock);
+		LeaveCriticalSection(&inputLock);
 	}
 
 	void StdIo::doRead(StdRequest *r) {

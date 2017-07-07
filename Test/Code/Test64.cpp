@@ -206,7 +206,7 @@ BEGIN_TEST(Cmp64, Code) {
 		*l << cmp(v1, v2);
 		*l << setCond(al, cf[i]);
 		*l << shl(eax, byteConst(i));
-		*l << or(r, eax);
+		*l << bor(r, eax);
 	}
 
 	for (nat i = 0; i < ARRAY_COUNT(cf); i++) {
@@ -214,7 +214,7 @@ BEGIN_TEST(Cmp64, Code) {
 
 		*l << cmp(v1, v2);
 		*l << jmp(lbl, inverse(cf[i]));
-		*l << or(r, intConst(1 << (16 + i)));
+		*l << bor(r, intConst(1 << (16 + i)));
 		*l << lbl;
 	}
 

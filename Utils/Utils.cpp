@@ -40,6 +40,19 @@ nat atomicDecrement(volatile nat &v) {
 	check_aligned_nat(v);
 	return (size_t)InterlockedDecrement((volatile LONG *)&v);
 }
+
+nat atomicRead(volatile nat &v) {
+	check_aligned_nat(v);
+	// Volatile reads are atomic on X86/X64 as long as they are aligned.
+	return v;
+}
+
+void atomicWrite(volatile nat &v, nat value) {
+	check_aligned_nat(v);
+	// Volatile writes are atomic on X86/X64 as long as they are aligned.
+	v = value;
+}
+
 #endif
 
 size_t atomicIncrement(volatile size_t &v) {
@@ -63,12 +76,6 @@ void *atomicCAS(void *volatile &v, void *compare, void *exchange) {
 }
 
 
-nat atomicRead(volatile nat &v) {
-	check_aligned_nat(v);
-	// Volatile reads are atomic on X86/X64 as long as they are aligned.
-	return v;
-}
-
 size_t atomicRead(volatile size_t &v) {
 	check_aligned_ptr(v);
 	// Volatile reads are atomic on X86/X64 as long as they are aligned.
@@ -79,12 +86,6 @@ void *atomicRead(void *volatile &v) {
 	check_aligned_ptr(v);
 	// Volatile reads are atomic on X86/X64 as long as they are aligned.
 	return v;
-}
-
-void atomicWrite(volatile nat &v, nat value) {
-	check_aligned_nat(v);
-	// Volatile writes are atomic on X86/X64 as long as they are aligned.
-	v = value;
 }
 
 void atomicWrite(volatile size_t &v, size_t value) {

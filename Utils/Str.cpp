@@ -100,8 +100,8 @@ String String::right(nat size) const {
 }
 
 #ifdef WINDOWS
-#define _wcsicmp wcscasecmp
-#define _wcsnicmp wcsncasecmp
+#define wcscasecmp _wcsicmp
+#define wcsncasecmp _wcsnicmp
 #endif
 
 int String::compareNoCase(const String &str) const {

@@ -16,16 +16,6 @@
 
 
 /**
- * Declare a string literal in Storm. Expands to L"" or u"" depending on what is appropriate for the
- * current system.
- */
-#ifdef WINDOWS
-#define S(x) L ## x
-#else
-#define S(x) u ## x
-#endif
-
-/**
  * Declare a super-class as hidden to Storm. This means that Storm will not know that the current
  * class inherits from any parent-class, even if it does from C++'s point of view.
  */
@@ -249,3 +239,13 @@
 #include "Utils/Platform.h"
 #include "Types.h"
 #include "Runtime.h"
+
+/**
+ * Declare a string literal in Storm. Expands to L"" or u"" depending on what is appropriate for the
+ * current system.
+ */
+#ifdef WINDOWS
+#define S(x) L ## x
+#else
+#define S(x) u ## x
+#endif
