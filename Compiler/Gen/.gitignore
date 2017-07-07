@@ -1,6 +1,3 @@
 #This folder only contains generated files.
-
-*.cpp
-*.asm
-
-
+*
+!.gitignore

@@ -802,6 +802,42 @@ static void genVsX86Impl(wostream &to, World &w) {
 	}
 }
 
+static void gccVTablePart(wostream &to, const CppName &name) {
+	if (name.empty())
+		return;
+
+	gccVTablePart(to, name.parent());
+	String here = name.last();
+	to << here.size();
+	to << here;
+}
+
+static String gccVTableName(const CppName &name) {
+	std::wostringstream to;
+
+	to << L"_ZTVN";
+	gccVTablePart(to, name);
+	to << L"E";
+
+	return to.str();
+}
+
+static void genGccX64(wostream &to, World &w) {
+	for (nat i = 0; i < w.types.size(); i++) {
+		const Type &t = *w.types[i];
+		if (!hasVTable(t))
+			continue;
+
+		String sName = stormVTableName(t.name);
+		to << L"\t.globl " << sName << L"\n";
+		to << L"\t.type " << sName << L", @function\n";
+		to << sName << L":\n";
+		// There are two words of additional information in GCC.
+		to << L"\tmovq $" << gccVTableName(t.name) << L"+16, %rax\n";
+		to << L"\tret\n\n";
+	}
+}
+
 GenerateMap asmMap() {
 	struct E {
 		const wchar_t *tag;
@@ -811,6 +847,7 @@ GenerateMap asmMap() {
 	static E e[] = {
 		{ L"VS_X86_DECL", &genVsX86Decl },
 		{ L"VS_X86_IMPL", &genVsX86Impl },
+		{ L"GCC_X64", &genGccX64 },
 	};
 
 	GenerateMap g;

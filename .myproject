@@ -123,17 +123,29 @@ flags+=-Wno-switch
 flags+=-Wno-parentheses
 flags+=-Wno-unused-function
 
+ext+=s
+noIncludes+=*.s
 compile+=*.c:gcc -std=c99 <defines> <warnings> <file> -c <includes> -o <output>
+compile+=*.s:gcc <file> -c -o <output>
 
 [stormpp]
 stormpp=CppTypes
 stormppUses=--use 
 stormProvides=./
 stormUses=../Core/
-stormppUsing=--using 
-preBuild+=<execpath|stormpp> <stormProvides> <stormppUses*stormUses> --template ../Core/Gen/CppTypes.cpp --out Gen/CppTypes.cpp --asm ../Core/Gen/CppVTables.VS_X86 Gen/CppVTables.asm <stormppUsing*stormUsingNamespace> <stormppFlags>
+stormppUsing=--using
+preBuild+=<execpath|stormpp> <stormProvides> <stormppUses*stormUses> --template ../Core/Gen/CppTypes.cpp --out Gen/CppTypes.cpp --asm <stormppAsmTemplate> <stormppAsmOut> <stormppUsing*stormUsingNamespace> <stormppFlags>
 preBuildCreates+=Gen/CppTypes.cpp
+
+[stormpp,windows]
+stormppAsmTemplate=../Core/Gen/CppVTables.VS_X86
+stormppAsmOut=Gen/CppVTables.asm
 preBuildCreates+=Gen/CppVTables.asm
+
+[stormpp,unix]
+stormppAsmTemplate=../Core/Gen/CppVTables.GCC_X64
+stormppAsmOut=Gen/CppVTables.s
+preBuildCreates+=Gen/CppVTables.s
 
 [sharedlib]
 packagePath=../root/<package>/
