@@ -34,13 +34,13 @@ namespace storm {
 		}
 
 		void RuleDecl::toS(StrBuf *to) const {
-			*to << result << L" " << name << L"(";
-			join(to, params, L", ");
-			*to << L")";
+			*to << result << S(" ") << name << S("(");
+			join(to, params, S(", "));
+			*to << S(")");
 
 			if (color != tNone)
-				*to << L" #" << storm::syntax::name(engine(), color);
-			*to << L";";
+				*to << S(" #") << storm::syntax::name(engine(), color);
+			*to << S(";");
 		}
 
 		void RuleDecl::push(Array<ParamDecl> *params) {
@@ -64,13 +64,13 @@ namespace storm {
 
 		void TokenDecl::toS(StrBuf *to) const {
 			if (raw)
-				*to << L"@";
+				*to << S("@");
 			if (store)
-				*to << L" " << store;
+				*to << S(" ") << store;
 			if (invoke)
-				*to << L" -> " << invoke;
+				*to << S(" -> ") << invoke;
 			if (color != tNone)
-				*to << L" #" << name(engine(), color);
+				*to << S(" #") << name(engine(), color);
 		}
 
 		void TokenDecl::pushRaw(Str *dummy) {
@@ -104,7 +104,7 @@ namespace storm {
 		}
 
 		void RegexTokenDecl::toS(StrBuf *to) const {
-			*to << L"\"" << regex->escape(Char('"')) << L"\"";
+			*to << S("\"") << regex->escape(Char('"')) << S("\"");
 			TokenDecl::toS(to);
 		}
 
@@ -124,9 +124,9 @@ namespace storm {
 		void RuleTokenDecl::toS(StrBuf *to) const {
 			*to << rule;
 			if (params) {
-				*to << L"(";
-				join(to, params, L", ");
-				*to << L")";
+				*to << S("(");
+				join(to, params, S(", "));
+				*to << S(")");
 			}
 			TokenDecl::toS(to);
 		}
@@ -135,13 +135,13 @@ namespace storm {
 		DelimTokenDecl::DelimTokenDecl() {}
 
 		void DelimTokenDecl::toS(StrBuf *to) const {
-			*to << L", ";
+			*to << S(", ");
 		}
 
 		SepTokenDecl::SepTokenDecl() {}
 
 		void SepTokenDecl::toS(StrBuf *to) const {
-			*to << L" - ";
+			*to << S(" - ");
 		}
 
 
@@ -164,14 +164,14 @@ namespace storm {
 		void ProductionDecl::toS(StrBuf *to) const {
 			*to << rule;
 			if (priority != 0)
-				*to << L"[" << priority << L"]";
+				*to << S("[") << priority << S("]");
 
 			if (result) {
-				*to << L" => " << result;
+				*to << S(" => ") << result;
 				if (resultParams) {
-					*to << L"(";
-					join(to, resultParams, L", ");
-					*to << L")";
+					*to << S("(");
+					join(to, resultParams, S(", "));
+					*to << S(")");
 				}
 			}
 
@@ -181,7 +181,7 @@ namespace storm {
 
 			bool usingIndent = indentType != indentNone;
 
-			*to << L" : ";
+			*to << S(" : ");
 			bool prevDelim = false;
 			for (Nat i = 0; i < tokens->count(); i++) {
 				TokenDecl *token = tokens->at(i);
@@ -191,16 +191,16 @@ namespace storm {
 					outputRepEnd(to);
 
 				if (usingIndent && indentEnd == i)
-					*to << L" ]" << indentType;
+					*to << S(" ]") << indentType;
 
 				if (i > 0 && !currentDelim && !prevDelim)
-					*to << L" - ";
+					*to << S(" - ");
 
 				if (usingIndent && indentStart == i)
-					*to << L"[";
+					*to << S("[");
 
 				if (usingRep && repStart == i)
-					*to << L"(";
+					*to << S("(");
 
 				*to << token;
 
@@ -211,26 +211,26 @@ namespace storm {
 				outputRepEnd(to);
 
 			if (usingIndent && indentEnd == tokens->count())
-				*to << L" ]" << indentType;
+				*to << S(" ]") << indentType;
 
 			if (name)
-				*to << L" = " << name;
+				*to << S(" = ") << name;
 
-			*to << L";";
+			*to << S(";");
 		}
 
 		void ProductionDecl::outputRepEnd(StrBuf *to) const {
-			*to << L")";
+			*to << S(")");
 
 			switch (repType) {
 			case repZeroOne:
-				*to << L"?";
+				*to << S("?");
 				break;
 			case repOnePlus:
-				*to << L"+";
+				*to << S("+");
 				break;
 			case repZeroPlus:
-				*to << L"*";
+				*to << S("*");
 				break;
 			case repNone:
 				if (repCapture)
@@ -319,20 +319,20 @@ namespace storm {
 
 		void FileContents::toS(StrBuf *to) const {
 			for (nat i = 0; i < use->count(); i++)
-				*to << L"\nuse " << use->at(i);
+				*to << S("\nuse ") << use->at(i);
 
 			if (delimiter)
-				*to << L"\ndelimiter = " << delimiter;
+				*to << S("\ndelimiter = ") << delimiter;
 
 			if (rules->any())
-				*to << L"\n";
+				*to << S("\n");
 			for (nat i = 0; i < rules->count(); i++)
-				*to << L"\n" << rules->at(i);
+				*to << S("\n") << rules->at(i);
 
 			if (productions->any())
-				*to << L"\n";
+				*to << S("\n");
 			for (nat i = 0; i < productions->count(); i++)
-				*to << L"\n" << productions->at(i);
+				*to << S("\n") << productions->at(i);
 		}
 	}
 }

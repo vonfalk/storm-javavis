@@ -8,6 +8,7 @@ namespace storm {
 	namespace syntax {
 		STORM_PKG(lang.bnf);
 
+		class Production;
 		class ProductionType;
 
 		/**

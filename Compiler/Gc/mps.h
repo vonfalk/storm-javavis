@@ -17,6 +17,10 @@ extern "C" {
 	// Run MPS in the hot configuration.
 #endif
 
+#ifdef __cplusplus
+	// Do not include these if we're compiled from 'mps.c', since that will break the MPS setup of
+	// defines for the system.
+
 #include "mps/code/mps.h" // MPS core
 #include "mps/code/mpslib.h" // MPS plinth
 #include "mps/code/mpsavm.h" // VM arena
@@ -33,7 +37,6 @@ extern "C" {
 	// Custom assertion failure handler. Calls 'DebugBreak' to aid when debugging.
 	void mps_assert_fail(const char *file, unsigned line, const char *condition);
 
-#ifdef __cplusplus
 }
 #endif
 

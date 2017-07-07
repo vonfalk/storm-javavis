@@ -25,8 +25,6 @@ namespace storm {
 				if (!followRules)
 					followRules = new (this) Set<Nat>();
 				followRules->put(rule);
-				if (rule == 0xC000000E)
-					DebugBreak();
 			}
 
 			void RuleInfo::followsFirst(Nat rule) {

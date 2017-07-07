@@ -11,15 +11,15 @@ namespace storm {
 		};
 
 		static const TCEntry tcTable[] = {
-			{ tNone, L"none" },
-			{ tComment, L"comment" },
-			{ tDelimiter, L"delimiter" },
-			{ tString, L"string" },
-			{ tConstant, L"constant" },
-			{ tKeyword, L"keyword" },
-			{ tFnName, L"fnName" },
-			{ tVarName, L"varName" },
-			{ tTypeName, L"typeName" },
+			{ tNone, S("none") },
+			{ tComment, S("comment") },
+			{ tDelimiter, S("delimiter") },
+			{ tString, S("string") },
+			{ tConstant, S("constant") },
+			{ tKeyword, S("keyword") },
+			{ tFnName, S("fnName") },
+			{ tVarName, S("varName") },
+			{ tTypeName, S("typeName") },
 		};
 
 
@@ -28,7 +28,7 @@ namespace storm {
 				if (tcTable[i].color == c)
 					return new (e.v) Str(tcTable[i].name);
 
-			return new (e.v) Str(L"<unknown>");
+			return new (e.v) Str(S("<unknown>"));
 		}
 
 		TokenColor STORM_FN tokenColor(Str *name) {

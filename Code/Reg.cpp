@@ -5,43 +5,43 @@
 
 namespace code {
 
-	const wchar_t *name(Reg r) {
+	const wchar *name(Reg r) {
 		switch (r) {
 		case noReg:
-			return L"<none>";
+			return S("<none>");
 		case ptrStack:
-			return L"ptrStack";
+			return S("ptrStack");
 		case ptrFrame:
-			return L"ptrFrame";
+			return S("ptrFrame");
 		case ptrA:
-			return L"ptrA";
+			return S("ptrA");
 		case ptrB:
-			return L"ptrB";
+			return S("ptrB");
 		case ptrC:
-			return L"ptrC";
+			return S("ptrC");
 		case al:
-			return L"al";
+			return S("al");
 		case bl:
-			return L"bl";
+			return S("bl");
 		case cl:
-			return L"cl";
+			return S("cl");
 		case eax:
-			return L"eax";
+			return S("eax");
 		case ebx:
-			return L"ebx";
+			return S("ebx");
 		case ecx:
-			return L"ecx";
+			return S("ecx");
 		case rax:
-			return L"rax";
+			return S("rax");
 		case rbx:
-			return L"rbx";
+			return S("rbx");
 		case rcx:
-			return L"rcx";
+			return S("rcx");
 		default:
-			if (const wchar_t *n = x86::nameX86(r))
+			if (const wchar *n = x86::nameX86(r))
 				return n;
 			assert(false);
-			return L"<unknown>";
+			return S("<unknown>");
 		}
 	}
 

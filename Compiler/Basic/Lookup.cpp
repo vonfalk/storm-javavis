@@ -5,7 +5,7 @@
 namespace storm {
 	namespace bs {
 
-		BSLookup::BSLookup() : ScopeLookup(L"void") {
+		BSLookup::BSLookup() : ScopeLookup(S("void")) {
 			includes = new (this) Array<Package *>();
 		}
 

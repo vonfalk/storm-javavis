@@ -127,12 +127,12 @@ static void genTypes(wostream &to, World &w) {
 		to << L"{ ";
 
 		// Name.
-		to << L"L\"" << t.name.last() << L"\", ";
+		to << L"S(\"" << t.name.last() << L"\"), ";
 
 		// Package.
 		if (t.pkg.empty() && config.compiler)
 			PLN(t.pos << L": warning: placing types in the root package.");
-		to << L"L\"" << t.pkg << L"\", ";
+		to << L"S(\"" << t.pkg << L"\"), ";
 
 		// Parent class (if any).
 		{
@@ -147,9 +147,9 @@ static void genTypes(wostream &to, World &w) {
 				to << L"CppType::superExternal, 0, ";
 			} else if (Enum *e = as<Enum>(&t)) {
 				if (e->bitmask)
-					to << L"CppType::superBitmaskEnum, null, ";
+					to << L"CppType::superBitmaskEnum, 0, ";
 				else
-					to << L"CppType::superEnum, null, ";
+					to << L"CppType::superEnum, 0, ";
 			} else if (p) {
 				to << L"CppType::superCustom, size_t(&" << p->generate << L"), ";
 			} else if (thread) {
@@ -383,9 +383,9 @@ static void stormName(wostream &to, Function &f) {
 			else
 				op = L"*" + op;
 		}
-		to << L"L\"" << op << L"\"";
+		to << L"S(\"" << op << L"\")";
 	} else {
-		to << L"L\"" << name << L"\"";
+		to << L"S(\"" << name << L"\")";
 	}
 }
 
@@ -438,7 +438,7 @@ static void genFunctions(wostream &to, World &w) {
 		} else {
 			if (f.pkg.empty() && config.compiler)
 				PLN(f.pos << L": warning: placing functions in the root package.");
-			to << L"L\"" << f.pkg << L"\", ";
+			to << L"S(\"" << f.pkg << L"\"), ";
 		}
 
 		// Kind.
@@ -503,7 +503,7 @@ static void genVariables(wostream &to, World &w) {
 
 			to << L"{ ";
 			// Name.
-			to << L"L\"" << v.stormName << L"\", ";
+			to << L"S(\"" << v.stormName << L"\"), ";
 
 			// Owner id.
 			to << c->id << L" /* " << c->name << L" */, ";
@@ -534,7 +534,7 @@ static void genEnumValues(wostream &to, World &w) {
 			to << L"{ ";
 
 			// Name.
-			to << L"L\"" << stormMember << L"\", ";
+			to << L"S(\"" << stormMember << L"\"), ";
 
 			// Member of.
 			to << e->id << L" /* " << e->name << L" */, ";
@@ -562,12 +562,12 @@ static void genTemplates(wostream &to, World &w) {
 		to << L"{ ";
 
 		// Name.
-		to << L"L\"" << t.name.last() << L"\", ";
+		to << L"S(\"" << t.name.last() << L"\"), ";
 
 		// Package.
 		if (t.pkg.empty() && config.compiler)
 			PLN(t.pos << L": warning: placing templates in the root package.");
-		to << L"L\"" << t.pkg << L"\", ";
+		to << L"S(\"" << t.pkg << L"\"), ";
 
 		// Generator function.
 		if (config.compiler)
@@ -593,12 +593,12 @@ static void genThreads(wostream &to, World &w) {
 		to << L"{ ";
 
 		// Name.
-		to << L"L\"" << t.name.last() << L"\", ";
+		to << L"S(\"" << t.name.last() << L"\"), ";
 
 		// Package.
 		if (t.pkg.empty() && config.compiler)
 			PLN(t.pos << L": warning: placing threads in the root package.");
-		to << L"L\"" << t.pkg << L"\", ";
+		to << L"S(\"" << t.pkg << L"\"), ";
 
 		// Declaration.
 		to << L"&" << t.name << L"::decl, ";
@@ -657,7 +657,7 @@ static bool escape(wchar ch) {
 }
 
 static void putHex(wostream &to, nat number, nat digits) {
-	wchar lookup[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+	char lookup[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
 	for (nat i = digits; i > 0; i--) {
 		nat digit = number >> ((i - 1)*4);
@@ -682,7 +682,7 @@ static void escapeChar(wostream &to, const String &src, nat &pos) {
 		putHex(to, ch, 2);
 	}
 	// End the string and start a new one to avoid errors in escape sequence expansion...
-	to << '"' << 'L' << '"';
+	to << L"\")S(\"";
 }
 
 static void outputStr(wostream &to, const String &str) {
@@ -694,28 +694,28 @@ static void outputStr(wostream &to, const String &str) {
 	while (end > start && str[end-1] == '\n')
 		end--;
 
-	to << 'L' << '"';
+	to << 'S' << '(' << '"';
 	for (nat i = start; i < end; i++) {
-		wchar ch = str[i];
+		wchar_t ch = str[i];
 		if (ch == '\r') {
 			continue;
 		} else if (ch == '\n') {
-			to << L"\\n\"\nL\"";
+			to << L"\\n\")\nS(\"";
 		} else if (escape(ch)) {
 			escapeChar(to, str, i);
 		} else {
 			to << ch;
 		}
 	}
-	to << '"';
+	to << '"' << ')';
 }
 
 static void genLicenses(wostream &to, World &w) {
 	for (nat i = 0; i < w.licenses.size(); i++) {
 		const License &l = w.licenses[i];
 
-		to << L"{ L\"" << l.id << L"\", ";
-		to << L"L\"" << l.pkg << L"\", ";
+		to << L"{ S(\"" << l.id << L"\"), ";
+		to << L"S(\"" << l.pkg << L"\"), ";
 		outputStr(to, l.title);
 		to << L",\n";
 		outputStr(to, l.body);

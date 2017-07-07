@@ -33,7 +33,7 @@ namespace storm {
 			for (nat i = 0; i < tfmParams->count(); i++)
 				params->push(tfmParams->at(i).type);
 
-			add(lazyFunction(engine, tfmResult, L"transform", params, fnPtr(engine, &Rule::createTransform, this)));
+			add(lazyFunction(engine, tfmResult, S("transform"), params, fnPtr(engine, &Rule::createTransform, this)));
 
 			// Add these last.
 			add(new (this) TypeDefaultCtor(this));

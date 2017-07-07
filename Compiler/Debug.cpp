@@ -72,7 +72,11 @@ namespace storm {
 		}
 
 		void dbgBreak() {
+#ifdef WINDOWS
 			DebugBreak();
+#else
+			abort();
+#endif
 		}
 
 		Float dbgFloat() {
@@ -98,7 +102,7 @@ namespace storm {
 				os::Future<void> fut;
 				os::FnCall<void, 1> p = os::fnCall().add(s);
 				typedef void (*PrintFn)(Object *);
-				os::UThread::spawn((PrintFn)&print, false, p, fut, &target);
+				os::UThread::spawn(address((PrintFn)&print), false, p, fut, &target);
 				fut.result();
 			} else {
 				print((Object *)s);
@@ -239,7 +243,11 @@ namespace storm {
 		void dbgSleep(Int ms) {
 			if (ms < 0)
 				return;
+#ifdef WINDOWS
 			Sleep(ms);
+#else
+			usleep(useconds_t(ms) * 1000);
+#endif
 		}
 
 		void dbgYield() {

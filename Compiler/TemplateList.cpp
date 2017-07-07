@@ -69,7 +69,7 @@ namespace storm {
 			return node->done;
 
 		Nat now = elems[at];
-		if (now == -1)
+		if (now == Nat(-1))
 			now = 0;
 		else
 			now++;
@@ -91,7 +91,7 @@ namespace storm {
 		}
 
 		Nat now = elems[at];
-		if (now == -1)
+		if (now == Nat(-1))
 			now = 0;
 		else
 			now++;
@@ -142,7 +142,7 @@ namespace storm {
 		types->reserve(count);
 
 		for (nat i = 0; i < count; i++) {
-			if (elems[i] == -1) {
+			if (elems[i] == Nat(-1)) {
 				types->push(Value());
 			} else {
 				Type *t = world->types[elems[i]];

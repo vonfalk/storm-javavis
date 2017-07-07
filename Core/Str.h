@@ -56,6 +56,9 @@ namespace storm {
 		// Concatenation.
 		Str *STORM_FN operator +(Str *o) const;
 		Str *operator +(const wchar *o) const;
+#ifdef POSIX
+		Str *operator +(const wchar_t *o) const;
+#endif
 
 		// Multiplication.
 		Str *STORM_FN operator *(Nat times) const;
@@ -212,4 +215,10 @@ namespace storm {
 
 	// Remove leading and trailing empty lines from a string.
 	Str *STORM_FN trimBlankLines(Str *src);
+
+#ifdef POSIX
+	// Low-level string operations for UTF-16.
+	size_t wcslen(const wchar *str);
+	int wcscmp(const wchar *a, const wchar *b);
+#endif
 }

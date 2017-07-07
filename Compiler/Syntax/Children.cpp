@@ -76,12 +76,12 @@ namespace storm {
 		}
 
 		static syntax::SStr *childName(ProductionDecl *decl) {
-			return new (decl) syntax::SStr(L"children", decl->pos);
+			return new (decl) syntax::SStr(S("children"), decl->pos);
 		}
 
 		static Array<ValParam> *childParams(ProductionType *owner) {
 			Array<ValParam> *p = new (owner) Array<ValParam>();
-			p->push(ValParam(thisPtr(owner), new (owner) Str(L"this")));
+			p->push(ValParam(thisPtr(owner), new (owner) Str(S("this"))));
 			return p;
 		}
 
@@ -99,7 +99,7 @@ namespace storm {
 			{
 				Function *f = Array<Node *>::stormType(engine())->defaultCtor();
 				Expr *r = new (this) CtorCall(pos, f, new (this) Actuals());
-				Var *v = new (this) Var(root, new (this) syntax::SStr(L"result"), r);
+				Var *v = new (this) Var(root, new (this) syntax::SStr(S("result")), r);
 				root->add(v);
 				result = new (this) LocalVarAccess(pos, v->var());
 			}
@@ -182,10 +182,10 @@ namespace storm {
 					continue;
 
 				Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), t->target);
-				Expr *read = callMember(L"count", src);
+				Expr *read = callMember(S("count"), src);
 
 				if (minExpr)
-					minExpr = callMember(L"min", minExpr, read);
+					minExpr = callMember(S("min"), minExpr, read);
 				else
 					minExpr = read;
 			}
@@ -197,7 +197,7 @@ namespace storm {
 			ExprBlock *forBlock = new (this) ExprBlock(pos, block);
 			Var *end = new (this) Var(forBlock,
 									Value(StormInfo<Nat>::type(e)),
-									new (e) syntax::SStr(L"_end"),
+									new (e) syntax::SStr(S("_end")),
 									minExpr);
 			forBlock->add(end);
 			Expr *readEnd = new (this) LocalVarAccess(pos, end->var());
@@ -205,14 +205,14 @@ namespace storm {
 			// Iterate...
 			Var *i = new (this) Var(forBlock,
 									Value(StormInfo<Nat>::type(e)),
-									new (e) syntax::SStr(L"_i"),
+									new (e) syntax::SStr(S("_i")),
 									new (this) Constant(pos, 0));
 			Expr *readI = new (this) LocalVarAccess(pos, i->var());
 			forBlock->add(i);
 
 			For *loop = new (this) For(pos, forBlock);
-			loop->test(callMember(L"<", readI, readEnd));
-			loop->update(callMember(L"++*", readI));
+			loop->test(callMember(S("<"), readI, readEnd));
+			loop->update(callMember(S("++*"), readI));
 
 			ExprBlock *inLoop = new (this) ExprBlock(pos, loop);
 			for (Nat i = from; i < to; i++) {
@@ -221,7 +221,7 @@ namespace storm {
 					continue;
 
 				Expr *src = new (this) MemberVarAccess(pos, thisExpr(block), t->target);
-				Expr *read = callMember(L"[]", src, readI);
+				Expr *read = callMember(S("[]"), src, readI);
 				inLoop->add(push(inLoop, result, read));
 			}
 
@@ -231,11 +231,11 @@ namespace storm {
 		}
 
 		Expr *ChildrenFn::push(Block *block, Expr *result, Expr *tokenSrc) {
-			return callMember(pos, L"push", result, tokenSrc);
+			return callMember(pos, S("push"), result, tokenSrc);
 		}
 
 		bs::Expr *ChildrenFn::thisExpr(bs::ExprBlock *block) {
-			LocalVar *var = block->variable(new (this) SimplePart(new (this) Str(L"this")));
+			LocalVar *var = block->variable(new (this) SimplePart(new (this) Str(S("this"))));
 			assert(var, L"'this' was not found!");
 			return new (this) LocalVarAccess(pos, var);
 		}

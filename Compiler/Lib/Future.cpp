@@ -106,37 +106,37 @@ namespace storm {
 	void FutureType::loadVoid() {
 		Engine &e = engine;
 		Value t = thisPtr(this);
-		Value cloneEnv = Value(CloneEnv::stormType(e));
+		//Value cloneEnv = Value(CloneEnv::stormType(e));
 
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&futureCreateVoid)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&futureCopy)));
-		add(nativeFunction(e, Value(), L"post", valList(e, 1, t), address(&postVoid)));
-		add(nativeFunction(e, Value(), L"result", valList(e, 1, t), address(&resultVoid)));
+		add(nativeFunction(e, Value(), S("post"), valList(e, 1, t), address(&postVoid)));
+		add(nativeFunction(e, Value(), S("result"), valList(e, 1, t), address(&resultVoid)));
 	}
 
 	void FutureType::loadClass() {
 		Engine &e = engine;
 		Value t = thisPtr(this);
-		Value cloneEnv = Value(CloneEnv::stormType(e));
+		//Value cloneEnv = Value(CloneEnv::stormType(e));
 
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&futureCreate)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&futureCopy)));
-		add(nativeFunction(e, Value(), L"post", valList(e, 2, t, param()), address(&postClass)));
-		add(nativeFunction(e, param(), L"result", valList(e, 1, t), address(&resultClass)));
+		add(nativeFunction(e, Value(), S("post"), valList(e, 2, t, param()), address(&postClass)));
+		add(nativeFunction(e, param(), S("result"), valList(e, 1, t), address(&resultClass)));
 	}
 
 	void FutureType::loadValue() {
 		Engine &e = engine;
 		Value t = thisPtr(this);
-		Value cloneEnv = Value(CloneEnv::stormType(e));
+		//Value cloneEnv = Value(CloneEnv::stormType(e));
 		Value ref = param().asRef();
 
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&futureCreate)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&futureCopy)));
-		add(nativeFunction(e, Value(), L"post", valList(e, 2, t, ref), address(&FutureBase::postRaw)));
+		add(nativeFunction(e, Value(), S("post"), valList(e, 2, t, ref), address(&FutureBase::postRaw)));
 		// TODO: When 'param' is not a built in type, we can use FutureBase::resultRaw() directly,
 		// as their signatures match (at least on X86).
-		add(dynamicFunction(e, param(), L"result", valList(e, 1, t), resultValue()));
+		add(dynamicFunction(e, param(), S("result"), valList(e, 1, t), resultValue()));
 	}
 
 	code::Listing *FutureType::resultValue() {

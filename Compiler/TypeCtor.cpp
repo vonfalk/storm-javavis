@@ -249,7 +249,7 @@ namespace storm {
 			}
 		}
 
-		Package *core = engine().package(L"core");
+		Package *core = engine().package(S("core"));
 
 		Array<MemberVar *> *vars = owner->variables();
 		for (Nat i = 0; i < vars->count(); i++) {
@@ -272,7 +272,7 @@ namespace storm {
 				*l << fnCall(toCall->ref(), valVoid());
 			} else if (type.isClass()) {
 				// Call the system-wide copy function for this type.
-				Function *toCall = as<Function>(core->find(L"clone", paramArray(type.type)));
+				Function *toCall = as<Function>(core->find(S("clone"), paramArray(type.type)));
 				if (!toCall)
 					throw InternalError(L"Can not find 'core.clone' for " + ::toS(type));
 

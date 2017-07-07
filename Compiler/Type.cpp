@@ -15,8 +15,8 @@
 
 namespace storm {
 
-	const wchar *Type::CTOR = L"__init";
-	const wchar *Type::DTOR = L"__destroy";
+	const wchar *Type::CTOR = S("__init");
+	const wchar *Type::DTOR = S("__destroy");
 
 
 	// Set 'type->type' to 'me' while forwarding 'name'. This has to be done before invoking the
@@ -166,7 +166,7 @@ namespace storm {
 	}
 
 	Type *Type::createType(Engine &e, const CppType *type) {
-		assert(wcscmp(type->name, L"Type") == 0, L"storm::Type was not found!");
+		assert(wcscmp(type->name, S("Type")) == 0, L"storm::Type was not found!");
 		assert(Size(type->size).current() == sizeof(Type),
 			L"The computed size of storm::Type is wrong: " + ::toS(Size(type->size).current()) + L" vs " + ::toS(sizeof(Type)));
 
@@ -356,7 +356,7 @@ namespace storm {
 	code::Ref Type::typeRef() {
 		if (!selfRef) {
 			StrBuf *name = new (this) StrBuf();
-			*name << identifier() << L"<type>";
+			*name << identifier() << S("<type>");
 			selfRef = new (engine) code::RefSource(name->toS());
 			selfRef->setPtr(this);
 		}
@@ -423,7 +423,7 @@ namespace storm {
 	}
 
 	static void defToS(const void *obj, StrBuf *to) {
-		*to << L"<operator << not found>";
+		*to << S("<operator << not found>");
 	}
 
 	const Handle &Type::handle() {
@@ -471,7 +471,7 @@ namespace storm {
 					if (t != os::Thread::current()) {
 						// Post a message to that thread (no need to wait).
 						os::FnCall<void, 1> params = os::fnCall().add(object);
-						os::UThread::spawn(f, true, params, &t);
+						os::UThread::spawn((const void *)f, true, params, &t);
 						return;
 					}
 				}
@@ -493,7 +493,7 @@ namespace storm {
 			rawDtor = null;
 
 		if (!value() && myGcType)
-			myGcType->finalizer = &stormDtor;
+			myGcType->finalizer = address(&stormDtor);
 	}
 
 	void Type::updateCtor(Function *ctor) {
@@ -562,7 +562,6 @@ namespace storm {
 		forceLoad();
 
 		// Compute the GcType for us!
-		nat count = 0;
 		const GcType *superGc = null;
 		Size superSize;
 		if (Type *s = super()) {
@@ -646,11 +645,11 @@ namespace storm {
 			updateHandleToS(true, null);
 
 			// Find hash function.
-			if (Function *f = as<Function>(find(L"hash", r)))
+			if (Function *f = as<Function>(find(S("hash"), r)))
 				updateHandle(f);
 
 			// Find equal function.
-			if (Function *f = as<Function>(find(L"==", vv)))
+			if (Function *f = as<Function>(find(S("=="), vv)))
 				updateHandle(f);
 
 		} else if (runOn().state != RunOn::any) {
@@ -667,7 +666,7 @@ namespace storm {
 			return;
 
 		if (newFn) {
-			if (wcscmp(newFn->name->c_str(), L"<<") != 0)
+			if (wcscmp(newFn->name->c_str(), S("<<")) != 0)
 				return;
 
 			if (newFn->params->count() != 2)
@@ -701,7 +700,7 @@ namespace storm {
 				bv->at(0) = Value(strBufT);
 
 				Scope s = engine.scope().child(parentLookup);
-				if (Function *f = as<Function>(s.find(L"<<", bv))) {
+				if (Function *f = as<Function>(s.find(S("<<"), bv))) {
 					h->setToS(f);
 					handleToS = toSFound;
 				}
@@ -714,7 +713,7 @@ namespace storm {
 				Type *strBufT = StrBuf::stormType(engine);
 				bv->at(0) = thisPtr(strBufT);
 
-				if (Function *f = as<Function>(strBufT->find(L"<<", bv))) {
+				if (Function *f = as<Function>(strBufT->find(S("<<"), bv))) {
 					h->setToS(f);
 					handleToS = toSFound;
 				} else {
@@ -758,13 +757,13 @@ namespace storm {
 		} else if (wcscmp(name, DTOR) == 0) {
 			if (refThis && params->count() == 1 && userType)
 				h->setDestroy(fn->ref());
-		} else if (wcscmp(name, L"deepCopy") == 0 && userType) {
+		} else if (wcscmp(name, S("deepCopy")) == 0 && userType) {
 			if (refThis && params->count() == 2 && params->at(1) == Value(CloneEnv::stormType(engine)))
 				h->setDeepCopy(fn->ref());
-		} else if (wcscmp(name, L"hash") == 0) {
+		} else if (wcscmp(name, S("hash")) == 0) {
 			if (params->count() == 1)
 				h->hashFn = (Handle::HashFn)makeRefParams(fn);
-		} else if (wcscmp(name, L"==") == 0) {
+		} else if (wcscmp(name, S("==")) == 0) {
 			if (params->count() == 2)
 				h->equalFn = (Handle::EqualFn)makeRefParams(fn);
 		}
@@ -858,11 +857,11 @@ namespace storm {
 
 	void Type::toS(StrBuf *to) const {
 		if (typeFlags & typeRawPtr) {
-			*to << L"class (raw ptr)";
+			*to << S("class (raw ptr)");
 		} else if (value()) {
-			*to << L"value ";
+			*to << S("value ");
 		} else {
-			*to << L"class ";
+			*to << S("class ");
 		}
 
 		if (params)
@@ -874,13 +873,13 @@ namespace storm {
 			if (chain->super() == TObject::stormType(engine)) {
 			} else if (chain->super() == Object::stormType(engine)) {
 			} else {
-				*to << L" extends " << chain->super()->identifier();
+				*to << S(" extends ") << chain->super()->identifier();
 				return;
 			}
 		}
 
 		if (useThread) {
-			*to << L" on " << useThread->identifier();
+			*to << S(" on ") << useThread->identifier();
 		}
 	}
 
@@ -893,12 +892,12 @@ namespace storm {
 	}
 
 	Function *Type::assignFn() {
-		return as<Function>(find(L"=", new (this) Array<Value>(2, thisPtr(this))));
+		return as<Function>(find(S("="), new (this) Array<Value>(2, thisPtr(this))));
 	}
 
 	Function *Type::deepCopyFn() {
 		Array<Value> *params = valList(engine, 2, thisPtr(this), Value(CloneEnv::stormType(engine)));
-		return as<Function>(find(L"deepCopy", params));
+		return as<Function>(find(S("deepCopy"), params));
 	}
 
 	Function *Type::destructor() {

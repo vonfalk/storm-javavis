@@ -41,9 +41,9 @@ namespace storm {
 	static os::Handle openFile(Str *name, bool input) {
 		int flags = O_CLOEXEC;
 		if (input)
-			flags |= O_CREAT | O_RDONLY;
+			flags |= O_RDONLY;
 		else
-			flags |= O_WRONLY;
+			flags |= O_CREAT | O_TRUNC | O_WRONLY;
 		return ::open(name->utf8_str(), flags, 0666);
 	}
 

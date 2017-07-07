@@ -441,7 +441,7 @@ namespace storm {
 		// Find the vtable...
 		const CppTypeRef &firstParam = fn.params[0];
 		assert(firstParam.params == null, L"Members for template types are not supported!");
-		CppType::VTableFn vFn = world->types[firstParam.id].vtable;
+		// CppType::VTableFn vFn = world->types[firstParam.id].vtable;
 
 		const void *ptr = deVirtualize(fn.params[0], fn.ptr);
 		Function *f = new (*e) CppMemberFunction(result, new (*e) Str(fn.name), params, fn.ptr);

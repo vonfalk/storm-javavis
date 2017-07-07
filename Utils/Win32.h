@@ -34,6 +34,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <time.h>
+#include <dlfcn.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 

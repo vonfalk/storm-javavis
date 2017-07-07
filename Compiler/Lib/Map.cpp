@@ -62,14 +62,14 @@ namespace storm {
 		add(iter.type);
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&MapType::createClass)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&MapType::copyClass)));
-		add(nativeFunction(e, Value(), L"put", valList(e, 3, t, keyRef, valRef), address(&MapBase::putRaw)));
-		add(nativeFunction(e, boolT, L"has", thisKey, address(&MapBase::hasRaw)));
-		add(nativeFunction(e, valRef, L"get", thisKey, address(&MapBase::getRaw)));
-		add(nativeFunction(e, valRef, L"get", valList(e, 3, t, keyRef, valRef), address(&MapBase::getRawDef)));
-		add(nativeFunction(e, boolT, L"remove", thisKey, address(&MapBase::removeRaw)));
-		add(nativeFunction(e, Value(), L"begin", valList(e, 1, t), address(&MapBase::beginRaw)));
-		add(nativeFunction(e, Value(), L"end", valList(e, 1, t), address(&MapBase::endRaw)));
-		add(nativeFunction(e, Value(), L"find", thisKey, address(&MapBase::findRaw)));
+		add(nativeFunction(e, Value(), S("put"), valList(e, 3, t, keyRef, valRef), address(&MapBase::putRaw)));
+		add(nativeFunction(e, boolT, S("has"), thisKey, address(&MapBase::hasRaw)));
+		add(nativeFunction(e, valRef, S("get"), thisKey, address(&MapBase::getRaw)));
+		add(nativeFunction(e, valRef, S("get"), valList(e, 3, t, keyRef, valRef), address(&MapBase::getRawDef)));
+		add(nativeFunction(e, boolT, S("remove"), thisKey, address(&MapBase::removeRaw)));
+		add(nativeFunction(e, Value(), S("begin"), valList(e, 1, t), address(&MapBase::beginRaw)));
+		add(nativeFunction(e, Value(), S("end"), valList(e, 1, t), address(&MapBase::endRaw)));
+		add(nativeFunction(e, Value(), S("find"), thisKey, address(&MapBase::findRaw)));
 
 		addAccess();
 
@@ -97,7 +97,7 @@ namespace storm {
 		*l << epilog();
 		*l << ret(valPtr());
 
-		add(dynamicFunction(engine, Value(), L"[]", valList(engine, 2, thisPtr(this), Value(k, true)), l));
+		add(dynamicFunction(engine, Value(), S("[]"), valList(engine, 2, thisPtr(this), Value(k, true)), l));
 	}
 
 
@@ -118,7 +118,7 @@ namespace storm {
 	}
 
 	MapIterType::MapIterType(Type *k, Type *v)
-		: Type(new (k) Str(L"Iter"), new (k) Array<Value>(), typeValue),
+		: Type(new (k) Str(S("Iter")), new (k) Array<Value>(), typeValue),
 		  k(k),
 		  v(v) {
 
@@ -143,12 +143,12 @@ namespace storm {
 		Array<Value> *refref = valList(e, 2, r, r);
 
 		add(nativeFunction(e, Value(), Type::CTOR, refref, address(&copyIterator)));
-		add(nativeFunction(e, vBool, L"==", refref, address(&iteratorEq)));
-		add(nativeFunction(e, vBool, L"!=", refref, address(&iteratorNeq)));
-		add(nativeFunction(e, r, L"++*", ref, address(&MapBase::Iter::preIncRaw)));
-		add(nativeFunction(e, v, L"*++", ref, address(&MapBase::Iter::postIncRaw)));
-		add(nativeFunction(e, keyRef, L"k", ref, address(&MapBase::Iter::rawKey)));
-		add(nativeFunction(e, valRef, L"v", ref, address(&MapBase::Iter::rawVal)));
+		add(nativeFunction(e, vBool, S("=="), refref, address(&iteratorEq)));
+		add(nativeFunction(e, vBool, S("!="), refref, address(&iteratorNeq)));
+		add(nativeFunction(e, r, S("++*"), ref, address(&MapBase::Iter::preIncRaw)));
+		add(nativeFunction(e, v, S("*++"), ref, address(&MapBase::Iter::postIncRaw)));
+		add(nativeFunction(e, keyRef, S("k"), ref, address(&MapBase::Iter::rawKey)));
+		add(nativeFunction(e, valRef, S("v"), ref, address(&MapBase::Iter::rawVal)));
 
 		return Type::loadAll();
 	}

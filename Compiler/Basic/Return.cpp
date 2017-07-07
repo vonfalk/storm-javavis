@@ -36,7 +36,6 @@ namespace storm {
 
 		void Return::valueCode(CodeGen *state) {
 			using namespace code;
-			Listing *l = state->l;
 
 			// TODO? Check the refness of the casted expr?
 			CodeResult *r = new (this) CodeResult(returnType, state->block);

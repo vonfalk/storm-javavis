@@ -90,7 +90,7 @@ namespace storm {
 	void NameSet::init() {
 		loaded = false;
 		loading = false;
-		nextAnon = null;
+		nextAnon = 0;
 
 		if (engine().has(bootTemplates))
 			lateInit();

@@ -33,7 +33,7 @@ namespace storm {
 		UseReader::UseReader(FileInfo *info) : FileReader(info) {}
 
 		syntax::InfoParser *UseReader::createParser() {
-			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(L"SIncludes"));
+			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SIncludes")));
 			if (!r)
 				throw LangDefError(L"Can not find the 'SIncludes' rule.");
 			return new (this) syntax::InfoParser(r);
@@ -44,7 +44,7 @@ namespace storm {
 			if (q & qSyntax)
 				return null;
 
-			syntax::Parser *p = syntax::Parser::create(syntaxPkg(this), L"SIncludes");
+			syntax::Parser *p = syntax::Parser::create(syntaxPkg(this), S("SIncludes"));
 
 			if (!p->parse(info->contents, info->url))
 				p->throwError();
@@ -73,7 +73,7 @@ namespace storm {
 		}
 
 		syntax::InfoParser *CodeReader::createParser() {
-			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(L"SFile"));
+			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SFile")));
 			if (!r)
 				throw LangDefError(L"Can not find the 'SFile' rule.");
 			syntax::InfoParser *p = new (this) syntax::InfoParser(r);
@@ -96,7 +96,6 @@ namespace storm {
 
 		void CodeReader::resolveTypes() {
 			readContent();
-			Package *pkg = info->pkg;
 
 			for (nat i = 0; i < content->types->count(); i++) {
 				if (Class *c = as<Class>(content->types->at(i))) {
@@ -122,7 +121,7 @@ namespace storm {
 			if (content)
 				return;
 
-			syntax::Parser *p = syntax::Parser::create(syntaxPkg(this), L"SFile");
+			syntax::Parser *p = syntax::Parser::create(syntaxPkg(this), S("SFile"));
 			addSyntax(scope, p);
 
 			p->parse(info->contents, info->url, info->start);

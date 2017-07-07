@@ -26,9 +26,9 @@ namespace storm {
 		Array<Value> *params = new (e) Array<Value>(1, type);
 
 		if (type.isActor())
-			return nativeFunction(e, type, L"clone", params, address(&returnPtr));
+			return nativeFunction(e, type, S("clone"), params, address(&returnPtr));
 		else if (type.isHeapObj())
-			return nativeFunction(e, type, L"clone", params, address(&runtime::cloneObject));
+			return nativeFunction(e, type, S("clone"), params, address(&runtime::cloneObject));
 
 		// Value or built-in type. We need to generate some code...
 		CodeGen *g = new (e) CodeGen(RunOn());
@@ -47,7 +47,7 @@ namespace storm {
 
 		g->returnValue(in);
 
-		return dynamicFunction(e, type, L"clone", params, g->l);
+		return dynamicFunction(e, type, S("clone"), params, g->l);
 	}
 
 	static Function *generateDual(Value type) {
@@ -57,9 +57,9 @@ namespace storm {
 		params->at(1) = cloneEnvT;
 
 		if (type.isActor())
-			return nativeFunction(e, type, L"clone", params, address(&returnPtrEnv));
+			return nativeFunction(e, type, S("clone"), params, address(&returnPtrEnv));
 		else if (type.isHeapObj())
-			return nativeFunction(e, type, L"clone", params, address(&runtime::cloneObjectEnv));
+			return nativeFunction(e, type, S("clone"), params, address(&runtime::cloneObjectEnv));
 
 		// Value or built-in type. We need to generate some code...
 		CodeGen *g = new (e) CodeGen(RunOn());
@@ -78,7 +78,7 @@ namespace storm {
 
 		g->returnValue(in);
 
-		return dynamicFunction(e, type, L"clone", params, g->l);
+		return dynamicFunction(e, type, S("clone"), params, g->l);
 	}
 
 	MAYBE(Named *) CloneTemplate::generate(SimplePart *part) {
@@ -107,8 +107,8 @@ namespace storm {
 	}
 
 	Function *cloneFn(Type *t) {
-		Package *p = t->engine.package(L"core");
-		Function *r = as<Function>(p->find(L"clone", Value(t)));
+		Package *p = t->engine.package(S("core"));
+		Function *r = as<Function>(p->find(S("clone"), Value(t)));
 		if (!r)
 			throw InternalError(L"Can not finde core.clone for " + ::toS(t->identifier()));
 		return r;
@@ -116,11 +116,11 @@ namespace storm {
 
 	Function *cloneFnEnv(Type *t) {
 		Engine &e = t->engine;
-		Package *p = e.package(L"core");
+		Package *p = e.package(S("core"));
 		Array<Value> *params = new (e) Array<Value>(2, Value(t));
 		params->at(1) = Value(CloneEnv::stormType(e));
 
-		Function *r = as<Function>(p->find(L"clone", params));
+		Function *r = as<Function>(p->find(S("clone"), params));
 		if (!r)
 			throw InternalError(L"Can not finde core.clone for " + ::toS(t->identifier()));
 		return r;

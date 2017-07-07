@@ -63,7 +63,7 @@ namespace storm {
 		}
 
 		syntax::InfoParser *FileReader::createParser() {
-			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(L"SRoot"));
+			syntax::Rule *r = as<syntax::Rule>(syntaxPkg(this)->find(S("SRoot")));
 			if (!r)
 				throw LangDefError(L"Can not find the 'SRoot' rule.");
 			return new (this) syntax::InfoParser(r);
@@ -79,7 +79,7 @@ namespace storm {
 				c = parseSyntax(info->contents, info->url, info->start);
 			} else {
 				// Use the 'real' parser!
-				Parser *p = Parser::create(grammar, L"SRoot");
+				Parser *p = Parser::create(grammar, S("SRoot"));
 				p->parse(info->contents, info->url, info->start);
 				if (p->hasError())
 					p->throwError();
@@ -101,12 +101,12 @@ namespace storm {
 
 
 
-		SyntaxLookup::SyntaxLookup() : ScopeExtra(new (engine()) Str(L"void")) {}
+		SyntaxLookup::SyntaxLookup() : ScopeExtra(new (engine()) Str(S("void"))) {}
 
 		Named *SyntaxLookup::find(Scope in, SimpleName *name) {
 			if (name->count() == 1) {
 				SimplePart *last = name->last();
-				if (wcscmp(last->name->c_str(), L"SStr") == 0 && last->params->empty())
+				if (wcscmp(last->name->c_str(), S("SStr")) == 0 && last->params->empty())
 					return SStr::stormType(engine());
 
 				if (last->params->any() && last->params->at(0) != Value()) {

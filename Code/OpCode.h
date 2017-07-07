@@ -90,6 +90,6 @@ namespace code {
 
 	BITMASK_OPERATORS(DestMode);
 
-	const wchar_t *name(op::Code op);
+	const wchar *name(op::Code op);
 	DestMode destMode(op::Code op);
 }

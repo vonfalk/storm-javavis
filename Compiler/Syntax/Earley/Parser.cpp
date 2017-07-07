@@ -438,7 +438,6 @@ namespace storm {
 						repEnd = atPtr.step;
 
 					if (token->target) {
-						Object *match = null;
 						if (as<RegexToken>(token)) {
 							Str::Iter from = src->posIter(at->prev.step + srcPos.pos);
 							Str::Iter to = src->posIter(atPtr.step + srcPos.pos);

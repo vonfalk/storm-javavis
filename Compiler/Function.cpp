@@ -315,9 +315,8 @@ namespace storm {
 		using namespace code;
 
 		Engine &e = engine();
-		Block b = to->l->createBlock(to->l->last(to->block));
-		*to->l << begin(b);
-		CodeGen *sub = to->child(b);
+		CodeGen *sub = to->child();
+		*to->l << begin(sub->block);
 
 		// Create the parameters.
 		Var par = createFnCall(sub, this->params, params, true);
@@ -342,7 +341,11 @@ namespace storm {
 		*to->l << fnCall(e.ref(Engine::rSpawnFuture), valVoid());
 
 		// Now, we're done!
-		*to->l << end(b);
+		*to->l << end(sub->block);
+
+		// May be delayed...
+		if (result->needed())
+			result->location(to).created(to);
 	}
 
 	void Function::threadThunkParam(nat id, code::Listing *l) {
@@ -391,7 +394,6 @@ namespace storm {
 
 	void spawnThreadFuture(const void *fn, bool member, os::CallThunk thunk, void **params, FutureBase *result, Thread *on) {
 		os::FnCallRaw call(params, thunk);
-		os::FutureBase *future = result->rawFuture();
 		const os::Thread *thread = on ? &on->thread() : null;
 		os::UThread::spawnRaw(fn, member, null, call, *result->rawFuture(), result->rawResult(), thread);
 	}

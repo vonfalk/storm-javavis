@@ -23,6 +23,10 @@
 // once during compiler startup, it is not very useful to optimize these functions. Especially not
 // during testing!
 #pragma optimize("", off)
+#pragma GCC optimize ("O0")
+
+// Turn of some warnings from GCC in this file...
+#pragma GCC diagnostic ignored "-Wnarrowing"
 
 namespace storm {
 
@@ -111,7 +115,7 @@ namespace storm {
 
 		static const CppFunction functions[] = {
 			// CPP_FUNCTIONS
-			{ null, null, CppFunction::fnFree, 0, null, null, null },
+			{ null, null, CppFunction::fnFree, 0, null, null, { CppTypeRef::tVoid, null, false, false } },
 		};
 
 		return functions;

@@ -63,7 +63,7 @@ namespace storm {
 		if (!hasExport(file, entryName))
 			return null;
 
-		LoadedLib lib = loadLibrary(file->format()->c_str());
+		LoadedLib lib = loadLibrary(file);
 		if (lib == invalidLib)
 			return null;
 

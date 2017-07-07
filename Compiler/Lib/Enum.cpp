@@ -25,7 +25,7 @@ namespace storm {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
 			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << or(result, p.params->at(1));
+			*p.state->l << bor(result, p.params->at(1));
 		}
 	}
 
@@ -33,8 +33,8 @@ namespace storm {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
 			*p.state->l << mov(result, p.params->at(1));
-			*p.state->l << not(result);
-			*p.state->l << and(result, p.params->at(0));
+			*p.state->l << bnot(result);
+			*p.state->l << band(result, p.params->at(0));
 		}
 	}
 
@@ -44,7 +44,7 @@ namespace storm {
 			// TODO: Use 'test' op-code if it is implemented.
 			Var t = p.state->l->createVar(p.state->block, Size::sInt);
 			*p.state->l << mov(t, p.params->at(0));
-			*p.state->l << and(t, p.params->at(1));
+			*p.state->l << band(t, p.params->at(1));
 			*p.state->l << setCond(result, ifNotEqual);
 		}
 	}
@@ -75,7 +75,7 @@ namespace storm {
 	}
 
 	Bool Enum::loadAll() {
-		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
+		// Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
 		Array<Value> *rr = new (this) Array<Value>(2, Value(this, true));
 		Array<Value> *v = new (this) Array<Value>(1, Value(this, false));
 		Array<Value> *vv = new (this) Array<Value>(2, Value(this, false));
@@ -84,18 +84,18 @@ namespace storm {
 		Value b(StormInfo<Bool>::type(engine));
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Int>)));
-		add(inlinedFunction(engine, Value(), L"=", rv, fnPtr(engine, &numAssign<Int>)));
-		add(inlinedFunction(engine, b, L"==", vv, fnPtr(engine, &numCmp<ifEqual>)));
-		add(inlinedFunction(engine, b, L"!=", vv, fnPtr(engine, &numCmp<ifNotEqual>)));
+		add(inlinedFunction(engine, Value(), S("="), rv, fnPtr(engine, &numAssign<Int>)));
+		add(inlinedFunction(engine, b, S("=="), vv, fnPtr(engine, &numCmp<ifEqual>)));
+		add(inlinedFunction(engine, b, S("!="), vv, fnPtr(engine, &numCmp<ifNotEqual>)));
 
 		if (bitmask) {
-			add(inlinedFunction(engine, Value(this), L"+", vv, fnPtr(engine, &enumAdd)));
-			add(inlinedFunction(engine, Value(this), L"-", vv, fnPtr(engine, &enumSub)));
-			add(inlinedFunction(engine, b, L"&", vv, fnPtr(engine, &enumOverlaps)));
-			add(inlinedFunction(engine, b, L"has", vv, fnPtr(engine, &enumOverlaps)));
+			add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &enumAdd)));
+			add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &enumSub)));
+			add(inlinedFunction(engine, b, S("&"), vv, fnPtr(engine, &enumOverlaps)));
+			add(inlinedFunction(engine, b, S("has"), vv, fnPtr(engine, &enumOverlaps)));
 		}
 
-		add(nativeFunction(engine, Value(this), L"hash", v, &intHash));
+		add(nativeFunction(engine, Value(this), S("hash"), v, address(&intHash)));
 
 		return Type::loadAll();
 	}
@@ -110,7 +110,7 @@ namespace storm {
 
 	static void put(StrBuf *to, const wchar *val, bool &first) {
 		if (!first)
-			*to << L" + ";
+			*to << S(" + ");
 		first = false;
 		*to << val;
 	}
@@ -141,23 +141,23 @@ namespace storm {
 
 		// Any remaining garbage?
 		if (v != 0)
-			put(to, L"<unknown>", first);
+			put(to, S("<unknown>"), first);
 	}
 
 	void Enum::toS(StrBuf *to) const {
-		*to << L"enum " << identifier() << L" {\n";
+		*to << S("enum ") << identifier() << S(" {\n");
 		{
 			Indent z(to);
 			for (Nat i = 0; i < values->count(); i++) {
 				EnumValue *v = values->at(i);
 				if (bitmask) {
-					*to << v->name << L" = " << hex(v->value) << L"\n";
+					*to << v->name << S(" = ") << hex(v->value) << S("\n");
 				} else {
-					*to << v->name << L" = " << v->value << L"\n";
+					*to << v->name << S(" = ") << v->value << S("\n");
 				}
 			}
 		}
-		*to << L"}";
+		*to << S("}");
 	}
 
 	EnumValue::EnumValue(Enum *owner, Str *name, Nat value)
@@ -168,7 +168,7 @@ namespace storm {
 	}
 
 	void EnumValue::toS(StrBuf *to) const {
-		*to << identifier() << L" = " << value;
+		*to << identifier() << S(" = ") << value;
 	}
 
 	void EnumValue::generate(InlineParams p) {
@@ -179,7 +179,7 @@ namespace storm {
 		*p.state->l << mov(result, natConst(value));
 	}
 
-	EnumOutput::EnumOutput() : Template(new (engine()) Str(L"<<")) {}
+	EnumOutput::EnumOutput() : Template(new (engine()) Str(S("<<"))) {}
 
 	MAYBE(Named *) EnumOutput::generate(SimplePart *part) {
 		Array<Value> *params = part->params;
@@ -210,7 +210,7 @@ namespace storm {
 		*l << epilog();
 		*l << ret(valPtr());
 
-		return dynamicFunction(engine(), strBuf, L"<<", valList(engine(), 2, strBuf, e), l);
+		return dynamicFunction(engine(), strBuf, S("<<"), valList(engine(), 2, strBuf, e), l);
 	}
 
 }

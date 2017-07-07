@@ -61,7 +61,7 @@ namespace storm {
 		loader.loadLicenses();
 
 		// Load the system-wide toS implementation.
-		Package *core = e.package(L"core");
+		Package *core = e.package(S("core"));
 		core->add(new (e) CloneTemplate());
 		core->add(new (e) ToSTemplate());
 		core->add(new (e) EnumOutput());

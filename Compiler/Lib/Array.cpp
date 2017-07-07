@@ -107,13 +107,13 @@ namespace storm {
 		Value ref = param().asRef();
 		Value natType = Value(StormInfo<Nat>::type(e));
 
-		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), &copyArray));
-		add(nativeFunction(e, ref, L"[]", valList(e, 2, t, natType), address(&ArrayBase::getRaw)));
-		add(nativeFunction(e, ref, L"last", valList(e, 1, t), address(&ArrayBase::lastRaw)));
-		add(nativeFunction(e, ref, L"first", valList(e, 1, t), address(&ArrayBase::firstRaw)));
-		add(nativeFunction(e, ref, L"random", valList(e, 1, t), address(&ArrayBase::randomRaw)));
-		add(nativeFunction(e, Value(iter), L"begin", valList(e, 1, t), address(&ArrayBase::beginRaw)));
-		add(nativeFunction(e, Value(iter), L"end", valList(e, 1, t), address(&ArrayBase::endRaw)));
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&copyArray)));
+		add(nativeFunction(e, ref, S("[]"), valList(e, 2, t, natType), address(&ArrayBase::getRaw)));
+		add(nativeFunction(e, ref, S("last"), valList(e, 1, t), address(&ArrayBase::lastRaw)));
+		add(nativeFunction(e, ref, S("first"), valList(e, 1, t), address(&ArrayBase::firstRaw)));
+		add(nativeFunction(e, ref, S("random"), valList(e, 1, t), address(&ArrayBase::randomRaw)));
+		add(nativeFunction(e, Value(iter), S("begin"), valList(e, 1, t), address(&ArrayBase::beginRaw)));
+		add(nativeFunction(e, Value(iter), S("end"), valList(e, 1, t), address(&ArrayBase::endRaw)));
 
 		return Type::loadAll();
 	}
@@ -123,10 +123,10 @@ namespace storm {
 		Value t = thisPtr(this);
 		Value natType = Value(StormInfo<Nat>::type(e));
 
-		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), &createArrayRaw));
-		add(nativeFunction(e, t, L"<<", valList(e, 2, t, param()), address(&pushClass)));
-		add(nativeFunction(e, t, L"push", valList(e, 2, t, param()), address(&pushClass)));
-		add(nativeFunction(e, Value(), L"insert", valList(e, 3, t, natType, param()), address(&insertClass)));
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&createArrayRaw)));
+		add(nativeFunction(e, t, S("<<"), valList(e, 2, t, param()), address(&pushClass)));
+		add(nativeFunction(e, t, S("push"), valList(e, 2, t, param()), address(&pushClass)));
+		add(nativeFunction(e, Value(), S("insert"), valList(e, 3, t, natType, param()), address(&insertClass)));
 	}
 
 	void ArrayType::loadValueFns() {
@@ -135,10 +135,10 @@ namespace storm {
 		Value ref = param().asRef(true);
 		Value natType = Value(StormInfo<Nat>::type(e));
 
-		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), &createArrayRaw));
-		add(nativeFunction(e, t, L"<<", valList(e, 2, t, ref), address(&pushValue)));
-		add(nativeFunction(e, t, L"push", valList(e, 2, t, ref), address(&pushValue)));
-		add(nativeFunction(e, Value(), L"insert", valList(e, 3, t, natType, ref), address(&ArrayBase::insertRaw)));
+		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&createArrayRaw)));
+		add(nativeFunction(e, t, S("<<"), valList(e, 2, t, ref), address(&pushValue)));
+		add(nativeFunction(e, t, S("push"), valList(e, 2, t, ref), address(&pushValue)));
+		add(nativeFunction(e, Value(), S("insert"), valList(e, 3, t, natType, ref), address(&ArrayBase::insertRaw)));
 	}
 
 	/**
@@ -166,7 +166,7 @@ namespace storm {
 	}
 
 	ArrayIterType::ArrayIterType(Type *param)
-		: Type(new (param) Str(L"Iter"), new (param) Array<Value>(), typeValue),
+		: Type(new (param) Str(S("Iter")), new (param) Array<Value>(), typeValue),
 		  contents(param) {
 
 		setSuper(ArrayBase::Iter::stormType(engine));
@@ -184,12 +184,12 @@ namespace storm {
 		Value vBool = Value(StormInfo<Bool>::type(e));
 		Value vNat = Value(StormInfo<Nat>::type(e));
 		add(nativeFunction(e, Value(), Type::CTOR, refref, address(&copyIterator)));
-		add(nativeFunction(e, vBool, L"==", refref, address(&iteratorEq)));
-		add(nativeFunction(e, vBool, L"!=", refref, address(&iteratorNeq)));
-		add(nativeFunction(e, r, L"++*", ref, address(&ArrayBase::Iter::preIncRaw)));
-		add(nativeFunction(e, v, L"*++", ref, address(&ArrayBase::Iter::postIncRaw)));
-		add(nativeFunction(e, vNat, L"k", ref, address(&iteratorGetKey)));
-		add(nativeFunction(e, param, L"v", ref, address(&iteratorGet)));
+		add(nativeFunction(e, vBool, S("=="), refref, address(&iteratorEq)));
+		add(nativeFunction(e, vBool, S("!="), refref, address(&iteratorNeq)));
+		add(nativeFunction(e, r, S("++*"), ref, address(&ArrayBase::Iter::preIncRaw)));
+		add(nativeFunction(e, v, S("*++"), ref, address(&ArrayBase::Iter::postIncRaw)));
+		add(nativeFunction(e, vNat, S("k"), ref, address(&iteratorGetKey)));
+		add(nativeFunction(e, param, S("v"), ref, address(&iteratorGet)));
 
 		return Type::loadAll();
 	}

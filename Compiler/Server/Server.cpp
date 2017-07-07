@@ -10,28 +10,28 @@ namespace storm {
 			lock = new (this) Lock();
 			files = new (this) Map<Nat, File *>();
 			colorSyms = new (this) Array<Symbol *>();
-			quit = c->symbol(L"quit");
-			supported = c->symbol(L"supported");
-			open = c->symbol(L"open");
-			edit = c->symbol(L"edit");
-			point = c->symbol(L"point");
-			indent = c->symbol(L"indent");
-			close = c->symbol(L"close");
-			error = c->symbol(L"error");
-			chunkSz = c->symbol(L"chunk-size");
-			test = c->symbol(L"test");
-			debug = c->symbol(L"debug");
-			color = c->symbol(L"color");
-			level = c->symbol(L"level");
-			as = c->symbol(L"as");
-			t = c->symbol(L"t");
+			quit = c->symbol(S("quit"));
+			supported = c->symbol(S("supported"));
+			open = c->symbol(S("open"));
+			edit = c->symbol(S("edit"));
+			point = c->symbol(S("point"));
+			indent = c->symbol(S("indent"));
+			close = c->symbol(S("close"));
+			error = c->symbol(S("error"));
+			chunkSz = c->symbol(S("chunk-size"));
+			test = c->symbol(S("test"));
+			debug = c->symbol(S("debug"));
+			color = c->symbol(S("color"));
+			level = c->symbol(S("level"));
+			as = c->symbol(S("as"));
+			t = c->symbol(S("t"));
 			work = new (this) WorkQueue(this);
 			chunkChars = defaultChunkChars;
 		}
 
 		void Server::run() {
 			work->start();
-			print(L"Language server started.");
+			print(S("Language server started."));
 
 			SExpr *msg = null;
 			while (msg = conn->receive()) {
@@ -39,16 +39,16 @@ namespace storm {
 					if (!process(msg))
 						break;
 				} catch (const MsgError &e) {
-					print(TO_S(this, L"While processing " << msg << L":"));
+					print(TO_S(this, S("While processing ") << msg << S(":")));
 					print(::toS(e));
 				} catch (const Exception &e) {
 					// TODO: Better error ouput for errors containing SrcPos.
-					print(TO_S(this, L"While processing " << msg << L":"));
+					print(TO_S(this, S("While processing ") << msg << S(":")));
 					print(::toS(e));
 				}
 			}
 
-			print(L"Terminating. Bye!");
+			print(S("Terminating. Bye!"));
 			work->stop();
 		}
 
@@ -63,7 +63,7 @@ namespace storm {
 				Range r = item->run(work);
 				updateLater(f, r);
 			} catch (const Exception &e) {
-				print(TO_S(this, L"While doing background work:"));
+				print(TO_S(this, S("While doing background work:")));
 				print(::toS(e));
 			}
 		}
@@ -109,7 +109,7 @@ namespace storm {
 				work->poke();
 				onColor(cell->rest);
 			} else {
-				print(TO_S(this, L"Unknown message: " << msg));
+				print(TO_S(this, S("Unknown message: ") << msg));
 			}
 
 			return true;
@@ -140,7 +140,7 @@ namespace storm {
 			f->editPos = point;
 			files->put(id, f);
 
-			print(TO_S(this, L"Opened " << url->name() << L" in " << (Moment() - start)));
+			print(TO_S(this, S("Opened ") << url->name() << S(" in ") << (Moment() - start)));
 
 			// Give the initial data on the file.
 			updateLater(f, f->full());
@@ -191,7 +191,7 @@ namespace storm {
 
 			try {
 				f->findError();
-				print(L"No errors.\n");
+				print(S("No errors.\n"));
 			} catch (const SyntaxError &error) {
 				print(::toS(error));
 			}
@@ -252,7 +252,7 @@ namespace storm {
 
 			File *f = files->get(fileId, null);
 			if (!f) {
-				print(TO_S(this, L"No file with id " << fileId));
+				print(TO_S(this, S("No file with id ") << fileId));
 				return;
 			}
 
@@ -263,7 +263,7 @@ namespace storm {
 			Nat fileId = next(expr)->asNum()->v;
 			File *f = files->get(fileId, null);
 			if (!f) {
-				print(TO_S(this, L"No file with id " << fileId));
+				print(TO_S(this, S("No file with id ") << fileId));
 				return;
 			}
 
@@ -276,34 +276,34 @@ namespace storm {
 
 		static Str *colorName(EnginePtr e, syntax::TokenColor c) {
 			using namespace storm::syntax;
-			const wchar *name = L"<unknown>";
+			const wchar *name = S("<unknown>");
 			switch (c) {
 			case tNone:
-				name = L"nil";
+				name = S("nil");
 				break;
 			case tComment:
-				name = L"comment";
+				name = S("comment");
 				break;
 			case tDelimiter:
-				name = L"delimiter";
+				name = S("delimiter");
 				break;
 			case tString:
-				name = L"string";
+				name = S("string");
 				break;
 			case tConstant:
-				name = L"constant";
+				name = S("constant");
 				break;
 			case tKeyword:
-				name = L"keyword";
+				name = S("keyword");
 				break;
 			case tFnName:
-				name = L"fn-name";
+				name = S("fn-name");
 				break;
 			case tVarName:
-				name = L"var-name";
+				name = S("var-name");
 				break;
 			case tTypeName:
-				name = L"type-name";
+				name = S("type-name");
 				break;
 			}
 

@@ -3,6 +3,8 @@
 
 #ifdef STORM_GC_MPS
 
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+
 /**
  * Note: Defining CONFIG_VAR_COOL or CONFIG_VAR_RASH from mymake will compile the 'cool' or the
  * 'rash' variety of MPS as opposed to the 'hot' variety. The cool variety will do more checking on
@@ -31,7 +33,7 @@ void mps_assert_fail(const char *file, unsigned line, const char *condition) {
 			file, line, condition);
 	fflush(stderr);
 	mps_telemetry_flush();
-#ifdef DEBUG
+#if defined(DEBUG) && defined(WINDOWS)
 	DebugBreak();
 #endif
 	abort();

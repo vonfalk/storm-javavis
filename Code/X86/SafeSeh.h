@@ -10,6 +10,6 @@ void __stdcall x86SafeSEH();
 #else
 
 // Fallback to make the code compile on other platforms.
-static void x86SafeSEH() {}
+inline void x86SafeSEH() {}
 
 #endif

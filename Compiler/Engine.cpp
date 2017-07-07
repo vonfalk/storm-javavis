@@ -12,6 +12,7 @@
 #include "Core/StrBuf.h"
 #include "Core/Handle.h"
 #include "Core/Io/Utf8Text.h"
+#include "Core/Convert.h"
 #include "Lib/Enum.h"
 #include "Lib/Fn.h"
 #include "Syntax/Node.h"
@@ -90,7 +91,12 @@ namespace storm {
 			Thread::stormType(*this)->setType(world.threads[0]);
 
 			// Set proper paths for the now created packages.
-			o.root->setUrl(parsePath(*this, toS(root).c_str()));
+#ifdef WINDOWS
+			wchar *rootUrl = toS(root).c_str();
+#else
+			wchar *rootUrl = toWChar(*this, toS(root).c_str())->v;
+#endif
+			o.root->setUrl(parsePath(*this, rootUrl));
 
 			// Done booting.
 			advance(bootDone);
@@ -114,7 +120,7 @@ namespace storm {
 
 		Gc::destroyRoot(objRoot);
 		delete ioThread;
-		volatile Engine *volatile me = this;
+		// volatile Engine *volatile me = this;
 
 		gc.destroy();
 		libs.unload();
@@ -294,11 +300,12 @@ namespace storm {
 	}
 
 	code::RefSource *Engine::createRef(RefType ref) {
-#define FNREF(x) arena()->externalSource(L"C++:" ## STRING(x), address(&x))
+#define W(x) S(x)
+#define FNREF(x) arena()->externalSource(S("C++:") W(#x), address(&x))
 
 		switch (ref) {
 		case rEngine:
-			return arena()->externalSource(L"engine", this);
+			return arena()->externalSource(S("engine"), this);
 		case rLazyCodeUpdate:
 			return FNREF(LazyCode::updateCode);
 		case rRuleThrow:
@@ -308,9 +315,9 @@ namespace storm {
 		case rAs:
 			return FNREF(stormAs);
 		case rVTableAllocOffset:
-			return arena()->externalSource(L"vtableAllocOffset", (const void *)VTableCpp::vtableAllocOffset());
+			return arena()->externalSource(S("vtableAllocOffset"), (const void *)VTableCpp::vtableAllocOffset());
 		case rTObjectOffset:
-			return arena()->externalSource(L"threadOffset", (const void *)OFFSET_OF(TObject, thread));
+			return arena()->externalSource(S("threadOffset"), (const void *)OFFSET_OF(TObject, thread));
 		case rMapAt:
 			return FNREF(MapBase::atRaw);
 		case rEnumToS:
@@ -379,7 +386,7 @@ namespace storm {
 	Package *Engine::package() {
 		if (!o.root) {
 			assert(has(bootTypes), L"Can not create packages yet.");
-			o.root = new (*this) Package(new (*this) Str(L"<root>"));
+			o.root = new (*this) Package(new (*this) Str(S("<root>")));
 		}
 		return o.root;
 	}

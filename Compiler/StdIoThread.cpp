@@ -4,51 +4,21 @@
 namespace storm {
 
 	StdIo::StdIo() : first(null), last(null) {
-		thread = NULL;
-		handles[stdIn] = GetStdHandle(STD_INPUT_HANDLE);
-		handles[stdOut] = GetStdHandle(STD_OUTPUT_HANDLE);
-		handles[stdError] = GetStdHandle(STD_ERROR_HANDLE);
-		InitializeCriticalSection(&inputLock);
+		platformInit();
 	}
 
 	StdIo::~StdIo() {
-		if (thread != NULL) {
+		if (hasThread()) {
 			StdRequest quit(stdIn, null, 0);
 			postThread(&quit);
 
 			// Wait for the thread to terminate.
-			WaitForSingleObject(thread, 500);
+			waitThread();
 		}
-		DeleteCriticalSection(&inputLock);
+		platformDestroy();
 	}
 
-	static void doRead(HANDLE handle, StdRequest *r) {
-		DWORD result = 0;
-		ReadFile(handle, r->buffer, r->count, &result, NULL);
-		r->count = Nat(result);
-		r->wait.up();
-	}
-
-	static bool tryRead(HANDLE handle, StdRequest *r) {
-		// NOTE: This does not seem to work... At least not when inside of Emacs...
-		// Stdin handle becomes signaling when there is data to read.
-		if (WaitForSingleObject(handle, 0) == WAIT_OBJECT_0) {
-			// Safe to read!
-			doRead(handle, r);
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	static void doWrite(HANDLE handle, StdRequest *r) {
-		DWORD result = 0;
-		WriteFile(handle, r->buffer, r->count, &result, NULL);
-		r->count = Nat(result);
-		r->wait.up();
-	}
-
-	static void doNop(StdRequest *r) {
+	void StdIo::doNop(StdRequest *r) {
 		r->count = 0;
 		r->wait.up();
 	}
@@ -64,10 +34,9 @@ namespace storm {
 		case stdIn: {
 			// See if we can read now, other post to the thread.
 			bool ok = false;
-			// Note: 'tryRead' is sadly not reliable...
-			if (false && TryEnterCriticalSection(&inputLock)) {
-				ok = tryRead(handles[r->stream], r);
-				LeaveCriticalSection(&inputLock);
+			if (tryLockInput()) {
+				ok = tryRead(r);
+				unlockInput();
 			}
 
 			if (!ok)
@@ -78,7 +47,7 @@ namespace storm {
 		case stdError:
 			// Output to the streams directly.
 			// TODO: We should queue these requests if we realize they will take time.
-			doWrite(handles[r->stream], r);
+			doWrite(r);
 			break;
 		default:
 			// Invalid stream...
@@ -99,50 +68,198 @@ namespace storm {
 			}
 
 			// Is the thread actually started?
-			if (thread == NULL)
-				thread = CreateThread(NULL, 1024 * 3, &ioMain, this, 0, NULL);
+			if (!hasThread())
+				startThread();
 		}
 
 		cond.signal();
 	}
 
-
-	DWORD WINAPI ioMain(void *param) {
-		StdIo *me = (StdIo *)param;
-
+	void StdIo::main() {
 		// Note: currently input is blocking output, which is bad. We should do something clever about that!
 
 		while (true) {
 			StdRequest *now = null;
 			{
-				util::Lock::L z(me->lock);
-				now = me->first;
+				util::Lock::L z(lock);
+				now = first;
 				if (now)
-					me->first = now->next;
-				if (me->last == now)
-					me->last = null;
+					first = now->next;
+				if (last == now)
+					last = null;
 			}
 
 			// Anything to do?
 			if (now == null) {
-				me->cond.wait();
+				cond.wait();
 				continue;
 			}
 
 			// Got a request!
 			if (now->buffer == null) {
 				// We shall terminate...
-				return 0;
+				return;
 			}
 
 			if (now->stream == stdIn) {
 				// Special care is needed when reading...
-				EnterCriticalSection(&me->inputLock);
-				doRead(me->handles[stdIn], now);
-				LeaveCriticalSection(&me->inputLock);
+				lockInput();
+				doRead(now);
+				unlockInput();
 			} else {
-				doWrite(me->handles[stdOut], now);
+				doWrite(now);
 			}
 		}
 	}
+
+#if defined(WINDOWS)
+
+	void StdIo::platformInit() {
+		thread = NULL;
+		handles[stdIn] = GetStdHandle(STD_INPUT_HANDLE);
+		handles[stdOut] = GetStdHandle(STD_OUTPUT_HANDLE);
+		handles[stdError] = GetStdHandle(STD_ERROR_HANDLE);
+		InitializeCriticalSection(&inputLock);
+	}
+
+	void StdIo::platformDestroy() {
+		DeleteCriticalSection();
+	}
+
+	void StdIo::startThread() {
+		thread = CreateThread(NULL, 1024 * 3, &ioMain, this, 0, NULL);
+	}
+
+	void StdIo::waitThread() {
+		WaitForSingleObject(thread, 500);
+	}
+
+	bool StdIo::hasThread() {
+		return thread != NULL;
+	}
+
+	void StdIo::lockInput() {
+		EnterCriticalSection(&me->inputLock);
+	}
+
+	bool StdIo::tryLockInput() {
+		return TryEnterCriticalSection(&inputLock) ? true : false;
+	}
+
+	void StdIo::unlockInput() {
+		LeaveCriticalSection(&me->inputLock);
+	}
+
+	void StdIo::doRead(StdRequest *r) {
+		HANDLE handle = handles[r->stream];
+		DWORD result = 0;
+		ReadFile(handle, r->buffer, r->count, &result, NULL);
+		r->count = Nat(result);
+		r->wait.up();
+	}
+
+	bool StdIo::tryRead(StdRequest *r) {
+		// NOTE: This does not seem to work... At least not when inside of Emacs...
+		return false;
+
+		HANDLE handle = handles[r->stream];
+		// Stdin handle becomes signaling when there is data to read.
+		if (WaitForSingleObject(handle, 0) == WAIT_OBJECT_0) {
+			// Safe to read!
+			doRead(r);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	void StdIo::doWrite(StdRequest *r) {
+		HANDLE handle = handles[r->stream];
+		DWORD result = 0;
+		WriteFile(handle, r->buffer, r->count, &result, NULL);
+		r->count = Nat(result);
+		r->wait.up();
+	}
+
+	DWORD WINAPI ioMain(void *param) {
+		StdIo *me = (StdIo *)param;
+		me->main();
+		return 0;
+	}
+
+#elif defined(POSIX)
+
+	void StdIo::platformInit() {
+		threadStarted = false;
+		handles[stdIn] = STDIN_FILENO;
+		handles[stdOut] = STDOUT_FILENO;
+		handles[stdError] = STDERR_FILENO;
+		pthread_mutex_init(&inputLock, null);
+	}
+
+	void StdIo::platformDestroy() {
+		pthread_mutex_destroy(&inputLock);
+	}
+
+	void *ioMain(void *param);
+
+	void StdIo::startThread() {
+		// TODO? Reduce stack space for this thread?
+		pthread_create(&thread, NULL, &ioMain, this);
+	}
+
+	void StdIo::waitThread() {
+		// TODO? Add timeout?
+		pthread_join(thread, NULL);
+	}
+
+	bool StdIo::hasThread() {
+		return threadStarted;
+	}
+
+	void StdIo::lockInput() {
+		pthread_mutex_lock(&inputLock);
+	}
+
+	bool StdIo::tryLockInput() {
+		return pthread_mutex_trylock(&inputLock) == 0;
+	}
+
+	void StdIo::unlockInput() {
+		pthread_mutex_unlock(&inputLock);
+	}
+
+	void StdIo::doRead(StdRequest *r) {
+		int handle = handles[r->stream];
+		ssize_t result = read(handle, r->buffer, r->count);
+		if (result < 0)
+			r->count = 0;
+		else
+			r->count = Nat(result);
+		r->wait.up();
+	}
+
+	bool StdIo::tryRead(StdRequest *r) {
+		// TODO: Temporarily switch to nonblocking IO for this fd?
+		return false;
+	}
+
+	void StdIo::doWrite(StdRequest *r) {
+		int handle = handles[r->stream];
+		ssize_t result = write(handle, r->buffer, r->count);
+		if (result < 0)
+			r->count = 0;
+		else
+			r->count = Nat(result);
+		r->wait.up();
+	}
+
+	void *ioMain(void *param) {
+		StdIo *me = (StdIo *)param;
+		me->main();
+		return null;
+	}
+
+#endif
+
 }

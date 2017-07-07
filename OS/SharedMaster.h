@@ -7,7 +7,9 @@
 
 
 #include "OS/Shared.h"
+#ifdef WINDOWS
 #include <process.h>
+#endif
 
 namespace os {
 

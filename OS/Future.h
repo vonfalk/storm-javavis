@@ -151,14 +151,16 @@ namespace os {
 		// Destroy.
 		~Future() {
 			if (future.dataPosted()) {
-				((T *)value)->~T();
+				void *v = value;
+				((T *)v)->~T();
 			}
 		}
 
 		// Get the result or throw the error, when the thread is ready.
 		T result() {
 			future.result();
-			return *(T *)value;
+			void *v = value;
+			return *(T *)v;
 		}
 
 		// Post the result.

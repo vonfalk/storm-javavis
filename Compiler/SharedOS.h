@@ -10,8 +10,10 @@ namespace storm {
 	/**
 	 * Type used to represent shared libraries on this platform.
 	 */
-#ifdef WINDOWS
+#if defined(WINDOWS)
 	typedef HMODULE LoadedLib;
+#elif defined(POSIX)
+	typedef void *LoadedLib;
 #else
 #error "Please implement shared libraries for your platform."
 #endif
@@ -21,7 +23,7 @@ namespace storm {
 
 
 	// Load a shared library. Returns 'invalidLib' on failure.
-	LoadedLib loadLibrary(const wchar *path);
+	LoadedLib loadLibrary(Url *file);
 
 	// Unload a shared library.
 	void unloadLibrary(LoadedLib lib);

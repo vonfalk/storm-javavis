@@ -116,6 +116,24 @@ namespace storm {
 	// Uses a visual studio specific extension...
 	Array<Value> *valList(Engine &e, Nat count, ...);
 #else
-#error "Define valList for C++11 here!"
+	template <class... Val>
+	void valListAdd(Array<Value> *to, const Value &first, const Val&... rest) {
+		to->push(first);
+		valListAdd(to, rest...);
+	}
+
+	void valListAdd(Array<Value> *to) {
+		UNUSED(to);
+	}
+
+	template <class... Val>
+	Array<Value> *valList(Engine &e, Nat count, const Val&... rest) {
+		assert(sizeof...(rest) == count, L"'count' does not match the number of parameters passed to 'valList'.");
+		Array<Value> *v = new (e) Array<Value>();
+
+		valListAdd(v, rest...);
+
+		return v;
+	}
 #endif
 }

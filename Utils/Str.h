@@ -125,6 +125,9 @@ inline std::wostream &operator <<(std::wostream &to, const std::pair<A, B> &pair
 	return to << pair.first << L" -> " << pair.second;
 }
 
+template <class T>
+void join(std::wostream &to, const T &data, const String &between);
+
 // To string based on the output operator.
 template <class T>
 String toS(T *v) {

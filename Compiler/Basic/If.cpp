@@ -44,7 +44,7 @@ namespace storm {
 			Label lblDone = state->l->label();
 
 			VarInfo c = condResult->location(state);
-			*state->l << cmp(condResult->location(state).v, byteConst(0));
+			*state->l << cmp(c.v, byteConst(0));
 			*state->l << jmp(lblElse, ifEqual);
 
 

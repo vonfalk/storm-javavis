@@ -5,11 +5,11 @@ namespace storm {
 	namespace server {
 
 		Test::Test(Connection *c) : conn(c) {
-			start = c->symbol(L"start");
-			stop = c->symbol(L"stop");
-			sum = c->symbol(L"sum");
-			send = c->symbol(L"send");
-			echo = c->symbol(L"echo");
+			start = c->symbol(S("start"));
+			stop = c->symbol(S("stop"));
+			sum = c->symbol(S("sum"));
+			send = c->symbol(S("send"));
+			echo = c->symbol(S("echo"));
 		}
 
 		void Test::clear() {

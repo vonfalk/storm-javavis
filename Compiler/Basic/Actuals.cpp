@@ -68,9 +68,9 @@ namespace storm {
 		}
 
 		void Actuals::toS(StrBuf *to) const {
-			*to << L"(";
-			join(to, expressions, L", ");
-			*to << L")";
+			*to << S("(");
+			join(to, expressions, S(", "));
+			*to << S(")");
 		}
 
 

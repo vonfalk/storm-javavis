@@ -39,13 +39,13 @@ namespace storm {
 	}
 
 	namespace syntax {
-		static void CODECALL createDefParser(void *mem) {
-			createParser(mem, null);
-		}
-
-		static void CODECALL createParser(void *mem, ParserBackend *backend) {
+		void CODECALL createParser(void *mem, ParserBackend *backend) {
 			ParserBase *p = new (Place(mem)) ParserBase(backend);
 			runtime::setVTable(p);
+		}
+
+		static void CODECALL createDefParser(void *mem) {
+			createParser(mem, null);
 		}
 	}
 
@@ -92,7 +92,7 @@ namespace storm {
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 3, t, pkg, backend), address(&createParserPkg)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, arr), address(&createDefParserArr)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 3, t, arr, backend), address(&createParserArr)));
-		add(nativeFunction(e, rule, L"tree", valList(e, 1, t), address(&parserTree)));
+		add(nativeFunction(e, rule, S("tree"), valList(e, 1, t), address(&parserTree)));
 
 		return Type::loadAll();
 	}

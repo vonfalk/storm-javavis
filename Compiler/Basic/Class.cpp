@@ -93,7 +93,7 @@ namespace storm {
 					if (z->params->count() == 2 && z->params->at(0) == z->params->at(1))
 						hasCopyCtor = true;
 					hasCtor = true;
-				} else if (wcscmp(z->name->c_str(), L"deepCopy") == 0) {
+				} else if (wcscmp(z->name->c_str(), S("deepCopy")) == 0) {
 					if (z->params->count() == 2 && z->params->at(1).type == CloneEnv::stormType(this))
 						hasDeepCopy = true;
 				}

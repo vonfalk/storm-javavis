@@ -106,8 +106,8 @@ namespace storm {
 				if (aId == bId)
 					return equal;
 
-				TreeNode &a = at(aId);
-				TreeNode &b = at(bId);
+				TreeNode a = at(aId);
+				TreeNode b = at(bId);
 
 				// Prioritize the one with fewer errors.
 				if (a.errors() != b.errors())
@@ -196,7 +196,7 @@ namespace storm {
 			}
 
 			bool TreeStore::addNode(ChildArray &out, Nat productionId, Nat node) {
-				TreeNode &me = at(node);
+				TreeNode me = at(node);
 				if (!me.children())
 					return false;
 				if (Syntax::baseProd(me.production()) != productionId)

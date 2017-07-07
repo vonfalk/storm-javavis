@@ -88,7 +88,6 @@ namespace storm {
 
 		void FnCall::code(CodeGen *s, CodeResult *to) {
 			using namespace code;
-			const Value &r = toExecute->result;
 
 			// Note that toExecute->params may not be equal to params->values()
 			// since some actual parameters may report that they can return a
@@ -531,7 +530,7 @@ namespace storm {
 				return false;
 
 			SimplePart *p = name->at(0);
-			if (wcscmp(p->name->c_str(), L"super") != 0)
+			if (wcscmp(p->name->c_str(), S("super")) != 0)
 				return false;
 			return p->params->empty();
 		}
@@ -542,7 +541,7 @@ namespace storm {
 											Named *&candidate) {
 			const Scope &scope = block->scope;
 
-			SimplePart *thisPart = new (block) SimplePart(new (block) Str(L"this"));
+			SimplePart *thisPart = new (block) SimplePart(new (block) Str(S("this")));
 			LocalVar *thisVar = block->variable(thisPart);
 			if (!thisVar)
 				return null;

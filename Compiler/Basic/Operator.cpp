@@ -46,6 +46,7 @@ namespace storm {
 		Expr *AssignOpInfo::meaning(Block *block, Expr *lhs, Expr *rhs) {
 			Value l = lhs->result().type();
 			Value r = rhs->result().type();
+			UNUSED(r);
 
 			if (l.isHeapObj() && l.ref && castable(rhs, l.asRef(false))) {
 				return new (block) ClassAssign(lhs, rhs);
@@ -86,7 +87,7 @@ namespace storm {
 
 			try {
 				// Create: 'lhs = lhs <op> rhs'
-				syntax::SStr *eqOp = CREATE(syntax::SStr, this, L"=", pos);
+				syntax::SStr *eqOp = new (this) syntax::SStr(S("="), pos);
 				OpInfo *assign = new (this) AssignOpInfo(eqOp, 100, true);
 
 				Expr *middle = op->meaning(block, lhs, rhs);
@@ -220,12 +221,12 @@ namespace storm {
 
 		void Operator::toS(StrBuf *to) const {
 			if (Operator *l = as<Operator>(lhs))
-				*to << L"<" << lhs << L">";
+				*to << S("<") << l << S(">");
 			else
 				*to << lhs;
-			*to << L" " << op->name << L" ";
+			*to << S(" ") << op->name << S(" ");
 			if (Operator *r = as<Operator>(rhs))
-				*to << L"<" << rhs << L">";
+				*to << S("<") << r << S(">");
 			else
 				*to << rhs;
 		}
@@ -250,7 +251,7 @@ namespace storm {
 		}
 
 		void ParenExpr::toS(StrBuf *to) const {
-			*to << L"(" << wrap << L")";
+			*to << S("(") << wrap << S(")");
 		}
 
 		/**
@@ -261,21 +262,21 @@ namespace storm {
 			Actuals *actual = new (block) Actuals();
 			actual->add(lhs);
 			actual->add(par);
-			syntax::SStr *m = CREATE(syntax::SStr, block, L"[]");
+			syntax::SStr *m = new (block) syntax::SStr(S("[]"));
 			return namedExpr(block, m, actual);
 		}
 
 		Expr *STORM_FN prefixOperator(Block *block, syntax::SStr *o, Expr *expr) {
 			Actuals *actual = new (block) Actuals();
 			actual->add(expr);
-			syntax::SStr *altered = new (o) syntax::SStr(*o->v + new (o) Str(L"*"), o->pos);
+			syntax::SStr *altered = new (o) syntax::SStr(*o->v + new (o) Str(S("*")), o->pos);
 			return namedExpr(block, altered, actual);
 		}
 
 		Expr *STORM_FN postfixOperator(Block *block, syntax::SStr *o, Expr *expr) {
 			Actuals *actual = new (block) Actuals();
 			actual->add(expr);
-			syntax::SStr *altered = new (o) syntax::SStr(*new (o) Str(L"*") + o->v, o->pos);
+			syntax::SStr *altered = new (o) syntax::SStr(*new (o) Str(S("*")) + o->v, o->pos);
 			return namedExpr(block, altered, actual);
 		}
 

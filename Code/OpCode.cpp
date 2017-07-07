@@ -7,12 +7,14 @@ using namespace code::op;
 namespace code {
 
 	struct OpInfo {
-		const wchar_t *name;
+		const wchar *name;
 		DestMode mode;
 	};
 
-#define OP_CODE(x, mode) { op::x, { L ## #x, mode } }
-#define OP_ALT_CODE(x, mode, name) { op::x, { L ## #name, mode } }
+#define W(x) S(x)
+
+#define OP_CODE(x, mode) { op::x, { W(#x), mode } }
+#define OP_ALT_CODE(x, mode, name) { op::x, { W(#name), mode } }
 
 	static OpEntry<OpInfo> descs[] = {
 		OP_CODE(nop, destNone),
@@ -75,7 +77,7 @@ namespace code {
 		return ops[op];
 	}
 
-	const wchar_t *name(op::Code op) {
+	const wchar *name(op::Code op) {
 		return info(op).name;
 	}
 

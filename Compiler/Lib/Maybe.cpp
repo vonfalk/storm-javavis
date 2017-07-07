@@ -143,27 +143,27 @@ namespace storm {
 
 		add(inlinedFunction(e, Value(), CTOR, r, fnPtr(e, &initMaybe)));
 		add(inlinedFunction(e, Value(), CTOR, rv, fnPtr(e, &copyMaybe)));
-		add(inlinedFunction(e, t.asRef(true), L"=", rv, fnPtr(e, &copyMaybe)));
-		add(inlinedFunction(e, b, L"empty", v, fnPtr(e, &emptyMaybe)));
-		add(inlinedFunction(e, b, L"any", v, fnPtr(e, &anyMaybe)));
+		add(inlinedFunction(e, t.asRef(true), S("="), rv, fnPtr(e, &copyMaybe)));
+		add(inlinedFunction(e, b, S("empty"), v, fnPtr(e, &emptyMaybe)));
+		add(inlinedFunction(e, b, S("any"), v, fnPtr(e, &anyMaybe)));
 
-		add(nativeEngineFunction(e, Value(Str::stormType(e)), L"toS", v, &maybeToS));
+		add(nativeEngineFunction(e, Value(Str::stormType(e)), S("toS"), v, address(&maybeToS)));
 
 		Array<Value> *strBuf = new (e) Array<Value>(2, t);
 		strBuf->at(1) = Value(StrBuf::stormType(e));
-		add(nativeFunction(e, Value(), L"toS", strBuf, &maybeToSBuf));
+		add(nativeFunction(e, Value(), S("toS"), strBuf, address(&maybeToSBuf)));
 
 		if (!contained->isA(TObject::stormType(e))) {
 			Array<Value> *clone = new (e) Array<Value>(2, t);
 			clone->at(1) = Value(CloneEnv::stormType(e));
-			add(nativeFunction(e, Value(), L"deepCopy", clone, &maybeClone));
+			add(nativeFunction(e, Value(), S("deepCopy"), clone, address(&maybeClone)));
 		}
 
 		// Create copy ctors for derived versions of Maybe<T> and T.
 		add(new (e) TemplateFn(new (e) Str(CTOR), fnPtr(e, &MaybeType::createCopy, this)));
 
 		// Create assignment functions for derived versions of Maybe.
-		add(new (e) TemplateFn(new (e) Str(L"="), fnPtr(e, &MaybeType::createAssign, this)));
+		add(new (e) TemplateFn(new (e) Str(S("=")), fnPtr(e, &MaybeType::createAssign, this)));
 
 		return Type::loadAll();
 	}
@@ -183,7 +183,7 @@ namespace storm {
 
 		Array<Value> *rv = new (this) Array<Value>(2, o);
 		rv->at(0) = Value(this).asRef(true);
-		return inlinedFunction(engine, Value(), L"=", rv, fnPtr(engine, &copyMaybe));
+		return inlinedFunction(engine, Value(), S("="), rv, fnPtr(engine, &copyMaybe));
 	}
 
 	Named *MaybeType::createCopy(Str *name, SimplePart *part) {

@@ -8,7 +8,7 @@
 namespace storm {
 
 #ifdef POSIX
-	static size_t wcslen(const wchar *ch) {
+	size_t wcslen(const wchar *ch) {
 		size_t r = 0;
 		while (*ch) {
 			ch++; r++;
@@ -16,7 +16,7 @@ namespace storm {
 		return r;
 	}
 
-	static int wcscmp(const wchar *a, const wchar *b) {
+	int wcscmp(const wchar *a, const wchar *b) {
 		do {
 			if (*a != *b) {
 				if (*a < *b)
@@ -196,6 +196,12 @@ namespace storm {
 	Str *Str::operator +(const wchar *o) const {
 		return new (this) Str(this, o);
 	}
+
+#ifdef POSIX
+	Str *Str::operator +(const wchar_t *o) const {
+		return new (this) Str(this, toWChar(engine(), o)->v);
+	}
+#endif
 
 	Str::Str(const Str *a, const Str *b) {
 		size_t aSize = a->data->count - 1;

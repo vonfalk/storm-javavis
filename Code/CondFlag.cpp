@@ -3,49 +3,49 @@
 
 namespace code {
 
-	const wchar_t *name(CondFlag c) {
+	const wchar *name(CondFlag c) {
 		switch (c) {
 		case ifAlways:
-			return L"always";
+			return S("always");
 		case ifNever:
-			return L"never";
+			return S("never");
 		case ifOverflow:
-			return L"overflow";
+			return S("overflow");
 		case ifNoOverflow:
-			return L"no overflow";
+			return S("no overflow");
 		case ifEqual:
-			return L"equal";
+			return S("equal");
 		case ifNotEqual:
-			return L"not equal";
+			return S("not equal");
 		case ifBelow:
-			return L"below";
+			return S("below");
 		case ifBelowEqual:
-			return L"below/equal";
+			return S("below/equal");
 		case ifAboveEqual:
-			return L"above/equal";
+			return S("above/equal");
 		case ifAbove:
-			return L"above";
+			return S("above");
 		case ifLess:
-			return L"less";
+			return S("less");
 		case ifLessEqual:
-			return L"less/equal";
+			return S("less/equal");
 		case ifGreaterEqual:
-			return L"greater/equal";
+			return S("greater/equal");
 		case ifGreater:
-			return L"greater";
+			return S("greater");
 		case ifFBelow:
-			return L"ifFBelow";
+			return S("ifFBelow");
 		case ifFBelowEqual:
-			return L"ifFBelowEqual";
+			return S("ifFBelowEqual");
 		case ifFAboveEqual:
-			return L"ifFAboveEqual";
+			return S("ifFAboveEqual");
 		case ifFAbove:
-			return L"ifFAbove";
+			return S("ifFAbove");
 		}
 
 		TODO(L"Implement!");
 		assert(false);
-		return L"Unknown CondFlag";
+		return S("Unknown CondFlag");
 	}
 
 	CondFlag inverse(CondFlag c) {

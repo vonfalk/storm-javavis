@@ -191,6 +191,7 @@ namespace storm {
 				Nat len = from->findByte(0x00);
 				Buffer fwd = from->read(len);
 				// TODO: Forward 'fwd' to stdin!
+				UNUSED(fwd);
 			}
 
 			return ok;

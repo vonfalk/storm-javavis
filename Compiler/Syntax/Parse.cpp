@@ -16,55 +16,55 @@ namespace storm {
 			do {
 				// Skip the previous dot.
 				if (!first)
-					tok.expect(L".");
+					tok.expect(S("."));
 				first = false;
 
 				Token id = tok.next();
-				if (tok.skipIf(L"<")) {
+				if (tok.skipIf(S("<"))) {
 					Array<Name *> *params = new (e) Array<Name *>();
-					while (tok.peek() != L">") {
-						tok.skipIf(L",");
+					while (tok.peek() != S(">")) {
+						tok.skipIf(S(","));
 						params->push(parseName(e, tok));
 					}
-					tok.expect(L">");
+					tok.expect(S(">"));
 
 					result->add(new (e) RecPart(id.toS(), params));
 				} else {
 					result->add(id.toS());
 				}
-			} while (tok.peek() == L".");
+			} while (tok.peek() == S("."));
 
 			return result;
 		}
 
 		// See if a token is a separator.
 		static bool isTokenSep(const Token &t) {
-			return t == L","
-				|| t == L"-"
-				|| t == L";"
-				|| t == L"="
-				|| t == L"("
-				|| t == L")"
-				|| t == L"["
-				|| t == L"]";
+			return t == S(",")
+				|| t == S("-")
+				|| t == S(";")
+				|| t == S("=")
+				|| t == S("(")
+				|| t == S(")")
+				|| t == S("[")
+				|| t == S("]");
 		}
 
 		// Parse a parameter list (actual parameters).
 		static Array<Str *> *parseActuals(Engine &e, Tokenizer &tok) {
-			if (!tok.skipIf(L"("))
+			if (!tok.skipIf(S("(")))
 				return null;
 
-			if (tok.skipIf(L","))
+			if (tok.skipIf(S(",")))
 				throw SyntaxError(tok.position(), L"Actual parameters to a token may not start with a comma."
 					L" If you meant to start a capture, use - to disambiguate.");
 
 			Array<Str *> *r = new (e) Array<Str *>();
-			while (tok.peek() != L")") {
-				tok.skipIf(L",");
+			while (tok.peek() != S(")")) {
+				tok.skipIf(S(","));
 				r->push(tok.next().toS());
 			}
 
-			tok.expect(L")");
+			tok.expect(S(")"));
 			return r;
 		}
 
@@ -80,9 +80,9 @@ namespace storm {
 		static TokenDecl *parseToken(Engine &e, Tokenizer &tok) {
 			TokenDecl *result = null;
 
-			if (tok.skipIf(L"-")) {
+			if (tok.skipIf(S("-"))) {
 				return null;
-			} else if (tok.skipIf(L",")) {
+			} else if (tok.skipIf(S(","))) {
 				// The delimiter token. Might not be bound to anything.
 				return new (e) DelimTokenDecl();
 			} else if (tok.peek().isStrLiteral()) {
@@ -100,29 +100,29 @@ namespace storm {
 			if (isTokenSep(tok.peek()))
 				return result;
 
-			if (tok.skipIf(L"@")) {
+			if (tok.skipIf(S("@"))) {
 				result->raw = true;
 
 				if (isTokenSep(tok.peek()))
 					return result;
 			}
 
-			if (tok.skipIf(L"->")) {
+			if (tok.skipIf(S("->"))) {
 				if (isTokenSep(tok.peek()))
 					throw SyntaxError(tok.position(), L"Expected identifier.");
 				result->invoke = tok.next().toS();
 
 				// Maybe a color name as well.
-				if (tok.skipIf(L"#"))
+				if (tok.skipIf(S("#")))
 					result->color = parseTokenColor(tok);
-			} else if (tok.skipIf(L"#")) {
+			} else if (tok.skipIf(S("#"))) {
 				result->color = parseTokenColor(tok);
 			} else {
 				// Simple identifier.
 				result->store = tok.next().toS();
 
 				// Maybe a color name as well.
-				if (tok.skipIf(L"#"))
+				if (tok.skipIf(S("#")))
 					result->color = parseTokenColor(tok);
 			}
 
@@ -131,7 +131,7 @@ namespace storm {
 
 		// Parse the bindings of a capture.
 		static TokenDecl *parseCapture(Engine &e, Tokenizer &tok, const Token &rep) {
-			if (rep == L"->") {
+			if (rep == S("->")) {
 				TokenDecl *decl = new (e) TokenDecl();
 				decl->invoke = tok.next().toS();
 				return decl;
@@ -146,25 +146,25 @@ namespace storm {
 
 		// Parse a production.
 		static ProductionDecl *parseProduction(Engine &e, Tokenizer &tok, SrcName *rule) {
-			tok.expect(L":");
+			tok.expect(S(":"));
 			ProductionDecl *result = new (e) ProductionDecl(rule->pos, rule);
 
-			while (tok.peek() != L";" && tok.peek() != L"=") {
-				if (tok.skipIf(L"(")) {
+			while (tok.peek() != S(";") && tok.peek() != S("=")) {
+				if (tok.skipIf(S("("))) {
 					// Start of a capture/repeat!
 					result->repStart = result->tokens->count();
-				} else if (tok.skipIf(L")")) {
+				} else if (tok.skipIf(S(")"))) {
 					// End of a capture/repeat!
 					result->repEnd = result->tokens->count();
 
 					Token rep = tok.next();
-					if (rep == L"?") {
+					if (rep == S("?")) {
 						result->repType = repZeroOne;
-					} else if (rep == L"*") {
+					} else if (rep == S("*")) {
 						result->repType = repZeroPlus;
-					} else if (rep == L"+") {
+					} else if (rep == S("+")) {
 						result->repType = repOnePlus;
-					} else if (rep == L"@") {
+					} else if (rep == S("@")) {
 						rep = tok.next();
 						result->repCapture = parseCapture(e, tok, rep);
 						result->repCapture->raw = true;
@@ -173,23 +173,23 @@ namespace storm {
 					} else {
 						result->repCapture = parseCapture(e, tok, rep);
 					}
-				} else if (tok.skipIf(L"[")) {
+				} else if (tok.skipIf(S("["))) {
 					// Start of an indented block.
 					result->indentStart = result->tokens->count();
-				} else if (tok.skipIf(L"]")) {
+				} else if (tok.skipIf(S("]"))) {
 					// End of an indented block. See what kind of indentation to use.
 					result->indentEnd = result->tokens->count();
 
 					Token kind = tok.next();
-					if (kind == L"+") {
+					if (kind == S("+")) {
 						result->indentType = indentIncrease;
-					} else if (kind == L"-") {
+					} else if (kind == S("-")) {
 						result->indentType = indentDecrease;
-					} else if (kind == L"?") {
+					} else if (kind == S("?")) {
 						result->indentType = indentWeakIncrease;
-					} else if (kind == L"@") {
+					} else if (kind == S("@")) {
 						result->indentType = indentAlignBegin;
-					} else if (kind == L"$") {
+					} else if (kind == S("$")) {
 						result->indentType = indentAlignEnd;
 					} else {
 						throw SyntaxError(kind.pos, L"Unexpected indentation kind: " + ::toS(kind));
@@ -201,7 +201,7 @@ namespace storm {
 				}
 			}
 
-			if (tok.skipIf(L"="))
+			if (tok.skipIf(S("=")))
 				result->name = tok.next().toS();
 
 			return result;
@@ -209,7 +209,7 @@ namespace storm {
 
 		// Parse a production with a result.
 		static ProductionDecl *parseProductionResult(Engine &e, Tokenizer &tok, SrcName *rule) {
-			tok.expect(L"=>");
+			tok.expect(S("=>"));
 
 			Name *name = parseName(e, tok);
 			Array<Str *> *params = parseActuals(e, tok);
@@ -223,12 +223,12 @@ namespace storm {
 
 		// Parse a production with a priority.
 		static ProductionDecl *parseProductionPriority(Engine &e, Tokenizer &tok, SrcName *rule) {
-			tok.expect(L"[");
+			tok.expect(S("["));
 			Int prio = 0;
 			try {
-				if (tok.skipIf(L"-")) {
+				if (tok.skipIf(S("-"))) {
 					prio = -tok.next().toS()->toInt();
-				} else if (tok.skipIf(L"+")) {
+				} else if (tok.skipIf(S("+"))) {
 					prio = tok.next().toS()->toInt();
 				} else {
 					prio = tok.next().toS()->toInt();
@@ -236,13 +236,13 @@ namespace storm {
 			} catch (const StrError &e) {
 				throw SyntaxError(tok.position(), e.what());
 			}
-			tok.expect(L"]");
+			tok.expect(S("]"));
 
 			ProductionDecl *result = null;
 			Token sep = tok.peek();
-			if (sep == L":") {
+			if (sep == S(":")) {
 				result = parseProduction(e, tok, rule);
-			} else if (sep == L"=>") {
+			} else if (sep == S("=>")) {
 				result = parseProductionResult(e, tok, rule);
 			} else {
 				throw SyntaxError(sep.pos, L"Unexpected token: " + ::toS(sep));
@@ -257,18 +257,18 @@ namespace storm {
 			Token name = tok.next();
 			RuleDecl *r = new (e) RuleDecl(name.pos, name.toS(), result);
 
-			tok.expect(L"(");
+			tok.expect(S("("));
 
-			while (tok.peek() != L")") {
-				tok.skipIf(L",");
+			while (tok.peek() != S(")")) {
+				tok.skipIf(S(","));
 				Name *type = parseName(e, tok);
 				Str *name = tok.next().toS();
 				r->params->push(ParamDecl(type, name));
 			}
 
-			tok.expect(L")");
+			tok.expect(S(")"));
 
-			if (tok.skipIf(L"#"))
+			if (tok.skipIf(S("#")))
 				r->color = parseTokenColor(tok);
 
 			return r;
@@ -278,27 +278,27 @@ namespace storm {
 			FileContents *r = new (e) FileContents();
 
 			while (tok.more()) {
-				if (tok.skipIf(L"use")) {
+				if (tok.skipIf(S("use"))) {
 					r->use->push(parseName(e, tok));
-				} else if (tok.skipIf(L"delimiter")) {
-					tok.expect(L"=");
+				} else if (tok.skipIf(S("delimiter"))) {
+					tok.expect(S("="));
 					r->delimiter = parseName(e, tok);
 				} else {
 					SrcName *name = parseName(e, tok);
 					Token sep = tok.peek();
 
-					if (sep == L":") {
+					if (sep == S(":")) {
 						r->productions->push(parseProduction(e, tok, name));
-					} else if (sep == L"=>") {
+					} else if (sep == S("=>")) {
 						r->productions->push(parseProductionResult(e, tok, name));
-					} else if (sep == L"[") {
+					} else if (sep == S("[")) {
 						r->productions->push(parseProductionPriority(e, tok, name));
 					} else {
 						r->rules->push(parseRule(e, tok, name));
 					}
 				}
 
-				tok.expect(L";");
+				tok.expect(S(";"));
 			}
 
 			return r;

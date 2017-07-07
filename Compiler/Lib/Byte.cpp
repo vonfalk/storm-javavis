@@ -28,49 +28,49 @@ namespace storm {
 		rv->at(1) = Value(this);
 		Value b(StormInfo<Bool>::type(engine));
 
-		add(inlinedFunction(engine, Value(this), L"+", vv, fnPtr(engine, &numAdd)));
-		add(inlinedFunction(engine, Value(this), L"-", vv, fnPtr(engine, &numSub)));
+		add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &numAdd)));
+		add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &numSub)));
 
 		// Not supported yet.
-		// add(inlinedFunction(engine, Value(this), L"*", vv, fnPtr(engine, &numMul)));
-		// add(inlinedFunction(engine, Value(this), L"/", vv, fnPtr(engine, &numIDiv)));
-		// add(inlinedFunction(engine, Value(this), L"%", vv, fnPtr(engine, &numIMod)));
+		// add(inlinedFunction(engine, Value(this), S("*"), vv, fnPtr(engine, &numMul)));
+		// add(inlinedFunction(engine, Value(this), S("/"), vv, fnPtr(engine, &numIDiv)));
+		// add(inlinedFunction(engine, Value(this), S("%"), vv, fnPtr(engine, &numIMod)));
 
-		add(inlinedFunction(engine, b, L"==", vv, fnPtr(engine, &numCmp<ifEqual>)));
-		add(inlinedFunction(engine, b, L"!=", vv, fnPtr(engine, &numCmp<ifNotEqual>)));
-		add(inlinedFunction(engine, b, L"<=", vv, fnPtr(engine, &numCmp<ifLessEqual>)));
-		add(inlinedFunction(engine, b, L">=", vv, fnPtr(engine, &numCmp<ifGreaterEqual>)));
-		add(inlinedFunction(engine, b, L"<", vv, fnPtr(engine, &numCmp<ifLess>)));
-		add(inlinedFunction(engine, b, L">", vv, fnPtr(engine, &numCmp<ifGreater>)));
+		add(inlinedFunction(engine, b, S("=="), vv, fnPtr(engine, &numCmp<ifEqual>)));
+		add(inlinedFunction(engine, b, S("!="), vv, fnPtr(engine, &numCmp<ifNotEqual>)));
+		add(inlinedFunction(engine, b, S("<="), vv, fnPtr(engine, &numCmp<ifLessEqual>)));
+		add(inlinedFunction(engine, b, S(">="), vv, fnPtr(engine, &numCmp<ifGreaterEqual>)));
+		add(inlinedFunction(engine, b, S("<"), vv, fnPtr(engine, &numCmp<ifLess>)));
+		add(inlinedFunction(engine, b, S(">"), vv, fnPtr(engine, &numCmp<ifGreater>)));
 
-		add(inlinedFunction(engine, Value(this), L"*++", r, fnPtr(engine, &numPostfixInc<Byte>)));
-		add(inlinedFunction(engine, Value(this), L"++*", r, fnPtr(engine, &numPrefixInc<Byte>)));
-		add(inlinedFunction(engine, Value(this), L"*--", r, fnPtr(engine, &numPostfixDec<Byte>)));
-		add(inlinedFunction(engine, Value(this), L"--*", r, fnPtr(engine, &numPrefixDec<Byte>)));
+		add(inlinedFunction(engine, Value(this), S("*++"), r, fnPtr(engine, &numPostfixInc<Byte>)));
+		add(inlinedFunction(engine, Value(this), S("++*"), r, fnPtr(engine, &numPrefixInc<Byte>)));
+		add(inlinedFunction(engine, Value(this), S("*--"), r, fnPtr(engine, &numPostfixDec<Byte>)));
+		add(inlinedFunction(engine, Value(this), S("--*"), r, fnPtr(engine, &numPrefixDec<Byte>)));
 
-		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &numAssign<Byte>)));
-		add(inlinedFunction(engine, Value(this), L"+=", rv, fnPtr(engine, &numInc<Byte>)));
-		add(inlinedFunction(engine, Value(this), L"-=", rv, fnPtr(engine, &numDec<Byte>)));
+		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &numAssign<Byte>)));
+		add(inlinedFunction(engine, Value(this), S("+="), rv, fnPtr(engine, &numInc<Byte>)));
+		add(inlinedFunction(engine, Value(this), S("-="), rv, fnPtr(engine, &numDec<Byte>)));
 
 		// Not supported yet!
-		// add(inlinedFunction(engine, Value(this), L"*=", rv, fnPtr(engine, &numScale<Byte>)));
-		// add(inlinedFunction(engine, Value(this), L"/=", rv, fnPtr(engine, &numIDivScale<Byte>)));
-		// add(inlinedFunction(engine, Value(this), L"%=", rv, fnPtr(engine, &numIModEq<Byte>)));
+		// add(inlinedFunction(engine, Value(this), S("*="), rv, fnPtr(engine, &numScale<Byte>)));
+		// add(inlinedFunction(engine, Value(this), S("/="), rv, fnPtr(engine, &numIDivScale<Byte>)));
+		// add(inlinedFunction(engine, Value(this), S("%="), rv, fnPtr(engine, &numIModEq<Byte>)));
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &numCopyCtor<Byte>)));
 		add(inlinedFunction(engine, Value(), Type::CTOR, r, fnPtr(engine, &numInit<Byte>)));
 
-		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), L"int", v, fnPtr(engine, &ucast)));
-		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), L"nat", v, fnPtr(engine, &ucast)));
-		add(inlinedFunction(engine, Value(StormInfo<Long>::type(engine)), L"long", v, fnPtr(engine, &ucast)));
-		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), L"word", v, fnPtr(engine, &ucast)));
-		add(nativeFunction(engine, Value(StormInfo<Float>::type(engine)), L"float", v, address(&byteToFloat)));
+		add(inlinedFunction(engine, Value(StormInfo<Int>::type(engine)), S("int"), v, fnPtr(engine, &ucast)));
+		add(inlinedFunction(engine, Value(StormInfo<Nat>::type(engine)), S("nat"), v, fnPtr(engine, &ucast)));
+		add(inlinedFunction(engine, Value(StormInfo<Long>::type(engine)), S("long"), v, fnPtr(engine, &ucast)));
+		add(inlinedFunction(engine, Value(StormInfo<Word>::type(engine)), S("word"), v, fnPtr(engine, &ucast)));
+		add(nativeFunction(engine, Value(StormInfo<Float>::type(engine)), S("float"), v, address(&byteToFloat)));
 
 		Value n(StormInfo<Nat>::type(engine));
-		add(nativeFunction(engine, n, L"hash", v, &byteHash));
-		add(inlinedFunction(engine, Value(this), L"min", vv, fnPtr(engine, &numMin<Byte>)));
-		add(inlinedFunction(engine, Value(this), L"max", vv, fnPtr(engine, &numMax<Byte>)));
-		add(inlinedFunction(engine, Value(this), L"delta", vv, fnPtr(engine, &numDelta<Byte>)));
+		add(nativeFunction(engine, n, S("hash"), v, address(&byteHash)));
+		add(inlinedFunction(engine, Value(this), S("min"), vv, fnPtr(engine, &numMin<Byte>)));
+		add(inlinedFunction(engine, Value(this), S("max"), vv, fnPtr(engine, &numMax<Byte>)));
+		add(inlinedFunction(engine, Value(this), S("delta"), vv, fnPtr(engine, &numDelta<Byte>)));
 
 		return Type::loadAll();
 	}

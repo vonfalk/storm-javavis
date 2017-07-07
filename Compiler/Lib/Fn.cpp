@@ -18,7 +18,7 @@ namespace storm {
 		TemplateList *l = e.cppTemplate(ArrayId);
 		NameSet *to = l->addTo();
 		assert(to, L"Too early to use 'fnType'.");
-		Type *found = as<Type>(to->find(L"Fn", params));
+		Type *found = as<Type>(to->find(S("Fn"), params));
 		if (!found)
 			throw InternalError(L"Can not find the function type!");
 		return found;
@@ -40,7 +40,7 @@ namespace storm {
 
 		Array<Value> *fnCall = clone(params);
 		fnCall->at(0) = t;
-		add(lazyFunction(e, params->at(0), L"call", fnCall, fnPtr(e, &FnType::callCode, this)));
+		add(lazyFunction(e, params->at(0), S("call"), fnCall, fnPtr(e, &FnType::callCode, this)));
 
 		return Type::loadAll();
 	}

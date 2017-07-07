@@ -29,7 +29,7 @@ namespace code {
 		extern const Reg rdi;
 
 		// Convert to names.
-		const wchar_t *nameX86(Reg r);
+		const wchar *nameX86(Reg r);
 
 		// Find unused registers to work with. Returns noReg if none. Takes 64-bit registers into account.
 		Reg STORM_FN unusedReg(RegSet *in);

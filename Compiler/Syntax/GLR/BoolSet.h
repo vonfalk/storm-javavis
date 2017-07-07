@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Object.h"
 #include "Core/GcArray.h"
+#include <climits>
 
 namespace storm {
 	namespace syntax {

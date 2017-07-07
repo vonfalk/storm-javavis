@@ -13,7 +13,7 @@ namespace storm {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
 			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << and(result, p.params->at(1));
+			*p.state->l << band(result, p.params->at(1));
 		}
 	}
 
@@ -21,7 +21,7 @@ namespace storm {
 		if (p.result->needed()) {
 			Operand result = p.result->location(p.state).v;
 			*p.state->l << mov(result, p.params->at(0));
-			*p.state->l << or(result, p.params->at(1));
+			*p.state->l << bor(result, p.params->at(1));
 		}
 	}
 
@@ -73,21 +73,21 @@ namespace storm {
 	BoolType::BoolType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sByte, type, null) {}
 
 	Bool BoolType::loadAll() {
-		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
+		// Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
 		Array<Value> *v = new (this) Array<Value>(1, Value(this, false));
 		Array<Value> *rr = new (this) Array<Value>(2, Value(this, true));
 		Array<Value> *vv = new (this) Array<Value>(2, Value(this, false));
 		Array<Value> *rv = new (this) Array<Value>(2, Value(this, true));
 		rv->at(1) = Value(this);
 
-		add(inlinedFunction(engine, Value(this), L"&", vv, fnPtr(engine, &boolAnd)));
-		add(inlinedFunction(engine, Value(this), L"|", vv, fnPtr(engine, &boolOr)));
-		add(inlinedFunction(engine, Value(this), L"==", vv, fnPtr(engine, &boolEq)));
-		add(inlinedFunction(engine, Value(this), L"!=", vv, fnPtr(engine, &boolNeq)));
-		add(inlinedFunction(engine, Value(this), L"!", v, fnPtr(engine, &boolNot)));
+		add(inlinedFunction(engine, Value(this), S("&"), vv, fnPtr(engine, &boolAnd)));
+		add(inlinedFunction(engine, Value(this), S("|"), vv, fnPtr(engine, &boolOr)));
+		add(inlinedFunction(engine, Value(this), S("=="), vv, fnPtr(engine, &boolEq)));
+		add(inlinedFunction(engine, Value(this), S("!="), vv, fnPtr(engine, &boolNeq)));
+		add(inlinedFunction(engine, Value(this), S("!"), v, fnPtr(engine, &boolNot)));
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &boolCopyCtor)));
-		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &boolAssign)));
+		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &boolAssign)));
 
 		return Type::loadAll();
 	}

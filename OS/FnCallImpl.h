@@ -27,7 +27,7 @@ namespace os {
 		struct ParamHelp<Result, Param<void, void>, false> {
 			template <class ... T>
 			static void call(const void *fn, void **, void *out, nat pos, T& ... args) {
-				typedef void CODECALL (*Fn)(T...);
+				typedef Result CODECALL (*Fn)(T...);
 				Fn p = (Fn)fn;
 				Result *r = (Result *)out;
 				*r = (*p)(args...);
@@ -38,14 +38,29 @@ namespace os {
 		struct ParamHelp<Result, Param<void, void>, true> {
 			class Dummy : NoCopy {};
 
-			template <class ... T>
-			static void call(const void *fn, void **, void *out, nat pos, const void *first, T& ... args) {
-				typedef void CODECALL (Dummy::*Fn)(T...);
-				Fn p;
+			template <class U, class ... T>
+			static typename std::enable_if<std::is_pointer<U>::value>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
+				typedef Result CODECALL (Dummy::*Fn)(T...);
+				Fn p = null;
 				memcpy(&p, &fn, sizeof(void *));
 				Dummy *f = (Dummy *)first;
 				Result *r = (Result *)out;
 				*r = (f->*p)(args...);
+			}
+
+			template <class U, class ... T>
+			static typename std::enable_if<!std::is_pointer<U>::value>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
+				typedef Result CODECALL (*Fn)(U, T...);
+				Fn p = (Fn)fn;
+				Result *r = (Result *)out;
+				*r = (*p)(first, args...);
+			}
+
+			static void call(const void *fn, void **, void *out, nat pos) {
+				typedef Result CODECALL (*Fn)();
+				Fn p = (Fn)fn;
+				Result *r = (Result *)out;
+				*r = (*p)();
 			}
 		};
 
@@ -63,13 +78,26 @@ namespace os {
 		struct ParamHelp<void, Param<void, void>, true> {
 			class Dummy : NoCopy {};
 
-			template <class ... T>
-			static void call(const void *fn, void **, void *out, nat pos, const void *first, T& ... args) {
+			template <class U, class ... T>
+			static typename std::enable_if<std::is_pointer<U>::value>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
 				typedef void CODECALL (Dummy::*Fn)(T...);
 				Fn p = null;
 				memcpy(&p, &fn, sizeof(void *));
 				Dummy *f = (Dummy *)first;
 				(f->*p)(args...);
+			}
+
+			template <class U, class ... T>
+			static typename std::enable_if<!std::is_pointer<U>::value>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
+				typedef void CODECALL (*Fn)(U, T...);
+				Fn p = (Fn)fn;
+				(*p)(first, args...);
+			}
+
+			static void call(const void *fn, void **, void *out, nat pos) {
+				typedef void CODECALL (*Fn)();
+				Fn p = (Fn)fn;
+				(*p)();
 			}
 		};
 

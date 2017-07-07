@@ -192,8 +192,8 @@ namespace storm {
 		// skip the mark-phase since we're dealing with a raw vtable.
 		*to << mov(ptrA, table);
 		*to << mov(ptrC, ptrConst(1));
-		*to << not(ptrC);
-		*to << and(ptrC, ptrA);
+		*to << bnot(ptrC);
+		*to << band(ptrC, ptrA);
 		*to << cmp(ptrC, ptrA);
 		*to << jmp(lbl, ifNotEqual);
 
@@ -326,6 +326,23 @@ namespace storm {
 			}
 
 			return size - 1;
+		}
+
+#elif defined(GCC) && defined(POSIX)
+
+		// TODO: Revise these for GCC!
+		const nat extraOffset = 2;
+		const nat dtorOffset = 0;
+
+
+		nat fnSlot(const void *fn) {
+			assert(false, L"Not implemented yet!");
+			return 0;
+		}
+
+		nat count(const void *vtable) {
+			assert(false, L"Not implemented yet!");
+			return 0;
 		}
 
 #else

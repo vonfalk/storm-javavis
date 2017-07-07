@@ -62,7 +62,7 @@ namespace code {
 	}
 
 	// Get the name of a register.
-	const wchar_t *name(Reg r);
+	const wchar *name(Reg r);
 
 	// Size of registers.
 	Size STORM_FN size(Reg r);

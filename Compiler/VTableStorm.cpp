@@ -14,7 +14,7 @@ namespace storm {
 	void VTableStorm::resize(Nat count) {
 		if (table != null && count <= table->count) {
 			// Release possible GC retention.
-			for (nat i = min(table->filled, count); i < table->count; i++) {
+			for (size_t i = min(table->filled, count); i < table->count; i++) {
 				table->v[i] = null;
 				refs->v[i] = null;
 			}

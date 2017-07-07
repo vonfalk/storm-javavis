@@ -42,7 +42,7 @@ namespace storm {
 
 		// For enums, it might also be located in 'core'.
 		if (!found) {
-			found = as<Function>(engine().package(L"core")->find(output));
+			found = as<Function>(engine().package(S("core"))->find(output));
 		}
 
 		// If not found anywhere, do not create a toS!
@@ -55,7 +55,7 @@ namespace storm {
 
 	ToSFunction::ToSFunction(Function *use)
 		: Function(Value(StormInfo<Str>::type(use->engine())),
-				new (use) Str(L"toS"),
+				new (use) Str(S("toS")),
 				new (use) Array<Value>(1, use->params->at(1).asRef(false))),
 		  use (use) {
 
@@ -81,7 +81,7 @@ namespace storm {
 		use->localCall(to, p, new (this) CodeResult(), false);
 
 		// Call 'toS' on the StrBuf to get the string.
-		Function *toS = as<Function>(strBufT->find(L"toS", thisPtr(strBufT)));
+		Function *toS = as<Function>(strBufT->find(S("toS"), thisPtr(strBufT)));
 		if (!toS)
 			throw InternalError(L"Can not find 'toS' for the StrBuf type!");
 

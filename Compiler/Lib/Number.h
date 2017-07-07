@@ -176,6 +176,8 @@ namespace storm {
 
 	template <class T>
 	void numMin(InlineParams p) {
+		using namespace code;
+
 		if (!p.result->needed())
 			return;
 
@@ -197,6 +199,8 @@ namespace storm {
 
 	template <class T>
 	void numMax(InlineParams p) {
+		using namespace code;
+
 		if (!p.result->needed())
 			return;
 
@@ -218,6 +222,8 @@ namespace storm {
 
 	template <class T>
 	void numDelta(InlineParams p) {
+		using namespace code;
+
 		if (!p.result->needed())
 			return;
 

@@ -47,14 +47,14 @@ namespace storm {
 		add(iter.type);
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&SetType::createClass)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&SetType::copyClass)));
-		add(nativeFunction(e, Value(), L"put", thisKey, address(&SetBase::putRaw)));
-		add(nativeFunction(e, Value(), L"put", valList(e, 2, t, t), address(&SetBase::putSetRaw)));
-		add(nativeFunction(e, boolT, L"has", thisKey, address(&SetBase::hasRaw)));
-		add(nativeFunction(e, keyRef, L"get", thisKey, address(&SetBase::getRaw)));
-		add(nativeFunction(e, keyRef, L"[]", thisKey, address(&SetBase::atRaw)));
-		add(nativeFunction(e, boolT, L"remove", thisKey, address(&SetBase::removeRaw)));
-		add(nativeFunction(e, Value(), L"begin", valList(e, 1, t), address(&SetBase::beginRaw)));
-		add(nativeFunction(e, Value(), L"end", valList(e, 1, t), address(&SetBase::endRaw)));
+		add(nativeFunction(e, Value(), S("put"), thisKey, address(&SetBase::putRaw)));
+		add(nativeFunction(e, Value(), S("put"), valList(e, 2, t, t), address(&SetBase::putSetRaw)));
+		add(nativeFunction(e, boolT, S("has"), thisKey, address(&SetBase::hasRaw)));
+		add(nativeFunction(e, keyRef, S("get"), thisKey, address(&SetBase::getRaw)));
+		add(nativeFunction(e, keyRef, S("[]"), thisKey, address(&SetBase::atRaw)));
+		add(nativeFunction(e, boolT, S("remove"), thisKey, address(&SetBase::removeRaw)));
+		add(nativeFunction(e, Value(), S("begin"), valList(e, 1, t), address(&SetBase::beginRaw)));
+		add(nativeFunction(e, Value(), S("end"), valList(e, 1, t), address(&SetBase::endRaw)));
 
 		return Type::loadAll();
 	}
@@ -76,7 +76,7 @@ namespace storm {
 	}
 
 	SetIterType::SetIterType(Type *k)
-		: Type(new (k) Str(L"Iter"), new (k) Array<Value>(), typeValue),
+		: Type(new (k) Str(S("Iter")), new (k) Array<Value>(), typeValue),
 		  k(k) {
 
 		setSuper(SetBase::Iter::stormType(engine));
@@ -98,12 +98,12 @@ namespace storm {
 		Array<Value> *refref = valList(e, 2, r, r);
 
 		add(nativeFunction(e, Value(), Type::CTOR, refref, address(&copyIterator)));
-		add(nativeFunction(e, vBool, L"==", refref, address(&iteratorEq)));
-		add(nativeFunction(e, vBool, L"!=", refref, address(&iteratorNeq)));
-		add(nativeFunction(e, r, L"++*", ref, address(&SetBase::Iter::preIncRaw)));
-		add(nativeFunction(e, v, L"*++", ref, address(&SetBase::Iter::postIncRaw)));
-		add(nativeFunction(e, keyRef, L"k", ref, address(&SetBase::Iter::rawVal)));
-		add(nativeFunction(e, keyRef, L"v", ref, address(&SetBase::Iter::rawVal)));
+		add(nativeFunction(e, vBool, S("=="), refref, address(&iteratorEq)));
+		add(nativeFunction(e, vBool, S("!="), refref, address(&iteratorNeq)));
+		add(nativeFunction(e, r, S("++*"), ref, address(&SetBase::Iter::preIncRaw)));
+		add(nativeFunction(e, v, S("*++"), ref, address(&SetBase::Iter::postIncRaw)));
+		add(nativeFunction(e, keyRef, S("k"), ref, address(&SetBase::Iter::rawVal)));
+		add(nativeFunction(e, keyRef, S("v"), ref, address(&SetBase::Iter::rawVal)));
 
 		return Type::loadAll();
 	}

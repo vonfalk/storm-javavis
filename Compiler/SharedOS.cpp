@@ -1,15 +1,16 @@
 #include "stdafx.h"
 #include "SharedOS.h"
+#include "Core/Str.h"
 #include "Core/Io/Stream.h"
 
 namespace storm {
 
-#ifdef WINDOWS
+#if defined(WINDOWS)
 
 	LoadedLib invalidLib = NULL;
 
-	LoadedLib loadLibrary(const wchar *path) {
-		return LoadLibrary(path);
+	LoadedLib loadLibrary(Url *path) {
+		return LoadLibrary(path->format()->c_str());
 	}
 
 	void unloadLibrary(LoadedLib lib) {
@@ -123,6 +124,28 @@ namespace storm {
 		bool r = hasExport(src, name);
 		src->close();
 		return r;
+	}
+
+#elif defined(POSIX)
+
+	LoadedLib invalidLib = null;
+
+	LoadedLib loadLibrary(Url *path) {
+		return dlopen(path->format()->utf8_str(), RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+	}
+
+	void unloadLibrary(LoadedLib lib) {
+		dlclose(lib);
+	}
+
+	const void *findLibraryFn(LoadedLib lib, const char *name) {
+		return dlsym(lib, name);
+	}
+
+	bool hasExport(Url *file, const char *name) {
+		TODO(L"Implement me!");
+		// Disallow all dynamic libraries for now:
+		return false;
 	}
 
 #else

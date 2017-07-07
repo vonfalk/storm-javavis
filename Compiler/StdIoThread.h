@@ -35,7 +35,32 @@ namespace storm {
 		// Post a message to the thread.
 		void postThread(StdRequest *request);
 
-#ifdef WINDOWS
+		// Platform-specific initialization and destruction.
+		void platformInit();
+		void platformDestroy();
+
+		// Thread management.
+		void startThread();
+		void waitThread();
+		bool hasThread();
+
+		// Read-write functionality.
+		void doNop(StdRequest *r);
+		void doRead(StdRequest *r);
+		void doWrite(StdRequest *r);
+
+		// Try to perform a nonblocking read operation. Returns 'true' on success.
+		bool tryRead(StdRequest *r);
+
+		// Lock input.
+		void lockInput();
+		bool tryLockInput();
+		void unlockInput();
+
+		// Main function for the IO thread.
+		void main();
+
+#if defined(WINDOWS)
 		// Thread handle for the running thread.
 		HANDLE thread;
 
@@ -45,7 +70,25 @@ namespace storm {
 		// Lock for doing input.
 		CRITICAL_SECTION inputLock;
 
+		// Startup function.
 		friend DWORD WINAPI ioMain(void *param);
+
+#elif defined(POSIX)
+		// Thread handle.
+		pthread_t thread;
+		bool threadStarted;
+
+		// All handles used.
+		int handles[3];
+
+		// Lock for doing input.
+		pthread_mutex_t inputLock;
+
+		// Startup function.
+		friend void *ioMain(void *param);
+
+#else
+#error "Please implement STDIO for your platform!"
 #endif
 	};
 

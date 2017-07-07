@@ -138,7 +138,7 @@ namespace storm {
 
 			// Nothing needs to be done for TObjects.
 			if (TObject *t = as<TObject>(obj))
-				return obj;
+				return t;
 
 			return cloneObjectEnv(obj, new (obj) CloneEnv());
 		}
@@ -149,7 +149,7 @@ namespace storm {
 
 			// Nothing needs to be done for TObjects.
 			if (TObject *t = as<TObject>(obj))
-				return obj;
+				return t;
 
 			Object *src = (Object *)obj;
 

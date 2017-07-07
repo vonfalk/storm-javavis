@@ -20,35 +20,35 @@ namespace code {
 		const Reg rsi = Reg(0x811);
 		const Reg rdi = Reg(0x812);
 
-		const wchar_t *nameX86(Reg r) {
+		const wchar *nameX86(Reg r) {
 			switch (r) {
 			case ptrD:
-				return L"ptrD";
+				return S("ptrD");
 			case ptrSi:
-				return L"ptrSi";
+				return S("ptrSi");
 			case ptrDi:
-				return L"ptrDi";
+				return S("ptrDi");
 
 			case dl:
-				return L"dl";
+				return S("dl");
 			case sil:
-				return L"sil";
+				return S("sil");
 			case dil:
-				return L"dil";
+				return S("dil");
 
 			case edx:
-				return L"edx";
+				return S("edx");
 			case esi:
-				return L"esi";
+				return S("esi");
 			case edi:
-				return L"edi";
+				return S("edi");
 
 			case rdx:
-				return L"rdx";
+				return S("rdx");
 			case rsi:
-				return L"rsi";
+				return S("rsi");
 			case rdi:
-				return L"rdi";
+				return S("rdi");
 			default:
 				return null;
 			}

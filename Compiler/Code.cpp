@@ -72,7 +72,7 @@ namespace storm {
 	 */
 
 	StaticEngineCode::StaticEngineCode(Value result, const void *src) {
-		original = new (this) code::RefSource(L"ref-to");
+		original = new (this) code::RefSource(S("ref-to"));
 		original->setPtr(src);
 
 		code::Listing *l = redirectCode(result, original);
@@ -83,7 +83,7 @@ namespace storm {
 		toUpdate->set(code);
 	}
 
-#ifdef X86
+#if defined(X86)
 
 	code::Listing *StaticEngineCode::redirectCode(Value result, code::Ref ref) {
 		using namespace code;
@@ -105,6 +105,16 @@ namespace storm {
 		*l << add(ptrStack, ptrConst(Size::sPtr * 2));
 		*l << ret(result.valTypeRet());
 
+		return l;
+	}
+
+#elif defined(X64)
+
+	code::Listing *StaticEngineCode::redirectCode(Value result, code::Ref ref) {
+		using namespace code;
+
+		Listing *l = new (this) Listing();
+		assert(false, L"Please implement 'StaticEngineCode::redirectCode'!");
 		return l;
 	}
 
@@ -164,7 +174,7 @@ namespace storm {
 			// let other UThreads run where they are not expected to.
 			os::Future<const void *, Semaphore> result;
 			os::FnCall<const void *, 1> params = os::fnCall().add(me);
-			os::UThread::spawn(&LazyCode::updateCodeLocal, true, params, result, &cThread->thread());
+			os::UThread::spawn(address(&LazyCode::updateCodeLocal), true, params, result, &cThread->thread());
 			return result.result();
 		}
 	}

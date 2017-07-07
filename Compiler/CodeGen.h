@@ -1,5 +1,6 @@
 #pragma once
 #include "Code/Listing.h"
+#include "Code/Binary.h"
 #include "RunOn.h"
 
 namespace storm {

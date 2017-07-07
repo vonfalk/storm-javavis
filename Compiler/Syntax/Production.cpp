@@ -54,6 +54,7 @@ namespace storm {
 					throw SyntaxError(pos, L"The rule " + ::toS(u->rule) + L" does not exist.");
 				}
 			} else if (DelimTokenDecl *d = as<DelimTokenDecl>(decl)) {
+				UNUSED(d);
 				if (delim) {
 					token = new (this) DelimToken(delim);
 				} else {
@@ -423,7 +424,7 @@ namespace storm {
 
 			Array<Value> *p = new (e) Array<Value>(2, me);
 			p->at(1) = strBuf;
-			add(nativeFunction(e, Value(), L"toS", p, &productionToS));
+			add(nativeFunction(e, Value(), S("toS"), p, address(&productionToS)));
 
 			if (!me.isActor()) {
 				add(new (e) TypeCopyCtor(this));

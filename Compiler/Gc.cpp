@@ -692,6 +692,23 @@ namespace storm {
 		return MPS_RES_OK;
 	}
 
+#elif defined(POSIX) && defined(X64)
+
+	// 0xFF....FF
+	static void * const stackDummy = (void *)((size_t)-1 & ~(wordSize - 1));
+
+	static void mpsAttach(GcThread *thread) {
+		TODO(L"Implement me!");
+	}
+
+	// Note: We're checking all word-aligned positions as we need to make sure we're scanning
+	// the return addresses into functions (which are also in this pool). MPS currently scans
+	// EIP as well, which is good as the currently executing function might otherwise be moved.
+	static mps_res_t mpsScanThread(mps_ss_t ss, void *base, void *limit, void *closure) {
+		TODO(L"Implement me!");
+		return MPS_RES_OK;
+	}
+
 #else
 #error "Implement stack scanning for your machine!"
 #endif
@@ -710,7 +727,7 @@ namespace storm {
 
 
 	// Check return codes from MPS.
-	static void check(mps_res_t result, const wchar *msg) {
+	static void check(mps_res_t result, const wchar_t *msg) {
 		if (result != MPS_RES_OK)
 			throw GcError(msg);
 	}
@@ -794,7 +811,7 @@ namespace storm {
 			// Store types in the last generation, as they are very long-lived.
 			MPS_ARGS_ADD(args, MPS_KEY_GEN, ARRAY_COUNT(generationParams) - 1);
 			MPS_ARGS_ADD(args, MPS_KEY_FORMAT, format);
-			MPS_ARGS_ADD(args, MPS_KEY_AMS_SUPPORT_AMBIGUOUS, FALSE);
+			MPS_ARGS_ADD(args, MPS_KEY_AMS_SUPPORT_AMBIGUOUS, false);
 			check(mps_pool_create_k(&typePool, arena, mps_class_ams(), args), L"Failed to create a GC pool for types.");
 		} MPS_ARGS_END(args);
 

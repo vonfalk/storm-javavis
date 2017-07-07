@@ -59,12 +59,12 @@ namespace storm {
 		}
 
 		static syntax::SStr *tfmName(ProductionDecl *decl) {
-			return CREATE(syntax::SStr, decl, L"transform", decl->pos);
+			return new (decl) syntax::SStr(S("transform"), decl->pos);
 		}
 
 		static Array<ValParam> *tfmParams(Rule *rule, ProductionType *owner) {
 			Array<ValParam> *v = new (rule) Array<ValParam>(*rule->params());
-			v->insert(0, ValParam(thisPtr(owner), new (rule) Str(L"this")));
+			v->insert(0, ValParam(thisPtr(owner), new (rule) Str(S("this"))));
 			return v;
 		}
 
@@ -103,8 +103,8 @@ namespace storm {
 			if (me && Function::result != Value())
 				root->add(me);
 
-			// if (wcsncmp(identifier()->c_str(), L"lang.bnf.", 9) == 0)
-			// 	PLN(source << L": " << root);
+			// if (wcsncmp(identifier()->c_str(), S("lang.bnf."), 9) == 0)
+			// 	PLN(source << S(": ") << root);
 			return root;
 		}
 
@@ -115,10 +115,10 @@ namespace storm {
 		Expr *TransformFn::createMe(ExprBlock *in) {
 			// See if there is a parameter named 'me'. If so: use that!
 			for (Nat i = 0; i < params->count(); i++) {
-				if (wcscmp(params->at(i).name->c_str(), L"me") == 0) {
+				if (wcscmp(params->at(i).name->c_str(), S("me")) == 0) {
 					if (result)
 						throw SyntaxError(pos, L"Can not use 'me' as a parameter name and specify a result.");
-					LocalVar *r = in->variable(new (this) SimplePart(L"me"));
+					LocalVar *r = in->variable(new (this) SimplePart(S("me")));
 					if (!r)
 						throw InternalError(L"Can not find the parameter named 'me'.");
 					return new (this) LocalVarAccess(pos, r);
@@ -150,7 +150,7 @@ namespace storm {
 				return null;
 			}
 
-			syntax::SStr *name = CREATE(syntax::SStr, this, L"me", pos);
+			syntax::SStr *name = CREATE(syntax::SStr, this, S("me"), pos);
 			Var *var = new (this) Var(in, name, init);
 			in->add(var);
 
@@ -163,9 +163,9 @@ namespace storm {
 			if (LocalVar *r = in->variable(part))
 				return new (this) LocalVarAccess(pos, r);
 
-			if (*name == L"me")
+			if (*name == S("me"))
 				throw SyntaxError(pos, L"Can not use 'me' this early!");
-			if (*name == L"pos")
+			if (*name == S("pos"))
 				return posVar(in);
 
 			throw InternalError(L"The variable " + ::toS(name) + L" was not created before being read.");
@@ -175,15 +175,15 @@ namespace storm {
 			if (LocalVar *r = in->variable(new (this) SimplePart(name)))
 				return new (this) LocalVarAccess(pos, r);
 
-			if (*name == L"me")
+			if (*name == S("me"))
 				throw SyntaxError(pos, L"Can not use 'me' this early!");
-			if (*name == L"pos")
+			if (*name == S("pos"))
 				return posVar(in);
 			if (name->isInt())
 				return new (this) Constant(pos, name->toInt());
-			if (*name == L"true")
+			if (*name == S("true"))
 				return new (this) Constant(pos, true);
-			if (*name == L"false")
+			if (*name == S("false"))
 				return new (this) Constant(pos, false);
 
 			// We need to create it...
@@ -263,7 +263,7 @@ namespace storm {
 				IfTrue *branch = new (this) IfTrue(this->pos, check);
 				actuals->addFirst(access);
 				Expr *tfmCall = new (this) FnCall(this->pos, tfmFn, actuals);
-				OpInfo *assignOp = assignOperator(new (e) syntax::SStr(L"="), 1);
+				OpInfo *assignOp = assignOperator(new (e) syntax::SStr(S("=")), 1);
 				branch->set(new (this) Operator(branch, readV, assignOp, tfmCall));
 				check->trueExpr(branch);
 				in->add(check);
@@ -275,28 +275,28 @@ namespace storm {
 
 				// Extra block to avoid name collisions.
 				ExprBlock *forBlock = new (this) ExprBlock(this->pos, in);
-				Expr *arrayCount = callMember(L"count", srcAccess);
+				Expr *arrayCount = callMember(S("count"), srcAccess);
 				Var *end = new (this) Var(forBlock,
 										Value(StormInfo<Nat>::type(e)),
-										new (e) syntax::SStr(L"_end"),
+										new (e) syntax::SStr(S("_end")),
 										arrayCount);
 				Expr *readEnd = new (this) LocalVarAccess(this->pos, end->var());
 				forBlock->add(end);
 
 				Var *i = new (this) Var(forBlock,
 										Value(StormInfo<Nat>::type(e)),
-										new (e) syntax::SStr(L"_i"),
+										new (e) syntax::SStr(S("_i")),
 										new (this) Constant(this->pos, 0));
 				Expr *readI = new (this) LocalVarAccess(this->pos, i->var());
 				forBlock->add(i);
 
 				For *loop = new (this) For(this->pos, forBlock);
-				loop->test(callMember(L"<", readI, readEnd));
-				loop->update(callMember(L"++*", readI));
+				loop->test(callMember(S("<"), readI, readEnd));
+				loop->update(callMember(S("++*"), readI));
 
-				actuals->addFirst(callMember(L"[]", srcAccess, readI));
+				actuals->addFirst(callMember(S("[]"), srcAccess, readI));
 				Expr *tfmCall = new (this) FnCall(this->pos, tfmFn, actuals);
-				loop->body(callMember(L"push", readV, tfmCall));
+				loop->body(callMember(S("push"), readV, tfmCall));
 
 				forBlock->add(loop);
 				in->add(forBlock);
@@ -443,10 +443,10 @@ namespace storm {
 					continue;
 
 				MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), t->target);
-				Expr *read = callMember(L"count", srcAccess);
+				Expr *read = callMember(S("count"), srcAccess);
 
 				if (minExpr)
-					minExpr = callMember(L"min", minExpr, read);
+					minExpr = callMember(S("min"), minExpr, read);
 				else
 					minExpr = read;
 			}
@@ -459,7 +459,7 @@ namespace storm {
 
 			Var *end = new (this) Var(forBlock,
 									Value(StormInfo<Nat>::type(e)),
-									new (e) syntax::SStr(L"_end"),
+									new (e) syntax::SStr(S("_end")),
 									minExpr);
 			forBlock->add(end);
 			Expr *readEnd = new (this) LocalVarAccess(this->pos, end->var());
@@ -467,14 +467,14 @@ namespace storm {
 			// Iterate...
 			Var *i = new (this) Var(forBlock,
 									Value(StormInfo<Nat>::type(e)),
-									new (e) syntax::SStr(L"_i"),
+									new (e) syntax::SStr(S("_i")),
 									new (this) Constant(this->pos, 0));
 			Expr *readI = new (this) LocalVarAccess(this->pos, i->var());
 			forBlock->add(i);
 
 			For *loop = new (this) For(this->pos, forBlock);
-			loop->test(callMember(L"<", readI, readEnd));
-			loop->update(callMember(L"++*", readI));
+			loop->test(callMember(S("<"), readI, readEnd));
+			loop->update(callMember(S("++*"), readI));
 
 			ExprBlock *inLoop = new (this) ExprBlock(this->pos, loop);
 
@@ -484,7 +484,7 @@ namespace storm {
 					continue;
 
 				MemberVarAccess *srcAccess = new (this) MemberVarAccess(this->pos, thisVar(in), t->target);
-				Expr *element = callMember(L"[]", srcAccess, readI);
+				Expr *element = callMember(S("[]"), srcAccess, readI);
 				inLoop->add(executeToken(inLoop, me, element, t, i));
 			}
 
@@ -516,7 +516,7 @@ namespace storm {
 		}
 
 		Expr *TransformFn::thisVar(Block *in) {
-			LocalVar *var = in->variable(new (this) SimplePart(new (this) Str(L"this")));
+			LocalVar *var = in->variable(new (this) SimplePart(new (this) Str(S("this"))));
 			assert(var, L"'this' was not found!");
 			return new (this) LocalVarAccess(pos, var);
 		}
@@ -524,7 +524,7 @@ namespace storm {
 		Expr *TransformFn::posVar(Block *in) {
 			Rule *rule = source->rule();
 
-			SimplePart *part = new (this) SimplePart(new (this) Str(L"pos"), thisPtr(rule));
+			SimplePart *part = new (this) SimplePart(new (this) Str(S("pos")), thisPtr(rule));
 			Named *found = rule->find(part);
 
 			MemberVar *posVar = as<MemberVar>(found);
@@ -598,14 +598,14 @@ namespace storm {
 			Array<Value> *types = actuals->values();
 			types->insert(0, thisPtr(type));
 
-			SimplePart *tfmName = new (this) SimplePart(new (this) Str(L"transform"), types);
+			SimplePart *tfmName = new (this) SimplePart(new (this) Str(S("transform")), types);
 			Named *foundTfm = type->find(tfmName);
 			Function *tfmFn = as<Function>(foundTfm);
 			if (!tfmFn) {
 				StrBuf *to = new (this) StrBuf();
-				*to << L"Can not transform a " << type->identifier() << L" with parameters: (";
-				join(to, actuals->values(), L", ");
-				*to << L").";
+				*to << S("Can not transform a ") << type->identifier() << S(" with parameters: (");
+				join(to, actuals->values(), S(", "));
+				*to << S(").");
 				throw SyntaxError(pos, to->toS()->c_str());
 			}
 			return tfmFn;

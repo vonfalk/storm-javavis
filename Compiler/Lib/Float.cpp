@@ -93,7 +93,7 @@ namespace storm {
 	FloatType::FloatType(Str *name, GcType *type) : Type(name, typeValue | typeFinal, Size::sFloat, type, null) {}
 
 	Bool FloatType::loadAll() {
-		Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
+		//Array<Value> *r = new (this) Array<Value>(1, Value(this, true));
 		Array<Value> *v = new (this) Array<Value>(1, Value(this, false));
 		Array<Value> *rr = new (this) Array<Value>(2, Value(this, true));
 		Array<Value> *vv = new (this) Array<Value>(2, Value(this, false));
@@ -101,26 +101,26 @@ namespace storm {
 		rv->at(1) = Value(this);
 
 		add(inlinedFunction(engine, Value(), Type::CTOR, rr, fnPtr(engine, &floatCopyCtor)));
-		add(inlinedFunction(engine, Value(this, true), L"=", rv, fnPtr(engine, &floatAssign)));
+		add(inlinedFunction(engine, Value(this, true), S("="), rv, fnPtr(engine, &floatAssign)));
 
-		add(inlinedFunction(engine, Value(this), L"+", vv, fnPtr(engine, &floatAdd)));
-		add(inlinedFunction(engine, Value(this), L"-", vv, fnPtr(engine, &floatSub)));
-		add(inlinedFunction(engine, Value(this), L"*", vv, fnPtr(engine, &floatMul)));
-		add(inlinedFunction(engine, Value(this), L"/", vv, fnPtr(engine, &floatDiv)));
+		add(inlinedFunction(engine, Value(this), S("+"), vv, fnPtr(engine, &floatAdd)));
+		add(inlinedFunction(engine, Value(this), S("-"), vv, fnPtr(engine, &floatSub)));
+		add(inlinedFunction(engine, Value(this), S("*"), vv, fnPtr(engine, &floatMul)));
+		add(inlinedFunction(engine, Value(this), S("/"), vv, fnPtr(engine, &floatDiv)));
 
 		Value vBool = Value(StormInfo<Bool>::type(engine));
-		add(inlinedFunction(engine, vBool, L">", vv, fnPtr(engine, &floatCmp<ifFAbove>)));
-		add(inlinedFunction(engine, vBool, L">=", vv, fnPtr(engine, &floatCmp<ifFAboveEqual>)));
-		add(inlinedFunction(engine, vBool, L"<", vv, fnPtr(engine, &floatCmp<ifFBelow>)));
-		add(inlinedFunction(engine, vBool, L"<=", vv, fnPtr(engine, &floatCmp<ifFBelowEqual>)));
-		add(inlinedFunction(engine, vBool, L"==", vv, fnPtr(engine, &floatCmp<ifEqual>)));
-		add(inlinedFunction(engine, vBool, L"!=", vv, fnPtr(engine, &floatCmp<ifNotEqual>)));
+		add(inlinedFunction(engine, vBool, S(">"), vv, fnPtr(engine, &floatCmp<ifFAbove>)));
+		add(inlinedFunction(engine, vBool, S(">="), vv, fnPtr(engine, &floatCmp<ifFAboveEqual>)));
+		add(inlinedFunction(engine, vBool, S("<"), vv, fnPtr(engine, &floatCmp<ifFBelow>)));
+		add(inlinedFunction(engine, vBool, S("<="), vv, fnPtr(engine, &floatCmp<ifFBelowEqual>)));
+		add(inlinedFunction(engine, vBool, S("=="), vv, fnPtr(engine, &floatCmp<ifEqual>)));
+		add(inlinedFunction(engine, vBool, S("!="), vv, fnPtr(engine, &floatCmp<ifNotEqual>)));
 
 		Value vInt = Value(StormInfo<Int>::type(engine));
-		add(inlinedFunction(engine, vInt, L"int", v, fnPtr(engine, &floatToInt)));
+		add(inlinedFunction(engine, vInt, S("int"), v, fnPtr(engine, &floatToInt)));
 
-		add(nativeFunction(engine, Value(this), L"min", vv, address(&floatMin)));
-		add(nativeFunction(engine, Value(this), L"max", vv, address(&floatMax)));
+		add(nativeFunction(engine, Value(this), S("min"), vv, address(&floatMin)));
+		add(nativeFunction(engine, Value(this), S("max"), vv, address(&floatMax)));
 
 		return Type::loadAll();
 	}

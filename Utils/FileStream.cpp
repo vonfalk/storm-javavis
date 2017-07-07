@@ -162,7 +162,7 @@ void FileStream::rawSeek(nat64 to) {
 void FileStream::openFile(const String &name, Mode m) {
 	int flags = O_CLOEXEC;
 	if (m & mRead) flags |= O_RDONLY;
-	if (m & mWrite) flags |= O_WRONLY | O_CREAT;
+	if (m & mWrite) flags |= O_WRONLY | O_CREAT | O_TRUNC;
 
 	file = open(name.toChar().c_str(), flags, 0666);
 	if (file >= 0) {

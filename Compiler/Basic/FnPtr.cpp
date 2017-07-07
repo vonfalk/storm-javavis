@@ -104,12 +104,12 @@ namespace storm {
 		}
 
 		void FnPtr::toS(StrBuf *to) const {
-			*to << "&";
+			*to << S("&");
 			if (dotExpr) {
-				*to << dotExpr << L".";
-				*to << target->name << L"(";
-				join(to, target->params, L", ");
-				*to << L")";
+				*to << dotExpr << S(".");
+				*to << target->name << S("(");
+				join(to, target->params, S(", "));
+				*to << S(")");
 			} else {
 				*to << target;
 			}

@@ -320,9 +320,6 @@ namespace storm {
 	static void allocRawObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
 		using namespace code;
 
-		Type *type = ctor->params->at(0).type;
-		Engine &e = ctor->engine();
-
 		*s->l << lea(ptrA, to);
 
 		CodeResult *r = new (s) CodeResult();

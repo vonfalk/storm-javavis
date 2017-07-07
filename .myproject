@@ -120,8 +120,10 @@ flags+=-Wno-unused-parameter
 flags+=-Wno-missing-field-initializers
 flags+=-Wno-pmf-conversions
 flags+=-Wno-switch
+flags+=-Wno-parentheses
+flags+=-Wno-unused-function
 
-compile+=*.c:gcc -std=c99 <defines> <warnings> <usePch*if|pch> <file> -c <includes> -o <output>
+compile+=*.c:gcc -std=c99 <defines> <warnings> <file> -c <includes> -o <output>
 
 [stormpp]
 stormpp=CppTypes

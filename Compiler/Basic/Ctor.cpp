@@ -90,7 +90,7 @@ namespace storm {
 			}
 
 			for (nat i = 1; i < params->count(); i++) {
-				Value t = params->at(i).type;
+				// Value t = params->at(i).type;
 				SimplePart *name = new (this) SimplePart(params->at(i).name);
 				LocalVar *var = body->variable(name);
 				assert(var);

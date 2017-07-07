@@ -50,10 +50,10 @@ namespace storm {
 		add(iter.type);
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 1, t), address(&WeakSetType::createClass)));
 		add(nativeFunction(e, Value(), Type::CTOR, valList(e, 2, t, t), address(&WeakSetType::copyClass)));
-		add(nativeFunction(e, Value(), L"put", thisKey, address(&WeakSetBase::putRaw)));
-		add(nativeFunction(e, boolT, L"has", thisKey, address(&WeakSetBase::hasRaw)));
-		add(nativeFunction(e, boolT, L"remove", thisKey, address(&WeakSetBase::removeRaw)));
-		add(nativeFunction(e, Value(), L"iter", valList(e, 1, t), address(&WeakSetBase::iterRaw)));
+		add(nativeFunction(e, Value(), S("put"), thisKey, address(&WeakSetBase::putRaw)));
+		add(nativeFunction(e, boolT, S("has"), thisKey, address(&WeakSetBase::hasRaw)));
+		add(nativeFunction(e, boolT, S("remove"), thisKey, address(&WeakSetBase::removeRaw)));
+		add(nativeFunction(e, Value(), S("iter"), valList(e, 1, t), address(&WeakSetBase::iterRaw)));
 
 		return Type::loadAll();
 	}
@@ -67,7 +67,7 @@ namespace storm {
 	}
 
 	WeakSetIterType::WeakSetIterType(Type *k)
-		: Type(new (k) Str(L"Iter"), new (k) Array<Value>(), typeValue),
+		: Type(new (k) Str(S("Iter")), new (k) Array<Value>(), typeValue),
 		  k(k) {
 
 		setSuper(WeakSetBase::Iter::stormType(engine));
@@ -85,7 +85,7 @@ namespace storm {
 		Array<Value> *refref = valList(e, 2, r, r);
 
 		add(nativeFunction(e, Value(), Type::CTOR, refref, address(&copyIterator)));
-		add(nativeFunction(e, key, L"next", ref, address(&WeakSetBase::Iter::nextRaw)));
+		add(nativeFunction(e, key, S("next"), ref, address(&WeakSetBase::Iter::nextRaw)));
 
 		return Type::loadAll();
 	}
