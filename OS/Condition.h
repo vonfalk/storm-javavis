@@ -43,6 +43,9 @@ namespace os {
 		// Waitable semaphore.
 		HANDLE sema;
 #elif defined(POSIX)
+		// Remember if signaled an nobody woke.
+		nat signaled;
+
 		// Condition object.
 		pthread_cond_t cond;
 

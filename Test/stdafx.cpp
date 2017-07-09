@@ -64,4 +64,22 @@ int64 callFn(const void *fnPtr, int64 p) {
 	return r;
 }
 
+#elif defined(X64) && defined(GCC)
+
+int callFn(const void *fnPtr, int p) {
+	TODO(L"Validate all registers!");
+
+	typedef int (*Fn)(int);
+	Fn f = (Fn)fnPtr;
+	return (*f)(p);
+}
+
+int64 callFn(const void *fnPtr, int64 p) {
+	TODO(L"Validate all registers!");
+
+	typedef int64 (*Fn)(int64);
+	Fn f = (Fn)fnPtr;
+	return (*f)(p);
+}
+
 #endif

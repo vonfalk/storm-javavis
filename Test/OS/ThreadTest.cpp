@@ -5,10 +5,6 @@
 
 using namespace os;
 
-#ifdef POSIX
-#define Sleep(X) usleep((X) * 1000LL);
-#endif
-
 static int var = 0;
 static THREAD int local = 0;
 static Semaphore stopSema(0);

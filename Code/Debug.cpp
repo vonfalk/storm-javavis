@@ -76,6 +76,13 @@ namespace code {
 		PLN("---- DONE ----");
 	}
 
+#else
+
+	void dumpStack() {
+		PLN("Stack dumping is not implemented for your system yet!");
+		PLN("See Code/Debug.h for where to implement it.");
+	}
+
 #endif
 
 }

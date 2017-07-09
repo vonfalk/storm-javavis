@@ -24,13 +24,13 @@ Gc &gc();
 
 
 // Basic threading, no GC yet.
-SUITEX(OS, 0);
+SUITE(OS, 0);
 // Basic gc operation, scanning simple objects without anything strange.
-SUITEX(GcScan, 1);
+SUITE(GcScan, 1);
 // Gc operation on Storm objects declared in C++.
-SUITEX(GcObjects, 2);
+SUITE(GcObjects, 2);
 // GC along with threads.
-SUITEX(GcThreads, 3);
+SUITE(GcThreads, 3);
 // Basic operation of the runtime. No code generation yet.
 SUITE(Core, 4);
 // Basic tests of the code generation backend. Further thests rely on these to work.
@@ -90,3 +90,8 @@ class Error : public Exception {
 public:
 	String what() const { return L"Test error"; }
 };
+
+
+#ifdef POSIX
+#define Sleep(X) usleep((X) * 1000LL);
+#endif

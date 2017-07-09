@@ -51,5 +51,12 @@ namespace code {
 	Arena *arena(EnginePtr e) {
 		return new (e.v) x86::Arena();
 	}
+#elif defined(X64) && defined(POSIX)
+	Arena *arena(EnginePtr e) {
+		TODO(L"Implement a proper backend for X86-64");
+		return new (e.v) x86::Arena();
+	}
+#else
+#error "Please note which is the default arena for your platform."
 #endif
 }

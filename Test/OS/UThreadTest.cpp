@@ -4,10 +4,6 @@
 #include "OS/ThreadGroup.h"
 #include "Tracker.h"
 
-#ifdef POSIX
-#define Sleep(X) usleep((X) * 1000LL);
-#endif
-
 using namespace os;
 
 static void returnVoid(bool error) {

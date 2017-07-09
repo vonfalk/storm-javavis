@@ -13,6 +13,7 @@ BEGIN_TEST(InfoParse, Server) {
 
 	Str *src = new (e) Str(S("foo + bar / 2;"));
 	Bool ok = p->parse(src, new (e) Url());
+	UNUSED(ok);
 	VERIFY(p->hasTree() && p->matchEnd() == src->end());
 
 	InfoNode *tree = p->infoTree();

@@ -296,6 +296,18 @@ namespace os {
 
 #else
 
+	static void *posixThreadMain(void *param) {
+		ThreadStart *s = (ThreadStart *)param;
+		ThreadData::threadMain(*s);
+		return null;
+	}
+
+	static void startThread(ThreadStart &start) {
+		pthread_t thread;
+		pthread_create(&thread, null, &posixThreadMain, &start);
+		pthread_detach(thread);
+	}
+
 	void Thread::initThread() {}
 
 	void Thread::cleanThread() {}

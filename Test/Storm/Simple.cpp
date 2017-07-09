@@ -3,8 +3,6 @@
 #include "Compiler/Exception.h"
 
 BEGIN_TEST(BasicSyntax, SimpleBS) {
-	Engine &e = gEngine();
-
 	CHECK_RUNS(runFn<void>(S("test.bs-simple.voidFn")));
 	CHECK_RUNS(runFn<void>(S("test.bs-simple.emptyVoidFn")));
 

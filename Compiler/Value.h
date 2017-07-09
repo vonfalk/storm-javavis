@@ -122,7 +122,7 @@ namespace storm {
 		valListAdd(to, rest...);
 	}
 
-	void valListAdd(Array<Value> *to) {
+	inline void valListAdd(Array<Value> *to) {
 		UNUSED(to);
 	}
 

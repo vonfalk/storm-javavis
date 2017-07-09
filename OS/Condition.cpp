@@ -58,7 +58,7 @@ namespace os {
 
 #ifdef POSIX
 
-	Condition::Condition() {
+	Condition::Condition() : signaled(0) {
 		pthread_condattr_t attr;
 		pthread_condattr_init(&attr);
 		pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
@@ -73,13 +73,14 @@ namespace os {
 	}
 
 	void Condition::signal() {
-		// '_signal' should be enough, but better safe than sorry.
-		pthread_cond_broadcast(&cond);
+		if (atomicCAS(signaled, 0, 1) == 0)
+			pthread_cond_signal(&cond);
 	}
 
 	void Condition::wait() {
 		pthread_mutex_lock(&mutex);
-		pthread_cond_wait(&cond, &mutex);
+		if (atomicCAS(signaled, 1, 0) == 0)
+			pthread_cond_wait(&cond, &mutex);
 		pthread_mutex_unlock(&mutex);
 	}
 
@@ -87,7 +88,8 @@ namespace os {
 		UNUSED(io);
 		TODO(L"Properly handle waiting for IO!");
 		pthread_mutex_lock(&mutex);
-		pthread_cond_wait(&cond, &mutex);
+		if (atomicCAS(signaled, 1, 0) == 0)
+			pthread_cond_wait(&cond, &mutex);
 		pthread_mutex_unlock(&mutex);
 	}
 
@@ -114,9 +116,11 @@ namespace os {
 
 	bool Condition::wait(nat msTimeout) {
 		struct timespec time = timeMs(msTimeout);;
+		int r = 0;
 
 		pthread_mutex_lock(&mutex);
-		int r = pthread_cond_timedwait(&cond, &mutex, &time);
+		if (atomicCAS(signaled, 1, 0) == 0)
+			r = pthread_cond_timedwait(&cond, &mutex, &time);
 		pthread_mutex_unlock(&mutex);
 
 		if (r == 0)

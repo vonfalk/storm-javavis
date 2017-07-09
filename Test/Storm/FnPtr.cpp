@@ -165,8 +165,6 @@ static Fn<Int, Dbg *> *dbgPtr(int id) {
 }
 
 BEGIN_TEST(FnPtrThreadTest, BS) {
-	Engine &e = gEngine();
-
 	CHECK_EQ(runPtr(dbgPtr(0), 1), 1);
 	CHECK_EQ(runPtr(dbgPtr(1), 1), 10101);
 	CHECK_EQ(runPtr(dbgPtr(2), 1), 1);
@@ -181,7 +179,7 @@ BEGIN_TEST(FnPtrThreadTest, BS) {
 	CHECK_EQ(runPtrOther(dbgPtr(3), 1), 10101);
 	CHECK_EQ(runPtrOther(dbgPtr(4), 1), 20201);
 
-	Fn<Int, Dbg *> *fromDbg = fnPtr(e, &::fromDbg);
+	// Fn<Int, Dbg *> *fromDbg = fnPtr(e, &::fromDbg);
 	CHECK_EQ(runPtrOther(dbgPtr(0), 1), 10101);
 
 	// Actor as the first parameter...

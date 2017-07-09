@@ -8,6 +8,10 @@
 #include "Utils/Lock.h"
 #include <limits>
 
+#ifdef POSIX
+#include <sys/mman.h>
+#endif
+
 namespace os {
 
 	/**
@@ -494,7 +498,7 @@ namespace os {
 	 * Machine specific code.
 	 */
 
-#ifdef X86
+#if defined(X86)
 
 	static int64 timestamp() {
 		LARGE_INTEGER v;
@@ -695,6 +699,123 @@ namespace os {
 			call doEndDetour2;
 			ret; // probably not reached, but better safe than sorry!
 		}
+	}
+
+#elif defined(GCC) && defined(X64)
+
+	static int64 timestamp() {
+		TODO(L"Implement me!");
+		return 0;
+	}
+
+	static int64 msInTimestamp(nat ms) {
+		TODO(L"Implement me!");
+		return ms;
+	}
+
+	static nat remainingMs(int64 target) {
+		int64 now = timestamp();
+		if (target <= now)
+			return 0;
+
+		TODO(L"Implement me!");
+		return target;
+	}
+
+	static nat pageSize() {
+		static nat sz = 0;
+		if (sz == 0) {
+			int s = getpagesize();
+			assert(s > 0, L"Failed to acquire the page size for your system!");
+			sz = (nat)s;
+		}
+		return sz;
+	}
+
+#ifdef DEBUG
+	static nat stacks = 0;
+#endif
+
+	static void *allocStack(nat size) {
+		nat pageSz = pageSize();
+		size = roundUp(size, pageSz);
+		size += pageSz; // We want a guard page.
+
+		byte *mem = (byte *)mmap(null, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		if (mem == null) {
+			// TODO: What to do in this case?
+#ifdef DEBUG
+			PLN(L"Out of memory when spawning a thread. Threads alive: " << stacks);
+#endif
+			throw ThreadError(L"Out of memory when spawning a thread.");
+		}
+
+#ifdef DEBUG
+		atomicIncrement(stacks);
+#endif
+
+		mprotect(mem, 1, PROT_NONE); // no special guard-page it seems...
+
+		// Do not show the guard page to other parts...
+		return mem + pageSz;
+	}
+
+	static void freeStack(void *base, nat size) {
+		byte *mem = (byte *)base;
+		nat pageSz = pageSize();
+		mem -= pageSz;
+		munmap(base, size + pageSz);
+
+#ifdef DEBUG
+		atomicDecrement(stacks);
+#endif
+	}
+
+	static StackDesc *initialStack(void *base, nat size) {
+		TODO(L"Implement me!");
+		return null;
+	}
+
+	void UThreadData::push(void *v) {
+		void **esp = (void **)stack.desc;
+		*--esp = v;
+		stack.desc = (StackDesc *)esp;
+	}
+
+	void UThreadData::push(uintptr_t v) {
+		void **esp = (void **)stack.desc;
+		*--esp = (void *)v;
+		stack.desc = (StackDesc *)esp;
+	}
+
+	void UThreadData::push(intptr_t v) {
+		void **esp = (void **)stack.desc;
+		*--esp = (void *)v;
+		stack.desc = (StackDesc *)esp;
+	}
+
+	void *UThreadData::alloc(size_t s) {
+		s = roundUp(s, sizeof(void *));
+		void **esp = (void **)stack.desc;
+		esp -= s / 4;
+		stack.desc = (StackDesc *)esp;
+		return esp;
+	}
+
+	void UThreadData::pushParams(const void *returnTo, void *param) {
+		TODO(L"Implement me!");
+	}
+
+	void UThreadData::pushParams(const void *returnTo, void *param1, void *param2) {
+		TODO(L"Implement me!");
+	}
+
+	void UThreadData::pushContext(const void *fn) {
+		TODO(L"Implement me!");
+	}
+
+	void doSwitch(StackDesc **newDesc, StackDesc **oldDesc) {
+		TODO(L"Implement me!");
 	}
 
 #endif

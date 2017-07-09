@@ -123,6 +123,9 @@ flags+=-Wno-switch
 flags+=-Wno-parentheses
 flags+=-Wno-unused-function
 
+library+=pthread
+library+=dl
+
 ext+=s
 noIncludes+=*.s
 compile+=*.c:gcc -std=c99 <defines> <warnings> <file> -c <includes> -o <output>
