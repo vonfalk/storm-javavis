@@ -8,11 +8,11 @@ using namespace storm::syntax;
 BEGIN_TEST(IndentParse, Server) {
 	Engine &e = gEngine();
 
-	Package *pkg = e.package(L"lang.simple");
-	Parser *p = Parser::create(pkg, L"SRoot"); //, new (e) storm::syntax::earley::Parser());
+	Package *pkg = e.package(S("lang.simple"));
+	Parser *p = Parser::create(pkg, S("SRoot")); //, new (e) storm::syntax::earley::Parser());
 
 	{
-		Str *src = new (e) Str(L"foo;\n{\na+b;\n{c;}\n}\nbar;");
+		Str *src = new (e) Str(S("foo;\n{\na+b;\n{c;}\n}\nbar;"));
 		p->parse(src, new (e) Url());
 		VERIFY(p->hasTree() && p->matchEnd() == src->end());
 
@@ -32,7 +32,7 @@ BEGIN_TEST(IndentParse, Server) {
 
 	// Try negative indentation as well.
 	{
-		Str *src = new (e) Str(L"{\na+b;\n[\nc;\n]\n}");
+		Str *src = new (e) Str(S("{\na+b;\n[\nc;\n]\n}"));
 		p->parse(src, new (e) Url());
 		VERIFY(p->hasTree() && p->matchEnd() == src->end());
 
@@ -45,7 +45,7 @@ BEGIN_TEST(IndentParse, Server) {
 
 	// Check so that weak indentation works.
 	{
-		Str *src = new (e) Str(L"if(){\na;}\nif()b;");
+		Str *src = new (e) Str(S("if(){\na;}\nif()b;"));
 		p->parse(src, new (e) Url());
 		VERIFY(p->hasTree() && p->matchEnd() == src->end());
 

@@ -1,2 +1,5 @@
 []
 input=*
+
+[unix]
+flags+=-Wno-sign-compare

@@ -64,7 +64,7 @@ BEGIN_TEST(Call64, Code) {
 
 	*l << prolog();
 	*l << fnParam(v);
-	*l << fnCall(arena->external(L"longFn", &longFn), valVoid());
+	*l << fnCall(arena->external(S("longFn"), address(&longFn)), valVoid());
 	*l << epilog();
 	*l << ret(valVoid());
 

@@ -34,7 +34,7 @@ Gc &gc() {
 	return *usedGc;
 }
 
-int _tmain(int argc, _TCHAR *argv[]) {
+int _tmain(int argc, wchar_t *argv[]) {
 	initDebug();
 
 	Moment start, end;

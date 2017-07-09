@@ -5,6 +5,10 @@
 
 using namespace os;
 
+#ifdef POSIX
+#define Sleep(X) usleep((X) * 1000LL);
+#endif
+
 static int var = 0;
 static THREAD int local = 0;
 static Semaphore stopSema(0);
@@ -263,7 +267,7 @@ BEGIN_TEST(UThreadFnCallTest, OS) {
 	{
 		nat a = 10, b = 20;
 		FnCall<void> call = fnCall().add(a).add(b);
-		UThread::spawn(&natNatFn, false, call);
+		UThread::spawn(address(&natNatFn), false, call);
 		UThread::leave();
 		CHECK_EQ(fnCallSum, 30);
 	}
@@ -272,7 +276,7 @@ BEGIN_TEST(UThreadFnCallTest, OS) {
 	{
 		Tracker t(12);
 		FnCall<void> call = fnCall().add(t);
-		UThread::spawn(&trackerFn, false, call);
+		UThread::spawn(address(&trackerFn), false, call);
 		UThread::leave();
 	}
 	CHECK_EQ(fnCallSum, 42);

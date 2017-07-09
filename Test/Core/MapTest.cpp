@@ -152,7 +152,7 @@ static bool verify(Array<PtrKey *> *k, Array<Str *> *v, Map<PtrKey *, Str *> *ma
 	for (nat i = 0; i < k->count(); i++) {
 		Str *found = map->get(k->at(i), null);
 		if (found != v->at(i)) {
-			PLN(L"Failed: " << (void *)k->at(i) << L" (" << (void *)ptrHash(k->at(i)) << L"), got " << found << L", expected " << v->at(i));
+			PLN(L"Failed: " << (void *)k->at(i) << L" (" << (void *)(size_t)ptrHash(k->at(i)) << L"), got " << found << L", expected " << v->at(i));
 			map->dbg_print();
 			return false;
 		}

@@ -39,7 +39,7 @@ BEGIN_TEST(VTableCppTest, Storm) {
 	nat slot = vtable::fnSlot(address(&VTableTest::replace));
 	CHECK_NEQ(slot, vtable::invalid);
 
-	tab->set(slot, &replaced);
+	tab->set(slot, address(&replaced));
 
 	CHECK_EQ(a.replace(), 10);
 	CHECK_EQ(b.replace(), 20);
@@ -110,7 +110,7 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 
 	Type *extend = debug::Extend::stormType(e);
 	Package *pkg = as<Package>(extend->parent());
-	Function *value = as<Function>(extend->find(L"value", Value(extend)));
+	Function *value = as<Function>(extend->find(S("value"), Value(extend)));
 	VERIFY(value);
 	VERIFY(pkg);
 
@@ -119,8 +119,8 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 
 
 	// Add our own instantiation...
-	Type *sub1 = addSubclass(pkg, extend, L"value", &extendReplace);
-	Function *value1 = as<Function>(sub1->find(L"value", Value(sub1)));
+	Type *sub1 = addSubclass(pkg, extend, S("value"), address(&extendReplace));
+	Function *value1 = as<Function>(sub1->find(S("value"), Value(sub1)));
 
 	// Now, we should use vtable calls on the base class!
 	CHECK(usesVTable(value));
@@ -128,8 +128,8 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 
 
 	// Add another subclass, subling to sub1.
-	Type *sub2 = addSubclass(pkg, extend, L"value", &extendReplace2);
-	Function *value2 = as<Function>(sub2->find(L"value", Value(sub2)));
+	Type *sub2 = addSubclass(pkg, extend, S("value"), address(&extendReplace2));
+	Function *value2 = as<Function>(sub2->find(S("value"), Value(sub2)));
 
 	// VTable call on base class and first level derived.
 	CHECK(usesVTable(value));
@@ -137,8 +137,8 @@ BEGIN_TEST(VTableCppTest2, Storm) {
 	CHECK(!usesVTable(value2));
 
 	// Add another subclass from sub1.
-	Type *sub3 = addSubclass(pkg, sub1, L"value", &extendReplace2);
-	Function *value3 = as<Function>(sub3->find(L"value", Value(sub3)));
+	Type *sub3 = addSubclass(pkg, sub1, S("value"), address(&extendReplace2));
+	Function *value3 = as<Function>(sub3->find(S("value"), Value(sub3)));
 
 	// VTable call on base class and first level derived.
 	CHECK(usesVTable(value));
@@ -186,9 +186,9 @@ BEGIN_TEST(VTableCppTest3, Storm) {
 	Type *sub2 = addSubclass(pkg, sub1);
 	Type *sub3 = addSubclass(pkg, sub2);
 
-	Function *f1 = addFn(sub1, L"val", &extendReplace);
-	Function *f2 = addFn(sub2, L"val", &extendReplace2);
-	Function *f3 = addFn(sub3, L"val", &extendReplace3);
+	Function *f1 = addFn(sub1, S("val"), address(&extendReplace));
+	Function *f2 = addFn(sub2, S("val"), address(&extendReplace2));
+	Function *f3 = addFn(sub3, S("val"), address(&extendReplace3));
 
 	CHECK(usesVTable(f1));
 	CHECK(usesVTable(f2));
@@ -218,9 +218,9 @@ BEGIN_TEST(VTableCppTest4, Storm) {
 	Type *sub2 = addSubclass(pkg, sub1);
 	Type *sub3 = addSubclass(pkg, sub2);
 
-	Function *f3 = addFn(sub3, L"val", &extendReplace3);
-	Function *f2 = addFn(sub2, L"val", &extendReplace2);
-	Function *f1 = addFn(sub1, L"val", &extendReplace);
+	Function *f3 = addFn(sub3, S("val"), address(&extendReplace3));
+	Function *f2 = addFn(sub2, S("val"), address(&extendReplace2));
+	Function *f1 = addFn(sub1, S("val"), address(&extendReplace));
 
 	CHECK(usesVTable(f1));
 	CHECK(usesVTable(f2));
@@ -248,13 +248,13 @@ BEGIN_TEST(VTableStormTest, Storm) {
 	VERIFY(pkg);
 
 	// Note: *not* overriding 'value' in debug::Extend.
-	Type *sub1 = addSubclass(pkg, base, L"val", &extendReplace);
-	Function *val1 = as<Function>(sub1->find(L"val", Value(sub1)));
+	Type *sub1 = addSubclass(pkg, base, S("val"), address(&extendReplace));
+	Function *val1 = as<Function>(sub1->find(S("val"), Value(sub1)));
 
 	CHECK(!usesVTable(val1));
 
-	Type *sub2 = addSubclass(pkg, sub1, L"val", &extendReplace2);
-	Function *val2 = as<Function>(sub2->find(L"val", Value(sub2)));
+	Type *sub2 = addSubclass(pkg, sub1, S("val"), address(&extendReplace2));
+	Function *val2 = as<Function>(sub2->find(S("val"), Value(sub2)));
 
 	CHECK(!usesVTable(val2));
 	CHECK(usesVTable(val1));
@@ -270,7 +270,7 @@ BEGIN_TEST(VTableSplit, Storm) {
 
 	Type *base = debug::Extend::stormType(e);
 	Package *pkg = as<Package>(base->parent());
-	Function *value = as<Function>(base->find(L"value", Value(base)));
+	Function *value = as<Function>(base->find(S("value"), Value(base)));
 	VERIFY(pkg);
 	VERIFY(value);
 
@@ -281,13 +281,13 @@ BEGIN_TEST(VTableSplit, Storm) {
 
 	// Add both 'value' and 'val' to them. Note: this violates the assumption that functions with
 	// different names have different implementation, which is made by the vtable subsystem.
-	Function *aValue = addFn(a, L"value", &extendReplace);
-	Function *bValue = addFn(b, L"value", &extendReplace2);
-	Function *cValue = addFn(c, L"value", &extendReplace3);
+	Function *aValue = addFn(a, S("value"), address(&extendReplace));
+	Function *bValue = addFn(b, S("value"), address(&extendReplace2));
+	Function *cValue = addFn(c, S("value"), address(&extendReplace3));
 
-	Function *aVal = addFn(a, L"val", &extendReplace);
-	Function *bVal = addFn(b, L"val", &extendReplace2);
-	Function *cVal = addFn(c, L"val", &extendReplace3);
+	Function *aVal = addFn(a, S("val"), address(&extendReplace));
+	Function *bVal = addFn(b, S("val"), address(&extendReplace2));
+	Function *cVal = addFn(c, S("val"), address(&extendReplace3));
 
 	// See so that everything is as we expect.
 	CHECK(usesVTable(value));

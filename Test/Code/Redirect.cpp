@@ -11,10 +11,10 @@ static Int redirectTo(Int v) {
 
 static bool throwError = false;
 
-static void *redirectFn(Int v) {
+static const void *redirectFn(Int v) {
 	if (throwError)
 		throw Error();
-	return &redirectTo;
+	return address(&redirectTo);
 }
 
 static Int destroyed = 0;
@@ -27,8 +27,8 @@ BEGIN_TEST(RedirectTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref freeInt = arena->external(L"freeInt", &destroyInt);
-	Ref redirectFn = arena->external(L"redirectFn", &::redirectFn);
+	Ref freeInt = arena->external(S("freeInt"), address(&destroyInt));
+	Ref redirectFn = arena->external(S("redirectFn"), address(&::redirectFn));
 
 	Array<RedirectParam> *p = new (e) Array<RedirectParam>();
 	p->push(RedirectParam(valInt(), freeInt, false));

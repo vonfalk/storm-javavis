@@ -3,13 +3,13 @@
 
 using namespace storm::syntax;
 
-static nat match(const wchar *regex, const wchar *str, nat start = 0) {
+static nat match(const wchar_t *regex, const wchar_t *str, nat start = 0) {
 	Engine &e = gEngine();
 	Regex r(new (e) Str(regex));
 	return r.matchRaw(new (e) Str(str), start);
 }
 
-static String tos(const wchar *regex) {
+static String tos(const wchar_t *regex) {
 	Engine &e = gEngine();
 	Regex r(new (e) Str(regex));
 	return ::toS(r);

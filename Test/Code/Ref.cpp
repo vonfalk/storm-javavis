@@ -19,7 +19,7 @@ BEGIN_TEST(RefTest, Code) {
 	Arena *arena = code::arena(e);
 
 	RefSource *fn = new (e) RefSource(new (e) Str(L"fnA/B"));
-	fn->setPtr(&fnA);
+	fn->setPtr(address(&fnA));
 
 	Listing *l = new (e) Listing();
 	Var p = l->createIntParam();
@@ -39,7 +39,7 @@ BEGIN_TEST(RefTest, Code) {
 
 	CHECK_EQ((*f)(10), 25);
 
-	fn->setPtr(&fnB);
+	fn->setPtr(address(&fnB));
 	CHECK_EQ((*f)(10), 35);
 
 } END_TEST
@@ -58,8 +58,8 @@ BEGIN_TEST(ReplaceTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref tenFun = arena->external(L"tenFn", &tenFn);
-	Ref addFun = arena->external(L"addFn", &addFn);
+	Ref tenFun = arena->external(S("tenFn"), address(&tenFn));
+	Ref addFun = arena->external(S("addFn"), address(&addFn));
 
 	Listing *l = new (e) Listing();
 	*l << prolog();
@@ -68,7 +68,7 @@ BEGIN_TEST(ReplaceTest, Code) {
 	*l << ret(valInt());
 
 	Binary *middleBlob = new (e) Binary(arena, l);
-	RefSource *middle = new (e) RefSource(new (e) Str(L"middle"));
+	RefSource *middle = new (e) RefSource(new (e) Str(S("middle")));
 	middle->set(middleBlob);
 
 	l = new (e) Listing();

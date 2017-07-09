@@ -138,7 +138,7 @@ BEGIN_TEST(CodeTest, CodeBasic) {
 static void triggerCollect() {
 	for (nat j = 0; j < 10; j++) {
 		for (nat i = 0; i < 100; i++)
-			new (gEngine()) Str(L"Hello");
+			new (gEngine()) Str(S("Hello"));
 
 		gEngine().gc.collect();
 	}
@@ -153,7 +153,7 @@ BEGIN_TEST(CodeGcTest, CodeBasic) {
 	Listing *l = new (e) Listing();
 
 	*l << prolog();
-	*l << call(arena->external(L"triggerCollect", &triggerCollect), valVoid());
+	*l << call(arena->external(S("triggerCollect"), address(&triggerCollect)), valVoid());
 	*l << mov(eax, intConst(1337));
 	*l << epilog();
 	*l << ret(ValType(Size::sInt, false));

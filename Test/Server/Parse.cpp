@@ -8,10 +8,10 @@ using namespace storm::syntax;
 BEGIN_TEST(InfoParse, Server) {
 	Engine &e = gEngine();
 
-	Package *pkg = e.package(L"lang.simple");
-	Parser *p = Parser::create(pkg, L"SRoot");
+	Package *pkg = e.package(S("lang.simple"));
+	Parser *p = Parser::create(pkg, S("SRoot"));
 
-	Str *src = new (e) Str(L"foo + bar / 2;");
+	Str *src = new (e) Str(S("foo + bar / 2;"));
 	Bool ok = p->parse(src, new (e) Url());
 	VERIFY(p->hasTree() && p->matchEnd() == src->end());
 
@@ -29,11 +29,11 @@ BEGIN_TEST(InfoParse, Server) {
 BEGIN_TEST(InfoError, Server) {
 	Engine &e = gEngine();
 
-	Package *pkg = e.package(L"lang.simple");
-	InfoParser *p = InfoParser::create(pkg, L"SExpr", new (e) glr::Parser());
+	Package *pkg = e.package(S("lang.simple"));
+	InfoParser *p = InfoParser::create(pkg, S("SExpr"), new (e) glr::Parser());
 
 	{
-		Str *src = new (e) Str(L"foo +");
+		Str *src = new (e) Str(S("foo +"));
 		InfoErrors s = p->parseApprox(src, new (e) Url());
 		VERIFY(s.success());
 
@@ -44,7 +44,7 @@ BEGIN_TEST(InfoError, Server) {
 	}
 
 	{
-		Str *src = new (e) Str(L"foo bar");
+		Str *src = new (e) Str(S("foo bar"));
 		InfoErrors s = p->parseApprox(src, new (e) Url());
 		VERIFY(s.success());
 
@@ -57,7 +57,7 @@ BEGIN_TEST(InfoError, Server) {
 
 	{
 		// How are strings with unknown tokens handled?
-		Str *src = new (e) Str(L"foo +;");
+		Str *src = new (e) Str(S("foo +;"));
 		InfoErrors s = p->parseApprox(src, new (e) Url());
 		VERIFY(s.success());
 
@@ -70,7 +70,7 @@ BEGIN_TEST(InfoError, Server) {
 
 	{
 		// Can we skip unknown characters?
-		Str *src = new (e) Str(L"foo ? bar");
+		Str *src = new (e) Str(S("foo ? bar"));
 		InfoErrors s = p->parseApprox(src, new (e) Url());
 		VERIFY(s.success());
 
@@ -86,19 +86,19 @@ BEGIN_TEST(InfoError, Server) {
 BEGIN_TEST(JavaError, Server) {
 	Engine &e = gEngine();
 
-	Package *pkg = e.package(L"lang.java");
-	InfoParser *p = InfoParser::create(pkg, L"SStmt");
+	Package *pkg = e.package(S("lang.java"));
+	InfoParser *p = InfoParser::create(pkg, S("SStmt"));
 
 	{
 		// Previously, this failed...
-		Str *src = new (e) Str(L"1 +");
+		Str *src = new (e) Str(S("1 +"));
 		InfoErrors s = p->parseApprox(src, new (e) Url());
 		CHECK(s.success());
 	}
 
 	{
 		// And this...
-		Str *src = new (e) Str(L"try { foo(bar, } catch (Type v) {}");
+		Str *src = new (e) Str(S("try { foo(bar, } catch (Type v) {}"));
 		InfoErrors s = p->parseApprox(src, new (e) Url());
 		CHECK(s.success());
 

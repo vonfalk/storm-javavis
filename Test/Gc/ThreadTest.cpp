@@ -66,8 +66,6 @@ static void uthreadFn() {
 }
 
 BEGIN_TEST(GcUThreadTest, GcThreads) {
-	Engine &e = gEngine();
-
 	threadOk = false;
 
 	os::UThread::spawn(util::simpleVoidFn(&uthreadFn));

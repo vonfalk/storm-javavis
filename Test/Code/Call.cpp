@@ -20,8 +20,8 @@ BEGIN_TEST(CallCopyTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref copy = arena->external(L"copyInt", &callCopyInt);
-	Ref intFn = arena->external(L"intFn", &callIntFn);
+	Ref copy = arena->external(S("copyInt"), address(&callCopyInt));
+	Ref intFn = arena->external(S("intFn"), address(&callIntFn));
 
 	Listing *l = new (e) Listing();
 	Var v = l->createIntVar(l->root());
@@ -49,8 +49,8 @@ BEGIN_TEST(CallRefTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref copy = arena->external(L"copyInt", &callCopyInt);
-	Ref intFn = arena->external(L"intFn", &callIntFn);
+	Ref copy = arena->external(S("copyInt"), address(&callCopyInt));
+	Ref intFn = arena->external(S("intFn"), address(&callIntFn));
 
 	Listing *l = new (e) Listing();
 	Var v = l->createIntVar(l->root());
@@ -78,7 +78,7 @@ BEGIN_TEST(CallRefPlainTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref intFn = arena->external(L"intFn", &callIntFn);
+	Ref intFn = arena->external(S("intFn"), address(&callIntFn));
 
 	Listing *l = new (e) Listing();
 	Var v = l->createIntVar(l->root());
@@ -118,8 +118,8 @@ BEGIN_TEST(CallRefMultiple, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref largeFn = arena->external(L"largeFn", &::largeFn);
-	Ref largeCopy = arena->external(L"largeCopy", &::largeCopy);
+	Ref largeFn = arena->external(S("largeFn"), address(&::largeFn));
+	Ref largeCopy = arena->external(S("largeCopy"), address(&::largeCopy));
 
 	Listing *l = new (e) Listing();
 

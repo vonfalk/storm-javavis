@@ -60,7 +60,7 @@ BEGIN_TEST(CallTest, Code) {
 	*l << prolog();
 
 	*l << push(p);
-	*l << call(arena->external(L"addFive", &addFive), ValType(Size::sInt, false));
+	*l << call(arena->external(S("addFive"), address(&addFive)), ValType(Size::sInt, false));
 
 	*l << epilog();
 	*l << ret(ValType(Size::sInt, false));

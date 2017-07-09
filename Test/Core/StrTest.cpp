@@ -5,8 +5,8 @@
 BEGIN_TEST(StrTest, Core) {
 	Engine &e = gEngine();
 
-	Str *s = new (e) Str(L"Hello");
-	Str *t = new (e) Str(L" World");
+	Str *s = new (e) Str(S("Hello"));
+	Str *t = new (e) Str(S(" World"));
 
 	CHECK_EQ(toS(s), L"Hello");
 	CHECK_EQ(toS(*s + t), L"Hello World");
@@ -19,41 +19,41 @@ BEGIN_TEST(StrTest, Core) {
 	w = new (e) Str(Char(nat(0x10030)), 2);
 	CHECK_EQ(toS(w), toS(*p * 2));
 
-	Str *l = new (e) Str(L"Hello World");
-	CHECK(l->startsWith(L"Hello"));
-	CHECK(!l->startsWith(L"Hello!"));
-	CHECK(l->endsWith(L"World"));
-	CHECK(!l->endsWith(L"World!"));
+	Str *l = new (e) Str(S("Hello World"));
+	CHECK(l->startsWith(S("Hello")));
+	CHECK(!l->startsWith(S("Hello!")));
+	CHECK(l->endsWith(S("World")));
+	CHECK(!l->endsWith(S("World!")));
 } END_TEST
 
 BEGIN_TEST(StrBufTest, Core) {
 	Engine &e = gEngine();
 
 	StrBuf *buf = new (e) StrBuf();
-	*buf << 10 << L"z" << -20;
+	*buf << 10 << S("z") << -20;
 	CHECK_EQ(toS(buf), L"10z-20");
 
 	buf->clear();
-	*buf << 10 << L"n";
+	*buf << 10 << S("n");
 	CHECK_EQ(toS(buf), L"10n");
 
 	buf->clear();
-	buf->indentBy(new (e) Str(L"-->"));
-	*buf << L"hello\n";
+	buf->indentBy(new (e) Str(S("-->")));
+	*buf << S("hello\n");
 	buf->indent();
-	*buf << L"world\n";
+	*buf << S("world\n");
 	buf->dedent();
 	CHECK_EQ(toS(buf), L"hello\n-->world\n");
 
 	buf->clear();
-	buf->indentBy(new (e) Str(L"-->"));
-	*buf << L"a\n";
+	buf->indentBy(new (e) Str(S("-->")));
+	*buf << S("a\n");
 	buf->indent();
 	*buf << 20;
 	CHECK_EQ(toS(buf), L"a\n-->20");
 
 	buf->clear();
-	*buf << width(5) << fill('z') << L"w";
+	*buf << width(5) << fill('z') << S("w");
 	CHECK_EQ(toS(buf), L"zzzzw");
 
 	buf->clear();
@@ -61,7 +61,7 @@ BEGIN_TEST(StrBufTest, Core) {
 	CHECK_EQ(toS(buf), L"   20  100   -3");
 
 	buf->clear();
-	*buf << hex(Byte(10)) << L" " << hex(Nat(10)) << L" " << hex(Word(0x12345));
+	*buf << hex(Byte(10)) << S(" ") << hex(Nat(10)) << S(" ") << hex(Word(0x12345));
 	CHECK_EQ(toS(buf), L"0A 0000000A 0000000000012345");
 
 } END_TEST

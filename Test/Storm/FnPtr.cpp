@@ -41,17 +41,17 @@ static void consumeStr(Str *v) {}
 
 static Fn<DbgVal, Dbg *> *dbgFn(int id) {
 	typedef Fn<DbgVal, Dbg *> FnPtr;
-	return runFn<FnPtr *>(L"test.bs.createDbgFn", id);
+	return runFn<FnPtr *>(S("test.bs.createDbgFn"), id);
 }
 
 static Fn<DbgVal> *voidFn(int id) {
 	typedef Fn<DbgVal> FnPtr;
-	return runFn<FnPtr *>(L"test.bs.createVoidFn", id);
+	return runFn<FnPtr *>(S("test.bs.createVoidFn"), id);
 }
 
 static Fn<DbgVal, DbgActor *> *actorFn(int id) {
 	typedef Fn<DbgVal, DbgActor *> FnPtr;
-	return runFn<FnPtr *>(L"test.bs.createActorFn", id);
+	return runFn<FnPtr *>(S("test.bs.createActorFn"), id);
 }
 
 BEGIN_TEST(FnPtrTest, BS) {
@@ -86,25 +86,25 @@ BEGIN_TEST(FnPtrTest, BS) {
 	CHECK_EQ(b2->call(), false);
 
 	// Run some code in Storm!
-	CHECK_RUNS(runFn<void>(L"test.bs.consumeStr", consumeStr));
-	CHECK_EQ(runFn<Int>(L"test.bs.consumeDbg", consumeDbg), 23);
-	CHECK_EQ(runFn<Int>(L"test.bs.runFnPtr", fn), 12);
-	CHECK_EQ(runFn<Int>(L"test.bs.runFnPtr", voidFn), 5);
-	CHECK_EQ(runFn<Int>(L"test.bs.runStrFnPtr", strFn), 22);
-	CHECK_EQ(runFn<Int>(L"test.bs.runStrFnPtr", echoStr), 22);
+	CHECK_RUNS(runFn<void>(S("test.bs.consumeStr"), consumeStr));
+	CHECK_EQ(runFn<Int>(S("test.bs.consumeDbg"), consumeDbg), 23);
+	CHECK_EQ(runFn<Int>(S("test.bs.runFnPtr"), fn), 12);
+	CHECK_EQ(runFn<Int>(S("test.bs.runFnPtr"), voidFn), 5);
+	CHECK_EQ(runFn<Int>(S("test.bs.runStrFnPtr"), strFn), 22);
+	CHECK_EQ(runFn<Int>(S("test.bs.runStrFnPtr"), echoStr), 22);
 	DbgVal::clear();
-	CHECK_EQ(runFn<Int>(L"test.bs.runFnPtr", dbgValFn), 23);
+	CHECK_EQ(runFn<Int>(S("test.bs.runFnPtr"), dbgValFn), 23);
 	CHECK(DbgVal::clear());
-	CHECK_EQ(runFn<Int>(L"test.bs.runFnPtr", dbgFn), 21);
-	CHECK_EQ(runFn<Int>(L"test.bs.runBoolFn", b1), 1);
-	CHECK_EQ(runFn<Int>(L"test.bs.runBoolFn", b2), 0);
+	CHECK_EQ(runFn<Int>(S("test.bs.runFnPtr"), dbgFn), 21);
+	CHECK_EQ(runFn<Int>(S("test.bs.runBoolFn"), b1), 1);
+	CHECK_EQ(runFn<Int>(S("test.bs.runBoolFn"), b2), 0);
 
-	b1 = runFn<Fn<Bool> *>(L"test.bs.createBoolFn", true);
-	b2 = runFn<Fn<Bool> *>(L"test.bs.createBoolFn", false);
+	b1 = runFn<Fn<Bool> *>(S("test.bs.createBoolFn"), true);
+	b2 = runFn<Fn<Bool> *>(S("test.bs.createBoolFn"), false);
 	CHECK_EQ(b1->call(), true);
 	CHECK_EQ(b2->call(), false);
-	CHECK_EQ(runFn<Int>(L"test.bs.runBoolFn", b1), 1);
-	CHECK_EQ(runFn<Int>(L"test.bs.runBoolFn", b2), 0);
+	CHECK_EQ(runFn<Int>(S("test.bs.runBoolFn"), b1), 1);
+	CHECK_EQ(runFn<Int>(S("test.bs.runBoolFn"), b2), 0);
 
 } END_TEST
 
@@ -115,7 +115,7 @@ BEGIN_TEST(StormFnPtrTest, BS) {
 	// Return a function pointer from Storm!
 	{
 		typedef Fn<Int, Int> IIFn;
-		IIFn *v = runFn<IIFn *>(L"test.bs.createIntFn");
+		IIFn *v = runFn<IIFn *>(S("test.bs.createIntFn"));
 		CHECK_EQ(v->call(10), 20);
 	}
 
@@ -143,8 +143,8 @@ BEGIN_TEST(StormFnPtrTest, BS) {
 
 // Run the function pointer both through Storm and C++ and compare the results.
 static int runPtr(Fn<Int, Dbg *> *ptr, int start) {
-	Dbg *dbg = runFn<Dbg *>(L"test.bs.dbgTrack", start);
-	int storm = runFn<Int>(L"test.bs.runPtr", ptr, dbg);
+	Dbg *dbg = runFn<Dbg *>(S("test.bs.dbgTrack"), start);
+	int storm = runFn<Int>(S("test.bs.runPtr"), ptr, dbg);
 	int cpp = ptr->call(dbg);
 	if (storm != cpp) {
 		PLN("Storm and C++ gives different results!");
@@ -155,13 +155,13 @@ static int runPtr(Fn<Int, Dbg *> *ptr, int start) {
 
 // Run the function pointer through another thread (only Storm) and see the result.
 static int runPtrOther(Fn<Int, Dbg *> *ptr, int start) {
-	Dbg *dbg = runFn<Dbg *>(L"test.bs.dbgTrack", start);
-	return runFn<Int>(L"test.bs.runPtrOther", ptr, dbg);
+	Dbg *dbg = runFn<Dbg *>(S("test.bs.dbgTrack"), start);
+	return runFn<Int>(S("test.bs.runPtrOther"), ptr, dbg);
 }
 
 
 static Fn<Int, Dbg *> *dbgPtr(int id) {
-	return runFn<Fn<Int, Dbg *> *>(L"test.bs.trackParam", id);
+	return runFn<Fn<Int, Dbg *> *>(S("test.bs.trackParam"), id);
 }
 
 BEGIN_TEST(FnPtrThreadTest, BS) {
@@ -186,11 +186,11 @@ BEGIN_TEST(FnPtrThreadTest, BS) {
 
 	// Actor as the first parameter...
 	{
-		Dbg *dbg = runFn<Dbg *>(L"test.bs.dbgTrack", 1);
-		TObject *dbgActor = runFn<TObject *>(L"test.bs.createInActor");
+		Dbg *dbg = runFn<Dbg *>(S("test.bs.dbgTrack"), 1);
+		TObject *dbgActor = runFn<TObject *>(S("test.bs.createInActor"));
 		Fn<Int, TObject *, Dbg *> *fn =
-			runFnUnsafe<Fn<Int, TObject *, Dbg *> *>(L"test.bs.trackActor");
-		int storm = runFn<Int>(L"test.bs.runPtrActor", fn, dbg);
+			runFnUnsafe<Fn<Int, TObject *, Dbg *> *>(S("test.bs.trackActor"));
+		int storm = runFn<Int>(S("test.bs.runPtrActor"), fn, dbg);
 		int cpp = fn->call(dbgActor, dbg);
 		CHECK_EQ(storm, 10101);
 		CHECK_EQ(cpp, 10101);
@@ -198,12 +198,12 @@ BEGIN_TEST(FnPtrThreadTest, BS) {
 
 	// Return values.
 	{
-		Fn<Dbg *> *fn = runFn<Fn<Dbg *> *>(L"test.bs.dbgFnPtr");
+		Fn<Dbg *> *fn = runFn<Fn<Dbg *> *>(S("test.bs.dbgFnPtr"));
 
 		Dbg *cpp = fn->call();
 		CHECK_EQ(cpp->get(), 10101);
 
-		int storm = runFn<Int>(L"test.bs.callDbgFnPtr", fn);
+		int storm = runFn<Int>(S("test.bs.callDbgFnPtr"), fn);
 		CHECK_EQ(storm, 10101);
 	}
 

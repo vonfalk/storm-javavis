@@ -27,8 +27,8 @@ BEGIN_TEST(CodeExceptionTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref intCleanup = arena->external(L"intCleanup", &::intCleanup);
-	Ref errorFn = arena->external(L"errorFn", &::throwError);
+	Ref intCleanup = arena->external(S("intCleanup"), address(&::intCleanup));
+	Ref errorFn = arena->external(S("errorFn"), address(&::throwError));
 
 	Listing *l = new (e) Listing();
 	Block block = l->createBlock(l->root());
@@ -84,8 +84,8 @@ BEGIN_TEST(CodeCleanupTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref intCleanup = arena->external(L"intCleanup", &::intCleanup);
-	Ref errorFn = arena->external(L"errorFn", &::throwError);
+	Ref intCleanup = arena->external(S("intCleanup"), address(&::intCleanup));
+	Ref errorFn = arena->external(S("errorFn"), address(&::throwError));
 
 	Listing *l = new (e) Listing();
 	Block block = l->createBlock(l->root());
@@ -141,11 +141,11 @@ BEGIN_TEST(ExceptionRefTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref intCleanup = arena->external(L"intCleanup", &::intPtrCleanup);
-	Ref errorFn = arena->external(L"errorFn", &::throwError);
+	Ref intCleanup = arena->external(S("intCleanup"), address(&::intPtrCleanup));
+	Ref errorFn = arena->external(S("errorFn"), address(&::throwError));
 
 	Listing *l = new (e) Listing();
-	Block block = l->createBlock(l->root());
+	// Block block = l->createBlock(l->root());
 	Var v = l->createVar(l->root(), Size::sInt, intCleanup, freeOnBoth | freePtr);
 
 	*l << prolog();
@@ -183,8 +183,8 @@ BEGIN_TEST(ExceptionSehTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref intCleanup = arena->external(L"intCleanup", &::intCleanup);
-	Ref errorFn = arena->external(L"errorFn", &::throwError);
+	Ref intCleanup = arena->external(S("intCleanup"), &::intCleanup);
+	Ref errorFn = arena->external(S("errorFn"), &::throwError);
 
 	Listing *l = new (e) Listing();
 	Block block = l->createBlock(l->root());
@@ -249,11 +249,11 @@ BEGIN_TEST(ExceptionLargeTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
-	Ref intCleanup = arena->external(L"largeCleanup", &::destroyLarge);
-	Ref errorFn = arena->external(L"errorFn", &::throwError);
+	Ref intCleanup = arena->external(S("largeCleanup"), address(&::destroyLarge));
+	Ref errorFn = arena->external(S("errorFn"), address(&::throwError));
 
 	Listing *l = new (e) Listing();
-	Block block = l->createBlock(l->root());
+	// Block block = l->createBlock(l->root());
 	Var p = l->createParam(ValType(Size::sInt * 3, false), intCleanup, freeOnBoth | freePtr);
 	Var v = l->createVar(l->root(), Size::sInt * 3, intCleanup, freeOnBoth | freePtr);
 

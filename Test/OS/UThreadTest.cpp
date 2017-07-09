@@ -4,6 +4,10 @@
 #include "OS/ThreadGroup.h"
 #include "Tracker.h"
 
+#ifdef POSIX
+#define Sleep(X) usleep((X) * 1000LL);
+#endif
+
 using namespace os;
 
 static void returnVoid(bool error) {
@@ -18,7 +22,7 @@ static void voidParams(int a, int b) {
 
 struct Dummy {
 	void CODECALL voidMember(int a, int b) {
-		assert((int)this == 10);
+		assert((size_t)this == 10);
 		assert(a == 20);
 		assert(b == 30);
 	}
@@ -66,12 +70,12 @@ BEGIN_TEST(UThreadResultTest, OS) {
 		bool e = false;
 		FnCall<void> params = fnCall().add(e);
 		os::Future<void> r;
-		UThread::spawn(&returnVoid, false, params, r);
+		UThread::spawn(address(returnVoid), false, params, r);
 		CHECK_RUNS(r.result());
 
 		e = true;
 		os::Future<void> r2;
-		UThread::spawn(&returnVoid, false, params, r2);
+		UThread::spawn(address(returnVoid), false, params, r2);
 		CHECK_ERROR(r2.result(), UserError);
 	}
 
@@ -79,7 +83,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 		os::Future<void> r;
 		int a = 10, b = 20;
 		FnCall<void> p = fnCall().add(a).add(b);
-		UThread::spawn(voidParams, false, p, r);
+		UThread::spawn(address(voidParams), false, p, r);
 		CHECK_RUNS(r.result());
 	}
 
@@ -97,7 +101,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 		int v = 10;
 		FnCall<int> params = fnCall().add(v);
 		os::Future<int> r;
-		UThread::spawn(returnInt, false, params, r);
+		UThread::spawn(address(returnInt), false, params, r);
 		CHECK_EQ(r.result(), 10);
 	}
 
@@ -105,7 +109,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 		int64 v = 1024LL << 30LL;
 		FnCall<int64> params = fnCall().add(v);
 		os::Future<int64> r;
-		UThread::spawn(returnInt64, false, params, r);
+		UThread::spawn(address(returnInt64), false, params, r);
 		CHECK_EQ(r.result() >> 30LL, 1024);
 	}
 
@@ -113,7 +117,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 		float v = 13.37f;
 		FnCall<float> params = fnCall().add(v);
 		os::Future<float> r;
-		UThread::spawn(returnFloat, false, params, r);
+		UThread::spawn(address(returnFloat), false, params, r);
 		CHECK_EQ(r.result(), 13.37f);
 	}
 
@@ -121,7 +125,7 @@ BEGIN_TEST(UThreadResultTest, OS) {
 		double v = 13.37;
 		FnCall<double> params = fnCall().add(v);
 		os::Future<double> r;
-		UThread::spawn(returnDouble, false, params, r);
+		UThread::spawn(address(returnDouble), false, params, r);
 		CHECK_EQ(r.result(), 13.37);
 	}
 
@@ -130,13 +134,13 @@ BEGIN_TEST(UThreadResultTest, OS) {
 		int t = 22;
 		FnCall<Tracker> params = fnCall().add(t);
 		os::Future<Tracker> r;
-		UThread::spawn(returnTracker, false, params, r);
+		UThread::spawn(address(returnTracker), false, params, r);
 		CHECK_EQ(r.result().data, 22);
 		CHECK_EQ(r.result().data, 22);
 
 		t = -2;
 		os::Future<Tracker> r2;
-		UThread::spawn(returnTracker, false, params, r2);
+		UThread::spawn(address(returnTracker), false, params, r2);
 		CHECK_ERROR(r2.result(), UserError);
 		CHECK_ERROR(r2.result(), UserError);
 	}
@@ -147,13 +151,13 @@ BEGIN_TEST(UThreadResultTest, OS) {
 		Tracker t(22);
 		FnCall<int> params = fnCall().add(t);
 		os::Future<int> r;
-		UThread::spawn(takeTracker, false, params, r);
+		UThread::spawn(address(takeTracker), false, params, r);
 		CHECK_EQ(r.result(), 22);
 		CHECK_EQ(r.result(), 22);
 
 		t.data = -3;
 		os::Future<int> r2;
-		UThread::spawn(takeTracker, false, params, r2);
+		UThread::spawn(address(takeTracker), false, params, r2);
 		CHECK_ERROR(r2.result(), UserError);
 		CHECK_ERROR(r2.result(), UserError);
 	}

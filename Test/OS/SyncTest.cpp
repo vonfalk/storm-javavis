@@ -1,5 +1,9 @@
 #include "stdafx.h"
 
+#ifdef POSIX
+#define Sleep(X) usleep((X) * 1000LL);
+#endif
+
 struct OtherData {
 	os::Sema sync;
 	os::Sema ready;

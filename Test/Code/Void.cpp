@@ -13,7 +13,7 @@ static void CODECALL voidFn(int c) {
 BEGIN_TEST(VoidTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
-	Ref r = arena->external(L"voidFn", &voidFn);
+	Ref r = arena->external(S("voidFn"), address(&voidFn));
 
 	Listing *l = new (e) Listing();
 

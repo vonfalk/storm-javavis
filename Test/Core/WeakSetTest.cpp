@@ -17,7 +17,7 @@ static bool setFind(WeakSet<PtrKey> *in, PtrKey *elem) {
 static nat setCount(WeakSet<PtrKey> *in) {
 	nat c = 0;
 	WeakSet<PtrKey>::Iter i = in->iter();
-	while (TObject *o = i.next())
+	while (i.next())
 		c++;
 
 	return c;
@@ -99,7 +99,7 @@ BEGIN_TEST(WeakSetStress, Stress) {
 		{
 			nat count = 0;
 			WeakSet<PtrKey>::Iter iter = set->iter();
-			while (PtrKey *k = iter.next())
+			while (iter.next())
 				count++;
 
 			CHECK_GTE(count, k->count());
@@ -145,7 +145,7 @@ BEGIN_TEST(WeakSetRemoveStress, Stress) {
 		{
 			nat count = 0;
 			WeakSet<PtrKey>::Iter iter = set->iter();
-			while (PtrKey *k = iter.next())
+			while (iter.next())
 				count++;
 
 			CHECK_GTE(count, k->count());

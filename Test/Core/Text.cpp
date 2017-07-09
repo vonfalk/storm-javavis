@@ -5,7 +5,7 @@
 // Some data with various sizes of UTF code points used for tests.
 
 // Strings with only ascii characters
-static const wchar strData[] = L"new\nline";
+static const wchar strData[] = S("new\nline");
 static const nat16 utf16Data[] = { 0xFEFF, 0x6E, 0x65, 0x77, 0x0A, 0x6C, 0x69, 0x6E, 0x65 };
 static const nat16 revUtf16Data[] = { 0xFFFE, 0x6E00, 0x6500, 0x7700, 0x0A00, 0x6C00, 0x6900, 0x6E00, 0x6500 };
 static const byte utf8Data[] = { 0xEF, 0xBB, 0xBF, 0x6E, 0x65, 0x77, 0x0A, 0x6C, 0x69, 0x6E, 0x65 };
@@ -35,7 +35,7 @@ static const byte plainUtf8Data2[] = {
 	0xF0, 0x9F, 0x98, 0xB9, // 0x1F639
 	0x65, // e
 };
-static const wchar strData2[] = L"a\u00D6\u0D36\u3042\u79C1\U0001F639e";
+static const wchar strData2[] = S("a\u00D6\u0D36\u3042\u79C1\U0001F639e");
 
 TextInput *read(const void *src, nat count) {
 	Buffer b = buffer(gEngine(), (const byte *)src, count);
@@ -73,13 +73,11 @@ static String verify(TextInput *src, const nat *ref) {
 }
 
 BEGIN_TEST(TestTextInput, Core) {
-	Engine &e = gEngine();
-
 	// 'easy' cases:
-	CHECK_EQ(::toS(READ(plainUtf8Data)->readAll()), strData);
-	CHECK_EQ(::toS(READ(utf8Data)->readAll()), strData);
-	CHECK_EQ(::toS(READ(utf16Data)->readAll()), strData);
-	CHECK_EQ(::toS(READ(revUtf16Data)->readAll()), strData);
+	CHECK_EQ(::toS(READ(plainUtf8Data)->readAll()), ::toS(strData));
+	CHECK_EQ(::toS(READ(utf8Data)->readAll()), ::toS(strData));
+	CHECK_EQ(::toS(READ(utf16Data)->readAll()), ::toS(strData));
+	CHECK_EQ(::toS(READ(revUtf16Data)->readAll()), ::toS(strData));
 
 	// Check so we can read lines:
 	{
