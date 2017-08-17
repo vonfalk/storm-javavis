@@ -127,9 +127,12 @@ library+=pthread
 library+=dl
 
 ext+=s
+ext+=S
 noIncludes+=*.s
+noIncludes+=*.S
 compile+=*.c:gcc -std=c99 <defines> <warnings> <file> -c <includes> -o <output>
-compile+=*.s:gcc <file> -c -o <output>
+compile+=*.s:gcc -g <file> -c -o <output>
+compile+=*.S:gcc -g <file> <includes> -c -o <output>
 
 [stormpp]
 stormpp=CppTypes

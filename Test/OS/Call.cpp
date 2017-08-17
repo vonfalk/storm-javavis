@@ -78,7 +78,7 @@ static void testVoid(int p1, int p2) {
 	sum = p1 + p2;
 }
 
-BEGIN_TEST(FnCallTest, OS) {
+BEGIN_TEST_(FnCallTest, OS) {
 
 	int p1 = 1, p2 = 2;
 
