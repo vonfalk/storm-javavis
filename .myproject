@@ -81,6 +81,13 @@ define+=FAST_DEBUG
 flags+=/Zi /Fd<path|buildDir>
 linkFlags+=/DEBUG /INCREMENTAL:NO /PDB:<path|execDir><titleNoExt|output>.pdb
 
+[storm_debug,unix]
+#We do not need that aggressive optimizations...
+flags=-std=c++11
+flags+=-O1
+#Generate debug information.
+flags+=-g
+
 [storm_release]
 buildDir=release/
 execDir=../release/
@@ -130,7 +137,7 @@ ext+=s
 ext+=S
 noIncludes+=*.s
 noIncludes+=*.S
-compile+=*.c:gcc -std=c99 <defines> <warnings> <file> -c <includes> -o <output>
+compile+=*.c:gcc -std=c99 -O3 <defines> <warnings> <file> -c <includes> -o <output>
 compile+=*.s:gcc -g <file> -c -o <output>
 compile+=*.S:gcc -g <file> <includes> -c -o <output>
 
