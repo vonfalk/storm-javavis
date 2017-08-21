@@ -1,4 +1,38 @@
 #pragma once
+#include <type_traits>
+
+#if defined(VISUAL_STUDIO) && VISUAL_STUDIO < 2008
+
+namespace std {
+	template <class T>
+	struct is_trivially_copy_constructible {
+		typedef std::tr1::has_trivial_copy<T>::value value;
+	};
+
+	template <class T>
+	struct is_trivially_destructible {
+		typedef std::tr1::has_trivial_destructor<T>::value value;
+	};
+}
+
+#endif
+
+
+struct TypeKind {
+	// Kind of type?
+	enum T {
+		nothing = 0, // void
+		signedNr, // int, int64...
+		unsignedNr, // nat, nat64...
+		floatNr, // float, double
+		boolVal, // bool
+		ptr, // pointer or reference
+		userTrivial, // user defined type, trivial copy ctor
+		userComplex, // user defined type, nontrivial copy ctor (or destructor)
+	};
+};
+
+wostream &operator <<(wostream &to, TypeKind::T t);
 
 /**
  * Minimal type information required for returning a value.
@@ -11,22 +45,14 @@ struct BasicTypeInfo {
 	// Size of the type.
 	nat size;
 
-	// Kind of type?
-	enum Kind {
-		nothing = 0, // void
-		signedNr, // int, int64...
-		unsignedNr, // nat, nat64...
-		floatNr, // float, double
-		boolVal, // bool
-		ptr, // pointer or reference
-		user, // user defined type
-	};
+	typedef TypeKind::T Kind;
 
+	// Kind of type?
 	Kind kind;
 
 	// Plain? (ie not a pointer nor a reference).
 	inline bool plain() const {
-		return kind != ptr;
+		return kind != TypeKind::ptr;
 	}
 };
 
@@ -56,16 +82,9 @@ struct TypeInfo {
 	}
 
 	// Kind of type?
-	enum Kind {
-		nothing = 0, // ie void
-		signedNr, // ie int, int64 ...
-		unsignedNr, // ie nat, nat64 ... also bool
-		floatNr, // float, double ...
-		boolVal, // bool
-		user, // user defined type
-	};
+	typedef TypeKind::T Kind;
 
-	// Kind.
+	// Kind. Note: 'ptr' is never used.
 	Kind kind;
 
 	// Convert to the basic type info.
@@ -145,9 +164,22 @@ struct ModifierOf<T &> {
 	};
 };
 
+template <bool trivial>
+struct TrivialKind {
+	enum { v = TypeKind::userComplex };
+};
+
+template <>
+struct TrivialKind<true> {
+	enum { v = TypeKind::userTrivial };
+};
+
 template <class T>
 struct KindOf {
-	enum { v = TypeInfo::user };
+	enum { v = TrivialKind<
+		   std::is_trivially_copy_constructible<T>::value
+		   & std::is_trivially_destructible<T>::value
+		   >::v };
 };
 
 template <class T>
@@ -160,64 +192,69 @@ struct KindOf<T &> {
 	enum { v = KindOf<T>::v };
 };
 
+template <class T>
+struct KindOf<const T> {
+	enum { v = KindOf<T>::v };
+};
+
 template <>
 struct KindOf<void> {
-	enum { v = TypeInfo::nothing };
+	enum { v = TypeKind::nothing };
 };
 
 template <>
 struct KindOf<int> {
-	enum { v = TypeInfo::signedNr };
+	enum { v = TypeKind::signedNr };
 };
 
 template <>
 struct KindOf<int64> {
-	enum { v = TypeInfo::signedNr };
+	enum { v = TypeKind::signedNr };
 };
 
 template <>
 struct KindOf<short> {
-	enum { v = TypeInfo::signedNr };
+	enum { v = TypeKind::signedNr };
 };
 
 template <>
 struct KindOf<char> {
-	enum { v = TypeInfo::signedNr };
+	enum { v = TypeKind::signedNr };
 };
 
 template <>
 struct KindOf<nat> {
-	enum { v = TypeInfo::unsignedNr };
+	enum { v = TypeKind::unsignedNr };
 };
 
 template <>
 struct KindOf<nat64> {
-	enum { v = TypeInfo::unsignedNr };
+	enum { v = TypeKind::unsignedNr };
 };
 
 template <>
 struct KindOf<unsigned short> {
-	enum { v = TypeInfo::unsignedNr };
+	enum { v = TypeKind::unsignedNr };
 };
 
 template <>
 struct KindOf<byte> {
-	enum { v = TypeInfo::unsignedNr };
+	enum { v = TypeKind::unsignedNr };
 };
 
 template <>
 struct KindOf<bool> {
-	enum { v = TypeInfo::boolVal };
+	enum { v = TypeKind::boolVal };
 };
 
 template <>
 struct KindOf<float> {
-	enum { v = TypeInfo::floatNr };
+	enum { v = TypeKind::floatNr };
 };
 
 template <>
 struct KindOf<double> {
-	enum { v = TypeInfo::floatNr };
+	enum { v = TypeKind::floatNr };
 };
 
 // General case, user-defined types.

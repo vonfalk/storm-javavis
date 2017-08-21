@@ -111,16 +111,17 @@ namespace storm {
 	}
 
 	BasicTypeInfo Value::typeInfo() const {
-		BasicTypeInfo::Kind kind = BasicTypeInfo::nothing;
+		BasicTypeInfo::Kind kind = TypeKind::nothing;
 
 		if (!type) {
-			kind = BasicTypeInfo::nothing;
+			kind = TypeKind::nothing;
 		} else if (isBuiltIn()) {
 			kind = type->builtInType();
 		} else if (isValue()) {
-			kind = BasicTypeInfo::user;
+			// In this case, 'type->builtInType()' is either userComplex or userTrivial.
+			kind = type->builtInType();
 		} else {
-			kind = BasicTypeInfo::ptr;
+			kind = TypeKind::ptr;
 		}
 
 		BasicTypeInfo r = {
@@ -142,7 +143,9 @@ namespace storm {
 		if (!type)
 			// Void is considered built-in.
 			return true;
-		return type->builtInType() != BasicTypeInfo::user;
+		TypeKind::T v = type->builtInType();
+		return v != TypeKind::userComplex
+			&& v != TypeKind::userTrivial;
 	}
 
 	Bool Value::isFloat() const {
@@ -150,7 +153,7 @@ namespace storm {
 			return false;
 		if (ref)
 			return false;
-		return type->builtInType() == BasicTypeInfo::floatNr;
+		return type->builtInType() == TypeKind::floatNr;
 	}
 
 	Bool Value::isValue() const {

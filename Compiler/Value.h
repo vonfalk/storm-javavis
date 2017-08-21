@@ -115,7 +115,7 @@ namespace storm {
 #ifdef VISUAL_STUDIO
 	// Uses a visual studio specific extension...
 	Array<Value> *valList(Engine &e, Nat count, ...);
-#else
+#elif defined(USE_VA_TEMPLATE)
 	template <class... Val>
 	void valListAdd(Array<Value> *to, const Value &first, const Val&... rest) {
 		to->push(first);
@@ -135,5 +135,7 @@ namespace storm {
 
 		return v;
 	}
+#else
+#error "Can not implement 'valList'"
 #endif
 }

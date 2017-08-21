@@ -34,6 +34,33 @@ wostream &operator <<(wostream &to, const LargeType &o) {
 	return to << L"{ " << o.v1 << L", " << o.v2 << L", " << o.v3 << L", " << o.v4 << L" }";
 }
 
+struct HugeType {
+	int v1, v2, v3, v4, v5, v6;
+	HugeType(int v1, int v2, int v3, int v4, int v5, int v6) : v1(v1), v2(v2), v3(v3), v4(v4), v5(v5), v6(v6) {}
+	bool operator ==(const HugeType &o) const { return v1 == o.v1 && v2 == o.v2 && v3 == o.v3 && v4 == o.v4 && v5 == o.v5 && v6 == o.v6; }
+	bool operator !=(const HugeType &o) const { return !(*this == o); }
+};
+wostream &operator <<(wostream &to, const HugeType &o) {
+	return to << L"{ " << o.v1 << L", " << o.v2 << L", " << o.v3 << L", " << o.v4 << L", " << o.v5 << L", " << o.v6 << L" }";
+}
+
+struct SmallComplexType {
+	int v;
+	SmallComplexType(int v) : v(v) {}
+	bool operator ==(const SmallComplexType &o) const { return v == o.v; }
+	bool operator !=(const SmallComplexType &o) const { return !(*this == o); }
+
+	// Use a copy constructor to enforce explicit copies.
+	SmallComplexType(const SmallComplexType &o) : v(o.v) {}
+};
+wostream &operator <<(wostream &to, const SmallComplexType &o) {
+	return to << L"{ " << o.v << L" }";
+}
+
+static int testFnBool(int p1, int p2) {
+	return (p1 + p2) == 20;
+}
+
 static int testFn1(int p1, int p2) {
 	return p1 + p2;
 }
@@ -52,6 +79,14 @@ static MediumType testType2(int p1, int p2) {
 
 static LargeType testType3(int p1, int p2) {
 	return LargeType(p1, p2, p1 + p2, p1 - p2);
+}
+
+static HugeType testType4(int p1, int p2) {
+	return HugeType(p1, p2, p1 + p2, p1 - p2, p1 * 2, p2 * 2);
+}
+
+static SmallComplexType testType5(int p1, int p2) {
+	return SmallComplexType(p1 + p2);
 }
 
 struct Dummy {
@@ -79,7 +114,6 @@ static void testVoid(int p1, int p2) {
 }
 
 BEGIN_TEST_(FnCallTest, OS) {
-
 	int p1 = 1, p2 = 2;
 
 	{

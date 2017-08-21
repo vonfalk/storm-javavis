@@ -12,7 +12,7 @@ namespace storm {
 	public:
 		IntType(Str *name, GcType *type);
 
-		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::signedNr; }
+		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::signedNr; }
 
 	protected:
 		virtual Bool STORM_FN loadAll();
@@ -30,7 +30,7 @@ namespace storm {
 	public:
 		NatType(Str *name, GcType *type);
 
-		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::signedNr; }
+		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::signedNr; }
 
 	protected:
 		virtual Bool STORM_FN loadAll();

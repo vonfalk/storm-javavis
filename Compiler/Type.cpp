@@ -364,7 +364,8 @@ namespace storm {
 	}
 
 	BasicTypeInfo::Kind Type::builtInType() const {
-		return BasicTypeInfo::user;
+		TODO(L"Differentiate between a simple and a complex type!");
+		return TypeKind::userComplex;
 	}
 
 	void Type::doLayout() {
@@ -749,7 +750,7 @@ namespace storm {
 		// Do not add constructor, destructor or deepCopy to the handle if this is a built-in type,
 		// as that allows containers etc to use raw memcpy which is more efficient in many cases.
 		// Also: it prevents infinite loops during startup due to recursive dependencies.
-		bool userType = builtInType() == BasicTypeInfo::user;
+		bool userType = builtInType() == TypeKind::userComplex;
 		const wchar *name = fn->name->c_str();
 		if (wcscmp(name, CTOR) == 0) {
 			if (refThis && params->count() == 2 && params->at(1) == Value(this, true) && userType)

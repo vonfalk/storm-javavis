@@ -72,7 +72,7 @@ namespace storm {
 
 	BasicTypeInfo::Kind MaybeType::builtInType() const {
 		// Tell the world we're a pointer!
-		return BasicTypeInfo::ptr;
+		return TypeKind::ptr;
 	}
 
 	static void initMaybe(InlineParams p) {

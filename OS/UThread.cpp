@@ -818,6 +818,10 @@ namespace os {
 		TODO(L"Implement me!");
 	}
 
+	void doEndDetour() {
+		TODO(L"Implement me!");
+	}
+
 #endif
 
 }

@@ -306,4 +306,3 @@ struct as {
 // Some other libraries we need on Windows.
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "ole32.lib")
-

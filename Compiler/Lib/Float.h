@@ -12,7 +12,7 @@ namespace storm {
 	public:
 		FloatType(Str *name, GcType *type);
 
-		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::floatNr; }
+		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::floatNr; }
 
 	protected:
 		virtual Bool STORM_FN loadAll();

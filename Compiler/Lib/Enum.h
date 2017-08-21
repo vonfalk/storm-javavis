@@ -27,7 +27,7 @@ namespace storm {
 		virtual void STORM_FN add(Named *n);
 
 		// Tell them we're an integer!
-		virtual BasicTypeInfo::Kind builtInType() const { return BasicTypeInfo::unsignedNr; }
+		virtual BasicTypeInfo::Kind builtInType() const { return TypeKind::unsignedNr; }
 
 		// Late init.
 		virtual void lateInit();
