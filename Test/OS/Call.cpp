@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Tracker.h"
 #include "OS/FnCall.h"
+#include "OS/NewFnCall.h"
 
 using namespace os;
 
@@ -35,6 +36,8 @@ wostream &operator <<(wostream &to, const LargeType &o) {
 }
 
 static int testFn1(int p1, int p2) {
+	PVAR(p1);
+	PVAR(p2);
 	return p1 + p2;
 }
 
@@ -253,13 +256,13 @@ BEGIN_TEST(FunctionCopyTest, OS) {
 	CHECK_EQ(call<int>(&testFn1, false, d), 30);
 } END_TEST
 
-BEGIN_TEST(FunctionRefTest, OS) {
+
+BEGIN_TEST_(NewCallTest, OS) {
 	int a = 10;
 	int b = 20;
-	int &refA = a;
-	int &refB = b;
 
-	FnParams par;
-	par.add(a).add(b);
-	CHECK_EQ(call<int>(&testFn1, false, par), 30);
+	FnCallT<int> call = fnCall().add(a).add(b);
+	int z = call.call(&testFn1);
+	PVAR(z);
+
 } END_TEST;
