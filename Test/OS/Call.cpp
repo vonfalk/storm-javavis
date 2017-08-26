@@ -36,8 +36,6 @@ wostream &operator <<(wostream &to, const LargeType &o) {
 }
 
 static int testFn1(int p1, int p2) {
-	PVAR(p1);
-	PVAR(p2);
 	return p1 + p2;
 }
 
@@ -61,6 +59,10 @@ struct Dummy {
 	LargeType data;
 
 	LargeType CODECALL large() {
+		assert(data.v1 == 2);
+		assert(data.v2 == 3);
+		assert(data.v3 == 4);
+		assert(data.v4 == 5);
 		return data;
 	}
 
@@ -77,35 +79,56 @@ static void testVoid(int p1, int p2) {
 	sum = p1 + p2;
 }
 
-BEGIN_TEST(FnCallTest, OS) {
+BEGIN_TEST_(FnCallTest, OS) {
 
-	FnParams p;
 	int p1 = 1, p2 = 2;
-	p.add(p1);
-	p.add(p2);
-	CHECK_EQ(call<int>(&testFn1, false, p), 3);
-	CHECK_EQ(call<int64>(&testFn2, false, p), 0x100000003LL);
-	CHECK_EQ(call<SmallType>(&testType1, false, p), SmallType(3));
-	CHECK_EQ(call<MediumType>(&testType2, false, p), MediumType(1, 2));
-	CHECK_EQ(call<LargeType>(&testType3, false, p), LargeType(1, 2, 3, -1));
-	sum = 0;
-	call<void>(&testVoid, false, p);
-	CHECK_EQ(sum, 3);
 
-	Dummy dummy = { LargeType(2, 3, 4, 5) };
-	Dummy *pDummy = &dummy;
-	FnParams q;
-	q.add(pDummy);
-	CHECK_EQ(call<LargeType>(address(&Dummy::large), true, q), LargeType(2, 3, 4, 5));
+	{
+		FnCall<int> p = fnCall().add(p1).add(p2);
+		CHECK_EQ(p.call(&testFn1, false), 3);
+	}
+
+	{
+		FnCall<int64> p = fnCall().add(p1).add(p2);
+		CHECK_EQ(p.call(&testFn2, false), 0x100000003LL);
+	}
+
+	{
+		FnCall<SmallType> p = fnCall().add(p1).add(p2);
+		CHECK_EQ(p.call(&testType1, false), SmallType(3));
+	}
+
+	{
+		FnCall<MediumType> p = fnCall().add(p1).add(p2);
+		CHECK_EQ(p.call(&testType2, false), MediumType(1, 2));
+	}
+
+	{
+		FnCall<LargeType> p = fnCall().add(p1).add(p2);
+		CHECK_EQ(p.call(&testType3, false), LargeType(1, 2, 3, -1));
+	}
+
+	{
+		sum = 0;
+		FnCall<void> p = fnCall().add(p1).add(p2);
+		p.call(&testVoid, false);
+		CHECK_EQ(sum, 3);
+	}
+
+	{
+		Dummy dummy = { LargeType(2, 3, 4, 5) };
+		Dummy *pDummy = &dummy;
+		FnCall<LargeType> p = fnCall().add(pDummy);
+		CHECK_EQ(p.call(address(&Dummy::large), true), LargeType(2, 3, 4, 5));
+	}
 
 	{
 		void *a = (void *)10;
 		int b = 20;
 		int c = 30;
-		FnParams p; p.add(a).add(b).add(c);
-		CHECK_RUNS(call<void>(address(&Dummy::voidMember), true, p));
+		FnCall<void> p = fnCall().add(a).add(b).add(c);
+		CHECK_RUNS(p.call(address(&Dummy::voidMember), true));
 	}
-
 
 } END_TEST
 
@@ -126,40 +149,36 @@ int shortFn(byte a, int b) {
 	return a + b;
 }
 
-BEGIN_TEST(FunctionParamTest, OS) {
+BEGIN_TEST_(FunctionParamTest, OS) {
 
 	Tracker::clear();
 	{
-		FnParams p;
 		Tracker t(10);
-		p.add(t);
-		call<void>(&trackerFn, false, p);
+		FnCall<void> p = fnCall().add(t);
+		p.call(&trackerFn, false);
 	}
 	CHECK(Tracker::clear());
 
 	Tracker::clear();
 	{
-		FnParams p;
 		Tracker t(10);
-		p.add(t);
-		CHECK_ERROR(call<Tracker>(&trackerError, false, p), UserError);
+		FnCall<Tracker> p = fnCall().add(t);
+		CHECK_ERROR(p.call(&trackerError, false), UserError);
 	}
 	CHECK(Tracker::clear());
 
 	{
-		FnParams p;
 		int a = 0x1, c = 0x20;
 		int64 b = 0x100000000;
-		p.add(a).add(b).add(c);
-		CHECK_EQ(call<int64>(&variedFn, false, p), 0x100000021);
+		FnCall<int64> p = fnCall().add(a).add(b).add(c);
+		CHECK_EQ(p.call(&variedFn, false), 0x100000021);
 	}
 
 	{
-		FnParams p;
 		byte a = 0x10;
 		int b = 0x1010;
-		p.add(a).add(b);
-		CHECK_EQ(call<int>(&shortFn, false, p), 0x1020);
+		FnCall<int> p = fnCall().add(a).add(b);
+		CHECK_EQ(p.call(&shortFn, false), 0x1020);
 	}
 
 } END_TEST
@@ -170,10 +189,11 @@ static Tracker returnTracker() {
 }
 
 
-BEGIN_TEST(FunctionReturnTest, OS) {
+BEGIN_TEST_(FunctionReturnTest, OS) {
 	Tracker::clear();
 	{
-		Tracker t = call<Tracker>(&returnTracker, false);
+		FnCall<Tracker> p = fnCall();
+		Tracker t = p.call(&returnTracker, false);
 		CHECK_EQ(t.data, 22);
 	}
 	CHECK(Tracker::clear());
@@ -196,26 +216,30 @@ static int takeDouble(double d) {
 	return int(d);
 }
 
-BEGIN_TEST(FunctionFloatTest, OS) {
+BEGIN_TEST_(FunctionFloatTest, OS) {
 
 	{
-		int p = 100;
-		CHECK_EQ(call<float>(&returnFloat, false, FnParams().add(p)), 100.0f);
+		int i = 100;
+		FnCall<float> p = fnCall().add(i);
+		CHECK_EQ(p.call(&returnFloat, false), 100.0f);
 	}
 
 	{
 		float f = 100.0f;
-		CHECK_EQ(call<int>(&takeFloat, false, FnParams().add(f)), 100);
+		FnCall<int> p = fnCall().add(f);
+		CHECK_EQ(p.call(&takeFloat, false), 100);
 	}
 
 	{
-		int p = 100;
-		CHECK_EQ(call<double>(&returnDouble, false, FnParams().add(p)), 100.0);
+		int i = 100;
+		FnCall<double> p = fnCall().add(i);
+		CHECK_EQ(p.call(&returnDouble, false), 100.0);
 	}
 
 	{
 		double d = 100.0f;
-		CHECK_EQ(call<int>(&takeDouble, false, FnParams().add(d)), 100);
+		FnCall<int> p = fnCall().add(d);
+		CHECK_EQ(p.call(&takeDouble, false), 100);
 	}
 
 } END_TEST
@@ -228,41 +252,11 @@ LargeType *ptrFn(LargeType *t) {
 	return t;
 }
 
-BEGIN_TEST(FunctionRefPtrTest, OS) {
+BEGIN_TEST_(FunctionRefPtrTest, OS) {
 	LargeType t(1, 2, 3, 4);
 	LargeType *ptrT = &t;
-	FnParams par;
-	par.add(ptrT);
 
-	LargeType *f = &callRef<LargeType>(&refFn, false, par);
-	CHECK_EQ(f, &t);
-	CHECK_EQ(&callRef<LargeType>(&refFn, false, par), &t);
-	CHECK_EQ(call<LargeType*>(&ptrFn, false, par), &t);
-
+	FnCall<LargeType *> c = fnCall().add(ptrT);
+	CHECK_EQ(c.call(&refFn, false), ptrT);
+	CHECK_EQ(c.call(&ptrFn, false), ptrT);
 } END_TEST
-
-
-BEGIN_TEST(FunctionCopyTest, OS) {
-	int a = 10;
-	int b = 20;
-
-	FnParams d;
-	{
-		FnParams c;
-		c.add(a).add(b);
-		d = c;
-	}
-
-	CHECK_EQ(call<int>(&testFn1, false, d), 30);
-} END_TEST
-
-
-BEGIN_TEST_(NewCallTest, OS) {
-	int a = 10;
-	int b = 20;
-
-	FnCallT<int> call = fnCall().add(a).add(b);
-	int z = call.call(&testFn1);
-	PVAR(z);
-
-} END_TEST;

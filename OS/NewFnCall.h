@@ -13,7 +13,7 @@ namespace os {
 	namespace impl {
 
 		// Function declaration used for performing the actual call later on.
-		typedef void (*Thunk)(const void *fn, void **params, void *result);
+		typedef void (*Thunk)(const void *fn, bool member, void **params, void *result);
 
 		// Storing a sequence of parameters.
 		template <class Here, class Prev>
@@ -54,92 +54,8 @@ namespace os {
 		};
 
 
-#ifdef X86
-
-		template <class Result>
-		void NAKED execCall(const void *fn, void **params, void **seq, void *result, nat index) {
-			__asm {
-				mov eax, fn;
-				call fn;
-
-				mov ecx, result;
-				mov [ecx], eax;
-
-				mov esp, ebp;
-				pop ebp;
-				ret;
-			}
-		}
-
-		template <class Par>
-		void NAKED pushParam(const void *fn, void **params, void **seq, void *result, nat index) {
-			__asm {
-				// TODO: Call constructor!
-				mov eax, params;
-				mov ecx, index;
-				dec ecx;
-				mov eax, [eax+ecx*4];
-				push [eax];
-
-				jmp doCallLoop;
-			}
-		}
-
-		template <>
-		void NAKED pushParam<int>(const void *fn, void **params, void **seq, void *result, nat index) {
-			__asm {
-				mov eax, params;
-				mov ecx, index;
-				dec ecx;
-				mov eax, [eax+ecx*4];
-				push [eax];
-				jmp doCallLoop;
-			}
-		}
-
-
-		template <class Par>
-		void fillSeq(void **seq) {
-			seq[Par::count - 1] = &pushParam<Par::HereType>;
-			fillSeq<Par::PrevType>(seq);
-		}
-
-		template <>
-		inline void fillSeq<Param<void, void>>(void **) {}
-
-		// Perform one iteration of the call loop. Elements in 'seq' are assumed to jump back here when they are done.
-		inline void NAKED doCallLoop(const void *fn, void **params, void **seq, void *result, nat index) {
-			__asm {
-				dec index;
-
-				mov eax, seq;
-				mov ecx, index;
-				mov eax, [eax+ecx*4];
-
-				jmp eax;
-			}
-		}
-
-		// Initialize the call loop.
-		inline void NAKED doCall(const void *fn, void **params, void **seq, void *result, nat index) {
-			__asm {
-				push ebp;
-				mov ebp, esp;
-
-				jmp doCallLoop;
-			}
-		}
-
 		template <class Result, class Par>
-		void call(const void *fn, void **params, void *result) {
-			void *seq[Par::count + 1];
-			fillSeq<Par>(seq + 1);
-			seq[0] = &execCall<Result>;
-
-			doCall(fn, params, seq, result, Par::count + 1);
-		}
-
-#endif
+		void call(const void *fn, void **params, void *result);
 
 	}
 
@@ -150,17 +66,17 @@ namespace os {
 	/**
 	 * Storage of the parameters in a type-agnostic way.
 	 */
-	class FnCall {
+	class FnCallRaw {
 	public:
 		// Create from pre-computed data (low-level).
-		FnCall(void **params, impl::Thunk thunk, BasicTypeInfo result);
+		FnCallRaw(void **params, impl::Thunk thunk, BasicTypeInfo result);
 
 		// Destroy.
-		~FnCall();
+		~FnCallRaw();
 
 	protected:
 		// Dummy ctor.
-		FnCall();
+		FnCallRaw();
 
 		// Array containing the source address of the parameters, and a flag indicating wether we're
 		// owning the memory or not.
@@ -179,11 +95,11 @@ namespace os {
 	};
 
 	template <class T>
-	class FnCallT : public FnCall {
+	class FnCall : public FnCallRaw {
 	public:
 		// Create from a 'fnCall' sequence.
 		template <class H, class P>
-		FnCallT(const impl::Param<H, P> &src) {
+		FnCall(const impl::Param<H, P> &src) {
 			nat count = src.count;
 			params(new void *[count], true);
 			src.extract(params());
@@ -193,9 +109,9 @@ namespace os {
 		}
 
 		// Call the function!
-		T call(const void *fn) const {
+		T call(const void *fn, bool member) const {
 			byte result[sizeof(T)];
-			(*thunk)(fn, params(), result);
+			(*thunk)(fn, member, params(), result);
 			T *resPtr = (T *)(void *)result;
 			T tmp = *resPtr;
 			resPtr->~T();
@@ -204,4 +120,27 @@ namespace os {
 
 	};
 
+	template <>
+	class FnCall<void> : public FnCallRaw {
+	public:
+		// Create from a 'fnCall' sequence.
+		template <class H, class P>
+		FnCall(const impl::Param<H, P> &src) {
+			nat count = src.count;
+			params(new void *[count], true);
+			src.extract(params());
+
+			thunk = &impl::call<void, impl::Param<H, P>>;
+			result = typeInfo<void>();
+		}
+
+		// Call the function!
+		void call(const void *fn, bool member) const {
+			(*thunk)(fn, member, params(), null);
+		}
+
+	};
+
 }
+
+#include "NewFnCallX86.h"
