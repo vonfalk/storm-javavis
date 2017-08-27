@@ -56,9 +56,9 @@ namespace storm {
 		R *transformNode(Node *node) {
 			Engine &e = node->engine();
 			const void *fn = transformFunction(runtime::typeOf(node), Value(StormInfo<R>::type(e)), Value());
-			os::FnParams p;
-			p.add(node);
-			return os::call<R *>(fn, true, p);
+
+			os::FnCall<R *> p = os::fnCall().add(node);
+			return p.call(fn, true);
 		}
 
 
@@ -68,10 +68,9 @@ namespace storm {
 			const void *fn = transformFunction(runtime::typeOf(node),
 											Value(StormInfo<R>::type(e)),
 											Value(StormInfo<P>::type(e)));
-			os::FnParams p;
-			p.add(node);
-			p.add(par);
-			return os::call<R *>(fn, true, p);
+
+			os::FnCall<R *> p = os::fnCall().add(node).add(par);
+			return p.call(fn, true);
 		}
 
 	}

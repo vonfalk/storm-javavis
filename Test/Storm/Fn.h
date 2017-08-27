@@ -10,7 +10,8 @@ inline Res runFn(const wchar *name) {
 	assert(f, L"Function " + ::toS(sName) + L" not found!");
 	storm::Value r(StormInfo<Res>::type(e));
 	assert(r.canStore(f->result), L"Invalid return type of " + ::toS(sName) + L"!");
-	return os::call<Res>(f->ref().address(), false);
+	os::FnCall<Res> c = os::fnCall();
+	return c.call(f->ref().address(), false);
 }
 
 template <>
@@ -20,7 +21,8 @@ inline void runFn(const wchar *name) {
 	Function *f = as<Function>(e.scope().find(sName));
 	assert(f, L"Function " + ::toS(sName) + L" not found!");
 	assert(f->result == storm::Value(), L"Invalid return type of " + ::toS(sName) + L"!");
-	return os::call<void>(f->ref().address(), false);
+	os::FnCall<void> c = os::fnCall();
+	return c.call(f->ref().address(), false);
 }
 
 template <class Res, class T>
@@ -32,9 +34,8 @@ inline Res runFn(const wchar *name, T t) {
 	assert(f, L"Function " + ::toS(sName) + L" not found!");
 	storm::Value r(StormInfo<Res>::type(e));
 	assert(r.canStore(f->result), L"Invalid return type of " + ::toS(sName) + L"!");
-	os::FnParams p;
-	p.add(t);
-	return os::call<Res>(f->ref().address(), false, p);
+	os::FnCall<Res> c = os::fnCall().add(t);
+	return c.call(f->ref().address(), false);
 }
 
 template <class Res, class T, class U>
@@ -47,10 +48,8 @@ inline Res runFn(const wchar *name, T t, U u) {
 	assert(f, L"Function " + ::toS(sName) + L" not found!");
 	storm::Value r(StormInfo<Res>::type(e));
 	assert(r.canStore(f->result), L"Invalid return type of " + ::toS(sName) + L"!");
-	os::FnParams p;
-	p.add(t);
-	p.add(u);
-	return os::call<Res>(f->ref().address(), false, p);
+	os::FnCall<Res> c = os::fnCall().add(t).add(u);
+	return c.call(f->ref().address(), false);
 }
 
 
@@ -60,5 +59,6 @@ inline Res runFnUnsafe(const wchar *name) {
 	SimpleName *sName = parseSimpleName(e, name);
 	Function *f = as<Function>(e.scope().find(sName));
 	assert(f, L"Function " + ::toS(sName) + L" not found!");
-	return os::call<Res>(f->ref().address(), false);
+	os::FnCall<Res> c = os::fnCall();
+	return c.call(f->ref().address(), false);
 }

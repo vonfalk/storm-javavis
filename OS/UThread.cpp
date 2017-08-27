@@ -602,37 +602,6 @@ namespace os {
 		push((void *)returnTo);
 	}
 
-	void UThreadData::pushParams(const void *returnTo, const FnParams &params) {
-		nat s = params.totalSize();
-		assert(s % 4 == 0);
-		void **esp = (void **)stack.desc;
-		esp -= s / 4;
-		stack.desc = (StackDesc *)esp;
-		params.copy(esp);
-		push((void *)returnTo);
-	}
-
-	void *UThreadData::pushParams(const FnParams &params, nat minSpace) {
-		minSpace += 30 * 4; // Space for the context and some return addresses.
-		// Extra space for the function. VS fills about 200 machine words of the stack
-		// with random data in the function prolog, so we want to have a good margin here.
-		// In release builds, we can probably reduce this a lot.
-#ifdef DEBUG
-		// In debug builds, the visual studio compiler allocates more stack than needed.
-		// I have removed some waste (including filling with 0xCC) by disabling runtime
-		// checks on relevant functions.
-		minSpace += 120 * 4;
-#endif
-
-		nat s = params.totalSize();
-		assert(s % 4 == 0);
-		void **esp = (void **)stack.desc;
-		void **to = esp - (s + minSpace) / 4;
-		stack.desc = (StackDesc *)esp;
-		params.copy(to);
-		return to;
-	}
-
 	void UThreadData::pushContext(const void *fn) {
 		push((void *)fn); // return to
 		push(0); // ebp

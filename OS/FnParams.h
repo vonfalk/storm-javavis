@@ -1,6 +1,8 @@
 #pragma once
 #include "Utils/TypeInfo.h"
 
+//TODO: Remove this file when Core/Fn is properly ported.
+
 namespace os {
 
 	/**

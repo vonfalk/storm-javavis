@@ -4,6 +4,8 @@
 #include "CloneEnv.h"
 #include "Utils/Templates.h"
 
+#include "OS/FnParams.h"
+
 namespace storm {
 	STORM_PKG(core);
 

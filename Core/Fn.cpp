@@ -96,7 +96,8 @@ namespace storm {
 			// future.result();
 			TODO(L"FIXME!");
 		} else {
-			os::call(toCall, callMember, params, out, type);
+			// os::call(toCall, callMember, params, out, type);
+			TODO(L"FIXME!");
 		}
 	}
 

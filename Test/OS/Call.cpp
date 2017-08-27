@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Tracker.h"
 #include "OS/FnCall.h"
-#include "OS/NewFnCall.h"
 
 using namespace os;
 

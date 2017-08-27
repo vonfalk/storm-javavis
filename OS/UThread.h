@@ -1,6 +1,5 @@
 #pragma once
-#include "FnParams.h"
-#include "NewFnCall.h"
+#include "FnCall.h"
 #include "InlineList.h"
 #include "SortedInlineList.h"
 #include "InlineSet.h"
@@ -223,10 +222,6 @@ namespace os {
 		// Push some parameters on the stack.
 		void pushParams(const void *returnTo, void *param);
 		void pushParams(const void *returnTo, void *param1, void *param2);
-		void pushParams(const void *returnTo, const FnParams &params);
-
-		// Push parameters while leaving some space on the stack.
-		void *pushParams(const FnParams &params, nat space);
 
 		// Allocate some space on the stack.
 		void *alloc(size_t size);
