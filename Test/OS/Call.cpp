@@ -79,7 +79,7 @@ static void testVoid(int p1, int p2) {
 	sum = p1 + p2;
 }
 
-BEGIN_TEST_(FnCallTest, OS) {
+BEGIN_TEST(FnCallTest, OS) {
 
 	int p1 = 1, p2 = 2;
 
@@ -149,7 +149,7 @@ int shortFn(byte a, int b) {
 	return a + b;
 }
 
-BEGIN_TEST_(FunctionParamTest, OS) {
+BEGIN_TEST(FunctionParamTest, OS) {
 
 	Tracker::clear();
 	{
@@ -189,7 +189,7 @@ static Tracker returnTracker() {
 }
 
 
-BEGIN_TEST_(FunctionReturnTest, OS) {
+BEGIN_TEST(FunctionReturnTest, OS) {
 	Tracker::clear();
 	{
 		FnCall<Tracker> p = fnCall();
@@ -216,7 +216,7 @@ static int takeDouble(double d) {
 	return int(d);
 }
 
-BEGIN_TEST_(FunctionFloatTest, OS) {
+BEGIN_TEST(FunctionFloatTest, OS) {
 
 	{
 		int i = 100;
@@ -252,7 +252,7 @@ LargeType *ptrFn(LargeType *t) {
 	return t;
 }
 
-BEGIN_TEST_(FunctionRefPtrTest, OS) {
+BEGIN_TEST(FunctionRefPtrTest, OS) {
 	LargeType t(1, 2, 3, 4);
 	LargeType *ptrT = &t;
 

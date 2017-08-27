@@ -1,5 +1,6 @@
 #pragma once
 #include "FnParams.h"
+#include "NewFnCall.h"
 #include "InlineList.h"
 #include "SortedInlineList.h"
 #include "InlineSet.h"
@@ -83,18 +84,56 @@ namespace os {
 		// Get the currently running UThread.
 		static UThread current();
 
+		// Get the thread data. Mainly for internal use.
+		inline UThreadData *threadData() { return data; }
+
+		// Value representing no thread.
+		static const UThread invalid;
+
+
 		/**
-		 * Spawn a new UThread on the currently running thread, or another thread.
-		 * There are a few variants of spawn here, all of them take some kind of
-		 * function pointer, optionally with parameters to run, followed by a reference
-		 * to the OS thread (Thread *) to run on. If this is left out, or set to null,
-		 * the thread of the caller is used.
-		 * All of these return as soon as the new UThread is set up, they do not
-		 * pre-empt the currently running thread.
+		 * Low-level spawn functions. See 'spawn' below for explanations.
+		 */
+
+		// Spawn a 'void' function.
+		static UThread spawnRaw(const void *fn, bool memberFn, const FnCallRaw &call, const Thread *on = null);
+
+		// Spawn a function, capturing the result in a future.
+		static UThread spawnRaw(const void *fn, bool memberFn, const FnCallRaw &call, FutureBase &result,
+								void *target, const Thread *on = null);
+
+
+		/**
+		 * Spawn a new UThread on the currently running thread, or another thread. There are a few
+		 * variants of spawn here, all of them take some kind of function pointer, optionally with
+		 * parameters to run, followed by a reference to the OS thread (Thread *) to run on. If this
+		 * is left out, or set to null, the thread of the caller is used.
+		 *
+		 * All of these return as soon as the new UThread is set up, they do not pre-empt the
+		 * currently running thread. Note, however, that any parameters are copied before the call
+		 * returns, so there is no need to worry about variables used as parameters going out of
+		 * scope.
 		 */
 
 		// Spawn using a Fn<void, void>.
 		static UThread spawn(const util::Fn<void, void> &fn, const Thread *on = null);
+
+		// Spawn using a FnCall object.
+		static UThread spawn(const void *fn, bool memberFn, const FnCall<void> &call, const Thread *on = null) {
+			return spawnRaw(fn, memberFn, call, on);
+		}
+
+		// Spawn using a FnCall object, providing the result in a Future<T>.
+		template <class R, class Sema>
+		static UThread spawn(const void *fn, bool memberFn, const FnCall<R> &call,
+							Future<R, Sema> &result, const Thread *on = null) {
+			return spawnRaw(fn, memberFn, call, result.impl(), result.data(), on);
+		}
+
+
+		/**
+		 * LEGACY. TODO: REMOVE!
+		 */
 
 		// Spawn using a plain function pointer and parameters. The parameters stored in
 		// 'params' follows the same lifetime rules as FnParams::call() does. No special care
@@ -114,12 +153,6 @@ namespace os {
 							Future<R, Sema> &future, const Thread *on = null) {
 			return spawn(fn, memberFn, params, future.impl(), future.data(), typeInfo<R>(), on);
 		}
-
-		// Get the thread data. Mainly for internal use.
-		inline UThreadData *threadData() { return data; }
-
-		// Value representing no thread.
-		static const UThread invalid;
 
 	private:
 		// Create
@@ -198,6 +231,9 @@ namespace os {
 		// The stack we allocated for this UThread. May be null.
 		void *stackBase;
 		nat stackSize;
+
+		// Move this UThread to another Thread.
+		void move(UThreadState *from, UThreadState *to);
 
 		// Switch from this thread to 'to'.
 		void switchTo(UThreadData *to);
@@ -284,6 +320,23 @@ namespace os {
 		// Notify there is a new stack.
 		void newStack(UThreadData *data);
 
+		/**
+		 * Take a detour to another thread for a while, with the intention to return directly to the
+		 * currently running thread later. Used while spawning threads.
+		 *
+		 * Only a single detour can be active at any point.
+		 *
+		 * Do not take a detour to a thread that is already on the ready queue. It is fine if the
+		 * thread being detoured to is associated with another Thread than the one represented by
+		 * the current UThreadState.
+		 */
+
+		// Take a detour to another UThread. Returns whatever was passed as 'result' to 'endDetour'.
+		void *startDetour(UThreadData *data);
+
+		// End the detour, returning to the thread which called 'startDetour'.
+		void endDetour(void *result = null);
+
 	private:
 		// Data for sleeping threads.
 		struct SleepData {
@@ -324,6 +377,12 @@ namespace os {
 		// Number of threads alive. Always updated using atomics, no locks. Threads
 		// that are waiting and not stored in the 'ready' queue are also counted.
 		nat aliveCount;
+
+		// Thread to return to after the current detour. 'null' if no current detour.
+		UThreadData *detourOrigin;
+
+		// Result from the detour.
+		void *detourResult;
 
 		// Elliminate any exited threads.
 		void reap();

@@ -26,6 +26,10 @@ namespace os {
 	// beginning of another function in the case of newly started UThreads.
 	void doSwitch(StackDesc **newEsp, StackDesc **oldEsp); // can not be static for some reason...
 
+	// Switch back to the previously running UThread, allocating an additional return address on the
+	// stack and remembering the location of that stack so that it can be altered later.
+	void doEndDetour();
+
 	// Allocate a new stack.
 	static void *allocStack(nat size);
 
@@ -135,63 +139,6 @@ namespace os {
 		exitUThread();
 	}
 
-	// Parameters to the spawn-call.
-	struct Params {
-		// Function to call.
-		const void *fn;
-
-		// Member function?
-		bool memberFn;
-
-		// The type to be passed to the future object.
-		BasicTypeInfo resultType;
-	};
-
-	struct FutureParams : Params {
-		// The future to post the result to.
-		FutureBase *future;
-
-		// Where to store the result (not stored inside the future itself).
-		void *target;
-	};
-
-	// 'actuals' is the location on our stack of the parameters to use when calling the function in 'params'.
-	// We disable the initialization check since it clears massive amounts of unused stack space.
-#pragma runtime_checks("", off)
-	static void spawnParams(Params *params, void *actuals) {
-		// Note: Do not call anything strange before we call p->toCall, otherwise
-		// we may overwrite parameters already on the stack!
-
-		try {
-			// Call the function and place the result in the future.
-			call(params->fn, params->memberFn, actuals, null, params->resultType);
-		} catch (...) {
-			onUncaughtException();
-		}
-
-		// Terminate ourselves.
-		exitUThread();
-	}
-
-	static void spawnFuture(FutureParams *params, void *actuals) {
-		// Note: Do not call anything strange before we call p->toCall, otherwise
-		// we may overwrite parameters already on the stack!
-
-		try {
-			// Call the function and place the result in the future.
-			call(params->fn, params->memberFn, actuals, params->target, params->resultType);
-			// Notify success.
-			params->future->posted();
-		} catch (...) {
-			// Post the error.
-			params->future->error();
-		}
-
-		// Terminate ourselves.
-		exitUThread();
-	}
-#pragma runtime_checks("", restore)
-
 	UThread UThread::spawn(const util::Fn<void, void> &fn, const Thread *on) {
 		ThreadData *thread = os::threadData(on);
 		UThreadData *t = UThreadData::create(&thread->uState);
@@ -202,52 +149,144 @@ namespace os {
 		return insert(t, thread);
 	}
 
-	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params, const Thread *on) {
-		ThreadData *thread = os::threadData(on);
+	struct SpawnParams {
+		bool memberFn;
+		void **params;
+		impl::Thunk thunk;
+
+		// Only valid when using futures.
+		void *target;
+		FutureBase *future;
+	};
+
+	static void spawnCall(SpawnParams *params) {
+		try {
+			(*params->thunk)(&doEndDetour, params->memberFn, params->params, null);
+		} catch (...) {
+			onUncaughtException();
+		}
+
+		// Terminate.
+		exitUThread();
+	}
+
+	static void spawnCallFuture(SpawnParams *params) {
+		// We need to save a local copy of 'future' since 'params' reside on the stack of the
+		// caller, which will continue as soon as we try to call the function.
+		FutureBase *future = params->future;
+
+		try {
+			(*params->thunk)(&doEndDetour, params->memberFn, params->params, params->target);
+			future->posted();
+		} catch (...) {
+			future->error();
+		}
+
+		// Terminate.
+		exitUThread();
+	}
+
+	typedef void (*SpawnFn)(SpawnParams *params);
+
+	static UThreadData *spawnHelper(SpawnFn spawn, const void *fn, ThreadData *thread, SpawnParams *params) {
+		// Create a new UThread on the proper thread.
 		UThreadData *t = UThreadData::create(&thread->uState);
 
-		// Copy parameters to the stack of the new thread.
-		Params *p = (Params *)t->alloc(sizeof(Params));
-		p->fn = fn;
-		p->memberFn = memberFn;
-		p->resultType = typeInfo<void>();
+		// Set up the thread for calling 'spawnCall'.
+		t->pushParams(null, params);
+		t->pushContext(spawn);
 
-		// Copy parameters a bit over the top of the stack. Some temporary stack space between is
-		// inserted by the 'pushParams' function, to suit the current platform.
-		void *paramsPos = t->pushParams(params, 0);
+		// Call the newly created UThread on this thread, and make sure to return directly here later.
+		UThreadState *current = UThreadState::current();
+		void *returnAddr = current->startDetour(t);
 
-		// Set up the call!
-		t->pushParams(null, p, paramsPos);
-		t->pushContext(&spawnParams);
+		// Make sure we return to the function we were supposed to call.
+		*(const void **)returnAddr = fn;
 
 		// Done!
+		return t;
+	}
+
+	UThread UThread::spawnRaw(const void *fn, bool memberFn, const FnCallRaw &call, const Thread *on) {
+		ThreadData *thread = os::threadData(on);
+
+		SpawnParams params = {
+			memberFn,
+			call.params(),
+			call.thunk,
+			null,
+			null
+		};
+		UThreadData *t = spawnHelper(&spawnCall, fn, thread, &params);
 		return insert(t, thread);
+	}
+
+	UThread UThread::spawnRaw(const void *fn, bool memberFn, const FnCallRaw &call, FutureBase &result,
+							void *target, const Thread *on) {
+		ThreadData *thread = os::threadData(on);
+
+		SpawnParams params = {
+			memberFn,
+			call.params(),
+			call.thunk,
+			target,
+			&result
+		};
+		UThreadData *t = spawnHelper(&spawnCallFuture, fn, thread, &params);
+		return insert(t, thread);
+	}
+
+
+	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params, const Thread *on) {
+		assert(false, L"NOT SUPPORTED ANYMORE!");
+
+		// ThreadData *thread = os::threadData(on);
+		// UThreadData *t = UThreadData::create(&thread->uState);
+
+		// // Copy parameters to the stack of the new thread.
+		// Params *p = (Params *)t->alloc(sizeof(Params));
+		// p->fn = fn;
+		// p->memberFn = memberFn;
+		// p->resultType = typeInfo<void>();
+
+		// // Copy parameters a bit over the top of the stack. Some temporary stack space between is
+		// // inserted by the 'pushParams' function, to suit the current platform.
+		// void *paramsPos = t->pushParams(params, 0);
+
+		// // Set up the call!
+		// t->pushParams(null, p, paramsPos);
+		// t->pushContext(&spawnParams);
+
+		// // Done!
+		// return insert(t, thread);
 	}
 
 	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params,
 						FutureBase &result, void *target, const BasicTypeInfo &resultType,
 						const Thread *on) {
-		ThreadData *thread = os::threadData(on);
-		UThreadData *t = UThreadData::create(&thread->uState);
+		assert(false, L"NOT SUPPORTED ANYMORE!");
 
-		// Copy parameters to the stack of the new thread.
-		FutureParams *p = (FutureParams *)t->alloc(sizeof(FutureParams));
-		p->fn = fn;
-		p->memberFn = memberFn;
-		p->future = &result;
-		p->target = target;
-		p->resultType = resultType;
+		// ThreadData *thread = os::threadData(on);
+		// UThreadData *t = UThreadData::create(&thread->uState);
 
-		// Copy parameters a bit over the top of the stack. Some temporary stack space between is
-		// inserted by the 'pushParams' function, to suit the current platform.
-		void *paramsPos = t->pushParams(params, 0);
+		// // Copy parameters to the stack of the new thread.
+		// FutureParams *p = (FutureParams *)t->alloc(sizeof(FutureParams));
+		// p->fn = fn;
+		// p->memberFn = memberFn;
+		// p->future = &result;
+		// p->target = target;
+		// p->resultType = resultType;
 
-		// Set up the call to 'spawnParams'.
-		t->pushParams(null, p, paramsPos);
-		t->pushContext(&spawnFuture);
+		// // Copy parameters a bit over the top of the stack. Some temporary stack space between is
+		// // inserted by the 'pushParams' function, to suit the current platform.
+		// void *paramsPos = t->pushParams(params, 0);
 
-		// Done!
-		return insert(t, thread);
+		// // Set up the call to 'spawnParams'.
+		// t->pushParams(null, p, paramsPos);
+		// t->pushContext(&spawnFuture);
+
+		// // Done!
+		// return insert(t, thread);
 	}
 
 
@@ -258,7 +297,7 @@ namespace os {
 	UThreadStack::UThreadStack() : desc(null) {}
 
 	UThreadData::UThreadData(UThreadState *state) :
-		references(0), next(null), owner(null), stackBase(null), stackSize(null) {
+		references(0), next(null), owner(null), stackBase(null), stackSize(0) {
 
 		// Notify the GC that we exist and may contain interesting data.
 		state->newStack(this);
@@ -302,6 +341,7 @@ namespace os {
 		running->addRef();
 
 		aliveCount = 1;
+		detourOrigin = null;
 	}
 
 	UThreadState::~UThreadState() {
@@ -312,6 +352,7 @@ namespace os {
 			atomicDecrement(aliveCount);
 		}
 
+		assert(detourOrigin == null, L"A detour was not properly terminated before terminating the thread.");
 		assert(aliveCount == 0, L"An OS thread tried to terminate before all its UThreads terminated.");
 		assert(stacks.empty(), L"Consistency issue. aliveCount says zero, but we still have stacks we can scan!");
 	}
@@ -477,6 +518,24 @@ namespace os {
 		owner->checkIo();
 	}
 
+	void *UThreadState::startDetour(UThreadData *to) {
+		assert(to->owner == null, L"The UThread is already associated with a thread, can not use it for detour.");
+		assert(detourOrigin == null, L"Can not start multiple detours!");
+		detourOrigin = running;
+		running = to;
+		detourOrigin->switchTo(running);
+		return detourResult;
+	}
+
+	void UThreadState::endDetour(void *result) {
+		assert(detourOrigin, L"No active detour.");
+		detourResult = result;
+		UThreadData *prev = running;
+		running = detourOrigin;
+		detourOrigin = null;
+		prev->switchTo(running);
+	}
+
 	/**
 	 * Machine specific code.
 	 */
@@ -639,7 +698,6 @@ namespace os {
 		push(stack.desc); // current stack-pointer (approximate, this is enough).
 	}
 
-
 #pragma warning (disable: 4733)
 	// Note: we need to keep fs:[4] and fs:[8] updated (stack begin and end) updated
 	// for exceptions to work in our threads. These could be saved through the 'stack'
@@ -654,6 +712,7 @@ namespace os {
 			// Store parameters.
 			mov eax, oldDesc;
 			mov ecx, newDesc;
+			mov edx, newDesc; // Trash edx so that the compiler do not accidentally assume it is untouched.
 
 			// Store state.
 			push ebx;
@@ -690,6 +749,27 @@ namespace os {
 			// Epilog. Bonus: restores ebp!
 			pop ebp;
 			ret;
+		}
+	}
+
+	void doEndDetour2() {
+		// Figure out the return address from the previous function.
+		void *retAddr = null;
+		__asm {
+			lea eax, [ebp+4];
+			mov retAddr, eax;
+		}
+
+		// Then call 'endDetour' of the current UThread.
+		UThreadState::current()->endDetour(retAddr);
+	}
+
+	NAKED void doEndDetour() {
+		// 'allocate' an extra return address by simply calling yet another function. This return
+		// address can be modified to simulate a direct jump to another function with the same
+		// parameters that were passed to this function.
+		__asm {
+			call doEndDetour2;
 		}
 	}
 

@@ -260,15 +260,19 @@ static void trackerFn(Tracker a) {
 BEGIN_TEST(UThreadFnCallTest, OS) {
 	fnCallSum = 0;
 
-	nat a = 10, b = 20;
-	UThread::spawn(&natNatFn, false, FnParams().add(a).add(b));
-	UThread::leave();
-	CHECK_EQ(fnCallSum, 30);
+	{
+		nat a = 10, b = 20;
+		FnCall<void> call = fnCall().add(a).add(b);
+		UThread::spawn(&natNatFn, false, call);
+		UThread::leave();
+		CHECK_EQ(fnCallSum, 30);
+	}
 
 	Tracker::clear();
 	{
 		Tracker t(12);
-		UThread::spawn(&trackerFn, false, FnParams().add(t));
+		FnCall<void> call = fnCall().add(t);
+		UThread::spawn(&trackerFn, false, call);
 		UThread::leave();
 	}
 	CHECK_EQ(fnCallSum, 42);

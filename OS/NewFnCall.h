@@ -67,6 +67,7 @@ namespace os {
 	 * Storage of the parameters in a type-agnostic way.
 	 */
 	class FnCallRaw {
+		friend class UThread;
 	public:
 		// Create from pre-computed data (low-level).
 		FnCallRaw(void **params, impl::Thunk thunk, BasicTypeInfo result);
