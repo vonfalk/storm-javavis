@@ -309,8 +309,8 @@ namespace gui {
 		if (myPainter) {
 			Engine &e = engine();
 			os::Future<void> result;
-			os::FnParams params;
-			params.add(myPainter).add(this);
+			Window *me = this;
+			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(me);
 			os::UThread::spawn(address(&Painter::attach), true, params, result, &Render::thread(e)->thread());
 			result.result();
 		}
@@ -320,8 +320,7 @@ namespace gui {
 		if (myPainter) {
 			Engine &e = engine();
 			os::Future<void> result;
-			os::FnParams params;
-			params.add(myPainter);
+			os::FnCall<void, 2> params = os::fnCall().add(myPainter);
 			os::UThread::spawn(address(&Painter::detach), true, params, result, &Render::thread(e)->thread());
 			result.result();
 		}
@@ -330,7 +329,7 @@ namespace gui {
 	void Window::notifyPainter(Size s) {
 		if (myPainter) {
 			Engine &e = engine();
-			os::FnParams params; params.add(myPainter).add(s);
+			os::FnCall<void, 2> params = os::fnCall().add(myPainter).add(s);
 			os::UThread::spawn(address(&Painter::resize), true, params, &Render::thread(e)->thread());
 		}
 	}
@@ -339,7 +338,7 @@ namespace gui {
 		if (myPainter) {
 			Engine &e = engine();
 			os::Future<void> result;
-			os::FnParams params; params.add(myPainter);
+			os::FnCall<void, 1> params = os::fnCall().add(myPainter);
 			os::UThread::spawn(address(&Painter::repaint), true, params, result, &Render::thread(e)->thread());
 
 			result.result();

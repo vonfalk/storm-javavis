@@ -156,8 +156,8 @@ namespace storm {
 
 	// Helper macro to add a cloned object to a os::FnParams object. We need to keep the cloned
 	// value alive until the function is actually called, so we can not use a function.
-#define FN_ADD_CLONE(T, to, obj, env)				\
-	typename RemoveConst<T>::Type tmp_ ## obj = obj; \
+#define FN_ADD_CLONE(T, to, obj, env)					\
+	typename RemoveConst<T>::Type tmp_ ## obj = obj;	\
 	cloned(tmp_ ## obj, env);							\
 	to.add(tmp_ ## obj);
 

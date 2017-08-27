@@ -91,9 +91,10 @@ namespace storm {
 		// Dispatch to the correct thread.
 
 		if (spawn) {
-			os::FutureSema<os::Sema> future;
-			os::UThread::spawn(toCall, callMember, params, future, out, type, &thread->thread());
-			future.result();
+			// os::FutureSema<os::Sema> future;
+			// os::UThread::spawn(toCall, callMember, params, future, out, type, &thread->thread());
+			// future.result();
+			TODO(L"FIXME!");
 		} else {
 			os::call(toCall, callMember, params, out, type);
 		}

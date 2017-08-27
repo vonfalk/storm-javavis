@@ -405,8 +405,9 @@ namespace storm {
 		const os::Thread &t = TObject::thread->thread();
 		if (t != os::Thread::current()) {
 			// Switch threads...
+			Type *me = this;
 			os::Future<Size, Semaphore> f;
-			os::FnStackParams<2> p; p.add(this);
+			os::FnCall<Size, 1> p = os::fnCall().add(me);
 			os::UThread::spawn(address(&Type::size), true, p, f, &t);
 			return f.result();
 		}
@@ -435,8 +436,9 @@ namespace storm {
 		const os::Thread &t = TObject::thread->thread();
 		if (t != os::Thread::current()) {
 			// Switch threads...
+			Type *me = this;
 			os::Future<const Handle *, Semaphore> f;
-			os::FnStackParams<2> p; p.add(this);
+			os::FnCall<const Handle *, 1> p = os::fnCall().add(me);
 			os::UThread::spawn(address(&Type::handle), true, p, f, &t);
 			return *f.result();
 		}
@@ -468,8 +470,7 @@ namespace storm {
 					os::Thread t = obj->thread->thread();
 					if (t != os::Thread::current()) {
 						// Post a message to that thread (no need to wait).
-						os::FnStackParams<1> params;
-						params.add(object);
+						os::FnCall<void, 1> params = os::fnCall().add(object);
 						os::UThread::spawn(f, true, params, &t);
 						return;
 					}
@@ -509,8 +510,9 @@ namespace storm {
 		const os::Thread &t = TObject::thread->thread();
 		if (t != os::Thread::current()) {
 			// Wrong thread, switch!
+			Type *me = this;
 			os::Future<void *, Semaphore> f;
-			os::FnStackParams<2> p; p.add(this);
+			os::FnCall<void *, 1> p = os::fnCall().add(me);
 			os::UThread::spawn(address(&Type::rawCopyConstructor), true, p, f, &t);
 			return (CopyCtorFn)f.result();
 		}
@@ -546,8 +548,9 @@ namespace storm {
 		const os::Thread &t = TObject::thread->thread();
 		if (t != os::Thread::current()) {
 			// Wrong thread, switch!
+			Type *me = this;
 			os::Future<const GcType *, Semaphore> f;
-			os::FnStackParams<2> p; p.add(this);
+			os::FnCall<const GcType *, 2> p = os::fnCall().add(me);
 			os::UThread::spawn(address(&Type::gcType), true, p, f, &t);
 			return f.result();
 		}

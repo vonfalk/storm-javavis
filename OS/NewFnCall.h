@@ -95,14 +95,19 @@ namespace os {
 		BasicTypeInfo result;
 	};
 
-	template <class T>
+	template <class T, int alloc = -1>
 	class FnCall : public FnCallRaw {
 	public:
 		// Create from a 'fnCall' sequence.
 		template <class H, class P>
 		FnCall(const impl::Param<H, P> &src) {
 			nat count = src.count;
-			params(new void *[count], true);
+			if (alloc < 0) {
+				params(new void *[count], true);
+			} else {
+				assert(alloc >= count, L"Not enough memory allocated to FnCall.");
+				params(memory, false);
+			}
 			src.extract(params());
 
 			thunk = &impl::call<T, impl::Param<H, P>>;
@@ -119,16 +124,23 @@ namespace os {
 			return tmp;
 		}
 
+	private:
+		void *memory[alloc > 0 ? alloc : 1];
 	};
 
-	template <>
-	class FnCall<void> : public FnCallRaw {
+	template <int alloc>
+	class FnCall<void, alloc> : public FnCallRaw {
 	public:
 		// Create from a 'fnCall' sequence.
 		template <class H, class P>
 		FnCall(const impl::Param<H, P> &src) {
 			nat count = src.count;
-			params(new void *[count], true);
+			if (alloc < 0) {
+				params(new void *[count], true);
+			} else {
+				assert(alloc >= count, L"Not enough memory allocated to FnCall.");
+				params(memory, false);
+			}
 			src.extract(params());
 
 			thunk = &impl::call<void, impl::Param<H, P>>;
@@ -140,6 +152,8 @@ namespace os {
 			(*thunk)(fn, member, params(), null);
 		}
 
+	private:
+		void *memory[alloc > 0 ? alloc : 1];
 	};
 
 }

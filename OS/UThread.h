@@ -119,39 +119,16 @@ namespace os {
 		static UThread spawn(const util::Fn<void, void> &fn, const Thread *on = null);
 
 		// Spawn using a FnCall object.
-		static UThread spawn(const void *fn, bool memberFn, const FnCall<void> &call, const Thread *on = null) {
+		template <int P>
+		static UThread spawn(const void *fn, bool memberFn, const FnCall<void, P> &call, const Thread *on = null) {
 			return spawnRaw(fn, memberFn, call, on);
 		}
 
 		// Spawn using a FnCall object, providing the result in a Future<T>.
-		template <class R, class Sema>
-		static UThread spawn(const void *fn, bool memberFn, const FnCall<R> &call,
+		template <class R, int P, class Sema>
+		static UThread spawn(const void *fn, bool memberFn, const FnCall<R, P> &call,
 							Future<R, Sema> &result, const Thread *on = null) {
 			return spawnRaw(fn, memberFn, call, result.impl(), result.data(), on);
-		}
-
-
-		/**
-		 * LEGACY. TODO: REMOVE!
-		 */
-
-		// Spawn using a plain function pointer and parameters. The parameters stored in
-		// 'params' follows the same lifetime rules as FnParams::call() does. No special care
-		// needs to be taken. Note: fn may not return a value!
-		static UThread spawn(const void *fn, bool memberFn, const FnParams &params, const Thread *on = null);
-
-		// Spawn a thread, returning the result in a future. Keep the Future object alive until
-		// it has gotten a result, otherwise we will probably crash! This is the low-level variant.
-		// It may also be used from the 'spawnLater' api by setting 'prealloc' to something other than null.
-		static UThread spawn(const void *fn, bool memberFn, const FnParams &params, FutureBase &result, void *target,
-							const BasicTypeInfo &resultType, const Thread *on = null);
-
-		// Spawn using a plain function pointer and parameters. Places the result (including any exceptions)
-		// in the future object.
-		template <class R, class Sema>
-		static UThread spawn(const void *fn, bool memberFn, const FnParams &params,
-							Future<R, Sema> &future, const Thread *on = null) {
-			return spawn(fn, memberFn, params, future.impl(), future.data(), typeInfo<R>(), on);
 		}
 
 	private:

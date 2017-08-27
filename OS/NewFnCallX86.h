@@ -204,7 +204,7 @@ namespace os {
 		// Helper for invoking a constructor (no exceptions in NAKED functions).
 		template <class T>
 		void create(void *dst, void *src) {
-			new (dst) T(*(T *)src);
+			new (storm::Place(dst)) T(*(T *)src);
 		}
 
 		// Generic parameter. Uses the constructor of the parameter to copy it.

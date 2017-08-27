@@ -34,8 +34,8 @@ namespace storm {
 			running = true;
 			quit = false;
 
-			os::FnStackParams<2> params;
-			params.add(this);
+			WorkQueue *me = this;
+			os::FnCall<void, 1> params = os::fnCall().add(me);
 			os::UThread::spawn(address(&WorkQueue::workerMain), true, params);
 		}
 

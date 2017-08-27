@@ -471,7 +471,8 @@ namespace storm {
 						BasicTypeInfo *resultType, Thread *on) {
 		os::FutureSema<os::Sema> future;
 		const os::Thread *thread = on ? &on->thread() : null;
-		os::UThread::spawn(fn, member, *params, future, result, *resultType, thread);
+		assert(false, L"FIXME!");
+		// os::UThread::spawn(fn, member, *params, future, result, *resultType, thread);
 		future.result();
 	}
 
@@ -479,7 +480,8 @@ namespace storm {
 						BasicTypeInfo *resultType, Thread *on) {
 		os::FutureBase *future = result->rawFuture();
 		const os::Thread *thread = on ? &on->thread() : null;
-		os::UThread::spawn(fn, member, *params, *future, result->rawResult(), *resultType, thread);
+		assert(false, L"FIXME!");
+		// os::UThread::spawn(fn, member, *params, *future, result->rawResult(), *resultType, thread);
 	}
 
 	/**

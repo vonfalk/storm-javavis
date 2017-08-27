@@ -163,7 +163,8 @@ namespace storm {
 			// Note: we're blocking the calling thread entirely since we would otherwise possibly
 			// let other UThreads run where they are not expected to.
 			os::Future<const void *, Semaphore> result;
-			os::UThread::spawn(&LazyCode::updateCodeLocal, true, os::FnParams().add(me), result, &cThread->thread());
+			os::FnCall<const void *, 1> params = os::fnCall().add(me);
+			os::UThread::spawn(&LazyCode::updateCodeLocal, true, params, result, &cThread->thread());
 			return result.result();
 		}
 	}

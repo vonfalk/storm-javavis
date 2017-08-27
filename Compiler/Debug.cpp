@@ -96,7 +96,7 @@ namespace storm {
 			const os::Thread &target = s->thread->thread();
 			if (os::Thread::current() != target) {
 				os::Future<void> fut;
-				os::FnParams p; p.add(s);
+				os::FnCall<void, 1> p = os::fnCall().add(s);
 				typedef void (*PrintFn)(Object *);
 				os::UThread::spawn((PrintFn)&print, false, p, fut, &target);
 				fut.result();

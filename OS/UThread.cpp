@@ -237,59 +237,6 @@ namespace os {
 	}
 
 
-	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params, const Thread *on) {
-		assert(false, L"NOT SUPPORTED ANYMORE!");
-
-		// ThreadData *thread = os::threadData(on);
-		// UThreadData *t = UThreadData::create(&thread->uState);
-
-		// // Copy parameters to the stack of the new thread.
-		// Params *p = (Params *)t->alloc(sizeof(Params));
-		// p->fn = fn;
-		// p->memberFn = memberFn;
-		// p->resultType = typeInfo<void>();
-
-		// // Copy parameters a bit over the top of the stack. Some temporary stack space between is
-		// // inserted by the 'pushParams' function, to suit the current platform.
-		// void *paramsPos = t->pushParams(params, 0);
-
-		// // Set up the call!
-		// t->pushParams(null, p, paramsPos);
-		// t->pushContext(&spawnParams);
-
-		// // Done!
-		// return insert(t, thread);
-	}
-
-	UThread UThread::spawn(const void *fn, bool memberFn, const FnParams &params,
-						FutureBase &result, void *target, const BasicTypeInfo &resultType,
-						const Thread *on) {
-		assert(false, L"NOT SUPPORTED ANYMORE!");
-
-		// ThreadData *thread = os::threadData(on);
-		// UThreadData *t = UThreadData::create(&thread->uState);
-
-		// // Copy parameters to the stack of the new thread.
-		// FutureParams *p = (FutureParams *)t->alloc(sizeof(FutureParams));
-		// p->fn = fn;
-		// p->memberFn = memberFn;
-		// p->future = &result;
-		// p->target = target;
-		// p->resultType = resultType;
-
-		// // Copy parameters a bit over the top of the stack. Some temporary stack space between is
-		// // inserted by the 'pushParams' function, to suit the current platform.
-		// void *paramsPos = t->pushParams(params, 0);
-
-		// // Set up the call to 'spawnParams'.
-		// t->pushParams(null, p, paramsPos);
-		// t->pushContext(&spawnFuture);
-
-		// // Done!
-		// return insert(t, thread);
-	}
-
-
 	/**
 	 * UThread data and UThreadStack.
 	 */
