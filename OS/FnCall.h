@@ -10,10 +10,10 @@ namespace os {
 	 * fnCall<Result>().add(x).add(y)
 	 */
 
-	namespace impl {
+	// Function declaration used for performing the actual call later on.
+	typedef void (*CallThunk)(const void *fn, bool member, void **params, void *first, void *result);
 
-		// Function declaration used for performing the actual call later on.
-		typedef void (*Thunk)(const void *fn, bool member, void **params, void *result);
+	namespace impl {
 
 		// Storing a sequence of parameters.
 		template <class Here, class Prev>
@@ -70,10 +70,15 @@ namespace os {
 		friend class UThread;
 	public:
 		// Create from pre-computed data (low-level).
-		FnCallRaw(void **params, impl::Thunk thunk, BasicTypeInfo result);
+		FnCallRaw(void **params, CallThunk thunk);
 
 		// Destroy.
 		~FnCallRaw();
+
+		// Helper to invoke 'thunk'.
+		inline void callRaw(const void *fn, bool member, void *first, void *result) const {
+			(*thunk)(fn, member, params(), first, result);
+		}
 
 	protected:
 		// Dummy ctor.
@@ -83,16 +88,20 @@ namespace os {
 		// owning the memory or not.
 		size_t paramsData;
 
-		// Get/set 'params'.
-		void **params() const;
+		// Set 'params'.
 		bool freeParams() const;
 		void params(void **data, bool owner);
 
-		// Function to invoke in order to copy parameters and perform the actual call.
-		impl::Thunk thunk;
+		// Get 'params'.
+		void **params() const;
 
-		// Type information about the return type.
-		BasicTypeInfo result;
+		// Function to invoke in order to copy parameters and perform the actual call.
+		CallThunk thunk;
+
+	private:
+		// Copy and assignment are not supported.
+		FnCallRaw(const FnCallRaw &o);
+		FnCallRaw &operator =(const FnCallRaw &o);
 	};
 
 	template <class T, int alloc = -1>
@@ -111,13 +120,12 @@ namespace os {
 			src.extract(params());
 
 			thunk = &impl::call<T, impl::Param<H, P>>;
-			result = typeInfo<T>();
 		}
 
-		// Call the function!
-		T call(const void *fn, bool member) const {
+		// Call the function, optionally adding a first parameter.
+		T call(const void *fn, bool member, void *first = null) const {
 			byte result[sizeof(T)];
-			(*thunk)(fn, member, params(), result);
+			(*thunk)(fn, member, params(), first, result);
 			T *resPtr = (T *)(void *)result;
 			T tmp = *resPtr;
 			resPtr->~T();
@@ -144,12 +152,11 @@ namespace os {
 			src.extract(params());
 
 			thunk = &impl::call<void, impl::Param<H, P>>;
-			result = typeInfo<void>();
 		}
 
-		// Call the function!
-		void call(const void *fn, bool member) const {
-			(*thunk)(fn, member, params(), null);
+		// Call the function, optionally adding a first parameter.
+		void call(const void *fn, bool member, void *first = null) const {
+			(*thunk)(fn, member, params(), first, null);
 		}
 
 	private:

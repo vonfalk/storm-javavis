@@ -151,8 +151,9 @@ namespace os {
 
 	struct SpawnParams {
 		bool memberFn;
+		void *first;
 		void **params;
-		impl::Thunk thunk;
+		CallThunk thunk;
 
 		// Only valid when using futures.
 		void *target;
@@ -161,7 +162,7 @@ namespace os {
 
 	static void spawnCall(SpawnParams *params) {
 		try {
-			(*params->thunk)(&doEndDetour, params->memberFn, params->params, null);
+			(*params->thunk)(&doEndDetour, params->memberFn, params->params, params->first, null);
 		} catch (...) {
 			onUncaughtException();
 		}
@@ -176,7 +177,7 @@ namespace os {
 		FutureBase *future = params->future;
 
 		try {
-			(*params->thunk)(&doEndDetour, params->memberFn, params->params, params->target);
+			(*params->thunk)(&doEndDetour, params->memberFn, params->params, params->first, params->target);
 			future->posted();
 		} catch (...) {
 			future->error();
@@ -207,11 +208,12 @@ namespace os {
 		return t;
 	}
 
-	UThread UThread::spawnRaw(const void *fn, bool memberFn, const FnCallRaw &call, const Thread *on) {
+	UThread UThread::spawnRaw(const void *fn, bool memberFn, void *first, const FnCallRaw &call, const Thread *on) {
 		ThreadData *thread = os::threadData(on);
 
 		SpawnParams params = {
 			memberFn,
+			first,
 			call.params(),
 			call.thunk,
 			null,
@@ -221,12 +223,13 @@ namespace os {
 		return insert(t, thread);
 	}
 
-	UThread UThread::spawnRaw(const void *fn, bool memberFn, const FnCallRaw &call, FutureBase &result,
+	UThread UThread::spawnRaw(const void *fn, bool memberFn, void *first, const FnCallRaw &call, FutureBase &result,
 							void *target, const Thread *on) {
 		ThreadData *thread = os::threadData(on);
 
 		SpawnParams params = {
 			memberFn,
+			first,
 			call.params(),
 			call.thunk,
 			target,

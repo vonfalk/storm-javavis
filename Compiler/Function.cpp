@@ -467,7 +467,7 @@ namespace storm {
 	 * Low-level functions called by the generated code.
 	 */
 
-	void spawnThreadResult(const void *fn, bool member, const os::FnParams *params, void *result,
+	void spawnThreadResult(const void *fn, bool member, const os::FnCallRaw *params, void *result,
 						BasicTypeInfo *resultType, Thread *on) {
 		os::FutureSema<os::Sema> future;
 		const os::Thread *thread = on ? &on->thread() : null;
@@ -476,7 +476,7 @@ namespace storm {
 		future.result();
 	}
 
-	void spawnThreadFuture(const void *fn, bool member, const os::FnParams *params, FutureBase *result,
+	void spawnThreadFuture(const void *fn, bool member, const os::FnCallRaw *params, FutureBase *result,
 						BasicTypeInfo *resultType, Thread *on) {
 		os::FutureBase *future = result->rawFuture();
 		const os::Thread *thread = on ? &on->thread() : null;

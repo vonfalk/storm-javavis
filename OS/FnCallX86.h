@@ -12,7 +12,10 @@ namespace os {
 	namespace impl {
 
 		// Params passed to all 'functions' inside the loop. All parameter lists must match exactly.
-#define LOOP_PARAMS const void *fn, void **params, void **seq, void *result, nat index, void *src, void *dst
+#define LOOP_PARAMS const void *fn, void **params, void **seq, void *result, nat index, void *first, void *src, void *dst
+
+		// Number of elements appended to the beginning of 'params'.
+#define SEQ_OFFSET 2
 
 		// Perform one iteration of the call loop. Elements in 'seq' are assumed to jump back here when they are done.
 		inline void NAKED doCallLoop(LOOP_PARAMS) {
@@ -222,7 +225,7 @@ namespace os {
 				// Read 'src' from 'params'.
 				mov eax, params;
 				mov ecx, index;
-				dec ecx;
+				sub ecx, SEQ_OFFSET;
 				mov eax, [eax+ecx*4];
 				mov src, eax;
 			}
@@ -242,7 +245,7 @@ namespace os {
 			__asm {
 				mov eax, params;
 				mov ecx, index;
-				dec ecx;
+				sub ecx, SEQ_OFFSET;
 				mov eax, [eax+ecx*4];
 				push [eax];
 				jmp doCallLoop;
@@ -255,7 +258,7 @@ namespace os {
 			__asm {
 				mov eax, params;
 				mov ecx, index;
-				dec ecx;
+				sub ecx, SEQ_OFFSET;
 				mov eax, [eax+ecx*4];
 				push [eax];
 				jmp doCallLoop;
@@ -268,7 +271,7 @@ namespace os {
 			__asm {
 				mov eax, params;
 				mov ecx, index;
-				dec ecx;
+				sub ecx, SEQ_OFFSET;
 				mov eax, [eax+ecx*4];
 				push [eax];
 				jmp doCallLoop;
@@ -281,7 +284,7 @@ namespace os {
 			__asm {
 				mov eax, params;
 				mov ecx, index;
-				dec ecx;
+				sub ecx, SEQ_OFFSET;
 				mov eax, [eax+ecx*4];
 				push [eax];
 				jmp doCallLoop;
@@ -294,7 +297,7 @@ namespace os {
 			__asm {
 				mov eax, params;
 				mov ecx, index;
-				dec ecx;
+				sub ecx, SEQ_OFFSET;
 				mov eax, [eax+ecx*4];
 				push [eax];
 				jmp doCallLoop;
@@ -307,7 +310,7 @@ namespace os {
 			__asm {
 				mov eax, params;
 				mov ecx, index;
-				dec ecx;
+				sub ecx, SEQ_OFFSET;
 				mov eax, [eax+ecx*4];
 				push [eax+4];
 				push [eax+0];
@@ -321,7 +324,7 @@ namespace os {
 			__asm {
 				mov eax, params;
 				mov ecx, index;
-				dec ecx;
+				sub ecx, SEQ_OFFSET;
 				mov eax, [eax+ecx*4];
 				push [eax+4];
 				push [eax+0];
@@ -335,7 +338,7 @@ namespace os {
 			__asm {
 				mov eax, params;
 				mov ecx, index;
-				dec ecx;
+				sub ecx, SEQ_OFFSET;
 				mov eax, [eax+ecx*4];
 				push [eax];
 				jmp doCallLoop;
@@ -348,10 +351,17 @@ namespace os {
 			__asm {
 				mov eax, params;
 				mov ecx, index;
-				dec ecx;
+				sub ecx, SEQ_OFFSET;
 				mov eax, [eax+ecx*4];
 				push [eax+4];
 				push [eax+0];
+				jmp doCallLoop;
+			}
+		}
+
+		inline void NAKED pushFirst(LOOP_PARAMS) {
+			__asm {
+				push first;
 				jmp doCallLoop;
 			}
 		}
@@ -412,15 +422,19 @@ namespace os {
 		inline void fillSeq<Param<void, void>>(void **) {}
 
 		template <class Result, class Par>
-		void call(const void *fn, bool member, void **params, void *result) {
-			void *seq[Par::count + 1];
-			fillSeq<Par>(seq + 1);
-			seq[0] = CallInfo<Result>::exec(member);
+		void call(const void *fn, bool member, void **params, void *first, void *result) {
+			void *seq[Par::count + SEQ_OFFSET];
+			fillSeq<Par>(seq + SEQ_OFFSET);
 
-			doCall(fn, params, seq, result, Par::count + 1, null, null);
+			nat pos = SEQ_OFFSET;
+			if (first)
+				seq[--pos] = &pushFirst;
+			seq[--pos] = CallInfo<Result>::exec(member);
+
+			doCall(fn, params, seq, result, Par::count + SEQ_OFFSET, first, null, null);
 		}
 
-
+#undef SEQ_OFFSET
 #undef LOOP_PARAMS
 
 	}

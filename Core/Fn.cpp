@@ -5,6 +5,10 @@
 
 namespace storm {
 
+	/**
+	 * Targets.
+	 */
+
 	RawFnTarget::RawFnTarget(const void *ptr) : data(ptr) {}
 
 	void RawFnTarget::cloneTo(void *to, size_t size) const {
@@ -20,6 +24,10 @@ namespace storm {
 		*to << L"C++ function @" << hex(data);
 	}
 
+
+	/**
+	 * The function pointer!
+	 */
 
 	FnBase::FnBase(const void *fn, const RootObject *thisPtr, Bool member, Thread *thread) {
 		callMember = member;
@@ -70,34 +78,30 @@ namespace storm {
 			return thread;
 	}
 
-	void FnBase::callRaw(void *out, const BasicTypeInfo &type, os::FnParams &params, const TObject *first, CloneEnv *env) const {
+	void FnBase::callRaw(void *out, const os::FnCallRaw &params, const TObject *first, CloneEnv *env) const {
 		const void *toCall = target()->ptr();
 
 		Thread *thread = runOn(first);
 		bool spawn = needsCopy(first);
 
+		void *addFirst = null;
 		if (thisPtr) {
-			const RootObject *p = thisPtr;
+			addFirst = (void *)thisPtr;
 			if (spawn) {
 				if (!env)
 					env = new (this) CloneEnv();
 				// In this case, 'p' has to be derived from Object.
-				p = clone((Object *)p, env);
+				addFirst = clone((Object *)addFirst, env);
 			}
-
-			params.addFirst(p);
 		}
 
-		// Dispatch to the correct thread.
-
+		// Dispatch to the proper thread.
 		if (spawn) {
-			// os::FutureSema<os::Sema> future;
-			// os::UThread::spawn(toCall, callMember, params, future, out, type, &thread->thread());
-			// future.result();
-			TODO(L"FIXME!");
+			os::FutureSema<os::Sema> future;
+			os::UThread::spawnRaw(toCall, callMember, addFirst, params, future, out, &thread->thread());
+			future.result();
 		} else {
-			// os::call(toCall, callMember, params, out, type);
-			TODO(L"FIXME!");
+			params.callRaw(toCall, callMember, addFirst, out);
 		}
 	}
 

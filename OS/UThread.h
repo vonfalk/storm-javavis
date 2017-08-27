@@ -95,10 +95,12 @@ namespace os {
 		 */
 
 		// Spawn a 'void' function.
-		static UThread spawnRaw(const void *fn, bool memberFn, const FnCallRaw &call, const Thread *on = null);
+		static UThread spawnRaw(const void *fn, bool memberFn, void *firstParam,
+								const FnCallRaw &call, const Thread *on = null);
 
 		// Spawn a function, capturing the result in a future.
-		static UThread spawnRaw(const void *fn, bool memberFn, const FnCallRaw &call, FutureBase &result,
+		static UThread spawnRaw(const void *fn, bool memberFn, void *firstParam,
+								const FnCallRaw &call, FutureBase &result,
 								void *target, const Thread *on = null);
 
 
@@ -120,14 +122,14 @@ namespace os {
 		// Spawn using a FnCall object.
 		template <int P>
 		static UThread spawn(const void *fn, bool memberFn, const FnCall<void, P> &call, const Thread *on = null) {
-			return spawnRaw(fn, memberFn, call, on);
+			return spawnRaw(fn, memberFn, null, call, on);
 		}
 
 		// Spawn using a FnCall object, providing the result in a Future<T>.
 		template <class R, int P, class Sema>
 		static UThread spawn(const void *fn, bool memberFn, const FnCall<R, P> &call,
 							Future<R, Sema> &result, const Thread *on = null) {
-			return spawnRaw(fn, memberFn, call, result.impl(), result.data(), on);
+			return spawnRaw(fn, memberFn, null, call, result.impl(), result.data(), on);
 		}
 
 	private:

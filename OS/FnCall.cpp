@@ -5,10 +5,9 @@ namespace os {
 
 	FnCallRaw::FnCallRaw() {}
 
-	FnCallRaw::FnCallRaw(void **params, impl::Thunk thunk, BasicTypeInfo result) {
+	FnCallRaw::FnCallRaw(void **params, CallThunk thunk) {
 		this->params(params, false);
 		this->thunk = thunk;
-		this->result = result;
 	}
 
 	FnCallRaw::~FnCallRaw() {

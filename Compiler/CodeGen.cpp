@@ -226,14 +226,16 @@ namespace storm {
 		Size s = Size::sPtr;
 		s += Size::sNat;
 		s += Size::sNat;
-		assert(s.current() == sizeof(os::FnParams), L"Please update the size here!");
+		// assert(s.current() == sizeof(os::FnParams), L"Please update the size here!");
+		assert(false, L"FIXME");
 		return s;
 	}
 
 	static code::Size fnParamSize() {
 		Size s = Size::sPtr * 3;
 		s += Size::sNat;
-		assert(s.current() == sizeof(os::FnParams::Param), L"Please update the size here!");
+		// assert(s.current() == sizeof(os::FnParams::Param), L"Please update the size here!");
+		assert(false, L"FIXME");
 		return s;
 	}
 

@@ -2,9 +2,8 @@
 #include "Object.h"
 #include "TObject.h"
 #include "CloneEnv.h"
+#include "OS/FnCall.h"
 #include "Utils/Templates.h"
-
-#include "OS/FnParams.h"
 
 namespace storm {
 	STORM_PKG(core);
@@ -60,6 +59,7 @@ namespace storm {
 		const void *data;
 	};
 
+
 	/**
 	 * Base class for a function pointer.
 	 */
@@ -91,10 +91,10 @@ namespace storm {
 		// and is used to decide if a thread call is to be made or not.
 		// Note: Does *not* copy parameters if needed, but handles the return value properly.
 		// Note: if 'params' are statically allocated, make sure it has room for at least one more element!
-		template <class R>
-		R callRaw(os::FnParams &params, const TObject *first, CloneEnv *env) const {
+		template <class R, int C>
+		R callRaw(const os::FnCall<R, C> &params, const TObject *first, CloneEnv *env) const {
 			byte d[sizeof(R)];
-			callRaw(d, typeInfo<R>(), params, first, env);
+			callRaw(d, params, first, env);
 			R *result = (R *)d;
 			R copy = *result;
 			result->~R();
@@ -107,13 +107,13 @@ namespace storm {
 			return copy;
 		}
 
-		template <>
-		void callRaw(os::FnParams &params, const TObject *first, CloneEnv *env) const {
-			callRaw(null, typeInfo<void>(), params, first, env);
+		template <int C>
+		void callRaw(const os::FnCall<void, C> &params, const TObject *first, CloneEnv *env) const {
+			callRaw(null, params, first, env);
 		}
 
 		// Call function with a pointer to the return value.
-		void callRaw(void *output, const BasicTypeInfo &type, os::FnParams &params, const TObject *first, CloneEnv *env) const;
+		void callRaw(void *output, const os::FnCallRaw &params, const TObject *first, CloneEnv *env) const;
 
 		// Do we need to copy the parameters for this function given the first TObject?
 		bool CODECALL needsCopy(const TObject *first) const;
@@ -147,7 +147,7 @@ namespace storm {
 
 	/**
 	 * Get 'x' as a TObject.
-	 * Note: regular overloads have higher priority than templates as long as no implicit conversion have to be made.
+	 * Note: regular overloads have higher priority than templates as long as no implicit conversion has to be made.
 	 */
 	template <class T>
 	inline const TObject *asTObject(const T &) { return null; }
@@ -158,10 +158,9 @@ namespace storm {
 
 	// Helper macro to add a cloned object to a os::FnParams object. We need to keep the cloned
 	// value alive until the function is actually called, so we can not use a function.
-#define FN_ADD_CLONE(T, to, obj, env)					\
-	typename RemoveConst<T>::Type tmp_ ## obj = obj;	\
-	cloned(tmp_ ## obj, env);							\
-	to.add(tmp_ ## obj);
+#define FN_CLONE(T, to, obj, env)						\
+	typename RemoveConst<T>::Type c_ ## obj = obj;		\
+	cloned(c_ ## obj, env)
 
 	/**
 	 * C++ implementation. Supports up to two parameters.
@@ -189,15 +188,13 @@ namespace storm {
 
 			if (needsCopy(first)) {
 				CloneEnv *env = new (this) CloneEnv();
-				os::FnStackParams<3> params;
-				FN_ADD_CLONE(P1, params, p1, env);
-				FN_ADD_CLONE(P2, params, p2, env);
-				return callRaw<R>(params, first, env);
+				FN_CLONE(P1, params, p1, env);
+				FN_CLONE(P2, params, p2, env);
+				os::FnCall<R, 2> params = os::fnCall().add(c_p1).add(c_p2);
+				return callRaw(params, first, env);
 			} else {
-				os::FnStackParams<3> params;
-				params.add(p1);
-				params.add(p2);
-				return callRaw<R>(params, first, null);
+				os::FnCall<R, 2> params = os::fnCall().add(p1).add(p2);
+				return callRaw(params, first, null);
 			}
 		}
 	};
@@ -226,13 +223,12 @@ namespace storm {
 
 			if (needsCopy(first)) {
 				CloneEnv *env = new (this) CloneEnv();
-				os::FnStackParams<2> params;
-				FN_ADD_CLONE(P1, params, p1, env);
-				return callRaw<R>(params, first, env);
+				FN_CLONE(P1, params, p1, env);
+				os::FnCall<R, 1> params = os::fnCall().add(c_p1);
+				return callRaw(params, first, env);
 			} else {
-				os::FnStackParams<2> params;
-				params.add(p1);
-				return callRaw<R>(params, first, null);
+				os::FnCall<R, 1> params = os::fnCall().add(p1);
+				return callRaw(params, first, null);
 			}
 		}
 	};
@@ -257,14 +253,9 @@ namespace storm {
 
 		// Call the function.
 		R call() const {
-			if (needsCopy(null)) {
-				CloneEnv *env = new (this) CloneEnv();
-				os::FnStackParams<1> params;
-				return callRaw<R>(params, null, env);
-			} else {
-				os::FnStackParams<1> params;
-				return callRaw<R>(params, null, null);
-			}
+			// Note: 'callRaw' will create a CloneEnv if it requires one in this case.
+			os::FnCall<R, 1> params = os::fnCall();
+			return callRaw(params, null, null);
 		}
 	};
 
@@ -303,5 +294,7 @@ namespace storm {
 	Fn<R, P1, P2> *fnPtr(Engine &e, R (CODECALL Q::*fn)(P1, P2), const Q *obj) {
 		return new (e) Fn<R, P1, P2>(fn, obj);
 	}
+
+#undef FN_CLONE
 
 }

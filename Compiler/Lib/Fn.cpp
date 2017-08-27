@@ -174,9 +174,10 @@ namespace storm {
 		return s;
 	}
 
-	void CODECALL fnCallRaw(FnBase *b, void *output, BasicTypeInfo *type, os::FnParams *params, TObject *first) {
+	void CODECALL fnCallRaw(FnBase *b, void *output, BasicTypeInfo *type, os::FnCallRaw *params, TObject *first) {
 		// TODO: We can provide a single CloneEnv so that all parameters are cloned uniformly.
-		return b->callRaw(output, *type, *params, first, null);
+		// b->callRaw(output, *type, *params, first, null);
+		assert(false, L"FIXME");
 	}
 
 	class RefFnTarget : public FnTarget {

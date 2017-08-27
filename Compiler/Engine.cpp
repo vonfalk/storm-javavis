@@ -282,16 +282,19 @@ namespace storm {
 	}
 
 	static void fnParamsCtor(void *memory, void *ptr) {
-		new (memory) os::FnParams(ptr);
+		// new (memory) os::FnParams(ptr);
+		assert(false, L"FIXME!");
 	}
 
-	static void fnParamsDtor(os::FnParams *o) {
-		o->~FnParams();
+	static void fnParamsDtor(os::FnCallRaw *o) {
+		// o->~FnParams();
+		assert(false, L"FIXME!");
 	}
 
-	static void fnParamsAdd(os::FnParams *obj, os::FnParams::CopyFn copy, os::FnParams::DestroyFn destroy,
+	static void fnParamsAdd(os::FnCallRaw *obj, void *copy, void *destroy,
 							size_t size, bool isFloat, const void *value) {
-		obj->add(copy, destroy, size, isFloat, value);
+		// obj->add(copy, destroy, size, isFloat, value);
+		assert(false, L"FIXME!");
 	}
 
 	static void *allocType(Type *t) {
