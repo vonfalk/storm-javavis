@@ -182,13 +182,6 @@ namespace storm {
 	void Function::localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *res, code::Ref ref) {
 		using namespace code;
 
-		if (::toS(identifier()) == L"lang.bs.NameParam.__init(lang.bs.NameParam, core.lang.SrcName, core.lang.SStr)") {
-			// Note: it seems the reference of params[0] has disappeared at this point! This causes
-			// the calling convention to be broken and everything to fail.
-			PLN(this->params);
-			DebugBreak();
-		}
-
 		if (result == Value()) {
 			addParams(to, params, code::Var());
 
@@ -262,7 +255,8 @@ namespace storm {
 		*to->l << begin(b);
 		CodeGen *sub = to->child(b);
 
-		PrepareResult r = prepareThreadCall(sub, params);
+		// Create the parameters.
+		Var par = createFnCall(sub, this->params, params, true);
 
 		// Where shall we store the result (store the pointer to it in ptrB)?
 		VarInfo resultPos;
@@ -274,46 +268,73 @@ namespace storm {
 			*to->l << lea(ptrB, resultPos.v);
 		}
 
-		Ref fn = ref();
-		if (RefSource *t = threadThunk())
-			fn = Ref(t);
-
-		// Describe the return type.
-		Var returnType = createBasicTypeInfo(to, this->result);
+		Ref thunk = Ref(threadThunk());
 
 		// Spawn the thread!
-		*to->l << lea(ptrA, r.params);
-		*to->l << lea(ptrC, returnType);
-		*to->l << fnParam(fn);
-		*to->l << fnParam(toOp(isMember()));
-		*to->l << fnParam(ptrA);
-		*to->l << fnParam(ptrB);
-		*to->l << fnParam(ptrC);
-		*to->l << fnParam(thread);
+		*to->l << lea(ptrA, par);
+		*to->l << fnParam(ref()); // fn
+		*to->l << fnParam(toOp(isMember())); // member
+		*to->l << fnParam(thunk); // thunk
+		*to->l << fnParam(ptrA); // params
+		*to->l << fnParam(ptrB); // result
+		*to->l << fnParam(thread); // on
 		*to->l << fnCall(e.ref(Engine::rSpawnResult), valVoid());
+		resultPos.created(to);
+
+		// Clone the result.
+		if (result.isValue() && !result.isBuiltIn()) {
+			if (Function *f = result.type->deepCopyFn()) {
+				Var env = allocObject(sub, CloneEnv::stormType(e));
+				*to->l << fnParam(resultPos.v);
+				*to->l << fnParam(env);
+				*to->l << fnCall(f->ref(), valVoid());
+			}
+		} else if (result.isClass()) {
+			*to->l << fnParam(resultPos.v);
+			*to->l << fnCall(cloneFn(result.type)->ref(), valPtr());
+			*to->l << mov(resultPos.v, ptrA);
+		}
 
 		*to->l << end(b);
-		resultPos.created(to);
 	}
 
-	Function::PrepareResult Function::prepareThreadCall(CodeGen *to, Array<code::Operand> *params) {
+	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result) {
+		asyncThreadCall(to, params, result, ptrConst(Offset()));
+	}
+
+	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Operand thread) {
 		using namespace code;
 
 		Engine &e = engine();
+		Block b = to->l->createBlock(to->l->last(to->block));
+		*to->l << begin(b);
+		CodeGen *sub = to->child(b);
 
-		// Create FnParams object.
-		Var fnParams = createFnParams(to, params->count());
+		// Create the parameters.
+		Var par = createFnCall(sub, this->params, params, true);
 
-		// Add all parameters.
-		for (nat i = 0; i < params->count(); i++) {
-			if (i == 0 && wcscmp(name->c_str(), Type::CTOR) == 0)
-				addFnParam(to, fnParams, this->params->at(i), params->at(i));
-			else
-				addFnParamCopy(to, fnParams, this->params->at(i), params->at(i));
-		}
+		// Create the result object.
+		Type *futureT = wrapFuture(e, this->result).type;
+		VarInfo resultPos = result->safeLocation(sub, thisPtr(futureT));
+		allocObject(sub, futureT->defaultCtor(), new (this) Array<Operand>(), resultPos.v);
+		resultPos.created(sub);
 
-		PrepareResult r = { fnParams };
-		return r;
+		// Get the thunk.
+		Ref thunk = Ref(threadThunk());
+
+		// Spawn the thread!
+		*to->l << lea(ptrA, par);
+		*to->l << fnParam(ref()); // fn
+		*to->l << fnParam(toOp(isMember())); // member
+		*to->l << fnParam(thunk); // thunk
+		*to->l << fnParam(ptrA); // params
+		*to->l << fnParam(resultPos.v); // result
+		*to->l << fnParam(thread); // on
+		*to->l << fnCall(e.ref(Engine::rSpawnResult), valVoid());
+		resultPos.created(to);
+
+		// Now, we're done!
+		*to->l << end(b);
 	}
 
 	void Function::threadThunkParam(nat id, code::Listing *l) {
@@ -341,125 +362,10 @@ namespace storm {
 		if (threadThunkRef)
 			return threadThunkRef;
 
-		bool needsThunk = false;
-		needsThunk |= !result.isBuiltIn();
-		for (nat i = 0; i < params->count(); i++) {
-			needsThunk |= params->at(i).isValue();
-		}
-
-		if (!needsThunk)
-			return null;
-
-
-		CodeGen *s = new (this) CodeGen(runOn());
-		Listing *l = s->l;
-		*l << prolog();
-
-		nat firstParam = 0;
-
-		if (isMember()) {
-			// The this-ptr goes before any result parameter!
-			threadThunkParam(0, l);
-			firstParam = 1;
-		}
-
-		Var resultParam;
-		if (result.isValue()) {
-			resultParam = l->createParam(valPtr());
-			*l << fnParam(resultParam);
-		}
-
-		for (nat i = firstParam; i < params->count(); i++)
-			threadThunkParam(i, l);
-
-		if (result.isClass()) {
-			Var t = l->createVar(l->root(), Size::sPtr);
-			*l << fnCall(ref(), valPtr());
-			*l << mov(t, ptrA);
-			// Copy it...
-			*l << fnParam(ptrA);
-			*l << fnCall(cloneFn(result.type)->ref(), valPtr());
-		} else if (result.isValue()) {
-			*l << fnCall(ref(), valPtr());
-
-			// Find 'deepCopy' and use it if possible. Otherwise, assume it is not required.
-			Function *deepCopy = result.type->deepCopyFn();
-			if (deepCopy) {
-				CodeGen *sub = s->child(l->createBlock(l->root()));
-				// Keep track of the result object.
-				Var freeResult = l->createVar(sub->block, Size::sPtr, result.destructor(), freeOnException);
-				*l << begin(sub->block);
-				*l << mov(freeResult, resultParam);
-
-				// We need to create a CloneEnv object.
-				Var cloneEnv = allocObject(s, CloneEnv::stormType(engine()));
-
-				// Copy by calling 'deepCopy'.
-				*l << fnParam(resultParam);
-				*l << fnParam(cloneEnv);
-				*l << fnCall(deepCopy->ref(), valVoid());
-
-				*l << end(sub->block);
-				*l << mov(ptrA, resultParam);
-			}
-		} else {
-			// Built in or actor.
-			*l << fnCall(ref(), result.valTypeRet());
-		}
-
-		*l << epilog();
-		if (result.isBuiltIn())
-			*l << ret(result.valTypeRet());
-		else
-			*l << ret(valPtr());
-
-		threadThunkCode = new (this) Binary(engine().arena(), l);
+		Binary *threadThunkCode = callThunk(result, params);
 		threadThunkRef = new (this) RefSource(*identifier() + new (this) Str(L"<thunk>"));
 		threadThunkRef->set(threadThunkCode);
 		return threadThunkRef;
-	}
-
-
-	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result) {
-		asyncThreadCall(to, params, result, ptrConst(Offset()));
-	}
-
-	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Operand t) {
-		using namespace code;
-
-		Engine &e = engine();
-		Block b = to->l->createBlock(to->l->last(to->block));
-		*to->l << begin(b);
-
-		CodeGen *sub = to->child(b);
-		PrepareResult r = prepareThreadCall(sub, params);
-
-		// Create the result object.
-		Type *futureT = wrapFuture(e, this->result).type;
-		VarInfo resultPos = result->safeLocation(sub, thisPtr(futureT));
-		allocObject(sub, futureT->defaultCtor(), new (this) Array<Operand>(), resultPos.v);
-		resultPos.created(sub);
-
-		// Find out what to call...
-		Ref fn = ref();
-		if (RefSource *t = threadThunk())
-			fn = Ref(t);
-
-		// Return type...
-		Var returnType = createBasicTypeInfo(to, this->result);
-
-		// Now we're ready to spawn the thread!
-		*to->l << lea(ptrA, r.params);
-		*to->l << lea(ptrC, returnType);
-		*to->l << fnParam(fn);
-		*to->l << fnParam(toOp(isMember()));
-		*to->l << fnParam(ptrA);
-		*to->l << fnParam(resultPos.v);
-		*to->l << fnParam(ptrC);
-		*to->l << fnParam(t);
-		*to->l << fnCall(e.ref(Engine::rSpawnFuture), valVoid());
-
-		*to->l << end(b);
 	}
 
 
@@ -467,21 +373,19 @@ namespace storm {
 	 * Low-level functions called by the generated code.
 	 */
 
-	void spawnThreadResult(const void *fn, bool member, const os::FnCallRaw *params, void *result,
-						BasicTypeInfo *resultType, Thread *on) {
+	void spawnThreadResult(const void *fn, bool member, os::CallThunk thunk, void **params, void *result, Thread *on) {
+		os::FnCallRaw call(params, thunk);
 		os::FutureSema<os::Sema> future;
 		const os::Thread *thread = on ? &on->thread() : null;
-		assert(false, L"FIXME!");
-		// os::UThread::spawn(fn, member, *params, future, result, *resultType, thread);
+		os::UThread::spawnRaw(fn, member, null, call, future, result, thread);
 		future.result();
 	}
 
-	void spawnThreadFuture(const void *fn, bool member, const os::FnCallRaw *params, FutureBase *result,
-						BasicTypeInfo *resultType, Thread *on) {
+	void spawnThreadFuture(const void *fn, bool member, os::CallThunk thunk, void **params, FutureBase *result, Thread *on) {
+		os::FnCallRaw call(params, thunk);
 		os::FutureBase *future = result->rawFuture();
 		const os::Thread *thread = on ? &on->thread() : null;
-		assert(false, L"FIXME!");
-		// os::UThread::spawn(fn, member, *params, *future, result->rawResult(), *resultType, thread);
+		os::UThread::spawnRaw(fn, member, null, call, *future, result, thread);
 	}
 
 	/**

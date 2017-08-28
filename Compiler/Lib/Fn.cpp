@@ -45,18 +45,6 @@ namespace storm {
 		return Type::loadAll();
 	}
 
-	static void callPlainCode(FnType *type, CodeGen *s, code::Var to, Array<code::Var> *input) {
-		for (nat i = 0; i < input->count(); i++) {
-			addFnParam(s, to, type->params->at(i + 1), input->at(i));
-		}
-	}
-
-	static void callCopyCode(FnType *type, CodeGen *s, code::Var to, Array<code::Var> *input) {
-		for (nat i = 0; i < input->count(); i++) {
-			addFnParamCopy(s, to, type->params->at(i + 1), input->at(i));
-		}
-	}
-
 	CodeGen *FnType::callCode() {
 		using namespace code;
 		Engine &e = engine;
@@ -71,9 +59,17 @@ namespace storm {
 			resultParam = s->l->createParam(valPtr());
 
 		// Create parameters.
-		Array<Var> *input = new (e) Array<Var>();
+		Array<Value> *formal = new (e) Array<Value>();
+		Array<Operand> *input = new (e) Array<Operand>();
 		for (nat i = 1; i < params->count(); i++) {
+			formal->push(params->at(i));
 			input->push(s->createParam(params->at(i)));
+		}
+
+		// Create the thunk if not done already.
+		if (!thunk) {
+			thunk = new (this) code::RefSource(*identifier() + new (this) Str(L"<thunk>"));
+			thunk->set(callThunk(result, formal));
 		}
 
 		// Figure out if the first parameter is a TObject and pass it on in case the FnPtr needs to know.
@@ -90,33 +86,27 @@ namespace storm {
 		*s->l << fnCall(e.ref(Engine::rFnNeedsCopy), ValType(Size::sByte, false));
 		*s->l << mov(needClone, al);
 
-		// Create the FnParams object.
-		Var fnParams = createFnParams(s, input->count() + 1);
-
 		// Handle parameters.
 		Label doCopy = s->l->label();
 		Label done = s->l->label();
 		*s->l << cmp(needClone, byteConst(0));
 		*s->l << jmp(doCopy, ifNotEqual);
-		callPlainCode(this, s, fnParams, input);
+		Var fnParamsPlain = createFnCall(s, formal, input, false);
+		*s->l << lea(ptrC, fnParamsPlain);
 		*s->l << jmp(done);
 		*s->l << doCopy;
-		callCopyCode(this, s, fnParams, input);
+		Var fnParamsClone = createFnCall(s, formal, input, true);
+		*s->l << lea(ptrC, fnParamsClone);
 		*s->l << done;
-
-		// Create type info.
-		Var typeInfo = createBasicTypeInfo(s, result);
 
 		// Call the function!
 		if (!result.returnInReg()) {
 			// Value -> call deepCopy if present.
-			*s->l << lea(ptrB, typeInfo);
-			*s->l << lea(ptrC, fnParams);
-			*s->l << fnParam(me);
-			*s->l << fnParam(resultParam);
-			*s->l << fnParam(ptrB);
-			*s->l << fnParam(ptrC);
-			*s->l << fnParam(firstTObj);
+			*s->l << fnParam(me); // b
+			*s->l << fnParam(resultParam); // output
+			*s->l << fnParam(Ref(thunk)); // thunk
+			*s->l << fnParam(ptrC); // params
+			*s->l << fnParam(firstTObj); // first
 			*s->l << fnCall(e.ref(Engine::rFnCall), valVoid());
 
 			// Call 'deepCopy'
@@ -137,13 +127,11 @@ namespace storm {
 			} else {
 				*s->l << mov(ptrA, ptrConst(Offset()));
 			}
-			*s->l << lea(ptrB, typeInfo);
-			*s->l << lea(ptrC, fnParams);
-			*s->l << fnParam(me);
-			*s->l << fnParam(ptrA);
-			*s->l << fnParam(ptrB);
-			*s->l << fnParam(ptrC);
-			*s->l << fnParam(firstTObj);
+			*s->l << fnParam(me); // b
+			*s->l << fnParam(ptrA); // output
+			*s->l << fnParam(Ref(thunk)); // thunk
+			*s->l << fnParam(ptrC); // params
+			*s->l << fnParam(firstTObj); // first
 			*s->l << fnCall(e.ref(Engine::rFnCall), valVoid());
 			if (result != Value())
 				*s->l << mov(asSize(ptrA, result.size()), r);
@@ -151,13 +139,11 @@ namespace storm {
 			// Class! Call 'core.clone'.
 			Var r = s->l->createVar(s->l->root(), result.size());
 			*s->l << lea(ptrA, r);
-			*s->l << lea(ptrB, typeInfo);
-			*s->l << lea(ptrC, fnParams);
-			*s->l << fnParam(me);
-			*s->l << fnParam(ptrA);
-			*s->l << fnParam(ptrB);
-			*s->l << fnParam(ptrC);
-			*s->l << fnParam(firstTObj);
+			*s->l << fnParam(me); // b
+			*s->l << fnParam(ptrA); // output
+			*s->l << fnParam(Ref(thunk)); // thunk
+			*s->l << fnParam(ptrC); // params
+			*s->l << fnParam(firstTObj); // first
 			*s->l << fnCall(e.ref(Engine::rFnCall), valVoid());
 
 			if (Function *call = cloneFn(result.type)) {
@@ -174,10 +160,10 @@ namespace storm {
 		return s;
 	}
 
-	void CODECALL fnCallRaw(FnBase *b, void *output, BasicTypeInfo *type, os::FnCallRaw *params, TObject *first) {
+	void CODECALL fnCallRaw(FnBase *b, void *output, os::CallThunk thunk, void **params, TObject *first) {
 		// TODO: We can provide a single CloneEnv so that all parameters are cloned uniformly.
-		// b->callRaw(output, *type, *params, first, null);
-		assert(false, L"FIXME");
+		os::FnCallRaw call(params, thunk);
+		b->callRaw(output, call, first, null);
 	}
 
 	class RefFnTarget : public FnTarget {

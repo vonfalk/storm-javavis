@@ -206,134 +206,88 @@ namespace storm {
 		return t != Value();
 	}
 
-	code::Var createBasicTypeInfo(CodeGen *to, Value v) {
+
+	code::Var createFnCallParams(CodeGen *to, Nat paramCount) {
 		using namespace code;
 
-		BasicTypeInfo typeInfo = v.typeInfo();
-
-		Size s = Size::sNat * 2;
-		assert(s.current() == sizeof(typeInfo), L"Please check the declaration of BasicTypeInfo.");
-
-		Var r = to->l->createVar(to->block, s);
-		*to->l << lea(ptrA, r);
-		*to->l << mov(intRel(ptrA, Offset()), natConst(typeInfo.size));
-		*to->l << mov(intRel(ptrA, Offset::sNat), natConst(typeInfo.kind));
-
-		return r;
+		Size s = Size::sPtr * paramCount;
+		return to->l->createVar(to->block, s);
 	}
 
-	static code::Size fnParamsSize() {
-		Size s = Size::sPtr;
-		s += Size::sNat;
-		s += Size::sNat;
-		// assert(s.current() == sizeof(os::FnParams), L"Please update the size here!");
-		assert(false, L"FIXME");
-		return s;
-	}
-
-	static code::Size fnParamSize() {
-		Size s = Size::sPtr * 3;
-		s += Size::sNat;
-		// assert(s.current() == sizeof(os::FnParams::Param), L"Please update the size here!");
-		assert(false, L"FIXME");
-		return s;
-	}
-
-	code::Var createFnParams(CodeGen *s, Nat paramCount) {
+	void setFnParam(CodeGen *to, code::Var params, Nat paramId, code::Operand param) {
 		using namespace code;
 
-		Engine &e = s->engine();
-		Var mem = s->l->createVar(s->block,
-								fnParamSize() * (paramCount + 1));
-		Var v = s->l->createVar(s->block,
-								fnParamsSize(),
-								e.ref(Engine::rFnParamsDtor),
-								freeOnBoth | freePtr);
-		// Call the ctor!
-		*s->l << lea(ptrA, mem);
-		*s->l << lea(ptrC, v);
-		*s->l << fnParam(ptrC);
-		*s->l << fnParam(ptrA);
-		*s->l << fnCall(e.ref(Engine::rFnParamsCtor), valVoid());
+		Offset o = Offset::sPtr * paramId;
 
-		return v;
+		*to->l << lea(ptrA, param);
+		*to->l << mov(ptrRel(params, o), ptrA);
 	}
 
-	void addFnParam(CodeGen *s, code::Var fnParams, Value type,	code::Operand v) {
-		using namespace code;
-		Engine &e = s->engine();
+	static bool needsCloneEnv(Value type) {
+		if (type.isBuiltIn() || type.ref)
+			return false;
+		else if (type.isActor())
+			return false;
+		else
+			return true;
+	}
 
-		if (type.isHeapObj() || type.ref) {
-			*s->l << lea(ptrC, fnParams);
-			*s->l << lea(ptrA, v);
-			*s->l << fnParam(ptrC);
-			*s->l << fnParam(ptrConst(Offset()));
-			*s->l << fnParam(ptrConst(Offset()));
-			*s->l << fnParam(ptrConst(type.size()));
-			*s->l << fnParam(byteConst(0));
-			*s->l << fnParam(ptrA);
-			*s->l << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
-		} else if (type.isBuiltIn()) {
-			*s->l << lea(ptrC, fnParams);
-			*s->l << lea(ptrA, v);
-			*s->l << fnParam(ptrC);
-			*s->l << fnParam(ptrConst(Offset()));
-			*s->l << fnParam(ptrConst(Offset()));
-			*s->l << fnParam(ptrConst(type.size()));
-			*s->l << fnParam(byteConst(type.isFloat() ? 1 : 0));
-			*s->l << fnParam(ptrA);
-			*s->l << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
+	static code::Operand cloneParam(CodeGen *to, Value formal, code::Operand actual, code::Var env) {
+		using namespace code;
+
+		if (!needsCloneEnv(formal))
+			return actual;
+
+		Function *toCall = formal.type->deepCopyFn();
+		if (!toCall)
+			// No 'deepCopy'? No problem!
+			return actual;
+
+		VarInfo clone = to->createVar(formal);
+		if (formal.isHeapObj()) {
+			*to->l << fnParam(actual);
+			*to->l << fnParam(env);
+			*to->l << fnCall(toCall->ref(), valPtr());
+			*to->l << mov(clone.v, ptrA);
 		} else {
-			// Value.
-			code::Operand dtor = type.destructor();
-			if (dtor.empty())
-				dtor = ptrConst(Offset());
-			*s->l << lea(ptrC, fnParams);
-			*s->l << lea(ptrA, v);
-			*s->l << fnParam(ptrC);
-			*s->l << fnParam(type.copyCtor());
-			*s->l << fnParam(dtor);
-			*s->l << fnParam(ptrConst(type.size()));
-			*s->l << fnParam(byteConst(0));
-			*s->l << fnParam(ptrA);
-			*s->l << fnCall(e.ref(Engine::rFnParamsAdd), valVoid());
+			VarInfo clone = to->createVar(formal);
+			*to->l << lea(ptrC, clone.v);
+			*to->l << lea(ptrA, actual);
+			*to->l << fnParam(ptrC);
+			*to->l << fnParamRef(ptrA, formal.size(), formal.copyCtor());
+			*to->l << fnParam(env);
+			*to->l << fnCall(toCall->ref(), valVoid());
 		}
+		clone.created(to);
+		return clone.v;
 	}
 
-	void addFnParamCopy(CodeGen *s, code::Var fnParams, Value type, code::Operand v) {
+	code::Var STORM_FN createFnCall(CodeGen *to, Array<Value> *formals, Array<code::Operand> *actuals, Bool copy) {
 		using namespace code;
-		Engine &e = s->engine();
+		assert(formals->count() == actuals->count(), L"Size of formals array does not match actuals!");
 
-		if (type.isBuiltIn() || type.ref) {
-			if (type.ref) {
-				TODO(L"Should we really allow pretending to deep-copy references?");
-			}
+		// Examine if we need to create a CloneEnv.
+		bool needEnv = false;
+		for (Nat i = 0; i < formals->count(); i++)
+			needEnv |= needsCloneEnv(formals->at(i));
 
-			// Nothing special!
-			addFnParam(s, fnParams, type, v);
-		} else if (type.isActor()) {
-			// Nothing special here!
-			addFnParam(s, fnParams, type, v);
-		} else if (type.isHeapObj()) {
-			Var clone = s->createVar(type).v;
-			*s->l << fnParam(v);
-			*s->l << fnCall(cloneFn(type.type)->ref(), valPtr());
-			*s->l << mov(clone, ptrA);
+		// Create it if required.
+		Var env;
+		if (needEnv)
+			env = allocObject(to, CloneEnv::stormType(to->engine()));
 
-			// Regular parameter add.
-			addFnParam(s, fnParams, type, clone);
-		} else {
-			VarInfo clone = s->createVar(type);
-			*s->l << lea(ptrC, clone.v);
-			*s->l << lea(ptrA, v);
-			*s->l << fnParam(ptrC);
-			*s->l << fnParamRef(ptrA, type.size(), type.copyCtor());
-			*s->l << fnCall(cloneFn(type.type)->ref(), valVoid());
-			clone.created(s);
+		// Create the FnCall array.
+		Var call = createFnCallParams(to, formals->count());
 
-			// Regular parameter add.
-			addFnParam(s, fnParams, type, clone.v);
+		// Start copying the parameters...
+		for (Nat i = 0; i < formals->count(); i++) {
+			Operand clone = actuals->at(i);
+			if (copy)
+				clone = cloneParam(to, formals->at(i), clone, env);
+			setFnParam(to, call, i, clone);
 		}
+
+		return call;
 	}
 
 	static void allocNormalObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to) {
@@ -388,6 +342,110 @@ namespace storm {
 		if (!ctor)
 			throw InternalError(L"Can not allocate " + ::toS(type->identifier()) + L" using the default constructor.");
 		return allocObject(s, ctor, new (type->engine) Array<code::Operand>());
+	}
+
+	static void addThunkParam(code::Listing *l, Value param, Nat id) {
+		using namespace code;
+
+		Offset o = Offset::sPtr * id;
+		if (param.isValue() && !param.isBuiltIn()) {
+			*l << fnParamRef(ptrRel(ptrB, o), param.size(), param.copyCtor());
+		} else {
+			*l << fnParamRef(ptrRel(ptrB, o), param.size());
+		}
+	}
+
+	static void addThunkResult(code::Listing *l, Value result, code::Var res) {
+		using namespace code;
+
+		if (!result.returnInReg())
+			*l << fnParam(res);
+	}
+
+	static void addThunkCall(CodeGen *s, Value result, code::Var res, code::Var fn) {
+		using namespace code;
+
+		*s->l << fnCall(fn, result.valTypeRet());
+		if (result.returnInReg() && result != Value()) {
+			*s->l << mov(ptrB, res);
+			*s->l << mov(xRel(result.size(), ptrB, Offset()), asSize(ptrA, result.size()));
+		}
+
+	}
+
+	code::Binary *callThunk(Value result, Array<Value> *formals) {
+		using namespace code;
+		Engine &e = formals->engine();
+
+		CodeGen *s = new (e) CodeGen(RunOn());
+		Listing *l = s->l;
+
+		// Parameters:
+		Var fn = l->createParam(valPtr());
+		Var member = l->createParam(ValType(Size::sByte, false));
+		Var params = l->createParam(valPtr());
+		Var first = l->createParam(valPtr());
+		Var output = l->createParam(valPtr());
+
+		*l << prolog();
+		*l << mov(ptrB, params);
+		// Do the function call. We have four alternatives:
+		// 1: Neither a first param, nor member (lPlain).
+		// 2: We have a first param, but not a member (lFirst).
+		// 3: No first param, but a member (lMember).
+		// 4: Both a first param and a member (lBoth).
+		Label lNoMember = l->label();
+		Label lPlain = l->label();
+		Label lFirst = l->label();
+		Label lMember = l->label();
+		Label lBoth = l->label();
+
+		if (!result.returnInReg()) {
+			// These cases (lBoth and lMember) can be ignored if we are returning something in a register.
+			*l << cmp(member, byteConst(0));
+			*l << jmp(lNoMember, ifEqual);
+			*l << cmp(first, ptrConst(0));
+			*l << jmp(lMember, ifEqual);
+
+			*l << lBoth;
+			*l << fnParam(first);
+			addThunkResult(l, result, output);
+			for (Nat i = 0; i < formals->count(); i++)
+				addThunkParam(l, formals->at(i), i);
+			addThunkCall(s, result, output, fn);
+			*l << ret(valVoid());
+
+			*l << lMember;
+			if (formals->count() > 0)
+				// Not really legal, but anyway...
+				addThunkParam(l, formals->at(0), 0);
+			addThunkResult(l, result, output);
+			for (Nat i = 1; i < formals->count(); i++)
+				addThunkParam(l, formals->at(i), i);
+			addThunkCall(s, result, output, fn);
+			*l << ret(valVoid());
+		}
+
+		*l << lNoMember;
+		*l << cmp(first, ptrConst(0));
+		*l << jmp(lPlain, ifEqual);
+
+		*l << lFirst;
+		addThunkResult(l, result, output);
+		*l << fnParam(first);
+		for (Nat i = 0; i < formals->count(); i++)
+			addThunkParam(l, formals->at(i), i);
+		addThunkCall(s, result, output, fn);
+		*l << ret(valVoid());
+
+		*l << lPlain;
+		addThunkResult(l, result, output);
+		for (Nat i = 0; i < formals->count(); i++)
+			addThunkParam(l, formals->at(i), i);
+		addThunkCall(s, result, output, fn);
+		*l << ret(valVoid());
+
+		return new (e) Binary(e.arena(), l);
 	}
 
 }

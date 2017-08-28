@@ -109,25 +109,14 @@ namespace storm {
 		// Initialize references.
 		void initRefs();
 
-		// Helper for calling this function from another thread. This takes care
-		// of refcounting parameters and copying return values.
+		// Helper for calling this function from another thread.
 		code::RefSource *threadThunkRef;
-		code::Binary *threadThunkCode;
 
 		// Get the thread thunk, generates it if needed. Returns null if no thunk is needed.
 		code::RefSource *threadThunk();
 
 		// Forward parameter #id for the thread thunk.
 		void threadThunkParam(nat id, code::Listing *to);
-
-		// Result from the prepare call.
-		struct PrepareResult {
-			code::Var params;
-		};
-
-		// Generate the code that is shared between 'threadCall' and 'asyncThreadCall'. This is
-		// basically setting up the parameters for the call.
-		PrepareResult prepareThreadCall(CodeGen *to, Array<code::Operand> *params);
 
 		// Generate code for a direct function call.
 		void localCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result, code::Ref ref);
@@ -165,9 +154,7 @@ namespace storm {
 
 
 	// Helpers used by the generated code.
-	void spawnThreadResult(const void *fn, bool member, const os::FnCallRaw *params, void *result,
-						BasicTypeInfo *resultType, Thread *on);
-	void spawnThreadFuture(const void *fn, bool member, const os::FnCallRaw *params, FutureBase *result,
-						BasicTypeInfo *resultType, Thread *on);
+	void spawnThreadResult(const void *fn, bool member, os::CallThunk thunk, void **params, void *result, Thread *on);
+	void spawnThreadFuture(const void *fn, bool member, os::CallThunk thunk, void **params, FutureBase *result, Thread *on);
 
 }

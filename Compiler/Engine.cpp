@@ -281,22 +281,6 @@ namespace storm {
 		return code::Ref(*r);
 	}
 
-	static void fnParamsCtor(void *memory, void *ptr) {
-		// new (memory) os::FnParams(ptr);
-		assert(false, L"FIXME!");
-	}
-
-	static void fnParamsDtor(os::FnCallRaw *o) {
-		// o->~FnParams();
-		assert(false, L"FIXME!");
-	}
-
-	static void fnParamsAdd(os::FnCallRaw *obj, void *copy, void *destroy,
-							size_t size, bool isFloat, const void *value) {
-		// obj->add(copy, destroy, size, isFloat, value);
-		assert(false, L"FIXME!");
-	}
-
 	static void *allocType(Type *t) {
 		return runtime::allocObject(0, t);
 	}
@@ -339,12 +323,6 @@ namespace storm {
 			return FNREF(spawnThreadResult);
 		case rSpawnFuture:
 			return FNREF(spawnThreadFuture);
-		case rFnParamsCtor:
-			return FNREF(fnParamsCtor);
-		case rFnParamsDtor:
-			return FNREF(fnParamsDtor);
-		case rFnParamsAdd:
-			return FNREF(fnParamsAdd);
 		case rFnNeedsCopy:
 			return FNREF(FnBase::needsCopy);
 		case rFnCall:

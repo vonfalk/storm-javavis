@@ -24,6 +24,9 @@ namespace storm {
 	private:
 		// Generate the code for calling the function.
 		CodeGen *CODECALL callCode();
+
+		// Thunk used for function calls.
+		code::RefSource *thunk;
 	};
 
 	// Find the function type.
@@ -36,7 +39,7 @@ namespace storm {
 	FnBase *pointer(Function *target, RootObject *thisPtr);
 
 	// Low-level functionality required by generated machine code.
-	void CODECALL fnCallRaw(FnBase *b, void *output, BasicTypeInfo *type, os::FnCallRaw *params, TObject *first);
+	void CODECALL fnCallRaw(FnBase *b, void *output, os::CallThunk thunk, void **params, TObject *first);
 
 	// Low-level creation from generated code.
 	FnBase *CODECALL fnCreateRaw(Type *type, code::RefSource *to, Thread *thread, RootObject *thisPtr, Bool memberFn);

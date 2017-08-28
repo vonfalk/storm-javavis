@@ -172,18 +172,14 @@ namespace storm {
 		Value t;
 	};
 
-	// Generate code to fill in a BasicTypeInfo struct. Only touches eax register.
-	code::Var createBasicTypeInfo(CodeGen *to, Value v);
+	// Allocate space for 'paramCount' parameters to a FnCall object.
+	code::Var STORM_FN createFnCallParams(CodeGen *to, Nat paramCount);
 
-	// Generate code that creates a FnParams object on the stack with room for 'paramCount'
-	// parameters. Issues a function call and does therefore not preserve any register values.
-	code::Var STORM_FN createFnParams(CodeGen *s, Nat paramCount);
+	// Fill in parameter 'n' of a FnCall object. Trashes 'ptrA' register.
+	void STORM_FN setFnParam(CodeGen *to, code::Var params, Nat paramId, code::Operand param);
 
-	// Add a parameter to a FnParams object.
-	void STORM_FN addFnParam(CodeGen *s, code::Var fnParams, Value type, code::Operand v);
-
-	// Add a copied parameter to a FnParams object. May add variables to the current scope.
-	void STORM_FN addFnParamCopy(CodeGen *s, code::Var fnParams, Value type, code::Operand v);
+	// Allocate and fill a FnCall object, copying arguments depending on 'copy'.
+	code::Var STORM_FN createFnCall(CodeGen *to, Array<Value> *formals, Array<code::Operand> *actuals, Bool copy);
 
 	// Allocate an object on the heap. Store it in variable 'to'.
 	void STORM_FN allocObject(CodeGen *s, Function *ctor, Array<code::Operand> *params, code::Var to);
@@ -191,5 +187,8 @@ namespace storm {
 
 	// Create an object on the heap using the default constructor.
 	code::Var STORM_FN allocObject(CodeGen *s, Type *type);
+
+	// Create a thunk for a function usable with function pointers. This thunk is compatible with 'os::CallThunk'
+	code::Binary *STORM_FN callThunk(Value result, Array<Value> *params);
 
 }
