@@ -114,4 +114,16 @@ namespace storm {
 		return r;
 	}
 
+	Function *cloneFnEnv(Type *t) {
+		Engine &e = t->engine;
+		Package *p = e.package(L"core");
+		Array<Value> *params = new (e) Array<Value>(2, Value(t));
+		params->at(1) = Value(CloneEnv::stormType(e));
+
+		Function *r = as<Function>(p->find(L"clone", params));
+		if (!r)
+			throw InternalError(L"Can not finde core.clone for " + ::toS(t->identifier()));
+		return r;
+	}
+
 }

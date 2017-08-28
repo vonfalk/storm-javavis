@@ -23,4 +23,7 @@ namespace storm {
 	// Find 'core.clone' for a type.
 	Function *cloneFn(Type *t);
 
+	// Find 'core.clone' (taking a CloneEnv) for a type.
+	Function *cloneFnEnv(Type *t);
+
 }

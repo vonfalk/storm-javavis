@@ -186,11 +186,11 @@ namespace code {
 	}
 
 	Nat Size::align32() const {
-		return code::size(s32);
+		return code::align(s32);
 	}
 
 	Nat Size::align64() const {
-		return code::size(s64);
+		return code::align(s64);
 	}
 
 

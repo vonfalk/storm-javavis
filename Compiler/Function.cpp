@@ -264,7 +264,7 @@ namespace storm {
 			// null-pointer.
 			*to->l << mov(ptrB, ptrConst(Offset(0)));
 		} else {
-			resultPos = res->safeLocation(to, this->result);
+			resultPos = res->safeLocation(sub, this->result);
 			*to->l << lea(ptrB, resultPos.v);
 		}
 
@@ -279,7 +279,7 @@ namespace storm {
 		*to->l << fnParam(ptrB); // result
 		*to->l << fnParam(thread); // on
 		*to->l << fnCall(e.ref(Engine::rSpawnResult), valVoid());
-		resultPos.created(to);
+		resultPos.created(sub);
 
 		// Clone the result.
 		if (result.isValue() && !result.isBuiltIn()) {
@@ -296,6 +296,11 @@ namespace storm {
 		}
 
 		*to->l << end(b);
+
+		// May be delayed...
+		if (res->needed())
+			res->location(to).created(to);
+		PVAR(to->l);
 	}
 
 	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result) {
@@ -330,8 +335,7 @@ namespace storm {
 		*to->l << fnParam(ptrA); // params
 		*to->l << fnParam(resultPos.v); // result
 		*to->l << fnParam(thread); // on
-		*to->l << fnCall(e.ref(Engine::rSpawnResult), valVoid());
-		resultPos.created(to);
+		*to->l << fnCall(e.ref(Engine::rSpawnFuture), valVoid());
 
 		// Now, we're done!
 		*to->l << end(b);
@@ -385,7 +389,7 @@ namespace storm {
 		os::FnCallRaw call(params, thunk);
 		os::FutureBase *future = result->rawFuture();
 		const os::Thread *thread = on ? &on->thread() : null;
-		os::UThread::spawnRaw(fn, member, null, call, *future, result, thread);
+		os::UThread::spawnRaw(fn, member, null, call, *result->rawFuture(), result->rawResult(), thread);
 	}
 
 	/**

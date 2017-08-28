@@ -471,6 +471,8 @@ namespace os {
 	void *UThreadState::startDetour(UThreadData *to) {
 		assert(to->owner == null, L"The UThread is already associated with a thread, can not use it for detour.");
 		assert(detourOrigin == null, L"Can not start multiple detours!");
+		to->owner = this;
+
 		detourOrigin = running;
 		running = to;
 		detourOrigin->switchTo(running);
@@ -480,6 +482,8 @@ namespace os {
 	void UThreadState::endDetour(void *result) {
 		assert(detourOrigin, L"No active detour.");
 		detourResult = result;
+		running->owner = null;
+
 		UThreadData *prev = running;
 		running = detourOrigin;
 		detourOrigin = null;
@@ -689,6 +693,7 @@ namespace os {
 		// parameters that were passed to this function.
 		__asm {
 			call doEndDetour2;
+			ret; // probably not reached, but better safe than sorry!
 		}
 	}
 

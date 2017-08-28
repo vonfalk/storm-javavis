@@ -238,28 +238,37 @@ namespace storm {
 		if (!needsCloneEnv(formal))
 			return actual;
 
-		Function *toCall = formal.type->deepCopyFn();
-		if (!toCall)
-			// No 'deepCopy'? No problem!
-			return actual;
-
-		VarInfo clone = to->createVar(formal);
 		if (formal.isHeapObj()) {
+			VarInfo clone = to->createVar(formal);
+
 			*to->l << fnParam(actual);
 			*to->l << fnParam(env);
-			*to->l << fnCall(toCall->ref(), valPtr());
+			*to->l << fnCall(cloneFnEnv(formal.type)->ref(), valPtr());
 			*to->l << mov(clone.v, ptrA);
+			clone.created(to);
+
+			return clone.v;
 		} else {
+			Function *toCall = formal.type->deepCopyFn();
+			if (!toCall)
+				// No 'deepCopy'? No problem!
+				return actual;
+
 			VarInfo clone = to->createVar(formal);
+
 			*to->l << lea(ptrC, clone.v);
 			*to->l << lea(ptrA, actual);
 			*to->l << fnParam(ptrC);
-			*to->l << fnParamRef(ptrA, formal.size(), formal.copyCtor());
+			*to->l << fnParam(ptrA);
+			*to->l << fnCall(formal.copyCtor(), valVoid());
+			clone.created(to);
+
+			*to->l << lea(ptrC, clone.v);
+			*to->l << fnParam(ptrC);
 			*to->l << fnParam(env);
 			*to->l << fnCall(toCall->ref(), valVoid());
+			return clone.v;
 		}
-		clone.created(to);
-		return clone.v;
 	}
 
 	code::Var STORM_FN createFnCall(CodeGen *to, Array<Value> *formals, Array<code::Operand> *actuals, Bool copy) {
@@ -413,6 +422,7 @@ namespace storm {
 			for (Nat i = 0; i < formals->count(); i++)
 				addThunkParam(l, formals->at(i), i);
 			addThunkCall(s, result, output, fn);
+			*l << epilog();
 			*l << ret(valVoid());
 
 			*l << lMember;
@@ -423,6 +433,7 @@ namespace storm {
 			for (Nat i = 1; i < formals->count(); i++)
 				addThunkParam(l, formals->at(i), i);
 			addThunkCall(s, result, output, fn);
+			*l << epilog();
 			*l << ret(valVoid());
 		}
 
@@ -436,6 +447,7 @@ namespace storm {
 		for (Nat i = 0; i < formals->count(); i++)
 			addThunkParam(l, formals->at(i), i);
 		addThunkCall(s, result, output, fn);
+		*l << epilog();
 		*l << ret(valVoid());
 
 		*l << lPlain;
@@ -443,6 +455,7 @@ namespace storm {
 		for (Nat i = 0; i < formals->count(); i++)
 			addThunkParam(l, formals->at(i), i);
 		addThunkCall(s, result, output, fn);
+		*l << epilog();
 		*l << ret(valVoid());
 
 		return new (e) Binary(e.arena(), l);
