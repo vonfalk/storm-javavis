@@ -251,9 +251,8 @@ namespace storm {
 		using namespace code;
 
 		Engine &e = engine();
-		Block b = to->l->createBlock(to->l->last(to->block));
-		*to->l << begin(b);
-		CodeGen *sub = to->child(b);
+		CodeGen *sub = to->child();
+		*to->l << begin(sub->block);
 
 		// Create the parameters.
 		Var par = createFnCall(sub, this->params, params, true);
@@ -281,26 +280,31 @@ namespace storm {
 		*to->l << fnCall(e.ref(Engine::rSpawnResult), valVoid());
 		resultPos.created(sub);
 
+		*to->l << end(sub->block);
+
+		// May be delayed...
+		if (res->needed())
+			res->location(to).created(to);
+
 		// Clone the result.
 		if (result.isValue() && !result.isBuiltIn()) {
 			if (Function *f = result.type->deepCopyFn()) {
-				Var env = allocObject(sub, CloneEnv::stormType(e));
-				*to->l << fnParam(resultPos.v);
+				CodeGen *child = to->child();
+				*to->l << begin(child->block);
+
+				Var env = allocObject(child, CloneEnv::stormType(e));
+				*to->l << lea(ptrA, resultPos.v);
+				*to->l << fnParam(ptrA);
 				*to->l << fnParam(env);
 				*to->l << fnCall(f->ref(), valVoid());
+
+				*to->l << end(child->block);
 			}
 		} else if (result.isClass()) {
 			*to->l << fnParam(resultPos.v);
 			*to->l << fnCall(cloneFn(result.type)->ref(), valPtr());
 			*to->l << mov(resultPos.v, ptrA);
 		}
-
-		*to->l << end(b);
-
-		// May be delayed...
-		if (res->needed())
-			res->location(to).created(to);
-		PVAR(to->l);
 	}
 
 	void Function::asyncThreadCall(CodeGen *to, Array<code::Operand> *params, CodeResult *result) {
