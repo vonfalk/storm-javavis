@@ -101,3 +101,59 @@ BEGIN_TEST(CallRefPlainTest, Code) {
 	CHECK_EQ(copied, 20);
 
 } END_TEST
+
+struct Large {
+	size_t a, b;
+};
+
+void CODECALL largeCopy(Large *to, Large *src) {
+	*to = *src;
+}
+
+size_t CODECALL largeFn(size_t a, Large b, size_t c) {
+	return a + b.a + b.b + c;
+}
+
+BEGIN_TEST(CallRefMultiple, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Ref largeFn = arena->external(L"largeFn", &::largeFn);
+	Ref largeCopy = arena->external(L"largeCopy", &::largeCopy);
+
+	Listing *l = new (e) Listing();
+
+	Var a = l->createVar(l->root(), Size::sPtr);
+	Var b = l->createVar(l->root(), Size::sPtr*2);
+	Var c = l->createVar(l->root(), Size::sPtr);
+
+	Var pA = l->createVar(l->root(), Size::sPtr);
+	Var pB = l->createVar(l->root(), Size::sPtr);
+	Var pC = l->createVar(l->root(), Size::sPtr);
+
+
+	*l << prolog();
+
+	*l << mov(a, ptrConst(10));
+	*l << mov(ptrRel(b, Offset()), ptrConst(1));
+	*l << mov(ptrRel(b, Offset::sPtr), ptrConst(2));
+	*l << mov(c, ptrConst(20));
+
+	*l << lea(pA, a);
+	*l << lea(pB, b);
+	*l << lea(pC, c);
+
+	*l << fnParamRef(pA, Size::sPtr);
+	*l << fnParamRef(pB, Size::sPtr*2, largeCopy);
+	*l << fnParamRef(pC, Size::sPtr);
+	*l << fnCall(largeFn, valPtr());
+
+	*l << epilog();
+	*l << ret(valPtr());
+
+	Binary *bin = new (e) Binary(arena, l);
+	typedef size_t (*Fn)();
+	Fn fn = (Fn)bin->address();
+
+	CHECK_EQ((*fn)(), 33);
+} END_TEST

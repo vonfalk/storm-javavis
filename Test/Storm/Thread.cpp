@@ -2,7 +2,7 @@
 #include "Fn.h"
 #include "Compiler/Debug.h"
 
-BEGIN_TEST_(BSThread, BS) {
+BEGIN_TEST(BSThread, BS) {
 	using namespace storm::debug;
 
 	Engine &e = gEngine();

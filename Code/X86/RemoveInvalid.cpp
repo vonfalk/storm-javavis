@@ -503,7 +503,8 @@ namespace code {
 			for (Nat i = 0; i < params->count(); i++) {
 				Param &p = params->at(i);
 
-				Size s = p.src.size() + Size::sPtr.align();
+				Size s = p.ref ? p.src.refSize() : p.src.size();
+				s += Size::sPtr.align();
 
 				if (!p.copyFn.empty()) {
 					// Copy it!
