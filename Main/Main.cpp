@@ -111,10 +111,10 @@ int runFunction(Engine &e, const wchar *function) {
 	RunOn run = fn->runOn();
 	const void *addr = fn->ref().address();
 	if (run.state == RunOn::named) {
-		os::FnStackParams<1> params;
+		os::FnCall<void, 1> call = os::fnCall();
 		os::Future<void> result;
 		os::Thread on = run.thread->thread()->thread();
-		os::UThread::spawn(addr, false, params, result, &on);
+		os::UThread::spawn(addr, false, call, result, &on);
 		result.result();
 	} else {
 		typedef void (*Fn)();
