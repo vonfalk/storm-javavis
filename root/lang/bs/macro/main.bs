@@ -4,7 +4,7 @@ use core:asm;
 use core:debug;
 
 // Get the name of the SrcName type.
-SrcName srcName(SrcPos pos) {
+SrcName srcName(SrcPos pos) on Compiler {
 	SrcName name(pos);
 	name.add("core");
 	name.add("lang");
@@ -13,7 +13,7 @@ SrcName srcName(SrcPos pos) {
 }
 
 // Get the name of the TypePart type.
-SrcName namePart(SrcPos pos) {
+SrcName namePart(SrcPos pos) on Compiler {
 	SrcName name(pos);
 	name.add("core");
 	name.add("lang");
@@ -22,7 +22,7 @@ SrcName namePart(SrcPos pos) {
 }
 
 // Create something that gives you a TypePart.
-Expr createTypePart(SrcPos pos, Block block, NamePart part) {
+Expr createTypePart(SrcPos pos, Block block, NamePart part) on Compiler {
 	ExprBlock b(pos, block);
 	SrcName partT = namePart(pos);
 
@@ -52,7 +52,7 @@ Expr createTypePart(SrcPos pos, Block block, NamePart part) {
 }
 
 // Create something that gives you a TypeName.
-Expr createType(SrcPos pos, Block block, Name type) {
+Expr createType(SrcPos pos, Block block, Name type) on Compiler {
 	ExprBlock b(pos, block);
 	SrcName nameT = srcName(pos);
 	SrcName partT = namePart(pos);
@@ -71,7 +71,7 @@ Expr createType(SrcPos pos, Block block, Name type) {
 }
 
 // Create a static reference to a Named object in the compiler.
-Expr referNamed(SrcPos pos, Block block, SrcName type) {
+Expr referNamed(SrcPos pos, Block block, SrcName type) on Compiler {
 	Named? referTo = block.scope.find(type);
 	if (referTo) {
 		ReferNamed(pos, referTo);
@@ -114,7 +114,7 @@ class ReferNamed extends Expr {
 	}
 }
 
-Expr exploreType(SrcPos pos, Block block, SrcName typeName) {
+Expr exploreType(SrcPos pos, Block block, SrcName typeName) on Compiler {
 	Expr type = createType(pos, block, typeName);
 
 	Expr rootScope = namedExpr(block, name{core:lang:rootScope}, Actuals());
@@ -125,14 +125,14 @@ Expr exploreType(SrcPos pos, Block block, SrcName typeName) {
 	namedExpr(block, name{core:debug:print}, Actuals(named));
 }
 
-Expr reloadName(Block block, SrcName typeName) {
+Expr reloadName(Block block, SrcName typeName) on Compiler {
 	Expr type = createType(typeName.pos, block, typeName);
 	Expr callIt = namedExpr(block, name{lang:bs:macro:reload}, Actuals(type));
 	callIt;
 }
 
 
-Expr printExpr(Str text, Expr expr) {
+Expr printExpr(Str text, Expr expr) on Compiler {
 	if (expr as Operator) {
 		print(text.removeIndentation # " <=> " # expr.meaning);
 	} else {
