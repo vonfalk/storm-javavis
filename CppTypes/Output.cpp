@@ -833,7 +833,7 @@ static void genGccX64(wostream &to, World &w) {
 		to << L"\t.type " << sName << L", @function\n";
 		to << sName << L":\n";
 		// There are two words of additional information in GCC.
-		to << L"\tmovq $" << gccVTableName(t.name) << L"+16, %rax\n";
+		to << L"\tmovabsq $" << gccVTableName(t.name) << L"+16, %rax\n";
 		to << L"\tret\n\n";
 	}
 }
