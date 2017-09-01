@@ -4,6 +4,7 @@ class Tracker {
 public:
 	Tracker(int data);
 	Tracker(const Tracker &o);
+	Tracker &operator =(const Tracker &o);
 	~Tracker();
 
 	// Carrying some data.

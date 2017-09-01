@@ -113,7 +113,7 @@ static void testVoid(int p1, int p2) {
 	sum = p1 + p2;
 }
 
-BEGIN_TEST_(FnCallTest, OS) {
+BEGIN_TEST(FnCallTest, OS) {
 	int p1 = 1, p2 = 2;
 
 	{
@@ -174,7 +174,7 @@ Tracker trackerError(Tracker t) {
 	throw UserError(L"ERROR");
 }
 
-int64 variedFn(int a, int64 b, int c) {
+int64 variedFn(int a, int b, int64 c) {
 	return a + b + c;
 }
 
@@ -201,8 +201,8 @@ BEGIN_TEST(FunctionParamTest, OS) {
 	CHECK(Tracker::clear());
 
 	{
-		int a = 0x1, c = 0x20;
-		int64 b = 0x100000000;
+		int a = 0x1, b = 0x20;
+		int64 c = 0x100000000;
 		FnCall<int64> p = fnCall().add(a).add(b).add(c);
 		CHECK_EQ(p.call(address(&variedFn), false), 0x100000021);
 	}
@@ -220,7 +220,6 @@ BEGIN_TEST(FunctionParamTest, OS) {
 static Tracker returnTracker() {
 	return Tracker(22);
 }
-
 
 BEGIN_TEST(FunctionReturnTest, OS) {
 	Tracker::clear();

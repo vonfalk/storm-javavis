@@ -11,6 +11,11 @@ Tracker::Tracker(const Tracker &o) : data(o.data) {
 	copies++;
 }
 
+Tracker &Tracker::operator =(const Tracker &o) {
+	data = o.data;
+	return *this;
+}
+
 Tracker::~Tracker() {
 	copies--;
 }

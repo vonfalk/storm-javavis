@@ -9,7 +9,7 @@ namespace code {
 #define ARCH x86
 #elif defined(X64)
 #define ARCH x86
-#warning "Not complete yet!"
+	// #warning "Not complete yet!"
 #else
 #error "Reading and writing pointers is not supported for your architecture yet!"
 #endif
