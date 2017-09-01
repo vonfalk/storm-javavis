@@ -1,4 +1,6 @@
-#pragma once
+// #pragma once // GCC issues a warning when using 'pragma once' with precompiled headers...
+#ifndef TEST_PCH
+#define TEST_PCH
 
 #include "Utils/Utils.h"
 #include "Core/Storm.h"
@@ -94,4 +96,6 @@ public:
 
 #ifdef POSIX
 #define Sleep(X) usleep((X) * 1000LL);
+#endif
+
 #endif
