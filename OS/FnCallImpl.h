@@ -19,7 +19,7 @@ namespace os {
 			template <class ... T>
 			static void call(const void *fn, void **params, void *out, nat pos, T& ... args) {
 				ParamHelp<Result, typename Par::PrevType, member>
-					::call(fn, params, out, pos, args..., *(typename Par::HereType *)params[pos]);
+					::call(fn, params, out, pos + 1, args..., *(typename Par::HereType *)params[pos]);
 			}
 		};
 
