@@ -6,6 +6,7 @@
 #include "Sync.h"
 #include "Utils/Bitwise.h"
 #include "Utils/Lock.h"
+#include "UThreadX64.h"
 #include <limits>
 
 #ifdef POSIX
@@ -28,7 +29,7 @@ namespace os {
 	// Switch the currently running threads. *oldEsp is set to the old esp.
 	// This returns as another thread, which may mean that it returns to the
 	// beginning of another function in the case of newly started UThreads.
-	void doSwitch(StackDesc **newEsp, StackDesc **oldEsp); // can not be static for some reason...
+	void doSwitch(StackDesc **newEsp, StackDesc **oldEsp);
 
 	// Switch back to the previously running UThread, allocating an additional return address on the
 	// stack and remembering the location of that stack so that it can be altered later.
@@ -40,8 +41,8 @@ namespace os {
 	// Free a previously allocated stack.
 	static void freeStack(void *base, nat size);
 
-	// Compute the initial esp for this architecture.
-	static StackDesc *initialStack(void *base, nat size);
+	// Compute the initial stack description for this architecture.
+	static StackDesc *initialDesc(void *base, nat size);
 
 	// Get a platform-dependent highly accurate timestamp in some unit. This should be monotonically
 	// increasing.
@@ -147,8 +148,7 @@ namespace os {
 		ThreadData *thread = os::threadData(on);
 		UThreadData *t = UThreadData::create(&thread->uState);
 
-		t->pushParams(null, new util::Fn<void, void>(fn));
-		t->pushContext(address(&spawnFn));
+		t->pushContext(address(&spawnFn), new util::Fn<void, void>(fn));
 
 		return insert(t, thread);
 	}
@@ -198,8 +198,7 @@ namespace os {
 		UThreadData *t = UThreadData::create(&thread->uState);
 
 		// Set up the thread for calling 'spawnCall'.
-		t->pushParams(null, params);
-		t->pushContext((const void *)spawn);
+		t->pushContext((const void *)spawn, params);
 
 		// Call the newly created UThread on this thread, and make sure to return directly here later.
 		UThreadState *current = UThreadState::current();
@@ -248,7 +247,7 @@ namespace os {
 	 * UThread data and UThreadStack.
 	 */
 
-	UThreadStack::UThreadStack() : desc(null) {}
+	UThreadStack::UThreadStack() : desc(null), stackLimit(null) {}
 
 	UThreadData::UThreadData(UThreadState *state) :
 		references(0), next(null), owner(null), stackBase(null), stackSize(0) {
@@ -259,7 +258,9 @@ namespace os {
 
 	UThreadData *UThreadData::createFirst(UThreadState *thread) {
 		// For the thread where the stack was allocated by the OS, we do not need to care.
-		return new UThreadData(thread);
+		UThreadData *t = new UThreadData(thread);
+		TODO(L"We need to get a value for 'stackLimit' somehow!");
+		return t;
 	}
 
 	UThreadData *UThreadData::create(UThreadState *thread) {
@@ -269,7 +270,8 @@ namespace os {
 		UThreadData *t = new UThreadData(thread);
 		t->stackSize = os::stackSize;
 		t->stackBase = stack;
-		t->stack.desc = initialStack(t->stackBase, t->stackSize);
+		t->stack.desc = initialDesc(t->stackBase, t->stackSize);
+		t->stack.stackLimit = t->stack.desc->high;
 		return t;
 	}
 
@@ -571,46 +573,38 @@ namespace os {
 #endif
 	}
 
-	static StackDesc *initialStack(void *base, nat size) {
+	static StackDesc *initialDesc(void *base, nat size) {
+		// Put the initial stack description in the 'top' of the stack.
+		// Update it whenever we call 'pushContext'.
 		byte *r = (byte *)base;
-		return (StackDesc *)(r + size);
+		StackDesc *desc = (StackDesc *)base;
+
+		desc->low = r + size;
+		desc->high = r + size;
+
+		return desc;
+	}
+
+	static void *&stackPtr(UThreadStack &stack) {
+		return stack.desc->low;
 	}
 
 	void UThreadData::push(void *v) {
-		void **esp = (void **)stack.desc;
+		void **esp = (void **)stackPtr(stack);
 		*--esp = v;
-		stack.desc = (StackDesc *)esp;
+		stackPtr(stack) = esp;
 	}
 
 	void UThreadData::push(uintptr_t v) {
-		void **esp = (void **)stack.desc;
+		void **esp = (void **)stackPtr(stack);
 		*--esp = (void *)v;
-		stack.desc = (StackDesc *)esp;
+		stackPtr(stack) = esp;
 	}
 
 	void UThreadData::push(intptr_t v) {
-		void **esp = (void **)stack.desc;
+		void **esp = (void **)stackPtr(stack);
 		*--esp = (void *)v;
-		stack.desc = (StackDesc *)esp;
-	}
-
-	void *UThreadData::alloc(size_t s) {
-		s = roundUp(s, sizeof(void *));
-		void **esp = (void **)stack.desc;
-		esp -= s / 4;
-		stack.desc = (StackDesc *)esp;
-		return esp;
-	}
-
-	void UThreadData::pushParams(const void *returnTo, void *param) {
-		push(param);
-		push((void *)returnTo);
-	}
-
-	void UThreadData::pushParams(const void *returnTo, void *param1, void *param2) {
-		push(param2);
-		push(param1);
-		push((void *)returnTo);
+		stackPtr(stack) = esp;
 	}
 
 	void UThreadData::pushContext(const void *fn) {
@@ -620,9 +614,17 @@ namespace os {
 		push(0); // esi
 		push(0); // edi
 		push(-1); // seh (end of list is -1)
-		push(initialStack(stackBase, stackSize)); // stack base
+		push(stack.desc->high);
 		push(stackBase); // stack limit
-		push(stack.desc); // current stack-pointer (approximate, this is enough).
+		push(stack.desc->low); // current stack pointer (approximate, this is enough)
+
+		// Set the 'desc' of 'stack' to the actual stack pointer, so that we can run code on this stack.
+		stack.desc = (StackDesc *)(stack.desc->low);
+	}
+
+	void UThreadData::pushContext(const void *fn, void *param) {
+		push(param);
+		pushContext(fn);
 	}
 
 #pragma warning (disable: 4733)
@@ -653,11 +655,10 @@ namespace os {
 			lea ebx, [esp-4];
 			push ebx;
 
-			// Report the state for the old thread. This makes it possible for the gc to scan that properly.
+			// Report the state for the old thread. This makes it possible for the GC to scan that properly.
 			mov [eax], esp;
 
-			// Switch to the new stack. At this point, the GC will ignore the current thread, as it
-			// has seen it 'disabled' earlier.
+			// Switch to the new stack.
 			mov esp, [ecx];
 
 			// Restore state.
@@ -669,7 +670,7 @@ namespace os {
 			pop esi;
 			pop ebx;
 
-			// Clear the new thread's description. This means that the gc will start scanning the
+			// Clear the new thread's description. This means that the GC will start scanning the
 			// stack based on esp rather than what is in the StackDesc.
 			mov DWORD PTR [ecx], 0;
 
@@ -704,13 +705,17 @@ namespace os {
 #elif defined(GCC) && defined(X64)
 
 	static int64 timestamp() {
-		TODO(L"Implement me!");
-		return 0;
+		struct timespec time = {0, 0};
+		clock_gettime(CLOCK_MONOTONIC, &time);
+
+		int64 r = time.tv_sec;
+		r *= 1000 * 1000;
+		r += time.tv_nsec / 1000;
+		return r;
 	}
 
 	static int64 msInTimestamp(nat ms) {
-		TODO(L"Implement me!");
-		return ms;
+		return int64(ms * 1000);
 	}
 
 	static nat remainingMs(int64 target) {
@@ -718,8 +723,8 @@ namespace os {
 		if (target <= now)
 			return 0;
 
-		TODO(L"Implement me!");
-		return target;
+		int64 remaining = target - now;
+		return nat(remaining / 1000);
 	}
 
 	static nat pageSize() {
@@ -764,62 +769,72 @@ namespace os {
 		byte *mem = (byte *)base;
 		nat pageSz = pageSize();
 		mem -= pageSz;
-		munmap(base, size + pageSz);
+		munmap(mem, size + pageSz);
 
 #ifdef DEBUG
 		atomicDecrement(stacks);
 #endif
 	}
 
-	static StackDesc *initialStack(void *base, nat size) {
-		TODO(L"Implement me!");
-		return null;
+	static StackDesc *initialDesc(void *base, nat size) {
+		// Put the initial stack description in the 'top' of the stack.
+		// Update it whenever we call 'pushContext'.
+		byte *r = (byte *)base;
+		StackDesc *desc = (StackDesc *)base;
+
+		desc->low = r + size;
+		desc->high = r + size;
+
+		return desc;
+	}
+
+	static void *&stackPtr(UThreadStack &stack) {
+		return stack.desc->low;
 	}
 
 	void UThreadData::push(void *v) {
-		void **esp = (void **)stack.desc;
+		void **esp = (void **)stackPtr(stack);
 		*--esp = v;
-		stack.desc = (StackDesc *)esp;
+		stackPtr(stack) = esp;
 	}
 
 	void UThreadData::push(uintptr_t v) {
-		void **esp = (void **)stack.desc;
+		void **esp = (void **)stackPtr(stack);
 		*--esp = (void *)v;
-		stack.desc = (StackDesc *)esp;
+		stackPtr(stack) = esp;
 	}
 
 	void UThreadData::push(intptr_t v) {
-		void **esp = (void **)stack.desc;
+		void **esp = (void **)stackPtr(stack);
 		*--esp = (void *)v;
-		stack.desc = (StackDesc *)esp;
-	}
-
-	void *UThreadData::alloc(size_t s) {
-		s = roundUp(s, sizeof(void *));
-		void **esp = (void **)stack.desc;
-		esp -= s / 4;
-		stack.desc = (StackDesc *)esp;
-		return esp;
-	}
-
-	void UThreadData::pushParams(const void *returnTo, void *param) {
-		TODO(L"Implement me!");
-	}
-
-	void UThreadData::pushParams(const void *returnTo, void *param1, void *param2) {
-		TODO(L"Implement me!");
+		stackPtr(stack) = esp;
 	}
 
 	void UThreadData::pushContext(const void *fn) {
-		TODO(L"Implement me!");
+		pushContext(fn, null);
 	}
 
-	void doSwitch(StackDesc **newDesc, StackDesc **oldDesc) {
-		TODO(L"Implement me!");
+	void UThreadData::pushContext(const void *fn, void *param) {
+		push((void *)fn); // return to
+		push((void *)0); // rbp
+		push(param); // rdi
+		push((void *)0); // rbx
+		push((void *)0); // r12
+		push((void *)0); // r13
+		push((void *)0); // r14
+		push((void *)0); // r15
+
+		push(stack.desc->high);
+		push(stack.desc->dummy);
+		push(stack.desc->low);
+
+		// Set the 'desc' of 'stack' to the actual stack pointer, so that we can run code on this stack.
+		stack.desc = (StackDesc *)(stack.desc->low);
 	}
 
-	void doEndDetour() {
-		TODO(L"Implement me!");
+	// Called from UThreadX64.S
+	extern "C" void doEndDetour2(void **result) {
+		UThreadState::current()->endDetour(result);
 	}
 
 #endif

@@ -164,6 +164,10 @@ namespace os {
 		// Current stack description. If null, then this UThread is currently running, and the
 		// current CPU state describes the stack of that thread.
 		Desc *desc;
+
+		// Stack bottom for the current thread. Only used if 'low' or 'high' is missing (depends on
+		// the current architecture).
+		void *stackLimit;
 	};
 
 
@@ -221,15 +225,10 @@ namespace os {
 		void push(intptr_t v);
 		void push(uintptr_t v);
 
-		// Push some parameters on the stack.
-		void pushParams(const void *returnTo, void *param);
-		void pushParams(const void *returnTo, void *param1, void *param2);
-
-		// Allocate some space on the stack.
-		void *alloc(size_t size);
-
-		// Push the initial context to the stack.
+		// Push the initial context to the stack. This contains where to 'return' to, and any
+		// parameters that shall be passed to that function.
 		void pushContext(const void *returnTo);
+		void pushContext(const void *returnTo, void *param);
 	};
 
 	/**
