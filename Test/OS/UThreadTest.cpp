@@ -67,7 +67,7 @@ static void trackerFn(Tracker a) {
 	fnCallSum += a.data;
 }
 
-BEGIN_TEST_(UThreadFnCallTest, OS) {
+BEGIN_TEST(UThreadFnCallTest, OS) {
 	fnCallSum = 0;
 
 	{

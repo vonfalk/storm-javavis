@@ -63,9 +63,9 @@ _ZN2os11doEndDetourEv:
 	pushq $0
 	mov %rsp, %rax
 
-	# Align the stack to 16 bytes. Otherwise our 'movaps' instructions will not work. We know that %rsp will
-	# be aligned to 16 bytes when the function is called, so this will keep the alignment to 16 bytes.
-	pushq $0
+	# NOTE: Since the last 'parameter' to a function is known to be aligned at a 16 byte boundary, we know
+	# that %rsp is now aligned on a 16 byte boundary as well. This alignment holds up all the way through this
+	# function since we push exactly 6 words on the stack, followed by a couple of 16 byte XMM registers.
 
 	# Save registers required for calling another function.
 	pushq %rdi
@@ -121,9 +121,6 @@ _ZN2os11doEndDetourEv:
 	popq %rdx
 	popq %rsi
 	popq %rdi
-
-	# Remove the alignment value.
-	addq $8, %rsp
 
 	# Let 'ret' handle the other one, which should contain an address now!
 	retq

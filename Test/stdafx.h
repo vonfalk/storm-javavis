@@ -26,7 +26,7 @@ Gc &gc();
 
 
 // Basic threading, no GC yet.
-SUITE(OS, 0);
+SUITE_(OS, 0);
 // Basic gc operation, scanning simple objects without anything strange.
 SUITE(GcScan, 1);
 // Gc operation on Storm objects declared in C++.

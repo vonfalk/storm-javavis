@@ -1,4 +1,5 @@
 #pragma once
+#include "Utils/Platform.h"
 
 namespace storm {
 	class Place;
@@ -12,6 +13,16 @@ namespace os {
 
 #ifndef USE_VA_TEMPLATE
 #error "The generic FnCall implementation requires varidic templates."
+#endif
+
+#if defined(POSIX) && defined(X64)
+	// The 'this' parameter is passed as if it was the first parameter of a function. Trying to call
+	// a member function only seems to cause trouble!
+#define DO_THISCALL(type) (std::is_pointer<type>::value && false) // needs to depend on 'type' to not cause errors.
+#else
+#error "Please define the 'DO_THISCALL' macro for your compiler here!"
+	// This could be needed on some architectures.
+#define DO_THISCALL(type) std::is_pointer<type>::value
 #endif
 
 	namespace impl {
@@ -41,7 +52,7 @@ namespace os {
 			class Dummy : NoCopy {};
 
 			template <class U, class ... T>
-			static typename std::enable_if<std::is_pointer<U>::value>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
+			static typename std::enable_if<DO_THISCALL(U)>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
 				typedef Result CODECALL (Dummy::*Fn)(T...);
 				Fn p = null;
 				memcpy(&p, &fn, sizeof(void *));
@@ -50,7 +61,7 @@ namespace os {
 			}
 
 			template <class U, class ... T>
-			static typename std::enable_if<!std::is_pointer<U>::value>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
+			static typename std::enable_if<!DO_THISCALL(U)>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
 				typedef Result CODECALL (*Fn)(U, T...);
 				Fn p = (Fn)fn;
 				new (storm::Place(out)) Result((*p)(first, args...));
@@ -78,7 +89,7 @@ namespace os {
 			class Dummy : NoCopy {};
 
 			template <class U, class ... T>
-			static typename std::enable_if<std::is_pointer<U>::value>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
+			static typename std::enable_if<DO_THISCALL(U)>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
 				typedef void CODECALL (Dummy::*Fn)(T...);
 				Fn p = null;
 				memcpy(&p, &fn, sizeof(void *));
@@ -87,7 +98,7 @@ namespace os {
 			}
 
 			template <class U, class ... T>
-			static typename std::enable_if<!std::is_pointer<U>::value>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
+			static typename std::enable_if<!DO_THISCALL(U)>::type call(const void *fn, void **, void *out, nat pos, U first, T& ... args) {
 				typedef void CODECALL (*Fn)(U, T...);
 				Fn p = (Fn)fn;
 				(*p)(first, args...);

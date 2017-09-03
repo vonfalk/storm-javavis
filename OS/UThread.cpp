@@ -814,7 +814,15 @@ namespace os {
 		pushContext(fn, null);
 	}
 
+	static void errorFn() {
+		PLN(L"UThread boot function returned. This is an implementation bug!");
+		std::terminate();
+	}
+
 	void UThreadData::pushContext(const void *fn, void *param) {
+		// Previous function's return to. Needed to align the stack properly.
+		push((void *)errorFn);
+
 		push((void *)fn); // return to
 		push((void *)0); // rbp
 		push(param); // rdi
