@@ -33,7 +33,8 @@ namespace os {
 
 	// Switch back to the previously running UThread, allocating an additional return address on the
 	// stack and remembering the location of that stack so that it can be altered later.
-	void doEndDetour();
+	// Returns the function that shall be called, since there may be variants of the function.
+	static const void *endDetourFn(bool member);
 
 	// Allocate a new stack.
 	static void *allocStack(nat size);
@@ -166,7 +167,7 @@ namespace os {
 
 	static void spawnCall(SpawnParams *params) {
 		try {
-			(*params->thunk)(address(&doEndDetour), params->memberFn, params->params, params->first, null);
+			(*params->thunk)(endDetourFn(params->memberFn), params->memberFn, params->params, params->first, null);
 		} catch (...) {
 			onUncaughtException();
 		}
@@ -181,7 +182,7 @@ namespace os {
 		FutureBase *future = params->future;
 
 		try {
-			(*params->thunk)(address(&doEndDetour), params->memberFn, params->params, params->first, params->target);
+			(*params->thunk)(endDetourFn(params->memberFn), params->memberFn, params->params, params->first, params->target);
 			future->posted();
 		} catch (...) {
 			future->error();
@@ -702,6 +703,10 @@ namespace os {
 		}
 	}
 
+	static const void *endDetourFn(bool member) {
+		return address(&doEndDetour);
+	}
+
 #elif defined(GCC) && defined(X64)
 
 	static int64 timestamp() {
@@ -843,6 +848,15 @@ namespace os {
 	// Called from UThreadX64.S
 	extern "C" void doEndDetour2(void **result) {
 		UThreadState::current()->endDetour(result);
+	}
+
+	extern "C" void doEndDetour();
+	extern "C" void doEndDetourMember();
+
+	static const void *endDetourFn(bool member) {
+		return member
+			? address(doEndDetourMember)
+			: address(doEndDetour);
 	}
 
 #endif
