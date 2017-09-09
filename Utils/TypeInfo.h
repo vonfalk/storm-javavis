@@ -1,17 +1,17 @@
 #pragma once
 #include <type_traits>
 
-#if defined(VISUAL_STUDIO) && VISUAL_STUDIO < 2008
+#if defined(VISUAL_STUDIO) && VISUAL_STUDIO <= 2008
 
 namespace std {
 	template <class T>
 	struct is_trivially_copy_constructible {
-		typedef std::tr1::has_trivial_copy<T>::value value;
+		static const bool value = std::tr1::has_trivial_copy<T>::value;
 	};
 
 	template <class T>
 	struct is_trivially_destructible {
-		typedef std::tr1::has_trivial_destructor<T>::value value;
+		static const bool value = std::tr1::has_trivial_destructor<T>::value;
 	};
 }
 

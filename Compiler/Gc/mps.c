@@ -3,6 +3,7 @@
 
 #ifdef STORM_GC_MPS
 
+#pragma warning(disable: 4068) // Do not warn about unknown pragmas.
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 
 /**

@@ -366,6 +366,12 @@ namespace os {
 
 #undef READ_SRC
 
+		template <class T>
+		inline bool isUser() {
+			return KindOf<T>::v == TypeKind::userTrivial
+				|| KindOf<T>::v == TypeKind::userComplex;
+		}
+
 		/**
 		 * Handle pointers/references properly.
 		 */
@@ -376,7 +382,7 @@ namespace os {
 			}
 
 			static void *exec(bool member) {
-				if (KindOf<T>::v == TypeInfo::user && member)
+				if (isUser<T>() && member)
 					return &execMemberUser;
 				else
 					return &execCall<T>;

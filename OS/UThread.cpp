@@ -625,6 +625,7 @@ namespace os {
 
 	void UThreadData::pushContext(const void *fn, void *param) {
 		push(param);
+		push(null); // return to
 		pushContext(fn);
 	}
 
