@@ -571,17 +571,6 @@ namespace storm {
 		// All threads running on this thread.
 		const os::InlineSet<os::UThreadStack> *stacks;
 
-#if defined(WINDOWS)
-		struct TIB {
-			void *sehFrame;
-			void *stackBase;
-			void *stackLimit;
-		};
-
-		// Location of the TIB for this thread.
-		TIB *tib;
-#endif
-
 #if MPS_CHECK_MEMORY
 		// How many allocations ago did we validate memory?
 		nat lastCheck;
@@ -599,21 +588,14 @@ namespace storm {
 	 * TODO: Move some of these to os::UThread to centralize the knowledge about threading on the
 	 * current platform.
 	 */
-#if defined(X86) && defined(WINDOWS)
+#if defined(X86) || defined(X64)
 
-	// Set to 0xFFFFFF so that MPS will not discard this thread when we switch stacks. Note, it must
-	// be properly word-aligned.
-	static void * const stackDummy = (void *)((size_t)-1 & ~(wordSize - 1));
+	// Stack dummy used to recognize when the MPS wants to scan an entire stack. This is the largest
+	// possible address (word aligned). Ie. 0xFF...F0
+	static void *const stackDummy = (void *)((size_t)-1 & ~(wordSize - 1));
 
-	static void mpsAttach(GcThread *thread) {
-		GcThread::TIB *tmp;
-		__asm {
-			// At offset 0x18, the linear address of the TIB is stored.
-			mov eax, fs:[0x18];
-			mov tmp, eax;
-		}
-		thread->tib = tmp;
-	}
+	// Get the read lower bound for the stack.
+	static void *mpsStackLimit(GcThread *thread);
 
 	// Note: We're checking all word-aligned positions as we need to make sure we're scanning
 	// the return addresses into functions (which are also in this pool). MPS currently scans
@@ -624,9 +606,6 @@ namespace storm {
 		void **to = (void **)limit;
 
 		if (limit == stackDummy) {
-			// Read the current stack base from TIB and replace the dummy.
-			to = (void **)thread->tib->stackBase;
-
 			// We shall scan the entire stack! This is a bit special, as we will more or less
 			// completely ignore what MPS told us and figure it out ourselves.
 
@@ -639,29 +618,36 @@ namespace storm {
 			// them. However, that means that all UThreads have proper states saved to them, which
 			// we can scan anyway.
 			size_t bytesScanned = 0;
-			bool ignoreMainStack = false;
+
+			// Remember we did not find a running stack.
+			to = null;
 
 			// Scan all UThreads.
 			MPS_SCAN_BEGIN(ss) {
 				os::InlineSet<os::UThreadStack>::iterator i = thread->stacks->begin();
 				for (nat id = 0; i != thread->stacks->end(); ++i, id++) {
-					os::UThreadStack::Desc *desc = i->desc;
-					if (!desc)
+					const os::UThreadStack *stack = *i;
+					if (!stack->desc) {
+						// This is the main stack! Scan that later.
+						to = (void **)stack->stackLimit;
 						continue;
+					}
 
-					bytesScanned += (char *)desc->high - (char *)desc->low;
-					for (void **at = (void **)desc->low; at < (void **)desc->high; at++) {
+					void **low = (void **)stack->desc->low;
+					void **high = (void **)stack->stackLimit;
+
+					bytesScanned += (char *)high - (char *)low;
+					for (void **at = low; at < high; at++) {
 						mps_res_t r = MPS_FIX12(ss, at);
 						if (r != MPS_RES_OK)
 							return r;
 					}
-
-					// Ignore the main stack later?
-					ignoreMainStack |= desc->high == to;
 				}
 
-				// Scan the main stack if we need to.
-				if (ignoreMainStack) {
+				// If we are right in the middle of a thread switch, we will fail to find a main
+				// stack. This means we have already scanned all stacks, and thus we do not need to
+				// do anything more.
+				if (to == null) {
 #ifdef DEBUG
 					// To see if this ever happens, and if it is handled correctly. This is *really*
 					// rare, as we have to hit a window of ~6 machine instructions when pausing another thread.
@@ -689,23 +675,6 @@ namespace storm {
 			} MPS_SCAN_END(ss);
 		}
 
-		return MPS_RES_OK;
-	}
-
-#elif defined(POSIX) && defined(X64)
-
-	// 0xFF....FF
-	static void * const stackDummy = (void *)((size_t)-1 & ~(wordSize - 1));
-
-	static void mpsAttach(GcThread *thread) {
-		TODO(L"Implement me!");
-	}
-
-	// Note: We're checking all word-aligned positions as we need to make sure we're scanning
-	// the return addresses into functions (which are also in this pool). MPS currently scans
-	// EIP as well, which is good as the currently executing function might otherwise be moved.
-	static mps_res_t mpsScanThread(mps_ss_t ss, void *base, void *limit, void *closure) {
-		TODO(L"Implement me!");
 		return MPS_RES_OK;
 	}
 
@@ -999,9 +968,6 @@ namespace storm {
 
 		// Find all stacks on this os-thread.
 		desc->stacks = &thread.stacks();
-
-		// Fill in anything else the MPS needs to scan.
-		mpsAttach(desc);
 
 		// Register the thread's root. Note that we're fooling MPS on where the stack starts, as
 		// we will discover this ourselves later in a platform-specific manner depending on
