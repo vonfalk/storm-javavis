@@ -92,7 +92,17 @@ static SmallComplexType testType5(int p1, int p2) {
 struct Dummy {
 	LargeType data;
 
+	Dummy(LargeType d) : data(d) {}
+
 	LargeType CODECALL large() {
+		assert(data.v1 == 2);
+		assert(data.v2 == 3);
+		assert(data.v3 == 4);
+		assert(data.v4 == 5);
+		return data;
+	}
+
+	virtual LargeType CODECALL virtualLarge() {
 		assert(data.v1 == 2);
 		assert(data.v2 == 3);
 		assert(data.v3 == 4);
@@ -149,10 +159,17 @@ BEGIN_TEST(FnCallTest, OS) {
 	}
 
 	{
-		Dummy dummy = { LargeType(2, 3, 4, 5) };
+		Dummy dummy(LargeType(2, 3, 4, 5));
 		Dummy *pDummy = &dummy;
 		FnCall<LargeType> p = fnCall().add(pDummy);
 		CHECK_EQ(p.call(address(&Dummy::large), true), LargeType(2, 3, 4, 5));
+	}
+
+	{
+		Dummy dummy(LargeType(2, 3, 4, 5));
+		Dummy *pDummy = &dummy;
+		FnCall<LargeType> p = fnCall().add(pDummy);
+		CHECK_EQ(p.call(address(&Dummy::virtualLarge), true), LargeType(2, 3, 4, 5));
 	}
 
 	{

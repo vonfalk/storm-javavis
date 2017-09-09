@@ -112,7 +112,21 @@ static void voidParams(int a, int b) {
 	assert(b == 20);
 }
 
-struct Dummy {
+struct IntDummy {
+	int data;
+
+	IntDummy(int d) : data(d) {}
+
+	int CODECALL large() {
+		assert(data == 22);
+		return data;
+	}
+
+	virtual int CODECALL virtualLarge() {
+		assert(data == 22);
+		return data;
+	}
+
 	void CODECALL voidMember(int a, int b) {
 		assert((size_t)this == 10);
 		assert(a == 20);
@@ -180,12 +194,30 @@ BEGIN_TEST(UThreadResultTest, OS) {
 	}
 
 	{
+		os::Future<int> r;
+		IntDummy d(22);
+		IntDummy *pD = &d;
+		FnCall<int> p = fnCall().add(pD);
+		UThread::spawn(address(&IntDummy::large), true, p, r);
+		CHECK_EQ(r.result(), 22);
+	}
+
+	{
+		os::Future<int> r;
+		IntDummy d(22);
+		IntDummy *pD = &d;
+		FnCall<int> p = fnCall().add(pD);
+		UThread::spawn(address(&IntDummy::virtualLarge), true, p, r);
+		CHECK_EQ(r.result(), 22);
+	}
+
+	{
 		os::Future<void> r;
 		void *a = (void *)10;
 		int b = 20;
 		int c = 30;
 		FnCall<void> p = fnCall().add(a).add(b).add(c);
-		UThread::spawn(address(&Dummy::voidMember), true, p, r);
+		UThread::spawn(address(&IntDummy::voidMember), true, p, r);
 		CHECK_RUNS(r.result());
 	}
 
