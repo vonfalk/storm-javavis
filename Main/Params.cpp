@@ -2,12 +2,12 @@
 #include "Params.h"
 
 struct StatePtr;
-typedef StatePtr (*State)(const wchar *, Params &);
+typedef StatePtr (*State)(const wchar_t *, Params &);
 
 struct StatePtr {
 	StatePtr() : p(null) {}
     StatePtr(State p) : p(p) {}
-	StatePtr operator () (const wchar *s, Params &l) { return (*p)(s, l); }
+	StatePtr operator () (const wchar_t *s, Params &l) { return (*p)(s, l); }
 	operator bool() { return p != null; }
     State p;
 };
@@ -23,21 +23,21 @@ struct StatePtr {
 		PARSE_ERROR(msg);						\
 	}
 
-static StatePtr start(const wchar *arg, Params &result);
+static StatePtr start(const wchar_t *arg, Params &result);
 
-static StatePtr function(const wchar *arg, Params &result) {
+static StatePtr function(const wchar_t *arg, Params &result) {
 	EXPECT_MORE(L"Missing function name.");
 	result.modeParam = arg;
 	return &start;
 }
 
-static StatePtr replCommand(const wchar *arg, Params &result) {
+static StatePtr replCommand(const wchar_t *arg, Params &result) {
 	EXPECT_MORE(L"Missing repl command.");
 	result.modeParam2 = arg;
 	return &start;
 }
 
-static StatePtr root(const wchar *arg, Params &result) {
+static StatePtr root(const wchar_t *arg, Params &result) {
 	EXPECT_MORE(L"Missing root path.");
 	if (result.root) {
 		PARSE_ERROR(L"Root already set once!");
@@ -46,13 +46,13 @@ static StatePtr root(const wchar *arg, Params &result) {
 	return &start;
 }
 
-static StatePtr importPath(const wchar *arg, Params &result) {
+static StatePtr importPath(const wchar_t *arg, Params &result) {
 	EXPECT_MORE(L"Missing import path.");
 	result.import.back().path = arg;
 	return &start;
 }
 
-static StatePtr import(const wchar *arg, Params &result) {
+static StatePtr import(const wchar_t *arg, Params &result) {
 	EXPECT_MORE(L"Missing import target.");
 	Import i = {
 		null,
@@ -62,7 +62,7 @@ static StatePtr import(const wchar *arg, Params &result) {
 	return &importPath;
 }
 
-static StatePtr start(const wchar *arg, Params &result) {
+static StatePtr start(const wchar_t *arg, Params &result) {
 	if (arg == null) {
 		return StatePtr();
 	} else if (wcscmp(arg, L"-?") == 0 || wcscmp(arg, L"--help") == 0) {
@@ -88,7 +88,7 @@ static StatePtr start(const wchar *arg, Params &result) {
 	}
 }
 
-Params::Params(int argc, const wchar *argv[])
+Params::Params(int argc, const wchar_t *argv[])
 	: mode(modeRepl),
 	  root(null),
 	  modeParam(L"bs"),

@@ -257,10 +257,10 @@ namespace os {
 		state->newStack(this);
 	}
 
-	UThreadData *UThreadData::createFirst(UThreadState *thread) {
+	UThreadData *UThreadData::createFirst(UThreadState *thread, void *base) {
 		// For the thread where the stack was allocated by the OS, we do not need to care.
 		UThreadData *t = new UThreadData(thread);
-		TODO(L"We need to get a value for 'stackLimit' somehow!");
+		t->stack.stackLimit = base;
 		return t;
 	}
 
@@ -290,10 +290,10 @@ namespace os {
 	 * UThread state.
 	 */
 
-	UThreadState::UThreadState(ThreadData *owner) : owner(owner) {
+	UThreadState::UThreadState(ThreadData *owner, void *stackBase) : owner(owner) {
 		currentUThreadState(this);
 
-		running = UThreadData::createFirst(this);
+		running = UThreadData::createFirst(this, stackBase);
 		running->owner = this;
 		running->addRef();
 

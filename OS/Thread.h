@@ -67,6 +67,9 @@ namespace os {
 		// Get the current thread.
 		static Thread current();
 
+		// Set the stack base for the first thread.
+		static void setStackBase(void *base);
+
 		// Invalid thread.
 		static Thread invalid;
 
@@ -98,7 +101,7 @@ namespace os {
 		UThreadState uState;
 
 		// Create.
-		ThreadData();
+		ThreadData(void *stackBase);
 
 		// Destroy.
 		~ThreadData();
@@ -127,9 +130,10 @@ namespace os {
 		inline void attach(Handle h) { ioComplete.add(h, this); }
 
 		// Thread main function.
-		static void threadMain(ThreadStart &start);
+		static void threadMain(ThreadStart &start, void *stackBottom);
 
 	private:
+		friend class Thread;
 		friend class IORequest;
 
 		// Condition variable for waking up the thread when there is more work to do

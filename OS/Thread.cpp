@@ -52,7 +52,7 @@ namespace os {
 	 * Thread data.
 	 */
 
-	ThreadData::ThreadData() : references(0), uState(this) {}
+	ThreadData::ThreadData(void *stack) : references(0), uState(this, stack) {}
 
 	ThreadData::~ThreadData() {}
 
@@ -100,16 +100,24 @@ namespace os {
 		data->attach(h);
 	}
 
+	static void *mainStackBase = null;
+
 	Thread Thread::current() {
 		ThreadData *t = currentThreadData();
 		if (t)
 			return Thread(t);
 
+		assert(mainStackBase, L"Call 'Thread::setStackBase' before using 'Thread::current'");
+
 		// The first thread, create its data...
-		static ThreadData firstData;
+		static ThreadData firstData(mainStackBase);
 		// Keep the first thread from firing 'signal' all the time.
 		static Thread first(&firstData);
 		return first;
+	}
+
+	void Thread::setStackBase(void *base) {
+		mainStackBase = base;
 	}
 
 	Thread Thread::invalid = Thread(null);
@@ -127,7 +135,10 @@ namespace os {
 		startThread(start);
 		start.sema.down();
 
-		return Thread(start.data);
+		Thread t(start.data);
+		// Consume the additional reference, making sure the thread does not terminate before 'spawn' returns.
+		start.data->release();
+		return t;
 	}
 
 	Thread Thread::spawn(ThreadWait *wait, ThreadGroup &group) {
@@ -136,11 +147,15 @@ namespace os {
 		startThread(start);
 		start.sema.down();
 
-		return Thread(start.data);
+		Thread t(start.data);
+		// Consume the additional reference, making sure the thread does not terminate before 'spawn' returns.
+		start.data->release();
+		return t;
 	}
 
-	void ThreadData::threadMain(ThreadStart &start) {
-		ThreadData d;
+	void ThreadData::threadMain(ThreadStart &start, void *stackBase) {
+		ThreadData d(stackBase);
+		d.addRef(); // Add a reference so that 'd' do not terminate prematurely.
 
 		Thread::initThread();
 		threadCreated();
@@ -279,7 +294,7 @@ namespace os {
 
 	static void winThreadMain(void *param) {
 		ThreadStart *s = (ThreadStart *)param;
-		ThreadData::threadMain(*s);
+		ThreadData::threadMain(*s, &param);
 	}
 
 	static void startThread(ThreadStart &start) {
@@ -298,7 +313,7 @@ namespace os {
 
 	static void *posixThreadMain(void *param) {
 		ThreadStart *s = (ThreadStart *)param;
-		ThreadData::threadMain(*s);
+		ThreadData::threadMain(*s, &param);
 		return null;
 	}
 

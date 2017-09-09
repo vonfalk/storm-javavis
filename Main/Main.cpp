@@ -9,7 +9,7 @@
 #include "Core/Io/StdStream.h"
 #include "Core/Io/Text.h"
 
-void runRepl(Engine &e, const wchar *lang, Repl *repl) {
+void runRepl(Engine &e, const wchar_t *lang, Repl *repl) {
 	TextInput *input = e.stdIn();
 	TextOutput *output = e.stdOut();
 
@@ -48,14 +48,14 @@ void runRepl(Engine &e, const wchar *lang, Repl *repl) {
 	}
 }
 
-int runRepl(Engine &e, const wchar *lang, const wchar *input) {
+int runRepl(Engine &e, const wchar_t *lang, const wchar_t *input) {
 	if (!lang)
 		lang = L"bs";
 
 	Name *replName = new (e) Name();
-	replName->add(new (e) Str(L"lang"));
+	replName->add(new (e) Str(S("lang")));
 	replName->add(new (e) Str(lang));
-	replName->add(new (e) Str(L"repl"));
+	replName->add(new (e) Str(S("repl")));
 	Function *replFn = as<Function>(e.scope().find(replName));
 	if (!replFn) {
 		wcerr << L"Could not find a repl for " << lang << L": no function named " << replName << L" exists." << endl;
@@ -86,8 +86,8 @@ int runRepl(Engine &e, const wchar *lang, const wchar *input) {
 	return 0;
 }
 
-int runFunction(Engine &e, const wchar *function) {
-	SimpleName *name = parseSimpleName(e, function);
+int runFunction(Engine &e, const wchar_t *function) {
+	SimpleName *name = parseSimpleName(new (e) Str(function));
 	Named *found = e.scope().find(name);
 	if (!found) {
 		wcerr << L"Could not find " << function << endl;
@@ -124,7 +124,7 @@ int runFunction(Engine &e, const wchar *function) {
 	return 0;
 }
 
-void help(const wchar *cmd) {
+void help(const wchar_t *cmd) {
 	wcout << L"Usage: " << endl;
 	wcout << cmd << L"                  - launch the default REPL." << endl;
 	wcout << cmd << L" <language>       - launch the REPL for <language>." << endl;
@@ -137,12 +137,12 @@ void help(const wchar *cmd) {
 void importPkgs(Engine &into, const Params &p) {
 	for (Nat i = 0; i < p.import.size(); i++) {
 		const Import &import = p.import[i];
-		SimpleName *n = parseSimpleName(into, import.into);
+		SimpleName *n = parseSimpleName(new (into) Str(import.into));
 		if (n->empty())
 			continue;
 
 		NameSet *ns = into.nameSet(n->parent(), true);
-		Url *path = parsePath(into, import.path);
+		Url *path = parsePath(new (into) Str(import.path));
 		if (!path->absolute())
 			path = cwdUrl(into)->push(path);
 		Package *pkg = new (into) Package(n->last()->name, path);
@@ -150,7 +150,7 @@ void importPkgs(Engine &into, const Params &p) {
 	}
 }
 
-int stormMain(int argc, const wchar *argv[]) {
+int stormMain(int argc, const wchar_t *argv[]) {
 	Params p(argc, argv);
 
 	switch (p.mode) {
@@ -179,7 +179,7 @@ int stormMain(int argc, const wchar *argv[]) {
 			root = Path::cwd() + root;
 	}
 
-	Engine e(root, Engine::reuseMain);
+	Engine e(root, Engine::reuseMain, &argc);
 	Moment end;
 
 	importPkgs(e, p);
@@ -231,5 +231,19 @@ int _tmain(int argc, const wchar *argv[]) {
 }
 
 #else
-#error "Please implement this stub for UNIX as well!"
+
+int main(int argc, const char *argv[]) {
+	try {
+		vector<String> args(argv, argv+argc);
+		vector<const wchar_t *> c_args(argc);
+		for (int i = 0; i < argc; i++)
+			c_args[i] = args[i].c_str();
+
+		return stormMain(argc, &c_args[0]);
+	} catch (const Exception &e) {
+		wcerr << "Unhandled exception: " << e << endl;
+		return 1;
+	}
+}
+
 #endif

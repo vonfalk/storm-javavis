@@ -199,7 +199,7 @@ namespace os {
 		}
 
 		// Create for the first thread (where the stack is allocated by OS).
-		static UThreadData *createFirst(UThreadState *thread);
+		static UThreadData *createFirst(UThreadState *thread, void *stackBase);
 
 		// Create any other threads.
 		static UThreadData *create(UThreadState *thread);
@@ -240,7 +240,7 @@ namespace os {
 	class UThreadState : NoCopy {
 	public:
 		// Create.
-		UThreadState(ThreadData *owner);
+		UThreadState(ThreadData *owner, void *stackBase);
 
 		// Destroy.
 		~UThreadState();

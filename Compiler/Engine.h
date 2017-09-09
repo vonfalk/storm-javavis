@@ -57,8 +57,10 @@ namespace storm {
 		// Create the engine.
 		// 'root' is the location of the root package directory on disk. The package 'core' is
 		// assumed to be found as a subdirectory of the given root path.
+		// 'stackBase' is the base of the current thread's stack. Eg. the address of argc and/or
+		// argv or some other variable allocated on the stack near 'main'.
 		// TODO: Do not depend on Util/Path!
-		Engine(const Path &root, ThreadMode mode);
+		Engine(const Path &root, ThreadMode mode, void *stackBase);
 
 		// Destroy. This will wait until all threads have terminated properly.
 		~Engine();

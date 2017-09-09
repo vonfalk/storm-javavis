@@ -57,7 +57,7 @@ namespace storm {
 	// Starts at -1 so that the first Engine will gain id=0.
 	static Nat engineId = -1;
 
-	Engine::Engine(const Path &root, ThreadMode mode) :
+	Engine::Engine(const Path &root, ThreadMode mode, void *stackBase) :
 		id(atomicIncrement(engineId)),
 		gc(defaultArena, defaultFinalizer),
 		threadGroup(util::memberVoidFn(this, &Engine::attachThread), util::memberVoidFn(this, &Engine::detachThread)),
@@ -66,6 +66,9 @@ namespace storm {
 		ioThread(null) {
 
 		bootStatus = bootNone;
+
+		// Tell the thread system about the 'stackBase' we received.
+		os::Thread::setStackBase(stackBase);
 
 		// Initialize the roots we need.
 		memset(&o, 0, sizeof(GcRoot));
