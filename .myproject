@@ -137,7 +137,7 @@ ext+=s
 ext+=S
 noIncludes+=*.s
 noIncludes+=*.S
-compile+=*.c:gcc -std=c99 -O3 <defines> <warnings> -Wno-maybe-uninitialized <file> -c <includes> -o <output>
+compile+=*.c:gcc -Wno-unknown-pragmas -std=c99 -O3 <defines> <warnings> -Wno-maybe-uninitialized <file> -c <includes> -o <output>
 compile+=*.s:gcc -g <file> -c -o <output>
 compile+=*.S:gcc -g <file> <includes> -c -o <output>
 

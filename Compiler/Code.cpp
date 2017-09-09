@@ -114,7 +114,7 @@ namespace storm {
 		using namespace code;
 
 		Listing *l = new (this) Listing();
-		assert(false, L"Please implement 'StaticEngineCode::redirectCode'!");
+		TODO(L"Please implement 'StaticEngineCode::redirectCode'!");
 		return l;
 	}
 

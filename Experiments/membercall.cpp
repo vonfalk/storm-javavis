@@ -5,6 +5,8 @@ class Base {
 public:
 	size_t data;
 
+	virtual ~Base() {}
+
 	void regular() {
 		printf("Regular Base\n");
 	}

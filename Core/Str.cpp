@@ -24,7 +24,7 @@ namespace storm {
 				else
 					return 1;
 			}
-		} while (*a && *b);
+		} while (*(a++) && *(b++));
 		// They are equal!
 		return 0;
 	}

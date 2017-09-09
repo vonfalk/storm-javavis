@@ -328,21 +328,70 @@ namespace storm {
 			return size - 1;
 		}
 
-#elif defined(GCC) && defined(POSIX)
+#elif defined(GCC) && defined(POSIX) && defined(X64) // might hold for other architectures as well...
 
-		// TODO: Revise these for GCC!
-		const nat extraOffset = 2;
-		const nat dtorOffset = 0;
+		// GCC stores a zero (probably base offset or similar) and type info at the two first
+		// indices (as -2 and -1). We use -3!
+		const nat extraOffset = 3;
+		// NOTE: There seem to bet two destructors in the VTable. I have not yet investigated the
+		// difference between them.
+		const nat dtorOffset = 1;
+
+
+		// GCC defines these. They are located at the start and end of the text section,
+		// respectively. It is not useful to read from these, only their addresses are useful.
+		extern "C" const char __executable_start;
+		extern "C" const char __etext;
+		extern "C" const char _edata;
+
+		// Is the address in the text section of the executable?
+		static inline bool inText(const void *addr) {
+			const char *a = (const char *)addr;
+			return &__executable_start <= a
+				&& a < &__etext;
+		}
+
+		// Is the address in the data section of the executable?
+		static inline bool inData(const void *addr) {
+			const char *a = (const char *)addr;
+			return &__etext <= a
+				&& a <= &_edata;
+		}
 
 
 		nat fnSlot(const void *fn) {
-			assert(false, L"Not implemented yet!");
-			return 0;
+			// See if the pointer is odd. Then it contains the offset into the vtable + 1.
+			size_t ptr = (size_t)fn;
+			if ((ptr & 0x1) != 0 && !inText(fn)) {
+				return nat((ptr - 1) / sizeof(void *));
+			} else {
+				return invalid;
+			}
 		}
 
 		nat count(const void *vtable) {
-			assert(false, L"Not implemented yet!");
-			return 0;
+			const void *const* table = (const void *const*)vtable;
+			assert(inData(table));
+
+			// This is a table of pointers, so we can find the size by scanning until we find
+			// something which does not look like a pointer. We also know that all member functions
+			// are aligned at even addresses at the very least. Since vtables generally start with
+			// null or something that is not code, we can use that to find the end of the VTable.
+			nat size = 1;
+			while (inData(table + size)) {
+				const void *entry = table[size];
+
+				if (size_t(entry) & 0x1)
+					return size;
+				if (!inText(entry))
+					return size;
+				if (inData(entry))
+					return size;
+
+				size++;
+			}
+
+			return size + 1;
 		}
 
 #else
