@@ -55,6 +55,11 @@ BEGIN_TEST(MapTest, Core) {
 		CHECK_ERROR(map->get(new (e) Str(L"A")), MapError);
 	}
 
+} END_TEST
+
+BEGIN_TEST(MapExTest, CoreEx) {
+	Engine &e = gEngine();
+
 	// Do primitives work as keys?
 	{
 		Map<Int, Int> *map = new (e) Map<Int, Int>();

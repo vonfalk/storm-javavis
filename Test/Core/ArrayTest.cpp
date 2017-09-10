@@ -18,6 +18,13 @@ BEGIN_TEST(ArrayTest, Core) {
 	t->append(t);
 	CHECK_EQ(toS(t), L"[Well, Hello, World, Well, Hello, World]");
 
+} END_TEST
+
+BEGIN_TEST(ArrayExTest, CoreEx) {
+	Engine &e = gEngine();
+
+	// Check automatically generated toS functions.
+
 	Array<Value> *v = new (e) Array<Value>();
 	CHECK_EQ(toS(v), L"[]");
 

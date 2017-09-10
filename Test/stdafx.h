@@ -26,27 +26,29 @@ Gc &gc();
 
 
 // Basic threading, no GC yet.
-SUITE_(OS, 0);
+SUITE(OS, 0);
 // Basic gc operation, scanning simple objects without anything strange.
-SUITE_(GcScan, 1);
+SUITE(GcScan, 1);
 // Gc operation on Storm objects declared in C++.
-SUITE_(GcObjects, 2);
+SUITE(GcObjects, 2);
 // GC along with threads.
 SUITE_(GcThreads, 3);
 // Basic operation of the runtime. No code generation yet.
-SUITE(Core, 4);
-// Basic tests of the code generation backend. Further thests rely on these to work.
+SUITE_(Core, 4);
+// Basic tests of the code generation backend. Further tests rely on these to work.
 SUITE(CodeBasic, 5);
 // Tests of the code generation backend.
 SUITE(Code, 6);
+// More tests of the code generation backend. Requires code generation to function.
+SUITE(CoreEx, 7);
 // More involved tests of Storm. Still no compilation from sources.
-SUITE(Storm, 7);
+SUITE(Storm, 8);
 // Simple tests of Basic Storm
-SUITE(SimpleBS, 8);
+SUITE(SimpleBS, 9);
 // More heavy tests of Basic Storm
-SUITE(BS, 9);
+SUITE(BS, 10);
 // Syntax server logic.
-SUITE(Server, 10);
+SUITE(Server, 11);
 
 // UI library. Sadly not too many automated tests.
 SUITED(Gui, 20);
