@@ -274,7 +274,7 @@ namespace code {
 
 		bool singleByte(Word value) {
 			Long v(value);
-			return (v >= -128 && v <= 127);
+			return v >= -128 && v <= 127;
 		}
 
 		byte sibValue(byte baseReg, byte scaledReg, byte scale) {

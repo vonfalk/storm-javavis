@@ -2,6 +2,7 @@
 #include "Arena.h"
 #include "Reg.h"
 #include "X86/Arena.h"
+#include "X64/Arena.h"
 #include "Core/Str.h"
 
 namespace code {
@@ -53,8 +54,7 @@ namespace code {
 	}
 #elif defined(X64) && defined(POSIX)
 	Arena *arena(EnginePtr e) {
-		TODO(L"Implement a proper backend for X86-64");
-		return new (e.v) x86::Arena();
+		return new (e.v) x64::Arena();
 	}
 #else
 #error "Please note which is the default arena for your platform."

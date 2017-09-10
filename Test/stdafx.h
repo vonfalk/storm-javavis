@@ -32,11 +32,11 @@ SUITE(GcScan, 1);
 // Gc operation on Storm objects declared in C++.
 SUITE(GcObjects, 2);
 // GC along with threads.
-SUITE_(GcThreads, 3);
+SUITE(GcThreads, 3);
 // Basic operation of the runtime. No code generation yet.
-SUITE_(Core, 4);
+SUITE(Core, 4);
 // Basic tests of the code generation backend. Further tests rely on these to work.
-SUITE(CodeBasic, 5);
+SUITE_(CodeBasic, 5);
 // Tests of the code generation backend.
 SUITE(Code, 6);
 // More tests of the code generation backend. Requires code generation to function.

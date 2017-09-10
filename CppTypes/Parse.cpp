@@ -17,7 +17,8 @@ public:
 
 	void add(const Variable &v) {
 		// Add stuff to 'world'.
-		PLN(L"Global variable " << v << L" ignored.");
+		// PLN(L"Global variable " << v << L" ignored.");
+		// TODO: Support globals!
 	}
 
 	void add(const Function &f) {

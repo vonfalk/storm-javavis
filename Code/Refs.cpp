@@ -2,14 +2,14 @@
 #include "Refs.h"
 #include "Core/GcCode.h"
 #include "X86/Refs.h"
+#include "X64/Refs.h"
 
 namespace code {
 
 #if defined(X86)
 #define ARCH x86
 #elif defined(X64)
-#define ARCH x86
-	// #warning "Not complete yet!"
+#define ARCH x64
 #else
 #error "Reading and writing pointers is not supported for your architecture yet!"
 #endif

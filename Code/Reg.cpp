@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Reg.h"
 #include "X86/Asm.h"
+#include "X64/Asm.h"
 #include "Core/StrBuf.h"
 
 namespace code {
@@ -39,6 +40,8 @@ namespace code {
 			return S("rcx");
 		default:
 			if (const wchar *n = x86::nameX86(r))
+				return n;
+			if (const wchar *n = x64::nameX64(r))
 				return n;
 			assert(false);
 			return S("<unknown>");
