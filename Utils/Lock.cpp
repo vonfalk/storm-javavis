@@ -29,7 +29,11 @@ namespace util {
 
 #ifdef POSIX
 	Lock::Lock() {
-		pthread_mutex_init(&cs, null);
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+		pthread_mutex_init(&cs, &attr);
+		pthread_mutexattr_destroy(&attr);
 	}
 
 	Lock::~Lock() {
@@ -37,10 +41,12 @@ namespace util {
 	}
 
 	Lock::L::L(Lock &l) : l(&l) {
+		// According to the man pages, we do not need to consider EINTR from locking a mutex.
 		pthread_mutex_lock(&l.cs);
 	}
 
 	Lock::L::L(Lock *l) : l(l) {
+		// According to the man pages, we do not need to consider EINTR from locking a mutex.
 		if (l)
 			pthread_mutex_lock(&l->cs);
 	}

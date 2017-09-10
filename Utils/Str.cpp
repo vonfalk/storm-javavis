@@ -54,29 +54,7 @@ String::String(const char *chars) : std::wstring(convert(chars)) {}
 
 static std::wstring convert(const wchar *chars) {
 	std::wostringstream z;
-
-	wchar prev = 0;
-	for (const wchar *at = chars; *at; at++) {
-		wchar ch = *at;
-		if ((ch & 0xFC00) == 0xD800) {
-			// Leading pair.
-			prev = ch;
-		} else if ((ch & 0xFC00) == 0xDC00) {
-			// Trailing pair.
-			if (prev != 0) {
-				nat r = nat(prev & 0x3FF) << nat(10);
-				r |= nat(ch & 0x3FF);
-				r += 0x10000;
-				z << wchar_t(r);
-				prev = 0;
-			}
-		} else {
-			// Plain!
-			z << wchar_t(ch);
-			prev = 0;
-		}
-	}
-
+	z << chars;
 	return z.str();
 }
 
@@ -87,6 +65,33 @@ std::string String::toChar() const {
 	return convert.to_bytes(*this);
 }
 
+namespace std {
+	std::wostream &operator <<(std::wostream &to, const wchar *str) {
+		wchar prev = 0;
+		for (const wchar *at = str; *at; at++) {
+			wchar ch = *at;
+			if ((ch & 0xFC00) == 0xD800) {
+				// Leading pair.
+				prev = ch;
+			} else if ((ch & 0xFC00) == 0xDC00) {
+				// Trailing pair.
+				if (prev != 0) {
+					nat r = nat(prev & 0x3FF) << nat(10);
+					r |= nat(ch & 0x3FF);
+					r += 0x10000;
+					to << wchar_t(r);
+					prev = 0;
+				}
+			} else {
+				// Plain!
+				to << wchar_t(ch);
+				prev = 0;
+			}
+		}
+
+		return to;
+	}
+}
 #endif
 
 String String::left(nat size) const {

@@ -125,6 +125,14 @@ inline std::wostream &operator <<(std::wostream &to, const std::pair<A, B> &pair
 	return to << pair.first << L" -> " << pair.second;
 }
 
+#ifdef POSIX
+inline String toS(const wchar *w) { return String(w); }
+namespace std {
+	// Needs to be in std to behave properly in other namespaces.
+	std::wostream &operator <<(std::wostream &to, const wchar *str);
+}
+#endif
+
 template <class T>
 void join(std::wostream &to, const T &data, const String &between);
 

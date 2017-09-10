@@ -8,4 +8,5 @@ stormUses=
 [windows]
 compile+=*.c:cl <defines> <file> <includes> <flags> <warnings> /c /Fo<output>
 
-#NOTE: make sure to compile .c-files properly on UNIX.
+[unix]
+compile+=*.c:gcc -Wno-unknown-pragmas -std=c99 -O3 <defines> <warnings> -Wno-maybe-uninitialized <file> -c <includes> -o <output>

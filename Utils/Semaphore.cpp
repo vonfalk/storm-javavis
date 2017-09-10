@@ -42,7 +42,13 @@ void Semaphore::up() {
 }
 
 void Semaphore::down() {
-	sem_wait(&semaphore);
+	while (sem_wait(&semaphore) != 0) {
+		// We failed for some reason, probably a signal from the MPS.
+		if (errno != EINTR) {
+			perror("Waiting for a semaphore");
+			std::terminate();
+		}
+	}
 }
 
 bool Semaphore::down(nat msTimeout) {
