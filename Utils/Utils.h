@@ -213,6 +213,7 @@ T *atomicRead(T *volatile &v) {
 // Atomic read/write. These two does not need aligned data.
 size_t unalignedAtomicRead(volatile size_t &v);
 void unalignedAtomicWrite(volatile size_t &v, size_t value);
+void shortUnalignedAtomicWrite(volatile nat &v, nat value);
 
 #ifdef X64
 nat atomicIncrement(volatile nat &v);

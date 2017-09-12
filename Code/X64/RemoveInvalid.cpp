@@ -31,8 +31,8 @@ namespace code {
 
 		void RemoveInvalid::before(Listing *dest, Listing *src) {
 			used = usedRegs(dest->arena, src).used;
-			numbers = new (this) Array<Word>();
-			lblNumbers = dest->label();
+			large = new (this) Array<Operand>();
+			lblLarge = dest->label();
 		}
 
 		void RemoveInvalid::during(Listing *dest, Listing *src, Nat line) {
@@ -50,18 +50,24 @@ namespace code {
 		}
 
 		void RemoveInvalid::after(Listing *dest, Listing *src) {
-			// Output all numbers.
-			*dest << lblNumbers;
-			for (Nat i = 0; i < numbers->count(); i++) {
-				*dest << dat(wordConst(numbers->at(i)));
+			// Output all constants.
+			*dest << lblLarge;
+			for (Nat i = 0; i < large->count(); i++) {
+				*dest << dat(large->at(i));
 			}
 		}
 
 		Instr *RemoveInvalid::extractNumbers(Instr *i) {
 			Operand src = i->src();
 			if (src.type() == opConstant && src.size() == Size::sWord && !singleInt(src.constant())) {
-				i = i->alterSrc(longRel(lblNumbers, Offset::sWord*numbers->count()));
-				numbers->push(src.constant());
+				i = i->alterSrc(longRel(lblLarge, Offset::sWord*large->count()));
+				large->push(src);
+			}
+
+			// Labels are also constants!
+			if (src.type() == opLabel) {
+				i = i->alterSrc(longRel(lblLarge, Offset::sWord*large->count()));
+				large->push(src);
 			}
 
 			// Since writing to a constant is not allowed, we will not attempt to extract 'dest'.

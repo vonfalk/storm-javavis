@@ -35,6 +35,9 @@ namespace storm {
 			// the object moves, but is never scanned as it does not point to the start.
 			inside,
 
+			// A relative (4-byte) pointer to one of the 'pointer' variables in the GcCodeRef itself.
+			relativeHere,
+
 			// ...
 		};
 

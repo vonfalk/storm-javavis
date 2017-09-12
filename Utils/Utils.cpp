@@ -123,6 +123,15 @@ void unalignedAtomicWrite(volatile size_t &v, size_t value) {
 	}
 }
 
+void shortUnalignedAtomicWrite(volatile nat &v, nat value) {
+	volatile nat *addr = &v;
+	__asm {
+		mov eax, value;
+		mov ecx, addr;
+		lock xchg [ecx], eax;
+	}
+}
+
 #else
 #error "Implement unaligned atomics for X86-64 as well!"
 #endif
@@ -232,6 +241,16 @@ void unalignedAtomicWrite(volatile size_t &v, size_t value) {
 		: "eax", "ecx", "memory");
 }
 
+void shortUnalignedAtomicWrite(volatile nat &v, nat value) {
+	asm (
+		"movl %[value], %%eax\n\t"
+		"movl %[addr], %%ecx\n\t"
+		"lock xchgl %%eax, (%%ecx)\n\t"
+		:
+		: [addr] "r"(&v), [value] "r"(value)
+		: "eax", "ecx", "memory");
+}
+
 #elif defined(X64)
 
 size_t unalignedAtomicRead(volatile size_t &v) {
@@ -252,6 +271,16 @@ void unalignedAtomicWrite(volatile size_t &v, size_t value) {
 		"movq %[value], %%rax\n\t"
 		"movq %[addr], %%rcx\n\t"
 		"lock xchgq %%rax, (%%rcx)\n\t"
+		:
+		: [addr] "r"(&v), [value] "r"(value)
+		: "rax", "rcx", "memory");
+}
+
+void shortUnalignedAtomicWrite(volatile nat &v, nat value) {
+	asm (
+		"movl %[value], %%eax\n\t"
+		"movq %[addr], %%rcx\n\t"
+		"lock xchgl %%eax, (%%rcx)\n\t"
 		:
 		: [addr] "r"(&v), [value] "r"(value)
 		: "rax", "rcx", "memory");

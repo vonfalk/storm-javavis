@@ -34,11 +34,11 @@ namespace code {
 			// Used registers for each line.
 			Array<RegSet *> *used;
 
-			// Remember all 'large' numbers that need to be stored at the end of the code section.
-			Array<Word> *numbers;
+			// Remember all 'large' constants that need to be stored at the end of the code section.
+			Array<Operand> *large;
 
-			// Label to the start of the numbers section.
-			Label lblNumbers;
+			// Label to the start of the large constants section.
+			Label lblLarge;
 
 			// Extract any large numbers from an instruction.
 			Instr *extractNumbers(Instr *i);

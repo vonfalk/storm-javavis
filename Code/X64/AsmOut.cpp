@@ -10,6 +10,7 @@ namespace code {
 			const Operand &src = instr->src();
 			switch (src.type()) {
 			case opConstant:
+				assert(singleInt(src.constant()), L"Should be solved by RemoveInvalid.");
 				if (singleByte(src.constant())) {
 					to->putByte(0x6A);
 					to->putByte(Byte(src.constant() & 0xFF));
@@ -30,6 +31,16 @@ namespace code {
 			}
 			case opRelative:
 				TODO(L"FIXME");
+				break;
+			case opReference:
+				to->putByte(0xFF);
+				to->putByte(0x35); // 6/[RIP+disp32]
+				to->putObjRelative(src.ref());
+				break;
+			case opObjReference:
+				to->putByte(0xFF);
+				to->putByte(0x35); // 6/[RIP+disp32]
+				to->putObjRelative(src.object());
 				break;
 			default:
 				assert(false, L"Push does not support this operand type.");

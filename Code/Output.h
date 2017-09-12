@@ -58,6 +58,10 @@ namespace code {
 		void STORM_FN putAddress(Ref ref); // Writes 4 or 8 bytes.
 		void putObject(RootObject *obj); // Writes 4 or 8 bytes.
 
+		// Store a (4-byte) reference to a reference or to an object.
+		void STORM_FN putObjRelative(Ref ref);
+		void putObjRelative(RootObject *obj);
+
 	protected:
 		// Mark a label here.
 		virtual void STORM_FN markLabel(Nat id);

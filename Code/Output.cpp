@@ -97,6 +97,15 @@ namespace code {
 		putGcPtr(Word(obj));
 	}
 
+	void Output::putObjRelative(Ref ref) {
+		putGc(GcCodeRef::relativeHere, sizeof(Int), Word(ref.address()));
+		markGcRef(ref);
+	}
+
+	void Output::putObjRelative(RootObject *obj) {
+		putGc(GcCodeRef::relativeHere, sizeof(Int), Word(obj));
+	}
+
 	void Output::markLabel(Nat id) {
 		assert(false);
 	}
@@ -141,7 +150,7 @@ namespace code {
 	}
 
 	void LabelOutput::putGc(GcCodeRef::Kind kind, Nat size, Word w) {
-		size += size;
+		this->size += size;
 		refs++;
 	}
 

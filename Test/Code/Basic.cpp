@@ -155,6 +155,8 @@ BEGIN_TEST(CodeGcTest, CodeBasic) {
 	*l << prolog();
 	*l << call(arena->external(S("triggerCollect"), address(&triggerCollect)), valVoid());
 	*l << mov(eax, intConst(1337));
+	*l << push(arena->external(S("triggerCollect"), address(&triggerCollect)));
+	*l << pop(ptrA);
 	*l << epilog();
 	*l << ret(ValType(Size::sInt, false));
 
@@ -163,5 +165,23 @@ BEGIN_TEST(CodeGcTest, CodeBasic) {
 	typedef Int (*Fn)();
 	Fn fn = (Fn)b->address();
 	CHECK_EQ((*fn)(), 1337);
+} END_TEST
 
+BEGIN_TEST(CodeHereTest, CodeBasic) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+
+	*l << prolog();
+	*l << push(arena->external(S("triggerCollect"), address(&triggerCollect)));
+	*l << pop(ptrA);
+	*l << epilog();
+	*l << ret(ValType(Size::sInt, false));
+
+	Binary *b = new (e) Binary(code::arena(e), l);
+
+	typedef void *(*Fn)();
+	Fn fn = (Fn)b->address();
+	CHECK_EQ((*fn)(), address(&triggerCollect));
 } END_TEST
