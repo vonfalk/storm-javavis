@@ -7,8 +7,7 @@ namespace code {
 	// allowed either.
 	void updatePtrs(void *code, const GcCode *refs);
 
-	// Read/write pointers from a code allocation.
-	void *readPtr(void *code, Nat id);
+	// Write pointers from a code allocation.
 	void writePtr(void *code, Nat id);
 	void writePtr(void *code, Nat id, void *ptr);
 

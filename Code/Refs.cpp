@@ -11,16 +11,12 @@ namespace code {
 #elif defined(X64)
 #define ARCH x64
 #else
-#error "Reading and writing pointers is not supported for your architecture yet!"
+#error "Writing pointers is not supported for your architecture yet!"
 #endif
 
 	void updatePtrs(void *code, const GcCode *refs) {
 		for (Nat i = 0; i < refs->refCount; i++)
 			ARCH::writePtr(code, refs, i, size_t(refs->refs[i].pointer));
-	}
-
-	void *readPtr(void *code, Nat id) {
-		return (void *)ARCH::readPtr(code, runtime::codeRefs(code), id);
 	}
 
 	void writePtr(void *code, Nat id) {

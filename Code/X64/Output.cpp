@@ -51,6 +51,18 @@ namespace code {
 			pos += 4;
 		}
 
+		void CodeOut::putGc(GcCodeRef::Kind kind, Nat size, Word w) {
+			GcCode *refs = runtime::codeRefs(code);
+			assert(ref < refs->refCount);
+			refs->refs[ref].offset = pos;
+			refs->refs[ref].kind = kind;
+			refs->refs[ref].pointer = (void *)w;
+			ref++;
+
+			// The actual contents will be updated later...
+			pos += size;
+		}
+
 		void CodeOut::putGcPtr(Word w) {
 			GcCode *refs = runtime::codeRefs(code);
 			assert(ref < refs->refCount);
@@ -125,7 +137,7 @@ namespace code {
 		}
 
 		Nat CodeOut::toRelative(Nat offset) {
-			return offset - (pos + 4);
+			return offset - (pos + 8);
 		}
 
 	}

@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/TObject.h"
 #include "Core/Array.h"
+#include "Core/GcCode.h"
 #include "Size.h"
 #include "Label.h"
 #include "Reference.h"
@@ -24,10 +25,13 @@ namespace code {
 		 * Special cases for GC interaction.
 		 */
 
+		// Put a custom purpose GC pointer. 'size' bytes.
+		virtual void putGc(GcCodeRef::Kind kind, Nat size, Word w);
+
 		// Put a pointer to a gc:d object. 4 or 8 bytes.
 		virtual void STORM_FN putGcPtr(Word w);
 
-		// Put a relative pointer to a gc:d object. 4 or 8 bytes. (Note: this may be tricky on x86-64).
+		// Put a relative pointer to a gc:d object. 4 or 8 bytes.
 		virtual void STORM_FN putGcRelative(Word w);
 
 		// Put a relative pointer to a static object (not managed by the Gc). 4 or 8 bytes.
@@ -92,6 +96,7 @@ namespace code {
 		virtual void STORM_FN putInt(Nat w);
 		virtual void STORM_FN putLong(Word w);
 		virtual void STORM_FN putPtr(Word w);
+		virtual void putGc(GcCodeRef::Kind kind, Nat size, Word w);
 		virtual void STORM_FN putGcPtr(Word w);
 		virtual void STORM_FN putGcRelative(Word w);
 		virtual void STORM_FN putRelativeStatic(Word w);

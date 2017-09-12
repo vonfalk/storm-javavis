@@ -22,6 +22,10 @@ namespace code {
 		assert(false);
 	}
 
+	void Output::putGc(GcCodeRef::Kind kind, Nat size, Word w) {
+		assert(false);
+	}
+
 	void Output::putGcPtr(Word w) {
 		assert(false);
 	}
@@ -134,6 +138,11 @@ namespace code {
 
 	void LabelOutput::putPtr(Word w) {
 		size += ptrSize;
+	}
+
+	void LabelOutput::putGc(GcCodeRef::Kind kind, Nat size, Word w) {
+		size += size;
+		refs++;
 	}
 
 	void LabelOutput::putGcPtr(Word w) {
