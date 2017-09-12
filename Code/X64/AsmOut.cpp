@@ -63,6 +63,10 @@ namespace code {
 			// TODO!
 		}
 
+		void jmpOut(Output *to, Instr *instr) {
+			// TODO!
+		}
+
 		void callOut(Output *to, Instr *instr) {
 			// TODO!
 		}
@@ -100,6 +104,7 @@ namespace code {
 			OUTPUT(push),
 			OUTPUT(pop),
 			OUTPUT(mov),
+			OUTPUT(jmp),
 			OUTPUT(call),
 			OUTPUT(ret),
 

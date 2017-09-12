@@ -56,6 +56,8 @@ namespace code {
 
 	Operand::Operand(Var v, Offset offset, Size size) : opType(opVariable), opPtr(null), opNum(v.id), opOffset(offset), opSize(size) {}
 
+	Operand::Operand(Label l, Offset offset, Size size) : opType(opRelativeLbl), opPtr(null), opNum(l.id), opOffset(offset), opSize(size) {}
+
 	Bool Operand::operator ==(const Operand &o) const {
 		if (opType != o.opType)
 			return false;
@@ -77,6 +79,7 @@ namespace code {
 			return opOffset == o.opOffset;
 		case opVariable:
 		case opRelative:
+		case opRelativeLbl:
 			return opNum == o.opNum && opOffset == o.opOffset;
 		case opReference:
 		case opObjReference:
@@ -218,7 +221,7 @@ namespace code {
 	}
 
 	Label Operand::label() const {
-		assert(type() == opLabel, L"Not a label!");
+		assert(type() == opLabel || type() == opRelativeLbl, L"Not a label!");
 		return Label(Nat(opNum));
 	}
 
@@ -249,6 +252,8 @@ namespace code {
 			return to << code::name(o.reg());
 		case opRelative:
 			return to << L"[" << code::name(o.reg()) << o.offset() << L"]";
+		case opRelativeLbl:
+			return to << L"[" << L"Label" << o.opNum << L"+" << o.offset() << L"]";
 		case opVariable:
 			if (o.offset() != Offset()) {
 				return to << L"[Var" << o.opNum << o.offset() << L"]";
@@ -387,6 +392,30 @@ namespace code {
 
 	Operand xRel(Size size, Var v, Offset offset) {
 		return Operand(v, offset, size);
+	}
+
+	Operand byteRel(Label l, Offset offset) {
+		return xRel(Size::sByte, l, offset);
+	}
+
+	Operand intRel(Label l, Offset offset) {
+		return xRel(Size::sInt, l, offset);
+	}
+
+	Operand longRel(Label l, Offset offset) {
+		return xRel(Size::sLong, l, offset);
+	}
+
+	Operand floatRel(Label l, Offset offset) {
+		return xRel(Size::sFloat, l, offset);
+	}
+
+	Operand ptrRel(Label l, Offset offset) {
+		return xRel(Size::sPtr, l, offset);
+	}
+
+	Operand xRel(Size size, Label l, Offset offset) {
+		return Operand(l, offset, size);
 	}
 
 }

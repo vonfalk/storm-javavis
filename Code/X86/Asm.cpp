@@ -55,8 +55,8 @@ namespace code {
 		}
 
 		Reg unusedReg(RegSet *in) {
-			Reg candidates[] = { ptrD, ptrA, ptrB, ptrC, ptrSi, ptrDi };
-			Reg protect64[] = { rax, noReg, noReg, noReg, rbx, rcx };
+			static const Reg candidates[] = { ptrD, ptrA, ptrB, ptrC, ptrSi, ptrDi };
+			static const Reg protect64[] = { rax, noReg, noReg, noReg, rbx, rcx };
 			for (nat i = 0; i < ARRAY_COUNT(candidates); i++) {
 				if (!in->has(candidates[i])) {
 					// See if we need to protect 64-bit registers...

@@ -79,6 +79,7 @@ namespace code {
 			case opLabel:
 			case opReference:
 			case opConstant:
+			case opObjReference:
 			case opRegister:
 				return true;
 			default:

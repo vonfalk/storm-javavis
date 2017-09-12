@@ -59,5 +59,8 @@ namespace code {
 		// Does 'value' fit in a 32-bit word?
 		bool singleInt(Word value);
 
+		// Find a unused register given a set of used registers.
+		Reg unusedReg(RegSet *in);
+
 	}
 }

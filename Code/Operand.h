@@ -45,6 +45,9 @@ namespace code {
 		// Relative to a register, ie. [reg + offset]
 		opRelative,
 
+		// Relative to a label. TODO: Implement for X86!
+		opRelativeLbl,
+
 		// Variable (+ offset).
 		opVariable,
 
@@ -156,9 +159,10 @@ namespace code {
 		Operand(Offset o, Size size);
 		Operand(RootObject *obj);
 
-		// Register + offset.
+		// [Register,variable,label] + offset.
 		Operand(Reg r, Offset offset, Size size);
 		Operand(Var v, Offset offset, Size size);
+		Operand(Label l, Offset offset, Size size);
 
 		// Our type. Note: may contain other flags as well!
 		OpType opType;
@@ -187,6 +191,7 @@ namespace code {
 		friend Operand objPtr(TObject *ptr);
 		friend Operand xRel(Size size, Reg reg, Offset offset);
 		friend Operand xRel(Size size, Var v, Offset offset);
+		friend Operand xRel(Size size, Label l, Offset offset);
 		friend wostream &operator <<(wostream &to, const Operand &o);
 	};
 
@@ -226,4 +231,12 @@ namespace code {
 	Operand STORM_FN floatRel(Var v, Offset offset);
 	Operand STORM_FN ptrRel(Var v, Offset offset);
 	Operand STORM_FN xRel(Size size, Var v, Offset offset);
+
+	// Access offsets inside variables.
+	Operand STORM_FN byteRel(Label l, Offset offset);
+	Operand STORM_FN intRel(Label l, Offset offset);
+	Operand STORM_FN longRel(Label l, Offset offset);
+	Operand STORM_FN floatRel(Label l, Offset offset);
+	Operand STORM_FN ptrRel(Label l, Offset offset);
+	Operand STORM_FN xRel(Size size, Label l, Offset offset);
 }

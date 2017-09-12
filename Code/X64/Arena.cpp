@@ -2,6 +2,7 @@
 #include "Arena.h"
 #include "Output.h"
 #include "AsmOut.h"
+#include "RemoveInvalid.h"
 #include "Layout.h"
 
 namespace code {
@@ -10,10 +11,8 @@ namespace code {
 		Arena::Arena() {}
 
 		Listing *Arena::transform(Listing *l, Binary *owner) const {
-			// TODO: We need a transform that removes:
-			// - immediate values that require 64 bits
-			// - references and object references (same reason as above)
-			// - memory-memory operands
+			// Remove unsupported OP-codes, replacing them with their equivalents.
+			l = code::transform(l, this, new (this) RemoveInvalid());
 
 			// Expand variables and function calls as well as function prolog and epilog.
 			l = code::transform(l, this, new (this) Layout(owner));

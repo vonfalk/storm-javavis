@@ -139,5 +139,20 @@ namespace code {
 			return v >= -limit && v < limit;
 		}
 
+		Reg unusedReg(RegSet *in) {
+			static const Reg candidates[] = {
+				// Scratch registers:
+				ptr11, ptr10, ptr9, ptr8, ptrC, ptrD, ptrSi, ptrDi, ptrA,
+				// Registers that need preservation:
+				ptrB, ptr12, ptr13, ptr14, ptr15
+			};
+			for (nat i = 0; i < ARRAY_COUNT(candidates); i++) {
+				if (!in->has(candidates[i]))
+					return candidates[i];
+			}
+
+			return noReg;
+		}
+
 	}
 }
