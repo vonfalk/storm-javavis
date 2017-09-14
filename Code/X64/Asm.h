@@ -84,6 +84,12 @@ namespace code {
 			return r;
 		}
 
+		// Wide operand?
+		inline bool wide(const Operand &op) {
+			return op.size() == Size::sWord
+				|| op.size() == Size::sPtr;
+		}
+
 		// Output an opcode.
 		void put(Output *to, OpCode op);
 

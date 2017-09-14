@@ -256,8 +256,7 @@ namespace code {
 		}
 
 		void immRegInstr(Output *to, const ImmRegInstr &op, const Operand &dest, const Operand &src) {
-			bool wide = src.size() == Size::sWord
-				|| src.size() == Size::sPtr;
+			bool wide = code::x64::wide(src);
 
 			switch (src.type()) {
 			case opConstant:

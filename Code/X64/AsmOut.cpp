@@ -77,6 +77,150 @@ namespace code {
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
+		void addOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				opCode(0x82), 0,
+				opCode(0x00),
+				opCode(0x02),
+			};
+			ImmRegInstr op = {
+				opCode(0x83), 0,
+				opCode(0x81), 0,
+				opCode(0x01),
+				opCode(0x03)
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void adcOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				opCode(0x82), 2,
+				opCode(0x10),
+				opCode(0x12)
+			};
+			ImmRegInstr op = {
+				opCode(0x83), 2,
+				opCode(0x81), 2,
+				opCode(0x11),
+				opCode(0x13)
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void borOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				opCode(0x82), 1,
+				opCode(0x08),
+				opCode(0x0A)
+			};
+			ImmRegInstr op = {
+				opCode(0x83), 1,
+				opCode(0x81), 1,
+				opCode(0x09),
+				opCode(0x0B)
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void bandOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				opCode(0x82), 4,
+				opCode(0x20),
+				opCode(0x22)
+			};
+			ImmRegInstr op = {
+				opCode(0x83), 4,
+				opCode(0x81), 4,
+				opCode(0x21),
+				opCode(0x23)
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void bnotOut(Output *to, Instr *instr) {
+			const Operand &dest = instr->dest();
+			if (dest.size() == Size::sByte) {
+				modRm(to, opCode(0xF6), false, 2, dest);
+			} else {
+				modRm(to, opCode(0xF7), wide(dest), 2, dest);
+			}
+		}
+
+		void subOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 5,
+				0x28,
+				0x2A
+			};
+			ImmRegInstr op = {
+				0x83, 5,
+				0x81, 5,
+				0x29,
+				0x2B
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void sbbOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 2,
+				0x18,
+				0x1A
+			};
+			ImmRegInstr op = {
+				0x83, 2,
+				0x81, 2,
+				0x19,
+				0x1B
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void bxorOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 6,
+				0x30,
+				0x32
+			};
+			ImmRegInstr op = {
+				0x83, 6,
+				0x81, 6,
+				0x31,
+				0x33
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void cmpOut(Output *to, Instr *instr) {
+			ImmRegInstr8 op8 = {
+				0x82, 7, // NOTE: it seems like this can also be encoded as 0x80 (preferred by some sources).
+				0x38,
+				0x3A
+			};
+			ImmRegInstr op = {
+				0x83, 7,
+				0x81, 7,
+				0x39,
+				0x3B
+			};
+			immRegInstr(to, op8, op, instr->dest(), instr->src());
+		}
+
+		void leaOut(Output *to, Instr *instr) {
+			Operand src = instr->src();
+			Operand dest = instr->dest();
+			assert(dest.type() == opRegister);
+			nat regId = registerId(dest.reg());
+
+			if (src.type() == opReference) {
+				// Special meaning, load the RefSource instead.
+				// Issues a 'mov' operation to simply load the address of the refsource.
+				modRm(to, opCode(0x8B), true, regId, objPtr(src.refSource()));
+			} else {
+				modRm(to, opCode(0x8D), true, regId, src);
+			}
+		}
+
 		void jmpOut(Output *to, Instr *instr) {
 			// TODO!
 		}
@@ -118,6 +262,16 @@ namespace code {
 			OUTPUT(push),
 			OUTPUT(pop),
 			OUTPUT(mov),
+			OUTPUT(add),
+			OUTPUT(adc),
+			OUTPUT(bor),
+			OUTPUT(band),
+			OUTPUT(bnot),
+			OUTPUT(sub),
+			OUTPUT(sbb),
+			OUTPUT(bxor),
+			OUTPUT(cmp),
+			OUTPUT(lea),
 			OUTPUT(jmp),
 			OUTPUT(call),
 			OUTPUT(ret),
