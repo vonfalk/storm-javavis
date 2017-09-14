@@ -88,8 +88,8 @@ namespace code {
 		void put(Output *to, OpCode op);
 
 		// Output an instruction with a ModRm modifier afterwards. Emits a REX prefix if necessary.
-		void modRm(Output *to, OpCode op, const Operand &dest, const Operand &src);
-		void modRm(Output *to, OpCode op, nat mode, const Operand &dest);
+		void modRm(Output *to, OpCode op, bool wide, const Operand &dest, const Operand &src);
+		void modRm(Output *to, OpCode op, bool wide, nat mode, const Operand &dest);
 
 		// Describes a single instruction that takes an immediate value or a register, along with a ModRm operand.
 		struct ImmRegInstr {

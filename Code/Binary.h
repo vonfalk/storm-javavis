@@ -28,6 +28,9 @@ namespace code {
 		// Clean up a stack frame from this function.
 		void cleanup(StackFrame &frame);
 
+		// Output to string.
+		virtual void toS(StrBuf *to) const;
+
 	private:
 		// Information about a single variable.
 		struct Variable {

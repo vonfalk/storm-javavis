@@ -173,11 +173,13 @@ namespace code {
 		}
 
 		// Perform the dirty work of outputting the modrm bytes correctly.
-		static void modRm(Output *to, OpCode op, byte reg, byte mod, byte rm) {
+		static void modRm(Output *to, OpCode op, bool wide, byte reg, byte mod, byte rm) {
 			// Transfer the fourth bit of 'reg' and 'rm' to the REX byte to see if it is needed.
 			byte rex = 0x40; // 0 1 0 0 W R X B
 			rex |= (reg & 0x8) >> 1;
-			reg |= (rm  & 0x8) >> 3;
+			rex |= (rm  & 0x8) >> 3;
+			if (wide)
+				rex |= 0x08;
 
 			if (rex != 0x40) {
 				// Something was set, emit the REX byte.
@@ -196,17 +198,17 @@ namespace code {
 		}
 
 
-		void modRm(Output *to, OpCode op, nat mode, const Operand &dest) {
+		void modRm(Output *to, OpCode op, bool wide, nat mode, const Operand &dest) {
 			switch (dest.type()) {
 			case opRegister:
-				modRm(to, op, mode, 3, registerId(dest.reg()));
+				modRm(to, op, wide, mode, 3, registerId(dest.reg()));
 				break;
 			case opReference:
-				modRm(to, op, mode, 0, 5); // RIP relative addressing.
+				modRm(to, op, wide, mode, 0, 5); // RIP relative addressing.
 				to->putObjRelative(dest.ref());
 				break;
 			case opObjReference:
-				modRm(to, op, mode, 0, 5); // RIP relative addressing.
+				modRm(to, op, wide, mode, 0, 5); // RIP relative addressing.
 				to->putObjRelative(dest.object());
 				break;
 			case opRelative:
@@ -228,7 +230,7 @@ namespace code {
 						mod = 1;
 					}
 
-					modRm(to, op, mode, mod, reg);
+					modRm(to, op, wide, mode, mod, reg);
 					if ((reg & 0x7) == 4) {
 						// We need to emit a SIB byte as well.
 						sib(to, reg);
@@ -248,28 +250,31 @@ namespace code {
 			}
 		}
 
-		void modRm(Output *to, OpCode op, const Operand &dest, const Operand &src) {
+		void modRm(Output *to, OpCode op, bool wide, const Operand &dest, const Operand &src) {
 			assert(dest.type() == opRegister);
-			modRm(to, op, registerId(dest.reg()), src);
+			modRm(to, op, wide, registerId(dest.reg()), src);
 		}
 
 		void immRegInstr(Output *to, const ImmRegInstr &op, const Operand &dest, const Operand &src) {
+			bool wide = src.size() == Size::sWord
+				|| src.size() == Size::sPtr;
+
 			switch (src.type()) {
 			case opConstant:
 				if (op.modeImm8 != 0xFF && singleByte(src.constant())) {
-					modRm(to, op.opImm8, op.modeImm8, dest);
+					modRm(to, op.opImm8, wide, op.modeImm8, dest);
 					to->putByte(src.constant() & 0xFF);
 				} else {
-					modRm(to, op.opImm32, op.modeImm32, dest);
+					modRm(to, op.opImm32, wide, op.modeImm32, dest);
 					to->putInt(Nat(src.constant()));
 				}
 				break;
 			case opRegister:
-				modRm(to, op.opSrcReg, registerId(src.reg()), dest);
+				modRm(to, op.opSrcReg, wide, registerId(src.reg()), dest);
 				break;
 			default:
 				if (dest.type() == opRegister) {
-					modRm(to, op.opDestReg, registerId(dest.reg()), src);
+					modRm(to, op.opDestReg, wide, registerId(dest.reg()), src);
 				} else {
 					assert(false, L"Operand types not supported.");
 				}
@@ -280,15 +285,15 @@ namespace code {
 		void immRegInstr(Output *to, const ImmRegInstr8 &op, const Operand &dest, const Operand &src) {
 			switch (src.type()) {
 			case opConstant:
-				modRm(to, op.opImm, op.modeImm, dest);
+				modRm(to, op.opImm, false, op.modeImm, dest);
 				to->putByte(src.constant() & 0xFF);
 				break;
 			case opRegister:
-				modRm(to, op.opSrcReg, registerId(src.reg()), dest);
+				modRm(to, op.opSrcReg, false, registerId(src.reg()), dest);
 				break;
 			default:
 				if (dest.type() == opRegister) {
-					modRm(to, op.opDestReg, registerId(dest.reg()), src);
+					modRm(to, op.opDestReg, false, registerId(dest.reg()), src);
 				} else {
 					assert(false, L"Operand types not supported.");
 				}
@@ -298,7 +303,7 @@ namespace code {
 
 		void immRegInstr(Output *to, const ImmRegInstr8 &op8, const ImmRegInstr &op, const Operand &dest, const Operand &src) {
 			Size size = src.size();
-			if (size == Size::sInt || size == Size::sPtr) {
+			if (size == Size::sInt || size == Size::sWord || size == Size::sPtr) {
 				immRegInstr(to, op, dest, src);
 			} else if (size == Size::sByte) {
 				immRegInstr(to, op8, dest, src);

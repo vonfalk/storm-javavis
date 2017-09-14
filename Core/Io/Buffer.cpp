@@ -82,18 +82,18 @@ namespace storm {
 		for (Nat i = 0; i <= b.count(); i++) {
 			if (i % width == 0) {
 				if (i > 0)
-					to << L"\n";
-				to << hex(i) << L":";
+					to << S("\n");
+				to << hex(i) << S(":");
 			}
 
 			if (i == b.filled() && i == mark)
-				to << L"|>";
+				to << S("|>");
 			else if (i == b.filled())
-				to << L"| ";
+				to << S("| ");
 			else if (i == mark)
-				to << L" >";
+				to << S(" >");
 			else
-				to << L"  ";
+				to << S("  ");
 
 			if (i < b.count())
 				to << hex(b[i]);

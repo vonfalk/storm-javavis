@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Binary.h"
+#include "Core/StrBuf.h"
 
 namespace code {
 
@@ -25,6 +26,26 @@ namespace code {
 
 		runtime::codeUpdatePtrs(output->codePtr());
 		set(output->codePtr(), output->tell());
+	}
+
+	void Binary::toS(StrBuf *to) const {
+		*to << S("Binary object:");
+
+		const nat columns = 16;
+		const byte *code = (const byte *)address();
+		if (!code) {
+			*to << S(" <null>");
+			return;
+		}
+
+		nat size = runtime::codeSize(code);
+		for (nat i = 0; i < size; i++) {
+			if (i % columns == 0) {
+				*to << S("\n") << hex(i) << S(":");
+			}
+
+			*to << S(" ") << hex(code[i]);
+		}
 	}
 
 	const GcType Binary::partArrayType = {
