@@ -43,14 +43,14 @@ Thumbs.db
 
 *.user
 
-debug/
-release/
-slow/
+debug
+release
+slow
 *.ncb
 *.suo
 
 Tools/
-build/
+build
 log/
 
 ReadMe.txt

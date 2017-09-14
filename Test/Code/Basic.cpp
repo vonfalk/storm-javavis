@@ -155,8 +155,6 @@ BEGIN_TEST(CodeGcTest, CodeBasic) {
 	*l << prolog();
 	*l << call(arena->external(S("triggerCollect"), address(&triggerCollect)), valVoid());
 	*l << mov(eax, intConst(1337));
-	*l << push(arena->external(S("triggerCollect"), address(&triggerCollect)));
-	*l << pop(ptrA);
 	*l << epilog();
 	*l << ret(ValType(Size::sInt, false));
 
