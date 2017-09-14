@@ -1,5 +1,7 @@
 #pragma once
 #include "../Reg.h"
+#include "../Output.h"
+#include "../Operand.h"
 
 namespace code {
 	namespace x64 {
@@ -61,6 +63,67 @@ namespace code {
 
 		// Find a unused register given a set of used registers.
 		Reg unusedReg(RegSet *in);
+
+		// Description of an op-code.
+		struct OpCode {
+			// The actual op-code. Maximum 2 bytes. If only one byte is required, the first byte is
+			// 0. (the byte 0x00 is the ADD instruction which is 1 byte long. Thus 0x00 0x00
+			// uniquely identifies ADD).
+			byte op1;
+			byte op2;
+		};
+
+		// Create OpCode objects.
+		inline OpCode opCode(byte op) {
+			OpCode r = { 0x00, op };
+			return r;
+		}
+
+		inline OpCode opCode(byte op1, byte op2) {
+			OpCode r = { op1, op2 };
+			return r;
+		}
+
+		// Output an opcode.
+		void put(Output *to, OpCode op);
+
+		// Output an instruction with a ModRm modifier afterwards. Emits a REX prefix if necessary.
+		void modRm(Output *to, OpCode op, const Operand &dest, const Operand &src);
+		void modRm(Output *to, OpCode op, nat mode, const Operand &dest);
+
+		// Describes a single instruction that takes an immediate value or a register, along with a ModRm operand.
+		struct ImmRegInstr {
+			// OP-code and mode when followed by an 8-bit immediate value. If 'modeImm' == 0xFF, imm8 is not used.
+			OpCode opImm8;
+			byte modeImm8;
+
+			// OP-code and mode when followed by a 32-bit immediate value.
+			OpCode opImm32;
+			byte modeImm32;
+
+			// OP-code when using a register as a source.
+			OpCode opSrcReg;
+
+			// OP-code when using a register as a destination.
+			OpCode opDestReg;
+		};
+
+		// Describes a single instruction with 8 bit operands.
+		struct ImmRegInstr8 {
+			OpCode opImm;
+			byte modeImm;
+
+			OpCode opSrcReg;
+			OpCode opDestReg;
+		};
+
+		// Emit an instruction represented by ImmRegInstr. Supports the following addressing modes:
+		// register, *
+		// *, register
+		// *, immediate
+		void immRegInstr(Output *to, const ImmRegInstr &op, const Operand &dest, const Operand &src);
+		void immRegInstr(Output *to, const ImmRegInstr8 &op, const Operand &dest, const Operand &src);
+		void immRegInstr(Output *to, const ImmRegInstr8 &op8, const ImmRegInstr &op, const Operand &dest, const Operand &src);
 
 	}
 }

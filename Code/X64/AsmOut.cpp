@@ -30,17 +30,9 @@ namespace code {
 				break;
 			}
 			case opRelative:
-				TODO(L"FIXME");
-				break;
 			case opReference:
-				to->putByte(0xFF);
-				to->putByte(0x35); // 6/[RIP+disp32]
-				to->putObjRelative(src.ref());
-				break;
 			case opObjReference:
-				to->putByte(0xFF);
-				to->putByte(0x35); // 6/[RIP+disp32]
-				to->putObjRelative(src.object());
+				modRm(to, opCode(0xFF), 6, src);
 				break;
 			default:
 				assert(false, L"Push does not support this operand type.");
@@ -62,7 +54,7 @@ namespace code {
 				break;
 			}
 			case opRelative:
-				TODO(L"FIXME");
+				modRm(to, opCode(0x8F), 0, dest);
 				break;
 			default:
 				assert(false, L"Pop does not support this operand type.");
@@ -71,7 +63,18 @@ namespace code {
 		}
 
 		void movOut(Output *to, Instr *instr) {
-			// TODO!
+			// ImmRegInstr8 op8 = {
+			// 	opCode(0xC6), 0,
+			// 	opCode(0x88),
+			// 	opCode(0x8A),
+			// };
+			// ImmRegInstr op = {
+			// 	opCode(0x00), 0xFF, // Not supported
+			// 	opCode(0xC7), 0,
+			// 	opCode(0x89),
+			// 	opCode(0x8B),
+			// };
+			// immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
 		void jmpOut(Output *to, Instr *instr) {

@@ -154,5 +154,158 @@ namespace code {
 			return noReg;
 		}
 
+		void put(Output *to, OpCode op) {
+			if (op.op1)
+				to->putByte(op.op1);
+			to->putByte(op.op2);
+		}
+
+		// Construct and emit a SIB value. NOTE: 'scale' can not be an extended register since we do
+		// not emit the REX byte ourselves.
+		static void sib(Output *to, byte base, byte scaled = 0xFF, byte scale = 1) {
+			if (scaled == 0xFF)
+				scaled = 4; // no scaling
+			assert(scaled < 8);
+			static const byte scaleMap[9] = { 0xFF, 0, 1, 0xFF, 2, 0xFF, 0xFF, 0xFF, 3 };
+			scale = scaleMap[scale];
+			assert(scale <= 3);
+			to->putByte((scale << 6) | (scaled << 3) | base);
+		}
+
+		// Perform the dirty work of outputting the modrm bytes correctly.
+		static void modRm(Output *to, OpCode op, byte reg, byte mod, byte rm) {
+			// Transfer the fourth bit of 'reg' and 'rm' to the REX byte to see if it is needed.
+			byte rex = 0x40; // 0 1 0 0 W R X B
+			rex |= (reg & 0x8) >> 1;
+			reg |= (rm  & 0x8) >> 3;
+
+			if (rex != 0x40) {
+				// Something was set, emit the REX byte.
+				to->putByte(rex);
+			}
+
+			// Emit the op-code.
+			put(to, op);
+
+			// Emit the modRm byte.
+			byte modrm = 0;
+			modrm |= (mod & 0x3) << 6;
+			modrm |= (reg & 0x7) << 3;
+			modrm |= (rm  & 0x7) << 0;
+			to->putByte(modrm);
+		}
+
+
+		void modRm(Output *to, OpCode op, nat mode, const Operand &dest) {
+			switch (dest.type()) {
+			case opRegister:
+				modRm(to, op, mode, 3, registerId(dest.reg()));
+				break;
+			case opReference:
+				modRm(to, op, mode, 0, 5); // RIP relative addressing.
+				to->putObjRelative(dest.ref());
+				break;
+			case opObjReference:
+				modRm(to, op, mode, 0, 5); // RIP relative addressing.
+				to->putObjRelative(dest.object());
+				break;
+			case opRelative:
+				if (dest.reg() == noReg) {
+					// TODO: Remove this in one of the transforms!
+					assert(false, L"Absolute addresses are not supported on X86-64!");
+				} else {
+					byte mod = 2;
+					nat reg = registerId(dest.reg());
+
+					if (dest.offset() == Offset(0)) {
+						if ((reg & 0x7) == 5) {
+							// We need to use disp8 for ebp and r13.
+							mod = 1;
+						} else {
+							mod = 0;
+						}
+					} else if (singleByte(dest.offset().current())) {
+						mod = 1;
+					}
+
+					modRm(to, op, mode, mod, reg);
+					if ((reg & 0x7) == 4) {
+						// We need to emit a SIB byte as well.
+						sib(to, reg);
+					}
+
+					if (mode == 1) {
+						to->putByte(Byte(dest.offset().current()));
+					} else if (mode == 2) {
+						to->putInt(Nat(dest.offset().current()));
+					}
+				}
+				break;
+			default:
+				// There are more modes we could support...
+				assert(false, L"This modRm mode is not implemented yet.");
+				break;
+			}
+		}
+
+		void modRm(Output *to, OpCode op, const Operand &dest, const Operand &src) {
+			assert(dest.type() == opRegister);
+			modRm(to, op, registerId(dest.reg()), src);
+		}
+
+		void immRegInstr(Output *to, const ImmRegInstr &op, const Operand &dest, const Operand &src) {
+			switch (src.type()) {
+			case opConstant:
+				if (op.modeImm8 != 0xFF && singleByte(src.constant())) {
+					modRm(to, op.opImm8, op.modeImm8, dest);
+					to->putByte(src.constant() & 0xFF);
+				} else {
+					modRm(to, op.opImm32, op.modeImm32, dest);
+					to->putInt(Nat(src.constant()));
+				}
+				break;
+			case opRegister:
+				modRm(to, op.opSrcReg, registerId(src.reg()), dest);
+				break;
+			default:
+				if (dest.type() == opRegister) {
+					modRm(to, op.opDestReg, registerId(dest.reg()), src);
+				} else {
+					assert(false, L"Operand types not supported.");
+				}
+				break;
+			}
+		}
+
+		void immRegInstr(Output *to, const ImmRegInstr8 &op, const Operand &dest, const Operand &src) {
+			switch (src.type()) {
+			case opConstant:
+				modRm(to, op.opImm, op.modeImm, dest);
+				to->putByte(src.constant() & 0xFF);
+				break;
+			case opRegister:
+				modRm(to, op.opSrcReg, registerId(src.reg()), dest);
+				break;
+			default:
+				if (dest.type() == opRegister) {
+					modRm(to, op.opDestReg, registerId(dest.reg()), src);
+				} else {
+					assert(false, L"Operand types not supported.");
+				}
+				break;
+			}
+		}
+
+		void immRegInstr(Output *to, const ImmRegInstr8 &op8, const ImmRegInstr &op, const Operand &dest, const Operand &src) {
+			Size size = src.size();
+			if (size == Size::sInt || size == Size::sPtr) {
+				immRegInstr(to, op, dest, src);
+			} else if (size == Size::sByte) {
+				immRegInstr(to, op8, dest, src);
+			} else {
+				assert(false, L"Operand size not supported: " + ::toS(size));
+			}
+		}
+
 	}
 }

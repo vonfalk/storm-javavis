@@ -411,7 +411,7 @@ namespace code {
 			} else if (size == Size::sByte) {
 				immRegInstr(to, op8, dest, src);
 			} else {
-				assert(false, L"Fail: " + ::toS(size));
+				assert(false, L"Operand size not supported: " + ::toS(size));
 			}
 		}
 
