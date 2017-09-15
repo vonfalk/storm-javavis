@@ -223,8 +223,8 @@ size_t unalignedAtomicRead(volatile size_t &v) {
 	asm (
 		"movl $0, %%eax\n\t"
 		"movl %[addr], %%ecx\n\t"
-		"lock addl %%eax, (%%ecx)\n\t"
-		"movl %[result], %%eax\n\t"
+		"lock addl (%%ecx), %%eax\n\t"
+		"movl %%eax, %[result]\n\t"
 		: [result] "=r"(result)
 		: [addr] "r"(&v)
 		: "eax", "ecx", "memory");
@@ -258,8 +258,9 @@ size_t unalignedAtomicRead(volatile size_t &v) {
 	asm (
 		"movq $0, %%rax\n\t"
 		"movq %[addr], %%rcx\n\t"
-		"lock addq %%rax, (%%rcx)\n\t"
-		"movq %[result], %%rax\n\t"
+		// "lock addq (%%rcx), %%rax\n\t"
+		"movq (%%rcx), %%rax\n\t" // TODO: It seems X86 will make sure this is atomic...
+		"movq %%rax, %[result]\n\t"
 		: [result] "=r"(result)
 		: [addr] "r"(&v)
 		: "rax", "rcx", "memory");

@@ -39,7 +39,17 @@ namespace code {
 			static OpTable<TransformFn> t(transformMap, ARRAY_COUNT(transformMap));
 
 			Instr *i = src->at(line);
-			i = extractNumbers(i);
+			switch (i->op()) {
+			case op::call:
+			case op::fnCall:
+			case op::fnCallFloat:
+			case op::jmp:
+				// Nothing needed. We deal with these later on in the chain.
+				break;
+			default:
+				i = extractNumbers(i);
+				break;
+			}
 
 			TransformFn f = t[i->op()];
 			if (f) {
@@ -64,7 +74,7 @@ namespace code {
 				large->push(src);
 			}
 
-			// Labels are also constants!
+			// Labels are also constants.
 			if (src.type() == opLabel) {
 				i = i->alterSrc(longRel(lblLarge, Offset::sWord*large->count()));
 				large->push(src);

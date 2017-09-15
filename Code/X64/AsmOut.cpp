@@ -221,12 +221,65 @@ namespace code {
 			}
 		}
 
+		static void jmpCall(Output *to, bool call, const Operand &src) {
+			switch (src.type()) {
+			case opConstant:
+				assert(false, L"Calling or jumping to constant values are not supported. Use labels or references!");
+				break;
+			case opLabel:
+				to->putByte(call ? 0xE8 : 0xE9);
+				to->putRelative(src.label());
+				break;
+			case opReference:
+				// We have two options of encoding here, depending on if the reference is currently
+				// within the 2GB we can address using the 32 bit operand. We want to use the short
+				// encoding if possible (as that is probably faster, and will occur quite frequently
+				// in practice). This is handled by the implementation in 'Refs.cpp'. This
+				// implementation dictates that the short variant shall be encoded with an unneeded
+				// REX prefix (we set the REX.W bit, so that we pretend that we mean something).
+				//
+				// We start by outputting the short version of the instruction so that the 'Refs'
+				// implementation is able to deduce if we're encoding a jump or a call
+				// instruction. Then we let that implementation deal with the fact that we might
+				// actually need the long version of the jump/call.
+				to->putByte(0x48); // REX.W
+				to->putByte(call ? 0xE8 : 0xE9);
+				to->putGc(GcCodeRef::jump, 4, src.ref());
+				break;
+			case opRegister:
+			case opRelative:
+				modRm(to, opCode(0x0F), false, call ? 2 : 4, src);
+				break;
+			default:
+				assert(false, L"Unsupported operand used for 'call' or 'jump'.");
+				break;
+			}
+		}
+
 		void jmpOut(Output *to, Instr *instr) {
-			// TODO!
+			CondFlag c = instr->src().condFlag();
+			if (c == ifAlways) {
+				jmpCall(to, false, instr->dest());
+			} else if (c == ifNever) {
+				// Nothing.
+			} else {
+				byte op = 0x80 + condOp(c);
+				const Operand &src = instr->dest();
+				switch (src.type()) {
+				case opLabel:
+					to->putByte(0x0F);
+					to->putByte(op);
+					to->putRelative(src.label());
+					break;
+				default:
+					assert(false, L"Conditional jumps only support labels.");
+					break;
+				}
+			}
 		}
 
 		void callOut(Output *to, Instr *instr) {
-			// TODO!
+			jmpCall(to, true, instr->src());
 		}
 
 		void retOut(Output *to, Instr *instr) {

@@ -128,6 +128,45 @@ namespace code {
 			}
 		}
 
+		byte condOp(CondFlag c) {
+			switch (c) {
+			case ifAlways:
+				assert(false);
+				break;
+			case ifOverflow:
+				return 0x0;
+			case ifNoOverflow:
+				return 0x1;
+			case ifEqual:
+				return 0x4;
+			case ifNotEqual:
+				return 0x5;
+			case ifBelow:
+			case ifFBelow:
+				return 0x2;
+			case ifBelowEqual:
+			case ifFBelowEqual:
+				return 0x6;
+			case ifAboveEqual:
+			case ifFAboveEqual:
+				return 0x3;
+			case ifAbove:
+			case ifFAbove:
+				return 0x7;
+			case ifLess:
+				return 0xC;
+			case ifLessEqual:
+				return 0xE;
+			case ifGreaterEqual:
+				return 0xD;
+			case ifGreater:
+				return 0xF;
+			}
+
+			assert(false, L"Missing jmpCond " + String(name(c)));
+			return 0;
+		}
+
 		bool singleByte(Word value) {
 			Long v(value);
 			return v >= -128 && v <= 127;

@@ -27,6 +27,7 @@ namespace code {
 
 		// Put a custom purpose GC pointer. 'size' bytes.
 		virtual void putGc(GcCodeRef::Kind kind, Nat size, Word w);
+		void putGc(GcCodeRef::Kind kind, Nat size, Ref ref);
 
 		// Put a pointer to a gc:d object. 4 or 8 bytes.
 		virtual void STORM_FN putGcPtr(Word w);

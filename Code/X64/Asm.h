@@ -55,6 +55,9 @@ namespace code {
 		// Register ID.
 		nat registerId(Reg r);
 
+		// Code for conditional operations.
+		byte condOp(CondFlag c);
+
 		// Does 'value' fit in a single byte?
 		bool singleByte(Word value);
 

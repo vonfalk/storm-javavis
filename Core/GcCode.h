@@ -38,6 +38,12 @@ namespace storm {
 			// A relative (4-byte) pointer to one of the 'pointer' variables in the GcCodeRef itself.
 			relativeHere,
 
+			// An architecture specific pointer that modifies the jump instruction as well, so that
+			// we can properly support both long and short jump instructions (if wee need to
+			// distinguish them) in an efficient manner by using short jumps where possible and
+			// falling back to long jumps where necessary.
+			jump,
+
 			// ...
 		};
 

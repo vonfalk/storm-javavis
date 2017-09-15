@@ -26,6 +26,11 @@ namespace code {
 		assert(false);
 	}
 
+	void Output::putGc(GcCodeRef::Kind kind, Nat size, Ref ref) {
+		putGc(kind, size, Word(ref.address()));
+		markGcRef(ref);
+	}
+
 	void Output::putGcPtr(Word w) {
 		assert(false);
 	}
