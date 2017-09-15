@@ -89,7 +89,7 @@ namespace code {
 	PROXY0(pushFlags);
 	PROXY0(popFlags);
 	PROXY1(jmp, Operand);
-	PROXY2(jmp, Operand, CondFlag);
+	PROXY2(jmp, Label, CondFlag);
 	PROXY2(call, Operand, ValType);
 	PROXY1(ret, ValType);
 	PROXY2(lea, Operand, Operand);

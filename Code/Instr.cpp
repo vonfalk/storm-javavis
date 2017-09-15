@@ -158,12 +158,12 @@ namespace code {
 	}
 
 	Instr *jmp(EnginePtr e, Operand to) {
-		return jmp(e, to, ifAlways);
-	}
-
-	Instr *jmp(EnginePtr e, Operand to, CondFlag cond) {
 		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must jump to a pointer, trying to jump to " + toS(to));
+		return instrLoose(e, op::jmp, to, CondFlag(ifAlways));
+	}
+
+	Instr *jmp(EnginePtr e, Label to, CondFlag cond) {
 		return instrLoose(e, op::jmp, to, cond);
 	}
 

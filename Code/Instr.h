@@ -82,7 +82,7 @@ namespace code {
 	Instr *STORM_FN pushFlags(EnginePtr e);
 	Instr *STORM_FN popFlags(EnginePtr e);
 	Instr *STORM_FN jmp(EnginePtr e, Operand to);
-	Instr *STORM_FN jmp(EnginePtr e, Operand to, CondFlag cond);
+	Instr *STORM_FN jmp(EnginePtr e, Label to, CondFlag cond);
 	Instr *STORM_FN call(EnginePtr e, Operand to, ValType ret);
 	Instr *STORM_FN ret(EnginePtr e, ValType ret); // Returns whatever is in eax register.
 
