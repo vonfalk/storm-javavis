@@ -17,7 +17,7 @@ namespace code {
 			none,
 			pointer,
 			integer,
-			decimal,
+			real,
 		};
 
 		// Create a 'void' value.
@@ -64,7 +64,7 @@ namespace code {
 	inline Primitive STORM_FN intPrimitive() { return Primitive(Primitive::integer, Size::sInt, Offset()); }
 	inline Primitive STORM_FN ptrPrimitive() { return Primitive(Primitive::pointer, Size::sPtr, Offset()); }
 	inline Primitive STORM_FN longPrimitive() { return Primitive(Primitive::integer, Size::sLong, Offset()); }
-	inline Primitive STORM_FN floatPrimitive() { return Primitive(Primitive::decimal, Size::sFloat, Offset()); }
+	inline Primitive STORM_FN floatPrimitive() { return Primitive(Primitive::real, Size::sFloat, Offset()); }
 
 	/**
 	 * Low-level description of a type. Instances of this class are used to tell the code backend

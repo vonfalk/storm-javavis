@@ -22,12 +22,12 @@ namespace code {
 	}
 
 	wostream &operator <<(wostream &to, const Primitive &p) {
-		static const wchar_t *names[] = { L"none", L"pointer", L"integer", L"decimal" };
+		static const wchar_t *names[] = { L"none", L"pointer", L"integer", L"real" };
 		return to << names[p.kind()] << L":" << p.size() << L"@" << p.offset();
 	}
 
 	StrBuf &operator <<(StrBuf &to, Primitive p) {
-		static const wchar *names[] = { S("none"), S("pointer"), S("integer"), S("decimal") };
+		static const wchar *names[] = { S("none"), S("pointer"), S("integer"), S("real") };
 		return to << names[p.kind()] << S(":") << p.size() << S("@") << p.offset();
 	}
 

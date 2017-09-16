@@ -3,6 +3,8 @@
 #include "Code/Binary.h"
 #include "Code/Exception.h"
 
+#include "Code/X64/Params.h"
+
 using namespace code;
 
 BEGIN_TEST(CodeScopeTest, CodeBasic) {
@@ -182,4 +184,14 @@ BEGIN_TEST(CodeHereTest, CodeBasic) {
 	typedef void *(*Fn)();
 	Fn fn = (Fn)b->address();
 	CHECK_EQ((*fn)(), address(&triggerCollect));
+} END_TEST
+
+BEGIN_TEST_(CodeX64Layout, CodeBasic) {
+	Engine &e = gEngine();
+
+	code::x64::Params *p = new (e) code::x64::Params();
+	p->add(0, new (e) PrimitiveDesc(intPrimitive()));
+	p->add(1, new (e) PrimitiveDesc(floatPrimitive()));
+
+	PVAR(p);
 } END_TEST
