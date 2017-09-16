@@ -303,7 +303,7 @@ namespace code {
 			case opRelative:
 				if (dest.reg() == noReg) {
 					to->putByte(modRmValue(0, subOp, 5));
-					to->putInt(dest.offset().current());
+					to->putInt(dest.offset().v32());
 				} else {
 					byte mode = 2;
 					nat reg = registerId(dest.reg());
@@ -315,7 +315,7 @@ namespace code {
 						} else {
 							mode = 0;
 						}
-					} else if (singleByte(dest.offset().current())) {
+					} else if (singleByte(dest.offset().v32())) {
 						mode = 1;
 					}
 
@@ -326,9 +326,9 @@ namespace code {
 					}
 
 					if (mode == 1) {
-						to->putByte(byte(dest.offset().current()));
+						to->putByte(byte(dest.offset().v32()));
 					} else if (mode == 2) {
-						to->putInt(Nat(dest.offset().current()));
+						to->putInt(Nat(dest.offset().v32()));
 					}
 				}
 				break;

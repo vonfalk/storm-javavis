@@ -106,8 +106,8 @@ namespace code {
 	 * Internal storage.
 	 */
 
-	Listing::IVar::IVar(Nat parent, Size size, Bool isParam, Bool isFloat, Operand freeFn, FreeOpt opt) :
-		parent(parent), size(size), isParam(isParam), isFloat(isFloat), freeFn(freeFn), freeOpt(opt) {}
+	Listing::IVar::IVar(Nat parent, Size size, TypeDesc *param, Operand freeFn, FreeOpt opt) :
+		parent(parent), size(size), param(param), freeFn(freeFn), freeOpt(opt) {}
 
 	void Listing::IVar::deepCopy(CloneEnv *env) {
 		// No need.
@@ -142,6 +142,9 @@ namespace code {
 		parts(new (engine()) Array<IPart>()),
 		needEH(false) {
 
+		result = new (this) PrimitiveDesc(Primitive());
+		member = false;
+
 		// Create the root block.
 		IBlock root(engine());
 		root.parts->push(0);
@@ -160,6 +163,9 @@ namespace code {
 		parts(new (engine()) Array<IPart>()),
 		needEH(false) {
 
+		result = new (this) PrimitiveDesc(Primitive());
+		member = false;
+
 		// Create the root block.
 		IBlock root(engine());
 		root.parts->push(0);
@@ -168,6 +174,8 @@ namespace code {
 	}
 
 	Listing::Listing(const Listing &o) :
+		result(o.result),
+		member(o.member),
 		arena(o.arena),
 		code(o.code),
 		nextLabels(o.nextLabels),
@@ -181,6 +189,7 @@ namespace code {
 	}
 
 	void Listing::deepCopy(CloneEnv *env) {
+		cloned(result, env);
 		code = new (this) Array<Entry>(*code);
 		code->deepCopy(env);
 		nextLabels = new (this) Array<Label>(*nextLabels);
@@ -198,6 +207,8 @@ namespace code {
 	Listing *Listing::createShell(const Arena *arena) const {
 		Listing *shell = arena ? new (this) Listing(arena) : new (this) Listing();
 
+		shell->result = result;
+		shell->member = member;
 		shell->nextLabel = nextLabel;
 		if (nextLabels)
 			shell->nextLabels = new (this) Array<Label>(*nextLabels);
@@ -405,7 +416,7 @@ namespace code {
 		IPart &toI = parts->at(to.id);
 		IVar &varI = vars->at(v.id);
 
-		if (varI.isParam)
+		if (varI.param)
 			throw InvalidValue(L"Can not delay parameters!");
 
 		Nat index = findId(fromI.vars, v.id);
@@ -482,7 +493,14 @@ namespace code {
 		if (v.id >= vars->count())
 			return false;
 
-		return vars->at(v.id).isParam;
+		return vars->at(v.id).param != null;
+	}
+
+	MAYBE(TypeDesc *) Listing::paramDesc(Var v) const {
+		if (v.id >= vars->count())
+			return null;
+
+		return vars->at(v.id).param;
 	}
 
 	Operand Listing::freeFn(Var v) const {
@@ -519,7 +537,7 @@ namespace code {
 			needEH = true;
 
 		Nat id = vars->count();
-		vars->push(IVar(in.id, size, false, false, free, when));
+		vars->push(IVar(in.id, size, null, free, when));
 
 		IPart &part = parts->at(in.id);
 		part.vars->push(id);
@@ -527,12 +545,24 @@ namespace code {
 		return Var(id, size);
 	}
 
-	Var Listing::createParam(ValType type, Operand free, FreeOpt when) {
+	Var Listing::createParam(TypeDesc *type, Operand free, FreeOpt when) {
 		if (checkFree(free, when))
 			needEH = true;
 
 		Nat id = vars->count();
-		vars->push(IVar(invalid, type.size, true, type.isFloat, free, when));
+		vars->push(IVar(invalid, type->size(), type, free, when));
+
+		params->push(id);
+		return Var(id, type->size());
+	}
+
+	Var Listing::createParam(ValType type, Operand free, FreeOpt when) {
+		if (checkFree(free, when))
+			needEH = true;
+
+		TODO(L"Obsolete function. Remove.");
+		Nat id = vars->count();
+		vars->push(IVar(invalid, type.size, null, free, when));
 
 		params->push(id);
 		return Var(id, type.size);

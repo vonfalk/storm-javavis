@@ -16,7 +16,7 @@ BEGIN_TEST(CodeScopeTest, CodeBasic) {
 	Var v1 = l->createVar(b, Size::sInt);
 	Var v2 = l->createVar(p, Size::sInt);
 	Var v3 = l->createVar(p, Size::sInt);
-	Var par = l->createParam(valPtr());
+	Var par = l->createPtrParam();
 
 	*l << mov(eax, ebx);
 	*l << mov(v2, intConst(10));

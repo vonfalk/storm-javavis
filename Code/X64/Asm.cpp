@@ -265,7 +265,7 @@ namespace code {
 						} else {
 							mod = 0;
 						}
-					} else if (singleByte(dest.offset().current())) {
+					} else if (singleByte(dest.offset().v64())) {
 						mod = 1;
 					}
 
@@ -276,9 +276,9 @@ namespace code {
 					}
 
 					if (mode == 1) {
-						to->putByte(Byte(dest.offset().current()));
+						to->putByte(Byte(dest.offset().v64()));
 					} else if (mode == 2) {
-						to->putInt(Nat(dest.offset().current()));
+						to->putInt(Nat(dest.offset().v64()));
 					}
 				}
 				break;

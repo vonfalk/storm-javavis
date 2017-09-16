@@ -43,6 +43,9 @@ namespace code {
 			// Extract any large numbers from an instruction.
 			Instr *extractNumbers(Instr *i);
 
+			// Remove any references to complex parameters.
+			Instr *extractComplex(Listing *dest, Instr *i, Nat line);
+
 			// Signature for the table of transform functions.
 			typedef void (RemoveInvalid::*TransformFn)(Listing *dest, Instr *instr, Nat line);
 

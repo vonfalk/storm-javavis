@@ -7,6 +7,8 @@ namespace code {
 	/**
 	 * Minimal description of a value passed to or from functions. This is needed as different
 	 * calling conventions treat floats differently from other values.
+	 *
+	 * TODO: Remove!
 	 */
 	class ValType {
 		STORM_VALUE;

@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Object.h"
 #include "Core/Array.h"
+#include "TypeDesc.h"
 #include "Instr.h"
 #include "Label.h"
 #include "Var.h"
@@ -184,6 +185,9 @@ namespace code {
 		// Is this a parameter?
 		Bool STORM_FN isParam(Var v) const;
 
+		// Get parameter info about a variable.
+		MAYBE(TypeDesc *) STORM_FN paramDesc(Var v) const;
+
 		// Get all blocks.
 		Array<Block> *STORM_FN allBlocks() const;
 
@@ -220,6 +224,11 @@ namespace code {
 		inline Var STORM_FN createVar(Part in, Size size, Operand free) { return createVar(in, size, free, freeDef); }
 		Var STORM_FN createVar(Part in, Size size, Operand free, FreeOpt when);
 
+		inline Var STORM_FN createParam(TypeDesc *type) { return createParam(type, Operand(), freeDef); }
+		inline Var STORM_FN createParam(TypeDesc *type, Operand free) { return createParam(type, free, freeDef); }
+		Var STORM_FN createParam(TypeDesc *type, Operand free, FreeOpt when);
+
+		// TODO: Remove these overloads - they are obsolete.
 		inline Var STORM_FN createParam(ValType type) { return createParam(type, Operand(), freeDef); }
 		inline Var STORM_FN createParam(ValType type, Operand free) { return createParam(type, free, freeDef); }
 		Var STORM_FN createParam(ValType type, Operand free, FreeOpt when);
@@ -242,17 +251,30 @@ namespace code {
 		}
 
 		inline Var STORM_FN createByteParam() {
-			return createParam(ValType(Size::sByte, false));
+			return createParam(new (this) PrimitiveDesc(bytePrimitive()));
 		}
 		inline Var STORM_FN createIntParam() {
-			return createParam(ValType(Size::sInt, false));
+			return createParam(new (this) PrimitiveDesc(intPrimitive()));
+		}
+		inline Var STORM_FN createPtrParam() {
+			return createParam(new (this) PrimitiveDesc(ptrPrimitive()));
 		}
 		inline Var STORM_FN createLongParam() {
-			return createParam(ValType(Size::sLong, false));
+			return createParam(new (this) PrimitiveDesc(longPrimitive()));
 		}
 		inline Var STORM_FN createFloatParam() {
-			return createParam(ValType(Size::sFloat, true));
+			return createParam(new (this) PrimitiveDesc(floatPrimitive()));
 		}
+
+		/**
+		 * Result from this listing.
+		 */
+
+		// Resulting type from this listing.
+		TypeDesc *result;
+
+		// Is this function a member of a class?
+		Bool member;
 
 
 		/**
@@ -263,7 +285,7 @@ namespace code {
 		virtual void STORM_FN toS(StrBuf *to) const;
 
 		// Arena.
-		const Arena *const arena;
+		MAYBE(const Arena *const) arena;
 
 	private:
 		// Variable information.
@@ -276,11 +298,8 @@ namespace code {
 			// Size of this variable.
 			Size size;
 
-			// Is this a parameter?
-			Bool isParam;
-
-			// Is this a float value (only relevant for parameters).
-			Bool isFloat;
+			// Parameter? If so: description of the parameter.
+			TypeDesc *param;
 
 			// Function to call on free.
 			Operand freeFn;
@@ -289,7 +308,7 @@ namespace code {
 			FreeOpt freeOpt;
 
 			// Create.
-			IVar(Nat parent, Size size, Bool isParam, Bool isFloat, Operand freeFn, FreeOpt opt);
+			IVar(Nat parent, Size size, TypeDesc *param, Operand freeFn, FreeOpt opt);
 
 			// Deep copy.
 			void STORM_FN deepCopy(CloneEnv *env);

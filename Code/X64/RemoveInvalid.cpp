@@ -48,6 +48,7 @@ namespace code {
 				break;
 			default:
 				i = extractNumbers(i);
+				i = extractComplex(dest, i, line);
 				break;
 			}
 
@@ -81,6 +82,39 @@ namespace code {
 			}
 
 			// Since writing to a constant is not allowed, we will not attempt to extract 'dest'.
+			return i;
+		}
+
+		static bool isComplex(Listing *l, Operand op) {
+			if (op.type() != opVariable)
+				return false;
+
+			Var v = op.var();
+			TypeDesc *t = l->paramDesc(v);
+			if (!t)
+				return false;
+
+			return as<ComplexDesc>(t) != null;
+		}
+
+		Instr *RemoveInvalid::extractComplex(Listing *to, Instr *i, Nat line) {
+			// Complex parameters are passed as a pointer. Dereference these by inserting a 'mov' instruction.
+			RegSet *regs = used->at(line);
+			if (isComplex(to, i->src())) {
+				Reg reg = asSize(unusedReg(regs), Size::sPtr);
+				regs = new (this) RegSet(*regs);
+				regs->put(reg);
+
+				*to << mov(reg, i->src());
+				i = i->alterSrc(ptrRel(reg, Offset()));
+			}
+
+			if (isComplex(to, i->dest())) {
+				Reg reg = asSize(unusedReg(regs), Size::sPtr);
+				*to << mov(reg, i->dest());
+				i = i->alterDest(ptrRel(reg, Offset()));
+			}
+
 			return i;
 		}
 
