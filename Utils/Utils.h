@@ -5,7 +5,7 @@
 #endif
 
 // Use standalone stack walking (ie no external libraries). This will not
-// always work well for optimized code. On windows, the default is to use the DbgHelp library.
+// always work well for optimized code. On Windows, the default is to use the DbgHelp library.
 // #define STANDALONE_STACKWALK
 
 #define _WIDEN(X) L ## X
