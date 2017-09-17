@@ -100,6 +100,9 @@ namespace code {
 
 			// Try to add a parameter to 'to', otherwise add it to the stack.
 			void tryAdd(GcArray<Param> *to, Param p);
+
+			// Try to add a parameter to a register described by 'kind'. Otherwise, do nothing.
+			bool tryAdd(Primitive::Kind kind, Param p);
 		};
 
 	}

@@ -84,24 +84,116 @@ namespace code {
 			tryAdd(integer, Param(id, 8, 0));
 		}
 
-		void Params::addDesc(Nat id, SimpleDesc *type) {
-			// Here, we should check 'type' to see if we shall pass parts of it in registers.
-			// It seems the algorithm works roughly as follows:
-			// - Examine each 8-byte word of the struct. Pass it in an integer register
-			//   if it only contains integers and pointers. Pass it in a real register
-			//   if it only contains floating point numbers. Otherwise, pass everything in memory.
-			// - If the struct is larger than 4 8-byte words, always pass it in memory.
-			// - If the struct is larger than 2 8-byte words, and do not contain real registers,
-			//   pass it in memory.
-			TODO(L"Implement me!");
-		}
-
 		void Params::tryAdd(GcArray<Param> *to, Param p) {
 			if (to->filled < to->count) {
 				to->v[to->filled++] = p;
 			} else {
 				stack->push(p.id());
 			}
+		}
+
+		static Primitive::Kind merge(Primitive::Kind a, Primitive::Kind b) {
+			switch (b) {
+			case Primitive::none:
+				return a;
+			case Primitive::pointer:
+				b = Primitive::integer;
+				break;
+			}
+
+			if (a == Primitive::none)
+				return b;
+			if (b == Primitive::none)
+				return a;
+			if (b == Primitive::pointer)
+				b = Primitive::integer;
+
+			switch (a) {
+			case Primitive::none:
+				return b;
+			case Primitive::pointer:
+			case Primitive::integer:
+				// Regardless of what 'b' is, we should remain in an integer register.
+				return Primitive::integer;
+			case Primitive::real:
+				// If 'b' is an integer, we shall become an integer as well.
+				return b;
+			}
+
+			dbg_assert(false, L"Should not be reached.");
+			return a;
+		}
+
+		static Primitive::Kind paramKind(GcArray<Primitive> *layout, Nat from, Nat to) {
+			Primitive::Kind result = Primitive::none;
+
+			for (Nat i = 0; i < layout->count; i++) {
+				Primitive p = layout->v[i];
+				Nat offset = p.offset().v64();
+				if (offset >= from && offset < to) {
+					result = merge(result, p.kind());
+				}
+			}
+
+			return result;
+		}
+
+		void Params::addDesc(Nat id, SimpleDesc *type) {
+			// Here, we should check 'type' to see if we shall pass parts of it in registers.
+			// It seems the algorithm works roughly as follows (from the offical documentation
+			// and examining the output of GCC from Experiments/call64.cpp):
+			// - If the struct is larger than 2 64-bit words, pass it on the stack.
+			// - If the struct does not fit entirely into registers, pass it on the stack.
+			// - Examine each 64-bit word of the struct:
+			//   - if the word contains only floating point numbers, pass them into a real register.
+			//   - otherwise, pass the word in an integer register (eg. int + float).
+
+			if (type->size().size64() > 2*8) {
+				// Too large: pass on the stack!
+				stack->push(id);
+				return;
+			}
+
+			Primitive::Kind first = paramKind(type->v, 0, 8);
+			Primitive::Kind second = paramKind(type->v, 8, 16);
+
+			size_t iCount = integer->filled;
+			size_t rCount = real->filled;
+
+			if (tryAdd(first, Param(id, 8, 0)) &&
+				tryAdd(second, Param(id, 8, 8))) {
+				// It worked!
+			} else {
+				// Not enough room. Roll back and pass on the stack instead.
+				integer->filled = iCount;
+				clear(integer);
+				real->filled = rCount;
+				clear(real);
+
+				stack->push(id);
+			}
+		}
+
+		bool Params::tryAdd(Primitive::Kind kind, Param p) {
+			GcArray<Param> *use = null;
+			switch (kind) {
+			case Primitive::none:
+				return true;
+			case Primitive::pointer:
+			case Primitive::integer:
+				use = integer;
+				break;
+			case Primitive::real:
+				use = real;
+				break;
+			}
+
+			if (use->filled < use->count) {
+				use->v[use->filled++] = p;
+				return true;
+			}
+
+			return false;
 		}
 
 		static void put(StrBuf *to, GcArray<Param> *p, const wchar **names) {

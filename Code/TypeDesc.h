@@ -1,5 +1,6 @@
 #pragma once
 #include "Size.h"
+#include "Core/Array.h"
 #include "Core/GcArray.h"
 #include "Core/Object.h"
 
@@ -127,6 +128,12 @@ namespace code {
 
 		Size s;
 		GcArray<Primitive> *v;
+
+		Primitive &STORM_FN at(Nat id) {
+			if (id >= v->count)
+				throw storm::ArrayError(L"Out of bounds.");
+			return v->v[id];
+		}
 
 		virtual void STORM_FN deepCopy(CloneEnv *env);
 		virtual Size STORM_FN size() const { return s; }

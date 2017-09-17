@@ -35,15 +35,23 @@ struct D {
 	float d; // Passed in RSI alongside 'c'.
 };
 
-// Can we mix integers and doubles to increase the limit a bit?
+// What happens if we reverse 'D'?
 struct E {
+	float a;
+	nat b;
+	float c;
+	nat d;
+};
+
+// Can we mix integers and doubles to increase the limit a bit?
+struct F {
 	// No. It seems like anything larger than 2 words is not put into registers.
 	nat64 a, b;
 	double c;
 };
 
 // Are floats passed as doubles, or in another fashion?
-struct F {
+struct G {
 	float a, b; // Passed in XMM0
 	float c, d; // Passed in XMM1
 };
@@ -79,12 +87,18 @@ void callD() {
 
 void e(E e);
 void callE() {
-	E v = { 1, 2 };
+	E v = { 1, 2, 3, 4 };
 	e(v);
 }
 
 void f(F f);
 void callF() {
-	F v = { 1, 2, 3, 4 };
+	F v = { 1, 2 };
 	f(v);
+}
+
+void g(G f);
+void callG() {
+	G v = { 1, 2, 3, 4 };
+	g(v);
 }
