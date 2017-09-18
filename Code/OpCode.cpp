@@ -31,6 +31,7 @@ namespace code {
 		OP_CODE(fnParam, destNone),
 		OP_CODE(fnParamRef, destNone),
 		OP_CODE(fnCall, destRead),
+		OP_CODE(fnRet, destNone),
 		OP_ALT_CODE(bor, destRead | destWrite, or),
 		OP_ALT_CODE(band, destRead | destWrite, and),
 		OP_ALT_CODE(bxor, destRead | destWrite, xor),

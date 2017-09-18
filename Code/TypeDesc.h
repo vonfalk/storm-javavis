@@ -7,29 +7,37 @@
 namespace code {
 	STORM_PKG(core.asm);
 
-	/**
-	 * Description of a primitive type. Used inside 'TypeDesc'.
-	 */
-	class Primitive {
-		STORM_VALUE;
-	public:
-		// Kind of primitives (TODO: Global scope, to make it more convenient in Storm?)
-		enum Kind {
+	namespace primitive {
+		// Kind of primitives.
+		enum PrimitiveKind {
 			none,
 			pointer,
 			integer,
 			real,
 		};
 
+		// C++ friendly name. Can not be used in function declarations visible to Storm.
+		typedef PrimitiveKind Kind;
+
+		// Get the name as a string.
+		const wchar *name(Kind kind);
+	}
+
+	/**
+	 * Description of a primitive type. Used inside 'TypeDesc'.
+	 */
+	class Primitive {
+		STORM_VALUE;
+	public:
 		// Create a 'void' value.
 		STORM_CTOR Primitive();
 
 		// Create a primitive.
-		STORM_CTOR Primitive(Kind kind, Size size, Offset offset);
+		STORM_CTOR Primitive(primitive::PrimitiveKind kind, Size size, Offset offset);
 
 		// Get the kind.
-		inline Kind STORM_FN kind() const {
-			return Kind((dataA & 0x1) | ((dataB & 0x1) << 1));
+		inline primitive::PrimitiveKind STORM_FN kind() const {
+			return primitive::Kind((dataA & 0x1) | ((dataB & 0x1) << 1));
 		}
 
 		// Get the size (we do not preserve offsets).
@@ -61,11 +69,11 @@ namespace code {
 	StrBuf &STORM_FN operator <<(StrBuf &to, Primitive p);
 
 	// Create primitive types easily.
-	inline Primitive STORM_FN bytePrimitive() { return Primitive(Primitive::integer, Size::sByte, Offset()); }
-	inline Primitive STORM_FN intPrimitive() { return Primitive(Primitive::integer, Size::sInt, Offset()); }
-	inline Primitive STORM_FN ptrPrimitive() { return Primitive(Primitive::pointer, Size::sPtr, Offset()); }
-	inline Primitive STORM_FN longPrimitive() { return Primitive(Primitive::integer, Size::sLong, Offset()); }
-	inline Primitive STORM_FN floatPrimitive() { return Primitive(Primitive::real, Size::sFloat, Offset()); }
+	inline Primitive STORM_FN bytePrimitive() { return Primitive(primitive::integer, Size::sByte, Offset()); }
+	inline Primitive STORM_FN intPrimitive() { return Primitive(primitive::integer, Size::sInt, Offset()); }
+	inline Primitive STORM_FN ptrPrimitive() { return Primitive(primitive::pointer, Size::sPtr, Offset()); }
+	inline Primitive STORM_FN longPrimitive() { return Primitive(primitive::integer, Size::sLong, Offset()); }
+	inline Primitive STORM_FN floatPrimitive() { return Primitive(primitive::real, Size::sFloat, Offset()); }
 
 	/**
 	 * Low-level description of a type. Instances of this class are used to tell the code backend

@@ -99,6 +99,7 @@ namespace code {
 	PROXY2(fnParamRef, Operand, Size);
 	PROXY3(fnParamRef, Operand, Size, Operand);
 	PROXY2(fnCall, Operand, ValType);
+	PROXY1(fnRet, Operand);
 	PROXY2(bor, Operand, Operand);
 	PROXY2(band, Operand, Operand);
 	PROXY2(bxor, Operand, Operand);

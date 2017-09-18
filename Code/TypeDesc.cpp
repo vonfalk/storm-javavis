@@ -4,13 +4,30 @@
 
 namespace code {
 
+	namespace primitive {
+		const wchar *name(Kind k) {
+			switch (k) {
+			case none:
+				return S("none");
+			case pointer:
+				return S("pointer");
+			case integer:
+				return S("integer");
+			case real:
+				return S("real");
+			default:
+				return S("<unknown>");
+			}
+		}
+	}
+
 	Primitive::Primitive() {
 		// represents 'none:0@0'.
 		dataA = 0;
 		dataB = 0;
 	}
 
-	Primitive::Primitive(Kind kind, Size size, Offset offset) {
+	Primitive::Primitive(primitive::Kind kind, Size size, Offset offset) {
 		dataA = Nat(kind) & 0x1;
 		dataB = (Nat(kind) >> 1) & 0x1;
 
@@ -22,13 +39,11 @@ namespace code {
 	}
 
 	wostream &operator <<(wostream &to, const Primitive &p) {
-		static const wchar_t *names[] = { L"none", L"pointer", L"integer", L"real" };
-		return to << names[p.kind()] << L":" << p.size() << L"@" << p.offset();
+		return to << primitive::name(p.kind()) << ":" << p.size() << L"@" << p.offset();
 	}
 
 	StrBuf &operator <<(StrBuf &to, Primitive p) {
-		static const wchar *names[] = { S("none"), S("pointer"), S("integer"), S("real") };
-		return to << names[p.kind()] << S(":") << p.size() << S("@") << p.offset();
+		return to << primitive::name(p.kind()) << S(":") << p.size() << S("@") << p.offset();
 	}
 
 	Size TypeDesc::size() const {

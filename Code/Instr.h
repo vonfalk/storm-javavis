@@ -84,7 +84,7 @@ namespace code {
 	Instr *STORM_FN jmp(EnginePtr e, Operand to);
 	Instr *STORM_FN jmp(EnginePtr e, Label to, CondFlag cond);
 	Instr *STORM_FN call(EnginePtr e, Operand to, ValType ret);
-	Instr *STORM_FN ret(EnginePtr e, ValType ret); // Returns whatever is in eax register.
+	Instr *STORM_FN ret(EnginePtr e, ValType ret); // Returns whatever is in eax register. TODO: Replace with a size.
 
 	// This one has somewhat special semantics, when used with a reference as 'from', it instead
 	// loads the RefSource referred to by the Ref.
@@ -105,6 +105,10 @@ namespace code {
 	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Size size);
 	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Size size, Operand copyFn);
 	Instr *STORM_FN fnCall(EnginePtr e, Operand src, ValType ret);
+
+	// High-level function return. Examines the return type specified in the listing and handles the
+	// return properly according to the current platform.
+	Instr *STORM_FN fnRet(EnginePtr e, Operand src);
 
 	// Integer math (signed/unsigned)
 	Instr *STORM_FN STORM_NAME(bor, or)(EnginePtr e, Operand dest, Operand src);

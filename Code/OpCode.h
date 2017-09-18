@@ -24,6 +24,7 @@ namespace code {
 			fnParam,
 			fnParamRef,
 			fnCall,
+			fnRet,
 			STORM_NAME(bor, or),
 			STORM_NAME(band, and),
 			STORM_NAME(bxor, xor),

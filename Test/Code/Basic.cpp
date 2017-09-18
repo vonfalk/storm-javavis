@@ -194,23 +194,23 @@ BEGIN_TEST_(CodeX64Layout, CodeBasic) {
 	p->add(1, new (e) PrimitiveDesc(floatPrimitive()));
 
 	SimpleDesc *s = new (e) SimpleDesc(Size::sInt*4, 4);
-	s->at(0) = Primitive(Primitive::integer, Size::sInt, Offset());
-	s->at(1) = Primitive(Primitive::real, Size::sFloat, Offset::sInt);
-	s->at(2) = Primitive(Primitive::real, Size::sFloat, Offset::sInt*2);
-	s->at(3) = Primitive(Primitive::integer, Size::sInt, Offset::sInt*3);
+	s->at(0) = Primitive(primitive::integer, Size::sInt, Offset());
+	s->at(1) = Primitive(primitive::real, Size::sFloat, Offset::sInt);
+	s->at(2) = Primitive(primitive::real, Size::sFloat, Offset::sInt*2);
+	s->at(3) = Primitive(primitive::integer, Size::sInt, Offset::sInt*3);
 	p->add(2, s);
 
 	SimpleDesc *t = new (e) SimpleDesc(Size::sInt*4, 4);
-	t->at(0) = Primitive(Primitive::integer, Size::sInt, Offset());
-	t->at(1) = Primitive(Primitive::integer, Size::sInt, Offset::sInt);
-	t->at(2) = Primitive(Primitive::real, Size::sFloat, Offset::sInt*2);
-	t->at(3) = Primitive(Primitive::real, Size::sFloat, Offset::sInt*3);
+	t->at(0) = Primitive(primitive::integer, Size::sInt, Offset());
+	t->at(1) = Primitive(primitive::integer, Size::sInt, Offset::sInt);
+	t->at(2) = Primitive(primitive::real, Size::sFloat, Offset::sInt*2);
+	t->at(3) = Primitive(primitive::real, Size::sFloat, Offset::sInt*3);
 	p->add(3, t);
 
 	SimpleDesc *u = new (e) SimpleDesc(Size::sLong*3, 4);
-	t->at(0) = Primitive(Primitive::integer, Size::sLong, Offset());
-	t->at(1) = Primitive(Primitive::integer, Size::sLong, Offset::sLong);
-	t->at(2) = Primitive(Primitive::integer, Size::sLong, Offset::sLong*2);
+	t->at(0) = Primitive(primitive::integer, Size::sLong, Offset());
+	t->at(1) = Primitive(primitive::integer, Size::sLong, Offset::sLong);
+	t->at(2) = Primitive(primitive::integer, Size::sLong, Offset::sLong*2);
 	p->add(4, u);
 
 	PVAR(p);

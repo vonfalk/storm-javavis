@@ -102,8 +102,40 @@ namespace code {
 			void tryAdd(GcArray<Param> *to, Param p);
 
 			// Try to add a parameter to a register described by 'kind'. Otherwise, do nothing.
-			bool tryAdd(Primitive::Kind kind, Param p);
+			bool tryAdd(primitive::Kind kind, Param p);
 		};
+
+		// Create a 'params' object from a list of TypeDesc objects.
+		Params *STORM_FN params(Array<TypeDesc *> *types);
+
+		/**
+		 * Describes how the return value is stored.
+		 */
+		class Result : public storm::Object {
+			STORM_CLASS;
+		public:
+			// Create.
+			STORM_CTOR Result(TypeDesc *type);
+
+			// We're using a maximum of 2 registers. Reg1 is always at offset 0 and reg2 at offset 8.
+			primitive::PrimitiveKind part1;
+			primitive::PrimitiveKind part2;
+
+			// Return in memory?
+			Bool memory;
+
+			// To string.
+			virtual void STORM_FN toS(StrBuf *to) const;
+
+		private:
+			// Helper functions.
+			void add(PrimitiveDesc *desc);
+			void add(ComplexDesc *desc);
+			void add(SimpleDesc *desc);
+		};
+
+		// Create a 'result' object describing how the return value shall be represented.
+		Result *STORM_FN result(TypeDesc *type);
 
 	}
 }

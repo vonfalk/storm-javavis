@@ -1,4 +1,6 @@
-* Cleanup work remaining [0/3]
-  - [ ] Remove 'ValType'.
+* Cleanup work remaining [0/5]
   - [ ] Remove the old 'fnCall' and 'fnParam' overloads.
+  - [ ] Remove 'retFloat' and 'callFloat'.
+  - [ ] Make 'call' and 'ret' take a plain size instead of a ValType.
   - [ ] Make a listing require a TypeDesc parameter.
+  - [ ] Remove 'ValType'.

@@ -228,6 +228,10 @@ namespace code {
 		return instrLoose(e, op, sizedReg(ptrA, ret.size), src);
 	}
 
+	Instr *fnRet(EnginePtr e, Operand src) {
+		return instrSrc(e, op::fnRet, src);
+	}
+
 	Instr *bor(EnginePtr e, Operand dest, Operand src) {
 		return instrDestSrc(e, op::bor, dest, src);
 	}

@@ -64,14 +64,14 @@ namespace code {
 
 		void Params::add(Nat id, Primitive p) {
 			switch (p.kind()) {
-			case Primitive::none:
+			case primitive::none:
 				// Nothing to do!
 				break;
-			case Primitive::pointer:
-			case Primitive::integer:
+			case primitive::pointer:
+			case primitive::integer:
 				tryAdd(integer, Param(id, p));
 				break;
-			case Primitive::real:
+			case primitive::real:
 				tryAdd(real, Param(id, p));
 				break;
 			default:
@@ -92,30 +92,30 @@ namespace code {
 			}
 		}
 
-		static Primitive::Kind merge(Primitive::Kind a, Primitive::Kind b) {
+		static primitive::Kind merge(primitive::Kind a, primitive::Kind b) {
 			switch (b) {
-			case Primitive::none:
+			case primitive::none:
 				return a;
-			case Primitive::pointer:
-				b = Primitive::integer;
+			case primitive::pointer:
+				b = primitive::integer;
 				break;
 			}
 
-			if (a == Primitive::none)
+			if (a == primitive::none)
 				return b;
-			if (b == Primitive::none)
+			if (b == primitive::none)
 				return a;
-			if (b == Primitive::pointer)
-				b = Primitive::integer;
+			if (b == primitive::pointer)
+				b = primitive::integer;
 
 			switch (a) {
-			case Primitive::none:
+			case primitive::none:
 				return b;
-			case Primitive::pointer:
-			case Primitive::integer:
+			case primitive::pointer:
+			case primitive::integer:
 				// Regardless of what 'b' is, we should remain in an integer register.
-				return Primitive::integer;
-			case Primitive::real:
+				return primitive::integer;
+			case primitive::real:
 				// If 'b' is an integer, we shall become an integer as well.
 				return b;
 			}
@@ -124,8 +124,8 @@ namespace code {
 			return a;
 		}
 
-		static Primitive::Kind paramKind(GcArray<Primitive> *layout, Nat from, Nat to) {
-			Primitive::Kind result = Primitive::none;
+		static primitive::Kind paramKind(GcArray<Primitive> *layout, Nat from, Nat to) {
+			primitive::Kind result = primitive::none;
 
 			for (Nat i = 0; i < layout->count; i++) {
 				Primitive p = layout->v[i];
@@ -154,8 +154,8 @@ namespace code {
 				return;
 			}
 
-			Primitive::Kind first = paramKind(type->v, 0, 8);
-			Primitive::Kind second = paramKind(type->v, 8, 16);
+			primitive::Kind first = paramKind(type->v, 0, 8);
+			primitive::Kind second = paramKind(type->v, 8, 16);
 
 			size_t iCount = integer->filled;
 			size_t rCount = real->filled;
@@ -174,16 +174,16 @@ namespace code {
 			}
 		}
 
-		bool Params::tryAdd(Primitive::Kind kind, Param p) {
+		bool Params::tryAdd(primitive::Kind kind, Param p) {
 			GcArray<Param> *use = null;
 			switch (kind) {
-			case Primitive::none:
+			case primitive::none:
 				return true;
-			case Primitive::pointer:
-			case Primitive::integer:
+			case primitive::pointer:
+			case primitive::integer:
 				use = integer;
 				break;
-			case Primitive::real:
+			case primitive::real:
 				use = real;
 				break;
 			}
@@ -215,6 +215,69 @@ namespace code {
 					*to << S(", ") << stack->at(i);
 				}
 			}
+		}
+
+		Params *params(Array<TypeDesc *> *types) {
+			Params *p = new (types) Params();
+			for (Nat i = 0; i < types->count(); i++)
+				p->add(i, types->at(i));
+			return p;
+		}
+
+		/**
+		 * Result.
+		 */
+
+		Result::Result(TypeDesc *result) {
+			part1 = primitive::none;
+			part2 = primitive::none;
+			memory = false;
+
+			if (PrimitiveDesc *p = as<PrimitiveDesc>(result)) {
+				add(p);
+			} else if (ComplexDesc *c = as<ComplexDesc>(result)) {
+				add(c);
+			} else if (SimpleDesc *s = as<SimpleDesc>(result)) {
+				add(s);
+			} else {
+				assert(false, L"Unknown type description found.");
+			}
+
+			if (part1 == primitive::pointer)
+				part1 = primitive::integer;
+			if (part2 == primitive::pointer)
+				part2 = primitive::integer;
+		}
+
+		void Result::toS(StrBuf *to) const {
+			*to << primitive::name(part1) << S(":") << primitive::name(part2);
+		}
+
+		void Result::add(PrimitiveDesc *desc) {
+			// Just add the primitive to the relevant register.
+			// We do not support >64 bit numbers, so this is fine!
+			part1 = desc->v.kind();
+		}
+
+		void Result::add(ComplexDesc *desc) {
+			// Complex types are easy. They are always passed by pointer.
+			part1 = primitive::integer;
+		}
+
+		void Result::add(SimpleDesc *desc) {
+			// The logic here is very similar to 'Params::addDesc'.
+			if (desc->size().size64() > 2*8) {
+				// Too large. Pass it on the stack!
+				memory = true;
+				return;
+			}
+
+			part1 = paramKind(desc->v, 0, 8);
+			part2 = paramKind(desc->v, 8, 16);
+		}
+
+		Result *result(TypeDesc *result) {
+			return new (result) Result(result);
 		}
 
 	}
