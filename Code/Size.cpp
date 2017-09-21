@@ -198,7 +198,7 @@ namespace code {
 
 	Offset::Offset(Int s) : o32(s), o64(s) {}
 
-	Offset::Offset(Size s) : o32(Int(size(s.s32))), o64(Int(size(s.s64))) {}
+	Offset::Offset(Size s) : o32(Int(s.size32())), o64(Int(s.size64())) {}
 
 	Offset::Offset(Int o32, Int o64) : o32(o32), o64(o64) {}
 

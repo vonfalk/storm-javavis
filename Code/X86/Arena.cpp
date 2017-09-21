@@ -2,7 +2,6 @@
 #include "Arena.h"
 #include "Output.h"
 #include "Listing.h"
-#include "Layout.h"
 #include "Remove64.h"
 #include "RemoveInvalid.h"
 #include "LayoutVars.h"
@@ -56,43 +55,6 @@ namespace code {
 			code::Arena::removeFnRegs(from);
 			from->remove(ptrD);
 			// esi, edi (and actually ebx as well) are preserved.
-		}
-
-		static Offset paramOffset(Listing *src, Var var) {
-			if (var == Var()) {
-				// Old ebp and return pointer.
-				return Offset::sPtr * 2;
-			}
-
-			Var prev = src->prev(var);
-			Offset offset = paramOffset(src, prev) + prev.size();
-			return offset.alignAs(Size::sPtr);
-		}
-
-		Array<Offset> *layout(Listing *src, Nat savedRegs, Bool usingEH) {
-			Array<Offset> *result = code::layout(src);
-			Array<Var> *all = src->allVars();
-
-			Offset varOffset;
-			// Exception handler frame.
-			if (usingEH)
-				varOffset += Size::sPtr * 4;
-			// Saved registers.
-			varOffset += Size::sPtr * savedRegs;
-
-			for (nat i = 0; i < all->count(); i++) {
-				Var var = all->at(i);
-				Nat id = var.key();
-
-				if (src->isParam(var)) {
-					result->at(id) = paramOffset(src, var);
-				} else {
-					result->at(id) = -(result->at(id) + var.size() + varOffset);
-				}
-			}
-
-			result->last() = result->last() + varOffset;
-			return result;
 		}
 
 	}

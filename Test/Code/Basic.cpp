@@ -3,7 +3,9 @@
 #include "Code/Binary.h"
 #include "Code/Exception.h"
 
+// Used during development:
 #include "Code/X64/Params.h"
+#include "Code/Layout.h"
 
 using namespace code;
 

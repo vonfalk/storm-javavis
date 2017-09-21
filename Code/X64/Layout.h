@@ -1,4 +1,5 @@
 #pragma once
+#include "Params.h"
 #include "../Transform.h"
 #include "../OpTable.h"
 #include "../UsedRegs.h"
@@ -34,8 +35,26 @@ namespace code {
 			virtual void STORM_FN after(Listing *dest, Listing *src);
 
 		private:
-			// Owner. We need to stor it when using exceptions.
+			// Owner. We need to store it when using exceptions.
 			Binary *owner;
+
+			// Layout of all parameters for this function.
+			Params *params;
+
+			// Layout of the result of this function.
+			Result *result;
+
+			// Layout of the stack. The stack offset of all variables in the listings.
+			Array<Offset> *layout;
+
+			// Currently active part.
+			Part part;
+
+			// Using exception handling here?
+			Bool usingEH;
+
+			// Compute the offset of the part id (when using exceptions).
+			Offset partId();
 
 			// Signature of the transform functions.
 			typedef void (Layout::*TransformFn)(Listing *dest, Listing *src, Nat line);
@@ -51,7 +70,16 @@ namespace code {
 
 			// Alter a single operand. Replace any local variables with their offset.
 			Operand resolve(Listing *src, const Operand &op);
+
+			// Create and destroy parts.
+			void initPart(Listing *dest, Part init);
+			void destroyPart(Listing *dest, Part destroy, Bool preserveRax);
 		};
+
+
+		// Compute the layout of variables, given a listing, parameters and the number of registers
+		// that need to be spilled into memory in the function prolog and epilog.
+		Array<Offset> *STORM_FN layout(Listing *l, Params *params, Nat spilled, Bool usingEH);
 
 	}
 }

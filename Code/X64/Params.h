@@ -53,6 +53,9 @@ namespace code {
 				return (data & 0xFFFFF000) >> 12;
 			}
 
+			// ID usable for a hidden return parameter.
+			enum { returnId = 0xFF };
+
 		private:
 			// Stored as follows:
 			// Bits 0-3: Size of the register (in bytes).
@@ -78,8 +81,25 @@ namespace code {
 			// Add a single parameter to here.
 			void STORM_FN add(Nat id, TypeDesc *type);
 
+			// Add a primitive.
+			void STORM_FN add(Nat id, Primitive p);
+
 			// To string.
 			virtual void STORM_FN toS(StrBuf *to) const;
+
+			/**
+			 * Access to the stack layout.
+			 */
+
+			// Get the total number of elements on the stack.
+			Nat STORM_FN stackCount() const {
+				return stack->count();
+			}
+
+			// Get stack element number 'n'.
+			Nat STORM_FN stackAt(Nat n) const {
+				return stack->at(n);
+			}
 
 		private:
 			// Available registers:
@@ -90,9 +110,6 @@ namespace code {
 			GcArray<Param> *real;
 			// Stores all parameters that are to be passed on the stack.
 			Array<Nat> *stack;
-
-			// Add a primitive.
-			void add(Nat id, Primitive p);
 
 			// Add complex and simple structs.
 			void addDesc(Nat id, ComplexDesc *type);

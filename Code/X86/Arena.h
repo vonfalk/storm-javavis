@@ -39,16 +39,5 @@ namespace code {
 		};
 
 
-		/**
-		 * Variable layouts. Extends code::layout by also providing offsets for parameters, and
-		 * aligns the naive offsets returned from there to what actually happens on an X86 using
-		 * cdecl calling convention.
-		 *
-		 * 'savedRegs' - # of saved registers in this case.
-		 * 'usingEh' - using exception handler (on Windows)?
-		 */
-		Array<Offset> *STORM_FN layout(Listing *src, Nat savedRegs, Bool usingEh);
-
-
 	}
 }

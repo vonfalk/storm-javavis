@@ -6,6 +6,7 @@
 #include "Exception.h"
 #include "SafeSeh.h"
 #include "Seh.h"
+#include "../Layout.h"
 
 namespace code {
 	namespace x86 {
@@ -133,7 +134,7 @@ namespace code {
 			}
 
 			if (usingEH)
-				*dest << mov(engine(), intRel(ptrFrame, partId), natConst(part.key()));
+				*dest << mov(intRel(ptrFrame, partId), natConst(part.key()));
 		}
 
 		void LayoutVars::destroyPart(Listing *dest, Part destroy, bool preserveEax) {
@@ -278,6 +279,44 @@ namespace code {
 
 			// Destroy the last one as well.
 			destroyPart(dest, target, false);
+		}
+
+
+		static Offset paramOffset(Listing *src, Var var) {
+			if (var == Var()) {
+				// Old ebp and return pointer.
+				return Offset::sPtr * 2;
+			}
+
+			Var prev = src->prev(var);
+			Offset offset = paramOffset(src, prev) + prev.size();
+			return offset.alignAs(Size::sPtr);
+		}
+
+		Array<Offset> *layout(Listing *src, Nat savedRegs, Bool usingEH) {
+			Array<Offset> *result = code::layout(src);
+			Array<Var> *all = src->allVars();
+
+			Offset varOffset;
+			// Exception handler frame.
+			if (usingEH)
+				varOffset += Size::sPtr * 4;
+			// Saved registers.
+			varOffset += Size::sPtr * savedRegs;
+
+			for (nat i = 0; i < all->count(); i++) {
+				Var var = all->at(i);
+				Nat id = var.key();
+
+				if (src->isParam(var)) {
+					result->at(id) = paramOffset(src, var);
+				} else {
+					result->at(id) = -(result->at(id) + var.size() + varOffset);
+				}
+			}
+
+			result->last() = result->last() + varOffset;
+			return result;
 		}
 
 	}

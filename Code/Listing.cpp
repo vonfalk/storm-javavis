@@ -562,7 +562,7 @@ namespace code {
 
 		TODO(L"Obsolete function. Remove.");
 		Nat id = vars->count();
-		vars->push(IVar(invalid, type.size, null, free, when));
+		vars->push(IVar(invalid, type.size, new (this) PrimitiveDesc(ptrPrimitive()), free, when));
 
 		params->push(id);
 		return Var(id, type.size);

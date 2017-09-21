@@ -63,6 +63,8 @@ namespace code {
 		}
 
 		void movOut(Output *to, Instr *instr) {
+			// NOTE: There is a version of MOV that supports 64-bit immediate values. We could use
+			// that to avoid additional instructions in quite some cases!
 			ImmRegInstr8 op8 = {
 				opCode(0xC6), 0,
 				opCode(0x88),
