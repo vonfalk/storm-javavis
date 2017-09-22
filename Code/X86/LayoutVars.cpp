@@ -289,7 +289,7 @@ namespace code {
 			}
 
 			Var prev = src->prev(var);
-			Offset offset = paramOffset(src, prev) + prev.size();
+			Offset offset = paramOffset(src, prev) + prev.size().aligned();
 			return offset.alignAs(Size::sPtr);
 		}
 
@@ -311,7 +311,7 @@ namespace code {
 				if (src->isParam(var)) {
 					result->at(id) = paramOffset(src, var);
 				} else {
-					result->at(id) = -(result->at(id) + var.size() + varOffset);
+					result->at(id) = -(result->at(id) + var.size().aligned() + varOffset);
 				}
 			}
 

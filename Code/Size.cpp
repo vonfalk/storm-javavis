@@ -110,7 +110,7 @@ namespace code {
 		}
 	}
 
-	Size Size::align() const {
+	Size Size::alignment() const {
 		return Size(0, code::align(s32), 0, code::align(s64));
 	}
 
@@ -251,16 +251,12 @@ namespace code {
 	}
 
 	Offset &Offset::operator +=(const Size &o) {
-		TODO(L"Verify the usage of this operator!");
-
 		o32 += size(o.s32);
 		o64 += size(o.s64);
 		return *this;
 	}
 
 	Offset &Offset::operator -=(const Size &o) {
-		TODO(L"Verify the usage of this operator!");
-
 		o32 -= size(o.s32);
 		o64 -= size(o.s64);
 		return *this;

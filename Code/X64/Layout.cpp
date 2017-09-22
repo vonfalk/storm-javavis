@@ -245,7 +245,7 @@ namespace code {
 					Var var = all->at(paramId);
 
 					out->at(var.key()) = stackOffset;
-					stackOffset = (stackOffset + var.size()).alignAs(Size::sPtr);
+					stackOffset = (stackOffset + var.size().aligned()).alignAs(Size::sPtr);
 				}
 			}
 
@@ -260,10 +260,10 @@ namespace code {
 					continue;
 
 				used += var.size();
-				to = -(varOffset + used);
+				to = -(varOffset + used.aligned());
 			}
 
-			return used;
+			return used.aligned();
 		}
 
 		Array<Offset> *layout(Listing *src, Params *params, Nat spilled, Bool usingEH) {
@@ -287,7 +287,7 @@ namespace code {
 				Nat id = var.key();
 
 				if (!src->isParam(var)) {
-					result->at(id) = -(result->at(id) + var.size() + varOffset);
+					result->at(id) = -(result->at(id) + var.size().aligned() + varOffset);
 				}
 			}
 

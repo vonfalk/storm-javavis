@@ -30,7 +30,7 @@ namespace code {
 		Nat STORM_FN current() const;
 
 		// Get a Size of zero, only with the align of this Size.
-		Size STORM_FN align() const;
+		Size STORM_FN alignment() const;
 
 		// Pointer size.
 		static Size sPtr;

@@ -32,6 +32,6 @@ BEGIN_TEST(SizeTest2, GcScan) {
 
 	s = Size();
 	s += Size::sByte;
-	s += Size::sLong.align();
+	s += Size::sLong.alignment();
 	CHECK_EQ(s.current(), OFFSET_OF(STB, b));
 } END_TEST

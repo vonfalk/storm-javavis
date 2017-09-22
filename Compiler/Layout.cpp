@@ -26,7 +26,7 @@ namespace storm {
 			MemberVar *v = vars->at(i);
 
 			Size vSize = v->type.size();
-			s += vSize.align();
+			s += vSize.alignment();
 			v->setOffset(Offset(s));
 
 			s += vSize;
@@ -60,7 +60,7 @@ namespace storm {
 			MemberVar *v = vars->at(i);
 			Value vType = v->type;
 			Size vSize = vType.size();
-			s += vSize.align();
+			s += vSize.alignment();
 
 			Offset offset(s);
 			if (vType.isPtr() || vType.ref) {

@@ -22,7 +22,7 @@ namespace code {
 		Offset offset = addVar(src, db, valid, prevVar);
 
 		if (!src->isParam(prevVar))
-			offset += prevVar.size();
+			offset += prevVar.size().aligned();
 
 		// Align 'prev' to something useful.
 		offset = offset.alignAs(v.size());

@@ -478,7 +478,7 @@ namespace code {
 				} else {
 					// Reserve stack space.
 					Size s = p.ref ? p.src.refSize() : p.src.size();
-					s += Size::sPtr.align();
+					s += Size::sPtr.alignment();
 					*dest << sub(ptrStack, ptrConst(s));
 				}
 			}
@@ -494,7 +494,7 @@ namespace code {
 				Param &p = params->at(i);
 
 				Size s = p.ref ? p.src.refSize() : p.src.size();
-				s += Size::sPtr.align();
+				s += Size::sPtr.alignment();
 
 				if (!p.copyFn.empty()) {
 					// Copy it!

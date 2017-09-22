@@ -139,6 +139,14 @@ static void parseMember(Tokenizer &tok, ParseEnv &env, Namespace &addTo, Access 
 	if (!tok.more() || tok.skipIf(L";"))
 		return;
 
+	// Primitive parsing of annotations (useful with the [[deprecated]] annotation).
+	if (tok.skipIf(L"[")) {
+		tok.expect(L"[");
+		tok.skip();
+		tok.expect(L"]");
+		tok.expect(L"]");
+	}
+
 	Token name(L"", SrcPos());
 	bool castFn = tok.skipIf(L"STORM_CAST_CTOR");
 	bool exportFn = castFn || tok.skipIf(L"STORM_CTOR");
