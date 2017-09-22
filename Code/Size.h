@@ -64,6 +64,9 @@ namespace code {
 		Bool STORM_FN operator >=(const Size &o) const;
 		Bool STORM_FN operator <=(const Size &o) const;
 
+		// Align the size (as seen by offsets) to the current alignment in here.
+		Size STORM_FN aligned() const;
+
 		// Find out the 32- and 64-bit sizes (for storage).
 		nat size32() const;
 		nat size64() const;
