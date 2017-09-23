@@ -18,13 +18,22 @@ namespace code {
 		}
 
 		void Param::clear() {
-			data = 0xFFFFFFFF;
+			set(0xFF, 0, 0xFFFFFFFF);
 		}
 
 		void Param::set(Nat id, Nat size, Nat offset) {
 			data = size & 0xF;
 			data |= (id & 0xFF) << 4;
 			data |= (offset & 0xFFFFFF) << 12;
+		}
+
+		wostream &operator <<(wostream &to, Param p) {
+			if (p.id() == 0xFF) {
+				to << L"empty";
+			} else {
+				to << L"#" << p.id() << L"+" << p.offset() << L"," << p.size();
+			}
+			return to;
 		}
 
 		StrBuf &operator <<(StrBuf &to, Param p) {

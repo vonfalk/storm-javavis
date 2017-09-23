@@ -105,7 +105,7 @@ BEGIN_TEST(CodeScopeTest3, CodeBasic) {
 
 } END_TEST
 
-BEGIN_TEST_(CodeTest, CodeBasic) {
+BEGIN_TEST(CodeTest, CodeBasic) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -189,7 +189,8 @@ BEGIN_TEST(CodeHereTest, CodeBasic) {
 } END_TEST
 
 BEGIN_TEST(CodeX64Layout, CodeBasic) {
-	TODO(L"REMOVE?");
+	using namespace code::x64;
+
 	Engine &e = gEngine();
 
 	code::x64::Params *p = new (e) code::x64::Params();
@@ -216,5 +217,12 @@ BEGIN_TEST(CodeX64Layout, CodeBasic) {
 	t->at(2) = Primitive(primitive::integer, Size::sLong, Offset::sLong*2);
 	p->add(4, u);
 
-	PVAR(p);
+	CHECK_EQ(p->stackCount(), 1);
+	CHECK_EQ(p->stackAt(0), 4);
+	CHECK_EQ(p->registerAt(0), Param(0, 4, 0));
+	CHECK_EQ(p->registerAt(6), Param(1, 4, 0));
+	CHECK_EQ(p->registerAt(1), Param(2, 8, 0));
+	CHECK_EQ(p->registerAt(2), Param(2, 8, 8));
+	CHECK_EQ(p->registerAt(3), Param(3, 8, 0));
+	CHECK_EQ(p->registerAt(7), Param(3, 8, 8));
 } END_TEST

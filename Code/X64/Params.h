@@ -54,6 +54,14 @@ namespace code {
 				return (data & 0xFFFFF000) >> 12;
 			}
 
+			// Compare for equality.
+			inline Bool STORM_FN operator ==(Param o) const {
+				return data == o.data;
+			}
+			inline Bool STORM_FN operator !=(Param o) const {
+				return data != o.data;
+			}
+
 			// ID usable for a hidden return parameter.
 			enum { returnId = 0xFF };
 
@@ -66,7 +74,8 @@ namespace code {
 		};
 
 		// Output.
-		StrBuf &operator <<(StrBuf &to, Param p);
+		wostream &operator <<(wostream &to, Param p);
+		StrBuf &STORM_FN operator <<(StrBuf &to, Param p);
 
 
 		/**
