@@ -256,9 +256,8 @@ namespace code {
 				to->putObjRelative(dest.object());
 				break;
 			case opRelativeLbl:
-				assert(dest.offset() == Offset(), L"Label + offset is not supported yet.");
 				modRm(to, op, wide, mode, 0, 5); // RIP relative addressing.
-				to->putRelative(dest.label());
+				to->putRelative(dest.label(), dest.offset().v64());
 				break;
 			case opRelative:
 				if (dest.reg() == noReg) {

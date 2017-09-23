@@ -52,6 +52,7 @@ namespace code {
 		void STORM_FN mark(Label lbl);
 		void STORM_FN mark(MAYBE(Array<Label> *) lbl);
 		void STORM_FN putRelative(Label lbl); // Writes 4 bytes.
+		void STORM_FN putRelative(Label lbl, Nat offset);
 		void STORM_FN putAddress(Label lbl); // Writes 4 or 8 bytes.
 
 		// References.

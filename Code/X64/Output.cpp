@@ -45,10 +45,10 @@ namespace code {
 		}
 
 		void CodeOut::putPtr(Word w) {
-			assert(pos + 3 < size);
-			Nat *to = (Nat *)&code[pos];
-			*to = (Nat)w;
-			pos += 4;
+			assert(pos + 7 < size);
+			Word *to = (Word *)&code[pos];
+			*to = w;
+			pos += 8;
 		}
 
 		void CodeOut::putGc(GcCodeRef::Kind kind, Nat size, Word w) {
@@ -86,7 +86,6 @@ namespace code {
 		}
 
 		void CodeOut::putRelativeStatic(Word w) {
-			assert(pos + 3 < size);
 			GcCode *refs = runtime::codeRefs(code);
 			assert(ref < refs->refCount);
 			refs->refs[ref].offset = pos;
@@ -137,7 +136,7 @@ namespace code {
 		}
 
 		Nat CodeOut::toRelative(Nat offset) {
-			return offset - (pos + 8);
+			return offset - (pos + 4); // NOTE: All relative things on the X86-64 are 4 bytes long, not 8!
 		}
 
 	}

@@ -82,6 +82,10 @@ namespace code {
 		putInt(toRelative(labelOffset(lbl.id)));
 	}
 
+	void Output::putRelative(Label lbl, Nat offset) {
+		putInt(toRelative(labelOffset(lbl.id) + offset));
+	}
+
 	void Output::putAddress(Label lbl) {
 		Word start = (Word)codePtr();
 		Nat offset = labelOffset(lbl.id);
