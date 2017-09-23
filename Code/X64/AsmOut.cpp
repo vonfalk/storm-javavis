@@ -150,60 +150,60 @@ namespace code {
 
 		void subOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 5,
-				0x28,
-				0x2A
+				opCode(0x82), 5,
+				opCode(0x28),
+				opCode(0x2A)
 			};
 			ImmRegInstr op = {
-				0x83, 5,
-				0x81, 5,
-				0x29,
-				0x2B
+				opCode(0x83), 5,
+				opCode(0x81), 5,
+				opCode(0x29),
+				opCode(0x2B)
 			};
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
 		void sbbOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 2,
-				0x18,
-				0x1A
+				opCode(0x82), 2,
+				opCode(0x18),
+				opCode(0x1A)
 			};
 			ImmRegInstr op = {
-				0x83, 2,
-				0x81, 2,
-				0x19,
-				0x1B
+				opCode(0x83), 2,
+				opCode(0x81), 2,
+				opCode(0x19),
+				opCode(0x1B)
 			};
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
 		void bxorOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 6,
-				0x30,
-				0x32
+				opCode(0x82), 6,
+				opCode(0x30),
+				opCode(0x32)
 			};
 			ImmRegInstr op = {
-				0x83, 6,
-				0x81, 6,
-				0x31,
-				0x33
+				opCode(0x83), 6,
+				opCode(0x81), 6,
+				opCode(0x31),
+				opCode(0x33)
 			};
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
 		void cmpOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
-				0x82, 7, // NOTE: it seems like this can also be encoded as 0x80 (preferred by some sources).
-				0x38,
-				0x3A
+				opCode(0x82), 7, // NOTE: it seems like this can also be encoded as 0x80 (preferred by some sources).
+				opCode(0x38),
+				opCode(0x3A)
 			};
 			ImmRegInstr op = {
-				0x83, 7,
-				0x81, 7,
-				0x39,
-				0x3B
+				opCode(0x83), 7,
+				opCode(0x81), 7,
+				opCode(0x39),
+				opCode(0x3B)
 			};
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}

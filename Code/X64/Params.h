@@ -1,5 +1,6 @@
 #pragma once
 #include "../TypeDesc.h"
+#include "../Reg.h"
 #include "Core/Object.h"
 #include "Core/Array.h"
 
@@ -100,6 +101,19 @@ namespace code {
 			Nat STORM_FN stackAt(Nat n) const {
 				return stack->at(n);
 			}
+
+			/**
+			 * Access to the registers.
+			 */
+
+			// Total number of registers to examine.
+			Nat STORM_FN registerCount() const;
+
+			// Get a parameter. Might be empty.
+			Param STORM_FN registerAt(Nat n) const;
+
+			// Get the register containing the parameter.
+			Reg STORM_FN registerSrc(Nat n) const;
 
 		private:
 			// Available registers:

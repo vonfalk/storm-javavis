@@ -71,12 +71,31 @@ namespace code {
 			return xRel(op.size(), ptrFrame, layout->at(v.key()) + op.offset());
 		}
 
+		void Layout::spillParams(Listing *dest) {
+			Array<Var> *all = dest->allParams();
+
+			for (Nat i = 0; i < params->registerCount(); i++) {
+				Param info = params->registerAt(i);
+				if (info.size() == 0)
+					continue; // Not used.
+				if (info.id() == Param::returnId)
+					continue; // TODO: Spill somewhere!
+
+				Offset to = layout->at(all->at(info.id()).key());
+				to += Offset(info.offset());
+
+				Size size(info.size());
+				*dest << mov(xRel(size, ptrFrame, to), asSize(params->registerSrc(i), size));
+			}
+		}
+
 		void Layout::prologTfm(Listing *dest, Listing *src, Nat line) {
 			*dest << push(ptrFrame);
 			*dest << mov(ptrFrame, ptrStack);
 
 			// Allocate stack space.
-			*dest << sub(ptrStack, ptrConst(layout->last()));
+			if (layout->last() != Offset())
+				*dest << sub(ptrStack, ptrConst(layout->last()));
 
 			// Keep track of offsets.
 			Offset offset = -Offset::sPtr;
@@ -94,6 +113,9 @@ namespace code {
 			}
 
 			// TODO: Save registers we need to preserve!
+
+			// Spill parameters to the stack.
+			spillParams(dest);
 
 			// Initialize the root block.
 			initPart(dest, dest->root());
@@ -278,6 +300,7 @@ namespace code {
 
 			// Figure out which variables we need to spill into memory.
 			varOffset += spillParams(result, src, params, varOffset);
+			varOffset = varOffset.alignAs(Size::sPtr);
 
 			// Update the layout of the other variables according to the size we needed for
 			// parameters and spilled registers.

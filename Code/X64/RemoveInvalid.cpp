@@ -77,7 +77,7 @@ namespace code {
 
 			// Labels are also constants.
 			if (src.type() == opLabel) {
-				i = i->alterSrc(longRel(lblLarge, Offset::sWord*large->count()));
+				i = i->alterSrc(ptrRel(lblLarge, Offset::sWord*large->count()));
 				large->push(src);
 			}
 

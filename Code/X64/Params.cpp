@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Params.h"
+#include "Asm.h"
 
 namespace code {
 	namespace x64 {
@@ -215,6 +216,30 @@ namespace code {
 					*to << S(", ") << stack->at(i);
 				}
 			}
+		}
+
+		Nat Params::registerCount() const {
+			return integer->count + real->count;
+		}
+
+		Param Params::registerAt(Nat n) const {
+			if (n < integer->count)
+				return integer->v[n];
+			if (n - integer->count < real->count)
+				return real->v[n - integer->count];
+			assert(false, L"Out of bounds.");
+			return Param();
+		}
+
+		Reg Params::registerSrc(Nat n) const {
+			static Reg v[] = {
+				ptrDi, ptrSi, ptrD, ptrC, ptr8, ptr9,
+				// TODO: xmm registers!
+				ptr8, ptr9, ptr10, ptr11, ptr12, ptr13, ptr14, ptr15
+			};
+			if (n >= 6)
+				TODO(L"Implement XMM registers!");
+			return v[n];
 		}
 
 		Params *params(Array<TypeDesc *> *types) {

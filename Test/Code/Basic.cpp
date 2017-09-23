@@ -105,7 +105,7 @@ BEGIN_TEST(CodeScopeTest3, CodeBasic) {
 
 } END_TEST
 
-BEGIN_TEST(CodeTest, CodeBasic) {
+BEGIN_TEST_(CodeTest, CodeBasic) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -188,7 +188,8 @@ BEGIN_TEST(CodeHereTest, CodeBasic) {
 	CHECK_EQ((*fn)(), address(&triggerCollect));
 } END_TEST
 
-BEGIN_TEST_(CodeX64Layout, CodeBasic) {
+BEGIN_TEST(CodeX64Layout, CodeBasic) {
+	TODO(L"REMOVE?");
 	Engine &e = gEngine();
 
 	code::x64::Params *p = new (e) code::x64::Params();

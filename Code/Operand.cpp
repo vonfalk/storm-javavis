@@ -253,7 +253,7 @@ namespace code {
 		case opRelative:
 			return to << L"[" << code::name(o.reg()) << o.offset() << L"]";
 		case opRelativeLbl:
-			return to << L"[" << L"Label" << o.opNum << L"+" << o.offset() << L"]";
+			return to << L"[" << L"Label" << o.opNum << o.offset() << L"]";
 		case opVariable:
 			if (o.offset() != Offset()) {
 				return to << L"[Var" << o.opNum << o.offset() << L"]";

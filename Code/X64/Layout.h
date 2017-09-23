@@ -74,6 +74,9 @@ namespace code {
 			// Create and destroy parts.
 			void initPart(Listing *dest, Part init);
 			void destroyPart(Listing *dest, Part destroy, Bool preserveRax);
+
+			// Spill parameters to the stack.
+			void spillParams(Listing *dest);
 		};
 
 

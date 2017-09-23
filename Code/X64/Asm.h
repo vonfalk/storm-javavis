@@ -60,6 +60,7 @@ namespace code {
 
 		// Does 'value' fit in a single byte?
 		bool singleByte(Word value);
+		bool singleByte(Nat value);
 
 		// Does 'value' fit in a 32-bit word?
 		bool singleInt(Word value);

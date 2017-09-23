@@ -172,6 +172,11 @@ namespace code {
 			return v >= -128 && v <= 127;
 		}
 
+		bool singleByte(Nat value) {
+			Int v(value);
+			return v >= -128 && v <= 127;
+		}
+
 		bool singleInt(Word value) {
 			const Long limit = Long(1) << Long(32);
 			Long v(value);
@@ -250,6 +255,11 @@ namespace code {
 				modRm(to, op, wide, mode, 0, 5); // RIP relative addressing.
 				to->putObjRelative(dest.object());
 				break;
+			case opRelativeLbl:
+				assert(dest.offset() == Offset(), L"Label + offset is not supported yet.");
+				modRm(to, op, wide, mode, 0, 5); // RIP relative addressing.
+				to->putRelative(dest.label());
+				break;
 			case opRelative:
 				if (dest.reg() == noReg) {
 					// TODO: Remove this in one of the transforms!
@@ -275,9 +285,9 @@ namespace code {
 						sib(to, reg);
 					}
 
-					if (mode == 1) {
+					if (mod == 1) {
 						to->putByte(Byte(dest.offset().v64()));
-					} else if (mode == 2) {
+					} else if (mod == 2) {
 						to->putInt(Nat(dest.offset().v64()));
 					}
 				}
