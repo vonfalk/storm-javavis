@@ -65,21 +65,39 @@ int64 callFn(const void *fnPtr, int64 p) {
 }
 
 #elif defined(X64) && defined(GCC)
+#include "CheckCall64.h"
+
+Reg64 regValues() {
+	Reg64 r = {
+		0x1111111111111111,
+		0x2222222222222222,
+		0x3333333333333333,
+		0x4444444444444444,
+		0x5555555555555555,
+	};
+	return r;
+}
 
 int callFn(const void *fnPtr, int p) {
-	TODO(L"Validate all registers!");
+	Reg64 before = regValues();
+	Reg64 after = regValues();
 
-	typedef int (*Fn)(int);
-	Fn f = (Fn)fnPtr;
-	return (*f)(p);
+	int result = (int)checkCall(fnPtr, p, &after);
+
+	assert(before == after, ::toS(before) + L" <=> " + ::toS(after));
+
+	return result;
 }
 
 int64 callFn(const void *fnPtr, int64 p) {
-	TODO(L"Validate all registers!");
+	Reg64 before = regValues();
+	Reg64 after = regValues();
 
-	typedef int64 (*Fn)(int64);
-	Fn f = (Fn)fnPtr;
-	return (*f)(p);
+	size_t result = checkCall(fnPtr, p, &after);
+
+	assert(before == after, ::toS(before) + L" <=> " + ::toS(after));
+
+	return result;
 }
 
 #endif
