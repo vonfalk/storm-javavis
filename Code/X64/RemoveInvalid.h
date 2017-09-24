@@ -55,13 +55,19 @@ namespace code {
 			// Generic transform function for instructions using a generic two-op immReg form.
 			void immRegTfm(Listing *dest, Instr *instr, Nat line);
 
+			// Generic transform for instructions requiring their dest operand to be a register.
+			void destRegTfm(Listing *dest, Instr *instr, Nat line);
+
 			// Function calls.
 			void fnParamTfm(Listing *dest, Instr *instr, Nat line);
 			void fnParamRefTfm(Listing *dest, Instr *instr, Nat line);
 			void fnCallTfm(Listing *dest, Instr *instr, Nat line);
+			void fnRetTfm(Listing *dest, Instr *instr, Nat line);
 
 			// Other transforms.
-			void leaTfm(Listing *dest, Instr *instr, Nat line);
+			void shlTfm(Listing *dest, Instr *instr, Nat line);
+			void shrTfm(Listing *dest, Instr *instr, Nat line);
+			void sarTfm(Listing *dest, Instr *instr, Nat line);
 		};
 
 	}

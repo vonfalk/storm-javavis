@@ -88,18 +88,33 @@ namespace code {
 			return r;
 		}
 
-		// Wide operand?
-		inline bool wide(const Operand &op) {
-			return op.size() == Size::sWord
-				|| op.size() == Size::sPtr;
-		}
-
 		// Output an opcode.
 		void put(Output *to, OpCode op);
 
+		// Flags to the modRm function, telling it how to behave.
+		enum RmFlags {
+			// No special flags.
+			rmNone = 0x0,
+			// This is a wide instruction.
+			rmWide = 0x1,
+			// This is a byte instruction. We will use the registers DIL and SIL instead of AH, BH, etc.
+			// Can be used with 'rmWide', but that is usually useless.
+			rmByte = 0x2,
+		};
+
+		BITMASK_OPERATORS(RmFlags);
+
+		// Wide operand?
+		inline RmFlags wide(const Operand &op) {
+			if (op.size() == Size::sWord || op.size() == Size::sPtr)
+				return rmWide;
+			else
+				return rmNone;
+		}
+
 		// Output an instruction with a ModRm modifier afterwards. Emits a REX prefix if necessary.
-		void modRm(Output *to, OpCode op, bool wide, const Operand &dest, const Operand &src);
-		void modRm(Output *to, OpCode op, bool wide, nat mode, const Operand &dest);
+		void modRm(Output *to, OpCode op, RmFlags flags, const Operand &dest, const Operand &src);
+		void modRm(Output *to, OpCode op, RmFlags flags, nat mode, const Operand &dest);
 
 		// Describes a single instruction that takes an immediate value or a register, along with a ModRm operand.
 		struct ImmRegInstr {

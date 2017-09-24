@@ -9,6 +9,7 @@ namespace code {
 
 #define TRANSFORM(x) { op::x, &RemoveInvalid::x ## Tfm }
 #define IMM_REG(x) { op::x, &RemoveInvalid::immRegTfm }
+#define DEST_REG(x) { op::x, &RemoveInvalid::destRegTfm }
 
 		const OpEntry<RemoveInvalid::TransformFn> RemoveInvalid::transformMap[] = {
 			IMM_REG(mov),
@@ -21,10 +22,14 @@ namespace code {
 			IMM_REG(bxor),
 			IMM_REG(cmp),
 
-			TRANSFORM(lea),
+			DEST_REG(lea),
+			DEST_REG(icast),
+			DEST_REG(ucast),
+
 			TRANSFORM(fnCall),
 			TRANSFORM(fnParam),
 			TRANSFORM(fnParamRef),
+			TRANSFORM(fnRet),
 		};
 
 		RemoveInvalid::RemoveInvalid() {}
@@ -143,22 +148,20 @@ namespace code {
 
 			Size size = instr->src().size();
 			Reg reg = unusedReg(used->at(line));
-			assert(reg != noReg, L"We should never run out of registers on X86-64!");
 			reg = asSize(reg, size);
 			*dest << mov(reg, instr->src());
 			*dest << instr->alterSrc(reg);
 		}
 
-		void RemoveInvalid::leaTfm(Listing *dest, Instr *instr, Nat line) {
+		void RemoveInvalid::destRegTfm(Listing *dest, Instr *instr, Nat line) {
 			if (instr->dest().type() == opRegister) {
 				*dest << instr;
 				return;
 			}
 
 			Reg reg = unusedReg(used->at(line));
-			assert(reg != noReg, L"We should never run out of registers on X86-64!");
-			reg = asSize(reg, Size::sPtr);
-			*dest << lea(reg, instr->src());
+			reg = asSize(reg, instr->dest().size());
+			*dest << instr->alterDest(reg);
 			*dest << mov(instr->dest(), reg);
 		}
 
@@ -172,6 +175,51 @@ namespace code {
 
 		void RemoveInvalid::fnCallTfm(Listing *dest, Instr *instr, Nat line) {
 			TODO(L"IMPLEMENT ME!");
+		}
+
+		void RemoveInvalid::fnRetTfm(Listing *dest, Instr *instr, Nat line) {
+			TODO(L"IMPLEMENT ME!");
+		}
+
+		void RemoveInvalid::shlTfm(Listing *dest, Instr *instr, Nat line) {
+			switch (instr->src().type()) {
+			case opRegister:
+				if (instr->src().reg() == cl) {
+					*dest << instr;
+					return;
+				}
+				break;
+			case opConstant:
+				*dest << instr;
+				return;
+			}
+
+			Size size = instr->dest().size();
+
+			// We need to store the value in 'cl'. See if 'dest' is also 'cl' or 'rcx'.
+			if (instr->dest().type() == opRegister && same(instr->dest().reg(), rcx)) {
+				// Yes. We need to swap things around quite a lot!
+				Reg reg = asSize(unusedReg(used->at(line)), size);
+				*dest << mov(reg, instr->dest());
+				*dest << mov(cl, instr->src());
+				*dest << instr->alter(reg, cl);
+				*dest << mov(instr->dest(), reg);
+			} else {
+				// We do not need to do that at least!
+				Reg reg = asSize(unusedReg(used->at(line)), Size::sLong);
+				*dest << mov(reg, rcx);
+				*dest << mov(cl, instr->src());
+				*dest << instr->alterSrc(cl);
+				*dest << mov(rcx, reg);
+			}
+		}
+
+		void RemoveInvalid::shrTfm(Listing *dest, Instr *instr, Nat line) {
+			shlTfm(dest, instr, line);
+		}
+
+		void RemoveInvalid::sarTfm(Listing *dest, Instr *instr, Nat line) {
+			shlTfm(dest, instr, line);
 		}
 
 	}

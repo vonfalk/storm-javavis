@@ -131,6 +131,7 @@ namespace code {
 		byte condOp(CondFlag c) {
 			switch (c) {
 			case ifAlways:
+			case ifNever:
 				assert(false);
 				break;
 			case ifOverflow:
@@ -195,6 +196,7 @@ namespace code {
 					return candidates[i];
 			}
 
+			assert(false, L"This should never happen!");
 			return noReg;
 		}
 
@@ -217,18 +219,25 @@ namespace code {
 		}
 
 		// Perform the dirty work of outputting the modrm bytes correctly.
-		static void modRm(Output *to, OpCode op, bool wide, byte reg, byte mod, byte rm) {
+		static void modRm(Output *to, OpCode op, RmFlags flags, byte reg, byte mod, byte rm) {
 			// Transfer the fourth bit of 'reg' and 'rm' to the REX byte to see if it is needed.
 			byte rex = 0x40; // 0 1 0 0 W R X B
 			rex |= (reg & 0x8) >> 1;
 			rex |= (rm  & 0x8) >> 3;
-			if (wide)
+			if (flags & rmWide)
 				rex |= 0x08;
 
-			if (rex != 0x40) {
-				// Something was set, emit the REX byte.
-				to->putByte(rex);
+			bool emitRex = rex != 0x40;
+			if (flags & rmByte) {
+				// We want to use SIL, DIL, etc. instead of AH, BH, etc. We need to emit a REX
+				// byte in these cases, even though it does not have any bits set.
+				// Even though 'reg' does not always specify a register, it is OK to encode it anyway.
+				emitRex |= rm >= 0x4;
+				emitRex |= reg >= 0x4;
 			}
+
+			if (emitRex)
+				to->putByte(rex);
 
 			// Emit the op-code.
 			put(to, op);
@@ -242,21 +251,21 @@ namespace code {
 		}
 
 
-		void modRm(Output *to, OpCode op, bool wide, nat mode, const Operand &dest) {
+		void modRm(Output *to, OpCode op, RmFlags flags, nat mode, const Operand &dest) {
 			switch (dest.type()) {
 			case opRegister:
-				modRm(to, op, wide, mode, 3, registerId(dest.reg()));
+				modRm(to, op, flags, mode, 3, registerId(dest.reg()));
 				break;
 			case opReference:
-				modRm(to, op, wide, mode, 0, 5); // RIP relative addressing.
+				modRm(to, op, flags, mode, 0, 5); // RIP relative addressing.
 				to->putObjRelative(dest.ref());
 				break;
 			case opObjReference:
-				modRm(to, op, wide, mode, 0, 5); // RIP relative addressing.
+				modRm(to, op, flags, mode, 0, 5); // RIP relative addressing.
 				to->putObjRelative(dest.object());
 				break;
 			case opRelativeLbl:
-				modRm(to, op, wide, mode, 0, 5); // RIP relative addressing.
+				modRm(to, op, flags, mode, 0, 5); // RIP relative addressing.
 				to->putRelative(dest.label(), dest.offset().v64());
 				break;
 			case opRelative:
@@ -278,7 +287,7 @@ namespace code {
 						mod = 1;
 					}
 
-					modRm(to, op, wide, mode, mod, reg);
+					modRm(to, op, flags, mode, mod, reg);
 					if ((reg & 0x7) == 4) {
 						// We need to emit a SIB byte as well.
 						sib(to, reg);
@@ -298,30 +307,30 @@ namespace code {
 			}
 		}
 
-		void modRm(Output *to, OpCode op, bool wide, const Operand &dest, const Operand &src) {
+		void modRm(Output *to, OpCode op, RmFlags flags, const Operand &dest, const Operand &src) {
 			assert(dest.type() == opRegister);
-			modRm(to, op, wide, registerId(dest.reg()), src);
+			modRm(to, op, flags, registerId(dest.reg()), src);
 		}
 
 		void immRegInstr(Output *to, const ImmRegInstr &op, const Operand &dest, const Operand &src) {
-			bool wide = code::x64::wide(src);
+			RmFlags flags = wide(src);
 
 			switch (src.type()) {
 			case opConstant:
 				if (op.modeImm8 != 0xFF && singleByte(src.constant())) {
-					modRm(to, op.opImm8, wide, op.modeImm8, dest);
+					modRm(to, op.opImm8, flags, op.modeImm8, dest);
 					to->putByte(src.constant() & 0xFF);
 				} else {
-					modRm(to, op.opImm32, wide, op.modeImm32, dest);
+					modRm(to, op.opImm32, flags, op.modeImm32, dest);
 					to->putInt(Nat(src.constant()));
 				}
 				break;
 			case opRegister:
-				modRm(to, op.opSrcReg, wide, registerId(src.reg()), dest);
+				modRm(to, op.opSrcReg, flags, registerId(src.reg()), dest);
 				break;
 			default:
 				if (dest.type() == opRegister) {
-					modRm(to, op.opDestReg, wide, registerId(dest.reg()), src);
+					modRm(to, op.opDestReg, flags, registerId(dest.reg()), src);
 				} else {
 					assert(false, L"Operand types not supported.");
 				}
@@ -332,15 +341,15 @@ namespace code {
 		void immRegInstr(Output *to, const ImmRegInstr8 &op, const Operand &dest, const Operand &src) {
 			switch (src.type()) {
 			case opConstant:
-				modRm(to, op.opImm, false, op.modeImm, dest);
+				modRm(to, op.opImm, rmByte, op.modeImm, dest);
 				to->putByte(src.constant() & 0xFF);
 				break;
 			case opRegister:
-				modRm(to, op.opSrcReg, false, registerId(src.reg()), dest);
+				modRm(to, op.opSrcReg, rmByte, registerId(src.reg()), dest);
 				break;
 			default:
 				if (dest.type() == opRegister) {
-					modRm(to, op.opDestReg, false, registerId(dest.reg()), src);
+					modRm(to, op.opDestReg, rmByte, registerId(dest.reg()), src);
 				} else {
 					assert(false, L"Operand types not supported.");
 				}

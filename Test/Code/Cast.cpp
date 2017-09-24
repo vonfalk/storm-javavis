@@ -18,7 +18,7 @@ BEGIN_TEST(CastIntLong, Code) {
 	*l << mov(rax, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valLong());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Long (*Fn)(Int);
@@ -44,7 +44,7 @@ BEGIN_TEST(CastIntLong2, Code) {
 	*l << mov(rax, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valLong());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Long (*Fn)(Int);
@@ -69,7 +69,7 @@ BEGIN_TEST(CastCharInt, Code) {
 	*l << mov(eax, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valInt());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(char);
@@ -94,7 +94,7 @@ BEGIN_TEST(CastCharLong, Code) {
 	*l << mov(rax, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valLong());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Long (*Fn)(char);
@@ -119,7 +119,7 @@ BEGIN_TEST(CastLongInt, Code) {
 	*l << mov(eax, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valInt());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)(Long);
@@ -144,7 +144,7 @@ BEGIN_TEST(CastIntChar, Code) {
 	*l << mov(al, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valByte());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef char (*Fn)(Int);
@@ -169,7 +169,7 @@ BEGIN_TEST(CastLongChar, Code) {
 	*l << mov(al, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valByte());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef char (*Fn)(Long);
@@ -198,7 +198,7 @@ BEGIN_TEST(CastNatWord, Code) {
 	*l << mov(rax, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valLong());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Word (*Fn)(Nat);
@@ -223,7 +223,7 @@ BEGIN_TEST(CastByteNat, Code) {
 	*l << mov(eax, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valInt());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Nat (*Fn)(Byte);
@@ -248,7 +248,7 @@ BEGIN_TEST(CastByteWord, Code) {
 	*l << mov(rax, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valLong());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Word (*Fn)(Byte);
@@ -273,7 +273,7 @@ BEGIN_TEST(CastWordNat, Code) {
 	*l << mov(eax, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valInt());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Nat (*Fn)(Word);
@@ -297,7 +297,7 @@ BEGIN_TEST(CastNatByte, Code) {
 	*l << mov(al, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valByte());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Byte (*Fn)(Nat);
@@ -321,7 +321,7 @@ BEGIN_TEST(CastWordByte, Code) {
 	*l << mov(al, r);
 
 	*l << epilog();
-	*l << ret(valVoid());
+	*l << ret(valByte());
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Byte (*Fn)(Word);

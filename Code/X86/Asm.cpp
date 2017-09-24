@@ -236,6 +236,7 @@ namespace code {
 		byte condOp(CondFlag c) {
 			switch (c) {
 			case ifAlways:
+			case ifNever:
 				assert(false);
 				break;
 			case ifOverflow:

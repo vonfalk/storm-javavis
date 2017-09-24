@@ -32,7 +32,7 @@ namespace code {
 			case opRelative:
 			case opReference:
 			case opObjReference:
-				modRm(to, opCode(0xFF), false, 6, src);
+				modRm(to, opCode(0xFF), rmNone, 6, src);
 				break;
 			default:
 				assert(false, L"Push does not support this operand type.");
@@ -54,7 +54,7 @@ namespace code {
 				break;
 			}
 			case opRelative:
-				modRm(to, opCode(0x8F), false, 0, dest);
+				modRm(to, opCode(0x8F), rmNone, 0, dest);
 				break;
 			default:
 				assert(false, L"Pop does not support this operand type.");
@@ -142,7 +142,7 @@ namespace code {
 		void bnotOut(Output *to, Instr *instr) {
 			const Operand &dest = instr->dest();
 			if (dest.size() == Size::sByte) {
-				modRm(to, opCode(0xF6), false, 2, dest);
+				modRm(to, opCode(0xF6), rmNone, 2, dest);
 			} else {
 				modRm(to, opCode(0xF7), wide(dest), 2, dest);
 			}
@@ -208,6 +208,55 @@ namespace code {
 			immRegInstr(to, op8, op, instr->dest(), instr->src());
 		}
 
+		static void shiftOp(Output *to, const Operand &dest, const Operand &src, byte subOp) {
+			RmFlags flags = wide(dest);
+			if (dest.size() == Size::sByte)
+				flags |= rmByte;
+
+			byte c;
+			switch (src.type()) {
+			case opConstant:
+				c = byte(src.constant());
+				if (c == 0) {
+					// Nothing to do!
+				} else if (c == 1) {
+					if (flags & rmByte)
+						modRm(to, opCode(0xD0), flags, subOp, dest);
+					else
+						modRm(to, opCode(0xD1), flags, subOp, dest);
+				} else {
+					if (flags & rmByte)
+						modRm(to, opCode(0xC0), flags, subOp, dest);
+					else
+						modRm(to, opCode(0xC1), flags, subOp, dest);
+					to->putByte(c);
+				}
+				break;
+			case opRegister:
+				assert(src.reg() == cl, L"Transformation of shift operation failed.");
+				if (flags & rmByte)
+					modRm(to, opCode(0xD2), flags, subOp, dest);
+				else
+					modRm(to, opCode(0xD3), flags, subOp, dest);
+				break;
+			default:
+				assert(false, L"The shift operation was not transformed properly.");
+				break;
+			}
+		}
+
+		void shlOut(Output *to, Instr *instr) {
+			shiftOp(to, instr->dest(), instr->src(), 4);
+		}
+
+		void shrOut(Output *to, Instr *instr) {
+			shiftOp(to, instr->dest(), instr->src(), 5);
+		}
+
+		void sarOut(Output *to, Instr *instr) {
+			shiftOp(to, instr->dest(), instr->src(), 7);
+		}
+
 		void leaOut(Output *to, Instr *instr) {
 			Operand src = instr->src();
 			Operand dest = instr->dest();
@@ -217,9 +266,9 @@ namespace code {
 			if (src.type() == opReference) {
 				// Special meaning, load the RefSource instead.
 				// Issues a 'mov' operation to simply load the address of the refsource.
-				modRm(to, opCode(0x8B), true, regId, objPtr(src.refSource()));
+				modRm(to, opCode(0x8B), rmWide, regId, objPtr(src.refSource()));
 			} else {
-				modRm(to, opCode(0x8D), true, regId, src);
+				modRm(to, opCode(0x8D), rmWide, regId, src);
 			}
 		}
 
@@ -250,7 +299,7 @@ namespace code {
 				break;
 			case opRegister:
 			case opRelative:
-				modRm(to, opCode(0x0F), false, call ? 2 : 4, src);
+				modRm(to, opCode(0x0F), rmNone, call ? 2 : 4, src);
 				break;
 			default:
 				assert(false, L"Unsupported operand used for 'call' or 'jump'.");
@@ -286,6 +335,86 @@ namespace code {
 
 		void retOut(Output *to, Instr *instr) {
 			to->putByte(0xC3);
+		}
+
+		void setCondOut(Output *to, Instr *instr) {
+			CondFlag c = instr->src().condFlag();
+			if (c == ifAlways) {
+				// mov <dest>, 1
+				modRm(to, opCode(0xC6), rmByte, 0, instr->dest());
+				to->putByte(0x01);
+			} else if (c == ifNever) {
+				// mov <dest>, 0
+				modRm(to, opCode(0xC6), rmByte, 0, instr->dest());
+				to->putByte(0x00);
+			} else {
+				modRm(to, opCode(0x0F, 0x90 + condOp(c)), rmNone, 0, instr->dest());
+			}
+		}
+
+		void ucastOut(Output *to, Instr *instr) {
+			nat sFrom = instr->src().size().size64();
+			nat sTo = instr->dest().size().size64();
+			Reg rTo = instr->dest().reg();
+
+			bool same = instr->src().type() == opRegister
+				&& instr->src().reg() == rTo;
+
+			switch (min(sTo, sFrom)) {
+			case 1:
+				// We could use 'movzx' as well, but this works in all cases.
+
+				// Easy, just move one byte from 'src' to 'dest', or do an 'and' operation.
+				if (!same) {
+					// mov
+					modRm(to, opCode(0x8A), rmByte, registerId(rTo), instr->src());
+				}
+
+				// Clear the remainder of the register, just in case.
+				// and <rTo>, 0xFF
+				modRm(to, opCode(0x81), rmNone, 4, asSize(rTo, Size::sInt));
+				to->putInt(0xFF);
+				break;
+			case 4:
+				// Easy, always a mov instruction. The upper 32 bits of a register is cleared when
+				// accessing them as a 32-bit register. Therefore, it is acceptable to generate a
+				// 'mov x, x' instruction to do this.
+				modRm(to, opCode(0x8B), rmNone, registerId(rTo), instr->src());
+				break;
+			case 8:
+				// This will rarely happen, but let's generate a regular mov instruction anyway.
+				modRm(to, opCode(0x8B), rmNone, registerId(rTo), instr->src());
+				break;
+			default:
+				assert(false, L"Unsupported operand sizes for ucast.");
+				break;
+			}
+		}
+
+		void icastOut(Output *to, Instr *instr) {
+			nat sFrom = instr->src().size().size64();
+			nat sTo = instr->dest().size().size64();
+			Reg rTo = instr->dest().reg();
+
+			if (sFrom >= sTo) {
+				// We can utilize the fact that narrowing works the same way for both signed and
+				// unsigned integers.
+				ucastOut(to, instr);
+				return;
+			}
+
+			if (sTo == 4 && sFrom == 1) {
+				// movsx
+				modRm(to, opCode(0x0F, 0xBE), rmByte, registerId(rTo), instr->src());
+			} else if (sTo == 8 && sFrom == 1) {
+				// movsx
+				modRm(to, opCode(0x0F, 0xBE), rmWide | rmByte, registerId(rTo), instr->src());
+			} else if (sTo == 8 && sFrom == 4) {
+				// movsx
+				modRm(to, opCode(0x0F, 0xBF), rmWide, registerId(rTo), instr->src());
+			} else {
+				assert(false, L"Unsupported operand sizes for icast.");
+			}
 		}
 
 		void datOut(Output *to, Instr *instr) {
@@ -326,10 +455,16 @@ namespace code {
 			OUTPUT(sbb),
 			OUTPUT(bxor),
 			OUTPUT(cmp),
+			OUTPUT(shl),
+			OUTPUT(shr),
+			OUTPUT(sar),
 			OUTPUT(lea),
 			OUTPUT(jmp),
 			OUTPUT(call),
 			OUTPUT(ret),
+			OUTPUT(setCond),
+			OUTPUT(icast),
+			OUTPUT(ucast),
 
 			OUTPUT(dat),
 		};

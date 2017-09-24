@@ -4,7 +4,7 @@
 
 using namespace code;
 
-BEGIN_TEST_(Add64, Code) {
+BEGIN_TEST(Add64, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
