@@ -4,7 +4,7 @@
 
 using namespace code;
 
-BEGIN_TEST(DivITest, Code) {
+BEGIN_TEST_(DivITest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -31,7 +31,7 @@ BEGIN_TEST(DivITest, Code) {
 
 } END_TEST
 
-BEGIN_TEST(DivI2Test, Code) {
+BEGIN_TEST_(DivI2Test, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -59,7 +59,7 @@ BEGIN_TEST(DivI2Test, Code) {
 
 } END_TEST
 
-BEGIN_TEST(DivUTest, Code) {
+BEGIN_TEST_(DivUTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -84,7 +84,7 @@ BEGIN_TEST(DivUTest, Code) {
 
 } END_TEST
 
-BEGIN_TEST(ModITest, Code) {
+BEGIN_TEST_(ModITest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -111,7 +111,7 @@ BEGIN_TEST(ModITest, Code) {
 
 } END_TEST
 
-BEGIN_TEST(ModUTest, Code) {
+BEGIN_TEST_(ModUTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -136,7 +136,7 @@ BEGIN_TEST(ModUTest, Code) {
 
 } END_TEST
 
-BEGIN_TEST(DivIConstTest, Code) {
+BEGIN_TEST_(DivIConstTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -160,7 +160,7 @@ BEGIN_TEST(DivIConstTest, Code) {
 
 } END_TEST
 
-BEGIN_TEST(ModIConstTest, Code) {
+BEGIN_TEST_(ModIConstTest, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 

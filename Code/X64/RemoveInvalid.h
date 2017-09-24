@@ -56,7 +56,8 @@ namespace code {
 			void immRegTfm(Listing *dest, Instr *instr, Nat line);
 
 			// Generic transform for instructions requiring their dest operand to be a register.
-			void destRegTfm(Listing *dest, Instr *instr, Nat line);
+			void destRegWTfm(Listing *dest, Instr *instr, Nat line);
+			void destRegRwTfm(Listing *dest, Instr *instr, Nat line);
 
 			// Function calls.
 			void fnParamTfm(Listing *dest, Instr *instr, Nat line);
@@ -68,6 +69,10 @@ namespace code {
 			void shlTfm(Listing *dest, Instr *instr, Nat line);
 			void shrTfm(Listing *dest, Instr *instr, Nat line);
 			void sarTfm(Listing *dest, Instr *instr, Nat line);
+			void idivTfm(Listing *dest, Instr *instr, Nat line);
+			void imodTfm(Listing *dest, Instr *instr, Nat line);
+			void udivTfm(Listing *dest, Instr *instr, Nat line);
+			void umodTfm(Listing *dest, Instr *instr, Nat line);
 		};
 
 	}

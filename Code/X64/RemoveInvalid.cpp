@@ -9,7 +9,8 @@ namespace code {
 
 #define TRANSFORM(x) { op::x, &RemoveInvalid::x ## Tfm }
 #define IMM_REG(x) { op::x, &RemoveInvalid::immRegTfm }
-#define DEST_REG(x) { op::x, &RemoveInvalid::destRegTfm }
+#define DEST_W_REG(x) { op::x, &RemoveInvalid::destRegWTfm }
+#define DEST_RW_REG(x) { op::x, &RemoveInvalid::destRegRwTfm }
 
 		const OpEntry<RemoveInvalid::TransformFn> RemoveInvalid::transformMap[] = {
 			IMM_REG(mov),
@@ -22,9 +23,10 @@ namespace code {
 			IMM_REG(bxor),
 			IMM_REG(cmp),
 
-			DEST_REG(lea),
-			DEST_REG(icast),
-			DEST_REG(ucast),
+			DEST_W_REG(lea),
+			DEST_W_REG(icast),
+			DEST_W_REG(ucast),
+			DEST_RW_REG(mul),
 
 			TRANSFORM(fnCall),
 			TRANSFORM(fnParam),
@@ -153,7 +155,7 @@ namespace code {
 			*dest << instr->alterSrc(reg);
 		}
 
-		void RemoveInvalid::destRegTfm(Listing *dest, Instr *instr, Nat line) {
+		void RemoveInvalid::destRegWTfm(Listing *dest, Instr *instr, Nat line) {
 			if (instr->dest().type() == opRegister) {
 				*dest << instr;
 				return;
@@ -161,6 +163,19 @@ namespace code {
 
 			Reg reg = unusedReg(used->at(line));
 			reg = asSize(reg, instr->dest().size());
+			*dest << instr->alterDest(reg);
+			*dest << mov(instr->dest(), reg);
+		}
+
+		void RemoveInvalid::destRegRwTfm(Listing *dest, Instr *instr, Nat line) {
+			if (instr->dest().type() == opRegister) {
+				*dest << instr;
+				return;
+			}
+
+			Reg reg = unusedReg(used->at(line));
+			reg = asSize(reg, instr->dest().size());
+			*dest << mov(reg, instr->dest());
 			*dest << instr->alterDest(reg);
 			*dest << mov(instr->dest(), reg);
 		}
@@ -220,6 +235,22 @@ namespace code {
 
 		void RemoveInvalid::sarTfm(Listing *dest, Instr *instr, Nat line) {
 			shlTfm(dest, instr, line);
+		}
+
+		void RemoveInvalid::idivTfm(Listing *dest, Instr *instr, Nat line) {
+			TODO(L"Implement me!");
+		}
+
+		void RemoveInvalid::udivTfm(Listing *dest, Instr *instr, Nat line) {
+			idivTfm(dest, instr, line);
+		}
+
+		void RemoveInvalid::imodTfm(Listing *dest, Instr *instr, Nat line) {
+			TODO(L"Implement me!");
+		}
+
+		void RemoveInvalid::umodTfm(Listing *dest, Instr *instr, Nat line) {
+			imodTfm(dest, instr, line);
 		}
 
 	}

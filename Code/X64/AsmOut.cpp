@@ -272,6 +272,34 @@ namespace code {
 			}
 		}
 
+		void mulOut(Output *to, Instr *instr) {
+			assert(instr->size() != Size::sByte);
+			assert(instr->dest().type() == opRegister);
+			const Operand &src = instr->src();
+			Reg dest = instr->dest().reg();
+
+			switch (src.type()) {
+			case opConstant:
+				if (singleByte(src.constant())) {
+					modRm(to, opCode(0x6B), wide(src), registerId(dest), instr->dest());
+					to->putByte(src.constant() & 0xFF);
+				} else {
+					modRm(to, opCode(0x69), wide(src), registerId(dest), instr->dest());
+					to->putInt(Nat(src.constant()));
+				}
+				break;
+			case opLabel:
+			case opReference:
+			case opObjReference:
+				assert(false, L"Multiplying an absolute address does not make sense.");
+				break;
+			default:
+				// Register or in memory. Handled by the modRm variant.
+				modRm(to, opCode(0x0F, 0xAF), wide(src), registerId(dest), src);
+				break;
+			}
+		}
+
 		static void jmpCall(Output *to, bool call, const Operand &src) {
 			switch (src.type()) {
 			case opConstant:
@@ -459,6 +487,7 @@ namespace code {
 			OUTPUT(shr),
 			OUTPUT(sar),
 			OUTPUT(lea),
+			OUTPUT(mul),
 			OUTPUT(jmp),
 			OUTPUT(call),
 			OUTPUT(ret),

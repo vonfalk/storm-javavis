@@ -403,6 +403,7 @@ namespace code {
 		}
 
 		void mulOut(Output *to, Instr *instr) {
+			assert(instr->size() != Size::sByte);
 			assert(instr->dest().type() == opRegister);
 			const Operand &src = instr->src();
 			Reg reg = instr->dest().reg();
