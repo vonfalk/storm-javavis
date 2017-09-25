@@ -243,10 +243,9 @@ namespace code {
 		}
 
 		void RemoveInvalid::idivTfm(Listing *dest, Instr *instr, Nat line) {
-			assert(instr->size() != Size::sByte); // Not properly implemented yet.
-
 			RegSet *used = new (this) RegSet(*this->used->at(line));
 			const Operand &op = instr->dest();
+			bool small = op.size() == Size::sByte;
 
 			// If 'src' is a constant, we need to move it into a register.
 			if (instr->src().type() == opConstant) {
@@ -255,9 +254,9 @@ namespace code {
 				instr = instr->alterSrc(r);
 			}
 
-			// Make sure ptrD can be trashed.
+			// Make sure ptrD can be trashed (not needed if we're working with bytes).
 			Reg oldD = noReg;
-			if (used->has(ptrD)) {
+			if (!small && used->has(ptrD)) {
 				oldD = asSize(unusedReg(used), Size::sPtr);
 				*dest << mov(oldD, ptrD);
 				used->put(oldD);
@@ -299,10 +298,9 @@ namespace code {
 		}
 
 		void RemoveInvalid::imodTfm(Listing *dest, Instr *instr, Nat line) {
-			assert(instr->size() != Size::sByte); // Not properly implemented yet.
-
 			RegSet *used = new (this) RegSet(*this->used->at(line));
 			const Operand &op = instr->dest();
+			bool small = op.size() == Size::sByte;
 
 			// If 'src' is a constant, we need to move it into a register.
 			if (instr->src().type() == opConstant) {
@@ -311,9 +309,9 @@ namespace code {
 				instr = instr->alterSrc(r);
 			}
 
-			// Make sure ptrD can be trashed.
+			// Make sure ptrD can be trashed (unless we're working with 8 bit numbers).
 			Reg oldD = noReg;
-			if (used->has(ptrD)) {
+			if (!small && used->has(ptrD)) {
 				oldD = asSize(unusedReg(used), Size::sPtr);
 				*dest << mov(oldD, ptrD);
 				used->put(oldD);
@@ -338,6 +336,12 @@ namespace code {
 			}
 
 			Reg destD = asSize(ptrD, op.size());
+			if (small) {
+				// We need to shift the register a bit (we are not able to access AH in this implementation).
+				*dest << shr(eax, byteConst(8));
+				destD = al;
+			}
+
 			if (op.type() != opRegister || op.reg() != destD)
 				*dest << mov(op, destD);
 

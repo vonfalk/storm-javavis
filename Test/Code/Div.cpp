@@ -4,7 +4,7 @@
 
 using namespace code;
 
-BEGIN_TEST_(DivITest, Code) {
+BEGIN_TEST(DivI, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -31,7 +31,7 @@ BEGIN_TEST_(DivITest, Code) {
 
 } END_TEST
 
-BEGIN_TEST_(DivI2Test, Code) {
+BEGIN_TEST(DivI2, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -59,7 +59,7 @@ BEGIN_TEST_(DivI2Test, Code) {
 
 } END_TEST
 
-BEGIN_TEST_(DivUTest, Code) {
+BEGIN_TEST(DivU, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -84,7 +84,7 @@ BEGIN_TEST_(DivUTest, Code) {
 
 } END_TEST
 
-BEGIN_TEST_(ModITest, Code) {
+BEGIN_TEST(ModI, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -111,7 +111,7 @@ BEGIN_TEST_(ModITest, Code) {
 
 } END_TEST
 
-BEGIN_TEST_(ModUTest, Code) {
+BEGIN_TEST(ModU, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -136,7 +136,7 @@ BEGIN_TEST_(ModUTest, Code) {
 
 } END_TEST
 
-BEGIN_TEST_(DivIConstTest, Code) {
+BEGIN_TEST(DivIConst, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -160,7 +160,7 @@ BEGIN_TEST_(DivIConstTest, Code) {
 
 } END_TEST
 
-BEGIN_TEST_(ModIConstTest, Code) {
+BEGIN_TEST(ModIConst, Code) {
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
 
@@ -181,5 +181,55 @@ BEGIN_TEST_(ModIConstTest, Code) {
 
 	CHECK_EQ((*fn)(18), 8);
 	CHECK_EQ((*fn)(-18), -8);
+
+} END_TEST
+
+
+BEGIN_TEST(DivByte, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+	Var p1 = l->createByteParam();
+	Var p2 = l->createByteParam();
+
+	*l << prolog();
+
+	*l << udiv(p1, p2);
+	*l << mov(al, p1);
+
+	*l << epilog();
+	*l << ret(ValType(Size::sByte, false));
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Byte (*Fn)(Byte, Byte);
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(8, 2), 4);
+	CHECK_EQ((*fn)(0x80, 2), 0x40);
+
+} END_TEST
+
+BEGIN_TEST(ModByte, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+	Var p1 = l->createByteParam();
+	Var p2 = l->createByteParam();
+
+	*l << prolog();
+
+	*l << umod(p1, p2);
+	*l << mov(al, p1);
+
+	*l << epilog();
+	*l << ret(ValType(Size::sByte, false));
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Byte (*Fn)(Byte, Byte);
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(18, 10), 8);
 
 } END_TEST

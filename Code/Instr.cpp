@@ -290,19 +290,19 @@ namespace code {
 
 	Instr *shl(EnginePtr e, Operand dest, Operand src) {
 		if (src.size() != Size::sByte)
-			throw InvalidValue(L"Size must be 1");
+			throw InvalidValue(L"Size for shl must be 1");
 		return instrLoose(e, op::shl, dest, src);
 	}
 
 	Instr *shr(EnginePtr e, Operand dest, Operand src) {
 		if (src.size() != Size::sByte)
-			throw InvalidValue(L"Size must be 1");
+			throw InvalidValue(L"Size for shr must be 1");
 		return instrLoose(e, op::shr, dest, src);
 	}
 
 	Instr *sar(EnginePtr e, Operand dest, Operand src) {
 		if (src.size() != Size::sByte)
-			throw InvalidValue(L"Size must be 1");
+			throw InvalidValue(L"Size for sar must be 1");
 		return instrLoose(e, op::sar, dest, src);
 	}
 

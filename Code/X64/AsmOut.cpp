@@ -273,10 +273,15 @@ namespace code {
 		}
 
 		void mulOut(Output *to, Instr *instr) {
-			assert(instr->size() != Size::sByte);
 			assert(instr->dest().type() == opRegister);
 			const Operand &src = instr->src();
 			Reg dest = instr->dest().reg();
+
+			// Note: We're actually doing 32-bit multiplication even if we are only supposed to do
+			// 8-bit multiplication. There is only one 8-bit multiplication which is difficult to
+			// use. That is fine since any 'noise' in the registers will be lost in the
+			// multiplication anyway. The only downside is when operands are in memory, which means
+			// we might casue a pagefault.
 
 			switch (src.type()) {
 			case opConstant:
