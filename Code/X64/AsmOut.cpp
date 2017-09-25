@@ -300,6 +300,45 @@ namespace code {
 			}
 		}
 
+		void idivOut(Output *to, Instr *instr) {
+			assert(instr->dest().type() == opRegister);
+			assert(same(instr->dest().reg(), ptrA));
+
+			if (instr->size() == Size::sByte) {
+				modRm(to, opCode(0xF6), rmByte, 7, instr->src());
+			} else if (instr->size() == Size::sInt) {
+				// Sign-extend eax into eax, edx
+				to->putByte(0x99);
+				modRm(to, opCode(0xF7), rmNone, 7, instr->src());
+			} else {
+				// Sign extend rax into rax, rdx
+				to->putByte(0x48); to->putByte(0x99);
+				modRm(to, opCode(0xF7), rmWide, 7, instr->src());
+			}
+		}
+
+		void udivOut(Output *to, Instr *instr) {
+			assert(instr->dest().type() == opRegister);
+			assert(same(instr->dest().reg(), ptrA));
+
+			if (instr->size() == Size::sByte) {
+				modRm(to, opCode(0xF6), rmByte, 6, instr->src());
+			} else {
+				RmFlags f = wide(instr->src());
+				// Clear edx using xor edx, edx (or rdx, rdx if 64-bit)
+				modRm(to, opCode(0x31), f, registerId(edx), edx);
+				modRm(to, opCode(0xF7), f, 6, instr->src());
+			}
+		}
+
+		void imodOut(Output *to, Instr *instr) {
+			idivOut(to, instr);
+		}
+
+		void umodOut(Output *to, Instr *instr) {
+			udivOut(to, instr);
+		}
+
 		static void jmpCall(Output *to, bool call, const Operand &src) {
 			switch (src.type()) {
 			case opConstant:
@@ -488,6 +527,10 @@ namespace code {
 			OUTPUT(sar),
 			OUTPUT(lea),
 			OUTPUT(mul),
+			OUTPUT(idiv),
+			OUTPUT(udiv),
+			OUTPUT(imod),
+			OUTPUT(umod),
 			OUTPUT(jmp),
 			OUTPUT(call),
 			OUTPUT(ret),

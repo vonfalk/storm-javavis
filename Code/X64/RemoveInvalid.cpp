@@ -32,6 +32,11 @@ namespace code {
 			TRANSFORM(fnParam),
 			TRANSFORM(fnParamRef),
 			TRANSFORM(fnRet),
+
+			TRANSFORM(idiv),
+			TRANSFORM(udiv),
+			TRANSFORM(imod),
+			TRANSFORM(umod),
 		};
 
 		RemoveInvalid::RemoveInvalid() {}
@@ -238,7 +243,55 @@ namespace code {
 		}
 
 		void RemoveInvalid::idivTfm(Listing *dest, Instr *instr, Nat line) {
-			TODO(L"Implement me!");
+			assert(instr->size() != Size::sByte); // Not properly implemented yet.
+
+			RegSet *used = new (this) RegSet(*this->used->at(line));
+			const Operand &op = instr->dest();
+
+			// If 'src' is a constant, we need to move it into a register.
+			if (instr->src().type() == opConstant) {
+				Reg r = asSize(unusedReg(used), instr->src().size());
+				*dest << mov(r, instr->src());
+				instr = instr->alterSrc(r);
+			}
+
+			// Make sure ptrD can be trashed.
+			Reg oldD = noReg;
+			if (used->has(ptrD)) {
+				oldD = asSize(unusedReg(used), Size::sPtr);
+				*dest << mov(oldD, ptrD);
+				used->put(oldD);
+			}
+
+			if (op.type() == opRegister && same(op.reg(), ptrA)) {
+				// Supported!
+				*dest << instr;
+			} else {
+				// We need to put op into 'ptrA'.
+				Reg oldA = noReg;
+				if (used->has(ptrA)) {
+					oldA = asSize(unusedReg(used), Size::sPtr);
+					*dest << mov(oldA, ptrA);
+					used->put(oldA);
+				}
+
+				Reg destA = asSize(ptrA, op.size());
+				*dest << mov(destA, op);
+				if (instr->src().type() == opRegister && same(instr->src().reg(), ptrA)) {
+					*dest << instr->alter(destA, asSize(oldA, instr->src().size()));
+				} else {
+					*dest << instr->alterDest(destA);
+				}
+				*dest << mov(op, destA);
+
+				if (oldA != noReg) {
+					*dest << mov(ptrA, oldA);
+				}
+			}
+
+			if (oldD != noReg) {
+				*dest << mov(ptrD, oldD);
+			}
 		}
 
 		void RemoveInvalid::udivTfm(Listing *dest, Instr *instr, Nat line) {
@@ -246,7 +299,55 @@ namespace code {
 		}
 
 		void RemoveInvalid::imodTfm(Listing *dest, Instr *instr, Nat line) {
-			TODO(L"Implement me!");
+			assert(instr->size() != Size::sByte); // Not properly implemented yet.
+
+			RegSet *used = new (this) RegSet(*this->used->at(line));
+			const Operand &op = instr->dest();
+
+			// If 'src' is a constant, we need to move it into a register.
+			if (instr->src().type() == opConstant) {
+				Reg r = asSize(unusedReg(used), instr->src().size());
+				*dest << mov(r, instr->src());
+				instr = instr->alterSrc(r);
+			}
+
+			// Make sure ptrD can be trashed.
+			Reg oldD = noReg;
+			if (used->has(ptrD)) {
+				oldD = asSize(unusedReg(used), Size::sPtr);
+				*dest << mov(oldD, ptrD);
+				used->put(oldD);
+			}
+
+			// We need to put op into 'ptrA'.
+			Reg oldA = noReg;
+			if (used->has(ptrA)) {
+				oldA = asSize(unusedReg(used), Size::sPtr);
+				*dest << mov(oldA, ptrA);
+				used->put(oldA);
+			}
+
+			Reg destA = asSize(ptrA, op.size());
+			if (op.type() != opRegister || op.reg() != destA)
+				*dest << mov(destA, op);
+
+			if (instr->src().type() == opRegister && same(instr->src().reg(), ptrA)) {
+				*dest << instr->alter(destA, asSize(oldA, instr->src().size()));
+			} else {
+				*dest << instr->alterDest(destA);
+			}
+
+			Reg destD = asSize(ptrD, op.size());
+			if (op.type() != opRegister || op.reg() != destD)
+				*dest << mov(op, destD);
+
+			// Restore registers.
+			if (oldA != noReg) {
+				*dest << mov(ptrA, oldA);
+			}
+			if (oldD != noReg) {
+				*dest << mov(ptrD, oldD);
+			}
 		}
 
 		void RemoveInvalid::umodTfm(Listing *dest, Instr *instr, Nat line) {
