@@ -1,5 +1,6 @@
 #pragma once
 #include "Size.h"
+#include "Reference.h"
 #include "Core/Array.h"
 #include "Core/GcArray.h"
 #include "Core/Object.h"
@@ -119,11 +120,11 @@ namespace code {
 	class ComplexDesc : public TypeDesc {
 		STORM_CLASS;
 	public:
-		ComplexDesc(Size size, const void *ctor, const void *dtor);
+		ComplexDesc(Size size, Ref ctor, Ref dtor);
 
 		Size s;
-		UNKNOWN(PTR_GC) const void *ctor;
-		UNKNOWN(PTR_GC) const void *dtor;
+		Ref ctor;
+		Ref dtor;
 
 		virtual Size STORM_FN size() const { return s; }
 		void STORM_FN toS(StrBuf *to) const;
@@ -147,5 +148,15 @@ namespace code {
 		virtual Size STORM_FN size() const { return s; }
 		void STORM_FN toS(StrBuf *to) const;
 	};
+
+
+	/**
+	 * Helpers for creating TypeDesc objects.
+	 */
+	TypeDesc *STORM_FN byteDesc(EnginePtr e);
+	TypeDesc *STORM_FN intDesc(EnginePtr e);
+	TypeDesc *STORM_FN ptrDesc(EnginePtr e);
+	TypeDesc *STORM_FN longDesc(EnginePtr e);
+	TypeDesc *STORM_FN floatDesc(EnginePtr e);
 
 }

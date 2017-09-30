@@ -4,16 +4,37 @@
 
 using namespace code;
 
+// If this is static, it seems the compiler optimizes it away, which breaks stuff.
+Int CODECALL callIntFn(Int v) {
+	return v + 2;
+}
+
+BEGIN_TEST_(SimpleCall, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Ref intFn = arena->external(S("intFn"), address(&callIntFn));
+
+	Listing *l = new (e) Listing();
+	*l << prolog();
+
+	*l << fnParam(intDesc(e), intConst(100));
+	*l << fnCall(intFn, intDesc(e), eax);
+
+	*l << fnRet(intDesc(e), eax);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Int (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 102);
+} END_TEST
+
 static Int copied = 0;
 
 void CODECALL callCopyInt(Int *dest, Int *src) {
 	*dest = *src;
 	copied = *src;
-}
-
-// If this is static, it seems the compiler optimizes it away, which breaks stuff.
-Int CODECALL callIntFn(Int v) {
-	return v + 2;
 }
 
 BEGIN_TEST(CallCopyTest, Code) {

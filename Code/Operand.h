@@ -115,6 +115,7 @@ namespace code {
 
 		// Make this operand a reference to some value of a specific size. Only works if this
 		// operand is already pointer-sized.
+		// TODO: Remove this!
 		Operand STORM_FN referTo(Size size) const;
 
 		// Get the size of the value we're referring to (if any), or Size() if we're not referring to anything.

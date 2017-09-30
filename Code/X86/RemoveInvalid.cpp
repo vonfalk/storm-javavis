@@ -34,10 +34,6 @@ namespace code {
 			TRANSFORM(icast),
 			TRANSFORM(ucast),
 
-			TRANSFORM(callFloat),
-			TRANSFORM(retFloat),
-			TRANSFORM(fnCallFloat),
-
 			TRANSFORM(fnParam),
 			TRANSFORM(fnParamRef),
 			TRANSFORM(fnCall),
@@ -521,11 +517,11 @@ namespace code {
 			*dest << call(instr->src(), ValType(rSize, false));
 
 			// If this was a float, do some magic.
-			if (instr->op() == op::fnCallFloat) {
-				*dest << sub(ptrStack, ptrConst(instr->dest().size()));
-				*dest << fstp(xRel(rSize, ptrStack, Offset()));
-				*dest << pop(instr->dest());
-			}
+			// if (instr->op() == op::fnCallFloat) {
+			// 	*dest << sub(ptrStack, ptrConst(instr->dest().size()));
+			// 	*dest << fstp(xRel(rSize, ptrStack, Offset()));
+			// 	*dest << pop(instr->dest());
+			// }
 
 			// Pop the stack.
 			if (paramOffset != Offset())

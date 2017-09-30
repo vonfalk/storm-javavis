@@ -24,7 +24,9 @@ namespace code {
 			fnParam,
 			fnParamRef,
 			fnCall,
+			fnCallRef,
 			fnRet,
+			fnRetRef,
 			STORM_NAME(bor, or),
 			STORM_NAME(band, and),
 			STORM_NAME(bxor, xor),
@@ -57,9 +59,6 @@ namespace code {
 			fdivp,
 			fcompp,
 			fwait,
-			callFloat,
-			retFloat,
-			fnCallFloat,
 
 			// Data
 			dat,

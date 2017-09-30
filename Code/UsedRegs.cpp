@@ -35,9 +35,8 @@ namespace code {
 			// These do not preserve any registers.
 			used->clear();
 			break;
-		case op::callFloat:
-		case op::fnCallFloat:
 		case op::fnCall:
+		case op::fnCallRef:
 		case op::call:
 			// Not all registers preserved.
 			if (arena)

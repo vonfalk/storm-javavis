@@ -57,10 +57,10 @@ namespace code {
 		*to << v;
 	}
 
-	ComplexDesc::ComplexDesc(Size size, const void *ctor, const void *dtor) : s(size), ctor(ctor), dtor(dtor) {}
+	ComplexDesc::ComplexDesc(Size size, Ref ctor, Ref dtor) : s(size), ctor(ctor), dtor(dtor) {}
 
 	void ComplexDesc::toS(StrBuf *to) const {
-		*to << S("complex:") << s;
+		*to << S("complex:") << s << S(" ctor:") << ctor << S(" dtor:") << dtor;
 	}
 
 	static const GcType primitiveArray = {
@@ -87,6 +87,26 @@ namespace code {
 		for (Nat i = 0; i < v->count; i++) {
 			*to << S("\n") << v->v[i];
 		}
+	}
+
+	TypeDesc *byteDesc(EnginePtr e) {
+		return new (e.v) PrimitiveDesc(bytePrimitive());
+	}
+
+	TypeDesc *intDesc(EnginePtr e) {
+		return new (e.v) PrimitiveDesc(intPrimitive());
+	}
+
+	TypeDesc *ptrDesc(EnginePtr e) {
+		return new (e.v) PrimitiveDesc(ptrPrimitive());
+	}
+
+	TypeDesc *longDesc(EnginePtr e) {
+		return new (e.v) PrimitiveDesc(longPrimitive());
+	}
+
+	TypeDesc *floatDesc(EnginePtr e) {
+		return new (e.v) PrimitiveDesc(floatPrimitive());
 	}
 
 }

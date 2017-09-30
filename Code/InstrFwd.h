@@ -75,11 +75,11 @@ namespace code {
 #define PROXY0(op)												\
 	inline InstrProxy0<&op> op() { return InstrProxy0<&op>(); }
 #define PROXY1(op, T)													\
-	inline InstrProxy1<T, &op> op(const T &t) { return InstrProxy1<T, &op>(t); }
+	inline InstrProxy1<T, &op> op(T const &t) { return InstrProxy1<T, &op>(t); }
 #define PROXY2(op, T, U)												\
-	inline InstrProxy2<T, U, &op> op(const T &t, const U &u) { return InstrProxy2<T, U, &op>(t, u); }
+	inline InstrProxy2<T, U, &op> op(T const &t, U const &u) { return InstrProxy2<T, U, &op>(t, u); }
 #define PROXY3(op, T, U, V)												\
-	inline InstrProxy3<T, U, V, &op> op(const T &t, const U &u, const V &v) { return InstrProxy3<T, U, V, &op>(t, u, v); }
+	inline InstrProxy3<T, U, V, &op> op(T const &t, U const &u, V const &v) { return InstrProxy3<T, U, V, &op>(t, u, v); }
 
 
 	// Repetition of all OP-codes.
@@ -94,12 +94,12 @@ namespace code {
 	PROXY1(ret, ValType);
 	PROXY2(lea, Operand, Operand);
 	PROXY2(setCond, Operand, CondFlag);
-	PROXY1(fnParam, Operand);
-	PROXY2(fnParam, Var, Operand);
-	PROXY2(fnParamRef, Operand, Size);
-	PROXY3(fnParamRef, Operand, Size, Operand);
-	PROXY2(fnCall, Operand, ValType);
-	PROXY1(fnRet, Operand);
+	PROXY2(fnParam, TypeDesc *, Operand);
+	PROXY2(fnParamRef, TypeDesc *, Operand);
+	PROXY3(fnCall, Operand, TypeDesc *, Operand);
+	PROXY3(fnCallRef, Operand, TypeDesc *, Operand);
+	PROXY2(fnRet, TypeDesc *, Operand);
+	PROXY2(fnRetRef, TypeDesc *, Operand);
 	PROXY2(bor, Operand, Operand);
 	PROXY2(band, Operand, Operand);
 	PROXY2(bxor, Operand, Operand);
@@ -135,4 +135,11 @@ namespace code {
 	PROXY1(begin, Part);
 	PROXY1(end, Part);
 	PROXY0(threadLocal);
+
+	// Old things. TODO: Remove!
+	PROXY1(fnParam, Operand);
+	PROXY2(fnParam, Var, Operand);
+	PROXY2(fnParamRef, Operand, Size);
+	PROXY3(fnParamRef, Operand, Size, Operand);
+	PROXY2(fnCall, Operand, ValType);
 }

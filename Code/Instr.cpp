@@ -3,6 +3,7 @@
 #include "Exception.h"
 #include "Reg.h"
 #include "Core/StrBuf.h"
+#include "Core/CloneEnv.h"
 
 namespace code {
 
@@ -105,6 +106,35 @@ namespace code {
 	}
 
 	/**
+	 * Additional information, used with function calls.
+	 */
+
+	TypeInstr::TypeInstr(op::Code opCode, const Operand &dest, const Operand &src, TypeDesc *type)
+		: Instr(opCode, dest, src), type(type) {}
+
+	void TypeInstr::deepCopy(CloneEnv *env) {
+		Instr::deepCopy(env);
+		cloned(type, env);
+	}
+
+	void TypeInstr::toS(StrBuf *to) const {
+		Instr::toS(to);
+		*to << S(" - ") << type;
+	}
+
+	Instr *TypeInstr::alter(Operand dest, Operand src) {
+		return new (this) TypeInstr(iOp, dest, src, type);
+	}
+
+	Instr *TypeInstr::alterSrc(Operand src) {
+		return new (this) TypeInstr(iOp, iDest, src, type);
+	}
+
+	Instr *TypeInstr::alterDest(Operand dest) {
+		return new (this) TypeInstr(iOp, dest, iSrc, type);
+	}
+
+	/**
 	 * Instructions.
 	 */
 
@@ -177,59 +207,57 @@ namespace code {
 		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(to));
 
-		op::Code op = ret.isFloat ? op::callFloat : op::call;
-		return instrLoose(e, op, sizedReg(ptrA, ret.size), to);
+		return instrLoose(e, op::call, sizedReg(ptrA, ret.size), to);
 	}
 
 	Instr *ret(EnginePtr e, ValType ret) {
 		Operand r = sizedReg(ptrA, ret.size);
-		op::Code op = ret.isFloat ? op::retFloat : op::ret;
 		if (r.type() == opNone)
-			return instr(e, op);
+			return instr(e, op::ret);
 		else
-			return instrSrc(e, op, r);
+			return instrSrc(e, op::ret, r);
 	}
 
-	Instr *fnParam(EnginePtr e, Operand src) {
-		return instrSrc(e, op::fnParam, src);
+	Instr *fnParam(EnginePtr e, TypeDesc *type, Operand src) {
+		if (src.size() != type->size())
+			throw InvalidValue(L"Size mismatch for 'fnParam'. Got " + ::toS(src.size()) + L", expected " + ::toS(type->size()));
+		return new (e.v) TypeInstr(op::fnParam, Operand(), src, type);
 	}
 
-	Instr *fnParam(EnginePtr e, Var src, Operand copyFn) {
-		if (copyFn.type() != opNone) {
-			if (copyFn.type() == opConstant)
-				throw InvalidValue(L"Should not call constant values, use references instead!");
-			if (copyFn.size() != Size::sPtr)
-				throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(copyFn));
-		}
-		return instrLoose(e, op::fnParam, copyFn, src);
-	}
-
-	Instr *fnParamRef(EnginePtr e, Operand src, Size size) {
-		return instrSrc(e, op::fnParamRef, src.referTo(size));
-	}
-
-	Instr *fnParamRef(EnginePtr e, Operand src, Size size, Operand copyFn) {
-		if (copyFn.type() != opNone) {
-			if (copyFn.type() == opConstant)
-				throw InvalidValue(L"Should not call constant values, use references instead!");
-			if (copyFn.size() != Size::sPtr)
-				throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(copyFn));
-		}
-		return instrLoose(e, op::fnParamRef, copyFn, src.referTo(size));
-	}
-
-	Instr *fnCall(EnginePtr e, Operand src, ValType ret) {
-		if (src.type() == opConstant)
-			throw InvalidValue(L"Should not call constant values, use references instead!");
+	Instr *fnParamRef(EnginePtr e, TypeDesc *type, Operand src) {
 		if (src.size() != Size::sPtr)
-			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(src));
-
-		op::Code op = ret.isFloat ? op::fnCallFloat : op::fnCall;
-		return instrLoose(e, op, sizedReg(ptrA, ret.size), src);
+			throw InvalidValue(L"Must use a pointer with 'fnParamRef'. Used " + ::toS(src));
+		return new (e.v) TypeInstr(op::fnParamRef, Operand(), src, type);
 	}
 
-	Instr *fnRet(EnginePtr e, Operand src) {
-		return instrSrc(e, op::fnRet, src);
+	Instr *fnCall(EnginePtr e, Operand call, TypeDesc *result, Operand to) {
+		if (call.type() == opConstant)
+			throw InvalidValue(L"Should not call constant values, use references instead!");
+		if (call.size() != Size::sPtr)
+			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(call));
+		return new (e.v) TypeInstr(op::fnCall, call, to, result);
+	}
+
+	Instr *fnCallRef(EnginePtr e, Operand call, TypeDesc *result, Operand to) {
+		if (call.type() == opConstant)
+			throw InvalidValue(L"Should not call constant values, use references instead!");
+		if (call.size() != Size::sPtr)
+			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(call));
+		if (to.size() != Size::sPtr)
+			throw InvalidValue(L"Must use a pointer with 'fnCallRef'. Used " + ::toS(to));
+		return new (e.v) TypeInstr(op::fnCallRef, call, to, result);
+	}
+
+	Instr *fnRet(EnginePtr e, TypeDesc *type, Operand src) {
+		if (src.size() != type->size())
+			throw InvalidValue(L"Size mismatch for 'fnRet'. Got " + ::toS(src.size()) + L", expected " + ::toS(type->size()));
+		return new (e.v) TypeInstr(op::fnRet, Operand(), src, type);
+	}
+
+	Instr *fnRetRef(EnginePtr e, TypeDesc *type, Operand src) {
+		if (src.size() != Size::sPtr)
+			throw InvalidValue(L"Must use a pointer with 'fnRetRef'. Used " + ::toS(src));
+		return new (e.v) TypeInstr(op::fnRetRef, Operand(), src, type);
 	}
 
 	Instr *bor(EnginePtr e, Operand dest, Operand src) {
@@ -372,12 +400,6 @@ namespace code {
 		return instr(e, op::fwait);
 	}
 
-	Instr *retFloat(EnginePtr e, const Size &s) {
-		Operand r = sizedReg(ptrA, s);
-		return instrSrc(e, op::retFloat, r);
-	}
-
-
 	Instr *dat(EnginePtr e, Operand v) {
 		switch (v.type()) {
 		case opConstant:
@@ -409,6 +431,47 @@ namespace code {
 
 	Instr *threadLocal(EnginePtr e) {
 		return instr(e, op::threadLocal);
+	}
+
+
+	/**
+	 * OLD: Remove.
+	 */
+
+	Instr *fnParam(EnginePtr e, Operand src) {
+		return instrSrc(e, op::fnParam, src);
+	}
+
+	Instr *fnParam(EnginePtr e, Var src, Operand copyFn) {
+		if (copyFn.type() != opNone) {
+			if (copyFn.type() == opConstant)
+				throw InvalidValue(L"Should not call constant values, use references instead!");
+			if (copyFn.size() != Size::sPtr)
+				throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(copyFn));
+		}
+		return instrLoose(e, op::fnParam, copyFn, src);
+	}
+
+	Instr *fnParamRef(EnginePtr e, Operand src, Size size) {
+		return instrSrc(e, op::fnParamRef, src.referTo(size));
+	}
+
+	Instr *fnParamRef(EnginePtr e, Operand src, Size size, Operand copyFn) {
+		if (copyFn.type() != opNone) {
+			if (copyFn.type() == opConstant)
+				throw InvalidValue(L"Should not call constant values, use references instead!");
+			if (copyFn.size() != Size::sPtr)
+				throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(copyFn));
+		}
+		return instrLoose(e, op::fnParamRef, copyFn, src.referTo(size));
+	}
+
+	Instr *fnCall(EnginePtr e, Operand src, ValType ret) {
+		if (src.type() == opConstant)
+			throw InvalidValue(L"Should not call constant values, use references instead!");
+		if (src.size() != Size::sPtr)
+			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(src));
+		return instrLoose(e, op::fnCall, sizedReg(ptrA, ret.size), src);
 	}
 
 }

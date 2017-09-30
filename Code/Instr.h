@@ -3,6 +3,7 @@
 #include "Operand.h"
 #include "CondFlag.h"
 #include "ValType.h"
+#include "TypeDesc.h"
 #include "Core/Object.h"
 #include "Core/EnginePtr.h"
 #include "Utils/Bitmask.h"
@@ -11,7 +12,7 @@ namespace code {
 	STORM_PKG(core.asm);
 
 	/**
-	 * Value representing an entire asm-instruction.
+	 * Class representing an entire asm-instruction.
 	 *
 	 * Note: immutable class.
 	 */
@@ -37,14 +38,14 @@ namespace code {
 		Size STORM_FN size() const;
 
 		// Create another instruction based off this one. Intended to be used by backends -> no sanity checking.
-		Instr *STORM_FN alter(Operand dest, Operand src);
-		Instr *STORM_FN alterSrc(Operand src);
-		Instr *STORM_FN alterDest(Operand dest);
+		virtual Instr *STORM_FN alter(Operand dest, Operand src);
+		virtual Instr *STORM_FN alterSrc(Operand src);
+		virtual Instr *STORM_FN alterDest(Operand dest);
 
 		// To string.
 		virtual void STORM_FN toS(StrBuf *to) const;
 
-	private:
+	protected:
 		// Private constructor, used by 'instrXxx()' functions below.
 		Instr(op::Code opCode, const Operand &dest, const Operand &src);
 
@@ -61,6 +62,34 @@ namespace code {
 		friend Instr *instrDest(EnginePtr e, op::Code op, Operand dest);
 		friend Instr *instrDestSrc(EnginePtr e, op::Code op, Operand dest, Operand src);
 		friend Instr *instrLoose(EnginePtr e, op::Code op, Operand dest, Operand src);
+	};
+
+	/**
+	 * Additional information required for FnCall and FnRet operations. Contains an additional
+	 * 'TypeDesc' describing the value being used in detail.
+	 *
+	 * TODO: If we wanted to, we could probably squeeze the extra pointer inside the Operand in a
+	 * regular Instr somehow. I do not, however, think the effort is worth it.
+	 */
+	class TypeInstr : public Instr {
+		STORM_CLASS;
+	public:
+		// Create.
+		TypeInstr(op::Code opCode, const Operand &dest, const Operand &src, TypeDesc *type);
+
+		// The type of used in this instruction.
+		TypeDesc *type;
+
+		// Alter various parts.
+		virtual Instr *STORM_FN alter(Operand dest, Operand src);
+		virtual Instr *STORM_FN alterSrc(Operand src);
+		virtual Instr *STORM_FN alterDest(Operand dest);
+
+		// Deep copy.
+		virtual void STORM_FN deepCopy(CloneEnv *env);
+
+		// To string.
+		virtual void STORM_FN toS(StrBuf *to) const;
 	};
 
 	// Create an instruction without operands.
@@ -97,18 +126,25 @@ namespace code {
 	// and fnCall will effectively be before the first fnParam. All fnParams will be merged into the fnCall, so do
 	// not place other instructions between. Parameters are entered "right to left". Ie, the above example
 	// calls myFn(10, 20).
-	// fnParam taking two parameters uses the function 'copy' to copy 'src' onto the stack. 'copy' is assumed
-	// to have the signature <ptr or void> copy(void *dest, void *src), like copy ctors in C++.
-	// Having an empty 'copyFn' to 'fnParam' will generate a 'memcpy'-like copy.
+	// The variations ending in 'Ref' assumes that the source (or destination) is a pointer rather than
+	// the target itself.
+	Instr *STORM_FN fnParam(EnginePtr e, TypeDesc *type, Operand src);
+	Instr *STORM_FN fnParamRef(EnginePtr e, TypeDesc *type, Operand src);
+	Instr *STORM_FN fnCall(EnginePtr e, Operand call, TypeDesc *result, Operand to);
+	Instr *STORM_FN fnCallRef(EnginePtr e, Operand call, TypeDesc *result, Operand to);
+
+	// High-level function return. Examines the return type specified in the listing and handles the
+	// return properly according to the current platform. Implies an 'epilog' instruction as well.
+	Instr *STORM_FN fnRet(EnginePtr e, TypeDesc *type, Operand src);
+	Instr *STORM_FN fnRetRef(EnginePtr e, TypeDesc *type, Operand src);
+
+	// Old-style function calls. TODO: Remove!
 	Instr *STORM_FN fnParam(EnginePtr e, Operand src);
 	Instr *STORM_FN fnParam(EnginePtr e, Var src, Operand copyFn);
 	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Size size);
 	Instr *STORM_FN fnParamRef(EnginePtr e, Operand src, Size size, Operand copyFn);
 	Instr *STORM_FN fnCall(EnginePtr e, Operand src, ValType ret);
 
-	// High-level function return. Examines the return type specified in the listing and handles the
-	// return properly according to the current platform.
-	Instr *STORM_FN fnRet(EnginePtr e, Operand src);
 
 	// Integer math (signed/unsigned)
 	Instr *STORM_FN STORM_NAME(bor, or)(EnginePtr e, Operand dest, Operand src);

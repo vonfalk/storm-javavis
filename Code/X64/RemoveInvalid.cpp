@@ -54,7 +54,7 @@ namespace code {
 			switch (i->op()) {
 			case op::call:
 			case op::fnCall:
-			case op::fnCallFloat:
+			case op::fnCallRef:
 			case op::jmp:
 				// Nothing needed. We deal with these later on in the chain.
 				break;
