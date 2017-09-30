@@ -63,7 +63,7 @@ namespace code {
 			void fnParamTfm(Listing *dest, Instr *instr, Nat line);
 			void fnParamRefTfm(Listing *dest, Instr *instr, Nat line);
 			void fnCallTfm(Listing *dest, Instr *instr, Nat line);
-			void fnRetTfm(Listing *dest, Instr *instr, Nat line);
+			void fnCallRefTfm(Listing *dest, Instr *instr, Nat line);
 
 			// Other transforms.
 			void shlTfm(Listing *dest, Instr *instr, Nat line);

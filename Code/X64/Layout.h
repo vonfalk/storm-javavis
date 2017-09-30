@@ -56,6 +56,9 @@ namespace code {
 			// Compute the offset of the part id (when using exceptions).
 			Offset partId();
 
+			// Offset of the result parameter (if any).
+			Offset resultParam();
+
 			// Signature of the transform functions.
 			typedef void (Layout::*TransformFn)(Listing *dest, Listing *src, Nat line);
 
@@ -67,6 +70,10 @@ namespace code {
 			void epilogTfm(Listing *dest, Listing *src, Nat line);
 			void beginBlockTfm(Listing *dest, Listing *src, Nat line);
 			void endBlockTfm(Listing *dest, Listing *src, Nat line);
+
+			// Function returns.
+			void fnRetTfm(Listing *dest, Listing *src, Nat line);
+			void fnRetRefTfm(Listing *dest, Listing *src, Nat line);
 
 			// Alter a single operand. Replace any local variables with their offset.
 			Operand resolve(Listing *src, const Operand &op);

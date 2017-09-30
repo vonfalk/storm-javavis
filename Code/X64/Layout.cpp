@@ -15,6 +15,9 @@ namespace code {
 			TRANSFORM(epilog),
 			TRANSFORM(beginBlock),
 			TRANSFORM(endBlock),
+
+			TRANSFORM(fnRet),
+			TRANSFORM(fnRetRef),
 		};
 
 		Layout::Layout(Binary *owner) : owner(owner) {}
@@ -78,8 +81,10 @@ namespace code {
 				Param info = params->registerAt(i);
 				if (info.size() == 0)
 					continue; // Not used.
-				if (info.id() == Param::returnId)
-					continue; // TODO: Spill somewhere!
+				if (info.id() == Param::returnId) {
+					TODO(L"Spill somewhere!");
+					continue;
+				}
 
 				Offset to = layout->at(all->at(info.id()).key());
 				to += Offset(info.offset());
@@ -155,6 +160,11 @@ namespace code {
 		}
 
 		Offset Layout::partId() {
+			return -Offset::sPtr;
+		}
+
+		Offset Layout::resultParam() {
+			TODO(L"FIXME");
 			return -Offset::sPtr;
 		}
 
@@ -249,6 +259,58 @@ namespace code {
 				*dest << mov(intRel(ptrFrame, partId()), natConst(part.key()));
 		}
 
+
+		void Layout::fnRetTfm(Listing *dest, Listing *src, Nat line) {
+			const Operand &value = src->at(line)->src();
+
+			// Handle the return value.
+			if (as<PrimitiveDesc>(src->result)) {
+				// Always a simple 'mov'.
+				if (value.type() == opRegister && same(value.reg(), ptrA)) {
+					// Already at the correct place!
+				} else {
+					*dest << mov(asSize(ptrA, value.size()), value);
+				}
+			} else if (ComplexDesc *c = as<ComplexDesc>(src->result)) {
+				// Call the copy-ctor.
+				*dest << mov(ptrDi, ptrRel(ptrFrame, resultParam()));
+				*dest << lea(ptrSi, value);
+				*dest << call(c->ctor, valVoid());
+			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
+				TODO(L"Implement me!");
+				UNUSED(s);
+			} else {
+				assert(false);
+			}
+
+			epilogTfm(dest, src, line);
+			*dest << ret(valVoid());
+		}
+
+		void Layout::fnRetRefTfm(Listing *dest, Listing *src, Nat line) {
+			const Operand &value = src->at(line)->src();
+
+			// Handle the return value.
+			if (as<PrimitiveDesc>(src->result)) {
+				// Always a simple 'mov'.
+				Size s = value.size();
+				*dest << mov(ptrA, value);
+				*dest << mov(asSize(ptrA, s), xRel(s, ptrA, Offset()));
+			} else if (ComplexDesc *c = as<ComplexDesc>(src->result)) {
+				// Call the copy-ctor.
+				*dest << mov(ptrDi, ptrRel(ptrFrame, resultParam()));
+				*dest << mov(ptrSi, value);
+				*dest << call(c->ctor, valVoid());
+			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
+				TODO(L"Implement me!");
+				UNUSED(s);
+			} else {
+				assert(false);
+			}
+
+			epilogTfm(dest, src, line);
+			*dest << ret(valVoid());
+		}
 
 
 		static Size spillParams(Array<Offset> *out, Listing *src, Params *params, Offset varOffset) {

@@ -29,9 +29,10 @@ namespace code {
 			DEST_RW_REG(mul),
 
 			TRANSFORM(fnCall),
+			TRANSFORM(fnCallRef),
 			TRANSFORM(fnParam),
 			TRANSFORM(fnParamRef),
-			TRANSFORM(fnRet),
+			// fnRet and fnRetRef are handled in the Layout transform.
 
 			TRANSFORM(idiv),
 			TRANSFORM(udiv),
@@ -197,7 +198,7 @@ namespace code {
 			TODO(L"IMPLEMENT ME!");
 		}
 
-		void RemoveInvalid::fnRetTfm(Listing *dest, Instr *instr, Nat line) {
+		void RemoveInvalid::fnCallRefTfm(Listing *dest, Instr *instr, Nat line) {
 			TODO(L"IMPLEMENT ME!");
 		}
 
