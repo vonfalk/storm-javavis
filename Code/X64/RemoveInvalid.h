@@ -46,6 +46,12 @@ namespace code {
 			// Remove any references to complex parameters.
 			Instr *extractComplex(Listing *dest, Instr *i, Nat line);
 
+			// Parameters for an upcoming 'fnCall' instruction.
+			Array<TypeInstr *> *params;
+
+			// Current active part. We need that for introducing blocks inside the 'fnCall' transform.
+			Part currentPart;
+
 			// Signature for the table of transform functions.
 			typedef void (RemoveInvalid::*TransformFn)(Listing *dest, Instr *instr, Nat line);
 
@@ -64,6 +70,10 @@ namespace code {
 			void fnParamRefTfm(Listing *dest, Instr *instr, Nat line);
 			void fnCallTfm(Listing *dest, Instr *instr, Nat line);
 			void fnCallRefTfm(Listing *dest, Instr *instr, Nat line);
+
+			// Keep track of the current part.
+			void beginBlockTfm(Listing *dest, Instr *instr, Nat line);
+			void endBlockTfm(Listing *dest, Instr *instr, Nat line);
 
 			// Other transforms.
 			void shlTfm(Listing *dest, Instr *instr, Nat line);

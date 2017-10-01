@@ -3,6 +3,7 @@
 #include "Asm.h"
 #include "../Listing.h"
 #include "../UsedRegs.h"
+#include "../Exception.h"
 
 namespace code {
 	namespace x64 {
@@ -28,6 +29,9 @@ namespace code {
 			DEST_W_REG(ucast),
 			DEST_RW_REG(mul),
 
+			TRANSFORM(beginBlock),
+			TRANSFORM(endBlock),
+
 			TRANSFORM(fnCall),
 			TRANSFORM(fnCallRef),
 			TRANSFORM(fnParam),
@@ -46,6 +50,7 @@ namespace code {
 			used = usedRegs(dest->arena, src).used;
 			large = new (this) Array<Operand>();
 			lblLarge = dest->label();
+			params = new (this) Array<TypeInstr *>();
 		}
 
 		void RemoveInvalid::during(Listing *dest, Listing *src, Nat line) {
@@ -186,20 +191,82 @@ namespace code {
 			*dest << mov(instr->dest(), reg);
 		}
 
+		void RemoveInvalid::beginBlockTfm(Listing *dest, Instr *instr, Nat line) {
+			currentPart = instr->src().part();
+		}
+
+		void RemoveInvalid::endBlockTfm(Listing *dest, Instr *instr, Nat line) {
+			Part ended = instr->src().part();
+			currentPart = dest->parent(ended);
+		}
+
 		void RemoveInvalid::fnParamTfm(Listing *dest, Instr *instr, Nat line) {
-			TODO(L"IMPLEMENT ME!");
+			TypeInstr *i = as<TypeInstr>(instr);
+			if (!i) {
+				TODO(L"REMOVE ME"); return;
+				throw InvalidValue(L"Expected a TypeInstr for 'fnParam'.");
+			}
+
+			params->push(i);
 		}
 
 		void RemoveInvalid::fnParamRefTfm(Listing *dest, Instr *instr, Nat line) {
-			TODO(L"IMPLEMENT ME!");
+			TypeInstr *i = as<TypeInstr>(instr);
+			if (!i) {
+				TODO(L"REMOVE ME"); return;
+				throw InvalidValue(L"Expected a TypeInstr for 'fnParamRef'.");
+			}
+
+			params->push(i);
+		}
+
+		static bool hasComplex(Array<TypeInstr *> *params) {
+			for (Nat i = 0; i < params->count(); i++)
+				if (as<ComplexDesc>(params->at(i)->type))
+					return true;
+			return false;
 		}
 
 		void RemoveInvalid::fnCallTfm(Listing *dest, Instr *instr, Nat line) {
-			TODO(L"IMPLEMENT ME!");
+			TODO(L"COMPLETE ME!");
+			Block block;
+			Array<Var> *copies;
+			bool complex = hasComplex(params);
+
+			if (complex) {
+				block = dest->createBlock(currentPart);
+				copies = new (this) Array<Var>(params->count(), Var());
+				*dest << begin(block);
+
+				Part part = block;
+				for (Nat i = 0; i < params->count(); i++) {
+					TypeInstr *param = params->at(i);
+
+					if (ComplexDesc *c = as<ComplexDesc>(param->type)) {
+						part = dest->createPart(part);
+						Var v = dest->createVar(part, c->size(), c->dtor);
+						copies->at(i) = v;
+
+						// Call the copy constructor.
+						*dest << lea(ptrDi, v);
+						*dest << mov(ptrSi, param->src());
+						*dest << call(c->ctor, valVoid());
+						*dest << begin(part);
+					}
+				}
+			}
+
+
+			if (complex) {
+				// TODO: Preserve registers as required!
+				*dest << end(block);
+			}
+
+			params->clear();
 		}
 
 		void RemoveInvalid::fnCallRefTfm(Listing *dest, Instr *instr, Nat line) {
-			TODO(L"IMPLEMENT ME!");
+			params->clear();
 		}
 
 		void RemoveInvalid::shlTfm(Listing *dest, Instr *instr, Nat line) {
