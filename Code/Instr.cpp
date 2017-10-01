@@ -230,11 +230,21 @@ namespace code {
 		return new (e.v) TypeInstr(op::fnParamRef, Operand(), src, type);
 	}
 
+	Instr *fnCall(EnginePtr e, Operand call) {
+		if (call.type() == opConstant)
+			throw InvalidValue(L"Should not call constant values, use references instead!");
+		if (call.size() != Size::sPtr)
+			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(call));
+		return new (e.v) TypeInstr(op::fnCall, call, Operand(), voidDesc(e));
+	}
+
 	Instr *fnCall(EnginePtr e, Operand call, TypeDesc *result, Operand to) {
 		if (call.type() == opConstant)
 			throw InvalidValue(L"Should not call constant values, use references instead!");
 		if (call.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(call));
+		if (to.size() != result->size())
+			throw InvalidValue(L"Size mismatch for 'fnCall'. Got " + ::toS(to.size()) + L", expected " + ::toS(result->size()));
 		return new (e.v) TypeInstr(op::fnCall, call, to, result);
 	}
 
@@ -248,16 +258,14 @@ namespace code {
 		return new (e.v) TypeInstr(op::fnCallRef, call, to, result);
 	}
 
-	Instr *fnRet(EnginePtr e, TypeDesc *type, Operand src) {
-		if (src.size() != type->size())
-			throw InvalidValue(L"Size mismatch for 'fnRet'. Got " + ::toS(src.size()) + L", expected " + ::toS(type->size()));
-		return new (e.v) TypeInstr(op::fnRet, Operand(), src, type);
+	Instr *fnRet(EnginePtr e, Operand src) {
+		return instrSrc(e, op::fnRet, src);
 	}
 
-	Instr *fnRetRef(EnginePtr e, TypeDesc *type, Operand src) {
+	Instr *fnRetRef(EnginePtr e, Operand src) {
 		if (src.size() != Size::sPtr)
 			throw InvalidValue(L"Must use a pointer with 'fnRetRef'. Used " + ::toS(src));
-		return new (e.v) TypeInstr(op::fnRetRef, Operand(), src, type);
+		return instrSrc(e, op::fnRetRef, src);
 	}
 
 	Instr *bor(EnginePtr e, Operand dest, Operand src) {

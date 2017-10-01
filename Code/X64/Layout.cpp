@@ -259,26 +259,54 @@ namespace code {
 				*dest << mov(intRel(ptrFrame, partId()), natConst(part.key()));
 		}
 
+		static void returnLayout(Listing *dest, primitive::PrimitiveKind k, nat &i, nat &r, Offset offset) {
+			static const Reg intReg[2] = { ptrA, ptrD };
+			static const Reg realReg[2] = { ptrA, ptrD }; // TODO: Should be XMM0 and XMM1
+
+			switch (k) {
+			case primitive::none:
+				break;
+			case primitive::integer:
+			case primitive::pointer:
+				*dest << mov(intReg[i++], ptrRel(ptrSi, offset));
+				break;
+			case primitive::real:
+				TODO(L"Implement XMM register support!");
+				UNUSED(realReg);
+				r++;
+				break;
+			}
+		}
+
+		// Put the return value into registers. Assumes ptrSi contains a pointer to the struct to be returned.
+		static void returnSimple(Listing *dest, Result *result) {
+			nat i = 0;
+			nat r = 0;
+			returnLayout(dest, result->part1, i, r, Offset());
+			returnLayout(dest, result->part2, i, r, Offset::sPtr);
+		}
 
 		void Layout::fnRetTfm(Listing *dest, Listing *src, Nat line) {
-			const Operand &value = src->at(line)->src();
+			Operand value = resolve(src, src->at(line)->src());
 
 			// Handle the return value.
-			if (as<PrimitiveDesc>(src->result)) {
-				// Always a simple 'mov'.
-				if (value.type() == opRegister && same(value.reg(), ptrA)) {
-					// Already at the correct place!
-				} else {
-					*dest << mov(asSize(ptrA, value.size()), value);
+			if (PrimitiveDesc *p = as<PrimitiveDesc>(src->result)) {
+				if (p->v.kind() != primitive::none) {
+					// Always a simple 'mov'.
+					if (value.type() == opRegister && same(value.reg(), ptrA)) {
+						// Already at the correct place!
+					} else {
+						*dest << mov(asSize(ptrA, value.size()), value);
+					}
 				}
 			} else if (ComplexDesc *c = as<ComplexDesc>(src->result)) {
 				// Call the copy-ctor.
 				*dest << mov(ptrDi, ptrRel(ptrFrame, resultParam()));
 				*dest << lea(ptrSi, value);
 				*dest << call(c->ctor, valVoid());
-			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
-				TODO(L"Implement me!");
-				UNUSED(s);
+			} else if (as<SimpleDesc>(src->result)) {
+				*dest << lea(ptrSi, value);
+				returnSimple(dest, result);
 			} else {
 				assert(false);
 			}
@@ -288,22 +316,24 @@ namespace code {
 		}
 
 		void Layout::fnRetRefTfm(Listing *dest, Listing *src, Nat line) {
-			const Operand &value = src->at(line)->src();
+			Operand value = resolve(src, src->at(line)->src());
 
 			// Handle the return value.
-			if (as<PrimitiveDesc>(src->result)) {
-				// Always a simple 'mov'.
-				Size s = value.size();
-				*dest << mov(ptrA, value);
-				*dest << mov(asSize(ptrA, s), xRel(s, ptrA, Offset()));
+			if (PrimitiveDesc *p = as<PrimitiveDesc>(src->result)) {
+				if (p->v.kind() != primitive::none) {
+					// Always a simple 'mov'.
+					Size s = value.size();
+					*dest << mov(ptrA, value);
+					*dest << mov(asSize(ptrA, s), xRel(s, ptrA, Offset()));
+				}
 			} else if (ComplexDesc *c = as<ComplexDesc>(src->result)) {
 				// Call the copy-ctor.
 				*dest << mov(ptrDi, ptrRel(ptrFrame, resultParam()));
 				*dest << mov(ptrSi, value);
 				*dest << call(c->ctor, valVoid());
-			} else if (SimpleDesc *s = as<SimpleDesc>(src->result)) {
-				TODO(L"Implement me!");
-				UNUSED(s);
+			} else if (as<SimpleDesc>(src->result)) {
+				*dest << mov(ptrSi, value);
+				returnSimple(dest, result);
 			} else {
 				assert(false);
 			}

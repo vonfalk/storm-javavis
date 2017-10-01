@@ -153,6 +153,7 @@ namespace code {
 	/**
 	 * Helpers for creating TypeDesc objects.
 	 */
+	TypeDesc *STORM_FN voidDesc(EnginePtr e);
 	TypeDesc *STORM_FN byteDesc(EnginePtr e);
 	TypeDesc *STORM_FN intDesc(EnginePtr e);
 	TypeDesc *STORM_FN ptrDesc(EnginePtr e);

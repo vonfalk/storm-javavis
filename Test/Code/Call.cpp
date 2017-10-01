@@ -16,12 +16,13 @@ BEGIN_TEST_(SimpleCall, Code) {
 	Ref intFn = arena->external(S("intFn"), address(&callIntFn));
 
 	Listing *l = new (e) Listing();
+	l->result = intDesc(e);
 	*l << prolog();
 
 	*l << fnParam(intDesc(e), intConst(100));
 	*l << fnCall(intFn, intDesc(e), eax);
 
-	*l << fnRet(intDesc(e), eax);
+	*l << fnRet(eax);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)();

@@ -130,13 +130,14 @@ namespace code {
 	// the target itself.
 	Instr *STORM_FN fnParam(EnginePtr e, TypeDesc *type, Operand src);
 	Instr *STORM_FN fnParamRef(EnginePtr e, TypeDesc *type, Operand src);
+	Instr *STORM_FN fnCall(EnginePtr e, Operand call); // no result
 	Instr *STORM_FN fnCall(EnginePtr e, Operand call, TypeDesc *result, Operand to);
 	Instr *STORM_FN fnCallRef(EnginePtr e, Operand call, TypeDesc *result, Operand to);
 
 	// High-level function return. Examines the return type specified in the listing and handles the
 	// return properly according to the current platform. Implies an 'epilog' instruction as well.
-	Instr *STORM_FN fnRet(EnginePtr e, TypeDesc *type, Operand src);
-	Instr *STORM_FN fnRetRef(EnginePtr e, TypeDesc *type, Operand src);
+	Instr *STORM_FN fnRet(EnginePtr e, Operand src);
+	Instr *STORM_FN fnRetRef(EnginePtr e, Operand src);
 
 	// Old-style function calls. TODO: Remove!
 	Instr *STORM_FN fnParam(EnginePtr e, Operand src);

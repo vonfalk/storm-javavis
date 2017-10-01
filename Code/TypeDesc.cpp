@@ -83,10 +83,17 @@ namespace code {
 	}
 
 	void SimpleDesc::toS(StrBuf *to) const {
-		*to << S("simple:") << s << S(":");
-		for (Nat i = 0; i < v->count; i++) {
-			*to << S("\n") << v->v[i];
+		*to << S("simple:") << s << S("[");
+		if (v->count > 0) {
+			*to << v->v[0];
+			for (Nat i = 1; i < v->count; i++)
+				*to << S(", ") << v->v[i];
 		}
+		*to << S("]");
+	}
+
+	TypeDesc *voidDesc(EnginePtr e) {
+		return new (e.v) PrimitiveDesc(Primitive());
 	}
 
 	TypeDesc *byteDesc(EnginePtr e) {

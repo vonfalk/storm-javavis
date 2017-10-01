@@ -96,10 +96,11 @@ namespace code {
 	PROXY2(setCond, Operand, CondFlag);
 	PROXY2(fnParam, TypeDesc *, Operand);
 	PROXY2(fnParamRef, TypeDesc *, Operand);
+	PROXY1(fnCall, Operand);
 	PROXY3(fnCall, Operand, TypeDesc *, Operand);
 	PROXY3(fnCallRef, Operand, TypeDesc *, Operand);
-	PROXY2(fnRet, TypeDesc *, Operand);
-	PROXY2(fnRetRef, TypeDesc *, Operand);
+	PROXY1(fnRet, Operand);
+	PROXY1(fnRetRef, Operand);
 	PROXY2(bor, Operand, Operand);
 	PROXY2(band, Operand, Operand);
 	PROXY2(bxor, Operand, Operand);
