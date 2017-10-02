@@ -1,12 +1,21 @@
 #include "stdafx.h"
 #include "RemoveInvalid.h"
 #include "Asm.h"
+#include "Params.h"
 #include "../Listing.h"
 #include "../UsedRegs.h"
 #include "../Exception.h"
+#include "Utils/Bitwise.h"
 
 namespace code {
 	namespace x64 {
+
+		ParamInfo::ParamInfo(TypeDesc *desc, const Operand &src, Bool ref)
+			: type(desc), src(src), ref(ref), lea(false) {}
+
+		ParamInfo::ParamInfo(TypeDesc *desc, const Operand &src, Bool ref, Bool lea)
+			: type(desc), src(src), ref(ref), lea(lea) {}
+
 
 #define TRANSFORM(x) { op::x, &RemoveInvalid::x ## Tfm }
 #define IMM_REG(x) { op::x, &RemoveInvalid::immRegTfm }
@@ -50,7 +59,7 @@ namespace code {
 			used = usedRegs(dest->arena, src).used;
 			large = new (this) Array<Operand>();
 			lblLarge = dest->label();
-			params = new (this) Array<TypeInstr *>();
+			params = new (this) Array<ParamInfo>();
 		}
 
 		void RemoveInvalid::during(Listing *dest, Listing *src, Nat line) {
@@ -207,7 +216,7 @@ namespace code {
 				throw InvalidValue(L"Expected a TypeInstr for 'fnParam'.");
 			}
 
-			params->push(i);
+			params->push(ParamInfo(i->type, i->src(), false));
 		}
 
 		void RemoveInvalid::fnParamRefTfm(Listing *dest, Instr *instr, Nat line) {
@@ -217,14 +226,167 @@ namespace code {
 				throw InvalidValue(L"Expected a TypeInstr for 'fnParamRef'.");
 			}
 
-			params->push(i);
+			params->push(ParamInfo(i->type, i->src(), true));
 		}
 
-		static bool hasComplex(Array<TypeInstr *> *params) {
+		static bool hasComplex(Array<ParamInfo> *params) {
 			for (Nat i = 0; i < params->count(); i++)
-				if (as<ComplexDesc>(params->at(i)->type))
+				if (as<ComplexDesc>(params->at(i).type))
 					return true;
 			return false;
+		}
+
+		static Params *paramLayout(Array<ParamInfo> *params) {
+			Params *r = new (params) Params();
+			for (Nat i = 0; i < params->count(); i++)
+				r->add(i, params->at(i).type);
+			return r;
+		}
+
+		static Nat stackParamsSize(Array<ParamInfo> *src, Params *layout) {
+			Nat result = 0;
+			for (Nat i = 0; i < layout->stackCount(); i++) {
+				TypeDesc *desc = src->at(layout->stackAt(i)).type;
+				result += roundUp(desc->size().size64(), nat(8));
+			}
+			return result;
+		}
+
+		static Nat pushValue(Listing *dest, const ParamInfo &p) {
+			Nat size = p.type->size().size64();
+			if (size <= 8) {
+				*dest << push(p.src);
+				return 8;
+			}
+
+			// We need to perform a memcpy-like operation.
+			assert(false, L"Not implemented yet!");
+			return 0;
+		}
+
+		static Nat pushLea(Listing *dest, const ParamInfo &p) {
+			assert(false, L"Not implemented yet!");
+			return 0;
+		}
+
+		static Nat pushRef(Listing *dest, const ParamInfo &p) {
+			assert(false, L"Not implemented yet!");
+			return 0;
+		}
+
+		static Nat pushParams(Listing *dest, Array<ParamInfo> *src, Params *layout) {
+			Nat pushed = 0;
+			Nat size = stackParamsSize(src, layout);
+			if (size & 0x0F) {
+				// We need to push an additional word to the stack to keep alignment.
+				*dest << push(natConst(0));
+				pushed += 8;
+			}
+
+			// Push the parameters.
+			for (Nat i = layout->stackCount(); i > 0; i--) {
+				const ParamInfo &p = src->at(layout->stackAt(i - 1));
+				if (p.ref) {
+					pushed += pushRef(dest, p);
+				} else if (p.lea) {
+					pushed += pushLea(dest, p);
+				} else {
+					pushed += pushValue(dest, p);
+				}
+			}
+
+			return pushed;
+		}
+
+		struct RegEnv {
+			Listing *dest;
+			Array<ParamInfo> *src;
+			Params *layout;
+			Array<Bool> *active;
+			Array<Bool> *finished;
+		};
+
+		static void setRegister(RegEnv &env, Nat i);
+
+		// Make sure any content inside 'reg' is used now, so that 'reg' can be reused for other purposes.
+		static void vacateRegister(RegEnv &env, Reg reg) {
+			for (Nat i = 0; i < env.layout->registerCount(); i++) {
+				Param p = env.layout->registerAt(i);
+				if (p == Param())
+					continue;
+
+				const Operand &src = env.src->at(p.id()).src;
+				if (src.type() == opRegister && same(src.reg(), reg)) {
+					// We need to set this register now, otherwise it will be destroyed!
+					if (env.active->at(i)) {
+						// Cycle detected. Use a temporary register.
+						assert(false, L"Not implemented yet!");
+					} else {
+						setRegister(env, i);
+					}
+				}
+			}
+		}
+
+		static void setRegisterVal(RegEnv &env, Reg target, Param param, const Operand &src) {
+			if (param.offset() == 0 && src.size().size64() <= 8) {
+				*env.dest << mov(asSize(target, src.size()), src);
+			} else if (src.type() == opVariable) {
+				assert(false, L"Not implemented yet!");
+			} else {
+				throw InvalidValue(L"Can not pass non-variables larger than 8 bytes to functions.");
+			}
+		}
+
+		static void setRegisterRef(RegEnv &env, Reg target, Param param, const Operand &src) {
+			assert(false, L"Not implemented yet!");
+		}
+
+		static void setRegisterLea(RegEnv &env, Reg target, Param param, const Operand &src) {
+			assert(false, L"Not implemented yet!");
+		}
+
+		static void setRegister(RegEnv &env, Nat i) {
+			Param param = env.layout->registerAt(i);
+			// Empty?
+			if (param == Param())
+				return;
+			// Already done?
+			if (env.finished->at(i))
+				return;
+
+			Reg target = env.layout->registerSrc(i);
+			ParamInfo &p = env.src->at(param.id());
+
+			// See if 'target' contains something that is used by other parameters.
+			env.active->at(i) = true;
+			vacateRegister(env, target);
+			env.active->at(i) = false;
+
+			// Set the register.
+			if (p.ref)
+				setRegisterRef(env, target, param, p.src);
+			else if (p.lea)
+				setRegisterLea(env, target, param, p.src);
+			else
+				setRegisterVal(env, target, param, p.src);
+
+			// Note that we're done.
+			env.finished->at(i) = true;
+		}
+
+		static void setRegisters(Listing *dest, Array<ParamInfo> *src, Params *layout) {
+			RegEnv env = {
+				dest,
+				src,
+				layout,
+				new (dest) Array<Bool>(layout->registerCount(), false),
+				new (dest) Array<Bool>(layout->registerCount(), false),
+			};
+
+			for (Nat i = 0; i < layout->registerCount(); i++) {
+				setRegister(env, i);
+			}
 		}
 
 		void RemoveInvalid::fnCallTfm(Listing *dest, Instr *instr, Nat line) {
@@ -240,22 +402,53 @@ namespace code {
 
 				Part part = block;
 				for (Nat i = 0; i < params->count(); i++) {
-					TypeInstr *param = params->at(i);
+					const ParamInfo &param = params->at(i);
 
-					if (ComplexDesc *c = as<ComplexDesc>(param->type)) {
+					if (ComplexDesc *c = as<ComplexDesc>(param.type)) {
 						part = dest->createPart(part);
 						Var v = dest->createVar(part, c->size(), c->dtor);
 						copies->at(i) = v;
 
 						// Call the copy constructor.
 						*dest << lea(ptrDi, v);
-						*dest << mov(ptrSi, param->src());
+						*dest << mov(ptrSi, param.src); // TODO: Load from a safe place.
 						*dest << call(c->ctor, valVoid());
 						*dest << begin(part);
 					}
 				}
 			}
 
+			// Do we need a hidden parameter?
+			if (as<ComplexDesc>(dest->result)) {
+				// We want to pass a reference to 'src'.
+				params->insert(0, ParamInfo(ptrDesc(engine()), instr->dest(), false, true));
+			}
+
+			Params *layout = paramLayout(params);
+
+			// Push parameters on the stack. This is a 'safe' operation since it does not destroy any registers.
+			Nat pushed = pushParams(dest, params, layout);
+
+			// Assign parameters to registers.
+			setRegisters(dest, params, layout);
+
+			// Call the function.
+			*dest << call(instr->src(), valVoid());
+
+			// Handle the return value if required.
+			if (as<PrimitiveDesc>(dest->result)) {
+				// TODO: Handle floating point values.
+				if (instr->dest().type() == opRegister && same(instr->dest().reg(), ptrA)) {
+				} else {
+					*dest << mov(instr->dest(), asSize(ptrA, instr->dest().size()));
+				}
+			} else if (as<SimpleDesc>(dest->result)) {
+				assert(false, L"Not implemented yet!");
+			}
+
+			// Pop the stack.
+			if (pushed > 0)
+				*dest << add(ptrStack, ptrConst(pushed));
 
 			if (complex) {
 				// TODO: Preserve registers as required!

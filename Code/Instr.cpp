@@ -235,7 +235,7 @@ namespace code {
 			throw InvalidValue(L"Should not call constant values, use references instead!");
 		if (call.size() != Size::sPtr)
 			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(call));
-		return new (e.v) TypeInstr(op::fnCall, call, Operand(), voidDesc(e));
+		return new (e.v) TypeInstr(op::fnCall, Operand(), call, voidDesc(e));
 	}
 
 	Instr *fnCall(EnginePtr e, Operand call, TypeDesc *result, Operand to) {
@@ -245,7 +245,7 @@ namespace code {
 			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(call));
 		if (to.size() != result->size())
 			throw InvalidValue(L"Size mismatch for 'fnCall'. Got " + ::toS(to.size()) + L", expected " + ::toS(result->size()));
-		return new (e.v) TypeInstr(op::fnCall, call, to, result);
+		return new (e.v) TypeInstr(op::fnCall, to, call, result);
 	}
 
 	Instr *fnCallRef(EnginePtr e, Operand call, TypeDesc *result, Operand to) {
@@ -255,7 +255,7 @@ namespace code {
 			throw InvalidValue(L"Must call a pointer, tried calling " + ::toS(call));
 		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Must use a pointer with 'fnCallRef'. Used " + ::toS(to));
-		return new (e.v) TypeInstr(op::fnCallRef, call, to, result);
+		return new (e.v) TypeInstr(op::fnCallRef, to, call, result);
 	}
 
 	Instr *fnRet(EnginePtr e, Operand src) {

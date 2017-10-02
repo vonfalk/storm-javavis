@@ -20,9 +20,9 @@ BEGIN_TEST_(SimpleCall, Code) {
 	*l << prolog();
 
 	*l << fnParam(intDesc(e), intConst(100));
-	*l << fnCall(intFn, intDesc(e), eax);
+	*l << fnCall(intFn, intDesc(e), ecx);
 
-	*l << fnRet(eax);
+	*l << fnRet(ecx);
 
 	Binary *b = new (e) Binary(arena, l);
 	typedef Int (*Fn)();

@@ -10,6 +10,28 @@ namespace code {
 		STORM_PKG(core.asm.x64);
 
 		/**
+		 * Parameter information.
+		 */
+		class ParamInfo {
+			STORM_VALUE;
+		public:
+			ParamInfo(TypeDesc *desc, const Operand &src, Bool ref);
+			ParamInfo(TypeDesc *desc, const Operand &src, Bool ref, Bool lea);
+
+			// Type of this parameter.
+			TypeDesc *type;
+
+			// Source of the parameter.
+			Operand src;
+
+			// Is 'src' a reference to the actual data?
+			Bool ref;
+
+			// Do we actually want to pass the address of 'src'?
+			Bool lea;
+		};
+
+		/**
 		 * Transform that removes invalid or otherwise non-supported OP-codes, replacing them with
 		 * an equivalent sequence of supported OP-codes. For example:
 		 * - memory-memory operands
@@ -47,7 +69,7 @@ namespace code {
 			Instr *extractComplex(Listing *dest, Instr *i, Nat line);
 
 			// Parameters for an upcoming 'fnCall' instruction.
-			Array<TypeInstr *> *params;
+			Array<ParamInfo> *params;
 
 			// Current active part. We need that for introducing blocks inside the 'fnCall' transform.
 			Part currentPart;
