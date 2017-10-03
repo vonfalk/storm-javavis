@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Arena.h"
 #include "Output.h"
+#include "Asm.h"
 #include "AsmOut.h"
 #include "RemoveInvalid.h"
 #include "Layout.h"
@@ -34,7 +35,12 @@ namespace code {
 
 		void Arena::removeFnRegs(RegSet *from) const {
 			code::Arena::removeFnRegs(from);
-			TODO(L"Remove registers not preserved through function calls.");
+			from->remove(ptrSi);
+			from->remove(ptrDi);
+			from->remove(ptrD);
+			from->remove(ptrC);
+			from->remove(ptr8);
+			from->remove(ptr9);
 		}
 
 	}

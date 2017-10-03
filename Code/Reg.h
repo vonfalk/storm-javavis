@@ -178,9 +178,9 @@ namespace code {
 
 		// Constants:
 		enum {
-			// 2 banks is enough for now. Make sure to add 'data' entries up to the number of banks used.
+			// 4 banks is enough for now. Make sure to add 'data' entries up to the number of banks used.
 			// At least 2, maximum 9.
-			banks = 2,
+			banks = 4,
 
 			// Slots per data entry. Should be 16.
 			dataSlots = 8 * sizeof(Nat) / 2,
@@ -193,6 +193,8 @@ namespace code {
 		// Data. Make sure to have at least 'banks' of these.
 		Nat data0;
 		Nat data1;
+		Nat data2;
+		Nat data3;
 
 		// # of registers in here.
 		Nat numSet;

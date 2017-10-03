@@ -259,9 +259,34 @@ namespace code {
 				return 8;
 			}
 
-			// We need to perform a memcpy-like operation.
-			assert(false, L"Not implemented yet!");
-			return 0;
+			// We need to perform a memcpy-like operation (only for variables).
+			if (p.src.type() != opVariable)
+				throw InvalidValue(L"Can not pass non-variables larger than 8 bytes to functions.");
+
+			Var src = p.src.var();
+			Nat pushed = 0;
+
+			// Last part:
+			Nat last = size & 0x07;
+			size -= last; // Now 'size' is a multiple of 8.
+			if (last == 1) {
+				*dest << push(byteRel(src, Offset(size)));
+				pushed += 8;
+			} else if (last <= 4) {
+				*dest << push(intRel(src, Offset(size)));
+				pushed += 8;
+			} else /* last < 8 */ {
+				*dest << push(longRel(src, Offset(size)));
+				pushed += 8;
+			}
+
+			while (size >= 8) {
+				size -= 8;
+				*dest << push(longRel(src, Offset(size)));
+				pushed += 8;
+			}
+
+			return pushed;
 		}
 
 		static Nat pushLea(Listing *dest, const ParamInfo &p) {
@@ -286,12 +311,12 @@ namespace code {
 			// Push the parameters.
 			for (Nat i = layout->stackCount(); i > 0; i--) {
 				const ParamInfo &p = src->at(layout->stackAt(i - 1));
-				if (p.ref) {
+				if (p.ref == p.lea) {
+					pushed += pushValue(dest, p);
+				} else if (p.ref) {
 					pushed += pushRef(dest, p);
 				} else if (p.lea) {
 					pushed += pushLea(dest, p);
-				} else {
-					pushed += pushValue(dest, p);
 				}
 			}
 
@@ -319,8 +344,10 @@ namespace code {
 				if (src.type() == opRegister && same(src.reg(), reg)) {
 					// We need to set this register now, otherwise it will be destroyed!
 					if (env.active->at(i)) {
-						// Cycle detected. Use a temporary register.
-						assert(false, L"Not implemented yet!");
+						// Cycle detected. Push the register we should vacate onto the stack and
+						// keep a note about that for later.
+						*env.dest << push(src);
+						env.active->at(i) = false;
 					} else {
 						setRegister(env, i);
 					}
@@ -332,17 +359,19 @@ namespace code {
 			if (param.offset() == 0 && src.size().size64() <= 8) {
 				*env.dest << mov(asSize(target, src.size()), src);
 			} else if (src.type() == opVariable) {
-				assert(false, L"Not implemented yet!");
+				Size s(param.size());
+				*env.dest << mov(asSize(target, s), xRel(s, src.var(), Offset(param.offset())));
 			} else {
 				throw InvalidValue(L"Can not pass non-variables larger than 8 bytes to functions.");
 			}
 		}
 
-		static void setRegisterRef(RegEnv &env, Reg target, Param param, const Operand &src) {
-			assert(false, L"Not implemented yet!");
+		static void setRegisterLea(RegEnv &env, Reg target, Param param, const Operand &src) {
+			assert(param.size() == 8);
+			*env.dest << lea(asSize(target, Size::sPtr), src);
 		}
 
-		static void setRegisterLea(RegEnv &env, Reg target, Param param, const Operand &src) {
+		static void setRegisterRef(RegEnv &env, Reg target, Param param, const Operand &src) {
 			assert(false, L"Not implemented yet!");
 		}
 
@@ -361,15 +390,20 @@ namespace code {
 			// See if 'target' contains something that is used by other parameters.
 			env.active->at(i) = true;
 			vacateRegister(env, target);
+			if (!env.active->at(i)) {
+				// This register is stored on the stack for now. Restore it before we continue!
+				p.src = Operand(asSize(target, p.src.size()));
+				*env.dest << pop(p.src);
+			}
 			env.active->at(i) = false;
 
 			// Set the register.
-			if (p.ref)
+			if (p.ref == p.lea)
+				setRegisterVal(env, target, param, p.src);
+			else if (p.ref)
 				setRegisterRef(env, target, param, p.src);
 			else if (p.lea)
 				setRegisterLea(env, target, param, p.src);
-			else
-				setRegisterVal(env, target, param, p.src);
 
 			// Note that we're done.
 			env.finished->at(i) = true;
