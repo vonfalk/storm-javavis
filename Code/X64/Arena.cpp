@@ -41,6 +41,15 @@ namespace code {
 			from->remove(ptrC);
 			from->remove(ptr8);
 			from->remove(ptr9);
+
+			from->remove(xmm0);
+			from->remove(xmm1);
+			from->remove(xmm2);
+			from->remove(xmm3);
+			from->remove(xmm4);
+			from->remove(xmm5);
+			from->remove(xmm6);
+			from->remove(xmm7);
 		}
 
 	}

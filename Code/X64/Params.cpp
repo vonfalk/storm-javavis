@@ -243,11 +243,8 @@ namespace code {
 		Reg Params::registerSrc(Nat n) const {
 			static Reg v[] = {
 				ptrDi, ptrSi, ptrD, ptrC, ptr8, ptr9,
-				// TODO: xmm registers!
-				ptr8, ptr9, ptr10, ptr11, ptr12, ptr13, ptr14, ptr15
+				xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7
 			};
-			if (n >= 6)
-				TODO(L"Implement XMM registers!");
 			return v[n];
 		}
 
@@ -294,8 +291,8 @@ namespace code {
 		}
 
 		void Result::add(ComplexDesc *desc) {
-			// Complex types are easy. They are always passed by pointer.
-			part1 = primitive::integer;
+			// Complex types are easy. They are always passed in memory.
+			memory = true;
 		}
 
 		void Result::add(SimpleDesc *desc) {

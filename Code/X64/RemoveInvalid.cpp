@@ -424,9 +424,15 @@ namespace code {
 		}
 
 		void RemoveInvalid::fnCallTfm(Listing *dest, Instr *instr, Nat line) {
+			if (!as<TypeInstr>(instr)) {
+				TODO(L"Remove me!"); return;
+				throw InvalidValue(L"Using a fnCall that was not created properly.");
+			}
+
 			TODO(L"COMPLETE ME!");
 			Block block;
 			Array<Var> *copies;
+			TypeDesc *result = ((TypeInstr *)instr)->type;
 			bool complex = hasComplex(params);
 
 			if (complex) {
@@ -453,7 +459,7 @@ namespace code {
 			}
 
 			// Do we need a hidden parameter?
-			if (as<ComplexDesc>(dest->result)) {
+			if (as<ComplexDesc>(result)) {
 				// We want to pass a reference to 'src'.
 				params->insert(0, ParamInfo(ptrDesc(engine()), instr->dest(), false, true));
 			}
@@ -470,13 +476,22 @@ namespace code {
 			*dest << call(instr->src(), valVoid());
 
 			// Handle the return value if required.
-			if (as<PrimitiveDesc>(dest->result)) {
-				// TODO: Handle floating point values.
-				if (instr->dest().type() == opRegister && same(instr->dest().reg(), ptrA)) {
-				} else {
-					*dest << mov(instr->dest(), asSize(ptrA, instr->dest().size()));
+			if (PrimitiveDesc *p = as<PrimitiveDesc>(result)) {
+				switch (p->v.kind()) {
+				case primitive::none:
+					break;
+				case primitive::integer:
+				case primitive::pointer:
+					if (instr->dest().type() == opRegister && same(instr->dest().reg(), ptrA)) {
+					} else {
+						*dest << mov(instr->dest(), asSize(ptrA, instr->dest().size()));
+					}
+					break;
+				case primitive::real:
+					*dest << mov(instr->dest(), asSize(xmm0, instr->dest().size()));
+					break;
 				}
-			} else if (as<SimpleDesc>(dest->result)) {
+			} else if (as<SimpleDesc>(result)) {
 				assert(false, L"Not implemented yet!");
 			}
 

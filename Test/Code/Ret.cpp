@@ -47,7 +47,27 @@ BEGIN_TEST_(RetRefPrimitive, Code) {
 	CHECK_EQ((*fn)(), 100);
 } END_TEST
 
-BEGIN_TEST(RetComplex, Code) {
+BEGIN_TEST_(RetFloatPrimitive, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+	l->result = floatDesc(e);
+
+	*l << prolog();
+
+	*l << mov(ecx, floatConst(10.0f));
+
+	*l << fnRet(ecx);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Float (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 10.0f);
+} END_TEST
+
+BEGIN_TEST_(RetComplex, Code) {
 	using storm::debug::DbgVal;
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
@@ -55,7 +75,7 @@ BEGIN_TEST(RetComplex, Code) {
 
 	Listing *l = new (e) Listing();
 	l->result = new (e) ComplexDesc(dbgVal->size(), dbgVal->copyCtor()->ref(), dbgVal->destructor()->ref());
-	Var v = l->createVar(l->root(), dbgVal->size());
+	Var v = l->createVar(l->root(), dbgVal->size(), dbgVal->destructor()->ref(), freeDef | freePtr);
 
 	*l << prolog();
 
@@ -74,7 +94,7 @@ BEGIN_TEST(RetComplex, Code) {
 	CHECK(DbgVal::clear());
 } END_TEST
 
-BEGIN_TEST(RetRefComplex, Code) {
+BEGIN_TEST_(RetRefComplex, Code) {
 	using storm::debug::DbgVal;
 	Engine &e = gEngine();
 	Arena *arena = code::arena(e);
@@ -82,7 +102,7 @@ BEGIN_TEST(RetRefComplex, Code) {
 
 	Listing *l = new (e) Listing();
 	l->result = new (e) ComplexDesc(dbgVal->size(), dbgVal->copyCtor()->ref(), dbgVal->destructor()->ref());
-	Var v = l->createVar(l->root(), dbgVal->size());
+	Var v = l->createVar(l->root(), dbgVal->size(), dbgVal->destructor()->ref(), freeDef | freePtr);
 
 	*l << prolog();
 
@@ -148,5 +168,57 @@ BEGIN_TEST_(RetSimple, Code) {
 	Fn fn = (Fn)b->address();
 
 	SimpleRet ok = { 10, 20 };
+	CHECK_EQ((*fn)(), ok);
+} END_TEST
+
+struct SimpleFloatRet {
+	int a, b;
+	float c;
+};
+
+bool operator ==(const SimpleFloatRet &a, const SimpleFloatRet &b) {
+	return a.a == b.a
+		&& a.b == b.b
+		&& a.c == b.c;
+}
+
+bool operator !=(const SimpleFloatRet &a, const SimpleFloatRet &b) {
+	return !(a == b);
+}
+
+wostream &operator <<(wostream &to, const SimpleFloatRet &b) {
+	return to << L"{ " << b.a << L", " << b.b << L", " << b.c << L" }";
+}
+
+SimpleDesc *retFloatDesc(Engine &e) {
+	SimpleDesc *desc = new (e) SimpleDesc(Size::sInt * 3, 3);
+	desc->at(0) = Primitive(primitive::integer, Size::sInt, Offset());
+	desc->at(1) = Primitive(primitive::integer, Size::sInt, Offset::sInt);
+	desc->at(2) = Primitive(primitive::real, Size::sInt, Offset::sInt * 2);
+	return desc;
+}
+
+BEGIN_TEST_(RetSimpleFloat, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+	l->result = retFloatDesc(e);
+	Var v = l->createVar(l->root(), Size::sInt * 3);
+
+	*l << prolog();
+
+	*l << lea(ptrA, v);
+	*l << mov(intRel(ptrA, Offset()), intConst(10));
+	*l << mov(intRel(ptrA, Offset::sInt), intConst(20));
+	*l << mov(intRel(ptrA, Offset::sInt * 2), floatConst(20.5f));
+
+	*l << fnRet(v);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef SimpleFloatRet (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	SimpleFloatRet ok = { 10, 20, 20.5f };
 	CHECK_EQ((*fn)(), ok);
 } END_TEST

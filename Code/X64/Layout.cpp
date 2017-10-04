@@ -43,8 +43,13 @@ namespace code {
 				params->add(i, src->paramDesc(p->at(i)));
 			}
 
-			// Compute the layout. TODO: Figure out how many registers we need to spill!
-			layout = code::x64::layout(src, params, 0, usingEH);
+			// TODO: Figure out how many registers we need to spill!
+			Nat spilled = 0;
+			if (result->memory)
+				spilled++; // The hidden parameter needs to be spilled!
+
+			// Compute the layout.
+			layout = code::x64::layout(src, params, spilled, usingEH);
 		}
 
 		void Layout::during(Listing *dest, Listing *src, Nat line) {
@@ -82,7 +87,7 @@ namespace code {
 				if (info.size() == 0)
 					continue; // Not used.
 				if (info.id() == Param::returnId) {
-					TODO(L"Spill somewhere!");
+					*dest << mov(ptrRel(ptrFrame, resultParam()), params->registerSrc(i));
 					continue;
 				}
 
@@ -164,8 +169,10 @@ namespace code {
 		}
 
 		Offset Layout::resultParam() {
-			TODO(L"FIXME");
-			return -Offset::sPtr;
+			if (usingEH)
+				return -(Offset::sPtr * 3);
+			else
+				return -Offset::sPtr;
 		}
 
 		// Zero the memory of a variable. 'initEax' should be true if we need to set eax to 0 before
@@ -231,9 +238,10 @@ namespace code {
 
 				if (!dtor.empty() && (when & freeOnBlockExit) == freeOnBlockExit) {
 					if (preserveRax && !pushedRax) {
-						// We need to keep the stack 16-byte aligned.
-						*dest << push(ptrA);
-						*dest << push(ptrA);
+						// Preserve ptrA and xmm0! (keeps stack 16-byte aligned).
+						*dest << sub(ptrStack, ptrConst(0x10));
+						*dest << mov(ptrRel(ptrStack, Offset::sPtr), ptrA);
+						*dest << mov(longRel(ptrStack, Offset()), xmm0);
 						pushedRax = true;
 					}
 
@@ -250,8 +258,9 @@ namespace code {
 			}
 
 			if (pushedRax) {
-				*dest << pop(ptrA);
-				*dest << pop(ptrA);
+				*dest << mov(ptrA, ptrRel(ptrStack, Offset::sPtr));
+				*dest << mov(xmm0, longRel(ptrStack, Offset()));
+				*dest << add(ptrStack, ptrConst(0x10));
 			}
 
 			part = dest->prev(part);
@@ -261,7 +270,7 @@ namespace code {
 
 		static void returnLayout(Listing *dest, primitive::PrimitiveKind k, nat &i, nat &r, Offset offset) {
 			static const Reg intReg[2] = { ptrA, ptrD };
-			static const Reg realReg[2] = { ptrA, ptrD }; // TODO: Should be XMM0 and XMM1
+			static const Reg realReg[2] = { xmm0, xmm1 };
 
 			switch (k) {
 			case primitive::none:
@@ -271,9 +280,7 @@ namespace code {
 				*dest << mov(intReg[i++], ptrRel(ptrSi, offset));
 				break;
 			case primitive::real:
-				TODO(L"Implement XMM register support!");
-				UNUSED(realReg);
-				r++;
+				*dest << mov(realReg[r++], longRel(ptrSi, offset));
 				break;
 			}
 		}
@@ -286,24 +293,39 @@ namespace code {
 			returnLayout(dest, result->part2, i, r, Offset::sPtr);
 		}
 
+		static void returnPrimitive(Listing *dest, PrimitiveDesc *p, const Operand &value) {
+			switch (p->v.kind()) {
+			case primitive::none:
+				break;
+			case primitive::integer:
+			case primitive::pointer:
+				if (value.type() == opRegister && same(value.reg(), ptrA)) {
+					// Already at the correct place!
+				} else {
+					// A simple 'mov' is enough!
+					*dest << mov(asSize(ptrA, value.size()), value);
+				}
+				break;
+			case primitive::real:
+				// A simple 'mov' will do!
+				*dest << mov(asSize(xmm0, value.size()), value);
+				break;
+			}
+		}
+
 		void Layout::fnRetTfm(Listing *dest, Listing *src, Nat line) {
 			Operand value = resolve(src, src->at(line)->src());
 
 			// Handle the return value.
 			if (PrimitiveDesc *p = as<PrimitiveDesc>(src->result)) {
-				if (p->v.kind() != primitive::none) {
-					// Always a simple 'mov'.
-					if (value.type() == opRegister && same(value.reg(), ptrA)) {
-						// Already at the correct place!
-					} else {
-						*dest << mov(asSize(ptrA, value.size()), value);
-					}
-				}
+				returnPrimitive(dest, p, value);
 			} else if (ComplexDesc *c = as<ComplexDesc>(src->result)) {
 				// Call the copy-ctor.
-				*dest << mov(ptrDi, ptrRel(ptrFrame, resultParam()));
 				*dest << lea(ptrSi, value);
+				*dest << mov(ptrDi, ptrRel(ptrFrame, resultParam()));
 				*dest << call(c->ctor, valVoid());
+				// Set 'rax' to the address of the return value.
+				*dest << mov(ptrA, ptrRel(ptrFrame, resultParam()));
 			} else if (as<SimpleDesc>(src->result)) {
 				*dest << lea(ptrSi, value);
 				returnSimple(dest, result);
@@ -315,22 +337,37 @@ namespace code {
 			*dest << ret(valVoid());
 		}
 
+		static void returnPrimitiveRef(Listing *dest, PrimitiveDesc *p, const Operand &value) {
+			Size s(p->v.size());
+			switch (p->v.kind()) {
+			case primitive::none:
+				break;
+			case primitive::integer:
+			case primitive::pointer:
+				// Always two 'mov'.
+				*dest << mov(ptrA, value);
+				*dest << mov(asSize(ptrA, s), xRel(s, ptrA, Offset()));
+				break;
+			case primitive::real:
+				*dest << mov(ptrA, value);
+				*dest << mov(asSize(xmm0, s), xRel(s, ptrA, Offset()));
+				break;
+			}
+		}
+
 		void Layout::fnRetRefTfm(Listing *dest, Listing *src, Nat line) {
 			Operand value = resolve(src, src->at(line)->src());
 
 			// Handle the return value.
 			if (PrimitiveDesc *p = as<PrimitiveDesc>(src->result)) {
-				if (p->v.kind() != primitive::none) {
-					// Always a simple 'mov'.
-					Size s = value.size();
-					*dest << mov(ptrA, value);
-					*dest << mov(asSize(ptrA, s), xRel(s, ptrA, Offset()));
-				}
+				returnPrimitiveRef(dest, p, value);
 			} else if (ComplexDesc *c = as<ComplexDesc>(src->result)) {
 				// Call the copy-ctor.
-				*dest << mov(ptrDi, ptrRel(ptrFrame, resultParam()));
 				*dest << mov(ptrSi, value);
+				*dest << mov(ptrDi, ptrRel(ptrFrame, resultParam()));
 				*dest << call(c->ctor, valVoid());
+				// Set 'rax' to the address of the return value.
+				*dest << mov(ptrA, ptrRel(ptrFrame, resultParam()));
 			} else if (as<SimpleDesc>(src->result)) {
 				*dest << mov(ptrSi, value);
 				returnSimple(dest, result);
@@ -363,8 +400,8 @@ namespace code {
 				}
 			}
 
-			// Then, compute where to spill the remaining registers.
 			Size used;
+			// Then, compute where to spill the remaining registers.
 			for (Nat i = 0; i < all->count(); i++) {
 				Var var = all->at(i);
 				Offset &to = out->at(var.key());

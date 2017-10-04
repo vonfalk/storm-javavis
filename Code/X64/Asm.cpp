@@ -42,6 +42,24 @@ namespace code {
 		const Reg r14 = Reg(0x826);
 		const Reg r15 = Reg(0x827);
 
+		const Reg emm0 = Reg(0x428);
+		const Reg emm1 = Reg(0x429);
+		const Reg emm2 = Reg(0x42A);
+		const Reg emm3 = Reg(0x42B);
+		const Reg emm4 = Reg(0x42C);
+		const Reg emm5 = Reg(0x42D);
+		const Reg emm6 = Reg(0x42E);
+		const Reg emm7 = Reg(0x42F);
+		const Reg xmm0 = Reg(0x828);
+		const Reg xmm1 = Reg(0x829);
+		const Reg xmm2 = Reg(0x82A);
+		const Reg xmm3 = Reg(0x82B);
+		const Reg xmm4 = Reg(0x82C);
+		const Reg xmm5 = Reg(0x82D);
+		const Reg xmm6 = Reg(0x82E);
+		const Reg xmm7 = Reg(0x82F);
+
+
 #define CASE_REG(name) case name: return S(#name)
 
 		const wchar *nameX64(Reg r) {
@@ -82,6 +100,23 @@ namespace code {
 				CASE_REG(r13);
 				CASE_REG(r14);
 				CASE_REG(r15);
+
+				CASE_REG(emm0);
+				CASE_REG(emm1);
+				CASE_REG(emm2);
+				CASE_REG(emm3);
+				CASE_REG(emm4);
+				CASE_REG(emm5);
+				CASE_REG(emm6);
+				CASE_REG(emm7);
+				CASE_REG(xmm0);
+				CASE_REG(xmm1);
+				CASE_REG(xmm2);
+				CASE_REG(xmm3);
+				CASE_REG(xmm4);
+				CASE_REG(xmm5);
+				CASE_REG(xmm6);
+				CASE_REG(xmm7);
 			default:
 				return null;
 			}
@@ -123,9 +158,28 @@ namespace code {
 			case ptr15:
 				return 15;
 			default:
+				if (fpRegister(r))
+					return fpRegisterId(r);
 				assert(false, L"Can not use " + ::toS(name(r)));
 				return 0;
 			}
+		}
+
+		bool fpRegister(const Operand &op) {
+			if (op.type() != opRegister)
+				return false;
+			else
+				return fpRegister(op.reg());
+		}
+
+		bool fpRegister(Reg r) {
+			Nat t = Nat(r) & 0xFF;
+			return t >= 0x28 && t <= 0x2F;
+		}
+
+		nat fpRegisterId(Reg r) {
+			assert(fpRegister(r));
+			return (Nat(r) & 0xF) - 8;
 		}
 
 		byte condOp(CondFlag c) {
@@ -201,9 +255,13 @@ namespace code {
 		}
 
 		void put(Output *to, OpCode op) {
-			if (op.op1)
+			if (op.op1) {
 				to->putByte(op.op1);
-			to->putByte(op.op2);
+				to->putByte(op.op2);
+			} else if (op.op2) {
+				to->putByte(op.op2);
+			}
+			to->putByte(op.op3);
 		}
 
 		// Construct and emit a SIB value. NOTE: 'scale' can not be an extended register since we do

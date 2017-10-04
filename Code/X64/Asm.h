@@ -49,11 +49,38 @@ namespace code {
 		extern const Reg r14;
 		extern const Reg r15;
 
+		/**
+		 * XMM registers required for the calling convention. Called 'emm' for 4 bytes wide and
+		 * 'xmm' for 8 bytes wide. These are only usable in 'mov' instructions. It is not possible
+		 * to move data from a regular register to an xmm register directly.
+		 */
+		extern const Reg emm0;
+		extern const Reg emm1;
+		extern const Reg emm2;
+		extern const Reg emm3;
+		extern const Reg emm4;
+		extern const Reg emm5;
+		extern const Reg emm6;
+		extern const Reg emm7;
+		extern const Reg xmm0;
+		extern const Reg xmm1;
+		extern const Reg xmm2;
+		extern const Reg xmm3;
+		extern const Reg xmm4;
+		extern const Reg xmm5;
+		extern const Reg xmm6;
+		extern const Reg xmm7;
+
 		// Convert to names.
 		const wchar *nameX64(Reg r);
 
 		// Register ID.
 		nat registerId(Reg r);
+
+		// Is this a xmm register?
+		bool fpRegister(Reg r);
+		bool fpRegister(const Operand &op);
+		nat fpRegisterId(Reg r);
 
 		// Code for conditional operations.
 		byte condOp(CondFlag c);
@@ -70,21 +97,27 @@ namespace code {
 
 		// Description of an op-code.
 		struct OpCode {
-			// The actual op-code. Maximum 2 bytes. If only one byte is required, the first byte is
-			// 0. (the byte 0x00 is the ADD instruction which is 1 byte long. Thus 0x00 0x00
+			// The actual op-code. Maximum 3 bytes. If only one byte is required, the first bytes are
+			// 0. (the byte 0x00 is the ADD instruction which is 1 byte long. Thus 0x00 0x00 0x00
 			// uniquely identifies ADD).
 			byte op1;
 			byte op2;
+			byte op3;
 		};
 
 		// Create OpCode objects.
 		inline OpCode opCode(byte op) {
-			OpCode r = { 0x00, op };
+			OpCode r = { 0x00, 0x00, op };
 			return r;
 		}
 
 		inline OpCode opCode(byte op1, byte op2) {
-			OpCode r = { op1, op2 };
+			OpCode r = { 0x00, op1, op2 };
+			return r;
+		}
+
+		inline OpCode opCode(byte op1, byte op2, byte op3) {
+			OpCode r = { op1, op2, op3 };
 			return r;
 		}
 

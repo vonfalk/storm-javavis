@@ -101,6 +101,12 @@ linkFlags+=/LTCG
 #Need extra flag to the linker...
 link=lib /LTCG <files> /nologo /OUT:<output>
 
+[storm_release,unix]
+#We do not need O3
+flags=-std=c++11
+flags+=-O2
+
+
 [storm_slow]
 buildDir=slow/
 execDir=../slow/
