@@ -210,6 +210,53 @@ BEGIN_TEST_(CallMixedInt, Code) {
 	CHECK_EQ((*fn)(), 30);
 } END_TEST
 
+struct MixedParam {
+	size_t a;
+	Float b;
+	Float c;
+};
+
+SimpleDesc *mixedDesc(Engine &e) {
+	SimpleDesc *desc = new (e) SimpleDesc(Size::sPtr + Size::sFloat * 2, 3);
+	desc->at(0) = Primitive(primitive::integer, Size::sPtr, Offset());
+	desc->at(1) = Primitive(primitive::real, Size::sFloat, Offset::sPtr);
+	desc->at(2) = Primitive(primitive::real, Size::sFloat, Offset::sPtr + Offset::sFloat);
+	return desc;
+}
+
+Float CODECALL callMixed(MixedParam a) {
+	return Float(a.a) - a.b / a.c;
+}
+
+BEGIN_TEST_(CallMixed, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Ref mixedFn = arena->external(S("mixedFn"), address(&callMixed));
+	SimpleDesc *mixed = mixedDesc(e);
+
+	Listing *l = new (e) Listing();
+	l->result = floatDesc(e);
+	Var a = l->createVar(l->root(), mixed->size());
+
+	*l << prolog();
+
+	*l << mov(ptrRel(a, Offset()), ptrConst(100));
+	*l << mov(floatRel(a, Offset::sPtr), floatConst(40.0f));
+	*l << mov(floatRel(a, Offset::sPtr + Offset::sFloat), floatConst(10.0f));
+
+	*l << fnParam(mixed, a);
+	*l << fnCall(mixedFn, floatDesc(e), eax);
+
+	*l << fnRet(eax);
+
+	Binary *bin = new (e) Binary(arena, l);
+	typedef Float (*Fn)();
+	Fn fn = (Fn)bin->address();
+
+	CHECK_EQ((*fn)(), 96.0f);
+} END_TEST
+
 
 static Int copied = 0;
 

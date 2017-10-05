@@ -213,6 +213,7 @@ namespace code {
 	Offset Offset::sNat = Offset(4);
 	Offset Offset::sLong = Offset(8);
 	Offset Offset::sWord = Offset(8);
+	Offset Offset::sFloat = Offset(4);
 
 	Int Offset::current() const {
 		switch (sizeof(void *)) {

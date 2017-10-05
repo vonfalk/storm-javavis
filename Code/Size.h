@@ -136,6 +136,9 @@ namespace code {
 		static Offset sLong;
 		static Offset sWord;
 
+		// Float size.
+		static Offset sFloat;
+
 		Offset &STORM_FN operator +=(const Offset &o);
 		Offset &STORM_FN operator -=(const Offset &o);
 		Offset STORM_FN operator +(const Offset &o) const;
