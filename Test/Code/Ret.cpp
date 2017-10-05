@@ -171,6 +171,35 @@ BEGIN_TEST_(RetSimple, Code) {
 	CHECK_EQ((*fn)(), ok);
 } END_TEST
 
+SimpleRet CODECALL createSimple() {
+	SimpleRet a = { 100, 20 };
+	return a;
+}
+
+BEGIN_TEST_(RetCallSimple, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Ref toCall = arena->external(S("create"), address(&createSimple));
+
+	Listing *l = new (e) Listing();
+	l->result = ptrDesc(e);
+	Var v = l->createVar(l->root(), Size::sPtr * 2);
+
+	*l << prolog();
+
+	*l << fnCall(toCall, retDesc(e), v);
+	*l << mov(ptrA, ptrRel(v, Offset()));
+	*l << add(ptrA, ptrRel(v, Offset::sPtr));
+
+	*l << fnRet(ptrA);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef size_t (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	CHECK_EQ((*fn)(), 120);
+} END_TEST
+
 struct SimpleFloatRet {
 	int a, b;
 	float c;
@@ -221,4 +250,34 @@ BEGIN_TEST_(RetSimpleFloat, Code) {
 
 	SimpleFloatRet ok = { 10, 20, 20.5f };
 	CHECK_EQ((*fn)(), ok);
+} END_TEST
+
+SimpleFloatRet CODECALL createSimpleFloat() {
+	SimpleFloatRet x = { 10, 20, 3.8f };
+	return x;
+}
+
+BEGIN_TEST_(RetCallSimpleFloat, Code) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Ref toCall = arena->external(S("create"), address(&createSimpleFloat));
+
+	Listing *l = new (e) Listing();
+	l->result = intDesc(e);
+	Var v = l->createVar(l->root(), Size::sInt * 3);
+
+	*l << prolog();
+
+	*l << fnCall(toCall, retFloatDesc(e), v);
+	*l << mov(eax, intRel(v, Offset()));
+	*l << add(eax, intRel(v, Offset::sInt));
+
+	*l << fnRet(eax);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Int (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	(*fn)();
+	CHECK_EQ((*fn)(), 30);
 } END_TEST

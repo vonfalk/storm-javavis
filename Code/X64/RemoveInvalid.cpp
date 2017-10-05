@@ -423,6 +423,49 @@ namespace code {
 			}
 		}
 
+		static void returnPrimitive(Listing *dest, PrimitiveDesc *p, Instr *instr) {
+			switch (p->v.kind()) {
+			case primitive::none:
+				break;
+			case primitive::integer:
+			case primitive::pointer:
+				if (instr->dest().type() == opRegister && same(instr->dest().reg(), ptrA)) {
+				} else {
+					*dest << mov(instr->dest(), asSize(ptrA, instr->dest().size()));
+				}
+				break;
+			case primitive::real:
+				*dest << mov(instr->dest(), asSize(xmm0, instr->dest().size()));
+				break;
+			}
+		}
+
+		static void returnSimple(Listing *dest, primitive::PrimitiveKind k, nat &i, nat &r, Offset offset, Size totalSize) {
+			static const Reg intReg[2] = { ptrA, ptrD };
+			static const Reg realReg[2] = { xmm0, xmm1 };
+			// Make sure not to overwrite any crucial memory region...
+			Size size(min(totalSize.size64() - offset.v64(), 8));
+
+			switch (k) {
+			case primitive::none:
+				break;
+			case primitive::integer:
+			case primitive::pointer:
+				*dest << mov(xRel(size, ptrSi, offset), asSize(intReg[i++], size));
+				break;
+			case primitive::real:
+				*dest << mov(xRel(size, ptrSi, offset), asSize(realReg[r++], size));
+				break;
+			}
+		}
+
+		static void returnSimple(Listing *dest, Result *result, Size size) {
+			nat i = 0;
+			nat r = 0;
+			returnSimple(dest, result->part1, i, r, Offset(), size);
+			returnSimple(dest, result->part2, i, r, Offset::sPtr, size);
+		}
+
 		void RemoveInvalid::fnCallTfm(Listing *dest, Instr *instr, Nat line) {
 			if (!as<TypeInstr>(instr)) {
 				TODO(L"Remove me!"); return;
@@ -433,6 +476,7 @@ namespace code {
 			Block block;
 			Array<Var> *copies;
 			TypeDesc *result = ((TypeInstr *)instr)->type;
+			Result *resultLayout = code::x64::result(result);
 			bool complex = hasComplex(params);
 
 			if (complex) {
@@ -459,7 +503,7 @@ namespace code {
 			}
 
 			// Do we need a hidden parameter?
-			if (as<ComplexDesc>(result)) {
+			if (resultLayout->memory) {
 				// We want to pass a reference to 'src'.
 				params->insert(0, ParamInfo(ptrDesc(engine()), instr->dest(), false, true));
 			}
@@ -477,22 +521,10 @@ namespace code {
 
 			// Handle the return value if required.
 			if (PrimitiveDesc *p = as<PrimitiveDesc>(result)) {
-				switch (p->v.kind()) {
-				case primitive::none:
-					break;
-				case primitive::integer:
-				case primitive::pointer:
-					if (instr->dest().type() == opRegister && same(instr->dest().reg(), ptrA)) {
-					} else {
-						*dest << mov(instr->dest(), asSize(ptrA, instr->dest().size()));
-					}
-					break;
-				case primitive::real:
-					*dest << mov(instr->dest(), asSize(xmm0, instr->dest().size()));
-					break;
-				}
-			} else if (as<SimpleDesc>(result)) {
-				assert(false, L"Not implemented yet!");
+				returnPrimitive(dest, p, instr);
+			} else if (!resultLayout->memory) {
+				*dest << lea(ptrSi, instr->dest());
+				returnSimple(dest, resultLayout, result->size());
 			}
 
 			// Pop the stack.
