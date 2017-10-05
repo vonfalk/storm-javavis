@@ -122,6 +122,41 @@ BEGIN_TEST_(RetRefComplex, Code) {
 	CHECK(DbgVal::clear());
 } END_TEST
 
+storm::debug::DbgVal STORM_FN createDbgVal() {
+	return storm::debug::DbgVal(121);
+}
+
+BEGIN_TEST_(RetCallComplex, Code) {
+	using storm::debug::DbgVal;
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+	Type *dbgVal = DbgVal::stormType(e);
+	TypeDesc *dbgDesc = new (e) ComplexDesc(dbgVal->size(), dbgVal->copyCtor()->ref(), dbgVal->destructor()->ref());
+	Ref toCall = arena->external(S("create"), address(&createDbgVal));
+
+	Listing *l = new (e) Listing();
+	l->result = intDesc(e);
+	Var v = l->createVar(l->root(), dbgVal->size(), dbgVal->destructor()->ref(), freeDef | freePtr);
+
+	*l << prolog();
+
+	*l << fnCall(toCall, dbgDesc, v);
+
+	// This is abusin the interface a tiny bit...
+	*l << mov(eax, intRel(v, Offset()));
+
+	*l << fnRet(eax);
+
+	Binary *b = new (e) Binary(arena, l);
+	typedef Int (*Fn)();
+	Fn fn = (Fn)b->address();
+
+	DbgVal::clear();
+	CHECK_EQ((*fn)(), 121);
+	CHECK(DbgVal::clear());
+
+} END_TEST
+
 struct SimpleRet {
 	size_t a;
 	size_t b;
