@@ -47,6 +47,9 @@ namespace code {
 			// Layout of the stack. The stack offset of all variables in the listings.
 			Array<Offset> *layout;
 
+			// Registers that need to be preserved in the function prolog.
+			RegSet *toPreserve;
+
 			// Currently active part.
 			Part part;
 

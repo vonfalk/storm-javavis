@@ -95,6 +95,9 @@ namespace code {
 		// Find a unused register given a set of used registers.
 		Reg unusedReg(RegSet *in);
 
+		// Get the set of registers that can be left dirty through a function call.
+		RegSet *STORM_FN fnDirtyRegs(EnginePtr e);
+
 		// Description of an op-code.
 		struct OpCode {
 			// The actual op-code. Maximum 3 bytes. If only one byte is required, the first bytes are

@@ -254,6 +254,25 @@ namespace code {
 			return noReg;
 		}
 
+		RegSet *fnDirtyRegs(EnginePtr e) {
+			RegSet *r = new (e.v) RegSet();
+			r->put(rax);
+			r->put(rdi);
+			r->put(rsi);
+			r->put(rcx);
+			r->put(r8);
+			r->put(r9);
+			r->put(xmm0);
+			r->put(xmm1);
+			r->put(xmm2);
+			r->put(xmm3);
+			r->put(xmm4);
+			r->put(xmm5);
+			r->put(xmm6);
+			r->put(xmm7);
+			return r;
+		}
+
 		void put(Output *to, OpCode op) {
 			if (op.op1) {
 				to->putByte(op.op1);

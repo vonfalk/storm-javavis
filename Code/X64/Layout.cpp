@@ -43,12 +43,23 @@ namespace code {
 				params->add(i, src->paramDesc(p->at(i)));
 			}
 
-			// TODO: Figure out how many registers we need to spill!
-			Nat spilled = 0;
+			// Figure out which registers we need to spill.
+			{
+				toPreserve = new (this) RegSet();
+				RegSet *notPreserved = fnDirtyRegs(engine());
+				RegSet *used = allUsedRegs(src);
+
+				for (RegSet::Iter i = used->begin(); i != used->end(); ++i) {
+					if (!notPreserved->has(i.v()))
+						toPreserve->put(i.v());
+				}
+			}
+
+			// Compute the layout.
+			Nat spilled = toPreserve->count();
 			if (result->memory)
 				spilled++; // The hidden parameter needs to be spilled!
 
-			// Compute the layout.
 			layout = code::x64::layout(src, params, spilled, usingEH);
 		}
 
@@ -122,7 +133,11 @@ namespace code {
 				offset -= Offset::sPtr;
 			}
 
-			// TODO: Save registers we need to preserve!
+			// Save registers we need to preserve.
+			for (RegSet::Iter i = toPreserve->begin(); i != toPreserve->end(); ++i) {
+				*dest << mov(ptrRel(ptrFrame, offset), asSize(i.v(), Size::sPtr));
+				offset -= Offset::sPtr;
+			}
 
 			// Spill parameters to the stack.
 			spillParams(dest);
@@ -139,7 +154,14 @@ namespace code {
 			}
 			part = oldPart;
 
-			// TODO: Restore preserved registers!
+			// Restore preserved registers.
+			Offset offset = -Offset::sPtr;
+			if (usingEH)
+				offset -= Offset::sPtr*2;
+			for (RegSet::Iter i = toPreserve->begin(); i != toPreserve->end(); ++i) {
+				*dest << mov(asSize(i.v(), Size::sPtr), ptrRel(ptrFrame, offset));
+				offset -= Offset::sPtr;
+			}
 
 			*dest << mov(ptrStack, ptrFrame);
 			*dest << pop(ptrFrame);
@@ -169,10 +191,10 @@ namespace code {
 		}
 
 		Offset Layout::resultParam() {
+			Nat count = 1 + toPreserve->count();
 			if (usingEH)
-				return -(Offset::sPtr * 3);
-			else
-				return -Offset::sPtr;
+				count += 2;
+			return -(Offset::sPtr * count);
 		}
 
 		// Zero the memory of a variable. 'initEax' should be true if we need to set eax to 0 before
