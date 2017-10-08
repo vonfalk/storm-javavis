@@ -138,6 +138,31 @@ BEGIN_TEST(CodeTest, CodeBasic) {
 } END_TEST
 
 
+BEGIN_TEST(SwapTest, CodeBasic) {
+	Engine &e = gEngine();
+	Arena *arena = code::arena(e);
+
+	Listing *l = new (e) Listing();
+	Var p = l->createIntParam();
+
+	*l << prolog();
+
+	*l << mov(eax, intConst(21));
+	*l << swap(eax, p);
+	*l << sub(eax, p);
+
+	*l << epilog();
+	*l << ret(ValType(Size::sInt, false));
+
+	Binary *b = new (e) Binary(arena, l);
+
+	typedef Int (*Fn)(Int);
+	Fn fn = (Fn)b->address();
+	Int r = (*fn)(100);
+	CHECK_EQ(r, 79);
+} END_TEST
+
+
 // Do some heavy GC allocations to make the Gc do a collection.
 static void triggerCollect() {
 	for (nat j = 0; j < 10; j++) {

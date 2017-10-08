@@ -154,6 +154,11 @@ namespace code {
 		return instrDestSrc(e, op::mov, to, from);
 	}
 
+	Instr *swap(EnginePtr e, Reg a, Operand b) {
+		b.ensureWritable(op::swap);
+		return instrDestSrc(e, op::swap, a, b);
+	}
+
 	Instr *lea(EnginePtr e, Operand to, Operand from) {
 		if (to.size() != Size::sPtr)
 			throw InvalidValue(L"Lea must update a pointer.");

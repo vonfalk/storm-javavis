@@ -38,6 +38,9 @@ namespace code {
 			// Does not preserve 'rax'.
 			used->remove(ptrA);
 			break;
+		case op::swap:
+			// No effect on the usage.
+			break;
 		case op::fnCall:
 		case op::fnCallRef:
 		case op::call:

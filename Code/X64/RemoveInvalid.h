@@ -1,4 +1,5 @@
 #pragma once
+#include "FnCall.h"
 #include "../Transform.h"
 #include "../OpTable.h"
 #include "../Reg.h"
@@ -8,28 +9,6 @@
 namespace code {
 	namespace x64 {
 		STORM_PKG(core.asm.x64);
-
-		/**
-		 * Parameter information.
-		 */
-		class ParamInfo {
-			STORM_VALUE;
-		public:
-			ParamInfo(TypeDesc *desc, const Operand &src, Bool ref);
-			ParamInfo(TypeDesc *desc, const Operand &src, Bool ref, Bool lea);
-
-			// Type of this parameter.
-			TypeDesc *type;
-
-			// Source of the parameter.
-			Operand src;
-
-			// Is 'src' a reference to the actual data?
-			Bool ref;
-
-			// Do we actually want to pass the address of 'src'?
-			Bool lea;
-		};
 
 		/**
 		 * Transform that removes invalid or otherwise non-supported OP-codes, replacing them with

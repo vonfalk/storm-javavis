@@ -45,6 +45,7 @@ namespace code {
 			shl,
 			shr,
 			sar,
+			swap,
 			icast,
 			ucast,
 

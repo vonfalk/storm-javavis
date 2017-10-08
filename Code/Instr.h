@@ -106,6 +106,7 @@ namespace code {
 	 */
 
 	Instr *STORM_FN mov(EnginePtr e, Operand to, Operand from);
+	Instr *STORM_FN swap(EnginePtr e, Reg a, Operand b);
 	Instr *STORM_FN push(EnginePtr e, Operand v);
 	Instr *STORM_FN pop(EnginePtr e, Operand to);
 	Instr *STORM_FN pushFlags(EnginePtr e);

@@ -121,6 +121,14 @@ namespace code {
 			}
 		}
 
+		void swapOut(Output *to, Instr *instr) {
+			if (instr->size() == Size::sByte) {
+				modRm(to, opCode(0x86), rmByte, instr->dest(), instr->src());
+			} else {
+				modRm(to, opCode(0x87), wide(instr->dest()), instr->dest(), instr->src());
+			}
+		}
+
 		void addOut(Output *to, Instr *instr) {
 			ImmRegInstr8 op8 = {
 				opCode(0x82), 0,
@@ -560,6 +568,7 @@ namespace code {
 			OUTPUT(push),
 			OUTPUT(pop),
 			OUTPUT(mov),
+			OUTPUT(swap),
 			OUTPUT(add),
 			OUTPUT(adc),
 			OUTPUT(bor),
